@@ -273,14 +273,16 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 		/* this is an array of eight integers */
 		short *short_array = (short *) ( (char *) rgbValue + rgbValueOffset);
 
-		len = 16;
+		len = 32;
 		vp = value;
 		nval = 0;
-		for (i = 0; i < 8; i++)
+mylog("index=(");
+		for (i = 0; i < 16; i++)
 		{
 			if (sscanf(vp, "%hd", &short_array[i]) != 1)
 				break;
 
+mylog(" %d", short_array[i]);
 			nval++;
 
 			/* skip the current token */
@@ -290,8 +292,9 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 			if (*vp == '\0')
 				break;
 		}
+mylog(") nval = %d\n", nval);
 
-		for (i = nval; i < 8; i++)
+		for (i = nval; i < 16; i++)
 		{
 			short_array[i] = 0;
 		}

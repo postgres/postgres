@@ -404,7 +404,8 @@ mylog("recycle statement: self= %u\n", self);
 		conn = SC_get_conn(self);
 		if ( ! CC_is_in_autocommit(conn) && CC_is_in_trans(conn)) {
 
-			CC_send_query(conn, "ABORT", NULL);
+			QResultClass *res = CC_send_query(conn, "ABORT", NULL);
+			QR_Destructor(res);
 			CC_set_no_trans(conn);
 		}
 		break;

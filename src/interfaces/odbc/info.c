@@ -1761,7 +1761,7 @@ HSTMT hindx_stmt;
 RETCODE result;
 char *table_name;
 char index_name[MAX_INFO_STRING];
-short fields_vector[8];
+short fields_vector[16];
 char isunique[10], isclustered[10];
 SDWORD index_name_len, fields_vector_len;
 TupleNode *row;
@@ -1924,7 +1924,7 @@ mylog("%s: entering...stmt=%u\n", func, stmt);
     }
     /* bind the vector column */
     result = SQLBindCol(hindx_stmt, 2, SQL_C_DEFAULT,
-                        fields_vector, 16, &fields_vector_len);
+                        fields_vector, 32, &fields_vector_len);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = indx_stmt->errormsg;  /* "Couldn't bind column in SQLStatistics."; */
 		stmt->errornumber = indx_stmt->errornumber;
@@ -2003,7 +2003,7 @@ mylog("%s: entering...stmt=%u\n", func, stmt);
 			(fUnique == SQL_INDEX_UNIQUE && atoi(isunique))) {
 			i = 0;
 			/* add a row in this table for each field in the index */
-			while(i < 8 && fields_vector[i] != 0) {
+			while(i < 16 && fields_vector[i] != 0) {
 
 				row = (TupleNode *)malloc(sizeof(TupleNode) + 
 							  (13 - 1) * sizeof(TupleField));

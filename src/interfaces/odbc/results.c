@@ -405,7 +405,7 @@ int len = 0, value = 0;
 
 			if (icol >= cols) {
 				stmt->errornumber = STMT_INVALID_COLUMN_NUMBER_ERROR;
-				stmt->errormsg = "Invalid column number in DescribeCol.";
+				stmt->errormsg = "Invalid column number in ColAttributes.";
 				SC_log_error(func, "", stmt);
 				return SQL_ERROR;
 			}
@@ -442,7 +442,7 @@ int len = 0, value = 0;
 
 		if (icol >= cols) {
 			stmt->errornumber = STMT_INVALID_COLUMN_NUMBER_ERROR;
-			stmt->errormsg = "Invalid column number in DescribeCol.";
+			stmt->errormsg = "Invalid column number in ColAttributes.";
 			SC_log_error(func, "", stmt);
 			return SQL_ERROR;
 		}

@@ -311,6 +311,7 @@ QResultClass *res;
 			QR_set_message(self, "Error closing cursor.");
 			return FALSE;
 		}
+		QR_Destructor(res);
 
 		/*	End the transaction if there are no cursors left on this conn */
 		if (CC_cursor_count(self->conn) == 0) {
@@ -325,6 +326,7 @@ QResultClass *res;
 				QR_set_message(self, "Error ending transaction.");
 				return FALSE;
 			}
+			QR_Destructor(res);
 		}
 
 	}
