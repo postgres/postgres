@@ -156,6 +156,48 @@ proc getDBs { {host "localhost"} {port "5432"} } {
   </example>
 </Sect1>
 
+<Sect1 id="libpgtcl-loading">
+<Title>Loading <application>pgtcl</application> into your application</Title>
+
+   <para>
+    Before using <application>pgtcl</application> commands, you must load
+    <filename>libpgtcl</> into your Tcl application.  This is normally
+    done with the Tcl <literal>load</> command.  Here is an example:
+
+<programlisting>
+	load libpgtcl[info sharedlibextension]
+</programlisting>
+
+    The use of <literal>info sharedlibextension</> is recommended in
+    preference to hard-wiring <literal>.so</> or  <literal>.sl</> into
+    the program.
+   </para>
+
+   <para>
+    The <literal>load</> command will fail unless the system's dynamic loader
+    knows where to look for the <filename>libpgtcl</> shared library file.
+    You may need to work with <literal>ldconfig</>, or set the environment
+    variable <envar>LD_LIBRARY_PATH</>, or use some equivalent facility for
+    your platform to make it work.
+   </para>
+
+   <para>
+    <filename>libpgtcl</> in turn depends on <filename>libpq</>, so the
+    dynamic loader must also be able to find the <filename>libpq</> shared
+    library.  In practice this is seldom an issue, since both of these
+    shared libraries are normally stored in the same directory, but it
+    can be a stumbling block in some configurations.
+   </para>
+
+   <para>
+    If you use a custom executable for your application, you might choose
+    to statically bind <filename>libpgtcl</> into the executable and thereby
+    avoid the <literal>load</> command and the potential problems of dynamic
+    linking.  See the source code for <application>pgtclsh</> for an example.
+   </para>
+
+</Sect1>
+
 <Sect1 id="libpgtcl-ref">
 <Title><application>pgtcl</application> Command Reference Information</Title>
 
@@ -817,8 +859,7 @@ loop over the result of a SELECT statement
 <DATE>1997-12-24</DATE>
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
-pg_select <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">queryString</REPLACEABLE>
-  <REPLACEABLE CLASS="PARAMETER">arrayVar</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">queryProcedure</REPLACEABLE>
+pg_select <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">queryString</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">arrayVar</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">queryProcedure</REPLACEABLE>
 </SYNOPSIS>
 
 <REFSECT2 ID="R2-PGTCL-PGSELECT-1">
@@ -874,18 +915,9 @@ pg_select <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE> <REPLACEABLE CLA
 </REFSECT2INFO>
 <TITLE>Outputs
 </TITLE>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-  <REPLACEABLE CLASS="PARAMETER">resultHandle</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-   the return result is either an error message or a handle for a query result.
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
+<Para>
+None.
+</Para>
 </REFSECT2></REFSYNOPSISDIV>
 
 <REFSECT1 ID="R1-PGTCL-PGSELECT-1">
@@ -908,6 +940,37 @@ given chunk of code for each tuple in the result.
   <REPLACEABLE CLASS="PARAMETER">queryProcedure</REPLACEABLE>
   is executed.
 </PARA>
+
+<PARA>
+ In addition to the field values, the following special entries are
+made in the array:
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM><literal>.headers</></TERM>
+<LISTITEM>
+<PARA>A list of the column names returned by the SELECT.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM><literal>.numcols</></TERM>
+<LISTITEM>
+<PARA>The number of columns returned by the SELECT.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM><literal>.tupno</></TERM>
+<LISTITEM>
+<PARA>The current tuple number, starting at zero and incrementing
+for each iteration of the loop body.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</PARA>
+
 </REFSECT1>
 
 <REFSECT1 ID="R1-PGTCL-PGSELECT-2">
@@ -918,7 +981,7 @@ This would work if table <classname>table</> has fields <structfield>control</> 
 (and, perhaps, other fields):
 <ProgramListing>
 	pg_select $pgconn "SELECT * FROM table" array {
-		puts [format "%5d %s" array(control) array(name)]
+		puts [format "%5d %s" $array(control) $array(name)]
 	}
 </ProgramListing>
 </PARA>
