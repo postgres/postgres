@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.54.4.1 2005/01/22 23:05:47 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.54.4.2 2005/03/23 19:39:06 tgl Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -177,7 +177,7 @@ pg_dumpall &gt; <replaceable>outfile</>
 </synopsis>
     The resulting dump can be restored with <application>psql</>:
 <synopsis>
-psql template1 &lt; <replaceable class="parameter">infile</replaceable>
+psql -f <replaceable class="parameter">infile</replaceable> template1
 </synopsis>
     (Actually, you can specify any existing database name to start from,
     but if you are reloading in an empty cluster then <literal>template1</>
@@ -364,13 +364,27 @@ tar -cf backup.tar /usr/local/pgsql/data
   </para>
 
   <para>
-   If your database is spread across multiple volumes (for example,
-   data files and WAL log on different disks) there may not be any way
-   to obtain exactly-simultaneous frozen snapshots of all the volumes.
+   If your database is spread across multiple file systems, there may not 
+   be any way to obtain exactly-simultaneous frozen snapshots of all 
+   the volumes.  For example, if your data files and WAL log are on different
+   disks, or if tablespaces are on different file systems, it might
+   not be possible to use snapshot backup because the snapshots must be
+   simultaneous.
    Read your file system documentation very carefully before trusting
    to the consistent-snapshot technique in such situations.  The safest
    approach is to shut down the database server for long enough to
    establish all the frozen snapshots.
+  </para>
+
+  <para>
+   Another option is to use <application>rsync</> to perform a file
+   system backup.  This is done by first running <application>rsync</>
+   while the database server is running, then shutting down the database
+   server just long enough to do a second <application>rsync</>.  The
+   second <application>rsync</> will be much quicker than the first,
+   because it has relatively little data to transfer, and the end result
+   will be consistent because the server was down.  This method
+   allows a file system backup to be performed with minimal downtime.
   </para>
 
   <para>
@@ -1111,6 +1125,19 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
      such index after completing a recovery operation.
     </para>
    </listitem>
+
+   <listitem>
+    <para>
+     <command>CREATE TABLESPACE</> commands are WAL-logged with the literal
+     absolute path, and will therefore be replayed as tablespace creations
+     with the same absolute path.  This might be undesirable if the log is
+     being replayed on a different machine.  It can be dangerous even if
+     the log is being replayed on the same machine, but into a new data
+     directory: the replay will still overwrite the contents of the original
+     tablespace.  To avoid potential gotchas of this sort, the best practice
+     is to take a new base backup after creating or dropping tablespaces.
+    </para>
+   </listitem>
   </itemizedlist>
    </para>
 
@@ -1121,7 +1148,9 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
     since we may need to fix partially-written disk pages.  It is not
     necessary to store so many page copies for PITR operations, however.
     An area for future development is to compress archived WAL data by
-    removing unnecessary page copies.
+    removing unnecessary page copies.  In the meantime, administrators
+    may wish to reduce the number of page snapshots included in WAL by
+    increasing the checkpoint interval parameters as much as feasible.
    </para>
   </sect2>
  </sect1>
@@ -1210,7 +1239,7 @@ cd ~/postgresql-&version;
 gmake install
 initdb -D /usr/local/pgsql/data
 postmaster -D /usr/local/pgsql/data
-psql template1 &lt; backup
+psql -f backup template1
 </programlisting>
 
    See <xref linkend="runtime"> about ways to start and stop the
