@@ -1,9 +1,9 @@
 
-/* File:            lobj.h
+/* File:			lobj.h
  *
- * Description:     See "lobj.c"
+ * Description:		See "lobj.c"
  *
- * Comments:        See "notice.txt" for copyright and license information.
+ * Comments:		See "notice.txt" for copyright and license information.
  *
  */
 
@@ -13,14 +13,15 @@
 
 #include "psqlodbc.h"
 
-struct lo_arg {
-	int		isint;
-	int		len;
+struct lo_arg
+{
+	int			isint;
+	int			len;
 	union
 	{
-		int		integer;
-		char	*ptr;
-	} u;
+		int			integer;
+		char	   *ptr;
+	}			u;
 };
 
 #define LO_CREAT		957
@@ -35,14 +36,13 @@ struct lo_arg {
 #define INV_WRITE		0x00020000
 #define INV_READ		0x00040000
 
-Oid lo_creat(ConnectionClass *conn, int mode);
-int lo_open(ConnectionClass *conn, int lobjId, int mode);
-int lo_close(ConnectionClass *conn, int fd);
-int lo_read(ConnectionClass *conn, int fd, char *buf, int len);
-int lo_write(ConnectionClass *conn, int fd, char *buf, int len);
-int lo_lseek(ConnectionClass *conn, int fd, int offset, int len);
-int lo_tell(ConnectionClass *conn, int fd);
-int lo_unlink(ConnectionClass *conn, Oid lobjId);
+Oid			lo_creat(ConnectionClass * conn, int mode);
+int			lo_open(ConnectionClass * conn, int lobjId, int mode);
+int			lo_close(ConnectionClass * conn, int fd);
+int			lo_read(ConnectionClass * conn, int fd, char *buf, int len);
+int			lo_write(ConnectionClass * conn, int fd, char *buf, int len);
+int			lo_lseek(ConnectionClass * conn, int fd, int offset, int len);
+int			lo_tell(ConnectionClass * conn, int fd);
+int			lo_unlink(ConnectionClass * conn, Oid lobjId);
 
 #endif
-

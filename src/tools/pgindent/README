@@ -3,7 +3,7 @@ This can format all PostgreSQL *.c and *.h files, excluding libpq++,
 
 On 09/06/1997, from the top directory, I ran:
 
-  find . -name '*.[ch]' -type f -print | egrep -v '\+\+|/odbc/|s_lock.h' | xargs -n100 pgindent
+  find . -name '*.[ch]' -type f -print | egrep -v '\+\+|s_lock.h' | xargs -n100 pgindent
 
 The stock BSD indent has two bugs.  First, a comment after the word 'else' 
 causes the rest of the file to be ignored.  Second, it silently ignores

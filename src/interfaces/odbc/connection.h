@@ -1,9 +1,9 @@
 
-/* File:            connection.h
+/* File:			connection.h
  *
- * Description:     See "connection.c"
+ * Description:		See "connection.c"
  *
- * Comments:        See "notice.txt" for copyright and license information.
+ * Comments:		See "notice.txt" for copyright and license information.
  *
  */
 
@@ -27,12 +27,15 @@
 #endif
 
 
-typedef enum {
-    CONN_NOT_CONNECTED,      /* Connection has not been established */
-    CONN_CONNECTED,      /* Connection is up and has been established */
-    CONN_DOWN,            /* Connection is broken */
-    CONN_EXECUTING     /* the connection is currently executing a statement */
-} CONN_Status;
+typedef enum
+{
+	CONN_NOT_CONNECTED,			/* Connection has not been established */
+	CONN_CONNECTED,				/* Connection is up and has been
+								 * established */
+	CONN_DOWN,					/* Connection is broken */
+	CONN_EXECUTING				/* the connection is currently executing a
+								 * statement */
+}			CONN_Status;
 
 /*	These errors have general sql error state */
 #define CONNECTION_SERVER_NOT_REACHED 101
@@ -50,7 +53,7 @@ typedef enum {
 #define CONN_INIREAD_ERROR 201
 #define CONN_OPENDB_ERROR 202
 #define CONN_STMT_ALLOC_ERROR 203
-#define CONN_IN_USE 204 
+#define CONN_IN_USE 204
 #define CONN_UNSUPPORTED_OPTION 205
 /* Used by SetConnectoption to indicate unsupported options */
 #define CONN_INVALID_ARGUMENT_NO 206
@@ -110,38 +113,39 @@ typedef unsigned int ProtocolVersion;
 /*	This startup packet is to support latest Postgres protocol */
 typedef struct _StartupPacket
 {
-	ProtocolVersion	protoVersion;
-	char			database[SM_DATABASE];
-	char			user[SM_USER];
-	char			options[SM_OPTIONS];
-	char			unused[SM_UNUSED];
-	char			tty[SM_TTY];
+	ProtocolVersion protoVersion;
+	char		database[SM_DATABASE];
+	char		user[SM_USER];
+	char		options[SM_OPTIONS];
+	char		unused[SM_UNUSED];
+	char		tty[SM_TTY];
 } StartupPacket;
 
 
 /*	Structure to hold all the connection attributes for a specific
 	connection (used for both registry and file, DSN and DRIVER)
 */
-typedef struct {
-	char	dsn[MEDIUM_REGISTRY_LEN];
-	char	desc[MEDIUM_REGISTRY_LEN];
-	char	driver[MEDIUM_REGISTRY_LEN];
-	char	server[MEDIUM_REGISTRY_LEN];
-	char	database[MEDIUM_REGISTRY_LEN];
-	char	username[MEDIUM_REGISTRY_LEN];
-	char	password[MEDIUM_REGISTRY_LEN];
-	char	conn_settings[LARGE_REGISTRY_LEN];
-	char	protocol[SMALL_REGISTRY_LEN];
-	char	port[SMALL_REGISTRY_LEN];
-	char	onlyread[SMALL_REGISTRY_LEN];	
-	char	fake_oid_index[SMALL_REGISTRY_LEN];
-	char	show_oid_column[SMALL_REGISTRY_LEN];
-	char	row_versioning[SMALL_REGISTRY_LEN];
-	char	show_system_tables[SMALL_REGISTRY_LEN];
-	char    translation_dll[MEDIUM_REGISTRY_LEN];
-	char    translation_option[SMALL_REGISTRY_LEN];
-	char	focus_password;
-} ConnInfo;
+typedef struct
+{
+	char		dsn[MEDIUM_REGISTRY_LEN];
+	char		desc[MEDIUM_REGISTRY_LEN];
+	char		driver[MEDIUM_REGISTRY_LEN];
+	char		server[MEDIUM_REGISTRY_LEN];
+	char		database[MEDIUM_REGISTRY_LEN];
+	char		username[MEDIUM_REGISTRY_LEN];
+	char		password[MEDIUM_REGISTRY_LEN];
+	char		conn_settings[LARGE_REGISTRY_LEN];
+	char		protocol[SMALL_REGISTRY_LEN];
+	char		port[SMALL_REGISTRY_LEN];
+	char		onlyread[SMALL_REGISTRY_LEN];
+	char		fake_oid_index[SMALL_REGISTRY_LEN];
+	char		show_oid_column[SMALL_REGISTRY_LEN];
+	char		row_versioning[SMALL_REGISTRY_LEN];
+	char		show_system_tables[SMALL_REGISTRY_LEN];
+	char		translation_dll[MEDIUM_REGISTRY_LEN];
+	char		translation_option[SMALL_REGISTRY_LEN];
+	char		focus_password;
+}			ConnInfo;
 
 /*
  *	Macros to compare the server's version with a specified version
@@ -160,15 +164,15 @@ typedef struct {
 #define SERVER_VERSION_LE(conn, major, minor) (! SERVER_VERSION_GT(conn, major, minor))
 #define SERVER_VERSION_LT(conn, major, minor) (! SERVER_VERSION_GE(conn, major, minor))
 /*#if ! defined(HAVE_CONFIG_H) || defined(HAVE_STRINGIZE)*/
-#define	STRING_AFTER_DOT(string)	(strchr(#string, '.') + 1)
+#define STRING_AFTER_DOT(string)	(strchr(#string, '.') + 1)
 /*#else
-#define	STRING_AFTER_DOT(str)	(strchr("str", '.') + 1)
+#define STRING_AFTER_DOT(str)	(strchr("str", '.') + 1)
 #endif*/
 /*
  *	Simplified macros to compare the server's version with a
  *		specified version
  *	Note: Never pass a variable as the second parameter.
- *	      It must be a decimal constant of the form %d.%d . 
+ *		  It must be a decimal constant of the form %d.%d .
  */
 #define PG_VERSION_GT(conn, ver) \
  (SERVER_VERSION_GT(conn, (int) ver, atoi(STRING_AFTER_DOT(ver))))
@@ -180,9 +184,10 @@ typedef struct {
 #define PG_VERSION_LT(conn, ver) (! PG_VERSION_GE(conn, ver))
 
 /*	This is used to store cached table information in the connection */
-struct col_info {
-	QResultClass	*result;
-	char			name[MAX_TABLE_LEN+1];
+struct col_info
+{
+	QResultClass *result;
+	char		name[MAX_TABLE_LEN + 1];
 };
 
  /* Translation DLL entry points */
@@ -194,52 +199,58 @@ struct col_info {
 #define HINSTANCE void *
 #endif
 
-typedef BOOL (FAR WINAPI *DataSourceToDriverProc) (UDWORD,
-					SWORD,
-					PTR,
-					SDWORD,
-					PTR,
-					SDWORD,
-					SDWORD FAR *,
-					UCHAR FAR *,
-					SWORD,
-					SWORD FAR *);
+typedef BOOL(FAR WINAPI * DataSourceToDriverProc) (UDWORD,
+										   SWORD,
+										   PTR,
+										   SDWORD,
+										   PTR,
+										   SDWORD,
+										   SDWORD FAR *,
+										   UCHAR FAR *,
+										   SWORD,
+										   SWORD FAR *);
 
-typedef BOOL (FAR WINAPI *DriverToDataSourceProc) (UDWORD,
-					SWORD,
-					PTR,
-					SDWORD,
-					PTR,
-					SDWORD,
-					SDWORD FAR *,
-					UCHAR FAR *,
-					SWORD,
-					SWORD FAR *);
+typedef BOOL(FAR WINAPI * DriverToDataSourceProc) (UDWORD,
+										   SWORD,
+										   PTR,
+										   SDWORD,
+										   PTR,
+										   SDWORD,
+										   SDWORD FAR *,
+										   UCHAR FAR *,
+										   SWORD,
+										   SWORD FAR *);
 
 /*******	The Connection handle	************/
-struct ConnectionClass_ {
-	HENV			henv;					/* environment this connection was created on */
+struct ConnectionClass_
+{
+	HENV		henv;			/* environment this connection was created
+								 * on */
 	StatementOptions stmtOptions;
-	char			*errormsg;
-	int				errornumber;
-	CONN_Status		status;
-	ConnInfo		connInfo;
-	StatementClass	**stmts;
-	int				num_stmts;
-	SocketClass		*sock;
-	int				lobj_type;
-	int				ntables;
-	COL_INFO		**col_info;
-	long            translation_option;
-	HINSTANCE       translation_handle;
-	DataSourceToDriverProc  DataSourceToDriver;
-	DriverToDataSourceProc  DriverToDataSource;
-	char			transact_status;		/* Is a transaction is currently in progress */
-	char			errormsg_created;		/* has an informative error msg been created?  */
-	char			pg_version[MAX_INFO_STRING];	/* Version of PostgreSQL we're connected to - DJP 25-1-2001 */
-	float			pg_version_number;
-	Int2			pg_version_major;
-	Int2			pg_version_minor;
+	char	   *errormsg;
+	int			errornumber;
+	CONN_Status status;
+	ConnInfo	connInfo;
+	StatementClass **stmts;
+	int			num_stmts;
+	SocketClass *sock;
+	int			lobj_type;
+	int			ntables;
+	COL_INFO  **col_info;
+	long		translation_option;
+	HINSTANCE	translation_handle;
+	DataSourceToDriverProc DataSourceToDriver;
+	DriverToDataSourceProc DriverToDataSource;
+	char		transact_status;/* Is a transaction is currently in
+								 * progress */
+	char		errormsg_created;		/* has an informative error msg
+										 * been created?  */
+	char		pg_version[MAX_INFO_STRING];	/* Version of PostgreSQL
+												 * we're connected to -
+												 * DJP 25-1-2001 */
+	float		pg_version_number;
+	Int2		pg_version_major;
+	Int2		pg_version_minor;
 };
 
 
@@ -252,31 +263,31 @@ struct ConnectionClass_ {
 #define CC_is_onlyread(x)	(x->connInfo.onlyread[0] == '1')
 
 
-/*  for CC_DSN_info */
+/*	for CC_DSN_info */
 #define CONN_DONT_OVERWRITE		0
-#define CONN_OVERWRITE			1 
+#define CONN_OVERWRITE			1
 
 
 /*	prototypes */
 ConnectionClass *CC_Constructor(void);
-char CC_Destructor(ConnectionClass *self);
-int CC_cursor_count(ConnectionClass *self);
-char CC_cleanup(ConnectionClass *self);
-char CC_abort(ConnectionClass *self);
-int CC_set_translation (ConnectionClass *self);
-char CC_connect(ConnectionClass *self, char do_password);
-char CC_add_statement(ConnectionClass *self, StatementClass *stmt);
-char CC_remove_statement(ConnectionClass *self, StatementClass *stmt);
-char CC_get_error(ConnectionClass *self, int *number, char **message);
-QResultClass *CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi);
-void CC_clear_error(ConnectionClass *self);
-char *CC_create_errormsg(ConnectionClass *self);
-int CC_send_function(ConnectionClass *conn, int fnid, void *result_buf, int *actual_result_len, int result_is_int, LO_ARG *argv, int nargs);
-char CC_send_settings(ConnectionClass *self);
-void CC_lookup_lo(ConnectionClass *conn);
-void CC_lookup_pg_version(ConnectionClass *conn);
-void CC_initialize_pg_version(ConnectionClass *conn);
-void CC_log_error(char *func, char *desc, ConnectionClass *self);
+char		CC_Destructor(ConnectionClass * self);
+int			CC_cursor_count(ConnectionClass * self);
+char		CC_cleanup(ConnectionClass * self);
+char		CC_abort(ConnectionClass * self);
+int			CC_set_translation(ConnectionClass * self);
+char		CC_connect(ConnectionClass * self, char do_password);
+char		CC_add_statement(ConnectionClass * self, StatementClass * stmt);
+char		CC_remove_statement(ConnectionClass * self, StatementClass * stmt);
+char		CC_get_error(ConnectionClass * self, int *number, char **message);
+QResultClass *CC_send_query(ConnectionClass * self, char *query, QueryInfo * qi);
+void		CC_clear_error(ConnectionClass * self);
+char	   *CC_create_errormsg(ConnectionClass * self);
+int			CC_send_function(ConnectionClass * conn, int fnid, void *result_buf, int *actual_result_len, int result_is_int, LO_ARG * argv, int nargs);
+char		CC_send_settings(ConnectionClass * self);
+void		CC_lookup_lo(ConnectionClass * conn);
+void		CC_lookup_pg_version(ConnectionClass * conn);
+void		CC_initialize_pg_version(ConnectionClass * conn);
+void		CC_log_error(char *func, char *desc, ConnectionClass * self);
 
 
 #endif
