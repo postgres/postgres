@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.9 2001/05/17 21:50:15 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.10 2001/07/06 02:01:35 ishii Exp $ -->
 <chapter id="backup">
  <title>Backup and Restore</title>
 
@@ -101,7 +101,7 @@ psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class
     for the pg_dump command. The database <replaceable
     class="parameter">dbname</replaceable> will not be created by this
     command, you must create it yourself from template0 before executing
-    <application>psql</> (e.g., with <userinput>createdb -t template0
+    <application>psql</> (e.g., with <userinput>createdb -T template0
     <replaceable class="parameter">dbname</></userinput>).
     <application>psql</> supports similar options to <application>pg_dump</> 
     for controlling the database server location and the user names. See
