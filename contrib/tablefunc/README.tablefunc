@@ -395,8 +395,12 @@ Notes
      for branch_delim for internal recursion detection, even though the branch
      field is not returned.
 
-  4. If the branch field is desired, it must be the forth column in the query
-     column definition, and it must be type TEXT
+  4. If the branch field is desired, it must be the fourth column in the query
+     column definition, and it must be type TEXT.
+
+  5. The parameters representing table and field names must include double
+     quotes if the names are mixed-case or contain special characters.
+
 
 Example usage
 
