@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.19 2001/02/09 17:16:57 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.20 2001/02/11 01:41:00 petere Exp $
 Postgres documentation
 -->
 
@@ -81,7 +81,6 @@ Postgres documentation
       </listitem>
      </varlistentry>
 
-    <variablelist>
      <varlistentry>
       <term>-h <replaceable>host</replaceable></term>
       <listitem>
