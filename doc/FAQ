@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Jun 4 00:09:16 EDT 2004
+   Last updated: Sun Jul 11 20:18:47 EDT 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -54,6 +54,7 @@
    3.9) What is in the pgsql_tmp directory?
    3.10) Why do I need to do a dump and restore to upgrade PostgreSQL
    releases?
+   3.10) What computer hardware should I use?
    
                            Operational Questions
                                       
@@ -258,7 +259,7 @@
    
     1.7) What is the latest release?
     
-   The latest release of PostgreSQL is version 7.4.2.
+   The latest release of PostgreSQL is version 7.4.3.
    
    We plan to have major releases every six to eight months.
    
@@ -633,6 +634,17 @@
    In releases where the on-disk format does not change, the pg_upgrade
    script can be used to upgrade without a dump/restore. The release
    notes mention whether pg_upgrade is available for the release.
+   
+    3.11) What computer hardware should I use?
+    
+   Because PC hardware is mostly compatible, people tend to believe that
+   all PC hardware is of equal quality. It is not. ECC RAM, SCSI, and
+   quality motherboards are more reliable and have better performance
+   than less expensive hardware. PostgreSQL will run on almost any
+   hardware, but if you are building a server where reliability and
+   performance are concerns, it is wise to research your hardware options
+   thoroughly. Our email lists can be used to discuss hardware options
+   and tradeoffs.
      _________________________________________________________________
    
                            Operational Questions
