@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.41 2003/06/27 00:33:26 tgl Exp $
+ * $Id: array.h,v 1.42 2003/07/14 20:34:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ typedef struct ArrayMetaState
  * ARR_LBOUND returns a pointer to an array of array lower bounds.
  *
  * That is: if the third axis of an array has elements 5 through 10, then
- * ARR_DIMS(a)[2] == 6 and ARR_LBOUND[2] == 5.
+ * ARR_DIMS(a)[2] == 6 and ARR_LBOUND(a)[2] == 5.
  *
  * Unlike C, the default lower bound is 1.
  */
