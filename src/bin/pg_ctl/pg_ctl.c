@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.41 2004/10/19 13:38:53 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.42 2004/10/22 00:24:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,9 +14,9 @@
 
 #include <locale.h>
 #include <signal.h>
-#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include "libpq/pqsignal.h"
 #include "getopt_long.h"
@@ -1229,6 +1229,7 @@ main(int argc, char **argv)
 
 	umask(077);
 
+	/* support --help and --version even if invoked as root */
 	if (argc > 1)
 	{
 		if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0 ||
@@ -1243,6 +1244,23 @@ main(int argc, char **argv)
 			exit(0);
 		}
 	}
+
+	/*
+	 * Disallow running as root, to forestall any possible security holes.
+	 */
+#ifndef WIN32
+#ifndef __BEOS__				/* no root check on BEOS */
+	if (geteuid() == 0)
+	{
+		write_stderr(_("%s: cannot be run as root\n"
+					   "Please log in (using, e.g., \"su\") as the "
+					   "(unprivileged) user that will\n"
+					   "own the server process.\n"),
+					 progname);
+		exit(1);
+	}
+#endif
+#endif
 
 	/*
 	 * 'Action' can be before or after args so loop over both. Some
