@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.63 2002/12/30 18:42:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.64 2002/12/30 19:45:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -423,8 +423,7 @@ TruncateRelation(const RangeVar *relation)
 		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
 
 		if (con->contype == 'f' && con->conrelid != relid)
-			elog(ERROR, "TRUNCATE cannot be used as table %s references "
-						"this one via foreign key constraint %s",
+			elog(ERROR, "TRUNCATE cannot be used as table %s references this one via foreign key constraint %s",
 				 get_rel_name(con->conrelid),
 				 NameStr(con->conname));
 	}
@@ -439,6 +438,11 @@ TruncateRelation(const RangeVar *relation)
 	rebuild_relation(rel, InvalidOid);
 
 	/* NB: rebuild_relation does heap_close() */
+
+	/*
+	 * You might think we need to truncate the rel's toast table here too,
+	 * but actually we don't; it will have been rebuilt in an empty state.
+	 */
 }
 
 /*----------

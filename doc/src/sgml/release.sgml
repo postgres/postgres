@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.173 2002/12/20 00:24:00 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.174 2002/12/30 19:45:11 tgl Exp $
 -->
 
 <appendix id="release">
@@ -29,6 +29,7 @@ Information schema
 Domains now support CHECK constraints
 psql backslash commands for listing conversions, casts, and schemas
 TRUNCATE TABLE is transaction-safe
+CLUSTER can re-cluster a previously clustered table, or all such tables
 Statement-level triggers
 System can use either hash- or sort-based strategy for grouped aggregation
 ON COMMIT options for temp tables
