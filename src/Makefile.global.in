@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.130 2001/07/10 16:33:01 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.131 2001/07/15 11:20:01 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -146,7 +146,10 @@ DOCBOOKSTYLE	= @DOCBOOKSTYLE@
 
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
-override CPPFLAGS := $(sort -I$(top_srcdir)/src/include -I$(top_builddir)/src/include) $(CPPFLAGS)
+override CPPFLAGS := -I$(top_srcdir)/src/include $(CPPFLAGS)
+ifdef VPATH
+override CPPFLAGS := -I$(top_builddir)/src/include $(CPPFLAGS)
+endif
 
 CC = @CC@
 GCC = @GCC@
