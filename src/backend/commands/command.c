@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.83 2000/07/04 06:11:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.84 2000/07/05 12:45:25 wieck Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1177,21 +1177,23 @@ AlterTableDropConstraint(const char *relationName,
  * ALTER TABLE CREATE TOAST TABLE
  */
 void
-AlterTableCreateToastTable(const char *relationName)
+AlterTableCreateToastTable(const char *relationName, bool silent)
 {
 	Relation			rel;
 	Oid					myrelid;
 	HeapTuple			reltup;
+	HeapTupleData		classtuple;
 	TupleDesc			tupdesc;
 	Form_pg_attribute  *att;
 	Relation			class_rel;
+	Buffer				buffer;
 	Relation			ridescs[Num_pg_class_indices];
 	Oid					toast_relid;
 	Oid					toast_idxid;
 	bool				has_toastable_attrs = false;
 	int					i;
-	char				toast_relname[NAMEDATALEN];
-	char				toast_idxname[NAMEDATALEN];
+	char				toast_relname[NAMEDATALEN + 1];
+	char				toast_idxname[NAMEDATALEN + 1];
 	Relation			toast_rel;
 	AttrNumber			attNums[1];
 	Oid					classObjectId[1];
@@ -1199,15 +1201,32 @@ AlterTableCreateToastTable(const char *relationName)
 	/*
 	 * permissions checking.  XXX exactly what is appropriate here?
 	 */
-/*
-	if (!allowSystemTableMods && IsSystemRelationName(relationName))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-			 relationName);
-*/
 #ifndef NO_SECURITY
 	if (!pg_ownercheck(UserName, relationName, RELNAME))
 		elog(ERROR, "ALTER TABLE: permission denied");
 #endif
+
+	/*
+	 * lock the pg_class tuple for update
+	 */
+	reltup = SearchSysCacheTuple(RELNAME, PointerGetDatum(relationName),
+								 0, 0, 0);
+
+	if (!HeapTupleIsValid(reltup))
+		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
+			 relationName);
+	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
+	classtuple.t_self = reltup->t_self;
+	switch (heap_mark4update(class_rel, &classtuple, &buffer))
+	{
+		case HeapTupleSelfUpdated:
+		case HeapTupleMayBeUpdated:
+			break;
+		default:
+			elog(ERROR, "couldn't lock pg_class tuple");
+	}
+	reltup = heap_copytuple(&classtuple);
+	ReleaseBuffer(buffer);
 
 	/*
 	 * Grab an exclusive lock on the target table, which we will NOT
@@ -1231,22 +1250,24 @@ AlterTableCreateToastTable(const char *relationName)
 	}
 
 	if (!has_toastable_attrs)
+	{
+	    if (silent)
+		{
+			heap_close(rel, NoLock);
+			heap_close(class_rel, NoLock);
+			return;
+		}
+
 		elog(ERROR, "ALTER TABLE: relation \"%s\" has no toastable attributes",
 				relationName);
+	}
+
 
 	/*
-	 * Get the pg_class tuple for the relation
-	 */
-	reltup = SearchSysCacheTuple(RELNAME,
-								 PointerGetDatum(relationName),
-								 0, 0, 0);
-
-	if (!HeapTupleIsValid(reltup))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
-			 relationName);
-
-	/*
-	 * XXX is the following check sufficient?
+	 * XXX is the following check sufficient? At least it would
+	 * allow to create TOAST tables for views. But why not - someone
+	 * can insert into a view, so it shouldn't be impossible to hide
+	 * huge data there :-)
 	 */
 	if (((Form_pg_class) GETSTRUCT(reltup))->relkind != RELKIND_RELATION)
 	{
@@ -1281,6 +1302,8 @@ AlterTableCreateToastTable(const char *relationName)
 
 	/* XXX use RELKIND_TOASTVALUE here? */
 	/* XXX what if owning relation is temp?  need we mark toasttable too? */
+	/* !!! No need to worry about temp. It'll go away when it's master    */
+	/*     table is deleted. Jan                                          */
 	heap_create_with_catalog(toast_relname, tupdesc, RELKIND_RELATION,
 							 false, true);
 
@@ -1308,32 +1331,22 @@ AlterTableCreateToastTable(const char *relationName)
 	index_close(toast_rel);
 
 	/*
-	 * Get the pg_class tuple for the relation
-	 */
-	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
-
-	reltup = SearchSysCacheTupleCopy(RELNAME,
-									 PointerGetDatum(relationName),
-									 0, 0, 0);
-	if (!HeapTupleIsValid(reltup))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
-			 relationName);
-
-	/*
 	 * Store the toast table- and index-Oid's in the relation tuple
 	 */
 	((Form_pg_class) GETSTRUCT(reltup))->reltoastrelid = toast_relid;
 	((Form_pg_class) GETSTRUCT(reltup))->reltoastidxid = toast_idxid;
 	heap_update(class_rel, &reltup->t_self, reltup, NULL);
 
-	/* keep catalog indices current */
+	/*
+	 * Keep catalog indices current
+	 */
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
-	CatalogIndexInsert(ridescs, Num_pg_class_indices, rel, reltup);
+	CatalogIndexInsert(ridescs, Num_pg_class_indices, class_rel, reltup);
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
 
 	heap_freetuple(reltup);
 
-	heap_close(class_rel, RowExclusiveLock);
+	heap_close(class_rel, NoLock);
 	heap_close(rel, NoLock);
 }
 

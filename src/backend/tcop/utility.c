@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.90 2000/07/03 23:09:46 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.91 2000/07/05 12:45:26 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,6 +159,15 @@ ProcessUtility(Node *parsetree,
 			CHECK_IF_ABORTED();
 
 			DefineRelation((CreateStmt *) parsetree, RELKIND_RELATION);
+
+			/*
+			 * Let AlterTableCreateToastTable decide if this
+			 * one needs a secondary relation too.
+			 *
+			 */
+			CommandCounterIncrement();
+			AlterTableCreateToastTable(((CreateStmt *)parsetree)->relname,
+										true);
 			break;
 
 		case T_DropStmt:
@@ -361,7 +370,7 @@ ProcessUtility(Node *parsetree,
 						AlterTableDropConstraint(stmt->relname, stmt->inh, stmt->name, stmt->behavior);
 						break;
 					case 'E':	/* CREATE TOAST TABLE */
-						AlterTableCreateToastTable(stmt->relname);
+						AlterTableCreateToastTable(stmt->relname, false);
 						break;
 					default:	/* oops */
 						elog(ERROR, "T_AlterTableStmt: unknown subtype");
