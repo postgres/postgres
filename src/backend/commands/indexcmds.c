@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.36 2000/08/03 16:34:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.37 2000/08/20 00:44:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -370,9 +370,12 @@ FuncIndexArgs(IndexInfo *indexInfo,
 {
 	Oid			argTypes[FUNC_MAX_ARGS];
 	List	   *arglist;
-	HeapTuple	tuple;
-	Oid			retType;
-	int			argn = 0;
+	int			nargs = 0;
+	int			i;
+	Oid			funcid;
+	Oid			rettype;
+	bool		retset;
+	Oid		   *true_typeids;
 
 	/*
 	 * process the function arguments, which are a list of T_String
@@ -385,6 +388,7 @@ FuncIndexArgs(IndexInfo *indexInfo,
 	foreach(arglist, funcIndex->args)
 	{
 		char	   *arg = strVal(lfirst(arglist));
+		HeapTuple	tuple;
 		Form_pg_attribute att;
 
 		tuple = SearchSysCacheTuple(ATTNAME,
@@ -395,40 +399,47 @@ FuncIndexArgs(IndexInfo *indexInfo,
 			elog(ERROR, "DefineIndex: attribute \"%s\" not found", arg);
 		att = (Form_pg_attribute) GETSTRUCT(tuple);
 
-		indexInfo->ii_KeyAttrNumbers[argn] = att->attnum;
-		argTypes[argn] = att->atttypid;
-		argn++;
+		indexInfo->ii_KeyAttrNumbers[nargs] = att->attnum;
+		argTypes[nargs] = att->atttypid;
+		nargs++;
 	}
 
 	/* ----------------
 	 * Lookup the function procedure to get its OID and result type.
 	 *
-	 * XXX need to accept binary-compatible functions here, not just
-	 * an exact match.
+	 * We rely on parse_func.c to find the correct function in the
+	 * possible presence of binary-compatible types.  However, parse_func
+	 * may do too much: it will accept a function that requires run-time
+	 * coercion of input types, and the executor is not currently set up
+	 * to support that.  So, check to make sure that the selected function
+	 * has exact-match or binary-compatible input types.
 	 * ----------------
 	 */
-	tuple = SearchSysCacheTuple(PROCNAME,
-								PointerGetDatum(funcIndex->name),
-								Int32GetDatum(indexInfo->ii_NumKeyAttrs),
-								PointerGetDatum(argTypes),
-								0);
-	if (!HeapTupleIsValid(tuple))
-	{
-		func_error("DefineIndex", funcIndex->name,
-				   indexInfo->ii_NumKeyAttrs, argTypes, NULL);
-	}
+	if (! func_get_detail(funcIndex->name, nargs, argTypes,
+						  &funcid, &rettype, &retset, &true_typeids))
+		func_error("DefineIndex", funcIndex->name, nargs, argTypes, NULL);
 
-	indexInfo->ii_FuncOid = tuple->t_data->t_oid;
-	retType = ((Form_pg_proc) GETSTRUCT(tuple))->prorettype;
+	if (retset)
+		elog(ERROR, "DefineIndex: cannot index on a function returning a set");
+
+	for (i = 0; i < nargs; i++)
+	{
+		if (argTypes[i] != true_typeids[i] &&
+			! IS_BINARY_COMPATIBLE(argTypes[i], true_typeids[i]))
+			func_error("DefineIndex", funcIndex->name, nargs, argTypes,
+					   "Index function must be binary-compatible with table datatype");
+	}
 
 	/* Process opclass, using func return type as default type */
 
-	classOidP[0] = GetAttrOpClass(funcIndex, retType,
+	classOidP[0] = GetAttrOpClass(funcIndex, rettype,
 								  accessMethodName, accessMethodId);
 
-	/* Need to do the fmgr function lookup now, too */
+	/* OK, return results */
 
-	fmgr_info(indexInfo->ii_FuncOid, & indexInfo->ii_FuncInfo);
+	indexInfo->ii_FuncOid = funcid;
+	/* Need to do the fmgr function lookup now, too */
+	fmgr_info(funcid, & indexInfo->ii_FuncInfo);
 }
 
 static void

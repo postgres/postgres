@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.87 2000/08/08 15:42:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.88 2000/08/20 00:44:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,18 +37,10 @@ static Node *ParseComplexProjection(ParseState *pstate,
 					   char *funcname,
 					   Node *first_arg,
 					   bool *attisset);
-static Oid **argtype_inherit(int nargs, Oid *oid_array);
+static Oid **argtype_inherit(int nargs, Oid *argtypes);
 
 static int	find_inheritors(Oid relid, Oid **supervec);
 static CandidateList func_get_candidates(char *funcname, int nargs);
-static bool
-func_get_detail(char *funcname,
-				int nargs,
-				Oid *oid_array,
-				Oid *funcid,	/* return value */
-				Oid *rettype,	/* return value */
-				bool *retset,	/* return value */
-				Oid **true_typeids);
 static Oid **gen_cross_product(InhPaths *arginh, int nargs);
 static void make_arguments(ParseState *pstate,
 			   int nargs,
@@ -1097,10 +1089,10 @@ func_select_candidate(int nargs,
  *	 c) if the answer is more than one, attempt to resolve the conflict
  *	 d) if the answer is zero, try the next array from vector #1
  */
-static bool
+bool
 func_get_detail(char *funcname,
 				int nargs,
-				Oid *oid_array,
+				Oid *argtypes,
 				Oid *funcid,	/* return value */
 				Oid *rettype,	/* return value */
 				bool *retset,	/* return value */
@@ -1112,13 +1104,13 @@ func_get_detail(char *funcname,
 	ftup = SearchSysCacheTuple(PROCNAME,
 							   PointerGetDatum(funcname),
 							   Int32GetDatum(nargs),
-							   PointerGetDatum(oid_array),
+							   PointerGetDatum(argtypes),
 							   0);
 
 	if (HeapTupleIsValid(ftup))
 	{
 		/* given argument types are the right ones */
-		*true_typeids = oid_array;
+		*true_typeids = argtypes;
 	}
 	else
 	{
@@ -1138,11 +1130,11 @@ func_get_detail(char *funcname,
 			Oid		   *current_input_typeids;
 
 			/*
-			 * First we will search with the given oid_array, then with
+			 * First we will search with the given argtypes, then with
 			 * variants based on replacing complex types with their
 			 * inheritance ancestors.  Stop as soon as any match is found.
 			 */
-			current_input_typeids = oid_array;
+			current_input_typeids = argtypes;
 
 			do
 			{
@@ -1200,7 +1192,7 @@ func_get_detail(char *funcname,
 				 * vectors.
 				 */
 				if (input_typeid_vector == NULL)
-					input_typeid_vector = argtype_inherit(nargs, oid_array);
+					input_typeid_vector = argtype_inherit(nargs, argtypes);
 
 				current_input_typeids = *input_typeid_vector++;
 			}
@@ -1243,7 +1235,7 @@ func_get_detail(char *funcname,
  *		catalogs.
  */
 static Oid **
-argtype_inherit(int nargs, Oid *oid_array)
+argtype_inherit(int nargs, Oid *argtypes)
 {
 	Oid			relid;
 	int			i;
@@ -1253,8 +1245,8 @@ argtype_inherit(int nargs, Oid *oid_array)
 	{
 		if (i < nargs)
 		{
-			arginh[i].self = oid_array[i];
-			if ((relid = typeidTypeRelid(oid_array[i])) != InvalidOid)
+			arginh[i].self = argtypes[i];
+			if ((relid = typeidTypeRelid(argtypes[i])) != InvalidOid)
 				arginh[i].nsupers = find_inheritors(relid, &(arginh[i].supervec));
 			else
 			{
@@ -1467,16 +1459,6 @@ typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)
 /* make_arguments()
  * Given the number and types of arguments to a function, and the
  *	actual arguments and argument types, do the necessary typecasting.
- *
- * There are two ways an input typeid can differ from a function typeid:
- *	1) the input type inherits the function type, so no typecasting required
- *	2) the input type can be typecast into the function type
- * Right now, we only typecast unknowns, and that is all we check for.
- *
- * func_get_detail() now can find coercions for function arguments which
- *	will make this function executable. So, we need to recover these
- *	results here too.
- * - thomas 1998-03-25
  */
 static void
 make_arguments(ParseState *pstate,
