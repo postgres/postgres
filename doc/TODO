@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Apr 23 14:58:56 EDT 2002
+Last updated:		Tue Apr 23 16:26:13 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -441,6 +441,7 @@ OPTIMIZER / EXECUTOR
 * Inline simple SQL functions to avoid overhead (Tom)
 * Precompile SQL functions to avoid overhead (Neil Conway)
 * Add utility to compute accurate random_page_cost value
+* Improve ability to display optimizer analysis using OPTIMIZER_DEBUG
 
 MISCELLANEOUS
 -------------
