@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.1.1.1 1996/07/09 06:22:02 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.1.1.1.2.1 1996/10/11 03:15:38 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,7 +258,11 @@ aclitemout(AclItem *aip)
 	(void) strcat(p, "group ");
 	tmpname = get_groname(aip->ai_id);
 	(void) strncat(p, tmpname, NAMEDATALEN);
+#ifdef ACL_PATCH
+	/* tmpname is a pointer into tuple data, don't pfree it */
+#else
 	pfree(tmpname);
+#endif
 	break;
     case ACL_IDTYPE_WORLD:
 	break;
