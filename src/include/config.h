@@ -162,7 +162,7 @@
 /* turn this on if you prefer European style dates instead of American
  * style dates
  */
-#define EUROPEAN_DATES FALSE
+/* #define EUROPEAN_DATES  */
 
 /*
  * If you do not plan to use Host based authentication,
