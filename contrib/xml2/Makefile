@@ -11,6 +11,7 @@ SHLIB_LINK = -lxml2 -lxslt
 DATA_built = pgxml.sql
 DOCS = README.xml2
 
+override CFLAGS += $(shell xml2-config --cflags)
 
 ifdef USE_PGXS
 PGXS = $(shell pg_config --pgxs)

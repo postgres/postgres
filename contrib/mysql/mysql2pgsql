@@ -1,4 +1,4 @@
-# -*- perl -*-
+#!/usr/bin/perl
 # mysql2pgsql
 # Take a MySQL schema dump and turn it into SQL92 and PostgreSQL form.
 # Thomas Lockhart, (c) 2000, PostgreSQL Inc.
