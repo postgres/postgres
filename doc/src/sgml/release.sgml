@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.248 2003/12/17 07:07:00 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.249 2003/12/19 20:06:20 petere Exp $
 -->
 
 <appendix id="release">
@@ -28,8 +28,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.248 2003/12/17 07:07:00 momjian
 
     <para>
      If you want to install the fixes in the information schema
-     concerning the bit types, you need to reload the information
-     schema.  This is either accomplished by initializing a new cluster
+     you need to reload it into the database.
+     This is either accomplished by initializing a new cluster
      by running <command>initdb</command>, or by running the following
      sequence of SQL commands in each database (ideally including
      <literal>template1</literal>) as a superuser in
@@ -48,8 +48,8 @@ DROP SCHEMA information_schema CASCADE;
 
 <para>Changes as of 2003-12-14</para>
 <itemizedlist>
-<listitem><para>Fixed bug in CREATE SCHEMA parsing (Michael)</para></listitem>
-<listitem><para>Fix --enable-thread-safety compile error when used with --with-perl (Peter)</para></listitem>
+<listitem><para>Fixed bug in <command>CREATE SCHEMA</command> parsing in ECPG (Michael)</para></listitem>
+<listitem><para>Fix compile error when <option>--enable-thread-safety</option> and <option>--with-perl</option> are used together (Peter)</para></listitem>
 <listitem><para>Fix for subqueries that used hash joins (Tom)</para>
 <para>
     Certain subqueries that used hash joins would crash because of
@@ -62,19 +62,19 @@ DROP SCHEMA information_schema CASCADE;
 </para>
 </listitem>
 <listitem><para>Fix for Borland compiler build of libpq (Bruce)</para></listitem>
-<listitem><para>Fix netmask() and hostmask() to return the maximum-length masklen (Tom)</para>
+<listitem><para>Fix <function>netmask()</function> and <function>hostmask()</function> to return the maximum-length masklen (Tom)</para>
 <para>
     Fix these functions to return values consistent with pre-7.4
     releases.
 </para>
 </listitem>
-<listitem><para>Several /contrib/pg_autovacuum fixes</para>
+<listitem><para>Several <filename>contrib/pg_autovacuum</filename> fixes</para>
 <para>
     Fixes include improper variable initialization, missing vacuum after
-    TRUNCATE, and duration computation overflow for long vacuums.
+    <command>TRUNCATE</command>, and duration computation overflow for long vacuums.
 </para>
 </listitem>
-<listitem><para>Allow compile of /contrib/cube under Cygwin (Jason Tishler)</para></listitem>
+<listitem><para>Allow compile of <filename>contrib/cube</filename> under Cygwin (Jason Tishler)</para></listitem>
 <listitem><para>Fix Solaris use of password file when no passwords are defined (Tom)</para>
 <para>
     Fix crash on Solaris caused by use of any type of password
@@ -82,23 +82,19 @@ DROP SCHEMA information_schema CASCADE;
 </para>
 </listitem>
 <listitem><para>JDBC fix for thread problems, other fixes</para></listitem>
-<listitem><para>Fix for index bytea lookups (Joe)</para></listitem>
-<listitem><para>Fix information schema for bit data types (Peter)</para>
-<para>
-    To enable this fix, an initdb is required.
-</para>
-</listitem>
+<listitem><para>Fix for <type>bytea</type> index lookups (Joe)</para></listitem>
+<listitem><para>Fix information schema for bit data types (Peter)</para></listitem>
 <listitem><para>Force zero_damaged_pages to be on during recovery from WAL</para></listitem>
 <listitem><para>Prevent some obscure cases of <quote>variable not in subplan target lists</para></listitem>
-<listitem><para>Make PQescapeBytea and byteaout consistent with each other (Joe)</para>
-<listitem><para>Escape bytea output for bytes > 0x7e(Joe)</para>
+<listitem><para>Make <function>PQescapeBytea</function> and <function>byteaout</function> consistent with each other (Joe)</para>
+<listitem><para>Escape <type>bytea</type> output for bytes > 0x7e(Joe)</para>
 <para>
-  If different client encodings are used for bytea output and input, it
-  is possible for bytea values to be corrupted by the differing
+  If different client encodings are used for <type>bytea</type> output and input, it
+  is possible for <type>bytea</type> values to be corrupted by the differing
   encodings.  This fix escapes all bytes that might be affected.
 </para>
 </listitem>
-<listitem><para>Added missing SPI_finish() calls to dblink's get_tuple_of_interest() (Joe)</para></listitem>
+<listitem><para>Added missing <function>SPI_finish()</function> calls to dblink's <function>get_tuple_of_interest()</function> (Joe)</para></listitem>
 </itemizedlist>
 
   </sect2>
