@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jun  6 23:46:49 EDT 2002
+Last updated:		Fri Jun  7 00:19:37 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -313,7 +313,7 @@ Referential Integrity
 * Change foreign key constraint for array -> element to mean element
   in array
 * Fix foreign key constraints to not error on intermediate db states (Stephan)
-
+* Allow DEFERRABLE UNIQUE constraints
 
 Dependency Checking
 ===================
