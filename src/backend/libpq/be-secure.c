@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.45 2003/12/18 22:49:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.46 2004/06/25 15:07:52 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -650,6 +650,16 @@ initialize_SSL(void)
 					(errcode_for_file_access(),
 				   errmsg("could not access private key file \"%s\": %m",
 						  fnbuf)));
+
+		/* 
+		 * Require no public access to key file.
+		 *
+		 * XXX temporarily suppress check when on Windows, because there may
+		 * not be proper support for Unix-y file permissions.  Need to think
+		 * of a reasonable check to apply on Windows.  (See also the data
+		 * directory permission check in postmaster.c)
+		 */
+#if !defined(__CYGWIN__) && !defined(WIN32)
 		if (!S_ISREG(buf.st_mode) || (buf.st_mode & (S_IRWXG | S_IRWXO)) ||
 			buf.st_uid != getuid())
 			ereport(FATAL,
@@ -657,6 +667,7 @@ initialize_SSL(void)
 				  errmsg("unsafe permissions on private key file \"%s\"",
 						 fnbuf),
 					 errdetail("File must be owned by the database user and must have no permissions for \"group\" or \"other\".")));
+#endif
 
 		if (!SSL_CTX_use_PrivateKey_file(SSL_context, fnbuf, SSL_FILETYPE_PEM))
 			ereport(FATAL,
