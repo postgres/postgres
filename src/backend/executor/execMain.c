@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.48 1998/06/15 19:28:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.49 1998/07/19 03:46:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -522,18 +522,38 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	 *        SELECT added by daveh@insightdist.com  5/20/98 to allow 
 	 *        ORDER/GROUP BY have an identifier missing from the target.
 	 */
-	if (operation == CMD_UPDATE || operation == CMD_DELETE ||
-		operation == CMD_INSERT || operation == CMD_SELECT)
 	{
-		JunkFilter *j = (JunkFilter *) ExecInitJunkFilter(targetList);
-		estate->es_junkFilter = j;
-
+		bool	junk_filter_needed = false;
+		List	*tlist;
+		
 		if (operation == CMD_SELECT)
-			tupType = j->jf_cleanTupType;
-	}
-	else
-		estate->es_junkFilter = NULL;
+		{
+			foreach(tlist, targetList)
+			{
+				TargetEntry	*tle = lfirst(tlist);
+	
+				if (tle->resdom->resjunk)
+				{
+					junk_filter_needed = true;
+					break;
+				}
+			}
+		}
 
+		if (operation == CMD_UPDATE || operation == CMD_DELETE ||
+			operation == CMD_INSERT ||
+			(operation == CMD_SELECT && junk_filter_needed))
+		{
+			JunkFilter *j = (JunkFilter *) ExecInitJunkFilter(targetList);
+			estate->es_junkFilter = j;
+
+			if (operation == CMD_SELECT)
+				tupType = j->jf_cleanTupType;
+		}
+		else
+			estate->es_junkFilter = NULL;
+	}
+	
 	/* ----------------
 	 *	initialize the "into" relation
 	 * ----------------
