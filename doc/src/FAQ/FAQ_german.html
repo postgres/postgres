@@ -14,7 +14,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
     <p>Deutsche Übersetzung von Ian Barwick (<a href="mailto:barwick@gmx.net">barwick@gmx.net</a>).</p>
 
-    <p>Letzte Aktualisierung der deutschen Übersetzung: Fr., den 05.03.2004, 23:30 CET</p>
+    <p>Letzte Aktualisierung der deutschen Übersetzung: Fr., den 02.07.2004, 23:30 CET</p>
 
     <p>Die aktuellste Version dieses Dokuments liegt auf der PostgreSQL Website:</p>
     <ul>
@@ -126,8 +126,9 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
     <h2 align="center">Allgemeine Fragen</h2>
     <h4><a name="1.1">1.1</a>)	Was ist PostgreSQL? Wie wird es ausgesprochen?</h4>
-    <p>Die (englische) Aussprache ist "Post-Gres-Q-L". Im allgemeinen Sprachgebrauch hat sich
-    auch "Postgres" durchgesetzt.</p>
+    <p>Die (englische) Aussprache ist "Post-Gres-Q-L". Eine MP3-Datei zum Anhören gibt es hier:
+    <a href="http://www.postgresql.org/postgresql.mp3">http://www.postgresql.org/postgresql.mp3</a>.
+    Im allgemeinen Sprachgebrauch hat sich die Kurzform "Postgres" auch durchgesetzt.</p>
 
     <p>PostgreSQL ist eine Weiterentwicklung des POSTGRES-Datenbank-Systems,
     eines zukunftsweisenden DBMS-Forschungsprototyps. Während PostgreSQL
@@ -164,7 +165,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
     <p>PostgreSQL Data Base Management System</p>
 
-    <p>Portions copyright (c) 1996-2002, PostgreSQL Global Development
+    <p>Portions copyright (c) 1996-2004, PostgreSQL Global Development
     Group Portions Copyright (c) 1994-6 Regents of the University of
     California</P>
 
@@ -289,9 +290,9 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
     <h4><a name="1.7">1.7</a>) Was ist die neueste Version von PostgreSQL?</h4>
 
-    <p>Die neueste Version von PostgreSQL ist 7.4.2 .</p>
+    <p>Die neueste Version von PostgreSQL ist 7.4.3 .</p>
 
-    <p>Die Freigabe einer neuen Version erfolgt im Schnitt ca. dreimal pro Jahr.</p>
+    <p>Die Freigabe einer neuen Version erfolgt im Schnitt jede 6 bis 8 Monaten.</p>
 
     <h4><a name="1.8">1.8</a>) Welche Dokumentation ist für PostgreSQL verfügbar?</h4>
 
@@ -494,7 +495,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     href="http://sources.redhat.com/rhdb/">http://sources.redhat.com/rhdb/
     </a>) und Rekall (<a href="http://www.thekompany.com/products/rekall/">
     http://www.thekompany.com/products/rekall/</a>, proprietär). Es gibt 
-    außerdem PHPPgAdmin (<a href="http://phppgadmin.sourceforge.net/">
+    außerdem PhpPgAdmin (<a href="http://phppgadmin.sourceforge.net/">
     http://phppgadmin.sourceforge.net/ </a>), eine web-basierte Schnittstelle. 
 
     <h4><a name="2.4">2.4</a>) Welche Programmiersprachen und Schnittstellen gibt es?</h4>
@@ -572,15 +573,16 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     <p>PostgreSQL ist standardmäßig so eingestellt, dass Verbindungen nur vom
     lokalen Rechner über Unix Domain Sockets möglich sind. Verbindungen
     von anderen Rechnern über TCP/IP sind nur möglich, wenn der <em>postmaster</em>
-    mit der <em>-i</em> Option gestartet wird und die host-basierte Authentifizierung in
+    mit der <em>-i</em> Option gestartet wird und / oder die Option tcpip_sockets 
+    in postgresql.conf eingeschaltet wird, und die host-basierte Authentifizierung in
     der Datei <em>$PGDATA/pg_hba.conf</em> entsprechend angepasst ist.</p>
 
 
     <h4><a name="3.6">3.6</a>) Wie optimiere ich die Datenbank für bessere Leistung?</h4>
 
     <p>Der Einsatz von Indizes sollte auf jeden Fall Abfragen beschleunigen. Die
-    Anweisung <small>EXPLAIN</small> zeigt, wie PostgreSQL Abfragen interpretiert und welche
-    Indizes benutzt werden.</p>
+    Anweisung <small>EXPLAIN ANALYZE</small> zeigt, wie PostgreSQL Abfragen interpretiert und 
+    welche Indizes benutzt werden.</p>
 
     <p>Wenn Sie eine große Anzahl von <small>INSERT</small>-Anweisungen durchführen, sollten Sie
     überlegen, ob die Durchführung mit der <small>COPY</small>-Anweisung in Frage kommt. Dies
@@ -755,11 +757,13 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     <h4><a name="4.3">4.3</a>) Wie bekomme ich eine Liste der Tabellen oder anderen Dinge, die ich
     in <em>psql</em> sehen kann?</h4>
 
-    <p>Sie können sich die Datei <em>pgsql/src/bin/psql/describe.c</em> mit dem Quellcode
-    für <em>psql</em> ansehen. Sie enthält die <small>SQL</small>-Abfragen, die die
+    <p>In psql zeigt der Befehl \dt eine Liste der Datenbanktabellen. Weiter psql-Befehle
+    lassen sich mit \? anzeigen. Sie können sich die Datei <em>pgsql/src/bin/psql/describe.c</em> 
+    mit dem Quellcode für <em>psql</em> ansehen. Sie enthält die <small>SQL</small>-Abfragen, die die
     Backslash-Kommandos (\) ausführen. Sie können <em>psql</em> auch mit der <em>-E</em>
     Option starten. Danach gibt <em>psql</em> die Abfragen aus, die es bei der Ausführung der Befehle
-    benutzt.</p>
+    benutzt. Außerdem biete PostgreSQL ein <small>SQLi</small>-kompatibles INFORMATION SCHEMA,
+    das Metainformation über die Datenbank zur Verfügung stellt.</p>
 
     <h4><a name="4.4">4.4</a>) Wie entferne ich eine Spalte aus einer Tabelle? Wie ändere 
     ich den Datentyp einer Spalte?</h4>
@@ -1113,11 +1117,11 @@ BYTEA         bytea           Bytearray mit variabler Länge
     die OID zu ändern, oder eine Kopie der Tabelle mit den originalen Oids
     anzulegen:</p>
 <pre>
-      CREATE TABLE new_table(old_oid OID, mycol INT);
-      SELECT INTO new SELECT old_oid, mycol FROM old;
-      COPY new TO '/tmp/pgtable';
-      DELETE FROM new;
-      COPY new WITH OIDS FROM '/tmp/pgtable';
+        CREATE TABLE new_table(mycol int);
+        SELECT oid AS old_oid, mycol INTO tmp_table FROM old_table;
+        COPY tmp_table TO '/tmp/pgtable';
+        COPY new_table WITH OIDS FROM '/tmp/pgtable';
+        DROP TABLE tmp_table;
 </pre>
 
     <h4><a name="4.17">4.17</a>) Welche Bedeutung haben die verschiedenen Ausdrücke, die in

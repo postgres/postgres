@@ -5,7 +5,7 @@
    
    Deutsche Übersetzung von Ian Barwick (barwick@gmx.net).
    
-   Letzte Aktualisierung der deutschen Übersetzung: Fr., den 05.03.2004,
+   Letzte Aktualisierung der deutschen Übersetzung: Fr., den 02.07.2004,
    23:30 CET
    
    Die aktuellste Version dieses Dokuments liegt auf der PostgreSQL
@@ -134,8 +134,10 @@
                                       
     1.1) Was ist PostgreSQL? Wie wird es ausgesprochen?
     
-   Die (englische) Aussprache ist "Post-Gres-Q-L". Im allgemeinen
-   Sprachgebrauch hat sich auch "Postgres" durchgesetzt.
+   Die (englische) Aussprache ist "Post-Gres-Q-L". Eine MP3-Datei zum
+   Anhören gibt es hier: http://www.postgresql.org/postgresql.mp3. Im
+   allgemeinen Sprachgebrauch hat sich die Kurzform "Postgres" auch
+   durchgesetzt.
    
    PostgreSQL ist eine Weiterentwicklung des POSTGRES-Datenbank-Systems,
    eines zukunftsweisenden DBMS-Forschungsprototyps. Während PostgreSQL
@@ -172,7 +174,7 @@
    
    PostgreSQL Data Base Management System
    
-   Portions copyright (c) 1996-2002, PostgreSQL Global Development Group
+   Portions copyright (c) 1996-2004, PostgreSQL Global Development Group
    Portions Copyright (c) 1994-6 Regents of the University of California
    
    Permission to use, copy, modify, and distribute this software and its
@@ -296,10 +298,10 @@
    
     1.7) Was ist die neueste Version von PostgreSQL?
     
-   Die neueste Version von PostgreSQL ist 7.4.2 .
+   Die neueste Version von PostgreSQL ist 7.4.3 .
    
-   Die Freigabe einer neuen Version erfolgt im Schnitt ca. dreimal pro
-   Jahr.
+   Die Freigabe einer neuen Version erfolgt im Schnitt jede 6 bis 8
+   Monaten.
    
     1.8) Welche Dokumentation ist für PostgreSQL verfügbar?
     
@@ -504,7 +506,7 @@
    PgAccess ( http://www.pgaccess.org), PgAdmin III
    (http://www.pgadmin.org, RHDB Admin (http://sources.redhat.com/rhdb/ )
    und Rekall ( http://www.thekompany.com/products/rekall/, proprietär).
-   Es gibt außerdem PHPPgAdmin ( http://phppgadmin.sourceforge.net/ ),
+   Es gibt außerdem PhpPgAdmin ( http://phppgadmin.sourceforge.net/ ),
    eine web-basierte Schnittstelle.
    
     2.4) Welche Programmiersprachen und Schnittstellen gibt es?
@@ -578,15 +580,16 @@
    PostgreSQL ist standardmäßig so eingestellt, dass Verbindungen nur vom
    lokalen Rechner über Unix Domain Sockets möglich sind. Verbindungen
    von anderen Rechnern über TCP/IP sind nur möglich, wenn der postmaster
-   mit der -i Option gestartet wird und die host-basierte
+   mit der -i Option gestartet wird und / oder die Option tcpip_sockets
+   in postgresql.conf eingeschaltet wird, und die host-basierte
    Authentifizierung in der Datei $PGDATA/pg_hba.conf entsprechend
    angepasst ist.
    
     3.6) Wie optimiere ich die Datenbank für bessere Leistung?
     
    Der Einsatz von Indizes sollte auf jeden Fall Abfragen beschleunigen.
-   Die Anweisung EXPLAIN zeigt, wie PostgreSQL Abfragen interpretiert und
-   welche Indizes benutzt werden.
+   Die Anweisung EXPLAIN ANALYZE zeigt, wie PostgreSQL Abfragen
+   interpretiert und welche Indizes benutzt werden.
    
    Wenn Sie eine große Anzahl von INSERT-Anweisungen durchführen, sollten
    Sie überlegen, ob die Durchführung mit der COPY-Anweisung in Frage
@@ -763,11 +766,14 @@
     4.3) Wie bekomme ich eine Liste der Tabellen oder anderen Dinge, die ich in
     psql sehen kann?
     
-   Sie können sich die Datei pgsql/src/bin/psql/describe.c mit dem
-   Quellcode für psql ansehen. Sie enthält die SQL-Abfragen, die die
-   Backslash-Kommandos (\) ausführen. Sie können psql auch mit der -E
-   Option starten. Danach gibt psql die Abfragen aus, die es bei der
-   Ausführung der Befehle benutzt.
+   In psql zeigt der Befehl \dt eine Liste der Datenbanktabellen. Weiter
+   psql-Befehle lassen sich mit \? anzeigen. Sie können sich die Datei
+   pgsql/src/bin/psql/describe.c mit dem Quellcode für psql ansehen. Sie
+   enthält die SQL-Abfragen, die die Backslash-Kommandos (\) ausführen.
+   Sie können psql auch mit der -E Option starten. Danach gibt psql die
+   Abfragen aus, die es bei der Ausführung der Befehle benutzt. Außerdem
+   biete PostgreSQL ein SQLi-kompatibles INFORMATION SCHEMA, das
+   Metainformation über die Datenbank zur Verfügung stellt.
    
     4.4) Wie entferne ich eine Spalte aus einer Tabelle? Wie ändere ich den
     Datentyp einer Spalte?
@@ -1116,11 +1122,11 @@ BYTEA         bytea           Bytearray mit variabler Länge
    allen Datenbanken genutzt wird, zugewiesen. Nichts hindert Sie daran,
    die OID zu ändern, oder eine Kopie der Tabelle mit den originalen Oids
    anzulegen:
-      CREATE TABLE new_table(old_oid OID, mycol INT);
-      SELECT INTO new SELECT old_oid, mycol FROM old;
-      COPY new TO '/tmp/pgtable';
-      DELETE FROM new;
-      COPY new WITH OIDS FROM '/tmp/pgtable';
+        CREATE TABLE new_table(mycol int);
+        SELECT oid AS old_oid, mycol INTO tmp_table FROM old_table;
+        COPY tmp_table TO '/tmp/pgtable';
+        COPY new_table WITH OIDS FROM '/tmp/pgtable';
+        DROP TABLE tmp_table;
 
     4.17) Welche Bedeutung haben die verschiedenen Ausdrücke, die in PostgreSQL
     benutzt werden (z.B. attribute, class,...)?
