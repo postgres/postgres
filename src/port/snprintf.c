@@ -65,7 +65,7 @@
  * causing nasty effects.
  **************************************************************/
 
-/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.20 2005/03/16 06:00:58 momjian Exp $";*/
+/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.21 2005/03/16 15:11:43 momjian Exp $";*/
 
 int			pg_snprintf(char *str, size_t count, const char *fmt,...);
 int			pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args);
@@ -467,15 +467,15 @@ performpr:
 			fmtparptr[i]->charvalue = va_arg(args, int);
 			break;
 		case FMTLEN:
-			if (i + 1 < fmtpos && fmtpar[i + 1].func != FMTWIDTH)
-				fmtpar[i + 1].len = va_arg(args, int);
+			if (i + 1 < fmtpos && fmtparptr[i + 1]->func != FMTWIDTH)
+				fmtparptr[i + 1]->len = va_arg(args, int);
 			/* For "%*.*f", use the second arg */
-			if (i + 2 < fmtpos && fmtpar[i + 1].func == FMTWIDTH)
-				fmtpar[i + 2].len = va_arg(args, int);
+			if (i + 2 < fmtpos && fmtparptr[i + 1]->func == FMTWIDTH)
+				fmtparptr[i + 2]->len = va_arg(args, int);
 			break;
 		case FMTWIDTH:
 			if (i + 1 < fmtpos)
-				fmtpar[i + 1].maxwidth = fmtpar[i + 1].precision =
+				fmtparptr[i + 1]->maxwidth = fmtparptr[i + 1]->precision =
 														va_arg(args, int);
 			break;
 		}
