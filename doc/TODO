@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Mar  1 00:00:32 EST 2005
+Last updated:		Thu Mar 10 22:45:28 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -932,6 +932,7 @@ Source Code
   is already possible to install into a directory that doesn't contain 
   spaces and then copy the install to a directory with spaces.
 
+* Fix cross-compiling of time zone database via 'zic'
 * Win32
 	o Remove configure.in check for link failure when cause is found
 	o Remove readdir() errno patch when runtime/mingwex/dirent.c rev
