@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.292 2002/08/27 18:57:26 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.293 2002/08/27 21:04:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -465,6 +465,12 @@ main(int argc, char **argv)
 	if (dataOnly && schemaOnly)
 	{
 		write_msg(NULL, "The options \"schema only\" (-s) and \"data only\" (-a) cannot be used together.\n");
+		exit(1);
+	}
+
+	if (dataOnly && outputClean)
+	{
+		write_msg(NULL, "The options \"clean\" (-c) and \"data only\" (-a) cannot be used together.\n");
 		exit(1);
 	}
 
