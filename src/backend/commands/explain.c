@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- *	  $Id: explain.c,v 1.44 1999/08/09 06:20:21 momjian Exp $
+ *	  $Id: explain.c,v 1.45 1999/08/16 23:47:23 tgl Exp $
  *
  */
 
@@ -175,6 +175,9 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 			break;
 		case T_Noname:
 			pname = "Noname Scan";
+			break;
+		case T_Material:
+			pname = "Materialize";
 			break;
 		case T_Sort:
 			pname = "Sort";
