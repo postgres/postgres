@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.150 2003/10/24 16:29:00 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.151 2003/10/24 16:30:53 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1613,10 +1613,10 @@ gunzip -c postgres.ps.gz \
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>Sparc</></entry>
-	<entry>7.3</entry>
-	<entry>2002-10-26, 
-	 Doug McNaught (<email>doug@mcnaught.org</email>)</entry>
-	<entry>3.0</entry>
+	<entry>7.4</entry>
+	<entry>2003-10-24, 
+	 Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
+	<entry>2.4, 32-bit</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
