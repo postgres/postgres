@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.60 2001/10/25 05:49:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.61 2002/01/11 23:21:55 tgl Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -309,7 +309,7 @@ dumpSchema(Archive *fout,
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined tables\n");
-	tblinfo = getTables(&numTables, finfo, numFuncs);
+	tblinfo = getTables(&numTables, finfo, numFuncs, tablename);
 
 	if (g_verbose)
 		write_msg(NULL, "reading index information\n");

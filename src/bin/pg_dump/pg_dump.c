@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.236 2001/10/28 06:25:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.237 2002/01/11 23:21:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2035,13 +2035,14 @@ getFuncs(int *numFuncs)
  * numTables is set to the number of tables read in
  */
 TableInfo *
-getTables(int *numTables, FuncInfo *finfo, int numFuncs)
+getTables(int *numTables, FuncInfo *finfo, int numFuncs, const char* tablename)
 {
 	PGresult   *res;
 	int			ntups;
 	int			i;
 	PQExpBuffer query = createPQExpBuffer();
 	PQExpBuffer delqry = createPQExpBuffer();
+	PQExpBuffer lockquery = createPQExpBuffer();
 	TableInfo  *tblinfo;
 
 	int			i_reloid;
@@ -2053,11 +2054,6 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	int			i_reltriggers;
 	int			i_relhasindex;
 	int			i_relhasoids;
-
-	char		relkindview[2];
-
-	relkindview[0] = RELKIND_VIEW;
-	relkindview[1] = '\0';
 
 	/*
 	 * find all the user-defined tables (no indexes and no catalogs),
@@ -2129,6 +2125,17 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 
 	*numTables = ntups;
 
+	/*
+	 * First pass: extract data from result and lock tables.  We do the
+	 * locking before anything else, to minimize the window wherein a table
+	 * could disappear under us.
+	 *
+	 * Note that we have to collect info about all tables here, even when
+	 * dumping only one, because we don't know which tables might be
+	 * inheritance ancestors of the target table.  Possible future
+	 * improvement: suppress later collection of schema info about tables
+	 * that are determined not to be either targets or ancestors of targets.
+	 */
 	tblinfo = (TableInfo *) malloc(ntups * sizeof(TableInfo));
 
 	i_reloid = PQfnumber(res, "oid");
@@ -2146,17 +2153,63 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 		tblinfo[i].oid = strdup(PQgetvalue(res, i, i_reloid));
 		tblinfo[i].relname = strdup(PQgetvalue(res, i, i_relname));
 		tblinfo[i].relacl = strdup(PQgetvalue(res, i, i_relacl));
-		tblinfo[i].sequence = (strcmp(PQgetvalue(res, i, i_relkind), "S") == 0);
+		tblinfo[i].relkind = *(PQgetvalue(res, i, i_relkind));
+		tblinfo[i].sequence = (tblinfo[i].relkind == RELKIND_SEQUENCE);
+		tblinfo[i].hasindex = (strcmp(PQgetvalue(res, i, i_relhasindex), "t") == 0);
+		tblinfo[i].hasoids = (strcmp(PQgetvalue(res, i, i_relhasoids), "t") == 0);
 		tblinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
 		tblinfo[i].ncheck = atoi(PQgetvalue(res, i, i_relchecks));
 		tblinfo[i].ntrig = atoi(PQgetvalue(res, i, i_reltriggers));
 
+		/*
+		 * Read-lock target tables to make sure they aren't DROPPED or
+		 * altered in schema before we get around to dumping them.
+		 *
+		 * If no target tablename was specified, lock all tables we see,
+		 * otherwise lock only the specified table.  (This is incomplete
+		 * because we'll still try to collect schema info about all tables,
+		 * and could possibly lose during that phase.  But for the typical
+		 * use where we're dumping all tables anyway, it matters not.)
+		 *
+		 * NOTE: it'd be kinda nice to lock views and sequences too, not
+		 * only plain tables, but the backend doesn't presently allow that.
+		 */
+		if ((tblinfo[i].relkind == RELKIND_RELATION) &&
+			(tablename == NULL || strcmp(tblinfo[i].relname, tablename) == 0))
+		{
+			PGresult *lres;
+
+			resetPQExpBuffer(lockquery);
+			appendPQExpBuffer(lockquery,
+							  "LOCK TABLE %s IN ACCESS SHARE MODE",
+							  fmtId(tblinfo[i].relname, force_quotes));
+			lres = PQexec(g_conn,lockquery->data);
+			if (!lres || PQresultStatus(lres) != PGRES_COMMAND_OK)
+			{
+				write_msg(NULL, "Attempt to lock table \"%s\" failed.  %s", 
+						  tblinfo[i].relname, PQerrorMessage(g_conn));
+				exit_nicely();
+			}
+			PQclear(lres);
+		}
+	}
+
+	PQclear(res);
+	res = NULL;
+
+	/*
+	 * Second pass: pick up additional information about each table,
+	 * as required.
+	 */
+	for (i = 0; i < *numTables; i++)
+	{
+		/* Emit notice if join for owner failed */
 		if (strlen(tblinfo[i].usename) == 0)
 			write_msg(NULL, "WARNING: owner of table \"%s\" appears to be invalid\n",
 					  tblinfo[i].relname);
 
-		/* Get view definition */
-		if (strcmp(PQgetvalue(res, i, i_relkind), relkindview) == 0)
+		/* Get definition if it's a view */
+		if (tblinfo[i].relkind == RELKIND_VIEW)
 		{
 			PGresult   *res2;
 
@@ -2208,6 +2261,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 						  tblinfo[i].relname);
 				exit_nicely();
 			}
+			PQclear(res2);
 		}
 		else
 			tblinfo[i].viewdef = NULL;
@@ -2291,7 +2345,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			tblinfo[i].check_expr = NULL;
 
 		/* Get primary key */
-		if (strcmp(PQgetvalue(res, i, i_relhasindex), "t") == 0)
+		if (tblinfo[i].hasindex)
 		{
 			PGresult   *res2;
 
@@ -2322,9 +2376,6 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 		}
 		else
 			tblinfo[i].pkIndexOid = NULL;
-
-		/* Has it got OIDs? */
-		tblinfo[i].hasoids = (strcmp(PQgetvalue(res, i, i_relhasoids), "t") == 0);
 
 		/* Get primary key name (if primary key exist) */
 		if (tblinfo[i].pkIndexOid != NULL)
@@ -2643,10 +2694,9 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 
 	}
 
-	PQclear(res);
-
 	destroyPQExpBuffer(query);
 	destroyPQExpBuffer(delqry);
+	destroyPQExpBuffer(lockquery);
 
 	return tblinfo;
 }

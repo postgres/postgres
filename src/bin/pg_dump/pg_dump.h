@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.76 2001/11/05 17:46:30 momjian Exp $
+ * $Id: pg_dump.h,v 1.77 2002/01/11 23:21:55 tgl Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -96,7 +96,9 @@ typedef struct _tableInfo
 								 * constructed manually from rules, and
 								 * rule may ref things created after the
 								 * base table was created. */
-	bool		sequence;
+	char		relkind;
+	bool		sequence;		/* this is redundant with relkind... */
+	bool		hasindex;		/* does it have any indexes? */
 	bool		hasoids;		/* does it have OIDs? */
 	int			numatts;		/* number of attributes */
 	int		   *inhAttrs;		/* an array of flags, one for each
@@ -254,7 +256,8 @@ extern void clearOprInfo(OprInfo *, int);
 extern void clearTypeInfo(TypeInfo *, int);
 
 extern OprInfo *getOperators(int *numOperators);
-extern TableInfo *getTables(int *numTables, FuncInfo *finfo, int numFuncs);
+extern TableInfo *getTables(int *numTables, FuncInfo *finfo, int numFuncs,
+							const char* tablename);
 extern InhInfo *getInherits(int *numInherits);
 extern void getTableAttrs(TableInfo *tbinfo, int numTables);
 extern IndInfo *getIndexes(int *numIndexes);
