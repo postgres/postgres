@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fcache.h,v 1.12 2000/07/12 02:37:35 tgl Exp $
+ * $Id: fcache.h,v 1.13 2000/08/08 15:43:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,8 +29,9 @@ typedef struct
 	int			typlen;			/* length of the return type */
 	bool		typbyval;		/* true if return type is pass by value */
 
-	bool		oneResult;		/* true we only want 1 result from the
-								 * function */
+	bool		returnsTuple;	/* true if return type is a tuple */
+	bool		returnsSet;		/* true if func returns a set (multi rows) */
+
 	bool		hasSetArg;		/* true if func is part of a nested dot
 								 * expr whose argument is func returning a
 								 * set ugh! */

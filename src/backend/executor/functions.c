@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.36 2000/07/12 02:37:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.37 2000/08/08 15:41:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,24 +47,21 @@ static void postquel_end(execution_state *es);
 static void postquel_sub_params(execution_state *es, FunctionCallInfo fcinfo);
 static Datum postquel_execute(execution_state *es,
 							  FunctionCallInfo fcinfo,
-							  FunctionCachePtr fcache,
-							  List *func_tlist);
+							  FunctionCachePtr fcache);
 
 
-Datum
-ProjectAttribute(TupleDesc TD,
-				 TargetEntry *tlist,
-				 HeapTuple tup,
+static Datum
+ProjectAttribute(HeapTuple tup,
+				 AttrNumber	attrno,
+				 TupleDesc TD,
 				 bool *isnullP)
 {
 	Datum		val;
-	Var		   *attrVar = (Var *) tlist->expr;
-	AttrNumber	attrno = attrVar->varattno;
 
 	val = heap_getattr(tup, attrno, TD, isnullP);
 
 	if (*isnullP)
-		return (Datum) 0;
+		return val;
 
 	return datumCopy(val,
 					 TD->attrs[attrno - 1]->attbyval,
@@ -216,39 +213,29 @@ copy_function_result(FunctionCachePtr fcache,
 {
 	TupleTableSlot *funcSlot;
 	TupleDesc	resultTd;
+	HeapTuple	resultTuple;
 	HeapTuple	newTuple;
-	HeapTuple	oldTuple;
 
 	Assert(!TupIsNull(resultSlot));
-	oldTuple = resultSlot->val;
+	resultTuple = resultSlot->val;
 
 	funcSlot = (TupleTableSlot *) fcache->funcSlot;
 
 	if (funcSlot == (TupleTableSlot *) NULL)
 		return resultSlot;
 
-	resultTd = resultSlot->ttc_tupleDescriptor;
-
 	/*
-	 * When the funcSlot is NULL we have to initialize the funcSlot's
+	 * If first time through, we have to initialize the funcSlot's
 	 * tuple descriptor.
 	 */
 	if (TupIsNull(funcSlot))
 	{
-		int			i = 0;
-		TupleDesc	funcTd = funcSlot->ttc_tupleDescriptor;
-
-		while (i < oldTuple->t_data->t_natts)
-		{
-			funcTd->attrs[i] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
-			memmove(funcTd->attrs[i],
-					resultTd->attrs[i],
-					ATTRIBUTE_TUPLE_SIZE);
-			i++;
-		}
+		resultTd = resultSlot->ttc_tupleDescriptor;
+		funcSlot->ttc_tupleDescriptor = CreateTupleDescCopy(resultTd);
+		funcSlot->ttc_descIsNew = true;
 	}
 
-	newTuple = heap_copytuple(oldTuple);
+	newTuple = heap_copytuple(resultTuple);
 
 	return ExecStoreTuple(newTuple, funcSlot, InvalidBuffer, true);
 }
@@ -256,8 +243,7 @@ copy_function_result(FunctionCachePtr fcache,
 static Datum
 postquel_execute(execution_state *es,
 				 FunctionCallInfo fcinfo,
-				 FunctionCachePtr fcache,
-				 List *func_tlist)
+				 FunctionCachePtr fcache)
 {
 	TupleTableSlot *slot;
 	Datum		value;
@@ -305,27 +291,35 @@ postquel_execute(execution_state *es,
 		 * logic and code redundancy here.
 		 */
 		resSlot = copy_function_result(fcache, slot);
-		if (func_tlist != NIL)
-		{
-			TargetEntry *tle = lfirst(func_tlist);
 
-			value = ProjectAttribute(resSlot->ttc_tupleDescriptor,
-									 tle,
-									 resSlot->val,
-									 &fcinfo->isnull);
+		/*
+		 * If we are supposed to return a tuple, we return the tuple slot
+		 * pointer converted to Datum.  If we are supposed to return a simple
+		 * value, then project out the first attribute of the result tuple
+		 * (ie, take the first result column of the final SELECT).
+		 */
+		if (fcache->returnsTuple)
+		{
+			/*
+			 * XXX do we need to remove junk attrs from the result tuple?
+			 * Probably OK to leave them, as long as they are at the end.
+			 */
+			value = PointerGetDatum(resSlot);
+			fcinfo->isnull = false;
 		}
 		else
 		{
-			/* XXX is this right?  Return whole tuple slot?? */
-			value = PointerGetDatum(resSlot);
-			fcinfo->isnull = false;
+			value = ProjectAttribute(resSlot->val,
+									 1,
+									 resSlot->ttc_tupleDescriptor,
+									 &fcinfo->isnull);
 		}
 
 		/*
 		 * If this is a single valued function we have to end the function
 		 * execution now.
 		 */
-		if (fcache->oneResult)
+		if (!fcache->returnsSet)
 		{
 			postquel_end(es);
 			es->status = F_EXEC_DONE;
@@ -346,7 +340,6 @@ postquel_execute(execution_state *es,
 Datum
 postquel_function(FunctionCallInfo fcinfo,
 				  FunctionCachePtr fcache,
-				  List *func_tlist,
 				  bool *isDone)
 {
 	MemoryContext oldcontext;
@@ -388,10 +381,7 @@ postquel_function(FunctionCallInfo fcinfo,
 	 */
 	while (es != (execution_state *) NULL)
 	{
-		result = postquel_execute(es,
-								  fcinfo,
-								  fcache,
-								  func_tlist);
+		result = postquel_execute(es, fcinfo, fcache);
 		if (es->status != F_EXEC_DONE)
 			break;
 		es = es->next;
@@ -423,7 +413,7 @@ postquel_function(FunctionCallInfo fcinfo,
 		 */
 		*isDone = true;
 		MemoryContextSwitchTo(oldcontext);
-		return (fcache->oneResult) ? result : (Datum) NULL;
+		return (fcache->returnsSet) ? (Datum) NULL : result;
 	}
 
 	/*

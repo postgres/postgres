@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.60 2000/06/15 03:32:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.61 2000/08/08 15:42:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,8 +71,6 @@ transformTargetEntry(ParseState *pstate,
 						 type_id,
 						 type_mod,
 						 colname,
-						 (Index) 0,
-						 (Oid) InvalidOid,
 						 resjunk);
 
 	return makeTargetEntry(resnode, expr);

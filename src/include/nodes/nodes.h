@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.72 2000/07/22 04:22:47 tgl Exp $
+ * $Id: nodes.h,v 1.73 2000/08/08 15:42:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ typedef enum NodeTag
 	T_Aggref,
 	T_SubLink,
 	T_Func,
-	T_ArrayXXX,					/* not used anymore; this tag# is available */
+	T_FieldSelect,
 	T_ArrayRef,
 	T_Iter,
 	T_RelabelType,

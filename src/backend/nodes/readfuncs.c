@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.94 2000/07/22 04:22:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.95 2000/08/08 15:41:27 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -942,29 +942,7 @@ _readFunc()
 	token = lsptok(NULL, &length);		/* now read it */
 	local_node->functype = (Oid) atol(token);
 
-	token = lsptok(NULL, &length);		/* get :funcisindex */
-	token = lsptok(NULL, &length);		/* now read it */
-
-	if (!strncmp(token, "true", 4))
-		local_node->funcisindex = true;
-	else
-		local_node->funcisindex = false;
-
-	token = lsptok(NULL, &length);		/* get :funcsize */
-	token = lsptok(NULL, &length);		/* now read it */
-	local_node->funcsize = atol(token);
-
-	token = lsptok(NULL, &length);		/* get :func_fcache */
-	token = lsptok(NULL, &length);		/* get @ */
-	token = lsptok(NULL, &length);		/* now read it */
-
-	local_node->func_fcache = (FunctionCache *) NULL;
-
-	token = lsptok(NULL, &length);		/* get :func_tlist */
-	local_node->func_tlist = nodeRead(true);	/* now read it */
-
-	token = lsptok(NULL, &length);		/* get :func_planlist */
-	local_node->func_planlist = nodeRead(true); /* now read it */
+	local_node->func_fcache = NULL;
 
 	return local_node;
 }
@@ -996,11 +974,7 @@ _readOper()
 	token = lsptok(NULL, &length);		/* now read it */
 	local_node->opresulttype = (Oid) atol(token);
 
-	/*
-	 * NOTE: Alternatively we can call 'replace_opid' which initializes
-	 * both 'opid' and 'op_fcache'.
-	 */
-	local_node->op_fcache = (FunctionCache *) NULL;
+	local_node->op_fcache = NULL;
 
 	return local_node;
 }
@@ -1038,9 +1012,6 @@ _readParam()
 	token = lsptok(NULL, &length);		/* get :paramtype */
 	token = lsptok(NULL, &length);		/* now read it */
 	local_node->paramtype = (Oid) atol(token);
-
-	token = lsptok(NULL, &length);		/* get :param_tlist */
-	local_node->param_tlist = nodeRead(true);	/* now read it */
 
 	return local_node;
 }
@@ -1117,6 +1088,39 @@ _readSubLink()
 
 	token = lsptok(NULL, &length);		/* eat :subselect */
 	local_node->subselect = nodeRead(true);		/* now read it */
+
+	return local_node;
+}
+
+/* ----------------
+ *		_readFieldSelect
+ *
+ *	FieldSelect is a subclass of Node
+ * ----------------
+ */
+static FieldSelect *
+_readFieldSelect()
+{
+	FieldSelect *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(FieldSelect);
+
+	token = lsptok(NULL, &length);		/* eat :arg */
+	local_node->arg = nodeRead(true);	/* now read it */
+
+	token = lsptok(NULL, &length);		/* eat :fieldnum */
+	token = lsptok(NULL, &length);		/* get fieldnum */
+	local_node->fieldnum = (AttrNumber) atoi(token);
+
+	token = lsptok(NULL, &length);		/* eat :resulttype */
+	token = lsptok(NULL, &length);		/* get resulttype */
+	local_node->resulttype = (Oid) atol(token);
+
+	token = lsptok(NULL, &length);		/* eat :resulttypmod */
+	token = lsptok(NULL, &length);		/* get resulttypmod */
+	local_node->resulttypmod = atoi(token);
 
 	return local_node;
 }
@@ -1781,6 +1785,8 @@ parsePlanString(void)
 		return_value = _readAggref();
 	else if (length == 7 && strncmp(token, "SUBLINK", length) == 0)
 		return_value = _readSubLink();
+	else if (length == 11 && strncmp(token, "FIELDSELECT", length) == 0)
+		return_value = _readFieldSelect();
 	else if (length == 11 && strncmp(token, "RELABELTYPE", length) == 0)
 		return_value = _readRelabelType();
 	else if (length == 3 && strncmp(token, "AGG", length) == 0)

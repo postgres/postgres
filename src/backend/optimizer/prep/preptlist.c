@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.37 2000/07/22 06:19:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.38 2000/08/08 15:41:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,8 +75,6 @@ preprocess_targetlist(List *tlist,
 							TIDOID,
 							-1,
 							pstrdup("ctid"),
-							0,
-							0,
 							true);
 
 		var = makeVar(result_relation, SelfItemPointerAttributeNumber,
@@ -219,8 +217,6 @@ expand_targetlist(List *tlist, int command_type,
 															 atttype,
 															 -1,
 													   pstrdup(attrname),
-															 0,
-															 (Oid) 0,
 															 false),
 												  (Node *) temp_const);
 						break;
@@ -251,8 +247,6 @@ expand_targetlist(List *tlist, int command_type,
 															 atttype,
 															 atttypmod,
 															 pstrdup(attrname),
-															 0,
-															 (Oid) 0,
 															 false),
 												  (Node *) temp_var);
 						break;

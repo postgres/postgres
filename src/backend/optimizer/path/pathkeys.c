@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.23 2000/07/24 03:10:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.24 2000/08/08 15:41:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -436,12 +436,7 @@ build_index_pathkeys(Query *root,
 
 		funcnode->funcid = index->indproc;
 		funcnode->functype = get_func_rettype(index->indproc);
-		funcnode->funcisindex = false;
-		funcnode->funcsize = 0;
 		funcnode->func_fcache = NULL;
-		/* we assume here that the function returns a base type... */
-		funcnode->func_tlist = setup_base_tlist(funcnode->functype);
-		funcnode->func_planlist = NIL;
 
 		while (*indexkeys != 0)
 		{

@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.70 2000/07/22 04:22:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.71 2000/08/08 15:41:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,7 +154,7 @@ _equalOper(Oper *a, Oper *b)
 		return false;
 
 	/*
-	 * We do not examine opid, opsize, or op_fcache, since these are
+	 * We do not examine opid or op_fcache, since these are
 	 * logically derived from opno, and they may not be set yet depending
 	 * on how far along the node is in the parse/plan pipeline.
 	 *
@@ -195,8 +195,6 @@ _equalParam(Param *a, Param *b)
 		return false;
 	if (a->paramtype != b->paramtype)
 		return false;
-	if (!equal(a->param_tlist, b->param_tlist))
-		return false;
 
 	switch (a->paramkind)
 	{
@@ -233,15 +231,7 @@ _equalFunc(Func *a, Func *b)
 		return false;
 	if (a->functype != b->functype)
 		return false;
-	if (a->funcisindex != b->funcisindex)
-		return false;
-	if (a->funcsize != b->funcsize)
-		return false;
-	/* Note we do not look at func_fcache */
-	if (!equal(a->func_tlist, b->func_tlist))
-		return false;
-	if (!equal(a->func_planlist, b->func_planlist))
-		return false;
+	/* Note we do not look at func_fcache; see notes for _equalOper */
 
 	return true;
 }
@@ -277,6 +267,20 @@ _equalSubLink(SubLink *a, SubLink *b)
 	if (!equal(a->oper, b->oper))
 		return false;
 	if (!equal(a->subselect, b->subselect))
+		return false;
+	return true;
+}
+
+static bool
+_equalFieldSelect(FieldSelect *a, FieldSelect *b)
+{
+	if (!equal(a->arg, b->arg))
+		return false;
+	if (a->fieldnum != b->fieldnum)
+		return false;
+	if (a->resulttype != b->resulttype)
+		return false;
+	if (a->resulttypmod != b->resulttypmod)
 		return false;
 	return true;
 }
@@ -786,6 +790,9 @@ equal(void *a, void *b)
 			break;
 		case T_Iter:
 			retval = _equalIter(a, b);
+			break;
+		case T_FieldSelect:
+			retval = _equalFieldSelect(a, b);
 			break;
 		case T_RelabelType:
 			retval = _equalRelabelType(a, b);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.26 2000/06/08 22:37:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.27 2000/08/08 15:41:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -504,8 +504,7 @@ push_nots(Expr *qual)
 		{
 			Oper	   *op = (Oper *) makeOper(negator,
 											   InvalidOid,
-											   oper->opresulttype,
-											   0, NULL);
+											   oper->opresulttype);
 
 			return make_opclause(op, get_leftop(qual), get_rightop(qual));
 		}

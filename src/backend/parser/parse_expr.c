@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.81 2000/06/15 03:32:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.82 2000/08/08 15:42:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,6 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				param->paramid = (AttrNumber) paramno;
 				param->paramname = "<unnamed>";
 				param->paramtype = toid;
-				param->param_tlist = NIL;
 				result = transformIndirection(pstate, (Node *) param,
 											  pno->indirection);
 				/* cope with typecast applied to param */
@@ -381,9 +380,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 						newop = makeOper(oprid(optup),	/* opno */
 										 InvalidOid,	/* opid */
-										 opform->oprresult,
-										 0,
-										 NULL);
+										 opform->oprresult);
 						sublink->oper = lappend(sublink->oper, newop);
 					}
 					if (left_list != NIL)
@@ -579,6 +576,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 		case T_Param:
 		case T_Aggref:
 		case T_ArrayRef:
+		case T_FieldSelect:
 		case T_RelabelType:
 			{
 				result = (Node *) expr;
@@ -690,6 +688,9 @@ exprType(Node *expr)
 		case T_Param:
 			type = ((Param *) expr)->paramtype;
 			break;
+		case T_FieldSelect:
+			type = ((FieldSelect *) expr)->resulttype;
+			break;
 		case T_RelabelType:
 			type = ((RelabelType *) expr)->resulttype;
 			break;
@@ -772,6 +773,9 @@ exprTypmod(Node *expr)
 				if (exprIsLengthCoercion(expr, &coercedTypmod))
 					return coercedTypmod;
 			}
+			break;
+		case T_FieldSelect:
+			return ((FieldSelect *) expr)->resulttypmod;
 			break;
 		case T_RelabelType:
 			return ((RelabelType *) expr)->resulttypmod;

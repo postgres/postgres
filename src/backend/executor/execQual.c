@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.76 2000/07/23 01:35:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.77 2000/08/08 15:41:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -294,8 +294,6 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 	AttrNumber	attnum;
 	HeapTuple	heapTuple;
 	TupleDesc	tuple_type;
-	bool		byval;
-	int16		len;
 
 	/*
 	 * get the slot we want
@@ -362,36 +360,6 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 										 * attribute */
 						  tuple_type,	/* tuple descriptor of tuple */
 						  isNull);		/* return: is attribute null? */
-
-	/*
-	 * return null if att is null
-	 */
-	if (*isNull)
-		return (Datum) 0;
-
-	/*
-	 * get length and type information.. ??? what should we do about
-	 * variable length attributes - variable length attributes have their
-	 * length stored in the first 4 bytes of the memory pointed to by the
-	 * returned value.. If we can determine that the type is a variable
-	 * length type, we can do the right thing. -cim 9/15/89
-	 */
-	if (attnum < 0)
-	{
-
-		/*
-		 * If this is a pseudo-att, we get the type and fake the length.
-		 * There ought to be a routine to return the real lengths, so
-		 * we'll mark this one ... XXX -mao
-		 */
-		len = heap_sysattrlen(attnum);	/* XXX see -mao above */
-		byval = heap_sysattrbyval(attnum);		/* XXX see -mao above */
-	}
-	else
-	{
-		len = tuple_type->attrs[attnum - 1]->attlen;
-		byval = tuple_type->attrs[attnum - 1]->attbyval ? true : false;
-	}
 
 	return result;
 }
@@ -519,25 +487,7 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
 	/*
 	 * return the value.
 	 */
-	if (paramList->isnull)
-	{
-		*isNull = true;
-		return (Datum) 0;
-	}
-
-	if (expression->param_tlist != NIL)
-	{
-		HeapTuple	tup;
-		Datum		value;
-		List	   *tlist = expression->param_tlist;
-		TargetEntry *tle = (TargetEntry *) lfirst(tlist);
-		TupleTableSlot *slot = (TupleTableSlot *) paramList->value;
-
-		tup = slot->val;
-		value = ProjectAttribute(slot->ttc_tupleDescriptor,
-								 tle, tup, isNull);
-		return value;
-	}
+	*isNull = paramList->isnull;
 	return paramList->value;
 }
 
@@ -686,7 +636,6 @@ ExecMakeFunctionResult(Node *node,
 {
 	FunctionCallInfoData	fcinfo;
 	FunctionCachePtr		fcache;
-	List				   *ftlist;
 	bool					funcisset;
 	Datum					result;
 	bool					argDone;
@@ -702,13 +651,11 @@ ExecMakeFunctionResult(Node *node,
 	if (IsA(node, Func))
 	{
 		fcache = ((Func *) node)->func_fcache;
-		ftlist = ((Func *) node)->func_tlist;
 		funcisset = (((Func *) node)->funcid == F_SETEVAL);
 	}
 	else
 	{
 		fcache = ((Oper *) node)->op_fcache;
-		ftlist = NIL;
 		funcisset = false;
 	}
 
@@ -822,7 +769,7 @@ ExecMakeFunctionResult(Node *node,
 
 			if (callit)
 			{
-				result = postquel_function(&fcinfo, fcache, ftlist, isDone);
+				result = postquel_function(&fcinfo, fcache, isDone);
 				*isNull = fcinfo.isnull;
 			}
 			else
@@ -1215,6 +1162,34 @@ ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext, bool *isNull)
 }
 
 /* ----------------------------------------------------------------
+ *		ExecEvalFieldSelect
+ *
+ *		Evaluate a FieldSelect node.
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalFieldSelect(FieldSelect *fselect,
+					ExprContext *econtext,
+					bool *isNull,
+					bool *isDone)
+{
+	Datum			result;
+	TupleTableSlot *resSlot;
+
+	result = ExecEvalExpr(fselect->arg, econtext, isNull, isDone);
+	if (*isNull)
+		return result;
+	/* XXX what about isDone? */
+	resSlot = (TupleTableSlot *) DatumGetPointer(result);
+	Assert(resSlot != NULL && IsA(resSlot, TupleTableSlot));
+	result = heap_getattr(resSlot->val,
+						  fselect->fieldnum,
+						  resSlot->ttc_tupleDescriptor,
+						  isNull);
+	return result;
+}
+
+/* ----------------------------------------------------------------
  *		ExecEvalExpr
  *
  *		Recursively evaluate a targetlist or qualification expression.
@@ -1319,6 +1294,12 @@ ExecEvalExpr(Node *expression,
 				}
 				break;
 			}
+		case T_FieldSelect:
+			retDatum = ExecEvalFieldSelect((FieldSelect *) expression,
+										   econtext,
+										   isNull,
+										   isDone);
+			break;
 		case T_RelabelType:
 			retDatum = ExecEvalExpr(((RelabelType *) expression)->arg,
 									econtext,

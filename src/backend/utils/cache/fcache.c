@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.34 2000/07/12 02:37:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.35 2000/08/08 15:42:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,9 @@ GetDynamicFuncArgType(Var *arg, ExprContext *econtext)
 	if (!tup)
 		elog(ERROR, "Lookup failed on type tuple for class %s",
 			 relname);
+
+	/* TEST: I bet this routine is unnecessary ... */
+	Assert(arg->vartype == tup->t_data->t_oid);
 
 	return tup->t_data->t_oid;
 }
@@ -116,22 +119,25 @@ init_fcache(Oid foid,
 	{
 		/* The return type is not a relation, so just use byval */
 		retval->typbyval = typeStruct->typbyval;
+		retval->returnsTuple = false;
 	}
 	else
 	{
 
 		/*
 		 * This is a hack.	We assume here that any function returning a
-		 * relation returns it by reference.  This needs to be fixed.
+		 * tuple returns it by reference.  This needs to be fixed, since
+		 * actually the mechanism isn't quite like return-by-reference.
 		 */
 		retval->typbyval = false;
+		retval->returnsTuple = true;
 	}
 	retval->foid = foid;
 	retval->language = procedureStruct->prolang;
+	retval->returnsSet = procedureStruct->proretset;
+	retval->hasSetArg = false;
 	retval->func_state = (char *) NULL;
 	retval->setArg = (Datum) 0;
-	retval->hasSetArg = false;
-	retval->oneResult = !procedureStruct->proretset;
 
 	/*
 	 * If we are returning exactly one result then we have to copy tuples
@@ -140,12 +146,9 @@ init_fcache(Oid foid,
 	 * allocated by the executor (i.e. slots and tuples) is freed.
 	 */
 	if ((retval->language == SQLlanguageId) &&
-		retval->oneResult &&
+		!retval->returnsSet &&
 		!retval->typbyval)
 	{
-		Form_pg_class relationStruct;
-		HeapTuple	relationTuple;
-		TupleDesc	td;
 		TupleTableSlot *slot;
 
 		slot = makeNode(TupleTableSlot);
@@ -154,21 +157,6 @@ init_fcache(Oid foid,
 		slot->ttc_tupleDescriptor = (TupleDesc) NULL;
 		slot->ttc_buffer = InvalidBuffer;
 		slot->ttc_whichplan = -1;
-
-		relationTuple =
-			SearchSysCacheTuple(RELNAME,
-								PointerGetDatum(&typeStruct->typname),
-								0, 0, 0);
-
-		if (relationTuple)
-		{
-			relationStruct = (Form_pg_class) GETSTRUCT(relationTuple);
-			td = CreateTemplateTupleDesc(relationStruct->relnatts);
-		}
-		else
-			td = CreateTemplateTupleDesc(1);
-
-		slot->ttc_tupleDescriptor = td;
 
 		retval->funcSlot = (Pointer) slot;
 	}

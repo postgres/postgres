@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.152 2000/08/03 16:35:08 tgl Exp $
+ *	$Id: analyze.c,v 1.153 2000/08/08 15:42:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -470,7 +470,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 											thisatt->atttypid,
 											thisatt->atttypmod,
 									  pstrdup(NameStr(thisatt->attname)),
-											0, 0, false),
+											false),
 								 stringToNode(defval[ndef].adbin));
 			qry->targetList = lappend(qry->targetList, te);
 

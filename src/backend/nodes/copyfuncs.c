@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.118 2000/07/22 04:22:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.119 2000/08/08 15:41:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -717,14 +717,8 @@ _copyOper(Oper *from)
 	newnode->opno = from->opno;
 	newnode->opid = from->opid;
 	newnode->opresulttype = from->opresulttype;
-	newnode->opsize = from->opsize;
-
-	/*
-	 * NOTE: shall we copy the cache structure or just the pointer ?
-	 * Alternatively we can set 'op_fcache' to NULL, in which case the
-	 * executor will initialize it when it needs it...
-	 */
-	newnode->op_fcache = from->op_fcache;
+	/* Do not copy the run-time state, if any */
+	newnode->op_fcache = NULL;
 
 	return newnode;
 }
@@ -797,7 +791,6 @@ _copyParam(Param *from)
 	if (from->paramname != NULL)
 		newnode->paramname = pstrdup(from->paramname);
 	newnode->paramtype = from->paramtype;
-	Node_Copy(from, newnode, param_tlist);
 
 	return newnode;
 }
@@ -817,11 +810,8 @@ _copyFunc(Func *from)
 	 */
 	newnode->funcid = from->funcid;
 	newnode->functype = from->functype;
-	newnode->funcisindex = from->funcisindex;
-	newnode->funcsize = from->funcsize;
-	newnode->func_fcache = from->func_fcache;
-	Node_Copy(from, newnode, func_tlist);
-	Node_Copy(from, newnode, func_planlist);
+	/* Do not copy the run-time state, if any */
+	newnode->func_fcache = NULL;
 
 	return newnode;
 }
@@ -868,6 +858,27 @@ _copySubLink(SubLink *from)
 	Node_Copy(from, newnode, lefthand);
 	Node_Copy(from, newnode, oper);
 	Node_Copy(from, newnode, subselect);
+
+	return newnode;
+}
+
+/* ----------------
+ *		_copyFieldSelect
+ * ----------------
+ */
+static FieldSelect *
+_copyFieldSelect(FieldSelect *from)
+{
+	FieldSelect *newnode = makeNode(FieldSelect);
+
+	/* ----------------
+	 *	copy remainder of node
+	 * ----------------
+	 */
+	Node_Copy(from, newnode, arg);
+	newnode->fieldnum = from->fieldnum;
+	newnode->resulttype = from->resulttype;
+	newnode->resulttypmod = from->resulttypmod;
 
 	return newnode;
 }
@@ -1709,6 +1720,9 @@ copyObject(void *from)
 			break;
 		case T_Iter:
 			retval = _copyIter(from);
+			break;
+		case T_FieldSelect:
+			retval = _copyFieldSelect(from);
 			break;
 		case T_RelabelType:
 			retval = _copyRelabelType(from);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.86 2000/08/03 19:19:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.87 2000/08/08 15:42:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ static int match_argtypes(int nargs,
 			   Oid *input_typeids,
 			   CandidateList function_typeids,
 			   CandidateList *candidates);
-static List *setup_tlist(char *attname, Oid relid);
+static FieldSelect *setup_field_select(Node *input, char *attname, Oid relid);
 static Oid *func_select_candidate(int nargs, Oid *input_typeids,
 					  CandidateList candidates);
 static int	agg_get_candidates(char *aggname, Oid typeId, CandidateList *candidates);
@@ -394,10 +394,9 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				argrelid = typeidTypeRelid(toid);
 
 				/*
-				 * A projection contains either an attribute name or "*".
+				 * A projection must match an attribute name of the rel.
 				 */
-				if ((get_attnum(argrelid, funcname) == InvalidAttrNumber)
-					&& strcmp(funcname, "*"))
+				if (get_attnum(argrelid, funcname) == InvalidAttrNumber)
 					elog(ERROR, "Functions on sets are not yet supported");
 			}
 
@@ -670,41 +669,10 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	funcnode = makeNode(Func);
 	funcnode->funcid = funcid;
 	funcnode->functype = rettype;
-	funcnode->funcisindex = false;
-	funcnode->funcsize = 0;
 	funcnode->func_fcache = NULL;
-	funcnode->func_tlist = NIL;
-	funcnode->func_planlist = NIL;
 
-	/* perform the necessary typecasting */
+	/* perform the necessary typecasting of arguments */
 	make_arguments(pstate, nargs, fargs, oid_array, true_oid_array);
-
-	/*
-	 * for functions returning base types, we want to project out the
-	 * return value.  set up a target list to do that.	the executor will
-	 * ignore these for c functions, and do the right thing for postquel
-	 * functions.
-	 */
-
-	if (typeidTypeRelid(rettype) == InvalidOid)
-		funcnode->func_tlist = setup_base_tlist(rettype);
-
-	/*
-	 * For sets, we want to make a targetlist to project out this
-	 * attribute of the set tuples.
-	 */
-	if (attisset)
-	{
-		if (!strcmp(funcname, "*"))
-			funcnode->func_tlist = expandAll(pstate, relname,
-											 makeAttr(refname, NULL),
-											 curr_resno);
-		else
-		{
-			funcnode->func_tlist = setup_tlist(funcname, argrelid);
-			rettype = get_atttype(argrelid, get_attnum(argrelid, funcname));
-		}
-	}
 
 	/*
 	 * Special checks to disallow sequence functions with side-effects
@@ -722,6 +690,18 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	expr->oper = (Node *) funcnode;
 	expr->args = fargs;
 	retval = (Node *) expr;
+
+	/*
+	 * For sets, we want to project out the desired attribute of the tuples.
+	 */
+	if (attisset)
+	{
+		FieldSelect	   *fselect;
+
+		fselect = setup_field_select(retval, funcname, argrelid);
+		rettype = fselect->resulttype;
+		retval = (Node *) fselect;
+	}
 
 	/*
 	 * if the function returns a set of values, then we need to iterate
@@ -1524,66 +1504,30 @@ make_arguments(ParseState *pstate,
 }
 
 /*
- ** setup_tlist
- **		Build a tlist that says which attribute to project to.
- **		This routine is called by ParseFuncOrColumn() to set up a target list
- **		on a tuple parameter or return value.  Due to a bug in 4.0,
- **		it's not possible to refer to system attributes in this case.
+ ** setup_field_select
+ **		Build a FieldSelect node that says which attribute to project to.
+ **		This routine is called by ParseFuncOrColumn() when we have found
+ **		a projection on a function result or parameter.
  */
-static List *
-setup_tlist(char *attname, Oid relid)
+static FieldSelect *
+setup_field_select(Node *input, char *attname, Oid relid)
 {
-	TargetEntry *tle;
-	Resdom	   *resnode;
-	Var		   *varnode;
-	Oid			typeid;
-	int32		type_mod;
-	int			attno;
+	FieldSelect *fselect = makeNode(FieldSelect);
+	AttrNumber	attno;
 
 	attno = get_attnum(relid, attname);
+
+	/* XXX Is there still a reason for this restriction? */
 	if (attno < 0)
 		elog(ERROR, "Cannot reference attribute '%s'"
 			 " of tuple params/return values for functions", attname);
 
-	typeid = get_atttype(relid, attno);
-	type_mod = get_atttypmod(relid, attno);
+	fselect->arg = input;
+	fselect->fieldnum = attno;
+	fselect->resulttype = get_atttype(relid, attno);
+	fselect->resulttypmod = get_atttypmod(relid, attno);
 
-	resnode = makeResdom(1,
-						 typeid,
-						 type_mod,
-						 get_attname(relid, attno),
-						 0,
-						 InvalidOid,
-						 false);
-	varnode = makeVar(-1, attno, typeid, type_mod, 0);
-
-	tle = makeTargetEntry(resnode, (Node *) varnode);
-	return lcons(tle, NIL);
-}
-
-/*
- ** setup_base_tlist
- **		Build a tlist that extracts a base type from the tuple
- **		returned by the executor.
- */
-List *
-setup_base_tlist(Oid typeid)
-{
-	TargetEntry *tle;
-	Resdom	   *resnode;
-	Var		   *varnode;
-
-	resnode = makeResdom(1,
-						 typeid,
-						 -1,
-						 "<noname>",
-						 0,
-						 InvalidOid,
-						 false);
-	varnode = makeVar(-1, 1, typeid, -1, 0);
-	tle = makeTargetEntry(resnode, (Node *) varnode);
-
-	return lcons(tle, NIL);
+	return fselect;
 }
 
 /*
@@ -1599,51 +1543,32 @@ ParseComplexProjection(ParseState *pstate,
 {
 	Oid			argtype;
 	Oid			argrelid;
-	Relation	rd;
-	Oid			relid;
-	int			attnum;
+	FieldSelect *fselect;
 
 	switch (nodeTag(first_arg))
 	{
 		case T_Iter:
 			{
-				Func	   *func;
-				Iter	   *iter;
+				Iter	   *iter = (Iter *) first_arg;
 
-				iter = (Iter *) first_arg;
-				func = (Func *) ((Expr *) iter->iterexpr)->oper;
-				argtype = get_func_rettype(func->funcid);
+				/*
+				 * If the argument of the Iter returns a tuple,
+				 * funcname may be a projection.  If so, we stick
+				 * the FieldSelect *inside* the Iter --- this is
+				 * klugy, but necessary because ExecTargetList()
+				 * currently does the right thing only when the
+				 * Iter node is at the top level of a targetlist item.
+				 */
+				argtype = iter->itertype;
 				argrelid = typeidTypeRelid(argtype);
 				if (argrelid &&
-					((attnum = get_attnum(argrelid, funcname))
-					 != InvalidAttrNumber))
+					get_attnum(argrelid, funcname) != InvalidAttrNumber)
 				{
-
-					/*
-					 * the argument is a function returning a tuple, so
-					 * funcname may be a projection
-					 */
-
-					/* add a tlist to the func node and return the Iter */
-					rd = heap_openr_nofail(typeidTypeName(argtype));
-					if (RelationIsValid(rd))
-					{
-						relid = RelationGetRelid(rd);
-						func->func_tlist = setup_tlist(funcname, argrelid);
-						iter->itertype = attnumTypeId(rd, attnum);
-						heap_close(rd, NoLock);
-						return (Node *) iter;
-					}
-					else
-					{
-						elog(ERROR, "Function '%s' has bad return type %d",
-							 funcname, argtype);
-					}
-				}
-				else
-				{
-					/* drop through */
-					;
+					fselect = setup_field_select(iter->iterexpr,
+												 funcname, argrelid);
+					iter->iterexpr = (Node *) fselect;
+					iter->itertype = fselect->resulttype;
+					return (Node *) iter;
 				}
 				break;
 			}
@@ -1665,38 +1590,20 @@ ParseComplexProjection(ParseState *pstate,
 				if (expr->opType != FUNC_EXPR)
 					break;
 
-				funcnode = (Func *) expr->oper;
-				argtype = get_func_rettype(funcnode->funcid);
-				argrelid = typeidTypeRelid(argtype);
-
 				/*
-				 * the argument is a function returning a tuple, so
+				 * If the argument is a function returning a tuple,
 				 * funcname may be a projection
 				 */
+				funcnode = (Func *) expr->oper;
+				argtype = funcnode->functype;
+				argrelid = typeidTypeRelid(argtype);
 				if (argrelid &&
-					(attnum = get_attnum(argrelid, funcname))
-					!= InvalidAttrNumber)
+					get_attnum(argrelid, funcname) != InvalidAttrNumber)
 				{
-					Expr	   *newexpr;
-
-					/* add a tlist to the func node */
-					rd = heap_openr(typeidTypeName(argtype), NoLock);
-
-					relid = RelationGetRelid(rd);
-					funcnode->func_tlist = setup_tlist(funcname, argrelid);
-					funcnode->functype = attnumTypeId(rd, attnum);
-
-					newexpr = makeNode(Expr);
-					newexpr->typeOid = funcnode->functype;
-					newexpr->opType = FUNC_EXPR;
-					newexpr->oper = (Node *) funcnode;
-					newexpr->args = expr->args;
-
-					heap_close(rd, NoLock);
-
-					return (Node *) newexpr;
+					fselect = setup_field_select((Node *) expr,
+												 funcname, argrelid);
+					return (Node *) fselect;
 				}
-
 				break;
 			}
 		case T_Param:
@@ -1707,19 +1614,14 @@ ParseComplexProjection(ParseState *pstate,
 				 * If the Param is a complex type, this could be a
 				 * projection
 				 */
-				rd = heap_openr_nofail(typeidTypeName(param->paramtype));
-				if (RelationIsValid(rd))
+				argtype = param->paramtype;
+				argrelid = typeidTypeRelid(argtype);
+				if (argrelid &&
+					get_attnum(argrelid, funcname) != InvalidAttrNumber)
 				{
-					relid = RelationGetRelid(rd);
-					if ((attnum = get_attnum(relid, funcname))
-						!= InvalidAttrNumber)
-					{
-						param->paramtype = attnumTypeId(rd, attnum);
-						param->param_tlist = setup_tlist(funcname, relid);
-						heap_close(rd, NoLock);
-						return (Node *) param;
-					}
-					heap_close(rd, NoLock);
+					fselect = setup_field_select((Node *) param,
+												 funcname, argrelid);
+					return (Node *) fselect;
 				}
 				break;
 			}

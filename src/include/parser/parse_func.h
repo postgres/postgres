@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.24 2000/04/12 17:16:45 momjian Exp $
+ * $Id: parse_func.h,v 1.25 2000/08/08 15:42:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,8 +44,6 @@ extern Node *ParseFuncOrColumn(ParseState *pstate,
 				  char *funcname, List *fargs,
 				  bool agg_star, bool agg_distinct,
 				  int *curr_resno, int precedence);
-
-extern List *setup_base_tlist(Oid typeid);
 
 extern bool typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId);
 

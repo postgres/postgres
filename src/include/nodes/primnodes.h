@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.45 2000/07/22 04:22:47 tgl Exp $
+ * $Id: primnodes.h,v 1.46 2000/08/08 15:42:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,10 +160,9 @@ typedef struct Var
 /* ----------------
  * Oper
  *		opno			- PG_OPERATOR OID of the operator
- *		opid			- PG_PROC OID for the operator
+ *		opid			- PG_PROC OID for the operator's underlying function
  *		opresulttype	- PG_TYPE OID of the operator's return value
- *		opsize			- size of return result (cached by executor)
- *		op_fcache		- XXX comment me.
+ *		op_fcache		- runtime state while running the function
  *
  * ----
  * NOTE: in the good old days 'opno' used to be both (or either, or
@@ -175,6 +174,10 @@ typedef struct Var
  * (i.e. a mess) some comments were referring to 'opno' using the name
  * 'opid'. Anyway, now we have two separate fields, and of course that
  * immediately removes all bugs from the code...		[ sp :-) ].
+ *
+ * Note also that opid is not necessarily filled in immediately on creation
+ * of the node.  The planner makes sure it is valid before passing the node
+ * tree to the executor, but during parsing/planning opid is typically 0.
  * ----------------
  */
 typedef struct Oper
@@ -183,7 +186,6 @@ typedef struct Oper
 	Oid			opno;
 	Oid			opid;
 	Oid			opresulttype;
-	int			opsize;
 	FunctionCachePtr op_fcache;
 } Oper;
 
@@ -240,7 +242,6 @@ typedef struct Const
  *		paramid - numeric identifier for literal-constant parameters ("$1")
  *		paramname - attribute name for tuple-substitution parameters ("$.foo")
  *		paramtype - PG_TYPE OID of the parameter's value
- *		param_tlist - allows for projection in a param node.
  * ----------------
  */
 typedef struct Param
@@ -250,23 +251,17 @@ typedef struct Param
 	AttrNumber	paramid;
 	char	   *paramname;
 	Oid			paramtype;
-	List	   *param_tlist;
 } Param;
 
 
 /* ----------------
  * Func
- *		funcid			- PG_FUNCTION OID of the function
+ *		funcid			- PG_PROC OID of the function
  *		functype		- PG_TYPE OID of the function's return value
- *		funcisindex		- the function can be evaluated by scanning an index
- *						  (set during query optimization)
- *		funcsize		- size of return result (cached by executor)
  *		func_fcache		- runtime state while running this function.  Where
  *						  we are in the execution of the function if it
  *						  returns more than one value, etc.
  *						  See utils/fcache.h
- *		func_tlist		- projection of functions returning tuples
- *		func_planlist	- result of planning this func, if it's a PQ func
  * ----------------
  */
 typedef struct Func
@@ -274,11 +269,7 @@ typedef struct Func
 	NodeTag		type;
 	Oid			funcid;
 	Oid			functype;
-	bool		funcisindex;
-	int			funcsize;
 	FunctionCachePtr func_fcache;
-	List	   *func_tlist;
-	List	   *func_planlist;
 } Func;
 
 /* ----------------
@@ -438,6 +429,29 @@ typedef struct ArrayRef
 	Node	   *refexpr;
 	Node	   *refassgnexpr;
 } ArrayRef;
+
+/* ----------------
+ * FieldSelect
+ *		arg				- input expression
+ *		fieldnum		- attribute number of field to extract
+ *		resulttype		- type of the field (result type of this node)
+ *		resulttypmod	- output typmod (usually -1)
+ *
+ * FieldSelect represents the operation of extracting one field from a tuple
+ * value.  At runtime, the input expression is expected to yield a Datum
+ * that contains a pointer-to-TupleTableSlot.  The specified field number
+ * is extracted and returned as a Datum.
+ * ----------------
+ */
+
+typedef struct FieldSelect
+{
+	NodeTag		type;
+	Node	   *arg;
+	AttrNumber	fieldnum;
+	Oid			resulttype;
+	int32		resulttypmod;
+} FieldSelect;
 
 /* ----------------
  * RelabelType

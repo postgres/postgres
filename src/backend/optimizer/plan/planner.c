@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.86 2000/07/27 23:15:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.87 2000/08/08 15:41:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -373,8 +373,6 @@ union_planner(Query *parse,
 									TIDOID,
 									-1,
 									resname,
-									0,
-									0,
 									true);
 
 				var = makeVar(rowmark->rti, -1, TIDOID, -1, 0);
@@ -761,8 +759,6 @@ make_subplanTargetList(Query *parse,
 												exprType(groupexpr),
 												exprTypmod(groupexpr),
 												NULL,
-												(Index) 0,
-												(Oid) 0,
 												false),
 									 groupexpr);
 				sub_tlist = lappend(sub_tlist, te);

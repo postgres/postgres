@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.46 2000/06/08 22:37:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.47 2000/08/08 15:41:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,8 +110,6 @@ create_tl_element(Var *var, int resdomno)
 									  var->vartype,
 									  var->vartypmod,
 									  NULL,
-									  (Index) 0,
-									  (Oid) 0,
 									  false),
 						   (Node *) var);
 }
@@ -199,8 +197,6 @@ add_to_flat_tlist(List *tlist, List *vars)
 						   var->vartype,
 						   var->vartypmod,
 						   NULL,
-						   (Index) 0,
-						   (Oid) 0,
 						   false);
 			tlist = lappend(tlist,
 							makeTargetEntry(r, copyObject(var)));

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: makefuncs.h,v 1.24 2000/04/12 17:16:40 momjian Exp $
+ * $Id: makefuncs.h,v 1.25 2000/08/08 15:42:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,9 +18,7 @@
 
 extern Oper *makeOper(Oid opno,
 		 Oid opid,
-		 Oid opresulttype,
-		 int opsize,
-		 FunctionCachePtr op_fcache);
+		 Oid opresulttype);
 
 extern Var *makeVar(Index varno,
 		AttrNumber varattno,
@@ -34,8 +32,6 @@ extern Resdom *makeResdom(AttrNumber resno,
 		   Oid restype,
 		   int32 restypmod,
 		   char *resname,
-		   Index reskey,
-		   Oid reskeyop,
 		   bool resjunk);
 
 extern Const *makeConst(Oid consttype,

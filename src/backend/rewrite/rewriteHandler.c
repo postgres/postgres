@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.77 2000/06/30 07:04:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.78 2000/08/08 15:42:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1882,9 +1882,7 @@ Except_Intersect_Rewrite(Query *parsetree)
 
 				newop = makeOper(oprid(optup),	/* opno */
 								 InvalidOid,	/* opid */
-								 opform->oprresult,
-								 0,
-								 NULL);
+								 opform->oprresult);
 
 				n->oper = lappend(n->oper, newop);
 
