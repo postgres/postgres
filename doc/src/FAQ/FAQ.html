@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Fri Oct 10 17:27:02 EDT 2003</P>
+    <P>Last updated: Wed Oct 29 15:19:43 EST 2003</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -1303,10 +1303,10 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     <H4><A name="4.22">4.22</A>) Why are my subqueries using
     <CODE><SMALL>IN</SMALL></CODE> so slow?</H4>
 
-    <P>Currently, we join subqueries to outer queries by sequentially
-    scanning the result of the subquery for each row of the outer
-    query. If the subquery returns only a few rows and the outer query
-    returns many rows, <CODE><SMALL>IN</SMALL></CODE> is fastest.  To
+    <P>In versions prior to 7.4, subqueries were joined to outer queries
+    by sequentially scanning the result of the subquery for each row of
+    the outer query. If the subquery returns only a few rows and the outer
+    query returns many rows, <CODE><SMALL>IN</SMALL></CODE> is fastest.  To
     speed up other queries, replace <CODE>IN</CODE> with
     <CODE>EXISTS</CODE>:</P>
 <PRE>    SELECT *
@@ -1320,7 +1320,9 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
 </PRE>
 
     For this to be fast, <CODE>subcol</CODE> should be an indexed column.
-    This preformance problem will be fixed in 7.4.
+    <P>In version 7.4 and later,  <CODE>IN</CODE> actually uses the same
+    sophisticated join techniques as normal queries, and is prefered
+    to using <CODE>EXISTS</CODE>.
 
     <H4><A name="4.23">4.23</A>) How do I perform an outer join?</H4>
 

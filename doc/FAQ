@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Oct 10 17:27:02 EDT 2003
+   Last updated: Wed Oct 29 15:19:43 EST 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -1031,11 +1031,11 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
 
     4.22) Why are my subqueries using IN so slow?
     
-   Currently, we join subqueries to outer queries by sequentially
-   scanning the result of the subquery for each row of the outer query.
-   If the subquery returns only a few rows and the outer query returns
-   many rows, IN is fastest. To speed up other queries, replace IN with
-   EXISTS:
+   In versions prior to 7.4, subqueries were joined to outer queries by
+   sequentially scanning the result of the subquery for each row of the
+   outer query. If the subquery returns only a few rows and the outer
+   query returns many rows, IN is fastest. To speed up other queries,
+   replace IN with EXISTS:
     SELECT *
     FROM tab
     WHERE col IN (SELECT subcol FROM subtab);
@@ -1045,8 +1045,10 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
     FROM tab
     WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col);
 
-   For this to be fast, subcol should be an indexed column. This
-   preformance problem will be fixed in 7.4.
+   For this to be fast, subcol should be an indexed column.
+   
+   In version 7.4 and later, IN actually uses the same sophisticated join
+   techniques as normal queries, and is prefered to using EXISTS.
    
     4.23) How do I perform an outer join?
     
