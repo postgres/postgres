@@ -11,10 +11,10 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 #include <stdarg.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -47,7 +47,7 @@
  * Trace option names, must match the constants in trace_opts[].
  */
 static char *opt_names[] = {
-	"all",
+	"all",						/* 0=trace some, 1=trace all, -1=trace none */
 	"verbose",
 	"query",
 	"plan",
@@ -73,6 +73,8 @@ static char *opt_names[] = {
 	"syslog",					/* use syslog for error messages */
 	"hostlookup",				/* enable hostname lookup in ps_status */
 	"showportnumber",			/* show port number in ps_status */
+
+	/* NUM_PG_OPTIONS */		/* must be the last item of enum */
 };
 
 /*
@@ -92,7 +94,6 @@ tprintf(int flag, const char *fmt,...)
 
 #ifdef USE_SYSLOG
 	int			log_level;
-
 #endif
 
 	if ((flag == TRACE_ALL) || (pg_options[TRACE_ALL] > 0))
@@ -208,7 +209,6 @@ write_syslog(int level, char *line)
 		syslog(level, "%s", line);
 	}
 }
-
 #endif
 
 #ifdef ELOG_TIMESTAMPS
@@ -219,12 +219,13 @@ char *
 tprintf_timestamp()
 {
 	struct timeval tv;
+	struct timezone tz = { 0, 0 };
 	struct tm  *time;
 	time_t		tm;
 	static char timestamp[32],
 				pid[8];
 
-	gettimeofday(&tv, DST_NONE);
+	gettimeofday(&tv, &tz);
 	tm = tv.tv_sec;
 	time = localtime(&tm);
 
@@ -232,11 +233,10 @@ tprintf_timestamp()
 	sprintf(timestamp, "%02d%02d%02d.%02d:%02d:%02d.%03d %7s ",
 			time->tm_year, time->tm_mon + 1, time->tm_mday,
 			time->tm_hour, time->tm_min, time->tm_sec,
-			tv.tv_usec / 1000, pid);
+			(int) (tv.tv_usec/1000), pid);
 
 	return timestamp;
 }
-
 #endif
 
 #ifdef NOT_USED
