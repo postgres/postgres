@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Jan 31 17:57:02 EST 2005
+   Last updated: Mon Jan 31 17:57:48 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -388,7 +388,7 @@
    debugging and performance measurements.
    
    The following detailed debug instructions are to be used to provide
-   more detailed information for server developers debugging a problem
+   more detailed information for server developers debugging a problem.
    
    It is also possible to debug the server if it isn't operating
    properly. First, by running configure with the --enable-cassert
