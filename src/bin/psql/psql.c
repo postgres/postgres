@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.79 1997/08/01 03:33:02 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.80 1997/08/01 04:07:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,7 +123,7 @@ usage(char *progname)
     fprintf(stderr, "\t -d dbName               specify database name\n");
     fprintf(stderr, "\t -e                      echo the query sent to the backend\n");
     fprintf(stderr, "\t -f filename             use file as a source of queries\n");
-    fprintf(stderr, "\t -F sep                  set the field separator (default is "|")\n");
+    fprintf(stderr, "\t -F sep                  set the field separator (default is '|')\n");
     fprintf(stderr, "\t -h host                 set database server host\n");
     fprintf(stderr, "\t -H                      turn on html3.0 table output\n");
     fprintf(stderr, "\t -l                      list available databases\n");
@@ -164,7 +164,7 @@ slashUsage(PsqlSettings * ps)
 	pqsignal(SIGPIPE, SIG_IGN);
     }
     else
-	fout = stderr;
+	fout = stdout;
 
     fprintf(fout, " \\?           -- help\n");
     fprintf(fout, " \\a           -- toggle field-alignment (currenty %s)\n", on(ps->opt.align));
@@ -621,7 +621,7 @@ SendQuery(bool * success_p, PsqlSettings * settings, const char *query,
 	case PGRES_COMMAND_OK:
 	    *success_p = true;
 	    if (!settings->quiet)
-		fprintf(stdout, "%s\n", PQcmdStatus(results));
+		printf("%s\n", PQcmdStatus(results));
 	    break;
 	case PGRES_COPY_OUT:
 	    *success_p = true;
@@ -629,7 +629,7 @@ SendQuery(bool * success_p, PsqlSettings * settings, const char *query,
 		handleCopyOut(results, settings->quiet, copystream);
 	    } else {
 		if (!settings->quiet)
-		    fprintf(stdout, "Copy command returns...\n");
+		    printf("Copy command returns...\n");
 
 		handleCopyOut(results, settings->quiet, stdout);
 	    }
@@ -693,7 +693,7 @@ toggle(PsqlSettings * settings, bool * sw, char *msg)
 {
     *sw = !*sw;
     if (!settings->quiet)
-	fprintf(stderr, "turned %s %s\n", on(*sw), msg);
+	printf("turned %s %s\n", on(*sw), msg);
     return *sw;
 }
 
@@ -869,9 +869,9 @@ do_copy(const char *args, PsqlSettings * settings)
 	    fclose(copystream);
 	    if (!settings->quiet) {
 		if (success)
-		    fprintf(stdout, "Successfully copied.\n");
+		    printf("Successfully copied.\n");
 		else
-		    fprintf(stdout, "Copy failed.\n");
+		    printf("Copy failed.\n");
 	    }
 	}
     }
@@ -1046,14 +1046,16 @@ do_help(const char *topic)
 	char *pagerenv;
 	FILE *fout;
 
-	if ((pagerenv = getenv("PAGER")) && (pagerenv[0] != '\0') && \
+	if (strcmp(topic, "*") == 0 &&
+	    (pagerenv = getenv("PAGER")) &&
+	    (pagerenv[0] != '\0') &&
 	    (fout = popen(pagerenv, "w")))
 	{
 	    usePipe = 1;
 	    pqsignal(SIGPIPE, SIG_IGN);
 	}
 	else
-	    fout = stderr;
+	    fout = stdout;
 
 	help_found = false;	/* Haven't found it yet */
 	for (i = 0; QL_HELP[i].cmd; i++) {
@@ -1075,7 +1077,7 @@ do_help(const char *topic)
 	}
 
 	if (!help_found)
-	    printf("command not found, "
+	    fprintf(stderr,"command not found, "
 		   "try \\h with no arguments to see available help\n");
     }
 }
@@ -1291,7 +1293,7 @@ HandleSlashCmds(PsqlSettings * settings,
 		exit(1);
 	    }
 	    if (!settings->quiet)
-		fprintf(stderr, "field separater changed to '%s'\n", settings->opt.fieldSep);
+		printf("field separater changed to '%s'\n", settings->opt.fieldSep);
 	    break;
 	}
     case 'g':			/* \g means send query */
@@ -1346,7 +1348,7 @@ HandleSlashCmds(PsqlSettings * settings,
     case 'r':			/* reset(clear) the buffer */
 	query[0] = '\0';
 	if (!settings->quiet)
-	    fprintf(stderr, "buffer reset(cleared)\n");
+	    printf("buffer reset(cleared)\n");
 	break;
     case 's':			/* \s is save history to a file */
 	if (!optarg)
@@ -1364,13 +1366,13 @@ HandleSlashCmds(PsqlSettings * settings,
 		free(settings->opt.fieldSep);
 	    settings->opt.fieldSep = strdup("|");
 	    if (!settings->quiet)
-		fprintf(stderr, "field separater changed to '%s'\n", settings->opt.fieldSep);
+		printf("field separater changed to '%s'\n", settings->opt.fieldSep);
 	} else {
 	    if (settings->opt.fieldSep)
 	    	free(settings->opt.fieldSep);
 	    settings->opt.fieldSep = strdup(DEFAULT_FIELD_SEP);
 	    if (!settings->quiet)
-		fprintf(stderr, "field separater changed to '%s'\n", settings->opt.fieldSep);
+		printf("field separater changed to '%s'\n", settings->opt.fieldSep);
 	}
 	break;
     case 'z': 			/* list table rights (grant/revoke) */
