@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.37 1998/01/07 21:02:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.38 1998/01/14 15:48:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,28 +57,22 @@
 
 
 /* decls for local routines only used within this module */
-static void
-ExecCheckPerms(CmdType operation, int resultRelation, List *rangeTable,
+static void ExecCheckPerms(CmdType operation, int resultRelation, List *rangeTable,
 			   Query *parseTree);
-static TupleDesc
-InitPlan(CmdType operation, Query *parseTree,
+static TupleDesc InitPlan(CmdType operation, Query *parseTree,
 		 Plan *plan, EState *estate);
 static void EndPlan(Plan *plan, EState *estate);
-static TupleTableSlot *
-ExecutePlan(EState *estate, Plan *plan,
+static TupleTableSlot * ExecutePlan(EState *estate, Plan *plan,
 			Query *parseTree, CmdType operation,
 			int numberTuples, ScanDirection direction,
 			void (*printfunc) ());
 static void ExecRetrieve(TupleTableSlot *slot, void (*printfunc) (),
 									 EState *estate);
-static void
-ExecAppend(TupleTableSlot *slot, ItemPointer tupleid,
+static void ExecAppend(TupleTableSlot *slot, ItemPointer tupleid,
 		   EState *estate);
-static void
-ExecDelete(TupleTableSlot *slot, ItemPointer tupleid,
+static void ExecDelete(TupleTableSlot *slot, ItemPointer tupleid,
 		   EState *estate);
-static void
-ExecReplace(TupleTableSlot *slot, ItemPointer tupleid,
+static void ExecReplace(TupleTableSlot *slot, ItemPointer tupleid,
 			EState *estate, Query *parseTree);
 
 /* end of local decls */

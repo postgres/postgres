@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.55 1998/01/13 14:57:25 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.56 1998/01/14 15:48:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1331,7 +1331,6 @@ PQuntrace(PGconn *conn)
 	if (conn->Pfdebug)
 	{
 		fflush(conn->Pfdebug);
-		fclose(conn->Pfdebug);
 		conn->Pfdebug = NULL;
 	}
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.32 1998/01/07 21:06:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.33 1998/01/14 15:48:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,14 +257,11 @@ static HeapTuple ScanPgRelation(RelationBuildDescInfo buildinfo);
 static HeapTuple scan_pg_rel_seq(RelationBuildDescInfo buildinfo);
 static HeapTuple scan_pg_rel_ind(RelationBuildDescInfo buildinfo);
 static Relation AllocateRelationDesc(u_int natts, Form_pg_class relp);
-static void
-RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
+static void RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 					   Relation relation, u_int natts);
-static void
-build_tupdesc_seq(RelationBuildDescInfo buildinfo,
+static void build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 				  Relation relation, u_int natts);
-static void
-build_tupdesc_ind(RelationBuildDescInfo buildinfo,
+static void build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 				  Relation relation, u_int natts);
 static Relation RelationBuildDesc(RelationBuildDescInfo buildinfo);
 static void IndexedAccessMethodInitialize(Relation relation);
