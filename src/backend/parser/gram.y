@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.98 1998/01/25 04:10:32 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.99 1998/01/25 04:12:28 scrappy Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1400,8 +1400,6 @@ opt_portal_name:  IN name				{ $$ = $2; }
 GrantStmt:  GRANT privileges ON relation_name_list TO grantee opt_with_grant
 				{
 					$$ = (Node*)makeAclStmt($2,$4,$6,'+');
-					pfree($2);
-					pfree($6);
 				}
 		;
 
@@ -1426,7 +1424,6 @@ operation_commalist:  operation
 		| operation_commalist ',' operation
 				{
 						$$ = aclmakepriv($1,$3);
-						pfree($1);
 				}
 		;
 
