@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/slru.c,v 1.4 2003/08/04 00:43:15 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/slru.c,v 1.5 2003/08/08 14:39:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -742,7 +742,9 @@ SimpleLruSetLatestPage(SlruCtl ctl, int pageno)
 void
 SimpleLruFlush(SlruCtl ctl, bool checkpoint)
 {
+#ifdef USE_ASSERT_CHECKING		/* only used in Assert() */
 	SlruShared	shared = (SlruShared) ctl->shared;
+#endif
 	int			slotno;
 
 	LWLockAcquire(ctl->locks->ControlLock, LW_EXCLUSIVE);

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.25 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.26 2003/08/08 14:39:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,7 +196,9 @@ tlist_matches_tupdesc(List *tlist, Index varno, TupleDesc tupdesc)
 
 	for (attrno = 1; attrno <= numattrs; attrno++)
 	{
+#ifdef USE_ASSERT_CHECKING		/* only used in Assert() */
 		Form_pg_attribute att_tup = tupdesc->attrs[attrno - 1];
+#endif
 		Var		   *var;
 
 		if (tlist == NIL)
