@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.50 1999/07/30 00:56:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.51 1999/07/30 04:07:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -300,23 +300,20 @@ create_seqscan_path(RelOptInfo *rel)
 
 /*
  * create_index_path
- *	  Creates a single path node for an index scan.
+ *	  Creates a path node for an index scan.
  *
  * 'rel' is the parent rel
- * 'index' is the pathnode for the index on 'rel'
- * 'restriction_clauses' is a list of restriction clause nodes.
- * 'is_join_scan' is a flag indicating whether or not the index is being
- *		considered because of its sort order.
+ * 'index' is an index on 'rel'
+ * 'restriction_clauses' is a list of RestrictInfo nodes
+ *			to be used as index qual conditions in the scan.
  *
  * Returns the new path node.
- *
  */
 IndexPath  *
 create_index_path(Query *root,
 				  RelOptInfo *rel,
 				  RelOptInfo *index,
-				  List *restriction_clauses,
-				  bool is_join_scan)
+				  List *restriction_clauses)
 {
 	IndexPath  *pathnode = makeNode(IndexPath);
 
@@ -361,20 +358,11 @@ create_index_path(Query *root,
 	else
 		pathnode->path.pathkeys = NULL;
 
-	if (is_join_scan || restriction_clauses == NULL)
+	if (restriction_clauses == NIL)
 	{
 		/*
-		 * Indices used for joins or sorting result nodes don't restrict
-		 * the result at all, they simply order it, so compute the scan
-		 * cost accordingly -- use a selectivity of 1.0.
-		 *
-		 * is the statement above really true?	what about IndexScan as the
-		 * inner of a join?
-		 *
-		 * I think it's OK --- this routine is only used to make index paths
-		 * for mergejoins and sorts.  Index paths used as the inner side of
-		 * a nestloop join do provide restriction, but they are not made
-		 * with this code.  See index_innerjoin() in indxpath.c.
+		 * We have no restriction clauses, so compute scan cost using
+		 * selectivity of 1.0.
 		 */
 		pathnode->path.path_cost = cost_index(lfirsti(index->relids),
 											  index->pages,
