@@ -30,14 +30,14 @@ struct ColumnInfoClass_
 #define CI_get_atttypmod(self, col)		(self->atttypmod[col])
 
 ColumnInfoClass *CI_Constructor(void);
-void		CI_Destructor(ColumnInfoClass * self);
-void		CI_free_memory(ColumnInfoClass * self);
-char		CI_read_fields(ColumnInfoClass * self, ConnectionClass * conn);
+void		CI_Destructor(ColumnInfoClass *self);
+void		CI_free_memory(ColumnInfoClass *self);
+char		CI_read_fields(ColumnInfoClass *self, ConnectionClass *conn);
 
 /* functions for setting up the fields from within the program, */
 /* without reading from a socket */
-void		CI_set_num_fields(ColumnInfoClass * self, int new_num_fields);
-void CI_set_field_info(ColumnInfoClass * self, int field_num, char *new_name,
+void		CI_set_num_fields(ColumnInfoClass *self, int new_num_fields);
+void CI_set_field_info(ColumnInfoClass *self, int field_num, char *new_name,
 				  Oid new_adtid, Int2 new_adtsize, Int4 atttypmod);
 
 

@@ -127,8 +127,8 @@
 void		getGlobalDefaults(char *section, char *filename, char override);
 
 #ifdef WIN32
-void		SetDlgStuff(HWND hdlg, ConnInfo * ci);
-void		GetDlgStuff(HWND hdlg, ConnInfo * ci);
+void		SetDlgStuff(HWND hdlg, ConnInfo *ci);
+void		GetDlgStuff(HWND hdlg, ConnInfo *ci);
 
 int CALLBACK driver_optionsProc(HWND hdlg,
 				   WORD wMsg,
@@ -142,11 +142,11 @@ int CALLBACK ds_optionsProc(HWND hdlg,
 #endif	 /* WIN32 */
 
 void		updateGlobals(void);
-void		writeDSNinfo(ConnInfo * ci);
-void		getDSNdefaults(ConnInfo * ci);
-void		getDSNinfo(ConnInfo * ci, char overwrite);
-void		makeConnectString(char *connect_string, ConnInfo * ci);
-void		copyAttributes(ConnInfo * ci, char *attribute, char *value);
+void		writeDSNinfo(ConnInfo *ci);
+void		getDSNdefaults(ConnInfo *ci);
+void		getDSNinfo(ConnInfo *ci, char overwrite);
+void		makeConnectString(char *connect_string, ConnInfo *ci);
+void		copyAttributes(ConnInfo *ci, char *attribute, char *value);
 
 
 #endif

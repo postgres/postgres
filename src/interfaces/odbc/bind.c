@@ -46,7 +46,7 @@ SQLBindParameter(
 				 SWORD ibScale,
 				 PTR rgbValue,
 				 SDWORD cbValueMax,
-				 SDWORD FAR * pcbValue)
+				 SDWORD FAR *pcbValue)
 {
 	StatementClass *stmt = (StatementClass *) hstmt;
 	static char *func = "SQLBindParameter";
@@ -163,7 +163,7 @@ SQLBindCol(
 		   SWORD fCType,
 		   PTR rgbValue,
 		   SDWORD cbValueMax,
-		   SDWORD FAR * pcbValue)
+		   SDWORD FAR *pcbValue)
 {
 	StatementClass *stmt = (StatementClass *) hstmt;
 	static char *func = "SQLBindCol";
@@ -271,10 +271,10 @@ RETCODE		SQL_API
 SQLDescribeParam(
 				 HSTMT hstmt,
 				 UWORD ipar,
-				 SWORD FAR * pfSqlType,
-				 UDWORD FAR * pcbColDef,
-				 SWORD FAR * pibScale,
-				 SWORD FAR * pfNullable)
+				 SWORD FAR *pfSqlType,
+				 UDWORD FAR *pcbColDef,
+				 SWORD FAR *pibScale,
+				 SWORD FAR *pfNullable)
 {
 	StatementClass *stmt = (StatementClass *) hstmt;
 	static char *func = "SQLDescribeParam";
@@ -325,7 +325,7 @@ RETCODE		SQL_API
 SQLParamOptions(
 				HSTMT hstmt,
 				UDWORD crow,
-				UDWORD FAR * pirow)
+				UDWORD FAR *pirow)
 {
 	static char *func = "SQLParamOptions";
 
@@ -347,7 +347,7 @@ SQLParamOptions(
 RETCODE		SQL_API
 SQLNumParams(
 			 HSTMT hstmt,
-			 SWORD FAR * pcpar)
+			 SWORD FAR *pcpar)
 {
 	StatementClass *stmt = (StatementClass *) hstmt;
 	char		in_quote = FALSE;
@@ -421,7 +421,7 @@ create_empty_bindings(int num_columns)
 }
 
 void
-extend_bindings(StatementClass * stmt, int num_columns)
+extend_bindings(StatementClass *stmt, int num_columns)
 {
 	static char *func = "extend_bindings";
 	BindInfoClass *new_bindings;

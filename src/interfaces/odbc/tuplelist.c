@@ -39,7 +39,7 @@ TL_Constructor(UInt4 fieldcnt)
 }
 
 void
-TL_Destructor(TupleListClass * self)
+TL_Destructor(TupleListClass *self)
 {
 	int			lf;
 	TupleNode  *node,
@@ -65,7 +65,7 @@ TL_Destructor(TupleListClass * self)
 
 
 void *
-TL_get_fieldval(TupleListClass * self, Int4 tupleno, Int2 fieldno)
+TL_get_fieldval(TupleListClass *self, Int4 tupleno, Int2 fieldno)
 {
 	Int4		lf;
 	Int4		delta,
@@ -178,7 +178,7 @@ TL_get_fieldval(TupleListClass * self, Int4 tupleno, Int2 fieldno)
 
 
 char
-TL_add_tuple(TupleListClass * self, TupleNode * new_field)
+TL_add_tuple(TupleListClass *self, TupleNode *new_field)
 {
 
 	/*

@@ -134,16 +134,16 @@ extern		"C"
 #endif
 
 	RETCODE SQL_API SQLAllocConnect(HENV henv,
-												HDBC FAR * phdbc);
-	RETCODE SQL_API SQLAllocEnv(HENV FAR * phenv);
+												HDBC FAR *phdbc);
+	RETCODE SQL_API SQLAllocEnv(HENV FAR *phenv);
 	RETCODE SQL_API SQLAllocStmt(HDBC hdbc,
-											 HSTMT FAR * phstmt);
+											 HSTMT FAR *phstmt);
 	RETCODE SQL_API SQLBindCol(HSTMT hstmt,
 										   UWORD icol,
 										   SWORD fCType,
 										   PTR rgbValue,
 										   SDWORD cbValueMax,
-										   SDWORD FAR * pcbValue);
+										   SDWORD FAR *pcbValue);
 
 	RETCODE SQL_API SQLCancel(HSTMT hstmt);
 
@@ -152,40 +152,40 @@ extern		"C"
 												 UWORD fDescType,
 												 PTR rgbDesc,
 												 SWORD cbDescMax,
-												 SWORD FAR * pcbDesc,
-												 SDWORD FAR * pfDesc);
+												 SWORD FAR *pcbDesc,
+												 SDWORD FAR *pfDesc);
 
 	RETCODE SQL_API SQLConnect(HDBC hdbc,
-										   UCHAR FAR * szDSN,
+										   UCHAR FAR *szDSN,
 										   SWORD cbDSN,
-										   UCHAR FAR * szUID,
+										   UCHAR FAR *szUID,
 										   SWORD cbUID,
-										   UCHAR FAR * szAuthStr,
+										   UCHAR FAR *szAuthStr,
 										   SWORD cbAuthStr);
 
 	RETCODE SQL_API SQLDescribeCol(HSTMT hstmt,
 											   UWORD icol,
-											   UCHAR FAR * szColName,
+											   UCHAR FAR *szColName,
 											   SWORD cbColNameMax,
-											   SWORD FAR * pcbColName,
-											   SWORD FAR * pfSqlType,
-											   UDWORD FAR * pcbColDef,
-											   SWORD FAR * pibScale,
-											   SWORD FAR * pfNullable);
+											   SWORD FAR *pcbColName,
+											   SWORD FAR *pfSqlType,
+											   UDWORD FAR *pcbColDef,
+											   SWORD FAR *pibScale,
+											   SWORD FAR *pfNullable);
 
 	RETCODE SQL_API SQLDisconnect(HDBC hdbc);
 
 	RETCODE SQL_API SQLError(HENV henv,
 										 HDBC hdbc,
 										 HSTMT hstmt,
-										 UCHAR FAR * szSqlState,
-										 SDWORD FAR * pfNativeError,
-										 UCHAR FAR * szErrorMsg,
+										 UCHAR FAR *szSqlState,
+										 SDWORD FAR *pfNativeError,
+										 UCHAR FAR *szErrorMsg,
 										 SWORD cbErrorMsgMax,
-										 SWORD FAR * pcbErrorMsg);
+										 SWORD FAR *pcbErrorMsg);
 
 	RETCODE SQL_API SQLExecDirect(HSTMT hstmt,
-											  UCHAR FAR * szSqlStr,
+											  UCHAR FAR *szSqlStr,
 											  SDWORD cbSqlStr);
 
 	RETCODE SQL_API SQLExecute(HSTMT hstmt);
@@ -200,18 +200,18 @@ extern		"C"
 											UWORD fOption);
 
 	RETCODE SQL_API SQLGetCursorName(HSTMT hstmt,
-												 UCHAR FAR * szCursor,
+												 UCHAR FAR *szCursor,
 												 SWORD cbCursorMax,
-												 SWORD FAR * pcbCursor);
+												 SWORD FAR *pcbCursor);
 
-	RETCODE SQL_API SQLNumResultCols(HSTMT hstmt, SWORD FAR * pccol);
+	RETCODE SQL_API SQLNumResultCols(HSTMT hstmt, SWORD FAR *pccol);
 
-	RETCODE SQL_API SQLPrepare(HSTMT hstmt, UCHAR FAR * szSqlStr,
+	RETCODE SQL_API SQLPrepare(HSTMT hstmt, UCHAR FAR *szSqlStr,
 										   SDWORD cbSqlStr);
 
-	RETCODE SQL_API SQLRowCount(HSTMT hstmt, SDWORD FAR * pcrow);
+	RETCODE SQL_API SQLRowCount(HSTMT hstmt, SDWORD FAR *pcrow);
 
-	RETCODE SQL_API SQLSetCursorName(HSTMT hstmt, UCHAR FAR * szCursor,
+	RETCODE SQL_API SQLSetCursorName(HSTMT hstmt, UCHAR FAR *szCursor,
 												 SWORD cbCursor);
 
 	RETCODE SQL_API SQLTransact(HENV henv, HDBC hdbc,
@@ -223,7 +223,7 @@ extern		"C"
 											UDWORD cbColDef,
 											SWORD ibScale,
 											PTR rgbValue,
-											SDWORD FAR * pcbValue);
+											SDWORD FAR *pcbValue);
 
 #ifdef __cplusplus
 }

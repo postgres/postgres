@@ -46,7 +46,7 @@ extern GLOBAL_VALUES globals;
 RETCODE		SQL_API
 SQLRowCount(
 			HSTMT hstmt,
-			SDWORD FAR * pcrow)
+			SDWORD FAR *pcrow)
 {
 	static char *func = "SQLRowCount";
 	StatementClass *stmt = (StatementClass *) hstmt;
@@ -116,7 +116,7 @@ SQLRowCount(
 RETCODE		SQL_API
 SQLNumResultCols(
 				 HSTMT hstmt,
-				 SWORD FAR * pccol)
+				 SWORD FAR *pccol)
 {
 	static char *func = "SQLNumResultCols";
 	StatementClass *stmt = (StatementClass *) hstmt;
@@ -180,13 +180,13 @@ RETCODE		SQL_API
 SQLDescribeCol(
 			   HSTMT hstmt,
 			   UWORD icol,
-			   UCHAR FAR * szColName,
+			   UCHAR FAR *szColName,
 			   SWORD cbColNameMax,
-			   SWORD FAR * pcbColName,
-			   SWORD FAR * pfSqlType,
-			   UDWORD FAR * pcbColDef,
-			   SWORD FAR * pibScale,
-			   SWORD FAR * pfNullable)
+			   SWORD FAR *pcbColName,
+			   SWORD FAR *pfSqlType,
+			   UDWORD FAR *pcbColDef,
+			   SWORD FAR *pibScale,
+			   SWORD FAR *pfNullable)
 {
 	static char *func = "SQLDescribeCol";
 
@@ -382,8 +382,8 @@ SQLColAttributes(
 				 UWORD fDescType,
 				 PTR rgbDesc,
 				 SWORD cbDescMax,
-				 SWORD FAR * pcbDesc,
-				 SDWORD FAR * pfDesc)
+				 SWORD FAR *pcbDesc,
+				 SDWORD FAR *pfDesc)
 {
 	static char *func = "SQLColAttributes";
 	StatementClass *stmt = (StatementClass *) hstmt;
@@ -658,7 +658,7 @@ SQLGetData(
 		   SWORD fCType,
 		   PTR rgbValue,
 		   SDWORD cbValueMax,
-		   SDWORD FAR * pcbValue)
+		   SDWORD FAR *pcbValue)
 {
 	static char *func = "SQLGetData";
 	QResultClass *res;
@@ -911,8 +911,8 @@ SQLExtendedFetch(
 				 HSTMT hstmt,
 				 UWORD fFetchType,
 				 SDWORD irow,
-				 UDWORD FAR * pcrow,
-				 UWORD FAR * rgfRowStatus)
+				 UDWORD FAR *pcrow,
+				 UWORD FAR *rgfRowStatus)
 {
 	static char *func = "SQLExtendedFetch";
 	StatementClass *stmt = (StatementClass *) hstmt;
@@ -1298,7 +1298,7 @@ SQLSetScrollOptions(
 RETCODE		SQL_API
 SQLSetCursorName(
 				 HSTMT hstmt,
-				 UCHAR FAR * szCursor,
+				 UCHAR FAR *szCursor,
 				 SWORD cbCursor)
 {
 	static char *func = "SQLSetCursorName";
@@ -1332,9 +1332,9 @@ SQLSetCursorName(
 RETCODE		SQL_API
 SQLGetCursorName(
 				 HSTMT hstmt,
-				 UCHAR FAR * szCursor,
+				 UCHAR FAR *szCursor,
 				 SWORD cbCursorMax,
-				 SWORD FAR * pcbCursor)
+				 SWORD FAR *pcbCursor)
 {
 	static char *func = "SQLGetCursorName";
 	StatementClass *stmt = (StatementClass *) hstmt;

@@ -23,7 +23,7 @@ ConnectionClass *conns[MAX_CONNECTIONS];
 
 
 RETCODE		SQL_API
-SQLAllocEnv(HENV FAR * phenv)
+SQLAllocEnv(HENV FAR *phenv)
 {
 	static char *func = "SQLAllocEnv";
 
@@ -67,11 +67,11 @@ SQLError(
 		 HENV henv,
 		 HDBC hdbc,
 		 HSTMT hstmt,
-		 UCHAR FAR * szSqlState,
-		 SDWORD FAR * pfNativeError,
-		 UCHAR FAR * szErrorMsg,
+		 UCHAR FAR *szSqlState,
+		 SDWORD FAR *pfNativeError,
+		 UCHAR FAR *szErrorMsg,
 		 SWORD cbErrorMsgMax,
-		 SWORD FAR * pcbErrorMsg)
+		 SWORD FAR *pcbErrorMsg)
 {
 	char	   *msg;
 	int			status;
@@ -410,7 +410,8 @@ SQLError(
 
 
 EnvironmentClass
-* EN_Constructor(void)
+		   *
+EN_Constructor(void)
 {
 	EnvironmentClass *rv;
 
@@ -426,7 +427,7 @@ EnvironmentClass
 
 
 char
-EN_Destructor(EnvironmentClass * self)
+EN_Destructor(EnvironmentClass *self)
 {
 	int			lf;
 	char		rv = 1;
@@ -448,7 +449,7 @@ EN_Destructor(EnvironmentClass * self)
 }
 
 char
-EN_get_error(EnvironmentClass * self, int *number, char **message)
+EN_get_error(EnvironmentClass *self, int *number, char **message)
 {
 	if (self && self->errormsg && self->errornumber)
 	{
@@ -463,7 +464,7 @@ EN_get_error(EnvironmentClass * self, int *number, char **message)
 }
 
 char
-EN_add_connection(EnvironmentClass * self, ConnectionClass * conn)
+EN_add_connection(EnvironmentClass *self, ConnectionClass *conn)
 {
 	int			i;
 
@@ -486,7 +487,7 @@ EN_add_connection(EnvironmentClass * self, ConnectionClass * conn)
 }
 
 char
-EN_remove_connection(EnvironmentClass * self, ConnectionClass * conn)
+EN_remove_connection(EnvironmentClass *self, ConnectionClass *conn)
 {
 	int			i;
 
@@ -501,7 +502,7 @@ EN_remove_connection(EnvironmentClass * self, ConnectionClass * conn)
 }
 
 void
-EN_log_error(char *func, char *desc, EnvironmentClass * self)
+EN_log_error(char *func, char *desc, EnvironmentClass *self)
 {
 	if (self)
 		qlog("ENVIRON ERROR: func=%s, desc='%s', errnum=%d, errmsg='%s'\n", func, desc, self->errornumber, self->errormsg);

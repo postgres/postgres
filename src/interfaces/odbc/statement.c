@@ -87,7 +87,7 @@ static struct
 
 RETCODE		SQL_API
 SQLAllocStmt(HDBC hdbc,
-			 HSTMT FAR * phstmt)
+			 HSTMT FAR *phstmt)
 {
 	static char *func = "SQLAllocStmt";
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
@@ -213,7 +213,7 @@ SQLFreeStmt(HSTMT hstmt,
  * StatementClass implementation
  */
 void
-InitializeStatementOptions(StatementOptions * opt)
+InitializeStatementOptions(StatementOptions *opt)
 {
 	opt->maxRows = 0;			/* driver returns all rows */
 	opt->maxLength = 0;			/* driver returns all data for char/binary */
@@ -288,7 +288,7 @@ SC_Constructor(void)
 }
 
 char
-SC_Destructor(StatementClass * self)
+SC_Destructor(StatementClass *self)
 {
 	mylog("SC_Destructor: self=%u, self->result=%u, self->hdbc=%u\n", self, self->result, self->hdbc);
 	if (STMT_EXECUTING == self->status)
@@ -358,7 +358,7 @@ SC_Destructor(StatementClass * self)
 	data-at-execution parameters that was allocated in SQLPutData.
 */
 void
-SC_free_params(StatementClass * self, char option)
+SC_free_params(StatementClass *self, char option)
 {
 	int			i;
 
@@ -422,7 +422,7 @@ statement_type(char *statement)
 	from SQLFreeStmt(SQL_CLOSE)
  */
 char
-SC_recycle_statement(StatementClass * self)
+SC_recycle_statement(StatementClass *self)
 {
 	ConnectionClass *conn;
 
@@ -535,7 +535,7 @@ SC_recycle_statement(StatementClass * self)
 
 /* Pre-execute a statement (SQLPrepare/SQLDescribeCol) */
 void
-SC_pre_execute(StatementClass * self)
+SC_pre_execute(StatementClass *self)
 {
 	mylog("SC_pre_execute: status = %d\n", self->status);
 
@@ -555,7 +555,7 @@ SC_pre_execute(StatementClass * self)
 
 /* This is only called from SQLFreeStmt(SQL_UNBIND) */
 char
-SC_unbind_cols(StatementClass * self)
+SC_unbind_cols(StatementClass *self)
 {
 	Int2		lf;
 
@@ -575,7 +575,7 @@ SC_unbind_cols(StatementClass * self)
 }
 
 void
-SC_clear_error(StatementClass * self)
+SC_clear_error(StatementClass *self)
 {
 	self->errornumber = 0;
 	self->errormsg = NULL;
@@ -586,7 +586,7 @@ SC_clear_error(StatementClass * self)
 /*	This function creates an error msg which is the concatenation */
 /*	of the result, statement, connection, and socket messages. */
 char *
-SC_create_errormsg(StatementClass * self)
+SC_create_errormsg(StatementClass *self)
 {
 	QResultClass *res = self->result;
 	ConnectionClass *conn = self->hdbc;
@@ -622,7 +622,7 @@ SC_create_errormsg(StatementClass * self)
 }
 
 char
-SC_get_error(StatementClass * self, int *number, char **message)
+SC_get_error(StatementClass *self, int *number, char **message)
 {
 	char		rv;
 
@@ -651,13 +651,13 @@ SC_get_error(StatementClass * self, int *number, char **message)
 	someday, such as mapping a key to a 32 bit value
 */
 unsigned long
-SC_get_bookmark(StatementClass * self)
+SC_get_bookmark(StatementClass *self)
 {
 	return (self->currTuple + 1);
 }
 
 RETCODE
-SC_fetch(StatementClass * self)
+SC_fetch(StatementClass *self)
 {
 	static char *func = "SC_fetch";
 	QResultClass *res = self->result;
@@ -817,7 +817,7 @@ SC_fetch(StatementClass * self)
 
 
 RETCODE
-SC_execute(StatementClass * self)
+SC_execute(StatementClass *self)
 {
 	static char *func = "SC_execute";
 	ConnectionClass *conn;
@@ -1024,7 +1024,7 @@ SC_execute(StatementClass * self)
 }
 
 void
-SC_log_error(char *func, char *desc, StatementClass * self)
+SC_log_error(char *func, char *desc, StatementClass *self)
 {
 #ifdef PRN_NULLCHECK
 #define nullcheck(a) (a ? a : "(NULL)")

@@ -38,7 +38,7 @@
 
 extern GLOBAL_VALUES globals;
 
-Int4		getCharPrecision(StatementClass * stmt, Int4 type, int col, int handle_unknown_size_as);
+Int4		getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as);
 
 
 /* these are the types we support.	all of the pgtype_ functions should */
@@ -194,7 +194,7 @@ sqltype_to_pgtype(SWORD fSqlType)
 	types that are unknown.  All other pg routines in here return a suitable default.
 */
 Int2
-pgtype_to_sqltype(StatementClass * stmt, Int4 type)
+pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
@@ -267,7 +267,7 @@ pgtype_to_sqltype(StatementClass * stmt, Int4 type)
 }
 
 Int2
-pgtype_to_ctype(StatementClass * stmt, Int4 type)
+pgtype_to_ctype(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
@@ -314,7 +314,7 @@ pgtype_to_ctype(StatementClass * stmt, Int4 type)
 }
 
 char *
-pgtype_to_name(StatementClass * stmt, Int4 type)
+pgtype_to_name(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
@@ -381,7 +381,7 @@ pgtype_to_name(StatementClass * stmt, Int4 type)
 }
 
 static Int2
-getNumericScale(StatementClass * stmt, Int4 type, int col)
+getNumericScale(StatementClass *stmt, Int4 type, int col)
 {
 	Int4		atttypmod;
 	QResultClass *result;
@@ -417,7 +417,7 @@ getNumericScale(StatementClass * stmt, Int4 type, int col)
 }
 
 static Int4
-getNumericPrecision(StatementClass * stmt, Int4 type, int col)
+getNumericPrecision(StatementClass *stmt, Int4 type, int col)
 {
 	Int4		atttypmod;
 	QResultClass *result;
@@ -453,7 +453,7 @@ getNumericPrecision(StatementClass * stmt, Int4 type, int col)
 }
 
 Int4
-getCharPrecision(StatementClass * stmt, Int4 type, int col, int handle_unknown_size_as)
+getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
 {
 	int			p = -1,
 				maxsize;
@@ -530,7 +530,7 @@ getCharPrecision(StatementClass * stmt, Int4 type, int col, int handle_unknown_s
 	This is used for functions SQLDescribeCol and SQLColAttributes.
 */
 Int4
-pgtype_precision(StatementClass * stmt, Int4 type, int col, int handle_unknown_size_as)
+pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
 {
 	switch (type)
 	{
@@ -595,7 +595,7 @@ pgtype_precision(StatementClass * stmt, Int4 type, int col, int handle_unknown_s
 }
 
 Int4
-pgtype_display_size(StatementClass * stmt, Int4 type, int col, int handle_unknown_size_as)
+pgtype_display_size(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
 {
 	switch (type)
 	{
@@ -634,7 +634,7 @@ pgtype_display_size(StatementClass * stmt, Int4 type, int col, int handle_unknow
 	override this length with the atttypmod length from pg_attribute
 */
 Int4
-pgtype_length(StatementClass * stmt, Int4 type, int col, int handle_unknown_size_as)
+pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
 {
 	switch (type)
 	{
@@ -676,7 +676,7 @@ pgtype_length(StatementClass * stmt, Int4 type, int col, int handle_unknown_size
 }
 
 Int2
-pgtype_scale(StatementClass * stmt, Int4 type, int col)
+pgtype_scale(StatementClass *stmt, Int4 type, int col)
 {
 	switch (type)
 	{
@@ -709,7 +709,7 @@ pgtype_scale(StatementClass * stmt, Int4 type, int col)
 
 
 Int2
-pgtype_radix(StatementClass * stmt, Int4 type)
+pgtype_radix(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
@@ -729,13 +729,13 @@ pgtype_radix(StatementClass * stmt, Int4 type)
 }
 
 Int2
-pgtype_nullable(StatementClass * stmt, Int4 type)
+pgtype_nullable(StatementClass *stmt, Int4 type)
 {
 	return SQL_NULLABLE;		/* everything should be nullable */
 }
 
 Int2
-pgtype_auto_increment(StatementClass * stmt, Int4 type)
+pgtype_auto_increment(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
@@ -763,7 +763,7 @@ pgtype_auto_increment(StatementClass * stmt, Int4 type)
 }
 
 Int2
-pgtype_case_sensitive(StatementClass * stmt, Int4 type)
+pgtype_case_sensitive(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
@@ -785,7 +785,7 @@ pgtype_case_sensitive(StatementClass * stmt, Int4 type)
 }
 
 Int2
-pgtype_money(StatementClass * stmt, Int4 type)
+pgtype_money(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
@@ -797,7 +797,7 @@ pgtype_money(StatementClass * stmt, Int4 type)
 }
 
 Int2
-pgtype_searchable(StatementClass * stmt, Int4 type)
+pgtype_searchable(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
@@ -818,7 +818,7 @@ pgtype_searchable(StatementClass * stmt, Int4 type)
 }
 
 Int2
-pgtype_unsigned(StatementClass * stmt, Int4 type)
+pgtype_unsigned(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
@@ -841,7 +841,7 @@ pgtype_unsigned(StatementClass * stmt, Int4 type)
 }
 
 char *
-pgtype_literal_prefix(StatementClass * stmt, Int4 type)
+pgtype_literal_prefix(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
@@ -861,7 +861,7 @@ pgtype_literal_prefix(StatementClass * stmt, Int4 type)
 }
 
 char *
-pgtype_literal_suffix(StatementClass * stmt, Int4 type)
+pgtype_literal_suffix(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
@@ -881,7 +881,7 @@ pgtype_literal_suffix(StatementClass * stmt, Int4 type)
 }
 
 char *
-pgtype_create_params(StatementClass * stmt, Int4 type)
+pgtype_create_params(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{

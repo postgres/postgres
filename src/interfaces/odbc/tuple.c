@@ -19,14 +19,14 @@
 #include <stdlib.h>
 
 void
-set_tuplefield_null(TupleField * tuple_field)
+set_tuplefield_null(TupleField *tuple_field)
 {
 	tuple_field->len = 0;
 	tuple_field->value = NULL;	/* strdup(""); */
 }
 
 void
-set_tuplefield_string(TupleField * tuple_field, char *string)
+set_tuplefield_string(TupleField *tuple_field, char *string)
 {
 	tuple_field->len = strlen(string);
 	tuple_field->value = malloc(strlen(string) + 1);
@@ -35,7 +35,7 @@ set_tuplefield_string(TupleField * tuple_field, char *string)
 
 
 void
-set_tuplefield_int2(TupleField * tuple_field, Int2 value)
+set_tuplefield_int2(TupleField *tuple_field, Int2 value)
 {
 	char		buffer[10];
 
@@ -48,7 +48,7 @@ set_tuplefield_int2(TupleField * tuple_field, Int2 value)
 }
 
 void
-set_tuplefield_int4(TupleField * tuple_field, Int4 value)
+set_tuplefield_int4(TupleField *tuple_field, Int4 value)
 {
 	char		buffer[15];
 

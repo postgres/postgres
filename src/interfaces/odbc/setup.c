@@ -50,7 +50,7 @@ typedef struct tagSETUPDLG
 	char		szDSN[MAXDSNAME];		/* Original data source name */
 	BOOL		fNewDSN;		/* New data source flag */
 	BOOL		fDefault;		/* Default data source flag */
-}			SETUPDLG, FAR * LPSETUPDLG;
+}			SETUPDLG, FAR *LPSETUPDLG;
 
 
 
@@ -323,7 +323,7 @@ ConfigDlgProc(HWND hdlg,
 						lpsetupdlg = (LPSETUPDLG) GetWindowLong(hdlg, DWL_USER);
 
 						DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DS),
-						hdlg, ds_optionsProc, (LPARAM) & lpsetupdlg->ci);
+						 hdlg, ds_optionsProc, (LPARAM) &lpsetupdlg->ci);
 
 						return TRUE;
 					}

@@ -52,11 +52,11 @@
 #include "dlg_specific.h"
 
 /* prototypes */
-void		dconn_get_connect_attributes(UCHAR FAR * connect_string, ConnInfo * ci);
+void		dconn_get_connect_attributes(UCHAR FAR *connect_string, ConnInfo *ci);
 
 #ifdef WIN32
 BOOL FAR PASCAL dconn_FDriverConnectProc(HWND hdlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
-RETCODE		dconn_DoDialog(HWND hwnd, ConnInfo * ci);
+RETCODE		dconn_DoDialog(HWND hwnd, ConnInfo *ci);
 
 extern HINSTANCE NEAR s_hModule;/* Saved module handle. */
 
@@ -69,11 +69,11 @@ RETCODE		SQL_API
 SQLDriverConnect(
 				 HDBC hdbc,
 				 HWND hwnd,
-				 UCHAR FAR * szConnStrIn,
+				 UCHAR FAR *szConnStrIn,
 				 SWORD cbConnStrIn,
-				 UCHAR FAR * szConnStrOut,
+				 UCHAR FAR *szConnStrOut,
 				 SWORD cbConnStrOutMax,
-				 SWORD FAR * pcbConnStrOut,
+				 SWORD FAR *pcbConnStrOut,
 				 UWORD fDriverCompletion)
 {
 	static char *func = "SQLDriverConnect";
@@ -248,7 +248,7 @@ dialog:
 
 #ifdef WIN32
 RETCODE
-dconn_DoDialog(HWND hwnd, ConnInfo * ci)
+dconn_DoDialog(HWND hwnd, ConnInfo *ci)
 {
 	int			dialog_result;
 
@@ -350,7 +350,7 @@ dconn_FDriverConnectProc(
 #endif	 /* WIN32 */
 
 void
-dconn_get_connect_attributes(UCHAR FAR * connect_string, ConnInfo * ci)
+dconn_get_connect_attributes(UCHAR FAR *connect_string, ConnInfo *ci)
 {
 	char	   *our_connect_string;
 	char	   *pair,

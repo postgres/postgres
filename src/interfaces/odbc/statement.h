@@ -48,7 +48,7 @@ typedef enum
 								 * considered to be "premature". */
 	STMT_FINISHED,				/* statement execution has finished */
 	STMT_EXECUTING				/* statement execution is still going on */
-}			STMT_Status;
+} STMT_Status;
 
 #define STMT_TRUNCATED -2
 #define STMT_INFO_ONLY -1		/* not an error message, just a
@@ -124,7 +124,7 @@ typedef struct
 	COL_INFO   *col_info;		/* cached SQLColumns info for this table */
 	char		name[MAX_TABLE_LEN + 1];
 	char		alias[MAX_TABLE_LEN + 1];
-}			TABLE_INFO;
+} TABLE_INFO;
 
 typedef struct
 {
@@ -142,7 +142,7 @@ typedef struct
 	char		dot[MAX_TABLE_LEN + 1];
 	char		name[MAX_COLUMN_LEN + 1];
 	char		alias[MAX_COLUMN_LEN + 1];
-}			FIELD_INFO;
+} FIELD_INFO;
 
 
 /********	Statement Handle	***********/
@@ -224,22 +224,22 @@ struct StatementClass_
 
 /*	Statement prototypes */
 StatementClass *SC_Constructor(void);
-void		InitializeStatementOptions(StatementOptions * opt);
-char		SC_Destructor(StatementClass * self);
+void		InitializeStatementOptions(StatementOptions *opt);
+char		SC_Destructor(StatementClass *self);
 int			statement_type(char *statement);
-char		parse_statement(StatementClass * stmt);
-void		SC_pre_execute(StatementClass * self);
-char		SC_unbind_cols(StatementClass * self);
-char		SC_recycle_statement(StatementClass * self);
+char		parse_statement(StatementClass *stmt);
+void		SC_pre_execute(StatementClass *self);
+char		SC_unbind_cols(StatementClass *self);
+char		SC_recycle_statement(StatementClass *self);
 
-void		SC_clear_error(StatementClass * self);
-char		SC_get_error(StatementClass * self, int *number, char **message);
-char	   *SC_create_errormsg(StatementClass * self);
-RETCODE		SC_execute(StatementClass * self);
-RETCODE		SC_fetch(StatementClass * self);
-void		SC_free_params(StatementClass * self, char option);
-void		SC_log_error(char *func, char *desc, StatementClass * self);
-unsigned long SC_get_bookmark(StatementClass * self);
+void		SC_clear_error(StatementClass *self);
+char		SC_get_error(StatementClass *self, int *number, char **message);
+char	   *SC_create_errormsg(StatementClass *self);
+RETCODE		SC_execute(StatementClass *self);
+RETCODE		SC_fetch(StatementClass *self);
+void		SC_free_params(StatementClass *self, char option);
+void		SC_log_error(char *func, char *desc, StatementClass *self);
+unsigned long SC_get_bookmark(StatementClass *self);
 
 
 #endif

@@ -37,7 +37,7 @@ extern GLOBAL_VALUES globals;
 RETCODE		SQL_API
 SQLAllocConnect(
 				HENV henv,
-				HDBC FAR * phdbc)
+				HDBC FAR *phdbc)
 {
 	EnvironmentClass *env = (EnvironmentClass *) henv;
 	ConnectionClass *conn;
@@ -78,11 +78,11 @@ SQLAllocConnect(
 RETCODE		SQL_API
 SQLConnect(
 		   HDBC hdbc,
-		   UCHAR FAR * szDSN,
+		   UCHAR FAR *szDSN,
 		   SWORD cbDSN,
-		   UCHAR FAR * szUID,
+		   UCHAR FAR *szUID,
 		   SWORD cbUID,
-		   UCHAR FAR * szAuthStr,
+		   UCHAR FAR *szAuthStr,
 		   SWORD cbAuthStr)
 {
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
@@ -135,11 +135,11 @@ SQLConnect(
 RETCODE		SQL_API
 SQLBrowseConnect(
 				 HDBC hdbc,
-				 UCHAR FAR * szConnStrIn,
+				 UCHAR FAR *szConnStrIn,
 				 SWORD cbConnStrIn,
-				 UCHAR FAR * szConnStrOut,
+				 UCHAR FAR *szConnStrOut,
 				 SWORD cbConnStrOutMax,
-				 SWORD FAR * pcbConnStrOut)
+				 SWORD FAR *pcbConnStrOut)
 {
 	static char *func = "SQLBrowseConnect";
 
@@ -285,7 +285,7 @@ CC_Constructor()
 
 
 char
-CC_Destructor(ConnectionClass * self)
+CC_Destructor(ConnectionClass *self)
 {
 	mylog("enter CC_Destructor, self=%u\n", self);
 
@@ -329,7 +329,7 @@ CC_Destructor(ConnectionClass * self)
 
 /*	Return how many cursors are opened on this connection */
 int
-CC_cursor_count(ConnectionClass * self)
+CC_cursor_count(ConnectionClass *self)
 {
 	StatementClass *stmt;
 	int			i,
@@ -350,7 +350,7 @@ CC_cursor_count(ConnectionClass * self)
 }
 
 void
-CC_clear_error(ConnectionClass * self)
+CC_clear_error(ConnectionClass *self)
 {
 	self->errornumber = 0;
 	self->errormsg = NULL;
@@ -360,7 +360,7 @@ CC_clear_error(ConnectionClass * self)
 /*	Used to cancel a transaction */
 /*	We are almost always in the middle of a transaction. */
 char
-CC_abort(ConnectionClass * self)
+CC_abort(ConnectionClass *self)
 {
 	QResultClass *res;
 
@@ -384,7 +384,7 @@ CC_abort(ConnectionClass * self)
 
 /* This is called by SQLDisconnect also */
 char
-CC_cleanup(ConnectionClass * self)
+CC_cleanup(ConnectionClass *self)
 {
 	int			i;
 	StatementClass *stmt;
@@ -437,7 +437,7 @@ CC_cleanup(ConnectionClass * self)
 }
 
 int
-CC_set_translation(ConnectionClass * self)
+CC_set_translation(ConnectionClass *self)
 {
 
 #ifdef WIN32
@@ -480,7 +480,7 @@ CC_set_translation(ConnectionClass * self)
 }
 
 char
-CC_connect(ConnectionClass * self, char do_password)
+CC_connect(ConnectionClass *self, char do_password)
 {
 	StartupPacket sp;
 	QResultClass *res;
@@ -733,7 +733,7 @@ CC_connect(ConnectionClass * self, char do_password)
 }
 
 char
-CC_add_statement(ConnectionClass * self, StatementClass * stmt)
+CC_add_statement(ConnectionClass *self, StatementClass *stmt)
 {
 	int			i;
 
@@ -765,7 +765,7 @@ CC_add_statement(ConnectionClass * self, StatementClass * stmt)
 }
 
 char
-CC_remove_statement(ConnectionClass * self, StatementClass * stmt)
+CC_remove_statement(ConnectionClass *self, StatementClass *stmt)
 {
 	int			i;
 
@@ -785,7 +785,7 @@ CC_remove_statement(ConnectionClass * self, StatementClass * stmt)
 	error message with its socket error message.
 */
 char *
-CC_create_errormsg(ConnectionClass * self)
+CC_create_errormsg(ConnectionClass *self)
 {
 	SocketClass *sock = self->sock;
 	int			pos;
@@ -812,7 +812,7 @@ CC_create_errormsg(ConnectionClass * self)
 
 
 char
-CC_get_error(ConnectionClass * self, int *number, char **message)
+CC_get_error(ConnectionClass *self, int *number, char **message)
 {
 	int			rv;
 
@@ -849,7 +849,7 @@ CC_get_error(ConnectionClass * self, int *number, char **message)
 	'declare cursor C3326857 for ...' and 'fetch 100 in C3326857' statements.
 */
 QResultClass *
-CC_send_query(ConnectionClass * self, char *query, QueryInfo * qi)
+CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 {
 	QResultClass *result_in,
 			   *res = NULL;
@@ -1142,7 +1142,7 @@ CC_send_query(ConnectionClass * self, char *query, QueryInfo * qi)
 }
 
 int
-CC_send_function(ConnectionClass * self, int fnid, void *result_buf, int *actual_result_len, int result_is_int, LO_ARG * args, int nargs)
+CC_send_function(ConnectionClass *self, int fnid, void *result_buf, int *actual_result_len, int result_is_int, LO_ARG *args, int nargs)
 {
 	char		id,
 				c,
@@ -1289,7 +1289,7 @@ CC_send_function(ConnectionClass * self, int fnid, void *result_buf, int *actual
 
 
 char
-CC_send_settings(ConnectionClass * self)
+CC_send_settings(ConnectionClass *self)
 {
 	/* char ini_query[MAX_MESSAGE_LEN]; */
 	ConnInfo   *ci = &(self->connInfo);
@@ -1393,7 +1393,7 @@ CC_send_settings(ConnectionClass * self)
 	will go away and the define 'PG_TYPE_LO' will be updated.
 */
 void
-CC_lookup_lo(ConnectionClass * self)
+CC_lookup_lo(ConnectionClass *self)
 {
 	HSTMT		hstmt;
 	StatementClass *stmt;
@@ -1442,7 +1442,7 @@ CC_lookup_lo(ConnectionClass * self)
 	h-inoue 01-2-2001
 */
 void
-CC_initialize_pg_version(ConnectionClass * self)
+CC_initialize_pg_version(ConnectionClass *self)
 {
 	strcpy(self->pg_version, self->connInfo.protocol);
 	self->pg_version_number = (float) 6.4;
@@ -1455,7 +1455,7 @@ CC_initialize_pg_version(ConnectionClass * self)
 	DJP - 25-1-2001
 */
 void
-CC_lookup_pg_version(ConnectionClass * self)
+CC_lookup_pg_version(ConnectionClass *self)
 {
 	HSTMT		hstmt;
 	StatementClass *stmt;
@@ -1517,7 +1517,7 @@ CC_lookup_pg_version(ConnectionClass * self)
 }
 
 void
-CC_log_error(char *func, char *desc, ConnectionClass * self)
+CC_log_error(char *func, char *desc, ConnectionClass *self)
 {
 #ifdef PRN_NULLCHECK
 #define nullcheck(a) (a ? a : "(NULL)")

@@ -64,7 +64,7 @@ SQLGetInfo(
 		   UWORD fInfoType,
 		   PTR rgbInfoValue,
 		   SWORD cbInfoValueMax,
-		   SWORD FAR * pcbInfoValue)
+		   SWORD FAR *pcbInfoValue)
 {
 	static char *func = "SQLGetInfo";
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
@@ -769,7 +769,7 @@ SQLGetTypeInfo(
 
 		if (fSqlType == SQL_ALL_TYPES || fSqlType == sqlType)
 		{
-			row = (TupleNode *) malloc(sizeof(TupleNode) + (15 - 1) * sizeof(TupleField));
+			row = (TupleNode *) malloc(sizeof(TupleNode) + (15 - 1) *sizeof(TupleField));
 
 			/* These values can't be NULL */
 			set_tuplefield_string(&row->tuple[0], pgtype_to_name(stmt, pgType));
@@ -814,7 +814,7 @@ RETCODE		SQL_API
 SQLGetFunctions(
 				HDBC hdbc,
 				UWORD fFunction,
-				UWORD FAR * pfExists)
+				UWORD FAR *pfExists)
 {
 	static char *func = "SQLGetFunctions";
 
@@ -1097,13 +1097,13 @@ SQLGetFunctions(
 RETCODE		SQL_API
 SQLTables(
 		  HSTMT hstmt,
-		  UCHAR FAR * szTableQualifier,
+		  UCHAR FAR *szTableQualifier,
 		  SWORD cbTableQualifier,
-		  UCHAR FAR * szTableOwner,
+		  UCHAR FAR *szTableOwner,
 		  SWORD cbTableOwner,
-		  UCHAR FAR * szTableName,
+		  UCHAR FAR *szTableName,
 		  SWORD cbTableName,
-		  UCHAR FAR * szTableType,
+		  UCHAR FAR *szTableType,
 		  SWORD cbTableType)
 {
 	static char *func = "SQLTables";
@@ -1372,7 +1372,7 @@ SQLTables(
 			(view && show_views) ||
 			(regular_table && show_regular_tables))
 		{
-			row = (TupleNode *) malloc(sizeof(TupleNode) + (5 - 1) * sizeof(TupleField));
+			row = (TupleNode *) malloc(sizeof(TupleNode) + (5 - 1) *sizeof(TupleField));
 
 			set_tuplefield_string(&row->tuple[0], "");
 
@@ -1422,13 +1422,13 @@ SQLTables(
 RETCODE		SQL_API
 SQLColumns(
 		   HSTMT hstmt,
-		   UCHAR FAR * szTableQualifier,
+		   UCHAR FAR *szTableQualifier,
 		   SWORD cbTableQualifier,
-		   UCHAR FAR * szTableOwner,
+		   UCHAR FAR *szTableOwner,
 		   SWORD cbTableOwner,
-		   UCHAR FAR * szTableName,
+		   UCHAR FAR *szTableName,
 		   SWORD cbTableName,
-		   UCHAR FAR * szColumnName,
+		   UCHAR FAR *szColumnName,
 		   SWORD cbColumnName)
 {
 	static char *func = "SQLColumns";
@@ -1684,7 +1684,7 @@ SQLColumns(
 			/* For OID fields */
 			the_type = PG_TYPE_OID;
 			row = (TupleNode *) malloc(sizeof(TupleNode) +
-								 (result_cols - 1) * sizeof(TupleField));
+								  (result_cols - 1) *sizeof(TupleField));
 
 			set_tuplefield_string(&row->tuple[0], "");
 			/* see note in SQLTables() */
@@ -1713,7 +1713,7 @@ SQLColumns(
 	while ((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO))
 	{
 		row = (TupleNode *) malloc(sizeof(TupleNode) +
-								 (result_cols - 1) * sizeof(TupleField));
+								   (result_cols - 1) *sizeof(TupleField));
 
 
 		set_tuplefield_string(&row->tuple[0], "");
@@ -1821,7 +1821,7 @@ SQLColumns(
 		the_type = PG_TYPE_INT4;
 
 		row = (TupleNode *) malloc(sizeof(TupleNode) +
-								 (result_cols - 1) * sizeof(TupleField));
+								   (result_cols - 1) *sizeof(TupleField));
 
 		set_tuplefield_string(&row->tuple[0], "");
 		set_tuplefield_string(&row->tuple[1], "");
@@ -1859,11 +1859,11 @@ RETCODE		SQL_API
 SQLSpecialColumns(
 				  HSTMT hstmt,
 				  UWORD fColType,
-				  UCHAR FAR * szTableQualifier,
+				  UCHAR FAR *szTableQualifier,
 				  SWORD cbTableQualifier,
-				  UCHAR FAR * szTableOwner,
+				  UCHAR FAR *szTableOwner,
 				  SWORD cbTableOwner,
-				  UCHAR FAR * szTableName,
+				  UCHAR FAR *szTableName,
 				  SWORD cbTableName,
 				  UWORD fScope,
 				  UWORD fNullable)
@@ -1958,7 +1958,7 @@ SQLSpecialColumns(
 		/* use the oid value for the rowid */
 		if (fColType == SQL_BEST_ROWID)
 		{
-			row = (TupleNode *) malloc(sizeof(TupleNode) + (8 - 1) * sizeof(TupleField));
+			row = (TupleNode *) malloc(sizeof(TupleNode) + (8 - 1) *sizeof(TupleField));
 
 			set_tuplefield_int2(&row->tuple[0], SQL_SCOPE_SESSION);
 			set_tuplefield_string(&row->tuple[1], "oid");
@@ -1977,7 +1977,7 @@ SQLSpecialColumns(
 
 			if (atoi(ci->row_versioning))
 			{
-				row = (TupleNode *) malloc(sizeof(TupleNode) + (8 - 1) * sizeof(TupleField));
+				row = (TupleNode *) malloc(sizeof(TupleNode) + (8 - 1) *sizeof(TupleField));
 
 				set_tuplefield_null(&row->tuple[0]);
 				set_tuplefield_string(&row->tuple[1], "xmin");
@@ -2007,11 +2007,11 @@ SQLSpecialColumns(
 RETCODE		SQL_API
 SQLStatistics(
 			  HSTMT hstmt,
-			  UCHAR FAR * szTableQualifier,
+			  UCHAR FAR *szTableQualifier,
 			  SWORD cbTableQualifier,
-			  UCHAR FAR * szTableOwner,
+			  UCHAR FAR *szTableOwner,
 			  SWORD cbTableOwner,
-			  UCHAR FAR * szTableName,
+			  UCHAR FAR *szTableName,
 			  SWORD cbTableName,
 			  UWORD fUnique,
 			  UWORD fAccuracy)
@@ -2255,7 +2255,7 @@ SQLStatistics(
 	if (relhasrules[0] != '1' && atoi(ci->show_oid_column) && atoi(ci->fake_oid_index))
 	{
 		row = (TupleNode *) malloc(sizeof(TupleNode) +
-								   (13 - 1) * sizeof(TupleField));
+								   (13 - 1) *sizeof(TupleField));
 
 		/* no table qualifier */
 		set_tuplefield_string(&row->tuple[0], "");
@@ -2300,7 +2300,7 @@ SQLStatistics(
 			while (i < 8 && fields_vector[i] != 0)
 			{
 				row = (TupleNode *) malloc(sizeof(TupleNode) +
-										   (13 - 1) * sizeof(TupleField));
+										   (13 - 1) *sizeof(TupleField));
 
 				/* no table qualifier */
 				set_tuplefield_string(&row->tuple[0], "");
@@ -2396,13 +2396,13 @@ SEEYA:
 RETCODE		SQL_API
 SQLColumnPrivileges(
 					HSTMT hstmt,
-					UCHAR FAR * szTableQualifier,
+					UCHAR FAR *szTableQualifier,
 					SWORD cbTableQualifier,
-					UCHAR FAR * szTableOwner,
+					UCHAR FAR *szTableOwner,
 					SWORD cbTableOwner,
-					UCHAR FAR * szTableName,
+					UCHAR FAR *szTableName,
 					SWORD cbTableName,
-					UCHAR FAR * szColumnName,
+					UCHAR FAR *szColumnName,
 					SWORD cbColumnName)
 {
 	static char *func = "SQLColumnPrivileges";
@@ -2422,11 +2422,11 @@ SQLColumnPrivileges(
 RETCODE		SQL_API
 SQLPrimaryKeys(
 			   HSTMT hstmt,
-			   UCHAR FAR * szTableQualifier,
+			   UCHAR FAR *szTableQualifier,
 			   SWORD cbTableQualifier,
-			   UCHAR FAR * szTableOwner,
+			   UCHAR FAR *szTableOwner,
 			   SWORD cbTableOwner,
-			   UCHAR FAR * szTableName,
+			   UCHAR FAR *szTableName,
 			   SWORD cbTableName)
 {
 	static char *func = "SQLPrimaryKeys";
@@ -2547,7 +2547,7 @@ SQLPrimaryKeys(
 
 	while ((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO))
 	{
-		row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) * sizeof(TupleField));
+		row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) *sizeof(TupleField));
 
 		set_tuplefield_null(&row->tuple[0]);
 
@@ -2598,17 +2598,17 @@ SQLPrimaryKeys(
 RETCODE		SQL_API
 SQLForeignKeys(
 			   HSTMT hstmt,
-			   UCHAR FAR * szPkTableQualifier,
+			   UCHAR FAR *szPkTableQualifier,
 			   SWORD cbPkTableQualifier,
-			   UCHAR FAR * szPkTableOwner,
+			   UCHAR FAR *szPkTableOwner,
 			   SWORD cbPkTableOwner,
-			   UCHAR FAR * szPkTableName,
+			   UCHAR FAR *szPkTableName,
 			   SWORD cbPkTableName,
-			   UCHAR FAR * szFkTableQualifier,
+			   UCHAR FAR *szFkTableQualifier,
 			   SWORD cbFkTableQualifier,
-			   UCHAR FAR * szFkTableOwner,
+			   UCHAR FAR *szFkTableOwner,
 			   SWORD cbFkTableOwner,
-			   UCHAR FAR * szFkTableName,
+			   UCHAR FAR *szFkTableName,
 			   SWORD cbFkTableName)
 {
 	static char *func = "SQLForeignKeys";
@@ -2974,7 +2974,7 @@ SQLForeignKeys(
 
 			for (k = 0; k < num_keys; k++)
 			{
-				row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) * sizeof(TupleField));
+				row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) *sizeof(TupleField));
 
 				mylog("%s: pk_table = '%s', pkey_ptr = '%s'\n", func, pk_table, pkey_ptr);
 				set_tuplefield_null(&row->tuple[0]);
@@ -3199,7 +3199,7 @@ SQLForeignKeys(
 			{
 				mylog("pkey_ptr = '%s', fk_table = '%s', fkey_ptr = '%s'\n", pkey_ptr, fk_table, fkey_ptr);
 
-				row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) * sizeof(TupleField));
+				row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) *sizeof(TupleField));
 
 				mylog("pk_table_needed = '%s', pkey_ptr = '%s'\n", pk_table_needed, pkey_ptr);
 				set_tuplefield_null(&row->tuple[0]);
@@ -3262,13 +3262,13 @@ SQLForeignKeys(
 RETCODE		SQL_API
 SQLProcedureColumns(
 					HSTMT hstmt,
-					UCHAR FAR * szProcQualifier,
+					UCHAR FAR *szProcQualifier,
 					SWORD cbProcQualifier,
-					UCHAR FAR * szProcOwner,
+					UCHAR FAR *szProcOwner,
 					SWORD cbProcOwner,
-					UCHAR FAR * szProcName,
+					UCHAR FAR *szProcName,
 					SWORD cbProcName,
-					UCHAR FAR * szColumnName,
+					UCHAR FAR *szColumnName,
 					SWORD cbColumnName)
 {
 	static char *func = "SQLProcedureColumns";
@@ -3282,11 +3282,11 @@ SQLProcedureColumns(
 RETCODE		SQL_API
 SQLProcedures(
 			  HSTMT hstmt,
-			  UCHAR FAR * szProcQualifier,
+			  UCHAR FAR *szProcQualifier,
 			  SWORD cbProcQualifier,
-			  UCHAR FAR * szProcOwner,
+			  UCHAR FAR *szProcOwner,
 			  SWORD cbProcOwner,
-			  UCHAR FAR * szProcName,
+			  UCHAR FAR *szProcName,
 			  SWORD cbProcName)
 {
 	static char *func = "SQLProcedures";
@@ -3300,11 +3300,11 @@ SQLProcedures(
 RETCODE		SQL_API
 SQLTablePrivileges(
 				   HSTMT hstmt,
-				   UCHAR FAR * szTableQualifier,
+				   UCHAR FAR *szTableQualifier,
 				   SWORD cbTableQualifier,
-				   UCHAR FAR * szTableOwner,
+				   UCHAR FAR *szTableOwner,
 				   SWORD cbTableOwner,
-				   UCHAR FAR * szTableName,
+				   UCHAR FAR *szTableName,
 				   SWORD cbTableName)
 {
 	static char *func = "SQLTablePrivileges";

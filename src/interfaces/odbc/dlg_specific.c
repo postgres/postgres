@@ -47,7 +47,7 @@ extern GLOBAL_VALUES globals;
 
 #ifdef WIN32
 void
-SetDlgStuff(HWND hdlg, ConnInfo * ci)
+SetDlgStuff(HWND hdlg, ConnInfo *ci)
 {
 
 	/*
@@ -68,7 +68,7 @@ SetDlgStuff(HWND hdlg, ConnInfo * ci)
 }
 
 void
-GetDlgStuff(HWND hdlg, ConnInfo * ci)
+GetDlgStuff(HWND hdlg, ConnInfo *ci)
 {
 	GetDlgItemText(hdlg, IDC_DESC, ci->desc, sizeof(ci->desc));
 
@@ -318,7 +318,7 @@ ds_optionsProc(HWND hdlg,
 #endif	 /* WIN32 */
 
 void
-makeConnectString(char *connect_string, ConnInfo * ci)
+makeConnectString(char *connect_string, ConnInfo *ci)
 {
 	char		got_dsn = (ci->dsn[0] != '\0');
 	char		encoded_conn_settings[LARGE_REGISTRY_LEN];
@@ -348,7 +348,7 @@ makeConnectString(char *connect_string, ConnInfo * ci)
 }
 
 void
-copyAttributes(ConnInfo * ci, char *attribute, char *value)
+copyAttributes(ConnInfo *ci, char *attribute, char *value)
 {
 	if (stricmp(attribute, "DSN") == 0)
 		strcpy(ci->dsn, value);
@@ -399,7 +399,7 @@ copyAttributes(ConnInfo * ci, char *attribute, char *value)
 }
 
 void
-getDSNdefaults(ConnInfo * ci)
+getDSNdefaults(ConnInfo *ci)
 {
 	if (ci->port[0] == '\0')
 		strcpy(ci->port, DEFAULT_PORT);
@@ -425,7 +425,7 @@ getDSNdefaults(ConnInfo * ci)
 
 
 void
-getDSNinfo(ConnInfo * ci, char overwrite)
+getDSNinfo(ConnInfo *ci, char overwrite)
 {
 	char	   *DSN = ci->dsn;
 	char		encoded_conn_settings[LARGE_REGISTRY_LEN];
@@ -522,7 +522,7 @@ getDSNinfo(ConnInfo * ci, char overwrite)
 
 /*	This is for datasource based options only */
 void
-writeDSNinfo(ConnInfo * ci)
+writeDSNinfo(ConnInfo *ci)
 {
 	char	   *DSN = ci->dsn;
 	char		encoded_conn_settings[LARGE_REGISTRY_LEN];

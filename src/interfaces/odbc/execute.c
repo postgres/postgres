@@ -41,7 +41,7 @@ extern GLOBAL_VALUES globals;
 /*		Perform a Prepare on the SQL statement */
 RETCODE		SQL_API
 SQLPrepare(HSTMT hstmt,
-		   UCHAR FAR * szSqlStr,
+		   UCHAR FAR *szSqlStr,
 		   SDWORD cbSqlStr)
 {
 	static char *func = "SQLPrepare";
@@ -136,7 +136,7 @@ SQLPrepare(HSTMT hstmt,
 RETCODE		SQL_API
 SQLExecDirect(
 			  HSTMT hstmt,
-			  UCHAR FAR * szSqlStr,
+			  UCHAR FAR *szSqlStr,
 			  SDWORD cbSqlStr)
 {
 	StatementClass *stmt = (StatementClass *) hstmt;
@@ -489,11 +489,11 @@ SQLCancel(
 RETCODE		SQL_API
 SQLNativeSql(
 			 HDBC hdbc,
-			 UCHAR FAR * szSqlStrIn,
+			 UCHAR FAR *szSqlStrIn,
 			 SDWORD cbSqlStrIn,
-			 UCHAR FAR * szSqlStr,
+			 UCHAR FAR *szSqlStr,
 			 SDWORD cbSqlStrMax,
-			 SDWORD FAR * pcbSqlStr)
+			 SDWORD FAR *pcbSqlStr)
 {
 	static char *func = "SQLNativeSql";
 	int			len = 0;
@@ -543,7 +543,7 @@ SQLNativeSql(
 RETCODE		SQL_API
 SQLParamData(
 			 HSTMT hstmt,
-			 PTR FAR * prgbValue)
+			 PTR FAR *prgbValue)
 {
 	static char *func = "SQLParamData";
 	StatementClass *stmt = (StatementClass *) hstmt;

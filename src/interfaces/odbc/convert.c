@@ -154,7 +154,7 @@ char	   *conv_to_octal(unsigned char val);
 
 /*	This is called by SQLFetch() */
 int
-copy_and_convert_field_bindinfo(StatementClass * stmt, Int4 field_type, void *value, int col)
+copy_and_convert_field_bindinfo(StatementClass *stmt, Int4 field_type, void *value, int col)
 {
 	BindInfoClass *bic = &(stmt->bindings[col]);
 
@@ -164,8 +164,8 @@ copy_and_convert_field_bindinfo(StatementClass * stmt, Int4 field_type, void *va
 
 /*	This is called by SQLGetData() */
 int
-copy_and_convert_field(StatementClass * stmt, Int4 field_type, void *value, Int2 fCType,
-					   PTR rgbValue, SDWORD cbValueMax, SDWORD * pcbValue)
+copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 fCType,
+					   PTR rgbValue, SDWORD cbValueMax, SDWORD *pcbValue)
 {
 	Int4		len = 0,
 				copy_len = 0;
@@ -672,7 +672,7 @@ copy_and_convert_field(StatementClass * stmt, Int4 field_type, void *value, Int2
 	This function no longer does any dynamic memory allocation!
 */
 int
-copy_statement_with_parameters(StatementClass * stmt)
+copy_statement_with_parameters(StatementClass *stmt)
 {
 	static char *func = "copy_statement_with_parameters";
 	unsigned int opos,
@@ -1308,7 +1308,7 @@ convert_money(char *s)
 /*	This function parses a character string for date/time info and fills in SIMPLE_TIME */
 /*	It does not zero out SIMPLE_TIME in case it is desired to initialize it with a value */
 char
-parse_datetime(char *buf, SIMPLE_TIME * st)
+parse_datetime(char *buf, SIMPLE_TIME *st)
 {
 	int			y,
 				m,
@@ -1610,8 +1610,8 @@ decode(char *in, char *out)
 	mapped to PG_TYPE_LO someday, instead of PG_TYPE_TEXT as it is now.
 */
 int
-convert_lo(StatementClass * stmt, void *value, Int2 fCType, PTR rgbValue,
-		   SDWORD cbValueMax, SDWORD * pcbValue)
+convert_lo(StatementClass *stmt, void *value, Int2 fCType, PTR rgbValue,
+		   SDWORD cbValueMax, SDWORD *pcbValue)
 {
 	Oid			oid;
 	int			retval,

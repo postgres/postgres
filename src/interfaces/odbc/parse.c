@@ -38,8 +38,8 @@
 #define COL_INCR	16
 
 char	   *getNextToken(char *s, char *token, int smax, char *delim, char *quote, char *dquote, char *numeric);
-void		getColInfo(COL_INFO * col_info, FIELD_INFO * fi, int k);
-char		searchColInfo(COL_INFO * col_info, FIELD_INFO * fi);
+void		getColInfo(COL_INFO *col_info, FIELD_INFO *fi, int k);
+char		searchColInfo(COL_INFO *col_info, FIELD_INFO *fi);
 
 char *
 getNextToken(char *s, char *token, int smax, char *delim, char *quote, char *dquote, char *numeric)
@@ -196,7 +196,7 @@ QR_set_field_info(stmt->result, 13, "FIELD_TYPE", PG_TYPE_INT4, 4);
 #endif
 
 void
-getColInfo(COL_INFO * col_info, FIELD_INFO * fi, int k)
+getColInfo(COL_INFO *col_info, FIELD_INFO *fi, int k)
 {
 	if (fi->name[0] == '\0')
 		strcpy(fi->name, QR_get_value_manual(col_info->result, k, 3));
@@ -209,7 +209,7 @@ getColInfo(COL_INFO * col_info, FIELD_INFO * fi, int k)
 }
 
 char
-searchColInfo(COL_INFO * col_info, FIELD_INFO * fi)
+searchColInfo(COL_INFO *col_info, FIELD_INFO *fi)
 {
 	int			k;
 	char	   *col;
@@ -232,7 +232,7 @@ searchColInfo(COL_INFO * col_info, FIELD_INFO * fi)
 
 
 char
-parse_statement(StatementClass * stmt)
+parse_statement(StatementClass *stmt)
 {
 	static char *func = "parse_statement";
 	char		token[256];

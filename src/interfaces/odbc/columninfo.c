@@ -38,7 +38,7 @@ CI_Constructor()
 }
 
 void
-CI_Destructor(ColumnInfoClass * self)
+CI_Destructor(ColumnInfoClass *self)
 {
 	CI_free_memory(self);
 
@@ -50,7 +50,7 @@ CI_Destructor(ColumnInfoClass * self)
 	If self is null, then just read, don't store.
 */
 char
-CI_read_fields(ColumnInfoClass * self, ConnectionClass * conn)
+CI_read_fields(ColumnInfoClass *self, ConnectionClass *conn)
 {
 	Int2		lf;
 	int			new_num_fields;
@@ -105,7 +105,7 @@ CI_read_fields(ColumnInfoClass * self, ConnectionClass * conn)
 
 
 void
-CI_free_memory(ColumnInfoClass * self)
+CI_free_memory(ColumnInfoClass *self)
 {
 	register Int2 lf;
 	int			num_fields = self->num_fields;
@@ -126,7 +126,7 @@ CI_free_memory(ColumnInfoClass * self)
 }
 
 void
-CI_set_num_fields(ColumnInfoClass * self, int new_num_fields)
+CI_set_num_fields(ColumnInfoClass *self, int new_num_fields)
 {
 	CI_free_memory(self);		/* always safe to call */
 
@@ -140,7 +140,7 @@ CI_set_num_fields(ColumnInfoClass * self, int new_num_fields)
 }
 
 void
-CI_set_field_info(ColumnInfoClass * self, int field_num, char *new_name,
+CI_set_field_info(ColumnInfoClass *self, int field_num, char *new_name,
 				  Oid new_adtid, Int2 new_adtsize, Int4 new_atttypmod)
 {
 	/* check bounds */

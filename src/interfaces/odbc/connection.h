@@ -35,7 +35,7 @@ typedef enum
 	CONN_DOWN,					/* Connection is broken */
 	CONN_EXECUTING				/* the connection is currently executing a
 								 * statement */
-}			CONN_Status;
+} CONN_Status;
 
 /*	These errors have general sql error state */
 #define CONNECTION_SERVER_NOT_REACHED 101
@@ -145,7 +145,7 @@ typedef struct
 	char		translation_dll[MEDIUM_REGISTRY_LEN];
 	char		translation_option[SMALL_REGISTRY_LEN];
 	char		focus_password;
-}			ConnInfo;
+} ConnInfo;
 
 /*
  *	Macros to compare the server's version with a specified version
@@ -199,27 +199,27 @@ struct col_info
 #define HINSTANCE void *
 #endif
 
-typedef BOOL(FAR WINAPI * DataSourceToDriverProc) (UDWORD,
-										   SWORD,
-										   PTR,
-										   SDWORD,
-										   PTR,
-										   SDWORD,
-										   SDWORD FAR *,
-										   UCHAR FAR *,
-										   SWORD,
-										   SWORD FAR *);
+typedef BOOL (FAR WINAPI * DataSourceToDriverProc) (UDWORD,
+																SWORD,
+																PTR,
+																SDWORD,
+																PTR,
+																SDWORD,
+															SDWORD FAR *,
+															 UCHAR FAR *,
+																SWORD,
+															SWORD FAR *);
 
-typedef BOOL(FAR WINAPI * DriverToDataSourceProc) (UDWORD,
-										   SWORD,
-										   PTR,
-										   SDWORD,
-										   PTR,
-										   SDWORD,
-										   SDWORD FAR *,
-										   UCHAR FAR *,
-										   SWORD,
-										   SWORD FAR *);
+typedef BOOL (FAR WINAPI * DriverToDataSourceProc) (UDWORD,
+																SWORD,
+																PTR,
+																SDWORD,
+																PTR,
+																SDWORD,
+															SDWORD FAR *,
+															 UCHAR FAR *,
+																SWORD,
+															SWORD FAR *);
 
 /*******	The Connection handle	************/
 struct ConnectionClass_
@@ -270,24 +270,24 @@ struct ConnectionClass_
 
 /*	prototypes */
 ConnectionClass *CC_Constructor(void);
-char		CC_Destructor(ConnectionClass * self);
-int			CC_cursor_count(ConnectionClass * self);
-char		CC_cleanup(ConnectionClass * self);
-char		CC_abort(ConnectionClass * self);
-int			CC_set_translation(ConnectionClass * self);
-char		CC_connect(ConnectionClass * self, char do_password);
-char		CC_add_statement(ConnectionClass * self, StatementClass * stmt);
-char		CC_remove_statement(ConnectionClass * self, StatementClass * stmt);
-char		CC_get_error(ConnectionClass * self, int *number, char **message);
-QResultClass *CC_send_query(ConnectionClass * self, char *query, QueryInfo * qi);
-void		CC_clear_error(ConnectionClass * self);
-char	   *CC_create_errormsg(ConnectionClass * self);
-int			CC_send_function(ConnectionClass * conn, int fnid, void *result_buf, int *actual_result_len, int result_is_int, LO_ARG * argv, int nargs);
-char		CC_send_settings(ConnectionClass * self);
-void		CC_lookup_lo(ConnectionClass * conn);
-void		CC_lookup_pg_version(ConnectionClass * conn);
-void		CC_initialize_pg_version(ConnectionClass * conn);
-void		CC_log_error(char *func, char *desc, ConnectionClass * self);
+char		CC_Destructor(ConnectionClass *self);
+int			CC_cursor_count(ConnectionClass *self);
+char		CC_cleanup(ConnectionClass *self);
+char		CC_abort(ConnectionClass *self);
+int			CC_set_translation(ConnectionClass *self);
+char		CC_connect(ConnectionClass *self, char do_password);
+char		CC_add_statement(ConnectionClass *self, StatementClass *stmt);
+char		CC_remove_statement(ConnectionClass *self, StatementClass *stmt);
+char		CC_get_error(ConnectionClass *self, int *number, char **message);
+QResultClass *CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi);
+void		CC_clear_error(ConnectionClass *self);
+char	   *CC_create_errormsg(ConnectionClass *self);
+int			CC_send_function(ConnectionClass *conn, int fnid, void *result_buf, int *actual_result_len, int result_is_int, LO_ARG *argv, int nargs);
+char		CC_send_settings(ConnectionClass *self);
+void		CC_lookup_lo(ConnectionClass *conn);
+void		CC_lookup_pg_version(ConnectionClass *conn);
+void		CC_initialize_pg_version(ConnectionClass *conn);
+void		CC_log_error(char *func, char *desc, ConnectionClass *self);
 
 
 #endif

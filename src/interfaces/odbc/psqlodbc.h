@@ -6,7 +6,7 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- * $Id: psqlodbc.h,v 1.33 2001/02/11 02:01:22 momjian Exp $
+ * $Id: psqlodbc.h,v 1.34 2001/02/11 05:13:51 momjian Exp $
  */
 
 #ifndef __PSQLODBC_H__
@@ -147,7 +147,7 @@ typedef struct GlobalValues_
 	char		protocol[SMALL_REGISTRY_LEN];
 	FILE	   *mylogFP;
 	FILE	   *qlogFP;
-}			GLOBAL_VALUES;
+} GLOBAL_VALUES;
 
 typedef struct StatementOptions_
 {
@@ -161,7 +161,7 @@ typedef struct StatementOptions_
 	int			bind_size;		/* size of each structure if using Row
 								 * Binding */
 	int			use_bookmarks;
-}			StatementOptions;
+} StatementOptions;
 
 /*	Used to pass extra query info to send_query */
 typedef struct QueryInfo_
@@ -169,7 +169,7 @@ typedef struct QueryInfo_
 	int			row_size;
 	QResultClass *result_in;
 	char	   *cursor;
-}			QueryInfo;
+} QueryInfo;
 
 
 #define PG_TYPE_LO				-999	/* hack until permanent type

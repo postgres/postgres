@@ -36,7 +36,7 @@ extern GLOBAL_VALUES globals;
 
 
 void
-SOCK_clear_error(SocketClass * self)
+SOCK_clear_error(SocketClass *self)
 {
 	self->errornumber = 0;
 	self->errormsg = NULL;
@@ -73,7 +73,7 @@ SOCK_Constructor()
 }
 
 void
-SOCK_Destructor(SocketClass * self)
+SOCK_Destructor(SocketClass *self)
 {
 	if (self->socket != -1)
 	{
@@ -98,7 +98,7 @@ SOCK_Destructor(SocketClass * self)
 
 
 char
-SOCK_connect_to(SocketClass * self, unsigned short port, char *hostname)
+SOCK_connect_to(SocketClass *self, unsigned short port, char *hostname)
 {
 	struct hostent *host;
 	struct sockaddr_in sadr;
@@ -156,7 +156,7 @@ SOCK_connect_to(SocketClass * self, unsigned short port, char *hostname)
 
 
 void
-SOCK_get_n_char(SocketClass * self, char *buffer, int len)
+SOCK_get_n_char(SocketClass *self, char *buffer, int len)
 {
 	int			lf;
 
@@ -173,7 +173,7 @@ SOCK_get_n_char(SocketClass * self, char *buffer, int len)
 
 
 void
-SOCK_put_n_char(SocketClass * self, char *buffer, int len)
+SOCK_put_n_char(SocketClass *self, char *buffer, int len)
 {
 	int			lf;
 
@@ -193,7 +193,7 @@ SOCK_put_n_char(SocketClass * self, char *buffer, int len)
 	will read at most bufsize-1 characters + null.
 */
 void
-SOCK_get_string(SocketClass * self, char *buffer, int bufsize)
+SOCK_get_string(SocketClass *self, char *buffer, int bufsize)
 {
 	register int lf = 0;
 
@@ -206,7 +206,7 @@ SOCK_get_string(SocketClass * self, char *buffer, int bufsize)
 
 
 void
-SOCK_put_string(SocketClass * self, char *string)
+SOCK_put_string(SocketClass *self, char *string)
 {
 	register int lf;
 	int			len;
@@ -219,7 +219,7 @@ SOCK_put_string(SocketClass * self, char *string)
 
 
 int
-SOCK_get_int(SocketClass * self, short len)
+SOCK_get_int(SocketClass *self, short len)
 {
 	char		buf[4];
 
@@ -248,7 +248,7 @@ SOCK_get_int(SocketClass * self, short len)
 
 
 void
-SOCK_put_int(SocketClass * self, int value, short len)
+SOCK_put_int(SocketClass *self, int value, short len)
 {
 	unsigned int rv;
 
@@ -273,7 +273,7 @@ SOCK_put_int(SocketClass * self, int value, short len)
 
 
 void
-SOCK_flush_output(SocketClass * self)
+SOCK_flush_output(SocketClass *self)
 {
 	int			written;
 
@@ -287,7 +287,7 @@ SOCK_flush_output(SocketClass * self)
 }
 
 unsigned char
-SOCK_get_next_byte(SocketClass * self)
+SOCK_get_next_byte(SocketClass *self)
 {
 	if (self->buffer_read_in >= self->buffer_filled_in)
 	{
@@ -316,7 +316,7 @@ SOCK_get_next_byte(SocketClass * self)
 }
 
 void
-SOCK_put_next_byte(SocketClass * self, unsigned char next_byte)
+SOCK_put_next_byte(SocketClass *self, unsigned char next_byte)
 {
 	int			bytes_sent;
 

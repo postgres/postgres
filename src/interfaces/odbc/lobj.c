@@ -16,7 +16,7 @@
 #include "connection.h"
 
 Oid
-lo_creat(ConnectionClass * conn, int mode)
+lo_creat(ConnectionClass *conn, int mode)
 {
 	LO_ARG		argv[1];
 	int			retval,
@@ -35,7 +35,7 @@ lo_creat(ConnectionClass * conn, int mode)
 }
 
 int
-lo_open(ConnectionClass * conn, int lobjId, int mode)
+lo_open(ConnectionClass *conn, int lobjId, int mode)
 {
 	int			fd;
 	int			result_len;
@@ -60,7 +60,7 @@ lo_open(ConnectionClass * conn, int lobjId, int mode)
 }
 
 int
-lo_close(ConnectionClass * conn, int fd)
+lo_close(ConnectionClass *conn, int fd)
 {
 	LO_ARG		argv[1];
 	int			retval,
@@ -80,7 +80,7 @@ lo_close(ConnectionClass * conn, int fd)
 
 
 int
-lo_read(ConnectionClass * conn, int fd, char *buf, int len)
+lo_read(ConnectionClass *conn, int fd, char *buf, int len)
 {
 	LO_ARG		argv[2];
 	int			result_len;
@@ -102,7 +102,7 @@ lo_read(ConnectionClass * conn, int fd, char *buf, int len)
 }
 
 int
-lo_write(ConnectionClass * conn, int fd, char *buf, int len)
+lo_write(ConnectionClass *conn, int fd, char *buf, int len)
 {
 	LO_ARG		argv[2];
 	int			retval,
@@ -128,7 +128,7 @@ lo_write(ConnectionClass * conn, int fd, char *buf, int len)
 }
 
 int
-lo_lseek(ConnectionClass * conn, int fd, int offset, int whence)
+lo_lseek(ConnectionClass *conn, int fd, int offset, int whence)
 {
 	LO_ARG		argv[3];
 	int			retval,
@@ -155,7 +155,7 @@ lo_lseek(ConnectionClass * conn, int fd, int offset, int whence)
 }
 
 int
-lo_tell(ConnectionClass * conn, int fd)
+lo_tell(ConnectionClass *conn, int fd)
 {
 	LO_ARG		argv[1];
 	int			retval,
@@ -174,7 +174,7 @@ lo_tell(ConnectionClass * conn, int fd)
 }
 
 int
-lo_unlink(ConnectionClass * conn, Oid lobjId)
+lo_unlink(ConnectionClass *conn, Oid lobjId)
 {
 	LO_ARG		argv[1];
 	int			retval,
