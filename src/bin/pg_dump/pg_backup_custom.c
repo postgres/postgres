@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.16 2001/10/25 05:49:52 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.17 2001/11/27 23:48:12 tgl Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -622,6 +622,8 @@ _PrintData(ArchiveHandle *AH)
 			out[zlibOutSize - zp->avail_out] = '\0';
 			ahwrite(out, 1, zlibOutSize - zp->avail_out, AH);
 		}
+		if (inflateEnd(zp) != Z_OK)
+			die_horribly(AH, modulename, "could not close compression library: %s\n", zp->msg);
 	}
 #endif
 
