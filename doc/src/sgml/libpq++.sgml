@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.42 2002/08/15 02:56:19 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.43 2002/08/19 04:05:00 ishii Exp $
 -->
 
  <chapter id="libpqplusplus">
@@ -120,6 +120,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.42 2002/08/15 02:56:
         <envar>PGPASSWORD</envar>
         sets the password used if the backend demands password
         authentication.  This is deprecated; use <envar>PGPASSWORDFILE</envar> instead.
+       </para>
+      </listitem>
       <listitem>
        <para>
 	<envar>PGPASSWORDFILE</envar>
