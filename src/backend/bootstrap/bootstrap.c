@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.15 1997/01/24 22:42:30 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.16 1997/03/12 20:57:33 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -485,7 +485,7 @@ boot_openrel(char *relname)
     
     if (!Quiet)
         printf("Amopen: relation %s. attrsize %d\n", relname,
-               ATTRIBUTE_TUPLE_SIZE);
+               (int)ATTRIBUTE_TUPLE_SIZE);
     
     reldesc = heap_openr(relname);
     Assert(reldesc);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.2 1996/12/20 20:31:31 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.3 1997/03/12 20:59:27 scrappy Exp $
  *
  * NOTES
  *    XXX a few of the following functions are duplicated to handle
@@ -66,9 +66,24 @@ lcons(void *obj, List *list)
 }
 
 List *
+lconsi(int datum, List *list)
+{
+    List *l = makeNode(List);
+    lfirsti(l) = datum;
+    lnext(l) = list;
+    return l;
+}
+
+List *
 lappend(List *list, void *obj)
 {
     return nconc(list, lcons(obj, NIL));
+}
+
+List *
+lappendi(List *list, int datum)
+{
+    return nconc(list, lconsi(datum, NIL));
 }
 
 Value *
@@ -108,6 +123,17 @@ nth(int n, List *l)
 	n--;
     }
     return lfirst(l);
+}
+
+int
+nthi(int n, List *l)
+{
+    /* XXX assume list is long enough */
+    while(n > 0) {
+	l = lnext(l);
+	n--;
+    }
+    return lfirsti(l);
 }
 
 /* this is here solely for rt_store. Get rid of me some day! */
@@ -244,7 +270,7 @@ same(List *foo, List *bar)
 	return (foo==NULL);
     if (length(foo) == length(bar)) {
 	foreach (temp,foo) {
-	    if (!intMember((int)lfirst(temp),bar))
+	    if (!intMember(lfirsti(temp),bar))
 		return(false);
 	}
 	return(true);
@@ -297,7 +323,7 @@ LispUnioni(List *foo, List *bar)
     foreach (i,foo) {
 	foreach (j,bar) {
 	    if (lfirsti(i) != lfirsti(j)) {
-		retval = lappendi(retval,lfirst(i));
+		retval = lappendi(retval,lfirsti(i));
 		break;
 	    }
 	}
@@ -329,7 +355,7 @@ intMember(int foo, List *bar)
 {
     List *i;
     foreach (i,bar)
-	if (foo == (int)lfirst(i))
+	if (foo == lfirsti(i))
 	    return(true);
     return(false);
 }
@@ -388,13 +414,13 @@ intLispRemove(int elem, List *list)
     List *temp = NIL;
     List *prev = NIL;
     
-    if (elem == (int)lfirst(list))
+    if (elem == lfirsti(list))
 	return lnext(list);
 
     temp = lnext(list);
     prev = list;
     while(temp!=NIL) {
-	if (elem == (int)lfirst(temp)) {
+	if (elem == lfirsti(temp)) {
 	    lnext(prev) = lnext(temp);
 	    break;
 	}
@@ -431,7 +457,7 @@ set_differencei(List *list1, List *list2)
     
     foreach (temp1, list1) {
 	if (!intMember(lfirsti(temp1), list2))
-	    result = lappendi(result, lfirst(temp1));
+	    result = lappendi(result, lfirsti(temp1));
     }
     return(result);
 }

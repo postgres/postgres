@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.12 1996/11/10 02:56:51 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.13 1997/03/12 20:56:32 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,13 +62,13 @@ index_keytest(IndexTuple tuple,
 	}
 
 	if (key[0].sk_flags & SK_COMMUTE) {
-	    test = (int) (*(key[0].sk_func))
+	    test = (*(key[0].sk_func))
 		(DatumGetPointer(key[0].sk_argument),
-		 datum);
+		 datum) ? 1 : 0;
 	} else {
-	    test = (int) (*(key[0].sk_func))
+	    test = (*(key[0].sk_func))
 		(datum,
-		 DatumGetPointer(key[0].sk_argument));
+		 DatumGetPointer(key[0].sk_argument)) ? 1 : 0;
 	}
 	
 	if (!test == !(key[0].sk_flags & SK_NEGATE)) {

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.5 1997/01/22 06:25:42 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.6 1997/03/12 21:00:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1045,7 +1045,7 @@ index_innerjoin(Query *root, Rel *rel, List *clausegroup_list, Rel *index)
 	index_selectivity(lfirsti(index->relids),
 			  index->classlist,
 			  get_opnos(clausegroup),
-			  getrelid((int)lfirst(rel->relids),
+			  getrelid(lfirsti(rel->relids),
 				   root->rtable),
 			  attnos,
 			  values,
@@ -1061,7 +1061,7 @@ index_innerjoin(Query *root, Rel *rel, List *clausegroup_list, Rel *index)
 	pathnode->path.joinid = ((CInfo*)lfirst(clausegroup))->cinfojoinid;
 
 	pathnode->path.path_cost =
-	    cost_index((Oid)lfirst(index->relids),
+	    cost_index((Oid)lfirsti(index->relids),
 		       (int)temp_pages,
 		       temp_selec,
 		       rel->pages,
@@ -1150,7 +1150,7 @@ add_index_paths(List *indexpaths, List *new_indexpaths)
 static bool
 function_index_operand(Expr *funcOpnd, Rel *rel, Rel *index)
 {
-    Oid heapRelid	= (Oid)lfirst(rel->relids);
+    Oid heapRelid	= (Oid)lfirsti(rel->relids);
     Func *function;
     List *funcargs;
     int *indexKeys	= index->indexkeys;
