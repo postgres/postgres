@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.11 1999/11/22 17:56:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.12 1999/11/24 16:52:45 momjian Exp $
  *
  * DESCRIPTION
  *	  See superuser().
@@ -30,7 +30,7 @@ superuser(void)
 
 	HeapTuple	utup;
 
-	utup = SearchSysCacheTuple(USERNAME,
+	utup = SearchSysCacheTuple(SHADOWNAME,
 							   PointerGetDatum(UserName),
 							   0, 0, 0);
 	Assert(utup != NULL);

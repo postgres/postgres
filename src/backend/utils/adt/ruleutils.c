@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.32 1999/11/22 17:56:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.33 1999/11/24 16:52:37 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -567,7 +567,7 @@ pg_get_userbyid(int32 uid)
 	 * Get the pg_shadow entry and print the result
 	 * ----------
 	 */
-	usertup = SearchSysCacheTuple(USERSYSID,
+	usertup = SearchSysCacheTuple(SHADOWSYSID,
 								  ObjectIdGetDatum(uid), 0, 0, 0);
 	if (HeapTupleIsValid(usertup))
 	{

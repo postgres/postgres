@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.44 1999/11/22 17:56:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.45 1999/11/24 16:52:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -241,7 +241,7 @@ check_permissions(char *command,
 	char		path[MAXPGPATH];
 
 	userName = GetPgUserName();
-	utup = SearchSysCacheTuple(USERNAME,
+	utup = SearchSysCacheTuple(SHADOWNAME,
 							   PointerGetDatum(userName),
 							   0, 0, 0);
 	Assert(utup);

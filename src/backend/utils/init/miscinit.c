@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.36 1999/11/22 17:56:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.37 1999/11/24 16:52:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -453,7 +453,7 @@ SetUserId()
 	}
 
 	userName = GetPgUserName();
-	userTup = SearchSysCacheTuple(USERNAME,
+	userTup = SearchSysCacheTuple(SHADOWNAME,
 								  PointerGetDatum(userName),
 								  0, 0, 0);
 	if (!HeapTupleIsValid(userTup))

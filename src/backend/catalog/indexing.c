@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.51 1999/11/22 17:55:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.52 1999/11/24 16:52:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -881,6 +881,85 @@ RewriteOidIndexScan(Relation heapRelation, Oid rewriteId)
 
 
 HeapTuple
+ShadowNameIndexScan(Relation heapRelation, char *useName)
+{
+	Relation	idesc;
+	ScanKeyData skey[1];
+	HeapTuple	tuple;
+	
+	ScanKeyEntryInitialize(&skey[0],
+						   (bits16) 0x0,
+						   (AttrNumber) 1,
+						   (RegProcedure) F_NAMEEQ,
+						   PointerGetDatum(useName));
+
+	idesc = index_openr(ShadowNameIndex);
+	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 1);
+
+	index_close(idesc);
+	return tuple;
+}
+
+
+HeapTuple
+ShadowSysidIndexScan(Relation heapRelation, int4 sysId)
+{
+	Relation	idesc;
+	ScanKeyData skey[1];
+	HeapTuple	tuple;
+	
+	ScanKeyEntryInitialize(&skey[0],
+						   (bits16) 0x0,
+						   (AttrNumber) 1,
+						   (RegProcedure) F_INT4EQ,
+						   Int32GetDatum(sysId));
+
+	idesc = index_openr(ShadowSysidIndex);
+	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 1);
+
+	index_close(idesc);
+	return tuple;
+}
+
+
+HeapTuple
+StatisticRelidAttnumOpIndexScan(Relation heapRelation,
+					   Oid relId,
+					   AttrNumber attNum,
+					   Oid op)
+{
+	Relation	idesc;
+	ScanKeyData skey[3];
+	HeapTuple	tuple;
+
+	ScanKeyEntryInitialize(&skey[0],
+						   (bits16) 0x0,
+						   (AttrNumber) 1,
+						   (RegProcedure) F_OIDEQ,
+						   ObjectIdGetDatum(relId));
+
+	ScanKeyEntryInitialize(&skey[1],
+						   (bits16) 0x0,
+						   (AttrNumber) 2,
+						   (RegProcedure) F_INT2EQ,
+						   Int16GetDatum(attNum));
+
+	ScanKeyEntryInitialize(&skey[2],
+						   (bits16) 0x0,
+						   (AttrNumber) 3,
+						   (RegProcedure) F_OIDEQ,
+						   ObjectIdGetDatum(op));
+
+	idesc = index_openr(StatisticRelidAttnumOpIndex);
+	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 3);
+
+	index_close(idesc);
+
+	return tuple;
+}
+
+
+HeapTuple
 TypeNameIndexScan(Relation heapRelation, char *typeName)
 {
 	Relation	idesc;
@@ -922,47 +1001,4 @@ TypeOidIndexScan(Relation heapRelation, Oid typeId)
 
 	return tuple;
 }
-
-
-HeapTuple
-ShadowNameIndexScan(Relation heapRelation, char *useName)
-{
-	Relation	idesc;
-	ScanKeyData skey[1];
-	HeapTuple	tuple;
-	
-	ScanKeyEntryInitialize(&skey[0],
-						   (bits16) 0x0,
-						   (AttrNumber) 1,
-						   (RegProcedure) F_NAMEEQ,
-						   PointerGetDatum(useName));
-
-	idesc = index_openr(ShadowNameIndex);
-	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 1);
-
-	index_close(idesc);
-	return tuple;
-}
-
-
-HeapTuple
-ShadowSysidIndexScan(Relation heapRelation, int4 sysId)
-{
-	Relation	idesc;
-	ScanKeyData skey[1];
-	HeapTuple	tuple;
-	
-	ScanKeyEntryInitialize(&skey[0],
-						   (bits16) 0x0,
-						   (AttrNumber) 1,
-						   (RegProcedure) F_INT4EQ,
-						   Int32GetDatum(sysId));
-
-	idesc = index_openr(ShadowSysidIndex);
-	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 1);
-
-	index_close(idesc);
-	return tuple;
-}
-
 

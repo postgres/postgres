@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.31 1999/11/24 00:44:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.32 1999/11/24 16:52:31 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -350,7 +350,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 	int32		result;
 	Relation	relation;
 
-	tuple = SearchSysCacheTuple(USERNAME,
+	tuple = SearchSysCacheTuple(SHADOWNAME,
 								PointerGetDatum(usename),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
@@ -469,7 +469,7 @@ pg_ownercheck(char *usename,
 	AclId		user_id,
 				owner_id = 0;
 
-	tuple = SearchSysCacheTuple(USERNAME,
+	tuple = SearchSysCacheTuple(SHADOWNAME,
 								PointerGetDatum(usename),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
@@ -535,7 +535,7 @@ pg_func_ownercheck(char *usename,
 	AclId		user_id,
 				owner_id;
 
-	tuple = SearchSysCacheTuple(USERNAME,
+	tuple = SearchSysCacheTuple(SHADOWNAME,
 								PointerGetDatum(usename),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
@@ -577,7 +577,7 @@ pg_aggr_ownercheck(char *usename,
 	AclId		user_id,
 				owner_id;
 
-	tuple = SearchSysCacheTuple(USERNAME,
+	tuple = SearchSysCacheTuple(SHADOWNAME,
 								PointerGetDatum(usename),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))

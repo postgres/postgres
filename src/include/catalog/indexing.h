@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.30 1999/11/23 04:47:39 momjian Exp $
+ * $Id: indexing.h,v 1.31 1999/11/24 16:52:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 #define Num_pg_relcheck_indices 	1
 #define Num_pg_rewrite_indices		2
 #define Num_pg_shadow_indices		2
+#define Num_pg_statistic_indices	1
 #define Num_pg_trigger_indices		3
 #define Num_pg_type_indices			2
 
@@ -72,6 +73,7 @@
 #define RewriteRulenameIndex		"pg_rewrite_rulename_index"
 #define ShadowNameIndex				"pg_shadow_name_index"
 #define ShadowSysidIndex			"pg_shadow_sysid_index"
+#define StatisticRelidAttnumOpIndex	"pg_statistic_relid_att_op_index"
 #define TriggerConstrNameIndex		"pg_trigger_tgconstrname_index"
 #define TriggerConstrRelidIndex		"pg_trigger_tgconstrrelid_index"
 #define TriggerRelidIndex			"pg_trigger_tgrelid_index"
@@ -96,6 +98,7 @@ extern char *Name_pg_proc_indices[];
 extern char *Name_pg_relcheck_indices[];
 extern char *Name_pg_rewrite_indices[];
 extern char *Name_pg_shadow_indices[];
+extern char *Name_pg_statistic_indices[];
 extern char *Name_pg_trigger_indices[];
 extern char *Name_pg_type_indices[];
 
@@ -150,6 +153,8 @@ extern HeapTuple RewriteRulenameIndexScan(Relation heapRelation,
 					char *ruleName);
 extern HeapTuple ShadowNameIndexScan(Relation heapRelation, char *useName);
 extern HeapTuple ShadowSysidIndexScan(Relation heapRelation, int4 sysId);
+extern HeapTuple StatisticRelidAttnumOpIndexScan(Relation heapRelation,
+				 Oid relId, AttrNumber attNum, Oid op);
 extern HeapTuple TypeNameIndexScan(Relation heapRelation, char *typeName);
 extern HeapTuple TypeOidIndexScan(Relation heapRelation, Oid typeId);
 
@@ -197,6 +202,7 @@ DECLARE_UNIQUE_INDEX(pg_rewrite_rulename_index on pg_rewrite using btree(rulenam
 xDECLARE_UNIQUE_INDEX(pg_shadow_name_index on pg_shadow using btree(usename name_ops));
 xDECLARE_UNIQUE_INDEX(pg_shadow_sysid_index on pg_shadow using btree(usesysid int4_ops));
 */
+DECLARE_INDEX(pg_statistic_relid_att_op_index on pg_shadow using btree(starelid oid_ops, staattnum int2_ops, staop oid_ops));
 DECLARE_INDEX(pg_trigger_tgconstrname_index on pg_trigger using btree(tgconstrname name_ops));
 DECLARE_INDEX(pg_trigger_tgconstrrelid_index on pg_trigger using btree(tgconstrrelid oid_ops));
 DECLARE_INDEX(pg_trigger_tgrelid_index on pg_trigger using btree(tgrelid oid_ops));

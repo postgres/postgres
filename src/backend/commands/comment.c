@@ -395,7 +395,7 @@ void CommentDatabase(char *database, char *comment) {
   /*** Now, fetch user information ***/
   
   username = GetPgUserName();
-  usertuple = SearchSysCacheTuple(USERNAME, PointerGetDatum(username),
+  usertuple = SearchSysCacheTuple(SHADOWNAME, PointerGetDatum(username),
 				  0, 0, 0);
   if (!HeapTupleIsValid(usertuple)) {
     elog(ERROR, "current user '%s' does not exist", username);

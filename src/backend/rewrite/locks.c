@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.25 1999/11/22 17:56:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.26 1999/11/24 16:52:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,7 +170,7 @@ checkLockPerms(List *locks, Query *parsetree, int rt_index)
 	 */
 	rte = (RangeTblEntry *) nth(rt_index - 1, parsetree->rtable);
 	ev_rel = heap_openr(rte->relname, AccessShareLock);
-	usertup = SearchSysCacheTuple(USERSYSID,
+	usertup = SearchSysCacheTuple(SHADOWSYSID,
 							  ObjectIdGetDatum(ev_rel->rd_rel->relowner),
 								  0, 0, 0);
 	if (!HeapTupleIsValid(usertup))
