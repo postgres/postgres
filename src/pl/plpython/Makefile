@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.17 2004/10/11 19:32:19 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.18 2004/11/19 19:23:01 tgl Exp $
 
 subdir = src/pl/plpython
 top_builddir = ../../..
@@ -33,7 +33,8 @@ endif
 ifneq (,$(findstring yes, $(shared_libpython)$(allow_nonpic_in_shlib)))
 
 override CPPFLAGS := -I$(srcdir) $(python_includespec) $(CPPFLAGS)
-rpath :=
+
+rpathdir = $(python_libdir)
 
 NAME = plpython
 SO_MAJOR_VERSION = 0
