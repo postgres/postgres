@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.43 2002/04/21 00:26:42 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.44 2002/06/20 15:44:06 momjian Exp $
  -->
 
 <chapter id="catalogs">
@@ -1260,6 +1260,18 @@
        handler, which is a special function that is responsible for
        executing all functions that are written in the particular
        language.
+      </entry>
+     </row>
+
+     <row>
+      <entry>lanvalidator</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_proc.oid</entry>
+      <entry>
+       This references a language validator function that is responsible
+       for checking the syntax and validity of new functions when they
+       are created. See under <command>CREATE LANGUAGE</command> for
+       further information about validators.
       </entry>
      </row>
 
