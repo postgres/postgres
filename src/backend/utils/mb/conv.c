@@ -6,7 +6,7 @@
  * WIN1250 client encoding support contributed by Pavel Behal
  * SJIS UDC (NEC selection IBM kanji) support contributed by Eiji Tokuya
  *
- * $Id: conv.c,v 1.20 2000/10/30 10:40:28 ishii Exp $
+ * $Id: conv.c,v 1.21 2000/11/17 04:42:10 ishii Exp $
  *
  *
  */
@@ -538,15 +538,22 @@ mic2euc_tw(unsigned char *mic, unsigned char *p, int len)
 	{
 		len -= pg_mic_mblen(mic++);
 
-		if (c1 == LC_CNS11643_1 || c1 == LC_CNS11643_2)
+		if (c1 == LC_CNS11643_1)
 		{
+			*p++ = *mic++;
+			*p++ = *mic++;
+		}
+		else if (c1 == LC_CNS11643_2)
+		{
+			*p++ = SS2;
+			*p++ = 0xa2;
 			*p++ = *mic++;
 			*p++ = *mic++;
 		}
 		else if (c1 == 0x9d)
 		{						/* LCPRV2? */
 			*p++ = SS2;
-			*p++ = c1 - LC_CNS11643_3 + 0xa3;
+			*p++ = *mic++ - LC_CNS11643_3 + 0xa3;
 			*p++ = *mic++;
 			*p++ = *mic++;
 		}
@@ -573,7 +580,7 @@ big52mic(unsigned char *big5, unsigned char *p, int len)
 	unsigned short big5buf,
 				cnsBuf;
 	unsigned char lc;
-	char		bogusBuf[2];
+	char		bogusBuf[3];
 	int			i;
 
 	while (len > 0 && (c1 = *big5++))
