@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.136 2003/09/11 21:42:20 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.137 2003/09/20 20:12:05 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -1945,7 +1945,7 @@ It is not thread-safe.
 
 <para>
 <function>PQescapeString</function> escapes a string for use within an SQL
-commmand.  This is useful when inserting data values as literal constants
+command.  This is useful when inserting data values as literal constants
 in SQL commands.  Certain characters (such as quotes and backslashes) must
 be escaped to prevent them from being interpreted specially by the SQL parser.
 <function>PQescapeString</> performs this operation.

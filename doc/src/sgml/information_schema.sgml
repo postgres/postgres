@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/information_schema.sgml,v 1.8 2003/09/11 23:15:51 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/information_schema.sgml,v 1.9 2003/09/20 20:12:05 tgl Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -330,7 +330,7 @@
    <literal>SELECT</literal>, <literal>INSERT</literal>,
    <literal>UPDATE</literal>, <literal>REFERENCES</literal>.  If you
    want to make your applications fit for possible future
-   developements, it is generally the right choice to use this view
+   developments, it is generally the right choice to use this view
    instead of <literal>table_privileges</literal> if one of those
    privilege types is concerned.
   </para>
@@ -1508,7 +1508,7 @@ ORDER BY c.ordinal_position;
       <entry><literal>object_type</literal</entry>
       <entry><type>character_data</type></entry>
       <entry>
-       The type of the object that uses the array being descibed: one
+       The type of the object that uses the array being described: one
        of <literal>TABLE</literal> (the array is used by a column of
        that table), <literal>DOMAIN</literal> (the array is used by
        that domain), <literal>ROUTINE</literal> (the array is used by
@@ -2424,7 +2424,7 @@ ORDER BY c.ordinal_position;
    objects to a group that the current user is a member of.  In
    <productname>PostgreSQL</productname>, this currently only applies
    to domains, and since domains do not have real privileges in
-   <productname>PostgreSQL</productname>, this view is empty.  Futher
+   <productname>PostgreSQL</productname>, this view is empty.  Further
    information can be found under <literal>usage_privileges</literal>.
    In the future, this view may contain more useful information.
   </para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.37 2003/09/12 22:17:23 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.38 2003/09/20 20:12:05 tgl Exp $
 -->
 
  <chapter id="mvcc">
@@ -661,7 +661,7 @@ ERROR:  could not serialize access due to concurrent update
     </indexterm>
 
     <para>
-     The use of explicit locking can increase the likelyhood of
+     The use of explicit locking can increase the likelihood of
      <firstterm>deadlocks</>, wherein two (or more) transactions each
      hold locks that the other wants.  For example, if transaction 1
      acquires an exclusive lock on table A and then tries to acquire

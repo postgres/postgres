@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.27 2003/08/31 17:32:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.28 2003/09/20 20:12:05 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -42,7 +42,7 @@ PostgreSQL documentation
   <para>
    <command>ecpg</command> will convert each input file given on the
    command line to the corresponding C output file.  Input files
-   preferrably have the extension <filename>.pgc</filename>, in which
+   preferably have the extension <filename>.pgc</filename>, in which
    case the extension will be replaced by <filename>.c</filename> to
    determine the output file name.  If the extension of the input file
    is not <filename>.pgc</filename>, then the output file name is

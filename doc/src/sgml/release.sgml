@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.207 2003/09/11 21:42:20 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.208 2003/09/20 20:12:05 tgl Exp $
 -->
 
 <appendix id="release">
@@ -782,7 +782,7 @@ Properly escape jdbc setObject() strings to improve security (Barry)
 <listitem><para>Add locale variables (Peter)</para></listitem>
 <listitem><para>Escape byes >= 0x7f for multibyte in PQescapeBytea/PQunescapeBytea (Tatsuo)</para></listitem>
 <listitem><para>Add locale awareness to regular expression character classes</para></listitem>
-<listitem><para>Enable multibyte support by default (Tatso)</para></listitem>
+<listitem><para>Enable multibyte support by default (Tatsuo)</para></listitem>
 <listitem><para>Add GB18030 multibyte support (Bill Huang)</para></listitem>
 <listitem><para>Add CREATE/DROP CONVERSION, allowing loadable encodings (Tatsuo, Kaori)</para></listitem>
 <listitem><para>Add pg_conversion table (Tatsuo)</para></listitem>
@@ -1058,7 +1058,7 @@ Properly escape jdbc setObject() strings to improve security (Barry)
 <listitem><para>Allow EXECUTE of "CREATE TABLE AS ... SELECT" in PL/pgSQL (Tom)</para></listitem>
 <listitem><para>Fix for compressed transaction log id wraparound (Tom)</para></listitem>
 <listitem><para>Fix PQescapeBytea/PQunescapeBytea so that they handle bytes > 0x7f (Tatsuo)</para></listitem>
-<listitem><para>Fix for psql and pg_dump crashing when invoked with non-existand long options (Tatsuo)</para></listitem>
+<listitem><para>Fix for psql and pg_dump crashing when invoked with non-existent long options (Tatsuo)</para></listitem>
 <listitem><para>Fix crash when invoking geometric operators (Tom)</para></listitem>
 <listitem><para>Allow OPEN cursor(args) (Tom)</para></listitem>
 <listitem><para>Fix for rtree_gist index build (Teodor)</para></listitem>
@@ -1066,7 +1066,7 @@ Properly escape jdbc setObject() strings to improve security (Barry)
 <listitem><para>contrib/intarray fixes (Oleg)</para></listitem>
 <listitem><para>Fix for complex UNION/EXCEPT/INTERSECT queries using parens (Tom)</para></listitem>
 <listitem><para>Fix to pg_convert (Tatsuo)</para></listitem>
-<listitem><para>Fix for crash with long DATA strings (Thomes, Neil)</para></listitem>
+<listitem><para>Fix for crash with long DATA strings (Thomas, Neil)</para></listitem>
 <listitem><para>Fix for repeat(), lpad(), rpad() and long strings (Neil)</para></listitem>
 </itemizedlist>
   </sect2>
@@ -1099,7 +1099,7 @@ Properly escape jdbc setObject() strings to improve security (Barry)
 
 <itemizedlist>
 <listitem><para>Ensure that sequence counters do not go backwards after a crash (Tom)</para></listitem>
-<listitem><para>Fix pgaccess kanji-coversion key binding (Tatsuo)</para></listitem>
+<listitem><para>Fix pgaccess kanji-conversion key binding (Tatsuo)</para></listitem>
 <listitem><para>Optimizer improvements (Tom)</para></listitem>
 <listitem><para>Cash I/O improvements (Tom)</para></listitem>
 <listitem><para>New Russian FAQ</para></listitem>
@@ -1447,7 +1447,7 @@ Properly escape jdbc setObject() strings to improve security (Barry)
 <listitem><para>New TIMESTAMP WITHOUT TIMEZONE data type (Thomas)</para></listitem>
 <listitem><para>Add ISO date/time specification with "T", yyyy-mm-ddThh:mm:ss (Thomas)</para></listitem>
 <listitem><para>New xid/int comparison functions (Hiroshi)</para></listitem>
-<listitem><para>Add precision to TIME, TIMESTAMP, and INVERVAL data types (Thomas)</para></listitem>
+<listitem><para>Add precision to TIME, TIMESTAMP, and INTERVAL data types (Thomas)</para></listitem>
 <listitem><para>Modify type coercion logic to attempt binary-compatible functions first (Tom)</para></listitem>
 <listitem><para>New encode() function installed by default (Marko Kreen)</para></listitem>
 <listitem><para>Improved to_*() conversion functions (Karel Zak)</para></listitem>
@@ -1584,7 +1584,7 @@ Properly escape jdbc setObject() strings to improve security (Barry)
 <listitem><para>Fix for SQLPrimaryKeys in multibyte mode (Hiroshi)</para></listitem>
 <listitem><para>Allow ODBC procedure calls (Hiroshi)</para></listitem>
 <listitem><para>Improve boolean handing (Aidan Mountford)</para></listitem>
-<listitem><para>Most configuration options on setable via DSN (Hiroshi)</para></listitem>
+<listitem><para>Most configuration options now settable via DSN (Hiroshi)</para></listitem>
 <listitem><para>Multibyte, performance fixes (Hiroshi)</para></listitem>
 <listitem><para>Allow driver to be used with iODBC or unixODBC (Peter E)</para></listitem>
 <listitem><para>MD5 password encryption support (Bruce)</para></listitem>
@@ -3351,7 +3351,7 @@ Add pg_dump -N flag to force double quotes around identifiers.  This is
 Fix for NOT in where clause causing crash(Bruce)
 EXPLAIN VERBOSE coredump fix(Vadim)
 Fix shared-library problems on Linux
-Fix test for table existance to allow mixed-case and whitespace in
+Fix test for table existence to allow mixed-case and whitespace in
 	the table name(Thomas)
 Fix a couple of pg_dump bugs
 Configure matches template/.similar entries better(Tom)

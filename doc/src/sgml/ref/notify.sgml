@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.24 2003/09/15 03:21:51 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.25 2003/09/20 20:12:05 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -35,7 +35,7 @@ NOTIFY <replaceable class="PARAMETER">name</replaceable>
   </para>
 
   <para>
-   The information passed to the client for a notifiation event includes the notification
+   The information passed to the client for a notification event includes the notification
    name and the notifying session's server process <acronym>PID</>.  It is up to the
    database designer to define the notification names that will be used in a given
    database and what each one means.
@@ -111,7 +111,7 @@ NOTIFY <replaceable class="PARAMETER">name</replaceable>
    are the same, the notification event is one's own work bouncing
    back, and can be ignored.  (Despite what was said in the preceding
    paragraph, this is a safe technique.
-   <productname>PostgreSQL</productname> keeps self-notifiications
+   <productname>PostgreSQL</productname> keeps self-notifications
    separate from notifications arriving from other sessions, so you
    cannot miss an outside notification by ignoring your own
    notifications.)

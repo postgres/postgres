@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.48 2003/08/31 17:32:19 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.49 2003/09/20 20:12:05 tgl Exp $
 -->
 
  <chapter id="jdbc">
@@ -262,7 +262,7 @@ jdbc:postgresql://<replaceable class="parameter">host</replaceable>:<replaceable
      </listitem>
     </itemizedlist>
 
-    The parametes have the following meanings:
+    The parameters have the following meanings:
 
     <variablelist>
      <varlistentry>
@@ -397,7 +397,7 @@ st.close();
      <title>Getting results based on a cursor</title>
 
      <para>By default the driver collects all the results for the
-       query at once. This can be inconvieniant for large data sets so
+       query at once. This can be inconvenient for large data sets so
        the JDBC driver provides a means of basing
        a <classname>ResultSet</classname> on a database cursor and
        only fetching a small number of rows.</para>
@@ -631,7 +631,7 @@ upperProc.close();
 	as <classname>ResultSet</classname> values.</para>
 
       <example id="get-refcursor-from-function-call">
-	<title>Gettig <type>refcursor</type> values from a
+	<title>Getting <type>refcursor</type> values from a
 	function</title>
 
 	<para>When calling a function that returns
@@ -741,7 +741,7 @@ st.close();
     that contains a Large Object reference does not delete the Large Object.
     Deleting the Large Object is a separate operation that needs to
     be performed.  Large Objects also have some security
-    issues since anyone connected to the database cann view 
+    issues since anyone connected to the database can view 
     and/or modify any Large Object, even if they don't have 
     permissions to view/update the row containing the Large Object reference.
   </para>

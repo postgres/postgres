@@ -13,7 +13,7 @@ B041	Extensions to embedded SQL exception declarations			NO
 B051	Enhanced execution rights			NO	
 E011	Numeric data types			YES	
 E011	Numeric data types	01	INTEGER and SMALLINT data types	YES	
-E011	Numeric data types	02	REAL, DOUBLE PRECISON, and FLOAT data types	YES	
+E011	Numeric data types	02	REAL, DOUBLE PRECISION, and FLOAT data types	YES	
 E011	Numeric data types	03	DECIMAL and NUMERIC data types	YES	
 E011	Numeric data types	04	Arithmetic operators	YES	
 E011	Numeric data types	05	Numeric comparison	YES	

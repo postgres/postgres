@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.51 2003/09/11 21:42:19 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.52 2003/09/20 20:12:04 tgl Exp $
 -->
 
 <chapter id="ecpg">
@@ -992,7 +992,7 @@ EXEC SQL WHENEVER SQLERROR STOP;
     different action was set for the same condition between the first
     <literal>EXEC SQL WHENEVER</literal> and the SQL statement causing
     the condition, regardless of the flow of control in the C program.
-    So neither of the two following C program exerpts will have the
+    So neither of the two following C program excerpts will have the
     desired effect.
 <programlisting>
 /*
@@ -1072,7 +1072,7 @@ struct
     If no error occurred in the last <acronym>SQL</acronym> statement,
     <literal>sqlca.sqlcode</literal> will be 0 and
     <literal>sqlca.sqlstate</literal> will be
-    <literal>"00000"</literal>.  If a warning or error occured, then
+    <literal>"00000"</literal>.  If a warning or error occurred, then
     <literal>sqlca.sqlcode</literal> will be negative and
     <literal>sqlca.sqlstate</literal> will be different from
     <literal>"00000"</literal>.  A positive

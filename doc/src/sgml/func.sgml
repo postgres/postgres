@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.174 2003/09/13 00:19:43 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.175 2003/09/20 20:12:04 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -469,7 +469,7 @@ PostgreSQL documentation
 
       <row>
        <entry> <literal>&lt;&lt;</literal> </entry>
-       <entry>biwise shift left</entry>
+       <entry>bitwise shift left</entry>
        <entry><literal>1 &lt;&lt; 4</literal></entry>
        <entry><literal>16</literal></entry>
       </row>

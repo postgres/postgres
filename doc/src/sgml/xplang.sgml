@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.23 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.24 2003/09/20 20:12:05 tgl Exp $
 -->
 
  <chapter id="xplang">
@@ -68,7 +68,7 @@ createlang plpgsql template1
     <para>
      A procedural language is installed in a database in three steps,
      which must be carried out by a database superuser.  The
-     <command>createlang</command> programm automates <xref
+     <command>createlang</command> program automates <xref
      linkend="xplang-install-cr1"> and <xref
      linkend="xplang-install-cr2">.
     </para>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.24 2003/08/31 17:32:20 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.25 2003/09/20 20:12:05 tgl Exp $ -->
 
 <chapter id="wal">
  <title>Write-Ahead Logging (<acronym>WAL</acronym>)</title>
@@ -239,9 +239,10 @@
    record to the log with <function>LogInsert</function> but before
    performing a <function>LogFlush</function>. This delay allows other
    server processes to add their commit records to the log so as to have all
-   of them flushed with a single log sync. No sleep will occur if <varname>fsync</varname>
-   is not enabled or if fewer than <varname>commit_siblings</varname>
-   other sessons are currently in active transactions; this avoids
+   of them flushed with a single log sync. No sleep will occur if
+   <varname>fsync</varname>
+   is not enabled, nor if fewer than <varname>commit_siblings</varname>
+   other sessions are currently in active transactions; this avoids
    sleeping when it's unlikely that any other session will commit soon.
    Note that on most platforms, the resolution of a sleep request is
    ten milliseconds, so that any nonzero <varname>commit_delay</varname>

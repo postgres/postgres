@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.35 2003/09/12 00:12:47 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.36 2003/09/20 20:12:05 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -230,7 +230,7 @@ SELECT * FROM <replaceable>seqname</replaceable>;
   <para>
    Furthermore, although multiple sessions are guaranteed to allocate
    distinct sequence values, the values may be generated out of
-   sequence when all the sessions are considered.  FFor example, with
+   sequence when all the sessions are considered.  For example, with
    a <replaceable class="parameter">cache</replaceable> setting of 10,
    session A might reserve values 1..10 and return
    <function>nextval</function>=1, then session B might reserve values

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.35 2003/09/11 16:22:42 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.36 2003/09/20 20:12:04 tgl Exp $
 -->
 
  <appendix id="datetime-appendix">
@@ -570,7 +570,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.35 2003/09/11 16:22:42 mo
        <row>
 	<entry>AFT</entry>
 	<entry>+04:30</entry>
-	<entry>Afganistan Time</entry>
+	<entry>Afghanistan Time</entry>
        </row>
        <row>
 	<entry>EAST</entry>

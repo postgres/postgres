@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.208 2003/09/12 22:17:23 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.209 2003/09/20 20:12:05 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -3119,7 +3119,7 @@ kernel.shmmax = 134217728
 	</para>
 
        <para>
-	The symptom of this occuring is a kernel message looking like 
+	The symptom of this occurring is a kernel message looking like 
 	this (consult your system documentation and configuration on 
 	where to look for such a message):
 <programlisting>
@@ -3507,7 +3507,7 @@ openssl req -new -text -out server.req
 </programlisting>
    Fill out the information that <command>openssl</> asks for. Make sure
    that you enter the local host name as <quote>Common Name</>; the challenge
-   password can be left blank. The programm will generate a key that is
+   password can be left blank. The program will generate a key that is
    passphrase protected; it will not accept a passphrase that is less
    than four characters long. To remove the passphrase (as you must if
    you want automatic start-up of the server), run the commands

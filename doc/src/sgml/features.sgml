@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.19 2003/09/11 21:42:19 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.20 2003/09/20 20:12:04 tgl Exp $
 -->
 
 <appendix id="features">
@@ -17,12 +17,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.19 2003/09/11 21:42:19 mo
   The formal name of the SQL standard is ISO/IEC 9075 <quote>Database
   Language SQL</quote>.  A revised version of the standard is released
   from time to time; the most recent one appearing in 1999.  That
-  version is refered to as ISO/IEC 9075:1999, or informally as SQL99.
+  version is referred to as ISO/IEC 9075:1999, or informally as SQL99.
   The version prior to that was SQL92.
   <productname>PostgreSQL</productname> development tends to aim for
   conformance with the latest official version of the standard where
   such conformance does not contradict traditional features or common
-  sense.  At the time of this writing, ballotting is under way for a
+  sense.  At the time of this writing, balloting is under way for a
   new revision of the standard, which, if approved, will eventually
   become the conformance target for future
   <productname>PostgreSQL</productname> development.

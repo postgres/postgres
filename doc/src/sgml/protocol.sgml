@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.44 2003/09/11 21:42:20 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.45 2003/09/20 20:12:05 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -238,7 +238,7 @@
 
    <para>
     The authentication cycle ends with the server either rejecting the
-    connection attempt (ErrorResponse), or sending AuthenticationOK.
+    connection attempt (ErrorResponse), or sending AuthenticationOk.
    </para>
 
    <para>
@@ -729,7 +729,7 @@
     <command>BEGIN</>/<command>COMMIT</> transaction block (<quote>close</>
     meaning to commit if no error, or roll back if error).  Then a
     ReadyForQuery response is issued.  The purpose of Sync is to provide
-    a resychronization point for error recovery.  When an error is detected
+    a resynchronization point for error recovery.  When an error is detected
     while processing any extended-query message, the backend issues
     ErrorResponse, then reads and discards messages until a Sync is reached,
     then issues ReadyForQuery and returns to normal message processing.

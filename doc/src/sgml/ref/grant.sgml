@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.35 2003/09/11 21:42:20 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.36 2003/09/20 20:12:05 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -316,7 +316,7 @@ GRANT SELECT, UPDATE, INSERT ON mytable TO GROUP todos;
 
    <para>
    If the <quote>Access privileges</> column is empty for a given object,
-it means the object has default privileges (that is, its privileges columm
+it means the object has default privileges (that is, its privileges column
 is null).  Default privileges always include all privileges for the owner,
 and may include some privileges for <literal>PUBLIC</> depending on the
 object type, as explained above.  The first <command>GRANT</> or
