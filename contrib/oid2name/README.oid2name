@@ -84,6 +84,7 @@ Oid of table ips from database "test":
 ---------------------------------
 18737  = ips
 
+$ # show disk space for every db object
 $ du * | while read SIZE OID
 > do
 >	echo "$SIZE      `oid2name -q -d test -o $OID`"
@@ -92,6 +93,7 @@ $ du * | while read SIZE OID
 36      18722  = cities
 ...
 
+$ # same as above, but sort by largest first
 $ du * | while read SIZE OID
 > do
 >	echo "$SIZE      `oid2name -q -d test -o $OID`"
@@ -100,6 +102,18 @@ $ du * | while read SIZE OID
 2048    19324  = bigtable
 1950    23903  = customers
 ...
+
+$ # show disk usage per database
+$ cd /u/pg/data/base
+$ du -s * | 
+> while read SIZE OID
+> do
+>	echo "$SIZE      `aspg oid2name -q | grep ^$OID' '`"
+> done |
+> sort -rn
+2256        18721  = test
+2135        18735  = postgres
+..
 
 This can be done in psql with:  (each page is typically 8k)
 
@@ -112,4 +126,3 @@ Mail me with any problems or additions you would like to see.  Clearing
 house for the code will be at:  http://www.crimelabs.net
 
 b. palmer, bpalmer@crimelabs.net
-
