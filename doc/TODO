@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Aug 17 00:28:15 EDT 2003
+Last updated:		Sun Aug 17 00:43:46 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -62,6 +62,8 @@ Administration
 * Allow server log information to be output as INSERT statements
 * Prevent default re-use of sysids for dropped users and groups
 * Prevent dropping user that still owns objects, or auto-drop the objects
+* Allow pooled connections to query prepared queries
+* Allow pooled connections to close all open WITH HOLD cursors
 
 
 
@@ -483,7 +485,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1119 2003/08/17 04:28:15 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1119 2003/08/17 04:28:15 momjian Exp $
+* Change CVS $Id: TODO,v 1.1120 2003/08/17 04:43:48 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1120 2003/08/17 04:43:48 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
