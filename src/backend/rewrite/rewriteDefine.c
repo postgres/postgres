@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.29 1999/05/25 16:10:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.30 1999/07/04 05:16:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,9 @@
 
 #include "postgres.h"
 
+#include "access/htup.h"
 #include "access/heapam.h"		/* access methods like amopenr */
+#include "catalog/pg_rewrite.h"
 #include "nodes/parsenodes.h"
 #include "nodes/pg_list.h"		/* for Lisp support */
 #include "parser/parse_relation.h"
@@ -31,14 +33,6 @@
 
 
 Oid			LastOidProcessed = InvalidOid;
-
-/*
- * This is too small for many rule plans, but it'll have to do for now.
- * Rule plans, etc will eventually have to be large objects.
- *
- * should this be smaller?
- */
-#define RULE_PLAN_SIZE BLCKSZ
 
 static void
 strcpyq(char *dest, char *source)
@@ -84,9 +78,9 @@ InsertRule(char *rulname,
 		   bool evinstead,
 		   char *actiontree)
 {
-	static char rulebuf[RULE_PLAN_SIZE];
-	static char actionbuf[RULE_PLAN_SIZE];
-	static char qualbuf[RULE_PLAN_SIZE];
+	static char rulebuf[MaxAttrSize];
+	static char actionbuf[MaxAttrSize];
+	static char qualbuf[MaxAttrSize];
 	Oid			eventrel_oid = InvalidOid;
 	AttrNumber	evslot_index = InvalidAttrNumber;
 	Relation	eventrel = NULL;
@@ -124,8 +118,8 @@ InsertRule(char *rulname,
 (rulename, ev_type, ev_class, ev_attr, ev_action, ev_qual, is_instead) VALUES \
 ('%s', %d::char, %u::oid, %d::int2, '%s'::text, '%s'::text, \
  '%s'::bool);";
-	if (strlen(template) + strlen(rulname) + strlen(actionbuf) +
-		strlen(qualbuf) + 20 /* fudge fac */ > RULE_PLAN_SIZE)
+	if (sizeof(FormData_pg_rewrite) + strlen(actionbuf) +
+		strlen(qualbuf) > MaxAttrSize)
 		elog(ERROR, "DefineQueryRewrite: rule plan string too big.");
 	sprintf(rulebuf, template,
 			rulname, evtype, eventrel_oid, evslot_index, actionbuf,
