@@ -1,17 +1,7 @@
 #!/bin/sh
-#
-# $Header: /cvsroot/pgsql/src/Attic/MAKE_ID,v 1.1 1996/10/03 17:26:13 momjian Exp $
-#
+find `pwd`/ -type f -name '*.[chyl]' -print|mkid -S.gen=C -
 
-
-if test $# -ne 1; then
-    echo "usage: $0 PORTNAME"
-    exit 1
-fi
-PORTNAME=$1
- 
-gfind . port/$PORTNAME -type f  -name '*.[chly]' -print | mkid -S.gen=C - 2>&1 | grep -v 'No scanner for language'
-
-
-
-exit 0
+find . -type d -print |while read DIR
+do
+	[ "$DIR" != "." ] && ln -f -s `pwd`/ID $DIR/ID
+done
