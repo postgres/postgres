@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.112 2005/02/22 04:40:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.113 2005/03/16 23:52:18 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -959,7 +959,7 @@ describeOneTableDetails(const char *schemaname,
 			printfPQExpBuffer(&buf,
 							  "SELECT r.rulename, trim(trailing ';' from pg_catalog.pg_get_ruledef(r.oid, true))\n"
 							  "FROM pg_catalog.pg_rewrite r\n"
-				   "WHERE r.ev_class = '%s' AND r.rulename != '_RETURN'",
+				   "WHERE r.ev_class = '%s' AND r.rulename != '_RETURN' ORDER BY 1",
 							  oid);
 			result = PSQLexec(buf.data, false);
 			if (!result)
@@ -1040,7 +1040,7 @@ describeOneTableDetails(const char *schemaname,
 						 "pg_catalog.pg_get_constraintdef(r.oid, true), "
 							  "conname\n"
 							  "FROM pg_catalog.pg_constraint r\n"
-						   "WHERE r.conrelid = '%s' AND r.contype = 'c'",
+						   "WHERE r.conrelid = '%s' AND r.contype = 'c' ORDER BY 1",
 							  oid);
 			result2 = PSQLexec(buf.data, false);
 			if (!result2)
@@ -1058,7 +1058,7 @@ describeOneTableDetails(const char *schemaname,
 			printfPQExpBuffer(&buf,
 							  "SELECT r.rulename, trim(trailing ';' from pg_catalog.pg_get_ruledef(r.oid, true))\n"
 							  "FROM pg_catalog.pg_rewrite r\n"
-							  "WHERE r.ev_class = '%s'",
+							  "WHERE r.ev_class = '%s' ORDER BY 1",
 							  oid);
 			result3 = PSQLexec(buf.data, false);
 			if (!result3)
@@ -1082,7 +1082,8 @@ describeOneTableDetails(const char *schemaname,
 							  " OR NOT EXISTS"
 							  "  (SELECT 1 FROM pg_catalog.pg_depend d "
 							  "   JOIN pg_catalog.pg_constraint c ON (d.refclassid = c.tableoid AND d.refobjid = c.oid) "
-							  "   WHERE d.classid = t.tableoid AND d.objid = t.oid AND d.deptype = 'i' AND c.contype = 'f'))",
+							  "   WHERE d.classid = t.tableoid AND d.objid = t.oid AND d.deptype = 'i' AND c.contype = 'f'))"
+							  "   ORDER BY 1",
 							  oid);
 			result4 = PSQLexec(buf.data, false);
 			if (!result4)
@@ -1103,7 +1104,7 @@ describeOneTableDetails(const char *schemaname,
 							  "SELECT conname,\n"
 			   "  pg_catalog.pg_get_constraintdef(oid, true) as condef\n"
 							  "FROM pg_catalog.pg_constraint r\n"
-						   "WHERE r.conrelid = '%s' AND r.contype = 'f'",
+						   "WHERE r.conrelid = '%s' AND r.contype = 'f' ORDER BY 1",
 							  oid);
 			result5 = PSQLexec(buf.data, false);
 			if (!result5)
