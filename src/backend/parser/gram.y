@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.369 2002/09/22 19:42:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.370 2002/09/22 21:44:43 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -127,42 +127,42 @@ static void doNegateFloat(Value *v);
 	VariableSetStmt		*vsetstmt;
 }
 
-%type <node>	stmt, schema_stmt,
-		AlterDatabaseSetStmt, AlterGroupStmt,
-		AlterTableStmt, AlterUserStmt, AlterUserSetStmt,
-		AnalyzeStmt, ClosePortalStmt, ClusterStmt, CommentStmt,
-		ConstraintsSetStmt, CopyStmt, CreateAsStmt, CreateCastStmt,
-		CreateDomainStmt, CreateGroupStmt, CreateOpClassStmt, CreatePLangStmt,
-		CreateSchemaStmt, CreateSeqStmt, CreateStmt,
-		CreateAssertStmt, CreateTrigStmt, CreateUserStmt,
-		CreatedbStmt, CursorStmt, DefineStmt, DeleteStmt,
-		DropGroupStmt, DropOpClassStmt, DropPLangStmt, DropStmt,
-		DropAssertStmt, DropTrigStmt, DropRuleStmt, DropCastStmt,
-		DropUserStmt, DropdbStmt, ExplainStmt, FetchStmt,
-		GrantStmt, IndexStmt, InsertStmt, ListenStmt, LoadStmt,
-		LockStmt, NotifyStmt, OptimizableStmt,
-		CreateFunctionStmt, ReindexStmt, RemoveAggrStmt,
-		RemoveFuncStmt, RemoveOperStmt, RenameStmt, RevokeStmt,
-		RuleActionStmt, RuleActionStmtOrEmpty, RuleStmt,
-		SelectStmt, TransactionStmt, TruncateStmt,
-		UnlistenStmt, UpdateStmt, VacuumStmt,
-		VariableResetStmt, VariableSetStmt, VariableShowStmt,
-		ViewStmt, CheckPointStmt, CreateConversionStmt,
-		DeallocateStmt, PrepareStmt, ExecuteStmt
+%type <node>	stmt schema_stmt
+		AlterDatabaseSetStmt AlterGroupStmt
+		AlterTableStmt AlterUserStmt AlterUserSetStmt
+		AnalyzeStmt ClosePortalStmt ClusterStmt CommentStmt
+		ConstraintsSetStmt CopyStmt CreateAsStmt CreateCastStmt
+		CreateDomainStmt CreateGroupStmt CreateOpClassStmt CreatePLangStmt
+		CreateSchemaStmt CreateSeqStmt CreateStmt
+		CreateAssertStmt CreateTrigStmt CreateUserStmt
+		CreatedbStmt CursorStmt DefineStmt DeleteStmt
+		DropGroupStmt DropOpClassStmt DropPLangStmt DropStmt
+		DropAssertStmt DropTrigStmt DropRuleStmt DropCastStmt
+		DropUserStmt DropdbStmt ExplainStmt FetchStmt
+		GrantStmt IndexStmt InsertStmt ListenStmt LoadStmt
+		LockStmt NotifyStmt OptimizableStmt
+		CreateFunctionStmt ReindexStmt RemoveAggrStmt
+		RemoveFuncStmt RemoveOperStmt RenameStmt RevokeStmt
+		RuleActionStmt RuleActionStmtOrEmpty RuleStmt
+		SelectStmt TransactionStmt TruncateStmt
+		UnlistenStmt UpdateStmt VacuumStmt
+		VariableResetStmt VariableSetStmt VariableShowStmt
+		ViewStmt CheckPointStmt CreateConversionStmt
+		DeallocateStmt PrepareStmt ExecuteStmt
 
-%type <node>	select_no_parens, select_with_parens, select_clause,
+%type <node>	select_no_parens select_with_parens select_clause
 				simple_select
 
-%type <node>	alter_column_default, opclass_item
+%type <node>	alter_column_default opclass_item
 %type <ival>	add_drop
 
 %type <dbehavior>	opt_drop_behavior
 
-%type <list>	createdb_opt_list, copy_opt_list
-%type <defelt>	createdb_opt_item, copy_opt_item
+%type <list>	createdb_opt_list copy_opt_list
+%type <defelt>	createdb_opt_item copy_opt_item
 
-%type <ival>	opt_lock, lock_type, cast_context
-%type <boolean>	opt_force, opt_or_replace
+%type <ival>	opt_lock lock_type cast_context
+%type <boolean>	opt_force opt_or_replace
 
 %type <list>	user_list
 
@@ -175,82 +175,82 @@ static void doNegateFloat(Value *v);
 %type <str>		OptSchemaName
 %type <list>	OptSchemaEltList
 
-%type <boolean> TriggerActionTime, TriggerForSpec, opt_trusted
+%type <boolean> TriggerActionTime TriggerForSpec opt_trusted
 %type <str>		opt_lancompiler
 
 %type <str>		TriggerEvents
 %type <value>	TriggerFuncArg
 
-%type <str>		relation_name, copy_file_name,
-				database_name, access_method_clause, access_method, attr_name,
-				index_name, name, function_name, file_name
+%type <str>		relation_name copy_file_name
+				database_name access_method_clause access_method attr_name
+				index_name name function_name file_name
 
-%type <list>	func_name, handler_name, qual_Op, qual_all_Op, OptUseOp,
-				opt_class, opt_validator
+%type <list>	func_name handler_name qual_Op qual_all_Op OptUseOp
+				opt_class opt_validator
 
-%type <range>	qualified_name, OptConstrFromTable
+%type <range>	qualified_name OptConstrFromTable
 
-%type <str>		opt_id,	all_Op, MathOp, opt_name, SpecialRuleRelation
+%type <str>		opt_id	all_Op MathOp opt_name SpecialRuleRelation
 
-%type <str>		iso_level, opt_encoding
+%type <str>		iso_level opt_encoding
 %type <node>	grantee
 %type <list>	grantee_list
 %type <ival>	privilege
-%type <list>	privileges, privilege_list
+%type <list>	privileges privilege_list
 %type <privtarget> privilege_target
 %type <node>	function_with_argtypes
 %type <list>	function_with_argtypes_list
 %type <chr> 	TriggerOneEvent
 
-%type <list>	stmtblock, stmtmulti,
-				OptTableElementList, TableElementList, OptInherit, definition,
-				opt_distinct, opt_definition, func_args,
-				func_args_list, func_as, createfunc_opt_list,
-				oper_argtypes, RuleActionList, RuleActionMulti,
-				opt_column_list, columnList, opt_name_list,
-				sort_clause, opt_sort_clause, sortby_list, index_params,
-				index_list,name_list, from_clause, from_list, opt_array_bounds,
-				qualified_name_list, any_name, any_name_list,
-				any_operator, expr_list, dotted_name, attrs,
-				target_list, update_target_list, insert_column_list,
-				insert_target_list, def_list, opt_indirection,
-				group_clause, TriggerFuncArgs, select_limit,
-				opt_select_limit, opclass_item_list, trans_options,
-				TableFuncElementList,
-				convert_args, prep_type_clause, prep_type_list,
-				execute_param_clause, execute_param_list
+%type <list>	stmtblock stmtmulti
+				OptTableElementList TableElementList OptInherit definition
+				opt_distinct opt_definition func_args
+				func_args_list func_as createfunc_opt_list
+				oper_argtypes RuleActionList RuleActionMulti
+				opt_column_list columnList opt_name_list
+				sort_clause opt_sort_clause sortby_list index_params
+				index_list name_list from_clause from_list opt_array_bounds
+				qualified_name_list any_name any_name_list
+				any_operator expr_list dotted_name attrs
+				target_list update_target_list insert_column_list
+				insert_target_list def_list opt_indirection
+				group_clause TriggerFuncArgs select_limit
+				opt_select_limit opclass_item_list trans_options
+				TableFuncElementList
+				convert_args prep_type_clause prep_type_list
+				execute_param_clause execute_param_list
 
-%type <range>	into_clause, OptTempTableName
+%type <range>	into_clause OptTempTableName
 
 %type <defelt>	createfunc_opt_item
-%type <typnam>	func_arg, func_return, func_type, aggr_argtype
+%type <typnam>	func_arg func_return func_type aggr_argtype
 
-%type <boolean> opt_arg, TriggerForType, OptTemp, OptWithOids
+%type <boolean> opt_arg TriggerForType OptTemp OptWithOids
 
-%type <list>	for_update_clause, opt_for_update_clause, update_list
+%type <list>	for_update_clause opt_for_update_clause update_list
 %type <boolean>	opt_all
 
-%type <node>	join_outer, join_qual
+%type <node>	join_outer join_qual
 %type <jtype>	join_type
 
-%type <list>	extract_list, overlay_list, position_list
-%type <list>	substr_list, trim_list, convert_list
+%type <list>	extract_list overlay_list position_list
+%type <list>	substr_list trim_list convert_list
 %type <ival>	opt_interval
-%type <node>	overlay_placing, substr_from, substr_for
+%type <node>	overlay_placing substr_from substr_for
 
-%type <boolean> opt_instead, opt_cursor
-%type <boolean> index_opt_unique, opt_verbose, opt_full
-%type <boolean> opt_freeze, opt_default, opt_recheck
-%type <defelt>	opt_binary, opt_oids, copy_delimiter
+%type <boolean> opt_instead opt_cursor
+%type <boolean> index_opt_unique opt_verbose opt_full
+%type <boolean> opt_freeze opt_default opt_recheck
+%type <defelt>	opt_binary opt_oids copy_delimiter
 
 %type <boolean> copy_from
 
-%type <ival>	direction, reindex_type, drop_type,
-				opt_column, event, comment_type
+%type <ival>	direction reindex_type drop_type
+				opt_column event comment_type
 
 %type <ival>	fetch_how_many
 
-%type <node>	select_limit_value, select_offset_value
+%type <node>	select_limit_value select_offset_value
 
 %type <list>	OptSeqList
 %type <defelt>	OptSeqElem
@@ -259,55 +259,55 @@ static void doNegateFloat(Value *v);
 
 %type <vsetstmt> set_rest
 
-%type <node>	TableElement, ConstraintElem, TableFuncElement
+%type <node>	TableElement ConstraintElem TableFuncElement
 %type <node>	columnDef
 %type <defelt>	def_elem
-%type <node>	def_arg, columnElem, where_clause, insert_column_item,
-				a_expr, b_expr, c_expr, r_expr, AexprConst,
-				in_expr, having_clause, func_table
-%type <list>	row, row_descriptor, row_list, in_expr_nodes, type_list
-%type <node>	case_expr, case_arg, when_clause, case_default
+%type <node>	def_arg columnElem where_clause insert_column_item
+				a_expr b_expr c_expr r_expr AexprConst
+				in_expr having_clause func_table
+%type <list>	row row_descriptor row_list in_expr_nodes type_list
+%type <node>	case_expr case_arg when_clause case_default
 %type <list>	when_clause_list
 %type <ival>	sub_type
-%type <list>	OptCreateAs, CreateAsList
+%type <list>	OptCreateAs CreateAsList
 %type <node>	CreateAsElement
-%type <value>	NumericOnly, FloatOnly, IntegerOnly
+%type <value>	NumericOnly FloatOnly IntegerOnly
 %type <columnref>	columnref
 %type <alias>	alias_clause
 %type <sortgroupby>		sortby
-%type <ielem>	index_elem, func_index
+%type <ielem>	index_elem func_index
 %type <node>	table_ref
 %type <jexpr>	joined_table
 %type <range>	relation_expr
-%type <target>	target_el, insert_target_el, update_target_el
+%type <target>	target_el insert_target_el update_target_el
 
-%type <typnam>	Typename, SimpleTypename, ConstTypename,
-				GenericType, Numeric, opt_float,
-				Character, ConstCharacter,
-				CharacterWithLength, CharacterWithoutLength,
-				ConstDatetime, ConstInterval,
-				Bit, ConstBit, BitWithLength, BitWithoutLength
+%type <typnam>	Typename SimpleTypename ConstTypename
+				GenericType Numeric opt_float
+				Character ConstCharacter
+				CharacterWithLength CharacterWithoutLength
+				ConstDatetime ConstInterval
+				Bit ConstBit BitWithLength BitWithoutLength
 %type <str>		character
 %type <str>		extract_arg
-%type <str>		opt_charset, opt_collate
-%type <ival>	opt_numeric, opt_decimal
-%type <boolean> opt_varying, opt_timezone
+%type <str>		opt_charset opt_collate
+%type <ival>	opt_numeric opt_decimal
+%type <boolean> opt_varying opt_timezone
 
 %type <ival>	Iconst
-%type <str>		Sconst, comment_text
-%type <str>		UserId, opt_boolean, ColId_or_Sconst
-%type <list>	var_list, var_list_or_default
-%type <str>		ColId, ColLabel, type_name
-%type <node>	var_value, zone_value
+%type <str>		Sconst comment_text
+%type <str>		UserId opt_boolean ColId_or_Sconst
+%type <list>	var_list var_list_or_default
+%type <str>		ColId ColLabel type_name
+%type <node>	var_value zone_value
 
-%type <keyword> unreserved_keyword, func_name_keyword
-%type <keyword> col_name_keyword, reserved_keyword
+%type <keyword> unreserved_keyword func_name_keyword
+%type <keyword> col_name_keyword reserved_keyword
 
-%type <node>	TableConstraint, TableLikeClause
+%type <node>	TableConstraint TableLikeClause
 %type <list>	ColQualList
-%type <node>	ColConstraint, ColConstraintElem, ConstraintAttr
-%type <ival>	key_actions, key_delete, key_match, key_update, key_action
-%type <ival>	ConstraintAttributeSpec, ConstraintDeferrabilitySpec,
+%type <node>	ColConstraint ColConstraintElem ConstraintAttr
+%type <ival>	key_actions key_delete key_match key_update key_action
+%type <ival>	ConstraintAttributeSpec ConstraintDeferrabilitySpec
 				ConstraintTimeSpec
 
 %type <list>	constraints_set_list
@@ -321,82 +321,82 @@ static void doNegateFloat(Value *v);
  */
 
 /* ordinary key words in alphabetical order */
-%token <keyword> ABORT_TRANS, ABSOLUTE, ACCESS, ACTION, ADD, AFTER,
-	AGGREGATE, ALL, ALTER, ANALYSE, ANALYZE, AND, ANY, AS, ASC,
-	ASSERTION, ASSIGNMENT, AT, AUTHORIZATION,
+%token <keyword> ABORT_TRANS ABSOLUTE ACCESS ACTION ADD AFTER
+	AGGREGATE ALL ALTER ANALYSE ANALYZE AND ANY AS ASC
+	ASSERTION ASSIGNMENT AT AUTHORIZATION
 
-	BACKWARD, BEFORE, BEGIN_TRANS, BETWEEN, BIGINT, BINARY, BIT, BOTH,
-	BOOLEAN, BY,
+	BACKWARD BEFORE BEGIN_TRANS BETWEEN BIGINT BINARY BIT BOTH
+	BOOLEAN BY
 
-	CACHE, CALLED, CASCADE, CASE, CAST, CHAIN, CHAR_P,
-	CHARACTER, CHARACTERISTICS, CHECK, CHECKPOINT, CLASS, CLOSE,
-	CLUSTER, COALESCE, COLLATE, COLUMN, COMMENT, COMMIT,
-	COMMITTED, CONSTRAINT, CONSTRAINTS, CONVERSION_P, CONVERT, COPY, CREATE, CREATEDB,
-	CREATEUSER, CROSS, CURRENT_DATE, CURRENT_TIME,
-	CURRENT_TIMESTAMP, CURRENT_USER, CURSOR, CYCLE,
+	CACHE CALLED CASCADE CASE CAST CHAIN CHAR_P
+	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
+	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMIT
+	COMMITTED CONSTRAINT CONSTRAINTS CONVERSION_P CONVERT COPY CREATE CREATEDB
+	CREATEUSER CROSS CURRENT_DATE CURRENT_TIME
+	CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
-	DATABASE, DAY_P, DEALLOCATE, DEC, DECIMAL, DECLARE, DEFAULT,
-	DEFERRABLE, DEFERRED, DEFINER, DELETE_P, DELIMITER, DELIMITERS,
-    DESC, DISTINCT, DO, DOMAIN_P, DOUBLE, DROP,
+	DATABASE DAY_P DEALLOCATE DEC DECIMAL DECLARE DEFAULT
+	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS
+    DESC DISTINCT DO DOMAIN_P DOUBLE DROP
 
-	EACH, ELSE, ENCODING, ENCRYPTED, END_TRANS, ESCAPE, EXCEPT,
-	EXCLUSIVE, EXECUTE, EXISTS, EXPLAIN, EXTERNAL, EXTRACT,
+	EACH ELSE ENCODING ENCRYPTED END_TRANS ESCAPE EXCEPT
+	EXCLUSIVE EXECUTE EXISTS EXPLAIN EXTERNAL EXTRACT
 
-	FALSE_P, FETCH, FLOAT_P, FOR, FORCE, FOREIGN, FORWARD,
-	FREEZE, FROM, FULL, FUNCTION,
+	FALSE_P FETCH FLOAT_P FOR FORCE FOREIGN FORWARD
+	FREEZE FROM FULL FUNCTION
 
-	GET, GLOBAL, GRANT, GROUP_P,
+	GET GLOBAL GRANT GROUP_P
 
-	HANDLER, HAVING, HOUR_P,
+	HANDLER HAVING HOUR_P
 
-	ILIKE, IMMEDIATE, IMMUTABLE, IMPLICIT_P, IN_P, INCREMENT,
-	INDEX, INHERITS, INITIALLY, INNER_P, INOUT, INPUT,
-	INSENSITIVE, INSERT, INSTEAD, INT, INTEGER, INTERSECT,
-	INTERVAL, INTO, INVOKER, IS, ISNULL, ISOLATION,
+	ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P INCREMENT
+	INDEX INHERITS INITIALLY INNER_P INOUT INPUT
+	INSENSITIVE INSERT INSTEAD INT INTEGER INTERSECT
+	INTERVAL INTO INVOKER IS ISNULL ISOLATION
 
-	JOIN,
-	KEY,
+	JOIN
+	KEY
 
-	LANCOMPILER, LANGUAGE, LEADING, LEFT, LEVEL, LIKE, LIMIT,
-	LISTEN, LOAD, LOCAL, LOCALTIME, LOCALTIMESTAMP, LOCATION,
-	LOCK_P,
+	LANCOMPILER LANGUAGE LEADING LEFT LEVEL LIKE LIMIT
+	LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
+	LOCK_P
 
-	MATCH, MAXVALUE, MINUTE_P, MINVALUE, MODE, MONTH_P, MOVE,
+	MATCH MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
 
-	NAMES, NATIONAL, NATURAL, NCHAR, NEW, NEXT, NO, NOCREATEDB,
-	NOCREATEUSER, NONE, NOT, NOTHING, NOTIFY, NOTNULL, NULL_P,
-	NULLIF, NUMERIC,
+	NAMES NATIONAL NATURAL NCHAR NEW NEXT NO NOCREATEDB
+	NOCREATEUSER NONE NOT NOTHING NOTIFY NOTNULL NULL_P
+	NULLIF NUMERIC
 
-	OF, OFF, OFFSET, OIDS, OLD, ON, ONLY, OPERATOR, OPTION, OR,
-	ORDER, OUT_P, OUTER_P, OVERLAPS, OVERLAY, OWNER,
+	OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OR
+	ORDER OUT_P OUTER_P OVERLAPS OVERLAY OWNER
 
-	PARTIAL, PASSWORD, PATH_P, PENDANT, PLACING, POSITION,
-	PRECISION, PREPARE, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE,
-	PROCEDURAL,
+	PARTIAL PASSWORD PATH_P PENDANT PLACING POSITION
+	PRECISION PREPARE PRIMARY PRIOR PRIVILEGES PROCEDURE
+	PROCEDURAL
 
-	READ, REAL, RECHECK, REFERENCES, REINDEX, RELATIVE, RENAME, REPLACE,
-	RESET, RESTRICT, RETURNS, REVOKE, RIGHT, ROLLBACK, ROW,
-	RULE,
+	READ REAL RECHECK REFERENCES REINDEX RELATIVE RENAME REPLACE
+	RESET RESTRICT RETURNS REVOKE RIGHT ROLLBACK ROW
+	RULE
 
-	SCHEMA, SCROLL, SECOND_P, SECURITY, SELECT, SEQUENCE,
-	SERIALIZABLE, SESSION, SESSION_USER, SET, SETOF, SHARE,
-	SHOW, SIMILAR, SIMPLE, SMALLINT, SOME, STABLE, START, STATEMENT,
-	STATISTICS, STDIN, STDOUT, STORAGE, STRICT, SUBSTRING,
-	SYSID,
+	SCHEMA SCROLL SECOND_P SECURITY SELECT SEQUENCE
+	SERIALIZABLE SESSION SESSION_USER SET SETOF SHARE
+	SHOW SIMILAR SIMPLE SMALLINT SOME STABLE START STATEMENT
+	STATISTICS STDIN STDOUT STORAGE STRICT SUBSTRING
+	SYSID
 
-	TABLE, TEMP, TEMPLATE, TEMPORARY, THEN, TIME, TIMESTAMP,
-	TO, TOAST, TRAILING, TRANSACTION, TREAT, TRIGGER, TRIM, TRUE_P,
-	TRUNCATE, TRUSTED, TYPE_P,
+	TABLE TEMP TEMPLATE TEMPORARY THEN TIME TIMESTAMP
+	TO TOAST TRAILING TRANSACTION TREAT TRIGGER TRIM TRUE_P
+	TRUNCATE TRUSTED TYPE_P
 
-	UNENCRYPTED, UNION, UNIQUE, UNKNOWN, UNLISTEN, UNTIL,
-	UPDATE, USAGE, USER, USING,
+	UNENCRYPTED UNION UNIQUE UNKNOWN UNLISTEN UNTIL
+	UPDATE USAGE USER USING
 
-	VACUUM, VALID, VALIDATOR, VALUES, VARCHAR, VARYING,
-	VERBOSE, VERSION, VIEW, VOLATILE,
+	VACUUM VALID VALIDATOR VALUES VARCHAR VARYING
+	VERBOSE VERSION VIEW VOLATILE
 
-	WHEN, WHERE, WITH, WITHOUT, WORK, WRITE,
+	WHEN WHERE WITH WITHOUT WORK WRITE
 
-	YEAR_P,
+	YEAR_P
 
 	ZONE
 
@@ -407,8 +407,8 @@ static void doNegateFloat(Value *v);
 %token			UNIONJOIN
 
 /* Special keywords, not in the query language - see the "lex" file */
-%token <str>	IDENT, FCONST, SCONST, NCONST, BCONST, XCONST, Op
-%token <ival>	ICONST, PARAM
+%token <str>	IDENT FCONST SCONST NCONST BCONST XCONST Op
+%token <ival>	ICONST PARAM
 
 /* these are not real. they are here so that they get generated as #define's*/
 %token			OP
