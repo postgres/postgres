@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/mcxt.c,v 1.53 2004/12/31 22:02:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/mcxt.c,v 1.54 2005/02/18 21:52:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -619,7 +619,13 @@ repalloc(void *pointer, Size size)
 /*
  * MemoryContextSwitchTo
  *		Returns the current context; installs the given context.
+ *
+ * This is inlined when using GCC.
+ *
+ * TODO: investigate supporting inlining for some non-GCC compilers.
  */
+#ifndef __GNUC__
+
 MemoryContext
 MemoryContextSwitchTo(MemoryContext context)
 {
@@ -631,6 +637,8 @@ MemoryContextSwitchTo(MemoryContext context)
 	CurrentMemoryContext = context;
 	return old;
 }
+
+#endif   /* ! __GNUC__ */
 
 /*
  * MemoryContextStrdup
