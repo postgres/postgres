@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.30 2004/06/24 19:26:54 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.31 2004/07/14 17:55:09 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -121,8 +121,8 @@ PostgreSQL documentation
        <para>
         Selects the encoding of the template database. This will also
         be the default encoding of any database you create later,
-        unless you override it there.  The default is
-        <literal>SQL_ASCII</literal>. The character sets supported by
+        unless you override it there.  The default is derived from the locale, or
+        <literal>SQL_ASCII</literal> if that does not work. The character sets supported by
         the <productname>PostgreSQL</productname> server are described
         in <xref linkend="multibyte-charset-supported">.
        </para>

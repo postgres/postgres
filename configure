@@ -6989,7 +6989,8 @@ done
 
 
 
-for ac_header in crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h poll.h pwd.h sys/ipc.h sys/poll.h sys/pstat.h sys/select.h sys/sem.h sys/socket.h sys/shm.h sys/time.h sys/un.h termios.h utime.h wchar.h wctype.h kernel/OS.h kernel/image.h SupportDefs.h
+
+for ac_header in crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h langinfo.h poll.h pwd.h sys/ipc.h sys/poll.h sys/pstat.h sys/select.h sys/sem.h sys/socket.h sys/shm.h sys/time.h sys/un.h termios.h utime.h wchar.h wctype.h kernel/OS.h kernel/image.h SupportDefs.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then

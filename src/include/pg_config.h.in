@@ -200,6 +200,9 @@
 /* Define to 1 if `enc_part2' is member of `krb5_ticket'. */
 #undef HAVE_KRB5_TICKET_ENC_PART2
 
+/* Define to 1 if you have the <langinfo.h> header file. */
+#undef HAVE_LANGINFO_H
+
 /* Define to 1 if you have the `bind' library (-lbind). */
 #undef HAVE_LIBBIND
 
