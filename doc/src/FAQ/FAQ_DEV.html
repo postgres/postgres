@@ -38,6 +38,7 @@ tables from the backend code?<BR>
 <a href="#10">10</a>)	What is elog()?<BR>
 <a href="#11">11</a>)	What is configure all about?<BR>
 <a href="#12">12</a>)	How do I add a new port?<BR>
+<a href="#13">13</a>)	What is CommandCounterIncrement()?<BR>
 <BR>
 <HR>
 
@@ -481,6 +482,18 @@ appropriate values.  Hopefully, there is already locking code in
 There is a <I>backend/port</I> directory if you need special files for
 your OS.<P>
 
+<H3><a name="13">13</a>)	What is CommandCounterIncrement()?</H3><P>
+
+Normally, transactions can not see the rows they modify.  This allows <CODE>
+UPDATE foo SET x = x + 1</CODE> to work correctly. 
+<P>
+
+However, there are cases where a transactions needs to see rows affected
+in previous parts of the transaction. This is accomplished using a
+Command Counter. Incrementing the counter allows transactions to be
+broken into pieces so each piece can see rows modified by previous
+pieces. <I>CommandCounterIncrement()</I> increments the Command
+Counter, creating a new piece of the transaction. <P>
 
 </BODY>
 </HTML>

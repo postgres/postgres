@@ -26,6 +26,7 @@
    10) What is elog()?
    11) What is configure all about?
    12) How do I add a new port?
+   13) What is CommandCounterIncrement()?
      _________________________________________________________________
    
   1) What tools are available for developers?
@@ -414,3 +415,15 @@ c-mode)
    src/include/storage/s_lock.h for your CPU. There is also a
    src/makefiles directory for port-specific Makefile handling. There is
    a backend/port directory if you need special files for your OS.
+   
+  13) What is CommandCounterIncrement()?
+  
+   Normally, transactions can not see the rows they modify. This allows
+   UPDATE foo SET x = x + 1 to work correctly.
+   
+   However, there are cases where a transactions needs to see rows
+   affected in previous parts of the transaction. This is accomplished
+   using a Command Counter. Incrementing the counter allows transactions
+   to be broken into pieces so each piece can see rows modified by
+   previous pieces. CommandCounterIncrement() increments the Command
+   Counter, creating a new piece of the transaction.
