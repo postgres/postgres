@@ -2,7 +2,7 @@ From pgsql-hackers-owner+M174@hub.org Sun Mar 12 22:31:11 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id XAA25886
 	for <pgman@candle.pha.pa.us>; Sun, 12 Mar 2000 23:31:10 -0500 (EST)
-Received: from news.tht.net (news.hub.org [216.126.91.242]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id XAA04589 for <pgman@candle.pha.pa.us>; Sun, 12 Mar 2000 23:19:33 -0500 (EST)
+Received: from news.tht.net (news.hub.org [216.126.91.242]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id XAA04589 for <pgman@candle.pha.pa.us>; Sun, 12 Mar 2000 23:19:33 -0500 (EST)
 Received: from hub.org (hub.org [216.126.84.1])
 	by news.tht.net (8.9.3/8.9.3) with SMTP id XAA42854;
 	Sun, 12 Mar 2000 23:05:05 -0500 (EST)
@@ -480,7 +480,7 @@ From Inoue@tpf.co.jp Wed Mar 15 02:00:58 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA17887
 	for <pgman@candle.pha.pa.us>; Wed, 15 Mar 2000 03:00:57 -0500 (EST)
-Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id CAA02974 for <pgman@candle.pha.pa.us>; Wed, 15 Mar 2000 02:54:44 -0500 (EST)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id CAA02974 for <pgman@candle.pha.pa.us>; Wed, 15 Mar 2000 02:54:44 -0500 (EST)
 Received: from cadzone ([126.0.1.40] (may be forged))
           by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
    id QAA00734; Wed, 15 Mar 2000 16:53:56 +0900
@@ -537,5 +537,205 @@ Regards.
 
 Hiroshi Inoue
 Inoue@tpf.co.jp
+
+
+From pgsql-hackers-owner+M196@hub.org Thu Mar 16 03:02:35 2000
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id EAA05789
+	for <pgman@candle.pha.pa.us>; Thu, 16 Mar 2000 04:02:29 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1])
+	by hub.org (8.9.3/8.9.3) with SMTP id CAA27302;
+	Thu, 16 Mar 2000 02:58:55 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M196@hub.org)
+Received: from downtown.oche.de (root@downtown.oche.de [194.94.253.3])
+	by hub.org (8.9.3/8.9.3) with ESMTP id CAA23907
+	for <pgsql-hackers@postgresql.org>; Thu, 16 Mar 2000 02:37:54 -0500 (EST)
+	(envelope-from mne@darwin.oche.de)
+Received: from darwin.oche.de (uucp@localhost)
+	by downtown.oche.de (8.9.3/8.9.3/Debian/GNU) with SMTP id IAA30654
+	for <pgsql-hackers@postgresql.org>; Thu, 16 Mar 2000 08:40:04 +0100
+Received: from mne by darwin.oche.de with local (Exim 3.12 #1 (Debian))
+	id 12VUhX-0003Vz-00
+	for <pgsql-hackers@postgreSQL.org>; Thu, 16 Mar 2000 08:28:11 +0100
+Date: Thu, 16 Mar 2000 08:28:11 +0100 (CET)
+From: Martin Neumann <mne@mne.de>
+Subject: [HACKERS] RfD: Design of tablespaces
+To: pgsql-hackers@postgresql.org
+MIME-Version: 1.0
+Content-Type: TEXT/plain; CHARSET=US-ASCII
+Message-Id: <E12VUhX-0003Vz-00@darwin.oche.de>
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+
+I have written some thoughts on the concept of tablespace
+down. I would be happy to get some comments on it.
+
+-----------------------------------------------------------------
+  Implementation of tablespaces within PostgreSQL
+- a brainstorming paper designed for general discussion -
+
+by Martin Neumann, 2000/3/15
+
+
+1. What are tablespaces?
+-------------------------
+
+Tablespaces make it possible to distribute storage objects
+over multiple points of storage (POS). Therefor one could
+say a tablespace can be a POS.
+
+Example:
+
+tablespace_a -----> /mnt/raid/arena0/
+tablespace_b -----> /mnt/raid/emc0/
+
+Tablespaces can also store their data on other tablespaces:
+
+tablespace_c -----> tablespace_b
+
+This is quite interessting for administration purposes.
+
+
+2. What are its advantages?
+----------------------------
+
+As you can choose a different tablespace for every storage
+object (table, index etc.) it is easy to improve the following
+aspects of your system:
+
+ - Reliability
+
+ You can put storage objects (mostly tables) you strongly depend
+ on onto a more reliable tablespace (mirrored RAID or perhaps
+ simply a directory which gets backuped more often than others).
+
+ - Speed
+
+ You can put storage objects you rarely need onto a rather slow
+ tablespace and keep your quick tablespaces clean from this.
+
+ A fast, but more expensive RAID-Stripeset can be used more
+ efficiently as it doesn't get filled with non-performance
+ sensitive data.
+
+ But also distributing storage objects which have equal needs
+ in sense of speed onto different tablespaces makes sense as
+ you gain more speed by distributing data over more than one
+ harddisk spindle.
+
+ - Manageability
+
+ You can grant and revoke rights on base of a tablespace.
+
+ As every storage object belongs to exactly one tablespace,
+ you can easily group storage objects using a tablespace.
+
+
+3. What about disk I/O?
+------------------------
+
+Tablespaces tell the storage manager only where to store
+the data, not how. This is the reasonable way.
+
+
+4. Usage
+---------
+
+CREATE TABLESPACE tsname TYPE storage_type storage_options
+
+Examples:
+
+CREATE TABLESPACE tsemc0
+  TYPE classic DIRECTORY /mnt/raid/emc0 NOFSYNC
+
+CREATE TABLESPACE tsarena0 TYPE raw DEVICE /dev/araid/0
+  MINSIZE 128 MAXSIZE 4096 GROW 4 32 SHRINK 2 32
+  BLOCKSIZE 16384
+
+CREATE TABLESPACE quick0 TYPE link TABLESPACE tsarena0;
+
+--
+
+CREATE TABLE tbname ( ... ) TABLESPACE tsname;
+
+Examples:
+
+CREATE TABLE foo (
+  id   int4 NOT NULL UNIQUE,
+  name text NOT NULL
+) TABLESPACE tsemc0;
+
+CREATE TABLE bar (
+  id   int4 NOT NULL UNIQUE,
+  name text NOT NULL
+) TABLESPACE default;
+
+If the tablespace isn't given, the storage objects gets created
+in the "default" tablespace.
+
+"default" is the PostgreSQL's default tablespace and the only one
+which has to exist on each system.
+
+--
+
+ALTER TABLESPACE tsname tssettings
+
+Examples:
+
+ALTER TABLESPACE tsemc0 DIRECTORY /mnt/raid/emc1
+
+
+NOTE: altering tablespaces without recreating the contained
+storage objects introduces many problems.
+Realisation is difficult and won't be my first goal.
+
+--
+
+DROP TABLESPACE tsname [FORCE]
+
+Examples:
+
+DROP TABLESPACE tsarena0
+
+This will immediately remove the tablespace tsarena0
+if it contains no storage objects.
+
+If it still contains some the tablespace is marked for
+deletion.
+
+This means:
+1. you can't create new storage objects in the tablespace
+2. if the last storage object inside gets dropped, the
+   tablespace will be removed.
+
+
+DROP TABLESPACE tsarena0 FORCE
+
+This will remove the tablespace including all contained
+storage objects immediately.
+
+--
+
+VACUUM tsname
+
+Example:
+
+VACUUM tsemc1
+
+This will vacuum a single tablespace with all contained
+storage objects.
+-----------------------------------------------------------------
+
+-- 
+Martin Neumann, Welkenrather Str. 118c, 52074 Aachen, Germany
+mne@mne.de - http://www.mne.de/mne/ - sms@mne.de [eMail2SMS]
+Tel. 0241 / 8876-080 - Mobil: 0173 / 27 69 632
+..------.---------------------------------------------------------
+|  at  | Inform GmbH - Abteilung Airport Logistics
+| work | Pascalstr. 23 - 52076 Aachen - Tel. 02408 / 9456-0
+|______| martin.neumann@inform-ac.com - http://www.inform-ac.com
+
 
 

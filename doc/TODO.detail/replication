@@ -43,7 +43,7 @@ From owner-pgsql-hackers@hub.org Fri Dec 24 10:01:18 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA11295
 	for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 11:01:17 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id KAA20310 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 10:39:18 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id KAA20310 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 10:39:18 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id KAA61760;
 	Fri, 24 Dec 1999 10:31:13 -0500 (EST)
@@ -129,7 +129,7 @@ From owner-pgsql-hackers@hub.org Fri Dec 24 18:31:03 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA26244
 	for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 19:31:02 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id TAA12730 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 19:30:05 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id TAA12730 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 19:30:05 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id TAA57851;
 	Fri, 24 Dec 1999 19:23:31 -0500 (EST)
@@ -212,7 +212,7 @@ From owner-pgsql-hackers@hub.org Fri Dec 24 21:31:10 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA02578
 	for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 22:31:09 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id WAA16641 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 22:18:56 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id WAA16641 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 22:18:56 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id WAA89135;
 	Fri, 24 Dec 1999 22:11:12 -0500 (EST)
@@ -486,7 +486,7 @@ From owner-pgsql-hackers@hub.org Sun Dec 26 08:31:09 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA17976
 	for <pgman@candle.pha.pa.us>; Sun, 26 Dec 1999 09:31:07 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id JAA23337 for <pgman@candle.pha.pa.us>; Sun, 26 Dec 1999 09:28:36 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id JAA23337 for <pgman@candle.pha.pa.us>; Sun, 26 Dec 1999 09:28:36 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id JAA90738;
 	Sun, 26 Dec 1999 09:21:58 -0500 (EST)
@@ -909,7 +909,7 @@ From owner-pgsql-hackers@hub.org Thu Dec 30 08:01:09 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA10317
 	for <pgman@candle.pha.pa.us>; Thu, 30 Dec 1999 09:01:08 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id IAA02365 for <pgman@candle.pha.pa.us>; Thu, 30 Dec 1999 08:37:10 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id IAA02365 for <pgman@candle.pha.pa.us>; Thu, 30 Dec 1999 08:37:10 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id IAA87902;
 	Thu, 30 Dec 1999 08:34:22 -0500 (EST)
@@ -1006,7 +1006,7 @@ From owner-pgsql-patches@hub.org Sun Jan  2 23:01:38 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA16274
 	for <pgman@candle.pha.pa.us>; Mon, 3 Jan 2000 00:01:28 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id XAA02655 for <pgman@candle.pha.pa.us>; Sun, 2 Jan 2000 23:45:55 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id XAA02655 for <pgman@candle.pha.pa.us>; Sun, 2 Jan 2000 23:45:55 -0500 (EST)
 Received: from hub.org (hub.org [216.126.84.1])
 	by hub.org (8.9.3/8.9.3) with ESMTP id XAA13828;
 	Sun, 2 Jan 2000 23:40:47 -0500 (EST)
@@ -1424,7 +1424,7 @@ From owner-pgsql-hackers@hub.org Tue Jan  4 10:31:01 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA17522
 	for <pgman@candle.pha.pa.us>; Tue, 4 Jan 2000 11:31:00 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id LAA01541 for <pgman@candle.pha.pa.us>; Tue, 4 Jan 2000 11:27:30 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id LAA01541 for <pgman@candle.pha.pa.us>; Tue, 4 Jan 2000 11:27:30 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id LAA09992;
 	Tue, 4 Jan 2000 11:18:07 -0500 (EST)
@@ -1557,4 +1557,63 @@ Sorry, I not sure if I re-draw previous picture total good..
 
 
 ************
+
+From pgsql-hackers-owner+M3133@hub.org Fri Jun  9 15:02:25 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id PAA22319
+	for <pgman@candle.pha.pa.us>; Fri, 9 Jun 2000 15:02:24 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e59IsET81137;
+	Fri, 9 Jun 2000 14:54:14 -0400 (EDT)
+Received: from ultra2.quiknet.com (ultra2.quiknet.com [207.183.249.4])
+	by hub.org (8.10.1/8.10.1) with SMTP id e59IrQT80458
+	for <pgsql-hackers@postgresql.org>; Fri, 9 Jun 2000 14:53:26 -0400 (EDT)
+Received: (qmail 13302 invoked from network); 9 Jun 2000 18:53:21 -0000
+Received: from 18.67.tc1.oro.pmpool.quiknet.com (HELO quiknet.com) (pecondon@207.231.67.18)
+  by ultra2.quiknet.com with SMTP; 9 Jun 2000 18:53:21 -0000
+Message-ID: <39413D08.A6BDC664@quiknet.com>
+Date: Fri, 09 Jun 2000 11:52:57 -0700
+From: Paul Condon <pecondon@quiknet.com>
+X-Mailer: Mozilla 4.73 [en] (X11; U; Linux 2.2.14-5.0 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: ohp@pyrenet.fr, pgsql-hackers@postgresql.org
+Subject: [HACKERS] Re: Big project, please help
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+Two way replication on a single "table" is availabe in Lotus Notes. In
+Notes, every record has a time-stamp, which contains the time of the
+last update. (It also has a creation timestamp.) During replication,
+timestamps are compared at the row/record level, and compared with the
+timestamp of the last replication. If, for corresponding rows in two
+replicas, the timestamp of one row is newer than the last replication,
+the contents of this newer row is copied to the other replica. But if
+both of the corresponding rows have newer timestamps, there is a
+problem. The Lotus Notes solution is to:
+  1. send a replication conflict message to the Notes Administrator,
+which message contains full copies of both rows.
+  2. copy the newest row over the less new row in the replicas.
+  3. there is a mechanism for the Administrator to reverse the default
+decision in 2, if the semantics of the message history, or off-line
+investigation indicates that the wrong decision was made.
+
+In practice, the Administrator is not overwhelmed with replication
+conflict messages because updates usually only originate at the site
+that originally created the row. Or updates fill only fields that were
+originally 'TBD'. The full logic is perhaps more complicated than I have
+described here, but it is already complicated enough to give you an idea
+of what you're really being asked to do. I am not aware of a supplier of
+relational database who really supports two way replication at the level
+that Notes supports it, but Notes isn't a relational database.
+
+The difficulty of the position that you appear to be in is that
+management might believe that the full problem is solved in brand X
+RDBMS, and you will have trouble convincing management that this is not
+really true.
+
 
