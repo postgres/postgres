@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.175 2001/01/08 20:54:24 momjian Exp $
+ *	$Id: analyze.c,v 1.176 2001/01/19 06:50:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -423,10 +423,9 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	foreach(tl, qry->targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tl);
-		Resdom	   *resnode = tle->resdom;
 		Ident	   *id;
 
-		Assert(!resnode->resjunk);
+		Assert(!tle->resdom->resjunk);
 		if (icolumns == NIL || attnos == NIL)
 			elog(ERROR, "INSERT has more expressions than target columns");
 		id = (Ident *) lfirst(icolumns);
