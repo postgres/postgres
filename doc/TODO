@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Sep  4 21:10:07 EDT 2003
+Last updated:		Thu Sep  4 22:20:40 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -168,7 +168,7 @@ Indexes
   float4, numeric/decimal too [optimizer]
 * Add FILLFACTOR to btree index creation
 * Add concurrency to GIST
-* Improve concurrency of hash indexes (Neil)
+* -Improve concurrency of hash indexes (Tom)
 * Allow a single index to index multiple tables (for inheritance and subtables)
 
 
@@ -492,7 +492,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1129 2003/09/05 01:10:07 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1129 2003/09/05 01:10:07 momjian Exp $
+* Change CVS $Id: TODO,v 1.1130 2003/09/05 02:20:50 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1130 2003/09/05 02:20:50 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
