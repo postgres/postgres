@@ -7,7 +7,7 @@
 #include "utils/builtins.h"
 
 /* sunos doesn't have this function */
-#if defined(sunos)
+#if defined(sunos4)
 #define difftime(time1,time0)  ((time1) - (time0))
 #endif
 
