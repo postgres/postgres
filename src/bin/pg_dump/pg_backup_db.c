@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.24 2001/08/22 20:23:23 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.25 2001/09/17 02:07:51 inoue Exp $
  *
  * NOTES
  *
@@ -721,7 +721,7 @@ FixupBlobRefs(ArchiveHandle *AH, char *tablename)
 
 	appendPQExpBuffer(tblQry, "SELECT a.attname FROM pg_class c, pg_attribute a, pg_type t "
 	 " WHERE a.attnum > 0 AND a.attrelid = c.oid AND a.atttypid = t.oid "
-			  " AND t.typname = 'oid' AND c.relname = '%s';", tablename);
+			  " AND t.typname in ('oid', 'lo') AND c.relname = '%s';", tablename);
 
 	res = PQexec(AH->blobConnection, tblQry->data);
 	if (!res)
