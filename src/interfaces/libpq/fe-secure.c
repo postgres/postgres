@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.61 2004/12/31 22:03:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.62 2005/01/04 23:18:25 tgl Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -492,6 +492,32 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 /*						  SSL specific code						*/
 /* ------------------------------------------------------------ */
 #ifdef USE_SSL
+
+/*
+ * Obtain user's home directory, return in given buffer
+ *
+ * This code isn't really SSL-specific, but currently we only need it in
+ * SSL-related places.
+ */
+static bool
+pqGetHomeDirectory(char *buf, int bufsize)
+{
+#ifndef WIN32
+	char		pwdbuf[BUFSIZ];
+	struct passwd pwdstr;
+	struct passwd *pwd = NULL;
+
+	if (pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) != 0)
+		return false;
+	StrNCpy(buf, pwd->pw_dir, bufsize);
+	return true;
+
+#else
+
+	return false;				/* PLACEHOLDER */
+#endif
+}
+
 /*
  *	Certificate verification callback
  *
@@ -612,7 +638,7 @@ verify_peer(PGconn *conn)
 
 	return -1;
 }
-#endif
+#endif /* NOT_USED */
 
 /*
  *	Load precomputed DH parameters.
@@ -624,23 +650,18 @@ verify_peer(PGconn *conn)
 static DH  *
 load_dh_file(int keylength)
 {
-#ifdef WIN32
-	return NULL;
-#else
-	char		pwdbuf[BUFSIZ];
-	struct passwd pwdstr;
-	struct passwd *pwd = NULL;
-	FILE	   *fp;
+	char		homedir[MAXPGPATH];
 	char		fnbuf[MAXPGPATH];
-	DH		   *dh = NULL;
+	FILE	   *fp;
+	DH		   *dh;
 	int			codes;
 
-	if (pqGetpwuid(getuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) != 0)
+	if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
 		return NULL;
 
 	/* attempt to open file.  It's not an error if it doesn't exist. */
 	snprintf(fnbuf, sizeof(fnbuf), "%s/.postgresql/dh%d.pem",
-			 pwd->pw_dir, keylength);
+			 homedir, keylength);
 
 	if ((fp = fopen(fnbuf, "r")) == NULL)
 		return NULL;
@@ -667,7 +688,6 @@ load_dh_file(int keylength)
 	}
 
 	return dh;
-#endif
 }
 
 /*
@@ -771,12 +791,7 @@ tmp_dh_cb(SSL *s, int is_export, int keylength)
 static int
 client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 {
-#ifdef WIN32
-	return 0;
-#else
-	char		pwdbuf[BUFSIZ];
-	struct passwd pwdstr;
-	struct passwd *pwd = NULL;
+	char		homedir[MAXPGPATH];
 	struct stat buf,
 				buf2;
 	char		fnbuf[MAXPGPATH];
@@ -785,7 +800,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	int			(*cb) () = NULL;	/* how to read user password */
 	char		sebuf[256];
 
-	if (pqGetpwuid(getuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) != 0)
+	if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 					  libpq_gettext("could not get user information\n"));
@@ -794,7 +809,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 
 	/* read the user certificate */
 	snprintf(fnbuf, sizeof(fnbuf), "%s/.postgresql/postgresql.crt",
-			 pwd->pw_dir);
+			 homedir);
 	if ((fp = fopen(fnbuf, "r")) == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
@@ -817,7 +832,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 
 	/* read the user key */
 	snprintf(fnbuf, sizeof(fnbuf), "%s/.postgresql/postgresql.key",
-			 pwd->pw_dir);
+			 homedir);
 	if (stat(fnbuf, &buf) == -1)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
@@ -873,7 +888,6 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	}
 
 	return 1;
-#endif
 }
 
 #ifdef ENABLE_THREAD_SAFETY
@@ -885,6 +899,7 @@ pq_threadidcallback(void)
 }
 
 static pthread_mutex_t *pq_lockarray;
+
 static void
 pq_lockingcallback(int mode, int n, const char *file, int line)
 {
@@ -893,6 +908,7 @@ pq_lockingcallback(int mode, int n, const char *file, int line)
 	else
 		pthread_mutex_unlock(&pq_lockarray[n]);
 }
+
 #endif   /* ENABLE_THREAD_SAFETY */
 
 static int
@@ -969,23 +985,17 @@ init_ssl_system(PGconn *conn)
 static int
 initialize_SSL(PGconn *conn)
 {
-#ifndef WIN32
 	struct stat buf;
-	char		pwdbuf[BUFSIZ];
-	struct passwd pwdstr;
-	struct passwd *pwd = NULL;
+	char		homedir[MAXPGPATH];
 	char		fnbuf[MAXPGPATH];
-#endif
 
 	if (init_ssl_system(conn))
 		return -1;
 
-#ifndef WIN32
 	/* Set up to verify server cert, if root.crt is present */
-	if (pqGetpwuid(getuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) == 0)
+	if (pqGetHomeDirectory(homedir, sizeof(homedir)))
 	{
-		snprintf(fnbuf, sizeof(fnbuf), "%s/.postgresql/root.crt",
-				 pwd->pw_dir);
+		snprintf(fnbuf, sizeof(fnbuf), "%s/.postgresql/root.crt", homedir);
 		if (stat(fnbuf, &buf) == 0)
 		{
 			if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, NULL))
@@ -1009,7 +1019,6 @@ initialize_SSL(PGconn *conn)
 
 	/* set up mechanism to provide client certificate, if available */
 	SSL_CTX_set_client_cert_cb(SSL_context, client_cert_cb);
-#endif
 
 	return 0;
 }
@@ -1232,15 +1241,19 @@ PQgetssl(PGconn *conn)
 		return NULL;
 	return conn->ssl;
 }
-#else
+
+#else   /* !USE_SSL */
+
 void *
 PQgetssl(PGconn *conn)
 {
 	return NULL;
 }
+
 #endif   /* USE_SSL */
 
 #ifdef ENABLE_THREAD_SAFETY
+
 /*
  *	Block SIGPIPE for this thread.  This prevents send()/write() from exiting
  *	the application.
@@ -1322,4 +1335,5 @@ pq_reset_sigpipe(sigset_t *osigset, bool sigpipe_pending, bool got_epipe)
 
 	SOCK_ERRNO_SET(save_errno);
 }
-#endif
+
+#endif /* ENABLE_THREAD_SAFETY */
