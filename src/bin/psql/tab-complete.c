@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.86 2003/10/14 22:47:12 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.87 2003/10/16 20:03:09 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -15,8 +15,8 @@
  * the programmer felt most like implementing.
  *
  * CAVEAT: Tab completion causes queries to be sent to the backend.
- * The number tuples returned gets limited, in most default
- * installations to 101, but if you still don't like this prospect,
+ * The number of tuples returned gets limited, in most default
+ * installations to 1000, but if you still don't like this prospect,
  * you can turn off tab completion in your ~/.inputrc (or else
  * ${INPUTRC}) file so:
  *
@@ -29,7 +29,7 @@
  *
  * BUGS:
  *
- * - If you split your queries across lines, this whole things gets
+ * - If you split your queries across lines, this whole thing gets
  *	 confused. (To fix this, one would have to read psql's query
  *	 buffer rather than readline's line buffer, which would require
  *	 some major revisions of things.)
@@ -115,7 +115,7 @@ initialize_readline(void)
 
 	rl_basic_word_break_characters = "\t\n@$><=;|&{( ";
 
-	completion_max_records = 100;
+	completion_max_records = 1000;
 
 	/*
 	 * There is a variable rl_completion_query_items for this but
@@ -134,38 +134,40 @@ initialize_readline(void)
  */
 
 #define Query_for_list_of_aggregates \
-" SELECT DISTINCT proname " \
-"   FROM pg_catalog.pg_proc" \
+" SELECT pg_catalog.quote_ident(proname) " \
+"   FROM pg_catalog.pg_proc p" \
 "  WHERE proisagg " \
-"    AND substr(proname,1,%d)='%s'" \
+"    AND substring(pg_catalog.quote_ident(proname),1,%d)='%s'" \
+"    AND pg_catalog.pg_function_is_visible(p.oid) "\
 "        UNION" \
-" SELECT nspname || '.' AS relname" \
+" SELECT pg_catalog.quote_ident(nspname) || '.'" \
 "   FROM pg_catalog.pg_namespace" \
-"  WHERE substr(nspname,1,%d)='%s'" \
+"  WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d)='%s'" \
 "        UNION" \
-" SELECT DISTINCT nspname || '.' || proname AS relname" \
+" SELECT pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(proname)" \
 "   FROM pg_catalog.pg_proc p, pg_catalog.pg_namespace n" \
 "  WHERE proisagg  " \
-"    AND substr(nspname || '.' || proname,1,%d)='%s'" \
+"    AND substring(pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(proname),1,%d)='%s'" \
 "    AND pronamespace = n.oid" \
-"    AND ('%s' ~ '^.*\\\\.' "\
+"    AND ('%s' ~ '\\\\.' "\
 "     OR (SELECT TRUE "\
 "           FROM pg_catalog.pg_namespace "\
-"          WHERE substr(nspname,1,%d)='%s' "\
+"          WHERE substring(pg_catalog.quote_ident(nspname),1,%d)='%s' "\
 "         HAVING COUNT(nspname)=1))"
 
 #define Query_for_list_of_attributes \
-"SELECT a.attname FROM pg_catalog.pg_attribute a, pg_catalog.pg_class c "\
+"SELECT pg_catalog.quote_ident(attname) "\
+"  FROM pg_catalog.pg_attribute a, pg_catalog.pg_class c "\
 " WHERE c.oid = a.attrelid "\
 "   AND a.attnum > 0 "\
 "   AND NOT a.attisdropped "\
-"   AND substr(a.attname,1,%d)='%s' "\
-"   AND c.relname='%s' "\
+"   AND substring(pg_catalog.quote_ident(attname),1,%d)='%s' "\
+"   AND pg_catalog.quote_ident(relname)='%s' "\
 "   AND pg_catalog.pg_table_is_visible(c.oid)"
 
 #define Query_for_list_of_databases \
-"SELECT datname FROM pg_catalog.pg_database "\
-" WHERE substr(datname,1,%d)='%s'"
+"SELECT pg_catalog.quote_ident(datname) FROM pg_catalog.pg_database "\
+" WHERE substring(pg_catalog.quote_ident(datname),1,%d)='%s'"
 
 #define Query_for_list_of_datatypes \
 " SELECT pg_catalog.format_type(t.oid, NULL) "\
@@ -173,247 +175,249 @@ initialize_readline(void)
 "  WHERE (t.typrelid = 0 "\
 "     OR (SELECT c.relkind = 'c' FROM pg_catalog.pg_class c WHERE c.oid = t.typrelid)) "\
 "    AND t.typname !~ '^_' "\
-"    AND substr(pg_catalog.format_type(t.oid, NULL),1,%d)='%s' "\
+"    AND substring(pg_catalog.format_type(t.oid, NULL),1,%d)='%s' "\
+"    AND pg_catalog.pg_type_is_visible(t.oid) "\
 "        UNION "\
-" SELECT nspname || '.' AS relname "\
+" SELECT pg_catalog.quote_ident(nspname) || '.'"\
 "   FROM pg_catalog.pg_namespace "\
-"  WHERE substr(nspname,1,%d)='%s' "\
+"  WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d)='%s' "\
 "        UNION "\
-" SELECT nspname || '.' || pg_catalog.format_type(t.oid, NULL) AS relname "\
+" SELECT pg_catalog.quote_ident(nspname) || '.' || pg_catalog.format_type(t.oid, NULL)"\
 "   FROM pg_catalog.pg_type t, pg_catalog.pg_namespace n "\
 "  WHERE(t.typrelid = 0 "\
 "     OR (SELECT c.relkind = 'c' FROM pg_catalog.pg_class c WHERE c.oid = t.typrelid)) "\
 "    AND t.typname !~ '^_' "\
-"    AND substr(nspname || '.' || pg_catalog.format_type(t.oid, NULL),1,%d)='%s' "\
+"    AND substring(pg_catalog.quote_ident(nspname) || '.' || pg_catalog.format_type(t.oid, NULL),1,%d)='%s' "\
 "    AND typnamespace = n.oid "\
-"    AND ('%s' ~ '^.*\\\\.' "\
+"    AND ('%s' ~ '\\\\.' "\
 "     OR (SELECT TRUE "\
 "           FROM pg_catalog.pg_namespace "\
-"          WHERE substr(nspname,1,%d)='%s' "\
+"          WHERE substring(pg_catalog.quote_ident(nspname),1,%d)='%s' "\
 "         HAVING COUNT(nspname)=1))"
 
 #define Query_for_list_of_domains \
-" SELECT typname "\
+" SELECT pg_catalog.quote_ident(typname) "\
 "   FROM pg_catalog.pg_type t "\
 "  WHERE typtype = 'd' "\
-"    AND substr(typname,1,%d)='%s' "\
+"    AND substring(pg_catalog.quote_ident(typname),1,%d)='%s' "\
+"    AND pg_catalog.pg_type_is_visible(t.oid) "\
 "        UNION" \
-" SELECT nspname || '.' "\
+" SELECT pg_catalog.quote_ident(nspname) || '.'"\
 "   FROM pg_catalog.pg_namespace "\
-"  WHERE substr(nspname,1,%d)='%s' "\
+"  WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d)='%s' "\
 "        UNION "\
-" SELECT nspname || '.' || pg_catalog.format_type(t.oid, NULL) "\
+" SELECT pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(typname)"\
 "   FROM pg_catalog.pg_type t, pg_catalog.pg_namespace n "\
 "  WHERE typtype = 'd' "\
-"    AND substr(nspname || '.' || typname,1,%d)='%s' "\
+"    AND substring(pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(typname),1,%d)='%s' "\
 "    AND typnamespace = n.oid "\
-"    AND ('%s' ~ '^.*\\\\.' "\
+"    AND ('%s' ~ '\\\\.' "\
 "     OR (SELECT TRUE "\
 "           FROM pg_catalog.pg_namespace "\
-"          WHERE substr(nspname,1,%d)='%s' "\
+"          WHERE substring(pg_catalog.quote_ident(nspname),1,%d)='%s' "\
 "         HAVING COUNT(nspname)=1))"
 
 #define Query_for_list_of_encodings \
 " SELECT DISTINCT pg_catalog.pg_encoding_to_char(conforencoding) "\
 "   FROM pg_catalog.pg_conversion "\
-"  WHERE substr(pg_catalog.pg_encoding_to_char(conforencoding),1,%d)=UPPER('%s')"
+"  WHERE substring(pg_catalog.pg_encoding_to_char(conforencoding),1,%d)=UPPER('%s')"
 
 #define Query_for_list_of_functions \
-" SELECT DISTINCT proname || '()' "\
-"   FROM pg_catalog.pg_proc p, pg_catalog.pg_namespace n "\
-"  WHERE substr(proname,1,%d)='%s'"\
+" SELECT pg_catalog.quote_ident(proname) || '()' "\
+"   FROM pg_catalog.pg_proc p "\
+"  WHERE substring(pg_catalog.quote_ident(proname),1,%d)='%s'"\
 "    AND pg_catalog.pg_function_is_visible(p.oid) "\
-"    AND pronamespace = n.oid "\
 "        UNION "\
-" SELECT nspname || '.' "\
+" SELECT pg_catalog.quote_ident(nspname) || '.' "\
 "   FROM pg_catalog.pg_namespace "\
-"  WHERE substr(nspname,1,%d)='%s' "\
+"  WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d)='%s' "\
 "        UNION "\
-" SELECT nspname || '.' || proname "\
+" SELECT pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(proname) || '()' "\
 "   FROM pg_catalog.pg_proc p, pg_catalog.pg_namespace n "\
-"  WHERE substr(nspname || '.' || proname,1,%d)='%s' "\
+"  WHERE substring(pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(proname),1,%d)='%s' "\
 "    AND pronamespace = n.oid "\
-"    AND ('%s' ~ '^.*\\\\.' "\
+"    AND ('%s' ~ '\\\\.' "\
 "     OR (SELECT TRUE "\
 "           FROM pg_catalog.pg_namespace "\
-"          WHERE substr(nspname,1,%d)='%s' "\
+"          WHERE substring(pg_catalog.quote_ident(nspname),1,%d)='%s' "\
 "         HAVING COUNT(nspname)=1))"
 
 #define Query_for_list_of_indexes \
-" SELECT relname "\
+" SELECT pg_catalog.quote_ident(relname) "\
 "   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
 "  WHERE relkind='i' "\
-"    AND substr(relname,1,%d)='%s' "\
+"    AND substring(pg_catalog.quote_ident(relname),1,%d)='%s' "\
 "    AND pg_catalog.pg_table_is_visible(c.oid) "\
 "    AND relnamespace = n.oid "\
 "    AND n.nspname NOT IN ('pg_catalog', 'pg_toast') "\
 "        UNION "\
-" SELECT nspname || '.' "\
+" SELECT pg_catalog.quote_ident(nspname) || '.' "\
 "   FROM pg_catalog.pg_namespace "\
-"  WHERE substr(nspname,1,%d)='%s' "\
+"  WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d)='%s' "\
 "        UNION "\
-" SELECT nspname || '.' || relname "\
+" SELECT pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(relname) "\
 "   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
 "  WHERE relkind='i' "\
-"    AND substr(nspname || '.' || relname,1,%d)='%s' "\
+"    AND substring(pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(relname),1,%d)='%s' "\
 "    AND relnamespace = n.oid "\
-"    AND ('%s' ~ '^.*\\\\.' "\
+"    AND ('%s' ~ '\\\\.' "\
 "     OR (SELECT TRUE "\
 "           FROM pg_catalog.pg_namespace "\
-"          WHERE substr(nspname,1,%d)='%s' "\
+"          WHERE substring(pg_catalog.quote_ident(nspname),1,%d)='%s' "\
 "         HAVING COUNT(nspname)=1))"
 
 
 #define Query_for_list_of_languages \
-"SELECT lanname "\
+"SELECT pg_catalog.quote_ident(lanname) "\
 "  FROM pg_language "\
 " WHERE lanname != 'internal' "\
-"   AND substr(lanname,1,%d)='%s' "
+"   AND substring(pg_catalog.quote_ident(lanname),1,%d)='%s' "
 
 #define Query_for_list_of_schemas \
-"SELECT nspname FROM pg_catalog.pg_namespace "\
-" WHERE substr(nspname,1,%d)='%s'"
+"SELECT pg_catalog.quote_ident(nspname) FROM pg_catalog.pg_namespace "\
+" WHERE substring(pg_catalog.quote_ident(nspname),1,%d)='%s'"
 
 #define Query_for_list_of_sequences \
-" SELECT relname "\
+" SELECT pg_catalog.quote_ident(relname) "\
 "   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
 "  WHERE relkind='S' "\
-"    AND substr(relname,1,%d)='%s' "\
+"    AND substring(pg_catalog.quote_ident(relname),1,%d)='%s' "\
 "    AND pg_catalog.pg_table_is_visible(c.oid) "\
 "    AND relnamespace = n.oid "\
 "    AND n.nspname NOT IN ('pg_catalog', 'pg_toast') "\
 "        UNION "\
-" SELECT nspname || '.' "\
+" SELECT pg_catalog.quote_ident(nspname) || '.' "\
 "   FROM pg_catalog.pg_namespace "\
-"  WHERE substr(nspname,1,%d)='%s' "\
+"  WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d)='%s' "\
 "        UNION "\
-" SELECT nspname || '.' || relname "\
+" SELECT pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(relname) "\
 "   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
 "  WHERE relkind='S' "\
-"    AND substr(nspname || '.' || relname,1,%d)='%s' "\
+"    AND substring(pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(relname),1,%d)='%s' "\
 "    AND relnamespace = n.oid "\
-"    AND ('%s' ~ '^.*\\\\.' "\
+"    AND ('%s' ~ '\\\\.' "\
 "     OR (SELECT TRUE "\
 "           FROM pg_catalog.pg_namespace "\
-"          WHERE substr(nspname,1,%d)='%s' "\
+"          WHERE substring(pg_catalog.quote_ident(nspname),1,%d)='%s' "\
 "         HAVING COUNT(nspname)=1))"
 
 #define Query_for_list_of_system_relations \
-"SELECT c.relname FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
+"SELECT pg_catalog.quote_ident(relname) "\
+"  FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
 " WHERE (c.relkind='r' OR c.relkind='v' OR c.relkind='s' OR c.relkind='S') "\
-"   AND substr(c.relname,1,%d)='%s' "\
+"   AND substring(pg_catalog.quote_ident(relname),1,%d)='%s' "\
 "   AND pg_catalog.pg_table_is_visible(c.oid)"\
 "   AND relnamespace = n.oid "\
 "   AND n.nspname = 'pg_catalog'"
 
 #define Query_for_list_of_tables \
-" SELECT relname "\
+" SELECT pg_catalog.quote_ident(relname) "\
 "   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
 "  WHERE relkind='r' "\
-"    AND substr(relname,1,%d)='%s' "\
+"    AND substring(pg_catalog.quote_ident(relname),1,%d)='%s' "\
 "    AND pg_catalog.pg_table_is_visible(c.oid) "\
 "    AND relnamespace = n.oid "\
 "    AND n.nspname NOT IN ('pg_catalog', 'pg_toast') "\
 "        UNION "\
-" SELECT nspname || '.' "\
+" SELECT pg_catalog.quote_ident(nspname) || '.' "\
 "   FROM pg_catalog.pg_namespace "\
-"  WHERE substr(nspname  || '.',1,%d)='%s' "\
+"  WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d)='%s' "\
 "        UNION "\
-" SELECT nspname || '.' || relname "\
+" SELECT pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(relname) "\
 "   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
 "  WHERE relkind='r' "\
-"    AND substr(nspname || '.' || relname,1,%d)='%s' "\
+"    AND substring(pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(relname),1,%d)='%s' "\
 "    AND relnamespace = n.oid "\
-"    AND ('%s' ~ '^.*\\\\.' "\
+"    AND ('%s' ~ '\\\\.' "\
 "     OR (SELECT TRUE "\
-"           FROM pg_catalog.pg_namespace n1 "\
-"          WHERE substr(nspname ||'.',1,%d)='%s' "\
+"           FROM pg_catalog.pg_namespace "\
+"          WHERE substring(pg_catalog.quote_ident(nspname),1,%d)='%s' "\
 "         HAVING COUNT(nspname)=1))"
 
 #define Query_for_list_of_tisv \
-" SELECT relname "\
+" SELECT pg_catalog.quote_ident(relname) "\
 "   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
 "  WHERE (relkind='r' OR relkind='i' OR relkind='S' OR relkind='v') "\
-"    AND substr(relname,1,%d)='%s' "\
+"    AND substring(pg_catalog.quote_ident(relname),1,%d)='%s' "\
 "    AND pg_catalog.pg_table_is_visible(c.oid) "\
 "    AND relnamespace = n.oid "\
 "    AND n.nspname NOT IN ('pg_catalog', 'pg_toast') "\
 "        UNION "\
-" SELECT nspname || '.' "\
+" SELECT pg_catalog.quote_ident(nspname) || '.' "\
 "   FROM pg_catalog.pg_namespace "\
-"  WHERE substr(nspname,1,%d)='%s' "\
+"  WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d)='%s' "\
 "        UNION "\
-" SELECT nspname || '.' || relname "\
+" SELECT pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(relname) "\
 "   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
 "  WHERE (relkind='r' OR relkind='i' OR relkind='S' OR relkind='v') "\
-"    AND substr(nspname || '.' || relname,1,%d)='%s' "\
+"    AND substring(pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(relname),1,%d)='%s' "\
 "    AND relnamespace = n.oid "\
-"    AND ('%s' ~ '^.*\\\\.' "\
+"    AND ('%s' ~ '\\\\.' "\
 "     OR (SELECT TRUE "\
 "           FROM pg_catalog.pg_namespace "\
-"          WHERE substr(nspname,1,%d)='%s' "\
+"          WHERE substring(pg_catalog.quote_ident(nspname),1,%d)='%s' "\
 "         HAVING COUNT(nspname)=1))"
 
 #define Query_for_list_of_tsv \
-" SELECT relname "\
+" SELECT pg_catalog.quote_ident(relname) "\
 "   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
 "  WHERE (relkind='r' OR relkind='S' OR relkind='v') "\
-"    AND substr(relname,1,%d)='%s' "\
+"    AND substring(pg_catalog.quote_ident(relname),1,%d)='%s' "\
 "    AND pg_catalog.pg_table_is_visible(c.oid) "\
 "    AND relnamespace = n.oid "\
 "    AND n.nspname NOT IN ('pg_catalog', 'pg_toast') "\
 "        UNION "\
-" SELECT nspname || '.' "\
+" SELECT pg_catalog.quote_ident(nspname) || '.' "\
 "   FROM pg_catalog.pg_namespace "\
-"  WHERE substr(nspname,1,%d)='%s' "\
+"  WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d)='%s' "\
 "        UNION "\
-" SELECT nspname || '.' || relname "\
+" SELECT pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(relname) "\
 "   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
 "  WHERE (relkind='r' OR relkind='S' OR relkind='v') "\
-"    AND substr(nspname || '.' || relname,1,%d)='%s' "\
+"    AND substring(pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(relname),1,%d)='%s' "\
 "    AND relnamespace = n.oid "\
-"    AND ('%s' ~ '^.*\\\\.' "\
+"    AND ('%s' ~ '\\\\.' "\
 "     OR (SELECT TRUE "\
 "           FROM pg_catalog.pg_namespace "\
-"          WHERE substr(nspname,1,%d)='%s' "\
+"          WHERE substring(pg_catalog.quote_ident(nspname),1,%d)='%s' "\
 "         HAVING COUNT(nspname)=1))"
 
 #define Query_for_list_of_views \
-" SELECT relname "\
+" SELECT pg_catalog.quote_ident(relname) "\
 "   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
 "  WHERE relkind='v'"\
-"    AND substr(relname,1,%d)='%s' "\
+"    AND substring(pg_catalog.quote_ident(relname),1,%d)='%s' "\
 "    AND pg_catalog.pg_table_is_visible(c.oid) "\
 "    AND relnamespace = n.oid "\
 "    AND n.nspname NOT IN ('pg_catalog', 'pg_toast') "\
 "        UNION "\
-" SELECT nspname || '.' "\
+" SELECT pg_catalog.quote_ident(nspname) || '.' "\
 "   FROM pg_catalog.pg_namespace "\
-"  WHERE substr(nspname,1,%d)='%s' "\
+"  WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d)='%s' "\
 "        UNION "\
-" SELECT nspname || '.' || relname "\
+" SELECT pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(relname) "\
 "   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
 "  WHERE relkind='v' "\
-"    AND substr(nspname || '.' || relname,1,%d)='%s' "\
+"    AND substring(pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(relname),1,%d)='%s' "\
 "    AND relnamespace = n.oid "\
-"    AND ('%s' ~ '^.*\\\\.' "\
+"    AND ('%s' ~ '\\\\.' "\
 "     OR (SELECT TRUE "\
 "           FROM pg_catalog.pg_namespace "\
-"          WHERE substr(nspname,1,%d)='%s' "\
+"          WHERE substring(pg_catalog.quote_ident(nspname),1,%d)='%s' "\
 "         HAVING COUNT(nspname)=1))"
 
 #define Query_for_list_of_users \
-" SELECT usename "\
+" SELECT pg_catalog.quote_ident(usename) "\
 "   FROM pg_catalog.pg_user "\
-"  WHERE substr(usename,1,%d)='%s'"
+"  WHERE substring(pg_catalog.quote_ident(usename),1,%d)='%s'"
 
 /* the silly-looking length condition is just to eat up the current word */
 #define Query_for_table_owning_index \
-"SELECT c1.relname "\
+"SELECT pg_catalog.quote_ident(c1.relname) "\
 "  FROM pg_catalog.pg_class c1, pg_catalog.pg_class c2, pg_catalog.pg_index i"\
 " WHERE c1.oid=i.indrelid and i.indexrelid=c2.oid"\
 "       and (%d = length('%s'))"\
-"       and c2.relname='%s'"\
+"       and pg_catalog.quote_ident(c2.relname)='%s'"\
 "       and pg_catalog.pg_table_is_visible(c2.oid)"
 
 /* This is a list of all "things" in Pgsql, which can show up after CREATE or
@@ -434,21 +438,21 @@ pgsql_thing_t words_after_create[] = {
 	{"AGGREGATE", WITH_SCHEMA, Query_for_list_of_aggregates},
 	{"CAST", NO_SCHEMA, NULL},	/* Casts have complex structures for
 								 * namees, so skip it */
-	{"CONVERSION", NO_SCHEMA, "SELECT conname FROM pg_catalog.pg_conversion WHERE substr(conname,1,%d)='%s'"},
+	{"CONVERSION", NO_SCHEMA, "SELECT pg_catalog.quote_ident(conname) FROM pg_catalog.pg_conversion WHERE substring(pg_catalog.quote_ident(conname),1,%d)='%s'"},
 	{"DATABASE", NO_SCHEMA, Query_for_list_of_databases},
 	{"DOMAIN", WITH_SCHEMA, Query_for_list_of_domains},
 	{"FUNCTION", WITH_SCHEMA, Query_for_list_of_functions},
-	{"GROUP", NO_SCHEMA, "SELECT groname FROM pg_catalog.pg_group WHERE substr(groname,1,%d)='%s'"},
+	{"GROUP", NO_SCHEMA, "SELECT pg_catalog.quote_ident(groname) FROM pg_catalog.pg_group WHERE substring(pg_catalog.quote_ident(groname),1,%d)='%s'"},
 	{"LANGUAGE", NO_SCHEMA, Query_for_list_of_languages},
 	{"INDEX", WITH_SCHEMA, Query_for_list_of_indexes},
 	{"OPERATOR", NO_SCHEMA, NULL},		/* Querying for this is probably
 										 * not such a good idea. */
-	{"RULE", NO_SCHEMA, "SELECT rulename FROM pg_catalog.pg_rules WHERE substr(rulename,1,%d)='%s'"},
+	{"RULE", NO_SCHEMA, "SELECT pg_catalog.quote_ident(rulename) FROM pg_catalog.pg_rules WHERE substring(pg_catalog.quote_ident(rulename),1,%d)='%s'"},
 	{"SCHEMA", NO_SCHEMA, Query_for_list_of_schemas},
 	{"SEQUENCE", WITH_SCHEMA, Query_for_list_of_sequences},
 	{"TABLE", WITH_SCHEMA, Query_for_list_of_tables},
 	{"TEMP", NO_SCHEMA, NULL},	/* for CREATE TEMP TABLE ... */
-	{"TRIGGER", NO_SCHEMA, "SELECT tgname FROM pg_catalog.pg_trigger WHERE substr(tgname,1,%d)='%s'"},
+	{"TRIGGER", NO_SCHEMA, "SELECT pg_catalog.quote_ident(tgname) FROM pg_catalog.pg_trigger WHERE substring(pg_catalog.quote_ident(tgname),1,%d)='%s'"},
 	{"TYPE", WITH_SCHEMA, Query_for_list_of_datatypes},
 	{"UNIQUE", NO_SCHEMA, NULL},	/* for CREATE UNIQUE INDEX ... */
 	{"USER", NO_SCHEMA, Query_for_list_of_users},
@@ -987,20 +991,20 @@ psql_completion(char *text, int start, int end)
 	else if ((strcasecmp(prev3_wd, "GRANT") == 0 ||
 			  strcasecmp(prev3_wd, "REVOKE") == 0) &&
 			 strcasecmp(prev_wd, "ON") == 0)
-		COMPLETE_WITH_QUERY("SELECT relname FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "
+		COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(relname) FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "
 							" WHERE relkind in ('r','S','v')  "
-							"   AND substr(relname,1,%d)='%s' "
+							"   AND substring(pg_catalog.quote_ident(relname),1,%d)='%s' "
 						  "   AND pg_catalog.pg_table_is_visible(c.oid) "
 							"   AND relnamespace = n.oid "
 					"   AND n.nspname NOT IN ('pg_catalog', 'pg_toast') "
 							" UNION "
-							"SELECT 'DATABASE' AS relname "
+							"SELECT 'DATABASE' "
 							" UNION "
-							"SELECT 'FUNCTION' AS relname "
+							"SELECT 'FUNCTION' "
 							" UNION "
-							"SELECT 'LANGUAGE' AS relname "
+							"SELECT 'LANGUAGE' "
 							" UNION "
-							"SELECT 'SCHEMA' AS relname ");
+							"SELECT 'SCHEMA' ");
 
 	/* Complete "GRANT/REVOKE * ON * " with "TO" */
 	else if ((strcasecmp(prev4_wd, "GRANT") == 0 ||
@@ -1098,7 +1102,7 @@ psql_completion(char *text, int start, int end)
 
 /* NOTIFY */
 	else if (strcasecmp(prev_wd, "NOTIFY") == 0)
-		COMPLETE_WITH_QUERY("SELECT relname FROM pg_catalog.pg_listener WHERE substr(relname,1,%d)='%s'");
+		COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(relname) FROM pg_catalog.pg_listener WHERE substring(pg_catalog.quote_ident(relname),1,%d)='%s'");
 
 /* REINDEX */
 	else if (strcasecmp(prev_wd, "REINDEX") == 0)
@@ -1227,7 +1231,7 @@ psql_completion(char *text, int start, int end)
 
 /* UNLISTEN */
 	else if (strcasecmp(prev_wd, "UNLISTEN") == 0)
-		COMPLETE_WITH_QUERY("SELECT relname FROM pg_catalog.pg_listener WHERE substr(relname,1,%d)='%s' UNION SELECT '*'::name");
+		COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(relname) FROM pg_catalog.pg_listener WHERE substring(pg_catalog.quote_ident(relname),1,%d)='%s' UNION SELECT '*'");
 
 /* UPDATE */
 	/* If prev. word is UPDATE suggest a list of tables */
@@ -1247,10 +1251,11 @@ psql_completion(char *text, int start, int end)
 
 /* VACUUM */
 	else if (strcasecmp(prev_wd, "VACUUM") == 0)
-		COMPLETE_WITH_QUERY("SELECT relname FROM pg_catalog.pg_class WHERE relkind='r' and substr(relname,1,%d)='%s' and pg_catalog.pg_table_is_visible(oid) UNION SELECT 'FULL'::name UNION SELECT 'ANALYZE'::name");
+		COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(relname) FROM pg_catalog.pg_class WHERE relkind='r' and substring(pg_catalog.quote_ident(relname),1,%d)='%s' and pg_catalog.pg_table_is_visible(oid) UNION SELECT 'FULL' UNION SELECT 'ANALYZE' UNION SELECT 'VERBOSE'");
 	else if (strcasecmp(prev2_wd, "VACUUM") == 0 &&
 			 (strcasecmp(prev_wd, "FULL") == 0 ||
-			  strcasecmp(prev_wd, "ANALYZE") == 0))
+			  strcasecmp(prev_wd, "ANALYZE") == 0 ||
+			  strcasecmp(prev_wd, "VERBOSE") == 0))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
 
 /* WHERE */
@@ -1641,20 +1646,20 @@ exec_query(char *query)
 	assert(query[strlen(query) - 1] != ';');
 #endif
 
-	if (snprintf(query_buffer, BUF_SIZE, "%s LIMIT %d;",
+	if (snprintf(query_buffer, BUF_SIZE, "%s LIMIT %d",
 				 query, completion_max_records) == -1)
 	{
 		ERROR_QUERY_TOO_LONG;
 		return NULL;
 	}
 
-	result = PQexec(pset.db, query);
+	result = PQexec(pset.db, query_buffer);
 
 	if (result != NULL && PQresultStatus(result) != PGRES_TUPLES_OK)
 	{
 #if 0
 		psql_error("tab completion: %s failed - %s\n",
-				   query, PQresStatus(PQresultStatus(result)));
+				   query_buffer, PQresStatus(PQresultStatus(result)));
 #endif
 		PQclear(result);
 		result = NULL;
