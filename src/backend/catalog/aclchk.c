@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.100 2004/05/26 18:35:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.101 2004/05/28 16:17:14 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -1347,20 +1347,30 @@ pg_namespace_aclmask(Oid nsp_oid, AclId userid,
 		return mask;
 
 	/*
-	 * If we have been assigned this namespace as a temp
-	 * namespace, check to make sure we have CREATE permissions on
-	 * the database.
+	 * If we have been assigned this namespace as a temp namespace,
+	 * check to make sure we have CREATE TEMP permission on the database,
+	 * and if so act as though we have all standard (but not GRANT OPTION)
+	 * permissions on the namespace.  If we don't have CREATE TEMP, act as
+	 * though we have only USAGE (and not CREATE) rights.
 	 *
-	 * Instead of returning ACLCHECK_NO_PRIV, should we return via
-	 * ereport() with a message about trying to create an object
-	 * in a TEMP namespace when GetUserId() doesn't have perms?
+	 * This may seem redundant given the check in InitTempTableNamespace,
+	 * but it really isn't since current user ID may have changed since then.
+	 * The upshot of this behavior is that a SECURITY INVOKER function can
+	 * create temp tables that can then be accessed (if permission is granted)
+	 * by code that doesn't have permissions to create temp tables.
+	 *
+	 * XXX Would it be safe to ereport a special error message as
+	 * InitTempTableNamespace does?  Returning zero here means we'll get a
+	 * generic "permission denied for schema pg_temp_N" message, which is not
+	 * remarkably user-friendly.
 	 */
-	if (isTempNamespace(nsp_oid)) {
-	  if (pg_database_aclcheck(MyDatabaseId, GetUserId(),
-				   ACL_CREATE_TEMP) == ACLCHECK_OK)
-	    return ACLCHECK_OK;
-	  else
-	    return ACLCHECK_NO_PRIV;
+	if (isTempNamespace(nsp_oid))
+	{
+		if (pg_database_aclcheck(MyDatabaseId, GetUserId(),
+								 ACL_CREATE_TEMP) == ACLCHECK_OK)
+			return mask & ACL_ALL_RIGHTS_NAMESPACE;
+		else
+			return mask & ACL_USAGE;
 	}
 
 	/*
