@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.105 2003/02/09 06:56:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.106 2003/03/03 04:37:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,6 +160,7 @@ cluster(ClusterStmt *stmt)
 					 stmt->indexname, stmt->relation->relname);
 		}
 
+		/* All other checks are done in cluster_rel() */
 		rvtc.tableOid = tableOid;
 		rvtc.indexOid = indexOid;
 
@@ -312,6 +313,34 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 		elog(ERROR, "CLUSTER: \"%s\" is not an index for table \"%s\"",
 			 RelationGetRelationName(OldIndex),
 			 RelationGetRelationName(OldHeap));
+
+	/*
+	 * Disallow clustering on incomplete indexes (those that might not index
+	 * every row of the relation).  We could relax this by making a separate
+	 * seqscan pass over the table to copy the missing rows, but that seems
+	 * expensive and tedious.
+	 */
+	if (VARSIZE(&OldIndex->rd_index->indpred) > VARHDRSZ) /* partial? */
+		elog(ERROR, "CLUSTER: cannot cluster on partial index");
+	if (!OldIndex->rd_am->amindexnulls)
+	{
+		AttrNumber	colno;
+
+		/*
+		 * If the AM doesn't index nulls, then it's a partial index unless
+		 * we can prove all the rows are non-null.  Note we only need look
+		 * at the first column; multicolumn-capable AMs are *required* to
+		 * index nulls in columns after the first.
+		 */
+		if (OidIsValid(OldIndex->rd_index->indproc))
+			elog(ERROR, "CLUSTER: cannot cluster on functional index when index access method does not handle nulls");
+		colno = OldIndex->rd_index->indkey[0];
+		if (colno > 0)			/* system columns are non-null */
+			if (!OldHeap->rd_att->attrs[colno - 1]->attnotnull)
+				elog(ERROR, "CLUSTER: cannot cluster when index access method does not handle nulls"
+					 "\n\tYou may be able to work around this by marking column \"%s\" NOT NULL",
+					 NameStr(OldHeap->rd_att->attrs[colno - 1]->attname));
+	}
 
 	/*
 	 * Disallow clustering system relations.  This will definitely NOT
