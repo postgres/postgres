@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.146 2000/06/04 01:44:31 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.147 2000/06/06 16:04:29 petere Exp $
  *
  * NOTES
  *
@@ -129,7 +129,7 @@ static Dllist *BackendList;
 /* list of ports associated with still open, but incomplete connections */
 static Dllist *PortList;
 
-int PostPortName = DEF_PGPORT;
+int PostPortName;
 
  /*
   * This is a boolean indicating that there is at least one backend that
@@ -381,6 +381,9 @@ PostmasterMain(int argc, char *argv[])
 	MyProcPid = getpid();
 	DataDir = getenv("PGDATA"); /* default value */
 
+	if (getenv("PGPORT"))
+		PostPortName = atoi(getenv("PGPORT"));
+
 	/*
 	 * First we must scan for a -D argument to get the data dir. Then
 	 * read the config file. Finally, scan all the other arguments.
@@ -542,9 +545,6 @@ PostmasterMain(int argc, char *argv[])
 				break;
 		}
 	}
-
-	if (PostPortName == 0)
-		PostPortName = pq_getport();
 
 	/*
 	 * Check for invalid combinations of switches

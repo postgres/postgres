@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.95 2000/06/04 01:44:30 petere Exp $
+ *	$Id: pqcomm.c,v 1.96 2000/06/06 16:04:29 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,19 +118,6 @@ pq_init(void)
 		debug_port = stderr;
 }
 
-/* --------------------------------
- *		pq_getport - return the PGPORT setting
- * --------------------------------
- */
-int
-pq_getport(void)
-{
-	char	   *envport = getenv("PGPORT");
-
-	if (envport)
-		return atoi(envport);
-	return DEF_PGPORT;
-}
 
 /* --------------------------------
  *		pq_close - shutdown libpq at backend exit
