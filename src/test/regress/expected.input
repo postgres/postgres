@@ -4771,11 +4771,16 @@ QUERY: CLOSE foo25;
 QUERY: END;
 QUERY: PURGE hash_f8_heap BEFORE 'now';
 QUERY: SELECT count(*) AS has_10002 FROM hash_f8_heap[,] h;
+has_10002
+---------
+    10002
+(1 row)
+
 QUERY: VACUUM hash_f8_heap;
 QUERY: SELECT count(*) AS has_10000 FROM hash_f8_heap[,] h;
 has_10000
 ---------
-    10002
+    10000
 (1 row)
 
 QUERY: PURGE hash_i4_heap AFTER '@ 1 second ago';
@@ -6914,7 +6919,7 @@ QUERY: drop index 314159;
 WARN:parser: syntax error at or near "314159"
 
 QUERY: drop index nonesuch;
-WARN:index "nonesuch" nonexistant
+WARN:index "nonesuch" nonexistent
 QUERY: drop aggregate;
 WARN:parser: syntax error at or near ";"
 
