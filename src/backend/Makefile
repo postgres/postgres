@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.10 1996/10/27 09:45:39 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.11 1996/10/31 07:25:15 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -170,7 +170,7 @@ endif
 
 global1.bki.source local1_template1.bki.source: 
 	$(MAKE) -C catalog $@
-	cp catalog/$@ .
+	cp catalog/$@ ../include
 
 
 ############################################################################
@@ -179,11 +179,11 @@ global1.bki.source local1_template1.bki.source:
 
 parse.h: 
 	$(MAKE) -C parser parse.h
-	cp parser/parse.h .
+	cp parser/parse.h ../include
 
 fmgr.h:
 	$(MAKE) -C utils fmgr.h
-	cp utils/fmgr.h .
+	cp utils/fmgr.h ../include
 
 #############################################################################
 clean:
