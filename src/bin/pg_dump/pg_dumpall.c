@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.1 2002/08/27 18:57:26 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.2 2002/08/27 21:33:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -467,6 +467,9 @@ runPgDump(const char *dbname)
 					  pgdumploc, pgdumpopts->data, dbname);
 	if (verbose)
 		fprintf(stderr, _("%s: running %s\n"), progname, cmd->data);
+
+	fflush(stdout);
+	fflush(stderr);
 
 	ret = system(cmd->data);
 	destroyPQExpBuffer(cmd);
