@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.204 2004/05/07 01:53:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.205 2004/05/08 02:11:46 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2743,7 +2743,7 @@ set_config_option(const char *name, const char *value,
 										(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 								 errmsg("permission denied to set parameter \"%s\"",
 										name),
-										 errhint("Must be superuser to change this value to false.")));
+										 errhint("must be superuser to change this value to false")));
 								return false;
 							}
 						}
@@ -4721,7 +4721,7 @@ assign_stage_log_stats(bool newval, bool doit, GucSource source)
 			if (doit)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("Can not enable parameter when \"log_statement_stats\" is true.")));
+					errmsg("cannot enable parameter when \"log_statement_stats\" is true.")));
 			else
 				return false;
 		}
@@ -4741,7 +4741,7 @@ assign_log_stats(bool newval, bool doit, GucSource source)
 			if (doit)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("Can not enable \"log_statement_stats\" when \"log_parser_stats\",\n"
+					errmsg("cannot enable \"log_statement_stats\" when \"log_parser_stats\",\n"
 							"\"log_planner_stats\", or \"log_executor_stats\" is true.")));
 			else
 				return false;
