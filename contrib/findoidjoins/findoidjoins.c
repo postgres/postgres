@@ -2,13 +2,11 @@
  * findoidjoins.c, requires src/interfaces/libpgeasy
  *
  */
+#include "postgres_fe.h"
 
-#include <stdio.h>
-#include <string.h>
 #include "libpq-fe.h"
-
 #include "halt.h"
-#include <libpgeasy.h>
+#include "libpgeasy.h"
 
 PGresult   *attres,
 		   *relres;
