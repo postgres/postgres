@@ -12017,6 +12017,8 @@ LIBOBJS="$LIBOBJS rand.$ac_objext"
 cat >>confdefs.h <<\_ACEOF
 #define PGTZ 1
 _ACEOF
+
+PGTZ=yes
  ;;
 esac
 
@@ -18611,6 +18613,7 @@ s,@python_includespec@,$python_includespec,;t t
 s,@python_libspec@,$python_libspec,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@HAVE_IPV6@,$HAVE_IPV6,;t t
+s,@PGTZ@,$PGTZ,;t t
 s,@acx_pthread_config@,$acx_pthread_config,;t t
 s,@PTHREAD_CC@,$PTHREAD_CC,;t t
 s,@PTHREAD_LIBS@,$PTHREAD_LIBS,;t t

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/Makefile,v 1.31 2004/04/26 00:48:38 momjian Exp $
+# $PostgreSQL: pgsql/src/Makefile,v 1.32 2004/04/30 04:31:52 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,6 +15,7 @@ include Makefile.global
 
 all install installdirs uninstall dep depend distprep:
 	$(MAKE) -C port $@
+	$(MAKE) -C timezone $@
 	$(MAKE) -C backend $@
 	$(MAKE) -C backend/utils/mb/conversion_procs $@
 	$(MAKE) -C include $@
@@ -27,6 +28,7 @@ install-all-headers:
 
 clean:
 	$(MAKE) -C port $@
+	$(MAKE) -C timezone $@
 	$(MAKE) -C backend $@
 	$(MAKE) -C include $@
 	$(MAKE) -C interfaces $@
@@ -39,6 +41,7 @@ clean:
 
 distclean maintainer-clean:
 	-$(MAKE) -C port $@
+	-$(MAKE) -C timezone $@
 	-$(MAKE) -C backend $@
 	-$(MAKE) -C include $@
 	-$(MAKE) -C interfaces $@
