@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.43 2004/12/31 21:59:10 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.44 2005/02/05 19:38:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,10 +60,11 @@ gistfirst(IndexScanDesc s, ScanDirection dir)
 	BlockNumber blk;
 	IndexTuple	it;
 
+	so = (GISTScanOpaque) s->opaque;
+
 	b = ReadBuffer(s->indexRelation, GISTP_ROOT);
 	p = BufferGetPage(b);
 	po = (GISTPageOpaque) PageGetSpecialPointer(p);
-	so = (GISTScanOpaque) s->opaque;
 
 	for (;;)
 	{
@@ -75,12 +76,14 @@ gistfirst(IndexScanDesc s, ScanDirection dir)
 
 		while (n < FirstOffsetNumber || n > maxoff)
 		{
-			ReleaseBuffer(b);
-			if (so->s_stack == NULL)
-				return false;
-
 			stk = so->s_stack;
-			b = ReadBuffer(s->indexRelation, stk->gs_blk);
+			if (stk == NULL)
+			{
+				ReleaseBuffer(b);
+				return false;
+			}
+
+			b = ReleaseAndReadBuffer(b, s->indexRelation, stk->gs_blk);
 			p = BufferGetPage(b);
 			po = (GISTPageOpaque) PageGetSpecialPointer(p);
 			maxoff = PageGetMaxOffsetNumber(p);
@@ -89,6 +92,7 @@ gistfirst(IndexScanDesc s, ScanDirection dir)
 				n = OffsetNumberPrev(stk->gs_child);
 			else
 				n = OffsetNumberNext(stk->gs_child);
+
 			so->s_stack = stk->gs_parent;
 			pfree(stk);
 
@@ -116,8 +120,7 @@ gistfirst(IndexScanDesc s, ScanDirection dir)
 			it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
 			blk = ItemPointerGetBlockNumber(&(it->t_tid));
 
-			ReleaseBuffer(b);
-			b = ReadBuffer(s->indexRelation, blk);
+			b = ReleaseAndReadBuffer(b, s->indexRelation, blk);
 			p = BufferGetPage(b);
 			po = (GISTPageOpaque) PageGetSpecialPointer(p);
 		}
@@ -137,6 +140,8 @@ gistnext(IndexScanDesc s, ScanDirection dir)
 	BlockNumber blk;
 	IndexTuple	it;
 
+	so = (GISTScanOpaque) s->opaque;
+
 	blk = ItemPointerGetBlockNumber(&(s->currentItemData));
 	n = ItemPointerGetOffsetNumber(&(s->currentItemData));
 
@@ -148,7 +153,6 @@ gistnext(IndexScanDesc s, ScanDirection dir)
 	b = ReadBuffer(s->indexRelation, blk);
 	p = BufferGetPage(b);
 	po = (GISTPageOpaque) PageGetSpecialPointer(p);
-	so = (GISTScanOpaque) s->opaque;
 
 	for (;;)
 	{
@@ -157,20 +161,23 @@ gistnext(IndexScanDesc s, ScanDirection dir)
 
 		while (n < FirstOffsetNumber || n > maxoff)
 		{
-			ReleaseBuffer(b);
-			if (so->s_stack == NULL)
-				return false;
-
 			stk = so->s_stack;
-			b = ReadBuffer(s->indexRelation, stk->gs_blk);
+			if (stk == NULL)
+			{
+				ReleaseBuffer(b);
+				return false;
+			}
+
+			b = ReleaseAndReadBuffer(b, s->indexRelation, stk->gs_blk);
 			p = BufferGetPage(b);
-			maxoff = PageGetMaxOffsetNumber(p);
 			po = (GISTPageOpaque) PageGetSpecialPointer(p);
+			maxoff = PageGetMaxOffsetNumber(p);
 
 			if (ScanDirectionIsBackward(dir))
 				n = OffsetNumberPrev(stk->gs_child);
 			else
 				n = OffsetNumberNext(stk->gs_child);
+
 			so->s_stack = stk->gs_parent;
 			pfree(stk);
 
@@ -198,8 +205,7 @@ gistnext(IndexScanDesc s, ScanDirection dir)
 			it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
 			blk = ItemPointerGetBlockNumber(&(it->t_tid));
 
-			ReleaseBuffer(b);
-			b = ReadBuffer(s->indexRelation, blk);
+			b = ReleaseAndReadBuffer(b, s->indexRelation, blk);
 			p = BufferGetPage(b);
 			po = (GISTPageOpaque) PageGetSpecialPointer(p);
 
