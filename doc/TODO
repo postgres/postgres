@@ -73,7 +73,7 @@ TYPES
 
 * Nchar (as distinguished from ordinary varchar),
 * Domain capability
-* Add STDDEV/VARIANCE() function for standard deviation computation/variance
+* -Add STDDEV/VARIANCE() function for standard deviation computation/variance
 * Allow compression of large fields or a compressed field type
 * Large objects
 	o Fix large object mapping scheme, own typeid or reltype(Peter)
