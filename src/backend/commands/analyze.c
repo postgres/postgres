@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.36 2002/06/13 19:52:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.37 2002/06/15 22:25:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ typedef enum
 
 /*
  * We build one of these structs for each attribute (column) that is to be
- * analyzed.  The struct and subsidiary data are in TransactionCommandContext,
+ * analyzed.  The struct and subsidiary data are in anl_context,
  * so they live until the end of the ANALYZE operation.
  */
 typedef struct
@@ -109,6 +109,8 @@ typedef struct
 
 static int elevel = -1;
 
+static MemoryContext anl_context = NULL;
+
 /* context information for compare_scalars() */
 static FmgrInfo *datumCmpFn;
 static SortFunctionKind datumCmpFnKind;
@@ -154,6 +156,13 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 		elevel = INFO;
 	else
 		elevel = DEBUG1;
+
+	/*
+	 * Use the current context for storing analysis info.  vacuum.c ensures
+	 * that this context will be cleared when I return, thus releasing the
+	 * memory allocated here.
+	 */
+	anl_context = CurrentMemoryContext;
 
 	/*
 	 * Check for user-requested abort.	Note we want this to be inside a
@@ -306,14 +315,14 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	 * Compute the statistics.	Temporary results during the calculations
 	 * for each column are stored in a child context.  The calc routines
 	 * are responsible to make sure that whatever they store into the
-	 * VacAttrStats structure is allocated in TransactionCommandContext.
+	 * VacAttrStats structure is allocated in anl_context.
 	 */
 	if (numrows > 0)
 	{
 		MemoryContext col_context,
 					old_context;
 
-		col_context = AllocSetContextCreate(CurrentMemoryContext,
+		col_context = AllocSetContextCreate(anl_context,
 											"Analyze Column",
 											ALLOCSET_DEFAULT_MINSIZE,
 											ALLOCSET_DEFAULT_INITSIZE,
@@ -1094,8 +1103,8 @@ compute_minimal_stats(VacAttrStats *stats,
 			Datum	   *mcv_values;
 			float4	   *mcv_freqs;
 
-			/* Must copy the target values into TransactionCommandContext */
-			old_context = MemoryContextSwitchTo(TransactionCommandContext);
+			/* Must copy the target values into anl_context */
+			old_context = MemoryContextSwitchTo(anl_context);
 			mcv_values = (Datum *) palloc(num_mcv * sizeof(Datum));
 			mcv_freqs = (float4 *) palloc(num_mcv * sizeof(float4));
 			for (i = 0; i < num_mcv; i++)
@@ -1415,8 +1424,8 @@ compute_scalar_stats(VacAttrStats *stats,
 			Datum	   *mcv_values;
 			float4	   *mcv_freqs;
 
-			/* Must copy the target values into TransactionCommandContext */
-			old_context = MemoryContextSwitchTo(TransactionCommandContext);
+			/* Must copy the target values into anl_context */
+			old_context = MemoryContextSwitchTo(anl_context);
 			mcv_values = (Datum *) palloc(num_mcv * sizeof(Datum));
 			mcv_freqs = (float4 *) palloc(num_mcv * sizeof(float4));
 			for (i = 0; i < num_mcv; i++)
@@ -1501,8 +1510,8 @@ compute_scalar_stats(VacAttrStats *stats,
 				nvals = values_cnt;
 			Assert(nvals >= num_hist);
 
-			/* Must copy the target values into TransactionCommandContext */
-			old_context = MemoryContextSwitchTo(TransactionCommandContext);
+			/* Must copy the target values into anl_context */
+			old_context = MemoryContextSwitchTo(anl_context);
 			hist_values = (Datum *) palloc(num_hist * sizeof(Datum));
 			for (i = 0; i < num_hist; i++)
 			{
@@ -1530,8 +1539,8 @@ compute_scalar_stats(VacAttrStats *stats,
 			double		corr_xsum,
 						corr_x2sum;
 
-			/* Must copy the target values into TransactionCommandContext */
-			old_context = MemoryContextSwitchTo(TransactionCommandContext);
+			/* Must copy the target values into anl_context */
+			old_context = MemoryContextSwitchTo(anl_context);
 			corrs = (float4 *) palloc(sizeof(float4));
 			MemoryContextSwitchTo(old_context);
 
