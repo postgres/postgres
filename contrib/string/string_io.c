@@ -79,7 +79,7 @@ string_output(char *data, int size)
 	    len++;
 	    break;
 	  default:
-	    if (NOTPRINTABLE(c)) {
+	    if (NOTPRINTABLE(*p)) {
 		len += 3;
 	    }
 	}

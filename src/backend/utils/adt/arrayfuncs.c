@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.4 1996/08/27 07:32:27 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.5 1996/09/19 20:04:56 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,6 +235,10 @@ _ArrayCount(char *str, int dim[], int typdelim)
                 }
                 break;
 #endif
+	    case '\0':
+		/* Signal a premature end of the string.  DZ - 2-9-1996 */
+		elog(WARN, "malformed array constant: %s", str);
+		break;
 	    case '\"':
 		scanning_string = ! scanning_string;
 		break;
