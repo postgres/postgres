@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.84 2002/01/20 22:19:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.85 2002/03/05 06:14:45 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -688,7 +688,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
      names <type>bigserial</type> and <type>serial8</type> work just
      the same way, except that they create a <type>bigint</type>
      column.  <type>bigserial</type> should be used if you anticipate
-     use of more than 2<superscript>31</> identifiers over the lifetime of the table.
+     the use of more than 2<superscript>31</> identifiers over the lifetime of the table.
     </para>
 
     <para>
@@ -704,7 +704,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
      The sequence will remain in the database until explicitly dropped using
      <command>DROP SEQUENCE</command>.  (This annoyance will probably be
-     changed in some future release.)
+     fixed in some future release.)
     </para>
    </sect2>
   </sect1>
