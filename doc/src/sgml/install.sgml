@@ -514,7 +514,8 @@ $ ./configure --prefix=/opt/postgres \
 
 <Step Performance="required">
 <Para>
-Install the <acronym>HTML</acronym> documentation. Type
+Install the <application>man</application> and
+<acronym>HTML</acronym> documentation. Type
 
 <ProgramListing>
 $ cd /usr/src/pgsql/doc
@@ -524,15 +525,6 @@ $ gmake install
 <para>
 The documentation is also available in Postscript format. Look for files
 ending with <filename>.ps.gz</filename> in the same directory.
-
-<Step Performance="optional">
-<Para>
-Install the man page documentation. Type
-
-<ProgramListing>
-$ cd /usr/src/pgsql/doc
-$ gmake man
-</ProgramListing>
 
 <Step Performance="required">
 <Para>

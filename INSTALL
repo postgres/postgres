@@ -506,16 +506,14 @@ Installation Procedure
                Tip: Of course, you may type these three 
                  lines all on the same line.
 
-       12.     Install the HTML documentation. Type 
+       12.     Install the man and HTML documentation. Type 
          $ cd /usr/src/pgsql/doc
          $ gmake install
          The documentation is also available in Postscript 
          format. Look for files ending with .ps.gz in the 
          same directory.
 
-       13.     Install the man page documentation. Type 
-         $ cd /usr/src/pgsql/doc
-         $ gmake man
+       13.     <removed>
 
        14.     Compile the program. Type 
          $ cd /usr/src/pgsql/src
