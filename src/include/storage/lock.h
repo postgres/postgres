@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.79 2004/07/17 03:31:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.80 2004/08/26 17:22:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,10 +26,10 @@ typedef struct PROC_QUEUE
 	int			size;			/* number of entries in list */
 } PROC_QUEUE;
 
-/* struct PGPROC is declared in storage/proc.h, but must forward-reference it */
+/* struct PGPROC is declared in proc.h, but must forward-reference it */
 typedef struct PGPROC PGPROC;
 
-
+/* GUC variables */
 extern int	max_locks_per_xact;
 
 #ifdef LOCK_DEBUG
@@ -41,6 +41,11 @@ extern bool Debug_deadlocks;
 #endif   /* LOCK_DEBUG */
 
 
+/*
+ * LOCKMODE is an integer (1..N) indicating a lock type.  LOCKMASK is a bit
+ * mask indicating a set of held or requested lock types (the bit 1<<mode
+ * corresponds to a particular lock mode).
+ */
 typedef int LOCKMASK;
 typedef int LOCKMODE;
 /* MAX_LOCKMODES cannot be larger than the # of bits in LOCKMASK */
@@ -49,6 +54,11 @@ typedef int LOCKMODE;
 #define LOCKBIT_ON(lockmode) (1 << (lockmode))
 #define LOCKBIT_OFF(lockmode) (~(1 << (lockmode)))
 
+/*
+ * There is normally only one lock method, the default one.
+ * If user locks are enabled, an additional lock method is present.
+ * Lock methods are identified by LOCKMETHODID.
+ */
 typedef uint16 LOCKMETHODID;
 /* MAX_LOCK_METHODS is the number of distinct lock control tables allowed */
 #define MAX_LOCK_METHODS	3
@@ -60,18 +70,13 @@ typedef uint16 LOCKMETHODID;
 #define LockMethodIsValid(lockmethodid) ((lockmethodid) != INVALID_LOCKMETHOD)
 
 /*
- * There is normally only one lock method, the default one.
- * If user locks are enabled, an additional lock method is present.
+ * This is the control structure for a lock table. It lives in shared
+ * memory.  Currently, none of these fields change after startup.  In addition
+ * to the LockMethodData, a lock table has a "lockHash" table holding
+ * per-locked-object lock information, and a "proclockHash" table holding
+ * per-lock-holder/waiter lock information.
  *
- * This is the control structure for a lock table.	It
- * lives in shared memory.	This information is the same
- * for all backends.
- *
- * lockHash -- hash table holding per-locked-object lock information
- *
- * proclockHash -- hash table holding per-lock-waiter/holder lock information
- *
- * lockmethod -- the handle used by the lock table's clients to
+ * lockmethodid -- the handle used by the lock table's clients to
  *		refer to the type of lock table being used.
  *
  * numLockModes -- number of lock types (READ,WRITE,etc) that
@@ -81,8 +86,7 @@ typedef uint16 LOCKMETHODID;
  *		type conflicts. conflictTab[i] is a mask with the j-th bit
  *		turned on if lock types i and j conflict.
  *
- * masterLock -- synchronizes access to the table
- *
+ * masterLock -- LWLock used to synchronize access to the table
  */
 typedef struct LockMethodData
 {
@@ -156,12 +160,13 @@ typedef struct LOCK
 
 /*
  * We may have several different transactions holding or awaiting locks
- * on the same lockable object.  We need to store some per-waiter/holder
- * information for each such holder (or would-be holder).
+ * on the same lockable object.  We need to store some per-holder/waiter
+ * information for each such holder (or would-be holder).  This is kept in
+ * a PROCLOCK struct.
  *
  * PROCLOCKTAG is the key information needed to look up a PROCLOCK item in the
- * proclock hashtable.	A PROCLOCKTAG value uniquely identifies a lock
- * holder/waiter.
+ * proclock hashtable.	A PROCLOCKTAG value uniquely identifies the combination
+ * of a lockable object and a holder/waiter for that object.
  *
  * There are two possible kinds of proclock tags: a transaction (identified
  * both by the PGPROC of the backend running it, and the xact's own ID) and
