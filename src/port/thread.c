@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Id: thread.c,v 1.12.2.2 2004/03/02 18:38:28 momjian Exp $
+ * $Id: thread.c,v 1.12.2.3 2004/03/14 14:01:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,7 +186,7 @@ pqGethostbyname(const char *name,
 	 * broken (well early POSIX draft) gethostbyname_r() which returns
 	 * 'struct hostent *'
 	 */
-	*result = gethostbyname_r(name, resbuf, buffer, buflen, herrno);
+	*result = gethostbyname_r(name, resultbuf, buffer, buflen, herrno);
 	return (*result == NULL) ? -1 : 0;
 
 #else
