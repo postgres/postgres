@@ -1,20 +1,24 @@
 #-------------------------------------------------------------------------
 #
-# Makefile--
-#    Makefile for regress (the regression test)
+# GNUmakefile--
+#    Makefile for regress (the regression tests)
 #
 # Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.20 1999/11/19 18:51:48 wieck Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/Attic/GNUmakefile.in,v 1.1 2000/01/09 07:53:58 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
-include ../../Makefile.global
+include $(SRCDIR)/Makefile.global
 
-CFLAGS+= -I$(LIBPQDIR) -I../../include $(CFLAGS_SL)
+CONTRIB= $(SRCDIR)/../contrib
+
+HOST= @host@
+
+CFLAGS+= -I$(LIBPQDIR) -I$(SRCDIR)/include $(CFLAGS_SL)
 
 LDADD+= -L$(LIBPQDIR) -lpq
         
@@ -43,17 +47,17 @@ endif
 EXTRA_TESTS	= numeric_big
 
 #
-# prepare to run the test (including clean-up after the last run)
+# prepare to run the tests
 #
 all: $(INFILES)
 	cd input; $(MAKE) all; cd ..
 	cd output; $(MAKE) all; cd ..
 #ifneq ($(PORTNAME), win)
-	$(MAKE) -C ../../../contrib/spi REFINT_VERBOSE=1 refint$(DLSUFFIX) \
-	autoinc$(DLSUFFIX)
+	$(MAKE) -C $(CONTRIB)/spi REFINT_VERBOSE=1 \
+	refint$(DLSUFFIX) autoinc$(DLSUFFIX)
 #else
-#	cat /dev/null > ../../../contrib/spi/refint$(DLSUFFIX)
-#	cat /dev/null > ../../../contrib/spi/autoinc$(DLSUFFIX)
+#	cat /dev/null > $(CONTRIB)/spi/refint$(DLSUFFIX)
+#	cat /dev/null > $(CONTRIB)/spi/autoinc$(DLSUFFIX)
 #endif
 
 #ifeq ($(PORTNAME), win)
@@ -62,15 +66,15 @@ all: $(INFILES)
 #endif
 
 #
-# run the test
+# run the tests
 #
 runtest: $(INFILES) 
 ifneq ($(PORTNAME), win)
 	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
-	$(SHELL) ./regress.sh $(PORTNAME) 2>&1 | tee regress.out
+	$(SHELL) ./regress.sh $(HOST) 2>&1 | tee regress.out
 else
 	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
-	./regress.sh $(PORTNAME) 2>&1 | tee regress.out
+	./regress.sh $(HOST) 2>&1 | tee regress.out
 endif
 	@echo "ACTUAL RESULTS OF REGRESSION TEST ARE NOW IN FILE regress.out"
 	@echo ""
@@ -84,10 +88,10 @@ endif
 bigtest: $(INFILES) 
 ifneq ($(PORTNAME), win)
 	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
-	$(SHELL) ./regress.sh $(PORTNAME) $(EXTRA_TESTS) 2>&1 | tee regress.out
+	$(SHELL) ./regress.sh $(HOST) $(EXTRA_TESTS) 2>&1 | tee regress.out
 else
 	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
-	./regress.sh $(PORTNAME) $(EXTRA_TESTS) 2>&1 | tee regress.out
+	./regress.sh $(HOST) $(EXTRA_TESTS) 2>&1 | tee regress.out
 endif
 	@echo "ACTUAL RESULTS OF REGRESSION TEST ARE NOW IN FILE regress.out"
 
@@ -97,10 +101,10 @@ endif
 runcheck:	$(INFILES)
 ifneq ($(PORTNAME), win)
 	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
-	$(SHELL) ./run_check.sh $(PORTNAME)
+	$(SHELL) ./run_check.sh $(HOST)
 else
 	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
-	./run_check.sh $(PORTNAME)
+	./run_check.sh $(HOST)
 endif
 	@echo "ACTUAL RESULTS OF REGRESSION TEST ARE NOW IN FILES run_check.out"
 	@echo "AND regress.out"
@@ -115,21 +119,21 @@ endif
 bigcheck: $(INFILES) 
 ifneq ($(PORTNAME), win)
 	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
-	$(SHELL) ./run_check.sh $(PORTNAME) $(EXTRA_TESTS)
+	$(SHELL) ./run_check.sh $(HOST) $(EXTRA_TESTS)
 else
 	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
-	./run_check.sh $(PORTNAME) $(EXTRA_TESTS)
+	./run_check.sh $(HOST) $(EXTRA_TESTS)
 endif
 	@echo "ACTUAL RESULTS OF REGRESSION TEST ARE NOW IN FILES run_check.out"
 	@echo "AND regress.out"
 
 clean:
-	rm -f $(INFILES) regress.out regress.o regression.diffs
+	rm -f $(INFILES) regress.out run_check.out regress.o regression.diffs
 ifeq ($(PORTNAME), win)
 	rm -f regress.def
 endif
 	$(MAKE) -C sql clean
 	$(MAKE) -C expected clean
 	$(MAKE) -C results clean
-	$(MAKE) -C ../../../contrib/spi clean
+	$(MAKE) -C $(CONTRIB)/spi clean
 	rm -rf tmp_check

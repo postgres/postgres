@@ -2,13 +2,11 @@
 Introduction
 
   The PostgreSQL regression tests are a comprehensive set of tests for the
-  SQL implementation embedded in PostgreSQL developed by Jolly Chen and
-  Andrew Yu. It tests standard SQL operations as well as the extensibility
-  capabilities of PostgreSQL.
+  SQL implementation embedded in PostgreSQL.  They test standard SQL
+  operations as well as the extensibility capabilities of PostgreSQL.
 
-  These tests have recently been revised by Marc Fournier and Thomas Lockhart
-  to become current for PostgreSQL v6.1. The tests are now packaged as
-  functional units and should be easier to run and easier to interpret.
+  The regression tests were originally developed by Jolly Chen and Andrew Yu,
+  and were extensively revised/repackaged by Marc Fournier and Thomas Lockhart.
 
   Some properly installed and fully functional PostgreSQL installations
   can fail some of these regression tests due to artifacts of floating point
@@ -19,12 +17,11 @@ Introduction
 
 Preparation
 
-  The regression test is invoked by the 'make' command which compiles
-  a 'c' program with PostgreSQL extension functions into a shared library
-  in the current directory.  Localized shell scripts are also created in
-  the current directory. The output file templates are massaged into the
-  ./expected/*.out files.  The localization replaces macros in the source
-  files with absolute pathnames and user names.
+  To prepare for regression testing, do "make all".  This compiles
+  a 'C' program with PostgreSQL extension functions into a shared library
+  in the current directory.  Localized SQL scripts and output-comparison
+  files are also created for the tests that need them.  The localization
+  replaces macros in the source files with absolute pathnames and user names.  
 
   It was formerly necessary to run the postmaster with system time zone
   set to PST, but this is no longer required.  You can run the regression
@@ -45,24 +42,32 @@ Directory Layout
   expected/ . .out files that represent what we *expect* the results to
               look like
 
-  results/ .. .out files that represent what the results *actually* look
+  results/ .. .out files that contain what the results *actually* look
               like. Also used as temporary storage for table copy testing.
 
 Running the regression test
 
-  If you have prevously invoked the regression test, clean up the
-  working directory with:
+  If you have previously run the regression test for a different Postgres
+  release, make sure you have up-to-date comparison files by doing
 
-        make clean
+        make clean all
 
   The regression test is invoked with the command:
 
-        make all runtest
+        make runtest
 
-  Normally, the regression test should be run as the pg_superuser since
+  or you can do
+
+	make runcheck
+
+  which invokes a parallel form of the regress tests, and does not
+  need an already-installed postmaster.  Instead, runcheck creates
+  a temporary installation under the regress directory.
+
+  Normally, the regression tests should be run as the postgres user since
   the 'src/test/regress' directory and sub-directories are owned by the
-  pg_superuser. If you run the regression test as another user the
-  'src/test/regress' directory tree should be writeable to that user.
+  postgres user. If you run the regression test as another user the
+  'src/test/regress' directory tree must be writeable to that user.
 
 Comparing expected/actual output
 
@@ -74,6 +79,11 @@ Comparing expected/actual output
   The files might not compare exactly. The following paragraphs attempt
   to explain the differences.
 
+  Once the output files have been verified for a particular platform,
+  it is possible to provide new platform-specific comparison files,
+  so that future test runs won't report bogus "failures".  See
+  'Platform-specific comparison files', below.
+
 Error message differences
 
   Some of the regression tests involve intentional invalid input values.
@@ -82,20 +92,6 @@ Error message differences
   between platforms, but should reflect similar information. These
   differences in messages will result in a "failed" regression test which
   can be validated by inspection.
-
-OID differences
-
-  There are several places where PostgreSQL OID (object identifiers) appear
-  in 'regress.out'. OID's are unique 32-bit integers which are generated
-  by the PostgreSQL backend whenever a table row is inserted or updated.
-  If you run the regression test on a non-virgin database or run it multiple
-  times, the OID's reported will have different values. 
-
-  The following SQL statements in 'misc.out' have shown this behavior:
-
-  QUERY: SELECT user_relns() AS user_relns ORDER BY user_relns;
-
-    The 'a,523676' row is composed from an OID.
 
 DATE/TIME differences
 
@@ -163,6 +159,38 @@ The 'expected' files
   files generated on various development machines have been substituted after
   careful (?) inspection. Many of the development machines are running a
   Unix OS variant (FreeBSD, Linux, etc) on Ix86 hardware.
+
+Platform-specific comparison files
+
+  Since some of the tests inherently produce platform-specific results,
+  we have provided a way to supply platform-specific result comparison
+  files.  Frequently, the same variation applies to multiple platforms;
+  rather than supplying a separate comparison file for every platform,
+  there is a mapping file that defines which comparison file to use.
+  So, to eliminate bogus test "failures" for a particular platform,
+  you must choose or make a variant result file, and then add a line
+  to the mapping file, which is "resultmap".
+
+  Each line in the mapping file is of the form
+		testname/platformname=comparisonfilename
+  The test name is just the name of the particular regression test module.
+  The platform name is the platform name as printed by config.guess (in
+  the toplevel PostgreSQL src directory), or any prefix of it.  The
+  comparison file name is the name of the substitute result comparison file.
+
+  For example: the int2 regress test includes a deliberate entry of a value
+  that is too large to fit in int2.  The specific error message that is
+  produced is platform-dependent; our reference platform emits
+    ERROR:  pg_atoi: error reading "100000": Numerical result out of range
+  but a fair number of other Unix platforms emit
+    ERROR:  pg_atoi: error reading "100000": Result too large
+  Therefore, we provide a variant comparison file, int2-too-large.out,
+  that includes this spelling of the error message.  To silence the
+  bogus "failure" message on HPPA platforms,  resultmap includes
+		int2/hppa=int2-too-large
+  which will trigger on any machine for which config.guess's output
+  begins with 'hppa'.  Other lines in resultmap select the variant
+  comparison file for other platforms where it's appropriate.
 
 Current release notes (Thomas.Lockhart@jpl.nasa.gov)
 

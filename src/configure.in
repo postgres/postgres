@@ -1250,4 +1250,5 @@ AC_OUTPUT(
 	pl/plpgsql/src/Makefile
 	pl/plpgsql/src/mklang.sql
 	pl/tcl/mkMakefile.tcldefs.sh
+	test/regress/GNUmakefile
 )

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.46 1999/12/04 04:34:56 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.47 2000/01/09 07:53:52 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -104,7 +104,8 @@ distclean: clean
 		interfaces/odbc/Makefile.global \
 		pl/plpgsql/src/Makefile \
 		pl/plpgsql/src/mklang.sql \
-		pl/tcl/mkMakefile.tcldefs.sh
+		pl/tcl/mkMakefile.tcldefs.sh \
+		test/regress/GNUmakefile
 
 .DEFAULT:
 	$(MAKE) -C lextest $@

@@ -7924,6 +7924,7 @@ trap 'rm -fr `echo "GNUmakefile
 	pl/plpgsql/src/Makefile
 	pl/plpgsql/src/mklang.sql
 	pl/tcl/mkMakefile.tcldefs.sh
+	test/regress/GNUmakefile
  include/config.h" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
 EOF
 cat >> $CONFIG_STATUS <<EOF
@@ -8098,6 +8099,7 @@ CONFIG_FILES=\${CONFIG_FILES-"GNUmakefile
 	pl/plpgsql/src/Makefile
 	pl/plpgsql/src/mklang.sql
 	pl/tcl/mkMakefile.tcldefs.sh
+	test/regress/GNUmakefile
 "}
 EOF
 cat >> $CONFIG_STATUS <<\EOF

@@ -1,21 +1,13 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.4 1999/12/03 12:47:43 wieck Exp $
-
-# ----------
-# This is currently needed because the actual 7.0 psql makes
-# all tests fail. Set a path to an existing 6.5.x version of
-# psql, the will be copied into the temporary installation
-# as psql.
-# ----------
-TEMP_PSQL_HACK=`which psql_65`
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.5 2000/01/09 07:53:58 tgl Exp $
 
 # ----------
 # Check call syntax
 # ----------
 if [ $# -eq 0 ]
 then
-    echo "Syntax: $0 <portname> [extra-tests]"
+    echo "Syntax: $0 <hostname> [extra-tests]"
     exit 1
 fi
 
@@ -25,18 +17,18 @@ fi
 cd `dirname $0`
 
 # ----------
-# Some paths used durint the test
+# Some paths used during the test
 # ----------
 PWD=`pwd`
-CHKDIR=$PWD/tmp_check
-PGDATA=$CHKDIR/data
-LIBDIR=$CHKDIR/lib
-BINDIR=$CHKDIR/bin
-LOGDIR=$CHKDIR/log
-TIMDIR=$CHKDIR/timestamp
-PGPORT=65432
-PGLIB=$LIBDIR
-PMPID=
+CHKDIR="$PWD/tmp_check"
+PGDATA="$CHKDIR/data"
+LIBDIR="$CHKDIR/lib"
+BINDIR="$CHKDIR/bin"
+LOGDIR="$CHKDIR/log"
+TIMDIR="$CHKDIR/timestamp"
+PGPORT="65432"
+PGLIB="$LIBDIR"
+PMPID=""
 
 export CHKDIR
 export PGDATA
@@ -49,18 +41,18 @@ export PGPORT
 # ----------
 # Get the commandline parameters
 # ----------
-portname=$1
+hostname=$1
 shift
 extratests="$*"
 
 # ----------
 # Special setting for Windows (no unix domain sockets)
 # ----------
-if [ x$portname = "xwin" ]
+if [ "x$hostname" = "xwin" ]
 then
-    HOST="-h localhost"
+    HOSTLOC="-h localhost"
 else
-    HOST=""
+    HOSTLOC=""
 fi
 
 # ----------
@@ -84,13 +76,19 @@ PGDATESTYLE="Postgres,US"; export PGDATESTYLE
 # ----------
 # The SQL shell to use during this test
 # ----------
-FRONTEND="$BINDIR/psql $HOST -n -e -q"
+FRONTEND="$BINDIR/psql $HOSTLOC -n -e -q"
 
 # ----------
-# Determine system type
+# Prepare temp file holding combined test script.
 # ----------
-SYSTEM=`/bin/sh ../../config.guess | awk -F\- '{ split($3,a,/[0-9]/); printf"%s-%s", $1,
- a[1] }'`
+TESTLIST="/tmp/testlist.$$"
+TESTS=./sql/run_check.tests
+(
+	cat $TESTS 
+	for name in $extratests ; do
+		echo "test $name"
+	done
+) > $TESTLIST
 
 # ----------
 # Catch SIGINT and SIGTERM to shutdown the postmaster
@@ -106,6 +104,7 @@ trap '	echo ""
 			echo ""
 		fi
 		echo ""
+		rm $TESTLIST
 		exit 1
 ' 2 15
 
@@ -137,15 +136,6 @@ then
 	echo "for the reason."
 	echo ""
 	exit 2
-fi
-
-
-# ----------
-# Copy an explicitly to use psql shell over the built one
-# ----------
-if [ ! -z "$TEMP_PSQL_HACK" ] ; then
-	rm -f $BINDIR/psql
-	cp $TEMP_PSQL_HACK $BINDIR/psql
 fi
 
 
@@ -210,7 +200,7 @@ else
     unset PGCLIENTENCODING
     ENCODINGOPT=""
 fi
-createdb $ENCODINGOPT $HOST regression
+createdb $ENCODINGOPT $HOSTLOC regression
 if [ $? -ne 0 ]; then
      echo createdb failed
 	 kill -15 $PMPID
@@ -222,7 +212,7 @@ fi
 # Install the PL/pgSQL language in it
 # ----------
 echo "=============== Installing PL/pgSQL...                 ================"
-createlang $HOST plpgsql regression
+createlang $HOSTLOC plpgsql regression
 if [ $? -ne 0 -a $? -ne 2 ]; then
      echo createlang failed
 	 kill -15 $PMPID
@@ -231,21 +221,15 @@ fi
 
 
 # ----------
-# Run the regression tests specified in the ./sql/run_check.tests file
+# Run the regression tests specified in the $TESTLIST file
 # ----------
 echo "=============== Running regression queries...          ================"
 echo "" > regression.diffs
 echo "" > regress.out
 
-TESTS=./sql/run_check.tests
 lno=0
-(
-	cat $TESTS 
-	for name in $extratests ; do
-		echo "test $name"
-	done
-) | while read line ; do
-
+while read line
+do
 	# ----------
 	# Count line numbers and skip comments and empty lines
 	# ----------
@@ -272,7 +256,8 @@ lno=0
 					pargroup=$name
 					parntests=0
 					parpar=0
-					while read line ; do
+					while read line
+					do
 						# ----------
 						# Again count line numbers and skip comments
 						# ----------
@@ -349,7 +334,7 @@ lno=0
 								> results/${name}.out 2>&1
 							$ECHO_N " $name" $ECHO_C
 						) &
-					done
+					done </dev/null
 					wait
 					echo ""
 
@@ -394,35 +379,55 @@ lno=0
 	# old format, so checkresults will still find the proper
 	# information.
 	# ----------
-	for name in $checklist ; do
+	for tst in $checklist ; do
 		if [ $checkpname -ne 0 ]
 		then
-			pnam=`echo $name | awk '{printf "%-20.20s", $1;}'`
+			pnam=`echo $tst | awk '{printf "%-20.20s", $1;}'`
 			$ECHO_N "           test $pnam ... " $ECHO_C
 		fi
 
-		if [ -f expected/${name}-${SYSTEM}.out ]
-		then
-			EXPECTED="expected/${name}-${SYSTEM}.out"
+		#
+		# Check resultmap to see if we should compare to a
+		# system-specific result file.  The format of the file is
+		#	testname/hostname=substitutefile
+		# There shouldn't be multiple matches, but take the last if there are.
+		#
+		EXPECTED="expected/${tst}.out"
+		SUBST=`grep "^$tst/$hostname=" resultmap | sed 's/^.*=//' | tail -1`
+		if test "$SUBST"
+		then EXPECTED="expected/${SUBST}.out"
 		else
-			EXPECTED="expected/${name}.out"
+		    # Next look for a .similar entry that is a prefix of $hostname.
+		    # If there are multiple matches, take the last one.
+		    while read LINE
+		    do
+			SIMHOST=`expr "$LINE" : '\(.*\)='`
+			MATCH=`expr "$tst/$hostname" : "$SIMHOST"`
+			echo "$LINE $SIMHOST $MATCH"
+			if test "$MATCH" != 0
+			then SUBST=`echo "$LINE" | sed 's/^.*=//'`
+			fi
+		    done <resultmap
+		    if test "$SUBST"
+		    then EXPECTED="expected/${SUBST}.out"
+		    fi
 		fi
 
-		if [ `diff -w ${EXPECTED} results/${name}.out | wc -l` -ne 0 ]
+		if [ `diff -w ${EXPECTED} results/${tst}.out | wc -l` -ne 0 ]
 		then
-			(	diff -wC3 ${EXPECTED} results/${name}.out	; \
+			(	diff -wC3 ${EXPECTED} results/${tst}.out	; \
 				echo ""										; \
 				echo "----------------------"				; \
 				echo ""										; \
 			) >> regression.diffs
 			echo "FAILED"
-			echo "$name .. failed" >> regress.out
+			echo "$tst .. failed" >> regress.out
 		else
 			echo "ok"
-			echo "$name .. ok" >> regress.out
+			echo "$tst .. ok" >> regress.out
 		fi
 	done
-done | tee run_check.out 2>&1
+done <$TESTLIST | tee run_check.out 2>&1
 
 # ----------
 # Finally kill the postmaster we started
@@ -430,5 +435,6 @@ done | tee run_check.out 2>&1
 echo "=============== Terminating regression postmaster      ================"
 kill -15 $PMPID
 
+rm $TESTLIST
 
 exit 0

@@ -1,0 +1,4 @@
+int2/hppa=int2-too-large
+int4/hppa=int4-too-large
+geometry/hppa2.0=geometry-hppa2.0
+horology/hppa=horology-no-DST-before-1970
