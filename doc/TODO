@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jun  6 00:53:41 EDT 2001
+Last updated:		Thu Jun  7 16:05:45 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -116,6 +116,7 @@ INDEXES
 * -Gather more accurate dispersion statistics using indexes (Tom)
 * Add deleted bit to index tuples to reduce heap access
 * Prevent index uniqueness checks when UPDATE does not modifying column
+* Add bitmap indexes [performance]
 
 SYSTEM TABLES
 
