@@ -6,7 +6,7 @@
  *
  *	1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.5 1999/12/06 19:50:49 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.6 1999/12/06 19:52:36 wieck Exp $
  *
  * ----------
  */
@@ -16,8 +16,6 @@
  * Internal TODO:
  *
  *		Finish functions for MATCH FULL:
- *			setnull_del
- *			setnull_upd
  *			setdefault_del
  *			setdefault_upd
  *
