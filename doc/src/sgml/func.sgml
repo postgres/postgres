@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.76 2001/10/09 18:46:00 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.77 2001/10/10 00:02:42 petere Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -2800,6 +2800,34 @@ SELECT EXTRACT(SECOND FROM TIME '17:12:28.5');
        </informalexample>
       </listitem>
      </varlistentry>
+<!--
+     <varlistentry>
+      <term><literal>timezone</literal></term>
+      <listitem>
+       <para>
+        The time zone offset. XXX But in what units?
+       </para>
+      </listitem>
+     </varlistentry>
+-->
+
+     <varlistentry>
+      <term><literal>timezone_hour</literal></term>
+      <listitem>
+       <para>
+        The hour component of the time zone offset.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>timezone_minute</literal></term>
+      <listitem>
+       <para>
+        The minute component of the time zone offset.
+       </para>
+      </listitem>
+     </varlistentry>
 
      <varlistentry>
       <term><literal>week</literal></term>
@@ -2837,12 +2865,6 @@ SELECT EXTRACT(YEAR FROM TIMESTAMP '2001-02-16 20:38:40');
        </informalexample>
       </listitem>
      </varlistentry>
-
-<!--
-tz
-tz_hour
-tz_minute
--->
 
     </variablelist>
 

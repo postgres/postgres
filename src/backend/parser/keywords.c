@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.98 2001/10/02 21:39:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.99 2001/10/10 00:02:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,8 +252,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"then", THEN},
 	{"time", TIME},
 	{"timestamp", TIMESTAMP},
-	{"timezone_hour", TIMEZONE_HOUR},
-	{"timezone_minute", TIMEZONE_MINUTE},
 	{"to", TO},
 	{"toast", TOAST},
 	{"trailing", TRAILING},

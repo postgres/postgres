@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.261 2001/10/09 22:32:32 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.262 2001/10/10 00:02:42 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -315,8 +315,8 @@ static void doNegateFloat(Value *v);
 		PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
 		READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
 		SCHEMA, SCROLL, SECOND_P, SELECT, SESSION, SESSION_USER, SET, SOME, SUBSTRING,
-		TABLE, TEMPORARY, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR,
-		TIMEZONE_MINUTE, TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
+		TABLE, TEMPORARY, THEN, TIME, TIMESTAMP,
+		TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
 		UNENCRYPTED, UNION, UNIQUE, UNKNOWN, UPDATE, USER, USING,
 		VALUES, VARCHAR, VARYING, VIEW,
 		WHEN, WHERE, WITH, WORK, YEAR_P, ZONE
@@ -5200,8 +5200,6 @@ extract_list:  extract_arg FROM a_expr
 extract_arg:  datetime						{ $$ = $1; }
 		| SCONST							{ $$ = $1; }
 		| IDENT								{ $$ = $1; }
-		| TIMEZONE_HOUR						{ $$ = "tz_hour"; }
-		| TIMEZONE_MINUTE					{ $$ = "tz_minute"; }
 		;
 
 /* position_list uses b_expr not a_expr to avoid conflict with general IN */
@@ -5738,8 +5736,6 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| TEMP							{ $$ = "temp"; }
 		| TEMPLATE						{ $$ = "template"; }
 		| TEMPORARY						{ $$ = "temporary"; }
-		| TIMEZONE_HOUR					{ $$ = "timezone_hour"; }
-		| TIMEZONE_MINUTE				{ $$ = "timezone_minute"; }
 		| TOAST							{ $$ = "toast"; }
 		| TRIGGER						{ $$ = "trigger"; }
 		| TRUNCATE						{ $$ = "truncate"; }
