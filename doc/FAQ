@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Jul 27 12:52:35 EDT 2000
+   Last updated: Fri Sep 29 23:04:02 EDT 2000
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -922,6 +922,9 @@ BYTEA           bytea           variable-length array of bytes
      * portal, cursor
      * range variable, table name, table alias
        
+   A list of general database terms can be found at:
+   http://www.comptechnews.com/~reaster/dbdesign.html
+   
     4.19) Why do I get the error "FATAL: palloc failure: memory exhausted?"
     
    It is possible you have run out of virtual memory on your system, or
