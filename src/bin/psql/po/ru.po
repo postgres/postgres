@@ -1,12 +1,13 @@
 # ru.po
 # PSQL Translated Messages into the Russian Language (KOI8-R)
 #
-# Copyright (c) 2001-2004 Serguei A. Mokhov, mokhov@cs.concordia.ca
+# Copyright (c) 2001-2005 Serguei A. Mokhov, mokhov@cs.concordia.ca
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/ru.po,v 1.24 2005/01/13 21:24:10 petere Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/ru.po,v 1.25 2005/01/17 21:21:18 petere Exp $
 #
 # ChangeLog:
+#   - January 17, 2005: Complete translation for 8.0, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - December, 2004 - January, 2005: New translation by Oleg Bartunov <oleg@sai.msu.su>
 #   - March 27 - December 10, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
 #   - July 26 - October 12, 2003: Updates for 7.4.x; <mokhov@cs.concordia.ca>
@@ -17,8 +18,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-12-10 19:09+0000\n"
-"PO-Revision-Date: 2004-12-10 21:59-0500\n"
+"POT-Creation-Date: 2005-01-17 19:06+0000\n"
+"PO-Revision-Date: 2005-01-17 15:36-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-ru-general <pgsql-ru-general@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -41,56 +42,56 @@ msgstr "Неверная команда \\%s. Наберите \\? для подсказки.\n"
 msgid "invalid command \\%s\n"
 msgstr "неверная команда \\%s\n"
 
-#: command.c:135
+#: command.c:137
 #, c-format
 msgid "\\%s: extra argument \"%s\" ignored\n"
 msgstr "\\%s: лишний аргумент: \"%s\" -- пропущен\n"
 
-#: command.c:244
+#: command.c:254
 #, c-format
 msgid "could not get home directory: %s\n"
 msgstr "не удалось получить домашнюю (home) директорию: %s\n"
 
-#: command.c:260
+#: command.c:270
 #, c-format
 msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s: не удалось поменять директорию на \"%s\": %s\n"
 
-#: command.c:374
-#: command.c:766
+#: command.c:384
+#: command.c:776
 msgid "no query buffer\n"
 msgstr "нет буфера запросов\n"
 
-#: command.c:437
+#: command.c:447
 #, c-format
 msgid "%s: invalid encoding name or conversion procedure not found\n"
 msgstr "%s: неверное название кодировки символов или процедура перекодировки не найдена\n"
 
-#: command.c:505
-#: command.c:539
-#: command.c:553
-#: command.c:570
-#: command.c:616
-#: command.c:746
-#: command.c:777
+#: command.c:515
+#: command.c:549
+#: command.c:563
+#: command.c:580
+#: command.c:626
+#: command.c:756
+#: command.c:787
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s: отсутствует необходимый аргумент\n"
 
-#: command.c:602
+#: command.c:612
 msgid "Query buffer is empty."
 msgstr "Буфер запросов пуст."
 
-#: command.c:636
+#: command.c:646
 msgid "Query buffer reset (cleared)."
 msgstr "Буфер запросов сброшен (очищен)."
 
-#: command.c:650
+#: command.c:660
 #, c-format
 msgid "Wrote history to file \"%s\".\n"
 msgstr "История записана в файл \"%s\".\n"
 
-#: command.c:687
+#: command.c:697
 #: common.c:85
 #: common.c:99
 #: mainloop.c:71
@@ -110,30 +111,30 @@ msgstr "История записана в файл \"%s\".\n"
 msgid "out of memory\n"
 msgstr "недостаточно памяти\n"
 
-#: command.c:702
-#: command.c:751
+#: command.c:712
+#: command.c:761
 #, c-format
 msgid "\\%s: error\n"
 msgstr "\\%s: ошибка\n"
 
-#: command.c:732
+#: command.c:742
 msgid "Timing is on."
 msgstr "Cекундомер включен."
 
-#: command.c:734
+#: command.c:744
 msgid "Timing is off."
 msgstr "Cекундомер выключен."
 
-#: command.c:794
-#: command.c:814
-#: command.c:1199
-#: command.c:1206
+#: command.c:804
+#: command.c:824
+#: command.c:1209
 #: command.c:1216
-#: command.c:1228
-#: command.c:1241
-#: command.c:1255
-#: command.c:1277
-#: command.c:1308
+#: command.c:1226
+#: command.c:1238
+#: command.c:1251
+#: command.c:1265
+#: command.c:1287
+#: command.c:1318
 #: common.c:170
 #: copy.c:530
 #: copy.c:575
@@ -141,14 +142,14 @@ msgstr "Cекундомер выключен."
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
-#: command.c:921
-#: command.c:945
+#: command.c:931
+#: command.c:955
 #: startup.c:188
 #: startup.c:206
 msgid "Password: "
 msgstr "Пароль: "
 
-#: command.c:959
+#: command.c:969
 #: common.c:216
 #: common.c:685
 #: common.c:740
@@ -157,142 +158,142 @@ msgstr "Пароль: "
 msgid "%s"
 msgstr "%s"
 
-#: command.c:963
+#: command.c:973
 msgid "Previous connection kept\n"
 msgstr "Предыдущее соединение сохранено\n"
 
-#: command.c:975
+#: command.c:985
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\соединение: %s"
 
-#: command.c:987
+#: command.c:997
 #, c-format
 msgid "You are now connected to database \"%s\".\n"
 msgstr "Вы подсоединились к базе данных \"%s\".\n"
 
-#: command.c:989
+#: command.c:999
 #, c-format
 msgid "You are now connected as new user \"%s\".\n"
 msgstr "Вы соединились как новый пользователь \"%s\".\n"
 
-#: command.c:992
+#: command.c:1002
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr "Вы подсоединились к базе данных \"%s\" как пользователь \"%s\".\n"
 
-#: command.c:1117
+#: command.c:1127
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "не удалось запустить редактор \"%s\"\n"
 
-#: command.c:1119
+#: command.c:1129
 msgid "could not start /bin/sh\n"
 msgstr "не удалось запустить /bin/sh\n"
 
-#: command.c:1158
+#: command.c:1168
 #, c-format
 msgid "cannot locate temporary directory: %s"
 msgstr "не удалось найти временную директорию: %s"
 
-#: command.c:1184
+#: command.c:1194
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "не удалось открыть временный файл \"%s\": %s\n"
 
-#: command.c:1376
+#: command.c:1386
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex\n"
 msgstr "\\pset: разрешенные форматы: unaligned, aligned, html и latex\n"
 
-#: command.c:1381
+#: command.c:1391
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Формат вывода: %s.\n"
 
-#: command.c:1391
+#: command.c:1401
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Стиль бордюра: %d.\n"
 
-#: command.c:1400
+#: command.c:1410
 msgid "Expanded display is on.\n"
 msgstr "Расширенный показ включен.\n"
 
-#: command.c:1401
+#: command.c:1411
 msgid "Expanded display is off.\n"
 msgstr "Расширенный показ выключен.\n"
 
-#: command.c:1413
+#: command.c:1423
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Null показываются как: \"%s\".\n"
 
-#: command.c:1425
+#: command.c:1435
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Разделитель полей: \"%s\".\n"
 
-#: command.c:1439
+#: command.c:1449
 msgid "Record separator is <newline>."
 msgstr "Разделитель записей: <newline>."
 
-#: command.c:1441
+#: command.c:1451
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Разделитель записей: \"%s\".\n"
 
-#: command.c:1452
+#: command.c:1462
 msgid "Showing only tuples."
 msgstr "Показываются только записи."
 
-#: command.c:1454
+#: command.c:1464
 msgid "Tuples only is off."
 msgstr "Режим \"только записи\" выключен."
 
-#: command.c:1470
+#: command.c:1480
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Заголовок: \"%s\".\n"
 
-#: command.c:1472
+#: command.c:1482
 msgid "Title is unset.\n"
 msgstr "Заголовок не задан.\n"
 
-#: command.c:1488
+#: command.c:1498
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "Атрибут HTML таблицы: \"%s\".\n"
 
-#: command.c:1490
+#: command.c:1500
 msgid "Table attributes unset.\n"
 msgstr "Атрибуты HTML таблицы не заданы.\n"
 
-#: command.c:1506
+#: command.c:1516
 msgid "Pager is used for long output."
 msgstr "Используется Pager для просмотра длинного вывода."
 
-#: command.c:1508
+#: command.c:1518
 msgid "Pager is always used."
 msgstr "Всегда использовать Pager."
 
-#: command.c:1510
+#: command.c:1520
 msgid "Pager usage is off."
 msgstr "Использование Pager выключено."
 
-#: command.c:1521
+#: command.c:1531
 msgid "Default footer is on."
 msgstr "Нижний колонтитул по-умолчанию включен."
 
-#: command.c:1523
+#: command.c:1533
 msgid "Default footer is off."
 msgstr "Нижний колонтитул по-умолчанию выключен."
 
-#: command.c:1529
+#: command.c:1539
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: неизвестная опция: %s\n"
 
-#: command.c:1582
+#: command.c:1592
 msgid "\\!: failed\n"
 msgstr "\\!: неудачно\n"
 
@@ -879,12 +880,12 @@ msgstr ""
 "Нет справки по \"%-.*s\".\n"
 "Попробуйте \\h без аргументов для просмотра имеющейся информации.\n"
 
-#: input.c:210
+#: input.c:211
 #, c-format
 msgid "could not save history to file \"%s\": %s\n"
 msgstr "не удалось сохранить историю в файл\"%s\": %s\n"
 
-#: input.c:213
+#: input.c:214
 msgid "history is not supported by this installation\n"
 msgstr "история не поддерживается в этой установке\n"
 
@@ -938,7 +939,7 @@ msgstr "(1 запись)"
 msgid "(%d rows)"
 msgstr "(записей: %d)"
 
-#: startup.c:133
+#: startup.c:138
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: недостаточно памяти\n"
@@ -999,17 +1000,30 @@ msgstr "%s: внимание: лишний аргумент \"%s\" проигнорирован\n"
 msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
 msgstr "%s: Внимание: Опция -u устарела. Используйте -U.\n"
 
-#: startup.c:630
+#: startup.c:627
 msgid "contains support for command-line editing"
 msgstr "содержит поддержку редактирования командной строки"
 
-#: startup.c:653
+#: startup.c:650
 #, c-format
 msgid ""
 "SSL connection (cipher: %s, bits: %i)\n"
 "\n"
 msgstr ""
 "SSL соединение (шифр: %s, биты: %i)\n"
+"\n"
+
+#: startup.c:673
+#, c-format
+msgid ""
+"Warning: Console code page (%u) differs from Windows code page (%u)\n"
+"         8-bit characters may not work correctly. See psql reference\n"
+"         page \"Notes for Windows users\" for details.\n"
+"\n"
+msgstr ""
+"Внимание: Кодовая страница консоли (%u) отличается от кодовой страницы Windows (%u)\n"
+"         8-битовые символы могут не корректно отображаться. См. psql страницу\n"
+"         документации \"Notes for Windows users\" для более подробной информации.\n"
 "\n"
 
 #: describe.c:82
@@ -1536,18 +1550,18 @@ msgid ""
 "ALTER DOMAIN name\n"
 "    DROP CONSTRAINT constraint_name [ RESTRICT | CASCADE ]\n"
 "ALTER DOMAIN name\n"
-"    OWNER TO new_owner\n"
+"    OWNER TO new_owner"
 msgstr ""
-"ALTER DOMAIN name\n"
-"    { SET DEFAULT expression | DROP DEFAULT }\n"
-"ALTER DOMAIN name\n"
-"    { SET | DROP } NOT NULL\n"
-"ALTER DOMAIN name\n"
-"    ADD domain_constraint\n"
-"ALTER DOMAIN name\n"
-"    DROP CONSTRAINT constraint_name [ RESTRICT | CASCADE ]\n"
 "ALTER DOMAIN имя\n"
-"    OWNER TO new_owner\n"
+"    { SET DEFAULT выражение | DROP DEFAULT }\n"
+"ALTER DOMAIN имя\n"
+"    { SET | DROP } NOT NULL\n"
+"ALTER DOMAIN имя\n"
+"    ADD ограничение_домена\n"
+"ALTER DOMAIN имя\n"
+"    DROP CONSTRAINT имя_ограничения [ RESTRICT | CASCADE ]\n"
+"ALTER DOMAIN имя\n"
+"    OWNER TO новый_владелец"
 
 #: sql_help.h:45
 msgid "change the definition of a function"
@@ -1751,9 +1765,9 @@ msgid ""
 "\n"
 "where option can be:\n"
 "\n"
-"    [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password' \n"
-"    | CREATEDB | NOCREATEDB\n"
+"    CREATEDB | NOCREATEDB\n"
 "    | CREATEUSER | NOCREATEUSER \n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password' \n"
 "    | VALID UNTIL 'abstime'\n"
 "\n"
 "ALTER USER name RENAME TO newname\n"
@@ -1761,19 +1775,19 @@ msgid ""
 "ALTER USER name SET parameter { TO | = } { value | DEFAULT }\n"
 "ALTER USER name RESET parameter"
 msgstr ""
-"ALTER USER name [ [ WITH ] option [ ... ] ]\n"
+"ALTER USER имя[ [ WITH ] опция [ ... ] ]\n"
 "\n"
-"где option может быть:\n"
+"где опции могут быть:\n"
 "\n"
-"    [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password' \n"
-"    | CREATEDB | NOCREATEDB\n"
+"    CREATEDB | NOCREATEDB\n"
 "    | CREATEUSER | NOCREATEUSER \n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'пароль' \n"
 "    | VALID UNTIL 'abstime'\n"
 "\n"
-"ALTER USER name RENAME TO newname\n"
+"ALTER USER имя RENAME TO новое_имя\n"
 "\n"
-"ALTER USER name SET parameter { TO | = } { value | DEFAULT }\n"
-"ALTER USER name RESET parameter"
+"ALTER USER имя SET параметр { TO | = } { значение | DEFAULT }\n"
+"ALTER USER имя RESET параметр"
 
 #: sql_help.h:97
 msgid "collect statistics about a database"
@@ -2299,10 +2313,10 @@ msgstr "создать новую таблицу из результатов запроса"
 #: sql_help.h:194
 msgid ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name [ (column_name [, ...] ) ] [ [ WITH | WITHOUT ] OIDS ]\n"
-"    AS query\n"
+"    AS query"
 msgstr ""
-"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name [ (column_name [, ...] ) ] [ [ WITH | WITHOUT ] OIDS ]\n"
-"    AS query\n"
+"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE имя_таблицы[ (имя_колонки [, ...] ) ] [ [ WITH | WITHOUT ] OIDS ]\n"
+"    AS запрос"
 
 #: sql_help.h:197
 msgid "define a new tablespace"
@@ -2379,22 +2393,22 @@ msgid ""
 "where option can be:\n"
 "    \n"
 "      SYSID uid \n"
-"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
 "    | CREATEDB | NOCREATEDB\n"
 "    | CREATEUSER | NOCREATEUSER\n"
 "    | IN GROUP groupname [, ...]\n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
 "    | VALID UNTIL 'abstime'"
 msgstr ""
-"CREATE USER name [ [ WITH ] option [ ... ] ]\n"
+"CREATE USER имя [ [ WITH ] опция [ ... ] ]\n"
 "\n"
-"где option может быть:\n"
+"где опции могут быть:\n"
 "    \n"
 "      SYSID uid \n"
-"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
 "    | CREATEDB | NOCREATEDB\n"
 "    | CREATEUSER | NOCREATEUSER\n"
-"    | IN GROUP groupname [, ...]\n"
-"    | VALID UNTIL 'abstime'"\
+"    | IN GROUP имя_группы [, ...]\n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'пароль'\n"
+"    | VALID UNTIL 'abstime'"
 
 #: sql_help.h:213
 msgid "define a new view"
@@ -3114,35 +3128,51 @@ msgstr ""
 "VACUUM [ FULL | FREEZE ] [ VERBOSE ] [ table ]\n"
 "VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column [, ...] ) ] ]"
 
-#: ../../port/exec.c:193
-#: ../../port/exec.c:307
-#: ../../port/exec.c:350
+#: ../../port/exec.c:194
+#: ../../port/exec.c:308
+#: ../../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "не удалось идентифицировать текущую директорию: %s"
 
-#: ../../port/exec.c:323
-#: ../../port/exec.c:359
+#: ../../port/exec.c:213
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "неверный бинарный \"%s\""
+
+#: ../../port/exec.c:262
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "не удалось считать бинарный \"%s\""
+
+#: ../../port/exec.c:269
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "\"%s\" не найден для выполнения"
+
+#: ../../port/exec.c:324
+#: ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "не удалось поменять директорию на \"%s\""
 
-#: ../../port/exec.c:338
+#: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "не удалось считать символическую ссылку \"%s\""
 
-#: ../../port/exec.c:569
+#: ../../port/exec.c:587
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "дочерний процесс завершился с кодом возрата %d"
 
-#: ../../port/exec.c:572
+#: ../../port/exec.c:590
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "дочерний процесс завершён сигналом %d"
 
-#: ../../port/exec.c:575
+#: ../../port/exec.c:593
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "дочерний процесс завершился с нераспознанным статусом %d"
+

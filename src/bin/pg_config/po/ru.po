@@ -1,20 +1,21 @@
 # ru.po
 # PG_CONFIG Translated Messages into the Russian Language (KOI8-R)
 #
-# Copyright (c) 2004 Serguei A. Mokhov, mokhov@cs.concordia.ca
+# Copyright (c) 2004-2005 Serguei A. Mokhov, mokhov@cs.concordia.ca
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
-# $PostgreSQL: pgsql/src/bin/pg_config/po/ru.po,v 1.4 2005/01/13 21:22:19 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_config/po/ru.po,v 1.5 2005/01/17 21:21:09 petere Exp $
 #
 # ChangeLog:
+#   - January 17, 2005: Complete translation for 8.0, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - December, 2004: Corrections and improvements by Oleg Bartunov <oleg@sai.msu.su>
 #   - October 13 - November 24, 2004: Initial Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-11-28 07:10+0000\n"
-"PO-Revision-Date: 2004-11-28 20:50-0500\n"
+"POT-Creation-Date: 2005-01-17 19:04+0000\n"
+"PO-Revision-Date: 2005-01-17 15:22-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-ru-general <pgsql-ru-general@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -127,35 +128,50 @@ msgstr "%s: неверный аргумент: %s\n"
 msgid "%s: could not find own executable\n"
 msgstr "%s: не удалось найти свой собственный выполняемый файл\n"
 
-#: ../../port/exec.c:193
-#: ../../port/exec.c:307
-#: ../../port/exec.c:350
+#: ../../port/exec.c:194
+#: ../../port/exec.c:308
+#: ../../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "не удалось идентифицировать текущую директорию: %s"
 
-#: ../../port/exec.c:323
-#: ../../port/exec.c:359
+#: ../../port/exec.c:213
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "неверный бинарный \"%s\""
+
+#: ../../port/exec.c:262
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "не удалось считать бинарный \"%s\""
+
+#: ../../port/exec.c:269
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "\"%s\" не найден для выполнения"
+
+#: ../../port/exec.c:324
+#: ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "не удалось поменять директорию на \"%s\""
 
-#: ../../port/exec.c:338
+#: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "не получилось считать символическую ссылку \"%s\""
 
-#: ../../port/exec.c:569
+#: ../../port/exec.c:587
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "дочерний процесс завершился с кодом возврата %d"
 
-#: ../../port/exec.c:572
+#: ../../port/exec.c:590
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "дочерний процесс завершён сигналом %d"
 
-#: ../../port/exec.c:575
+#: ../../port/exec.c:593
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "дочерний процесс завершился с нераспознанным статусом %d"
