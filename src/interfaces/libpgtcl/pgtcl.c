@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.5 1996/11/11 12:14:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.6 1996/12/19 05:02:47 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,6 +159,16 @@ Pgtcl_Init (Tcl_Interp *interp)
 		    Pg_lo_export,
 		    (ClientData)cd, (Tcl_CmdDeleteProc*)NULL);
   
+  Tcl_CreateCommand(interp,
+		    "pg_listen",
+		    Pg_listen,
+		    (ClientData)NULL, (Tcl_CmdDeleteProc*)NULL);
+
+  Tcl_CreateCommand(interp,
+		    "pg_notifies",
+		    Pg_notifies,
+		    (ClientData)NULL, (Tcl_CmdDeleteProc*)NULL);
+
   Tcl_PkgProvide(interp, "Pgtcl", "1.0");
 
   return TCL_OK;

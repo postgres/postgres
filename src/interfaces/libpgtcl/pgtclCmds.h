@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pgtclCmds.h,v 1.4 1996/11/09 10:39:42 scrappy Exp $
+ * $Id: pgtclCmds.h,v 1.5 1996/12/19 05:02:51 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,6 +74,10 @@ extern int Pg_lo_unlink(
 extern int Pg_lo_import(
     ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
 extern int Pg_lo_export(
+    ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
+extern int Pg_listen(
+    ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
+extern int Pg_notifies(
     ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
 
 

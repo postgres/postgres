@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.7 1996/11/11 12:14:42 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.8 1996/12/19 05:02:49 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,8 @@
 #include "libpq/libpq-fs.h"
 #include "pgtclCmds.h"
 #include "pgtclId.h"
+
+static Tcl_HashTable notifyTable = { NULL };
 
 #ifdef TCL_ARRAYS
 #define ISOCTAL(c)	(((c) >= '0') && ((c) <= '7'))
@@ -1210,3 +1212,155 @@ Pg_select(ClientData cData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_OK;
 }
 
+int
+Pg_listen(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
+{
+    int new;
+    char *relname;
+    char *callback = NULL;
+    Tcl_HashEntry *entry;
+    PGconn *conn;
+    PGresult *result;
+
+    if ((argc < 3) || (argc > 4)) {
+	Tcl_AppendResult(interp, "wrong # args, should be \"",
+			 argv[0], " connection relname ?callback?\"", 0);
+	return TCL_ERROR;
+    }
+
+    /*
+     * Initialize the notify hash table if not already done.
+     */
+    if (notifyTable.buckets == NULL) {
+	Tcl_InitHashTable(&notifyTable, TCL_STRING_KEYS);
+    }
+
+    /*
+     * Get the command arguments. Note that relname will copied by
+     * Tcl_CreateHashEntry while callback must be allocated.
+     */
+    if (!PgValidId(argv[1])) {
+	Tcl_AppendResult(interp, "not a valid connection\n", 0);
+	return TCL_ERROR;
+    }
+    conn = (PGconn*)PgGetId(argv[1]);
+    relname = argv[2];
+    if ((argc > 3) && *argv[3]) {
+	callback = (char *) ckalloc((unsigned) (strlen(argv[3])+1));
+	strcpy(callback, argv[3]);
+    }
+
+    /*
+     * Set or update a callback for a relation;
+     */
+    if (callback) {
+	entry = Tcl_CreateHashEntry(&notifyTable, relname, &new);
+	if (new) {
+	    /* New callback, execute a listen command on the relation */
+	    char *cmd = (char *) ckalloc((unsigned) (strlen(argv[2])+8));
+	    sprintf(cmd, "LISTEN %s", relname);
+	    result = PQexec(conn, cmd);
+	    ckfree(cmd);
+	    if (!result || (result->resultStatus != PGRES_COMMAND_OK)) {
+		/* Error occurred during the execution of command */
+		if (result) PQclear(result);
+		ckfree(callback);
+		Tcl_DeleteHashEntry(entry);
+		Tcl_SetResult(interp, conn->errorMessage, TCL_STATIC);
+		return TCL_ERROR;
+	    }
+	    PQclear(result);
+	} else {
+	    /* Free the old callback string */
+	    ckfree((char *) Tcl_GetHashValue(entry));
+	}
+	/* Store the new callback command */
+	Tcl_SetHashValue(entry, callback);
+    }
+
+    /*
+     * Remove a callback for a relation.  There is no way to
+     * un-listen a relation, simply remove the callback from
+     * the notify hash table.
+     */
+    if (callback == NULL) {
+	entry = Tcl_FindHashEntry(&notifyTable, relname);
+	if (entry == NULL) {
+	    Tcl_AppendResult(interp, "not listening on ", relname, 0);
+	    return TCL_ERROR;
+	}
+	ckfree((char *) Tcl_GetHashValue(entry));
+	Tcl_DeleteHashEntry(entry);
+    }
+
+    return TCL_OK;
+}
+
+Pg_notifies(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
+{
+    int count;
+    char buff[12];
+    char *relname;
+    char *callback;
+    Tcl_HashEntry *entry;
+    PGconn *conn;
+    PGresult *result;
+    PGnotify *notify;
+
+    if (argc != 2) {
+	Tcl_AppendResult(interp, "wrong # args, should be \"",
+			 argv[0], " connection\"", 0);
+	return TCL_ERROR;
+    }
+
+    /*
+     * Initialize the notify hash table if not already done.
+     */
+    if (notifyTable.buckets == NULL) {
+	Tcl_InitHashTable(&notifyTable, TCL_STRING_KEYS);
+    }
+
+    /*
+     * Get the connection argument.
+     */
+    if (!PgValidId(argv[1])) {
+	Tcl_AppendResult(interp, "not a valid connection\n", 0);
+	return TCL_ERROR;
+    }
+    conn = (PGconn*)PgGetId(argv[1]);
+
+    /* Execute an empty command to retrieve asynchronous notifications */
+    result = PQexec(conn, " ");
+    if (result == NULL) {
+      /* Error occurred during the execution of command */
+      Tcl_SetResult(interp, conn->errorMessage, TCL_STATIC);
+      return TCL_ERROR;
+    }
+    PQclear(result);
+
+    /*
+     * Loop while there are pending notifies.
+     */
+    for (count=0; count < 999; count++) {
+	/* See if there is a pending notification */
+	notify = PQnotifies(conn);
+	if (notify == NULL) {
+	    break;
+	}
+	entry = Tcl_FindHashEntry(&notifyTable, notify->relname);
+	if (entry != NULL) {
+	    callback = Tcl_GetHashValue(entry);
+	    if (callback) {
+		Tcl_Eval(interp, callback);
+	    }
+	}
+	free(notify);
+    }
+
+    /*
+     * Return the number of notifications processed.
+     */
+    sprintf(buff, "%d", count);
+    Tcl_SetResult(interp, buff, TCL_VOLATILE);
+    return TCL_OK;
+}
