@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.51 2001/09/16 16:11:11 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.52 2001/10/04 19:13:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 
 
 /*
- * List of dynamically loaded files.
+ * List of dynamically loaded files (kept in malloc'd memory).
  */
 
 typedef struct df_files
@@ -71,25 +71,25 @@ load_external_function(char *filename, char *funcname,
 	char	   *fullname;
 
 	fullname = expand_dynamic_library_name(filename);
-	if (fullname)
-		filename = fullname;
+	if (!fullname)
+		fullname = pstrdup(filename);
+	/* at this point fullname is always freshly palloc'd */
 
 	/*
 	 * Scan the list of loaded FILES to see if the file has been loaded.
 	 */
 	for (file_scanner = file_list;
 		 file_scanner != (DynamicFileList *) NULL &&
-		 strcmp(filename, file_scanner->filename) != 0;
+		 strcmp(fullname, file_scanner->filename) != 0;
 		 file_scanner = file_scanner->next)
 		;
 	if (file_scanner == (DynamicFileList *) NULL)
 	{
-
 		/*
 		 * Check for same files - different paths (ie, symlink or link)
 		 */
-		if (stat(filename, &stat_buf) == -1)
-			elog(ERROR, "stat failed on file '%s': %m", filename);
+		if (stat(fullname, &stat_buf) == -1)
+			elog(ERROR, "stat failed on file '%s': %m", fullname);
 
 		for (file_scanner = file_list;
 			 file_scanner != (DynamicFileList *) NULL &&
@@ -100,27 +100,26 @@ load_external_function(char *filename, char *funcname,
 
 	if (file_scanner == (DynamicFileList *) NULL)
 	{
-
 		/*
 		 * File not loaded yet.
 		 */
 		file_scanner = (DynamicFileList *)
-			malloc(sizeof(DynamicFileList) + strlen(filename));
+			malloc(sizeof(DynamicFileList) + strlen(fullname));
 		if (file_scanner == NULL)
 			elog(ERROR, "Out of memory in load_external_function");
 
 		MemSet((char *) file_scanner, 0, sizeof(DynamicFileList));
-		strcpy(file_scanner->filename, filename);
+		strcpy(file_scanner->filename, fullname);
 		file_scanner->device = stat_buf.st_dev;
 		file_scanner->inode = stat_buf.st_ino;
 		file_scanner->next = (DynamicFileList *) NULL;
 
-		file_scanner->handle = pg_dlopen(filename);
+		file_scanner->handle = pg_dlopen(fullname);
 		if (file_scanner->handle == (void *) NULL)
 		{
 			load_error = (char *) pg_dlerror();
 			free((char *) file_scanner);
-			elog(ERROR, "Load of file %s failed: %s", filename, load_error);
+			elog(ERROR, "Load of file %s failed: %s", fullname, load_error);
 		}
 
 		/* OK to link it into list */
@@ -135,13 +134,17 @@ load_external_function(char *filename, char *funcname,
 	 * If funcname is NULL, we only wanted to load the file.
 	 */
 	if (funcname == (char *) NULL)
+	{
+		pfree(fullname);
 		return (PGFunction) NULL;
+	}
 
 	retval = pg_dlsym(file_scanner->handle, funcname);
 
 	if (retval == (PGFunction) NULL && signalNotFound)
-		elog(ERROR, "Can't find function %s in file %s", funcname, filename);
+		elog(ERROR, "Can't find function %s in file %s", funcname, fullname);
 
+	pfree(fullname);
 	return retval;
 }
 
@@ -159,16 +162,17 @@ load_file(char *filename)
 	char	   *fullname;
 
 	fullname = expand_dynamic_library_name(filename);
-	if (fullname)
-		filename = fullname;
+	if (!fullname)
+		fullname = pstrdup(filename);
+	/* at this point fullname is always freshly palloc'd */
 
 	/*
 	 * We need to do stat() in order to determine whether this is the same
 	 * file as a previously loaded file; it's also handy so as to give a
 	 * good error message if bogus file name given.
 	 */
-	if (stat(filename, &stat_buf) == -1)
-		elog(ERROR, "LOAD: could not open file '%s': %m", filename);
+	if (stat(fullname, &stat_buf) == -1)
+		elog(ERROR, "LOAD: could not open file '%s': %m", fullname);
 
 	if (file_list != (DynamicFileList *) NULL)
 	{
@@ -197,7 +201,9 @@ load_file(char *filename)
 		}
 	}
 
-	load_external_function(filename, (char *) NULL, false);
+	load_external_function(fullname, (char *) NULL, false);
+
+	pfree(fullname);
 }
 
 
@@ -235,6 +241,8 @@ file_exists(const char *name)
  * find_in_dynamic_libpath below); if that works, return the fully
  * expanded file name.  If the previous failed, append DLSUFFIX and
  * try again.  If all fails, return NULL.
+ *
+ * A non-NULL result will always be freshly palloc'd.
  */
 static char *
 expand_dynamic_library_name(const char *name)
@@ -258,6 +266,7 @@ expand_dynamic_library_name(const char *name)
 		full = substitute_libpath_macro(name);
 		if (file_exists(full))
 			return full;
+		pfree(full);
 	}
 
 	new = palloc(strlen(name)+ strlen(DLSUFFIX) + 1);
@@ -274,15 +283,20 @@ expand_dynamic_library_name(const char *name)
 	else
 	{
 		full = substitute_libpath_macro(new);
+		pfree(new);
 		if (file_exists(full))
 			return full;
+		pfree(full);
 	}
 		
 	return NULL;
 }
 
 
-
+/*
+ * Substitute for any macros appearing in the given string.
+ * Result is always freshly palloc'd.
+ */
 static char *
 substitute_libpath_macro(const char * name)
 {
@@ -302,7 +316,7 @@ substitute_libpath_macro(const char * name)
 		elog(ERROR, "invalid macro name in dynamic library path");
 
 	if (name[macroname_len] == '\0')
-		return replacement;
+		return pstrdup(replacement);
 	else
 	{
 		char * new;
@@ -319,15 +333,14 @@ substitute_libpath_macro(const char * name)
 
 /*
  * Search for a file called 'basename' in the colon-separated search
- * path 'path'.  If the file is found, the full file name is returned
- * in palloced memory.  The the file is not found, return NULL.
+ * path Dynamic_library_path.  If the file is found, the full file name
+ * is returned in freshly palloc'd memory.  If the file is not found,
+ * return NULL.
  */
 static char *
 find_in_dynamic_libpath(const char * basename)
 {
 	const char *p;
-	char *full;
-	size_t len;
 	size_t baselen;
 
 	AssertArg(basename != NULL);
@@ -340,9 +353,12 @@ find_in_dynamic_libpath(const char * basename)
 
 	baselen = strlen(basename);
 
-	do {
+	for (;;)
+	{
+		size_t len;
 		char * piece;
-		const char * mangled;
+		char * mangled;
+		char *full;
 
 		len = strcspn(p, ":");
 
@@ -354,6 +370,7 @@ find_in_dynamic_libpath(const char * basename)
 		piece[len] = '\0';
 
 		mangled = substitute_libpath_macro(piece);
+		pfree(piece);
 
 		/* only absolute paths */
 		if (mangled[0] != '/')
@@ -361,6 +378,7 @@ find_in_dynamic_libpath(const char * basename)
 
 		full = palloc(strlen(mangled) + 1 + baselen + 1);
 		sprintf(full, "%s/%s", mangled, basename);
+		pfree(mangled);
 
 		if (DebugLvl > 1)
 			elog(DEBUG, "find_in_dynamic_libpath: trying %s", full);
@@ -368,13 +386,13 @@ find_in_dynamic_libpath(const char * basename)
 		if (file_exists(full))
 			return full;
 
-		pfree(piece);
 		pfree(full);
+
 		if (p[len] == '\0')
 			break;
 		else
 			p += len + 1;
-	} while(1);
+	}
 
 	return NULL;
 }
