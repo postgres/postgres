@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.209 2001/11/04 03:08:11 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.210 2001/11/05 05:00:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,6 +88,7 @@ static void transformFKConstraints(ParseState *pstate,
 					   CreateStmtContext *cxt);
 static Node *transformTypeRefs(ParseState *pstate, Node *stmt);
 
+static void applyColumnNames(List *dst, List *src);
 static void transformTypeRefsList(ParseState *pstate, List *l);
 static void transformTypeRef(ParseState *pstate, TypeName *tn);
 static List *getSetColTypes(ParseState *pstate, Node *node);
@@ -1942,9 +1943,13 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	/* process the FROM clause */
 	transformFromClause(pstate, stmt->fromClause);
 
-	/* transform targetlist and WHERE */
+	/* transform targetlist */
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
+	if (stmt->intoColNames)
+		applyColumnNames(qry->targetList, stmt->intoColNames);
+
+	/* transform WHERE */
 	qual = transformWhereClause(pstate, stmt->whereClause);
 
 	/*
@@ -2003,6 +2008,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	SetOperationStmt *sostmt;
 	char	   *into;
 	bool		istemp;
+	List	   *intoColNames;
 	char	   *portalname;
 	bool		binary;
 	List	   *sortClause;
@@ -2031,12 +2037,14 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 		   leftmostSelect->larg == NULL);
 	into = leftmostSelect->into;
 	istemp = leftmostSelect->istemp;
+	intoColNames = leftmostSelect->intoColNames;
 	portalname = stmt->portalname;
 	binary = stmt->binary;
 
 	/* clear them to prevent complaints in transformSetOperationTree() */
 	leftmostSelect->into = NULL;
 	leftmostSelect->istemp = false;
+	leftmostSelect->intoColNames = NIL;
 	stmt->portalname = NULL;
 	stmt->binary = false;
 
@@ -2148,6 +2156,9 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 		qry->isPortal = FALSE;
 		qry->isBinary = FALSE;
 	}
+
+	if (intoColNames)
+		applyColumnNames(qry->targetList, intoColNames);
 
 	/*
 	 * As a first step towards supporting sort clauses that are
@@ -2374,6 +2385,27 @@ getSetColTypes(ParseState *pstate, Node *node)
 		elog(ERROR, "getSetColTypes: unexpected node %d",
 			 (int) nodeTag(node));
 		return NIL;				/* keep compiler quiet */
+	}
+}
+
+/* Attach column names from a ColumnDef list to a TargetEntry list */
+static void
+applyColumnNames(List *dst, List *src)
+{
+	if (length(src) > length(dst))
+		elog(ERROR,"CREATE TABLE AS specifies too many column names");
+
+	while (src != NIL && dst != NIL)
+	{
+		TargetEntry *d = (TargetEntry *) lfirst(dst);
+		ColumnDef *s = (ColumnDef *) lfirst(src);
+
+		Assert(d->resdom && !d->resdom->resjunk);
+
+		d->resdom->resname = pstrdup(s->colname);
+
+		dst = lnext(dst);
+		src = lnext(src);
 	}
 }
 

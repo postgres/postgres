@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.149 2001/10/28 06:26:07 momjian Exp $
+ * $Id: parsenodes.h,v 1.150 2001/11/05 05:00:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -881,6 +881,7 @@ typedef struct SelectStmt
 								 * DISTINCT) */
 	char	   *into;			/* name of table (for select into table) */
 	bool		istemp;			/* into is a temp table? */
+	List	   *intoColNames;	/* column names for into table */
 	List	   *targetList;		/* the target list (of ResTarget) */
 	List	   *fromClause;		/* the FROM clause */
 	Node	   *whereClause;	/* WHERE qualification */

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.107 2001/10/25 05:49:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.108 2001/11/05 05:00:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -680,6 +680,8 @@ _equalSelectStmt(SelectStmt *a, SelectStmt *b)
 	if (!equalstr(a->into, b->into))
 		return false;
 	if (a->istemp != b->istemp)
+		return false;
+	if (!equal(a->intoColNames, b->intoColNames))
 		return false;
 	if (!equal(a->targetList, b->targetList))
 		return false;

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.271 2001/10/31 04:49:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.272 2001/11/05 05:00:14 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -86,7 +86,6 @@ static Node *makeTypeCast(Node *arg, TypeName *typename);
 static Node *makeStringConst(char *str, TypeName *typename);
 static Node *makeFloatConst(char *str);
 static Node *makeRowExpr(char *opr, List *largs, List *rargs);
-static void mapTargetColumns(List *source, List *target);
 static SelectStmt *findLeftmostSelect(SelectStmt *node);
 static void insertSelectOptions(SelectStmt *stmt,
 								List *sortClause, List *forUpdate,
@@ -1611,11 +1610,10 @@ CreateAsStmt:  CREATE OptTemp TABLE relation_name OptCreateAs AS SelectStmt
 					 */
 					SelectStmt *n = findLeftmostSelect((SelectStmt *) $7);
 					if (n->into != NULL)
-						elog(ERROR,"CREATE TABLE / AS SELECT may not specify INTO");
+						elog(ERROR,"CREATE TABLE AS may not specify INTO");
 					n->istemp = $2;
 					n->into = $4;
-					if ($5 != NIL)
-						mapTargetColumns($5, n->targetList);
+					n->intoColNames = $5;
 					$$ = $7;
 				}
 		;
@@ -3552,6 +3550,7 @@ simple_select: SELECT opt_distinct target_list
 					n->targetList = $3;
 					n->istemp = (bool) ((Value *) lfirst($4))->val.ival;
 					n->into = (char *) lnext($4);
+					n->intoColNames = NIL;
 					n->fromClause = $5;
 					n->whereClause = $6;
 					n->groupClause = $7;
@@ -6105,28 +6104,6 @@ makeRowExpr(char *opr, List *largs, List *rargs)
 
 	return expr;
 }
-
-static void
-mapTargetColumns(List *src, List *dst)
-{
-	ColumnDef *s;
-	ResTarget *d;
-
-	if (length(src) != length(dst))
-		elog(ERROR,"CREATE TABLE / AS SELECT has mismatched column count");
-
-	while ((src != NIL) && (dst != NIL))
-	{
-		s = (ColumnDef *)lfirst(src);
-		d = (ResTarget *)lfirst(dst);
-
-		d->name = s->colname;
-
-		src = lnext(src);
-		dst = lnext(dst);
-	}
-} /* mapTargetColumns() */
-
 
 /* findLeftmostSelect()
  *		Find the leftmost component SelectStmt in a set-operation parsetree.

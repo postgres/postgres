@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.159 2001/10/25 05:49:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.160 2001/11/05 05:00:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1835,6 +1835,7 @@ _copySelectStmt(SelectStmt *from)
 	if (from->into)
 		newnode->into = pstrdup(from->into);
 	newnode->istemp = from->istemp;
+	Node_Copy(from, newnode, intoColNames);
 	Node_Copy(from, newnode, targetList);
 	Node_Copy(from, newnode, fromClause);
 	Node_Copy(from, newnode, whereClause);
