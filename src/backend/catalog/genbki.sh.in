@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh.in,v 1.4 1999/11/04 08:00:56 inoue Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh.in,v 1.5 2000/01/11 04:02:28 tgl Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -53,7 +53,17 @@ while test $x -le $numargs ; do
 done
 
 # Get NAMEDATALEN from postgres_ext.h
-NAMEDATALEN=`grep '#define.*NAMEDATALEN' ../../include/postgres_ext.h | awk '{ print $3 }'`
+NAMEDATALEN=`grep '#define[ 	]*NAMEDATALEN' ../../include/postgres_ext.h | awk '{ print $3 }'`
+
+# Get INDEX_MAX_KEYS from config.h (who needs consistency?)
+INDEXMAXKEYS=`grep '#define[ 	]*INDEX_MAX_KEYS' ../../include/config.h | awk '{ print $3 }'`
+
+# NOTE: we assume here that FUNC_MAX_ARGS has the same value as INDEX_MAX_KEYS,
+# and don't read it separately from config.h.  This is OK because both of them
+# must be equal to the length of oidvector.
+
+INDEXMAXKEYS2=`expr $INDEXMAXKEYS '*' 2`
+INDEXMAXKEYS4=`expr $INDEXMAXKEYS '*' 4`
 
 # ----------------
 # 	strip comments and trash from .h before we generate
@@ -80,6 +90,12 @@ sed -e "s/;[ 	]*$//g" \
     -e "s/(NameData/(name/g" \
     -e "s/(Oid/(oid/g" \
     -e "s/NAMEDATALEN/$NAMEDATALEN/g" \
+    -e "s/INDEX_MAX_KEYS\*2/$INDEXMAXKEYS2/g" \
+    -e "s/INDEX_MAX_KEYS\*4/$INDEXMAXKEYS4/g" \
+    -e "s/INDEX_MAX_KEYS/$INDEXMAXKEYS/g" \
+    -e "s/FUNC_MAX_ARGS\*2/$INDEXMAXKEYS2/g" \
+    -e "s/FUNC_MAX_ARGS\*4/$INDEXMAXKEYS4/g" \
+    -e "s/FUNC_MAX_ARGS/$INDEXMAXKEYS/g" \
 | awk '
 # ----------------
 #	now use awk to process remaining .h file..

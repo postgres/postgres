@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.74 2000/01/10 20:23:31 momjian Exp $
+ * $Id: pg_type.h,v 1.75 2000/01/11 04:02:28 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -174,8 +174,8 @@ DATA(insert OID = 21 (	int2	   PGUID  2   5 t b t \054 0   0 int2in int2out int2
 DESCR("-32 thousand to 32 thousand, 2-byte storage");
 #define INT2OID			21
 
-DATA(insert OID = 22 (	int2vector PGUID 32  113 f b t \054 0  21 int2vectorin int2vectorout int2vectorin int2vectorout i _null_ ));
-DESCR("16 int2 integers, used internally");
+DATA(insert OID = 22 (	int2vector PGUID INDEX_MAX_KEYS*2 -1 f b t \054 0  21 int2vectorin int2vectorout int2vectorin int2vectorout i _null_ ));
+DESCR("array of INDEX_MAX_KEYS int2 integers, used in system tables");
 /*
  * XXX -- the implementation of int2vector's in postgres is a hack, and will
  *		  go away someday.	until that happens, there is a case (in the
@@ -213,8 +213,8 @@ DATA(insert OID = 29 (	cid		   PGUID  4  10 t b t \054 0   0 cidin cidout cidin 
 DESCR("command identifier type, sequence in transaction id");
 #define CIDOID 29
 
-DATA(insert OID = 30 (	oidvector  PGUID 64  193 f b t \054 0  26 oidvectorin oidvectorout oidvectorin oidvectorout i _null_ ));
-DESCR("array of 16 oids, used in system tables");
+DATA(insert OID = 30 (	oidvector  PGUID INDEX_MAX_KEYS*4 -1 f b t \054 0  26 oidvectorin oidvectorout oidvectorin oidvectorout i _null_ ));
+DESCR("array of INDEX_MAX_KEYS oids, used in system tables");
 DATA(insert OID = 32 (	SET		   PGUID -1  -1 f b t \054 0   0 textin textout textin textout i _null_ ));
 DESCR("set of tuples");
 
