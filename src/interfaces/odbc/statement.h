@@ -98,6 +98,7 @@ enum
 	STMT_TYPE_DROP,
 	STMT_TYPE_GRANT,
 	STMT_TYPE_REVOKE,
+	STMT_TYPE_PROCCALL
 };
 
 #define STMT_UPDATE(stmt)	(stmt->statement_type > STMT_TYPE_SELECT)

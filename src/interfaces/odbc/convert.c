@@ -1056,7 +1056,30 @@ copy_statement_with_parameters(StatementClass *stmt)
 
 			if (!end)
 				continue;
-
+			/* procedure calls */
+			if (stmt->statement_type == STMT_TYPE_PROCCALL)
+			{
+				while (isspace((unsigned char) old_statement[++opos]));
+				if (old_statement[opos] == '?')
+				{
+					param_number++;
+					while (isspace((unsigned char) old_statement[++opos]));
+					if (old_statement[opos] != '=')
+					{
+						opos--;
+						continue;
+					}
+					while (isspace((unsigned char) old_statement[++opos]));
+				}
+				if (strnicmp(&old_statement[opos], "call", 4))
+				{
+					opos--;
+					continue;
+				}
+				opos += (4 - 1);
+				CVT_APPEND_STR("SELECT");
+				continue; 
+			}
 			*end = '\0';
 
 			esc = convert_escape(begin);
@@ -1075,6 +1098,9 @@ copy_statement_with_parameters(StatementClass *stmt)
 			*end = '}';
 			continue;
 		}
+		/* End of a procedure call */
+		else if (oldchar == '}' && stmt->statement_type == STMT_TYPE_PROCCALL)
+			continue;
 
 		/*
 		 * Can you have parameter markers inside of quotes?  I dont think

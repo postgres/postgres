@@ -802,7 +802,7 @@ SQLGetFunctions(
 {
 	static char *func = "SQLGetFunctions";
 
-	mylog("%s: entering...\n", func);
+	mylog("%s: entering...%u\n", func);
 
 	if (fFunction == SQL_API_ALL_FUNCTIONS)
 	{

@@ -82,6 +82,9 @@ static struct
 		STMT_TYPE_REVOKE, "REVOKE"
 	},
 	{
+		STMT_TYPE_PROCCALL, "{"
+	},
+	{
 		0, NULL
 	}
 };
@@ -1054,6 +1057,31 @@ SC_execute(StatementClass *self)
 			CC_abort(conn);
 	}
 
+	if (self->statement_type == STMT_TYPE_PROCCALL &&
+	    (self->errornumber == STMT_OK ||
+	     self->errornumber == STMT_INFO_ONLY) &&
+	    self->parameters &&
+	    self->parameters[0].buflen > 0 &&
+	    self->parameters[0].paramType == SQL_PARAM_OUTPUT)
+	{	/* get the return value of the procedure call */
+		RETCODE	ret;
+		HSTMT hstmt = (HSTMT) self;
+		ret = SQLBindCol(hstmt, 1, self->parameters[0].CType, self->parameters[0].buffer, self->parameters[0].buflen, self->parameters[0].used);
+		if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO) 
+			SC_fetch(hstmt);
+		else
+		{
+			self->errornumber = STMT_EXEC_ERROR;
+			self->errormsg = "BindCol to Procedure return failed.";
+		}
+		if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO) 
+			SQLBindCol(hstmt, 1, self->parameters[0].CType, NULL, 0, NULL);
+		else
+		{
+			self->errornumber = STMT_EXEC_ERROR;
+			self->errormsg = "SC_fetch to get a Procedure return failed.";
+		}
+	}
 	if (self->errornumber == STMT_OK)
 		return SQL_SUCCESS;
 	else if (self->errornumber == STMT_INFO_ONLY)
