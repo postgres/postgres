@@ -33,6 +33,7 @@ CLEAN :
 	-@erase "$(INTDIR)\print.obj"
 	-@erase "$(INTDIR)\describe.obj"
 	-@erase "$(INTDIR)\tab-complete.obj"
+	-@erase "$(INTDIR)\sprompt.obj"
 	-@erase "$(INTDIR)\getopt.obj"
 	-@erase "$(INTDIR)\getopt_long.obj"
 	-@erase "$(INTDIR)\path.obj"
@@ -70,6 +71,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\print.obj" \
 	"$(INTDIR)\describe.obj" \
 	"$(INTDIR)\tab-complete.obj" \
+	"$(INTDIR)\sprompt.obj" \
 	"$(INTDIR)\getopt.obj" \
 	"$(INTDIR)\getopt_long.obj" \
 	"$(INTDIR)\path.obj" \
@@ -79,6 +81,11 @@ LINK32_OBJS= \
 "$(OUTDIR)\psql.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
+<<
+
+"$(OUTDIR)\sprompt.obj" : "$(OUTDIR)" ..\..\port\sprompt.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\sprompt.c
 <<
 
 "$(OUTDIR)\getopt.obj" : "$(OUTDIR)" ..\..\port\getopt.c

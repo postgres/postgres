@@ -7,19 +7,23 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Id: thread.c,v 1.11 2003/10/24 20:48:10 momjian Exp $
+ * $Id: thread.c,v 1.12 2003/10/26 04:29:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include <sys/types.h>
+#include <errno.h>
+#if defined(WIN32) && defined(_MSC_VER)
+#undef ERROR
+#else
+#include <pwd.h>
+#endif
 #if defined(USE_THREADS)
 #include <pthread.h>
 #endif
-#include <sys/types.h>
-#include <pwd.h>
-#include <errno.h>
 
 /*
  *	Threading sometimes requires specially-named versions of functions

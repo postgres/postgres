@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/port/sprompt.c,v 1.1 2003/08/08 04:52:22 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/port/sprompt.c,v 1.2 2003/10/26 04:29:15 momjian Exp $
  */
 
 
@@ -26,6 +26,7 @@
 #else
 #ifdef WIN32
 #include <windows.h>
+#undef ERROR
 #endif
 #endif
 
