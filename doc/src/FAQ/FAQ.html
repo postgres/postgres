@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Fri May 30 22:24:56 EDT 2003</P>
+    <P>Last updated: Fri Jun  6 18:20:23 EDT 2003</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -323,7 +323,7 @@
 
     <H4><A name="1.7">1.7</A>) What is the latest release?</H4>
 
-    <P>The latest release of PostgreSQL is version 7.3.2.</P>
+    <P>The latest release of PostgreSQL is version 7.3.3.</P>
 
     <P>We plan to have major releases every four months.</P>
 
@@ -340,7 +340,7 @@
     "http://www.commandprompt.com/ppbook/">http://www.commandprompt.com/ppbook/</A>.
     There is a list of PostgreSQL books available for purchase at <A
     href=
-    "http://www.ca.PostgreSQL.org/books/">http://www.ca.PostgreSQL.org/books/</A>.
+    "http://techdocs.postgresql.org/techdocs/bookreviews.php">http://techdocs.PostgreSQL.org/techdocs/bookreviews.php</A>.
     There is also a collection of PostgreSQL technical articles at <A
     href=
     "http://techdocs.PostgreSQL.org/">http://techdocs.PostgreSQL.org/</A>.</P>
@@ -505,7 +505,7 @@
 
     <P>Also, if you have a success story about PostgreSQL, please submit
     it to our advocacy site at <a href="http://advocacy.postgresql.org">
-    http://advocacy.postgresql.org</a>.
+    http://advocacy.postgresql.org</a>.</P>
 
 
     <H2 align="center">User Client Questions</H2>
@@ -612,7 +612,7 @@
     <I>postmaster</I>. For most systems, with default numbers of
     buffers and processes, you need a minimum of ~1 MB. See the <A
     href=
-    "http://www.PostgreSQL.org/docs/view.php?version=current&idoc=1&file=kernel-resources.html">PostgreSQL
+    "http://www.PostgreSQL.org/docs/view.php?version=current&amp;idoc=1&amp;file=kernel-resources.html">PostgreSQL
     Administrator's Guide</A> for more detailed information about
     shared memory and semaphores.</P>
 
@@ -856,7 +856,7 @@
     BEGIN;
     ALTER TABLE tab ADD COLUMN new_col <i>new_data_type</i>;
     UPDATE tab SET new_col = CAST(old_col AS <i>new_data_type</i>);
-    ALTER TABLE DROP COLUMN old_col;
+    ALTER TABLE tab DROP COLUMN old_col;
     COMMIT;
 </PRE>
     <P>You might then want to do <I>VACUUM FULL tab</I> to reclaim the

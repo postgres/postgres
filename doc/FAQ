@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri May 30 22:24:56 EDT 2003
+   Last updated: Fri Jun 6 18:20:23 EDT 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -252,7 +252,7 @@
    
     1.7) What is the latest release?
     
-   The latest release of PostgreSQL is version 7.3.2.
+   The latest release of PostgreSQL is version 7.3.3.
    
    We plan to have major releases every four months.
    
@@ -265,8 +265,9 @@
    There are two PostgreSQL books available online at
    http://www.PostgreSQL.org/docs/awbook.html and
    http://www.commandprompt.com/ppbook/. There is a list of PostgreSQL
-   books available for purchase at http://www.ca.PostgreSQL.org/books/.
-   There is also a collection of PostgreSQL technical articles at
+   books available for purchase at
+   http://techdocs.PostgreSQL.org/techdocs/bookreviews.php. There is also
+   a collection of PostgreSQL technical articles at
    http://techdocs.PostgreSQL.org/.
    
    psql has some nice \d commands to show information about types,
@@ -671,7 +672,7 @@
     BEGIN;
     ALTER TABLE tab ADD COLUMN new_col new_data_type;
     UPDATE tab SET new_col = CAST(old_col AS new_data_type);
-    ALTER TABLE DROP COLUMN old_col;
+    ALTER TABLE tab DROP COLUMN old_col;
     COMMIT;
 
    You might then want to do VACUUM FULL tab to reclaim the disk space
