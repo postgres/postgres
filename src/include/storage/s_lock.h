@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.23 1998/02/03 12:42:52 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.24 1998/02/05 03:31:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@
 
 
 
-#if defined(irix5)
+#if defined(__sgi)
 /*
  * SGI IRIX 5
  * slock_t is defined as a struct abilock_t, which has a single unsigned long
@@ -87,7 +87,7 @@
 
 #define	S_LOCK_FREE(lock)	(stat_lock(lock) == UNLOCKED)
 
-#endif							/* irix5 */
+#endif							/* __sgi */
 
 
 /*
