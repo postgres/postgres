@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_group.sgml,v 1.4 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_group.sgml,v 1.5 2001/09/14 07:59:31 ishii Exp $
 Postgres documentation
 -->
 
@@ -127,14 +127,14 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
   <para>
    Create an empty group:
 <programlisting>
-CREATE GROUP staff
+CREATE GROUP staff;
 </programlisting>
   </para>
 
   <para>
    Create a group with members:
 <programlisting>
-CREATE GROUP marketing WITH USER jonathan, david
+CREATE GROUP marketing WITH USER jonathan, david;
 </programlisting>
   </para>
  </refsect1>
