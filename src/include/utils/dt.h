@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.12 1997/06/23 15:03:45 thomas Exp $
+ * $Id: dt.h,v 1.13 1997/07/01 00:25:30 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,10 +129,10 @@ typedef struct {
 #define DTK_NUMBER	0
 #define DTK_STRING	1
 
-#define DTK_DATETIME	2
-#define DTK_DATE	3
-#define DTK_TIME	4
-#define DTK_TZ		5
+#define DTK_DATE	2
+#define DTK_TIME	3
+#define DTK_TZ		4
+#define DTK_AGO		5
 
 #define DTK_SPECIAL	6
 #define DTK_INVALID	7
@@ -160,7 +160,7 @@ typedef struct {
 #define DTK_MILLENIUM	28
 #define DTK_MILLISEC	29
 #define DTK_MICROSEC	30
-#define DTK_AGO		31
+#define DTK_DOW		31
 
 /*
  * Bit mask definitions for time parsing.
@@ -268,8 +268,11 @@ extern text *datetime_text(DateTime *datetime);
 extern DateTime *text_datetime(text *str);
 extern text *timespan_text(TimeSpan *timespan);
 extern TimeSpan *text_timespan(text *str);
+extern DateTime *datetime_trunc(text *units, DateTime *datetime);
+extern TimeSpan *timespan_trunc(text *units, TimeSpan *timespan);
 extern float64 datetime_part(text *units, DateTime *datetime);
 extern float64 timespan_part(text *units, TimeSpan *timespan);
+extern text *datetime_zone(text *zone, DateTime *datetime);
 
 extern TimeSpan *timespan_um(TimeSpan *span);
 extern TimeSpan *timespan_add(TimeSpan *span1, TimeSpan *span2);
@@ -278,6 +281,7 @@ extern TimeSpan *timespan_sub(TimeSpan *span1, TimeSpan *span2);
 extern TimeSpan *datetime_sub(DateTime *dt1, DateTime *dt2);
 extern DateTime *datetime_add_span(DateTime *dt, TimeSpan *span);
 extern DateTime *datetime_sub_span(DateTime *dt, TimeSpan *span);
+extern TimeSpan *datetime_age(DateTime *dt1, DateTime *dt2);
 
 extern void GetCurrentTime(struct tm *tm);
 extern DateTime SetDateTime(DateTime datetime);
@@ -317,6 +321,8 @@ extern int DecodeDateDelta( char *field[], int ftype[],
 extern int DecodeUnits(int field, char *lowtoken, int *val);
 
 extern int EncodeSpecialDateTime(DateTime dt, char *str);
+extern int EncodeDateOnly(struct tm *tm, int style, char *str);
+extern int EncodeTimeOnly(struct tm *tm, double fsec, int style, char *str);
 extern int EncodeDateTime(struct tm *tm, double fsec, int *tzp, char **tzn, int style, char *str);
 extern int EncodeTimeSpan(struct tm *tm, double fsec, int style, char *str);
 
