@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.26 2000/04/14 22:23:02 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.27 2000/04/14 22:53:10 momjian Exp $
 Postgres documentation
 -->
 
@@ -961,7 +961,7 @@ ERROR: Cannot insert a duplicate key into a unique index.
          default match type if none is specified. MATCH FULL will not
          allow one column of a multi-column foreign key to be NULL
          unless all foreign key columns are NULL. The default MATCH type
-         allows a single foreign key column to be NULL while other parts
+         allows a some foreign key columns to be NULL while other parts
          of the foreign key are not NULL. MATCH PARTIAL is currently not
 	 supported.
         </para>
@@ -1509,7 +1509,7 @@ FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) REFE
          default match type if none is specified. MATCH FULL will not
          allow one column of a multi-column foreign key to be NULL
          unless all foreign key columns are NULL. The default MATCH type
-         allows a single foreign key column to be NULL while other parts
+         allows a some foreign key columns to be NULL while other parts
          of the foreign key are not NULL. MATCH PARTIAL is currently not
 	 supported.
         </para>
