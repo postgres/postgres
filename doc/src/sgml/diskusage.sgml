@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/diskusage.sgml,v 1.3 2002/06/21 19:17:40 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/diskusage.sgml,v 1.4 2002/07/05 00:14:16 momjian Exp $
 -->
 
 <chapter id="diskusage">
@@ -47,7 +47,7 @@ play-# WHERE relname = 'customer';
 <programlisting>
 play=# SELECT relname, relpages
 play-# FROM pg_class
-play-# WHERE relname = 'pg_toast_16806' or
+play-# WHERE relname = 'pg_toast_16806' OR
 play-#       relname = 'pg_toast_16806_index'
 play-# ORDER BY relname;
        relname        | relpages 
