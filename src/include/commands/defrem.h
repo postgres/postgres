@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.53 2003/11/29 22:40:59 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.54 2004/02/21 00:34:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ extern void RenameOpClass(List *name, const char *access_method, const char *new
 
 /* support routines in commands/define.c */
 
-extern void case_translate_language_name(const char *input, char *output);
+extern char *case_translate_language_name(const char *input);
 
 extern char *defGetString(DefElem *def);
 extern double defGetNumeric(DefElem *def);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.52 2003/11/29 19:51:47 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.53 2004/02/21 00:34:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,11 +40,12 @@
 void
 CreateProceduralLanguage(CreatePLangStmt *stmt)
 {
-	char		languageName[NAMEDATALEN];
+	char	   *languageName;
 	Oid			procOid,
 				valProcOid;
 	Oid			funcrettype;
 	Oid			typev[FUNC_MAX_ARGS];
+	NameData	langname;
 	char		nulls[Natts_pg_language];
 	Datum		values[Natts_pg_language];
 	Relation	rel;
@@ -66,7 +67,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	 * Translate the language name and check that this language doesn't
 	 * already exist
 	 */
-	case_translate_language_name(stmt->plname, languageName);
+	languageName = case_translate_language_name(stmt->plname);
 
 	if (SearchSysCacheExists(LANGNAME,
 							 PointerGetDatum(languageName),
@@ -124,12 +125,13 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	}
 
 	i = 0;
-	values[i++] = PointerGetDatum(languageName);
-	values[i++] = BoolGetDatum(true);	/* lanispl */
-	values[i++] = BoolGetDatum(stmt->pltrusted);
-	values[i++] = ObjectIdGetDatum(procOid);
-	values[i++] = ObjectIdGetDatum(valProcOid);
-	nulls[i] = 'n';				/* lanacl */
+	namestrcpy(&langname, languageName);
+	values[i++] = NameGetDatum(&langname);			/* lanname */
+	values[i++] = BoolGetDatum(true);				/* lanispl */
+	values[i++] = BoolGetDatum(stmt->pltrusted);	/* lanpltrusted */
+	values[i++] = ObjectIdGetDatum(procOid);		/* lanplcallfoid */
+	values[i++] = ObjectIdGetDatum(valProcOid);		/* lanvalidator */
+	nulls[i] = 'n';									/* lanacl */
 
 	rel = heap_openr(LanguageRelationName, RowExclusiveLock);
 
@@ -173,7 +175,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 void
 DropProceduralLanguage(DropPLangStmt *stmt)
 {
-	char		languageName[NAMEDATALEN];
+	char	   *languageName;
 	HeapTuple	langTup;
 	ObjectAddress object;
 
@@ -189,7 +191,7 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 	 * Translate the language name, check that this language exist and is
 	 * a PL
 	 */
-	case_translate_language_name(stmt->plname, languageName);
+	languageName = case_translate_language_name(stmt->plname);
 
 	langTup = SearchSysCache(LANGNAME,
 							 CStringGetDatum(languageName),

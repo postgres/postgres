@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scansup.c,v 1.25 2003/11/29 19:51:52 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scansup.c,v 1.26 2004/02/21 00:34:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,8 @@
 
 #include "miscadmin.h"
 #include "parser/scansup.h"
+#include "mb/pg_wchar.h"
+
 
 /* ----------------
  *		scanstr
@@ -32,7 +34,7 @@
  */
 
 char *
-scanstr(char *s)
+scanstr(const char *s)
 {
 	char	   *newStr;
 	int			len,
@@ -108,4 +110,76 @@ scanstr(char *s)
 	}
 	newStr[j] = '\0';
 	return newStr;
+}
+
+
+/*
+ * downcase_truncate_identifier() --- do appropriate downcasing and
+ * truncation of an unquoted identifier.  Optionally warn of truncation.
+ *
+ * Returns a palloc'd string containing the adjusted identifier.
+ *
+ * Note: in some usages the passed string is not null-terminated.
+ *
+ * Note: the API of this function is designed to allow for downcasing
+ * transformations that increase the string length, but we don't yet
+ * support that.  If you want to implement it, you'll need to fix
+ * SplitIdentifierString() in utils/adt/varlena.c.
+ */
+char *
+downcase_truncate_identifier(const char *ident, int len, bool warn)
+{
+	char	   *result;
+	int			i;
+
+	result = palloc(len + 1);
+	/*
+	 * SQL99 specifies Unicode-aware case normalization, which we don't yet
+	 * have the infrastructure for.  Instead we use tolower() to provide a
+	 * locale-aware translation.  However, there are some locales where this
+	 * is not right either (eg, Turkish may do strange things with 'i' and
+	 * 'I').  Our current compromise is to use tolower() for characters with
+	 * the high bit set, and use an ASCII-only downcasing for 7-bit
+	 * characters.
+	 */
+	for (i = 0; i < len; i++)
+	{
+		unsigned char	ch = (unsigned char) ident[i];
+
+		if (ch >= 'A' && ch <= 'Z')
+			ch += 'a' - 'A';
+		else if (ch >= 0x80 && isupper(ch))
+			ch = tolower(ch);
+		result[i] = (char) ch;
+	}
+	result[i] = '\0';
+
+	if (i >= NAMEDATALEN)
+		truncate_identifier(result, i, warn);
+
+	return result;
+}
+
+/*
+ * truncate_identifier() --- truncate an identifier to NAMEDATALEN-1 bytes.
+ *
+ * The given string is modified in-place, if necessary.  A warning is
+ * issued if requested.
+ *
+ * We require the caller to pass in the string length since this saves a
+ * strlen() call in some common usages.
+ */
+void
+truncate_identifier(char *ident, int len, bool warn)
+{
+	if (len >= NAMEDATALEN)
+	{
+		len = pg_mbcliplen(ident, len, NAMEDATALEN-1);
+		if (warn)
+			ereport(NOTICE,
+					(errcode(ERRCODE_NAME_TOO_LONG),
+					 errmsg("identifier \"%s\" will be truncated to \"%.*s\"",
+							ident, len, ident)));
+		ident[len] = '\0';
+	}
 }

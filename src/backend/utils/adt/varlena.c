@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.111 2004/01/31 05:09:40 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.112 2004/02/21 00:34:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,17 +16,18 @@
 
 #include <ctype.h>
 
-#include "mb/pg_wchar.h"
-#include "miscadmin.h"
 #include "access/tuptoaster.h"
 #include "catalog/pg_type.h"
 #include "lib/stringinfo.h"
 #include "libpq/crypt.h"
 #include "libpq/pqformat.h"
+#include "mb/pg_wchar.h"
+#include "miscadmin.h"
+#include "parser/scansup.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
-#include "utils/pg_locale.h"
 #include "utils/lsyscache.h"
+#include "utils/pg_locale.h"
 
 
 typedef struct varlena unknown;
@@ -1695,7 +1696,6 @@ SplitIdentifierString(char *rawstring, char separator,
 	{
 		char	   *curname;
 		char	   *endp;
-		int			curlen;
 
 		if (*nextp == '\"')
 		{
@@ -1718,21 +1718,30 @@ SplitIdentifierString(char *rawstring, char separator,
 		else
 		{
 			/* Unquoted name --- extends to separator or whitespace */
+			char	   *downname;
+			int			len;
+
 			curname = nextp;
 			while (*nextp && *nextp != separator &&
 				   !isspace((unsigned char) *nextp))
-			{
-				/*
-				 * It's important that this match the identifier
-				 * downcasing code used by backend/parser/scan.l.
-				 */
-				if (isupper((unsigned char) *nextp))
-					*nextp = tolower((unsigned char) *nextp);
 				nextp++;
-			}
 			endp = nextp;
 			if (curname == nextp)
 				return false;	/* empty unquoted name not allowed */
+			/*
+			 * Downcase the identifier, using same code as main lexer does.
+			 *
+			 * XXX because we want to overwrite the input in-place, we cannot
+			 * support a downcasing transformation that increases the
+			 * string length.  This is not a problem given the current
+			 * implementation of downcase_truncate_identifier, but we'll
+			 * probably have to do something about this someday.
+			 */
+			len = endp - curname;
+			downname = downcase_truncate_identifier(curname, len, false);
+			Assert(strlen(downname) <= len);
+			strncpy(curname, downname, len);
+			pfree(downname);
 		}
 
 		while (isspace((unsigned char) *nextp))
@@ -1753,13 +1762,8 @@ SplitIdentifierString(char *rawstring, char separator,
 		/* Now safe to overwrite separator with a null */
 		*endp = '\0';
 
-		/* Truncate name if it's overlength; again, should match scan.l */
-		curlen = strlen(curname);
-		if (curlen >= NAMEDATALEN)
-		{
-			curlen = pg_mbcliplen(curname, curlen, NAMEDATALEN - 1);
-			curname[curlen] = '\0';
-		}
+		/* Truncate name if it's overlength */
+		truncate_identifier(curname, strlen(curname), false);
 
 		/*
 		 * Finished isolating current name --- add it to list

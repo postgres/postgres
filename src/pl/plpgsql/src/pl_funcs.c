@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.31 2003/11/29 19:52:12 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.32 2004/02/21 00:34:53 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -40,7 +40,7 @@
 
 #include <ctype.h>
 
-#include "mb/pg_wchar.h"
+#include "parser/scansup.h"
 
 
 /* ----------
@@ -348,15 +348,15 @@ plpgsql_convert_ident(const char *s, char **output, int numidents)
 	{
 		char	   *curident;
 		char	   *cp;
-		int			i;
 
 		/* Process current identifier */
-		curident = palloc(strlen(s) + 1);		/* surely enough room */
-		cp = curident;
 
 		if (*s == '"')
 		{
 			/* Quoted identifier: copy, collapsing out doubled quotes */
+
+			curident = palloc(strlen(s) + 1); /* surely enough room */
+			cp = curident;
 			s++;
 			while (*s)
 			{
@@ -373,35 +373,20 @@ plpgsql_convert_ident(const char *s, char **output, int numidents)
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("unterminated \" in name: %s", sstart)));
 			s++;
+			*cp = '\0';
+			/* Truncate to NAMEDATALEN */
+			truncate_identifier(curident, cp-curident, false);
 		}
 		else
 		{
-			/*
-			 * Normal identifier: downcase, stop at dot or whitespace.
-			 *
-			 * Note that downcasing is locale-sensitive, following SQL99
-			 * rules for identifiers.  We have already decided that the
-			 * item is not a PLPGSQL keyword.
-			 */
+			/* Normal identifier: extends till dot or whitespace */
+			const char *thisstart = s;
+
 			while (*s && *s != '.' && !isspace((unsigned char) *s))
-			{
-				if (isupper((unsigned char) *s))
-					*cp++ = tolower((unsigned char) *s++);
-				else
-					*cp++ = *s++;
-			}
-		}
-
-		/* Truncate to NAMEDATALEN */
-		*cp = '\0';
-		i = cp - curident;
-
-		if (i >= NAMEDATALEN)
-		{
-			int			len;
-
-			len = pg_mbcliplen(curident, i, NAMEDATALEN - 1);
-			curident[len] = '\0';
+				s++;
+			/* Downcase and truncate to NAMEDATALEN */
+			curident = downcase_truncate_identifier(thisstart, s-thisstart,
+													false);
 		}
 
 		/* Pass ident to caller */
