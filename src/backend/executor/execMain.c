@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.11 1997/03/12 20:47:41 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.12 1997/04/02 04:04:11 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -419,6 +419,10 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	resultRelationOid =   rtentry->relid;
 	resultRelationDesc =  heap_open(resultRelationOid);
 	
+	if ( resultRelationDesc->rd_rel->relkind == RELKIND_SEQUENCE )
+	    elog (WARN, "You can't change sequence relation %s",
+			resultRelationDesc->rd_rel->relname.data);
+
 	/* Write-lock the result relation right away: if the relation
 	   is used in a subsequent scan, we won't have to elevate the 
 	   read-lock set by heap_beginscan to a write-lock (needed by 
