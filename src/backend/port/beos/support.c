@@ -299,7 +299,7 @@ beos_before_backend_startup(void)
 void
 beos_backend_startup_failed(void)
 {
-	/* The foek failed, just release the semaphore */
+	/* The fork failed, just release the semaphore */
 	release_sem(beos_shm_sem);
 }
 
