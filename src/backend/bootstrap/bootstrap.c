@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.188 2004/07/21 20:22:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.189 2004/07/21 20:34:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,6 @@
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "postmaster/bgwriter.h"
-#include "postmaster/pg_autovacuum.h"
 #include "storage/freespace.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
@@ -356,9 +355,6 @@ BootstrapMain(int argc, char *argv[])
 			case BS_XLOG_BGWRITER:
 				statmsg = "writer process";
 				break;
-			case BS_XLOG_AUTOVAC:
-				statmsg = "auto vacuum process";
-				break;
 			default:
 				statmsg = "??? process";
 				break;
@@ -394,9 +390,6 @@ BootstrapMain(int argc, char *argv[])
 		{
 			case BS_XLOG_BGWRITER:
 				InitDummyProcess(DUMMY_PROC_BGWRITER);
-				break;
-			case BS_XLOG_AUTOVAC:
-				InitDummyProcess(DUMMY_PROC_AUTOVAC);
 				break;
 
 			default:
@@ -434,12 +427,6 @@ BootstrapMain(int argc, char *argv[])
 			BackgroundWriterMain();
 			proc_exit(1);		/* should never return */
 
-		case BS_XLOG_AUTOVAC:
-			/* don't set signals, autovac has its own agenda */
-			InitXLOGAccess();
-			AutoVacMain();
-			proc_exit(1);		/* should never return */
-		
 		default:
 			elog(PANIC, "unrecognized XLOG op: %d", xlogop);
 			proc_exit(1);

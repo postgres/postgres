@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.413 2004/07/21 20:22:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.414 2004/07/21 20:34:46 momjian Exp $
  *
  * NOTES
  *
@@ -54,6 +54,12 @@
  * Garbage Collection:
  *		The Postmaster cleans up after backends if they have an emergency
  *		exit and/or core dump.
+ *
+ * Error Reporting:
+ *		Use write_stderr() only for reporting "interactive" errors
+ *		(essentially, bogus arguments on the command line).  Once the
+ *		postmaster is launched, use ereport().  In particular, don't use
+ *		write_stderr() for anything that occurs after pmdaemonize.
  *
  *-------------------------------------------------------------------------
  */
@@ -194,7 +200,6 @@ char	   *preload_libraries_string = NULL;
 static pid_t StartupPID = 0,
 			BgWriterPID = 0,
 			PgArchPID = 0,
-			AutoVacPID = 0,
 			PgStatPID = 0;
 
 /* Startup/shutdown state */
@@ -264,7 +269,6 @@ static void SignalChildren(int signal);
 static int	CountChildren(void);
 static bool CreateOptsFile(int argc, char *argv[], char *fullprogname);
 static pid_t StartChildProcess(int xlop);
-static void postmaster_error(const char *fmt,...);
 
 #ifdef EXEC_BACKEND
 
@@ -295,7 +299,6 @@ static void ShmemBackendArrayRemove(pid_t pid);
 
 #define StartupDataBase()		StartChildProcess(BS_XLOG_STARTUP)
 #define StartBackgroundWriter() StartChildProcess(BS_XLOG_BGWRITER)
-#define StartAutoVac() StartChildProcess(BS_XLOG_AUTOVAC)
 
 
 /*
@@ -382,7 +385,7 @@ PostmasterMain(int argc, char *argv[])
 #ifdef USE_ASSERT_CHECKING
 				SetConfigOption("debug_assertions", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 #else
-				postmaster_error("assert checking is not compiled in");
+				write_stderr("%s: assert checking is not compiled in\n", progname);
 #endif
 				break;
 			case 'a':
@@ -506,9 +509,8 @@ PostmasterMain(int argc, char *argv[])
 				}
 
 			default:
-				fprintf(stderr,
-					gettext("Try \"%s --help\" for more information.\n"),
-						progname);
+				write_stderr("Try \"%s --help\" for more information.\n",
+							 progname);
 				ExitPostmaster(1);
 		}
 	}
@@ -518,10 +520,10 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	if (optind < argc)
 	{
-		postmaster_error("invalid argument: \"%s\"", argv[optind]);
-		fprintf(stderr,
-				gettext("Try \"%s --help\" for more information.\n"),
-				progname);
+		write_stderr("%s: invalid argument: \"%s\"\n",
+					 progname, argv[optind]);
+		write_stderr("Try \"%s --help\" for more information.\n",
+					 progname);
 		ExitPostmaster(1);
 	}
 
@@ -592,13 +594,13 @@ PostmasterMain(int argc, char *argv[])
 		 * for lack of buffers.  The specific choices here are somewhat
 		 * arbitrary.
 		 */
-		postmaster_error("the number of buffers (-B) must be at least twice the number of allowed connections (-N) and at least 16");
+		write_stderr("%s: the number of buffers (-B) must be at least twice the number of allowed connections (-N) and at least 16\n", progname);
 		ExitPostmaster(1);
 	}
 
 	if (ReservedBackends >= MaxBackends)
 	{
-		postmaster_error("superuser_reserved_connections must be less than max_connections");
+		write_stderr("%s: superuser_reserved_connections must be less than max_connections\n", progname);
 		ExitPostmaster(1);
 	}
 
@@ -607,7 +609,7 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	if (!CheckDateTokenTables())
 	{
-		postmaster_error("invalid datetoken tables, please fix");
+		write_stderr("%s: invalid datetoken tables, please fix\n", progname);
 		ExitPostmaster(1);
 	}
 
@@ -827,7 +829,7 @@ PostmasterMain(int argc, char *argv[])
 	 * CAUTION: when changing this list, check for side-effects on the signal
 	 * handling setup of child processes.  See tcop/postgres.c,
 	 * bootstrap/bootstrap.c, postmaster/bgwriter.c, postmaster/pgarch.c,
-	 * postmaster/pgstat.c, and postmaster/pg_autovacuum.c.
+	 * and postmaster/pgstat.c.
 	 */
 	pqinitmask();
 	PG_SETMASK(&BlockSig);
@@ -976,11 +978,10 @@ checkDataDir(const char *checkdir)
 	fp = AllocateFile(path, PG_BINARY_R);
 	if (fp == NULL)
 	{
-		fprintf(stderr,
-				gettext("%s: could not find the database system\n"
-						"Expected to find it in the directory \"%s\",\n"
-						"but could not open file \"%s\": %s\n"),
-				progname, checkdir, path, strerror(errno));
+		write_stderr("%s: could not find the database system\n"
+					 "Expected to find it in the directory \"%s\",\n"
+					 "but could not open file \"%s\": %s\n",
+					 progname, checkdir, path, strerror(errno));
 		ExitPostmaster(2);
 	}
 	FreeFile(fp);
@@ -1023,8 +1024,8 @@ pmdaemonize(void)
 	pid = fork();
 	if (pid == (pid_t) -1)
 	{
-		postmaster_error("could not fork background process: %s",
-						 strerror(errno));
+		write_stderr("%s: could not fork background process: %s\n",
+					 progname, strerror(errno));
 		ExitPostmaster(1);
 	}
 	else if (pid)
@@ -1045,8 +1046,8 @@ pmdaemonize(void)
 #ifdef HAVE_SETSID
 	if (setsid() < 0)
 	{
-		postmaster_error("could not dissociate from controlling TTY: %s",
-						 strerror(errno));
+		write_stderr("%s: could not dissociate from controlling TTY: %s\n",
+					 progname, strerror(errno));
 		ExitPostmaster(1);
 	}
 #endif
@@ -1113,9 +1114,9 @@ ServerLoop(void)
 	int			nSockets;
 	time_t		now,
 				last_touch_time;
-	struct 		timeval earlier,
+	struct timeval earlier,
 				later;
-	struct 		timezone tz;
+	struct timezone tz;
 
 	gettimeofday(&earlier, &tz);
 	last_touch_time = time(NULL);
@@ -1219,35 +1220,6 @@ ServerLoop(void)
 				kill(BgWriterPID, SIGUSR2);
 		}
 
-		/*
-		 * If no AutoVacuum process is running, and we are not in
-		 * a state that prevents it, start one.  It doesn't matter if this
-		 * fails, we'll just try again later.
-		 */
-		if (autovacuum_start_daemon)
-		{
-			if (pgstat_collect_tuplelevel)
-			{
-				if (AutoVacPID == 0 && StartupPID == 0 && !FatalError)
-				{
-					AutoVacPID = StartAutoVac();
-					if(pgstat_collect_resetonpmstart)
-						elog(WARNING,"pg_autovacuum: stats_reset_on_server_start should be disabled for optimal performance");
-					
-					/* If shutdown is pending, set it going */
-					if (Shutdown > NoShutdown && AutoVacPID != 0)
-						kill(AutoVacPID, SIGUSR2);
-				}
-			}
-			else
-				elog(WARNING, "pg_autovacuum: autovac is enabled, but requires stats_row_level which is not enabled");
-		}	
-		else if(AutoVacPID > 0)
-			kill(AutoVacPID, SIGUSR2);
-			
-		if (!autovacuum_start_daemon)
-			elog(DEBUG1, "pg_autovacuum: not enabled");
-			
 		/* If we have lost the archiver, try to start a new one */
 		if (XLogArchivingActive() && PgArchPID == 0 && 
             StartupPID == 0 && !FatalError && Shutdown == NoShutdown)
@@ -1615,21 +1587,6 @@ processCancelRequest(Port *port, void *pkt)
 	backendPID = (int) ntohl(canc->backendPID);
 	cancelAuthCode = (long) ntohl(canc->cancelAuthCode);
 
-	if (backendPID == BgWriterPID)
-	{
-		ereport(DEBUG2,
-				(errmsg_internal("ignoring cancel request for bgwriter process %d",
-								 backendPID)));
-		return;
-	}
-	if (backendPID == AutoVacPID)
-	{
-		ereport(DEBUG2,
-				(errmsg_internal("ignoring cancel request for autovacuum process %d",
-								 backendPID)));
-		return;
-	}
-
 	/*
 	 * See if we have a matching backend.  In the EXEC_BACKEND case, we
 	 * can no longer access the postmaster's own backend list, and must
@@ -1813,8 +1770,6 @@ SIGHUP_handler(SIGNAL_ARGS)
 			kill(BgWriterPID, SIGHUP);
 		if (PgArchPID != 0)
 			kill(PgArchPID, SIGHUP);
-		if (AutoVacPID != 0)
-			kill(AutoVacPID, SIGHUP);
 		/* PgStatPID does not currently need SIGHUP */
 		load_hba();
 		load_ident();
@@ -1876,10 +1831,6 @@ pmdie(SIGNAL_ARGS)
 			/* Tell pgarch to shut down too; nothing left for it to do */
 			if (PgArchPID != 0)
 				kill(PgArchPID, SIGQUIT);
-			/* I don't think we need to Start the autovac process if not running */
-			/* And tell it to shut down */
-			if (AutoVacPID != 0)
-				kill(AutoVacPID, SIGUSR2);
 			/* Tell pgstat to shut down too; nothing left for it to do */
 			if (PgStatPID != 0)
 				kill(PgStatPID, SIGQUIT);
@@ -1927,9 +1878,6 @@ pmdie(SIGNAL_ARGS)
 			/* Tell pgarch to shut down too; nothing left for it to do */
 			if (PgArchPID != 0)
 				kill(PgArchPID, SIGQUIT);
-			/* And tell it to shut down */
-			if (AutoVacPID != 0)
-				kill(AutoVacPID, SIGUSR2);
 			/* Tell pgstat to shut down too; nothing left for it to do */
 			if (PgStatPID != 0)
 				kill(PgStatPID, SIGQUIT);
@@ -1950,8 +1898,6 @@ pmdie(SIGNAL_ARGS)
 				kill(BgWriterPID, SIGQUIT);
 			if (PgArchPID != 0)
 				kill(PgArchPID, SIGQUIT);
-			if (AutoVacPID != 0)
-				kill(AutoVacPID, SIGQUIT);
 			if (PgStatPID != 0)
 				kill(PgStatPID, SIGQUIT);
 			if (DLGetHead(BackendList))
@@ -2094,35 +2040,9 @@ reaper(SIGNAL_ARGS)
 			if (XLogArchivingActive() &&
 				StartupPID == 0 && !FatalError && Shutdown == NoShutdown)
 				PgArchPID = pgarch_start();
-			/*
-			 * Shutdown autovac if a shutdown request was pending.
-			 */
-			if (Shutdown > NoShutdown && AutoVacPID != 0)
-				kill(AutoVacPID, SIGUSR2);
-
 			continue;
 		}
 
-		/*
-		 * Was it the autovac?
-		 */
-		if (AutoVacPID != 0 && pid == AutoVacPID)
-		{
-			AutoVacPID = 0;
-			if (exitstatus != 0)
-			{
-				/*
-				* Any unexpected exit of the autovacuum is treated as a crash.
-				* FIXME: This is useful for debugging autovac, but I think it should be 
-				* ripped out before final patch, autovac shouldn't crash the postmaster
-				*/
-				LogChildExit(LOG, gettext("pg_autovacuum process"),
-							pid, exitstatus);
-				HandleChildCrash(pid, exitstatus);
-				continue;
-			}
-		}
-		
 		/*
 		 * Was it the statistics collector?  If so, just try to start a new
 		 * one; no need to force reset of the rest of the system.  (If fail,
@@ -2152,7 +2072,7 @@ reaper(SIGNAL_ARGS)
 		 * StartupDataBase.  (We can ignore the archiver and stats processes
 		 * here since they are not connected to shmem.)
 		 */
-		if (DLGetHead(BackendList) || StartupPID != 0 || BgWriterPID != 0 || AutoVacPID != 0)
+		if (DLGetHead(BackendList) || StartupPID != 0 || BgWriterPID != 0)
 			goto reaper_done;
 		ereport(LOG,
 			(errmsg("all server processes terminated; reinitializing")));
@@ -2175,9 +2095,6 @@ reaper(SIGNAL_ARGS)
 		/* And tell it to shut down */
 		if (BgWriterPID != 0)
 			kill(BgWriterPID, SIGUSR2);
-		/* Tell AutoVac to shut down */
-		if (AutoVacPID != 0)
-			kill(AutoVacPID, SIGUSR2);
 	}
 
 reaper_done:
@@ -2334,20 +2251,6 @@ HandleChildCrash(int pid,
 								 "SIGQUIT",
 								 (int) PgStatPID)));
 		kill(PgStatPID, SIGQUIT);
-	}
-
-	FatalError = true;
-
-	/* Take care of the autovacuum too */
-	if (pid == AutoVacPID)
-		AutoVacPID = 0;
-	else if (AutoVacPID != 0 && !FatalError)
-	{
-		ereport(DEBUG2,
-				(errmsg_internal("sending %s to process %d",
-								 (SendStop ? "SIGSTOP" : "SIGQUIT"),
-								 (int) AutoVacPID)));
-		kill(AutoVacPID, (SendStop ? SIGSTOP : SIGQUIT));
 	}
 
 	FatalError = true;
@@ -3337,10 +3240,6 @@ StartChildProcess(int xlop)
 				ereport(LOG,
 						(errmsg("could not fork background writer process: %m")));
 				break;
-			case BS_XLOG_AUTOVAC:
-				ereport(LOG,
-						(errmsg("could not fork auto vacuum process: %m")));
-				break;
 			default:
 				ereport(LOG,
 						(errmsg("could not fork process: %m")));
@@ -3393,24 +3292,6 @@ CreateOptsFile(int argc, char *argv[], char *fullprogname)
 	}
 
 	return true;
-}
-
-/*
- * This should be used only for reporting "interactive" errors (essentially,
- * bogus arguments on the command line).  Once the postmaster is launched,
- * use ereport.  In particular, don't use this for anything that occurs
- * after pmdaemonize.
- */
-static void
-postmaster_error(const char *fmt,...)
-{
-	va_list		ap;
-
-	fprintf(stderr, "%s: ", progname);
-	va_start(ap, fmt);
-	vfprintf(stderr, gettext(fmt), ap);
-	va_end(ap);
-	fprintf(stderr, "\n");
 }
 
 
@@ -3852,7 +3733,7 @@ win32_sigchld_waiter(LPVOID param)
 	if (r == WAIT_OBJECT_0)
 		pg_queue_signal(SIGCHLD);
 	else
-		fprintf(stderr, "ERROR: failed to wait on child process handle: %d\n",
+		write_stderr("ERROR: failed to wait on child process handle: %d\n",
 				(int) GetLastError());
 	CloseHandle(procHandle);
 	return 0;

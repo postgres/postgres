@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.102 2004/07/21 20:22:58 momjian Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.103 2004/07/21 20:34:44 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,13 +29,13 @@ endif
 
 ##########################################################################
 
-all: submake-libpgport submake-libpq postgres $(POSTGRES_IMP)
+all: submake-libpgport postgres $(POSTGRES_IMP)
 
 ifneq ($(PORTNAME), cygwin)
 ifneq ($(PORTNAME), win32)
 
 postgres: $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -I $(libpq_srcdir) $(export_dynamic) $^ $(LIBS)  $(libpq) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(export_dynamic) $^ $(LIBS) -o $@
 
 endif
 endif
