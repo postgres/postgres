@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_shadow.h,v 1.4 1999/02/13 23:21:14 momjian Exp $
+ * $Id: pg_shadow.h,v 1.5 1999/12/17 01:05:31 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -67,39 +67,11 @@ typedef FormData_pg_shadow *Form_pg_shadow;
 
 /* ----------------
  *		initial contents of pg_shadow
+ *
+ * The uppercase quantities will be replaced at initdb time with
+ * user choices.
  * ----------------
  */
-DATA(insert OID = 0 ( postgres PGUID t t t t _null_ 2116994400 ));
-
-BKI_BEGIN
-#ifdef ALLOW_PG_GROUP
-BKI_END
-
-DATA(insert OID = 0 ( mike 799 t t t t _null_ 2116994400 ));
-DATA(insert OID = 0 ( mao 1806 t t t t _null_ 2116994400 ));
-DATA(insert OID = 0 ( hellers 1089 t t t t _null_ 2116994400 ));
-DATA(insert OID = 0 ( joey 5209 t t t t _null_ 2116994400 ));
-DATA(insert OID = 0 ( jolly 5443 t t t t _null_ 2116994400 ));
-DATA(insert OID = 0 ( sunita 6559 t t t t _null_ 2116994400 ));
-DATA(insert OID = 0 ( paxson 3029 t t t t _null_ 2116994400 ));
-DATA(insert OID = 0 ( marc 2435 t t t t _null_ 2116994400 ));
-DATA(insert OID = 0 ( jiangwu 6124 t t t t _null_ 2116994400 ));
-DATA(insert OID = 0 ( aoki 2360 t t t t _null_ 2116994400 ));
-DATA(insert OID = 0 ( avi 31080 t t t t _null_ 2116994400 ));
-DATA(insert OID = 0 ( kristin 1123 t t t t _null_ 2116994400 ));
-DATA(insert OID = 0 ( andrew 5229 t t t t _null_ 2116994400 ));
-DATA(insert OID = 0 ( nobuko 5493 t t t t _null_ 2116994400 ));
-DATA(insert OID = 0 ( hartzell 6676 t t t t _null_ 2116994400 ));
-DATA(insert OID = 0 ( devine 6724 t t t t _null_ 2116994400 ));
-DATA(insert OID = 0 ( boris 6396 t t t t _null_ 2116994400 ));
-DATA(insert OID = 0 ( sklower 354 t t t t _null_ 2116994400 ));
-DATA(insert OID = 0 ( marcel 31113 t t t t _null_ 2116994400 ));
-DATA(insert OID = 0 ( ginger 3692 t t t t _null_ 2116994400 ));
-DATA(insert OID = 0 ( woodruff 31026 t t t t _null_ 2116994400 ));
-DATA(insert OID = 0 ( searcher 8261 t t t t _null_ 2116994400 ));
-
-BKI_BEGIN
-#endif	 /* ALLOW_PG_GROUP */
-BKI_END
+DATA(insert OID = 0 ( POSTGRES PGUID t t t t PASSWORD _null_ ));
 
 #endif	 /* PG_SHADOW_H */

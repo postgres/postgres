@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.65 1999/12/16 20:09:56 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.66 1999/12/17 01:05:30 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -291,38 +291,31 @@ umask 077
 
 if [ -f "$PGDATA/PG_VERSION" ]; then
     if [ $template_only -eq 0 ]; then
-        echo "$CMDNAME: error: File $PGDATA/PG_VERSION already exists."
-        echo "This probably means initdb has already been run and the "
+        echo "$CMDNAME: The file $PGDATA/PG_VERSION already exists."
+        echo "This probably means initdb has already been run and the"
         echo "database system already exists."
         echo 
-        echo "If you want to create a new database system, either remove "
-        echo "the directory $PGDATA or run initdb with a --pgdata option "
+        echo "If you want to create a new database system, either remove"
+        echo "the directory $PGDATA or run initdb with a --pgdata argument"
         echo "other than $PGDATA."
         exit 1
     fi
 else
     if [ ! -d $PGDATA ]; then
-        echo "Creating Postgres database system directory $PGDATA"
-        echo
-        mkdir $PGDATA
-        if [ $? -ne 0 ]; then exit 5; fi
-	else
-        echo "Fixing permissions on pre-existing $PGDATA"
-        echo
-		chmod go-rwx $PGDATA
-        if [ $? -ne 0 ]; then exit 5; fi
+        echo "Creating database system directory $PGDATA"
+        mkdir $PGDATA || exit_nicely
+    else
+        echo "Fixing permissions on pre-existing data directory $PGDATA"
+	chmod go-rwx $PGDATA || exit_nicely
     fi
+
     if [ ! -d $PGDATA/base ]; then
-        echo "Creating Postgres database system directory $PGDATA/base"
-        echo
-        mkdir $PGDATA/base
-        if [ $? -ne 0 ]; then exit 5; fi
+        echo "Creating database system directory $PGDATA/base"
+        mkdir $PGDATA/base || exit_nicely
     fi
     if [ ! -d $PGDATA/pg_xlog ]; then
-        echo "Creating Postgres database XLOG directory $PGDATA/pg_xlog"
-        echo
-        mkdir $PGDATA/pg_xlog
-        if [ $? -ne 0 ]; then exit 5; fi
+        echo "Creating database XLOG directory $PGDATA/pg_xlog"
+        mkdir $PGDATA/pg_xlog || exit_nicely
     fi
 fi
 
@@ -330,8 +323,8 @@ fi
 # Create the template1 database
 #----------------------------------------------------------------------------
 
-rm -rf $PGDATA/base/template1
-mkdir $PGDATA/base/template1
+rm -rf $PGDATA/base/template1 || exit_nicely
+mkdir $PGDATA/base/template1 || exit_nicely
 
 if [ "$debug" -eq 1 ]; then
     BACKEND_TALK_ARG="-d"
@@ -343,82 +336,51 @@ BACKENDARGS="-boot -C -F -D$PGDATA $BACKEND_TALK_ARG"
 FIRSTRUN="-boot -x -C -F -D$PGDATA $BACKEND_TALK_ARG"
 
 echo "Creating template database in $PGDATA/base/template1"
-[ "$debug" -ne 0 ] && echo "Running: postgres $BACKENDARGS template1"
+[ "$debug" -ne 0 ] && echo "Running: $PGPATH/postgres $FIRSTRUN template1"
 
 cat $TEMPLATE \
-| sed -e "s/postgres PGUID/$POSTGRES_SUPERUSERNAME $POSTGRES_SUPERUID/" \
-      -e "s/PGUID/$POSTGRES_SUPERUID/" \
-| postgres $FIRSTRUN template1
+| sed -e "s/PGUID/$POSTGRES_SUPERUSERID/g" \
+| $PGPATH/postgres $FIRSTRUN template1 \
+|| exit_nicely
 
-if [ $? -ne 0 ]; then
-    echo "$CMDNAME: could not create template database"
-    if [ $noclean -eq 0 ]; then
-        echo "$CMDNAME: cleaning up by wiping out $PGDATA/base/template1"
-        rm -rf $PGDATA/base/template1
-    else
-        echo "$CMDNAME: cleanup not done because noclean options was used."
-    fi
-    exit 1;
-fi
-
-echo
-
-pg_version $PGDATA/base/template1
+$PGPATH/pg_version $PGDATA/base/template1 || exit_nicely
 
 #----------------------------------------------------------------------------
 # Create the global classes, if requested.
 #----------------------------------------------------------------------------
 
 if [ $template_only -eq 0 ]; then
-    echo "Creating global classes in $PGDATA/base"
-    [ "$debug" -ne 0 ] && echo "Running: postgres $BACKENDARGS template1"
+    echo "Creating global relations in $PGDATA/base"
+    [ "$debug" -ne 0 ] && echo "Running: $PGPATH/postgres $BACKENDARGS template1"
 
     cat $GLOBAL \
-    | sed -e "s/postgres PGUID/$POSTGRES_SUPERUSERNAME $POSTGRES_SUPERUID/" \
-        -e "s/PGUID/$POSTGRES_SUPERUID/" \
-    | postgres $BACKENDARGS template1
+    | sed -e "s/POSTGRES/$POSTGRES_SUPERUSERNAME/g" \
+          -e "s/PGUID/$POSTGRES_SUPERUSERID/g" \
+          -e "s/PASSWORD/$Password/g" \
+    | $PGPATH/postgres $BACKENDARGS template1 \
+    || exit_nicely
 
-    if (test $? -ne 0)
-    then
-        echo "$CMDNAME: could not create global classes."
-        if (test $noclean -eq 0); then
-            echo "$CMDNAME: cleaning up."
-            rm -rf $PGDATA
-        else
-            echo "$CMDNAME: cleanup not done (noclean mode set)."
-        fi
-        exit 1;
+    $PGPATH/pg_version $PGDATA || exit_nicely
+
+    cp $PG_HBA_SAMPLE $PGDATA/pg_hba.conf     || exit_nicely
+    cp $PG_GEQO_SAMPLE $PGDATA/pg_geqo.sample || exit_nicely
+
+    echo "Adding template1 database to pg_database"
+
+    echo "open pg_database" > $TEMPFILE
+    echo "insert (template1 $POSTGRES_SUPERUSERID $MULTIBYTEID template1)" >> $TEMPFILE
+    #echo "show" >> $TEMPFILE
+    echo "close pg_database" >> $TEMPFILE
+
+    [ "$debug" -ne 0 ] && echo "Running: $PGPATH/postgres $BACKENDARGS template1 < $TEMPFILE"
+
+    $PGPATH/postgres $BACKENDARGS template1 < $TEMPFILE
+    # Gotta remove that temp file before exiting on error.
+    retval=$?
+    if [ $noclean -eq 0 ]; then
+            rm -f $TEMPFILE || exit_nicely
     fi
-
-    echo
-
-    pg_version $PGDATA
-
-    cp $PG_HBA_SAMPLE $PGDATA/pg_hba.conf
-    cp $PG_GEQO_SAMPLE $PGDATA/pg_geqo.sample
-
-    echo "Adding template1 database to pg_database..."
-
-    echo "open pg_database" > /tmp/create.$$
-    echo "insert (template1 $POSTGRES_SUPERUID $MULTIBYTEID template1)" >> /tmp/create.$$
-    #echo "show" >> /tmp/create.$$
-    echo "close pg_database" >> /tmp/create.$$
-
-    [ "$debug" -ne 0 ] && echo "Running: postgres $BACKENDARGS template1 < /tmp/create.$$"
-
-    postgres $BACKENDARGS template1 < /tmp/create.$$ 
-
-    if [ $? -ne 0 ]; then
-        echo "$CMDNAME: could not log template database"
-        if [ $noclean -eq 0 ]; then
-            echo "$CMDNAME: cleaning up."
-            rm -rf $PGDATA
-        else
-            echo "$CMDNAME: cleanup not done (noclean mode set)."
-        fi
-        exit 1;
-    fi
-    rm -f /tmp/create.$$
+    [ $retval -ne 0 ] && exit_nicely
 fi
 
 echo
@@ -427,102 +389,103 @@ PGSQL_OPT="-o /dev/null -O -F -Q -D$PGDATA"
 
 # Create a trigger so that direct updates to pg_shadow will be written
 # to the flat password file pg_pwd
-echo "CREATE TRIGGER pg_sync_pg_pwd AFTER INSERT OR UPDATE OR DELETE ON pg_shadow FOR EACH ROW EXECUTE PROCEDURE update_pg_pwd()" | postgres $PGSQL_OPT template1 > /dev/null
+echo "CREATE TRIGGER pg_sync_pg_pwd AFTER INSERT OR UPDATE OR DELETE ON pg_shadow" \
+     "FOR EACH ROW EXECUTE PROCEDURE update_pg_pwd()" \
+     | $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 # Create the initial pg_pwd (flat-file copy of pg_shadow)
-echo "COPY pg_shadow TO '$PGDATA/pg_pwd' USING DELIMITERS '\\t'" | \
-	postgres $PGSQL_OPT template1 > /dev/null
+echo "Writing password file."
+echo "COPY pg_shadow TO '$PGDATA/pg_pwd' USING DELIMITERS '\\t'" \
+	| $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
 # An ordinary COPY will leave the file too loosely protected.
-chmod go-rw $PGDATA/pg_pwd
+# Note: If you lied above and specified a --username different from the one
+# you really are, this will manifest itself in this command failing because
+# of a missing file, since the COPY command above failed. It would perhaps
+# be better if postgres returned an error code.
+chmod go-rw $PGDATA/pg_pwd || exit_nicely
 
-echo "Creating public pg_user view"
-echo "CREATE TABLE pg_user (		\
-	    usename	name,		\
-	    usesysid	int4,		\
-	    usecreatedb	bool,		\
-	    usetrace	bool,		\
-	    usesuper	bool,		\
-	    usecatupd	bool,		\
-	    passwd		text,		\
-	    valuntil	abstime);" | postgres $PGSQL_OPT template1 > /dev/null
+echo "Creating view pg_user."
+echo "CREATE VIEW pg_user AS
+        SELECT
+            usename,
+            usesysid,
+            usecreatedb,
+            usetrace,
+            usesuper,
+            usecatupd,
+            '********'::text as passwd,
+            valuntil
+        FROM pg_shadow" \
+        | $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
+echo "REVOKE ALL on pg_shadow FROM public" \
+	| $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
-echo "CREATE RULE \"_RETpg_user\" AS ON SELECT TO pg_user DO INSTEAD	\
-	    SELECT usename, usesysid, usecreatedb, usetrace,		\
-	           usesuper, usecatupd, '********'::text as passwd,	\
-		   valuntil FROM pg_shadow;" | \
-	postgres $PGSQL_OPT template1 > /dev/null
-echo "REVOKE ALL on pg_shadow FROM public" | \
-	postgres $PGSQL_OPT template1 > /dev/null
+echo "Creating view pg_rules."
+echo "CREATE VIEW pg_rules AS
+        SELECT
+            C.relname AS tablename,
+            R.rulename AS rulename,
+	    pg_get_ruledef(R.rulename) AS definition
+	FROM pg_rewrite R, pg_class C
+	WHERE R.rulename !~ '^_RET'
+            AND C.oid = R.ev_class;" \
+	| $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
-echo "Creating view pg_rules"
-echo "CREATE TABLE pg_rules (		\
-	    tablename	name,		\
-	    rulename	name,		\
-	    definition	text);" | postgres $PGSQL_OPT template1 > /dev/null
+echo "Creating view pg_views."
+echo "CREATE VIEW pg_views AS
+        SELECT
+            C.relname AS viewname,
+            pg_get_userbyid(C.relowner) AS viewowner,
+            pg_get_viewdef(C.relname) AS definition
+        FROM pg_class C
+        WHERE C.relhasrules
+            AND	EXISTS (
+                SELECT rulename FROM pg_rewrite R
+                    WHERE ev_class = C.oid AND ev_type = '1'
+            )" \
+	| $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
-echo "CREATE RULE \"_RETpg_rules\" AS ON SELECT TO pg_rules DO INSTEAD	\
-	    SELECT C.relname AS tablename,				\
-	           R.rulename AS rulename,				\
-		   pg_get_ruledef(R.rulename) AS definition		\
-	      FROM pg_rewrite R, pg_class C 				\
-	           WHERE R.rulename !~ '^_RET'				\
-		   AND C.oid = R.ev_class;" | \
-	postgres $PGSQL_OPT template1 > /dev/null
+echo "Creating view pg_tables."
+echo "CREATE VIEW pg_tables AS
+        SELECT
+            C.relname AS tablename,
+	    pg_get_userbyid(C.relowner) AS tableowner,
+	    C.relhasindex AS hasindexes,
+	    C.relhasrules AS hasrules,
+	    (C.reltriggers > 0) AS hastriggers
+        FROM pg_class C
+        WHERE C.relkind IN ('r', 's')
+            AND NOT EXISTS (
+                SELECT rulename FROM pg_rewrite
+                    WHERE ev_class = C.oid AND ev_type = '1'
+            )" \
+	| $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
-echo "Creating view pg_views"
-echo "CREATE TABLE pg_views (		\
-	    viewname	name,		\
-	    viewowner	name,		\
-	    definition	text);" | postgres $PGSQL_OPT template1 > /dev/null
+echo "Creating view pg_indexes."
+echo "CREATE VIEW pg_indexes AS
+        SELECT
+            C.relname AS tablename,
+	    I.relname AS indexname,
+            pg_get_indexdef(X.indexrelid) AS indexdef
+        FROM pg_index X, pg_class C, pg_class I
+	WHERE C.oid = X.indrelid
+            AND I.oid = X.indexrelid" \
+        | $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
-echo "CREATE RULE \"_RETpg_views\" AS ON SELECT TO pg_views DO INSTEAD	\
-	    SELECT C.relname AS viewname, 				\
-		   pg_get_userbyid(C.relowner) AS viewowner,		\
-	           pg_get_viewdef(C.relname) AS definition		\
-	      FROM pg_class C WHERE C.relhasrules AND			\
-	           EXISTS (SELECT rulename FROM pg_rewrite R	\
-			   			WHERE ev_class = C.oid AND ev_type = '1');" | \
-	postgres $PGSQL_OPT template1 > /dev/null
+echo "Loading pg_description."
+echo "COPY pg_description FROM '$TEMPLATE_DESCR'" \
+	| $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+echo "COPY pg_description FROM '$GLOBAL_DESCR'" \
+	| $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+echo "Vacuuming database."
+echo "VACUUM ANALYZE" \
+	| $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
-echo "Creating view pg_tables"
-echo "CREATE TABLE pg_tables (		\
-	    tablename	name,		\
-	    tableowner	name,		\
-	    hasindexes	bool,		\
-	    hasrules	bool,		\
-	    hastriggers	bool);" | postgres $PGSQL_OPT template1 > /dev/null
+echo
+echo "$CMDNAME completed successfully. You can now start the database server."
+echo "($PGPATH/postmaster -D $PGDATA)"
+echo
 
-echo "CREATE RULE \"_RETpg_tables\" AS ON SELECT TO pg_tables DO INSTEAD	\
-	    SELECT C.relname AS tablename, 				\
-		   pg_get_userbyid(C.relowner) AS tableowner,		\
-		   C.relhasindex AS hasindexes,				\
-		   C.relhasrules AS hasrules,				\
-		   (C.reltriggers > 0) AS hastriggers			\
-	      FROM pg_class C WHERE C.relkind IN ('r', 's')			\
-	           AND NOT EXISTS (SELECT rulename FROM pg_rewrite	\
-			   					WHERE ev_class = C.oid AND ev_type = '1');" | \
-	postgres $PGSQL_OPT template1 > /dev/null
-
-echo "Creating view pg_indexes"
-echo "CREATE TABLE pg_indexes (	\
-	    tablename	name,		\
-	    indexname	name,		\
-	    indexdef	text);" | postgres $PGSQL_OPT template1 > /dev/null
-
-echo "CREATE RULE \"_RETpg_indexes\" AS ON SELECT TO pg_indexes DO INSTEAD	\
-	    SELECT C.relname AS tablename, 				\
-		   I.relname AS indexname,				\
-		   pg_get_indexdef(X.indexrelid) AS indexdef		\
-	      FROM pg_index X, pg_class C, pg_class I			\
-	      	   WHERE C.oid = X.indrelid				\
-	           AND I.oid = X.indexrelid;" | \
-	postgres $PGSQL_OPT template1 > /dev/null
-
-echo "Loading pg_description"
-echo "copy pg_description from '$TEMPLATE_DESCR'" | \
-	postgres $PGSQL_OPT template1 > /dev/null
-echo "copy pg_description from '$GLOBAL_DESCR'" | \
-	postgres $PGSQL_OPT template1 > /dev/null
-echo "vacuum analyze" | \
-	postgres $PGSQL_OPT template1 > /dev/null
+exit 0

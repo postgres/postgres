@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.5 1999/07/22 15:09:12 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.6 1999/12/17 01:05:29 momjian Exp $
 Postgres documentation
 -->
 
@@ -15,24 +15,26 @@ Postgres documentation
    <application>initdb</application>
   </refname>
   <refpurpose>
-   Create a new <productname>Postgres</productname> database installation
+   Create a new <productname>PostgreSQL</productname> database installation
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-07-20</date>
+   <date>1999-12-17</date>
   </refsynopsisdivinfo>
   <synopsis>
-initdb [ --pgdata=<replaceable class="parameter">dbdir</replaceable> | -r <replaceable class="parameter">dbdir</replaceable> ]
-    [ --pglib=<replaceable class="parameter">libdir</replaceable> | -l <replaceable class="parameter">libdir</replaceable> ]
-    [ --template=<replaceable class="parameter">template</replaceable> | -t <replaceable class="parameter">template</replaceable> ]
-    [ --username=<replaceable class="parameter">name</replaceable> | -u <replaceable class="parameter">name</replaceable> ]
-    [ --noclean | -n ] [ --debug | -d ]
+initdb [ --pgdata|-D <replaceable class="parameter">dbdir</replaceable> ]
+       [ --sysid|-i <replaceable class="parameter">sysid</replaceable> ]
+       [ --password|-W <replaceable class="parameter">password</replaceable> ]
+       [ --pgencoding|-e <replaceable class="parameter">encoding</replaceable> ]
+       [ --pglib|-L <replaceable class="parameter">libdir</replaceable> ]
+       [ --username|-u <replaceable class="parameter">name</replaceable> ]
+       [ --noclean | -n ] [ --debug | -d ] [ --template | -t ]
   </synopsis>
 
   <refsect2 id="R2-APP-INITDB-1">
    <refsect2info>
-    <date>1998-10-02</date>
+    <date>1999-11-17</date>
    </refsect2info>
    <title>
     Inputs
@@ -41,62 +43,61 @@ initdb [ --pgdata=<replaceable class="parameter">dbdir</replaceable> | -r <repla
 
     <variablelist>
      <varlistentry>
-      <term>--pglib=<replaceable class="parameter">libdir</replaceable></term>
-      <term>-l <replaceable class="parameter">libdir</replaceable></term>
-      <term><envar>PGLIB</envar></term>
-      <listitem>
-       <para>
-	Where are the files that make up <productname>Postgres</productname>? 
-	Apart from files that
-	have to go in particular directories because of their function, the
-	files that make up the <productname>Postgres</productname> software 
-	were installed in a directory
-	called the <replaceable class="parameter">libdir</replaceable> directory.
-	An example of a file that will be found
-	there that <application>initdb</application>
-	needs is <filename>global1.bki.source</filename>,
-	which contains all the information that goes
-	into the shared catalog tables.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term>--pgdata=<replaceable class="parameter">dbdir</replaceable></term>
-      <term>-r <replaceable class="parameter">dbdir</replaceable></term>
+      <term>-D <replaceable class="parameter">dbdir</replaceable></term>
       <term><envar>PGDATA</envar></term>
       <listitem>
        <para>
-	Where in your Unix filesystem do you want the database data to go?
-	The top level directory is called the <envar>PGDATA</envar> directory.
+        This option specifies where in the file system the database should be
+        stored. This is the only information required by initdb, but you can avoid
+        it by setting the <envar>PGDATA</envar> environment variable, which
+        can be convenient since the database server (<filename>postmaster</filename>)
+        can find the database directory later by the same variable.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term>--username=<replaceable class="parameter">name</replaceable></term>
-      <term>-u <replaceable class="parameter">name</replaceable></term>
-      <term><envar>PGUSER</envar></term>
+      <term>--sysid=<replaceable class="parameter">sysid</replaceable></term>
+      <term>-i <replaceable class="parameter">sysid</replaceable></term>
       <listitem>
        <para>
-	Who will be the <productname>Postgres</productname> superuser
-	for this database system?  The
-	<productname>Postgres</productname> superuser is a Unix user 
-	who owns all files that store the database
-	system and also owns the postmaster and backend processes that access them.
-	Or just let it default to you (the Unix user who runs
-	<application>initdb</application>).
+        Selects the system id of the database superuser. This defaults to
+        the effective user id of the user running initdb. It is really
+        not important what the superuser's sysid is, but one might choose
+        to start the numbering at some number like 0 or 1.
        </para>
-       <note>
-	<para>
-	 Only the Unix superuser (<literal>root</literal>)
-	 can create a database system with an owner
-	 different from the <productname>Postgres</productname> superuser.
-	</para>
-       </note>
       </listitem>
      </varlistentry>
-    </variablelist>
+ 
+     <varlistentry>
+      <term>--password=<replaceable class="parameter">password</replaceable></term>
+      <term>-W <replaceable class="parameter">password</replaceable></term>
+      <listitem>
+       <para>
+        Sets the password of the database superuser. If you don't plan
+        on using password authentication, this is not important. If you
+        do, you can save yourself a trip by specifying it here, but you
+        can always change it later. The default password is empty.
+       </para>
+      </listitem>
+     </varlistentry>
+ 
+     <varlistentry>
+      <term>--pgencoding=<replaceable class="parameter">encoding</replaceable></term>
+      <term>-e <replaceable class="parameter">encoding</replaceable></term>
+      <listitem>
+       <para>
+        Selects the multibyte encoding of the template database. This will also
+        be the default encoding of any database you create later, unless you
+        override it there. To use the multibyte encoding feature, you must
+        specify so at build time, at which time you also select the default
+        for this option.
+       </para>
+      </listitem>
+     </varlistentry>
+
+   </variablelist>
    </para>
 
    <para>
@@ -104,15 +105,46 @@ initdb [ --pgdata=<replaceable class="parameter">dbdir</replaceable> | -r <repla
 
     <variablelist>
      <varlistentry>
-      <term>--template=<replaceable class="parameter">template</replaceable></term>
-      <term>-t <replaceable class="parameter">template</replaceable></term>
+      <term>--pglib=<replaceable class="parameter">libdir</replaceable></term>
+      <term>-l <replaceable class="parameter">libdir</replaceable></term>
+      <listitem>
+       <para>
+        initdb needs a few input files to initialize the database. This option
+        tells where to find them. You normally don't have to worry about this
+        since initdb knows about the most common installation layouts and will
+        find the files itself. You will be told if you need to specify their
+        location explicitly. If that happens, one of the files is called
+	<filename>global1.bki.source</filename> and is traditionally installed
+        along with the others in the library directory (e.g.,
+        <filename>/usr/local/pgsql/lib</filename>).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>--username=<replaceable class="parameter">name</replaceable></term>
+      <term>-u <replaceable class="parameter">name</replaceable></term>
+      <listitem>
+       <para>
+        The database system will be initialized with the username that is
+        running initdb. That is a requirement. If for some unimaginable
+        reason initdb cannot find out what the current user's name is,
+        you have to use this option. Normally, this will not be necessary
+        and initdb will tell you when it is.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>--template</term>
+      <term>-t</term>
       <listitem>
        <para>
 	Replace the <literal>template1</literal>
 	database in an existing database system, and don't touch anything else.
 	This is useful when you need to upgrade your <literal>template1</literal>
 	database using <application>initdb</application>
-	from a newer release of <productname>Postgres</productname>, 
+	from a newer release of <productname>PostgreSQL</productname>, 
 	or when your <literal>template1</literal>
 	database has become corrupted by some system problem.  Normally the
 	contents of <literal>template1</literal>
@@ -133,8 +165,7 @@ initdb [ --pgdata=<replaceable class="parameter">dbdir</replaceable> | -r <repla
 	By default, when <application>initdb</application>
 	determines that error prevent it from completely creating the database
 	system, it removes any files it may have created before determining
-	that it can't finish the job.  That includes any core files left by
-	the programs it invokes.  This option inhibits any tidying-up and is
+	that it can't finish the job. This option inhibits any tidying-up and is
 	thus useful for debugging.
        </para>
       </listitem>
@@ -145,10 +176,11 @@ initdb [ --pgdata=<replaceable class="parameter">dbdir</replaceable> | -r <repla
       <term>-d</term>
       <listitem>
        <para>
-	Print debugging output from the bootstrap backend.  
+	Print debugging output from the bootstrap backend and a few other
+        messages of lesser interest for the general public.
 	The bootstrap backend is the program <application>initdb</application>
 	uses to create the catalog tables.  This option generates a tremendous
-	amount of output.  It also turns off the final vacuuming step.
+	amount of output.
        </para>
       </listitem>
      </varlistentry>
@@ -156,56 +188,17 @@ initdb [ --pgdata=<replaceable class="parameter">dbdir</replaceable> | -r <repla
     </variablelist>
    </para>
 
-   <para>
-    Files are also input to <application>initdb</application>:
-
-    <variablelist>
-     <varlistentry>
-      <term><application>postconfig</application></term>
-      <listitem>
-       <para>
-	If appearing somewhere in the Unix command search path 
-	(defined by the PATH environment variable).
-	This is a program that specifies defaults for some of the
-	command options.  See below.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><filename><envar>PGLIB</envar>/global1.bki.source</filename></term>
-      <listitem>
-       <para>
-	Contents for the shared catalog tables in the new database system.  This
-	file is part of the <productname>Postgres</productname> software.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><filename><envar>PGLIB</envar>/local1_template1.bki.source</filename></term>
-      <listitem>
-       <para>
-	Contents for the template1 tables in the new database system.  This
-	file is part of the <productname>Postgres</productname> software.
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
-   </para>
   </refsect2>
 
   <refsect2 id="R2-APP-INITDB-2">
    <refsect2info>
-    <date>1998-09-26</date>
+    <date>1999-12-17</date>
    </refsect2info>
    <title>
     Outputs
    </title>
    <para>
-    <application>initdb</application> will create files in the
-    <envar>PGDATA</envar>
+    <application>initdb</application> will create files in the specified
     data area which are the system tables and framework for a complete
     installation.
    </para>
@@ -214,14 +207,14 @@ initdb [ --pgdata=<replaceable class="parameter">dbdir</replaceable> | -r <repla
 
  <refsect1 id="R1-APP-INITDB-1">
   <refsect1info>
-   <date>1998-09-26</date>
+   <date>1999-12-17</date>
   </refsect1info>
   <title>
    Description
   </title>
   <para>
    <application>initdb</application> creates a new 
-   <productname>Postgres</productname> database system.
+   <productname>PostgreSQL</productname> database system.
    A database system is a
    collection of databases that are all administered by the same Unix user
    and managed by a single postmaster.
@@ -231,74 +224,37 @@ initdb [ --pgdata=<replaceable class="parameter">dbdir</replaceable> | -r <repla
    the database data will live, generating the shared catalog tables 
    (tables that don't belong to any particular database), and
    creating the <literal>template1</literal>
-   database.  What is the <literal>template1</literal>
-   database?  When you create a database, <productname>Postgres</productname> 
-   does it by copying
-   everything from the <literal>template1</literal>
-   database.  It contains catalog tables filled in for things like the
+   database.  When you create a new database, everything in the
+   <literal>template1</literal> database is copied.
+   It contains catalog tables filled in for things like the
    builtin types.
   </para>
-  <para>
-   After <application>initdb</application> 
-   creates the database, it completes the initialization by running
-   <application>vacuum</application>, which resets some optimization parameters.
-  </para>
-  <para>
-   There are three ways to give parameters to <application>initdb</application>.
 
-   <itemizedlist>
-    <listitem>
-     <para>
-      You can use <application>initdb</application> command options.
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      You can set environment
-      variables before invoking <application>initdb</application>.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      You can have a program called <application>postconfig</application>
-      in your Unix command search path.
-      <application>initdb</application> invokes that program and that program then writes 
-      <application>initdb</application> parameters to its standard output stream.
-      This third option is not a common thing to do, however.
-     </para>
-    </listitem>
-   </itemizedlist>
+  <para>
+   You must not execute <application>initdb</application> as root. This is
+   because you cannot run the database server as root either, but the
+   server needs to have access to the files <application>initdb</application>
+   creates. Furthermore, during the initialization phase, when there are no
+   users and no access controls installed, postgres will only connect with
+   the name of the current Unix user, so you must log in under the account
+   that will own the server process.
   </para>
 
   <para>
-   Command options always override parameters specified any other way.
-   The values returned by <application>postconfig</application>
-   override any environment variables, but your
-   <application>postconfig</application> 
-   program may base its output on the environment variables if you want
-   their values to be used.
+   Although <application>initdb</application> will attempt to create the respective
+   data directory, chances are that it won't have the permission to do so. Thus
+   it is a good idea to create the data directory before running <application>initdb</application>
+   <emphasis>and</emphasis> to hand over the ownership of it to the database superuser.
   </para>
 
   <para>
-   The value that <application>postconfig</application> 
-   outputs must have the format
-   <synopsis>
-<replaceable>var1</replaceable>=<replaceable class="parameter">value1</replaceable> <replaceable class="parameter">var2</replaceable>=<replaceable class="parameter">value2</replaceable> ...
-   </synopsis>
-
-   It can output nothing if it doesn't want to supply any parameters.
-   The <replaceable>var</replaceable> values are equal to 
-   the corresponding environment variable
-   names.  For example,
-   <programlisting>
-PGDATA=/tmp/postgres_test
-   </programlisting>
-   has the
-   same effect as invoking <application>initdb</application>
-   with an environment variable called <envar>PGDATA</envar> whose value is
-   <filename>/tmp/postgres_test</filename>.
+   Note that if you use the <option>--username</option> you must give correct
+   information about the name of the <emphasis>current</emphasis> user. If you don't
+   this will usually manifest itself in an error message about <literal>chmod</literal>
+   failing on a file <filename>pg_pwd</filename>, because the backend silently
+   refuses to create it.
   </para>
+
  </refsect1>
 </refentry>
 
