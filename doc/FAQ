@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Feb 24 19:32:04 EST 2005
+   Last updated: Thu Feb 24 19:33:07 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -645,10 +645,10 @@
    FROM tab
    WHERE col IS NULL;
 
-   To sort by the NULLIS NULL
-   and IS NOT NULL modifiers in your WHERE clause. Things that are true
-   will sort higher than things that are false, so the following will put
-   NULL entries at the top of the resulting list:
+   To sort by the NULL status, use the IS NULL and IS NOT NULL modifiers
+   in your WHERE clause. Things that are true will sort higher than
+   things that are false, so the following will put NULL entries at the
+   top of the resulting list:
    SELECT *
    FROM tab
    ORDER BY (col IS NOT NULL)
