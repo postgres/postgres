@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.7 1997/07/24 20:16:11 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.8 1997/08/12 20:15:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,8 +63,7 @@ filename_in(char *file)
 		len = strlen(name);
 	    } else {
 		len = (p - file) - 1;
-		strncpy(name, file+1, len);
-		name[len] = '\0';
+		strNcpy(name, file+1, len);
 	    }
 	    /*printf("name: %s\n");*/
 	    if ((pw = getpwnam(name)) == NULL) {
@@ -84,8 +83,7 @@ filename_in(char *file)
 	    len = strlen(environment);
 	} else {
 	    len = (p - file) - 1;
-	    strncpy(environment, file+1, len);
-	    environment[len] = '\0';
+	    strNcpy(environment, file+1, len);
 	}
 	envirp = getenv(environment);
 	if (envirp) {

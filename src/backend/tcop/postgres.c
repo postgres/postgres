@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.39 1997/08/06 05:38:35 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.40 1997/08/12 20:15:49 momjian Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -300,7 +300,7 @@ SocketBackend(char *inBuf, bool multiplexedBackend)
      *  get input from the frontend
      * ----------------
      */
-    (void) strcpy(qtype, "?");
+    strcpy(qtype, "?");
     if (pq_getnchar(qtype,0,1) == EOF) {
         /* ------------
          *  when front-end applications quits/dies
@@ -865,7 +865,7 @@ PostgresMain(int argc, char *argv[])
        or 'localhost' */
     if (!(hostName = getenv("PGHOST"))) {
         if (gethostname(hostbuf, MAXHOSTNAMELEN) < 0)
-            (void) strcpy(hostbuf, "localhost");
+            strcpy(hostbuf, "localhost");
         hostName = hostbuf;
     }
 
@@ -1010,7 +1010,7 @@ PostgresMain(int argc, char *argv[])
              *  o - send output (stdout and stderr) to the given file
              * ----------------
              */
-            (void) strncpy(OutputFileName, optarg, MAXPGPATH);
+            strNcpy(OutputFileName, optarg, MAXPGPATH);
             break;
             
         case 'p':       /* started by postmaster */
@@ -1292,7 +1292,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
         puts("\nPOSTGRES backend interactive interface");
-        puts("$Revision: 1.39 $ $Date: 1997/08/06 05:38:35 $");
+        puts("$Revision: 1.40 $ $Date: 1997/08/12 20:15:49 $");
     }
     
     /* ----------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.3 1996/11/06 08:48:29 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.4 1997/08/12 20:15:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -377,8 +377,7 @@ void
 pbuf_setportalinfo(PortalEntry *entry, char *pname)
 {
     if (entry)
-	strncpy(entry->name, pname, PortalNameLength-1);
-    entry->name[PortalNameLength-1] = '\0';
+	strNcpy(entry->name, pname, PortalNameLength-1);
 }
 
 /* --------------------------------

@@ -466,8 +466,7 @@ static int readExports(ModulePtr mp)
 			 * must copy the first SYMNMLEN chars and make
 			 * sure we have a zero byte at the end.
 			 */
-			strncpy(tmpsym, ls->l_name, SYMNMLEN);
-			tmpsym[SYMNMLEN] = '\0';
+			strNcpy(tmpsym, ls->l_name, SYMNMLEN);
 			symname = tmpsym;
 		}
 		ep->name = strdup(symname);

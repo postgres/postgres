@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.2 1996/11/06 08:48:26 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.3 1997/08/12 20:15:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,7 +223,7 @@ strmake(char *str, int len)
     if (len <= 0) len = strlen(str);
     
     newstr = (char *) palloc((unsigned) len+1);
-    (void) strncpy(newstr, str, len);
+    strNcpy(newstr, str, len);
     newstr[len] = (char) 0;
     return newstr;
 }

@@ -45,8 +45,7 @@ fixedlen_like(char *s, struct varlena* p, int charlen)
     
     /* be sure sterm is null-terminated */
     sterm = (char *) palloc(charlen + 1);
-    memset(sterm, 0, charlen + 1);
-    strncpy(sterm, s, charlen);
+    strNcpy(sterm, s, charlen);
     
     /* p is a text = varlena, not a string so we have to make 
      * a string from the vl_data field of the struct. */
@@ -140,7 +139,7 @@ bool textnlike(struct varlena *s, struct varlena *p)
 }
 
 
-/*  $Revision: 1.4 $
+/*  $Revision: 1.5 $
 **  "like.c" A first attempt at a LIKE operator for Postgres95.
 **
 **  Originally written by Rich $alz, mirror!rs, Wed Nov 26 19:03:17 EST 1986.

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.10 1997/04/22 17:47:14 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.11 1997/08/12 20:16:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,7 @@ ftoa(double value, char *ascii, int width, int prec1, char format)
 		ascii[width] = 0;
 		return(0);
 	}
-	(void) strcpy(ascii, out);
+	strcpy(ascii, out);
 	return(ret);
 #else
     auto int	expon;

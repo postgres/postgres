@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.8 1997/08/03 02:34:53 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.9 1997/08/12 20:15:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,8 +61,7 @@ DefineRelation(CreateStmt *stmt)
     if ( strlen(stmt->relname) >= NAMEDATALEN)
 	elog(WARN, "the relation name %s is >= %d characters long", stmt->relname,
 	     NAMEDATALEN);
-    strncpy(relname,stmt->relname,NAMEDATALEN);  /* make full length for copy */
-    relname[NAMEDATALEN-1] = '\0';
+    strNcpy(relname,stmt->relname,NAMEDATALEN-1);  /* make full length for copy */
 
     /* ----------------
      * 	Handle parameters

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.11 1997/08/06 17:11:20 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.12 1997/08/12 20:16:14 momjian Exp $
  *
  * NOTES
  *      Sorts the first relation into the second relation.
@@ -214,17 +214,17 @@ resetpsort()
  */
 
 
-#define	PUTTUP(NODE, TUP, FP) if (1) {\
+#define	PUTTUP(NODE, TUP, FP) do {\
     ((Psortstate *)NODE->psortstate)->BytesWritten += (TUP)->t_len; \
-    fwrite((char *)TUP, (TUP)->t_len, 1, FP);} else
+    fwrite((char *)TUP, (TUP)->t_len, 1, FP);} while (0)
 #define	ENDRUN(FP)	fwrite((char *)&shortzero, sizeof (shortzero), 1, FP)
 #define	GETLEN(LEN, FP)	fread((char *)&(LEN), sizeof (shortzero), 1, FP)
 #define	ALLOCTUP(LEN)	((HeapTuple)palloc((unsigned)LEN))
-#define	GETTUP(NODE, TUP, LEN, FP) if (1) {\
+#define	GETTUP(NODE, TUP, LEN, FP) do {\
     IncrProcessed(); \
     ((Psortstate *)NODE->psortstate)->BytesRead += (LEN) - sizeof (shortzero); \
     fread((char *)(TUP) + sizeof (shortzero), (LEN) - sizeof (shortzero), 1, FP);} \
-				else
+				while (0)
 #define	SETTUPLEN(TUP, LEN)	(TUP)->t_len = LEN
     
     /*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.4 1997/04/27 19:20:16 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.5 1997/08/12 20:16:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,14 +122,14 @@ char *regprocout(RegProcedure proid)
 	s = (char *) heap_getattr(proctup, InvalidBuffer, 1,
 				  RelationGetTupleDescriptor(proc), &isnull);
 	if (!isnull) {
-	    strncpy(result, s, 16);
+	    strNcpy(result, s, 16);
 	    break;
 	}
 	elog(FATAL, "regprocout: null procedure %d", proid);
 	/*FALLTHROUGH*/
     case 0:
-	memset(result, 0, 16);
 	result[0] = '-';
+	result[1] = '\0';
 #ifdef	EBUG
 	elog(DEBUG, "regprocout: no such procedure %d", proid);
 #endif	/* defined(EBUG) */

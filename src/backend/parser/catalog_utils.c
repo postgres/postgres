@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.19 1997/07/24 20:13:01 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.20 1997/08/12 20:15:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1488,7 +1488,7 @@ func_error(char *caller, char *funcname, int nargs, Oid *argtypes)
 	    *ptr++ = ' ';
 	}
 	if (argtypes[i] != 0) {
-	    (void) strcpy(ptr, tname(get_id_type(argtypes[i])));
+	    strcpy(ptr, tname(get_id_type(argtypes[i])));
 	    *(ptr + NAMEDATALEN) = '\0';
 	} else
 	    strcpy(ptr, "opaque");

@@ -37,7 +37,7 @@ concat16(char16 *arg1, char16 *arg2)
     char16 *new_c16 = (char16 *) palloc(sizeof(char16));
 
     memset(new_c16, 0, sizeof(char16));
-    (void) strncpy((char*)new_c16, (char*)arg1, 16);
+    strncpy((char*)new_c16, (char*)arg1, 16);
     return (char16 *)(strncat((char*)new_c16, (char*)arg2, 16));
 }
 

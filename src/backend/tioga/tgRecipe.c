@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.2 1996/11/03 06:52:45 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.3 1997/08/12 20:15:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,8 +100,7 @@ first character\n", ARRAY_LEFT_DELIM);
     nextlen = endQuote - beginQuote; /* don't subtract one here because we
 				      need the extra character for \0 anyway */
     word = (char*) malloc(nextlen);
-    strncpy(word, beginQuote+1, nextlen-1);
-    word[nextlen-1] ='\0';
+    strNcpy(word, beginQuote+1, nextlen-1);
     addArr_TgString(result, (TgString*)&word);
     free (word);
     str = endQuote + 1;

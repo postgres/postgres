@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.34 1997/05/22 00:24:07 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.35 1997/08/12 20:15:33 momjian Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -2190,8 +2190,7 @@ opt_id:  Id					{ $$ = $1; }
 relation_name:  SpecialRuleRelation
           	{
                    $$ = $1;
-                   strncpy(saved_relname, $1, NAMEDATALEN);
-                   saved_relname[NAMEDATALEN-1] = '\0';
+                   strNcpy(saved_relname, $1, NAMEDATALEN-1);
 	        }
 	| Id
 	  	{
@@ -2204,8 +2203,7 @@ relation_name:  SpecialRuleRelation
 		    } else {
 			$$ = $1;
 		    }
-                    strncpy(saved_relname, $1, NAMEDATALEN);
-                    saved_relname[NAMEDATALEN-1] = '\0';
+                    strNcpy(saved_relname, $1, NAMEDATALEN-1);
 		}
 	;
 

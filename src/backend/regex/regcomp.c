@@ -1255,7 +1255,7 @@ register char *cp;
 		return;
 	}
 
-	(void) strcpy(cs->multis + oldend - 1, cp);
+	strcpy(cs->multis + oldend - 1, cp);
 	cs->multis[cs->smultis - 1] = '\0';
 }
 

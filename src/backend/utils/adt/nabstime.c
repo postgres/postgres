@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.28 1997/07/08 22:06:46 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.29 1997/08/12 20:16:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -286,11 +286,11 @@ nabstimeout(AbsoluteTime time)
     char zone[MAXDATELEN+1], *tzn = zone;
 
     switch (time) {
-    case EPOCH_ABSTIME:	  (void) strcpy(buf, EPOCH);	break;
-    case INVALID_ABSTIME: (void) strcpy(buf, INVALID);	break;
-    case CURRENT_ABSTIME: (void) strcpy(buf, DCURRENT);	break;
-    case NOEND_ABSTIME:   (void) strcpy(buf, LATE);	break;
-    case NOSTART_ABSTIME: (void) strcpy(buf, EARLY);	break;
+    case EPOCH_ABSTIME:	  strcpy(buf, EPOCH);	break;
+    case INVALID_ABSTIME: strcpy(buf, INVALID);	break;
+    case CURRENT_ABSTIME: strcpy(buf, DCURRENT);	break;
+    case NOEND_ABSTIME:   strcpy(buf, LATE);	break;
+    case NOSTART_ABSTIME: strcpy(buf, EARLY);	break;
     default:
 	abstime2tm( time, &tz, tm, tzn);
 #if DATEDEBUG

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/lib/stringinfo.c,v 1.2 1996/11/06 08:27:16 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/lib/stringinfo.c,v 1.3 1997/08/12 20:15:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,6 +111,6 @@ appendStringInfo(StringInfo str, char *buffer)
      * NOTE: this is a text string (i.e. printable characters)
      * so 'strcat' will do the job (no need to use 'bcopy' et all...)
      */
-    (void) strcat(str->data, buffer);
+    strcat(str->data, buffer);
     str->len += buflen;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.5 1996/11/06 08:21:37 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.6 1997/08/12 20:15:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1149,8 +1149,7 @@ replaceTeeScans(Plan* plan, Query* parsetree, TeeInfo *teeInfo)
 	if  ((strlen(rte->refname) < 4) ||
 	     (strcmp (rte->relname, rte->refname) != 0))
 	    continue;
-	strncpy(prefix,rte->refname,4);
-	prefix[4] = '\0';
+	strNcpy(prefix,rte->refname,4);
 	if (strcmp(prefix,"tee_") == 0) {
 	    /* okay, we found a tee node entry in the range table */
 

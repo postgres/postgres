@@ -52,7 +52,7 @@ BSD44_derived_dlerror(void)
 {
 	static char	ret[BUFSIZ];
 
-	(void) strcpy(ret, error_message);
+	strcpy(ret, error_message);
 	error_message[0] = 0;
 	return((ret[0] == 0) ? (char *) NULL : ret);
 }

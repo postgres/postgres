@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.7 1997/07/24 20:16:59 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.8 1997/08/12 20:16:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,7 +152,7 @@ handle_load(char *filename, char *funcname)
              * Same files - different paths (ie, symlink or link)
              */
             if (file_scanner != (DynamicFileList *) NULL)
-		(void) strcpy(file_scanner->filename, filename);
+		strcpy(file_scanner->filename, filename);
 	    
         }
     } else {
@@ -175,7 +175,7 @@ handle_load(char *filename, char *funcname)
         }
 	memset((char *) file_scanner, 0, sizeof(DynamicFileList));
 	
-        (void) strcpy(file_scanner->filename, filename);
+        strcpy(file_scanner->filename, filename);
         file_scanner->device = stat_buf.st_dev;
         file_scanner->inode = stat_buf.st_ino;
         file_scanner->next = (DynamicFileList *) NULL;

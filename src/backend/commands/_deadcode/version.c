@@ -10,7 +10,7 @@
  *  
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/version.c,v 1.3 1996/11/06 08:21:42 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/version.c,v 1.4 1997/08/12 20:15:13 momjian Exp $
  *
  * NOTES
  *    At the point the version is defined, 2 physical relations are created
@@ -106,12 +106,12 @@ DefineVersion(char *name, char *fromRelname, char *date)
     if (date == NULL) {
 	/* no time ranges */
 	bname = fromRelname;
-	(void) strcpy(saved_basename, (char *) bname);
+	strcpy(saved_basename, (char *) bname);
 	*saved_snapshot = (char)NULL;
     } else {
 	/* version is a snapshot */
 	bname = fromRelname;
-	(void) strcpy(saved_basename, (char *) bname);
+	strcpy(saved_basename, (char *) bname);
 	sprintf(saved_snapshot, "['%s']", date);
     }
     

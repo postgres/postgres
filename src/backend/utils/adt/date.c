@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.10 1997/07/29 15:54:49 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.11 1997/08/12 20:15:57 momjian Exp $
  *
  * NOTES
  *   This code is actually (almost) unused.
@@ -200,7 +200,7 @@ reltime2tm(int32 time, struct tm *tm)
     timestring = (char *) palloc(Max(strlen(INVALID_RELTIME_STR),
 				     UNITMAXLEN) + 1);
     if (timevalue == INVALID_RELTIME) {
-	(void) strcpy(timestring,INVALID_RELTIME_STR);
+	strcpy(timestring,INVALID_RELTIME_STR);
 	return(timestring);
     }
     if (timevalue == 0)
@@ -259,19 +259,19 @@ char *tintervalout(TimeInterval interval)
     char	*i_str, *p;
     
     i_str = (char	*) palloc( T_INTERVAL_LEN );  /* ['...' '...'] */
-    (void) strcpy(i_str,"[\"");
+    strcpy(i_str,"[\"");
     if (interval->status == T_INTERVAL_INVAL)
-	(void) strcat(i_str,INVALID_INTERVAL_STR);
+	strcat(i_str,INVALID_INTERVAL_STR);
     else {
 	p = nabstimeout(interval->data[0]);
-	(void) strcat(i_str,p);
+	strcat(i_str,p);
 	pfree(p);
-	(void) strcat(i_str,"\" \"");
+	strcat(i_str,"\" \"");
 	p = nabstimeout(interval->data[1]);
-	(void) strcat(i_str,p);
+	strcat(i_str,p);
 	pfree(p);
     }
-    (void) strcat(i_str,"\"]\0");
+    strcat(i_str,"\"]\0");
     return(i_str);
 }
 
@@ -963,7 +963,7 @@ timeofday(void)
     int len = 0;
 
     gettimeofday(&tp, &tpz);
-    (void) strftime(templ, sizeof(templ), "%a %b %d %H:%M:%S.%%d %Y %Z",
+    strftime(templ, sizeof(templ), "%a %b %d %H:%M:%S.%%d %Y %Z",
 		    localtime((time_t *) &tp.tv_sec));
     sprintf(buf, templ, tp.tv_usec);
 

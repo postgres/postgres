@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.11 1997/03/25 00:54:15 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.12 1997/08/12 20:15:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,10 +302,10 @@ pg_krb5_recvauth(int sock,
      * easy, we construct our own name and parse it.  See note on
      * canonicalization above.
      */
-    (void) strcpy(servbuf, PG_KRB_SRVNAM);
+    strcpy(servbuf, PG_KRB_SRVNAM);
     *(hostp = servbuf + (sizeof(PG_KRB_SRVNAM) - 1)) = '/';
     if (gethostname(++hostp, MAXHOSTNAMELEN) < 0)
-	(void) strcpy(hostp, "localhost");
+	strcpy(hostp, "localhost");
     if (hostp = strchr(hostp, '.'))
 	*hostp = '\0';
     if (code = krb5_parse_name(servbuf, &server)) {

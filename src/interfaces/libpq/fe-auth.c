@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.7 1997/03/12 21:23:02 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.8 1997/08/12 20:16:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,10 +273,10 @@ krb5_ccache pg_krb5_init(void)
 		       "pg_krb5_init: krb5_cc_default_name failed\n");
 	return((krb5_ccache) NULL);
     }
-    (void) strcpy(tktbuf, defname);
+    strcpy(tktbuf, defname);
     if (realm = getenv("PGREALM")) {
-	(void) strcat(tktbuf, "@");
-	(void) strcat(tktbuf, realm);
+	strcat(tktbuf, "@");
+	strcat(tktbuf, realm);
     }
     
     if (code = krb5_cc_resolve(tktbuf, &ccache)) {
@@ -374,19 +374,19 @@ pg_krb5_sendauth(const char* PQerrormsg,int sock,
     /*
      * set up server -- canonicalize as described above
      */
-    (void) strcpy(servbuf, PG_KRB_SRVNAM);
+    strcpy(servbuf, PG_KRB_SRVNAM);
     *(hostp = servbuf + (sizeof(PG_KRB_SRVNAM) - 1)) = '/';
     if (hostname || *hostname) {
-	(void) strncpy(++hostp, hostname, MAXHOSTNAMELEN);
+	strncpy(++hostp, hostname, MAXHOSTNAMELEN);
     } else {
 	if (gethostname(++hostp, MAXHOSTNAMELEN) < 0)
-	    (void) strcpy(hostp, "localhost");
+	    strcpy(hostp, "localhost");
     }
     if (hostp = strchr(hostp, '.'))
 	*hostp = '\0';
     if (realm = getenv("PGREALM")) {
-	(void) strcat(servbuf, "@");
-	(void) strcat(servbuf, realm);
+	strcat(servbuf, "@");
+	strcat(servbuf, realm);
     }
     if (code = krb5_parse_name(servbuf, &server)) {
 	(void) sprintf(PQerrormsg,
@@ -565,7 +565,7 @@ fe_getauthname(char* PQerrormsg)
     }
 
     if(name && (authn = (char *) malloc(strlen(name) + 1)))
-      (void) strcpy(authn, name);
+      strcpy(authn, name);
     return(authn);
 }
 

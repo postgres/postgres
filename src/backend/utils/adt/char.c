@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.5 1997/06/11 05:17:58 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.6 1997/08/12 20:15:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -265,8 +265,7 @@ uint32 char4in(char *s)
     if (s == NULL)
 	return(0);
     
-    memset((char *) &res, 0, sizeof(res));
-    (void) strncpy((char *) &res, s, 4);
+    strncpy((char *) &res, s, 4);
     
     return(res);
 }
@@ -276,8 +275,7 @@ char *char4out(s)
 {
     char	*result = (char *) palloc(5);
     
-    memset(result, 0, 5);
-    (void) strncpy(result, (char *) &s, 4);
+    strNcpy(result, (char *) &s, 4);
     
     return(result);
 }
@@ -326,8 +324,7 @@ char *char8in(char *s)
 	return((char *) NULL);
     
     result = (char *) palloc(8);
-    memset(result, 0, 8);
-    (void) strncpy(result, s, 8);
+    strncpy(result, s, 8);
     return(result);
 }
 
@@ -335,12 +332,11 @@ char *char8out(char *s)
 {
     char	*result = (char *) palloc(9);
     
-    memset(result, 0, 9);
     if (s == NULL) {
 	result[0] = '-';
-    } else {
-	strncpy(result, s, 8);
-    }
+	result[1] = '\0';
+    } else
+	strNcpy(result, s, 8);
     return(result);
 }
 

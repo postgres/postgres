@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.49 1997/08/03 02:36:01 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.50 1997/08/12 20:15:42 momjian Exp $
  *
  * NOTES
  *
@@ -241,7 +241,7 @@ PostmasterMain(int argc, char *argv[])
     
     if (!(hostName = getenv("PGHOST"))) {
         if (gethostname(hostbuf, MAXHOSTNAMELEN) < 0)
-            (void) strcpy(hostbuf, "localhost");
+            strcpy(hostbuf, "localhost");
         hostName = hostbuf;
     }
 
@@ -262,8 +262,8 @@ PostmasterMain(int argc, char *argv[])
              * were allocated. 
              */
             NBuffers = atol(optarg);
-            (void) strcat(ExtraOptions, " -B ");
-            (void) strcat(ExtraOptions, optarg);
+            strcat(ExtraOptions, " -B ");
+            strcat(ExtraOptions, optarg);
             break;
         case 'b': 
             /* Set the backend executable file to use. */
@@ -308,8 +308,8 @@ PostmasterMain(int argc, char *argv[])
              * Other options to pass to the backend on the
              * command line -- useful only for debugging.
              */
-            (void) strcat(ExtraOptions, " ");
-            (void) strcat(ExtraOptions, optarg);
+            strcat(ExtraOptions, " ");
+            strcat(ExtraOptions, optarg);
             break;
         case 'p': 
             /* Set PGPORT by hand. */
@@ -652,8 +652,7 @@ ConnStartup(Port *port, int *status,
 
     msgType = (MsgType) ntohl(port->buf.msgtype);
 
-    (void) strncpy(namebuf, sp.user, NAMEDATALEN);
-    namebuf[NAMEDATALEN-1] = '\0';
+    strNcpy(namebuf, sp.user, NAMEDATALEN-1);
     if (!namebuf[0]) {
         strncpy(errormsg, 
                 "No Postgres username specified in startup packet.",
@@ -1087,8 +1086,7 @@ DoExec(StartupInfo *packet, int portFd)
     int ac = 0;
     int i;
 
-    (void) strncpy(execbuf, Execfile, MAXPATHLEN);
-    execbuf[MAXPATHLEN - 1] = '\0';
+    strncpy(execbuf, Execfile, MAXPATHLEN-1);
     av[ac++] = execbuf;
     
     /* Tell the backend it is being called from the postmaster */
@@ -1111,7 +1109,7 @@ DoExec(StartupInfo *packet, int portFd)
     
     /* Pass the requested debugging output file */
     if (packet->tty[0]) {
-        (void) strncpy(ttybuf, packet->tty, ARGV_SIZE);
+        strncpy(ttybuf, packet->tty, ARGV_SIZE);
         av[ac++] = "-o";
         av[ac++] = ttybuf;
     }
@@ -1125,17 +1123,15 @@ DoExec(StartupInfo *packet, int portFd)
     (void) sprintf(portbuf, "-P%d", portFd);
     av[ac++] = portbuf;
     
-    (void) strncpy(argbuf, packet->options, ARGV_SIZE);
-    argbuf[ARGV_SIZE] = '\0';
-    (void) strncat(argbuf, ExtraOptions, ARGV_SIZE);
+    strNcpy(argbuf, packet->options, ARGV_SIZE);
+    strncat(argbuf, ExtraOptions, ARGV_SIZE);
     argbuf[(2 * ARGV_SIZE)] = '\0';
     split_opts(av, &ac, argbuf);
     
     if (packet->database[0])
-        (void) strncpy(dbbuf, packet->database, ARGV_SIZE);
+        strNcpy(dbbuf, packet->database, ARGV_SIZE);
     else
-        (void) strncpy(dbbuf, packet->user, NAMEDATALEN);
-    dbbuf[ARGV_SIZE] = '\0';
+        strNcpy(dbbuf, packet->user, NAMEDATALEN-1);
     av[ac++] = dbbuf;
     
     av[ac] = (char *) NULL;

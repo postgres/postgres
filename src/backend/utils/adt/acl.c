@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.11 1997/08/03 02:36:41 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.12 1997/08/12 20:15:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -245,17 +245,17 @@ aclitemout(AclItem *aip)
 	    
 	    elog(NOTICE, "aclitemout: usesysid %d not found",
 		 aip->ai_id);
-	    (void) strcat(p, tmp);
+	    strcat(p, tmp);
 	    pfree(tmp);
 	} else
-	    (void) strncat(p, (char *) &((Form_pg_user)
+	    strncat(p, (char *) &((Form_pg_user)
 					 GETSTRUCT(htp))->usename,
 			   sizeof(NameData));
 	break;
     case ACL_IDTYPE_GID:
-	(void) strcat(p, "group ");
+	strcat(p, "group ");
 	tmpname = get_groname(aip->ai_id);
-	(void) strncat(p, tmpname, NAMEDATALEN);
+	strncat(p, tmpname, NAMEDATALEN);
 	break;
     case ACL_IDTYPE_WORLD:
 	break;

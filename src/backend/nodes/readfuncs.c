@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.5 1997/05/12 07:17:23 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.6 1997/08/12 20:15:28 momjian Exp $
  *
  * NOTES
  *    Most of the read functions for plan nodes are tested. (In fact, they
@@ -87,8 +87,7 @@ _readQuery()
     else {
 	   NotifyStmt *n = makeNode(NotifyStmt);
 	   n->relname = palloc(length + 1);
-	   strncpy(n->relname,token,length);
-	   n->relname[length] = '\0';
+	   strNcpy(n->relname,token,length);
 	   local_node->utilityStmt = (Node*)n;
        }
 
@@ -106,8 +105,7 @@ _readQuery()
       local_node->uniqueFlag = NULL;
     else {
       local_node->uniqueFlag = palloc(length + 1);
-      strncpy(local_node->uniqueFlag,token,length);
-      local_node->uniqueFlag[length] = '\0';
+      strNcpy(local_node->uniqueFlag,token,length);
     }
 
     token = lsptok(NULL, &length);    	/* skip :targetlist */
@@ -1033,8 +1031,7 @@ _readAggreg()
     token = lsptok(NULL, &length);    		/* eat :aggname */
     token = lsptok(NULL, &length);    		/* get aggname */
     local_node->aggname = (char*) palloc (length + 1);
-    memset (local_node->aggname, 0, length + 1);
-    strncpy (local_node->aggname, token, length);
+    strNcpy (local_node->aggname, token, length);
     
     token = lsptok(NULL, &length);    		/* eat :basetype */
     token = lsptok(NULL, &length);    		/* get basetype */

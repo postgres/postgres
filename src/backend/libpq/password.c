@@ -80,8 +80,7 @@ verify_password(char *user, char *password, Port *port,
 	/* kill the newline */
 	test_pw[strlen(test_pw)-1] = '\0';
 
-	strncpy(salt, test_pw, 2);
-	salt[2] = '\0';
+	strNcpy(salt, test_pw, 2);
 
 	if(strcmp(user, test_user) == 0) {
 	    /* we're outta here one way or the other. */

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.3 1997/02/14 04:18:08 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.4 1997/08/12 20:16:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,12 +167,12 @@ FindBackend(char *backend, char *argv0)
 	if (*argv0 == '/' || !getcwd(buf, MAXPGPATH))
 	    buf[0] = '\0';
 	else
-	    (void) strcat(buf, "/");
-	(void) strcat(buf, argv0);
+	    strcat(buf, "/");
+	strcat(buf, argv0);
 	p = strrchr(buf, '/');
-	(void) strcpy(++p, "postgres");
+	strcpy(++p, "postgres");
 	if (!ValidateBackend(buf)) {
-	    (void) strncpy(backend, buf, MAXPGPATH);
+	    strncpy(backend, buf, MAXPGPATH);
 	    if (DebugLvl)
 		fprintf(stderr, "FindBackend: found \"%s\" using argv[0]\n",
 			backend);
@@ -192,7 +192,7 @@ FindBackend(char *backend, char *argv0)
 	    fprintf(stderr, "FindBackend: searching PATH ...\n");
 	pathlen = strlen(p);
 	path = malloc(pathlen + 1);
-	(void) strcpy(path, p);
+	strcpy(path, p);
 	for (startp = path, endp = strchr(path, ':');
 	     startp && *startp;
 	     startp = endp + 1, endp = strchr(startp, ':')) {
@@ -202,11 +202,11 @@ FindBackend(char *backend, char *argv0)
 		*endp = '\0';
 	    if (*startp == '/' || !getcwd(buf, MAXPGPATH))
 		buf[0] = '\0';
-	    (void) strcat(buf, startp);
-	    (void) strcat(buf, "/postgres");
+	    strcat(buf, startp);
+	    strcat(buf, "/postgres");
 	    switch (ValidateBackend(buf)) {
 	    case 0:		/* found ok */
-		(void) strncpy(backend, buf, MAXPGPATH);
+		strncpy(backend, buf, MAXPGPATH);
 		if (DebugLvl)
 		    fprintf(stderr, "FindBackend: found \"%s\" using PATH\n",
 			    backend);
