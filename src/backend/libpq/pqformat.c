@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: pqformat.c,v 1.1 1999/04/25 03:19:22 tgl Exp $
+ *  $Id: pqformat.c,v 1.2 1999/04/25 19:27:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
  *		pq_sendbyte		- append a raw byte to a StringInfo buffer
  *		pq_sendint		- append a binary integer to a StringInfo buffer
  *		pq_sendbytes	- append raw data to a StringInfo buffer
- *		pq_sendtext		- append a text string (with MULTIBYTE conversion)
+ *		pq_sendcountedtext - append a text string (with MULTIBYTE conversion)
  *		pq_sendstring	- append a null-terminated text string (with MULTIBYTE)
  *		pq_endmessage	- send the completed message to the frontend
  * Note: it is also possible to append data to the StringInfo buffer using
@@ -36,9 +36,8 @@
  * Message input:
  *		pq_getint		- get an integer from connection
  *		pq_getstr		- get a null terminated string from connection
- *		pq_getnchar		- get n characters from connection, and null-terminate
- * pq_getstr and pq_getnchar perform MULTIBYTE conversion on the collected
- * string.  Use the raw pqcomm.c routines pq_getstring and pq_getbytes
+ * pq_getstr performs MULTIBYTE conversion on the collected string.
+ * Use the raw pqcomm.c routines pq_getstring or pq_getbytes
  * to fetch data without conversion.
  */
 #include "postgres.h"
@@ -48,6 +47,7 @@
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
+#include <string.h>
 #ifdef HAVE_ENDIAN_H
 #include <endian.h>
 #endif
@@ -110,36 +110,49 @@ pq_sendbytes(StringInfo buf, const char *data, int datalen)
 }
 
 /* --------------------------------
- *		pq_sendtext		- append a text string (with MULTIBYTE conversion)
+ *		pq_sendcountedtext - append a text string (with MULTIBYTE conversion)
  *
- * NB: passed text string must be null-terminated, even though we expect
- * the caller to hand us the length (this is just because the caller
- * usually knows the length anyway).  In this routine, the data sent to
- * the frontend is NOT null-terminated.
+ * The data sent to the frontend by this routine is a 4-byte count field
+ * (the count includes itself, by convention) followed by the string.
+ * The passed text string need not be null-terminated, and the data sent
+ * to the frontend isn't either.
  * --------------------------------
  */
 void
-pq_sendtext(StringInfo buf, const char *str, int slen)
+pq_sendcountedtext(StringInfo buf, const char *str, int slen)
 {
 #ifdef MULTIBYTE
-	str = (const char *) pg_server_to_client(str, slen);
+	const char *p;
+	p = (const char *) pg_server_to_client((unsigned char *) str, slen);
+	if (p != str)				/* actual conversion has been done? */
+	{
+		str = p;
+		slen = strlen(str);
+	}
 #endif
+	pq_sendint(buf, slen + 4, 4);
 	appendBinaryStringInfo(buf, str, slen);
 }
 
 /* --------------------------------
  *		pq_sendstring	- append a null-terminated text string (with MULTIBYTE)
  *
- * NB: passed text string must be null-terminated, even though we expect
- * the caller to hand us the length (this is just because the caller
- * usually knows the length anyway).
+ * NB: passed text string must be null-terminated, and so is the data
+ * sent to the frontend.
  * --------------------------------
  */
 void
-pq_sendstring(StringInfo buf, const char *str, int slen)
+pq_sendstring(StringInfo buf, const char *str)
 {
+	int slen = strlen(str);
 #ifdef MULTIBYTE
-	str = (const char *) pg_server_to_client(str, slen);
+	const char *p;
+	p = (const char *) pg_server_to_client((unsigned char *) str, slen);
+	if (p != str)				/* actual conversion has been done? */
+	{
+		str = p;
+		slen = strlen(str);
+	}
 #endif
 	appendBinaryStringInfo(buf, str, slen+1);
 }
@@ -258,35 +271,18 @@ pq_getstr(char *s, int maxlen)
 	c = pq_getstring(s, maxlen);
 
 #ifdef MULTIBYTE
-	p = (char*) pg_client_to_server((unsigned char *) s, maxlen);
-	if (s != p)					/* actual conversion has been done? */
-		strcpy(s, p);
-#endif
-
-	return c;
-}
-
-/* --------------------------------
- *		pq_getnchar - get n characters from connection, and null-terminate
- *
- *		returns 0 if OK, EOF if trouble
- * --------------------------------
- */
-int
-pq_getnchar(char *s, int len)
-{
-	int			c;
-#ifdef MULTIBYTE
-	char	   *p;
-#endif
-
-	c = pq_getbytes(s, len);
-	s[len] = '\0';
-
-#ifdef MULTIBYTE
-	p = (char*) pg_client_to_server((unsigned char *) s, len+1);
-	if (s != p)					/* actual conversion has been done? */
-		strcpy(s, p);
+	p = (char*) pg_client_to_server((unsigned char *) s, strlen(s));
+	if (p != s)					/* actual conversion has been done? */
+	{
+		int newlen = strlen(p);
+		if (newlen < maxlen)
+			strcpy(s, p);
+		else
+		{
+			strncpy(s, p, maxlen);
+			s[maxlen-1] = '\0';
+		}
+	}
 #endif
 
 	return c;
