@@ -14,7 +14,7 @@ available through operators and may be documented as operators only.
 </Para>
 
 <sect1>
-<title>Mathematical Functions</title>
+<title id="math-funcs">Mathematical Functions</title>
 
 <Para>
 <TABLE TOCENTRY="1">

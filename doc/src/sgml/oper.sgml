@@ -3,19 +3,22 @@
 
 <Abstract>
 <Para>
-Describes the built-in operators available in <ProductName>Postgres</ProductName>.
+Describes the built-in operators available in 
+<ProductName>Postgres</ProductName>.
 </Para>
 </Abstract>
 
 <Para>
-<ProductName>Postgres</ProductName> provides a large number of built-in operators on system types.
+<ProductName>Postgres</ProductName> provides a large number of 
+built-in operators on system types.
 These operators are declared in the system catalog
 pg_operator.  Every entry in pg_operator includes
 the name of the procedure that implements the operator and the
 class <Acronym>OIDs</Acronym> of the input and output types.
 
 <Para>
-To view all variations of the <Quote>||</Quote> string concatenation operator, try
+To view all variations of the <Quote>||</Quote> string concatenation operator, 
+try
 <ProgramListing>
     SELECT oprleft, oprright, oprresult, oprcode
     FROM pg_operator WHERE oprname = '||';
@@ -227,8 +230,8 @@ logical union
 <title>General Operators</title>
 
 <para>
-The operators listed here are defined for a number of native data types, ranging
-from numeric types to data/time types.
+The operators listed here are defined for a number of native data types, 
+ranging from numeric types to data/time types.
 
 <Para>
 <TABLE TOCENTRY="1">
@@ -319,7 +322,7 @@ from numeric types to data/time types.
 </Para>
 
 <sect1>
-<title>Numerical Operators</title>
+<title id="math-opers">Numerical Operators</title>
 
 <Para>
 <TABLE TOCENTRY="1">
