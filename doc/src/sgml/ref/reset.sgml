@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/reset.sgml,v 1.16 2002/10/09 04:59:38 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/reset.sgml,v 1.17 2002/10/13 16:55:05 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -68,7 +68,7 @@ SET <replaceable class="parameter">variable</replaceable> TO DEFAULT
   </para>
 
   <para>
-   See the <command>SHOW</> manual page for details on the transaction
+   See the <command>SET</> manual page for details on the transaction
    behavior of <command>RESET</>.
   </para>
 

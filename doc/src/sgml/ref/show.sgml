@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.21 2002/09/01 01:59:48 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.22 2002/10/13 16:55:05 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -59,6 +59,13 @@ SHOW ALL
    <envar>PGOPTIONS</envar> environmental variable, or through a
    command-line flag when starting the
    <application>postmaster</application>.
+  </para>
+
+  <para>
+   Even with <literal>autocommit</> set to <literal>off</>, <command>SHOW</>
+   does not start a new transaction block. See the
+   <literal>autocommit</> section of the <citetitle>Administrator's
+   Guide</citetitle> for details.
   </para>
  </refsect1>
 

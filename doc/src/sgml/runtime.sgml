@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.144 2002/10/09 04:59:38 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.145 2002/10/13 16:55:05 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1236,7 +1236,7 @@ env PGOPTIONS='-c geqo=off' psql
 	<command>BEGIN</> with no matching <command>COMMIT</> has been
 	given).
 	If set to false, <productname>PostgreSQL</productname> will
-	commit the commands only when receiving an explicit
+	commit only upon receiving an explicit
 	<command>COMMIT</> command. This mode can also be thought of as
 	implicitly issuing <command>BEGIN</> whenever a command is
 	received that is not already inside a transaction block. The
@@ -1247,16 +1247,16 @@ env PGOPTIONS='-c geqo=off' psql
        </para>
        <note>
         <para>
-	 With <varname>autocommit</> set to false, <command>SET</>,
+	 Even with <varname>autocommit</> set to false, <command>SET</>,
 	 <command>SHOW</>, and <command>RESET</> do not start new
 	 transaction blocks. They are run in their own transactions.
-	 Once another command is issued, multi-statement transaction
-	 behavior begins and any <command>SET</>, <command>SHOW</>, or
+	 Once another command is issued, a transaction block
+	 begins and any <command>SET</>, <command>SHOW</>, or
 	 <command>RESET</> commands are considered to be part of the
 	 transaction, i.e. they are committed or rolled back depending
-	 on the completion status of the transaction. To have
-	 <command>SET</>, <command>SHOW</>, and <command>RESET</>
-	 commands at the start of a transaction, use <command>BEGIN</>
+	 on the completion status of the transaction. To execute a
+	 <command>SET</>, <command>SHOW</>, or <command>RESET</>
+	 command at the start of a transaction block, use <command>BEGIN</>
 	 first.
         </para>
        </note>

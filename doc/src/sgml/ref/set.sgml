@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.67 2002/10/09 16:27:48 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.68 2002/10/13 16:55:05 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -109,9 +109,10 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
   </para>
 
   <para>
-   With <literal>autocommit</> set to <literal>off</>, <command>SET</>
+   Even with <literal>autocommit</> set to <literal>off</>, <command>SET</>
    does not start a new transaction block. See the
-   <literal>autocommit</> section of the documentation for details.
+   <literal>autocommit</> section of the <citetitle>Administrator's
+   Guide</citetitle> for details.
   </para>
 
   <para>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.300 2002/10/09 04:59:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.301 2002/10/13 16:55:05 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -76,7 +76,6 @@ char	   *debug_query_string; /* for pgmonitor and
 CommandDest whereToSendOutput = Debug;
 
 extern int	StatementTimeout;
-extern bool autocommit;
 
 static bool dontExecute = false;
 
@@ -620,14 +619,10 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 	foreach(parsetree_item, parsetree_list)
 	{
 		Node	   *parsetree = (Node *) lfirst(parsetree_item);
-		bool		isTransactionStmt;
 		const char *commandTag;
 		char		completionTag[COMPLETION_TAG_BUFSIZE];
 		List	   *querytree_list,
 				   *querytree_item;
-
-		/* Transaction control statements need some special handling */
-		isTransactionStmt = IsA(parsetree, TransactionStmt);
 
 		/*
 		 * First we set the command-completion tag to the main query (as
@@ -653,7 +648,7 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 		{
 			bool		allowit = false;
 
-			if (isTransactionStmt)
+			if (IsA(parsetree, TransactionStmt))
 			{
 				TransactionStmt *stmt = (TransactionStmt *) parsetree;
 
@@ -698,6 +693,7 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 		foreach(querytree_item, querytree_list)
 		{
 			Query	   *querytree = (Query *) lfirst(querytree_item);
+			bool		endTransactionBlock = false;
 
 			/* Make sure we are in a transaction command */
 			if (!xact_started)
@@ -732,6 +728,13 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 					IsA(utilityStmt, PrepareStmt) ||
 					IsA(utilityStmt, ReindexStmt))
 					SetQuerySnapshot();
+
+				/* end transaction block if transaction or variable stmt */
+				if (IsA(utilityStmt, TransactionStmt) ||
+					IsA(utilityStmt, VariableSetStmt) ||
+					IsA(utilityStmt, VariableShowStmt) ||
+					IsA(utilityStmt, VariableResetStmt))
+					endTransactionBlock = true;
 
 				if (querytree->originalQuery)
 				{
@@ -805,7 +808,7 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 			 * visible to subsequent ones.	In particular we'd better do
 			 * so before checking constraints.
 			 */
-			if (!isTransactionStmt)
+			if (!endTransactionBlock)
 				CommandCounterIncrement();
 
 			/*
@@ -820,13 +823,13 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 			MemoryContextResetAndDeleteChildren(CurrentMemoryContext);
 
 			/*
-			 * If this was a transaction control statement, commit it and
-			 * arrange to start a new xact command for the next command
-			 * (if any).
+			 * If this was a transaction control statement or a variable
+			 * set/show/reset statement, commit it and arrange to start a
+			 * new xact command for the next command (if any).
 			 */
-			if (isTransactionStmt)
+			if (endTransactionBlock)
 			{
-				finish_xact_command(false);
+				finish_xact_command(true);
 				xact_started = false;
 			}
 		}						/* end loop over queries generated from a
@@ -844,19 +847,7 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 		 */
 		if (lnext(parsetree_item) == NIL && xact_started)
 		{
-			/*
-			 *	Don't allow SET/SHOW/RESET to start a new transaction
-			 *	with autocommit off.  We do this by forcing a COMMIT
-			 *	when these commands start a transaction.
-			 */
-			if (autocommit ||
-				IsTransactionState() ||
-				(strcmp(commandTag, "SET") != 0 &&
-				 strcmp(commandTag, "SHOW") != 0 &&
-				 strcmp(commandTag, "RESET") != 0))
-				finish_xact_command(false);
-			else
-				finish_xact_command(true);
+			finish_xact_command(false);
 			xact_started = false;
 		}
 
@@ -1733,7 +1724,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.300 $ $Date: 2002/10/09 04:59:38 $\n");
+		puts("$Revision: 1.301 $ $Date: 2002/10/13 16:55:05 $\n");
 	}
 
 	/*
