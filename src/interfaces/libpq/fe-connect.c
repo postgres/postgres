@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.193 2002/08/18 00:06:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.194 2002/08/18 01:35:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,8 +111,8 @@ static const PQconninfoOption PQconninfoOptions[] = {
 	{"password", "PGPASSWORD", DefaultPassword, NULL,
 	"Database-Password", "*", 20},
 
-        {"connect_timeout", "PGCONNECT_TIMEOUT", NULL, NULL,
-        "Connect-timeout", "", 10}, /* strlen( INT32_MAX) == 10 */
+	{"connect_timeout", "PGCONNECT_TIMEOUT", NULL, NULL,
+	"Connect-timeout", "", 10}, /* strlen( INT32_MAX) == 10 */
 
 	{"dbname", "PGDATABASE", NULL, NULL,
 	"Database-Name", "", 20},
@@ -306,8 +306,8 @@ PQconnectStart(const char *conninfo)
 	conn->pguser = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "password");
 	conn->pgpass = tmp ? strdup(tmp) : NULL;
-      tmp = conninfo_getval(connOptions, "connect_timeout");
-      conn->connect_timeout = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "connect_timeout");
+	conn->connect_timeout = tmp ? strdup(tmp) : NULL;
 #ifdef USE_SSL
 	tmp = conninfo_getval(connOptions, "requiressl");
 	if (tmp && tmp[0] == '1')
@@ -1058,7 +1058,7 @@ connectDBComplete(PGconn *conn)
 {
 	PostgresPollingStatusType flag = PGRES_POLLING_WRITING;
 
-      struct timeval remains, *rp = NULL, finish_time, start_time;
+    struct timeval remains, *rp = NULL, finish_time, start_time;
 
 	if (conn == NULL || conn->status == CONNECTION_BAD)
 		return 0;

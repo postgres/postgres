@@ -12,13 +12,16 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.53 2002/08/17 12:33:18 momjian Exp $
+ * $Id: libpq-int.h,v 1.54 2002/08/18 01:35:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #ifndef LIBPQ_INT_H
 #define LIBPQ_INT_H
+
+#include <sys/types.h>
+#include <time.h>
 
 #if defined(WIN32) && (!defined(ssize_t))
   typedef int ssize_t; /* ssize_t doesn't exist in VC (atleast not VC6) */
@@ -334,7 +337,7 @@ extern int	pqReadData(PGconn *conn);
 extern int	pqFlush(PGconn *conn);
 extern int	pqSendSome(PGconn *conn);
 extern int	pqWait(int forRead, int forWrite, PGconn *conn);
-extern int    pqWaitTimed(int forRead, int forWrite, PGconn *conn, const struct timeval* timeout);
+extern int  pqWaitTimed(int forRead, int forWrite, PGconn *conn, const struct timeval* timeout);
 extern int	pqReadReady(PGconn *conn);
 extern int	pqWriteReady(PGconn *conn);
 
