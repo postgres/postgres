@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.7 1997/04/03 19:55:35 scrappy Exp $
+ * $Id: geqo_eval.c,v 1.8 1997/04/09 08:31:29 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,7 @@ static void geqo_joinrel_size(Rel *joinrel, Rel *outer_rel, Rel *inner_rel);
 static void geqo_add_new_joininfos(Query *root, List *joinrels, List *outerrels);
 static List *geqo_final_join_rels(List *join_rel_list);
 
+static Rel *geqo_nth(int stop, List *rels);
 
 /*    
  * geqo_eval--
@@ -108,7 +109,7 @@ Rel *
 gimme_tree (Query *root, Gene *tour, int rel_count, int num_gene, Rel *outer_rel)
 {
  Rel *inner_rel; /* current relation */
- int relid;
+ int base_rel_index;
 
  List *new_rels = NIL;
  Rel *new_rel = NULL;
@@ -116,10 +117,11 @@ gimme_tree (Query *root, Gene *tour, int rel_count, int num_gene, Rel *outer_rel
  if (rel_count < num_gene ) { /* tree not yet finished */
 
 	/* tour[0] = 3; tour[1] = 1; tour[2] = 2 */
- 	relid = (int) tour[rel_count];
- 	inner_rel = (Rel *) get_base_rel(root, relid);
+ 	base_rel_index = (int) tour[rel_count];
 
-	if (rel_count == 0) { /* processing first join with relid = (int) tour[0] */
+ 	inner_rel = (Rel *) geqo_nth(base_rel_index,root->base_relation_list_);
+
+	if (rel_count == 0) { /* processing first join with base_rel_index = (int) tour[0] */
 		rel_count++;
 		return gimme_tree(root, tour, rel_count, num_gene, inner_rel);
 		}
@@ -668,4 +670,16 @@ double
 geqo_log(double x, double b)
 {
     return(log(x)/log(b));
+}
+
+static Rel *
+geqo_nth(int stop, List *rels)
+{
+	List *r;
+	int i=1;
+
+	foreach(r, rels) {
+		if (i == stop) return lfirst(r);
+		i++;
+		}
 }
