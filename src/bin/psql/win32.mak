@@ -77,9 +77,9 @@ LINK32_OBJS= \
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
 
-"$(OUTDIR)\getopt.obj" : "$(OUTDIR)" ..\..\utils\getopt.c
+"$(OUTDIR)\getopt.obj" : "$(OUTDIR)" ..\..\port\getopt.c
     $(CPP) @<<
-    $(CPP_PROJ) ..\..\utils\getopt.c
+    $(CPP_PROJ) ..\..\port\getopt.c
 <<
 
 .c{$(CPP_OBJS)}.obj::
