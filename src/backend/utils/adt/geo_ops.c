@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.4 1997/04/25 18:40:25 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.5 1997/05/06 07:27:51 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,13 +180,10 @@ int path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point
 
 char *path_encode( bool closed, int npts, Point *pt)
 {
-    char *result;
+    char *result = PALLOC(npts*(P_MAXLEN+3)+2);
 
     char *cp;
     int i;
-
-    if (!PointerIsValid(result = (char *)PALLOC(npts*(P_MAXLEN+3)+2)))
-	elog(WARN, "Memory allocation failed, can't output path", NULL);
 
     cp = result;
     switch (closed) {
@@ -261,7 +258,7 @@ int pair_count(char *s, char delim)
  */
 BOX *box_in(char *str)
 {
-    BOX	*box;
+    BOX	*box = PALLOCTYPE(BOX);
 
     int isopen;
     char *s;
@@ -269,9 +266,6 @@ BOX *box_in(char *str)
 
     if (!PointerIsValid((char *)str))
 	elog (WARN," Bad (null) box external representation",NULL);
-
-    if (!PointerIsValid(box = PALLOCTYPE(BOX)))
-      elog(WARN, "Memory allocation failed, can't input box '%s'",str);
 
     if ((! path_decode(FALSE, 2, str, &isopen, &s, &(box->high)))
       || (*s != '\0'))
@@ -297,7 +291,7 @@ BOX *box_in(char *str)
 char *box_out(BOX *box)
 {
 #if OLD_FORMAT_OUT
-    char *result;
+    char *result = PALLOC(2*(P_MAXLEN+1)+2);
 
     char *cp;
 #endif
@@ -306,9 +300,6 @@ char *box_out(BOX *box)
 	return(NULL);
 
 #if OLD_FORMAT_OUT
-    if (!PointerIsValid(result = (char *)PALLOC(2*(P_MAXLEN+1)+2)))
-	elog(WARN, "Memory allocation failed, can't output box", NULL);
-
     cp = result;
     *cp++ = LDELIM;
     if (! pair_encode( box->high.x, box->high.y, cp))
@@ -332,9 +323,8 @@ char *box_out(BOX *box)
  */
 BOX *box_construct(double x1, double x2, double y1, double y2)
 {
-    BOX	*result;
-    
-    result = PALLOCTYPE(BOX);
+    BOX	*result = PALLOCTYPE(BOX);
+
     return( box_fill(result, x1, x2, y1, y2) );
 }
 
@@ -366,9 +356,8 @@ BOX *box_fill(BOX *result, double x1, double x2, double y1, double y2)
  */
 BOX *box_copy(BOX *box)
 {
-    BOX	*result;
-    
-    result = PALLOCTYPE(BOX);
+    BOX	*result = PALLOCTYPE(BOX);
+
     memmove((char *) result, (char *) box, sizeof(BOX));
     
     return(result);
@@ -507,9 +496,8 @@ bool box_ge(BOX	*box1, BOX *box2)
  */
 double *box_area(BOX *box)
 {
-    double *result;
-    
-    result = PALLOCTYPE(double);
+    double *result = PALLOCTYPE(double);
+
     *result = box_ln(box) * box_ht(box);
     
     return(result);
@@ -521,9 +509,8 @@ double *box_area(BOX *box)
  */
 double *box_length(BOX *box)
 {
-    double	*result;
-    
-    result = PALLOCTYPE(double);
+    double *result = PALLOCTYPE(double);
+
     *result = box->high.x - box->low.x;
     
     return(result);
@@ -535,9 +522,8 @@ double *box_length(BOX *box)
  */
 double *box_height(BOX *box)
 {
-    double	*result;
-    
-    result = PALLOCTYPE(double);
+    double *result = PALLOCTYPE(double);
+
     *result = box->high.y - box->low.y;
     
     return(result);
@@ -549,10 +535,9 @@ double *box_height(BOX *box)
  */
 double *box_distance(BOX *box1, BOX *box2)
 {
-    double	*result;
-    Point	*a, *b;
+    double *result = PALLOCTYPE(double);
+    Point *a, *b;
     
-    result = PALLOCTYPE(double);
     a = box_center(box1);
     b = box_center(box2);
     *result = HYPOT(a->x - b->x, a->y - b->y);
@@ -567,9 +552,8 @@ double *box_distance(BOX *box1, BOX *box2)
  */
 Point *box_center(BOX *box)
 {
-    Point	*result;
-    
-    result = PALLOCTYPE(Point);
+    Point *result = PALLOCTYPE(Point);
+
     result->x = (box->high.x + box->low.x) / 2.0;
     result->y = (box->high.y + box->low.y) / 2.0;
     
@@ -634,7 +618,9 @@ BOX *box_intersect(BOX	*box1, BOX *box2)
 
     if (! box_overlap(box1,box2))
 	return(NULL);
+
     result = PALLOCTYPE(BOX);
+
     result->high.x = Min(box1->high.x, box2->high.x);
     result->low.x = Max(box1->low.x, box2->low.x);
     result->high.y = Min(box1->high.y, box2->high.y);
@@ -678,9 +664,8 @@ LSEG *box_diagonal(BOX *box)
 LINE *				/* point-slope */
 line_construct_pm(Point *pt, double m)
 {
-    LINE	*result;
-    
-    result = PALLOCTYPE(LINE);
+    LINE *result = PALLOCTYPE(LINE);
+
     /* use "mx - y + yinter = 0" */
     result->A = m;
     result->B = -1.0;
@@ -692,9 +677,8 @@ line_construct_pm(Point *pt, double m)
 LINE *				/* two points */
 line_construct_pp(Point *pt1, Point *pt2)
 {
-    LINE	*result;
-    
-    result = PALLOCTYPE(LINE);
+    LINE *result = PALLOCTYPE(LINE);
+
     if (FPeq(pt1->x, pt2->x)) {		/* vertical */
 	/* use "x = C" */
 	result->m = 0.0;
@@ -771,10 +755,9 @@ bool line_eq(LINE *l1, LINE *l2)
 double * 		/* distance between l1, l2 */
 line_distance(LINE *l1, LINE *l2)
 {
-    double	*result;
-    Point	*tmp;
+    double *result = PALLOCTYPE(double);
+    Point *tmp;
     
-    result = PALLOCTYPE(double);
     if (line_intersect(l1, l2)) {
 	*result = 0.0;
 	return(result);
@@ -867,8 +850,7 @@ PATH *path_in(char *str)
 #endif
 
     size = offsetof(PATH, p[0]) + (sizeof(path->p[0]) * npts);
-    if (!PointerIsValid(path = PALLOC(size)))
-	elog(WARN, "Memory allocation failed, can't input path '%s'",str);
+    path = PALLOC(size);
 
     path->size = size;
     path->npts =  npts;
@@ -908,8 +890,7 @@ char *path_out(PATH *path)
 	return NULL;
 
 #if OLD_FORMAT_OUT
-    if (!PointerIsValid(result = (char *)PALLOC(path->npts*(P_MAXLEN+3)+2)))
-	elog(WARN, "Memory allocation failed, can't output path", NULL);
+    result = PALLOC(path->npts*(P_MAXLEN+3)+2);
 
     cp = result;
     *cp++ = LDELIM;
@@ -1033,8 +1014,7 @@ path_copy(PATH *path)
 	return NULL;
 
     size = offsetof(PATH, p[0]) + (sizeof(path->p[0]) * path->npts);
-    if (!PointerIsValid(result = PALLOC(size)))
-	elog(WARN, "Memory allocation failed, can't copy path",NULL);
+    result = PALLOC(size);
 
     memmove((char *) result, (char *) path, size);
     return(result);
@@ -1124,10 +1104,9 @@ double *path_distance(PATH *p1, PATH *p2)
 
 double *path_length(PATH *path)
 {
-    double *result;
+    double *result = PALLOCTYPE(double);
     int	ct, i;
     
-    result = PALLOCTYPE(double);
     ct = path->npts - 1;
     for (i = 0; i < ct; i++)
 	*result += point_dt(&path->p[i], &path->p[i+1]);
@@ -1177,8 +1156,7 @@ point_in(char *str)
     if (! pair_decode( str, &x, &y, &s) || (strlen(s) > 0))
       elog (WARN, "Bad point external representation '%s'",str);
 
-    if (!PointerIsValid(point = PALLOCTYPE(Point)))
-      elog (WARN, "Unable to allocate point storage for '%s'",str);
+    point = PALLOCTYPE(Point);
 
     point->x = x;
     point->y = y;
@@ -1198,9 +1176,8 @@ point_out(Point *pt)
 
 Point *point_construct(double x, double y)
 {
-    Point *result;
-    
-    result = PALLOCTYPE(Point);
+    Point *result = PALLOCTYPE(Point);
+
     result->x = x;
     result->y = y;
     return(result);
@@ -1209,9 +1186,8 @@ Point *point_construct(double x, double y)
 
 Point *point_copy(Point *pt)
 {
-    Point *result;
-    
-    result = PALLOCTYPE(Point);
+    Point *result = PALLOCTYPE(Point);
+
     result->x = pt->x;
     result->y = pt->y;
     return(result);
@@ -1276,9 +1252,8 @@ int32 pointdist(Point *p1, Point *p2)
 
 double *point_distance(Point *pt1, Point *pt2)
 {
-    double *result;
-    
-    result = PALLOCTYPE(double);
+    double *result = PALLOCTYPE(double);
+
     *result = HYPOT( pt1->x - pt2->x, pt1->y - pt2->y );
     return(result);
 }
@@ -1291,9 +1266,8 @@ double point_dt(Point *pt1, Point *pt2)
 
 double *point_slope(Point *pt1, Point *pt2)
 {
-    double *result;
-    
-    result = PALLOCTYPE(double);
+    double *result = PALLOCTYPE(double);
+
     if (point_vert(pt1, pt2))
 	*result = (double)DBL_MAX;
     else
@@ -1335,8 +1309,7 @@ LSEG *lseg_in(char *str)
     if (!PointerIsValid((char *)str))
 	elog (WARN," Bad (null) lseg external representation",NULL);
 
-    if (!PointerIsValid(lseg = PALLOCTYPE(LSEG)))
-      elog(WARN, "Memory allocation failed, can't input lseg '%s'",str);
+    lseg = PALLOCTYPE(LSEG);
 
     if ((! path_decode(TRUE, 2, str, &isopen, &s, &(lseg->p[0])))
       || (*s != '\0'))
@@ -1362,9 +1335,8 @@ char *lseg_out(LSEG *ls)
  */
 LSEG *lseg_construct(Point *pt1, Point *pt2)
 {
-    LSEG	*result;
-    
-    result = PALLOCTYPE(LSEG);
+    LSEG *result = PALLOCTYPE(LSEG);
+
     result->p[0].x = pt1->x;
     result->p[0].y = pt1->y;
     result->p[1].x = pt2->x;
@@ -1456,9 +1428,8 @@ bool lseg_eq(LSEG *l1, LSEG *l2)
  */
 double *lseg_distance(LSEG *l1, LSEG *l2)
 {
-    double *result;
-    
-    result = PALLOCTYPE(double);
+    double *result = PALLOCTYPE(double);
+
     *result = lseg_dt( l1, l2);
 
     return(result);
@@ -1533,9 +1504,8 @@ Point *lseg_interpt(LSEG *l1, LSEG *l2)
 
 double *dist_pl(Point *pt, LINE *line)
 {
-    double	*result;
-    
-    result = PALLOCTYPE(double);
+    double *result = PALLOCTYPE(double);
+
     *result = (line->A * pt->x + line->B * pt->y + line->C) /
 	HYPOT(line->A, line->B);
     
@@ -2040,8 +2010,7 @@ POLYGON *poly_in(char *str)
 	elog(WARN, "Bad polygon external representation '%s'", str);
 
     size = offsetof(POLYGON, p[0]) + (sizeof(poly->p[0]) * npts);
-    if (!PointerIsValid(poly = (POLYGON *) PALLOC(size)))
-      elog(WARN, "Memory allocation failed, can't input polygon '%s'",str);
+    poly = PALLOC(size);
 
     memset((char *) poly, 0, size);	/* zero any holes */
     poly->size = size;
@@ -2124,8 +2093,7 @@ char *poly_out(POLYGON *poly)
 	return NULL;
 
 #if OLD_FORMAT_OUT
-    if (!PointerIsValid(result = (char *)PALLOC(poly->npts*(P_MAXLEN+3)+2)))
-	elog(WARN, "Memory allocation failed, can't output polygon", NULL);
+    result = PALLOC(poly->npts*(P_MAXLEN+3)+2);
 
     cp = result;
     *cp++ = LDELIM;
@@ -2255,8 +2223,7 @@ point_add(Point *p1, Point *p2)
     if (! (PointerIsValid(p1) && PointerIsValid(p2)))
 	return(NULL);
 
-    if (!PointerIsValid(result = PALLOCTYPE(Point)))
-	elog(WARN, "Memory allocation failed, can't add points",NULL);
+    result = PALLOCTYPE(Point);
 
     result->x = (p1->x + p2->x);
     result->y = (p1->y + p2->y);
@@ -2272,8 +2239,7 @@ point_sub(Point *p1, Point *p2)
     if (! (PointerIsValid(p1) && PointerIsValid(p2)))
 	return(NULL);
 
-    if (!PointerIsValid(result = PALLOCTYPE(Point)))
-	elog(WARN, "Memory allocation failed, can't add points",NULL);
+    result = PALLOCTYPE(Point);
 
     result->x = (p1->x - p2->x);
     result->y = (p1->y - p2->y);
@@ -2289,8 +2255,7 @@ point_mul(Point *p1, Point *p2)
     if (! (PointerIsValid(p1) && PointerIsValid(p2)))
 	return(NULL);
 
-    if (!PointerIsValid(result = PALLOCTYPE(Point)))
-	elog(WARN, "Memory allocation failed, can't multiply points",NULL);
+    result = PALLOCTYPE(Point);
 
     result->x = (p1->x*p2->x) - (p1->y*p2->y);
     result->y = (p1->x*p2->y) + (p1->y*p2->x);
@@ -2307,8 +2272,7 @@ point_div(Point *p1, Point *p2)
     if (! (PointerIsValid(p1) && PointerIsValid(p2)))
 	return(NULL);
 
-    if (!PointerIsValid(result = PALLOCTYPE(Point)))
-	elog(WARN, "Memory allocation failed, can't multiply path",NULL);
+    result = PALLOCTYPE(Point);
 
     div = (p2->x*p2->x) + (p2->y*p2->y);
 
@@ -2438,8 +2402,7 @@ path_add(PATH *p1, PATH *p2)
 	return(NULL);
 
     size = offsetof(PATH, p[0]) + (sizeof(p1->p[0]) * (p1->npts+p2->npts));
-    if (!PointerIsValid(result = PALLOC(size)))
-	elog(WARN, "Memory allocation failed, can't add paths",NULL);
+    result = PALLOC(size);
 
     result->size = size;
     result->npts = (p1->npts+p2->npts);
@@ -2564,8 +2527,7 @@ POLYGON *path_poly(PATH *path)
 	elog(WARN, "Open path cannot be converted to polygon",NULL);
 
     size = offsetof(POLYGON, p[0]) + (sizeof(poly->p[0]) * path->npts);
-    if (!PointerIsValid(poly = PALLOC(size)))
-	elog(WARN, "Memory allocation failed, can't convert path to polygon",NULL);
+    poly = PALLOC(size);
 
     poly->size = size;
     poly->npts = path->npts;
@@ -2609,6 +2571,9 @@ poly_box(POLYGON *poly)
     return(box);
 } /* poly_box() */
 
+/* box_poly()
+ * Convert a box to a polygon.
+ */
 POLYGON *
 box_poly(BOX *box)
 {
@@ -2618,9 +2583,9 @@ box_poly(BOX *box)
     if (!PointerIsValid(box))
 	return(NULL);
 
+    /* map four corners of the box to a polygon */
     size = offsetof(POLYGON, p[0]) + (sizeof(poly->p[0]) * 4);
-    if (!PointerIsValid(poly = PALLOC(size)))
-	elog(WARN, "Memory allocation failed, can't convert box to polygon",NULL);
+    poly = PALLOC(size);
 
     poly->size = size;
     poly->npts = 4;
@@ -2650,8 +2615,7 @@ poly_path(POLYGON *poly)
 	return(NULL);
 
     size = offsetof(PATH, p[0]) + (sizeof(path->p[0]) * poly->npts);
-    if (!PointerIsValid(path = PALLOC(size)))
-	elog(WARN, "Memory allocation failed, can't convert polygon to path",NULL);
+    path = PALLOC(size);
 
     path->size = size;
     path->npts = poly->npts;
@@ -2675,7 +2639,7 @@ poly_path(POLYGON *poly)
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.4 1997/04/25 18:40:25 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.5 1997/05/06 07:27:51 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2739,8 +2703,7 @@ CIRCLE *circle_in(char *str)
     if (!PointerIsValid(str))
 	elog (WARN," Bad (null) circle external representation",NULL);
 
-    if (!PointerIsValid(circle = PALLOCTYPE(CIRCLE)))
-      elog(WARN, "Memory allocation failed, can't input circle '%s'",str);
+    circle = PALLOCTYPE(CIRCLE);
 
     s = str;
     while (isspace( *s)) s++;
@@ -2789,8 +2752,7 @@ char *circle_out(CIRCLE *circle)
     if (!PointerIsValid(circle))
 	return(NULL);
 
-    if (!PointerIsValid(result = (char *)PALLOC(3*(P_MAXLEN+1)+3)))
-	elog(WARN, "Memory allocation failed, can't output circle", NULL);
+    result = PALLOC(3*(P_MAXLEN+1)+3);
 
     cp = result;
     *cp++ = LDELIM_C;
@@ -2944,8 +2906,7 @@ circle_copy(CIRCLE *circle)
     if (!PointerIsValid(circle))
 	return NULL;
 
-    if (!PointerIsValid(result = PALLOCTYPE(CIRCLE)))
-	elog(WARN, "Memory allocation failed, can't copy circle",NULL);
+    result = PALLOCTYPE(CIRCLE);
 
     memmove((char *) result, (char *) circle, sizeof(CIRCLE));
     return(result);
@@ -3152,8 +3113,7 @@ CIRCLE *circle(Point *center, float8 *radius)
     if (! (PointerIsValid(center) && PointerIsValid(radius)))
 	return(NULL);
 
-    if (!PointerIsValid(result = PALLOCTYPE(CIRCLE)))
-      elog(WARN, "Memory allocation failed, can't convert point to circle",NULL);
+    result = PALLOCTYPE(CIRCLE);
 
     result->center.x = center->x;
     result->center.y = center->y;
@@ -3176,8 +3136,7 @@ POLYGON *circle_poly(int npts, CIRCLE *circle)
 	  elog (WARN, "Unable to convert circle to polygon", NULL);
 
     size = offsetof(POLYGON, p[0]) + (sizeof(poly->p[0]) * npts);
-    if (!PointerIsValid(poly = (POLYGON *) PALLOC(size)))
-      elog(WARN, "Memory allocation failed, can't convert circle to polygon",NULL);
+    poly = PALLOC(size);
 
     memset((char *) poly, 0, size);	/* zero any holes */
     poly->size = size;
@@ -3210,8 +3169,7 @@ CIRCLE *poly_circle(POLYGON *poly)
     if (poly->npts <= 2)
 	  elog (WARN, "Unable to convert polygon to circle", NULL);
 
-    if (!PointerIsValid(circle = PALLOCTYPE(CIRCLE)))
-      elog(WARN, "Memory allocation failed, can't convert polygon to circle",NULL);
+    circle = PALLOCTYPE(CIRCLE);
 
     circle->center.x = 0;
     circle->center.y = 0;
