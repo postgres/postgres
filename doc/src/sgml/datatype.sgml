@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.41 2000/11/11 23:27:48 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.42 2000/11/16 06:03:40 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -497,13 +497,13 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
        </row>
        <row>
 	<entry>text</entry>
-	<entry>(4+x) bytes</entry>
+	<entry>(4+length) bytes</entry>
 	<entry>Best choice</entry>
 	<entry>Variable-length</entry>
        </row>
        <row>
 	<entry>varchar(n)</entry>
-	<entry>(4+x) bytes</entry>
+	<entry>(4+n) bytes</entry>
 	<entry><acronym>SQL92</acronym>-compatible</entry>
 	<entry>Variable-length with limit</entry>
        </row>
