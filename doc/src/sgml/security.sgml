@@ -138,8 +138,8 @@
     </para>
 
     <para>
-     Connections from clients can be made using UNIX domain sockets or Internet
-     domain sockets (ie. TCP/IP).  Connections made using UNIX domain sockets
+     Connections from clients can be made using Unix domain sockets or Internet
+     domain sockets (ie. TCP/IP).  Connections made using Unix domain sockets
      are controlled using records of the following format:
 
      <synopsis>
@@ -158,7 +158,7 @@ local <replaceable>database</replaceable> <replaceable>authentication method</re
       <member>
        <replaceable>authentication method</replaceable>
        specifies the method a user must use to authenticate themselves when
-       connecting to that database using UNIX domain sockets.  The different methods
+       connecting to that database using Unix domain sockets.  The different methods
        are described below.
       </member>
      </simplelist>
@@ -199,7 +199,7 @@ host <replaceable>database</replaceable> <replaceable>TCP/IP address</replaceabl
      <title>Authentication Methods</title>
 
      <para>
-      The following authentication methods are supported for both UNIX and TCP/IP
+      The following authentication methods are supported for both Unix and TCP/IP
       domain sockets:
 
       <variablelist>
@@ -299,7 +299,7 @@ host <replaceable>database</replaceable> <replaceable>TCP/IP address</replaceabl
 
      <para>
       <programlisting>
-# Trust any connection via UNIX domain sockets.
+# Trust any connection via Unix domain sockets.
 local	trust
 # Trust any connection via TCP/IP from this machine.
 host	all	127.0.0.1	255.255.255.255		trust

@@ -13,96 +13,107 @@
    oriented access to user data that has been declared  to
    be a large type.
    This  section describes the implementation and the 
-   programmatic and query  language  interfaces  to 
+   programming and query  language  interfaces  to 
    <productname>Postgres</productname>
    large object data.
   </para>
 
-<sect1>
-<title>Historical Note</title>
+  <sect1>
+   <title>Historical Note</title>
 
-<para>
-     Originally, <productname>Postgres 4.2</productname> supported three standard 
-     implementations of large objects: as files external 
-     to <productname>Postgres</productname>,  as
- <acronym>ym>U</acronym>ym>  files managed by <productname>Postgres</productname>, and as data
-     stored within the <productname>Postgres</productname> database. It causes  
-     considerable confusion among users. As a result, we only 
-     support large objects as data stored within  the  <productname>Postgres</productname>
-     database  in  <productname>PostgreSQL</productname>.  Even  though it is slower to
-     access, it provides stricter data  integrity.
-     For historical reasons, this storage scheme is referred to as 
-     Inversion large objects. (We will use  Inversion  and  large
-     objects  interchangeably to mean the same thing in this
-     section.)
-</para>
-</sect1>
+   <para>
+    Originally, <productname>Postgres 4.2</productname> supported three standard 
+    implementations of large objects: as files external 
+    to <productname>Postgres</productname>,  as
+    external files managed by <productname>Postgres</productname>, and as data
+    stored within the <productname>Postgres</productname> database. It causes  
+    considerable confusion among users. As a result, we only 
+    support large objects as data stored within  the  <productname>Postgres</productname>
+    database  in  <productname>PostgreSQL</productname>.  Even  though it is slower to
+    access, it provides stricter data  integrity.
+    For historical reasons, this storage scheme is referred to as 
+    Inversion large objects. (We will use  Inversion  and  large
+    objects  interchangeably to mean the same thing in this
+    section.)
+   </para>
+  </sect1>
 
-<sect1>
-<title>Inversion Large Objects</title>
+  <sect1>
+   <title>Implementation Features</title>
 
-<para>
-     The Inversion large object implementation breaks  large
-     objects  up  into  "chunks"  and  stores  the chunks in
-     tuples in the database.  A B-tree index guarantees fast
-     searches for the correct chunk number when doing random
-     access reads and writes.
-</para>
-</sect1>
+   <para>
+    The Inversion large object implementation breaks  large
+    objects  up  into  "chunks"  and  stores  the chunks in
+    tuples in the database.  A B-tree index guarantees fast
+    searches for the correct chunk number when doing random
+    access reads and writes.
+   </para>
+  </sect1>
 
-<sect1>
-<title>Large Object Interfaces</title>
+  <sect1>
+   <title>Interfaces</title>
 
-<para>
-     The  facilities  <productname>Postgres</productname>  provides  to  access   large
-     objects,  both  in  the backend as part of user-defined
-     functions or the front end as part  of  an  application
-     using  the   interface, are described below. (For users
-     familiar with <productname>Postgres 4.2</productname>,
+   <para>
+    The  facilities  <productname>Postgres</productname> provides  to
+    access large objects,  both  in  the backend as part of user-defined
+    functions or the front end as part  of  an  application
+    using  the   interface, are described below. For users
+    familiar with <productname>Postgres 4.2</productname>,
     <productname>PostgreSQL</productname> has a new set of
-     functions  providing  a  more  coherent  interface. The
-     interface is the same for  dynamically-loaded  C  
-     functions as well as for XXX LOST TEXT? WHAT SHOULD GO HERE??.
+    functions  providing  a  more  coherent  interface.
 
-     The  <productname>Postgres</productname>  large  object interface is modeled after
-     the <acronym>UNIX</acronym>  file  system  interface,  with  analogues  of
-     <function>open(2)</function>,  <function>read(2)</function>,
-<function>write(2)</function>,
- <function>lseek(2)</function>, etc.  User 
-     functions call these routines to retrieve only the data  of
-     interest  from a large object.  For example, if a large
-     object type called mugshot  existed  that  stored  
-     photographs  of  faces, then a function called beard could
-     be declared on mugshot data.  Beard could look  at  the
-     lower third of a photograph, and determine the color of
-     the beard that appeared  there,  if  any.   The  entire
-     large  object value need not be buffered, or even 
-     examined, by the beard function.
-     Large objects may be accessed from dynamically-loaded <acronym>C</acronym>
-     functions  or  database  client  programs that link the
-     library.  <productname>Postgres</productname> provides a set of routines that 
-     support opening, reading, writing, closing, and seeking on
-     large objects.
-</para>
+    <note>
+     <para>
+      All large object manipulation <emphasis>must</emphasis> take
+      place within an SQL transaction. This requirement is strictly
+      enforced as of Postgres v6.5, though it has been an
+      implicit requirement in previous versions, resulting in
+      misbehavior if ignored.
+     </para>
+    </note>
+   </para>
 
-<sect2>
-<title>Creating a Large Object</title>
+   <para>
+    The  <productname>Postgres</productname>  large  object interface is modeled after
+    the <acronym>Unix</acronym>  file  system  interface,  with  analogues  of
+    <function>open(2)</function>,  <function>read(2)</function>,
+    <function>write(2)</function>,
+    <function>lseek(2)</function>, etc.  User 
+    functions call these routines to retrieve only the data  of
+    interest  from a large object.  For example, if a large
+    object type called mugshot  existed  that  stored  
+    photographs  of  faces, then a function called beard could
+    be declared on mugshot data.  Beard could look  at  the
+    lower third of a photograph, and determine the color of
+    the beard that appeared  there,  if  any.   The  entire
+    large  object value need not be buffered, or even 
+    examined, by the beard function.
+    Large objects may be accessed from dynamically-loaded <acronym>C</acronym>
+    functions  or  database  client  programs that link the
+    library.  <productname>Postgres</productname> provides a set of routines that 
+    support opening, reading, writing, closing, and seeking on
+    large objects.
+   </para>
 
-<para>
+   <sect2>
+    <title>Creating a Large Object</title>
+
+    <para>
      The routine
-<programlisting>
-Oid lo_creat(PGconn *conn, int mode)
-</programlisting>
-     creates a new large  object.  The  mode  is  a  bitmask
+
+     <synopsis>
+Oid lo_creat(PGconn *<replaceable class="parameter">conn</replaceable>, int <replaceable class="parameter">mode</replaceable>)
+     </synopsis>
+
+     creates a new large  object.  
+     <replaceable class="parameter">mode</replaceable>  is  a  bitmask
      describing  several  different  attributes  of  the new
      object.  The symbolic constants listed here are defined
      in
-<filename>
-PGROOT/src/backend/libpq/libpq-fs.h
-</filename>
+     <filename>$<envar>PGROOT</envar>/src/backend/libpq/libpq-fs.h</filename>
      The access type (read, write, or both) is controlled by
      OR ing together the bits <acronym>INV_READ</acronym>  and
-<acronym>INV_WRITE</acronym>.   If
+     <acronym>INV_WRITE</acronym>.   If
      the large object should be archived -- that is, if 
      historical versions of it should be moved periodically  to
      a  special archive relation -- then the <acronym>INV_ARCHIVE</acronym> bit
@@ -111,45 +122,45 @@ PGROOT/src/backend/libpq/libpq-fs.h
      should reside.  For sites other  than  Berkeley,  these
      bits should always be zero.
      The commands below create an (Inversion) large object:
-<programlisting>
+     <programlisting>
 inv_oid = lo_creat(INV_READ|INV_WRITE|INV_ARCHIVE);
-</programlisting>
-</para>
-</sect2>
+     </programlisting>
+    </para>
+   </sect2>
 
-<sect2>
-<title>Importing a Large Object</title>
+   <sect2>
+    <title>Importing a Large Object</title>
 
-<para>
-To import a <acronym>UNIX</acronym> file as
-     a large object, call
-<programlisting>
-Oid lo_import(PGconn *conn, text *filename)
-</programlisting>
-     The filename argument specifies the  <acronym>UNIX</acronym>  pathname  of
+    <para>
+     To import a Unix file as a large object, call
+     <synopsis>
+Oid lo_import(PGconn *<replaceable class="parameter">conn</replaceable>, text *<replaceable class="parameter">filename</replaceable>)
+     </synopsis>
+    <replaceable class="parameter">filename</replaceable> 
+     specifies the  <acronym>Unix</acronym>  pathname  of
      the file to be imported as a large object.
-</para>
-</sect2>
+    </para>
+   </sect2>
 
-<sect2>
-<title>Exporting a Large Object</title>
+   <sect2>
+    <title>Exporting a Large Object</title>
 
-<para>
-To export a large object
-     into <acronym>UNIX</acronym> file, call
-<programlisting>
-int lo_export(PGconn *conn, Oid lobjId, text *filename)
-</programlisting>
+    <para>
+     To export a large object
+     into <acronym>Unix</acronym> file, call
+     <synopsis>
+int lo_export(PGconn *<replaceable class="parameter">conn</replaceable>, Oid <replaceable class="parameter">lobjId</replaceable>, text *<replaceable class="parameter">filename</replaceable>)
+     </synopsis>
      The lobjId argument specifies  the  Oid  of  the  large
      object  to  export  and the filename argument specifies
-     the <acronym>UNIX</acronym> pathname of the file.
-</para>
-</sect2>
+     the <acronym>Unix</acronym> pathname of the file.
+    </para>
+   </sect2>
 
-<sect2>
-<title>Opening an Existing Large Object</title>
+   <sect2>
+    <title>Opening an Existing Large Object</title>
 
-<para>
+    <para>
      To open an existing large object, call
 <programlisting>
 int lo_open(PGconn *conn, Oid lobjId, int mode, ...)

@@ -11,7 +11,7 @@
      somewhat clearer.
      In  database  jargon,  <ProductName>Postgres</ProductName> uses a simple "process  
      per-user" client/server model.  A <ProductName>Postgres</ProductName> session 
-     consists of the following cooperating UNIX processes (programs):
+     consists of the following cooperating Unix processes (programs):
 </Para>
 
 <ItemizedList>
@@ -80,7 +80,7 @@
      have  to  be  a special user (e.g., a user named 
      "postgres").  Furthermore,  the  <ProductName>Postgres</ProductName>  superuser  
      should
-     definitely  not  be the UNIX superuser ("root")!  In any
+     definitely  not  be the Unix superuser ("root")!  In any
      case, all files relating to a database should belong to
      this <ProductName>Postgres</ProductName> superuser.
 </Para>

@@ -282,7 +282,7 @@ SELECT name, population
 
     <note>
      <para>
-      On UNIX systems, this is always  midnight,  January  1, 1970 GMT.
+      On Unix systems, this is always  midnight,  January  1, 1970 GMT.
      </para>
     </note>
    </para>

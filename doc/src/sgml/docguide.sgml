@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.18 1999/07/06 17:19:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.19 1999/10/04 15:18:53 thomas Exp $
 Documentation Guide
 Thomas Lockhart
 
@@ -1334,7 +1334,7 @@ but it is almost certainly a good candidate for use.
 <itemizedlist>
 <listitem><para>A working installation of GCC 2.7.2</para></listitem>
 <listitem><para>A working installation of Emacs 19.19 or later</para></listitem>
-<listitem><para>An unzip program for UNIX to unpack things</para></listitem>
+<listitem><para>An unzip program for Unix to unpack things</para></listitem>
 </itemizedlist>
 
 </para>

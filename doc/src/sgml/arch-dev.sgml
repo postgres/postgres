@@ -174,7 +174,7 @@
       <para>
        The <firstterm>parser</firstterm> defined in
        <filename>gram.y</filename> and <filename>scan.l</filename> is
-       built using the UNIX tools <application>yacc</application>
+       built using the Unix tools <application>yacc</application>
        and <application>lex</application>.
       </para>
      </listitem>
@@ -194,7 +194,7 @@
      The parser has to check the query string (which arrives as
      plain ASCII text) for valid syntax. If the syntax is correct a
      <firstterm>parse tree</firstterm> is built up and handed back otherwise an error is
-     returned. For the implementation the well known UNIX
+     returned. For the implementation the well known Unix
      tools <application>lex</application> and <application>yacc</application>
      are used.
     </para>

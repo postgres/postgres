@@ -13,7 +13,7 @@ How to begin work with <ProductName>Postgres</ProductName> for a new user.
      the site database administrator.  This site administrator 
      is the person who installed the  software,  created
      the  database  directories  and  started the <Application>postmaster</Application>
-     process.  This person does not  have  to  be  the  UNIX
+     process.  This person does not  have  to  be  the  Unix
      superuser (<Quote>root</Quote>)
  or the computer system administrator; a person can install and use
 <ProductName>Postgres</ProductName> without any special accounts or privileges.
@@ -28,7 +28,7 @@ to this guide when the installation is complete.
 <Para>
      Throughout this manual, any examples  that  begin  with
      the  character  <Quote>%</Quote> are commands that should be typed
-     at the UNIX shell prompt.  Examples that begin with the
+     at the Unix shell prompt.  Examples that begin with the
      character <Quote>*</Quote> are commands in the Postgres query 
      language, Postgres <Acronym>SQL</Acronym>.
 </Para>
@@ -77,7 +77,7 @@ of a client application is the interactive monitor <Application>psql</Applicatio
      variable</Quote>  or  <Quote>setting an environment variable</Quote> throughout
      this document.  If you did  not  fully  understand  the
      last  paragraph  on  modifying  your  search  path, you
-     should consult the UNIX manual pages that describe your
+     should consult the Unix manual pages that describe your
      shell before going any further.
 </Para>
 
@@ -282,7 +282,7 @@ mydb=> \g
 mydb=> \i fileName
 </ProgramListing>
 
-     To get out of <Application>psql</Application> and return to UNIX, type
+     To get out of <Application>psql</Application> and return to Unix, type
 <ProgramListing>
 mydb=> \q
 </ProgramListing>
@@ -303,11 +303,11 @@ mydb=> \q
 
 <Para>
      If you are the database administrator for the  database
-     <Database>mydb</Database>,  you can destroy it using the following UNIX command:
+     <Database>mydb</Database>,  you can destroy it using the following Unix command:
 <ProgramListing>
 % destroydb mydb
 </ProgramListing>
-     This action physically removes all of  the  UNIX  files
+     This action physically removes all of  the  Unix  files
      associated  with  the database and cannot be undone, so
      this should only be done with a  great  deal  of  forethought.
 </Para>

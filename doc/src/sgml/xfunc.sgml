@@ -116,7 +116,7 @@ select function hobbies (EMP) returns set of HOBBIES
 
     <para>
      The simplest possible <acronym>SQL</acronym> function has no arguments and
-     simply returns a base type, such as <acronym>int4</acronym>:
+     simply returns a base type, such as <literal>int4</literal>:
      
      <programlisting>
     CREATE FUNCTION one() RETURNS int4
@@ -291,10 +291,11 @@ WARN::function declared to return type EMP does not retrieve (EMP.*)
     <para>
      Any collection of commands in the  <acronym>SQL</acronym>  query  
      language can be packaged together and defined as a function.
-     The commands can include updates (i.e., <acronym>insert</acronym>,  
-     <acronym>update</acronym> and <acronym>delete</acronym>) as well 
-     as <acronym>select</acronym> queries.  However, the final command 
-     must be a <acronym>select</acronym> that returns whatever is
+     The commands can include updates (i.e.,
+     <command>INSERT</command>, <command>UPDATE</command>, and
+     <command>DELETE</command>) as well
+     as <command>SELECT</command> queries.  However, the final command 
+     must be a <command>SELECT</command> that returns whatever is
      specified as the function's returntype.
 
      <programlisting>
@@ -392,7 +393,7 @@ WARN::function declared to return type EMP does not retrieve (EMP.*)
     code file for the function, bracketed by quotation marks.  If a
     link symbol is used in the AS clause, the link symbol should also be
     bracketed by single quotation marks, and should be exactly the
-    same as the name of the function in the C source code. On UNIX systems
+    same as the name of the function in the C source code. On Unix systems
     the command <command>nm</command> will print all of the link
     symbols in a dynamically loadable object.
     (<productname>Postgres</productname> will not compile a function
@@ -608,12 +609,12 @@ WARN::function declared to return type EMP does not retrieve (EMP.*)
      only passes integer types by value.  You should be careful 
      to define your types such that  they  will  be  the  same  
      size (in bytes) on all architectures.  For example, the 
-     <acronym>long</acronym> type is dangerous because  it  
+     <literal>long</literal> type is dangerous because  it  
      is 4 bytes on some machines and 8 bytes on others, whereas 
-     <acronym>int</acronym>  type  is  4  bytes  on  most  
-     <acronym>UNIX</acronym> machines  (though  not  on most 
+     <literal>int</literal>  type  is  4  bytes  on  most  
+     Unix machines  (though  not  on most 
      personal computers).  A reasonable implementation of  
-     the  <acronym>int4</acronym>  type  on  <acronym>UNIX</acronym>
+     the  <literal>int4</literal>  type  on  Unix
      machines might be:
      
      <programlisting>
@@ -779,7 +780,7 @@ memmove(destination-&gt;data, buffer, 40);
      a  procedural interface for accessing fields of composite types  
      from C.  As <productname>Postgres</productname> processes 
      a set of instances, each instance will be passed into your 
-     function as an  opaque  structure of type <acronym>TUPLE</acronym>.
+     function as an  opaque  structure of type <literal>TUPLE</literal>.
      Suppose we want to write a function to answer the query
 
      <programlisting>
@@ -809,16 +810,16 @@ memmove(destination-&gt;data, buffer, 40);
     </para>
 
     <para>
-     <acronym>GetAttributeByName</acronym> is the 
+     <function>GetAttributeByName</function> is the 
      <productname>Postgres</productname> system function that
      returns attributes out of the current instance.  It has
      three arguments: the argument of type TUPLE passed into
      the  function, the name of the desired attribute, and a
      return parameter that describes whether  the  attribute
-     is  null.   <acronym>GetAttributeByName</acronym> will 
+     is  null.   <function>GetAttributeByName</function> will 
      align data properly so you can cast its return value to 
      the  desired  type. For  example, if you have an attribute 
-     name which is of the type name, the <acronym>GetAttributeByName</acronym> 
+     name which is of the type name, the <function>GetAttributeByName</function> 
      call would look like:
 
      <programlisting>

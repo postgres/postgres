@@ -41,7 +41,7 @@ export PATH
      variable"  or  "setting an environment variable" throughout
      this document.  If you did  not  fully  understand  the
      last  paragraph  on  modifying  your  search  path, you
-     should consult the UNIX manual pages that describe your
+     should consult the Unix manual pages that describe your
      shell before going any further.
 </Para>
 

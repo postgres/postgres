@@ -243,7 +243,7 @@ mydb=> \g
 mydb=> \i fileName
 </ProgramListing>
 
-     To get out of <Application>psql</Application> and return to UNIX, type
+     To get out of <Application>psql</Application> and return to Unix, type
 <ProgramListing>
 mydb=> \q
 </ProgramListing>
@@ -281,11 +281,11 @@ TBD
 
 <Para>
      If you are the database administrator for the  database
-     <Database>mydb</Database>,  you can destroy it using the following UNIX command:
+     <Database>mydb</Database>,  you can destroy it using the following Unix command:
 <ProgramListing>
 % destroydb mydb
 </ProgramListing>
-     This action physically removes all of  the  UNIX  files
+     This action physically removes all of  the  Unix  files
      associated  with  the database and cannot be undone, so
      this should only be done with a  great  deal  of  forethought.
 </Para>

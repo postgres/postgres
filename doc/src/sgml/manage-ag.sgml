@@ -116,7 +116,7 @@ You are currently connected to the database: <replaceable>dbname</replaceable>
 <replaceable>dbname</replaceable>=> \i <replaceable class="parameter">filename</replaceable>
     </programlisting>
 
-    To get out of <application>psql</application> and return to UNIX, type
+    To get out of <application>psql</application> and return to Unix, type
 
     <programlisting>
 <replaceable>dbname</replaceable>=&gt; \q
@@ -140,13 +140,13 @@ You are currently connected to the database: <replaceable>dbname</replaceable>
 
    <para>
     If you are the database administrator for the  database
-    mydb,  you can destroy it using the following UNIX command:
+    mydb,  you can destroy it using the following Unix command:
 
     <programlisting>
 % destroydb <replaceable class="parameter">dbname</replaceable>
     </programlisting>
 
-    This action physically removes all of  the  UNIX  files
+    This action physically removes all of  the  Unix  files
     associated  with  the database and cannot be undone, so
     this should only be done with a  great  deal  of  forethought.
    </para>
