@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.8 2001/10/28 06:25:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.8.2.1 2003/03/31 20:33:09 tgl Exp $
  *
  *	Interface:
  *
@@ -47,7 +47,7 @@ typedef struct
 
 
 static bool DeadLockCheckRecurse(PROC *proc);
-static bool TestConfiguration(PROC *startProc);
+static int	TestConfiguration(PROC *startProc);
 static bool FindLockCycle(PROC *checkProc,
 			  EDGE *softEdges, int *nSoftEdges);
 static bool FindLockCycleRecurse(PROC *checkProc,
@@ -299,7 +299,7 @@ DeadLockCheckRecurse(PROC *proc)
  * number of soft edges.
  *--------------------
  */
-static bool
+static int
 TestConfiguration(PROC *startProc)
 {
 	int			softFound = 0;
