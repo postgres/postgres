@@ -4107,10 +4107,10 @@ done
 if test "$YACC"; then
   if $YACC --version | sed q | $AWK '{ if ($4 < 1.875) exit 0; else exit 1;}'; then
     { echo "$as_me:$LINENO: WARNING:
-*** If you are going to modify the lexer files or build from CVS, the installed
+*** If you are going to modify the grammar files or build from CVS, the installed
 *** version of Bison is too old.  Bison version 1.875 or later is required." >&5
 echo "$as_me: WARNING:
-*** If you are going to modify the lexer files or build from CVS, the installed
+*** If you are going to modify the grammar files or build from CVS, the installed
 *** version of Bison is too old.  Bison version 1.875 or later is required." >&2;}
   fi
 fi
