@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.25 1996/12/28 01:57:13 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.26 1996/12/31 07:29:15 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -348,6 +348,170 @@ makePGresult_badResponse_return:
 }
 
 
+/*
+ * Assuming that we just sent a query to the backend, read the backend's 
+ * response from stream <pfin> and respond accordingly.
+ *
+ * If <pfdebug> is non-null, write to that stream whatever we receive
+ * (it's a debugging trace).
+ * 
+ * Return as <result> a pointer to a proper final PGresult structure,
+ * newly allocated, for the query based on the response we get.  If the
+ * response we get indicates that the query didn't execute, return a
+ * null pointer and don't allocate any space, but also place a text
+ * string explaining the problem at <*reason>.
+ */
+
+static void
+process_response_from_backend(FILE *pfin, FILE *pfout, FILE *pfdebug, 
+                              PGconn *conn, 
+                              PGresult **result_p, char * const reason) {
+  
+  char id;
+    /* The protocol character received from the backend.  The protocol
+       character is the first character in the backend's response to our
+       query.  It defines the nature of the response.
+       */
+  PGnotify *newNotify;
+  bool done;  
+    /* We're all done with the query and ready to return the result. */
+  int emptiesSent;
+    /* Number of empty queries we have sent in order to flush out multiple
+       responses, less the number of corresponding responses we have 
+       received.
+       */
+  char cmdStatus[MAX_MESSAGE_LEN];
+  char pname[MAX_MESSAGE_LEN]; /* portal name */
+
+  /* loop because multiple messages, especially NOTICES,
+     can come back from the backend.  NOTICES are output directly to stderr
+   */
+
+  emptiesSent = 0;  /* No empty queries sent yet */
+  pname[0] = '\0';
+
+  done = false;  /* initial value */
+  while (!done) {
+    /* read the result id */
+    id = pqGetc(pfin, pfdebug);
+    if (id == EOF) {
+      /* hmm,  no response from the backend-end, that's bad */
+      (void) sprintf(reason,
+                     "PQexec() -- Request was sent to backend, but backend "
+                     "closed the channel before "
+                     "responding.  This probably means the backend "
+                     "terminated abnormally before or while processing "
+                     "the request.\n");
+      conn->status = CONNECTION_BAD;  /* No more connection to backend */
+      *result_p = (PGresult*)NULL;
+      done = true;
+    } else {
+      switch (id) {
+      case 'A': 
+        newNotify = (PGnotify*)malloc(sizeof(PGnotify));
+        pqGetInt(&(newNotify->be_pid), 4, pfin, pfdebug);
+        pqGets(newNotify->relname, NAMEDATALEN, pfin, pfdebug);
+        DLAddTail(conn->notifyList, DLNewElem(newNotify));
+        /* async messages are piggy'ed back on other messages,
+           so we stay in the while loop for other messages */
+        break;
+      case 'C': /* portal query command, no rows returned */
+        if (pqGets(cmdStatus, MAX_MESSAGE_LEN, pfin, pfdebug) == 1) {
+          sprintf(reason,
+                  "PQexec() -- query command completed, "
+                  "but return message from backend cannot be read.");
+          *result_p = (PGresult*)NULL;
+          done = true;
+        } else {
+          /*
+             // since backend may produce more than one result for some 
+             // commands need to poll until clear 
+             // send an empty query down, and keep reading out of the pipe
+             // until an 'I' is received.
+             */
+          pqPuts("Q ", pfout, pfdebug); /* send an empty query */
+          /*
+           * Increment a flag and process messages in the usual way because
+           * there may be async notifications pending.  DZ - 31-8-1996
+           */
+          emptiesSent++;
+        }
+        break;
+      case 'E': /* error return */
+        if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, pfin, pfdebug) == 1) {
+          (void) sprintf(reason,
+                         "PQexec() -- error return detected from backend, "
+                         "but attempt to read the error message failed.");
+        }
+        *result_p = (PGresult*)NULL;
+        done = true;
+        break;
+      case 'I':  { /* empty query */
+        /* read and throw away the closing '\0' */
+        int c;
+        if ((c = pqGetc(pfin,pfdebug)) != '\0') {
+          fprintf(stderr,"error!, unexpected character %c following 'I'\n", c);
+        }
+        if (emptiesSent) {
+          if (--emptiesSent == 0) { /* is this the last one? */
+            /*
+             * If this is the result of a portal query command set the
+             * command status and message accordingly.  DZ - 31-8-1996
+             */
+            *result_p = makeEmptyPGresult(conn,PGRES_COMMAND_OK);
+            strncpy((*result_p)->cmdStatus, cmdStatus, CMDSTATUS_LEN-1);
+            done = true;
+          }
+        }
+        else {
+          *result_p = makeEmptyPGresult(conn, PGRES_EMPTY_QUERY);
+          done = true;
+        }
+      }
+        break;
+      case 'N': /* notices from the backend */
+        if (pqGets(reason, ERROR_MSG_LENGTH, pfin, pfdebug) == 1) {
+          sprintf(reason,
+                  "PQexec() -- Notice detected from backend, "
+                  "but attempt to read the notice failed.");
+          *result_p = (PGresult*)NULL;
+          done = true;
+        } else
+          /* Should we really be doing this?  These notices are not important
+             enough for us to presume to put them on stderr.  Maybe the caller
+             should decide whether to put them on stderr or not.  BJH 96.12.27
+             */
+          fprintf(stderr,"%s", reason);
+        break;
+      case 'P': /* synchronous (normal) portal */
+        pqGets(pname, MAX_MESSAGE_LEN, pfin, pfdebug); /* read in portal name*/
+        break;
+      case 'T': /* actual row results: */
+        *result_p = makePGresult(conn, pname);
+        done = true;
+        break;
+      case 'D': /* copy command began successfully */
+        *result_p = makeEmptyPGresult(conn, PGRES_COPY_IN);
+        done = true;
+        break;
+      case 'B': /* copy command began successfully */
+        *result_p = makeEmptyPGresult(conn, PGRES_COPY_OUT);
+        done = true;
+        break;
+      default:
+        sprintf(reason,
+                "unknown protocol character '%c' read from backend.  "
+                "(The protocol character is the first character the "
+                "backend sends in response to a query it receives).\n",
+                id);
+        *result_p = (PGresult*)NULL;
+        done = true;
+      } /* switch on protocol character */
+    } /* if character was received */
+  } /* while not done */
+}
+
+
 
 /*
  * PQexec
@@ -364,26 +528,13 @@ PGresult*
 PQexec(PGconn* conn, const char* query)
 {
   PGresult *result;
-  int id;
   char buffer[MAX_MESSAGE_LEN];
-  char cmdStatus[MAX_MESSAGE_LEN];
-  char pname[MAX_MESSAGE_LEN]; /* portal name */
-  PGnotify *newNotify;
-  FILE *pfin, *pfout, *pfdebug;
-  static int emptiesPending = 0;
-  bool emptySent = false;
-  
-  pname[0]='\0';
 
   if (!conn) return NULL;
   if (!query) {
     sprintf(conn->errorMessage, "PQexec() -- query pointer is null.");
     return NULL;
   }
-
-  pfin = conn->Pfin;
-  pfout = conn->Pfout;
-  pfdebug = conn->Pfdebug;
 
   /*clear the error string */
   conn->errorMessage[0] = '\0';
@@ -406,129 +557,20 @@ PQexec(PGconn* conn, const char* query)
   sprintf(buffer,"Q%s",query);
 
   /* send the query to the backend; */
-  if (pqPuts(buffer,pfout, pfdebug) == 1) {
+  if (pqPuts(buffer, conn->Pfout, conn->Pfdebug) == 1) {
       (void) sprintf(conn->errorMessage,
                      "PQexec() -- while sending query:  %s\n"
                      "-- fprintf to Pfout failed: errno=%d\n%s\n",
-                     query, errno,strerror(errno));
+                     query, errno, strerror(errno));
       return NULL;
   }
 
-  /* loop forever because multiple messages, especially NOTICES,
-     can come back from the backend
-     NOTICES are output directly to stderr
-   */
-
-  while (1) {
-
-    /* read the result id */
-    id = pqGetc(pfin,pfdebug);
-    if (id == EOF) {
-      /* hmm,  no response from the backend-end, that's bad */
-      (void) sprintf(conn->errorMessage,
-                     "PQexec() -- Request was sent to backend, but backend "
-                     "closed the channel before "
-                     "responding.  This probably means the backend "
-                     "terminated abnormally before or while processing "
-                     "the request.\n");
-      conn->status = CONNECTION_BAD;  /* No more connection to backend */
-      return (PGresult*)NULL;
-    }
-
-    switch (id) {
-    case 'A': 
-        newNotify = (PGnotify*)malloc(sizeof(PGnotify));
-        pqGetInt(&(newNotify->be_pid), 4, pfin, pfdebug);
-        pqGets(newNotify->relname, NAMEDATALEN, pfin, pfdebug);
-        DLAddTail(conn->notifyList, DLNewElem(newNotify));
-        /* async messages are piggy'ed back on other messages,
-           so we stay in the while loop for other messages */
-        break;
-    case 'C': /* portal query command, no rows returned */
-      if (pqGets(cmdStatus, MAX_MESSAGE_LEN, pfin, pfdebug) == 1) {
-        sprintf(conn->errorMessage,
-                "PQexec() -- query command completed, "
-                "but return message from backend cannot be read.");
-        return (PGresult*)NULL;
-      } 
-      else {
-        /*
-        // since backend may produce more than one result for some commands
-        // need to poll until clear 
-        // send an empty query down, and keep reading out of the pipe
-        // until an 'I' is received.
-        */
-        pqPuts("Q",pfout,pfdebug); /* send an empty query */
-        /*
-         * Increment a flag and process messages in the usual way because
-         * there may be async notifications pending.  DZ - 31-8-1996
-         */
-        emptiesPending++;
-        emptySent = true;
-      }
-      break;
-    case 'E': /* error return */
-      if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, pfin, pfdebug) == 1) {
-        (void) sprintf(conn->errorMessage,
-                       "PQexec() -- error return detected from backend, "
-                       "but attempt to read the error message failed.");
-      }
-      return (PGresult*)NULL;
-      break;
-    case 'I': /* empty query */
-      /* read the throw away the closing '\0' */
-      {
-        int c;
-        if ((c = pqGetc(pfin,pfdebug)) != '\0') {
-          fprintf(stderr,"error!, unexpected character %c following 'I'\n", c);
-        }
-        if (emptiesPending) {
-	    if (--emptiesPending == 0 && emptySent) { /* is this the last one? */
-            	/*
-             	 * If this is the result of a portal query command set the
-             	 * command status and message accordingly.  DZ - 31-8-1996
-             	*/
-            	result = makeEmptyPGresult(conn,PGRES_COMMAND_OK);
-            	strncpy(result->cmdStatus,cmdStatus, CMDSTATUS_LEN-1);
-            	return result;
-            }
-        }
-        else {
-	    result = makeEmptyPGresult(conn, PGRES_EMPTY_QUERY);
-            return result;
-        }
-      }
-      break;
-    case 'N': /* notices from the backend */
-      if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, pfin, pfdebug) == 1) {
-        sprintf(conn->errorMessage,
-                "PQexec() -- Notice detected from backend, "
-                "but attempt to read the notice failed.");
-        return (PGresult*)NULL;
-      }
-      else
-        fprintf(stderr,"%s", conn->errorMessage);
-      break;
-    case 'P': /* synchronous (normal) portal */
-      pqGets(pname,MAX_MESSAGE_LEN,pfin, pfdebug);  /* read in portal name*/
-      break;
-    case 'T': /* actual row results: */
-      return makePGresult(conn, pname);
-      break;
-    case 'D': /* copy command began successfully */
-      return makeEmptyPGresult(conn,PGRES_COPY_IN);
-      break;
-    case 'B': /* copy command began successfully */
-      return makeEmptyPGresult(conn,PGRES_COPY_OUT);
-      break;
-    default:
-      sprintf(conn->errorMessage,
-              "unknown protocol character %c read from backend\n",
-              id);
-      return (PGresult*)NULL;
-    } /* switch */
-  } /* while (1)*/
+  process_response_from_backend(conn->Pfin, conn->Pfout, conn->Pfdebug, conn,
+                                &result, conn->errorMessage);
+  return(result);
 }
+
+
 
 /*
  * PQnotifies

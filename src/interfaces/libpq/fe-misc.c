@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.3 1996/11/03 07:14:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.4 1996/12/31 07:29:17 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@ pqGetc(FILE* fin, FILE* debug)
 
   c = getc(fin);
   if (debug && c != EOF)
-    putc(c,debug);
+    fprintf(debug, "From backend> %c\n", c);
   return c;
 }
 
@@ -52,6 +52,7 @@ pqPutnchar(const char* s, int len, FILE *f, FILE *debug)
     if (f == NULL)
 	return 1;
 
+    if (debug) fputs("To backend>", debug);
     while (len--) {
 	status = fputc(*s,f);
 	if (debug)
@@ -60,6 +61,7 @@ pqPutnchar(const char* s, int len, FILE *f, FILE *debug)
 	if (status == EOF)
 	    return 1;
     }
+    if (debug) fputc('\n', debug);
     return 0;
 }
 
@@ -79,7 +81,7 @@ pqGetnchar(char* s, int len, FILE *f, FILE *debug)
   *s = '\0';
 
   if (debug) {
-      fputs(s,debug);
+      fprintf(debug, "From backend> %s\n", s);
   }
   return 0;
 }
@@ -100,7 +102,7 @@ pqGets(char* s, int len, FILE *f, FILE *debug)
   *s = '\0';
 
   if (debug) {
-      fputs(s,debug);
+      fprintf(debug, "From backend> %s\n", s);
   }
   return 0;
 }
@@ -114,22 +116,24 @@ pqGets(char* s, int len, FILE *f, FILE *debug)
    returns 0 if successful, 1 otherwise
 */
 int
-pqPutInt(int i, int bytes, FILE* f, FILE *debug)
+pqPutInt(const int integer, int bytes, FILE* f, FILE *debug)
 {
+    int i;
     int status;
+
+    i = integer;
 
     if (bytes > 4)
 	bytes = 4;
 
     while (bytes--) {
 	status = fputc(i & 0xff, f);
-	if (debug)
-	    fputc(i & 0xff, debug);
 	i >>= 8;
 	if (status == EOF) {
 	    return 1;
 	}
     }
+    if (debug) fprintf(debug, "To backend (#)> %d\n", integer);
     return 0;
 }
 
@@ -163,7 +167,7 @@ pqGetInt(int* result, int bytes, FILE* f, FILE *debug)
 
   *result = n;
   if (debug)
-      fprintf(debug,"%d",*result);
+      fprintf(debug,"From backend (#)> %d\n",*result);
   return 0;
 }
 
@@ -181,7 +185,7 @@ pqPuts(const char* s, FILE *f, FILE *debug)
   fflush(f);
 
   if (debug) {
-      fputs(s,debug);
+      fprintf(debug, "To backend> %s\n", s);
   }
   return 0;
 }
@@ -195,3 +199,5 @@ pqFlush(FILE *f, FILE *debug)
     if (debug)
 	fflush(debug);
 }
+
+
