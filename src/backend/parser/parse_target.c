@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.34 1999/02/03 21:16:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.35 1999/04/29 03:01:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -216,6 +216,8 @@ MakeTargetEntryExpr(ParseState *pstate,
 		rd = pstate->p_target_relation;
 		Assert(rd != NULL);
 		resdomno = attnameAttNum(rd, colname);
+		if (resdomno <= 0)
+			elog(ERROR, "Cannot assign to system attribute '%s'", colname);
 		attrisset = attnameIsSet(rd, colname);
 		attrtype = attnumTypeId(rd, resdomno);
 		if ((arrayRef != NIL) && (lfirst(arrayRef) == NIL))
