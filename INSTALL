@@ -600,13 +600,13 @@ What Now?
 
    * The Tutorial should be your first reading if you are completely new to
      SQL databases. It should have been installed at
-     /usr/local/pgsql/doc/tutorial/index.html unless you changed the
+     /usr/local/pgsql/doc/html/tutorial.htm unless you changed the
      installation directories.
 
    * If you are familiar with database concepts then you want to proceed
      with the Administrator's Guide, which contains information about how to
      set up the database server, database users, and authentication. It can
-     be found at /usr/local/pgsql/doc/admin/index.html.
+     be found at /usr/local/pgsql/doc/html/admin.htm.
 
    * Usually, you will want to modify your computer so that it will
      automatically start the database server whenever it boots. Some
