@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.123 2000/02/17 03:39:48 tgl Exp $
+ * $Id: pg_proc.h,v 1.124 2000/02/21 03:36:55 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -661,8 +661,8 @@ DATA(insert OID = 313 (  i2toi4			   PGUID 11 f t t 1 f  23  "21" 100 0 0 100  i
 DESCR("convert int2 to int4");
 DATA(insert OID = 314 (  i4toi2			   PGUID 11 f t t 1 f  21  "23" 100 0 0 100  i4toi2 - ));
 DESCR("convert int4 to int2");
-DATA(insert OID = 315 (  keyfirsteq		   PGUID 11 f t f 2 f  16	"0 21" 100 0 0 100	keyfirsteq - ));
-DESCR("");
+DATA(insert OID = 315 (  int2vectoreq	   PGUID 11 f t t 2 f  16  "22 22" 100 0 0 100	int2vectoreq - ));
+DESCR("equal");
 DATA(insert OID = 316 (  i4tod			   PGUID 11 f t t 1 f 701  "23" 100 0 0 100  i4tod - ));
 DESCR("convert int4 to float8");
 DATA(insert OID = 317 (  dtoi4			   PGUID 11 f t t 1 f  23 "701" 100 0 0 100  dtoi4 - ));

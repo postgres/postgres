@@ -8,12 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.61 2000/02/18 09:28:53 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.62 2000/02/21 03:36:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+
 #include "access/genam.h"
+#include "access/hash.h"
 #include "access/heapam.h"
 #include "access/valid.h"
 #include "catalog/pg_operator.h"
@@ -28,10 +30,11 @@
 static void CatCacheRemoveCTup(CatCache *cache, Dlelem *e);
 static Index CatalogCacheComputeHashIndex(struct catcache * cacheInP);
 static Index CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
-								  Relation relation, HeapTuple tuple);
+											   Relation relation,
+											   HeapTuple tuple);
 static void CatalogCacheInitializeCache(struct catcache * cache,
-							Relation relation);
-static long comphash(long l, char *v);
+										Relation relation);
+static uint32 cc_hashname(NameData *n);
 
 /* ----------------
  *		variables, macros and other stuff
@@ -63,6 +66,7 @@ GlobalMemory CacheCxt;			/* context in which caches are allocated */
 /* ----------------
  *		EQPROC is used in CatalogCacheInitializeCache to find the equality
  *		functions for system types that are used as cache key fields.
+ *		See also GetCCHashFunc, which should support the same set of types.
  *
  *		XXX this should be replaced by catalog lookups,
  *		but that seems to pose considerable risk of circularity...
@@ -70,7 +74,7 @@ GlobalMemory CacheCxt;			/* context in which caches are allocated */
  */
 static const Oid eqproc[] = {
 	F_BOOLEQ, InvalidOid, F_CHAREQ, F_NAMEEQ, InvalidOid,
-	F_INT2EQ, F_KEYFIRSTEQ, F_INT4EQ, F_OIDEQ, F_TEXTEQ,
+	F_INT2EQ, F_INT2VECTOREQ, F_INT4EQ, F_OIDEQ, F_TEXTEQ,
 	F_OIDEQ, InvalidOid, InvalidOid, InvalidOid, F_OIDVECTOREQ
 };
 
@@ -80,6 +84,54 @@ static const Oid eqproc[] = {
  *					internal support functions
  * ----------------------------------------------------------------
  */
+
+static CCHashFunc
+GetCCHashFunc(Oid keytype)
+{
+	switch (keytype)
+	{
+		case BOOLOID:
+		case CHAROID:
+			return (CCHashFunc) hashchar;
+		case NAMEOID:
+			return (CCHashFunc) cc_hashname;
+		case INT2OID:
+			return (CCHashFunc) hashint2;
+		case INT2VECTOROID:
+			return (CCHashFunc) hashint2vector;
+		case INT4OID:
+			return (CCHashFunc) hashint4;
+		case TEXTOID:
+			return (CCHashFunc) hashtext;
+		case REGPROCOID:
+		case OIDOID:
+			return (CCHashFunc) hashoid;
+		case OIDVECTOROID:
+			return (CCHashFunc) hashoidvector;
+		default:
+			elog(FATAL, "GetCCHashFunc: type %u unsupported as catcache key",
+				 keytype);
+			return NULL;
+	}
+}
+
+static uint32
+cc_hashname(NameData *n)
+{
+	/*
+	 * We need our own variant of hashname because we want to accept
+	 * null-terminated C strings as search values for name fields.
+	 * So, we have to make sure the data is correctly padded before
+	 * we compute the hash value.
+	 */
+	NameData	my_n;
+
+	namestrcpy(&my_n, NameStr(*n));
+
+	return hashname(&my_n);
+}
+
+
 /* --------------------------------
  *		CatalogCacheInitializeCache
  * --------------------------------
@@ -190,31 +242,20 @@ CatalogCacheInitializeCache(struct catcache * cache,
 
 		if (cache->cc_key[i] > 0)
 		{
+			Oid		keytype = tupdesc->attrs[cache->cc_key[i] - 1]->atttypid;
 
-			/*
-			 * Yoiks.  The implementation of the hashing code and the
-			 * implementation of int2vector's are at loggerheads.  The right
-			 * thing to do is to throw out the implementation of int2vector's
-			 * altogether; until that happens, we do the right thing here
-			 * to guarantee that the hash key generator doesn't try to
-			 * dereference an int2 by mistake.
-			 */
+			cache->cc_hashfunc[i] = GetCCHashFunc(keytype);
 
-			if (tupdesc->attrs[cache->cc_key[i] - 1]->atttypid == INT2VECTOROID)
-				cache->cc_klen[i] = sizeof(short);
-			else
-				cache->cc_klen[i] = tupdesc->attrs[cache->cc_key[i] - 1]->attlen;
-
-			cache->cc_skey[i].sk_procedure = EQPROC(tupdesc->attrs[cache->cc_key[i] - 1]->atttypid);
+			/* If GetCCHashFunc liked the type, safe to index into eqproc[] */
+			cache->cc_skey[i].sk_procedure = EQPROC(keytype);
 
 			fmgr_info(cache->cc_skey[i].sk_procedure,
 					  &cache->cc_skey[i].sk_func);
 			cache->cc_skey[i].sk_nargs = cache->cc_skey[i].sk_func.fn_nargs;
 
-			CACHE5_elog(DEBUG, "CatalogCacheInit %s %d %d %x",
+			CACHE4_elog(DEBUG, "CatalogCacheInit %s %d %x",
 						RelationGetRelationName(relation),
 						i,
-						tupdesc->attrs[cache->cc_key[i] - 1]->attlen,
 						cache);
 		}
 	}
@@ -255,53 +296,6 @@ CatalogCacheInitializeCache(struct catcache * cache,
 	MemoryContextSwitchTo(oldcxt);
 }
 
-/* ----------------
- * comphash
- *		Compute a hash value, somehow.
- *
- * XXX explain algorithm here.
- *
- * l is length of the attribute value, v
- * v is the attribute value ("Datum")
- * ----------------
- */
-static long
-comphash(long l, char *v)
-{
-	long		i;
-	NameData	n;
-
-	CACHE3_elog(DEBUG, "comphash (%d,%x)", l, v);
-
-	switch (l)
-	{
-		case 1:
-		case 2:
-		case 4:
-			return (long) v;
-	}
-
-	if (l == NAMEDATALEN)
-	{
-
-		/*
-		 * if it's a name, make sure that the values are null-padded.
-		 *
-		 * Note that this other fixed-length types can also have the same
-		 * typelen so this may break them	  - XXX
-		 */
-		namestrcpy(&n, v);
-		v = NameStr(n);
-	}
-	else if (l < 0)
-		l = VARSIZE(v);
-
-	i = 0;
-	while (l--)
-		i += *v++;
-	return i;
-}
-
 /* --------------------------------
  *		CatalogCacheComputeHashIndex
  * --------------------------------
@@ -309,40 +303,37 @@ comphash(long l, char *v)
 static Index
 CatalogCacheComputeHashIndex(struct catcache * cacheInP)
 {
-	Index		hashIndex;
+	uint32		hashIndex = 0;
 
-	hashIndex = 0x0;
-	CACHE6_elog(DEBUG, "CatalogCacheComputeHashIndex %s %d %d %d %x",
+	CACHE4_elog(DEBUG, "CatalogCacheComputeHashIndex %s %d %x",
 				cacheInP->cc_relname,
 				cacheInP->cc_nkeys,
-				cacheInP->cc_klen[0],
-				cacheInP->cc_klen[1],
 				cacheInP);
 
 	switch (cacheInP->cc_nkeys)
 	{
 		case 4:
-			hashIndex ^= comphash(cacheInP->cc_klen[3],
-						 (char *) cacheInP->cc_skey[3].sk_argument) << 9;
+			hashIndex ^=
+				(*cacheInP->cc_hashfunc[3])(cacheInP->cc_skey[3].sk_argument) << 9;
 			/* FALLTHROUGH */
 		case 3:
-			hashIndex ^= comphash(cacheInP->cc_klen[2],
-						 (char *) cacheInP->cc_skey[2].sk_argument) << 6;
+			hashIndex ^=
+				(*cacheInP->cc_hashfunc[2])(cacheInP->cc_skey[2].sk_argument) << 6;
 			/* FALLTHROUGH */
 		case 2:
-			hashIndex ^= comphash(cacheInP->cc_klen[1],
-						 (char *) cacheInP->cc_skey[1].sk_argument) << 3;
+			hashIndex ^=
+				(*cacheInP->cc_hashfunc[1])(cacheInP->cc_skey[1].sk_argument) << 3;
 			/* FALLTHROUGH */
 		case 1:
-			hashIndex ^= comphash(cacheInP->cc_klen[0],
-							  (char *) cacheInP->cc_skey[0].sk_argument);
+			hashIndex ^=
+				(*cacheInP->cc_hashfunc[0])(cacheInP->cc_skey[0].sk_argument);
 			break;
 		default:
 			elog(FATAL, "CCComputeHashIndex: %d cc_nkeys", cacheInP->cc_nkeys);
 			break;
 	}
-	hashIndex %= cacheInP->cc_size;
-	return hashIndex;
+	hashIndex %= (uint32) cacheInP->cc_size;
+	return (Index) hashIndex;
 }
 
 /* --------------------------------
@@ -645,8 +636,8 @@ do { \
 		cp->relationId, cp->id, cp->cc_nkeys, cp->cc_size); \
 	for (i = 0; i < nkeys; i += 1) \
 	{ \
-		elog(DEBUG, "InitSysCache: key=%d len=%d skey=[%d %d %d %d]\n", \
-			 cp->cc_key[i], cp->cc_klen[i], \
+		elog(DEBUG, "InitSysCache: key=%d skey=[%d %d %d %d]\n", \
+			 cp->cc_key[i], \
 			 cp->cc_skey[i].sk_flags, \
 			 cp->cc_skey[i].sk_attno, \
 			 cp->cc_skey[i].sk_procedure, \
@@ -742,7 +733,8 @@ InitSysCache(char *relname,
 	cp->cc_iscanfunc = iScanfuncP;
 
 	/* ----------------
-	 *	initialize the cache's key information
+	 *	partially initialize the cache's key information
+	 *	CatalogCacheInitializeCache() will do the rest
 	 * ----------------
 	 */
 	for (i = 0; i < nkeys; ++i)
@@ -756,15 +748,7 @@ InitSysCache(char *relname,
 				elog(FATAL, "InitSysCache: called with %d key[%d]", key[i], i);
 			else
 			{
-				cp->cc_klen[i] = sizeof(Oid);
-
-				/*
-				 * ScanKeyEntryData and struct skey are equivalent. It
-				 * looks like a move was made to obsolete struct skey, but
-				 * it didn't reach this file.  Someday we should clean up
-				 * this code and consolidate to ScanKeyEntry - mer 10 Nov
-				 * 1991
-				 */
+				cp->cc_hashfunc[i] = GetCCHashFunc(OIDOID);
 				ScanKeyEntryInitialize(&cp->cc_skey[i],
 									   (bits16) 0,
 									   (AttrNumber) key[i],

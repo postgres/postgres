@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.30 2000/01/26 05:57:50 momjian Exp $
+ * $Id: hash.h,v 1.31 2000/02/21 03:36:51 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -270,6 +270,7 @@ extern uint32 hashfloat4(float32 keyp);
 extern uint32 hashfloat8(float64 keyp);
 extern uint32 hashoid(Oid key);
 extern uint32 hashoidvector(Oid *key);
+extern uint32 hashint2vector(int16 *key);
 extern uint32 hashchar(char key);
 extern uint32 hashtext(struct varlena * key);
 extern uint32 hashname(NameData *n);

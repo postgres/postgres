@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.102 2000/02/16 17:26:25 thomas Exp $
+ * $Id: builtins.h,v 1.103 2000/02/21 03:36:59 tgl Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -75,6 +75,7 @@ extern int32 int2in(char *num);
 extern char *int2out(int16 sh);
 extern int16 *int2vectorin(char *shs);
 extern char *int2vectorout(int16 *shs);
+extern bool int2vectoreq(int16 *arg1, int16 *arg2);
 extern int32 *int44in(char *input_string);
 extern char *int44out(int32 *an_array);
 extern int32 int4in(char *num);
@@ -109,7 +110,6 @@ extern bool int42lt(int32 arg1, int32 arg2);
 extern bool int42le(int32 arg1, int32 arg2);
 extern bool int42gt(int32 arg1, int32 arg2);
 extern bool int42ge(int32 arg1, int32 arg2);
-extern bool keyfirsteq(int16 *arg1, int16 arg2);
 extern int32 int4um(int32 arg);
 extern int32 int4pl(int32 arg1, int32 arg2);
 extern int32 int4mi(int32 arg1, int32 arg2);

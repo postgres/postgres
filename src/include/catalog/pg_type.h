@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.82 2000/02/20 06:28:41 tgl Exp $
+ * $Id: pg_type.h,v 1.83 2000/02/21 03:36:57 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -177,13 +177,6 @@ DESCR("-32 thousand to 32 thousand, 2-byte storage");
 
 DATA(insert OID = 22 (	int2vector PGUID INDEX_MAX_KEYS*2 -1 f b t \054 0  21 int2vectorin int2vectorout int2vectorin int2vectorout i _null_ ));
 DESCR("array of INDEX_MAX_KEYS int2 integers, used in system tables");
-/*
- * XXX -- the implementation of int2vector's in postgres is a hack, and will
- *		  go away someday.	until that happens, there is a case (in the
- *		  catalog cache management code) where we need to step gingerly
- *		  over piles of int2vector's on the sidewalk.  in order to do so, we
- *		  need the OID of the int2vector row from pg_type.
- */
 #define INT2VECTOROID	22
 
 DATA(insert OID = 23 (	int4	   PGUID  4  10 t b t \054 0   0 int4in int4out int4in int4out i _null_ ));
@@ -216,6 +209,8 @@ DESCR("command identifier type, sequence in transaction id");
 
 DATA(insert OID = 30 (	oidvector  PGUID INDEX_MAX_KEYS*4 -1 f b t \054 0  26 oidvectorin oidvectorout oidvectorin oidvectorout i _null_ ));
 DESCR("array of INDEX_MAX_KEYS oids, used in system tables");
+#define OIDVECTOROID	30
+
 DATA(insert OID = 32 (	SET		   PGUID -1  -1 f b t \054 0   0 textin textout textin textout i _null_ ));
 DESCR("set of tuples");
 

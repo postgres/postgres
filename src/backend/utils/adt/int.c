@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.32 2000/01/26 05:57:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.33 2000/02/21 03:36:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,6 +145,17 @@ int2vectorout(int16 *int2Array)
 }
 
 /*
+ * We don't have a complete set of int2vector support routines,
+ * but we need int2vectoreq for catcache indexing.
+ */
+bool
+int2vectoreq(int16 *arg1, int16 *arg2)
+{
+	return (bool) (memcmp(arg1, arg2, INDEX_MAX_KEYS * sizeof(int16)) == 0);
+}
+
+
+/*
  *		int44in			- converts "num num ..." to internal form
  *
  *		Note:
@@ -169,7 +180,7 @@ int44in(char *input_string)
 }
 
 /*
- *		int2vectorout		- converts internal form to "num num ..."
+ *		int44out		- converts internal form to "num num ..."
  */
 char *
 int44out(int32 *an_array)
@@ -487,13 +498,6 @@ bool
 int42ge(int32 arg1, int32 arg2)
 {
 	return arg1 >= arg2;
-}
-
-
-bool
-keyfirsteq(int16 *arg1, int16 arg2)
-{
-	return *arg1 == arg2;
 }
 
 /*
