@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.194 2002/08/18 01:35:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.195 2002/08/27 14:49:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1063,34 +1063,33 @@ connectDBComplete(PGconn *conn)
 	if (conn == NULL || conn->status == CONNECTION_BAD)
 		return 0;
 
-      /*
-       * Prepare to time calculations, if connect_timeout isn't zero.
-       */
-      if (conn->connect_timeout != NULL)
+    /*
+     * Prepare to time calculations, if connect_timeout isn't zero.
+     */
+    if (conn->connect_timeout != NULL)
 	{
-              remains.tv_sec = atoi(conn->connect_timeout);
-              if (!remains.tv_sec)
-              {
-                      conn->status = CONNECTION_BAD;
-                      return 0;
-              }
-              remains.tv_usec = 0;
-              rp = &remains;
-      }
+		remains.tv_sec = atoi(conn->connect_timeout);
+		if (!remains.tv_sec)
+		{
+			conn->status = CONNECTION_BAD;
+			return 0;
+		}
+		remains.tv_usec = 0;
+		rp = &remains;
+	}
 
-
-      while (rp == NULL || remains.tv_sec > 0 || (remains.tv_sec == 0 && remains.tv_usec > 0))
-      {
+	while (rp == NULL || remains.tv_sec > 0 || (remains.tv_sec == 0 && remains.tv_usec > 0))
+	{
 		/*
-               * If connecting timeout is set, get current time.
-               */
-              if (rp != NULL && gettimeofday(&start_time, NULL) == -1)
-              {
-                      conn->status = CONNECTION_BAD;
-                      return 0;
-              }
+		 * If connecting timeout is set, get current time.
+		 */
+		if (rp != NULL && gettimeofday(&start_time, NULL) == -1)
+		{
+			conn->status = CONNECTION_BAD;
+			return 0;
+		}
 
-        /*
+		/*
 		 * Wait, if necessary.	Note that the initial state (just after
 		 * PQconnectStart) is to wait for the socket to select for
 		 * writing.
@@ -1104,7 +1103,7 @@ connectDBComplete(PGconn *conn)
 				return 1;		/* success! */
 
 			case PGRES_POLLING_READING:
-                              if (pqWaitTimed(1, 0, conn, rp))
+				if (pqWaitTimed(1, 0, conn, rp))
 				{
 					conn->status = CONNECTION_BAD;
 					return 0;
@@ -1130,27 +1129,28 @@ connectDBComplete(PGconn *conn)
 		 */
 		flag = PQconnectPoll(conn);
 
-              /*
-               * If connecting timeout is set, calculate remain time.
-               */
-              if (NULL != rp) {
-                      if (-1 == gettimeofday(&finish_time, NULL))
-                      {
-                              conn->status = CONNECTION_BAD;
-                              return 0;
-                      }
-                      if (0 > (finish_time.tv_usec -= start_time.tv_usec))
-                      {
-                              remains.tv_sec++;
-                              finish_time.tv_usec += 1000000;
-                      }
-                      if (0 > (remains.tv_usec -= finish_time.tv_usec))
-                      {
-                              remains.tv_sec--;
-                              remains.tv_usec += 1000000;
-                      }
-                      remains.tv_sec -= finish_time.tv_sec - start_time.tv_sec;
-              }
+		/*
+		 * If connecting timeout is set, calculate remain time.
+		 */
+		if (NULL != rp)
+		{
+			if (gettimeofday(&finish_time, NULL) == -1)
+			{
+				conn->status = CONNECTION_BAD;
+				return 0;
+			}
+			if ((finish_time.tv_usec -= start_time.tv_usec) < 0 )
+			{
+				remains.tv_sec++;
+				finish_time.tv_usec += 1000000;
+			}
+			if ((remains.tv_usec -= finish_time.tv_usec) < 0 )
+			{
+				remains.tv_sec--;
+				remains.tv_usec += 1000000;
+			}
+			remains.tv_sec -= finish_time.tv_sec - start_time.tv_sec;
+		}
 	}
       conn->status = CONNECTION_BAD;
       return 0;
