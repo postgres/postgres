@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.21 1997/11/20 23:20:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.22 1997/12/09 01:40:30 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,7 +123,7 @@ _bt_doinsert(Relation rel, BTItem btitem, bool index_is_unique, Relation heapRel
 				htup = heap_fetch(heapRel, true, &(itup->t_tid), NULL);
 				if (htup != (HeapTuple) NULL)
 				{				/* it is a duplicate */
-					elog(WARN, "Cannot insert a duplicate key into a unique index.");
+					elog(WARN, "Cannot insert a duplicate key into a unique index");
 				}
 				/* get next offnum */
 				if (offset < maxoff)
