@@ -131,6 +131,10 @@ pg_resetxlog -
 	Reset the WAL log (pg_xlog) to recover from crash or format change
 	by Tom Lane <tgl@sss.pgh.pa.us>
 
+pg_upgrade -
+	Upgrade from previous PostgreSQL version without pg_dump/reload
+	by Bruce Momjian <pgman@candle.pha.pa.us>
+
 pgbench -
 	TPC-B like benchmarking tool
 	by Tatsuo Ishii <t-ishii@sra.co.jp>
