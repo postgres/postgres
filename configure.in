@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.369 2004/07/20 20:37:13 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.370 2004/08/01 06:19:16 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -909,11 +909,6 @@ AC_LIBOBJ(gettimeofday)
 AC_LIBOBJ(kill)
 AC_LIBOBJ(open)
 AC_LIBOBJ(rand) ;;
-esac
-
-# Win32 can't do rename or unlink on an open file
-case $host_os in mingw*|cygwin*)
-AC_LIBOBJ(dirmod) ;;
 esac
 
 if test "$with_readline" = yes; then

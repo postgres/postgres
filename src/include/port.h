@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.45 2004/07/23 01:58:36 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.46 2004/08/01 06:19:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,6 +147,8 @@ extern int	pgunlink(const char *path);
 #define rename(from, to)	pgrename(from, to)
 #define unlink(path)		pgunlink(path)
 #endif
+
+extern bool rmtree(char *path, bool rmtopdir);
 
 #ifdef WIN32
 

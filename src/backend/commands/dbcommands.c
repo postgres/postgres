@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.137 2004/06/25 21:55:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.138 2004/08/01 06:19:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -915,7 +915,6 @@ remove_dbtablespaces(Oid db_id)
 	Relation rel;
 	HeapScanDesc scan;
 	HeapTuple tuple;
-	char buf[MAXPGPATH + 100];
 
 	rel = heap_openr(TableSpaceRelationName, AccessShareLock);
 	scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
@@ -938,17 +937,11 @@ remove_dbtablespaces(Oid db_id)
 			continue;
 		}
 
-#ifndef WIN32
-		snprintf(buf, sizeof(buf), "rm -rf '%s'", dstpath);
-#else
-		snprintf(buf, sizeof(buf), "rmdir /s /q \"%s\"", dstpath);
-#endif
-		if (system(buf) != 0)
+		if (!rmtree(dstpath, true))
 		{
 			ereport(WARNING,
 				(errmsg("could not remove database directory \"%s\"",
 						dstpath),
-				 errdetail("Failing system command was: %s", buf),
 				 errhint("Look in the postmaster's stderr log for more information.")));
 		}
 

@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.45 2004/08/01 05:59:13 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.46 2004/08/01 06:19:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,7 +146,6 @@ char	   backend_exec[MAXPGPATH];
 
 static void *xmalloc(size_t size);
 static char *xstrdup(const char *s);
-static bool rmtree(char *path, bool rmtopdir);
 static char **replace_token(char **lines, char *token, char *replacement);
 static char **readfile(char *path);
 static void writefile(char *path, char **lines);
@@ -250,30 +249,6 @@ xstrdup(const char *s)
 	}
 	return result;
 }
-
-/*
- * delete a directory tree recursively
- * assumes path points to a valid directory
- * deletes everything under path
- * if rmtopdir is true deletes the directory too
- */
-static bool
-rmtree(char *path, bool rmtopdir)
-{
-	char		buf[MAXPGPATH + 64];
-
-#ifndef WIN32
-	/* doesn't handle .* files, but we don't make any... */
-	snprintf(buf, sizeof(buf), "rm -rf \"%s\"%s", path,
-			 rmtopdir ? "" : "/*");
-#else
-	snprintf(buf, sizeof(buf), "%s /s /q \"%s\"",
-			 rmtopdir ? "rmdir" : "del", path);
-#endif
-
-	return !system(buf);
-}
-
 
 /*
  * make a copy of the array of lines, with token replaced by replacement

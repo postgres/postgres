@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.31 2004/07/14 17:55:09 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.32 2004/08/01 06:19:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -98,6 +98,19 @@ PostgreSQL documentation
 
    <para>
     <variablelist>
+     <varlistentry>
+      <term><option>-A <replaceable class="parameter">authmethod</replaceable></option></term>
+      <term><option>--auth=<replaceable class="parameter">authmethod</replaceable></option></term>
+      <listitem>
+       <para>
+        This option specifies the authentication method for local users
+        used in <filename>pg_hba.conf</>.  Do not use <literal>trust</>
+        unless you trust all local users on your system.  <literal>Trust</> 
+        is the default for ease of installation.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry>
       <term><option>-D <replaceable class="parameter">directory</replaceable></option></term>
       <term><option>--pgdata=<replaceable class="parameter">directory</replaceable></option></term>

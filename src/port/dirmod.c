@@ -10,21 +10,28 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.12 2004/02/26 02:59:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.13 2004/08/01 06:19:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-
-#ifndef TEST_VERSION
-
-#if defined(WIN32) || defined(__CYGWIN__)
-
 
 #ifndef FRONTEND
 #include "postgres.h"
 #else
 #include "postgres_fe.h"
 #endif
+
+#include <unistd.h>
+#include <dirent.h>
+#include <sys/stat.h>
+
+#define _(x) gettext((x))
+
+#ifndef TEST_VERSION
+
+#if defined(WIN32) || defined(__CYGWIN__)
+
+
 #include "miscadmin.h"
 
 #undef rename
@@ -82,7 +89,7 @@ pgunlink(const char *path)
 		if (errno != EACCES)
 			/* set errno? */
 			return -1;
-		pg_usleep(100000);				/* us */
+		pg_usleep(100000);		/* us */
 		if (loops == 30)
 #ifndef FRONTEND
 			elog(LOG, "could not unlink \"%s\", continuing to try",
@@ -104,6 +111,165 @@ pgunlink(const char *path)
 }
 
 #endif
+
+#if defined(WIN32) || defined(__CYGWIN__)
+#define rmt_unlink(path) pgunlink(path)
+#else
+#define rmt_unlink(path) unlink(path)
+#endif
+
+#ifdef FRONTEND
+
+static void *
+xmalloc(size_t size)
+{
+    void       *result;
+
+    result = malloc(size);
+    if (!result)
+    {
+        fprintf(stderr, _("out of memory\n"));
+        exit(1);
+    }
+    return result;
+}
+
+static char *
+xstrdup(const char *s)
+{
+    char       *result;
+
+    result = strdup(s);
+    if (!result)
+    {
+        fprintf(stderr, _("out of memory\n"));
+        exit(1);
+    }
+    return result;
+}
+
+#define xfree(n) free(n)
+
+#else
+
+/* on the backend, use palloc and friends */
+
+#define xmalloc(n)	palloc(n)
+#define xstrdup(n)	pstrdup(n)
+#define xfree(n)	pfree(n)
+
+#endif
+
+/*
+ * deallocate memory used for filenames
+ */
+
+static void
+rmt_cleanup(char ** filenames)
+{
+	char ** fn;
+
+	for (fn = filenames; *fn; fn++)
+		xfree(*fn);
+
+	xfree(filenames);
+}
+
+
+
+/*
+ * delete a directory tree recursively
+ * assumes path points to a valid directory
+ * deletes everything under path
+ * if rmtopdir is true deletes the directory too
+ *
+ */
+
+bool
+rmtree(char *path, bool rmtopdir)
+{
+	char		filepath[MAXPGPATH];
+	DIR		   *dir;
+	struct dirent *file;
+	char	  **filenames;
+	char	  **filename;
+	int			numnames = 0;
+	struct stat statbuf;
+
+	/*
+	 * we copy all the names out of the directory before we start
+	 * modifying it.
+	 */
+
+	dir = opendir(path);
+	if (dir == NULL)
+		return false;
+
+	while ((file = readdir(dir)) != NULL)
+	{
+		if (strcmp(file->d_name, ".") != 0 && strcmp(file->d_name, "..") != 0)
+			numnames++;
+	}
+
+	rewinddir(dir);
+
+	filenames = xmalloc((numnames + 2) * sizeof(char *));
+	numnames = 0;
+
+	while ((file = readdir(dir)) != NULL)
+	{
+		if (strcmp(file->d_name, ".") != 0 && strcmp(file->d_name, "..") != 0)
+			filenames[numnames++] = xstrdup(file->d_name);
+	}
+
+	filenames[numnames] = NULL;
+
+	closedir(dir);
+
+	/* now we have the names we can start removing things */
+
+	for (filename = filenames; *filename; filename++)
+	{
+		snprintf(filepath, MAXPGPATH, "%s/%s", path, *filename);
+
+		if (stat(filepath, &statbuf) != 0)
+		{
+			rmt_cleanup(filenames);
+			return false;
+		}
+
+		if (S_ISDIR(statbuf.st_mode))
+		{
+			/* call ourselves recursively for a directory */
+			if (!rmtree(filepath, true))
+			{
+				rmt_cleanup(filenames);
+				return false;
+			}
+		}
+		else
+		{
+			if (rmt_unlink(filepath) != 0)
+			{
+				rmt_cleanup(filenames);
+				return false;
+			}
+		}
+	}
+
+	if (rmtopdir)
+	{
+		if (rmdir(path) != 0)
+		{
+			rmt_cleanup(filenames);
+			return false;
+		}
+	}
+
+	rmt_cleanup(filenames);
+	return true;
+}
+
 
 #else
 
