@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.49 2001/01/21 22:02:01 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.50 2001/02/05 19:21:45 petere Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -183,6 +183,29 @@
    3</literal> are not valid (because there is no
    <literal>&lt;</literal> operator to compare a boolean with
    <literal>3</literal>).
+  </para>
+
+  <para>
+   In addition to the comparison operators, the special
+   <token>BETWEEN</token> construct is available.
+<synopsis>
+<replaceable>a</replaceable> BETWEEN <replaceable>x</replaceable> AND <replaceable>y</replaceable>
+</synopsis>
+   is equivalent to
+<synopsis>
+<replaceable>a</replaceable> &gt;= <replaceable>x</replaceable> AND <replaceable>a</replaceable> &lt;= <replaceable>y</replaceable>
+</synopsis>
+   Similarly,
+<synopsis>
+<replaceable>a</replaceable> NOT BETWEEN <replaceable>x</replaceable> AND <replaceable>y</replaceable>
+</synopsis>
+   is equivalent to
+<synopsis>
+<replaceable>a</replaceable> &lt; <replaceable>x</replaceable> OR <replaceable>a</replaceable> &gt; <replaceable>y</replaceable>
+</synopsis>
+   There is no difference between the two respective forms apart from
+   the <acronym>CPU</acronym> cycles required to rewrite the first one
+   into the second one internally.
   </para>
 
   <para>
