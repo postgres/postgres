@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.80 2003/01/23 23:38:55 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.81 2003/05/27 17:49:45 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -57,11 +57,11 @@ dumpacl(Acl *acl)
 	int			i;
 	AclItem    *aip;
 
-	elog(DEBUG1, "acl size = %d, # acls = %d",
+	elog(DEBUG2, "acl size = %d, # acls = %d",
 		 ACL_SIZE(acl), ACL_NUM(acl));
 	aip = ACL_DAT(acl);
 	for (i = 0; i < ACL_NUM(acl); ++i)
-		elog(DEBUG1, "	acl[%d]: %s", i,
+		elog(DEBUG2, "	acl[%d]: %s", i,
 			 DatumGetCString(DirectFunctionCall1(aclitemout,
 											 PointerGetDatum(aip + i))));
 }
@@ -894,7 +894,7 @@ pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode)
 		!usecatupd)
 	{
 #ifdef ACLDEBUG
-		elog(DEBUG1, "pg_class_aclcheck: catalog update: permission denied");
+		elog(DEBUG2, "pg_class_aclcheck: catalog update: permission denied");
 #endif
 		ReleaseSysCache(tuple);
 		return ACLCHECK_NO_PRIV;
@@ -906,7 +906,7 @@ pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode)
 	if (usesuper)
 	{
 #ifdef ACLDEBUG
-		elog(DEBUG1, "pg_class_aclcheck: %u is superuser", userid);
+		elog(DEBUG2, "pg_class_aclcheck: %u is superuser", userid);
 #endif
 		ReleaseSysCache(tuple);
 		return ACLCHECK_OK;

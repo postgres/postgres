@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.94 2003/05/14 03:26:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.95 2003/05/27 17:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,7 +150,7 @@ void
 Async_Notify(char *relname)
 {
 	if (Trace_notify)
-		elog(LOG, "Async_Notify: %s", relname);
+		elog(DEBUG1, "Async_Notify: %s", relname);
 
 	/* no point in making duplicate entries in the list ... */
 	if (!AsyncExistsPendingNotify(relname))
@@ -198,7 +198,7 @@ Async_Listen(char *relname, int pid)
 	bool		alreadyListener = false;
 
 	if (Trace_notify)
-		elog(LOG, "Async_Listen: %s", relname);
+		elog(DEBUG1, "Async_Listen: %s", relname);
 
 	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
 
@@ -293,7 +293,7 @@ Async_Unlisten(char *relname, int pid)
 	}
 
 	if (Trace_notify)
-		elog(LOG, "Async_Unlisten %s", relname);
+		elog(DEBUG1, "Async_Unlisten %s", relname);
 
 	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
 
@@ -351,7 +351,7 @@ Async_UnlistenAll(void)
 	ScanKeyData key[1];
 
 	if (Trace_notify)
-		elog(LOG, "Async_UnlistenAll");
+		elog(DEBUG1, "Async_UnlistenAll");
 
 	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
 	tdesc = RelationGetDescr(lRel);
@@ -453,7 +453,7 @@ AtCommit_Notify(void)
 	}
 
 	if (Trace_notify)
-		elog(LOG, "AtCommit_Notify");
+		elog(DEBUG1, "AtCommit_Notify");
 
 	/* preset data to update notify column to MyProcPid */
 	nulls[0] = nulls[1] = nulls[2] = ' ';
@@ -485,14 +485,14 @@ AtCommit_Notify(void)
 			 */
 
 			if (Trace_notify)
-				elog(LOG, "AtCommit_Notify: notifying self");
+				elog(DEBUG1, "AtCommit_Notify: notifying self");
 
 			NotifyMyFrontEnd(relname, listenerPID);
 		}
 		else
 		{
 			if (Trace_notify)
-				elog(LOG, "AtCommit_Notify: notifying pid %d",
+				elog(DEBUG1, "AtCommit_Notify: notifying pid %d",
 					 listenerPID);
 
 			/*
@@ -541,7 +541,7 @@ AtCommit_Notify(void)
 	ClearPendingNotifies();
 
 	if (Trace_notify)
-		elog(LOG, "AtCommit_Notify: done");
+		elog(DEBUG1, "AtCommit_Notify: done");
 }
 
 /*
@@ -628,12 +628,12 @@ Async_NotifyHandler(SIGNAL_ARGS)
 			{
 				/* Here, it is finally safe to do stuff. */
 				if (Trace_notify)
-					elog(LOG, "Async_NotifyHandler: perform async notify");
+					elog(DEBUG1, "Async_NotifyHandler: perform async notify");
 
 				ProcessIncomingNotify();
 
 				if (Trace_notify)
-					elog(LOG, "Async_NotifyHandler: done");
+					elog(DEBUG1, "Async_NotifyHandler: done");
 			}
 		}
 
@@ -707,12 +707,12 @@ EnableNotifyInterrupt(void)
 		if (notifyInterruptOccurred)
 		{
 			if (Trace_notify)
-				elog(LOG, "EnableNotifyInterrupt: perform async notify");
+				elog(DEBUG1, "EnableNotifyInterrupt: perform async notify");
 
 			ProcessIncomingNotify();
 
 			if (Trace_notify)
-				elog(LOG, "EnableNotifyInterrupt: done");
+				elog(DEBUG1, "EnableNotifyInterrupt: done");
 		}
 	}
 }
@@ -763,7 +763,7 @@ ProcessIncomingNotify(void)
 				nulls[Natts_pg_listener];
 
 	if (Trace_notify)
-		elog(LOG, "ProcessIncomingNotify");
+		elog(DEBUG1, "ProcessIncomingNotify");
 
 	set_ps_display("async_notify");
 
@@ -799,7 +799,7 @@ ProcessIncomingNotify(void)
 			/* Notify the frontend */
 
 			if (Trace_notify)
-				elog(LOG, "ProcessIncomingNotify: received %s from %d",
+				elog(DEBUG1, "ProcessIncomingNotify: received %s from %d",
 					 relname, (int) sourcePID);
 
 			NotifyMyFrontEnd(relname, sourcePID);
@@ -834,7 +834,7 @@ ProcessIncomingNotify(void)
 	set_ps_display("idle");
 
 	if (Trace_notify)
-		elog(LOG, "ProcessIncomingNotify: done");
+		elog(DEBUG1, "ProcessIncomingNotify: done");
 }
 
 /*

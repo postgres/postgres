@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.56 2003/05/14 03:26:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.57 2003/05/27 17:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ static void
 do_start()
 {
 	StartTransactionCommand();
-	elog(DEBUG3, "start transaction");
+	elog(DEBUG4, "start transaction");
 }
 
 
@@ -64,7 +64,7 @@ static void
 do_end()
 {
 	CommitTransactionCommand();
-	elog(DEBUG3, "commit transaction");
+	elog(DEBUG4, "commit transaction");
 	if (isatty(0))
 	{
 		printf("bootstrap> ");
@@ -155,7 +155,7 @@ Boot_CreateStmt:
 				{
 					do_start();
 					numattr = 0;
-					elog(DEBUG3, "creating%s%s relation %s...",
+					elog(DEBUG4, "creating%s%s relation %s...",
 						 $2 ? " bootstrap" : "",
 						 $3 ? " shared" : "",
 						 LexIDStr($5));
@@ -176,7 +176,7 @@ Boot_CreateStmt:
 					{
 						if (boot_reldesc)
 						{
-							elog(DEBUG3, "create bootstrap: warning, open relation exists, closing first");
+							elog(DEBUG4, "create bootstrap: warning, open relation exists, closing first");
 							closerel(NULL);
 						}
 
@@ -186,7 +186,7 @@ Boot_CreateStmt:
 												   $3,
 												   true,
 												   true);
-						elog(DEBUG3, "bootstrap relation created");
+						elog(DEBUG4, "bootstrap relation created");
 					}
 					else
 					{
@@ -199,7 +199,7 @@ Boot_CreateStmt:
 													  $3,
 													  ONCOMMIT_NOOP,
 													  true);
-						elog(DEBUG3, "relation created with oid %u", id);
+						elog(DEBUG4, "relation created with oid %u", id);
 					}
 					do_end();
 				}
@@ -210,9 +210,9 @@ Boot_InsertStmt:
 				{
 					do_start();
 					if ($2)
-						elog(DEBUG3, "inserting row with oid %u...", $2);
+						elog(DEBUG4, "inserting row with oid %u...", $2);
 					else
-						elog(DEBUG3, "inserting row...");
+						elog(DEBUG4, "inserting row...");
 					num_columns_read = 0;
 				}
 		  LPAREN  boot_tuplelist RPAREN

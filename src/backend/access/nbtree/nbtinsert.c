@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.99 2003/02/23 06:17:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.100 2003/05/27 17:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1193,7 +1193,7 @@ _bt_insert_parent(Relation rel,
 			BTPageOpaque lpageop;
 
 			if (!InRecovery)
-				elog(DEBUG1, "_bt_insert_parent: concurrent ROOT page split");
+				elog(DEBUG2, "_bt_insert_parent: concurrent ROOT page split");
 			lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
 			/* Find the leftmost page at the next level up */
 			pbuf = _bt_get_endpoint(rel, lpageop->btpo.level + 1, false);

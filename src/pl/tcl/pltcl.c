@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.70 2003/05/16 13:37:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.71 2003/05/27 17:49:47 momjian Exp $
  *
  **********************************************************************/
 
@@ -1272,7 +1272,7 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 	}
 
 	if (strcmp(argv[1], "DEBUG") == 0)
-		level = DEBUG1;
+		level = DEBUG2;
 	else if (strcmp(argv[1], "LOG") == 0)
 		level = LOG;
 	else if (strcmp(argv[1], "INFO") == 0)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.64 2003/05/08 18:16:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.65 2003/05/27 17:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -702,7 +702,7 @@ PortalRunUtility(Portal portal, Query *query,
 {
 	Node   *utilityStmt = query->utilityStmt;
 
-	elog(DEBUG2, "ProcessUtility");
+	elog(DEBUG3, "ProcessUtility");
 
 	/*
 	 * Set snapshot if utility stmt needs one.  Most reliable
@@ -806,7 +806,7 @@ PortalRunMulti(Portal portal,
 			/*
 			 * process a plannable query.
 			 */
-			elog(DEBUG2, "ProcessQuery");
+			elog(DEBUG3, "ProcessQuery");
 
 			/* Must always set snapshot for plannable queries */
 			SetQuerySnapshot();

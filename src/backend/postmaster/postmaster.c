@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.328 2003/05/15 16:35:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.329 2003/05/27 17:49:46 momjian Exp $
  *
  * NOTES
  *
@@ -631,11 +631,11 @@ PostmasterMain(int argc, char *argv[])
 		extern char **environ;
 		char	  **p;
 
-		elog(DEBUG2, "%s: PostmasterMain: initial environ dump:", progname);
-		elog(DEBUG2, "-----------------------------------------");
+		elog(DEBUG3, "%s: PostmasterMain: initial environ dump:", progname);
+		elog(DEBUG3, "-----------------------------------------");
 		for (p = environ; *p; ++p)
-			elog(DEBUG2, "\t%s", *p);
-		elog(DEBUG2, "-----------------------------------------");
+			elog(DEBUG3, "\t%s", *p);
+		elog(DEBUG3, "-----------------------------------------");
 	}
 
 	/*
@@ -1407,7 +1407,7 @@ processCancelRequest(Port *port, void *pkt)
 
 	if (backendPID == CheckPointPID)
 	{
-		elog(DEBUG1, "processCancelRequest: CheckPointPID in cancel request for process %d", backendPID);
+		elog(DEBUG2, "processCancelRequest: CheckPointPID in cancel request for process %d", backendPID);
 		return;
 	}
 	else if (ExecBackend)
@@ -1425,20 +1425,20 @@ processCancelRequest(Port *port, void *pkt)
 			if (bp->cancel_key == cancelAuthCode)
 			{
 				/* Found a match; signal that backend to cancel current op */
-				elog(DEBUG1, "processing cancel request: sending SIGINT to process %d",
+				elog(DEBUG2, "processing cancel request: sending SIGINT to process %d",
 					 backendPID);
 				kill(bp->pid, SIGINT);
 			}
 			else
 				/* Right PID, wrong key: no way, Jose */
-				elog(DEBUG1, "bad key in cancel request for process %d",
+				elog(DEBUG2, "bad key in cancel request for process %d",
 					 backendPID);
 			return;
 		}
 	}
 
 	/* No matching backend */
-	elog(DEBUG1, "bad pid in cancel request for process %d", backendPID);
+	elog(DEBUG2, "bad pid in cancel request for process %d", backendPID);
 }
 
 /*
@@ -1603,7 +1603,7 @@ pmdie(SIGNAL_ARGS)
 
 	PG_SETMASK(&BlockSig);
 
-	elog(DEBUG1, "pmdie %d", postgres_signal_arg);
+	elog(DEBUG2, "pmdie %d", postgres_signal_arg);
 
 	switch (postgres_signal_arg)
 	{
@@ -1727,7 +1727,7 @@ reaper(SIGNAL_ARGS)
 
 	PG_SETMASK(&BlockSig);
 
-	elog(DEBUG3, "reaping dead processes");
+	elog(DEBUG4, "reaping dead processes");
 #ifdef HAVE_WAITPID
 	while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
 	{
@@ -1863,7 +1863,7 @@ CleanupProc(int pid,
 			   *next;
 	Backend    *bp;
 
-	LogChildExit(DEBUG1, gettext("child process"), pid, exitstatus);
+	LogChildExit(DEBUG2, gettext("child process"), pid, exitstatus);
 
 	/*
 	 * If a backend dies in an ugly way (i.e. exit status not 0) then we
@@ -1933,7 +1933,7 @@ CleanupProc(int pid,
 			 */
 			if (!FatalError)
 			{
-				elog(DEBUG1, "CleanupProc: sending %s to process %d",
+				elog(DEBUG2, "CleanupProc: sending %s to process %d",
 					 (SendStop ? "SIGSTOP" : "SIGQUIT"), (int) bp->pid);
 				kill(bp->pid, (SendStop ? SIGSTOP : SIGQUIT));
 			}
@@ -2005,7 +2005,7 @@ SignalChildren(int signal)
 
 		if (bp->pid != MyProcPid)
 		{
-			elog(DEBUG1, "SignalChildren: sending signal %d to process %d",
+			elog(DEBUG2, "SignalChildren: sending signal %d to process %d",
 				 signal, (int) bp->pid);
 			kill(bp->pid, signal);
 		}
@@ -2097,7 +2097,7 @@ BackendStartup(Port *port)
 	}
 
 	/* in parent, normal */
-	elog(DEBUG1, "BackendStartup: forked pid=%d socket=%d", (int) pid,
+	elog(DEBUG2, "BackendStartup: forked pid=%d socket=%d", (int) pid,
 		 port->sock);
 
 	/*
@@ -2469,10 +2469,10 @@ BackendFinalize(Port *port)
 	/*
 	 * Debug: print arguments being passed to backend
 	 */
-	elog(DEBUG2, "%s child[%d]: starting with (", progname, MyProcPid);
+	elog(DEBUG3, "%s child[%d]: starting with (", progname, MyProcPid);
 	for (i = 0; i < ac; ++i)
-		elog(DEBUG2, "\t%s", av[i]);
-	elog(DEBUG2, ")");
+		elog(DEBUG3, "\t%s", av[i]);
+	elog(DEBUG3, ")");
 
 	ClientAuthInProgress = false;		/* client_min_messages is active
 										 * now */

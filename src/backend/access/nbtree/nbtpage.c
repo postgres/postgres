@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.64 2003/03/04 21:51:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.65 2003/05/27 17:49:45 momjian Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -416,7 +416,7 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 				_bt_pageinit(page, BufferGetPageSize(buf));
 				return buf;
 			}
-			elog(DEBUG1, "_bt_getbuf: FSM returned nonrecyclable page");
+			elog(DEBUG2, "_bt_getbuf: FSM returned nonrecyclable page");
 			_bt_relbuf(rel, buf);
 		}
 

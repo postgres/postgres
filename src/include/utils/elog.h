@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.43 2003/05/22 17:20:43 petere Exp $
+ * $Id: elog.h,v 1.44 2003/05/27 17:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 #define DEBUG4		11
 #define DEBUG3		12
 #define DEBUG2		13
-#define DEBUG1		14
+#define DEBUG1		14			/* used by GUC debug_* variables */
 #define LOG			15			/* Server operational messages; sent only
 								 * to server log by default. */
 #define COMMERROR	16			/* Client communication problems; same as

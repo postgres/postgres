@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.140 2003/05/26 00:11:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.141 2003/05/27 17:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1279,7 +1279,7 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	if (isNull)
 	{
 		/* Treat a null result as false ... but it's a tad fishy ... */
-		elog(DEBUG1, "pred_test_simple_clause: null test result");
+		elog(DEBUG2, "pred_test_simple_clause: null test result");
 		return false;
 	}
 	return DatumGetBool(test_result);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.102 2002/11/13 00:39:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.103 2003/05/27 17:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,7 +164,7 @@ CatalogCacheComputeHashValue(CatCache *cache, int nkeys, ScanKey cur_skey)
 {
 	uint32		hashValue = 0;
 
-	CACHE4_elog(DEBUG1, "CatalogCacheComputeHashValue %s %d %p",
+	CACHE4_elog(DEBUG2, "CatalogCacheComputeHashValue %s %d %p",
 				cache->cc_relname,
 				nkeys,
 				cache);
@@ -281,14 +281,14 @@ CatCachePrintStats(void)
 	long		cc_lsearches = 0;
 	long		cc_lhits = 0;
 
-	elog(DEBUG1, "Catcache stats dump: %d/%d tuples in catcaches",
+	elog(DEBUG2, "Catcache stats dump: %d/%d tuples in catcaches",
 		 CacheHdr->ch_ntup, CacheHdr->ch_maxtup);
 
 	for (cache = CacheHdr->ch_caches; cache; cache = cache->cc_next)
 	{
 		if (cache->cc_ntup == 0 && cache->cc_searches == 0)
 			continue;			/* don't print unused caches */
-		elog(DEBUG1, "Catcache %s/%s: %d tup, %ld srch, %ld+%ld=%ld hits, %ld+%ld=%ld loads, %ld invals, %ld discards, %ld lsrch, %ld lhits",
+		elog(DEBUG2, "Catcache %s/%s: %d tup, %ld srch, %ld+%ld=%ld hits, %ld+%ld=%ld loads, %ld invals, %ld discards, %ld lsrch, %ld lhits",
 			 cache->cc_relname,
 			 cache->cc_indname,
 			 cache->cc_ntup,
@@ -312,7 +312,7 @@ CatCachePrintStats(void)
 		cc_lsearches += cache->cc_lsearches;
 		cc_lhits += cache->cc_lhits;
 	}
-	elog(DEBUG1, "Catcache totals: %d tup, %ld srch, %ld+%ld=%ld hits, %ld+%ld=%ld loads, %ld invals, %ld discards, %ld lsrch, %ld lhits",
+	elog(DEBUG2, "Catcache totals: %d tup, %ld srch, %ld+%ld=%ld hits, %ld+%ld=%ld loads, %ld invals, %ld discards, %ld lsrch, %ld lhits",
 		 CacheHdr->ch_ntup,
 		 cc_searches,
 		 cc_hits,
@@ -419,7 +419,7 @@ CatalogCacheIdInvalidate(int cacheId,
 	 * sanity checks
 	 */
 	Assert(ItemPointerIsValid(pointer));
-	CACHE1_elog(DEBUG1, "CatalogCacheIdInvalidate: called");
+	CACHE1_elog(DEBUG2, "CatalogCacheIdInvalidate: called");
 
 	/*
 	 * inspect caches to find the proper cache
@@ -476,7 +476,7 @@ CatalogCacheIdInvalidate(int cacheId,
 					ct->dead = true;
 				else
 					CatCacheRemoveCTup(ccp, ct);
-				CACHE1_elog(DEBUG1, "CatalogCacheIdInvalidate: invalidated");
+				CACHE1_elog(DEBUG2, "CatalogCacheIdInvalidate: invalidated");
 #ifdef CATCACHE_STATS
 				ccp->cc_invals++;
 #endif
@@ -641,12 +641,12 @@ ResetCatalogCaches(void)
 {
 	CatCache   *cache;
 
-	CACHE1_elog(DEBUG1, "ResetCatalogCaches called");
+	CACHE1_elog(DEBUG2, "ResetCatalogCaches called");
 
 	for (cache = CacheHdr->ch_caches; cache; cache = cache->cc_next)
 		ResetCatalogCache(cache);
 
-	CACHE1_elog(DEBUG1, "end of ResetCatalogCaches call");
+	CACHE1_elog(DEBUG2, "end of ResetCatalogCaches call");
 }
 
 /*
@@ -674,7 +674,7 @@ CatalogCacheFlushRelation(Oid relId)
 {
 	CatCache   *cache;
 
-	CACHE2_elog(DEBUG1, "CatalogCacheFlushRelation called for %u", relId);
+	CACHE2_elog(DEBUG2, "CatalogCacheFlushRelation called for %u", relId);
 
 	for (cache = CacheHdr->ch_caches; cache; cache = cache->cc_next)
 	{
@@ -744,7 +744,7 @@ CatalogCacheFlushRelation(Oid relId)
 		}
 	}
 
-	CACHE1_elog(DEBUG1, "end of CatalogCacheFlushRelation call");
+	CACHE1_elog(DEBUG2, "end of CatalogCacheFlushRelation call");
 }
 
 /*
@@ -756,14 +756,14 @@ CatalogCacheFlushRelation(Oid relId)
  *	structure initialized on the first access.
  */
 #ifdef CACHEDEBUG
-#define InitCatCache_DEBUG1 \
+#define InitCatCache_DEBUG2 \
 do { \
-	elog(DEBUG1, "InitCatCache: rel=%s id=%d nkeys=%d size=%d\n", \
+	elog(DEBUG2, "InitCatCache: rel=%s id=%d nkeys=%d size=%d\n", \
 		cp->cc_relname, cp->id, cp->cc_nkeys, cp->cc_nbuckets); \
 } while(0)
 
 #else
-#define InitCatCache_DEBUG1
+#define InitCatCache_DEBUG2
 #endif
 
 CatCache *
@@ -832,7 +832,7 @@ InitCatCache(int id,
 	 * new cache is initialized as far as we can go for now. print some
 	 * debugging information, if appropriate.
 	 */
-	InitCatCache_DEBUG1;
+	InitCatCache_DEBUG2;
 
 	/*
 	 * add completed cache to top of group header's list
@@ -856,24 +856,24 @@ InitCatCache(int id,
  * that the relcache entry can be opened at this point!
  */
 #ifdef CACHEDEBUG
-#define CatalogCacheInitializeCache_DEBUG1 \
-	elog(DEBUG1, "CatalogCacheInitializeCache: cache @%p %s", cache, \
+#define CatalogCacheInitializeCache_DEBUG2 \
+	elog(DEBUG2, "CatalogCacheInitializeCache: cache @%p %s", cache, \
 		 cache->cc_relname)
 
 #define CatalogCacheInitializeCache_DEBUG2 \
 do { \
 		if (cache->cc_key[i] > 0) { \
-			elog(DEBUG1, "CatalogCacheInitializeCache: load %d/%d w/%d, %u", \
+			elog(DEBUG2, "CatalogCacheInitializeCache: load %d/%d w/%d, %u", \
 				i+1, cache->cc_nkeys, cache->cc_key[i], \
 				 tupdesc->attrs[cache->cc_key[i] - 1]->atttypid); \
 		} else { \
-			elog(DEBUG1, "CatalogCacheInitializeCache: load %d/%d w/%d", \
+			elog(DEBUG2, "CatalogCacheInitializeCache: load %d/%d w/%d", \
 				i+1, cache->cc_nkeys, cache->cc_key[i]); \
 		} \
 } while(0)
 
 #else
-#define CatalogCacheInitializeCache_DEBUG1
+#define CatalogCacheInitializeCache_DEBUG2
 #define CatalogCacheInitializeCache_DEBUG2
 #endif
 
@@ -885,7 +885,7 @@ CatalogCacheInitializeCache(CatCache *cache)
 	TupleDesc	tupdesc;
 	int			i;
 
-	CatalogCacheInitializeCache_DEBUG1;
+	CatalogCacheInitializeCache_DEBUG2;
 
 	/*
 	 * Open the relation without locking --- we only need the tupdesc,
@@ -920,7 +920,7 @@ CatalogCacheInitializeCache(CatCache *cache)
 
 	heap_close(relation, NoLock);
 
-	CACHE3_elog(DEBUG1, "CatalogCacheInitializeCache: %s, %d keys",
+	CACHE3_elog(DEBUG2, "CatalogCacheInitializeCache: %s, %d keys",
 				cache->cc_relname, cache->cc_nkeys);
 
 	/*
@@ -958,7 +958,7 @@ CatalogCacheInitializeCache(CatCache *cache)
 		/* Initialize sk_attno suitably for HeapKeyTest() and heap scans */
 		cache->cc_skey[i].sk_attno = cache->cc_key[i];
 
-		CACHE4_elog(DEBUG1, "CatalogCacheInit %s %d %p",
+		CACHE4_elog(DEBUG2, "CatalogCacheInit %s %d %p",
 					cache->cc_relname,
 					i,
 					cache);
@@ -1150,7 +1150,7 @@ SearchCatCache(CatCache *cache,
 		{
 			ct->refcount++;
 
-			CACHE3_elog(DEBUG1, "SearchCatCache(%s): found in bucket %d",
+			CACHE3_elog(DEBUG2, "SearchCatCache(%s): found in bucket %d",
 						cache->cc_relname, hashIndex);
 
 #ifdef CATCACHE_STATS
@@ -1161,7 +1161,7 @@ SearchCatCache(CatCache *cache,
 		}
 		else
 		{
-			CACHE3_elog(DEBUG1, "SearchCatCache(%s): found neg entry in bucket %d",
+			CACHE3_elog(DEBUG2, "SearchCatCache(%s): found neg entry in bucket %d",
 						cache->cc_relname, hashIndex);
 
 #ifdef CATCACHE_STATS
@@ -1223,9 +1223,9 @@ SearchCatCache(CatCache *cache,
 									 true);
 		heap_freetuple(ntp);
 
-		CACHE4_elog(DEBUG1, "SearchCatCache(%s): Contains %d/%d tuples",
+		CACHE4_elog(DEBUG2, "SearchCatCache(%s): Contains %d/%d tuples",
 					cache->cc_relname, cache->cc_ntup, CacheHdr->ch_ntup);
-		CACHE3_elog(DEBUG1, "SearchCatCache(%s): put neg entry in bucket %d",
+		CACHE3_elog(DEBUG2, "SearchCatCache(%s): put neg entry in bucket %d",
 					cache->cc_relname, hashIndex);
 
 		/*
@@ -1237,9 +1237,9 @@ SearchCatCache(CatCache *cache,
 		return NULL;
 	}
 
-	CACHE4_elog(DEBUG1, "SearchCatCache(%s): Contains %d/%d tuples",
+	CACHE4_elog(DEBUG2, "SearchCatCache(%s): Contains %d/%d tuples",
 				cache->cc_relname, cache->cc_ntup, CacheHdr->ch_ntup);
-	CACHE3_elog(DEBUG1, "SearchCatCache(%s): put in bucket %d",
+	CACHE3_elog(DEBUG2, "SearchCatCache(%s): put in bucket %d",
 				cache->cc_relname, hashIndex);
 
 #ifdef CATCACHE_STATS
@@ -1388,7 +1388,7 @@ SearchCatCacheList(CatCache *cache,
 		/* Bump the list's refcount and return it */
 		cl->refcount++;
 
-		CACHE2_elog(DEBUG1, "SearchCatCacheList(%s): found list",
+		CACHE2_elog(DEBUG2, "SearchCatCacheList(%s): found list",
 					cache->cc_relname);
 
 #ifdef CATCACHE_STATS
@@ -1510,7 +1510,7 @@ SearchCatCacheList(CatCache *cache,
 
 	DLAddHead(&cache->cc_lists, &cl->cache_elem);
 
-	CACHE3_elog(DEBUG1, "SearchCatCacheList(%s): made list of %d members",
+	CACHE3_elog(DEBUG2, "SearchCatCacheList(%s): made list of %d members",
 				cache->cc_relname, nmembers);
 
 	return cl;
@@ -1613,7 +1613,7 @@ CatalogCacheCreateEntry(CatCache *cache, HeapTuple ntp,
 
 			if (oldct->refcount == 0)
 			{
-				CACHE2_elog(DEBUG1, "CatCacheCreateEntry(%s): Overflow, LRU removal",
+				CACHE2_elog(DEBUG2, "CatCacheCreateEntry(%s): Overflow, LRU removal",
 							cache->cc_relname);
 #ifdef CATCACHE_STATS
 				oldct->my_cache->cc_discards++;
@@ -1731,7 +1731,7 @@ PrepareToInvalidateCacheTuple(Relation relation,
 	CatCache   *ccp;
 	Oid			reloid;
 
-	CACHE1_elog(DEBUG1, "PrepareToInvalidateCacheTuple: called");
+	CACHE1_elog(DEBUG2, "PrepareToInvalidateCacheTuple: called");
 
 	/*
 	 * sanity checks

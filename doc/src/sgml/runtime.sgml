@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.181 2003/05/23 16:34:36 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.182 2003/05/27 17:49:45 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -993,10 +993,13 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         These options enable various debugging output to be sent to the
-        server log. For each executed query, they print the resulting parse
-        tree, the query rewriter output, or the execution plan.
+        client or server log. For each executed query, they print the resulting 
+        parse tree, the query rewriter output, or the execution plan.
         <option>DEBUG_PRETTY_PRINT</option> indents these displays to
         produce a more readable but much longer output format.
+	<option>CLIENT_MIN_MESSAGES</option> or <option>LOG_MIN_MESSAGES</option>
+	must be <literal>DEBUG1</literal> or lower to send output to the client
+        or server logs.
        </para>
       </listitem>
      </varlistentry>
@@ -1266,6 +1269,9 @@ SET ENABLE_SEQSCAN TO OFF;
         Generates a great amount of debugging output for the
         <command>LISTEN</command> and <command>NOTIFY</command>
         commands.
+	<option>CLIENT_MIN_MESSAGES</option> or <option>LOG_MIN_MESSAGES</option>
+	must be <literal>DEBUG1</literal> or lower to send output to the client
+        or server logs.
        </para>
       </listitem>
      </varlistentry>

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.81 2002/09/04 20:31:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.82 2003/05/27 17:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,7 @@ proc_exit(int code)
 	InterruptHoldoffCount = 1;
 	CritSectionCount = 0;
 
-	elog(DEBUG2, "proc_exit(%d)", code);
+	elog(DEBUG3, "proc_exit(%d)", code);
 
 	/* do our shared memory exits first */
 	shmem_exit(code);
@@ -110,7 +110,7 @@ proc_exit(int code)
 		(*on_proc_exit_list[on_proc_exit_index].function) (code,
 							  on_proc_exit_list[on_proc_exit_index].arg);
 
-	elog(DEBUG2, "exit(%d)", code);
+	elog(DEBUG3, "exit(%d)", code);
 	exit(code);
 }
 
@@ -123,7 +123,7 @@ proc_exit(int code)
 void
 shmem_exit(int code)
 {
-	elog(DEBUG2, "shmem_exit(%d)", code);
+	elog(DEBUG3, "shmem_exit(%d)", code);
 
 	/*
 	 * call all the registered callbacks.

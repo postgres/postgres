@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.43 2003/05/05 16:46:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.44 2003/05/27 17:49:47 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1294,7 +1294,7 @@ raise_level		: K_EXCEPTION
 					}
 				| K_DEBUG
 					{
-						$$ = DEBUG1;
+						$$ = DEBUG2;
 					}
 				;
 

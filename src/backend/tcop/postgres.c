@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.345 2003/05/14 18:40:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.346 2003/05/27 17:49:46 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -513,7 +513,7 @@ pg_rewrite_queries(List *querytree_list)
 		Query	   *querytree = (Query *) lfirst(list_item);
 
 		if (Debug_print_parse)
-			elog_node_display(LOG, "parse tree", querytree,
+			elog_node_display(DEBUG1, "parse tree", querytree,
 							  Debug_pretty_print);
 
 		if (querytree->commandType == CMD_UTILITY)
@@ -550,7 +550,7 @@ pg_rewrite_queries(List *querytree_list)
 #endif
 
 	if (Debug_print_rewritten)
-		elog_node_display(LOG, "rewritten parse tree", querytree_list,
+		elog_node_display(DEBUG1, "rewritten parse tree", querytree_list,
 						  Debug_pretty_print);
 
 	return querytree_list;
@@ -599,7 +599,7 @@ pg_plan_query(Query *querytree)
 	 * Print plan if debugging.
 	 */
 	if (Debug_print_plan)
-		elog_node_display(LOG, "plan", plan, Debug_pretty_print);
+		elog_node_display(DEBUG1, "plan", plan, Debug_pretty_print);
 
 	return plan;
 }
@@ -1650,7 +1650,7 @@ start_xact_command(void)
 {
 	if (!xact_started)
 	{
-		elog(DEBUG2, "StartTransactionCommand");
+		elog(DEBUG3, "StartTransactionCommand");
 		StartTransactionCommand();
 
 		/* Set statement timeout running, if any */
@@ -1673,7 +1673,7 @@ finish_xact_command(void)
 		disable_sig_alarm(true);
 
 		/* Now commit the command */
-		elog(DEBUG2, "CommitTransactionCommand");
+		elog(DEBUG3, "CommitTransactionCommand");
 
 		CommitTransactionCommand();
 
@@ -2503,7 +2503,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 * putting it inside InitPostgres() instead.  In particular, anything
 	 * that involves database access should be there, not here.
 	 */
-	elog(DEBUG2, "InitPostgres");
+	elog(DEBUG3, "InitPostgres");
 	InitPostgres(dbname, username);
 
 	SetProcessingMode(NormalProcessing);
@@ -2526,7 +2526,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.345 $ $Date: 2003/05/14 18:40:37 $\n");
+		puts("$Revision: 1.346 $ $Date: 2003/05/27 17:49:46 $\n");
 	}
 
 	/*
@@ -2585,7 +2585,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		MemoryContextSwitchTo(ErrorContext);
 
 		/* Do the recovery */
-		elog(DEBUG1, "AbortCurrentTransaction");
+		elog(DEBUG2, "AbortCurrentTransaction");
 		AbortCurrentTransaction();
 
 		/*

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.70 2003/03/10 03:53:49 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.71 2003/05/27 17:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,7 +208,7 @@ ExecMarkPos(PlanState *node)
 
 		default:
 			/* don't make hard error unless caller asks to restore... */
-			elog(DEBUG1, "ExecMarkPos: node type %d not supported",
+			elog(DEBUG2, "ExecMarkPos: node type %d not supported",
 				 nodeTag(node));
 			break;
 	}

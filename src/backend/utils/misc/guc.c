@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.124 2003/05/14 03:26:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.125 2003/05/27 17:49:46 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1721,7 +1721,7 @@ set_config_option(const char *name, const char *value,
 	bool		makeDefault;
 
 	if (context == PGC_SIGHUP || source == PGC_S_DEFAULT)
-		elevel = DEBUG1;
+		elevel = DEBUG2;
 	else if (source == PGC_S_DATABASE || source == PGC_S_USER)
 		elevel = INFO;
 	else
@@ -1830,7 +1830,7 @@ set_config_option(const char *name, const char *value,
 	{
 		if (DoIt && !makeDefault)
 		{
-			elog(DEBUG2, "%s: setting ignored because previous source is higher priority",
+			elog(DEBUG3, "%s: setting ignored because previous source is higher priority",
 				 name);
 			return true;
 		}
@@ -2855,7 +2855,7 @@ write_nondefault_variables(GucContext context)
 
 	Assert(context == PGC_POSTMASTER || context == PGC_SIGHUP);
 	Assert(DataDir);
-	elevel = (context == PGC_SIGHUP) ? DEBUG3 : ERROR;
+	elevel = (context == PGC_SIGHUP) ? DEBUG4 : ERROR;
 
 	/*
 	 * Open file
@@ -3366,7 +3366,7 @@ assign_msglvl(int *var, const char *newval, bool doit, bool interactive)
 	if (strcasecmp(newval, "debug") == 0)
 	{
 		if (doit)
-			(*var) = DEBUG1;
+			(*var) = DEBUG2;
 	}
 	else if (strcasecmp(newval, "debug5") == 0)
 	{

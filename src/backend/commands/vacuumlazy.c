@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.27 2003/03/04 21:51:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.28 2003/05/27 17:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	if (vacstmt->verbose)
 		elevel = INFO;
 	else
-		elevel = DEBUG1;
+		elevel = DEBUG2;
 
 	vacuum_set_xid_limits(vacstmt, onerel->rd_rel->relisshared,
 						  &OldestXmin, &FreezeLimit);

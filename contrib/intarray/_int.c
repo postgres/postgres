@@ -110,7 +110,7 @@ printarr(ArrayType *a, int num)
 	initStringInfo(&bbb);
 	for (l = 0; l < min(num, ARRNELEMS(a)); l++)
 		appendStringInfo(&bbb, "%d ", d[l]);
-	elog(DEBUG3, "\t\t%s", bbb.data);
+	elog(DEBUG4, "\t\t%s", bbb.data);
 	pfree(bbb.data);
 }
 static void
@@ -122,7 +122,7 @@ printbitvec(BITVEC bv)
 	str[SIGLENBIT] = '\0';
 	LOOPBIT(str[i] = (GETBIT(bv, i)) ? '1' : '0');
 
-	elog(DEBUG3, "BV: %s", str);
+	elog(DEBUG4, "BV: %s", str);
 }
 #endif
 
@@ -589,7 +589,7 @@ inner_int_contains(ArrayType *a, ArrayType *b)
 	db = ARRPTR(b);
 
 #ifdef GIST_DEBUG
-	elog(DEBUG3, "contains %d %d", na, nb);
+	elog(DEBUG4, "contains %d %d", na, nb);
 #endif
 
 	i = j = n = 0;
@@ -709,7 +709,7 @@ inner_int_overlap(ArrayType *a, ArrayType *b)
 	db = ARRPTR(b);
 
 #ifdef GIST_DEBUG
-	elog(DEBUG3, "g_int_overlap");
+	elog(DEBUG4, "g_int_overlap");
 #endif
 
 	i = j = 0;
@@ -1334,7 +1334,7 @@ _int_common_union(bytea *entryvec, int *sizep, formarray unionf)
 	ArrayType  *tmp;
 
 #ifdef GIST_DEBUG
-	elog(DEBUG3, "_int_common_union in");
+	elog(DEBUG4, "_int_common_union in");
 #endif
 
 	numranges = (VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY);
@@ -1355,12 +1355,12 @@ _int_common_union(bytea *entryvec, int *sizep, formarray unionf)
 	{
 		pfree(out);
 #ifdef GIST_DEBUG
-		elog(DEBUG3, "_int_common_union out1");
+		elog(DEBUG4, "_int_common_union out1");
 #endif
 		return NULL;
 	}
 #ifdef GIST_DEBUG
-	elog(DEBUG3, "_int_common_union out");
+	elog(DEBUG4, "_int_common_union out");
 #endif
 	return (out);
 
@@ -1380,7 +1380,7 @@ _int_common_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result,
 				tmp2;
 
 #ifdef GIST_DEBUG
-	elog(DEBUG3, "penalty");
+	elog(DEBUG4, "penalty");
 #endif
 	ud = (*unionf) ((ArrayType *) DatumGetPointer(origentry->key),
 					(ArrayType *) DatumGetPointer(newentry->key));
@@ -1390,7 +1390,7 @@ _int_common_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result,
 	pfree(ud);
 
 #ifdef GIST_DEBUG
-	elog(DEBUG3, "--penalty\t%g", *result);
+	elog(DEBUG4, "--penalty\t%g", *result);
 #endif
 
 	return (result);
@@ -1451,7 +1451,7 @@ _int_common_picksplit(bytea *entryvec,
 	SPLITCOST  *costvector;
 
 #ifdef GIST_DEBUG
-	elog(DEBUG3, "--------picksplit %d", (VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY));
+	elog(DEBUG4, "--------picksplit %d", (VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY));
 #endif
 
 	maxoff = ((VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY)) - 2;
@@ -1609,7 +1609,7 @@ _int_common_picksplit(bytea *entryvec,
 	v->spl_rdatum = PointerGetDatum(datum_r);
 
 #ifdef GIST_DEBUG
-	elog(DEBUG3, "--------ENDpicksplit %d %d", v->spl_nleft, v->spl_nright);
+	elog(DEBUG4, "--------ENDpicksplit %d %d", v->spl_nleft, v->spl_nright);
 #endif
 	return v;
 }
@@ -1962,7 +1962,7 @@ static void
 findoprnd(ITEM * ptr, int4 *pos)
 {
 #ifdef BS_DEBUG
-	elog(DEBUG3, (ptr[*pos].type == OPR) ?
+	elog(DEBUG4, (ptr[*pos].type == OPR) ?
 		 "%d  %c" : "%d  %d ", *pos, ptr[*pos].val);
 #endif
 	if (ptr[*pos].type == VAL)
@@ -2045,7 +2045,7 @@ bqarr_in(PG_FUNCTION_ARGS)
 		else
 			appendStringInfo(&pbuf, "%d ", ptr[i].val);
 	}
-	elog(DEBUG3, "POR: %s", pbuf.data);
+	elog(DEBUG4, "POR: %s", pbuf.data);
 	pfree(pbuf.data);
 #endif
 

@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.55 2003/03/20 04:52:35 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.56 2003/05/27 17:49:47 momjian Exp $
  */
 
 #include "postgres.h"
@@ -435,7 +435,7 @@ funny_dup17(PG_FUNCTION_ARGS)
 																	))));
 	}
 
-	elog(DEBUG3, "funny_dup17 (fired %s) on level %3d: %d/%d tuples inserted/selected",
+	elog(DEBUG4, "funny_dup17 (fired %s) on level %3d: %d/%d tuples inserted/selected",
 		 when, *level, inserted, selected);
 
 	SPI_finish();

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.253 2003/05/14 03:26:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.254 2003/05/27 17:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,7 +166,7 @@ vacuum(VacuumStmt *vacstmt)
 	if (vacstmt->verbose)
 		elevel = INFO;
 	else
-		elevel = DEBUG1;
+		elevel = DEBUG2;
 
 	/*
 	 * We cannot run VACUUM inside a user transaction block; if we were
@@ -1673,7 +1673,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				/* Quick exit if we have no vtlinks to search in */
 				if (vacrelstats->vtlinks == NULL)
 				{
-					elog(DEBUG1, "Parent item in update-chain not found - can't continue repair_frag");
+					elog(DEBUG2, "Parent item in update-chain not found - can't continue repair_frag");
 					break;		/* out of walk-along-page loop */
 				}
 
@@ -1710,7 +1710,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						 * in scan_heap(), but it's not implemented at the
 						 * moment and so we just stop shrinking here.
 						 */
-						elog(DEBUG1, "Child itemid in update-chain marked as unused - can't continue repair_frag");
+						elog(DEBUG2, "Child itemid in update-chain marked as unused - can't continue repair_frag");
 						chain_move_failed = true;
 						break;	/* out of loop to move to chain end */
 					}
@@ -1795,7 +1795,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					if (vtlp == NULL)
 					{
 						/* see discussion above */
-						elog(DEBUG1, "Parent item in update-chain not found - can't continue repair_frag");
+						elog(DEBUG2, "Parent item in update-chain not found - can't continue repair_frag");
 						chain_move_failed = true;
 						break;	/* out of check-all-items loop */
 					}
@@ -1831,7 +1831,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 									 HeapTupleHeaderGetXmin(tp.t_data))))
 					{
 						ReleaseBuffer(Pbuf);
-						elog(DEBUG1, "Too old parent tuple found - can't continue repair_frag");
+						elog(DEBUG2, "Too old parent tuple found - can't continue repair_frag");
 						chain_move_failed = true;
 						break;	/* out of check-all-items loop */
 					}

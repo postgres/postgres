@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/pl/plpython/Attic/plpython.h,v 1.6 2002/03/06 06:10:48 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/pl/plpython/Attic/plpython.h,v 1.7 2003/05/27 17:49:47 momjian Exp $ */
 
 #ifndef PLPYTHON_H
 #define PLPYTHON_H
@@ -43,8 +43,8 @@
 
 #if DEBUG_LEVEL
 #define CALL_LEVEL_INC() do { PLy_call_level += 1; \
-	elog(DEBUG3, "Level: %d", PLy_call_level); } while (0)
-#define CALL_LEVEL_DEC() do { elog(DEBUG3, "Level: %d", PLy_call_level); \
+	elog(DEBUG4, "Level: %d", PLy_call_level); } while (0)
+#define CALL_LEVEL_DEC() do { elog(DEBUG4, "Level: %d", PLy_call_level); \
 	PLy_call_level -= 1; } while (0)
 #else
 #define CALL_LEVEL_INC() do { PLy_call_level += 1; } while (0)
@@ -54,10 +54,10 @@
 /* temporary debugging macros
  */
 #if DEBUG_LEVEL
-#define enter() elog(DEBUG3, "Enter(%d): %s", func_enter_calls++,__FUNCTION__)
-#define leave() elog(DEBUG3, "Leave(%d): %s", func_leave_calls++,__FUNCTION__)
-#define mark() elog(DEBUG3, "Mark: %s:%d", __FUNCTION__, __LINE__);
-#define refc(O) elog(DEBUG3, "Ref<%p>:<%d>:%s:%d", (O), (((O) == NULL) ? -1 : (O)->ob_refcnt), __FUNCTION__, __LINE__)
+#define enter() elog(DEBUG4, "Enter(%d): %s", func_enter_calls++,__FUNCTION__)
+#define leave() elog(DEBUG4, "Leave(%d): %s", func_leave_calls++,__FUNCTION__)
+#define mark() elog(DEBUG4, "Mark: %s:%d", __FUNCTION__, __LINE__);
+#define refc(O) elog(DEBUG4, "Ref<%p>:<%d>:%s:%d", (O), (((O) == NULL) ? -1 : (O)->ob_refcnt), __FUNCTION__, __LINE__)
 #else
 #define enter()
 #define leave()

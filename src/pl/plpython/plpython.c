@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.31 2003/03/10 22:28:22 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.32 2003/05/27 17:49:47 momjian Exp $
  *
  *********************************************************************
  */
@@ -2661,7 +2661,7 @@ static PyObject *PLy_output(int, PyObject *, PyObject *);
 PyObject *
 PLy_debug(PyObject * self, PyObject * args)
 {
-	return PLy_output(DEBUG1, self, args);
+	return PLy_output(DEBUG2, self, args);
 }
 
 PyObject *

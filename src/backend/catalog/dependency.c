@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.23 2003/03/06 22:54:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.24 2003/05/27 17:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,7 +224,7 @@ deleteWhatDependsOn(const ObjectAddress *object,
 	 */
 	if (!deleteDependentObjects(object, objDescription,
 								DROP_CASCADE,
-								showNotices ? NOTICE : DEBUG1,
+								showNotices ? NOTICE : DEBUG2,
 								&oktodelete, depRel))
 		elog(ERROR, "Failed to drop all objects depending on %s",
 			 objDescription);
@@ -522,7 +522,7 @@ recursiveDeletion(const ObjectAddress *object,
 	if (amOwned)
 	{
 		if (object_address_present(&owningObject, oktodelete))
-			elog(DEBUG1, "Drop auto-cascades to %s",
+			elog(DEBUG2, "Drop auto-cascades to %s",
 				 getObjectDescription(&owningObject));
 		else if (behavior == DROP_RESTRICT)
 		{
@@ -669,7 +669,7 @@ deleteDependentObjects(const ObjectAddress *object,
 				 * In that case, act like this link is AUTO, too.
 				 */
 				if (object_address_present(&otherObject, oktodelete))
-					elog(DEBUG1, "Drop auto-cascades to %s",
+					elog(DEBUG2, "Drop auto-cascades to %s",
 						 getObjectDescription(&otherObject));
 				else if (behavior == DROP_RESTRICT)
 				{
@@ -694,7 +694,7 @@ deleteDependentObjects(const ObjectAddress *object,
 				 * RESTRICT case.  (However, normal dependencies on the
 				 * component object could still cause failure.)
 				 */
-				elog(DEBUG1, "Drop auto-cascades to %s",
+				elog(DEBUG2, "Drop auto-cascades to %s",
 					 getObjectDescription(&otherObject));
 
 				if (!recursiveDeletion(&otherObject, behavior, msglevel,

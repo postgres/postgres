@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.32 2003/05/15 16:35:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.33 2003/05/27 17:49:46 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -442,7 +442,7 @@ load_dh_buffer(const char *buffer, size_t len)
 		return NULL;
 	dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
 	if (dh == NULL)
-		elog(DEBUG1, "DH load buffer: %s", SSLerrmessage());
+		elog(DEBUG2, "DH load buffer: %s", SSLerrmessage());
 	BIO_free(bio);
 
 	return dh;
@@ -514,7 +514,7 @@ tmp_dh_cb(SSL *s, int is_export, int keylength)
 	/* this may take a long time, but it may be necessary... */
 	if (r == NULL || 8 * DH_size(r) < keylength)
 	{
-		elog(DEBUG1, "DH: generating parameters (%d bits)....", keylength);
+		elog(DEBUG2, "DH: generating parameters (%d bits)....", keylength);
 		r = DH_generate_parameters(keylength, DH_GENERATOR_2, NULL, NULL);
 	}
 
@@ -548,28 +548,28 @@ info_cb(const SSL *ssl, int type, int args)
 	switch (type)
 	{
 		case SSL_CB_HANDSHAKE_START:
-			elog(DEBUG3, "SSL: handshake start");
+			elog(DEBUG4, "SSL: handshake start");
 			break;
 		case SSL_CB_HANDSHAKE_DONE:
-			elog(DEBUG3, "SSL: handshake done");
+			elog(DEBUG4, "SSL: handshake done");
 			break;
 		case SSL_CB_ACCEPT_LOOP:
-			elog(DEBUG3, "SSL: accept loop");
+			elog(DEBUG4, "SSL: accept loop");
 			break;
 		case SSL_CB_ACCEPT_EXIT:
-			elog(DEBUG3, "SSL: accept exit (%d)", args);
+			elog(DEBUG4, "SSL: accept exit (%d)", args);
 			break;
 		case SSL_CB_CONNECT_LOOP:
-			elog(DEBUG3, "SSL: connect loop");
+			elog(DEBUG4, "SSL: connect loop");
 			break;
 		case SSL_CB_CONNECT_EXIT:
-			elog(DEBUG3, "SSL: connect exit (%d)", args);
+			elog(DEBUG4, "SSL: connect exit (%d)", args);
 			break;
 		case SSL_CB_READ_ALERT:
-			elog(DEBUG3, "SSL: read alert (0x%04x)", args);
+			elog(DEBUG4, "SSL: read alert (0x%04x)", args);
 			break;
 		case SSL_CB_WRITE_ALERT:
-			elog(DEBUG3, "SSL: write alert (0x%04x)", args);
+			elog(DEBUG4, "SSL: write alert (0x%04x)", args);
 			break;
 	}
 }
@@ -702,7 +702,7 @@ open_server_SSL(Port *port)
 				   NID_commonName, port->peer_cn, sizeof(port->peer_cn));
 		port->peer_cn[sizeof(port->peer_cn) - 1] = '\0';
 	}
-	elog(DEBUG1, "secure connection from '%s'", port->peer_cn);
+	elog(DEBUG2, "secure connection from '%s'", port->peer_cn);
 
 	/* set up debugging/info callback */
 	SSL_CTX_set_info_callback(SSL_context, info_cb);

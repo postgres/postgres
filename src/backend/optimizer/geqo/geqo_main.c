@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/geqo_main.c,v 1.34 2003/01/20 18:54:49 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/geqo_main.c,v 1.35 2003/05/27 17:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,30 +120,30 @@ geqo(Query *root, int number_of_rels, List *initial_rels)
 	daddy = alloc_chromo(pool->string_length);
 
 #if defined (ERX)
-	elog(DEBUG1, "geqo_main: using edge recombination crossover [ERX]");
+	elog(DEBUG2, "geqo_main: using edge recombination crossover [ERX]");
 /* allocate edge table memory */
 	edge_table = alloc_edge_table(pool->string_length);
 #elif defined(PMX)
-	elog(DEBUG1, "geqo_main: using partially matched crossover [PMX]");
+	elog(DEBUG2, "geqo_main: using partially matched crossover [PMX]");
 /* allocate chromosome kid memory */
 	kid = alloc_chromo(pool->string_length);
 #elif defined(CX)
-	elog(DEBUG1, "geqo_main: using cycle crossover [CX]");
+	elog(DEBUG2, "geqo_main: using cycle crossover [CX]");
 /* allocate city table memory */
 	kid = alloc_chromo(pool->string_length);
 	city_table = alloc_city_table(pool->string_length);
 #elif defined(PX)
-	elog(DEBUG1, "geqo_main: using position crossover [PX]");
+	elog(DEBUG2, "geqo_main: using position crossover [PX]");
 /* allocate city table memory */
 	kid = alloc_chromo(pool->string_length);
 	city_table = alloc_city_table(pool->string_length);
 #elif defined(OX1)
-	elog(DEBUG1, "geqo_main: using order crossover [OX1]");
+	elog(DEBUG2, "geqo_main: using order crossover [OX1]");
 /* allocate city table memory */
 	kid = alloc_chromo(pool->string_length);
 	city_table = alloc_city_table(pool->string_length);
 #elif defined(OX2)
-	elog(DEBUG1, "geqo_main: using order crossover [OX2]");
+	elog(DEBUG2, "geqo_main: using order crossover [OX2]");
 /* allocate city table memory */
 	kid = alloc_chromo(pool->string_length);
 	city_table = alloc_city_table(pool->string_length);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.53 2003/04/25 21:29:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.54 2003/05/27 17:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,7 +161,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	if (vacstmt->verbose)
 		elevel = INFO;
 	else
-		elevel = DEBUG1;
+		elevel = DEBUG2;
 
 	/*
 	 * Use the current context for storing analysis info.  vacuum.c

@@ -132,7 +132,7 @@ _rserv_log_()
 			 GetCurrentTransactionId(), deleted, rel->rd_id, okey);
 
 	if (debug)
-		elog(DEBUG3, "sql: %s", sql);
+		elog(DEBUG4, "sql: %s", sql);
 
 	ret = SPI_exec(sql, 0);
 
@@ -153,7 +153,7 @@ _rserv_log_()
 				 deleted, okey);
 
 		if (debug)
-			elog(DEBUG3, "sql: %s", sql);
+			elog(DEBUG4, "sql: %s", sql);
 
 		ret = SPI_exec(sql, 0);
 
@@ -177,7 +177,7 @@ _rserv_log_()
 				 rel->rd_id, GetCurrentTransactionId(), okey);
 
 		if (debug)
-			elog(DEBUG3, "sql: %s", sql);
+			elog(DEBUG4, "sql: %s", sql);
 
 		ret = SPI_exec(sql, 0);
 

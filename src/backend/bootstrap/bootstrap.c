@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.157 2003/05/14 03:26:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.158 2003/05/27 17:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -537,7 +537,7 @@ boot_openrel(char *relname)
 	if (boot_reldesc != NULL)
 		closerel(NULL);
 
-	elog(DEBUG3, "open relation %s, attrsize %d", relname ? relname : "(null)",
+	elog(DEBUG4, "open relation %s, attrsize %d", relname ? relname : "(null)",
 		 (int) ATTRIBUTE_TUPLE_SIZE);
 
 	boot_reldesc = heap_openr(relname, NoLock);
@@ -553,7 +553,7 @@ boot_openrel(char *relname)
 		{
 			Form_pg_attribute at = attrtypes[i];
 
-			elog(DEBUG3, "create attribute %d name %s len %d num %d type %u",
+			elog(DEBUG4, "create attribute %d name %s len %d num %d type %u",
 				 i, NameStr(at->attname), at->attlen, at->attnum,
 				 at->atttypid);
 		}
@@ -584,7 +584,7 @@ closerel(char *name)
 		elog(ERROR, "no open relation to close");
 	else
 	{
-		elog(DEBUG3, "close relation %s", relname ? relname : "(null)");
+		elog(DEBUG4, "close relation %s", relname ? relname : "(null)");
 		heap_close(boot_reldesc, NoLock);
 		boot_reldesc = (Relation) NULL;
 	}
@@ -617,7 +617,7 @@ DefineAttr(char *name, char *type, int attnum)
 	MemSet(attrtypes[attnum], 0, ATTRIBUTE_TUPLE_SIZE);
 
 	namestrcpy(&attrtypes[attnum]->attname, name);
-	elog(DEBUG3, "column %s %s", NameStr(attrtypes[attnum]->attname), type);
+	elog(DEBUG4, "column %s %s", NameStr(attrtypes[attnum]->attname), type);
 	attrtypes[attnum]->attnum = attnum + 1;		/* fillatt */
 
 	typeoid = gettype(type);
@@ -707,7 +707,7 @@ InsertOneTuple(Oid objectid)
 	TupleDesc	tupDesc;
 	int			i;
 
-	elog(DEBUG3, "inserting row oid %u, %d columns", objectid, numattr);
+	elog(DEBUG4, "inserting row oid %u, %d columns", objectid, numattr);
 
 	tupDesc = CreateTupleDesc(numattr,
 							  RelationGetForm(boot_reldesc)->relhasoids,
@@ -719,7 +719,7 @@ InsertOneTuple(Oid objectid)
 
 	simple_heap_insert(boot_reldesc, tuple);
 	heap_freetuple(tuple);
-	elog(DEBUG3, "row inserted");
+	elog(DEBUG4, "row inserted");
 
 	/*
 	 * Reset blanks for next tuple
@@ -741,13 +741,13 @@ InsertOneValue(char *value, int i)
 
 	AssertArg(i >= 0 || i < MAXATTR);
 
-	elog(DEBUG3, "inserting column %d value '%s'", i, value);
+	elog(DEBUG4, "inserting column %d value '%s'", i, value);
 
 	if (Typ != (struct typmap **) NULL)
 	{
 		struct typmap *ap;
 
-		elog(DEBUG3, "Typ != NULL");
+		elog(DEBUG4, "Typ != NULL");
 		app = Typ;
 		while (*app && (*app)->am_oid != boot_reldesc->rd_att->attrs[i]->atttypid)
 			++app;
@@ -765,7 +765,7 @@ InsertOneValue(char *value, int i)
 											   values[i],
 									ObjectIdGetDatum(ap->am_typ.typelem),
 											   Int32GetDatum(-1)));
-		elog(DEBUG3, " -> %s", prt);
+		elog(DEBUG4, " -> %s", prt);
 		pfree(prt);
 	}
 	else
@@ -777,7 +777,7 @@ InsertOneValue(char *value, int i)
 		}
 		if (typeindex >= n_types)
 			elog(ERROR, "type oid %u not found", attrtypes[i]->atttypid);
-		elog(DEBUG3, "Typ == NULL, typeindex = %u", typeindex);
+		elog(DEBUG4, "Typ == NULL, typeindex = %u", typeindex);
 		values[i] = OidFunctionCall3(Procid[typeindex].inproc,
 									 CStringGetDatum(value),
 								ObjectIdGetDatum(Procid[typeindex].elem),
@@ -786,10 +786,10 @@ InsertOneValue(char *value, int i)
 											   values[i],
 								ObjectIdGetDatum(Procid[typeindex].elem),
 											   Int32GetDatum(-1)));
-		elog(DEBUG3, " -> %s", prt);
+		elog(DEBUG4, " -> %s", prt);
 		pfree(prt);
 	}
-	elog(DEBUG3, "inserted");
+	elog(DEBUG4, "inserted");
 }
 
 /* ----------------
@@ -799,7 +799,7 @@ InsertOneValue(char *value, int i)
 void
 InsertOneNull(int i)
 {
-	elog(DEBUG3, "inserting column %d NULL", i);
+	elog(DEBUG4, "inserting column %d NULL", i);
 	Assert(i >= 0 || i < MAXATTR);
 	values[i] = PointerGetDatum(NULL);
 	Blanks[i] = 'n';
@@ -893,7 +893,7 @@ gettype(char *type)
 			if (strncmp(type, Procid[i].name, NAMEDATALEN) == 0)
 				return i;
 		}
-		elog(DEBUG3, "external type: %s", type);
+		elog(DEBUG4, "external type: %s", type);
 		rel = heap_openr(TypeRelationName, NoLock);
 		scan = heap_beginscan(rel, SnapshotNow, 0, (ScanKey) NULL);
 		i = 0;
