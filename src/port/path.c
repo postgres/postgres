@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.38 2004/10/27 17:17:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.39 2004/11/01 04:25:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,8 +195,8 @@ get_progname(const char *argv0)
 
 #if defined(__CYGWIN__) || defined(WIN32)
 	/* strip .exe suffix, regardless of case */
-	if (strlen(nodir_name) > 4 &&
-		stricmp(nodir_name + (strlen(nodir_name) - 4), EXE) == 0)
+	if (strlen(nodir_name) > sizeof(EXE) &&
+		pg_strcasecmp(nodir_name + strlen(nodir_name) - sizeof(EXE), EXE) == 0)
 	{
 		char *progname;
 
@@ -206,7 +206,7 @@ get_progname(const char *argv0)
 			fprintf(stderr, "%s: out of memory\n", nodir_name);
 			exit(1);
 		}
-		progname[strlen(progname) - 4] = '\0';
+		progname[strlen(progname) - sizeof(EXE)] = '\0';
 		nodir_name = progname; 
 	}
 #endif
