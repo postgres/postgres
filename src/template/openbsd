@@ -1,9 +1,0 @@
-AROPT:cq
-SHARED_LIB:-fpic -DPIC
-CFLAGS:-O2 -m486 -pipe
-SRCH_INC:/usr/local/include
-SRCH_LIB:/usr/local/lib
-USE_LOCALE:no
-DLSUFFIX:.so
-YFLAGS:-d
-YACC:bison -y
