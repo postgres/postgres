@@ -1,0 +1,541 @@
+From pgsql-hackers-owner+M174@hub.org Sun Mar 12 22:31:11 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id XAA25886
+	for <pgman@candle.pha.pa.us>; Sun, 12 Mar 2000 23:31:10 -0500 (EST)
+Received: from news.tht.net (news.hub.org [216.126.91.242]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id XAA04589 for <pgman@candle.pha.pa.us>; Sun, 12 Mar 2000 23:19:33 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1])
+	by news.tht.net (8.9.3/8.9.3) with SMTP id XAA42854;
+	Sun, 12 Mar 2000 23:05:05 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M174@hub.org)
+Received: from candle.pha.pa.us (root@s5-03.ppp.op.net [209.152.195.67])
+	by hub.org (8.9.3/8.9.3) with ESMTP id XAA95917
+	for <pgsql-hackers@postgreSQL.org>; Sun, 12 Mar 2000 23:00:56 -0500 (EST)
+	(envelope-from pgman@candle.pha.pa.us)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.9.0/8.9.0) id WAA25403
+	for pgsql-hackers@postgreSQL.org; Sun, 12 Mar 2000 22:59:56 -0500 (EST)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-Id: <200003130359.WAA25403@candle.pha.pa.us>
+Subject: [HACKERS] Fix for RENAME
+To: PostgreSQL-development <pgsql-hackers@postgresql.org>
+Date: Sun, 12 Mar 2000 22:59:56 -0500 (EST)
+X-Mailer: ELM [version 2.4ME+ PL72 (25)]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+I have thought about the issue with ALTER TABLE RENAME and keeping the
+file system in sync with the database.
+
+It seems there are three commands that can cause these to get out of
+sync:
+
+	CREATE TABLE/INDEX
+	DROP TABLE/INDEX
+	ALTER TABLE RENAME
+
+Now, if we had file names based only on the oid, we can eliminate file
+renaming for RENAME, but the others are still a problem.
+
+Seems there are three ways to get out of sync:
+
+	ABORT transaction
+	backend crash
+	OS crash
+
+The last two are the same, except the backend crash restarts the
+postmaster, while the OS crash has the postmaster starting up normally.
+
+Here is my idea.  Create a C List of file names to unlink on transaction
+commit or abort.  For CREATE, unlink created files on transaction ABORT.
+For DROP, unlink dropped files on COMMIT.  For RENAME, create a hard
+link for the new table linked to old table, and unlink the old file name
+on COMMIT or the new file on ABORT.
+
+That takes care of COMMIT and ABORT.  For backend crash or OS crash, add
+a postgres command-line flag for recovery.  Have the postmaster on
+startup or shared memory refresh start up a postgres backend on every
+database with the recovery flag set.  Have the postgres backend find all
+the oids in the pg_class table, and have it go through every file in the
+database directory and remove all files that don't match the oids/names
+in pg_class.  Also, remove all old sort, noname, and temp files at the
+same time.  Seems we should be doing this anyway.
+
+Care would have to be taken that a corrupted database that caused a
+postgres crash on connection would not get the postmaster startup into
+an infinite loop.
+
+Comments?
+
+-- 
+  Bruce Momjian                        |  http://www.op.net/~candle
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+From reedstrm@wallace.ece.rice.edu Tue Mar 14 12:33:31 2000
+Received: from wallace.ece.rice.edu (root@wallace.ece.rice.edu [128.42.12.154])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id NAA23826
+	for <pgman@candle.pha.pa.us>; Tue, 14 Mar 2000 13:33:29 -0500 (EST)
+Received: by wallace.ece.rice.edu
+	via sendmail from stdin
+	id <m12Uw8K-000LELC@wallace.ece.rice.edu> (Debian Smail3.2.0.102)
+	for pgman@candle.pha.pa.us; Tue, 14 Mar 2000 12:33:32 -0600 (CST) 
+Date: Tue, 14 Mar 2000 12:33:32 -0600
+From: "Ross J. Reedstrom" <reedstrm@wallace.ece.rice.edu>
+To: Hiroshi Inoue <Inoue@tpf.co.jp>
+Cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+        PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Fix for RENAME
+Message-ID: <20000314123331.A6094@rice.edu>
+References: <200003140317.WAA27733@candle.pha.pa.us> <000c01bf8d75$a0016800$2801007e@tpf.co.jp>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+User-Agent: Mutt/1.0i
+In-Reply-To: <000c01bf8d75$a0016800$2801007e@tpf.co.jp>; from Inoue@tpf.co.jp on Tue, Mar 14, 2000 at 02:24:52PM +0900
+Status: OR
+
+Hiroshi -
+I've just about finished working up a patch to store the physical
+file name in the pg_class table. There are only two places that 
+require a Rule for generating the filename, and one of them is
+only used for bootstrapping. For the initial cut, I used the rule:
+
+The filename consists of the TABLENAME, and underscore, and the OID.
+If this is longer than NAMEDATALEN, shorten the TABLENAME.
+
+I implemented this rule by exporting Tom's  makeObjectName function
+from analyze.c, which is used to make other system generated names
+that are have a requirement to be human readable. Replacing this
+rule with any other in the future would be straightforward, except
+for bootstrap. There are a number of places in bootstrap that need to
+know the filename. I've factored them out into yet another set of 
+#defines (in catname.h) to make that easier.
+
+
+I'm working through the regression tests right now: this is a relatively
+extensive change, since it modifies the low level access routines, and the
+buffer cache (which I indexed on physical filename, rather than relname,
+as it is now) Hopefully, I caught all the places that assume relname ==
+filename == unique name within a single database (see, I want schemas...)
+
+Ross
+-- 
+Ross J. Reedstrom, Ph.D., <reedstrm@rice.edu> 
+NSBRI Research Scientist/Programmer
+Computer and Information Technology Institute
+Rice University, 6100 S. Main St.,  Houston, TX 77005
+
+
+
+
+
+On Tue, Mar 14, 2000 at 02:24:52PM +0900, Hiroshi Inoue wrote:
+> > -----Original Message-----
+> > From: Bruce Momjian [mailto:pgman@candle.pha.pa.us]
+> > 
+> > > > They use the existing table file.  It is only when
+> > > > adding/removing/renaming file system files that this 
+> > out-of-sync problem
+> > > > happens.
+> > > >
+> > 
+> > Not sure.  I was going to get the CREATE/DROP/RENAME working as it
+> > should then as we add more features, we can implement this solution for
+> > them too.
+> >
+> 
+> Hmm,is general solution difficult ?
+> Is more flexible naming rule bad ?
+> 
+> This the 3rd or 4th time that I mention the following.
+> 
+> PostgreSQL doesn't keep the information in itself where tables are
+> allocated. So we need a naming rule to find where existent tables
+> are allocated.  Don't you wonder the spec ?
+> 
+> Regards.
+> 
+> Hiroshi Inoue
+> Inoue@tpf.co.jp
+>   
+> 
+
+From pgsql-hackers-owner+M74@hub.org Tue Mar 14 18:14:15 2000
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA06093
+	for <pgman@candle.pha.pa.us>; Tue, 14 Mar 2000 19:14:13 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1])
+	by hub.org (8.9.3/8.9.3) with SMTP id SAA95465;
+	Tue, 14 Mar 2000 18:45:35 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M74@hub.org)
+Received: from wallace.ece.rice.edu (root@wallace.ece.rice.edu [128.42.12.154])
+	by hub.org (8.9.3/8.9.3) with ESMTP id NAA31276
+	for <pgsql-hackers@postgresql.org>; Tue, 14 Mar 2000 13:33:52 -0500 (EST)
+	(envelope-from reedstrm@wallace.ece.rice.edu)
+Received: by wallace.ece.rice.edu
+	via sendmail from stdin
+	id <m12Uw8K-000LELC@wallace.ece.rice.edu> (Debian Smail3.2.0.102)
+	for pgsql-hackers@postgresql.org; Tue, 14 Mar 2000 12:33:32 -0600 (CST) 
+Date: Tue, 14 Mar 2000 12:33:32 -0600
+From: "Ross J. Reedstrom" <reedstrm@wallace.ece.rice.edu>
+To: Hiroshi Inoue <Inoue@tpf.co.jp>
+Cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+        PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Fix for RENAME
+Message-ID: <20000314123331.A6094@rice.edu>
+References: <200003140317.WAA27733@candle.pha.pa.us> <000c01bf8d75$a0016800$2801007e@tpf.co.jp>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+User-Agent: Mutt/1.0i
+In-Reply-To: <000c01bf8d75$a0016800$2801007e@tpf.co.jp>; from Inoue@tpf.co.jp on Tue, Mar 14, 2000 at 02:24:52PM +0900
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+Hiroshi -
+I've just about finished working up a patch to store the physical
+file name in the pg_class table. There are only two places that 
+require a Rule for generating the filename, and one of them is
+only used for bootstrapping. For the initial cut, I used the rule:
+
+The filename consists of the TABLENAME, and underscore, and the OID.
+If this is longer than NAMEDATALEN, shorten the TABLENAME.
+
+I implemented this rule by exporting Tom's  makeObjectName function
+from analyze.c, which is used to make other system generated names
+that are have a requirement to be human readable. Replacing this
+rule with any other in the future would be straightforward, except
+for bootstrap. There are a number of places in bootstrap that need to
+know the filename. I've factored them out into yet another set of 
+#defines (in catname.h) to make that easier.
+
+
+I'm working through the regression tests right now: this is a relatively
+extensive change, since it modifies the low level access routines, and the
+buffer cache (which I indexed on physical filename, rather than relname,
+as it is now) Hopefully, I caught all the places that assume relname ==
+filename == unique name within a single database (see, I want schemas...)
+
+Ross
+-- 
+Ross J. Reedstrom, Ph.D., <reedstrm@rice.edu> 
+NSBRI Research Scientist/Programmer
+Computer and Information Technology Institute
+Rice University, 6100 S. Main St.,  Houston, TX 77005
+
+
+
+
+
+On Tue, Mar 14, 2000 at 02:24:52PM +0900, Hiroshi Inoue wrote:
+> > -----Original Message-----
+> > From: Bruce Momjian [mailto:pgman@candle.pha.pa.us]
+> > 
+> > > > They use the existing table file.  It is only when
+> > > > adding/removing/renaming file system files that this 
+> > out-of-sync problem
+> > > > happens.
+> > > >
+> > 
+> > Not sure.  I was going to get the CREATE/DROP/RENAME working as it
+> > should then as we add more features, we can implement this solution for
+> > them too.
+> >
+> 
+> Hmm,is general solution difficult ?
+> Is more flexible naming rule bad ?
+> 
+> This the 3rd or 4th time that I mention the following.
+> 
+> PostgreSQL doesn't keep the information in itself where tables are
+> allocated. So we need a naming rule to find where existent tables
+> are allocated.  Don't you wonder the spec ?
+> 
+> Regards.
+> 
+> Hiroshi Inoue
+> Inoue@tpf.co.jp
+>   
+> 
+
+From mascarm@mascari.com Tue Mar 14 16:34:04 2000
+Received: from corvette.mascari.com (dhcp26136016.columbus.rr.com [24.26.136.16])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA04395
+	for <pgman@candle.pha.pa.us>; Tue, 14 Mar 2000 17:32:14 -0500 (EST)
+Received: from mascari.com (ferrari.mascari.com [192.168.2.1])
+	by corvette.mascari.com (8.9.3/8.9.3) with ESMTP id RAA09562;
+	Tue, 14 Mar 2000 17:27:22 -0500
+Message-ID: <38CEBD0A.52ADB37E@mascari.com>
+Date: Tue, 14 Mar 2000 17:28:26 -0500
+From: Mike Mascari <mascarm@mascari.com>
+X-Mailer: Mozilla 4.7 [en] (Win95; I)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+CC: Hiroshi Inoue <Inoue@tpf.co.jp>,
+        PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Fix for RENAME
+References: <200003141545.KAA17518@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+Bruce Momjian wrote:
+> 
+> > Hmm,is general solution difficult ?
+> > Is more flexible naming rule bad ?
+> >
+> > This the 3rd or 4th time that I mention the following.
+> 
+> That's because I didn't understand.
+> 
+> >
+> > PostgreSQL doesn't keep the information in itself where tables are
+> > allocated. So we need a naming rule to find where existent tables
+> > are allocated.  Don't you wonder the spec ?
+> 
+> How does naming the files in the database help our DROP/CREATE problem?
+> It would help RENAME a little bit.  Not sure about the others because
+> currently they don't have a problem.
+
+I've been thinking about this somewhat, and I think the first
+step necessary in correctly supporting ROLLBACK-able DDL
+statements in transactions is the change to <relname>_<oid>.
+Imagine the scenario:
+
+CREATE TABLE test (key int4);
+
+a) Session #1:
+
+BEGIN;
+
+b) Session #2:
+
+BEGIN;
+DROP TABLE test;
+CREATE TABLE test (value varchar(32));
+
+c) Session #1:
+
+DROP TABLE test;
+COMMIT;
+
+d) Session #2:
+
+COMMIT;
+
+What's clear to me is that, if DDL statements are to be
+ROLLBACK-able, either (1) an AccessExclusive lock is held on the
+relation until transaction commit (like Phillip Warner stated was
+Dec/Rdb's behavior) or (2) PostgreSQL must be capable of
+supporting "multi-versioned schema" as well as tuples. Before
+step 'c' is executed, both tables must simultaneously exist in
+the database with the same name, which works fine in the cataloge
+thanks to MVCC, but requires that, on disk, there exists:
+
+test_01231  - Session #1's table, available for ROLLBACK
+test_13421  - Session #2's table, available for COMMIT
+
+Now, I believe it was Andreas who suggested that VACUUM be
+modified to perform cleanup. I agree with this. VACUUM will need
+to check for aborted relation tuples in pg_class and remove the
+associated file from the filesystem in the event, for example,
+that Session #2 aborted -or- Session #1 aborted leaving the
+original pg_class tuple the "active" one and Session #2 attempted
+to COMMIT, which violates the UNIQUE constraint on the relname of
+pg_class. In addition, for "active" relation entries, VACUUM
+should verify the filename is
+<relname>_<oid> for the given oid. If it is not, it should rename
+the filename on the filesystem. Again, this is purely cosmetic
+for administrative purposes only, but would allow
+for lack of atomicity only with respect to the label of the
+relation file, until the next
+VACUUM is run. 
+
+For the case of ALTER TABLE RENAME, ALTER TABLE DROP COLUMN,
+etc., the same functionality would apply. But, as in previous
+discussions regarding ALTER TABLE DROP COLUMN, PostgreSQL MUST be
+capable of allowing multiple tuples with different attribute
+counts and types within the same relation:
+
+CREATE TABLE test (key int4);
+
+a) Session #1:
+
+BEGIN;
+
+b) Session #2:
+
+BEGIN;
+ALTER TABLE test ADD COLUMN value int4;
+INSERT INTO test values (1, 1);
+
+c) Session #1:
+
+INSERT INTO test values (0);
+COMMIT;
+
+d) Session #2:
+
+COMMIT;
+
+This also means that Hiroshi's plan to suppress the visibility of
+attributes for ALTER TABLE DROP COLUMN would be required anyway,
+to allow for "multi-versioning" of attributes within a single
+tuple (i.e., like multi-versioning of tuples within relations),
+an attribute is either visible or not, but the tuple should
+always grow, until, of course, the next VACUUM.
+
+So, to support rollback-able DDL statements ("multi-versioning
+schema", if you will), PostgreSQL needs:
+
+1) relation names of the form <relname>_<oid>
+2) support "multi-versioning" of attributes within a single tuple
+3) modify VACUUM to:
+
+  A) Remove filesystem files whose pg_class tuples are no longer
+valid
+  B) Rename filesystem files to relname of pg_class when the
+<relname>_<oid> doesn't match
+  C) Reconstruct relations after attributes have been
+added/dropped.
+
+4) All DDL statements should perform their non-create filesystem
+functions in the now infamous "post-transaction-commit" trigger.
+If the backend should crash between the time the transaction
+committed and the rename() or unlink(), no adverse affects would
+be encountered with the database WRT data, VACUUM would clean up
+the rename() problem, and, worst-case scenario, an old
+<relname>_<oid> file would lie around unused. But at least it
+would no longer prohibit the creation of a table by the same
+name....
+
+Just my humble opinion, 
+
+Mike Mascari
+
+From Inoue@tpf.co.jp Tue Mar 14 20:31:35 2000
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA08792
+	for <pgman@candle.pha.pa.us>; Tue, 14 Mar 2000 21:30:35 -0500 (EST)
+Received: from cadzone ([126.0.1.40] (may be forged))
+          by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
+   id LAA00515; Wed, 15 Mar 2000 11:29:09 +0900
+From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+To: "Ross J. Reedstrom" <reedstrm@wallace.ece.rice.edu>,
+        "Bruce Momjian" <pgman@candle.pha.pa.us>
+Cc: "PostgreSQL-development" <pgsql-hackers@postgresql.org>
+Subject: RE: [HACKERS] Fix for RENAME
+Date: Wed, 15 Mar 2000 11:35:46 +0900
+Message-ID: <000c01bf8e27$2b3c3ce0$2801007e@tpf.co.jp>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
+In-Reply-To: <20000314123331.A6094@rice.edu>
+Importance: Normal
+Status: ORr
+
+> -----Original Message-----
+> From: Ross J. Reedstrom [mailto:reedstrm@wallace.ece.rice.edu]
+> 
+> Hiroshi -
+> I've just about finished working up a patch to store the physical
+> file name in the pg_class table. There are only two places that 
+> require a Rule for generating the filename, and one of them is
+> only used for bootstrapping.
+
+Thanks for your trial.
+It's nice that only two places require naming rule.
+
+I don't stick to one naming rule.
+The only limitation is the uniqueness and the rule
+could be changed according to situations.
+For example,we could change the naming rule according to
+the kind of relation such as system/user relations.
+
+I'm now inclined to introduce a new system relation to store
+the physical path name. It could also have table(data)space
+information in the (near ?) future. 
+It seems better to separate it from pg_class because table(data?)
+space may change the concept of table allocation.
+
+Comments ?
+
+Regards.
+
+Hiroshi Inoue
+Inoue@tpf.co.jp
+
+
+From Inoue@tpf.co.jp Wed Mar 15 02:00:58 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA17887
+	for <pgman@candle.pha.pa.us>; Wed, 15 Mar 2000 03:00:57 -0500 (EST)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id CAA02974 for <pgman@candle.pha.pa.us>; Wed, 15 Mar 2000 02:54:44 -0500 (EST)
+Received: from cadzone ([126.0.1.40] (may be forged))
+          by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
+   id QAA00734; Wed, 15 Mar 2000 16:53:56 +0900
+From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+To: "Bruce Momjian" <pgman@candle.pha.pa.us>
+Cc: "Ross J. Reedstrom" <reedstrm@wallace.ece.rice.edu>,
+        "PostgreSQL-development" <pgsql-hackers@postgresql.org>
+Subject: RE: [HACKERS] Fix for RENAME
+Date: Wed, 15 Mar 2000 17:00:35 +0900
+Message-ID: <001101bf8e54$8b941cc0$2801007e@tpf.co.jp>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
+In-Reply-To: <200003150433.XAA13256@candle.pha.pa.us>
+Importance: Normal
+Status: ORr
+
+> -----Original Message-----
+> From: Bruce Momjian [mailto:pgman@candle.pha.pa.us]
+> 
+> > I'm now inclined to introduce a new system relation to store
+> > the physical path name. It could also have table(data)space
+> > information in the (near ?) future. 
+> > It seems better to separate it from pg_class because table(data?)
+> > space may change the concept of table allocation.
+> 
+> Why not just put it in pg_class?
+>
+
+Not sure,it's only my feeling.
+Comments please,everyone.
+
+We have taken a practical way which doesn't break file per table
+assumption in this thread and it wouldn't so difficult  to implement.
+In fact Ross has already tried it.
+
+However there was a discussion about data(table)space for
+months ago and currently a new discussion is there.
+Judging from the previous discussion,I can't expect so much
+that it could get a practical consensus(How many opinions there
+were). We can make a practical step toward future by encapsulating
+the information of table allocation. Separating table alloc info from
+pg_class seems one of the way. 
+There may be more essential things for encapsulation. 
+
+Comments ?
+
+Regards.
+
+Hiroshi Inoue
+Inoue@tpf.co.jp
+
+
