@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.105 2000/12/30 15:19:54 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.106 2001/01/07 22:14:31 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1410,8 +1410,13 @@ heap_insert(Relation relation, HeapTuple tup)
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	WriteBuffer(buffer);
 
-	if (IsSystemRelationName(RelationGetRelationName(relation)))
-		RelationMark4RollbackHeapTuple(relation, tup);
+	/*
+	 * If tuple is cachable, mark it for rollback from the caches
+	 * in case we abort.  Note it is OK to do this after WriteBuffer
+	 * releases the buffer, because the "tup" data structure is all
+	 * in local memory, not in the shared buffer.
+	 */
+	RelationMark4RollbackHeapTuple(relation, tup);
 
 	return tup->t_data->t_oid;
 }
@@ -1541,7 +1546,11 @@ l1:
 
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
-	/* invalidate caches */
+	/*
+	 * Mark tuple for invalidation from system caches at next command boundary.
+	 * We have to do this before WriteBuffer because we need to look at the
+	 * contents of the tuple, so we need to hold our refcount on the buffer.
+	 */
 	RelationInvalidateHeapTuple(relation, &tp);
 
 	WriteBuffer(buffer);
@@ -1570,7 +1579,7 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(otid));
 	if (!BufferIsValid(buffer))
-		elog(ERROR, "amreplace: failed ReadBuffer");
+		elog(ERROR, "heap_update: failed ReadBuffer");
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
 	dp = (PageHeader) BufferGetPage(buffer);
@@ -1580,6 +1589,12 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	oldtup.t_data = (HeapTupleHeader) PageGetItem(dp, lp);
 	oldtup.t_len = ItemIdGetLength(lp);
 	oldtup.t_self = *otid;
+	/*
+	 * Note: beyond this point, use oldtup not otid to refer to old tuple.
+	 * otid may very well point at newtup->t_self, which we will overwrite
+	 * with the new tuple's location, so there's great risk of confusion
+	 * if we use otid anymore.
+	 */
 
 l2:
 	result = HeapTupleSatisfiesUpdate(&oldtup);
@@ -1672,7 +1687,7 @@ l2:
 		 * after postmaster startup.
 		 */
 		_locked_tuple_.node = relation->rd_node;
-		_locked_tuple_.tid = *otid;
+		_locked_tuple_.tid = oldtup.t_self;
 		XactPushRollback(_heap_unlock_tuple, (void*) &_locked_tuple_);
 
 		TransactionIdStore(GetCurrentTransactionId(), &(oldtup.t_data->t_xmax));
@@ -1722,15 +1737,26 @@ l2:
 	END_CRIT_CODE;
 
 	if (newbuf != buffer)
-	{
 		LockBuffer(newbuf, BUFFER_LOCK_UNLOCK);
-		WriteBuffer(newbuf);
-	}
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+
+	/*
+	 * Mark old tuple for invalidation from system caches at next command
+	 * boundary. We have to do this before WriteBuffer because we need to
+	 * look at the contents of the tuple, so we need to hold our refcount.
+	 */
+	RelationInvalidateHeapTuple(relation, &oldtup);
+
+	if (newbuf != buffer)
+		WriteBuffer(newbuf);
 	WriteBuffer(buffer);
 
-	/* invalidate caches */
-	RelationInvalidateHeapTuple(relation, &oldtup);
+	/*
+	 * If new tuple is cachable, mark it for rollback from the caches
+	 * in case we abort.  Note it is OK to do this after WriteBuffer
+	 * releases the buffer, because the "newtup" data structure is all
+	 * in local memory, not in the shared buffer.
+	 */
 	RelationMark4RollbackHeapTuple(relation, newtup);
 
 	return HeapTupleMayBeUpdated;
