@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.29 2000/03/02 04:08:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.30 2000/03/11 23:53:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,8 +302,8 @@ make_subplan(SubLink *slink)
 		 * the top of an uncorrelated/undirect correlated subplan, which lets
 		 * us do the work of evaluating the subplan only once.  We do this
 		 * if the subplan's top plan node is anything more complicated than
-		 * a sequential or index scan, and we do it even for those plan types
-		 * if the qual appears selective enough to eliminate many tuples.
+		 * a plain sequential scan, and we do it even for seqscan if the
+		 * qual appears selective enough to eliminate many tuples.
 		 */
 		if (node->parParam == NIL)
 		{
@@ -312,28 +312,19 @@ make_subplan(SubLink *slink)
 			switch (nodeTag(plan))
 			{
 				case T_SeqScan:
-				{
-					Selectivity qualsel;
+					if (plan->initPlan || plan->subPlan)
+						use_material = true;
+					else
+					{
+						Selectivity qualsel;
 
-					qualsel = clauselist_selectivity(subquery, plan->qual, 0);
-					/* Is 10% selectivity a good threshold?? */
-					use_material = qualsel < 0.10;
+						qualsel = clauselist_selectivity(subquery,
+														 plan->qual,
+														 0);
+						/* Is 10% selectivity a good threshold?? */
+						use_material = qualsel < 0.10;
+					}
 					break;
-				}
-				case T_IndexScan:
-				{
-					List	   *indxqual = ((IndexScan *) plan)->indxqualorig;
-					Selectivity qualsel;
-
-					qualsel = clauselist_selectivity(subquery, plan->qual, 0);
-					qualsel *= clauselist_selectivity(subquery, indxqual, 0);
-					/* Note: if index is lossy, we just double-counted the
-					 * index selectivity.  Worth fixing?
-					 */
-					/* Is 10% selectivity a good threshold?? */
-					use_material = qualsel < 0.10;
-					break;
-				}
 				case T_Material:
 				case T_Sort:
 					/* Don't add another Material node if there's one already,
