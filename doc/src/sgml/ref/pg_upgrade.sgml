@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.13 2001/12/08 03:24:38 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.14 2002/01/09 21:50:51 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -24,7 +24,7 @@ PostgreSQL documentation
    <date>1999-07-31</date>
   </refsynopsisdivinfo>
   <synopsis>
-pg_upgrade [ -f <replaceable class="parameter">filename</replaceable> ] <replaceable class="parameter">old_data_dir</replaceable>
+pg_upgrade -s <replaceable class="parameter">filename</replaceable> [ -d <replaceable class="parameter">filename</replaceable> ] <replaceable class="parameter">old_data_dir</replaceable>
   </synopsis>
  </refsynopsisdiv>
 
@@ -58,7 +58,7 @@ pg_upgrade [ -f <replaceable class="parameter">filename</replaceable> ] <replace
     <para>
      Then do:
      <programlisting>
-$ pg_dumpall -s >db.out
+$ pg_dumpall -s > schema.out
      </programlisting>
      to dump out your old database's table definitions without any data.
     </para>
@@ -108,7 +108,7 @@ $ make install
      Change your working directory to the 
      pgsql main directory, and type:
      <programlisting>
-$ pg_upgrade -f db.out data.old
+$ pg_upgrade -s schema.out -d data.out data.old
      </programlisting>
      The program will do some checking to make sure everything is properly
      configured, and will run your db.out script to recreate all the databases
