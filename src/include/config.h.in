@@ -23,6 +23,9 @@
 /* Set to 1 if you have <termios.h> */
 #undef HAVE_TERMIOS_H
 
+/* Set to 1 if you have <float.h> */
+#undef HAVE_FLOAT_H
+
 /* Set to 1 if you have <limits.h> */
 #undef HAVE_LIMITS_H
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.9 1997/03/25 20:00:52 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.10 1997/03/25 20:02:42 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2556,7 +2556,6 @@ int EncodePostgresDate(struct tm *tm, double fsec, char *str)
     char mabbrev[4], dabbrev[4];
     int day;
     double sec;
-    char buf[MAXDATELEN];
 
     sec = (tm->tm_sec + fsec);
 
