@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.52 1999/07/16 04:59:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.53 1999/07/16 22:32:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,10 @@
 #include "utils/builtins.h"
 
 static Node *parser_typecast(Value *expr, TypeName *typename, int32 atttypmod);
-static Node *transformIdent(ParseState *pstate, Node *expr, int precedence);
+static Node *transformAttr(ParseState *pstate, Attr *att, int precedence);
+static Node *transformIdent(ParseState *pstate, Ident *ident, int precedence);
+static Node *transformIndirection(ParseState *pstate, Node *basenode,
+								  List *indirection, int precedence);
 
 /*
  * transformExpr -
@@ -51,45 +54,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 	{
 		case T_Attr:
 			{
-				Attr	   *att = (Attr *) expr;
-				Node	   *temp;
-
-				/* what if att.attrs == "*"? */
-				temp = ParseNestedFuncOrColumn(pstate, att, &pstate->p_last_resno,
-											   precedence);
-				if (att->indirection != NIL)
-				{
-					List	   *idx = att->indirection;
-
-					while (idx != NIL)
-					{
-						A_Indices  *ai = (A_Indices *) lfirst(idx);
-						Node	   *lexpr = NULL,
-								   *uexpr;
-
-						uexpr = transformExpr(pstate, ai->uidx, precedence);	/* must exists */
-						if (exprType(uexpr) != INT4OID)
-							elog(ERROR, "array index expressions must be int4's");
-						if (ai->lidx != NULL)
-						{
-							lexpr = transformExpr(pstate, ai->lidx, precedence);
-							if (exprType(lexpr) != INT4OID)
-								elog(ERROR, "array index expressions must be int4's");
-						}
-						ai->lidx = lexpr;
-						ai->uidx = uexpr;
-
-						/*
-						 * note we reuse the list of indices, make sure we
-						 * don't free them! Otherwise, make a new list
-						 * here
-						 */
-						idx = lnext(idx);
-					}
-					result = (Node *) make_array_ref(temp, att->indirection);
-				}
-				else
-					result = temp;
+				result = transformAttr(pstate, (Attr *) expr, precedence);
 				break;
 			}
 		case T_A_Const:
@@ -106,12 +71,10 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 		case T_ParamNo:
 			{
 				ParamNo    *pno = (ParamNo *) expr;
-				Oid			toid;
-				int			paramno;
+				int			paramno = pno->number;
+				Oid			toid = param_type(paramno);
 				Param	   *param;
 
-				paramno = pno->number;
-				toid = param_type(paramno);
 				if (!OidIsValid(toid))
 					elog(ERROR, "Parameter '$%d' is out of range", paramno);
 				param = makeNode(Param);
@@ -120,40 +83,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				param->paramname = "<unnamed>";
 				param->paramtype = (Oid) toid;
 				param->param_tlist = (List *) NULL;
-
-				if (pno->indirection != NIL)
-				{
-					List	   *idx = pno->indirection;
-
-					while (idx != NIL)
-					{
-						A_Indices  *ai = (A_Indices *) lfirst(idx);
-						Node	   *lexpr = NULL,
-								   *uexpr;
-
-						uexpr = transformExpr(pstate, ai->uidx, precedence);	/* must exists */
-						if (exprType(uexpr) != INT4OID)
-							elog(ERROR, "array index expressions must be int4's");
-						if (ai->lidx != NULL)
-						{
-							lexpr = transformExpr(pstate, ai->lidx, precedence);
-							if (exprType(lexpr) != INT4OID)
-								elog(ERROR, "array index expressions must be int4's");
-						}
-						ai->lidx = lexpr;
-						ai->uidx = uexpr;
-
-						/*
-						 * note we reuse the list of indices, make sure we
-						 * don't free them! Otherwise, make a new list
-						 * here
-						 */
-						idx = lnext(idx);
-					}
-					result = (Node *) make_array_ref((Node *) param, pno->indirection);
-				}
-				else
-					result = (Node *) param;
+				result = transformIndirection(pstate, (Node *) param,
+											  pno->indirection, precedence);
 				break;
 			}
 		case T_A_Expr:
@@ -247,12 +178,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 			}
 		case T_Ident:
 			{
-
-				/*
-				 * look for a column name or a relation name (the default
-				 * behavior)
-				 */
-				result = transformIdent(pstate, expr, precedence);
+				result = transformIdent(pstate, (Ident *) expr, precedence);
 				break;
 			}
 		case T_FuncCall:
@@ -544,48 +470,79 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 }
 
 static Node *
-transformIdent(ParseState *pstate, Node *expr, int precedence)
+transformIndirection(ParseState *pstate, Node *basenode,
+					 List *indirection, int precedence)
 {
-	Ident	   *ident = (Ident *) expr;
-	RangeTblEntry *rte;
-	Node	   *column_result,
-			   *relation_result,
-			   *result;
+	List	   *idx;
 
-	column_result = relation_result = result = 0;
-	/* try to find the ident as a column */
-	if ((rte = colnameRangeTableEntry(pstate, ident->name)) != NULL)
+	if (indirection == NIL)
+		return basenode;
+	foreach (idx, indirection)
 	{
-		Attr	   *att = makeNode(Attr);
+		A_Indices  *ai = (A_Indices *) lfirst(idx);
+		Node	   *lexpr = NULL,
+				   *uexpr;
 
-		/* we add the relation name for them */
-		att->relname = rte->refname;
-		att->attrs = lcons(makeString(ident->name), NIL);
-		column_result = (Node *) ParseNestedFuncOrColumn(pstate, att,
-									  &pstate->p_last_resno, precedence);
+		/* uidx is always present, but lidx might be null */
+		if (ai->lidx != NULL)
+		{
+			lexpr = transformExpr(pstate, ai->lidx, precedence);
+			if (exprType(lexpr) != INT4OID)
+				elog(ERROR, "array index expressions must be int4's");
+		}
+		uexpr = transformExpr(pstate, ai->uidx, precedence);
+		if (exprType(uexpr) != INT4OID)
+			elog(ERROR, "array index expressions must be int4's");
+		ai->lidx = lexpr;
+		ai->uidx = uexpr;
+		/*
+		 * note we reuse the list of A_Indices nodes, make sure
+		 * we don't free them! Otherwise, make a new list here
+		 */
 	}
+	return (Node *) make_array_ref(basenode, indirection);
+}
 
-	/* try to find the ident as a relation */
-	if (refnameRangeTableEntry(pstate, ident->name) != NULL)
+static Node *
+transformAttr(ParseState *pstate, Attr *att, int precedence)
+{
+	Node	   *basenode;
+
+	/* what if att->attrs == "*"? */
+	basenode = ParseNestedFuncOrColumn(pstate, att, &pstate->p_last_resno,
+									   precedence);
+	return transformIndirection(pstate, basenode,
+								att->indirection, precedence);
+}
+
+static Node *
+transformIdent(ParseState *pstate, Ident *ident, int precedence)
+{
+	Node	   *result = NULL;
+	RangeTblEntry *rte;
+
+	/* try to find the ident as a relation ... but not if subscripts appear */
+	if (ident->indirection == NIL &&
+		refnameRangeTableEntry(pstate, ident->name) != NULL)
 	{
 		ident->isRel = TRUE;
-		relation_result = (Node *) ident;
+		result = (Node *) ident;
 	}
 
-	/* choose the right result based on the precedence */
-	if (precedence == EXPR_COLUMN_FIRST)
+	if (result == NULL || precedence == EXPR_COLUMN_FIRST)
 	{
-		if (column_result)
-			result = column_result;
-		else
-			result = relation_result;
-	}
-	else
-	{
-		if (relation_result)
-			result = relation_result;
-		else
-			result = column_result;
+		/* try to find the ident as a column */
+		if ((rte = colnameRangeTableEntry(pstate, ident->name)) != NULL)
+		{
+			/* Convert it to a fully qualified Attr, and transform that */
+			Attr	   *att = makeNode(Attr);
+
+			att->relname = rte->refname;
+			att->paramNo = NULL;
+			att->attrs = lcons(makeString(ident->name), NIL);
+			att->indirection = ident->indirection;
+			return transformAttr(pstate, att, precedence);
+		}
 	}
 
 	if (result == NULL)
