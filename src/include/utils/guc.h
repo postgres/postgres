@@ -7,7 +7,7 @@
  * Copyright 2000-2003 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $Id: guc.h,v 1.34 2003/07/09 17:57:47 momjian Exp $
+ * $Id: guc.h,v 1.35 2003/07/21 21:02:12 momjian Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -52,9 +52,6 @@
  * non-super users.
  *
  * USERSET options can be set by anyone any time.
- *
- * When updating the GucContexts, please make sure to update the
- * corresponding GucContext_names [] entries in pg_guc.c.
  */
 typedef enum
 {
