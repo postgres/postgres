@@ -14973,6 +14973,11 @@ _ACEOF
 
 # Now we have checked all the reasons to replace snprintf
 if test $pgac_need_repl_snprintf = yes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define USE_SNPRINTF 1
+_ACEOF
+
   LIBOBJS="$LIBOBJS snprintf.$ac_objext"
 fi
 

@@ -65,19 +65,15 @@
  * causing nasty effects.
  **************************************************************/
 
-/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.16 2005/03/02 23:56:53 momjian Exp $";*/
+/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.17 2005/03/11 17:20:35 momjian Exp $";*/
 
-int			snprintf(char *str, size_t count, const char *fmt,...);
-int			vsnprintf(char *str, size_t count, const char *fmt, va_list args);
-int			printf(const char *format, ...);
+int			pg_snprintf(char *str, size_t count, const char *fmt,...);
+int			pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args);
+int			pg_printf(const char *format, ...);
 static void dopr(char *buffer, const char *format, va_list args, char *end);
 
-/*
- *	If vsnprintf() is not before snprintf() in this file, snprintf()
- *	will call the system vsnprintf() on MinGW.
- */
 int
-vsnprintf(char *str, size_t count, const char *fmt, va_list args)
+pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args)
 {
 	char *end;
 	str[0] = '\0';
@@ -89,19 +85,19 @@ vsnprintf(char *str, size_t count, const char *fmt, va_list args)
 }
 
 int
-snprintf(char *str, size_t count, const char *fmt,...)
+pg_snprintf(char *str, size_t count, const char *fmt,...)
 {
 	int			len;
 	va_list		args;
 
 	va_start(args, fmt);
-	len = vsnprintf(str, count, fmt, args);
+	len = pg_vsnprintf(str, count, fmt, args);
 	va_end(args);
 	return len;
 }
 
 int
-printf(const char *fmt,...)
+pg_printf(const char *fmt,...)
 {
 	int			len;
 	va_list			args;
@@ -109,7 +105,7 @@ printf(const char *fmt,...)
 	char*			p;
 
 	va_start(args, fmt);
-	len = vsnprintf((char*)buffer, (size_t)4096, fmt, args);
+	len = pg_vsnprintf((char*)buffer, (size_t)4096, fmt, args);
 	va_end(args);
 	p = (char*)buffer;
 	for(;*p;p++)

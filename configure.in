@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.405 2005/03/02 15:42:35 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.406 2005/03/11 17:20:33 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1143,6 +1143,7 @@ AC_DEFINE_UNQUOTED(UINT64_FORMAT, $UINT64_FORMAT,
 
 # Now we have checked all the reasons to replace snprintf
 if test $pgac_need_repl_snprintf = yes; then
+  AC_DEFINE(USE_SNPRINTF, 1, [Use replacement snprintf() functions.])
   AC_LIBOBJ(snprintf)
 fi
 

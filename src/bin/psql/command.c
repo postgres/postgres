@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.140 2005/02/22 04:40:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.141 2005/03/11 17:20:34 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1175,13 +1175,13 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 		 *	supplied path unless we use only backslashes, so we do that.
 		 */
 #endif
-		snprintf(fnametmp, sizeof(fnametmp), "%s%spsql.edit.%d", tmpdir,
 #ifndef WIN32
-				"/",
+		snprintf(fnametmp, sizeof(fnametmp), "%s%spsql.edit.%d", tmpdir,
+				"/", (int)getpid());
 #else
-				"",	/* trailing separator already present */
+		snprintf(fnametmp, sizeof(fnametmp), "%s%spsql.edit.%d", tmpdir,
+				"" /* trailing separator already present */, (int)getpid());
 #endif
-				(int)getpid());
 
 		fname = (const char *) fnametmp;
 

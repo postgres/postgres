@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.54 2005/02/22 04:39:22 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.55 2005/03/11 17:20:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -337,19 +337,23 @@ start_postmaster(void)
 	if (log_file != NULL)
 #ifndef WIN32	/* Cygwin doesn't have START */
 		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1 &%s",
-#else
-		snprintf(cmd, MAXPGPATH, "%sSTART /B \"\" \"%s\" %s%s < \"%s\" >> \"%s\" 2>&1%s",
-#endif
 				 SYSTEMQUOTE, postgres_path, pgdata_opt, post_opts,
 				 DEVNULL, log_file, SYSTEMQUOTE);
+#else
+		snprintf(cmd, MAXPGPATH, "%sSTART /B \"\" \"%s\" %s%s < \"%s\" >> \"%s\" 2>&1%s",
+				 SYSTEMQUOTE, postgres_path, pgdata_opt, post_opts,
+				 DEVNULL, log_file, SYSTEMQUOTE);
+#endif
 	else
 #ifndef WIN32	/* Cygwin doesn't have START */
 		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s%s < \"%s\" 2>&1 &%s",
-#else
-		snprintf(cmd, MAXPGPATH, "%sSTART /B \"\" \"%s\" %s%s < \"%s\" 2>&1%s",
-#endif
 				 SYSTEMQUOTE, postgres_path, pgdata_opt, post_opts,
 				 DEVNULL, SYSTEMQUOTE);
+#else
+		snprintf(cmd, MAXPGPATH, "%sSTART /B \"\" \"%s\" %s%s < \"%s\" 2>&1%s",
+				 SYSTEMQUOTE, postgres_path, pgdata_opt, post_opts,
+				 DEVNULL, SYSTEMQUOTE);
+#endif
 
 	return system(cmd);
 }
