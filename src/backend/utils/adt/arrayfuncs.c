@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.85 2002/11/13 00:39:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.86 2003/01/29 01:28:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -275,7 +275,7 @@ ArrayCount(char *str, int *dim, char typdelim)
 {
 	int			nest_level = 0,
 				i;
-	int			ndim = 0,
+	int			ndim = 1,
 				temp[MAXDIM];
 	bool		scanning_string = false;
 	bool		eoArray = false;
