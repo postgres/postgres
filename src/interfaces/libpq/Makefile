@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.109 2004/05/24 01:01:38 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.110 2004/06/19 04:43:18 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,8 +25,14 @@ OBJS=	fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
 	fe-protocol2.o fe-protocol3.o pqexpbuffer.o pqsignal.o fe-secure.o \
 	dllist.o md5.o ip.o wchar.o encnames.o noblock.o pgstrcasecmp.o thread.o \
 	$(filter crypt.o getaddrinfo.o inet_aton.o open.o snprintf.o strerror.o, $(LIBOBJS))
+
 ifeq ($(PORTNAME), win32)
 OBJS+=win32.o
+ifeq ($(enable_thread_safety), yes)
+# This doesn't work yet because configure test fails.  2004-06-19
+OBJS+=pthread-win32.o
+PTHREAD_H_WIN32=yes
+endif
 endif
 
 
@@ -39,7 +45,7 @@ SHLIB_LINK += -lwsock32 -lws2_32
 endif
 
 
-all: all-lib
+all: $(PTHREAD_H_WIN32) all-lib
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
@@ -66,6 +72,11 @@ encnames.c wchar.c : % : $(backend_src)/utils/mb/%
 	rm -f $@ && $(LN_S) $< .
 
 
+ifeq ($(PTHREAD_H_WIN32))
+pthread.h : % : $(top_srcdir)/src/interfaces/libpq/pthread.h.win
+	rm -f $@ && $(LN_S) $< .
+endif
+
 install: all installdirs install-lib
 	$(INSTALL_DATA) $(srcdir)/libpq-fe.h $(DESTDIR)$(includedir)
 	$(INSTALL_DATA) $(srcdir)/libpq-int.h $(DESTDIR)$(includedir_internal)
@@ -79,4 +90,4 @@ uninstall: uninstall-lib
 	rm -f $(DESTDIR)$(includedir)/libpq-fe.h $(DESTDIR)$(includedir_internal)/libpq-int.h $(DESTDIR)$(includedir_internal)/pqexpbuffer.h
 
 clean distclean maintainer-clean: clean-lib
-	rm -f $(OBJS) crypt.c getaddrinfo.c inet_aton.c noblock.c pgstrcasecmp.c snprintf.c strerror.c open.c thread.c dllist.c md5.c ip.c encnames.c wchar.c
+	rm -f $(OBJS) crypt.c getaddrinfo.c inet_aton.c noblock.c pgstrcasecmp.c snprintf.c strerror.c open.c thread.c dllist.c md5.c ip.c encnames.c wchar.c pthread.h
