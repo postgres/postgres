@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.3 1996/10/18 05:59:15 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.4 1996/10/21 09:37:20 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,51 +59,63 @@
  *
  */
 
-#include <string.h>
-#include <signal.h>
-#include <errno.h>
 #include "postgres.h"
 
-#include "access/attnum.h"
-#include "access/heapam.h"
-#include "access/htup.h"
-#include "access/relscan.h"
+#include "catalog/pg_attribute.h"
+#include "access/attnum.h" 
+#include "nodes/pg_list.h"
+#include "access/tupdesc.h"  
+#include "storage/fd.h"
+#include "catalog/pg_am.h"
+#include "catalog/pg_class.h"
+#include "nodes/nodes.h"
+#include "rewrite/prs2lock.h"
 #include "access/skey.h"
-#include "utils/builtins.h"
-#include "utils/tqual.h"
-#include "access/xact.h"
-
-#include "commands/async.h"
-#include "commands/copy.h"
-#include "storage/buf.h"
-#include "storage/itemptr.h"
-#include "miscadmin.h"
-#include "utils/portal.h"
-#include "utils/excid.h"
-#include "utils/elog.h"
-#include "utils/mcxt.h"
-#include "utils/palloc.h"
+#include "access/strat.h"
 #include "utils/rel.h"
 
-#include "nodes/pg_list.h"
-#include "tcop/dest.h"
-#include "commands/command.h"
+#include "storage/block.h"
+#include "storage/off.h"
+#include "storage/itemptr.h"
+#include <time.h>
+#include "utils/nabstime.h"
+#include "access/htup.h" 
 
-#include "catalog/catname.h"
-#include "utils/syscache.h"
-#include "catalog/pg_attribute.h"
+#include "utils/tqual.h"
+#include "storage/buf.h"  
+#include "access/relscan.h"
+
+#include "access/xact.h"
+
+#include "lib/dllist.h"
+
+#include "utils/palloc.h"
+
+#include "tcop/dest.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_class.h"
-#include "catalog/pg_type.h"
+#include "catalog/catname.h"
 #include "catalog/pg_listener.h"
 
-#include "executor/execdefs.h"
-/* #include "executor/execdesc.h"*/
+#include "access/heapam.h" 
 
+#include <stdio.h>
+#include "storage/ipc.h"
 #include "storage/bufmgr.h"
-#include "lib/dllist.h"
+
+#include "nodes/memnodes.h"
+#include "utils/mcxt.h"
+#include "commands/async.h"
+
+#include <unistd.h>
+#include <signal.h>
+#include <string.h>
+#include <errno.h>
+
+#include <netinet/in.h>
+#include "libpq/pqcomm.h"
 #include "libpq/libpq.h"
 
+#include "utils/syscache.h"
 
 static int notifyFrontEndPending = 0;
 static int notifyIssued = 0;

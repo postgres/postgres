@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.2 1996/08/19 01:53:37 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.3 1996/10/21 09:37:23 scrappy Exp $
  *
  * NOTES
  *    The PortalExecutorHeapMemory crap needs to be eliminated
@@ -20,58 +20,80 @@
  *	
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 #include "postgres.h"
 
-#include "access/attnum.h"
-#include "access/heapam.h"
-#include "access/htup.h"
-#include "access/relscan.h"
-#include "access/skey.h"
-#include "utils/builtins.h"
-#include "utils/tqual.h"
-
-#include "commands/copy.h"
-
-#include "storage/buf.h"
-#include "storage/itemptr.h"
-
-#include "miscadmin.h"
-
-#include "utils/portal.h"
-#include "utils/excid.h"
-#include "utils/elog.h"
-#include "utils/mcxt.h"
-#include "utils/palloc.h"
-#include "utils/rel.h"
-
+#include "catalog/pg_attribute.h"
+#include "access/attnum.h"  
 #include "nodes/pg_list.h"
+#include "access/tupdesc.h"
+#include "storage/fd.h"
+#include "catalog/pg_am.h"
+#include "catalog/pg_class.h"
+#include "nodes/nodes.h"
+#include "rewrite/prs2lock.h"
+#include "access/skey.h"
+#include "access/strat.h"
+#include "utils/rel.h"  
+
+#include "storage/block.h"
+#include "storage/off.h"
+#include "storage/itemptr.h"
+#include <time.h>
+#include "utils/nabstime.h"
+#include "access/htup.h"
+
+#include "utils/tqual.h"
+#include "storage/buf.h"  
+#include "access/relscan.h"
+
+#include "nodes/memnodes.h"
 #include "nodes/primnodes.h"
-#include "tcop/dest.h"
+#include "nodes/parsenodes.h"
+#include "nodes/params.h"
+#include "access/sdir.h"
+#include "executor/hashjoin.h"
+#include "executor/tuptable.h"
+#include "access/funcindex.h"
+#include "nodes/execnodes.h"
+#include "nodes/plannodes.h"
+#include "tcop/dest.h"  
+#include "executor/execdesc.h"
+#include "utils/portal.h"  
+
 #include "commands/command.h"
 
-#include "catalog/catalog.h"
-#include "catalog/catname.h"
-#include "utils/syscache.h"
-#include "catalog/pg_attribute.h"
-#include "catalog/pg_proc.h"
-#include "catalog/pg_class.h"
-#include "catalog/pg_type.h"
+#include "utils/mcxt.h"
+
+#include <stdio.h>
+#include "catalog/pg_index.h"
+#include "access/itup.h" 
+#include "executor/executor.h"
+
+#include "executor/execdefs.h"
+
 #include "catalog/indexing.h"
 
-#include "executor/executor.h"
-#include "executor/execdefs.h"
-#include "executor/execdesc.h"
-
-#include "optimizer/internal.h"
-#include "optimizer/prep.h"	/* for find_all_inheritors */
-
-
-#ifndef NO_SECURITY
-#include "miscadmin.h"
-#include "utils/acl.h"
 #include "utils/syscache.h"
-#endif /* !NO_SECURITY */
+
+#include "catalog/catalog.h"
+
+#include "access/heapam.h"  
+
+#include "utils/array.h"
+#include "utils/acl.h"
+
+#include "optimizer/prep.h"
+
+#include "catalog/catname.h"
+
+#include "catalog/pg_proc.h"
+
+#include "utils/palloc.h"
+
+#include "catalog/pg_type.h"
+
+#include "utils/geo-decls.h"
+#include "utils/builtins.h"
 
 /* ----------------
  * 	PortalExecutorHeapMemory stuff

@@ -7,39 +7,60 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.1.1.1 1996/07/09 06:21:19 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.2 1996/10/21 09:37:21 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>	/* for sprintf() */
-#include <string.h>
 #include "postgres.h"
 
-#include "tcop/tcopdebug.h"
-
-#include "utils/builtins.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
-
+#include "catalog/pg_attribute.h"
+#include "access/attnum.h" 
 #include "nodes/pg_list.h"
-#include "nodes/primnodes.h"
-#include "nodes/plannodes.h"
-#include "nodes/parsenodes.h"
-#include "nodes/execnodes.h"
+#include "access/tupdesc.h"  
+#include "storage/fd.h" 
+#include "catalog/pg_am.h"
+#include "catalog/pg_class.h"
+#include "nodes/nodes.h" 
+#include "rewrite/prs2lock.h" 
+#include "access/skey.h"
+#include "access/strat.h"  
+#include "utils/rel.h"
 
-#include "utils/syscache.h"
-#include "utils/relcache.h"
-#include "catalog/catname.h"
-#include "catalog/pg_type.h"
-#include "catalog/pg_inherits.h"
-#include "catalog/pg_ipl.h"
-#include "parser/catalog_utils.h"
+#include "nodes/primnodes.h"
+#include <time.h>
+#include "utils/nabstime.h"
+#include "storage/block.h"
+#include "storage/off.h"
+#include "storage/itemptr.h"
+#include "access/htup.h"
+#include "utils/tqual.h"
+#include "nodes/parsenodes.h"
+
+#include "catalog/heap.h"
+
+#include "utils/palloc.h"
 
 #include "commands/creatinh.h"
 
-#include "access/tupdesc.h"
-#include "access/heapam.h"
 #include "access/xact.h"
+
+#include "access/htup.h"
+#include "utils/tqual.h"
+#include "storage/buf.h"
+#include "access/relscan.h"
+#include "access/heapam.h"
+
+#include "utils/syscache.h"
+
+#include "catalog/catname.h"
+
+#include "catalog/pg_type.h"
+
+#include "catalog/pg_inherits.h"
+
+#include <stdio.h>
+
+#include "catalog/pg_ipl.h"
 
 /* ----------------
  *	local stuff

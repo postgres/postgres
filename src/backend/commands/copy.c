@@ -6,43 +6,87 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.8 1996/10/18 05:59:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.9 1996/10/21 09:37:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "config.h"
+#include "postgres.h"
+
+#include "catalog/pg_attribute.h"
+#include "access/attnum.h"   
+#include "nodes/pg_list.h"
+#include "access/tupdesc.h"  
+#include "storage/fd.h"
+#include "catalog/pg_am.h"
+#include "catalog/pg_class.h"
+#include "nodes/nodes.h"
+#include "rewrite/prs2lock.h"
+#include "access/skey.h"
+#include "access/strat.h"
+#include "utils/rel.h"
+ 
+#include "storage/block.h"
+#include "storage/off.h"
+#include "storage/itemptr.h"
+#include <time.h>
+#include "utils/nabstime.h"
+#include "access/htup.h"
+
+#include "utils/tqual.h"
+#include "storage/buf.h" 
+#include "access/relscan.h"
+#include "access/heapam.h"
+
+#include "access/itup.h" 
 
 #include <stdio.h>
-#include <sys/types.h>	/* for mode_t */
-#include <sys/stat.h>	/* for umask(2) prototype */
 
-#include "postgres.h"
+#include "tcop/dest.h"
+
+#include "fmgr.h"
+
+#include "utils/palloc.h"
+
 #include "miscadmin.h"
+
+#include "utils/geo-decls.h"
 #include "utils/builtins.h"
-#include "utils/syscache.h"
-#include "catalog/pg_type.h"
+
+#include <sys/stat.h>
+
+#include "access/funcindex.h"
+
 #include "catalog/pg_index.h"
+
+#include "utils/syscache.h"
+
+#include "nodes/params.h"
+#include "access/sdir.h" 
+#include "executor/hashjoin.h"
+#include "nodes/primnodes.h"  
+#include "nodes/memnodes.h"
+#include "executor/tuptable.h"
+#include "nodes/execnodes.h" 
+
+#include "utils/memutils.h"
+
+#include "nodes/plannodes.h"
+#include "nodes/parsenodes.h"
+#include "executor/execdesc.h"
+#include "executor/executor.h"
+
+#include "storage/ipc.h"
+#include "storage/bufmgr.h"
+#include "access/transam.h"
+
 #include "catalog/index.h"
 
-#include "storage/bufmgr.h"
-#include "access/heapam.h"
-#include "access/htup.h"
-#include "access/itup.h"
-#include "access/relscan.h"
-#include "access/funcindex.h"
-#include "access/transam.h"
-#include "access/tupdesc.h"
-#include "nodes/execnodes.h"
-#include "nodes/plannodes.h"
-#include "nodes/pg_list.h"
-#include "executor/tuptable.h"
-#include "executor/executor.h"
-#include "utils/rel.h"
-#include "utils/elog.h"
-#include "utils/memutils.h"
-#include "utils/palloc.h"
-#include "fmgr.h"
+#include "access/genam.h"
+
+#include "catalog/pg_type.h"
+
+#include "catalog/catname.h"
 
 #define ISOCTAL(c)    (((c) >= '0') && ((c) <= '7'))
 #define VALUE(c)        ((c) - '0')
@@ -240,7 +284,6 @@ static void
 CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 {
     HeapTuple tuple;
-    IndexTuple ituple;
     AttrNumber attr_count;
     AttributeTupleForm *attr;
     func_ptr *in_functions;
