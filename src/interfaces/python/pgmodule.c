@@ -36,7 +36,7 @@
 #include <string.h>
 
 static PyObject *PGError;
-static const char *PyPgVersion = "3.2";
+static const char *PyPgVersion = "3.3";
 
 /* taken from fileobject.c */
 #define BUF(v) PyString_AS_STRING((PyStringObject *)(v))
@@ -1844,21 +1844,32 @@ pgquery_getresult(pgqueryobject * self, PyObject * args)
 						val = PyFloat_FromDouble(strtod(s, NULL));
 						break;
 
-					case 3:		/* get rid of the '$' and commas */
+					case 3:
+					{
+						int mult = 1;
+
 						if (*s == '$')	/* there's talk of getting rid of
 										 * it */
 							s++;
 
-						if ((s[0] == '-' || s[0] == '(') && s[1] == '$')
-							*(++s) = '-';
+						if (*s == '-' || *s == '(')
+						{
+							s++;
+							mult = -1;
+						}
+
+						/* get rid of the '$' and commas */
+						if (*s == '$')	/* Just in case we exposed one */
+							s++;
 
 						for (k = 0; *s; s++)
 							if (*s != ',')
 								cashbuf[k++] = *s;
 
 						cashbuf[k] = 0;
-						val = PyFloat_FromDouble(strtod(cashbuf, NULL));
+						val = PyFloat_FromDouble(strtod(cashbuf, NULL) * mult);
 						break;
+					}
 
 					default:
 						val = PyString_FromString(s);
@@ -1980,21 +1991,32 @@ pgquery_dictresult(pgqueryobject * self, PyObject * args)
 						val = PyFloat_FromDouble(strtod(s, NULL));
 						break;
 
-					case 3:		/* get rid of the '$' and commas */
+					case 3:
+					{
+						int mult = 1;
+
 						if (*s == '$')	/* there's talk of getting rid of
 										 * it */
 							s++;
 
-						if ((s[0] == '-' || s[0] == '(') && s[1] == '$')
-							*(++s) = '-';
+						if (*s == '-' || *s == '(')
+						{
+							s++;
+							mult = -1;
+						}
+
+						/* get rid of the '$' and commas */
+						if (*s == '$')	/* Just in case we exposed one */
+							s++;
 
 						for (k = 0; *s; s++)
 							if (*s != ',')
 								cashbuf[k++] = *s;
 
 						cashbuf[k] = 0;
-						val = PyFloat_FromDouble(strtod(cashbuf, NULL));
+						val = PyFloat_FromDouble(strtod(cashbuf, NULL) * mult);
 						break;
+					}
 
 					default:
 						val = PyString_FromString(s);
