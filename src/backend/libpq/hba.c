@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.5 1996/11/03 06:52:13 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.6 1996/11/03 06:56:52 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -349,8 +349,6 @@ find_hba_entry(const char DataDir[], const struct in_addr ip_addr,
     if (file == 0) {  
       /* The open of the config file failed.  */
       
-      const int open_errno = errno;
-      
       *host_ok_p = false;
 
       sprintf(PQerrormsg,
@@ -651,8 +649,6 @@ verify_against_usermap(const char DataDir[],
     file = fopen(map_file, "r");
     if (file == 0) {  
       /* The open of the map file failed.  */
-      
-      const int open_errno = errno;
       
       *checks_out_p = false;
 
