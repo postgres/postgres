@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.56 2000/04/12 17:15:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.57 2000/04/15 19:13:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,8 +197,9 @@ elog(int lev, const char *fmt,...)
 	if (lineno)
 	{
 		sprintf(bp, "copy: line %d, ", lineno);
-		bp = fmt_buf + strlen(fmt_buf);
-		lineno = 0;
+		bp += strlen(bp);
+		if (lev == ERROR || lev >= FATAL)
+			lineno = 0;
 	}
 
 	for (cp = fmt; *cp; cp++)
