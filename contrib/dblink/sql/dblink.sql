@@ -30,6 +30,7 @@ CREATE DATABASE regression_slave;
 -- Turn off echoing so that expected file does not depend on
 -- contents of dblink.sql.
 \set ECHO none
+SET autocommit TO 'on';
 \i dblink.sql
 \set ECHO all
 
@@ -72,6 +73,7 @@ SELECT dblink_build_sql_delete('foo','1 2',2,'{"0", "a"}');
 --
 \connect regression
 \set ECHO none
+SET autocommit TO 'on';
 \i dblink.sql
 \set ECHO all
 
@@ -124,7 +126,7 @@ WHERE t.a > 7;
 
 -- put more data into our slave table, first using arbitrary connection syntax
 -- but truncate the actual return value so we can use diff to check for success
-SELECT substr(dblink_exec('dbname=regression_slave','INSERT INTO foo VALUES(10,''k'',''{"a10","b10","c10"}'')'),1,6);
+SELECT substr(dblink_exec('dbname=regression_slave','SET autocommit TO ''on'';INSERT INTO foo VALUES(10,''k'',''{"a10","b10","c10"}'')'),1,6);
 
 -- create a persistent connection
 SELECT dblink_connect('dbname=regression_slave');
