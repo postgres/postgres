@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/hpux/Attic/dynloader.c,v 1.3 1997/09/08 02:26:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.1 1997/12/20 04:48:06 scrappy Exp $
  *
  *	NOTES
  *		all functions are defined here -- it's impossible to trace the
