@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.147 2003/06/29 23:05:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.148 2003/07/14 22:35:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -811,6 +811,8 @@ create_subqueryscan_plan(Path *best_path, List *tlist, List *scan_clauses)
 								  scan_relid,
 								  best_path->parent->subplan);
 
+	copy_path_costsize(&scan_plan->scan.plan, best_path);
+
 	return scan_plan;
 }
 
@@ -1503,8 +1505,14 @@ make_subqueryscan(List *qptlist,
 	SubqueryScan *node = makeNode(SubqueryScan);
 	Plan	   *plan = &node->scan.plan;
 
-	/* cost is figured here for the convenience of prepunion.c */
+	/*
+	 * Cost is figured here for the convenience of prepunion.c.  Note this
+	 * is only correct for the case where qpqual is empty; otherwise caller
+	 * should overwrite cost with a better estimate.
+	 */
 	copy_plan_costsize(plan, subplan);
+	plan->total_cost += cpu_tuple_cost * subplan->plan_rows;
+
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
 	plan->lefttree = NULL;
@@ -1540,7 +1548,11 @@ make_append(List *appendplans, bool isTarget, List *tlist)
 	Plan	   *plan = &node->plan;
 	List	   *subnode;
 
-	/* compute costs from subplan costs */
+	/*
+	 * Compute cost as sum of subplan costs.  We charge nothing extra for
+	 * the Append itself, which perhaps is too optimistic, but since it
+	 * doesn't do any selection or projection, it is a pretty cheap node.
+	 */
 	plan->startup_cost = 0;
 	plan->total_cost = 0;
 	plan->plan_rows = 0;
@@ -1556,6 +1568,7 @@ make_append(List *appendplans, bool isTarget, List *tlist)
 		if (plan->plan_width < subplan->plan_width)
 			plan->plan_width = subplan->plan_width;
 	}
+
 	plan->targetlist = tlist;
 	plan->qual = NIL;
 	plan->lefttree = NULL;

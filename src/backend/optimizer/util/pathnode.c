@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.91 2003/06/29 23:05:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.92 2003/07/14 22:35:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -686,9 +686,7 @@ create_subqueryscan_path(RelOptInfo *rel, List *pathkeys)
 	pathnode->parent = rel;
 	pathnode->pathkeys = pathkeys;
 
-	/* just copy the subplan's cost estimates */
-	pathnode->startup_cost = rel->subplan->startup_cost;
-	pathnode->total_cost = rel->subplan->total_cost;
+	cost_subqueryscan(pathnode, rel);
 
 	return pathnode;
 }

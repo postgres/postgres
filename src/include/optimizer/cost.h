@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.53 2003/06/11 15:01:15 momjian Exp $
+ * $Id: cost.h,v 1.54 2003/07/14 22:35:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,6 +56,7 @@ extern void cost_index(Path *path, Query *root,
 		   List *indexQuals, bool is_injoin);
 extern void cost_tidscan(Path *path, Query *root,
 			 RelOptInfo *baserel, List *tideval);
+extern void cost_subqueryscan(Path *path, RelOptInfo *baserel);
 extern void cost_functionscan(Path *path, Query *root,
 				  RelOptInfo *baserel);
 extern void cost_sort(Path *path, Query *root,
