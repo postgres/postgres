@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.67 1997/06/01 15:38:42 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.68 1997/06/01 15:53:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ static void     handleCopyOut(PGresult * res, bool quiet, FILE * copystream);
 static void
 handleCopyIn(PGresult * res, const bool mustprompt,
 	     FILE * copystream);
-static int      tableList(PsqlSettings * ps, bool deep_tablelist);
+static int      tableList(PsqlSettings * ps, bool deep_tablelist, char table_index_both);
 static int      tableDesc(PsqlSettings * ps, char *table);
 static int	rightsList(PsqlSettings * ps);
 static void     prompt_for_password(char *username, char *password);
@@ -158,7 +158,9 @@ slashUsage(PsqlSettings * ps)
     fprintf(stderr, " \\C [<captn>] -- set html3 caption (currently '%s')\n", ps->opt.caption ? ps->opt.caption : "");
     fprintf(stderr, " \\connect <dbname> <user> -- connect to new database (currently '%s')\n", PQdb(ps->db));
     fprintf(stderr, " \\copy table {from | to} <fname>\n");
-    fprintf(stderr, " \\d [<table>] -- list tables in database or columns in <table>, * for all\n");
+    fprintf(stderr, " \\d [<table>] -- list tables and indicies in database or columns in <table>, * for all\n");
+    fprintf(stderr, " \\di          -- list only indicies in database\n");
+    fprintf(stderr, " \\dt          -- list only tables in database\n");
     fprintf(stderr, " \\e [<fname>] -- edit the current query buffer or <fname>, \\E execute too\n");
     fprintf(stderr, " \\f [<sep>]   -- change field separater (currently '%s')\n", ps->opt.fieldSep);
     fprintf(stderr, " \\g [<fname>] [|<cmd>] -- send query to backend [and results in <fname> or pipe]\n");
@@ -225,7 +227,7 @@ listAllDbs(PsqlSettings * ps)
  * 
  */
 int
-tableList(PsqlSettings * ps, bool deep_tablelist)
+tableList(PsqlSettings * ps, bool deep_tablelist, char table_index_both)
 {
     char            listbuf[256];
     int             nColumns;
@@ -238,7 +240,15 @@ tableList(PsqlSettings * ps, bool deep_tablelist)
     listbuf[0] = '\0';
     strcat(listbuf, "SELECT usename, relname, relkind, relhasrules");
     strcat(listbuf, "  FROM pg_class, pg_user ");
-    strcat(listbuf, "WHERE ( relkind = 'r' OR relkind = 'i') ");
+ 	switch (table_index_both) {
+ 		case 't':	strcat(listbuf, "WHERE ( relkind = 'r') ");
+ 		 		break;
+ 		case 'i':	strcat(listbuf, "WHERE ( relkind = 'i') ");
+ 		  		break;
+ 		case 'b':
+ 		default:	strcat(listbuf, "WHERE ( relkind = 'r' OR relkind = 'i') ");
+ 		 		break;
+ 	}
     strcat(listbuf, "  and relname !~ '^pg_'");
     strcat(listbuf, "  and relname !~ '^Inv[0-9]+'");
     /*
@@ -299,7 +309,15 @@ tableList(PsqlSettings * ps, bool deep_tablelist)
 	return (0);
 
     } else {
-	fprintf(stderr, "Couldn't find any tables!\n");
+ 	switch (table_index_both) {
+ 		case 't':	fprintf(stderr, "Couldn't find any tables!\n");
+ 		 		break;
+ 		case 'i':	fprintf(stderr, "Couldn't find any indicies!\n");
+ 		  		break;
+ 		case 'b':
+ 		default:	fprintf(stderr, "Couldn't find any tables or indicies!\n");
+ 		 		break;
+ 	}
 	return (-1);
     }
 }
@@ -1151,14 +1169,16 @@ HandleSlashCmds(PsqlSettings * settings,
 	}
 	break;
     case 'd':			/* \d describe tables or columns in a table */
-	if (!optarg) {
-	    tableList(settings, 0);
-	    break;
-	}
-	if (strcmp(optarg, "*") == 0) {
-	    tableList(settings, 0);
-	    tableList(settings, 1);
-	} else {
+ 	if (strncmp(cmd, "dt", 2) == 0) {		/* only tables */
+ 		tableList(settings, 0, 't');
+ 	} else if (strncmp(cmd, "di", 2) == 0) {	/* only tables */
+ 		tableList(settings, 0, 'i');
+ 	} else if (!optarg) {				/* show'em both */
+ 	    tableList(settings, 0, 'b');
+ 	} else if (strcmp(optarg, "*") == 0) {		/* show everything */
+ 	    tableList(settings, 0, 'b');
+ 	    tableList(settings, 1, 'b');
+ 	} else {					/* describe the specified table */
 	    tableDesc(settings, optarg);
 	}
 	break;
