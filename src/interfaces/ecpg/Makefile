@@ -4,11 +4,13 @@ include $(top_builddir)/src/Makefile.global
 
 all install installdirs uninstall dep depend distprep:
 	$(MAKE) -C include $@
-	$(MAKE) -C lib $@
+	$(MAKE) -C ecpglib $@
+	$(MAKE) -C pgtypeslib $@
 	$(MAKE) -C preproc $@
 
 clean distclean maintainer-clean:
 	-$(MAKE) -C include $@
-	-$(MAKE) -C lib $@
+	-$(MAKE) -C ecpglib $@
+	-$(MAKE) -C pgtypeslib $@
 	-$(MAKE) -C preproc $@
 	-$(MAKE) -C test clean

@@ -1,0 +1,56 @@
+#include <stdio.h>
+
+int
+main()
+{
+	char *text="error\n";
+		NumericVar *value1, *value2, *res;
+	exec sql begin declare section;
+		decimal(14,7) des = {0, 0, 0, 0, 0, NULL, NULL} ;
+	exec sql end declare section;
+	double d;
+	FILE *dbgs;
+	
+	if ((dbgs = fopen("log", "w")) != NULL)
+	         ECPGdebug(1, dbgs);
+	exec sql whenever sqlerror do sqlprint();
+
+	exec sql connect to mm;
+	exec sql create table test (text char(5), num decimal(14,7));
+	
+	value1 = PGTYPESnew();
+	PGTYPESnumeric_iton(1407, value1);
+	text = PGTYPESnumeric_ntoa(value1);
+	printf("long = %s\n", text);
+		
+	value1 = PGTYPESnumeric_aton("2369.7", -1);
+	value2 = PGTYPESnumeric_aton("10.0", -1);
+	res = PGTYPESnew();
+	decadd(value1, value2, res);
+	text = PGTYPESnumeric_ntoa(res);
+	printf("add = %s\n", text);
+	
+	PGTYPESnumeric_sub(res, value2, res);
+	text = PGTYPESnumeric_ntoa(res);
+	printf("sub = %s\n", text);
+		
+	PGTYPESnumeric_copy(res, &des);
+	exec sql insert into test (text, num) values ('test', :des);
+	
+	value2 = PGTYPESnumeric_aton("2369.7", -1);
+	PGTYPESnumeric_mul(value1, value2, res);
+
+	exec sql select num into :des from test where text = 'test';
+	
+	PGTYPESnumeric_mul(res, &des, res);
+	text = PGTYPESnumeric_ntoa(res);
+	printf("mul = %s\n", text);
+
+	value2 = PGTYPESnumeric_aton("10000", -1);
+	PGTYPESnumeric_div(res, value2, res);
+	text = PGTYPESnumeric_ntoa(res);
+	PGTYPESnumeric_ntod(res, &d);
+	printf("div = %s %e\n", text, d);
+	return (0);
+}
+

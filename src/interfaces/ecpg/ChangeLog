@@ -1353,6 +1353,14 @@ Tue Feb 25 16:46:27 CET 2003
 	- Allow SET CONNECTION to be followed by connection object without
 	  leading "TO" or "=".
 	- Allow whenever statement to list function without parameters.
+
+
+Sun Mar 16 11:28:01 CET 2003
+	
+	- Started with a pgtypes library.
+	- Renamed lib directory to ecpglib.
+	- Added numerical functions to library and preprocessor.
 	- Set ecpg version to 2.12.0.
-	- Set library to 3.4.2.
+	- Set ecpg library to 3.4.2.
+	- Set pgtypes library to 1.0.0
 

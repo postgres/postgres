@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/test/Makefile,v 1.33 2001/12/23 12:17:41 meskes Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/test/Makefile,v 1.34 2003/03/16 10:42:54 meskes Exp $
 
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..
@@ -8,12 +8,12 @@ override CPPFLAGS := -I$(srcdir)/../include $(CPPFLAGS) -g
 
 ECPG = ../preproc/ecpg -I$(srcdir)/../include
 
-TESTS = test1 test2 test3 test4 perftest dyntest dyntest2 test_notice test_code100 test_init testdynalloc
+TESTS = test1 test2 test3 test4 perftest dyntest dyntest2 test_notice test_code100 test_init testdynalloc num_test
 
 all: $(TESTS)
 
 %: %.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -L../lib -L../../libpq $^ $(LIBS) -lecpg -lpq -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) -L../ecpglib -L ../pgtypeslib -L../../libpq $^ $(LIBS) -lpgtypes -lecpg -lpq -o $@
 
 %.c: %.pgc
 	$(ECPG) $<

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.211 2003/02/25 15:58:03 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.212 2003/03/16 10:42:54 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -211,7 +211,7 @@ make_name(void)
 
         KEY
 
-	LANCOMPILER LANGUAGE LAST LEADING LEFT LEVEL LIKE LIMIT LISTEN
+	LANCOMPILER LANGUAGE LEADING LEFT LEVEL LIKE LIMIT LISTEN
         LOAD LOCAL LOCATION LOCK_P
 
 	MATCH MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
@@ -303,7 +303,7 @@ make_name(void)
 %type  <str>	Typename SimpleTypename Numeric opt_float opt_numeric
 %type  <str>	opt_decimal Character character opt_varying opt_charset
 %type  <str>	opt_collate opt_timezone opt_interval table_ref
-%type  <str>	row_descriptor ConstDatetime AlterDomainStmt
+%type  <str>	row_descriptor ConstDatetime AlterDomainStmt 
 %type  <str>	SelectStmt into_clause OptTemp ConstraintAttributeSpec
 %type  <str>	opt_table opt_all sort_clause sortby_list ConstraintAttr
 %type  <str>	sortby OptUseOp qualified_name_list name_list ColId_or_Sconst
@@ -390,7 +390,7 @@ make_name(void)
 %type  <str>	ECPGAllocateDescr ECPGDeallocateDescr symbol opt_symbol
 %type  <str>	ECPGGetDescriptorHeader ECPGColLabel single_var_declaration
 %type  <str>	reserved_keyword unreserved_keyword
-%type  <str>	col_name_keyword func_name_keyword
+%type  <str>	col_name_keyword func_name_keyword precision opt_scale
 %type  <str>	ECPGTypeName variablelist ECPGColLabelCommon
 
 %type  <descriptor> ECPGGetDescriptor
@@ -399,11 +399,11 @@ make_name(void)
 
 %type  <dtype_enum> descriptor_item desc_header_item
 
-%type  <type>	type common_type single_vt_type
+%type  <type>	var_type common_type single_vt_type
 
 %type  <action> action
 
-%type  <index>	opt_array_bounds opt_type_array_bounds
+%type  <index>	opt_array_bounds 
 
 %type  <ival>	Iresult
 
@@ -4158,16 +4158,22 @@ single_var_declaration: storage_declaration
 
 			/* we do not need the string "varchar" for output */
 			/* so replace it with an empty string */
-			if ($2.type_enum == ECPGt_varchar)
+			/* if ($2.type_enum == ECPGt_varchar)
 			{
 				free($2.type_str);
 				$2.type_str=EMPTY;
-			}
+			}*/
 		}
 		variable_list ';'
 		{
 			$$ = cat_str(5, actual_startline[struct_level], $1, $2.type_str, $4, make_str(";\n"));
 		}
+		;
+
+precision:	NumConst	{ $$ = $1; };
+
+opt_scale:	',' NumConst	{ $$ = $2; }
+		| /* EMPTY */	{ $$ = EMPTY; }
 		;
 
 single_vt_type: common_type
@@ -4180,7 +4186,7 @@ single_vt_type: common_type
 			if (strcmp($1, "varchar") == 0)
 			{
 				$$.type_enum = ECPGt_varchar;
-				$$.type_str = make_str("varchar");
+				$$.type_str = EMPTY;
 				$$.type_dimension = -1;
 				$$.type_index = -1;
 				$$.type_sizeof = NULL;
@@ -4201,6 +4207,22 @@ single_vt_type: common_type
 				$$.type_index = -1;
 				$$.type_sizeof = NULL;
 			}
+			else if (strcmp($1, "numeric") == 0)
+			{
+				$$.type_enum = ECPGt_numeric;
+				$$.type_str = EMPTY;
+				$$.type_dimension = -1;
+				$$.type_index = -1;
+				$$.type_sizeof = NULL;
+			}
+			else if (strcmp($1, "decimal") == 0)
+			{
+				$$.type_enum = ECPGt_numeric;
+				$$.type_str = EMPTY;
+				$$.type_dimension = -1;
+				$$.type_index = -1;
+				$$.type_sizeof = NULL;
+			}
 			else
 			{
 				/* this is for typedef'ed types */
@@ -4213,6 +4235,17 @@ single_vt_type: common_type
 				$$.type_sizeof = this->type->type_sizeof;
 				struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
 			}
+		}
+		| ECPGColLabelCommon '(' precision opt_scale ')'
+		{
+			if (strcmp($1, "numeric") != 0 && strcmp($1, "decimal") != 0)
+				mmerror(PARSE_ERROR, ET_ERROR, "Only numeric/decimal have precision/scale argument");
+			
+			$$.type_enum = ECPGt_numeric;
+			$$.type_str = EMPTY;
+			$$.type_dimension = -1;
+			$$.type_index = -1;
+			$$.type_sizeof = NULL;
 		}
 		;
 
@@ -4253,7 +4286,7 @@ type_declaration: S_TYPEDEF
 		/* an initializer specified */
 		initializer = 0;
 	}
-	type opt_pointer ECPGColLabel opt_type_array_bounds ';'
+	var_type opt_pointer ECPGColLabel opt_array_bounds ';'
 	{
 		/* add entry to list */
 		struct typedefs *ptr, *this;
@@ -4310,7 +4343,7 @@ type_declaration: S_TYPEDEF
 	};
 
 var_declaration: storage_declaration
-		type
+		var_type
 		{
 			actual_type[struct_level].type_enum = $2.type_enum;
 			actual_type[struct_level].type_dimension = $2.type_dimension;
@@ -4319,11 +4352,11 @@ var_declaration: storage_declaration
 
 			/* we do not need the string "varchar" for output */
 			/* so replace it with an empty string */
-			if ($2.type_enum == ECPGt_varchar)
+			/* if ($2.type_enum == ECPGt_varchar)
 			{
 				free($2.type_str);
 				$2.type_str=EMPTY;
-			}
+			}*/
 		}
 		variable_list ';'
 		{
@@ -4384,7 +4417,7 @@ common_type: simple_type
 		}
 		;
 
-type:		common_type
+var_type:	common_type
 		| ECPGColLabel
 		{
 			/*
@@ -4394,7 +4427,7 @@ type:		common_type
 			if (strcmp($1, "varchar") == 0)
 			{
 				$$.type_enum = ECPGt_varchar;
-				$$.type_str = make_str("varchar");
+				$$.type_str = EMPTY; /*make_str("varchar");*/
 				$$.type_dimension = -1;
 				$$.type_index = -1;
 				$$.type_sizeof = NULL;
@@ -4415,6 +4448,22 @@ type:		common_type
 				$$.type_index = -1;
 				$$.type_sizeof = NULL;
 			}
+			else if (strcmp($1, "numeric") == 0)
+			{
+				$$.type_enum = ECPGt_numeric;
+				$$.type_str = EMPTY;
+				$$.type_dimension = -1;
+				$$.type_index = -1;
+				$$.type_sizeof = NULL;
+			}
+			else if (strcmp($1, "decimal") == 0)
+			{
+				$$.type_enum = ECPGt_numeric;
+				$$.type_str = EMPTY;
+				$$.type_dimension = -1;
+				$$.type_index = -1;
+				$$.type_sizeof = NULL;
+			}
 			else
 			{
 				/* this is for typedef'ed types */
@@ -4427,6 +4476,17 @@ type:		common_type
 				$$.type_sizeof = this->type->type_sizeof;
 				struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
 			}
+		}
+		| ECPGColLabelCommon '(' precision opt_scale ')'
+		{
+			if (strcmp($1, "numeric") != 0 && strcmp($1, "decimal") != 0)
+				mmerror(PARSE_ERROR, ET_ERROR, "Only numeric/decimal have precision/scale argument");
+			
+			$$.type_enum = ECPGt_numeric;
+			$$.type_str = EMPTY;
+			$$.type_dimension = -1;
+			$$.type_index = -1;
+			$$.type_sizeof = NULL;
 		}
 		;
 
@@ -4600,6 +4660,18 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_initializer
 					$$ = cat_str(4, $1, mm_strdup($2), $3.str, $4);
 					break;
 
+				case ECPGt_numeric:
+					if (dimension < 0)
+                                                type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length);
+                                        else
+                                                type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length), dimension);
+
+					if (dimension < 0)
+						$$ = cat_str(4, mm_strdup(actual_storage[struct_level]), make_str("NumericVar"), mm_strdup($2), $4);
+					else
+						$$ = cat_str(5, mm_strdup(actual_storage[struct_level]), make_str("NumericVar"), mm_strdup($2), mm_strdup(dim), $4);
+					break;
+					
 				default:
 					if (dimension < 0)
 						type = ECPGmake_simple_type(actual_type[struct_level].type_enum, 1);
@@ -4870,7 +4942,7 @@ ECPGTypedef: TYPE_P
 			/* an initializer specified */
 			initializer = 0;
 		}
-		ColLabel IS type opt_type_array_bounds opt_reference
+		ColLabel IS var_type opt_array_bounds opt_reference
 		{
 			/* add entry to list */
 			struct typedefs *ptr, *this;
@@ -4925,44 +4997,6 @@ ECPGTypedef: TYPE_P
 		}
 		;
 
-opt_type_array_bounds:	'[' ']' opt_type_array_bounds
-		{
-			$$.index1 = 0;
-			$$.index2 = $3.index1;
-			$$.str = cat2_str(make_str("[]"), $3.str);
-		}
-		| '(' ')' opt_type_array_bounds
-		{
-			$$.index1 = 0;
-			$$.index2 = $3.index1;
-			$$.str = cat2_str(make_str("[]"), $3.str);
-		}
-		| '[' Iresult ']' opt_type_array_bounds
-		{
-			char *txt = mm_alloc(20L);
-
-			sprintf (txt, "%d", $2);
-			$$.index1 = $2;
-			$$.index2 = $4.index1;
-			$$.str = cat_str(4, make_str("["), txt, make_str("]"), $4.str);
-		}
-		| '(' Iresult ')' opt_type_array_bounds
-		{
-			char *txt = mm_alloc(20L);
-
-			sprintf (txt, "%d", $2);
-			$$.index1 = $2;
-			$$.index2 = $4.index1;
-			$$.str = cat_str(4, make_str("["), txt, make_str("]"), $4.str);
-		}
-		| /* EMPTY */
-		{
-			$$.index1 = -1;
-			$$.index2 = -1;
-			$$.str= EMPTY;
-		}
-		;
-
 opt_reference: SQL_REFERENCE 		{ $$ = make_str("reference"); }
 		| /*EMPTY*/		 			{ $$ = EMPTY; }
 		;
@@ -4976,7 +5010,7 @@ ECPGVar: SQL_VAR
 			/* an initializer specified */
 			initializer = 0;
 		}
-		ColLabel IS type opt_type_array_bounds opt_reference
+		ColLabel IS var_type opt_array_bounds opt_reference
 		{
 			struct variable *p = find_variable($3);
 			int dimension = $6.index1;

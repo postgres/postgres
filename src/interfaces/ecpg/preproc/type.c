@@ -169,6 +169,9 @@ get_type(enum ECPGttype type)
 										 * quoted */
 			return ("ECPGt_char_variable");
 			break;
+		case ECPGt_numeric:
+			return ("ECPGt_numeric");
+			break;
 		case ECPGt_descriptor:
 			return ("ECPGt_descriptor");
 			break;
@@ -318,6 +321,14 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 					sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
 
 				sprintf(offset, "%ld*sizeof(char)", varcharsize == 0 ? 1 : varcharsize);
+				break;
+			case ECPGt_numeric:
+
+				/*
+				 *  we have to use a pointer here
+				 */
+				sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
+				sprintf(offset, "sizeof(struct NumericVar)");
 				break;
 			default:
 
