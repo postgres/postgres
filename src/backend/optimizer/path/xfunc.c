@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.8 1997/12/11 17:36:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.9 1997/12/22 05:41:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -451,7 +451,7 @@ xfunc_local_expense(LispValue clause)
 								   (LispValue) get_funcargs(clause)));
 	else if (fast_not_clause(clause))
 		return (xfunc_local_expense(lsecond(clause)));
-	else if (fast_or_clause(clause))
+	else if (fast_or_clause(clause) || fast_and_clause(clause))
 	{
 		/* find cost of evaluating each disjunct */
 		for (tmpclause = lnext(clause); tmpclause != LispNil;
@@ -845,7 +845,7 @@ xfunc_find_references(LispValue clause)
 	}
 	else if (fast_not_clause(clause))
 		return (xfunc_find_references(lsecond(clause)));
-	else if (fast_or_clause(clause))
+	else if (fast_or_clause(clause) || fast_and_clause(clause))
 	{
 		/* string together result of all operands of OR */
 		for (tmpclause = lnext(clause); tmpclause != LispNil;
@@ -1186,7 +1186,7 @@ xfunc_fixvars(LispValue clause, /* clause being pulled up */
 			xfunc_fixvars(lfirst(tmpclause), rel, varno);
 	else if (fast_not_clause(clause))
 		xfunc_fixvars(lsecond(clause), rel, varno);
-	else if (fast_or_clause(clause))
+	else if (fast_or_clause(clause) || fast_and_clause(clause))
 		for (tmpclause = lnext(clause); tmpclause != LispNil;
 			 tmpclause = lnext(tmpclause))
 			xfunc_fixvars(lfirst(tmpclause), rel, varno);

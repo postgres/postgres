@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.6 1997/09/08 21:45:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.7 1997/12/22 05:42:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ contain_var_clause(Node *clause)
 		return contain_var_clause(((Iter *) clause)->iterexpr);
 	else if (single_node(clause))
 		return FALSE;
-	else if (or_clause(clause))
+	else if (or_clause(clause) || and_clause(clause))
 	{
 		List	   *temp;
 
@@ -156,7 +156,7 @@ pull_var_clause(Node *clause)
 		retval = pull_var_clause(((Iter *) clause)->iterexpr);
 	else if (single_node(clause))
 		retval = NIL;
-	else if (or_clause(clause))
+	else if (or_clause(clause) || and_clause(clause))
 	{
 		List	   *temp;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.3 1997/11/26 03:42:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.4 1997/12/22 05:42:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,7 @@ contain_agg_clause(Node *clause)
 		return contain_agg_clause(((Iter *) clause)->iterexpr);
 	else if (single_node(clause))
 		return FALSE;
-	else if (or_clause(clause))
+	else if (or_clause(clause) || and_clause(clause))
 	{
 		List	   *temp;
 

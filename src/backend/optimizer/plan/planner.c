@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.14 1997/12/20 07:59:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.15 1997/12/22 05:42:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,6 @@ planner(Query *parse)
 	List	   *rangetable = parse->rtable;
 	char	   *uniqueflag = parse->uniqueFlag;
 	List	   *sortclause = parse->sortClause;
-	Agg		   *aggplan = NULL;
 
 	Plan	   *result_plan = (Plan *) NULL;
 
@@ -141,7 +140,7 @@ planner(Query *parse)
 	 */
 	if (parse->qry_aggs)
 	{
-		aggplan = make_agg(tlist,
+		result_plan = (Plan *)make_agg(tlist,
 							parse->qry_numAgg,
 							parse->qry_aggs,
 							result_plan);
@@ -153,29 +152,8 @@ planner(Query *parse)
 		 * pointers, after a few dozen's of copying, they're not the same
 		 * as those in the target list.)
 		 */
-		set_agg_tlist_references(aggplan);
-		set_agg_agglist_references(aggplan);
-
-		result_plan = (Plan *) aggplan;
-	}
-
-	/*
-	 * fix up the flattened target list of the plan root node so that
-	 * expressions are evaluated.  this forces expression evaluations that
-	 * may involve expensive function calls to be delayed to the very last
-	 * stage of query execution.  this could be bad. but it is joey's
-	 * responsibility to optimally push these expressions down the plan
-	 * tree.  -- Wei
-	 *
-	 * But now nothing to do if there are GroupBy and/or Aggregates: 1.
-	 * make_groupPlan fixes tlist; 2. flatten_tlist_vars does nothing with
-	 * aggregates fixing only other entries (i.e. - GroupBy-ed and so
-	 * fixed by make_groupPlan).	 - vadim 04/05/97
-	 */
-	if (parse->groupClause == NULL && aggplan == NULL)
-	{
-		result_plan->targetlist = flatten_tlist_vars(tlist,
-												 result_plan->targetlist);
+		set_agg_tlist_references((Agg *)result_plan);
+		set_agg_agglist_references((Agg *)result_plan);
 	}
 
 	/*

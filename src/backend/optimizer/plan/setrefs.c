@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.9 1997/12/20 07:59:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.10 1997/12/22 05:42:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -328,6 +328,15 @@ replace_clause_joinvar_refs(Expr *clause,
 	else if (single_node((Node *) clause))
 	{
 		return ((List *) clause);
+	}
+	else if (and_clause((Node *) clause))
+	{
+		List	   *andclause =
+		replace_subclause_joinvar_refs(((Expr *) clause)->args,
+									   outer_tlist,
+									   inner_tlist);
+
+		return ((List *) make_andclause(andclause));
 	}
 	else if (or_clause((Node *) clause))
 	{

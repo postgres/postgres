@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.12 1997/09/25 12:48:15 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.13 1997/12/22 05:42:14 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -431,7 +431,7 @@ contains_not(Node *clause)
 	if (not_clause(clause))
 		return (true);
 
-	if (or_clause(clause))
+	if (or_clause(clause) || and_clause(clause))
 	{
 		List	   *a;
 
@@ -518,7 +518,7 @@ fix_opid(Node *clause)
 	{
 		;
 	}
-	else if (or_clause(clause))
+	else if (or_clause(clause) || and_clause(clause))
 	{
 		fix_opids(((Expr *) clause)->args);
 	}

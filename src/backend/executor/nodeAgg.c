@@ -534,6 +534,19 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	outerPlan = outerPlan(node);
 	ExecInitNode(outerPlan, estate, (Plan *) node);
 
+	/*
+	 *	Result runs in its own context, but make it use our aggregates
+	 *	fix for 'select sum(2+2)'
+	 */
+	if (nodeTag(outerPlan) == T_Result)
+	{
+		((Result *)outerPlan)->resstate->cstate.cs_ProjInfo->pi_exprContext->ecxt_values =
+												econtext->ecxt_values;
+		((Result *)outerPlan)->resstate->cstate.cs_ProjInfo->pi_exprContext->ecxt_nulls =
+												econtext->ecxt_nulls;
+	}
+
+
 	/* ----------------
 	 *	initialize tuple type.
 	 * ----------------

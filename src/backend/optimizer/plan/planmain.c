@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.12 1997/12/20 07:59:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.13 1997/12/22 05:42:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,7 @@ query_planner(Query *root,
 			  List *qual)
 {
 	List	   *constant_qual = NIL;
-	List	   *flattened_tlist = NIL;
+	List	   *var_only_tlist = NIL;
 	List	   *level_tlist = NIL;
 	Plan	   *subplan = (Plan *) NULL;
 
@@ -109,16 +109,12 @@ query_planner(Query *root,
 	 * Create a target list that consists solely of (resdom var) target
 	 * list entries, i.e., contains no arbitrary expressions.
 	 */
-	flattened_tlist = flatten_tlist(tlist);
-	if (flattened_tlist)
-	{
-		level_tlist = flattened_tlist;
-	}
+	var_only_tlist = flatten_tlist(tlist);
+	if (var_only_tlist)
+		level_tlist = var_only_tlist;
 	else
-	{
 		/* from old code. the logic is beyond me. - ay 2/95 */
 		level_tlist = tlist;
-	}
 
 	/*
 	 * A query may have a non-variable target list and a non-variable
@@ -126,7 +122,7 @@ query_planner(Query *root,
 	 * all-new tuples, or - the query is a replace (a scan must still be
 	 * done in this case).
 	 */
-	if (flattened_tlist == NULL && qual == NULL)
+	if (var_only_tlist == NULL && qual == NULL)
 	{
 
 		switch (command_type)
@@ -193,10 +189,29 @@ query_planner(Query *root,
 	}
 
 	/*
+	 * fix up the flattened target list of the plan root node so that
+	 * expressions are evaluated.  this forces expression evaluations that
+	 * may involve expensive function calls to be delayed to the very last
+	 * stage of query execution.  this could be bad. but it is joey's
+	 * responsibility to optimally push these expressions down the plan
+	 * tree.  -- Wei
+	 *
+	 * But now nothing to do if there are GroupBy and/or Aggregates: 1.
+	 * make_groupPlan fixes tlist; 2. flatten_tlist_vars does nothing with
+	 * aggregates fixing only other entries (i.e. - GroupBy-ed and so
+	 * fixed by make_groupPlan).	 - vadim 04/05/97
+	 */
+	if (root->groupClause == NULL && root->qry_aggs == NULL)
+	{
+		subplan->targetlist = flatten_tlist_vars(tlist,
+												 subplan->targetlist);
+	}
+
+#ifdef NOT_USED
+	/*
 	 * Destructively modify the query plan's targetlist to add fjoin lists
 	 * to flatten functions that return sets of base types
 	 */
-#ifdef NOT_USED
 	subplan->targetlist = generate_fjoin(subplan->targetlist);
 #endif
 
