@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.115 2004/02/24 21:45:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.116 2004/06/28 01:19:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,18 +18,14 @@
 
 #include <ctype.h>
 #include <unistd.h>
-#include <errno.h>
 
-#include "miscadmin.h"
-#include "nodes/parsenodes.h"
-#include "nodes/pg_list.h"
 #include "parser/gramparse.h"
 #include "parser/keywords.h"
 /* Not needed now that this file is compiled as part of gram.y */
 /* #include "parser/parse.h" */
 #include "parser/scansup.h"
-#include "utils/builtins.h"
 #include "mb/pg_wchar.h"
+
 
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
 #define fprintf(file, fmt, msg)  ereport(ERROR, (errmsg_internal("%s", msg)))

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.464 2004/06/28 00:18:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.465 2004/06/28 01:19:11 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -51,18 +51,15 @@
 #include <ctype.h>
 #include <limits.h>
 
-#include "access/htup.h"
 #include "catalog/index.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
-#include "nodes/params.h"
-#include "nodes/parsenodes.h"
 #include "parser/gramparse.h"
 #include "storage/lmgr.h"
-#include "utils/numeric.h"
-#include "utils/datetime.h"
 #include "utils/date.h"
+#include "utils/datetime.h"
+#include "utils/numeric.h"
+
 
 extern List *parsetree;			/* final parse result is delivered here */
 
