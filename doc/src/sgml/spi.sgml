@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.32 2004/03/05 01:00:45 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.33 2004/03/17 01:05:10 momjian Exp $
 -->
 
 <chapter id="spi">
@@ -195,6 +195,68 @@ int SPI_finish(void)
    </varlistentry>
   </variablelist>
  </refsect1>
+</refentry>
+
+<!-- *********************************************** -->
+
+<refentry id="spi-spi-push">
+ <refmeta>
+  <refentrytitle>SPI_push</refentrytitle>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_push</refname>
+  <refpurpose>pushes SPI stack to allow recursive SPI calls</refpurpose>
+ </refnamediv>
+
+ <indexterm><primary>SPI_push</primary></indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+void SPI_push(void)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <function>SPI_push</function> pushes a new environment on to the 
+   SPI call stack, allowing recursive calls to use a new environment.
+  </para>
+ </refsect1>
+
+</refentry>
+
+<!-- *********************************************** -->
+
+<refentry id="spi-spi-pop">
+ <refmeta>
+  <refentrytitle>SPI_pop</refentrytitle>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_pop</refname>
+  <refpurpose>pops SPI stack to allow recursive SPI calls</refpurpose>
+ </refnamediv>
+
+ <indexterm><primary>SPI_pop</primary></indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+void SPI_pop(void)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <function>SPI_pop</function> pops the previous environment from the 
+   SPI call stack.  For use when returning from recursive SPI calls.
+  </para>
+ </refsect1>
+
 </refentry>
 
 <!-- *********************************************** -->
