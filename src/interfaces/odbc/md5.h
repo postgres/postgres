@@ -1,6 +1,6 @@
 /* File:			connection.h
  *
- * Description:		See "connection.c"
+ * Description:		See "md.h"
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
