@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.142.4.2 2005/02/09 23:27:24 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.142.4.3 2005/03/25 18:04:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5356,7 +5356,7 @@ change_owner_recurse_to_sequences(Oid relationOid, int32 newOwnerSysId)
 	 * SERIAL sequences are those having an internal dependency on one
 	 * of the table's columns (we don't care *which* column, exactly).
 	 */
-	depRel = heap_openr(DependRelationName, RowExclusiveLock);
+	depRel = heap_openr(DependRelationName, AccessShareLock);
 
 	ScanKeyInit(&key[0],
 			Anum_pg_depend_refclassid,
@@ -5402,6 +5402,8 @@ change_owner_recurse_to_sequences(Oid relationOid, int32 newOwnerSysId)
 	}
 
 	systable_endscan(scan);
+
+	relation_close(depRel, AccessShareLock);
 }
 
 /*
