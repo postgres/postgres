@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.45 2000/12/30 15:03:09 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.46 2001/01/08 21:01:54 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1536,7 +1536,8 @@ options "SEMMNU=120"
 
 
      <varlistentry>
-      <term>FreeBSD</>
+      <term>FreeBSD</term>
+      <term>OpenBSD</term>
       <listitem>
        <para>
         The options <varname>SYSVSHM</> and <varname>SYSVSEM</> need
@@ -1545,14 +1546,14 @@ options "SEMMNU=120"
         the option <varname>SHMMAXPGS</> (in pages). The following
         shows an example of how to set the various parameters:
 <programlisting>
-options         SYSVSHM                                                           
-options         SHMMAXPGS=4096                                                    
-options         SHMSEG=256                                                        
-                                                                                  
-options         SYSVSEM                                                           
-options         SEMMNI=256                                                        
-options         SEMMNS=512                                                        
-options         SEMMNU=256                                                        
+options         SYSVSHM
+options         SHMMAXPGS=4096
+options         SHMSEG=256
+
+options         SYSVSEM
+options         SEMMNI=256
+options         SEMMNS=512
+options         SEMMNU=256
 options         SEMMAP=256
 </programlisting>
        </para>
@@ -1711,24 +1712,82 @@ set semsys:seminfo_semmsl=32
 
     </variablelist>
 
-    <note>
-     <para>
-      If your platform is not listed here, please consider
-      contributing some information.
-     </para>
-    </note>
    </para>
   </sect2>
 
-<!--
- Other fun things to write about one day:
- * number of processes per user and system-wide (soft/hard limit)
- * open files/inodes per user and system-wide (soft/hard limit)
-   (Think about this both ways: Increasing it to allow Postgres to
-   open more files, and decreasing it to prevent Postgres from taking
-   up all file descriptors.)
- * stack and data segment size, plain-old memory limit
---> 
+
+  <sect2>
+   <title>Resource Limits</title>
+
+   <para>
+    Unix-like operating systems enforce various kinds of resource
+    limits that might interfere with the operation of your
+    <productname>Postgres</productname> server.  Of importance are
+    especially the limits on the number of processes per user, the
+    number of open files per process, and the amount of memory
+    available to a process.  Each of these have a <quote>hard</quote>
+    and a <quote>soft</quote> limit.  The soft limit is what actually
+    counts but it can be changed by the user up to the hard limit.
+    The hard limit can only be changed by the root user.  The system
+    call <function>setrlimit</function> is responsible for setting
+    these parameters.  The shell the built-in command
+    <command>ulimit</command> (Bourne shells) or
+    <command>limit</command> (csh) is used to control the resource
+    limits from the command line.  On BSD-derived systems the file
+    <filename>/etc/login.conf</filename> controls what values the
+    various resource limits are set to upon login.  See
+    <citerefentry><refentrytitle>login.conf</refentrytitle>
+    <manvolnum>5</manvolnum></citerefentry> for details.  The relevant
+    parameters are <varname>maxproc</varname>,
+    <varname>openfiles</varname>, and <varname>datasize</varname>.
+    For example:
+<programlisting>
+default:\
+...
+        :datasize-cur=256M:\
+        :maxproc-cur=256:\
+        :openfiles-cur=256:\
+...
+</programlisting>
+    (<literal>-cur</literal> is the soft limit.  Append
+    <literal>-max</literal> to set the hard limit.)
+   </para>
+
+   <para>
+    Kernels generally also have an implementation-dependent
+    system-wide limit on some resources.
+    <simplelist>
+     <member>
+      On <productname>Linux</productname>
+      <filename>/proc/sys/fs/file-max</filename> determines the
+      maximum number of files that the kernel will allocate.  It can
+      be changed by writing a different number into the file or by
+      adding an assignment in <filename>/etc/sysctl.conf</filename>.
+      The maximum limit of files per process is fixed at the time the
+      kernel is compiled; see
+      <filename>/usr/src/linux/Documentation/proc.txt</filename> for
+      more information.
+     </member>
+    </simplelist>
+   </para>
+
+   <para>
+    The <productname>Postgres</productname> server uses one process
+    per connection so you should provide for at least as many processes
+    as allowed connections, in addition to what you need for the rest
+    of your system.  This is usually not a problem but if you run
+    several servers on one machine things might get tight.
+   </para>
+
+   <para>
+    The factory default limit on open files is often set to
+    <quote>socially friendly</quote> values that allow many users to
+    coexist on a machine without using an inappropriate fraction of
+    the system resources.  If you run many servers on a machine this
+    is perhaps what you want, but on dedicated servers you may want to
+    raise this limit.
+   </para>
+  </sect2>
 
  </sect1>
 
@@ -1819,19 +1878,18 @@ set semsys:seminfo_semmsl=32
    can be started with the argument <option>-l</> (ell) to enable
    SSL connections. When starting in SSL mode, the postmaster will look
    for the files <filename>server.key</> and <filename>server.crt</> in
-   the data directory (pointed to by <envar>PGDATA</envar>).
-    These files should contain the server private key
+   the data directory.  These files should contain the server private key
    and certificate respectively. These files must be set up correctly
    before an SSL-enabled server can start. If the private key is protected
    with a passphrase, the postmaster will prompt for the passphrase and will
-   not start until it has been provided.
+   not start until it has been entered.
   </para>
 
   <para>
    The postmaster will listen for both standard and SSL connections
    on the same TCP/IP port, and will negotiate with any connecting
    client whether or not to use SSL.
-    See <xref linkend="client-authentication">
+   See <xref linkend="client-authentication">
    about how to force on the server side the use of SSL for certain
    connections.
   </para>
@@ -1843,27 +1901,27 @@ set semsys:seminfo_semmsl=32
    by a CA (either one of the global CAs or a local one) should be used in 
    production so the client can verify the servers identity. To create
    a quick self-signed certificate, use the following OpenSSL command:
-    <programlisting>
-     openssl req -new -text -out cert.req
-    </programlisting>
+<programlisting>
+openssl req -new -text -out cert.req
+</programlisting>
    Fill out the information that openssl asks for. Make sure that you enter
    the local host name as Common Name; the challenge password can be
-	left blank. The script will generate a key that is passphrase protected;
-	it will not accept a pass phrase that is less than four characters long.
-	To remove the passphrase (as you must if you want automatic start-up of
-	the postmaster), run the commands
-    <programlisting>
-     mv privkey.pem cert.pem.pw
-     openssl rsa -in cert.pem.pw -out cert.pem 
-    </programlisting>
+   left blank. The script will generate a key that is passphrase protected;
+   it will not accept a pass phrase that is less than four characters long.
+   To remove the passphrase (as you must if you want automatic start-up of
+   the postmaster), run the commands
+<programlisting>
+mv privkey.pem cert.pem.pw
+openssl rsa -in cert.pem.pw -out cert.pem 
+</programlisting>
    Enter the old passphrase to unlock the existing key. Now do
-    <programlisting>
-     openssl req -x509 -in cert.req -text -key cert.pem -out cert.cert
-     cp cert.pem $PGDATA/server.key
-     cp cert.cert $PGDATA/server.crt
-    </programlisting>
+<programlisting>
+openssl req -x509 -in cert.req -text -key cert.pem -out cert.cert
+cp cert.pem <replaceable>$PGDATA</replaceable>/server.key
+cp cert.cert <replaceable>$PGDATA</replaceable>/server.crt
+</programlisting>
    to turn the certificate into a self-signed certificate and to copy the
-	key and certificate to where the postmaster will look for them.
+   key and certificate to where the postmaster will look for them.
   </para>
  </sect1>
 
