@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.53 2000/03/14 02:23:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.54 2000/03/22 22:08:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,7 +202,7 @@ cost_nonsequential_access(double relpages)
  * 'index' is the index to be used
  * 'indexQuals' is the list of applicable qual clauses (implicit AND semantics)
  * 'is_injoin' is T if we are considering using the index scan as the inside
- *		of a nestloop join.
+ *		of a nestloop join (hence, some of the indexQuals are join clauses)
  *
  * NOTE: 'indexQuals' must contain only clauses usable as index restrictions.
  * Any additional quals evaluated as qpquals may reduce the number of returned
@@ -281,12 +281,15 @@ cost_index(Path *path, Query *root,
 	/* CPU costs */
 	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost;
 	/*
-	 * Assume that the indexquals will be removed from the list of
-	 * restriction clauses that we actually have to evaluate as qpquals.
-	 * This is not completely right, but it's close.
-	 * For a lossy index, however, we will have to recheck all the quals.
+	 * Normally the indexquals will be removed from the list of restriction
+	 * clauses that we have to evaluate as qpquals, so we should subtract
+	 * their costs from baserestrictcost.  For a lossy index, however, we
+	 * will have to recheck all the quals and so mustn't subtract anything.
+	 * Also, if we are doing a join then some of the indexquals are join
+	 * clauses and shouldn't be subtracted.  Rather than work out exactly
+	 * how much to subtract, we don't subtract anything in that case either.
 	 */
-	if (! index->lossy)
+	if (! index->lossy && ! is_injoin)
 		cpu_per_tuple -= cost_qual_eval(indexQuals);
 
 	run_cost += cpu_per_tuple * tuples_fetched;
@@ -418,15 +421,12 @@ cost_sort(Path *path, List *pathkeys, double tuples, int width)
  * 'outer_path' is the path for the outer relation
  * 'inner_path' is the path for the inner relation
  * 'restrictlist' are the RestrictInfo nodes to be applied at the join
- * 'is_indexjoin' is true if we are using an indexscan for the inner relation
- *		(not currently needed here; the indexscan adjusts its cost...)
  */
 void
 cost_nestloop(Path *path,
 			  Path *outer_path,
 			  Path *inner_path,
-			  List *restrictlist,
-			  bool is_indexjoin)
+			  List *restrictlist)
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
@@ -447,8 +447,15 @@ cost_nestloop(Path *path,
 	run_cost += outer_path->parent->rows *
 		(inner_path->total_cost - inner_path->startup_cost);
 
-	/* number of tuples processed (not number emitted!) */
-	ntuples = outer_path->parent->rows * inner_path->parent->rows;
+	/* Number of tuples processed (not number emitted!).  If inner path is
+	 * an indexscan, be sure to use its estimated output row count, which
+	 * may be lower than the restriction-clause-only row count of its parent.
+	 */
+	if (IsA(inner_path, IndexPath))
+		ntuples = ((IndexPath *) inner_path)->rows;
+	else
+		ntuples = inner_path->parent->rows;
+	ntuples *= outer_path->parent->rows;
 
 	/* CPU costs */
 	cpu_per_tuple = cpu_tuple_cost + cost_qual_eval(restrictlist);

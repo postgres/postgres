@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.86 2000/02/18 23:47:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.87 2000/03/22 22:08:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -314,7 +314,6 @@ create_indexscan_node(Query *root,
 	List	   *ixid;
 	IndexScan  *scan_node;
 	bool		lossy = false;
-	double		plan_rows;
 
 	/* there should be exactly one base rel involved... */
 	Assert(length(best_path->path.parent->relids) == 1);
@@ -350,20 +349,7 @@ create_indexscan_node(Query *root,
 	 * given by scan_clauses, there will normally be some duplications
 	 * between the lists.  We get rid of the duplicates, then add back
 	 * if lossy.
-	 *
-	 * If this indexscan is a nestloop-join inner indexscan (as indicated
-	 * by having nonempty joinrelids), then it uses indexqual conditions
-	 * that are not part of the relation's restriction clauses.  The rows
-	 * estimate stored in the relation's RelOptInfo will be an overestimate
-	 * because it did not take these extra conditions into account.  So,
-	 * in this case we recompute the selectivity of the whole scan ---
-	 * considering both indexqual and qpqual --- rather than using the
-	 * RelOptInfo's rows value.  Since clausesel.c assumes it's working on
-	 * minimized (no duplicates) expressions, we have to do that while we
-	 * have the duplicate-free qpqual available.
 	 */
-	plan_rows = best_path->path.parent->rows; /* OK unless nestloop inner */
-
 	if (length(indxqual) > 1)
 	{
 		/*
@@ -383,15 +369,6 @@ create_indexscan_node(Query *root,
 		qpqual = set_difference(scan_clauses,
 								lcons(indxqual_expr, NIL));
 
-		if (best_path->joinrelids)
-		{
-			/* recompute output row estimate using all available quals */
-			plan_rows = best_path->path.parent->tuples *
-				clauselist_selectivity(root,
-									   lcons(indxqual_expr, qpqual),
-									   baserelid);
-		}
-
 		if (lossy)
 			qpqual = lappend(qpqual, copyObject(indxqual_expr));
 	}
@@ -403,15 +380,6 @@ create_indexscan_node(Query *root,
 		List	   *indxqual_list = lfirst(indxqual);
 
 		qpqual = set_difference(scan_clauses, indxqual_list);
-
-		if (best_path->joinrelids)
-		{
-			/* recompute output row estimate using all available quals */
-			plan_rows = best_path->path.parent->tuples *
-				clauselist_selectivity(root,
-									   nconc(listCopy(indxqual_list), qpqual),
-									   baserelid);
-		}
 
 		if (lossy)
 			qpqual = nconc(qpqual, (List *) copyObject(indxqual_list));
@@ -433,10 +401,8 @@ create_indexscan_node(Query *root,
 							   best_path->indexscandir);
 
 	copy_path_costsize(&scan_node->scan.plan, &best_path->path);
-	/* set up rows estimate (just to make EXPLAIN output reasonable) */
-	if (plan_rows < 1.0)
-		plan_rows = 1.0;
-	scan_node->scan.plan.plan_rows = plan_rows;
+	/* use the indexscan-specific rows estimate, not the parent rel's */
+	scan_node->scan.plan.plan_rows = best_path->rows;
 
 	return scan_node;
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.45 2000/02/18 23:47:17 tgl Exp $
+ * $Id: relation.h,v 1.46 2000/03/22 22:08:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,6 +252,12 @@ typedef struct Path
  * as the inner path of a nestloop join.  These paths have indexquals
  * that refer to values of other rels, so those other rels must be
  * included in the outer joinrel in order to make a usable join.
+ *
+ * 'rows' is the estimated result tuple count for the indexscan.  This
+ * is the same as path.parent->rows for a simple indexscan, but it is
+ * different for a nestloop inner path, because the additional indexquals
+ * coming from join clauses make the scan more selective than the parent
+ * rel's restrict clauses alone would do.
  *----------
  */
 typedef struct IndexPath
@@ -260,7 +266,8 @@ typedef struct IndexPath
 	List	   *indexid;
 	List	   *indexqual;
 	ScanDirection indexscandir;
-	Relids		joinrelids;			/* other rels mentioned in indexqual */
+	Relids		joinrelids;		/* other rels mentioned in indexqual */
+	double		rows;			/* estimated number of result tuples */
 } IndexPath;
 
 typedef struct TidPath

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.80 2000/02/15 20:49:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.81 2000/03/22 22:08:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1453,6 +1453,26 @@ index_innerjoin(Query *root, RelOptInfo *rel, IndexOptInfo *index,
 
 		/* joinrelids saves the rels needed on the outer side of the join */
 		pathnode->joinrelids = lfirst(outerrelids_list);
+
+		/*
+		 * We must compute the estimated number of output rows for the
+		 * indexscan.  This is less than rel->rows because of the additional
+		 * selectivity of the join clauses.  Since clausegroup may contain
+		 * both restriction and join clauses, we have to do a set union to
+		 * get the full set of clauses that must be considered to compute
+		 * the correct selectivity.  (We can't just nconc the two lists;
+		 * then we might have some restriction clauses appearing twice,
+		 * which'd mislead restrictlist_selectivity into double-counting
+		 * their selectivity.)
+		 */
+		pathnode->rows = rel->tuples *
+			restrictlist_selectivity(root,
+									 LispUnion(rel->baserestrictinfo,
+											   clausegroup),
+									 lfirsti(rel->relids));
+		/* Like costsize.c, force estimate to be at least one row */
+		if (pathnode->rows < 1.0)
+			pathnode->rows = 1.0;
 
 		cost_index(&pathnode->path, root, rel, index, indexquals, true);
 

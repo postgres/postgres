@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.30 2000/02/15 20:49:25 tgl Exp $
+ * $Id: cost.h,v 1.31 2000/03/22 22:08:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ extern void cost_index(Path *path, Query *root,
 extern void cost_tidscan(Path *path, RelOptInfo *baserel, List *tideval);
 extern void cost_sort(Path *path, List *pathkeys, double tuples, int width);
 extern void cost_nestloop(Path *path, Path *outer_path, Path *inner_path,
-						  List *restrictlist, bool is_indexjoin);
+						  List *restrictlist);
 extern void cost_mergejoin(Path *path, Path *outer_path, Path *inner_path,
 						   List *restrictlist,
 						   List *outersortkeys, List *innersortkeys);

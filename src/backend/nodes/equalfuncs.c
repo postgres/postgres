@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.64 2000/03/01 18:47:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.65 2000/03/22 22:08:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -375,6 +375,9 @@ _equalIndexPath(IndexPath *a, IndexPath *b)
 		return false;
 	if (!equali(a->joinrelids, b->joinrelids))
 		return false;
+	/* Skip 'rows' because of possibility of floating-point roundoff error.
+	 * It should be derivable from the other fields anyway.
+	 */
 	return true;
 }
 

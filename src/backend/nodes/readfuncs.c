@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.86 2000/03/17 02:36:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.87 2000/03/22 22:08:32 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1509,6 +1509,10 @@ _readIndexPath()
 
 	token = lsptok(NULL, &length);		/* get :joinrelids */
 	local_node->joinrelids = toIntList(nodeRead(true));
+
+	token = lsptok(NULL, &length);		/* get :rows */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->rows = atof(token);
 
 	return local_node;
 }
