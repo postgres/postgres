@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.145 2003/02/09 06:56:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.146 2003/03/27 14:33:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,9 +40,10 @@
 
 static void InsertTrigger(TriggerDesc *trigdesc, Trigger *trigger, int indx);
 static HeapTuple GetTupleForTrigger(EState *estate,
-				   ResultRelInfo *relinfo,
-				   ItemPointer tid,
-				   TupleTableSlot **newSlot);
+									ResultRelInfo *relinfo,
+									ItemPointer tid,
+									CommandId cid,
+									TupleTableSlot **newSlot);
 static HeapTuple ExecCallTriggerFunc(TriggerData *trigdata,
 					FmgrInfo *finfo,
 					MemoryContext per_tuple_context);
@@ -1303,7 +1304,8 @@ ExecASDeleteTriggers(EState *estate, ResultRelInfo *relinfo)
 
 bool
 ExecBRDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
-					 ItemPointer tupleid)
+					 ItemPointer tupleid,
+					 CommandId cid)
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 	int			ntrigs = trigdesc->n_before_row[TRIGGER_EVENT_DELETE];
@@ -1314,7 +1316,7 @@ ExecBRDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 	TupleTableSlot *newSlot;
 	int			i;
 
-	trigtuple = GetTupleForTrigger(estate, relinfo, tupleid, &newSlot);
+	trigtuple = GetTupleForTrigger(estate, relinfo, tupleid, cid, &newSlot);
 	if (trigtuple == NULL)
 		return false;
 
@@ -1359,7 +1361,9 @@ ExecARDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 	if (trigdesc && trigdesc->n_after_row[TRIGGER_EVENT_DELETE] > 0)
 	{
 		HeapTuple	trigtuple = GetTupleForTrigger(estate, relinfo,
-												   tupleid, NULL);
+												   tupleid,
+												   (CommandId) 0,
+												   NULL);
 
 		DeferredTriggerSaveEvent(relinfo, TRIGGER_EVENT_DELETE,
 								 true, trigtuple, NULL);
@@ -1427,7 +1431,8 @@ ExecASUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 
 HeapTuple
 ExecBRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
-					 ItemPointer tupleid, HeapTuple newtuple)
+					 ItemPointer tupleid, HeapTuple newtuple,
+					 CommandId cid)
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 	int			ntrigs = trigdesc->n_before_row[TRIGGER_EVENT_UPDATE];
@@ -1439,7 +1444,7 @@ ExecBRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 	TupleTableSlot *newSlot;
 	int			i;
 
-	trigtuple = GetTupleForTrigger(estate, relinfo, tupleid, &newSlot);
+	trigtuple = GetTupleForTrigger(estate, relinfo, tupleid, cid, &newSlot);
 	if (trigtuple == NULL)
 		return NULL;
 
@@ -1490,7 +1495,9 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 	if (trigdesc && trigdesc->n_after_row[TRIGGER_EVENT_UPDATE] > 0)
 	{
 		HeapTuple	trigtuple = GetTupleForTrigger(estate, relinfo,
-												   tupleid, NULL);
+												   tupleid,
+												   (CommandId) 0,
+												   NULL);
 
 		DeferredTriggerSaveEvent(relinfo, TRIGGER_EVENT_UPDATE,
 								 true, trigtuple, newtuple);
@@ -1501,7 +1508,8 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 
 static HeapTuple
 GetTupleForTrigger(EState *estate, ResultRelInfo *relinfo,
-				   ItemPointer tid, TupleTableSlot **newSlot)
+				   ItemPointer tid, CommandId cid,
+				   TupleTableSlot **newSlot)
 {
 	Relation	relation = relinfo->ri_RelationDesc;
 	HeapTupleData tuple;
@@ -1518,8 +1526,7 @@ GetTupleForTrigger(EState *estate, ResultRelInfo *relinfo,
 		*newSlot = NULL;
 		tuple.t_self = *tid;
 ltrmark:;
-		test = heap_mark4update(relation, &tuple, &buffer,
-								GetCurrentCommandId());
+		test = heap_mark4update(relation, &tuple, &buffer, cid);
 		switch (test)
 		{
 			case HeapTupleSelfUpdated:

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: trigger.h,v 1.40 2002/11/23 03:59:09 momjian Exp $
+ * $Id: trigger.h,v 1.41 2003/03/27 14:33:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,8 +131,9 @@ extern void ExecBSDeleteTriggers(EState *estate,
 extern void ExecASDeleteTriggers(EState *estate,
 								 ResultRelInfo *relinfo);
 extern bool ExecBRDeleteTriggers(EState *estate,
-					 ResultRelInfo *relinfo,
-					 ItemPointer tupleid);
+								 ResultRelInfo *relinfo,
+								 ItemPointer tupleid,
+								 CommandId cid);
 extern void ExecARDeleteTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 ItemPointer tupleid);
@@ -141,9 +142,10 @@ extern void ExecBSUpdateTriggers(EState *estate,
 extern void ExecASUpdateTriggers(EState *estate,
 								 ResultRelInfo *relinfo);
 extern HeapTuple ExecBRUpdateTriggers(EState *estate,
-					 ResultRelInfo *relinfo,
-					 ItemPointer tupleid,
-					 HeapTuple newtuple);
+									  ResultRelInfo *relinfo,
+									  ItemPointer tupleid,
+									  HeapTuple newtuple,
+									  CommandId cid);
 extern void ExecARUpdateTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 ItemPointer tupleid,
