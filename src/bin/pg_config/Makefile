@@ -4,15 +4,16 @@
 #
 # Copyright (c) 1998-2002, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/bin/pg_config/Makefile,v 1.11 2004/10/06 17:21:45 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/pg_config/Makefile,v 1.12 2004/10/09 03:57:39 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
+PGFILEDESC = "pg_config - report configuration information"
 subdir = src/bin/pg_config
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS=   pg_config.o
+OBJS=   pg_config.o $(WIN32RES)
 
 override CPPFLAGS := -DFRONTEND -I$(libpq_srcdir) -DVAL_CONFIGURE="\"$(configure_args)\"" $(CPPFLAGS)
 
