@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.7 1998/02/26 04:33:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.8 1998/02/27 19:44:51 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ typeidTypeName(Oid id)
 	if (!(tup = SearchSysCacheTuple(TYPOID, ObjectIdGetDatum(id),
 									0, 0, 0)))
 	{
-		elog(ERROR, "type id lookup of %ud failed", id);
+		elog(ERROR, "type id lookup of %u failed", id);
 		return (NULL);
 	}
 	typetuple = (TypeTupleForm) GETSTRUCT(tup);
@@ -60,7 +60,7 @@ typeidType(Oid id)
 	if (!(tup = SearchSysCacheTuple(TYPOID, ObjectIdGetDatum(id),
 									0, 0, 0)))
 	{
-		elog(ERROR, "type id lookup of %ud failed", id);
+		elog(ERROR, "type id lookup of %u failed", id);
 		return (NULL);
 	}
 	return ((Type) tup);
