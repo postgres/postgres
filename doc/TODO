@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Oct  9 00:29:39 EDT 2003
+Last updated:		Thu Oct  9 15:36:14 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -406,6 +406,7 @@ Vacuum
 * Allow free space map to be auto-sized or warn when it is too small
 * Maintain a map of recently-expired of pages so vacuum can reclaim
   free space without a sequential scan
+* Have VACUUM FULL use REINDEX rather than index vacuum
 
 
 Locking
@@ -506,7 +507,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1147 2003/10/09 04:29:40 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1147 2003/10/09 04:29:40 momjian Exp $
+* Change CVS $Id: TODO,v 1.1148 2003/10/09 19:36:27 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1148 2003/10/09 19:36:27 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
