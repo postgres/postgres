@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.35 2000/10/05 19:48:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.36 2000/10/08 13:22:24 petere Exp $
 Postgres documentation
 -->
 
@@ -2049,14 +2049,14 @@ CREATE ASSERTION <replaceable>name</replaceable> CHECK ( <replaceable>condition<
          the foreign key to be checked only at the end of the
          transaction.
 	</para>
+        <note>
+         <para>  
+          <command>SET CONSTRAINTS</> changes the foreign key constraint mode
+          only for the current transaction.
+         </para>
+        </note>
        </listitem>
       </varlistentry>
-     </variablelist>
-     <para>  
-     <term>SET CONSTRAINT</term> changes the foreign key constraint mode
-	only for the current transaction.
-     </para>
-     <variablelist>
       <varlistentry>
        <term>INITIALLY IMMEDIATE</term>
        <listitem>

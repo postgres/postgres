@@ -1,11 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.1 2000/10/05 19:48:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.2 2000/10/08 13:22:24 petere Exp $
 Postgres documentation
 -->
 
-<refentry id="app-pg_ctl">
+<refentry id="app-pg-ctl">
  <refmeta>
-  <refentrytitle id="app-pg_ctl-title">
+  <refentrytitle id="app-pg-ctl-title">
    <application>pg_ctl</application>
   </refentrytitle>
   <refmiscinfo>Application</refmiscinfo>
