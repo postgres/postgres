@@ -189,7 +189,7 @@ prsd_headline(PG_FUNCTION_ARGS)
 	int			bestb = -1,
 				beste = -1;
 	int			bestlen = -1;
-	int			pose = 0,
+	int			pose = 0, posb,
 				poslen,
 				curlen;
 
@@ -229,15 +229,15 @@ prsd_headline(PG_FUNCTION_ARGS)
 		if (min_words >= max_words)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("must be MinWords < MaxWords")));
+					 errmsg("MinWords must be less than MaxWords")));
 		if (min_words <= 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("must be MinWords > 0")));
+					 errmsg("MinWords should be positive")));
 		if (shortword < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("must be ShortWord >= 0")));
+					 errmsg("ShortWord hould be = 0")));
 	}
 
 	while (hlCover(prs, query, &p, &q))
@@ -261,6 +261,7 @@ prsd_headline(PG_FUNCTION_ARGS)
 			continue;
 		}
 
+		posb=p;
 		if (curlen < max_words)
 		{						/* find good end */
 			for (i = i - 1; i < prs->curwords && curlen < max_words; i++)
@@ -277,6 +278,19 @@ prsd_headline(PG_FUNCTION_ARGS)
 					continue;
 				if (curlen >= min_words)
 					break;
+			}
+			if ( curlen < min_words && i>=prs->curwords ) { /* got end of text and our cover is shoter than min_words */
+				for(i=p; i>= 0; i--) {
+					if (!NONWORDTOKEN(prs->words[i].type))
+						curlen++;
+					if (prs->words[i].item && !prs->words[i].repeated)
+						poslen++;
+					if (NOENDTOKEN(prs->words[i].type) || prs->words[i].len <= shortword)
+						continue;
+					if (curlen >= min_words)
+						break;
+				}
+				posb=(i>=0) ? i : 0;
 			}
 		}
 		else
@@ -298,7 +312,7 @@ prsd_headline(PG_FUNCTION_ARGS)
 			(bestlen >= 0 && !(NOENDTOKEN(prs->words[pose].type) || prs->words[pose].len <= shortword) &&
 			 (NOENDTOKEN(prs->words[beste].type) || prs->words[beste].len <= shortword)))
 		{
-			bestb = p;
+			bestb = posb;
 			beste = pose;
 			bestlen = poslen;
 		}
