@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.29 1996/08/28 07:14:00 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.30 1996/09/16 06:32:25 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -62,19 +62,19 @@
 PORTNAME=	BSD44_derived
 
 # SRCDIR specifies where the source files are.
-SRCDIR=		/home/staff/scrappy/postgres/2.0/cvs/postgres95/src
+SRCDIR=		/usr/local/postgres95/src
 
 # For convenience, POSTGRESDIR is where DATADIR, BINDIR, and LIBDIR 
 # and other target destinations are rooted.  Of course, each of these is 
 # changable separately.
-POSTGRESDIR=	/home/staff/scrappy/postgres/2.0/cvs/postgres95
+POSTGRESDIR=	/usr/local/postgres95
 
 # POSTGRESLOGIN is the login name of the user who gets special
 # privileges within the database.  By default it is "postgres", but
 # you can change it to any existing login name (such as your own 
 # login if you are compiling a private version or don't have root
 # access).
-POSTGRESLOGIN=	scrappy
+POSTGRESLOGIN=	postgres
 
 # DATADIR specifies where the postmaster expects to find its database.
 # This may be overridden by command line options or the PGDATA environment
@@ -314,3 +314,11 @@ objdir=		obj
 #
 # Customization.
 #
+# This includes your local customizations.  This file doesn't exist
+# in the original distribution (so that it doesn't get overwritten
+# when you upgrade the source) so you have to create at least an
+# empty one.  Run "touch Makefile.custom" in the source directory
+# to create an empty customization file.  Make your local changes.
+
+# include $(MKDIR)/../Makefile.custom
+
