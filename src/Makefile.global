@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.94 1997/01/14 22:58:10 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.95 1997/01/18 07:56:52 bryanh Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -580,6 +580,10 @@ endif
 MK_NO_LORDER= true
 
 CC= gcc
+# gcc mainly just calls LD, but it also uses some default options that are
+# part of the gcc configuration, like search paths, and the user probably 
+# wants those.
+LD= gcc
 
 # use the regex library
 USE_REGEX= 1
