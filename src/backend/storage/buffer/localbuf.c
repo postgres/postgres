@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.63 2005/03/04 20:21:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.64 2005/03/18 16:16:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,4 +258,18 @@ AtEOXact_LocalBuffers(bool isCommit)
 		Assert(LocalRefCount[i] == 0);
 	}
 #endif
+}
+
+/*
+ * AtProcExit_LocalBuffers - ensure we have dropped pins during backend exit.
+ *
+ * This is just like AtProcExit_Buffers, but for local buffers.  We have
+ * to drop pins to ensure that any attempt to drop temp files doesn't
+ * fail in DropRelFileNodeBuffers.
+ */
+void
+AtProcExit_LocalBuffers(void)
+{
+	/* just zero the refcounts ... */
+	MemSet(LocalRefCount, 0, NLocBuffer * sizeof(*LocalRefCount));
 }
