@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.35 2000/03/31 17:45:32 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.36 2000/04/07 13:31:18 thomas Exp $
 Postgres documentation
 -->
 
@@ -197,6 +197,44 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
 	  int  DateStyle = USE_ISO_DATES | USE_POSTGRES_DATES | USE_SQL_DATES | USE_GERMAN_DATES
 	 </member>
 	</simplelist>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>Seed</term>
+      <listitem>
+       <para>
+	Sets the internal seed for the random number generator.
+	
+	<variablelist>
+	 <varlistentry>
+	  <term><replaceable class="parameter">value</replaceable></term>
+	  <listitem>
+	   <para>
+	    The value for the seed to be used by the
+	    <function>random</function> catalog function. Significant
+	    values are floating point numbers between 0 and 1, which
+	    are then multiplied by RAND_MAX. This product will
+	    silently overflow if a number outside the range is used.
+	   </para>
+
+	   <para>
+	    The seed can also be set by invoking the
+	    <function>setseed</function> SQL function:
+
+	    <programlisting>
+SELECT setseed(<replaceable>value</replaceable>);
+	    </programlisting>
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
+       </para>
+
+       <para>
+	This option is only available if MULTIBYTE support was enabled
+	during the configure step of building Postgres.
        </para>
       </listitem>
      </varlistentry>
