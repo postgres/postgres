@@ -1,6 +1,6 @@
 /*-------------------------------------------------------
  *
- * $Id: Pg.xs,v 1.14 2000/03/11 03:08:37 tgl Exp $ with patch for NULs
+ * $Id: Pg.xs,v 1.15 2000/10/24 17:00:00 tgl Exp $ with patch for NULs
  *
  * Copyright (c) 1997, 1998  Edmund Mergl
  *
@@ -9,6 +9,7 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#include "ppport.h"
 #include <string.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -581,7 +582,7 @@ PQprint(fout, res, header, align, standard, html3, expanded, pager, fieldSep, ta
 		ps.caption   = caption;
 		Newz(0, ps.fieldName, items + 1 - 11, char*);
 		for (i = 11; i < items; i++) {
-			ps.fieldName[i - 11] = (char *)SvPV(ST(i), na);
+			ps.fieldName[i - 11] = (char *)SvPV(ST(i), PL_na);
 		}
 		PQprint(fout, res, &ps);
 		Safefree(ps.fieldName);
@@ -1252,7 +1253,7 @@ PQfetchrow(res)
 				EXTEND(sp, cols);
 				while (col < cols) {
 					if (PQgetisnull(res->result, res->row, col)) {
-						PUSHs(&sv_undef);
+						PUSHs(&PL_sv_undef);
 					} else {
 						char *val = PQgetvalue(res->result, res->row, col);
 						PUSHs(sv_2mortal((SV*)newSVpv(val, 0)));
@@ -1292,7 +1293,7 @@ PQprint(res, fout, header, align, standard, html3, expanded, pager, fieldSep, ta
 		ps.caption   = caption;
 		Newz(0, ps.fieldName, items + 1 - 11, char*);
 		for (i = 11; i < items; i++) {
-			ps.fieldName[i - 11] = (char *)SvPV(ST(i), na);
+			ps.fieldName[i - 11] = (char *)SvPV(ST(i), PL_na);
 		}
 		PQprint(fout, res->result, &ps);
 		Safefree(ps.fieldName);

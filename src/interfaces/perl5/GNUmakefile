@@ -4,7 +4,7 @@
 # Makefile according to its own ideas and then invoke the rules from
 # that file.
 #
-# $Header: /cvsroot/pgsql/src/interfaces/perl5/Attic/GNUmakefile,v 1.2 2000/08/31 16:11:58 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/perl5/Attic/GNUmakefile,v 1.3 2000/10/24 16:59:59 tgl Exp $
 
 subdir = src/interfaces/perl5
 top_builddir = ../../..
@@ -15,7 +15,7 @@ all: Makefile libpq-all
 	$(MAKE) -f $< all
 
 Makefile: Makefile.PL
-	$(PERL) $< POLLUTE=1
+	$(PERL) $<
 
 .PHONY: libpq-all
 libpq-all:
@@ -35,7 +35,7 @@ install: Makefile
 	$(MAKE) -f Makefile clean
 	POSTGRES_LIB="$(libdir)" \
 	  POSTGRES_INCLUDE="$(includedir)" \
-	  $(PERL) $(srcdir)/Makefile.PL POLLUTE=1
+	  $(PERL) $(srcdir)/Makefile.PL
 	$(MAKE) -f Makefile all
 	-@if [ -w "`$(MAKE) --quiet -f Makefile echo-installdir`" ]; then \
 		$(MAKE) -f Makefile install; \

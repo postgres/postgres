@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/pl/plperl/GNUmakefile,v 1.4 2000/09/17 13:02:51 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/plperl/GNUmakefile,v 1.5 2000/10/24 17:01:05 tgl Exp $
 
 subdir = src/pl/plperl
 top_builddir = ../../..
@@ -13,7 +13,7 @@ all: Makefile
 Makefile: Makefile.PL
 	@plperl_installdir='$(plperl_installdir)' \
 	  EXTRA_INCLUDES='-I$(top_srcdir)/src/include $(INCLUDES)' \
-	  $(PERL) $< POLLUTE=1
+	  $(PERL) $<
 
 install: all installdirs
 	$(MAKE) -f Makefile install
