@@ -1,3 +1,7 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.7 2001/03/24 03:40:44 tgl Exp $
+-->
+
 <sect1 id="bug-reporting">
  <title>Bug Reporting Guidelines</title>
 
@@ -119,15 +123,19 @@
       The exact sequence of steps <emphasis>from program start-up</emphasis>
       necessary to reproduce the problem. This should be self-contained;
       it is not enough to send in a bare select statement without the
-      preceeding create table and insert statements, if the output should
+      preceding create table and insert statements, if the output should
       depend on the data in the tables. We do not have the time
-      to decode your database schema, and if we are supposed to make up
-      our own data we would probably miss the problem.
+      to reverse-engineer your database schema, and if we are supposed to make
+      up our own data we would probably miss the problem.
       The best format for a test case for
       query-language related problems is a file that can be run through the
       <application>psql</application> frontend
       that shows the problem. (Be sure to not have anything in your
-      <filename>~/.psqlrc</filename> start-up file.) You are encouraged to
+      <filename>~/.psqlrc</filename> start-up file.)  An easy start at this
+      file is to use <application>pg_dump</application> to dump out the table
+      declarations and data needed to set the scene, then add the problem
+      query.
+      You are encouraged to
       minimize the size of your example, but this is not absolutely necessary.
       If the bug is reproduceable, we will find it either way.
      </para>
@@ -155,8 +163,8 @@
       <para>
        In case of fatal errors, the error message provided by the client might
        not contain all the information available. In that case, also look at the
-       output of the database server. If you do not keep your server output,
-       this would be a good time to start doing so.
+       log output of the database server. If you do not keep your server
+       output, this would be a good time to start doing so.
       </para>
      </note>
     </listitem>
@@ -224,8 +232,8 @@
       processor, memory information. In most cases it is sufficient to report
       the vendor and version, but do not assume everyone knows what exactly
       "Debian" contains or that everyone runs on Pentiums. If
-      you have installation problems information about compilers, make, etc.
-      is also necessary.
+      you have installation problems then information about compilers, make,
+      etc. is also necessary.
      </para>
     </listitem>
    </itemizedlist>
@@ -302,13 +310,12 @@
    <para>
     Due to the unfortunate amount of spam going around, all of the above
     email addresses are closed mailing lists. That is, you need to be
-    subscribed to them in order to be allowed to post. If you simply
+    subscribed to a list to be allowed to post on it. If you simply
     want to send mail but do not want to receive list traffic, you can
-    subscribe to the special pgsql-loophole mailing list, which
-    allows you to post to all <productname>PostgreSQL</productname>
-    mailing lists without receiving any messages. Send email to
-    <email>pgsql-loophole-request@postgresql.org</email>
-    to subscribe.
+    subscribe and set your subscription option to <literal>nomail</>.
+    For more information send mail to
+    <email>majordomo@postgresql.org</email>
+    with the single word <literal>help</> in the body of the message.
    </para>
   </note>
  </sect2>
