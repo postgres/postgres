@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jul  6 12:18:16 EDT 2004
+Last updated:		Tue Jul  6 16:29:28 EDT 2004
 
 A dash (-) marks changes that will appear in the upcoming 7.5 release.
 
@@ -15,14 +15,6 @@ the PostgreSQL web site, http://www.PostgreSQL.org.
 Urgent
 ======
 
-* Add replication of distributed databases
-	o Automatic failover
-	o Load balancing
-	o Master/slave replication
-	o Multi-master replication
-	o Partition data across servers
-	o Queries across databases or servers (two-phase commit)
-	o Allow replication over unreliable or non-persistent links
 * Point-in-time data recovery using backup and write-ahead log,
 * Create native Win32 port, http://momjian.postgresql.org/main/writings/pgsql/project/win32.html
 
@@ -53,6 +45,14 @@ Administration
   in-progress when the server terminated abruptly
 * Allow reporting of which objects are in which tablespaces
 * Allow database recovery where tablespaces can't be created
+* Improve replication solutions
+	o Automatic failover
+	o Load balancing
+	o Master/slave replication
+	o Multi-master replication
+	o Partition data across servers
+	o Queries across databases or servers (two-phase commit)
+	o Allow replication over unreliable or non-persistent links
 
 
 Data Types
