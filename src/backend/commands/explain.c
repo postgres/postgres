@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- *	  $Id: explain.c,v 1.41 1999/07/16 04:58:40 momjian Exp $
+ *	  $Id: explain.c,v 1.42 1999/07/17 19:01:21 tgl Exp $
  *
  */
 #include <stdio.h>
@@ -307,7 +307,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 
 			if (appendplan->inheritrelid > 0)
 			{
-				ResTarget  *rtentry;
+				RangeTblEntry *rtentry;
 
 				rtentry = nth(whichplan, appendplan->inheritrtable);
 				Assert(rtentry != NULL);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.23 1999/07/16 04:58:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.24 1999/07/17 19:01:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ exec_append_initialize_next(Append *node)
 	int			nplans;
 	List	   *rtables;
 	List	   *rtable;
-	ResTarget  *rtentry;
+	RangeTblEntry *rtentry;
 
 	/* ----------------
 	 *	get information from the append node
