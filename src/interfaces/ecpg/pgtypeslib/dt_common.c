@@ -13,8 +13,6 @@ static int day_tab[2][13] = {
 		{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0}};
 
 typedef long AbsoluteTime;
-
-int tm2timestamp(struct tm *, fsec_t, int *, Timestamp *);
 	
 #define ABS_SIGNBIT             ((char) 0200)
 #define POS(n)                  (n)

@@ -1,6 +1,8 @@
 #ifndef DT_H
 #define DT_H
 
+#include <pgtypes_timestamp.h>
+
 #define MAXTZLEN             10
 
 #ifdef HAVE_INT64_TIMESTAMP
@@ -296,6 +298,8 @@ int DecodeInterval(char **field, int *ftype,
 int	EncodeTimeOnly(struct tm * tm, fsec_t fsec, int *tzp, int style, char *str);
 int	EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, char *str, bool);
 int	EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str);
+
+int tm2timestamp(struct tm *, fsec_t, int *, Timestamp *);
 
 int	DecodeUnits(int field, char *lowtoken, int *val);
 bool	ClearDateCache(bool, bool, bool);
