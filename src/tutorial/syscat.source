@@ -7,9 +7,15 @@
 -- Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
 -- Portions Copyright (c) 1994, Regents of the University of California
 --
--- $Id: syscat.source,v 1.9 2003/08/04 23:59:41 tgl Exp $
+-- $Id: syscat.source,v 1.10 2003/10/26 04:51:51 momjian Exp $
 --
 ---------------------------------------------------------------------------
+
+--
+-- Sets the schema search path to pg_catalog first, so that we do not
+-- need to qualify every system object
+--
+SET SEARCH_PATH TO pg_catalog;
 
 --
 -- lists the name of all database adminstrators and the name of their
@@ -23,117 +29,140 @@ SELECT usename, datname
 --
 -- lists all user-defined classes
 --
-SELECT relname
-  FROM pg_class
-  WHERE relkind = 'r'           -- not indices, views, etc
-    and relname !~ '^pg_'       -- not catalogs
-  ORDER BY relname;
+SELECT pgn.nspname, pgc.relname
+  FROM pg_class pgc, pg_namespace pgn
+  WHERE pgc.relnamespace=pgn.oid
+    and pgc.relkind = 'r'           -- not indices, views, etc
+    and pgn.nspname not like 'pg_%' -- not catalogs
+    and pgn.nspname != 'information_schema' -- not information_schema
+  ORDER BY nspname, relname;
 
 
 --
 -- lists all simple indices (ie. those that are defined over one simple
 -- column reference)
 --
-SELECT bc.relname AS class_name, 
+SELECT n.nspname AS schema_name,
+       bc.relname AS class_name, 
        ic.relname AS index_name, 
        a.attname
-  FROM pg_class bc,             -- base class
+  FROM pg_namespace n,
+       pg_class bc,             -- base class
        pg_class ic,             -- index class
        pg_index i,
        pg_attribute a           -- att in base
-  WHERE i.indrelid = bc.oid
+  WHERE bc.relnamespace = n.oid
+     and i.indrelid = bc.oid
      and i.indexrelid = ic.oid
      and i.indkey[0] = a.attnum
      and i.indnatts = 1
      and a.attrelid = bc.oid
-  ORDER BY class_name, index_name, attname;
+  ORDER BY schema_name, class_name, index_name, attname;
 
 
 --
 -- lists the user-defined attributes and their types for all user-defined
 -- classes
 --
-SELECT c.relname, a.attname, t.typname
-  FROM pg_class c, pg_attribute a, pg_type t
-  WHERE c.relkind = 'r'     -- no indices
-    and c.relname !~ '^pg_' -- no catalogs
+SELECT n.nspname, c.relname, a.attname, format_type(t.oid, null) as typname
+  FROM pg_namespace n, pg_class c, 
+       pg_attribute a, pg_type t
+  WHERE n.oid = c.relnamespace
+    and c.relkind = 'r'     -- no indices
+    and n.nspname not like 'pg_%' -- no catalogs
+    and n.nspname != 'information_schema' -- no information_schema
     and a.attnum > 0        -- no system att's
+    and not a.attisdropped   -- no dropped columns
     and a.attrelid = c.oid
     and a.atttypid = t.oid
-  ORDER BY relname, attname;
+  ORDER BY nspname, relname, attname;
 
 
 --
 -- lists all user-defined base types (not including array types)
 --
-SELECT u.usename, t.typname
-  FROM pg_type t, pg_user u
+SELECT n.nspname, u.usename, format_type(t.oid, null) as typname
+  FROM pg_type t, pg_user u, pg_namespace n
   WHERE u.usesysid = t.typowner
+    and t.typnamespace = n.oid
     and t.typrelid = '0'::oid   -- no complex types
     and t.typelem = '0'::oid    -- no arrays
-    and u.usename <> 'postgres'
-  ORDER BY usename, typname;
+    and n.nspname not like 'pg_%' -- no catalogs
+    and n.nspname != 'information_schema' -- no information_schema
+  ORDER BY nspname, usename, typname;
 
 
 --
 -- lists all left unary operators
 --
-SELECT o.oprname AS left_unary, 
-       right_type.typname AS operand,
-       result.typname AS return_type
-  FROM pg_operator o, pg_type right_type, pg_type result
-  WHERE o.oprkind = 'l'           -- left unary
+SELECT n.nspname, o.oprname AS left_unary, 
+       format_type(right_type.oid, null) AS operand,
+       format_type(result.oid, null) AS return_type
+  FROM pg_namespace n, pg_operator o, 
+       pg_type right_type, pg_type result
+  WHERE o.oprnamespace = n.oid
+    and o.oprkind = 'l'           -- left unary
     and o.oprright = right_type.oid
     and o.oprresult = result.oid
-  ORDER BY operand;
+  ORDER BY nspname, operand;
 
 
 --
 -- lists all right unary operators
 --
-SELECT o.oprname AS right_unary,
-       left_type.typname AS operand,
-       result.typname AS return_type
-  FROM pg_operator o, pg_type left_type, pg_type result
-  WHERE o.oprkind = 'r'          -- right unary
+SELECT n.nspname, o.oprname AS right_unary, 
+       format_type(left_type.oid, null) AS operand,
+       format_type(result.oid, null) AS return_type
+  FROM pg_namespace n, pg_operator o, 
+       pg_type left_type, pg_type result
+  WHERE o.oprnamespace = n.oid
+    and o.oprkind = 'r'          -- right unary
     and o.oprleft = left_type.oid
     and o.oprresult = result.oid
-  ORDER BY operand;
+  ORDER BY nspname, operand;
 
 --
 -- lists all binary operators
 --
-SELECT o.oprname AS binary_op,
-       left_type.typname AS left_opr,
-       right_type.typname AS right_opr,
-       result.typname AS return_type
-  FROM pg_operator o, pg_type left_type, pg_type right_type, pg_type result
-  WHERE o.oprkind = 'b'         -- binary
+SELECT n.nspname, o.oprname AS binary_op,
+       format_type(left_type.oid, null) AS left_opr,
+       format_type(right_type.oid, null) AS right_opr,
+       format_type(result.oid, null) AS return_type
+  FROM pg_namespace n, pg_operator o, pg_type left_type, 
+       pg_type right_type, pg_type result
+  WHERE o.oprnamespace = n.oid
+    and o.oprkind = 'b'         -- binary
     and o.oprleft = left_type.oid
     and o.oprright = right_type.oid
     and o.oprresult = result.oid
-  ORDER BY left_opr, right_opr;
+  ORDER BY nspname, left_opr, right_opr;
 
 
 --
 -- lists the name, number of arguments and the return type of all user-defined
 -- C functions
 --
-SELECT p.proname, p.pronargs, t.typname
-  FROM pg_proc p, pg_language l, pg_type t
-  WHERE p.prolang = l.oid 
+SELECT n.nspname, p.proname, p.pronargs, format_type(t.oid, null) as return_type
+  FROM pg_namespace n, pg_proc p, 
+       pg_language l, pg_type t
+  WHERE p.pronamespace = n.oid
+    and n.nspname not like 'pg_%' -- no catalogs
+    and n.nspname != 'information_schema' -- no information_schema
+    and p.prolang = l.oid 
     and p.prorettype = t.oid
     and l.lanname = 'c'
-  ORDER BY proname;
+  ORDER BY nspname, proname, pronargs, return_type;
 
 --
 -- lists all aggregate functions and the types to which they can be applied
 --
-SELECT p.proname, t.typname
-  FROM pg_aggregate a, pg_proc p, pg_type t
-  WHERE a.aggfnoid = p.oid
+SELECT n.nspname, p.proname, format_type(t.oid, null) as typname
+  FROM pg_namespace n, pg_aggregate a, 
+       pg_proc p, pg_type t
+  WHERE p.pronamespace = n.oid
+    and a.aggfnoid = p.oid
     and p.proargtypes[0] = t.oid
-  ORDER BY proname, typname;
+  ORDER BY nspname, proname, typname;
 
 
 --
@@ -141,9 +170,17 @@ SELECT p.proname, t.typname
 -- as well as the operators that cn be used with the respective operator
 -- classes
 --
-SELECT am.amname, opc.opcname, opr.oprname
-  FROM pg_am am, pg_opclass opc, pg_amop amop, pg_operator opr
-  WHERE opc.opcamid = am.oid
+SELECT n.nspname, am.amname, opc.opcname, opr.oprname
+  FROM pg_namespace n, pg_am am, pg_opclass opc, 
+       pg_amop amop, pg_operator opr
+  WHERE opc.opcnamespace = n.oid
+    and opc.opcamid = am.oid
     and amop.amopclaid = opc.oid
     and amop.amopopr = opr.oid
-  ORDER BY amname, opcname, oprname;
+  ORDER BY nspname, amname, opcname, oprname;
+
+--
+-- Reset the search path
+--
+RESET SEARCH_PATH;
+

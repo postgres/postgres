@@ -6,7 +6,7 @@
 --
 -- Copyright (c) 1994-5, Regents of the University of California
 --
--- $Id: funcs.source,v 1.5 2001/10/26 20:45:33 tgl Exp $
+-- $Id: funcs.source,v 1.6 2003/10/26 04:51:51 momjian Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -153,10 +153,11 @@ DROP FUNCTION c_overpaid(EMP, int4);
 DROP FUNCTION copytext(text);
 DROP FUNCTION makepoint(point,point);
 DROP FUNCTION add_one(int4);
-DROP FUNCTION clean_EMP();
+--DROP FUNCTION clean_EMP();
 DROP FUNCTION high_pay();
 DROP FUNCTION new_emp();
 DROP FUNCTION add_em(int4, int4);
 DROP FUNCTION one();
+DROP FUNCTION double_salary(EMP);
 
 DROP TABLE EMP;
