@@ -10,7 +10,7 @@
    CREATE OPERATOR
   </REFNAME>
   <REFPURPOSE>
-   Defines a new user operator.
+   Defines a new user operator
   </REFPURPOSE>
   
  <REFSYNOPSISDIV>

@@ -10,7 +10,7 @@
    CREATE TABLE
   </REFNAME>
   <REFPURPOSE>
-   Creates a new table.
+   Creates a new table
   </REFPURPOSE>
   
  <REFSYNOPSISDIV>
@@ -983,8 +983,8 @@
     SQL92
    </TITLE>
    <PARA>
-    In addition to normal CREATE TABLE, SQL92 also supports a
-    CREATE TEMPORARY TABLE statement.
+    In addition to normal CREATE TABLE, SQL92 also defines a
+    CREATE TEMPORARY TABLE statement:
    </PARA>
    <synopsis>
    CREATE [ {GLOBAL | LOCAL} ] TEMPORARY TABLE table (
@@ -1014,7 +1014,9 @@
              ) ON COMMIT DELETE ROWS
    </programlisting> 
    <para>
-    TIP: In the current release of PostgreSQL (6.3.2), to create a temporary
+Temporary tables are not currently available in <productname>Postgres</productname>.
+   <para>
+    TIP: In the current release of <productname>Postgres</productname> (v6.3.2), to create a temporary
     table you must create and drop the table by explicit commands.
    </para>
    
@@ -1027,6 +1029,7 @@
     </TITLE>
     <PARA>
      SQL92 specifies some additional capabilities for UNIQUE:
+    <para>
      Table Constraint definition
     </PARA>
     <synopsis>

@@ -10,7 +10,7 @@
    CREATE SEQUENCE
   </REFNAME>
   <REFPURPOSE>
-   creates a new sequence number generator.
+   Creates a new sequence number generator
   </REFPURPOSE>
   
  <REFSYNOPSISDIV>

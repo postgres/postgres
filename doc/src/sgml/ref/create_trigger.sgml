@@ -10,7 +10,7 @@
    CREATE TRIGGER
   </REFNAME>
   <REFPURPOSE>
-   CREATE TRIGGER - creates a new trigger.
+   Creates a new trigger
   </REFPURPOSE>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>

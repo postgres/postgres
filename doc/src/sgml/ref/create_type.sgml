@@ -10,7 +10,7 @@
    CREATE TYPE
   </REFNAME>
   <REFPURPOSE>
-   CREATE TYPE - defines a new base data type.
+   Defines a new base data type
   </REFPURPOSE>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
