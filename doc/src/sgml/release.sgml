@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.269 2004/07/25 04:18:05 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.270 2004/07/26 00:26:42 momjian Exp $
 -->
 
 <appendix id="release">
@@ -32,8 +32,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.269 2004/07/25 04:18:05 momjian
         installer project has been created to ease installation, <ulink
         url="http://pgfoundry.org/projects/pginstaller">
 	http://pgfoundry.org/projects/pginstaller</ulink>. This release
-	supports Windows NT 4 and all later releases. It does not
-	support earlier releases like Windows 95, 98, or ME because
+	supports  NT-based Windows releases like NT4, Win2k, XP, Win2003.
+        Older releases like Windows 95, 98, and ME are not supported because
 	these operating systems do not have the infrastructure to
 	support PostgreSQL.
        </para>
@@ -169,57 +169,52 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.269 2004/07/25 04:18:05 momjian
     <itemizedlist>
      <listitem>
       <para>
-       GUC parameters SortMem and VacuumMem have been renamed to 
-        work_mem and maintenance_work_mem to better reflect their use.
-        The original names still supported.
+       Server configuration parameters SortMem and VacuumMem have been
+       renamed to work_mem and maintenance_work_mem to better reflect
+       their use. The original names still supported.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       GUC parameters log_pid, log_timestamp, and log_source_port have been
-       removed now that a more flexible log_line_prefix has been added.
+       Server configuration parameters log_pid, log_timestamp, and
+       log_source_port have been removed now that a more flexible
+       log_line_prefix has been added.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       GUC parameters virtual_host and tcpip_socket have been replaced
-       with a more general listen_addresses.  Also, the server now 
-       listens on localhost by default, which eliminates the need for 
-       the -i postmaster switch in many scenarios.
+       Server configuration parameters virtual_host and tcpip_socket
+       have been replaced with a more general listen_addresses. Also,
+       the server now listens on localhost by default, which eliminates
+       the need for the -i postmaster switch in many scenarios.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       GUC parameter syslog has been removed and replaced with a more
-       logical log_destination variable to control the log output
-       destination.
+       Server configuration parameter syslog has been removed and
+       replaced with a more logical log_destination variable to control
+       the log output destination.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       GUC parameter log_statement has been changed so it can restrict
-       logging of just database modification or data definition
-       statements.
+       Server configuration parameter log_statement has been changed so
+       it can restrict logging of just database modification or data
+       definition statements.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       GUC parameter max_expr_depth parameter has been replaced with
-       max_stack_depth which measures the stack size rather than the
-       number of stack levels used. This helps prevent session
-       termination due to stack overflow caused by recursive functions.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       When matching GROUP BY names, prefer local FROM columns first, then SELECT
-        aliases, and FROM columns in upper subqueries.
+       Server configuration parameter max_expr_depth parameter has been
+       replaced with max_stack_depth which measures the stack size
+       rather than the number of stack levels used. This helps prevent
+       session termination due to stack overflow caused by recursive
+       functions.
       </para>
      </listitem>
 
@@ -315,9 +310,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.269 2004/07/25 04:18:05 momjian
      </para>
      <para>
       Before this change some queries would not use an index if the data
-      types did not exactly match. This improvement makes index usage more
+      types did not match exactly. This improvement makes index usage more
       intuitive and consistent.
-      match exactly
      </para>
     </listitem>
 
@@ -352,23 +346,6 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.269 2004/07/25 04:18:05 momjian
       disk writes at a steady pace so checkpoints have far fewer dirty
       pages to write to disk. This should improve performance and
       minimize performance degradation during checkpoints.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Optimizer improvements and subquery fixes (Tom)
-     </para>
-     <para>
-      It is difficult to explain all the optimizer improvements that go
-      into a release like this. They involve complex adjustments to the
-      logic used to select indexes, join methods, and join order. They
-      are difficult to explain, but the result is that the optimizer
-      make quicker and better choices in how to execute queries,
-      resulting in improved performance. The close relationship between
-      our developers and users reporting problems allows us to make
-      rapid and complex optimizer improvements that would be very
-      difficult for lose-source companies to emulate.
      </para>
     </listitem>
 
@@ -527,9 +504,9 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.269 2004/07/25 04:18:05 momjian
 
     <listitem>
      <para>
-      Add new read-only GUC variables to query server compile-time
-      setting func_max_args, index_max_keys, namedatalen, blcksz,
-      have_int64_timestamp (Joe)
+      Add new read-only server configuration parameter to query server
+      compile-time setting func_max_args, index_max_keys, namedatalen,
+      blcksz, have_int64_timestamp (Joe)
      </para>
     </listitem>
 
@@ -548,8 +525,9 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.269 2004/07/25 04:18:05 momjian
 
     <listitem>
      <para>
-      Rename GUC parameters SortMem and VacuumMem to work_mem and
-      maintenance_work_mem (Old names still supported) (Tom)
+      Rename server configuration parameters SortMem and VacuumMem to
+      work_mem and maintenance_work_mem (Old names still supported)
+      (Tom)
      </para>
      <para>
       This change was made to clarify that index creation uses
@@ -560,14 +538,15 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.269 2004/07/25 04:18:05 momjian
 
     <listitem>
      <para>
-      Allow logging of session disconnections using GUC log_disconnections (Andrew)
+      Allow logging of session disconnections using server configuration
+      log_disconnections (Andrew)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add new GUC parameter to report useful session information at the
-      start of each log line (Andrew)
+      Add new server configuration parameter log_line_prefix to report useful 
+      session information at the start of each log line (Andrew)
      </para>
      <para>
       Information includes user name, database name, remote IP address,
@@ -577,15 +556,16 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.269 2004/07/25 04:18:05 momjian
 
     <listitem>
      <para>
-      Remove GUC log_pid, log_timestamp, log_source_port;
-      functionality superseded by log_line_prefix (Andrew)
+      Remove server configuration parameter log_pid, log_timestamp,
+      log_source_port; functionality superseded by log_line_prefix
+      (Andrew)
      </para>
     </listitem>
 
     <listitem>
      <para>
       Replace the virtual_host and tcpip_socket parameters with a unified
-      listen_addresses parameter (Tom)
+      listen_addresses parameter (Andrew, Tom)
      </para>
     </listitem>
 
@@ -603,15 +583,16 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.269 2004/07/25 04:18:05 momjian
 
     <listitem>
      <para>
-      Remove 'syslog' GUC variable, and add more logical 'log_destination'
-      variable to control log output location (Magnus)
+      Remove 'syslog' server configuration parameter, and add more
+      logical 'log_destination' variable to control log output location
+      (Magnus)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Change GUC log_statement to take values "all, mod, ddl, none" which
-      controls the queries output (Bruce)
+      Change server configuration parameter log_statement to take values
+      "all, mod, ddl, none" which controls the queries output (Bruce)
      </para>
      <para>
       This allows administrators to log only data definition changes or
@@ -628,7 +609,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.269 2004/07/25 04:18:05 momjian
     <listitem>
      <para>
       Allow configuration files to be placed outside the data directory using
-      GUC variables (mlw)
+      server configuration parameters (mlw)
      </para>
      <para>
       By default, configuration files sit in the top server directory.
@@ -678,7 +659,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.269 2004/07/25 04:18:05 momjian
 
     <listitem>
      <para>
-      Implement dollar quoting to simplify single-quote usage (Andrew)
+      Implement dollar quoting to simplify single-quote usage (Andrew, Tom, 
+      David Fetter)
      </para>
      <para>
       In previous releases, because single quotes had to be used to
@@ -717,17 +699,6 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.269 2004/07/25 04:18:05 momjian
     <listitem>
      <para>
       Allow LIKE/ILIKE to appear in more places in a query (?) (Fabien Coelho)
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      When matching GROUP BY names, prefer local FROM columns first, then SELECT
-      aliases, and then outer FROM columns (Tom)
-     </para>
-     <para>
-      This change was made because it is considered more consistent than
-      the previous behavior.
      </para>
     </listitem>
 
@@ -780,8 +751,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.269 2004/07/25 04:18:05 momjian
 
     <listitem>
      <para>
-      Add new GUC default_with_oids to control the oid default during table
-      creation (Neil)
+      Add new server configuration parameter default_with_oids to
+      control the oid default during table creation (Neil)
      </para>
      <para>
       This allows administrators to default all CREATE TABLE commands to
@@ -1514,6 +1485,12 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.269 2004/07/25 04:18:05 momjian
 
     <listitem>
      <para>
+      psql now uses a lexical analyzer to process command strings
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       New linked list data structure implementation (Neil)
      </para>
      <para>
@@ -1524,7 +1501,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.269 2004/07/25 04:18:05 momjian
 
     <listitem>
      <para>
-      Allow external interfaces to create their own GUC variables (Thomas
+      Allow external interfaces to create their own server configuration
+      parameters (Thomas
       Hallgren)
      </para>
     </listitem>
@@ -2242,7 +2220,7 @@ DROP SCHEMA information_schema CASCADE;
       <para>
        The server-side autocommit setting was removed and
        reimplemented in client applications and languages.
-       Server-side autocommit was causing too many problems with
+       server-side autocommit was causing too many problems with
        languages and applications that wanted to control their own
        autocommit behavior, so autocommit was removed from the server
        and added to individual client APIs as appropriate.
