@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.162 2004/01/31 05:09:40 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.163 2004/03/17 20:48:42 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2564,7 +2564,7 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 				case T_ArrayExpr:		/* other separators */
 				case T_CoalesceExpr:	/* own parentheses */
 				case T_NullIfExpr:		/* other separators */
-				case T_Aggref:	/* own parentheses */
+				case T_Aggref:			/* own parentheses */
 				case T_CaseExpr:		/* other separators */
 					return true;
 				default:
@@ -2610,7 +2610,7 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 				case T_ArrayExpr:		/* other separators */
 				case T_CoalesceExpr:	/* own parentheses */
 				case T_NullIfExpr:		/* other separators */
-				case T_Aggref:	/* own parentheses */
+				case T_Aggref:			/* own parentheses */
 				case T_CaseExpr:		/* other separators */
 					return true;
 				default:
@@ -3026,6 +3026,11 @@ get_rule_expr(Node *node, deparse_context *context,
 
 				appendContextKeyword(context, "CASE",
 									 0, PRETTYINDENT_VAR, 0);
+				if (caseexpr->arg)
+				{
+					appendStringInfoChar(buf, ' ');
+					get_rule_expr((Node *) caseexpr->arg, context, true);
+				}
 				foreach(temp, caseexpr->args)
 				{
 					CaseWhen   *when = (CaseWhen *) lfirst(temp);
@@ -3034,7 +3039,17 @@ get_rule_expr(Node *node, deparse_context *context,
 						appendStringInfoChar(buf, ' ');
 					appendContextKeyword(context, "WHEN ",
 										 0, 0, 0);
-					get_rule_expr((Node *) when->expr, context, false);
+					if (caseexpr->arg)
+					{
+						/* Show only the RHS of "CaseTestExpr = RHS" */
+						Node   *rhs;
+
+						Assert(IsA(when->expr, OpExpr));
+						rhs = (Node *) lsecond(((OpExpr *) when->expr)->args);
+						get_rule_expr(rhs, context, false);
+					}
+					else
+						get_rule_expr((Node *) when->expr, context, false);
 					appendStringInfo(buf, " THEN ");
 					get_rule_expr((Node *) when->result, context, true);
 				}

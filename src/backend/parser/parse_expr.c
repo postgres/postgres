@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.165 2004/02/13 01:08:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.166 2004/03/17 20:48:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -637,14 +637,39 @@ transformExpr(ParseState *pstate, Node *expr)
 		case T_CaseExpr:
 			{
 				CaseExpr   *c = (CaseExpr *) expr;
-				CaseExpr   *newc = makeNode(CaseExpr);
-				List	   *newargs = NIL;
-				List	   *typeids = NIL;
+				CaseExpr   *newc;
+				Node	   *arg;
+				CaseTestExpr *placeholder;
+				List	   *newargs;
+				List	   *typeids;
 				List	   *args;
 				Node	   *defresult;
 				Oid			ptype;
 
+				/* If we already transformed this node, do nothing */
+				if (OidIsValid(c->casetype))
+				{
+					result = expr;
+					break;
+				}
+				newc = makeNode(CaseExpr);
+
+				/* transform the test expression, if any */
+				arg = transformExpr(pstate, (Node *) c->arg);
+				newc->arg = (Expr *) arg;
+				/* generate placeholder for test expression */
+				if (arg)
+				{
+					placeholder = makeNode(CaseTestExpr);
+					placeholder->typeId = exprType(arg);
+					placeholder->typeMod = exprTypmod(arg);
+				}
+				else
+					placeholder = NULL;
+
 				/* transform the list of arguments */
+				newargs = NIL;
+				typeids = NIL;
 				foreach(args, c->args)
 				{
 					CaseWhen   *w = (CaseWhen *) lfirst(args);
@@ -654,11 +679,11 @@ transformExpr(ParseState *pstate, Node *expr)
 					Assert(IsA(w, CaseWhen));
 
 					warg = (Node *) w->expr;
-					if (c->arg != NULL)
+					if (placeholder)
 					{
 						/* shorthand form was specified, so expand... */
 						warg = (Node *) makeSimpleA_Expr(AEXPR_OP, "=",
-														 (Node *) c->arg,
+														 (Node *) placeholder,
 														 warg);
 					}
 					neww->expr = (Expr *) transformExpr(pstate, warg);
@@ -667,18 +692,7 @@ transformExpr(ParseState *pstate, Node *expr)
 													 (Node *) neww->expr,
 															"CASE/WHEN");
 
-					/*
-					 * result is NULL for NULLIF() construct - thomas
-					 * 1998-11-11
-					 */
 					warg = (Node *) w->result;
-					if (warg == NULL)
-					{
-						A_Const    *n = makeNode(A_Const);
-
-						n->val.type = T_Null;
-						warg = (Node *) n;
-					}
 					neww->result = (Expr *) transformExpr(pstate, warg);
 
 					newargs = lappend(newargs, neww);
@@ -686,13 +700,6 @@ transformExpr(ParseState *pstate, Node *expr)
 				}
 
 				newc->args = newargs;
-
-				/*
-				 * It's not shorthand anymore, so drop the implicit
-				 * argument. This is necessary to keep any re-application
-				 * of transformExpr from doing the wrong thing.
-				 */
-				newc->arg = NULL;
 
 				/* transform the default clause */
 				defresult = (Node *) c->defresult;
@@ -714,6 +721,7 @@ transformExpr(ParseState *pstate, Node *expr)
 				typeids = lconso(exprType((Node *) newc->defresult), typeids);
 
 				ptype = select_common_type(typeids, "CASE");
+				Assert(OidIsValid(ptype));
 				newc->casetype = ptype;
 
 				/* Convert default result clause, if necessary */
@@ -915,6 +923,7 @@ transformExpr(ParseState *pstate, Node *expr)
 		case T_BoolExpr:
 		case T_FieldSelect:
 		case T_RelabelType:
+		case T_CaseTestExpr:
 		case T_CoerceToDomain:
 		case T_CoerceToDomainValue:
 		case T_SetToDefault:
@@ -1288,6 +1297,9 @@ exprType(Node *expr)
 		case T_CaseWhen:
 			type = exprType((Node *) ((CaseWhen *) expr)->result);
 			break;
+		case T_CaseTestExpr:
+			type = ((CaseTestExpr *) expr)->typeId;
+			break;
 		case T_ArrayExpr:
 			type = ((ArrayExpr *) expr)->array_typeid;
 			break;
@@ -1408,6 +1420,8 @@ exprTypmod(Node *expr)
 				return typmod;
 			}
 			break;
+		case T_CaseTestExpr:
+			return ((CaseTestExpr *) expr)->typeMod;
 		case T_CoalesceExpr:
 			{
 				/*

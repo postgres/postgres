@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.278 2004/03/11 01:47:35 ishii Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.279 2004/03/17 20:48:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -964,6 +964,20 @@ _copyCaseWhen(CaseWhen *from)
 
 	COPY_NODE_FIELD(expr);
 	COPY_NODE_FIELD(result);
+
+	return newnode;
+}
+
+/*
+ * _copyCaseTestExpr
+ */
+static CaseTestExpr *
+_copyCaseTestExpr(CaseTestExpr *from)
+{
+	CaseTestExpr *newnode = makeNode(CaseTestExpr);
+
+	COPY_SCALAR_FIELD(typeId);
+	COPY_SCALAR_FIELD(typeMod);
 
 	return newnode;
 }
@@ -2642,6 +2656,9 @@ copyObject(void *from)
 			break;
 		case T_CaseWhen:
 			retval = _copyCaseWhen(from);
+			break;
+		case T_CaseTestExpr:
+			retval = _copyCaseTestExpr(from);
 			break;
 		case T_ArrayExpr:
 			retval = _copyArrayExpr(from);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.155 2004/03/17 01:02:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.156 2004/03/17 20:48:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,6 +81,9 @@ static Datum ExecEvalAnd(BoolExprState *andExpr, ExprContext *econtext,
 						 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalCaseTestExpr(ExprState *exprstate,
+								  ExprContext *econtext,
+								  bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalArray(ArrayExprState *astate,
 						   ExprContext *econtext,
 						   bool *isNull, ExprDoneCond *isDone);
@@ -1809,9 +1812,28 @@ ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 {
 	List	   *clauses = caseExpr->args;
 	List	   *clause;
+	Datum		save_datum;
+	bool		save_isNull;
 
 	if (isDone)
 		*isDone = ExprSingleResult;
+
+	/*
+	 * If there's a test expression, we have to evaluate it and save
+	 * the value where the CaseTestExpr placeholders can find it.
+	 * We must save and restore prior setting of econtext's caseValue fields,
+	 * in case this node is itself within a larger CASE.
+	 */
+	save_datum = econtext->caseValue_datum;
+	save_isNull = econtext->caseValue_isNull;
+
+	if (caseExpr->arg)
+	{
+		econtext->caseValue_datum = ExecEvalExpr(caseExpr->arg,
+												 econtext,
+												 &econtext->caseValue_isNull,
+												 NULL);
+	}
 
 	/*
 	 * we evaluate each of the WHEN clauses in turn, as soon as one is
@@ -1835,12 +1857,17 @@ ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 		 */
 		if (DatumGetBool(clause_value) && !*isNull)
 		{
+			econtext->caseValue_datum = save_datum;
+			econtext->caseValue_isNull = save_isNull;
 			return ExecEvalExpr(wclause->result,
 								econtext,
 								isNull,
 								isDone);
 		}
 	}
+
+	econtext->caseValue_datum = save_datum;
+	econtext->caseValue_isNull = save_isNull;
 
 	if (caseExpr->defresult)
 	{
@@ -1852,6 +1879,22 @@ ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 
 	*isNull = true;
 	return (Datum) 0;
+}
+
+/*
+ * ExecEvalCaseTestExpr
+ *
+ * Return the value stored by CASE.
+ */
+static Datum
+ExecEvalCaseTestExpr(ExprState *exprstate,
+					 ExprContext *econtext,
+					 bool *isNull, ExprDoneCond *isDone)
+{
+	if (isDone)
+		*isDone = ExprSingleResult;
+	*isNull = econtext->caseValue_isNull;
+	return econtext->caseValue_datum;
 }
 
 /* ----------------------------------------------------------------
@@ -2478,6 +2521,10 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			state = (ExprState *) makeNode(ExprState);
 			state->evalfunc = ExecEvalCoerceToDomainValue;
 			break;
+		case T_CaseTestExpr:
+			state = (ExprState *) makeNode(ExprState);
+			state->evalfunc = ExecEvalCaseTestExpr;
+			break;
 		case T_Aggref:
 			{
 				Aggref	   *aggref = (Aggref *) node;
@@ -2666,6 +2713,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				List	   *inlist;
 
 				cstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalCase;
+				cstate->arg = ExecInitExpr(caseexpr->arg, parent);
 				FastListInit(&outlist);
 				foreach(inlist, caseexpr->args)
 				{
@@ -2680,8 +2728,6 @@ ExecInitExpr(Expr *node, PlanState *parent)
 					FastAppend(&outlist, wstate);
 				}
 				cstate->args = FastListValue(&outlist);
-				/* caseexpr->arg should be null by now */
-				Assert(caseexpr->arg == NULL);
 				cstate->defresult = ExecInitExpr(caseexpr->defresult, parent);
 				state = (ExprState *) cstate;
 			}

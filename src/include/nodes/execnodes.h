@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.113 2004/03/17 01:02:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.114 2004/03/17 20:48:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,6 +112,10 @@ typedef struct ExprContext
 	/* Values to substitute for Aggref nodes in expression */
 	Datum	   *ecxt_aggvalues; /* precomputed values for Aggref nodes */
 	bool	   *ecxt_aggnulls;	/* null flags for Aggref nodes */
+
+	/* Value to substitute for CaseTestExpr nodes in expression */
+	Datum		caseValue_datum;
+	bool		caseValue_isNull;
 
 	/* Value to substitute for CoerceToDomainValue nodes in expression */
 	Datum		domainValue_datum;
@@ -566,6 +570,7 @@ typedef struct SubPlanState
 typedef struct CaseExprState
 {
 	ExprState	xprstate;
+	ExprState  *arg;			/* implicit equality comparison argument */
 	List	   *args;			/* the arguments (list of WHEN clauses) */
 	ExprState  *defresult;		/* the default result (ELSE clause) */
 } CaseExprState;

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.97 2004/02/25 18:10:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.98 2004/03/17 20:48:43 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3729,6 +3729,9 @@ exec_simple_check_node(Node *node)
 				return TRUE;
 			}
 
+		case T_CaseTestExpr:
+			return TRUE;
+
 		case T_ArrayExpr:
 			{
 				ArrayExpr  *expr = (ArrayExpr *) node;
@@ -3769,6 +3772,9 @@ exec_simple_check_node(Node *node)
 
 		case T_CoerceToDomain:
 			return exec_simple_check_node((Node *) ((CoerceToDomain *) node)->arg);
+
+		case T_CoerceToDomainValue:
+			return TRUE;
 
 		case T_List:
 			{

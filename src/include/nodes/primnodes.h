@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.95 2004/03/14 23:41:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.96 2004/03/17 20:48:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -563,8 +563,27 @@ typedef struct RelabelType
 	CoercionForm relabelformat; /* how to display this node */
 } RelabelType;
 
-/*
+/*----------
  * CaseExpr - a CASE expression
+ *
+ * We support two distinct forms of CASE expression:
+ *		CASE WHEN boolexpr THEN expr [ WHEN boolexpr THEN expr ... ]
+ *		CASE testexpr WHEN compexpr THEN expr [ WHEN compexpr THEN expr ... ]
+ * These are distinguishable by the "arg" field being NULL in the first case
+ * and the testexpr in the second case.
+ *
+ * In the raw grammar output for the second form, the condition expressions
+ * of the WHEN clauses are just the comparison values.  Parse analysis
+ * converts these to valid boolean expressions of the form
+ *		CaseTestExpr '=' compexpr
+ * where the CaseTestExpr node is a placeholder that emits the correct
+ * value at runtime.  This structure is used so that the testexpr need be
+ * evaluated only once.  Note that after parse analysis, the condition
+ * expressions always yield boolean.
+ *
+ * Note: we can test whether a CaseExpr has been through parse analysis
+ * yet by checking whether casetype is InvalidOid or not.
+ *----------
  */
 typedef struct CaseExpr
 {
@@ -576,7 +595,7 @@ typedef struct CaseExpr
 } CaseExpr;
 
 /*
- * CaseWhen - an argument to a CASE expression
+ * CaseWhen - one arm of a CASE expression
  */
 typedef struct CaseWhen
 {
@@ -584,6 +603,18 @@ typedef struct CaseWhen
 	Expr	   *expr;			/* condition expression */
 	Expr	   *result;			/* substitution result */
 } CaseWhen;
+
+/*
+ * Placeholder node for the test value to be processed by a CASE expression.
+ * This is effectively like a Param, but can be implemented more simply
+ * since we need only one replacement value at a time.
+ */
+typedef struct CaseTestExpr
+{
+	Expr		xpr;
+	Oid			typeId;			/* type for substituted value */
+	int32		typeMod;		/* typemod for substituted value */
+} CaseTestExpr;
 
 /*
  * ArrayExpr - an ARRAY[] expression

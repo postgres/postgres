@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.164 2004/03/14 23:41:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.165 2004/03/17 20:48:42 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1397,15 +1397,29 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		 * simplify the entire CASE to that alternative's expression.
 		 * If there are no non-FALSE alternatives, we simplify the entire
 		 * CASE to the default result (ELSE result).
+		 *
+		 * If we have a simple-form CASE with constant test expression and
+		 * one or more constant comparison expressions, we could run the
+		 * implied comparisons and potentially reduce those arms to constants.
+		 * This is not yet implemented, however.  At present, the
+		 * CaseTestExpr placeholder will always act as a non-constant node
+		 * and prevent the comparison boolean expressions from being reduced
+		 * to Const nodes.
 		 *----------
 		 */
 		CaseExpr   *caseexpr = (CaseExpr *) node;
 		CaseExpr   *newcase;
+		Node	   *newarg;
 		FastList	newargs;
 		Node	   *defresult;
 		Const	   *const_input;
 		List	   *arg;
 
+		/* Simplify the test expression, if any */
+		newarg = eval_const_expressions_mutator((Node *) caseexpr->arg,
+												active_fns);
+
+		/* Simplify the WHEN clauses */
 		FastListInit(&newargs);
 		foreach(arg, caseexpr->args)
 		{
@@ -1454,7 +1468,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		/* Otherwise we need a new CASE node */
 		newcase = makeNode(CaseExpr);
 		newcase->casetype = caseexpr->casetype;
-		newcase->arg = NULL;
+		newcase->arg = (Expr *) newarg;
 		newcase->args = FastListValue(&newargs);
 		newcase->defresult = (Expr *) defresult;
 		return (Node *) newcase;
@@ -2319,6 +2333,7 @@ expression_tree_walker(Node *node,
 		case T_Const:
 		case T_Param:
 		case T_CoerceToDomainValue:
+		case T_CaseTestExpr:
 		case T_SetToDefault:
 		case T_RangeTblRef:
 			/* primitive node types with no subnodes */
@@ -2425,6 +2440,8 @@ expression_tree_walker(Node *node,
 			{
 				CaseExpr   *caseexpr = (CaseExpr *) node;
 
+				if (walker(caseexpr->arg, context))
+					return true;
 				/* we assume walker doesn't care about CaseWhens, either */
 				foreach(temp, caseexpr->args)
 				{
@@ -2436,9 +2453,6 @@ expression_tree_walker(Node *node,
 					if (walker(when->result, context))
 						return true;
 				}
-				/* caseexpr->arg should be null, but we'll check it anyway */
-				if (walker(caseexpr->arg, context))
-					return true;
 				if (walker(caseexpr->defresult, context))
 					return true;
 			}
@@ -2692,6 +2706,7 @@ expression_tree_mutator(Node *node,
 		case T_Const:
 		case T_Param:
 		case T_CoerceToDomainValue:
+		case T_CaseTestExpr:
 		case T_SetToDefault:
 		case T_RangeTblRef:
 			/* primitive node types with no subnodes */
@@ -2829,9 +2844,8 @@ expression_tree_mutator(Node *node,
 				CaseExpr   *newnode;
 
 				FLATCOPY(newnode, caseexpr, CaseExpr);
-				MUTATE(newnode->args, caseexpr->args, List *);
-				/* caseexpr->arg should be null, but we'll check it anyway */
 				MUTATE(newnode->arg, caseexpr->arg, Expr *);
+				MUTATE(newnode->args, caseexpr->args, List *);
 				MUTATE(newnode->defresult, caseexpr->defresult, Expr *);
 				return (Node *) newnode;
 			}

@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.217 2004/03/14 23:41:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.218 2004/03/17 20:48:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -399,6 +399,15 @@ _equalCaseWhen(CaseWhen *a, CaseWhen *b)
 {
 	COMPARE_NODE_FIELD(expr);
 	COMPARE_NODE_FIELD(result);
+
+	return true;
+}
+
+static bool
+_equalCaseTestExpr(CaseTestExpr *a, CaseTestExpr *b)
+{
+	COMPARE_SCALAR_FIELD(typeId);
+	COMPARE_SCALAR_FIELD(typeMod);
 
 	return true;
 }
@@ -1723,6 +1732,9 @@ equal(void *a, void *b)
 			break;
 		case T_CaseWhen:
 			retval = _equalCaseWhen(a, b);
+			break;
+		case T_CaseTestExpr:
+			retval = _equalCaseTestExpr(a, b);
 			break;
 		case T_ArrayExpr:
 			retval = _equalArrayExpr(a, b);
