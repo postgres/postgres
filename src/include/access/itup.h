@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.10 1998/01/31 04:39:23 momjian Exp $
+ * $Id: itup.h,v 1.11 1998/02/01 05:38:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,28 +123,27 @@ typedef struct PredInfo
 		*(isnull) = false, \
 		IndexTupleNoNulls(tup) ? \
 		( \
-			((tupleDesc)->attrs[(attnum)-1]->attcacheoff > 0) ? \
+			((tupleDesc)->attrs[(attnum)-1]->attcacheoff > 0 || \
+			 (attnum) == 1) ? \
 			( \
 				(Datum)fetchatt(&((tupleDesc)->attrs[(attnum)-1]), \
-			  	  (char *) (tup) + \
-					(IndexTupleHasMinHeader(tup) ? sizeof (*(tup)) : \
-					 IndexInfoFindDataOffset((tup)->t_info)) + \
-					(tupleDesc)->attrs[(attnum)-1]->attcacheoff) \
+			  		(char *) (tup) + \
+					( \
+						IndexTupleHasMinHeader(tup) ? \
+							sizeof (*(tup)) \
+						: \
+							IndexInfoFindDataOffset((tup)->t_info) \
+					) + \
+					( \
+						((attnum) != 1) ? \
+							(tupleDesc)->attrs[(attnum)-1]->attcacheoff \
+						: \
+							0 \
+					) \
+				) \
 			) \
 			: \
-			( \
-				((attnum)-1 == 0) ? \
-				( \
-					(Datum)fetchatt(&((tupleDesc)->attrs[0]), \
-						(char *) (tup) + \
-						(IndexTupleHasMinHeader(tup) ? sizeof (*(tup)) : \
-					 	 IndexInfoFindDataOffset((tup)->t_info))) \
-				) \
-				: \
-				( \
-					nocache_index_getattr((tup), (attnum), (tupleDesc), (isnull)) \
-				) \
-			) \
+				nocache_index_getattr((tup), (attnum), (tupleDesc), (isnull)) \
 		) \
 		: \
 		( \

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupmacs.h,v 1.2 1997/09/07 04:56:17 momjian Exp $
+ * $Id: tupmacs.h,v 1.3 1998/02/01 05:38:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,12 +44,22 @@
  * I would eliminate attbyval altogether, but I don't know how.  -BRYANH.
  */
 #define fetchatt(A, T) \
- ((*(A))->attbyval && (*(A))->attlen != -1 \
-  ? ((*(A))->attlen > sizeof(int16) \
-	 ? (char *) (long) *((int32 *)(T)) \
-	 : ((*(A))->attlen < sizeof(int16) \
-		? (char *) (long) *((char *)(T)) \
-		: (char *) (long) *((int16 *)(T)))) \
-  : (char *) (T))
+( \
+	(*(A))->attbyval && (*(A))->attlen != -1 ? \
+	( \
+		(*(A))->attlen > sizeof(int16) ? \
+		( \
+			(char *) (long) *((int32 *)(T)) \
+		) \
+	 	: \
+		( \
+			(*(A))->attlen < sizeof(int16) ? \
+				(char *) (long) *((char *)(T)) \
+			: \
+				(char *) (long) *((int16 *)(T))) \
+		) \
+	: \
+	(char *) (T) \
+)
 
 #endif
