@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.177.2.1 2002/12/01 17:33:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.177.2.2 2003/04/25 22:14:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -542,10 +542,11 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	 * Get info about the columns we need to process.
 	 *
 	 * For binary copy we really only need isvarlena, but compute it all...
+	 * +1's here are to avoid palloc(0) in a zero-column table.
 	 */
-	out_functions = (FmgrInfo *) palloc(num_phys_attrs * sizeof(FmgrInfo));
-	elements = (Oid *) palloc(num_phys_attrs * sizeof(Oid));
-	isvarlena = (bool *) palloc(num_phys_attrs * sizeof(bool));
+	out_functions = (FmgrInfo *) palloc((num_phys_attrs + 1) * sizeof(FmgrInfo));
+	elements = (Oid *) palloc((num_phys_attrs + 1) * sizeof(Oid));
+	isvarlena = (bool *) palloc((num_phys_attrs + 1) * sizeof(bool));
 	foreach(cur, attnumlist)
 	{
 		int			attnum = lfirsti(cur);
@@ -799,13 +800,14 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	 * relation, including the input function, the element type (to pass
 	 * to the input function), and info about defaults and constraints.
 	 * (We don't actually use the input function if it's a binary copy.)
+	 * +1's here are to avoid palloc(0) in a zero-column table.
 	 */
-	in_functions = (FmgrInfo *) palloc(num_phys_attrs * sizeof(FmgrInfo));
-	elements = (Oid *) palloc(num_phys_attrs * sizeof(Oid));
-	defmap = (int *) palloc(num_phys_attrs * sizeof(int));
-	defexprs = (Node **) palloc(num_phys_attrs * sizeof(Node *));
-	constraintexprs = (Node **) palloc(num_phys_attrs * sizeof(Node *));
-	constraintconsts = (Const **) palloc(num_phys_attrs * sizeof(Const *));
+	in_functions = (FmgrInfo *) palloc((num_phys_attrs + 1) * sizeof(FmgrInfo));
+	elements = (Oid *) palloc((num_phys_attrs + 1) * sizeof(Oid));
+	defmap = (int *) palloc((num_phys_attrs + 1) * sizeof(int));
+	defexprs = (Node **) palloc((num_phys_attrs + 1) * sizeof(Node *));
+	constraintexprs = (Node **) palloc((num_phys_attrs + 1) * sizeof(Node *));
+	constraintconsts = (Const **) palloc((num_phys_attrs + 1) * sizeof(Const *));
 	MemSet(constraintexprs, 0, num_phys_attrs * sizeof(Node *));
 
 	for (i = 0; i < num_phys_attrs; i++)
@@ -917,8 +919,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		}
 	}
 
-	values = (Datum *) palloc(num_phys_attrs * sizeof(Datum));
-	nulls = (char *) palloc(num_phys_attrs * sizeof(char));
+	values = (Datum *) palloc((num_phys_attrs + 1) * sizeof(Datum));
+	nulls = (char *) palloc((num_phys_attrs + 1) * sizeof(char));
 
 	copy_lineno = 0;
 	fe_eof = false;
@@ -1015,9 +1017,31 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			if (done)
 				break;			/* out of per-row loop */
 
-			/* Complain if there are more fields on the input line */
+			/*
+			 * Complain if there are more fields on the input line.
+			 *
+			 * Special case: if we're reading a zero-column table, we
+			 * won't yet have called CopyReadAttribute() at all; so do that
+			 * and check we have an empty line.  Fortunately we can keep that
+			 * silly corner case out of the main line of execution.
+			 */
 			if (result == NORMAL_ATTR)
-				elog(ERROR, "Extra data after last expected column");
+			{
+				if (attnumlist == NIL && !file_has_oids)
+				{
+					string = CopyReadAttribute(fp, delim, &result);
+					if (result == NORMAL_ATTR || *string != '\0')
+						elog(ERROR, "Extra data after last expected column");
+					if (result == END_OF_FILE)
+					{
+						/* EOF at start of line: all is well */
+						done = true;
+						break;
+					}
+				}
+				else
+					elog(ERROR, "Extra data after last expected column");
+			}
 
 			/*
 			 * If we got some data on the line, but it was ended by EOF,

@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.305.2.3 2003/02/13 22:56:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.305.2.4 2003/04/25 22:14:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -960,6 +960,7 @@ dumpClasses_dumpData(Archive *fout, char *oid, void *dctxv)
 	PQExpBuffer q = createPQExpBuffer();
 	PGresult   *res;
 	int			tuple;
+	int			nfields;
 	int			field;
 
 	/*
@@ -1009,14 +1010,21 @@ dumpClasses_dumpData(Archive *fout, char *oid, void *dctxv)
 			exit_nicely();
 		}
 
+		nfields = PQnfields(res);
 		for (tuple = 0; tuple < PQntuples(res); tuple++)
 		{
 			archprintf(fout, "INSERT INTO %s ", fmtId(classname));
+			if (nfields == 0)
+			{
+				/* corner case for zero-column table */
+				archprintf(fout, "DEFAULT VALUES;\n");
+				continue;
+			}
 			if (attrNames == true)
 			{
 				resetPQExpBuffer(q);
 				appendPQExpBuffer(q, "(");
-				for (field = 0; field < PQnfields(res); field++)
+				for (field = 0; field < nfields; field++)
 				{
 					if (field > 0)
 						appendPQExpBuffer(q, ", ");
@@ -1026,7 +1034,7 @@ dumpClasses_dumpData(Archive *fout, char *oid, void *dctxv)
 				archprintf(fout, "%s", q->data);
 			}
 			archprintf(fout, "VALUES (");
-			for (field = 0; field < PQnfields(res); field++)
+			for (field = 0; field < nfields; field++)
 			{
 				if (field > 0)
 					archprintf(fout, ", ");
@@ -6702,7 +6710,10 @@ fmtQualifiedId(const char *schema, const char *id)
 }
 
 /*
- * return a column list clause for the given relation.
+ * Return a column list clause for the given relation.
+ *
+ * Special case: if there are no undropped columns in the relation, return
+ * "", not an invalid "()" column list.
  */
 static const char *
 fmtCopyColumnList(const TableInfo *ti)
@@ -6730,6 +6741,10 @@ fmtCopyColumnList(const TableInfo *ti)
 		appendPQExpBuffer(q, "%s", fmtId(attnames[i]));
 		needComma = true;
 	}
+
+	if (!needComma)
+		return "";				/* no undropped columns */
+
 	appendPQExpBuffer(q, ")");
 	return q->data;
 }
