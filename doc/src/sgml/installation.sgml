@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.99 2002/10/29 18:13:28 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.100 2002/10/29 18:59:38 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1521,7 +1521,7 @@ gunzip -c user.ps.gz \
        <row>
 	<entry><systemitem class="osname">FreeBSD</></entry>
 	<entry><systemitem>x86</></entry>
-	<entry>7.2</entry>
+	<entry>7.3</entry>
 	<entry>2002-10-29,
 	 Larry Rosenman (<email>ler@lerctr.org</email>)</entry>
         <entry>4.7</entry>
@@ -1546,7 +1546,7 @@ gunzip -c user.ps.gz \
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>Alpha</></entry>
-	<entry>7.2</entry>
+	<entry>7.3</entry>
 	<entry>2002-10-28,
 	 Magnus Naeslund(f) (<email>mag@fbab.net</email>)</entry>
 	<entry>2.4.19-pre6</entry>
@@ -1708,7 +1708,7 @@ gunzip -c user.ps.gz \
        <row>
 	<entry><systemitem class="osname">Solaris</></entry>
 	<entry><systemitem>Sparc</></entry>
-	<entry>7.2</entry>
+	<entry>7.3</entry>
 	<entry>2002-10-28,
 	 Andrew Sullivan (<email>andrew@libertyrms.info</email>)</entry>
 	<entry>Solaris 7 &amp; 8; see also <filename>doc/FAQ_Solaris</filename></entry>
