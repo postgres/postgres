@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.59 2001/05/24 09:29:29 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.60 2001/06/13 22:51:02 momjian Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -3307,6 +3307,13 @@ Not defined by this name. Implements the intersection operator '#'
 	<entry>24</entry>
        </row>
        <row>
+	<entry>set_masklen(inet,integer)</entry>
+	<entry>inet</entry>
+	<entry>set netmask length for inet value</entry>
+	<entry>set_masklen('192.168.1.5/24',16)</entry>
+	<entry>192.168.1.5/16</entry>
+       </row>
+       <row>
 	<entry>netmask(inet)</entry>
 	<entry>inet</entry>
 	<entry>construct netmask for network</entry>
@@ -3342,7 +3349,9 @@ Not defined by this name. Implements the intersection operator '#'
     All of the functions for <type>inet</type> can be applied to
     <type>cidr</type> values as well.  The <function>host</>(),
     <function>text</>(), and <function>abbrev</>() functions are primarily
-    intended to offer alternative display formats.
+    intended to offer alternative display formats. You can cast a text
+    field to inet using normal casting syntax: inet(fieldname) or 
+    fieldname::inet.
    </para>
 
    <para>
