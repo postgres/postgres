@@ -2309,7 +2309,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		if (columnNamePattern != null && !"".equals(columnNamePattern)) {
 			sql += " AND a.attname LIKE '"+escapeQuotes(columnNamePattern)+"' ";
 		}
-		sql += " ORDER BY nspname,relname,attname ";
+		sql += " ORDER BY nspname,relname,attnum ";
 
 		ResultSet rs = connection.createStatement().executeQuery(sql);
 		while (rs.next())
