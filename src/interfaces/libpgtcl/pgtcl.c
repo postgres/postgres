@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpgtcl/pgtcl.c,v 1.30 2004/01/07 18:56:29 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpgtcl/pgtcl.c,v 1.31 2004/02/02 00:35:08 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ Pgtcl_Init(Tcl_Interp *interp)
 	 */
 	Tcl_GetDouble(interp, Tcl_GetVar(interp, "tcl_version", TCL_GLOBAL_ONLY), &tclversion);
 	if (tclversion >= 8.1)
-		putenv("PGCLIENTENCODING=UNICODE");
+		Tcl_PutEnv("PGCLIENTENCODING=UNICODE");
 
 	/* register all pgtcl commands */
 	Tcl_CreateCommand(interp,
