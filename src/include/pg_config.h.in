@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.36 2003/01/06 05:46:18 momjian Exp $
+ * $Id: pg_config.h.in,v 1.37 2003/01/06 06:07:20 momjian Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -368,7 +368,7 @@
 /* Set to 1 if you have <sys/shm.h> */
 #undef HAVE_SYS_SHM_H
 
-/* Set to 1 if you have getaddrinfo for IPv6 */
+/* Set to 1 if you have support for IPv6 */
 #undef HAVE_IPV6
 
 /* Set to 1 if you have <kernel/OS.h> */
