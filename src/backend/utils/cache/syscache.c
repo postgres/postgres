@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.41 1999/11/22 17:56:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.42 1999/11/24 00:58:48 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -71,7 +71,7 @@ typedef HeapTuple (*ScanFunc) ();
     function names in the same order as the cache list for clarity.
 
     Finally, any place your relation gets heap_insert() or
-	heap_replace calls, include code to do a CatalogIndexInsert() to update
+	heap_update calls, include code to do a CatalogIndexInsert() to update
 	the system indexes.  The heap_* calls do not update indexes.
 	
     bjm 1999/11/22
