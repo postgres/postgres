@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.227 2001/06/29 16:05:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.228 2001/07/30 14:50:24 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1120,7 +1120,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	unsigned short remote_port;
 
 	char	   *potential_DataDir = NULL;
-	
+
 	/*
 	 * Catch standard options before doing much else.  This even works on
 	 * systems without getopt_long.
@@ -1144,15 +1144,26 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	 *
 	 * If we are running under the postmaster, this is done already.
 	 */
-	if (!IsUnderPostmaster)
+	if (IsUnderPostmaster)
+	{
+		MemoryContextSwitchTo(TopMemoryContext);
+		ClientAuthentication(MyProcPort); /* might not return */
+		/*
+		 * Release postmaster's working memory context so that backend can
+		 * recycle the space.  Note this does not trash *MyProcPort, because
+		 * ConnCreate() allocated that space with malloc() ... else we'd need
+		 * to copy the Port data here.  We delete it here because the
+		 * authorization file tokens are stored in this context.
+		 */
+		MemoryContextDelete(PostmasterContext);
+		PostmasterContext = NULL;
+	}
+	else
 	{
 		SetProcessingMode(InitProcessing);
 		EnableExceptionHandling(true);
 		MemoryContextInit();
 	}
-
-	if (IsUnderPostmaster)
-		ClientAuthentication(MyProcPort); /* might not return */
 
 	/*
 	 * Set default values for command-line options.
@@ -1714,7 +1725,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.227 $ $Date: 2001/06/29 16:05:56 $\n");
+		puts("$Revision: 1.228 $ $Date: 2001/07/30 14:50:24 $\n");
 	}
 
 	/*

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.231 2001/07/03 16:52:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.232 2001/07/30 14:50:22 momjian Exp $
  *
  * NOTES
  *
@@ -809,6 +809,8 @@ ServerLoop(void)
 
 	nSockets = initMasks(&readmask, &writemask);
 
+	load_hba_and_ident();
+
 	for (;;)
 	{
 		Port	   *port;
@@ -874,6 +876,7 @@ ServerLoop(void)
 		if (got_SIGHUP)
 		{
 			got_SIGHUP = false;
+			load_hba_and_ident();
 			ProcessConfigFile(PGC_SIGHUP);
 		}
 
@@ -993,7 +996,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 
 	buf = palloc(len);
 	pq_getbytes(buf, len);
-	
+
 	packet = buf;
 
 	/*
@@ -1479,7 +1482,7 @@ reaper(SIGNAL_ARGS)
 #endif
 		/*
 		 * Check if this child was the statistics collector. If
-		 * so, start a new one. 
+		 * so, start a new one.
 		 */
 		if (pgstat_ispgstat(pid))
 		{
@@ -1987,18 +1990,7 @@ DoBackend(Port *port)
 		av[ac++] = "-o";
 		av[ac++] = ttybuf;
 	}
-
 	av[ac] = (char *) NULL;
-
-	/*
-	 * Release postmaster's working memory context so that backend can
-	 * recycle the space.  Note this does not trash *MyProcPort, because
-	 * ConnCreate() allocated that space with malloc() ... else we'd need
-	 * to copy the Port data here.
-	 */
-	MemoryContextSwitchTo(TopMemoryContext);
-	MemoryContextDelete(PostmasterContext);
-	PostmasterContext = NULL;
 
 	/*
 	 * Debug: print arguments being passed to backend
