@@ -150,6 +150,7 @@ COMMANDS
 * -Move LIKE index optimization handling to the optimizer
 * Allow RULE recompilation
 * Support UNION/INTERSECT/EXCEPT in sub-selects
+* Allow DELETE and UPDATE to use inheritance using tablename*
   
 CLIENTS
 
