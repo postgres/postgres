@@ -22,7 +22,6 @@ extern char *yytext,
 
 #ifdef YYDEBUG
 extern int	yydebug;
-
 #endif
 extern int	yylineno,
 			yyleng;
@@ -67,7 +66,7 @@ extern void whenever_action(int);
 extern void add_descriptor(char *, char *);
 extern void drop_descriptor(char *, char *);
 extern struct descriptor *lookup_descriptor(char *, char *);
-extern struct variable *descriptor_variable(const char *name,int input);
+extern struct variable *descriptor_variable(const char *name, int input);
 extern void add_variable(struct arguments **, struct variable *, struct variable *);
 extern void append_variable(struct arguments **, struct variable *, struct variable *);
 extern void dump_variables(struct arguments *, int);

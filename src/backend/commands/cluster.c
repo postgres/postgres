@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.69 2001/08/21 16:36:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.70 2001/10/25 05:49:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -267,10 +267,9 @@ rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 		LocalHeapTuple.t_datamcxt = NULL;
 		LocalHeapTuple.t_data = NULL;
 		heap_fetch(LocalOldHeap, SnapshotNow, &LocalHeapTuple, &LocalBuffer,
-						ScanDesc);
+				   ScanDesc);
 		if (LocalHeapTuple.t_data != NULL)
 		{
-
 			/*
 			 * We must copy the tuple because heap_insert() will overwrite
 			 * the commit-status fields of the tuple it's handed, and the

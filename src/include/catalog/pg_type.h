@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.112 2001/09/28 08:09:14 thomas Exp $
+ * $Id: pg_type.h,v 1.113 2001/10/25 05:49:58 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -43,14 +43,15 @@ CATALOG(pg_type) BOOTSTRAP
 
 	/*
 	 * For a fixed-size type, typlen is the number of bytes we use to
-	 * represent a value of this type, e.g. 4 for an int4.  But for a
+	 * represent a value of this type, e.g. 4 for an int4.	But for a
 	 * variable-length type, typlen is -1.
 	 */
 	int2		typlen;
+
 	/*
 	 * typprtlen was once intended to be the length of the external
 	 * representation of a datatype, with the same interpretation as for
-	 * typlen.  But it's currently unused.
+	 * typlen.	But it's currently unused.
 	 */
 	int2		typprtlen;
 
@@ -74,7 +75,8 @@ CATALOG(pg_type) BOOTSTRAP
 
 	/*
 	 * If typisdefined is false, the entry is only a placeholder (forward
-	 * reference).  We know the type name, but not yet anything else about it.
+	 * reference).	We know the type name, but not yet anything else about
+	 * it.
 	 */
 	bool		typisdefined;
 
@@ -90,7 +92,7 @@ CATALOG(pg_type) BOOTSTRAP
 	 * be turned into pseudo-arrays like that. Hence, the way to determine
 	 * whether a type is a "true" array type is if:
 	 *
-	 *	typelem != 0 and typlen < 0.
+	 * typelem != 0 and typlen < 0.
 	 */
 	Oid			typelem;
 
@@ -139,10 +141,10 @@ CATALOG(pg_type) BOOTSTRAP
 	char		typstorage;
 
 	/*
-	 * typdefault is NULL if the type has no associated default value.
-	 * If it's not NULL, it contains the external representation of the
-	 * type's default value --- this default is used whenever no per-column
-	 * default is specified for a column of the datatype.
+	 * typdefault is NULL if the type has no associated default value. If
+	 * it's not NULL, it contains the external representation of the
+	 * type's default value --- this default is used whenever no
+	 * per-column default is specified for a column of the datatype.
 	 */
 	text		typdefault;		/* VARIABLE LENGTH FIELD */
 } FormData_pg_type;
@@ -404,7 +406,7 @@ DATA(insert OID = 1183 ( _time		 PGUID	-1 -1 f b t \054 0	1083 array_in array_ou
 DATA(insert OID = 1184 ( timestamptz PGUID	8  47 f b t \054 0	0 timestamptz_in timestamptz_out timestamptz_in timestamptz_out d p _null_ ));
 DESCR("date and time with time zone");
 #define TIMESTAMPTZOID	1184
-DATA(insert OID = 1185 ( _timestamptz PGUID	-1 -1 f b t \054 0	1184 array_in array_out array_in array_out d x _null_ ));
+DATA(insert OID = 1185 ( _timestamptz PGUID -1 -1 f b t \054 0	1184 array_in array_out array_in array_out d x _null_ ));
 DATA(insert OID = 1186 ( interval	 PGUID 12  47 f b t \054 0	0 interval_in interval_out interval_in interval_out d p _null_ ));
 DESCR("@ <number> <units>, time interval");
 #define INTERVALOID		1186
@@ -463,6 +465,5 @@ extern Oid TypeCreate(char *typeName,
 		   char storage);
 extern void TypeRename(const char *oldTypeName, const char *newTypeName);
 extern char *makeArrayTypeName(char *typeName);
-
 
 #endif	 /* PG_TYPE_H */

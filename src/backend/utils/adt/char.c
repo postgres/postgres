@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.31 2001/05/28 21:58:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.32 2001/10/25 05:49:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,9 +161,9 @@ text_char(PG_FUNCTION_ARGS)
 	char		result;
 
 	/*
-	 * An empty input string is converted to \0 (for consistency with charin).
-	 * If the input is longer than one character, the excess data is silently
-	 * discarded.
+	 * An empty input string is converted to \0 (for consistency with
+	 * charin). If the input is longer than one character, the excess data
+	 * is silently discarded.
 	 */
 	if (VARSIZE(arg1) > VARHDRSZ)
 		result = *(VARDATA(arg1));
@@ -189,9 +189,7 @@ char_text(PG_FUNCTION_ARGS)
 		*(VARDATA(result)) = arg1;
 	}
 	else
-	{
 		VARATT_SIZEP(result) = VARHDRSZ;
-	}
 
 	PG_RETURN_TEXT_P(result);
 }

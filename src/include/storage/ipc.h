@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.51 2001/09/29 04:02:26 tgl Exp $
+ * $Id: ipc.h,v 1.52 2001/10/25 05:50:10 momjian Exp $
  *
  * Some files that would normally need to include only sys/ipc.h must
  * instead include this file because on Ultrix, sys/ipc.h is not designed
@@ -89,5 +89,4 @@ extern bool SharedMemoryIsInUse(IpcMemoryKey shmKey, IpcMemoryId shmId);
 /* ipci.c */
 extern void CreateSharedMemoryAndSemaphores(bool makePrivate,
 								int maxBackends);
-
 #endif	 /* IPC_H */

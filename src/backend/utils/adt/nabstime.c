@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.90 2001/10/20 01:02:18 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.91 2001/10/25 05:49:44 momjian Exp $
  *
  * NOTES
  *
@@ -90,7 +90,6 @@ static int	sec_tab[] = {
 	1, 1, 60, 60,
 	3600, 3600, 86400, 86400, 604800, 604800,
 2592000, 2592000, 31536000, 31536000};
-
 #endif
 
 /*
@@ -103,7 +102,6 @@ static void reltime2tm(RelativeTime time, struct tm * tm);
 #ifdef NOT_USED
 static int	correct_unit(char *unit, int *unptr);
 static int	correct_dir(char *direction, int *signptr);
-
 #endif
 
 static int istinterval(char *i_string,
@@ -188,13 +186,15 @@ GetCurrentAbsoluteTime(void)
 AbsoluteTime
 GetCurrentAbsoluteTimeUsec(int *usec)
 {
-	time_t now;
+	time_t		now;
 	struct timeval tp;
+
 #ifdef NOT_USED
 	struct timezone tpz;
 #endif
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 	struct tm  *tm;
+
 #else
 	struct timeb tb;			/* the old V7-ism */
 #endif
@@ -271,7 +271,7 @@ GetCurrentTime(struct tm * tm)
 
 
 void
-GetCurrentTimeUsec(struct tm *tm, double *fsec)
+GetCurrentTimeUsec(struct tm * tm, double *fsec)
 {
 	int			tz;
 	int			usec;
@@ -297,15 +297,16 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 	ftime(&tb);
 #endif
 
-	/* If HasCTZSet is true then we have a brute force time zone specified.
-	 * Go ahead and rotate to the local time zone since we will later bypass
-	 * any calls which adjust the tm fields.
+	/*
+	 * If HasCTZSet is true then we have a brute force time zone
+	 * specified. Go ahead and rotate to the local time zone since we will
+	 * later bypass any calls which adjust the tm fields.
 	 */
 	if (HasCTZSet && (tzp != NULL))
 		time -= CTimeZone;
 
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
-	if ((! HasCTZSet) && (tzp != NULL))
+	if ((!HasCTZSet) && (tzp != NULL))
 	{
 		tx = localtime((time_t *) &time);
 #ifdef NO_MKTIME_BEFORE_1970
@@ -336,9 +337,9 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 
 	if (tzp != NULL)
 	{
-		/* We have a brute force time zone per SQL99?
-		 * Then use it without change
-		 * since we have already rotated to the time zone.
+		/*
+		 * We have a brute force time zone per SQL99? Then use it without
+		 * change since we have already rotated to the time zone.
 		 */
 		if (HasCTZSet)
 		{
@@ -351,14 +352,18 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 		}
 		else
 		{
-			*tzp = -tm->tm_gmtoff;	/* tm_gmtoff is Sun/DEC-ism */
+			*tzp = -tm->tm_gmtoff;		/* tm_gmtoff is Sun/DEC-ism */
 
-			/* XXX FreeBSD man pages indicate that this should work - tgl 97/04/23 */
+			/*
+			 * XXX FreeBSD man pages indicate that this should work - tgl
+			 * 97/04/23
+			 */
 			if (tzn != NULL)
 			{
 				/*
-				 * Copy no more than MAXTZLEN bytes of timezone to tzn, in case it
-				 * contains an error message, which doesn't fit in the buffer
+				 * Copy no more than MAXTZLEN bytes of timezone to tzn, in
+				 * case it contains an error message, which doesn't fit in
+				 * the buffer
 				 */
 				StrNCpy(*tzn, tm->tm_zone, MAXTZLEN + 1);
 				if (strlen(tm->tm_zone) > MAXTZLEN)
@@ -367,15 +372,13 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 		}
 	}
 	else
-	{
 		tm->tm_isdst = -1;
-	}
 #elif defined(HAVE_INT_TIMEZONE)
 	if (tzp != NULL)
 	{
-		/* We have a brute force time zone per SQL99?
-		 * Then use it without change
-		 * since we have already rotated to the time zone.
+		/*
+		 * We have a brute force time zone per SQL99? Then use it without
+		 * change since we have already rotated to the time zone.
 		 */
 		if (HasCTZSet)
 		{
@@ -390,10 +393,10 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 
 			if (tzn != NULL)
 			{
-
 				/*
-				 * Copy no more than MAXTZLEN bytes of timezone to tzn, in case it
-				 * contains an error message, which doesn't fit in the buffer
+				 * Copy no more than MAXTZLEN bytes of timezone to tzn, in
+				 * case it contains an error message, which doesn't fit in
+				 * the buffer
 				 */
 				StrNCpy(*tzn, tzname[tm->tm_isdst], MAXTZLEN + 1);
 				if (strlen(tzname[tm->tm_isdst]) > MAXTZLEN)
@@ -402,16 +405,14 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 		}
 	}
 	else
-	{
 		tm->tm_isdst = -1;
-	}
 #endif
 #else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
 	if (tzp != NULL)
 	{
-		/* We have a brute force time zone per SQL99?
-		 * Then use it without change
-		 * since we have already rotated to the time zone.
+		/*
+		 * We have a brute force time zone per SQL99? Then use it without
+		 * change since we have already rotated to the time zone.
 		 */
 		if (HasCTZSet)
 		{
@@ -424,20 +425,19 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 			*tzp = tb.timezone * 60;
 
 			/*
-			 * XXX does this work to get the local timezone string in V7? - tgl
-			 * 97/03/18
+			 * XXX does this work to get the local timezone string in V7?
+			 * - tgl 97/03/18
 			 */
 			if (tzn != NULL)
 			{
 				strftime(*tzn, MAXTZLEN, "%Z", localtime(&now));
-				tzn[MAXTZLEN] = '\0';	/* let's just be sure it's null-terminated */
+				tzn[MAXTZLEN] = '\0';	/* let's just be sure it's
+										 * null-terminated */
 			}
 		}
 	}
 	else
-	{
 		tm->tm_isdst = -1;
-	}
 #endif
 
 	return;
@@ -517,8 +517,11 @@ nabstimein(PG_FUNCTION_ARGS)
 			break;
 
 		case DTK_EPOCH:
-			/* Don't bother retaining this as a reserved value,
-			 * but instead just set to the actual epoch time (1970-01-01) */
+
+			/*
+			 * Don't bother retaining this as a reserved value, but
+			 * instead just set to the actual epoch time (1970-01-01)
+			 */
 			result = 0;
 			break;
 
@@ -562,9 +565,10 @@ nabstimeout(PG_FUNCTION_ARGS)
 
 	switch (time)
 	{
-		/* Note that timestamp no longer supports 'invalid'.
-		 * Retain 'invalid' for abstime for now, but dump it someday.
-		 */
+			/*
+			 * Note that timestamp no longer supports 'invalid'. Retain
+			 * 'invalid' for abstime for now, but dump it someday.
+			 */
 		case INVALID_ABSTIME:
 			strcpy(buf, INVALID);
 			break;
@@ -611,14 +615,14 @@ abstime_cmp_internal(AbsoluteTime a, AbsoluteTime b)
  */
 	if (a == INVALID_ABSTIME)
 	{
-        if (b == INVALID_ABSTIME)
-			return 0;	/* INVALID = INVALID */
-        else
-			return 1;	/* INVALID > non-INVALID */
+		if (b == INVALID_ABSTIME)
+			return 0;			/* INVALID = INVALID */
+		else
+			return 1;			/* INVALID > non-INVALID */
 	}
 
 	if (b == INVALID_ABSTIME)
-        return -1;		/* non-INVALID < INVALID */
+		return -1;				/* non-INVALID < INVALID */
 
 #if 0
 /* CURRENT is no longer stored internally... */
@@ -777,7 +781,7 @@ abstime_timestamp(PG_FUNCTION_ARGS)
 Datum
 timestamptz_abstime(PG_FUNCTION_ARGS)
 {
-	TimestampTz	timestamp = PG_GETARG_TIMESTAMP(0);
+	TimestampTz timestamp = PG_GETARG_TIMESTAMP(0);
 	AbsoluteTime result;
 	double		fsec;
 	struct tm	tt,
@@ -805,7 +809,7 @@ Datum
 abstime_timestamptz(PG_FUNCTION_ARGS)
 {
 	AbsoluteTime abstime = PG_GETARG_ABSOLUTETIME(0);
-	TimestampTz	result;
+	TimestampTz result;
 
 	switch (abstime)
 	{
@@ -928,7 +932,7 @@ tintervalin(PG_FUNCTION_ARGS)
 		elog(ERROR, "Unable to decode tinterval '%s'", intervalstr);
 
 	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-        interval->status = T_INTERVAL_INVAL;    /* undefined  */
+		interval->status = T_INTERVAL_INVAL;	/* undefined  */
 	else
 		interval->status = T_INTERVAL_VALID;
 
@@ -1273,11 +1277,11 @@ tintervalsame(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 
 	if (DatumGetBool(DirectFunctionCall2(abstimeeq,
-										 AbsoluteTimeGetDatum(i1->data[0]),
-										 AbsoluteTimeGetDatum(i2->data[0]))) &&
+									   AbsoluteTimeGetDatum(i1->data[0]),
+								   AbsoluteTimeGetDatum(i2->data[0]))) &&
 		DatumGetBool(DirectFunctionCall2(abstimeeq,
-										 AbsoluteTimeGetDatum(i1->data[1]),
-										 AbsoluteTimeGetDatum(i2->data[1]))))
+									   AbsoluteTimeGetDatum(i1->data[1]),
+									 AbsoluteTimeGetDatum(i2->data[1]))))
 		PG_RETURN_BOOL(true);
 	PG_RETURN_BOOL(false);
 }
@@ -1293,9 +1297,9 @@ tintervaleq(PG_FUNCTION_ARGS)
 	TimeInterval i1 = PG_GETARG_TIMEINTERVAL(0);
 	TimeInterval i2 = PG_GETARG_TIMEINTERVAL(1);
 	AbsoluteTime t10,
-				 t11,
-				 t20,
-				 t21;
+				t11,
+				t20,
+				t21;
 
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
 		PG_RETURN_BOOL(false);
@@ -1318,9 +1322,9 @@ tintervalne(PG_FUNCTION_ARGS)
 	TimeInterval i1 = PG_GETARG_TIMEINTERVAL(0);
 	TimeInterval i2 = PG_GETARG_TIMEINTERVAL(1);
 	AbsoluteTime t10,
-				 t11,
-				 t20,
-				 t21;
+				t11,
+				t20,
+				t21;
 
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
 		PG_RETURN_BOOL(false);
@@ -1343,9 +1347,9 @@ tintervallt(PG_FUNCTION_ARGS)
 	TimeInterval i1 = PG_GETARG_TIMEINTERVAL(0);
 	TimeInterval i2 = PG_GETARG_TIMEINTERVAL(1);
 	AbsoluteTime t10,
-				 t11,
-				 t20,
-				 t21;
+				t11,
+				t20,
+				t21;
 
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
 		PG_RETURN_BOOL(false);
@@ -1368,9 +1372,9 @@ tintervalle(PG_FUNCTION_ARGS)
 	TimeInterval i1 = PG_GETARG_TIMEINTERVAL(0);
 	TimeInterval i2 = PG_GETARG_TIMEINTERVAL(1);
 	AbsoluteTime t10,
-				 t11,
-				 t20,
-				 t21;
+				t11,
+				t20,
+				t21;
 
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
 		PG_RETURN_BOOL(false);
@@ -1462,7 +1466,7 @@ tintervalleneq(PG_FUNCTION_ARGS)
 	if (i->status == T_INTERVAL_INVAL || t == INVALID_RELTIME)
 		PG_RETURN_BOOL(false);
 	rt = DatumGetRelativeTime(DirectFunctionCall1(tintervalrel,
-												  TimeIntervalGetDatum(i)));
+											   TimeIntervalGetDatum(i)));
 	PG_RETURN_BOOL((rt != INVALID_RELTIME) && (rt == t));
 }
 
@@ -1569,11 +1573,11 @@ tintervalov(PG_FUNCTION_ARGS)
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
 		PG_RETURN_BOOL(false);
 	if (DatumGetBool(DirectFunctionCall2(abstimelt,
-										 AbsoluteTimeGetDatum(i1->data[1]),
-										 AbsoluteTimeGetDatum(i2->data[0]))) ||
+									   AbsoluteTimeGetDatum(i1->data[1]),
+								   AbsoluteTimeGetDatum(i2->data[0]))) ||
 		DatumGetBool(DirectFunctionCall2(abstimegt,
-										 AbsoluteTimeGetDatum(i1->data[0]),
-										 AbsoluteTimeGetDatum(i2->data[1]))))
+									   AbsoluteTimeGetDatum(i1->data[0]),
+									 AbsoluteTimeGetDatum(i2->data[1]))))
 		PG_RETURN_BOOL(false);
 	PG_RETURN_BOOL(true);
 }

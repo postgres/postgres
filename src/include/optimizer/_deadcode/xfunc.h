@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xfunc.h,v 1.5 2001/01/24 19:43:26 momjian Exp $
+ * $Id: xfunc.h,v 1.6 2001/10/25 05:50:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,5 +79,4 @@ extern bool xfunc_copyrel(RelOptInfo *from, RelOptInfo **to);
  * function prototypes for path/predmig.c
  */
 extern bool xfunc_do_predmig(Path root);
-
 #endif	 /* XFUNC_H */

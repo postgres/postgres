@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.112 2001/09/14 17:46:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.113 2001/10/25 05:50:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,31 +67,33 @@ static int	getNotice(PGconn *conn);
  */
 
 size_t
-PQescapeString (char *to, const char *from, size_t length)
+PQescapeString(char *to, const char *from, size_t length)
 {
 	const char *source = from;
-	char *target = to;
+	char	   *target = to;
 	unsigned int remaining = length;
 
-	while (remaining > 0) {
-		switch (*source) {
-		case '\\':
-			*target = '\\';
-			target++;
-			*target = '\\';
-			/* target and remaining are updated below. */
-			break;
+	while (remaining > 0)
+	{
+		switch (*source)
+		{
+			case '\\':
+				*target = '\\';
+				target++;
+				*target = '\\';
+				/* target and remaining are updated below. */
+				break;
 
-		case '\'':
-			*target = '\'';
-			target++;
-			*target = '\'';
-			/* target and remaining are updated below. */
-			break;
+			case '\'':
+				*target = '\'';
+				target++;
+				*target = '\'';
+				/* target and remaining are updated below. */
+				break;
 
-		default:
-			*target = *source;
-			/* target and remaining are updated below. */
+			default:
+				*target = *source;
+				/* target and remaining are updated below. */
 		}
 		source++;
 		target++;
@@ -100,7 +102,7 @@ PQescapeString (char *to, const char *from, size_t length)
 
 	/* Write the terminating NUL character. */
 	*target = '\0';
-	
+
 	return target - to;
 }
 
@@ -117,11 +119,11 @@ PQescapeString (char *to, const char *from, size_t length)
 unsigned char *
 PQescapeBytea(unsigned char *bintext, size_t binlen, size_t *bytealen)
 {
-	unsigned char	   *vp;
-	unsigned char	   *rp;
-	unsigned char	   *result;
-	size_t				i;
-	size_t				len;
+	unsigned char *vp;
+	unsigned char *rp;
+	unsigned char *result;
+	size_t		i;
+	size_t		len;
 
 	/*
 	 * empty string has 1 char ('\0')
@@ -253,7 +255,7 @@ PQescapeBytea(unsigned char *bintext, size_t binlen, size_t *bytealen)
  * and the Perl5 interface, so maybe it's not so unreasonable.
  */
 
-PGresult   *
+PGresult *
 PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 {
 	PGresult   *result;
@@ -346,7 +348,7 @@ pqResultAlloc(PGresult *res, size_t nBytes, bool isBinary)
 	}
 
 	/* If there's enough space in the current block, no problem. */
-	if (nBytes <= (size_t)res->spaceLeft)
+	if (nBytes <= (size_t) res->spaceLeft)
 	{
 		space = res->curBlock->space + res->curOffset;
 		res->curOffset += nBytes;
@@ -369,7 +371,6 @@ pqResultAlloc(PGresult *res, size_t nBytes, bool isBinary)
 		space = block->space + PGRESULT_BLOCK_OVERHEAD;
 		if (res->curBlock)
 		{
-
 			/*
 			 * Tuck special block below the active block, so that we don't
 			 * have to waste the free space in the active block.
@@ -515,7 +516,6 @@ pqClearAsyncResult(PGconn *conn)
 static void
 saveErrorResult(PGconn *conn)
 {
-
 	/*
 	 * If no old async result, just let PQmakeEmptyPGresult make one.
 	 * Likewise if old result is not an error message.
@@ -558,7 +558,6 @@ prepareAsyncResult(PGconn *conn)
 		res = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
 	else
 	{
-
 		/*
 		 * Make sure PQerrorMessage agrees with result; it could be
 		 * different if we have concatenated messages.
@@ -580,7 +579,6 @@ addTuple(PGresult *res, PGresAttValue * tup)
 {
 	if (res->ntups >= res->tupArrSize)
 	{
-
 		/*
 		 * Try to grow the array.
 		 *
@@ -632,7 +630,7 @@ PQsendQuery(PGconn *conn, const char *query)
 	if (!query)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("command string is a null pointer\n"));
+					libpq_gettext("command string is a null pointer\n"));
 		return 0;
 	}
 
@@ -647,7 +645,7 @@ PQsendQuery(PGconn *conn, const char *query)
 	if (conn->asyncStatus != PGASYNC_IDLE)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("another command is already in progress\n"));
+			  libpq_gettext("another command is already in progress\n"));
 		return 0;
 	}
 
@@ -669,7 +667,6 @@ PQsendQuery(PGconn *conn, const char *query)
 	 */
 	if (pqIsnonblocking(conn))
 	{
-
 		/*
 		 * the buffer must have emptied completely before we allow a new
 		 * query to be buffered
@@ -692,7 +689,6 @@ PQsendQuery(PGconn *conn, const char *query)
 	}
 	else
 	{
-
 		/*
 		 * the frontend-backend protocol uses 'Q' to designate queries
 		 */
@@ -721,7 +717,6 @@ PQsendQuery(PGconn *conn, const char *query)
 static void
 handleSendFailure(PGconn *conn)
 {
-
 	/*
 	 * Accept any available input data, ignoring errors.  Note that if
 	 * pqReadData decides the backend has closed the channel, it will
@@ -757,7 +752,6 @@ PQconsumeInput(PGconn *conn)
 	 */
 	if (pqReadData(conn) < 0)
 	{
-
 		/*
 		 * for non-blocking connections try to flush the send-queue
 		 * otherwise we may never get a responce for something that may
@@ -789,7 +783,6 @@ parseInput(PGconn *conn)
 	 */
 	for (;;)
 	{
-
 		/*
 		 * Quit if in COPY_OUT state: we expect raw data from the server
 		 * until PQendcopy is called.  Don't try to parse it according to
@@ -860,7 +853,6 @@ parseInput(PGconn *conn)
 		}
 		else
 		{
-
 			/*
 			 * In BUSY state, we can process everything.
 			 */
@@ -929,7 +921,6 @@ parseInput(PGconn *conn)
 					}
 					else
 					{
-
 						/*
 						 * A new 'T' message is treated as the start of
 						 * another PGresult.  (It is not clear that this
@@ -984,7 +975,7 @@ parseInput(PGconn *conn)
 				default:
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext(
-										  "unexpected response from server; first received character was \"%c\"\n"),
+													"unexpected response from server; first received character was \"%c\"\n"),
 									  id);
 					/* build an error result holding the error message */
 					saveErrorResult(conn);
@@ -1147,7 +1138,7 @@ getAnotherTuple(PGconn *conn, int binary)
 				vlen = 0;
 			if (tup[i].value == NULL)
 			{
-				tup[i].value = (char *) pqResultAlloc(result, vlen + 1, (bool)binary);
+				tup[i].value = (char *) pqResultAlloc(result, vlen + 1, (bool) binary);
 				if (tup[i].value == NULL)
 					goto outOfMemory;
 			}
@@ -1228,7 +1219,7 @@ PQisBusy(PGconn *conn)
  *	  Returns NULL if and only if no query work remains.
  */
 
-PGresult   *
+PGresult *
 PQgetResult(PGconn *conn)
 {
 	PGresult   *res;
@@ -1246,7 +1237,6 @@ PQgetResult(PGconn *conn)
 		if (pqWait(TRUE, FALSE, conn) ||
 			pqReadData(conn) < 0)
 		{
-
 			/*
 			 * conn->errorMessage has been set by pqWait or pqReadData. We
 			 * want to append it to any already-received error message.
@@ -1278,7 +1268,7 @@ PQgetResult(PGconn *conn)
 			break;
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("unexpected asyncStatus: %d\n"),
+						   libpq_gettext("unexpected asyncStatus: %d\n"),
 							  (int) conn->asyncStatus);
 			res = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
 			break;
@@ -1300,7 +1290,7 @@ PQgetResult(PGconn *conn)
  * when done with it.
  */
 
-PGresult   *
+PGresult *
 PQexec(PGconn *conn, const char *query)
 {
 	PGresult   *result;
@@ -1328,7 +1318,7 @@ PQexec(PGconn *conn, const char *query)
 		{
 			PQclear(result);
 			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("COPY state must be terminated first\n"));
+				 libpq_gettext("COPY state must be terminated first\n"));
 			/* restore blocking status */
 			goto errout;
 		}
@@ -1445,7 +1435,7 @@ getNotify(PGconn *conn)
  * the CALLER is responsible for FREE'ing the structure returned
  */
 
-PGnotify   *
+PGnotify *
 PQnotifies(PGconn *conn)
 {
 	Dlelem	   *e;
@@ -1757,7 +1747,7 @@ PQendcopy(PGconn *conn)
  * ----------------
  */
 
-PGresult   *
+PGresult *
 PQfn(PGconn *conn,
 	 int fnid,
 	 int *result_buf,
@@ -1787,9 +1777,9 @@ PQfn(PGconn *conn,
 		return NULL;
 	}
 
-	if (pqPuts("F ", conn) != 0 ||	/* function */
-		pqPutInt(fnid, 4, conn) != 0 ||		/* function id */
-		pqPutInt(nargs, 4, conn) != 0)		/* # of args */
+	if (pqPuts("F ", conn) != 0 ||		/* function */
+		pqPutInt(fnid, 4, conn) != 0 || /* function id */
+		pqPutInt(nargs, 4, conn) != 0)	/* # of args */
 	{
 		handleSendFailure(conn);
 		return NULL;
@@ -1885,7 +1875,7 @@ PQfn(PGconn *conn,
 				{
 					/* The backend violates the protocol. */
 					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext("protocol error: id=0x%x\n"),
+							  libpq_gettext("protocol error: id=0x%x\n"),
 									  id);
 					saveErrorResult(conn);
 					conn->inStart = conn->inCursor;
@@ -1919,7 +1909,7 @@ PQfn(PGconn *conn,
 			default:
 				/* The backend violates the protocol. */
 				printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("protocol error: id=0x%x\n"),
+							  libpq_gettext("protocol error: id=0x%x\n"),
 								  id);
 				saveErrorResult(conn);
 				conn->inStart = conn->inCursor;
@@ -2007,7 +1997,7 @@ check_field_number(const PGresult *res, int field_num)
 		if (res->noticeHook)
 		{
 			snprintf(noticeBuf, sizeof(noticeBuf),
-					 libpq_gettext("column number %d is out of range 0..%d\n"),
+			   libpq_gettext("column number %d is out of range 0..%d\n"),
 					 field_num, res->numAttributes - 1);
 			DONOTICE(res, noticeBuf);
 		}
@@ -2029,8 +2019,8 @@ check_tuple_field_number(const PGresult *res,
 		if (res->noticeHook)
 		{
 			snprintf(noticeBuf, sizeof(noticeBuf),
-					libpq_gettext("row number %d is out of range 0..%d\n"),
-					tup_num, res->ntups - 1);
+				  libpq_gettext("row number %d is out of range 0..%d\n"),
+					 tup_num, res->ntups - 1);
 			DONOTICE(res, noticeBuf);
 		}
 		return FALSE;
@@ -2040,8 +2030,8 @@ check_tuple_field_number(const PGresult *res,
 		if (res->noticeHook)
 		{
 			snprintf(noticeBuf, sizeof(noticeBuf),
-					libpq_gettext("column number %d is out of range 0..%d\n"),
-					field_num, res->numAttributes - 1);
+			   libpq_gettext("column number %d is out of range 0..%d\n"),
+					 field_num, res->numAttributes - 1);
 			DONOTICE(res, noticeBuf);
 		}
 		return FALSE;
@@ -2152,7 +2142,6 @@ PQcmdStatus(PGresult *res)
 char *
 PQoidStatus(const PGresult *res)
 {
-
 	/*
 	 * This must be enough to hold the result. Don't laugh, this is better
 	 * than what this function used to do.
@@ -2188,7 +2177,7 @@ PQoidValue(const PGresult *res)
 		return InvalidOid;
 
 #ifdef WIN32
-    SetLastError(0);
+	SetLastError(0);
 #else
 	errno = 0;
 #endif
@@ -2225,8 +2214,8 @@ PQcmdTuples(PGresult *res)
 			if (res->noticeHook)
 			{
 				snprintf(noticeBuf, sizeof(noticeBuf),
-						libpq_gettext("could not interpret result from server: %s\n"),
-						res->cmdStatus);
+						 libpq_gettext("could not interpret result from server: %s\n"),
+						 res->cmdStatus);
 				DONOTICE(res, noticeBuf);
 			}
 			return "";

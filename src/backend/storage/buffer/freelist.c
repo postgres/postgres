@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.25 2001/09/29 04:02:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.26 2001/10/25 05:49:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ AddBufferToFreelist(BufferDesc *bf)
 void
 PinBuffer(BufferDesc *buf)
 {
-	int		b = BufferDescriptorGetBuffer(buf) - 1;
+	int			b = BufferDescriptorGetBuffer(buf) - 1;
 
 	if (buf->refcount == 0)
 	{
@@ -129,7 +129,6 @@ refcount = %ld, file: %s, line: %d\n",
 				PrivateRefCount[buffer - 1], file, line);
 	}
 }
-
 #endif
 
 #undef UnpinBuffer
@@ -143,7 +142,7 @@ refcount = %ld, file: %s, line: %d\n",
 void
 UnpinBuffer(BufferDesc *buf)
 {
-	int		b = BufferDescriptorGetBuffer(buf) - 1;
+	int			b = BufferDescriptorGetBuffer(buf) - 1;
 
 	IsNotInQueue(buf);
 	Assert(buf->refcount > 0);
@@ -186,7 +185,6 @@ refcount = %ld, file: %s, line: %d\n",
 				PrivateRefCount[buffer - 1], file, line);
 	}
 }
-
 #endif
 
 /*
@@ -277,7 +275,6 @@ DBG_FreeListCheck(int nfree)
 		printf("\tfree list corrupted: %d-th buffer is %d\n",
 			   nfree, buf->buf_id);
 }
-
 #endif
 
 #ifdef NOT_USED
@@ -312,5 +309,4 @@ PrintBufferFreeList()
 		buf = &(BufferDescriptors[buf->freeNext]);
 	}
 }
-
 #endif

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.17 2001/09/11 23:08:07 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.18 2001/10/25 05:49:54 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "input.h"
@@ -19,18 +19,17 @@
 /* (of course there is no runtime command for doing that :) */
 #ifdef USE_READLINE
 static bool useReadline;
-
 #endif
 #ifdef USE_HISTORY
 static bool useHistory;
-
 #endif
 
 #ifdef HAVE_ATEXIT
-static void	finishInput(void);
+static void finishInput(void);
+
 #else
 /* designed for use with on_exit() */
-static void	finishInput(int, void*);
+static void finishInput(int, void *);
 #endif
 
 
@@ -48,7 +47,6 @@ gets_interactive(char *prompt)
 #ifdef USE_HISTORY
 	const char *var;
 	static char *prev_hist = NULL;
-
 #endif
 
 #ifdef USE_READLINE

@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.55 2001/09/30 20:16:21 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.56 2001/10/25 05:49:51 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -95,11 +95,11 @@ bool		Password_encryption = false;
  */
 enum config_type
 {
-	PGC_NONE = 0,
-	PGC_BOOL,
-	PGC_INT,
-	PGC_REAL,
-	PGC_STRING
+				PGC_NONE = 0,
+				PGC_BOOL,
+				PGC_INT,
+				PGC_REAL,
+				PGC_STRING
 };
 
 
@@ -161,7 +161,7 @@ struct config_string
 	const char *boot_default_val;
 	bool		(*parse_hook) (const char *proposed);
 	void		(*assign_hook) (const char *newval);
-	char		*default_val;
+	char	   *default_val;
 };
 
 
@@ -192,92 +192,196 @@ struct config_string
 static struct config_bool
 			ConfigureNamesBool[] =
 {
-	{"enable_seqscan", PGC_USERSET, &enable_seqscan, true, NULL},
-	{"enable_indexscan", PGC_USERSET, &enable_indexscan, true, NULL},
-	{"enable_tidscan", PGC_USERSET, &enable_tidscan, true, NULL},
-	{"enable_sort", PGC_USERSET, &enable_sort, true, NULL},
-	{"enable_nestloop", PGC_USERSET, &enable_nestloop, true, NULL},
-	{"enable_mergejoin", PGC_USERSET, &enable_mergejoin, true, NULL},
-	{"enable_hashjoin", PGC_USERSET, &enable_hashjoin, true, NULL},
+	{
+		"enable_seqscan", PGC_USERSET, &enable_seqscan, true, NULL
+	}		   ,
+	{
+		"enable_indexscan", PGC_USERSET, &enable_indexscan, true, NULL
+	},
+	{
+		"enable_tidscan", PGC_USERSET, &enable_tidscan, true, NULL
+	},
+	{
+		"enable_sort", PGC_USERSET, &enable_sort, true, NULL
+	},
+	{
+		"enable_nestloop", PGC_USERSET, &enable_nestloop, true, NULL
+	},
+	{
+		"enable_mergejoin", PGC_USERSET, &enable_mergejoin, true, NULL
+	},
+	{
+		"enable_hashjoin", PGC_USERSET, &enable_hashjoin, true, NULL
+	},
 
-	{"ksqo", PGC_USERSET, &_use_keyset_query_optimizer, false, NULL},
-	{"geqo", PGC_USERSET, &enable_geqo, true, NULL},
+	{
+		"ksqo", PGC_USERSET, &_use_keyset_query_optimizer, false, NULL
+	},
+	{
+		"geqo", PGC_USERSET, &enable_geqo, true, NULL
+	},
 
-	{"tcpip_socket", PGC_POSTMASTER, &NetServer, false, NULL},
-	{"ssl", PGC_POSTMASTER, &EnableSSL, false, NULL},
-	{"fsync", PGC_SIGHUP, &enableFsync, true, NULL},
-	{"silent_mode", PGC_POSTMASTER, &SilentMode, false, NULL},
+	{
+		"tcpip_socket", PGC_POSTMASTER, &NetServer, false, NULL
+	},
+	{
+		"ssl", PGC_POSTMASTER, &EnableSSL, false, NULL
+	},
+	{
+		"fsync", PGC_SIGHUP, &enableFsync, true, NULL
+	},
+	{
+		"silent_mode", PGC_POSTMASTER, &SilentMode, false, NULL
+	},
 
-	{"log_connections", PGC_BACKEND, &Log_connections, false, NULL},
-	{"log_timestamp", PGC_SIGHUP, &Log_timestamp, false, NULL},
-	{"log_pid", PGC_SIGHUP, &Log_pid, false, NULL},
+	{
+		"log_connections", PGC_BACKEND, &Log_connections, false, NULL
+	},
+	{
+		"log_timestamp", PGC_SIGHUP, &Log_timestamp, false, NULL
+	},
+	{
+		"log_pid", PGC_SIGHUP, &Log_pid, false, NULL
+	},
 
 #ifdef USE_ASSERT_CHECKING
-	{"debug_assertions", PGC_USERSET, &assert_enabled, true, NULL},
+	{
+		"debug_assertions", PGC_USERSET, &assert_enabled, true, NULL
+	},
 #endif
 
-	{"debug_print_query", PGC_USERSET, &Debug_print_query, false, NULL},
-	{"debug_print_parse", PGC_USERSET, &Debug_print_parse, false, NULL},
-	{"debug_print_rewritten", PGC_USERSET, &Debug_print_rewritten, false, NULL},
-	{"debug_print_plan", PGC_USERSET, &Debug_print_plan, false, NULL},
-	{"debug_pretty_print", PGC_USERSET, &Debug_pretty_print, false, NULL},
+	{
+		"debug_print_query", PGC_USERSET, &Debug_print_query, false, NULL
+	},
+	{
+		"debug_print_parse", PGC_USERSET, &Debug_print_parse, false, NULL
+	},
+	{
+		"debug_print_rewritten", PGC_USERSET, &Debug_print_rewritten, false, NULL
+	},
+	{
+		"debug_print_plan", PGC_USERSET, &Debug_print_plan, false, NULL
+	},
+	{
+		"debug_pretty_print", PGC_USERSET, &Debug_pretty_print, false, NULL
+	},
 
-	{"show_parser_stats", PGC_USERSET, &Show_parser_stats, false, NULL},
-	{"show_planner_stats", PGC_USERSET, &Show_planner_stats, false, NULL},
-	{"show_executor_stats", PGC_USERSET, &Show_executor_stats, false, NULL},
-	{"show_query_stats", PGC_USERSET, &Show_query_stats, false, NULL},
+	{
+		"show_parser_stats", PGC_USERSET, &Show_parser_stats, false, NULL
+	},
+	{
+		"show_planner_stats", PGC_USERSET, &Show_planner_stats, false, NULL
+	},
+	{
+		"show_executor_stats", PGC_USERSET, &Show_executor_stats, false, NULL
+	},
+	{
+		"show_query_stats", PGC_USERSET, &Show_query_stats, false, NULL
+	},
 #ifdef BTREE_BUILD_STATS
-	{"show_btree_build_stats", PGC_SUSET, &Show_btree_build_stats, false, NULL},
+	{
+		"show_btree_build_stats", PGC_SUSET, &Show_btree_build_stats, false, NULL
+	},
 #endif
 
-	{"stats_start_collector", PGC_POSTMASTER, &pgstat_collect_startcollector, true, NULL},
-	{"stats_reset_on_server_start", PGC_POSTMASTER, &pgstat_collect_resetonpmstart, true, NULL},
-	{"stats_command_string", PGC_SUSET, &pgstat_collect_querystring, false, NULL},
-	{"stats_row_level", PGC_SUSET, &pgstat_collect_tuplelevel, false, NULL},
-	{"stats_block_level", PGC_SUSET, &pgstat_collect_blocklevel, false, NULL},
+	{
+		"stats_start_collector", PGC_POSTMASTER, &pgstat_collect_startcollector, true, NULL
+	},
+	{
+		"stats_reset_on_server_start", PGC_POSTMASTER, &pgstat_collect_resetonpmstart, true, NULL
+	},
+	{
+		"stats_command_string", PGC_SUSET, &pgstat_collect_querystring, false, NULL
+	},
+	{
+		"stats_row_level", PGC_SUSET, &pgstat_collect_tuplelevel, false, NULL
+	},
+	{
+		"stats_block_level", PGC_SUSET, &pgstat_collect_blocklevel, false, NULL
+	},
 
-	{"trace_notify", PGC_USERSET, &Trace_notify, false, NULL},
+	{
+		"trace_notify", PGC_USERSET, &Trace_notify, false, NULL
+	},
 
 #ifdef LOCK_DEBUG
-	{"trace_locks", PGC_SUSET, &Trace_locks, false, NULL},
-	{"trace_userlocks", PGC_SUSET, &Trace_userlocks, false, NULL},
-	{"trace_lwlocks", PGC_SUSET, &Trace_lwlocks, false, NULL},
-	{"debug_deadlocks", PGC_SUSET, &Debug_deadlocks, false, NULL},
+	{
+		"trace_locks", PGC_SUSET, &Trace_locks, false, NULL
+	},
+	{
+		"trace_userlocks", PGC_SUSET, &Trace_userlocks, false, NULL
+	},
+	{
+		"trace_lwlocks", PGC_SUSET, &Trace_lwlocks, false, NULL
+	},
+	{
+		"debug_deadlocks", PGC_SUSET, &Debug_deadlocks, false, NULL
+	},
 #endif
 
-	{"hostname_lookup", PGC_SIGHUP, &HostnameLookup, false, NULL},
-	{"show_source_port", PGC_SIGHUP, &ShowPortNumber, false, NULL},
+	{
+		"hostname_lookup", PGC_SIGHUP, &HostnameLookup, false, NULL
+	},
+	{
+		"show_source_port", PGC_SIGHUP, &ShowPortNumber, false, NULL
+	},
 
-	{"sql_inheritance", PGC_USERSET, &SQL_inheritance, true, NULL},
-	{"australian_timezones", PGC_USERSET, &Australian_timezones, false, ClearDateCache},
-	{"fixbtree", PGC_POSTMASTER, &FixBTree, true, NULL},
-	{"password_encryption", PGC_USERSET, &Password_encryption, false, NULL},
-	{"transform_null_equals", PGC_USERSET, &Transform_null_equals, false, NULL},
+	{
+		"sql_inheritance", PGC_USERSET, &SQL_inheritance, true, NULL
+	},
+	{
+		"australian_timezones", PGC_USERSET, &Australian_timezones, false, ClearDateCache
+	},
+	{
+		"fixbtree", PGC_POSTMASTER, &FixBTree, true, NULL
+	},
+	{
+		"password_encryption", PGC_USERSET, &Password_encryption, false, NULL
+	},
+	{
+		"transform_null_equals", PGC_USERSET, &Transform_null_equals, false, NULL
+	},
 
-	{NULL, 0, NULL, false, NULL}
+	{
+		NULL, 0, NULL, false, NULL
+	}
 };
 
 
 static struct config_int
 			ConfigureNamesInt[] =
 {
-	{"geqo_threshold", PGC_USERSET, &geqo_rels,
-	DEFAULT_GEQO_RELS, 2, INT_MAX, NULL, NULL},
-	{"geqo_pool_size", PGC_USERSET, &Geqo_pool_size,
-	DEFAULT_GEQO_POOL_SIZE, 0, MAX_GEQO_POOL_SIZE, NULL, NULL},
-	{"geqo_effort", PGC_USERSET, &Geqo_effort,
-	1, 1, INT_MAX, NULL, NULL},
-	{"geqo_generations", PGC_USERSET, &Geqo_generations,
-	0, 0, INT_MAX, NULL, NULL},
-	{"geqo_random_seed", PGC_USERSET, &Geqo_random_seed,
-	-1, INT_MIN, INT_MAX, NULL, NULL},
+	{
+		"geqo_threshold", PGC_USERSET, &geqo_rels,
+		DEFAULT_GEQO_RELS, 2, INT_MAX, NULL, NULL
+	}		   ,
+	{
+		"geqo_pool_size", PGC_USERSET, &Geqo_pool_size,
+		DEFAULT_GEQO_POOL_SIZE, 0, MAX_GEQO_POOL_SIZE, NULL, NULL
+	},
+	{
+		"geqo_effort", PGC_USERSET, &Geqo_effort,
+		1, 1, INT_MAX, NULL, NULL
+	},
+	{
+		"geqo_generations", PGC_USERSET, &Geqo_generations,
+		0, 0, INT_MAX, NULL, NULL
+	},
+	{
+		"geqo_random_seed", PGC_USERSET, &Geqo_random_seed,
+		-1, INT_MIN, INT_MAX, NULL, NULL
+	},
 
-	{"deadlock_timeout", PGC_POSTMASTER, &DeadlockTimeout,
-	1000, 0, INT_MAX, NULL, NULL},
+	{
+		"deadlock_timeout", PGC_POSTMASTER, &DeadlockTimeout,
+		1000, 0, INT_MAX, NULL, NULL
+	},
 
 #ifdef ENABLE_SYSLOG
-	{"syslog", PGC_SIGHUP, &Use_syslog,
-	0, 0, 2, NULL, NULL},
+	{
+		"syslog", PGC_SIGHUP, &Use_syslog,
+		0, 0, 2, NULL, NULL
+	},
 #endif
 
 	/*
@@ -285,133 +389,215 @@ static struct config_int
 	 * sure the buffers are at least twice the number of backends, so the
 	 * constraints here are partially unused.
 	 */
-	{"max_connections", PGC_POSTMASTER, &MaxBackends,
-	DEF_MAXBACKENDS, 1, INT_MAX, NULL, NULL},
+	{
+		"max_connections", PGC_POSTMASTER, &MaxBackends,
+		DEF_MAXBACKENDS, 1, INT_MAX, NULL, NULL
+	},
 
-	{"shared_buffers", PGC_POSTMASTER, &NBuffers,
-	DEF_NBUFFERS, 16, INT_MAX, NULL, NULL},
+	{
+		"shared_buffers", PGC_POSTMASTER, &NBuffers,
+		DEF_NBUFFERS, 16, INT_MAX, NULL, NULL
+	},
 
-	{"port", PGC_POSTMASTER, &PostPortNumber,
-	DEF_PGPORT, 1, 65535, NULL, NULL},
+	{
+		"port", PGC_POSTMASTER, &PostPortNumber,
+		DEF_PGPORT, 1, 65535, NULL, NULL
+	},
 
-	{"unix_socket_permissions", PGC_POSTMASTER, &Unix_socket_permissions,
-	0777, 0000, 0777, NULL, NULL},
+	{
+		"unix_socket_permissions", PGC_POSTMASTER, &Unix_socket_permissions,
+		0777, 0000, 0777, NULL, NULL
+	},
 
-	{"sort_mem", PGC_USERSET, &SortMem,
-	512, 4*BLCKSZ/1024, INT_MAX, NULL, NULL},
+	{
+		"sort_mem", PGC_USERSET, &SortMem,
+		512, 4 * BLCKSZ / 1024, INT_MAX, NULL, NULL
+	},
 
-	{"vacuum_mem", PGC_USERSET, &VacuumMem,
-	8192, 1024, INT_MAX, NULL, NULL},
+	{
+		"vacuum_mem", PGC_USERSET, &VacuumMem,
+		8192, 1024, INT_MAX, NULL, NULL
+	},
 
-	{"max_files_per_process", PGC_BACKEND, &max_files_per_process,
-	1000, 25, INT_MAX, NULL, NULL},
+	{
+		"max_files_per_process", PGC_BACKEND, &max_files_per_process,
+		1000, 25, INT_MAX, NULL, NULL
+	},
 
-	{"debug_level", PGC_USERSET, &DebugLvl,
-	0, 0, 16, NULL, NULL},
+	{
+		"debug_level", PGC_USERSET, &DebugLvl,
+		0, 0, 16, NULL, NULL
+	},
 
 #ifdef LOCK_DEBUG
-	{"trace_lock_oidmin", PGC_SUSET, &Trace_lock_oidmin,
-	BootstrapObjectIdData, 1, INT_MAX, NULL, NULL},
-	{"trace_lock_table", PGC_SUSET, &Trace_lock_table,
-	0, 0, INT_MAX, NULL, NULL},
+	{
+		"trace_lock_oidmin", PGC_SUSET, &Trace_lock_oidmin,
+		BootstrapObjectIdData, 1, INT_MAX, NULL, NULL
+	},
+	{
+		"trace_lock_table", PGC_SUSET, &Trace_lock_table,
+		0, 0, INT_MAX, NULL, NULL
+	},
 #endif
-	{"max_expr_depth", PGC_USERSET, &max_expr_depth,
-	DEFAULT_MAX_EXPR_DEPTH, 10, INT_MAX, NULL, NULL},
+	{
+		"max_expr_depth", PGC_USERSET, &max_expr_depth,
+		DEFAULT_MAX_EXPR_DEPTH, 10, INT_MAX, NULL, NULL
+	},
 
-	{"max_fsm_relations", PGC_POSTMASTER, &MaxFSMRelations,
-	 100, 10, INT_MAX, NULL, NULL},
-	{"max_fsm_pages", PGC_POSTMASTER, &MaxFSMPages,
-	 10000, 1000, INT_MAX, NULL, NULL},
+	{
+		"max_fsm_relations", PGC_POSTMASTER, &MaxFSMRelations,
+		100, 10, INT_MAX, NULL, NULL
+	},
+	{
+		"max_fsm_pages", PGC_POSTMASTER, &MaxFSMPages,
+		10000, 1000, INT_MAX, NULL, NULL
+	},
 
-	{"max_locks_per_transaction", PGC_POSTMASTER, &max_locks_per_xact,
-	 64, 10, INT_MAX, NULL, NULL},
+	{
+		"max_locks_per_transaction", PGC_POSTMASTER, &max_locks_per_xact,
+		64, 10, INT_MAX, NULL, NULL
+	},
 
-	{"authentication_timeout", PGC_SIGHUP, &AuthenticationTimeout,
-	60, 1, 600, NULL, NULL},
+	{
+		"authentication_timeout", PGC_SIGHUP, &AuthenticationTimeout,
+		60, 1, 600, NULL, NULL
+	},
 
-	{"pre_auth_delay", PGC_SIGHUP, &PreAuthDelay,
-	0, 0, 60, NULL, NULL},
+	{
+		"pre_auth_delay", PGC_SIGHUP, &PreAuthDelay,
+		0, 0, 60, NULL, NULL
+	},
 
-	{"checkpoint_segments", PGC_SIGHUP, &CheckPointSegments,
-	3, 1, INT_MAX, NULL, NULL},
+	{
+		"checkpoint_segments", PGC_SIGHUP, &CheckPointSegments,
+		3, 1, INT_MAX, NULL, NULL
+	},
 
-	{"checkpoint_timeout", PGC_SIGHUP, &CheckPointTimeout,
-	300, 30, 3600, NULL, NULL},
+	{
+		"checkpoint_timeout", PGC_SIGHUP, &CheckPointTimeout,
+		300, 30, 3600, NULL, NULL
+	},
 
-	{"wal_buffers", PGC_POSTMASTER, &XLOGbuffers,
-	8, 4, INT_MAX, NULL, NULL},
+	{
+		"wal_buffers", PGC_POSTMASTER, &XLOGbuffers,
+		8, 4, INT_MAX, NULL, NULL
+	},
 
-	{"wal_files", PGC_SIGHUP, &XLOGfiles,
-	0, 0, 64, NULL, NULL},
+	{
+		"wal_files", PGC_SIGHUP, &XLOGfiles,
+		0, 0, 64, NULL, NULL
+	},
 
-	{"wal_debug", PGC_SUSET, &XLOG_DEBUG,
-	0, 0, 16, NULL, NULL},
+	{
+		"wal_debug", PGC_SUSET, &XLOG_DEBUG,
+		0, 0, 16, NULL, NULL
+	},
 
-	{"commit_delay", PGC_USERSET, &CommitDelay,
-	0, 0, 100000, NULL, NULL},
+	{
+		"commit_delay", PGC_USERSET, &CommitDelay,
+		0, 0, 100000, NULL, NULL
+	},
 
-	{"commit_siblings", PGC_USERSET, &CommitSiblings,
-	5, 1, 1000, NULL, NULL},
+	{
+		"commit_siblings", PGC_USERSET, &CommitSiblings,
+		5, 1, 1000, NULL, NULL
+	},
 
-	{NULL, 0, NULL, 0, 0, 0, NULL, NULL}
+	{
+		NULL, 0, NULL, 0, 0, 0, NULL, NULL
+	}
 };
 
 
 static struct config_real
 			ConfigureNamesReal[] =
 {
-	{"effective_cache_size", PGC_USERSET, &effective_cache_size,
-	DEFAULT_EFFECTIVE_CACHE_SIZE, 0, DBL_MAX, NULL, NULL},
-	{"random_page_cost", PGC_USERSET, &random_page_cost,
-	DEFAULT_RANDOM_PAGE_COST, 0, DBL_MAX, NULL, NULL},
-	{"cpu_tuple_cost", PGC_USERSET, &cpu_tuple_cost,
-	DEFAULT_CPU_TUPLE_COST, 0, DBL_MAX, NULL, NULL},
-	{"cpu_index_tuple_cost", PGC_USERSET, &cpu_index_tuple_cost,
-	DEFAULT_CPU_INDEX_TUPLE_COST, 0, DBL_MAX, NULL, NULL},
-	{"cpu_operator_cost", PGC_USERSET, &cpu_operator_cost,
-	DEFAULT_CPU_OPERATOR_COST, 0, DBL_MAX, NULL, NULL},
+	{
+		"effective_cache_size", PGC_USERSET, &effective_cache_size,
+		DEFAULT_EFFECTIVE_CACHE_SIZE, 0, DBL_MAX, NULL, NULL
+	}		   ,
+	{
+		"random_page_cost", PGC_USERSET, &random_page_cost,
+		DEFAULT_RANDOM_PAGE_COST, 0, DBL_MAX, NULL, NULL
+	},
+	{
+		"cpu_tuple_cost", PGC_USERSET, &cpu_tuple_cost,
+		DEFAULT_CPU_TUPLE_COST, 0, DBL_MAX, NULL, NULL
+	},
+	{
+		"cpu_index_tuple_cost", PGC_USERSET, &cpu_index_tuple_cost,
+		DEFAULT_CPU_INDEX_TUPLE_COST, 0, DBL_MAX, NULL, NULL
+	},
+	{
+		"cpu_operator_cost", PGC_USERSET, &cpu_operator_cost,
+		DEFAULT_CPU_OPERATOR_COST, 0, DBL_MAX, NULL, NULL
+	},
 
-	{"geqo_selection_bias", PGC_USERSET, &Geqo_selection_bias,
-	DEFAULT_GEQO_SELECTION_BIAS, MIN_GEQO_SELECTION_BIAS,
-	MAX_GEQO_SELECTION_BIAS, NULL, NULL},
+	{
+		"geqo_selection_bias", PGC_USERSET, &Geqo_selection_bias,
+		DEFAULT_GEQO_SELECTION_BIAS, MIN_GEQO_SELECTION_BIAS,
+		MAX_GEQO_SELECTION_BIAS, NULL, NULL
+	},
 
-	{NULL, 0, NULL, 0.0, 0.0, 0.0, NULL, NULL}
+	{
+		NULL, 0, NULL, 0.0, 0.0, 0.0, NULL, NULL
+	}
 };
 
 
 static struct config_string
 			ConfigureNamesString[] =
 {
-	{"default_transaction_isolation", PGC_USERSET, &default_iso_level_string,
-	 "read committed", check_defaultxactisolevel, assign_defaultxactisolevel},
+	{
+		"default_transaction_isolation", PGC_USERSET, &default_iso_level_string,
+		"read committed", check_defaultxactisolevel, assign_defaultxactisolevel
+	}		   ,
 
-	{"dynamic_library_path", PGC_SUSET, &Dynamic_library_path,
-	 "$libdir", NULL, NULL},
+	{
+		"dynamic_library_path", PGC_SUSET, &Dynamic_library_path,
+		"$libdir", NULL, NULL
+	},
 
-	{"krb_server_keyfile", PGC_POSTMASTER, &pg_krb_server_keyfile,
-	PG_KRB_SRVTAB, NULL, NULL},
+	{
+		"krb_server_keyfile", PGC_POSTMASTER, &pg_krb_server_keyfile,
+		PG_KRB_SRVTAB, NULL, NULL
+	},
 
 #ifdef ENABLE_SYSLOG
-	{"syslog_facility", PGC_POSTMASTER, &Syslog_facility,
-	"LOCAL0", check_facility, NULL},
-	{"syslog_ident", PGC_POSTMASTER, &Syslog_ident,
-	"postgres", NULL, NULL},
+	{
+		"syslog_facility", PGC_POSTMASTER, &Syslog_facility,
+		"LOCAL0", check_facility, NULL
+	},
+	{
+		"syslog_ident", PGC_POSTMASTER, &Syslog_ident,
+		"postgres", NULL, NULL
+	},
 #endif
 
-	{"unix_socket_group", PGC_POSTMASTER, &Unix_socket_group,
-	"", NULL, NULL},
+	{
+		"unix_socket_group", PGC_POSTMASTER, &Unix_socket_group,
+		"", NULL, NULL
+	},
 
-	{"unix_socket_directory", PGC_POSTMASTER, &UnixSocketDir,
-	"", NULL, NULL},
+	{
+		"unix_socket_directory", PGC_POSTMASTER, &UnixSocketDir,
+		"", NULL, NULL
+	},
 
-	{"virtual_host", PGC_POSTMASTER, &VirtualHost,
-	"", NULL, NULL},
+	{
+		"virtual_host", PGC_POSTMASTER, &VirtualHost,
+		"", NULL, NULL
+	},
 
-	{"wal_sync_method", PGC_SIGHUP, &XLOG_sync_method,
-	XLOG_sync_method_default, check_xlog_sync_method,
-	assign_xlog_sync_method},
+	{
+		"wal_sync_method", PGC_SIGHUP, &XLOG_sync_method,
+		XLOG_sync_method_default, check_xlog_sync_method,
+		assign_xlog_sync_method
+	},
 
-	{NULL, 0, NULL, NULL, NULL, NULL}
+	{
+		NULL, 0, NULL, NULL, NULL, NULL
+	}
 };
 
 /******** end of options list ********/
@@ -628,10 +814,10 @@ parse_int(const char *value, int *result)
 	val = strtol(value, &endptr, 0);
 	if (endptr == value || *endptr != '\0' || errno == ERANGE
 #ifdef HAVE_LONG_INT_64
-		/* if long > 32 bits, check for overflow of int4 */
+	/* if long > 32 bits, check for overflow of int4 */
 		|| val != (long) ((int32) val)
 #endif
-	   )
+		)
 		return false;
 	if (result)
 		*result = (int) val;
@@ -715,23 +901,24 @@ set_config_option(const char *name, const char *value,
 		case PGC_SIGHUP:
 			if (context != PGC_SIGHUP && context != PGC_POSTMASTER)
 				elog(ERROR, "'%s' cannot be changed now", name);
+
 			/*
-			 * Hmm, the idea of the SIGHUP context is "ought to be global, but
-			 * can be changed after postmaster start". But there's nothing
-			 * that prevents a crafty administrator from sending SIGHUP
-			 * signals to individual backends only.
+			 * Hmm, the idea of the SIGHUP context is "ought to be global,
+			 * but can be changed after postmaster start". But there's
+			 * nothing that prevents a crafty administrator from sending
+			 * SIGHUP signals to individual backends only.
 			 */
 			break;
 		case PGC_BACKEND:
 			if (context == PGC_SIGHUP)
 			{
 				/*
-				 * If a PGC_BACKEND parameter is changed in the config file,
-				 * we want to accept the new value in the postmaster (whence
-				 * it will propagate to subsequently-started backends), but
-				 * ignore it in existing backends.  This is a tad klugy, but
-				 * necessary because we don't re-read the config file during
-				 * backend start.
+				 * If a PGC_BACKEND parameter is changed in the config
+				 * file, we want to accept the new value in the postmaster
+				 * (whence it will propagate to subsequently-started
+				 * backends), but ignore it in existing backends.  This is
+				 * a tad klugy, but necessary because we don't re-read the
+				 * config file during backend start.
 				 */
 				if (IsUnderPostmaster)
 					return true;
@@ -903,7 +1090,8 @@ set_config_option(const char *name, const char *value,
 						if (makeDefault)
 						{
 							str = strdup(value);
-							if (str == NULL) {
+							if (str == NULL)
+							{
 								elog(elevel, "out of memory");
 								return false;
 							}
@@ -1006,10 +1194,10 @@ GetConfigOption(const char *name)
 }
 
 static void
-_ShowOption(enum config_type opttype, struct config_generic *record)
+_ShowOption(enum config_type opttype, struct config_generic * record)
 {
-	char buffer[256];
-	char *val;
+	char		buffer[256];
+	char	   *val;
 
 	switch (opttype)
 	{
@@ -1046,16 +1234,16 @@ ShowAllGUCConfig(void)
 	int			i;
 
 	for (i = 0; ConfigureNamesBool[i].name; i++)
-		_ShowOption(PGC_BOOL, (struct config_generic *)&ConfigureNamesBool[i]);
+		_ShowOption(PGC_BOOL, (struct config_generic *) & ConfigureNamesBool[i]);
 
 	for (i = 0; ConfigureNamesInt[i].name; i++)
-		_ShowOption(PGC_INT, (struct config_generic *)&ConfigureNamesInt[i]);
+		_ShowOption(PGC_INT, (struct config_generic *) & ConfigureNamesInt[i]);
 
 	for (i = 0; ConfigureNamesReal[i].name; i++)
-		_ShowOption(PGC_REAL, (struct config_generic *)&ConfigureNamesReal[i]);
+		_ShowOption(PGC_REAL, (struct config_generic *) & ConfigureNamesReal[i]);
 
 	for (i = 0; ConfigureNamesString[i].name; i++)
-		_ShowOption(PGC_STRING, (struct config_generic *)&ConfigureNamesString[i]);
+		_ShowOption(PGC_STRING, (struct config_generic *) & ConfigureNamesString[i]);
 }
 
 
@@ -1132,7 +1320,6 @@ check_facility(const char *facility)
 		return true;
 	return false;
 }
-
 #endif
 
 

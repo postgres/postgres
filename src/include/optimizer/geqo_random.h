@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_random.h,v 1.8 2001/01/24 19:43:26 momjian Exp $
+ * $Id: geqo_random.h,v 1.9 2001/10/25 05:50:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,5 +34,4 @@
 
 #define geqo_randint(upper,lower) \
 	( (int) floor( geqo_rand()*(((upper)-(lower))+0.999999) ) + (lower) )
-
 #endif	 /* GEQO_RANDOM_H */

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.34 2001/10/23 21:26:44 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.35 2001/10/25 05:49:52 momjian Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -42,20 +42,20 @@
  *	  - Only disable triggers in DataOnly (or implied data-only) restores.
  *
  * Modifications - 31-Mar-2001 - pjw@rhyme.com.au
- * 
+ *
  *	  - Rudimentary support for dependencies in archives. Current implementation
  *		uses dependencies to modify the OID used in sorting TOC entries.
  *		This will NOT handle multi-level dependencies, but will manage simple
  *		relationships like UDTs & their functions.
  *
- *	  - Treat OIDs with more respect (avoid using ints, use macros for 
+ *	  - Treat OIDs with more respect (avoid using ints, use macros for
  *		conversion & comparison).
  *
  * Modifications - 10-May-2001 - pjw@rhyme.com.au
  *	  - Treat SEQUENCE SET TOC entries as data entries rather than schema
  *		entries.
  *	  - Make allowance for data entries that did not have a data dumper
- * 		routine (eg. SEQUENCE SET)
+ *		routine (eg. SEQUENCE SET)
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@ static void _moveAfter(ArchiveHandle *AH, TocEntry *pos, TocEntry *te);
 static void _moveBefore(ArchiveHandle *AH, TocEntry *pos, TocEntry *te);
 static int	_discoverArchiveFormat(ArchiveHandle *AH);
 static void _fixupOidInfo(TocEntry *te);
-static Oid _findMaxOID(const char *((*deps)[]));
+static Oid	_findMaxOID(const char *((*deps)[]));
 
 const char *progname;
 static char *modulename = gettext_noop("archiver");
@@ -110,7 +110,7 @@ static int	_restoringToDB(ArchiveHandle *AH);
 
 /* Create a new archive */
 /* Public */
-Archive    *
+Archive *
 CreateArchive(const char *FileSpec, const ArchiveFormat fmt,
 			  const int compression)
 
@@ -122,7 +122,7 @@ CreateArchive(const char *FileSpec, const ArchiveFormat fmt,
 
 /* Open an existing archive */
 /* Public */
-Archive    *
+Archive *
 OpenArchive(const char *FileSpec, const ArchiveFormat fmt)
 {
 	ArchiveHandle *AH = _allocAH(FileSpec, fmt, 0, archModeRead);
@@ -167,8 +167,9 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	 *
 	 * NB: create+dropSchema is useless because if you're creating the DB,
 	 * there's no need to drop individual items in it.  Moreover, if we
-	 * tried to do that then we'd issue the drops in the database initially
-	 * connected to, not the one we will create, which is very bad...
+	 * tried to do that then we'd issue the drops in the database
+	 * initially connected to, not the one we will create, which is very
+	 * bad...
 	 */
 	if (ropt->create && ropt->noReconnect)
 		die_horribly(AH, modulename, "-C and -R are incompatible options\n");
@@ -238,7 +239,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		write_msg(modulename, "WARNING:\n"
 				  "  Data restoration may fail because existing triggers cannot be disabled\n"
 				  "  (no superuser user name specified).  This is only a problem when\n"
-				  "  restoring into a database with already existing triggers.\n");
+		"  restoring into a database with already existing triggers.\n");
 
 	/*
 	 * Setup the output file if necessary.
@@ -283,11 +284,11 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		/* Dump any relevant dump warnings to stderr */
 		if (!ropt->suppressDumpWarnings && strcmp(te->desc, "WARNING") == 0)
 		{
-			if (!ropt->dataOnly && te->defn != NULL && strlen(te->defn) != 0) 
+			if (!ropt->dataOnly && te->defn != NULL && strlen(te->defn) != 0)
 				write_msg(modulename, "warning from original dump file: %s\n", te->defn);
 			else if (te->copyStmt != NULL && strlen(te->copyStmt) != 0)
 				write_msg(modulename, "warning from original dump file: %s\n", te->copyStmt);
-	 	}
+		}
 
 		defnDumped = false;
 
@@ -306,18 +307,20 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 				ahlog(AH, 1, "connecting to new database %s as user %s\n", te->name, te->owner);
 				_reconnectAsUser(AH, te->name, te->owner);
 			}
-		}	
+		}
 
 		/*
 		 * If we have a data component, then process it
 		 */
-		if ( (reqs & 2) != 0 )
+		if ((reqs & 2) != 0)
 		{
-			/* hadDumper will be set if there is genuine data component for this
-			 * node. Otherwise, we need to check the defn field for statements
-			 * that need to be executed in data-only restores.
+			/*
+			 * hadDumper will be set if there is genuine data component
+			 * for this node. Otherwise, we need to check the defn field
+			 * for statements that need to be executed in data-only
+			 * restores.
 			 */
-			if (te->hadDumper) 
+			if (te->hadDumper)
 			{
 				/*
 				 * If we can output the data, then restore it.
@@ -332,16 +335,17 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 					_printTocEntry(AH, te, ropt, true);
 
 					/*
-					 * Maybe we can't do BLOBS, so check if this node is for BLOBS
+					 * Maybe we can't do BLOBS, so check if this node is
+					 * for BLOBS
 					 */
 					if ((strcmp(te->desc, "BLOBS") == 0) && !_canRestoreBlobs(AH))
 					{
 						ahprintf(AH, "--\n-- SKIPPED \n--\n\n");
 
 						/*
-						 * This is a bit nasty - we assume, for the moment, that
-						 * if a custom output is used, then we don't want
-						 * warnings.
+						 * This is a bit nasty - we assume, for the
+						 * moment, that if a custom output is used, then
+						 * we don't want warnings.
 						 */
 						if (!AH->CustomOutPtr)
 							write_msg(modulename, "WARNING: skipping large object restoration\n");
@@ -353,21 +357,23 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 						_disableTriggersIfNecessary(AH, te, ropt);
 
 						/*
-						 * Reconnect if necessary (_disableTriggers may have
-						 * reconnected)
+						 * Reconnect if necessary (_disableTriggers may
+						 * have reconnected)
 						 */
 						_reconnectAsOwner(AH, NULL, te);
 
 						ahlog(AH, 1, "restoring data for table %s\n", te->name);
 
 						/*
-						 * If we have a copy statement, use it. As of V1.3, these
-						 * are separate to allow easy import from withing a
-						 * database connection. Pre 1.3 archives can not use DB
-						 * connections and are sent to output only.
+						 * If we have a copy statement, use it. As of
+						 * V1.3, these are separate to allow easy import
+						 * from withing a database connection. Pre 1.3
+						 * archives can not use DB connections and are
+						 * sent to output only.
 						 *
-						 * For V1.3+, the table data MUST have a copy statement so
-						 * that we can go into appropriate mode with libpq.
+						 * For V1.3+, the table data MUST have a copy
+						 * statement so that we can go into appropriate
+						 * mode with libpq.
 						 */
 						if (te->copyStmt && strlen(te->copyStmt) > 0)
 							ahprintf(AH, te->copyStmt);
@@ -377,8 +383,10 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 						_enableTriggersIfNecessary(AH, te, ropt);
 					}
 				}
-			} else if (!defnDumped) {
-				/* If we haven't already dumped the defn part, do so now */ 
+			}
+			else if (!defnDumped)
+			{
+				/* If we haven't already dumped the defn part, do so now */
 				ahlog(AH, 1, "executing %s %s\n", te->desc, te->name);
 				_printTocEntry(AH, te, ropt, false);
 			}
@@ -493,7 +501,6 @@ _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *rop
 	{
 		if (!_restoringToDB(AH) || !ConnectedUserIsSuperuser(AH))
 		{
-
 			/*
 			 * If we're not allowing changes for ownership, then remember
 			 * the user so we can change it back here. Otherwise, let
@@ -552,7 +559,6 @@ _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt
 	{
 		if (!_restoringToDB(AH) || !ConnectedUserIsSuperuser(AH))
 		{
-
 			/*
 			 * If we're not allowing changes for ownership, then remember
 			 * the user so we can change it back here. Otherwise, let
@@ -1065,7 +1071,6 @@ SetOutput(ArchiveHandle *AH, char *filename, int compression)
 
 #ifdef HAVE_LIBZ
 	char		fmode[10];
-
 #endif
 	int			fn = 0;
 
@@ -1233,7 +1238,6 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 	}
 	else
 	{
-
 		/*
 		 * If we're doing a restore, and it's direct to DB, and we're
 		 * connected then send it to the DB.
@@ -1262,7 +1266,7 @@ _write_msg(const char *modulename, const char *fmt, va_list ap)
 }
 
 void
-write_msg(const char *modulename, const char *fmt, ...)
+write_msg(const char *modulename, const char *fmt,...)
 {
 	va_list		ap;
 
@@ -1469,7 +1473,7 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 	int			wantClose = 0;
 
 #if 0
-	 write_msg(modulename, "attempting to ascertain archive format\n");
+	write_msg(modulename, "attempting to ascertain archive format\n");
 #endif
 
 	if (AH->lookahead)
@@ -1534,7 +1538,6 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 	}
 	else
 	{
-
 		/*
 		 * *Maybe* we have a tar archive format file... So, read first 512
 		 * byte header...
@@ -1554,7 +1557,6 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 	/* If we can't seek, then mark the header as read */
 	if (fseek(fh, 0, SEEK_SET) != 0)
 	{
-
 		/*
 		 * NOTE: Formats that use the looahead buffer can unset this in
 		 * their Init routine.
@@ -1588,7 +1590,7 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	ArchiveHandle *AH;
 
 #if 0
-	 write_msg(modulename, "allocating AH for %s, format %d\n", FileSpec, fmt);
+	write_msg(modulename, "allocating AH for %s, format %d\n", FileSpec, fmt);
 #endif
 
 	AH = (ArchiveHandle *) calloc(1, sizeof(ArchiveHandle));
@@ -1638,7 +1640,7 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	AH->OF = stdout;
 
 #if 0
-	 write_msg(modulename, "archive format is %d\n", fmt);
+	write_msg(modulename, "archive format is %d\n", fmt);
 #endif
 
 	if (fmt == archUnknown)
@@ -1747,12 +1749,10 @@ WriteToc(ArchiveHandle *AH)
 		if (te->depOid != NULL)
 		{
 			i = 0;
-			while( (dep = (*te->depOid)[i++]) != NULL)
-			{
+			while ((dep = (*te->depOid)[i++]) != NULL)
 				WriteStr(AH, dep);
-			}
 		}
-		WriteStr(AH, NULL); /* Terminate List */
+		WriteStr(AH, NULL);		/* Terminate List */
 
 		if (AH->WriteExtraTocPtr)
 			(*AH->WriteExtraTocPtr) (AH, te);
@@ -1764,7 +1764,7 @@ void
 ReadToc(ArchiveHandle *AH)
 {
 	int			i;
-	char		*((*deps)[]);
+	char	   *((*deps)[]);
 	int			depIdx;
 	int			depSize;
 
@@ -1800,14 +1800,14 @@ ReadToc(ArchiveHandle *AH)
 		if (AH->version >= K_VERS_1_5)
 		{
 			depSize = 100;
-			deps = malloc(sizeof(char*) * depSize);
+			deps = malloc(sizeof(char *) * depSize);
 			depIdx = 0;
 			do
 			{
 				if (depIdx > depSize)
 				{
 					depSize *= 2;
-					deps = realloc(deps, sizeof(char*) * depSize);
+					deps = realloc(deps, sizeof(char *) * depSize);
 				}
 				(*deps)[depIdx] = ReadStr(AH);
 #if 0
@@ -1815,12 +1815,12 @@ ReadToc(ArchiveHandle *AH)
 					write_msg(modulename, "read dependency for %s -> %s\n",
 							  te->name, (*deps)[depIdx]);
 #endif
-			} while ( (*deps)[depIdx++] != NULL);
+			} while ((*deps)[depIdx++] != NULL);
 
-			if (depIdx > 1) /* We have a non-null entry */
-				te->depOid = realloc(deps, sizeof(char*) * depIdx);	/* trim it */
+			if (depIdx > 1)		/* We have a non-null entry */
+				te->depOid = realloc(deps, sizeof(char *) * depIdx);	/* trim it */
 			else
-				te->depOid = NULL; /* no deps */
+				te->depOid = NULL;		/* no deps */
 		}
 		else
 			te->depOid = NULL;
@@ -1918,7 +1918,7 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt)
  * user, this won't do anything.
  *
  * If we're currently restoring right into a database, this will
- * actuall establish a connection.  Otherwise it puts a \connect into
+ * actuall establish a connection.	Otherwise it puts a \connect into
  * the script output.
  */
 static void
@@ -1928,7 +1928,10 @@ _reconnectAsUser(ArchiveHandle *AH, const char *dbname, const char *user)
 		|| (strcmp(AH->currUser, user) == 0 && !dbname))
 		return;					/* no need to do anything */
 
-	/* Use SET SESSION AUTHORIZATION if allowed and no database change needed */
+	/*
+	 * Use SET SESSION AUTHORIZATION if allowed and no database change
+	 * needed
+	 */
 	if (!dbname && AH->ropt->use_setsessauth)
 	{
 		if (RestoringToDB(AH))
@@ -1961,8 +1964,10 @@ _reconnectAsUser(ArchiveHandle *AH, const char *dbname, const char *user)
 				 dbname ? dbname : "-",
 				 user ? user : "-");
 
-	/* NOTE: currUser keeps track of what the imaginary session user
-       in our script is */
+	/*
+	 * NOTE: currUser keeps track of what the imaginary session user in
+	 * our script is
+	 */
 	if (AH->currUser)
 		free(AH->currUser);
 
@@ -1988,14 +1993,12 @@ _reconnectAsOwner(ArchiveHandle *AH, const char *dbname, TocEntry *te)
 static int
 _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData)
 {
-	char	*pfx;
+	char	   *pfx;
 
 	if (isData)
-	{
 		pfx = "Data for ";
-	} else {
+	else
 		pfx = "";
-	}
 
 	ahprintf(AH, "--\n-- %sTOC Entry ID %d (OID %s)\n--\n-- Name: %s Type: %s Owner: %s\n",
 			 pfx, te->id, te->oid, te->name, te->desc, te->owner);
@@ -2136,7 +2139,6 @@ _SortToc(ArchiveHandle *AH, TocSortCompareFn fn)
 	te = AH->toc;
 	for (i = 0; i <= AH->tocCount + 1; i++)
 	{
-
 		/*
 		 * printf("%d: %x (%x, %x) - %d\n", i, te, te->prev, te->next,
 		 * te->oidVal);
@@ -2159,7 +2161,6 @@ _SortToc(ArchiveHandle *AH, TocSortCompareFn fn)
 	te = AH->toc;
 	for (i = 0; i <= AH->tocCount + 1; i++)
 	{
-
 		/*
 		 * printf("%d: %x (%x, %x) - %d\n", i, te, te->prev, te->next,
 		 * te->oidVal);
@@ -2187,39 +2188,48 @@ _tocSortCompareByOIDNum(const void *p1, const void *p2)
 
 	/* If we have a deterministic answer, return it. */
 	if (cmpval != 0)
-	   return cmpval;
+		return cmpval;
 
 	/* More comparisons required */
-	if ( oideq(id1, te1->maxDepOidVal) ) /* maxOid1 came from deps */
+	if (oideq(id1, te1->maxDepOidVal))	/* maxOid1 came from deps */
 	{
-		if ( oideq(id2, te2->maxDepOidVal) ) /* maxOid2 also came from deps */
+		if (oideq(id2, te2->maxDepOidVal))		/* maxOid2 also came from
+												 * deps */
 		{
-			cmpval = oidcmp(te1->oidVal, te2->oidVal); /* Just compare base OIDs */
+			cmpval = oidcmp(te1->oidVal, te2->oidVal);	/* Just compare base
+														 * OIDs */
 		}
-		else /* MaxOid2 was entry OID */
+		else
+/* MaxOid2 was entry OID */
 		{
-			return 1; /* entry1 > entry2 */
+			return 1;			/* entry1 > entry2 */
 		};
-	} 
-	else /* must have oideq(id1, te1->oidVal) => maxOid1 = Oid1 */
+	}
+	else
+/* must have oideq(id1, te1->oidVal) => maxOid1 = Oid1 */
 	{
-		if ( oideq(id2, te2->maxDepOidVal) ) /* maxOid2 came from deps */
+		if (oideq(id2, te2->maxDepOidVal))		/* maxOid2 came from deps */
 		{
-			return -1; /* entry1 < entry2 */
+			return -1;			/* entry1 < entry2 */
 		}
-		else /* MaxOid2 was entry OID - deps don't matter */
+		else
+/* MaxOid2 was entry OID - deps don't matter */
 		{
 			cmpval = 0;
 		};
 	};
 
-	/* If we get here, then we've done another comparison
-	 * Once again, a 0 result means we require even more
+	/*
+	 * If we get here, then we've done another comparison Once again, a 0
+	 * result means we require even more
 	 */
 	if (cmpval != 0)
 		return cmpval;
 
-	/* Entire OID details match, so use ID number (ie. original pg_dump order) */
+	/*
+	 * Entire OID details match, so use ID number (ie. original pg_dump
+	 * order)
+	 */
 	return _tocSortCompareByIDNum(te1, te2);
 }
 
@@ -2245,35 +2255,35 @@ _tocSortCompareByIDNum(const void *p1, const void *p2)
  * Assuming Oid and depOid are set, work out the various
  * Oid values used in sorting.
  */
-static void 
+static void
 _fixupOidInfo(TocEntry *te)
 {
 	te->oidVal = atooid(te->oid);
 	te->maxDepOidVal = _findMaxOID(te->depOid);
 
 	/* For the purpose of sorting, find the max OID. */
-	if (oidcmp(te->oidVal, te->maxDepOidVal) >= 0) 
+	if (oidcmp(te->oidVal, te->maxDepOidVal) >= 0)
 		te->maxOidVal = te->oidVal;
 	else
 		te->maxOidVal = te->maxDepOidVal;
 }
 
-/* 
- * Find the max OID value for a given list of string Oid values 
+/*
+ * Find the max OID value for a given list of string Oid values
  */
 static Oid
 _findMaxOID(const char *((*deps)[]))
 {
 	const char *dep;
 	int			i;
-	Oid			maxOid = (Oid)0;
+	Oid			maxOid = (Oid) 0;
 	Oid			currOid;
 
 	if (!deps)
 		return maxOid;
 
 	i = 0;
-	while( (dep = (*deps)[i++]) != NULL)
+	while ((dep = (*deps)[i++]) != NULL)
 	{
 		currOid = atooid(dep);
 		if (oidcmp(maxOid, currOid) < 0)

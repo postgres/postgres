@@ -39,7 +39,8 @@ print_action(struct when * w)
 {
 	switch (w->code)
 	{
-			case W_SQLPRINT:fprintf(yyout, "sqlprint();");
+		case W_SQLPRINT:
+			fprintf(yyout, "sqlprint();");
 			break;
 		case W_GOTO:
 			fprintf(yyout, "goto %s;", w->command);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.45 2001/03/23 04:49:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.46 2001/10/25 05:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,6 @@ MJFormSkipQual(List *qualList, char *replaceopname)
 
 	foreach(qualcdr, qualCopy)
 	{
-
 		/*
 		 * first get the current (op .. ..) list
 		 */
@@ -321,7 +320,6 @@ ExecMergeTupleDump(MergeJoinState *mergestate)
 
 	printf("******** \n");
 }
-
 #endif
 
 /* ----------------------------------------------------------------
@@ -431,7 +429,7 @@ ExecMergeJoin(MergeJoin *node)
 		default:
 			elog(ERROR, "ExecMergeJoin: unsupported join type %d",
 				 (int) node->join.jointype);
-			doFillOuter = false;/* keep compiler quiet */
+			doFillOuter = false;		/* keep compiler quiet */
 			doFillInner = false;
 			break;
 	}
@@ -476,7 +474,6 @@ ExecMergeJoin(MergeJoin *node)
 	 */
 	for (;;)
 	{
-
 		/*
 		 * get the current state of the join and do things accordingly.
 		 * Note: The join states are highlighted with 32-* comments for
@@ -486,7 +483,6 @@ ExecMergeJoin(MergeJoin *node)
 
 		switch (mergestate->mj_JoinState)
 		{
-
 				/*
 				 * EXEC_MJ_INITIALIZE means that this is the first time
 				 * ExecMergeJoin() has been called and so we have to fetch
@@ -505,7 +501,6 @@ ExecMergeJoin(MergeJoin *node)
 					MJ_printf("ExecMergeJoin: outer subplan is empty\n");
 					if (doFillInner)
 					{
-
 						/*
 						 * Need to emit right-join tuples for remaining
 						 * inner tuples.  We set MatchedInner = true to
@@ -526,7 +521,6 @@ ExecMergeJoin(MergeJoin *node)
 					MJ_printf("ExecMergeJoin: inner subplan is empty\n");
 					if (doFillOuter)
 					{
-
 						/*
 						 * Need to emit left-join tuples for all outer
 						 * tuples, including the one we just fetched.  We
@@ -632,7 +626,6 @@ ExecMergeJoin(MergeJoin *node)
 
 					if (qualResult)
 					{
-
 						/*
 						 * qualification succeeded.  now form the desired
 						 * projection tuple and return the slot containing
@@ -669,7 +662,6 @@ ExecMergeJoin(MergeJoin *node)
 
 				if (doFillInner && !mergestate->mj_MatchedInner)
 				{
-
 					/*
 					 * Generate a fake join tuple with nulls for the outer
 					 * tuple, and return it if it passes the non-join
@@ -686,7 +678,6 @@ ExecMergeJoin(MergeJoin *node)
 
 					if (ExecQual(otherqual, econtext, false))
 					{
-
 						/*
 						 * qualification succeeded.  now form the desired
 						 * projection tuple and return the slot containing
@@ -747,7 +738,6 @@ ExecMergeJoin(MergeJoin *node)
 
 				if (doFillOuter && !mergestate->mj_MatchedOuter)
 				{
-
 					/*
 					 * Generate a fake join tuple with nulls for the inner
 					 * tuple, and return it if it passes the non-join
@@ -764,7 +754,6 @@ ExecMergeJoin(MergeJoin *node)
 
 					if (ExecQual(otherqual, econtext, false))
 					{
-
 						/*
 						 * qualification succeeded.  now form the desired
 						 * projection tuple and return the slot containing
@@ -805,7 +794,6 @@ ExecMergeJoin(MergeJoin *node)
 					innerTupleSlot = mergestate->mj_InnerTupleSlot;
 					if (doFillInner && !TupIsNull(innerTupleSlot))
 					{
-
 						/*
 						 * Need to emit right-join tuples for remaining
 						 * inner tuples.
@@ -873,7 +861,6 @@ ExecMergeJoin(MergeJoin *node)
 
 				if (qualResult)
 				{
-
 					/*
 					 * the merge clause matched so now we restore the
 					 * inner scan position to the first mark, and loop
@@ -915,7 +902,6 @@ ExecMergeJoin(MergeJoin *node)
 					{
 						if (doFillOuter)
 						{
-
 							/*
 							 * Need to emit left-join tuples for remaining
 							 * outer tuples.
@@ -1036,7 +1022,6 @@ ExecMergeJoin(MergeJoin *node)
 
 				if (doFillOuter && !mergestate->mj_MatchedOuter)
 				{
-
 					/*
 					 * Generate a fake join tuple with nulls for the inner
 					 * tuple, and return it if it passes the non-join
@@ -1053,7 +1038,6 @@ ExecMergeJoin(MergeJoin *node)
 
 					if (ExecQual(otherqual, econtext, false))
 					{
-
 						/*
 						 * qualification succeeded.  now form the desired
 						 * projection tuple and return the slot containing
@@ -1094,7 +1078,6 @@ ExecMergeJoin(MergeJoin *node)
 					innerTupleSlot = mergestate->mj_InnerTupleSlot;
 					if (doFillInner && !TupIsNull(innerTupleSlot))
 					{
-
 						/*
 						 * Need to emit right-join tuples for remaining
 						 * inner tuples.
@@ -1216,7 +1199,6 @@ ExecMergeJoin(MergeJoin *node)
 
 				if (doFillInner && !mergestate->mj_MatchedInner)
 				{
-
 					/*
 					 * Generate a fake join tuple with nulls for the outer
 					 * tuple, and return it if it passes the non-join
@@ -1233,7 +1215,6 @@ ExecMergeJoin(MergeJoin *node)
 
 					if (ExecQual(otherqual, econtext, false))
 					{
-
 						/*
 						 * qualification succeeded.  now form the desired
 						 * projection tuple and return the slot containing
@@ -1274,7 +1255,6 @@ ExecMergeJoin(MergeJoin *node)
 					outerTupleSlot = mergestate->mj_OuterTupleSlot;
 					if (doFillOuter && !TupIsNull(outerTupleSlot))
 					{
-
 						/*
 						 * Need to emit left-join tuples for remaining
 						 * outer tuples.
@@ -1304,7 +1284,6 @@ ExecMergeJoin(MergeJoin *node)
 
 				if (!mergestate->mj_MatchedInner)
 				{
-
 					/*
 					 * Generate a fake join tuple with nulls for the outer
 					 * tuple, and return it if it passes the non-join
@@ -1321,7 +1300,6 @@ ExecMergeJoin(MergeJoin *node)
 
 					if (ExecQual(otherqual, econtext, false))
 					{
-
 						/*
 						 * qualification succeeded.  now form the desired
 						 * projection tuple and return the slot containing
@@ -1373,7 +1351,6 @@ ExecMergeJoin(MergeJoin *node)
 
 				if (!mergestate->mj_MatchedOuter)
 				{
-
 					/*
 					 * Generate a fake join tuple with nulls for the inner
 					 * tuple, and return it if it passes the non-join
@@ -1390,7 +1367,6 @@ ExecMergeJoin(MergeJoin *node)
 
 					if (ExecQual(otherqual, econtext, false))
 					{
-
 						/*
 						 * qualification succeeded.  now form the desired
 						 * projection tuple and return the slot containing
@@ -1579,8 +1555,8 @@ int
 ExecCountSlotsMergeJoin(MergeJoin *node)
 {
 	return ExecCountSlotsNode(outerPlan((Plan *) node)) +
-	ExecCountSlotsNode(innerPlan((Plan *) node)) +
-	MERGEJOIN_NSLOTS;
+		ExecCountSlotsNode(innerPlan((Plan *) node)) +
+		MERGEJOIN_NSLOTS;
 }
 
 /* ----------------------------------------------------------------

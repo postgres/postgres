@@ -23,7 +23,7 @@
  */
 #define crypt(a,b) (a)
 
-#undef EAGAIN	/* doesn't apply on sockets */
+#undef EAGAIN					/* doesn't apply on sockets */
 #undef EINTR
 #define EINTR WSAEINTR
 #define EWOULDBLOCK WSAEWOULDBLOCK
@@ -36,4 +36,4 @@
 static HINSTANCE netmsgModule = NULL;
 
 static char winsock_strerror_buf[512];
-const char* winsock_strerror(DWORD eno);
+const char *winsock_strerror(DWORD eno);

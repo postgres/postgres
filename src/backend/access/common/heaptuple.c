@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.73 2001/08/23 23:06:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.74 2001/10/25 05:49:20 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -241,7 +241,6 @@ nocachegetattr(HeapTuple tuple,
 	}
 	else
 	{
-
 		/*
 		 * there's a null somewhere in the tuple
 		 */
@@ -347,7 +346,6 @@ nocachegetattr(HeapTuple tuple,
 			  (HeapTupleNoNulls(tuple) || !att_isnull(j, bp)) &&
 			  (HeapTupleAllFixed(tuple) || att[j]->attlen > 0)); j++)
 		{
-
 			/*
 			 * Fix me when going to a machine with more than a four-byte
 			 * word!
@@ -546,7 +544,6 @@ heap_deformtuple(HeapTuple tuple,
 			nulls[i] = ' ';
 	}
 }
-
 #endif
 
 /* ----------------
@@ -739,7 +736,7 @@ heap_freetuple(HeapTuple htup)
  *
  * This routine forms a HeapTuple by copying the given structure (tuple
  * data) and adding a generic header.  Note that the tuple data is
- * presumed to contain no null fields.  It is typically only useful
+ * presumed to contain no null fields.	It is typically only useful
  * for null-free system tables.
  * ----------------
  */
@@ -771,7 +768,7 @@ heap_addheader(int natts,		/* max domain index */
 
 	td->t_hoff = hoff;
 	td->t_natts = natts;
-	td->t_infomask = HEAP_XMAX_INVALID;	/* XXX sufficient? */
+	td->t_infomask = HEAP_XMAX_INVALID; /* XXX sufficient? */
 
 	memcpy((char *) td + hoff, structure, structlen);
 

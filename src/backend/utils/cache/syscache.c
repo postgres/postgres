@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.65 2001/08/21 16:36:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.66 2001/10/25 05:49:46 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -133,7 +133,7 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{AccessMethodProcedureRelationName,	/* AMPROCNUM */
+	{AccessMethodProcedureRelationName, /* AMPROCNUM */
 		AccessMethodProcedureIndex,
 		0,
 		2,
@@ -365,7 +365,8 @@ static struct cachedesc cacheinfo[] = {
 	}}
 };
 
-static CatCache *SysCache[lengthof(cacheinfo)];
+static CatCache *SysCache[
+						  lengthof(cacheinfo)];
 static int	SysCacheSize = lengthof(cacheinfo);
 static bool CacheInitialized = false;
 
@@ -564,7 +565,6 @@ SysCacheGetAttr(int cacheId, HeapTuple tup,
 				AttrNumber attributeNumber,
 				bool *isNull)
 {
-
 	/*
 	 * We just need to get the TupleDesc out of the cache entry, and then
 	 * we can apply heap_getattr().  We expect that the cache control data

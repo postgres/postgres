@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.19 2001/03/22 03:59:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.20 2001/10/25 05:49:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,7 @@ findElemInRecipe()
    XXX Currently, this is done by linear search.  Change to using a hash table.
 -------------------------------------- */
 
-TgElement  *
+TgElement *
 findElemInRecipe(TgRecipe * r, char *elemName)
 {
 	int			i;
@@ -188,7 +188,6 @@ fillTgNode(TgRecipe * r, TgNode * node, PortalBuffer * pbuf, int tupno)
 
 	if (!attnums_initialized)
 	{
-
 		/*
 		 * the first time fillTgNode is called, we find out all the
 		 * relevant attribute numbers in a TgNode so subsequent calls are
@@ -278,7 +277,6 @@ fillTgElement(TgElement * elem, PortalBuffer * pbuf, int tupno)
 
 	if (!attnums_initialized)
 	{
-
 		/*
 		 * the first time fillTgElement is called, we find out all the
 		 * relevant attribute numbers in a TgElement so subsequent calls
@@ -617,7 +615,7 @@ fillTgRecipe
 	takes a query result in the PortalBuffer containing a Recipe
 	and converts it to a C TgRecipe strcture
   ------------------------------------ */
-TgRecipe   *
+TgRecipe *
 fillTgRecipe(PortalBuffer * pbuf, int tupno)
 {
 	TgRecipe   *r;
@@ -690,7 +688,7 @@ fillTgRecipe(PortalBuffer * pbuf, int tupno)
 retrieveRecipe
    find the recipe with the given name
   ------------------------------------ */
-TgRecipe   *
+TgRecipe *
 retrieveRecipe(char *name)
 {
 	char		qbuf[MAX_QBUF_LENGTH];

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.46 2001/06/25 21:11:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.47 2001/10/25 05:49:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ typedef struct RangeQueryClause
 } RangeQueryClause;
 
 static void addRangeClause(RangeQueryClause **rqlist, Node *clause,
-						   bool varonleft, bool isLTsel, Selectivity s2);
+			   bool varonleft, bool isLTsel, Selectivity s2);
 
 
 /****************************************************************************
@@ -212,7 +212,6 @@ clauselist_selectivity(Query *root,
 			{
 				if (s2 < -0.01)
 				{
-
 					/*
 					 * No data available --- use a default estimate that
 					 * is small, but not real small.
@@ -221,7 +220,6 @@ clauselist_selectivity(Query *root,
 				}
 				else
 				{
-
 					/*
 					 * It's just roundoff error; use a small positive
 					 * value
@@ -275,7 +273,6 @@ addRangeClause(RangeQueryClause **rqlist, Node *clause,
 
 	for (rqelem = *rqlist; rqelem; rqelem = rqelem->next)
 	{
-
 		/*
 		 * We use full equal() here because the "var" might be a function
 		 * of one or more attributes of the same relation...
@@ -386,7 +383,6 @@ clause_selectivity(Query *root,
 
 			if (rte->subquery)
 			{
-
 				/*
 				 * XXX not smart about subquery references... any way to
 				 * do better?
@@ -395,7 +391,6 @@ clause_selectivity(Query *root,
 			}
 			else
 			{
-
 				/*
 				 * A Var at the top of a clause must be a bool Var. This
 				 * is equivalent to the clause reln.attribute = 't', so we
@@ -405,7 +400,7 @@ clause_selectivity(Query *root,
 											 BooleanEqualOperator,
 											 makeList2(var,
 													   MAKEBOOLCONST(true,
-																	 false)),
+																 false)),
 											 varRelid);
 			}
 		}
@@ -436,7 +431,6 @@ clause_selectivity(Query *root,
 	}
 	else if (or_clause(clause))
 	{
-
 		/*
 		 * Selectivities for an 'or' clause are computed as s1+s2 - s1*s2
 		 * to account for the probable overlap of selected tuple sets. XXX
@@ -461,7 +455,6 @@ clause_selectivity(Query *root,
 
 		if (varRelid != 0)
 		{
-
 			/*
 			 * If we are considering a nestloop join then all clauses are
 			 * restriction clauses, since we are only interested in the
@@ -471,7 +464,6 @@ clause_selectivity(Query *root,
 		}
 		else
 		{
-
 			/*
 			 * Otherwise, it's a join if there's more than one relation
 			 * used.
@@ -482,19 +474,18 @@ clause_selectivity(Query *root,
 		if (is_join_clause)
 		{
 			/* Estimate selectivity for a join clause. */
-			s1 = join_selectivity(root, opno, 
+			s1 = join_selectivity(root, opno,
 								  ((Expr *) clause)->args);
 		}
 		else
 		{
 			/* Estimate selectivity for a restriction clause. */
-			s1 = restriction_selectivity(root, opno, 
-										 ((Expr *) clause)->args, varRelid);
+			s1 = restriction_selectivity(root, opno,
+									  ((Expr *) clause)->args, varRelid);
 		}
 	}
 	else if (is_funcclause(clause))
 	{
-
 		/*
 		 * This is not an operator, so we guess at the selectivity. THIS
 		 * IS A HACK TO GET V4 OUT THE DOOR.  FUNCS SHOULD BE ABLE TO HAVE
@@ -504,7 +495,6 @@ clause_selectivity(Query *root,
 	}
 	else if (is_subplan(clause))
 	{
-
 		/*
 		 * Just for the moment! FIX ME! - vadim 02/04/98
 		 */

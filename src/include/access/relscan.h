@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relscan.h,v 1.22 2001/06/22 19:16:23 wieck Exp $
+ * $Id: relscan.h,v 1.23 2001/10/25 05:49:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@ typedef struct HeapScanDescData
 	uint16		rs_nkeys;		/* number of scan keys to select tuples */
 	ScanKey		rs_key;			/* key descriptors */
 
-	PgStat_Info rs_pgstat_info;	/* statistics collector hook */
+	PgStat_Info rs_pgstat_info; /* statistics collector hook */
 } HeapScanDescData;
 
 typedef HeapScanDescData *HeapScanDesc;
@@ -38,14 +38,14 @@ typedef struct IndexScanDescData
 	Relation	relation;		/* relation descriptor */
 	void	   *opaque;			/* access-method-specific info */
 	ItemPointerData currentItemData;	/* current index pointer */
-	ItemPointerData	currentMarkData;	/* marked current pointer */
+	ItemPointerData currentMarkData;	/* marked current pointer */
 	uint8		flags;			/* scan position flags */
 	bool		scanFromEnd;	/* restart scan at end? */
 	uint16		numberOfKeys;	/* number of scan keys to select tuples */
 	ScanKey		keyData;		/* key descriptors */
 	FmgrInfo	fn_getnext;		/* cached lookup info for am's getnext fn */
 
-	PgStat_Info xs_pgstat_info;	/* statistics collector hook */
+	PgStat_Info xs_pgstat_info; /* statistics collector hook */
 } IndexScanDescData;
 
 typedef IndexScanDescData *IndexScanDesc;
@@ -75,5 +75,4 @@ typedef IndexScanDesc *IndexScanDescPtr;
  *		True iff the index scan is valid.
  */
 #define IndexScanIsValid(scan) PointerIsValid(scan)
-
 #endif	 /* RELSCAN_H */

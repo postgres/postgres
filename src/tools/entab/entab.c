@@ -130,7 +130,6 @@ char	  **argv;
 
 					if (col_in_tab == tab_size)
 					{
-
 						/*
 						 * Is the next character going to be a tab? Needed
 						 * to do tab replacement in current spot if next

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup.h,v 1.15 2001/10/03 21:58:28 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup.h,v 1.16 2001/10/25 05:49:52 momjian Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -56,11 +56,11 @@
 
 typedef enum _archiveFormat
 {
-	archUnknown = 0,
-	archCustom = 1,
-	archFiles = 2,
-	archTar = 3,
-	archNull = 4
+				archUnknown = 0,
+				archCustom = 1,
+				archFiles = 2,
+				archTar = 3,
+				archNull = 4
 } ArchiveFormat;
 
 /*
@@ -69,10 +69,10 @@ typedef enum _archiveFormat
  */
 typedef struct _Archive
 {
-	int				verbose;
-	int				remoteVersion;
-	int				minRemoteVersion;
-	int				maxRemoteVersion;
+	int			verbose;
+	int			remoteVersion;
+	int			minRemoteVersion;
+	int			maxRemoteVersion;
 	/* The rest is private */
 } Archive;
 
@@ -85,7 +85,8 @@ typedef struct _restoreOptions
 								 * original object owner */
 	int			noReconnect;	/* Don't reconnect to database under any
 								 * cirsumstances */
-	int			use_setsessauth; /* use SET SESSSION AUTHORIZATION instead of \connect */
+	int			use_setsessauth;/* use SET SESSSION AUTHORIZATION instead
+								 * of \connect */
 	char	   *superuser;		/* Username to use as superuser */
 	int			dataOnly;
 	int			dropSchema;
@@ -123,18 +124,20 @@ typedef struct _restoreOptions
 	int			limitToList;
 	int			compression;
 
-	int			suppressDumpWarnings;		/* Suppress output of WARNING entries to stderr */
+	int			suppressDumpWarnings;	/* Suppress output of WARNING
+										 * entries to stderr */
 } RestoreOptions;
 
 /*
  * Main archiver interface.
  */
 
-extern void exit_horribly(Archive *AH, const char *modulename, const char *fmt, ...)
-__attribute__((format(printf,3,4)));
+extern void
+exit_horribly(Archive *AH, const char *modulename, const char *fmt,...)
+__attribute__((format(printf, 3, 4)));
 
 extern char *
-simple_prompt(const char *prompt, int maxlen, bool echo);
+			simple_prompt(const char *prompt, int maxlen, bool echo);
 
 /* Lets the archibe know we have a DB connection to shutdown if it dies */
 
@@ -189,8 +192,8 @@ extern void SortTocFromFile(Archive *AH, RestoreOptions *ropt);
 /* Convenience functions used only when writing DATA */
 extern int	archputs(const char *s, Archive *AH);
 extern int	archputc(const char c, Archive *AH);
-extern int	archprintf(Archive *AH, const char *fmt, ...)
+extern int
+archprintf(Archive *AH, const char *fmt,...)
 /* This extension allows gcc to check the format string */
 __attribute__((format(printf, 2, 3)));
-
 #endif

@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.33 2001/08/27 20:03:38 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.34 2001/10/25 05:49:45 momjian Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -153,44 +153,43 @@ cidr_out(PG_FUNCTION_ARGS)
 static Datum
 text_network(text *src, int type)
 {
-        int 	len = VARSIZE(src) - VARHDRSZ;
+	int			len = VARSIZE(src) - VARHDRSZ;
 
-        char 	*str = palloc(len + 1);
-        memcpy(str, VARDATA(src), len);
-        *(str + len) = '\0';
+	char	   *str = palloc(len + 1);
 
-	PG_RETURN_INET_P(network_in( str, type));
+	memcpy(str, VARDATA(src), len);
+	*(str + len) = '\0';
+
+	PG_RETURN_INET_P(network_in(str, type));
 }
 
 Datum
 text_cidr(PG_FUNCTION_ARGS)
 {
-	return text_network( PG_GETARG_TEXT_P(0), 1);
+	return text_network(PG_GETARG_TEXT_P(0), 1);
 }
 
 Datum
 text_inet(PG_FUNCTION_ARGS)
 {
-	return text_network( PG_GETARG_TEXT_P(0), 0);
+	return text_network(PG_GETARG_TEXT_P(0), 0);
 }
 
 Datum
 inet_set_masklen(PG_FUNCTION_ARGS)
 {
-	inet 	*src = PG_GETARG_INET_P(0);
-	int     bits = PG_GETARG_INT32(1);
-	inet 	*dst;
+	inet	   *src = PG_GETARG_INET_P(0);
+	int			bits = PG_GETARG_INT32(1);
+	inet	   *dst;
 
-        if ((bits < 0) || (bits > 32)) /* no support for v6 yet */
-        {
-                elog(ERROR, "set_masklen - invalid value '%d'", bits);
-        }
+	if ((bits < 0) || (bits > 32))		/* no support for v6 yet */
+		elog(ERROR, "set_masklen - invalid value '%d'", bits);
 
 	/* clone the original data */
-        dst = (inet *) palloc(VARHDRSZ + sizeof(inet_struct));
+	dst = (inet *) palloc(VARHDRSZ + sizeof(inet_struct));
 	memcpy(dst, src, VARHDRSZ + sizeof(inet_struct));
 
-        ip_bits(dst) = bits;
+	ip_bits(dst) = bits;
 
 	PG_RETURN_INET_P(dst);
 }
@@ -618,7 +617,7 @@ network_netmask(PG_FUNCTION_ARGS)
  * involving network types.
  *
  * Currently, inet/cidr values are simply converted to the IPv4 address;
- * this will need more thought when IPv6 is supported too.  MAC addresses
+ * this will need more thought when IPv6 is supported too.	MAC addresses
  * are converted to their numeric equivalent as well (OK since we have a
  * double to play in).
  */
@@ -629,26 +628,26 @@ convert_network_to_scalar(Datum value, Oid typid)
 	{
 		case INETOID:
 		case CIDROID:
-		{
-			inet	   *ip = DatumGetInetP(value);
+			{
+				inet	   *ip = DatumGetInetP(value);
 
-			if (ip_family(ip) == AF_INET)
-				return (double) ip_v4addr(ip);
-			else
-				/* Go for an IPV6 address here, before faulting out: */
-				elog(ERROR, "unknown address family (%d)", ip_family(ip));
-			break;
-		}
+				if (ip_family(ip) == AF_INET)
+					return (double) ip_v4addr(ip);
+				else
+					/* Go for an IPV6 address here, before faulting out: */
+					elog(ERROR, "unknown address family (%d)", ip_family(ip));
+				break;
+			}
 		case MACADDROID:
-		{
-			macaddr    *mac = DatumGetMacaddrP(value);
-			double		res;
+			{
+				macaddr    *mac = DatumGetMacaddrP(value);
+				double		res;
 
-			res = (mac->a << 16) | (mac->b << 8) | (mac->c);
-			res *= 256*256*256;
-			res += (mac->d << 16) | (mac->e << 8) | (mac->f);
-			return res;
-		}
+				res = (mac->a << 16) | (mac->b << 8) | (mac->c);
+				res *= 256 * 256 * 256;
+				res += (mac->d << 16) | (mac->e << 8) | (mac->f);
+				return res;
+			}
 	}
 
 	/*
@@ -722,7 +721,7 @@ network_scan_first(Datum in)
 }
 
 /*
- * return "last" IP on a given network. It's the broadcast address, 
+ * return "last" IP on a given network. It's the broadcast address,
  * however, masklen has to be set to 32, since
  * 192.168.0.255/24 is considered less than 192.168.0.255/32
  *

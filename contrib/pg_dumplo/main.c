@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/main.c,v 1.8 2001/03/22 06:16:06 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/main.c,v 1.9 2001/10/25 05:49:19 momjian Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
@@ -152,7 +152,7 @@ main(int argc, char **argv)
 		exit(RE_ERROR);
 	}
 
-	/* 
+	/*
 	 * Check space
 	 */
 	if (!pgLO->space && !pgLO->action == ACTION_SHOW)
@@ -170,7 +170,7 @@ main(int argc, char **argv)
 		exit(RE_ERROR);
 	}
 
-	/* 
+	/*
 	 * Make connection
 	 */
 	pgLO->conn = PQsetdbLogin(pgLO->host, NULL, NULL, NULL, pgLO->db,
@@ -186,7 +186,7 @@ main(int argc, char **argv)
 	pgLO->user = PQuser(pgLO->conn);
 
 
-	/* 
+	/*
 	 * Init index file
 	 */
 	if (pgLO->action != ACTION_SHOW)
@@ -304,7 +304,6 @@ usage()
 		 "-q                           run quietly\n"
 		 "-w                           not dump, but show all LO in DB\n"
 		);						/* puts() */
-
 #endif
 
 	puts(

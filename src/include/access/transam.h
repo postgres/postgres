@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.41 2001/09/29 04:02:26 tgl Exp $
+ * $Id: transam.h,v 1.42 2001/10/25 05:49:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@
 #define TransactionIdIsNormal(xid)		((xid) >= FirstNormalTransactionId)
 #define TransactionIdEquals(id1, id2)	((id1) == (id2))
 #define TransactionIdStore(xid, dest)	(*(dest) = (xid))
-#define StoreInvalidTransactionId(dest)	(*(dest) = InvalidTransactionId)
+#define StoreInvalidTransactionId(dest) (*(dest) = InvalidTransactionId)
 /* advance a transaction ID variable, handling wraparound correctly */
 #define TransactionIdAdvance(dest)	\
 	do { \
@@ -58,7 +58,7 @@
  *		OIDS 10000-16383 are reserved for assignment by genbki.sh.
  *
  *		OIDs beginning at 16384 are assigned at runtime from the OID
- *		generator.  (The first few of these will be assigned during initdb,
+ *		generator.	(The first few of these will be assigned during initdb,
  *		to objects created after the initial BKI script processing.)
  *
  * The choices of 10000 and 16384 are completely arbitrary, and can be moved
@@ -121,5 +121,4 @@ extern bool AMI_OVERRIDE;
 
 /* in varsup.c */
 extern VariableCache ShmemVariableCache;
-
 #endif	 /* TRAMSAM_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.22 2001/03/22 03:59:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.23 2001/10/25 05:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,6 @@ oidrand(PG_FUNCTION_ARGS)
 {
 #ifdef NOT_USED
 	Oid			o = PG_GETARG_OID(0);
-
 #endif
 	int32		X = PG_GETARG_INT32(1);
 	bool		result;

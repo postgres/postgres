@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.66 2001/06/05 05:26:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.67 2001/10/25 05:49:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,7 +137,6 @@ query_planner(Query *root,
 	 */
 	if (constant_quals || IsA(subplan, Append))
 	{
-
 		/*
 		 * The result node will also be responsible for evaluating the
 		 * originally requested tlist.
@@ -148,7 +147,6 @@ query_planner(Query *root,
 	}
 	else
 	{
-
 		/*
 		 * Replace the toplevel plan node's flattened target list with the
 		 * targetlist given by my caller, so that expressions are

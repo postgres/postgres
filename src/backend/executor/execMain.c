@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.148 2001/09/18 01:59:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.149 2001/10/25 05:49:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,7 +287,6 @@ ExecutorEnd(QueryDesc *queryDesc, EState *estate)
 static void
 ExecCheckQueryPerms(CmdType operation, Query *parseTree, Plan *plan)
 {
-
 	/*
 	 * Check RTEs in the query's primary rangetable.
 	 */
@@ -428,7 +427,6 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 
 	if (rte->checkForWrite)
 	{
-
 		/*
 		 * Note: write access in a SELECT context means SELECT FOR UPDATE.
 		 * Right now we don't distinguish that from true update as far as
@@ -521,7 +519,6 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 
 		if (resultRelations != NIL)
 		{
-
 			/*
 			 * Multiple result relations (due to inheritance)
 			 * parseTree->resultRelations identifies them all
@@ -544,7 +541,6 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 		}
 		else
 		{
-
 			/*
 			 * Single result relation identified by
 			 * parseTree->resultRelation
@@ -564,7 +560,6 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	}
 	else
 	{
-
 		/*
 		 * if no result relation, then set state appropriately
 		 */
@@ -599,9 +594,9 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 
 	/*
 	 * initialize the executor "tuple" table.  We need slots for all the
-	 * plan nodes, plus possibly output slots for the junkfilter(s).
-	 * At this point we aren't sure if we need junkfilters, so just add
-	 * slots for them unconditionally.
+	 * plan nodes, plus possibly output slots for the junkfilter(s). At
+	 * this point we aren't sure if we need junkfilters, so just add slots
+	 * for them unconditionally.
 	 */
 	{
 		int			nSlots = ExecCountSlotsNode(plan);
@@ -669,7 +664,6 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 
 		if (junk_filter_needed)
 		{
-
 			/*
 			 * If there are multiple result relations, each one needs its
 			 * own junk filter.  Note this is only possible for
@@ -694,7 +688,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 
 					j = ExecInitJunkFilter(subplan->targetlist,
 										   ExecGetTupType(subplan),
-										   ExecAllocTableSlot(estate->es_tupleTable));
+							  ExecAllocTableSlot(estate->es_tupleTable));
 					resultRelInfo->ri_junkFilter = j;
 					resultRelInfo++;
 					subplans = lnext(subplans);
@@ -714,7 +708,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 
 				j = ExecInitJunkFilter(plan->targetlist,
 									   tupType,
-									   ExecAllocTableSlot(estate->es_tupleTable));
+							  ExecAllocTableSlot(estate->es_tupleTable));
 				estate->es_junkFilter = j;
 				if (estate->es_result_relation_info)
 					estate->es_result_relation_info->ri_junkFilter = j;
@@ -741,13 +735,11 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 
 		if (!parseTree->isPortal)
 		{
-
 			/*
 			 * a select into table
 			 */
 			if (parseTree->into != NULL)
 			{
-
 				/*
 				 * create the "into" relation
 				 */
@@ -1101,7 +1093,7 @@ lnext:	;
 			newTuple = ExecRemoveJunk(junkfilter, slot);
 
 			slot = ExecStoreTuple(newTuple,		/* tuple to store */
-								  junkfilter->jf_resultSlot, /* dest slot */
+								  junkfilter->jf_resultSlot,	/* dest slot */
 								  InvalidBuffer,		/* this tuple has no
 														 * buffer */
 								  true);		/* tuple should be pfreed */
@@ -1234,7 +1226,7 @@ ExecAppend(TupleTableSlot *slot,
 
 	/* BEFORE ROW INSERT Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
-		resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
+	  resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
 	{
 		HeapTuple	newtuple;
 
@@ -1245,7 +1237,6 @@ ExecAppend(TupleTableSlot *slot,
 
 		if (newtuple != tuple)	/* modified by Trigger(s) */
 		{
-
 			/*
 			 * Insert modified tuple into tuple table slot, replacing the
 			 * original.  We assume that it was allocated in per-tuple
@@ -1314,7 +1305,7 @@ ExecDelete(TupleTableSlot *slot,
 
 	/* BEFORE ROW DELETE Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
-		resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_DELETE] > 0)
+	  resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_DELETE] > 0)
 	{
 		bool		dodelete;
 
@@ -1421,7 +1412,7 @@ ExecReplace(TupleTableSlot *slot,
 
 	/* BEFORE ROW UPDATE Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
-		resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_UPDATE] > 0)
+	  resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_UPDATE] > 0)
 	{
 		HeapTuple	newtuple;
 
@@ -1433,7 +1424,6 @@ ExecReplace(TupleTableSlot *slot,
 
 		if (newtuple != tuple)	/* modified by Trigger(s) */
 		{
-
 			/*
 			 * Insert modified tuple into tuple table slot, replacing the
 			 * original.  We assume that it was allocated in per-tuple
@@ -1448,11 +1438,11 @@ ExecReplace(TupleTableSlot *slot,
 	/*
 	 * Check the constraints of the tuple
 	 *
-	 * If we generate a new candidate tuple after EvalPlanQual testing,
-	 * we must loop back here and recheck constraints.  (We don't need to
-	 * redo triggers, however.  If there are any BEFORE triggers then
-	 * trigger.c will have done mark4update to lock the correct tuple,
-	 * so there's no need to do them again.)
+	 * If we generate a new candidate tuple after EvalPlanQual testing, we
+	 * must loop back here and recheck constraints.  (We don't need to
+	 * redo triggers, however.	If there are any BEFORE triggers then
+	 * trigger.c will have done mark4update to lock the correct tuple, so
+	 * there's no need to do them again.)
 	 */
 lreplace:;
 	if (resultRelationDesc->rd_att->constr)
@@ -1483,7 +1473,7 @@ lreplace:;
 					*tupleid = ctid;
 					tuple = ExecRemoveJunk(estate->es_junkFilter, epqslot);
 					slot = ExecStoreTuple(tuple,
-										  estate->es_junkFilter->jf_resultSlot,
+									estate->es_junkFilter->jf_resultSlot,
 										  InvalidBuffer, true);
 					goto lreplace;
 				}
@@ -1641,9 +1631,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 	 */
 	if (estate->es_result_relation_info != NULL &&
 		estate->es_result_relation_info->ri_RangeTableIndex == rti)
-	{
 		relation = estate->es_result_relation_info->ri_RelationDesc;
-	}
 	else
 	{
 		List	   *l;
@@ -1724,7 +1712,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 	*tid = tuple.t_self;
 
 	/*
-	 * Need to run a recheck subquery.  Find or create a PQ stack entry.
+	 * Need to run a recheck subquery.	Find or create a PQ stack entry.
 	 */
 	epq = (evalPlanQual *) estate->es_evalPlanQual;
 	rtsize = length(estate->es_range_table);
@@ -1782,18 +1770,20 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 		{
 			newepq = (evalPlanQual *) palloc(sizeof(evalPlanQual));
 			newepq->free = NULL;
+
 			/*
-			 * Each stack level has its own copy of the plan tree.  This
+			 * Each stack level has its own copy of the plan tree.	This
 			 * is wasteful, but necessary as long as plan nodes point to
-			 * exec state nodes rather than vice versa.  Note that copyfuncs.c
-			 * doesn't attempt to copy the exec state nodes, which is a good
-			 * thing in this situation.
+			 * exec state nodes rather than vice versa.  Note that
+			 * copyfuncs.c doesn't attempt to copy the exec state nodes,
+			 * which is a good thing in this situation.
 			 */
 			newepq->plan = copyObject(estate->es_origPlan);
+
 			/*
 			 * Init stack level's EState.  We share top level's copy of
-			 * es_result_relations array and other non-changing status.
-			 * We need our own tupletable, es_param_exec_vals, and other
+			 * es_result_relations array and other non-changing status. We
+			 * need our own tupletable, es_param_exec_vals, and other
 			 * changeable state.
 			 */
 			epqstate = &(newepq->estate);
@@ -1805,11 +1795,12 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 						   sizeof(ParamExecData));
 			epqstate->es_tupleTable = NULL;
 			epqstate->es_per_tuple_exprcontext = NULL;
+
 			/*
-			 * Each epqstate must have its own es_evTupleNull state,
-			 * but all the stack entries share es_evTuple state.  This
-			 * allows sub-rechecks to inherit the value being examined by
-			 * an outer recheck.
+			 * Each epqstate must have its own es_evTupleNull state, but
+			 * all the stack entries share es_evTuple state.  This allows
+			 * sub-rechecks to inherit the value being examined by an
+			 * outer recheck.
 			 */
 			epqstate->es_evTupleNull = (bool *) palloc(rtsize * sizeof(bool));
 			if (epq == NULL)
@@ -1842,12 +1833,12 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 	epqstate = &(epq->estate);
 
 	/*
-	 * Ok - we're requested for the same RTE.  Unfortunately we still
-	 * have to end and restart execution of the plan, because ExecReScan
+	 * Ok - we're requested for the same RTE.  Unfortunately we still have
+	 * to end and restart execution of the plan, because ExecReScan
 	 * wouldn't ensure that upper plan nodes would reset themselves.  We
-	 * could make that work if insertion of the target tuple were integrated
-	 * with the Param mechanism somehow, so that the upper plan nodes know
-	 * that their children's outputs have changed.
+	 * could make that work if insertion of the target tuple were
+	 * integrated with the Param mechanism somehow, so that the upper plan
+	 * nodes know that their children's outputs have changed.
 	 */
 	if (endNode)
 	{
@@ -1858,8 +1849,8 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 	}
 
 	/*
-	 * free old RTE' tuple, if any, and store target tuple where relation's
-	 * scan node will see it
+	 * free old RTE' tuple, if any, and store target tuple where
+	 * relation's scan node will see it
 	 */
 	if (epqstate->es_evTuple[rti - 1] != NULL)
 		heap_freetuple(epqstate->es_evTuple[rti - 1]);

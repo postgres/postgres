@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.48 2001/08/25 18:52:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.49 2001/10/25 05:49:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,6 @@ ExpandDatabasePath(const char *dbpath)
 	 */
 	for (cp = buf; *cp; cp++)
 	{
-
 		/*
 		 * The following characters will not be allowed anywhere in the
 		 * database path. (Do not include the slash  or '.' here.)

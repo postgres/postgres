@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/shm.h,v 1.3 2001/03/18 18:32:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/shm.h,v 1.4 2001/10/25 05:49:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,5 @@ extern		"C"
 
 #ifdef	__cplusplus
 }
-
 #endif
-
 #endif	 /* _SYS_SHM_H */

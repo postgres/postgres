@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.73 2001/10/22 19:31:09 tgl Exp $
+ * $Id: pg_dump.h,v 1.74 2001/10/25 05:49:53 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -92,18 +92,20 @@ typedef struct _tableInfo
 	char	   *relacl;
 	char	   *viewdef;
 	char	   *viewoid;		/* OID of view - should be >= oid of table
-								 * important because views may be constructed 
-								 * manually from rules, and rule may ref things
-								 * created after the base table was created. 
-								 */
+								 * important because views may be
+								 * constructed manually from rules, and
+								 * rule may ref things created after the
+								 * base table was created. */
 	bool		sequence;
 	bool		hasoids;		/* does it have OIDs? */
 	int			numatts;		/* number of attributes */
 	int		   *inhAttrs;		/* an array of flags, one for each
 								 * attribute if the value is 1, then this
 								 * attribute is an inherited attribute */
-	int		   *inhAttrDef;		/* Flags indicating if attrdef is inherited */
-	int		   *inhNotNull;		/* Flags indicating if NOT NULL in inherited */
+	int		   *inhAttrDef;		/* Flags indicating if attrdef is
+								 * inherited */
+	int		   *inhNotNull;		/* Flags indicating if NOT NULL in
+								 * inherited */
 	char	  **attnames;		/* the attribute names */
 	char	  **atttypedefns;	/* formatted column type definitions */
 	char	  **typnames;		/* fill out attributes */
@@ -157,7 +159,8 @@ typedef struct _aggInfo
 	char	   *aggbasetype;
 	char	   *agginitval;
 	char	   *usename;
-	int		   convertok;		/* Flag to indicate of version convertsion is OK */
+	int			convertok;		/* Flag to indicate of version convertsion
+								 * is OK */
 } AggInfo;
 
 typedef struct _oprInfo
@@ -165,7 +168,7 @@ typedef struct _oprInfo
 	char	   *oid;
 	char	   *oprname;
 	char	   *oprkind;		/*----------
-								 * 	b = binary,
+								 *	b = binary,
 								 *	l = left unary
 								 *	r = right unary
 								 *----------
@@ -221,11 +224,11 @@ extern void dumpSchemaIdx(Archive *fout,
 
 typedef enum _OidOptions
 {
-	zeroAsOpaque = 1,
-	zeroAsAny = 2,
-	zeroAsStar = 4,
-	zeroAsNone = 8,
-	useBaseTypeName = 1024
+				zeroAsOpaque = 1,
+				zeroAsAny = 2,
+				zeroAsStar = 4,
+				zeroAsNone = 8,
+				useBaseTypeName = 1024
 } OidOptions;
 
 extern char *findTypeByOid(TypeInfo *tinfo, int numTypes, const char *oid, OidOptions opts);
@@ -276,5 +279,4 @@ extern void dumpIndexes(Archive *fout, IndInfo *indinfo, int numIndexes,
 			TableInfo *tbinfo, int numTables, const char *tablename);
 extern const char *fmtId(const char *identifier, bool force_quotes);
 extern void exit_nicely(void);
-
 #endif	 /* PG_DUMP_H */

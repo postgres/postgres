@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.37 2001/03/22 03:59:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.38 2001/10/25 05:49:46 momjian Exp $
  *
  * NOTE
  *	  XXX this code needs improvement--check for state violations and
@@ -138,16 +138,15 @@ ExcPrint(Exception *excP,
 }
 
 #ifdef NOT_USED
-ExcProc    *
+ExcProc *
 ExcGetUnCaught(void)
 {
 	return ExcUnCaughtP;
 }
-
 #endif
 
 #ifdef NOT_USED
-ExcProc    *
+ExcProc *
 ExcSetUnCaught(ExcProc *newP)
 {
 	ExcProc    *oldP = ExcUnCaughtP;
@@ -156,7 +155,6 @@ ExcSetUnCaught(ExcProc *newP)
 
 	return oldP;
 }
-
 #endif
 
 static void

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.51 2001/06/30 17:26:12 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.52 2001/10/25 05:49:54 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -56,11 +56,11 @@ PsqlSettings pset;
  */
 enum _actions
 {
-	ACT_NOTHING = 0,
-	ACT_SINGLE_SLASH,
-	ACT_LIST_DB,
-	ACT_SINGLE_QUERY,
-	ACT_FILE
+				ACT_NOTHING = 0,
+				ACT_SINGLE_SLASH,
+				ACT_LIST_DB,
+				ACT_SINGLE_QUERY,
+				ACT_FILE
 };
 
 struct adhoc_opts
@@ -87,7 +87,6 @@ static void
 #ifdef USE_SSL
 static void
 			printSSLInfo(void);
-
 #endif
 
 
@@ -167,7 +166,6 @@ main(int argc, char *argv[])
 
 	if (options.username)
 	{
-
 		/*
 		 * The \001 is a hack to support the deprecated -u option which
 		 * issues a username prompt. The recommended option is -U followed
@@ -241,7 +239,7 @@ main(int argc, char *argv[])
 	/*
 	 * process file given by -f
 	 */
-	if (options.action == ACT_FILE && strcmp(options.action_string, "-")!=0)
+	if (options.action == ACT_FILE && strcmp(options.action_string, "-") != 0)
 	{
 		if (!options.no_psqlrc)
 			process_psqlrc();
@@ -286,8 +284,8 @@ main(int argc, char *argv[])
 			printf(gettext("Welcome to %s, the PostgreSQL interactive terminal.\n\n"
 						   "Type:  \\copyright for distribution terms\n"
 						   "       \\h for help with SQL commands\n"
-						   "       \\? for help on internal slash commands\n"
-						   "       \\g or terminate with semicolon to execute query\n"
+					   "       \\? for help on internal slash commands\n"
+			  "       \\g or terminate with semicolon to execute query\n"
 						   "       \\q to quit\n\n"),
 				   pset.progname);
 #ifdef USE_SSL
@@ -302,7 +300,7 @@ main(int argc, char *argv[])
 			process_psqlrc();
 		if (!pset.notty)
 			initializeInput(options.no_readline ? 0 : 1);
-		if (options.action_string) /* -f - was used */
+		if (options.action_string)		/* -f - was used */
 			pset.inputfile = "<stdin>";
 		successResult = MainLoop(stdin);
 	}
@@ -326,7 +324,6 @@ int			getopt(int, char *const[], const char *);
 
 /* And it requires progname to be set */
 char	   *__progname = "psql";
-
 #endif
 
 static void
@@ -367,7 +364,6 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 	};
 
 	int			optindex;
-
 #endif	 /* HAVE_GETOPT_LONG */
 
 	extern char *optarg;
@@ -554,7 +550,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 			case '-':
 				fprintf(stderr,
 						gettext("%s was compiled without support for long options.\n"
-								"Use --help for help on invocation options.\n"),
+						 "Use --help for help on invocation options.\n"),
 						pset.progname);
 				exit(EXIT_FAILURE);
 				break;
@@ -673,7 +669,7 @@ showVersion(void)
 
 	puts(gettext("Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group\n"
 				 "Portions Copyright (c) 1996, Regents of the University of California\n"
-				 "Read the file COPYRIGHT or use the command \\copyright to see the\n"
+	"Read the file COPYRIGHT or use the command \\copyright to see the\n"
 				 "usage and distribution terms."));
 }
 
@@ -699,5 +695,4 @@ printSSLInfo(void)
 	printf(gettext("SSL connection (cipher: %s, bits: %i)\n\n"),
 		   SSL_get_cipher(ssl), sslbits);
 }
-
 #endif

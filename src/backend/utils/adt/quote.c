@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/quote.c,v 1.4 2001/03/22 03:59:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/quote.c,v 1.5 2001/10/25 05:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -289,5 +289,4 @@ do_quote_literal(text *lptr)
 
 	return result;
 }
-
 #endif

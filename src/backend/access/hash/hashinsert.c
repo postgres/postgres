@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.22 2001/03/07 21:20:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.23 2001/10/25 05:49:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,13 +133,11 @@ _hash_insertonpg(Relation rel,
 
 	while (PageGetFreeSpace(page) < itemsz)
 	{
-
 		/*
 		 * no space on this page; check for an overflow page
 		 */
 		if (BlockNumberIsValid(pageopaque->hasho_nextblkno))
 		{
-
 			/*
 			 * ovfl page exists; go get it.  if it doesn't have room,
 			 * we'll find out next pass through the loop test above.
@@ -152,7 +150,6 @@ _hash_insertonpg(Relation rel,
 		}
 		else
 		{
-
 			/*
 			 * we're at the end of the bucket chain and we haven't found a
 			 * page with enough room.  allocate a new overflow page.
@@ -184,7 +181,6 @@ _hash_insertonpg(Relation rel,
 
 	if (res != NULL)
 	{
-
 		/*
 		 * Increment the number of keys in the table. We switch lock
 		 * access type just for a moment to allow greater accessibility to

@@ -359,7 +359,6 @@ c_charin(unsigned char *str)
 {
 	return (string_input(str, 1, 0, NULL));
 }
-
 #endif
 
 /* end of file */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.62 2001/07/15 22:48:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.63 2001/10/25 05:49:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,7 +222,7 @@ IndexNext(IndexScan *node)
 					qual = lnext(qual);
 				}
 				if (!prev_matches)
-					return slot;/* OK to return tuple */
+					return slot;		/* OK to return tuple */
 				/* Duplicate tuple, so drop it and loop back for another */
 				ExecClearTuple(slot);
 			}
@@ -337,7 +337,6 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 
 	if (econtext)
 	{
-
 		/*
 		 * If we are being passed an outer tuple, save it for runtime key
 		 * calc
@@ -377,7 +376,6 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 			run_keys = runtimeKeyInfo[i];
 			for (j = 0; j < n_keys; j++)
 			{
-
 				/*
 				 * If we have a run-time key, then extract the run-time
 				 * expression and evaluate it with respect to the current
@@ -703,10 +701,10 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 			Expr	   *clause; /* one clause of index qual */
 			Oper	   *op;		/* operator used in clause */
 			Node	   *leftop; /* expr on lhs of operator */
-			Node	   *rightop;/* expr on rhs ... */
+			Node	   *rightop;		/* expr on rhs ... */
 			bits16		flags = 0;
 
-			int			scanvar;/* which var identifies varattno */
+			int			scanvar;		/* which var identifies varattno */
 			AttrNumber	varattno = 0;	/* att number used in scan */
 			Oid			opid;	/* operator id used in scan */
 			Datum		scanvalue = 0;	/* value used in scan (if const) */
@@ -772,7 +770,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 
 			if (IsA(leftop, Var) &&var_is_rel((Var *) leftop))
 			{
-
 				/*
 				 * if the leftop is a "rel-var", then it means that it is
 				 * a var node which tells us which attribute to use for
@@ -783,7 +780,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 			}
 			else if (IsA(leftop, Const))
 			{
-
 				/*
 				 * if the leftop is a const node then it means it
 				 * identifies the value to place in our scan key.
@@ -820,7 +816,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 			}
 			else
 			{
-
 				/*
 				 * otherwise, the leftop contains an expression evaluable
 				 * at runtime to figure out the value to place in our scan
@@ -842,7 +837,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 
 			if (IsA(rightop, Var) &&var_is_rel((Var *) rightop))
 			{
-
 				/*
 				 * here we make sure only one op identifies the
 				 * scan-attribute...
@@ -861,7 +855,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 			}
 			else if (IsA(rightop, Const))
 			{
-
 				/*
 				 * if the rightop is a const node then it means it
 				 * identifies the value to place in our scan key.
@@ -898,7 +891,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 			}
 			else
 			{
-
 				/*
 				 * otherwise, the rightop contains an expression evaluable
 				 * at runtime to figure out the value to place in our scan
@@ -1023,7 +1015,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 			ExecOpenScanR(indexOid,		/* relation */
 						  numScanKeys[i],		/* nkeys */
 						  scanKeys[i],	/* scan key */
-						  true,			/* is index */
+						  true, /* is index */
 						  direction,	/* scan direction */
 						  estate->es_snapshot,
 						  &(relationDescs[i]),	/* return: rel desc */
@@ -1045,5 +1037,5 @@ int
 ExecCountSlotsIndexScan(IndexScan *node)
 {
 	return ExecCountSlotsNode(outerPlan((Plan *) node)) +
-	ExecCountSlotsNode(innerPlan((Plan *) node)) + INDEXSCAN_NSLOTS;
+		ExecCountSlotsNode(innerPlan((Plan *) node)) + INDEXSCAN_NSLOTS;
 }

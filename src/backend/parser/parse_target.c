@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.74 2001/10/08 21:48:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.75 2001/10/25 05:49:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 
 static List *ExpandAllTables(ParseState *pstate);
 static char *FigureColname(Node *node);
-static int FigureColnameInternal(Node *node, char **name);
+static int	FigureColnameInternal(Node *node, char **name);
 
 
 /*
@@ -57,8 +57,8 @@ transformTargetEntry(ParseState *pstate,
 	if (expr == NULL)
 		expr = transformExpr(pstate, node, EXPR_COLUMN_FIRST);
 
-	if (IsA(expr, Ident) && ((Ident *)expr)->isRel)
-		elog(ERROR,"You can't use relation names alone in the target list, try relation.*.");	
+	if (IsA(expr, Ident) &&((Ident *) expr)->isRel)
+		elog(ERROR, "You can't use relation names alone in the target list, try relation.*.");
 
 	type_id = exprType(expr);
 	type_mod = exprTypmod(expr);
@@ -104,7 +104,6 @@ transformTargetList(ParseState *pstate, List *targetlist)
 
 			if (att->relname != NULL && strcmp(att->relname, "*") == 0)
 			{
-
 				/*
 				 * Target item is a single '*', expand all tables (eg.
 				 * SELECT * FROM emp)
@@ -115,7 +114,6 @@ transformTargetList(ParseState *pstate, List *targetlist)
 			else if (att->attrs != NIL &&
 					 strcmp(strVal(lfirst(att->attrs)), "*") == 0)
 			{
-
 				/*
 				 * Target item is relation.*, expand that table (eg.
 				 * SELECT emp.*, dname FROM emp, dept)
@@ -221,7 +219,6 @@ updateTargetListEntry(ParseState *pstate,
 
 		if (pstate->p_is_insert)
 		{
-
 			/*
 			 * The command is INSERT INTO table (arraycol[subscripts]) ...
 			 * so there is not really a source array value to work with.
@@ -234,7 +231,6 @@ updateTargetListEntry(ParseState *pstate,
 		}
 		else
 		{
-
 			/*
 			 * Build a Var for the array to be updated.
 			 */
@@ -253,7 +249,6 @@ updateTargetListEntry(ParseState *pstate,
 	}
 	else
 	{
-
 		/*
 		 * For normal non-subscripted target column, do type checking and
 		 * coercion.  But accept InvalidOid, which indicates the source is
@@ -347,7 +342,6 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 
 	if (cols == NIL)
 	{
-
 		/*
 		 * Generate default column list for INSERT.
 		 */
@@ -373,7 +367,6 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 	}
 	else
 	{
-
 		/*
 		 * Do initial validation of user-supplied INSERT column list.
 		 */
@@ -461,7 +454,7 @@ ExpandAllTables(ParseState *pstate)
 static char *
 FigureColname(Node *node)
 {
-	char   *name = NULL;
+	char	   *name = NULL;
 
 	FigureColnameInternal(node, &name);
 	if (name != NULL)
@@ -473,7 +466,7 @@ FigureColname(Node *node)
 static int
 FigureColnameInternal(Node *node, char **name)
 {
-	int		strength = 0;
+	int			strength = 0;
 
 	if (node == NULL)
 		return strength;
@@ -506,7 +499,7 @@ FigureColnameInternal(Node *node, char **name)
 				return 1;
 			}
 			break;
-		case T_TypeCast: 
+		case T_TypeCast:
 			strength = FigureColnameInternal(((TypeCast *) node)->arg,
 											 name);
 			if (strength <= 1)

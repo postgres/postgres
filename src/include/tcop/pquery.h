@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pquery.h,v 1.16 2001/01/24 19:43:28 momjian Exp $
+ * $Id: pquery.h,v 1.17 2001/10/25 05:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,5 +23,4 @@ extern void ProcessQuery(Query *parsetree, Plan *plan, CommandDest dest);
 extern EState *CreateExecutorState(void);
 
 extern Portal PreparePortal(char *portalName);
-
 #endif	 /* PQUERY_H */

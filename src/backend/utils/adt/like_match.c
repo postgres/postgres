@@ -18,7 +18,7 @@
  * Copyright (c) 1996-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like_match.c,v 1.1 2001/10/04 02:15:47 ishii Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like_match.c,v 1.2 2001/10/25 05:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,7 +101,6 @@ MatchText(unsigned char *t, int tlen, unsigned char *p, int plen)
 			 */
 			while (tlen > 0)
 			{
-
 				/*
 				 * Optimization to prevent most recursion: don't recurse
 				 * unless first pattern char might match this text char.
@@ -125,7 +124,6 @@ MatchText(unsigned char *t, int tlen, unsigned char *p, int plen)
 		}
 		else if ((*p != '_') && !CHAREQ(t, p))
 		{
-
 			/*
 			 * Not the single-character wildcard and no explicit match?
 			 * Then time to quit...
@@ -189,7 +187,6 @@ MatchTextIC(unsigned char *t, int tlen, unsigned char *p, int plen)
 			 */
 			while (tlen > 0)
 			{
-
 				/*
 				 * Optimization to prevent most recursion: don't recurse
 				 * unless first pattern char might match this text char.
@@ -213,7 +210,6 @@ MatchTextIC(unsigned char *t, int tlen, unsigned char *p, int plen)
 		}
 		else if ((*p != '_') && !ICHAREQ(t, p))
 		{
-
 			/*
 			 * Not the single-character wildcard and no explicit match?
 			 * Then time to quit...
@@ -271,7 +267,6 @@ do_like_escape(text *pat, text *esc)
 
 	if (elen == 0)
 	{
-
 		/*
 		 * No escape character is wanted.  Double any backslashes in the
 		 * pattern to make them act like ordinary characters.
@@ -285,7 +280,6 @@ do_like_escape(text *pat, text *esc)
 	}
 	else
 	{
-
 		/*
 		 * The specified escape must be only a single character.
 		 */

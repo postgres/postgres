@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.50 2001/09/18 01:59:07 tgl Exp $
+ * $Id: plannodes.h,v 1.51 2001/10/25 05:50:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,8 +89,8 @@ typedef struct Plan
 								 * individual nodes point to one EState
 								 * for the whole top-level plan */
 
-	struct Instrumentation *instrument;  /* Optional runtime stats for this
-										  * plan node */
+	struct Instrumentation *instrument; /* Optional runtime stats for this
+										 * plan node */
 
 	/*
 	 * Common structural data for all Plan types.  XXX chgParam is runtime
@@ -373,10 +373,10 @@ typedef struct Unique
  */
 typedef enum SetOpCmd
 {
-	SETOPCMD_INTERSECT,
-	SETOPCMD_INTERSECT_ALL,
-	SETOPCMD_EXCEPT,
-	SETOPCMD_EXCEPT_ALL
+				SETOPCMD_INTERSECT,
+				SETOPCMD_INTERSECT_ALL,
+				SETOPCMD_EXCEPT,
+				SETOPCMD_EXCEPT_ALL
 } SetOpCmd;
 
 typedef struct SetOp
@@ -433,7 +433,6 @@ typedef struct Tee
 								 * Tee may be different than the parent
 								 * plans */
 }			Tee;
-
 #endif
 
 /* ---------------------
@@ -464,5 +463,4 @@ typedef struct SubPlan
 	bool		needShutdown;	/* TRUE = need to shutdown subplan */
 	HeapTuple	curTuple;		/* copy of most recent tuple from subplan */
 } SubPlan;
-
 #endif	 /* PLANNODES_H */

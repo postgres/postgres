@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hsearch.h,v 1.22 2001/10/05 17:28:13 tgl Exp $
+ * $Id: hsearch.h,v 1.23 2001/10/25 05:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,9 +31,9 @@
  * tables, the initial directory size can be left at the default.
  */
 #define DEF_SEGSIZE			   256
-#define DEF_SEGSIZE_SHIFT	   8		/* must be log2(DEF_SEGSIZE) */
+#define DEF_SEGSIZE_SHIFT	   8/* must be log2(DEF_SEGSIZE) */
 #define DEF_DIRSIZE			   256
-#define DEF_FFACTOR			   1		/* default fill factor */
+#define DEF_FFACTOR			   1/* default fill factor */
 
 #define PRIME1				   37		/* for the hash function */
 #define PRIME2				   1048583
@@ -84,11 +84,12 @@ typedef struct HASHHDR
  */
 typedef struct HTAB
 {
-	HASHHDR	   *hctl;			/* shared control information */
+	HASHHDR    *hctl;			/* shared control information */
 	HASHSEGMENT *dir;			/* directory of segment starts */
-	long		(*hash) (void *key, int keysize); /* Hash Function */
-	void	   *(*alloc) (Size);/* memory allocator */
-	MemoryContext hcxt;			/* memory context if default allocator used */
+	long		(*hash) (void *key, int keysize);		/* Hash Function */
+	void	   *(*alloc) (Size);		/* memory allocator */
+	MemoryContext hcxt;			/* memory context if default allocator
+								 * used */
 	char	   *tabname;		/* table name (for error messages) */
 	bool		isshared;		/* true if table is in shared memory */
 } HTAB;
@@ -100,14 +101,14 @@ typedef struct HASHCTL
 	long		ssize;			/* Segment Size */
 	long		dsize;			/* (initial) Directory Size */
 	long		ffactor;		/* Fill factor */
-	long		(*hash) (void *key, int keysize); /* Hash Function */
+	long		(*hash) (void *key, int keysize);		/* Hash Function */
 	long		keysize;		/* hash key length in bytes */
 	long		entrysize;		/* total user element size in bytes */
 	long		max_dsize;		/* limit to dsize if directory size is
 								 * limited */
-	void	   *(*alloc) (Size);/* memory allocation function */
+	void	   *(*alloc) (Size);		/* memory allocation function */
 	HASHSEGMENT *dir;			/* directory of segment starts */
-	HASHHDR	   *hctl;			/* location of header in shared mem */
+	HASHHDR    *hctl;			/* location of header in shared mem */
 	MemoryContext hcxt;			/* memory context to use for allocations */
 } HASHCTL;
 
@@ -131,11 +132,11 @@ typedef struct HASHCTL
 /* hash_search operations */
 typedef enum
 {
-	HASH_FIND,
-	HASH_ENTER,
-	HASH_REMOVE,
-	HASH_FIND_SAVE,
-	HASH_REMOVE_SAVED
+				HASH_FIND,
+				HASH_ENTER,
+				HASH_REMOVE,
+				HASH_FIND_SAVE,
+				HASH_REMOVE_SAVED
 } HASHACTION;
 
 /* hash_seq status (should be considered an opaque type by callers) */
@@ -150,7 +151,7 @@ typedef struct
  * prototypes for functions in dynahash.c
  */
 extern HTAB *hash_create(const char *tabname, long nelem,
-						 HASHCTL *info, int flags);
+			HASHCTL *info, int flags);
 extern void hash_destroy(HTAB *hashp);
 extern void hash_stats(const char *where, HTAB *hashp);
 extern void *hash_search(HTAB *hashp, void *keyPtr, HASHACTION action,
@@ -165,5 +166,4 @@ extern long hash_select_dirsize(long num_entries);
  */
 extern long string_hash(void *key, int keysize);
 extern long tag_hash(void *key, int keysize);
-
 #endif	 /* HSEARCH_H */

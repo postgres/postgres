@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: makefuncs.h,v 1.27 2001/01/24 19:43:25 momjian Exp $
+ * $Id: makefuncs.h,v 1.28 2001/10/25 05:50:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,5 +45,4 @@ extern Const *makeConst(Oid consttype,
 extern Const *makeNullConst(Oid consttype);
 
 extern Attr *makeAttr(char *relname, char *attname);
-
 #endif	 /* MAKEFUNC_H */

@@ -45,28 +45,27 @@
 #include "dlg_specific.h"
 
 /* prototypes */
-void		dconn_get_connect_attributes(const UCHAR FAR *connect_string, ConnInfo *ci);
-static void	dconn_get_common_attributes(const UCHAR FAR *connect_string, ConnInfo *ci);
+void		dconn_get_connect_attributes(const UCHAR FAR * connect_string, ConnInfo * ci);
+static void dconn_get_common_attributes(const UCHAR FAR * connect_string, ConnInfo * ci);
 
 #ifdef WIN32
 BOOL FAR PASCAL dconn_FDriverConnectProc(HWND hdlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
-RETCODE		dconn_DoDialog(HWND hwnd, ConnInfo *ci);
+RETCODE		dconn_DoDialog(HWND hwnd, ConnInfo * ci);
 
-extern HINSTANCE NEAR s_hModule;/* Saved module handle. */
-
+extern HINSTANCE NEAR s_hModule;		/* Saved module handle. */
 #endif
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_DriverConnect(
-				 HDBC hdbc,
-				 HWND hwnd,
-				 UCHAR FAR *szConnStrIn,
-				 SWORD cbConnStrIn,
-				 UCHAR FAR *szConnStrOut,
-				 SWORD cbConnStrOutMax,
-				 SWORD FAR *pcbConnStrOut,
-				 UWORD fDriverCompletion)
+					HDBC hdbc,
+					HWND hwnd,
+					UCHAR FAR * szConnStrIn,
+					SWORD cbConnStrIn,
+					UCHAR FAR * szConnStrOut,
+					SWORD cbConnStrOutMax,
+					SWORD FAR * pcbConnStrOut,
+					UWORD fDriverCompletion)
 {
 	static char *func = "PGAPI_DriverConnect";
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
@@ -74,7 +73,6 @@ PGAPI_DriverConnect(
 
 #ifdef WIN32
 	RETCODE		dialog_result;
-
 #endif
 	RETCODE		result;
 	char		connStrIn[MAX_CONNECT_STRING];
@@ -208,13 +206,12 @@ dialog:
 
 	lenStrout = cbConnStrOutMax;
 	if (conn->ms_jet && lenStrout > 255)
-		lenStrout = 255; 
+		lenStrout = 255;
 	makeConnectString(connStrOut, ci, lenStrout);
 	len = strlen(connStrOut);
 
 	if (szConnStrOut)
 	{
-
 		/*
 		 * Return the completed string to the caller. The correct method
 		 * is to only construct the connect string if a dialog was put up,
@@ -228,7 +225,8 @@ dialog:
 
 		if (len >= cbConnStrOutMax)
 		{
-			int	clen;
+			int			clen;
+
 			for (clen = strlen(szConnStrOut) - 1; clen >= 0 && szConnStrOut[clen] != ';'; clen--)
 				szConnStrOut[clen] = '\0';
 			result = SQL_SUCCESS_WITH_INFO;
@@ -251,7 +249,7 @@ dialog:
 
 #ifdef WIN32
 RETCODE
-dconn_DoDialog(HWND hwnd, ConnInfo *ci)
+dconn_DoDialog(HWND hwnd, ConnInfo * ci)
 {
 	int			dialog_result;
 
@@ -327,7 +325,7 @@ dconn_FDriverConnectProc(
 				case IDC_DRIVER:
 					ci = (ConnInfo *) GetWindowLong(hdlg, DWL_USER);
 					DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DRV),
-								hdlg, driver_optionsProc, (LPARAM) ci);
+								   hdlg, driver_optionsProc, (LPARAM) ci);
 					break;
 
 				case IDC_DATASOURCE:
@@ -340,12 +338,11 @@ dconn_FDriverConnectProc(
 
 	return FALSE;
 }
-
 #endif	 /* WIN32 */
 
 
 void
-dconn_get_connect_attributes(const UCHAR FAR *connect_string, ConnInfo *ci)
+dconn_get_connect_attributes(const UCHAR FAR * connect_string, ConnInfo * ci)
 {
 	char	   *our_connect_string;
 	char	   *pair,
@@ -357,7 +354,7 @@ dconn_get_connect_attributes(const UCHAR FAR *connect_string, ConnInfo *ci)
 	memset(ci, 0, sizeof(ConnInfo));
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 	ci->updatable_cursors = 1;
-#endif /* DRIVER_CURSOR_IMPLEMENT */
+#endif	 /* DRIVER_CURSOR_IMPLEMENT */
 
 	our_connect_string = strdup(connect_string);
 	strtok_arg = our_connect_string;
@@ -394,7 +391,7 @@ dconn_get_connect_attributes(const UCHAR FAR *connect_string, ConnInfo *ci)
 }
 
 static void
-dconn_get_common_attributes(const UCHAR FAR *connect_string, ConnInfo *ci)
+dconn_get_common_attributes(const UCHAR FAR * connect_string, ConnInfo * ci)
 {
 	char	   *our_connect_string;
 	char	   *pair,

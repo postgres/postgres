@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.20 2001/01/24 19:43:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.21 2001/10/25 05:49:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,6 @@ scanstr(char *s)
 	{
 		if (s[i] == '\'')
 		{
-
 			/*
 			 * Note: if scanner is working right, unescaped quotes can
 			 * only appear in pairs, so there should be another character.

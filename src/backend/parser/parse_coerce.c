@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.63 2001/10/04 17:52:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.64 2001/10/25 05:49:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,6 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 	}
 	else if (inputTypeId == UNKNOWNOID && IsA(node, Const))
 	{
-
 		/*
 		 * Input is a string constant with previously undetermined type.
 		 * Apply the target type's typinput function to it to produce a
@@ -90,7 +89,6 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 	}
 	else if (IS_BINARY_COMPATIBLE(inputTypeId, targetTypeId))
 	{
-
 		/*
 		 * We don't really need to do a conversion, but we do need to
 		 * attach a RelabelType node so that the expression will be seen
@@ -118,7 +116,6 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 	}
 	else
 	{
-
 		/*
 		 * Otherwise, find the appropriate type conversion function
 		 * (caller should have determined that there is one), and generate
@@ -240,7 +237,7 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 		oid_array[0] = inputTypeId;
 
 		ftup = SearchSysCache(PROCNAME,
-							  PointerGetDatum(typeidTypeName(targetTypeId)),
+						   PointerGetDatum(typeidTypeName(targetTypeId)),
 							  Int32GetDatum(1),
 							  PointerGetDatum(oid_array),
 							  0);
@@ -324,7 +321,7 @@ coerce_type_typmod(ParseState *pstate, Node *node,
  *		(AND, OR, NOT, etc).
  *
  * If successful, update *pnode to be the transformed argument (if any
- * transformation is needed), and return TRUE.  If fail, return FALSE.
+ * transformation is needed), and return TRUE.	If fail, return FALSE.
  * (The caller must check for FALSE and emit a suitable error message.)
  */
 bool
@@ -336,7 +333,7 @@ coerce_to_boolean(ParseState *pstate, Node **pnode)
 	if (inputTypeId == BOOLOID)
 		return true;			/* no work */
 	targetTypeId = BOOLOID;
-	if (! can_coerce_type(1, &inputTypeId, &targetTypeId))
+	if (!can_coerce_type(1, &inputTypeId, &targetTypeId))
 		return false;			/* fail, but let caller choose error msg */
 	*pnode = coerce_type(pstate, *pnode, inputTypeId, targetTypeId, -1);
 	return true;
@@ -384,7 +381,6 @@ select_common_type(List *typeids, const char *context)
 			}
 			else if (TypeCategory(ntype) != pcategory)
 			{
-
 				/*
 				 * both types in different categories? then not much
 				 * hope...
@@ -396,7 +392,6 @@ select_common_type(List *typeids, const char *context)
 					 && !IsPreferredType(pcategory, ptype)
 					 && can_coerce_type(1, &ptype, &ntype))
 			{
-
 				/*
 				 * new one is preferred and can convert? then take it...
 				 */

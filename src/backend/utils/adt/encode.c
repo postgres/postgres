@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/encode.c,v 1.3 2001/09/30 22:03:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/encode.c,v 1.4 2001/10/25 05:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,13 +20,13 @@
 
 struct pg_encoding
 {
-	unsigned		(*encode_len) (const uint8 *data, unsigned dlen);
-	unsigned		(*decode_len) (const uint8 *data, unsigned dlen);
-	unsigned		(*encode) (const uint8 *data, unsigned dlen, uint8 *res);
-	unsigned		(*decode) (const uint8 *data, unsigned dlen, uint8 *res);
+	unsigned	(*encode_len) (const uint8 *data, unsigned dlen);
+	unsigned	(*decode_len) (const uint8 *data, unsigned dlen);
+	unsigned	(*encode) (const uint8 *data, unsigned dlen, uint8 *res);
+	unsigned	(*decode) (const uint8 *data, unsigned dlen, uint8 *res);
 };
 
-static struct pg_encoding * pg_find_encoding(const char *name);
+static struct pg_encoding *pg_find_encoding(const char *name);
 
 /*
  * SQL functions.
@@ -39,7 +39,9 @@ binary_encode(PG_FUNCTION_ARGS)
 	Datum		name = PG_GETARG_DATUM(1);
 	text	   *result;
 	char	   *namebuf;
-	int			datalen, resultlen, res;
+	int			datalen,
+				resultlen,
+				res;
 	struct pg_encoding *enc;
 
 	datalen = VARSIZE(data) - VARHDRSZ;
@@ -70,8 +72,10 @@ binary_decode(PG_FUNCTION_ARGS)
 	text	   *data = PG_GETARG_TEXT_P(0);
 	Datum		name = PG_GETARG_DATUM(1);
 	bytea	   *result;
-	char		*namebuf;
-	int			datalen, resultlen, res;
+	char	   *namebuf;
+	int			datalen,
+				resultlen,
+				res;
 	struct pg_encoding *enc;
 
 	datalen = VARSIZE(data) - VARHDRSZ;
@@ -115,9 +119,9 @@ static const int8 hexlookup[128] = {
 };
 
 static unsigned
-hex_encode(const uint8 * src, unsigned len, uint8 * dst)
+hex_encode(const uint8 *src, unsigned len, uint8 *dst)
 {
-	const uint8	   *end = src + len;
+	const uint8 *end = src + len;
 
 	while (src < end)
 	{
@@ -131,7 +135,7 @@ hex_encode(const uint8 * src, unsigned len, uint8 * dst)
 static uint8
 get_hex(unsigned c)
 {
-	int		res = -1;
+	int			res = -1;
 
 	if (c > 0 && c < 127)
 		res = hexlookup[c];
@@ -139,11 +143,11 @@ get_hex(unsigned c)
 	if (res < 0)
 		elog(ERROR, "Bad hex code: '%c'", c);
 
-	return (uint8)res;
+	return (uint8) res;
 }
 
 static unsigned
-hex_decode(const uint8 * src, unsigned len, uint8 * dst)
+hex_decode(const uint8 *src, unsigned len, uint8 *dst)
 {
 	const uint8 *s,
 			   *srcend;
@@ -172,13 +176,13 @@ hex_decode(const uint8 * src, unsigned len, uint8 * dst)
 }
 
 static unsigned
-hex_enc_len(const uint8 * src, unsigned srclen)
+hex_enc_len(const uint8 *src, unsigned srclen)
 {
 	return srclen << 1;
 }
 
 static unsigned
-hex_dec_len(const uint8 * src, unsigned srclen)
+hex_dec_len(const uint8 *src, unsigned srclen)
 {
 	return srclen >> 1;
 }
@@ -202,7 +206,7 @@ static const int8 b64lookup[128] = {
 };
 
 static unsigned
-b64_encode(const uint8 * src, unsigned len, uint8 * dst)
+b64_encode(const uint8 *src, unsigned len, uint8 *dst)
 {
 	uint8	   *p,
 			   *lend = dst + 76;
@@ -249,9 +253,9 @@ b64_encode(const uint8 * src, unsigned len, uint8 * dst)
 }
 
 static unsigned
-b64_decode(const uint8 * src, unsigned len, uint8 * dst)
+b64_decode(const uint8 *src, unsigned len, uint8 *dst)
 {
-	const char	   *srcend = src + len,
+	const char *srcend = src + len,
 			   *s = src;
 	uint8	   *p = dst;
 	unsigned	c;
@@ -281,7 +285,8 @@ b64_decode(const uint8 * src, unsigned len, uint8 * dst)
 			}
 			b = 0;
 		}
-		else {
+		else
+		{
 			b = -1;
 			if (c > 0 && c < 127)
 				b = b64lookup[c];
@@ -311,14 +316,14 @@ b64_decode(const uint8 * src, unsigned len, uint8 * dst)
 
 
 static unsigned
-b64_enc_len(const uint8 * src, unsigned srclen)
+b64_enc_len(const uint8 *src, unsigned srclen)
 {
 	/* 3 bytes will be converted to 4, linefeed after 76 chars */
 	return (srclen + 2) * 4 / 3 + srclen / (76 * 3 / 4);
 }
 
 static unsigned
-b64_dec_len(const uint8 * src, unsigned srclen)
+b64_dec_len(const uint8 *src, unsigned srclen)
 {
 	return (srclen * 3) >> 2;
 }
@@ -327,10 +332,10 @@ b64_dec_len(const uint8 * src, unsigned srclen)
  * Escape
  * Minimally escape bytea to text.
  * De-escape text to bytea.
- * 
+ *
  * Only two characters are escaped:
  * \0 (null) and \\ (backslash)
- * 
+ *
  * De-escapes \\ and any \### octal
  */
 
@@ -340,9 +345,9 @@ b64_dec_len(const uint8 * src, unsigned srclen)
 static unsigned
 esc_encode(const uint8 *src, unsigned srclen, uint8 *dst)
 {
-	const uint8	   *end = src + srclen;
-	uint8			*rp = dst;
-	int				len = 0;
+	const uint8 *end = src + srclen;
+	uint8	   *rp = dst;
+	int			len = 0;
 
 	while (src < end)
 	{
@@ -377,22 +382,20 @@ esc_encode(const uint8 *src, unsigned srclen, uint8 *dst)
 static unsigned
 esc_decode(const uint8 *src, unsigned srclen, uint8 *dst)
 {
-	const uint8		*end = src + srclen;
-	uint8			*rp = dst;
-	int				len = 0;
+	const uint8 *end = src + srclen;
+	uint8	   *rp = dst;
+	int			len = 0;
 
 	while (src < end)
 	{
 		if (src[0] != '\\')
-		{
 			*rp++ = *src++;
-		}
-		else if	( src+3 < end &&
-					(src[1] >= '0' && src[1] <= '3') &&
-					(src[2] >= '0' && src[2] <= '7') &&
-					(src[3] >= '0' && src[3] <= '7') )
+		else if (src + 3 < end &&
+				 (src[1] >= '0' && src[1] <= '3') &&
+				 (src[2] >= '0' && src[2] <= '7') &&
+				 (src[3] >= '0' && src[3] <= '7'))
 		{
-			int				val;
+			int			val;
 
 			val = VAL(src[1]);
 			val <<= 3;
@@ -401,8 +404,8 @@ esc_decode(const uint8 *src, unsigned srclen, uint8 *dst)
 			*rp++ = val + VAL(src[3]);
 			src += 4;
 		}
-		else if ( src+1 < end &&
-					(src[1] == '\\') )
+		else if (src + 1 < end &&
+				 (src[1] == '\\'))
 		{
 			*rp++ = '\\';
 			src += 2;
@@ -410,8 +413,8 @@ esc_decode(const uint8 *src, unsigned srclen, uint8 *dst)
 		else
 		{
 			/*
-			 * One backslash, not followed by ### valid octal.
-			 * Should never get here, since esc_dec_len does same check.
+			 * One backslash, not followed by ### valid octal. Should
+			 * never get here, since esc_dec_len does same check.
 			 */
 			elog(ERROR, "decode: Bad input string for type bytea");
 		}
@@ -425,8 +428,8 @@ esc_decode(const uint8 *src, unsigned srclen, uint8 *dst)
 static unsigned
 esc_enc_len(const uint8 *src, unsigned srclen)
 {
-	const uint8		*end = src + srclen;
-	int				len = 0;
+	const uint8 *end = src + srclen;
+	int			len = 0;
 
 	while (src < end)
 	{
@@ -446,27 +449,25 @@ esc_enc_len(const uint8 *src, unsigned srclen)
 static unsigned
 esc_dec_len(const uint8 *src, unsigned srclen)
 {
-	const uint8		*end = src + srclen;
-	int				len = 0;
+	const uint8 *end = src + srclen;
+	int			len = 0;
 
 	while (src < end)
 	{
 		if (src[0] != '\\')
-		{
 			src++;
-		}
-		else if	( src+3 < end &&
-					(src[1] >= '0' && src[1] <= '3') &&
-					(src[2] >= '0' && src[2] <= '7') &&
-					(src[3] >= '0' && src[3] <= '7') )
+		else if (src + 3 < end &&
+				 (src[1] >= '0' && src[1] <= '3') &&
+				 (src[2] >= '0' && src[2] <= '7') &&
+				 (src[3] >= '0' && src[3] <= '7'))
 		{
 			/*
 			 * backslash + valid octal
 			 */
 			src += 4;
 		}
-		else if ( src+1 < end &&
-					(src[1] == '\\') )
+		else if (src + 1 < end &&
+				 (src[1] == '\\'))
 		{
 			/*
 			 * two backslashes = backslash
@@ -490,20 +491,43 @@ esc_dec_len(const uint8 *src, unsigned srclen)
  * Common
  */
 
-static struct {
+static struct
+{
 	const char *name;
 	struct pg_encoding enc;
-} enclist[] = {
-	{"hex", { hex_enc_len, hex_dec_len, hex_encode, hex_decode }},
-	{"base64", { b64_enc_len, b64_dec_len, b64_encode, b64_decode }},
-	{"escape", { esc_enc_len, esc_dec_len, esc_encode, esc_decode }},
-	{NULL, { NULL, NULL, NULL, NULL } }
+}			enclist[] =
+
+{
+	{
+		"hex",
+		{
+			hex_enc_len, hex_dec_len, hex_encode, hex_decode
+		}
+	},
+	{
+		"base64",
+		{
+			b64_enc_len, b64_dec_len, b64_encode, b64_decode
+		}
+	},
+	{
+		"escape",
+		{
+			esc_enc_len, esc_dec_len, esc_encode, esc_decode
+		}
+	},
+	{
+		NULL,
+		{
+			NULL, NULL, NULL, NULL
+		}
+	}
 };
 
 static struct pg_encoding *
 pg_find_encoding(const char *name)
 {
-	int i;
+	int			i;
 
 	for (i = 0; enclist[i].name; i++)
 		if (strcasecmp(enclist[i].name, name) == 0)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/recipe.c,v 1.13 2001/03/22 06:16:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/recipe.c,v 1.14 2001/10/25 05:49:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -431,7 +431,6 @@ tg_replaceNumberedParam(Node *expression,
 	{
 		case T_Param:
 			{
-
 				/*
 				 * the node is a parameter, substitute the entry from the
 				 * target list of the child that corresponds to the
@@ -445,7 +444,6 @@ tg_replaceNumberedParam(Node *expression,
 
 					if (p->param_tlist)
 					{
-
 						/*
 						 * we have a parameter with an attribute like
 						 * $N.foo so replace it with a new var node
@@ -506,7 +504,6 @@ tg_replaceNumberedParam(Node *expression,
 			break;
 		case T_Expr:
 			{
-
 				/*
 				 * the node is an expression, we need to recursively call
 				 * ourselves until we find parameter nodes
@@ -578,7 +575,6 @@ tg_rewriteParamsInExpr(Node *expression, QueryTreeList * inputQlist)
 	{
 		case T_Param:
 			{
-
 				/*
 				 * the node is a parameter, substitute the entry from the
 				 * target list of the child that corresponds to the
@@ -594,7 +590,6 @@ tg_rewriteParamsInExpr(Node *expression, QueryTreeList * inputQlist)
 
 					if (p->param_tlist)
 					{
-
 						/*
 						 * we have a parameter with an attribute like
 						 * $N.foo so match the resname "foo" against the
@@ -634,7 +629,6 @@ tg_rewriteParamsInExpr(Node *expression, QueryTreeList * inputQlist)
 			break;
 		case T_Expr:
 			{
-
 				/*
 				 * the node is an expression, we need to recursively call
 				 * ourselves until we find parameter nodes
@@ -834,7 +828,6 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 		{
 			case TG_SQL:
 				{
-
 					/*
 					 * for SQL ingredients, the SQL query is contained in
 					 * the 'src' field
@@ -940,7 +933,6 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 	}
 	else if (n->nodeType == TG_EYE_NODE)
 	{
-
 		/*
 		 * if we hit an eye, we need to stop and make what we have into a
 		 * subrecipe query block
@@ -949,7 +941,6 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 	}
 	else if (n->nodeType == TG_TEE_NODE)
 	{
-
 		/*
 		 * if we hit a tee, check to see if the parsing has been done for
 		 * this tee already by the other parent
@@ -958,7 +949,6 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 		rel = RelationNameGetRelation(n->nodeName);
 		if (RelationIsValid(rel))
 		{
-
 			/*
 			 * this tee has already been visited, no need to do any
 			 * further processing
@@ -1014,7 +1004,6 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 
 			if (RelationIsValid(rel))
 			{
-
 				/*
 				 * for complex types, create new relation with the same
 				 * tuple descriptor as the output table type
@@ -1028,7 +1017,6 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 			}
 			else
 			{
-
 				/*
 				 * we have to create a relation with one attribute of the
 				 * simple base type.  That attribute will have an attr
@@ -1197,7 +1185,6 @@ replaceSeqScan(Plan *plan, Plan *parent,
 		snode = (Scan *) plan;
 		if (snode->scanrelid == rt_ind)
 		{
-
 			/*
 			 * found the sequential scan that should be replaced with the
 			 * tplan.
@@ -1326,7 +1313,6 @@ replaceTeeScans(Plan *plan, Query *parsetree, TeeInfo * teeInfo)
 
 	return plan;
 }
-
 
 
 #endif	 /* TIOGA */

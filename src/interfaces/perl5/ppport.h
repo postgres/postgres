@@ -237,7 +237,6 @@ newRV_noinc(SV * sv)
 static
 #else
 extern void newCONSTSUB _((HV * stash, char *name, SV * sv));
-
 #endif
 
 #if defined(NEED_newCONSTSUB) || defined(NEED_newCONSTSUB_GLOBAL)
@@ -284,10 +283,7 @@ SV		   *sv;
 	PL_curstash = old_curstash;
 	PL_curcop->cop_line = oldline;
 }
-
 #endif
-
 #endif	 /* newCONSTSUB */
-
 
 #endif	 /* _P_P_PORTABILITY_H_ */

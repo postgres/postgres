@@ -8,7 +8,7 @@
  * <opcamid, opcname> --- that is, there is a row for each valid combination
  * of opclass name and index access method type.  This row specifies the
  * expected input data type for the opclass (the type of the heap column,
- * or the function output type in the case of a functional index).  Note
+ * or the function output type in the case of a functional index).	Note
  * that types binary-compatible with the specified type will be accepted too.
  *
  * For a given <opcamid, opcintype> pair, there can be at most one row that
@@ -16,17 +16,17 @@
  * such an index.
  *
  * Normally opckeytype = InvalidOid (zero), indicating that the data stored
- * in the index is the same as the input data.  If opckeytype is nonzero
+ * in the index is the same as the input data.	If opckeytype is nonzero
  * then it indicates that a conversion step is needed to produce the stored
  * index data, which will be of type opckeytype (which might be the same or
- * different from the input data).  Performing such a conversion is the
+ * different from the input data).	Performing such a conversion is the
  * responsibility of the index access method --- not all AMs support this.
- * 
+ *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_opclass.h,v 1.40 2001/09/28 08:09:13 thomas Exp $
+ * $Id: pg_opclass.h,v 1.41 2001/10/25 05:49:57 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -127,8 +127,8 @@ DATA(insert OID = 1994 (	403		text_ops		  25	t	0 ));
 DATA(insert OID = 1995 (	405		text_ops		  25	t	0 ));
 DATA(insert OID = 1996 (	403		time_ops		1083	t	0 ));
 DATA(insert OID = 1997 (	405		time_ops		1083	t	0 ));
-DATA(insert OID = 1998 (	403		timestamptz_ops	1184	t	0 ));
-DATA(insert OID = 1999 (	405		timestamptz_ops	1184	t	0 ));
+DATA(insert OID = 1998 (	403		timestamptz_ops 1184	t	0 ));
+DATA(insert OID = 1999 (	405		timestamptz_ops 1184	t	0 ));
 DATA(insert OID = 2000 (	403		timetz_ops		1266	t	0 ));
 DATA(insert OID = 2001 (	405		timetz_ops		1266	t	0 ));
 DATA(insert OID = 2002 (	403		varbit_ops		1562	t	0 ));
@@ -136,5 +136,4 @@ DATA(insert OID = 2003 (	403		varchar_ops		1043	t	0 ));
 DATA(insert OID = 2004 (	405		varchar_ops		1043	t	0 ));
 DATA(insert OID = 2039 (	403		timestamp_ops	1114	t	0 ));
 DATA(insert OID = 2040 (	405		timestamp_ops	1114	t	0 ));
-
 #endif	 /* PG_OPCLASS_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.59 2001/10/23 17:38:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.60 2001/10/25 05:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ static int _SPI_execute_plan(_SPI_plan *plan,
 				  Datum *Values, char *Nulls, int tcount);
 
 static void _SPI_cursor_operation(Portal portal, bool forward, int count,
-					CommandDest dest);
+					  CommandDest dest);
 
 static _SPI_plan *_SPI_copy_plan(_SPI_plan *plan, int location);
 
@@ -51,7 +51,6 @@ static bool _SPI_checktuples(void);
 extern int	ShowExecutorStats;
 extern void ResetUsage(void);
 extern void ShowUsage(void);
-
 #endif
 
 /* =================== interface functions =================== */
@@ -298,7 +297,7 @@ SPI_saveplan(void *plan)
 int
 SPI_freeplan(void *plan)
 {
-	_SPI_plan  *spiplan = (_SPI_plan *)plan;
+	_SPI_plan  *spiplan = (_SPI_plan *) plan;
 
 	if (plan == NULL)
 		return SPI_ERROR_ARGUMENT;
@@ -444,7 +443,7 @@ SPI_fnumber(TupleDesc tupdesc, char *fname)
 			return res + 1;
 	}
 
-	sysatt = SystemAttributeByName(fname, true /* "oid" will be accepted */);
+	sysatt = SystemAttributeByName(fname, true /* "oid" will be accepted */ );
 	if (sysatt != NULL)
 		return sysatt->attnum;
 
@@ -673,26 +672,26 @@ SPI_freetuptable(SPITupleTable *tuptable)
 Portal
 SPI_cursor_open(char *name, void *plan, Datum *Values, char *Nulls)
 {
-	static int			unnamed_portal_count = 0;
+	static int	unnamed_portal_count = 0;
 
-	_SPI_plan		   *spiplan = (_SPI_plan *)plan;
-	List			   *qtlist = spiplan->qtlist;
-	List			   *ptlist = spiplan->ptlist;
-	Query			   *queryTree;
-	Plan			   *planTree;
-	QueryDesc		   *queryDesc;
-	EState			   *eState;
-	TupleDesc			attinfo;
-	MemoryContext		oldcontext;
-	Portal				portal;
-	char				portalname[64];
-	int					k;
+	_SPI_plan  *spiplan = (_SPI_plan *) plan;
+	List	   *qtlist = spiplan->qtlist;
+	List	   *ptlist = spiplan->ptlist;
+	Query	   *queryTree;
+	Plan	   *planTree;
+	QueryDesc  *queryDesc;
+	EState	   *eState;
+	TupleDesc	attinfo;
+	MemoryContext oldcontext;
+	Portal		portal;
+	char		portalname[64];
+	int			k;
 
 	/* Ensure that the plan contains only one regular SELECT query */
 	if (length(ptlist) != 1)
 		elog(ERROR, "cannot open multi-query plan as cursor");
-	queryTree = (Query *)lfirst(qtlist);
-	planTree  = (Plan *)lfirst(ptlist);
+	queryTree = (Query *) lfirst(qtlist);
+	planTree = (Plan *) lfirst(ptlist);
 
 	if (queryTree->commandType != CMD_SELECT)
 		elog(ERROR, "plan in SPI_cursor_open() is not a SELECT");
@@ -712,7 +711,7 @@ SPI_cursor_open(char *name, void *plan, Datum *Values, char *Nulls)
 	{
 		for (;;)
 		{
-		    unnamed_portal_count++;
+			unnamed_portal_count++;
 			if (unnamed_portal_count < 0)
 				unnamed_portal_count = 0;
 			sprintf(portalname, "<unnamed cursor %d>", unnamed_portal_count);
@@ -735,30 +734,31 @@ SPI_cursor_open(char *name, void *plan, Datum *Values, char *Nulls)
 
 	/* Switch to portals memory and copy the parsetree and plan to there */
 	oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
-	queryTree  = copyObject(queryTree);
-	planTree   = copyObject(planTree);
+	queryTree = copyObject(queryTree);
+	planTree = copyObject(planTree);
 
 	/* Modify the parsetree to be a cursor */
 	queryTree->isPortal = true;
-	queryTree->into     = pstrdup(name);
+	queryTree->into = pstrdup(name);
 	queryTree->isBinary = false;
-	
+
 	/* Create the QueryDesc object and the executor state */
 	queryDesc = CreateQueryDesc(queryTree, planTree, SPI);
-	eState    = CreateExecutorState();
+	eState = CreateExecutorState();
 
 	/* If the plan has parameters, put them into the executor state */
 	if (spiplan->nargs > 0)
 	{
-		ParamListInfo	paramLI = (ParamListInfo) palloc((spiplan->nargs + 1) *
-									sizeof(ParamListInfoData));
+		ParamListInfo paramLI = (ParamListInfo) palloc((spiplan->nargs + 1) *
+											  sizeof(ParamListInfoData));
+
 		eState->es_param_list_info = paramLI;
 		for (k = 0; k < spiplan->nargs; paramLI++, k++)
 		{
-			paramLI->kind	= PARAM_NUM;
-			paramLI->id		= k + 1;
-			paramLI->isnull	= (Nulls && Nulls[k] == 'n');
-			paramLI->value	= Values[k];
+			paramLI->kind = PARAM_NUM;
+			paramLI->id = k + 1;
+			paramLI->isnull = (Nulls && Nulls[k] == 'n');
+			paramLI->value = Values[k];
 		}
 		paramLI->kind = PARAM_INVALID;
 	}
@@ -872,7 +872,7 @@ spi_printtup(HeapTuple tuple, TupleDesc tupdesc, DestReceiver *self)
 		tuptable->vals = (HeapTuple *) palloc(tuptable->alloced * sizeof(HeapTuple));
 		tuptable->tupdesc = CreateTupleDescCopy(tupdesc);
 	}
-	else 
+	else
 	{
 		MemoryContextSwitchTo(tuptable->tuptabcxt);
 
@@ -881,7 +881,7 @@ spi_printtup(HeapTuple tuple, TupleDesc tupdesc, DestReceiver *self)
 			tuptable->free = 256;
 			tuptable->alloced += tuptable->free;
 			tuptable->vals = (HeapTuple *) repalloc(tuptable->vals,
-									  tuptable->alloced * sizeof(HeapTuple));
+								  tuptable->alloced * sizeof(HeapTuple));
 		}
 	}
 
@@ -1171,12 +1171,12 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
  */
 static void
 _SPI_cursor_operation(Portal portal, bool forward, int count,
-					CommandDest dest)
+					  CommandDest dest)
 {
-    QueryDesc	   *querydesc;
-	EState		   *estate;
-	MemoryContext	oldcontext;
-	CommandDest		olddest;
+	QueryDesc  *querydesc;
+	EState	   *estate;
+	MemoryContext oldcontext;
+	CommandDest olddest;
 
 	/* Check that the portal is valid */
 	if (!PortalIsValid(portal))
@@ -1193,8 +1193,8 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 
 	/* Switch to the portals memory context */
 	oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
-	querydesc  = PortalGetQueryDesc(portal);
-	estate     = PortalGetState(portal);
+	querydesc = PortalGetQueryDesc(portal);
+	estate = PortalGetState(portal);
 
 	/* Save the queries command destination and set it to SPI (for fetch) */
 	/* or None (for move) */
@@ -1206,7 +1206,7 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 	{
 		if (!portal->atEnd)
 		{
-			ExecutorRun(querydesc, estate, EXEC_FOR, (long)count);
+			ExecutorRun(querydesc, estate, EXEC_FOR, (long) count);
 			_SPI_current->processed = estate->es_processed;
 			if (estate->es_processed > 0)
 				portal->atStart = false;
@@ -1237,7 +1237,7 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 
 	/* Put the result into place for access by caller */
 	SPI_processed = _SPI_current->processed;
-	SPI_tuptable  = _SPI_current->tuptable;
+	SPI_tuptable = _SPI_current->tuptable;
 
 	/* Pop the SPI stack */
 	_SPI_end_call(true);
@@ -1278,7 +1278,6 @@ _SPI_begin_call(bool execmem)
 static int
 _SPI_end_call(bool procmem)
 {
-
 	/*
 	 * We' returning to procedure where _SPI_curid == _SPI_connected - 1
 	 */

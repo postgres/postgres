@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.53 2001/09/29 04:02:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.54 2001/10/25 05:49:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,21 +33,21 @@ typedef struct f_smgr
 	int			(*smgr_create) (Relation reln);
 	int			(*smgr_unlink) (RelFileNode rnode);
 	int			(*smgr_extend) (Relation reln, BlockNumber blocknum,
-								char *buffer);
+											char *buffer);
 	int			(*smgr_open) (Relation reln);
 	int			(*smgr_close) (Relation reln);
 	int			(*smgr_read) (Relation reln, BlockNumber blocknum,
-							  char *buffer);
+										  char *buffer);
 	int			(*smgr_write) (Relation reln, BlockNumber blocknum,
-							   char *buffer);
+										   char *buffer);
 	int			(*smgr_flush) (Relation reln, BlockNumber blocknum,
-							   char *buffer);
+										   char *buffer);
 	int			(*smgr_blindwrt) (RelFileNode rnode, BlockNumber blkno,
-								  char *buffer, bool dofsync);
+											  char *buffer, bool dofsync);
 	int			(*smgr_markdirty) (Relation reln, BlockNumber blkno);
 	int			(*smgr_blindmarkdirty) (RelFileNode, BlockNumber blkno);
-	BlockNumber	(*smgr_nblocks) (Relation reln);
-	BlockNumber	(*smgr_truncate) (Relation reln, BlockNumber nblocks);
+	BlockNumber (*smgr_nblocks) (Relation reln);
+	BlockNumber (*smgr_truncate) (Relation reln, BlockNumber nblocks);
 	int			(*smgr_commit) (void);	/* may be NULL */
 	int			(*smgr_abort) (void);	/* may be NULL */
 	int			(*smgr_sync) (void);
@@ -71,7 +71,6 @@ static f_smgr smgrsw[] = {
 	{mminit, mmshutdown, mmcreate, mmunlink, mmextend, mmopen, mmclose,
 		mmread, mmwrite, mmflush, mmblindwrt, mmmarkdirty, mmblindmarkdirty,
 	mmnblocks, NULL, mmcommit, mmabort},
-
 #endif
 };
 
@@ -89,7 +88,6 @@ static bool smgrwo[] = {
 	false,						/* main memory */
 #endif
 };
-
 #endif
 
 static int	NSmgr = lengthof(smgrsw);
@@ -438,9 +436,10 @@ smgrblindmarkdirty(int16 which,
 BlockNumber
 smgrnblocks(int16 which, Relation reln)
 {
-	BlockNumber		nblocks;
+	BlockNumber nblocks;
 
 	nblocks = (*(smgrsw[which].smgr_nblocks)) (reln);
+
 	/*
 	 * NOTE: if a relation ever did grow to 2^32-1 blocks, this code would
 	 * fail --- but that's a good thing, because it would stop us from
@@ -464,15 +463,15 @@ smgrnblocks(int16 which, Relation reln)
 BlockNumber
 smgrtruncate(int16 which, Relation reln, BlockNumber nblocks)
 {
-	BlockNumber		newblks;
+	BlockNumber newblks;
 
 	newblks = nblocks;
 	if (smgrsw[which].smgr_truncate)
 	{
 		/*
 		 * Tell the free space map to forget anything it may have stored
-		 * for the about-to-be-deleted blocks.  We want to be sure it won't
-		 * return bogus block numbers later on.
+		 * for the about-to-be-deleted blocks.	We want to be sure it
+		 * won't return bogus block numbers later on.
 		 */
 		MultiRecordFreeSpace(&reln->rd_node,
 							 nblocks, MaxBlockNumber,
@@ -601,7 +600,6 @@ smgriswo(int16 smgrno)
 
 	return smgrwo[smgrno];
 }
-
 #endif
 
 void

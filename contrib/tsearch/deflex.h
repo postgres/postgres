@@ -12,12 +12,12 @@
 #define HOST		6
 #define FLOAT		7
 #define FINT		8
-#define PARTWORD 	9	
-#define NONLATINPARTWORD 	10	
-#define LATPARTWORD 	11	
-#define SPACE 		12
-#define SYMTAG 		13
-#define HTTP 		14
+#define PARTWORD	9
+#define NONLATINPARTWORD	10
+#define LATPARTWORD		11
+#define SPACE		12
+#define SYMTAG		13
+#define HTTP		14
 #define DEFISWORD	15
 #define DEFISLATWORD	16
 #define DEFISNONLATINWORD	17
@@ -25,6 +25,4 @@
 #define FILEPATH	19
 
 extern const char *descr[];
-
 #endif
-

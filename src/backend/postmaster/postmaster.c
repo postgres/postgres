@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.251 2001/10/22 19:41:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.252 2001/10/25 05:49:40 momjian Exp $
  *
  * NOTES
  *
@@ -116,6 +116,7 @@
 sigset_t	UnBlockSig,
 			BlockSig,
 			AuthBlockSig;
+
 #else
 int			UnBlockSig,
 			BlockSig,
@@ -223,6 +224,7 @@ static unsigned int random_seed = 0;
 extern char *optarg;
 extern int	optind,
 			opterr;
+
 #ifdef HAVE_INT_OPTRESET
 extern int	optreset;
 #endif
@@ -245,9 +247,12 @@ static void usage(const char *);
 static int	ServerLoop(void);
 static int	BackendStartup(Port *port);
 static int	ProcessStartupPacket(Port *port, bool SSLdone);
-static void	processCancelRequest(Port *port, void *pkt);
+static void processCancelRequest(Port *port, void *pkt);
 static int	initMasks(fd_set *rmask, fd_set *wmask);
-enum CAC_state { CAC_OK, CAC_STARTUP, CAC_SHUTDOWN, CAC_RECOVERY, CAC_TOOMANY };
+enum CAC_state
+{
+	CAC_OK, CAC_STARTUP, CAC_SHUTDOWN, CAC_RECOVERY, CAC_TOOMANY
+};
 static enum CAC_state canAcceptConnections(void);
 static long PostmasterRandom(void);
 static void RandomSalt(char *cryptSalt, char *md5Salt);
@@ -255,7 +260,8 @@ static void SignalChildren(int signal);
 static int	CountChildren(void);
 static bool CreateOptsFile(int argc, char *argv[]);
 static pid_t SSDataBase(int xlop);
-static void postmaster_error(const char *fmt, ...)
+static void
+postmaster_error(const char *fmt,...)
 /* This lets gcc check the format string for consistency. */
 __attribute__((format(printf, 1, 2)));
 
@@ -278,14 +284,14 @@ checkDataDir(const char *checkdir)
 	if (checkdir == NULL)
 	{
 		fprintf(stderr, gettext(
-			"%s does not know where to find the database system data.\n"
-			"You must specify the directory that contains the database system\n"
-			"either by specifying the -D invocation option or by setting the\n"
-			"PGDATA environment variable.\n\n"),
+			 "%s does not know where to find the database system data.\n"
+								"You must specify the directory that contains the database system\n"
+								"either by specifying the -D invocation option or by setting the\n"
+								"PGDATA environment variable.\n\n"),
 				progname);
 		ExitPostmaster(2);
 	}
-	
+
 	/*
 	 * Check if the directory has group or world access.  If so, reject.
 	 */
@@ -311,9 +317,9 @@ checkDataDir(const char *checkdir)
 	if (fp == NULL)
 	{
 		fprintf(stderr, gettext(
-			"%s does not find the database system.\n"
-			"Expected to find it in the PGDATA directory \"%s\",\n"
-			"but unable to open file \"%s\": %s\n\n"),
+								"%s does not find the database system.\n"
+				  "Expected to find it in the PGDATA directory \"%s\",\n"
+								"but unable to open file \"%s\": %s\n\n"),
 				progname, checkdir, path, strerror(errno));
 		ExitPostmaster(2);
 	}
@@ -464,6 +470,7 @@ PostmasterMain(int argc, char *argv[])
 				/* already done above */
 				break;
 			case 'd':
+
 				/*
 				 * Turn on debugging for the postmaster and the backend
 				 * servers descended from it.
@@ -583,9 +590,8 @@ PostmasterMain(int argc, char *argv[])
 	}
 
 	/*
-	 * Now that we are done processing the postmaster arguments,
-	 * reset getopt(3) library so that it will work correctly in
-	 * subprocesses.
+	 * Now that we are done processing the postmaster arguments, reset
+	 * getopt(3) library so that it will work correctly in subprocesses.
 	 */
 	optind = 1;
 #ifdef HAVE_INT_OPTRESET
@@ -649,8 +655,9 @@ PostmasterMain(int argc, char *argv[])
 		ExitPostmaster(1);
 
 	/*
-	 * Remove old temporary files.  At this point there can be no other
-	 * Postgres processes running in this directory, so this should be safe.
+	 * Remove old temporary files.	At this point there can be no other
+	 * Postgres processes running in this directory, so this should be
+	 * safe.
 	 */
 	RemovePgTempFiles();
 
@@ -725,9 +732,9 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * Reset whereToSendOutput from Debug (its starting state) to None.
 	 * This prevents elog from sending messages to stderr unless the
-	 * syslog/stderr switch permits.  We don't do this until the postmaster
-	 * is fully launched, since startup failures may as well be reported
-	 * to stderr.
+	 * syslog/stderr switch permits.  We don't do this until the
+	 * postmaster is fully launched, since startup failures may as well be
+	 * reported to stderr.
 	 */
 	whereToSendOutput = None;
 
@@ -938,8 +945,8 @@ ServerLoop(void)
 		}
 
 		/*
-		 * New connection pending on our well-known port's socket?
-		 * If so, fork a child process to deal with it.
+		 * New connection pending on our well-known port's socket? If so,
+		 * fork a child process to deal with it.
 		 */
 
 #ifdef HAVE_UNIX_SOCKETS
@@ -950,9 +957,10 @@ ServerLoop(void)
 			if (port)
 			{
 				BackendStartup(port);
+
 				/*
-				 * We no longer need the open socket or port structure
-				 * in this process
+				 * We no longer need the open socket or port structure in
+				 * this process
 				 */
 				StreamClose(port->sock);
 				ConnFree(port);
@@ -967,9 +975,10 @@ ServerLoop(void)
 			if (port)
 			{
 				BackendStartup(port);
+
 				/*
-				 * We no longer need the open socket or port structure
-				 * in this process
+				 * We no longer need the open socket or port structure in
+				 * this process
 				 */
 				StreamClose(port->sock);
 				ConnFree(port);
@@ -1083,7 +1092,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 		{
 			elog(DEBUG, "failed to send SSL negotiation response: %s",
 				 strerror(errno));
-			return STATUS_ERROR; /* close the connection */
+			return STATUS_ERROR;		/* close the connection */
 		}
 
 #ifdef USE_SSL
@@ -1131,8 +1140,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 
 	/*
 	 * Truncate given database and user names to length of a Postgres
-	 * name.  This avoids lookup failures when overlength names are
-	 * given.
+	 * name.  This avoids lookup failures when overlength names are given.
 	 */
 	if ((int) sizeof(port->database) >= NAMEDATALEN)
 		port->database[NAMEDATALEN - 1] = '\0';
@@ -1241,14 +1249,15 @@ canAcceptConnections(void)
 		return CAC_STARTUP;
 	if (FatalError)
 		return CAC_RECOVERY;
+
 	/*
 	 * Don't start too many children.
 	 *
-	 * We allow more connections than we can have backends here because
-	 * some might still be authenticating; they might fail auth, or some
-	 * existing backend might exit before the auth cycle is completed.
-	 * The exact MaxBackends limit is enforced when a new backend tries
-	 * to join the shared-inval backend array.
+	 * We allow more connections than we can have backends here because some
+	 * might still be authenticating; they might fail auth, or some
+	 * existing backend might exit before the auth cycle is completed. The
+	 * exact MaxBackends limit is enforced when a new backend tries to
+	 * join the shared-inval backend array.
 	 */
 	if (CountChildren() >= 2 * MaxBackends)
 		return CAC_TOOMANY;
@@ -1340,7 +1349,6 @@ ClosePostmasterPorts(bool pgstat_too)
 static void
 reset_shared(unsigned short port)
 {
-
 	/*
 	 * Reset assignment of shared mem and semaphore IPC keys. Doing this
 	 * means that in normal cases we'll assign the same keys on each
@@ -1529,8 +1537,10 @@ static void
 reaper(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
+
 #ifdef HAVE_WAITPID
 	int			status;			/* backend exit status */
+
 #else
 	union wait	status;			/* backend exit status */
 #endif
@@ -1552,9 +1562,10 @@ reaper(SIGNAL_ARGS)
 	{
 		exitstatus = status.w_status;
 #endif
+
 		/*
-		 * Check if this child was the statistics collector. If
-		 * so, start a new one.
+		 * Check if this child was the statistics collector. If so, start
+		 * a new one.
 		 */
 		if (pgstat_ispgstat(pid))
 		{
@@ -1843,8 +1854,8 @@ BackendStartup(Port *port)
 	MyCancelKey = PostmasterRandom();
 
 	/*
-	 * Make room for backend data structure.  Better before the fork()
-	 * so we can handle failure cleanly.
+	 * Make room for backend data structure.  Better before the fork() so
+	 * we can handle failure cleanly.
 	 */
 	bn = (Backend *) malloc(sizeof(Backend));
 	if (!bn)
@@ -1873,7 +1884,7 @@ BackendStartup(Port *port)
 
 	if (pid == 0)				/* child */
 	{
-		int		status;
+		int			status;
 
 		free(bn);
 #ifdef __BEOS__
@@ -2001,10 +2012,11 @@ DoBackend(Port *port)
 
 	/*
 	 * Initialize libpq and enable reporting of elog errors to the client.
-	 * Must do this now because authentication uses libpq to send messages.
+	 * Must do this now because authentication uses libpq to send
+	 * messages.
 	 */
 	pq_init();					/* initialize libpq to talk to client */
-	whereToSendOutput = Remote;	/* now safe to elog to client */
+	whereToSendOutput = Remote; /* now safe to elog to client */
 
 	/*
 	 * We arrange for a simple exit(0) if we receive SIGTERM or SIGQUIT
@@ -2016,9 +2028,9 @@ DoBackend(Port *port)
 	 *
 	 * PreAuthDelay is a debugging aid for investigating problems in the
 	 * authentication cycle: it can be set in postgresql.conf to allow
-	 * time to attach to the newly-forked backend with a debugger.
-	 * (See also the -W backend switch, which we allow clients to pass
-	 * through PGOPTIONS, but it is not honored until after authentication.)
+	 * time to attach to the newly-forked backend with a debugger. (See
+	 * also the -W backend switch, which we allow clients to pass through
+	 * PGOPTIONS, but it is not honored until after authentication.)
 	 */
 	pqsignal(SIGTERM, authdie);
 	pqsignal(SIGQUIT, authdie);
@@ -2028,7 +2040,7 @@ DoBackend(Port *port)
 	if (PreAuthDelay > 0)
 		sleep(PreAuthDelay);
 
-	if (! enable_sigalrm_interrupt(AuthenticationTimeout * 1000))
+	if (!enable_sigalrm_interrupt(AuthenticationTimeout * 1000))
 		elog(FATAL, "DoBackend: Unable to set timer for auth timeout");
 
 	/*
@@ -2042,7 +2054,8 @@ DoBackend(Port *port)
 
 	/*
 	 * Now that we have the user and database name, we can set the process
-	 * title for ps.  It's good to do this as early as possible in startup.
+	 * title for ps.  It's good to do this as early as possible in
+	 * startup.
 	 *
 	 * But first, we need the remote host name.
 	 */
@@ -2101,10 +2114,10 @@ DoBackend(Port *port)
 	ClientAuthentication(port); /* might not return, if failure */
 
 	/*
-	 * Done with authentication.  Disable timeout, and prevent SIGTERM/SIGQUIT
-	 * again until backend startup is complete.
+	 * Done with authentication.  Disable timeout, and prevent
+	 * SIGTERM/SIGQUIT again until backend startup is complete.
 	 */
-	if (! disable_sigalrm_interrupt())
+	if (!disable_sigalrm_interrupt())
 		elog(FATAL, "DoBackend: Unable to disable timer for auth timeout");
 	PG_SETMASK(&BlockSig);
 
@@ -2294,14 +2307,15 @@ RandomSalt(char *cryptSalt, char *md5Salt)
 
 	cryptSalt[0] = CharRemap(rand % 62);
 	cryptSalt[1] = CharRemap(rand / 62);
+
 	/*
-	 * It's okay to reuse the first random value for one of the MD5 salt bytes,
-	 * since only one of the two salts will be sent to the client.  After that
-	 * we need to compute more random bits.
+	 * It's okay to reuse the first random value for one of the MD5 salt
+	 * bytes, since only one of the two salts will be sent to the client.
+	 * After that we need to compute more random bits.
 	 *
 	 * We use % 255, sacrificing one possible byte value, so as to ensure
-	 * that all bits of the random() value participate in the result.  While
-	 * at it, add one to avoid generating any null bytes.
+	 * that all bits of the random() value participate in the result.
+	 * While at it, add one to avoid generating any null bytes.
 	 */
 	md5Salt[0] = (rand % 255) + 1;
 	rand = PostmasterRandom();
@@ -2391,7 +2405,6 @@ InitSSL(void)
 		ExitPostmaster(1);
 	}
 }
-
 #endif
 
 /*
@@ -2428,7 +2441,8 @@ SSDataBase(int xlop)
 		beos_backend_startup();
 #endif
 
-		IsUnderPostmaster = true; /* we are a postmaster subprocess now */
+		IsUnderPostmaster = true;		/* we are a postmaster subprocess
+										 * now */
 
 		/* Lose the postmaster's on-exit routines and port connections */
 		on_exit_reset();
@@ -2487,7 +2501,7 @@ SSDataBase(int xlop)
 		beos_backend_startup_failed();
 #endif
 
-		switch(xlop)
+		switch (xlop)
 		{
 			case BS_XLOG_STARTUP:
 				elog(DEBUG, "could not launch startup process (fork failure): %s",
@@ -2585,9 +2599,9 @@ CreateOptsFile(int argc, char *argv[])
 
 
 static void
-postmaster_error(const char *fmt, ...)
+postmaster_error(const char *fmt,...)
 {
-	va_list ap;
+	va_list		ap;
 
 	fprintf(stderr, "%s: ", progname);
 	va_start(ap, fmt);

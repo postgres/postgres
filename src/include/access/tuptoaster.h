@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000, PostgreSQL Development Team
  *
- * $Id: tuptoaster.h,v 1.11 2001/05/07 00:43:24 tgl Exp $
+ * $Id: tuptoaster.h,v 1.12 2001/10/25 05:49:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,6 +114,5 @@ extern Datum toast_compress_datum(Datum value);
  * ----------
  */
 extern Size toast_raw_datum_size(Datum value);
-
 
 #endif	 /* TUPTOASTER_H */

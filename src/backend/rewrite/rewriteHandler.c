@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.97 2001/07/09 23:50:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.98 2001/10/25 05:49:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,10 +33,10 @@
 
 
 static Query *rewriteRuleAction(Query *parsetree,
-								Query *rule_action,
-								Node *rule_qual,
-								int rt_index,
-								CmdType event);
+				  Query *rule_action,
+				  Node *rule_qual,
+				  int rt_index,
+				  CmdType event);
 static List *adjustJoinTreeList(Query *parsetree, bool removert, int rt_index);
 static void markQueryForUpdate(Query *qry, bool skipOldNew);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
@@ -92,16 +92,16 @@ rewriteRuleAction(Query *parsetree,
 				   PRS2_OLD_VARNO + rt_length, rt_index, 0);
 
 	/*
-	 * Generate expanded rtable consisting of main parsetree's rtable
-	 * plus rule action's rtable; this becomes the complete rtable for the
-	 * rule action.  Some of the entries may be unused after we finish
-	 * rewriting, but if we tried to clean those out we'd have a much harder
-	 * job to adjust RT indexes in the query's Vars.  It's OK to have unused
-	 * RT entries, since planner will ignore them.
+	 * Generate expanded rtable consisting of main parsetree's rtable plus
+	 * rule action's rtable; this becomes the complete rtable for the rule
+	 * action.	Some of the entries may be unused after we finish
+	 * rewriting, but if we tried to clean those out we'd have a much
+	 * harder job to adjust RT indexes in the query's Vars.  It's OK to
+	 * have unused RT entries, since planner will ignore them.
 	 *
 	 * NOTE: because planner will destructively alter rtable, we must ensure
-	 * that rule action's rtable is separate and shares no substructure with
-	 * the main rtable.  Hence do a deep copy here.
+	 * that rule action's rtable is separate and shares no substructure
+	 * with the main rtable.  Hence do a deep copy here.
 	 */
 	sub_action->rtable = nconc((List *) copyObject(parsetree->rtable),
 							   sub_action->rtable);
@@ -118,8 +118,8 @@ rewriteRuleAction(Query *parsetree,
 	 * joined twice, however, so avoid keeping it if the rule action
 	 * mentions it.
 	 *
-	 * As above, the action's jointree must not share substructure with
-	 * the main parsetree's.
+	 * As above, the action's jointree must not share substructure with the
+	 * main parsetree's.
 	 */
 	if (sub_action->jointree != NULL)
 	{
@@ -129,7 +129,7 @@ rewriteRuleAction(Query *parsetree,
 		keeporig = (!rangeTableEntry_used((Node *) sub_action->jointree,
 										  rt_index, 0)) &&
 			(rangeTableEntry_used(rule_qual, rt_index, 0) ||
-			 rangeTableEntry_used(parsetree->jointree->quals, rt_index, 0));
+		  rangeTableEntry_used(parsetree->jointree->quals, rt_index, 0));
 		newjointree = adjustJoinTreeList(parsetree, !keeporig, rt_index);
 		sub_action->jointree->fromlist =
 			nconc(newjointree, sub_action->jointree->fromlist);
@@ -139,8 +139,8 @@ rewriteRuleAction(Query *parsetree,
 	 * We copy the qualifications of the parsetree to the action and vice
 	 * versa. So force hasSubLinks if one of them has it. If this is not
 	 * right, the flag will get cleared later, but we mustn't risk having
-	 * it not set when it needs to be.  (XXX this should probably be handled
-	 * by AddQual and friends, not here...)
+	 * it not set when it needs to be.	(XXX this should probably be
+	 * handled by AddQual and friends, not here...)
 	 */
 	if (parsetree->hasSubLinks)
 		sub_action->hasSubLinks = TRUE;
@@ -313,7 +313,6 @@ ApplyRetrieveRule(Query *parsetree,
 	 */
 	if (intMember(rt_index, parsetree->rowMarks))
 	{
-
 		/*
 		 * Remove the view from the list of rels that will actually be
 		 * marked FOR UPDATE by the executor.  It will still be access-
@@ -482,10 +481,10 @@ fireRIRrules(Query *parsetree)
 		rel = heap_openr(rte->relname, lockmode);
 
 		/*
-		 * Check to see if relation's OID matches the RTE.  If not, the RTE
-		 * actually refers to an older relation that had the same name.
-		 * Eventually we might want to reparse the referencing rule, but
-		 * for now all we can do is punt.
+		 * Check to see if relation's OID matches the RTE.  If not, the
+		 * RTE actually refers to an older relation that had the same
+		 * name. Eventually we might want to reparse the referencing rule,
+		 * but for now all we can do is punt.
 		 */
 		if (RelationGetRelid(rel) != rte->relid)
 			elog(ERROR, "Relation \"%s\" with OID %u no longer exists",
@@ -771,8 +770,8 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 	/*
 	 * Check to see if relation's OID matches the RTE.  If not, the RTE
 	 * actually refers to an older relation that had the same name.
-	 * Eventually we might want to reparse the referencing rule, but
-	 * for now all we can do is punt.
+	 * Eventually we might want to reparse the referencing rule, but for
+	 * now all we can do is punt.
 	 */
 	if (RelationGetRelid(rt_entry_relation) != rt_entry->relid)
 		elog(ERROR, "Relation \"%s\" with OID %u no longer exists",
@@ -845,12 +844,13 @@ deepRewriteQuery(Query *parsetree)
 	}
 
 	/*
-	 * For INSERTs, the original query is done first; for UPDATE/DELETE, it is
-	 * done last.  This is needed because update and delete rule actions might
-	 * not do anything if they are invoked after the update or delete is
-	 * performed. The command counter increment between the query execution
-	 * makes the deleted (and maybe the updated) tuples disappear so the scans
-	 * for them in the rule actions cannot find them.
+	 * For INSERTs, the original query is done first; for UPDATE/DELETE,
+	 * it is done last.  This is needed because update and delete rule
+	 * actions might not do anything if they are invoked after the update
+	 * or delete is performed. The command counter increment between the
+	 * query execution makes the deleted (and maybe the updated) tuples
+	 * disappear so the scans for them in the rule actions cannot find
+	 * them.
 	 */
 	if (parsetree->commandType == CMD_INSERT)
 	{
@@ -860,6 +860,7 @@ deepRewriteQuery(Query *parsetree)
 		 */
 		if (qual_products != NIL)
 			rewritten = nconc(qual_products, rewritten);
+
 		/*
 		 * Add the unmodified original query, if no INSTEAD rule was seen.
 		 */
@@ -874,6 +875,7 @@ deepRewriteQuery(Query *parsetree)
 		 */
 		if (qual_products != NIL)
 			rewritten = nconc(rewritten, qual_products);
+
 		/*
 		 * Add the unmodified original query, if no INSTEAD rule was seen.
 		 */

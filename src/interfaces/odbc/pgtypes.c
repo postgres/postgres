@@ -25,7 +25,7 @@
 
 
 
-Int4		getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as);
+Int4		getCharPrecision(StatementClass * stmt, Int4 type, int col, int handle_unknown_size_as);
 
 /*
  * these are the types we support.	all of the pgtype_ functions should
@@ -94,10 +94,10 @@ Int2		sqlTypes[] = {
 
 
 Int4
-sqltype_to_pgtype(StatementClass *stmt, SWORD fSqlType)
+sqltype_to_pgtype(StatementClass * stmt, SWORD fSqlType)
 {
 	Int4		pgType;
-	ConnInfo *ci = &(SC_get_conn(stmt)->connInfo);
+	ConnInfo   *ci = &(SC_get_conn(stmt)->connInfo);
 
 	switch (fSqlType)
 	{
@@ -190,9 +190,10 @@ sqltype_to_pgtype(StatementClass *stmt, SWORD fSqlType)
  *	types that are unknown.  All other pg routines in here return a suitable default.
  */
 Int2
-pgtype_to_sqltype(StatementClass *stmt, Int4 type)
+pgtype_to_sqltype(StatementClass * stmt, Int4 type)
 {
-	ConnInfo *ci = &(SC_get_conn(stmt)->connInfo);
+	ConnInfo   *ci = &(SC_get_conn(stmt)->connInfo);
+
 	switch (type)
 	{
 		case PG_TYPE_CHAR:
@@ -265,9 +266,10 @@ pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 
 
 Int2
-pgtype_to_ctype(StatementClass *stmt, Int4 type)
+pgtype_to_ctype(StatementClass * stmt, Int4 type)
 {
-	ConnInfo *ci = &(SC_get_conn(stmt)->connInfo);
+	ConnInfo   *ci = &(SC_get_conn(stmt)->connInfo);
+
 	switch (type)
 	{
 		case PG_TYPE_INT8:
@@ -313,7 +315,7 @@ pgtype_to_ctype(StatementClass *stmt, Int4 type)
 
 
 char *
-pgtype_to_name(StatementClass *stmt, Int4 type)
+pgtype_to_name(StatementClass * stmt, Int4 type)
 {
 	switch (type)
 	{
@@ -382,7 +384,7 @@ pgtype_to_name(StatementClass *stmt, Int4 type)
 
 
 static Int2
-getNumericScale(StatementClass *stmt, Int4 type, int col)
+getNumericScale(StatementClass * stmt, Int4 type, int col)
 {
 	Int4		atttypmod;
 	QResultClass *result;
@@ -419,7 +421,7 @@ getNumericScale(StatementClass *stmt, Int4 type, int col)
 
 
 static Int4
-getNumericPrecision(StatementClass *stmt, Int4 type, int col)
+getNumericPrecision(StatementClass * stmt, Int4 type, int col)
 {
 	Int4		atttypmod;
 	QResultClass *result;
@@ -456,13 +458,13 @@ getNumericPrecision(StatementClass *stmt, Int4 type, int col)
 
 
 Int4
-getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
+getCharPrecision(StatementClass * stmt, Int4 type, int col, int handle_unknown_size_as)
 {
 	int			p = -1,
 				maxsize;
 	QResultClass *result;
 	ColumnInfoClass *flds;
-	ConnInfo *ci = &(SC_get_conn(stmt)->connInfo);
+	ConnInfo   *ci = &(SC_get_conn(stmt)->connInfo);
 
 	mylog("getCharPrecision: type=%d, col=%d, unknown = %d\n", type, col, handle_unknown_size_as);
 
@@ -497,7 +499,7 @@ getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 	{
 		if (PG_VERSION_GE(SC_get_conn(stmt), 7.1))
 			maxsize = 0;
-		else 
+		else
 			maxsize = TEXT_FIELD_SIZE;
 	}
 	if (col < 0)
@@ -543,7 +545,7 @@ getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
  *	This is used for functions SQLDescribeCol and SQLColAttributes.
  */
 Int4
-pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
+pgtype_precision(StatementClass * stmt, Int4 type, int col, int handle_unknown_size_as)
 {
 	switch (type)
 	{
@@ -610,7 +612,7 @@ pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 
 
 Int4
-pgtype_display_size(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
+pgtype_display_size(StatementClass * stmt, Int4 type, int col, int handle_unknown_size_as)
 {
 	switch (type)
 	{
@@ -651,7 +653,7 @@ pgtype_display_size(StatementClass *stmt, Int4 type, int col, int handle_unknown
  *	override this length with the atttypmod length from pg_attribute
  */
 Int4
-pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
+pgtype_length(StatementClass * stmt, Int4 type, int col, int handle_unknown_size_as)
 {
 	switch (type)
 	{
@@ -678,12 +680,12 @@ pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_
 
 		case PG_TYPE_DATE:
 		case PG_TYPE_TIME:
-			return 6;	/* sizeof(DATE(TIME)_STRUCT) */
+			return 6;			/* sizeof(DATE(TIME)_STRUCT) */
 
 		case PG_TYPE_ABSTIME:
 		case PG_TYPE_DATETIME:
 		case PG_TYPE_TIMESTAMP:
-			return 16;	/* sizeof(TIMESTAMP_STRUCT) */
+			return 16;			/* sizeof(TIMESTAMP_STRUCT) */
 
 			/* Character types (and NUMERIC) use the default precision */
 		case PG_TYPE_VARCHAR:
@@ -695,8 +697,8 @@ pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_
 			else
 #else
 			/* CR -> CR/LF */
-				return 2 * pgtype_precision(stmt, type, col, handle_unknown_size_as);
-#endif /* MULTIBYTE */
+			return 2 * pgtype_precision(stmt, type, col, handle_unknown_size_as);
+#endif	 /* MULTIBYTE */
 		default:
 			return pgtype_precision(stmt, type, col, handle_unknown_size_as);
 	}
@@ -704,7 +706,7 @@ pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_
 
 
 Int2
-pgtype_scale(StatementClass *stmt, Int4 type, int col)
+pgtype_scale(StatementClass * stmt, Int4 type, int col)
 {
 	switch (type)
 	{
@@ -738,7 +740,7 @@ pgtype_scale(StatementClass *stmt, Int4 type, int col)
 
 
 Int2
-pgtype_radix(StatementClass *stmt, Int4 type)
+pgtype_radix(StatementClass * stmt, Int4 type)
 {
 	switch (type)
 	{
@@ -758,14 +760,14 @@ pgtype_radix(StatementClass *stmt, Int4 type)
 
 
 Int2
-pgtype_nullable(StatementClass *stmt, Int4 type)
+pgtype_nullable(StatementClass * stmt, Int4 type)
 {
 	return SQL_NULLABLE;		/* everything should be nullable */
 }
 
 
 Int2
-pgtype_auto_increment(StatementClass *stmt, Int4 type)
+pgtype_auto_increment(StatementClass * stmt, Int4 type)
 {
 	switch (type)
 	{
@@ -794,7 +796,7 @@ pgtype_auto_increment(StatementClass *stmt, Int4 type)
 
 
 Int2
-pgtype_case_sensitive(StatementClass *stmt, Int4 type)
+pgtype_case_sensitive(StatementClass * stmt, Int4 type)
 {
 	switch (type)
 	{
@@ -817,7 +819,7 @@ pgtype_case_sensitive(StatementClass *stmt, Int4 type)
 
 
 Int2
-pgtype_money(StatementClass *stmt, Int4 type)
+pgtype_money(StatementClass * stmt, Int4 type)
 {
 	switch (type)
 	{
@@ -830,7 +832,7 @@ pgtype_money(StatementClass *stmt, Int4 type)
 
 
 Int2
-pgtype_searchable(StatementClass *stmt, Int4 type)
+pgtype_searchable(StatementClass * stmt, Int4 type)
 {
 	switch (type)
 	{
@@ -852,7 +854,7 @@ pgtype_searchable(StatementClass *stmt, Int4 type)
 
 
 Int2
-pgtype_unsigned(StatementClass *stmt, Int4 type)
+pgtype_unsigned(StatementClass * stmt, Int4 type)
 {
 	switch (type)
 	{
@@ -876,19 +878,20 @@ pgtype_unsigned(StatementClass *stmt, Int4 type)
 
 
 char *
-pgtype_literal_prefix(StatementClass *stmt, Int4 type)
+pgtype_literal_prefix(StatementClass * stmt, Int4 type)
 {
 	switch (type)
 	{
-			case PG_TYPE_INT2:
-			case PG_TYPE_OID:
-			case PG_TYPE_XID:
-			case PG_TYPE_INT4:
-			case PG_TYPE_INT8:
-			case PG_TYPE_NUMERIC:
-			case PG_TYPE_FLOAT4:
-			case PG_TYPE_FLOAT8:
-			case PG_TYPE_MONEY:return NULL;
+		case PG_TYPE_INT2:
+		case PG_TYPE_OID:
+		case PG_TYPE_XID:
+		case PG_TYPE_INT4:
+		case PG_TYPE_INT8:
+		case PG_TYPE_NUMERIC:
+		case PG_TYPE_FLOAT4:
+		case PG_TYPE_FLOAT8:
+		case PG_TYPE_MONEY:
+			return NULL;
 
 		default:
 			return "'";
@@ -897,19 +900,20 @@ pgtype_literal_prefix(StatementClass *stmt, Int4 type)
 
 
 char *
-pgtype_literal_suffix(StatementClass *stmt, Int4 type)
+pgtype_literal_suffix(StatementClass * stmt, Int4 type)
 {
 	switch (type)
 	{
-			case PG_TYPE_INT2:
-			case PG_TYPE_OID:
-			case PG_TYPE_XID:
-			case PG_TYPE_INT4:
-			case PG_TYPE_INT8:
-			case PG_TYPE_NUMERIC:
-			case PG_TYPE_FLOAT4:
-			case PG_TYPE_FLOAT8:
-			case PG_TYPE_MONEY:return NULL;
+		case PG_TYPE_INT2:
+		case PG_TYPE_OID:
+		case PG_TYPE_XID:
+		case PG_TYPE_INT4:
+		case PG_TYPE_INT8:
+		case PG_TYPE_NUMERIC:
+		case PG_TYPE_FLOAT4:
+		case PG_TYPE_FLOAT8:
+		case PG_TYPE_MONEY:
+			return NULL;
 
 		default:
 			return "'";
@@ -918,12 +922,13 @@ pgtype_literal_suffix(StatementClass *stmt, Int4 type)
 
 
 char *
-pgtype_create_params(StatementClass *stmt, Int4 type)
+pgtype_create_params(StatementClass * stmt, Int4 type)
 {
 	switch (type)
 	{
-			case PG_TYPE_CHAR:
-			case PG_TYPE_VARCHAR:return "max. length";
+		case PG_TYPE_CHAR:
+		case PG_TYPE_VARCHAR:
+			return "max. length";
 		default:
 			return NULL;
 	}
@@ -933,7 +938,6 @@ pgtype_create_params(StatementClass *stmt, Int4 type)
 Int2
 sqltype_to_default_ctype(Int2 sqltype)
 {
-
 	/*
 	 * from the table on page 623 of ODBC 2.0 Programmer's Reference
 	 * (Appendix D)

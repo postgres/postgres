@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.43 2001/09/06 02:07:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.44 2001/10/25 05:49:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,6 @@ preprocess_targetlist(List *tlist,
 					  Index result_relation,
 					  List *range_table)
 {
-
 	/*
 	 * Sanity check: if there is a result relation, it'd better be a real
 	 * relation not a subquery.  Else parser or rewriter messed up.
@@ -175,7 +174,6 @@ expand_targetlist(List *tlist, int command_type,
 
 		if (new_tle == NULL)
 		{
-
 			/*
 			 * Didn't find a matching tlist entry, so make one.
 			 *
@@ -203,7 +201,8 @@ expand_targetlist(List *tlist, int command_type,
 							/*
 							 * Set attributes are represented as OIDs no
 							 * matter what the set element type is, and
-							 * the element type's default is irrelevant too.
+							 * the element type's default is irrelevant
+							 * too.
 							 */
 							hasdefault = false;
 							typedefault = (Datum) 0;
@@ -335,7 +334,6 @@ process_matched_tle(TargetEntry *src_tle,
 
 	if (prior_tle == NULL)
 	{
-
 		/*
 		 * Normal case where this is the first assignment to the
 		 * attribute.

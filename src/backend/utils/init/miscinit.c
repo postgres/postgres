@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.80 2001/10/19 18:19:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.81 2001/10/25 05:49:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,7 +256,6 @@ next_token(FILE *fp, char *buf, const int bufsz)
 
 	if (c != '\n')
 	{
-
 		/*
 		 * build a token in buf of next characters up to EOF, eol, or
 		 * blank.
@@ -317,8 +316,8 @@ SetCharSet()
 
 	if (p && *p != '\0')
 	{
-		map_file = malloc(strlen(DataDir) +	strlen(p) + 2);
-		if (! map_file)
+		map_file = malloc(strlen(DataDir) + strlen(p) + 2);
+		if (!map_file)
 			elog(FATAL, "out of memory");
 		sprintf(map_file, "%s/%s", DataDir, p);
 		file = AllocateFile(map_file, PG_BINARY_R);
@@ -381,7 +380,6 @@ convertstr(unsigned char *buff, int len, int dest)
 	}
 	return ch;
 }
-
 #endif
 
 
@@ -487,7 +485,8 @@ InitializeSessionUserIdStandalone(void)
 /*
  * Change session auth ID while running
  */
-void SetSessionAuthorization(const char * username)
+void
+SetSessionAuthorization(const char *username)
 {
 	int32		userid;
 
@@ -579,13 +578,12 @@ CreateLockFile(const char *filename, bool amPostmaster,
 	pid_t		my_pid = getpid();
 
 	/*
-	 * We need a loop here because of race conditions.  But don't loop
+	 * We need a loop here because of race conditions.	But don't loop
 	 * forever (for example, a non-writable $PGDATA directory might cause
 	 * a failure that won't go away).  100 tries seems like plenty.
 	 */
-	for (ntries = 0; ; ntries++)
+	for (ntries = 0;; ntries++)
 	{
-
 		/*
 		 * Try to create the lock file --- O_EXCL makes this atomic.
 		 */

@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.18 2001/08/21 16:36:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.19 2001/10/25 05:49:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,12 +104,13 @@
  */
 typedef enum
 {
-	TSS_INITIAL,				/* Loading tuples; still within memory
+				TSS_INITIAL,	/* Loading tuples; still within memory
 								 * limit */
-	TSS_BUILDRUNS,				/* Loading tuples; writing to tape */
-	TSS_SORTEDINMEM,			/* Sort completed entirely in memory */
-	TSS_SORTEDONTAPE,			/* Sort completed, final run is on tape */
-	TSS_FINALMERGE				/* Performing final merge on-the-fly */
+				TSS_BUILDRUNS,	/* Loading tuples; writing to tape */
+				TSS_SORTEDINMEM,/* Sort completed entirely in memory */
+				TSS_SORTEDONTAPE,		/* Sort completed, final run is on
+										 * tape */
+				TSS_FINALMERGE	/* Performing final merge on-the-fly */
 } TupSortStatus;
 
 /*
@@ -135,10 +136,9 @@ struct Tuplesortstate
 	 * kind of tuple we are sorting from the routines that don't need to
 	 * know it. They are set up by the tuplesort_begin_xxx routines.
 	 *
-	 * Function to compare two tuples; result is per qsort() convention,
-	 * ie:
+	 * Function to compare two tuples; result is per qsort() convention, ie:
 	 *
-	 * 	<0, 0, >0 according as a<b, a=b, a>b.
+	 * <0, 0, >0 according as a<b, a=b, a>b.
 	 */
 	int			(*comparetup) (Tuplesortstate *state, const void *a, const void *b);
 
@@ -584,7 +584,10 @@ tuplesort_end(Tuplesortstate *state)
 	if (state->memtupindex)
 		pfree(state->memtupindex);
 
-	/* this stuff might better belong in a variant-specific shutdown routine */
+	/*
+	 * this stuff might better belong in a variant-specific shutdown
+	 * routine
+	 */
 	if (state->scanKeys)
 		pfree(state->scanKeys);
 	if (state->sortFnKinds)
@@ -601,7 +604,6 @@ tuplesort_end(Tuplesortstate *state)
 void
 tuplesort_puttuple(Tuplesortstate *state, void *tuple)
 {
-
 	/*
 	 * Copy the given tuple into memory we control, and decrease availMem.
 	 * Then call the code shared with the Datum case.
@@ -660,7 +662,7 @@ puttuple_common(Tuplesortstate *state, void *tuple)
 {
 	switch (state->status)
 	{
-			case TSS_INITIAL:
+		case TSS_INITIAL:
 
 			/*
 			 * Save the copied tuple into the unsorted array.
@@ -732,7 +734,7 @@ tuplesort_performsort(Tuplesortstate *state)
 {
 	switch (state->status)
 	{
-			case TSS_INITIAL:
+		case TSS_INITIAL:
 
 			/*
 			 * We were able to accumulate all the tuples within the
@@ -843,7 +845,6 @@ tuplesort_gettuple(Tuplesortstate *state, bool forward,
 			 */
 			if (state->eof_reached)
 			{
-
 				/*
 				 * Seek position is pointing just past the zero tuplen at
 				 * the end of file; back up to fetch last tuple's ending
@@ -858,7 +859,6 @@ tuplesort_gettuple(Tuplesortstate *state, bool forward,
 			}
 			else
 			{
-
 				/*
 				 * Back up and fetch previously-returned tuple's ending
 				 * length word.  If seek fails, assume we are at start of
@@ -877,7 +877,6 @@ tuplesort_gettuple(Tuplesortstate *state, bool forward,
 										  state->result_tape,
 									  tuplen + 2 * sizeof(unsigned int)))
 				{
-
 					/*
 					 * If that fails, presumably the prev tuple is the
 					 * first in the file.  Back up so that it becomes next
@@ -928,7 +927,6 @@ tuplesort_gettuple(Tuplesortstate *state, bool forward,
 				tuplesort_heap_siftup(state, false);
 				if ((tupIndex = state->mergenext[srcTape]) == 0)
 				{
-
 					/*
 					 * out of preloaded data on this tape, try to read
 					 * more
@@ -1457,7 +1455,6 @@ dumptuples(Tuplesortstate *state, bool alltuples)
 	while (alltuples ||
 		   (LACKMEM(state) && state->memtupcount > 1))
 	{
-
 		/*
 		 * Dump the heap's frontmost entry, and sift up to remove it from
 		 * the heap.
@@ -2037,10 +2034,10 @@ tuplesize_datum(Tuplesortstate *state, void *tup)
 
 /*
  * This routine selects an appropriate sorting function to implement
- * a sort operator as efficiently as possible.  The straightforward
+ * a sort operator as efficiently as possible.	The straightforward
  * method is to use the operator's implementation proc --- ie, "<"
- * comparison.  However, that way often requires two calls of the function
- * per comparison.  If we can find a btree three-way comparator function
+ * comparison.	However, that way often requires two calls of the function
+ * per comparison.	If we can find a btree three-way comparator function
  * associated with the operator, we can use it to do the comparisons
  * more efficiently.  We also support the possibility that the operator
  * is ">" (descending sort), in which case we have to reverse the output
@@ -2061,12 +2058,12 @@ SelectSortFunction(Oid sortOperator,
 	Oid			opclass = InvalidOid;
 
 	/*
-	 * Scan pg_amop to see if the target operator is registered as the
-	 * "<" or ">" operator of any btree opclass.  It's possible that it
-	 * might be registered both ways (eg, if someone were to build a
-	 * "reverse sort" opclass for some reason); prefer the "<" case if so.
-	 * If the operator is registered the same way in multiple opclasses,
-	 * assume we can use the associated comparator function from any one.
+	 * Scan pg_amop to see if the target operator is registered as the "<"
+	 * or ">" operator of any btree opclass.  It's possible that it might
+	 * be registered both ways (eg, if someone were to build a "reverse
+	 * sort" opclass for some reason); prefer the "<" case if so. If the
+	 * operator is registered the same way in multiple opclasses, assume
+	 * we can use the associated comparator function from any one.
 	 */
 	ScanKeyEntryInitialize(&skey[0], 0x0,
 						   Anum_pg_amop_amopopr,
@@ -2109,6 +2106,7 @@ SelectSortFunction(Oid sortOperator,
 		if (HeapTupleIsValid(tuple))
 		{
 			Form_pg_amproc aform = (Form_pg_amproc) GETSTRUCT(tuple);
+
 			*sortFunction = aform->amproc;
 			ReleaseSysCache(tuple);
 			Assert(RegProcedureIsValid(*sortFunction));
@@ -2119,7 +2117,8 @@ SelectSortFunction(Oid sortOperator,
 	/*
 	 * Can't find a comparator, so use the operator as-is.  Decide whether
 	 * it is forward or reverse sort by looking at its name (grotty, but
-	 * this only matters for deciding which end NULLs should get sorted to).
+	 * this only matters for deciding which end NULLs should get sorted
+	 * to).
 	 */
 	tuple = SearchSysCache(OPEROID,
 						   ObjectIdGetDatum(sortOperator),
@@ -2202,8 +2201,8 @@ ApplySortFunction(FmgrInfo *sortFunction, SortFunctionKind kind,
 			}
 			if (isNull2)
 				return 1;
-			return - DatumGetInt32(FunctionCall2(sortFunction,
-												 datum1, datum2));
+			return -DatumGetInt32(FunctionCall2(sortFunction,
+												datum1, datum2));
 
 		default:
 			elog(ERROR, "Invalid SortFunctionKind %d", (int) kind);

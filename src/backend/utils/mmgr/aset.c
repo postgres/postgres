@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.41 2001/03/22 04:00:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.42 2001/10/25 05:49:51 momjian Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -207,7 +207,6 @@ static void AllocSetDelete(MemoryContext context);
 
 #ifdef MEMORY_CONTEXT_CHECKING
 static void AllocSetCheck(MemoryContext context);
-
 #endif
 static void AllocSetStats(MemoryContext context);
 
@@ -359,7 +358,6 @@ AllocSetContextCreate(MemoryContext parent,
 static void
 AllocSetInit(MemoryContext context)
 {
-
 	/*
 	 * Since MemoryContextCreate already zeroed the context node, we don't
 	 * have to do anything here: it's already OK.
@@ -581,7 +579,6 @@ AllocSetAlloc(MemoryContext context, Size size)
 
 		if (availspace < (chunk_size + ALLOC_CHUNKHDRSZ))
 		{
-
 			/*
 			 * The existing active (top) block does not have enough room
 			 * for the requested allocation, but it might still have a
@@ -745,7 +742,6 @@ AllocSetFree(MemoryContext context, void *pointer)
 
 	if (chunk->size > ALLOC_CHUNK_LIMIT)
 	{
-
 		/*
 		 * Big chunks are certain to have been allocated as single-chunk
 		 * blocks.	Find the containing block and return it to malloc().
@@ -837,7 +833,6 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 
 	if (oldsize > ALLOC_CHUNK_LIMIT)
 	{
-
 		/*
 		 * The chunk must been allocated as a single-chunk block.  Find
 		 * the containing block and use realloc() to make it bigger with
@@ -893,7 +888,6 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 	}
 	else
 	{
-
 		/*
 		 * Small-chunk case.  If the chunk is the last one in its block,
 		 * there might be enough free space after it that we can just
@@ -1088,5 +1082,4 @@ AllocSetCheck(MemoryContext context)
 				 name, block);
 	}
 }
-
 #endif	 /* MEMORY_CONTEXT_CHECKING */

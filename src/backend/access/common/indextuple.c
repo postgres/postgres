@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.54 2001/03/22 06:16:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.55 2001/10/25 05:49:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,6 @@ index_formtuple(TupleDesc tupleDescriptor,
 #ifdef TOAST_INDEX_HACK
 	Datum		untoasted_value[INDEX_MAX_KEYS];
 	bool		untoasted_free[INDEX_MAX_KEYS];
-
 #endif
 
 	if (numberOfAttributes > INDEX_MAX_KEYS)
@@ -338,7 +337,6 @@ nocache_index_getattr(IndexTuple tup,
 
 		for (; j <= attnum; j++)
 		{
-
 			/*
 			 * Fix me when going to a machine with more than a four-byte
 			 * word!

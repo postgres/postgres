@@ -9,7 +9,7 @@
  * Dec 17, 1997 - Todd A. Brandys
  *	Orignal Version Completed.
  *
- * $Id: crypt.c,v 1.38 2001/09/21 20:31:45 tgl Exp $
+ * $Id: crypt.c,v 1.39 2001/10/25 05:49:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,7 +163,6 @@ crypt_loadpwdfile(void)
 		 */
 		while (fgets(buffer, 256, pwd_file) != NULL)
 		{
-
 			/*
 			 * We must remove the return char at the end of the string, as
 			 * this will affect the correct parsing of the password entry.
@@ -281,8 +280,8 @@ md5_crypt_verify(const Port *port, const char *user, const char *pgpass)
 	if (isMD5(passwd) && port->auth_method != uaMD5)
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			"Password is stored MD5 encrypted.  "
-			"'password' and 'crypt' auth methods cannot be used.\n");
+				 "Password is stored MD5 encrypted.  "
+				 "'password' and 'crypt' auth methods cannot be used.\n");
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		return STATUS_ERROR;
@@ -295,11 +294,11 @@ md5_crypt_verify(const Port *port, const char *user, const char *pgpass)
 	switch (port->auth_method)
 	{
 		case uaMD5:
-			crypt_pwd = palloc(MD5_PASSWD_LEN+1);
+			crypt_pwd = palloc(MD5_PASSWD_LEN + 1);
 			if (isMD5(passwd))
 			{
 				if (!EncryptMD5(passwd + strlen("md5"),
-								(char *)port->md5Salt,
+								(char *) port->md5Salt,
 								sizeof(port->md5Salt), crypt_pwd))
 				{
 					pfree(crypt_pwd);
@@ -308,7 +307,7 @@ md5_crypt_verify(const Port *port, const char *user, const char *pgpass)
 			}
 			else
 			{
-				char *crypt_pwd2 = palloc(MD5_PASSWD_LEN+1);
+				char	   *crypt_pwd2 = palloc(MD5_PASSWD_LEN + 1);
 
 				if (!EncryptMD5(passwd, port->user, strlen(port->user),
 								crypt_pwd2))
@@ -328,12 +327,13 @@ md5_crypt_verify(const Port *port, const char *user, const char *pgpass)
 			}
 			break;
 		case uaCrypt:
-		{
-			char salt[3];
-			StrNCpy(salt, port->cryptSalt,3);
-			crypt_pwd = crypt(passwd, salt);
-			break;
-		}
+			{
+				char		salt[3];
+
+				StrNCpy(salt, port->cryptSalt, 3);
+				crypt_pwd = crypt(passwd, salt);
+				break;
+			}
 		default:
 			crypt_pwd = passwd;
 			break;

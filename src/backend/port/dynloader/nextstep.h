@@ -22,5 +22,4 @@ char	   *next_dlerror(void);
 #define pg_dlerror		next_dlerror
 
 /* port.c */
-
 #endif	 /* PORT_PROTOS_H */

@@ -126,7 +126,7 @@ do { \
 do { \
 	free((m)->space); \
 } while (0)
-	
+
 #define SETUP(v)		((v) = &m->space[m->vn++ * m->g->nstates])
 #define onestate		int
 #define INIT(o, n)		((o) = (n))
@@ -157,7 +157,6 @@ pg95_regexec(const regex_t *preg, const char *string, size_t nmatch,
 #ifdef MULTIBYTE
 	pg_wchar   *str;
 	int			sts;
-
 #endif
 
 #ifdef REDEBUG

@@ -18,8 +18,8 @@
  *
  * We can limit the storage for page free space to MaxFSMPages entries,
  * since that's the most the free space map will be willing to remember
- * anyway.  If the relation has fewer than that many pages with free space,
- * life is easy: just build an array of per-page info.  If it has more,
+ * anyway.	If the relation has fewer than that many pages with free space,
+ * life is easy: just build an array of per-page info.	If it has more,
  * we store the free space info as a heap ordered by amount of free space,
  * so that we can discard the pages with least free space to ensure we never
  * have more than MaxFSMPages entries in all.  The surviving page entries
@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.8 2001/09/29 04:02:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.9 2001/10/25 05:49:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@
  * Space/time tradeoff parameters: do these need to be user-tunable?
  *
  * A page with less than PAGE_SPACE_THRESHOLD free space will be forgotten
- * immediately, and not even passed to the free space map.  Removing the
+ * immediately, and not even passed to the free space map.	Removing the
  * uselessly small entries early saves cycles, and in particular reduces
  * the amount of time we spend holding the FSM lock when we finally call
  * MultiRecordFreeSpace.  Since the FSM will ignore pages below its own
@@ -74,21 +74,21 @@
 typedef struct LVRelStats
 {
 	/* Overall statistics about rel */
-	BlockNumber	rel_pages;
+	BlockNumber rel_pages;
 	double		rel_tuples;
-	BlockNumber	nonempty_pages;		/* actually, last nonempty page + 1 */
+	BlockNumber nonempty_pages; /* actually, last nonempty page + 1 */
 	/* List of TIDs of tuples we intend to delete */
 	/* NB: this list is ordered by TID address */
-	int			num_dead_tuples;	/* current # of entries */
-	int			max_dead_tuples;	/* # slots allocated in array */
-	ItemPointer	dead_tuples;		/* array of ItemPointerData */
+	int			num_dead_tuples;		/* current # of entries */
+	int			max_dead_tuples;		/* # slots allocated in array */
+	ItemPointer dead_tuples;	/* array of ItemPointerData */
 	/* Array or heap of per-page info about free space */
 	/* We use a simple array until it fills up, then convert to heap */
-	bool		fs_is_heap;			/* are we using heap organization? */
-	int			num_free_pages;		/* current # of entries */
-	int			max_free_pages;		/* # slots allocated in arrays */
-	BlockNumber *free_pages;		/* array or heap of block numbers */
-	Size	   *free_spaceavail;	/* array or heap of available space */
+	bool		fs_is_heap;		/* are we using heap organization? */
+	int			num_free_pages; /* current # of entries */
+	int			max_free_pages; /* # slots allocated in arrays */
+	BlockNumber *free_pages;	/* array or heap of block numbers */
+	Size	   *free_spaceavail;		/* array or heap of available space */
 } LVRelStats;
 
 
@@ -100,20 +100,20 @@ static TransactionId FreezeLimit;
 
 /* non-export function prototypes */
 static void lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
-						   Relation *Irel, int nindexes);
+			   Relation *Irel, int nindexes);
 static void lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats);
 static void lazy_scan_index(Relation indrel, LVRelStats *vacrelstats);
 static void lazy_vacuum_index(Relation indrel, LVRelStats *vacrelstats);
-static int	lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
-							 int tupindex, LVRelStats *vacrelstats);
+static int lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
+				 int tupindex, LVRelStats *vacrelstats);
 static void lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats);
 static BlockNumber count_nondeletable_pages(Relation onerel,
-											LVRelStats *vacrelstats);
+						 LVRelStats *vacrelstats);
 static void lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks);
 static void lazy_record_dead_tuple(LVRelStats *vacrelstats,
-								   ItemPointer itemptr);
+					   ItemPointer itemptr);
 static void lazy_record_free_space(LVRelStats *vacrelstats,
-								   BlockNumber page, Size avail);
+					   BlockNumber page, Size avail);
 static bool lazy_tid_reaped(ItemPointer itemptr, void *state);
 static bool dummy_tid_reaped(ItemPointer itemptr, void *state);
 static void lazy_update_fsm(Relation onerel, LVRelStats *vacrelstats);
@@ -136,7 +136,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	Relation   *Irel;
 	int			nindexes;
 	bool		hasindex;
-	BlockNumber	possibly_freeable;
+	BlockNumber possibly_freeable;
 
 	/* initialize */
 	if (vacstmt->verbose)
@@ -163,8 +163,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	/*
 	 * Optionally truncate the relation.
 	 *
-	 * Don't even think about it unless we have a shot at releasing a
-	 * goodly number of pages.  Otherwise, the time taken isn't worth it.
+	 * Don't even think about it unless we have a shot at releasing a goodly
+	 * number of pages.  Otherwise, the time taken isn't worth it.
 	 */
 	possibly_freeable = vacrelstats->rel_pages - vacrelstats->nonempty_pages;
 	if (possibly_freeable > vacrelstats->rel_pages / REL_TRUNCATE_FRACTION)
@@ -195,7 +195,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				blkno;
 	HeapTupleData tuple;
 	char	   *relname;
-	BlockNumber	empty_pages,
+	BlockNumber empty_pages,
 				changed_pages;
 	double		num_tuples,
 				tups_vacuumed,
@@ -231,8 +231,9 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		int			prev_dead_count;
 
 		/*
-		 * If we are close to overrunning the available space for dead-tuple
-		 * TIDs, pause and do a cycle of vacuuming before we tackle this page.
+		 * If we are close to overrunning the available space for
+		 * dead-tuple TIDs, pause and do a cycle of vacuuming before we
+		 * tackle this page.
 		 */
 		if ((vacrelstats->max_dead_tuples - vacrelstats->num_dead_tuples) < MAX_TUPLES_PER_PAGE &&
 			vacrelstats->num_dead_tuples > 0)
@@ -312,17 +313,18 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			switch (HeapTupleSatisfiesVacuum(tuple.t_data, OldestXmin))
 			{
 				case HEAPTUPLE_DEAD:
-					tupgone = true;	/* we can delete the tuple */
+					tupgone = true;		/* we can delete the tuple */
 					break;
 				case HEAPTUPLE_LIVE:
+
 					/*
-					 * Tuple is good.  Consider whether to replace its xmin
-					 * value with FrozenTransactionId.
+					 * Tuple is good.  Consider whether to replace its
+					 * xmin value with FrozenTransactionId.
 					 *
-					 * NB: Since we hold only a shared buffer lock here,
-					 * we are assuming that TransactionId read/write
-					 * is atomic.  This is not the only place that makes
-					 * such an assumption.  It'd be possible to avoid the
+					 * NB: Since we hold only a shared buffer lock here, we
+					 * are assuming that TransactionId read/write is
+					 * atomic.	This is not the only place that makes such
+					 * an assumption.  It'd be possible to avoid the
 					 * assumption by momentarily acquiring exclusive lock,
 					 * but for the moment I see no need to.
 					 */
@@ -337,9 +339,10 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 					}
 					break;
 				case HEAPTUPLE_RECENTLY_DEAD:
+
 					/*
-					 * If tuple is recently deleted then we must not remove
-					 * it from relation.
+					 * If tuple is recently deleted then we must not
+					 * remove it from relation.
 					 */
 					nkeep += 1;
 					break;
@@ -376,11 +379,11 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				num_tuples += 1;
 				hastup = true;
 			}
-		} /* scan along page */
+		}						/* scan along page */
 
 		/*
-		 * If we remembered any tuples for deletion, then the page will
-		 * be visited again by lazy_vacuum_heap, which will compute and
+		 * If we remembered any tuples for deletion, then the page will be
+		 * visited again by lazy_vacuum_heap, which will compute and
 		 * record its post-compaction free space.  If not, then we're done
 		 * with this page, so remember its free space as-is.
 		 */
@@ -418,7 +421,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		/* Remove tuples from heap */
 		lazy_vacuum_heap(onerel, vacrelstats);
 	}
-	else if (! did_vacuum_index)
+	else if (!did_vacuum_index)
 	{
 		/* Scan indexes just to update pg_class statistics about them */
 		for (i = 0; i < nindexes; i++)
@@ -457,7 +460,7 @@ lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats)
 	tupindex = 0;
 	while (tupindex < vacrelstats->num_dead_tuples)
 	{
-		BlockNumber		tblk;
+		BlockNumber tblk;
 		Buffer		buf;
 		Page		page;
 
@@ -493,7 +496,7 @@ static int
 lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 				 int tupindex, LVRelStats *vacrelstats)
 {
-	OffsetNumber unbuf[BLCKSZ/sizeof(OffsetNumber)];
+	OffsetNumber unbuf[BLCKSZ / sizeof(OffsetNumber)];
 	OffsetNumber *unused = unbuf;
 	int			uncnt;
 	Page		page = BufferGetPage(buffer);
@@ -502,8 +505,8 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 	START_CRIT_SECTION();
 	for (; tupindex < vacrelstats->num_dead_tuples; tupindex++)
 	{
-		BlockNumber		tblk;
-		OffsetNumber	toff;
+		BlockNumber tblk;
+		OffsetNumber toff;
 
 		tblk = ItemPointerGetBlockNumber(&vacrelstats->dead_tuples[tupindex]);
 		if (tblk != blkno)
@@ -542,10 +545,10 @@ lazy_scan_index(Relation indrel, LVRelStats *vacrelstats)
 	vac_init_rusage(&ru0);
 
 	/*
-	 * If the index is not partial, skip the scan, and just assume it
-	 * has the same number of tuples as the heap.
+	 * If the index is not partial, skip the scan, and just assume it has
+	 * the same number of tuples as the heap.
 	 */
-	if (! vac_is_partial_index(indrel))
+	if (!vac_is_partial_index(indrel))
 	{
 		vac_update_relstats(RelationGetRelid(indrel),
 							RelationGetNumberOfBlocks(indrel),
@@ -555,23 +558,23 @@ lazy_scan_index(Relation indrel, LVRelStats *vacrelstats)
 	}
 
 	/*
-	 * If index is unsafe for concurrent access, must lock it;
-	 * but a shared lock should be sufficient.
+	 * If index is unsafe for concurrent access, must lock it; but a
+	 * shared lock should be sufficient.
 	 */
-	if (! indrel->rd_am->amconcurrent)
+	if (!indrel->rd_am->amconcurrent)
 		LockRelation(indrel, AccessShareLock);
 
 	/*
 	 * Even though we're not planning to delete anything, use the
-	 * ambulkdelete call, so that the scan happens within the index AM
-	 * for more speed.
+	 * ambulkdelete call, so that the scan happens within the index AM for
+	 * more speed.
 	 */
 	stats = index_bulk_delete(indrel, dummy_tid_reaped, NULL);
 
 	/*
 	 * Release lock acquired above.
 	 */
-	if (! indrel->rd_am->amconcurrent)
+	if (!indrel->rd_am->amconcurrent)
 		UnlockRelation(indrel, AccessShareLock);
 
 	if (!stats)
@@ -610,7 +613,7 @@ lazy_vacuum_index(Relation indrel, LVRelStats *vacrelstats)
 	/*
 	 * If index is unsafe for concurrent access, must lock it.
 	 */
-	if (! indrel->rd_am->amconcurrent)
+	if (!indrel->rd_am->amconcurrent)
 		LockRelation(indrel, AccessExclusiveLock);
 
 	/* Do bulk deletion */
@@ -619,7 +622,7 @@ lazy_vacuum_index(Relation indrel, LVRelStats *vacrelstats)
 	/*
 	 * Release lock acquired above.
 	 */
-	if (! indrel->rd_am->amconcurrent)
+	if (!indrel->rd_am->amconcurrent)
 		UnlockRelation(indrel, AccessExclusiveLock);
 
 	/* now update statistics in pg_class */
@@ -644,8 +647,8 @@ lazy_vacuum_index(Relation indrel, LVRelStats *vacrelstats)
 static void
 lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 {
-	BlockNumber	old_rel_pages = vacrelstats->rel_pages;
-	BlockNumber	new_rel_pages;
+	BlockNumber old_rel_pages = vacrelstats->rel_pages;
+	BlockNumber new_rel_pages;
 	BlockNumber *pages;
 	Size	   *spaceavail;
 	int			n;
@@ -656,12 +659,13 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	vac_init_rusage(&ru0);
 
 	/*
-	 * We need full exclusive lock on the relation in order to do truncation.
-	 * If we can't get it, give up rather than waiting --- we don't want
-	 * to block other backends, and we don't want to deadlock (which is
-	 * quite possible considering we already hold a lower-grade lock).
+	 * We need full exclusive lock on the relation in order to do
+	 * truncation. If we can't get it, give up rather than waiting --- we
+	 * don't want to block other backends, and we don't want to deadlock
+	 * (which is quite possible considering we already hold a lower-grade
+	 * lock).
 	 */
-	if (! ConditionalLockRelation(onerel, AccessExclusiveLock))
+	if (!ConditionalLockRelation(onerel, AccessExclusiveLock))
 		return;
 
 	/*
@@ -680,9 +684,9 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 
 	/*
 	 * Scan backwards from the end to verify that the end pages actually
-	 * contain nothing we need to keep.  This is *necessary*, not optional,
-	 * because other backends could have added tuples to these pages whilst
-	 * we were vacuuming.
+	 * contain nothing we need to keep.  This is *necessary*, not
+	 * optional, because other backends could have added tuples to these
+	 * pages whilst we were vacuuming.
 	 */
 	new_rel_pages = count_nondeletable_pages(onerel, vacrelstats);
 
@@ -710,9 +714,10 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	 * Do the physical truncation.
 	 */
 	new_rel_pages = smgrtruncate(DEFAULT_SMGR, onerel, new_rel_pages);
-	onerel->rd_nblocks = new_rel_pages;	/* update relcache immediately */
+	onerel->rd_nblocks = new_rel_pages; /* update relcache immediately */
 	onerel->rd_targblock = InvalidBlockNumber;
-	vacrelstats->rel_pages = new_rel_pages; /* save new number of blocks */
+	vacrelstats->rel_pages = new_rel_pages;		/* save new number of
+												 * blocks */
 
 	/*
 	 * Drop free-space info for removed blocks; these must not get entered
@@ -808,15 +813,16 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 			switch (HeapTupleSatisfiesVacuum(tuple.t_data, OldestXmin))
 			{
 				case HEAPTUPLE_DEAD:
-					tupgone = true;	/* we can delete the tuple */
+					tupgone = true;		/* we can delete the tuple */
 					break;
 				case HEAPTUPLE_LIVE:
 					/* Shouldn't be necessary to re-freeze anything */
 					break;
 				case HEAPTUPLE_RECENTLY_DEAD:
+
 					/*
-					 * If tuple is recently deleted then we must not remove
-					 * it from relation.
+					 * If tuple is recently deleted then we must not
+					 * remove it from relation.
 					 */
 					break;
 				case HEAPTUPLE_INSERT_IN_PROGRESS:
@@ -839,7 +845,7 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 				hastup = true;
 				break;			/* can stop scanning */
 			}
-		} /* scan along page */
+		}						/* scan along page */
 
 		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
@@ -855,8 +861,8 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 
 	/*
 	 * If we fall out of the loop, all the previously-thought-to-be-empty
-	 * pages really are; we need not bother to look at the last known-nonempty
-	 * page.
+	 * pages really are; we need not bother to look at the last
+	 * known-nonempty page.
 	 */
 	return vacrelstats->nonempty_pages;
 }
@@ -907,9 +913,9 @@ lazy_record_dead_tuple(LVRelStats *vacrelstats,
 					   ItemPointer itemptr)
 {
 	/*
-	 * The array shouldn't overflow under normal behavior,
-	 * but perhaps it could if we are given a really small VacuumMem.
-	 * In that case, just forget the last few tuples.
+	 * The array shouldn't overflow under normal behavior, but perhaps it
+	 * could if we are given a really small VacuumMem. In that case, just
+	 * forget the last few tuples.
 	 */
 	if (vacrelstats->num_dead_tuples < vacrelstats->max_dead_tuples)
 	{
@@ -960,29 +966,29 @@ lazy_record_free_space(LVRelStats *vacrelstats,
 	 */
 
 	/* If we haven't yet converted the array to heap organization, do it */
-	if (! vacrelstats->fs_is_heap)
+	if (!vacrelstats->fs_is_heap)
 	{
 		/*
 		 * Scan backwards through the array, "sift-up" each value into its
-		 * correct position.  We can start the scan at n/2-1 since each entry
-		 * above that position has no children to worry about.
+		 * correct position.  We can start the scan at n/2-1 since each
+		 * entry above that position has no children to worry about.
 		 */
-		int		l = n / 2;
+		int			l = n / 2;
 
 		while (--l >= 0)
 		{
-			BlockNumber	R = pages[l];
+			BlockNumber R = pages[l];
 			Size		K = spaceavail[l];
 			int			i;		/* i is where the "hole" is */
 
 			i = l;
 			for (;;)
 			{
-				int		j = 2*i + 1;
+				int			j = 2 * i + 1;
 
 				if (j >= n)
 					break;
-				if (j+1 < n && spaceavail[j] > spaceavail[j+1])
+				if (j + 1 < n && spaceavail[j] > spaceavail[j + 1])
 					j++;
 				if (K <= spaceavail[j])
 					break;
@@ -1001,20 +1007,20 @@ lazy_record_free_space(LVRelStats *vacrelstats,
 	if (avail > spaceavail[0])
 	{
 		/*
-		 * Notionally, we replace the zero'th entry with the new data,
-		 * and then sift-up to maintain the heap property.  Physically,
-		 * the new data doesn't get stored into the arrays until we find
-		 * the right location for it.
+		 * Notionally, we replace the zero'th entry with the new data, and
+		 * then sift-up to maintain the heap property.	Physically, the
+		 * new data doesn't get stored into the arrays until we find the
+		 * right location for it.
 		 */
-		int		i = 0;			/* i is where the "hole" is */
+		int			i = 0;		/* i is where the "hole" is */
 
 		for (;;)
 		{
-			int		j = 2*i + 1;
+			int			j = 2 * i + 1;
 
 			if (j >= n)
 				break;
-			if (j+1 < n && spaceavail[j] > spaceavail[j+1])
+			if (j + 1 < n && spaceavail[j] > spaceavail[j + 1])
 				j++;
 			if (avail <= spaceavail[j])
 				break;
@@ -1038,7 +1044,7 @@ static bool
 lazy_tid_reaped(ItemPointer itemptr, void *state)
 {
 	LVRelStats *vacrelstats = (LVRelStats *) state;
-	ItemPointer	res;
+	ItemPointer res;
 
 	res = (ItemPointer) bsearch((void *) itemptr,
 								(void *) vacrelstats->dead_tuples,
@@ -1066,9 +1072,9 @@ static void
 lazy_update_fsm(Relation onerel, LVRelStats *vacrelstats)
 {
 	/*
-	 * Since MultiRecordFreeSpace doesn't currently impose any restrictions
-	 * on the ordering of the input, we can just pass it the arrays as-is,
-	 * whether they are in heap or linear order.
+	 * Since MultiRecordFreeSpace doesn't currently impose any
+	 * restrictions on the ordering of the input, we can just pass it the
+	 * arrays as-is, whether they are in heap or linear order.
 	 */
 	MultiRecordFreeSpace(&onerel->rd_node,
 						 0, MaxBlockNumber,

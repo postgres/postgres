@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.49 2001/06/01 15:45:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.50 2001/10/25 05:49:43 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -120,8 +120,8 @@ SendFunctionResult(Datum retval,/* actual return value */
  * each fastpath call as a separate transaction command, and so the
  * cached data could never actually have been reused.  If it had worked
  * as intended, it would have had problems anyway with dangling references
- * in the FmgrInfo struct.  So, forget about caching and just repeat the
- * syscache fetches on each usage.  They're not *that* expensive.
+ * in the FmgrInfo struct.	So, forget about caching and just repeat the
+ * syscache fetches on each usage.	They're not *that* expensive.
  */
 struct fp_info
 {
@@ -157,7 +157,8 @@ fetch_fp_info(Oid func_id, struct fp_info * fip)
 	 * correct value until we are about to return with a good struct
 	 * fp_info, since we can be interrupted (i.e., with an elog(ERROR,
 	 * ...)) at any time.  [No longer really an issue since we don't save
-	 * the struct fp_info across transactions anymore, but keep it anyway.]
+	 * the struct fp_info across transactions anymore, but keep it
+	 * anyway.]
 	 */
 	MemSet((char *) fip, 0, sizeof(struct fp_info));
 	fip->funcid = InvalidOid;
@@ -260,8 +261,8 @@ HandleFunctionRequest(void)
 		return EOF;
 
 	/*
-	 * There used to be a lame attempt at caching lookup info here.
-	 * Now we just do the lookups on every call.
+	 * There used to be a lame attempt at caching lookup info here. Now we
+	 * just do the lookups on every call.
 	 */
 	fip = &my_fp;
 	fetch_fp_info(fid, fip);

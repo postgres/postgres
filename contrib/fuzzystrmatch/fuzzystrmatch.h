@@ -24,13 +24,13 @@
  * documentation for any purpose, without fee, and without a written agreement
  * is hereby granted, provided that the above copyright notice and this
  * paragraph and the following two paragraphs appear in all copies.
- * 
+ *
  * IN NO EVENT SHALL THE AUTHORS OR DISTRIBUTORS BE LIABLE TO ANY PARTY FOR
  * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
  * LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
  * DOCUMENTATION, EVEN IF THE AUTHOR OR DISTRIBUTORS HAVE BEEN ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * THE AUTHORS AND DISTRIBUTORS SPECIFICALLY DISCLAIM ANY WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
  * AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
@@ -88,7 +88,7 @@ static const char *soundex_table = "01230120022455012623010202";
  */
 #define MAX_METAPHONE_STRLEN		255
 
-/* 
+/*
  * Original code by Michael G Schwern starts here.
  * Code slightly modified for use as PostgreSQL
  * function (combined *.h into here).
@@ -96,26 +96,26 @@ static const char *soundex_table = "01230120022455012623010202";
 
 /**************************************************************************
 	metaphone -- Breaks english phrases down into their phonemes.
-	
+
 	Input
-		word			-- 	An english word to be phonized
-		max_phonemes 	-- 	How many phonemes to calculate.  If 0, then it
+		word			--	An english word to be phonized
+		max_phonemes	--	How many phonemes to calculate.  If 0, then it
 							will phonize the entire phrase.
-		phoned_word  	-- 	The final phonized word.  (We'll allocate the
+		phoned_word		--	The final phonized word.  (We'll allocate the
 							memory.)
 	Output
 		error	--	A simple error flag, returns TRUE or FALSE
-		
-	NOTES:  ALL non-alpha characters are ignored, this includes whitespace,
+
+	NOTES:	ALL non-alpha characters are ignored, this includes whitespace,
 	although non-alpha characters will break up phonemes.
 ****************************************************************************/
 
 
 /**************************************************************************
 	my constants -- constants I like
-	
+
 	Probably redundant.
-	
+
 ***************************************************************************/
 
 #define META_ERROR			FALSE
@@ -123,22 +123,23 @@ static const char *soundex_table = "01230120022455012623010202";
 #define META_FAILURE		FALSE
 
 
-/*  I add modifications to the traditional metaphone algorithm that you
+/*	I add modifications to the traditional metaphone algorithm that you
 	might find in books.  Define this if you want metaphone to behave
 	traditionally */
 #undef USE_TRADITIONAL_METAPHONE
 
 /* Special encodings */
-#define  SH 	'X'
+#define  SH		'X'
 #define  TH		'0'
 
-char Lookahead(char * word, int how_far);
-int _metaphone (
-	/* IN */
-	char * 	word,
-	int 	max_phonemes,
-	/* OUT */
-	char **	phoned_word
+char		Lookahead(char *word, int how_far);
+int
+_metaphone(
+ /* IN */
+		   char *word,
+		   int max_phonemes,
+ /* OUT */
+		   char **phoned_word
 );
 
 /* Metachar.h ... little bits about characters for metaphone */
@@ -146,9 +147,9 @@ int _metaphone (
 
 /*-- Character encoding array & accessing macros --*/
 /* Stolen directly out of the book... */
-char _codes[26] = {
-	1,16,4,16,9,2,4,16,9,2,0,2,2,2,1,4,0,2,4,4,1,0,0,0,8,0
-/*  a  b c  d e f g  h i j k l m n o p q r s t u v w x y z */
+char		_codes[26] = {
+	1, 16, 4, 16, 9, 2, 4, 16, 9, 2, 0, 2, 2, 2, 1, 4, 0, 2, 4, 4, 1, 0, 0, 0, 8, 0
+/*	a  b c	d e f g  h i j k l m n o p q r s t u v w x y z */
 };
 
 
@@ -157,16 +158,15 @@ char _codes[26] = {
 #define isvowel(c)	(ENCODE(c) & 1)		/* AEIOU */
 
 /* These letters are passed through unchanged */
-#define NOCHANGE(c)	(ENCODE(c) & 2) 	/* FJMNR */
+#define NOCHANGE(c) (ENCODE(c) & 2)		/* FJMNR */
 
 /* These form dipthongs when preceding H */
-#define AFFECTH(c)	(ENCODE(c) & 4) 	/* CGPST */
+#define AFFECTH(c)	(ENCODE(c) & 4)		/* CGPST */
 
 /* These make C and G soft */
-#define MAKESOFT(c)	(ENCODE(c) & 8) 	/* EIY */
+#define MAKESOFT(c) (ENCODE(c) & 8)		/* EIY */
 
 /* These prevent GH from becoming F */
-#define NOGHTOF(c)	(ENCODE(c) & 16) 	/* BDH */
-
+#define NOGHTOF(c)	(ENCODE(c) & 16)	/* BDH */
 
 #endif	 /* FUZZYSTRMATCH_H */

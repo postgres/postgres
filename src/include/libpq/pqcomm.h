@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.59 2001/09/06 03:18:12 momjian Exp $
+ * $Id: pqcomm.h,v 1.60 2001/10/25 05:49:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,6 @@ struct sockaddr_un
 	short int	sun_family;		/* AF_UNIX */
 	char		sun_path[108];	/* path name (gag) */
 };
-
 #endif
 
 /* Define a generic socket address type. */
@@ -178,6 +177,5 @@ typedef struct CancelRequestPacket
  * secure channel.
  */
 #define NEGOTIATE_SSL_CODE PG_PROTOCOL(1234,5679)
-
 
 #endif	 /* PQCOMM_H */

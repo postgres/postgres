@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.34 2001/10/18 16:11:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.35 2001/10/25 05:49:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,9 +26,9 @@
 static RelOptInfo *make_base_rel(Query *root, int relid);
 static List *new_join_tlist(List *tlist, int first_resdomno);
 static List *build_joinrel_restrictlist(Query *root,
-										RelOptInfo *joinrel,
-										RelOptInfo *outer_rel,
-										RelOptInfo *inner_rel);
+						   RelOptInfo *joinrel,
+						   RelOptInfo *outer_rel,
+						   RelOptInfo *inner_rel);
 static void build_joinrel_joinlist(RelOptInfo *joinrel,
 					   RelOptInfo *outer_rel,
 					   RelOptInfo *inner_rel);
@@ -154,7 +154,7 @@ make_base_rel(Query *root, int relid)
 	if (relationObjectId != InvalidOid)
 	{
 		/* Plain relation --- retrieve statistics from the system catalogs */
-		bool	indexed;
+		bool		indexed;
 
 		get_relation_info(relationObjectId,
 						  &indexed, &rel->pages, &rel->tuples);
@@ -270,7 +270,6 @@ build_join_rel(Query *root,
 
 	if (joinrel)
 	{
-
 		/*
 		 * Yes, so we only need to figure the restrictlist for this
 		 * particular pair of component relations.
@@ -437,9 +436,9 @@ build_joinrel_restrictlist(Query *root,
 						   RelOptInfo *outer_rel,
 						   RelOptInfo *inner_rel)
 {
-	List   *result = NIL;
-	List   *rlist;
-	List   *item;
+	List	   *result = NIL;
+	List	   *rlist;
+	List	   *item;
 
 	/*
 	 * Collect all the clauses that syntactically belong at this level.
@@ -453,9 +452,9 @@ build_joinrel_restrictlist(Query *root,
 	 * Eliminate duplicate and redundant clauses.
 	 *
 	 * We must eliminate duplicates, since we will see many of the same
-	 * clauses arriving from both input relations.  Also, if a clause is
-	 * a mergejoinable clause, it's possible that it is redundant with
-	 * previous clauses (see optimizer/README for discussion).  We detect
+	 * clauses arriving from both input relations.	Also, if a clause is a
+	 * mergejoinable clause, it's possible that it is redundant with
+	 * previous clauses (see optimizer/README for discussion).	We detect
 	 * that case and omit the redundant clause from the result list.
 	 *
 	 * We can detect redundant mergejoinable clauses very cheaply by using
@@ -463,8 +462,9 @@ build_joinrel_restrictlist(Query *root,
 	 * equijoined variables in question.  All the members of a pathkey set
 	 * that are in the left relation have already been forced to be equal;
 	 * likewise for those in the right relation.  So, we need to have only
-	 * one clause that checks equality between any set member on the left and
-	 * any member on the right; by transitivity, all the rest are then equal.
+	 * one clause that checks equality between any set member on the left
+	 * and any member on the right; by transitivity, all the rest are then
+	 * equal.
 	 */
 	foreach(item, rlist)
 	{
@@ -477,8 +477,8 @@ build_joinrel_restrictlist(Query *root,
 		/* check for redundant merge clauses */
 		if (rinfo->mergejoinoperator != InvalidOid)
 		{
-			bool	redundant = false;
-			List   *olditem;
+			bool		redundant = false;
+			List	   *olditem;
 
 			cache_mergeclause_pathkeys(root, rinfo);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/shm.c,v 1.6 2001/08/24 14:07:49 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/shm.c,v 1.7 2001/10/25 05:49:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,8 +48,8 @@ static int	shm_getinfobyaddr(const void *addr, struct shm_info * info);
 static char *
 keytoname(key_t key, char *name)
 {
-  sprintf( name,"PgShm%x", key );
-  return name;
+	sprintf(name, "PgShm%x", key);
+	return name;
 }
 
 static int
@@ -182,51 +182,53 @@ shmctl(int shmid, int cmd, struct shmid_ds * buf)
 {
 	struct shm_info info;
 	char		name[NAME_MAX + 1];
-  int     result;
-  int     fd;
-  struct stat statbuf;
+	int			result;
+	int			fd;
+	struct stat statbuf;
 
-  
-	switch( cmd )
+
+	switch (cmd)
 	{
-    case IPC_RMID :
-		if (shm_getinfo(shmid, &info) == -1)
-		{
-			errno = EACCES;
-			return -1;
-		}
-      close( info.shmid );
-      keytoname(info.key, name);
-      return shm_unlink( name );
-      
-    case IPC_STAT :
-      /*
-       * we have to open it first. stat() does no prefix tracking
-       * -> the call would go to fsys instead of proc
-       */
-      keytoname(shmid, name);
-      fd = shm_open( name, 0, MODE );
-      if ( fd >= 0 )
-      {
-        result = fstat( fd, &statbuf );
-        /*
-         * if the file exists, subtract 2 from linkcount :
-         *  one for our own open and one for the dir entry
-         */
-        if ( ! result )
-          buf->shm_nattch = statbuf.st_nlink-2;
-        close( fd );
-        return result;
-	}
-      else
-	{
-		/*
-         * if there's no entry for this key it doesn't matter
-         * the next shmget() would get a different shm anyway
-		 */
-        buf->shm_nattch = 0;
-        return 0;
-      }  
+		case IPC_RMID:
+			if (shm_getinfo(shmid, &info) == -1)
+			{
+				errno = EACCES;
+				return -1;
+			}
+			close(info.shmid);
+			keytoname(info.key, name);
+			return shm_unlink(name);
+
+		case IPC_STAT:
+
+			/*
+			 * we have to open it first. stat() does no prefix tracking ->
+			 * the call would go to fsys instead of proc
+			 */
+			keytoname(shmid, name);
+			fd = shm_open(name, 0, MODE);
+			if (fd >= 0)
+			{
+				result = fstat(fd, &statbuf);
+
+				/*
+				 * if the file exists, subtract 2 from linkcount : one for
+				 * our own open and one for the dir entry
+				 */
+				if (!result)
+					buf->shm_nattch = statbuf.st_nlink - 2;
+				close(fd);
+				return result;
+			}
+			else
+			{
+				/*
+				 * if there's no entry for this key it doesn't matter the
+				 * next shmget() would get a different shm anyway
+				 */
+				buf->shm_nattch = 0;
+				return 0;
+			}
 	}
 	errno = EINVAL;
 	return -1;
@@ -258,13 +260,13 @@ shmget(key_t key, size_t size, int flags)
 		info.key = key;
 		info.size = size;
 		info.addr = NULL;
-		if (shm_putinfo(&info) == -1) {
-      close( info.shmid );
-      if ( (oflag & (O_CREAT|O_EXCL)) == (O_CREAT|O_EXCL) ) {
-        shm_unlink( name );
-      }
+		if (shm_putinfo(&info) == -1)
+		{
+			close(info.shmid);
+			if ((oflag & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL))
+				shm_unlink(name);
 			return -1;
-    }
+		}
 	}
 
 	/* The size may only be set once. Ignore errors. */

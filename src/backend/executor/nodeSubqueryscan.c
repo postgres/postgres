@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.10 2001/09/18 01:59:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.11 2001/10/25 05:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,8 +63,8 @@ SubqueryNext(SubqueryScan *node)
 	direction = estate->es_direction;
 
 	/*
-	 * We need not support EvalPlanQual here, since we are not scanning
-	 * a real relation.
+	 * We need not support EvalPlanQual here, since we are not scanning a
+	 * real relation.
 	 */
 
 	/*
@@ -92,7 +92,6 @@ SubqueryNext(SubqueryScan *node)
 TupleTableSlot *
 ExecSubqueryScan(SubqueryScan *node)
 {
-
 	/*
 	 * use SubqueryNext as access method
 	 */
@@ -181,8 +180,8 @@ ExecCountSlotsSubqueryScan(SubqueryScan *node)
 	 * The subplan has its own tuple table and must not be counted here!
 	 */
 	return ExecCountSlotsNode(outerPlan(node)) +
-	ExecCountSlotsNode(innerPlan(node)) +
-	SUBQUERYSCAN_NSLOTS;
+		ExecCountSlotsNode(innerPlan(node)) +
+		SUBQUERYSCAN_NSLOTS;
 }
 
 /* ----------------------------------------------------------------
@@ -251,6 +250,7 @@ ExecSubqueryReScan(SubqueryScan *node, ExprContext *exprCtxt, Plan *parent)
 	 */
 	if (node->scan.plan.chgParam != NULL)
 		SetChangedParamList(node->subplan, node->scan.plan.chgParam);
+
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by
 	 * first ExecProcNode.

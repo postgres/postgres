@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.36 2001/05/27 20:42:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.37 2001/10/25 05:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,8 +185,8 @@ int
 ExecCountSlotsMaterial(Material *node)
 {
 	return ExecCountSlotsNode(outerPlan((Plan *) node)) +
-	ExecCountSlotsNode(innerPlan((Plan *) node)) +
-	MATERIAL_NSLOTS;
+		ExecCountSlotsNode(innerPlan((Plan *) node)) +
+		MATERIAL_NSLOTS;
 }
 
 /* ----------------------------------------------------------------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.28 2001/05/27 20:48:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.29 2001/10/25 05:49:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,7 +111,6 @@ ExecInitJunkFilter(List *targetList, TupleDesc tupType,
 			resjunk = resdom->resjunk;
 			if (!resjunk)
 			{
-
 				/*
 				 * make a copy of the resdom node, changing its resno.
 				 */

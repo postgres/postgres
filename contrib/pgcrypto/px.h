@@ -1,7 +1,7 @@
 /*
  * px.h
  *		Header file for pgcrypto.
- * 
+ *
  * Copyright (c) 2001 Marko Kreen
  * All rights reserved.
  *
@@ -9,15 +9,15 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *	  notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *	  notice, this list of conditions and the following disclaimer in the
+ *	  documentation and/or other materials provided with the distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.	IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: px.h,v 1.2 2001/09/23 04:12:44 momjian Exp $
+ * $Id: px.h,v 1.3 2001/10/25 05:49:20 momjian Exp $
  */
 
 #ifndef __PX_H
@@ -36,22 +36,21 @@
 
 #define px_alloc(s) palloc(s)
 #define px_realloc(p, s) prealloc(p, s)
-#define px_free(p)  pfree(p)
+#define px_free(p)	pfree(p)
 
 #else
 
-void *xalloc(size_t s);
-void *xrealloc(void *p, size_t s);
-void  xfree(void *p);
+void	   *xalloc(size_t s);
+void	   *xrealloc(void *p, size_t s);
+void		xfree(void *p);
 
 #define px_alloc(s) xalloc(s)
 #define px_realloc(p, s) xrealloc(p, s)
-#define px_free(p)  xfree(p)
-
+#define px_free(p)	xfree(p)
 #endif
 
 /* max len of 'type' parms */
-#define PX_MAX_NAMELEN      128
+#define PX_MAX_NAMELEN		128
 
 /* max salt returned */
 #define PX_MAX_SALT_LEN		128
@@ -63,79 +62,86 @@ typedef struct px_hmac PX_HMAC;
 typedef struct px_cipher PX_Cipher;
 typedef struct px_combo PX_Combo;
 
-struct px_digest {
-	uint (*result_size)(PX_MD *h);
-	uint (*block_size)(PX_MD *h);
-	void (*reset)(PX_MD *h);
-	void (*update)(PX_MD *h, const uint8 *data, uint dlen);
-	void (*finish)(PX_MD *h, uint8 *dst);
-	void (*free)(PX_MD *h);
+struct px_digest
+{
+	uint		(*result_size) (PX_MD * h);
+	uint		(*block_size) (PX_MD * h);
+	void		(*reset) (PX_MD * h);
+	void		(*update) (PX_MD * h, const uint8 *data, uint dlen);
+	void		(*finish) (PX_MD * h, uint8 *dst);
+	void		(*free) (PX_MD * h);
 	/* private */
-	union {
-		uint code;
+	union
+	{
+		uint		code;
 		const void *ptr;
-	} p;
+	}			p;
 };
 
-struct px_alias {
-	char *alias;
-	char *name;
+struct px_alias
+{
+	char	   *alias;
+	char	   *name;
 };
 
-struct px_hmac {
-	uint (*result_size)(PX_HMAC *h);
-	uint (*block_size)(PX_HMAC *h);
-	void (*reset)(PX_HMAC *h);
-	void (*update)(PX_HMAC *h, const uint8 *data, uint dlen);
-	void (*finish)(PX_HMAC *h, uint8 *dst);
-	void (*free)(PX_HMAC *h);
-	void (*init)(PX_HMAC *h, const uint8 *key, uint klen);
-	
-	PX_MD *md;
+struct px_hmac
+{
+	uint		(*result_size) (PX_HMAC * h);
+	uint		(*block_size) (PX_HMAC * h);
+	void		(*reset) (PX_HMAC * h);
+	void		(*update) (PX_HMAC * h, const uint8 *data, uint dlen);
+	void		(*finish) (PX_HMAC * h, uint8 *dst);
+	void		(*free) (PX_HMAC * h);
+	void		(*init) (PX_HMAC * h, const uint8 *key, uint klen);
+
+	PX_MD	   *md;
 	/* private */
-	struct {
-		uint8 *ipad;
-		uint8 *opad;
-	} p;
+	struct
+	{
+		uint8	   *ipad;
+		uint8	   *opad;
+	}			p;
 };
 
-struct px_cipher {
-	uint (*block_size)(PX_Cipher *c);
-	uint (*key_size)(PX_Cipher *c);		/* max key len */
-	uint (*iv_size)(PX_Cipher *c);
-	
-	int (*init)(PX_Cipher *c, const uint8 *key, uint klen, const uint8 *iv);
-	int (*encrypt)(PX_Cipher *c, const uint8 *data, uint dlen, uint8 *res);
-	int (*decrypt)(PX_Cipher *c, const uint8 *data, uint dlen, uint8 *res);
-	void (*free)(PX_Cipher *c);
+struct px_cipher
+{
+	uint		(*block_size) (PX_Cipher * c);
+	uint		(*key_size) (PX_Cipher * c);	/* max key len */
+	uint		(*iv_size) (PX_Cipher * c);
+
+	int			(*init) (PX_Cipher * c, const uint8 *key, uint klen, const uint8 *iv);
+	int			(*encrypt) (PX_Cipher * c, const uint8 *data, uint dlen, uint8 *res);
+	int			(*decrypt) (PX_Cipher * c, const uint8 *data, uint dlen, uint8 *res);
+	void		(*free) (PX_Cipher * c);
 	/* private */
-	void *ptr;
-	int pstat; /* mcrypt uses it */
+	void	   *ptr;
+	int			pstat;			/* mcrypt uses it */
 };
 
-struct px_combo {
-	int (*init)(PX_Combo *cx, const uint8 *key, uint klen,
-			const uint8 *iv, uint ivlen);
-	int (*encrypt)(PX_Combo *cx, const uint8 *data, uint dlen,
-			uint8 *res, uint *rlen);
-	int (*decrypt)(PX_Combo *cx, const uint8 *data, uint dlen,
-			uint8 *res, uint *rlen);
-	uint (*encrypt_len)(PX_Combo *cx, uint dlen);
-	uint (*decrypt_len)(PX_Combo *cx, uint dlen);
-	void (*free)(PX_Combo *cx);
+struct px_combo
+{
+	int			(*init) (PX_Combo * cx, const uint8 *key, uint klen,
+									 const uint8 *iv, uint ivlen);
+	int			(*encrypt) (PX_Combo * cx, const uint8 *data, uint dlen,
+										uint8 *res, uint *rlen);
+	int			(*decrypt) (PX_Combo * cx, const uint8 *data, uint dlen,
+										uint8 *res, uint *rlen);
+	uint		(*encrypt_len) (PX_Combo * cx, uint dlen);
+	uint		(*decrypt_len) (PX_Combo * cx, uint dlen);
+	void		(*free) (PX_Combo * cx);
 
-	PX_Cipher *cipher;
-	uint padding;
+	PX_Cipher  *cipher;
+	uint		padding;
 };
 
-int px_find_digest(const char *name, PX_MD **res);
-int px_find_hmac(const char *name, PX_HMAC **res);
-int px_find_cipher(const char *name, PX_Cipher **res);
-int px_find_combo(const char *name, PX_Combo **res);
+int			px_find_digest(const char *name, PX_MD ** res);
+int			px_find_hmac(const char *name, PX_HMAC ** res);
+int			px_find_cipher(const char *name, PX_Cipher ** res);
+int			px_find_combo(const char *name, PX_Combo ** res);
 
-int px_get_random_bytes(uint8 *dst, unsigned count);
+int			px_get_random_bytes(uint8 *dst, unsigned count);
 
-const char *px_resolve_alias(const PX_Alias *aliases, const char *name);
+const char *px_resolve_alias(const PX_Alias * aliases, const char *name);
 
 #define px_md_result_size(md)		(md)->result_size(md)
 #define px_md_block_size(md)		(md)->block_size(md)
@@ -174,6 +180,4 @@ const char *px_resolve_alias(const PX_Alias *aliases, const char *name);
 					(c)->decrypt(c, data, dlen, res, rlen)
 #define px_combo_free(c)		(c)->free(c)
 
-
-#endif /* __PX_H */
-
+#endif	 /* __PX_H */

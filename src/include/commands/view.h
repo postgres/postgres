@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: view.h,v 1.10 2001/08/12 21:35:19 tgl Exp $
+ * $Id: view.h,v 1.11 2001/10/25 05:49:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,5 +18,4 @@
 
 extern void DefineView(char *view_name, Query *view_parse);
 extern void RemoveView(char *view_name);
-
 #endif	 /* VIEW_H */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * instrument.c
- *	 functions for instrumentation of plan execution 
+ *	 functions for instrumentation of plan execution
  *
  *
  * Copyright (c) 2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/instrument.c,v 1.1 2001/09/18 01:59:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/instrument.c,v 1.2 2001/10/25 05:49:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,9 +22,9 @@
 Instrumentation *
 InstrAlloc(void)
 {
-	Instrumentation *instr = palloc( sizeof(Instrumentation) );
+	Instrumentation *instr = palloc(sizeof(Instrumentation));
 
-	memset( instr, 0, sizeof(Instrumentation) );
+	memset(instr, 0, sizeof(Instrumentation));
 
 	return instr;
 }
@@ -47,7 +47,7 @@ void
 InstrStopNode(Instrumentation *instr, bool returnedTuple)
 {
 	struct timeval endtime;
-  
+
 	if (!instr)
 		return;
 
@@ -56,10 +56,10 @@ InstrStopNode(Instrumentation *instr, bool returnedTuple)
 		elog(DEBUG, "InstrStopNode without start");
 		return;
 	}
-  
+
 	gettimeofday(&endtime, NULL);
-  
-	instr->counter.tv_sec  += endtime.tv_sec  - instr->starttime.tv_sec;
+
+	instr->counter.tv_sec += endtime.tv_sec - instr->starttime.tv_sec;
 	instr->counter.tv_usec += endtime.tv_usec - instr->starttime.tv_usec;
 
 	/* Normalize after each add to avoid overflow/underflow of tv_usec */
@@ -90,10 +90,10 @@ InstrStopNode(Instrumentation *instr, bool returnedTuple)
 }
 
 /* Finish a run cycle for a plan node */
-void 
+void
 InstrEndLoop(Instrumentation *instr)
 {
-	double totaltime;
+	double		totaltime;
 
 	if (!instr)
 		return;
@@ -104,10 +104,10 @@ InstrEndLoop(Instrumentation *instr)
 
 	/* Accumulate statistics */
 	totaltime = (double) instr->counter.tv_sec +
-		(double) instr->counter.tv_usec / 1000000.0; 
+		(double) instr->counter.tv_usec / 1000000.0;
 
 	instr->startup += instr->firsttuple;
-	instr->total   += totaltime;
+	instr->total += totaltime;
 	instr->ntuples += instr->tuplecount;
 	instr->nloops += 1;
 

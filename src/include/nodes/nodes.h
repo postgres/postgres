@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.93 2001/07/16 19:12:58 momjian Exp $
+ * $Id: nodes.h,v 1.94 2001/10/25 05:50:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,211 +23,211 @@
  */
 typedef enum NodeTag
 {
-	T_Invalid = 0,
+				T_Invalid = 0,
 
 	/*
 	 * TAGS FOR PLAN NODES (plannodes.h)
 	 */
-	T_Plan = 10,
-	T_Result,
-	T_Append,
-	T_Scan,
-	T_SeqScan,
-	T_IndexScan,
-	T_Join,
-	T_NestLoop,
-	T_MergeJoin,
-	T_HashJoin,
-	T_Limit,
-	T_Material,
-	T_Sort,
-	T_Agg,
-	T_Unique,
-	T_Hash,
-	T_SetOp,
-	T_Group,
-	T_SubPlan,
-	T_TidScan,
-	T_SubqueryScan,
+				T_Plan = 10,
+				T_Result,
+				T_Append,
+				T_Scan,
+				T_SeqScan,
+				T_IndexScan,
+				T_Join,
+				T_NestLoop,
+				T_MergeJoin,
+				T_HashJoin,
+				T_Limit,
+				T_Material,
+				T_Sort,
+				T_Agg,
+				T_Unique,
+				T_Hash,
+				T_SetOp,
+				T_Group,
+				T_SubPlan,
+				T_TidScan,
+				T_SubqueryScan,
 
 	/*
 	 * TAGS FOR PRIMITIVE NODES (primnodes.h)
 	 */
-	T_Resdom = 100,
-	T_Fjoin,
-	T_Expr,
-	T_Var,
-	T_Oper,
-	T_Const,
-	T_Param,
-	T_Aggref,
-	T_SubLink,
-	T_Func,
-	T_FieldSelect,
-	T_ArrayRef,
-	T_Iter,
-	T_RelabelType,
-	T_RangeTblRef,
-	T_FromExpr,
-	T_JoinExpr,
+				T_Resdom = 100,
+				T_Fjoin,
+				T_Expr,
+				T_Var,
+				T_Oper,
+				T_Const,
+				T_Param,
+				T_Aggref,
+				T_SubLink,
+				T_Func,
+				T_FieldSelect,
+				T_ArrayRef,
+				T_Iter,
+				T_RelabelType,
+				T_RangeTblRef,
+				T_FromExpr,
+				T_JoinExpr,
 
 	/*
 	 * TAGS FOR PLANNER NODES (relation.h)
 	 */
-	T_RelOptInfo = 200,
-	T_Path,
-	T_IndexPath,
-	T_NestPath,
-	T_MergePath,
-	T_HashPath,
-	T_TidPath,
-	T_AppendPath,
-	T_PathKeyItem,
-	T_RestrictInfo,
-	T_JoinInfo,
-	T_Stream,
-	T_IndexOptInfo,
+				T_RelOptInfo = 200,
+				T_Path,
+				T_IndexPath,
+				T_NestPath,
+				T_MergePath,
+				T_HashPath,
+				T_TidPath,
+				T_AppendPath,
+				T_PathKeyItem,
+				T_RestrictInfo,
+				T_JoinInfo,
+				T_Stream,
+				T_IndexOptInfo,
 
 	/*
 	 * TAGS FOR EXECUTOR NODES (execnodes.h)
 	 */
-	T_IndexInfo = 300,
-	T_ResultRelInfo,
-	T_TupleCount,
-	T_TupleTableSlot,
-	T_ExprContext,
-	T_ProjectionInfo,
-	T_JunkFilter,
-	T_EState,
-	T_BaseNode,
-	T_CommonState,
-	T_ResultState,
-	T_AppendState,
-	T_CommonScanState,
-	T_ScanState,
-	T_IndexScanState,
-	T_JoinState,
-	T_NestLoopState,
-	T_MergeJoinState,
-	T_HashJoinState,
-	T_MaterialState,
-	T_AggState,
-	T_GroupState,
-	T_SortState,
-	T_UniqueState,
-	T_HashState,
-	T_TidScanState,
-	T_SubqueryScanState,
-	T_SetOpState,
-	T_LimitState,
+				T_IndexInfo = 300,
+				T_ResultRelInfo,
+				T_TupleCount,
+				T_TupleTableSlot,
+				T_ExprContext,
+				T_ProjectionInfo,
+				T_JunkFilter,
+				T_EState,
+				T_BaseNode,
+				T_CommonState,
+				T_ResultState,
+				T_AppendState,
+				T_CommonScanState,
+				T_ScanState,
+				T_IndexScanState,
+				T_JoinState,
+				T_NestLoopState,
+				T_MergeJoinState,
+				T_HashJoinState,
+				T_MaterialState,
+				T_AggState,
+				T_GroupState,
+				T_SortState,
+				T_UniqueState,
+				T_HashState,
+				T_TidScanState,
+				T_SubqueryScanState,
+				T_SetOpState,
+				T_LimitState,
 
 	/*
 	 * TAGS FOR MEMORY NODES (memnodes.h)
 	 */
-	T_MemoryContext = 400,
-	T_AllocSetContext,
+				T_MemoryContext = 400,
+				T_AllocSetContext,
 
 	/*
 	 * TAGS FOR VALUE NODES (pg_list.h)
 	 */
-	T_Value = 500,
-	T_List,
-	T_Integer,
-	T_Float,
-	T_String,
-	T_BitString,
-	T_Null,
+				T_Value = 500,
+				T_List,
+				T_Integer,
+				T_Float,
+				T_String,
+				T_BitString,
+				T_Null,
 
 	/*
 	 * TAGS FOR PARSE TREE NODES (parsenodes.h)
 	 */
-	T_Query = 600,
-	T_InsertStmt,
-	T_DeleteStmt,
-	T_UpdateStmt,
-	T_SelectStmt,
-	T_AlterTableStmt,
-	T_SetOperationStmt,
-	T_GrantStmt,
-	T_ClosePortalStmt,
-	T_ClusterStmt,
-	T_CopyStmt,
-	T_CreateStmt,
-	T_VersionStmt,
-	T_DefineStmt,
-	T_DropStmt,
-	T_TruncateStmt,
-	T_CommentStmt,
-	T_FetchStmt,
-	T_IndexStmt,
-	T_ProcedureStmt,
-	T_RemoveAggrStmt,
-	T_RemoveFuncStmt,
-	T_RemoveOperStmt,
-	T_RenameStmt,
-	T_RuleStmt,
-	T_NotifyStmt,
-	T_ListenStmt,
-	T_UnlistenStmt,
-	T_TransactionStmt,
-	T_ViewStmt,
-	T_LoadStmt,
-	T_CreatedbStmt,
-	T_DropdbStmt,
-	T_VacuumStmt,
-	T_ExplainStmt,
-	T_CreateSeqStmt,
-	T_VariableSetStmt,
-	T_VariableShowStmt,
-	T_VariableResetStmt,
-	T_CreateTrigStmt,
-	T_DropTrigStmt,
-	T_CreatePLangStmt,
-	T_DropPLangStmt,
-	T_CreateUserStmt,
-	T_AlterUserStmt,
-	T_DropUserStmt,
-	T_LockStmt,
-	T_ConstraintsSetStmt,
-	T_CreateGroupStmt,
-	T_AlterGroupStmt,
-	T_DropGroupStmt,
-	T_ReindexStmt,
-	T_CheckPointStmt,
+				T_Query = 600,
+				T_InsertStmt,
+				T_DeleteStmt,
+				T_UpdateStmt,
+				T_SelectStmt,
+				T_AlterTableStmt,
+				T_SetOperationStmt,
+				T_GrantStmt,
+				T_ClosePortalStmt,
+				T_ClusterStmt,
+				T_CopyStmt,
+				T_CreateStmt,
+				T_VersionStmt,
+				T_DefineStmt,
+				T_DropStmt,
+				T_TruncateStmt,
+				T_CommentStmt,
+				T_FetchStmt,
+				T_IndexStmt,
+				T_ProcedureStmt,
+				T_RemoveAggrStmt,
+				T_RemoveFuncStmt,
+				T_RemoveOperStmt,
+				T_RenameStmt,
+				T_RuleStmt,
+				T_NotifyStmt,
+				T_ListenStmt,
+				T_UnlistenStmt,
+				T_TransactionStmt,
+				T_ViewStmt,
+				T_LoadStmt,
+				T_CreatedbStmt,
+				T_DropdbStmt,
+				T_VacuumStmt,
+				T_ExplainStmt,
+				T_CreateSeqStmt,
+				T_VariableSetStmt,
+				T_VariableShowStmt,
+				T_VariableResetStmt,
+				T_CreateTrigStmt,
+				T_DropTrigStmt,
+				T_CreatePLangStmt,
+				T_DropPLangStmt,
+				T_CreateUserStmt,
+				T_AlterUserStmt,
+				T_DropUserStmt,
+				T_LockStmt,
+				T_ConstraintsSetStmt,
+				T_CreateGroupStmt,
+				T_AlterGroupStmt,
+				T_DropGroupStmt,
+				T_ReindexStmt,
+				T_CheckPointStmt,
 
-	T_A_Expr = 700,
-	T_Attr,
-	T_A_Const,
-	T_ParamNo,
-	T_Ident,
-	T_FuncCall,
-	T_A_Indices,
-	T_ResTarget,
-	T_TypeCast,
-	T_RangeSubselect,
-	T_SortGroupBy,
-	T_RangeVar,
-	T_TypeName,
-	T_IndexElem,
-	T_ColumnDef,
-	T_Constraint,
-	T_DefElem,
-	T_TargetEntry,
-	T_RangeTblEntry,
-	T_SortClause,
-	T_GroupClause,
-	T_NullTest,
-	T_BooleanTest,
-	T_CaseExpr,
-	T_CaseWhen,
-	T_FkConstraint,
-	T_PrivGrantee,
+				T_A_Expr = 700,
+				T_Attr,
+				T_A_Const,
+				T_ParamNo,
+				T_Ident,
+				T_FuncCall,
+				T_A_Indices,
+				T_ResTarget,
+				T_TypeCast,
+				T_RangeSubselect,
+				T_SortGroupBy,
+				T_RangeVar,
+				T_TypeName,
+				T_IndexElem,
+				T_ColumnDef,
+				T_Constraint,
+				T_DefElem,
+				T_TargetEntry,
+				T_RangeTblEntry,
+				T_SortClause,
+				T_GroupClause,
+				T_NullTest,
+				T_BooleanTest,
+				T_CaseExpr,
+				T_CaseWhen,
+				T_FkConstraint,
+				T_PrivGrantee,
 
 	/*
 	 * TAGS FOR FUNCTION-CALL CONTEXT AND RESULTINFO NODES (see fmgr.h)
 	 */
-	T_TriggerData = 800,		/* in commands/trigger.h */
-	T_ReturnSetInfo				/* in nodes/execnodes.h */
+				T_TriggerData = 800,	/* in commands/trigger.h */
+				T_ReturnSetInfo /* in nodes/execnodes.h */
 
 } NodeTag;
 
@@ -313,14 +313,14 @@ typedef double Cost;			/* execution cost (in page-access units) */
  */
 typedef enum CmdType
 {
-	CMD_UNKNOWN,
-	CMD_SELECT,					/* select stmt (formerly retrieve) */
-	CMD_UPDATE,					/* update stmt (formerly replace) */
-	CMD_INSERT,					/* insert stmt (formerly append) */
-	CMD_DELETE,
-	CMD_UTILITY,				/* cmds like create, destroy, copy,
+				CMD_UNKNOWN,
+				CMD_SELECT,		/* select stmt (formerly retrieve) */
+				CMD_UPDATE,		/* update stmt (formerly replace) */
+				CMD_INSERT,		/* insert stmt (formerly append) */
+				CMD_DELETE,
+				CMD_UTILITY,	/* cmds like create, destroy, copy,
 								 * vacuum, etc. */
-	CMD_NOTHING					/* dummy command for instead nothing rules
+				CMD_NOTHING		/* dummy command for instead nothing rules
 								 * with qual */
 } CmdType;
 
@@ -337,15 +337,14 @@ typedef enum CmdType
  */
 typedef enum JoinType
 {
-
 	/*
 	 * The canonical kinds of joins
 	 */
-	JOIN_INNER,					/* matching tuple pairs only */
-	JOIN_LEFT,					/* pairs + unmatched outer tuples */
-	JOIN_FULL,					/* pairs + unmatched outer + unmatched
+				JOIN_INNER,		/* matching tuple pairs only */
+				JOIN_LEFT,		/* pairs + unmatched outer tuples */
+				JOIN_FULL,		/* pairs + unmatched outer + unmatched
 								 * inner */
-	JOIN_RIGHT,					/* pairs + unmatched inner tuples */
+				JOIN_RIGHT,		/* pairs + unmatched inner tuples */
 
 	/*
 	 * SQL92 considers UNION JOIN to be a kind of join, so list it here
@@ -353,7 +352,7 @@ typedef enum JoinType
 	 * join in the executor.  (The planner must convert it to an Append
 	 * plan.)
 	 */
-	JOIN_UNION
+				JOIN_UNION
 
 	/*
 	 * Eventually we will have some additional join types for efficient
@@ -365,5 +364,4 @@ typedef enum JoinType
 	((jointype) == JOIN_LEFT || \
 	 (jointype) == JOIN_FULL || \
 	 (jointype) == JOIN_RIGHT)
-
 #endif	 /* NODES_H */

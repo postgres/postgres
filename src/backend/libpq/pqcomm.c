@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.121 2001/08/07 15:55:16 tgl Exp $
+ *	$Id: pqcomm.c,v 1.122 2001/10/25 05:49:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,9 +347,9 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 #endif	 /* HAVE_UNIX_SOCKETS */
 
 	/*
-	 * Select appropriate accept-queue length limit.  PG_SOMAXCONN is
-	 * only intended to provide a clamp on the request on platforms where
-	 * an overly large request provokes a kernel error (are there any?).
+	 * Select appropriate accept-queue length limit.  PG_SOMAXCONN is only
+	 * intended to provide a clamp on the request on platforms where an
+	 * overly large request provokes a kernel error (are there any?).
 	 */
 	maxconn = MaxBackends * 2;
 	if (maxconn > PG_SOMAXCONN)
@@ -401,6 +401,7 @@ StreamConnection(int server_fd, Port *port)
 	}
 
 #ifdef SCO_ACCEPT_BUG
+
 	/*
 	 * UnixWare 7+ and OpenServer 5.0.4 are known to have this bug, but it
 	 * shouldn't hurt to catch it for all versions of those platforms.
@@ -701,8 +702,8 @@ pq_flush(void)
 int
 pq_eof(void)
 {
-	char x;
-	int res;
+	char		x;
+	int			res;
 
 	res = recv(MyProcPort->sock, &x, 1, MSG_PEEK);
 

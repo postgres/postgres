@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.46 2001/10/19 19:43:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.47 2001/10/25 05:50:21 momjian Exp $
  *
  **********************************************************************/
 
@@ -67,31 +67,33 @@
 static pg_enconv *tcl_enconv;
 
 static unsigned char *
-utf_u2e(unsigned char *src) {
-	return pg_do_encoding_conversion(src,strlen(src),
-		NULL,tcl_enconv->from_unicode);
+utf_u2e(unsigned char *src)
+{
+	return pg_do_encoding_conversion(src, strlen(src),
+									 NULL, tcl_enconv->from_unicode);
 }
 
 static unsigned char *
-utf_e2u(unsigned char *src) {
-	return pg_do_encoding_conversion(src,strlen(src),
-		tcl_enconv->to_unicode,NULL);
+utf_e2u(unsigned char *src)
+{
+	return pg_do_encoding_conversion(src, strlen(src),
+									 tcl_enconv->to_unicode, NULL);
 }
 
-#	define PLTCL_UTF
-#	define UTF_BEGIN	do { \
+#define PLTCL_UTF
+#define UTF_BEGIN	 do { \
 					unsigned char *_pltcl_utf_src; \
 					unsigned char *_pltcl_utf_dst
-#       define UTF_END		if (_pltcl_utf_src!=_pltcl_utf_dst) \
+#define UTF_END		 if (_pltcl_utf_src!=_pltcl_utf_dst) \
 					pfree(_pltcl_utf_dst); } while (0)
-#       define UTF_U2E(x)	(_pltcl_utf_dst=utf_u2e(_pltcl_utf_src=(x)))
-#       define UTF_E2U(x)	(_pltcl_utf_dst=utf_e2u(_pltcl_utf_src=(x)))
-#else /* PLTCL_UTF */
-#	define	UTF_BEGIN
-#	define	UTF_END
-#	define	UTF_U2E(x)	(x)
-#	define	UTF_E2U(x)	(x)
-#endif /* PLTCL_UTF */
+#define UTF_U2E(x)	 (_pltcl_utf_dst=utf_u2e(_pltcl_utf_src=(x)))
+#define UTF_E2U(x)	 (_pltcl_utf_dst=utf_e2u(_pltcl_utf_src=(x)))
+#else							/* PLTCL_UTF */
+#define  UTF_BEGIN
+#define  UTF_END
+#define  UTF_U2E(x)  (x)
+#define  UTF_E2U(x)  (x)
+#endif	 /* PLTCL_UTF */
 
 /**********************************************************************
  * The information we cache about loaded procedures
@@ -179,7 +181,7 @@ static void pltcl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
 static void pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 						   Tcl_DString *retval);
 static int pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
-				int argc, char *argv[]);
+				  int argc, char *argv[]);
 
 /*
  * This routine is a crock, and so is everyplace that calls it.  The problem
@@ -215,7 +217,7 @@ pltcl_init_all(void)
 	 * Do unicode conversion initialization
 	 ************************************************************/
 
-	tcl_enconv=pg_get_enconv_by_encoding(GetDatabaseEncoding());
+	tcl_enconv = pg_get_enconv_by_encoding(GetDatabaseEncoding());
 #endif
 
 	/************************************************************
@@ -288,7 +290,7 @@ pltcl_init_interp(Tcl_Interp *interp)
 					  pltcl_SPI_execp, NULL, NULL);
 	Tcl_CreateCommand(interp, "spi_lastoid",
 					  pltcl_SPI_lastoid, NULL, NULL);
-					  
+
 	/************************************************************
 	 * Try to load the unknown procedure from pltcl_modules
 	 ************************************************************/
@@ -556,8 +558,8 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 				pltcl_restart_in_progress = 0;
 			UTF_BEGIN;
 			elog(ERROR, "pltcl: %s\n%s", interp->result,
-				UTF_U2E(Tcl_GetVar(interp,"errorInfo",
-					TCL_GLOBAL_ONLY)));
+				 UTF_U2E(Tcl_GetVar(interp, "errorInfo",
+									TCL_GLOBAL_ONLY)));
 			UTF_END;
 		}
 		if (--pltcl_call_level == 0)
@@ -789,8 +791,8 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 				pltcl_restart_in_progress = 0;
 			UTF_BEGIN;
 			elog(ERROR, "pltcl: %s\n%s", interp->result,
-				UTF_U2E(Tcl_GetVar(interp,"errorInfo",
-					TCL_GLOBAL_ONLY)));
+				 UTF_U2E(Tcl_GetVar(interp, "errorInfo",
+									TCL_GLOBAL_ONLY)));
 			UTF_END;
 		}
 		if (--pltcl_call_level == 0)
@@ -1054,7 +1056,7 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 		if (!is_trigger)
 		{
 			typeTup = SearchSysCache(TYPEOID,
-									 ObjectIdGetDatum(procStruct->prorettype),
+								ObjectIdGetDatum(procStruct->prorettype),
 									 0, 0, 0);
 			if (!HeapTupleIsValid(typeTup))
 			{
@@ -1093,7 +1095,7 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 			for (i = 0; i < prodesc->nargs; i++)
 			{
 				typeTup = SearchSysCache(TYPEOID,
-										 ObjectIdGetDatum(procStruct->proargtypes[i]),
+							ObjectIdGetDatum(procStruct->proargtypes[i]),
 										 0, 0, 0);
 				if (!HeapTupleIsValid(typeTup))
 				{
@@ -2257,15 +2259,16 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 
 
 /**********************************************************************
- * pltcl_SPI_lastoid()  - return the last oid. To
- *        be used after insert queries
+ * pltcl_SPI_lastoid()	- return the last oid. To
+ *		  be used after insert queries
  **********************************************************************/
 static int
 pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
 				  int argc, char *argv[])
 {
-	char buf[64];
-	sprintf(buf,"%u",SPI_lastoid);
+	char		buf[64];
+
+	sprintf(buf, "%u", SPI_lastoid);
 	Tcl_SetResult(interp, buf, TCL_VOLATILE);
 	return TCL_OK;
 }
@@ -2353,7 +2356,7 @@ pltcl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
 			outputstr = DatumGetCString(OidFunctionCall3(typoutput,
 														 attr,
 											   ObjectIdGetDatum(typelem),
-							  Int32GetDatum(tupdesc->attrs[i]->atttypmod)));
+						   Int32GetDatum(tupdesc->attrs[i]->atttypmod)));
 			UTF_BEGIN;
 			Tcl_SetVar2(interp, *arrptr, *nameptr, UTF_E2U(outputstr), 0);
 			UTF_END;
@@ -2425,7 +2428,7 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 			outputstr = DatumGetCString(OidFunctionCall3(typoutput,
 														 attr,
 											   ObjectIdGetDatum(typelem),
-							  Int32GetDatum(tupdesc->attrs[i]->atttypmod)));
+						   Int32GetDatum(tupdesc->attrs[i]->atttypmod)));
 			Tcl_DStringAppendElement(retval, attname);
 			UTF_BEGIN;
 			Tcl_DStringAppendElement(retval, UTF_E2U(outputstr));

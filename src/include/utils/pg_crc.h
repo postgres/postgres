@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_crc.h,v 1.3 2001/03/23 18:42:12 tgl Exp $
+ * $Id: pg_crc.h,v 1.4 2001/10/25 05:50:10 momjian Exp $
  */
 #ifndef PG_CRC_H
 #define PG_CRC_H
@@ -116,7 +116,5 @@ do { \
 
 /* Constant table for CRC calculation */
 extern const uint64 crc_table[];
-
 #endif	 /* INT64_IS_BUSTED */
-
 #endif	 /* PG_CRC_H */

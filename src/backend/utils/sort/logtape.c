@@ -64,7 +64,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/logtape.c,v 1.6 2001/01/24 19:43:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/logtape.c,v 1.7 2001/10/25 05:49:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,7 +224,6 @@ ltsReadBlock(LogicalTapeSet *lts, long blocknum, void *buffer)
 static long
 ltsGetFreeBlock(LogicalTapeSet *lts)
 {
-
 	/*
 	 * If there are multiple free blocks, we select the one appearing last
 	 * in freeBlocks[].  If there are none, assign the next block at the
@@ -286,7 +285,6 @@ ltsRecordBlockNum(LogicalTapeSet *lts, IndirectBlock *indirect,
 {
 	if (indirect->nextSlot >= BLOCKS_PER_INDIR_BLOCK)
 	{
-
 		/*
 		 * This indirect block is full, so dump it out and recursively
 		 * save its address in the next indirection level.	Create a new
@@ -365,7 +363,6 @@ static long
 ltsRewindFrozenIndirectBlock(LogicalTapeSet *lts,
 							 IndirectBlock *indirect)
 {
-
 	/*
 	 * If block is not topmost, recurse to obtain address of first block
 	 * in this hierarchy level.  Read that one in.
@@ -612,7 +609,6 @@ LogicalTapeRewind(LogicalTapeSet *lts, int tapenum, bool forWrite)
 	{
 		if (lt->writing)
 		{
-
 			/*
 			 * Completion of a write phase.  Flush last partial data
 			 * block, flush any partial indirect blocks, rewind for normal
@@ -626,7 +622,6 @@ LogicalTapeRewind(LogicalTapeSet *lts, int tapenum, bool forWrite)
 		}
 		else
 		{
-
 			/*
 			 * This is only OK if tape is frozen; we rewind for (another)
 			 * read pass.
@@ -649,7 +644,6 @@ LogicalTapeRewind(LogicalTapeSet *lts, int tapenum, bool forWrite)
 	}
 	else
 	{
-
 		/*
 		 * Completion of a read phase.	Rewind and prepare for write.
 		 *

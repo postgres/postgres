@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.145 2001/10/23 17:39:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.146 2001/10/25 05:49:24 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -32,7 +32,7 @@
 #include "catalog/pg_type.h"
 #include "commands/command.h"
 #include "commands/trigger.h"
-#include "commands/defrem.h" /* For add constraint unique, primary */
+#include "commands/defrem.h"	/* For add constraint unique, primary */
 #include "executor/execdefs.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
@@ -43,7 +43,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
-#include "parser/analyze.h" /* For add constraint unique, primary */
+#include "parser/analyze.h"		/* For add constraint unique, primary */
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -137,8 +137,8 @@ PerformPortalFetch(char *name,
 	 * destination.  This supports MOVE, for example, which will pass in
 	 * dest = None.
 	 *
-	 * EXCEPTION: if the query's original dest is RemoteInternal (ie, it's
-	 * a binary cursor) and the request is Remote, we do NOT override the
+	 * EXCEPTION: if the query's original dest is RemoteInternal (ie, it's a
+	 * binary cursor) and the request is Remote, we do NOT override the
 	 * original dest.  This is necessary since a FETCH command will pass
 	 * dest = Remote, not knowing whether the cursor is binary or not.
 	 */
@@ -183,10 +183,11 @@ PerformPortalFetch(char *name,
 		if (!portal->atEnd)
 		{
 			ExecutorRun(queryDesc, estate, EXEC_FOR, (long) count);
+
 			/*
-			 *	I use CMD_UPDATE, because no CMD_MOVE or the like
-			 *	exists, and I would like to provide the same
-			 *	kind of info as CMD_UPDATE
+			 * I use CMD_UPDATE, because no CMD_MOVE or the like exists,
+			 * and I would like to provide the same kind of info as
+			 * CMD_UPDATE
 			 */
 			UpdateCommandInfo(CMD_UPDATE, 0, estate->es_processed);
 			if (estate->es_processed > 0)
@@ -200,10 +201,11 @@ PerformPortalFetch(char *name,
 		if (!portal->atStart)
 		{
 			ExecutorRun(queryDesc, estate, EXEC_BACK, (long) count);
+
 			/*
-			 *	I use CMD_UPDATE, because no CMD_MOVE or the like
-			 *	exists, and I would like to provide the same
-			 *	kind of info as CMD_UPDATE
+			 * I use CMD_UPDATE, because no CMD_MOVE or the like exists,
+			 * and I would like to provide the same kind of info as
+			 * CMD_UPDATE
 			 */
 			UpdateCommandInfo(CMD_UPDATE, 0, estate->es_processed);
 			if (estate->es_processed > 0)
@@ -356,8 +358,8 @@ AlterTableAddColumn(const char *relationName,
 
 		/*
 		 * find_all_inheritors does the recursive search of the
-		 * inheritance hierarchy, so all we have to do is process all
-		 * of the relids in the list that it returns.
+		 * inheritance hierarchy, so all we have to do is process all of
+		 * the relids in the list that it returns.
 		 */
 		foreach(child, children)
 		{
@@ -382,12 +384,12 @@ AlterTableAddColumn(const char *relationName,
 	 * Implementation restrictions: because we don't touch the table rows,
 	 * the new column values will initially appear to be NULLs.  (This
 	 * happens because the heap tuple access routines always check for
-	 * attnum > # of attributes in tuple, and return NULL if so.)  Therefore
-	 * we can't support a DEFAULT value in SQL92-compliant fashion, and
-	 * we also can't allow a NOT NULL constraint.
+	 * attnum > # of attributes in tuple, and return NULL if so.)
+	 * Therefore we can't support a DEFAULT value in SQL92-compliant
+	 * fashion, and we also can't allow a NOT NULL constraint.
 	 *
-	 * We do allow CHECK constraints, even though these theoretically
-	 * could fail for NULL rows (eg, CHECK (newcol IS NOT NULL)).
+	 * We do allow CHECK constraints, even though these theoretically could
+	 * fail for NULL rows (eg, CHECK (newcol IS NOT NULL)).
 	 */
 	if (colDef->raw_default || colDef->cooked_default)
 		elog(ERROR, "Adding columns with defaults is not implemented."
@@ -512,8 +514,8 @@ AlterTableAddColumn(const char *relationName,
 	/*
 	 * Add any CHECK constraints attached to the new column.
 	 *
-	 * To do this we must re-open the rel so that its new attr list
-	 * gets loaded into the relcache.
+	 * To do this we must re-open the rel so that its new attr list gets
+	 * loaded into the relcache.
 	 */
 	if (colDef->constraints != NIL)
 	{
@@ -1012,7 +1014,6 @@ RemoveColumnReferences(Oid reloid, int attnum, bool checkonly, HeapTuple reltup)
 
 	return checkok;
 }
-
 #endif	 /* _DROP_COLUMN_HACK__ */
 
 /*
@@ -1169,7 +1170,7 @@ AlterTableDropColumn(const char *relationName,
 	heap_freetuple(reltup);
 	heap_close(rel, NoLock);
 #else
-				elog(ERROR, "ALTER TABLE / DROP COLUMN is not implemented");
+	elog(ERROR, "ALTER TABLE / DROP COLUMN is not implemented");
 #endif	 /* _DROP_COLUMN_HACK__ */
 }
 
@@ -1183,8 +1184,8 @@ AlterTableAddConstraint(char *relationName,
 						bool inh, List *newConstraints)
 {
 	Relation	rel;
-	Oid	myrelid;
-	List	*listptr;
+	Oid			myrelid;
+	List	   *listptr;
 
 #ifndef NO_SECURITY
 	if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
@@ -1199,7 +1200,8 @@ AlterTableAddConstraint(char *relationName,
 	rel = heap_openr(relationName, AccessExclusiveLock);
 	myrelid = RelationGetRelid(rel);
 
-	if (inh) {
+	if (inh)
+	{
 		List	   *child,
 				   *children;
 
@@ -1208,8 +1210,8 @@ AlterTableAddConstraint(char *relationName,
 
 		/*
 		 * find_all_inheritors does the recursive search of the
-		 * inheritance hierarchy, so all we have to do is process all
-		 * of the relids in the list that it returns.
+		 * inheritance hierarchy, so all we have to do is process all of
+		 * the relids in the list that it returns.
 		 */
 		foreach(child, children)
 		{
@@ -1229,372 +1231,418 @@ AlterTableAddConstraint(char *relationName,
 
 	foreach(listptr, newConstraints)
 	{
-		Node   *newConstraint = lfirst(listptr);
+		Node	   *newConstraint = lfirst(listptr);
 
-	switch (nodeTag(newConstraint))
-	{
-		case T_Constraint:
-			{
-				Constraint *constr = (Constraint *) newConstraint;
-
-				switch (constr->contype)
+		switch (nodeTag(newConstraint))
+		{
+			case T_Constraint:
 				{
-					case CONSTR_CHECK:
-						{
-							ParseState *pstate;
-							bool		successful = true;
-							HeapScanDesc scan;
-							ExprContext *econtext;
-							TupleTableSlot *slot;
-							HeapTuple	tuple;
-							RangeTblEntry *rte;
-							List	   *qual;
-							Node	   *expr;
-							char	   *name;
+					Constraint *constr = (Constraint *) newConstraint;
 
-							if (constr->name)
-								name = constr->name;
-							else
-								name = "<unnamed>";
-
-							/*
-							 * We need to make a parse state and range
-							 * table to allow us to transformExpr and
-							 * fix_opids to get a version of the
-							 * expression we can pass to ExecQual
-							 */
-							pstate = make_parsestate(NULL);
-							rte = addRangeTableEntry(pstate, relationName, NULL,
-													 false, true);
-							addRTEtoQuery(pstate, rte, true, true);
-
-							/* Convert the A_EXPR in raw_expr into an EXPR */
-							expr = transformExpr(pstate, constr->raw_expr,
-												 EXPR_COLUMN_FIRST);
-
-							/*
-							 * Make sure it yields a boolean result.
-							 */
-							if (exprType(expr) != BOOLOID)
-								elog(ERROR, "CHECK '%s' does not yield boolean result",
-									 name);
-
-							/*
-							 * Make sure no outside relations are referred
-							 * to.
-							 */
-							if (length(pstate->p_rtable) != 1)
-								elog(ERROR, "Only relation '%s' can be referenced in CHECK",
-									 relationName);
-
-							/*
-							 * Might as well try to reduce any constant
-							 * expressions.
-							 */
-							expr = eval_const_expressions(expr);
-
-							/* And fix the opids */
-							fix_opids(expr);
-
-							qual = makeList1(expr);
-
-							/* Make tuple slot to hold tuples */
-							slot = MakeTupleTableSlot();
-							ExecSetSlotDescriptor(slot, RelationGetDescr(rel), false);
-							/* Make an expression context for ExecQual */
-							econtext = MakeExprContext(slot, CurrentMemoryContext);
-
-							/*
-							 * Scan through the rows now, checking the
-							 * expression at each row.
-							 */
-							scan = heap_beginscan(rel, false, SnapshotNow, 0, NULL);
-
-							while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+					switch (constr->contype)
+					{
+						case CONSTR_CHECK:
 							{
-								ExecStoreTuple(tuple, slot, InvalidBuffer, false);
-								if (!ExecQual(qual, econtext, true))
+								ParseState *pstate;
+								bool		successful = true;
+								HeapScanDesc scan;
+								ExprContext *econtext;
+								TupleTableSlot *slot;
+								HeapTuple	tuple;
+								RangeTblEntry *rte;
+								List	   *qual;
+								Node	   *expr;
+								char	   *name;
+
+								if (constr->name)
+									name = constr->name;
+								else
+									name = "<unnamed>";
+
+								/*
+								 * We need to make a parse state and range
+								 * table to allow us to transformExpr and
+								 * fix_opids to get a version of the
+								 * expression we can pass to ExecQual
+								 */
+								pstate = make_parsestate(NULL);
+								rte = addRangeTableEntry(pstate, relationName, NULL,
+														 false, true);
+								addRTEtoQuery(pstate, rte, true, true);
+
+								/*
+								 * Convert the A_EXPR in raw_expr into an
+								 * EXPR
+								 */
+								expr = transformExpr(pstate, constr->raw_expr,
+													 EXPR_COLUMN_FIRST);
+
+								/*
+								 * Make sure it yields a boolean result.
+								 */
+								if (exprType(expr) != BOOLOID)
+									elog(ERROR, "CHECK '%s' does not yield boolean result",
+										 name);
+
+								/*
+								 * Make sure no outside relations are
+								 * referred to.
+								 */
+								if (length(pstate->p_rtable) != 1)
+									elog(ERROR, "Only relation '%s' can be referenced in CHECK",
+										 relationName);
+
+								/*
+								 * Might as well try to reduce any
+								 * constant expressions.
+								 */
+								expr = eval_const_expressions(expr);
+
+								/* And fix the opids */
+								fix_opids(expr);
+
+								qual = makeList1(expr);
+
+								/* Make tuple slot to hold tuples */
+								slot = MakeTupleTableSlot();
+								ExecSetSlotDescriptor(slot, RelationGetDescr(rel), false);
+								/* Make an expression context for ExecQual */
+								econtext = MakeExprContext(slot, CurrentMemoryContext);
+
+								/*
+								 * Scan through the rows now, checking the
+								 * expression at each row.
+								 */
+								scan = heap_beginscan(rel, false, SnapshotNow, 0, NULL);
+
+								while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 								{
-									successful = false;
-									break;
+									ExecStoreTuple(tuple, slot, InvalidBuffer, false);
+									if (!ExecQual(qual, econtext, true))
+									{
+										successful = false;
+										break;
+									}
+									ResetExprContext(econtext);
 								}
-								ResetExprContext(econtext);
-							}
 
-							heap_endscan(scan);
+								heap_endscan(scan);
 
-							FreeExprContext(econtext);
-							pfree(slot);
+								FreeExprContext(econtext);
+								pfree(slot);
 
-							if (!successful)
-								elog(ERROR, "AlterTableAddConstraint: rejected due to CHECK constraint %s", name);
+								if (!successful)
+									elog(ERROR, "AlterTableAddConstraint: rejected due to CHECK constraint %s", name);
 
-							/*
-							 * Call AddRelationRawConstraints to do the
-							 * real adding -- It duplicates some of the
-							 * above, but does not check the validity of
-							 * the constraint against tuples already in
-							 * the table.
-							 */
-							AddRelationRawConstraints(rel, NIL,
+								/*
+								 * Call AddRelationRawConstraints to do
+								 * the real adding -- It duplicates some
+								 * of the above, but does not check the
+								 * validity of the constraint against
+								 * tuples already in the table.
+								 */
+								AddRelationRawConstraints(rel, NIL,
 													  makeList1(constr));
 
-							break;
-						}
-               case CONSTR_UNIQUE:
-						{
-                            char  *iname = constr->name;
-                            bool  istemp = is_temp_rel_name(relationName);
-                            List	   *indexoidlist;
-                            List     *indexoidscan;
-                            int num_keys;
-                            bool index_found = false;
-                            bool index_found_unique = false;
-                            bool index_found_primary = false;
+								break;
+							}
+						case CONSTR_UNIQUE:
+							{
+								char	   *iname = constr->name;
+								bool		istemp = is_temp_rel_name(relationName);
+								List	   *indexoidlist;
+								List	   *indexoidscan;
+								int			num_keys;
+								bool		index_found = false;
+								bool		index_found_unique = false;
+								bool		index_found_primary = false;
 
-                            /* If the constraint name is not specified, generate a name */
-                            if (iname == NULL) {
-                               Oid	indoid;
-                               int   pass = 0;
-                               char  *typename = palloc(NAMEDATALEN);
-                               Ident *key;
+								/*
+								 * If the constraint name is not
+								 * specified, generate a name
+								 */
+								if (iname == NULL)
+								{
+									Oid			indoid;
+									int			pass = 0;
+									char	   *typename = palloc(NAMEDATALEN);
+									Ident	   *key;
 
-                               /* Assume that the length of the attr list is already > 0 */
+									/*
+									 * Assume that the length of the attr
+									 * list is already > 0
+									 */
 
-                               /* Get the first attribute so we can use its name */
-                               key = (Ident *)lfirst(constr->keys);
+									/*
+									 * Get the first attribute so we can
+									 * use its name
+									 */
+									key = (Ident *) lfirst(constr->keys);
 
-                               /* Initialise typename to 'key' */
-                               snprintf(typename, NAMEDATALEN, "key");
+									/* Initialise typename to 'key' */
+									snprintf(typename, NAMEDATALEN, "key");
 
-                               for (;;)
-                               {
-                                  iname = makeObjectName(relationName, key->name, typename);
+									for (;;)
+									{
+										iname = makeObjectName(relationName, key->name, typename);
 
-                                  /* Check for a conflict */
-                                  indoid = RelnameFindRelid(iname);
+										/* Check for a conflict */
+										indoid = RelnameFindRelid(iname);
 
-                                  /* If the oid was not found, then we have a safe name */
-                                  if ((!istemp && !OidIsValid(indoid)) ||
-                                     (istemp && !is_temp_rel_name(iname)))
-                                     break;
+										/*
+										 * If the oid was not found, then
+										 * we have a safe name
+										 */
+										if ((!istemp && !OidIsValid(indoid)) ||
+											(istemp && !is_temp_rel_name(iname)))
+											break;
 
-                                  /* Found a conflict, so try a new name component */
-                                  pfree(iname);
-                                  snprintf(typename, NAMEDATALEN, "key%d", ++pass);
-                               }
-                            }
+										/*
+										 * Found a conflict, so try a new
+										 * name component
+										 */
+										pfree(iname);
+										snprintf(typename, NAMEDATALEN, "key%d", ++pass);
+									}
+								}
 
-                            /* Need to check for unique key already on field(s) */
+								/*
+								 * Need to check for unique key already on
+								 * field(s)
+								 */
 
-                            /*
-                             * First we check for limited correctness of the
-                             * constraint
-                             */
+								/*
+								 * First we check for limited correctness
+								 * of the constraint
+								 */
 
-                            /* Loop over all indices on the relation */
-                            indexoidlist = RelationGetIndexList(rel);
+								/* Loop over all indices on the relation */
+								indexoidlist = RelationGetIndexList(rel);
 
-                            foreach(indexoidscan, indexoidlist)
-                            {
-                               Oid			indexoid = lfirsti(indexoidscan);
-                               HeapTuple	indexTuple;
-                               Form_pg_index indexStruct;
-                               List	   *keyl;
-                               int         i;
+								foreach(indexoidscan, indexoidlist)
+								{
+									Oid			indexoid = lfirsti(indexoidscan);
+									HeapTuple	indexTuple;
+									Form_pg_index indexStruct;
+									List	   *keyl;
+									int			i;
 
-                               indexTuple = SearchSysCache(INDEXRELID,
-                                                 ObjectIdGetDatum(indexoid),
-                                                    0, 0, 0);
+									indexTuple = SearchSysCache(INDEXRELID,
+											  ObjectIdGetDatum(indexoid),
+																0, 0, 0);
 
-                               if (!HeapTupleIsValid(indexTuple))
-                                  elog(ERROR, "ALTER TABLE/ADD CONSTRAINT: Index \"%u\" not found",
-                                     indexoid);
-                               indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
+									if (!HeapTupleIsValid(indexTuple))
+										elog(ERROR, "ALTER TABLE/ADD CONSTRAINT: Index \"%u\" not found",
+											 indexoid);
+									indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
 
-                               /*
-                               * Make sure this index has the same number of
-                               * keys as the constraint -- It obviously won't match otherwise.
-                               */
-                               for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
-								   ;
-                               num_keys = length(constr->keys);
+									/*
+									 * Make sure this index has the same
+									 * number of keys as the constraint --
+									 * It obviously won't match otherwise.
+									 */
+									for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
+										;
+									num_keys = length(constr->keys);
 
-                               if (i == num_keys)
-                               {
-                                  /* Loop over each key in the constraint and check that there is a
-                                     corresponding key in the index. */
-								   int keys_matched = 0;
+									if (i == num_keys)
+									{
+										/*
+										 * Loop over each key in the
+										 * constraint and check that there
+										 * is a corresponding key in the
+										 * index.
+										 */
+										int			keys_matched = 0;
 
-                                  i = 0;
-                                  foreach(keyl, constr->keys)
-                                  {
-                                     Ident    *key = lfirst(keyl);
-									 int	   keyno = indexStruct->indkey[i];
+										i = 0;
+										foreach(keyl, constr->keys)
+										{
+											Ident	   *key = lfirst(keyl);
+											int			keyno = indexStruct->indkey[i];
 
-                                     /* Look at key[i] in the index and check that it is over the same column
-                                        as key[i] in the constraint.  This is to differentiate between (a,b)
-                                        and (b,a) */
-									 if (namestrcmp(attnumAttName(rel, keyno),
-													key->name) == 0)
-										 keys_matched++;
-									 else
-										 break;
-                                     i++;
-                                  }
-                                  if (keys_matched == num_keys) {
-                                     index_found = true;
-                                     index_found_unique = indexStruct->indisunique;
-                                     index_found_primary = indexStruct->indisprimary;
-                                  }
-                               }
-                               ReleaseSysCache(indexTuple);
-							   if (index_found_unique || index_found_primary)
-								   break;
-                            }
+											/*
+											 * Look at key[i] in the index
+											 * and check that it is over
+											 * the same column as key[i]
+											 * in the constraint.  This is
+											 * to differentiate between
+											 * (a,b) and (b,a)
+											 */
+											if (namestrcmp(attnumAttName(rel, keyno),
+														 key->name) == 0)
+												keys_matched++;
+											else
+												break;
+											i++;
+										}
+										if (keys_matched == num_keys)
+										{
+											index_found = true;
+											index_found_unique = indexStruct->indisunique;
+											index_found_primary = indexStruct->indisprimary;
+										}
+									}
+									ReleaseSysCache(indexTuple);
+									if (index_found_unique || index_found_primary)
+										break;
+								}
 
-                            freeList(indexoidlist);
+								freeList(indexoidlist);
 
-                            if (index_found_primary)
-                               elog(ERROR, "Unique primary key already defined on relation \"%s\"", relationName);
-                            else if (index_found_unique)
-                               elog(ERROR, "Unique constraint already defined on the specified attributes in relation \"%s\"", relationName);
+								if (index_found_primary)
+									elog(ERROR, "Unique primary key already defined on relation \"%s\"", relationName);
+								else if (index_found_unique)
+									elog(ERROR, "Unique constraint already defined on the specified attributes in relation \"%s\"", relationName);
 
-                            /* If everything is ok, create the new index (constraint) */
-                            DefineIndex(
-                               relationName,
-                               iname,
-                               "btree",
-                               constr->keys,
-                               true,
-                               false,
-                               NULL,
-                               NIL);
+								/*
+								 * If everything is ok, create the new
+								 * index (constraint)
+								 */
+								DefineIndex(
+											relationName,
+											iname,
+											"btree",
+											constr->keys,
+											true,
+											false,
+											NULL,
+											NIL);
 
-                            /* Issue notice */
-                            elog(NOTICE, "ALTER TABLE/ADD UNIQUE will create implicit index '%s' for table '%s'",
-                               iname, relationName);
-                            if (index_found)
-                               elog(NOTICE, "Unique constraint supercedes existing index on relation \"%s\".  Drop the existing index to remove redundancy.", relationName);
-                            pfree(iname);
+								/* Issue notice */
+								elog(NOTICE, "ALTER TABLE/ADD UNIQUE will create implicit index '%s' for table '%s'",
+									 iname, relationName);
+								if (index_found)
+									elog(NOTICE, "Unique constraint supercedes existing index on relation \"%s\".  Drop the existing index to remove redundancy.", relationName);
+								pfree(iname);
 
-           					break;
-                         }
-					default:
-						elog(ERROR, "ALTER TABLE / ADD CONSTRAINT is not implemented for that constraint type.");
+								break;
+							}
+						default:
+							elog(ERROR, "ALTER TABLE / ADD CONSTRAINT is not implemented for that constraint type.");
+					}
+					break;
 				}
-				break;
-			}
-		case T_FkConstraint:
-			{
-				FkConstraint *fkconstraint = (FkConstraint *) newConstraint;
-				Relation	pkrel;
-				HeapScanDesc scan;
-				HeapTuple	tuple;
-				Trigger		trig;
-				List	   *list;
-				int			count;
- 
-				if (is_temp_rel_name(fkconstraint->pktable_name) &&
-					!is_temp_rel_name(relationName))
-					elog(ERROR, "ALTER TABLE / ADD CONSTRAINT: Unable to reference temporary table from permanent table constraint.");
+			case T_FkConstraint:
+				{
+					FkConstraint *fkconstraint = (FkConstraint *) newConstraint;
+					Relation	pkrel;
+					HeapScanDesc scan;
+					HeapTuple	tuple;
+					Trigger		trig;
+					List	   *list;
+					int			count;
 
-				/*
-				 * Grab an exclusive lock on the pk table, so that someone
-				 * doesn't delete rows out from under us.
-				 */
+					if (is_temp_rel_name(fkconstraint->pktable_name) &&
+						!is_temp_rel_name(relationName))
+						elog(ERROR, "ALTER TABLE / ADD CONSTRAINT: Unable to reference temporary table from permanent table constraint.");
 
-				pkrel = heap_openr(fkconstraint->pktable_name, AccessExclusiveLock);
-				if (pkrel->rd_rel->relkind != RELKIND_RELATION)
-					elog(ERROR, "referenced table \"%s\" not a relation",
-						 fkconstraint->pktable_name);
-				heap_close(pkrel, NoLock);
+					/*
+					 * Grab an exclusive lock on the pk table, so that
+					 * someone doesn't delete rows out from under us.
+					 */
 
-				/*
-				 * First we check for limited correctness of the constraint.
-				 *
-				 * NOTE: we assume parser has already checked for existence
-				 * of an appropriate unique index on the referenced relation,
-				 * and that the column datatypes are comparable.
-				 *
-				 * Scan through each tuple, calling the RI_FKey_Match_Ins
-				 * (insert trigger) as if that tuple had just been
-				 * inserted.  If any of those fail, it should elog(ERROR)
-				 * and that's that.
-				 */
+					pkrel = heap_openr(fkconstraint->pktable_name, AccessExclusiveLock);
+					if (pkrel->rd_rel->relkind != RELKIND_RELATION)
+						elog(ERROR, "referenced table \"%s\" not a relation",
+							 fkconstraint->pktable_name);
+					heap_close(pkrel, NoLock);
 
-				trig.tgoid = 0;
-				if (fkconstraint->constr_name)
-					trig.tgname = fkconstraint->constr_name;
-				else
-					trig.tgname = "<unknown>";
-				trig.tgfoid = 0;
-				trig.tgtype = 0;
-				trig.tgenabled = TRUE;
-				trig.tgisconstraint = TRUE;
-				trig.tginitdeferred = FALSE;
-				trig.tgdeferrable = FALSE;
+					/*
+					 * First we check for limited correctness of the
+					 * constraint.
+					 *
+					 * NOTE: we assume parser has already checked for
+					 * existence of an appropriate unique index on the
+					 * referenced relation, and that the column datatypes
+					 * are comparable.
+					 *
+					 * Scan through each tuple, calling the RI_FKey_Match_Ins
+					 * (insert trigger) as if that tuple had just been
+					 * inserted.  If any of those fail, it should
+					 * elog(ERROR) and that's that.
+					 */
 
-				trig.tgargs = (char **) palloc(
+					trig.tgoid = 0;
+					if (fkconstraint->constr_name)
+						trig.tgname = fkconstraint->constr_name;
+					else
+						trig.tgname = "<unknown>";
+					trig.tgfoid = 0;
+					trig.tgtype = 0;
+					trig.tgenabled = TRUE;
+					trig.tgisconstraint = TRUE;
+					trig.tginitdeferred = FALSE;
+					trig.tgdeferrable = FALSE;
+
+					trig.tgargs = (char **) palloc(
 					 sizeof(char *) * (4 + length(fkconstraint->fk_attrs)
 									   + length(fkconstraint->pk_attrs)));
 
-				if (fkconstraint->constr_name)
-					trig.tgargs[0] = fkconstraint->constr_name;
-				else
-					trig.tgargs[0] = "<unknown>";
-				trig.tgargs[1] = (char *) relationName;
-				trig.tgargs[2] = fkconstraint->pktable_name;
-				trig.tgargs[3] = fkconstraint->match_type;
-				count = 4;
-				foreach(list, fkconstraint->fk_attrs)
-				{
-					Ident	   *fk_at = lfirst(list);
+					if (fkconstraint->constr_name)
+						trig.tgargs[0] = fkconstraint->constr_name;
+					else
+						trig.tgargs[0] = "<unknown>";
+					trig.tgargs[1] = (char *) relationName;
+					trig.tgargs[2] = fkconstraint->pktable_name;
+					trig.tgargs[3] = fkconstraint->match_type;
+					count = 4;
+					foreach(list, fkconstraint->fk_attrs)
+					{
+						Ident	   *fk_at = lfirst(list);
 
-					trig.tgargs[count] = fk_at->name;
-					count += 2;
+						trig.tgargs[count] = fk_at->name;
+						count += 2;
+					}
+					count = 5;
+					foreach(list, fkconstraint->pk_attrs)
+					{
+						Ident	   *pk_at = lfirst(list);
+
+						trig.tgargs[count] = pk_at->name;
+						count += 2;
+					}
+					trig.tgnargs = count - 1;
+
+					scan = heap_beginscan(rel, false, SnapshotNow, 0, NULL);
+
+					while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+					{
+						/* Make a call to the check function */
+
+						/*
+						 * No parameters are passed, but we do set a
+						 * context
+						 */
+						FunctionCallInfoData fcinfo;
+						TriggerData trigdata;
+
+						MemSet(&fcinfo, 0, sizeof(fcinfo));
+
+						/*
+						 * We assume RI_FKey_check_ins won't look at
+						 * flinfo...
+						 */
+
+						trigdata.type = T_TriggerData;
+						trigdata.tg_event = TRIGGER_EVENT_INSERT | TRIGGER_EVENT_ROW;
+						trigdata.tg_relation = rel;
+						trigdata.tg_trigtuple = tuple;
+						trigdata.tg_newtuple = NULL;
+						trigdata.tg_trigger = &trig;
+
+						fcinfo.context = (Node *) &trigdata;
+
+						RI_FKey_check_ins(&fcinfo);
+					}
+					heap_endscan(scan);
+
+					pfree(trig.tgargs);
+					break;
 				}
-				count = 5;
-				foreach(list, fkconstraint->pk_attrs)
-				{
-					Ident	   *pk_at = lfirst(list);
-
-					trig.tgargs[count] = pk_at->name;
-					count += 2;
-				}
-				trig.tgnargs = count - 1;
-
-				scan = heap_beginscan(rel, false, SnapshotNow, 0, NULL);
-
-				while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
-				{
-					/* Make a call to the check function */
-					/* No parameters are passed, but we do set a context */
-					FunctionCallInfoData fcinfo;
-					TriggerData trigdata;
-
-					MemSet(&fcinfo, 0, sizeof(fcinfo));
-					/* We assume RI_FKey_check_ins won't look at flinfo... */
-
-					trigdata.type = T_TriggerData;
-					trigdata.tg_event = TRIGGER_EVENT_INSERT | TRIGGER_EVENT_ROW;
-					trigdata.tg_relation = rel;
-					trigdata.tg_trigtuple = tuple;
-					trigdata.tg_newtuple = NULL;
-					trigdata.tg_trigger = &trig;
-
-					fcinfo.context = (Node *) &trigdata;
-
-					RI_FKey_check_ins(&fcinfo);
-				}
-				heap_endscan(scan);
-
-				pfree(trig.tgargs);
-				break;
-			}
-		default:
-			elog(ERROR, "ALTER TABLE / ADD CONSTRAINT unable to determine type of constraint passed");
-	}
+			default:
+				elog(ERROR, "ALTER TABLE / ADD CONSTRAINT unable to determine type of constraint passed");
+		}
 	}
 
 	/* Close rel, but keep lock till commit */
@@ -1614,7 +1662,7 @@ AlterTableDropConstraint(const char *relationName,
 						 bool inh, const char *constrName,
 						 int behavior)
 {
-	Relation		rel;
+	Relation	rel;
 	int			deleted;
 
 #ifndef NO_SECURITY
@@ -1622,14 +1670,16 @@ AlterTableDropConstraint(const char *relationName,
 		elog(ERROR, "ALTER TABLE: permission denied");
 #endif
 
-	/* We don't support CASCADE yet  - in fact, RESTRICT
-	 * doesn't work to the spec either! */
+	/*
+	 * We don't support CASCADE yet  - in fact, RESTRICT doesn't work to
+	 * the spec either!
+	 */
 	if (behavior == CASCADE)
 		elog(ERROR, "ALTER TABLE / DROP CONSTRAINT does not support the CASCADE keyword");
 
 	/*
-	 * Acquire an exclusive lock on the target relation for
-	 * the duration of the operation.
+	 * Acquire an exclusive lock on the target relation for the duration
+	 * of the operation.
 	 */
 
 	rel = heap_openr(relationName, AccessExclusiveLock);
@@ -1640,9 +1690,10 @@ AlterTableDropConstraint(const char *relationName,
 			 relationName);
 
 	/*
-	 * Since all we have is the name of the constraint, we have to look through
-	 * all catalogs that could possibly contain a constraint for this relation.
-	 * We also keep a count of the number of constraints removed.
+	 * Since all we have is the name of the constraint, we have to look
+	 * through all catalogs that could possibly contain a constraint for
+	 * this relation. We also keep a count of the number of constraints
+	 * removed.
 	 */
 
 	deleted = 0;
@@ -1654,7 +1705,8 @@ AlterTableDropConstraint(const char *relationName,
 	deleted += RemoveCheckConstraint(rel, constrName, inh);
 
 	/*
-	 * Now we remove NULL, UNIQUE, PRIMARY KEY and FOREIGN KEY constraints.
+	 * Now we remove NULL, UNIQUE, PRIMARY KEY and FOREIGN KEY
+	 * constraints.
 	 *
 	 * Unimplemented.
 	 */
@@ -1887,10 +1939,11 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	 * Create unique index on chunk_id, chunk_seq.
 	 *
 	 * NOTE: the tuple toaster could actually function with a single-column
-	 * index on chunk_id only.  However, it couldn't be unique then.  We
-	 * want it to be unique as a check against the possibility of duplicate
-	 * TOAST chunk OIDs.  Too, the index might be a little more efficient this
-	 * way, since btree isn't all that happy with large numbers of equal keys.
+	 * index on chunk_id only.	However, it couldn't be unique then.  We
+	 * want it to be unique as a check against the possibility of
+	 * duplicate TOAST chunk OIDs.	Too, the index might be a little more
+	 * efficient this way, since btree isn't all that happy with large
+	 * numbers of equal keys.
 	 */
 
 	indexInfo = makeNode(IndexInfo);
@@ -1910,9 +1963,9 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 							   true, true);
 
 	/*
-	 * Update toast rel's pg_class entry to show that it has an index.
-	 * The index OID is stored into the reltoastidxid field for
-	 * easy access by the tuple toaster.
+	 * Update toast rel's pg_class entry to show that it has an index. The
+	 * index OID is stored into the reltoastidxid field for easy access by
+	 * the tuple toaster.
 	 */
 	setRelhasindex(toast_relid, true, true, toast_idxid);
 
@@ -1990,7 +2043,7 @@ needs_toast_table(Relation rel)
 		MAXALIGN(data_length);
 	return (tuple_length > TOAST_TUPLE_THRESHOLD);
 }
-	
+
 /*
  *
  * LOCK TABLE
@@ -1999,38 +2052,39 @@ needs_toast_table(Relation rel)
 void
 LockTableCommand(LockStmt *lockstmt)
 {
-	List *p;
-	Relation rel;
-	
-	/* Iterate over the list and open, lock, and close the relations
-	   one at a time
+	List	   *p;
+	Relation	rel;
+
+	/*
+	 * Iterate over the list and open, lock, and close the relations one
+	 * at a time
 	 */
 
-		foreach(p, lockstmt->rellist)
-		{
-			char* relname = strVal(lfirst(p));
-			int			aclresult;
-			
-			rel = heap_openr(relname, NoLock);
+	foreach(p, lockstmt->rellist)
+	{
+		char	   *relname = strVal(lfirst(p));
+		int			aclresult;
 
-			if (rel->rd_rel->relkind != RELKIND_RELATION)
-				elog(ERROR, "LOCK TABLE: %s is not a table", 
-					 relname);
-			
-			if (lockstmt->mode == AccessShareLock)
-				aclresult = pg_aclcheck(relname, GetUserId(),
-										ACL_SELECT);
-			else
-				aclresult = pg_aclcheck(relname, GetUserId(),
-										ACL_UPDATE | ACL_DELETE);
+		rel = heap_openr(relname, NoLock);
 
-			if (aclresult != ACLCHECK_OK)
-				elog(ERROR, "LOCK TABLE: permission denied");
+		if (rel->rd_rel->relkind != RELKIND_RELATION)
+			elog(ERROR, "LOCK TABLE: %s is not a table",
+				 relname);
 
-			LockRelation(rel, lockstmt->mode);
-			
-			heap_close(rel, NoLock);	/* close rel, keep lock */
-		}
+		if (lockstmt->mode == AccessShareLock)
+			aclresult = pg_aclcheck(relname, GetUserId(),
+									ACL_SELECT);
+		else
+			aclresult = pg_aclcheck(relname, GetUserId(),
+									ACL_UPDATE | ACL_DELETE);
+
+		if (aclresult != ACLCHECK_OK)
+			elog(ERROR, "LOCK TABLE: permission denied");
+
+		LockRelation(rel, lockstmt->mode);
+
+		heap_close(rel, NoLock);		/* close rel, keep lock */
+	}
 }
 
 

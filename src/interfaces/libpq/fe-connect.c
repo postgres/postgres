@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.177 2001/09/06 04:57:30 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.178 2001/10/25 05:50:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,13 +59,11 @@ inet_aton(const char *cp, struct in_addr * inp)
 	inp->s_addr = a;
 	return 1;
 }
-
 #endif
 
 
 #ifdef USE_SSL
 static SSL_CTX *SSL_context = NULL;
-
 #endif
 
 #define NOTIFYLIST_INITIAL_SIZE 10
@@ -99,7 +97,6 @@ static SSL_CTX *SSL_context = NULL;
  * ----------
  */
 static const PQconninfoOption PQconninfoOptions[] = {
-
 	/*
 	 * "authtype" is no longer used, so mark it "don't show".  We keep it
 	 * in the array so as not to reject conninfo strings from old apps
@@ -191,7 +188,7 @@ static int parseServiceInfo(PQconninfoOption *options,
 				 PQExpBuffer errorMessage);
 
 
-/* 
+/*
  *		Connecting to a Database
  *
  * There are now four different ways a user of this API can connect to the
@@ -576,7 +573,7 @@ update_db_info(PGconn *conn)
 
 			/*-------
 			 * new style:
-			 * 	<tcp|unix>:postgresql://server[:port|:/unixsocket/path:]
+			 *	<tcp|unix>:postgresql://server[:port|:/unixsocket/path:]
 			 *	[/db name][?options]
 			 *-------
 			 */
@@ -601,7 +598,6 @@ update_db_info(PGconn *conn)
 			}
 			else
 			{
-
 				/*
 				 * Why do we default only this value from the environment
 				 * again?
@@ -676,7 +672,6 @@ update_db_info(PGconn *conn)
 
 	return 0;
 }
-
 #endif	 /* NOT_USED */
 
 
@@ -696,13 +691,13 @@ connectMakeNonblocking(PGconn *conn)
 #if defined(WIN32)
 	if (ioctlsocket(conn->sock, FIONBIO, &on) != 0)
 #elif defined(__BEOS__)
-	if (ioctl(conn->sock, FIONBIO, &on) != 0)
+		if (ioctl(conn->sock, FIONBIO, &on) != 0)
 #else
 	if (fcntl(conn->sock, F_SETFL, O_NONBLOCK) < 0)
 #endif
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("could not set socket to non-blocking mode: %s\n"),
+		libpq_gettext("could not set socket to non-blocking mode: %s\n"),
 						  SOCK_STRERROR(SOCK_ERRNO));
 		return 0;
 	}
@@ -726,7 +721,7 @@ connectNoDelay(PGconn *conn)
 				   sizeof(on)) < 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("could not set socket to TCP no delay mode: %s\n"),
+		libpq_gettext("could not set socket to TCP no delay mode: %s\n"),
 						  SOCK_STRERROR(SOCK_ERRNO));
 		return 0;
 	}
@@ -746,19 +741,19 @@ connectFailureMessage(PGconn *conn, int errorno)
 	if (conn->raddr.sa.sa_family == AF_UNIX)
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext(
-							  "could not connect to server: %s\n"
-							  "\tIs the server running locally and accepting\n"
-							  "\tconnections on Unix domain socket \"%s\"?\n"
-							  ),
+									  "could not connect to server: %s\n"
+						"\tIs the server running locally and accepting\n"
+						  "\tconnections on Unix domain socket \"%s\"?\n"
+										),
 						  SOCK_STRERROR(errorno),
 						  conn->raddr.un.sun_path);
 	else
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext(
-							  "could not connect to server: %s\n"
-							  "\tIs the server running on host %s and accepting\n"
-							  "\tTCP/IP connections on port %s?\n"
-							  ),
+									  "could not connect to server: %s\n"
+					 "\tIs the server running on host %s and accepting\n"
+									 "\tTCP/IP connections on port %s?\n"
+										),
 						  SOCK_STRERROR(errorno),
 						  conn->pghost
 						  ? conn->pghost
@@ -785,7 +780,6 @@ connectDBStart(PGconn *conn)
 #ifdef USE_SSL
 	StartupPacket np;			/* Used to negotiate SSL connection */
 	char		SSLok;
-
 #endif
 
 	if (!conn)
@@ -944,7 +938,7 @@ connectDBStart(PGconn *conn)
 		if (pqPacketSend(conn, (char *) &np, sizeof(StartupPacket)) != STATUS_OK)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not send SSL negotiation packet: %s\n"),
+			libpq_gettext("could not send SSL negotiation packet: %s\n"),
 							  SOCK_STRERROR(SOCK_ERRNO));
 			goto connect_errReturn;
 		}
@@ -966,8 +960,8 @@ connectDBStart(PGconn *conn)
 				if (!SSL_context)
 				{
 					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext("could not create SSL context: %s\n"),
-									  ERR_reason_error_string(ERR_get_error()));
+					 libpq_gettext("could not create SSL context: %s\n"),
+							   ERR_reason_error_string(ERR_get_error()));
 					goto connect_errReturn;
 				}
 			}
@@ -976,8 +970,8 @@ connectDBStart(PGconn *conn)
 				SSL_connect(conn->ssl) <= 0)
 			{
 				printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("could not establish SSL connection: %s\n"),
-								  ERR_reason_error_string(ERR_get_error()));
+				libpq_gettext("could not establish SSL connection: %s\n"),
+							   ERR_reason_error_string(ERR_get_error()));
 				goto connect_errReturn;
 			}
 			/* SSL connection finished. Continue to send startup packet */
@@ -1053,7 +1047,6 @@ connectDBComplete(PGconn *conn)
 
 	for (;;)
 	{
-
 		/*
 		 * Wait, if necessary.	Note that the initial state (just after
 		 * PQconnectStart) is to wait for the socket to select for
@@ -1134,7 +1127,6 @@ PQconnectPoll(PGconn *conn)
 	/* Get the new data */
 	switch (conn->status)
 	{
-
 			/*
 			 * We really shouldn't have been polled in these two cases,
 			 * but we can handle it.
@@ -1171,9 +1163,9 @@ PQconnectPoll(PGconn *conn)
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext(
-								  "invalid connection state, "
-								  "probably indicative of memory corruption\n"
-								  ));
+											"invalid connection state, "
+							 "probably indicative of memory corruption\n"
+											));
 			goto error_return;
 	}
 
@@ -1261,7 +1253,7 @@ keep_going:						/* We will come back to here until there
 								 sizeof(StartupPacket)) != STATUS_OK)
 				{
 					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext("could not send startup packet: %s\n"),
+					libpq_gettext("could not send startup packet: %s\n"),
 									  SOCK_STRERROR(SOCK_ERRNO));
 					goto error_return;
 				}
@@ -1317,9 +1309,9 @@ keep_going:						/* We will come back to here until there
 				{
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext(
-										  "expected authentication request from "
-										  "server, but received %c\n"
-										  ),
+								  "expected authentication request from "
+											  "server, but received %c\n"
+													),
 									  beresp);
 					goto error_return;
 				}
@@ -1404,7 +1396,6 @@ keep_going:						/* We will come back to here until there
 
 		case CONNECTION_AUTH_OK:
 			{
-
 				/*
 				 * Now we expect to hear from the backend. A ReadyForQuery
 				 * message indicates that startup is successful, but we
@@ -1489,9 +1480,9 @@ keep_going:						/* We will come back to here until there
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext(
-								  "invalid connection state %c, "
-								  "probably indicative of memory corruption\n"
-								  ),
+										  "invalid connection state %c, "
+							 "probably indicative of memory corruption\n"
+											),
 							  conn->status);
 			goto error_return;
 	}
@@ -1549,7 +1540,6 @@ PQsetenvPoll(PGconn *conn)
 
 #ifdef MULTIBYTE
 	static const char envname[] = "PGCLIENTENCODING";
-
 #endif
 
 	if (conn == NULL || conn->status == CONNECTION_BAD)
@@ -1589,9 +1579,9 @@ PQsetenvPoll(PGconn *conn)
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext(
-								  "invalid setenv state %c, "
-								  "probably indicative of memory corruption\n"
-								  ),
+											"invalid setenv state %c, "
+							 "probably indicative of memory corruption\n"
+											),
 							  conn->setenv_state);
 			goto error_return;
 	}
@@ -1610,7 +1600,6 @@ keep_going:						/* We will come back to here until there
 				env = getenv(envname);
 				if (!env || *env == '\0')
 				{
-
 					/*
 					 * query server encoding if PGCLIENTENCODING is not
 					 * specified
@@ -1756,7 +1745,7 @@ keep_going:						/* We will come back to here until there
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("invalid state %c, "
-											"probably indicative of memory corruption\n"),
+						   "probably indicative of memory corruption\n"),
 							  conn->setenv_state);
 			goto error_return;
 	}
@@ -1793,7 +1782,6 @@ PQsetenv(PGconn *conn)
 
 	for (;;)
 	{
-
 		/*
 		 * Wait, if necessary.	Note that the initial state (just after
 		 * PQsetenvStart) is to wait for the socket to select for writing.
@@ -1834,7 +1822,6 @@ PQsetenv(PGconn *conn)
 		flag = PQsetenvPoll(conn);
 	}
 }
-
 #endif	 /* NOT_USED */
 
 
@@ -1955,11 +1942,12 @@ freePGconn(PGconn *conn)
 static void
 closePGconn(PGconn *conn)
 {
-	/* Note that the protocol doesn't allow us to send Terminate
-	   messages during the startup phase. */
+	/*
+	 * Note that the protocol doesn't allow us to send Terminate messages
+	 * during the startup phase.
+	 */
 	if (conn->sock >= 0 && conn->status == CONNECTION_OK)
 	{
-
 		/*
 		 * Try to send "close connection" message to backend. Ignore any
 		 * error. Note: this routine used to go to substantial lengths to
@@ -2298,7 +2286,6 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 			{
 				if (group_found)
 				{
-
 					/*
 					 * Finally, we are in the right group and can parse
 					 * the line
@@ -2507,7 +2494,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 		if (option->keyword == NULL)
 		{
 			printfPQExpBuffer(errorMessage,
-							  libpq_gettext("invalid connection option \"%s\"\n"),
+					 libpq_gettext("invalid connection option \"%s\"\n"),
 							  pname);
 			PQconninfoFree(options);
 			free(buf);
@@ -2758,14 +2745,13 @@ PQsetClientEncoding(PGconn *conn, const char *encoding)
 	return (status);
 }
 
-#else	/* without multibytle support */
+#else							/* without multibytle support */
 
 int
 PQsetClientEncoding(PGconn *conn, const char *encoding)
 {
 	return -1;
 }
-
 #endif
 
 #ifdef USE_SSL
@@ -2776,7 +2762,6 @@ PQgetssl(PGconn *conn)
 		return NULL;
 	return conn->ssl;
 }
-
 #endif
 
 void

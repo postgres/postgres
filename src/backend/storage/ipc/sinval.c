@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.42 2001/09/29 15:29:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.43 2001/10/25 05:49:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ CreateSharedInvalidationState(int maxBackends)
 void
 InitBackendSharedInvalidationState(void)
 {
-	int		flag;
+	int			flag;
 
 	LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
 	flag = SIBackendInit(shmInvalBuffer);
@@ -75,8 +75,8 @@ SendSharedInvalidMessage(SharedInvalidationMessage *msg)
  */
 void
 ReceiveSharedInvalidMessages(
-	void (*invalFunction) (SharedInvalidationMessage *msg),
-	void (*resetFunction) (void))
+				  void (*invalFunction) (SharedInvalidationMessage *msg),
+							 void (*resetFunction) (void))
 {
 	SharedInvalidationMessage data;
 	int			getResult;
@@ -85,19 +85,19 @@ ReceiveSharedInvalidMessages(
 	for (;;)
 	{
 		/*
-		 * We can run SIGetDataEntry in parallel with other backends running
-		 * SIGetDataEntry for themselves, since each instance will modify
-		 * only fields of its own backend's ProcState, and no instance will
-		 * look at fields of other backends' ProcStates.  We express this
-		 * by grabbing SInvalLock in shared mode.  Note that this is not
-		 * exactly the normal (read-only) interpretation of a shared lock!
-		 * Look closely at the interactions before allowing SInvalLock to
-		 * be grabbed in shared mode for any other reason!
+		 * We can run SIGetDataEntry in parallel with other backends
+		 * running SIGetDataEntry for themselves, since each instance will
+		 * modify only fields of its own backend's ProcState, and no
+		 * instance will look at fields of other backends' ProcStates.  We
+		 * express this by grabbing SInvalLock in shared mode.	Note that
+		 * this is not exactly the normal (read-only) interpretation of a
+		 * shared lock! Look closely at the interactions before allowing
+		 * SInvalLock to be grabbed in shared mode for any other reason!
 		 *
-		 * The routines later in this file that use shared mode are okay
-		 * with this, because they aren't looking at the ProcState fields
-		 * associated with SI message transfer; they only use the ProcState
-		 * array as an easy way to find all the PROC structures.
+		 * The routines later in this file that use shared mode are okay with
+		 * this, because they aren't looking at the ProcState fields
+		 * associated with SI message transfer; they only use the
+		 * ProcState array as an easy way to find all the PROC structures.
 		 */
 		LWLockAcquire(SInvalLock, LW_SHARED);
 		getResult = SIGetDataEntry(shmInvalBuffer, MyBackendId, &data);
@@ -209,6 +209,7 @@ TransactionIdIsInProgress(TransactionId xid)
 		if (pOffset != INVALID_OFFSET)
 		{
 			PROC	   *proc = (PROC *) MAKE_PTR(pOffset);
+
 			/* Fetch xid just once - see GetNewTransactionId */
 			TransactionId pxid = proc->xid;
 
@@ -233,7 +234,7 @@ TransactionIdIsInProgress(TransactionId xid)
  * then only backends running in my own database are considered.
  *
  * This is used by VACUUM to decide which deleted tuples must be preserved
- * in a table.  allDbs = TRUE is needed for shared relations, but allDbs =
+ * in a table.	allDbs = TRUE is needed for shared relations, but allDbs =
  * FALSE is sufficient for non-shared relations, since only backends in my
  * own database could ever see the tuples in them.
  *
@@ -331,7 +332,7 @@ GetSnapshotData(bool serializable)
 	/*--------------------
 	 * Unfortunately, we have to call ReadNewTransactionId() after acquiring
 	 * SInvalLock above.  It's not good because ReadNewTransactionId() does
-	 * LWLockAcquire(XidGenLock), but *necessary*.  We need to be sure that
+	 * LWLockAcquire(XidGenLock), but *necessary*.	We need to be sure that
 	 * no transactions exit the set of currently-running transactions
 	 * between the time we fetch xmax and the time we finish building our
 	 * snapshot.  Otherwise we could have a situation like this:
@@ -364,18 +365,19 @@ GetSnapshotData(bool serializable)
 		if (pOffset != INVALID_OFFSET)
 		{
 			PROC	   *proc = (PROC *) MAKE_PTR(pOffset);
+
 			/* Fetch xid just once - see GetNewTransactionId */
 			TransactionId xid = proc->xid;
 
 			/*
 			 * Ignore my own proc (dealt with my xid above), procs not
-			 * running a transaction, and xacts started since we read
-			 * the next transaction ID.  There's no need to store XIDs
-			 * above what we got from ReadNewTransactionId, since we'll
-			 * treat them as running anyway.
+			 * running a transaction, and xacts started since we read the
+			 * next transaction ID.  There's no need to store XIDs above
+			 * what we got from ReadNewTransactionId, since we'll treat
+			 * them as running anyway.
 			 */
 			if (proc == MyProc ||
-				! TransactionIdIsNormal(xid) ||
+				!TransactionIdIsNormal(xid) ||
 				TransactionIdFollowsOrEquals(xid, snapshot->xmax))
 				continue;
 

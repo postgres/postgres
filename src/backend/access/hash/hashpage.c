@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.32 2001/07/15 22:48:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.33 2001/10/25 05:49:21 momjian Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -50,7 +50,7 @@ static void _hash_splitpage(Relation rel, Buffer metabuf, Bucket obucket, Bucket
  *	system catalogs anyway.
  *
  *	Note that our page locks are actual lockmanager locks, not buffer
- *	locks (as are used by btree, for example).  This is a good idea because
+ *	locks (as are used by btree, for example).	This is a good idea because
  *	the algorithms are not deadlock-free, and we'd better be able to detect
  *	and recover from deadlocks.
  *
@@ -325,7 +325,7 @@ _hash_setpagelock(Relation rel,
 	{
 		switch (access)
 		{
-				case HASH_WRITE:
+			case HASH_WRITE:
 				LockPage(rel, blkno, ExclusiveLock);
 				break;
 			case HASH_READ:
@@ -349,7 +349,7 @@ _hash_unsetpagelock(Relation rel,
 	{
 		switch (access)
 		{
-				case HASH_WRITE:
+			case HASH_WRITE:
 				UnlockPage(rel, blkno, ExclusiveLock);
 				break;
 			case HASH_READ:
@@ -369,7 +369,7 @@ _hash_unsetpagelock(Relation rel,
  * It is safe to delete an item after acquiring a regular WRITE lock on
  * the page, because no other backend can hold a READ lock on the page,
  * and that means no other backend currently has an indexscan stopped on
- * any item of the item being deleted.  Our own backend might have such
+ * any item of the item being deleted.	Our own backend might have such
  * an indexscan (in fact *will*, since that's how VACUUM found the item
  * in the first place), but _hash_adjscans will fix the scan position.
  */
@@ -532,7 +532,6 @@ _hash_splitpage(Relation rel,
 		_hash_relbuf(rel, obuf, HASH_WRITE);
 		if (!BlockNumberIsValid(oblkno))
 		{
-
 			/*
 			 * the old bucket is completely empty; of course, the new
 			 * bucket will be as well, but since it's a base bucket page
@@ -559,7 +558,6 @@ _hash_splitpage(Relation rel,
 	omaxoffnum = PageGetMaxOffsetNumber(opage);
 	for (;;)
 	{
-
 		/*
 		 * at each iteration through this loop, each of these variables
 		 * should be up-to-date: obuf opage oopaque ooffnum omaxoffnum
@@ -572,7 +570,6 @@ _hash_splitpage(Relation rel,
 			oblkno = oopaque->hasho_nextblkno;
 			if (BlockNumberIsValid(oblkno))
 			{
-
 				/*
 				 * we ran out of tuples on this particular page, but we
 				 * have more overflow pages; re-init values.
@@ -594,7 +591,6 @@ _hash_splitpage(Relation rel,
 			}
 			else
 			{
-
 				/*
 				 * we're at the end of the bucket chain, so now we're
 				 * really done with everything.  before quitting, call
@@ -618,7 +614,6 @@ _hash_splitpage(Relation rel,
 
 		if (bucket == nbucket)
 		{
-
 			/*
 			 * insert the tuple into the new bucket.  if it doesn't fit on
 			 * the current page in the new bucket, we must allocate a new
@@ -695,7 +690,6 @@ _hash_splitpage(Relation rel,
 		}
 		else
 		{
-
 			/*
 			 * the tuple stays on this page.  we didn't move anything, so
 			 * we didn't delete anything and therefore we don't have to

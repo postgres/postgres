@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeGroup.h,v 1.18 2001/01/24 19:43:23 momjian Exp $
+ * $Id: nodeGroup.h,v 1.19 2001/10/25 05:49:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,5 +32,4 @@ extern bool execTuplesMatch(HeapTuple tuple1,
 extern FmgrInfo *execTuplesMatchPrepare(TupleDesc tupdesc,
 					   int numCols,
 					   AttrNumber *matchColIdx);
-
 #endif	 /* NODEGROUP_H */

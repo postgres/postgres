@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.141 2001/08/10 18:57:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.142 2001/10/25 05:49:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,6 @@ static StringInfoData attribute_buf;
 #ifdef MULTIBYTE
 static int	client_encoding;
 static int	server_encoding;
-
 #endif
 
 
@@ -209,7 +208,6 @@ CopyDonePeek(FILE *fp, int c, int pickup)
 	{
 		if (pickup)
 		{
-
 			/*
 			 * We want to pick it up - just receive again into dummy
 			 * buffer
@@ -240,8 +238,8 @@ CopyDonePeek(FILE *fp, int c, int pickup)
  * (<from> = TRUE means we are inserting into the table.)
  *
  * If <pipe> is false, transfer is between the table and the file named
- * <filename>.  Otherwise, transfer is between the table and our regular
- * input/output stream.	The latter could be either stdin/stdout or a
+ * <filename>.	Otherwise, transfer is between the table and our regular
+ * input/output stream. The latter could be either stdin/stdout or a
  * socket, depending on whether we're running under Postmaster control.
  *
  * Iff <binary>, unload or reload in the binary format, as opposed to the
@@ -257,7 +255,7 @@ CopyDonePeek(FILE *fp, int c, int pickup)
  * NULL values as <null_print>.
  *
  * When loading in the text format from an input stream (as opposed to
- * a file), recognize a "." on a line by itself as EOF.	Also recognize
+ * a file), recognize a "." on a line by itself as EOF. Also recognize
  * a stream EOF.  When unloading in the text format to an output stream,
  * write a "." on a line by itself at the end of the data.
  *
@@ -534,7 +532,6 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp,
 			}
 			else
 			{
-
 				/*
 				 * If we have a toasted datum, forcibly detoast it to
 				 * avoid memory leakage inside the type's output routine
@@ -1197,7 +1194,6 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 	char	   *string_start;
 	int			mblen;
 	int			i;
-
 #endif
 
 #ifdef MULTIBYTE

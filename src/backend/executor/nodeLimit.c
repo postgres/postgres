@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeLimit.c,v 1.7 2001/08/06 18:05:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeLimit.c,v 1.8 2001/10/25 05:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,6 @@ ExecLimit(Limit *node)
 	 */
 	for (;;)
 	{
-
 		/*
 		 * If we have reached the subplan EOF or the limit, just quit.
 		 *
@@ -76,11 +75,11 @@ ExecLimit(Limit *node)
 		 * here is for position > netlimit not position >= netlimit.
 		 *
 		 * Similarly, when scanning backwards, we must re-fetch the last
-		 * tuple in the offset region before we can return NULL.
-		 * Otherwise we won't be correctly aligned to start going forward
-		 * again.  So, although you might think we can quit when position
-		 * equals offset + 1, we have to fetch a subplan tuple first, and
-		 * then exit when position = offset.
+		 * tuple in the offset region before we can return NULL. Otherwise
+		 * we won't be correctly aligned to start going forward again.
+		 * So, although you might think we can quit when position equals
+		 * offset + 1, we have to fetch a subplan tuple first, and then
+		 * exit when position = offset.
 		 */
 		if (ScanDirectionIsForward(direction))
 		{
@@ -101,7 +100,6 @@ ExecLimit(Limit *node)
 		slot = ExecProcNode(outerPlan, (Plan *) node);
 		if (TupIsNull(slot))
 		{
-
 			/*
 			 * We are at start or end of the subplan.  Update local state
 			 * appropriately, but always return NULL.
@@ -269,8 +267,8 @@ int
 ExecCountSlotsLimit(Limit *node)
 {
 	return ExecCountSlotsNode(outerPlan(node)) +
-	ExecCountSlotsNode(innerPlan(node)) +
-	LIMIT_NSLOTS;
+		ExecCountSlotsNode(innerPlan(node)) +
+		LIMIT_NSLOTS;
 }
 
 /* ----------------------------------------------------------------

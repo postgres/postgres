@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: trigger.h,v 1.27 2001/06/01 02:41:36 tgl Exp $
+ * $Id: trigger.h,v 1.28 2001/10/25 05:49:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,25 +90,25 @@ extern void FreeTriggerDesc(TriggerDesc *trigdesc);
 extern bool equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2);
 
 extern HeapTuple ExecBRInsertTriggers(EState *estate,
-									  ResultRelInfo *relinfo,
-									  HeapTuple trigtuple);
+					 ResultRelInfo *relinfo,
+					 HeapTuple trigtuple);
 extern void ExecARInsertTriggers(EState *estate,
-								 ResultRelInfo *relinfo,
-								 HeapTuple trigtuple);
+					 ResultRelInfo *relinfo,
+					 HeapTuple trigtuple);
 extern bool ExecBRDeleteTriggers(EState *estate,
-								 ResultRelInfo *relinfo,
-								 ItemPointer tupleid);
+					 ResultRelInfo *relinfo,
+					 ItemPointer tupleid);
 extern void ExecARDeleteTriggers(EState *estate,
-								 ResultRelInfo *relinfo,
-								 ItemPointer tupleid);
+					 ResultRelInfo *relinfo,
+					 ItemPointer tupleid);
 extern HeapTuple ExecBRUpdateTriggers(EState *estate,
-									  ResultRelInfo *relinfo,
-									  ItemPointer tupleid,
-									  HeapTuple newtuple);
+					 ResultRelInfo *relinfo,
+					 ItemPointer tupleid,
+					 HeapTuple newtuple);
 extern void ExecARUpdateTriggers(EState *estate,
-								 ResultRelInfo *relinfo,
-								 ItemPointer tupleid,
-								 HeapTuple newtuple);
+					 ResultRelInfo *relinfo,
+					 ItemPointer tupleid,
+					 HeapTuple newtuple);
 
 
 /* ----------
@@ -160,5 +160,4 @@ extern void DeferredTriggerSetState(ConstraintsSetStmt *stmt);
  *
  */
 extern bool RI_FKey_keyequal_upd(TriggerData *trigdata);
-
 #endif	 /* TRIGGER_H */

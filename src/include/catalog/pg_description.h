@@ -6,12 +6,12 @@
  * NOTE: an object is identified by the OID of the row that primarily
  * defines the object, plus the OID of the table that that row appears in.
  * For example, a function is identified by the OID of its pg_proc row
- * plus the pg_class OID of table pg_proc.  This allows unique identification
+ * plus the pg_class OID of table pg_proc.	This allows unique identification
  * of objects without assuming that OIDs are unique across tables.
  *
  * Since attributes don't have OIDs of their own, we identify an attribute
  * comment by the objoid+classoid of its parent table, plus an "objsubid"
- * giving the attribute column number.  "objsubid" must be zero in a comment
+ * giving the attribute column number.	"objsubid" must be zero in a comment
  * for a table itself, so that it is distinct from any column comment.
  * Currently, objsubid is unused and zero for all other kinds of objects,
  * but perhaps it might be useful someday to associate comments with
@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_description.h,v 1.13 2001/08/10 18:57:40 tgl Exp $
+ * $Id: pg_description.h,v 1.14 2001/10/25 05:49:57 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -83,5 +83,4 @@ typedef FormData_pg_description *Form_pg_description;
  *	there is no initialization here.  The initial contents are extracted
  *	by genbki.sh and loaded during initdb.
  */
-
 #endif	 /* PG_DESCRIPTION_H */

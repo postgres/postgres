@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.35 2001/09/23 11:02:01 ishii Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.36 2001/10/25 05:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,8 +171,9 @@ lpad(PG_FUNCTION_ARGS)
 	int			m,
 				s1len,
 				s2len;
+
 #ifdef MULTIBYTE
-	int bytelen;
+	int			bytelen;
 #endif
 
 	/* Negative len is silently taken as zero */
@@ -188,7 +189,7 @@ lpad(PG_FUNCTION_ARGS)
 		s2len = 0;				/* shouldn't happen */
 
 #ifdef MULTIBYTE
-	s1len = pg_mbstrlen_with_len(VARDATA(string1),s1len);
+	s1len = pg_mbstrlen_with_len(VARDATA(string1), s1len);
 #endif
 	if (s1len > len)
 		s1len = len;			/* truncate string1 to len chars */
@@ -213,12 +214,13 @@ lpad(PG_FUNCTION_ARGS)
 #ifdef MULTIBYTE
 	while (m--)
 	{
-	    int mlen = pg_mblen(ptr2);
-	    memcpy(ptr_ret, ptr2, mlen);
-	    ptr_ret += mlen;
-	    ptr2 += mlen;
-	    if (ptr2 == ptr2end)	/* wrap around at end of s2 */
-		ptr2 = VARDATA(string2);
+		int			mlen = pg_mblen(ptr2);
+
+		memcpy(ptr_ret, ptr2, mlen);
+		ptr_ret += mlen;
+		ptr2 += mlen;
+		if (ptr2 == ptr2end)	/* wrap around at end of s2 */
+			ptr2 = VARDATA(string2);
 	}
 #else
 	while (m--)
@@ -234,10 +236,11 @@ lpad(PG_FUNCTION_ARGS)
 #ifdef MULTIBYTE
 	while (s1len--)
 	{
-	    int mlen = pg_mblen(ptr1);
-	    memcpy(ptr_ret, ptr1, mlen);
-	    ptr_ret += mlen;
-	    ptr1 += mlen;
+		int			mlen = pg_mblen(ptr1);
+
+		memcpy(ptr_ret, ptr1, mlen);
+		ptr_ret += mlen;
+		ptr1 += mlen;
 	}
 #else
 	while (s1len--)
@@ -278,8 +281,9 @@ rpad(PG_FUNCTION_ARGS)
 	int			m,
 				s1len,
 				s2len;
+
 #ifdef MULTIBYTE
-	int bytelen;
+	int			bytelen;
 #endif
 
 	/* Negative len is silently taken as zero */
@@ -295,7 +299,7 @@ rpad(PG_FUNCTION_ARGS)
 		s2len = 0;				/* shouldn't happen */
 
 #ifdef MULTIBYTE
-	s1len = pg_mbstrlen_with_len(VARDATA(string1),s1len);
+	s1len = pg_mbstrlen_with_len(VARDATA(string1), s1len);
 #endif
 
 	if (s1len > len)
@@ -320,10 +324,11 @@ rpad(PG_FUNCTION_ARGS)
 #ifdef MULTIBYTE
 	while (s1len--)
 	{
-	    int mlen = pg_mblen(ptr1);
-	    memcpy(ptr_ret, ptr1, mlen);
-	    ptr_ret += mlen;
-	    ptr1 += mlen;
+		int			mlen = pg_mblen(ptr1);
+
+		memcpy(ptr_ret, ptr1, mlen);
+		ptr_ret += mlen;
+		ptr1 += mlen;
 	}
 #else
 	while (s1len--)
@@ -336,12 +341,13 @@ rpad(PG_FUNCTION_ARGS)
 #ifdef MULTIBYTE
 	while (m--)
 	{
-	    int mlen = pg_mblen(ptr2);
-	    memcpy(ptr_ret, ptr2, mlen);
-	    ptr_ret += mlen;
-	    ptr2 += mlen;
-	    if (ptr2 == ptr2end)	/* wrap around at end of s2 */
-		ptr2 = VARDATA(string2);
+		int			mlen = pg_mblen(ptr2);
+
+		memcpy(ptr_ret, ptr2, mlen);
+		ptr_ret += mlen;
+		ptr2 += mlen;
+		if (ptr2 == ptr2end)	/* wrap around at end of s2 */
+			ptr2 = VARDATA(string2);
 	}
 #else
 	while (m--)
@@ -384,11 +390,11 @@ btrim(PG_FUNCTION_ARGS)
 	int			m;
 
 #ifdef MULTIBYTE
-	char	**mp;
-	int	mplen;
-	char	*p;
-	int	mblen;
-	int	len;
+	char	  **mp;
+	int			mplen;
+	char	   *p;
+	int			mblen;
+	int			len;
 #endif
 
 	if ((m = VARSIZE(string) - VARHDRSZ) <= 0 ||
@@ -398,18 +404,18 @@ btrim(PG_FUNCTION_ARGS)
 	ptr = VARDATA(string);
 
 #ifdef MULTIBYTE
-        len = m;
-	mp = (char **)palloc(len*sizeof(char *));
+	len = m;
+	mp = (char **) palloc(len * sizeof(char *));
 	p = ptr;
 	mplen = 0;
 
 	/* build the mb pointer array */
 	while (len > 0)
 	{
-	    mp[mplen++] = p;
-	    mblen = pg_mblen(p);
-	    p += mblen;
-	    len -= mblen;
+		mp[mplen++] = p;
+		mblen = pg_mblen(p);
+		p += mblen;
+		len -= mblen;
 	}
 	mplen--;
 #else
@@ -420,16 +426,17 @@ btrim(PG_FUNCTION_ARGS)
 #ifdef MULTIBYTE
 	while (m > 0)
 	{
-		int str_len = pg_mblen(ptr);
+		int			str_len = pg_mblen(ptr);
+
 		ptr2 = VARDATA(set);
 		while (ptr2 <= end2)
 		{
-		    int set_len = pg_mblen(ptr2);
+			int			set_len = pg_mblen(ptr2);
 
-		    if (str_len == set_len &&
-			memcmp(ptr,ptr2,str_len) == 0)
+			if (str_len == set_len &&
+				memcmp(ptr, ptr2, str_len) == 0)
 				break;
-		    ptr2 += set_len;
+			ptr2 += set_len;
 		}
 		if (ptr2 > end2)
 			break;
@@ -439,18 +446,19 @@ btrim(PG_FUNCTION_ARGS)
 
 	while (m > 0)
 	{
-		int str_len;
+		int			str_len;
+
 		end = mp[mplen--];
 		str_len = pg_mblen(end);
 		ptr2 = VARDATA(set);
 		while (ptr2 <= end2)
 		{
-		    int set_len = pg_mblen(ptr2);
+			int			set_len = pg_mblen(ptr2);
 
-		    if (str_len == set_len &&
-			memcmp(end,ptr2,str_len) == 0)
+			if (str_len == set_len &&
+				memcmp(end, ptr2, str_len) == 0)
 				break;
-		    ptr2 += set_len;
+			ptr2 += set_len;
 		}
 		if (ptr2 > end2)
 			break;
@@ -604,16 +612,17 @@ ltrim(PG_FUNCTION_ARGS)
 #ifdef MULTIBYTE
 	while (m > 0)
 	{
-		int str_len = pg_mblen(ptr);
+		int			str_len = pg_mblen(ptr);
+
 		ptr2 = VARDATA(set);
 		while (ptr2 <= end2)
 		{
-		    int set_len = pg_mblen(ptr2);
+			int			set_len = pg_mblen(ptr2);
 
-		    if (str_len == set_len &&
-			memcmp(ptr,ptr2,str_len) == 0)
+			if (str_len == set_len &&
+				memcmp(ptr, ptr2, str_len) == 0)
 				break;
-		    ptr2 += set_len;
+			ptr2 += set_len;
 		}
 		if (ptr2 > end2)
 			break;
@@ -673,11 +682,11 @@ rtrim(PG_FUNCTION_ARGS)
 	int			m;
 
 #ifdef MULTIBYTE
-	char	**mp;
-	int	mplen;
-	char	*p;
-	int	mblen;
-	int	len;
+	char	  **mp;
+	int			mplen;
+	char	   *p;
+	int			mblen;
+	int			len;
 #endif
 
 	if ((m = VARSIZE(string) - VARHDRSZ) <= 0 ||
@@ -687,18 +696,18 @@ rtrim(PG_FUNCTION_ARGS)
 	ptr = VARDATA(string);
 
 #ifdef MULTIBYTE
-        len = m;
-	mp = (char **)palloc(len*sizeof(char *));
+	len = m;
+	mp = (char **) palloc(len * sizeof(char *));
 	p = ptr;
 	mplen = 0;
 
 	/* build the mb pointer array */
 	while (len > 0)
 	{
-	    mp[mplen++] = p;
-	    mblen = pg_mblen(p);
-	    p += mblen;
-	    len -= mblen;
+		mp[mplen++] = p;
+		mblen = pg_mblen(p);
+		p += mblen;
+		len -= mblen;
 	}
 	mplen--;
 #else
@@ -709,18 +718,19 @@ rtrim(PG_FUNCTION_ARGS)
 #ifdef MULTIBYTE
 	while (m > 0)
 	{
-		int str_len;
+		int			str_len;
+
 		end = mp[mplen--];
 		str_len = pg_mblen(end);
 		ptr2 = VARDATA(set);
 		while (ptr2 <= end2)
 		{
-		    int set_len = pg_mblen(ptr2);
+			int			set_len = pg_mblen(ptr2);
 
-		    if (str_len == set_len &&
-			memcmp(end,ptr2,str_len) == 0)
+			if (str_len == set_len &&
+				memcmp(end, ptr2, str_len) == 0)
 				break;
-		    ptr2 += set_len;
+			ptr2 += set_len;
 		}
 		if (ptr2 > end2)
 			break;
@@ -784,12 +794,13 @@ translate(PG_FUNCTION_ARGS)
 				tolen,
 				retlen,
 				i;
+
 #ifdef MULTIBYTE
-	int str_len;
-	int estimate_len;
-	int len;
-	int source_len;
-	int from_index;
+	int			str_len;
+	int			estimate_len;
+	int			len;
+	int			source_len;
+	int			from_index;
 #endif
 
 	if ((m = VARSIZE(string) - VARHDRSZ) <= 0)
@@ -802,8 +813,8 @@ translate(PG_FUNCTION_ARGS)
 
 #ifdef MULTIBYTE
 	str_len = VARSIZE(string);
-	estimate_len = (tolen*1.0/fromlen + 0.5)*str_len;
-	estimate_len = estimate_len>str_len?estimate_len:str_len;
+	estimate_len = (tolen * 1.0 / fromlen + 0.5) * str_len;
+	estimate_len = estimate_len > str_len ? estimate_len : str_len;
 	result = (text *) palloc(estimate_len);
 #else
 	result = (text *) palloc(VARSIZE(string));
@@ -821,38 +832,39 @@ translate(PG_FUNCTION_ARGS)
 
 		for (i = 0; i < fromlen; i += len)
 		{
-		    len = pg_mblen(&from_ptr[i]);
-		    if (len == source_len &&
-			memcmp(source, &from_ptr[i], len) == 0)
-			break;
+			len = pg_mblen(&from_ptr[i]);
+			if (len == source_len &&
+				memcmp(source, &from_ptr[i], len) == 0)
+				break;
 
-		    from_index++;
+			from_index++;
 		}
 		if (i < fromlen)
 		{
-				/* substitute */
-		    char *p = to_ptr;
-		    for (i=0;i<from_index;i++)
-		    {
-			p += pg_mblen(p);
-			if (p >= (to_ptr + tolen))
-			    break;
-		    }
-		    if (p < (to_ptr + tolen))
-		    {
-			len = pg_mblen(p);
-			memcpy(target, p, len);
-			target += len;
-			retlen += len;
-		    }
+			/* substitute */
+			char	   *p = to_ptr;
+
+			for (i = 0; i < from_index; i++)
+			{
+				p += pg_mblen(p);
+				if (p >= (to_ptr + tolen))
+					break;
+			}
+			if (p < (to_ptr + tolen))
+			{
+				len = pg_mblen(p);
+				memcpy(target, p, len);
+				target += len;
+				retlen += len;
+			}
 
 		}
 		else
 		{
 			/* no match, so copy */
-		    memcpy(target, source, source_len);
-		    target += source_len;
-		    retlen += source_len;
+			memcpy(target, source, source_len);
+			target += source_len;
+			retlen += source_len;
 		}
 
 		source += source_len;

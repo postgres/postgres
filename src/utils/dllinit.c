@@ -52,7 +52,6 @@ BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD reason,
 DECLARE_CYGWIN_DLL(DllMain);
 /* save hInstance from DllMain */
 HINSTANCE	__hDllInstance_base;
-
 #endif	 /* __CYGWIN__ */
 
 struct _reent *_impure_ptr;
@@ -105,5 +104,4 @@ DllMain(
 	}
 	return TRUE;
 }
-
 #endif	 /* CYGWIN_VERSION_DLL_MAJOR < 1001 */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_expr.h,v 1.22 2001/09/20 14:20:28 petere Exp $
+ * $Id: parse_expr.h,v 1.23 2001/10/25 05:50:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,5 +28,4 @@ extern int32 exprTypmod(Node *expr);
 extern bool exprIsLengthCoercion(Node *expr, int32 *coercedTypmod);
 extern void parse_expr_init(void);
 extern char *TypeNameToInternalName(TypeName *typename);
-
 #endif	 /* PARSE_EXPR_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.57 2001/09/06 02:54:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.58 2001/10/25 05:50:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,7 +209,6 @@ tcl_value(char *value)
 		{
 			if (*p == '\\')
 			{
-
 				/*
 				 * escape sequence, translate it
 				 */
@@ -224,7 +223,6 @@ tcl_value(char *value)
 #endif
 	return value;
 }
-
 #endif	 /* TCL_ARRAYS */
 
 
@@ -310,7 +308,6 @@ Pg_connect(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 
 	if (!strcmp("-conninfo", argv[1]))
 	{
-
 		/*
 		 * Establish a connection using the new PQconnectdb() interface
 		 */
@@ -324,7 +321,6 @@ Pg_connect(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 	}
 	else
 	{
-
 		/*
 		 * Establish a connection using the old PQsetdb() interface
 		 */
@@ -661,7 +657,6 @@ Pg_result(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 
 #else
 			PQgetvalue(result, tupno, 0);
-
 #endif
 			char	   *workspace = malloc(strlen(field0) + strlen(appendstr) + 210);
 
@@ -830,7 +825,6 @@ Pg_execute(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 
 		if (strcmp(argv[i], "-array") == 0)
 		{
-
 			/*
 			 * The rows should appear in an array vs. to single variables
 			 */
@@ -846,7 +840,6 @@ Pg_execute(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 
 		if (strcmp(argv[i], "-oid") == 0)
 		{
-
 			/*
 			 * We should place PQoidValue() somewhere
 			 */
@@ -955,7 +948,6 @@ Pg_execute(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 	 */
 	if (i == argc)
 	{
-
 		/*
 		 * We don't have a loop body. If we have at least one result row,
 		 * we set all the variables to the first one and return.
@@ -1272,7 +1264,6 @@ Pg_lo_read(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 	return TCL_OK;
 
 }
-
 #endif
 
 /***********************************
@@ -1365,7 +1356,6 @@ Pg_lo_write(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 	sprintf(interp->result, "%d", nbytes);
 	return TCL_OK;
 }
-
 #endif
 
 /***********************************
@@ -1893,7 +1883,6 @@ Pg_listen(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 
 	if (callback)
 	{
-
 		/*
 		 * Create or update a callback for a relation
 		 */
@@ -1937,7 +1926,6 @@ Pg_listen(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 	}
 	else
 	{
-
 		/*
 		 * Remove a callback for a relation
 		 */

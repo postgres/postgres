@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: px-crypt.c,v 1.2 2001/09/23 04:12:44 momjian Exp $
+ * $Id: px-crypt.c,v 1.3 2001/10/25 05:49:20 momjian Exp $
  */
 
 #include <postgres.h>
@@ -38,7 +38,7 @@
 
 static char *
 run_crypt_des(const char *psw, const char *salt,
-			 char *buf, unsigned len)
+			  char *buf, unsigned len)
 {
 	char	   *res;
 
@@ -51,37 +51,51 @@ run_crypt_des(const char *psw, const char *salt,
 
 static char *
 run_crypt_md5(const char *psw, const char *salt,
-			 char *buf, unsigned len)
+			  char *buf, unsigned len)
 {
 	char	   *res;
+
 	res = px_crypt_md5(psw, salt, buf, len);
 	return res;
 }
 
 static char *
 run_crypt_bf(const char *psw, const char *salt,
-			char *buf, unsigned len)
+			 char *buf, unsigned len)
 {
 	char	   *res;
+
 	res = _crypt_blowfish_rn(psw, salt, buf, len);
 	return res;
 }
 
 static struct
 {
-	char		*id;
+	char	   *id;
 	unsigned	id_len;
 	char	   *(*crypt) (const char *psw, const char *salt,
 									  char *buf, unsigned len);
 }			px_crypt_list[] =
 
 {
-	{ "$2a$", 4, run_crypt_bf },
-	{ "$2$", 3, NULL },							/* N/A */
-	{ "$1$", 3, run_crypt_md5 },
-	{ "_", 1, run_crypt_des },
-	{ "", 0, run_crypt_des },
-	{ NULL, 0, NULL }
+	{
+		"$2a$", 4, run_crypt_bf
+	},
+	{
+		"$2$", 3, NULL
+	},							/* N/A */
+	{
+		"$1$", 3, run_crypt_md5
+	},
+	{
+		"_", 1, run_crypt_des
+	},
+	{
+		"", 0, run_crypt_des
+	},
+	{
+		NULL, 0, NULL
+	}
 };
 
 char *
@@ -125,41 +139,45 @@ px_crypt(const char *psw, const char *salt,
  * salt generators
  */
 
-struct generator {
-	char *name;
-	char *(*gen)(unsigned long count, const char *input, int size,
-					char *output, int output_size);
-	int input_len;
-	int def_rounds;
-	int min_rounds;
-	int max_rounds;
+struct generator
+{
+	char	   *name;
+	char	   *(*gen) (unsigned long count, const char *input, int size,
+									char *output, int output_size);
+	int			input_len;
+	int			def_rounds;
+	int			min_rounds;
+	int			max_rounds;
 };
 
-static struct generator gen_list [] = {
-	{ "des", _crypt_gensalt_traditional_rn, 2, 0, 0, 0 },
-	{ "md5", _crypt_gensalt_md5_rn, 6, 0, 0, 0 },
-	{ "xdes", _crypt_gensalt_extended_rn, 3, PX_XDES_ROUNDS, 1, 0xFFFFFF },
-	{ "bf", _crypt_gensalt_blowfish_rn, 16, PX_BF_ROUNDS, 4, 31 },
-	{ NULL, NULL, 0, 0, 0 }
+static struct generator gen_list[] = {
+	{"des", _crypt_gensalt_traditional_rn, 2, 0, 0, 0},
+	{"md5", _crypt_gensalt_md5_rn, 6, 0, 0, 0},
+	{"xdes", _crypt_gensalt_extended_rn, 3, PX_XDES_ROUNDS, 1, 0xFFFFFF},
+	{"bf", _crypt_gensalt_blowfish_rn, 16, PX_BF_ROUNDS, 4, 31},
+	{NULL, NULL, 0, 0, 0}
 };
 
 uint
 px_gen_salt(const char *salt_type, char *buf, int rounds)
 {
-	int i, res;
+	int			i,
+				res;
 	struct generator *g;
-	char *p;
-	char rbuf[16];
-	
-	for (i = 0; gen_list[i].name; i++) {
+	char	   *p;
+	char		rbuf[16];
+
+	for (i = 0; gen_list[i].name; i++)
+	{
 		g = &gen_list[i];
 		if (strcasecmp(g->name, salt_type) != 0)
 			continue;
 
-		if (g->def_rounds) {
+		if (g->def_rounds)
+		{
 			if (rounds == 0)
 				rounds = g->def_rounds;
-			
+
 			if (rounds < g->min_rounds || rounds > g->max_rounds)
 				return 0;
 		}
@@ -170,10 +188,9 @@ px_gen_salt(const char *salt_type, char *buf, int rounds)
 
 		p = g->gen(rounds, rbuf, g->input_len, buf, PX_MAX_SALT_LEN);
 		memset(rbuf, 0, sizeof(rbuf));
-		
+
 		return p != NULL ? strlen(p) : 0;
 	}
 
 	return 0;
 }
-

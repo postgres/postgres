@@ -52,7 +52,7 @@ check_primary_key(PG_FUNCTION_ARGS)
 	HeapTuple	tuple = NULL;	/* tuple to return */
 	TupleDesc	tupdesc;		/* tuple description */
 	EPlan	   *plan;			/* prepared plan */
-	Oid		   *argtypes = NULL;/* key types to prepare execution plan */
+	Oid		   *argtypes = NULL;		/* key types to prepare execution plan */
 	bool		isnull;			/* to know is some column NULL or not */
 	char		ident[2 * NAMEDATALEN]; /* to identify myself */
 	int			ret;
@@ -235,10 +235,10 @@ check_foreign_key(PG_FUNCTION_ARGS)
 	char	   *relname;		/* referencing relation name */
 	Relation	rel;			/* triggered relation */
 	HeapTuple	trigtuple = NULL;		/* tuple to being changed */
-	HeapTuple	newtuple = NULL;/* tuple to return */
+	HeapTuple	newtuple = NULL;		/* tuple to return */
 	TupleDesc	tupdesc;		/* tuple description */
 	EPlan	   *plan;			/* prepared plan(s) */
-	Oid		   *argtypes = NULL;/* key types to prepare execution plan */
+	Oid		   *argtypes = NULL;		/* key types to prepare execution plan */
 	bool		isnull;			/* to know is some column NULL or not */
 	bool		isequal = true; /* are keys in both tuples equal (in
 								 * UPDATE) */
@@ -402,11 +402,11 @@ check_foreign_key(PG_FUNCTION_ARGS)
 			/*---------
 			 * For 'R'estrict action we construct SELECT query:
 			 *
-			 *  SELECT 1
+			 *	SELECT 1
 			 *	FROM _referencing_relation_
 			 *	WHERE Fkey1 = $1 [AND Fkey2 = $2 [...]]
 			 *
-			 *  to check is tuple referenced or not.
+			 *	to check is tuple referenced or not.
 			 *---------
 			 */
 			if (action == 'r')
@@ -537,7 +537,6 @@ check_foreign_key(PG_FUNCTION_ARGS)
 	 */
 	for (r = 0; r < nrefs; r++)
 	{
-
 		/*
 		 * For 'R'estrict we may to execute plan for one tuple only, for
 		 * other actions - for all tuples.

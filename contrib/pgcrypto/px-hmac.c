@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: px-hmac.c,v 1.1 2001/08/21 01:32:01 momjian Exp $
+ * $Id: px-hmac.c,v 1.2 2001/10/25 05:49:20 momjian Exp $
  */
 
 
@@ -50,7 +50,7 @@ hmac_block_size(PX_HMAC * h)
 }
 
 static void
-hmac_init(PX_HMAC * h, const uint8 * key, uint klen)
+hmac_init(PX_HMAC * h, const uint8 *key, uint klen)
 {
 	uint		bs,
 				hlen,
@@ -95,13 +95,13 @@ hmac_reset(PX_HMAC * h)
 }
 
 static void
-hmac_update(PX_HMAC * h, const uint8 * data, uint dlen)
+hmac_update(PX_HMAC * h, const uint8 *data, uint dlen)
 {
 	px_md_update(h->md, data, dlen);
 }
 
 static void
-hmac_finish(PX_HMAC * h, uint8 * dst)
+hmac_finish(PX_HMAC * h, uint8 *dst)
 {
 	PX_MD	   *md = h->md;
 	uint		bs,

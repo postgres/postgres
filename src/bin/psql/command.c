@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.60 2001/10/11 16:54:18 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.61 2001/10/25 05:49:53 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -56,7 +56,7 @@ static backslashResult exec_command(const char *cmd,
 
 enum option_type
 {
-	OT_NORMAL, OT_SQLID, OT_FILEPIPE
+				OT_NORMAL, OT_SQLID, OT_FILEPIPE
 };
 static char *scan_option(char **string, enum option_type type, char *quote, bool semicolon);
 static char *unescape(const unsigned char *source, size_t len);
@@ -130,11 +130,10 @@ HandleSlashCmds(const char *line,
 
 	if (status == CMD_UNKNOWN)
 	{
-
 		/*
-		 * If the command was not recognized, try to parse it as a one-letter
-		 * command with immediately following argument (a still-supported,
-		 * but no longer encouraged, syntax).
+		 * If the command was not recognized, try to parse it as a
+		 * one-letter command with immediately following argument (a
+		 * still-supported, but no longer encouraged, syntax).
 		 */
 		char		new_cmd[2];
 
@@ -144,7 +143,10 @@ HandleSlashCmds(const char *line,
 		/* use line for options, because my_line was clobbered above */
 		status = exec_command(new_cmd, line + 1, &continue_parse, query_buf);
 
-		/* continue_parse must be relative to my_line for calculation below */
+		/*
+		 * continue_parse must be relative to my_line for calculation
+		 * below
+		 */
 		continue_parse += my_line - line;
 
 #if 0							/* turned out to be too annoying */
@@ -262,8 +264,8 @@ exec_command(const char *cmd,
 	/* \cd */
 	else if (strcmp(cmd, "cd") == 0)
 	{
-		char   *opt = scan_option(&string, OT_NORMAL, NULL, true);
-		char   *dir;
+		char	   *opt = scan_option(&string, OT_NORMAL, NULL, true);
+		char	   *dir;
 
 		if (opt)
 			dir = opt;
@@ -279,12 +281,14 @@ exec_command(const char *cmd,
 				exit(EXIT_FAILURE);
 			}
 			dir = pw->pw_dir;
-#else /* WIN32 */
-			/* On Windows, 'cd' without arguments prints the current
-               directory, so if someone wants to code this here
-               instead... */
+#else							/* WIN32 */
+
+			/*
+			 * On Windows, 'cd' without arguments prints the current
+			 * directory, so if someone wants to code this here instead...
+			 */
 			dir = "/";
-#endif /* WIN32 */
+#endif	 /* WIN32 */
 		}
 
 		if (chdir(dir) == -1)
@@ -315,6 +319,7 @@ exec_command(const char *cmd,
 	{
 		char	   *name;
 		bool		show_verbose;
+
 		name = scan_option(&string, OT_SQLID, NULL, true);
 
 		show_verbose = strchr(cmd, '+') ? true : false;
@@ -359,7 +364,7 @@ exec_command(const char *cmd,
 				break;
 			case 'u':
 				success = describeUsers(name);
-  				break;
+				break;
 			default:
 				status = CMD_UNKNOWN;
 		}
@@ -401,7 +406,7 @@ exec_command(const char *cmd,
 			fout = pset.queryFout;
 		else
 			fout = stdout;
-	
+
 		while ((value = scan_option(&string, OT_NORMAL, &quoted, false)))
 		{
 			if (!quoted && strcmp(value, "-n") == 0)
@@ -649,7 +654,6 @@ exec_command(const char *cmd,
 		}
 		else
 		{
-
 			/*
 			 * Set variable to the concatenation of the arguments.
 			 */
@@ -866,7 +870,6 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 
 	switch (options_string[pos])
 	{
-
 			/*
 			 * Double quoted string
 			 */
@@ -937,7 +940,7 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 				*string = options_string + jj + 1;
 				if (quote)
 					*quote = '"';
-			
+
 				return return_val;
 			}
 
@@ -1119,10 +1122,13 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 				return_val[token_end] = 0;
 
 				/* Strip any trailing semi-colons for some types */
-				if (semicolon) {
-					int i;
-					for (i = strlen(return_val)-1; i && return_val[i]==';'; i--);
-					if (i<strlen(return_val)-1) return_val[i+1]='\0';
+				if (semicolon)
+				{
+					int			i;
+
+					for (i = strlen(return_val) - 1; i && return_val[i] == ';'; i--);
+					if (i < strlen(return_val) - 1)
+						return_val[i + 1] = '\0';
 				}
 
 				if (type == OT_SQLID)
@@ -1331,7 +1337,6 @@ do_connect(const char *new_dbname, const char *new_user)
 		}
 		else
 		{
-
 			/*
 			 * we don't want unpredictable things to happen in scripting
 			 * mode
@@ -1466,7 +1471,6 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 #ifndef WIN32
 	struct stat before,
 				after;
-
 #endif
 
 	if (filename_arg)
@@ -1626,7 +1630,7 @@ _align2string(enum printFormat in)
 {
 	switch (in)
 	{
-			case PRINT_NOTHING:
+		case PRINT_NOTHING:
 			return "nothing";
 			break;
 		case PRINT_UNALIGNED:

@@ -4,18 +4,18 @@
  * Functions returning results from a remote database
  *
  * Copyright (c) Joseph Conway <joe.conway@mail.com>, 2001;
- * 
+ *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose, without fee, and without a written agreement
  * is hereby granted, provided that the above copyright notice and this
  * paragraph and the following two paragraphs appear in all copies.
- * 
+ *
  * IN NO EVENT SHALL THE AUTHOR OR DISTRIBUTORS BE LIABLE TO ANY PARTY FOR
  * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
  * LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
  * DOCUMENTATION, EVEN IF THE AUTHOR OR DISTRIBUTORS HAVE BEEN ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * THE AUTHOR AND DISTRIBUTORS SPECIFICALLY DISCLAIMS ANY WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
  * AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
@@ -52,9 +52,9 @@ typedef struct
 	/*
 	 * the actual query results
 	 */
-	PGresult	*res;
+	PGresult   *res;
 
-} dblink_results;
+}			dblink_results;
 
 /*
  * External declarations
@@ -66,5 +66,4 @@ extern Datum dblink_tok(PG_FUNCTION_ARGS);
  * Internal declarations
  */
 dblink_results *init_dblink_results(MemoryContext fn_mcxt);
-
 #endif	 /* DBLINK_H */

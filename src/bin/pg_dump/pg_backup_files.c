@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.13 2001/09/21 21:58:30 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.14 2001/10/25 05:49:52 momjian Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -550,4 +550,3 @@ _EndBlobs(ArchiveHandle *AH, TocEntry *te)
 		die_horribly(AH, modulename, "could not close large object TOC file: %s\n", strerror(errno));
 
 }
-

@@ -21,7 +21,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: palloc.h,v 1.16 2001/03/22 04:01:13 momjian Exp $
+ * $Id: palloc.h,v 1.17 2001/10/25 05:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,6 +62,5 @@ extern MemoryContext MemoryContextSwitchTo(MemoryContext context);
 extern char *MemoryContextStrdup(MemoryContext context, const char *string);
 
 #define pstrdup(str)  MemoryContextStrdup(CurrentMemoryContext, (str))
-
 
 #endif	 /* PALLOC_H */

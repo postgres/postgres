@@ -1,7 +1,7 @@
 /* ----------
  * pg_lzcompress.h -
  *
- * $Header: /cvsroot/pgsql/src/include/utils/pg_lzcompress.h,v 1.5 2000/04/12 17:16:55 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/include/utils/pg_lzcompress.h,v 1.6 2001/10/25 05:50:10 momjian Exp $
  *
  *	Definitions for the builtin LZ compressor
  * ----------
@@ -227,5 +227,4 @@ int			pglz_decompress(PGLZ_Header *source, char *dest);
  */
 extern int	pglz_get_next_decomp_char_from_lzdata(PGLZ_DecompState *dstate);
 extern int	pglz_get_next_decomp_char_from_plain(PGLZ_DecompState *dstate);
-
 #endif	 /* _PG_LZCOMPRESS_H_ */

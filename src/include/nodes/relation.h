@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.58 2001/08/21 16:36:06 tgl Exp $
+ * $Id: relation.h,v 1.59 2001/10/25 05:50:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@ typedef List *Relids;
  */
 typedef enum CostSelector
 {
-	STARTUP_COST, TOTAL_COST
+				STARTUP_COST, TOTAL_COST
 } CostSelector;
 
 /*----------
@@ -179,14 +179,14 @@ typedef struct RelOptInfo
  *		useful.  So now we have a separate IndexOptInfo struct for indexes.
  *
  *		indexoid  - OID of the index relation itself
- *		pages     - number of disk pages in index
- *		tuples    - number of index tuples in index
+ *		pages	  - number of disk pages in index
+ *		tuples	  - number of index tuples in index
  *		ncolumns  - number of columns in index
- *		nkeys     - number of keys used by index (input columns)
+ *		nkeys	  - number of keys used by index (input columns)
  *		classlist - List of PG_OPCLASS OIDs for the index
  *		indexkeys - List of base-relation attribute numbers that are index keys
  *		ordering  - List of PG_OPERATOR OIDs which order the indexscan result
- *		relam     - the OID of the pg_am of the index
+ *		relam	  - the OID of the pg_am of the index
  *		amcostestimate - OID of the relam's cost estimator
  *		indproc   - OID of the function if a functional index, else 0
  *		indpred   - index predicate if a partial index, else NULL
@@ -197,7 +197,7 @@ typedef struct RelOptInfo
  *		is the number of table columns passed to the function. classlist[]
  *		and ordering[] have ncolumns entries, while indexkeys[] has nkeys
  *		entries.
- * 
+ *
  *		Note: for historical reasons, the arrays classlist, indexkeys and
  *		ordering have an extra entry that is always zero.  Some code scans
  *		until it sees a zero rather than looking at ncolumns or nkeys.
@@ -221,7 +221,7 @@ typedef struct IndexOptInfo
 	Oid		   *ordering;		/* OIDs of sort operators for each column */
 	Oid			relam;			/* OID of the access method (in pg_am) */
 
-	RegProcedure amcostestimate;/* OID of the access method's cost fcn */
+	RegProcedure amcostestimate;		/* OID of the access method's cost fcn */
 
 	Oid			indproc;		/* if a functional index */
 	List	   *indpred;		/* if a partial index */
@@ -339,7 +339,7 @@ typedef struct TidPath
 {
 	Path		path;
 	List	   *tideval;
-	Relids		unjoined_relids;/* some rels not yet part of my Path */
+	Relids		unjoined_relids;		/* some rels not yet part of my Path */
 } TidPath;
 
 /*
@@ -510,7 +510,7 @@ typedef struct RestrictInfo
 
 	/* cache space for costs (currently only used for join clauses) */
 	Cost		eval_cost;		/* eval cost of clause; -1 if not yet set */
-	Selectivity	this_selec;		/* selectivity; -1 if not yet set */
+	Selectivity this_selec;		/* selectivity; -1 if not yet set */
 
 	/* valid if clause is mergejoinable, else InvalidOid: */
 	Oid			mergejoinoperator;		/* copy of clause operator */
@@ -546,7 +546,7 @@ typedef struct RestrictInfo
 typedef struct JoinInfo
 {
 	NodeTag		type;
-	Relids		unjoined_relids; /* some rels not yet part of my RelOptInfo */
+	Relids		unjoined_relids;		/* some rels not yet part of my RelOptInfo */
 	List	   *jinfo_restrictinfo;		/* relevant RestrictInfos */
 } JoinInfo;
 
@@ -587,5 +587,4 @@ typedef struct Stream
 	Cost		groupcost;
 	Selectivity groupsel;
 } Stream;
-
 #endif	 /* RELATION_H */

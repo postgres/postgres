@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tuptable.h,v 1.18 2001/01/29 00:39:20 tgl Exp $
+ * $Id: tuptable.h,v 1.19 2001/10/25 05:49:59 momjian Exp $
  *
  * NOTES
  *	  The tuple table interface is getting pretty ugly.
@@ -80,5 +80,4 @@ typedef struct TupleTableData
 } TupleTableData;
 
 typedef TupleTableData *TupleTable;
-
 #endif	 /* TUPTABLE_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.64 2001/06/14 01:09:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.65 2001/10/25 05:49:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,11 +38,11 @@ static bool aclitemgt(const AclItem *a1, const AclItem *a2);
 
 static AclMode convert_priv_string(text *priv_type_text);
 static bool has_table_privilege_cname_cname(char *username, char *relname,
-											text *priv_type_text);
+								text *priv_type_text);
 static bool has_table_privilege_cname_id(char *username, Oid reloid,
-										 text *priv_type_text);
+							 text *priv_type_text);
 static bool has_table_privilege_id_cname(int32 usesysid, char *relname,
-										 text *priv_type_text);
+							 text *priv_type_text);
 
 
 /*
@@ -394,7 +394,7 @@ acldefault(const char *relname, AclId ownerid)
 
 
 /*
- * Add or replace an item in an ACL array.  The result is a modified copy;
+ * Add or replace an item in an ACL array.	The result is a modified copy;
  * the input object is not changed.
  *
  * NB: caller is responsible for having detoasted the input ACL, if needed.
@@ -622,7 +622,7 @@ aclmakepriv(const char *old_privlist, char new_priv)
 	int			l;
 
 	Assert(strlen(old_privlist) <= strlen(ACL_MODE_STR));
-	priv = palloc(strlen(ACL_MODE_STR)+1);
+	priv = palloc(strlen(ACL_MODE_STR) + 1);
 
 	if (old_privlist == NULL || old_privlist[0] == '\0')
 	{
@@ -687,7 +687,7 @@ char *
 makeAclString(const char *privileges, const char *grantee, char grant_or_revoke)
 {
 	StringInfoData str;
-	char *ret;
+	char	   *ret;
 
 	initStringInfo(&str);
 
@@ -731,7 +731,7 @@ has_table_privilege_name_name(PG_FUNCTION_ARGS)
 {
 	Name		username = PG_GETARG_NAME(0);
 	Name		relname = PG_GETARG_NAME(1);
-	text		*priv_type_text = PG_GETARG_TEXT_P(2);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
 	bool		result;
 
 	result = has_table_privilege_cname_cname(NameStr(*username),
@@ -757,7 +757,7 @@ Datum
 has_table_privilege_name(PG_FUNCTION_ARGS)
 {
 	Name		relname = PG_GETARG_NAME(0);
-	text		*priv_type_text = PG_GETARG_TEXT_P(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
 	int32		usesysid;
 	bool		result;
 
@@ -786,7 +786,7 @@ has_table_privilege_name_id(PG_FUNCTION_ARGS)
 {
 	Name		username = PG_GETARG_NAME(0);
 	Oid			reloid = PG_GETARG_OID(1);
-	text		*priv_type_text = PG_GETARG_TEXT_P(2);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
 	bool		result;
 
 	result = has_table_privilege_cname_id(NameStr(*username),
@@ -812,7 +812,7 @@ Datum
 has_table_privilege_id(PG_FUNCTION_ARGS)
 {
 	Oid			reloid = PG_GETARG_OID(0);
-	text		*priv_type_text = PG_GETARG_TEXT_P(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
 	char	   *relname;
 	int32		usesysid;
 	AclMode		mode;
@@ -828,12 +828,12 @@ has_table_privilege_id(PG_FUNCTION_ARGS)
 		elog(ERROR, "has_table_privilege: invalid relation oid %u",
 			 reloid);
 
-	/* 
+	/*
 	 * Convert priv_type_text to an AclMode
 	 */
 	mode = convert_priv_string(priv_type_text);
 
-	/* 
+	/*
 	 * Finally, check for the privilege
 	 */
 	result = pg_aclcheck(relname, usesysid, mode);
@@ -860,7 +860,7 @@ has_table_privilege_id_name(PG_FUNCTION_ARGS)
 {
 	int32		usesysid = PG_GETARG_INT32(0);
 	Name		relname = PG_GETARG_NAME(1);
-	text		*priv_type_text = PG_GETARG_TEXT_P(2);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
 	bool		result;
 
 	result = has_table_privilege_id_cname(usesysid,
@@ -886,8 +886,8 @@ has_table_privilege_id_id(PG_FUNCTION_ARGS)
 {
 	int32		usesysid = PG_GETARG_INT32(0);
 	Oid			reloid = PG_GETARG_OID(1);
-	text		*priv_type_text = PG_GETARG_TEXT_P(2);
-	char		*relname;
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	char	   *relname;
 	AclMode		mode;
 	int32		result;
 
@@ -899,12 +899,12 @@ has_table_privilege_id_id(PG_FUNCTION_ARGS)
 		elog(ERROR, "has_table_privilege: invalid relation oid %u",
 			 reloid);
 
-	/* 
+	/*
 	 * Convert priv_type_text to an AclMode
 	 */
 	mode = convert_priv_string(priv_type_text);
 
-	/* 
+	/*
 	 * Finally, check for the privilege
 	 */
 	result = pg_aclcheck(relname, usesysid, mode);
@@ -931,7 +931,7 @@ has_table_privilege_id_id(PG_FUNCTION_ARGS)
 static AclMode
 convert_priv_string(text *priv_type_text)
 {
-	char	*priv_type = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(priv_type_text)));
+	char	   *priv_type = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(priv_type_text)));
 
 	/*
 	 * Return mode from priv_type string
@@ -958,6 +958,7 @@ convert_priv_string(text *priv_type_text)
 		return ACL_TRIGGER;
 
 	elog(ERROR, "has_table_privilege: invalid privilege type %s", priv_type);
+
 	/*
 	 * We should never get here, but stop the compiler from complaining
 	 */
@@ -986,8 +987,8 @@ has_table_privilege_cname_cname(char *username, char *relname,
 	usesysid = get_usesysid(username);
 
 	/*
-	 * Make use of has_table_privilege_id_cname.
-	 * It accepts the arguments we now have.
+	 * Make use of has_table_privilege_id_cname. It accepts the arguments
+	 * we now have.
 	 */
 	return has_table_privilege_id_cname(usesysid, relname, priv_type_text);
 }
@@ -1008,7 +1009,7 @@ has_table_privilege_cname_id(char *username, Oid reloid,
 							 text *priv_type_text)
 {
 	int32		usesysid;
-	char		*relname;
+	char	   *relname;
 
 	/*
 	 * Lookup userid based on username
@@ -1024,8 +1025,8 @@ has_table_privilege_cname_id(char *username, Oid reloid,
 			 reloid);
 
 	/*
-	 * Make use of has_table_privilege_id_cname.
-	 * It accepts the arguments we now have.
+	 * Make use of has_table_privilege_id_cname. It accepts the arguments
+	 * we now have.
 	 */
 	return has_table_privilege_id_cname(usesysid, relname, priv_type_text);
 }
@@ -1050,10 +1051,9 @@ has_table_privilege_id_cname(int32 usesysid, char *relname,
 	int32		result;
 
 	/*
-	 * Check relname is valid.
-	 * This is needed to deal with the case when usename is a superuser
-	 * in which case pg_aclcheck simply returns ACLCHECK_OK
-	 * without validating relname
+	 * Check relname is valid. This is needed to deal with the case when
+	 * usename is a superuser in which case pg_aclcheck simply returns
+	 * ACLCHECK_OK without validating relname
 	 */
 	tuple = SearchSysCache(RELNAME,
 						   PointerGetDatum(relname),
@@ -1063,12 +1063,12 @@ has_table_privilege_id_cname(int32 usesysid, char *relname,
 			 relname);
 	ReleaseSysCache(tuple);
 
-	/* 
+	/*
 	 * Convert priv_type_text to an AclMode
 	 */
 	mode = convert_priv_string(priv_type_text);
 
-	/* 
+	/*
 	 * Finally, check for the privilege
 	 */
 	result = pg_aclcheck(relname, usesysid, mode);

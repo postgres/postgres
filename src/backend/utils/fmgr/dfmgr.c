@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.53 2001/10/06 23:21:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.54 2001/10/25 05:49:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,12 +46,12 @@ static DynamicFileList *file_tail = (DynamicFileList *) NULL;
 
 #define SAME_INODE(A,B) ((A).st_ino == (B).inode && (A).st_dev == (B).device)
 
-char * Dynamic_library_path;
+char	   *Dynamic_library_path;
 
 static bool file_exists(const char *name);
-static char * find_in_dynamic_libpath(const char * basename);
-static char * expand_dynamic_library_name(const char *name);
-static char * substitute_libpath_macro(const char * name);
+static char *find_in_dynamic_libpath(const char *basename);
+static char *expand_dynamic_library_name(const char *name);
+static char *substitute_libpath_macro(const char *name);
 
 /*
  * Load the specified dynamic-link library file, and look for a function
@@ -237,7 +237,7 @@ file_exists(const char *name)
 	if (stat(name, &st) == 0)
 		return S_ISDIR(st.st_mode) ? false : true;
 	else if (!(errno == ENOENT || errno == ENOTDIR || errno == EACCES))
-			elog(ERROR, "stat failed on %s: %s", name, strerror(errno));
+		elog(ERROR, "stat failed on %s: %s", name, strerror(errno));
 
 	return false;
 }
@@ -258,7 +258,7 @@ file_exists(const char *name)
  * If name contains a slash, check if the file exists, if so return
  * the name.  Else (no slash) try to expand using search path (see
  * find_in_dynamic_libpath below); if that works, return the fully
- * expanded file name.  If the previous failed, append DLSUFFIX and
+ * expanded file name.	If the previous failed, append DLSUFFIX and
  * try again.  If all fails, return NULL.
  *
  * A non-NULL result will always be freshly palloc'd.
@@ -266,9 +266,9 @@ file_exists(const char *name)
 static char *
 expand_dynamic_library_name(const char *name)
 {
-	bool have_slash;
-	char * new;
-	char * full;
+	bool		have_slash;
+	char	   *new;
+	char	   *full;
 
 	AssertArg(name);
 
@@ -288,7 +288,7 @@ expand_dynamic_library_name(const char *name)
 		pfree(full);
 	}
 
-	new = palloc(strlen(name)+ strlen(DLSUFFIX) + 1);
+	new = palloc(strlen(name) + strlen(DLSUFFIX) + 1);
 	strcpy(new, name);
 	strcat(new, DLSUFFIX);
 
@@ -307,7 +307,7 @@ expand_dynamic_library_name(const char *name)
 			return full;
 		pfree(full);
 	}
-		
+
 	return NULL;
 }
 
@@ -317,10 +317,10 @@ expand_dynamic_library_name(const char *name)
  * Result is always freshly palloc'd.
  */
 static char *
-substitute_libpath_macro(const char * name)
+substitute_libpath_macro(const char *name)
 {
-	size_t macroname_len;
-	char * replacement = NULL;
+	size_t		macroname_len;
+	char	   *replacement = NULL;
 
 	AssertArg(name != NULL);
 
@@ -329,7 +329,7 @@ substitute_libpath_macro(const char * name)
 
 	macroname_len = strcspn(name + 1, "/") + 1;
 
-	if (strncmp(name, "$libdir", macroname_len)==0)
+	if (strncmp(name, "$libdir", macroname_len) == 0)
 		replacement = PKGLIBDIR;
 	else
 		elog(ERROR, "invalid macro name in dynamic library path");
@@ -338,7 +338,7 @@ substitute_libpath_macro(const char * name)
 		return pstrdup(replacement);
 	else
 	{
-		char * new;
+		char	   *new;
 
 		new = palloc(strlen(replacement) + (strlen(name) - macroname_len) + 1);
 
@@ -357,10 +357,10 @@ substitute_libpath_macro(const char * name)
  * return NULL.
  */
 static char *
-find_in_dynamic_libpath(const char * basename)
+find_in_dynamic_libpath(const char *basename)
 {
 	const char *p;
-	size_t baselen;
+	size_t		baselen;
 
 	AssertArg(basename != NULL);
 	AssertArg(strchr(basename, '/') == NULL);
@@ -374,10 +374,10 @@ find_in_dynamic_libpath(const char * basename)
 
 	for (;;)
 	{
-		size_t len;
-		char * piece;
-		char * mangled;
-		char *full;
+		size_t		len;
+		char	   *piece;
+		char	   *mangled;
+		char	   *full;
 
 		len = strcspn(p, ":");
 

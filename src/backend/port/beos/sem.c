@@ -121,7 +121,6 @@ semctl(int semId, int semNum, int flag, union semun semun)
 		TRACEDBGP("->semctl nmbre %d", Address[0]);
 		for (i = 0; i < Address[0]; i++)
 		{
-
 			/*
 			 * Make sure to have ownership of the semaphore (if created by
 			 * another team)
@@ -294,7 +293,6 @@ semop(int semId, struct sembuf * sops, int nsops)
 		/* For each sem in the pool, check the operation to perform */
 		if (sops[i].sem_op < 0)
 		{
-
 			/*
 			 * Try acuiring the semaphore till we are not inteerupted by a
 			 * signal

@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.28 2001/10/18 21:57:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.29 2001/10/25 05:49:52 momjian Exp $
  *
  * NOTES
  *
@@ -64,7 +64,9 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 {
 	int			length;
 	char	   *destination;
-	FILE *termin, *termout;
+	FILE	   *termin,
+			   *termout;
+
 #ifdef HAVE_TERMIOS_H
 	struct termios t_orig,
 				t;
@@ -77,8 +79,8 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 	prompt_state = true;		/* disable SIGINT */
 
 	/*
-	 * Do not try to collapse these into one "w+" mode file.
-	 * Doesn't work on some platforms (eg, HPUX 10.20).
+	 * Do not try to collapse these into one "w+" mode file. Doesn't work
+	 * on some platforms (eg, HPUX 10.20).
 	 */
 	termin = fopen("/dev/tty", "r");
 	termout = fopen("/dev/tty", "w");
@@ -101,7 +103,7 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 		tcsetattr(fileno(termin), TCSAFLUSH, &t);
 	}
 #endif
-	
+
 	if (prompt)
 	{
 		fputs(gettext(prompt), termout);
@@ -152,17 +154,17 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 
 
 static int
-_parse_version(ArchiveHandle *AH, const char* versionString)
+_parse_version(ArchiveHandle *AH, const char *versionString)
 {
 	int			cnt;
-	int			vmaj, vmin, vrev;
+	int			vmaj,
+				vmin,
+				vrev;
 
 	cnt = sscanf(versionString, "%d.%d.%d", &vmaj, &vmin, &vrev);
 
 	if (cnt < 2)
-	{
 		die_horribly(AH, modulename, "unable to parse version string \"%s\"\n", versionString);
-	}
 
 	if (cnt == 2)
 		vrev = 0;
@@ -195,8 +197,8 @@ _check_database_version(ArchiveHandle *AH, bool ignoreVersion)
 
 	AH->public.remoteVersion = remoteversion;
 
-	if (myversion != remoteversion 
-		&& (remoteversion < AH->public.minRemoteVersion || remoteversion > AH->public.maxRemoteVersion) )
+	if (myversion != remoteversion
+		&& (remoteversion < AH->public.minRemoteVersion || remoteversion > AH->public.maxRemoteVersion))
 	{
 		write_msg(NULL, "server version: %s; %s version: %s\n",
 				  remoteversion_str, progname, PG_VERSION);
@@ -261,7 +263,7 @@ ConnectedUser(ArchiveHandle *AH)
 /*
  * Reconnect to the server.  If dbname is not NULL, use that database,
  * else the one associated with the archive handle.  If username is
- * not NULL, use that user name, else the one from the handle.  If
+ * not NULL, use that user name, else the one from the handle.	If
  * both the database and the user and match the existing connection
  * already, nothing will be done.
  *
@@ -348,7 +350,7 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 			noPwd = (strcmp(PQerrorMessage(newConn),
 							"fe_sendauth: no password supplied\n") == 0);
 			badPwd = (strncmp(PQerrorMessage(newConn),
-							  "Password authentication failed for user", 39) == 0);
+					"Password authentication failed for user", 39) == 0);
 
 			if (noPwd || badPwd)
 			{
@@ -432,8 +434,8 @@ ConnectDatabase(Archive *AHX,
 		AH->requirePassword = false;
 
 	/*
-	 * Start the connection.  Loop until we have a password if
-	 * requested by backend.
+	 * Start the connection.  Loop until we have a password if requested
+	 * by backend.
 	 */
 	do
 	{
@@ -480,7 +482,8 @@ ConnectDatabase(Archive *AHX,
 }
 
 
-static void notice_processor(void *arg, const char *message)
+static void
+notice_processor(void *arg, const char *message)
 {
 	write_msg(NULL, "%s", message);
 }
@@ -635,7 +638,6 @@ ExecuteSqlCommandBuf(ArchiveHandle *AH, void *qryv, int bufLen)
 	/* We may have finished Copy In, and have a non-empty buffer */
 	if (!AH->pgCopyIn)
 	{
-
 		/*
 		 * The following is a mini state machine to assess then of of an
 		 * SQL statement. It really only needs to parse good SQL, or at
@@ -754,7 +756,7 @@ FixupBlobRefs(ArchiveHandle *AH, char *tablename)
 
 	appendPQExpBuffer(tblQry, "SELECT a.attname FROM pg_class c, pg_attribute a, pg_type t "
 	 " WHERE a.attnum > 0 AND a.attrelid = c.oid AND a.atttypid = t.oid "
-			  " AND t.typname in ('oid', 'lo') AND c.relname = '%s';", tablename);
+	 " AND t.typname in ('oid', 'lo') AND c.relname = '%s';", tablename);
 
 	res = PQexec(AH->blobConnection, tblQry->data);
 	if (!res)
@@ -791,13 +793,13 @@ FixupBlobRefs(ArchiveHandle *AH, char *tablename)
 		uRes = PQexec(AH->blobConnection, tblQry->data);
 		if (!uRes)
 			die_horribly(AH, modulename,
-						 "could not update column \"%s\" of table \"%s\": %s",
-						 attr, tablename, PQerrorMessage(AH->blobConnection));
+					"could not update column \"%s\" of table \"%s\": %s",
+					attr, tablename, PQerrorMessage(AH->blobConnection));
 
 		if (PQresultStatus(uRes) != PGRES_COMMAND_OK)
 			die_horribly(AH, modulename,
-						 "error while updating column \"%s\" of table \"%s\": %s",
-						 attr, tablename, PQerrorMessage(AH->blobConnection));
+				"error while updating column \"%s\" of table \"%s\": %s",
+					attr, tablename, PQerrorMessage(AH->blobConnection));
 
 		PQclear(uRes);
 	}

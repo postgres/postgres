@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.53 2001/10/06 23:21:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.54 2001/10/25 05:49:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,9 +120,9 @@ StrategyOperatorIsValid(StrategyOperator operator,
 						StrategyNumber maxStrategy)
 {
 	return (bool)
-	(PointerIsValid(operator) &&
-	 StrategyNumberIsInBounds(operator->strategy, maxStrategy) &&
-	 !(operator->flags & ~(SK_NEGATE | SK_COMMUTE)));
+		(PointerIsValid(operator) &&
+		 StrategyNumberIsInBounds(operator->strategy, maxStrategy) &&
+		 !(operator->flags & ~(SK_NEGATE | SK_COMMUTE)));
 }
 
 /* ----------------
@@ -196,7 +196,6 @@ StrategyEvaluationIsValid(StrategyEvaluation evaluation)
 	}
 	return true;
 }
-
 #endif
 
 #ifdef NOT_USED
@@ -255,7 +254,6 @@ StrategyTermEvaluate(StrategyTerm term,
 
 	return result;
 }
-
 #endif
 
 /* ----------------
@@ -453,7 +451,6 @@ RelationInvokeStrategy(Relation relation,
 	/* not reached, just to make compiler happy */
 	return FALSE;
 }
-
 #endif
 
 /* ----------------
@@ -552,7 +549,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 	{
 		for (attIndex = 0; attIndex < maxAttributeNumber; attIndex++)
 		{
-			Oid		opclass = operatorClassObjectId[attIndex];
+			Oid			opclass = operatorClassObjectId[attIndex];
 			RegProcedure *loc;
 			StrategyNumber support;
 
@@ -562,7 +559,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 			{
 				tuple = SearchSysCache(AMPROCNUM,
 									   ObjectIdGetDatum(opclass),
-									   Int16GetDatum(support+1),
+									   Int16GetDatum(support + 1),
 									   0, 0);
 				if (HeapTupleIsValid(tuple))
 				{
@@ -581,7 +578,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 	/* Now load the strategy information for the index operators */
 	for (attIndex = 0; attIndex < maxAttributeNumber; attIndex++)
 	{
-		Oid		opclass = operatorClassObjectId[attIndex];
+		Oid			opclass = operatorClassObjectId[attIndex];
 		StrategyMap map;
 		StrategyNumber strategy;
 
@@ -591,7 +588,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 
 		for (strategy = 1; strategy <= maxStrategyNumber; strategy++)
 		{
-			ScanKey mapentry = StrategyMapGetScanKeyEntry(map, strategy);
+			ScanKey		mapentry = StrategyMapGetScanKeyEntry(map, strategy);
 
 			tuple = SearchSysCache(AMOPSTRATEGY,
 								   ObjectIdGetDatum(opclass),
@@ -643,5 +640,4 @@ IndexStrategyDisplay(IndexStrategy indexStrategy,
 		}
 	}
 }
-
 #endif	 /* defined(ISTRATDEBUG) */

@@ -62,7 +62,6 @@ makepoint(Point *pointx, Point *pointy)
 text *
 copytext(text *t)
 {
-
 	/*
 	 * VARSIZE is the total size of the struct in bytes.
 	 */

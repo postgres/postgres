@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.49 2001/09/19 14:09:32 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.50 2001/10/25 05:50:12 momjian Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -32,7 +32,7 @@ help(const char *progname)
 	/* printf is a macro some places; don't #ifdef inside its arguments */
 #ifdef YYDEBUG
 	printf("Usage:\n"
-		   "  %s [-d] [-I DIRECTORY] [-o OUTFILE] [-t] file1 [file2...]\n\n",
+	   "  %s [-d] [-I DIRECTORY] [-o OUTFILE] [-t] file1 [file2...]\n\n",
 		   progname);
 #else
 	printf("Usage:\n"
@@ -47,7 +47,7 @@ help(const char *progname)
 	printf("  -o OUTFILE           write result to OUTFILE\n");
 	printf("  -t                   turn on autocommit of transactions\n");
 	printf("\nIf no output file is specified, the name is formed by adding .c\n"
-		   "to the input file name, after stripping off .pgc if present.\n");
+	   "to the input file name, after stripping off .pgc if present.\n");
 	printf("\nReport bugs to <pgsql-bugs@postgresql.org>.\n");
 }
 
@@ -90,12 +90,12 @@ main(int argc, char *const argv[])
 
 	if (argc > 1)
 	{
-		if (strcmp(argv[1], "--help")==0 || strcmp(argv[1], "-?")==0)
+		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
 		{
 			help(progname);
 			exit(0);
 		}
-		else if (strcmp(argv[1], "--version")==0)
+		else if (strcmp(argv[1], "--version") == 0)
 		{
 			printf("ecpg (PostgreSQL %s) %d.%d.%d\n", PG_VERSION,
 				   MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);

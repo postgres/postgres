@@ -10,7 +10,7 @@
  *	 - this required changing sem_info from containig an array of sem_t to an array of sem_t*
  *
  * IDENTIFICATION
- *		 $Header: /cvsroot/pgsql/src/backend/port/darwin/Attic/sem.c,v 1.4 2001/09/07 00:27:29 tgl Exp $
+ *		 $Header: /cvsroot/pgsql/src/backend/port/darwin/Attic/sem.c,v 1.5 2001/10/25 05:49:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,10 +47,9 @@ struct sem_set_info
 	key_t		key;
 	int			nsems;
 	sem_t	   *sem[SEMMAX];	/* array of POSIX semaphores */
-	struct sem	semV[SEMMAX];	/* array of System V semaphore
-								 * structures */
-	struct pending_ops pendingOps[SEMMAX];	/* array of pending
-											 * operations */
+	struct sem	semV[SEMMAX];	/* array of System V semaphore structures */
+	struct pending_ops pendingOps[SEMMAX];		/* array of pending
+												 * operations */
 };
 
 struct sem_info
@@ -58,7 +57,7 @@ struct sem_info
 	sem_t	   *sem;
 	int			nsets;
 	/* there are actually nsets of these: */
-	struct sem_set_info set[1];	/* VARIABLE LENGTH ARRAY */
+	struct sem_set_info set[1]; /* VARIABLE LENGTH ARRAY */
 };
 
 static struct sem_info *SemInfo = (struct sem_info *) - 1;
@@ -171,7 +170,7 @@ semget(key_t key, int nsems, int semflg)
 		shm_unlink(SHM_INFO_NAME);
 		/* The size may only be set once. Ignore errors. */
 		nsets = PROC_SEM_MAP_ENTRIES(MaxBackends);
-		sem_info_size = sizeof(struct sem_info) + (nsets-1) * sizeof(struct sem_set_info);
+		sem_info_size = sizeof(struct sem_info) + (nsets - 1) * sizeof(struct sem_set_info);
 		ftruncate(fd, sem_info_size);
 		SemInfo = mmap(NULL, sem_info_size,
 					   PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
@@ -260,13 +259,13 @@ semget(key_t key, int nsems, int semflg)
 
 		/* Currently sem_init always returns -1. */
 #ifdef NOT_USED
-		if( sem_init( &SemInfo->set[semid].sem[semnum], 1, 0 ) == -1 )	{
-			int semnum1;
+		if (sem_init(&SemInfo->set[semid].sem[semnum], 1, 0) == -1)
+		{
+			int			semnum1;
 
-			for( semnum1 = 0; semnum1 < semnum; semnum1++ )  {
-				sem_close( SemInfo->set[semid].sem[semnum1] );
-			}
-			sem_post( SemInfo->sem );
+			for (semnum1 = 0; semnum1 < semnum; semnum1++)
+				sem_close(SemInfo->set[semid].sem[semnum1]);
+			sem_post(SemInfo->sem);
 			return -1;
 		}
 #endif

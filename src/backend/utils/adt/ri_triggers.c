@@ -18,7 +18,7 @@
  * Portions Copyright (c) 2000-2001, PostgreSQL Global Development Group
  * Copyright 1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.28 2001/10/06 23:21:44 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.29 2001/10/25 05:49:45 momjian Exp $
  *
  * ----------
  */
@@ -423,7 +423,6 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	 */
 	for (i = 0; i < qkey.nkeypairs; i++)
 	{
-
 		/*
 		 * We can implement MATCH PARTIAL by excluding this column from
 		 * the query if it is null.  Simple!  Unfortunately, the
@@ -2140,7 +2139,6 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 				qualsep = "WHERE";
 				for (i = 0; i < qkey.nkeypairs; i++)
 				{
-
 					/*
 					 * MATCH <unspecified> - only change columns
 					 * corresponding to changed columns in pk_rel's key
@@ -2402,7 +2400,6 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 					defval = NULL;
 				for (i = 0; i < qkey.nkeypairs && defval != NULL; i++)
 				{
-
 					/*
 					 * For each key attribute lookup the tuple constructor
 					 * for a corresponding default value
@@ -2412,7 +2409,6 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 						if (defval[j].adnum ==
 							qkey.keypair[i][RI_KEYPAIR_FK_IDX])
 						{
-
 							/*
 							 * That's the one - push the expression from
 							 * defval.adbin into the plan's targetlist
@@ -2629,7 +2625,6 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 				qualsep = "WHERE";
 				for (i = 0; i < qkey.nkeypairs; i++)
 				{
-
 					/*
 					 * MATCH <unspecified> - only change columns
 					 * corresponding to changed columns in pk_rel's key
@@ -2669,7 +2664,6 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 					defval = NULL;
 				for (i = 0; i < qkey.nkeypairs && defval != NULL; i++)
 				{
-
 					/*
 					 * MATCH <unspecified> - only change columns
 					 * corresponding to changed columns in pk_rel's key.
@@ -2680,7 +2674,6 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 						!ri_OneKeyEqual(pk_rel, i, old_row,
 									  new_row, &qkey, RI_KEYPAIR_PK_IDX))
 					{
-
 						/*
 						 * For each key attribute lookup the tuple
 						 * constructor for a corresponding default value
@@ -2690,7 +2683,6 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 							if (defval[j].adnum ==
 								qkey.keypair[i][RI_KEYPAIR_FK_IDX])
 							{
-
 								/*
 								 * That's the one - push the expression
 								 * from defval.adbin into the plan's
@@ -2807,7 +2799,6 @@ RI_FKey_keyequal_upd(TriggerData *trigdata)
 
 	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
 	{
-
 			/*
 			 * MATCH <UNSPECIFIED>
 			 */
@@ -3079,7 +3070,6 @@ ri_KeysEqual(Relation rel, HeapTuple oldtup, HeapTuple newtup,
 
 	for (i = 0; i < key->nkeypairs; i++)
 	{
-
 		/*
 		 * Get one attributes oldvalue. If it is NULL - they're not equal.
 		 */
@@ -3129,7 +3119,6 @@ ri_AllKeysUnequal(Relation rel, HeapTuple oldtup, HeapTuple newtup,
 	keys_unequal = true;
 	for (i = 0; keys_unequal && i < key->nkeypairs; i++)
 	{
-
 		/*
 		 * Get one attributes oldvalue. If it is NULL - they're not equal.
 		 */
@@ -3252,17 +3241,17 @@ ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 								 CharGetDatum('b'));
 		if (!HeapTupleIsValid(opr_tup))
 			elog(ERROR,
-				 "ri_AttributesEqual(): cannot find '=' operator for type %u",
+			"ri_AttributesEqual(): cannot find '=' operator for type %u",
 				 typeid);
 		opr_proc = ((Form_pg_operator) GETSTRUCT(opr_tup))->oprcode;
 		ReleaseSysCache(opr_tup);
 
 		/*
 		 * Since fmgr_info could fail, call it *before* creating the
-		 * hashtable entry --- otherwise we could elog leaving an incomplete
-		 * entry in the hashtable.  Also, because this will be a permanent
-		 * table entry, we must make sure any subsidiary structures of the
-		 * fmgr record are kept in TopMemoryContext.
+		 * hashtable entry --- otherwise we could elog leaving an
+		 * incomplete entry in the hashtable.  Also, because this will be
+		 * a permanent table entry, we must make sure any subsidiary
+		 * structures of the fmgr record are kept in TopMemoryContext.
 		 */
 		fmgr_info_cxt(opr_proc, &finfo, TopMemoryContext);
 

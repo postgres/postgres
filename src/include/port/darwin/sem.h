@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *		 $Header: /cvsroot/pgsql/src/include/port/darwin/Attic/sem.h,v 1.2 2001/03/22 04:01:02 momjian Exp $
+ *		 $Header: /cvsroot/pgsql/src/include/port/darwin/Attic/sem.h,v 1.3 2001/10/25 05:50:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,5 @@ extern		"C"
 
 #ifdef __cplusplus
 }
-
 #endif
-
 #endif	 /* _SYS_SEM_H */

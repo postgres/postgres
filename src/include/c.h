@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.105 2001/10/24 21:49:14 petere Exp $
+ * $Id: c.h,v 1.106 2001/10/25 05:49:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,6 @@
  */
 #define _priv_CppIdentity(x)x
 #define CppConcat(x, y)			_priv_CppIdentity(x)y
-
 #endif	 /* !HAVE_STRINGIZE */
 
 /*
@@ -163,9 +162,7 @@ typedef char bool;
 #ifndef false
 #define false	((bool) 0)
 #endif
-
 #endif	 /* not C++ */
-
 #endif	 /* __BEOS__ */
 
 typedef bool *BoolPtr;
@@ -211,7 +208,6 @@ typedef char *Pointer;
 typedef signed char int8;		/* == 8 bits */
 typedef signed short int16;		/* == 16 bits */
 typedef signed int int32;		/* == 32 bits */
-
 #endif	 /* __BEOS__ */
 
 /*
@@ -224,7 +220,6 @@ typedef signed int int32;		/* == 32 bits */
 typedef unsigned char uint8;	/* == 8 bits */
 typedef unsigned short uint16;	/* == 16 bits */
 typedef unsigned int uint32;	/* == 32 bits */
-
 #endif	 /* __BEOS__ */
 
 /*
@@ -616,7 +611,7 @@ typedef NameData *Name;
 #else							/* not BUILDING_DLL */
 #define DLLIMPORT __declspec (dllimport)
 #endif
-#elif defined(WIN32) && defined(_MSC_VER)	/* not CYGWIN */
+#elif defined(WIN32) && defined(_MSC_VER)		/* not CYGWIN */
 #if defined(_DLL)
 #define DLLIMPORT __declspec (dllexport)
 #else							/* not _DLL */
@@ -632,7 +627,8 @@ typedef NameData *Name;
  */
 
 #ifndef HAVE_SNPRINTF_DECL
-extern int	snprintf(char *str, size_t count, const char *fmt, ...)
+extern int
+snprintf(char *str, size_t count, const char *fmt,...)
 /* This extension allows gcc to check the format string */
 __attribute__((format(printf, 3, 4)));
 #endif

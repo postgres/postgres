@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.6 2001/09/30 00:45:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.7 2001/10/25 05:49:42 momjian Exp $
  *
  *	Interface:
  *
@@ -58,7 +58,6 @@ static bool TopoSort(LOCK *lock, EDGE *constraints, int nConstraints,
 
 #ifdef DEBUG_DEADLOCK
 static void PrintLockQueue(LOCK *lock, const char *info);
-
 #endif
 
 
@@ -499,7 +498,6 @@ FindLockCycleRecurse(PROC *checkProc,
 				/* This proc soft-blocks checkProc */
 				if (FindLockCycleRecurse(proc, softEdges, nSoftEdges))
 				{
-
 					/*
 					 * Add this edge to the list of soft edges in the
 					 * cycle
@@ -533,7 +531,6 @@ FindLockCycleRecurse(PROC *checkProc,
 				/* This proc soft-blocks checkProc */
 				if (FindLockCycleRecurse(proc, softEdges, nSoftEdges))
 				{
-
 					/*
 					 * Add this edge to the list of soft edges in the
 					 * cycle
@@ -759,5 +756,4 @@ PrintLockQueue(LOCK *lock, const char *info)
 	printf("\n");
 	fflush(stdout);
 }
-
 #endif

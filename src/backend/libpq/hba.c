@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.74 2001/09/26 19:57:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.75 2001/10/25 05:49:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,14 +45,14 @@
 /*
  * These variables hold the pre-parsed contents of the hba and ident
  * configuration files.  Each is a list of sublists, one sublist for
- * each (non-empty, non-comment) line of the file.  Each sublist's
+ * each (non-empty, non-comment) line of the file.	Each sublist's
  * first item is an integer line number (so we can give somewhat-useful
  * location info in error messages).  Remaining items are palloc'd strings,
  * one string per token on the line.  Note there will always be at least
  * one token, since blank lines are not entered in the data structure.
  */
 static List *hba_lines = NIL;	/* pre-parsed contents of hba file */
-static List *ident_lines = NIL;	/* pre-parsed contents of ident file */
+static List *ident_lines = NIL; /* pre-parsed contents of ident file */
 
 
 /*
@@ -67,13 +67,13 @@ isblank(const char c)
 
 
 /*
- *  Grab one token out of fp.  Tokens are strings of non-blank
- *  characters bounded by blank characters, beginning of line, and end
- *  of line.	Blank means space or tab.  Return the token as *buf.
- *  Leave file positioned to character immediately after the token or
- *  EOF, whichever comes first.  If no more tokens on line, return null
- *  string as *buf and position file to beginning of next line or EOF,
- *  whichever comes first.
+ *	Grab one token out of fp.  Tokens are strings of non-blank
+ *	characters bounded by blank characters, beginning of line, and end
+ *	of line.	Blank means space or tab.  Return the token as *buf.
+ *	Leave file positioned to character immediately after the token or
+ *	EOF, whichever comes first.  If no more tokens on line, return null
+ *	string as *buf and position file to beginning of next line or EOF,
+ *	whichever comes first.
  */
 static void
 next_token(FILE *fp, char *buf, const int bufsz)
@@ -89,8 +89,8 @@ next_token(FILE *fp, char *buf, const int bufsz)
 	{
 		/*
 		 * build a token in buf of next characters up to EOF, eol, or
-		 * blank.  If the token gets too long, we still parse it correctly,
-		 * but the excess characters are not stored into *buf.
+		 * blank.  If the token gets too long, we still parse it
+		 * correctly, but the excess characters are not stored into *buf.
 		 */
 		while (c != EOF && c != '\n' && !isblank(c))
 		{
@@ -98,9 +98,10 @@ next_token(FILE *fp, char *buf, const int bufsz)
 				*buf++ = c;
 			c = getc(fp);
 		}
+
 		/*
-		 * Put back the char right after the token (critical in case it
-		 * is eol, since we need to detect end-of-line at next call).
+		 * Put back the char right after the token (critical in case it is
+		 * eol, since we need to detect end-of-line at next call).
 		 */
 		if (c != EOF)
 			ungetc(c, fp);
@@ -120,7 +121,7 @@ read_to_eol(FILE *file)
 
 
 /*
- *  Read the given file and create a list of line sublists.
+ *	Read the given file and create a list of line sublists.
  */
 static List *
 tokenize_file(FILE *file)
@@ -182,11 +183,12 @@ free_lines(List **lines)
 {
 	if (*lines)
 	{
-		List *line, *token;
+		List	   *line,
+				   *token;
 
 		foreach(line, *lines)
 		{
-			List   *ln = lfirst(line);
+			List	   *ln = lfirst(line);
 
 			/* free the pstrdup'd tokens (don't try it on the line number) */
 			foreach(token, lnext(ln))
@@ -203,15 +205,15 @@ free_lines(List **lines)
 
 
 /*
- *  Scan the rest of a host record (after the mask field)
- *  and return the interpretation of it as *userauth_p, auth_arg, and
- *  *error_p.  line points to the next token of the line.
+ *	Scan the rest of a host record (after the mask field)
+ *	and return the interpretation of it as *userauth_p, auth_arg, and
+ *	*error_p.  line points to the next token of the line.
  */
 static void
 parse_hba_auth(List *line, UserAuth *userauth_p, char *auth_arg,
 			   bool *error_p)
 {
-	char		*token;
+	char	   *token;
 
 	if (!line)
 		*error_p = true;
@@ -261,21 +263,21 @@ parse_hba_auth(List *line, UserAuth *userauth_p, char *auth_arg,
 
 
 /*
- *  Process one line from the hba config file.
+ *	Process one line from the hba config file.
  *
- *  See if it applies to a connection from a host with IP address port->raddr
- *  to a database named port->database.  If so, return *found_p true
- *  and fill in the auth arguments into the appropriate port fields.
- *  If not, leave *found_p as it was.  If the record has a syntax error,
- *  return *error_p true, after issuing a message to stderr.  If no error,
- *  leave *error_p as it was.
+ *	See if it applies to a connection from a host with IP address port->raddr
+ *	to a database named port->database.  If so, return *found_p true
+ *	and fill in the auth arguments into the appropriate port fields.
+ *	If not, leave *found_p as it was.  If the record has a syntax error,
+ *	return *error_p true, after issuing a message to stderr.  If no error,
+ *	leave *error_p as it was.
  */
 static void
 parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 {
 	int			line_number;
-	char		*token;
-	char		*db;
+	char	   *token;
+	char	   *db;
 
 	Assert(line != NIL);
 	line_number = lfirsti(line);
@@ -319,7 +321,8 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 	}
 	else if (strcmp(token, "host") == 0 || strcmp(token, "hostssl") == 0)
 	{
-		struct in_addr file_ip_addr, mask;
+		struct in_addr file_ip_addr,
+					mask;
 
 		if (strcmp(token, "hostssl") == 0)
 		{
@@ -401,17 +404,17 @@ hba_syntax:
 
 
 /*
- *  Scan the (pre-parsed) hba file line by line, looking for a match
+ *	Scan the (pre-parsed) hba file line by line, looking for a match
  *	to the port's connection request.
  */
 static bool
 check_hba(hbaPort *port)
 {
-	bool	found_entry = false;
-	bool	error = false;
-	List 	*line;
+	bool		found_entry = false;
+	bool		error = false;
+	List	   *line;
 
-	foreach (line, hba_lines)
+	foreach(line, hba_lines)
 	{
 		parse_hba(lfirst(line), port, &found_entry, &error);
 		if (found_entry || error)
@@ -447,10 +450,11 @@ load_hba(void)
 
 	if (hba_lines)
 		free_lines(&hba_lines);
+
 	/*
-	 *	The name of old config file that better not exist.
-	 *	Fail if config file by old name exists.
-	 *	Put together the full pathname to the old config file.
+	 * The name of old config file that better not exist. Fail if config
+	 * file by old name exists. Put together the full pathname to the old
+	 * config file.
 	 */
 	bufsize = (strlen(DataDir) + strlen(OLD_CONF_FILE) + 2) * sizeof(char);
 	old_conf_file = (char *) palloc(bufsize);
@@ -461,10 +465,10 @@ load_hba(void)
 		/* Old config file exists.	Tell this guy he needs to upgrade. */
 		close(fd);
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			"A file exists by the name used for host-based authentication "
-			"in prior releases of Postgres (%s).  The name and format of "
-			"the configuration file have changed, so this file should be "
-			"converted.\n", old_conf_file);
+		  "A file exists by the name used for host-based authentication "
+		   "in prior releases of Postgres (%s).  The name and format of "
+		   "the configuration file have changed, so this file should be "
+				 "converted.\n", old_conf_file);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 	}
@@ -502,7 +506,7 @@ load_hba(void)
 /*
  *	Process one line from the ident config file.
  *
- *  Take the line and compare it to the needed map, pg_user and ident_user.
+ *	Take the line and compare it to the needed map, pg_user and ident_user.
  *	*found_p and *error_p are set according to our results.
  */
 static void
@@ -510,10 +514,10 @@ parse_ident_usermap(List *line, const char *usermap_name, const char *pg_user,
 					const char *ident_user, bool *found_p, bool *error_p)
 {
 	int			line_number;
-	char		*token;
-	char		*file_map;
-	char		*file_pguser;
-	char		*file_ident_user;
+	char	   *token;
+	char	   *file_map;
+	char	   *file_pguser;
+	char	   *file_ident_user;
 
 	*found_p = false;
 	*error_p = false;
@@ -562,32 +566,33 @@ ident_syntax:
 
 
 /*
- *  Scan the (pre-parsed) ident usermap file line by line, looking for a match
+ *	Scan the (pre-parsed) ident usermap file line by line, looking for a match
  *
- *  See if the user with ident username "ident_user" is allowed to act
- *  as Postgres user "pguser" according to usermap "usermap_name".
+ *	See if the user with ident username "ident_user" is allowed to act
+ *	as Postgres user "pguser" according to usermap "usermap_name".
  *
- *  Special case: For usermap "sameuser", don't look in the usermap
- *  file.  That's an implied map where "pguser" must be identical to
- *  "ident_user" in order to be authorized.
+ *	Special case: For usermap "sameuser", don't look in the usermap
+ *	file.  That's an implied map where "pguser" must be identical to
+ *	"ident_user" in order to be authorized.
  *
- *  Iff authorized, return true.
+ *	Iff authorized, return true.
  */
 static bool
 check_ident_usermap(const char *usermap_name,
 					const char *pg_user,
 					const char *ident_user)
 {
-	List 	*line;
-	bool	found_entry = false, error = false;
+	List	   *line;
+	bool		found_entry = false,
+				error = false;
 
 	if (usermap_name[0] == '\0')
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			"check_ident_usermap: hba configuration file does not "
-			"have the usermap field filled in in the entry that pertains "
-			"to this connection.  That field is essential for Ident-based "
-			"authentication.\n");
+				 "check_ident_usermap: hba configuration file does not "
+		   "have the usermap field filled in in the entry that pertains "
+		  "to this connection.  That field is essential for Ident-based "
+				 "authentication.\n");
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		found_entry = false;
@@ -619,9 +624,9 @@ check_ident_usermap(const char *usermap_name,
 static void
 load_ident(void)
 {
-	FILE	   *file;		/* The map file we have to read */
-	char	   *map_file;	/* The name of the map file we have to
-							 * read */
+	FILE	   *file;			/* The map file we have to read */
+	char	   *map_file;		/* The name of the map file we have to
+								 * read */
 	int			bufsize;
 
 	if (ident_lines)
@@ -652,16 +657,17 @@ load_ident(void)
 
 
 /*
- *  Parse the string "*ident_response" as a response from a query to an Ident
- *  server.  If it's a normal response indicating a username, return true
- *  and store the username at *ident_user.  If it's anything else,
+ *	Parse the string "*ident_response" as a response from a query to an Ident
+ *	server.  If it's a normal response indicating a username, return true
+ *	and store the username at *ident_user.	If it's anything else,
  *	return false.
  */
 static bool
 interpret_ident_response(char *ident_response,
 						 char *ident_user)
 {
-	char	   *cursor = ident_response; /* Cursor into *ident_response */
+	char	   *cursor = ident_response;		/* Cursor into
+												 * *ident_response */
 
 	/*
 	 * Ident's response, in the telnet tradition, should end in crlf
@@ -735,14 +741,14 @@ interpret_ident_response(char *ident_response,
 
 
 /*
- *  Talk to the ident server on host "remote_ip_addr" and find out who
- *  owns the tcp connection from his port "remote_port" to port
- *  "local_port_addr" on host "local_ip_addr".  Return the username the
- *  ident server gives as "*ident_user".
+ *	Talk to the ident server on host "remote_ip_addr" and find out who
+ *	owns the tcp connection from his port "remote_port" to port
+ *	"local_port_addr" on host "local_ip_addr".	Return the username the
+ *	ident server gives as "*ident_user".
  *
- *  IP addresses and port numbers are in network byte order.
+ *	IP addresses and port numbers are in network byte order.
  *
- *  But iff we're unable to get the information from ident, return false.
+ *	But iff we're unable to get the information from ident, return false.
  */
 static bool
 ident_inet(const struct in_addr remote_ip_addr,
@@ -755,14 +761,14 @@ ident_inet(const struct in_addr remote_ip_addr,
 								 * talk to Ident */
 				rc;				/* Return code from a locally called
 								 * function */
-	bool ident_return;
+	bool		ident_return;
 
 	sock_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
 	if (sock_fd == -1)
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			"Failed to create socket on which to talk to Ident server. "
-			"socket() returned errno = %s (%d)\n", strerror(errno), errno);
+			 "Failed to create socket on which to talk to Ident server. "
+		  "socket() returned errno = %s (%d)\n", strerror(errno), errno);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		ident_return = false;
@@ -799,10 +805,10 @@ ident_inet(const struct in_addr remote_ip_addr,
 		{
 			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				"Unable to connect to Ident server on the host which is "
-				"trying to connect to Postgres "
-				"(IP address %s, Port %d). "
-				"errno = %s (%d)\n",
-				inet_ntoa(remote_ip_addr), IDENT_PORT, strerror(errno), errno);
+					 "trying to connect to Postgres "
+					 "(IP address %s, Port %d). "
+					 "errno = %s (%d)\n",
+					 inet_ntoa(remote_ip_addr), IDENT_PORT, strerror(errno), errno);
 			fputs(PQerrormsg, stderr);
 			pqdebug("%s", PQerrormsg);
 			ident_return = false;
@@ -818,11 +824,11 @@ ident_inet(const struct in_addr remote_ip_addr,
 			if (rc < 0)
 			{
 				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-					"Unable to send query to Ident server on the host which is "
-					"trying to connect to Postgres (Host %s, Port %d),"
-					"even though we successfully connected to it.  "
-					"errno = %s (%d)\n",
-					inet_ntoa(remote_ip_addr), IDENT_PORT, strerror(errno), errno);
+						 "Unable to send query to Ident server on the host which is "
+					  "trying to connect to Postgres (Host %s, Port %d),"
+						 "even though we successfully connected to it.  "
+						 "errno = %s (%d)\n",
+						 inet_ntoa(remote_ip_addr), IDENT_PORT, strerror(errno), errno);
 				fputs(PQerrormsg, stderr);
 				pqdebug("%s", PQerrormsg);
 				ident_return = false;
@@ -836,13 +842,13 @@ ident_inet(const struct in_addr remote_ip_addr,
 				if (rc < 0)
 				{
 					snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-						"Unable to receive response from Ident server "
-						"on the host which is "
-						"trying to connect to Postgres (Host %s, Port %d),"
-						"even though we successfully sent our query to it.  "
-						"errno = %s (%d)\n",
-						inet_ntoa(remote_ip_addr), IDENT_PORT,
-						strerror(errno), errno);
+						  "Unable to receive response from Ident server "
+							 "on the host which is "
+					  "trying to connect to Postgres (Host %s, Port %d),"
+					"even though we successfully sent our query to it.  "
+							 "errno = %s (%d)\n",
+							 inet_ntoa(remote_ip_addr), IDENT_PORT,
+							 strerror(errno), errno);
 					fputs(PQerrormsg, stderr);
 					pqdebug("%s", PQerrormsg);
 					ident_return = false;
@@ -861,18 +867,18 @@ ident_inet(const struct in_addr remote_ip_addr,
 }
 
 /*
- *  Ask kernel about the credentials of the connecting process and
- *  determine the symbolic name of the corresponding user.
+ *	Ask kernel about the credentials of the connecting process and
+ *	determine the symbolic name of the corresponding user.
  *
- *  Returns either true and the username put into "ident_user",
- *  or false if we were unable to determine the username.
+ *	Returns either true and the username put into "ident_user",
+ *	or false if we were unable to determine the username.
  */
 static bool
 ident_unix(int sock, char *ident_user)
 {
 #if defined(SO_PEERCRED)
 	/* Linux style: use getsockopt(SO_PEERCRED) */
-	struct ucred	peercred;
+	struct ucred peercred;
 	ACCEPT_TYPE_ARG3 so_len = sizeof(peercred);
 	struct passwd *pass;
 
@@ -894,13 +900,13 @@ ident_unix(int sock, char *ident_user)
 	if (pass == NULL)
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			 "ident_unix: unknown local user with uid %d\n", peercred.uid);
+		   "ident_unix: unknown local user with uid %d\n", peercred.uid);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		return false;
 	}
 
-	StrNCpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX+1);
+	StrNCpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
 
 	return true;
 
@@ -910,36 +916,40 @@ ident_unix(int sock, char *ident_user)
 /* Credentials structure */
 #ifdef HAVE_STRUCT_CMSGCRED
 	typedef struct cmsgcred Cred;
+
 #define cruid cmcred_uid
 #elif HAVE_STRUCT_FCRED
 	typedef struct fcred Cred;
+
 #define cruid fc_uid
 #elif HAVE_STRUCT_SOCKCRED
 	typedef struct sockcred Cred;
+
 #define cruid sc_uid
 #endif
-	Cred *cred;
+	Cred	   *cred;
 
 	/* Compute size without padding */
-	char cmsgmem[ALIGN(sizeof(struct cmsghdr)) + ALIGN(sizeof(Cred))]; /*for NetBSD*/
+	char		cmsgmem[ALIGN(sizeof(struct cmsghdr)) + ALIGN(sizeof(Cred))];	/* for NetBSD */
+
 	/* Point to start of first structure */
-	struct cmsghdr *cmsg = (struct cmsghdr *)cmsgmem;
+	struct cmsghdr *cmsg = (struct cmsghdr *) cmsgmem;
 
 	struct iovec iov;
-	char buf;
+	char		buf;
 	struct passwd *pw;
 
 	memset(&msg, 0, sizeof(msg));
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
-	msg.msg_control = (char *)cmsg;
+	msg.msg_control = (char *) cmsg;
 	msg.msg_controllen = sizeof(cmsgmem);
 	memset(cmsg, 0, sizeof(cmsgmem));
 
 	/*
-	 * The one character which is received here is not meaningful;
-	 * its purposes is only to make sure that recvmsg() blocks
-	 * long enough for the other side to send its credentials.
+	 * The one character which is received here is not meaningful; its
+	 * purposes is only to make sure that recvmsg() blocks long enough for
+	 * the other side to send its credentials.
 	 */
 	iov.iov_base = &buf;
 	iov.iov_len = 1;
@@ -956,20 +966,20 @@ ident_unix(int sock, char *ident_user)
 		return false;
 	}
 
-	cred = (Cred *)CMSG_DATA(cmsg);
+	cred = (Cred *) CMSG_DATA(cmsg);
 
 	pw = getpwuid(cred->cruid);
 	if (pw == NULL)
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			 "ident_unix: unknown local user with uid %d\n",
-			 cred->cruid);
+				 "ident_unix: unknown local user with uid %d\n",
+				 cred->cruid);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		return false;
 	}
 
-	StrNCpy(ident_user, pw->pw_name, IDENT_USERNAME_MAX+1);
+	StrNCpy(ident_user, pw->pw_name, IDENT_USERNAME_MAX + 1);
 
 	return true;
 
@@ -980,17 +990,16 @@ ident_unix(int sock, char *ident_user)
 	pqdebug("%s", PQerrormsg);
 
 	return false;
-
 #endif
 }
 
 /*
- *  Determine the username of the initiator of the connection described
- *  by "port".  Then look in the usermap file under the usermap
- *  port->auth_arg and see if that user is equivalent to Postgres user
- *  port->user.
+ *	Determine the username of the initiator of the connection described
+ *	by "port".	Then look in the usermap file under the usermap
+ *	port->auth_arg and see if that user is equivalent to Postgres user
+ *	port->user.
  *
- *  Return STATUS_OK if yes, STATUS_ERROR if no match (or couldn't get info).
+ *	Return STATUS_OK if yes, STATUS_ERROR if no match (or couldn't get info).
  */
 int
 authident(hbaPort *port)
@@ -1022,13 +1031,13 @@ authident(hbaPort *port)
 
 
 /*
- *  Determine what authentication method should be used when accessing database
- *  "database" from frontend "raddr", user "user".  Return the method and
- *  an optional argument (stored in fields of *port), and STATUS_OK.
+ *	Determine what authentication method should be used when accessing database
+ *	"database" from frontend "raddr", user "user".	Return the method and
+ *	an optional argument (stored in fields of *port), and STATUS_OK.
  *
- *  Note that STATUS_ERROR indicates a problem with the hba config file.
- *  If the file is OK but does not contain any entry matching the request,
- *  we return STATUS_OK and method = uaReject.
+ *	Note that STATUS_ERROR indicates a problem with the hba config file.
+ *	If the file is OK but does not contain any entry matching the request,
+ *	we return STATUS_OK and method = uaReject.
  */
 int
 hba_getauthmethod(hbaPort *port)
@@ -1252,5 +1261,4 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
 		pfree((struct CharsetItem *) ChArray[i]);
 	}
 }
-
-#endif /* CYR_RECODE */
+#endif	 /* CYR_RECODE */

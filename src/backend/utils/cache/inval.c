@@ -22,14 +22,14 @@
  *	second lives till end of transaction.  Finally, we need a third list of
  *	all tuples outdated in the current transaction; if we commit, we send
  *	those invalidation events to all other backends (via the SI message queue)
- *	so that they can flush obsolete entries from their caches.  This list
+ *	so that they can flush obsolete entries from their caches.	This list
  *	definitely can't be processed until after we commit, otherwise the other
  *	backends won't see our updated tuples as good.
  *
  *	We do not need to register EVERY tuple operation in this way, just those
- *	on tuples in relations that have associated catcaches.  We do, however,
+ *	on tuples in relations that have associated catcaches.	We do, however,
  *	have to register every operation on every tuple that *could* be in a
- *	catcache, whether or not it currently is in our cache.  Also, if the
+ *	catcache, whether or not it currently is in our cache.	Also, if the
  *	tuple is in a relation that has multiple catcaches, we need to register
  *	an invalidation message for each such catcache.  catcache.c's
  *	PrepareToInvalidateCacheTuple() routine provides the knowledge of which
@@ -56,7 +56,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.45 2001/06/19 19:42:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.46 2001/10/25 05:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,15 +74,15 @@
 /*
  * To minimize palloc traffic, we keep pending requests in successively-
  * larger chunks (a slightly more sophisticated version of an expansible
- * array).  All request types can be stored as SharedInvalidationMessage
+ * array).	All request types can be stored as SharedInvalidationMessage
  * records.
  */
 typedef struct InvalidationChunk
 {
-	struct InvalidationChunk *next;	/* list link */
+	struct InvalidationChunk *next;		/* list link */
 	int			nitems;			/* # items currently stored in chunk */
 	int			maxitems;		/* size of allocated array in this chunk */
-	SharedInvalidationMessage msgs[1]; /* VARIABLE LENGTH ARRAY */
+	SharedInvalidationMessage msgs[1];	/* VARIABLE LENGTH ARRAY */
 } InvalidationChunk;			/* VARIABLE LENGTH STRUCTURE */
 
 typedef struct InvalidationListHeader
@@ -148,7 +148,7 @@ AddInvalidationMessage(InvalidationChunk **listHdr,
 		chunk = (InvalidationChunk *)
 			MemoryContextAlloc(TopTransactionContext,
 							   sizeof(InvalidationChunk) +
-							   (FIRSTCHUNKSIZE-1) * sizeof(SharedInvalidationMessage));
+				(FIRSTCHUNKSIZE - 1) *sizeof(SharedInvalidationMessage));
 		chunk->nitems = 0;
 		chunk->maxitems = FIRSTCHUNKSIZE;
 		chunk->next = *listHdr;
@@ -157,12 +157,12 @@ AddInvalidationMessage(InvalidationChunk **listHdr,
 	else if (chunk->nitems >= chunk->maxitems)
 	{
 		/* Need another chunk; double size of last chunk */
-		int		chunksize = 2 * chunk->maxitems;
+		int			chunksize = 2 * chunk->maxitems;
 
 		chunk = (InvalidationChunk *)
 			MemoryContextAlloc(TopTransactionContext,
 							   sizeof(InvalidationChunk) +
-							   (chunksize-1) * sizeof(SharedInvalidationMessage));
+					 (chunksize - 1) *sizeof(SharedInvalidationMessage));
 		chunk->nitems = 0;
 		chunk->maxitems = chunksize;
 		chunk->next = *listHdr;
@@ -279,7 +279,10 @@ DiscardInvalidationMessages(InvalidationListHeader *hdr, bool physicalFree)
 	}
 	else
 	{
-		/* Assume the storage will go away at xact end, just reset pointers */
+		/*
+		 * Assume the storage will go away at xact end, just reset
+		 * pointers
+		 */
 		hdr->cclist = NULL;
 		hdr->rclist = NULL;
 	}
@@ -421,7 +424,7 @@ InvalidateSystemCaches(void)
 static void
 PrepareForTupleInvalidation(Relation relation, HeapTuple tuple,
 							void (*CacheIdRegisterFunc) (int, Index,
-														 ItemPointer, Oid),
+													   ItemPointer, Oid),
 							void (*RelationIdRegisterFunc) (Oid, Oid))
 {
 	Oid			tupleRelId;
@@ -460,12 +463,12 @@ PrepareForTupleInvalidation(Relation relation, HeapTuple tuple,
 	 * Yes.  We need to register a relcache invalidation event for the
 	 * relation identified by relationId.
 	 *
-	 * KLUGE ALERT: we always send the relcache event with MyDatabaseId,
-	 * even if the rel in question is shared.  This essentially means that
-	 * only backends in this same database will react to the relcache flush
-	 * request.  This is in fact appropriate, since only those backends could
-	 * see our pg_class or pg_attribute change anyway.  It looks a bit ugly
-	 * though.
+	 * KLUGE ALERT: we always send the relcache event with MyDatabaseId, even
+	 * if the rel in question is shared.  This essentially means that only
+	 * backends in this same database will react to the relcache flush
+	 * request.  This is in fact appropriate, since only those backends
+	 * could see our pg_class or pg_attribute change anyway.  It looks a
+	 * bit ugly though.
 	 */
 	(*RelationIdRegisterFunc) (MyDatabaseId, relationId);
 }
@@ -498,7 +501,7 @@ AcceptInvalidationMessages(void)
  * If isCommit, we must send out the messages in our GlobalInvalidMsgs list
  * to the shared invalidation message queue.  Note that these will be read
  * not only by other backends, but also by our own backend at the next
- * transaction start (via AcceptInvalidationMessages).  Therefore, it's okay
+ * transaction start (via AcceptInvalidationMessages).	Therefore, it's okay
  * to discard any pending LocalInvalidMsgs, since these will be redundant
  * with the global list.
  *
@@ -538,7 +541,7 @@ AtEOXactInvalidationMessages(bool isCommit)
  *		in a transaction.
  *
  * Here, we send no messages to the shared queue, since we don't know yet if
- * we will commit.  But we do need to locally process the LocalInvalidMsgs
+ * we will commit.	But we do need to locally process the LocalInvalidMsgs
  * list, so as to flush our caches of any tuples we have outdated in the
  * current command.
  *
@@ -563,9 +566,10 @@ CommandEndInvalidationMessages(bool isCommit)
 		ProcessInvalidationMessages(&RollbackMsgs,
 									LocalExecuteInvalidationMessage);
 	}
+
 	/*
-	 * LocalInvalidMsgs list is not interesting anymore, so flush it
-	 * (for real).  Do *not* clear GlobalInvalidMsgs or RollbackMsgs.
+	 * LocalInvalidMsgs list is not interesting anymore, so flush it (for
+	 * real).  Do *not* clear GlobalInvalidMsgs or RollbackMsgs.
 	 */
 	DiscardInvalidationMessages(&LocalInvalidMsgs, true);
 }

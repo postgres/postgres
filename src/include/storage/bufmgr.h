@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.54 2001/07/06 21:04:26 tgl Exp $
+ * $Id: bufmgr.h,v 1.55 2001/10/25 05:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,7 +159,7 @@ extern int	ReleaseBuffer(Buffer buffer);
 extern int	WriteBuffer(Buffer buffer);
 extern int	WriteNoReleaseBuffer(Buffer buffer);
 extern Buffer ReleaseAndReadBuffer(Buffer buffer, Relation relation,
-								   BlockNumber blockNum);
+					 BlockNumber blockNum);
 extern int	FlushBuffer(Buffer buffer, bool sync, bool release);
 
 extern void InitBufferPool(void);
@@ -191,5 +191,4 @@ extern void BufmgrCommit(void);
 extern void BufferSync(void);
 
 extern void InitLocalBuffer(void);
-
 #endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.45 2001/08/09 18:28:17 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.46 2001/10/25 05:49:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,7 +240,6 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 void
 agg_error(char *caller, char *aggname, Oid basetypeID)
 {
-
 	/*
 	 * basetypeID that is Invalid (zero) means aggregate over all types.
 	 * (count)

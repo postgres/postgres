@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.38 2001/10/22 22:47:57 tgl Exp $
+ * $Id: heap.h,v 1.39 2001/10/25 05:49:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,12 +45,11 @@ extern void AddRelationRawConstraints(Relation rel,
 						  List *rawColDefaults,
 						  List *rawConstraints);
 
-extern int RemoveCheckConstraint(Relation rel, const char *constrName, bool inh);
+extern int	RemoveCheckConstraint(Relation rel, const char *constrName, bool inh);
 
 extern Form_pg_attribute SystemAttributeDefinition(AttrNumber attno,
-												   bool relhasoids);
+						  bool relhasoids);
 
 extern Form_pg_attribute SystemAttributeByName(const char *attname,
-											   bool relhasoids);
-
+					  bool relhasoids);
 #endif	 /* HEAP_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.87 2001/08/24 14:07:49 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.88 2001/10/25 05:49:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ typedef struct _MdfdVec
 
 	int			mdfd_nextFree;	/* link to next freelist member, if free */
 #ifndef LET_OS_MANAGE_FILESIZE
-	struct _MdfdVec *mdfd_chain;/* for large relations */
+	struct _MdfdVec *mdfd_chain;		/* for large relations */
 #endif
 } MdfdVec;
 
@@ -194,7 +194,7 @@ mdunlink(RelFileNode rnode)
 	if (status == SM_SUCCESS)
 	{
 		char	   *segpath = (char *) palloc(strlen(path) + 12);
-		BlockNumber	segno;
+		BlockNumber segno;
 
 		for (segno = 1;; segno++)
 		{
@@ -258,11 +258,11 @@ mdextend(Relation reln, BlockNumber blocknum, char *buffer)
 	/*
 	 * Note: because caller obtained blocknum by calling mdnblocks, which
 	 * did a seek(SEEK_END), this seek is often redundant and will be
-	 * optimized away by fd.c.  It's not redundant, however, if there is a
-	 * partial page at the end of the file.  In that case we want to try to
-	 * overwrite the partial page with a full page.  It's also not redundant
-	 * if bufmgr.c had to dump another buffer of the same file to make room
-	 * for the new page's buffer.
+	 * optimized away by fd.c.	It's not redundant, however, if there is a
+	 * partial page at the end of the file.  In that case we want to try
+	 * to overwrite the partial page with a full page.	It's also not
+	 * redundant if bufmgr.c had to dump another buffer of the same file
+	 * to make room for the new page's buffer.
 	 */
 	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
 		return SM_FAIL;
@@ -271,7 +271,7 @@ mdextend(Relation reln, BlockNumber blocknum, char *buffer)
 	{
 		if (nbytes > 0)
 		{
-			int		save_errno = errno;
+			int			save_errno = errno;
 
 			/* Remove the partially-written page */
 			FileTruncate(v->mdfd_vfd, seekpos);
@@ -309,7 +309,6 @@ mdopen(Relation reln)
 
 	if (fd < 0)
 	{
-
 		/*
 		 * During bootstrap, there are cases where a system relation will
 		 * be accessed (by internal backend processes) before the
@@ -383,7 +382,6 @@ mdclose_fd(int fd)
 		/* if not closed already */
 		if (v->mdfd_vfd >= 0)
 		{
-
 			/*
 			 * We sync the file descriptor so that we don't need to reopen
 			 * it at transaction commit to force changes to disk.  (This
@@ -406,7 +404,6 @@ mdclose_fd(int fd)
 	{
 		if (v->mdfd_vfd >= 0)
 		{
-
 			/*
 			 * We sync the file descriptor so that we don't need to reopen
 			 * it at transaction commit to force changes to disk.  (This
@@ -455,8 +452,8 @@ mdread(Relation reln, BlockNumber blocknum, char *buffer)
 	if ((nbytes = FileRead(v->mdfd_vfd, buffer, BLCKSZ)) != BLCKSZ)
 	{
 		/*
-		 * If we are at EOF, return zeroes without complaining.
-		 * (XXX Is this still necessary/a good idea??)
+		 * If we are at EOF, return zeroes without complaining. (XXX Is
+		 * this still necessary/a good idea??)
 		 */
 		if (nbytes == 0 ||
 			(nbytes > 0 && mdnblocks(reln) == blocknum))
@@ -664,9 +661,10 @@ mdnblocks(Relation reln)
 {
 	int			fd;
 	MdfdVec    *v;
+
 #ifndef LET_OS_MANAGE_FILESIZE
-	BlockNumber	nblocks;
-	BlockNumber	segno;
+	BlockNumber nblocks;
+	BlockNumber segno;
 #endif
 
 	fd = _mdfd_getrelnfd(reln);
@@ -681,6 +679,7 @@ mdnblocks(Relation reln)
 			elog(FATAL, "segment too big in mdnblocks!");
 		if (nblocks < ((BlockNumber) RELSEG_SIZE))
 			return (segno * ((BlockNumber) RELSEG_SIZE)) + nblocks;
+
 		/*
 		 * If segment is exactly RELSEG_SIZE, advance to next one.
 		 */
@@ -689,11 +688,11 @@ mdnblocks(Relation reln)
 		if (v->mdfd_chain == (MdfdVec *) NULL)
 		{
 			/*
-			 * Because we pass O_CREAT, we will create the next
-			 * segment (with zero length) immediately, if the last
-			 * segment is of length REL_SEGSIZE.  This is unnecessary
-			 * but harmless, and testing for the case would take more
-			 * cycles than it seems worth.
+			 * Because we pass O_CREAT, we will create the next segment
+			 * (with zero length) immediately, if the last segment is of
+			 * length REL_SEGSIZE.	This is unnecessary but harmless, and
+			 * testing for the case would take more cycles than it seems
+			 * worth.
 			 */
 			v->mdfd_chain = _mdfd_openseg(reln, segno, O_CREAT);
 			if (v->mdfd_chain == (MdfdVec *) NULL)
@@ -718,9 +717,10 @@ mdtruncate(Relation reln, BlockNumber nblocks)
 {
 	int			fd;
 	MdfdVec    *v;
-	BlockNumber	curnblk;
+	BlockNumber curnblk;
+
 #ifndef LET_OS_MANAGE_FILESIZE
-	BlockNumber	priorblocks;
+	BlockNumber priorblocks;
 #endif
 
 	/*
@@ -729,7 +729,7 @@ mdtruncate(Relation reln, BlockNumber nblocks)
 	 */
 	curnblk = mdnblocks(reln);
 	if (nblocks > curnblk)
-		return InvalidBlockNumber; /* bogus request */
+		return InvalidBlockNumber;		/* bogus request */
 	if (nblocks == curnblk)
 		return nblocks;			/* no work */
 
@@ -768,7 +768,7 @@ mdtruncate(Relation reln, BlockNumber nblocks)
 			 * truncate the K+1st segment to 0 length but keep it. This is
 			 * mainly so that the right thing happens if nblocks==0.
 			 */
-			BlockNumber		lastsegblocks = nblocks - priorblocks;
+			BlockNumber lastsegblocks = nblocks - priorblocks;
 
 			if (FileTruncate(v->mdfd_vfd, lastsegblocks * BLCKSZ) < 0)
 				return InvalidBlockNumber;
@@ -838,7 +838,6 @@ mdcommit()
 int
 mdabort()
 {
-
 	/*
 	 * We don't actually have to do anything here.  fd.c will discard
 	 * fsync-needed bits in its AtEOXact_Files() routine.
@@ -1004,9 +1003,10 @@ _mdfd_getseg(Relation reln, BlockNumber blkno)
 {
 	MdfdVec    *v;
 	int			fd;
+
 #ifndef LET_OS_MANAGE_FILESIZE
-	BlockNumber	segno;
-	BlockNumber	i;
+	BlockNumber segno;
+	BlockNumber i;
 #endif
 
 	fd = _mdfd_getrelnfd(reln);
@@ -1019,7 +1019,6 @@ _mdfd_getseg(Relation reln, BlockNumber blkno)
 
 		if (v->mdfd_chain == (MdfdVec *) NULL)
 		{
-
 			/*
 			 * We will create the next segment only if the target block is
 			 * within it.  This prevents Sorcerer's Apprentice syndrome if
@@ -1063,8 +1062,9 @@ _mdfd_blind_getseg(RelFileNode rnode, BlockNumber blkno)
 {
 	char	   *path;
 	int			fd;
+
 #ifndef LET_OS_MANAGE_FILESIZE
-	BlockNumber	segno;
+	BlockNumber segno;
 #endif
 
 	path = relpath(rnode);

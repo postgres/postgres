@@ -47,7 +47,7 @@ extern		"C"
 		ECPGt_EORT,				/* End of result types. */
 		ECPGt_NO_INDICATOR,		/* no indicator */
 		ECPGt_long_long, ECPGt_unsigned_long_long,
-		ECPGt_descriptor	/* sql descriptor, no C variable */
+		ECPGt_descriptor		/* sql descriptor, no C variable */
 	};
 
 	/* descriptor items */
@@ -76,5 +76,4 @@ extern		"C"
 
 #ifdef __cplusplus
 }
-
 #endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.50 2001/08/09 18:28:18 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.51 2001/10/25 05:49:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -481,7 +481,6 @@ oper_select_candidate(int nargs,
 				}
 				else
 				{
-
 					/*
 					 * Remember conflict, but keep going (might find
 					 * STRING)
@@ -835,7 +834,6 @@ right_oper(char *op, Oid arg)
 			unary_op_error(op, arg, FALSE);
 		else
 		{
-
 			/*
 			 * We must run oper_select_candidate even if only one
 			 * candidate, otherwise we may falsely return a
@@ -892,7 +890,6 @@ left_oper(char *op, Oid arg)
 			unary_op_error(op, arg, TRUE);
 		else
 		{
-
 			/*
 			 * We must run oper_select_candidate even if only one
 			 * candidate, otherwise we may falsely return a
@@ -957,11 +954,11 @@ unary_op_error(char *op, Oid arg, bool is_left_op)
 	{
 		if (is_left_op)
 			elog(ERROR, "Unable to identify a prefix operator '%s' for type '%s'"
-				 "\n\tYou may need to add parentheses or an explicit cast",
+			   "\n\tYou may need to add parentheses or an explicit cast",
 				 op, format_type_be(arg));
 		else
 			elog(ERROR, "Unable to identify a postfix operator '%s' for type '%s'"
-				 "\n\tYou may need to add parentheses or an explicit cast",
+			   "\n\tYou may need to add parentheses or an explicit cast",
 				 op, format_type_be(arg));
 	}
 }

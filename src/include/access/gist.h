@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: gist.h,v 1.32 2001/08/22 18:24:26 tgl Exp $
+ * $Id: gist.h,v 1.33 2001/10/25 05:49:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,20 +123,22 @@ typedef struct GIST_SPLITVEC
 	OffsetNumber *spl_left;		/* array of entries that go left */
 	int			spl_nleft;		/* size of this array */
 	Datum		spl_ldatum;		/* Union of keys in spl_left */
-	Datum		spl_lattr[INDEX_MAX_KEYS];  /* Union of subkeys in spl_left */
-	int	   spl_lattrsize[INDEX_MAX_KEYS];
-	bool	   spl_lisnull[INDEX_MAX_KEYS];
+	Datum		spl_lattr[INDEX_MAX_KEYS];		/* Union of subkeys in
+												 * spl_left */
+	int			spl_lattrsize[INDEX_MAX_KEYS];
+	bool		spl_lisnull[INDEX_MAX_KEYS];
 
 	OffsetNumber *spl_right;	/* array of entries that go right */
 	int			spl_nright;		/* size of the array */
 	Datum		spl_rdatum;		/* Union of keys in spl_right */
-	Datum		spl_rattr[INDEX_MAX_KEYS];  /* Union of subkeys in spl_right */
-	int	   spl_rattrsize[INDEX_MAX_KEYS];
-	bool	   spl_risnull[INDEX_MAX_KEYS];
+	Datum		spl_rattr[INDEX_MAX_KEYS];		/* Union of subkeys in
+												 * spl_right */
+	int			spl_rattrsize[INDEX_MAX_KEYS];
+	bool		spl_risnull[INDEX_MAX_KEYS];
 
-	int 	*spl_idgrp;
-	int  	*spl_ngrp;		   /* number in each group */
-	char  	*spl_grpflag;		   /* flags of each group */
+	int		   *spl_idgrp;
+	int		   *spl_ngrp;		/* number in each group */
+	char	   *spl_grpflag;	/* flags of each group */
 } GIST_SPLITVEC;
 
 /*
@@ -171,10 +173,10 @@ extern void gistfreestack(GISTSTACK *s);
 extern void initGISTstate(GISTSTATE *giststate, Relation index);
 extern void freeGISTstate(GISTSTATE *giststate);
 extern void gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
-						   Datum k, Relation r, Page pg, OffsetNumber o,
-						   int b, bool l, bool isNull);
+			   Datum k, Relation r, Page pg, OffsetNumber o,
+			   int b, bool l, bool isNull);
 extern StrategyNumber RelationGetGISTStrategy(Relation, AttrNumber,
-											  RegProcedure);
+						RegProcedure);
 
 extern void gist_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void gist_undo(XLogRecPtr lsn, XLogRecord *record);
@@ -182,5 +184,4 @@ extern void gist_desc(char *buf, uint8 xl_info, char *rec);
 
 /* gistget.c */
 extern Datum gistgettuple(PG_FUNCTION_ARGS);
-
 #endif	 /* GIST_H */

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_largeobject.h,v 1.9 2001/08/10 20:52:25 tgl Exp $
+ * $Id: pg_largeobject.h,v 1.10 2001/10/25 05:49:57 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -58,5 +58,4 @@ typedef FormData_pg_largeobject *Form_pg_largeobject;
 extern void LargeObjectCreate(Oid loid);
 extern void LargeObjectDrop(Oid loid);
 extern bool LargeObjectExists(Oid loid);
-
 #endif	 /* PG_LARGEOBJECT_H */

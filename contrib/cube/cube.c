@@ -166,7 +166,6 @@ g_cube_consistent(GISTENTRY *entry,
 				  NDBOX * query,
 				  StrategyNumber strategy)
 {
-
 	/*
 	 * if entry is not leaf, use g_cube_internal_consistent, else use
 	 * g_cube_leaf_consistent
@@ -206,7 +205,7 @@ g_cube_union(bytea *entryvec, int *sizep)
 	for (i = 1; i < numranges; i++)
 	{
 		out = g_cube_binary_union(tmp, (NDBOX *)
-								  DatumGetPointer((((GISTENTRY *) (VARDATA(entryvec)))[i]).key),
+		   DatumGetPointer((((GISTENTRY *) (VARDATA(entryvec)))[i]).key),
 								  sizep);
 		if (i > 1)
 			pfree(tmp);
@@ -220,13 +219,13 @@ g_cube_union(bytea *entryvec, int *sizep)
 ** GiST Compress and Decompress methods for boxes
 ** do not do anything.
 */
-GISTENTRY  *
+GISTENTRY *
 g_cube_compress(GISTENTRY *entry)
 {
 	return (entry);
 }
 
-GISTENTRY  *
+GISTENTRY *
 g_cube_decompress(GISTENTRY *entry)
 {
 	return (entry);
@@ -365,7 +364,6 @@ g_cube_picksplit(bytea *entryvec,
 	maxoff = OffsetNumberNext(maxoff);
 	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 	{
-
 		/*
 		 * If we've already decided where to place this item, just put it
 		 * on the right list.  Otherwise, we need to figure out which page
@@ -1001,7 +999,6 @@ cube_contains(NDBOX * box_a, NDBOX * box_b)
 
 	if (a->dim < b->dim)
 	{
-
 		/*
 		 * the further comparisons will make sense if the excess
 		 * dimensions of (b) were zeroes

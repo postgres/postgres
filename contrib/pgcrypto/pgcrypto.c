@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: pgcrypto.c,v 1.9 2001/09/23 04:12:44 momjian Exp $
+ * $Id: pgcrypto.c,v 1.10 2001/10/25 05:49:19 momjian Exp $
  */
 
 #include <postgres.h>
@@ -41,7 +41,7 @@
 
 typedef int (*PFN) (const char *name, void **res);
 static void *
-			find_provider(text * name, PFN pf, char *desc, int silent);
+			find_provider(text *name, PFN pf, char *desc, int silent);
 
 /* SQL function: hash(text, text) returns text */
 PG_FUNCTION_INFO_V1(pg_digest);
@@ -313,17 +313,21 @@ PG_FUNCTION_INFO_V1(pg_encrypt);
 Datum
 pg_encrypt(PG_FUNCTION_ARGS)
 {
-	int err;
-	bytea *data, *key, *res;
-	text *type;
-	PX_Combo *c;
-	uint dlen, klen, rlen;
-	
+	int			err;
+	bytea	   *data,
+			   *key,
+			   *res;
+	text	   *type;
+	PX_Combo   *c;
+	uint		dlen,
+				klen,
+				rlen;
+
 	if (PG_ARGISNULL(0) || PG_ARGISNULL(1) || PG_ARGISNULL(2))
 		PG_RETURN_NULL();
-	
+
 	type = PG_GETARG_TEXT_P(2);
-	c = find_provider(type, (PFN)px_find_combo, "Cipher", 0);
+	c = find_provider(type, (PFN) px_find_combo, "Cipher", 0);
 
 	data = PG_GETARG_BYTEA_P(0);
 	key = PG_GETARG_BYTEA_P(1);
@@ -341,8 +345,9 @@ pg_encrypt(PG_FUNCTION_ARGS)
 	PG_FREE_IF_COPY(data, 0);
 	PG_FREE_IF_COPY(key, 1);
 	PG_FREE_IF_COPY(type, 2);
-	
-	if (err) {
+
+	if (err)
+	{
 		pfree(res);
 		elog(ERROR, "encrypt error: %d", err);
 	}
@@ -357,17 +362,21 @@ PG_FUNCTION_INFO_V1(pg_decrypt);
 Datum
 pg_decrypt(PG_FUNCTION_ARGS)
 {
-	int err;
-	bytea *data, *key, *res;
-	text *type;
-	PX_Combo *c;
-	uint dlen, klen, rlen;
-	
+	int			err;
+	bytea	   *data,
+			   *key,
+			   *res;
+	text	   *type;
+	PX_Combo   *c;
+	uint		dlen,
+				klen,
+				rlen;
+
 	if (PG_ARGISNULL(0) || PG_ARGISNULL(1) || PG_ARGISNULL(2))
 		PG_RETURN_NULL();
-	
+
 	type = PG_GETARG_TEXT_P(2);
-	c = find_provider(type, (PFN)px_find_combo, "Cipher", 0);
+	c = find_provider(type, (PFN) px_find_combo, "Cipher", 0);
 
 	data = PG_GETARG_BYTEA_P(0);
 	key = PG_GETARG_BYTEA_P(1);
@@ -401,18 +410,24 @@ PG_FUNCTION_INFO_V1(pg_encrypt_iv);
 Datum
 pg_encrypt_iv(PG_FUNCTION_ARGS)
 {
-	int err;
-	bytea *data, *key, *iv, *res;
-	text *type;
-	PX_Combo *c;
-	uint dlen, klen, ivlen, rlen;
-	
+	int			err;
+	bytea	   *data,
+			   *key,
+			   *iv,
+			   *res;
+	text	   *type;
+	PX_Combo   *c;
+	uint		dlen,
+				klen,
+				ivlen,
+				rlen;
+
 	if (PG_ARGISNULL(0) || PG_ARGISNULL(1)
-			|| PG_ARGISNULL(2) || PG_ARGISNULL(3))
+		|| PG_ARGISNULL(2) || PG_ARGISNULL(3))
 		PG_RETURN_NULL();
-	
+
 	type = PG_GETARG_TEXT_P(3);
-	c = find_provider(type, (PFN)px_find_combo, "Cipher", 0);
+	c = find_provider(type, (PFN) px_find_combo, "Cipher", 0);
 
 	data = PG_GETARG_BYTEA_P(0);
 	key = PG_GETARG_BYTEA_P(1);
@@ -449,18 +464,24 @@ PG_FUNCTION_INFO_V1(pg_decrypt_iv);
 Datum
 pg_decrypt_iv(PG_FUNCTION_ARGS)
 {
-	int err;
-	bytea *data, *key, *iv, *res;
-	text *type;
-	PX_Combo *c;
-	uint dlen, klen, rlen, ivlen;
-	
+	int			err;
+	bytea	   *data,
+			   *key,
+			   *iv,
+			   *res;
+	text	   *type;
+	PX_Combo   *c;
+	uint		dlen,
+				klen,
+				rlen,
+				ivlen;
+
 	if (PG_ARGISNULL(0) || PG_ARGISNULL(1)
-			|| PG_ARGISNULL(2) || PG_ARGISNULL(3))
+		|| PG_ARGISNULL(2) || PG_ARGISNULL(3))
 		PG_RETURN_NULL();
-	
+
 	type = PG_GETARG_TEXT_P(3);
-	c = find_provider(type, (PFN)px_find_combo, "Cipher", 0);
+	c = find_provider(type, (PFN) px_find_combo, "Cipher", 0);
 
 	data = PG_GETARG_BYTEA_P(0);
 	key = PG_GETARG_BYTEA_P(1);
@@ -480,7 +501,7 @@ pg_decrypt_iv(PG_FUNCTION_ARGS)
 
 	if (err)
 		elog(ERROR, "decrypt_iv error: %d", err);
-	
+
 	VARATT_SIZEP(res) = VARHDRSZ + rlen;
 
 	PG_FREE_IF_COPY(data, 0);
@@ -497,15 +518,15 @@ PG_FUNCTION_INFO_V1(pg_cipher_exists);
 Datum
 pg_cipher_exists(PG_FUNCTION_ARGS)
 {
-	text *arg;
-	PX_Combo *c;
+	text	   *arg;
+	PX_Combo   *c;
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
 	arg = PG_GETARG_TEXT_P(0);
 
-	c = find_provider(arg, (PFN)px_find_combo, "Cipher", 1);
+	c = find_provider(arg, (PFN) px_find_combo, "Cipher", 1);
 	if (c != NULL)
 		px_combo_free(c);
 
@@ -514,7 +535,7 @@ pg_cipher_exists(PG_FUNCTION_ARGS)
 
 
 static void *
-find_provider(text * name,
+find_provider(text *name,
 			  PFN provider_lookup,
 			  char *desc, int silent)
 {

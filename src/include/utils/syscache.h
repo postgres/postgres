@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.33 2001/08/21 16:36:06 tgl Exp $
+ * $Id: syscache.h,v 1.34 2001/10/25 05:50:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,11 +66,10 @@ extern void ReleaseSysCache(HeapTuple tuple);
 extern HeapTuple SearchSysCacheCopy(int cacheId,
 				   Datum key1, Datum key2, Datum key3, Datum key4);
 extern bool SearchSysCacheExists(int cacheId,
-			   Datum key1, Datum key2, Datum key3, Datum key4);
+					 Datum key1, Datum key2, Datum key3, Datum key4);
 extern Oid GetSysCacheOid(int cacheId,
 			   Datum key1, Datum key2, Datum key3, Datum key4);
 
 extern Datum SysCacheGetAttr(int cacheId, HeapTuple tup,
 				AttrNumber attributeNumber, bool *isNull);
-
 #endif	 /* SYSCACHE_H */

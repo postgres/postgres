@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.26 2001/03/23 04:49:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.27 2001/10/25 05:49:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,6 @@ _hash_search(Relation rel,
 	if (scankey == (ScanKey) NULL ||
 		(keyDatum = scankey[0].sk_argument) == (Datum) NULL)
 	{
-
 		/*
 		 * If the scankey argument is NULL, all tuples will satisfy the
 		 * scan so we start the scan at the first bucket (bucket 0).

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.158 2001/10/18 17:30:14 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.159 2001/10/25 05:49:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -782,7 +782,6 @@ _copyConst(Const *from)
 
 	if (from->constbyval || from->constisnull)
 	{
-
 		/*
 		 * passed by value so just copy the datum. Also, don't try to copy
 		 * struct when value is null!
@@ -792,7 +791,6 @@ _copyConst(Const *from)
 	}
 	else
 	{
-
 		/*
 		 * not passed by value. datum contains a pointer.
 		 */
@@ -1024,7 +1022,7 @@ _copyCaseWhen(CaseWhen *from)
 static NullTest *
 _copyNullTest(NullTest *from)
 {
-	NullTest *newnode = makeNode(NullTest);
+	NullTest   *newnode = makeNode(NullTest);
 
 	/*
 	 * copy remainder of node
@@ -1180,7 +1178,6 @@ _copyIndexOptInfo(IndexOptInfo *from)
 static void
 CopyPathFields(Path *from, Path *newnode)
 {
-
 	/*
 	 * Modify the next line, since it causes the copying to cycle (i.e.
 	 * the parent points right back here! -- JMH, 7/7/92. Old version:
@@ -1780,8 +1777,8 @@ _copyQuery(Query *from)
 
 	/*
 	 * We do not copy the planner internal fields: base_rel_list,
-	 * other_rel_list, join_rel_list, equi_key_list, query_pathkeys.
-	 * Not entirely clear if this is right?
+	 * other_rel_list, join_rel_list, equi_key_list, query_pathkeys. Not
+	 * entirely clear if this is right?
 	 */
 
 	return newnode;
@@ -1892,7 +1889,7 @@ _copyAlterTableStmt(AlterTableStmt *from)
 static GrantStmt *
 _copyGrantStmt(GrantStmt *from)
 {
-	GrantStmt *newnode = makeNode(GrantStmt);
+	GrantStmt  *newnode = makeNode(GrantStmt);
 
 	newnode->is_grant = from->is_grant;
 	Node_Copy(from, newnode, relnames);
@@ -2426,7 +2423,7 @@ _copyLockStmt(LockStmt *from)
 	LockStmt   *newnode = makeNode(LockStmt);
 
 	Node_Copy(from, newnode, rellist);
-	
+
 	newnode->mode = from->mode;
 
 	return newnode;
@@ -2536,7 +2533,6 @@ copyObject(void *from)
 
 	switch (nodeTag(from))
 	{
-
 			/*
 			 * PLAN NODES
 			 */

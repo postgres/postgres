@@ -61,5 +61,4 @@
 #define ECPG_NOTICE_NO_TRANSACTION	   -604
  /* NOTICE:  BlankPortalAssignName: portal * already exists */
 #define ECPG_NOTICE_PORTAL_EXISTS	   -605
-
 #endif	 /* !_ECPG_ERROR_H */

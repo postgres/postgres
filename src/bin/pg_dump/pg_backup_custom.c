@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.15 2001/09/21 21:58:30 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.16 2001/10/25 05:49:52 momjian Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -447,7 +447,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 			if ((TocIDRequired(AH, id, ropt) & 2) != 0)
 				die_horribly(AH, modulename,
 							 "Dumping a specific TOC data block out of order is not supported"
-							 " without id on this input stream (fseek required)\n");
+				  " without id on this input stream (fseek required)\n");
 
 			switch (blkType)
 			{
@@ -533,7 +533,6 @@ _PrintData(ArchiveHandle *AH)
 #ifdef HAVE_LIBZ
 	int			res;
 	char	   *out = ctx->zlibOut;
-
 #endif
 
 #ifdef HAVE_LIBZ
@@ -549,7 +548,6 @@ _PrintData(ArchiveHandle *AH)
 		if (inflateInit(zp) != Z_OK)
 			die_horribly(AH, modulename, "could not initialize compression library: %s\n", zp->msg);
 	}
-
 #endif
 
 	blkLen = ReadInt(AH);
@@ -910,7 +908,6 @@ _StartDataCompressor(ArchiveHandle *AH, TocEntry *te)
 #else
 
 	AH->compression = 0;
-
 #endif
 
 	/* Just be paranoid - maybe End is called after Start, with no Write */
@@ -944,7 +941,6 @@ _DoDeflate(ArchiveHandle *AH, lclContext *ctx, int flush)
 			|| (zp->avail_in != 0)
 			)
 		{
-
 			/*
 			 * Extra paranoia: avoid zero-length chunks since a zero
 			 * length chunk is the EOF marker. This should never happen
@@ -952,7 +948,6 @@ _DoDeflate(ArchiveHandle *AH, lclContext *ctx, int flush)
 			 */
 			if (zp->avail_out < zlibOutSize)
 			{
-
 				/*
 				 * printf("Wrote %d byte deflated chunk\n", zlibOutSize -
 				 * zp->avail_out);

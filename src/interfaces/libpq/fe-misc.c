@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.57 2001/09/30 16:23:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.58 2001/10/25 05:50:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,16 +59,16 @@
 #define DONOTICE(conn,message) \
 	((*(conn)->noticeHook) ((conn)->noticeArg, (message)))
 
-static int pqPutBytes(const char *s, size_t nbytes, PGconn *conn);
+static int	pqPutBytes(const char *s, size_t nbytes, PGconn *conn);
 
 
 /*
  * pqGetc:
- *  get a character from the connection
+ *	get a character from the connection
  *
- *  All these routines return 0 on success, EOF on error.
- *  Note that for the Get routines, EOF only means there is not enough
- *  data in the buffer, not that there is necessarily a hard error.
+ *	All these routines return 0 on success, EOF on error.
+ *	Note that for the Get routines, EOF only means there is not enough
+ *	data in the buffer, not that there is necessarily a hard error.
  */
 int
 pqGetc(char *result, PGconn *conn)
@@ -116,7 +116,6 @@ pqPutBytes(const char *s, size_t nbytes, PGconn *conn)
 	 */
 	if (pqIsnonblocking(conn) && nbytes > avail && pqFlush(conn))
 	{
-
 		/*
 		 * even if the flush failed we may still have written some data,
 		 * recalculate the size of the send-queue relative to the amount
@@ -129,7 +128,7 @@ pqPutBytes(const char *s, size_t nbytes, PGconn *conn)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("could not flush enough data (space available: %d, space needed %d)\n"),
-							  Max(conn->outBufSize - conn->outCount, 0), nbytes);
+					  Max(conn->outBufSize - conn->outCount, 0), nbytes);
 			return EOF;
 		}
 		/* fixup avail for while loop */
@@ -211,7 +210,7 @@ pqPuts(const char *s, PGconn *conn)
 
 /*
  * pqGetnchar:
- *  get a string of exactly len bytes in buffer s, no null termination
+ *	get a string of exactly len bytes in buffer s, no null termination
  */
 int
 pqGetnchar(char *s, size_t len, PGconn *conn)
@@ -232,7 +231,7 @@ pqGetnchar(char *s, size_t len, PGconn *conn)
 
 /*
  * pqPutnchar:
- *  send a string of exactly len bytes, no null termination needed
+ *	send a string of exactly len bytes, no null termination needed
  */
 int
 pqPutnchar(const char *s, size_t len, PGconn *conn)
@@ -248,8 +247,8 @@ pqPutnchar(const char *s, size_t len, PGconn *conn)
 
 /*
  * pgGetInt
- *  read a 2 or 4 byte integer and convert from network byte order
- *  to local byte order
+ *	read a 2 or 4 byte integer and convert from network byte order
+ *	to local byte order
  */
 int
 pqGetInt(int *result, size_t bytes, PGconn *conn)
@@ -484,7 +483,7 @@ tryAgain:
 			goto definitelyFailed;
 #endif
 		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("could not receive data from server: %s\n"),
+			   libpq_gettext("could not receive data from server: %s\n"),
 						  SOCK_STRERROR(SOCK_ERRNO));
 		return -1;
 	}
@@ -570,7 +569,7 @@ tryAgain2:
 			goto definitelyFailed;
 #endif
 		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("could not receive data from server: %s\n"),
+			   libpq_gettext("could not receive data from server: %s\n"),
 						  SOCK_STRERROR(SOCK_ERRNO));
 		return -1;
 	}
@@ -587,9 +586,9 @@ tryAgain2:
 definitelyFailed:
 	printfPQExpBuffer(&conn->errorMessage,
 					  libpq_gettext(
-						  "server closed the connection unexpectedly\n"
-						  "\tThis probably means the server terminated abnormally\n"
-						  "\tbefore or while processing the request.\n"));
+							"server closed the connection unexpectedly\n"
+			   "\tThis probably means the server terminated abnormally\n"
+						 "\tbefore or while processing the request.\n"));
 	conn->status = CONNECTION_BAD;		/* No more connection to backend */
 #ifdef WIN32
 	closesocket(conn->sock);
@@ -647,7 +646,6 @@ pqFlush(PGconn *conn)
 
 		if (sent < 0)
 		{
-
 			/*
 			 * Anything except EAGAIN or EWOULDBLOCK is trouble. If it's
 			 * EPIPE or ECONNRESET, assume we've lost the backend
@@ -672,9 +670,9 @@ pqFlush(PGconn *conn)
 #endif
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext(
-										  "server closed the connection unexpectedly\n"
-										  "\tThis probably means the server terminated abnormally\n"
-										  "\tbefore or while processing the request.\n"));
+							"server closed the connection unexpectedly\n"
+													"\tThis probably means the server terminated abnormally\n"
+						 "\tbefore or while processing the request.\n"));
 
 					/*
 					 * We used to close the socket here, but that's a bad
@@ -688,7 +686,7 @@ pqFlush(PGconn *conn)
 
 				default:
 					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext("could not send data to server: %s\n"),
+					libpq_gettext("could not send data to server: %s\n"),
 									  SOCK_STRERROR(SOCK_ERRNO));
 					/* We don't assume it's a fatal error... */
 					return EOF;
@@ -832,7 +830,6 @@ PQenv2encoding(void)
 {
 	return 0;
 }
-
 #endif	 /* MULTIBYTE */
 
 
@@ -840,7 +837,7 @@ PQenv2encoding(void)
 char *
 libpq_gettext(const char *msgid)
 {
-	static int already_bound = 0;
+	static int	already_bound = 0;
 
 	if (!already_bound)
 	{
@@ -850,7 +847,7 @@ libpq_gettext(const char *msgid)
 
 	return dgettext("libpq", msgid);
 }
-#endif /* ENABLE_NLS */
+#endif	 /* ENABLE_NLS */
 
 #ifdef WIN32
 /*
@@ -860,41 +857,41 @@ libpq_gettext(const char *msgid)
  * If you can verify this working on win9x or have a solution, let us know, ok?
  *
  */
-const char*
+const char *
 winsock_strerror(DWORD eno)
 {
-  #define WSSE_MAXLEN (sizeof(winsock_strerror_buf)-1-12) /* 12 == "(0x00000000)" */
-  int length;
+#define WSSE_MAXLEN (sizeof(winsock_strerror_buf)-1-12) /* 12 == "(0x00000000)" */
+	int			length;
 
-  /* First try the "system table", this works on Win2k pro */
+	/* First try the "system table", this works on Win2k pro */
 
-  if (FormatMessage(
-	   FORMAT_MESSAGE_IGNORE_INSERTS|FORMAT_MESSAGE_FROM_SYSTEM,
-	   0,eno,MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-	   winsock_strerror_buf,WSSE_MAXLEN,NULL
-	 ))
-    goto WSSE_GOODEXIT;
+	if (FormatMessage(
+			  FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
+					  0, eno, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+					  winsock_strerror_buf, WSSE_MAXLEN, NULL
+					  ))
+		goto WSSE_GOODEXIT;
 
-  /* That didn't work, let's try the netmsg.dll */
+	/* That didn't work, let's try the netmsg.dll */
 
-  if (netmsgModule && 
-      FormatMessage(
-	   FORMAT_MESSAGE_IGNORE_INSERTS|FORMAT_MESSAGE_FROM_HMODULE,
-	   0,eno,MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-	   winsock_strerror_buf,WSSE_MAXLEN,NULL 
-	   ))
-    goto WSSE_GOODEXIT;
+	if (netmsgModule &&
+		FormatMessage(
+			 FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_HMODULE,
+					  0, eno, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+					  winsock_strerror_buf, WSSE_MAXLEN, NULL
+					  ))
+		goto WSSE_GOODEXIT;
 
-  /* Everything failed, just tell the user that we don't know the desc */
-  
-  strcat(winsock_strerror_buf,"Socket error, no description available.");
+	/* Everything failed, just tell the user that we don't know the desc */
+
+	strcat(winsock_strerror_buf, "Socket error, no description available.");
 
 WSSE_GOODEXIT:
 
-  length = strlen(winsock_strerror_buf);
-  sprintf(winsock_strerror_buf + (length<WSSE_MAXLEN?length:WSSE_MAXLEN),
-	  "(0x%08X)",eno);
+	length = strlen(winsock_strerror_buf);
+	sprintf(winsock_strerror_buf + (length < WSSE_MAXLEN ? length : WSSE_MAXLEN),
+			"(0x%08X)", eno);
 
-  return winsock_strerror_buf;
+	return winsock_strerror_buf;
 }
 #endif

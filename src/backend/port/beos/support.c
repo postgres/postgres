@@ -116,19 +116,17 @@ beos_dl_open(char *filename)
 }
 
 void
-beos_dl_sym(image_id im,char* symname,void** fptr)
+beos_dl_sym(image_id im, char *symname, void **fptr)
 {
 	/* Send command '3' (get symbol) to the support server */
 	write_port(beos_dl_port_in, 3, symname, strlen(symname) + 1);
-	write_port(beos_dl_port_in, im, NULL,0);
+	write_port(beos_dl_port_in, im, NULL, 0);
 
 	/* Read sym address */
-	read_port(beos_dl_port_out, (int32*)(fptr), NULL, 0);
+	read_port(beos_dl_port_out, (int32 *) (fptr), NULL, 0);
 
-	if (fptr==NULL)
-	{
+	if (fptr == NULL)
 		elog(NOTICE, "loading symbol '%s' failed ", symname);
-	}
 }
 
 status_t
@@ -149,7 +147,6 @@ beos_startup(int argc, char **argv)
 {
 	if (strlen(argv[0]) >= 10 && !strcmp(argv[0] + strlen(argv[0]) - 10, "postmaster"))
 	{
-
 		/*
 		 * We are in the postmaster, create the protection semaphore for
 		 * shared mem remapping
@@ -180,13 +177,13 @@ beos_startup(int argc, char **argv)
 			 * server
 			 */
 			read_port(port_in, &opcode, datas, 4000);
-			
+
 			switch (opcode)
 			{
 					image_id	addon;
 					image_info	info_im;
 					area_info	info_ar;
-					void  *     fpt;
+					void	   *fpt;
 
 					/* Load Add-On */
 				case 1:
@@ -226,32 +223,32 @@ beos_startup(int argc, char **argv)
 					break;
 					/* Cleanup and exit */
 				case 3:
-					
+
 					/* read image Id on the input port */
-					read_port(port_in, &addon,NULL,0);
+					read_port(port_in, &addon, NULL, 0);
 
 					/* Loading symbol */
-					fpt=NULL;
-					
-			
-				if (get_image_symbol(addon, datas, B_SYMBOL_TYPE_TEXT, &fpt) == B_OK);
-					{
+					fpt = NULL;
 
+
+					if (get_image_symbol(addon, datas, B_SYMBOL_TYPE_TEXT, &fpt) == B_OK);
+					{
 						/*
-						 * Sometime the loader return B_OK for an inexistant function
-						 * with an invalid address !!! Check that the return address
-						 * is in the image range
-			 			*/
+						 * Sometime the loader return B_OK for an
+						 * inexistant function with an invalid address !!!
+						 * Check that the return address is in the image
+						 * range
+						 */
 
 						get_image_info(addon, &info_im);
 						if ((fpt < info_im.text) ||(fpt >= (info_im.text +info_im.text_size)))
-							fpt=NULL;
+							fpt = NULL;
 					}
 
 					/* Send back fptr of data segment */
-					write_port(port_out, (int32)(fpt),NULL,0);
+					write_port(port_out, (int32) (fpt), NULL, 0);
 					break;
-								
+
 				default:
 					/* Free system resources */
 					delete_port(port_in);

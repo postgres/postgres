@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtree.h,v 1.24 2001/07/15 22:48:18 tgl Exp $
+ * $Id: rtree.h,v 1.25 2001/10/25 05:49:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,5 +134,4 @@ extern void AtEOXact_rtree(void);
 /* rtstrat.c */
 extern RegProcedure RTMapOperator(Relation r, AttrNumber attnum,
 			  RegProcedure proc);
-
 #endif	 /* RTREE_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.78 2001/09/29 04:02:21 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.79 2001/10/25 05:49:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@ char		XLOG_archive_dir[MAXPGPATH];		/* null string means
 												 * delete 'em */
 
 /*
- * XLOGfileslop is used in the code as the allowed "fuzz" in the number of 
+ * XLOGfileslop is used in the code as the allowed "fuzz" in the number of
  * preallocated XLOG segments --- we try to have at least XLOGfiles advance
  * segments but no more than XLOGfiles+XLOGfileslop segments.  This could
  * be made a separate GUC variable, but at present I think it's sufficient
@@ -215,13 +215,13 @@ typedef struct XLogwrtRqst
 {
 	XLogRecPtr	Write;			/* last byte + 1 to write out */
 	XLogRecPtr	Flush;			/* last byte + 1 to flush */
-}			XLogwrtRqst;
+} XLogwrtRqst;
 
 typedef struct XLogwrtResult
 {
 	XLogRecPtr	Write;			/* last byte + 1 written out */
 	XLogRecPtr	Flush;			/* last byte + 1 flushed */
-}			XLogwrtResult;
+} XLogwrtResult;
 
 /*
  * Shared state data for XLogInsert.
@@ -260,8 +260,9 @@ typedef struct XLogCtlData
 
 	/*
 	 * These values do not change after startup, although the pointed-to
-	 * pages and xlblocks values certainly do.	Permission to read/write the
-	 * pages and xlblocks values depends on WALInsertLock and WALWriteLock.
+	 * pages and xlblocks values certainly do.	Permission to read/write
+	 * the pages and xlblocks values depends on WALInsertLock and
+	 * WALWriteLock.
 	 */
 	char	   *pages;			/* buffers for unwritten XLOG pages */
 	XLogRecPtr *xlblocks;		/* 1st byte ptr-s + BLCKSZ */
@@ -428,8 +429,8 @@ static void XLogWrite(XLogwrtRqst WriteRqst);
 static int XLogFileInit(uint32 log, uint32 seg,
 			 bool *use_existent, bool use_lock);
 static bool InstallXLogFileSegment(uint32 log, uint32 seg, char *tmppath,
-								   bool find_free, int max_advance,
-								   bool use_lock);
+					   bool find_free, int max_advance,
+					   bool use_lock);
 static int	XLogFileOpen(uint32 log, uint32 seg, bool econt);
 static void PreallocXlogFiles(XLogRecPtr endptr);
 static void MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr);
@@ -621,8 +622,8 @@ begin:;
 	SpinLockRelease_NoHoldoff(&XLogCtl->info_lck);
 
 	/*
-	 * If cache is half filled then try to acquire write lock and
-	 * do XLogWrite. Ignore any fractional blocks in performing this check.
+	 * If cache is half filled then try to acquire write lock and do
+	 * XLogWrite. Ignore any fractional blocks in performing this check.
 	 */
 	LogwrtRqst.Write.xrecoff -= LogwrtRqst.Write.xrecoff % BLCKSZ;
 	if (LogwrtRqst.Write.xlogid != LogwrtResult.Write.xlogid ||
@@ -939,9 +940,7 @@ AdvanceXLInsertBuffer(void)
 		NewPageEndPtr.xrecoff = BLCKSZ;
 	}
 	else
-	{
 		NewPageEndPtr.xrecoff += BLCKSZ;
-	}
 	XLogCtl->xlblocks[nextidx] = NewPageEndPtr;
 	NewPage = (XLogPageHeader) (XLogCtl->pages + nextidx * BLCKSZ);
 	Insert->curridx = nextidx;
@@ -956,7 +955,7 @@ AdvanceXLInsertBuffer(void)
 
 	/* And fill the new page's header */
 	NewPage->xlp_magic = XLOG_PAGE_MAGIC;
-	/* NewPage->xlp_info = 0; */			/* done by memset */
+	/* NewPage->xlp_info = 0; *//* done by memset */
 	NewPage->xlp_sui = ThisStartUpID;
 	NewPage->xlp_pageaddr.xlogid = NewPageEndPtr.xlogid;
 	NewPage->xlp_pageaddr.xrecoff = NewPageEndPtr.xrecoff - BLCKSZ;
@@ -985,7 +984,6 @@ XLogWrite(XLogwrtRqst WriteRqst)
 
 	while (XLByteLT(LogwrtResult.Write, WriteRqst.Write))
 	{
-
 		/*
 		 * Make sure we're not ahead of the insert process.  This could
 		 * happen if we're passed a bogus WriteRqst.Write that is past the
@@ -1004,7 +1002,6 @@ XLogWrite(XLogwrtRqst WriteRqst)
 
 		if (!XLByteInPrevSeg(LogwrtResult.Write, openLogId, openLogSeg))
 		{
-
 			/*
 			 * Switch to new logfile segment.
 			 */
@@ -1114,7 +1111,6 @@ XLogWrite(XLogwrtRqst WriteRqst)
 	if (XLByteLT(LogwrtResult.Flush, WriteRqst.Flush) &&
 		XLByteLT(LogwrtResult.Flush, LogwrtResult.Write))
 	{
-
 		/*
 		 * Could get here without iterating above loop, in which case we
 		 * might have no open file or the wrong one.  However, we do not
@@ -1174,11 +1170,11 @@ XLogFlush(XLogRecPtr record)
 	if (XLOG_DEBUG)
 	{
 		elog(DEBUG, "XLogFlush%s%s: request %X/%X; write %X/%X; flush %X/%X\n",
-				(IsBootstrapProcessingMode()) ? "(bootstrap)" : "",
-				(InRedo) ? "(redo)" : "",
-				record.xlogid, record.xrecoff,
-				LogwrtResult.Write.xlogid, LogwrtResult.Write.xrecoff,
-				LogwrtResult.Flush.xlogid, LogwrtResult.Flush.xrecoff);
+			 (IsBootstrapProcessingMode()) ? "(bootstrap)" : "",
+			 (InRedo) ? "(redo)" : "",
+			 record.xlogid, record.xrecoff,
+			 LogwrtResult.Write.xlogid, LogwrtResult.Write.xrecoff,
+			 LogwrtResult.Flush.xlogid, LogwrtResult.Flush.xrecoff);
 		fflush(stderr);
 	}
 
@@ -1240,7 +1236,7 @@ XLogFlush(XLogRecPtr record)
 			if (XLByteLT(LogwrtResult.Flush, record))
 				elog(STOP, "XLogFlush: request %X/%X is not satisfied --- flushed only to %X/%X",
 					 record.xlogid, record.xrecoff,
-					 LogwrtResult.Flush.xlogid, LogwrtResult.Flush.xrecoff);
+				  LogwrtResult.Flush.xlogid, LogwrtResult.Flush.xrecoff);
 		}
 		LWLockRelease(WALWriteLock);
 	}
@@ -1565,8 +1561,8 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr)
 			{
 				/*
 				 * Before deleting the file, see if it can be recycled as
-				 * a future log segment.  We allow recycling segments up to
-				 * XLOGfiles + XLOGfileslop segments beyond the current
+				 * a future log segment.  We allow recycling segments up
+				 * to XLOGfiles + XLOGfileslop segments beyond the current
 				 * XLOG location.
 				 */
 				if (InstallXLogFileSegment(endlogId, endlogSeg, path,
@@ -1719,7 +1715,6 @@ ReadRecord(XLogRecPtr *RecPtr, int emode, char *buffer)
 
 	if (readBuf == NULL)
 	{
-
 		/*
 		 * First time through, permanently allocate readBuf.  We do it
 		 * this way, rather than just making a static array, for two
@@ -1767,7 +1762,7 @@ ReadRecord(XLogRecPtr *RecPtr, int emode, char *buffer)
 		readFile = XLogFileOpen(readId, readSeg, (emode == LOG));
 		if (readFile < 0)
 			goto next_record_is_invalid;
-		readOff = (uint32) (-1);/* force read to occur below */
+		readOff = (uint32) (-1);		/* force read to occur below */
 	}
 
 	targetPageOff = ((RecPtr->xrecoff % XLogSegSize) / BLCKSZ) * BLCKSZ;
@@ -2022,7 +2017,6 @@ WriteControlFile(void)
 
 #ifdef USE_LOCALE
 	char	   *localeptr;
-
 #endif
 
 	/*
@@ -2054,10 +2048,10 @@ WriteControlFile(void)
 		  "\n\tsuch queries, you may wish to set LC_COLLATE to \"C\" and"
 			 "\n\tre-initdb.  For more information see the Administrator's Guide.",
 			 ControlFile->lc_collate);
-#else /* not USE_LOCALE */
+#else							/* not USE_LOCALE */
 	strcpy(ControlFile->lc_collate, "C");
 	strcpy(ControlFile->lc_ctype, "C");
-#endif /* not USE_LOCALE */
+#endif	 /* not USE_LOCALE */
 
 	/* Contents are protected with a CRC */
 	INIT_CRC64(ControlFile->crc);
@@ -2156,7 +2150,7 @@ ReadControlFile(void)
 	if (ControlFile->catalog_version_no != CATALOG_VERSION_NO)
 		elog(STOP,
 			 "The database cluster was initialized with CATALOG_VERSION_NO %d,\n"
-			 "\tbut the backend was compiled with CATALOG_VERSION_NO %d.\n"
+		   "\tbut the backend was compiled with CATALOG_VERSION_NO %d.\n"
 			 "\tIt looks like you need to initdb.",
 			 ControlFile->catalog_version_no, CATALOG_VERSION_NO);
 	if (ControlFile->blcksz != BLCKSZ)
@@ -2174,7 +2168,7 @@ ReadControlFile(void)
 #ifdef USE_LOCALE
 	if (setlocale(LC_COLLATE, ControlFile->lc_collate) == NULL)
 		elog(STOP,
-			 "The database cluster was initialized with LC_COLLATE '%s',\n"
+		   "The database cluster was initialized with LC_COLLATE '%s',\n"
 			 "\twhich is not recognized by setlocale().\n"
 			 "\tIt looks like you need to initdb.",
 			 ControlFile->lc_collate);
@@ -2184,15 +2178,15 @@ ReadControlFile(void)
 			 "\twhich is not recognized by setlocale().\n"
 			 "\tIt looks like you need to initdb.",
 			 ControlFile->lc_ctype);
-#else /* not USE_LOCALE */
+#else							/* not USE_LOCALE */
 	if (strcmp(ControlFile->lc_collate, "C") != 0 ||
 		strcmp(ControlFile->lc_ctype, "C") != 0)
 		elog(STOP,
-			 "The database cluster was initialized with LC_COLLATE '%s' and\n"
+		"The database cluster was initialized with LC_COLLATE '%s' and\n"
 			 "\tLC_CTYPE '%s', but the server was compiled without locale support.\n"
 			 "\tIt looks like you need to initdb or recompile.",
 			 ControlFile->lc_collate, ControlFile->lc_ctype);
-#endif /* not USE_LOCALE */
+#endif	 /* not USE_LOCALE */
 }
 
 void
@@ -2536,7 +2530,7 @@ StartupXLOG(void)
 			{
 				/* nextXid must be beyond record's xid */
 				if (TransactionIdFollowsOrEquals(record->xl_xid,
-												 ShmemVariableCache->nextXid))
+											ShmemVariableCache->nextXid))
 				{
 					ShmemVariableCache->nextXid = record->xl_xid;
 					TransactionIdAdvance(ShmemVariableCache->nextXid);
@@ -2585,8 +2579,8 @@ StartupXLOG(void)
 	Insert->PrevRecord = LastRec;
 
 	/*
-	 * If the next record will go to the new page
-	 * then initialize for that one.
+	 * If the next record will go to the new page then initialize for that
+	 * one.
 	 */
 	if ((BLCKSZ - EndOfLog.xrecoff % BLCKSZ) < SizeOfXLogRecord)
 		EndOfLog.xrecoff += (BLCKSZ - EndOfLog.xrecoff % BLCKSZ);
@@ -2602,9 +2596,7 @@ StartupXLOG(void)
 			NewPageEndPtr.xrecoff = BLCKSZ;
 		}
 		else
-		{
 			NewPageEndPtr.xrecoff += BLCKSZ;
-		}
 		XLogCtl->xlblocks[0] = NewPageEndPtr;
 		Insert->currpage->xlp_magic = XLOG_PAGE_MAGIC;
 		if (InRecovery)
@@ -2621,9 +2613,10 @@ StartupXLOG(void)
 		XLogCtl->xlblocks[0].xlogid = openLogId;
 		XLogCtl->xlblocks[0].xrecoff =
 			((EndOfLog.xrecoff - 1) / BLCKSZ + 1) * BLCKSZ;
+
 		/*
 		 * Tricky point here: readBuf contains the *last* block that the
-		 * LastRec record spans, not the one it starts in.  The last block
+		 * LastRec record spans, not the one it starts in.	The last block
 		 * is indeed the one we want to use.
 		 */
 		Assert(readOff == (XLogCtl->xlblocks[0].xrecoff - BLCKSZ) % XLogSegSize);
@@ -2670,7 +2663,6 @@ StartupXLOG(void)
 
 	if (InRecovery)
 	{
-
 		/*
 		 * In case we had to use the secondary checkpoint, make sure that
 		 * it will still be shown as the secondary checkpoint after this
@@ -2748,8 +2740,8 @@ ReadCheckpointRecord(XLogRecPtr RecPtr,
 	if (record->xl_rmid != RM_XLOG_ID)
 	{
 		elog(LOG, (whichChkpt == 1 ?
-				   "invalid resource manager id in primary checkpoint record" :
-				   "invalid resource manager id in secondary checkpoint record"));
+			 "invalid resource manager id in primary checkpoint record" :
+		  "invalid resource manager id in secondary checkpoint record"));
 		return NULL;
 	}
 	if (record->xl_info != XLOG_CHECKPOINT_SHUTDOWN &&
@@ -2845,11 +2837,11 @@ CreateCheckPoint(bool shutdown)
 
 	/*
 	 * The CheckpointLock can be held for quite a while, which is not good
-	 * because we won't respond to a cancel/die request while waiting for an
-	 * LWLock.  (But the alternative of using a regular lock won't work for
-	 * background checkpoint processes, which are not regular backends.)
-	 * So, rather than use a plain LWLockAcquire, use this kluge to allow
-	 * an interrupt to be accepted while we are waiting:
+	 * because we won't respond to a cancel/die request while waiting for
+	 * an LWLock.  (But the alternative of using a regular lock won't work
+	 * for background checkpoint processes, which are not regular
+	 * backends.) So, rather than use a plain LWLockAcquire, use this
+	 * kluge to allow an interrupt to be accepted while we are waiting:
 	 */
 	while (!LWLockConditionalAcquire(CheckpointLock, LW_EXCLUSIVE))
 	{
@@ -2996,7 +2988,8 @@ CreateCheckPoint(bool shutdown)
 	 * but watch out for case that undo = 0.
 	 *
 	 * Without UNDO support: just use the redo pointer.  This allows xlog
-	 * space to be freed much faster when there are long-running transactions.
+	 * space to be freed much faster when there are long-running
+	 * transactions.
 	 */
 #ifdef NOT_USED
 	if (ControlFile->checkPointCopy.undo.xrecoff != 0 &&
@@ -3230,7 +3223,6 @@ assign_xlog_sync_method(const char *method)
 
 	if (sync_method != new_sync_method || open_sync_bit != new_sync_bit)
 	{
-
 		/*
 		 * To ensure that no blocks escape unsynced, force an fsync on the
 		 * currently open log segment (if any).  Also, if the open flag is
@@ -3264,7 +3256,7 @@ issue_xlog_fsync(void)
 {
 	switch (sync_method)
 	{
-			case SYNC_METHOD_FSYNC:
+		case SYNC_METHOD_FSYNC:
 			if (pg_fsync(openLogFile) != 0)
 				elog(STOP, "fsync of log file %u, segment %u failed: %m",
 					 openLogId, openLogSeg);

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_aggregate.h,v 1.32 2001/09/28 08:09:13 thomas Exp $
+ * $Id: pg_aggregate.h,v 1.33 2001/10/25 05:49:56 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -90,8 +90,8 @@ DATA(insert OID = 0 ( avg	PGUID float8_accum	float8_avg		701  1022 701 "{0,0,0}"
 DATA(insert OID = 0 ( avg	PGUID interval_accum interval_avg	1186 1187 1186 "{0 second,0 second}" ));
 
 DATA(insert OID = 0 ( sum	PGUID int8_sum			-	20 1700 1700 _null_ ));
-DATA(insert OID = 0 ( sum	PGUID int4_sum			-	23   20   20 _null_ ));
-DATA(insert OID = 0 ( sum	PGUID int2_sum			-	21   20   20 _null_ ));
+DATA(insert OID = 0 ( sum	PGUID int4_sum			-	23	 20   20 _null_ ));
+DATA(insert OID = 0 ( sum	PGUID int2_sum			-	21	 20   20 _null_ ));
 DATA(insert OID = 0 ( sum	PGUID float4pl			-  700	700  700 _null_ ));
 DATA(insert OID = 0 ( sum	PGUID float8pl			-  701	701  701 _null_ ));
 DATA(insert OID = 0 ( sum	PGUID cash_pl			-  790	790  790 _null_ ));
@@ -164,5 +164,4 @@ extern void AggregateCreate(char *aggName,
 
 extern Datum AggNameGetInitVal(char *aggName, Oid basetype,
 				  bool *isNull);
-
 #endif	 /* PG_AGGREGATE_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopdebug.h,v 1.6 2001/01/24 19:43:28 momjian Exp $
+ * $Id: tcopdebug.h,v 1.7 2001/10/25 05:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,5 +40,4 @@
  *		#defines controlled by above definitions
  * ----------------------------------------------------------------
  */
-
 #endif	 /* TCOPDEBUG_H */

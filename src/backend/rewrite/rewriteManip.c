@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.58 2001/09/07 20:52:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.59 2001/10/25 05:49:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,6 @@ static bool checkExprHasSubLink_walker(Node *node, void *context);
 bool
 checkExprHasAggs(Node *node)
 {
-
 	/*
 	 * If a Query is passed, examine it --- but we will not recurse into
 	 * sub-Queries.
@@ -74,7 +73,6 @@ checkExprHasAggs_walker(Node *node, void *context)
 bool
 checkExprHasSubLink(Node *node)
 {
-
 	/*
 	 * If a Query is passed, examine it --- but we will not recurse into
 	 * sub-Queries.
@@ -596,13 +594,13 @@ AddQual(Query *parsetree, Node *qual)
 		 * There's noplace to put the qual on a utility statement.
 		 *
 		 * If it's a NOTIFY, silently ignore the qual; this means that the
-		 * NOTIFY will execute, whether or not there are any qualifying rows.
-		 * While clearly wrong, this is much more useful than refusing to
-		 * execute the rule at all, and extra NOTIFY events are harmless for
-		 * typical uses of NOTIFY.
+		 * NOTIFY will execute, whether or not there are any qualifying
+		 * rows. While clearly wrong, this is much more useful than
+		 * refusing to execute the rule at all, and extra NOTIFY events
+		 * are harmless for typical uses of NOTIFY.
 		 *
-		 * If it isn't a NOTIFY, error out, since unconditional execution
-		 * of other utility stmts is unlikely to be wanted.  (This case is
+		 * If it isn't a NOTIFY, error out, since unconditional execution of
+		 * other utility stmts is unlikely to be wanted.  (This case is
 		 * not currently allowed anyway, but keep the test for safety.)
 		 */
 		if (parsetree->utilityStmt && IsA(parsetree->utilityStmt, NotifyStmt))
@@ -680,7 +678,6 @@ AddNotHavingQual(Query *parsetree, Node *havingQual)
 
 	AddHavingQual(parsetree, notqual);
 }
-
 #endif
 
 void
@@ -733,7 +730,6 @@ FindMatchingTLEntry(List *tlist, char *e_attname)
 	}
 	return NULL;
 }
-
 #endif
 
 
@@ -999,5 +995,4 @@ HandleRIRAttributeRule(Query *parsetree,
 	query_tree_mutator(parsetree, HandleRIRAttributeRule_mutator,
 					   (void *) &context, true);
 }
-
 #endif	 /* NOT_USED */

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.118 2001/10/19 17:03:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.119 2001/10/25 05:49:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -188,7 +188,7 @@ usage(void)
 {
 	fprintf(stderr,
 			gettext("Usage:\n"
-					"  postgres -boot [-d] [-D datadir] [-F] [-o file] [-x num] dbname\n"
+	"  postgres -boot [-d] [-D datadir] [-F] [-o file] [-x num] dbname\n"
 					"  -d               debug mode\n"
 					"  -D datadir       data directory\n"
 					"  -F               turn off fsync\n"
@@ -293,7 +293,7 @@ BootstrapMain(int argc, char *argv[])
 	{
 		if (!potential_DataDir)
 		{
-			fprintf(stderr, 
+			fprintf(stderr,
 					gettext("%s does not know where to find the database system data.\n"
 							"You must specify the directory that contains the database system\n"
 							"either by specifying the -D invocation option or by setting the\n"
@@ -377,7 +377,7 @@ BootstrapMain(int argc, char *argv[])
 
 		case BS_XLOG_CHECKPOINT:
 			if (IsUnderPostmaster)
-				InitDummyProcess(); /* needed to get LWLocks */
+				InitDummyProcess();		/* needed to get LWLocks */
 			CreateDummyCaches();
 			CreateCheckPoint(false);
 			SetRedoRecPtr();
@@ -996,7 +996,6 @@ FindStr(char *str, int length, hashnode *mderef)
 	node = hashtable[CompHash(str, length)];
 	while (node != NULL)
 	{
-
 		/*
 		 * We must differentiate between string constants that might have
 		 * the same value as a identifier and the identifier itself.

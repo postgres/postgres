@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.51 2001/06/18 16:13:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.52 2001/10/25 05:49:22 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -61,8 +61,7 @@ dumpacl(Acl *acl)
 			 DatumGetCString(DirectFunctionCall1(aclitemout,
 											 PointerGetDatum(aip + i))));
 }
-
-#endif /* ACLDEBUG */
+#endif	 /* ACLDEBUG */
 
 
 /*
@@ -115,8 +114,8 @@ ExecuteGrantStmt(GrantStmt *stmt)
 				 relname);
 
 		/*
-		 * If there's no ACL, create a default using the
-		 * pg_class.relowner field.
+		 * If there's no ACL, create a default using the pg_class.relowner
+		 * field.
 		 */
 		aclDatum = SysCacheGetAttr(RELNAME, tuple, Anum_pg_class_relacl,
 								   &isNull);
@@ -133,10 +132,10 @@ ExecuteGrantStmt(GrantStmt *stmt)
 
 		foreach(j, stmt->grantees)
 		{
-			PrivGrantee *grantee = (PrivGrantee *)lfirst(j);
+			PrivGrantee *grantee = (PrivGrantee *) lfirst(j);
 			char	   *granteeString;
 			char	   *aclString;
-			AclItem		aclitem;
+			AclItem aclitem;
 			unsigned	modechg;
 
 			if (grantee->username)
@@ -162,7 +161,8 @@ ExecuteGrantStmt(GrantStmt *stmt)
 		{
 			replaces[i] = ' ';
 			nulls[i] = ' ';		/* ignored if replaces[i]==' ' anyway */
-			values[i] = (Datum) NULL; /* ignored if replaces[i]==' ' anyway */
+			values[i] = (Datum) NULL;	/* ignored if replaces[i]==' '
+										 * anyway */
 		}
 		replaces[Anum_pg_class_relacl - 1] = 'r';
 		values[Anum_pg_class_relacl - 1] = PointerGetDatum(new_acl);
@@ -175,6 +175,7 @@ ExecuteGrantStmt(GrantStmt *stmt)
 		{
 			/* keep the catalog indexes up to date */
 			Relation	idescs[Num_pg_class_indices];
+
 			CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices,
 							   idescs);
 			CatalogIndexInsert(idescs, Num_pg_class_indices, relation, newtuple);
@@ -322,8 +323,8 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 	}
 
 	/*
-	 * "World" rights are applicable regardless of the passed-in ID,
-	 * and since they're much the cheapest to check, check 'em first.
+	 * "World" rights are applicable regardless of the passed-in ID, and
+	 * since they're much the cheapest to check, check 'em first.
 	 */
 	if (aidat->ai_idtype != ACL_IDTYPE_WORLD)
 		elog(ERROR, "aclcheck: first entry in ACL is not 'world' entry");
@@ -376,7 +377,7 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 			for (i = 1, aip = aidat + 1;		/* skip world entry */
 				 i < num && aip->ai_idtype == ACL_IDTYPE_UID;
 				 ++i, ++aip)
-				/* skip UID entry */;
+				 /* skip UID entry */ ;
 			for (;
 				 i < num && aip->ai_idtype == ACL_IDTYPE_GID;
 				 ++i, ++aip)

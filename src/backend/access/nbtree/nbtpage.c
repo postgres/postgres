@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.53 2001/07/15 22:48:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.54 2001/10/25 05:49:21 momjian Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -153,7 +153,6 @@ _bt_getroot(Relation rel, int access)
 		 */
 		if (metad->btm_root == P_NONE)
 		{
-
 			/*
 			 * Get, initialize, write, and leave a lock of the appropriate
 			 * type on the new root page.  Since this is the first page in
@@ -209,7 +208,6 @@ _bt_getroot(Relation rel, int access)
 		}
 		else
 		{
-
 			/*
 			 * Metadata initialized by someone else.  In order to
 			 * guarantee no deadlocks, we have to release the metadata
@@ -237,7 +235,6 @@ _bt_getroot(Relation rel, int access)
 
 	if (!P_ISROOT(rootopaque))
 	{
-
 		/*
 		 * It happened, but if root page splitter failed to create new
 		 * root page then we'll go in loop trying to call _bt_getroot
@@ -402,7 +399,6 @@ _bt_wrtnorelbuf(Relation rel, Buffer buf)
 void
 _bt_pageinit(Page page, Size size)
 {
-
 	/*
 	 * Cargo_cult programming -- don't really need this to be zero, but
 	 * creating new pages is an infrequent occurrence and it makes me feel

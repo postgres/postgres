@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.111 2001/10/04 22:06:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.112 2001/10/25 05:49:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,16 +106,16 @@ ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int precedence)
 }
 
 /*
- * 	parse function
+ *	parse function
  *
- * 	This code is confusing because the database can accept
- *  relation.column, column.function, or relation.column.function.
+ *	This code is confusing because the database can accept
+ *	relation.column, column.function, or relation.column.function.
  *	In these cases, funcname is the last parameter, and fargs are
- *  the rest.
+ *	the rest.
  *
- *  It can also be called as func(col) or func(col,col).
- *  In this case, Funcname is the part before parens, and fargs
- *  are the part in parens.
+ *	It can also be called as func(col) or func(col,col).
+ *	In this case, Funcname is the part before parens, and fargs
+ *	are the part in parens.
  *
  *	FYI, projection is choosing column from a table.
  *
@@ -146,10 +146,10 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	Expr	   *expr;
 
 	/*
-	 * Most of the rest of the parser just assumes that functions do
-	 * not have more than FUNC_MAX_ARGS parameters.  We have to test
-	 * here to protect against array overruns, etc.  Of course, this
-	 * may not be a function, but the test doesn't hurt.
+	 * Most of the rest of the parser just assumes that functions do not
+	 * have more than FUNC_MAX_ARGS parameters.  We have to test here to
+	 * protect against array overruns, etc.  Of course, this may not be a
+	 * function, but the test doesn't hurt.
 	 */
 	if (nargs > FUNC_MAX_ARGS)
 		elog(ERROR, "Cannot pass more than %d arguments to a function",
@@ -165,15 +165,15 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	/*
 	 * test for relation.column
 	 *
-	 * check for projection methods: if function takes one argument, and
-	 * that argument is a relation, param, or PQ function returning a
-	 * complex * type, then the function could be a projection.
+	 * check for projection methods: if function takes one argument, and that
+	 * argument is a relation, param, or PQ function returning a complex *
+	 * type, then the function could be a projection.
 	 */
 	/* We only have one parameter, and it's not got aggregate decoration */
 	if (nargs == 1 && !must_be_agg)
 	{
 		/* Is it a plain Relation name from the parser? */
-		if (IsA(first_arg, Ident) && ((Ident *) first_arg)->isRel)
+		if (IsA(first_arg, Ident) &&((Ident *) first_arg)->isRel)
 		{
 			Ident	   *ident = (Ident *) first_arg;
 
@@ -188,7 +188,6 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		}
 		else if (ISCOMPLEX(exprType(first_arg)))
 		{
-
 			/*
 			 * Attempt to handle projection of a complex argument. If
 			 * ParseComplexProjection can't handle the projection, we have
@@ -231,7 +230,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		if (nargs != 1)
 			elog(ERROR, "Aggregate functions may only have one parameter");
 		/* Agg's argument can't be a relation name, either */
-		if (IsA(first_arg, Ident) && ((Ident *) first_arg)->isRel)
+		if (IsA(first_arg, Ident) &&((Ident *) first_arg)->isRel)
 			elog(ERROR, "Aggregate functions cannot be applied to relation names");
 		could_be_agg = true;
 	}
@@ -239,7 +238,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	{
 		/* Try to parse as an aggregate if above-mentioned checks are OK */
 		could_be_agg = (nargs == 1) &&
-			!(IsA(first_arg, Ident) && ((Ident *) first_arg)->isRel);
+			!(IsA(first_arg, Ident) &&((Ident *) first_arg)->isRel);
 	}
 
 	if (could_be_agg)
@@ -295,7 +294,6 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 
 		if (must_be_agg)
 		{
-
 			/*
 			 * No matching agg, but we had '*' or DISTINCT, so a plain
 			 * function could not have been meant.
@@ -318,7 +316,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	{
 		Node	   *arg = lfirst(i);
 
-		if (IsA(arg, Ident) && ((Ident *) arg)->isRel)
+		if (IsA(arg, Ident) &&((Ident *) arg)->isRel)
 		{
 			RangeTblEntry *rte;
 			int			vnum;
@@ -339,9 +337,8 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				rte = (RangeTblEntry *) rteorjoin;
 			else if (IsA(rteorjoin, JoinExpr))
 			{
-
 				/*
-				 * The relation name refers to a join.  We can't support
+				 * The relation name refers to a join.	We can't support
 				 * functions on join tuples (since we don't have a named
 				 * type for the join tuples), so error out.
 				 */
@@ -360,8 +357,8 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				else
 				{
 					/*
-					 * There are multiple arguments, so it must be a function
-					 * call.
+					 * There are multiple arguments, so it must be a
+					 * function call.
 					 */
 					elog(ERROR, "Cannot pass result of join %s to a function",
 						 refname);
@@ -378,24 +375,26 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			vnum = RTERangeTablePosn(pstate, rte, &sublevels_up);
 
 			/*
-			 * The parameter to be passed to the function is the whole tuple
-			 * from the relation.  We build a special VarNode to reflect
-			 * this -- it has varno set to the correct range table entry,
-			 * but has varattno == 0 to signal that the whole tuple is the
-			 * argument.  Also, it has typmod set to sizeof(Pointer) to
-			 * signal that the runtime representation will be a pointer
-			 * not an Oid.
+			 * The parameter to be passed to the function is the whole
+			 * tuple from the relation.  We build a special VarNode to
+			 * reflect this -- it has varno set to the correct range table
+			 * entry, but has varattno == 0 to signal that the whole tuple
+			 * is the argument.  Also, it has typmod set to
+			 * sizeof(Pointer) to signal that the runtime representation
+			 * will be a pointer not an Oid.
 			 */
 			if (rte->relname == NULL)
 			{
 				/*
-				 * RTE is a subselect; must fail for lack of a specific type
+				 * RTE is a subselect; must fail for lack of a specific
+				 * type
 				 */
 				if (nargs == 1)
 				{
 					/*
-					 * Here, we probably have an unrecognized attribute of a
-					 * sub-select; again can't tell if it was x.f or f(x)
+					 * Here, we probably have an unrecognized attribute of
+					 * a sub-select; again can't tell if it was x.f or
+					 * f(x)
 					 */
 					elog(ERROR, "No such attribute or function %s.%s",
 						 refname, funcname);
@@ -449,14 +448,14 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	}
 	else
 	{
-		FuncDetailCode	fdresult;
+		FuncDetailCode fdresult;
 
 		/*
 		 * func_get_detail looks up the function in the catalogs, does
-		 * disambiguation for polymorphic functions, handles inheritance, and
-		 * returns the funcid and type and set or singleton status of the
-		 * function's return value.  it also returns the true argument types
-		 * to the function.
+		 * disambiguation for polymorphic functions, handles inheritance,
+		 * and returns the funcid and type and set or singleton status of
+		 * the function's return value.  it also returns the true argument
+		 * types to the function.
 		 */
 		fdresult = func_get_detail(funcname, fargs, nargs, oid_array,
 								   &funcid, &rettype, &retset,
@@ -464,8 +463,8 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		if (fdresult == FUNCDETAIL_COERCION)
 		{
 			/*
-			 * We can do it as a trivial coercion.
-			 * coerce_type can handle these cases, so why duplicate code...
+			 * We can do it as a trivial coercion. coerce_type can handle
+			 * these cases, so why duplicate code...
 			 */
 			return coerce_type(pstate, lfirst(fargs),
 							   oid_array[0], rettype, -1);
@@ -1019,7 +1018,6 @@ func_select_candidate(int nargs,
 				}
 				else
 				{
-
 					/*
 					 * Remember conflict, but keep going (might find
 					 * STRING)
@@ -1101,7 +1099,7 @@ func_select_candidate(int nargs,
  *	(exact match) is as quick as possible.
  *
  * If an exact match isn't found:
- *  1) check for possible interpretation as a trivial type coercion
+ *	1) check for possible interpretation as a trivial type coercion
  *	2) get a vector of all possible input arg type arrays constructed
  *	   from the superclasses of the original input arg types
  *	3) get a list of all possible argument type arrays to the function
@@ -1145,23 +1143,24 @@ func_get_detail(char *funcname,
 		 * that this is really a type-coercion request: a single-argument
 		 * function call where the function name is a type name.  If so,
 		 * and if we can do the coercion trivially (no run-time function
-		 * call needed), then go ahead and treat the "function call" as
-		 * a coercion.  This interpretation needs to be given higher
-		 * priority than interpretations involving a type coercion followed
-		 * by a function call, otherwise we can produce surprising results.
-		 * For example, we want "text(varchar)" to be interpreted as a
-		 * trivial coercion, not as "text(name(varchar))" which the code
-		 * below this point is entirely capable of selecting.
+		 * call needed), then go ahead and treat the "function call" as a
+		 * coercion.  This interpretation needs to be given higher
+		 * priority than interpretations involving a type coercion
+		 * followed by a function call, otherwise we can produce
+		 * surprising results. For example, we want "text(varchar)" to be
+		 * interpreted as a trivial coercion, not as "text(name(varchar))"
+		 * which the code below this point is entirely capable of
+		 * selecting.
 		 *
-		 * "Trivial" coercions are ones that involve binary-compatible
-		 * types and ones that are coercing a previously-unknown-type
-		 * literal constant to a specific type.
+		 * "Trivial" coercions are ones that involve binary-compatible types
+		 * and ones that are coercing a previously-unknown-type literal
+		 * constant to a specific type.
 		 *
 		 * NB: it's important that this code stays in sync with what
 		 * coerce_type can do, because the caller will try to apply
 		 * coerce_type if we return FUNCDETAIL_COERCION.  If we return
-		 * that result for something coerce_type can't handle, we'll
-		 * cause infinite recursion between this module and coerce_type!
+		 * that result for something coerce_type can't handle, we'll cause
+		 * infinite recursion between this module and coerce_type!
 		 */
 		if (nargs == 1)
 		{
@@ -1627,7 +1626,6 @@ ParseComplexProjection(ParseState *pstate,
 			}
 		case T_Var:
 			{
-
 				/*
 				 * The argument is a set, so this is either a projection
 				 * or a function call on this set.

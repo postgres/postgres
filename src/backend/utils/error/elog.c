@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.89 2001/10/18 23:07:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.90 2001/10/25 05:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,16 +135,15 @@ elog(int lev, const char *fmt,...)
 	errorstr = useful_strerror(errno);
 
 	/*
-	 * Convert initialization errors into fatal errors. This is
-	 * probably redundant, because Warn_restart_ready won't be set
-	 * anyway.
+	 * Convert initialization errors into fatal errors. This is probably
+	 * redundant, because Warn_restart_ready won't be set anyway.
 	 */
 	if (lev == ERROR && IsInitProcessingMode())
 		lev = FATAL;
 
 	/*
-	 * If we are inside a critical section, all errors become
-	 * REALLYFATAL errors.  See miscadmin.h.
+	 * If we are inside a critical section, all errors become REALLYFATAL
+	 * errors.	See miscadmin.h.
 	 */
 	if (lev == ERROR || lev == FATAL)
 	{
@@ -161,6 +160,7 @@ elog(int lev, const char *fmt,...)
 		timestamp_size += PID_SIZE;
 
 	fmt = gettext(fmt);
+
 	/*
 	 * Set up the expanded format, consisting of the prefix string plus
 	 * input format, with any %m replaced by strerror() string (since
@@ -189,11 +189,11 @@ elog(int lev, const char *fmt,...)
 				lev = ERROR;
 				prefix = elog_message_prefix(lev);
 			}
+
 			/*
-			 * gettext doesn't allocate memory, except in the very
-			 * first call (which this isn't), so it's safe to
-			 * translate here.  Worst case we get the untranslated
-			 * string back.
+			 * gettext doesn't allocate memory, except in the very first
+			 * call (which this isn't), so it's safe to translate here.
+			 * Worst case we get the untranslated string back.
 			 */
 			/* translator: This must fit in fmt_fixedbuf. */
 			fmt = gettext("elog: out of memory");
@@ -329,7 +329,7 @@ elog(int lev, const char *fmt,...)
 
 		write_syslog(syslog_level, msg_buf + timestamp_size);
 	}
-#endif /* ENABLE_SYSLOG */
+#endif	 /* ENABLE_SYSLOG */
 
 	/* syslog doesn't want a trailing newline, but other destinations do */
 	strcat(msg_buf, "\n");
@@ -665,8 +665,7 @@ write_syslog(int level, const char *line)
 		syslog(level, "[%lu] %s", seq, line);
 	}
 }
-
-#endif /* ENABLE_SYSLOG */
+#endif	 /* ENABLE_SYSLOG */
 
 
 static void
@@ -682,22 +681,22 @@ send_message_to_frontend(int type, const char *msg)
 	pq_endmessage(&buf);
 
 	/*
-	 * This flush is normally not necessary, since postgres.c will
-	 * flush out waiting data when control returns to the main loop.
-	 * But it seems best to leave it here, so that the client has some
-	 * clue what happened if the backend dies before getting back to
-	 * the main loop ... error/notice messages should not be a
-	 * performance-critical path anyway, so an extra flush won't hurt
-	 * much ...
+	 * This flush is normally not necessary, since postgres.c will flush
+	 * out waiting data when control returns to the main loop. But it
+	 * seems best to leave it here, so that the client has some clue what
+	 * happened if the backend dies before getting back to the main loop
+	 * ... error/notice messages should not be a performance-critical path
+	 * anyway, so an extra flush won't hurt much ...
 	 */
 	pq_flush();
 }
 
 
-static const char *useful_strerror(int errnum)
+static const char *
+useful_strerror(int errnum)
 {
 	/* this buffer is only used if errno has a bogus value */
-	static char	errorstr_buf[48];
+	static char errorstr_buf[48];
 	char	   *str;
 
 	if (errnum == ERANGE)
@@ -712,7 +711,10 @@ static const char *useful_strerror(int errnum)
 	 */
 	if (str == NULL || *str == '\0')
 	{
-		/* translator: This string will be truncated at 47 characters expanded. */
+		/*
+		 * translator: This string will be truncated at 47 characters
+		 * expanded.
+		 */
 		snprintf(errorstr_buf, 48, gettext("operating system error %d"), errnum);
 		str = errorstr_buf;
 	}
@@ -725,7 +727,7 @@ static const char *useful_strerror(int errnum)
 static const char *
 elog_message_prefix(int lev)
 {
-	const char * prefix = NULL;
+	const char *prefix = NULL;
 
 	switch (lev)
 	{

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: valid.h,v 1.23 2001/01/24 19:43:20 momjian Exp $
+ * $Id: valid.h,v 1.24 2001/10/25 05:49:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,5 +130,4 @@ do \
 		(tuple)->t_data = NULL; \
 	} \
 } while (0)
-
 #endif	 /* VALID_H */

@@ -9,7 +9,7 @@
  * $FreeBSD: src/lib/libcrypt/crypt-md5.c,v 1.5 1999/12/17 20:21:45 peter Exp $
  *
  */
-/* $Id: crypt-md5.c,v 1.1 2001/08/21 01:32:01 momjian Exp $ */
+/* $Id: crypt-md5.c,v 1.2 2001/10/25 05:49:19 momjian Exp $ */
 
 #include <postgres.h>
 #include "px.h"
@@ -23,12 +23,9 @@
 char *
 px_crypt_md5(const char *pw, const char *salt, char *passwd, unsigned dstlen)
 {
-	static char *magic = "$1$"; /*
-					 * This string is magic for
-					 * this algorithm.	Having
-					 * it this way, we can get
-					 * get better later on
-					 */
+	static char *magic = "$1$"; /* This string is magic for this
+								 * algorithm.  Having it this way, we can
+								 * get get better later on */
 	static char *p;
 	static const char *sp,
 			   *ep;
@@ -43,7 +40,7 @@ px_crypt_md5(const char *pw, const char *salt, char *passwd, unsigned dstlen)
 
 	if (!passwd || dstlen < 120)
 		return NULL;
-	
+
 	/* Refine the Salt first */
 	sp = salt;
 
@@ -99,9 +96,9 @@ px_crypt_md5(const char *pw, const char *salt, char *passwd, unsigned dstlen)
 	px_md_finish(ctx, final);
 
 	/*
-	 * and now, just to make sure things don't run too fast
-	 * On a 60 Mhz Pentium this takes 34 msec, so you would
-	 * need 30 seconds to build a 1000 entry dictionary...
+	 * and now, just to make sure things don't run too fast On a 60 Mhz
+	 * Pentium this takes 34 msec, so you would need 30 seconds to build a
+	 * 1000 entry dictionary...
 	 */
 	for (i = 0; i < 1000; i++)
 	{

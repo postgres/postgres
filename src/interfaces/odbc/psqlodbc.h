@@ -5,7 +5,7 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- * $Id: psqlodbc.h,v 1.51 2001/10/12 09:41:49 inoue Exp $
+ * $Id: psqlodbc.h,v 1.52 2001/10/25 05:50:15 momjian Exp $
  *
  */
 
@@ -25,7 +25,7 @@
 #define ODBCVER						ODBCVER_REP
 #else
 #define ODBCVER						0x0250
-#endif	/* ODBCVER_REP */
+#endif	 /* ODBCVER_REP */
 
 
 #if defined(WIN32) || defined(WITH_UNIXODBC) || defined(WITH_IODBC)
@@ -185,7 +185,7 @@ typedef struct GlobalValues_
 	char		extra_systable_prefixes[MEDIUM_REGISTRY_LEN];
 	char		conn_settings[LARGE_REGISTRY_LEN];
 	char		protocol[SMALL_REGISTRY_LEN];
-} GLOBAL_VALUES;
+}			GLOBAL_VALUES;
 
 typedef struct StatementOptions_
 {
@@ -199,10 +199,10 @@ typedef struct StatementOptions_
 	int			bind_size;		/* size of each structure if using Row
 								 * Binding */
 	int			use_bookmarks;
-	UInt4			*rowsFetched;
-	UInt2			*rowStatusArray;
-	void			*bookmark_ptr;
-} StatementOptions;
+	UInt4	   *rowsFetched;
+	UInt2	   *rowStatusArray;
+	void	   *bookmark_ptr;
+}			StatementOptions;
 
 /*	Used to pass extra query info to send_query */
 typedef struct QueryInfo_
@@ -210,9 +210,9 @@ typedef struct QueryInfo_
 	int			row_size;
 	QResultClass *result_in;
 	char	   *cursor;
-} QueryInfo;
+}			QueryInfo;
 
-void logs_on_off(int cnopen, int, int);
+void		logs_on_off(int cnopen, int, int);
 
 #define PG_TYPE_LO					(-999)		/* hack until permanent
 												 * type available */
@@ -231,20 +231,22 @@ void logs_on_off(int cnopen, int, int);
 #define PG_NUMERIC_MAX_PRECISION	1000
 #define PG_NUMERIC_MAX_SCALE		1000
 
-#define	INFO_INQUIRY_LEN		8192 /* this seems sufficiently big for
-queries used in info.c inoue 2001/05/17 */
+#define INFO_INQUIRY_LEN		8192	/* this seems sufficiently big for
+										 * queries used in info.c inoue
+										 * 2001/05/17 */
 
 #include "misc.h"
 
 #ifdef	_MEMORY_DEBUG_
-void * debug_alloc(size_t);
-void * debug_realloc(void *, size_t);
-char * debug_strdup(const char *);
-void	debug_free(void *);
-void	debug_memory_check(void);
-#define	malloc	debug_alloc
-#define	realloc	debug_realloc
-#define	strdup	debug_strdup
-#define	free	debug_free
-#endif /* _MEMORY_DEBUG_ */
+void	   *debug_alloc(size_t);
+void	   *debug_realloc(void *, size_t);
+char	   *debug_strdup(const char *);
+void		debug_free(void *);
+void		debug_memory_check(void);
+
+#define malloc	debug_alloc
+#define realloc debug_realloc
+#define strdup	debug_strdup
+#define free	debug_free
+#endif	 /* _MEMORY_DEBUG_ */
 #endif

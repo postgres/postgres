@@ -50,21 +50,21 @@
 
 /*
  * theIniFileName is searched for in:
- * 	$HOME/theIniFileName
- * 	theIniFileName
- * 	ODBCINSTDIR/ODBCINST_INI
+ *	$HOME/theIniFileName
+ *	theIniFileName
+ *	ODBCINSTDIR/ODBCINST_INI
  */
 DWORD
-GetPrivateProfileString(const char *theSection,		/* section name */
-						const char *theKey,	/* search key name */
-						const char *theDefault,		/* default value if not
+GetPrivateProfileString(const char *theSection,			/* section name */
+						const char *theKey,		/* search key name */
+						const char *theDefault, /* default value if not
 												 * found */
 						char *theReturnBuffer,	/* return value stored
 												 * here */
 						size_t theReturnBufferLength,	/* byte length of return
 														 * buffer */
-						const char *theIniFileName)	/* pathname of ini file to
-												 * search */
+						const char *theIniFileName)		/* pathname of ini file
+														 * to search */
 {
 	char		buf[MAXPGPATH];
 	char	   *ptr = 0;
@@ -84,13 +84,13 @@ GetPrivateProfileString(const char *theSection,		/* section name */
 	if (ptr == NULL || (((struct passwd *) ptr)->pw_dir) == NULL || *(((struct passwd *) ptr)->pw_dir) == '\0')
 		ptr = "/home";
 	else
-		ptr = ((struct passwd *) ptr)->pw_dir;		/* get user home dir */
+		ptr = ((struct passwd *) ptr)->pw_dir;	/* get user home dir */
 
 	/*
-	 * If it can't be opened because the paths are too long, then
-	 * skip it, don't just truncate the path string...  The truncated path
-	 * might accidently be an existing file.  The default value will be
-	 * returned instead.
+	 * If it can't be opened because the paths are too long, then skip it,
+	 * don't just truncate the path string...  The truncated path might
+	 * accidently be an existing file.	The default value will be returned
+	 * instead.
 	 */
 	if (MAXPGPATH - 1 >= strlen(ptr) + 1 + strlen(theIniFileName))
 	{
@@ -278,10 +278,10 @@ GetPrivateProfileString(const char *theSection,		/* section name */
 
 DWORD
 WritePrivateProfileString(const char *theSection,		/* section name */
-						  const char *theKey, /* write key name */
+						  const char *theKey,	/* write key name */
 						  const char *theBuffer,		/* input buffer */
-						  const char *theIniFileName) /* pathname of ini file to
-												 * write */
+						  const char *theIniFileName)	/* pathname of ini file
+														 * to write */
 {
 	return 0;
 }
@@ -449,8 +449,6 @@ if (!keyFound)
 
 	return aReturnLength > 0 ? aReturnLength - 1 : 0;
 }
+#endif	 /* NOT_USED */
 
-#endif /* NOT_USED */
-
-
-#endif /* not WIN32 */
+#endif	 /* not WIN32 */

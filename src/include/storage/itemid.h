@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemid.h,v 1.16 2001/03/22 04:01:06 momjian Exp $
+ * $Id: itemid.h,v 1.17 2001/10/25 05:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,5 +93,4 @@ typedef bits16 ItemIdFlags;
 	AssertMacro(ItemIdIsValid(itemId)), \
 	(bool) (((itemId)->lp_flags & LP_USED) != 0) \
 )
-
 #endif	 /* ITEMID_H */

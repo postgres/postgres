@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: smgr.h,v 1.31 2001/09/29 04:02:27 tgl Exp $
+ * $Id: smgr.h,v 1.32 2001/10/25 05:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,8 +28,8 @@
 extern int	smgrinit(void);
 extern int	smgrcreate(int16 which, Relation reln);
 extern int	smgrunlink(int16 which, Relation reln);
-extern int	smgrextend(int16 which, Relation reln, BlockNumber blocknum,
-					   char *buffer);
+extern int smgrextend(int16 which, Relation reln, BlockNumber blocknum,
+		   char *buffer);
 extern int	smgropen(int16 which, Relation reln, bool failOK);
 extern int	smgrclose(int16 which, Relation reln);
 extern int smgrread(int16 which, Relation reln, BlockNumber blocknum,
@@ -45,7 +45,7 @@ extern int smgrblindmarkdirty(int16 which, RelFileNode rnode,
 extern int	smgrmarkdirty(int16 which, Relation reln, BlockNumber blkno);
 extern BlockNumber smgrnblocks(int16 which, Relation reln);
 extern BlockNumber smgrtruncate(int16 which, Relation reln,
-								BlockNumber nblocks);
+			 BlockNumber nblocks);
 extern int	smgrDoPendingDeletes(bool isCommit);
 extern int	smgrcommit(void);
 extern int	smgrabort(void);
@@ -107,5 +107,4 @@ extern Datum smgrout(PG_FUNCTION_ARGS);
 extern Datum smgrin(PG_FUNCTION_ARGS);
 extern Datum smgreq(PG_FUNCTION_ARGS);
 extern Datum smgrne(PG_FUNCTION_ARGS);
-
 #endif	 /* SMGR_H */

@@ -88,7 +88,6 @@ static unsigned char othercase(int ch);
 
 #else
 static char othercase(int ch);
-
 #endif
 static void bothcases(struct parse * p, int ch);
 static void ordinary(struct parse * p, int ch);
@@ -173,7 +172,6 @@ pg95_regcomp(regex_t *preg, const char *pattern, int cflags)
 
 #ifdef MULTIBYTE
 	pg_wchar   *wcp;
-
 #endif
 
 #ifdef REDEBUG
@@ -724,7 +722,6 @@ p_bracket(struct parse * p)
 #ifdef MULTIBYTE
 	pg_wchar	sp1[] = {'[', ':', '<', ':', ']', ']'};
 	pg_wchar	sp2[] = {'[', ':', '>', ':', ']', ']'};
-
 #endif
 
 	/* Dept of Truly Sickening Special-Case Kludges */
@@ -930,7 +927,7 @@ p_b_eclass(struct parse * p, cset *cs)
 /*
  * p_b_symbol - parse a character or [..]ed multicharacter collating symbol
  */
-static pg_wchar			/* value of symbol */
+static pg_wchar					/* value of symbol */
 p_b_symbol(struct parse * p)
 {
 	pg_wchar	value;
@@ -1020,7 +1017,7 @@ bothcases(struct parse * p, int ch)
 	pg_wchar   *oldend = p->end;
 	pg_wchar	bracket[3];
 
-	assert(othercase(ch) != ch);/* p_bracket() would recurse */
+	assert(othercase(ch) != ch);		/* p_bracket() would recurse */
 	p->next = bracket;
 	p->end = bracket + 2;
 	bracket[0] = ch;
@@ -1110,7 +1107,7 @@ repeat(struct parse * p,
 		case REP(0, N): /* as x{1,n}? */
 		case REP(0, INF):		/* as x{1,}? */
 			/* KLUDGE: emit y? as (y|) until subtle bug gets fixed */
-			INSERT(OCH_, start);/* offset is wrong... */
+			INSERT(OCH_, start);		/* offset is wrong... */
 			repeat(p, start + 1, 1, to);
 			ASTERN(OOR1, start);
 			AHEAD(start);		/* ... fix it */

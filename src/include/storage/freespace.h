@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: freespace.h,v 1.3 2001/09/29 04:02:26 tgl Exp $
+ * $Id: freespace.h,v 1.4 2001/10/25 05:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,22 +30,21 @@ extern int	FreeSpaceShmemSize(void);
 
 extern BlockNumber GetPageWithFreeSpace(RelFileNode *rel, Size spaceNeeded);
 extern void RecordFreeSpace(RelFileNode *rel, BlockNumber page,
-							Size spaceAvail);
+				Size spaceAvail);
 extern BlockNumber RecordAndGetPageWithFreeSpace(RelFileNode *rel,
-												 BlockNumber oldPage,
-												 Size oldSpaceAvail,
-												 Size spaceNeeded);
+							  BlockNumber oldPage,
+							  Size oldSpaceAvail,
+							  Size spaceNeeded);
 extern void MultiRecordFreeSpace(RelFileNode *rel,
-								 BlockNumber minPage,
-								 BlockNumber maxPage,
-								 int nPages,
-								 BlockNumber *pages,
-								 Size *spaceAvail);
+					 BlockNumber minPage,
+					 BlockNumber maxPage,
+					 int nPages,
+					 BlockNumber *pages,
+					 Size *spaceAvail);
 extern void FreeSpaceMapForgetRel(RelFileNode *rel);
 extern void FreeSpaceMapForgetDatabase(Oid dbid);
 
 #ifdef FREESPACE_DEBUG
 extern void DumpFreeSpace(void);
 #endif
-
 #endif	 /* FREESPACE_H */

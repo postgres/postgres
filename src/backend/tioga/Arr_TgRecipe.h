@@ -52,7 +52,6 @@ typedef struct Arr_TgString
   AppendVarray((Varray *) (A), (void *) (V), (CopyingFunct) copyTgString)
 
 #define deleteArr_TgString(A) FreeVarray(A)
-
 #endif	 /* _ARR_TgString_ */
 
 /* -- Defining types and function for Arr_TgElementPtr type -- */
@@ -90,7 +89,6 @@ typedef struct Arr_TgElementPtr
   AppendVarray((Varray *) (A), (void *) (V), (CopyingFunct) copyTgElementPtr)
 
 #define deleteArr_TgElementPtr(A) FreeVarray(A)
-
 #endif	 /* _ARR_TgElementPtr_ */
 
 /* -- Defining types and function for Arr_TgNodePtr type -- */
@@ -128,5 +126,4 @@ typedef struct Arr_TgNodePtr
   AppendVarray((Varray *) (A), (void *) (V), (CopyingFunct) copyTgNodePtr)
 
 #define deleteArr_TgNodePtr(A) FreeVarray(A)
-
 #endif	 /* _ARR_TgNodePtr_ */

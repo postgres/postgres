@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.28 2001/06/03 14:53:56 petere Exp $
+ * $Id: geqo_main.c,v 1.29 2001/10/25 05:49:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,16 +82,13 @@ geqo(Query *root, int number_of_rels, List *initial_rels)
 	Edge	   *edge_table;		/* list of edges */
 	int			edge_failures = 0;
 	float		difference;
-
 #endif
 #if defined(CX) || defined(PX) || defined(OX1) || defined(OX2)
 	City	   *city_table;		/* list of cities */
-
 #endif
 #if defined(CX)
 	int			cycle_diffs = 0;
 	int			mutations = 0;
-
 #endif
 
 /* set GA parameters */

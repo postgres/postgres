@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.58 2001/10/20 01:02:18 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.59 2001/10/25 05:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,7 @@ Datum
 timestamp_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
@@ -146,7 +147,7 @@ timestamp_scale(PG_FUNCTION_ARGS)
 static void
 AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 {
-	if (! TIMESTAMP_NOT_FINITE(*time) &&
+	if (!TIMESTAMP_NOT_FINITE(*time) &&
 		(typmod >= 0) && (typmod <= 13))
 	{
 		static double TimestampScale = 1;
@@ -158,7 +159,7 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 			TimestampTypmod = typmod;
 		}
 
-		*time = (rint(((double) *time) * TimestampScale)/TimestampScale);
+		*time = (rint(((double) *time) * TimestampScale) / TimestampScale);
 	}
 }
 
@@ -170,11 +171,12 @@ Datum
 timestamptz_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
 	int32		typmod = PG_GETARG_INT32(2);
-	TimestampTz	result;
+	TimestampTz result;
 	double		fsec;
 	struct tm	tt,
 			   *tm = &tt;
@@ -229,7 +231,7 @@ timestamptz_in(PG_FUNCTION_ARGS)
 Datum
 timestamptz_out(PG_FUNCTION_ARGS)
 {
-	TimestampTz	dt = PG_GETARG_TIMESTAMP(0);
+	TimestampTz dt = PG_GETARG_TIMESTAMP(0);
 	char	   *result;
 	int			tz;
 	struct tm	tt,
@@ -256,9 +258,9 @@ timestamptz_out(PG_FUNCTION_ARGS)
 Datum
 timestamptz_scale(PG_FUNCTION_ARGS)
 {
-	TimestampTz	timestamp = PG_GETARG_TIMESTAMP(0);
+	TimestampTz timestamp = PG_GETARG_TIMESTAMP(0);
 	int32		typmod = PG_GETARG_INT32(1);
-	TimestampTz	result;
+	TimestampTz result;
 
 	result = timestamp;
 
@@ -278,6 +280,7 @@ Datum
 interval_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
@@ -374,8 +377,8 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 {
 	if (typmod != -1)
 	{
-		int range = ((typmod >> 16) & 0x7FFF);
-		int precision = (typmod & 0xFFFF);
+		int			range = ((typmod >> 16) & 0x7FFF);
+		int			precision = (typmod & 0xFFFF);
 
 		if (range == 0x7FFF)
 		{
@@ -392,69 +395,65 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			interval->time = 0;
 		}
 		/* YEAR TO MONTH */
-		else if (range  == (MASK(YEAR) | MASK(MONTH)))
-		{
+		else if (range == (MASK(YEAR) | MASK(MONTH)))
 			interval->time = 0;
-		}
 		else if (range == MASK(DAY))
 		{
 			interval->month = 0;
-			interval->time = (((int)(interval->time / 86400)) * 86400);
+			interval->time = (((int) (interval->time / 86400)) * 86400);
 		}
 		else if (range == MASK(HOUR))
 		{
-			double day;
+			double		day;
 
 			interval->month = 0;
 			TMODULO(interval->time, day, 86400.0);
-			interval->time = (((int)(interval->time / 3600)) * 3600.0);
+			interval->time = (((int) (interval->time / 3600)) * 3600.0);
 		}
 		else if (range == MASK(MINUTE))
 		{
-			double hour;
+			double		hour;
 
 			interval->month = 0;
 			TMODULO(interval->time, hour, 3600.0);
-			interval->time = (((int)(interval->time / 60)) * 60);
+			interval->time = (((int) (interval->time / 60)) * 60);
 		}
 		else if (range == MASK(SECOND))
 		{
-			double hour;
+			double		hour;
 
 			interval->month = 0;
 			TMODULO(interval->time, hour, 60.0);
-//			interval->time = (int)(interval->time);
+/*			interval->time = (int)(interval->time); */
 		}
 		/* DAY TO HOUR */
 		else if (range == (MASK(DAY) | MASK(HOUR)))
 		{
 			interval->month = 0;
-			interval->time = (((int)(interval->time / 3600)) * 3600);
+			interval->time = (((int) (interval->time / 3600)) * 3600);
 		}
 		/* DAY TO MINUTE */
 		else if (range == (MASK(DAY) | MASK(HOUR) | MASK(MINUTE)))
 		{
 			interval->month = 0;
-			interval->time = (((int)(interval->time / 60)) * 60);
+			interval->time = (((int) (interval->time / 60)) * 60);
 		}
 		/* DAY TO SECOND */
 		else if (range == (MASK(DAY) | MASK(HOUR) | MASK(MINUTE) | MASK(SECOND)))
-		{
 			interval->month = 0;
-		}
 		/* HOUR TO MINUTE */
 		else if (range == (MASK(HOUR) | MASK(MINUTE)))
 		{
-			double day;
+			double		day;
 
 			interval->month = 0;
 			TMODULO(interval->time, day, 86400.0);
-			interval->time = (((int)(interval->time / 60)) * 60);
+			interval->time = (((int) (interval->time / 60)) * 60);
 		}
 		/* HOUR TO SECOND */
 		else if (range == (MASK(HOUR) | MASK(MINUTE) | MASK(SECOND)))
 		{
-			double day;
+			double		day;
 
 			interval->month = 0;
 			TMODULO(interval->time, day, 86400.0);
@@ -462,20 +461,18 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		/* MINUTE TO SECOND */
 		else if (range == (MASK(MINUTE) | MASK(SECOND)))
 		{
-			double hour;
+			double		hour;
 
 			interval->month = 0;
 			TMODULO(interval->time, hour, 3600.0);
 		}
 		else
-		{
 			elog(ERROR, "AdjustIntervalForTypmod(): internal coding error");
-		}
 
 		if (precision != 0xFFFF)
 		{
 			static double IntervalScale = 1;
-			static int IntervalTypmod = 0;
+			static int	IntervalTypmod = 0;
 
 			if (precision != IntervalTypmod)
 			{
@@ -483,15 +480,15 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 				IntervalScale = pow(10.0, IntervalTypmod);
 			}
 
-			/* Hmm. For the time field, we can get to a large value
-			 * since we store everything related to an absolute interval
-			 * (e.g. years worth of days) in this one field. So we have
+			/*
+			 * Hmm. For the time field, we can get to a large value since
+			 * we store everything related to an absolute interval (e.g.
+			 * years worth of days) in this one field. So we have
 			 * precision problems doing rint() on this field if the field
-			 * is too large. This resulted in an annoying "...0001" appended
-			 * to the printed result on my Linux box.
-			 * I hate doing an expensive math operation like log10()
-			 * to avoid this, but what else can we do??
-			 * - thomas 2001-10-19
+			 * is too large. This resulted in an annoying "...0001"
+			 * appended to the printed result on my Linux box. I hate
+			 * doing an expensive math operation like log10() to avoid
+			 * this, but what else can we do?? - thomas 2001-10-19
 			 */
 			if ((log10(interval->time) + IntervalTypmod) <= 13)
 				interval->time = (rint(interval->time * IntervalScale) / IntervalScale);
@@ -521,7 +518,7 @@ EncodeSpecialTimestamp(Timestamp dt, char *str)
 Datum
 now(PG_FUNCTION_ARGS)
 {
-	TimestampTz	result;
+	TimestampTz result;
 	AbsoluteTime sec;
 	int			usec;
 
@@ -571,14 +568,14 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 	struct tm  *tx;
-
 #endif
 
 	date0 = date2j(2000, 1, 1);
 
-	/* If HasCTZSet is true then we have a brute force time zone specified.
-	 * Go ahead and rotate to the local time zone since we will later bypass
-	 * any calls which adjust the tm fields.
+	/*
+	 * If HasCTZSet is true then we have a brute force time zone
+	 * specified. Go ahead and rotate to the local time zone since we will
+	 * later bypass any calls which adjust the tm fields.
 	 */
 	if (HasCTZSet && (tzp != NULL))
 		dt -= CTimeZone;
@@ -607,9 +604,9 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 
 	if (tzp != NULL)
 	{
-		/* We have a brute force time zone per SQL99?
-		 * Then use it without change
-		 * since we have already rotated to the time zone.
+		/*
+		 * We have a brute force time zone per SQL99? Then use it without
+		 * change since we have already rotated to the time zone.
 		 */
 		if (HasCTZSet)
 		{
@@ -623,8 +620,9 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 				*tzn = NULL;
 		}
 
-		/* Does this fall within the capabilities of the localtime() interface?
-		 * Then use this to rotate to the local time zone.
+		/*
+		 * Does this fall within the capabilities of the localtime()
+		 * interface? Then use this to rotate to the local time zone.
 		 */
 		else if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
 		{
@@ -1031,7 +1029,6 @@ interval_hash(PG_FUNCTION_ARGS)
 Datum
 overlaps_timestamp(PG_FUNCTION_ARGS)
 {
-
 	/*
 	 * The arguments are Timestamps, but we leave them as generic Datums
 	 * to avoid unnecessary conversions between value and reference forms
@@ -1101,7 +1098,6 @@ overlaps_timestamp(PG_FUNCTION_ARGS)
 	 */
 	if (TIMESTAMP_GT(ts1, ts2))
 	{
-
 		/*
 		 * This case is ts1 < te2 OR te1 < te2, which may look redundant
 		 * but in the presence of nulls it's not quite completely so.
@@ -1137,7 +1133,6 @@ overlaps_timestamp(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-
 		/*
 		 * For ts1 = ts2 the spec says te1 <> te2 OR te1 = te2, which is a
 		 * rather silly way of saying "true if both are nonnull, else
@@ -1225,9 +1220,7 @@ timestamp_pl_span(PG_FUNCTION_ARGS)
 	Timestamp	result;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
-	{
 		result = timestamp;
-	}
 	else
 	{
 		if (span->month != 0)
@@ -1309,16 +1302,14 @@ timestamp_mi_span(PG_FUNCTION_ARGS)
 Datum
 timestamptz_pl_span(PG_FUNCTION_ARGS)
 {
-	TimestampTz	timestamp = PG_GETARG_TIMESTAMP(0);
+	TimestampTz timestamp = PG_GETARG_TIMESTAMP(0);
 	Interval   *span = PG_GETARG_INTERVAL_P(1);
-	TimestampTz	result;
+	TimestampTz result;
 	int			tz;
 	char	   *tzn;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
-	{
 		result = timestamp;
-	}
 	else
 	{
 		if (span->month != 0)
@@ -1349,7 +1340,7 @@ timestamptz_pl_span(PG_FUNCTION_ARGS)
 
 				if (tm2timestamp(tm, fsec, &tz, &timestamp) != 0)
 					elog(ERROR, "Unable to add TIMESTAMP and INTERVAL"
-						"\n\ttimestamptz_pl_span() internal error encoding timestamp");
+						 "\n\ttimestamptz_pl_span() internal error encoding timestamp");
 			}
 			else
 			{
@@ -1373,7 +1364,7 @@ timestamptz_pl_span(PG_FUNCTION_ARGS)
 Datum
 timestamptz_mi_span(PG_FUNCTION_ARGS)
 {
-	TimestampTz	timestamp = PG_GETARG_TIMESTAMP(0);
+	TimestampTz timestamp = PG_GETARG_TIMESTAMP(0);
 	Interval   *span = PG_GETARG_INTERVAL_P(1);
 	Interval	tspan;
 
@@ -1584,8 +1575,8 @@ interval_accum(PG_FUNCTION_ARGS)
 	memcpy(&N, DatumGetIntervalP(transdatums[1]), sizeof(Interval));
 
 	newsum = DatumGetIntervalP(DirectFunctionCall2(interval_pl,
-												   IntervalPGetDatum(&sumX),
-												   IntervalPGetDatum(newval)));
+												IntervalPGetDatum(&sumX),
+											 IntervalPGetDatum(newval)));
 	N.time += 1;
 
 	transdatums[0] = IntervalPGetDatum(newsum);
@@ -1750,8 +1741,8 @@ timestamp_age(PG_FUNCTION_ARGS)
 Datum
 timestamptz_age(PG_FUNCTION_ARGS)
 {
-	TimestampTz	dt1 = PG_GETARG_TIMESTAMP(0);
-	TimestampTz	dt2 = PG_GETARG_TIMESTAMP(1);
+	TimestampTz dt1 = PG_GETARG_TIMESTAMP(0);
+	TimestampTz dt2 = PG_GETARG_TIMESTAMP(1);
 	Interval   *result;
 	double		fsec,
 				fsec1,
@@ -1978,7 +1969,7 @@ interval_text(PG_FUNCTION_ARGS)
 	int			len;
 
 	str = DatumGetCString(DirectFunctionCall1(interval_out,
-											  IntervalPGetDatum(interval)));
+										   IntervalPGetDatum(interval)));
 
 	len = (strlen(str) + VARHDRSZ);
 
@@ -2043,7 +2034,7 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
 		elog(ERROR, "TIMESTAMP units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(units))));
+											   PointerGetDatum(units))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -2113,8 +2104,8 @@ Datum
 timestamptz_trunc(PG_FUNCTION_ARGS)
 {
 	text	   *units = PG_GETARG_TEXT_P(0);
-	TimestampTz	timestamp = PG_GETARG_TIMESTAMP(1);
-	TimestampTz	result;
+	TimestampTz timestamp = PG_GETARG_TIMESTAMP(1);
+	TimestampTz result;
 	int			tz;
 	int			type,
 				val;
@@ -2130,7 +2121,7 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
 		elog(ERROR, "TIMESTAMP WITH TIME ZONE units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(units))));
+											   PointerGetDatum(units))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -2218,7 +2209,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
 		elog(ERROR, "INTERVAL units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(units))));
+											   PointerGetDatum(units))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -2281,7 +2272,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 	{
 		elog(ERROR, "INTERVAL units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(units))));
+											   PointerGetDatum(units))));
 		*result = *interval;
 	}
 
@@ -2390,7 +2381,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
 		elog(ERROR, "TIMESTAMP units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(units))));
+											   PointerGetDatum(units))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -2517,7 +2508,7 @@ Datum
 timestamptz_part(PG_FUNCTION_ARGS)
 {
 	text	   *units = PG_GETARG_TEXT_P(0);
-	TimestampTz	timestamp = PG_GETARG_TIMESTAMP(1);
+	TimestampTz timestamp = PG_GETARG_TIMESTAMP(1);
 	float8		result;
 	int			tz;
 	int			type,
@@ -2756,7 +2747,7 @@ interval_part(PG_FUNCTION_ARGS)
 				default:
 					elog(ERROR, "INTERVAL units '%s' not supported",
 						 DatumGetCString(DirectFunctionCall1(textout,
-															 PointerGetDatum(units))));
+											   PointerGetDatum(units))));
 					result = 0;
 			}
 
@@ -2781,7 +2772,7 @@ interval_part(PG_FUNCTION_ARGS)
 	{
 		elog(ERROR, "INTERVAL units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(units))));
+											   PointerGetDatum(units))));
 		result = 0;
 	}
 
@@ -2797,7 +2788,7 @@ timestamp_zone(PG_FUNCTION_ARGS)
 {
 	text	   *zone = PG_GETARG_TEXT_P(0);
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(1);
-	TimestampTz	result;
+	TimestampTz result;
 	int			tz;
 	int			type,
 				val;
@@ -2845,7 +2836,7 @@ timestamp_izone(PG_FUNCTION_ARGS)
 {
 	Interval   *zone = PG_GETARG_INTERVAL_P(0);
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(1);
-	TimestampTz	result;
+	TimestampTz result;
 	int			tz;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
@@ -2869,16 +2860,14 @@ Datum
 timestamp_timestamptz(PG_FUNCTION_ARGS)
 {
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
-	TimestampTz	result;
+	TimestampTz result;
 	struct tm	tt,
 			   *tm = &tt;
 	double		fsec;
 	int			tz;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
-	{
 		result = timestamp;
-	}
 	else
 	{
 		if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
@@ -2899,7 +2888,7 @@ timestamp_timestamptz(PG_FUNCTION_ARGS)
 Datum
 timestamptz_timestamp(PG_FUNCTION_ARGS)
 {
-	TimestampTz	timestamp = PG_GETARG_TIMESTAMP(0);
+	TimestampTz timestamp = PG_GETARG_TIMESTAMP(0);
 	Timestamp	result;
 	struct tm	tt,
 			   *tm = &tt;
@@ -2908,9 +2897,7 @@ timestamptz_timestamp(PG_FUNCTION_ARGS)
 	int			tz;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
-	{
 		result = timestamp;
-	}
 	else
 	{
 		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
@@ -2930,9 +2917,9 @@ Datum
 timestamptz_zone(PG_FUNCTION_ARGS)
 {
 	text	   *zone = PG_GETARG_TEXT_P(0);
-	TimestampTz	timestamp = PG_GETARG_TIMESTAMP(1);
+	TimestampTz timestamp = PG_GETARG_TIMESTAMP(1);
 	text	   *result;
-	TimestampTz	dt;
+	TimestampTz dt;
 	int			tz;
 	int			type,
 				val;
@@ -3007,9 +2994,9 @@ Datum
 timestamptz_izone(PG_FUNCTION_ARGS)
 {
 	Interval   *zone = PG_GETARG_INTERVAL_P(0);
-	TimestampTz	timestamp = PG_GETARG_TIMESTAMP(1);
+	TimestampTz timestamp = PG_GETARG_TIMESTAMP(1);
 	text	   *result;
-	TimestampTz	dt;
+	TimestampTz dt;
 	int			tz;
 	char	   *tzn = "";
 	double		fsec;
@@ -3033,7 +3020,7 @@ timestamptz_izone(PG_FUNCTION_ARGS)
 
 	if (timestamp2tm(dt, NULL, tm, &fsec, NULL) != 0)
 		elog(ERROR, "Unable to decode TIMESTAMP WITH TIME ZONE"
-			"\n\ttimestamptz_izone() internal coding error");
+			 "\n\ttimestamptz_izone() internal coding error");
 
 	EncodeDateTime(tm, fsec, &tz, &tzn, USE_ISO_DATES, buf);
 	len = (strlen(buf) + VARHDRSZ);

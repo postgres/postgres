@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteHandler.h,v 1.15 2001/06/13 18:56:30 tgl Exp $
+ * $Id: rewriteHandler.h,v 1.16 2001/10/25 05:50:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,5 +18,4 @@
 
 
 extern List *QueryRewrite(Query *parsetree);
-
 #endif	 /* REWRITEHANDLER_H */

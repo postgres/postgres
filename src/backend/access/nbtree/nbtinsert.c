@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.86 2001/09/29 23:49:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.87 2001/10/25 05:49:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1100,7 +1100,7 @@ _bt_checksplitloc(FindSplitData *state, OffsetNumber firstright,
 	 * If we are not on the leaf level, we will be able to discard the key
 	 * data from the first item that winds up on the right page.
 	 */
-	if (! state->is_leaf)
+	if (!state->is_leaf)
 		rightfree += (int) firstrightitemsz -
 			(int) (MAXALIGN(sizeof(BTItemData)) + sizeof(ItemIdData));
 
@@ -1115,7 +1115,8 @@ _bt_checksplitloc(FindSplitData *state, OffsetNumber firstright,
 		{
 			/*
 			 * On a rightmost page, try to equalize right free space with
-			 * twice the left free space.  See comments for _bt_findsplitloc.
+			 * twice the left free space.  See comments for
+			 * _bt_findsplitloc.
 			 */
 			delta = (2 * leftfree) - rightfree;
 		}
@@ -1618,7 +1619,6 @@ _bt_fixlevel(Relation rel, Buffer buf, BlockNumber limit)
 
 	for (;;)
 	{
-
 		/*
 		 * Read up to 2 more child pages and look for pointers to them in
 		 * *saved* parent page

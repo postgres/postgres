@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_database.h,v 1.18 2001/08/26 16:56:02 tgl Exp $
+ * $Id: pg_database.h,v 1.19 2001/10/25 05:49:57 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -39,8 +39,8 @@ CATALOG(pg_database) BOOTSTRAP
 	bool		datistemplate;	/* allowed as CREATE DATABASE template? */
 	bool		datallowconn;	/* new connections allowed? */
 	Oid			datlastsysoid;	/* highest OID to consider a system OID */
-	TransactionId datvacuumxid;	/* all XIDs before this are vacuumed */
-	TransactionId datfrozenxid;	/* all XIDs before this are frozen */
+	TransactionId datvacuumxid; /* all XIDs before this are vacuumed */
+	TransactionId datfrozenxid; /* all XIDs before this are frozen */
 	text		datpath;		/* VARIABLE LENGTH FIELD */
 } FormData_pg_database;
 
@@ -78,5 +78,4 @@ DATAMARKOID(= 2)
 #define RecoveryDb	2
 
 #undef DATAMARKOID
-
 #endif	 /* PG_DATABASE_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.68 2001/09/17 00:29:10 tgl Exp $
+ * $Id: heapam.h,v 1.69 2001/10/25 05:49:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,7 +141,6 @@ extern Datum nocachegetattr(HeapTuple tup, int attnum,
 
 extern Datum fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 			bool *isnull);
-
 #endif	 /* defined(DISABLE_COMPLEX_MACRO) */
 
 
@@ -221,10 +220,10 @@ extern void heap_redo(XLogRecPtr lsn, XLogRecord *rptr);
 extern void heap_undo(XLogRecPtr lsn, XLogRecord *rptr);
 extern void heap_desc(char *buf, uint8 xl_info, char *rec);
 extern XLogRecPtr log_heap_clean(Relation reln, Buffer buffer,
-								 char *unused, int unlen);
+			   char *unused, int unlen);
 extern XLogRecPtr log_heap_move(Relation reln, Buffer oldbuf,
-								ItemPointerData from,
-								Buffer newbuf, HeapTuple newtup);
+			  ItemPointerData from,
+			  Buffer newbuf, HeapTuple newtup);
 
 /* in common/heaptuple.c */
 extern Size ComputeDataSize(TupleDesc tupleDesc, Datum *value, char *nulls);
@@ -246,5 +245,4 @@ extern HeapTuple heap_addheader(int natts, Size structlen, void *structure);
 /* in common/heap/stats.c */
 extern void PrintHeapAccessStatistics(HeapAccessStatistics stats);
 extern void initam(void);
-
 #endif	 /* HEAPAM_H */

@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.145 2001/08/21 16:36:02 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.146 2001/10/25 05:49:31 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -218,7 +218,6 @@ _outQuery(StringInfo str, Query *node)
 
 	if (node->utilityStmt)
 	{
-
 		/*
 		 * Hack to make up for lack of outfuncs for utility-stmt nodes
 		 */
@@ -1271,7 +1270,7 @@ _outValue(StringInfo str, Value *value)
 {
 	switch (value->type)
 	{
-			case T_Integer:
+		case T_Integer:
 			appendStringInfo(str, " %ld ", value->val.ival);
 			break;
 		case T_Float:

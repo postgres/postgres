@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.32 2001/03/22 06:16:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.33 2001/10/25 05:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,6 @@ ExecUnique(Unique *node)
 	 */
 	for (;;)
 	{
-
 		/*
 		 * fetch a tuple from the outer subplan
 		 */
@@ -186,8 +185,8 @@ int
 ExecCountSlotsUnique(Unique *node)
 {
 	return ExecCountSlotsNode(outerPlan(node)) +
-	ExecCountSlotsNode(innerPlan(node)) +
-	UNIQUE_NSLOTS;
+		ExecCountSlotsNode(innerPlan(node)) +
+		UNIQUE_NSLOTS;
 }
 
 /* ----------------------------------------------------------------

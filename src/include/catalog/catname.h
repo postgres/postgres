@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catname.h,v 1.20 2001/08/25 18:52:42 tgl Exp $
+ * $Id: catname.h,v 1.21 2001/10/25 05:49:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,5 +43,4 @@
 #define  TriggerRelationName "pg_trigger"
 
 extern char *SharedSystemRelationNames[];
-
 #endif	 /* CATNAME_H */

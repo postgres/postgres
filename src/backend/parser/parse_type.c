@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.36 2001/10/09 04:15:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.37 2001/10/25 05:49:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,7 +139,6 @@ typeTypElem(Type typ)
 
 	return typtup->typelem;
 }
-
 #endif
 
 #ifdef NOT_USED
@@ -153,7 +152,6 @@ typeInfunc(Type typ)
 
 	return typtup->typinput;
 }
-
 #endif
 
 #ifdef NOT_USED
@@ -167,7 +165,6 @@ typeOutfunc(Type typ)
 
 	return typtup->typoutput;
 }
-
 #endif
 
 /* Given a type structure and a string, returns the internal form of
@@ -207,7 +204,6 @@ typeidOutfunc(Oid type_id)
 	ReleaseSysCache(typeTuple);
 	return outfunc;
 }
-
 #endif
 
 /* return a type name, given a typeid */
@@ -279,12 +275,12 @@ typenameTypeId(char *s)
 void
 parseTypeString(const char *str, Oid *type_id, int32 *typmod)
 {
-	char   *buf;
-	List   *raw_parsetree_list;
+	char	   *buf;
+	List	   *raw_parsetree_list;
 	SelectStmt *stmt;
-	ResTarget *restarget;
-	A_Const *aconst;
-	TypeName *typename;
+	ResTarget  *restarget;
+	A_Const    *aconst;
+	TypeName   *typename;
 
 	buf = (char *) palloc(strlen(str) + 16);
 	sprintf(buf, "SELECT (NULL::%s)", str);

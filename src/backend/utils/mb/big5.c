@@ -7,7 +7,7 @@
  *
  * 1999/1/15 Tatsuo Ishii
  *
- * $Id: big5.c,v 1.7 2001/02/10 02:31:27 tgl Exp $
+ * $Id: big5.c,v 1.8 2001/10/25 05:49:51 momjian Exp $
  */
 
 /* can be used in either frontend or backend */
@@ -19,7 +19,7 @@ typedef struct
 {
 	unsigned short code,
 				peer;
-}			codes_t;
+} codes_t;
 
 /* map Big5 Level 1 to CNS 11643-1992 Plane 1 */
 static codes_t big5Level1ToCnsPlane1[25] = {	/* range */
@@ -205,7 +205,7 @@ static unsigned short b2c3[][2] = {
 };
 
 static unsigned short BinarySearchRange
-			(codes_t * array, int high, unsigned short code)
+			(codes_t *array, int high, unsigned short code)
 {
 	int			low,
 				mid,

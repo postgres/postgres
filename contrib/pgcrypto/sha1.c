@@ -1,4 +1,4 @@
-/*	$Id: sha1.c,v 1.7 2001/10/25 01:29:37 momjian Exp $ */
+/*	$Id: sha1.c,v 1.8 2001/10/25 05:49:20 momjian Exp $ */
 /*	   $KAME: sha1.c,v 1.3 2000/02/22 14:01:18 itojun Exp $    */
 
 /*
@@ -87,7 +87,7 @@ do { \
 static void sha1_step(struct sha1_ctxt *);
 
 static void
-sha1_step(struct sha1_ctxt *ctxt)
+sha1_step(struct sha1_ctxt * ctxt)
 {
 	uint32		a,
 				b,
@@ -232,7 +232,7 @@ sha1_step(struct sha1_ctxt *ctxt)
 /*------------------------------------------------------------*/
 
 void
-sha1_init(struct sha1_ctxt *ctxt)
+sha1_init(struct sha1_ctxt * ctxt)
 {
 	bzero(ctxt, sizeof(struct sha1_ctxt));
 	H(0) = 0x67452301;
@@ -243,7 +243,7 @@ sha1_init(struct sha1_ctxt *ctxt)
 }
 
 void
-sha1_pad(struct sha1_ctxt *ctxt)
+sha1_pad(struct sha1_ctxt * ctxt)
 {
 	size_t		padlen;			/* pad length in bytes */
 	size_t		padstart;
@@ -286,7 +286,7 @@ sha1_pad(struct sha1_ctxt *ctxt)
 }
 
 void
-sha1_loop(struct sha1_ctxt *ctxt, const uint8 *input0, size_t len)
+sha1_loop(struct sha1_ctxt * ctxt, const uint8 *input0, size_t len)
 {
 	const uint8 *input;
 	size_t		gaplen;
@@ -314,7 +314,7 @@ sha1_loop(struct sha1_ctxt *ctxt, const uint8 *input0, size_t len)
 }
 
 void
-sha1_result(struct sha1_ctxt *ctxt, uint8 *digest0)
+sha1_result(struct sha1_ctxt * ctxt, uint8 *digest0)
 {
 	uint8	   *digest;
 

@@ -60,5 +60,4 @@ typedef unsigned char uch;
 #define NDEBUG					/* no assertions please */
 #endif
 #endif
-
 #endif	 /* _REGEX_UTILS_H */

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.68 2001/08/21 16:36:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.69 2001/10/25 05:49:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,8 +115,8 @@ find_secondary_indexes(Oid relationObjectId)
 		info = makeNode(IndexOptInfo);
 
 		/*
-		 * Need to make these arrays large enough to be sure there is
-		 * room for a terminating 0 at the end of each one.
+		 * Need to make these arrays large enough to be sure there is room
+		 * for a terminating 0 at the end of each one.
 		 */
 		info->classlist = (Oid *) palloc(sizeof(Oid) * (INDEX_MAX_KEYS + 1));
 		info->indexkeys = (int *) palloc(sizeof(int) * (INDEX_MAX_KEYS + 1));
@@ -125,7 +125,7 @@ find_secondary_indexes(Oid relationObjectId)
 		/* Extract info from the pg_index tuple */
 		info->indexoid = index->indexrelid;
 		info->indproc = index->indproc; /* functional index ?? */
-		if (VARSIZE(&index->indpred) > VARHDRSZ) /* partial index ?? */
+		if (VARSIZE(&index->indpred) > VARHDRSZ)		/* partial index ?? */
 		{
 			char	   *predString;
 
@@ -210,7 +210,7 @@ find_secondary_indexes(Oid relationObjectId)
  * This code executes registered procedures stored in the
  * operator relation, by calling the function manager.
  *
- * varRelid is either 0 or a rangetable index.  See clause_selectivity()
+ * varRelid is either 0 or a rangetable index.	See clause_selectivity()
  * for details about its meaning.
  */
 Selectivity
@@ -223,8 +223,8 @@ restriction_selectivity(Query *root,
 	float8		result;
 
 	/*
-	 * if the oprrest procedure is missing for whatever reason,
-	 * use a selectivity of 0.5
+	 * if the oprrest procedure is missing for whatever reason, use a
+	 * selectivity of 0.5
 	 */
 	if (!oprrest)
 		return (Selectivity) 0.5;
@@ -257,8 +257,8 @@ join_selectivity(Query *root,
 	float8		result;
 
 	/*
-	 * if the oprjoin procedure is missing for whatever reason,
-	 * use a selectivity of 0.5
+	 * if the oprjoin procedure is missing for whatever reason, use a
+	 * selectivity of 0.5
 	 */
 	if (!oprjoin)
 		return (Selectivity) 0.5;
@@ -365,10 +365,10 @@ has_unique_index(RelOptInfo *rel, AttrNumber attno)
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(ilist);
 
 		/*
-		 * Note: ignore functional and partial indexes, since they
-		 * don't allow us to conclude that all attr values are distinct.
-		 * Also, a multicolumn unique index doesn't allow us to conclude
-		 * that just the specified attr is unique.
+		 * Note: ignore functional and partial indexes, since they don't
+		 * allow us to conclude that all attr values are distinct. Also, a
+		 * multicolumn unique index doesn't allow us to conclude that just
+		 * the specified attr is unique.
 		 */
 		if (index->unique &&
 			index->nkeys == 1 &&

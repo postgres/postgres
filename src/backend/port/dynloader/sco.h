@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sco.h,v 1.8 2001/05/14 21:45:53 petere Exp $
+ * $Id: sco.h,v 1.9 2001/10/25 05:49:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,5 +32,4 @@
 #define pg_dlerror		dlerror
 
 /* port.c */
-
 #endif	 /* PORT_PROTOS_H */

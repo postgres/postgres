@@ -26,7 +26,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplestore.c,v 1.3 2001/03/22 04:00:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplestore.c,v 1.4 2001/10/25 05:49:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,11 +43,11 @@
  */
 typedef enum
 {
-	TSS_INITIAL,				/* Loading tuples; still within memory
+				TSS_INITIAL,	/* Loading tuples; still within memory
 								 * limit */
-	TSS_WRITEFILE,				/* Loading tuples; writing to temp file */
-	TSS_READMEM,				/* Reading tuples; entirely in memory */
-	TSS_READFILE				/* Reading tuples from temp file */
+				TSS_WRITEFILE,	/* Loading tuples; writing to temp file */
+				TSS_READMEM,	/* Reading tuples; entirely in memory */
+				TSS_READFILE	/* Reading tuples from temp file */
 } TupStoreStatus;
 
 /*
@@ -271,7 +271,6 @@ tuplestore_end(Tuplestorestate *state)
 void
 tuplestore_puttuple(Tuplestorestate *state, void *tuple)
 {
-
 	/*
 	 * Copy the tuple.	(Must do this even in WRITEFILE case.)
 	 */
@@ -324,7 +323,7 @@ tuplestore_donestoring(Tuplestorestate *state)
 {
 	switch (state->status)
 	{
-			case TSS_INITIAL:
+		case TSS_INITIAL:
 
 			/*
 			 * We were able to accumulate all the tuples within the
@@ -432,7 +431,6 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 			 */
 			if (state->eof_reached)
 			{
-
 				/*
 				 * Seek position is pointing just past the zero tuplen at
 				 * the end of file; back up to fetch last tuple's ending
@@ -447,7 +445,6 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 			}
 			else
 			{
-
 				/*
 				 * Back up and fetch previously-returned tuple's ending
 				 * length word.  If seek fails, assume we are at start of
@@ -466,7 +463,6 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 							 -(long) (tuplen + 2 * sizeof(unsigned int)),
 								SEEK_CUR) != 0)
 				{
-
 					/*
 					 * If that fails, presumably the prev tuple is the
 					 * first in the file.  Back up so that it becomes next

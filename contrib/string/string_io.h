@@ -13,7 +13,6 @@ struct varlena *c_textin(unsigned char *str);
 int32 *
 c_charin(unsigned char *str)
 #endif
-
 #endif
 
 /*

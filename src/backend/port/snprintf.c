@@ -50,7 +50,6 @@ typedef unsigned long long ulong_long;
 #else
 typedef long long_long;
 typedef unsigned long ulong_long;
-
 #endif
 
 /*
@@ -75,7 +74,7 @@ typedef unsigned long ulong_long;
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.30 2001/02/10 02:31:26 tgl Exp $";*/
+/*static char _id[] = "$Id: snprintf.c,v 1.31 2001/10/25 05:49:40 momjian Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 

@@ -8,7 +8,7 @@
 #include  <sys/types.h>
 
 #define   MEM_ALLOC(size)	(malloc((size_t)(size)))
-#define   MEM_FREE(ptr)	\
+#define   MEM_FREE(ptr) \
 do { \
 	if(ptr) \
 		free(ptr); \
@@ -33,7 +33,6 @@ typedef WORD WPARAM;
 typedef DWORD LPARAM;
 typedef void *HWND;
 typedef int BOOL;
-
 #endif	 /* _UNIX_ */
 
 #if    defined(WIN32) || defined(WIN32_SYSTEM)
@@ -58,7 +57,6 @@ typedef int BOOL;
 #define  STRLEN(str)		((str)? _fstrlen((char FAR*)(str)):0)
 #define  STREQ(a, b)		(_fstrcmp((char FAR*)(a), (char FAR*)(b) == 0)
 #endif
-
 #endif	 /* WIN32 */
 
 #define    SYSERR			(-1)
@@ -66,5 +64,4 @@ typedef int BOOL;
 #ifndef    NULL
 #define  NULL				((void FAR*)0UL)
 #endif
-
 #endif

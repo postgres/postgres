@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistget.c,v 1.30 2001/08/22 18:24:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistget.c,v 1.31 2001/10/25 05:49:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,7 +251,7 @@ gistindex_keytest(IndexTuple tuple,
 		if (key[0].sk_flags & SK_ISNULL)
 			return false;
 */
-		gistdentryinit(giststate, key[0].sk_attno-1, &de,
+		gistdentryinit(giststate, key[0].sk_attno - 1, &de,
 					   datum, r, p, offset,
 					   IndexTupleSize(tuple) - sizeof(IndexTupleData),
 					   FALSE, isNull);
@@ -271,9 +271,9 @@ gistindex_keytest(IndexTuple tuple,
 								 ObjectIdGetDatum(key[0].sk_procedure));
 		}
 
-		if ( de.key != datum && ! isAttByVal( giststate, key[0].sk_attno-1 ) )
-			if ( DatumGetPointer(de.key) != NULL )
-				pfree( DatumGetPointer(de.key) );
+		if (de.key != datum && !isAttByVal(giststate, key[0].sk_attno - 1))
+			if (DatumGetPointer(de.key) != NULL)
+				pfree(DatumGetPointer(de.key));
 
 		if (DatumGetBool(test) == !!(key[0].sk_flags & SK_NEGATE))
 			return false;

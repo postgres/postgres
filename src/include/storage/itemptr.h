@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemptr.h,v 1.18 2001/03/30 05:25:51 tgl Exp $
+ * $Id: itemptr.h,v 1.19 2001/10/25 05:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
  * tuple header on disk, it's very important not to waste space with
  * structure padding bytes.  The struct is designed to be six bytes long
  * (it contains three int16 fields) but a few compilers will pad it to
- * eight bytes unless coerced.  We apply appropriate persuasion where
+ * eight bytes unless coerced.	We apply appropriate persuasion where
  * possible, and to cope with unpersuadable compilers, we try to use
  * "SizeOfIptrData" rather than "sizeof(ItemPointerData)" when computing
  * on-disk sizes.
@@ -39,10 +39,12 @@ typedef struct ItemPointerData
 	BlockIdData ip_blkid;
 	OffsetNumber ip_posid;
 }
+
 #ifdef __arm__
-__attribute__((packed))		/* Appropriate whack upside the head for ARM */
+__attribute__((packed))			/* Appropriate whack upside the head for
+								 * ARM */
 #endif
-	ItemPointerData;
+ItemPointerData;
 
 #define SizeOfIptrData	\
 	(offsetof(ItemPointerData, ip_posid) + sizeof(OffsetNumber))
@@ -140,5 +142,4 @@ typedef ItemPointerData *ItemPointer;
  */
 
 extern bool ItemPointerEquals(ItemPointer pointer1, ItemPointer pointer2);
-
 #endif	 /* ITEMPTR_H */

@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/lo_import.c,v 1.5 2001/03/22 06:16:06 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/lo_import.c,v 1.6 2001/10/25 05:49:19 momjian Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
@@ -50,7 +50,7 @@ pglo_import(LODumpMaster * pgLO)
 
 		sprintf(lo_path, "%s/%s", pgLO->space, path);
 
-		/* 
+		/*
 		 * Import LO
 		 */
 		if ((new_oid = lo_import(pgLO->conn, lo_path)) == 0)
@@ -78,7 +78,7 @@ pglo_import(LODumpMaster * pgLO)
 
 		pgLO->counter++;
 
-		/* 
+		/*
 		 * UPDATE oid in tab
 		 */
 		sprintf(Qbuff, "UPDATE \"%s\" SET \"%s\"=%u WHERE \"%s\"=%u",

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.147 2001/10/18 17:30:16 thomas Exp $
+ * $Id: parsenodes.h,v 1.148 2001/10/25 05:50:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,11 +79,11 @@ typedef struct Query
 	 * commit to the exact set of child tables at parse time.  This field
 	 * ought to go in some sort of TopPlan plan node, not in the Query.
 	 */
-	List	   *resultRelations;/* integer list of RT indexes, or NIL */
+	List	   *resultRelations;		/* integer list of RT indexes, or NIL */
 
 	/* internal to planner */
 	List	   *base_rel_list;	/* list of base-relation RelOptInfos */
-	List	   *other_rel_list;	/* list of other 1-relation RelOptInfos */
+	List	   *other_rel_list; /* list of other 1-relation RelOptInfos */
 	List	   *join_rel_list;	/* list of join-relation RelOptInfos */
 	List	   *equi_key_list;	/* list of lists of equijoined
 								 * PathKeyItems */
@@ -93,9 +93,9 @@ typedef struct Query
 
 typedef enum InhOption
 {
-	INH_NO,						/* Do NOT scan child tables */
-	INH_YES,					/* DO scan child tables */
-	INH_DEFAULT					/* Use current SQL_inheritance option */
+				INH_NO,			/* Do NOT scan child tables */
+				INH_YES,		/* DO scan child tables */
+				INH_DEFAULT		/* Use current SQL_inheritance option */
 } InhOption;
 
 /*****************************************************************************
@@ -118,7 +118,7 @@ typedef struct AlterTableStmt
 {
 	NodeTag		type;
 	char		subtype;		/*------------
-								 * 	A = add column
+								 *	A = add column
 								 *	T = alter column default
 								 *	S = alter column statistics
 								 *	D = drop column
@@ -228,17 +228,18 @@ typedef struct CreateStmt
 
 typedef enum ConstrType			/* types of constraints */
 {
-	CONSTR_NULL,				/* not SQL92, but a lot of people expect
+				CONSTR_NULL,	/* not SQL92, but a lot of people expect
 								 * it */
-	CONSTR_NOTNULL,
-	CONSTR_DEFAULT,
-	CONSTR_CHECK,
-	CONSTR_PRIMARY,
-	CONSTR_UNIQUE,
-	CONSTR_ATTR_DEFERRABLE,		/* attributes for previous constraint node */
-	CONSTR_ATTR_NOT_DEFERRABLE,
-	CONSTR_ATTR_DEFERRED,
-	CONSTR_ATTR_IMMEDIATE
+				CONSTR_NOTNULL,
+				CONSTR_DEFAULT,
+				CONSTR_CHECK,
+				CONSTR_PRIMARY,
+				CONSTR_UNIQUE,
+				CONSTR_ATTR_DEFERRABLE, /* attributes for previous
+										 * constraint node */
+				CONSTR_ATTR_NOT_DEFERRABLE,
+				CONSTR_ATTR_DEFERRED,
+				CONSTR_ATTR_IMMEDIATE
 } ConstrType;
 
 typedef struct Constraint
@@ -398,7 +399,7 @@ typedef struct CreateSeqStmt
 {
 	NodeTag		type;
 	char	   *seqname;		/* the relation to create */
-  	bool		istemp;			/* is this a temp sequence? */
+	bool		istemp;			/* is this a temp sequence? */
 	List	   *options;
 } CreateSeqStmt;
 
@@ -702,7 +703,8 @@ typedef struct VacuumStmt
 	bool		analyze;		/* do ANALYZE step */
 	bool		freeze;			/* early-freeze option */
 	bool		verbose;		/* print progress info */
-	char	   *vacrel;			/* name of single table to process, or NULL */
+	char	   *vacrel;			/* name of single table to process, or
+								 * NULL */
 	List	   *va_cols;		/* list of column names, or NIL for all */
 } VacuumStmt;
 
@@ -862,10 +864,10 @@ typedef struct UpdateStmt
  */
 typedef enum SetOperation
 {
-	SETOP_NONE = 0,
-	SETOP_UNION,
-	SETOP_INTERSECT,
-	SETOP_EXCEPT
+				SETOP_NONE = 0,
+				SETOP_UNION,
+				SETOP_INTERSECT,
+				SETOP_EXCEPT
 } SetOperation;
 
 typedef struct SelectStmt
@@ -1052,14 +1054,14 @@ typedef struct CaseWhen
 
 typedef enum NullTestType
 {
-	IS_NULL, IS_NOT_NULL
+				IS_NULL, IS_NOT_NULL
 } NullTestType;
 
 typedef struct NullTest
 {
-	NodeTag			type;
-	Node			*arg;			/* input expression */
-	NullTestType	nulltesttype;	/* IS NULL, IS NOT NULL */
+	NodeTag		type;
+	Node	   *arg;			/* input expression */
+	NullTestType nulltesttype;	/* IS NULL, IS NOT NULL */
 } NullTest;
 
 /* ----------------
@@ -1074,14 +1076,14 @@ typedef struct NullTest
 
 typedef enum BoolTestType
 {
-	IS_TRUE, IS_NOT_TRUE, IS_FALSE, IS_NOT_FALSE, IS_UNKNOWN, IS_NOT_UNKNOWN
+				IS_TRUE, IS_NOT_TRUE, IS_FALSE, IS_NOT_FALSE, IS_UNKNOWN, IS_NOT_UNKNOWN
 } BoolTestType;
 
 typedef struct BooleanTest
 {
-	NodeTag			type;
-	Node			*arg;			/* input expression */
-	BoolTestType	booltesttype;	/* test type */
+	NodeTag		type;
+	Node	   *arg;			/* input expression */
+	BoolTestType booltesttype;	/* test type */
 } BooleanTest;
 
 /*
@@ -1339,7 +1341,7 @@ typedef struct RangeTblEntry
 typedef struct SortClause
 {
 	NodeTag		type;
-	Index		tleSortGroupRef;/* reference into targetlist */
+	Index		tleSortGroupRef;		/* reference into targetlist */
 	Oid			sortop;			/* the sort operator to use */
 } SortClause;
 
@@ -1352,5 +1354,4 @@ typedef struct SortClause
  * nodetags...).  We have routines that operate interchangeably on both.
  */
 typedef SortClause GroupClause;
-
 #endif	 /* PARSENODES_H */

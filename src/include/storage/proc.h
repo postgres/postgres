@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.50 2001/09/30 00:45:48 momjian Exp $
+ * $Id: proc.h,v 1.51 2001/10/25 05:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,9 +103,10 @@ typedef struct
 	/* info about a single set of per-process semaphores */
 	IpcSemaphoreId procSemId;
 	int32		freeSemMap;
+
 	/*
-	 * In freeSemMap, bit i is set if the i'th semaphore of this sema
-	 * set is allocated to a process.  (i counts from 0 at the LSB)
+	 * In freeSemMap, bit i is set if the i'th semaphore of this sema set
+	 * is allocated to a process.  (i counts from 0 at the LSB)
 	 */
 } SEM_MAP_ENTRY;
 
@@ -116,11 +117,12 @@ typedef struct PROC_HDR
 
 	/* Info about semaphore sets used for per-process semaphores */
 	int			semMapEntries;
+
 	/*
-	 * VARIABLE LENGTH ARRAY: actual length is semMapEntries.
-	 * THIS MUST BE LAST IN THE STRUCT DECLARATION.
+	 * VARIABLE LENGTH ARRAY: actual length is semMapEntries. THIS MUST BE
+	 * LAST IN THE STRUCT DECLARATION.
 	 */
-	SEM_MAP_ENTRY	procSemMap[1];
+	SEM_MAP_ENTRY procSemMap[1];
 } PROC_HDR;
 
 
@@ -150,5 +152,4 @@ extern void ProcSendSignal(BackendId procId);
 
 extern bool enable_sigalrm_interrupt(int delayms);
 extern bool disable_sigalrm_interrupt(void);
-
 #endif	 /* PROC_H */

@@ -24,7 +24,7 @@
 #define		  pg_dlclose	  dlclose
 #define		  pg_dlerror	  dlerror
 
-#else /* not HAVE_DLOPEN */
+#else							/* not HAVE_DLOPEN */
 
 #define pg_dlsym(handle, funcname)	  ((PGFunction) dld_get_func((funcname)))
 #define pg_dlclose(handle) \
@@ -32,7 +32,5 @@ do { \
 	dld_unlink_by_file(handle, 1); \
 	free(handle); \
 } while (0)
-
-#endif /* not HAVE_DLOPEN */
-
+#endif	 /* not HAVE_DLOPEN */
 #endif	 /* PORT_PROTOS_H */

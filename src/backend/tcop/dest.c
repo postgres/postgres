@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.44 2001/03/22 06:16:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.45 2001/10/25 05:49:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,7 +173,7 @@ DestToFunction(CommandDest dest)
 {
 	switch (dest)
 	{
-			case Remote:
+		case Remote:
 			return printtup_create_DR(false);
 
 		case RemoteInternal:
@@ -272,13 +272,13 @@ NullCommand(CommandDest dest)
 {
 	switch (dest)
 	{
-			case RemoteInternal:
-			case Remote:
+		case RemoteInternal:
+		case Remote:
 
 			/*
 			 * tell the fe that we saw an empty query string
 			 */
-			pq_putbytes("I", 2);/* note we send I and \0 */
+			pq_putbytes("I", 2);		/* note we send I and \0 */
 			break;
 
 		case Debug:
@@ -303,8 +303,8 @@ ReadyForQuery(CommandDest dest)
 {
 	switch (dest)
 	{
-			case RemoteInternal:
-			case Remote:
+		case RemoteInternal:
+		case Remote:
 			if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
 				pq_putbytes("Z", 1);
 			/* Flush output at end of cycle in any case. */
@@ -323,7 +323,7 @@ UpdateCommandInfo(int operation, Oid lastoid, uint32 tuples)
 {
 	switch (operation)
 	{
-			case CMD_INSERT:
+		case CMD_INSERT:
 			if (tuples > 1)
 				lastoid = InvalidOid;
 			sprintf(CommandInfo, " %u %u", lastoid, tuples);

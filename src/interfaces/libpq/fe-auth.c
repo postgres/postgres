@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.61 2001/09/26 19:54:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.62 2001/10/25 05:50:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -231,7 +231,6 @@ pg_krb4_sendauth(char *PQerrormsg, int sock,
 	}
 	return STATUS_OK;
 }
-
 #endif	 /* KRB4 */
 
 #ifdef KRB5
@@ -405,7 +404,7 @@ pg_krb5_sendauth(char *PQerrormsg, int sock,
 		if (retval == KRB5_SENDAUTH_REJECTED && err_ret)
 		{
 			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-					 libpq_gettext("Kerberos 5 authentication rejected: %*s\n"),
+			  libpq_gettext("Kerberos 5 authentication rejected: %*s\n"),
 					 err_ret->text.length, err_ret->text.data);
 		}
 		else
@@ -432,33 +431,34 @@ pg_krb5_sendauth(char *PQerrormsg, int sock,
 
 	return ret;
 }
-
 #endif	 /* KRB5 */
 
 static int
 pg_local_sendauth(char *PQerrormsg, PGconn *conn)
 {
 #if defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || (defined(HAVE_STRUCT_SOCKCRED) && defined(LOCAL_CREDS))
-	char buf;
+	char		buf;
 	struct iovec iov;
 	struct msghdr msg;
+
 #ifdef HAVE_STRUCT_CMSGCRED
 	/* Prevent padding */
-	char cmsgmem[sizeof(struct cmsghdr) + sizeof(struct cmsgcred)];
+	char		cmsgmem[sizeof(struct cmsghdr) + sizeof(struct cmsgcred)];
+
 	/* Point to start of first structure */
-	struct cmsghdr *cmsg = (struct cmsghdr *)cmsgmem;
+	struct cmsghdr *cmsg = (struct cmsghdr *) cmsgmem;
 #endif
 #ifdef HAVE_STRUCT_SOCKCRED
 	/* Prevent padding */
-	char cmsgmem[sizeof(struct cmsghdr) + sizeof(struct sockcred)];
+	char		cmsgmem[sizeof(struct cmsghdr) + sizeof(struct sockcred)];
+
 	/* Point to start of first structure */
-	struct cmsghdr *cmsg = (struct cmsghdr *)cmsgmem;
+	struct cmsghdr *cmsg = (struct cmsghdr *) cmsgmem;
 #endif
 
 	/*
-	 * The backend doesn't care what we send here, but it wants
-	 * exactly one character to force recvmsg() to block and wait
-	 * for us.
+	 * The backend doesn't care what we send here, but it wants exactly
+	 * one character to force recvmsg() to block and wait for us.
 	 */
 	buf = '\0';
 	iov.iov_base = &buf;
@@ -481,13 +481,13 @@ pg_local_sendauth(char *PQerrormsg, PGconn *conn)
 	if (sendmsg(conn->sock, &msg, 0) == -1)
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			 "pg_local_sendauth: sendmsg: %s\n", strerror(errno));
+				 "pg_local_sendauth: sendmsg: %s\n", strerror(errno));
 		return STATUS_ERROR;
 	}
 	return STATUS_OK;
 #else
 	snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			 libpq_gettext("SCM_CRED authentication method not supported\n"));
+		libpq_gettext("SCM_CRED authentication method not supported\n"));
 	return STATUS_ERROR;
 #endif
 }
@@ -495,51 +495,51 @@ pg_local_sendauth(char *PQerrormsg, PGconn *conn)
 static int
 pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 {
-	int ret;
-	char *crypt_pwd;
+	int			ret;
+	char	   *crypt_pwd;
 
 	/* Encrypt the password if needed. */
 
 	switch (areq)
 	{
 		case AUTH_REQ_MD5:
-		{
-			char *crypt_pwd2;
+			{
+				char	   *crypt_pwd2;
 
-			if (!(crypt_pwd = malloc(MD5_PASSWD_LEN+1)) ||
-				!(crypt_pwd2 = malloc(MD5_PASSWD_LEN+1)))
-			{
-				perror("malloc");
-				return STATUS_ERROR;
-			}
-			if (!EncryptMD5(password, conn->pguser,
-							strlen(conn->pguser), crypt_pwd2))
-			{
-				free(crypt_pwd);
+				if (!(crypt_pwd = malloc(MD5_PASSWD_LEN + 1)) ||
+					!(crypt_pwd2 = malloc(MD5_PASSWD_LEN + 1)))
+				{
+					perror("malloc");
+					return STATUS_ERROR;
+				}
+				if (!EncryptMD5(password, conn->pguser,
+								strlen(conn->pguser), crypt_pwd2))
+				{
+					free(crypt_pwd);
+					free(crypt_pwd2);
+					return STATUS_ERROR;
+				}
+				if (!EncryptMD5(crypt_pwd2 + strlen("md5"), conn->md5Salt,
+								sizeof(conn->md5Salt), crypt_pwd))
+				{
+					free(crypt_pwd);
+					free(crypt_pwd2);
+					return STATUS_ERROR;
+				}
 				free(crypt_pwd2);
-				return STATUS_ERROR;
+				break;
 			}
-			if (!EncryptMD5(crypt_pwd2 + strlen("md5"), conn->md5Salt,
-							sizeof(conn->md5Salt), crypt_pwd))
-			{
-				free(crypt_pwd);
-				free(crypt_pwd2);
-				return STATUS_ERROR;
-			}
-			free(crypt_pwd2);
-			break;
-		}
 		case AUTH_REQ_CRYPT:
-		{
-			char salt[3];
+			{
+				char		salt[3];
 
-			StrNCpy(salt, conn->cryptSalt,3);
-			crypt_pwd = crypt(password, salt);
-			break;
-		}
+				StrNCpy(salt, conn->cryptSalt, 3);
+				crypt_pwd = crypt(password, salt);
+				break;
+			}
 		case AUTH_REQ_PASSWORD:
 			/* discard const so we can assign it */
-			crypt_pwd = (char *)password;
+			crypt_pwd = (char *) password;
 			break;
 		default:
 			return STATUS_ERROR;
@@ -573,13 +573,13 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 								 hostname) != STATUS_OK)
 			{
 				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-						 libpq_gettext("Kerberos 4 authentication failed\n"));
+					libpq_gettext("Kerberos 4 authentication failed\n"));
 				return STATUS_ERROR;
 			}
 			break;
 #else
 			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-					 libpq_gettext("Kerberos 4 authentication not supported\n"));
+			 libpq_gettext("Kerberos 4 authentication not supported\n"));
 			return STATUS_ERROR;
 #endif
 
@@ -590,13 +590,13 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 								 hostname) != STATUS_OK)
 			{
 				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-						 libpq_gettext("Kerberos 5 authentication failed\n"));
+					libpq_gettext("Kerberos 5 authentication failed\n"));
 				return STATUS_ERROR;
 			}
 			break;
 #else
 			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-					 libpq_gettext("Kerberos 5 authentication not supported\n"));
+			 libpq_gettext("Kerberos 5 authentication not supported\n"));
 			return STATUS_ERROR;
 #endif
 

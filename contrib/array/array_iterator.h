@@ -34,7 +34,6 @@ int32		array_all_int4le(ArrayType *array, int4 value);
 
 int32		array_oideq(ArrayType *array, Oid value);
 int32		array_all_oidne(ArrayType *array, Oid value);
-
 #endif
 
 /*

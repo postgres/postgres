@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.47 2001/10/22 19:41:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.48 2001/10/25 05:49:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,11 +67,9 @@ main(int argc, char *argv[])
 #if defined(__alpha)
 #ifdef NOFIXADE
 	int			buffer[] = {SSIN_UACPROC, UAC_SIGBUS};
-
 #endif	 /* NOFIXADE */
 #ifdef NOPRINTADE
 	int			buffer[] = {SSIN_UACPROC, UAC_NOPRINT};
-
 #endif	 /* NOPRINTADE */
 #endif	 /* __alpha */
 
@@ -86,7 +84,6 @@ main(int argc, char *argv[])
 				   (unsigned long) NULL) < 0)
 		fprintf(stderr, gettext("%s: setsysinfo failed: %s\n"), argv[0], strerror(errno));
 #endif
-
 #endif	 /* NOFIXADE || NOPRINTADE */
 
 #ifdef __BEOS__
@@ -107,16 +104,16 @@ main(int argc, char *argv[])
 	 * affected if init_ps_display overwrites the original argv[].
 	 *
 	 * (NB: do NOT think to remove the copying of argv[], even though
-	 * postmaster.c finishes looking at argv[] long before we ever consider
-	 * changing the ps display.  On some platforms, getopt() keeps pointers
-	 * into the argv array, and will get horribly confused when it is
-	 * re-called to analyze a subprocess' argument string if the argv storage
-	 * has been clobbered meanwhile.)
+	 * postmaster.c finishes looking at argv[] long before we ever
+	 * consider changing the ps display.  On some platforms, getopt()
+	 * keeps pointers into the argv array, and will get horribly confused
+	 * when it is re-called to analyze a subprocess' argument string if
+	 * the argv storage has been clobbered meanwhile.)
 	 *
 	 * On some platforms, save_ps_display_args moves the environment strings
-	 * to make extra room.  Therefore this should be done as early as
-	 * possible during startup, to avoid entanglements with code that might
-	 * save a getenv() result pointer.
+	 * to make extra room.	Therefore this should be done as early as
+	 * possible during startup, to avoid entanglements with code that
+	 * might save a getenv() result pointer.
 	 */
 	save_ps_display_args(argc, argv);
 
@@ -135,8 +132,9 @@ main(int argc, char *argv[])
 #endif
 
 	/*
-	 * Skip permission checks if we're just trying to do --help or --version;
-	 * otherwise root will get unhelpful failure messages from initdb.
+	 * Skip permission checks if we're just trying to do --help or
+	 * --version; otherwise root will get unhelpful failure messages from
+	 * initdb.
 	 */
 	if (!(argc > 1
 		  && (strcmp(argv[1], "--help") == 0 ||
@@ -154,11 +152,11 @@ main(int argc, char *argv[])
 		if (geteuid() == 0)
 		{
 			fprintf(stderr, gettext(
-				"\"root\" execution of the PostgreSQL server is not permitted.\n\n"
-				"The server must be started under an unprivileged user id to prevent\n"
-				"a possible system security compromise.  See the documentation for\n"
-				"more information on how to properly start the server.\n\n"
-				));
+									"\"root\" execution of the PostgreSQL server is not permitted.\n\n"
+									"The server must be started under an unprivileged user id to prevent\n"
+									"a possible system security compromise.  See the documentation for\n"
+			  "more information on how to properly start the server.\n\n"
+									));
 			exit(1);
 		}
 #endif	 /* __BEOS__ */
@@ -166,11 +164,11 @@ main(int argc, char *argv[])
 		/*
 		 * Also make sure that real and effective uids are the same.
 		 * Executing Postgres as a setuid program from a root shell is a
-		 * security hole, since on many platforms a nefarious subroutine could
-		 * setuid back to root if real uid is root.  (Since nobody actually
-		 * uses Postgres as a setuid program, trying to actively fix this
-		 * situation seems more trouble than it's worth; we'll just expend the
-		 * effort to check for it.)
+		 * security hole, since on many platforms a nefarious subroutine
+		 * could setuid back to root if real uid is root.  (Since nobody
+		 * actually uses Postgres as a setuid program, trying to actively
+		 * fix this situation seems more trouble than it's worth; we'll
+		 * just expend the effort to check for it.)
 		 */
 		if (getuid() != geteuid())
 		{

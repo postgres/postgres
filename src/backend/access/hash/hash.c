@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.52 2001/07/15 22:48:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.53 2001/10/25 05:49:20 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -37,11 +37,11 @@ typedef struct
 } HashBuildState;
 
 static void hashbuildCallback(Relation index,
-							  HeapTuple htup,
-							  Datum *attdata,
-							  char *nulls,
-							  bool tupleIsAlive,
-							  void *state);
+				  HeapTuple htup,
+				  Datum *attdata,
+				  char *nulls,
+				  bool tupleIsAlive,
+				  void *state);
 
 
 /*
@@ -80,7 +80,7 @@ hashbuild(PG_FUNCTION_ARGS)
 
 	/* do the heap scan */
 	reltuples = IndexBuildHeapScan(heap, index, indexInfo,
-								   hashbuildCallback, (void *) &buildstate);
+								hashbuildCallback, (void *) &buildstate);
 
 	/* all done */
 	BuildingHash = false;
@@ -121,7 +121,7 @@ hashbuildCallback(Relation index,
 				  bool tupleIsAlive,
 				  void *state)
 {
-	HashBuildState   *buildstate = (HashBuildState *) state;
+	HashBuildState *buildstate = (HashBuildState *) state;
 	IndexTuple	itup;
 	HashItem	hitem;
 	InsertIndexResult res;
@@ -164,6 +164,7 @@ hashinsert(PG_FUNCTION_ARGS)
 	Datum	   *datum = (Datum *) PG_GETARG_POINTER(1);
 	char	   *nulls = (char *) PG_GETARG_POINTER(2);
 	ItemPointer ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
+
 #ifdef NOT_USED
 	Relation	heapRel = (Relation) PG_GETARG_POINTER(4);
 #endif
@@ -176,14 +177,13 @@ hashinsert(PG_FUNCTION_ARGS)
 	itup->t_tid = *ht_ctid;
 
 	/*
-	 * If the single index key is null, we don't insert it into the
-	 * index.  Hash tables support scans on '='. Relational algebra
-	 * says that A = B returns null if either A or B is null.  This
-	 * means that no qualification used in an index scan could ever
-	 * return true on a null attribute.  It also means that indices
-	 * can't be used by ISNULL or NOTNULL scans, but that's an
-	 * artifact of the strategy map architecture chosen in 1986, not
-	 * of the way nulls are handled here.
+	 * If the single index key is null, we don't insert it into the index.
+	 * Hash tables support scans on '='. Relational algebra says that A =
+	 * B returns null if either A or B is null.  This means that no
+	 * qualification used in an index scan could ever return true on a
+	 * null attribute.	It also means that indices can't be used by ISNULL
+	 * or NOTNULL scans, but that's an artifact of the strategy map
+	 * architecture chosen in 1986, not of the way nulls are handled here.
 	 */
 	if (IndexTupleHasNulls(itup))
 	{
@@ -262,7 +262,6 @@ hashrescan(PG_FUNCTION_ARGS)
 
 #ifdef NOT_USED					/* XXX surely it's wrong to ignore this? */
 	bool		fromEnd = PG_GETARG_BOOL(1);
-
 #endif
 	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(2);
 	ItemPointer iptr;
@@ -412,7 +411,7 @@ hashbulkdelete(PG_FUNCTION_ARGS)
 	IndexBulkDeleteCallback callback = (IndexBulkDeleteCallback) PG_GETARG_POINTER(1);
 	void	   *callback_state = (void *) PG_GETARG_POINTER(2);
 	IndexBulkDeleteResult *result;
-	BlockNumber	num_pages;
+	BlockNumber num_pages;
 	double		tuples_removed;
 	double		num_index_tuples;
 	RetrieveIndexResult res;

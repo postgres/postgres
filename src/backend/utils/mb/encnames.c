@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $Id: encnames.c,v 1.4 2001/10/16 10:09:17 ishii Exp $
+ * $Id: encnames.c,v 1.5 2001/10/25 05:49:51 momjian Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -23,7 +23,7 @@
 #include <ctype.h>
 
 /* ----------
- * All encoding names, sorted:       *** A L P H A B E T I C ***
+ * All encoding names, sorted:		 *** A L P H A B E T I C ***
  *
  * All names must be without irrelevan chars, search routines use
  * isalnum() chars only. It means ISO-8859-1, iso_8859-1 and Iso8859_1
@@ -34,58 +34,153 @@
  * Karel Zak, Aug 2001
  * ----------
  */
-pg_encname pg_encname_tbl[] =
+pg_encname	pg_encname_tbl[] =
 {
-	{ "alt",	PG_ALT },		/* IBM866 */
-	{ "big5",	PG_BIG5 },		/* Big5; Chinese for Taiwan Multi-byte set */
-	{ "euccn",	PG_EUC_CN },		/* EUC-CN; Extended Unix Code for simplified Chinese */
-	{ "eucjp",	PG_EUC_JP },		/* EUC-JP; Extended UNIX Code fixed Width for Japanese, stdandard OSF */
-	{ "euckr",	PG_EUC_KR },		/* EUC-KR; RFC1557,Choi */
-	{ "euctw",	PG_EUC_TW },		/* EUC-TW; Extended Unix Code for traditional Chinese */
-	{ "iso88591",	PG_LATIN1 },		/* ISO-8859-1; RFC1345,KXS2 */
-	{ "iso885910",	PG_LATIN6 },	/* ISO-8859-10; RFC1345,KXS2 */
-	{ "iso885913",	PG_LATIN7 },	/* ISO-8859-13; RFC1345,KXS2 */
-	{ "iso885914",	PG_LATIN8 },	/* ISO-8859-14; RFC1345,KXS2 */
-	{ "iso885915",	PG_LATIN9 },	/* ISO-8859-15; RFC1345,KXS2 */
-	{ "iso885916",	PG_LATIN10 },	/* ISO-8859-16; RFC1345,KXS2 */
-	{ "iso88592",	PG_LATIN2 },		/* ISO-8859-2; RFC1345,KXS2 */
-	{ "iso88593",	PG_LATIN3 },		/* ISO-8859-3; RFC1345,KXS2 */
-	{ "iso88594",	PG_LATIN4 },		/* ISO-8859-4; RFC1345,KXS2 */
-	{ "iso88595",	PG_ISO_8859_5 },	/* ISO-8859-5; RFC1345,KXS2 */
-	{ "iso88596",	PG_ISO_8859_6 },	/* ISO-8859-6; RFC1345,KXS2 */
-	{ "iso88597",	PG_ISO_8859_7 },	/* ISO-8859-7; RFC1345,KXS2 */
-	{ "iso88598",	PG_ISO_8859_8 },	/* ISO-8859-8; RFC1345,KXS2 */
-	{ "iso88599",	PG_LATIN5 },		/* ISO-8859-9; RFC1345,KXS2 */
-	{ "koi8",	PG_KOI8R },		/* _dirty_ alias for KOI8-R (backward compatibility) */
-	{ "koi8r",	PG_KOI8R },		/* KOI8-R; RFC1489 */
-	{ "latin1",	PG_LATIN1 },		/* alias for ISO-8859-1 */
-	{ "latin10",	PG_LATIN10},		/* alias for ISO-8859-16 */
-	{ "latin2",	PG_LATIN2 },		/* alias for ISO-8859-2 */
-	{ "latin3",	PG_LATIN3 },		/* alias for ISO-8859-3 */
-	{ "latin4",	PG_LATIN4 },		/* alias for ISO-8859-4 */
-	{ "latin5",	PG_LATIN5 },		/* alias for ISO-8859-9 */
-	{ "latin6",	PG_LATIN6},		/* alias for ISO-8859-10 */
-	{ "latin7",	PG_LATIN7},		/* alias for ISO-8859-13 */
-	{ "latin8",	PG_LATIN8},		/* alias for ISO-8859-14 */
-	{ "latin9",	PG_LATIN9},		/* alias for ISO-8859-15 */
-	{ "mskanji",	PG_SJIS },		/* alias for Shift_JIS */
-	{ "muleinternal",PG_MULE_INTERNAL },
-	{ "shiftjis",	PG_SJIS },		/* Shift_JIS; JIS X 0202-1991 */
-	{ "sjis",	PG_SJIS },		/* alias for Shift_JIS */
-	{ "sqlascii",	PG_SQL_ASCII },
-	{ "unicode",	PG_UTF8 },		/* alias for UTF-8 */
-	{ "utf8",	PG_UTF8 },		/* UTF-8; RFC2279 */
-	{ "win", 	PG_WIN1251 },		/* _dirty_ alias for windows-1251 (backward compatibility) */
-	{ "win1250",	PG_WIN1250 },		/* alias for Windows-1250 */
-	{ "win1251",	PG_WIN1251 },		/* alias for Windows-1251 */
-	{ "windows1250",PG_WIN1250 },		/* Windows-1251; Microsoft */
-	{ "windows1251",PG_WIN1251 },		/* Windows-1251; Microsoft */
+	{
+		"alt", PG_ALT
+	}		   ,				/* IBM866 */
+	{
+		"big5", PG_BIG5
+	},							/* Big5; Chinese for Taiwan Multi-byte set */
+	{
+		"euccn", PG_EUC_CN
+	},							/* EUC-CN; Extended Unix Code for
+								 * simplified Chinese */
+	{
+		"eucjp", PG_EUC_JP
+	},							/* EUC-JP; Extended UNIX Code fixed Width
+								 * for Japanese, stdandard OSF */
+	{
+		"euckr", PG_EUC_KR
+	},							/* EUC-KR; RFC1557,Choi */
+	{
+		"euctw", PG_EUC_TW
+	},							/* EUC-TW; Extended Unix Code for
+								 * traditional Chinese */
+	{
+		"iso88591", PG_LATIN1
+	},							/* ISO-8859-1; RFC1345,KXS2 */
+	{
+		"iso885910", PG_LATIN6
+	},							/* ISO-8859-10; RFC1345,KXS2 */
+	{
+		"iso885913", PG_LATIN7
+	},							/* ISO-8859-13; RFC1345,KXS2 */
+	{
+		"iso885914", PG_LATIN8
+	},							/* ISO-8859-14; RFC1345,KXS2 */
+	{
+		"iso885915", PG_LATIN9
+	},							/* ISO-8859-15; RFC1345,KXS2 */
+	{
+		"iso885916", PG_LATIN10
+	},							/* ISO-8859-16; RFC1345,KXS2 */
+	{
+		"iso88592", PG_LATIN2
+	},							/* ISO-8859-2; RFC1345,KXS2 */
+	{
+		"iso88593", PG_LATIN3
+	},							/* ISO-8859-3; RFC1345,KXS2 */
+	{
+		"iso88594", PG_LATIN4
+	},							/* ISO-8859-4; RFC1345,KXS2 */
+	{
+		"iso88595", PG_ISO_8859_5
+	},							/* ISO-8859-5; RFC1345,KXS2 */
+	{
+		"iso88596", PG_ISO_8859_6
+	},							/* ISO-8859-6; RFC1345,KXS2 */
+	{
+		"iso88597", PG_ISO_8859_7
+	},							/* ISO-8859-7; RFC1345,KXS2 */
+	{
+		"iso88598", PG_ISO_8859_8
+	},							/* ISO-8859-8; RFC1345,KXS2 */
+	{
+		"iso88599", PG_LATIN5
+	},							/* ISO-8859-9; RFC1345,KXS2 */
+	{
+		"koi8", PG_KOI8R
+	},							/* _dirty_ alias for KOI8-R (backward
+								 * compatibility) */
+	{
+		"koi8r", PG_KOI8R
+	},							/* KOI8-R; RFC1489 */
+	{
+		"latin1", PG_LATIN1
+	},							/* alias for ISO-8859-1 */
+	{
+		"latin10", PG_LATIN10
+	},							/* alias for ISO-8859-16 */
+	{
+		"latin2", PG_LATIN2
+	},							/* alias for ISO-8859-2 */
+	{
+		"latin3", PG_LATIN3
+	},							/* alias for ISO-8859-3 */
+	{
+		"latin4", PG_LATIN4
+	},							/* alias for ISO-8859-4 */
+	{
+		"latin5", PG_LATIN5
+	},							/* alias for ISO-8859-9 */
+	{
+		"latin6", PG_LATIN6
+	},							/* alias for ISO-8859-10 */
+	{
+		"latin7", PG_LATIN7
+	},							/* alias for ISO-8859-13 */
+	{
+		"latin8", PG_LATIN8
+	},							/* alias for ISO-8859-14 */
+	{
+		"latin9", PG_LATIN9
+	},							/* alias for ISO-8859-15 */
+	{
+		"mskanji", PG_SJIS
+	},							/* alias for Shift_JIS */
+	{
+		"muleinternal", PG_MULE_INTERNAL
+	},
+	{
+		"shiftjis", PG_SJIS
+	},							/* Shift_JIS; JIS X 0202-1991 */
+	{
+		"sjis", PG_SJIS
+	},							/* alias for Shift_JIS */
+	{
+		"sqlascii", PG_SQL_ASCII
+	},
+	{
+		"unicode", PG_UTF8
+	},							/* alias for UTF-8 */
+	{
+		"utf8", PG_UTF8
+	},							/* UTF-8; RFC2279 */
+	{
+		"win", PG_WIN1251
+	},							/* _dirty_ alias for windows-1251
+								 * (backward compatibility) */
+	{
+		"win1250", PG_WIN1250
+	},							/* alias for Windows-1250 */
+	{
+		"win1251", PG_WIN1251
+	},							/* alias for Windows-1251 */
+	{
+		"windows1250", PG_WIN1250
+	},							/* Windows-1251; Microsoft */
+	{
+		"windows1251", PG_WIN1251
+	},							/* Windows-1251; Microsoft */
 
-	{ NULL, 0 }	/* last */
+	{
+		NULL, 0
+	}							/* last */
 };
 
 unsigned int pg_encname_tbl_sz = \
-		sizeof(pg_encname_tbl) / sizeof(pg_encname_tbl[0]) -1;
+sizeof(pg_encname_tbl) / sizeof(pg_encname_tbl[0]) - 1;
 
 /* ----------
  * These are "official" encoding names.
@@ -94,33 +189,87 @@ unsigned int pg_encname_tbl_sz = \
  */
 pg_enc2name pg_enc2name_tbl[] =
 {
-	{ "SQL_ASCII",	PG_SQL_ASCII },
-	{ "EUC_JP",	PG_EUC_JP },
-	{ "EUC_CN",	PG_EUC_CN },
-	{ "EUC_KR",	PG_EUC_KR },
-	{ "EUC_TW",	PG_EUC_TW },
-	{ "UNICODE",	PG_UTF8 },
-	{ "MULE_INTERNAL",PG_MULE_INTERNAL },
-	{ "LATIN1",	PG_LATIN1 },
-	{ "LATIN2",	PG_LATIN2 },
-	{ "LATIN3",	PG_LATIN3 },
-	{ "LATIN4",	PG_LATIN4 },
-	{ "LATIN5",	PG_LATIN5 },
-	{ "LATIN6",	PG_LATIN6 },
-	{ "LATIN7",	PG_LATIN7 },
-	{ "LATIN8",	PG_LATIN8 },
-	{ "LATIN9",	PG_LATIN9 },
-	{ "LATIN10",	PG_LATIN10 },
-	{ "KOI8",	PG_KOI8R },
-	{ "WIN",	PG_WIN1251 },
-	{ "ALT",	PG_ALT },
-	{ "ISO_8859_5", PG_ISO_8859_5 },
-	{ "ISO_8859_6", PG_ISO_8859_6 },
-	{ "ISO_8859_7", PG_ISO_8859_7 },
-	{ "ISO_8859_8", PG_ISO_8859_8 },
-	{ "SJIS",	PG_SJIS },
-	{ "BIG5",	PG_BIG5 },
-	{ "WIN1250",	PG_WIN1250 }
+	{
+		"SQL_ASCII", PG_SQL_ASCII
+	}		   ,
+	{
+		"EUC_JP", PG_EUC_JP
+	},
+	{
+		"EUC_CN", PG_EUC_CN
+	},
+	{
+		"EUC_KR", PG_EUC_KR
+	},
+	{
+		"EUC_TW", PG_EUC_TW
+	},
+	{
+		"UNICODE", PG_UTF8
+	},
+	{
+		"MULE_INTERNAL", PG_MULE_INTERNAL
+	},
+	{
+		"LATIN1", PG_LATIN1
+	},
+	{
+		"LATIN2", PG_LATIN2
+	},
+	{
+		"LATIN3", PG_LATIN3
+	},
+	{
+		"LATIN4", PG_LATIN4
+	},
+	{
+		"LATIN5", PG_LATIN5
+	},
+	{
+		"LATIN6", PG_LATIN6
+	},
+	{
+		"LATIN7", PG_LATIN7
+	},
+	{
+		"LATIN8", PG_LATIN8
+	},
+	{
+		"LATIN9", PG_LATIN9
+	},
+	{
+		"LATIN10", PG_LATIN10
+	},
+	{
+		"KOI8", PG_KOI8R
+	},
+	{
+		"WIN", PG_WIN1251
+	},
+	{
+		"ALT", PG_ALT
+	},
+	{
+		"ISO_8859_5", PG_ISO_8859_5
+	},
+	{
+		"ISO_8859_6", PG_ISO_8859_6
+	},
+	{
+		"ISO_8859_7", PG_ISO_8859_7
+	},
+	{
+		"ISO_8859_8", PG_ISO_8859_8
+	},
+	{
+		"SJIS", PG_SJIS
+	},
+	{
+		"BIG5", PG_BIG5
+	},
+	{
+		"WIN1250", PG_WIN1250
+	}
 };
 
 /* ----------
@@ -130,12 +279,12 @@ pg_enc2name pg_enc2name_tbl[] =
 int
 pg_valid_client_encoding(const char *name)
 {
-	int enc;
+	int			enc;
 
 	if ((enc = pg_char_to_encoding(name)) < 0)
 		return -1;
 
-	if (!PG_VALID_FE_ENCODING( enc))
+	if (!PG_VALID_FE_ENCODING(enc))
 		return -1;
 
 	return enc;
@@ -144,12 +293,12 @@ pg_valid_client_encoding(const char *name)
 int
 pg_valid_server_encoding(const char *name)
 {
-	int enc;
+	int			enc;
 
 	if ((enc = pg_char_to_encoding(name)) < 0)
 		return -1;
 
-	if (!PG_VALID_BE_ENCODING( enc))
+	if (!PG_VALID_BE_ENCODING(enc))
 		return -1;
 
 	return enc;
@@ -162,12 +311,13 @@ pg_valid_server_encoding(const char *name)
 static char *
 clean_encoding_name(char *key, char *newkey)
 {
-	char	*p, *np;
+	char	   *p,
+			   *np;
 
-	for(p=key, np=newkey; *p!='\0'; p++)
+	for (p = key, np = newkey; *p != '\0'; p++)
 	{
 		if (isalnum((unsigned char) *p))
-			*np++=tolower((unsigned char) *p);
+			*np++ = tolower((unsigned char) *p);
 	}
 	*np = '\0';
 	return newkey;
@@ -180,15 +330,15 @@ clean_encoding_name(char *key, char *newkey)
 pg_encname *
 pg_char_to_encname_struct(const char *name)
 {
-	unsigned int 	nel = pg_encname_tbl_sz;
-	pg_encname	*base = pg_encname_tbl,
-			*last = base + nel - 1,
-			*position;
-	int		result;
+	unsigned int nel = pg_encname_tbl_sz;
+	pg_encname *base = pg_encname_tbl,
+			   *last = base + nel - 1,
+			   *position;
+	int			result;
 	char		buff[NAMEDATALEN],
-			*key;
+			   *key;
 
-	if(name==NULL || *name=='\0')
+	if (name == NULL || *name == '\0')
 		return NULL;
 
 	if (strlen(name) > NAMEDATALEN)
@@ -241,6 +391,7 @@ Datum
 PG_char_to_encoding(PG_FUNCTION_ARGS)
 {
 	Name		s = PG_GETARG_NAME(0);
+
 	PG_RETURN_INT32(pg_char_to_encoding(NameStr(*s)));
 }
 #endif
@@ -250,8 +401,9 @@ pg_encoding_to_char(int encoding)
 {
 	if (PG_VALID_ENCODING(encoding))
 	{
-		pg_enc2name *p = &pg_enc2name_tbl[ encoding ];
-		Assert( encoding == p->encoding );
+		pg_enc2name *p = &pg_enc2name_tbl[encoding];
+
+		Assert(encoding == p->encoding);
 		return p->name;
 	}
 	return "";
@@ -262,9 +414,8 @@ Datum
 PG_encoding_to_char(PG_FUNCTION_ARGS)
 {
 	int32		encoding = PG_GETARG_INT32(0);
-	const char	*encoding_name = pg_encoding_to_char(encoding);
+	const char *encoding_name = pg_encoding_to_char(encoding);
 
 	return DirectFunctionCall1(namein, CStringGetDatum(encoding_name));
 }
 #endif
-

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.63 2001/08/21 16:36:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.64 2001/10/25 05:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,9 +53,9 @@ regprocin(PG_FUNCTION_ARGS)
 		Oid			searchOid;
 
 		searchOid = DatumGetObjectId(DirectFunctionCall1(oidin,
-									 CStringGetDatum(pro_name_or_oid)));
+									  CStringGetDatum(pro_name_or_oid)));
 		result = (RegProcedure) GetSysCacheOid(PROCOID,
-											   ObjectIdGetDatum(searchOid),
+											 ObjectIdGetDatum(searchOid),
 											   0, 0, 0);
 		if (!RegProcedureIsValid(result))
 			elog(ERROR, "No procedure with oid %s", pro_name_or_oid);

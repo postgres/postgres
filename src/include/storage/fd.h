@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fd.h,v 1.31 2001/09/30 18:57:45 tgl Exp $
+ * $Id: fd.h,v 1.32 2001/10/25 05:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ typedef int File;
 
 
 /* GUC parameter */
-extern int max_files_per_process;
+extern int	max_files_per_process;
 
 
 /*
@@ -78,5 +78,4 @@ extern void AtEOXact_Files(void);
 extern void RemovePgTempFiles(void);
 extern int	pg_fsync(int fd);
 extern int	pg_fdatasync(int fd);
-
 #endif	 /* FD_H */

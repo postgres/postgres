@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.31 2001/01/24 19:43:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.32 2001/10/25 05:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,7 +155,6 @@ namecat(Name n1, Name n2)
 	return namestrcat(n1, NameStr(*n2));		/* n2 can't be any longer
 												 * than n1 */
 }
-
 #endif
 
 #ifdef NOT_USED
@@ -164,7 +163,6 @@ namecmp(Name n1, Name n2)
 {
 	return strncmp(NameStr(*n1), NameStr(*n2), NAMEDATALEN);
 }
-
 #endif
 
 int
@@ -196,7 +194,6 @@ namestrcat(Name name, const char *str)
 	}
 	return 0;
 }
-
 #endif
 
 int
@@ -243,5 +240,4 @@ NameComputeLength(Name name)
 		;
 	return (uint32) length;
 }
-
 #endif

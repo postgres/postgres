@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.43 2001/03/22 06:16:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.44 2001/10/25 05:49:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,6 @@ ExecGroupEveryTuple(Group *node)
 		}
 		else
 		{
-
 			/*
 			 * Compare with first tuple and see if this tuple is of the
 			 * same group.
@@ -133,7 +132,6 @@ ExecGroupEveryTuple(Group *node)
 								 grpstate->eqfunctions,
 								 econtext->ecxt_per_tuple_memory))
 			{
-
 				/*
 				 * No; save the tuple to return it next time, and return
 				 * NULL
@@ -478,7 +476,7 @@ execTuplesMatch(HeapTuple tuple1,
  *		Look up the equality functions needed for execTuplesMatch.
  *		The result is a palloc'd array.
  */
-FmgrInfo   *
+FmgrInfo *
 execTuplesMatchPrepare(TupleDesc tupdesc,
 					   int numCols,
 					   AttrNumber *matchColIdx)

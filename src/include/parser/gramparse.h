@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: gramparse.h,v 1.16 2001/09/20 14:20:28 petere Exp $
+ * $Id: gramparse.h,v 1.17 2001/10/25 05:50:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,5 @@ extern Oid	param_type(int t);
 extern int	yyparse(void);
 extern char *xlateSqlFunc(char *name);
 extern char *xlateSqlType(char *name);
-bool exprIsNullConstant(Node *arg);
-
+bool		exprIsNullConstant(Node *arg);
 #endif	 /* GRAMPARSE_H */

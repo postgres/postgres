@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.96 2001/08/23 23:06:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.97 2001/10/25 05:49:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,17 +34,17 @@
 
 static void InsertTrigger(TriggerDesc *trigdesc, Trigger *trigger, int indx);
 static HeapTuple GetTupleForTrigger(EState *estate,
-									ResultRelInfo *relinfo,
-									ItemPointer tid,
-									TupleTableSlot **newSlot);
+				   ResultRelInfo *relinfo,
+				   ItemPointer tid,
+				   TupleTableSlot **newSlot);
 static HeapTuple ExecCallTriggerFunc(TriggerData *trigdata,
-									 FmgrInfo *finfo,
-									 MemoryContext per_tuple_context);
+					FmgrInfo *finfo,
+					MemoryContext per_tuple_context);
 static void DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event,
-									 HeapTuple oldtup, HeapTuple newtup);
+						 HeapTuple oldtup, HeapTuple newtup);
 static void DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
-								   Relation rel, FmgrInfo *finfo,
-								   MemoryContext per_tuple_context);
+					   Relation rel, FmgrInfo *finfo,
+					   MemoryContext per_tuple_context);
 
 
 void
@@ -93,7 +93,6 @@ CreateTrigger(CreateTrigStmt *stmt)
 			constrrelid = InvalidOid;
 		else
 		{
-
 			/*
 			 * NoLock is probably sufficient here, since we're only
 			 * interested in getting the relation's OID...
@@ -849,8 +848,8 @@ ExecCallTriggerFunc(TriggerData *trigdata,
 	MemoryContext oldContext;
 
 	/*
-	 * We cache fmgr lookup info, to avoid making the lookup
-	 * again on each call.
+	 * We cache fmgr lookup info, to avoid making the lookup again on each
+	 * call.
 	 */
 	if (finfo->fn_oid == InvalidOid)
 		fmgr_info(trigdata->tg_trigger->tgfoid, finfo);
@@ -915,14 +914,14 @@ ExecBRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 	LocTriggerData.tg_newtuple = NULL;
 	for (i = 0; i < ntrigs; i++)
 	{
-		Trigger *trigger = &trigdesc->triggers[tgindx[i]];
+		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 
 		if (!trigger->tgenabled)
 			continue;
 		LocTriggerData.tg_trigtuple = oldtuple = newtuple;
 		LocTriggerData.tg_trigger = trigger;
 		newtuple = ExecCallTriggerFunc(&LocTriggerData,
-									   relinfo->ri_TrigFunctions + tgindx[i],
+								   relinfo->ri_TrigFunctions + tgindx[i],
 									   GetPerTupleMemoryContext(estate));
 		if (oldtuple != newtuple && oldtuple != trigtuple)
 			heap_freetuple(oldtuple);
@@ -978,14 +977,14 @@ ExecBRDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 	LocTriggerData.tg_newtuple = NULL;
 	for (i = 0; i < ntrigs; i++)
 	{
-		Trigger *trigger = &trigdesc->triggers[tgindx[i]];
+		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 
 		if (!trigger->tgenabled)
 			continue;
 		LocTriggerData.tg_trigtuple = trigtuple;
 		LocTriggerData.tg_trigger = trigger;
 		newtuple = ExecCallTriggerFunc(&LocTriggerData,
-									   relinfo->ri_TrigFunctions + tgindx[i],
+								   relinfo->ri_TrigFunctions + tgindx[i],
 									   GetPerTupleMemoryContext(estate));
 		if (newtuple == NULL)
 			break;
@@ -1055,7 +1054,7 @@ ExecBRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 	LocTriggerData.tg_relation = relinfo->ri_RelationDesc;
 	for (i = 0; i < ntrigs; i++)
 	{
-		Trigger *trigger = &trigdesc->triggers[tgindx[i]];
+		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 
 		if (!trigger->tgenabled)
 			continue;
@@ -1063,7 +1062,7 @@ ExecBRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 		LocTriggerData.tg_newtuple = oldtuple = newtuple;
 		LocTriggerData.tg_trigger = trigger;
 		newtuple = ExecCallTriggerFunc(&LocTriggerData,
-									   relinfo->ri_TrigFunctions + tgindx[i],
+								   relinfo->ri_TrigFunctions + tgindx[i],
 									   GetPerTupleMemoryContext(estate));
 		if (oldtuple != newtuple && oldtuple != intuple)
 			heap_freetuple(oldtuple);
@@ -1130,8 +1129,8 @@ ltrmark:;
 				else if (!(ItemPointerEquals(&(tuple.t_self), tid)))
 				{
 					TupleTableSlot *epqslot = EvalPlanQual(estate,
-														   relinfo->ri_RangeTableIndex,
-														   &(tuple.t_self));
+											 relinfo->ri_RangeTableIndex,
+														&(tuple.t_self));
 
 					if (!(TupIsNull(epqslot)))
 					{
@@ -1293,7 +1292,6 @@ deferredTriggerCheckState(Oid tgoid, int32 itemstate)
 static void
 deferredTriggerAddEvent(DeferredTriggerEvent event)
 {
-
 	/*
 	 * Since the event list could grow quite long, we keep track of the
 	 * list tail and append there, rather than just doing a stupid
@@ -1359,7 +1357,7 @@ deferredTriggerGetPreviousEvent(Oid relid, ItemPointer ctid)
  *	single trigger function.
  *
  *	Frequently, this will be fired many times in a row for triggers of
- *	a single relation.  Therefore, we cache the open relation and provide
+ *	a single relation.	Therefore, we cache the open relation and provide
  *	fmgr lookup cache space at the caller level.
  *
  *	event: event currently being fired.
@@ -1535,8 +1533,8 @@ deferredTriggerInvokeEvents(bool immediate_only)
 			}
 
 			/*
-			 * So let's fire it... but first, open the correct relation
-			 * if this is not the same relation as before.
+			 * So let's fire it... but first, open the correct relation if
+			 * this is not the same relation as before.
 			 */
 			if (rel == NULL || rel->rd_id != event->dte_relid)
 			{
@@ -1544,11 +1542,13 @@ deferredTriggerInvokeEvents(bool immediate_only)
 					heap_close(rel, NoLock);
 				if (finfo)
 					pfree(finfo);
+
 				/*
 				 * We assume that an appropriate lock is still held by the
 				 * executor, so grab no new lock here.
 				 */
 				rel = heap_open(event->dte_relid, NoLock);
+
 				/*
 				 * Allocate space to cache fmgr lookup info for triggers
 				 * of this relation.
@@ -1667,7 +1667,6 @@ DeferredTriggerBeginXact(void)
 void
 DeferredTriggerEndQuery(void)
 {
-
 	/*
 	 * Ignore call if we aren't in a transaction.
 	 */
@@ -1688,7 +1687,6 @@ DeferredTriggerEndQuery(void)
 void
 DeferredTriggerEndXact(void)
 {
-
 	/*
 	 * Ignore call if we aren't in a transaction.
 	 */
@@ -1713,7 +1711,6 @@ DeferredTriggerEndXact(void)
 void
 DeferredTriggerAbortXact(void)
 {
-
 	/*
 	 * Ignore call if we aren't in a transaction.
 	 */
@@ -1751,7 +1748,6 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 	{
 		if (!IsTransactionBlock())
 		{
-
 			/*
 			 * ... outside of a transaction block
 			 *
@@ -1779,7 +1775,6 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 		}
 		else
 		{
-
 			/*
 			 * ... inside of a transaction block
 			 *
@@ -2050,7 +2045,7 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event,
 	new_event->dte_n_items = ntriggers;
 	for (i = 0; i < ntriggers; i++)
 	{
-		Trigger *trigger = &trigdesc->triggers[tgindx[i]];
+		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 
 		new_event->dte_item[i].dti_tgoid = trigger->tgoid;
 		new_event->dte_item[i].dti_state =
@@ -2090,7 +2085,7 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event,
 			 */
 			for (i = 0; i < ntriggers; i++)
 			{
-				Trigger	   *trigger = &trigdesc->triggers[tgindx[i]];
+				Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 				bool		is_ri_trigger;
 				bool		key_unchanged;
 
@@ -2125,7 +2120,6 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event,
 
 				if (key_unchanged)
 				{
-
 					/*
 					 * The key hasn't changed, so no need later to invoke
 					 * the trigger at all. But remember other states from
@@ -2138,7 +2132,6 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event,
 						if (prev_event->dte_event &
 							TRIGGER_DEFERRED_ROW_INSERTED)
 						{
-
 							/*
 							 * This is a row inserted during our
 							 * transaction. So any key value is considered
@@ -2153,7 +2146,6 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event,
 						}
 						else
 						{
-
 							/*
 							 * This is a row, previously updated. So if
 							 * this key has been changed before, we still
@@ -2172,7 +2164,6 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event,
 				}
 				else
 				{
-
 					/*
 					 * Bomb out if this key has been changed before.
 					 * Otherwise remember that we do so.

@@ -28,8 +28,8 @@ extern GLOBAL_VALUES globals;
 ConnectionClass *conns[MAX_CONNECTIONS];
 
 
-RETCODE SQL_API
-PGAPI_AllocEnv(HENV FAR *phenv)
+RETCODE		SQL_API
+PGAPI_AllocEnv(HENV FAR * phenv)
 {
 	static char *func = "PGAPI_AllocEnv";
 
@@ -58,7 +58,7 @@ PGAPI_AllocEnv(HENV FAR *phenv)
 }
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_FreeEnv(HENV henv)
 {
 	static char *func = "PGAPI_FreeEnv";
@@ -79,21 +79,21 @@ PGAPI_FreeEnv(HENV henv)
 
 
 /*		Returns the next SQL error information. */
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_Error(
-		 HENV henv,
-		 HDBC hdbc,
-		 HSTMT hstmt,
-		 UCHAR FAR *szSqlState,
-		 SDWORD FAR *pfNativeError,
-		 UCHAR FAR *szErrorMsg,
-		 SWORD cbErrorMsgMax,
-		 SWORD FAR *pcbErrorMsg)
+			HENV henv,
+			HDBC hdbc,
+			HSTMT hstmt,
+			UCHAR FAR * szSqlState,
+			SDWORD FAR * pfNativeError,
+			UCHAR FAR * szErrorMsg,
+			SWORD cbErrorMsgMax,
+			SWORD FAR * pcbErrorMsg)
 {
 	char	   *msg;
 	int			status;
-	BOOL	once_again = FALSE;
-	SWORD	msglen;
+	BOOL		once_again = FALSE;
+	SWORD		msglen;
 
 	mylog("**** PGAPI_Error: henv=%u, hdbc=%u, hstmt=%u <%d>\n", henv, hdbc, hstmt, cbErrorMsgMax);
 
@@ -212,7 +212,7 @@ PGAPI_Error(
 						strcpy(szSqlState, "07006");
 						break;
 					case STMT_INVALID_CURSOR_STATE_ERROR:
-						 strcpy(szSqlState, "24000");
+						strcpy(szSqlState, "24000");
 						break;
 					case STMT_OPTION_VALUE_CHANGED:
 						strcpy(szSqlState, "01S02");
@@ -266,7 +266,8 @@ PGAPI_Error(
 
 		if (once_again)
 		{
-			int	outlen;
+			int			outlen;
+
 			stmt->errornumber = status;
 			if (cbErrorMsgMax > 0)
 				outlen = *pcbErrorMsg;
@@ -493,7 +494,7 @@ EN_Constructor(void)
 
 
 char
-EN_Destructor(EnvironmentClass *self)
+EN_Destructor(EnvironmentClass * self)
 {
 	int			lf;
 	char		rv = 1;
@@ -515,14 +516,14 @@ EN_Destructor(EnvironmentClass *self)
 
 	mylog("exit EN_Destructor: rv = %d\n", rv);
 #ifdef	_MEMORY_DEBUG_
-debug_memory_inouecheck();
-#endif /* _MEMORY_DEBUG_ */
+	debug_memory_inouecheck();
+#endif	 /* _MEMORY_DEBUG_ */
 	return rv;
 }
 
 
 char
-EN_get_error(EnvironmentClass *self, int *number, char **message)
+EN_get_error(EnvironmentClass * self, int *number, char **message)
 {
 	if (self && self->errormsg && self->errornumber)
 	{
@@ -538,7 +539,7 @@ EN_get_error(EnvironmentClass *self, int *number, char **message)
 
 
 char
-EN_add_connection(EnvironmentClass *self, ConnectionClass *conn)
+EN_add_connection(EnvironmentClass * self, ConnectionClass * conn)
 {
 	int			i;
 
@@ -562,7 +563,7 @@ EN_add_connection(EnvironmentClass *self, ConnectionClass *conn)
 
 
 char
-EN_remove_connection(EnvironmentClass *self, ConnectionClass *conn)
+EN_remove_connection(EnvironmentClass * self, ConnectionClass * conn)
 {
 	int			i;
 
@@ -578,7 +579,7 @@ EN_remove_connection(EnvironmentClass *self, ConnectionClass *conn)
 
 
 void
-EN_log_error(char *func, char *desc, EnvironmentClass *self)
+EN_log_error(char *func, char *desc, EnvironmentClass * self)
 {
 	if (self)
 		qlog("ENVIRON ERROR: func=%s, desc='%s', errnum=%d, errmsg='%s'\n", func, desc, self->errornumber, self->errormsg);

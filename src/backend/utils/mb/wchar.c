@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multi-byte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.24 2001/10/15 01:19:15 ishii Exp $
+ * $Id: wchar.c,v 1.25 2001/10/25 05:49:51 momjian Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -29,7 +29,7 @@
  * SQL/ASCII
  */
 static int	pg_ascii2wchar_with_len
-			(const unsigned char *from, pg_wchar * to, int len)
+			(const unsigned char *from, pg_wchar *to, int len)
 {
 	int			cnt = 0;
 
@@ -54,7 +54,7 @@ pg_ascii_mblen(const unsigned char *s)
  */
 
 static int	pg_euc2wchar_with_len
-			(const unsigned char *from, pg_wchar * to, int len)
+			(const unsigned char *from, pg_wchar *to, int len)
 {
 	int			cnt = 0;
 
@@ -111,7 +111,7 @@ pg_euc_mblen(const unsigned char *s)
  * EUC_JP
  */
 static int	pg_eucjp2wchar_with_len
-			(const unsigned char *from, pg_wchar * to, int len)
+			(const unsigned char *from, pg_wchar *to, int len)
 {
 	return (pg_euc2wchar_with_len(from, to, len));
 }
@@ -126,7 +126,7 @@ pg_eucjp_mblen(const unsigned char *s)
  * EUC_KR
  */
 static int	pg_euckr2wchar_with_len
-			(const unsigned char *from, pg_wchar * to, int len)
+			(const unsigned char *from, pg_wchar *to, int len)
 {
 	return (pg_euc2wchar_with_len(from, to, len));
 }
@@ -141,7 +141,7 @@ pg_euckr_mblen(const unsigned char *s)
  * EUC_CN
  */
 static int	pg_euccn2wchar_with_len
-			(const unsigned char *from, pg_wchar * to, int len)
+			(const unsigned char *from, pg_wchar *to, int len)
 {
 	int			cnt = 0;
 
@@ -195,7 +195,7 @@ pg_euccn_mblen(const unsigned char *s)
  * EUC_TW
  */
 static int	pg_euctw2wchar_with_len
-			(const unsigned char *from, pg_wchar * to, int len)
+			(const unsigned char *from, pg_wchar *to, int len)
 {
 	int			cnt = 0;
 
@@ -257,7 +257,7 @@ pg_euctw_mblen(const unsigned char *s)
  * "from" not necessarily null terminated.
  */
 static int
-pg_utf2wchar_with_len(const unsigned char *from, pg_wchar * to, int len)
+pg_utf2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 {
 	unsigned char c1,
 				c2,
@@ -325,7 +325,7 @@ pg_utf_mblen(const unsigned char *s)
  * "from" not necessarily null terminated.
  */
 static int
-pg_mule2wchar_with_len(const unsigned char *from, pg_wchar * to, int len)
+pg_mule2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 {
 	int			cnt = 0;
 
@@ -395,7 +395,7 @@ pg_mule_mblen(const unsigned char *s)
  * ISO8859-1
  */
 static int
-pg_latin12wchar_with_len(const unsigned char *from, pg_wchar * to, int len)
+pg_latin12wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 {
 	int			cnt = 0;
 
@@ -458,33 +458,33 @@ pg_big5_mblen(const unsigned char *s)
 }
 
 pg_wchar_tbl pg_wchar_table[] = {
-	{pg_ascii2wchar_with_len, pg_ascii_mblen, 1},	/* 0; PG_SQL_ASCII  */
-	{pg_eucjp2wchar_with_len, pg_eucjp_mblen, 3},	/* 1; PG_EUC_JP */
-	{pg_euccn2wchar_with_len, pg_euccn_mblen, 3},	/* 2; PG_EUC_CN */
-	{pg_euckr2wchar_with_len, pg_euckr_mblen, 3},	/* 3; PG_EUC_KR */
-	{pg_euctw2wchar_with_len, pg_euctw_mblen, 3},	/* 4; PG_EUC_TW */
+	{pg_ascii2wchar_with_len, pg_ascii_mblen, 1},		/* 0; PG_SQL_ASCII	*/
+	{pg_eucjp2wchar_with_len, pg_eucjp_mblen, 3},		/* 1; PG_EUC_JP */
+	{pg_euccn2wchar_with_len, pg_euccn_mblen, 3},		/* 2; PG_EUC_CN */
+	{pg_euckr2wchar_with_len, pg_euckr_mblen, 3},		/* 3; PG_EUC_KR */
+	{pg_euctw2wchar_with_len, pg_euctw_mblen, 3},		/* 4; PG_EUC_TW */
 	{pg_utf2wchar_with_len, pg_utf_mblen, 3},	/* 5; PG_UNICODE */
-	{pg_mule2wchar_with_len, pg_mule_mblen, 3},	/* 6; PG_MULE_INTERNAL */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 7; PG_LATIN1 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 8; PG_LATIN2 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 9; PG_LATIN3 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 10; PG_LATIN4 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 11; PG_LATIN5 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 12; PG_KOI8 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 13; PG_WIN1251 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 14; PG_ALT */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 15; ISO-8859-5 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 16; ISO-8859-6 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 17; ISO-8859-7 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 18; ISO-8859-8 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 19; ISO-8859-10 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 20; ISO-8859-13 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 21; ISO-8859-14 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 22; ISO-8859-15 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 23; ISO-8859-16 */
-	{0, pg_sjis_mblen, 2},				/* 24; PG_SJIS */
-	{0, pg_big5_mblen, 2},				/* 25; PG_BIG5 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1} 	/* 26; PG_WIN1250 */
+	{pg_mule2wchar_with_len, pg_mule_mblen, 3}, /* 6; PG_MULE_INTERNAL */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 7; PG_LATIN1 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 8; PG_LATIN2 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 9; PG_LATIN3 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 10; PG_LATIN4 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 11; PG_LATIN5 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 12; PG_KOI8 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 13; PG_WIN1251 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 14; PG_ALT */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 15; ISO-8859-5 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 16; ISO-8859-6 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 17; ISO-8859-7 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 18; ISO-8859-8 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 19; ISO-8859-10 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 20; ISO-8859-13 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 21; ISO-8859-14 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 22; ISO-8859-15 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 23; ISO-8859-16 */
+	{0, pg_sjis_mblen, 2},		/* 24; PG_SJIS */
+	{0, pg_big5_mblen, 2},		/* 25; PG_BIG5 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1}		/* 26; PG_WIN1250 */
 };
 
 /* returns the byte length of a word for mule internal code */
@@ -502,9 +502,9 @@ pg_encoding_mblen(int encoding, const unsigned char *mbstr)
 {
 	Assert(PG_VALID_ENCODING(encoding));
 
-	return( (encoding >= 0 && 
-	         encoding < sizeof(pg_wchar_table)/sizeof(pg_wchar_tbl)) ? 
-			((*pg_wchar_table[encoding].mblen) (mbstr)) : 
+	return ((encoding >= 0 &&
+			 encoding < sizeof(pg_wchar_table) / sizeof(pg_wchar_tbl)) ?
+			((*pg_wchar_table[encoding].mblen) (mbstr)) :
 			((*pg_wchar_table[PG_SQL_ASCII].mblen) (mbstr)));
 }
 
@@ -531,59 +531,62 @@ pg_encoding_max_length(int encoding)
 char *
 pg_verifymbstr(const unsigned char *mbstr, int len)
 {
-	int	l;
-	int	i, j;
-	static char	buf[256];
-	int	slen = 0;
+	int			l;
+	int			i,
+				j;
+	static char buf[256];
+	int			slen = 0;
 
 	/* we do not check single byte encodings */
 	if (pg_database_encoding_max_length() <= 1)
-	    return NULL;
+		return NULL;
 
 	while (len > 0 && *mbstr)
 	{
 		/* special UTF-8 check */
 		if (GetDatabaseEncoding() == PG_UTF8 &&
-		    (*mbstr & 0xf8) == 0xf0)
+			(*mbstr & 0xf8) == 0xf0)
 		{
-		    snprintf(buf, sizeof(buf), "Unicode >= 0x10000 is not supoorted");
-		    return(buf);
+			snprintf(buf, sizeof(buf), "Unicode >= 0x10000 is not supoorted");
+			return (buf);
 		}
-		    
+
 		l = pg_mblen(mbstr);
 
 		/* multi-byte letter? */
 		if (l > 1)
 		{
-		    for (i=1;i<l;i++)
-		    {
-			if (i > len || *(mbstr+i) == '\0' ||
-			    /* we assume that every muti-byte letter
-			     * consists of bytes being the 8th bit set
-			     */
-			    ((*(mbstr+i) & 0x80) == 0))
+			for (i = 1; i < l; i++)
 			{
-			    int remains = sizeof(buf);
-			    char *p = buf;
+				if (i > len || *(mbstr + i) == '\0' ||
 
-			    slen = snprintf(p, remains, "Invalid %s character sequence found (0x",
-				     GetDatabaseEncodingName());
-			    p += slen;
-			    remains -= slen;
+				/*
+				 * we assume that every muti-byte letter consists of bytes
+				 * being the 8th bit set
+				 */
+					((*(mbstr + i) & 0x80) == 0))
+				{
+					int			remains = sizeof(buf);
+					char	   *p = buf;
 
-			    i = ((*(mbstr+i) & 0x80) == 0)?l:i;
+					slen = snprintf(p, remains, "Invalid %s character sequence found (0x",
+									GetDatabaseEncodingName());
+					p += slen;
+					remains -= slen;
 
-			    for (j=0;j<i;j++)
-			    {
-				slen = snprintf(p, remains, "%02x",
-						*(mbstr+j));
-				p += slen;
-				remains -= slen;
-			    }
-			    snprintf(p, remains, ")");
-			    return(buf);
+					i = ((*(mbstr + i) & 0x80) == 0) ? l : i;
+
+					for (j = 0; j < i; j++)
+					{
+						slen = snprintf(p, remains, "%02x",
+										*(mbstr + j));
+						p += slen;
+						remains -= slen;
+					}
+					snprintf(p, remains, ")");
+					return (buf);
+				}
 			}
-		    }
 		}
 		len -= l;
 		mbstr += l;
@@ -599,5 +602,4 @@ pg_database_encoding_max_length(void)
 {
 	return pg_wchar_table[GetDatabaseEncoding()].maxmblen;
 }
-
 #endif

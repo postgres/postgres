@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.165 2001/10/06 23:21:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.166 2001/10/25 05:49:22 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -64,19 +64,19 @@
 static Oid GetHeapRelationOid(char *heapRelationName, char *indexRelationName,
 				   bool istemp);
 static TupleDesc BuildFuncTupleDesc(Oid funcOid,
-									Oid *classObjectId);
+				   Oid *classObjectId);
 static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
-										  int numatts, AttrNumber *attNums,
-										  Oid *classObjectId);
+						 int numatts, AttrNumber *attNums,
+						 Oid *classObjectId);
 static void ConstructIndexReldesc(Relation indexRelation, Oid amoid);
 static Oid	UpdateRelationRelation(Relation indexRelation, char *temp_relname);
 static void InitializeAttributeOids(Relation indexRelation,
 						int numatts, Oid indexoid);
 static void AppendAttributeTuples(Relation indexRelation, int numatts);
 static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
-								IndexInfo *indexInfo,
-								Oid *classOids,
-								bool primary);
+					IndexInfo *indexInfo,
+					Oid *classOids,
+					bool primary);
 static Oid	IndexGetRelation(Oid indexId);
 static bool activate_index(Oid indexId, bool activate, bool inplace);
 
@@ -255,7 +255,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 			 * here we are indexing on a system attribute (-1...-n)
 			 */
 			from = SystemAttributeDefinition(atnum,
-											 heapRelation->rd_rel->relhasoids);
+									   heapRelation->rd_rel->relhasoids);
 		}
 		else
 		{
@@ -319,11 +319,11 @@ ConstructTupleDescriptor(Relation heapRelation,
 				elog(ERROR, "Type %u does not exist", keyType);
 			typeTup = (Form_pg_type) GETSTRUCT(tuple);
 
-			to->atttypid   = keyType;
-			to->atttypmod  = -1;
-			to->attlen     = typeTup->typlen;
-			to->attbyval   = typeTup->typbyval;
-			to->attalign   = typeTup->typalign;
+			to->atttypid = keyType;
+			to->atttypmod = -1;
+			to->attlen = typeTup->typlen;
+			to->attbyval = typeTup->typbyval;
+			to->attalign = typeTup->typalign;
 			to->attstorage = typeTup->typstorage;
 
 			ReleaseSysCache(tuple);
@@ -405,14 +405,15 @@ ConstructIndexReldesc(Relation indexRelation, Oid amoid)
 	 * Fill in a copy of relevant pg_am entry
 	 */
 	indexRelation->rd_am = AccessMethodObjectIdGetForm(amoid,
-													   CacheMemoryContext);
+													 CacheMemoryContext);
+
 	/*
-	 * Set up some additional fields of the index' pg_class entry.
-	 * In particular, initialize knowledge of whether the index is shared.
+	 * Set up some additional fields of the index' pg_class entry. In
+	 * particular, initialize knowledge of whether the index is shared.
 	 */
 	indexRelation->rd_rel->relowner = GetUserId();
 	indexRelation->rd_rel->relam = amoid;
-	indexRelation->rd_rel->relisshared = 
+	indexRelation->rd_rel->relisshared =
 		IsSharedSystemRelationName(RelationGetPhysicalRelationName(indexRelation));
 	indexRelation->rd_rel->relkind = RELKIND_INDEX;
 	indexRelation->rd_rel->relhasoids = false;
@@ -521,10 +522,10 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 	for (i = 0; i < numatts; i++)
 	{
 		/*
-		 * There used to be very grotty code here to set these fields,
-		 * but I think it's unnecessary.  They should be set already.
+		 * There used to be very grotty code here to set these fields, but
+		 * I think it's unnecessary.  They should be set already.
 		 */
-		Assert(indexTupDesc->attrs[i]->attnum == i+1);
+		Assert(indexTupDesc->attrs[i]->attnum == i + 1);
 		Assert(indexTupDesc->attrs[i]->attcacheoff == -1);
 
 		new_tuple = heap_addheader(Natts_pg_attribute,
@@ -592,7 +593,7 @@ UpdateIndexRelation(Oid indexoid,
 	indexForm->indexrelid = indexoid;
 	indexForm->indrelid = heapoid;
 	indexForm->indproc = indexInfo->ii_FuncOid;
-	indexForm->indisclustered = false;			/* not used */
+	indexForm->indisclustered = false;	/* not used */
 	indexForm->indisunique = indexInfo->ii_Unique;
 	indexForm->indisprimary = primary;
 	memcpy((char *) &indexForm->indpred, (char *) predText, predLen);
@@ -678,7 +679,7 @@ index_create(char *heapRelationName,
 		elog(ERROR, "must index at least one column");
 
 	if (heapRelationName && !allow_system_table_mods &&
-		IsSystemRelationName(heapRelationName) && IsNormalProcessingMode())
+	  IsSystemRelationName(heapRelationName) && IsNormalProcessingMode())
 		elog(ERROR, "User-defined indexes on system catalogs are not supported");
 
 	/*
@@ -700,7 +701,7 @@ index_create(char *heapRelationName,
 	else
 		indexTupDesc = ConstructTupleDescriptor(heapRelation,
 												indexInfo->ii_NumKeyAttrs,
-												indexInfo->ii_KeyAttrNumbers,
+											indexInfo->ii_KeyAttrNumbers,
 												classObjectId);
 
 	if (istemp)
@@ -825,12 +826,13 @@ index_drop(Oid indexId)
 	 * To drop an index safely, we must grab exclusive lock on its parent
 	 * table; otherwise there could be other backends using the index!
 	 * Exclusive lock on the index alone is insufficient because another
-	 * backend might be in the midst of devising a query plan that will use
-	 * the index.  The parser and planner take care to hold an appropriate
-	 * lock on the parent table while working, but having them hold locks on
-	 * all the indexes too seems overly complex.  We do grab exclusive lock
-	 * on the index too, just to be safe. Both locks must be held till end of
-	 * transaction, else other backends will still see this index in pg_index.
+	 * backend might be in the midst of devising a query plan that will
+	 * use the index.  The parser and planner take care to hold an
+	 * appropriate lock on the parent table while working, but having them
+	 * hold locks on all the indexes too seems overly complex.	We do grab
+	 * exclusive lock on the index too, just to be safe. Both locks must
+	 * be held till end of transaction, else other backends will still see
+	 * this index in pg_index.
 	 */
 	heapId = IndexGetRelation(indexId);
 	userHeapRelation = heap_open(heapId, AccessExclusiveLock);
@@ -873,8 +875,8 @@ index_drop(Oid indexId)
 	 * ensure other backends update their relcache lists of indexes.  So,
 	 * unconditionally do setRelhasindex(true).
 	 *
-	 * Possible future improvement: skip the physical tuple update and
-	 * just send out an invalidation message.
+	 * Possible future improvement: skip the physical tuple update and just
+	 * send out an invalidation message.
 	 */
 	setRelhasindex(heapId, true, false, InvalidOid);
 
@@ -950,7 +952,7 @@ index_drop(Oid indexId)
  * just once per command, and then use it for (potentially) many tuples.
  * ----------------
  */
-IndexInfo  *
+IndexInfo *
 BuildIndexInfo(HeapTuple indexTuple)
 {
 	Form_pg_index indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
@@ -974,8 +976,8 @@ BuildIndexInfo(HeapTuple indexTuple)
 	 * Handle functional index.
 	 *
 	 * If we have a functional index then the number of attributes defined in
-	 * the index must be 1 (the function's single return value).
-	 * Otherwise it's same as number of keys.
+	 * the index must be 1 (the function's single return value). Otherwise
+	 * it's same as number of keys.
 	 */
 	ii->ii_FuncOid = indexStruct->indproc;
 
@@ -1041,7 +1043,6 @@ FormIndexDatum(IndexInfo *indexInfo,
 
 	if (OidIsValid(indexInfo->ii_FuncOid))
 	{
-
 		/*
 		 * Functional index --- compute the single index attribute
 		 */
@@ -1076,7 +1077,6 @@ FormIndexDatum(IndexInfo *indexInfo,
 	}
 	else
 	{
-
 		/*
 		 * Plain index --- for each attribute we need from the heap tuple,
 		 * get the attribute and stick it into the datum and nullv arrays.
@@ -1198,7 +1198,7 @@ IndexesAreActive(Oid relid, bool confirmCommitted)
  *		set relhasindex of relation's pg_class entry
  *
  * If isprimary is TRUE, we are defining a primary index, so also set
- * relhaspkey to TRUE.  Otherwise, leave relhaspkey alone.
+ * relhaspkey to TRUE.	Otherwise, leave relhaspkey alone.
  *
  * If reltoastidxid is not InvalidOid, also set reltoastidxid to that value.
  * This is only used for TOAST relations.
@@ -1390,7 +1390,7 @@ UpdateStats(Oid relid, double reltuples)
 	Relation	pg_class;
 	HeapTuple	tuple;
 	HeapTuple	newtup;
-	BlockNumber	relpages;
+	BlockNumber relpages;
 	int			i;
 	Form_pg_class rd_rel;
 	Relation	idescs[Num_pg_class_indices];
@@ -1473,8 +1473,8 @@ UpdateStats(Oid relid, double reltuples)
 	 * when it is actually sizable.  See also CREATE TABLE in heap.c.
 	 *
 	 * Note: this path is also taken during bootstrap, because bootstrap.c
-	 * passes reltuples = 0 after loading a table.  We have to estimate some
-	 * number for reltuples based on the actual number of pages.
+	 * passes reltuples = 0 after loading a table.	We have to estimate
+	 * some number for reltuples based on the actual number of pages.
 	 */
 	relpages = RelationGetNumberOfBlocks(whichRel);
 
@@ -1492,7 +1492,7 @@ UpdateStats(Oid relid, double reltuples)
 			reltuples = 1000;
 		}
 		else
-			reltuples = (double) relpages * NTUPLES_PER_PAGE(whichRel->rd_rel->relnatts);
+			reltuples = (double) relpages *NTUPLES_PER_PAGE(whichRel->rd_rel->relnatts);
 	}
 
 	/*
@@ -1508,7 +1508,6 @@ UpdateStats(Oid relid, double reltuples)
 	 */
 	if (in_place_upd)
 	{
-
 		/*
 		 * At bootstrap time, we don't need to worry about concurrency or
 		 * visibility of changes, so we cheat.	Also cheat if REINDEX.
@@ -1599,8 +1598,8 @@ index_build(Relation heapRelation,
  * build procedure does whatever cleanup is needed; in particular, it should
  * close the heap and index relations.
  *
- * The total count of heap tuples is returned.  This is for updating pg_class
- * statistics.  (It's annoying not to be able to do that here, but we can't
+ * The total count of heap tuples is returned.	This is for updating pg_class
+ * statistics.	(It's annoying not to be able to do that here, but we can't
  * do it until after the relation is closed.)  Note that the index AM itself
  * must keep track of the number of index tuples; we don't do so here because
  * the AM might reject some of the tuples for its own reasons, such as being
@@ -1658,7 +1657,8 @@ IndexBuildHeapScan(Relation heapRelation,
 
 	/*
 	 * Ok, begin our scan of the base relation.  We use SnapshotAny
-	 * because we must retrieve all tuples and do our own time qual checks.
+	 * because we must retrieve all tuples and do our own time qual
+	 * checks.
 	 */
 	if (IsBootstrapProcessingMode())
 	{
@@ -1673,7 +1673,7 @@ IndexBuildHeapScan(Relation heapRelation,
 
 	scan = heap_beginscan(heapRelation, /* relation */
 						  0,	/* start at end */
-						  snapshot,	/* seeself */
+						  snapshot,		/* seeself */
 						  0,	/* number of keys */
 						  (ScanKey) NULL);		/* scan key */
 
@@ -1689,14 +1689,14 @@ IndexBuildHeapScan(Relation heapRelation,
 		if (snapshot == SnapshotAny)
 		{
 			/* do our own time qual check */
-			bool	indexIt;
-			uint16	sv_infomask;
+			bool		indexIt;
+			uint16		sv_infomask;
 
 			/*
-			 * HeapTupleSatisfiesVacuum may update tuple's hint status bits.
-			 * We could possibly get away with not locking the buffer here,
-			 * since caller should hold ShareLock on the relation, but let's
-			 * be conservative about it.
+			 * HeapTupleSatisfiesVacuum may update tuple's hint status
+			 * bits. We could possibly get away with not locking the
+			 * buffer here, since caller should hold ShareLock on the
+			 * relation, but let's be conservative about it.
 			 */
 			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 			sv_infomask = heapTuple->t_data->t_infomask;
@@ -1712,6 +1712,7 @@ IndexBuildHeapScan(Relation heapRelation,
 					tupleIsAlive = true;
 					break;
 				case HEAPTUPLE_RECENTLY_DEAD:
+
 					/*
 					 * If tuple is recently deleted then we must index it
 					 * anyway to keep VACUUM from complaining.
@@ -1720,32 +1721,36 @@ IndexBuildHeapScan(Relation heapRelation,
 					tupleIsAlive = false;
 					break;
 				case HEAPTUPLE_INSERT_IN_PROGRESS:
+
 					/*
-					 * Since caller should hold ShareLock or better, we should
-					 * not see any tuples inserted by open transactions ---
-					 * unless it's our own transaction.  (Consider INSERT
-					 * followed by CREATE INDEX within a transaction.)
+					 * Since caller should hold ShareLock or better, we
+					 * should not see any tuples inserted by open
+					 * transactions --- unless it's our own transaction.
+					 * (Consider INSERT followed by CREATE INDEX within a
+					 * transaction.)
 					 */
-					if (! TransactionIdIsCurrentTransactionId(heapTuple->t_data->t_xmin))
+					if (!TransactionIdIsCurrentTransactionId(heapTuple->t_data->t_xmin))
 						elog(ERROR, "IndexBuildHeapScan: concurrent insert in progress");
 					indexIt = true;
 					tupleIsAlive = true;
 					break;
 				case HEAPTUPLE_DELETE_IN_PROGRESS:
+
 					/*
-					 * Since caller should hold ShareLock or better, we should
-					 * not see any tuples deleted by open transactions ---
-					 * unless it's our own transaction.  (Consider DELETE
-					 * followed by CREATE INDEX within a transaction.)
+					 * Since caller should hold ShareLock or better, we
+					 * should not see any tuples deleted by open
+					 * transactions --- unless it's our own transaction.
+					 * (Consider DELETE followed by CREATE INDEX within a
+					 * transaction.)
 					 */
-					if (! TransactionIdIsCurrentTransactionId(heapTuple->t_data->t_xmax))
+					if (!TransactionIdIsCurrentTransactionId(heapTuple->t_data->t_xmax))
 						elog(ERROR, "IndexBuildHeapScan: concurrent delete in progress");
 					indexIt = true;
 					tupleIsAlive = false;
 					break;
 				default:
 					elog(ERROR, "Unexpected HeapTupleSatisfiesVacuum result");
-					indexIt = tupleIsAlive = false;	/* keep compiler quiet */
+					indexIt = tupleIsAlive = false;		/* keep compiler quiet */
 					break;
 			}
 
@@ -1755,7 +1760,7 @@ IndexBuildHeapScan(Relation heapRelation,
 
 			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 
-			if (! indexIt)
+			if (!indexIt)
 				continue;
 		}
 		else
@@ -1776,7 +1781,7 @@ IndexBuildHeapScan(Relation heapRelation,
 		 */
 		if (predicate != NIL)
 		{
-			if (! tupleIsAlive)
+			if (!tupleIsAlive)
 				continue;
 			ExecStoreTuple(heapTuple, slot, InvalidBuffer, false);
 			if (!ExecQual(predicate, econtext, false))
@@ -1785,7 +1790,7 @@ IndexBuildHeapScan(Relation heapRelation,
 
 		/*
 		 * For the current heap tuple, extract all the attributes we use
-		 * in this index, and note which are null.  This also performs
+		 * in this index, and note which are null.	This also performs
 		 * evaluation of the function, if this is a functional index.
 		 */
 		FormIndexDatum(indexInfo,
@@ -1797,8 +1802,8 @@ IndexBuildHeapScan(Relation heapRelation,
 
 		/*
 		 * You'd think we should go ahead and build the index tuple here,
-		 * but some index AMs want to do further processing on the
-		 * data first.  So pass the attdata and nulls arrays, instead.
+		 * but some index AMs want to do further processing on the data
+		 * first.  So pass the attdata and nulls arrays, instead.
 		 */
 
 		/* Call the AM's callback routine to process the tuple */
@@ -1919,7 +1924,6 @@ reindex_index(Oid indexId, bool force, bool inplace)
 
 	if (inplace)
 	{
-
 		/*
 		 * Release any buffers associated with this index.	If they're
 		 * dirty, they're just dropped without bothering to flush to disk.
@@ -2002,11 +2006,12 @@ reindex_relation(Oid relid, bool force)
 		upd_pg_class_inplace = true;
 
 	/*
-	 *	Ensure to hold an exclusive lock throughout the
-	 *	transaction. The lock could be less intensive
-	 *	but now it's AccessExclusiveLock for simplicity.
+	 * Ensure to hold an exclusive lock throughout the transaction. The
+	 * lock could be less intensive but now it's AccessExclusiveLock for
+	 * simplicity.
 	 */
 	rel = heap_open(relid, AccessExclusiveLock);
+
 	/*
 	 * ignore the indexes of the target system relation while processing
 	 * reindex.
@@ -2045,8 +2050,9 @@ reindex_relation(Oid relid, bool force)
 		else
 			elog(ERROR, "the target relation %u is shared", relid);
 	}
+
 	/*
-	 *	Continue to hold the lock.
+	 * Continue to hold the lock.
 	 */
 	heap_close(rel, NoLock);
 
@@ -2087,7 +2093,6 @@ reindex_relation(Oid relid, bool force)
 	heap_close(indexRelation, AccessShareLock);
 	if (reindexed)
 	{
-
 		/*
 		 * Ok,we could use the reindexed indexes of the target system
 		 * relation now.
@@ -2096,7 +2101,6 @@ reindex_relation(Oid relid, bool force)
 		{
 			if (!overwrite && relid == RelOid_pg_class)
 			{
-
 				/*
 				 * For pg_class, relhasindex should be set to true here in
 				 * place.

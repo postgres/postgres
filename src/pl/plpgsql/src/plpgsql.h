@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.19 2001/10/09 15:59:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.20 2001/10/25 05:50:20 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -53,11 +53,11 @@
  */
 enum
 {
-	PLPGSQL_NSTYPE_LABEL,
-	PLPGSQL_NSTYPE_VAR,
-	PLPGSQL_NSTYPE_ROW,
-	PLPGSQL_NSTYPE_REC,
-	PLPGSQL_NSTYPE_RECFIELD
+				PLPGSQL_NSTYPE_LABEL,
+				PLPGSQL_NSTYPE_VAR,
+				PLPGSQL_NSTYPE_ROW,
+				PLPGSQL_NSTYPE_REC,
+				PLPGSQL_NSTYPE_RECFIELD
 };
 
 /* ----------
@@ -66,12 +66,12 @@ enum
  */
 enum
 {
-	PLPGSQL_DTYPE_VAR,
-	PLPGSQL_DTYPE_ROW,
-	PLPGSQL_DTYPE_REC,
-	PLPGSQL_DTYPE_RECFIELD,
-	PLPGSQL_DTYPE_EXPR,
-	PLPGSQL_DTYPE_TRIGARG
+				PLPGSQL_DTYPE_VAR,
+				PLPGSQL_DTYPE_ROW,
+				PLPGSQL_DTYPE_REC,
+				PLPGSQL_DTYPE_RECFIELD,
+				PLPGSQL_DTYPE_EXPR,
+				PLPGSQL_DTYPE_TRIGARG
 };
 
 /* ----------
@@ -80,24 +80,24 @@ enum
  */
 enum
 {
-	PLPGSQL_STMT_BLOCK,
-	PLPGSQL_STMT_ASSIGN,
-	PLPGSQL_STMT_IF,
-	PLPGSQL_STMT_LOOP,
-	PLPGSQL_STMT_WHILE,
-	PLPGSQL_STMT_FORI,
-	PLPGSQL_STMT_FORS,
-	PLPGSQL_STMT_SELECT,
-	PLPGSQL_STMT_EXIT,
-	PLPGSQL_STMT_RETURN,
-	PLPGSQL_STMT_RAISE,
-	PLPGSQL_STMT_EXECSQL,
-	PLPGSQL_STMT_DYNEXECUTE,
-	PLPGSQL_STMT_DYNFORS,
-	PLPGSQL_STMT_GETDIAG,
-	PLPGSQL_STMT_OPEN,
-	PLPGSQL_STMT_FETCH,
-	PLPGSQL_STMT_CLOSE
+				PLPGSQL_STMT_BLOCK,
+				PLPGSQL_STMT_ASSIGN,
+				PLPGSQL_STMT_IF,
+				PLPGSQL_STMT_LOOP,
+				PLPGSQL_STMT_WHILE,
+				PLPGSQL_STMT_FORI,
+				PLPGSQL_STMT_FORS,
+				PLPGSQL_STMT_SELECT,
+				PLPGSQL_STMT_EXIT,
+				PLPGSQL_STMT_RETURN,
+				PLPGSQL_STMT_RAISE,
+				PLPGSQL_STMT_EXECSQL,
+				PLPGSQL_STMT_DYNEXECUTE,
+				PLPGSQL_STMT_DYNFORS,
+				PLPGSQL_STMT_GETDIAG,
+				PLPGSQL_STMT_OPEN,
+				PLPGSQL_STMT_FETCH,
+				PLPGSQL_STMT_CLOSE
 };
 
 
@@ -107,9 +107,9 @@ enum
  */
 enum
 {
-	PLPGSQL_RC_OK,
-	PLPGSQL_RC_EXIT,
-	PLPGSQL_RC_RETURN
+				PLPGSQL_RC_OK,
+				PLPGSQL_RC_EXIT,
+				PLPGSQL_RC_RETURN
 };
 
 /* ----------
@@ -118,8 +118,8 @@ enum
  */
 enum
 {
-	PLPGSQL_GETDIAG_ROW_COUNT,
-	PLPGSQL_GETDIAG_RESULT_OID
+				PLPGSQL_GETDIAG_ROW_COUNT,
+				PLPGSQL_GETDIAG_RESULT_OID
 };
 
 
@@ -382,7 +382,7 @@ typedef struct
 	int			cmd_type;
 	int			lineno;
 	int			curvar;
-	PLpgSQL_row	*returntype;
+	PLpgSQL_row *returntype;
 	PLpgSQL_expr *argquery;
 	PLpgSQL_expr *query;
 	PLpgSQL_expr *dynquery;
@@ -486,7 +486,7 @@ typedef struct PLpgSQL_function
 	PLpgSQL_datum **datums;
 	PLpgSQL_stmt_block *action;
 
-	struct PLpgSQL_function *next; /* for chaining list of functions */
+	struct PLpgSQL_function *next;		/* for chaining list of functions */
 }			PLpgSQL_function;
 
 
@@ -529,8 +529,10 @@ extern char *plpgsql_error_funcname;
 
 /* linkage to the real yytext and yylineno variables */
 extern char *plpgsql_base_yytext;
+
 #define plpgsql_yytext plpgsql_base_yytext
 extern int	plpgsql_base_yylineno;
+
 #define plpgsql_yylineno plpgsql_base_yylineno
 
 extern PLpgSQL_function *plpgsql_curr_compile;
@@ -609,5 +611,4 @@ extern int	plpgsql_base_yylex(void);
 extern int	plpgsql_yylex(void);
 extern void plpgsql_push_back_token(int token);
 extern void plpgsql_setinput(char *s, int functype);
-
 #endif	 /* PLPGSQL_H */

@@ -1,4 +1,4 @@
-/* $Id: strcasecmp.c,v 1.7 2001/01/24 19:43:03 momjian Exp $ */
+/* $Id: strcasecmp.c,v 1.8 2001/10/25 05:49:40 momjian Exp $ */
 
 /*
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
@@ -15,7 +15,6 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)strcasecmp.c	5.5 (Berkeley) 11/24/87";
-
 #endif	 /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.42 2001/05/03 19:00:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.43 2001/10/25 05:49:21 momjian Exp $
  *
  * NOTES
  *
@@ -25,7 +25,7 @@
  *	NOTE: although any negative int32 is acceptable for reporting "<",
  *	and any positive int32 is acceptable for reporting ">", routines
  *	that work on 32-bit or wider datatypes can't just return "a - b".
- *	That could overflow and give the wrong answer.  Also, one should not
+ *	That could overflow and give the wrong answer.	Also, one should not
  *	return INT_MIN to report "<", since some callers will negate the result.
  *
  *	NOTE: it is critical that the comparison function impose a total order

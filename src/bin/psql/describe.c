@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.40 2001/10/06 14:41:17 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.41 2001/10/25 05:49:53 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -54,7 +54,7 @@ describeAggregates(const char *name)
 			 "  obj_description(a.oid, 'pg_aggregate') as \"%s\"\n"
 			 "FROM pg_aggregate a\n",
 			 _("Name"), _("(all types)"),
-			 _("Data type"), _("Description") );
+			 _("Data type"), _("Description"));
 
 	if (name)
 	{
@@ -98,7 +98,7 @@ describeFunctions(const char *name, bool verbose)
 			 "  p.proname as \"%s\",\n"
 			 "  oidvectortypes(p.proargtypes) as \"%s\"",
 			 _("Result data type"), _("Name"),
-			 _("Argument data types") );
+			 _("Argument data types"));
 
 	if (verbose)
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
@@ -107,7 +107,7 @@ describeFunctions(const char *name, bool verbose)
 				 "  p.prosrc as \"%s\",\n"
 				 "  obj_description(p.oid, 'pg_proc') as \"%s\"",
 				 _("Owner"), _("Language"),
-				 _("Source code"), _("Description") );
+				 _("Source code"), _("Description"));
 
 	if (!verbose)
 		strcat(buf,
@@ -155,7 +155,7 @@ describeTypes(const char *name, bool verbose)
 
 	snprintf(buf, sizeof(buf),
 			 "SELECT format_type(t.oid, NULL) AS \"%s\",\n",
-			 _("Name") );
+			 _("Name"));
 	if (verbose)
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
 				 "  t.typname AS \"%s\",\n"
@@ -163,10 +163,10 @@ describeTypes(const char *name, bool verbose)
 				 "    THEN CAST('var' AS text)\n"
 				 "    ELSE CAST(t.typlen AS text)\n"
 				 "  END AS \"%s\",\n",
-				 _("Internal name"), _("Size") );
-	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),	
+				 _("Internal name"), _("Size"));
+	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
 			 "  obj_description(t.oid, 'pg_type') as \"%s\"\n",
-			 _("Description") );
+			 _("Description"));
 
 	/*
 	 * do not include array types (start with underscore), do not include
@@ -218,7 +218,7 @@ describeOperators(const char *name)
 			 "FROM pg_proc p, pg_operator o\n"
 			 "WHERE RegprocToOid(o.oprcode) = p.oid\n",
 			 _("Name"), _("Left arg type"), _("Right arg type"),
-			 _("Result type"), _("Description") );
+			 _("Result type"), _("Description"));
 	if (name)
 	{
 		strcat(buf, "  AND o.oprname = '");
@@ -265,10 +265,10 @@ listAllDbs(bool desc)
 #endif
 	if (desc)
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-				 ",\n       obj_description(d.oid, 'pg_database') as \"%s\"",
+			 ",\n       obj_description(d.oid, 'pg_database') as \"%s\"",
 				 _("Description"));
 	strcat(buf,
-		   "\nFROM pg_database d LEFT JOIN pg_user u ON d.datdba = u.usesysid\n"
+	"\nFROM pg_database d LEFT JOIN pg_user u ON d.datdba = u.usesysid\n"
 		   "ORDER BY 1;");
 
 	res = PSQLexec(buf);
@@ -347,32 +347,32 @@ objectDescription(const char *object)
 			 "SELECT DISTINCT tt.name AS \"%s\", tt.object AS \"%s\", d.description AS \"%s\"\n"
 			 "FROM (\n"
 
-			 /* Aggregate descriptions */
+	/* Aggregate descriptions */
 			 "  SELECT a.oid as oid, a.tableoid as tableoid,\n"
-			 "  CAST(a.aggname AS text) as name, CAST('%s' AS text) as object\n"
+	  "  CAST(a.aggname AS text) as name, CAST('%s' AS text) as object\n"
 			 "  FROM pg_aggregate a\n"
 
-			 /* Function descriptions (except in/outs for datatypes) */
+	/* Function descriptions (except in/outs for datatypes) */
 			 "UNION ALL\n"
 			 "  SELECT p.oid as oid, p.tableoid as tableoid,\n"
-			 "  CAST(p.proname AS text) as name, CAST('%s' AS text) as object\n"
+	  "  CAST(p.proname AS text) as name, CAST('%s' AS text) as object\n"
 			 "  FROM pg_proc p\n"
-			 "  WHERE p.pronargs = 0 or oidvectortypes(p.proargtypes) <> ''\n"
+		"  WHERE p.pronargs = 0 or oidvectortypes(p.proargtypes) <> ''\n"
 
-			 /* Operator descriptions (must get comment via associated function) */
+	/* Operator descriptions (must get comment via associated function) */
 			 "UNION ALL\n"
 			 "  SELECT RegprocToOid(o.oprcode) as oid,\n"
 			 "  (SELECT oid FROM pg_class WHERE relname = 'pg_proc') as tableoid,\n"
-			 "  CAST(o.oprname AS text) as name, CAST('%s' AS text) as object\n"
+	  "  CAST(o.oprname AS text) as name, CAST('%s' AS text) as object\n"
 			 "  FROM pg_operator o\n"
 
-			 /* Type description */
+	/* Type description */
 			 "UNION ALL\n"
 			 "  SELECT t.oid as oid, t.tableoid as tableoid,\n"
-			 "  format_type(t.oid, NULL) as name, CAST('%s' AS text) as object\n"
+	 "  format_type(t.oid, NULL) as name, CAST('%s' AS text) as object\n"
 			 "  FROM pg_type t\n"
 
-			 /* Relation (tables, views, indexes, sequences) descriptions */
+	/* Relation (tables, views, indexes, sequences) descriptions */
 			 "UNION ALL\n"
 			 "  SELECT c.oid as oid, c.tableoid as tableoid,\n"
 			 "  CAST(c.relname AS text) as name,\n"
@@ -381,17 +381,17 @@ objectDescription(const char *object)
 			 "  AS text) as object\n"
 			 "  FROM pg_class c\n"
 
-			 /* Rule description (ignore rules for views) */
+	/* Rule description (ignore rules for views) */
 			 "UNION ALL\n"
 			 "  SELECT r.oid as oid, r.tableoid as tableoid,\n"
-			 "  CAST(r.rulename AS text) as name, CAST('%s' AS text) as object\n"
+	 "  CAST(r.rulename AS text) as name, CAST('%s' AS text) as object\n"
 			 "  FROM pg_rewrite r\n"
 			 "  WHERE r.rulename !~ '^_RET'\n"
 
-			 /* Trigger description */
+	/* Trigger description */
 			 "UNION ALL\n"
 			 "  SELECT t.oid as oid, t.tableoid as tableoid,\n"
-			 "  CAST(t.tgname AS text) as name, CAST('%s' AS text) as object\n"
+	   "  CAST(t.tgname AS text) as name, CAST('%s' AS text) as object\n"
 			 "  FROM pg_trigger t\n"
 
 			 ") AS tt,\n"
@@ -664,10 +664,10 @@ describeTableDetails(const char *name, bool desc)
 			error = true;
 		else
 		{
-			char   *indisunique = PQgetvalue(result, 0, 0);
-			char   *indisprimary = PQgetvalue(result, 0, 1);
-			char   *indamname = PQgetvalue(result, 0, 2);
-			char   *indpred = PQgetvalue(result, 0, 3);
+			char	   *indisunique = PQgetvalue(result, 0, 0);
+			char	   *indisprimary = PQgetvalue(result, 0, 1);
+			char	   *indamname = PQgetvalue(result, 0, 2);
+			char	   *indpred = PQgetvalue(result, 0, 3);
 
 			footers = xmalloc(3 * sizeof(*footers));
 			/* XXX This construction is poorly internationalized. */
@@ -704,18 +704,18 @@ describeTableDetails(const char *name, bool desc)
 	else if (tableinfo.relkind == 'r')
 	{
 		/* Footer information about a table */
-		PGresult		*result1 = NULL,
-						*result2 = NULL,
-						*result3 = NULL,
-						*result4 = NULL,
-						*result5 = NULL,
-						*result6 = NULL;
+		PGresult   *result1 = NULL,
+				   *result2 = NULL,
+				   *result3 = NULL,
+				   *result4 = NULL,
+				   *result5 = NULL,
+				   *result6 = NULL;
 		int			index_count = 0,
-						primary_count = 0,
-						unique_count = 0,
-						constr_count = 0,
-						rule_count = 0,
-						trigger_count = 0;
+					primary_count = 0,
+					unique_count = 0,
+					constr_count = 0,
+					rule_count = 0,
+					trigger_count = 0;
 		int			count_footers = 0;
 
 		/* count indexes */
@@ -724,7 +724,7 @@ describeTableDetails(const char *name, bool desc)
 			sprintf(buf, "SELECT c2.relname\n"
 					"FROM pg_class c, pg_class c2, pg_index i\n"
 					"WHERE c.relname = '%s' AND c.oid = i.indrelid AND i.indexrelid = c2.oid\n"
-               "AND NOT i.indisunique ORDER BY c2.relname",
+					"AND NOT i.indisunique ORDER BY c2.relname",
 					name);
 			result1 = PSQLexec(buf);
 			if (!result1)
@@ -739,7 +739,7 @@ describeTableDetails(const char *name, bool desc)
 			sprintf(buf, "SELECT c2.relname\n"
 					"FROM pg_class c, pg_class c2, pg_index i\n"
 					"WHERE c.relname = '%s' AND c.oid = i.indrelid AND i.indexrelid = c2.oid\n"
-               "AND i.indisprimary AND i.indisunique ORDER BY c2.relname",
+			  "AND i.indisprimary AND i.indisunique ORDER BY c2.relname",
 					name);
 			result5 = PSQLexec(buf);
 			if (!result5)
@@ -754,7 +754,7 @@ describeTableDetails(const char *name, bool desc)
 			sprintf(buf, "SELECT c2.relname\n"
 					"FROM pg_class c, pg_class c2, pg_index i\n"
 					"WHERE c.relname = '%s' AND c.oid = i.indrelid AND i.indexrelid = c2.oid\n"
-               "AND NOT i.indisprimary AND i.indisunique ORDER BY c2.relname",
+					"AND NOT i.indisprimary AND i.indisunique ORDER BY c2.relname",
 					name);
 			result6 = PSQLexec(buf);
 			if (!result6)
@@ -808,18 +808,18 @@ describeTableDetails(const char *name, bool desc)
 		}
 
 		footers = xmalloc((index_count + primary_count + unique_count +
-									constr_count + rule_count + trigger_count + 1)
-									* sizeof(*footers));
+						   constr_count + rule_count + trigger_count + 1)
+						  * sizeof(*footers));
 
 		/* print indexes */
 		for (i = 0; i < index_count; i++)
 		{
-			char   *s = _("Indexes");
+			char	   *s = _("Indexes");
 
 			if (i == 0)
 				snprintf(buf, sizeof(buf), "%s: %s", s, PQgetvalue(result1, i, 0));
 			else
-				snprintf(buf, sizeof(buf), "%*s  %s", (int)strlen(s), "", PQgetvalue(result1, i, 0));
+				snprintf(buf, sizeof(buf), "%*s  %s", (int) strlen(s), "", PQgetvalue(result1, i, 0));
 			if (i < index_count - 1)
 				strcat(buf, ",");
 
@@ -829,12 +829,12 @@ describeTableDetails(const char *name, bool desc)
 		/* print primary keys */
 		for (i = 0; i < primary_count; i++)
 		{
-			char   *s = _("Primary key");
+			char	   *s = _("Primary key");
 
 			if (i == 0)
 				snprintf(buf, sizeof(buf), "%s: %s", s, PQgetvalue(result5, i, 0));
 			else
-				snprintf(buf, sizeof(buf), "%*s  %s", (int)strlen(s), "", PQgetvalue(result5, i, 0));
+				snprintf(buf, sizeof(buf), "%*s  %s", (int) strlen(s), "", PQgetvalue(result5, i, 0));
 			if (i < primary_count - 1)
 				strcat(buf, ",");
 
@@ -844,12 +844,12 @@ describeTableDetails(const char *name, bool desc)
 		/* print unique constraints */
 		for (i = 0; i < unique_count; i++)
 		{
-			char   *s = _("Unique keys");
+			char	   *s = _("Unique keys");
 
 			if (i == 0)
 				snprintf(buf, sizeof(buf), "%s: %s", s, PQgetvalue(result6, i, 0));
 			else
-				snprintf(buf, sizeof(buf), "%*s  %s", (int)strlen(s), "", PQgetvalue(result6, i, 0));
+				snprintf(buf, sizeof(buf), "%*s  %s", (int) strlen(s), "", PQgetvalue(result6, i, 0));
 			if (i < unique_count - 1)
 				strcat(buf, ",");
 
@@ -859,26 +859,26 @@ describeTableDetails(const char *name, bool desc)
 		/* print constraints */
 		for (i = 0; i < constr_count; i++)
 		{
-			char   *s = _("Check constraints");
+			char	   *s = _("Check constraints");
 
 			if (i == 0)
 				snprintf(buf, sizeof(buf), _("%s: \"%s\" %s"), s,
-						 PQgetvalue(result2, i, 1), PQgetvalue(result2, i, 0));
+				   PQgetvalue(result2, i, 1), PQgetvalue(result2, i, 0));
 			else
-				snprintf(buf, sizeof(buf), _("%*s  \"%s\" %s"), (int)strlen(s), "",
-						 PQgetvalue(result2, i, 1), PQgetvalue(result2, i, 0));
+				snprintf(buf, sizeof(buf), _("%*s  \"%s\" %s"), (int) strlen(s), "",
+				   PQgetvalue(result2, i, 1), PQgetvalue(result2, i, 0));
 			footers[count_footers++] = xstrdup(buf);
 		}
 
 		/* print rules */
 		for (i = 0; i < rule_count; i++)
 		{
-			char   *s = _("Rules");
+			char	   *s = _("Rules");
 
 			if (i == 0)
 				snprintf(buf, sizeof(buf), "%s: %s", s, PQgetvalue(result3, i, 0));
 			else
-				snprintf(buf, sizeof(buf), "%*s  %s", (int)strlen(s), "", PQgetvalue(result3, i, 0));
+				snprintf(buf, sizeof(buf), "%*s  %s", (int) strlen(s), "", PQgetvalue(result3, i, 0));
 			if (i < rule_count - 1)
 				strcat(buf, ",");
 
@@ -888,12 +888,12 @@ describeTableDetails(const char *name, bool desc)
 		/* print triggers */
 		for (i = 0; i < trigger_count; i++)
 		{
-			char   *s = _("Triggers");
+			char	   *s = _("Triggers");
 
 			if (i == 0)
 				snprintf(buf, sizeof(buf), "%s: %s", s, PQgetvalue(result4, i, 0));
 			else
-				snprintf(buf, sizeof(buf), "%*s  %s", (int)strlen(s), "", PQgetvalue(result4, i, 0));
+				snprintf(buf, sizeof(buf), "%*s  %s", (int) strlen(s), "", PQgetvalue(result4, i, 0));
 			if (i < trigger_count - 1)
 				strcat(buf, ",");
 
@@ -944,16 +944,16 @@ describeTableDetails(const char *name, bool desc)
  */
 
 bool
-describeUsers (const char *name)
+describeUsers(const char *name)
 {
 	char		buf[384 + REGEXP_CUTOFF];
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
-	
+
 	snprintf(buf, sizeof(buf),
 			 "SELECT u.usename AS \"%s\",\n"
 			 "  u.usesysid AS \"%s\",\n"
-			 "  CASE WHEN u.usesuper AND u.usecreatedb THEN CAST('%s' AS text)\n"
+	 "  CASE WHEN u.usesuper AND u.usecreatedb THEN CAST('%s' AS text)\n"
 			 "       WHEN u.usesuper THEN CAST('%s' AS text)\n"
 			 "       WHEN u.usecreatedb THEN CAST('%s' AS text)\n"
 			 "       ELSE CAST('' AS text)\n"
@@ -962,7 +962,7 @@ describeUsers (const char *name)
 			 _("User name"), _("User ID"),
 			 _("superuser, create database"),
 			 _("superuser"), _("create database"),
-			 _("Attributes") );
+			 _("Attributes"));
 	if (name)
 	{
 		strcat(buf, "WHERE u.usename ~ '^");
@@ -1033,7 +1033,7 @@ listTables(const char *infotype, const char *name, bool desc)
 				 ",\n  obj_description(c.oid, 'pg_class') as \"%s\"",
 				 _("Description"));
 	strcat(buf,
-		   "\nFROM pg_class c LEFT JOIN pg_user u ON c.relowner = u.usesysid\n"
+	 "\nFROM pg_class c LEFT JOIN pg_user u ON c.relowner = u.usesysid\n"
 		   "WHERE c.relkind IN (");
 	if (showTables)
 		strcat(buf, "'r',");
@@ -1045,7 +1045,7 @@ listTables(const char *infotype, const char *name, bool desc)
 		strcat(buf, "'S',");
 	if (showSystem && showTables)
 		strcat(buf, "'s',");
-	strcat(buf, "''");				/* dummy */
+	strcat(buf, "''");			/* dummy */
 	strcat(buf, ")\n");
 
 	if (showSystem)

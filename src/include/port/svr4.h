@@ -9,5 +9,4 @@
 
 #include "abi_mutex.h"
 typedef abilock_t slock_t;
-
 #endif

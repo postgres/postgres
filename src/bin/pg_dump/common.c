@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.59 2001/10/22 19:31:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.60 2001/10/25 05:49:52 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -166,13 +166,13 @@ findParentsByOid(TableInfo *tblinfo, int numTables,
 					selfInd = findTableByOid(tblinfo, numTables, oid);
 					if (selfInd >= 0)
 						write_msg(NULL, "failed sanity check, parent oid %s of table %s (oid %s) not found\n",
-								   inhinfo[i].inhparent,
-								   tblinfo[selfInd].relname,
-								   oid);
+								  inhinfo[i].inhparent,
+								  tblinfo[selfInd].relname,
+								  oid);
 					else
 						write_msg(NULL, "failed sanity check, parent oid %s of table (oid %s) not found\n",
-								   inhinfo[i].inhparent,
-								   oid);
+								  inhinfo[i].inhparent,
+								  oid);
 
 					exit_nicely();
 				}
@@ -267,7 +267,7 @@ strInArray(const char *pattern, char **arr, int arr_size)
  *
  */
 
-TableInfo  *
+TableInfo *
 dumpSchema(Archive *fout,
 		   int *numTablesPtr,
 		   const char *tablename,
@@ -411,12 +411,12 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 	int			parentInd;
 	int			inhAttrInd;
 	int			(*parentIndexes)[];
-	bool		foundAttr; 		/* Attr was found in a parent */
+	bool		foundAttr;		/* Attr was found in a parent */
 	bool		foundNotNull;	/* Attr was NOT NULL in a parent */
 	bool		defaultsMatch;	/* All non-empty defaults match */
 	bool		defaultsFound;	/* Found a default in a parent */
-	char		*attrDef;
-	char		*inhDef;
+	char	   *attrDef;
+	char	   *inhDef;
 
 	/*
 	 * we go backwards because the tables in tblinfo are in OID order,
@@ -438,15 +438,13 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 												 &parentIndexes);
 
 		/*
-	     * For each attr, check the parent info: if no parent has
-		 * an attr with the same name, then it's not inherited. If there
-		 * *is* an attr with the same name, then only dump it if:
+		 * For each attr, check the parent info: if no parent has an attr
+		 * with the same name, then it's not inherited. If there *is* an
+		 * attr with the same name, then only dump it if:
 		 *
-		 *     - it is NOT NULL and zero parents are NOT NULL
-		 * OR  
-		 * 	   - it has a default value AND the default value
-		 *		 does not match all parent default values, or
-		 *		 no parents specify a default.
+		 * - it is NOT NULL and zero parents are NOT NULL OR - it has a
+		 * default value AND the default value does not match all parent
+		 * default values, or no parents specify a default.
 		 *
 		 * See discussion on -hackers around 2-Apr-2001.
 		 */
@@ -479,7 +477,8 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 				{
 					foundAttr = true;
 					foundNotNull |= tblinfo[parentInd].notnull[inhAttrInd];
-					if (attrDef != NULL) /* It we have a default, check parent */
+					if (attrDef != NULL)		/* It we have a default,
+												 * check parent */
 					{
 						inhDef = tblinfo[parentInd].adef_expr[inhAttrInd];
 
@@ -492,25 +491,31 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 				};
 			};
 
-			/* 
-			 * Based on the scan of the parents, decide if we
-			 * can rely on the inherited attr
+			/*
+			 * Based on the scan of the parents, decide if we can rely on
+			 * the inherited attr
 			 */
-			if (foundAttr) /* Attr was inherited */
+			if (foundAttr)		/* Attr was inherited */
 			{
 				/* Set inherited flag by default */
 				tblinfo[i].inhAttrs[j] = 1;
 				tblinfo[i].inhAttrDef[j] = 1;
 				tblinfo[i].inhNotNull[j] = 1;
 
-				/* Clear it if attr had a default, but parents did not, or mismatch */
-				if ( (attrDef != NULL) && (!defaultsFound || !defaultsMatch) )
+				/*
+				 * Clear it if attr had a default, but parents did not, or
+				 * mismatch
+				 */
+				if ((attrDef != NULL) && (!defaultsFound || !defaultsMatch))
 				{
 					tblinfo[i].inhAttrs[j] = 0;
 					tblinfo[i].inhAttrDef[j] = 0;
 				}
 
-				/* Clear it if NOT NULL and none of the parents were NOT NULL */
+				/*
+				 * Clear it if NOT NULL and none of the parents were NOT
+				 * NULL
+				 */
 				if (tblinfo[i].notnull[j] && !foundNotNull)
 				{
 					tblinfo[i].inhAttrs[j] = 0;
@@ -631,7 +636,6 @@ fmtId(const char *rawid, bool force_quotes)
 	appendPQExpBufferChar(id_return, '\"');
 	for (cp = rawid; *cp; cp++)
 	{
-
 		/*
 		 * Did we find a double-quote in the string? Then make this a
 		 * double double-quote per SQL99. Before, we put in a

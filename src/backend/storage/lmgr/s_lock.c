@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.2 2001/09/29 04:02:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.3 2001/10/25 05:49:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,13 +48,14 @@ s_lock(volatile slock_t *lock, const char *file, int line)
 	struct timeval delay;
 
 	/*
-	 * We loop tightly for awhile, then delay using select() and try again.
-	 * Preferably, "awhile" should be a small multiple of the maximum time
-	 * we expect a spinlock to be held.  100 iterations seems about right.
+	 * We loop tightly for awhile, then delay using select() and try
+	 * again. Preferably, "awhile" should be a small multiple of the
+	 * maximum time we expect a spinlock to be held.  100 iterations seems
+	 * about right.
 	 *
 	 * We use a 10 millisec select delay because that is the lower limit on
-	 * many platforms.  The timeout is figured on this delay only, and so the
-	 * nominal 1 minute is a lower bound.
+	 * many platforms.	The timeout is figured on this delay only, and so
+	 * the nominal 1 minute is a lower bound.
 	 */
 #define SPINS_PER_DELAY		100
 #define DELAY_MSEC			10
@@ -108,7 +109,6 @@ _success:						\n\
 			rts					\n\
 ");
 }
-
 #endif	 /* __m68k__ */
 
 #if defined(__APPLE__) && defined(__ppc__)
@@ -138,7 +138,6 @@ success:						\n\
 			blr					\n\
 ");
 }
-
 #endif	 /* __APPLE__ && __ppc__ */
 
 #if defined(__powerpc__)
@@ -163,7 +162,6 @@ success:						\n\
 			blr					\n\
 ");
 }
-
 #endif	 /* __powerpc__ */
 
 #if defined(__mips__) && !defined(__sgi)
@@ -171,7 +169,7 @@ static void
 tas_dummy()
 {
 	__asm__		__volatile__(
-										"\
+										 "\
 .global	tas						\n\
 tas:							\n\
 			.frame	$sp, 0, $31	\n\
@@ -188,10 +186,9 @@ fail:							\n\
 			j   	$31			\n\
 ");
 }
-
 #endif	 /* __mips__ && !__sgi */
 
-#else /* not __GNUC__ */
+#else							/* not __GNUC__ */
 /***************************************************************************
  * All non gcc
  */
@@ -220,7 +217,6 @@ tas_dummy()						/* really means: extern int tas(slock_t
 	asm("   rts");
 	asm("   .data");
 }
-
 #endif	 /* sun3 */
 
 
@@ -244,7 +240,6 @@ tas_dummy()						/* really means: extern int tas(slock_t
 	asm("retl");
 	asm("nop");
 }
-
 #endif	 /* NEED_SPARC_TAS_ASM */
 
 
@@ -253,7 +248,6 @@ tas_dummy()						/* really means: extern int tas(slock_t
 #if defined(NEED_I386_TAS_ASM)
 /* non gcc i386 based things */
 #endif	 /* NEED_I386_TAS_ASM */
-
 
 
 #endif	 /* not __GNUC__ */
@@ -298,5 +292,4 @@ main()
 	exit(3);
 
 }
-
 #endif	 /* S_LOCK_TEST */

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.47 2001/08/02 21:31:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.48 2001/10/25 05:50:20 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -96,11 +96,11 @@ static int exec_stmt_fors(PLpgSQL_execstate * estate,
 static int exec_stmt_select(PLpgSQL_execstate * estate,
 				 PLpgSQL_stmt_select * stmt);
 static int exec_stmt_open(PLpgSQL_execstate * estate,
-				 PLpgSQL_stmt_open * stmt);
+			   PLpgSQL_stmt_open * stmt);
 static int exec_stmt_fetch(PLpgSQL_execstate * estate,
-				 PLpgSQL_stmt_fetch * stmt);
+				PLpgSQL_stmt_fetch * stmt);
 static int exec_stmt_close(PLpgSQL_execstate * estate,
-				 PLpgSQL_stmt_close * stmt);
+				PLpgSQL_stmt_close * stmt);
 static int exec_stmt_exit(PLpgSQL_execstate * estate,
 			   PLpgSQL_stmt_exit * stmt);
 static int exec_stmt_return(PLpgSQL_execstate * estate,
@@ -115,7 +115,7 @@ static int exec_stmt_dynfors(PLpgSQL_execstate * estate,
 				  PLpgSQL_stmt_dynfors * stmt);
 
 static void plpgsql_estate_setup(PLpgSQL_execstate * estate,
-								 PLpgSQL_function * func);
+					 PLpgSQL_function * func);
 static void exec_eval_cleanup(PLpgSQL_execstate * estate);
 
 static void exec_prepare_plan(PLpgSQL_execstate * estate,
@@ -859,7 +859,7 @@ exec_stmt_block(PLpgSQL_execstate * estate, PLpgSQL_stmt_block * block)
 
 					if (var->freeval)
 					{
-						pfree((void *)(var->value));
+						pfree((void *) (var->value));
 						var->freeval = false;
 					}
 
@@ -1072,16 +1072,16 @@ exec_stmt(PLpgSQL_execstate * estate, PLpgSQL_stmt * stmt)
 static int
 exec_stmt_assign(PLpgSQL_execstate * estate, PLpgSQL_stmt_assign * stmt)
 {
-	PLpgSQL_expr   *expr = stmt->expr;
+	PLpgSQL_expr *expr = stmt->expr;
 
 	if (stmt->varno >= 0)
 		exec_assign_expr(estate, estate->datums[stmt->varno], expr);
 	else
 	{
 		/*
-		 * PERFORM: evaluate query and discard result.  This cannot share
-		 * code with the assignment case since we do not wish to constraint
-		 * the discarded result to be only one row/column.
+		 * PERFORM: evaluate query and discard result.	This cannot share
+		 * code with the assignment case since we do not wish to
+		 * constraint the discarded result to be only one row/column.
 		 */
 		int			rc;
 
@@ -1322,7 +1322,6 @@ exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
 	exec_set_found(estate, false);
 	for (;;)
 	{
-
 		/*
 		 * Check bounds
 		 */
@@ -1418,8 +1417,8 @@ exec_stmt_fors(PLpgSQL_execstate * estate, PLpgSQL_stmt_fors * stmt)
 	}
 
 	/*
-	 * Open the implicit cursor for the statement and fetch
-	 * the initial 10 rows.
+	 * Open the implicit cursor for the statement and fetch the initial 10
+	 * rows.
 	 */
 	exec_run_select(estate, stmt->query, 0, &portal);
 
@@ -1636,6 +1635,7 @@ exec_stmt_return(PLpgSQL_execstate * estate, PLpgSQL_stmt_return * stmt)
 				estate->rettupdesc = SPI_copytupledesc(estate->eval_tuptable->tupdesc);
 				estate->retisnull = false;
 			}
+
 			/*
 			 * Okay to clean up here, since we already copied result tuple
 			 * to upper executor.
@@ -1678,7 +1678,6 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 
 	for (cp = stmt->message; *cp; cp++)
 	{
-
 		/*
 		 * Occurences of a single % are replaced by the next arguments
 		 * external representation. Double %'s are left as is so elog()
@@ -1882,8 +1881,8 @@ exec_prepare_plan(PLpgSQL_execstate * estate,
 	Oid		   *argtypes;
 
 	/*
-	 * We need a temporary argtypes array to load with data.
-	 * (The finished plan structure will contain a copy of it.)
+	 * We need a temporary argtypes array to load with data. (The finished
+	 * plan structure will contain a copy of it.)
 	 *
 	 * +1 is just to avoid palloc(0) error.
 	 */
@@ -2047,7 +2046,10 @@ exec_stmt_execsql(PLpgSQL_execstate * estate,
 				 expr->query);
 	}
 
-	/* Release any result tuples from SPI_execp (probably shouldn't be any) */
+	/*
+	 * Release any result tuples from SPI_execp (probably shouldn't be
+	 * any)
+	 */
 	SPI_freetuptable(SPI_tuptable);
 
 	/* Save result info for GET DIAGNOSTICS */
@@ -2181,7 +2183,7 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 	HeapTuple	typetup;
 	Form_pg_type typeStruct;
 	FmgrInfo	finfo_output;
-	void		*plan;
+	void	   *plan;
 	Portal		portal;
 
 	/*
@@ -2238,7 +2240,7 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 	portal = SPI_cursor_open(NULL, plan, NULL, NULL);
 	if (portal == NULL)
 		elog(ERROR, "failed to open implicit cursor for dynamic query \"%s\"",
-					querystr);
+			 querystr);
 	pfree(querystr);
 	SPI_freeplan(plan);
 
@@ -2344,7 +2346,7 @@ static int
 exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 {
 	PLpgSQL_var *curvar = NULL;
-	char		*curname = NULL;
+	char	   *curname = NULL;
 	PLpgSQL_expr *query = NULL;
 	Portal		portal;
 
@@ -2387,7 +2389,7 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 		 * done downstairs.
 		 * ----------
 		 */
-		query = stmt->query; 
+		query = stmt->query;
 		if (query->plan == NULL)
 			exec_prepare_plan(estate, query);
 	}
@@ -2403,7 +2405,7 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 		HeapTuple	typetup;
 		Form_pg_type typeStruct;
 		FmgrInfo	finfo_output;
-		void		*curplan = NULL;
+		void	   *curplan = NULL;
 
 		/* ----------
 		 * We evaluate the string expression after the
@@ -2429,7 +2431,7 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 		fmgr_info(typeStruct->typoutput, &finfo_output);
 		querystr = DatumGetCString(FunctionCall3(&finfo_output,
 												 queryD,
-												 ObjectIdGetDatum(typeStruct->typelem),
+								   ObjectIdGetDatum(typeStruct->typelem),
 												 Int32GetDatum(-1)));
 
 		ReleaseSysCache(typetup);
@@ -2450,7 +2452,7 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 		 * ----------
 		 */
 		if (curvar->freeval)
-			pfree((void *)(curvar->value));
+			pfree((void *) (curvar->value));
 
 		curvar->value = DirectFunctionCall1(textin, CStringGetDatum(portal->name));
 		curvar->isnull = false;
@@ -2472,20 +2474,20 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 			 * internal row.
 			 * ----------
 			 */
-			PLpgSQL_stmt_select	set_args;
+			PLpgSQL_stmt_select set_args;
 
 			memset(&set_args, 0, sizeof(set_args));
-			set_args.cmd_type	= PLPGSQL_STMT_SELECT;
-			set_args.lineno		= stmt->lineno;
-			set_args.row		= (PLpgSQL_row *) 
-								  (estate->datums[curvar->cursor_explicit_argrow]);
-			set_args.query		= stmt->argquery;
+			set_args.cmd_type = PLPGSQL_STMT_SELECT;
+			set_args.lineno = stmt->lineno;
+			set_args.row = (PLpgSQL_row *)
+				(estate->datums[curvar->cursor_explicit_argrow]);
+			set_args.query = stmt->argquery;
 
 			if (exec_stmt_select(estate, &set_args) != PLPGSQL_RC_OK)
 				elog(ERROR, "open cursor failed during argument processing");
 		}
 
-		query = curvar->cursor_explicit_expr; 
+		query = curvar->cursor_explicit_expr;
 		if (query->plan == NULL)
 			exec_prepare_plan(estate, query);
 	}
@@ -2574,7 +2576,7 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 	 * ----------
 	 */
 	if (curvar->freeval)
-		pfree((void *)(curvar->value));
+		pfree((void *) (curvar->value));
 
 	curvar->value = DirectFunctionCall1(textin, CStringGetDatum(portal->name));
 	curvar->isnull = false;
@@ -2596,7 +2598,7 @@ exec_stmt_fetch(PLpgSQL_execstate * estate, PLpgSQL_stmt_fetch * stmt)
 	PLpgSQL_row *row = NULL;
 	SPITupleTable *tuptab;
 	Portal		portal;
-	char		*curname;
+	char	   *curname;
 	int			n;
 
 	/* ----------
@@ -2674,7 +2676,7 @@ exec_stmt_close(PLpgSQL_execstate * estate, PLpgSQL_stmt_close * stmt)
 {
 	PLpgSQL_var *curvar = NULL;
 	Portal		portal;
-	char		*curname;
+	char	   *curname;
 
 	/* ----------
 	 * Get the portal of the cursor by name
@@ -2757,7 +2759,7 @@ exec_assign_value(PLpgSQL_execstate * estate,
 
 			if (var->freeval)
 			{
-				pfree((void *)(var->value));
+				pfree((void *) (var->value));
 				var->freeval = false;
 			}
 
@@ -2771,23 +2773,24 @@ exec_assign_value(PLpgSQL_execstate * estate,
 				elog(ERROR, "NULL assignment to variable '%s' declared NOT NULL", var->refname);
 
 			/*
-			 * If type is by-reference, make sure we have a freshly palloc'd
-			 * copy; the originally passed value may not live as long as the
-			 * variable!  But we don't need to re-copy if exec_cast_value
-			 * performed a conversion; its output must already be palloc'd.
+			 * If type is by-reference, make sure we have a freshly
+			 * palloc'd copy; the originally passed value may not live as
+			 * long as the variable!  But we don't need to re-copy if
+			 * exec_cast_value performed a conversion; its output must
+			 * already be palloc'd.
 			 */
 			if (!var->datatype->typbyval && !*isNull)
 			{
 				if (newvalue == value)
 				{
-					int		len;
+					int			len;
 
 					if (var->datatype->typlen < 0)
 						len = VARSIZE(newvalue);
 					else
 						len = var->datatype->typlen;
 					var->value = (Datum) palloc(len);
-					memcpy((void *)(var->value), (void *)newvalue, len);
+					memcpy((void *) (var->value), (void *) newvalue, len);
 				}
 				else
 					var->value = newvalue;
@@ -2825,9 +2828,9 @@ exec_assign_value(PLpgSQL_execstate * estate,
 			natts = rec->tupdesc->natts;
 
 			/*
-			 * Set up values/datums arrays for heap_formtuple.  For all the
-			 * attributes except the one we want to replace, use the value
-			 * that's in the old tuple.
+			 * Set up values/datums arrays for heap_formtuple.	For all
+			 * the attributes except the one we want to replace, use the
+			 * value that's in the old tuple.
 			 */
 			values = palloc(sizeof(Datum) * natts);
 			nulls = palloc(natts);
@@ -2869,8 +2872,8 @@ exec_assign_value(PLpgSQL_execstate * estate,
 				nulls[fno] = ' ';
 
 			/*
-			 * Avoid leaking the result of exec_cast_value, if it performed
-			 * a conversion to a pass-by-ref type.
+			 * Avoid leaking the result of exec_cast_value, if it
+			 * performed a conversion to a pass-by-ref type.
 			 */
 			if (!typeStruct->typbyval && !attisnull && values[fno] != value)
 				mustfree = DatumGetPointer(values[fno]);
@@ -2953,7 +2956,7 @@ exec_eval_expr(PLpgSQL_execstate * estate,
 		elog(ERROR, "query \"%s\" returned more than one row", expr->query);
 	if (estate->eval_tuptable->tupdesc->natts != 1)
 		elog(ERROR, "query \"%s\" returned %d columns", expr->query,
-				estate->eval_tuptable->tupdesc->natts);
+			 estate->eval_tuptable->tupdesc->natts);
 
 	/*
 	 * Return the result and its type
@@ -3062,7 +3065,7 @@ exec_run_select(PLpgSQL_execstate * estate,
 		*portalP = SPI_cursor_open(NULL, expr->plan, values, nulls);
 		if (*portalP == NULL)
 			elog(ERROR, "failed to open implicit cursor for \"%s\"",
-						expr->query);
+				 expr->query);
 		pfree(values);
 		pfree(nulls);
 		return SPI_OK_CURSOR;
@@ -3118,17 +3121,17 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	 *
 	 * NOTE: we pass the SPI plan's context as the query-lifetime context for
 	 * function cache nodes and suchlike allocations.  This is appropriate
-	 * because that's where the expression tree itself is, and the function
-	 * cache nodes must live as long as it does.
+	 * because that's where the expression tree itself is, and the
+	 * function cache nodes must live as long as it does.
 	 */
 	econtext = MakeExprContext(NULL, spi_plan->plancxt);
 
 	/*
 	 * Param list can live in econtext's temporary memory context.
 	 */
-	paramLI = (ParamListInfo) 
+	paramLI = (ParamListInfo)
 		MemoryContextAlloc(econtext->ecxt_per_tuple_memory,
-						   (expr->nparams + 1) * sizeof(ParamListInfoData));
+						(expr->nparams + 1) * sizeof(ParamListInfoData));
 	econtext->ecxt_param_list_info = paramLI;
 
 	/*
@@ -3204,8 +3207,9 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	SPI_pop();
 
 	/*
-	 * Note: if pass-by-reference, the result is in the econtext's temporary
-	 * memory context.  It will be freed when exec_eval_cleanup is done.
+	 * Note: if pass-by-reference, the result is in the econtext's
+	 * temporary memory context.  It will be freed when exec_eval_cleanup
+	 * is done.
 	 */
 	Assert(estate->eval_econtext == NULL);
 	estate->eval_econtext = econtext;
@@ -3265,11 +3269,11 @@ exec_move_row(PLpgSQL_execstate * estate,
 	 * attributes of the tuple to the variables the row points to.
 	 *
 	 * NOTE: this code used to demand row->nfields == tup->t_data->t_natts,
-	 * but that's wrong.  The tuple might have more fields than we expected
-	 * if it's from an inheritance-child table of the current table, or it
-	 * might have fewer if the table has had columns added by ALTER TABLE.
-	 * Ignore extra columns and assume NULL for missing columns, the same
-	 * as heap_getattr would do.
+	 * but that's wrong.  The tuple might have more fields than we
+	 * expected if it's from an inheritance-child table of the current
+	 * table, or it might have fewer if the table has had columns added by
+	 * ALTER TABLE. Ignore extra columns and assume NULL for missing
+	 * columns, the same as heap_getattr would do.
 	 */
 	if (row != NULL)
 	{
@@ -3374,7 +3378,7 @@ exec_simple_check_node(Node *node)
 {
 	switch (nodeTag(node))
 	{
-			case T_Expr:
+		case T_Expr:
 			{
 				Expr	   *expr = (Expr *) node;
 				List	   *l;

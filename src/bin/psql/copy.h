@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/copy.h,v 1.9 2000/03/01 21:09:58 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.h,v 1.10 2001/10/25 05:49:53 momjian Exp $
  */
 #ifndef COPY_H
 #define COPY_H
@@ -19,5 +19,4 @@ bool		do_copy(const char *args);
 
 bool		handleCopyOut(PGconn *conn, FILE *copystream);
 bool		handleCopyIn(PGconn *conn, FILE *copystream, const char *prompt);
-
 #endif

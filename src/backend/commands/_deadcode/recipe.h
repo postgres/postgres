@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: recipe.h,v 1.3 2001/01/24 19:42:53 momjian Exp $
+ * $Id: recipe.h,v 1.4 2001/10/25 05:49:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,5 +16,4 @@
 #include "nodes/parsenodes.h"
 
 extern void beginRecipe(RecipeStmt *stmt);
-
 #endif	 /* RECIPE_H */

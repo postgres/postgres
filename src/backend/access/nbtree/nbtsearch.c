@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.68 2001/10/06 23:21:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.69 2001/10/25 05:49:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -589,10 +589,10 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 	/*
 	 * At this point we are positioned at the first item >= scan key, or
-	 * possibly at the end of a page on which all the existing items are 
-	 * greater than the scan key and we know that everything on later pages
-	 * is less than or equal to scan key.
-     *
+	 * possibly at the end of a page on which all the existing items are
+	 * greater than the scan key and we know that everything on later
+	 * pages is less than or equal to scan key.
+	 *
 	 * We could step forward in the latter case, but that'd be a waste of
 	 * time if we want to scan backwards.  So, it's now time to examine
 	 * the scan strategy to find the exact place to start the scan.

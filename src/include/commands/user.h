@@ -3,7 +3,7 @@
  * user.h
  *
  *
- * $Id: user.h,v 1.13 2000/06/15 03:32:35 momjian Exp $
+ * $Id: user.h,v 1.14 2001/10/25 05:49:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,5 +21,4 @@ extern void AlterGroup(AlterGroupStmt *stmt, const char *tag);
 extern void DropGroup(DropGroupStmt *stmt);
 
 extern Datum update_pg_pwd(PG_FUNCTION_ARGS);
-
 #endif	 /* USER_H */

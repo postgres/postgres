@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.42 2001/05/15 00:33:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.43 2001/10/25 05:49:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,7 +90,6 @@ exec_append_initialize_next(Append *node)
 
 	if (whichplan < appendstate->as_firstplan)
 	{
-
 		/*
 		 * if scanning in reverse, we start at the last scan in the list
 		 * and then proceed back to the first.. in any case we inform
@@ -102,7 +101,6 @@ exec_append_initialize_next(Append *node)
 	}
 	else if (whichplan > appendstate->as_lastplan)
 	{
-
 		/*
 		 * as above, end the scan if we go beyond the last scan in our
 		 * list..
@@ -112,7 +110,6 @@ exec_append_initialize_next(Append *node)
 	}
 	else
 	{
-
 		/*
 		 * initialize the scan
 		 *
@@ -182,12 +179,13 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 	node->appendstate = appendstate;
 
 	/*
-	 * Do we want to scan just one subplan?  (Special case for EvalPlanQual)
-	 * XXX pretty dirty way of determining that this case applies ...
+	 * Do we want to scan just one subplan?  (Special case for
+	 * EvalPlanQual) XXX pretty dirty way of determining that this case
+	 * applies ...
 	 */
 	if (node->isTarget && estate->es_evTuple != NULL)
 	{
-		int		tplan;
+		int			tplan;
 
 		tplan = estate->es_result_relation_info - estate->es_result_relations;
 		Assert(tplan >= 0 && tplan < nplans);
@@ -301,7 +299,6 @@ ExecProcAppend(Append *node)
 
 	if (!TupIsNull(result))
 	{
-
 		/*
 		 * if the subplan gave us something then place a copy of whatever
 		 * we get into our result slot and return it.
@@ -313,7 +310,6 @@ ExecProcAppend(Append *node)
 	}
 	else
 	{
-
 		/*
 		 * .. go on to the "next" subplan in the appropriate direction and
 		 * try processing again (recursively)
@@ -385,15 +381,17 @@ ExecReScanAppend(Append *node, ExprContext *exprCtxt, Plan *parent)
 		Plan	   *subnode;
 
 		subnode = (Plan *) nth(i, node->appendplans);
+
 		/*
 		 * ExecReScan doesn't know about my subplans, so I have to do
 		 * changed-parameter signaling myself.
 		 */
 		if (node->plan.chgParam != NULL)
 			SetChangedParamList(subnode, node->plan.chgParam);
+
 		/*
-		 * if chgParam of subnode is not null then plan will be re-scanned by
-		 * first ExecProcNode.
+		 * if chgParam of subnode is not null then plan will be re-scanned
+		 * by first ExecProcNode.
 		 */
 		if (subnode->chgParam == NULL)
 		{

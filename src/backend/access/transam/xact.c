@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.112 2001/10/18 17:30:03 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.113 2001/10/25 05:49:22 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -300,7 +300,6 @@ IsTransactionState(void)
 	 */
 	return false;
 }
-
 #endif
 
 /* --------------------------------
@@ -476,7 +475,6 @@ AtStart_Cache(void)
 static void
 AtStart_Locks(void)
 {
-
 	/*
 	 * at present, it is unknown to me what belongs here -cim 3/18/90
 	 *
@@ -492,7 +490,6 @@ AtStart_Locks(void)
 static void
 AtStart_Memory(void)
 {
-
 	/*
 	 * We shouldn't have any transaction contexts already.
 	 */
@@ -717,8 +714,8 @@ RecordTransactionAbort(void)
 		recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_ABORT, &rdata);
 
 		/*
-		 * There's no need for XLogFlush here, since the default assumption
-		 * would be that we aborted, anyway.
+		 * There's no need for XLogFlush here, since the default
+		 * assumption would be that we aborted, anyway.
 		 */
 
 		/* Mark the transaction aborted in clog */
@@ -756,7 +753,6 @@ AtAbort_Cache(void)
 static void
 AtAbort_Locks(void)
 {
-
 	/*
 	 * XXX What if ProcReleaseLocks() fails?  (race condition?)
 	 *
@@ -773,7 +769,6 @@ AtAbort_Locks(void)
 static void
 AtAbort_Memory(void)
 {
-
 	/*
 	 * Make sure we are in a valid context (not a child of
 	 * TransactionCommandContext...).  Note that it is possible for this
@@ -807,7 +802,6 @@ AtAbort_Memory(void)
 static void
 AtCleanup_Memory(void)
 {
-
 	/*
 	 * Now that we're "out" of a transaction, have the system allocate
 	 * things in the top memory context instead of per-transaction
@@ -909,7 +903,6 @@ CurrentXactInProgress(void)
 {
 	return CurrentTransactionState->state == TRANS_INPROGRESS;
 }
-
 #endif
 
 /* --------------------------------
@@ -965,12 +958,11 @@ CommitTransaction(void)
 	 * this must be done _before_ releasing locks we hold and _after_
 	 * RecordTransactionCommit.
 	 *
-	 * LWLockAcquire(SInvalLock) is required: UPDATE with xid 0 is blocked
-	 * by xid 1' UPDATE, xid 1 is doing commit while xid 2 gets snapshot -
-	 * if xid 2' GetSnapshotData sees xid 1 as running then it must see
-	 * xid 0 as running as well or it will see two tuple versions - one
-	 * deleted by xid 1 and one inserted by xid 0.  See notes in
-	 * GetSnapshotData.
+	 * LWLockAcquire(SInvalLock) is required: UPDATE with xid 0 is blocked by
+	 * xid 1' UPDATE, xid 1 is doing commit while xid 2 gets snapshot - if
+	 * xid 2' GetSnapshotData sees xid 1 as running then it must see xid 0
+	 * as running as well or it will see two tuple versions - one deleted
+	 * by xid 1 and one inserted by xid 0.	See notes in GetSnapshotData.
 	 */
 	if (MyProc != (PROC *) NULL)
 	{
@@ -1002,7 +994,7 @@ CommitTransaction(void)
 	AtCommit_Memory();
 	AtEOXact_Files();
 
-	SharedBufferChanged = false;/* safest place to do it */
+	SharedBufferChanged = false;		/* safest place to do it */
 
 	/* Count transaction commit in statistics collector */
 	pgstat_count_xact_commit();
@@ -1032,8 +1024,8 @@ AbortTransaction(void)
 	/*
 	 * Release any LW locks we might be holding as quickly as possible.
 	 * (Regular locks, however, must be held till we finish aborting.)
-	 * Releasing LW locks is critical since we might try to grab them again
-	 * while cleaning up!
+	 * Releasing LW locks is critical since we might try to grab them
+	 * again while cleaning up!
 	 */
 	LWLockReleaseAll();
 
@@ -1105,7 +1097,7 @@ AbortTransaction(void)
 	AtEOXact_Files();
 	AtAbort_Locks();
 
-	SharedBufferChanged = false;/* safest place to do it */
+	SharedBufferChanged = false;		/* safest place to do it */
 
 	/* Count transaction abort in statistics collector */
 	pgstat_count_xact_rollback();
@@ -1155,7 +1147,6 @@ StartTransactionCommand(void)
 
 	switch (s->blockState)
 	{
-
 			/*
 			 * if we aren't in a transaction block, we just do our usual
 			 * start transaction.
@@ -1238,7 +1229,6 @@ CommitTransactionCommand(void)
 
 	switch (s->blockState)
 	{
-
 			/*
 			 * if we aren't in a transaction block, we just do our usual
 			 * transaction commit
@@ -1313,7 +1303,6 @@ AbortCurrentTransaction(void)
 
 	switch (s->blockState)
 	{
-
 			/*
 			 * if we aren't in a transaction block, we just do the basic
 			 * abort & cleanup transaction.
@@ -1429,7 +1418,6 @@ EndTransactionBlock(void)
 	 */
 	if (s->blockState == TBLOCK_INPROGRESS)
 	{
-
 		/*
 		 * here we are in a transaction block which should commit when we
 		 * get to the upcoming CommitTransactionCommand() so we set the
@@ -1442,7 +1430,6 @@ EndTransactionBlock(void)
 
 	if (s->blockState == TBLOCK_ABORT)
 	{
-
 		/*
 		 * here, we are in a transaction block which aborted and since the
 		 * AbortTransaction() was already done, we do whatever is needed
@@ -1480,7 +1467,6 @@ AbortTransactionBlock(void)
 	 */
 	if (s->blockState == TBLOCK_INPROGRESS)
 	{
-
 		/*
 		 * here we were inside a transaction block something screwed up
 		 * inside the system so we enter the abort state, do the abort
@@ -1502,7 +1488,6 @@ AbortTransactionBlock(void)
 	AbortTransaction();
 	s->blockState = TBLOCK_ENDABORT;
 }
-
 #endif
 
 /* --------------------------------
@@ -1527,7 +1512,6 @@ UserAbortTransactionBlock(void)
 
 	if (s->blockState == TBLOCK_INPROGRESS)
 	{
-
 		/*
 		 * here we were inside a transaction block and we got an abort
 		 * command from the user, so we move to the abort state, do the

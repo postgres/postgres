@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.88 2001/09/21 00:11:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.89 2001/10/25 05:49:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,9 +62,9 @@ static Datum ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalNullTest(NullTest *ntest, ExprContext *econtext,
-			 bool *isNull, ExprDoneCond *isDone);
+				 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalBooleanTest(BooleanTest *btest, ExprContext *econtext,
-			 bool *isNull, ExprDoneCond *isDone);
+					bool *isNull, ExprDoneCond *isDone);
 
 
 /*----------
@@ -126,7 +126,6 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 	}
 	else
 	{
-
 		/*
 		 * Empty refexpr indicates we are doing an INSERT into an array
 		 * column. For now, we just take the refassgnexpr (which the
@@ -339,9 +338,9 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 	 * the entire tuple; we give back a whole slot so that callers know
 	 * what the tuple looks like.
 	 *
-	 * XXX this is a horrid crock: since the pointer to the slot might
-	 * live longer than the current evaluation context, we are forced to
-	 * copy the tuple and slot into a long-lived context --- we use
+	 * XXX this is a horrid crock: since the pointer to the slot might live
+	 * longer than the current evaluation context, we are forced to copy
+	 * the tuple and slot into a long-lived context --- we use
 	 * TransactionCommandContext which should be safe enough.  This
 	 * represents a serious memory leak if many such tuples are processed
 	 * in one command, however.  We ought to redesign the representation
@@ -434,7 +433,6 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
 	matchFound = 0;
 	if (paramList != NULL)
 	{
-
 		/*
 		 * search for an entry in 'paramList' that matches the
 		 * `expression'.
@@ -485,7 +483,6 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
 
 	if (!matchFound)
 	{
-
 		/*
 		 * ooops! we couldn't find this parameter in the parameter list.
 		 * Signal an error
@@ -1128,28 +1125,28 @@ ExecEvalNullTest(NullTest *ntest,
 
 	result = ExecEvalExpr(ntest->arg, econtext, isNull, isDone);
 	switch (ntest->nulltesttype)
-    {
-        case IS_NULL:
-            if (*isNull)
-            {
-                *isNull = false;
-                return BoolGetDatum(true);
-            }
-            else
-                return BoolGetDatum(false);
-        case IS_NOT_NULL:
-            if (*isNull)
-            {
-                *isNull = false;
-                return BoolGetDatum(false);
-            }
-            else
-                return BoolGetDatum(true);
-        default:
-            elog(ERROR, "ExecEvalNullTest: unexpected nulltesttype %d",
-                 (int) ntest->nulltesttype);
-            return (Datum) 0;  /* keep compiler quiet */
-    }
+	{
+		case IS_NULL:
+			if (*isNull)
+			{
+				*isNull = false;
+				return BoolGetDatum(true);
+			}
+			else
+				return BoolGetDatum(false);
+		case IS_NOT_NULL:
+			if (*isNull)
+			{
+				*isNull = false;
+				return BoolGetDatum(false);
+			}
+			else
+				return BoolGetDatum(true);
+		default:
+			elog(ERROR, "ExecEvalNullTest: unexpected nulltesttype %d",
+				 (int) ntest->nulltesttype);
+			return (Datum) 0;	/* keep compiler quiet */
+	}
 }
 
 /* ----------------------------------------------------------------
@@ -1168,68 +1165,68 @@ ExecEvalBooleanTest(BooleanTest *btest,
 
 	result = ExecEvalExpr(btest->arg, econtext, isNull, isDone);
 	switch (btest->booltesttype)
-    {
-        case IS_TRUE:
-            if (*isNull)
-            {
-                *isNull = false;
-                return BoolGetDatum(false);
-            }
-            else if (DatumGetBool(result))
-                return BoolGetDatum(true);
+	{
+		case IS_TRUE:
+			if (*isNull)
+			{
+				*isNull = false;
+				return BoolGetDatum(false);
+			}
+			else if (DatumGetBool(result))
+				return BoolGetDatum(true);
 			else
-                return BoolGetDatum(false);
-        case IS_NOT_TRUE:
-            if (*isNull)
-            {
-                *isNull = false;
-                return BoolGetDatum(true);
-            }
-            else if (DatumGetBool(result))
-                return BoolGetDatum(false);
+				return BoolGetDatum(false);
+		case IS_NOT_TRUE:
+			if (*isNull)
+			{
+				*isNull = false;
+				return BoolGetDatum(true);
+			}
+			else if (DatumGetBool(result))
+				return BoolGetDatum(false);
 			else
-                return BoolGetDatum(true);
-        case IS_FALSE:
-            if (*isNull)
-            {
-                *isNull = false;
-                return BoolGetDatum(false);
-            }
-            else if (DatumGetBool(result))
-                return BoolGetDatum(false);
+				return BoolGetDatum(true);
+		case IS_FALSE:
+			if (*isNull)
+			{
+				*isNull = false;
+				return BoolGetDatum(false);
+			}
+			else if (DatumGetBool(result))
+				return BoolGetDatum(false);
 			else
-                return BoolGetDatum(true);
-        case IS_NOT_FALSE:
-            if (*isNull)
-            {
-                *isNull = false;
-                return BoolGetDatum(true);
-            }
-            else if (DatumGetBool(result))
-                return BoolGetDatum(true);
+				return BoolGetDatum(true);
+		case IS_NOT_FALSE:
+			if (*isNull)
+			{
+				*isNull = false;
+				return BoolGetDatum(true);
+			}
+			else if (DatumGetBool(result))
+				return BoolGetDatum(true);
 			else
-                return BoolGetDatum(false);
-        case IS_UNKNOWN:
-            if (*isNull)
-            {
-                *isNull = false;
-                return BoolGetDatum(true);
-            }
+				return BoolGetDatum(false);
+		case IS_UNKNOWN:
+			if (*isNull)
+			{
+				*isNull = false;
+				return BoolGetDatum(true);
+			}
 			else
-                return BoolGetDatum(false);
-        case IS_NOT_UNKNOWN:
-            if (*isNull)
-            {
-                *isNull = false;
-                return BoolGetDatum(false);
-            }
+				return BoolGetDatum(false);
+		case IS_NOT_UNKNOWN:
+			if (*isNull)
+			{
+				*isNull = false;
+				return BoolGetDatum(false);
+			}
 			else
-                return BoolGetDatum(true);
-        default:
-            elog(ERROR, "ExecEvalBooleanTest: unexpected booltesttype %d",
-                 (int) btest->booltesttype);
-            return (Datum) 0;  /* keep compiler quiet */
-    }
+				return BoolGetDatum(true);
+		default:
+			elog(ERROR, "ExecEvalBooleanTest: unexpected booltesttype %d",
+				 (int) btest->booltesttype);
+			return (Datum) 0;	/* keep compiler quiet */
+	}
 }
 
 /* ----------------------------------------------------------------
@@ -1409,15 +1406,15 @@ ExecEvalExpr(Node *expression,
 			break;
 		case T_NullTest:
 			retDatum = ExecEvalNullTest((NullTest *) expression,
-									econtext,
-									isNull,
-									isDone);
+										econtext,
+										isNull,
+										isDone);
 			break;
 		case T_BooleanTest:
 			retDatum = ExecEvalBooleanTest((BooleanTest *) expression,
-									econtext,
-									isNull,
-									isDone);
+										   econtext,
+										   isNull,
+										   isDone);
 			break;
 
 		default:
@@ -1665,7 +1662,7 @@ ExecTargetList(List *targetlist,
 	 * generating multiple tuples, when one or more tlist items return
 	 * sets.  (We expect the caller to call us again if we return:
 	 *
-	 *	isDone = ExprMultipleResult.)
+	 * isDone = ExprMultipleResult.)
 	 */
 	if (nodomains > NPREALLOCDOMAINS)
 	{
@@ -1774,13 +1771,11 @@ ExecTargetList(List *targetlist,
 
 	if (haveDoneSets)
 	{
-
 		/*
 		 * note: can't get here unless we verified isDone != NULL
 		 */
 		if (*isDone == ExprSingleResult)
 		{
-
 			/*
 			 * all sets are done, so report that tlist expansion is
 			 * complete.
@@ -1792,7 +1787,6 @@ ExecTargetList(List *targetlist,
 		}
 		else
 		{
-
 			/*
 			 * We have some done and some undone sets.	Restart the done
 			 * ones so that we can deliver a tuple (if possible).
@@ -1815,7 +1809,6 @@ ExecTargetList(List *targetlist,
 
 						if (itemIsDone[resind] == ExprEndResult)
 						{
-
 							/*
 							 * Oh dear, this item is returning an empty
 							 * set. Guess we can't make a tuple after all.

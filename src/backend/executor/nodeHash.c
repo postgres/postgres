@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.59 2001/08/13 19:50:11 tgl Exp $
+ *	$Id: nodeHash.c,v 1.60 2001/10/25 05:49:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,6 @@ ExecHash(Hash *node)
 
 	if (nbatch > 0)
 	{
-
 		/*
 		 * Open temp files for inner batches, if needed. Note that file
 		 * buffers are palloc'd in regular executor context.
@@ -165,8 +164,8 @@ int
 ExecCountSlotsHash(Hash *node)
 {
 	return ExecCountSlotsNode(outerPlan(node)) +
-	ExecCountSlotsNode(innerPlan(node)) +
-	HASH_NSLOTS;
+		ExecCountSlotsNode(innerPlan(node)) +
+		HASH_NSLOTS;
 }
 
 /* ---------------------------------------------------------------
@@ -279,7 +278,6 @@ ExecHashTableCreate(Hash *node)
 
 	if (nbatch > 0)
 	{
-
 		/*
 		 * allocate and initialize the file arrays in hashCxt
 		 */
@@ -480,7 +478,6 @@ ExecHashTableInsert(HashJoinTable hashtable,
 	 */
 	if (bucketno < hashtable->nbuckets)
 	{
-
 		/*
 		 * put the tuple in hash table
 		 */
@@ -506,7 +503,6 @@ ExecHashTableInsert(HashJoinTable hashtable,
 	}
 	else
 	{
-
 		/*
 		 * put the tuple into a tmp file for other batches
 		 */
@@ -536,8 +532,8 @@ ExecHashGetBucket(HashJoinTable hashtable,
 	MemoryContext oldContext;
 
 	/*
-	 * We reset the eval context each time to reclaim any memory leaked
-	 * in the hashkey expression or hashFunc itself.
+	 * We reset the eval context each time to reclaim any memory leaked in
+	 * the hashkey expression or hashFunc itself.
 	 */
 	ResetExprContext(econtext);
 
@@ -657,15 +653,15 @@ hashFunc(Datum key, int len, bool byVal)
 	else
 	{
 		/*
-		 * If this is a variable length type, then 'key' points to a "struct
-		 * varlena" and len == -1.  NOTE: VARSIZE returns the "real" data
-		 * length plus the sizeof the "vl_len" attribute of varlena (the
-		 * length information). 'key' points to the beginning of the varlena
-		 * struct, so we have to use "VARDATA" to find the beginning of
-		 * the "real" data.  Also, we have to be careful to detoast the
-		 * datum if it's toasted.  (We don't worry about freeing the detoasted
-		 * copy; that happens for free when the per-tuple memory context
-		 * is reset in ExecHashGetBucket.)
+		 * If this is a variable length type, then 'key' points to a
+		 * "struct varlena" and len == -1.	NOTE: VARSIZE returns the
+		 * "real" data length plus the sizeof the "vl_len" attribute of
+		 * varlena (the length information). 'key' points to the beginning
+		 * of the varlena struct, so we have to use "VARDATA" to find the
+		 * beginning of the "real" data.  Also, we have to be careful to
+		 * detoast the datum if it's toasted.  (We don't worry about
+		 * freeing the detoasted copy; that happens for free when the
+		 * per-tuple memory context is reset in ExecHashGetBucket.)
 		 */
 		unsigned char *k;
 
@@ -737,7 +733,6 @@ ExecHashTableReset(HashJoinTable hashtable, long ntuples)
 void
 ExecReScanHash(Hash *node, ExprContext *exprCtxt, Plan *parent)
 {
-
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by
 	 * first ExecProcNode.

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_group.h,v 1.10 2001/08/10 18:57:40 tgl Exp $
+ * $Id: pg_group.h,v 1.11 2001/10/25 05:49:57 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -40,5 +40,4 @@ typedef FormData_pg_group *Form_pg_group;
 #define Anum_pg_group_groname	1
 #define Anum_pg_group_grosysid	2
 #define Anum_pg_group_grolist	3
-
 #endif	 /* PG_GROUP_H */

@@ -8,14 +8,14 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.76 2001/08/26 16:56:00 tgl Exp $
+ * $Id: pg_attribute.h,v 1.77 2001/10/25 05:49:56 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
  *	  information from the DATA() statements.
  *
  *	  utils/cache/relcache.c requires hard-coded tuple descriptors
- *	  for some of the system catalogs.  So if the schema for any of
+ *	  for some of the system catalogs.	So if the schema for any of
  *	  these changes, be sure and change the appropriate Schema_xxx
  *	  macros!  -cim 2/5/91
  *
@@ -55,9 +55,10 @@ CATALOG(pg_attribute) BOOTSTRAP BKI_WITHOUT_OIDS
 	Oid			atttypid;
 
 	/*
-	 * attstattarget is the target number of statistics datapoints to collect
-	 * during VACUUM ANALYZE of this column.  A zero here indicates that we
-	 * do not wish to collect any stats about this column.
+	 * attstattarget is the target number of statistics datapoints to
+	 * collect during VACUUM ANALYZE of this column.  A zero here
+	 * indicates that we do not wish to collect any stats about this
+	 * column.
 	 */
 	int4		attstattarget;
 
@@ -239,7 +240,7 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 { 1247, {"typsend"},	   24, 0,	4, 14, 0, -1, -1, true, 'p', false, 'i', false, false }, \
 { 1247, {"typalign"},	   18, 0,	1, 15, 0, -1, -1, true, 'p', false, 'c', false, false }, \
 { 1247, {"typstorage"},    18, 0,	1, 16, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1247, {"typdefault"},    25, 0,  -1, 17, 0, -1, -1, false	, 'x', false, 'i', false, false }
+{ 1247, {"typdefault"},    25, 0,  -1, 17, 0, -1, -1, false , 'x', false, 'i', false, false }
 
 DATA(insert ( 1247 typname			19 DEFAULT_ATTSTATTARGET NAMEDATALEN   1 0 -1 -1 f p f i f f));
 DATA(insert ( 1247 typowner			23 0  4   2 0 -1 -1 t p f i f f));
@@ -484,5 +485,4 @@ DATA(insert ( 1259 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
  * ----------------
  */
 DATA(insert ( 376 xactlockfoo		26 0  4   1 0 -1 -1 t p f i f f));
-
 #endif	 /* PG_ATTRIBUTE_H */

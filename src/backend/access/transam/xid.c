@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: xid.c,v 1.33 2001/08/26 16:55:59 tgl Exp $
+ *	$Id: xid.c,v 1.34 2001/10/25 05:49:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@ Datum
 xidout(PG_FUNCTION_ARGS)
 {
 	TransactionId transactionId = PG_GETARG_TRANSACTIONID(0);
+
 	/* maximum 32 bit unsigned integer representation takes 10 chars */
 	char	   *str = palloc(11);
 
@@ -64,7 +65,7 @@ xid_age(PG_FUNCTION_ARGS)
 	TransactionId now = GetCurrentTransactionId();
 
 	/* Permanent XIDs are always infinitely old */
-	if (! TransactionIdIsNormal(xid))
+	if (!TransactionIdIsNormal(xid))
 		PG_RETURN_INT32(INT_MAX);
 
 	PG_RETURN_INT32((int32) (now - xid));

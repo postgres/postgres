@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.40 2001/06/05 05:26:05 tgl Exp $
+ * $Id: cost.h,v 1.41 2001/10/25 05:50:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,26 +53,26 @@ extern bool enable_mergejoin;
 extern bool enable_hashjoin;
 
 extern void cost_seqscan(Path *path, Query *root,
-						 RelOptInfo *baserel);
+			 RelOptInfo *baserel);
 extern void cost_index(Path *path, Query *root,
-					   RelOptInfo *baserel, IndexOptInfo *index,
-					   List *indexQuals, bool is_injoin);
+		   RelOptInfo *baserel, IndexOptInfo *index,
+		   List *indexQuals, bool is_injoin);
 extern void cost_tidscan(Path *path, Query *root,
-						 RelOptInfo *baserel, List *tideval);
+			 RelOptInfo *baserel, List *tideval);
 extern void cost_sort(Path *path, Query *root,
-					  List *pathkeys, double tuples, int width);
+		  List *pathkeys, double tuples, int width);
 extern void cost_nestloop(Path *path, Query *root,
-						  Path *outer_path, Path *inner_path,
-						  List *restrictlist);
+			  Path *outer_path, Path *inner_path,
+			  List *restrictlist);
 extern void cost_mergejoin(Path *path, Query *root,
-						   Path *outer_path, Path *inner_path,
-						   List *restrictlist,
-						   List *mergeclauses,
-						   List *outersortkeys, List *innersortkeys);
+			   Path *outer_path, Path *inner_path,
+			   List *restrictlist,
+			   List *mergeclauses,
+			   List *outersortkeys, List *innersortkeys);
 extern void cost_hashjoin(Path *path, Query *root,
-						  Path *outer_path, Path *inner_path,
-						  List *restrictlist,
-						  List *hashclauses);
+			  Path *outer_path, Path *inner_path,
+			  List *restrictlist,
+			  List *hashclauses);
 extern Cost cost_qual_eval(List *quals);
 extern void set_baserel_size_estimates(Query *root, RelOptInfo *rel);
 extern void set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
@@ -92,7 +92,6 @@ extern Selectivity clauselist_selectivity(Query *root,
 					   List *clauses,
 					   int varRelid);
 extern Selectivity clause_selectivity(Query *root,
-									  Node *clause,
-									  int varRelid);
-
+				   Node *clause,
+				   int varRelid);
 #endif	 /* COST_H */

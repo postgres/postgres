@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.51 2001/10/01 05:36:17 tgl Exp $
+ * $Id: buf_internals.h,v 1.52 2001/10/25 05:50:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,13 +95,14 @@ typedef struct sbufdesc
 	bool		cntxDirty;		/* new way to mark block as dirty */
 
 	/*
-	 * We can't physically remove items from a disk page if another backend
-	 * has the buffer pinned.  Hence, a backend may need to wait for all
-	 * other pins to go away.  This is signaled by setting its own backend ID
-	 * into wait_backend_id and setting flag bit BM_PIN_COUNT_WAITER.
-	 * At present, there can be only one such waiter per buffer.
+	 * We can't physically remove items from a disk page if another
+	 * backend has the buffer pinned.  Hence, a backend may need to wait
+	 * for all other pins to go away.  This is signaled by setting its own
+	 * backend ID into wait_backend_id and setting flag bit
+	 * BM_PIN_COUNT_WAITER. At present, there can be only one such waiter
+	 * per buffer.
 	 */
-	BackendId	wait_backend_id; /* backend ID of pin-count waiter */
+	BackendId	wait_backend_id;		/* backend ID of pin-count waiter */
 } BufferDesc;
 
 #define BufferDescriptorGetBuffer(bdesc) ((bdesc)->buf_id + 1)
@@ -136,7 +137,7 @@ typedef struct _bmtrace
 	int			bmt_buf;
 	Oid			bmt_dbid;
 	Oid			bmt_relid;
-	BlockNumber	bmt_blkno;
+	BlockNumber bmt_blkno;
 	int			bmt_op;
 
 #define BMT_NOTUSED		0
@@ -145,7 +146,6 @@ typedef struct _bmtrace
 #define BMT_DEALLOC		3
 
 }			bmtrace;
-
 #endif	 /* BMTRACE */
 
 
@@ -183,5 +183,4 @@ extern int	WriteLocalBuffer(Buffer buffer, bool release);
 extern int	FlushLocalBuffer(Buffer buffer, bool sync, bool release);
 extern void LocalBufferSync(void);
 extern void ResetLocalBufferPool(void);
-
 #endif	 /* BUFMGR_INTERNALS_H */

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.89 2001/08/10 20:52:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.90 2001/10/25 05:49:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -416,9 +416,10 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 	bool		neednextpage;
 	bytea	   *datafield;
 	bool		pfreeit;
-	struct {
-		struct varlena	hdr;
-		char			data[LOBLKSIZE];
+	struct
+	{
+		struct varlena hdr;
+		char		data[LOBLKSIZE];
 	}			workbuf;
 	char	   *workb = VARATT_DATA(&workbuf.hdr);
 	HeapTuple	newtup;
@@ -462,7 +463,6 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 
 	while (nwritten < nbytes)
 	{
-
 		/*
 		 * If possible, get next pre-existing page of the LO.  We assume
 		 * the indexscan will deliver these in order --- but there may be
@@ -491,7 +491,6 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 		 */
 		if (olddata != NULL && olddata->pageno == pageno)
 		{
-
 			/*
 			 * Update an existing page with fresh data.
 			 *
@@ -558,7 +557,6 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 		}
 		else
 		{
-
 			/*
 			 * Write a brand new page.
 			 *

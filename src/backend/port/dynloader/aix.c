@@ -537,7 +537,6 @@ readExports(ModulePtr mp)
 			symname = ls->l_offset + lhp->l_stoff + ldbuf;
 		else
 		{
-
 			/*
 			 * The l_name member is not zero terminated, we must copy the
 			 * first SYMNMLEN chars and make sure we have a zero byte at
@@ -608,5 +607,4 @@ findMain(void)
 	free(buf);
 	return ret;
 }
-
 #endif	 /* HAVE_DLOPEN */

@@ -34,7 +34,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.19 2001/03/22 06:16:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.20 2001/10/25 05:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,6 @@ ExecResult(Result *node)
 
 		if (outerPlan != NULL)
 		{
-
 			/*
 			 * retrieve tuples from the outer plan until there are no
 			 * more.
@@ -146,7 +145,6 @@ ExecResult(Result *node)
 		}
 		else
 		{
-
 			/*
 			 * if we don't have an outer plan, then we are just generating
 			 * the results from a constant target list.  Do it only once.

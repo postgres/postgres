@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.50 2001/03/22 03:59:49 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.51 2001/10/25 05:49:43 momjian Exp $
  */
 
 #include "postgres.h"
@@ -85,7 +85,6 @@ cash_in(PG_FUNCTION_ARGS)
 
 #ifdef USE_LOCALE
 	struct lconv *lconvert = PGLC_localeconv();
-
 #endif
 
 #ifdef USE_LOCALE
@@ -244,7 +243,6 @@ cash_out(PG_FUNCTION_ARGS)
 
 #ifdef USE_LOCALE
 	struct lconv *lconvert = PGLC_localeconv();
-
 #endif
 
 #ifdef USE_LOCALE

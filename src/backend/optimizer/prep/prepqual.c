@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.29 2001/03/22 03:59:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.30 2001/10/25 05:49:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,7 +157,6 @@ canonicalize_qual(Expr *qual, bool removeAndFlag)
 	 */
 	if (cnfok)
 	{
-
 		/*
 		 * Normalize into conjunctive normal form, and clean up the
 		 * result.
@@ -166,7 +165,6 @@ canonicalize_qual(Expr *qual, bool removeAndFlag)
 	}
 	else if (dnfok)
 	{
-
 		/*
 		 * Normalize into disjunctive normal form, and clean up the
 		 * result.
@@ -260,7 +258,6 @@ dnfify(Expr *qual)
 
 	return newqual;
 }
-
 #endif
 
 /*--------------------
@@ -539,7 +536,6 @@ push_nots(Expr *qual)
 	}
 	else if (not_clause((Node *) qual))
 	{
-
 		/*
 		 * Another 'not' cancels this 'not', so eliminate the 'not' and
 		 * stop negating this branch.  But search the subexpression for
@@ -549,7 +545,6 @@ push_nots(Expr *qual)
 	}
 	else
 	{
-
 		/*
 		 * We don't know how to negate anything else, place a 'not' at
 		 * this level.
@@ -959,7 +954,6 @@ count_bool_nodes(Expr *qual,
 	}
 	else if (contain_subplans((Node *) qual))
 	{
-
 		/*
 		 * charge extra for subexpressions containing sub-SELECTs, to
 		 * discourage us from rearranging them in a way that might

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.55 2001/10/06 23:21:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.56 2001/10/25 05:49:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,6 @@ typedef int32 ((*func_ptr) ());
 
 #else
 typedef char *((*func_ptr) ());
-
 #endif
 
 /*
@@ -143,9 +142,9 @@ fmgr_info_cxt(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt)
 	char	   *prosrc;
 
 	/*
-	 * fn_oid *must* be filled in last.  Some code assumes that if fn_oid is
-	 * valid, the whole struct is valid.  Some FmgrInfo struct's do survive
-	 * elogs.
+	 * fn_oid *must* be filled in last.  Some code assumes that if fn_oid
+	 * is valid, the whole struct is valid.  Some FmgrInfo struct's do
+	 * survive elogs.
 	 */
 	finfo->fn_oid = InvalidOid;
 	finfo->fn_extra = NULL;
@@ -154,7 +153,8 @@ fmgr_info_cxt(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt)
 	if ((fbp = fmgr_isbuiltin(functionId)) != NULL)
 	{
 		/*
-		 * Fast path for builtin functions: don't bother consulting pg_proc
+		 * Fast path for builtin functions: don't bother consulting
+		 * pg_proc
 		 */
 		finfo->fn_nargs = fbp->nargs;
 		finfo->fn_strict = fbp->strict;
@@ -189,6 +189,7 @@ fmgr_info_cxt(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt)
 	switch (procedureStruct->prolang)
 	{
 		case INTERNALlanguageId:
+
 			/*
 			 * For an ordinary builtin function, we should never get here
 			 * because the isbuiltin() search above will have succeeded.
@@ -405,7 +406,7 @@ fetch_finfo_record(void *filehandle, char *funcname)
  * Copy an FmgrInfo struct
  *
  * This is inherently somewhat bogus since we can't reliably duplicate
- * language-dependent subsidiary info.  We cheat by zeroing fn_extra,
+ * language-dependent subsidiary info.	We cheat by zeroing fn_extra,
  * instead, meaning that subsidiary info will have to be recomputed.
  */
 void
@@ -624,7 +625,6 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 static Datum
 fmgr_untrusted(PG_FUNCTION_ARGS)
 {
-
 	/*
 	 * Currently these are unsupported.  Someday we might do something
 	 * like forking a subprocess to execute 'em.
@@ -1457,19 +1457,20 @@ Int64GetDatum(int64 X)
 
 	*retval = X;
 	return PointerGetDatum(retval);
-#else /* INT64_IS_BUSTED */
+#else							/* INT64_IS_BUSTED */
+
 	/*
-	 * On a machine with no 64-bit-int C datatype, sizeof(int64) will not be
-	 * 8, but we want Int64GetDatum to return an 8-byte object anyway, with
-	 * zeroes in the unused bits.  This is needed so that, for example,
-	 * hash join of int8 will behave properly.
+	 * On a machine with no 64-bit-int C datatype, sizeof(int64) will not
+	 * be 8, but we want Int64GetDatum to return an 8-byte object anyway,
+	 * with zeroes in the unused bits.	This is needed so that, for
+	 * example, hash join of int8 will behave properly.
 	 */
 	int64	   *retval = (int64 *) palloc(Max(sizeof(int64), 8));
 
 	MemSet(retval, 0, Max(sizeof(int64), 8));
 	*retval = X;
 	return PointerGetDatum(retval);
-#endif /* INT64_IS_BUSTED */
+#endif	 /* INT64_IS_BUSTED */
 }
 
 Datum

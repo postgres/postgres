@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.64 2001/09/19 09:48:42 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.65 2001/10/25 05:49:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,9 +36,9 @@
 #else
 #define SEQ_MAXVALUE	((int64) 0x7FFFFFFFFFFFFFFF)
 #endif
-#else /* INT64_IS_BUSTED */
+#else							/* INT64_IS_BUSTED */
 #define SEQ_MAXVALUE	((int64) 0x7FFFFFFF)
-#endif /* INT64_IS_BUSTED */
+#endif	 /* INT64_IS_BUSTED */
 
 #define SEQ_MINVALUE	(-SEQ_MAXVALUE)
 
@@ -204,17 +204,17 @@ DefineSequence(CreateSeqStmt *seq)
 	heap_insert(rel, tuple);
 
 	/*
-	 * After crash REDO of heap_insert above would re-init page and
-	 * our magic number would be lost. We have to log sequence creation.
-	 * This means two log records instead of one -:(
+	 * After crash REDO of heap_insert above would re-init page and our
+	 * magic number would be lost. We have to log sequence creation. This
+	 * means two log records instead of one -:(
 	 */
 	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 	START_CRIT_SECTION();
 	{
-		xl_seq_rec			xlrec;
-		XLogRecPtr			recptr;
-		XLogRecData 		rdata[2];
-		Form_pg_sequence	newseq = (Form_pg_sequence) GETSTRUCT(tuple);
+		xl_seq_rec	xlrec;
+		XLogRecPtr	recptr;
+		XLogRecData rdata[2];
+		Form_pg_sequence newseq = (Form_pg_sequence) GETSTRUCT(tuple);
 
 		/* We do not log first nextval call, so "advance" sequence here */
 		newseq->is_called = true;
@@ -582,12 +582,12 @@ get_seq_name(text *seqin)
 	if (strlen(seqname) >= NAMEDATALEN)
 	{
 #ifdef MULTIBYTE
-		int len;
+		int			len;
 
-		len = pg_mbcliplen(seqname, rawlen, NAMEDATALEN-1);
+		len = pg_mbcliplen(seqname, rawlen, NAMEDATALEN - 1);
 		seqname[len] = '\0';
 #else
-		seqname[NAMEDATALEN-1] = '\0';
+		seqname[NAMEDATALEN - 1] = '\0';
 #endif
 	}
 
@@ -658,7 +658,6 @@ init_sequence(char *caller, char *name)
 
 	if (elm != (SeqTable) NULL)
 	{
-
 		/*
 		 * We are using a seqtable entry left over from a previous xact;
 		 * must check for relid change.
@@ -674,7 +673,6 @@ init_sequence(char *caller, char *name)
 	}
 	else
 	{
-
 		/*
 		 * Time to make a new seqtable entry.  These entries live as long
 		 * as the backend does, so we use plain malloc for them.
@@ -713,7 +711,7 @@ CloseSequences(void)
 	for (elm = seqtab; elm != (SeqTable) NULL; elm = elm->next)
 	{
 		rel = elm->rel;
-		if (rel != (Relation) NULL)	/* opened in current xact */
+		if (rel != (Relation) NULL)		/* opened in current xact */
 		{
 			elm->rel = (Relation) NULL;
 			heap_close(rel, AccessShareLock);
@@ -737,17 +735,17 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 	{
 		DefElem    *defel = (DefElem *) lfirst(option);
 
-		if (strcmp(defel->defname, "increment")==0)
+		if (strcmp(defel->defname, "increment") == 0)
 			increment_by = defel;
-		else if (strcmp(defel->defname, "start")==0)
+		else if (strcmp(defel->defname, "start") == 0)
 			last_value = defel;
-		else if (strcmp(defel->defname, "maxvalue")==0)
+		else if (strcmp(defel->defname, "maxvalue") == 0)
 			max_value = defel;
-		else if (strcmp(defel->defname, "minvalue")==0)
+		else if (strcmp(defel->defname, "minvalue") == 0)
 			min_value = defel;
-		else if (strcmp(defel->defname, "cache")==0)
+		else if (strcmp(defel->defname, "cache") == 0)
 			cache_value = defel;
-		else if (strcmp(defel->defname, "cycle")==0)
+		else if (strcmp(defel->defname, "cycle") == 0)
 		{
 			if (defel->arg != (Node *) NULL)
 				elog(ERROR, "DefineSequence: CYCLE ??");
@@ -768,7 +766,7 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 		if (new->increment_by > 0)
 			new->max_value = SEQ_MAXVALUE;		/* ascending seq */
 		else
-			new->max_value = -1; /* descending seq */
+			new->max_value = -1;		/* descending seq */
 	}
 	else
 		new->max_value = get_param(max_value);
@@ -822,12 +820,12 @@ get_param(DefElem *def)
 		return (int64) intVal(def->arg);
 
 	/*
-	 * Values too large for int4 will be represented as Float constants
-	 * by the lexer.  Accept these if they are valid int8 strings.
+	 * Values too large for int4 will be represented as Float constants by
+	 * the lexer.  Accept these if they are valid int8 strings.
 	 */
 	if (IsA(def->arg, Float))
 		return DatumGetInt64(DirectFunctionCall1(int8in,
-												 CStringGetDatum(strVal(def->arg))));
+									 CStringGetDatum(strVal(def->arg))));
 
 	/* Shouldn't get here unless parser messed up */
 	elog(ERROR, "DefineSequence: \"%s\" value must be integer", def->defname);

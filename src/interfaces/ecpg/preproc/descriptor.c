@@ -75,9 +75,10 @@ void
 add_descriptor(char *name, char *connection)
 {
 	struct descriptor *new;
-	
-	if (name[0]!='"') return;
-	
+
+	if (name[0] != '"')
+		return;
+
 	new = (struct descriptor *) mm_alloc(sizeof(struct descriptor));
 
 	new->next = descriptors;
@@ -99,7 +100,8 @@ drop_descriptor(char *name, char *connection)
 	struct descriptor *i;
 	struct descriptor **lastptr = &descriptors;
 
-	if (name[0]!='"') return;
+	if (name[0] != '"')
+		return;
 
 	for (i = descriptors; i; lastptr = &i->next, i = i->next)
 	{
@@ -128,7 +130,8 @@ lookup_descriptor(char *name, char *connection)
 {
 	struct descriptor *i;
 
-	if (name[0]!='"') return NULL;
+	if (name[0] != '"')
+		return NULL;
 
 	for (i = descriptors; i; i = i->next)
 	{
@@ -199,21 +202,23 @@ output_get_descr(char *desc_name, char *index)
 
 /* I consider dynamic allocation overkill since at most two descriptor
    variables are possible per statement. (input and output descriptor)
-   And descriptors are no normal variables, so they don't belong into 
+   And descriptors are no normal variables, so they don't belong into
    the variable list.
 */
-   
+
 #define MAX_DESCRIPTOR_NAMELEN 128
-struct variable *descriptor_variable(const char *name,int input)
-{	static char descriptor_names[2][MAX_DESCRIPTOR_NAMELEN];
+struct variable *
+descriptor_variable(const char *name, int input)
+{
+	static char descriptor_names[2][MAX_DESCRIPTOR_NAMELEN];
 	static const struct ECPGtype descriptor_type =
-	{ ECPGt_descriptor, 0 };
+	{ECPGt_descriptor, 0};
 	static const struct variable varspace[2] =
-	{{ descriptor_names[0], (struct ECPGtype*)&descriptor_type, 0, NULL }, 
-	 { descriptor_names[1], (struct ECPGtype*)&descriptor_type, 0, NULL }
+	{{descriptor_names[0], (struct ECPGtype *) & descriptor_type, 0, NULL},
+	{descriptor_names[1], (struct ECPGtype *) & descriptor_type, 0, NULL}
 	};
-	
-	strncpy(descriptor_names[input],name,MAX_DESCRIPTOR_NAMELEN);
-	descriptor_names[input][MAX_DESCRIPTOR_NAMELEN-1]=0;
-	return (struct variable*)&varspace[input];
+
+	strncpy(descriptor_names[input], name, MAX_DESCRIPTOR_NAMELEN);
+	descriptor_names[input][MAX_DESCRIPTOR_NAMELEN - 1] = 0;
+	return (struct variable *) & varspace[input];
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.82 2001/08/09 18:28:17 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.83 2001/10/25 05:49:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,7 +179,7 @@ interpretInhOption(InhOption inhOpt)
 {
 	switch (inhOpt)
 	{
-			case INH_NO:
+		case INH_NO:
 			return false;
 		case INH_YES:
 			return true;
@@ -288,9 +288,9 @@ transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 	result = transformExpr(pstate, result, EXPR_COLUMN_FIRST);
 
 	/*
-	 * We expect the result to yield bool directly, otherwise complain.
-	 * We could try coerce_to_boolean() here, but it seems likely that an
-	 * "=" operator that doesn't return bool is wrong anyway.
+	 * We expect the result to yield bool directly, otherwise complain. We
+	 * could try coerce_to_boolean() here, but it seems likely that an "="
+	 * operator that doesn't return bool is wrong anyway.
 	 */
 	if (exprType(result) != BOOLOID)
 		elog(ERROR, "JOIN/USING clause must return type boolean, not type %s",
@@ -328,7 +328,7 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 	/* This part is just like transformWhereClause() */
 	result = transformExpr(pstate, j->quals, EXPR_COLUMN_FIRST);
 
-	if (! coerce_to_boolean(pstate, &result))
+	if (!coerce_to_boolean(pstate, &result))
 		elog(ERROR, "JOIN/ON clause must return type boolean, not type %s",
 			 format_type_be(exprType(result)));
 
@@ -608,7 +608,6 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 
 		if (j->using)
 		{
-
 			/*
 			 * JOIN/USING (or NATURAL JOIN, as transformed above).
 			 * Transform the list into an explicit ON-condition, and
@@ -734,7 +733,6 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		 */
 		if (j->alias)
 		{
-
 			/*
 			 * If a column alias list is specified, substitute the alias
 			 * names into my output-column list
@@ -775,7 +773,7 @@ transformWhereClause(ParseState *pstate, Node *clause)
 
 	qual = transformExpr(pstate, clause, EXPR_COLUMN_FIRST);
 
-	if (! coerce_to_boolean(pstate, &qual))
+	if (!coerce_to_boolean(pstate, &qual))
 		elog(ERROR, "WHERE clause must return type boolean, not type %s",
 			 format_type_be(exprType(qual)));
 
@@ -840,13 +838,12 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 	 * an expression.
 	 *----------
 	 */
-	if (IsA(node, Ident) && ((Ident *) node)->indirection == NIL)
+	if (IsA(node, Ident) &&((Ident *) node)->indirection == NIL)
 	{
 		char	   *name = ((Ident *) node)->name;
 
 		if (clause == GROUP_CLAUSE)
 		{
-
 			/*
 			 * In GROUP BY, we must prefer a match against a FROM-clause
 			 * column to one against the targetlist.  Look to see if there

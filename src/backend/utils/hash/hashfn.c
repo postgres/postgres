@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.14 2001/10/01 05:36:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.15 2001/10/25 05:49:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,41 +57,41 @@ tag_hash(void *key, int keysize)
 	 * Use four byte chunks in a "jump table" to go a little faster.
 	 *
 	 * Currently the maximum keysize is 16 (mar 17 1992).  I have put in
-	 * cases for up to 32.  Bigger than this will resort to a for loop
+	 * cases for up to 32.	Bigger than this will resort to a for loop
 	 * (see the default case).
 	 */
 	switch (keysize)
 	{
 		case 8 * sizeof(int):
-			h = (h * PRIME1) ^ (*k++);
+			h = (h * PRIME1) ^(*k++);
 			/* fall through */
 
 		case 7 * sizeof(int):
-			h = (h * PRIME1) ^ (*k++);
+			h = (h * PRIME1) ^(*k++);
 			/* fall through */
 
 		case 6 * sizeof(int):
-			h = (h * PRIME1) ^ (*k++);
+			h = (h * PRIME1) ^(*k++);
 			/* fall through */
 
 		case 5 * sizeof(int):
-			h = (h * PRIME1) ^ (*k++);
+			h = (h * PRIME1) ^(*k++);
 			/* fall through */
 
 		case 4 * sizeof(int):
-			h = (h * PRIME1) ^ (*k++);
+			h = (h * PRIME1) ^(*k++);
 			/* fall through */
 
 		case 3 * sizeof(int):
-			h = (h * PRIME1) ^ (*k++);
+			h = (h * PRIME1) ^(*k++);
 			/* fall through */
 
 		case 2 * sizeof(int):
-			h = (h * PRIME1) ^ (*k++);
+			h = (h * PRIME1) ^(*k++);
 			/* fall through */
 
 		case sizeof(int):
-			h = (h * PRIME1) ^ (*k++);
+			h = (h * PRIME1) ^(*k++);
 			break;
 
 		default:
@@ -102,7 +102,7 @@ tag_hash(void *key, int keysize)
 			/* Cope with any partial-int leftover bytes */
 			if (keysize > 0)
 			{
-				unsigned char   *keybyte = (unsigned char *) k;
+				unsigned char *keybyte = (unsigned char *) k;
 
 				do
 					h = (h * PRIME1) ^ (*keybyte++);

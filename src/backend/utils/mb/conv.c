@@ -6,7 +6,7 @@
  * WIN1250 client encoding support contributed by Pavel Behal
  * SJIS UDC (NEC selection IBM kanji) support contributed by Eiji Tokuya
  *
- * $Id: conv.c,v 1.32 2001/10/16 10:09:17 ishii Exp $
+ * $Id: conv.c,v 1.33 2001/10/25 05:49:51 momjian Exp $
  *
  *
  */
@@ -63,7 +63,6 @@
 #include "Unicode/utf8_to_alt.map"
 #include "Unicode/utf8_to_koi8r.map"
 #include "Unicode/utf8_to_win1251.map"
-
 
 #endif	 /* UNICODE_CONVERSION */
 
@@ -124,7 +123,6 @@ sjis2mic(unsigned char *sjis, unsigned char *p, int len)
 		}
 		else if (c1 > 0x7f)
 		{
-
 			/*
 			 * JIS X0208, X0212, user defined extended characters
 			 */
@@ -168,7 +166,6 @@ sjis2mic(unsigned char *sjis, unsigned char *p, int len)
 			}
 			else if (k >= 0xf040 && k < 0xf540)
 			{
-
 				/*
 				 * UDC1 mapping to X0208 85 ku - 94 ku JIS code 0x7521 -
 				 * 0x7e7e EUC 0xf5a1 - 0xfefe
@@ -181,7 +178,6 @@ sjis2mic(unsigned char *sjis, unsigned char *p, int len)
 			}
 			else if (k >= 0xf540 && k < 0xfa40)
 			{
-
 				/*
 				 * UDC2 mapping to X0212 85 ku - 94 ku JIS code 0x7521 -
 				 * 0x7e7e EUC 0x8ff5a1 - 0x8ffefe
@@ -194,7 +190,6 @@ sjis2mic(unsigned char *sjis, unsigned char *p, int len)
 			}
 			else if (k >= 0xfa40)
 			{
-
 				/*
 				 * mapping IBM kanji to X0208 and X0212
 				 *
@@ -624,7 +619,7 @@ big52mic(unsigned char *big5, unsigned char *p, int len)
 			{
 				if (lc == LC_CNS11643_3 || lc == LC_CNS11643_4)
 				{
-					*p++ = 0x9d;/* LCPRV2 */
+					*p++ = 0x9d;		/* LCPRV2 */
 				}
 				*p++ = lc;		/* Plane No. */
 				*p++ = (cnsBuf >> 8) & 0x00ff;
@@ -793,7 +788,6 @@ mic2latin5(unsigned char *mic, unsigned char *p, int len)
 {
 	mic2latin(mic, p, len, LC_ISO8859_5);
 }
-
 #endif
 
 /*
@@ -1275,7 +1269,7 @@ compare2(const void *p1, const void *p2)
  */
 static void
 utf_to_local(unsigned char *utf, unsigned char *iso,
-			 pg_utf_to_local * map, int size, int len)
+			 pg_utf_to_local *map, int size, int len)
 {
 	unsigned int iutf;
 	int			l;
@@ -1355,14 +1349,14 @@ utf_to_latin5(unsigned char *utf, unsigned char *iso, int len)
 {
 	utf_to_local(utf, iso, ULmapISO8859_5, sizeof(ULmapISO8859_5) / sizeof(pg_utf_to_local), len);
 }
-#endif /* NOT_USED */
+#endif	 /* NOT_USED */
 
 /*
  * Cyrillic charsets
  */
 
 /*
- * UTF-8 --->KOI8-R 
+ * UTF-8 --->KOI8-R
  */
 static void
 utf_to_KOI8R(unsigned char *utf, unsigned char *iso, int len)
@@ -1372,7 +1366,7 @@ utf_to_KOI8R(unsigned char *utf, unsigned char *iso, int len)
 }
 
 /*
- * UTF-8 --->WIN1251 
+ * UTF-8 --->WIN1251
  */
 static void
 utf_to_WIN1251(unsigned char *utf, unsigned char *iso, int len)
@@ -1382,7 +1376,7 @@ utf_to_WIN1251(unsigned char *utf, unsigned char *iso, int len)
 }
 
 /*
- * UTF-8 --->ALT 
+ * UTF-8 --->ALT
  */
 static void
 utf_to_ALT(unsigned char *utf, unsigned char *iso, int len)
@@ -1396,7 +1390,7 @@ utf_to_ALT(unsigned char *utf, unsigned char *iso, int len)
  */
 static void
 local_to_utf(unsigned char *iso, unsigned char *utf,
-			 pg_local_to_utf * map, int size, int encoding, int len)
+			 pg_local_to_utf *map, int size, int encoding, int len)
 {
 	unsigned int iiso;
 	int			l;
@@ -1441,7 +1435,7 @@ local_to_utf(unsigned char *iso, unsigned char *utf,
 		if (p == NULL)
 		{
 			elog(NOTICE, "local_to_utf: could not convert (0x%04x) %s to UTF-8. Ignored",
-				 iiso, (&pg_enc2name_tbl[ encoding ])->name);
+				 iiso, (&pg_enc2name_tbl[encoding])->name);
 			continue;
 		}
 		if (p->utf & 0xff000000)
@@ -1492,7 +1486,7 @@ latin5_to_utf(unsigned char *iso, unsigned char *utf, int len)
 {
 	local_to_utf(iso, utf, LUmapISO8859_5, sizeof(LUmapISO8859_5) / sizeof(pg_local_to_utf), PG_LATIN5, len);
 }
-#endif /* NOT_USED */
+#endif	 /* NOT_USED */
 
 #define UTF_ISO8859(_id_) \
 static void \
@@ -1546,6 +1540,7 @@ ALT_to_utf(unsigned char *iso, unsigned char *utf, int len)
 {
 	local_to_utf(iso, utf, LUmapALT, sizeof(LUmapALT) / sizeof(pg_local_to_utf), PG_ALT, len);
 }
+
 /*
  * UTF-8 ---> EUC_JP
  */
@@ -1564,7 +1559,7 @@ static void
 euc_jp_to_utf(unsigned char *euc, unsigned char *utf, int len)
 {
 	local_to_utf(euc, utf, LUmapEUC_JP,
-			 sizeof(LUmapEUC_JP) / sizeof(pg_local_to_utf), PG_EUC_JP, len);
+		  sizeof(LUmapEUC_JP) / sizeof(pg_local_to_utf), PG_EUC_JP, len);
 }
 
 /*
@@ -1585,7 +1580,7 @@ static void
 euc_cn_to_utf(unsigned char *euc, unsigned char *utf, int len)
 {
 	local_to_utf(euc, utf, LUmapEUC_CN,
-			 sizeof(LUmapEUC_CN) / sizeof(pg_local_to_utf), PG_EUC_CN, len);
+		  sizeof(LUmapEUC_CN) / sizeof(pg_local_to_utf), PG_EUC_CN, len);
 }
 
 /*
@@ -1606,7 +1601,7 @@ static void
 euc_kr_to_utf(unsigned char *euc, unsigned char *utf, int len)
 {
 	local_to_utf(euc, utf, LUmapEUC_KR,
-			 sizeof(LUmapEUC_KR) / sizeof(pg_local_to_utf), PG_EUC_KR, len);
+		  sizeof(LUmapEUC_KR) / sizeof(pg_local_to_utf), PG_EUC_KR, len);
 }
 
 /*
@@ -1627,7 +1622,7 @@ static void
 euc_tw_to_utf(unsigned char *euc, unsigned char *utf, int len)
 {
 	local_to_utf(euc, utf, LUmapEUC_TW,
-			 sizeof(LUmapEUC_TW) / sizeof(pg_local_to_utf), PG_EUC_TW, len);
+		  sizeof(LUmapEUC_TW) / sizeof(pg_local_to_utf), PG_EUC_TW, len);
 }
 
 /*
@@ -1648,7 +1643,7 @@ static void
 sjis_to_utf(unsigned char *euc, unsigned char *utf, int len)
 {
 	local_to_utf(euc, utf, LUmapSJIS,
-				 sizeof(LUmapSJIS) / sizeof(pg_local_to_utf), PG_SJIS, len);
+			  sizeof(LUmapSJIS) / sizeof(pg_local_to_utf), PG_SJIS, len);
 }
 
 /*
@@ -1669,7 +1664,7 @@ static void
 big5_to_utf(unsigned char *euc, unsigned char *utf, int len)
 {
 	local_to_utf(euc, utf, LUmapBIG5,
-				 sizeof(LUmapBIG5) / sizeof(pg_local_to_utf), PG_BIG5, len);
+			  sizeof(LUmapBIG5) / sizeof(pg_local_to_utf), PG_BIG5, len);
 }
 
 /* ----------
@@ -1678,69 +1673,176 @@ big5_to_utf(unsigned char *euc, unsigned char *utf, int len)
  * WARINIG: must by same order as pg_enc in include/mb/pg_wchar.h!
  * ----------
  */
-pg_enconv pg_enconv_tbl[] = 
+pg_enconv	pg_enconv_tbl[] =
 {
-	{ PG_SQL_ASCII,	ascii2mic, mic2ascii, ascii2utf, utf2ascii},
-	{ PG_EUC_JP,	euc_jp2mic, mic2euc_jp, euc_jp_to_utf, utf_to_euc_jp},
-	{ PG_EUC_CN,	euc_cn2mic, mic2euc_cn, euc_cn_to_utf, utf_to_euc_cn},
-	{ PG_EUC_KR,	euc_kr2mic, mic2euc_kr, euc_kr_to_utf, utf_to_euc_kr},
-	{ PG_EUC_TW,	euc_tw2mic, mic2euc_tw, euc_tw_to_utf, utf_to_euc_tw},
-	{ PG_UTF8, 	0, 0, 0, 0},
-	{ PG_MULE_INTERNAL, 0, 0, 0, 0},
-	{ PG_LATIN1,	latin12mic, mic2latin1, iso8859_1_to_utf, utf_to_iso8859_1},
-	{ PG_LATIN2,	latin22mic, mic2latin2, iso8859_2_to_utf, utf_to_iso8859_2},
-	{ PG_LATIN3,	latin32mic, mic2latin3, iso8859_3_to_utf, utf_to_iso8859_3},
-	{ PG_LATIN4,	latin42mic, mic2latin4, iso8859_4_to_utf, utf_to_iso8859_4},
-	{ PG_LATIN5,	iso2mic, mic2iso, iso8859_9_to_utf, utf_to_iso8859_9},
-	{ PG_LATIN6,	0, 0, iso8859_10_to_utf, utf_to_iso8859_10},
-	{ PG_LATIN7,	0, 0, iso8859_13_to_utf, utf_to_iso8859_13},
-	{ PG_LATIN8,	0, 0, iso8859_14_to_utf, utf_to_iso8859_14},
-	{ PG_LATIN9,	0, 0, iso8859_15_to_utf, utf_to_iso8859_15},
-	{ PG_LATIN10,	0, 0, iso8859_16_to_utf, utf_to_iso8859_16},
-	{ PG_KOI8R,	koi8r2mic, mic2koi8r, KOI8R_to_utf, utf_to_KOI8R},
-	{ PG_WIN1251,	win12512mic, mic2win1251, WIN1251_to_utf, utf_to_WIN1251},
-	{ PG_ALT,	alt2mic, mic2alt, ALT_to_utf, utf_to_ALT},
-	{ PG_ISO_8859_5,	0, 0, iso8859_5_to_utf, utf_to_iso8859_5},
-	{ PG_ISO_8859_6,	0, 0, iso8859_6_to_utf, utf_to_iso8859_6},
-	{ PG_ISO_8859_7,	0, 0, iso8859_7_to_utf, utf_to_iso8859_7},
-	{ PG_ISO_8859_8,	0, 0, iso8859_8_to_utf, utf_to_iso8859_8},
+	{
+		PG_SQL_ASCII, ascii2mic, mic2ascii, ascii2utf, utf2ascii
+	}		   ,
+	{
+		PG_EUC_JP, euc_jp2mic, mic2euc_jp, euc_jp_to_utf, utf_to_euc_jp
+	},
+	{
+		PG_EUC_CN, euc_cn2mic, mic2euc_cn, euc_cn_to_utf, utf_to_euc_cn
+	},
+	{
+		PG_EUC_KR, euc_kr2mic, mic2euc_kr, euc_kr_to_utf, utf_to_euc_kr
+	},
+	{
+		PG_EUC_TW, euc_tw2mic, mic2euc_tw, euc_tw_to_utf, utf_to_euc_tw
+	},
+	{
+		PG_UTF8, 0, 0, 0, 0
+	},
+	{
+		PG_MULE_INTERNAL, 0, 0, 0, 0
+	},
+	{
+		PG_LATIN1, latin12mic, mic2latin1, iso8859_1_to_utf, utf_to_iso8859_1
+	},
+	{
+		PG_LATIN2, latin22mic, mic2latin2, iso8859_2_to_utf, utf_to_iso8859_2
+	},
+	{
+		PG_LATIN3, latin32mic, mic2latin3, iso8859_3_to_utf, utf_to_iso8859_3
+	},
+	{
+		PG_LATIN4, latin42mic, mic2latin4, iso8859_4_to_utf, utf_to_iso8859_4
+	},
+	{
+		PG_LATIN5, iso2mic, mic2iso, iso8859_9_to_utf, utf_to_iso8859_9
+	},
+	{
+		PG_LATIN6, 0, 0, iso8859_10_to_utf, utf_to_iso8859_10
+	},
+	{
+		PG_LATIN7, 0, 0, iso8859_13_to_utf, utf_to_iso8859_13
+	},
+	{
+		PG_LATIN8, 0, 0, iso8859_14_to_utf, utf_to_iso8859_14
+	},
+	{
+		PG_LATIN9, 0, 0, iso8859_15_to_utf, utf_to_iso8859_15
+	},
+	{
+		PG_LATIN10, 0, 0, iso8859_16_to_utf, utf_to_iso8859_16
+	},
+	{
+		PG_KOI8R, koi8r2mic, mic2koi8r, KOI8R_to_utf, utf_to_KOI8R
+	},
+	{
+		PG_WIN1251, win12512mic, mic2win1251, WIN1251_to_utf, utf_to_WIN1251
+	},
+	{
+		PG_ALT, alt2mic, mic2alt, ALT_to_utf, utf_to_ALT
+	},
+	{
+		PG_ISO_8859_5, 0, 0, iso8859_5_to_utf, utf_to_iso8859_5
+	},
+	{
+		PG_ISO_8859_6, 0, 0, iso8859_6_to_utf, utf_to_iso8859_6
+	},
+	{
+		PG_ISO_8859_7, 0, 0, iso8859_7_to_utf, utf_to_iso8859_7
+	},
+	{
+		PG_ISO_8859_8, 0, 0, iso8859_8_to_utf, utf_to_iso8859_8
+	},
 
-	{ PG_SJIS,	sjis2mic, mic2sjis, sjis_to_utf, utf_to_sjis},
-	{ PG_BIG5,	big52mic, mic2big5, big5_to_utf, utf_to_big5},
-	{ PG_WIN1250,	win12502mic, mic2win1250, 0, 0},
+	{
+		PG_SJIS, sjis2mic, mic2sjis, sjis_to_utf, utf_to_sjis
+	},
+	{
+		PG_BIG5, big52mic, mic2big5, big5_to_utf, utf_to_big5
+	},
+	{
+		PG_WIN1250, win12502mic, mic2win1250, 0, 0
+	},
 };
 
 #else
 
-pg_enconv pg_enconv_tbl[] = 
+pg_enconv	pg_enconv_tbl[] =
 {
-	{ PG_SQL_ASCII,	ascii2mic, mic2ascii, 0, 0},
-	{ PG_EUC_JP,	euc_jp2mic, mic2euc_jp, 0, 0},
-	{ PG_EUC_CN,	euc_cn2mic, mic2euc_cn, 0, 0},
-	{ PG_EUC_KR,	euc_kr2mic, mic2euc_kr, 0, 0},
-	{ PG_EUC_TW,	euc_tw2mic, mic2euc_tw, 0, 0},
-	{ PG_UTF8, 	0, 0, 0, 0},
-	{ PG_MULE_INTERNAL, 0, 0, 0, 0},
-	{ PG_LATIN1,	latin12mic, mic2latin1, 0, 0},
-	{ PG_LATIN2,	latin22mic, mic2latin2, 0, 0},
-	{ PG_LATIN3,	latin32mic, mic2latin3, 0, 0},
-	{ PG_LATIN4,	latin42mic, mic2latin4, 0, 0},
-	{ PG_LATIN5,	iso2mic, mic2iso, 0, 0},
-	{ PG_LATIN6,	0, 0, 0, 0},
-	{ PG_LATIN7,	0, 0, 0, 0},
-	{ PG_LATIN8,	0, 0, 0, 0},
-	{ PG_LATIN9,	0, 0, 0, 0},
-	{ PG_LATIN10,	0, 0, 0, 0},
-	{ PG_KOI8R,	koi8r2mic, mic2koi8r, 0, 0},
-	{ PG_WIN1251,	win12512mic, mic2win1251, 0, 0},
-	{ PG_ALT,	alt2mic, mic2alt, 0, 0},
-	{ PG_ISO_8859_5,	0, 0, 0, 0},
-	{ PG_ISO_8859_6,	0, 0, 0, 0},
-	{ PG_ISO_8859_7,	0, 0, 0, 0},
-	{ PG_ISO_8859_8,	0, 0, 0, 0},
-	{ PG_SJIS,	sjis2mic, mic2sjis, 0, 0},
-	{ PG_BIG5,	big52mic, mic2big5, 0, 0},
-	{ PG_WIN1250,	win12502mic, mic2win1250, 0, 0},
+	{
+		PG_SQL_ASCII, ascii2mic, mic2ascii, 0, 0
+	}		   ,
+	{
+		PG_EUC_JP, euc_jp2mic, mic2euc_jp, 0, 0
+	},
+	{
+		PG_EUC_CN, euc_cn2mic, mic2euc_cn, 0, 0
+	},
+	{
+		PG_EUC_KR, euc_kr2mic, mic2euc_kr, 0, 0
+	},
+	{
+		PG_EUC_TW, euc_tw2mic, mic2euc_tw, 0, 0
+	},
+	{
+		PG_UTF8, 0, 0, 0, 0
+	},
+	{
+		PG_MULE_INTERNAL, 0, 0, 0, 0
+	},
+	{
+		PG_LATIN1, latin12mic, mic2latin1, 0, 0
+	},
+	{
+		PG_LATIN2, latin22mic, mic2latin2, 0, 0
+	},
+	{
+		PG_LATIN3, latin32mic, mic2latin3, 0, 0
+	},
+	{
+		PG_LATIN4, latin42mic, mic2latin4, 0, 0
+	},
+	{
+		PG_LATIN5, iso2mic, mic2iso, 0, 0
+	},
+	{
+		PG_LATIN6, 0, 0, 0, 0
+	},
+	{
+		PG_LATIN7, 0, 0, 0, 0
+	},
+	{
+		PG_LATIN8, 0, 0, 0, 0
+	},
+	{
+		PG_LATIN9, 0, 0, 0, 0
+	},
+	{
+		PG_LATIN10, 0, 0, 0, 0
+	},
+	{
+		PG_KOI8R, koi8r2mic, mic2koi8r, 0, 0
+	},
+	{
+		PG_WIN1251, win12512mic, mic2win1251, 0, 0
+	},
+	{
+		PG_ALT, alt2mic, mic2alt, 0, 0
+	},
+	{
+		PG_ISO_8859_5, 0, 0, 0, 0
+	},
+	{
+		PG_ISO_8859_6, 0, 0, 0, 0
+	},
+	{
+		PG_ISO_8859_7, 0, 0, 0, 0
+	},
+	{
+		PG_ISO_8859_8, 0, 0, 0, 0
+	},
+	{
+		PG_SJIS, sjis2mic, mic2sjis, 0, 0
+	},
+	{
+		PG_BIG5, big52mic, mic2big5, 0, 0
+	},
+	{
+		PG_WIN1250, win12502mic, mic2win1250, 0, 0
+	},
 };
-
 #endif	 /* UNICODE_CONVERSION */

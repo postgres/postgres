@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inet.h,v 1.10 2001/03/22 04:01:12 momjian Exp $
+ * $Id: inet.h,v 1.11 2001/10/25 05:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,6 +66,5 @@ typedef struct macaddr
 #define MacaddrPGetDatum(X)    PointerGetDatum(X)
 #define PG_GETARG_MACADDR_P(n) DatumGetMacaddrP(PG_GETARG_DATUM(n))
 #define PG_RETURN_MACADDR_P(x) return MacaddrPGetDatum(x)
-
 
 #endif	 /* INET_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.38 2001/03/22 06:16:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.39 2001/10/25 05:49:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,7 +148,6 @@ ExecHashJoin(HashJoin *node)
 
 	for (;;)
 	{
-
 		/*
 		 * If we don't have an outer tuple, get the next one
 		 */
@@ -159,7 +158,6 @@ ExecHashJoin(HashJoin *node)
 													   hjstate);
 			if (TupIsNull(outerTupleSlot))
 			{
-
 				/*
 				 * when the last batch runs out, clean up and exit
 				 */
@@ -193,7 +191,6 @@ ExecHashJoin(HashJoin *node)
 
 				if (batch > 0)
 				{
-
 					/*
 					 * Need to postpone this outer tuple to a later batch.
 					 * Save it in the corresponding outer-batch file.
@@ -270,7 +267,6 @@ ExecHashJoin(HashJoin *node)
 		if (!hjstate->hj_MatchedOuter &&
 			node->join.jointype == JOIN_LEFT)
 		{
-
 			/*
 			 * We are doing an outer join and there were no join matches
 			 * for this outer tuple.  Generate a fake join tuple with
@@ -281,7 +277,6 @@ ExecHashJoin(HashJoin *node)
 
 			if (ExecQual(otherqual, econtext, false))
 			{
-
 				/*
 				 * qualification was satisfied so we project and return
 				 * the slot containing the result tuple using
@@ -411,8 +406,8 @@ int
 ExecCountSlotsHashJoin(HashJoin *node)
 {
 	return ExecCountSlotsNode(outerPlan(node)) +
-	ExecCountSlotsNode(innerPlan(node)) +
-	HASHJOIN_NSLOTS;
+		ExecCountSlotsNode(innerPlan(node)) +
+		HASHJOIN_NSLOTS;
 }
 
 /* ----------------------------------------------------------------
@@ -565,7 +560,6 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
 
 	if (newbatch > 1)
 	{
-
 		/*
 		 * We no longer need the previous outer batch file; close it right
 		 * away to free disk space.

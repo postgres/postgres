@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpgtcl.h,v 1.11 2001/01/24 19:43:29 momjian Exp $
+ * $Id: libpgtcl.h,v 1.12 2001/10/25 05:50:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,5 +20,4 @@
 
 extern int	Pgtcl_Init(Tcl_Interp *interp);
 extern int	Pgtcl_SafeInit(Tcl_Interp *interp);
-
 #endif	 /* LIBPGTCL_H */

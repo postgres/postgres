@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.58 2001/09/06 02:07:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.59 2001/10/25 05:49:46 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -589,7 +589,6 @@ get_relnatts(Oid relid)
 	else
 		return InvalidAttrNumber;
 }
-
 #endif
 
 /*
@@ -723,7 +722,6 @@ get_typalign(Oid typid)
 	else
 		return 'i';
 }
-
 #endif
 
 char
@@ -778,8 +776,8 @@ get_typdefault(Oid typid, Datum *defaultValue)
 	typelem = type->typelem;
 
 	/*
-	 * typdefault is potentially null, so don't try to access it as a struct
-	 * field. Must do it the hard way with SysCacheGetAttr.
+	 * typdefault is potentially null, so don't try to access it as a
+	 * struct field. Must do it the hard way with SysCacheGetAttr.
 	 */
 	textDefaultVal = SysCacheGetAttr(TYPEOID,
 									 typeTuple,
@@ -828,6 +826,7 @@ get_typavgwidth(Oid typid, int32 typmod)
 	 */
 	if (typlen > 0)
 		return typlen;
+
 	/*
 	 * type_maximum_size knows the encoding of typmod for some datatypes;
 	 * don't duplicate that knowledge here.
@@ -836,16 +835,17 @@ get_typavgwidth(Oid typid, int32 typmod)
 	if (maxwidth > 0)
 	{
 		/*
-		 * For BPCHAR, the max width is also the only width.  Otherwise
-		 * we need to guess about the typical data width given the max.
-		 * A sliding scale for percentage of max width seems reasonable.
+		 * For BPCHAR, the max width is also the only width.  Otherwise we
+		 * need to guess about the typical data width given the max. A
+		 * sliding scale for percentage of max width seems reasonable.
 		 */
 		if (typid == BPCHAROID)
 			return maxwidth;
 		if (maxwidth <= 32)
 			return maxwidth;	/* assume full width */
 		if (maxwidth < 1000)
-			return 32 + (maxwidth - 32) / 2; /* assume 50% */
+			return 32 + (maxwidth - 32) / 2;	/* assume 50% */
+
 		/*
 		 * Beyond 1000, assume we're looking at something like
 		 * "varchar(10000)" where the limit isn't actually reached often,
@@ -853,6 +853,7 @@ get_typavgwidth(Oid typid, int32 typmod)
 		 */
 		return 32 + (1000 - 32) / 2;
 	}
+
 	/*
 	 * Ooops, we have no idea ... wild guess time.
 	 */
@@ -887,7 +888,6 @@ get_typtype(Oid typid)
 	else
 		return '\0';
 }
-
 #endif
 
 /*				---------- STATISTICS CACHE ----------					 */
@@ -909,7 +909,7 @@ get_attavgwidth(Oid relid, AttrNumber attnum)
 						0, 0);
 	if (HeapTupleIsValid(tp))
 	{
-		int32	stawidth = ((Form_pg_statistic) GETSTRUCT(tp))->stawidth;
+		int32		stawidth = ((Form_pg_statistic) GETSTRUCT(tp))->stawidth;
 
 		ReleaseSysCache(tp);
 		if (stawidth > 0)
@@ -977,14 +977,17 @@ get_attstatsslot(HeapTuple statstuple,
 		if (isnull)
 			elog(ERROR, "get_attstatsslot: stavalues is null");
 		statarray = DatumGetArrayTypeP(val);
+
 		/*
-		 * Do initial examination of the array.  This produces a list
-		 * of text Datums --- ie, pointers into the text array value.
+		 * Do initial examination of the array.  This produces a list of
+		 * text Datums --- ie, pointers into the text array value.
 		 */
 		deconstruct_array(statarray, false, -1, 'i', values, nvalues);
 		narrayelem = *nvalues;
+
 		/*
-		 * We now need to replace each text Datum by its internal equivalent.
+		 * We now need to replace each text Datum by its internal
+		 * equivalent.
 		 *
 		 * Get the type input proc and typelem for the column datatype.
 		 */
@@ -997,9 +1000,10 @@ get_attstatsslot(HeapTuple statstuple,
 		fmgr_info(((Form_pg_type) GETSTRUCT(typeTuple))->typinput, &inputproc);
 		typelem = ((Form_pg_type) GETSTRUCT(typeTuple))->typelem;
 		ReleaseSysCache(typeTuple);
+
 		/*
-		 * Do the conversions.  The palloc'd array of Datums is reused
-		 * in place.
+		 * Do the conversions.	The palloc'd array of Datums is reused in
+		 * place.
 		 */
 		for (j = 0; j < narrayelem; j++)
 		{
@@ -1013,6 +1017,7 @@ get_attstatsslot(HeapTuple statstuple,
 										 Int32GetDatum(atttypmod));
 			pfree(strval);
 		}
+
 		/*
 		 * Free statarray if it's a detoasted copy.
 		 */
@@ -1028,10 +1033,11 @@ get_attstatsslot(HeapTuple statstuple,
 		if (isnull)
 			elog(ERROR, "get_attstatsslot: stanumbers is null");
 		statarray = DatumGetArrayTypeP(val);
+
 		/*
-		 * We expect the array to be a 1-D float4 array; verify that.
-		 * We don't need to use deconstruct_array() since the array
-		 * data is just going to look like a C array of float4 values.
+		 * We expect the array to be a 1-D float4 array; verify that. We
+		 * don't need to use deconstruct_array() since the array data is
+		 * just going to look like a C array of float4 values.
 		 */
 		narrayelem = ARR_DIMS(statarray)[0];
 		if (ARR_NDIM(statarray) != 1 || narrayelem <= 0 ||
@@ -1040,6 +1046,7 @@ get_attstatsslot(HeapTuple statstuple,
 		*numbers = (float4 *) palloc(narrayelem * sizeof(float4));
 		memcpy(*numbers, ARR_DATA_PTR(statarray), narrayelem * sizeof(float4));
 		*nnumbers = narrayelem;
+
 		/*
 		 * Free statarray if it's a detoasted copy.
 		 */
@@ -1057,9 +1064,9 @@ free_attstatsslot(Oid atttype,
 {
 	if (values)
 	{
-		if (! get_typbyval(atttype))
+		if (!get_typbyval(atttype))
 		{
-			int		i;
+			int			i;
 
 			for (i = 0; i < nvalues; i++)
 				pfree(DatumGetPointer(values[i]));

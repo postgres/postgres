@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-be.h,v 1.22 2001/08/17 02:59:19 momjian Exp $
+ * $Id: libpq-be.h,v 1.23 2001/10/25 05:49:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,10 +67,10 @@ typedef struct AuthRequestPacket
 
 typedef enum
 {
-	Idle,
-	ReadingPacketLength,
-	ReadingPacket,
-	WritingPacket
+				Idle,
+				ReadingPacketLength,
+				ReadingPacket,
+				WritingPacket
 } PacketState;
 
 typedef int (*PacketDoneProc) (void *arg, PacketLen pktlen, void *pktdata);
@@ -120,7 +120,7 @@ typedef struct Port
 	SockAddr	laddr;			/* local addr (us) */
 	SockAddr	raddr;			/* remote addr (them) */
 	char		md5Salt[4];		/* Password salt */
- 	char		cryptSalt[2];	/* Password salt */
+	char		cryptSalt[2];	/* Password salt */
 
 	/*
 	 * Information that needs to be held during the fe/be authentication
@@ -155,5 +155,4 @@ int			PacketReceiveFragment(Port *port);
 void		PacketSendSetup(Packet *pkt, int nbytes, PacketDoneProc iodone, void *arg);
 int			PacketSendFragment(Port *port);
 void		PacketSendError(Packet *pkt, char *errormsg);
-
 #endif	 /* LIBPQ_BE_H */

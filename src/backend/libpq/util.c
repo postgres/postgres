@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/libpq/Attic/util.c,v 1.17 2001/01/24 19:42:56 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/Attic/util.c,v 1.18 2001/10/25 05:49:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,6 @@ pqdebug(char *fmt, char *msg)
 
 	if (PQtracep)
 	{
-
 		/*
 		 * if nothing else was suggested default to stderr
 		 */

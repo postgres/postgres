@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.27 2001/10/05 17:28:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.28 2001/10/25 05:49:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -481,7 +481,7 @@ mmnblocks(Relation reln)
 {
 	MMRelTag	rtag;
 	MMRelHashEntry *rentry;
-	BlockNumber	nblocks;
+	BlockNumber nblocks;
 
 	if (reln->rd_rel->relisshared)
 		rtag.mmrt_dbid = (Oid) 0;
@@ -561,5 +561,4 @@ MMShmemSize()
 
 	return size;
 }
-
 #endif	 /* STABLE_MEMORY_STORAGE */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.59 2001/10/24 09:28:31 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.60 2001/10/25 05:49:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ static void NormIndexAttrs(IndexInfo *indexInfo, Oid *classOidP,
 			   char *accessMethodName, Oid accessMethodId);
 static Oid GetAttrOpClass(IndexElem *attribute, Oid attrType,
 			   char *accessMethodName, Oid accessMethodId);
-static Oid GetDefaultOpClass(Oid attrType, Oid accessMethodId);
+static Oid	GetDefaultOpClass(Oid attrType, Oid accessMethodId);
 
 /*
  * DefineIndex
@@ -97,7 +97,8 @@ DefineIndex(char *heapRelationName,
 			 heapRelationName);
 
 	/*
-	 * look up the access method, verify it can handle the requested features
+	 * look up the access method, verify it can handle the requested
+	 * features
 	 */
 	tuple = SearchSysCache(AMNAME,
 						   PointerGetDatum(accessMethodName),
@@ -108,18 +109,18 @@ DefineIndex(char *heapRelationName,
 	accessMethodId = tuple->t_data->t_oid;
 	accessMethodForm = (Form_pg_am) GETSTRUCT(tuple);
 
-	if (unique && ! accessMethodForm->amcanunique)
+	if (unique && !accessMethodForm->amcanunique)
 		elog(ERROR, "DefineIndex: access method \"%s\" does not support UNIQUE indexes",
 			 accessMethodName);
-	if (numberOfAttributes > 1 && ! accessMethodForm->amcanmulticol)
+	if (numberOfAttributes > 1 && !accessMethodForm->amcanmulticol)
 		elog(ERROR, "DefineIndex: access method \"%s\" does not support multi-column indexes",
 			 accessMethodName);
 
 	ReleaseSysCache(tuple);
 
 	/*
-	 * Convert the partial-index predicate from parsetree form to
-	 * an implicit-AND qual expression, for easier evaluation at runtime.
+	 * Convert the partial-index predicate from parsetree form to an
+	 * implicit-AND qual expression, for easier evaluation at runtime.
 	 * While we are at it, we reduce it to a canonical (CNF or DNF) form
 	 * to simplify the task of proving implications.
 	 */
@@ -196,7 +197,7 @@ DefineIndex(char *heapRelationName,
  *		(via the given range table) only to the given base relation oid.
  *
  * This used to also constrain the form of the predicate to forms that
- * indxpath.c could do something with.  However, that seems overly
+ * indxpath.c could do something with.	However, that seems overly
  * restrictive.  One useful application of partial indexes is to apply
  * a UNIQUE constraint across a subset of a table, and in that scenario
  * any evaluatable predicate will work.  So accept any predicate here
@@ -208,11 +209,12 @@ CheckPredicate(List *predList, List *rangeTable, Oid baseRelOid)
 {
 	if (length(rangeTable) != 1 || getrelid(1, rangeTable) != baseRelOid)
 		elog(ERROR,
-			 "Partial-index predicates may refer only to the base relation");
+		 "Partial-index predicates may refer only to the base relation");
 
 	/*
 	 * We don't currently support generation of an actual query plan for a
-	 * predicate, only simple scalar expressions; hence these restrictions.
+	 * predicate, only simple scalar expressions; hence these
+	 * restrictions.
 	 */
 	if (contain_subplans((Node *) predList))
 		elog(ERROR, "Cannot use subselect in index predicate");
@@ -240,7 +242,7 @@ FuncIndexArgs(IndexInfo *indexInfo,
 	List	   *arglist;
 	int			nargs = 0;
 	int			i;
-	FuncDetailCode	fdresult;
+	FuncDetailCode fdresult;
 	Oid			funcid;
 	Oid			rettype;
 	bool		retset;
@@ -309,9 +311,9 @@ FuncIndexArgs(IndexInfo *indexInfo,
 
 	/*
 	 * Require that the function be marked cachable.  Using a noncachable
-	 * function for a functional index is highly questionable, since if you
-	 * aren't going to get the same result for the same data every time,
-	 * it's not clear what the index entries mean at all.
+	 * function for a functional index is highly questionable, since if
+	 * you aren't going to get the same result for the same data every
+	 * time, it's not clear what the index entries mean at all.
 	 */
 	if (!func_iscachable(funcid))
 		elog(ERROR, "DefineIndex: index function must be marked iscachable");
@@ -431,11 +433,11 @@ GetDefaultOpClass(Oid attrType, Oid accessMethodId)
 	 * (either exactly or binary-compatibly, but prefer an exact match).
 	 *
 	 * We could find more than one binary-compatible match, in which case we
-	 * require the user to specify which one he wants.  If we find more than
-	 * one exact match, then someone put bogus entries in pg_opclass.
+	 * require the user to specify which one he wants.	If we find more
+	 * than one exact match, then someone put bogus entries in pg_opclass.
 	 *
-	 * We could use an indexscan here, but since pg_opclass is small
-	 * and a scan on opcamid won't be very selective, the indexscan would
+	 * We could use an indexscan here, but since pg_opclass is small and a
+	 * scan on opcamid won't be very selective, the indexscan would
 	 * probably actually be slower than heapscan.
 	 */
 	ScanKeyEntryInitialize(&entry[0], 0x0,
@@ -612,7 +614,7 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 	if (strcmp(dbname, DatabaseName) != 0)
 		elog(ERROR, "REINDEX DATABASE: Can be executed only on the currently open database.");
 
-	if (! (superuser() || is_dbadmin(MyDatabaseId)))
+	if (!(superuser() || is_dbadmin(MyDatabaseId)))
 		elog(ERROR, "REINDEX DATABASE: Permission denied.");
 
 	/*

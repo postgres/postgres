@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.78 2001/08/21 16:36:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.79 2001/10/25 05:49:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -271,10 +271,10 @@ cost_index(Path *path, Query *root,
 	 *
 	 * When the index ordering is exactly correlated with the table ordering
 	 * (just after a CLUSTER, for example), the number of pages fetched should
-	 * be just sT.  What's more, these will be sequential fetches, not the
-	 * random fetches that occur in the uncorrelated case.  So, depending on
+	 * be just sT.	What's more, these will be sequential fetches, not the
+	 * random fetches that occur in the uncorrelated case.	So, depending on
 	 * the extent of correlation, we should estimate the actual I/O cost
-	 * somewhere between s * T * 1.0 and PF * random_cost.  We currently
+	 * somewhere between s * T * 1.0 and PF * random_cost.	We currently
 	 * interpolate linearly between these two endpoints based on the
 	 * correlation squared (XXX is that appropriate?).
 	 *
@@ -301,7 +301,7 @@ cost_index(Path *path, Query *root,
 	}
 	else
 	{
-		double	lim;
+		double		lim;
 
 		lim = (2.0 * T * b) / (2.0 * T - b);
 		if (tuples_fetched <= lim)
@@ -317,18 +317,19 @@ cost_index(Path *path, Query *root,
 	}
 
 	/*
-	 * min_IO_cost corresponds to the perfectly correlated case (csquared=1),
-	 * max_IO_cost to the perfectly uncorrelated case (csquared=0).  Note
-	 * that we just charge random_page_cost per page in the uncorrelated
-	 * case, rather than using cost_nonsequential_access, since we've already
-	 * accounted for caching effects by using the Mackert model.
+	 * min_IO_cost corresponds to the perfectly correlated case
+	 * (csquared=1), max_IO_cost to the perfectly uncorrelated case
+	 * (csquared=0).  Note that we just charge random_page_cost per page
+	 * in the uncorrelated case, rather than using
+	 * cost_nonsequential_access, since we've already accounted for
+	 * caching effects by using the Mackert model.
 	 */
 	min_IO_cost = ceil(indexSelectivity * T);
 	max_IO_cost = pages_fetched * random_page_cost;
 
 	/*
-	 * Now interpolate based on estimated index order correlation
-	 * to get total disk I/O cost for main table accesses.
+	 * Now interpolate based on estimated index order correlation to get
+	 * total disk I/O cost for main table accesses.
 	 */
 	csquared = indexCorrelation * indexCorrelation;
 
@@ -337,14 +338,14 @@ cost_index(Path *path, Query *root,
 	/*
 	 * Estimate CPU costs per tuple.
 	 *
-	 * Normally the indexquals will be removed from the list of
-	 * restriction clauses that we have to evaluate as qpquals, so we
-	 * should subtract their costs from baserestrictcost.  XXX For a lossy
-	 * index, not all the quals will be removed and so we really shouldn't
-	 * subtract their costs; but detecting that seems more expensive than
-	 * it's worth.  Also, if we are doing a join then some of the indexquals
-	 * are join clauses and shouldn't be subtracted.  Rather than work out
-	 * exactly how much to subtract, we don't subtract anything.
+	 * Normally the indexquals will be removed from the list of restriction
+	 * clauses that we have to evaluate as qpquals, so we should subtract
+	 * their costs from baserestrictcost.  XXX For a lossy index, not all
+	 * the quals will be removed and so we really shouldn't subtract their
+	 * costs; but detecting that seems more expensive than it's worth.
+	 * Also, if we are doing a join then some of the indexquals are join
+	 * clauses and shouldn't be subtracted.  Rather than work out exactly
+	 * how much to subtract, we don't subtract anything.
 	 */
 	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost;
 
@@ -501,11 +502,11 @@ cost_nestloop(Path *path, Query *root,
 
 	/*
 	 * NOTE: clearly, we must pay both outer and inner paths' startup_cost
-	 * before we can start returning tuples, so the join's startup cost
-	 * is their sum.  What's not so clear is whether the inner path's
+	 * before we can start returning tuples, so the join's startup cost is
+	 * their sum.  What's not so clear is whether the inner path's
 	 * startup_cost must be paid again on each rescan of the inner path.
-	 * This is not true if the inner path is materialized, but probably
-	 * is true otherwise.  Since we don't yet have clean handling of the
+	 * This is not true if the inner path is materialized, but probably is
+	 * true otherwise.	Since we don't yet have clean handling of the
 	 * decision whether to materialize a path, we can't tell here which
 	 * will happen.  As a compromise, charge 50% of the inner startup cost
 	 * for each restart.
@@ -615,9 +616,9 @@ cost_mergejoin(Path *path, Query *root,
 	/*
 	 * The number of tuple comparisons needed depends drastically on the
 	 * number of equal keys in the two source relations, which we have no
-	 * good way of estimating.  Somewhat arbitrarily, we charge one
-	 * tuple comparison (one cpu_operator_cost) for each tuple in the
-	 * two source relations.  This is probably a lower bound.
+	 * good way of estimating.	Somewhat arbitrarily, we charge one tuple
+	 * comparison (one cpu_operator_cost) for each tuple in the two source
+	 * relations.  This is probably a lower bound.
 	 */
 	run_cost += cpu_operator_cost *
 		(outer_path->parent->rows + inner_path->parent->rows);
@@ -625,7 +626,7 @@ cost_mergejoin(Path *path, Query *root,
 	/*
 	 * For each tuple that gets through the mergejoin proper, we charge
 	 * cpu_tuple_cost plus the cost of evaluating additional restriction
-	 * clauses that are to be applied at the join.  It's OK to use an
+	 * clauses that are to be applied at the join.	It's OK to use an
 	 * approximate selectivity here, since in most cases this is a minor
 	 * component of the cost.
 	 */
@@ -685,8 +686,8 @@ cost_hashjoin(Path *path, Query *root,
 	run_cost += cpu_operator_cost * outer_path->parent->rows;
 
 	/*
-	 * Determine bucketsize fraction for inner relation.  First we have
-	 * to figure out which side of the hashjoin clause is the inner side.
+	 * Determine bucketsize fraction for inner relation.  First we have to
+	 * figure out which side of the hashjoin clause is the inner side.
 	 */
 	Assert(length(hashclauses) == 1);
 	Assert(IsA(lfirst(hashclauses), RestrictInfo));
@@ -696,9 +697,9 @@ cost_hashjoin(Path *path, Query *root,
 	right = get_rightop(restrictinfo->clause);
 
 	/*
-	 * Since we tend to visit the same clauses over and over when
-	 * planning a large query, we cache the bucketsize estimate in
-	 * the RestrictInfo node to avoid repeated lookups of statistics.
+	 * Since we tend to visit the same clauses over and over when planning
+	 * a large query, we cache the bucketsize estimate in the RestrictInfo
+	 * node to avoid repeated lookups of statistics.
 	 */
 	if (intMember(right->varno, inner_path->parent->relids))
 	{
@@ -726,9 +727,9 @@ cost_hashjoin(Path *path, Query *root,
 
 	/*
 	 * The number of tuple comparisons needed is the number of outer
-	 * tuples times the typical number of tuples in a hash bucket,
-	 * which is the inner relation size times its bucketsize fraction.
-	 * We charge one cpu_operator_cost per tuple comparison.
+	 * tuples times the typical number of tuples in a hash bucket, which
+	 * is the inner relation size times its bucketsize fraction. We charge
+	 * one cpu_operator_cost per tuple comparison.
 	 */
 	run_cost += cpu_operator_cost * outer_path->parent->rows *
 		ceil(inner_path->parent->rows * innerbucketsize);
@@ -736,7 +737,7 @@ cost_hashjoin(Path *path, Query *root,
 	/*
 	 * For each tuple that gets through the hashjoin proper, we charge
 	 * cpu_tuple_cost plus the cost of evaluating additional restriction
-	 * clauses that are to be applied at the join.  It's OK to use an
+	 * clauses that are to be applied at the join.	It's OK to use an
 	 * approximate selectivity here, since in most cases this is a minor
 	 * component of the cost.
 	 */
@@ -792,11 +793,11 @@ cost_hashjoin(Path *path, Query *root,
  * distribution, so this will have to do for now.
  *
  * We can get the number of buckets the executor will use for the given
- * input relation.  If the data were perfectly distributed, with the same
+ * input relation.	If the data were perfectly distributed, with the same
  * number of tuples going into each available bucket, then the bucketsize
  * fraction would be 1/nbuckets.  But this happy state of affairs will occur
  * only if (a) there are at least nbuckets distinct data values, and (b)
- * we have a not-too-skewed data distribution.  Otherwise the buckets will
+ * we have a not-too-skewed data distribution.	Otherwise the buckets will
  * be nonuniformly occupied.  If the other relation in the join has a key
  * distribution similar to this one's, then the most-loaded buckets are
  * exactly those that will be probed most often.  Therefore, the "average"
@@ -828,8 +829,8 @@ estimate_hash_bucketsize(Query *root, Var *var)
 	int			nnumbers;
 
 	/*
-	 * Lookup info about var's relation and attribute;
-	 * if none available, return default estimate.
+	 * Lookup info about var's relation and attribute; if none available,
+	 * return default estimate.
 	 */
 	if (!IsA(var, Var))
 		return 0.1;
@@ -891,12 +892,13 @@ estimate_hash_bucketsize(Query *root, Var *var)
 	avgfreq = (1.0 - stats->stanullfrac) / ndistinct;
 
 	/*
-	 * Adjust ndistinct to account for restriction clauses.  Observe we are
-	 * assuming that the data distribution is affected uniformly by the
-	 * restriction clauses!
+	 * Adjust ndistinct to account for restriction clauses.  Observe we
+	 * are assuming that the data distribution is affected uniformly by
+	 * the restriction clauses!
 	 *
 	 * XXX Possibly better way, but much more expensive: multiply by
-	 * selectivity of rel's restriction clauses that mention the target Var.
+	 * selectivity of rel's restriction clauses that mention the target
+	 * Var.
 	 */
 	ndistinct *= rel->rows / rel->tuples;
 
@@ -929,7 +931,8 @@ estimate_hash_bucketsize(Query *root, Var *var)
 	}
 
 	/*
-	 * Adjust estimated bucketsize upward to account for skewed distribution.
+	 * Adjust estimated bucketsize upward to account for skewed
+	 * distribution.
 	 */
 	if (avgfreq > 0.0 && mcvfreq > avgfreq)
 		estfract *= mcvfreq / avgfreq;
@@ -1084,19 +1087,20 @@ cost_qual_eval_walker(Node *node, Cost *total)
 static Selectivity
 approx_selectivity(Query *root, List *quals)
 {
-	Selectivity	total = 1.0;
+	Selectivity total = 1.0;
 	List	   *l;
 
 	foreach(l, quals)
 	{
 		Node	   *qual = (Node *) lfirst(l);
-		Selectivity	selec;
+		Selectivity selec;
 
 		/*
 		 * RestrictInfo nodes contain a this_selec field reserved for this
 		 * routine's use, so that it's not necessary to evaluate the qual
-		 * clause's selectivity more than once.  If the clause's selectivity
-		 * hasn't been computed yet, the field will contain -1.
+		 * clause's selectivity more than once.  If the clause's
+		 * selectivity hasn't been computed yet, the field will contain
+		 * -1.
 		 */
 		if (qual && IsA(qual, RestrictInfo))
 		{
@@ -1254,7 +1258,7 @@ set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
  * NB: this works best on base relations because it prefers to look at
  * real Vars.  It will fail to make use of pg_statistic info when applied
  * to a subquery relation, even if the subquery outputs are simple vars
- * that we could have gotten info for.  Is it worth trying to be smarter
+ * that we could have gotten info for.	Is it worth trying to be smarter
  * about subqueries?
  */
 static void
@@ -1266,15 +1270,15 @@ set_rel_width(Query *root, RelOptInfo *rel)
 	foreach(tllist, rel->targetlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tllist);
-		int32	item_width;
+		int32		item_width;
 
 		/*
 		 * If it's a Var, try to get statistical info from pg_statistic.
 		 */
 		if (tle->expr && IsA(tle->expr, Var))
 		{
-			Var	   *var = (Var *) tle->expr;
-			Oid		relid;
+			Var		   *var = (Var *) tle->expr;
+			Oid			relid;
 
 			relid = getrelid(var->varno, root->rtable);
 			if (relid != InvalidOid)
@@ -1287,6 +1291,7 @@ set_rel_width(Query *root, RelOptInfo *rel)
 				}
 			}
 		}
+
 		/*
 		 * Not a Var, or can't find statistics for it.  Estimate using
 		 * just the type info.

@@ -46,7 +46,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.77 2001/03/22 06:16:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.78 2001/10/25 05:49:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,6 @@
  */
 typedef struct AggStatePerAggData
 {
-
 	/*
 	 * These values are set up during ExecInitAgg() and do not change
 	 * thereafter:
@@ -178,7 +177,6 @@ initialize_aggregate(AggStatePerAgg peraggstate)
 	 */
 	if (aggref->aggdistinct)
 	{
-
 		/*
 		 * In case of rescan, maybe there could be an uncompleted sort
 		 * operation?  Clean it up if so.
@@ -228,7 +226,6 @@ advance_transition_function(AggStatePerAgg peraggstate,
 	{
 		if (isNull)
 		{
-
 			/*
 			 * For a strict transfn, nothing happens at a NULL input
 			 * tuple; we just keep the prior transValue.  However, if the
@@ -243,7 +240,6 @@ advance_transition_function(AggStatePerAgg peraggstate,
 		}
 		if (peraggstate->noTransValue)
 		{
-
 			/*
 			 * transValue has not been initialized. This is the first
 			 * non-NULL input value. We use it as the initial value for
@@ -264,7 +260,6 @@ advance_transition_function(AggStatePerAgg peraggstate,
 		}
 		if (peraggstate->transValueIsNull)
 		{
-
 			/*
 			 * Don't call a strict function with NULL inputs.  Note it is
 			 * possible to get here despite the above tests, if the
@@ -333,7 +328,6 @@ process_sorted_aggregate(AggState *aggstate,
 	while (tuplesort_getdatum(peraggstate->sortstate, true,
 							  &newVal, &isNull))
 	{
-
 		/*
 		 * DISTINCT always suppresses nulls, per SQL spec, regardless of
 		 * the transition function's strictness.
@@ -398,7 +392,6 @@ static void
 finalize_aggregate(AggStatePerAgg peraggstate,
 				   Datum *resultVal, bool *resultIsNull)
 {
-
 	/*
 	 * Apply the agg's finalfn if one is provided, else return transValue.
 	 */
@@ -757,7 +750,6 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	aggstate->numaggs = numaggs = length(aggstate->aggs);
 	if (numaggs <= 0)
 	{
-
 		/*
 		 * This used to be treated as an error, but we can't do that
 		 * anymore because constant-expression simplification could
@@ -897,7 +889,6 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 		 */
 		if (peraggstate->transfn.fn_strict && peraggstate->initValueIsNull)
 		{
-
 			/*
 			 * Note: use the type from the input expression here, not
 			 * aggform->aggbasetype, because the latter might be 0.
@@ -913,7 +904,6 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 
 		if (aggref->aggdistinct)
 		{
-
 			/*
 			 * Note: use the type from the input expression here, not
 			 * aggform->aggbasetype, because the latter might be 0.
@@ -947,8 +937,8 @@ int
 ExecCountSlotsAgg(Agg *node)
 {
 	return ExecCountSlotsNode(outerPlan(node)) +
-	ExecCountSlotsNode(innerPlan(node)) +
-	AGG_NSLOTS;
+		ExecCountSlotsNode(innerPlan(node)) +
+		AGG_NSLOTS;
 }
 
 void

@@ -24,7 +24,6 @@ Datum		_rserv_debug_(PG_FUNCTION_ARGS);
 HeapTuple	_rserv_log_(void);
 int32		_rserv_sync_(int32);
 int32		_rserv_debug_(int32);
-
 #endif
 
 static int	debug = 0;
@@ -44,7 +43,7 @@ _rserv_log_()
 	char	  **args;			/* argument: argnum */
 	Relation	rel;			/* triggered relation */
 	HeapTuple	tuple;			/* tuple to return */
-	HeapTuple	newtuple = NULL;/* tuple to return */
+	HeapTuple	newtuple = NULL;		/* tuple to return */
 	TupleDesc	tupdesc;		/* tuple description */
 	int			keynum;
 	char	   *key;
@@ -88,6 +87,7 @@ _rserv_log_()
 		newtuple = CurrentTriggerData->tg_newtuple;
 
 #ifndef PG_FUNCTION_INFO_V1
+
 	/*
 	 * Setting CurrentTriggerData to NULL prevents direct calls to trigger
 	 * functions in queries. Normally, trigger functions have to be called
@@ -207,7 +207,6 @@ _rserv_sync_(int32 server)
 {
 #ifdef PG_FUNCTION_INFO_V1
 	int32		server = PG_GETARG_INT32(0);
-
 #endif
 	char		sql[8192];
 	char		buf[8192];
@@ -253,7 +252,6 @@ _rserv_debug_(int32 newval)
 {
 #ifdef PG_FUNCTION_INFO_V1
 	int32		newval = PG_GETARG_INT32(0);
-
 #endif
 	int32		oldval = debug;
 

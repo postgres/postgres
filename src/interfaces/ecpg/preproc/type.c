@@ -121,7 +121,7 @@ get_type(enum ECPGttype typ)
 {
 	switch (typ)
 	{
-			case ECPGt_char:
+		case ECPGt_char:
 			return ("ECPGt_char");
 			break;
 		case ECPGt_unsigned_char:
@@ -212,10 +212,10 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *in
 
 	switch (typ->typ)
 	{
-			case ECPGt_array:
+		case ECPGt_array:
 			switch (typ->u.element->typ)
 			{
-					case ECPGt_array:
+				case ECPGt_array:
 					yyerror("No nested arrays allowed (except strings)");		/* array of array */
 					break;
 				case ECPGt_struct:
@@ -351,7 +351,6 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype typ,
 static void
 ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, long arrsiz, struct ECPGtype * typ, struct ECPGtype * ind_typ, const char *offsetarg, const char *prefix, const char *ind_prefix)
 {
-
 	/*
 	 * If offset is NULL, then this is the first recursive level. If not
 	 * then we are in a struct in a struct and the offset is used as
@@ -409,10 +408,10 @@ ECPGfree_type(struct ECPGtype * typ)
 	{
 		switch (typ->typ)
 		{
-				case ECPGt_array:
+			case ECPGt_array:
 				switch (typ->u.element->typ)
 				{
-						case ECPGt_array:
+					case ECPGt_array:
 						yyerror("internal error, found multi-dimensional array\n");
 						break;
 					case ECPGt_struct:
@@ -446,7 +445,7 @@ get_dtype(enum ECPGdtype typ)
 {
 	switch (typ)
 	{
-			case ECPGd_count:
+		case ECPGd_count:
 			return ("ECPGd_countr");
 			break;
 		case ECPGd_data:

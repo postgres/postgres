@@ -44,7 +44,7 @@ TL_Constructor(UInt4 fieldcnt)
 
 
 void
-TL_Destructor(TupleListClass *self)
+TL_Destructor(TupleListClass * self)
 {
 	int			lf;
 	TupleNode  *node,
@@ -70,7 +70,7 @@ TL_Destructor(TupleListClass *self)
 
 
 void *
-TL_get_fieldval(TupleListClass *self, Int4 tupleno, Int2 fieldno)
+TL_get_fieldval(TupleListClass * self, Int4 tupleno, Int2 fieldno)
 {
 	Int4		lf;
 	Int4		delta,
@@ -138,7 +138,6 @@ TL_get_fieldval(TupleListClass *self, Int4 tupleno, Int2 fieldno)
 	}
 	else if (start_is_closer)
 	{
-
 		/*
 		 * the shortest way is to start the search from the head of the
 		 * list
@@ -182,9 +181,8 @@ TL_get_fieldval(TupleListClass *self, Int4 tupleno, Int2 fieldno)
 
 
 char
-TL_add_tuple(TupleListClass *self, TupleNode *new_field)
+TL_add_tuple(TupleListClass * self, TupleNode * new_field)
 {
-
 	/*
 	 * we append the tuple at the end of the doubly linked list of the
 	 * tuples we have already read in
@@ -203,7 +201,6 @@ TL_add_tuple(TupleListClass *self, TupleNode *new_field)
 	}
 	else
 	{
-
 		/*
 		 * there is already an element in the list, so add the new one at
 		 * the end of the list

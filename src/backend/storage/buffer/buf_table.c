@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.24 2001/10/05 17:28:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.25 2001/10/25 05:49:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ InitBufTable(void)
 BufferDesc *
 BufTableLookup(BufferTag *tagPtr)
 {
-	BufferLookupEnt  *result;
+	BufferLookupEnt *result;
 
 	if (tagPtr->blockNum == P_NEW)
 		return NULL;
@@ -80,7 +80,7 @@ BufTableLookup(BufferTag *tagPtr)
 bool
 BufTableDelete(BufferDesc *buf)
 {
-	BufferLookupEnt  *result;
+	BufferLookupEnt *result;
 
 	/*
 	 * buffer not initialized or has been removed from table already.
@@ -116,7 +116,7 @@ BufTableDelete(BufferDesc *buf)
 bool
 BufTableInsert(BufferDesc *buf)
 {
-	BufferLookupEnt  *result;
+	BufferLookupEnt *result;
 	bool		found;
 
 	/* cannot insert it twice */
@@ -152,5 +152,4 @@ DBG_LookupListCheck(int nlookup)
 
 	hash_stats("Shared", SharedBufHash);
 }
-
 #endif

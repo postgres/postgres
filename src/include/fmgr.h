@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fmgr.h,v 1.15 2001/10/06 23:21:44 tgl Exp $
+ * $Id: fmgr.h,v 1.16 2001/10/25 05:49:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,13 +78,13 @@ extern void fmgr_info(Oid functionId, FmgrInfo *finfo);
  * and used to hold all subsidiary data of finfo.
  */
 extern void fmgr_info_cxt(Oid functionId, FmgrInfo *finfo,
-						  MemoryContext mcxt);
+			  MemoryContext mcxt);
 
 /*
  * Copy an FmgrInfo struct
  */
 extern void fmgr_info_copy(FmgrInfo *dstinfo, FmgrInfo *srcinfo,
-						   MemoryContext destcxt);
+			   MemoryContext destcxt);
 
 /*
  * This macro invokes a function given a filled-in FunctionCallInfoData
@@ -361,7 +361,7 @@ extern Oid	fmgr_internal_function(const char *proname);
 /*
  * Routines in dfmgr.c
  */
-extern char * Dynamic_library_path;
+extern char *Dynamic_library_path;
 
 extern PGFunction load_external_function(char *filename, char *funcname,
 					   bool signalNotFound, void **filehandle);
@@ -383,5 +383,4 @@ extern void load_file(char *filename);
  * DEPRECATED, DO NOT USE IN NEW CODE
  */
 extern char *fmgr(Oid procedureId,...);
-
 #endif	 /* FMGR_H */

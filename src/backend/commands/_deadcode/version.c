@@ -10,7 +10,7 @@
  *	doesn't work! - jolly 8/19/95
  *
  *
- *	$Id: version.c,v 1.26 2001/03/23 04:49:52 momjian Exp $
+ *	$Id: version.c,v 1.27 2001/10/25 05:49:27 momjian Exp $
  *
  * NOTES
  *	At the point the version is defined, 2 physical relations are created
@@ -87,7 +87,6 @@ eval_as_new_xact(char *query)
 	CommandCounterIncrement();
 	pg_exec_query(query);
 }
-
 #endif
 /*
  *	Define a version.
@@ -129,7 +128,6 @@ DefineVersion(char *name, char *fromRelname, char *date)
 	VersionReplace(name, saved_basename, saved_snapshot);
 	VersionRetrieve(name, saved_basename, saved_snapshot);
 }
-
 #endif
 
 /*
@@ -162,7 +160,6 @@ VersionCreate(char *vname, char *bname)
 	sprintf(query_buf, "CREATE TABLE %s_del (DOID oid)", vname);
 	eval_as_new_xact(query_buf);
 }
-
 #endif
 
 
@@ -210,7 +207,6 @@ setAttrList(char *bname)
 
 	return;
 }
-
 #endif
 
 /*
@@ -228,7 +224,6 @@ VersionAppend(char *vname, char *bname)
 
 	eval_as_new_xact(rule_buf);
 }
-
 #endif
 
 /*
@@ -257,7 +252,6 @@ where _%s.oid !!= '%s_del.DOID'",
 	/* printf("%s\n",rule_buf); */
 
 }
-
 #endif
 
 /*
@@ -295,7 +289,6 @@ VersionDelete(char *vname, char *bname, char *snapshot)
 	eval_as_new_xact(rule_buf);
 #endif	 /* OLD_REWRITE */
 }
-
 #endif
 
 /*
@@ -349,5 +342,4 @@ VersionReplace(char *vname, char *bname, char *snapshot)
 /*	printf("%s\n",rule_buf); */
 
 }
-
 #endif

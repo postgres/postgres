@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/stringutils.h,v 1.14 2000/02/07 23:10:07 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/stringutils.h,v 1.15 2001/10/25 05:49:54 momjian Exp $
  */
 #ifndef STRINGUTILS_H
 #define STRINGUTILS_H
@@ -17,5 +17,4 @@ extern char *strtokx(const char *s,
 		char *was_quoted,
 		unsigned int *token_pos,
 		int encoding);
-
 #endif	 /* STRINGUTILS_H */

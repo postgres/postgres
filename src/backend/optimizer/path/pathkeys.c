@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.33 2001/10/18 16:11:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.34 2001/10/25 05:49:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,6 @@ add_equijoined_keys(Query *root, RestrictInfo *restrictinfo)
 
 		if (item1here || item2here)
 		{
-
 			/*
 			 * If find both in same equivalence set, no need to do any
 			 * more
@@ -318,7 +317,7 @@ compare_pathkeys(List *keys1, List *keys2)
 	if (key1 == NIL && key2 == NIL)
 		return PATHKEYS_EQUAL;
 	if (key1 != NIL)
-		return PATHKEYS_BETTER1;/* key1 is longer */
+		return PATHKEYS_BETTER1;		/* key1 is longer */
 	return PATHKEYS_BETTER2;	/* key2 is longer */
 }
 
@@ -368,7 +367,7 @@ compare_noncanonical_pathkeys(List *keys1, List *keys2)
 	if (key1 == NIL && key2 == NIL)
 		return PATHKEYS_EQUAL;
 	if (key1 != NIL)
-		return PATHKEYS_BETTER1;/* key1 is longer */
+		return PATHKEYS_BETTER1;		/* key1 is longer */
 	return PATHKEYS_BETTER2;	/* key2 is longer */
 }
 
@@ -382,8 +381,8 @@ pathkeys_contained_in(List *keys1, List *keys2)
 {
 	switch (compare_pathkeys(keys1, keys2))
 	{
-			case PATHKEYS_EQUAL:
-			case PATHKEYS_BETTER2:
+		case PATHKEYS_EQUAL:
+		case PATHKEYS_BETTER2:
 			return true;
 		default:
 			break;
@@ -400,8 +399,8 @@ noncanonical_pathkeys_contained_in(List *keys1, List *keys2)
 {
 	switch (compare_noncanonical_pathkeys(keys1, keys2))
 	{
-			case PATHKEYS_EQUAL:
-			case PATHKEYS_BETTER2:
+		case PATHKEYS_EQUAL:
+		case PATHKEYS_BETTER2:
 			return true;
 		default:
 			break;
@@ -632,7 +631,6 @@ build_join_pathkeys(Query *root,
 					RelOptInfo *joinrel,
 					List *outer_pathkeys)
 {
-
 	/*
 	 * This used to be quite a complex bit of code, but now that all
 	 * pathkey sublists start out life canonicalized, we don't have to do

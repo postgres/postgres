@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.63 2001/09/29 07:57:04 inoue Exp $
+ * $Id: execnodes.h,v 1.64 2001/10/25 05:50:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,9 +98,11 @@ typedef struct ExprContext
  */
 typedef enum
 {
-	ExprSingleResult,			/* expression does not return a set */
-	ExprMultipleResult,			/* this result is an element of a set */
-	ExprEndResult				/* there are no more elements in the set */
+				ExprSingleResult,		/* expression does not return a
+										 * set */
+				ExprMultipleResult,		/* this result is an element of a
+										 * set */
+				ExprEndResult	/* there are no more elements in the set */
 } ExprDoneCond;
 
 /*
@@ -174,7 +176,7 @@ typedef struct ProjectionInfo
  *	  resultSlot:		tuple slot that can be used to hold cleaned tuple.
  *
  * NOTE: the original targetList and tupType are passed to ExecInitJunkFilter,
- * as is the resultSlot.  These items do not belong to the JunkFilter.  All
+ * as is the resultSlot.  These items do not belong to the JunkFilter.	All
  * the other subsidiary structures are created during ExecInitJunkFilter,
  * and all of them can be freed by deleting the memory context junkContext.
  * This would not be needed if we had a cleaner approach to managing
@@ -461,7 +463,7 @@ typedef struct TidScanState
 	int			tss_NumTids;
 	int			tss_TidPtr;
 	int			tss_MarkTidPtr;
-	ItemPointerData*	tss_TidList;
+	ItemPointerData *tss_TidList;
 	HeapTupleData tss_htup;
 } TidScanState;
 
@@ -750,7 +752,5 @@ typedef struct TeeState
 	HeapScanDesc tee_leftScanDesc,
 				tee_rightScanDesc;
 }			TeeState;
-
 #endif
-
 #endif	 /* EXECNODES_H */

@@ -74,9 +74,9 @@ static struct
 };
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_AllocStmt(HDBC hdbc,
-			 HSTMT FAR *phstmt)
+				HSTMT FAR * phstmt)
 {
 	static char *func = "PGAPI_AllocStmt";
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
@@ -126,9 +126,9 @@ PGAPI_AllocStmt(HDBC hdbc,
 }
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_FreeStmt(HSTMT hstmt,
-			UWORD fOption)
+			   UWORD fOption)
 {
 	static char *func = "PGAPI_FreeStmt";
 	StatementClass *stmt = (StatementClass *) hstmt;
@@ -173,7 +173,6 @@ PGAPI_FreeStmt(HSTMT hstmt,
 		SC_unbind_cols(stmt);
 	else if (fOption == SQL_CLOSE)
 	{
-
 		/*
 		 * this should discard all the results, but leave the statement
 		 * itself in place (it can be executed again)
@@ -203,7 +202,7 @@ PGAPI_FreeStmt(HSTMT hstmt,
  * StatementClass implementation
  */
 void
-InitializeStatementOptions(StatementOptions *opt)
+InitializeStatementOptions(StatementOptions * opt)
 {
 	opt->maxRows = 0;			/* driver returns all rows */
 	opt->maxLength = 0;			/* driver returns all data for char/binary */
@@ -285,7 +284,7 @@ SC_Constructor(void)
 
 
 char
-SC_Destructor(StatementClass *self)
+SC_Destructor(StatementClass * self)
 {
 	mylog("SC_Destructor: self=%u, self->result=%u, self->hdbc=%u\n", self, self->result, self->hdbc);
 	SC_clear_error(self);
@@ -357,7 +356,7 @@ SC_Destructor(StatementClass *self)
  *	data-at-execution parameters that was allocated in SQLPutData.
  */
 void
-SC_free_params(StatementClass *self, char option)
+SC_free_params(StatementClass * self, char option)
 {
 	int			i;
 
@@ -422,7 +421,7 @@ statement_type(char *statement)
  *	from SQLFreeStmt(SQL_CLOSE)
  */
 char
-SC_recycle_statement(StatementClass *self)
+SC_recycle_statement(StatementClass * self)
 {
 	ConnectionClass *conn;
 
@@ -456,7 +455,7 @@ SC_recycle_statement(StatementClass *self)
 			conn = SC_get_conn(self);
 			if (!CC_is_in_autocommit(conn) && CC_is_in_trans(conn))
 			{
-				if (SC_is_pre_executable(self) && !conn->connInfo.disallow_premature) 
+				if (SC_is_pre_executable(self) && !conn->connInfo.disallow_premature)
 					CC_abort(conn);
 			}
 			break;
@@ -508,7 +507,7 @@ SC_recycle_statement(StatementClass *self)
 	 * Reset only parameters that have anything to do with results
 	 */
 	self->status = STMT_READY;
-	self->manual_result = FALSE;/* very important */
+	self->manual_result = FALSE;		/* very important */
 
 	self->currTuple = -1;
 	self->rowset_start = -1;
@@ -538,7 +537,7 @@ SC_recycle_statement(StatementClass *self)
 
 /* Pre-execute a statement (SQLPrepare/SQLDescribeCol) */
 void
-SC_pre_execute(StatementClass *self)
+SC_pre_execute(StatementClass * self)
 {
 	mylog("SC_pre_execute: status = %d\n", self->status);
 
@@ -577,7 +576,7 @@ SC_pre_execute(StatementClass *self)
 
 /* This is only called from SQLFreeStmt(SQL_UNBIND) */
 char
-SC_unbind_cols(StatementClass *self)
+SC_unbind_cols(StatementClass * self)
 {
 	Int2		lf;
 
@@ -598,7 +597,7 @@ SC_unbind_cols(StatementClass *self)
 
 
 void
-SC_clear_error(StatementClass *self)
+SC_clear_error(StatementClass * self)
 {
 	if (self->errormsg_malloced && self->errormsg)
 		free(self->errormsg);
@@ -614,7 +613,7 @@ SC_clear_error(StatementClass *self)
  *	of the result, statement, connection, and socket messages.
  */
 char *
-SC_create_errormsg(StatementClass *self)
+SC_create_errormsg(StatementClass * self)
 {
 	QResultClass *res = self->result;
 	ConnectionClass *conn = self->hdbc;
@@ -653,7 +652,7 @@ SC_create_errormsg(StatementClass *self)
 
 
 char
-SC_get_error(StatementClass *self, int *number, char **message)
+SC_get_error(StatementClass * self, int *number, char **message)
 {
 	char		rv;
 
@@ -685,29 +684,31 @@ SC_get_error(StatementClass *self, int *number, char **message)
  *	someday, such as mapping a key to a 32 bit value
  */
 unsigned long
-SC_get_bookmark(StatementClass *self)
+SC_get_bookmark(StatementClass * self)
 {
 	return (self->currTuple + 1);
 }
 
 
 RETCODE
-SC_fetch(StatementClass *self)
+SC_fetch(StatementClass * self)
 {
 	static char *func = "SC_fetch";
 	QResultClass *res = self->result;
 	int			retval,
 				result;
+
 #ifdef	DRIVER_CURSOR_IMPLEMENT
-	int		updret;
-#endif /* DRIVER_CURSOR_IMPLEMENT */
+	int			updret;
+#endif	 /* DRIVER_CURSOR_IMPLEMENT */
 	Int2		num_cols,
 				lf;
 	Oid			type;
 	char	   *value;
 	ColumnInfoClass *coli;
+
 	/* TupleField *tupleField; */
-	ConnInfo *ci = &(SC_get_conn(self)->connInfo);
+	ConnInfo   *ci = &(SC_get_conn(self)->connInfo);
 
 	self->last_fetch_count = 0;
 	coli = QR_get_fields(res);	/* the column info */
@@ -719,7 +720,6 @@ SC_fetch(StatementClass *self)
 		if (self->currTuple >= QR_get_num_tuples(res) - 1 ||
 			(self->options.maxRows > 0 && self->currTuple == self->options.maxRows - 1))
 		{
-
 			/*
 			 * if at the end of the tuples, return "no data found" and set
 			 * the cursor past the end of the result set
@@ -741,7 +741,7 @@ SC_fetch(StatementClass *self)
 			return SQL_NO_DATA_FOUND;
 		}
 		else if (retval > 0)
-			(self->currTuple)++;/* all is well */
+			(self->currTuple)++;		/* all is well */
 		else
 		{
 			mylog("SC_fetch: error\n");
@@ -780,13 +780,13 @@ SC_fetch(StatementClass *self)
 			updret = SQL_ROW_DELETED;
 		num_cols -= 2;
 	}
-#endif /* DRIVER_CURSOR_IMPLEMENT */
-	if (self->options.retrieve_data == SQL_RD_OFF) /* data isn't required */
+#endif	 /* DRIVER_CURSOR_IMPLEMENT */
+	if (self->options.retrieve_data == SQL_RD_OFF)		/* data isn't required */
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 		return updret ? updret + 10 : SQL_SUCCESS;
 #else
-		return	SQL_SUCCESS;
-#endif /* DRIVER_CURSOR_IMPLEMENT */
+		return SQL_SUCCESS;
+#endif	 /* DRIVER_CURSOR_IMPLEMENT */
 	for (lf = 0; lf < num_cols; lf++)
 	{
 		mylog("fetch: cols=%d, lf=%d, self = %u, self->bindings = %u, buffer[] = %u\n", num_cols, lf, self, self->bindings, self->bindings[lf].buffer);
@@ -799,7 +799,7 @@ SC_fetch(StatementClass *self)
 			/* this column has a binding */
 
 			/* type = QR_get_field_type(res, lf); */
-			type = CI_get_oid(coli, lf);	/* speed things up */
+			type = CI_get_oid(coli, lf);		/* speed things up */
 
 			mylog("type = %d\n", type);
 
@@ -841,7 +841,7 @@ SC_fetch(StatementClass *self)
 				case COPY_RESULT_TRUNCATED:
 					self->errornumber = STMT_TRUNCATED;
 					self->errormsg = "Fetched item was truncated.";
-					qlog("The %dth item was truncated\n", lf + 1);   
+					qlog("The %dth item was truncated\n", lf + 1);
 					qlog("The buffer size = %d", self->bindings[lf].buflen);
 					qlog(" and the value is '%s'\n", value);
 					result = SQL_SUCCESS_WITH_INFO;
@@ -870,13 +870,13 @@ SC_fetch(StatementClass *self)
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 	if (updret)
 		result = updret + 10;
-#endif /* DRIVER_CURSOR_IMPLEMENT */
+#endif	 /* DRIVER_CURSOR_IMPLEMENT */
 	return result;
 }
 
 
 RETCODE
-SC_execute(StatementClass *self)
+SC_execute(StatementClass * self)
 {
 	static char *func = "SC_execute";
 	ConnectionClass *conn;
@@ -887,7 +887,7 @@ SC_execute(StatementClass *self)
 	Int2		oldstatus,
 				numcols;
 	QueryInfo	qi;
-	ConnInfo *ci;
+	ConnInfo   *ci;
 
 
 	conn = SC_get_conn(self);
@@ -904,8 +904,8 @@ SC_execute(StatementClass *self)
 	 * OTHER.
 	 */
 	if (!self->internal && !CC_is_in_trans(conn) &&
-	    (SC_is_fetchcursor(self) ||
-	     (!CC_is_in_autocommit(conn) && self->statement_type != STMT_TYPE_OTHER)))
+		(SC_is_fetchcursor(self) ||
+		 (!CC_is_in_autocommit(conn) && self->statement_type != STMT_TYPE_OTHER)))
 	{
 		mylog("   about to begin a transaction on statement = %u\n", self);
 		res = CC_send_query(conn, "BEGIN", NULL);
@@ -1067,19 +1067,21 @@ SC_execute(StatementClass *self)
 	}
 
 	if (self->statement_type == STMT_TYPE_PROCCALL &&
-	    (self->errornumber == STMT_OK ||
-	     self->errornumber == STMT_INFO_ONLY) &&
-	    self->parameters &&
-	    self->parameters[0].buffer &&
-	    self->parameters[0].paramType == SQL_PARAM_OUTPUT)
-	{	/* get the return value of the procedure call */
-		RETCODE	ret;
-		HSTMT hstmt = (HSTMT) self;
+		(self->errornumber == STMT_OK ||
+		 self->errornumber == STMT_INFO_ONLY) &&
+		self->parameters &&
+		self->parameters[0].buffer &&
+		self->parameters[0].paramType == SQL_PARAM_OUTPUT)
+	{							/* get the return value of the procedure
+								 * call */
+		RETCODE		ret;
+		HSTMT		hstmt = (HSTMT) self;
+
 		ret = SC_fetch(hstmt);
 		if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO)
-		{ 
+		{
 			ret = PGAPI_GetData(hstmt, 1, self->parameters[0].CType, self->parameters[0].buffer, self->parameters[0].buflen, self->parameters[0].used);
-			if (ret != SQL_SUCCESS) 
+			if (ret != SQL_SUCCESS)
 			{
 				self->errornumber = STMT_EXEC_ERROR;
 				self->errormsg = "GetData to Procedure return failed.";
@@ -1105,7 +1107,7 @@ SC_execute(StatementClass *self)
 
 
 void
-SC_log_error(char *func, char *desc, StatementClass *self)
+SC_log_error(char *func, char *desc, StatementClass * self)
 {
 #ifdef PRN_NULLCHECK
 #define nullcheck(a) (a ? a : "(NULL)")

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.66 2001/08/14 17:12:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.67 2001/10/25 05:49:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -275,7 +275,7 @@ generate_nonunion_plan(SetOperationStmt *op, Query *parse,
 	 *
 	 * The tlist for an Append plan isn't important as far as the Append is
 	 * concerned, but we must make it look real anyway for the benefit of
-	 * the next plan level up.  In fact, it has to be real enough that the
+	 * the next plan level up.	In fact, it has to be real enough that the
 	 * flag column is shown as a variable not a constant, else setrefs.c
 	 * will get confused.
 	 */
@@ -358,7 +358,7 @@ recurse_union_children(Node *setOp, Query *parse,
  *
  * colTypes: column datatypes for non-junk columns
  * flag: -1 if no flag column needed, 0 or 1 to create a const flag column,
- *       2 to create a variable flag column
+ *		 2 to create a variable flag column
  * hack_constants: true to copy up constants (see comments in code)
  * input_tlist: targetlist of this node's input node
  * refnames_tlist: targetlist to take column names from
@@ -538,7 +538,7 @@ find_all_inheritors(Oid parentrel)
  *		If not, return NIL.
  *
  * When dup_parent is false, the initially given RT index is part of the
- * returned list (if any).  When dup_parent is true, the given RT index
+ * returned list (if any).	When dup_parent is true, the given RT index
  * is *not* in the returned list; a duplicate RTE will be made for the
  * parent table.
  *
@@ -571,6 +571,7 @@ expand_inherted_rtentry(Query *parse, Index rti, bool dup_parent)
 		return NIL;
 	/* Scan for all members of inheritance set */
 	inhOIDs = find_all_inheritors(parentOID);
+
 	/*
 	 * Check that there's at least one descendant, else treat as no-child
 	 * case.  This could happen despite above has_subclass() check, if
@@ -582,7 +583,7 @@ expand_inherted_rtentry(Query *parse, Index rti, bool dup_parent)
 	if (dup_parent)
 		inhRTIs = NIL;
 	else
-		inhRTIs = makeListi1(rti); /* include original RTE in result */
+		inhRTIs = makeListi1(rti);		/* include original RTE in result */
 
 	foreach(l, inhOIDs)
 	{
@@ -728,10 +729,10 @@ adjust_inherited_attrs_mutator(Node *node,
 	/*
 	 * BUT: although we don't need to recurse into subplans, we do need to
 	 * make sure that they are copied, not just referenced as
-	 * expression_tree_mutator will do by default.  Otherwise we'll have the
-	 * same subplan node referenced from each arm of the inheritance APPEND
-	 * plan, which will cause trouble in the executor.  This is a kluge
-	 * that should go away when we redesign querytrees.
+	 * expression_tree_mutator will do by default.	Otherwise we'll have
+	 * the same subplan node referenced from each arm of the inheritance
+	 * APPEND plan, which will cause trouble in the executor.  This is a
+	 * kluge that should go away when we redesign querytrees.
 	 */
 	if (is_subplan(node))
 	{

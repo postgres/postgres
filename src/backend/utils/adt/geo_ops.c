@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.59 2001/10/13 17:40:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.60 2001/10/25 05:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -484,11 +484,11 @@ box_ov(BOX *box1, BOX *box2)
 			 FPle(box1->low.x, box2->high.x)) ||
 			(FPge(box2->high.x, box1->high.x) &&
 			 FPle(box2->low.x, box1->high.x)))
-	&&
-	((FPge(box1->high.y, box2->high.y) &&
-	  FPle(box1->low.y, box2->high.y)) ||
-	 (FPge(box2->high.y, box1->high.y) &&
-	  FPle(box2->low.y, box1->high.y)));
+		&&
+		((FPge(box1->high.y, box2->high.y) &&
+		  FPle(box1->low.y, box2->high.y)) ||
+		 (FPge(box2->high.y, box1->high.y) &&
+		  FPle(box2->low.y, box1->high.y)));
 }
 
 /*		box_overleft	-		is the right edge of box1 to the left of
@@ -811,7 +811,6 @@ line_in(PG_FUNCTION_ARGS)
 {
 #ifdef ENABLE_LINE_TYPE
 	char	   *str = PG_GETARG_CSTRING(0);
-
 #endif
 	LINE	   *line;
 
@@ -840,7 +839,6 @@ line_out(PG_FUNCTION_ARGS)
 {
 #ifdef ENABLE_LINE_TYPE
 	LINE	   *line = PG_GETARG_LINE_P(0);
-
 #endif
 	char	   *result;
 
@@ -1403,28 +1401,28 @@ path_inter(PG_FUNCTION_ARGS)
 	/* pairwise check lseg intersections */
 	for (i = 0; i < p1->npts; i++)
 	{
-		int	iprev;
+		int			iprev;
 
 		if (i > 0)
-			iprev = i-1;
+			iprev = i - 1;
 		else
 		{
 			if (!p1->closed)
 				continue;
-			iprev = p1->npts-1;	/* include the closure segment */
+			iprev = p1->npts - 1;		/* include the closure segment */
 		}
 
 		for (j = 0; j < p2->npts; j++)
 		{
-			int	jprev;
+			int			jprev;
 
 			if (j > 0)
-				jprev = j-1;
+				jprev = j - 1;
 			else
 			{
 				if (!p2->closed)
 					continue;
-				jprev = p2->npts-1;	/* include the closure segment */
+				jprev = p2->npts - 1;	/* include the closure segment */
 			}
 
 			statlseg_construct(&seg1, &p1->p[iprev], &p1->p[i]);
@@ -1457,28 +1455,28 @@ path_distance(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < p1->npts; i++)
 	{
-		int	iprev;
+		int			iprev;
 
 		if (i > 0)
-			iprev = i-1;
+			iprev = i - 1;
 		else
 		{
 			if (!p1->closed)
 				continue;
-			iprev = p1->npts-1;	/* include the closure segment */
+			iprev = p1->npts - 1;		/* include the closure segment */
 		}
 
 		for (j = 0; j < p2->npts; j++)
 		{
-			int	jprev;
+			int			jprev;
 
 			if (j > 0)
-				jprev = j-1;
+				jprev = j - 1;
 			else
 			{
 				if (!p2->closed)
 					continue;
-				jprev = p2->npts-1;	/* include the closure segment */
+				jprev = p2->npts - 1;	/* include the closure segment */
 			}
 
 			statlseg_construct(&seg1, &p1->p[iprev], &p1->p[i]);
@@ -1515,15 +1513,15 @@ path_length(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < path->npts; i++)
 	{
-		int	iprev;
+		int			iprev;
 
 		if (i > 0)
-			iprev = i-1;
+			iprev = i - 1;
 		else
 		{
 			if (!path->closed)
 				continue;
-			iprev = path->npts-1;	/* include the closure segment */
+			iprev = path->npts - 1;		/* include the closure segment */
 		}
 
 		result += point_dt(&path->p[iprev], &path->p[i]);
@@ -2114,7 +2112,7 @@ static double
 dist_pl_internal(Point *pt, LINE *line)
 {
 	return (line->A * pt->x + line->B * pt->y + line->C) /
-	HYPOT(line->A, line->B);
+		HYPOT(line->A, line->B);
 }
 
 Datum
@@ -2216,15 +2214,16 @@ dist_ppath(PG_FUNCTION_ARGS)
 			 */
 			for (i = 0; i < path->npts; i++)
 			{
-				int	iprev;
+				int			iprev;
 
 				if (i > 0)
-					iprev = i-1;
+					iprev = i - 1;
 				else
 				{
 					if (!path->closed)
 						continue;
-					iprev = path->npts-1;	/* include the closure segment */
+					iprev = path->npts - 1;		/* include the closure
+												 * segment */
 				}
 
 				statlseg_construct(&lseg, &path->p[iprev], &path->p[i]);
@@ -2307,7 +2306,6 @@ dist_lb(PG_FUNCTION_ARGS)
 #ifdef NOT_USED
 	LINE	   *line = PG_GETARG_LINE_P(0);
 	BOX		   *box = PG_GETARG_BOX_P(1);
-
 #endif
 
 	/* think about this one for a while */
@@ -2830,7 +2828,6 @@ close_lb(PG_FUNCTION_ARGS)
 #ifdef NOT_USED
 	LINE	   *line = PG_GETARG_LINE_P(0);
 	BOX		   *box = PG_GETARG_BOX_P(1);
-
 #endif
 
 	/* think about this one for a while */
@@ -3430,7 +3427,6 @@ poly_distance(PG_FUNCTION_ARGS)
 #ifdef NOT_USED
 	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
 	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
-
 #endif
 
 	elog(ERROR, "poly_distance not implemented");
@@ -3737,7 +3733,6 @@ path_center(PG_FUNCTION_ARGS)
 {
 #ifdef NOT_USED
 	PATH	   *path = PG_GETARG_PATH_P(0);
-
 #endif
 
 	elog(ERROR, "path_center not implemented");

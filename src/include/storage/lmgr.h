@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lmgr.h,v 1.32 2001/07/09 22:18:34 tgl Exp $
+ * $Id: lmgr.h,v 1.33 2001/10/25 05:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,8 +31,8 @@
 										 * ROW SHARE */
 #define ExclusiveLock			7		/* blocks ROW SHARE/SELECT...FOR
 										 * UPDATE */
-#define AccessExclusiveLock		8		/* ALTER TABLE, DROP TABLE,
-										 * VACUUM FULL, and unqualified LOCK
+#define AccessExclusiveLock		8		/* ALTER TABLE, DROP TABLE, VACUUM
+										 * FULL, and unqualified LOCK
 										 * TABLE */
 
 /*
@@ -61,5 +61,4 @@ extern void UnlockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode);
 /* Lock an XID (used to wait for a transaction to finish) */
 extern void XactLockTableInsert(TransactionId xid);
 extern void XactLockTableWait(TransactionId xid);
-
 #endif	 /* LMGR_H */

@@ -114,9 +114,7 @@ _fini(void)
 {
 	return TRUE;
 }
-
 #endif	 /* not __GNUC__ */
-
 #endif	 /* not WIN32 */
 
 
@@ -127,7 +125,7 @@ _fini(void)
  *	Driver Manager do this.  Also, the ordinal values of the
  *	functions must match the value of fFunction in SQLGetFunctions()
  */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLDummyOrdinal(void)
 {
 	return SQL_SUCCESS;

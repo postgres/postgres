@@ -6,8 +6,8 @@
 #define DLLIMPORT __declspec (dllimport)
 #else
 #define DLLIMPORT
-#endif /* __CYGWIN__ */
-#endif /* DLLIMPORT */
+#endif	 /* __CYGWIN__ */
+#endif	 /* DLLIMPORT */
 
 #define SQLERRMC_LEN	70
 
@@ -44,7 +44,7 @@ extern		"C"
 
 		/*
 		 * 2: if 'W' a (hopefully) non-fatal notice occured
-		 *//* 3: empty */
+*//* 3: empty */
 		/* 4: empty						*/
 		/* 5: empty						*/
 		/* 6: empty						*/
@@ -58,7 +58,5 @@ extern		"C"
 
 #ifdef __cplusplus
 }
-
 #endif
-
 #endif

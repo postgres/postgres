@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.16 2001/03/22 03:59:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.17 2001/10/25 05:49:42 momjian Exp $
  *
  * NOTES
  *
@@ -33,7 +33,6 @@
 #define SHMQUEUE_DEBUG_ELOG NOTICE
 
 static void dumpQ(SHM_QUEUE *q, char *s);
-
 #endif
 
 
@@ -59,7 +58,6 @@ SHMQueueIsDetached(SHM_QUEUE *queue)
 	Assert(SHM_PTR_VALID(queue));
 	return (queue)->prev == INVALID_OFFSET;
 }
-
 #endif
 
 /*
@@ -152,7 +150,6 @@ SHMQueueInsertAfter(SHM_QUEUE *queue, SHM_QUEUE *elem)
 	dumpQ(queue, "in SHMQueueInsertAfter: end");
 #endif
 }
-
 #endif	 /* NOT_USED */
 
 /*--------------------
@@ -256,5 +253,4 @@ dumpQ(SHM_QUEUE *q, char *s)
 	strcat(buf, elem);
 	elog(SHMQUEUE_DEBUG_ELOG, "%s: %s", s, buf);
 }
-
 #endif	 /* SHMQUEUE_DEBUG */

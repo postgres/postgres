@@ -60,13 +60,13 @@ extern const char *ECPGtype_name(enum ECPGttype typ);
 /* some stuff for whenever statements */
 enum WHEN_TYPE
 {
-	W_NOTHING,
-	W_CONTINUE,
-	W_BREAK,
-	W_SQLPRINT,
-	W_GOTO,
-	W_DO,
-	W_STOP
+				W_NOTHING,
+				W_CONTINUE,
+				W_BREAK,
+				W_SQLPRINT,
+				W_GOTO,
+				W_DO,
+				W_STOP
 };
 
 struct when
@@ -155,7 +155,7 @@ struct assignment
 
 enum errortype
 {
-	ET_NOTICE, ET_ERROR, ET_FATAL
+				ET_NOTICE, ET_ERROR, ET_FATAL
 };
 
 struct fetch_desc

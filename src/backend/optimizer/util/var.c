@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.32 2001/05/09 23:13:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.33 2001/10/25 05:49:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ typedef struct
 static bool pull_varnos_walker(Node *node,
 				   pull_varnos_context *context);
 static bool contain_var_reference_walker(Node *node,
-				   contain_var_reference_context *context);
+							 contain_var_reference_context *context);
 static bool contain_var_clause_walker(Node *node, void *context);
 static bool pull_var_clause_walker(Node *node,
 					   pull_var_clause_context *context);
@@ -55,7 +55,7 @@ static bool pull_var_clause_walker(Node *node,
  *
  * NOTE: this is used on not-yet-planned expressions.  It may therefore find
  * bare SubLinks, and if so it needs to recurse into them to look for uplevel
- * references to the desired rtable level!  But when we find a completed
+ * references to the desired rtable level!	But when we find a completed
  * SubPlan, we only need to look at the parameters passed to the subplan.
  */
 List *
@@ -96,7 +96,6 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
 	}
 	if (is_subplan(node))
 	{
-
 		/*
 		 * Already-planned subquery.  Examine the args list (parameters to
 		 * be passed to subquery), as well as the "oper" list which is
@@ -137,7 +136,7 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
  *
  * NOTE: this is used on not-yet-planned expressions.  It may therefore find
  * bare SubLinks, and if so it needs to recurse into them to look for uplevel
- * references to the desired rtable entry!  But when we find a completed
+ * references to the desired rtable entry!	But when we find a completed
  * SubPlan, we only need to look at the parameters passed to the subplan.
  */
 bool
@@ -180,7 +179,6 @@ contain_var_reference_walker(Node *node,
 	}
 	if (is_subplan(node))
 	{
-
 		/*
 		 * Already-planned subquery.  Examine the args list (parameters to
 		 * be passed to subquery), as well as the "oper" list which is

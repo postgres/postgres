@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.65 2001/06/05 05:26:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.66 2001/10/25 05:49:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,6 @@ static void match_unsorted_inner(Query *root, RelOptInfo *joinrel,
 					 RelOptInfo *outerrel, RelOptInfo *innerrel,
 					 List *restrictlist, List *mergeclause_list,
 					 JoinType jointype);
-
 #endif
 static void hash_inner_and_outer(Query *root, RelOptInfo *joinrel,
 					 RelOptInfo *outerrel, RelOptInfo *innerrel,
@@ -297,9 +296,9 @@ match_unsorted_outer(Query *root,
 	/*
 	 * Nestloop only supports inner and left joins.  Also, if we are doing
 	 * a right or full join, we must use *all* the mergeclauses as join
-	 * clauses, else we will not have a valid plan.  (Although these two flags
-	 * are currently inverses, keep them separate for clarity and possible
-	 * future changes.)
+	 * clauses, else we will not have a valid plan.  (Although these two
+	 * flags are currently inverses, keep them separate for clarity and
+	 * possible future changes.)
 	 */
 	switch (jointype)
 	{
@@ -316,7 +315,7 @@ match_unsorted_outer(Query *root,
 		default:
 			elog(ERROR, "match_unsorted_outer: unexpected join type %d",
 				 (int) jointype);
-			nestjoinOK = false;	/* keep compiler quiet */
+			nestjoinOK = false; /* keep compiler quiet */
 			useallclauses = false;
 			break;
 	}
@@ -350,12 +349,11 @@ match_unsorted_outer(Query *root,
 
 		if (nestjoinOK)
 		{
-
 			/*
 			 * Always consider a nestloop join with this outer and
 			 * cheapest-total-cost inner.	Consider nestloops using the
-			 * cheapest-startup-cost inner as well, and the best
-			 * innerjoin indexpath.
+			 * cheapest-startup-cost inner as well, and the best innerjoin
+			 * indexpath.
 			 */
 			add_path(joinrel, (Path *)
 					 create_nestloop_path(root,
@@ -494,7 +492,6 @@ match_unsorted_outer(Query *root,
 				/* Found a cheap (or even-cheaper) sorted path */
 				if (innerpath != cheapest_total_inner)
 				{
-
 					/*
 					 * Avoid rebuilding clause list if we already made
 					 * one; saves memory in big join trees...
@@ -526,6 +523,7 @@ match_unsorted_outer(Query *root,
 				}
 				cheapest_startup_inner = innerpath;
 			}
+
 			/*
 			 * Don't consider truncated sortkeys if we need all clauses.
 			 */
@@ -576,7 +574,7 @@ match_unsorted_inner(Query *root,
 		default:
 			elog(ERROR, "match_unsorted_inner: unexpected join type %d",
 				 (int) jointype);
-			useallclauses = false; /* keep compiler quiet */
+			useallclauses = false;		/* keep compiler quiet */
 			break;
 	}
 
@@ -673,7 +671,6 @@ match_unsorted_inner(Query *root,
 		}
 	}
 }
-
 #endif
 
 /*

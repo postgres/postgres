@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.14 2001/03/22 03:59:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.15 2001/10/25 05:49:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,7 @@ bool
 var_is_rel(Var *var)
 {
 	return (bool)
-	!(var_is_inner(var) || var_is_outer(var));
+		!(var_is_inner(var) || var_is_outer(var));
 }
 
 /*****************************************************************************
@@ -114,5 +114,4 @@ non_null(Expr *c)
 	else
 		return false;
 }
-
 #endif

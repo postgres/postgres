@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupdesc.h,v 1.30 2001/01/24 19:43:20 momjian Exp $
+ * $Id: tupdesc.h,v 1.31 2001/10/25 05:49:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,5 +74,4 @@ extern bool TupleDescInitEntry(TupleDesc desc,
 				   bool attisset);
 
 extern TupleDesc BuildDescForRelation(List *schema, char *relname);
-
 #endif	 /* TUPDESC_H */

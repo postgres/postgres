@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.109 2001/10/18 16:11:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.110 2001/10/25 05:49:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -210,7 +210,7 @@ subquery_planner(Query *parse, double tuple_fraction)
 	 * grouping_planner.
 	 */
 	if (parse->resultRelation &&
-		(lst = expand_inherted_rtentry(parse, parse->resultRelation, false))
+	 (lst = expand_inherted_rtentry(parse, parse->resultRelation, false))
 		!= NIL)
 		plan = inheritance_planner(parse, lst);
 	else
@@ -277,8 +277,8 @@ pull_up_subqueries(Query *parse, Node *jtnode)
 		 * Is this a subquery RTE, and if so, is the subquery simple
 		 * enough to pull up?  (If not, do nothing at this node.)
 		 *
-		 * Note: even if the subquery itself is simple enough, we can't
-		 * pull it up if there is a reference to its whole tuple result.
+		 * Note: even if the subquery itself is simple enough, we can't pull
+		 * it up if there is a reference to its whole tuple result.
 		 */
 		if (subquery && is_simple_subquery(subquery) &&
 			!contain_whole_tuple_var((Node *) parse, varno, 0))
@@ -370,12 +370,13 @@ pull_up_subqueries(Query *parse, Node *jtnode)
 
 		/*
 		 * At the moment, we can't pull up subqueries that are inside the
-		 * nullable side of an outer join, because substituting their target
-		 * list entries for upper Var references wouldn't do the right thing
-		 * (the entries wouldn't go to NULL when they're supposed to).
-		 * Suppressing the pullup is an ugly, performance-losing hack, but
-		 * I see no alternative for now.  Find a better way to handle this
-		 * when we redesign query trees --- tgl 4/30/01.
+		 * nullable side of an outer join, because substituting their
+		 * target list entries for upper Var references wouldn't do the
+		 * right thing (the entries wouldn't go to NULL when they're
+		 * supposed to). Suppressing the pullup is an ugly,
+		 * performance-losing hack, but I see no alternative for now.
+		 * Find a better way to handle this when we redesign query trees
+		 * --- tgl 4/30/01.
 		 */
 		switch (j->jointype)
 		{
@@ -392,6 +393,7 @@ pull_up_subqueries(Query *parse, Node *jtnode)
 				j->rarg = pull_up_subqueries(parse, j->rarg);
 				break;
 			case JOIN_UNION:
+
 				/*
 				 * This is where we fail if upper levels of planner
 				 * haven't rewritten UNION JOIN as an Append ...
@@ -418,7 +420,6 @@ pull_up_subqueries(Query *parse, Node *jtnode)
 static bool
 is_simple_subquery(Query *subquery)
 {
-
 	/*
 	 * Let's just make sure it's a valid subselect ...
 	 */
@@ -545,7 +546,6 @@ preprocess_jointree(Query *parse, Node *jtnode)
 			/* Now, is it a FromExpr? */
 			if (child && IsA(child, FromExpr))
 			{
-
 				/*
 				 * Yes, so do we want to merge it into parent?	Always do
 				 * so if child has just one element (since that doesn't
@@ -596,7 +596,6 @@ preprocess_jointree(Query *parse, Node *jtnode)
 static Node *
 preprocess_expression(Query *parse, Node *expr, int kind)
 {
-
 	/*
 	 * Simplify constant expressions.
 	 *
@@ -632,7 +631,6 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 		if (kind != EXPRKIND_WHERE &&
 			(parse->groupClause != NIL || parse->hasAggs))
 		{
-
 			/*
 			 * Check for ungrouped variables passed to subplans.  Note we
 			 * do NOT do this for subplans in WHERE (or JOIN/ON); it's
@@ -776,7 +774,6 @@ grouping_planner(Query *parse, double tuple_fraction)
 
 	if (parse->setOperations)
 	{
-
 		/*
 		 * Construct the plan for set operations.  The result will not
 		 * need any work except perhaps a top-level sort and/or LIMIT.
@@ -946,12 +943,12 @@ grouping_planner(Query *parse, double tuple_fraction)
 		if (parse->limitCount != NULL)
 		{
 			/*
-			 * A LIMIT clause limits the absolute number of tuples returned.
-			 * However, if it's not a constant LIMIT then we have to punt;
-			 * for lack of a better idea, assume 10% of the plan's result
-			 * is wanted.
+			 * A LIMIT clause limits the absolute number of tuples
+			 * returned. However, if it's not a constant LIMIT then we
+			 * have to punt; for lack of a better idea, assume 10% of the
+			 * plan's result is wanted.
 			 */
-			double	limit_fraction = 0.0;
+			double		limit_fraction = 0.0;
 
 			if (IsA(parse->limitCount, Const))
 			{
@@ -959,9 +956,9 @@ grouping_planner(Query *parse, double tuple_fraction)
 				int32		count = DatumGetInt32(limitc->constvalue);
 
 				/*
-				 * A NULL-constant LIMIT represents "LIMIT ALL", which
-				 * we treat the same as no limit (ie, expect to
-				 * retrieve all the tuples).
+				 * A NULL-constant LIMIT represents "LIMIT ALL", which we
+				 * treat the same as no limit (ie, expect to retrieve all
+				 * the tuples).
 				 */
 				if (!limitc->constisnull && count > 0)
 				{
@@ -996,9 +993,10 @@ grouping_planner(Query *parse, double tuple_fraction)
 			{
 				/*
 				 * If we have absolute limits from both caller and LIMIT,
-				 * use the smaller value; if one is fractional and the other
-				 * absolute, treat the fraction as a fraction of the absolute
-				 * value; else we can multiply the two fractions together.
+				 * use the smaller value; if one is fractional and the
+				 * other absolute, treat the fraction as a fraction of the
+				 * absolute value; else we can multiply the two fractions
+				 * together.
 				 */
 				if (tuple_fraction >= 1.0)
 				{
@@ -1040,7 +1038,6 @@ grouping_planner(Query *parse, double tuple_fraction)
 
 		if (parse->groupClause)
 		{
-
 			/*
 			 * In GROUP BY mode, we have the little problem that we don't
 			 * really know how many input tuples will be needed to make a
@@ -1069,7 +1066,6 @@ grouping_planner(Query *parse, double tuple_fraction)
 		}
 		else if (parse->hasAggs)
 		{
-
 			/*
 			 * Ungrouped aggregate will certainly want all the input
 			 * tuples.
@@ -1078,7 +1074,6 @@ grouping_planner(Query *parse, double tuple_fraction)
 		}
 		else if (parse->distinctClause)
 		{
-
 			/*
 			 * SELECT DISTINCT, like GROUP, will absorb an unpredictable
 			 * number of input tuples per output tuple.  Handle the same
@@ -1147,7 +1142,6 @@ grouping_planner(Query *parse, double tuple_fraction)
 		}
 		else
 		{
-
 			/*
 			 * We will need to do an explicit sort by the GROUP BY clause.
 			 * make_groupplan will do the work, but set current_pathkeys
@@ -1346,7 +1340,6 @@ make_groupplan(Query *parse,
 
 	if (!is_presorted)
 	{
-
 		/*
 		 * The Sort node always just takes a copy of the subplan's tlist
 		 * plus ordering information.  (This might seem inefficient if the

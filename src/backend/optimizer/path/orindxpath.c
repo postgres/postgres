@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.44 2001/06/05 17:13:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.45 2001/10/25 05:49:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,7 +175,7 @@ best_or_subclause_indices(Query *root,
 
 		pathnode->indexinfo = lappend(pathnode->indexinfo, best_indexinfo);
 		pathnode->indexqual = lappend(pathnode->indexqual, best_indexqual);
-		if (slist == subclauses) /* first scan? */
+		if (slist == subclauses)/* first scan? */
 			pathnode->path.startup_cost = best_startup_cost;
 		pathnode->path.total_cost += best_total_cost;
 
@@ -202,7 +202,7 @@ best_or_subclause_index(Query *root,
 						RelOptInfo *rel,
 						Expr *subclause,
 						List *indices,
-						IndexOptInfo **retIndexInfo, /* return value */
+						IndexOptInfo **retIndexInfo,	/* return value */
 						List **retIndexQual,	/* return value */
 						Cost *retStartupCost,	/* return value */
 						Cost *retTotalCost)		/* return value */

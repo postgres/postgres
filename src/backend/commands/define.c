@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.62 2001/10/13 01:35:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.63 2001/10/25 05:49:25 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -64,7 +64,7 @@ static void
 case_translate_language_name(const char *input, char *output)
 {
 /*
- *  Translate the input language name to lower case, except if it's "C",
+ *	Translate the input language name to lower case, except if it's "C",
  * translate to upper case.
  */
 	int			i;
@@ -85,8 +85,8 @@ compute_return_type(TypeName *returnType,
 					char **prorettype_p, bool *returnsSet_p)
 {
 /*
- *   Examine the "returns" clause returnType of the CREATE FUNCTION statement
- *   and return information about it as *prorettype_p and *returnsSet.
+ *	 Examine the "returns" clause returnType of the CREATE FUNCTION statement
+ *	 and return information about it as *prorettype_p and *returnsSet.
  */
 	*prorettype_p = TypeNameToInternalName(returnType);
 	*returnsSet_p = returnType->setof;
@@ -100,26 +100,26 @@ compute_full_attributes(List *parameters,
 						bool *canCache_p, bool *isStrict_p)
 {
 /*-------------
- *   Interpret the parameters *parameters and return their contents as
- *   *byte_pct_p, etc.
+ *	 Interpret the parameters *parameters and return their contents as
+ *	 *byte_pct_p, etc.
  *
- *  These parameters supply optional information about a function.
- *  All have defaults if not specified.
+ *	These parameters supply optional information about a function.
+ *	All have defaults if not specified.
  *
- *  Note: currently, only two of these parameters actually do anything:
+ *	Note: currently, only two of these parameters actually do anything:
  *
- *   * canCache means the optimizer's constant-folder is allowed to
- * 	   pre-evaluate the function when all its inputs are constants.
+ *	 * canCache means the optimizer's constant-folder is allowed to
+ *	   pre-evaluate the function when all its inputs are constants.
  *
- *   * isStrict means the function should not be called when any NULL
- *     inputs are present; instead a NULL result value should be assumed.
+ *	 * isStrict means the function should not be called when any NULL
+ *	   inputs are present; instead a NULL result value should be assumed.
  *
- *  The other four parameters are not used anywhere.	They used to be
- *  used in the "expensive functions" optimizer, but that's been dead code
- *  for a long time.
+ *	The other four parameters are not used anywhere.	They used to be
+ *	used in the "expensive functions" optimizer, but that's been dead code
+ *	for a long time.
  *
- *  Since canCache and isStrict are useful for any function, we now allow
- *  attributes to be supplied for all functions regardless of language.
+ *	Since canCache and isStrict are useful for any function, we now allow
+ *	attributes to be supplied for all functions regardless of language.
  *------------
  */
 	List	   *pl;
@@ -142,7 +142,6 @@ compute_full_attributes(List *parameters,
 			*isStrict_p = true;
 		else if (strcasecmp(param->defname, "trusted") == 0)
 		{
-
 			/*
 			 * we don't have untrusted functions any more. The 4.2
 			 * implementation is lousy anyway so I took it out. -ay 10/94
@@ -183,7 +182,6 @@ interpret_AS_clause(const char *languageName, const List *as,
 
 	if (strcmp(languageName, "C") == 0)
 	{
-
 		/*
 		 * For "C" language, store the file name in probin and, when
 		 * given, the link symbol name in prosrc.
@@ -358,7 +356,7 @@ DefineOperator(char *oprName,
 			   List *parameters)
 {
 	uint16		precedence = 0; /* operator precedence */
-	bool		canHash = false;/* operator hashes */
+	bool		canHash = false;		/* operator hashes */
 	bool		isLeftAssociative = true;		/* operator is left
 												 * associative */
 	char	   *functionName = NULL;	/* function for operator */
@@ -369,7 +367,7 @@ DefineOperator(char *oprName,
 	char	   *negatorName = NULL;		/* optional negator operator name */
 	char	   *restrictionName = NULL; /* optional restrict. sel.
 										 * procedure */
-	char	   *joinName = NULL;/* optional join sel. procedure name */
+	char	   *joinName = NULL;		/* optional join sel. procedure name */
 	char	   *sortName1 = NULL;		/* optional first sort operator */
 	char	   *sortName2 = NULL;		/* optional second sort operator */
 	List	   *pl;
@@ -534,8 +532,8 @@ DefineAggregate(char *aggName, List *parameters)
 void
 DefineType(char *typeName, List *parameters)
 {
-	int16		internalLength = -1;		/* int2 */
-	int16		externalLength = -1;		/* int2 */
+	int16		internalLength = -1;	/* int2 */
+	int16		externalLength = -1;	/* int2 */
 	char	   *elemName = NULL;
 	char	   *inputName = NULL;
 	char	   *outputName = NULL;
@@ -546,7 +544,7 @@ DefineType(char *typeName, List *parameters)
 	char		delimiter = DEFAULT_TYPDELIM;
 	char	   *shadow_type;
 	List	   *pl;
-	char		alignment = 'i'; /* default alignment */
+	char		alignment = 'i';		/* default alignment */
 	char		storage = 'p';	/* default TOAST storage method */
 
 	/*
@@ -591,9 +589,10 @@ DefineType(char *typeName, List *parameters)
 			char	   *a = defGetString(defel);
 
 			/*
-			 * Note: if argument was an unquoted identifier, parser will have
-			 * applied xlateSqlType() to it, so be prepared to recognize
-			 * translated type names as well as the nominal form.
+			 * Note: if argument was an unquoted identifier, parser will
+			 * have applied xlateSqlType() to it, so be prepared to
+			 * recognize translated type names as well as the nominal
+			 * form.
 			 */
 			if (strcasecmp(a, "double") == 0)
 				alignment = 'd';

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.21 2001/08/24 19:59:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.22 2001/10/25 05:49:54 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "prompt.h"
@@ -33,7 +33,7 @@
  *
  * Defined interpolations are:
  * %M - database server "hostname.domainname", "[local]" for AF_UNIX
- *      sockets, "[local:/dir/name]" if not default
+ *		sockets, "[local:/dir/name]" if not default
  * %m - like %M, but hostname only (before first dot), or always "[local]"
  * %> - database server port number
  * %n - database user name
@@ -120,7 +120,7 @@ get_prompt(promptStatus_t status)
 				case 'm':
 					if (pset.db)
 					{
-						const char * host = PQhost(pset.db);
+						const char *host = PQhost(pset.db);
 
 						/* INET socket */
 						if (host && host[0] && host[0] != '/')
@@ -134,7 +134,7 @@ get_prompt(promptStatus_t status)
 						else
 						{
 							if (!host
-								|| strcmp(host, DEFAULT_PGSOCKET_DIR)==0
+								|| strcmp(host, DEFAULT_PGSOCKET_DIR) == 0
 								|| *p == 'm')
 								strncpy(buf, "[local]", MAX_PROMPT_SIZE);
 							else

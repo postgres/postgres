@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fe-auth.h,v 1.12 2001/01/24 19:43:30 momjian Exp $
+ * $Id: fe-auth.h,v 1.13 2001/10/25 05:50:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,5 +41,4 @@ extern char *fe_getauthname(char *PQerrormsg);
 
 #define PG_KRB4_VERSION "PGVER4.1"		/* at most KRB_SENDAUTH_VLEN chars */
 #define PG_KRB5_VERSION "PGVER5.1"
-
 #endif	 /* FE_AUTH_H */

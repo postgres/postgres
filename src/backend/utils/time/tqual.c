@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.42 2001/08/26 16:56:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.43 2001/10/25 05:49:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -324,7 +324,7 @@ HeapTupleSatisfiesUpdate(HeapTuple tuple)
 	{
 		if (th->t_infomask & HEAP_MARKED_FOR_UPDATE)
 			return HeapTupleMayBeUpdated;
-		return HeapTupleUpdated;/* updated by other */
+		return HeapTupleUpdated;		/* updated by other */
 	}
 
 	if (TransactionIdIsCurrentTransactionId(th->t_xmax))
@@ -374,7 +374,6 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 
 		if (tuple->t_infomask & HEAP_MOVED_OFF)
 		{
-
 			/*
 			 * HeapTupleSatisfiesDirty is used by unique btree-s and so
 			 * may be used while vacuuming.
@@ -592,7 +591,7 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
  * HeapTupleSatisfiesVacuum - determine tuple status for VACUUM and related
  *		operations
  *
- * OldestXmin is a cutoff XID (obtained from GetOldestXmin()).  Tuples
+ * OldestXmin is a cutoff XID (obtained from GetOldestXmin()).	Tuples
  * deleted by XIDs >= OldestXmin are deemed "recently dead"; they might
  * still be visible to some open transaction, so we can't remove them,
  * even if we see that the deleting transaction has committed.
@@ -614,9 +613,9 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 	 * NOTE: must check TransactionIdIsInProgress (which looks in PROC array)
 	 * before TransactionIdDidCommit/TransactionIdDidAbort (which look in
 	 * pg_clog).  Otherwise we have a race condition where we might decide
-	 * that a just-committed transaction crashed, because none of the tests
-	 * succeed.  xact.c is careful to record commit/abort in pg_clog before
-	 * it unsets MyProc->xid in PROC array.
+	 * that a just-committed transaction crashed, because none of the
+	 * tests succeed.  xact.c is careful to record commit/abort in pg_clog
+	 * before it unsets MyProc->xid in PROC array.
 	 */
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
@@ -655,8 +654,8 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 		else
 		{
 			/*
-			 * Not in Progress, Not Committed, Not Aborted -
-			 * so it's from crashed process. - vadim 11/26/96
+			 * Not in Progress, Not Committed, Not Aborted - so it's from
+			 * crashed process. - vadim 11/26/96
 			 */
 			tuple->t_infomask |= HEAP_XMIN_INVALID;
 			return HEAPTUPLE_DEAD;
@@ -666,7 +665,7 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 	}
 
 	/*
-	 * Okay, the inserter committed, so it was good at some point.  Now
+	 * Okay, the inserter committed, so it was good at some point.	Now
 	 * what about the deleting transaction?
 	 */
 	if (tuple->t_infomask & HEAP_XMAX_INVALID)
@@ -686,8 +685,8 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 		else
 		{
 			/*
-			 * Not in Progress, Not Committed, Not Aborted -
-			 * so it's from crashed process. - vadim 06/02/97
+			 * Not in Progress, Not Committed, Not Aborted - so it's from
+			 * crashed process. - vadim 06/02/97
 			 */
 			tuple->t_infomask |= HEAP_XMAX_INVALID;
 			return HEAPTUPLE_LIVE;
@@ -708,7 +707,10 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 
 	if (TransactionIdEquals(tuple->t_xmin, tuple->t_xmax))
 	{
-		/* inserter also deleted it, so it was never visible to anyone else */
+		/*
+		 * inserter also deleted it, so it was never visible to anyone
+		 * else
+		 */
 		return HEAPTUPLE_DEAD;
 	}
 

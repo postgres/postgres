@@ -3,7 +3,7 @@
  *
  * Resource managers definition
  *
- * $Id: rmgr.h,v 1.6 2001/08/25 18:52:42 tgl Exp $
+ * $Id: rmgr.h,v 1.7 2001/10/25 05:49:55 momjian Exp $
  */
 #ifndef RMGR_H
 #define RMGR_H
@@ -24,5 +24,4 @@ typedef uint8 RmgrId;
 #define RM_GIST_ID				14
 #define RM_SEQ_ID				15
 #define RM_MAX_ID				RM_SEQ_ID
-
 #endif	 /* RMGR_H */

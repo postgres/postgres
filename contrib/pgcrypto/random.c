@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: random.c,v 1.2 2001/09/29 03:12:51 momjian Exp $
+ * $Id: random.c,v 1.3 2001/10/25 05:49:20 momjian Exp $
  */
 
 
@@ -44,13 +44,15 @@
 static int
 safe_read(int fd, void *buf, size_t count)
 {
-	int done = 0;
-	char *p = buf;
-	int res;
-	
-	while (count) {
+	int			done = 0;
+	char	   *p = buf;
+	int			res;
+
+	while (count)
+	{
 		res = read(fd, p, count);
-		if (res <= 0) {
+		if (res <= 0)
+		{
 			if (errno == EINTR)
 				continue;
 			return -1;
@@ -65,8 +67,8 @@ safe_read(int fd, void *buf, size_t count)
 int
 px_get_random_bytes(uint8 *dst, unsigned count)
 {
-	int fd;
-	int res;
+	int			fd;
+	int			res;
 
 	fd = open(RAND_DEV, O_RDONLY);
 	if (fd == -1)
@@ -75,21 +77,20 @@ px_get_random_bytes(uint8 *dst, unsigned count)
 	close(fd);
 	return res;
 }
-
-#endif /* RAND_DEV */
+#endif	 /* RAND_DEV */
 
 #ifdef RAND_SILLY
 
-int px_get_random_bytes(uint8 *dst, unsigned count)
+int
+px_get_random_bytes(uint8 *dst, unsigned count)
 {
-	int i;
-	for (i = 0; i < count; i++) {
+	int			i;
+
+	for (i = 0; i < count; i++)
 		*dst++ = random();
-	}
 	return i;
 }
-
-#endif /* RAND_SILLY */
+#endif	 /* RAND_SILLY */
 
 #ifdef RAND_OPENSSL
 
@@ -98,30 +99,29 @@ int px_get_random_bytes(uint8 *dst, unsigned count)
 #include <openssl/rand.h>
 #include <openssl/err.h>
 
-static int openssl_random_init = 0;
+static int	openssl_random_init = 0;
 
-int px_get_random_bytes(uint8 *dst, unsigned count)
+int
+px_get_random_bytes(uint8 *dst, unsigned count)
 {
-	int res;
+	int			res;
 
-	if (!openssl_random_init) {
-		if (RAND_get_rand_method() == NULL) {
+	if (!openssl_random_init)
+	{
+		if (RAND_get_rand_method() == NULL)
 			RAND_set_rand_method(RAND_SSLeay());
-		}
 		openssl_random_init = 1;
 	}
-	
+
 	/*
-	 * OpenSSL random should re-feeded occasionally.
-	 * From /dev/urandom preferrably.
+	 * OpenSSL random should re-feeded occasionally. From /dev/urandom
+	 * preferrably.
 	 */
-	
+
 	res = RAND_bytes(dst, count);
 	if (res > 0)
 		return count;
 
 	return -1;
 }
-
-#endif /* RAND_OPENSSL */
-
+#endif	 /* RAND_OPENSSL */

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fmgrtab.h,v 1.16 2001/03/22 04:01:12 momjian Exp $
+ * $Id: fmgrtab.h,v 1.17 2001/10/25 05:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,5 @@ typedef struct
 
 extern const FmgrBuiltin fmgr_builtins[];
 
-extern const int fmgr_nbuiltins;/* number of entries in table */
-
+extern const int fmgr_nbuiltins;		/* number of entries in table */
 #endif	 /* FMGRTAB_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relcache.h,v 1.26 2001/10/06 23:21:44 tgl Exp $
+ * $Id: relcache.h,v 1.27 2001/10/25 05:50:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,9 +45,9 @@ extern void RelationCacheInitializePhase2(void);
  * Routine to create a relcache entry for an about-to-be-created relation
  */
 extern Relation RelationBuildLocalRelation(const char *relname,
-										   TupleDesc tupDesc,
-										   Oid relid, Oid dbid,
-										   bool nailit);
+						   TupleDesc tupDesc,
+						   Oid relid, Oid dbid,
+						   bool nailit);
 
 /*
  * Routines for flushing/rebuilding relcache entries in various scenarios
@@ -72,5 +72,4 @@ extern void DestroyDummyCaches(void);
  */
 
 #define RELCACHE_INIT_FILENAME	"pg_internal.init"
-
 #endif	 /* RELCACHE_H */

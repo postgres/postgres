@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.27 2001/06/08 21:16:49 petere Exp $
+ * $Id: elog.h,v 1.28 2001/10/25 05:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,11 +33,11 @@ extern bool Log_timestamp;
 extern bool Log_pid;
 
 
-extern void elog(int lev, const char *fmt,...)
+extern void
+elog(int lev, const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format(printf, 2, 3)));
 
 extern int	DebugFileOpen(void);
-
 #endif	 /* ELOG_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.22 2001/07/05 19:33:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.23 2001/10/25 05:49:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,9 +37,11 @@
 /*
  * Analysis algorithms supported
  */
-typedef enum {
+typedef enum
+{
 	ALG_MINIMAL = 1,			/* Compute only most-common-values */
-	ALG_SCALAR					/* Compute MCV, histogram, sort correlation */
+	ALG_SCALAR					/* Compute MCV, histogram, sort
+								 * correlation */
 } AlgCode;
 
 /*
@@ -70,7 +72,10 @@ typedef struct
 	Oid			eqfunc;			/* and associated function */
 	Oid			ltopr;			/* '<' operator for datatype, if any */
 
-	/* These fields are filled in by the actual statistics-gathering routine */
+	/*
+	 * These fields are filled in by the actual statistics-gathering
+	 * routine
+	 */
 	bool		stats_valid;
 	float4		stanullfrac;	/* fraction of entries that are NULL */
 	int4		stawidth;		/* average width */
@@ -101,7 +106,7 @@ typedef struct
 #define swapDatum(a,b)	do {Datum _tmp; _tmp=a; a=b; b=_tmp;} while(0)
 
 
-static int MESSAGE_LEVEL;
+static int	MESSAGE_LEVEL;
 
 /* context information for compare_scalars() */
 static FmgrInfo *datumCmpFn;
@@ -111,19 +116,19 @@ static int *datumCmpTupnoLink;
 
 static VacAttrStats *examine_attribute(Relation onerel, int attnum);
 static int acquire_sample_rows(Relation onerel, HeapTuple *rows,
-							   int targrows, double *totalrows);
+					int targrows, double *totalrows);
 static double random_fract(void);
 static double init_selection_state(int n);
 static double select_next_random_record(double t, int n, double *stateptr);
-static int compare_rows(const void *a, const void *b);
-static int compare_scalars(const void *a, const void *b);
-static int compare_mcvs(const void *a, const void *b);
+static int	compare_rows(const void *a, const void *b);
+static int	compare_scalars(const void *a, const void *b);
+static int	compare_mcvs(const void *a, const void *b);
 static void compute_minimal_stats(VacAttrStats *stats,
-								  TupleDesc tupDesc, double totalrows,
-								  HeapTuple *rows, int numrows);
+					  TupleDesc tupDesc, double totalrows,
+					  HeapTuple *rows, int numrows);
 static void compute_scalar_stats(VacAttrStats *stats,
-								 TupleDesc tupDesc, double totalrows,
-								 HeapTuple *rows, int numrows);
+					 TupleDesc tupDesc, double totalrows,
+					 HeapTuple *rows, int numrows);
 static void update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats);
 
 
@@ -154,8 +159,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	 * Begin a transaction for analyzing this relation.
 	 *
 	 * Note: All memory allocated during ANALYZE will live in
-	 * TransactionCommandContext or a subcontext thereof, so it will
-	 * all be released by transaction commit at the end of this routine.
+	 * TransactionCommandContext or a subcontext thereof, so it will all
+	 * be released by transaction commit at the end of this routine.
 	 */
 	StartTransactionCommand();
 
@@ -191,14 +196,14 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	ReleaseSysCache(tuple);
 
 	/*
-	 * Open the class, getting only a read lock on it, and check permissions.
-	 * Permissions check should match vacuum's check!
+	 * Open the class, getting only a read lock on it, and check
+	 * permissions. Permissions check should match vacuum's check!
 	 */
 	onerel = heap_open(relid, AccessShareLock);
 
-	if (! (pg_ownercheck(GetUserId(), RelationGetRelationName(onerel),
-						 RELNAME) ||
-		   (is_dbadmin(MyDatabaseId) && !onerel->rd_rel->relisshared)))
+	if (!(pg_ownercheck(GetUserId(), RelationGetRelationName(onerel),
+						RELNAME) ||
+		  (is_dbadmin(MyDatabaseId) && !onerel->rd_rel->relisshared)))
 	{
 		/* No need for a notice if we already complained during VACUUM */
 		if (!vacstmt->vacuum)
@@ -238,7 +243,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 			if (i >= attr_cnt)
 				elog(ERROR, "ANALYZE: there is no attribute %s in %s",
 					 col, RelationGetRelationName(onerel));
-			vacattrstats[tcnt] = examine_attribute(onerel, i+1);
+			vacattrstats[tcnt] = examine_attribute(onerel, i + 1);
 			if (vacattrstats[tcnt] != NULL)
 				tcnt++;
 		}
@@ -251,7 +256,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 		tcnt = 0;
 		for (i = 0; i < attr_cnt; i++)
 		{
-			vacattrstats[tcnt] = examine_attribute(onerel, i+1);
+			vacattrstats[tcnt] = examine_attribute(onerel, i + 1);
 			if (vacattrstats[tcnt] != NULL)
 				tcnt++;
 		}
@@ -270,8 +275,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 
 	/*
 	 * Determine how many rows we need to sample, using the worst case
-	 * from all analyzable columns.  We use a lower bound of 100 rows
-	 * to avoid possible overflow in Vitter's algorithm.
+	 * from all analyzable columns.  We use a lower bound of 100 rows to
+	 * avoid possible overflow in Vitter's algorithm.
 	 */
 	targrows = 100;
 	for (i = 0; i < attr_cnt; i++)
@@ -289,8 +294,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	/*
 	 * If we are running a standalone ANALYZE, update pages/tuples stats
 	 * in pg_class.  We have the accurate page count from heap_beginscan,
-	 * but only an approximate number of tuples; therefore, if we are
-	 * part of VACUUM ANALYZE do *not* overwrite the accurate count already
+	 * but only an approximate number of tuples; therefore, if we are part
+	 * of VACUUM ANALYZE do *not* overwrite the accurate count already
 	 * inserted by VACUUM.
 	 */
 	if (!vacstmt->vacuum)
@@ -300,7 +305,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 							RelationGetForm(onerel)->relhasindex);
 
 	/*
-	 * Compute the statistics.  Temporary results during the calculations
+	 * Compute the statistics.	Temporary results during the calculations
 	 * for each column are stored in a child context.  The calc routines
 	 * are responsible to make sure that whatever they store into the
 	 * VacAttrStats structure is allocated in TransactionCommandContext.
@@ -338,8 +343,9 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 
 		/*
 		 * Emit the completed stats rows into pg_statistic, replacing any
-		 * previous statistics for the target columns.  (If there are stats
-		 * in pg_statistic for columns we didn't process, we leave them alone.)
+		 * previous statistics for the target columns.	(If there are
+		 * stats in pg_statistic for columns we didn't process, we leave
+		 * them alone.)
 		 */
 		update_attstats(relid, attr_cnt, vacattrstats);
 	}
@@ -364,7 +370,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 static VacAttrStats *
 examine_attribute(Relation onerel, int attnum)
 {
-	Form_pg_attribute attr = onerel->rd_att->attrs[attnum-1];
+	Form_pg_attribute attr = onerel->rd_att->attrs[attnum - 1];
 	Operator	func_operator;
 	Oid			oprrest;
 	HeapTuple	typtuple;
@@ -396,8 +402,8 @@ examine_attribute(Relation onerel, int attnum)
 		return NULL;
 
 	/*
-	 * If we have "=" then we're at least able to do the minimal algorithm,
-	 * so start filling in a VacAttrStats struct.
+	 * If we have "=" then we're at least able to do the minimal
+	 * algorithm, so start filling in a VacAttrStats struct.
 	 */
 	stats = (VacAttrStats *) palloc(sizeof(VacAttrStats));
 	MemSet(stats, 0, sizeof(VacAttrStats));
@@ -424,15 +430,14 @@ examine_attribute(Relation onerel, int attnum)
 	{
 		oprrest = ((Form_pg_operator) GETSTRUCT(func_operator))->oprrest;
 		if (oprrest == F_SCALARLTSEL)
-		{
 			ltopr = oprid(func_operator);
-		}
 		ReleaseSysCache(func_operator);
 	}
 	stats->ltopr = ltopr;
 
 	/*
-	 * Determine the algorithm to use (this will get more complicated later)
+	 * Determine the algorithm to use (this will get more complicated
+	 * later)
 	 */
 	if (OidIsValid(ltopr))
 	{
@@ -474,7 +479,7 @@ examine_attribute(Relation onerel, int attnum)
  * acquire_sample_rows -- acquire a random sample of rows from the table
  *
  * Up to targrows rows are collected (if there are fewer than that many
- * rows in the table, all rows are collected).  When the table is larger
+ * rows in the table, all rows are collected).	When the table is larger
  * than targrows, a truly random sample is collected: every row has an
  * equal chance of ending up in the final sample.
  *
@@ -491,8 +496,8 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 	int			numrows = 0;
 	HeapScanDesc scan;
 	HeapTuple	tuple;
-	ItemPointer	lasttuple;
-	BlockNumber	lastblock,
+	ItemPointer lasttuple;
+	BlockNumber lastblock,
 				estblock;
 	OffsetNumber lastoffset;
 	int			numest;
@@ -501,6 +506,7 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 	double		rstate;
 
 	Assert(targrows > 1);
+
 	/*
 	 * Do a simple linear scan until we reach the target number of rows.
 	 */
@@ -512,8 +518,9 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 			break;
 	}
 	heap_endscan(scan);
+
 	/*
-	 * If we ran out of tuples then we're done, no matter how few we 
+	 * If we ran out of tuples then we're done, no matter how few we
 	 * collected.  No sort is needed, since they're already in order.
 	 */
 	if (!HeapTupleIsValid(tuple))
@@ -521,35 +528,40 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 		*totalrows = (double) numrows;
 		return numrows;
 	}
+
 	/*
 	 * Otherwise, start replacing tuples in the sample until we reach the
 	 * end of the relation.  This algorithm is from Jeff Vitter's paper
-	 * (see full citation below).  It works by repeatedly computing the number
-	 * of the next tuple we want to fetch, which will replace a randomly
-	 * chosen element of the reservoir (current set of tuples).  At all times
-	 * the reservoir is a true random sample of the tuples we've passed over
-	 * so far, so when we fall off the end of the relation we're done.
+	 * (see full citation below).  It works by repeatedly computing the
+	 * number of the next tuple we want to fetch, which will replace a
+	 * randomly chosen element of the reservoir (current set of tuples).
+	 * At all times the reservoir is a true random sample of the tuples
+	 * we've passed over so far, so when we fall off the end of the
+	 * relation we're done.
 	 *
-	 * A slight difficulty is that since we don't want to fetch tuples or even
-	 * pages that we skip over, it's not possible to fetch *exactly* the N'th
-	 * tuple at each step --- we don't know how many valid tuples are on
-	 * the skipped pages.  We handle this by assuming that the average number
-	 * of valid tuples/page on the pages already scanned over holds good for
-	 * the rest of the relation as well; this lets us estimate which page
-	 * the next tuple should be on and its position in the page.  Then we
-	 * fetch the first valid tuple at or after that position, being careful
-	 * not to use the same tuple twice.  This approach should still give a
-	 * good random sample, although it's not perfect.
+	 * A slight difficulty is that since we don't want to fetch tuples or
+	 * even pages that we skip over, it's not possible to fetch *exactly*
+	 * the N'th tuple at each step --- we don't know how many valid tuples
+	 * are on the skipped pages.  We handle this by assuming that the
+	 * average number of valid tuples/page on the pages already scanned
+	 * over holds good for the rest of the relation as well; this lets us
+	 * estimate which page the next tuple should be on and its position in
+	 * the page.  Then we fetch the first valid tuple at or after that
+	 * position, being careful not to use the same tuple twice.  This
+	 * approach should still give a good random sample, although it's not
+	 * perfect.
 	 */
-	lasttuple = &(rows[numrows-1]->t_self);
+	lasttuple = &(rows[numrows - 1]->t_self);
 	lastblock = ItemPointerGetBlockNumber(lasttuple);
 	lastoffset = ItemPointerGetOffsetNumber(lasttuple);
+
 	/*
-	 * If possible, estimate tuples/page using only completely-scanned pages.
+	 * If possible, estimate tuples/page using only completely-scanned
+	 * pages.
 	 */
 	for (numest = numrows; numest > 0; numest--)
 	{
-		if (ItemPointerGetBlockNumber(&(rows[numest-1]->t_self)) != lastblock)
+		if (ItemPointerGetBlockNumber(&(rows[numest - 1]->t_self)) != lastblock)
 			break;
 	}
 	if (numest == 0)
@@ -558,27 +570,25 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 		estblock = lastblock + 1;
 	}
 	else
-	{
 		estblock = lastblock;
-	}
 	tuplesperpage = (double) numest / (double) estblock;
 
 	t = (double) numrows;		/* t is the # of records processed so far */
 	rstate = init_selection_state(targrows);
 	for (;;)
 	{
-		double			targpos;
-		BlockNumber		targblock;
-		Buffer			targbuffer;
-		Page			targpage;
-		OffsetNumber	targoffset,
-						maxoffset;
+		double		targpos;
+		BlockNumber targblock;
+		Buffer		targbuffer;
+		Page		targpage;
+		OffsetNumber targoffset,
+					maxoffset;
 
 		t = select_next_random_record(t, targrows, &rstate);
 		/* Try to read the t'th record in the table */
 		targpos = t / tuplesperpage;
 		targblock = (BlockNumber) targpos;
-		targoffset = ((int) ((targpos - targblock) * tuplesperpage)) + 
+		targoffset = ((int) ((targpos - targblock) * tuplesperpage)) +
 			FirstOffsetNumber;
 		/* Make sure we are past the last selected record */
 		if (targblock <= lastblock)
@@ -588,19 +598,22 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 				targoffset = lastoffset + 1;
 		}
 		/* Loop to find first valid record at or after given position */
-	pageloop:;
+pageloop:;
+
 		/*
-		 * Have we fallen off the end of the relation?  (We rely on
+		 * Have we fallen off the end of the relation?	(We rely on
 		 * heap_beginscan to have updated rd_nblocks.)
 		 */
 		if (targblock >= onerel->rd_nblocks)
 			break;
+
 		/*
-		 * We must maintain a pin on the target page's buffer to ensure that
-		 * the maxoffset value stays good (else concurrent VACUUM might
-		 * delete tuples out from under us).  Hence, pin the page until we
-		 * are done looking at it.  We don't maintain a lock on the page,
-		 * so tuples could get added to it, but we ignore such tuples.
+		 * We must maintain a pin on the target page's buffer to ensure
+		 * that the maxoffset value stays good (else concurrent VACUUM
+		 * might delete tuples out from under us).	Hence, pin the page
+		 * until we are done looking at it.  We don't maintain a lock on
+		 * the page, so tuples could get added to it, but we ignore such
+		 * tuples.
 		 */
 		targbuffer = ReadBuffer(onerel, targblock);
 		if (!BufferIsValid(targbuffer))
@@ -632,7 +645,7 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 				 * Found a suitable tuple, so save it, replacing one old
 				 * tuple at random
 				 */
-				int		k = (int) (targrows * random_fract());
+				int			k = (int) (targrows * random_fract());
 
 				Assert(k >= 0 && k < targrows);
 				heap_freetuple(rows[k]);
@@ -667,13 +680,13 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 static double
 random_fract(void)
 {
-	long	z;
+	long		z;
 
 	/* random() can produce endpoint values, try again if so */
 	do
 	{
 		z = random();
-	} while (! (z > 0 && z < MAX_RANDOM_VALUE));
+	} while (!(z > 0 && z < MAX_RANDOM_VALUE));
 	return (double) z / (double) MAX_RANDOM_VALUE;
 }
 
@@ -702,7 +715,7 @@ static double
 init_selection_state(int n)
 {
 	/* Initial value of W (for use when Algorithm Z is first applied) */
-	return exp(- log(random_fract())/n);
+	return exp(-log(random_fract()) / n);
 }
 
 static double
@@ -712,8 +725,8 @@ select_next_random_record(double t, int n, double *stateptr)
 	if (t <= (22.0 * n))
 	{
 		/* Process records using Algorithm X until t is large enough */
-		double	V,
-				quot;
+		double		V,
+					quot;
 
 		V = random_fract();		/* Generate V */
 		t += 1;
@@ -728,21 +741,21 @@ select_next_random_record(double t, int n, double *stateptr)
 	else
 	{
 		/* Now apply Algorithm Z */
-		double	W = *stateptr;
-		double	term = t - (double) n + 1;
-		double	S;
+		double		W = *stateptr;
+		double		term = t - (double) n + 1;
+		double		S;
 
 		for (;;)
 		{
-			double	numer,
-					numer_lim,
-					denom;
-			double	U,
-					X,
-					lhs,
-					rhs,
-					y,
-					tmp;
+			double		numer,
+						numer_lim,
+						denom;
+			double		U,
+						X,
+						lhs,
+						rhs,
+						y,
+						tmp;
 
 			/* Generate U and X */
 			U = random_fract();
@@ -750,15 +763,15 @@ select_next_random_record(double t, int n, double *stateptr)
 			S = floor(X);		/* S is tentatively set to floor(X) */
 			/* Test if U <= h(S)/cg(X) in the manner of (6.3) */
 			tmp = (t + 1) / term;
-			lhs = exp(log(((U * tmp * tmp) * (term + S))/(t + X))/n);
-			rhs = (((t + X)/(term + S)) * term)/t;
+			lhs = exp(log(((U * tmp * tmp) * (term + S)) / (t + X)) / n);
+			rhs = (((t + X) / (term + S)) * term) / t;
 			if (lhs <= rhs)
 			{
-				W = rhs/lhs;
+				W = rhs / lhs;
 				break;
 			}
 			/* Test if U <= f(S)/cg(X) */
-			y = (((U * (t + 1))/term) * (t + S + 1))/(t + X);
+			y = (((U * (t + 1)) / term) * (t + S + 1)) / (t + X);
 			if ((double) n < S)
 			{
 				denom = t;
@@ -774,8 +787,8 @@ select_next_random_record(double t, int n, double *stateptr)
 				y *= numer / denom;
 				denom -= 1;
 			}
-			W = exp(- log(random_fract())/n); /* Generate W in advance */
-			if (exp(log(y)/n) <= (t + X)/t)
+			W = exp(-log(random_fract()) / n);	/* Generate W in advance */
+			if (exp(log(y) / n) <= (t + X) / t)
 				break;
 		}
 		t += S + 1;
@@ -790,11 +803,11 @@ select_next_random_record(double t, int n, double *stateptr)
 static int
 compare_rows(const void *a, const void *b)
 {
-	HeapTuple	ha = * (HeapTuple *) a;
-	HeapTuple	hb = * (HeapTuple *) b;
-	BlockNumber	ba = ItemPointerGetBlockNumber(&ha->t_self);
+	HeapTuple	ha = *(HeapTuple *) a;
+	HeapTuple	hb = *(HeapTuple *) b;
+	BlockNumber ba = ItemPointerGetBlockNumber(&ha->t_self);
 	OffsetNumber oa = ItemPointerGetOffsetNumber(&ha->t_self);
-	BlockNumber	bb = ItemPointerGetBlockNumber(&hb->t_self);
+	BlockNumber bb = ItemPointerGetBlockNumber(&hb->t_self);
 	OffsetNumber ob = ItemPointerGetOffsetNumber(&hb->t_self);
 
 	if (ba < bb)
@@ -839,15 +852,18 @@ compute_minimal_stats(VacAttrStats *stats,
 	FmgrInfo	f_cmpeq;
 	typedef struct
 	{
-		Datum	value;
-		int		count;
+		Datum		value;
+		int			count;
 	} TrackItem;
 	TrackItem  *track;
 	int			track_cnt,
 				track_max;
 	int			num_mcv = stats->attr->attstattarget;
 
-	/* We track up to 2*n values for an n-element MCV list; but at least 10 */
+	/*
+	 * We track up to 2*n values for an n-element MCV list; but at least
+	 * 10
+	 */
 	track_max = 2 * num_mcv;
 	if (track_max < 10)
 		track_max = 10;
@@ -877,19 +893,20 @@ compute_minimal_stats(VacAttrStats *stats,
 
 		/*
 		 * If it's a varlena field, add up widths for average width
-		 * calculation.  Note that if the value is toasted, we
-		 * use the toasted width.  We don't bother with this calculation
-		 * if it's a fixed-width type.
+		 * calculation.  Note that if the value is toasted, we use the
+		 * toasted width.  We don't bother with this calculation if it's a
+		 * fixed-width type.
 		 */
 		if (is_varlena)
 		{
 			total_width += VARSIZE(DatumGetPointer(value));
+
 			/*
 			 * If the value is toasted, we want to detoast it just once to
-			 * avoid repeated detoastings and resultant excess memory usage
-			 * during the comparisons.  Also, check to see if the value is
-			 * excessively wide, and if so don't detoast at all --- just
-			 * ignore the value.
+			 * avoid repeated detoastings and resultant excess memory
+			 * usage during the comparisons.  Also, check to see if the
+			 * value is excessively wide, and if so don't detoast at all
+			 * --- just ignore the value.
 			 */
 			if (toast_raw_datum_size(value) > WIDTH_THRESHOLD)
 			{
@@ -920,10 +937,10 @@ compute_minimal_stats(VacAttrStats *stats,
 			/* Found a match */
 			track[j].count++;
 			/* This value may now need to "bubble up" in the track list */
-			while (j > 0 && track[j].count > track[j-1].count)
+			while (j > 0 && track[j].count > track[j - 1].count)
 			{
-				swapDatum(track[j].value, track[j-1].value);
-				swapInt(track[j].count, track[j-1].count);
+				swapDatum(track[j].value, track[j - 1].value);
+				swapInt(track[j].count, track[j - 1].count);
 				j--;
 			}
 		}
@@ -932,10 +949,10 @@ compute_minimal_stats(VacAttrStats *stats,
 			/* No match.  Insert at head of count-1 list */
 			if (track_cnt < track_max)
 				track_cnt++;
-			for (j = track_cnt-1; j > firstcount1; j--)
+			for (j = track_cnt - 1; j > firstcount1; j--)
 			{
-				track[j].value = track[j-1].value;
-				track[j].count = track[j-1].count;
+				track[j].value = track[j - 1].value;
+				track[j].count = track[j - 1].count;
 			}
 			if (firstcount1 < track_cnt)
 			{
@@ -948,8 +965,8 @@ compute_minimal_stats(VacAttrStats *stats,
 	/* We can only compute valid stats if we found some non-null values. */
 	if (nonnull_cnt > 0)
 	{
-		int		nmultiple,
-				summultiple;
+		int			nmultiple,
+					summultiple;
 
 		stats->stats_valid = true;
 		/* Do the simple null-frac and width stats */
@@ -977,9 +994,9 @@ compute_minimal_stats(VacAttrStats *stats,
 				 nmultiple == track_cnt)
 		{
 			/*
-			 * Our track list includes every value in the sample, and every
-			 * value appeared more than once.  Assume the column has just
-			 * these values.
+			 * Our track list includes every value in the sample, and
+			 * every value appeared more than once.  Assume the column has
+			 * just these values.
 			 */
 			stats->stadistinct = track_cnt;
 		}
@@ -994,12 +1011,12 @@ compute_minimal_stats(VacAttrStats *stats,
 			 * We assume (not very reliably!) that all the multiply-occurring
 			 * values are reflected in the final track[] list, and the other
 			 * nonnull values all appeared but once.  (XXX this usually
-			 * results in a drastic overestimate of ndistinct.  Can we do
+			 * results in a drastic overestimate of ndistinct.	Can we do
 			 * any better?)
 			 *----------
 			 */
-			int		f1 = nonnull_cnt - summultiple;
-			double	term1;
+			int			f1 = nonnull_cnt - summultiple;
+			double		term1;
 
 			if (f1 < 1)
 				f1 = 1;
@@ -1014,16 +1031,16 @@ compute_minimal_stats(VacAttrStats *stats,
 		 * a fixed value.
 		 */
 		if (stats->stadistinct > 0.1 * totalrows)
-			stats->stadistinct = - (stats->stadistinct / totalrows);
+			stats->stadistinct = -(stats->stadistinct / totalrows);
 
 		/*
 		 * Decide how many values are worth storing as most-common values.
 		 * If we are able to generate a complete MCV list (all the values
 		 * in the sample will fit, and we think these are all the ones in
-		 * the table), then do so.  Otherwise, store only those values
-		 * that are significantly more common than the (estimated) average.
-		 * We set the threshold rather arbitrarily at 25% more than average,
-		 * with at least 2 instances in the sample.
+		 * the table), then do so.	Otherwise, store only those values
+		 * that are significantly more common than the (estimated)
+		 * average. We set the threshold rather arbitrarily at 25% more
+		 * than average, with at least 2 instances in the sample.
 		 */
 		if (track_cnt < track_max && toowide_cnt == 0 &&
 			stats->stadistinct > 0 &&
@@ -1034,12 +1051,12 @@ compute_minimal_stats(VacAttrStats *stats,
 		}
 		else
 		{
-			double	ndistinct = stats->stadistinct;
-			double	avgcount,
-					mincount;
+			double		ndistinct = stats->stadistinct;
+			double		avgcount,
+						mincount;
 
 			if (ndistinct < 0)
-				ndistinct = - ndistinct * totalrows;
+				ndistinct = -ndistinct * totalrows;
 			/* estimate # of occurrences in sample of a typical value */
 			avgcount = (double) numrows / ndistinct;
 			/* set minimum threshold count to store a value */
@@ -1062,8 +1079,8 @@ compute_minimal_stats(VacAttrStats *stats,
 		if (num_mcv > 0)
 		{
 			MemoryContext old_context;
-			Datum  *mcv_values;
-			float4 *mcv_freqs;
+			Datum	   *mcv_values;
+			float4	   *mcv_freqs;
 
 			/* Must copy the target values into TransactionCommandContext */
 			old_context = MemoryContextSwitchTo(TransactionCommandContext);
@@ -1153,19 +1170,20 @@ compute_scalar_stats(VacAttrStats *stats,
 
 		/*
 		 * If it's a varlena field, add up widths for average width
-		 * calculation.  Note that if the value is toasted, we
-		 * use the toasted width.  We don't bother with this calculation
-		 * if it's a fixed-width type.
+		 * calculation.  Note that if the value is toasted, we use the
+		 * toasted width.  We don't bother with this calculation if it's a
+		 * fixed-width type.
 		 */
 		if (is_varlena)
 		{
 			total_width += VARSIZE(DatumGetPointer(value));
+
 			/*
 			 * If the value is toasted, we want to detoast it just once to
-			 * avoid repeated detoastings and resultant excess memory usage
-			 * during the comparisons.  Also, check to see if the value is
-			 * excessively wide, and if so don't detoast at all --- just
-			 * ignore the value.
+			 * avoid repeated detoastings and resultant excess memory
+			 * usage during the comparisons.  Also, check to see if the
+			 * value is excessively wide, and if so don't detoast at all
+			 * --- just ignore the value.
 			 */
 			if (toast_raw_datum_size(value) > WIDTH_THRESHOLD)
 			{
@@ -1185,11 +1203,11 @@ compute_scalar_stats(VacAttrStats *stats,
 	/* We can only compute valid stats if we found some sortable values. */
 	if (values_cnt > 0)
 	{
-		int		ndistinct,		/* # distinct values in sample */
-				nmultiple,		/* # that appear multiple times */
-				num_hist,
-				dups_cnt;
-		int		slot_idx = 0;
+		int			ndistinct,	/* # distinct values in sample */
+					nmultiple,	/* # that appear multiple times */
+					num_hist,
+					dups_cnt;
+		int			slot_idx = 0;
 
 		/* Sort the collected values */
 		datumCmpFn = &f_cmpfn;
@@ -1199,23 +1217,24 @@ compute_scalar_stats(VacAttrStats *stats,
 			  sizeof(ScalarItem), compare_scalars);
 
 		/*
-		 * Now scan the values in order, find the most common ones,
-		 * and also accumulate ordering-correlation statistics.
+		 * Now scan the values in order, find the most common ones, and
+		 * also accumulate ordering-correlation statistics.
 		 *
 		 * To determine which are most common, we first have to count the
-		 * number of duplicates of each value.  The duplicates are adjacent
-		 * in the sorted list, so a brute-force approach is to compare
-		 * successive datum values until we find two that are not equal.
-		 * However, that requires N-1 invocations of the datum comparison
-		 * routine, which are completely redundant with work that was done
-		 * during the sort.  (The sort algorithm must at some point have
-		 * compared each pair of items that are adjacent in the sorted order;
-		 * otherwise it could not know that it's ordered the pair correctly.)
-		 * We exploit this by having compare_scalars remember the highest
-		 * tupno index that each ScalarItem has been found equal to.  At the
-		 * end of the sort, a ScalarItem's tupnoLink will still point to
-		 * itself if and only if it is the last item of its group of
-		 * duplicates (since the group will be ordered by tupno).
+		 * number of duplicates of each value.	The duplicates are
+		 * adjacent in the sorted list, so a brute-force approach is to
+		 * compare successive datum values until we find two that are not
+		 * equal. However, that requires N-1 invocations of the datum
+		 * comparison routine, which are completely redundant with work
+		 * that was done during the sort.  (The sort algorithm must at
+		 * some point have compared each pair of items that are adjacent
+		 * in the sorted order; otherwise it could not know that it's
+		 * ordered the pair correctly.) We exploit this by having
+		 * compare_scalars remember the highest tupno index that each
+		 * ScalarItem has been found equal to.	At the end of the sort, a
+		 * ScalarItem's tupnoLink will still point to itself if and only
+		 * if it is the last item of its group of duplicates (since the
+		 * group will be ordered by tupno).
 		 */
 		corr_xysum = 0;
 		ndistinct = 0;
@@ -1225,7 +1244,8 @@ compute_scalar_stats(VacAttrStats *stats,
 		{
 			int			tupno = values[i].tupno;
 
-			corr_xysum += (double) i * (double) tupno;
+			corr_xysum += (double) i *(double) tupno;
+
 			dups_cnt++;
 			if (tupnoLink[tupno] == tupno)
 			{
@@ -1235,7 +1255,7 @@ compute_scalar_stats(VacAttrStats *stats,
 				{
 					nmultiple++;
 					if (track_cnt < num_mcv ||
-						dups_cnt > track[track_cnt-1].count)
+						dups_cnt > track[track_cnt - 1].count)
 					{
 						/*
 						 * Found a new item for the mcv list; find its
@@ -1243,16 +1263,16 @@ compute_scalar_stats(VacAttrStats *stats,
 						 * Loop invariant is that j points at an empty/
 						 * replaceable slot.
 						 */
-						int		j;
+						int			j;
 
 						if (track_cnt < num_mcv)
 							track_cnt++;
-						for (j = track_cnt-1; j > 0; j--)
+						for (j = track_cnt - 1; j > 0; j--)
 						{
-							if (dups_cnt <= track[j-1].count)
+							if (dups_cnt <= track[j - 1].count)
 								break;
-							track[j].count = track[j-1].count;
-							track[j].first = track[j-1].first;
+							track[j].count = track[j - 1].count;
+							track[j].first = track[j - 1].first;
 						}
 						track[j].count = dups_cnt;
 						track[j].first = i + 1 - dups_cnt;
@@ -1278,8 +1298,8 @@ compute_scalar_stats(VacAttrStats *stats,
 		else if (toowide_cnt == 0 && nmultiple == ndistinct)
 		{
 			/*
-			 * Every value in the sample appeared more than once.  Assume the
-			 * column has just these values.
+			 * Every value in the sample appeared more than once.  Assume
+			 * the column has just these values.
 			 */
 			stats->stadistinct = ndistinct;
 		}
@@ -1294,8 +1314,8 @@ compute_scalar_stats(VacAttrStats *stats,
 			 * Overwidth values are assumed to have been distinct.
 			 *----------
 			 */
-			int		f1 = ndistinct - nmultiple + toowide_cnt;
-			double	term1;
+			int			f1 = ndistinct - nmultiple + toowide_cnt;
+			double		term1;
 
 			if (f1 < 1)
 				f1 = 1;
@@ -1310,19 +1330,20 @@ compute_scalar_stats(VacAttrStats *stats,
 		 * a fixed value.
 		 */
 		if (stats->stadistinct > 0.1 * totalrows)
-			stats->stadistinct = - (stats->stadistinct / totalrows);
+			stats->stadistinct = -(stats->stadistinct / totalrows);
 
 		/*
 		 * Decide how many values are worth storing as most-common values.
 		 * If we are able to generate a complete MCV list (all the values
 		 * in the sample will fit, and we think these are all the ones in
-		 * the table), then do so.  Otherwise, store only those values
-		 * that are significantly more common than the (estimated) average.
-		 * We set the threshold rather arbitrarily at 25% more than average,
-		 * with at least 2 instances in the sample.  Also, we won't suppress
-		 * values that have a frequency of at least 1/K where K is the
-		 * intended number of histogram bins; such values might otherwise
-		 * cause us to emit duplicate histogram bin boundaries.
+		 * the table), then do so.	Otherwise, store only those values
+		 * that are significantly more common than the (estimated)
+		 * average. We set the threshold rather arbitrarily at 25% more
+		 * than average, with at least 2 instances in the sample.  Also,
+		 * we won't suppress values that have a frequency of at least 1/K
+		 * where K is the intended number of histogram bins; such values
+		 * might otherwise cause us to emit duplicate histogram bin
+		 * boundaries.
 		 */
 		if (track_cnt == ndistinct && toowide_cnt == 0 &&
 			stats->stadistinct > 0 &&
@@ -1333,13 +1354,13 @@ compute_scalar_stats(VacAttrStats *stats,
 		}
 		else
 		{
-			double	ndistinct = stats->stadistinct;
-			double	avgcount,
-					mincount,
-					maxmincount;
+			double		ndistinct = stats->stadistinct;
+			double		avgcount,
+						mincount,
+						maxmincount;
 
 			if (ndistinct < 0)
-				ndistinct = - ndistinct * totalrows;
+				ndistinct = -ndistinct * totalrows;
 			/* estimate # of occurrences in sample of a typical value */
 			avgcount = (double) numrows / ndistinct;
 			/* set minimum threshold count to store a value */
@@ -1366,8 +1387,8 @@ compute_scalar_stats(VacAttrStats *stats,
 		if (num_mcv > 0)
 		{
 			MemoryContext old_context;
-			Datum  *mcv_values;
-			float4 *mcv_freqs;
+			Datum	   *mcv_values;
+			float4	   *mcv_freqs;
 
 			/* Must copy the target values into TransactionCommandContext */
 			old_context = MemoryContextSwitchTo(TransactionCommandContext);
@@ -1402,8 +1423,8 @@ compute_scalar_stats(VacAttrStats *stats,
 		if (num_hist >= 2)
 		{
 			MemoryContext old_context;
-			Datum  *hist_values;
-			int		nvals;
+			Datum	   *hist_values;
+			int			nvals;
 
 			/* Sort the MCV items into position order to speed next loop */
 			qsort((void *) track, num_mcv,
@@ -1413,24 +1434,25 @@ compute_scalar_stats(VacAttrStats *stats,
 			 * Collapse out the MCV items from the values[] array.
 			 *
 			 * Note we destroy the values[] array here... but we don't need
-			 * it for anything more.  We do, however, still need values_cnt.
-			 * nvals will be the number of remaining entries in values[].
+			 * it for anything more.  We do, however, still need
+			 * values_cnt. nvals will be the number of remaining entries
+			 * in values[].
 			 */
 			if (num_mcv > 0)
 			{
-				int		src,
-						dest;
-				int		j;
+				int			src,
+							dest;
+				int			j;
 
 				src = dest = 0;
 				j = 0;			/* index of next interesting MCV item */
 				while (src < values_cnt)
 				{
-					int		ncopy;
+					int			ncopy;
 
 					if (j < num_mcv)
 					{
-						int		first = track[j].first;
+						int			first = track[j].first;
 
 						if (src >= first)
 						{
@@ -1442,9 +1464,7 @@ compute_scalar_stats(VacAttrStats *stats,
 						ncopy = first - src;
 					}
 					else
-					{
 						ncopy = values_cnt - src;
-					}
 					memmove(&values[dest], &values[src],
 							ncopy * sizeof(ScalarItem));
 					src += ncopy;
@@ -1461,7 +1481,7 @@ compute_scalar_stats(VacAttrStats *stats,
 			hist_values = (Datum *) palloc(num_hist * sizeof(Datum));
 			for (i = 0; i < num_hist; i++)
 			{
-				int		pos;
+				int			pos;
 
 				pos = (i * (nvals - 1)) / (num_hist - 1);
 				hist_values[i] = datumCopy(values[pos].value,
@@ -1481,9 +1501,9 @@ compute_scalar_stats(VacAttrStats *stats,
 		if (values_cnt > 1)
 		{
 			MemoryContext old_context;
-			float4 *corrs;
-			double	corr_xsum,
-					corr_x2sum;
+			float4	   *corrs;
+			double		corr_xsum,
+						corr_x2sum;
 
 			/* Must copy the target values into TransactionCommandContext */
 			old_context = MemoryContextSwitchTo(TransactionCommandContext);
@@ -1499,9 +1519,10 @@ compute_scalar_stats(VacAttrStats *stats,
 			 *		(values_cnt-1)*values_cnt*(2*values_cnt-1) / 6.
 			 *----------
 			 */
-			corr_xsum = (double) (values_cnt-1) * (double) values_cnt / 2.0;
-			corr_x2sum = (double) (values_cnt-1) * (double) values_cnt *
-				(double) (2*values_cnt-1) / 6.0;
+			corr_xsum = (double) (values_cnt - 1) * (double) values_cnt / 2.0;
+			corr_x2sum = (double) (values_cnt - 1) * (double) values_cnt *
+						(double) (2 * values_cnt - 1) / 6.0;
+
 			/* And the correlation coefficient reduces to */
 			corrs[0] = (values_cnt * corr_xysum - corr_xsum * corr_xsum) /
 				(values_cnt * corr_x2sum - corr_xsum * corr_xsum);
@@ -1521,7 +1542,7 @@ compute_scalar_stats(VacAttrStats *stats,
  * qsort comparator for sorting ScalarItems
  *
  * Aside from sorting the items, we update the datumCmpTupnoLink[] array
- * whenever two ScalarItems are found to contain equal datums.  The array
+ * whenever two ScalarItems are found to contain equal datums.	The array
  * is indexed by tupno; for each ScalarItem, it contains the highest
  * tupno that that item's datum has been found to be equal to.  This allows
  * us to avoid additional comparisons in compute_scalar_stats().
@@ -1573,7 +1594,7 @@ compare_mcvs(const void *a, const void *b)
  *		Statistics are stored in several places: the pg_class row for the
  *		relation has stats about the whole relation, and there is a
  *		pg_statistic row for each (non-system) attribute that has ever
- *		been analyzed.  The pg_class values are updated by VACUUM, not here.
+ *		been analyzed.	The pg_class values are updated by VACUUM, not here.
  *
  *		pg_statistic rows are just added or updated normally.  This means
  *		that pg_statistic will probably contain some deleted rows at the
@@ -1604,7 +1625,9 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 		FmgrInfo	out_function;
 		HeapTuple	stup,
 					oldtup;
-		int			i, k, n;
+		int			i,
+					k,
+					n;
 		Datum		values[Natts_pg_statistic];
 		char		nulls[Natts_pg_statistic];
 		char		replaces[Natts_pg_statistic];
@@ -1626,22 +1649,22 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 		}
 
 		i = 0;
-		values[i++] = ObjectIdGetDatum(relid); /* starelid */
-		values[i++] = Int16GetDatum(stats->attnum); /* staattnum */
-		values[i++] = Float4GetDatum(stats->stanullfrac); /* stanullfrac */
-		values[i++] = Int32GetDatum(stats->stawidth); /* stawidth */
-		values[i++] = Float4GetDatum(stats->stadistinct); /* stadistinct */
+		values[i++] = ObjectIdGetDatum(relid);	/* starelid */
+		values[i++] = Int16GetDatum(stats->attnum);		/* staattnum */
+		values[i++] = Float4GetDatum(stats->stanullfrac);		/* stanullfrac */
+		values[i++] = Int32GetDatum(stats->stawidth);	/* stawidth */
+		values[i++] = Float4GetDatum(stats->stadistinct);		/* stadistinct */
 		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
 		{
-			values[i++] = Int16GetDatum(stats->stakind[k]);	/* stakindN */
+			values[i++] = Int16GetDatum(stats->stakind[k]);		/* stakindN */
 		}
 		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
 		{
-			values[i++] = ObjectIdGetDatum(stats->staop[k]); /* staopN */
+			values[i++] = ObjectIdGetDatum(stats->staop[k]);	/* staopN */
 		}
 		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
 		{
-			int		nnum = stats->numnumbers[k];
+			int			nnum = stats->numnumbers[k];
 
 			if (nnum > 0)
 			{
@@ -1653,7 +1676,7 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 				/* XXX knows more than it should about type float4: */
 				arry = construct_array(numdatums, nnum,
 									   false, sizeof(float4), 'i');
-				values[i++] = PointerGetDatum(arry); /* stanumbersN */
+				values[i++] = PointerGetDatum(arry);	/* stanumbersN */
 			}
 			else
 			{
@@ -1663,7 +1686,7 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 		}
 		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
 		{
-			int		ntxt = stats->numvalues[k];
+			int			ntxt = stats->numvalues[k];
 
 			if (ntxt > 0)
 			{
@@ -1676,20 +1699,20 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 					 * Convert data values to a text string to be inserted
 					 * into the text array.
 					 */
-					Datum	stringdatum;
+					Datum		stringdatum;
 
 					stringdatum =
 						FunctionCall3(&out_function,
 									  stats->stavalues[k][n],
-									  ObjectIdGetDatum(stats->attrtype->typelem),
-									  Int32GetDatum(stats->attr->atttypmod));
+							  ObjectIdGetDatum(stats->attrtype->typelem),
+								  Int32GetDatum(stats->attr->atttypmod));
 					txtdatums[n] = DirectFunctionCall1(textin, stringdatum);
 					pfree(DatumGetPointer(stringdatum));
 				}
 				/* XXX knows more than it should about type text: */
 				arry = construct_array(txtdatums, ntxt,
 									   false, -1, 'i');
-				values[i++] = PointerGetDatum(arry); /* stavaluesN */
+				values[i++] = PointerGetDatum(arry);	/* stavaluesN */
 			}
 			else
 			{

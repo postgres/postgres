@@ -229,7 +229,7 @@ msqlGetSequenceInfo(int a, char *b)
 {
 }
 
-m_field    *
+m_field *
 msqlFetchField(m_result * mr)
 {
 	m_field    *m = (m_field *) mr->fieldCursor;
@@ -242,7 +242,7 @@ msqlFetchField(m_result * mr)
 	return NULL;
 }
 
-m_result   *
+m_result *
 msqlListDBs(int a)
 {
 	m_result   *m;
@@ -256,7 +256,7 @@ msqlListDBs(int a)
 		return NULL;
 }
 
-m_result   *
+m_result *
 msqlListTables(int a)
 {
 	m_result   *m;
@@ -272,13 +272,13 @@ msqlListTables(int a)
 		return NULL;
 }
 
-m_result   *
+m_result *
 msqlListFields(int a, char *b)
 {
 
 }
 
-m_result   *
+m_result *
 msqlListIndex(int a, char *b, char *c)
 {
 	m_result   *m;
@@ -294,7 +294,7 @@ msqlListIndex(int a, char *b, char *c)
 		return NULL;
 }
 
-m_result   *
+m_result *
 msqlStoreResult(void)
 {
 	if (queryres)

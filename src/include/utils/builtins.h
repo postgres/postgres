@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.168 2001/10/13 23:32:34 tgl Exp $
+ * $Id: builtins.h,v 1.169 2001/10/25 05:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 
 #include "fmgr.h"
 #include "nodes/primnodes.h"
-#include "storage/itemptr.h"  /* for setLastTid() */
+#include "storage/itemptr.h"	/* for setLastTid() */
 
 /*
  *		Defined in adt/
@@ -345,7 +345,7 @@ extern char *deparse_expression(Node *expr, List *dpcontext,
 extern List *deparse_context_for(char *relname, Oid relid);
 
 /* tid.c */
-extern void  setLastTid(const ItemPointer tid);
+extern void setLastTid(const ItemPointer tid);
 extern Datum tidin(PG_FUNCTION_ARGS);
 extern Datum tidout(PG_FUNCTION_ARGS);
 extern Datum tideq(PG_FUNCTION_ARGS);
@@ -599,13 +599,12 @@ extern Datum pg_convert2(PG_FUNCTION_ARGS);
 
 /* format_type.c */
 extern Datum format_type(PG_FUNCTION_ARGS);
-extern char * format_type_be(Oid type_oid);
-extern char * format_type_with_typemod(Oid type_oid, int32 typemod);
+extern char *format_type_be(Oid type_oid);
+extern char *format_type_with_typemod(Oid type_oid, int32 typemod);
 extern Datum oidvectortypes(PG_FUNCTION_ARGS);
 extern int32 type_maximum_size(Oid type_oid, int32 typemod);
 
 /* quote.c */
 extern Datum quote_ident(PG_FUNCTION_ARGS);
 extern Datum quote_literal(PG_FUNCTION_ARGS);
-
 #endif	 /* BUILTINS_H */

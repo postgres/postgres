@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.84 2001/09/19 09:48:42 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.85 2001/10/25 05:49:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,7 +170,7 @@ update_pg_pwd(PG_FUNCTION_ARGS)
 {
 	/*
 	 * ExclusiveLock ensures no one modifies pg_shadow while we read it,
-	 * and that only one backend rewrites the flat file at a time.  It's
+	 * and that only one backend rewrites the flat file at a time.	It's
 	 * OK to allow normal reads of pg_shadow in parallel, however.
 	 */
 	Relation	rel = heap_openr(ShadowRelationName, ExclusiveLock);
@@ -199,15 +199,17 @@ CreateUser(CreateUserStmt *stmt)
 				sysid_exists = false,
 				havesysid = false;
 	int			max_id;
-	List	   *item, *option;
-	char	   *password = NULL;	/* PostgreSQL user password */
-	bool		encrypt_password = Password_encryption;	/* encrypt password? */
-	char		encrypted_password[MD5_PASSWD_LEN+1];
-	int			sysid = 0;			/* PgSQL system id (valid if havesysid) */
-	bool		createdb = false;	/* Can the user create databases? */
-	bool		createuser = false;	/* Can this user create users? */
-	List	   *groupElts = NIL;	/* The groups the user is a member of */
-	char	   *validUntil = NULL;	/* The time the login is valid until */
+	List	   *item,
+			   *option;
+	char	   *password = NULL;		/* PostgreSQL user password */
+	bool		encrypt_password = Password_encryption; /* encrypt password? */
+	char		encrypted_password[MD5_PASSWD_LEN + 1];
+	int			sysid = 0;		/* PgSQL system id (valid if havesysid) */
+	bool		createdb = false;		/* Can the user create databases? */
+	bool		createuser = false;		/* Can this user create users? */
+	List	   *groupElts = NIL;		/* The groups the user is a member of */
+	char	   *validUntil = NULL;		/* The time the login is valid
+										 * until */
 	DefElem    *dpassword = NULL;
 	DefElem    *dsysid = NULL;
 	DefElem    *dcreatedb = NULL;
@@ -218,11 +220,12 @@ CreateUser(CreateUserStmt *stmt)
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
 	{
-		DefElem *defel = (DefElem *) lfirst(option);
+		DefElem    *defel = (DefElem *) lfirst(option);
 
 		if (strcmp(defel->defname, "password") == 0 ||
 			strcmp(defel->defname, "encryptedPassword") == 0 ||
-			strcmp(defel->defname, "unencryptedPassword") == 0) {
+			strcmp(defel->defname, "unencryptedPassword") == 0)
+		{
 			if (dpassword)
 				elog(ERROR, "CREATE USER: conflicting options");
 			dpassword = defel;
@@ -231,33 +234,38 @@ CreateUser(CreateUserStmt *stmt)
 			else if (strcmp(defel->defname, "unencryptedPassword") == 0)
 				encrypt_password = false;
 		}
-		else if (strcmp(defel->defname, "sysid") == 0) {
+		else if (strcmp(defel->defname, "sysid") == 0)
+		{
 			if (dsysid)
 				elog(ERROR, "CREATE USER: conflicting options");
 			dsysid = defel;
 		}
-		else if (strcmp(defel->defname, "createdb") == 0) {
+		else if (strcmp(defel->defname, "createdb") == 0)
+		{
 			if (dcreatedb)
 				elog(ERROR, "CREATE USER: conflicting options");
 			dcreatedb = defel;
 		}
-		else if (strcmp(defel->defname, "createuser") == 0) {
+		else if (strcmp(defel->defname, "createuser") == 0)
+		{
 			if (dcreateuser)
 				elog(ERROR, "CREATE USER: conflicting options");
 			dcreateuser = defel;
 		}
-		else if (strcmp(defel->defname, "groupElts") == 0) {
+		else if (strcmp(defel->defname, "groupElts") == 0)
+		{
 			if (dgroupElts)
 				elog(ERROR, "CREATE USER: conflicting options");
 			dgroupElts = defel;
 		}
-		else if (strcmp(defel->defname, "validUntil") == 0) {
+		else if (strcmp(defel->defname, "validUntil") == 0)
+		{
 			if (dvalidUntil)
 				elog(ERROR, "CREATE USER: conflicting options");
 			dvalidUntil = defel;
 		}
 		else
-			elog(ERROR,"CREATE USER: option \"%s\" not recognized",
+			elog(ERROR, "CREATE USER: option \"%s\" not recognized",
 				 defel->defname);
 	}
 
@@ -329,7 +337,7 @@ CreateUser(CreateUserStmt *stmt)
 		elog(ERROR, "CREATE USER: sysid %d is already assigned", sysid);
 
 	/* If no sysid given, use max existing id + 1 */
-	if (! havesysid)
+	if (!havesysid)
 		sysid = max_id + 1;
 
 	/*
@@ -355,7 +363,7 @@ CreateUser(CreateUserStmt *stmt)
 		else
 		{
 			if (!EncryptMD5(password, stmt->user, strlen(stmt->user),
-				encrypted_password))
+							encrypted_password))
 				elog(ERROR, "CREATE USER: password encryption failed");
 			new_record[Anum_pg_shadow_passwd - 1] =
 				DirectFunctionCall1(textin, CStringGetDatum(encrypted_password));
@@ -438,26 +446,28 @@ AlterUser(AlterUserStmt *stmt)
 	HeapTuple	tuple,
 				new_tuple;
 	bool		null;
-	List       *option;
-	char	   *password = NULL;	/* PostgreSQL user password */
-	bool		encrypt_password = Password_encryption;	/* encrypt password? */
-	char		encrypted_password[MD5_PASSWD_LEN+1];
-	int			createdb = -1;		/* Can the user create databases? */
-	int			createuser = -1;	/* Can this user create users? */
-	char	   *validUntil = NULL;	/* The time the login is valid until */
+	List	   *option;
+	char	   *password = NULL;		/* PostgreSQL user password */
+	bool		encrypt_password = Password_encryption; /* encrypt password? */
+	char		encrypted_password[MD5_PASSWD_LEN + 1];
+	int			createdb = -1;	/* Can the user create databases? */
+	int			createuser = -1;		/* Can this user create users? */
+	char	   *validUntil = NULL;		/* The time the login is valid
+										 * until */
 	DefElem    *dpassword = NULL;
 	DefElem    *dcreatedb = NULL;
 	DefElem    *dcreateuser = NULL;
 	DefElem    *dvalidUntil = NULL;
 
 	/* Extract options from the statement node tree */
-	foreach(option,stmt->options)
+	foreach(option, stmt->options)
 	{
-		DefElem *defel = (DefElem *) lfirst(option);
+		DefElem    *defel = (DefElem *) lfirst(option);
 
 		if (strcmp(defel->defname, "password") == 0 ||
 			strcmp(defel->defname, "encryptedPassword") == 0 ||
-			strcmp(defel->defname, "unencryptedPassword") == 0) {
+			strcmp(defel->defname, "unencryptedPassword") == 0)
+		{
 			if (dpassword)
 				elog(ERROR, "ALTER USER: conflicting options");
 			dpassword = defel;
@@ -466,23 +476,26 @@ AlterUser(AlterUserStmt *stmt)
 			else if (strcmp(defel->defname, "unencryptedPassword") == 0)
 				encrypt_password = false;
 		}
-		else if (strcmp(defel->defname, "createdb") == 0) {
+		else if (strcmp(defel->defname, "createdb") == 0)
+		{
 			if (dcreatedb)
 				elog(ERROR, "ALTER USER: conflicting options");
 			dcreatedb = defel;
 		}
-		else if (strcmp(defel->defname, "createuser") == 0) {
+		else if (strcmp(defel->defname, "createuser") == 0)
+		{
 			if (dcreateuser)
 				elog(ERROR, "ALTER USER: conflicting options");
 			dcreateuser = defel;
 		}
-		else if (strcmp(defel->defname, "validUntil") == 0) {
+		else if (strcmp(defel->defname, "validUntil") == 0)
+		{
 			if (dvalidUntil)
 				elog(ERROR, "ALTER USER: conflicting options");
 			dvalidUntil = defel;
 		}
 		else
-			elog(ERROR,"ALTER USER: option \"%s\" not recognized",
+			elog(ERROR, "ALTER USER: option \"%s\" not recognized",
 				 defel->defname);
 	}
 
@@ -556,10 +569,10 @@ AlterUser(AlterUserStmt *stmt)
 	/*
 	 * createuser (superuser) and catupd
 	 *
-	 * XXX It's rather unclear how to handle catupd.  It's probably
-	 * best to keep it equal to the superuser status, otherwise you
-	 * could end up with a situation where no existing superuser can
-	 * alter the catalogs, including pg_shadow!
+	 * XXX It's rather unclear how to handle catupd.  It's probably best to
+	 * keep it equal to the superuser status, otherwise you could end up
+	 * with a situation where no existing superuser can alter the
+	 * catalogs, including pg_shadow!
 	 */
 	if (createuser < 0)
 	{
@@ -588,7 +601,7 @@ AlterUser(AlterUserStmt *stmt)
 		else
 		{
 			if (!EncryptMD5(password, stmt->user, strlen(stmt->user),
-				encrypted_password))
+							encrypted_password))
 				elog(ERROR, "CREATE USER: password encryption failed");
 			new_record[Anum_pg_shadow_passwd - 1] =
 				DirectFunctionCall1(textin, CStringGetDatum(encrypted_password));
@@ -719,7 +732,7 @@ DropUser(DropUserStmt *stmt)
 
 		if (HeapTupleIsValid(tmp_tuple = heap_getnext(scan, 0)))
 		{
-			char   *dbname;
+			char	   *dbname;
 
 			datum = heap_getattr(tmp_tuple, Anum_pg_database_datname,
 								 pg_dsc, &null);
@@ -847,20 +860,22 @@ CreateGroup(CreateGroupStmt *stmt)
 
 	foreach(option, stmt->options)
 	{
-		DefElem *defel = (DefElem *) lfirst(option);
+		DefElem    *defel = (DefElem *) lfirst(option);
 
-		if (strcmp(defel->defname, "sysid") == 0) {
+		if (strcmp(defel->defname, "sysid") == 0)
+		{
 			if (dsysid)
 				elog(ERROR, "CREATE GROUP: conflicting options");
 			dsysid = defel;
 		}
-		else if (strcmp(defel->defname, "userElts") == 0) {
+		else if (strcmp(defel->defname, "userElts") == 0)
+		{
 			if (duserElts)
 				elog(ERROR, "CREATE GROUP: conflicting options");
 			duserElts = defel;
 		}
 		else
-			elog(ERROR,"CREATE GROUP: option \"%s\" not recognized",
+			elog(ERROR, "CREATE GROUP: option \"%s\" not recognized",
 				 defel->defname);
 	}
 
@@ -900,7 +915,7 @@ CreateGroup(CreateGroupStmt *stmt)
 		datum = heap_getattr(tuple, Anum_pg_group_grosysid,
 							 pg_group_dsc, &null);
 		Assert(!null);
-		if (havesysid)	/* customized id wanted */
+		if (havesysid)			/* customized id wanted */
 			sysid_exists = (DatumGetInt32(datum) == sysid);
 		else
 		{
@@ -939,7 +954,7 @@ CreateGroup(CreateGroupStmt *stmt)
 		userarray = palloc(ARR_OVERHEAD(1) + length(newlist) * sizeof(int32));
 		userarray->size = ARR_OVERHEAD(1) + length(newlist) * sizeof(int32);
 		userarray->flags = 0;
-		ARR_NDIM(userarray) = 1;/* one dimensional array */
+		ARR_NDIM(userarray) = 1;		/* one dimensional array */
 		ARR_LBOUND(userarray)[0] = 1;	/* axis starts at one */
 		ARR_DIMS(userarray)[0] = length(newlist);		/* axis is this long */
 		/* fill the array */
@@ -1088,6 +1103,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 			if (!member(v, newlist))
 				newlist = lappend(newlist, v);
 			else
+
 				/*
 				 * we silently assume here that this error will only come
 				 * up in a ALTER GROUP statement

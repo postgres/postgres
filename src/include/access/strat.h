@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: strat.h,v 1.22 2001/05/30 19:53:39 tgl Exp $
+ * $Id: strat.h,v 1.23 2001/10/25 05:49:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ typedef StrategyOperatorData *StrategyOperator;
 typedef struct StrategyTermData
 {								/* conjunctive term */
 	uint16		degree;
-	StrategyOperatorData operatorData[1];	/* VARIABLE LENGTH ARRAY */
+	StrategyOperatorData operatorData[1];		/* VARIABLE LENGTH ARRAY */
 } StrategyTermData;				/* VARIABLE LENGTH STRUCTURE */
 
 typedef StrategyTermData *StrategyTerm;
@@ -86,5 +86,4 @@ typedef struct IndexStrategyData
 } IndexStrategyData;			/* VARIABLE LENGTH STRUCTURE */
 
 typedef IndexStrategyData *IndexStrategy;
-
 #endif	 /* STRAT_H */

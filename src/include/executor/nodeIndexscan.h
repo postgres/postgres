@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeIndexscan.h,v 1.11 2001/01/24 19:43:23 momjian Exp $
+ * $Id: nodeIndexscan.h,v 1.12 2001/10/25 05:49:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,5 +25,4 @@ extern void ExecUpdateIndexScanKeys(IndexScan *node, ExprContext *econtext);
 extern bool ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent);
 extern int	ExecCountSlotsIndexScan(IndexScan *node);
 extern void ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent);
-
 #endif	 /* NODEINDEXSCAN_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdebug.h,v 1.16 2001/09/20 21:07:57 tgl Exp $
+ * $Id: execdebug.h,v 1.17 2001/10/25 05:49:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -281,7 +281,6 @@ extern int	NIndexTupleInserted;
 #define MJ_DEBUG_QUAL(clause, res)
 #define MJ_DEBUG_MERGE_COMPARE(qual, res)
 #define MJ_DEBUG_PROC_NODE(slot)
-
 #endif	 /* EXEC_MERGEJOINDEBUG */
 
 /* ----------------------------------------------------------------
@@ -298,5 +297,4 @@ extern int	NIndexTupleInserted;
 
 extern long NDirectFileRead;
 extern long NDirectFileWrite;
-
 #endif	 /* ExecDebugIncluded */

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_rewrite.h,v 1.14 2001/03/22 04:00:40 momjian Exp $
+ * $Id: pg_rewrite.h,v 1.15 2001/10/25 05:49:58 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -63,5 +63,4 @@ typedef FormData_pg_rewrite *Form_pg_rewrite;
 #define Anum_pg_rewrite_is_instead		5
 #define Anum_pg_rewrite_ev_qual			6
 #define Anum_pg_rewrite_ev_action		7
-
 #endif	 /* PG_REWRITE_H */

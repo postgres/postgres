@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.70 2001/03/22 03:59:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.71 2001/10/25 05:49:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -764,7 +764,6 @@ array_ref(ArrayType *array,
 
 	if (arraylen > 0)
 	{
-
 		/*
 		 * fixed-length arrays -- these are assumed to be 1-d, 0-based
 		 */
@@ -815,7 +814,7 @@ array_ref(ArrayType *array,
  * lowerIndx[] and upperIndx[].  These are generally just temporaries.
  *-----------------------------------------------------------------------------
  */
-ArrayType  *
+ArrayType *
 array_get_slice(ArrayType *array,
 				int nSubscripts,
 				int *upperIndx,
@@ -841,7 +840,6 @@ array_get_slice(ArrayType *array,
 
 	if (arraylen > 0)
 	{
-
 		/*
 		 * fixed-length arrays -- currently, cannot slice these because
 		 * parser labels output as being of the fixed-length array type!
@@ -926,7 +924,7 @@ array_get_slice(ArrayType *array,
  * with NULL, which will probably not make him happy.
  *-----------------------------------------------------------------------------
  */
-ArrayType  *
+ArrayType *
 array_set(ArrayType *array,
 		  int nSubscripts,
 		  int *indx,
@@ -958,7 +956,6 @@ array_set(ArrayType *array,
 
 	if (arraylen > 0)
 	{
-
 		/*
 		 * fixed-length arrays -- these are assumed to be 1-d, 0-based. We
 		 * cannot extend them, either.
@@ -1090,7 +1087,7 @@ array_set(ArrayType *array,
  * with NULL, which will probably not make him happy.
  *----------------------------------------------------------------------------
  */
-ArrayType  *
+ArrayType *
 array_set_slice(ArrayType *array,
 				int nSubscripts,
 				int *upperIndx,
@@ -1123,7 +1120,6 @@ array_set_slice(ArrayType *array,
 
 	if (arraylen > 0)
 	{
-
 		/*
 		 * fixed-length arrays -- not got round to doing this...
 		 */
@@ -1192,7 +1188,6 @@ array_set_slice(ArrayType *array,
 	olddatasize = ARR_SIZE(array) - overheadlen;
 	if (ndim > 1)
 	{
-
 		/*
 		 * here we do not need to cope with extension of the array; it
 		 * would be a lot more complicated if we had to do so...
@@ -1203,7 +1198,6 @@ array_set_slice(ArrayType *array,
 	}
 	else
 	{
-
 		/*
 		 * here we must allow for possibility of slice larger than orig
 		 * array
@@ -1237,7 +1231,6 @@ array_set_slice(ArrayType *array,
 
 	if (ndim > 1)
 	{
-
 		/*
 		 * here we do not need to cope with extension of the array; it
 		 * would be a lot more complicated if we had to do so...
@@ -1401,7 +1394,7 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType)
  * NULL element values are not supported.
  *----------
  */
-ArrayType  *
+ArrayType *
 construct_array(Datum *elems, int nelems,
 				bool elmbyval, int elmlen, char elmalign)
 {

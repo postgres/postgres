@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.80 2001/08/16 20:38:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.81 2001/10/25 05:49:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ static List *MergeAttributes(List *schema, List *supers, bool istemp,
 				List **supOids, List **supconstr, bool *supHasOids);
 static bool change_varattnos_of_a_node(Node *node, const AttrNumber *newattno);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
-static int findAttrByName(const char *attributeName, List *schema);
+static int	findAttrByName(const char *attributeName, List *schema);
 static void setRelhassubclassInRelation(Oid relationId, bool relhassubclass);
 
 
@@ -74,7 +74,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 * including inherited attributes.
 	 */
 	schema = MergeAttributes(schema, stmt->inhRelnames, stmt->istemp,
-							 &inheritOids, &old_constraints, &parentHasOids);
+						 &inheritOids, &old_constraints, &parentHasOids);
 
 	numberOfAttributes = length(schema);
 	if (numberOfAttributes <= 0)
@@ -305,7 +305,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 	List	   *constraints = NIL;
 	bool		parentHasOids = false;
 	bool		have_bogus_defaults = false;
-	char	   *bogus_marker = "Bogus!"; /* marks conflicting defaults */
+	char	   *bogus_marker = "Bogus!";		/* marks conflicting
+												 * defaults */
 	int			child_attno;
 
 	/*
@@ -329,6 +330,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 					 coldef->colname);
 		}
 	}
+
 	/*
 	 * Reject duplicate names in the list of parents, too.
 	 */
@@ -346,7 +348,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 
 	/*
 	 * Scan the parents left-to-right, and merge their attributes to form
-	 * a list of inherited attributes (inhSchema).  Also check to see if
+	 * a list of inherited attributes (inhSchema).	Also check to see if
 	 * we need to inherit an OID column.
 	 */
 	child_attno = 0;
@@ -387,7 +389,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		 * the attributes of this parent table.  (They are not the same
 		 * for parents after the first one.)
 		 */
-		newattno = (AttrNumber *) palloc(tupleDesc->natts*sizeof(AttrNumber));
+		newattno = (AttrNumber *) palloc(tupleDesc->natts * sizeof(AttrNumber));
 
 		for (parent_attno = 1; parent_attno <= tupleDesc->natts;
 			 parent_attno++)
@@ -420,8 +422,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 			if (exist_attno > 0)
 			{
 				/*
-				 * Yes, try to merge the two column definitions.
-				 * They must have the same type and typmod.
+				 * Yes, try to merge the two column definitions. They must
+				 * have the same type and typmod.
 				 */
 				elog(NOTICE, "CREATE TABLE: merging multiple inherited definitions of attribute \"%s\"",
 					 attributeName);
@@ -429,7 +431,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				if (strcmp(def->typename->name, attributeType) != 0 ||
 					def->typename->typmod != attribute->atttypmod)
 					elog(ERROR, "CREATE TABLE: inherited attribute \"%s\" type conflict (%s and %s)",
-						 attributeName, def->typename->name, attributeType);
+					  attributeName, def->typename->name, attributeType);
 				/* Merge of NOT NULL constraints = OR 'em together */
 				def->is_not_null |= attribute->attnotnull;
 				/* Default and other constraints are handled below */
@@ -453,6 +455,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				inhSchema = lappend(inhSchema, def);
 				newattno[parent_attno - 1] = ++child_attno;
 			}
+
 			/*
 			 * Copy default if any
 			 */
@@ -474,15 +477,17 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 					}
 				}
 				Assert(this_default != NULL);
+
 				/*
-				 * If default expr could contain any vars, we'd need to fix
-				 * 'em, but it can't; so default is ready to apply to child.
+				 * If default expr could contain any vars, we'd need to
+				 * fix 'em, but it can't; so default is ready to apply to
+				 * child.
 				 *
-				 * If we already had a default from some prior parent,
-				 * check to see if they are the same.  If so, no problem;
-				 * if not, mark the column as having a bogus default.
-				 * Below, we will complain if the bogus default isn't
-				 * overridden by the child schema.
+				 * If we already had a default from some prior parent, check
+				 * to see if they are the same.  If so, no problem; if
+				 * not, mark the column as having a bogus default. Below,
+				 * we will complain if the bogus default isn't overridden
+				 * by the child schema.
 				 */
 				Assert(def->raw_default == NULL);
 				if (def->cooked_default == NULL)
@@ -494,6 +499,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				}
 			}
 		}
+
 		/*
 		 * Now copy the constraints of this parent, adjusting attnos using
 		 * the completed newattno[] map
@@ -555,8 +561,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				ColumnDef  *def;
 
 				/*
-				 * Yes, try to merge the two column definitions.
-				 * They must have the same type and typmod.
+				 * Yes, try to merge the two column definitions. They must
+				 * have the same type and typmod.
 				 */
 				elog(NOTICE, "CREATE TABLE: merging attribute \"%s\" with inherited definition",
 					 attributeName);
@@ -564,7 +570,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				if (strcmp(def->typename->name, attributeType) != 0 ||
 					def->typename->typmod != newdef->typename->typmod)
 					elog(ERROR, "CREATE TABLE: attribute \"%s\" type conflict (%s and %s)",
-						 attributeName, def->typename->name, attributeType);
+					  attributeName, def->typename->name, attributeType);
 				/* Merge of NOT NULL constraints = OR 'em together */
 				def->is_not_null |= newdef->is_not_null;
 				/* If new def has a default, override previous default */
@@ -630,7 +636,6 @@ change_varattnos_walker(Node *node, const AttrNumber *newattno)
 		if (var->varlevelsup == 0 && var->varno == 1 &&
 			var->varattno > 0)
 		{
-
 			/*
 			 * ??? the following may be a problem when the node is
 			 * multiply referenced though stringToNode() doesn't create
@@ -783,7 +788,6 @@ again:
 		}
 		if (found)
 		{
-
 			/*
 			 * found a later duplicate, so remove this entry.
 			 */

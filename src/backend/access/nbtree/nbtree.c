@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.82 2001/07/15 22:48:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.83 2001/10/25 05:49:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@ typedef struct
 	bool		haveDead;
 	Relation	heapRel;
 	BTSpool    *spool;
+
 	/*
 	 * spool2 is needed only when the index is an unique index. Dead
 	 * tuples are put into spool2 instead of spool in order to avoid
@@ -58,11 +59,11 @@ bool		FixBTree = true;
 
 static void _bt_restscan(IndexScanDesc scan);
 static void btbuildCallback(Relation index,
-							HeapTuple htup,
-							Datum *attdata,
-							char *nulls,
-							bool tupleIsAlive,
-							void *state);
+				HeapTuple htup,
+				Datum *attdata,
+				char *nulls,
+				bool tupleIsAlive,
+				void *state);
 
 
 /*
@@ -134,6 +135,7 @@ btbuild(PG_FUNCTION_ARGS)
 	if (buildstate.usefast)
 	{
 		buildstate.spool = _bt_spoolinit(index, indexInfo->ii_Unique);
+
 		/*
 		 * Different from spool, the uniqueness isn't checked for spool2.
 		 */
@@ -214,7 +216,7 @@ btbuildCallback(Relation index,
 				bool tupleIsAlive,
 				void *state)
 {
-	BTBuildState   *buildstate = (BTBuildState *) state;
+	BTBuildState *buildstate = (BTBuildState *) state;
 	IndexTuple	itup;
 	BTItem		btitem;
 	InsertIndexResult res;
@@ -226,9 +228,9 @@ btbuildCallback(Relation index,
 	btitem = _bt_formitem(itup);
 
 	/*
-	 * if we are doing bottom-up btree build, we insert the index into
-	 * a spool file for subsequent processing.	otherwise, we insert
-	 * into the btree.
+	 * if we are doing bottom-up btree build, we insert the index into a
+	 * spool file for subsequent processing.  otherwise, we insert into
+	 * the btree.
 	 */
 	if (buildstate->usefast)
 	{
@@ -305,7 +307,6 @@ btgettuple(PG_FUNCTION_ARGS)
 
 	if (ItemPointerIsValid(&(scan->currentItemData)))
 	{
-
 		/*
 		 * Restore scan position using heap TID returned by previous call
 		 * to btgettuple(). _bt_restscan() re-grabs the read lock on the
@@ -321,7 +322,7 @@ btgettuple(PG_FUNCTION_ARGS)
 	 * Save heap TID to use it in _bt_restscan.  Then release the read
 	 * lock on the buffer so that we aren't blocking other backends.
 	 *
-	 * NOTE: we do keep the pin on the buffer!  This is essential to ensure
+	 * NOTE: we do keep the pin on the buffer!	This is essential to ensure
 	 * that someone else doesn't delete the index entry we are stopped on.
 	 */
 	if (res)
@@ -362,7 +363,6 @@ btrescan(PG_FUNCTION_ARGS)
 
 #ifdef NOT_USED					/* XXX surely it's wrong to ignore this? */
 	bool		fromEnd = PG_GETARG_BOOL(1);
-
 #endif
 	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(2);
 	ItemPointer iptr;
@@ -547,7 +547,7 @@ btbulkdelete(PG_FUNCTION_ARGS)
 	IndexBulkDeleteCallback callback = (IndexBulkDeleteCallback) PG_GETARG_POINTER(1);
 	void	   *callback_state = (void *) PG_GETARG_POINTER(2);
 	IndexBulkDeleteResult *result;
-	BlockNumber	num_pages;
+	BlockNumber num_pages;
 	double		tuples_removed;
 	double		num_index_tuples;
 	RetrieveIndexResult res;
@@ -559,15 +559,16 @@ btbulkdelete(PG_FUNCTION_ARGS)
 	num_index_tuples = 0;
 
 	/*
-	 * We use a standard IndexScanDesc scan object, but to speed up the loop,
-	 * we skip most of the wrapper layers of index_getnext and instead call
-	 * _bt_step directly.  This implies holding buffer lock on a target page
-	 * throughout the loop over the page's tuples.  Initially, we have a read
-	 * lock acquired by _bt_step when we stepped onto the page.  If we find
-	 * a tuple we need to delete, we trade in the read lock for an exclusive
-	 * write lock; after that, we hold the write lock until we step off the
-	 * page (fortunately, _bt_relbuf doesn't care which kind of lock it's
-	 * releasing).  This should minimize the amount of work needed per page.
+	 * We use a standard IndexScanDesc scan object, but to speed up the
+	 * loop, we skip most of the wrapper layers of index_getnext and
+	 * instead call _bt_step directly.	This implies holding buffer lock
+	 * on a target page throughout the loop over the page's tuples.
+	 * Initially, we have a read lock acquired by _bt_step when we stepped
+	 * onto the page.  If we find a tuple we need to delete, we trade in
+	 * the read lock for an exclusive write lock; after that, we hold the
+	 * write lock until we step off the page (fortunately, _bt_relbuf
+	 * doesn't care which kind of lock it's releasing).  This should
+	 * minimize the amount of work needed per page.
 	 */
 	scan = index_beginscan(rel, false, 0, (ScanKey) NULL);
 	so = (BTScanOpaque) scan->opaque;
@@ -579,7 +580,7 @@ btbulkdelete(PG_FUNCTION_ARGS)
 	if (res != NULL)
 	{
 		Buffer		buf;
-		BlockNumber	lockedBlock = InvalidBlockNumber;
+		BlockNumber lockedBlock = InvalidBlockNumber;
 
 		pfree(res);
 		/* we have the buffer pinned and locked */
@@ -589,11 +590,11 @@ btbulkdelete(PG_FUNCTION_ARGS)
 		do
 		{
 			Page		page;
-			BlockNumber	blkno;
+			BlockNumber blkno;
 			OffsetNumber offnum;
 			BTItem		btitem;
 			IndexTuple	itup;
-			ItemPointer	htup;
+			ItemPointer htup;
 
 			/* current is the next index tuple */
 			blkno = ItemPointerGetBlockNumber(current);
@@ -607,9 +608,10 @@ btbulkdelete(PG_FUNCTION_ARGS)
 			{
 				/*
 				 * If this is first deletion on this page, trade in read
-				 * lock for a really-exclusive write lock.  Then, step back
-				 * one and re-examine the item, because someone else might
-				 * have inserted an item while we weren't holding the lock!
+				 * lock for a really-exclusive write lock.	Then, step
+				 * back one and re-examine the item, because someone else
+				 * might have inserted an item while we weren't holding
+				 * the lock!
 				 */
 				if (blkno != lockedBlock)
 				{
@@ -632,8 +634,8 @@ btbulkdelete(PG_FUNCTION_ARGS)
 				 * We need to back up the scan one item so that the next
 				 * cycle will re-examine the same offnum on this page.
 				 *
-				 * For now, just hack the current-item index.  Will need
-				 * to be smarter when deletion includes removal of empty
+				 * For now, just hack the current-item index.  Will need to
+				 * be smarter when deletion includes removal of empty
 				 * index pages.
 				 */
 				current->ip_posid--;

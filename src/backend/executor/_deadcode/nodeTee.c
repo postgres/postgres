@@ -15,7 +15,7 @@
  *		ExecInitTee
  *		ExecEndTee
  *
- *	$Id: nodeTee.c,v 1.10 2001/03/22 06:16:13 momjian Exp $
+ *	$Id: nodeTee.c,v 1.11 2001/10/25 05:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -336,7 +336,6 @@ ExecTee(Tee * node, Plan *parent)
 		slot = ExecProcNode(childNode, (Plan *) node);
 		if (!TupIsNull(slot))
 		{
-
 			/*
 			 * heap_insert changes something...
 			 */
@@ -361,7 +360,6 @@ ExecTee(Tee * node, Plan *parent)
 				teeState->tee_leftScanDesc : teeState->tee_rightScanDesc;
 
 			{
-
 				/*
 				 * move the scandesc forward so we don't re-read this
 				 * tuple later

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.19 2001/09/29 07:57:06 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.20 2001/10/25 05:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
 #include "access/heapam.h"
 #include "parser/parsetree.h"
 
-static int	TidListCreate(List *, ExprContext *, ItemPointerData []);
+static int	TidListCreate(List *, ExprContext *, ItemPointerData[]);
 static TupleTableSlot *TidNext(TidScan *node);
 
 static int
@@ -80,7 +80,7 @@ TidNext(TidScan *node)
 
 	bool		bBackward;
 	int			tidNumber;
-	ItemPointerData* tidList;
+	ItemPointerData *tidList;
 
 	/*
 	 * extract necessary information from tid scan node
@@ -233,7 +233,6 @@ TidNext(TidScan *node)
 TupleTableSlot *
 ExecTidScan(TidScan *node)
 {
-
 	/*
 	 * use TidNext as access method
 	 */
@@ -249,7 +248,7 @@ ExecTidReScan(TidScan *node, ExprContext *exprCtxt, Plan *parent)
 {
 	EState	   *estate;
 	TidScanState *tidstate;
-	ItemPointerData* tidList;
+	ItemPointerData *tidList;
 
 	tidstate = node->tidstate;
 	estate = node->scan.plan.state;
@@ -357,7 +356,6 @@ ExecTidRestrPos(TidScan *node)
 	tidstate = node->tidstate;
 	tidstate->tss_TidPtr = tidstate->tss_MarkTidPtr;
 }
-
 #endif
 
 /* ----------------------------------------------------------------
@@ -376,7 +374,7 @@ ExecInitTidScan(TidScan *node, EState *estate, Plan *parent)
 {
 	TidScanState *tidstate;
 	CommonScanState *scanstate;
-	ItemPointerData*	tidList;
+	ItemPointerData *tidList;
 	int			numTids;
 	int			tidPtr;
 	List	   *rangeTable;
@@ -482,5 +480,5 @@ int
 ExecCountSlotsTidScan(TidScan *node)
 {
 	return ExecCountSlotsNode(outerPlan((Plan *) node)) +
-	ExecCountSlotsNode(innerPlan((Plan *) node)) + TIDSCAN_NSLOTS;
+		ExecCountSlotsNode(innerPlan((Plan *) node)) + TIDSCAN_NSLOTS;
 }

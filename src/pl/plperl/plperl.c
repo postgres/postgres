@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.24 2001/10/19 22:43:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.25 2001/10/25 05:50:17 momjian Exp $
  *
  **********************************************************************/
 
@@ -300,8 +300,8 @@ plperl_create_sub(char *s, bool trusted)
 	PUSHMARK(SP);
 	XPUSHs(sv_2mortal(newSVpv(s, 0)));
 	PUTBACK;
-	count = perl_call_pv( (trusted?"mksafefunc":"mkunsafefunc"), 
-			     G_SCALAR | G_EVAL | G_KEEPERR);
+	count = perl_call_pv((trusted ? "mksafefunc" : "mkunsafefunc"),
+						 G_SCALAR | G_EVAL | G_KEEPERR);
 	SPAGAIN;
 
 	if (SvTRUE(ERRSV))
@@ -358,7 +358,7 @@ plperl_init_shared_libs(void)
 {
 	char	   *file = __FILE__;
 
-        newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
+	newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
 	newXS("SPI::bootstrap", boot_SPI, file);
 }
 
@@ -622,7 +622,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 		if (!is_trigger)
 		{
 			typeTup = SearchSysCache(TYPEOID,
-									 ObjectIdGetDatum(procStruct->prorettype),
+								ObjectIdGetDatum(procStruct->prorettype),
 									 0, 0, 0);
 			if (!HeapTupleIsValid(typeTup))
 			{
@@ -660,7 +660,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 			for (i = 0; i < prodesc->nargs; i++)
 			{
 				typeTup = SearchSysCache(TYPEOID,
-										 ObjectIdGetDatum(procStruct->proargtypes[i]),
+							ObjectIdGetDatum(procStruct->proargtypes[i]),
 										 0, 0, 0);
 				if (!HeapTupleIsValid(typeTup))
 				{
@@ -780,8 +780,8 @@ plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 		 ************************************************************/
 		outputstr = DatumGetCString(OidFunctionCall3(typoutput,
 													 attr,
-													 ObjectIdGetDatum(typelem),
-													 Int32GetDatum(tupdesc->attrs[i]->atttypmod)));
+											   ObjectIdGetDatum(typelem),
+						   Int32GetDatum(tupdesc->attrs[i]->atttypmod)));
 		sv_catpvf(output, "'%s' => '%s',", attname, outputstr);
 		pfree(outputstr);
 	}

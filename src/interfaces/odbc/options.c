@@ -24,21 +24,21 @@
 
 
 
-RETCODE set_statement_option(ConnectionClass *conn,
-					 StatementClass *stmt,
+RETCODE set_statement_option(ConnectionClass * conn,
+					 StatementClass * stmt,
 					 UWORD fOption,
 					 UDWORD vParam);
 
 
 RETCODE
-set_statement_option(ConnectionClass *conn,
-					 StatementClass *stmt,
+set_statement_option(ConnectionClass * conn,
+					 StatementClass * stmt,
 					 UWORD fOption,
 					 UDWORD vParam)
 {
 	static char *func = "set_statement_option";
 	char		changed = FALSE;
-	ConnInfo *ci = NULL;
+	ConnInfo   *ci = NULL;
 
 	if (conn)
 		ci = &(conn->connInfo);
@@ -67,19 +67,19 @@ set_statement_option(ConnectionClass *conn,
 			if (ci->drivers.lie || vParam == SQL_CONCUR_READ_ONLY || vParam == SQL_CONCUR_ROWVER)
 			{
 				if (conn)
-			 		conn->stmtOptions.scroll_concurrency = vParam;
-			 	if (stmt)
-			 		stmt->options.scroll_concurrency = vParam;
+					conn->stmtOptions.scroll_concurrency = vParam;
+				if (stmt)
+					stmt->options.scroll_concurrency = vParam;
 			}
-			else 
+			else
 			{
-			 	if (conn)
-			 		conn->stmtOptions.scroll_concurrency = SQL_CONCUR_ROWVER;
-			 	if (stmt)
-			 		stmt->options.scroll_concurrency = SQL_CONCUR_ROWVER;
-			 	changed = TRUE;
-			 }
-			 break;
+				if (conn)
+					conn->stmtOptions.scroll_concurrency = SQL_CONCUR_ROWVER;
+				if (stmt)
+					stmt->options.scroll_concurrency = SQL_CONCUR_ROWVER;
+				changed = TRUE;
+			}
+			break;
 
 		case SQL_CURSOR_TYPE:
 
@@ -275,11 +275,11 @@ set_statement_option(ConnectionClass *conn,
 
 
 /* Implements only SQL_AUTOCOMMIT */
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_SetConnectOption(
-					HDBC hdbc,
-					UWORD fOption,
-					UDWORD vParam)
+					   HDBC hdbc,
+					   UWORD fOption,
+					   UDWORD vParam)
 {
 	static char *func = "PGAPI_SetConnectOption";
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
@@ -296,7 +296,6 @@ PGAPI_SetConnectOption(
 
 	switch (fOption)
 	{
-
 			/*
 			 * Statement Options (apply to all stmts on the connection and
 			 * become defaults for new stmts)
@@ -428,15 +427,15 @@ PGAPI_SetConnectOption(
 
 
 /* This function just can tell you whether you are in Autcommit mode or not */
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_GetConnectOption(
-					HDBC hdbc,
-					UWORD fOption,
-					PTR pvParam)
+					   HDBC hdbc,
+					   UWORD fOption,
+					   PTR pvParam)
 {
 	static char *func = "PGAPI_GetConnectOption";
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
-	ConnInfo *ci = &(conn->connInfo);
+	ConnInfo   *ci = &(conn->connInfo);
 
 	mylog("%s: entering...\n", func);
 
@@ -505,11 +504,11 @@ PGAPI_GetConnectOption(
 }
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_SetStmtOption(
-				 HSTMT hstmt,
-				 UWORD fOption,
-				 UDWORD vParam)
+					HSTMT hstmt,
+					UWORD fOption,
+					UDWORD vParam)
 {
 	static char *func = "PGAPI_SetStmtOption";
 	StatementClass *stmt = (StatementClass *) hstmt;
@@ -531,16 +530,16 @@ PGAPI_SetStmtOption(
 }
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_GetStmtOption(
-				 HSTMT hstmt,
-				 UWORD fOption,
-				 PTR pvParam)
+					HSTMT hstmt,
+					UWORD fOption,
+					PTR pvParam)
 {
 	static char *func = "PGAPI_GetStmtOption";
 	StatementClass *stmt = (StatementClass *) hstmt;
 	QResultClass *res;
-	ConnInfo *ci = &(SC_get_conn(stmt)->connInfo);
+	ConnInfo   *ci = &(SC_get_conn(stmt)->connInfo);
 
 	mylog("%s: entering...\n", func);
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.59 2001/03/22 06:16:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.60 2001/10/25 05:49:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,7 +197,6 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 			continue;
 		if (OidIsValid(thisState->typoutput))
 		{
-
 			/*
 			 * If we have a toasted datum, forcibly detoast it here to
 			 * avoid memory leakage inside the type's output routine.
@@ -306,7 +305,6 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 		if (getTypeOutputInfo(typeinfo->attrs[i]->atttypid,
 							  &typoutput, &typelem, &typisvarlena))
 		{
-
 			/*
 			 * If we have a toasted datum, forcibly detoast it here to
 			 * avoid memory leakage inside the type's output routine.
@@ -401,7 +399,6 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 		/* send # of bytes, and opaque data */
 		if (thisState->typisvarlena)
 		{
-
 			/*
 			 * If we have a toasted datum, must detoast before sending.
 			 */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.30 2001/07/15 22:48:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.31 2001/10/25 05:49:21 momjian Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -208,7 +208,6 @@ _hash_getovfladdr(Relation rel, Buffer *metabufp)
 	}
 	else
 	{
-
 		/*
 		 * Free_bit addresses the last used bit.  Bump it to address the
 		 * first available bit.

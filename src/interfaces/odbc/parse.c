@@ -43,8 +43,8 @@
 #define COL_INCR	16
 
 char	   *getNextToken(char *s, char *token, int smax, char *delim, char *quote, char *dquote, char *numeric);
-void		getColInfo(COL_INFO *col_info, FIELD_INFO *fi, int k);
-char		searchColInfo(COL_INFO *col_info, FIELD_INFO *fi);
+void		getColInfo(COL_INFO * col_info, FIELD_INFO * fi, int k);
+char		searchColInfo(COL_INFO * col_info, FIELD_INFO * fi);
 
 
 char *
@@ -90,7 +90,7 @@ getNextToken(char *s, char *token, int smax, char *delim, char *quote, char *dqu
 			token[out++] = s[i++];
 			continue;
 		}
-#endif			
+#endif
 		/* Handle quoted stuff */
 		if (out == 0 && (s[i] == '\"' || s[i] == '\''))
 		{
@@ -115,13 +115,11 @@ getNextToken(char *s, char *token, int smax, char *delim, char *quote, char *dqu
 					token[out++] = s[i++];
 					continue;
 				}
-#endif			
+#endif
 				if (s[i] == qc && !in_escape)
 					break;
 				if (s[i] == '\\' && !in_escape)
-				{
 					in_escape = TRUE;
-				}
 				else
 				{
 					in_escape = FALSE;
@@ -218,9 +216,10 @@ QR_set_field_info(stmt->result, 13, "FIELD_TYPE", PG_TYPE_INT4, 4);
 #endif
 
 void
-getColInfo(COL_INFO *col_info, FIELD_INFO *fi, int k)
+getColInfo(COL_INFO * col_info, FIELD_INFO * fi, int k)
 {
-	char *str;
+	char	   *str;
+
 	if (fi->name[0] == '\0')
 		strcpy(fi->name, QR_get_value_manual(col_info->result, k, 3));
 
@@ -237,7 +236,7 @@ getColInfo(COL_INFO *col_info, FIELD_INFO *fi, int k)
 
 
 char
-searchColInfo(COL_INFO *col_info, FIELD_INFO *fi)
+searchColInfo(COL_INFO * col_info, FIELD_INFO * fi)
 {
 	int			k,
 				cmp;
@@ -266,7 +265,7 @@ searchColInfo(COL_INFO *col_info, FIELD_INFO *fi)
 
 
 char
-parse_statement(StatementClass *stmt)
+parse_statement(StatementClass * stmt)
 {
 	static char *func = "parse_statement";
 	char		token[256];
@@ -275,7 +274,8 @@ parse_statement(StatementClass *stmt)
 				dquote,
 				numeric,
 				unquoted;
-	char	   *ptr, *pptr = NULL;
+	char	   *ptr,
+			   *pptr = NULL;
 	char		in_select = FALSE,
 				in_distinct = FALSE,
 				in_on = FALSE,
@@ -342,7 +342,7 @@ parse_statement(StatementClass *stmt)
 				in_select = FALSE;
 				in_from = TRUE;
 				if (!from_found &&
-				    (!strnicmp(pptr, "from", 4)))
+					(!strnicmp(pptr, "from", 4)))
 				{
 					mylog("First ");
 					from_found = TRUE;
@@ -355,21 +355,21 @@ parse_statement(StatementClass *stmt)
 		if (unquoted && blevel == 0)
 		{
 			if ((!stricmp(token, "where") ||
-				!stricmp(token, "union") ||
-				!stricmp(token, "intersect") ||
-				!stricmp(token, "except") ||
-				!stricmp(token, "order") ||
-				!stricmp(token, "group") ||
-				!stricmp(token, "having")))
+				 !stricmp(token, "union") ||
+				 !stricmp(token, "intersect") ||
+				 !stricmp(token, "except") ||
+				 !stricmp(token, "order") ||
+				 !stricmp(token, "group") ||
+				 !stricmp(token, "having")))
 			{
 				in_select = FALSE;
 				in_from = FALSE;
 				in_where = TRUE;
 
 				if (!first_where &&
-				    (!stricmp(token, "where")))
+					(!stricmp(token, "where")))
 					first_where = ptr - stmt->statement;
-				    
+
 				mylog("WHERE...\n");
 				break;
 			}
@@ -475,7 +475,7 @@ parse_statement(StatementClass *stmt)
 				if (quote)
 				{
 					fi[stmt->nfld++]->quote = TRUE;
-in_expr = TRUE;
+					in_expr = TRUE;
 					continue;
 				}
 				else if (numeric)
@@ -614,8 +614,8 @@ in_expr = TRUE;
 						if ((unsigned char) *ptr >= 0x80)
 							ptr++;
 						else
-#endif /* MULTIBYTE */
-						*ptr = tolower((unsigned char) *ptr);
+#endif	 /* MULTIBYTE */
+							*ptr = tolower((unsigned char) *ptr);
 					}
 				}
 				mylog("got table = '%s'\n", ti[stmt->ntab]->name);
@@ -655,10 +655,11 @@ in_expr = TRUE;
 		else if (fi[i]->quote)
 		{						/* handle as text */
 			fi[i]->ti = NULL;
+
 			/*
-			fi[i]->type = PG_TYPE_TEXT;
-			fi[i]->precision = 0;
-			the following may be better */
+			 * fi[i]->type = PG_TYPE_TEXT; fi[i]->precision = 0; the
+			 * following may be better
+			 */
 			fi[i]->type = PG_TYPE_UNKNOWN;
 			fi[i]->precision = 254;
 			continue;

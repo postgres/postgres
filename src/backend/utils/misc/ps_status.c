@@ -5,7 +5,7 @@
  * to contain some useful information. Mechanism differs wildly across
  * platforms.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.7 2001/10/22 19:41:38 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.8 2001/10/25 05:49:51 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * various details abducted from various places
@@ -83,7 +83,6 @@ static const size_t ps_buffer_size = PS_BUFFER_SIZE;
 #else							/* PS_USE_CLOBBER_ARGV */
 static char *ps_buffer;			/* will point to argv area */
 static size_t ps_buffer_size;	/* space determined at run time */
-
 #endif	 /* PS_USE_CLOBBER_ARGV */
 
 static size_t ps_buffer_fixed_size;		/* size of the constant prefix */
@@ -97,7 +96,7 @@ static char **save_argv;
  * Call this early in startup to save the original argc/argv values.
  *
  * argv[] will not be overwritten by this routine, but may be overwritten
- * during init_ps_display.  Also, the physical location of the environment
+ * during init_ps_display.	Also, the physical location of the environment
  * strings may be moved, so this should be called before any code that
  * might try to hang onto a getenv() result.
  */
@@ -108,6 +107,7 @@ save_ps_display_args(int argc, char *argv[])
 	save_argv = argv;
 
 #ifdef PS_USE_CLOBBER_ARGV
+
 	/*
 	 * If we're going to overwrite the argv area, count the available
 	 * space.  Also move the environment to make additional room.
@@ -126,7 +126,7 @@ save_ps_display_args(int argc, char *argv[])
 				end_of_area = argv[i] + strlen(argv[i]);
 		}
 
-		if (end_of_area == NULL) /* probably can't happen? */
+		if (end_of_area == NULL)/* probably can't happen? */
 		{
 			ps_buffer = NULL;
 			ps_buffer_size = 0;
@@ -159,7 +159,7 @@ save_ps_display_args(int argc, char *argv[])
 
 /*
  * Call this once during subprocess startup to set the identification
- * values.  At this point, the original argv[] array may be overwritten.
+ * values.	At this point, the original argv[] array may be overwritten.
  */
 void
 init_ps_display(const char *username, const char *dbname,
@@ -201,6 +201,7 @@ init_ps_display(const char *username, const char *dbname,
 	 */
 
 #ifdef PS_USE_SETPROCTITLE
+
 	/*
 	 * apparently setproctitle() already adds a `progname:' prefix to the
 	 * ps line
@@ -273,7 +274,6 @@ set_ps_display(const char *activity)
 			*cp = PS_PADDING;
 	}
 #endif	 /* PS_USE_CLOBBER_ARGV */
-
 #endif	 /* not PS_USE_NONE */
 }
 

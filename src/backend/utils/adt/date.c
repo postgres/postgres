@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.62 2001/10/18 17:30:15 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.63 2001/10/25 05:49:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -268,7 +268,7 @@ Datum
 date_timestamptz(PG_FUNCTION_ARGS)
 {
 	DateADT		dateVal = PG_GETARG_DATEADT(0);
-	TimestampTz	result;
+	TimestampTz result;
 	struct tm	tt,
 			   *tm = &tt;
 	time_t		utime;
@@ -310,7 +310,7 @@ date_timestamptz(PG_FUNCTION_ARGS)
 Datum
 timestamptz_date(PG_FUNCTION_ARGS)
 {
-	TimestampTz	timestamp = PG_GETARG_TIMESTAMP(0);
+	TimestampTz timestamp = PG_GETARG_TIMESTAMP(0);
 	DateADT		result;
 	struct tm	tt,
 			   *tm = &tt;
@@ -427,6 +427,7 @@ Datum
 time_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
@@ -506,7 +507,7 @@ AdjustTimeForTypmod(TimeADT *time, int32 typmod)
 			TimeTypmod = typmod;
 		}
 
-		*time = (rint(((double) *time)*TimeScale)/TimeScale);
+		*time = (rint(((double) *time) * TimeScale) / TimeScale);
 
 		if (*time >= 86400)
 			*time -= 86400;
@@ -610,7 +611,6 @@ time_smaller(PG_FUNCTION_ARGS)
 Datum
 overlaps_time(PG_FUNCTION_ARGS)
 {
-
 	/*
 	 * The arguments are TimeADT, but we leave them as generic Datums to
 	 * avoid dereferencing nulls (TimeADT is pass-by-reference!)
@@ -679,7 +679,6 @@ overlaps_time(PG_FUNCTION_ARGS)
 	 */
 	if (TIMEADT_GT(ts1, ts2))
 	{
-
 		/*
 		 * This case is ts1 < te2 OR te1 < te2, which may look redundant
 		 * but in the presence of nulls it's not quite completely so.
@@ -715,7 +714,6 @@ overlaps_time(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-
 		/*
 		 * For ts1 = ts2 the spec says te1 <> te2 OR te1 = te2, which is a
 		 * rather silly way of saying "true if both are nonnull, else
@@ -937,6 +935,7 @@ Datum
 timetz_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
@@ -1199,7 +1198,6 @@ timetz_mi_interval(PG_FUNCTION_ARGS)
 Datum
 overlaps_timetz(PG_FUNCTION_ARGS)
 {
-
 	/*
 	 * The arguments are TimeTzADT *, but we leave them as generic Datums
 	 * for convenience of notation --- and to avoid dereferencing nulls.
@@ -1268,7 +1266,6 @@ overlaps_timetz(PG_FUNCTION_ARGS)
 	 */
 	if (TIMETZ_GT(ts1, ts2))
 	{
-
 		/*
 		 * This case is ts1 < te2 OR te1 < te2, which may look redundant
 		 * but in the presence of nulls it's not quite completely so.
@@ -1304,7 +1301,6 @@ overlaps_timetz(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-
 		/*
 		 * For ts1 = ts2 the spec says te1 <> te2 OR te1 = te2, which is a
 		 * rather silly way of saying "true if both are nonnull, else
@@ -1360,7 +1356,7 @@ time_timetz(PG_FUNCTION_ARGS)
 Datum
 timestamptz_timetz(PG_FUNCTION_ARGS)
 {
-	TimestampTz	timestamp = PG_GETARG_TIMESTAMP(0);
+	TimestampTz timestamp = PG_GETARG_TIMESTAMP(0);
 	TimeTzADT  *result;
 	struct tm	tt,
 			   *tm = &tt;
@@ -1394,7 +1390,7 @@ datetimetz_timestamptz(PG_FUNCTION_ARGS)
 {
 	DateADT		date = PG_GETARG_DATEADT(0);
 	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(1);
-	TimestampTz	result;
+	TimestampTz result;
 
 	result = date * 86400.0 + time->time + time->zone;
 
@@ -1477,7 +1473,7 @@ timetz_part(PG_FUNCTION_ARGS)
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
 		elog(ERROR, "TIMETZ units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(units))));
+											   PointerGetDatum(units))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -1550,19 +1546,17 @@ timetz_part(PG_FUNCTION_ARGS)
 			default:
 				elog(ERROR, "TIMETZ units '%s' not supported",
 					 DatumGetCString(DirectFunctionCall1(textout,
-														 PointerGetDatum(units))));
+											   PointerGetDatum(units))));
 				result = 0;
 		}
 	}
 	else if ((type == RESERV) && (val == DTK_EPOCH))
-	{
 		result = time->time - time->zone;
-	}
 	else
 	{
 		elog(ERROR, "TIMETZ units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(units))));
+											   PointerGetDatum(units))));
 		result = 0;
 	}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.83 2001/10/06 23:21:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.84 2001/10/25 05:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,13 +30,13 @@
 #include "utils/syscache.h"
 
 
-/* #define CACHEDEBUG */		/* turns DEBUG elogs on */
+ /* #define CACHEDEBUG *//* turns DEBUG elogs on */
 
 /*
  * Constants related to size of the catcache.
  *
  * NCCBUCKETS should be prime and must be less than 64K (because
- * SharedInvalCatcacheMsg crams hash indexes into a uint16 field).  In
+ * SharedInvalCatcacheMsg crams hash indexes into a uint16 field).	In
  * practice it should be a lot less, anyway, to avoid chewing up too much
  * space on hash bucket headers.
  *
@@ -642,13 +642,13 @@ CatalogCacheFlushRelation(Oid relId)
 					tupRelid = ct->tuple.t_data->t_oid;
 				else
 				{
-					bool	isNull;
+					bool		isNull;
 
 					tupRelid = DatumGetObjectId(
-						fastgetattr(&ct->tuple,
-									cache->cc_reloidattr,
-									cache->cc_tupdesc,
-									&isNull));
+												fastgetattr(&ct->tuple,
+													cache->cc_reloidattr,
+													   cache->cc_tupdesc,
+															&isNull));
 					Assert(!isNull);
 				}
 
@@ -707,8 +707,8 @@ InitCatCache(int id,
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/*
-	 * if first time through, initialize the cache group header,
-	 * including global LRU list header
+	 * if first time through, initialize the cache group header, including
+	 * global LRU list header
 	 */
 	if (CacheHdr == NULL)
 	{
@@ -740,7 +740,7 @@ InitCatCache(int id,
 	cp->cc_relname = relname;
 	cp->cc_indname = indname;
 	cp->cc_reloidattr = reloidattr;
-	cp->cc_relisshared = false;	/* temporary */
+	cp->cc_relisshared = false; /* temporary */
 	cp->cc_tupdesc = (TupleDesc) NULL;
 	cp->cc_ntup = 0;
 	cp->cc_size = NCCBUCKETS;
@@ -749,8 +749,8 @@ InitCatCache(int id,
 		cp->cc_key[i] = key[i];
 
 	/*
-	 * new cache is initialized as far as we can go for now.
-	 * print some debugging information, if appropriate.
+	 * new cache is initialized as far as we can go for now. print some
+	 * debugging information, if appropriate.
 	 */
 	InitCatCache_DEBUG1;
 
@@ -1105,9 +1105,7 @@ ReleaseCatCache(HeapTuple tuple)
 		&& ct->dead
 #endif
 		)
-	{
 		CatCacheRemoveCTup(ct->my_cache, ct);
-	}
 }
 
 /*
@@ -1141,7 +1139,7 @@ ReleaseCatCache(HeapTuple tuple)
 void
 PrepareToInvalidateCacheTuple(Relation relation,
 							  HeapTuple tuple,
-							  void (*function) (int, Index, ItemPointer, Oid))
+						 void (*function) (int, Index, ItemPointer, Oid))
 {
 	CatCache   *ccp;
 

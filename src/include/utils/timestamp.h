@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: timestamp.h,v 1.21 2001/10/18 17:30:16 thomas Exp $
+ * $Id: timestamp.h,v 1.22 2001/10/25 05:50:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,8 +37,10 @@ typedef double TimestampTz;
 
 typedef struct
 {
-	double		time;	/* all time units other than months and years */
-	int32		month;	/* months and years, after time for alignment */
+	double		time;			/* all time units other than months and
+								 * years */
+	int32		month;			/* months and years, after time for
+								 * alignment */
 } Interval;
 
 
@@ -49,7 +51,7 @@ typedef struct
  * Therefore Timestamp is pass-by-reference if and only if float8 is!
  */
 #define DatumGetTimestamp(X)  ((Timestamp) DatumGetFloat8(X))
-#define DatumGetTimestampTz(X)  ((TimestampTz) DatumGetFloat8(X))
+#define DatumGetTimestampTz(X)	((TimestampTz) DatumGetFloat8(X))
 #define DatumGetIntervalP(X)  ((Interval *) DatumGetPointer(X))
 
 #define TimestampGetDatum(X) Float8GetDatum(X)
@@ -166,9 +168,9 @@ extern Datum now(PG_FUNCTION_ARGS);
 /* Internal routines (not fmgr-callable) */
 
 extern int	tm2timestamp(struct tm * tm, double fsec, int *tzp, Timestamp *dt);
-extern int	timestamp2tm(Timestamp dt, int *tzp, struct tm * tm,
-						 double *fsec, char **tzn);
-extern void	dt2time(Timestamp dt, int *hour, int *min, double *sec);
+extern int timestamp2tm(Timestamp dt, int *tzp, struct tm * tm,
+			 double *fsec, char **tzn);
+extern void dt2time(Timestamp dt, int *hour, int *min, double *sec);
 
 extern int	interval2tm(Interval span, struct tm * tm, float8 *fsec);
 extern int	tm2interval(struct tm * tm, double fsec, Interval *span);
@@ -178,5 +180,4 @@ extern void GetEpochTime(struct tm * tm);
 
 extern void isoweek2date(int woy, int *year, int *mon, int *mday);
 extern int	date2isoweek(int year, int mon, int mday);
-
 #endif	 /* TIMESTAMP_H */

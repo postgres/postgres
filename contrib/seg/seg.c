@@ -138,7 +138,6 @@ seg_out(SEG * seg)
 
 	if (seg->lower == seg->upper && seg->l_ext == seg->u_ext)
 	{
-
 		/*
 		 * indicates that this interval was built by seg_in off a single
 		 * point
@@ -219,7 +218,6 @@ gseg_consistent(GISTENTRY *entry,
 				SEG * query,
 				StrategyNumber strategy)
 {
-
 	/*
 	 * * if entry is not leaf, use gseg_internal_consistent, * else use
 	 * gseg_leaf_consistent
@@ -253,7 +251,7 @@ gseg_union(bytea *entryvec, int *sizep)
 	for (i = 1; i < numranges; i++)
 	{
 		out = gseg_binary_union(tmp, (SEG *)
-								DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[i].key),
+			   DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[i].key),
 								sizep);
 		if (i > 1)
 			pfree(tmp);
@@ -267,13 +265,13 @@ gseg_union(bytea *entryvec, int *sizep)
 ** GiST Compress and Decompress methods for segments
 ** do not do anything.
 */
-GISTENTRY  *
+GISTENTRY *
 gseg_compress(GISTENTRY *entry)
 {
 	return (entry);
 }
 
-GISTENTRY  *
+GISTENTRY *
 gseg_decompress(GISTENTRY *entry)
 {
 	return (entry);
@@ -415,7 +413,6 @@ gseg_picksplit(bytea *entryvec,
 	maxoff = OffsetNumberNext(maxoff);
 	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 	{
-
 		/*
 		 * If we've already decided where to place this item, just put it
 		 * on the right list.  Otherwise, we need to figure out which page
@@ -614,7 +611,7 @@ seg_overlap(SEG * a, SEG * b)
 			((a->upper >= b->upper) && (a->lower <= b->upper))
 			||
 			((b->upper >= a->upper) && (b->lower <= a->upper))
-	);
+		);
 }
 
 /*	seg_overleft -- is the right edge of (a) located to the left of the right edge of (b)?
@@ -757,7 +754,6 @@ seg_size(SEG * a)
 int32
 seg_cmp(SEG * a, SEG * b)
 {
-
 	/*
 	 * First compare on lower boundary position
 	 */
@@ -968,7 +964,6 @@ restore(char *result, float val, int n)
 	{
 		if (abs(exp) <= 4)
 		{
-
 			/*
 			 * remove the decimal point from the mantyssa and write the
 			 * digits to the buf array
@@ -989,7 +984,6 @@ restore(char *result, float val, int n)
 			{
 				if (dp - 10 + exp >= n)
 				{
-
 					/*
 					 * the decimal point is behind the last significant
 					 * digit; the digits in between must be converted to

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.62 2001/10/22 19:34:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.63 2001/10/25 05:49:23 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -74,7 +74,7 @@ static void OperatorUpd(Oid baseId, Oid commId, Oid negId);
 static bool
 validOperatorName(const char *name)
 {
-	size_t	len = strlen(name);
+	size_t		len = strlen(name);
 
 	/* Can't be empty or too long */
 	if (len == 0 || len >= NAMEDATALEN)
@@ -90,20 +90,19 @@ validOperatorName(const char *name)
 		return false;
 
 	/*
-	 * For SQL92 compatibility, '+' and '-' cannot be the
-	 * last char of a multi-char operator unless the operator
-	 * contains chars that are not in SQL92 operators.
-	 * The idea is to lex '=-' as two operators, but not
-	 * to forbid operator names like '?-' that could not be
-	 * sequences of SQL92 operators.
+	 * For SQL92 compatibility, '+' and '-' cannot be the last char of a
+	 * multi-char operator unless the operator contains chars that are not
+	 * in SQL92 operators. The idea is to lex '=-' as two operators, but
+	 * not to forbid operator names like '?-' that could not be sequences
+	 * of SQL92 operators.
 	 */
 	if (len > 1 &&
-		(name[len-1] == '+' ||
-		 name[len-1] == '-'))
+		(name[len - 1] == '+' ||
+		 name[len - 1] == '-'))
 	{
-		int		ic;
+		int			ic;
 
-		for (ic = len-2; ic >= 0; ic--)
+		for (ic = len - 2; ic >= 0; ic--)
 		{
 			if (strchr("~!@#^&|`?$%", name[ic]))
 				break;
@@ -143,7 +142,7 @@ OperatorGetWithOpenRelation(Relation pg_operator_desc,
 	HeapScanDesc pg_operator_scan;
 	Oid			operatorObjectId;
 	HeapTuple	tup;
-	ScanKeyData	opKey[3];
+	ScanKeyData opKey[3];
 
 	/*
 	 * form scan key
@@ -495,7 +494,7 @@ OperatorDef(char *operatorName,
 	int			nargs;
 	NameData	oname;
 	TupleDesc	tupDesc;
-	ScanKeyData	opKey[3];
+	ScanKeyData opKey[3];
 
 	operatorObjectId = OperatorGet(operatorName,
 								   leftTypeName,
@@ -743,7 +742,6 @@ OperatorDef(char *operatorName,
 			}
 			else
 			{
-
 				/*
 				 * self-linkage to this operator; will fix below. Note
 				 * that only self-linkage for commutation makes sense.
@@ -867,7 +865,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 	char		nulls[Natts_pg_operator];
 	char		replaces[Natts_pg_operator];
 	Datum		values[Natts_pg_operator];
-	ScanKeyData	opKey[1];
+	ScanKeyData opKey[1];
 
 	for (i = 0; i < Natts_pg_operator; ++i)
 	{

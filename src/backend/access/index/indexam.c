@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.53 2001/10/06 23:21:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.54 2001/10/25 05:49:21 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -241,9 +241,9 @@ index_beginscan(Relation relation,
 	pgstat_initstats(&scan->xs_pgstat_info, relation);
 
 	/*
-	 * We want to look up the amgettuple procedure just once per scan,
-	 * not once per index_getnext call.  So do it here and save
-	 * the fmgr info result in the scan descriptor.
+	 * We want to look up the amgettuple procedure just once per scan, not
+	 * once per index_getnext call.  So do it here and save the fmgr info
+	 * result in the scan descriptor.
 	 */
 	GET_SCAN_PROCEDURE(beginscan, amgettuple);
 	fmgr_info(procedure, &scan->fn_getnext);
@@ -342,8 +342,8 @@ index_getnext(IndexScanDesc scan,
 	pgstat_count_index_scan(&scan->xs_pgstat_info);
 
 	/*
-	 * have the am's gettuple proc do all the work.
-	 * index_beginscan already set up fn_getnext.
+	 * have the am's gettuple proc do all the work. index_beginscan
+	 * already set up fn_getnext.
 	 */
 	result = (RetrieveIndexResult)
 		DatumGetPointer(FunctionCall2(&scan->fn_getnext,
@@ -378,8 +378,8 @@ index_bulk_delete(Relation relation,
 	result = (IndexBulkDeleteResult *)
 		DatumGetPointer(OidFunctionCall3(procedure,
 										 PointerGetDatum(relation),
-										 PointerGetDatum((Pointer) callback),
-										 PointerGetDatum(callback_state)));
+									 PointerGetDatum((Pointer) callback),
+									   PointerGetDatum(callback_state)));
 
 	return result;
 }

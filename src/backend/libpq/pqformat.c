@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqformat.c,v 1.17 2001/04/16 01:46:57 tgl Exp $
+ *	$Id: pqformat.c,v 1.18 2001/10/25 05:49:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,7 +90,6 @@
 #else
 
 #error BYTE_ORDER not defined as anything understood
-
 #endif
 #endif
 #endif
@@ -309,7 +308,6 @@ pq_getstr(StringInfo s)
 
 #ifdef MULTIBYTE
 	char	   *p;
-
 #endif
 
 	result = pq_getstring(s);

@@ -26,18 +26,18 @@
 
 
 /*		Bind parameters on a statement handle */
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_BindParameter(
-				 HSTMT hstmt,
-				 UWORD ipar,
-				 SWORD fParamType,
-				 SWORD fCType,
-				 SWORD fSqlType,
-				 UDWORD cbColDef,
-				 SWORD ibScale,
-				 PTR rgbValue,
-				 SDWORD cbValueMax,
-				 SDWORD FAR *pcbValue)
+					HSTMT hstmt,
+					UWORD ipar,
+					SWORD fParamType,
+					SWORD fCType,
+					SWORD fSqlType,
+					UDWORD cbColDef,
+					SWORD ibScale,
+					PTR rgbValue,
+					SDWORD cbValueMax,
+					SDWORD FAR * pcbValue)
 {
 	StatementClass *stmt = (StatementClass *) hstmt;
 	static char *func = "PGAPI_BindParameter";
@@ -152,14 +152,14 @@ PGAPI_BindParameter(
 
 
 /*	Associate a user-supplied buffer with a database column. */
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_BindCol(
-		   HSTMT hstmt,
-		   UWORD icol,
-		   SWORD fCType,
-		   PTR rgbValue,
-		   SDWORD cbValueMax,
-		   SDWORD FAR *pcbValue)
+			  HSTMT hstmt,
+			  UWORD icol,
+			  SWORD fCType,
+			  PTR rgbValue,
+			  SDWORD cbValueMax,
+			  SDWORD FAR * pcbValue)
 {
 	StatementClass *stmt = (StatementClass *) hstmt;
 	static char *func = "PGAPI_BindCol";
@@ -167,7 +167,7 @@ PGAPI_BindCol(
 	mylog("%s: entering...\n", func);
 
 	mylog("**** PGAPI_BindCol: stmt = %u, icol = %d\n", stmt, icol);
-mylog("**** : fCType=%d rgb=%x valusMax=%d pcb=%x\n", fCType, rgbValue, cbValueMax, pcbValue);
+	mylog("**** : fCType=%d rgb=%x valusMax=%d pcb=%x\n", fCType, rgbValue, cbValueMax, pcbValue);
 
 	if (!stmt)
 	{
@@ -265,14 +265,14 @@ mylog("**** : fCType=%d rgb=%x valusMax=%d pcb=%x\n", fCType, rgbValue, cbValueM
  *	it is best to say this function is not supported and let the application assume a
  *	data type (most likely varchar).
  */
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_DescribeParam(
-				 HSTMT hstmt,
-				 UWORD ipar,
-				 SWORD FAR *pfSqlType,
-				 UDWORD FAR *pcbColDef,
-				 SWORD FAR *pibScale,
-				 SWORD FAR *pfNullable)
+					HSTMT hstmt,
+					UWORD ipar,
+					SWORD FAR * pfSqlType,
+					UDWORD FAR * pcbColDef,
+					SWORD FAR * pibScale,
+					SWORD FAR * pfNullable)
 {
 	StatementClass *stmt = (StatementClass *) hstmt;
 	static char *func = "PGAPI_DescribeParam";
@@ -318,18 +318,19 @@ PGAPI_DescribeParam(
 
 
 /*	Sets multiple values (arrays) for the set of parameter markers. */
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_ParamOptions(
-				HSTMT hstmt,
-				UDWORD crow,
-				UDWORD FAR *pirow)
+				   HSTMT hstmt,
+				   UDWORD crow,
+				   UDWORD FAR * pirow)
 {
 	static char *func = "PGAPI_ParamOptions";
-	StatementClass	*stmt = (StatementClass *) hstmt;
+	StatementClass *stmt = (StatementClass *) hstmt;
 
 	mylog("%s: entering... %d %x\n", func, crow, pirow);
 
-	if (crow == 1) /* temporary solution and must be rewritten later */
+	if (crow == 1)				/* temporary solution and must be
+								 * rewritten later */
 	{
 		if (pirow)
 			*pirow = 1;
@@ -351,10 +352,10 @@ PGAPI_ParamOptions(
  *	to call it anyway.
  *	If the statement does not have parameters, it should just return 0.
  */
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_NumParams(
-			 HSTMT hstmt,
-			 SWORD FAR *pcpar)
+				HSTMT hstmt,
+				SWORD FAR * pcpar)
 {
 	StatementClass *stmt = (StatementClass *) hstmt;
 	char		in_quote = FALSE;
@@ -430,7 +431,7 @@ create_empty_bindings(int num_columns)
 
 
 void
-extend_bindings(StatementClass *stmt, int num_columns)
+extend_bindings(StatementClass * stmt, int num_columns)
 {
 	static char *func = "extend_bindings";
 	BindInfoClass *new_bindings;

@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.37 2001/08/22 20:23:23 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.38 2001/10/25 05:49:52 momjian Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *	-	Initial version.
@@ -61,7 +61,6 @@ typedef struct _z_stream
 	int			avail_out;
 } z_stream;
 typedef z_stream *z_streamp;
-
 #endif
 
 #include "pg_backup.h"
@@ -69,7 +68,7 @@ typedef z_stream *z_streamp;
 
 #define K_VERS_MAJOR 1
 #define K_VERS_MINOR 5
-#define K_VERS_REV 6 
+#define K_VERS_REV 6
 
 /* Data block types */
 #define BLK_DATA 1
@@ -119,8 +118,8 @@ typedef int (*TocSortCompareFn) (const void *te1, const void *te2);
 
 typedef enum _archiveMode
 {
-	archModeWrite,
-	archModeRead
+				archModeWrite,
+				archModeRead
 } ArchiveMode;
 
 typedef struct _outputContext
@@ -131,10 +130,10 @@ typedef struct _outputContext
 
 typedef enum
 {
-	SQL_SCAN = 0,
-	SQL_IN_SQL_COMMENT,
-	SQL_IN_EXT_COMMENT,
-	SQL_IN_QUOTE
+				SQL_SCAN = 0,
+				SQL_IN_SQL_COMMENT,
+				SQL_IN_EXT_COMMENT,
+				SQL_IN_QUOTE
 } sqlparseState;
 
 typedef struct
@@ -189,8 +188,8 @@ typedef struct _archiveHandle
 	ReadBufPtr ReadBufPtr;		/* Read a buffer of input from the archive */
 	ClosePtr ClosePtr;			/* Close the archive */
 	WriteExtraTocPtr WriteExtraTocPtr;	/* Write extra TOC entry data
-										 * associated with 
-										 * the current archive format */
+										 * associated with the current
+										 * archive format */
 	ReadExtraTocPtr ReadExtraTocPtr;	/* Read extr info associated with
 										 * archie format */
 	PrintExtraTocPtr PrintExtraTocPtr;	/* Extra TOC info for format */
@@ -222,7 +221,7 @@ typedef struct _archiveHandle
 
 	int			loFd;			/* BLOB fd */
 	int			writingBlob;	/* Flag */
-	int			createdBlobXref;/* Flag */
+	int			createdBlobXref;		/* Flag */
 	int			blobCount;		/* # of blobs restored */
 
 	int			lastID;			/* Last internal ID for a TOC entry */
@@ -256,11 +255,11 @@ typedef struct _tocEntry
 	char	   *dropStmt;
 	char	   *copyStmt;
 	char	   *owner;
-	char       *oid;			/* Oid of source of entry */
+	char	   *oid;			/* Oid of source of entry */
 	Oid			oidVal;			/* Value of above */
 	const char *((*depOid)[]);
 	Oid			maxDepOidVal;	/* Value of largest OID in deps */
-	Oid			maxOidVal;		/* Max of entry OID and max dep OID */ 
+	Oid			maxOidVal;		/* Max of entry OID and max dep OID */
 
 	int			printed;		/* Indicates if entry defn has been dumped */
 	DataDumperPtr dataDumper;	/* Routine to dump data for object */
@@ -273,8 +272,8 @@ typedef struct _tocEntry
 
 /* Used everywhere */
 extern const char *progname;
-extern void die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt, ...) __attribute__((format(printf,3,4)));
-extern void write_msg(const char *modulename, const char *fmt, ...) __attribute__((format(printf,2,3)));
+extern void die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt,...) __attribute__((format(printf, 3, 4)));
+extern void write_msg(const char *modulename, const char *fmt,...) __attribute__((format(printf, 2, 3)));
 
 extern void WriteTOC(ArchiveHandle *AH);
 extern void ReadTOC(ArchiveHandle *AH);
@@ -316,8 +315,7 @@ extern char *ConnectedUser(ArchiveHandle *AH);
 extern int	ConnectedUserIsSuperuser(ArchiveHandle *AH);
 
 int			ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH);
-int			ahprintf(ArchiveHandle *AH, const char *fmt,...) __attribute__((format(printf,2,3)));
+int			ahprintf(ArchiveHandle *AH, const char *fmt,...) __attribute__((format(printf, 2, 3)));
 
-void		ahlog(ArchiveHandle *AH, int level, const char *fmt,...) __attribute__((format(printf,3,4)));
-
+void		ahlog(ArchiveHandle *AH, int level, const char *fmt,...) __attribute__((format(printf, 3, 4)));
 #endif

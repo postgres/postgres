@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plancat.h,v 1.23 2001/05/20 20:28:20 tgl Exp $
+ * $Id: plancat.h,v 1.24 2001/10/25 05:50:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 
 
 extern void get_relation_info(Oid relationObjectId,
-			  bool *hasindex, long *pages, double *tuples);
+				  bool *hasindex, long *pages, double *tuples);
 
 extern List *find_secondary_indexes(Oid relationObjectId);
 
@@ -29,12 +29,11 @@ extern bool has_subclass(Oid relationId);
 extern bool has_unique_index(RelOptInfo *rel, AttrNumber attno);
 
 extern Selectivity restriction_selectivity(Query *root,
-										   Oid operator,
-										   List *args,
-										   int varRelid);
+						Oid operator,
+						List *args,
+						int varRelid);
 
 extern Selectivity join_selectivity(Query *root,
-									Oid operator,
-									List *args);
-
+				 Oid operator,
+				 List *args);
 #endif	 /* PLANCAT_H */

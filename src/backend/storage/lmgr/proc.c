@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.112 2001/10/01 18:16:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.113 2001/10/25 05:49:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,8 +127,8 @@ InitProcGlobal(int maxBackends)
 	 * besides those used for regular backends.
 	 */
 	Assert(maxBackends > 0);
-	semMapEntries = PROC_SEM_MAP_ENTRIES(maxBackends+1);
-	procGlobalSize = sizeof(PROC_HDR) + (semMapEntries-1) * sizeof(SEM_MAP_ENTRY);
+	semMapEntries = PROC_SEM_MAP_ENTRIES(maxBackends + 1);
+	procGlobalSize = sizeof(PROC_HDR) + (semMapEntries - 1) *sizeof(SEM_MAP_ENTRY);
 
 	/* Create or attach to the ProcGlobal shared structure */
 	ProcGlobal = (PROC_HDR *)
@@ -182,10 +182,10 @@ InitProcGlobal(int maxBackends)
 		 */
 		DummyProc = (PROC *) ShmemAlloc(sizeof(PROC));
 		DummyProc->pid = 0;		/* marks DummyProc as not in use */
-		i = semMapEntries-1;
-		ProcGlobal->procSemMap[i].freeSemMap |= 1 << (PROC_NSEMS_PER_SET-1);
+		i = semMapEntries - 1;
+		ProcGlobal->procSemMap[i].freeSemMap |= 1 << (PROC_NSEMS_PER_SET - 1);
 		DummyProc->sem.semId = ProcGlobal->procSemMap[i].procSemId;
-		DummyProc->sem.semNum = PROC_NSEMS_PER_SET-1;
+		DummyProc->sem.semNum = PROC_NSEMS_PER_SET - 1;
 
 		/* Create ProcStructLock spinlock, too */
 		ProcStructLock = (slock_t *) ShmemAlloc(sizeof(slock_t));
@@ -199,11 +199,11 @@ InitProcGlobal(int maxBackends)
 void
 InitProcess(void)
 {
-	SHMEM_OFFSET	myOffset;
+	SHMEM_OFFSET myOffset;
 
 	/*
-	 * ProcGlobal should be set by a previous call to InitProcGlobal
-	 * (if we are a backend, we inherit this by fork() from the postmaster).
+	 * ProcGlobal should be set by a previous call to InitProcGlobal (if
+	 * we are a backend, we inherit this by fork() from the postmaster).
 	 */
 	if (ProcGlobal == NULL)
 		elog(STOP, "InitProcess: Proc Header uninitialized");
@@ -260,8 +260,8 @@ InitProcess(void)
 	on_shmem_exit(ProcKill, 0);
 
 	/*
-	 * Set up a wait-semaphore for the proc.  (We rely on ProcKill to clean
-	 * up MyProc if this fails.)
+	 * Set up a wait-semaphore for the proc.  (We rely on ProcKill to
+	 * clean up MyProc if this fails.)
 	 */
 	if (IsUnderPostmaster)
 		ProcGetNewSemIdAndNum(&MyProc->sem.semId, &MyProc->sem.semNum);
@@ -291,8 +291,8 @@ void
 InitDummyProcess(void)
 {
 	/*
-	 * ProcGlobal should be set by a previous call to InitProcGlobal
-	 * (we inherit this by fork() from the postmaster).
+	 * ProcGlobal should be set by a previous call to InitProcGlobal (we
+	 * inherit this by fork() from the postmaster).
 	 */
 	if (ProcGlobal == NULL || DummyProc == NULL)
 		elog(STOP, "InitDummyProcess: Proc Header uninitialized");
@@ -309,8 +309,8 @@ InitDummyProcess(void)
 	MyProc = DummyProc;
 
 	/*
-	 * Initialize all fields of MyProc, except MyProc->sem which was
-	 * set up by InitProcGlobal.
+	 * Initialize all fields of MyProc, except MyProc->sem which was set
+	 * up by InitProcGlobal.
 	 */
 	MyProc->pid = MyProcPid;	/* marks DummyProc as in use by me */
 	SHMQueueElemInit(&(MyProc->links));
@@ -471,7 +471,7 @@ ProcKill(void)
 
 /*
  * DummyProcKill() -- Cut-down version of ProcKill for dummy (checkpoint)
- *		processes.  The PROC and sema are not released, only marked
+ *		processes.	The PROC and sema are not released, only marked
  *		as not-in-use.
  */
 static void
@@ -520,7 +520,6 @@ ProcQueueAlloc(char *name)
 		ProcQueueInit(queue);
 	return queue;
 }
-
 #endif
 
 /*
@@ -599,10 +598,11 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 				if (lockctl->conflictTab[lockmode] & proc->heldLocks)
 				{
 					/*
-					 * Yes, so we have a deadlock.  Easiest way to clean up
-					 * correctly is to call RemoveFromWaitQueue(), but we
-					 * can't do that until we are *on* the wait queue.
-					 * So, set a flag to check below, and break out of loop.
+					 * Yes, so we have a deadlock.	Easiest way to clean
+					 * up correctly is to call RemoveFromWaitQueue(), but
+					 * we can't do that until we are *on* the wait queue.
+					 * So, set a flag to check below, and break out of
+					 * loop.
 					 */
 					early_deadlock = true;
 					break;
@@ -653,12 +653,12 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	MyProc->waitHolder = holder;
 	MyProc->waitLockMode = lockmode;
 
-	MyProc->errType = STATUS_OK; /* initialize result for success */
+	MyProc->errType = STATUS_OK;		/* initialize result for success */
 
 	/*
 	 * If we detected deadlock, give up without waiting.  This must agree
-	 * with HandleDeadLock's recovery code, except that we shouldn't release
-	 * the semaphore since we haven't tried to lock it yet.
+	 * with HandleDeadLock's recovery code, except that we shouldn't
+	 * release the semaphore since we haven't tried to lock it yet.
 	 */
 	if (early_deadlock)
 	{
@@ -689,7 +689,7 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	 * By delaying the check until we've waited for a bit, we can avoid
 	 * running the rather expensive deadlock-check code in most cases.
 	 */
-	if (! enable_sigalrm_interrupt(DeadlockTimeout))
+	if (!enable_sigalrm_interrupt(DeadlockTimeout))
 		elog(FATAL, "ProcSleep: Unable to set timer for process wakeup");
 
 	/*
@@ -711,7 +711,7 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	/*
 	 * Disable the timer, if it's still running
 	 */
-	if (! disable_sigalrm_interrupt())
+	if (!disable_sigalrm_interrupt())
 		elog(FATAL, "ProcSleep: Unable to disable timer for process wakeup");
 
 	/*
@@ -821,7 +821,6 @@ ProcLockWakeup(LOCKMETHODTABLE *lockMethodTable, LOCK *lock)
 		}
 		else
 		{
-
 			/*
 			 * Cannot wake this guy. Remember his request for later
 			 * checks.
@@ -851,8 +850,8 @@ HandleDeadLock(SIGNAL_ARGS)
 	 * Acquire locktable lock.	Note that the SIGALRM interrupt had better
 	 * not be enabled anywhere that this process itself holds the
 	 * locktable lock, else this will wait forever.  Also note that
-	 * LWLockAcquire creates a critical section, so that this
-	 * routine cannot be interrupted by cancel/die interrupts.
+	 * LWLockAcquire creates a critical section, so that this routine
+	 * cannot be interrupted by cancel/die interrupts.
 	 */
 	LWLockAcquire(LockMgrLock, LW_EXCLUSIVE);
 
@@ -960,7 +959,7 @@ ProcCancelWaitForSignal(void)
 void
 ProcSendSignal(BackendId procId)
 {
-	PROC   *proc = BackendIdGetProc(procId);
+	PROC	   *proc = BackendIdGetProc(procId);
 
 	if (proc != NULL)
 		IpcSemaphoreUnlock(proc->sem.semId, proc->sem.semNum);
@@ -976,7 +975,7 @@ ProcSendSignal(BackendId procId)
 /*
  * Enable the SIGALRM interrupt to fire after the specified delay
  *
- * Delay is given in milliseconds.  Caller should be sure a SIGALRM
+ * Delay is given in milliseconds.	Caller should be sure a SIGALRM
  * signal handler is installed before this is called.
  *
  * Returns TRUE if okay, FALSE on failure.
@@ -997,7 +996,7 @@ enable_sigalrm_interrupt(int delayms)
 	/* BeOS doesn't have setitimer, but has set_alarm */
 	bigtime_t	time_interval;
 
-	time_interval = delayms * 1000;	/* usecs */
+	time_interval = delayms * 1000;		/* usecs */
 	if (set_alarm(time_interval, B_ONE_SHOT_RELATIVE_ALARM) < 0)
 		return false;
 #endif
@@ -1044,7 +1043,7 @@ ProcGetNewSemIdAndNum(IpcSemaphoreId *semId, int *semNum)
 {
 	int			i;
 	int			semMapEntries = ProcGlobal->semMapEntries;
-	SEM_MAP_ENTRY  *procSemMap = ProcGlobal->procSemMap;
+	SEM_MAP_ENTRY *procSemMap = ProcGlobal->procSemMap;
 	int32		fullmask = (1 << PROC_NSEMS_PER_SET) - 1;
 
 	SpinLockAcquire(ProcStructLock);
@@ -1080,10 +1079,11 @@ ProcGetNewSemIdAndNum(IpcSemaphoreId *semId, int *semNum)
 	SpinLockRelease(ProcStructLock);
 
 	/*
-	 * If we reach here, all the semaphores are in use.  This is one of the
-	 * possible places to detect "too many backends", so give the standard
-	 * error message.  (Whether we detect it here or in sinval.c depends on
-	 * whether MaxBackends is a multiple of PROC_NSEMS_PER_SET.)
+	 * If we reach here, all the semaphores are in use.  This is one of
+	 * the possible places to detect "too many backends", so give the
+	 * standard error message.	(Whether we detect it here or in sinval.c
+	 * depends on whether MaxBackends is a multiple of
+	 * PROC_NSEMS_PER_SET.)
 	 */
 	elog(FATAL, "Sorry, too many clients already");
 }

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_am.h,v 1.18 2001/07/15 22:48:18 tgl Exp $
+ * $Id: pg_am.h,v 1.19 2001/10/25 05:49:56 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -38,8 +38,8 @@ CATALOG(pg_am)
 {
 	NameData	amname;			/* access method name */
 	int4		amowner;		/* usesysid of creator */
-	int2		amstrategies;	/* total NUMBER of strategies (operators) by
-								 * which we can traverse/search this AM */
+	int2		amstrategies;	/* total NUMBER of strategies (operators)
+								 * by which we can traverse/search this AM */
 	int2		amsupport;		/* total NUMBER of support functions that
 								 * this AM uses */
 	int2		amorderstrategy;/* if this AM has a sort order, the
@@ -98,14 +98,13 @@ typedef FormData_pg_am *Form_pg_am;
  * ----------------
  */
 
-DATA(insert OID = 402 (  rtree	PGUID   8 3 0 f f f f rtgettuple rtinsert rtbeginscan rtrescan rtendscan rtmarkpos rtrestrpos rtbuild rtbulkdelete rtcostestimate ));
+DATA(insert OID = 402 (  rtree	PGUID	8 3 0 f f f f rtgettuple rtinsert rtbeginscan rtrescan rtendscan rtmarkpos rtrestrpos rtbuild rtbulkdelete rtcostestimate ));
 DESCR("r-tree index access method");
-DATA(insert OID = 403 (  btree	PGUID   5 1 1 t t t t btgettuple btinsert btbeginscan btrescan btendscan btmarkpos btrestrpos btbuild btbulkdelete btcostestimate ));
+DATA(insert OID = 403 (  btree	PGUID	5 1 1 t t t t btgettuple btinsert btbeginscan btrescan btendscan btmarkpos btrestrpos btbuild btbulkdelete btcostestimate ));
 DESCR("b-tree index access method");
 #define BTREE_AM_OID 403
-DATA(insert OID = 405 (  hash	PGUID   1 1 0 f f f t hashgettuple hashinsert hashbeginscan hashrescan hashendscan hashmarkpos hashrestrpos hashbuild hashbulkdelete hashcostestimate ));
+DATA(insert OID = 405 (  hash	PGUID	1 1 0 f f f t hashgettuple hashinsert hashbeginscan hashrescan hashendscan hashmarkpos hashrestrpos hashbuild hashbulkdelete hashcostestimate ));
 DESCR("hash index access method");
 DATA(insert OID = 783 (  gist	PGUID 100 7 0 f t f f gistgettuple gistinsert gistbeginscan gistrescan gistendscan gistmarkpos gistrestrpos gistbuild gistbulkdelete gistcostestimate ));
 DESCR("GiST index access method");
-
 #endif	 /* PG_AM_H */

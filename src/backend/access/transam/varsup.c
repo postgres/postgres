@@ -6,7 +6,7 @@
  * Copyright (c) 2000, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.46 2001/09/29 04:02:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.47 2001/10/25 05:49:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@ VariableCache ShmemVariableCache = NULL;
 TransactionId
 GetNewTransactionId(void)
 {
-	TransactionId	xid;
+	TransactionId xid;
 
 	/*
 	 * During bootstrap initialization, we return the special bootstrap
@@ -48,32 +48,32 @@ GetNewTransactionId(void)
 	TransactionIdAdvance(ShmemVariableCache->nextXid);
 
 	/*
-	 * If we have just allocated the first XID of a new page of the
-	 * commit log, zero out that commit-log page before returning.
-	 * We must do this while holding XidGenLock, else another xact could
-	 * acquire and commit a later XID before we zero the page.  Fortunately,
-	 * a page of the commit log holds 32K or more transactions, so we don't
-	 * have to do this very often.
+	 * If we have just allocated the first XID of a new page of the commit
+	 * log, zero out that commit-log page before returning. We must do
+	 * this while holding XidGenLock, else another xact could acquire and
+	 * commit a later XID before we zero the page.	Fortunately, a page of
+	 * the commit log holds 32K or more transactions, so we don't have to
+	 * do this very often.
 	 */
 	ExtendCLOG(xid);
 
 	/*
-	 * Must set MyProc->xid before releasing XidGenLock.  This ensures that
-	 * when GetSnapshotData calls ReadNewTransactionId, all active XIDs
-	 * before the returned value of nextXid are already present in the shared
-	 * PROC array.  Else we have a race condition.
+	 * Must set MyProc->xid before releasing XidGenLock.  This ensures
+	 * that when GetSnapshotData calls ReadNewTransactionId, all active
+	 * XIDs before the returned value of nextXid are already present in
+	 * the shared PROC array.  Else we have a race condition.
 	 *
 	 * XXX by storing xid into MyProc without acquiring SInvalLock, we are
 	 * relying on fetch/store of an xid to be atomic, else other backends
-	 * might see a partially-set xid here.  But holding both locks at once
-	 * would be a nasty concurrency hit (and in fact could cause a deadlock
-	 * against GetSnapshotData).  So for now, assume atomicity.  Note that
-	 * readers of PROC xid field should be careful to fetch the value only
-	 * once, rather than assume they can read it multiple times and get the
-	 * same answer each time.
+	 * might see a partially-set xid here.	But holding both locks at once
+	 * would be a nasty concurrency hit (and in fact could cause a
+	 * deadlock against GetSnapshotData).  So for now, assume atomicity.
+	 * Note that readers of PROC xid field should be careful to fetch the
+	 * value only once, rather than assume they can read it multiple times
+	 * and get the same answer each time.
 	 *
-	 * A solution to the atomic-store problem would be to give each PROC
-	 * its own spinlock used only for fetching/storing that PROC's xid.
+	 * A solution to the atomic-store problem would be to give each PROC its
+	 * own spinlock used only for fetching/storing that PROC's xid.
 	 * (SInvalLock would then mean primarily that PROCs couldn't be added/
 	 * removed while holding the lock.)
 	 */
@@ -91,7 +91,7 @@ GetNewTransactionId(void)
 TransactionId
 ReadNewTransactionId(void)
 {
-	TransactionId	xid;
+	TransactionId xid;
 
 	/*
 	 * During bootstrap initialization, we return the special bootstrap
@@ -117,16 +117,16 @@ static Oid	lastSeenOid = InvalidOid;
 Oid
 GetNewObjectId(void)
 {
-	Oid		result;
+	Oid			result;
 
 	LWLockAcquire(OidGenLock, LW_EXCLUSIVE);
 
 	/*
 	 * Check for wraparound of the OID counter.  We *must* not return 0
 	 * (InvalidOid); and as long as we have to check that, it seems a good
-	 * idea to skip over everything below BootstrapObjectIdData too.  (This
-	 * basically just reduces the odds of OID collision right after a wrap
-	 * occurs.)  Note we are relying on unsigned comparison here.
+	 * idea to skip over everything below BootstrapObjectIdData too.
+	 * (This basically just reduces the odds of OID collision right after
+	 * a wrap occurs.)	Note we are relying on unsigned comparison here.
 	 */
 	if (ShmemVariableCache->nextOid < ((Oid) BootstrapObjectIdData))
 	{

@@ -30,7 +30,7 @@ int4		complex_abs_cmp(Complex * a, Complex * b);
  * Input/Output functions
  *****************************************************************************/
 
-Complex    *
+Complex *
 complex_in(char *str)
 {
 	double		x,
@@ -73,7 +73,7 @@ complex_out(Complex * complex)
  * New Operators
  *****************************************************************************/
 
-Complex    *
+Complex *
 complex_add(Complex * a, Complex * b)
 {
 	Complex    *result;

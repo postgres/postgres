@@ -71,7 +71,7 @@ void		beos_startup(int argc, char **argv);
 image_id	beos_dl_open(char *filename);
 
 /* Find symbol */
-void 		beos_dl_sym(image_id im,char* symname,void** fptr);
+void		beos_dl_sym(image_id im, char *symname, void **fptr);
 
 /* UnLoad a shared library */
 status_t	beos_dl_close(image_id im);

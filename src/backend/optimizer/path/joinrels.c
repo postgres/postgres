@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.54 2001/10/18 16:11:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.55 2001/10/25 05:49:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,6 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 
 		if (old_rel->joininfo != NIL)
 		{
-
 			/*
 			 * Note that if all available join clauses for this rel
 			 * require more than one other rel, we will fail to make any
@@ -84,7 +83,6 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 		}
 		else
 		{
-
 			/*
 			 * Oops, we have a relation that is not joined to any other
 			 * relation.  Cartesian product time.
@@ -195,7 +193,6 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 	 */
 	if (result_rels == NIL)
 	{
-
 		/*
 		 * This loop is just like the first one, except we always call
 		 * make_rels_by_clauseless_joins().

@@ -1,4 +1,4 @@
-/* $Id: isinf.c,v 1.16 2001/08/24 14:07:49 petere Exp $ */
+/* $Id: isinf.c,v 1.17 2001/10/25 05:49:40 momjian Exp $ */
 
 #include "c.h"
 
@@ -42,7 +42,6 @@ double		x;
 
 #else
 	int			fpclass = fp_class_d(x);
-
 #endif
 
 	if (fpclass == FP_POS_INF)
@@ -64,7 +63,6 @@ isinf(double x)
 		return -1;
 	return 0;
 }
-
 #endif
 #endif
 
@@ -80,5 +78,4 @@ isinf(double x)
 		return -1;
 	return 0;
 }
-
 #endif

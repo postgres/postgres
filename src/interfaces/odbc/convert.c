@@ -1,5 +1,5 @@
 /*-------
- * Module:               convert.c
+ * Module:				 convert.c
  *
  * Description:    This module contains routines related to
  *				   converting parameters and columns into requested data types.
@@ -111,10 +111,10 @@ char	   *mapFuncs[][2] = {
 	{0, 0}
 };
 
-static char   *mapFunction(const char *func);
+static char *mapFunction(const char *func);
 static unsigned int conv_from_octal(const unsigned char *s);
 static unsigned int conv_from_hex(const unsigned char *s);
-static char	   *conv_to_octal(unsigned char val);
+static char *conv_to_octal(unsigned char val);
 
 /*---------
  *			A Guide for date/time/timestamp conversions
@@ -138,7 +138,7 @@ static char	   *conv_to_octal(unsigned char val);
 
 /*	This is called by SQLFetch() */
 int
-copy_and_convert_field_bindinfo(StatementClass *stmt, Int4 field_type, void *value, int col)
+copy_and_convert_field_bindinfo(StatementClass * stmt, Int4 field_type, void *value, int col)
 {
 	BindInfoClass *bic = &(stmt->bindings[col]);
 
@@ -149,8 +149,8 @@ copy_and_convert_field_bindinfo(StatementClass *stmt, Int4 field_type, void *val
 
 /*	This is called by SQLGetData() */
 int
-copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 fCType,
-					   PTR rgbValue, SDWORD cbValueMax, SDWORD *pcbValue)
+copy_and_convert_field(StatementClass * stmt, Int4 field_type, void *value, Int2 fCType,
+					   PTR rgbValue, SDWORD cbValueMax, SDWORD * pcbValue)
 {
 	Int4		len = 0,
 				copy_len = 0;
@@ -160,16 +160,16 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 	int			pcbValueOffset,
 				rgbValueOffset;
 	char	   *rgbValueBindRow;
-	const char	*ptr;
+	const char *ptr;
 	int			bind_row = stmt->bind_row;
 	int			bind_size = stmt->options.bind_size;
 	int			result = COPY_OK;
 	BOOL		changed;
-	static		char *tempBuf= NULL;
-	static		unsigned int tempBuflen = 0;
+	static char *tempBuf = NULL;
+	static unsigned int tempBuflen = 0;
 	const char *neut_str = value;
-	char	midtemp[2][32];
-	int	mtemp_cnt = 0;
+	char		midtemp[2][32];
+	int			mtemp_cnt = 0;
 
 	if (!tempBuf)
 		tempBuflen = 0;
@@ -200,7 +200,6 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 
 	if (!value)
 	{
-
 		/*
 		 * handle a null just by returning SQL_NULL_DATA in pcbValue, and
 		 * doing nothing to the buffer.
@@ -229,7 +228,6 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 	 */
 	switch (field_type)
 	{
-
 			/*
 			 * $$$ need to add parsing for date/time/timestamp strings in
 			 * PG_TYPE_CHAR,VARCHAR $$$
@@ -249,7 +247,6 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				sscanf(value, "%4d-%2d-%2d %2d:%2d:%2d", &st.y, &st.m, &st.d, &st.hh, &st.mm, &st.ss);
 			else
 			{
-
 				/*
 				 * The timestamp is invalid so set something conspicuous,
 				 * like the epoch
@@ -266,7 +263,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 			break;
 
 		case PG_TYPE_BOOL:
-			{			/* change T/F to 1/0 */
+			{					/* change T/F to 1/0 */
 				char	   *s;
 
 				s = midtemp[mtemp_cnt];
@@ -287,7 +284,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 			{
 				int			nval,
 							i;
-				const char	*vp;
+				const char *vp;
 
 				/* this is an array of eight integers */
 				short	   *short_array = (short *) ((char *) rgbValue + rgbValueOffset);
@@ -425,12 +422,14 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 
 			default:
 				if (stmt->current_col >= 0 && stmt->bindings[stmt->current_col].data_left == -2)
-					stmt->bindings[stmt->current_col].data_left = (cbValueMax > 0) ? 0 : -1; /* This seems to be needed for ADO ? */
+					stmt->bindings[stmt->current_col].data_left = (cbValueMax > 0) ? 0 : -1;	/* This seems to be
+																								 * needed for ADO ? */
 				if (stmt->current_col < 0 || stmt->bindings[stmt->current_col].data_left < 0)
 				{
 					/* convert linefeeds to carriage-return/linefeed */
 					len = convert_linefeeds(neut_str, NULL, 0, &changed);
-					if (cbValueMax == 0) /* just returns length info */
+					if (cbValueMax == 0)		/* just returns length
+												 * info */
 					{
 						result = COPY_RESULT_TRUNCATED;
 						break;
@@ -519,7 +518,6 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 	}
 	else
 	{
-
 		/*
 		 * for SQL_C_CHAR, it's probably ok to leave currency symbols in.
 		 * But to convert to numeric types, it is necessary to get rid of
@@ -595,8 +593,9 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 					*((UCHAR *) rgbValue + bind_row) = atoi(neut_str);
 
 				/*
-				 * mylog("SQL_C_BIT: bind_row = %d val = %d, cb = %d, rgb=%d\n",
-				 * bind_row, atoi(neut_str), cbValueMax, *((UCHAR *)rgbValue));
+				 * mylog("SQL_C_BIT: bind_row = %d val = %d, cb = %d,
+				 * rgb=%d\n", bind_row, atoi(neut_str), cbValueMax,
+				 * *((UCHAR *)rgbValue));
 				 */
 				break;
 
@@ -751,14 +750,15 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
  *	Functions/Macros to get rid of query size limit.
  *
  *	I always used the follwoing macros to convert from
- *	old_statement to new_statement.	 Please improve it
+ *	old_statement to new_statement.  Please improve it
  *	if you have a better way.	Hiroshi 2001/05/22
  *--------------------------------------------------------------------
  */
-#define	INIT_MIN_ALLOC	4096
-static int enlarge_statement(StatementClass *stmt, unsigned int newsize)
+#define INIT_MIN_ALLOC	4096
+static int
+enlarge_statement(StatementClass * stmt, unsigned int newsize)
 {
-	unsigned int	newalsize = INIT_MIN_ALLOC;
+	unsigned int newalsize = INIT_MIN_ALLOC;
 	static char *func = "enlarge_statement";
 
 	if (stmt->stmt_size_limit > 0 && stmt->stmt_size_limit < (int) newsize)
@@ -784,7 +784,7 @@ static int enlarge_statement(StatementClass *stmt, unsigned int newsize)
  *	Enlarge stmt_with_params if necessary.
  *----------
  */
-#define	ENLARGE_NEWSTATEMENT(newpos) \
+#define ENLARGE_NEWSTATEMENT(newpos) \
 	if (newpos >= new_stsize) \
 	{ \
 		if ((new_stsize = enlarge_statement(stmt, newpos)) <= 0) \
@@ -795,7 +795,7 @@ static int enlarge_statement(StatementClass *stmt, unsigned int newsize)
  *	Initialize stmt_with_params, new_statement etc.
  *----------
  */
-#define	CVT_INIT(size) \
+#define CVT_INIT(size) \
 do { \
 	if (stmt->stmt_with_params) \
 		free(stmt->stmt_with_params); \
@@ -817,7 +817,7 @@ do { \
  *	Terminate the stmt_with_params string with NULL.
  *----------
  */
-#define	CVT_TERMINATE \
+#define CVT_TERMINATE \
 do { \
 	new_statement[npos] = '\0'; \
 } while (0)
@@ -826,7 +826,7 @@ do { \
  *	Append a data.
  *----------
  */
-#define	CVT_APPEND_DATA(s, len) \
+#define CVT_APPEND_DATA(s, len) \
 do { \
 	unsigned int	newpos = npos + len; \
 	ENLARGE_NEWSTATEMENT(newpos) \
@@ -839,17 +839,17 @@ do { \
  *	Append a string.
  *----------
  */
-#define	CVT_APPEND_STR(s) \
+#define CVT_APPEND_STR(s) \
 do { \
 	unsigned int len = strlen(s); \
 	CVT_APPEND_DATA(s, len); \
 } while (0)
 
 /*----------
- *	Append a char.	
+ *	Append a char.
  *----------
  */
-#define	CVT_APPEND_CHAR(c) \
+#define CVT_APPEND_CHAR(c) \
 do { \
 	ENLARGE_NEWSTATEMENT(npos + 1); \
 	new_statement[npos++] = c; \
@@ -857,10 +857,10 @@ do { \
 
 /*----------
  *	Append a binary data.
- *	Newly reqeuired size may be overestimated currently. 
+ *	Newly reqeuired size may be overestimated currently.
  *----------
  */
-#define	CVT_APPEND_BINARY(buf, used) \
+#define CVT_APPEND_BINARY(buf, used) \
 do { \
 	unsigned int	newlimit = npos + 5 * used; \
 	ENLARGE_NEWSTATEMENT(newlimit); \
@@ -871,9 +871,9 @@ do { \
  *
  *----------
  */
-#define	CVT_SPECIAL_CHARS(buf, used) \
+#define CVT_SPECIAL_CHARS(buf, used) \
 do { \
-	int	cnvlen = convert_special_chars(buf, NULL, used); \
+	int cnvlen = convert_special_chars(buf, NULL, used); \
 	unsigned int	newlimit = npos + cnvlen; \
 \
 	ENLARGE_NEWSTATEMENT(newlimit); \
@@ -882,10 +882,10 @@ do { \
 } while (0)
 
 /*----------
- *	Check if the statement is	
+ *	Check if the statement is
  *	SELECT ... INTO table FROM .....
  *	This isn't really a strict check but ...
- *---------- 
+ *----------
  */
 static BOOL
 into_table_from(const char *stmt)
@@ -902,15 +902,14 @@ into_table_from(const char *stmt)
 		case ',':
 		case '\'':
 			return FALSE;
-		case '\"': /* double quoted table name ? */
+		case '\"':				/* double quoted table name ? */
 			do
 			{
 				do
-				{
-					 while (*(++stmt) != '\"' && *stmt);
-				}
+					while (*(++stmt) != '\"' && *stmt);
 				while (*stmt && *(++stmt) == '\"');
-				while (*stmt && !isspace((unsigned char) *stmt) && *stmt != '\"') stmt++;
+				while (*stmt && !isspace((unsigned char) *stmt) && *stmt != '\"')
+					stmt++;
 			}
 			while (*stmt == '\"');
 			break;
@@ -918,7 +917,7 @@ into_table_from(const char *stmt)
 			while (!isspace((unsigned char) *(++stmt)));
 			break;
 	}
-	if (! *stmt)
+	if (!*stmt)
 		return FALSE;
 	while (isspace((unsigned char) *(++stmt)));
 	if (strnicmp(stmt, "from", 4))
@@ -927,17 +926,18 @@ into_table_from(const char *stmt)
 }
 
 /*----------
- *	Check if the statement is	
+ *	Check if the statement is
  *	SELECT ... FOR UPDATE .....
  *	This isn't really a strict check but ...
- *---------- 
+ *----------
  */
 static BOOL
 table_for_update(const char *stmt, int *endpos)
 {
 	const char *wstmt = stmt;
+
 	while (isspace((unsigned char) *(++wstmt)));
-	if (! *wstmt)
+	if (!*wstmt)
 		return FALSE;
 	if (strnicmp(wstmt, "update", 6))
 		return FALSE;
@@ -952,7 +952,7 @@ table_for_update(const char *stmt, int *endpos)
  *	This function does a dynamic memory allocation to get rid of query size limit!
  */
 int
-copy_statement_with_parameters(StatementClass *stmt)
+copy_statement_with_parameters(StatementClass * stmt)
 {
 	static char *func = "copy_statement_with_parameters";
 	unsigned int opos,
@@ -960,34 +960,43 @@ copy_statement_with_parameters(StatementClass *stmt)
 				oldstmtlen;
 	char		param_string[128],
 				tmp[256],
-				cbuf[PG_NUMERIC_MAX_PRECISION * 2]; /* seems big enough to handle the data in this function */
+				cbuf[PG_NUMERIC_MAX_PRECISION * 2];		/* seems big enough to
+														 * handle the data in
+														 * this function */
 	int			param_number;
 	Int2		param_ctype,
 				param_sqltype;
-	char	   *old_statement = stmt->statement, oldchar;
+	char	   *old_statement = stmt->statement,
+				oldchar;
 	char	   *new_statement = stmt->stmt_with_params;
-	unsigned int	new_stsize = 0;
+	unsigned int new_stsize = 0;
 	SIMPLE_TIME st;
 	time_t		t = time(NULL);
 	struct tm  *tim;
 	SDWORD		used;
-	char	   	*buffer, *buf;
-	BOOL		in_quote = FALSE, in_dquote = FALSE, in_escape = FALSE;
+	char	   *buffer,
+			   *buf;
+	BOOL		in_quote = FALSE,
+				in_dquote = FALSE,
+				in_escape = FALSE;
 	Oid			lobj_oid;
 	int			lobj_fd,
 				retval;
-	BOOL	check_cursor_ok = FALSE; /* check cursor restriction */
-	BOOL	proc_no_param = TRUE;
-	unsigned int	declare_pos = 0;
-	ConnectionClass	*conn = SC_get_conn(stmt);
-	ConnInfo	*ci = &(conn->connInfo);
-	BOOL		prepare_dummy_cursor = FALSE, begin_first = FALSE;
-	char	token_save[64];
-	int	token_len;
-	BOOL	prev_token_end;
+	BOOL		check_cursor_ok = FALSE;		/* check cursor
+												 * restriction */
+	BOOL		proc_no_param = TRUE;
+	unsigned int declare_pos = 0;
+	ConnectionClass *conn = SC_get_conn(stmt);
+	ConnInfo   *ci = &(conn->connInfo);
+	BOOL		prepare_dummy_cursor = FALSE,
+				begin_first = FALSE;
+	char		token_save[64];
+	int			token_len;
+	BOOL		prev_token_end;
+
 #ifdef	DRIVER_CURSOR_IMPLEMENT
-	BOOL search_from_pos = FALSE;
-#endif /* DRIVER_CURSOR_IMPLEMENT */
+	BOOL		search_from_pos = FALSE;
+#endif	 /* DRIVER_CURSOR_IMPLEMENT */
 	if (ci->disallow_premature)
 		prepare_dummy_cursor = stmt->pre_executing;
 
@@ -1012,7 +1021,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 		stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
 	}
 	else if (stmt->options.cursor_type == SQL_CURSOR_FORWARD_ONLY)
-    		stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
+		stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
 	else if (stmt->options.scroll_concurrency != SQL_CONCUR_READ_ONLY)
 	{
 		if (stmt->parse_status == STMT_PARSE_NONE)
@@ -1020,11 +1029,11 @@ copy_statement_with_parameters(StatementClass *stmt)
 		if (stmt->parse_status != STMT_PARSE_COMPLETE)
 			stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
 		else if (!stmt->ti || stmt->ntab != 1)
-    			stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
+			stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
 		else
 			search_from_pos = TRUE;
 	}
-#endif /* DRIVER_CURSOR_IMPLEMENT */
+#endif	 /* DRIVER_CURSOR_IMPLEMENT */
 
 	/* If the application hasn't set a cursor name, then generate one */
 	if (stmt->cursor_name[0] == '\0')
@@ -1052,7 +1061,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 			else if (ci->drivers.use_declarefetch)
 				SC_set_fetchcursor(stmt);
 			sprintf(new_statement, "%sdeclare %s cursor for ",
-				 new_statement, stmt->cursor_name);
+					new_statement, stmt->cursor_name);
 			npos = strlen(new_statement);
 			check_cursor_ok = TRUE;
 			declare_pos = npos;
@@ -1072,18 +1081,18 @@ copy_statement_with_parameters(StatementClass *stmt)
 			CVT_APPEND_CHAR(oldchar);
 			continue;
 		}
+
 		/*
-		 *	From here we are guaranteed to handle a
-		 *	1-byte character.
+		 * From here we are guaranteed to handle a 1-byte character.
 		 */
 #endif
 
-		if (in_escape) /* escape check */
+		if (in_escape)			/* escape check */
 		{
 			in_escape = FALSE;
 			CVT_APPEND_CHAR(oldchar);
 			continue;
-		}	
+		}
 		else if (in_quote || in_dquote) /* quote/double quote check */
 		{
 			if (oldchar == '\\')
@@ -1093,16 +1102,18 @@ copy_statement_with_parameters(StatementClass *stmt)
 			else if (oldchar == '\"' && in_dquote)
 				in_dquote = FALSE;
 			CVT_APPEND_CHAR(oldchar);
-			continue;	
+			continue;
 		}
+
 		/*
-		 *	From here we are guranteed to be in neither
-		 *	an escape, a quote nor a double quote.
+		 * From here we are guranteed to be in neither an escape, a quote
+		 * nor a double quote.
 		 */
 		/* Squeeze carriage-return/linefeed pairs to linefeed only */
 		else if (oldchar == '\r' && opos + 1 < oldstmtlen &&
-			old_statement[opos + 1] == '\n')
+				 old_statement[opos + 1] == '\n')
 			continue;
+
 		/*
 		 * Handle literals (date, time, timestamp) and ODBC scalar
 		 * functions
@@ -1117,7 +1128,6 @@ copy_statement_with_parameters(StatementClass *stmt)
 
 #else
 			char	   *end = strchr(begin, '}');
-
 #endif
 
 			if (!end)
@@ -1125,7 +1135,8 @@ copy_statement_with_parameters(StatementClass *stmt)
 			/* procedure calls */
 			if (stmt->statement_type == STMT_TYPE_PROCCALL)
 			{
-				int	lit_call_len = 4;
+				int			lit_call_len = 4;
+
 				while (isspace((unsigned char) old_statement[++opos]));
 				/* '=?' to accept return values exists ? */
 				if (old_statement[opos] == '?')
@@ -1145,23 +1156,21 @@ copy_statement_with_parameters(StatementClass *stmt)
 					opos--;
 					continue;
 				}
-				opos += lit_call_len; 
+				opos += lit_call_len;
 				CVT_APPEND_STR("SELECT ");
 #ifdef MULTIBYTE
 				if (multibyte_strchr(&old_statement[opos], '('))
 #else
 				if (strchr(&old_statement[opos], '('))
-#endif /* MULTIBYTE */
+#endif	 /* MULTIBYTE */
 					proc_no_param = FALSE;
-				continue; 
+				continue;
 			}
 			*end = '\0';
 
 			esc = convert_escape(begin);
 			if (esc)
-			{
 				CVT_APPEND_STR(esc);
-			}
 			else
 			{					/* it's not a valid literal so just copy */
 				*end = '}';
@@ -1196,7 +1205,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 				in_escape = TRUE;
 			else if (oldchar == '\"')
 				in_dquote = TRUE;
-			else 
+			else
 			{
 				if (isspace(oldchar))
 				{
@@ -1207,7 +1216,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 						if (token_len == 4)
 						{
 							if (check_cursor_ok &&
-    				 			   into_table_from(&old_statement[opos - token_len]))
+								into_table_from(&old_statement[opos - token_len]))
 							{
 								stmt->statement_type = STMT_TYPE_CREATE;
 								SC_no_pre_executable(stmt);
@@ -1218,20 +1227,21 @@ copy_statement_with_parameters(StatementClass *stmt)
 							}
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 							else if (search_from_pos && /* where's from clause */
-    				 				 strnicmp(token_save, "from", 4) == 0)
+									 strnicmp(token_save, "from", 4) == 0)
 							{
 								search_from_pos = FALSE;
 								npos -= 5;
 								CVT_APPEND_STR(", CTID, OID from");
 							}
-#endif /* DRIVER_CURSOR_IMPLEMENT */
+#endif	 /* DRIVER_CURSOR_IMPLEMENT */
 						}
 						if (token_len == 3)
 						{
-							int	endpos;
+							int			endpos;
+
 							if (check_cursor_ok &&
-    				 			    strnicmp(token_save, "for", 3) == 0 &&
-    				 			    table_for_update(&old_statement[opos], &endpos))
+								strnicmp(token_save, "for", 3) == 0 &&
+								table_for_update(&old_statement[opos], &endpos))
 							{
 								SC_no_fetchcursor(stmt);
 								stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
@@ -1247,7 +1257,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 								}
 							}
 						}
-					}	
+					}
 				}
 				else if (prev_token_end)
 				{
@@ -1257,7 +1267,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 				}
 				else if (token_len + 1 < sizeof(token_save))
 					token_save[token_len++] = oldchar;
-			} 
+			}
 			CVT_APPEND_CHAR(oldchar);
 			continue;
 		}
@@ -1290,10 +1300,10 @@ copy_statement_with_parameters(StatementClass *stmt)
 		}
 		else
 		{
-			
-			
+
+
 			used = stmt->parameters[param_number].used ? *stmt->parameters[param_number].used : SQL_NTS;
-			
+
 			buffer = stmt->parameters[param_number].buffer;
 		}
 
@@ -1457,15 +1467,11 @@ copy_statement_with_parameters(StatementClass *stmt)
 
 				/* it was a SQL_C_CHAR */
 				if (buf)
-				{
 					CVT_SPECIAL_CHARS(buf, used);
-				}
 
 				/* it was a numeric type */
 				else if (param_string[0] != '\0')
-				{
 					CVT_APPEND_STR(param_string);
-				}
 
 				/* it was date,time,timestamp -- use m,d,y,hh,mm,ss */
 				else
@@ -1694,19 +1700,20 @@ copy_statement_with_parameters(StatementClass *stmt)
 		int			length = strlen(new_statement);
 
 		conn->DriverToDataSource(conn->translation_option,
-									   SQL_CHAR,
-									   new_statement, length,
-									   new_statement, length, NULL,
-									   NULL, 0, NULL);
+								 SQL_CHAR,
+								 new_statement, length,
+								 new_statement, length, NULL,
+								 NULL, 0, NULL);
 	}
 
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 	if (search_from_pos)
 		stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
-#endif /* DRIVER_CURSOR_IMPLEMENT */
+#endif	 /* DRIVER_CURSOR_IMPLEMENT */
 	if (prepare_dummy_cursor && SC_is_pre_executable(stmt))
 	{
-		char fetchstr[128];	
+		char		fetchstr[128];
+
 		sprintf(fetchstr, ";fetch backward in %s;close %s;",
 				stmt->cursor_name, stmt->cursor_name);
 		if (begin_first && CC_is_in_autocommit(conn))
@@ -1765,7 +1772,6 @@ convert_escape(char *value)
 	}
 	else if (strcmp(key, "fn") == 0)
 	{
-
 		/*
 		 * Function invocation Separate off the func name, skipping
 		 * trailing whitespace.
@@ -1796,8 +1802,8 @@ convert_escape(char *value)
 		mapFunc = mapFunction(key);
 
 		/*
-		 * We could have mapFunction() return key if not in table...
-		 * - thomas 2000-04-03
+		 * We could have mapFunction() return key if not in table... -
+		 * thomas 2000-04-03
 		 */
 		if (mapFunc == NULL)
 		{
@@ -1822,7 +1828,8 @@ convert_escape(char *value)
 BOOL
 convert_money(const char *s, char *sout, size_t soutmax)
 {
-	size_t		i = 0, out = 0;
+	size_t		i = 0,
+				out = 0;
 
 	for (i = 0; s[i]; i++)
 	{
@@ -1831,7 +1838,7 @@ convert_money(const char *s, char *sout, size_t soutmax)
 		else
 		{
 			if (out + 1 >= soutmax)
-				return FALSE; /* sout is too short */
+				return FALSE;	/* sout is too short */
 			if (s[i] == '(')
 				sout[out++] = '-';
 			else
@@ -1848,7 +1855,7 @@ convert_money(const char *s, char *sout, size_t soutmax)
  *	It does not zero out SIMPLE_TIME in case it is desired to initialize it with a value
  */
 char
-parse_datetime(char *buf, SIMPLE_TIME *st)
+parse_datetime(char *buf, SIMPLE_TIME * st)
 {
 	int			y,
 				m,
@@ -1915,7 +1922,7 @@ parse_datetime(char *buf, SIMPLE_TIME *st)
 
 /*	Change linefeed to carriage-return/linefeed */
 int
-convert_linefeeds(const char *si, char *dst, size_t max, BOOL *changed)
+convert_linefeeds(const char *si, char *dst, size_t max, BOOL * changed)
 {
 	size_t		i = 0,
 				out = 0;
@@ -2069,7 +2076,8 @@ conv_from_hex(const unsigned char *s)
 int
 convert_from_pgbinary(const unsigned char *value, unsigned char *rgbValue, int cbValueMax)
 {
-	size_t		i, ilen = strlen(value);
+	size_t		i,
+				ilen = strlen(value);
 	int			o = 0;
 
 
@@ -2148,7 +2156,8 @@ convert_to_pgbinary(const unsigned char *in, char *out, int len)
 void
 encode(const char *in, char *out)
 {
-	unsigned int i, ilen = strlen(in),
+	unsigned int i,
+				ilen = strlen(in),
 				o = 0;
 
 	for (i = 0; i < ilen; i++)
@@ -2175,7 +2184,8 @@ encode(const char *in, char *out)
 void
 decode(const char *in, char *out)
 {
-	unsigned int i, ilen = strlen(in),
+	unsigned int i,
+				ilen = strlen(in),
 				o = 0;
 
 	for (i = 0; i < ilen; i++)
@@ -2211,16 +2221,16 @@ decode(const char *in, char *out)
  *-------
  */
 int
-convert_lo(StatementClass *stmt, const void *value, Int2 fCType, PTR rgbValue,
-		   SDWORD cbValueMax, SDWORD *pcbValue)
+convert_lo(StatementClass * stmt, const void *value, Int2 fCType, PTR rgbValue,
+		   SDWORD cbValueMax, SDWORD * pcbValue)
 {
 	Oid			oid;
 	int			retval,
 				result,
 				left = -1;
 	BindInfoClass *bindInfo = NULL;
-	ConnectionClass	*conn = SC_get_conn(stmt);
-	ConnInfo	*ci = &(conn->connInfo);
+	ConnectionClass *conn = SC_get_conn(stmt);
+	ConnInfo   *ci = &(conn->connInfo);
 
 	/* If using SQLGetData, then current_col will be set */
 	if (stmt->current_col >= 0)

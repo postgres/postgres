@@ -4,7 +4,7 @@
  * darcy@druid.net
  * http://www.druid.net/darcy/
  *
- * $Id: chkpass.c,v 1.4 2001/05/30 02:11:46 darcy Exp $
+ * $Id: chkpass.c,v 1.5 2001/10/25 05:49:19 momjian Exp $
  * best viewed with tabs set to 4
  */
 
@@ -31,7 +31,7 @@
 
 typedef struct chkpass
 {
-	char	password[16];
+	char		password[16];
 }			chkpass;
 
 /*
@@ -62,12 +62,12 @@ PG_FUNCTION_INFO_V1(chkpass_in)
 Datum
 chkpass_in(PG_FUNCTION_ARGS)
 {
-	char       *str = PG_GETARG_CSTRING(0);
-	chkpass	   *result;
+	char	   *str = PG_GETARG_CSTRING(0);
+	chkpass    *result;
 	char		mysalt[4];
-	static bool	random_initialized = false;
+	static bool random_initialized = false;
 	static char salt_chars[] =
-		"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 	/* special case to let us enter encrypted passwords */
 	if (*str == ':')
@@ -81,7 +81,7 @@ chkpass_in(PG_FUNCTION_ARGS)
 	if (verify_pass(str) != 0)
 	{
 		elog(ERROR, "chkpass_in: purported CHKPASS \"%s\" is a weak password",
-		     str);
+			 str);
 		PG_RETURN_POINTER(NULL);
 	}
 
@@ -159,17 +159,18 @@ Datum
 chkpass_eq(PG_FUNCTION_ARGS)
 {
 	chkpass    *a1 = (chkpass *) PG_GETARG_POINTER(0);
-	text       *a2 = (text *) PG_GETARG_TEXT_P(1);
-	char        str[10];
-	int         sz = 8;
+	text	   *a2 = (text *) PG_GETARG_TEXT_P(1);
+	char		str[10];
+	int			sz = 8;
 
 	if (!a1 || !a2)
 		PG_RETURN_BOOL(0);
 
-	if (a2->vl_len < 12) sz = a2->vl_len - 4;
+	if (a2->vl_len < 12)
+		sz = a2->vl_len - 4;
 	strncpy(str, a2->vl_dat, sz);
 	str[sz] = 0;
-	PG_RETURN_BOOL (strcmp(a1->password, crypt(str, a1->password)) == 0);
+	PG_RETURN_BOOL(strcmp(a1->password, crypt(str, a1->password)) == 0);
 }
 
 PG_FUNCTION_INFO_V1(chkpass_ne)
@@ -177,14 +178,15 @@ Datum
 chkpass_ne(PG_FUNCTION_ARGS)
 {
 	chkpass    *a1 = (chkpass *) PG_GETARG_POINTER(0);
-	text       *a2 = (text *) PG_GETARG_TEXT_P(1);
-	char        str[10];
-	int         sz = 8;
+	text	   *a2 = (text *) PG_GETARG_TEXT_P(1);
+	char		str[10];
+	int			sz = 8;
 
-	if (!a1 || !a2) PG_RETURN_BOOL(0);
-	if (a2->vl_len < 12) sz = a2->vl_len - 4;
+	if (!a1 || !a2)
+		PG_RETURN_BOOL(0);
+	if (a2->vl_len < 12)
+		sz = a2->vl_len - 4;
 	strncpy(str, a2->vl_dat, sz);
 	str[sz] = 0;
-	PG_RETURN_BOOL (strcmp(a1->password, crypt(str, a1->password)) != 0);
+	PG_RETURN_BOOL(strcmp(a1->password, crypt(str, a1->password)) != 0);
 }
-

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.38 2001/10/23 02:20:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.39 2001/10/25 05:49:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,6 @@ PageAddItem(Page page,
 		}
 		else
 		{
-
 			/*
 			 * Don't actually do the shuffle till we've checked free
 			 * space!
@@ -264,7 +263,7 @@ itemoffcompare(const void *itemidp1, const void *itemidp2)
  * It doesn't remove unused line pointers! Please don't change this.
  * This routine is usable for heap pages only.
  *
- * Returns number of unused line pointers on page.  If "unused" is not NULL
+ * Returns number of unused line pointers on page.	If "unused" is not NULL
  * then the unused[] array is filled with indexes of unused line pointers.
  */
 int
@@ -283,11 +282,11 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 	Offset		upper;
 
 	/*
-	 * It's worth the trouble to be more paranoid here than in most places,
-	 * because we are about to reshuffle data in (what is usually) a shared
-	 * disk buffer.  If we aren't careful then corrupted pointers, lengths,
-	 * etc could cause us to clobber adjacent disk buffers, spreading the
-	 * data loss further.  So, check everything.
+	 * It's worth the trouble to be more paranoid here than in most
+	 * places, because we are about to reshuffle data in (what is usually)
+	 * a shared disk buffer.  If we aren't careful then corrupted
+	 * pointers, lengths, etc could cause us to clobber adjacent disk
+	 * buffers, spreading the data loss further.  So, check everything.
 	 */
 	if (pd_lower < (sizeof(PageHeaderData) - sizeof(ItemIdData)) ||
 		pd_lower > pd_upper ||
@@ -344,7 +343,7 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 			}
 			else
 			{
-				(*lp).lp_len = 0; /* indicate unused & deallocated */
+				(*lp).lp_len = 0;		/* indicate unused & deallocated */
 			}
 		}
 
@@ -390,7 +389,7 @@ PageGetFreeSpace(Page page)
 
 	if (space < sizeof(ItemIdData))
 		return 0;
-	space -= sizeof(ItemIdData); /* XXX not always appropriate */
+	space -= sizeof(ItemIdData);		/* XXX not always appropriate */
 
 	return space;
 }

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.28 2001/03/22 04:00:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.29 2001/10/25 05:49:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -263,7 +263,6 @@ MemoryContextCheck(MemoryContext context)
 	for (child = context->firstchild; child != NULL; child = child->nextchild)
 		MemoryContextCheck(child);
 }
-
 #endif
 
 /*

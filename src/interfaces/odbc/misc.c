@@ -30,7 +30,7 @@
 #endif
 
 extern GLOBAL_VALUES globals;
-void	generate_filename(const char *, const char *, char *);
+void		generate_filename(const char *, const char *, char *);
 
 
 void
@@ -58,15 +58,19 @@ generate_filename(const char *dirname, const char *prefix, char *filename)
 	return;
 }
 
-static	int	mylog_on = 0, qlog_on = 0;
-void logs_on_off(int cnopen, int mylog_onoff, int qlog_onoff)
+static int	mylog_on = 0,
+			qlog_on = 0;
+void
+logs_on_off(int cnopen, int mylog_onoff, int qlog_onoff)
 {
-	static	int	mylog_on_count = 0, mylog_off_count = 0,
-			qlog_on_count = 0, qlog_off_count = 0;
+	static int	mylog_on_count = 0,
+				mylog_off_count = 0,
+				qlog_on_count = 0,
+				qlog_off_count = 0;
 
 	if (mylog_onoff)
 		mylog_on_count += cnopen;
-	else 
+	else
 		mylog_off_count += cnopen;
 	if (mylog_on_count > 0)
 		mylog_on = 1;
@@ -76,7 +80,7 @@ void logs_on_off(int cnopen, int mylog_onoff, int qlog_onoff)
 		mylog_on = globals.debug;
 	if (qlog_onoff)
 		qlog_on_count += cnopen;
-	else 
+	else
 		qlog_off_count += cnopen;
 	if (qlog_on_count > 0)
 		qlog_on = 1;
@@ -92,7 +96,7 @@ mylog(char *fmt,...)
 {
 	va_list		args;
 	char		filebuf[80];
-	static FILE	*LOGFP = NULL;
+	static FILE *LOGFP = NULL;
 
 	if (mylog_on)
 	{
@@ -111,7 +115,6 @@ mylog(char *fmt,...)
 		va_end(args);
 	}
 }
-
 #endif
 
 
@@ -121,7 +124,7 @@ qlog(char *fmt,...)
 {
 	va_list		args;
 	char		filebuf[80];
-	static FILE   *LOGFP = NULL;
+	static FILE *LOGFP = NULL;
 
 	if (qlog_on)
 	{
@@ -140,7 +143,6 @@ qlog(char *fmt,...)
 		va_end(args);
 	}
 }
-
 #endif
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.238 2001/10/21 03:25:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.239 2001/10/25 05:49:43 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -72,7 +72,7 @@
 extern int	optind;
 extern char *optarg;
 
-char *debug_query_string;		/* used by pgmonitor */
+char	   *debug_query_string; /* used by pgmonitor */
 
 /* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
 CommandDest whereToSendOutput = Debug;
@@ -99,7 +99,6 @@ int			UseNewLine = 1;		/* Use newlines query delimiters (the
 
 #else
 int			UseNewLine = 0;		/* Use EOF as query delimiters */
-
 #endif	 /* TCOP_DONTUSENEWLINE */
 
 /*
@@ -163,7 +162,6 @@ InteractiveBackend(StringInfo inBuf)
 	{
 		if (UseNewLine)
 		{
-
 			/*
 			 * if we are using \n as a delimiter, then read characters
 			 * until the \n.
@@ -199,7 +197,6 @@ InteractiveBackend(StringInfo inBuf)
 		}
 		else
 		{
-
 			/*
 			 * otherwise read characters until EOF.
 			 */
@@ -258,7 +255,6 @@ SocketBackend(StringInfo inBuf)
 
 	switch (qtype)
 	{
-
 			/*
 			 * 'Q': user entered a query
 			 */
@@ -686,7 +682,6 @@ pg_exec_query_string(char *query_string,		/* string to execute */
 
 			if (!allowit)
 			{
-
 				/*
 				 * the EndCommand() stuff is to tell the frontend that the
 				 * command ended. -cim 6/1/90
@@ -755,7 +750,6 @@ pg_exec_query_string(char *query_string,		/* string to execute */
 
 			if (querytree->commandType == CMD_UTILITY)
 			{
-
 				/*
 				 * process utility functions (create, destroy, etc..)
 				 */
@@ -768,7 +762,6 @@ pg_exec_query_string(char *query_string,		/* string to execute */
 			}
 			else
 			{
-
 				/*
 				 * process a plannable query.
 				 */
@@ -848,7 +841,7 @@ pg_exec_query_string(char *query_string,		/* string to execute */
 	if (xact_started)
 		finish_xact_command();
 
-	debug_query_string = NULL;		/* used by pgmonitor */
+	debug_query_string = NULL;	/* used by pgmonitor */
 }
 
 /*
@@ -901,7 +894,7 @@ quickdie(SIGNAL_ARGS)
 		 "\n\tThe Postmaster has informed me that some other backend"
 		 "\n\tdied abnormally and possibly corrupted shared memory."
 		 "\n\tI have rolled back the current transaction and am"
-		 "\n\tgoing to terminate your database system connection and exit."
+	   "\n\tgoing to terminate your database system connection and exit."
 	"\n\tPlease reconnect to the database system and repeat your query.");
 
 	/*
@@ -1111,7 +1104,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	bool		secure;
 	int			errs = 0;
 	GucContext	ctx;
-	char		*tmp;
+	char	   *tmp;
 
 	int			firstchar;
 	StringInfo	parser_input;
@@ -1482,9 +1475,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 		if (!potential_DataDir)
 		{
 			fprintf(stderr, "%s does not know where to find the database system "
-					"data.  You must specify the directory that contains the "
-					"database system either by specifying the -D invocation "
-					"option or by setting the PGDATA environment variable.\n\n",
+			   "data.  You must specify the directory that contains the "
+				"database system either by specifying the -D invocation "
+			 "option or by setting the PGDATA environment variable.\n\n",
 					argv[0]);
 			proc_exit(1);
 		}
@@ -1509,7 +1502,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	pqsignal(SIGHUP, SigHupHandler);	/* set flag to read config file */
 	pqsignal(SIGINT, QueryCancelHandler);		/* cancel current query */
 	pqsignal(SIGTERM, die);		/* cancel current query and exit */
-	pqsignal(SIGQUIT, quickdie);/* hard crash time */
+	pqsignal(SIGQUIT, quickdie);		/* hard crash time */
 	pqsignal(SIGALRM, HandleDeadLock);	/* check for deadlock after
 										 * timeout */
 
@@ -1529,7 +1522,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 * Reset some signals that are accepted by postmaster but not by
 	 * backend
 	 */
-	pqsignal(SIGCHLD, SIG_DFL);	/* system() requires this on some platforms */
+	pqsignal(SIGCHLD, SIG_DFL); /* system() requires this on some
+								 * platforms */
 	pqsignal(SIGTTIN, SIG_DFL);
 	pqsignal(SIGTTOU, SIG_DFL);
 	pqsignal(SIGCONT, SIG_DFL);
@@ -1586,8 +1580,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 				 argv[0]);
 
 		/*
-		 * Validate we have been given a reasonable-looking DataDir
-		 * (if under postmaster, assume postmaster did this already).
+		 * Validate we have been given a reasonable-looking DataDir (if
+		 * under postmaster, assume postmaster did this already).
 		 */
 		ValidatePgVersion(DataDir);
 
@@ -1648,7 +1642,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.238 $ $Date: 2001/10/21 03:25:35 $\n");
+		puts("$Revision: 1.239 $ $Date: 2001/10/25 05:49:43 $\n");
 	}
 
 	/*
@@ -1740,7 +1734,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 	for (;;)
 	{
-
 		/*
 		 * Release storage left over from prior query cycle, and create a
 		 * new query input buffer in the cleared QueryContext.
@@ -1819,7 +1812,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 */
 		switch (firstchar)
 		{
-
 				/*
 				 * 'F' indicates a fastpath call.
 				 */
@@ -1849,7 +1841,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 			case 'Q':
 				if (strspn(parser_input->data, " \t\r\n") == parser_input->len)
 				{
-
 					/*
 					 * if there is nothing in the input buffer, don't
 					 * bother trying to parse and execute anything; just
@@ -1860,7 +1851,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 				}
 				else
 				{
-
 					/*
 					 * otherwise, process the input string.
 					 *
@@ -2058,6 +2048,5 @@ assertTest(int val)
 
 	return val;
 }
-
 #endif
 #endif

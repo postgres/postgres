@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.45 2001/10/01 05:36:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.46 2001/10/25 05:49:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,8 +183,8 @@ InitBufferPool(void)
 
 		/*
 		 * link the buffers into a circular, doubly-linked list to
-		 * initialize free list, and initialize the buffer headers.
-		 * Still don't know anything about replacement strategy in this file.
+		 * initialize free list, and initialize the buffer headers. Still
+		 * don't know anything about replacement strategy in this file.
 		 */
 		for (i = 0; i < Data_Descriptors; block += BLCKSZ, buf++, i++)
 		{

@@ -1,7 +1,7 @@
 /* ----------
  * pg_lzcompress.c -
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.12 2001/10/25 01:29:37 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.13 2001/10/25 05:49:45 momjian Exp $
  *
  *		This is an implementation of LZ compression for PostgreSQL.
  *		It uses a simple history table and generates 2-3 byte tags
@@ -394,7 +394,6 @@ pglz_find_match(PGLZ_HistEntry **hstart, char *input, char *end,
 	hent = hstart[pglz_hist_idx(input, end)];
 	while (hent && len < good_match)
 	{
-
 		/*
 		 * Be happy with lesser good matches the more entries we visited.
 		 */
@@ -566,7 +565,6 @@ pglz_compress(char *source, int32 slen, PGLZ_Header *dest, PGLZ_Strategy *strate
 	 */
 	while (dp < dend)
 	{
-
 		/*
 		 * If we already exceeded the maximum result size, set no
 		 * compression flag and stop this. But don't check too often.
@@ -583,7 +581,6 @@ pglz_compress(char *source, int32 slen, PGLZ_Header *dest, PGLZ_Strategy *strate
 		if (pglz_find_match(hist_start, dp, dend, &match_len,
 							&match_off, good_match, good_drop))
 		{
-
 			/*
 			 * Create the tag and add history entries for all matched
 			 * characters.
@@ -598,7 +595,6 @@ pglz_compress(char *source, int32 slen, PGLZ_Header *dest, PGLZ_Strategy *strate
 		}
 		else
 		{
-
 			/*
 			 * No match found. Copy one literal byte.
 			 */
@@ -671,7 +667,6 @@ pglz_decompress(PGLZ_Header *source, char *dest)
 
 	while (dp < dend)
 	{
-
 		/*
 		 * Read one control byte and process the next 8 items.
 		 */
@@ -680,7 +675,6 @@ pglz_decompress(PGLZ_Header *source, char *dest)
 		{
 			if (ctrl & 1)
 			{
-
 				/*
 				 * Otherwise it contains the match length minus 3 and the
 				 * upper 4 bits of the offset. The next following byte
@@ -708,7 +702,6 @@ pglz_decompress(PGLZ_Header *source, char *dest)
 			}
 			else
 			{
-
 				/*
 				 * An unset control bit means LITERAL BYTE. So we just
 				 * copy one from INPUT to OUTPUT.
@@ -744,7 +737,6 @@ pglz_get_next_decomp_char_from_lzdata(PGLZ_DecompState *dstate)
 
 	if (dstate->tocopy > 0)
 	{
-
 		/*
 		 * Copy one byte from output to output until we did it for the
 		 * length specified by the last tag. Return that byte.
@@ -755,7 +747,6 @@ pglz_get_next_decomp_char_from_lzdata(PGLZ_DecompState *dstate)
 
 	if (dstate->ctrl_count == 0)
 	{
-
 		/*
 		 * Get the next control byte if we need to, but check for EOF
 		 * before.
@@ -838,7 +829,6 @@ pglz_get_next_decomp_char_from_lzdata(PGLZ_DecompState *dstate)
 	dstate->ctrl_count--;
 	if (dstate->ctrl & 0x01)
 	{
-
 		/*
 		 * Bit is set, so tag is following. Setup copy information and do
 		 * the copy for the first byte as above.
@@ -857,7 +847,6 @@ pglz_get_next_decomp_char_from_lzdata(PGLZ_DecompState *dstate)
 	}
 	else
 	{
-
 		/*
 		 * Bit is unset, so literal byte follows.
 		 */

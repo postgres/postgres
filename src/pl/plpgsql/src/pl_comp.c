@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.36 2001/10/09 15:59:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.37 2001/10/25 05:50:20 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -252,7 +252,6 @@ plpgsql_compile(Oid fn_oid, int functype)
 
 				if (typeStruct->typrelid != InvalidOid)
 				{
-
 					/*
 					 * For tuple type parameters, we set up a record of
 					 * that type
@@ -274,7 +273,6 @@ plpgsql_compile(Oid fn_oid, int functype)
 				}
 				else
 				{
-
 					/*
 					 * Normal parameters get a var node
 					 */
@@ -691,7 +689,6 @@ plpgsql_parse_dblword(char *string)
 
 		case PLPGSQL_NSTYPE_REC:
 			{
-
 				/*
 				 * First word is a record name, so second word must be a
 				 * field in this record.
@@ -712,7 +709,6 @@ plpgsql_parse_dblword(char *string)
 
 		case PLPGSQL_NSTYPE_ROW:
 			{
-
 				/*
 				 * First word is a row name, so second word must be a
 				 * field in this row.
@@ -794,7 +790,6 @@ plpgsql_parse_tripword(char *string)
 	{
 		case PLPGSQL_NSTYPE_REC:
 			{
-
 				/*
 				 * This word is a record name, so third word must be a
 				 * field in this record.
@@ -815,7 +810,6 @@ plpgsql_parse_tripword(char *string)
 
 		case PLPGSQL_NSTYPE_ROW:
 			{
-
 				/*
 				 * This word is a row name, so third word must be a field
 				 * in this row.
@@ -1137,7 +1131,6 @@ plpgsql_parse_wordrowtype(char *string)
 
 	for (i = 0; i < row->nfields; i++)
 	{
-
 		/*
 		 * Get the attribute and it's type
 		 */
@@ -1164,11 +1157,11 @@ plpgsql_parse_wordrowtype(char *string)
 		 * Create the internal variable
 		 *
 		 * We know if the table definitions contain a default value or if the
-		 * field is declared in the table as NOT NULL. But it's possible to
-		 * create a table field as NOT NULL without a default value and that
-		 * would lead to problems later when initializing the variables due to
-		 * entering a block at execution time. Thus we ignore this information
-		 * for now.
+		 * field is declared in the table as NOT NULL. But it's possible
+		 * to create a table field as NOT NULL without a default value and
+		 * that would lead to problems later when initializing the
+		 * variables due to entering a block at execution time. Thus we
+		 * ignore this information for now.
 		 */
 		var = malloc(sizeof(PLpgSQL_var));
 		memset(var, 0, sizeof(PLpgSQL_var));
@@ -1223,8 +1216,8 @@ plpgsql_parse_wordrowtype(char *string)
 PLpgSQL_type *
 plpgsql_parse_datatype(char *string)
 {
-	Oid		type_id;
-	int32	typmod;
+	Oid			type_id;
+	int32		typmod;
 	HeapTuple	typeTup;
 	Form_pg_type typeStruct;
 	PLpgSQL_type *typ;

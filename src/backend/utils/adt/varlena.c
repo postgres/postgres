@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.73 2001/09/14 17:46:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.74 2001/10/25 05:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,21 +54,15 @@ byteain(PG_FUNCTION_ARGS)
 	for (byte = 0, tp = inputText; *tp != '\0'; byte++)
 	{
 		if (tp[0] != '\\')
-		{
 			tp++;
-		}
-		else if	( (tp[0] == '\\') &&
-					(tp[1] >= '0' && tp[1] <= '3') &&
-					(tp[2] >= '0' && tp[2] <= '7') &&
-					(tp[3] >= '0' && tp[3] <= '7') )
-		{
+		else if ((tp[0] == '\\') &&
+				 (tp[1] >= '0' && tp[1] <= '3') &&
+				 (tp[2] >= '0' && tp[2] <= '7') &&
+				 (tp[3] >= '0' && tp[3] <= '7'))
 			tp += 4;
-		}
-		else if ( (tp[0] == '\\') &&
-				(tp[1] == '\\') )
-		{
+		else if ((tp[0] == '\\') &&
+				 (tp[1] == '\\'))
 			tp += 2;
-		}
 		else
 		{
 			/*
@@ -87,13 +81,11 @@ byteain(PG_FUNCTION_ARGS)
 	while (*tp != '\0')
 	{
 		if (tp[0] != '\\')
-		{
 			*rp++ = *tp++;
-		}
-		else if	( (tp[0] == '\\') &&
-					(tp[1] >= '0' && tp[1] <= '3') &&
-					(tp[2] >= '0' && tp[2] <= '7') &&
-					(tp[3] >= '0' && tp[3] <= '7') )
+		else if ((tp[0] == '\\') &&
+				 (tp[1] >= '0' && tp[1] <= '3') &&
+				 (tp[2] >= '0' && tp[2] <= '7') &&
+				 (tp[3] >= '0' && tp[3] <= '7'))
 		{
 			byte = VAL(tp[1]);
 			byte <<= 3;
@@ -102,8 +94,8 @@ byteain(PG_FUNCTION_ARGS)
 			*rp++ = byte + VAL(tp[3]);
 			tp += 4;
 		}
-		else if ( (tp[0] == '\\') &&
-				(tp[1] == '\\') )
+		else if ((tp[0] == '\\') &&
+				 (tp[1] == '\\'))
 		{
 			*rp++ = '\\';
 			tp += 2;
@@ -111,8 +103,8 @@ byteain(PG_FUNCTION_ARGS)
 		else
 		{
 			/*
-			 * We should never get here. The first pass should
-			 * not allow it.
+			 * We should never get here. The first pass should not allow
+			 * it.
 			 */
 			elog(ERROR, "Bad input string for type bytea");
 		}
@@ -188,15 +180,16 @@ textin(PG_FUNCTION_ARGS)
 	char	   *inputText = PG_GETARG_CSTRING(0);
 	text	   *result;
 	int			len;
+
 #ifdef MULTIBYTE
-	char	*ermsg;
+	char	   *ermsg;
 #endif
 
 	len = strlen(inputText) + VARHDRSZ;
 
 #ifdef MULTIBYTE
 	if ((ermsg = pg_verifymbstr(inputText, len - VARHDRSZ)))
-	    elog(ERROR,"%s",ermsg);
+		elog(ERROR, "%s", ermsg);
 #endif
 
 	result = (text *) palloc(len);
@@ -368,7 +361,6 @@ text_substr(PG_FUNCTION_ARGS)
 #ifdef MULTIBYTE
 	int			i;
 	char	   *p;
-
 #endif
 
 	len = VARSIZE(string) - VARHDRSZ;
@@ -442,7 +434,6 @@ textpos(PG_FUNCTION_ARGS)
 #ifdef MULTIBYTE
 	pg_wchar   *ps1,
 			   *ps2;
-
 #endif
 
 	if (VARSIZE(t2) <= VARHDRSZ)
@@ -819,8 +810,8 @@ byteapos(PG_FUNCTION_ARGS)
 				p;
 	int			len1,
 				len2;
-	char		*p1,
-				*p2;
+	char	   *p1,
+			   *p2;
 
 	if (VARSIZE(t2) <= VARHDRSZ)
 		PG_RETURN_INT32(1);		/* result for empty pattern */
@@ -1072,8 +1063,8 @@ name_text(PG_FUNCTION_ARGS)
 Datum
 byteaeq(PG_FUNCTION_ARGS)
 {
-	bytea	    *arg1 = PG_GETARG_BYTEA_P(0);
-	bytea   	*arg2 = PG_GETARG_BYTEA_P(1);
+	bytea	   *arg1 = PG_GETARG_BYTEA_P(0);
+	bytea	   *arg2 = PG_GETARG_BYTEA_P(1);
 	int			len1,
 				len2;
 	bool		result;
@@ -1096,8 +1087,8 @@ byteaeq(PG_FUNCTION_ARGS)
 Datum
 byteane(PG_FUNCTION_ARGS)
 {
-	bytea		*arg1 = PG_GETARG_BYTEA_P(0);
-	bytea		*arg2 = PG_GETARG_BYTEA_P(1);
+	bytea	   *arg1 = PG_GETARG_BYTEA_P(0);
+	bytea	   *arg2 = PG_GETARG_BYTEA_P(1);
 	int			len1,
 				len2;
 	bool		result;
@@ -1120,8 +1111,8 @@ byteane(PG_FUNCTION_ARGS)
 Datum
 bytealt(PG_FUNCTION_ARGS)
 {
-	bytea		*arg1 = PG_GETARG_BYTEA_P(0);
-	bytea		*arg2 = PG_GETARG_BYTEA_P(1);
+	bytea	   *arg1 = PG_GETARG_BYTEA_P(0);
+	bytea	   *arg2 = PG_GETARG_BYTEA_P(1);
 	int			len1,
 				len2;
 	int			cmp;
@@ -1140,8 +1131,8 @@ bytealt(PG_FUNCTION_ARGS)
 Datum
 byteale(PG_FUNCTION_ARGS)
 {
-	bytea		*arg1 = PG_GETARG_BYTEA_P(0);
-	bytea		*arg2 = PG_GETARG_BYTEA_P(1);
+	bytea	   *arg1 = PG_GETARG_BYTEA_P(0);
+	bytea	   *arg2 = PG_GETARG_BYTEA_P(1);
 	int			len1,
 				len2;
 	int			cmp;
@@ -1160,8 +1151,8 @@ byteale(PG_FUNCTION_ARGS)
 Datum
 byteagt(PG_FUNCTION_ARGS)
 {
-	bytea		*arg1 = PG_GETARG_BYTEA_P(0);
-	bytea		*arg2 = PG_GETARG_BYTEA_P(1);
+	bytea	   *arg1 = PG_GETARG_BYTEA_P(0);
+	bytea	   *arg2 = PG_GETARG_BYTEA_P(1);
 	int			len1,
 				len2;
 	int			cmp;
@@ -1180,8 +1171,8 @@ byteagt(PG_FUNCTION_ARGS)
 Datum
 byteage(PG_FUNCTION_ARGS)
 {
-	bytea		*arg1 = PG_GETARG_BYTEA_P(0);
-	bytea		*arg2 = PG_GETARG_BYTEA_P(1);
+	bytea	   *arg1 = PG_GETARG_BYTEA_P(0);
+	bytea	   *arg2 = PG_GETARG_BYTEA_P(1);
 	int			len1,
 				len2;
 	int			cmp;
@@ -1200,8 +1191,8 @@ byteage(PG_FUNCTION_ARGS)
 Datum
 byteacmp(PG_FUNCTION_ARGS)
 {
-	bytea		*arg1 = PG_GETARG_BYTEA_P(0);
-	bytea		*arg2 = PG_GETARG_BYTEA_P(1);
+	bytea	   *arg1 = PG_GETARG_BYTEA_P(0);
+	bytea	   *arg2 = PG_GETARG_BYTEA_P(1);
 	int			len1,
 				len2;
 	int			cmp;

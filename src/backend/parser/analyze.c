@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.203 2001/10/23 17:39:02 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.204 2001/10/25 05:49:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,15 +77,15 @@ static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt);
 static Query *transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt);
 static void transformColumnDefinition(ParseState *pstate,
-									  CreateStmtContext *cxt,
-									  ColumnDef *column);
+						  CreateStmtContext *cxt,
+						  ColumnDef *column);
 static void transformTableConstraint(ParseState *pstate,
-									 CreateStmtContext *cxt,
-									 Constraint *constraint);
+						 CreateStmtContext *cxt,
+						 Constraint *constraint);
 static void transformIndexConstraints(ParseState *pstate,
-									  CreateStmtContext *cxt);
+						  CreateStmtContext *cxt);
 static void transformFKConstraints(ParseState *pstate,
-								   CreateStmtContext *cxt);
+					   CreateStmtContext *cxt);
 static Node *transformTypeRefs(ParseState *pstate, Node *stmt);
 
 static void transformTypeRefsList(ParseState *pstate, List *l);
@@ -97,7 +97,7 @@ static void transformColumnType(ParseState *pstate, ColumnDef *column);
 static void transformFkeyCheckAttrs(FkConstraint *fkconstraint, Oid *pktypoid);
 static void transformFkeyGetPrimaryKey(FkConstraint *fkconstraint, Oid *pktypoid);
 static bool relationHasPrimaryKey(char *relname);
-static Oid transformFkeyGetColType(CreateStmtContext *cxt, char *colname);
+static Oid	transformFkeyGetColType(CreateStmtContext *cxt, char *colname);
 static void release_pstate_resources(ParseState *pstate);
 static FromExpr *makeFromExpr(List *fromlist, Node *quals);
 
@@ -170,7 +170,6 @@ transformStmt(ParseState *pstate, Node *parseTree)
 
 	switch (nodeTag(parseTree))
 	{
-
 			/*
 			 * Non-optimizable statements
 			 */
@@ -197,8 +196,8 @@ transformStmt(ParseState *pstate, Node *parseTree)
 				 * insert these into the actual query tree. - thomas
 				 * 2000-03-08
 				 *
-				 * Outer loop is over targetlist to make it easier to
-				 * skip junk targetlist entries.
+				 * Outer loop is over targetlist to make it easier to skip
+				 * junk targetlist entries.
 				 */
 				if (n->aliases != NIL)
 				{
@@ -214,14 +213,15 @@ transformStmt(ParseState *pstate, Node *parseTree)
 						Assert(IsA(te, TargetEntry));
 						rd = te->resdom;
 						Assert(IsA(rd, Resdom));
-						if (rd->resjunk) /* junk columns don't get aliases */
+						if (rd->resjunk)		/* junk columns don't get
+												 * aliases */
 							continue;
 						id = (Ident *) lfirst(aliaslist);
 						Assert(IsA(id, Ident));
 						rd->resname = pstrdup(id->name);
 						aliaslist = lnext(aliaslist);
 						if (aliaslist == NIL)
-							break; /* done assigning aliases */
+							break;		/* done assigning aliases */
 					}
 
 					if (aliaslist != NIL)
@@ -466,7 +466,6 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	}
 	else
 	{
-
 		/*
 		 * For INSERT ... VALUES, transform the given list of values to
 		 * form a targetlist for the INSERT.
@@ -548,7 +547,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 			te = makeTargetEntry(makeResdom(attrno,
 											thisatt->atttypid,
 											thisatt->atttypmod,
-											pstrdup(NameStr(thisatt->attname)),
+									  pstrdup(NameStr(thisatt->attname)),
 											false),
 								 stringToNode(defval[ndef].adbin));
 			qry->targetList = lappend(qry->targetList, te);
@@ -828,16 +827,16 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		CreateSeqStmt *sequence;
 
 		/*
-		 * Create appropriate constraints for SERIAL.  We do
-		 * this in full, rather than shortcutting, so that we
-		 * will detect any conflicting constraints the user
-		 * wrote (like a different DEFAULT).
+		 * Create appropriate constraints for SERIAL.  We do this in full,
+		 * rather than shortcutting, so that we will detect any
+		 * conflicting constraints the user wrote (like a different
+		 * DEFAULT).
 		 */
 		sname = makeObjectName(cxt->relname, column->colname, "seq");
 
 		/*
-		 * Create an expression tree representing the function
-		 * call  nextval('"sequencename"')
+		 * Create an expression tree representing the function call
+		 * nextval('"sequencename"')
 		 */
 		qstring = palloc(strlen(sname) + 2 + 1);
 		sprintf(qstring, "\"%s\"", sname);
@@ -860,7 +859,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 
 		constraint = makeNode(Constraint);
 		constraint->contype = CONSTR_UNIQUE;
-		constraint->name = NULL;	/* assign later */
+		constraint->name = NULL;		/* assign later */
 		column->constraints = lappend(column->constraints, constraint);
 
 		constraint = makeNode(Constraint);
@@ -868,9 +867,9 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		column->constraints = lappend(column->constraints, constraint);
 
 		/*
-		 * Build a CREATE SEQUENCE command to create the
-		 * sequence object, and add it to the list of things
-		 * to be done before this CREATE/ALTER TABLE.
+		 * Build a CREATE SEQUENCE command to create the sequence object,
+		 * and add it to the list of things to be done before this
+		 * CREATE/ALTER TABLE.
 		 */
 		sequence = makeNode(CreateSeqStmt);
 		sequence->seqname = pstrdup(sname);
@@ -878,7 +877,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		sequence->options = NIL;
 
 		elog(NOTICE, "%s will create implicit sequence '%s' for SERIAL column '%s.%s'",
-			 cxt->stmtType, sequence->seqname, cxt->relname, column->colname);
+		cxt->stmtType, sequence->seqname, cxt->relname, column->colname);
 
 		cxt->blist = lappend(cxt->blist, sequence);
 	}
@@ -893,10 +892,9 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		constraint = lfirst(clist);
 
 		/*
-		 * If this column constraint is a FOREIGN KEY
-		 * constraint, then we fill in the current attributes
-		 * name and throw it into the list of FK constraints
-		 * to be processed later.
+		 * If this column constraint is a FOREIGN KEY constraint, then we
+		 * fill in the current attributes name and throw it into the list
+		 * of FK constraints to be processed later.
 		 */
 		if (IsA(constraint, FkConstraint))
 		{
@@ -1041,9 +1039,9 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 	List	   *indexlist = NIL;
 
 	/*
-	 * Run through the constraints that need to generate an index.
-	 * For PRIMARY KEY, mark each column as NOT NULL and create an index.
-	 * For UNIQUE, create an index as for PRIMARY KEY, but do not insist on
+	 * Run through the constraints that need to generate an index. For
+	 * PRIMARY KEY, mark each column as NOT NULL and create an index. For
+	 * UNIQUE, create an index as for PRIMARY KEY, but do not insist on
 	 * NOT NULL.
 	 */
 	foreach(listptr, cxt->ixconstraints)
@@ -1083,8 +1081,8 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		index->whereClause = NULL;
 
 		/*
-		 * Make sure referenced keys exist.  If we are making a
-		 * PRIMARY KEY index, also make sure they are NOT NULL.
+		 * Make sure referenced keys exist.  If we are making a PRIMARY
+		 * KEY index, also make sure they are NOT NULL.
 		 */
 		foreach(keys, constraint->keys)
 		{
@@ -1112,9 +1110,9 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 			else if (SystemAttributeByName(key->name, cxt->hasoids) != NULL)
 			{
 				/*
-				 * column will be a system column in the new table,
-				 * so accept it.  System columns can't ever be null,
-				 * so no need to worry about PRIMARY/NOT NULL constraint.
+				 * column will be a system column in the new table, so
+				 * accept it.  System columns can't ever be null, so no
+				 * need to worry about PRIMARY/NOT NULL constraint.
 				 */
 				found = true;
 			}
@@ -1181,6 +1179,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 				if (HeapTupleIsValid(atttuple))
 				{
 					found = true;
+
 					/*
 					 * We require pre-existing column to be already marked
 					 * NOT NULL.
@@ -1275,8 +1274,8 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 	 * Finally, select unique names for all not-previously-named indices,
 	 * and display notice messages.
 	 *
-	 * XXX in ALTER TABLE case, we fail to consider name collisions
-	 * against pre-existing indexes.
+	 * XXX in ALTER TABLE case, we fail to consider name collisions against
+	 * pre-existing indexes.
 	 */
 	foreach(indexlist, cxt->alist)
 	{
@@ -1307,9 +1306,9 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 	List	   *fk_attr;
 	List	   *pk_attr;
 	Ident	   *id;
-	Oid	   pktypoid[INDEX_MAX_KEYS];
-	Oid	   fktypoid[INDEX_MAX_KEYS];
-	int	   i;
+	Oid			pktypoid[INDEX_MAX_KEYS];
+	Oid			fktypoid[INDEX_MAX_KEYS];
+	int			i;
 
 	if (cxt->fkconstraints == NIL)
 		return;
@@ -1320,7 +1319,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 	foreach(fkclist, cxt->fkconstraints)
 	{
 		FkConstraint *fkconstraint = (FkConstraint *) lfirst(fkclist);
-		int	   attnum;
+		int			attnum;
 		List	   *fkattrs;
 
 		/*
@@ -1329,12 +1328,12 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		if (fkconstraint->constr_name == NULL)
 			fkconstraint->constr_name = "<unnamed>";
 
-		for (attnum=0; attnum<INDEX_MAX_KEYS; attnum++)
+		for (attnum = 0; attnum < INDEX_MAX_KEYS; attnum++)
 			pktypoid[attnum] = fktypoid[attnum] = InvalidOid;
 
 		/*
-		 * Look up the referencing attributes to make sure they exist
-		 * (or will exist) in this table, and remember their type OIDs.
+		 * Look up the referencing attributes to make sure they exist (or
+		 * will exist) in this table, and remember their type OIDs.
 		 */
 		attnum = 0;
 		foreach(fkattrs, fkconstraint->fk_attrs)
@@ -1361,7 +1360,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 				/* Use the to-be-created primary key */
 				List	   *attr;
 
-				attnum=0;
+				attnum = 0;
 				foreach(attr, cxt->pkey->indexParams)
 				{
 					IndexElem  *ielem = lfirst(attr);
@@ -1376,7 +1375,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 						elog(ERROR, "Can only have %d keys in a foreign key",
 							 INDEX_MAX_KEYS);
 					pktypoid[attnum++] = transformFkeyGetColType(cxt,
-																 ielem->name);
+															ielem->name);
 				}
 			}
 			else
@@ -1410,7 +1409,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 					if (length(ind->indexParams) !=
 						length(fkconstraint->pk_attrs))
 						continue;
-					attnum=0;
+					attnum = 0;
 					foreach(pkattrs, fkconstraint->pk_attrs)
 					{
 						Ident	   *pkattr = lfirst(pkattrs);
@@ -1433,14 +1432,17 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 							elog(ERROR, "Can only have %d keys in a foreign key",
 								 INDEX_MAX_KEYS);
 						pktypoid[attnum++] = transformFkeyGetColType(cxt,
-																	 pkattr->name);
+														   pkattr->name);
 					}
 					if (found)
 						break;
 				}
 				if (!found)
 				{
-					/* In ALTER TABLE case, such an index may already exist */
+					/*
+					 * In ALTER TABLE case, such an index may already
+					 * exist
+					 */
 					if (OidIsValid(cxt->relOid))
 						transformFkeyCheckAttrs(fkconstraint, pktypoid);
 					else
@@ -1454,12 +1456,13 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		for (i = 0; i < INDEX_MAX_KEYS && fktypoid[i] != 0; i++)
 		{
 			/*
-			 * fktypoid[i] is the foreign key table's i'th element's type oid
-			 * pktypoid[i] is the primary key table's i'th element's type oid
-			 * We let oper() do our work for us, including elog(ERROR) if the
-			 * types don't compare with =
+			 * fktypoid[i] is the foreign key table's i'th element's type
+			 * oid pktypoid[i] is the primary key table's i'th element's
+			 * type oid We let oper() do our work for us, including
+			 * elog(ERROR) if the types don't compare with =
 			 */
-			Operator o=oper("=", fktypoid[i], pktypoid[i], false);
+			Operator	o = oper("=", fktypoid[i], pktypoid[i], false);
+
 			ReleaseSysCache(o);
 		}
 
@@ -1492,7 +1495,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		fk_trigger->args = lappend(fk_trigger->args,
 								   makeString(cxt->relname));
 		fk_trigger->args = lappend(fk_trigger->args,
-								   makeString(fkconstraint->pktable_name));
+								 makeString(fkconstraint->pktable_name));
 		fk_trigger->args = lappend(fk_trigger->args,
 								   makeString(fkconstraint->match_type));
 		fk_attr = fkconstraint->fk_attrs;
@@ -1519,8 +1522,8 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		fkactions = lappend(fkactions, (Node *) fk_trigger);
 
 		/*
-		 * Build a CREATE CONSTRAINT TRIGGER statement for the ON
-		 * DELETE action fired on the PK table !!!
+		 * Build a CREATE CONSTRAINT TRIGGER statement for the ON DELETE
+		 * action fired on the PK table !!!
 		 */
 		fk_trigger = (CreateTrigStmt *) makeNode(CreateTrigStmt);
 		fk_trigger->trigname = fkconstraint->constr_name;
@@ -1569,7 +1572,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		fk_trigger->args = lappend(fk_trigger->args,
 								   makeString(cxt->relname));
 		fk_trigger->args = lappend(fk_trigger->args,
-								   makeString(fkconstraint->pktable_name));
+								 makeString(fkconstraint->pktable_name));
 		fk_trigger->args = lappend(fk_trigger->args,
 								   makeString(fkconstraint->match_type));
 		fk_attr = fkconstraint->fk_attrs;
@@ -1591,8 +1594,8 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		fkactions = lappend(fkactions, (Node *) fk_trigger);
 
 		/*
-		 * Build a CREATE CONSTRAINT TRIGGER statement for the ON
-		 * UPDATE action fired on the PK table !!!
+		 * Build a CREATE CONSTRAINT TRIGGER statement for the ON UPDATE
+		 * action fired on the PK table !!!
 		 */
 		fk_trigger = (CreateTrigStmt *) makeNode(CreateTrigStmt);
 		fk_trigger->trigname = fkconstraint->constr_name;
@@ -1641,7 +1644,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		fk_trigger->args = lappend(fk_trigger->args,
 								   makeString(cxt->relname));
 		fk_trigger->args = lappend(fk_trigger->args,
-								   makeString(fkconstraint->pktable_name));
+								 makeString(fkconstraint->pktable_name));
 		fk_trigger->args = lappend(fk_trigger->args,
 								   makeString(fkconstraint->match_type));
 		fk_attr = fkconstraint->fk_attrs;
@@ -1664,9 +1667,9 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 	}
 
 	/*
-	 * Attach completed list of extra actions to cxt->alist.  We cannot
-	 * do this earlier, because we assume above that cxt->alist still
-	 * holds only IndexStmts.
+	 * Attach completed list of extra actions to cxt->alist.  We cannot do
+	 * this earlier, because we assume above that cxt->alist still holds
+	 * only IndexStmts.
 	 */
 	cxt->alist = nconc(cxt->alist, fkactions);
 }
@@ -1688,11 +1691,11 @@ transformIndexStmt(ParseState *pstate, IndexStmt *stmt)
 	if (stmt->whereClause)
 	{
 		/*
-		 * Put the parent table into the rtable so that the WHERE clause can
-		 * refer to its fields without qualification.  Note that this only
-		 * works if the parent table already exists --- so we can't easily
-		 * support predicates on indexes created implicitly by CREATE TABLE.
-		 * Fortunately, that's not necessary.
+		 * Put the parent table into the rtable so that the WHERE clause
+		 * can refer to its fields without qualification.  Note that this
+		 * only works if the parent table already exists --- so we can't
+		 * easily support predicates on indexes created implicitly by
+		 * CREATE TABLE. Fortunately, that's not necessary.
 		 */
 		rte = addRangeTableEntry(pstate, stmt->relname, NULL, false, true);
 
@@ -1849,8 +1852,8 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 
 			/*
 			 * We cannot support utility-statement actions (eg NOTIFY)
-			 * with nonempty rule WHERE conditions, because there's no
-			 * way to make the utility action execute conditionally.
+			 * with nonempty rule WHERE conditions, because there's no way
+			 * to make the utility action execute conditionally.
 			 */
 			if (top_subqry->commandType == CMD_UTILITY &&
 				stmt->whereClause != NULL)
@@ -2041,7 +2044,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
  * The tree of set operations is converted into the setOperations field of
  * the top-level Query.
  */
-static Query *transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
+static Query *
+transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
 	SelectStmt *leftmostSelect;
@@ -2481,7 +2485,6 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 
 		if (resnode->resjunk)
 		{
-
 			/*
 			 * Resjunk nodes need no additional processing, but be sure
 			 * they have names and resnos that do not match any target
@@ -2518,7 +2521,7 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt)
 
 	/*
 	 * The only subtypes that currently require parse transformation
-	 * handling are 'A'dd column and Add 'C'onstraint.  These largely
+	 * handling are 'A'dd column and Add 'C'onstraint.	These largely
 	 * re-use code from CREATE TABLE.
 	 */
 	switch (stmt->subtype)
@@ -2532,8 +2535,8 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt)
 										PointerGetDatum(stmt->relname),
 										0, 0, 0);
 			cxt.hasoids = SearchSysCacheExists(ATTNUM,
-											   ObjectIdGetDatum(cxt.relOid),
-											   Int16GetDatum(ObjectIdAttributeNumber),
+											ObjectIdGetDatum(cxt.relOid),
+								  Int16GetDatum(ObjectIdAttributeNumber),
 											   0, 0);
 			cxt.columns = NIL;
 			cxt.ckconstraints = NIL;
@@ -2564,8 +2567,8 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt)
 										PointerGetDatum(stmt->relname),
 										0, 0, 0);
 			cxt.hasoids = SearchSysCacheExists(ATTNUM,
-											   ObjectIdGetDatum(cxt.relOid),
-											   Int16GetDatum(ObjectIdAttributeNumber),
+											ObjectIdGetDatum(cxt.relOid),
+								  Int16GetDatum(ObjectIdAttributeNumber),
 											   0, 0);
 			cxt.columns = NIL;
 			cxt.ckconstraints = NIL;
@@ -2612,48 +2615,46 @@ transformTypeRefs(ParseState *pstate, Node *stmt)
 	switch (nodeTag(stmt))
 	{
 		case T_ProcedureStmt:
-		{
-			ProcedureStmt  *ps = (ProcedureStmt *) stmt;
+			{
+				ProcedureStmt *ps = (ProcedureStmt *) stmt;
 
-			transformTypeRefsList(pstate, ps->argTypes);
-			transformTypeRef(pstate, (TypeName *) ps->returnType);
-			transformTypeRefsList(pstate, ps->withClause);
-		}
-		break;
+				transformTypeRefsList(pstate, ps->argTypes);
+				transformTypeRef(pstate, (TypeName *) ps->returnType);
+				transformTypeRefsList(pstate, ps->withClause);
+			}
+			break;
 
 		case T_CommentStmt:
-		{
-			CommentStmt	   *cs = (CommentStmt *) stmt;
+			{
+				CommentStmt *cs = (CommentStmt *) stmt;
 
-			transformTypeRefsList(pstate, cs->objlist);
-		}
-		break;
+				transformTypeRefsList(pstate, cs->objlist);
+			}
+			break;
 
 		case T_RemoveFuncStmt:
-		{
-			RemoveFuncStmt *rs = (RemoveFuncStmt *) stmt;
+			{
+				RemoveFuncStmt *rs = (RemoveFuncStmt *) stmt;
 
-			transformTypeRefsList(pstate, rs->args);
-		}
-		break;
+				transformTypeRefsList(pstate, rs->args);
+			}
+			break;
 
 		case T_DefineStmt:
-		{
-			DefineStmt *ds = (DefineStmt *) stmt;
-			List	   *ele;
-
-			foreach(ele, ds->definition)
 			{
-				DefElem	   *de = (DefElem *) lfirst(ele);
+				DefineStmt *ds = (DefineStmt *) stmt;
+				List	   *ele;
 
-				if (de->arg != NULL
-					&& IsA(de->arg, TypeName))
+				foreach(ele, ds->definition)
 				{
-					transformTypeRef(pstate, (TypeName *) de->arg);
+					DefElem    *de = (DefElem *) lfirst(ele);
+
+					if (de->arg != NULL
+						&& IsA(de->arg, TypeName))
+						transformTypeRef(pstate, (TypeName *) de->arg);
 				}
 			}
-		}
-		break;
+			break;
 
 		default:
 			elog(ERROR, "Unsupported type %d in transformTypeRefs",
@@ -2674,7 +2675,7 @@ transformTypeRefsList(ParseState *pstate, List *l)
 
 	foreach(ele, l)
 	{
-		Node   *elem = lfirst(ele);
+		Node	   *elem = lfirst(ele);
 
 		if (elem && IsA(elem, TypeName))
 			transformTypeRef(pstate, (TypeName *) elem);
@@ -2687,16 +2688,16 @@ transformTypeRefsList(ParseState *pstate, List *l)
 static void
 transformTypeRef(ParseState *pstate, TypeName *tn)
 {
-	Attr   *att;
-	Node   *n;
-	Var	   *v;
-	char   *tyn;
+	Attr	   *att;
+	Node	   *n;
+	Var		   *v;
+	char	   *tyn;
 
 	if (tn->attrname == NULL)
 		return;
 	att = makeAttr(tn->name, tn->attrname);
 	n = transformExpr(pstate, (Node *) att, EXPR_COLUMN_FIRST);
-	if (! IsA(n, Var))
+	if (!IsA(n, Var))
 		elog(ERROR, "unsupported expression in %%TYPE");
 	v = (Var *) n;
 	tyn = typeidTypeName(v->vartype);
@@ -2841,7 +2842,7 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint, Oid *pktypoid)
 			{
 				/* go through the fkconstraint->pk_attrs list */
 				List	   *attrl;
-				int	   attnum = 0;
+				int			attnum = 0;
 
 				foreach(attrl, fkconstraint->pk_attrs)
 				{
@@ -2893,7 +2894,7 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint, Oid *pktypoid)
 	HeapTuple	indexTuple = NULL;
 	Form_pg_index indexStruct = NULL;
 	int			i;
-	int		attnum=0;
+	int			attnum = 0;
 
 	/*
 	 * Open the referenced table
@@ -3022,7 +3023,7 @@ transformFkeyGetColType(CreateStmtContext *cxt, char *colname)
 
 		if (strcmp(col->colname, colname) == 0)
 		{
-			char *buff = TypeNameToInternalName(col->typename);
+			char	   *buff = TypeNameToInternalName(col->typename);
 
 			result = typenameTypeId(buff);
 			if (!OidIsValid(result))
@@ -3231,7 +3232,6 @@ transformColumnType(ParseState *pstate, ColumnDef *column)
 	 */
 	if (typeTypeRelid(ctype) != InvalidOid)
 	{
-
 		/*
 		 * (Eventually add in here that the set can only contain one
 		 * element.)

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.27 2001/09/18 01:59:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.28 2001/10/25 05:49:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -267,9 +267,9 @@ ExecProcNode(Plan *node, Plan *parent)
 
 	switch (nodeTag(node))
 	{
-		/*
-		 * control nodes
-		 */
+			/*
+			 * control nodes
+			 */
 		case T_Result:
 			result = ExecResult((Result *) node);
 			break;
@@ -473,9 +473,9 @@ ExecEndNode(Plan *node, Plan *parent)
 
 	switch (nodeTag(node))
 	{
-		/*
-		 * control nodes
-		 */
+			/*
+			 * control nodes
+			 */
 		case T_Result:
 			ExecEndResult((Result *) node);
 			break;

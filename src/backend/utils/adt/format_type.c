@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.20 2001/10/23 20:12:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.21 2001/10/25 05:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -216,8 +216,8 @@ format_type_internal(Oid type_oid, int32 typemod, bool allow_invalid)
 		case INTERVALOID:
 			if (with_typemod)
 			{
-				int	fields = typemod >> 16;
-				int precision = typemod & 0xFFFF;
+				int			fields = typemod >> 16;
+				int			precision = typemod & 0xFFFF;
 				const char *fieldstr;
 
 				switch (fields)

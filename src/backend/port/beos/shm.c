@@ -48,7 +48,6 @@ shmat(int memId, int m1, int m2)
 
 	if (ainfo.team == teinfo.team)
 	{
-
 		/*
 		 * the area is already in our address space, just return the
 		 * address
@@ -57,7 +56,6 @@ shmat(int memId, int m1, int m2)
 	}
 	else
 	{
-
 		/*
 		 * the area is not in our address space, clone it before and
 		 * return the address

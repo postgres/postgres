@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.36 2001/06/12 16:34:27 momjian Exp $
+ * $Id: acl.h,v 1.37 2001/10/25 05:50:10 momjian Exp $
  *
  * NOTES
  *	  For backward-compatibility purposes we have to allow there
@@ -149,13 +149,14 @@ typedef ArrayType IdList;
 #define ACL_MODECHG_ADD_CHR		'+'
 #define ACL_MODECHG_DEL_CHR		'-'
 #define ACL_MODECHG_EQL_CHR		'='
-#define ACL_MODE_STR			"arwdRxt"	/* list of valid characters */
-#define ACL_MODE_INSERT_CHR		'a'	/* formerly known as "append" */
-#define ACL_MODE_SELECT_CHR		'r'	/* formerly known as "read" */
-#define ACL_MODE_UPDATE_CHR		'w'	/* formerly known as "write" */
+#define ACL_MODE_STR			"arwdRxt"		/* list of valid
+												 * characters */
+#define ACL_MODE_INSERT_CHR		'a'		/* formerly known as "append" */
+#define ACL_MODE_SELECT_CHR		'r'		/* formerly known as "read" */
+#define ACL_MODE_UPDATE_CHR		'w'		/* formerly known as "write" */
 #define ACL_MODE_DELETE_CHR		'd'
 #define ACL_MODE_RULE_CHR		'R'
-#define ACL_MODE_REFERENCES_CHR	'x'
+#define ACL_MODE_REFERENCES_CHR 'x'
 #define ACL_MODE_TRIGGER_CHR	't'
 
 /* result codes for pg_aclcheck */
@@ -203,8 +204,7 @@ extern int32 pg_aclcheck(char *relname, Oid userid, AclMode mode);
 extern bool pg_ownercheck(Oid userid, const char *name, int cacheid);
 extern bool pg_oper_ownercheck(Oid userid, Oid oprid);
 extern bool pg_func_ownercheck(Oid userid, char *funcname,
-							   int nargs, Oid *arglist);
+				   int nargs, Oid *arglist);
 extern bool pg_aggr_ownercheck(Oid userid, char *aggname,
-							   Oid basetypeID);
-
+				   Oid basetypeID);
 #endif	 /* ACL_H */

@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.66 2001/09/18 01:59:06 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.67 2001/10/25 05:49:25 momjian Exp $
  *
  */
 
@@ -114,8 +114,8 @@ ExplainOneQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
 		struct timeval endtime;
 
 		/*
-		 * Set up the instrumentation for the top node.
-		 * This will cascade during plan initialisation
+		 * Set up the instrumentation for the top node. This will cascade
+		 * during plan initialisation
 		 */
 		plan->instrument = InstrAlloc();
 
@@ -124,7 +124,7 @@ ExplainOneQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
 		CommandCounterIncrement();
 		gettimeofday(&endtime, NULL);
 
-		endtime.tv_sec  -= starttime.tv_sec;
+		endtime.tv_sec -= starttime.tv_sec;
 		endtime.tv_usec -= starttime.tv_usec;
 		while (endtime.tv_usec < 0)
 		{
@@ -328,9 +328,9 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 						 plan->startup_cost, plan->total_cost,
 						 plan->plan_rows, plan->plan_width);
 
-		if ( plan->instrument && plan->instrument->nloops > 0 )
+		if (plan->instrument && plan->instrument->nloops > 0)
 		{
-			double nloops = plan->instrument->nloops;
+			double		nloops = plan->instrument->nloops;
 
 			appendStringInfo(str, " (actual time=%.2f..%.2f rows=%.0f loops=%.0f)",
 							 1000.0 * plan->instrument->startup / nloops,
@@ -442,7 +442,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 static StringInfo
 Explain_PlanToString(Plan *plan, ExplainState *es)
 {
-	StringInfo str = makeStringInfo();
+	StringInfo	str = makeStringInfo();
 
 	if (plan != NULL)
 		explain_outNode(str, plan, 0, es);

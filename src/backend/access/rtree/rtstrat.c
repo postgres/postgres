@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtstrat.c,v 1.17 2001/05/30 19:53:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtstrat.c,v 1.18 2001/10/25 05:49:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,7 +163,7 @@ static StrategyExpression RTEvaluationExpressions[RTNStrategies] = {
 	NULL,						/* express overlap */
 	NULL,						/* express overright */
 	NULL,						/* express right */
-	(StrategyExpression) RTEqualExpressionData,	/* express same */
+	(StrategyExpression) RTEqualExpressionData, /* express same */
 	NULL,						/* express contains */
 	NULL						/* express contained-by */
 };
@@ -221,7 +221,6 @@ RelationInvokeRTStrategy(Relation r,
 	return (RelationInvokeStrategy(r, &RTEvaluationData, attnum, s,
 								   left, right));
 }
-
 #endif
 
 RegProcedure

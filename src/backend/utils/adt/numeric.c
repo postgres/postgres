@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.45 2001/10/13 23:32:33 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.46 2001/10/25 05:49:45 momjian Exp $
  *
  * ----------
  */
@@ -193,6 +193,7 @@ Datum
 numeric_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
@@ -440,7 +441,6 @@ numeric_sign(PG_FUNCTION_ARGS)
 		set_var_from_var(&const_zero, &result);
 	else
 	{
-
 		/*
 		 * And if there are some, we return a copy of ONE with the sign of
 		 * our argument
@@ -496,7 +496,6 @@ numeric_round(PG_FUNCTION_ARGS)
 
 	if (i < arg.ndigits)
 	{
-
 		/*
 		 * If i = 0, the value loses all digits, but could round up if its
 		 * first digit is more than 4.	If i < 0 the result must be 0.
@@ -518,7 +517,7 @@ numeric_round(PG_FUNCTION_ARGS)
 
 			if (i < 0)
 			{
-				Assert(i == -1);/* better not have added more than 1 digit */
+				Assert(i == -1);		/* better not have added more than 1 digit */
 				Assert(arg.digits > arg.buf);
 				arg.digits--;
 				arg.ndigits++;
@@ -781,9 +780,9 @@ cmp_numerics(Numeric num1, Numeric num2)
 	int			result;
 
 	/*
-	 * We consider all NANs to be equal and larger than any non-NAN.
-	 * This is somewhat arbitrary; the important thing is to have a
-	 * consistent sort order.
+	 * We consider all NANs to be equal and larger than any non-NAN. This
+	 * is somewhat arbitrary; the important thing is to have a consistent
+	 * sort order.
 	 */
 	if (NUMERIC_IS_NAN(num1))
 	{
@@ -1799,9 +1798,9 @@ numeric_accum(PG_FUNCTION_ARGS)
 
 /*
  * Integer data types all use Numeric accumulators to share code and
- * avoid risk of overflow.  For int2 and int4 inputs, Numeric accumulation
+ * avoid risk of overflow.	For int2 and int4 inputs, Numeric accumulation
  * is overkill for the N and sum(X) values, but definitely not overkill
- * for the sum(X*X) value.  Hence, we use int2_accum and int4_accum only
+ * for the sum(X*X) value.	Hence, we use int2_accum and int4_accum only
  * for stddev/variance --- there are faster special-purpose accumulator
  * routines for SUM and AVG of these datatypes.
  */
@@ -2020,7 +2019,7 @@ numeric_stddev(PG_FUNCTION_ARGS)
  * the initial condition of the transition data value needs to be NULL. This
  * means we can't rely on ExecAgg to automatically insert the first non-null
  * data value into the transition data: it doesn't know how to do the type
- * conversion.  The upshot is that these routines have to be marked non-strict
+ * conversion.	The upshot is that these routines have to be marked non-strict
  * and handle substitution of the first non-null input themselves.
  */
 
@@ -2269,7 +2268,6 @@ dump_var(char *str, NumericVar *var)
 
 	printf("\n");
 }
-
 #endif	 /* NUMERIC_DEBUG */
 
 
@@ -2795,7 +2793,6 @@ cmp_var(NumericVar *var1, NumericVar *var2)
 static void
 add_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 {
-
 	/*
 	 * Decide on the signs of the two variables what to do
 	 */
@@ -2803,7 +2800,6 @@ add_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	{
 		if (var2->sign == NUMERIC_POS)
 		{
-
 			/*
 			 * Both are positive result = +(ABS(var1) + ABS(var2))
 			 */
@@ -2812,7 +2808,6 @@ add_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 		}
 		else
 		{
-
 			/*
 			 * var1 is positive, var2 is negative Must compare absolute
 			 * values
@@ -2919,7 +2914,6 @@ add_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 static void
 sub_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 {
-
 	/*
 	 * Decide on the signs of the two variables what to do
 	 */

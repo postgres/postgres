@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/beos.c,v 1.8 2001/08/07 16:56:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/beos.c,v 1.9 2001/10/25 05:49:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ pg_dlsym(void *handle, char *funcname)
 	/* Checking that "Handle" is valid */
 	if ((handle) && ((*(int *) (handle)) >= 0))
 	{
-		beos_dl_sym(*((int *) (handle)),funcname,(void **) &fpt);
+		beos_dl_sym(*((int *) (handle)), funcname, (void **) &fpt);
 		return fpt;
 	}
 	elog(NOTICE, "add-on not loaded correctly");

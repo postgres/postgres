@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: mhash.c,v 1.4 2001/08/21 00:42:41 momjian Exp $
+ * $Id: mhash.c,v 1.5 2001/10/25 05:49:19 momjian Exp $
  */
 
 #include <postgres.h>
@@ -75,7 +75,7 @@ digest_reset(PX_MD * h)
 }
 
 static void
-digest_update(PX_MD * h, const uint8 * data, uint dlen)
+digest_update(PX_MD * h, const uint8 *data, uint dlen)
 {
 	MHASH		mh = (MHASH) h->p.ptr;
 
@@ -83,7 +83,7 @@ digest_update(PX_MD * h, const uint8 * data, uint dlen)
 }
 
 static void
-digest_finish(PX_MD * h, uint8 * dst)
+digest_finish(PX_MD * h, uint8 *dst)
 {
 	MHASH		mh = (MHASH) h->p.ptr;
 	uint		hlen = digest_result_size(h);
@@ -111,34 +111,37 @@ digest_free(PX_MD * h)
 /* ENCRYPT / DECRYPT */
 
 static uint
-cipher_block_size(PX_Cipher *c)
+cipher_block_size(PX_Cipher * c)
 {
-	MCRYPT ctx = (MCRYPT)c->ptr;
+	MCRYPT		ctx = (MCRYPT) c->ptr;
+
 	return mcrypt_enc_get_block_size(ctx);
 }
 
 static uint
-cipher_key_size(PX_Cipher *c)
+cipher_key_size(PX_Cipher * c)
 {
-	MCRYPT ctx = (MCRYPT)c->ptr;
+	MCRYPT		ctx = (MCRYPT) c->ptr;
+
 	return mcrypt_enc_get_key_size(ctx);
 }
 
 static uint
-cipher_iv_size(PX_Cipher *c)
+cipher_iv_size(PX_Cipher * c)
 {
-	MCRYPT ctx = (MCRYPT)c->ptr;
+	MCRYPT		ctx = (MCRYPT) c->ptr;
+
 	return mcrypt_enc_mode_has_iv(ctx)
 		? mcrypt_enc_get_iv_size(ctx) : 0;
 }
 
 static int
-cipher_init(PX_Cipher *c, const uint8 *key, uint klen, const uint8 *iv)
+cipher_init(PX_Cipher * c, const uint8 *key, uint klen, const uint8 *iv)
 {
-	int err;
-	MCRYPT ctx = (MCRYPT)c->ptr;
+	int			err;
+	MCRYPT		ctx = (MCRYPT) c->ptr;
 
-	err = mcrypt_generic_init(ctx, (char *)key, klen, (char*)iv);
+	err = mcrypt_generic_init(ctx, (char *) key, klen, (char *) iv);
 	if (err < 0)
 		elog(ERROR, "mcrypt_generic_init error: %s", mcrypt_strerror(err));
 
@@ -147,10 +150,10 @@ cipher_init(PX_Cipher *c, const uint8 *key, uint klen, const uint8 *iv)
 }
 
 static int
-cipher_encrypt(PX_Cipher *c, const uint8 *data, uint dlen, uint8 *res)
+cipher_encrypt(PX_Cipher * c, const uint8 *data, uint dlen, uint8 *res)
 {
-	int err;
-	MCRYPT ctx = (MCRYPT)c->ptr;
+	int			err;
+	MCRYPT		ctx = (MCRYPT) c->ptr;
 
 	memcpy(res, data, dlen);
 
@@ -161,10 +164,10 @@ cipher_encrypt(PX_Cipher *c, const uint8 *data, uint dlen, uint8 *res)
 }
 
 static int
-cipher_decrypt(PX_Cipher *c, const uint8 *data, uint dlen, uint8 *res)
+cipher_decrypt(PX_Cipher * c, const uint8 *data, uint dlen, uint8 *res)
 {
-	int err;
-	MCRYPT ctx = (MCRYPT)c->ptr;
+	int			err;
+	MCRYPT		ctx = (MCRYPT) c->ptr;
 
 	memcpy(res, data, dlen);
 
@@ -176,15 +179,15 @@ cipher_decrypt(PX_Cipher *c, const uint8 *data, uint dlen, uint8 *res)
 
 
 static void
-cipher_free(PX_Cipher *c)
+cipher_free(PX_Cipher * c)
 {
-	MCRYPT ctx = (MCRYPT)c->ptr;
+	MCRYPT		ctx = (MCRYPT) c->ptr;
 
 	if (c->pstat)
 		mcrypt_generic_end(ctx);
 	else
 		mcrypt_module_close(ctx);
-	
+
 	px_free(c);
 }
 
@@ -223,33 +226,34 @@ static char *modes[] = {
 };
 
 static PX_Alias aliases[] = {
-	{"bf", "blowfish" },
-	{"3des", "tripledes" },
-	{"des3", "tripledes" },
-	{"aes", "rijndael-128" },
-	{"rijndael", "rijndael-128" },
-	{"aes-128", "rijndael-128" },
-	{"aes-192", "rijndael-192" },
-	{"aes-256", "rijndael-256" },
-	{ NULL, NULL }
+	{"bf", "blowfish"},
+	{"3des", "tripledes"},
+	{"des3", "tripledes"},
+	{"aes", "rijndael-128"},
+	{"rijndael", "rijndael-128"},
+	{"aes-128", "rijndael-128"},
+	{"aes-192", "rijndael-192"},
+	{"aes-256", "rijndael-256"},
+	{NULL, NULL}
 };
 
 static PX_Alias mode_aliases[] = {
-#if 0 /* N/A */
-	{ "cfb", "ncfb" },
-	{ "ofb", "nofb" },
-	{ "cfb64", "ncfb" },
+#if 0							/* N/A */
+	{"cfb", "ncfb"},
+	{"ofb", "nofb"},
+	{"cfb64", "ncfb"},
 #endif
 	/* { "ofb64", "nofb" }, not sure it works */
-	{ "cfb8", "cfb" },
-	{ "ofb8", "ofb" },
-	{ NULL, NULL }
+	{"cfb8", "cfb"},
+	{"ofb8", "ofb"},
+	{NULL, NULL}
 };
 
-static int is_mode(char *s)
+static int
+is_mode(char *s)
 {
-	char **p;
-	
+	char	  **p;
+
 	if (*s >= '0' && *s <= '9')
 		return 0;
 
@@ -263,7 +267,7 @@ static int is_mode(char *s)
 /* PUBLIC FUNCTIONS */
 
 int
-px_find_digest(const char *name, PX_MD **res)
+px_find_digest(const char *name, PX_MD ** res)
 {
 	PX_MD	   *h;
 	MHASH		mh;
@@ -290,19 +294,21 @@ px_find_digest(const char *name, PX_MD **res)
 
 
 int
-px_find_cipher(const char *name, PX_Cipher **res)
+px_find_cipher(const char *name, PX_Cipher ** res)
 {
-	char nbuf[PX_MAX_NAMELEN + 1];
+	char		nbuf[PX_MAX_NAMELEN + 1];
 	const char *mode = NULL;
-	char *p;
-	MCRYPT ctx;
+	char	   *p;
+	MCRYPT		ctx;
 
-	PX_Cipher *c;
+	PX_Cipher  *c;
 
 	strcpy(nbuf, name);
-	
-	if ((p = strrchr(nbuf, '-')) != NULL) {
-		if (is_mode(p + 1)) {
+
+	if ((p = strrchr(nbuf, '-')) != NULL)
+	{
+		if (is_mode(p + 1))
+		{
 			mode = p + 1;
 			*p = 0;
 		}
@@ -310,19 +316,19 @@ px_find_cipher(const char *name, PX_Cipher **res)
 
 	name = px_resolve_alias(aliases, nbuf);
 
-	if (!mode) {
+	if (!mode)
+	{
 		mode = "cbc";
+
 		/*
-		if (mcrypt_module_is_block_algorithm(name, NULL))
-			mode = "cbc";
-		else
-			mode = "stream";
-		*/
+		 * if (mcrypt_module_is_block_algorithm(name, NULL)) mode = "cbc";
+		 * else mode = "stream";
+		 */
 	}
 	mode = px_resolve_alias(mode_aliases, mode);
-	
-	ctx = mcrypt_module_open((char*)name, NULL, (char*)mode, NULL);
-	if (ctx == (void*)MCRYPT_FAILED)
+
+	ctx = mcrypt_module_open((char *) name, NULL, (char *) mode, NULL);
+	if (ctx == (void *) MCRYPT_FAILED)
 		return -1;
 
 	c = palloc(sizeof *c);
@@ -339,4 +345,3 @@ px_find_cipher(const char *name, PX_Cipher **res)
 	*res = c;
 	return 0;
 }
-

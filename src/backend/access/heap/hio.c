@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.42 2001/07/13 22:52:58 tgl Exp $
+ *	  $Id: hio.c,v 1.43 2001/10/25 05:49:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,7 @@ RelationPutHeapTuple(Relation relation,
  *	NOTE: it is unlikely, but not quite impossible, for otherBuffer to be the
  *	same buffer we select for insertion of the new tuple (this could only
  *	happen if space is freed in that page after heap_update finds there's not
- *	enough there).  In that case, the page will be pinned and locked only once.
+ *	enough there).	In that case, the page will be pinned and locked only once.
  *
  *	Note that we use LockPage(rel, 0) to lock relation for extension.
  *	We can do this as long as in all other places we use page-level locking
@@ -115,17 +115,19 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	if (otherBuffer != InvalidBuffer)
 		otherBlock = BufferGetBlockNumber(otherBuffer);
 	else
-		otherBlock = InvalidBlockNumber; /* just to keep compiler quiet */
+		otherBlock = InvalidBlockNumber;		/* just to keep compiler
+												 * quiet */
 
 	/*
 	 * We first try to put the tuple on the same page we last inserted a
 	 * tuple on, as cached in the relcache entry.  If that doesn't work,
-	 * we ask the shared Free Space Map to locate a suitable page.  Since
+	 * we ask the shared Free Space Map to locate a suitable page.	Since
 	 * the FSM's info might be out of date, we have to be prepared to loop
 	 * around and retry multiple times.  (To insure this isn't an infinite
-	 * loop, we must update the FSM with the correct amount of free space on
-	 * each page that proves not to be suitable.)  If the FSM has no record of
-	 * a page with enough free space, we give up and extend the relation.
+	 * loop, we must update the FSM with the correct amount of free space
+	 * on each page that proves not to be suitable.)  If the FSM has no
+	 * record of a page with enough free space, we give up and extend the
+	 * relation.
 	 */
 
 	targetBlock = relation->rd_targblock;
@@ -137,6 +139,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 		 * target.
 		 */
 		targetBlock = GetPageWithFreeSpace(&relation->rd_node, len);
+
 		/*
 		 * If the FSM knows nothing of the rel, try the last page before
 		 * we give up and extend.  This avoids one-tuple-per-page syndrome
@@ -144,7 +147,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 		 */
 		if (targetBlock == InvalidBlockNumber)
 		{
-			BlockNumber	nblocks = RelationGetNumberOfBlocks(relation);
+			BlockNumber nblocks = RelationGetNumberOfBlocks(relation);
 
 			if (nblocks > 0)
 				targetBlock = nblocks - 1;
@@ -154,9 +157,9 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	while (targetBlock != InvalidBlockNumber)
 	{
 		/*
-		 * Read and exclusive-lock the target block, as well as the
-		 * other block if one was given, taking suitable care with
-		 * lock ordering and the possibility they are the same block.
+		 * Read and exclusive-lock the target block, as well as the other
+		 * block if one was given, taking suitable care with lock ordering
+		 * and the possibility they are the same block.
 		 */
 		if (otherBuffer == InvalidBuffer)
 		{
@@ -184,9 +187,10 @@ RelationGetBufferForTuple(Relation relation, Size len,
 			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 			LockBuffer(otherBuffer, BUFFER_LOCK_EXCLUSIVE);
 		}
+
 		/*
-		 * Now we can check to see if there's enough free space here.
-		 * If so, we're done.
+		 * Now we can check to see if there's enough free space here. If
+		 * so, we're done.
 		 */
 		pageHeader = (Page) BufferGetPage(buffer);
 		pageFreeSpace = PageGetFreeSpace(pageHeader);
@@ -196,22 +200,22 @@ RelationGetBufferForTuple(Relation relation, Size len,
 			relation->rd_targblock = targetBlock;
 			return buffer;
 		}
+
 		/*
-		 * Not enough space, so we must give up our page locks and
-		 * pin (if any) and prepare to look elsewhere.  We don't care
-		 * which order we unlock the two buffers in, so this can be
-		 * slightly simpler than the code above.
+		 * Not enough space, so we must give up our page locks and pin (if
+		 * any) and prepare to look elsewhere.	We don't care which order
+		 * we unlock the two buffers in, so this can be slightly simpler
+		 * than the code above.
 		 */
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		if (otherBuffer == InvalidBuffer)
-		{
 			ReleaseBuffer(buffer);
-		}
 		else if (otherBlock != targetBlock)
 		{
 			LockBuffer(otherBuffer, BUFFER_LOCK_UNLOCK);
 			ReleaseBuffer(buffer);
 		}
+
 		/*
 		 * Update FSM as to condition of this page, and ask for another
 		 * page to try.
@@ -225,9 +229,9 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	/*
 	 * Have to extend the relation.
 	 *
-	 * We have to use a lock to ensure no one else is extending the
-	 * rel at the same time, else we will both try to initialize the
-	 * same new page.
+	 * We have to use a lock to ensure no one else is extending the rel at
+	 * the same time, else we will both try to initialize the same new
+	 * page.
 	 */
 	if (!relation->rd_myxactonly)
 		LockPage(relation, 0, ExclusiveLock);
@@ -236,20 +240,21 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	 * XXX This does an lseek - rather expensive - but at the moment it is
 	 * the only way to accurately determine how many blocks are in a
 	 * relation.  Is it worth keeping an accurate file length in shared
-	 * memory someplace, rather than relying on the kernel to do it for us?
+	 * memory someplace, rather than relying on the kernel to do it for
+	 * us?
 	 */
 	buffer = ReadBuffer(relation, P_NEW);
 
 	/*
-	 * Release the file-extension lock; it's now OK for someone else
-	 * to extend the relation some more.
+	 * Release the file-extension lock; it's now OK for someone else to
+	 * extend the relation some more.
 	 */
 	if (!relation->rd_myxactonly)
 		UnlockPage(relation, 0, ExclusiveLock);
 
 	/*
-	 * We can be certain that locking the otherBuffer first is OK,
-	 * since it must have a lower page number.
+	 * We can be certain that locking the otherBuffer first is OK, since
+	 * it must have a lower page number.
 	 */
 	if (otherBuffer != InvalidBuffer)
 		LockBuffer(otherBuffer, BUFFER_LOCK_EXCLUSIVE);
@@ -273,7 +278,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	 *
 	 * XXX should we enter the new page into the free space map immediately,
 	 * or just keep it for this backend's exclusive use in the short run
-	 * (until VACUUM sees it)?  Seems to depend on whether you expect the
+	 * (until VACUUM sees it)?	Seems to depend on whether you expect the
 	 * current backend to make more insertions or not, which is probably a
 	 * good bet most of the time.  So for now, don't add it to FSM yet.
 	 */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.146 2001/10/06 23:21:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.147 2001/10/25 05:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,7 +226,6 @@ static void RelationClearRelation(Relation relation, bool rebuildIt);
 
 #ifdef	ENABLE_REINDEX_NAILED_RELATIONS
 static void RelationReloadClassinfo(Relation relation);
-
 #endif	 /* ENABLE_REINDEX_NAILED_RELATIONS */
 static void RelationFlushRelation(Relation relation);
 static Relation RelationNameCacheGetRelation(const char *relationName);
@@ -273,7 +272,6 @@ static List *insert_ordered_oid(List *list, Oid datum);
 static HeapTuple
 ScanPgRelation(RelationBuildDescInfo buildinfo)
 {
-
 	/*
 	 * If this is bootstrap time (initdb), then we can't use the system
 	 * catalog indices, because they may not exist yet.  Otherwise, we
@@ -333,7 +331,6 @@ scan_pg_rel_seq(RelationBuildDescInfo buildinfo)
 		return_tuple = pg_class_tuple;
 	else
 	{
-
 		/*
 		 * a satanic bug used to live here: pg_class_tuple used to be
 		 * returned here without having the corresponding buffer pinned.
@@ -382,7 +379,7 @@ scan_pg_rel_ind(RelationBuildDescInfo buildinfo)
 
 		default:
 			elog(ERROR, "ScanPgRelation: bad buildinfo");
-			return_tuple = NULL;/* keep compiler quiet */
+			return_tuple = NULL;		/* keep compiler quiet */
 	}
 
 	heap_close(pg_class_desc, AccessShareLock);
@@ -461,7 +458,6 @@ static void
 RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 					   Relation relation)
 {
-
 	/*
 	 * If this is bootstrap time (initdb), then we can't use the system
 	 * catalog indices, because they may not exist yet.  Otherwise, we
@@ -649,7 +645,6 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 	{
 #ifdef	_DROP_COLUMN_HACK__
 		bool		columnDropped = false;
-
 #endif	 /* _DROP_COLUMN_HACK__ */
 
 		atttup = AttributeRelidNumIndexScan(attrel,
@@ -767,7 +762,7 @@ RelationBuildRuleLock(Relation relation)
 	 */
 	rulescxt = AllocSetContextCreate(CacheMemoryContext,
 									 RelationGetRelationName(relation),
-									 0,			/* minsize */
+									 0, /* minsize */
 									 1024,		/* initsize */
 									 1024);		/* maxsize */
 	relation->rd_rulescxt = rulescxt;
@@ -1106,16 +1101,16 @@ RelationInitIndexAccessInfo(Relation relation)
 	amsupport = relation->rd_am->amsupport;
 
 	/*
-	 * Make the private context to hold index access info.  The reason
-	 * we need a context, and not just a couple of pallocs, is so that
-	 * we won't leak any subsidiary info attached to fmgr lookup records.
+	 * Make the private context to hold index access info.	The reason we
+	 * need a context, and not just a couple of pallocs, is so that we
+	 * won't leak any subsidiary info attached to fmgr lookup records.
 	 *
 	 * Context parameters are set on the assumption that it'll probably not
 	 * contain much data.
 	 */
 	indexcxt = AllocSetContextCreate(CacheMemoryContext,
 									 RelationGetRelationName(relation),
-									 0,			/* minsize */
+									 0, /* minsize */
 									 512,		/* initsize */
 									 1024);		/* maxsize */
 	relation->rd_indexcxt = indexcxt;
@@ -1128,7 +1123,7 @@ RelationInitIndexAccessInfo(Relation relation)
 
 	if (amsupport > 0)
 	{
-		int		nsupport = natts * amsupport;
+		int			nsupport = natts * amsupport;
 
 		support = (RegProcedure *)
 			MemoryContextAlloc(indexcxt, nsupport * sizeof(RegProcedure));
@@ -1214,8 +1209,9 @@ formrdesc(char *relationName,
 	strcpy(RelationGetPhysicalRelationName(relation), relationName);
 
 	/*
-	 * It's important to distinguish between shared and non-shared relations,
-	 * even at bootstrap time, to make sure we know where they are stored.
+	 * It's important to distinguish between shared and non-shared
+	 * relations, even at bootstrap time, to make sure we know where they
+	 * are stored.
 	 */
 	relation->rd_rel->relisshared = IsSharedSystemRelationName(relationName);
 
@@ -1267,8 +1263,8 @@ formrdesc(char *relationName,
 	if (!IsBootstrapProcessingMode())
 	{
 		/*
-		 * This list is incomplete, but it only has to work for the
-		 * set of rels that formrdesc is used for ...
+		 * This list is incomplete, but it only has to work for the set of
+		 * rels that formrdesc is used for ...
 		 */
 		if (strcmp(relationName, RelationRelationName) == 0 ||
 			strcmp(relationName, AttributeRelationName) == 0 ||
@@ -1560,7 +1556,6 @@ RelationReloadClassinfo(Relation relation)
 
 	return;
 }
-
 #endif	 /* ENABLE_REINDEX_NAILED_RELATIONS */
 
 /*
@@ -1649,7 +1644,6 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 	}
 	else
 	{
-
 		/*
 		 * When rebuilding an open relcache entry, must preserve ref count
 		 * and myxactonly flag.  Also attempt to preserve the tupledesc,
@@ -1663,7 +1657,7 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 		RuleLock   *old_rules = relation->rd_rules;
 		MemoryContext old_rulescxt = relation->rd_rulescxt;
 		TriggerDesc *old_trigdesc = relation->trigdesc;
-		BlockNumber	old_nblocks = relation->rd_nblocks;
+		BlockNumber old_nblocks = relation->rd_nblocks;
 		RelationBuildDescInfo buildinfo;
 
 		buildinfo.infotype = INFO_RELID;
@@ -1730,7 +1724,6 @@ RelationFlushRelation(Relation relation)
 
 	if (relation->rd_myxactonly)
 	{
-
 		/*
 		 * Local rels should always be rebuilt, not flushed; the relcache
 		 * entry must live until RelationPurgeLocalRelation().
@@ -1739,7 +1732,6 @@ RelationFlushRelation(Relation relation)
 	}
 	else
 	{
-
 		/*
 		 * Nonlocal rels can be dropped from the relcache if not open.
 		 */
@@ -1837,7 +1829,6 @@ RelationFlushIndexes(Relation *r,
 		 relation->rd_rel->relam == accessMethodId))
 		RelationFlushRelation(relation);
 }
-
 #endif
 
 
@@ -1982,8 +1973,8 @@ RelationBuildLocalRelation(const char *relname,
 		rel->rd_isnailed = true;
 
 	/*
-	 * create a new tuple descriptor from the one passed in
-	 * (we do this to copy it into the cache context)
+	 * create a new tuple descriptor from the one passed in (we do this to
+	 * copy it into the cache context)
 	 */
 	rel->rd_att = CreateTupleDescCopyConstr(tupDesc);
 
@@ -2003,9 +1994,10 @@ RelationBuildLocalRelation(const char *relname,
 		rel->rd_rel->relchecks = tupDesc->constr->num_check;
 
 	/*
-	 * Insert relation OID and database/tablespace ID into the right places.
-	 * XXX currently we assume physical tblspace/relnode are same as logical
-	 * dbid/reloid.  Probably should pass an extra pair of parameters.
+	 * Insert relation OID and database/tablespace ID into the right
+	 * places. XXX currently we assume physical tblspace/relnode are same
+	 * as logical dbid/reloid.	Probably should pass an extra pair of
+	 * parameters.
 	 */
 	rel->rd_rel->relisshared = (dbid == InvalidOid);
 
@@ -2149,7 +2141,6 @@ RelationCacheInitialize(void)
 void
 RelationCacheInitializePhase2(void)
 {
-
 	/*
 	 * Get the real pg_class tuple for each nailed-in-cache relcache entry
 	 * that was made by RelationCacheInitialize(), and replace the phony
@@ -2159,7 +2150,6 @@ RelationCacheInitializePhase2(void)
 	 */
 	if (!IsBootstrapProcessingMode())
 	{
-
 		/*
 		 * Initialize critical system index relation descriptors, first.
 		 * They are to make building relation descriptors fast.
@@ -2764,9 +2754,9 @@ init_irels(void)
 		 */
 		indexcxt = AllocSetContextCreate(CacheMemoryContext,
 										 RelationGetRelationName(ird),
-										 0,			/* minsize */
-										 512,		/* initsize */
-										 1024);		/* maxsize */
+										 0,		/* minsize */
+										 512,	/* initsize */
+										 1024); /* maxsize */
 		ird->rd_indexcxt = indexcxt;
 
 		/* next, read the index strategy map */
@@ -2848,7 +2838,6 @@ write_irels(void)
 	fd = PathNameOpenFile(tempfilename, O_WRONLY | O_CREAT | O_TRUNC | PG_BINARY, 0600);
 	if (fd < 0)
 	{
-
 		/*
 		 * We used to consider this a fatal error, but we might as well
 		 * continue with backend startup ...

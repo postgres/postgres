@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.45 2001/03/22 06:16:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.46 2001/10/25 05:49:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
  */
 typedef enum
 {
-	F_EXEC_START, F_EXEC_RUN, F_EXEC_DONE
+				F_EXEC_START, F_EXEC_RUN, F_EXEC_DONE
 } ExecStatus;
 
 typedef struct local_es
@@ -201,7 +201,6 @@ init_sql_fcache(FmgrInfo *finfo)
 	}
 	else
 	{
-
 		/*
 		 * This is a hack.	We assume here that any function returning a
 		 * tuple returns it by reference.  This needs to be fixed, since
@@ -257,7 +256,6 @@ init_sql_fcache(FmgrInfo *finfo)
 static void
 postquel_start(execution_state *es)
 {
-
 	/*
 	 * Do nothing for utility commands. (create, destroy...)  DZ -
 	 * 30-8-1996
@@ -274,7 +272,6 @@ postquel_getnext(execution_state *es)
 
 	if (es->qd->operation == CMD_UTILITY)
 	{
-
 		/*
 		 * Process a utility command. (create, destroy...)	DZ - 30-8-1996
 		 */
@@ -292,7 +289,6 @@ postquel_getnext(execution_state *es)
 static void
 postquel_end(execution_state *es)
 {
-
 	/*
 	 * Do nothing for utility commands. (create, destroy...)  DZ -
 	 * 30-8-1996
@@ -417,7 +413,6 @@ postquel_execute(execution_state *es,
 		 */
 		if (fcache->returnsTuple)
 		{
-
 			/*
 			 * XXX do we need to remove junk attrs from the result tuple?
 			 * Probably OK to leave them, as long as they are at the end.
@@ -528,7 +523,6 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	 */
 	if (es == (execution_state *) NULL)
 	{
-
 		/*
 		 * Reset the execution states to start over again
 		 */

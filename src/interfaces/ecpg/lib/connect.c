@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/connect.c,v 1.12 2001/09/19 14:09:32 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/connect.c,v 1.13 2001/10/25 05:50:11 momjian Exp $ */
 
 #include "postgres_fe.h"
 
@@ -313,7 +313,7 @@ ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, 
 
 			/*------
 			 * new style:
-			 * 	<tcp|unix>:postgresql://server[:port|:/unixsocket/path:]
+			 *	<tcp|unix>:postgresql://server[:port|:/unixsocket/path:]
 			 *	[/db name][?options]
 			 *------
 			 */

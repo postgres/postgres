@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/contrib/pg_resetxlog/Attic/pg_resetxlog.c,v 1.7 2001/10/25 00:55:48 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_resetxlog/Attic/pg_resetxlog.c,v 1.8 2001/10/25 05:49:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,7 +147,6 @@ ReadControlFile(void)
 
 	if ((fd = open(ControlFilePath, O_RDONLY)) < 0)
 	{
-
 		/*
 		 * If pg_control is not there at all, or we can't read it, the
 		 * odds are we've been handed a bad DataDir path, so give up. User
@@ -412,7 +411,6 @@ CheckControlVersion0(char *buffer, int len)
 						  (char *) malloc(_INTL_MAXLOGRECSZ));
 	if (record == NULL)
 	{
-
 		/*
 		 * We have to guess at the checkpoint contents.
 		 */
@@ -493,7 +491,7 @@ ReadRecordV0(XLogRecPtr *RecPtr, char *buffer)
 		readFile = XLogFileOpen(readId, readSeg);
 		if (readFile < 0)
 			goto next_record_is_invalid;
-		readOff = (uint32) (-1);/* force read to occur below */
+		readOff = (uint32) (-1);		/* force read to occur below */
 	}
 
 	targetPageOff = ((RecPtr->xrecoff % XLogSegSize) / BLCKSZ) * BLCKSZ;
@@ -617,7 +615,6 @@ GuessControlValues(void)
 {
 #ifdef USE_LOCALE
 	char	   *localeptr;
-
 #endif
 
 	/*

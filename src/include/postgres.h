@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.53 2001/10/03 21:58:28 tgl Exp $
+ * $Id: postgres.h,v 1.54 2001/10/25 05:49:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,7 @@ typedef struct varattrib
 			int32		va_extsize;		/* External saved size */
 			Oid			va_valueid;		/* Unique identifier of value */
 			Oid			va_toastrelid;	/* RelID where to find chunks */
-		}			va_external;/* External stored attribute */
+		}			va_external;		/* External stored attribute */
 
 		char		va_data[1]; /* Plain stored attribute */
 	}			va_content;
@@ -533,7 +533,6 @@ extern DLLIMPORT bool assert_enabled;
 
 #define AssertState(condition) \
 		Trap(!(condition), BadState)
-
 #endif	 /* USE_ASSERT_CHECKING */
 
 /*
@@ -563,7 +562,8 @@ extern int ExceptionalCondition(char *conditionName,
 					 Exception *exceptionP, char *details,
 					 char *fileName, int lineNumber);
 
-extern char *vararg_format(const char *fmt, ...)
+extern char *
+vararg_format(const char *fmt,...)
 /* This lets gcc check the format string for consistency. */
 __attribute__((format(printf, 1, 2)));
 
@@ -587,16 +587,14 @@ __attribute__((format(printf, 1, 2)));
 
 #ifdef ASSERT_CHECKING_TEST
 extern int	assertTest(int val);
-
 #endif
-
 #endif	 /* USE_ASSERT_CHECKING */
 
 /* ----------------------------------------------------------------
  *				Section 4: genbki macros used by catalog/pg_xxx.h files
  * ----------------------------------------------------------------
  */
-#define CATALOG(x)  typedef struct CppConcat(FormData_,x)
+#define CATALOG(x)	typedef struct CppConcat(FormData_,x)
 
 #define BOOTSTRAP
 
@@ -610,6 +608,5 @@ extern int	assertTest(int val);
 #define BKI_END
 
 typedef int4 aclitem;			/* PHONY definition for catalog use only */
-
 
 #endif	 /* POSTGRES_H */

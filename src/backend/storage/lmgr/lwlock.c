@@ -6,7 +6,7 @@
  * Lightweight locks are intended primarily to provide mutual exclusion of
  * access to shared-memory data structures.  Therefore, they offer both
  * exclusive and shared lock modes (to support read/write and read-only
- * access to a shared object).  There are few other frammishes.  User-level
+ * access to a shared object).	There are few other frammishes.  User-level
  * locking should be done with the full lock manager --- which depends on
  * an LWLock to protect its shared state.
  *
@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lwlock.c,v 1.1 2001/09/29 04:02:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lwlock.c,v 1.2 2001/10/25 05:49:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,8 +43,9 @@ typedef struct LWLock
  * the array.
  */
 static LWLock *LWLockArray = NULL;
+
 /* shared counter for dynamic allocation of LWLockIds */
-static int	  *LWLockCounter;
+static int *LWLockCounter;
 
 
 /*
@@ -55,8 +56,8 @@ static int	  *LWLockCounter;
  */
 #define MAX_SIMUL_LWLOCKS	100
 
-static int		num_held_lwlocks = 0;
-static LWLockId	held_lwlocks[MAX_SIMUL_LWLOCKS];
+static int	num_held_lwlocks = 0;
+static LWLockId held_lwlocks[MAX_SIMUL_LWLOCKS];
 
 
 #ifdef LOCK_DEBUG
@@ -71,9 +72,9 @@ PRINT_LWDEBUG(const char *where, LWLockId lockid, const LWLock *lock)
 			 (int) lock->exclusive, lock->shared, lock->head);
 }
 
-#else	/* not LOCK_DEBUG */
+#else							/* not LOCK_DEBUG */
 #define PRINT_LWDEBUG(a,b,c)
-#endif	/* LOCK_DEBUG */
+#endif	 /* LOCK_DEBUG */
 
 
 /*
@@ -82,13 +83,13 @@ PRINT_LWDEBUG(const char *where, LWLockId lockid, const LWLock *lock)
 int
 NumLWLocks(void)
 {
-	int		numLocks;
+	int			numLocks;
 
 	/*
-	 * Possibly this logic should be spread out among the affected modules,
-	 * the same way that shmem space estimation is done.  But for now,
-	 * there are few enough users of LWLocks that we can get away with
-	 * just keeping the knowledge here.
+	 * Possibly this logic should be spread out among the affected
+	 * modules, the same way that shmem space estimation is done.  But for
+	 * now, there are few enough users of LWLocks that we can get away
+	 * with just keeping the knowledge here.
 	 */
 
 	/* Predefined LWLocks */
@@ -112,8 +113,8 @@ NumLWLocks(void)
 int
 LWLockShmemSize(void)
 {
-	int		numLocks = NumLWLocks();
-	uint32	spaceLocks;
+	int			numLocks = NumLWLocks();
+	uint32		spaceLocks;
 
 	/* Allocate the LWLocks plus space for shared allocation counter. */
 	spaceLocks = numLocks * sizeof(LWLock) + 2 * sizeof(int);
@@ -129,10 +130,10 @@ LWLockShmemSize(void)
 void
 CreateLWLocks(void)
 {
-	int		numLocks = NumLWLocks();
-	uint32	spaceLocks = LWLockShmemSize();
-	LWLock *lock;
-	int		id;
+	int			numLocks = NumLWLocks();
+	uint32		spaceLocks = LWLockShmemSize();
+	LWLock	   *lock;
+	int			id;
 
 	/* Allocate space */
 	LWLockArray = (LWLock *) ShmemAlloc(spaceLocks);
@@ -184,8 +185,8 @@ LWLockAssign(void)
 void
 LWLockAcquire(LWLockId lockid, LWLockMode mode)
 {
-	LWLock *lock = LWLockArray + lockid;
-	bool	mustwait;
+	LWLock	   *lock = LWLockArray + lockid;
+	bool		mustwait;
 
 	PRINT_LWDEBUG("LWLockAcquire", lockid, lock);
 
@@ -229,13 +230,13 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 	if (mustwait)
 	{
 		/* Add myself to wait queue */
-		PROC	*proc = MyProc;
-		int		extraWaits = 0;
+		PROC	   *proc = MyProc;
+		int			extraWaits = 0;
 
 		/*
-		 * If we don't have a PROC structure, there's no way to wait.
-		 * This should never occur, since MyProc should only be null
-		 * during shared memory initialization.
+		 * If we don't have a PROC structure, there's no way to wait. This
+		 * should never occur, since MyProc should only be null during
+		 * shared memory initialization.
 		 */
 		if (proc == NULL)
 			elog(FATAL, "LWLockAcquire: can't wait without a PROC structure");
@@ -256,13 +257,13 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 		 * Wait until awakened.
 		 *
 		 * Since we share the process wait semaphore with the regular lock
-		 * manager and ProcWaitForSignal, and we may need to acquire an LWLock
-		 * while one of those is pending, it is possible that we get awakened
-		 * for a reason other than being granted the LWLock.  If so, loop back
-		 * and wait again.  Once we've gotten the lock, re-increment the sema
-		 * by the number of additional signals received, so that the lock
-		 * manager or signal manager will see the received signal when it
-		 * next waits.
+		 * manager and ProcWaitForSignal, and we may need to acquire an
+		 * LWLock while one of those is pending, it is possible that we
+		 * get awakened for a reason other than being granted the LWLock.
+		 * If so, loop back and wait again.  Once we've gotten the lock,
+		 * re-increment the sema by the number of additional signals
+		 * received, so that the lock manager or signal manager will see
+		 * the received signal when it next waits.
 		 */
 		for (;;)
 		{
@@ -272,6 +273,7 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 				break;
 			extraWaits++;
 		}
+
 		/*
 		 * The awakener already updated the lock struct's state, so we
 		 * don't need to do anything more to it.  Just need to fix the
@@ -301,8 +303,8 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 bool
 LWLockConditionalAcquire(LWLockId lockid, LWLockMode mode)
 {
-	LWLock *lock = LWLockArray + lockid;
-	bool	mustwait;
+	LWLock	   *lock = LWLockArray + lockid;
+	bool		mustwait;
 
 	PRINT_LWDEBUG("LWLockConditionalAcquire", lockid, lock);
 
@@ -367,18 +369,18 @@ LWLockConditionalAcquire(LWLockId lockid, LWLockMode mode)
 void
 LWLockRelease(LWLockId lockid)
 {
-	LWLock *lock = LWLockArray + lockid;
-	PROC	*head;
-	PROC	*proc;
-	int		i;
+	LWLock	   *lock = LWLockArray + lockid;
+	PROC	   *head;
+	PROC	   *proc;
+	int			i;
 
 	PRINT_LWDEBUG("LWLockRelease", lockid, lock);
 
 	/*
-	 * Remove lock from list of locks held.  Usually, but not always,
-	 * it will be the latest-acquired lock; so search array backwards.
+	 * Remove lock from list of locks held.  Usually, but not always, it
+	 * will be the latest-acquired lock; so search array backwards.
 	 */
-	for (i = num_held_lwlocks; --i >= 0; )
+	for (i = num_held_lwlocks; --i >= 0;)
 	{
 		if (lockid == held_lwlocks[i])
 			break;
@@ -387,7 +389,7 @@ LWLockRelease(LWLockId lockid)
 		elog(ERROR, "LWLockRelease: lock %d is not held", (int) lockid);
 	num_held_lwlocks--;
 	for (; i < num_held_lwlocks; i++)
-		held_lwlocks[i] = held_lwlocks[i+1];
+		held_lwlocks[i] = held_lwlocks[i + 1];
 
 	/* Acquire mutex.  Time spent holding mutex should be short! */
 	SpinLockAcquire_NoHoldoff(&lock->mutex);
@@ -402,8 +404,8 @@ LWLockRelease(LWLockId lockid)
 	}
 
 	/*
-	 * See if I need to awaken any waiters.  If I released a non-last shared
-	 * hold, there cannot be anything to do.
+	 * See if I need to awaken any waiters.  If I released a non-last
+	 * shared hold, there cannot be anything to do.
 	 */
 	head = lock->head;
 	if (head != NULL)
@@ -411,14 +413,12 @@ LWLockRelease(LWLockId lockid)
 		if (lock->exclusive == 0 && lock->shared == 0)
 		{
 			/*
-			 * Remove the to-be-awakened PROCs from the queue, and update the
-			 * lock state to show them as holding the lock.
+			 * Remove the to-be-awakened PROCs from the queue, and update
+			 * the lock state to show them as holding the lock.
 			 */
 			proc = head;
 			if (proc->lwExclusive)
-			{
 				lock->exclusive++;
-			}
 			else
 			{
 				lock->shared++;
@@ -465,10 +465,10 @@ LWLockRelease(LWLockId lockid)
 /*
  * LWLockReleaseAll - release all currently-held locks
  *
- * Used to clean up after elog(ERROR).  An important difference between this
+ * Used to clean up after elog(ERROR).	An important difference between this
  * function and retail LWLockRelease calls is that InterruptHoldoffCount is
  * unchanged by this operation.  This is necessary since InterruptHoldoffCount
- * has been set to an appropriate level earlier in error recovery.  We could
+ * has been set to an appropriate level earlier in error recovery.	We could
  * decrement it below zero if we allow it to drop for each released lock!
  */
 void
@@ -478,6 +478,6 @@ LWLockReleaseAll(void)
 	{
 		HOLD_INTERRUPTS();		/* match the upcoming RESUME_INTERRUPTS */
 
-		LWLockRelease(held_lwlocks[num_held_lwlocks-1]);
+		LWLockRelease(held_lwlocks[num_held_lwlocks - 1]);
 	}
 }

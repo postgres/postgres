@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.106 2001/10/18 17:30:14 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.107 2001/10/25 05:49:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,6 @@ _equalFjoin(Fjoin *a, Fjoin *b)
 static bool
 _equalExpr(Expr *a, Expr *b)
 {
-
 	/*
 	 * We do not examine typeOid, since the optimizer often doesn't bother
 	 * to set it in created nodes, and it is logically a derivative of the
@@ -351,7 +350,6 @@ _equalJoinExpr(JoinExpr *a, JoinExpr *b)
 static bool
 _equalRelOptInfo(RelOptInfo *a, RelOptInfo *b)
 {
-
 	/*
 	 * We treat RelOptInfos as equal if they refer to the same base rels
 	 * joined in the same order.  Is this appropriate/sufficient?
@@ -362,7 +360,6 @@ _equalRelOptInfo(RelOptInfo *a, RelOptInfo *b)
 static bool
 _equalIndexOptInfo(IndexOptInfo *a, IndexOptInfo *b)
 {
-
 	/*
 	 * We treat IndexOptInfos as equal if they refer to the same index. Is
 	 * this sufficient?
@@ -515,11 +512,12 @@ _equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 		return false;
 	if (a->ispusheddown != b->ispusheddown)
 		return false;
+
 	/*
 	 * We ignore eval_cost, this_selec, left/right_pathkey, and
 	 * left/right_bucketsize, since they may not be set yet, and should be
-	 * derivable from the clause anyway.  Probably it's not really necessary
-	 * to compare any of these remaining fields ...
+	 * derivable from the clause anyway.  Probably it's not really
+	 * necessary to compare any of these remaining fields ...
 	 */
 	if (!equal(a->subclauseindices, b->subclauseindices))
 		return false;
@@ -622,9 +620,9 @@ _equalQuery(Query *a, Query *b)
 
 	/*
 	 * We do not check the internal-to-the-planner fields: base_rel_list,
-	 * other_rel_list, join_rel_list, equi_key_list, query_pathkeys.
-	 * They might not be set yet, and in any case they should be derivable
-	 * from the other fields.
+	 * other_rel_list, join_rel_list, equi_key_list, query_pathkeys. They
+	 * might not be set yet, and in any case they should be derivable from
+	 * the other fields.
 	 */
 	return true;
 }
@@ -773,7 +771,7 @@ _equalPrivGrantee(PrivGrantee *a, PrivGrantee *b)
 {
 	return equalstr(a->username, b->username)
 		&& equalstr(a->groupname, b->groupname);
-}	
+}
 
 static bool
 _equalClosePortalStmt(ClosePortalStmt *a, ClosePortalStmt *b)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.36 2001/03/22 03:59:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.37 2001/10/25 05:49:45 momjian Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -121,7 +121,6 @@ RE_compile_and_execute(text *text_re, char *text, int cflags)
 	regcomp_result = pg95_regcomp(&rev[oldest].cre_re, re, cflags);
 	if (regcomp_result == 0)
 	{
-
 		/*
 		 * use malloc/free for the cre_s field because the storage has to
 		 * persist across transactions

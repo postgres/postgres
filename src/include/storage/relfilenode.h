@@ -18,5 +18,4 @@ typedef struct RelFileNode
 #define RelFileNodeEquals(node1, node2) \
 	((node1).relNode == (node2).relNode && \
 	 (node1).tblNode == (node2).tblNode)
-
 #endif	 /* RELFILENODE_H */

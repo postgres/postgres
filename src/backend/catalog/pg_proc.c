@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.61 2001/10/06 23:21:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.62 2001/10/25 05:49:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,6 @@ ProcedureCreate(char *procedureName,
 
 	if (languageObjectId == SQLlanguageId)
 	{
-
 		/*
 		 * If this call is defining a set, check if the set is already
 		 * defined by looking to see whether this call's function text
@@ -230,7 +229,7 @@ ProcedureCreate(char *procedureName,
 			prosrc = procedureName;
 		if (fmgr_internal_function(prosrc) == InvalidOid)
 			elog(ERROR,
-			"there is no built-in function named \"%s\"",
+				 "there is no built-in function named \"%s\"",
 				 prosrc);
 	}
 
@@ -246,7 +245,7 @@ ProcedureCreate(char *procedureName,
 
 	if (languageObjectId == ClanguageId)
 	{
-		void   *libraryhandle;
+		void	   *libraryhandle;
 
 		/* If link symbol is specified as "-", substitute procedure name */
 		if (strcmp(prosrc, "-") == 0)
@@ -303,7 +302,7 @@ ProcedureCreate(char *procedureName,
 	if (HeapTupleIsValid(oldtup))
 	{
 		/* There is one; okay to replace it? */
-		Form_pg_proc	oldproc = (Form_pg_proc) GETSTRUCT(oldtup);
+		Form_pg_proc oldproc = (Form_pg_proc) GETSTRUCT(oldtup);
 
 		if (!replace)
 			elog(ERROR, "function %s already exists with same argument types",
@@ -311,6 +310,7 @@ ProcedureCreate(char *procedureName,
 		if (GetUserId() != oldproc->proowner && !superuser())
 			elog(ERROR, "ProcedureCreate: you do not have permission to replace function %s",
 				 procedureName);
+
 		/*
 		 * Not okay to change the return type of the existing proc, since
 		 * existing rules, views, etc may depend on the return type.
@@ -321,8 +321,8 @@ ProcedureCreate(char *procedureName,
 				 "\n\tUse DROP FUNCTION first.");
 
 		/* Okay, do it... */
- 		tup = heap_modifytuple(oldtup, rel, values, nulls, replaces);
- 	   	simple_heap_update(rel, &tup->t_self, tup);
+		tup = heap_modifytuple(oldtup, rel, values, nulls, replaces);
+		simple_heap_update(rel, &tup->t_self, tup);
 
 		ReleaseSysCache(oldtup);
 	}
@@ -412,8 +412,8 @@ checkretval(Oid rettype, List *queryTreeList)
 
 	/*
 	 * For base-type returns, the target list should have exactly one
-	 * entry, and its type should agree with what the user declared.
-	 * (As of Postgres 7.2, we accept binary-compatible types too.)
+	 * entry, and its type should agree with what the user declared. (As
+	 * of Postgres 7.2, we accept binary-compatible types too.)
 	 */
 	typerelid = typeidTypeRelid(rettype);
 	if (typerelid == InvalidOid)
@@ -433,9 +433,9 @@ checkretval(Oid rettype, List *queryTreeList)
 	/*
 	 * If the target list is of length 1, and the type of the varnode in
 	 * the target list matches the declared return type, this is okay.
-	 * This can happen, for example, where the body of the function
-	 * is 'SELECT func2()', where func2 has the same return type as
-	 * the function that's calling it.
+	 * This can happen, for example, where the body of the function is
+	 * 'SELECT func2()', where func2 has the same return type as the
+	 * function that's calling it.
 	 */
 	if (tlistlen == 1)
 	{

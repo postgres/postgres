@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.31 2001/03/22 04:00:29 momjian Exp $
+ * $Id: itup.h,v 1.32 2001/10/25 05:49:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,6 +150,5 @@ extern Datum nocache_index_getattr(IndexTuple tup, int attnum,
 extern RetrieveIndexResult FormRetrieveIndexResult(ItemPointer indexItemPointer,
 						ItemPointer heapItemPointer);
 extern void CopyIndexTuple(IndexTuple source, IndexTuple *target);
-
 
 #endif	 /* ITUP_H */

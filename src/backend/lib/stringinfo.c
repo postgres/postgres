@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: stringinfo.c,v 1.28 2001/03/22 06:16:13 momjian Exp $
+ *	  $Id: stringinfo.c,v 1.29 2001/10/25 05:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,6 @@ appendStringInfo(StringInfo str, const char *fmt,...)
 
 	for (;;)
 	{
-
 		/*
 		 * Try to format the given string into the available space; but if
 		 * there's hardly any space, don't bother trying, just fall

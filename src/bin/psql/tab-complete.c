@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.38 2001/09/21 03:32:36 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.39 2001/10/25 05:49:54 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -106,7 +106,7 @@ void
 initialize_readline(void)
 {
 	rl_readline_name = pset.progname;
-	rl_attempted_completion_function = (void *)psql_completion;
+	rl_attempted_completion_function = (void *) psql_completion;
 
 	rl_basic_word_break_characters = "\t\n@$><=;|&{( ";
 
@@ -584,7 +584,11 @@ psql_completion(char *text, int start, int end)
 	/* Complete INSERT INTO with table names */
 	else if (strcasecmp(prev2_wd, "INSERT") == 0 && strcasecmp(prev_wd, "INTO") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
-	/* Complete INSERT INTO <table> with "VALUES" or "SELECT" or "DEFAULT VALUES" */
+
+	/*
+	 * Complete INSERT INTO <table> with "VALUES" or "SELECT" or "DEFAULT
+	 * VALUES"
+	 */
 	else if (strcasecmp(prev3_wd, "INSERT") == 0 && strcasecmp(prev2_wd, "INTO") == 0)
 	{
 		char	   *list_INSERT[] = {"DEFAULT VALUES", "SELECT", "VALUES", NULL};
@@ -662,19 +666,17 @@ psql_completion(char *text, int start, int end)
 	/* Complete SET SESSION with AUTHORIZATION or CHARACTERISTICS... */
 	else if (strcasecmp(prev2_wd, "SET") == 0 && strcasecmp(prev_wd, "SESSION") == 0)
 	{
-		char *my_list[] = {"AUTHORIZATION",
-						   "CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL",
-						   NULL};
+		char	   *my_list[] = {"AUTHORIZATION",
+			"CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL",
+		NULL};
 
 		COMPLETE_WITH_LIST(my_list);
 	}
 	/* Complete SET SESSION AUTHORIZATION with username */
-	else if (strcasecmp(prev3_wd, "SET") == 0 
+	else if (strcasecmp(prev3_wd, "SET") == 0
 			 && strcasecmp(prev2_wd, "SESSION") == 0
 			 && strcasecmp(prev_wd, "AUTHORIZATION") == 0)
-	{
 		COMPLETE_WITH_QUERY(Query_for_list_of_users);
-	}
 	/* Complete SET <var> with "TO" */
 	else if (strcasecmp(prev2_wd, "SET") == 0 &&
 			 strcasecmp(prev4_wd, "UPDATE") != 0)
@@ -755,12 +757,12 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_LIST(my_list);
 	}
 	else if (strcmp(prev_wd, "\\cd") == 0 ||
-			 strcmp(prev_wd, "\\e") == 0 || strcmp(prev_wd, "\\edit") == 0 ||
+		 strcmp(prev_wd, "\\e") == 0 || strcmp(prev_wd, "\\edit") == 0 ||
 			 strcmp(prev_wd, "\\g") == 0 ||
 			 strcmp(prev_wd, "\\i") == 0 || strcmp(prev_wd, "\\include") == 0 ||
-			 strcmp(prev_wd, "\\o") == 0 || strcmp(prev_wd, "\\out") == 0 ||
+		  strcmp(prev_wd, "\\o") == 0 || strcmp(prev_wd, "\\out") == 0 ||
 			 strcmp(prev_wd, "\\s") == 0 ||
-			 strcmp(prev_wd, "\\w") == 0 || strcmp(prev_wd, "\\write") == 0
+		   strcmp(prev_wd, "\\w") == 0 || strcmp(prev_wd, "\\write") == 0
 		)
 		matches = completion_matches(text, filename_completion_function);
 
@@ -1110,7 +1112,5 @@ dequote_file_name(char *text, char quote_char)
 
 	return s;
 }
-
 #endif	 /* 0 */
-
 #endif	 /* USE_READLINE */

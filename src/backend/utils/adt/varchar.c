@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.84 2001/10/06 23:21:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.85 2001/10/25 05:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,23 +65,26 @@ Datum
 bpcharin(PG_FUNCTION_ARGS)
 {
 	char	   *s = PG_GETARG_CSTRING(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
 	int32		atttypmod = PG_GETARG_INT32(2);
 	BpChar	   *result;
 	char	   *r;
-	size_t		len, maxlen;
+	size_t		len,
+				maxlen;
 	int			i;
+
 #ifdef MULTIBYTE
-	int	charlen;	/* number of charcters in the input string */
-	char	*ermsg;
+	int			charlen;		/* number of charcters in the input string */
+	char	   *ermsg;
 #endif
 
 	len = strlen(s);
 #ifdef MULTIBYTE
 	if ((ermsg = pg_verifymbstr(s, len)))
-	    elog(ERROR,"%s",ermsg);
+		elog(ERROR, "%s", ermsg);
 
 	charlen = pg_mbstrlen(s);
 #endif
@@ -104,19 +107,21 @@ bpcharin(PG_FUNCTION_ARGS)
 	{
 		/* Verify that extra characters are spaces, and clip them off */
 #ifdef MULTIBYTE
-		size_t mbmaxlen = pg_mbcharcliplen(s, len, maxlen);
+		size_t		mbmaxlen = pg_mbcharcliplen(s, len, maxlen);
+
 		/*
-		 * at this point, len is the actual BYTE length of the
-		 * input string, maxlen is the max number of
-		 * CHARACTERS allowed for this bpchar type. 
+		 * at this point, len is the actual BYTE length of the input
+		 * string, maxlen is the max number of CHARACTERS allowed for this
+		 * bpchar type.
 		 */
 		if (strspn(s + mbmaxlen, " ") == len - mbmaxlen)
 			len = mbmaxlen;
 		else
 			elog(ERROR, "value too long for type character(%d)", maxlen);
+
 		/*
-		 * XXX: at this point, maxlen is the necessary byte
-		 * length, not the number of CHARACTERS!
+		 * XXX: at this point, maxlen is the necessary byte length, not
+		 * the number of CHARACTERS!
 		 */
 		maxlen = len;
 #else
@@ -130,8 +135,8 @@ bpcharin(PG_FUNCTION_ARGS)
 	else
 	{
 		/*
-		 * XXX: at this point, maxlen is the necessary byte
-		 * length, not the number of CHARACTERS!
+		 * XXX: at this point, maxlen is the necessary byte length, not
+		 * the number of CHARACTERS!
 		 */
 		maxlen = len + (maxlen - charlen);
 	}
@@ -194,9 +199,10 @@ bpchar(PG_FUNCTION_ARGS)
 	char	   *r;
 	char	   *s;
 	int			i;
+
 #ifdef MULTIBYTE
-	int	charlen;	/* number of charcters in the input string 
-				 + VARHDRSZ*/
+	int			charlen;		/* number of charcters in the input string
+								 * + VARHDRSZ */
 #endif
 
 	len = VARSIZE(source);
@@ -217,7 +223,7 @@ bpchar(PG_FUNCTION_ARGS)
 		size_t		maxmblen;
 
 		maxmblen = pg_mbcharcliplen(VARDATA(source), len - VARHDRSZ,
-								maxlen - VARHDRSZ) + VARHDRSZ;
+									maxlen - VARHDRSZ) + VARHDRSZ;
 
 		for (i = maxmblen - VARHDRSZ; i < len - VARHDRSZ; i++)
 			if (*(VARDATA(source) + i) != ' ')
@@ -225,6 +231,7 @@ bpchar(PG_FUNCTION_ARGS)
 					 maxlen - VARHDRSZ);
 
 		len = maxmblen;
+
 		/*
 		 * XXX: at this point, maxlen is the necessary byte
 		 * length+VARHDRSZ, not the number of CHARACTERS!
@@ -403,20 +410,23 @@ Datum
 varcharin(PG_FUNCTION_ARGS)
 {
 	char	   *s = PG_GETARG_CSTRING(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
 	int32		atttypmod = PG_GETARG_INT32(2);
 	VarChar    *result;
-	size_t		len, maxlen;
+	size_t		len,
+				maxlen;
+
 #ifdef MULTIBYTE
-	char	*ermsg;
+	char	   *ermsg;
 #endif
 
 	len = strlen(s);
 #ifdef MULTIBYTE
 	if ((ermsg = pg_verifymbstr(s, len)))
-	    elog(ERROR,"%s",ermsg);
+		elog(ERROR, "%s", ermsg);
 #endif
 	maxlen = atttypmod - VARHDRSZ;
 
@@ -424,7 +434,7 @@ varcharin(PG_FUNCTION_ARGS)
 	{
 		/* Verify that extra characters are spaces, and clip them off */
 #ifdef MULTIBYTE
-		size_t mbmaxlen = pg_mbcharcliplen(s, len, maxlen);
+		size_t		mbmaxlen = pg_mbcharcliplen(s, len, maxlen);
 
 		if (strspn(s + mbmaxlen, " ") == len - mbmaxlen)
 			len = mbmaxlen;
@@ -499,7 +509,7 @@ varchar(PG_FUNCTION_ARGS)
 
 		/* truncate multi-byte string preserving multi-byte boundary */
 		maxmblen = pg_mbcharcliplen(VARDATA(source), len - VARHDRSZ,
-								maxlen - VARHDRSZ) + VARHDRSZ;
+									maxlen - VARHDRSZ) + VARHDRSZ;
 
 		for (i = maxmblen - VARHDRSZ; i < len - VARHDRSZ; i++)
 			if (*(VARDATA(source) + i) != ' ')
@@ -586,8 +596,8 @@ bpcharlen(PG_FUNCTION_ARGS)
 
 #ifdef MULTIBYTE
 	PG_RETURN_INT32(
-		pg_mbstrlen_with_len(VARDATA(arg), VARSIZE(arg) - VARHDRSZ)
-	    );
+			  pg_mbstrlen_with_len(VARDATA(arg), VARSIZE(arg) - VARHDRSZ)
+		);
 #else
 	PG_RETURN_INT32(VARSIZE(arg) - VARHDRSZ);
 #endif
@@ -794,8 +804,8 @@ varcharlen(PG_FUNCTION_ARGS)
 
 #ifdef MULTIBYTE
 	PG_RETURN_INT32(
-		pg_mbstrlen_with_len(VARDATA(arg), VARSIZE(arg) - VARHDRSZ)
-	    );
+			  pg_mbstrlen_with_len(VARDATA(arg), VARSIZE(arg) - VARHDRSZ)
+		);
 #else
 	PG_RETURN_INT32(VARSIZE(arg) - VARHDRSZ);
 #endif

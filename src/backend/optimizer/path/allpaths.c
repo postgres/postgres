@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.79 2001/10/18 16:11:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.80 2001/10/25 05:49:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,10 +38,10 @@ static void set_base_rel_pathlists(Query *root);
 static void set_plain_rel_pathlist(Query *root, RelOptInfo *rel,
 					   RangeTblEntry *rte);
 static void set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
-									   Index rti, RangeTblEntry *rte,
-									   List *inheritlist);
+						   Index rti, RangeTblEntry *rte,
+						   List *inheritlist);
 static void set_subquery_pathlist(Query *root, RelOptInfo *rel,
-								  Index rti, RangeTblEntry *rte);
+					  Index rti, RangeTblEntry *rte);
 static RelOptInfo *make_one_rel_by_joins(Query *root, int levels_needed,
 					  List *initial_rels);
 
@@ -160,7 +160,7 @@ set_plain_rel_pathlist(Query *root, RelOptInfo *rel, RangeTblEntry *rte)
  *	  Build access paths for a inheritance tree rooted at rel
  *
  * inheritlist is a list of RT indexes of all tables in the inheritance tree,
- * including a duplicate of the parent itself.  Note we will not come here
+ * including a duplicate of the parent itself.	Note we will not come here
  * unless there's at least one child in addition to the parent.
  *
  * NOTE: the passed-in rel and RTE will henceforth represent the appended
@@ -192,9 +192,9 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 		elog(ERROR, "SELECT FOR UPDATE is not supported for inherit queries");
 
 	/*
-	 * The executor will check the parent table's access permissions when it
-	 * examines the parent's inheritlist entry.  There's no need to check
-	 * twice, so turn off access check bits in the original RTE.
+	 * The executor will check the parent table's access permissions when
+	 * it examines the parent's inheritlist entry.  There's no need to
+	 * check twice, so turn off access check bits in the original RTE.
 	 */
 	rte->checkForRead = false;
 	rte->checkForWrite = false;
@@ -230,8 +230,8 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 		/*
 		 * Copy the parent's targetlist and restriction quals to the
 		 * child, with attribute-number adjustment as needed.  We don't
-		 * bother to copy the join quals, since we can't do any joining
-		 * of the individual tables.
+		 * bother to copy the join quals, since we can't do any joining of
+		 * the individual tables.
 		 */
 		childrel->targetlist = (List *)
 			adjust_inherited_attrs((Node *) rel->targetlist,
@@ -282,32 +282,32 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 
 	/*
 	 * If there are any restriction clauses that have been attached to the
-	 * subquery relation, consider pushing them down to become HAVING quals
-	 * of the subquery itself.  (Not WHERE clauses, since they may refer to
-	 * subquery outputs that are aggregate results.  But planner.c will
-	 * transfer them into the subquery's WHERE if they do not.)  This
-	 * transformation is useful because it may allow us to generate a better
-	 * plan for the subquery than evaluating all the subquery output rows
-	 * and then filtering them.
+	 * subquery relation, consider pushing them down to become HAVING
+	 * quals of the subquery itself.  (Not WHERE clauses, since they may
+	 * refer to subquery outputs that are aggregate results.  But
+	 * planner.c will transfer them into the subquery's WHERE if they do
+	 * not.)  This transformation is useful because it may allow us to
+	 * generate a better plan for the subquery than evaluating all the
+	 * subquery output rows and then filtering them.
 	 *
 	 * There are several cases where we cannot push down clauses:
 	 *
 	 * 1. If the subquery contains set ops (UNION/INTERSECT/EXCEPT) we do not
-	 * push down any qual clauses, since the planner doesn't support quals at
-	 * the top level of a setop.  (With suitable analysis we could try to push
-	 * the quals down into the component queries of the setop, but getting it
-	 * right seems nontrivial.  Work on this later.)
+	 * push down any qual clauses, since the planner doesn't support quals
+	 * at the top level of a setop.  (With suitable analysis we could try
+	 * to push the quals down into the component queries of the setop, but
+	 * getting it right seems nontrivial.  Work on this later.)
 	 *
 	 * 2. If the subquery has a LIMIT clause or a DISTINCT ON clause, we must
 	 * not push down any quals, since that could change the set of rows
 	 * returned.  (Actually, we could push down quals into a DISTINCT ON
-	 * subquery if they refer only to DISTINCT-ed output columns, but checking
-	 * that seems more work than it's worth.  In any case, a plain DISTINCT is
-	 * safe to push down past.)
+	 * subquery if they refer only to DISTINCT-ed output columns, but
+	 * checking that seems more work than it's worth.  In any case, a
+	 * plain DISTINCT is safe to push down past.)
 	 *
 	 * 3. We do not push down clauses that contain subselects, mainly because
-	 * I'm not sure it will work correctly (the subplan hasn't yet transformed
-	 * sublinks to subselects).
+	 * I'm not sure it will work correctly (the subplan hasn't yet
+	 * transformed sublinks to subselects).
 	 *
 	 * Non-pushed-down clauses will get evaluated as qpquals of the
 	 * SubqueryScan node.
@@ -337,22 +337,23 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 			else
 			{
 				/*
-				 * We need to replace Vars in the clause (which must refer to
-				 * outputs of the subquery) with copies of the subquery's
-				 * targetlist expressions.  Note that at this point, any
-				 * uplevel Vars in the clause should have been replaced with
-				 * Params, so they need no work.
+				 * We need to replace Vars in the clause (which must refer
+				 * to outputs of the subquery) with copies of the
+				 * subquery's targetlist expressions.  Note that at this
+				 * point, any uplevel Vars in the clause should have been
+				 * replaced with Params, so they need no work.
 				 */
 				clause = ResolveNew(clause, rti, 0,
 									subquery->targetList,
 									CMD_SELECT, 0);
 				subquery->havingQual = make_and_qual(subquery->havingQual,
 													 clause);
+
 				/*
 				 * We need not change the subquery's hasAggs or
-				 * hasSublinks flags, since we can't be pushing
-				 * down any aggregates that weren't there before,
-				 * and we don't push down subselects at all.
+				 * hasSublinks flags, since we can't be pushing down any
+				 * aggregates that weren't there before, and we don't push
+				 * down subselects at all.
 				 */
 			}
 		}
@@ -412,7 +413,6 @@ make_fromexpr_rel(Query *root, FromExpr *from)
 
 	if (levels_needed == 1)
 	{
-
 		/*
 		 * Single jointree node, so we're done.
 		 */
@@ -420,7 +420,6 @@ make_fromexpr_rel(Query *root, FromExpr *from)
 	}
 	else
 	{
-
 		/*
 		 * Consider the different orders in which we could join the rels,
 		 * using either GEQO or regular optimizer.
@@ -552,7 +551,7 @@ print_restrictclauses(Query *root, List *clauses)
 static void
 print_path(Query *root, Path *path, int indent)
 {
-	const char   *ptype;
+	const char *ptype;
 	bool		join;
 	int			i;
 
@@ -650,7 +649,7 @@ debug_print_rel(Query *root, RelOptInfo *rel)
 
 	foreach(l, rel->joininfo)
 	{
-		JoinInfo *j = (JoinInfo *) lfirst(l);
+		JoinInfo   *j = (JoinInfo *) lfirst(l);
 
 		printf("\tjoininfo (");
 		print_relids(j->unjoined_relids);
@@ -669,5 +668,4 @@ debug_print_rel(Query *root, RelOptInfo *rel)
 	printf("\n");
 	fflush(stdout);
 }
-
 #endif	 /* OPTIMIZER_DEBUG */

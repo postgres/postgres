@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.41 2001/06/11 18:23:33 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.42 2001/10/25 05:49:54 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "help.h"
@@ -54,7 +54,6 @@ usage(void)
 
 #ifndef WIN32
 	struct passwd *pw = NULL;
-
 #endif
 
 	/* Find default user, in case we need it. */
@@ -132,10 +131,10 @@ usage(void)
 	puts(_("  -X              Do not read startup file (~/.psqlrc)"));
 
 	puts(_(
-		"\nFor more information, type \"\\?\" (for internal commands) or \"\\help\"\n"
-		"(for SQL commands) from within psql, or consult the psql section in\n"
-		"the PostgreSQL documentation.\n\n"
-		"Report bugs to <pgsql-bugs@postgresql.org>."));
+		   "\nFor more information, type \"\\?\" (for internal commands) or \"\\help\"\n"
+		   "(for SQL commands) from within psql, or consult the psql section in\n"
+		   "the PostgreSQL documentation.\n\n"
+		   "Report bugs to <pgsql-bugs@postgresql.org>."));
 }
 
 
@@ -152,7 +151,6 @@ struct winsize
 	int			ws_row;
 	int			ws_col;
 };
-
 #endif
 
 void
@@ -193,7 +191,7 @@ slashUsage(void)
 	/* if you add/remove a line here, change the row test above */
 	fprintf(fout, _(" \\a             toggle between unaligned and aligned output mode\n"));
 	fprintf(fout, _(" \\c[onnect] [DBNAME|- [USER]]\n"
-					"                connect to new database (currently \"%s\")\n"),
+		 "                connect to new database (currently \"%s\")\n"),
 			PQdb(pset.db));
 	fprintf(fout, _(" \\C TITLE       set table title\n"));
 	fprintf(fout, _(" \\cd [DIRNAME]  change the current working directory\n"));
@@ -334,5 +332,5 @@ print_copyright(void)
 		 "PARTICULAR PURPOSE.THE SOFTWARE PROVIDED HEREUNDER IS ON AN \"AS IS\" BASIS,\n"
 		 "AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE,\n"
 		 "SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS."
-	);
+		);
 }

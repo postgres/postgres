@@ -49,13 +49,13 @@
 
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_GetInfo(
-		   HDBC hdbc,
-		   UWORD fInfoType,
-		   PTR rgbInfoValue,
-		   SWORD cbInfoValueMax,
-		   SWORD FAR *pcbInfoValue)
+			  HDBC hdbc,
+			  UWORD fInfoType,
+			  PTR rgbInfoValue,
+			  SWORD cbInfoValueMax,
+			  SWORD FAR * pcbInfoValue)
 {
 	static char *func = "PGAPI_GetInfo";
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
@@ -219,16 +219,20 @@ PGAPI_GetInfo(
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 			{
 				static char dver[32];
+
 				SQLGetPrivateProfileString(DBMS_NAME,
-				 "DriverODBCVer", "", dver, sizeof(dver), "odbcinst.ini");
+				"DriverODBCVer", "", dver, sizeof(dver), "odbcinst.ini");
 				if (dver[0])
 				{
-					int	major, minor;
+					int			major,
+								minor;
+
 					mylog("REGISTRY_ODBC_VER = %s\n", dver)
-;
+						;
 					if (sscanf(dver, "%x.%x", &major, &minor) >= 2)
 					{
-						Int2	drv_ver = (major << 8) + minor;
+						Int2		drv_ver = (major << 8) + minor;
+
 						if (drv_ver > ODBCVER)
 						{
 							conn->driver_version = drv_ver;
@@ -237,7 +241,7 @@ PGAPI_GetInfo(
 					}
 				}
 			}
-#endif /* DRIVER_CURSOR_IMPLEMENT */
+#endif	 /* DRIVER_CURSOR_IMPLEMENT */
 			break;
 
 		case SQL_DRIVER_VER:	/* ODBC 1.0 */
@@ -520,8 +524,8 @@ PGAPI_GetInfo(
 		case SQL_POSITIONED_STATEMENTS: /* ODBC 2.0 */
 			len = 4;
 			value = ci->drivers.lie ? (SQL_PS_POSITIONED_DELETE |
-								   SQL_PS_POSITIONED_UPDATE |
-								   SQL_PS_SELECT_FOR_UPDATE) : 0;
+									   SQL_PS_POSITIONED_UPDATE |
+									   SQL_PS_SELECT_FOR_UPDATE) : 0;
 			break;
 
 		case SQL_PROCEDURE_TERM:		/* ODBC 1.0 */
@@ -568,10 +572,10 @@ PGAPI_GetInfo(
 		case SQL_SCROLL_CONCURRENCY:	/* ODBC 1.0 */
 			len = 4;
 			value = ci->drivers.lie ? (SQL_SCCO_READ_ONLY |
-								   SQL_SCCO_LOCK |
-								   SQL_SCCO_OPT_ROWVER |
-							 SQL_SCCO_OPT_VALUES) :
- (SQL_SCCO_READ_ONLY);
+									   SQL_SCCO_LOCK |
+									   SQL_SCCO_OPT_ROWVER |
+									   SQL_SCCO_OPT_VALUES) :
+				(SQL_SCCO_READ_ONLY);
 			if (ci->updatable_cursors)
 				value |= SQL_SCCO_OPT_ROWVER;
 			break;
@@ -579,13 +583,13 @@ PGAPI_GetInfo(
 		case SQL_SCROLL_OPTIONS:		/* ODBC 1.0 */
 			len = 4;
 			value = ci->drivers.lie ? (SQL_SO_FORWARD_ONLY |
-								   SQL_SO_STATIC |
-								   SQL_SO_KEYSET_DRIVEN |
-								   SQL_SO_DYNAMIC |
-								   SQL_SO_MIXED)
- : (ci->drivers.use_declarefetch ? SQL_SO_FORWARD_ONLY : (SQL_SO_FORWARD_ONLY | SQL_SO_STATIC));
+									   SQL_SO_STATIC |
+									   SQL_SO_KEYSET_DRIVEN |
+									   SQL_SO_DYNAMIC |
+									   SQL_SO_MIXED)
+				: (ci->drivers.use_declarefetch ? SQL_SO_FORWARD_ONLY : (SQL_SO_FORWARD_ONLY | SQL_SO_STATIC));
 			if (ci->updatable_cursors)
- 				value |= 0; /* SQL_SO_KEYSET_DRIVEN in the furure */
+				value |= 0;		/* SQL_SO_KEYSET_DRIVEN in the furure */
 			break;
 
 		case SQL_SEARCH_PATTERN_ESCAPE: /* ODBC 1.0 */
@@ -730,10 +734,10 @@ PGAPI_GetInfo(
 }
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_GetTypeInfo(
-			   HSTMT hstmt,
-			   SWORD fSqlType)
+				  HSTMT hstmt,
+				  SWORD fSqlType)
 {
 	static char *func = "PGAPI_GetTypeInfo";
 	StatementClass *stmt = (StatementClass *) hstmt;
@@ -785,7 +789,7 @@ PGAPI_GetTypeInfo(
 
 		if (fSqlType == SQL_ALL_TYPES || fSqlType == sqlType)
 		{
-			row = (TupleNode *) malloc(sizeof(TupleNode) + (15 - 1) *sizeof(TupleField));
+			row = (TupleNode *) malloc(sizeof(TupleNode) + (15 - 1) * sizeof(TupleField));
 
 			/* These values can't be NULL */
 			set_tuplefield_string(&row->tuple[0], pgtype_to_name(stmt, pgType));
@@ -824,15 +828,15 @@ PGAPI_GetTypeInfo(
 }
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_GetFunctions(
-				HDBC hdbc,
-				UWORD fFunction,
-				UWORD FAR *pfExists)
+				   HDBC hdbc,
+				   UWORD fFunction,
+				   UWORD FAR * pfExists)
 {
 	static char *func = "PGAPI_GetFunctions";
-	ConnectionClass *conn = (ConnectionClass *)hdbc;
-	ConnInfo *ci = &(conn->connInfo);
+	ConnectionClass *conn = (ConnectionClass *) hdbc;
+	ConnInfo   *ci = &(conn->connInfo);
 
 	mylog("%s: entering...%u\n", func, fFunction);
 
@@ -1114,17 +1118,17 @@ PGAPI_GetFunctions(
 }
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_Tables(
-		  HSTMT hstmt,
-		  UCHAR FAR *szTableQualifier,
-		  SWORD cbTableQualifier,
-		  UCHAR FAR *szTableOwner,
-		  SWORD cbTableOwner,
-		  UCHAR FAR *szTableName,
-		  SWORD cbTableName,
-		  UCHAR FAR *szTableType,
-		  SWORD cbTableType)
+			 HSTMT hstmt,
+			 UCHAR FAR * szTableQualifier,
+			 SWORD cbTableQualifier,
+			 UCHAR FAR * szTableOwner,
+			 SWORD cbTableOwner,
+			 UCHAR FAR * szTableName,
+			 SWORD cbTableName,
+			 UCHAR FAR * szTableType,
+			 SWORD cbTableType)
 {
 	static char *func = "PGAPI_Tables";
 	StatementClass *stmt = (StatementClass *) hstmt;
@@ -1274,7 +1278,7 @@ PGAPI_Tables(
 	}
 
 	result = PGAPI_BindCol(htbl_stmt, 1, SQL_C_CHAR,
-						table_name, MAX_INFO_STRING, NULL);
+						   table_name, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = tbl_stmt->errormsg;
@@ -1285,7 +1289,7 @@ PGAPI_Tables(
 	}
 
 	result = PGAPI_BindCol(htbl_stmt, 2, SQL_C_CHAR,
-						table_owner, MAX_INFO_STRING, NULL);
+						   table_owner, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = tbl_stmt->errormsg;
@@ -1295,7 +1299,7 @@ PGAPI_Tables(
 		return SQL_ERROR;
 	}
 	result = PGAPI_BindCol(htbl_stmt, 3, SQL_C_CHAR,
-						relkind_or_hasrules, MAX_INFO_STRING, NULL);
+						   relkind_or_hasrules, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = tbl_stmt->errormsg;
@@ -1335,7 +1339,6 @@ PGAPI_Tables(
 	result = PGAPI_Fetch(htbl_stmt);
 	while ((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO))
 	{
-
 		/*
 		 * Determine if this table name is a system table. If treating
 		 * system tables as regular tables, then no need to do this test.
@@ -1384,7 +1387,7 @@ PGAPI_Tables(
 			(view && show_views) ||
 			(regular_table && show_regular_tables))
 		{
-			row = (TupleNode *) malloc(sizeof(TupleNode) + (5 - 1) *sizeof(TupleField));
+			row = (TupleNode *) malloc(sizeof(TupleNode) + (5 - 1) * sizeof(TupleField));
 
 			set_tuplefield_string(&row->tuple[0], "");
 
@@ -1434,17 +1437,17 @@ PGAPI_Tables(
 }
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_Columns(
-		   HSTMT hstmt,
-		   UCHAR FAR *szTableQualifier,
-		   SWORD cbTableQualifier,
-		   UCHAR FAR *szTableOwner,
-		   SWORD cbTableOwner,
-		   UCHAR FAR *szTableName,
-		   SWORD cbTableName,
-		   UCHAR FAR *szColumnName,
-		   SWORD cbColumnName)
+			  HSTMT hstmt,
+			  UCHAR FAR * szTableQualifier,
+			  SWORD cbTableQualifier,
+			  UCHAR FAR * szTableOwner,
+			  SWORD cbTableOwner,
+			  UCHAR FAR * szTableName,
+			  SWORD cbTableName,
+			  UCHAR FAR * szColumnName,
+			  SWORD cbColumnName)
 {
 	static char *func = "PGAPI_Columns";
 	StatementClass *stmt = (StatementClass *) hstmt;
@@ -1520,7 +1523,7 @@ PGAPI_Columns(
 	mylog("%s: hcol_stmt = %u, col_stmt = %u\n", func, hcol_stmt, col_stmt);
 
 	result = PGAPI_ExecDirect(hcol_stmt, columns_query,
-						   strlen(columns_query));
+							  strlen(columns_query));
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = SC_create_errormsg(hcol_stmt);
@@ -1531,7 +1534,7 @@ PGAPI_Columns(
 	}
 
 	result = PGAPI_BindCol(hcol_stmt, 1, SQL_C_CHAR,
-						table_owner, MAX_INFO_STRING, NULL);
+						   table_owner, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
@@ -1542,7 +1545,7 @@ PGAPI_Columns(
 	}
 
 	result = PGAPI_BindCol(hcol_stmt, 2, SQL_C_CHAR,
-						table_name, MAX_INFO_STRING, NULL);
+						   table_name, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
@@ -1553,7 +1556,7 @@ PGAPI_Columns(
 	}
 
 	result = PGAPI_BindCol(hcol_stmt, 3, SQL_C_CHAR,
-						field_name, MAX_INFO_STRING, NULL);
+						   field_name, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
@@ -1564,7 +1567,7 @@ PGAPI_Columns(
 	}
 
 	result = PGAPI_BindCol(hcol_stmt, 4, SQL_C_LONG,
-						&field_type, 4, NULL);
+						   &field_type, 4, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
@@ -1575,7 +1578,7 @@ PGAPI_Columns(
 	}
 
 	result = PGAPI_BindCol(hcol_stmt, 5, SQL_C_CHAR,
-						field_type_name, MAX_INFO_STRING, NULL);
+						   field_type_name, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
@@ -1586,7 +1589,7 @@ PGAPI_Columns(
 	}
 
 	result = PGAPI_BindCol(hcol_stmt, 6, SQL_C_SHORT,
-						&field_number, MAX_INFO_STRING, NULL);
+						   &field_number, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
@@ -1597,7 +1600,7 @@ PGAPI_Columns(
 	}
 
 	result = PGAPI_BindCol(hcol_stmt, 7, SQL_C_LONG,
-						&field_length, MAX_INFO_STRING, NULL);
+						   &field_length, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
@@ -1608,7 +1611,7 @@ PGAPI_Columns(
 	}
 
 	result = PGAPI_BindCol(hcol_stmt, 8, SQL_C_LONG,
-						&mod_length, MAX_INFO_STRING, NULL);
+						   &mod_length, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
@@ -1619,7 +1622,7 @@ PGAPI_Columns(
 	}
 
 	result = PGAPI_BindCol(hcol_stmt, 9, SQL_C_CHAR,
-						not_null, MAX_INFO_STRING, NULL);
+						   not_null, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
@@ -1630,7 +1633,7 @@ PGAPI_Columns(
 	}
 
 	result = PGAPI_BindCol(hcol_stmt, 10, SQL_C_CHAR,
-						relhasrules, MAX_INFO_STRING, NULL);
+						   relhasrules, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
@@ -1695,7 +1698,7 @@ PGAPI_Columns(
 			/* For OID fields */
 			the_type = PG_TYPE_OID;
 			row = (TupleNode *) malloc(sizeof(TupleNode) +
-								  (result_cols - 1) *sizeof(TupleField));
+								 (result_cols - 1) * sizeof(TupleField));
 
 			set_tuplefield_string(&row->tuple[0], "");
 			/* see note in SQLTables() */
@@ -1724,7 +1727,7 @@ PGAPI_Columns(
 	while ((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO))
 	{
 		row = (TupleNode *) malloc(sizeof(TupleNode) +
-								   (result_cols - 1) *sizeof(TupleField));
+								 (result_cols - 1) * sizeof(TupleField));
 
 
 		set_tuplefield_string(&row->tuple[0], "");
@@ -1758,7 +1761,7 @@ PGAPI_Columns(
 		if (field_type == PG_TYPE_NUMERIC)
 		{
 			if (mod_length >= 4)
-				mod_length -= 4;/* the length is in atttypmod - 4 */
+				mod_length -= 4;		/* the length is in atttypmod - 4 */
 
 			if (mod_length >= 0)
 			{
@@ -1782,7 +1785,7 @@ PGAPI_Columns(
 			useStaticPrecision = FALSE;
 
 			if (mod_length >= 4)
-				mod_length -= 4;/* the length is in atttypmod - 4 */
+				mod_length -= 4;		/* the length is in atttypmod - 4 */
 
 			if (mod_length > ci->drivers.max_varchar_size || mod_length <= 0)
 				mod_length = ci->drivers.max_varchar_size;
@@ -1835,7 +1838,7 @@ PGAPI_Columns(
 		the_type = PG_TYPE_INT4;
 
 		row = (TupleNode *) malloc(sizeof(TupleNode) +
-								   (result_cols - 1) *sizeof(TupleField));
+								 (result_cols - 1) * sizeof(TupleField));
 
 		set_tuplefield_string(&row->tuple[0], "");
 		set_tuplefield_string(&row->tuple[1], "");
@@ -1872,18 +1875,18 @@ PGAPI_Columns(
 }
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_SpecialColumns(
-				  HSTMT hstmt,
-				  UWORD fColType,
-				  UCHAR FAR *szTableQualifier,
-				  SWORD cbTableQualifier,
-				  UCHAR FAR *szTableOwner,
-				  SWORD cbTableOwner,
-				  UCHAR FAR *szTableName,
-				  SWORD cbTableName,
-				  UWORD fScope,
-				  UWORD fNullable)
+					 HSTMT hstmt,
+					 UWORD fColType,
+					 UCHAR FAR * szTableQualifier,
+					 SWORD cbTableQualifier,
+					 UCHAR FAR * szTableOwner,
+					 SWORD cbTableOwner,
+					 UCHAR FAR * szTableName,
+					 SWORD cbTableName,
+					 UWORD fScope,
+					 UWORD fNullable)
 {
 	static char *func = "PGAPI_SpecialColumns";
 	TupleNode  *row;
@@ -1930,7 +1933,7 @@ PGAPI_SpecialColumns(
 	mylog("%s: hcol_stmt = %u, col_stmt = %u\n", func, hcol_stmt, col_stmt);
 
 	result = PGAPI_ExecDirect(hcol_stmt, columns_query,
-						   strlen(columns_query));
+							  strlen(columns_query));
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = SC_create_errormsg(hcol_stmt);
@@ -1941,7 +1944,7 @@ PGAPI_SpecialColumns(
 	}
 
 	result = PGAPI_BindCol(hcol_stmt, 1, SQL_C_CHAR,
-						relhasrules, MAX_INFO_STRING, NULL);
+						   relhasrules, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
@@ -1972,7 +1975,7 @@ PGAPI_SpecialColumns(
 		/* use the oid value for the rowid */
 		if (fColType == SQL_BEST_ROWID)
 		{
-			row = (TupleNode *) malloc(sizeof(TupleNode) + (8 - 1) *sizeof(TupleField));
+			row = (TupleNode *) malloc(sizeof(TupleNode) + (8 - 1) * sizeof(TupleField));
 
 			set_tuplefield_int2(&row->tuple[0], SQL_SCOPE_SESSION);
 			set_tuplefield_string(&row->tuple[1], "oid");
@@ -1992,7 +1995,7 @@ PGAPI_SpecialColumns(
 
 			if (atoi(ci->row_versioning))
 			{
-				row = (TupleNode *) malloc(sizeof(TupleNode) + (8 - 1) *sizeof(TupleField));
+				row = (TupleNode *) malloc(sizeof(TupleNode) + (8 - 1) * sizeof(TupleField));
 
 				set_tuplefield_null(&row->tuple[0]);
 				set_tuplefield_string(&row->tuple[1], "xmin");
@@ -2018,17 +2021,17 @@ PGAPI_SpecialColumns(
 }
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_Statistics(
-			  HSTMT hstmt,
-			  UCHAR FAR *szTableQualifier,
-			  SWORD cbTableQualifier,
-			  UCHAR FAR *szTableOwner,
-			  SWORD cbTableOwner,
-			  UCHAR FAR *szTableName,
-			  SWORD cbTableName,
-			  UWORD fUnique,
-			  UWORD fAccuracy)
+				 HSTMT hstmt,
+				 UCHAR FAR * szTableQualifier,
+				 SWORD cbTableQualifier,
+				 UCHAR FAR * szTableOwner,
+				 SWORD cbTableOwner,
+				 UCHAR FAR * szTableName,
+				 SWORD cbTableName,
+				 UWORD fUnique,
+				 UWORD fAccuracy)
 {
 	static char *func = "PGAPI_Statistics";
 	StatementClass *stmt = (StatementClass *) hstmt;
@@ -2136,7 +2139,7 @@ PGAPI_Statistics(
 	 */
 	col_stmt->internal = TRUE;
 	result = PGAPI_Columns(hcol_stmt, "", 0, "", 0,
-						table_name, (SWORD) strlen(table_name), "", 0);
+						   table_name, (SWORD) strlen(table_name), "", 0);
 	col_stmt->internal = FALSE;
 
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
@@ -2148,7 +2151,7 @@ PGAPI_Statistics(
 		goto SEEYA;
 	}
 	result = PGAPI_BindCol(hcol_stmt, 4, SQL_C_CHAR,
-						column_name, MAX_INFO_STRING, &column_name_len);
+						 column_name, MAX_INFO_STRING, &column_name_len);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
@@ -2206,7 +2209,7 @@ PGAPI_Statistics(
 			" and d.oid = i.indrelid"
 			" and i.indexrelid = c.oid"
 			" and c.relam = a.oid"
-			, table_name);
+			,table_name);
 	if (PG_VERSION_GT(SC_get_conn(stmt), 6.4))
 		strcat(index_query, " order by i.indisprimary desc");
 
@@ -2226,7 +2229,7 @@ PGAPI_Statistics(
 
 	/* bind the index name column */
 	result = PGAPI_BindCol(hindx_stmt, 1, SQL_C_CHAR,
-						index_name, MAX_INFO_STRING, &index_name_len);
+						   index_name, MAX_INFO_STRING, &index_name_len);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = indx_stmt->errormsg;	/* "Couldn't bind column
@@ -2238,7 +2241,7 @@ PGAPI_Statistics(
 	}
 	/* bind the vector column */
 	result = PGAPI_BindCol(hindx_stmt, 2, SQL_C_DEFAULT,
-						fields_vector, 32, &fields_vector_len);
+						   fields_vector, 32, &fields_vector_len);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = indx_stmt->errormsg;	/* "Couldn't bind column
@@ -2250,7 +2253,7 @@ PGAPI_Statistics(
 	}
 	/* bind the "is unique" column */
 	result = PGAPI_BindCol(hindx_stmt, 3, SQL_C_CHAR,
-						isunique, sizeof(isunique), NULL);
+						   isunique, sizeof(isunique), NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = indx_stmt->errormsg;	/* "Couldn't bind column
@@ -2262,7 +2265,7 @@ PGAPI_Statistics(
 
 	/* bind the "is clustered" column */
 	result = PGAPI_BindCol(hindx_stmt, 4, SQL_C_CHAR,
-						isclustered, sizeof(isclustered), NULL);
+						   isclustered, sizeof(isclustered), NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = indx_stmt->errormsg;	/* "Couldn't bind column
@@ -2275,7 +2278,7 @@ PGAPI_Statistics(
 
 	/* bind the "is hash" column */
 	result = PGAPI_BindCol(hindx_stmt, 5, SQL_C_CHAR,
-						ishash, sizeof(ishash), NULL);
+						   ishash, sizeof(ishash), NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = indx_stmt->errormsg;	/* "Couldn't bind column
@@ -2287,7 +2290,7 @@ PGAPI_Statistics(
 	}
 
 	result = PGAPI_BindCol(hindx_stmt, 6, SQL_C_CHAR,
-						relhasrules, MAX_INFO_STRING, NULL);
+						   relhasrules, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = indx_stmt->errormsg;
@@ -2300,7 +2303,7 @@ PGAPI_Statistics(
 	if (relhasrules[0] != '1' && atoi(ci->show_oid_column) && atoi(ci->fake_oid_index))
 	{
 		row = (TupleNode *) malloc(sizeof(TupleNode) +
-								   (13 - 1) *sizeof(TupleField));
+								   (13 - 1) * sizeof(TupleField));
 
 		/* no table qualifier */
 		set_tuplefield_string(&row->tuple[0], "");
@@ -2344,7 +2347,7 @@ PGAPI_Statistics(
 			while (i < 16 && fields_vector[i] != 0)
 			{
 				row = (TupleNode *) malloc(sizeof(TupleNode) +
-										   (13 - 1) *sizeof(TupleField));
+										   (13 - 1) * sizeof(TupleField));
 
 				/* no table qualifier */
 				set_tuplefield_string(&row->tuple[0], "");
@@ -2366,8 +2369,8 @@ PGAPI_Statistics(
 				 * Clustered/HASH index?
 				 */
 				set_tuplefield_int2(&row->tuple[6], (Int2)
-					(atoi(isclustered) ? SQL_INDEX_CLUSTERED :
-					(!strncmp(ishash, "hash", 4)) ? SQL_INDEX_HASHED : SQL_INDEX_OTHER));
+							   (atoi(isclustered) ? SQL_INDEX_CLUSTERED :
+								(!strncmp(ishash, "hash", 4)) ? SQL_INDEX_HASHED : SQL_INDEX_OTHER));
 				set_tuplefield_int2(&row->tuple[7], (Int2) (i + 1));
 
 				if (fields_vector[i] == OID_ATTNUM)
@@ -2441,17 +2444,17 @@ SEEYA:
 }
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_ColumnPrivileges(
-					HSTMT hstmt,
-					UCHAR FAR *szTableQualifier,
-					SWORD cbTableQualifier,
-					UCHAR FAR *szTableOwner,
-					SWORD cbTableOwner,
-					UCHAR FAR *szTableName,
-					SWORD cbTableName,
-					UCHAR FAR *szColumnName,
-					SWORD cbColumnName)
+					   HSTMT hstmt,
+					   UCHAR FAR * szTableQualifier,
+					   SWORD cbTableQualifier,
+					   UCHAR FAR * szTableOwner,
+					   SWORD cbTableOwner,
+					   UCHAR FAR * szTableName,
+					   SWORD cbTableName,
+					   UCHAR FAR * szColumnName,
+					   SWORD cbColumnName)
 {
 	static char *func = "PGAPI_ColumnPrivileges";
 
@@ -2469,15 +2472,15 @@ PGAPI_ColumnPrivileges(
  *
  *	Retrieve the primary key columns for the specified table.
  */
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_PrimaryKeys(
-			   HSTMT hstmt,
-			   UCHAR FAR *szTableQualifier,
-			   SWORD cbTableQualifier,
-			   UCHAR FAR *szTableOwner,
-			   SWORD cbTableOwner,
-			   UCHAR FAR *szTableName,
-			   SWORD cbTableName)
+				  HSTMT hstmt,
+				  UCHAR FAR * szTableQualifier,
+				  SWORD cbTableQualifier,
+				  UCHAR FAR * szTableOwner,
+				  SWORD cbTableOwner,
+				  UCHAR FAR * szTableName,
+				  SWORD cbTableName)
 {
 	static char *func = "PGAPI_PrimaryKeys";
 	StatementClass *stmt = (StatementClass *) hstmt;
@@ -2492,7 +2495,9 @@ PGAPI_PrimaryKeys(
 	SDWORD		attname_len;
 	char		pktab[MAX_TABLE_LEN + 1];
 	Int2		result_cols;
-	int		qno, qstart, qend;
+	int			qno,
+				qstart,
+				qend;
 
 	mylog("%s: entering...stmt=%u\n", func, stmt);
 
@@ -2554,7 +2559,7 @@ PGAPI_PrimaryKeys(
 	}
 
 	result = PGAPI_BindCol(htbl_stmt, 1, SQL_C_CHAR,
-						attname, MAX_INFO_STRING, &attname_len);
+						   attname, MAX_INFO_STRING, &attname_len);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = tbl_stmt->errormsg;
@@ -2575,32 +2580,35 @@ PGAPI_PrimaryKeys(
 		switch (qno)
 		{
 			case 1:
+
 				/*
-	 			 * Simplified query to remove assumptions about number of possible
-	 			 * index columns. Courtesy of Tom Lane - thomas 2000-03-21
-	 			 */
+				 * Simplified query to remove assumptions about number of
+				 * possible index columns. Courtesy of Tom Lane - thomas
+				 * 2000-03-21
+				 */
 				sprintf(tables_query, "select ta.attname, ia.attnum"
-		 		" from pg_attribute ta, pg_attribute ia, pg_class c, pg_index i"
-				" where c.relname = '%s'"
-				" AND c.oid = i.indrelid"
-				" AND i.indisprimary = 't'"
-				" AND ia.attrelid = i.indexrelid"
-				" AND ta.attrelid = i.indrelid"
-				" AND ta.attnum = i.indkey[ia.attnum-1]"
-				" order by ia.attnum", pktab);
+						" from pg_attribute ta, pg_attribute ia, pg_class c, pg_index i"
+						" where c.relname = '%s'"
+						" AND c.oid = i.indrelid"
+						" AND i.indisprimary = 't'"
+						" AND ia.attrelid = i.indexrelid"
+						" AND ta.attrelid = i.indrelid"
+						" AND ta.attnum = i.indkey[ia.attnum-1]"
+						" order by ia.attnum", pktab);
 				break;
 			case 2:
+
 				/*
-	 	 		 * Simplified query to search old fashoned primary key
-	 	 		 */
+				 * Simplified query to search old fashoned primary key
+				 */
 				sprintf(tables_query, "select ta.attname, ia.attnum"
-		 		" from pg_attribute ta, pg_attribute ia, pg_class c, pg_index i"
-				" where c.relname = '%s_pkey'"
-				" AND c.oid = i.indexrelid"
-				" AND ia.attrelid = i.indexrelid"
-				" AND ta.attrelid = i.indrelid"
-				" AND ta.attnum = i.indkey[ia.attnum-1]"
-				" order by ia.attnum", pktab);
+						" from pg_attribute ta, pg_attribute ia, pg_class c, pg_index i"
+						" where c.relname = '%s_pkey'"
+						" AND c.oid = i.indexrelid"
+						" AND ia.attrelid = i.indexrelid"
+						" AND ta.attrelid = i.indrelid"
+						" AND ta.attnum = i.indkey[ia.attnum-1]"
+						" order by ia.attnum", pktab);
 				break;
 		}
 		mylog("%s: tables_query='%s'\n", func, tables_query);
@@ -2622,7 +2630,7 @@ PGAPI_PrimaryKeys(
 
 	while ((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO))
 	{
-		row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) *sizeof(TupleField));
+		row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) * sizeof(TupleField));
 
 		set_tuplefield_null(&row->tuple[0]);
 
@@ -2679,7 +2687,8 @@ PGAPI_PrimaryKeys(
  *	There may be much more effective way in the
  *	future version. The way is very forcive currently.
  */
-static	BOOL isMultibyte(const unsigned char *str)
+static BOOL
+isMultibyte(const unsigned char *str)
 {
 	for (; *str; str++)
 	{
@@ -2688,11 +2697,15 @@ static	BOOL isMultibyte(const unsigned char *str)
 	}
 	return FALSE;
 }
-static	char *getClientTableName(ConnectionClass *conn, char *serverTableName, BOOL *nameAlloced)
+static char *
+getClientTableName(ConnectionClass * conn, char *serverTableName, BOOL * nameAlloced)
 {
-	char	query[1024], saveoid[24], *ret = serverTableName;
-	BOOL	continueExec = TRUE, bError = FALSE;
-	QResultClass	*res;
+	char		query[1024],
+				saveoid[24],
+			   *ret = serverTableName;
+	BOOL		continueExec = TRUE,
+				bError = FALSE;
+	QResultClass *res;
 
 	*nameAlloced = FALSE;
 	if (!conn->client_encoding || !isMultibyte(serverTableName))
@@ -2764,11 +2777,16 @@ static	char *getClientTableName(ConnectionClass *conn, char *serverTableName, BO
 	}
 	return ret;
 }
-static	char *getClientColumnName(ConnectionClass *conn, const char *serverTableName, char *serverColumnName, BOOL *nameAlloced)
+static char *
+getClientColumnName(ConnectionClass * conn, const char *serverTableName, char *serverColumnName, BOOL * nameAlloced)
 {
-	char	query[1024], saveattrelid[24], saveattnum[16], *ret = serverColumnName;
-	BOOL	continueExec = TRUE, bError = FALSE;
-	QResultClass	*res;
+	char		query[1024],
+				saveattrelid[24],
+				saveattnum[16],
+			   *ret = serverColumnName;
+	BOOL		continueExec = TRUE,
+				bError = FALSE;
+	QResultClass *res;
 
 	*nameAlloced = FALSE;
 	if (!conn->client_encoding || !isMultibyte(serverColumnName))
@@ -2795,8 +2813,8 @@ static	char *getClientColumnName(ConnectionClass *conn, const char *serverTableN
 	if (!bError && continueExec)
 	{
 		sprintf(query, "select attrelid, attnum from pg_class, pg_attribute "
-			"where relname = '%s' and attrelid = pg_class.oid "
-			"and attname = '%s'", serverTableName, serverColumnName);
+				"where relname = '%s' and attrelid = pg_class.oid "
+				"and attname = '%s'", serverTableName, serverColumnName);
 		if (res = CC_send_query(conn, query, NULL), res)
 		{
 			if (QR_get_num_tuples(res) > 0)
@@ -2845,23 +2863,23 @@ static	char *getClientColumnName(ConnectionClass *conn, const char *serverTableN
 	}
 	return ret;
 }
-#endif /* MULTIBYTE */
+#endif	 /* MULTIBYTE */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_ForeignKeys(
-			   HSTMT hstmt,
-			   UCHAR FAR *szPkTableQualifier,
-			   SWORD cbPkTableQualifier,
-			   UCHAR FAR *szPkTableOwner,
-			   SWORD cbPkTableOwner,
-			   UCHAR FAR *szPkTableName,
-			   SWORD cbPkTableName,
-			   UCHAR FAR *szFkTableQualifier,
-			   SWORD cbFkTableQualifier,
-			   UCHAR FAR *szFkTableOwner,
-			   SWORD cbFkTableOwner,
-			   UCHAR FAR *szFkTableName,
-			   SWORD cbFkTableName)
+				  HSTMT hstmt,
+				  UCHAR FAR * szPkTableQualifier,
+				  SWORD cbPkTableQualifier,
+				  UCHAR FAR * szPkTableOwner,
+				  SWORD cbPkTableOwner,
+				  UCHAR FAR * szPkTableName,
+				  SWORD cbPkTableName,
+				  UCHAR FAR * szFkTableQualifier,
+				  SWORD cbFkTableQualifier,
+				  UCHAR FAR * szFkTableOwner,
+				  SWORD cbFkTableOwner,
+				  UCHAR FAR * szFkTableName,
+				  SWORD cbFkTableName)
 {
 	static char *func = "PGAPI_ForeignKeys";
 	StatementClass *stmt = (StatementClass *) hstmt;
@@ -2879,14 +2897,22 @@ PGAPI_ForeignKeys(
 				del_rule[MAX_TABLE_LEN];
 	char		pk_table_needed[MAX_TABLE_LEN + 1];
 	char		fk_table_needed[MAX_TABLE_LEN + 1];
-	char		*pkey_ptr, *pkey_text,
-			*fkey_ptr, *fkey_text,
-			*pk_table, *pkt_text,
-			*fk_table, *fkt_text;
+	char	   *pkey_ptr,
+			   *pkey_text,
+			   *fkey_ptr,
+			   *fkey_text,
+			   *pk_table,
+			   *pkt_text,
+			   *fk_table,
+			   *fkt_text;
+
 #ifdef	MULTIBYTE
-	BOOL		pkey_alloced, fkey_alloced, pkt_alloced, fkt_alloced;
-	ConnectionClass	*conn;
-#endif /* MULTIBYTE */
+	BOOL		pkey_alloced,
+				fkey_alloced,
+				pkt_alloced,
+				fkt_alloced;
+	ConnectionClass *conn;
+#endif	 /* MULTIBYTE */
 	int			i,
 				j,
 				k,
@@ -2897,7 +2923,6 @@ PGAPI_ForeignKeys(
 
 #if (ODBCVER >= 0x0300)
 	SWORD		defer_type;
-
 #endif
 	char		pkey[MAX_INFO_STRING];
 	Int2		result_cols;
@@ -2983,7 +3008,8 @@ PGAPI_ForeignKeys(
 #ifdef	MULTIBYTE
 	pkey_alloced = fkey_alloced = pkt_alloced = fkt_alloced = FALSE;
 	conn = SC_get_conn(stmt);
-#endif /* MULTIBYTE */
+#endif	 /* MULTIBYTE */
+
 	/*
 	 * Case #2 -- Get the foreign keys in the specified table (fktab) that
 	 * refer to the primary keys of other table(s).
@@ -3032,7 +3058,7 @@ PGAPI_ForeignKeys(
 		}
 
 		result = PGAPI_BindCol(htbl_stmt, 1, SQL_C_BINARY,
-							trig_args, sizeof(trig_args), NULL);
+							   trig_args, sizeof(trig_args), NULL);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = tbl_stmt->errormsg;
@@ -3043,7 +3069,7 @@ PGAPI_ForeignKeys(
 		}
 
 		result = PGAPI_BindCol(htbl_stmt, 2, SQL_C_SHORT,
-							&trig_nargs, 0, NULL);
+							   &trig_nargs, 0, NULL);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = tbl_stmt->errormsg;
@@ -3076,7 +3102,7 @@ PGAPI_ForeignKeys(
 		}
 
 		result = PGAPI_BindCol(htbl_stmt, 5, SQL_C_CHAR,
-							upd_rule, sizeof(upd_rule), NULL);
+							   upd_rule, sizeof(upd_rule), NULL);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = tbl_stmt->errormsg;
@@ -3087,7 +3113,7 @@ PGAPI_ForeignKeys(
 		}
 
 		result = PGAPI_BindCol(htbl_stmt, 6, SQL_C_CHAR,
-							del_rule, sizeof(del_rule), NULL);
+							   del_rule, sizeof(del_rule), NULL);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = tbl_stmt->errormsg;
@@ -3120,7 +3146,7 @@ PGAPI_ForeignKeys(
 		}
 
 		keyresult = PGAPI_BindCol(hpkey_stmt, 4, SQL_C_CHAR,
-							   pkey, sizeof(pkey), NULL);
+								  pkey, sizeof(pkey), NULL);
 		if (keyresult != SQL_SUCCESS)
 		{
 			stmt->errornumber = STMT_NO_MEMORY_ERROR;
@@ -3148,7 +3174,7 @@ PGAPI_ForeignKeys(
 			pkt_text = getClientTableName(conn, pk_table, &pkt_alloced);
 #else
 			pkt_text = pk_table;
-#endif /* MULTIBYTE */
+#endif	 /* MULTIBYTE */
 			/* If there is a pk table specified, then check it. */
 			if (pk_table_needed[0] != '\0')
 			{
@@ -3189,7 +3215,7 @@ PGAPI_ForeignKeys(
 				pkey_text = getClientColumnName(conn, pk_table, pkey_ptr, &pkey_alloced);
 #else
 				pkey_text = pkey_ptr;
-#endif /* MULTIBYTE */
+#endif	 /* MULTIBYTE */
 				mylog("%s: pkey_ptr='%s', pkey='%s'\n", func, pkey_text, pkey);
 				if (strcmp(pkey_text, pkey))
 				{
@@ -3199,7 +3225,7 @@ PGAPI_ForeignKeys(
 #ifdef	MULTIBYTE
 				if (pkey_alloced)
 					free(pkey_text);
-#endif /* MULTIBYTE */
+#endif	 /* MULTIBYTE */
 				/* Get to next primary key */
 				for (k = 0; k < 2; k++)
 					pkey_ptr += strlen(pkey_ptr) + 1;
@@ -3251,7 +3277,7 @@ PGAPI_ForeignKeys(
 
 			for (k = 0; k < num_keys; k++)
 			{
-				row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) *sizeof(TupleField));
+				row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) * sizeof(TupleField));
 
 #ifdef	MULTIBYTE
 				pkey_text = getClientColumnName(conn, pk_table, pkey_ptr, &pkey_alloced);
@@ -3259,7 +3285,7 @@ PGAPI_ForeignKeys(
 #else
 				pkey_text = pkey_ptr;
 				fkey_text = fkey_ptr;
-#endif /* MULTIBYTE */
+#endif	 /* MULTIBYTE */
 				mylog("%s: pk_table = '%s', pkey_ptr = '%s'\n", func, pkt_text, pkey_text);
 				set_tuplefield_null(&row->tuple[0]);
 				set_tuplefield_string(&row->tuple[1], "");
@@ -3291,7 +3317,7 @@ PGAPI_ForeignKeys(
 				if (pkey_alloced)
 					free(pkey_text);
 				pkey_alloced = FALSE;
-#endif	/* MULTIBYTE */
+#endif	 /* MULTIBYTE */
 				/* next primary/foreign key */
 				for (i = 0; i < 2; i++)
 				{
@@ -3303,7 +3329,7 @@ PGAPI_ForeignKeys(
 			if (pkt_alloced)
 				free(pkt_text);
 			pkt_alloced = FALSE;
-#endif /* MULTIBYTE */
+#endif	 /* MULTIBYTE */
 
 			result = PGAPI_Fetch(htbl_stmt);
 		}
@@ -3358,7 +3384,7 @@ PGAPI_ForeignKeys(
 		}
 
 		result = PGAPI_BindCol(htbl_stmt, 1, SQL_C_BINARY,
-							trig_args, sizeof(trig_args), NULL);
+							   trig_args, sizeof(trig_args), NULL);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = tbl_stmt->errormsg;
@@ -3369,7 +3395,7 @@ PGAPI_ForeignKeys(
 		}
 
 		result = PGAPI_BindCol(htbl_stmt, 2, SQL_C_SHORT,
-							&trig_nargs, 0, NULL);
+							   &trig_nargs, 0, NULL);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = tbl_stmt->errormsg;
@@ -3402,7 +3428,7 @@ PGAPI_ForeignKeys(
 		}
 
 		result = PGAPI_BindCol(htbl_stmt, 5, SQL_C_CHAR,
-							upd_rule, sizeof(upd_rule), NULL);
+							   upd_rule, sizeof(upd_rule), NULL);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = tbl_stmt->errormsg;
@@ -3413,7 +3439,7 @@ PGAPI_ForeignKeys(
 		}
 
 		result = PGAPI_BindCol(htbl_stmt, 6, SQL_C_CHAR,
-							del_rule, sizeof(del_rule), NULL);
+							   del_rule, sizeof(del_rule), NULL);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = tbl_stmt->errormsg;
@@ -3489,7 +3515,7 @@ PGAPI_ForeignKeys(
 			fkt_text = getClientTableName(conn, fk_table, &fkt_alloced);
 #else
 			fkt_text = fk_table;
-#endif /* MULTIBYTE */	
+#endif	 /* MULTIBYTE */
 
 			/* Get to first foreign key */
 			fkey_ptr = trig_args;
@@ -3504,10 +3530,10 @@ PGAPI_ForeignKeys(
 #else
 				pkey_text = pkey_ptr;
 				fkey_text = fkey_ptr;
-#endif /* MULTIBYTE */	
+#endif	 /* MULTIBYTE */
 				mylog("pkey_ptr = '%s', fk_table = '%s', fkey_ptr = '%s'\n", pkey_text, fkt_text, fkey_text);
 
-				row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) *sizeof(TupleField));
+				row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) * sizeof(TupleField));
 
 				mylog("pk_table_needed = '%s', pkey_ptr = '%s'\n", pk_table_needed, pkey_text);
 				set_tuplefield_null(&row->tuple[0]);
@@ -3545,7 +3571,7 @@ PGAPI_ForeignKeys(
 				if (fkey_alloced)
 					free(fkey_text);
 				fkey_alloced = FALSE;
-#endif	/* MULTIBYTE */
+#endif	 /* MULTIBYTE */
 
 				/* next primary/foreign key */
 				for (j = 0; j < 2; j++)
@@ -3558,7 +3584,7 @@ PGAPI_ForeignKeys(
 			if (fkt_alloced)
 				free(fkt_text);
 			fkt_alloced = FALSE;
-#endif /* MULTIBYTE */	
+#endif	 /* MULTIBYTE */
 			result = PGAPI_Fetch(htbl_stmt);
 		}
 	}
@@ -3579,7 +3605,7 @@ PGAPI_ForeignKeys(
 		free(fkt_text);
 	if (fkey_alloced)
 		free(fkey_text);
-#endif /* MULTIBYTE */
+#endif	 /* MULTIBYTE */
 
 	PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 
@@ -3588,17 +3614,17 @@ PGAPI_ForeignKeys(
 }
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_ProcedureColumns(
-					HSTMT hstmt,
-					UCHAR FAR *szProcQualifier,
-					SWORD cbProcQualifier,
-					UCHAR FAR *szProcOwner,
-					SWORD cbProcOwner,
-					UCHAR FAR *szProcName,
-					SWORD cbProcName,
-					UCHAR FAR *szColumnName,
-					SWORD cbColumnName)
+					   HSTMT hstmt,
+					   UCHAR FAR * szProcQualifier,
+					   SWORD cbProcQualifier,
+					   UCHAR FAR * szProcOwner,
+					   SWORD cbProcOwner,
+					   UCHAR FAR * szProcName,
+					   SWORD cbProcName,
+					   UCHAR FAR * szColumnName,
+					   SWORD cbColumnName)
 {
 	static char *func = "PGAPI_ProcedureColumns";
 
@@ -3609,24 +3635,24 @@ PGAPI_ProcedureColumns(
 }
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_Procedures(
-			  HSTMT hstmt,
-			  UCHAR FAR *szProcQualifier,
-			  SWORD cbProcQualifier,
-			  UCHAR FAR *szProcOwner,
-			  SWORD cbProcOwner,
-			  UCHAR FAR *szProcName,
-			  SWORD cbProcName)
+				 HSTMT hstmt,
+				 UCHAR FAR * szProcQualifier,
+				 SWORD cbProcQualifier,
+				 UCHAR FAR * szProcOwner,
+				 SWORD cbProcOwner,
+				 UCHAR FAR * szProcName,
+				 SWORD cbProcName)
 {
 	static char *func = "PGAPI_Procedures";
-	StatementClass	*stmt = (StatementClass *) hstmt;
-	ConnectionClass	*conn = SC_get_conn(stmt);
+	StatementClass *stmt = (StatementClass *) hstmt;
+	ConnectionClass *conn = SC_get_conn(stmt);
 	char		proc_query[INFO_INQUIRY_LEN];
-	QResultClass	*res;
+	QResultClass *res;
 
 	mylog("%s: entering...\n", func);
-	
+
 	if (PG_VERSION_LT(conn, 6.5))
 	{
 		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
@@ -3636,14 +3662,15 @@ PGAPI_Procedures(
 	}
 	if (!SC_recycle_statement(stmt))
 		return SQL_ERROR;
+
 	/*
-	 *	The following seems the simplest implementation
+	 * The following seems the simplest implementation
 	 */
-	strcpy(proc_query, "select '' as ""PROCEDURE_CAT"", '' as ""PROCEDURE_SCHEM"","
-		" proname as ""PROCEDURE_NAME"", '' as ""NUM_INPUT_PARAMS"","
-		" '' as ""NUM_OUTPUT_PARAMS"", '' as ""NUM_RESULT_SETS"","
-		" '' as ""REMARKS"","
-		" case when prorettype =0 then 1::int2 else 2::int2 end as ""PROCEDURE_TYPE"" from pg_proc");
+	strcpy(proc_query, "select '' as " "PROCEDURE_CAT" ", '' as " "PROCEDURE_SCHEM" ","
+		" proname as " "PROCEDURE_NAME" ", '' as " "NUM_INPUT_PARAMS" ","
+		   " '' as " "NUM_OUTPUT_PARAMS" ", '' as " "NUM_RESULT_SETS" ","
+		   " '' as " "REMARKS" ","
+		   " case when prorettype =0 then 1::int2 else 2::int2 end as " "PROCEDURE_TYPE" " from pg_proc");
 	my_strcat(proc_query, " where proname like '%.*s'", szProcName, cbProcName);
 
 	res = CC_send_query(conn, proc_query, NULL);
@@ -3656,6 +3683,7 @@ PGAPI_Procedures(
 		return SQL_ERROR;
 	}
 	stmt->result = res;
+
 	/*
 	 * also, things need to think that this statement is finished so the
 	 * results can be retrieved.
@@ -3671,26 +3699,26 @@ PGAPI_Procedures(
 }
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_TablePrivileges(
-				   HSTMT hstmt,
-				   UCHAR FAR *szTableQualifier,
-				   SWORD cbTableQualifier,
-				   UCHAR FAR *szTableOwner,
-				   SWORD cbTableOwner,
-				   UCHAR FAR *szTableName,
-				   SWORD cbTableName)
+					  HSTMT hstmt,
+					  UCHAR FAR * szTableQualifier,
+					  SWORD cbTableQualifier,
+					  UCHAR FAR * szTableOwner,
+					  SWORD cbTableOwner,
+					  UCHAR FAR * szTableName,
+					  SWORD cbTableName)
 {
-	StatementClass	*stmt = (StatementClass *) hstmt;
+	StatementClass *stmt = (StatementClass *) hstmt;
 	static char *func = "PGAPI_TablePrivileges";
 	Int2		result_cols;
 
 	mylog("%s: entering...\n", func);
 
 	/*
- 	* a statement is actually executed, so we'll have to do this
- 	* ourselves.
- 	*/
+	 * a statement is actually executed, so we'll have to do this
+	 * ourselves.
+	 */
 	result_cols = 7;
 	extend_bindings(stmt, result_cols);
 
@@ -3703,7 +3731,7 @@ PGAPI_TablePrivileges(
 	QR_set_field_info(stmt->result, 4, "GRANTEE", PG_TYPE_TEXT, MAX_INFO_STRING);
 	QR_set_field_info(stmt->result, 5, "PRIVILEGE", PG_TYPE_TEXT, MAX_INFO_STRING);
 	QR_set_field_info(stmt->result, 6, "IS_GRANTABLE", PG_TYPE_TEXT, MAX_INFO_STRING);
-                                                             
+
 	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
 	return SQL_ERROR;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.48 2001/08/26 16:55:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.49 2001/10/25 05:49:22 momjian Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -32,7 +32,7 @@ static void TransactionLogUpdate(TransactionId transactionId,
  * ----------------
  */
 static TransactionId cachedTestXid = InvalidTransactionId;
-static XidStatus	cachedTestXidStatus;
+static XidStatus cachedTestXidStatus;
 
 
 /* ----------------------------------------------------------------
@@ -56,8 +56,8 @@ TransactionLogTest(TransactionId transactionId, /* transaction id to test */
 	XidStatus	xidstatus;		/* recorded status of xid */
 
 	/*
-	 * Before going to the commit log manager, check our single item cache to
-	 * see if we didn't just check the transaction status a moment ago.
+	 * Before going to the commit log manager, check our single item cache
+	 * to see if we didn't just check the transaction status a moment ago.
 	 */
 	if (TransactionIdEquals(transactionId, cachedTestXid))
 		return (status == cachedTestXidStatus);
@@ -65,7 +65,7 @@ TransactionLogTest(TransactionId transactionId, /* transaction id to test */
 	/*
 	 * Also, check to see if the transaction ID is a permanent one.
 	 */
-	if (! TransactionIdIsNormal(transactionId))
+	if (!TransactionIdIsNormal(transactionId))
 	{
 		if (TransactionIdEquals(transactionId, BootstrapTransactionId))
 			return (status == TRANSACTION_STATUS_COMMITTED);
@@ -77,18 +77,18 @@ TransactionLogTest(TransactionId transactionId, /* transaction id to test */
 	/*
 	 * Get the status.
 	 */
-	 xidstatus = TransactionIdGetStatus(transactionId);
+	xidstatus = TransactionIdGetStatus(transactionId);
 
-	 /*
-	  * DO NOT cache status for unfinished transactions!
-	  */
-	 if (xidstatus != TRANSACTION_STATUS_IN_PROGRESS)
-	 {
-		 TransactionIdStore(transactionId, &cachedTestXid);
-		 cachedTestXidStatus = xidstatus;
-	 }
+	/*
+	 * DO NOT cache status for unfinished transactions!
+	 */
+	if (xidstatus != TRANSACTION_STATUS_IN_PROGRESS)
+	{
+		TransactionIdStore(transactionId, &cachedTestXid);
+		cachedTestXidStatus = xidstatus;
+	}
 
-	 return (status == xidstatus);
+	return (status == xidstatus);
 }
 
 /* --------------------------------
@@ -197,7 +197,7 @@ TransactionIdIsInProgress(TransactionId transactionId)
 
 	return TransactionLogTest(transactionId, TRANSACTION_STATUS_IN_PROGRESS);
 }
-#endif /* NOT_USED */
+#endif	 /* NOT_USED */
 
 /* --------------------------------
  *		TransactionId Commit
@@ -246,7 +246,7 @@ TransactionIdPrecedes(TransactionId id1, TransactionId id2)
 {
 	/*
 	 * If either ID is a permanent XID then we can just do unsigned
-	 * comparison.  If both are normal, do a modulo-2^31 comparison.
+	 * comparison.	If both are normal, do a modulo-2^31 comparison.
 	 */
 	int32		diff;
 

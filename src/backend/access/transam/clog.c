@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.4 2001/09/29 04:02:21 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.5 2001/10/25 05:49:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@
 
 /*
  * Defines for CLOG page and segment sizes.  A page is the same BLCKSZ
- * as is used everywhere else in Postgres.  The CLOG segment size can be
+ * as is used everywhere else in Postgres.	The CLOG segment size can be
  * chosen somewhat arbitrarily; we make it 1 million transactions by default,
  * or 256Kb.
  *
@@ -48,15 +48,15 @@
 
 /* We need two bits per xact, so four xacts fit in a byte */
 #define CLOG_BITS_PER_XACT	2
-#define CLOG_XACTS_PER_BYTE	4
-#define CLOG_XACTS_PER_PAGE	(CLOG_BLCKSZ * CLOG_XACTS_PER_BYTE)
+#define CLOG_XACTS_PER_BYTE 4
+#define CLOG_XACTS_PER_PAGE (CLOG_BLCKSZ * CLOG_XACTS_PER_BYTE)
 #define CLOG_XACT_BITMASK	((1 << CLOG_BITS_PER_XACT) - 1)
 
 #define CLOG_XACTS_PER_SEGMENT	0x100000
 #define CLOG_PAGES_PER_SEGMENT	(CLOG_XACTS_PER_SEGMENT / CLOG_XACTS_PER_PAGE)
 
 #define TransactionIdToPage(xid)	((xid) / (TransactionId) CLOG_XACTS_PER_PAGE)
-#define TransactionIdToPgIndex(xid)	((xid) % (TransactionId) CLOG_XACTS_PER_PAGE)
+#define TransactionIdToPgIndex(xid) ((xid) % (TransactionId) CLOG_XACTS_PER_PAGE)
 #define TransactionIdToByte(xid)	(TransactionIdToPgIndex(xid) / CLOG_XACTS_PER_BYTE)
 #define TransactionIdToBIndex(xid)	((xid) % (TransactionId) CLOG_XACTS_PER_BYTE)
 
@@ -101,15 +101,15 @@
  * the control lock.
  *
  * As with the regular buffer manager, it is possible for another process
- * to re-dirty a page that is currently being written out.  This is handled
+ * to re-dirty a page that is currently being written out.	This is handled
  * by setting the page's state from WRITE_IN_PROGRESS to DIRTY.  The writing
  * process must notice this and not mark the page CLEAN when it's done.
  *
  * XLOG interactions: this module generates an XLOG record whenever a new
- * CLOG page is initialized to zeroes.  Other writes of CLOG come from
+ * CLOG page is initialized to zeroes.	Other writes of CLOG come from
  * recording of transaction commit or abort in xact.c, which generates its
  * own XLOG records for these events and will re-perform the status update
- * on redo; so we need make no additional XLOG entry here.  Also, the XLOG
+ * on redo; so we need make no additional XLOG entry here.	Also, the XLOG
  * is guaranteed flushed through the XLOG commit record before we are called
  * to log a commit, so the WAL rule "write xlog before data" is satisfied
  * automatically for commits, and we don't really care for aborts.  Therefore,
@@ -120,11 +120,13 @@
 
 typedef enum
 {
-	CLOG_PAGE_EMPTY,			/* CLOG buffer is not in use */
-	CLOG_PAGE_READ_IN_PROGRESS,	/* CLOG page is being read in */
-	CLOG_PAGE_CLEAN,			/* CLOG page is valid and not dirty */
-	CLOG_PAGE_DIRTY,			/* CLOG page is valid but needs write */
-	CLOG_PAGE_WRITE_IN_PROGRESS	/* CLOG page is being written out in */
+				CLOG_PAGE_EMPTY,/* CLOG buffer is not in use */
+				CLOG_PAGE_READ_IN_PROGRESS,		/* CLOG page is being read
+												 * in */
+				CLOG_PAGE_CLEAN,/* CLOG page is valid and not dirty */
+				CLOG_PAGE_DIRTY,/* CLOG page is valid but needs write */
+				CLOG_PAGE_WRITE_IN_PROGRESS		/* CLOG page is being
+												 * written out in */
 } ClogPageStatus;
 
 /*
@@ -134,14 +136,15 @@ typedef struct ClogCtlData
 {
 	/*
 	 * Info for each buffer slot.  Page number is undefined when status is
-	 * EMPTY.  lru_count is essentially the number of operations since last
-	 * use of this page; the page with highest lru_count is the best candidate
-	 * to replace.
+	 * EMPTY.  lru_count is essentially the number of operations since
+	 * last use of this page; the page with highest lru_count is the best
+	 * candidate to replace.
 	 */
 	char	   *page_buffer[NUM_CLOG_BUFFERS];
-	ClogPageStatus	page_status[NUM_CLOG_BUFFERS];
+	ClogPageStatus page_status[NUM_CLOG_BUFFERS];
 	int			page_number[NUM_CLOG_BUFFERS];
-	unsigned int	page_lru_count[NUM_CLOG_BUFFERS];
+	unsigned int page_lru_count[NUM_CLOG_BUFFERS];
+
 	/*
 	 * latest_page_number is the page number of the current end of the
 	 * CLOG; this is not critical data, since we use it only to avoid
@@ -157,7 +160,7 @@ static ClogCtlData *ClogCtl = NULL;
  * The value is automatically inherited by backends via fork, and
  * doesn't need to be in shared memory.
  */
-static LWLockId ClogBufferLocks[NUM_CLOG_BUFFERS]; /* Per-buffer I/O locks */
+static LWLockId ClogBufferLocks[NUM_CLOG_BUFFERS];		/* Per-buffer I/O locks */
 
 /*
  * ClogDir is set during CLOGShmemInit and does not change thereafter.
@@ -166,7 +169,7 @@ static LWLockId ClogBufferLocks[NUM_CLOG_BUFFERS]; /* Per-buffer I/O locks */
  */
 static char ClogDir[MAXPGPATH];
 
-#define ClogFileName(path, seg)	\
+#define ClogFileName(path, seg) \
 	snprintf(path, MAXPGPATH, "%s/%04X", ClogDir, seg)
 
 /*
@@ -430,7 +433,7 @@ ReadCLOGPage(int pageno)
 		LWLockAcquire(CLogControlLock, LW_EXCLUSIVE);
 
 		Assert(ClogCtl->page_number[slotno] == pageno &&
-			   ClogCtl->page_status[slotno] == CLOG_PAGE_READ_IN_PROGRESS);
+			 ClogCtl->page_status[slotno] == CLOG_PAGE_READ_IN_PROGRESS);
 
 		ClogCtl->page_status[slotno] = CLOG_PAGE_CLEAN;
 
@@ -447,7 +450,7 @@ ReadCLOGPage(int pageno)
  *
  * NOTE: only one write attempt is made here.  Hence, it is possible that
  * the page is still dirty at exit (if someone else re-dirtied it during
- * the write).  However, we *do* attempt a fresh write even if the page
+ * the write).	However, we *do* attempt a fresh write even if the page
  * is already being written; this is for checkpoints.
  *
  * Control lock must be held at entry, and will be held at exit.
@@ -455,7 +458,7 @@ ReadCLOGPage(int pageno)
 static void
 WriteCLOGPage(int slotno)
 {
-	int pageno;
+	int			pageno;
 
 	/* Do nothing if page does not need writing */
 	if (ClogCtl->page_status[slotno] != CLOG_PAGE_DIRTY &&
@@ -489,11 +492,12 @@ WriteCLOGPage(int slotno)
 	 * update on this page will mark it dirty again.  NB: we are assuming
 	 * that read/write of the page status field is atomic, since we change
 	 * the state while not holding control lock.  However, we cannot set
-	 * this state any sooner, or we'd possibly fool a previous writer
-	 * into thinking he's successfully dumped the page when he hasn't.
-	 * (Scenario: other writer starts, page is redirtied, we come along and
-	 * set WRITE_IN_PROGRESS again, other writer completes and sets CLEAN
-	 * because redirty info has been lost, then we think it's clean too.)
+	 * this state any sooner, or we'd possibly fool a previous writer into
+	 * thinking he's successfully dumped the page when he hasn't.
+	 * (Scenario: other writer starts, page is redirtied, we come along
+	 * and set WRITE_IN_PROGRESS again, other writer completes and sets
+	 * CLEAN because redirty info has been lost, then we think it's clean
+	 * too.)
 	 */
 	ClogCtl->page_status[slotno] = CLOG_PAGE_WRITE_IN_PROGRESS;
 
@@ -523,7 +527,7 @@ WriteCLOGPage(int slotno)
 static void
 CLOGPhysicalReadPage(int pageno, int slotno)
 {
-	int			segno =   pageno / CLOG_PAGES_PER_SEGMENT;
+	int			segno = pageno / CLOG_PAGES_PER_SEGMENT;
 	int			rpageno = pageno % CLOG_PAGES_PER_SEGMENT;
 	int			offset = rpageno * CLOG_BLCKSZ;
 	char		path[MAXPGPATH];
@@ -533,9 +537,9 @@ CLOGPhysicalReadPage(int pageno, int slotno)
 
 	/*
 	 * In a crash-and-restart situation, it's possible for us to receive
-	 * commands to set the commit status of transactions whose bits are
-	 * in already-truncated segments of the commit log (see notes in
-	 * CLOGPhysicalWritePage).  Hence, if we are InRecovery, allow the
+	 * commands to set the commit status of transactions whose bits are in
+	 * already-truncated segments of the commit log (see notes in
+	 * CLOGPhysicalWritePage).	Hence, if we are InRecovery, allow the
 	 * case where the file doesn't exist, and return zeroes instead.
 	 */
 	fd = BasicOpenFile(path, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
@@ -569,7 +573,7 @@ CLOGPhysicalReadPage(int pageno, int slotno)
 static void
 CLOGPhysicalWritePage(int pageno, int slotno)
 {
-	int			segno =   pageno / CLOG_PAGES_PER_SEGMENT;
+	int			segno = pageno / CLOG_PAGES_PER_SEGMENT;
 	int			rpageno = pageno % CLOG_PAGES_PER_SEGMENT;
 	int			offset = rpageno * CLOG_BLCKSZ;
 	char		path[MAXPGPATH];
@@ -578,16 +582,17 @@ CLOGPhysicalWritePage(int pageno, int slotno)
 	ClogFileName(path, segno);
 
 	/*
-	 * If the file doesn't already exist, we should create it.  It is possible
-	 * for this to need to happen when writing a page that's not first in
-	 * its segment; we assume the OS can cope with that.  (Note: it might seem
-	 * that it'd be okay to create files only when ZeroCLOGPage is called for
-	 * the first page of a segment.  However, if after a crash and restart
-	 * the REDO logic elects to replay the log from a checkpoint before the
-	 * latest one, then it's possible that we will get commands to set
-	 * transaction status of transactions that have already been truncated
-	 * from the commit log.  Easiest way to deal with that is to accept
-	 * references to nonexistent files here and in CLOGPhysicalReadPage.)
+	 * If the file doesn't already exist, we should create it.  It is
+	 * possible for this to need to happen when writing a page that's not
+	 * first in its segment; we assume the OS can cope with that.  (Note:
+	 * it might seem that it'd be okay to create files only when
+	 * ZeroCLOGPage is called for the first page of a segment.	However,
+	 * if after a crash and restart the REDO logic elects to replay the
+	 * log from a checkpoint before the latest one, then it's possible
+	 * that we will get commands to set transaction status of transactions
+	 * that have already been truncated from the commit log.  Easiest way
+	 * to deal with that is to accept references to nonexistent files here
+	 * and in CLOGPhysicalReadPage.)
 	 */
 	fd = BasicOpenFile(path, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
 	if (fd < 0)
@@ -649,16 +654,15 @@ SelectLRUCLOGPage(int pageno)
 		}
 
 		/*
-		 * If we find any EMPTY slot, just select that one.
-		 * Else locate the least-recently-used slot that isn't the
-		 * latest CLOG page.
+		 * If we find any EMPTY slot, just select that one. Else locate
+		 * the least-recently-used slot that isn't the latest CLOG page.
 		 */
 		for (slotno = 0; slotno < NUM_CLOG_BUFFERS; slotno++)
 		{
 			if (ClogCtl->page_status[slotno] == CLOG_PAGE_EMPTY)
 				return slotno;
 			if (ClogCtl->page_lru_count[slotno] > bestcount &&
-				ClogCtl->page_number[slotno] != ClogCtl->latest_page_number)
+			 ClogCtl->page_number[slotno] != ClogCtl->latest_page_number)
 			{
 				bestslot = slotno;
 				bestcount = ClogCtl->page_lru_count[slotno];
@@ -672,10 +676,10 @@ SelectLRUCLOGPage(int pageno)
 			return bestslot;
 
 		/*
-		 * We need to do I/O.  Normal case is that we have to write it out,
-		 * but it's possible in the worst case to have selected a read-busy
-		 * page.  In that case we use ReadCLOGPage to wait for the read to
-		 * complete.
+		 * We need to do I/O.  Normal case is that we have to write it
+		 * out, but it's possible in the worst case to have selected a
+		 * read-busy page.	In that case we use ReadCLOGPage to wait for
+		 * the read to complete.
 		 */
 		if (ClogCtl->page_status[bestslot] == CLOG_PAGE_READ_IN_PROGRESS)
 			(void) ReadCLOGPage(ClogCtl->page_number[bestslot]);
@@ -683,9 +687,9 @@ SelectLRUCLOGPage(int pageno)
 			WriteCLOGPage(bestslot);
 
 		/*
-		 * Now loop back and try again.  This is the easiest way of dealing
-		 * with corner cases such as the victim page being re-dirtied while
-		 * we wrote it.
+		 * Now loop back and try again.  This is the easiest way of
+		 * dealing with corner cases such as the victim page being
+		 * re-dirtied while we wrote it.
 		 */
 	}
 }
@@ -736,6 +740,7 @@ CheckPointCLOG(void)
 	for (slotno = 0; slotno < NUM_CLOG_BUFFERS; slotno++)
 	{
 		WriteCLOGPage(slotno);
+
 		/*
 		 * We cannot assert that the slot is clean now, since another
 		 * process might have re-dirtied it already.  That's okay.
@@ -782,13 +787,13 @@ ExtendCLOG(TransactionId newestXact)
  * Remove all CLOG segments before the one holding the passed transaction ID
  *
  * When this is called, we know that the database logically contains no
- * reference to transaction IDs older than oldestXact.  However, we must
+ * reference to transaction IDs older than oldestXact.	However, we must
  * not truncate the CLOG until we have performed a checkpoint, to ensure
  * that no such references remain on disk either; else a crash just after
  * the truncation might leave us with a problem.  Since CLOG segments hold
  * a large number of transactions, the opportunity to actually remove a
  * segment is fairly rare, and so it seems best not to do the checkpoint
- * unless we have confirmed that there is a removable segment.  Therefore
+ * unless we have confirmed that there is a removable segment.	Therefore
  * we issue the checkpoint command here, not in higher-level code as might
  * seem cleaner.
  */
@@ -813,15 +818,16 @@ TruncateCLOG(TransactionId oldestXact)
 	/*
 	 * Scan CLOG shared memory and remove any pages preceding the cutoff
 	 * page, to ensure we won't rewrite them later.  (Any dirty pages
-	 * should have been flushed already during the checkpoint, we're
-	 * just being extra careful here.)
+	 * should have been flushed already during the checkpoint, we're just
+	 * being extra careful here.)
 	 */
 	LWLockAcquire(CLogControlLock, LW_EXCLUSIVE);
 
 restart:;
+
 	/*
-	 * While we are holding the lock, make an important safety check:
-	 * the planned cutoff point must be <= the current CLOG endpoint page.
+	 * While we are holding the lock, make an important safety check: the
+	 * planned cutoff point must be <= the current CLOG endpoint page.
 	 * Otherwise we have already wrapped around, and proceeding with the
 	 * truncation would risk removing the current CLOG segment.
 	 */
@@ -838,6 +844,7 @@ restart:;
 			continue;
 		if (!CLOGPagePrecedes(ClogCtl->page_number[slotno], cutoffPage))
 			continue;
+
 		/*
 		 * If page is CLEAN, just change state to EMPTY (expected case).
 		 */
@@ -846,6 +853,7 @@ restart:;
 			ClogCtl->page_status[slotno] = CLOG_PAGE_EMPTY;
 			continue;
 		}
+
 		/*
 		 * Hmm, we have (or may have) I/O operations acting on the page,
 		 * so we've got to wait for them to finish and then start again.
@@ -928,9 +936,11 @@ CLOGPagePrecedes(int page1, int page2)
 	TransactionId xid1;
 	TransactionId xid2;
 
-	xid1 = (TransactionId) page1 * CLOG_XACTS_PER_PAGE;
+	xid1 = (TransactionId) page1 *CLOG_XACTS_PER_PAGE;
+
 	xid1 += FirstNormalTransactionId;
-	xid2 = (TransactionId) page2 * CLOG_XACTS_PER_PAGE;
+	xid2 = (TransactionId) page2 *CLOG_XACTS_PER_PAGE;
+
 	xid2 += FirstNormalTransactionId;
 
 	return TransactionIdPrecedes(xid1, xid2);
@@ -966,8 +976,8 @@ clog_redo(XLogRecPtr lsn, XLogRecord *record)
 
 	if (info == CLOG_ZEROPAGE)
 	{
-		int		pageno;
-		int		slotno;
+		int			pageno;
+		int			slotno;
 
 		memcpy(&pageno, XLogRecGetData(record), sizeof(int));
 
@@ -993,7 +1003,7 @@ clog_desc(char *buf, uint8 xl_info, char *rec)
 
 	if (info == CLOG_ZEROPAGE)
 	{
-		int		pageno;
+		int			pageno;
 
 		memcpy(&pageno, rec, sizeof(int));
 		sprintf(buf + strlen(buf), "zeropage: %d", pageno);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.75 2001/09/14 17:46:40 momjian Exp $
+ * $Id: libpq-fe.h,v 1.76 2001/10/25 05:50:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,11 +23,11 @@ extern		"C"
 #include <stdio.h>
 
 #ifdef WIN32
-    #define SOCK_ERRNO (WSAGetLastError ())
-	#define SOCK_STRERROR winsock_strerror
+#define SOCK_ERRNO (WSAGetLastError ())
+#define SOCK_STRERROR winsock_strerror
 #else
-    #define SOCK_ERRNO errno
-	#define SOCK_STRERROR strerror
+#define SOCK_ERRNO errno
+#define SOCK_STRERROR strerror
 #endif
 
 
@@ -44,7 +44,6 @@ extern		"C"
 
 	typedef enum
 	{
-
 		/*
 		 * Although you may decide to change this list in some way, values
 		 * which become unused should never be removed, nor should
@@ -252,13 +251,13 @@ extern		"C"
 /* === in fe-exec.c === */
 
 	/* Quoting strings before inclusion in queries. */
-	extern size_t PQescapeString (char *to, const char *from, size_t length);
+	extern size_t PQescapeString(char *to, const char *from, size_t length);
 	extern unsigned char *PQescapeBytea(unsigned char *bintext, size_t binlen, size_t *bytealen);
 
 	/* Simple synchronous query */
 	extern PGresult *PQexec(PGconn *conn, const char *query);
 	extern PGnotify *PQnotifies(PGconn *conn);
-	extern void      PQfreeNotify(PGnotify *notify);
+	extern void PQfreeNotify(PGnotify *notify);
 
 	/* Interface for multiple-result or asynchronous queries */
 	extern int	PQsendQuery(PGconn *conn, const char *query);
@@ -374,7 +373,5 @@ extern		"C"
 
 #ifdef __cplusplus
 }
-
 #endif
-
 #endif	 /* LIBPQ_FE_H */

@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *  $Id: pgstat.h,v 1.8 2001/10/21 03:25:36 tgl Exp $
+ *	$Id: pgstat.h,v 1.9 2001/10/25 05:49:54 momjian Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -16,22 +16,22 @@
  * installations $PGDATA.
  * ----------
  */
-#define	PGSTAT_STAT_FILENAME	"%s/global/pgstat.stat"
-#define	PGSTAT_STAT_TMPFILE		"%s/global/pgstat.tmp.%d"
+#define PGSTAT_STAT_FILENAME	"%s/global/pgstat.stat"
+#define PGSTAT_STAT_TMPFILE		"%s/global/pgstat.tmp.%d"
 
 /* ----------
  * Timer definitions.
  * ----------
  */
 #define PGSTAT_STAT_INTERVAL	500		/* How often to write the status	*/
-										/* file, in milliseconds.			*/
+ /* file, in milliseconds.			 */
 
 #define PGSTAT_DESTROY_DELAY	10000	/* How long to keep destroyed		*/
-										/* objects known to give delayed	*/
-										/* UDP packets time to arrive,		*/
-										/* in milliseconds.					*/
+ /* objects known to give delayed	 */
+ /* UDP packets time to arrive,		 */
+ /* in milliseconds.				 */
 
-#define PGSTAT_DESTROY_COUNT	(PGSTAT_DESTROY_DELAY 					\
+#define PGSTAT_DESTROY_COUNT	(PGSTAT_DESTROY_DELAY					\
 								/ PGSTAT_STAT_INTERVAL)
 
 
@@ -46,20 +46,20 @@
  * The types of backend/postmaster -> collector messages
  * ----------
  */
-#define	PGSTAT_MTYPE_DUMMY			0
-#define	PGSTAT_MTYPE_BESTART		1
-#define	PGSTAT_MTYPE_BETERM			2
-#define	PGSTAT_MTYPE_ACTIVITY		3
-#define	PGSTAT_MTYPE_TABSTAT		4
-#define	PGSTAT_MTYPE_TABPURGE		5
-#define	PGSTAT_MTYPE_DROPDB			6
-#define	PGSTAT_MTYPE_RESETCOUNTER	7
+#define PGSTAT_MTYPE_DUMMY			0
+#define PGSTAT_MTYPE_BESTART		1
+#define PGSTAT_MTYPE_BETERM			2
+#define PGSTAT_MTYPE_ACTIVITY		3
+#define PGSTAT_MTYPE_TABSTAT		4
+#define PGSTAT_MTYPE_TABPURGE		5
+#define PGSTAT_MTYPE_DROPDB			6
+#define PGSTAT_MTYPE_RESETCOUNTER	7
 
 /* ----------
  * Amount of space reserved in pgstat_recvbuffer().
  * ----------
  */
-#define	PGSTAT_RECVBUFFERSZ		((int) (1024 * sizeof(PgStat_Msg)))
+#define PGSTAT_RECVBUFFERSZ		((int) (1024 * sizeof(PgStat_Msg)))
 
 
 /* ----------
@@ -76,7 +76,7 @@
  * The data type used for counters.
  * ----------
  */
-typedef int64	PgStat_Counter;
+typedef int64 PgStat_Counter;
 
 
 /* ------------------------------------------------------------
@@ -87,17 +87,17 @@ typedef int64	PgStat_Counter;
  * PgStat_StatDBEntry			The collectors data per database
  * ----------
  */
-typedef struct	PgStat_StatDBEntry
+typedef struct PgStat_StatDBEntry
 {
-	Oid				databaseid;
-	HTAB		   *tables;
-	int				n_backends;
-	PgStat_Counter	n_connects;
-	PgStat_Counter	n_xact_commit;
-	PgStat_Counter	n_xact_rollback;
-	PgStat_Counter	n_blocks_fetched;
-	PgStat_Counter	n_blocks_hit;
-	int				destroy;			
+	Oid			databaseid;
+	HTAB	   *tables;
+	int			n_backends;
+	PgStat_Counter n_connects;
+	PgStat_Counter n_xact_commit;
+	PgStat_Counter n_xact_rollback;
+	PgStat_Counter n_blocks_fetched;
+	PgStat_Counter n_blocks_hit;
+	int			destroy;
 } PgStat_StatDBEntry;
 
 
@@ -105,12 +105,12 @@ typedef struct	PgStat_StatDBEntry
  * PgStat_StatBeEntry			The collectors data per backend
  * ----------
  */
-typedef struct	PgStat_StatBeEntry
+typedef struct PgStat_StatBeEntry
 {
-	Oid				databaseid;
-	Oid				userid;
-	int				procpid;
-	char			activity[PGSTAT_ACTIVITY_SIZE];
+	Oid			databaseid;
+	Oid			userid;
+	int			procpid;
+	char		activity[PGSTAT_ACTIVITY_SIZE];
 } PgStat_StatBeEntry;
 
 
@@ -122,11 +122,11 @@ typedef struct	PgStat_StatBeEntry
  *								in a hash table of these structs.
  * ----------
  */
-typedef struct	PgStat_StatBeDead
+typedef struct PgStat_StatBeDead
 {
-	int				procpid;
-	int				backendid;
-	int				destroy;
+	int			procpid;
+	int			backendid;
+	int			destroy;
 } PgStat_StatBeDead;
 
 
@@ -134,22 +134,22 @@ typedef struct	PgStat_StatBeDead
  * PgStat_StatTabEntry			The collectors data table data
  * ----------
  */
-typedef struct	PgStat_StatTabEntry
+typedef struct PgStat_StatTabEntry
 {
-	Oid					tableid;
+	Oid			tableid;
 
-	PgStat_Counter		numscans;
+	PgStat_Counter numscans;
 
-	PgStat_Counter		tuples_returned;
-	PgStat_Counter		tuples_fetched;
-	PgStat_Counter		tuples_inserted;
-	PgStat_Counter		tuples_updated;
-	PgStat_Counter		tuples_deleted;
+	PgStat_Counter tuples_returned;
+	PgStat_Counter tuples_fetched;
+	PgStat_Counter tuples_inserted;
+	PgStat_Counter tuples_updated;
+	PgStat_Counter tuples_deleted;
 
-	PgStat_Counter		blocks_fetched;
-	PgStat_Counter		blocks_hit;
+	PgStat_Counter blocks_fetched;
+	PgStat_Counter blocks_hit;
 
-	int					destroy;
+	int			destroy;
 } PgStat_StatTabEntry;
 
 
@@ -163,34 +163,34 @@ typedef struct	PgStat_StatTabEntry
  * PgStat_MsgHdr				The common message header
  * ----------
  */
-typedef struct	PgStat_MsgHdr
+typedef struct PgStat_MsgHdr
 {
-	int						m_type;
-	int						m_size;
-	int						m_backendid;
-	int						m_procpid;
-	Oid						m_databaseid;
-	Oid						m_userid;
+	int			m_type;
+	int			m_size;
+	int			m_backendid;
+	int			m_procpid;
+	Oid			m_databaseid;
+	Oid			m_userid;
 } PgStat_MsgHdr;
 
 /* ----------
  * PgStat_TabEntry				A table slot in a MsgTabstat
  * ----------
  */
-typedef struct	PgStat_TableEntry
+typedef struct PgStat_TableEntry
 {
-	Oid						t_id;
+	Oid			t_id;
 
-	PgStat_Counter			t_numscans;
+	PgStat_Counter t_numscans;
 
-	PgStat_Counter			t_tuples_returned;
-	PgStat_Counter			t_tuples_fetched;
-	PgStat_Counter			t_tuples_inserted;
-	PgStat_Counter			t_tuples_updated;
-	PgStat_Counter			t_tuples_deleted;
+	PgStat_Counter t_tuples_returned;
+	PgStat_Counter t_tuples_fetched;
+	PgStat_Counter t_tuples_inserted;
+	PgStat_Counter t_tuples_updated;
+	PgStat_Counter t_tuples_deleted;
 
-	PgStat_Counter			t_blocks_fetched;
-	PgStat_Counter			t_blocks_hit;
+	PgStat_Counter t_blocks_fetched;
+	PgStat_Counter t_blocks_hit;
 } PgStat_TableEntry;
 
 
@@ -198,28 +198,28 @@ typedef struct	PgStat_TableEntry
  * PgStat_MsgDummy				A dummy message, ignored by the collector
  * ----------
  */
-typedef struct	PgStat_MsgDummy
+typedef struct PgStat_MsgDummy
 {
-	PgStat_MsgHdr			m_hdr;
-	char					m_dummy[512];
+	PgStat_MsgHdr m_hdr;
+	char		m_dummy[512];
 } PgStat_MsgDummy;
 
 /* ----------
  * PgStat_MsgBestart			Sent by the backend on startup
  * ----------
  */
-typedef struct	PgStat_MsgBestart
+typedef struct PgStat_MsgBestart
 {
-	PgStat_MsgHdr			m_hdr;
+	PgStat_MsgHdr m_hdr;
 } PgStat_MsgBestart;
 
 /* ----------
  * PgStat_MsgBeterm				Sent by the postmaster after backend exit
  * ----------
  */
-typedef struct	PgStat_MsgBeterm
+typedef struct PgStat_MsgBeterm
 {
-	PgStat_MsgHdr			m_hdr;
+	PgStat_MsgHdr m_hdr;
 } PgStat_MsgBeterm;
 
 /* ----------
@@ -227,10 +227,10 @@ typedef struct	PgStat_MsgBeterm
  *								to parse a query.
  * ----------
  */
-typedef struct	PgStat_MsgActivity
+typedef struct PgStat_MsgActivity
 {
-	PgStat_MsgHdr			m_hdr;
-	char					m_what[PGSTAT_ACTIVITY_SIZE];
+	PgStat_MsgHdr m_hdr;
+	char		m_what[PGSTAT_ACTIVITY_SIZE];
 } PgStat_MsgActivity;
 
 /* ----------
@@ -248,13 +248,13 @@ typedef struct	PgStat_MsgActivity
  *								and buffer access statistics.
  * ----------
  */
-typedef struct	PgStat_MsgTabstat
+typedef struct PgStat_MsgTabstat
 {
-	PgStat_MsgHdr			m_hdr;
-	int						m_nentries;
-	int						m_xact_commit;
-	int						m_xact_rollback;
-	PgStat_TableEntry		m_entry[PGSTAT_NUM_TABENTRIES];
+	PgStat_MsgHdr m_hdr;
+	int			m_nentries;
+	int			m_xact_commit;
+	int			m_xact_rollback;
+	PgStat_TableEntry m_entry[PGSTAT_NUM_TABENTRIES];
 } PgStat_MsgTabstat;
 
 
@@ -270,11 +270,11 @@ typedef struct	PgStat_MsgTabstat
  *								about dead tables.
  * ----------
  */
-typedef struct	PgStat_MsgTabpurge
+typedef struct PgStat_MsgTabpurge
 {
-	PgStat_MsgHdr			m_hdr;
-	int						m_nentries;
-	Oid						m_tableid[PGSTAT_NUM_TABPURGE];
+	PgStat_MsgHdr m_hdr;
+	int			m_nentries;
+	Oid			m_tableid[PGSTAT_NUM_TABPURGE];
 } PgStat_MsgTabpurge;
 
 
@@ -283,10 +283,10 @@ typedef struct	PgStat_MsgTabpurge
  *								about dropped database
  * ----------
  */
-typedef struct	PgStat_MsgDropdb
+typedef struct PgStat_MsgDropdb
 {
-	PgStat_MsgHdr			m_hdr;
-	Oid						m_databaseid;
+	PgStat_MsgHdr m_hdr;
+	Oid			m_databaseid;
 } PgStat_MsgDropdb;
 
 
@@ -295,9 +295,9 @@ typedef struct	PgStat_MsgDropdb
  *								to reset counters
  * ----------
  */
-typedef struct	PgStat_MsgResetcounter
+typedef struct PgStat_MsgResetcounter
 {
-	PgStat_MsgHdr			m_hdr;
+	PgStat_MsgHdr m_hdr;
 } PgStat_MsgResetcounter;
 
 
@@ -305,16 +305,16 @@ typedef struct	PgStat_MsgResetcounter
  * PgStat_Msg					Union over all possible messages.
  * ----------
  */
-typedef union	PgStat_Msg
+typedef union PgStat_Msg
 {
-	PgStat_MsgHdr			msg_hdr;
-	PgStat_MsgDummy			msg_dummy;
-	PgStat_MsgBestart		msg_bestart;
-	PgStat_MsgActivity		msg_activity;
-	PgStat_MsgTabstat		msg_tabstat;
-	PgStat_MsgTabpurge		msg_tabpurge;
-	PgStat_MsgDropdb		msg_dropdb;
-	PgStat_MsgResetcounter	msg_resetcounter;
+	PgStat_MsgHdr msg_hdr;
+	PgStat_MsgDummy msg_dummy;
+	PgStat_MsgBestart msg_bestart;
+	PgStat_MsgActivity msg_activity;
+	PgStat_MsgTabstat msg_tabstat;
+	PgStat_MsgTabpurge msg_tabpurge;
+	PgStat_MsgDropdb msg_dropdb;
+	PgStat_MsgResetcounter msg_resetcounter;
 } PgStat_Msg;
 
 
@@ -322,36 +322,36 @@ typedef union	PgStat_Msg
  * Global variables
  * ----------
  */
-extern bool		pgstat_collect_startcollector;
-extern bool		pgstat_collect_resetonpmstart;
-extern bool		pgstat_collect_querystring;
-extern bool		pgstat_collect_tuplelevel;
-extern bool		pgstat_collect_blocklevel;
+extern bool pgstat_collect_startcollector;
+extern bool pgstat_collect_resetonpmstart;
+extern bool pgstat_collect_querystring;
+extern bool pgstat_collect_tuplelevel;
+extern bool pgstat_collect_blocklevel;
 
 /* ----------
  * Functions called from postmaster
  * ----------
  */
-extern int		pgstat_init(void);
-extern int		pgstat_start(void);
-extern int		pgstat_ispgstat(int pid);
-extern void		pgstat_close_sockets(void);
-extern void		pgstat_beterm(int pid);
+extern int	pgstat_init(void);
+extern int	pgstat_start(void);
+extern int	pgstat_ispgstat(int pid);
+extern void pgstat_close_sockets(void);
+extern void pgstat_beterm(int pid);
 
 /* ----------
  * Functions called from backends
  * ----------
  */
-extern void		pgstat_bestart(void);
+extern void pgstat_bestart(void);
 
-extern void		pgstat_ping(void);
-extern void		pgstat_report_activity(char *what);
-extern void		pgstat_report_tabstat(void);
-extern int		pgstat_vacuum_tabstat(void);
+extern void pgstat_ping(void);
+extern void pgstat_report_activity(char *what);
+extern void pgstat_report_tabstat(void);
+extern int	pgstat_vacuum_tabstat(void);
 
-extern void		pgstat_reset_counters(void);
+extern void pgstat_reset_counters(void);
 
-extern void		pgstat_initstats(PgStat_Info *stats, Relation rel);
+extern void pgstat_initstats(PgStat_Info *stats, Relation rel);
 
 
 #define pgstat_reset_heap_scan(s)										\
@@ -361,7 +361,7 @@ extern void		pgstat_initstats(PgStat_Info *stats, Relation rel);
 	} while (0)
 #define pgstat_count_heap_scan(s)										\
 	do {																\
-		if (pgstat_collect_tuplelevel && (s)->tabentry != NULL && 		\
+		if (pgstat_collect_tuplelevel && (s)->tabentry != NULL &&		\
 				!(s)->heap_scan_counted) {								\
 			((PgStat_TableEntry *)((s)->tabentry))->t_numscans++;		\
 			(s)->heap_scan_counted = TRUE;								\
@@ -375,7 +375,7 @@ extern void		pgstat_initstats(PgStat_Info *stats, Relation rel);
 #define pgstat_count_heap_fetch(s)										\
 	do {																\
 		if (pgstat_collect_tuplelevel && (s)->tabentry != NULL)			\
-			((PgStat_TableEntry *)((s)->tabentry))->t_tuples_fetched++;	\
+			((PgStat_TableEntry *)((s)->tabentry))->t_tuples_fetched++; \
 	} while (0)
 #define pgstat_count_heap_insert(s)										\
 	do {																\
@@ -385,12 +385,12 @@ extern void		pgstat_initstats(PgStat_Info *stats, Relation rel);
 #define pgstat_count_heap_update(s)										\
 	do {																\
 		if (pgstat_collect_tuplelevel && (s)->tabentry != NULL)			\
-			((PgStat_TableEntry *)((s)->tabentry))->t_tuples_updated++;	\
+			((PgStat_TableEntry *)((s)->tabentry))->t_tuples_updated++; \
 	} while (0)
 #define pgstat_count_heap_delete(s)										\
 	do {																\
 		if (pgstat_collect_tuplelevel && (s)->tabentry != NULL)			\
-			((PgStat_TableEntry *)((s)->tabentry))->t_tuples_deleted++;	\
+			((PgStat_TableEntry *)((s)->tabentry))->t_tuples_deleted++; \
 	} while (0)
 #define pgstat_reset_index_scan(s)										\
 	do {																\
@@ -399,7 +399,7 @@ extern void		pgstat_initstats(PgStat_Info *stats, Relation rel);
 	} while (0)
 #define pgstat_count_index_scan(s)										\
 	do {																\
-		if (pgstat_collect_tuplelevel && (s)->tabentry != NULL && 		\
+		if (pgstat_collect_tuplelevel && (s)->tabentry != NULL &&		\
 				!(s)->index_scan_counted) {								\
 			((PgStat_TableEntry *)((s)->tabentry))->t_numscans++;		\
 			(s)->index_scan_counted = TRUE;								\
@@ -413,7 +413,7 @@ extern void		pgstat_initstats(PgStat_Info *stats, Relation rel);
 #define pgstat_count_buffer_read(s,r)									\
 	do {																\
 		if (pgstat_collect_blocklevel && (s)->tabentry != NULL)			\
-			((PgStat_TableEntry *)((s)->tabentry))->t_blocks_fetched++;	\
+			((PgStat_TableEntry *)((s)->tabentry))->t_blocks_fetched++; \
 		else {															\
 			if (pgstat_collect_blocklevel && !(s)->no_stats) {			\
 				pgstat_initstats((s), (r));								\
@@ -436,18 +436,17 @@ extern void		pgstat_initstats(PgStat_Info *stats, Relation rel);
 	} while (0)
 
 
-extern void		pgstat_count_xact_commit(void);
-extern void		pgstat_count_xact_rollback(void);
+extern void pgstat_count_xact_commit(void);
+extern void pgstat_count_xact_rollback(void);
 
 /* ----------
  * Support functions for the SQL-callable functions to
  * generate the pgstat* views.
  * ----------
  */
-extern PgStat_StatDBEntry  *pgstat_fetch_stat_dbentry(Oid dbid);
+extern PgStat_StatDBEntry *pgstat_fetch_stat_dbentry(Oid dbid);
 extern PgStat_StatTabEntry *pgstat_fetch_stat_tabentry(Oid relid);
-extern PgStat_StatBeEntry  *pgstat_fetch_stat_beentry(int beid);
-extern int					pgstat_fetch_stat_numbackends(void);
+extern PgStat_StatBeEntry *pgstat_fetch_stat_beentry(int beid);
+extern int	pgstat_fetch_stat_numbackends(void);
 
-
-#endif /* PGSTAT_H */
+#endif	 /* PGSTAT_H */

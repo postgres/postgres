@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.109 2001/09/21 04:06:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.110 2001/10/25 05:49:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,14 +57,14 @@ static HashJoin *create_hashjoin_plan(HashPath *best_path, List *tlist,
 					 Plan *outer_plan, List *outer_tlist,
 					 Plan *inner_plan, List *inner_tlist);
 static void fix_indxqual_references(List *indexquals, IndexPath *index_path,
-									List **fixed_indexquals,
-									List **recheck_indexquals);
+						List **fixed_indexquals,
+						List **recheck_indexquals);
 static void fix_indxqual_sublist(List *indexqual, int baserelid,
-								 IndexOptInfo *index,
-								 List **fixed_quals, List **recheck_quals);
+					 IndexOptInfo *index,
+					 List **fixed_quals, List **recheck_quals);
 static Node *fix_indxqual_operand(Node *node, int baserelid,
-								  IndexOptInfo *index,
-								  Oid *opclass);
+					 IndexOptInfo *index,
+					 Oid *opclass);
 static List *switch_outer(List *clauses);
 static void copy_path_costsize(Plan *dest, Path *src);
 static void copy_plan_costsize(Plan *dest, Plan *src);
@@ -410,9 +410,9 @@ create_indexscan_plan(Query *root,
 
 	/*
 	 * The qpqual list must contain all restrictions not automatically
-	 * handled by the index.  Normally the predicates in the indxqual
-	 * are checked fully by the index, but if the index is "lossy" for
-	 * a particular operator (as signaled by the amopreqcheck flag in
+	 * handled by the index.  Normally the predicates in the indxqual are
+	 * checked fully by the index, but if the index is "lossy" for a
+	 * particular operator (as signaled by the amopreqcheck flag in
 	 * pg_amop), then we need to double-check that predicate in qpqual,
 	 * because the index may return more tuples than match the predicate.
 	 *
@@ -453,19 +453,19 @@ create_indexscan_plan(Query *root,
 
 	/*
 	 * The executor needs a copy with the indexkey on the left of each
-	 * clause and with index attr numbers substituted for table ones.
-	 * This pass also looks for "lossy" operators.
+	 * clause and with index attr numbers substituted for table ones. This
+	 * pass also looks for "lossy" operators.
 	 */
 	fix_indxqual_references(indxqual, best_path,
 							&fixed_indxqual, &recheck_indxqual);
 
 	/*
-	 * If there were any "lossy" operators, need to add back the appropriate
-	 * qual clauses to the qpqual.  When there is just one indexscan being
-	 * performed (ie, we have simple AND semantics), we can just add the
-	 * lossy clauses themselves to qpqual.  If we have OR-of-ANDs, we'd
-	 * better add the entire original indexqual to make sure that the
-	 * semantics are correct.
+	 * If there were any "lossy" operators, need to add back the
+	 * appropriate qual clauses to the qpqual.	When there is just one
+	 * indexscan being performed (ie, we have simple AND semantics), we
+	 * can just add the lossy clauses themselves to qpqual.  If we have
+	 * OR-of-ANDs, we'd better add the entire original indexqual to make
+	 * sure that the semantics are correct.
 	 */
 	if (recheck_indxqual != NIL)
 	{
@@ -589,7 +589,6 @@ create_nestloop_plan(NestPath *best_path,
 
 	if (IsA(inner_plan, IndexScan))
 	{
-
 		/*
 		 * An index is being used to reduce the number of tuples scanned
 		 * in the inner relation.  If there are join clauses being used
@@ -657,7 +656,6 @@ create_nestloop_plan(NestPath *best_path,
 	}
 	else if (IsA_Join(inner_plan))
 	{
-
 		/*
 		 * Materialize the inner join for speed reasons.
 		 *
@@ -900,7 +898,7 @@ create_hashjoin_plan(HashPath *best_path,
  *	  left.  (Someday the executor might not need this, but for now it does.)
  *	* If the indexable operator is marked 'amopreqcheck' in pg_amop, then
  *	  the index is "lossy" for this operator: it may return more tuples than
- *	  actually satisfy the operator condition.  For each such operator, we
+ *	  actually satisfy the operator condition.	For each such operator, we
  *	  must add (the original form of) the indexqual clause to the "qpquals"
  *	  of the indexscan node, where the operator will be re-evaluated to
  *	  ensure it passes.
@@ -922,7 +920,7 @@ create_hashjoin_plan(HashPath *best_path,
  */
 static void
 fix_indxqual_references(List *indexquals, IndexPath *index_path,
-						List **fixed_indexquals, List **recheck_indexquals)
+					  List **fixed_indexquals, List **recheck_indexquals)
 {
 	List	   *fixed_quals = NIL;
 	List	   *recheck_quals = NIL;
@@ -992,7 +990,7 @@ fix_indxqual_sublist(List *indexqual, int baserelid, IndexOptInfo *index,
 
 		/*
 		 * Check to see if the indexkey is on the right; if so, commute
-		 * the clause.  The indexkey should be the side that refers to
+		 * the clause.	The indexkey should be the side that refers to
 		 * (only) the base relation.
 		 */
 		leftvarnos = pull_varnos((Node *) lfirst(newclause->args));
@@ -1022,8 +1020,8 @@ fix_indxqual_sublist(List *indexqual, int baserelid, IndexOptInfo *index,
 		fixed_qual = lappend(fixed_qual, newclause);
 
 		/*
-		 * Finally, check to see if index is lossy for this operator.
-		 * If so, add (a copy of) original form of clause to recheck list.
+		 * Finally, check to see if index is lossy for this operator. If
+		 * so, add (a copy of) original form of clause to recheck list.
 		 */
 		if (op_requires_recheck(newopno, opclass))
 			recheck_qual = lappend(recheck_qual,
@@ -1038,7 +1036,6 @@ static Node *
 fix_indxqual_operand(Node *node, int baserelid, IndexOptInfo *index,
 					 Oid *opclass)
 {
-
 	/*
 	 * Remove any binary-compatible relabeling of the indexkey
 	 */
@@ -1088,7 +1085,7 @@ fix_indxqual_operand(Node *node, int baserelid, IndexOptInfo *index,
 	 * the returned varattno must be 1.
 	 */
 	Assert(index->indproc != InvalidOid);
-	Assert(is_funcclause(node)); /* not a very thorough check, but easy */
+	Assert(is_funcclause(node));		/* not a very thorough check, but easy */
 
 	/* classlist[0] is the only class of a functional index */
 	*opclass = index->classlist[0];
@@ -1119,7 +1116,6 @@ switch_outer(List *clauses)
 		Assert(op && IsA(op, Var));
 		if (var_is_outer(op))
 		{
-
 			/*
 			 * Duplicate just enough of the structure to allow commuting
 			 * the clause without changing the original list.  Could use
@@ -1899,5 +1895,4 @@ generate_fjoin(List *tlist)
 	return newTlist;
 	return tlist;				/* do nothing for now - ay 10/94 */
 }
-
 #endif

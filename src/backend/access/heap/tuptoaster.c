@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.24 2001/08/10 18:57:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.25 2001/10/25 05:49:21 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -74,14 +74,13 @@ heap_tuple_toast_attrs(Relation rel, HeapTuple newtup, HeapTuple oldtup)
  *	external storage (possibly still in compressed format).
  * ----------
  */
-varattrib  *
+varattrib *
 heap_tuple_fetch_attr(varattrib *attr)
 {
 	varattrib  *result;
 
 	if (VARATT_IS_EXTERNAL(attr))
 	{
-
 		/*
 		 * This is an external stored plain value
 		 */
@@ -89,7 +88,6 @@ heap_tuple_fetch_attr(varattrib *attr)
 	}
 	else
 	{
-
 		/*
 		 * This is a plain value inside of the main tuple - why am I
 		 * called?
@@ -108,7 +106,7 @@ heap_tuple_fetch_attr(varattrib *attr)
  *	or external storage.
  * ----------
  */
-varattrib  *
+varattrib *
 heap_tuple_untoast_attr(varattrib *attr)
 {
 	varattrib  *result;
@@ -135,7 +133,6 @@ heap_tuple_untoast_attr(varattrib *attr)
 		}
 		else
 		{
-
 			/*
 			 * This is an external stored plain value
 			 */
@@ -144,7 +141,6 @@ heap_tuple_untoast_attr(varattrib *attr)
 	}
 	else if (VARATT_IS_COMPRESSED(attr))
 	{
-
 		/*
 		 * This is a compressed value inside of the main tuple
 		 */
@@ -181,8 +177,8 @@ toast_raw_datum_size(Datum value)
 	if (VARATT_IS_COMPRESSED(attr))
 	{
 		/*
-		 * va_rawsize shows the original data size, whether the datum
-		 * is external or not.
+		 * va_rawsize shows the original data size, whether the datum is
+		 * external or not.
 		 */
 		result = attr->va_content.va_compressed.va_rawsize + VARHDRSZ;
 	}
@@ -301,7 +297,6 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 
 		if (oldtup != NULL)
 		{
-
 			/*
 			 * For UPDATE get the old and new values of this attribute
 			 */
@@ -324,7 +319,6 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 					old_value->va_content.va_external.va_toastrelid !=
 					new_value->va_content.va_external.va_toastrelid)
 				{
-
 					/*
 					 * The old external store value isn't needed any more
 					 * after the update
@@ -334,7 +328,6 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 				}
 				else
 				{
-
 					/*
 					 * This attribute isn't changed by this update so we
 					 * reuse the original reference to the old value in
@@ -348,7 +341,6 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		}
 		else
 		{
-
 			/*
 			 * For INSERT simply get the new value
 			 */
@@ -372,7 +364,6 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		 */
 		if (att[i]->attlen == -1)
 		{
-
 			/*
 			 * If the table's attribute says PLAIN always, force it so.
 			 */
@@ -400,7 +391,6 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		}
 		else
 		{
-
 			/*
 			 * Not a variable size attribute, plain storage always
 			 */
@@ -475,7 +465,6 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		}
 		else
 		{
-
 			/*
 			 * incompressible data, ignore on subsequent compression
 			 * passes
@@ -588,7 +577,6 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		}
 		else
 		{
-
 			/*
 			 * incompressible data, ignore on subsequent compression
 			 * passes
@@ -776,9 +764,10 @@ toast_save_datum(Relation rel, Datum value)
 	Datum		t_values[3];
 	char		t_nulls[3];
 	varattrib  *result;
-	struct {
-		struct varlena	hdr;
-		char			data[TOAST_MAX_CHUNK_SIZE];
+	struct
+	{
+		struct varlena hdr;
+		char		data[TOAST_MAX_CHUNK_SIZE];
 	}			chunk_data;
 	int32		chunk_size;
 	int32		chunk_seq = 0;
@@ -851,12 +840,12 @@ toast_save_datum(Relation rel, Datum value)
 		heap_insert(toastrel, toasttup);
 
 		/*
-		 * Create the index entry.  We cheat a little here by not using
+		 * Create the index entry.	We cheat a little here by not using
 		 * FormIndexDatum: this relies on the knowledge that the index
 		 * columns are the same as the initial columns of the table.
 		 *
-		 * Note also that there had better not be any user-created index
-		 * on the TOAST table, since we don't bother to update anything else.
+		 * Note also that there had better not be any user-created index on
+		 * the TOAST table, since we don't bother to update anything else.
 		 */
 		idxres = index_insert(toastidx, t_values, t_nulls,
 							  &(toasttup->t_self),
@@ -916,8 +905,8 @@ toast_delete_datum(Relation rel, Datum value)
 	toastidx = index_open(toastrel->rd_rel->reltoastidxid);
 
 	/*
-	 * Setup a scan key to fetch from the index by va_valueid
-	 * (we don't particularly care whether we see them in sequence or not)
+	 * Setup a scan key to fetch from the index by va_valueid (we don't
+	 * particularly care whether we see them in sequence or not)
 	 */
 	ScanKeyEntryInitialize(&toastkey,
 						   (bits16) 0,
@@ -1095,6 +1084,5 @@ toast_fetch_datum(varattrib *attr)
 
 	return result;
 }
-
 
 #endif	 /* TUPLE_TOASTER_ACTIVE */

@@ -4,7 +4,7 @@
  *	 The PostgreSQL locale utils.
  *
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.10 2001/09/29 21:16:30 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.11 2001/10/25 05:49:45 momjian Exp $
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
  *
@@ -28,15 +28,15 @@ static bool CurrentLocaleConvValid = false;
 static struct lconv CurrentLocaleConv;
 
 
-static void PGLC_setlocale(PG_LocaleCategories * lc);
+static void PGLC_setlocale(PG_LocaleCategories *lc);
 
 /*------
- * Frees memory used in PG_LocaleCategories -- this memory is 
+ * Frees memory used in PG_LocaleCategories -- this memory is
  * allocated in PGLC_current().
  *------
  */
 void
-PGLC_free_categories(PG_LocaleCategories * lc)
+PGLC_free_categories(PG_LocaleCategories *lc)
 {
 	if (lc->lc_ctype)
 		pfree(lc->lc_ctype);
@@ -47,7 +47,7 @@ PGLC_free_categories(PG_LocaleCategories * lc)
 	if (lc->lc_collate)
 		pfree(lc->lc_collate);
 	if (lc->lc_monetary);
-		pfree(lc->lc_monetary);
+	pfree(lc->lc_monetary);
 #ifdef LC_MESSAGES
 	if (lc->lc_messages)
 		pfree(lc->lc_messages);
@@ -61,17 +61,17 @@ PGLC_free_categories(PG_LocaleCategories * lc)
  *------
  */
 void
-PGLC_current(PG_LocaleCategories * lc)
+PGLC_current(PG_LocaleCategories *lc)
 {
 	lc->lang = getenv("LANG");
 
-	lc->lc_ctype = pstrdup( setlocale(LC_CTYPE, NULL) );
-	lc->lc_numeric = pstrdup( setlocale(LC_NUMERIC, NULL) );
-	lc->lc_time = pstrdup( setlocale(LC_TIME, NULL) );
-	lc->lc_collate = pstrdup( setlocale(LC_COLLATE, NULL) );
-	lc->lc_monetary = pstrdup( setlocale(LC_MONETARY, NULL) );
+	lc->lc_ctype = pstrdup(setlocale(LC_CTYPE, NULL));
+	lc->lc_numeric = pstrdup(setlocale(LC_NUMERIC, NULL));
+	lc->lc_time = pstrdup(setlocale(LC_TIME, NULL));
+	lc->lc_collate = pstrdup(setlocale(LC_COLLATE, NULL));
+	lc->lc_monetary = pstrdup(setlocale(LC_MONETARY, NULL));
 #ifdef LC_MESSAGES
-	lc->lc_messages = pstrdup( setlocale(LC_MESSAGES, NULL) );
+	lc->lc_messages = pstrdup(setlocale(LC_MESSAGES, NULL));
 #endif
 }
 
@@ -83,7 +83,7 @@ PGLC_current(PG_LocaleCategories * lc)
  *------
  */
 static void
-PGLC_debug_lc(PG_LocaleCategories * lc)
+PGLC_debug_lc(PG_LocaleCategories *lc)
 {
 #ifdef LC_MESSAGES
 	elog(DEBUG, "CURRENT LOCALE ENVIRONMENT:\n\nLANG:   \t%s\nLC_CTYPE:\t%s\nLC_NUMERIC:\t%s\nLC_TIME:\t%s\nLC_COLLATE:\t%s\nLC_MONETARY:\t%s\nLC_MESSAGES:\t%s\n",
@@ -104,7 +104,6 @@ PGLC_debug_lc(PG_LocaleCategories * lc)
 		 lc->lc_monetary);
 #endif
 }
-
 #endif
 
 /*------
@@ -117,7 +116,7 @@ PGLC_debug_lc(PG_LocaleCategories * lc)
  *------
  */
 static void
-PGLC_setlocale(PG_LocaleCategories * lc)
+PGLC_setlocale(PG_LocaleCategories *lc)
 {
 	if (!setlocale(LC_COLLATE, lc->lc_collate))
 		elog(NOTICE, "pg_setlocale(): 'LC_COLLATE=%s' cannot be honored.",
@@ -172,7 +171,10 @@ PGLC_localeconv(void)
 	/* Get formatting information for the external environment */
 	extlconv = localeconv();
 
-	/* Must copy all values since restoring internal settings may overwrite */
+	/*
+	 * Must copy all values since restoring internal settings may
+	 * overwrite
+	 */
 	CurrentLocaleConv = *extlconv;
 	CurrentLocaleConv.currency_symbol = strdup(extlconv->currency_symbol);
 	CurrentLocaleConv.decimal_point = strdup(extlconv->decimal_point);
@@ -194,5 +196,4 @@ PGLC_localeconv(void)
 	CurrentLocaleConvValid = true;
 	return &CurrentLocaleConv;
 }
-
 #endif	 /* USE_LOCALE */

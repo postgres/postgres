@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.31 2001/07/15 22:48:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.32 2001/10/25 05:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,7 +127,6 @@ SeqNext(SeqScan *node)
 TupleTableSlot *
 ExecSeqScan(SeqScan *node)
 {
-
 	/*
 	 * use SeqNext as access method
 	 */
@@ -246,8 +245,8 @@ int
 ExecCountSlotsSeqScan(SeqScan *node)
 {
 	return ExecCountSlotsNode(outerPlan(node)) +
-	ExecCountSlotsNode(innerPlan(node)) +
-	SEQSCAN_NSLOTS;
+		ExecCountSlotsNode(innerPlan(node)) +
+		SEQSCAN_NSLOTS;
 }
 
 /* ----------------------------------------------------------------

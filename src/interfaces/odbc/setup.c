@@ -25,7 +25,7 @@
 
 #define INTFUNC  __stdcall
 
-extern HINSTANCE NEAR s_hModule;/* Saved module handle. */
+extern HINSTANCE NEAR s_hModule;		/* Saved module handle. */
 
 /* Constants */
 #define MIN(x,y)	  ((x) < (y) ? (x) : (y))
@@ -50,7 +50,7 @@ typedef struct tagSETUPDLG
 	BOOL		fNewDSN;		/* New data source flag */
 	BOOL		fDefault;		/* Default data source flag */
 
-}			SETUPDLG, FAR *LPSETUPDLG;
+}			SETUPDLG, FAR * LPSETUPDLG;
 
 
 
@@ -217,10 +217,11 @@ ConfigDlgProc(HWND hdlg,
 			  LPARAM lParam)
 {
 	LPSETUPDLG	lpsetupdlg;
-	ConnInfo	*ci;
+	ConnInfo   *ci;
+
 	switch (wMsg)
 	{
-		/* Initialize the dialog */
+			/* Initialize the dialog */
 		case WM_INITDIALOG:
 			lpsetupdlg = (LPSETUPDLG) lParam;
 			ci = &lpsetupdlg->ci;
@@ -229,11 +230,10 @@ ConfigDlgProc(HWND hdlg,
 			ShowWindow(GetDlgItem(hdlg, DRV_MSG_LABEL), SW_HIDE);
 
 			SetWindowLong(hdlg, DWL_USER, lParam);
-			CenterDialog(hdlg);		/* Center dialog */
+			CenterDialog(hdlg); /* Center dialog */
 
 			/*
-			 * NOTE: Values supplied in the attribute string will
-			 * always
+			 * NOTE: Values supplied in the attribute string will always
 			 */
 			/* override settings in ODBC.INI */
 
@@ -253,17 +253,16 @@ ConfigDlgProc(HWND hdlg,
 			}
 			else
 				SendDlgItemMessage(hdlg, IDC_DSNAME,
-						 EM_LIMITTEXT, (WPARAM) (MAXDSNAME - 1), 0L);
+							 EM_LIMITTEXT, (WPARAM) (MAXDSNAME - 1), 0L);
 
 			SendDlgItemMessage(hdlg, IDC_DESC,
-						   EM_LIMITTEXT, (WPARAM) (MAXDESC - 1), 0L);
-			return TRUE;	/* Focus was not set */
+							   EM_LIMITTEXT, (WPARAM) (MAXDESC - 1), 0L);
+			return TRUE;		/* Focus was not set */
 
 			/* Process buttons */
 		case WM_COMMAND:
 			switch (GET_WM_COMMAND_ID(wParam, lParam))
 			{
-
 					/*
 					 * Ensure the OK button is enabled only when a data
 					 * source name
@@ -288,8 +287,8 @@ ConfigDlgProc(HWND hdlg,
 					/* Retrieve dialog values */
 					if (!lpsetupdlg->fDefault)
 						GetDlgItemText(hdlg, IDC_DSNAME,
-										   lpsetupdlg->ci.dsn,
-										   sizeof(lpsetupdlg->ci.dsn));
+									   lpsetupdlg->ci.dsn,
+									   sizeof(lpsetupdlg->ci.dsn));
 					/* Get Dialog Values */
 					GetDlgStuff(hdlg, &lpsetupdlg->ci);
 
@@ -304,14 +303,14 @@ ConfigDlgProc(HWND hdlg,
 				case IDC_DRIVER:
 					lpsetupdlg = (LPSETUPDLG) GetWindowLong(hdlg, DWL_USER);
 					DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DRV),
-								hdlg, driver_optionsProc, (LPARAM) &lpsetupdlg->ci);
+					hdlg, driver_optionsProc, (LPARAM) & lpsetupdlg->ci);
 					return TRUE;
 
 				case IDC_DATASOURCE:
 					lpsetupdlg = (LPSETUPDLG) GetWindowLong(hdlg, DWL_USER);
 
 					DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DS),
-						 hdlg, ds_optionsProc, (LPARAM) &lpsetupdlg->ci);
+						hdlg, ds_optionsProc, (LPARAM) & lpsetupdlg->ci);
 
 					return TRUE;
 			}
@@ -344,7 +343,6 @@ ParseAttributes(LPCSTR lpszAttributes, LPSETUPDLG lpsetupdlg)
 
 	for (lpsz = lpszAttributes; *lpsz; lpsz++)
 	{
-
 		/*
 		 * Extract key name (e.g., DSN), it must be terminated by an
 		 * equals

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_node.h,v 1.26 2001/03/22 04:00:57 momjian Exp $
+ * $Id: parse_node.h,v 1.27 2001/10/25 05:50:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,5 +62,4 @@ extern ArrayRef *transformArraySubscripts(ParseState *pstate,
 						 bool forceSlice,
 						 Node *assignFrom);
 extern Const *make_const(Value *value);
-
 #endif	 /* PARSE_NODE_H */

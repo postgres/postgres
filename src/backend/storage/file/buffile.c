@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/buffile.c,v 1.10 2001/03/22 03:59:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/buffile.c,v 1.11 2001/10/25 05:49:41 momjian Exp $
  *
  * NOTES:
  *
@@ -135,7 +135,7 @@ extendBufFile(BufFile *file)
  * multiple temporary files if more than MAX_PHYSICAL_FILESIZE bytes are
  * written to it).
  */
-BufFile    *
+BufFile *
 BufFileCreateTemp(void)
 {
 	BufFile    *file;
@@ -158,12 +158,11 @@ BufFileCreateTemp(void)
  * to attach a BufFile to a non-temporary file.  Note that BufFiles created
  * in this way CANNOT be expanded into multiple files.
  */
-BufFile    *
+BufFile *
 BufFileCreate(File file)
 {
 	return makeBufFile(file);
 }
-
 #endif
 
 /*
@@ -254,7 +253,6 @@ BufFileDumpBuffer(BufFile *file)
 	 */
 	while (wpos < file->nbytes)
 	{
-
 		/*
 		 * Advance to next component file if necessary and possible.
 		 */
@@ -489,7 +487,6 @@ BufFileSeek(BufFile *file, int fileno, long offset, int whence)
 		newOffset >= file->curOffset &&
 		newOffset <= file->curOffset + file->nbytes)
 	{
-
 		/*
 		 * Seek is to a point within existing buffer; we can just adjust
 		 * pos-within-buffer, without flushing buffer.	Note this is OK
@@ -575,5 +572,4 @@ BufFileTellBlock(BufFile *file)
 	blknum += file->curFile * RELSEG_SIZE;
 	return blknum;
 }
-
 #endif

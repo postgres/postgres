@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.88 2001/07/31 20:16:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.89 2001/10/25 05:49:34 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -354,7 +354,6 @@ make_ands_explicit(List *andclauses)
 List *
 make_ands_implicit(Expr *clause)
 {
-
 	/*
 	 * NB: because the parser sets the qual field to NULL in a query that
 	 * has no WHERE clause, we must consider a NULL input clause as TRUE,
@@ -526,7 +525,6 @@ void
 check_subplans_for_ungrouped_vars(Node *clause,
 								  Query *query)
 {
-
 	/*
 	 * No special setup needed; context for walker is just the Query
 	 * pointer
@@ -555,7 +553,6 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
 	 */
 	if (is_subplan(node))
 	{
-
 		/*
 		 * The args list of the subplan node represents attributes from
 		 * outside passed into the sublink.
@@ -686,7 +683,6 @@ contain_noncachable_functions_walker(Node *node, void *context)
 bool
 is_pseudo_constant_clause(Node *clause)
 {
-
 	/*
 	 * We could implement this check in one recursive scan.  But since the
 	 * check for noncachable functions is both moderately expensive and
@@ -746,7 +742,7 @@ pull_constant_clauses(List *quals, List **constantQual)
 static bool
 sortgroupref_is_present(Index sortgroupref, List *clauselist)
 {
-	List   *clause;
+	List	   *clause;
 
 	foreach(clause, clauselist)
 	{
@@ -765,20 +761,21 @@ sortgroupref_is_present(Index sortgroupref, List *clauselist)
 bool
 has_distinct_on_clause(Query *query)
 {
-	List   *targetList;
+	List	   *targetList;
 
 	/* Is there a DISTINCT clause at all? */
 	if (query->distinctClause == NIL)
 		return false;
+
 	/*
-	 * If the DISTINCT list contains all the nonjunk targetlist items,
-	 * and nothing else (ie, no junk tlist items), then it's a simple
+	 * If the DISTINCT list contains all the nonjunk targetlist items, and
+	 * nothing else (ie, no junk tlist items), then it's a simple
 	 * DISTINCT, else it's DISTINCT ON.  We do not require the lists to be
 	 * in the same order (since the parser may have adjusted the DISTINCT
-	 * clause ordering to agree with ORDER BY).  Furthermore, a non-DISTINCT
-	 * junk tlist item that is in the sortClause is also evidence of
-	 * DISTINCT ON, since we don't allow ORDER BY on junk tlist items when
-	 * plain DISTINCT is used.
+	 * clause ordering to agree with ORDER BY).  Furthermore, a
+	 * non-DISTINCT junk tlist item that is in the sortClause is also
+	 * evidence of DISTINCT ON, since we don't allow ORDER BY on junk
+	 * tlist items when plain DISTINCT is used.
 	 *
 	 * This code assumes that the DISTINCT list is valid, ie, all its entries
 	 * match some entry of the tlist.
@@ -1155,7 +1152,6 @@ eval_const_expressions_mutator(Node *node, void *context)
 	}
 	if (IsA(node, RelabelType))
 	{
-
 		/*
 		 * If we can simplify the input to a constant, then we don't need
 		 * the RelabelType node anymore: just change the type field of the
@@ -1272,7 +1268,6 @@ eval_const_expressions_mutator(Node *node, void *context)
 	}
 	if (IsA(node, Iter))
 	{
-
 		/*
 		 * The argument of an Iter is normally a function call. We must
 		 * not try to eliminate the function, but we can try to simplify
@@ -1423,7 +1418,6 @@ simplify_op_or_func(Expr *expr, List *args)
 	 */
 	if (proisstrict && has_null_input)
 	{
-
 		/*
 		 * It's strict and has NULL input, so must produce NULL output.
 		 * Return a NULL constant of the right type.
@@ -1871,7 +1865,6 @@ expression_tree_mutator(Node *node,
 						Node *(*mutator) (),
 						void *context)
 {
-
 	/*
 	 * The mutator has already decided not to modify the current node, but
 	 * we must call the mutator for any sub-nodes.
@@ -1933,7 +1926,6 @@ expression_tree_mutator(Node *node,
 				}
 				else
 				{
-
 					/*
 					 * for other Expr node types, just transform args
 					 * list, linking to original oper node (OK?)
@@ -2026,8 +2018,8 @@ expression_tree_mutator(Node *node,
 			break;
 		case T_NullTest:
 			{
-				NullTest *ntest = (NullTest *) node;
-				NullTest *newnode;
+				NullTest   *ntest = (NullTest *) node;
+				NullTest   *newnode;
 
 				FLATCOPY(newnode, ntest, NullTest);
 				MUTATE(newnode->arg, ntest->arg, Node *);
@@ -2046,7 +2038,6 @@ expression_tree_mutator(Node *node,
 			break;
 		case T_SubLink:
 			{
-
 				/*
 				 * A "bare" SubLink (note we will not come here if we
 				 * found a SUBPLAN_EXPR node above it).  Transform the
@@ -2062,7 +2053,6 @@ expression_tree_mutator(Node *node,
 			break;
 		case T_List:
 			{
-
 				/*
 				 * We assume the mutator isn't interested in the list
 				 * nodes per se, so just invoke it on each list element.
@@ -2083,7 +2073,6 @@ expression_tree_mutator(Node *node,
 			break;
 		case T_TargetEntry:
 			{
-
 				/*
 				 * We mutate the expression, but not the resdom, by
 				 * default.

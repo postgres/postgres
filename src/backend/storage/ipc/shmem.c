@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.61 2001/10/05 17:28:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.62 2001/10/25 05:49:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,8 +97,9 @@ InitShmemAllocation(void *seghdr)
 	ShmemEnd = ShmemBase + shmhdr->totalsize;
 
 	/*
-	 * Initialize the spinlock used by ShmemAlloc.  We have to do the
-	 * space allocation the hard way, since ShmemAlloc can't be called yet.
+	 * Initialize the spinlock used by ShmemAlloc.	We have to do the
+	 * space allocation the hard way, since ShmemAlloc can't be called
+	 * yet.
 	 */
 	ShmemLock = (slock_t *) (((char *) shmhdr) + shmhdr->freeoffset);
 	shmhdr->freeoffset += MAXALIGN(sizeof(slock_t));
@@ -234,7 +235,7 @@ InitShmemIndex(void)
  * table at once.
  */
 HTAB *
-ShmemInitHash(const char *name,	/* table string name for shmem index */
+ShmemInitHash(const char *name, /* table string name for shmem index */
 			  long init_size,	/* initial table size */
 			  long max_size,	/* max size of the table */
 			  HASHCTL *infoP,	/* info about key and bucket size */
@@ -256,7 +257,7 @@ ShmemInitHash(const char *name,	/* table string name for shmem index */
 
 	/* look it up in the shmem index */
 	location = ShmemInitStruct(name,
-						sizeof(HASHHDR) + infoP->dsize * sizeof(HASHSEGMENT),
+					sizeof(HASHHDR) + infoP->dsize * sizeof(HASHSEGMENT),
 							   &found);
 
 	/*
@@ -267,8 +268,8 @@ ShmemInitHash(const char *name,	/* table string name for shmem index */
 		return NULL;
 
 	/*
-	 * if it already exists, attach to it rather than allocate and initialize
-	 * new space
+	 * if it already exists, attach to it rather than allocate and
+	 * initialize new space
 	 */
 	if (found)
 		hash_flags |= HASH_ATTACH;

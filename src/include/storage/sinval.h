@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinval.h,v 1.22 2001/09/29 04:02:27 tgl Exp $
+ * $Id: sinval.h,v 1.23 2001/10/25 05:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ typedef struct
 	ItemPointerData tuplePtr;	/* tuple identifier in cached relation */
 } SharedInvalCatcacheMsg;
 
-#define SHAREDINVALRELCACHE_ID  (-1)
+#define SHAREDINVALRELCACHE_ID	(-1)
 
 typedef struct
 {
@@ -68,14 +68,14 @@ extern void CreateSharedInvalidationState(int maxBackends);
 extern void InitBackendSharedInvalidationState(void);
 extern void SendSharedInvalidMessage(SharedInvalidationMessage *msg);
 extern void ReceiveSharedInvalidMessages(
-	void (*invalFunction) (SharedInvalidationMessage *msg),
-	void (*resetFunction) (void));
+				  void (*invalFunction) (SharedInvalidationMessage *msg),
+							 void (*resetFunction) (void));
 
 extern bool DatabaseHasActiveBackends(Oid databaseId, bool ignoreMyself);
 extern bool TransactionIdIsInProgress(TransactionId xid);
 extern TransactionId GetOldestXmin(bool allDbs);
 extern int	CountActiveBackends(void);
+
 /* Use "struct PROC", not PROC, to avoid including proc.h here */
 extern struct PROC *BackendIdGetProc(BackendId procId);
-
 #endif	 /* SINVAL_H */

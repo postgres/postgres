@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.39 2001/08/10 15:49:39 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.40 2001/10/25 05:49:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,7 +167,6 @@ AggregateCreate(char *aggName,
 	}
 	else
 	{
-
 		/*
 		 * If no finalfn, aggregate result type is type of the state value
 		 */

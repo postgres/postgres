@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: prs2lock.h,v 1.12 2001/01/24 19:43:27 momjian Exp $
+ * $Id: prs2lock.h,v 1.13 2001/10/25 05:50:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,5 +42,4 @@ typedef struct RuleLock
 	int			numLocks;
 	RewriteRule **rules;
 } RuleLock;
-
 #endif	 /* REWRITE_H */

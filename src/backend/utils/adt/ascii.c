@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * ascii.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.9 2001/09/06 04:57:29 ishii Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.10 2001/10/25 05:49:43 momjian Exp $
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
  *
@@ -80,7 +80,6 @@ pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *desc, int
 
 	if (enc == PG_LATIN1)
 	{
-
 		/*
 		 * ISO-8859-1 <range: 160 -- 255>
 		 */
@@ -89,7 +88,6 @@ pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *desc, int
 	}
 	else if (enc == PG_LATIN2)
 	{
-
 		/*
 		 * ISO-8859-2 <range: 160 -- 255>
 		 */
@@ -98,7 +96,6 @@ pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *desc, int
 	}
 	else if (enc == PG_WIN1250)
 	{
-
 		/*
 		 * Window CP1250 <range: 128 -- 255>
 		 */
@@ -151,13 +148,13 @@ Datum
 to_ascii_encname(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_TEXT_P
-	(
-	 encode_to_ascii
-	 (
-	  PG_GETARG_TEXT_P_COPY(0),
-	  pg_char_to_encoding(NameStr(*PG_GETARG_NAME(1)))
-	  )
-	);
+		(
+		 encode_to_ascii
+		 (
+		  PG_GETARG_TEXT_P_COPY(0),
+		  pg_char_to_encoding(NameStr(*PG_GETARG_NAME(1)))
+		  )
+		);
 }
 
 /* ----------
@@ -168,13 +165,13 @@ Datum
 to_ascii_enc(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_TEXT_P
-	(
-	 encode_to_ascii
-	 (
-	  PG_GETARG_TEXT_P_COPY(0),
-	  PG_GETARG_INT32(1)
-	  )
-	);
+		(
+		 encode_to_ascii
+		 (
+		  PG_GETARG_TEXT_P_COPY(0),
+		  PG_GETARG_INT32(1)
+		  )
+		);
 }
 
 /* ----------
@@ -185,13 +182,12 @@ Datum
 to_ascii_default(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_TEXT_P
-	(
-	 encode_to_ascii
-	 (
-	  PG_GETARG_TEXT_P_COPY(0),
-	  GetDatabaseEncoding()
-	  )
-	);
+		(
+		 encode_to_ascii
+		 (
+		  PG_GETARG_TEXT_P_COPY(0),
+		  GetDatabaseEncoding()
+		  )
+		);
 }
-
 #endif	 /* MULTIBYTE */

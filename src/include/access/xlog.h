@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xlog.h,v 1.25 2001/08/25 18:52:42 tgl Exp $
+ * $Id: xlog.h,v 1.26 2001/10/25 05:49:56 momjian Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -103,7 +103,7 @@ typedef struct XLogContRecord
 
 	/* ACTUAL LOG DATA FOLLOWS AT END OF STRUCT */
 
-}			XLogContRecord;
+} XLogContRecord;
 
 #define SizeOfXLogContRecord	MAXALIGN(sizeof(XLogContRecord))
 
@@ -215,5 +215,4 @@ extern XLogRecPtr GetUndoRecPtr(void);
 
 extern bool check_xlog_sync_method(const char *method);
 extern void assign_xlog_sync_method(const char *method);
-
 #endif	 /* XLOG_H */

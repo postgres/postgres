@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.18 2001/09/21 21:58:30 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.19 2001/10/25 05:49:52 momjian Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -66,7 +66,6 @@ typedef FILE ThingFile;
 
 #else
 typedef FILE ThingFile;
-
 #endif
 
 typedef struct
@@ -110,7 +109,6 @@ static void tarClose(ArchiveHandle *AH, TAR_MEMBER *TH);
 
 #ifdef __NOT_USED__
 static char *tarGets(char *buf, int len, TAR_MEMBER *th);
-
 #endif
 static int	tarPrintf(ArchiveHandle *AH, TAR_MEMBER *th, const char *fmt,...);
 
@@ -173,7 +171,7 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 
 		if (ctx->tarFH == NULL)
 			die_horribly(NULL, modulename,
-						 "could not open TOC file for output: %s\n", strerror(errno));
+			"could not open TOC file for output: %s\n", strerror(errno));
 
 		ctx->tarFHpos = 0;
 
@@ -323,7 +321,6 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 
 #ifdef HAVE_LIBZ
 	char		fmode[10];
-
 #endif
 
 	if (mode == 'r')
@@ -350,7 +347,6 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 #else
 
 		tm->nFH = ctx->tarFH;
-
 #endif
 
 	}
@@ -379,7 +375,6 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 #else
 
 		tm->nFH = tm->tmpFH;
-
 #endif
 
 		tm->AH = AH;
@@ -396,7 +391,6 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 static void
 tarClose(ArchiveHandle *AH, TAR_MEMBER *th)
 {
-
 	/*
 	 * Close the GZ file since we dup'd. This will flush the buffers.
 	 */
@@ -458,7 +452,6 @@ tarGets(char *buf, int len, TAR_MEMBER *th)
 
 	return s;
 }
-
 #endif
 
 /*
@@ -706,12 +699,12 @@ _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt)
 
 	StartRestoreBlobs(AH);
 
-	th = tarOpen(AH, NULL, 'r');/* Open next file */
+	th = tarOpen(AH, NULL, 'r');		/* Open next file */
 	while (th != NULL)
 	{
 		ctx->FH = th;
 
-		oid = (Oid)strtoul(&th->targetFile[5], NULL, 10);
+		oid = (Oid) strtoul(&th->targetFile[5], NULL, 10);
 
 		if (strncmp(th->targetFile, "blob_", 5) == 0 && oid != 0)
 		{
@@ -796,7 +789,6 @@ _CloseArchive(ArchiveHandle *AH)
 
 	if (AH->mode == archModeWrite)
 	{
-
 		/*
 		 * Write the Header & TOC to the archive FIRST
 		 */
@@ -854,7 +846,7 @@ _CloseArchive(ArchiveHandle *AH)
 		{
 			if (fputc(0, ctx->tarFH) == EOF)
 				die_horribly(AH, modulename,
-							 "could not write null block at end of tar archive\n");
+				   "could not write null block at end of tar archive\n");
 		}
 
 	}
@@ -1028,7 +1020,7 @@ static void
 _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	FILE	   *tmp = th->tmpFH;/* Grab it for convenience */
+	FILE	   *tmp = th->tmpFH;		/* Grab it for convenience */
 	char		buf[32768];
 	int			cnt;
 	int			len = 0;
@@ -1120,7 +1112,7 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 		id = atoi(th->targetFile);
 		if ((TocIDRequired(AH, id, AH->ropt) & 2) != 0)
 			die_horribly(AH, modulename, "dumping data out of order is not supported in this archive format: "
-						 "%s is required, but comes before %s in the archive file.\n",
+			"%s is required, but comes before %s in the archive file.\n",
 						 th->targetFile, filename);
 
 		/* Header doesn't match, so read to next header */
@@ -1207,7 +1199,7 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 	if (chk != sum)
 		die_horribly(AH, modulename,
 					 "corrupt tar header found in %s "
-					 "(expected %d (%o), computed %d (%o)) file position %ld (%lx)\n",
+		"(expected %d (%o), computed %d (%o)) file position %ld (%lx)\n",
 					 &name[0], sum, sum, chk, chk, ftell(ctx->tarFH), ftell(ctx->tarFH));
 
 	th->targetFile = strdup(name);

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.59 2001/09/18 01:59:06 tgl Exp $
+ *	$Id: execAmi.c,v 1.60 2001/10/25 05:49:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,7 +224,6 @@ ExecCloseR(Plan *node)
 
 		for (i = 0; i < numIndices; i++)
 		{
-
 			/*
 			 * shut down each of the index scans and close each of the
 			 * index relations
@@ -410,7 +409,7 @@ ExecMarkPos(Plan *node)
 {
 	switch (nodeTag(node))
 	{
-			case T_SeqScan:
+		case T_SeqScan:
 			ExecSeqMarkPos((SeqScan *) node);
 			break;
 
@@ -452,7 +451,7 @@ ExecRestrPos(Plan *node)
 {
 	switch (nodeTag(node))
 	{
-			case T_SeqScan:
+		case T_SeqScan:
 			ExecSeqRestrPos((SeqScan *) node);
 			break;
 

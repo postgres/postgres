@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.74 2001/06/07 00:09:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.75 2001/10/25 05:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,6 @@
 
 #ifndef atof
 extern double atof(const char *p);
-
 #endif
 
 #ifndef HAVE_CBRT
@@ -81,7 +80,6 @@ static double cbrt(double x);
 #else
 #if !defined(nextstep)
 extern double cbrt(double x);
-
 #endif
 #endif	 /* HAVE_CBRT */
 
@@ -91,9 +89,7 @@ static double rint(double x);
 
 #else
 extern double rint(double x);
-
 #endif	 /* HAVE_RINT */
-
 #endif	 /* NeXT check */
 
 
@@ -140,7 +136,6 @@ static void CheckFloat8Val(double val);
 static void
 CheckFloat4Val(double val)
 {
-
 	/*
 	 * defining unsafe floats's will make float4 and float8 ops faster at
 	 * the cost of safety, of course!
@@ -165,7 +160,6 @@ CheckFloat4Val(double val)
 static void
 CheckFloat8Val(double val)
 {
-
 	/*
 	 * defining unsafe floats's will make float4 and float8 ops faster at
 	 * the cost of safety, of course!
@@ -344,6 +338,7 @@ Datum
 float4up(PG_FUNCTION_ARGS)
 {
 	float4		arg = PG_GETARG_FLOAT4(0);
+
 	PG_RETURN_FLOAT4(arg);
 }
 
@@ -410,6 +405,7 @@ Datum
 float8up(PG_FUNCTION_ARGS)
 {
 	float8		arg = PG_GETARG_FLOAT8(0);
+
 	PG_RETURN_FLOAT8(arg);
 }
 
@@ -578,9 +574,9 @@ static int
 float4_cmp_internal(float4 a, float4 b)
 {
 	/*
-	 * We consider all NANs to be equal and larger than any non-NAN.
-	 * This is somewhat arbitrary; the important thing is to have a
-	 * consistent sort order.
+	 * We consider all NANs to be equal and larger than any non-NAN. This
+	 * is somewhat arbitrary; the important thing is to have a consistent
+	 * sort order.
 	 */
 	if (isnan(a))
 	{
@@ -674,9 +670,9 @@ static int
 float8_cmp_internal(float8 a, float8 b)
 {
 	/*
-	 * We consider all NANs to be equal and larger than any non-NAN.
-	 * This is somewhat arbitrary; the important thing is to have a
-	 * consistent sort order.
+	 * We consider all NANs to be equal and larger than any non-NAN. This
+	 * is somewhat arbitrary; the important thing is to have a consistent
+	 * sort order.
 	 */
 	if (isnan(a))
 	{
@@ -1479,7 +1475,6 @@ setseed(PG_FUNCTION_ARGS)
 static float8 *
 check_float8_array(ArrayType *transarray, const char *caller)
 {
-
 	/*
 	 * We expect the input to be a 3-element float array; verify that. We
 	 * don't need to use deconstruct_array() since the array data is just
@@ -1974,7 +1969,6 @@ rint(double x)
 	w = TWO52[sx] + x;
 	return w - TWO52[sx];
 }
-
 #endif	 /* !HAVE_RINT */
 
 #ifndef HAVE_CBRT
@@ -1987,5 +1981,4 @@ cbrt(double x)
 
 	return isneg ? -tmpres : tmpres;
 }
-
 #endif	 /* !HAVE_CBRT */

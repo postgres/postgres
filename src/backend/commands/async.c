@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.80 2001/09/08 01:10:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.81 2001/10/25 05:49:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,7 +120,7 @@ static volatile int notifyInterruptOccurred = 0;
 /* True if we've registered an on_shmem_exit cleanup */
 static bool unlistenExitRegistered = false;
 
-bool	Trace_notify = false;
+bool		Trace_notify = false;
 
 
 static void Async_UnlistenAll(void);
@@ -153,13 +153,13 @@ Async_Notify(char *relname)
 		elog(DEBUG, "Async_Notify: %s", relname);
 
 	/* no point in making duplicate entries in the list ... */
-	if (! AsyncExistsPendingNotify(relname))
+	if (!AsyncExistsPendingNotify(relname))
 	{
 		/*
-		 * The name list needs to live until end of transaction, so
-		 * store it in the top transaction context.
+		 * The name list needs to live until end of transaction, so store
+		 * it in the top transaction context.
 		 */
-		MemoryContext	oldcontext;
+		MemoryContext oldcontext;
 
 		oldcontext = MemoryContextSwitchTo(TopTransactionContext);
 
@@ -209,7 +209,7 @@ Async_Listen(char *relname, int pid)
 		Form_pg_listener listener = (Form_pg_listener) GETSTRUCT(tuple);
 
 		if (listener->listenerpid == pid &&
-			strncmp(NameStr(listener->relname), relname, NAMEDATALEN) == 0)
+		  strncmp(NameStr(listener->relname), relname, NAMEDATALEN) == 0)
 		{
 			alreadyListener = true;
 			/* No need to scan the rest of the table */
@@ -310,13 +310,14 @@ Async_Unlisten(char *relname, int pid)
 		Form_pg_listener listener = (Form_pg_listener) GETSTRUCT(tuple);
 
 		if (listener->listenerpid == pid &&
-			strncmp(NameStr(listener->relname), relname, NAMEDATALEN) == 0)
+		  strncmp(NameStr(listener->relname), relname, NAMEDATALEN) == 0)
 		{
 			/* Found the matching tuple, delete it */
 			simple_heap_delete(lRel, &tuple->t_self);
+
 			/*
-			 * We assume there can be only one match, so no need
-			 * to scan the rest of the table
+			 * We assume there can be only one match, so no need to scan
+			 * the rest of the table
 			 */
 			break;
 		}
@@ -478,16 +479,16 @@ AtCommit_Notify(void)
 		char	   *relname = NameStr(listener->relname);
 		int32		listenerPID = listener->listenerpid;
 
-		if (! AsyncExistsPendingNotify(relname))
+		if (!AsyncExistsPendingNotify(relname))
 			continue;
 
 		if (listenerPID == MyProcPid)
 		{
 			/*
-			 * Self-notify: no need to bother with table update.
-			 * Indeed, we *must not* clear the notification field in
-			 * this path, or we could lose an outside notify, which'd
-			 * be bad for applications that ignore self-notify messages.
+			 * Self-notify: no need to bother with table update. Indeed,
+			 * we *must not* clear the notification field in this path, or
+			 * we could lose an outside notify, which'd be bad for
+			 * applications that ignore self-notify messages.
 			 */
 
 			if (Trace_notify)
@@ -503,22 +504,20 @@ AtCommit_Notify(void)
 
 			/*
 			 * If someone has already notified this listener, we don't
-			 * bother modifying the table, but we do still send a
-			 * SIGUSR2 signal, just in case that backend missed the
-			 * earlier signal for some reason.	It's OK to send the
-			 * signal first, because the other guy can't read
-			 * pg_listener until we unlock it.
+			 * bother modifying the table, but we do still send a SIGUSR2
+			 * signal, just in case that backend missed the earlier signal
+			 * for some reason.  It's OK to send the signal first, because
+			 * the other guy can't read pg_listener until we unlock it.
 			 */
 			if (kill(listenerPID, SIGUSR2) < 0)
 			{
 				/*
-				 * Get rid of pg_listener entry if it refers to a PID
-				 * that no longer exists.  Presumably, that backend
-				 * crashed without deleting its pg_listener entries.
-				 * This code used to only delete the entry if
-				 * errno==ESRCH, but as far as I can see we should
-				 * just do it for any failure (certainly at least for
-				 * EPERM too...)
+				 * Get rid of pg_listener entry if it refers to a PID that
+				 * no longer exists.  Presumably, that backend crashed
+				 * without deleting its pg_listener entries. This code
+				 * used to only delete the entry if errno==ESRCH, but as
+				 * far as I can see we should just do it for any failure
+				 * (certainly at least for EPERM too...)
 				 */
 				simple_heap_delete(lRel, &lTuple->t_self);
 			}
@@ -610,7 +609,6 @@ Async_NotifyHandler(SIGNAL_ARGS)
 
 	if (notifyInterruptEnabled)
 	{
-
 		/*
 		 * I'm not sure whether some flavors of Unix might allow another
 		 * SIGUSR2 occurrence to recursively interrupt this routine. To
@@ -641,7 +639,6 @@ Async_NotifyHandler(SIGNAL_ARGS)
 	}
 	else
 	{
-
 		/*
 		 * In this path it is NOT SAFE to do much of anything, except
 		 * this:
@@ -888,11 +885,11 @@ static void
 ClearPendingNotifies(void)
 {
 	/*
-	 * We used to have to explicitly deallocate the list members and nodes,
-	 * because they were malloc'd.  Now, since we know they are palloc'd
-	 * in TopTransactionContext, we need not do that --- they'll go away
-	 * automatically at transaction exit.  We need only reset the list head
-	 * pointer.
+	 * We used to have to explicitly deallocate the list members and
+	 * nodes, because they were malloc'd.  Now, since we know they are
+	 * palloc'd in TopTransactionContext, we need not do that --- they'll
+	 * go away automatically at transaction exit.  We need only reset the
+	 * list head pointer.
 	 */
 	pendingNotifies = NIL;
 }

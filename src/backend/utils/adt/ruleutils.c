@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.85 2001/10/08 19:55:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.86 2001/10/25 05:49:45 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -84,7 +84,7 @@ typedef struct
 	List	   *rtable;			/* List of RangeTblEntry nodes */
 	List	   *namespace;		/* List of joinlist items (RangeTblRef and
 								 * JoinExpr nodes) */
-}			deparse_namespace;
+} deparse_namespace;
 
 
 /* ----------
@@ -118,8 +118,8 @@ static void get_basic_select_query(Query *query, deparse_context *context);
 static void get_setop_query(Node *setOp, Query *query,
 				deparse_context *context, bool toplevel);
 static void get_rule_sortgroupclause(SortClause *srt, List *tlist,
-									 bool force_colno,
-									 deparse_context *context);
+						 bool force_colno,
+						 deparse_context *context);
 static void get_names_for_var(Var *var, deparse_context *context,
 				  char **refname, char **attname);
 static bool get_alias_for_case(CaseExpr *caseexpr, deparse_context *context,
@@ -138,7 +138,7 @@ static void get_from_clause(Query *query, deparse_context *context);
 static void get_from_clause_item(Node *jtnode, Query *query,
 					 deparse_context *context);
 static void get_opclass_name(Oid opclass, Oid actual_datatype,
-							 StringInfo buf);
+				 StringInfo buf);
 static bool tleIsArrayAssign(TargetEntry *tle);
 static char *quote_identifier(char *ident);
 static char *get_relation_name(Oid relid);
@@ -302,7 +302,6 @@ pg_get_viewdef(PG_FUNCTION_ARGS)
 		appendStringInfo(&buf, "Not a view");
 	else
 	{
-
 		/*
 		 * Get the rules definition and put it into executors memory
 		 */
@@ -409,7 +408,7 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	sep = "";
 	for (keyno = 0; keyno < INDEX_MAX_KEYS; keyno++)
 	{
-		AttrNumber attnum = idxrec->indkey[keyno];
+		AttrNumber	attnum = idxrec->indkey[keyno];
 
 		if (attnum == InvalidAttrNumber)
 			break;
@@ -470,16 +469,17 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	 */
 	if (VARSIZE(&idxrec->indpred) > VARHDRSZ)
 	{
-		Node	*node;
-		List	*context;
-		char	*exprstr;
-		char	*str;
+		Node	   *node;
+		List	   *context;
+		char	   *exprstr;
+		char	   *str;
 
 		/* Convert TEXT object to C string */
 		exprstr = DatumGetCString(DirectFunctionCall1(textout,
-													  PointerGetDatum(&idxrec->indpred)));
+									 PointerGetDatum(&idxrec->indpred)));
 		/* Convert expression to node tree */
 		node = (Node *) stringToNode(exprstr);
+
 		/*
 		 * If top level is a List, assume it is an implicit-AND structure,
 		 * and convert to explicit AND.  This is needed for partial index
@@ -528,14 +528,14 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 Datum
 pg_get_expr(PG_FUNCTION_ARGS)
 {
-	text	*expr = PG_GETARG_TEXT_P(0);
-	Oid		relid = PG_GETARG_OID(1);
-	text	*result;
-	Node	*node;
-	List	*context;
-	char	*exprstr;
-	char	*relname;
-	char	*str;
+	text	   *expr = PG_GETARG_TEXT_P(0);
+	Oid			relid = PG_GETARG_OID(1);
+	text	   *result;
+	Node	   *node;
+	List	   *context;
+	char	   *exprstr;
+	char	   *relname;
+	char	   *str;
 
 	/* Get the name for the relation */
 	relname = get_rel_name(relid);
@@ -550,19 +550,17 @@ pg_get_expr(PG_FUNCTION_ARGS)
 	node = (Node *) stringToNode(exprstr);
 
 	/*
-	 * If top level is a List, assume it is an implicit-AND structure,
-	 * and convert to explicit AND.  This is needed for partial index
+	 * If top level is a List, assume it is an implicit-AND structure, and
+	 * convert to explicit AND.  This is needed for partial index
 	 * predicates.
 	 */
 	if (node && IsA(node, List))
-	{
 		node = (Node *) make_ands_explicit((List *) node);
-	}
 
 	/* Deparse */
 	context = deparse_context_for(relname, relid);
 	str = deparse_expression(node, context, false);
-	
+
 	/* Pass the result back as TEXT */
 	result = DatumGetTextP(DirectFunctionCall1(textin,
 											   CStringGetDatum(str)));
@@ -1178,10 +1176,11 @@ get_rule_sortgroupclause(SortClause *srt, List *tlist, bool force_colno,
 
 	tle = get_sortgroupclause_tle(srt, tlist);
 	expr = tle->expr;
+
 	/*
 	 * Use column-number form if requested by caller or if expression is a
-	 * constant --- a constant is ambiguous (and will be misinterpreted
-	 * by findTargetlistEntry()) if we dump it explicitly.
+	 * constant --- a constant is ambiguous (and will be misinterpreted by
+	 * findTargetlistEntry()) if we dump it explicitly.
 	 */
 	if (force_colno || (expr && IsA(expr, Const)))
 	{
@@ -1938,54 +1937,54 @@ get_rule_expr(Node *node, deparse_context *context)
 
 		case T_NullTest:
 			{
-				NullTest		*ntest = (NullTest *) node;
+				NullTest   *ntest = (NullTest *) node;
 
 				appendStringInfo(buf, "(");
 				get_rule_expr(ntest->arg, context);
-			    switch (ntest->nulltesttype)
-			    {
-			        case IS_NULL:
+				switch (ntest->nulltesttype)
+				{
+					case IS_NULL:
 						appendStringInfo(buf, " IS NULL)");
 						break;
-			        case IS_NOT_NULL:
+					case IS_NOT_NULL:
 						appendStringInfo(buf, " IS NOT NULL)");
 						break;
-			        default:
-			            elog(ERROR, "get_rule_expr: unexpected nulltesttype %d",
-			                 (int) ntest->nulltesttype);
+					default:
+						elog(ERROR, "get_rule_expr: unexpected nulltesttype %d",
+							 (int) ntest->nulltesttype);
 				}
 			}
 			break;
 
 		case T_BooleanTest:
 			{
-				BooleanTest		*btest = (BooleanTest *) node;
+				BooleanTest *btest = (BooleanTest *) node;
 
 				appendStringInfo(buf, "(");
 				get_rule_expr(btest->arg, context);
-			    switch (btest->booltesttype)
-			    {
-			        case IS_TRUE:
+				switch (btest->booltesttype)
+				{
+					case IS_TRUE:
 						appendStringInfo(buf, " IS TRUE)");
 						break;
-			        case IS_NOT_TRUE:
+					case IS_NOT_TRUE:
 						appendStringInfo(buf, " IS NOT TRUE)");
 						break;
-			        case IS_FALSE:
+					case IS_FALSE:
 						appendStringInfo(buf, " IS FALSE)");
 						break;
-			        case IS_NOT_FALSE:
+					case IS_NOT_FALSE:
 						appendStringInfo(buf, " IS NOT FALSE)");
 						break;
-			        case IS_UNKNOWN:
+					case IS_UNKNOWN:
 						appendStringInfo(buf, " IS UNKNOWN)");
 						break;
-			        case IS_NOT_UNKNOWN:
+					case IS_NOT_UNKNOWN:
 						appendStringInfo(buf, " IS NOT UNKNOWN)");
 						break;
-			        default:
-			            elog(ERROR, "get_rule_expr: unexpected booltesttype %d",
-			                 (int) btest->booltesttype);
+					default:
+						elog(ERROR, "get_rule_expr: unexpected booltesttype %d",
+							 (int) btest->booltesttype);
 				}
 			}
 			break;
@@ -2051,14 +2050,15 @@ get_func_expr(Expr *expr, deparse_context *context)
 
 		appendStringInfoChar(buf, '(');
 		get_rule_expr(arg, context);
+
 		/*
 		 * Show typename with appropriate length decoration. Note that
 		 * since exprIsLengthCoercion succeeded, the function's output
 		 * type is the right thing to use.
 		 *
 		 * XXX In general it is incorrect to quote the result of
-		 * format_type_with_typemod, but are there any special cases
-		 * where we should do so?
+		 * format_type_with_typemod, but are there any special cases where
+		 * we should do so?
 		 */
 		typdesc = format_type_with_typemod(procStruct->prorettype,
 										   coercedTypmod);
@@ -2107,7 +2107,7 @@ strip_type_coercion(Node *expr, Oid resultType)
 	if (IsA(expr, RelabelType))
 		return strip_type_coercion(((RelabelType *) expr)->arg, resultType);
 
-	if (IsA(expr, Expr) && ((Expr *) expr)->opType == FUNC_EXPR)
+	if (IsA(expr, Expr) &&((Expr *) expr)->opType == FUNC_EXPR)
 	{
 		Func	   *func;
 		HeapTuple	procTuple;
@@ -2135,7 +2135,7 @@ strip_type_coercion(Node *expr, Oid resultType)
 		}
 		/* See if function has same name as its result type */
 		typeTuple = SearchSysCache(TYPEOID,
-								   ObjectIdGetDatum(procStruct->prorettype),
+								ObjectIdGetDatum(procStruct->prorettype),
 								   0, 0, 0);
 		if (!HeapTupleIsValid(typeTuple))
 			elog(ERROR, "cache lookup for type %u failed",
@@ -2221,7 +2221,6 @@ get_const_expr(Const *constval, deparse_context *context)
 
 	if (constval->constisnull)
 	{
-
 		/*
 		 * Always label the type of a NULL constant.  This not only
 		 * prevents misdecisions about the type, but it ensures that our
@@ -2625,7 +2624,6 @@ tleIsArrayAssign(TargetEntry *tle)
 static char *
 quote_identifier(char *ident)
 {
-
 	/*
 	 * Can avoid quoting if ident starts with a lowercase letter and
 	 * contains only lowercase letters, digits, and underscores, *and* is
@@ -2657,7 +2655,6 @@ quote_identifier(char *ident)
 
 	if (safe)
 	{
-
 		/*
 		 * Check for keyword.  This test is overly strong, since many of
 		 * the "keywords" known to the parser are usable as column names,

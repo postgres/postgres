@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.103 2001/10/08 21:46:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.104 2001/10/25 05:49:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,11 +40,11 @@ bool		Transform_null_equals = false;
 
 static Node *parser_typecast_constant(Value *expr, TypeName *typename);
 static Node *parser_typecast_expression(ParseState *pstate,
-										Node *expr, TypeName *typename);
+						   Node *expr, TypeName *typename);
 static Node *transformAttr(ParseState *pstate, Attr *att, int precedence);
 static Node *transformIdent(ParseState *pstate, Ident *ident, int precedence);
 static Node *transformIndirection(ParseState *pstate, Node *basenode,
-								  List *indirection);
+					 List *indirection);
 
 
 /*
@@ -159,16 +159,18 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					case OP:
 						{
 							/*
-							 * Special-case "foo = NULL" and "NULL = foo" for
-							 * compatibility with standards-broken products
-							 * (like Microsoft's).  Turn these into IS NULL exprs.
+							 * Special-case "foo = NULL" and "NULL = foo"
+							 * for compatibility with standards-broken
+							 * products (like Microsoft's).  Turn these
+							 * into IS NULL exprs.
 							 */
 							if (Transform_null_equals &&
 								strcmp(a->opname, "=") == 0 &&
 								(exprIsNullConstant(a->lexpr) ||
 								 exprIsNullConstant(a->rexpr)))
 							{
-								NullTest *n = makeNode(NullTest);
+								NullTest   *n = makeNode(NullTest);
+
 								n->nulltesttype = IS_NULL;
 
 								if (exprIsNullConstant(a->lexpr))
@@ -183,11 +185,11 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 							else
 							{
 								Node	   *lexpr = transformExpr(pstate,
-																  a->lexpr,
-																  precedence);
+																a->lexpr,
+															 precedence);
 								Node	   *rexpr = transformExpr(pstate,
-																  a->rexpr,
-																  precedence);
+																a->rexpr,
+															 precedence);
 
 								result = (Node *) make_op(a->opname,
 														  lexpr,
@@ -205,12 +207,12 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 															  precedence);
 							Expr	   *expr = makeNode(Expr);
 
-							if (! coerce_to_boolean(pstate, &lexpr))
+							if (!coerce_to_boolean(pstate, &lexpr))
 								elog(ERROR, "left-hand side of AND is type '%s', not '%s'",
 									 format_type_be(exprType(lexpr)),
 									 format_type_be(BOOLOID));
 
-							if (! coerce_to_boolean(pstate, &rexpr))
+							if (!coerce_to_boolean(pstate, &rexpr))
 								elog(ERROR, "right-hand side of AND is type '%s', not '%s'",
 									 format_type_be(exprType(rexpr)),
 									 format_type_be(BOOLOID));
@@ -231,12 +233,12 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 															  precedence);
 							Expr	   *expr = makeNode(Expr);
 
-							if (! coerce_to_boolean(pstate, &lexpr))
+							if (!coerce_to_boolean(pstate, &lexpr))
 								elog(ERROR, "left-hand side of OR is type '%s', not '%s'",
 									 format_type_be(exprType(lexpr)),
 									 format_type_be(BOOLOID));
 
-							if (! coerce_to_boolean(pstate, &rexpr))
+							if (!coerce_to_boolean(pstate, &rexpr))
 								elog(ERROR, "right-hand side of OR is type '%s', not '%s'",
 									 format_type_be(exprType(rexpr)),
 									 format_type_be(BOOLOID));
@@ -254,7 +256,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 															  precedence);
 							Expr	   *expr = makeNode(Expr);
 
-							if (! coerce_to_boolean(pstate, &rexpr))
+							if (!coerce_to_boolean(pstate, &rexpr))
 								elog(ERROR, "argument to NOT is type '%s', not '%s'",
 									 format_type_be(exprType(rexpr)),
 									 format_type_be(BOOLOID));
@@ -315,7 +317,6 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 				if (sublink->subLinkType == EXISTS_SUBLINK)
 				{
-
 					/*
 					 * EXISTS needs no lefthand or combining operator.
 					 * These fields should be NIL already, but make sure.
@@ -456,7 +457,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					}
 					neww->expr = transformExpr(pstate, warg, precedence);
 
-					if (! coerce_to_boolean(pstate, &neww->expr))
+					if (!coerce_to_boolean(pstate, &neww->expr))
 						elog(ERROR, "WHEN clause must have a boolean result");
 
 					/*
@@ -541,11 +542,11 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 		case T_BooleanTest:
 			{
-				BooleanTest   *b = (BooleanTest *) expr;
+				BooleanTest *b = (BooleanTest *) expr;
 
 				b->arg = transformExpr(pstate, b->arg, precedence);
 
-				if (! coerce_to_boolean(pstate, &b->arg))
+				if (!coerce_to_boolean(pstate, &b->arg))
 				{
 					const char *clausename;
 
@@ -572,7 +573,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 						default:
 							elog(ERROR, "transformExpr: unexpected booltesttype %d",
 								 (int) b->booltesttype);
-							clausename = NULL; /* keep compiler quiet */
+							clausename = NULL;	/* keep compiler quiet */
 					}
 
 					elog(ERROR, "Argument of %s must be boolean",
@@ -645,7 +646,7 @@ transformIdent(ParseState *pstate, Ident *ident, int precedence)
 	 * appear
 	 */
 	if (ident->indirection == NIL &&
-		refnameRangeOrJoinEntry(pstate, ident->name, &sublevels_up) != NULL)
+	 refnameRangeOrJoinEntry(pstate, ident->name, &sublevels_up) != NULL)
 	{
 		ident->isRel = TRUE;
 		result = (Node *) ident;
@@ -1023,7 +1024,6 @@ TypeNameToInternalName(TypeName *typename)
 	Assert(typename->attrname == NULL);
 	if (typename->arrayBounds != NIL)
 	{
-
 		/*
 		 * By convention, the name of an array type is the name of its
 		 * element type with "_" prepended.

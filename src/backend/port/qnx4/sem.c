@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/sem.c,v 1.7 2001/09/07 00:27:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/sem.c,v 1.8 2001/10/25 05:49:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,10 +48,9 @@ struct sem_set_info
 	key_t		key;
 	int			nsems;
 	sem_t		sem[SEMMAX];	/* array of POSIX semaphores */
-	struct sem	semV[SEMMAX];	/* array of System V semaphore
-								 * structures */
-	struct pending_ops pendingOps[SEMMAX];	/* array of pending
-											 * operations */
+	struct sem	semV[SEMMAX];	/* array of System V semaphore structures */
+	struct pending_ops pendingOps[SEMMAX];		/* array of pending
+												 * operations */
 };
 
 struct sem_info
@@ -59,21 +58,21 @@ struct sem_info
 	sem_t		sem;
 	int			nsets;
 	/* there are actually nsets of these: */
-	struct sem_set_info set[1];	/* VARIABLE LENGTH ARRAY */
+	struct sem_set_info set[1]; /* VARIABLE LENGTH ARRAY */
 };
 
 static struct sem_info *SemInfo = (struct sem_info *) - 1;
 
 /* ----------------------------------------------------------------
  * semclean - remove the shared memory file on exit
- *            only called by the process which created the shm file
+ *			  only called by the process which created the shm file
  * ----------------------------------------------------------------
  */
 
 static void
-semclean( void )
+semclean(void)
 {
-  remove( "/dev/shmem/" SHM_INFO_NAME );
+	remove("/dev/shmem/" SHM_INFO_NAME);
 }
 
 int
@@ -175,30 +174,31 @@ semget(key_t key, int nsems, int semflg)
 			return fd;
 		/* The size may only be set once. Ignore errors. */
 		nsets = PROC_SEM_MAP_ENTRIES(MaxBackends);
-		sem_info_size = sizeof(struct sem_info) + (nsets-1) * sizeof(struct sem_set_info);
+		sem_info_size = sizeof(struct sem_info) + (nsets - 1) * sizeof(struct sem_set_info);
 		ltrunc(fd, sem_info_size, SEEK_SET);
-		if ( fstat( fd, &statbuf ) ) /* would be strange : the only doc'ed */
-		{                            /* error is EBADF */
-			close( fd );
+		if (fstat(fd, &statbuf))/* would be strange : the only doc'ed */
+		{						/* error is EBADF */
+			close(fd);
 			return -1;
 		}
-    /*
-     * size is rounded by proc to the next __PAGESIZE
-     */
-    if ( statbuf.st_size != 
-         (((sem_info_size/__PAGESIZE)+1) * __PAGESIZE) )
-    {
-       fprintf( stderr,
-         "Found a pre-existing shared memory block for the semaphore memory\n"
-         "of a different size (%ld instead %ld). Make sure that all executables\n"
-         "are from the same release or remove the file \"/dev/shmem/%s\"\n"
-         "left by a previous version.\n",
-				(long) statbuf.st_size,
-				(long) sem_info_size,
-				SHM_INFO_NAME);
-         errno = EACCES;
-       return -1;
-    }
+
+		/*
+		 * size is rounded by proc to the next __PAGESIZE
+		 */
+		if (statbuf.st_size !=
+			(((sem_info_size / __PAGESIZE) + 1) * __PAGESIZE))
+		{
+			fprintf(stderr,
+					"Found a pre-existing shared memory block for the semaphore memory\n"
+					"of a different size (%ld instead %ld). Make sure that all executables\n"
+					"are from the same release or remove the file \"/dev/shmem/%s\"\n"
+					"left by a previous version.\n",
+					(long) statbuf.st_size,
+					(long) sem_info_size,
+					SHM_INFO_NAME);
+			errno = EACCES;
+			return -1;
+		}
 		SemInfo = mmap(NULL, sem_info_size,
 					   PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 		if (SemInfo == MAP_FAILED)
@@ -212,7 +212,7 @@ semget(key_t key, int nsems, int semflg)
 				SemInfo->set[semid].key = -1;
 			/* create semaphore for locking */
 			sem_init(&SemInfo->sem, 1, 1);
-			on_proc_exit( semclean, 0 );
+			on_proc_exit(semclean, 0);
 		}
 	}
 
@@ -269,13 +269,13 @@ semget(key_t key, int nsems, int semflg)
 		sem_init(&SemInfo->set[semid].sem[semnum], 1, 0);
 /* Currently sem_init always returns -1. */
 #ifdef NOT_USED
-		if( sem_init( &SemInfo->set[semid].sem[semnum], 1, 0 ) == -1 )	{
-			int semnum1;
+		if (sem_init(&SemInfo->set[semid].sem[semnum], 1, 0) == -1)
+		{
+			int			semnum1;
 
-			for( semnum1 = 0; semnum1 < semnum; semnum1++ )  {
-				sem_destroy( &SemInfo->set[semid].sem[semnum1] );
-			}
-			sem_post( &SemInfo->sem );
+			for (semnum1 = 0; semnum1 < semnum; semnum1++)
+				sem_destroy(&SemInfo->set[semid].sem[semnum1]);
+			sem_post(&SemInfo->sem);
 			return -1;
 		}
 #endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.58 2001/10/08 18:40:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.59 2001/10/25 05:49:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,7 +167,8 @@ renameatt(char *relname,
 	heap_freetuple(atttup);
 
 	/*
-	 * Update column names of indexes that refer to the column being renamed.
+	 * Update column names of indexes that refer to the column being
+	 * renamed.
 	 */
 	indexoidlist = RelationGetIndexList(targetrelation);
 
@@ -177,9 +178,8 @@ renameatt(char *relname,
 		HeapTuple	indextup;
 
 		/*
-		 * First check to see if index is a functional index.
-		 * If so, its column name is a function name and shouldn't
-		 * be renamed here.
+		 * First check to see if index is a functional index. If so, its
+		 * column name is a function name and shouldn't be renamed here.
 		 */
 		indextup = SearchSysCache(INDEXRELID,
 								  ObjectIdGetDatum(indexoid),
@@ -192,9 +192,10 @@ renameatt(char *relname,
 			continue;
 		}
 		ReleaseSysCache(indextup);
+
 		/*
-		 * Okay, look to see if any column name of the index matches
-		 * the old attribute name.
+		 * Okay, look to see if any column name of the index matches the
+		 * old attribute name.
 		 */
 		atttup = SearchSysCacheCopy(ATTNAME,
 									ObjectIdGetDatum(indexoid),
@@ -206,20 +207,20 @@ renameatt(char *relname,
 		/*
 		 * Update the (copied) attribute tuple.
 		 */
-	    StrNCpy(NameStr(((Form_pg_attribute) GETSTRUCT(atttup))->attname),
-			    newattname, NAMEDATALEN);
+		StrNCpy(NameStr(((Form_pg_attribute) GETSTRUCT(atttup))->attname),
+				newattname, NAMEDATALEN);
 
-	    simple_heap_update(attrelation, &atttup->t_self, atttup);
+		simple_heap_update(attrelation, &atttup->t_self, atttup);
 
 		/* keep system catalog indices current */
-	    {
-		    Relation	irelations[Num_pg_attr_indices];
+		{
+			Relation	irelations[Num_pg_attr_indices];
 
-		    CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, irelations);
-		    CatalogIndexInsert(irelations, Num_pg_attr_indices, attrelation, atttup);
-		    CatalogCloseIndices(Num_pg_attr_indices, irelations);
-	    }
-	    heap_freetuple(atttup);
+			CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, irelations);
+			CatalogIndexInsert(irelations, Num_pg_attr_indices, attrelation, atttup);
+			CatalogCloseIndices(Num_pg_attr_indices, irelations);
+		}
+		heap_freetuple(atttup);
 	}
 
 	freeList(indexoidlist);
@@ -332,8 +333,8 @@ renamerel(const char *oldrelname, const char *newrelname)
 	 */
 	if (relkind == RELKIND_VIEW)
 	{
-		char   *oldrulename,
-			   *newrulename;
+		char	   *oldrulename,
+				   *newrulename;
 
 		oldrulename = MakeRetrieveViewRuleName(oldrelname);
 		newrulename = MakeRetrieveViewRuleName(newrelname);

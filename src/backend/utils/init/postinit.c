@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.94 2001/10/19 17:03:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.95 2001/10/25 05:49:51 momjian Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -221,7 +221,10 @@ InitPostgres(const char *dbname, const char *username)
 		char	   *fullpath,
 					datpath[MAXPGPATH];
 
-		/* Formerly we validated DataDir here, but now that's done earlier. */
+		/*
+		 * Formerly we validated DataDir here, but now that's done
+		 * earlier.
+		 */
 
 		/*
 		 * Find oid and path of the database we're about to open. Since
@@ -257,7 +260,7 @@ InitPostgres(const char *dbname, const char *username)
 	 */
 
 	/*
-	 * Set up my per-backend PROC struct in shared memory.  (We need to
+	 * Set up my per-backend PROC struct in shared memory.	(We need to
 	 * know MyDatabaseId before we can do this, since it's entered into
 	 * the PROC struct.)
 	 */
@@ -284,8 +287,8 @@ InitPostgres(const char *dbname, const char *username)
 	AmiTransactionOverride(bootstrap);
 
 	/*
-	 * Initialize the relation descriptor cache.
-	 * The pre-allocated reldescs are created here.
+	 * Initialize the relation descriptor cache. The pre-allocated
+	 * reldescs are created here.
 	 */
 	RelationCacheInitialize();
 
@@ -320,9 +323,8 @@ InitPostgres(const char *dbname, const char *username)
 	RelationCacheInitializePhase2();
 
 	/*
-	 * Figure out our postgres user id.  In standalone mode we use a
-	 * fixed id, otherwise we figure it out from the authenticated
-	 * user name.
+	 * Figure out our postgres user id.  In standalone mode we use a fixed
+	 * id, otherwise we figure it out from the authenticated user name.
 	 */
 	if (bootstrap)
 		InitializeSessionUserIdStandalone();
@@ -388,7 +390,6 @@ InitPostgres(const char *dbname, const char *username)
 static void
 ShutdownPostgres(void)
 {
-
 	/*
 	 * These operations are really just a minimal subset of
 	 * AbortTransaction(). We don't want to do any inessential cleanup,
@@ -408,7 +409,7 @@ ShutdownPostgres(void)
 	 * has to happen before bufmgr shutdown, so having smgr register a
 	 * callback for it wouldn't work.
 	 */
-	smgrDoPendingDeletes(false);/* delete as though aborting xact */
+	smgrDoPendingDeletes(false);		/* delete as though aborting xact */
 }
 
 

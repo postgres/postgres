@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.45 2001/03/22 03:59:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.46 2001/10/25 05:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -345,7 +345,6 @@ frac_out:
 	return avail;
 #endif
 }
-
 #endif
 
 /*
@@ -476,5 +475,4 @@ atof1(char *str, double *val)
 	*val = v;
 	return 0;
 }
-
 #endif

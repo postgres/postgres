@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.178 2001/10/22 22:47:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.179 2001/10/25 05:49:22 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -64,10 +64,10 @@
 
 
 static void AddNewRelationTuple(Relation pg_class_desc,
-								Relation new_rel_desc,
-								Oid new_rel_oid, Oid new_type_oid,
-								char relkind, bool relhasoids,
-								char *temp_relname);
+					Relation new_rel_desc,
+					Oid new_rel_oid, Oid new_type_oid,
+					char relkind, bool relhasoids,
+					char *temp_relname);
 static void DeleteAttributeTuples(Relation rel);
 static void DeleteRelationTuple(Relation rel);
 static void DeleteTypeTuple(Relation rel);
@@ -156,7 +156,7 @@ static Form_pg_attribute SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7};
 Form_pg_attribute
 SystemAttributeDefinition(AttrNumber attno, bool relhasoids)
 {
-	if (attno >= 0 || attno < - (int) lengthof(SysAtt))
+	if (attno >= 0 || attno < -(int) lengthof(SysAtt))
 		elog(ERROR, "SystemAttributeDefinition: invalid attribute number %d",
 			 attno);
 	if (attno == ObjectIdAttributeNumber && !relhasoids)
@@ -167,12 +167,12 @@ SystemAttributeDefinition(AttrNumber attno, bool relhasoids)
 
 /*
  * If the given name is a system attribute name, return a Form_pg_attribute
- * pointer for a prototype definition.  If not, return NULL.
+ * pointer for a prototype definition.	If not, return NULL.
  */
 Form_pg_attribute
 SystemAttributeByName(const char *attname, bool relhasoids)
 {
-	int j;
+	int			j;
 
 	for (j = 0; j < (int) lengthof(SysAtt); j++)
 	{
@@ -237,8 +237,8 @@ heap_create(char *relname,
 
 	/*
 	 * Real ugly stuff to assign the proper relid in the relation
-	 * descriptor follows.  Note that only "bootstrapped" relations
-	 * whose OIDs are hard-coded in pg_class.h need be listed here.
+	 * descriptor follows.	Note that only "bootstrapped" relations whose
+	 * OIDs are hard-coded in pg_class.h need be listed here.
 	 */
 	if (relname && IsSystemRelationName(relname))
 	{
@@ -541,7 +541,11 @@ AddNewAttributeTuples(Oid new_rel_oid,
 			/* Fill in the correct relation OID in the copied tuple */
 			attStruct = (Form_pg_attribute) GETSTRUCT(tup);
 			attStruct->attrelid = new_rel_oid;
-			/* Unneeded since they should be OK in the constant data anyway */
+
+			/*
+			 * Unneeded since they should be OK in the constant data
+			 * anyway
+			 */
 			/* attStruct->attstattarget = 0; */
 			/* attStruct->attcacheoff = -1; */
 
@@ -613,7 +617,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 		case RELKIND_RELATION:
 		case RELKIND_INDEX:
 		case RELKIND_TOASTVALUE:
-			new_rel_reltup->relpages = 10;	/* bogus estimates */
+			new_rel_reltup->relpages = 10;		/* bogus estimates */
 			new_rel_reltup->reltuples = 1000;
 			break;
 		case RELKIND_SEQUENCE:
@@ -653,7 +657,6 @@ AddNewRelationTuple(Relation pg_class_desc,
 
 	if (!IsIgnoringSystemIndexes())
 	{
-
 		/*
 		 * First, open the catalog indices and insert index tuples for the
 		 * new relation.
@@ -1735,27 +1738,35 @@ AddRelationRawConstraints(Relation rel,
 		{
 			int			i;
 			int			j;
-			bool			success;
+			bool		success;
 			List	   *listptr2;
+
 			ccname = (char *) palloc(NAMEDATALEN);
 
 			/* Loop until we find a non-conflicting constraint name */
 			/* What happens if this loops forever? */
 			j = numchecks + 1;
-			do {
+			do
+			{
 				success = true;
 				snprintf(ccname, NAMEDATALEN, "$%d", j);
 
 				/* Check against old constraints */
 				for (i = 0; i < numoldchecks; i++)
 				{
-					if (strcmp(oldchecks[i].ccname, ccname) == 0) {
+					if (strcmp(oldchecks[i].ccname, ccname) == 0)
+					{
 						success = false;
 						break;
 					}
 				}
-				/* Check against other new constraints, if the check hasn't already failed */
-				if (success) {
+
+				/*
+				 * Check against other new constraints, if the check
+				 * hasn't already failed
+				 */
+				if (success)
+				{
 					foreach(listptr2, rawConstraints)
 					{
 						Constraint *cdef2 = (Constraint *) lfirst(listptr2);
@@ -1765,7 +1776,8 @@ AddRelationRawConstraints(Relation rel,
 							cdef2->raw_expr == NULL ||
 							cdef2->name == NULL)
 							continue;
-						if (strcmp(cdef2->name, ccname) == 0) {
+						if (strcmp(cdef2->name, ccname) == 0)
+						{
 							success = false;
 							break;
 						}
@@ -1914,59 +1926,60 @@ RemoveRelCheck(Relation rel)
 int
 RemoveCheckConstraint(Relation rel, const char *constrName, bool inh)
 {
-   Oid            relid;
-	Relation			rcrel;
-	Relation			relrel;
-	Relation			inhrel;
-	Relation			relidescs[Num_pg_class_indices];
-	TupleDesc		tupleDesc;
-	TupleConstr		*oldconstr;
-	int				numoldchecks;
-	int				numchecks;
-	HeapScanDesc	rcscan;
-	ScanKeyData		key[2];
-	HeapTuple		rctup;
-	HeapTuple		reltup;
-	Form_pg_class	relStruct;
-	int				rel_deleted = 0;
-   int            all_deleted = 0;
+	Oid			relid;
+	Relation	rcrel;
+	Relation	relrel;
+	Relation	inhrel;
+	Relation	relidescs[Num_pg_class_indices];
+	TupleDesc	tupleDesc;
+	TupleConstr *oldconstr;
+	int			numoldchecks;
+	int			numchecks;
+	HeapScanDesc rcscan;
+	ScanKeyData key[2];
+	HeapTuple	rctup;
+	HeapTuple	reltup;
+	Form_pg_class relStruct;
+	int			rel_deleted = 0;
+	int			all_deleted = 0;
 
-   /* Find id of the relation */
-   relid = RelationGetRelid(rel);
+	/* Find id of the relation */
+	relid = RelationGetRelid(rel);
 
-   /* Process child tables and remove constraints of the
-      same name. */
-   if (inh)
-   {
-      List  *child,
-            *children;
+	/*
+	 * Process child tables and remove constraints of the same name.
+	 */
+	if (inh)
+	{
+		List	   *child,
+				   *children;
 
-      /* This routine is actually in the planner */
-      children = find_all_inheritors(relid);
+		/* This routine is actually in the planner */
+		children = find_all_inheritors(relid);
 
-      /*
-       * find_all_inheritors does the recursive search of the
-       * inheritance hierarchy, so all we have to do is process all
-       * of the relids in the list that it returns.
-       */
-      foreach(child, children)
-      {
-         Oid	childrelid = lfirsti(child);
+		/*
+		 * find_all_inheritors does the recursive search of the
+		 * inheritance hierarchy, so all we have to do is process all of
+		 * the relids in the list that it returns.
+		 */
+		foreach(child, children)
+		{
+			Oid			childrelid = lfirsti(child);
 
-         if (childrelid == relid)
-            continue;
-         inhrel = heap_open(childrelid, AccessExclusiveLock);
-         all_deleted += RemoveCheckConstraint(inhrel, constrName, false);
-         heap_close(inhrel, NoLock);
-      }
-   }
+			if (childrelid == relid)
+				continue;
+			inhrel = heap_open(childrelid, AccessExclusiveLock);
+			all_deleted += RemoveCheckConstraint(inhrel, constrName, false);
+			heap_close(inhrel, NoLock);
+		}
+	}
 
 	/* Grab an exclusive lock on the pg_relcheck relation */
 	rcrel = heap_openr(RelCheckRelationName, RowExclusiveLock);
 
 	/*
-	 * Create two scan keys.  We need to match on the oid of the table
-	 * the CHECK is in and also we need to match the name of the CHECK
+	 * Create two scan keys.  We need to match on the oid of the table the
+	 * CHECK is in and also we need to match the name of the CHECK
 	 * constraint.
 	 */
 	ScanKeyEntryInitialize(&key[0], 0, Anum_pg_relcheck_rcrelid,
@@ -1979,14 +1992,15 @@ RemoveCheckConstraint(Relation rel, const char *constrName, bool inh)
 	rcscan = heap_beginscan(rcrel, 0, SnapshotNow, 2, key);
 
 	/*
-	 * Scan over the result set, removing any matching entries.  Note
-	 * that this has the side-effect of removing ALL CHECK constraints
-	 * that share the specified constraint name.
+	 * Scan over the result set, removing any matching entries.  Note that
+	 * this has the side-effect of removing ALL CHECK constraints that
+	 * share the specified constraint name.
 	 */
-	while (HeapTupleIsValid(rctup = heap_getnext(rcscan, 0))) {
+	while (HeapTupleIsValid(rctup = heap_getnext(rcscan, 0)))
+	{
 		simple_heap_delete(rcrel, &rctup->t_self);
 		++rel_deleted;
-      ++all_deleted;
+		++all_deleted;
 	}
 
 	/* Clean up after the scan */
@@ -2001,7 +2015,7 @@ RemoveCheckConstraint(Relation rel, const char *constrName, bool inh)
 	 * message, but for ALTER TABLE ADD ATTRIBUTE this'd be important.)
 	 */
 
- 	/*
+	/*
 	 * Get number of existing constraints.
 	 */
 
@@ -2020,7 +2034,7 @@ RemoveCheckConstraint(Relation rel, const char *constrName, bool inh)
 
 	relrel = heap_openr(RelationRelationName, RowExclusiveLock);
 	reltup = SearchSysCacheCopy(RELOID,
-		ObjectIdGetDatum(RelationGetRelid(rel)), 0, 0, 0);
+					   ObjectIdGetDatum(RelationGetRelid(rel)), 0, 0, 0);
 
 	if (!HeapTupleIsValid(reltup))
 		elog(ERROR, "cache lookup of relation %u failed",

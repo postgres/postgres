@@ -28,7 +28,6 @@ main()
 
 #ifdef DEBUG
 	FILE	   *debug;
-
 #endif	 /* DEBUG */
 
 	PGconn	   *conn;

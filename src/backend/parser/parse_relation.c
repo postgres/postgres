@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.58 2001/10/23 17:39:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.59 2001/10/25 05:49:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -967,7 +967,7 @@ specialAttNum(char *a)
 {
 	Form_pg_attribute sysatt;
 
-	sysatt = SystemAttributeByName(a, true /* "oid" will be accepted */);
+	sysatt = SystemAttributeByName(a, true /* "oid" will be accepted */ );
 	if (sysatt != NULL)
 		return sysatt->attnum;
 	return InvalidAttrNumber;

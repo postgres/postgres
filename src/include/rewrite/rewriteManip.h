@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteManip.h,v 1.27 2001/06/13 18:56:29 tgl Exp $
+ * $Id: rewriteManip.h,v 1.28 2001/10/25 05:50:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,5 +39,4 @@ extern bool checkExprHasSubLink(Node *node);
 
 extern Node *ResolveNew(Node *node, int target_varno, int sublevels_up,
 		   List *targetlist, int event, int update_varno);
-
 #endif	 /* REWRITEMANIP_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.46 2001/10/06 23:21:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.47 2001/10/25 05:49:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,7 +221,6 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 	/* We can short-circuit most of the work if there's just one key */
 	if (numberOfKeys == 1)
 	{
-
 		/*
 		 * We don't use indices for 'A is null' and 'A is not null'
 		 * currently and 'A < = > <> NULL' will always fail - so qual is
@@ -317,7 +316,6 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 			}
 			else
 			{
-
 				/*
 				 * No "=" for this key, so we're done with required keys
 				 */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.77 2001/07/16 05:06:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.78 2001/10/25 05:49:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,6 @@ ResetTupleCount(void)
 	NTupleReplaced = 0;
 	NIndexTupleProcessed = 0;
 }
-
 #endif
 
 /* ----------------------------------------------------------------
@@ -117,7 +116,6 @@ DisplayTupleCount(FILE *statfp)
 				(NTupleReplaced == 1) ? "" : "s");
 	fprintf(statfp, "\n");
 }
-
 #endif
 
 /* ----------------------------------------------------------------
@@ -504,26 +502,26 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo)
 		/*
 		 * Open (and lock, if necessary) the index relation
 		 *
-		 * If the index AM is not safe for concurrent updates, obtain
-		 * an exclusive lock on the index to lock out other updaters as
-		 * well as readers (index_beginscan places AccessShareLock).
-		 * We will release this lock in ExecCloseIndices.
+		 * If the index AM is not safe for concurrent updates, obtain an
+		 * exclusive lock on the index to lock out other updaters as well
+		 * as readers (index_beginscan places AccessShareLock). We will
+		 * release this lock in ExecCloseIndices.
 		 *
 		 * If the index AM supports concurrent updates, we obtain no lock
 		 * here at all, which is a tad weird, but safe since any critical
-		 * operation on the index (like deleting it) will acquire exclusive
-		 * lock on the parent table.  Perhaps someday we should acquire
-		 * RowExclusiveLock on the index here?
+		 * operation on the index (like deleting it) will acquire
+		 * exclusive lock on the parent table.	Perhaps someday we should
+		 * acquire RowExclusiveLock on the index here?
 		 *
 		 * If there are multiple not-concurrent-safe indexes, all backends
-		 * must lock the indexes in the same order or we will get deadlocks
-		 * here during concurrent updates.	This is guaranteed by
-		 * RelationGetIndexList(), which promises to return the index list
-		 * in OID order.
+		 * must lock the indexes in the same order or we will get
+		 * deadlocks here during concurrent updates.  This is guaranteed
+		 * by RelationGetIndexList(), which promises to return the index
+		 * list in OID order.
 		 */
 		indexDesc = index_open(indexOid);
 
-		if (! indexDesc->rd_am->amconcurrent)
+		if (!indexDesc->rd_am->amconcurrent)
 			LockRelation(indexDesc, AccessExclusiveLock);
 
 		/*
@@ -572,7 +570,7 @@ ExecCloseIndices(ResultRelInfo *resultRelInfo)
 			continue;
 
 		/* Drop lock, if one was acquired by ExecOpenIndices */
-		if (! indexDescs[i]->rd_am->amconcurrent)
+		if (!indexDescs[i]->rd_am->amconcurrent)
 			UnlockRelation(indexDescs[i], AccessExclusiveLock);
 
 		index_close(indexDescs[i]);

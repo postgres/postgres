@@ -2,7 +2,7 @@
  *
  * spi.h
  *
- * $Id: spi.h,v 1.28 2001/08/02 18:08:43 tgl Exp $
+ * $Id: spi.h,v 1.29 2001/10/25 05:49:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ extern int	SPI_exec(char *src, int tcount);
 extern int	SPI_execp(void *plan, Datum *values, char *Nulls, int tcount);
 extern void *SPI_prepare(char *src, int nargs, Oid *argtypes);
 extern void *SPI_saveplan(void *plan);
-extern int  SPI_freeplan(void *plan);
+extern int	SPI_freeplan(void *plan);
 
 extern HeapTuple SPI_copytuple(HeapTuple tuple);
 extern TupleDesc SPI_copytupledesc(TupleDesc tupdesc);
@@ -104,13 +104,12 @@ extern void SPI_pfree(void *pointer);
 extern void SPI_freetuple(HeapTuple pointer);
 extern void SPI_freetuptable(SPITupleTable *tuptable);
 
-extern Portal SPI_cursor_open(char *name, void *plan, 
+extern Portal SPI_cursor_open(char *name, void *plan,
 				Datum *Values, char *Nulls);
 extern Portal SPI_cursor_find(char *name);
-extern void   SPI_cursor_fetch(Portal portal, bool forward, int count);
-extern void   SPI_cursor_move(Portal portal, bool forward, int count);
-extern void   SPI_cursor_close(Portal portal);
+extern void SPI_cursor_fetch(Portal portal, bool forward, int count);
+extern void SPI_cursor_move(Portal portal, bool forward, int count);
+extern void SPI_cursor_close(Portal portal);
 
 extern void AtEOXact_SPI(void);
-
 #endif	 /* SPI_H */

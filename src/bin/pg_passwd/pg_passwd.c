@@ -16,7 +16,6 @@
 #include <crypt.h>
 #else
 extern char *crypt(const char *, const char *);
-
 #endif
 
 /*
@@ -289,7 +288,6 @@ prompt_for_password(char *prompt, char *password)
 #ifdef HAVE_TERMIOS_H
 	struct termios t_orig,
 				t;
-
 #endif
 
 #ifdef HAVE_TERMIOS_H

@@ -5,41 +5,45 @@
 /*
  * routine to change little endian long to host long
  */
-long get_long(u_char *cp)
+long
+get_long(u_char *cp)
 {
-        long ret;
+	long		ret;
 
-        ret = *cp++;
-        ret += ((*cp++)<<8);
-        ret += ((*cp++)<<16);
-        ret += ((*cp++)<<24);
+	ret = *cp++;
+	ret += ((*cp++) << 8);
+	ret += ((*cp++) << 16);
+	ret += ((*cp++) << 24);
 
-        return ret;
+	return ret;
 }
 
-void put_long(u_char *cp, long lval)
+void
+put_long(u_char *cp, long lval)
 {
-        cp[0] = lval & 0xff;
-        cp[1] = (lval >> 8) & 0xff;
-        cp[2] = (lval >> 16) & 0xff;
-        cp[3] = (lval >> 24) & 0xff;
+	cp[0] = lval & 0xff;
+	cp[1] = (lval >> 8) & 0xff;
+	cp[2] = (lval >> 16) & 0xff;
+	cp[3] = (lval >> 24) & 0xff;
 }
 
 /*
  * routine to change little endian short to host short
  */
-short get_short(u_char *cp)
+short
+get_short(u_char *cp)
 {
-        short ret;
+	short		ret;
 
-        ret = *cp++;
-        ret += ((*cp++)<<8);
+	ret = *cp++;
+	ret += ((*cp++) << 8);
 
-        return ret;
+	return ret;
 }
 
-void put_short(u_char *cp, short sval)
+void
+put_short(u_char *cp, short sval)
 {
-        cp[0] = sval & 0xff;
-        cp[1] = (sval >> 8) & 0xff;
+	cp[0] = sval & 0xff;
+	cp[1] = (sval >> 8) & 0xff;
 }

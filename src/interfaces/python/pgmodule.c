@@ -94,16 +94,15 @@ const char *__movename[5] =
 
 static PyObject *pg_default_host;		/* default database host */
 static PyObject *pg_default_base;		/* default database name */
-static PyObject *pg_default_opt;/* default connection options */
-static PyObject *pg_default_tty;/* default debug tty */
+static PyObject *pg_default_opt;		/* default connection options */
+static PyObject *pg_default_tty;		/* default debug tty */
 static PyObject *pg_default_port;		/* default connection port */
 static PyObject *pg_default_user;		/* default username */
 static PyObject *pg_default_passwd;		/* default password */
-
 #endif	 /* DEFAULT_VARS */
 
 DL_EXPORT(void) init_pg(void);
-int *get_type_array(PGresult *result, int nfields);
+int		   *get_type_array(PGresult *result, int nfields);
 
 /* --------------------------------------------------------------------- */
 /* OBJECTS DECLARATION */
@@ -112,7 +111,7 @@ int *get_type_array(PGresult *result, int nfields);
 
 typedef struct
 {
-	PyObject_HEAD
+				PyObject_HEAD
 	int			valid;			/* validity flag */
 	PGconn	   *cnx;			/* PostGres connection handle */
 	PGresult   *last_result;	/* last result content */
@@ -140,7 +139,7 @@ pgobject_New(void)
 
 typedef struct
 {
-	PyObject_HEAD
+				PyObject_HEAD
 	PGresult   *last_result;	/* last result content */
 	int			result_type;	/* type of previous result */
 	long		current_pos;	/* current position in last result */
@@ -155,7 +154,7 @@ staticforward PyTypeObject PgQueryType;
 
 typedef struct
 {
-	PyObject_HEAD
+				PyObject_HEAD
 	int			valid;			/* validity flag */
 	pgobject   *pgcnx;			/* parent connection object */
 	PGresult   *last_result;	/* last result content */
@@ -176,8 +175,8 @@ staticforward PyTypeObject PgSourceType;
 
 typedef struct
 {
-	PyObject_HEAD
-	pgobject * pgcnx;			/* parent connection object */
+				PyObject_HEAD
+				pgobject * pgcnx;		/* parent connection object */
 	Oid			lo_oid;			/* large object oid */
 	int			lo_fd;			/* large object fd */
 }			pglargeobject;
@@ -236,7 +235,6 @@ check_lo_obj(pglargeobject * self, int level)
 
 	return 1;
 }
-
 #endif	 /* LARGE_OBJECTS */
 
 /* checks source object validity */
@@ -1452,7 +1450,6 @@ staticforward PyTypeObject PglargeType = {
 	0,							/* tp_as_mapping */
 	0,							/* tp_hash */
 };
-
 #endif	 /* LARGE_OBJECTS */
 
 
@@ -1848,31 +1845,32 @@ pgquery_getresult(pgqueryobject * self, PyObject * args)
 						break;
 
 					case 3:
-					{
-						int mult = 1;
-
-						if (*s == '$')	/* there's talk of getting rid of
-										 * it */
-							s++;
-
-						if (*s == '-' || *s == '(')
 						{
-							s++;
-							mult = -1;
+							int			mult = 1;
+
+							if (*s == '$')		/* there's talk of getting
+												 * rid of it */
+								s++;
+
+							if (*s == '-' || *s == '(')
+							{
+								s++;
+								mult = -1;
+							}
+
+							/* get rid of the '$' and commas */
+							if (*s == '$')		/* Just in case we exposed
+												 * one */
+								s++;
+
+							for (k = 0; *s; s++)
+								if (*s != ',')
+									cashbuf[k++] = *s;
+
+							cashbuf[k] = 0;
+							val = PyFloat_FromDouble(strtod(cashbuf, NULL) * mult);
+							break;
 						}
-
-						/* get rid of the '$' and commas */
-						if (*s == '$')	/* Just in case we exposed one */
-							s++;
-
-						for (k = 0; *s; s++)
-							if (*s != ',')
-								cashbuf[k++] = *s;
-
-						cashbuf[k] = 0;
-						val = PyFloat_FromDouble(strtod(cashbuf, NULL) * mult);
-						break;
-					}
 
 					default:
 						val = PyString_FromString(s);
@@ -1996,31 +1994,32 @@ pgquery_dictresult(pgqueryobject * self, PyObject * args)
 						break;
 
 					case 3:
-					{
-						int mult = 1;
-
-						if (*s == '$')	/* there's talk of getting rid of
-										 * it */
-							s++;
-
-						if (*s == '-' || *s == '(')
 						{
-							s++;
-							mult = -1;
+							int			mult = 1;
+
+							if (*s == '$')		/* there's talk of getting
+												 * rid of it */
+								s++;
+
+							if (*s == '-' || *s == '(')
+							{
+								s++;
+								mult = -1;
+							}
+
+							/* get rid of the '$' and commas */
+							if (*s == '$')		/* Just in case we exposed
+												 * one */
+								s++;
+
+							for (k = 0; *s; s++)
+								if (*s != ',')
+									cashbuf[k++] = *s;
+
+							cashbuf[k] = 0;
+							val = PyFloat_FromDouble(strtod(cashbuf, NULL) * mult);
+							break;
 						}
-
-						/* get rid of the '$' and commas */
-						if (*s == '$')	/* Just in case we exposed one */
-							s++;
-
-						for (k = 0; *s; s++)
-							if (*s != ',')
-								cashbuf[k++] = *s;
-
-						cashbuf[k] = 0;
-						val = PyFloat_FromDouble(strtod(cashbuf, NULL) * mult);
-						break;
-					}
 
 					default:
 						val = PyString_FromString(s);
@@ -2336,7 +2335,6 @@ pg_endcopy(pgobject * self, PyObject * args)
 	Py_INCREF(Py_None);
 	return Py_None;
 }
-
 #endif	 /* DIRECT_ACCESS */
 
 
@@ -2640,7 +2638,6 @@ static struct PyMethodDef pgobj_methods[] = {
 static PyObject *
 pg_getattr(pgobject * self, char *name)
 {
-
 	/*
 	 * Although we could check individually, there are only a few
 	 * attributes that don't require a live connection and unless someone
@@ -3122,7 +3119,6 @@ pgsetdefport(PyObject * self, PyObject * args)
 
 	return old;
 }
-
 #endif	 /* DEFAULT_VARS */
 
 /* List of functions defined in the module */

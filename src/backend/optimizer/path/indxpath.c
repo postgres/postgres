@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.111 2001/08/21 16:36:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.112 2001/10/25 05:49:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -288,7 +288,6 @@ match_index_orclauses(RelOptInfo *rel,
 
 		if (restriction_is_or_clause(restrictinfo))
 		{
-
 			/*
 			 * Add this index to the subclause index list for each
 			 * subclause that it matches.
@@ -444,9 +443,10 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 	Oid		   *classes = index->classlist;
 
 	/*
-	 * Extract relevant indexclauses in indexkey order.  This is essentially
-	 * just like group_clauses_by_indexkey() except that the input and
-	 * output are lists of bare clauses, not of RestrictInfo nodes.
+	 * Extract relevant indexclauses in indexkey order.  This is
+	 * essentially just like group_clauses_by_indexkey() except that the
+	 * input and output are lists of bare clauses, not of RestrictInfo
+	 * nodes.
 	 */
 	do
 	{
@@ -459,7 +459,7 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 		{
 			foreach(item, orsubclause->args)
 			{
-				Expr   *subsubclause = (Expr *) lfirst(item);
+				Expr	   *subsubclause = (Expr *) lfirst(item);
 
 				if (match_clause_to_indexkey(rel, index,
 											 curIndxKey, curClass,
@@ -470,9 +470,7 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 		else if (match_clause_to_indexkey(rel, index,
 										  curIndxKey, curClass,
 										  orsubclause, false))
-		{
 			clausegroup = makeList1(orsubclause);
-		}
 
 		/*
 		 * If we found no clauses for this indexkey in the OR subclause
@@ -492,8 +490,8 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 		}
 
 		/*
-		 * If still no clauses match this key, we're done; we don't want to
-		 * look at keys to its right.
+		 * If still no clauses match this key, we're done; we don't want
+		 * to look at keys to its right.
 		 */
 		if (clausegroup == NIL)
 			break;
@@ -744,7 +742,6 @@ match_clause_to_indexkey(RelOptInfo *rel,
 
 	if (!join)
 	{
-
 		/*
 		 * Not considering joins, so check for clauses of the form:
 		 * (indexkey operator constant) or (constant operator indexkey).
@@ -782,7 +779,6 @@ match_clause_to_indexkey(RelOptInfo *rel,
 	}
 	else
 	{
-
 		/*
 		 * Check for an indexqual that could be handled by a nestloop
 		 * join. We need the index key to be compared against an
@@ -921,7 +917,6 @@ indexable_operator(Expr *clause, Oid opclass, bool indexkey_on_left)
 	{
 		if (new_op != expr_op)
 		{
-
 			/*
 			 * OK, we found a binary-compatible operator of the same name;
 			 * now does it match the index?
@@ -1144,7 +1139,7 @@ static const StrategyNumber
  *	  and a "simple clause" restriction.
  *
  *	  We have two strategies for determining whether one simple clause
- *	  implies another.  A simple and general way is to see if they are
+ *	  implies another.	A simple and general way is to see if they are
  *	  equal(); this works for any kind of expression.  (Actually, there
  *	  is an implied assumption that the functions in the expression are
  *	  cachable, ie dependent only on their input arguments --- but this
@@ -1187,8 +1182,8 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 		return true;
 
 	/*
-	 * Can't do anything more unless they are both binary opclauses with
-	 * a Var on the left and a Const on the right.
+	 * Can't do anything more unless they are both binary opclauses with a
+	 * Var on the left and a Const on the right.
 	 */
 	if (!is_opclause((Node *) predicate))
 		return false;
@@ -1223,8 +1218,8 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	/*
 	 * 1. Find a "btree" strategy number for the pred_op
 	 *
-	 * The following assumes that any given operator will only be in a
-	 * single btree operator class.  This is true at least for all the
+	 * The following assumes that any given operator will only be in a single
+	 * btree operator class.  This is true at least for all the
 	 * pre-defined operator classes.  If it isn't true, then whichever
 	 * operator class happens to be returned first for the given operator
 	 * will be used to find the associated strategy numbers for the test.
@@ -1237,7 +1232,7 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 
 	relation = heap_openr(AccessMethodOperatorRelationName, AccessShareLock);
 	scan = heap_beginscan(relation, false, SnapshotNow, 1, entry);
-	
+
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 	{
 		aform = (Form_pg_amop) GETSTRUCT(tuple);
@@ -1246,7 +1241,11 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 			/* Get the predicate operator's btree strategy number (1 to 5) */
 			pred_strategy = (StrategyNumber) aform->amopstrategy;
 			Assert(pred_strategy >= 1 && pred_strategy <= 5);
-			/* Remember which operator class this strategy number came from */
+
+			/*
+			 * Remember which operator class this strategy number came
+			 * from
+			 */
 			opclass_id = aform->amopclaid;
 			break;
 		}
@@ -1457,8 +1456,8 @@ index_innerjoin(Query *root, RelOptInfo *rel, IndexOptInfo *index,
 
 		/*
 		 * Note that we are making a pathnode for a single-scan indexscan;
-		 * therefore, both indexinfo and indexqual should be single-element
-		 * lists.
+		 * therefore, both indexinfo and indexqual should be
+		 * single-element lists.
 		 */
 		pathnode->indexinfo = makeList1(index);
 		pathnode->indexqual = makeList1(indexquals);
@@ -1516,7 +1515,6 @@ match_index_to_operand(int indexkey,
 					   RelOptInfo *rel,
 					   IndexOptInfo *index)
 {
-
 	/*
 	 * Ignore any RelabelType node above the indexkey.	This is needed to
 	 * be able to apply indexscanning in binary-compatible-operator cases.
@@ -1528,7 +1526,6 @@ match_index_to_operand(int indexkey,
 
 	if (index->indproc == InvalidOid)
 	{
-
 		/*
 		 * Simple index.
 		 */
@@ -1860,7 +1857,6 @@ expand_indexqual_conditions(List *indexquals)
 
 		switch (expr_op)
 		{
-
 				/*
 				 * LIKE and regex operators are not members of any index
 				 * opclass, so if we find one in an indexqual list we can
@@ -2065,17 +2061,17 @@ prefix_quals(Var *leftop, Oid expr_op,
 /*
  * Given a leftop and a rightop, and a inet-class sup/sub operator,
  * generate suitable indexqual condition(s).  expr_op is the original
- * operator. 
+ * operator.
  */
 static List *
 network_prefix_quals(Var *leftop, Oid expr_op, Datum rightop)
 {
-	bool 	   is_eq;
-	char 	   *opr1name;
- 	Datum	   opr1right;
- 	Datum	   opr2right;
-	Oid	   opr1oid;
-	Oid	   opr2oid;
+	bool		is_eq;
+	char	   *opr1name;
+	Datum		opr1right;
+	Datum		opr2right;
+	Oid			opr1oid;
+	Oid			opr2oid;
 	List	   *result;
 	Oid			datatype;
 	Oper	   *op;
@@ -2084,30 +2080,30 @@ network_prefix_quals(Var *leftop, Oid expr_op, Datum rightop)
 	switch (expr_op)
 	{
 		case OID_INET_SUB_OP:
-			datatype = INETOID; 
- 			is_eq = false;
+			datatype = INETOID;
+			is_eq = false;
 			break;
 		case OID_INET_SUBEQ_OP:
-			datatype = INETOID; 
- 			is_eq = true;
+			datatype = INETOID;
+			is_eq = true;
 			break;
 		case OID_CIDR_SUB_OP:
-			datatype = CIDROID; 
- 			is_eq = false;
+			datatype = CIDROID;
+			is_eq = false;
 			break;
 		case OID_CIDR_SUBEQ_OP:
-			datatype = CIDROID; 
- 			is_eq = true;
+			datatype = CIDROID;
+			is_eq = true;
 			break;
 		default:
 			elog(ERROR, "network_prefix_quals: unexpected operator %u",
 				 expr_op);
 			return NIL;
-  	}
+	}
 
 	/*
-	 * create clause "key >= network_scan_first( rightop )", or ">"
-	 * if the operator disallows equality.
+	 * create clause "key >= network_scan_first( rightop )", or ">" if the
+	 * operator disallows equality.
 	 */
 
 	opr1name = is_eq ? ">=" : ">";
@@ -2116,11 +2112,11 @@ network_prefix_quals(Var *leftop, Oid expr_op, Datum rightop)
 		elog(ERROR, "network_prefix_quals: no %s operator for type %u",
 			 opr1name, datatype);
 
-	opr1right = network_scan_first( rightop );
+	opr1right = network_scan_first(rightop);
 
 	op = makeOper(opr1oid, InvalidOid, BOOLOID);
-	expr = make_opclause(op, leftop, 
-						 (Var *) makeConst(datatype, -1, opr1right, 
+	expr = make_opclause(op, leftop,
+						 (Var *) makeConst(datatype, -1, opr1right,
 										   false, false, false, false));
 	result = makeList1(expr);
 
@@ -2131,11 +2127,11 @@ network_prefix_quals(Var *leftop, Oid expr_op, Datum rightop)
 		elog(ERROR, "network_prefix_quals: no <= operator for type %u",
 			 datatype);
 
-	opr2right = network_scan_last( rightop );
+	opr2right = network_scan_last(rightop);
 
 	op = makeOper(opr2oid, InvalidOid, BOOLOID);
-	expr = make_opclause(op, leftop, 
-						 (Var *) makeConst(datatype, -1, opr2right, 
+	expr = make_opclause(op, leftop,
+						 (Var *) makeConst(datatype, -1, opr2right,
 										   false, false, false, false));
 	result = lappend(result, expr);
 

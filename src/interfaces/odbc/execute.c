@@ -31,10 +31,10 @@
 
 
 /*		Perform a Prepare on the SQL statement */
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_Prepare(HSTMT hstmt,
-		   UCHAR FAR *szSqlStr,
-		   SDWORD cbSqlStr)
+			  UCHAR FAR * szSqlStr,
+			  SDWORD cbSqlStr)
 {
 	static char *func = "PGAPI_Prepare";
 	StatementClass *self = (StatementClass *) hstmt;
@@ -121,11 +121,11 @@ PGAPI_Prepare(HSTMT hstmt,
 
 
 /*		Performs the equivalent of SQLPrepare, followed by SQLExecute. */
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_ExecDirect(
-			  HSTMT hstmt,
-			  UCHAR FAR *szSqlStr,
-			  SDWORD cbSqlStr)
+				 HSTMT hstmt,
+				 UCHAR FAR * szSqlStr,
+				 SDWORD cbSqlStr)
 {
 	StatementClass *stmt = (StatementClass *) hstmt;
 	RETCODE		result;
@@ -188,9 +188,9 @@ PGAPI_ExecDirect(
 
 
 /*	Execute a prepared SQL statement */
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_Execute(
-		   HSTMT hstmt)
+			  HSTMT hstmt)
 {
 	static char *func = "PGAPI_Execute";
 	StatementClass *stmt = (StatementClass *) hstmt;
@@ -284,7 +284,6 @@ PGAPI_Execute(
 	 */
 	if (!stmt->pre_executing)
 	{
-
 		/*
 		 * The bound parameters could have possibly changed since the last
 		 * execute of this statement?  Therefore check for params and
@@ -333,17 +332,19 @@ PGAPI_Execute(
 		return retval;
 
 	mylog("   stmt_with_params = '%s'\n", stmt->stmt_with_params);
+
 	/*
-	 *	Get the field info for the prepared
-	 *	query using dummy backward fetch.
+	 * Get the field info for the prepared query using dummy backward
+	 * fetch.
 	 */
 	if (stmt->inaccurate_result && conn->connInfo.disallow_premature)
 	{
 		if (SC_is_pre_executable(stmt))
 		{
-			BOOL	in_trans = CC_is_in_trans(conn);
-			BOOL	issued_begin = FALSE, begin_included = FALSE;
-			QResultClass	*res;
+			BOOL		in_trans = CC_is_in_trans(conn);
+			BOOL		issued_begin = FALSE,
+						begin_included = FALSE;
+			QResultClass *res;
 
 			if (strnicmp(stmt->stmt_with_params, "BEGIN;", 6) == 0)
 				begin_included = TRUE;
@@ -384,8 +385,8 @@ PGAPI_Execute(
 					}
 					else if (!in_trans && begin_included)
 						CC_set_no_trans(conn);
-				}	
-				stmt->status =STMT_FINISHED;
+				}
+				stmt->status = STMT_FINISHED;
 				return SQL_SUCCESS;
 			}
 		}
@@ -397,11 +398,11 @@ PGAPI_Execute(
 }
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_Transact(
-			HENV henv,
-			HDBC hdbc,
-			UWORD fType)
+			   HENV henv,
+			   HDBC hdbc,
+			   UWORD fType)
 {
 	static char *func = "PGAPI_Transact";
 	extern ConnectionClass *conns[];
@@ -478,19 +479,18 @@ PGAPI_Transact(
 }
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_Cancel(
-		  HSTMT hstmt)			/* Statement to cancel. */
+			 HSTMT hstmt)		/* Statement to cancel. */
 {
 	static char *func = "PGAPI_Cancel";
 	StatementClass *stmt = (StatementClass *) hstmt;
 	RETCODE		result;
-	ConnInfo *ci;
+	ConnInfo   *ci;
 
 #ifdef WIN32
 	HMODULE		hmodule;
 	FARPROC		addr;
-
 #endif
 
 	mylog("%s: entering...\n", func);
@@ -509,7 +509,6 @@ PGAPI_Cancel(
 	 */
 	if (stmt->data_at_exec < 0)
 	{
-
 		/*
 		 * MAJOR HACK for Windows to reset the driver manager's cursor
 		 * state: Because of what seems like a bug in the Odbc driver
@@ -559,14 +558,14 @@ PGAPI_Cancel(
  *	Currently, just copy the input string without modification
  *	observing buffer limits and truncation.
  */
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_NativeSql(
-			 HDBC hdbc,
-			 UCHAR FAR *szSqlStrIn,
-			 SDWORD cbSqlStrIn,
-			 UCHAR FAR *szSqlStr,
-			 SDWORD cbSqlStrMax,
-			 SDWORD FAR *pcbSqlStr)
+				HDBC hdbc,
+				UCHAR FAR * szSqlStrIn,
+				SDWORD cbSqlStrIn,
+				UCHAR FAR * szSqlStr,
+				SDWORD cbSqlStrMax,
+				SDWORD FAR * pcbSqlStr)
 {
 	static char *func = "PGAPI_NativeSql";
 	int			len = 0;
@@ -614,16 +613,16 @@ PGAPI_NativeSql(
  *	Supplies parameter data at execution time.
  *	Used in conjuction with SQLPutData.
  */
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_ParamData(
-			 HSTMT hstmt,
-			 PTR FAR *prgbValue)
+				HSTMT hstmt,
+				PTR FAR * prgbValue)
 {
 	static char *func = "PGAPI_ParamData";
 	StatementClass *stmt = (StatementClass *) hstmt;
 	int			i,
 				retval;
-	ConnInfo *ci;
+	ConnInfo   *ci;
 
 	mylog("%s: entering...\n", func);
 
@@ -724,11 +723,11 @@ PGAPI_ParamData(
  *	Supplies parameter data at execution time.
  *	Used in conjunction with SQLParamData.
  */
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_PutData(
-		   HSTMT hstmt,
-		   PTR rgbValue,
-		   SDWORD cbValue)
+			  HSTMT hstmt,
+			  PTR rgbValue,
+			  SDWORD cbValue)
 {
 	static char *func = "PGAPI_PutData";
 	StatementClass *stmt = (StatementClass *) hstmt;

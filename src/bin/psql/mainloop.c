@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.40 2001/06/02 18:25:18 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.41 2001/10/25 05:49:54 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -101,7 +101,6 @@ MainLoop(FILE *source)
 		{
 			if (!pset.cur_cmd_interactive)
 			{
-
 				/*
 				 * You get here if you stopped a script with Ctrl-C and a
 				 * query cancel was issued. In that case we don't do the
@@ -137,14 +136,15 @@ MainLoop(FILE *source)
 			}
 		}
 
-		/* establish the control-C handler only after main_loop_jmp is ready */
-		pqsignal(SIGINT, handle_sigint);	/* control-C => cancel */
-
+		/*
+		 * establish the control-C handler only after main_loop_jmp is
+		 * ready
+		 */
+		pqsignal(SIGINT, handle_sigint);		/* control-C => cancel */
 #endif	 /* not WIN32 */
 
 		if (slashCmdStatus == CMD_NEWEDIT)
 		{
-
 			/*
 			 * just returned from editing the line? then just copy to the
 			 * input buffer
@@ -393,7 +393,7 @@ MainLoop(FILE *source)
 					line = new;
 					len = strlen(new);
 
-					goto rescan;/* reparse the just substituted */
+					goto rescan;		/* reparse the just substituted */
 				}
 				else
 				{
@@ -410,7 +410,6 @@ MainLoop(FILE *source)
 				/* is there anything else on the line? */
 				if (line[query_start + strspn(line + query_start, " \t\n\r")] != '\0')
 				{
-
 					/*
 					 * insert a cosmetic newline, if this is not the first
 					 * line in the buffer
@@ -454,7 +453,6 @@ MainLoop(FILE *source)
 				/* is there anything else on the line for the command? */
 				if (line[query_start + strspn(line + query_start, " \t\n\r")] != '\0')
 				{
-
 					/*
 					 * insert a cosmetic newline, if this is not the first
 					 * line in the buffer
@@ -563,8 +561,8 @@ MainLoop(FILE *source)
 	/*
 	 * Reset SIGINT handler because main_loop_jmp will be invalid as soon
 	 * as we exit this routine.  If there is an outer MainLoop instance,
-	 * it will re-enable ^C catching as soon as it gets back to the top
-	 * of its loop and resets main_loop_jmp to point to itself.
+	 * it will re-enable ^C catching as soon as it gets back to the top of
+	 * its loop and resets main_loop_jmp to point to itself.
 	 */
 #ifndef WIN32
 	pqsignal(SIGINT, SIG_DFL);

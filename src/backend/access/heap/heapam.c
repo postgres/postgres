@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.125 2001/08/23 23:06:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.126 2001/10/25 05:49:21 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -116,8 +116,8 @@ heapgettup(Relation relation,
 {
 	ItemId		lpp;
 	Page		dp;
-	BlockNumber	page;
-	BlockNumber	pages;
+	BlockNumber page;
+	BlockNumber pages;
 	int			lines;
 	OffsetNumber lineoff;
 	int			linesleft;
@@ -350,7 +350,7 @@ heapgettup(Relation relation,
 		/*
 		 * return NULL if we've exhausted all the pages
 		 */
-		if ((dir < 0) ? (page == 0) : (page+1 >= pages))
+		if ((dir < 0) ? (page == 0) : (page + 1 >= pages))
 		{
 			if (BufferIsValid(*buffer))
 				ReleaseBuffer(*buffer);
@@ -429,9 +429,8 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 			(
 			 (Datum) NULL
 			 )
-	);
+		);
 }
-
 #endif	 /* defined(DISABLE_COMPLEX_MACRO) */
 
 
@@ -1045,12 +1044,13 @@ heap_insert(Relation relation, HeapTuple tup)
 	if (relation->rd_rel->relhasoids)
 	{
 		/*
-		 * If the object id of this tuple has already been assigned, trust the
-		 * caller.	There are a couple of ways this can happen.  At initial db
-		 * creation, the backend program sets oids for tuples.	When we define
-		 * an index, we set the oid.  Finally, in the future, we may allow
-		 * users to set their own object ids in order to support a persistent
-		 * object store (objects need to contain pointers to one another).
+		 * If the object id of this tuple has already been assigned, trust
+		 * the caller.	There are a couple of ways this can happen.  At
+		 * initial db creation, the backend program sets oids for tuples.
+		 * When we define an index, we set the oid.  Finally, in the
+		 * future, we may allow users to set their own object ids in order
+		 * to support a persistent object store (objects need to contain
+		 * pointers to one another).
 		 */
 		if (!OidIsValid(tup->t_data->t_oid))
 			tup->t_data->t_oid = newoid();
@@ -1478,21 +1478,22 @@ l2:
 		}
 
 		/*
-		 * Now, do we need a new page for the tuple, or not?  This is a bit
-		 * tricky since someone else could have added tuples to the page
-		 * while we weren't looking.  We have to recheck the available space
-		 * after reacquiring the buffer lock.  But don't bother to do that
-		 * if the former amount of free space is still not enough; it's
-		 * unlikely there's more free now than before.
+		 * Now, do we need a new page for the tuple, or not?  This is a
+		 * bit tricky since someone else could have added tuples to the
+		 * page while we weren't looking.  We have to recheck the
+		 * available space after reacquiring the buffer lock.  But don't
+		 * bother to do that if the former amount of free space is still
+		 * not enough; it's unlikely there's more free now than before.
 		 *
 		 * What's more, if we need to get a new page, we will need to acquire
-		 * buffer locks on both old and new pages.  To avoid deadlock against
-		 * some other backend trying to get the same two locks in the other
-		 * order, we must be consistent about the order we get the locks in.
-		 * We use the rule "lock the lower-numbered page of the relation
-		 * first".  To implement this, we must do RelationGetBufferForTuple
-		 * while not holding the lock on the old page, and we must rely on it
-		 * to get the locks on both pages in the correct order.
+		 * buffer locks on both old and new pages.	To avoid deadlock
+		 * against some other backend trying to get the same two locks in
+		 * the other order, we must be consistent about the order we get
+		 * the locks in. We use the rule "lock the lower-numbered page of
+		 * the relation first".  To implement this, we must do
+		 * RelationGetBufferForTuple while not holding the lock on the old
+		 * page, and we must rely on it to get the locks on both pages in
+		 * the correct order.
 		 */
 		if (newtupsize > pagefree)
 		{
@@ -1510,8 +1511,8 @@ l2:
 			{
 				/*
 				 * Rats, it doesn't fit anymore.  We must now unlock and
-				 * relock to avoid deadlock.  Fortunately, this path should
-				 * seldom be taken.
+				 * relock to avoid deadlock.  Fortunately, this path
+				 * should seldom be taken.
 				 */
 				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 				newbuf = RelationGetBufferForTuple(relation, newtup->t_len,
@@ -1534,9 +1535,9 @@ l2:
 	pgstat_count_heap_update(&relation->pgstat_info);
 
 	/*
-	 * At this point newbuf and buffer are both pinned and locked,
-	 * and newbuf has enough space for the new tuple.  If they are
-	 * the same buffer, only one pin is held.
+	 * At this point newbuf and buffer are both pinned and locked, and
+	 * newbuf has enough space for the new tuple.  If they are the same
+	 * buffer, only one pin is held.
 	 */
 
 	/* NO ELOG(ERROR) from here till changes are logged */
@@ -1865,12 +1866,14 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 	 * Note: xlhdr is declared to have adequate size and correct alignment
 	 * for an xl_heap_header.  However the two tids, if present at all,
 	 * will be packed in with no wasted space after the xl_heap_header;
-	 * they aren't necessarily aligned as implied by this struct declaration.
+	 * they aren't necessarily aligned as implied by this struct
+	 * declaration.
 	 */
-	struct {
-		xl_heap_header	hdr;
-		TransactionId	tid1;
-		TransactionId	tid2;
+	struct
+	{
+		xl_heap_header hdr;
+		TransactionId tid1;
+		TransactionId tid2;
 	}			xlhdr;
 	int			hsize = SizeOfHeapHeader;
 	xl_heap_update xlrec;
@@ -1972,7 +1975,7 @@ heap_xlog_clean(bool redo, XLogRecPtr lsn, XLogRecord *record)
 
 	if (record->xl_len > SizeOfHeapClean)
 	{
-		OffsetNumber unbuf[BLCKSZ/sizeof(OffsetNumber)];
+		OffsetNumber unbuf[BLCKSZ / sizeof(OffsetNumber)];
 		OffsetNumber *unused = unbuf;
 		char	   *unend;
 		ItemId		lp;
@@ -2084,9 +2087,10 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 
 	if (redo)
 	{
-		struct {
+		struct
+		{
 			HeapTupleHeaderData hdr;
-			char				data[MaxTupleSize];
+			char		data[MaxTupleSize];
 		}			tbuf;
 		HeapTupleHeader htup;
 		xl_heap_header xlhdr;
@@ -2251,9 +2255,10 @@ newsame:;
 
 	if (redo)
 	{
-		struct {
+		struct
+		{
 			HeapTupleHeaderData hdr;
-			char				data[MaxTupleSize];
+			char		data[MaxTupleSize];
 		}			tbuf;
 		xl_heap_header xlhdr;
 		int			hsize;

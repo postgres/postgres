@@ -48,6 +48,5 @@ struct ParameterInfoClass_
 };
 
 BindInfoClass *create_empty_bindings(int num_columns);
-void		extend_bindings(StatementClass *stmt, int num_columns);
-
+void		extend_bindings(StatementClass * stmt, int num_columns);
 #endif

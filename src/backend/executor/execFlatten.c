@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/execFlatten.c,v 1.14 2001/01/24 19:42:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/execFlatten.c,v 1.15 2001/10/25 05:49:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,6 @@
 #ifdef SETS_FIXED
 static bool FjoinBumpOuterNodes(TargetEntry *tlist, ExprContext *econtext,
 					DatumPtr results, char *nulls);
-
 #endif
 
 
@@ -81,7 +80,6 @@ ExecEvalFjoin(TargetEntry *tlist,
 	 */
 	if (!fjNode->fj_initialized)
 	{
-
 		/*
 		 * Initialize all of the Outer nodes
 		 */
@@ -127,7 +125,6 @@ ExecEvalFjoin(TargetEntry *tlist,
 	}
 	else
 	{
-
 		/*
 		 * If we're already initialized, all we need to do is get the next
 		 * inner result and pair it up with the existing outer node result
@@ -242,5 +239,4 @@ FjoinBumpOuterNodes(TargetEntry *tlist,
 	}
 	return false;
 }
-
 #endif

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.47 2001/10/04 02:15:47 ishii Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.48 2001/10/25 05:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,14 +35,14 @@ static int MatchText(unsigned char *t, int tlen,
 static int MatchTextIC(unsigned char *t, int tlen,
 			unsigned char *p, int plen);
 static int MatchBytea(unsigned char *t, int tlen,
-		  unsigned char *p, int plen);
+		   unsigned char *p, int plen);
 static text *do_like_escape(text *, text *);
 
 #ifdef MULTIBYTE
 static int MBMatchText(unsigned char *t, int tlen,
-		  unsigned char *p, int plen);
-static int MBMatchTextIC(unsigned char *t, int tlen,
 			unsigned char *p, int plen);
+static int MBMatchTextIC(unsigned char *t, int tlen,
+			  unsigned char *p, int plen);
 static text *MB_do_like_escape(text *, text *);
 
 /*--------------------
@@ -107,7 +107,6 @@ iwchareq(unsigned char *p1, unsigned char *p2)
 	c2[0] = tolower(c2[0]);
 	return (c1[0] == c2[0]);
 }
-
 #endif
 
 #ifdef MULTIBYTE
@@ -123,7 +122,7 @@ iwchareq(unsigned char *p1, unsigned char *p2)
 	   } while (0)
 
 #define MatchText	MBMatchText
-#define MatchTextIC	MBMatchTextIC
+#define MatchTextIC MBMatchTextIC
 #define do_like_escape	MB_do_like_escape
 #include "like_match.c"
 #undef CHAREQ
@@ -167,11 +166,11 @@ namelike(PG_FUNCTION_ARGS)
 
 #ifdef MULTIBYTE
 	if (pg_database_encoding_max_length() == 1)
-	    result = (MatchText(s, slen, p, plen) == LIKE_TRUE);
+		result = (MatchText(s, slen, p, plen) == LIKE_TRUE);
 	else
-	    result = (MBMatchText(s, slen, p, plen) == LIKE_TRUE);	
+		result = (MBMatchText(s, slen, p, plen) == LIKE_TRUE);
 #else
-	result = (MatchText(s, slen, p, plen) == LIKE_TRUE);	
+	result = (MatchText(s, slen, p, plen) == LIKE_TRUE);
 #endif
 
 	PG_RETURN_BOOL(result);
@@ -195,11 +194,11 @@ namenlike(PG_FUNCTION_ARGS)
 
 #ifdef MULTIBYTE
 	if (pg_database_encoding_max_length() == 1)
-	    result = (MatchText(s, slen, p, plen) != LIKE_TRUE);
+		result = (MatchText(s, slen, p, plen) != LIKE_TRUE);
 	else
-	    result = (MBMatchText(s, slen, p, plen) != LIKE_TRUE);	
+		result = (MBMatchText(s, slen, p, plen) != LIKE_TRUE);
 #else
-	result = (MatchText(s, slen, p, plen) != LIKE_TRUE);	
+	result = (MatchText(s, slen, p, plen) != LIKE_TRUE);
 #endif
 
 	PG_RETURN_BOOL(result);
@@ -215,6 +214,7 @@ textlike(PG_FUNCTION_ARGS)
 			   *p;
 	int			slen,
 				plen;
+
 	s = VARDATA(str);
 	slen = (VARSIZE(str) - VARHDRSZ);
 	p = VARDATA(pat);
@@ -222,11 +222,11 @@ textlike(PG_FUNCTION_ARGS)
 
 #ifdef MULTIBYTE
 	if (pg_database_encoding_max_length() == 1)
-	    result = (MatchText(s, slen, p, plen) == LIKE_TRUE);
+		result = (MatchText(s, slen, p, plen) == LIKE_TRUE);
 	else
-	    result = (MBMatchText(s, slen, p, plen) == LIKE_TRUE);	
+		result = (MBMatchText(s, slen, p, plen) == LIKE_TRUE);
 #else
-	result = (MatchText(s, slen, p, plen) == LIKE_TRUE);	
+	result = (MatchText(s, slen, p, plen) == LIKE_TRUE);
 #endif
 
 	PG_RETURN_BOOL(result);
@@ -250,11 +250,11 @@ textnlike(PG_FUNCTION_ARGS)
 
 #ifdef MULTIBYTE
 	if (pg_database_encoding_max_length() == 1)
-	    result = (MatchText(s, slen, p, plen) != LIKE_TRUE);
+		result = (MatchText(s, slen, p, plen) != LIKE_TRUE);
 	else
-	    result = (MBMatchText(s, slen, p, plen) != LIKE_TRUE);	
+		result = (MBMatchText(s, slen, p, plen) != LIKE_TRUE);
 #else
-	result = (MatchText(s, slen, p, plen) != LIKE_TRUE);	
+	result = (MatchText(s, slen, p, plen) != LIKE_TRUE);
 #endif
 
 	PG_RETURN_BOOL(result);
@@ -324,11 +324,11 @@ nameiclike(PG_FUNCTION_ARGS)
 
 #ifdef MULTIBYTE
 	if (pg_database_encoding_max_length() == 1)
-	    result = (MatchTextIC(s, slen, p, plen) == LIKE_TRUE);
+		result = (MatchTextIC(s, slen, p, plen) == LIKE_TRUE);
 	else
-	    result = (MBMatchTextIC(s, slen, p, plen) == LIKE_TRUE);	
+		result = (MBMatchTextIC(s, slen, p, plen) == LIKE_TRUE);
 #else
-	result = (MatchTextIC(s, slen, p, plen) == LIKE_TRUE);	
+	result = (MatchTextIC(s, slen, p, plen) == LIKE_TRUE);
 #endif
 
 	PG_RETURN_BOOL(result);
@@ -352,11 +352,11 @@ nameicnlike(PG_FUNCTION_ARGS)
 
 #ifdef MULTIBYTE
 	if (pg_database_encoding_max_length() == 1)
-	    result = (MatchTextIC(s, slen, p, plen) != LIKE_TRUE);
+		result = (MatchTextIC(s, slen, p, plen) != LIKE_TRUE);
 	else
-	    result = (MBMatchTextIC(s, slen, p, plen) != LIKE_TRUE);	
+		result = (MBMatchTextIC(s, slen, p, plen) != LIKE_TRUE);
 #else
-	result = (MatchTextIC(s, slen, p, plen) != LIKE_TRUE);	
+	result = (MatchTextIC(s, slen, p, plen) != LIKE_TRUE);
 #endif
 
 	PG_RETURN_BOOL(result);
@@ -380,11 +380,11 @@ texticlike(PG_FUNCTION_ARGS)
 
 #ifdef MULTIBYTE
 	if (pg_database_encoding_max_length() == 1)
-	    result = (MatchTextIC(s, slen, p, plen) == LIKE_TRUE);
+		result = (MatchTextIC(s, slen, p, plen) == LIKE_TRUE);
 	else
-	    result = (MBMatchTextIC(s, slen, p, plen) == LIKE_TRUE);	
+		result = (MBMatchTextIC(s, slen, p, plen) == LIKE_TRUE);
 #else
-	result = (MatchTextIC(s, slen, p, plen) == LIKE_TRUE);	
+	result = (MatchTextIC(s, slen, p, plen) == LIKE_TRUE);
 #endif
 
 	PG_RETURN_BOOL(result);
@@ -408,11 +408,11 @@ texticnlike(PG_FUNCTION_ARGS)
 
 #ifdef MULTIBYTE
 	if (pg_database_encoding_max_length() == 1)
-	    result = (MatchTextIC(s, slen, p, plen) != LIKE_TRUE);
+		result = (MatchTextIC(s, slen, p, plen) != LIKE_TRUE);
 	else
-	    result = (MBMatchTextIC(s, slen, p, plen) != LIKE_TRUE);	
+		result = (MBMatchTextIC(s, slen, p, plen) != LIKE_TRUE);
 #else
-	result = (MatchTextIC(s, slen, p, plen) != LIKE_TRUE);	
+	result = (MatchTextIC(s, slen, p, plen) != LIKE_TRUE);
 #endif
 
 	PG_RETURN_BOOL(result);
@@ -431,9 +431,9 @@ like_escape(PG_FUNCTION_ARGS)
 
 #ifdef MULTIBYTE
 	if (pg_database_encoding_max_length() == 1)
-	    result = do_like_escape(pat, esc);
+		result = do_like_escape(pat, esc);
 	else
-	    result = MB_do_like_escape(pat, esc);
+		result = MB_do_like_escape(pat, esc);
 #else
 	result = do_like_escape(pat, esc);
 #endif
@@ -472,7 +472,6 @@ like_escape_bytea(PG_FUNCTION_ARGS)
 
 	if (elen == 0)
 	{
-
 		/*
 		 * No escape character is wanted.  Double any backslashes in the
 		 * pattern to make them act like ordinary characters.
@@ -486,7 +485,6 @@ like_escape_bytea(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-
 		/*
 		 * The specified escape must be only a single character.
 		 */
@@ -574,7 +572,6 @@ MatchBytea(unsigned char *t, int tlen, unsigned char *p, int plen)
 			 */
 			while (tlen > 0)
 			{
-
 				/*
 				 * Optimization to prevent most recursion: don't recurse
 				 * unless first pattern char might match this text char.
@@ -598,7 +595,6 @@ MatchBytea(unsigned char *t, int tlen, unsigned char *p, int plen)
 		}
 		else if ((*p != '_') && !BYTEA_CHAREQ(t, p))
 		{
-
 			/*
 			 * Not the single-character wildcard and no explicit match?
 			 * Then time to quit...

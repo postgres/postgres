@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.117 2001/09/29 04:02:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.118 2001/10/25 05:49:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,9 +88,9 @@ extern void AbortBufferIO(void);
 #define BUFFER_IS_BROKEN(buf) ((buf->flags & BM_IO_ERROR) && !(buf->flags & BM_DIRTY))
 
 static Buffer ReadBufferInternal(Relation reln, BlockNumber blockNum,
-								 bool bufferLockHeld);
+				   bool bufferLockHeld);
 static BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
-							   bool *foundPtr);
+			bool *foundPtr);
 static int	ReleaseBufferWithBufferLock(Buffer buffer);
 static int	BufferReplace(BufferDesc *bufHdr);
 void		PrintBufferDescs(void);
@@ -173,6 +173,7 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 			blockNum = reln->rd_nblocks = smgrnblocks(DEFAULT_SMGR, reln);
 			reln->rd_nblocks++;
 		}
+
 		/*
 		 * lookup the buffer.  IO_IN_PROGRESS is set if the requested
 		 * block is not currently in memory.
@@ -198,12 +199,14 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 		/* That is, we're done if we expected to be able to find it ... */
 		if (!isExtend)
 			return BufferDescriptorGetBuffer(bufHdr);
+
 		/*
-		 * If we found a buffer when we were expecting to extend the relation,
-		 * the implication is that a buffer was already created for the next
-		 * page position, but then smgrextend failed to write the page.
-		 * We'd better try the smgrextend again.  But since BufferAlloc
-		 * won't have done StartBufferIO, we must do that first.
+		 * If we found a buffer when we were expecting to extend the
+		 * relation, the implication is that a buffer was already created
+		 * for the next page position, but then smgrextend failed to write
+		 * the page. We'd better try the smgrextend again.  But since
+		 * BufferAlloc won't have done StartBufferIO, we must do that
+		 * first.
 		 */
 		if (!isLocalBuf)
 		{
@@ -308,7 +311,6 @@ BufferAlloc(Relation reln,
 	buf = BufTableLookup(&newTag);
 	if (buf != NULL)
 	{
-
 		/*
 		 * Found it.  Now, (a) pin the buffer so no one steals it from the
 		 * buffer pool, (b) check IO_IN_PROGRESS, someone may be faulting
@@ -326,7 +328,6 @@ BufferAlloc(Relation reln,
 		}
 		if (BUFFER_IS_BROKEN(buf))
 		{
-
 			/*
 			 * I couldn't understand the following old comment. If there's
 			 * no IO for the buffer and the buffer is BROKEN,it should be
@@ -481,7 +482,6 @@ BufferAlloc(Relation reln,
 			buf2 = BufTableLookup(&newTag);
 			if (buf2 != NULL)
 			{
-
 				/*
 				 * Found it. Someone has already done what we're about to
 				 * do. We'll just handle this as if it were found in the
@@ -853,9 +853,9 @@ WaitIO(BufferDesc *buf)
 	/*
 	 * Changed to wait until there's no IO - Inoue 01/13/2000
 	 *
-	 * Note this is *necessary* because an error abort in the process
-	 * doing I/O could release the io_in_progress_lock prematurely.
-	 * See AbortBufferIO.
+	 * Note this is *necessary* because an error abort in the process doing
+	 * I/O could release the io_in_progress_lock prematurely. See
+	 * AbortBufferIO.
 	 */
 	while ((buf->flags & BM_IO_IN_PROGRESS) != 0)
 	{
@@ -930,7 +930,7 @@ ResetBufferPool(bool isCommit)
 		{
 			BufferDesc *buf = &BufferDescriptors[i];
 
-			PrivateRefCount[i] = 1;	/* make sure we release shared pin */
+			PrivateRefCount[i] = 1;		/* make sure we release shared pin */
 			LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 			UnpinBuffer(buf);
 			LWLockRelease(BufMgrLock);
@@ -1090,9 +1090,9 @@ BlockNumber
 RelationGetNumberOfBlocks(Relation relation)
 {
 	/*
-	 * relation->rd_nblocks should be accurate already if the relation
-	 * is myxactonly.  (XXX how safe is that really?)  Don't call smgr
-	 * on a view, either.
+	 * relation->rd_nblocks should be accurate already if the relation is
+	 * myxactonly.	(XXX how safe is that really?)	Don't call smgr on a
+	 * view, either.
 	 */
 	if (relation->rd_rel->relkind == RELKIND_VIEW)
 		relation->rd_nblocks = 0;
@@ -1147,7 +1147,6 @@ DropRelationBuffers(Relation rel)
 recheck:
 		if (RelFileNodeEquals(bufHdr->tag.rnode, rel->rd_node))
 		{
-
 			/*
 			 * If there is I/O in progress, better wait till it's done;
 			 * don't want to delete the relation out from under someone
@@ -1231,7 +1230,6 @@ DropRelFileNodeBuffers(RelFileNode rnode)
 recheck:
 		if (RelFileNodeEquals(bufHdr->tag.rnode, rnode))
 		{
-
 			/*
 			 * If there is I/O in progress, better wait till it's done;
 			 * don't want to delete the relation out from under someone
@@ -1307,7 +1305,6 @@ recheck:
 		 */
 		if (bufHdr->tag.rnode.tblNode == dbid)
 		{
-
 			/*
 			 * If there is I/O in progress, better wait till it's done;
 			 * don't want to delete the database out from under someone
@@ -1428,7 +1425,6 @@ BufferPoolBlowaway()
 		BufTableDelete(&BufferDescriptors[i - 1]);
 	}
 }
-
 #endif
 
 /* ---------------------------------------------------------------------
@@ -1681,7 +1677,6 @@ refcount = %ld, file: %s, line: %d\n",
 				PrivateRefCount[buffer - 1], file, line);
 	}
 }
-
 #endif
 
 #ifdef NOT_USED
@@ -1701,7 +1696,6 @@ refcount = %ld, file: %s, line: %d\n",
 				PrivateRefCount[buffer - 1], file, line);
 	}
 }
-
 #endif
 
 #ifdef NOT_USED
@@ -1742,7 +1736,6 @@ refcount = %ld, file: %s, line: %d\n",
 	}
 	return b;
 }
-
 #endif
 
 #ifdef BMTRACE
@@ -1888,7 +1881,6 @@ _bm_die(Oid dbId, Oid relId, int blkNo, int bufNo,
 
 	kill(getpid(), SIGILL);
 }
-
 #endif	 /* BMTRACE */
 
 /*
@@ -1943,7 +1935,7 @@ UnlockBuffers(void)
 
 	for (i = 0; i < NBuffers; i++)
 	{
-		bits8	buflocks = BufferLocks[i];
+		bits8		buflocks = BufferLocks[i];
 
 		if (buflocks == 0)
 			continue;
@@ -1960,9 +1952,11 @@ UnlockBuffers(void)
 		if (buflocks & BL_PIN_COUNT_LOCK)
 		{
 			LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
+
 			/*
-			 * Don't complain if flag bit not set; it could have been reset
-			 * but we got a cancel/die interrupt before getting the signal.
+			 * Don't complain if flag bit not set; it could have been
+			 * reset but we got a cancel/die interrupt before getting the
+			 * signal.
 			 */
 			if ((buf->flags & BM_PIN_COUNT_WAITER) != 0 &&
 				buf->wait_backend_id == MyBackendId)
@@ -1992,13 +1986,9 @@ LockBuffer(Buffer buffer, int mode)
 	buf = &(BufferDescriptors[buffer - 1]);
 
 	if (mode == BUFFER_LOCK_UNLOCK)
-	{
 		LWLockRelease(buf->cntx_lock);
-	}
 	else if (mode == BUFFER_LOCK_SHARE)
-	{
 		LWLockAcquire(buf->cntx_lock, LW_SHARED);
-	}
 	else if (mode == BUFFER_LOCK_EXCLUSIVE)
 	{
 		LWLockAcquire(buf->cntx_lock, LW_EXCLUSIVE);
@@ -2012,9 +2002,7 @@ LockBuffer(Buffer buffer, int mode)
 		buf->cntxDirty = true;
 	}
 	else
-	{
 		elog(ERROR, "LockBuffer: unknown lock mode %d", mode);
-	}
 }
 
 /*
@@ -2163,7 +2151,6 @@ InitBufferIO(void)
 {
 	InProgressBuf = (BufferDesc *) 0;
 }
-
 #endif
 
 /*
@@ -2180,11 +2167,11 @@ AbortBufferIO(void)
 	if (buf)
 	{
 		/*
-		 *	Since LWLockReleaseAll has already been called,
-		 *	we're not holding the buffer's io_in_progress_lock.
-		 *	We have to re-acquire it so that we can use TerminateBufferIO.
-		 *	Anyone who's executing WaitIO on the buffer will be in a busy spin
-		 *	until we succeed in doing this.
+		 * Since LWLockReleaseAll has already been called, we're not
+		 * holding the buffer's io_in_progress_lock. We have to re-acquire
+		 * it so that we can use TerminateBufferIO. Anyone who's executing
+		 * WaitIO on the buffer will be in a busy spin until we succeed in
+		 * doing this.
 		 */
 		LWLockAcquire(buf->io_in_progress_lock, LW_EXCLUSIVE);
 

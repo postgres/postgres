@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.84 2001/09/30 18:57:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.85 2001/10/25 05:49:41 momjian Exp $
  *
  * NOTES:
  *
@@ -92,7 +92,7 @@
  * far beyond what they can really support.  This GUC parameter limits what
  * we will believe.
  */
-int max_files_per_process = 1000;
+int			max_files_per_process = 1000;
 
 
 /* Debugging.... */
@@ -122,7 +122,7 @@ typedef struct vfd
 #define FD_TEMPORARY	(1 << 1)/* should be unlinked when closed */
 
 	File		nextFree;		/* link to next free VFD, if in freelist */
-	File		lruMoreRecently;/* doubly linked recency-of-use list */
+	File		lruMoreRecently;		/* doubly linked recency-of-use list */
 	File		lruLessRecently;
 	long		seekPos;		/* current logical file position */
 	char	   *fileName;		/* name of file, or NULL for unused VFD */
@@ -307,16 +307,16 @@ pg_nofile(void)
 			elog(DEBUG, "pg_nofile: sysconf(_SC_OPEN_MAX) failed; using %ld",
 				 no_files);
 		}
-#else /* !HAVE_SYSCONF */
+#else							/* !HAVE_SYSCONF */
 #ifdef NOFILE
 		no_files = (long) NOFILE;
 #else
 		no_files = (long) max_files_per_process;
 #endif
-#endif /* HAVE_SYSCONF */
+#endif	 /* HAVE_SYSCONF */
 
 		/*
-		 * Some platforms return hopelessly optimistic values.  Apply a
+		 * Some platforms return hopelessly optimistic values.	Apply a
 		 * configurable upper limit.
 		 */
 		if (no_files > (long) max_files_per_process)
@@ -355,7 +355,6 @@ _dump_lru(void)
 	sprintf(buf + strlen(buf), "LEAST");
 	elog(DEBUG, buf);
 }
-
 #endif	 /* FDDEBUG */
 
 static void
@@ -497,7 +496,6 @@ ReleaseLruFile(void)
 
 	if (nfile > 0)
 	{
-
 		/*
 		 * There are opened files and so there should be at least one used
 		 * vfd in the ring.
@@ -537,7 +535,6 @@ AllocateVfd(void)
 
 	if (VfdCache[0].nextFree == 0)
 	{
-
 		/*
 		 * The free list is empty so it is time to increase the size of
 		 * the array.  We choose to double it each time this happens.
@@ -550,8 +547,8 @@ AllocateVfd(void)
 			newCacheSize = 32;
 
 		/*
-		 * Be careful not to clobber VfdCache ptr if realloc fails;
-		 * we will need it during proc_exit cleanup!
+		 * Be careful not to clobber VfdCache ptr if realloc fails; we
+		 * will need it during proc_exit cleanup!
 		 */
 		newVfdCache = (Vfd *) realloc(VfdCache, sizeof(Vfd) * newCacheSize);
 		if (newVfdCache == NULL)
@@ -624,9 +621,7 @@ filepath(const char *filename)
 		sprintf(buf, "%s/%s", DatabasePath, filename);
 	}
 	else
-	{
 		buf = pstrdup(filename);
-	}
 
 #ifdef FILEDEBUG
 	printf("filepath: path is %s\n", buf);
@@ -657,7 +652,6 @@ FileAccess(File file)
 	}
 	else if (VfdCache[0].lruLessRecently != file)
 	{
-
 		/*
 		 * We now know that the file is open and that it is not the last
 		 * one accessed, so we need to move it to the head of the Lru
@@ -682,7 +676,6 @@ FileInvalidate(File file)
 	if (!FileIsNotOpen(file))
 		LruDelete(file);
 }
-
 #endif
 
 static File
@@ -798,15 +791,15 @@ OpenTemporaryFile(void)
 							0600);
 	if (file <= 0)
 	{
-		char   *dirpath;
+		char	   *dirpath;
 
 		/*
-		 * We might need to create the pg_tempfiles subdirectory, if
-		 * no one has yet done so.
+		 * We might need to create the pg_tempfiles subdirectory, if no
+		 * one has yet done so.
 		 *
 		 * Don't check for error from mkdir; it could fail if someone else
-		 * just did the same thing.  If it doesn't work then we'll bomb out
-		 * on the second create attempt, instead.
+		 * just did the same thing.  If it doesn't work then we'll bomb
+		 * out on the second create attempt, instead.
 		 */
 		dirpath = filepath(PG_TEMP_FILES_DIR);
 		mkdir(dirpath, S_IRWXU);
@@ -1009,7 +1002,6 @@ FileTell(File file)
 			   file, VfdCache[file].fileName));
 	return VfdCache[file].seekPos;
 }
-
 #endif
 
 int
@@ -1077,7 +1069,6 @@ FileSync(File file)
 	}
 	else
 	{
-
 		/*
 		 * We don't use FileAccess() because we don't want to force the
 		 * file to the front of the LRU ring; we aren't expecting to
@@ -1275,17 +1266,17 @@ AtEOXact_Files(void)
 void
 RemovePgTempFiles(void)
 {
-	char 		db_path[MAXPGPATH];
-	char 		temp_path[MAXPGPATH];
-	char 		rm_path[MAXPGPATH];
+	char		db_path[MAXPGPATH];
+	char		temp_path[MAXPGPATH];
+	char		rm_path[MAXPGPATH];
 	DIR		   *db_dir;
 	DIR		   *temp_dir;
-	struct dirent  *db_de;
-	struct dirent  *temp_de;
+	struct dirent *db_de;
+	struct dirent *temp_de;
 
 	/*
-	 * Cycle through pg_tempfiles for all databases
-	 * and remove old temp files.
+	 * Cycle through pg_tempfiles for all databases and remove old temp
+	 * files.
 	 */
 	snprintf(db_path, sizeof(db_path), "%s/base", DataDir);
 	if ((db_dir = opendir(db_path)) != NULL)
@@ -1317,14 +1308,12 @@ RemovePgTempFiles(void)
 					if (strncmp(temp_de->d_name,
 								PG_TEMP_FILE_PREFIX,
 								strlen(PG_TEMP_FILE_PREFIX)) == 0)
-					{
 						unlink(rm_path);
-					}
 					else
 					{
 						/*
-						 * would prefer to use elog here, but it's not
-						 * up and running during postmaster startup...
+						 * would prefer to use elog here, but it's not up
+						 * and running during postmaster startup...
 						 */
 						fprintf(stderr,
 								"Unexpected file found in temporary-files directory: %s\n",

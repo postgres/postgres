@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: params.h,v 1.13 2001/01/24 19:43:25 momjian Exp $
+ * $Id: params.h,v 1.14 2001/10/25 05:50:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,5 +99,4 @@ typedef struct ParamExecData
 	Datum		value;
 	bool		isnull;
 } ParamExecData;
-
 #endif	 /* PARAMS_H */

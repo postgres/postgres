@@ -6,52 +6,52 @@
 #include "commands/trigger.h"
 
 /*
- *  Trigger function accepts variable number of arguments:
+ *	Trigger function accepts variable number of arguments:
  *
  *		1. relation in which to store the substrings
  *		2. fields to extract substrings from
  *
- *  The relation in which to insert *must* have the following layout:
+ *	The relation in which to insert *must* have the following layout:
  *
  *		string		varchar(#)
  *		id			oid
  *
- *   where # is the largest size of the varchar columns being indexed
+ *	 where # is the largest size of the varchar columns being indexed
  *
  *	Example:
  *
- *  -- Create the SQL function based on the compiled shared object
- *  create function fti() returns opaque as
- *    '/usr/local/pgsql/lib/contrib/fti.so' language 'C';
+ *	-- Create the SQL function based on the compiled shared object
+ *	create function fti() returns opaque as
+ *	  '/usr/local/pgsql/lib/contrib/fti.so' language 'C';
  *
- *  -- Create the FTI table
- *  create table product_fti (string varchar(255), id oid);
+ *	-- Create the FTI table
+ *	create table product_fti (string varchar(255), id oid);
  *
- *  -- Create an index to assist string matches
- *  create index product_fti_string_idx on product_fti (string);
+ *	-- Create an index to assist string matches
+ *	create index product_fti_string_idx on product_fti (string);
  *
- *  -- Create an index to assist trigger'd deletes
- *  create index product_fti_id_idx on product_fti (id);
+ *	-- Create an index to assist trigger'd deletes
+ *	create index product_fti_id_idx on product_fti (id);
  *
- *  -- Create an index on the product oid column to assist joins 
- *  -- between the fti table and the product table
- *  create index product_oid_idx on product (oid);
+ *	-- Create an index on the product oid column to assist joins
+ *	-- between the fti table and the product table
+ *	create index product_oid_idx on product (oid);
  *
- *  -- Create the trigger to perform incremental changes to the full text index.
- *  create trigger product_fti_trig after update or insert or delete on product
- *  for each row execute procedure fti(product_fti, title, artist);
- *								       ^^^^^^^^^^^
- *								       table where full text index is stored
- *											        ^^^^^^^^^^^^^
- *											        columns to index in the base table
+ *	-- Create the trigger to perform incremental changes to the full text index.
+ *	create trigger product_fti_trig after update or insert or delete on product
+ *	for each row execute procedure fti(product_fti, title, artist);
+ *									   ^^^^^^^^^^^
+ *									   table where full text index is stored
+ *													^^^^^^^^^^^^^
+ *													columns to index in the base table
  *
- *  After populating 'product', try something like:
+ *	After populating 'product', try something like:
  *
- *  SELECT DISTINCT(p.*) FROM product p, product_fti f1, product_fti f2 WHERE
+ *	SELECT DISTINCT(p.*) FROM product p, product_fti f1, product_fti f2 WHERE
  *	f1.string ~ '^slippery' AND f2.string ~ '^wet' AND p.oid=f1.id AND p.oid=f2.id;
  *
- *  To check that your indicies are being used correctly, make sure you
- *  EXPLAIN SELECT ... your test query above.
+ *	To check that your indicies are being used correctly, make sure you
+ *	EXPLAIN SELECT ... your test query above.
  *
  * CHANGELOG
  * ---------
@@ -76,14 +76,14 @@
  * TODO
  * ----
  *
- *   prevent generating duplicate words for an oid in the fti table
- *   save a plan for deletes
- *   create a function that will make the index *after* we have populated
- *   the main table (probably first delete all contents to be sure there's
- *   nothing in it, then re-populate the fti-table)
+ *	 prevent generating duplicate words for an oid in the fti table
+ *	 save a plan for deletes
+ *	 create a function that will make the index *after* we have populated
+ *	 the main table (probably first delete all contents to be sure there's
+ *	 nothing in it, then re-populate the fti-table)
  *
- *   can we do something with operator overloading or a seperate function
- *   that can build the final query automatigally?
+ *	 can we do something with operator overloading or a seperate function
+ *	 that can build the final query automatigally?
  */
 
 #define MAX_FTI_QUERY_LENGTH 8192
@@ -103,16 +103,15 @@ char	   *StopWords[] = {		/* list of words to skip in indexing */
 	"the",
 	"yes"
 };
-
-#endif /* USE_STOP_WORDS */
+#endif	 /* USE_STOP_WORDS */
 
 /* stuff for caching query-plans, stolen from contrib/spi/\*.c */
 typedef struct
 {
-	char	*ident;
-	int		nplans;
-	void	**splan;
-} EPlan;
+	char	   *ident;
+	int			nplans;
+	void	  **splan;
+}			EPlan;
 
 static EPlan *InsertPlans = NULL;
 static EPlan *DeletePlans = NULL;
@@ -201,13 +200,11 @@ fti(PG_FUNCTION_ARGS)
 		Oid		   *argtypes;
 		Datum		values[1];
 		EPlan	   *plan;
-		int i;
+		int			i;
 
 		snprintf(query, MAX_FTI_QUERY_LENGTH, "D%s", indexname);
 		for (i = 1; i < nargs; i++)
-		{
 			snprintf(query, MAX_FTI_QUERY_LENGTH, "%s$%s", query, args[i]);
-		}
 
 		plan = find_plan(query, &DeletePlans, &nDeletePlans);
 		if (plan->nplans <= 0)
@@ -238,23 +235,21 @@ fti(PG_FUNCTION_ARGS)
 
 	if (isinsert)
 	{
-		char		*substring;
-		char		*column;
-		void		*pplan;
-		Oid			*argtypes;
+		char	   *substring;
+		char	   *column;
+		void	   *pplan;
+		Oid		   *argtypes;
 		Datum		values[2];
 		int			colnum;
-		struct	varlena *data;
-		EPlan		*plan;
-		int 		i;
-		char		*buff;
-		char		*string;
+		struct varlena *data;
+		EPlan	   *plan;
+		int			i;
+		char	   *buff;
+		char	   *string;
 
 		snprintf(query, MAX_FTI_QUERY_LENGTH, "I%s", indexname);
 		for (i = 1; i < nargs; i++)
-		{
 			snprintf(query, MAX_FTI_QUERY_LENGTH, "%s$%s", query, args[i]);
-		}
 
 		plan = find_plan(query, &InsertPlans, &nInsertPlans);
 
@@ -269,7 +264,7 @@ fti(PG_FUNCTION_ARGS)
 
 			/* prepare plan to gain speed */
 			snprintf(query, MAX_FTI_QUERY_LENGTH, "INSERT INTO %s (string, id) VALUES ($1, $2)",
-					indexname);
+					 indexname);
 			pplan = SPI_prepare(query, 2, argtypes);
 			if (!pplan)
 				elog(ERROR, "Full Text Indexing: SPI_prepare: Returned NULL in insert");
@@ -303,7 +298,7 @@ fti(PG_FUNCTION_ARGS)
 					string++;
 				}
 
-				data = (struct varlena *) palloc(sizeof(int32) + strlen(column) + 1);
+				data = (struct varlena *) palloc(sizeof(int32) + strlen(column) +1);
 				buff = palloc(strlen(column) + 1);
 				/* saves lots of calls in while-loop and in breakup() */
 
@@ -348,7 +343,6 @@ breakup(char *string, char *substring)
 
 	while (cur_pos > string)	/* don't read before start of 'string' */
 	{
-
 		/*
 		 * skip pieces at the end of a string that are not alfa-numeric
 		 * (ie. 'string$%^&', last_start first points to '&', and after
@@ -409,7 +403,7 @@ is_stopword(char *text)
 		else
 			StopHigh = StopMiddle;
 	}
-#endif /* USE_STOP_WORDS */
+#endif	 /* USE_STOP_WORDS */
 
 	return (false);
 }

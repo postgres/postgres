@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.34 2001/06/19 19:42:16 tgl Exp $
+ * $Id: catcache.h,v 1.35 2001/10/25 05:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ typedef struct catcache
 	char	   *cc_relname;		/* name of relation the tuples come from */
 	char	   *cc_indname;		/* name of index matching cache keys */
 	int			cc_reloidattr;	/* AttrNumber of relation OID, or 0 */
-	bool		cc_relisshared;	/* is relation shared? */
+	bool		cc_relisshared; /* is relation shared? */
 	TupleDesc	cc_tupdesc;		/* tuple descriptor (copied from reldesc) */
 	int			cc_ntup;		/* # of tuples currently in this cache */
 	int			cc_size;		/* # of hash buckets in this cache */
@@ -53,6 +53,7 @@ typedef struct catctup
 	int			ct_magic;		/* for Assert checks */
 #define CT_MAGIC   0x57261502
 	CatCache   *my_cache;		/* link to owning catcache */
+
 	/*
 	 * Each tuple in a cache is a member of two lists: one lists all the
 	 * elements in all the caches in LRU order, and the other lists just
@@ -86,8 +87,8 @@ extern void CreateCacheMemoryContext(void);
 extern void AtEOXact_CatCache(bool isCommit);
 
 extern CatCache *InitCatCache(int id, char *relname, char *indname,
-							  int reloidattr,
-							  int nkeys, int *key);
+			 int reloidattr,
+			 int nkeys, int *key);
 
 extern HeapTuple SearchCatCache(CatCache *cache,
 			   Datum v1, Datum v2,
@@ -99,7 +100,6 @@ extern void CatalogCacheFlushRelation(Oid relId);
 extern void CatalogCacheIdInvalidate(int cacheId, Index hashIndex,
 						 ItemPointer pointer);
 extern void PrepareToInvalidateCacheTuple(Relation relation,
-						 HeapTuple tuple,
-						 void (*function) (int, Index, ItemPointer, Oid));
-
+							  HeapTuple tuple,
+						void (*function) (int, Index, ItemPointer, Oid));
 #endif	 /* CATCACHE_H */

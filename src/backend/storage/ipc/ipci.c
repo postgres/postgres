@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.43 2001/09/29 04:02:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.44 2001/10/25 05:49:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,8 +83,8 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int maxBackends)
 	InitShmemAllocation(seghdr);
 
 	/*
-	 * Now initialize LWLocks, which do shared memory allocation and
-	 * are needed for InitShmemIndex.
+	 * Now initialize LWLocks, which do shared memory allocation and are
+	 * needed for InitShmemIndex.
 	 */
 	CreateLWLocks();
 

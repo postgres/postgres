@@ -70,7 +70,7 @@ disconnectdb()
 **		doquery - returns PGresult structure
 **
 */
-PGresult   *
+PGresult *
 doquery(char *query)
 {
 	if (res != NULL &&
@@ -206,7 +206,7 @@ on_error_continue()
 **		get_result
 **
 */
-PGresult   *
+PGresult *
 get_result()
 {
 	char	   *cmdstatus = PQcmdStatus(res);

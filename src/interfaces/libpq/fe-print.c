@@ -10,7 +10,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.42 2001/03/22 04:01:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.43 2001/10/25 05:50:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,7 +102,6 @@ PQprint(FILE *fout,
 			int			ws_row;
 			int			ws_col;
 		}			screen_size;
-
 #endif
 
 		nTups = PQntuples(res);
@@ -152,7 +151,6 @@ PQprint(FILE *fout,
 #endif
 			)
 		{
-
 			/*
 			 * If we think there'll be more than one screen of output, try
 			 * to pipe to the pager program.

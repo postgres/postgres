@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buffile.h,v 1.8 2001/01/24 19:43:27 momjian Exp $
+ * $Id: buffile.h,v 1.9 2001/10/25 05:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,5 +41,4 @@ extern size_t BufFileWrite(BufFile *file, void *ptr, size_t size);
 extern int	BufFileSeek(BufFile *file, int fileno, long offset, int whence);
 extern void BufFileTell(BufFile *file, int *fileno, long *offset);
 extern int	BufFileSeekBlock(BufFile *file, long blknum);
-
 #endif	 /* BUFFILE_H */

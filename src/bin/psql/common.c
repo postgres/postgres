@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.36 2001/10/18 21:57:11 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.37 2001/10/25 05:49:53 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -176,7 +176,9 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 {
 	int			length;
 	char	   *destination;
-	FILE *termin, *termout;
+	FILE	   *termin,
+			   *termout;
+
 #ifdef HAVE_TERMIOS_H
 	struct termios t_orig,
 				t;
@@ -189,8 +191,8 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 	prompt_state = true;		/* disable SIGINT */
 
 	/*
-	 * Do not try to collapse these into one "w+" mode file.
-	 * Doesn't work on some platforms (eg, HPUX 10.20).
+	 * Do not try to collapse these into one "w+" mode file. Doesn't work
+	 * on some platforms (eg, HPUX 10.20).
 	 */
 	termin = fopen("/dev/tty", "r");
 	termout = fopen("/dev/tty", "w");
@@ -213,7 +215,7 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 		tcsetattr(fileno(termin), TCSAFLUSH, &t);
 	}
 #endif
-	
+
 	if (prompt)
 	{
 		fputs(gettext(prompt), termout);
@@ -304,7 +306,6 @@ handle_sigint(SIGNAL_ARGS)
 	}
 	errno = save_errno;			/* just in case the write changed it */
 }
-
 #endif	 /* not WIN32 */
 
 
@@ -314,7 +315,7 @@ handle_sigint(SIGNAL_ARGS)
  * This is the way to send "backdoor" queries (those not directly entered
  * by the user). It is subject to -E but not -e.
  */
-PGresult   *
+PGresult *
 PSQLexec(const char *query)
 {
 	PGresult   *res;
@@ -509,7 +510,7 @@ SendQuery(const char *query)
 			case PGRES_COPY_IN:
 				if (pset.cur_cmd_interactive && !QUIET())
 					puts(gettext("Enter data to be copied followed by a newline.\n"
-						 "End with a backslash and a period on a line by itself."));
+								 "End with a backslash and a period on a line by itself."));
 
 				success = handleCopyIn(pset.db, pset.cur_cmd_source,
 									   pset.cur_cmd_interactive ? get_prompt(PROMPT_COPY) : NULL);

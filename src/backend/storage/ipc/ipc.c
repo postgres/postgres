@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.71 2001/10/01 23:26:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.72 2001/10/25 05:49:42 momjian Exp $
  *
  * NOTES
  *
@@ -114,7 +114,6 @@ static int	on_proc_exit_index,
 void
 proc_exit(int code)
 {
-
 	/*
 	 * Once we set this flag, we are committed to exit.  Any elog() will
 	 * NOT send control back to the main loop, but right back here.
@@ -275,7 +274,6 @@ InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey,
 
 	if (semId < 0)
 	{
-
 		/*
 		 * Fail quietly if error indicates a collision with existing set.
 		 * One would expect EEXIST, given that we said IPC_EXCL, but
@@ -592,7 +590,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 					"\nThis error usually means that PostgreSQL's request for a shared memory\n"
 					"segment exceeded your kernel's SHMMAX parameter.  You can either\n"
 					"reduce the request size or reconfigure the kernel with larger SHMMAX.\n"
-					"To reduce the request size (currently %u bytes), reduce\n"
+			  "To reduce the request size (currently %u bytes), reduce\n"
 					"PostgreSQL's shared_buffers parameter (currently %d) and/or\n"
 					"its max_connections parameter (currently %d).\n"
 					"\n"
@@ -607,8 +605,8 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 		else if (errno == ENOMEM)
 			fprintf(stderr,
 					"\nThis error usually means that PostgreSQL's request for a shared\n"
-					"memory segment exceeded available memory or swap space.\n"
-					"To reduce the request size (currently %u bytes), reduce\n"
+			  "memory segment exceeded available memory or swap space.\n"
+			  "To reduce the request size (currently %u bytes), reduce\n"
 					"PostgreSQL's shared_buffers parameter (currently %d) and/or\n"
 					"its max_connections parameter (currently %d).\n"
 					"\n"
@@ -623,7 +621,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 					"It occurs either if all available shared memory IDs have been taken,\n"
 					"in which case you need to raise the SHMMNI parameter in your kernel,\n"
 					"or because the system's overall limit for shared memory has been\n"
-					"reached.  If you cannot increase the shared memory limit,\n"
+			"reached.  If you cannot increase the shared memory limit,\n"
 					"reduce PostgreSQL's shared memory request (currently %u bytes),\n"
 					"by reducing its shared_buffers parameter (currently %d) and/or\n"
 					"its max_connections parameter (currently %d).\n"
@@ -710,7 +708,6 @@ SharedMemoryIsInUse(IpcMemoryKey shmKey, IpcMemoryId shmId)
 	 */
 	if (shmctl(shmId, IPC_STAT, &shmStat) < 0)
 	{
-
 		/*
 		 * EINVAL actually has multiple possible causes documented in the
 		 * shmctl man page, but we assume it must mean the segment no
@@ -748,7 +745,7 @@ PrivateMemoryCreate(uint32 size)
 		fprintf(stderr, "PrivateMemoryCreate: malloc(%u) failed\n", size);
 		proc_exit(1);
 	}
-	MemSet(memAddress, 0, size);/* keep Purify quiet */
+	MemSet(memAddress, 0, size);		/* keep Purify quiet */
 
 	/* Register on-exit routine to release storage */
 	on_shmem_exit(PrivateMemoryDelete, PointerGetDatum(memAddress));

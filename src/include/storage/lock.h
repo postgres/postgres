@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.56 2001/10/01 05:36:17 tgl Exp $
+ * $Id: lock.h,v 1.57 2001/10/25 05:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,5 +251,4 @@ extern void InitDeadLockChecking(void);
 extern void DumpLocks(void);
 extern void DumpAllLocks(void);
 #endif
-
 #endif	 /* LOCK_H */

@@ -33,7 +33,6 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)getopt.c	8.3 (Berkeley) 4/27/95";
-
 #endif	 /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -82,7 +81,6 @@ const char *ostr;
 	if ((optopt = (int) *place++) == (int) ':' ||
 		!(oli = strchr(ostr, optopt)))
 	{
-
 		/*
 		 * if the user didn't specify '-' as an option, assume it means
 		 * -1.

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.27 2001/09/07 21:55:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.28 2001/10/25 05:50:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,7 +135,6 @@ PgGetFileProc(ClientData cData, int direction)
 {
 	return (Tcl_File) NULL;
 }
-
 #endif
 
 /*
@@ -147,7 +146,7 @@ PgWatchProc(ClientData instanceData, int mask)
 }
 static int
 PgGetHandleProc(ClientData instanceData, int direction,
-	ClientData *handlePtr)
+				ClientData *handlePtr)
 {
 	return TCL_ERROR;
 }
@@ -163,7 +162,7 @@ Tcl_ChannelType Pg_ConnType = {
 	NULL,						/* GetOptionProc, Not used */
 	PgWatchProc,				/* WatchProc, must be defined */
 	PgGetHandleProc,			/* GetHandleProc, must be defined */
-	NULL 						/* Close2Proc, Not used */
+	NULL						/* Close2Proc, Not used */
 };
 
 /*
@@ -395,7 +394,7 @@ getresid(Tcl_Interp *interp, char *id, Pg_ConnectionId ** connid_p)
 /*
  * Get back the result pointer from the Id
  */
-PGresult   *
+PGresult *
 PgGetResultId(Tcl_Interp *interp, char *id)
 {
 	Pg_ConnectionId *connid;
@@ -710,7 +709,7 @@ PgStartNotifyEventSource(Pg_ConnectionId * connid)
 		{
 #if TCL_MAJOR_VERSION >= 8
 			Tcl_CreateChannelHandler(connid->notifier_channel, TCL_READABLE,
-							Pg_Notify_FileHandler, (ClientData) connid);
+							 Pg_Notify_FileHandler, (ClientData) connid);
 #else
 			/* In Tcl 7.5 and 7.6, we need to gin up a Tcl_File. */
 			Tcl_File	tclfile = Tcl_GetFile((ClientData) pqsock, TCL_UNIX_FD);
@@ -732,7 +731,7 @@ PgStopNotifyEventSource(Pg_ConnectionId * connid)
 	{
 #if TCL_MAJOR_VERSION >= 8
 		Tcl_DeleteChannelHandler(connid->notifier_channel,
-								Pg_Notify_FileHandler, (ClientData) connid);
+							 Pg_Notify_FileHandler, (ClientData) connid);
 #else
 		/* In Tcl 7.5 and 7.6, we need to gin up a Tcl_File. */
 		Tcl_File	tclfile = Tcl_GetFile((ClientData) connid->notifier_socket,

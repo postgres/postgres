@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $Header: /cvsroot/pgsql/contrib/pg_controldata/Attic/pg_controldata.c,v 1.4 2001/09/06 10:49:29 petere Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_controldata/Attic/pg_controldata.c,v 1.5 2001/10/25 05:49:19 momjian Exp $
  */
 #include "postgres.h"
 
@@ -24,7 +24,7 @@ dbState(DBState state)
 {
 	switch (state)
 	{
-			case DB_STARTUP:
+		case DB_STARTUP:
 			return "STARTUP";
 		case DB_SHUTDOWNED:
 			return "SHUTDOWNED";

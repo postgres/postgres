@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.100 2001/10/05 17:28:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.101 2001/10/25 05:49:42 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -42,7 +42,7 @@
 
 
 /* This configuration variable is used to set the lock table size */
-int		max_locks_per_xact;		/* set by guc.c */
+int			max_locks_per_xact; /* set by guc.c */
 
 #define NLOCKENTS(maxBackends)	(max_locks_per_xact * (maxBackends))
 
@@ -54,15 +54,15 @@ static void LockCountMyLocks(SHMEM_OFFSET lockOffset, PROC *proc,
 
 static char *lock_mode_names[] =
 {
-	"INVALID",
-	"AccessShareLock",
-	"RowShareLock",
-	"RowExclusiveLock",
-	"ShareUpdateExclusiveLock",
-	"ShareLock",
-	"ShareRowExclusiveLock",
-	"ExclusiveLock",
-	"AccessExclusiveLock"
+				"INVALID",
+				"AccessShareLock",
+				"RowShareLock",
+				"RowExclusiveLock",
+				"ShareUpdateExclusiveLock",
+				"ShareLock",
+				"ShareRowExclusiveLock",
+				"ExclusiveLock",
+				"AccessExclusiveLock"
 };
 
 
@@ -96,10 +96,10 @@ inline static bool
 LOCK_DEBUG_ENABLED(const LOCK *lock)
 {
 	return
-	(((LOCK_LOCKMETHOD(*lock) == DEFAULT_LOCKMETHOD && Trace_locks)
-	  || (LOCK_LOCKMETHOD(*lock) == USER_LOCKMETHOD && Trace_userlocks))
-	 && (lock->tag.relId >= (Oid) Trace_lock_oidmin))
-	|| (Trace_lock_table && (lock->tag.relId == Trace_lock_table));
+		(((LOCK_LOCKMETHOD(*lock) == DEFAULT_LOCKMETHOD && Trace_locks)
+	   || (LOCK_LOCKMETHOD(*lock) == USER_LOCKMETHOD && Trace_userlocks))
+		 && (lock->tag.relId >= (Oid) Trace_lock_oidmin))
+		|| (Trace_lock_table && (lock->tag.relId == Trace_lock_table));
 }
 
 
@@ -132,7 +132,7 @@ HOLDER_PRINT(const char *where, const HOLDER *holderP)
 	   || (HOLDER_LOCKMETHOD(*holderP) == USER_LOCKMETHOD && Trace_userlocks))
 	  && (((LOCK *) MAKE_PTR(holderP->tag.lock))->tag.relId >= (Oid) Trace_lock_oidmin))
 		|| (Trace_lock_table && (((LOCK *) MAKE_PTR(holderP->tag.lock))->tag.relId == Trace_lock_table))
-	)
+		)
 		elog(DEBUG,
 			 "%s: holder(%lx) lock(%lx) tbl(%d) proc(%lx) xid(%u) hold(%d,%d,%d,%d,%d,%d,%d)=%d",
 			 where, MAKE_OFFSET(holderP), holderP->tag.lock,
@@ -147,7 +147,6 @@ HOLDER_PRINT(const char *where, const HOLDER *holderP)
 
 #define LOCK_PRINT(where, lock, type)
 #define HOLDER_PRINT(where, holderP)
-
 #endif	 /* not LOCK_DEBUG */
 
 
@@ -647,9 +646,11 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	else
 	{
 		Assert(status == STATUS_FOUND);
+
 		/*
 		 * We can't acquire the lock immediately.  If caller specified no
-		 * blocking, remove the holder entry and return FALSE without waiting.
+		 * blocking, remove the holder entry and return FALSE without
+		 * waiting.
 		 */
 		if (dontWait)
 		{
@@ -911,7 +912,6 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 				  lock,
 				  holder) != STATUS_OK)
 	{
-
 		/*
 		 * We failed as a result of a deadlock, see HandleDeadLock(). Quit
 		 * now.  Removal of the holder and lock objects, if no longer
@@ -1114,7 +1114,6 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 
 	if (lock->nRequested == 0)
 	{
-
 		/*
 		 * if there's no one waiting in the queue, we just released the
 		 * last lock on this object. Delete it from the lock table.
@@ -1464,5 +1463,4 @@ DumpAllLocks(void)
 			elog(DEBUG, "DumpAllLocks: holder->tag.lock = NULL");
 	}
 }
-
 #endif	 /* LOCK_DEBUG */

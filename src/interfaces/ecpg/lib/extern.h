@@ -62,9 +62,8 @@ struct descriptor
 	struct descriptor *next;
 };
 
-PGresult **
-ECPGdescriptor_lvalue(int line, const char *descriptor);
+PGresult  **
+			ECPGdescriptor_lvalue(int line, const char *descriptor);
 
-bool
-ECPGstore_result(const PGresult *results, int act_field, 
-			const struct statement * stmt, struct variable *var);
+bool ECPGstore_result(const PGresult *results, int act_field,
+				 const struct statement * stmt, struct variable * var);

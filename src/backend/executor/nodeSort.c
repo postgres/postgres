@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.34 2001/05/27 20:42:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.35 2001/10/25 05:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -275,8 +275,8 @@ int
 ExecCountSlotsSort(Sort *node)
 {
 	return ExecCountSlotsNode(outerPlan((Plan *) node)) +
-	ExecCountSlotsNode(innerPlan((Plan *) node)) +
-	SORT_NSLOTS;
+		ExecCountSlotsNode(innerPlan((Plan *) node)) +
+		SORT_NSLOTS;
 }
 
 /* ----------------------------------------------------------------

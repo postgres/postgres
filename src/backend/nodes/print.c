@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.48 2001/10/18 16:11:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.49 2001/10/25 05:49:31 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -215,7 +215,7 @@ print_expr(Node *expr, List *rtable)
 
 		outputstr = DatumGetCString(OidFunctionCall3(typoutput,
 													 c->constvalue,
-													 ObjectIdGetDatum(typelem),
+											   ObjectIdGetDatum(typelem),
 													 Int32GetDatum(-1)));
 		printf("%s", outputstr);
 		pfree(outputstr);
@@ -322,7 +322,7 @@ plannode_type(Plan *p)
 {
 	switch (nodeTag(p))
 	{
-			case T_Plan:
+		case T_Plan:
 			return "PLAN";
 		case T_Result:
 			return "RESULT";

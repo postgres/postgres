@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.18 2001/03/22 03:59:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.19 2001/10/25 05:49:40 momjian Exp $
  *
  *	NOTES
  *		all functions are defined here -- it's impossible to trace the
@@ -28,7 +28,6 @@
 void *
 pg_dlopen(char *filename)
 {
-
 	/*
 	 * Use BIND_IMMEDIATE so that undefined symbols cause a failure return
 	 * from shl_load(), rather than an abort() later on when we attempt to

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/Attic/hashstrat.c,v 1.18 2001/05/30 19:53:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/Attic/hashstrat.c,v 1.19 2001/10/25 05:49:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,6 @@ static StrategyEvaluationData HTEvaluationData = {
 	(StrategyTransformMap) HTNegateCommute,
 	HTEvaluationExpressions
 };
-
 #endif
 
 /* ----------------------------------------------------------------
@@ -68,7 +67,6 @@ _hash_getstrat(Relation rel,
 
 	return strat;
 }
-
 #endif
 
 #ifdef NOT_USED
@@ -82,5 +80,4 @@ _hash_invokestrat(Relation rel,
 	return (RelationInvokeStrategy(rel, &HTEvaluationData, attno, strat,
 								   left, right));
 }
-
 #endif

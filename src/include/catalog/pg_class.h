@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.54 2001/08/26 16:56:01 tgl Exp $
+ * $Id: pg_class.h,v 1.55 2001/10/25 05:49:57 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -55,6 +55,7 @@ CATALOG(pg_class) BOOTSTRAP
 	bool		relisshared;	/* T if shared across databases */
 	char		relkind;		/* see RELKIND_xxx constants below */
 	int2		relnatts;		/* number of user attributes */
+
 	/*
 	 * Class pg_attribute must contain exactly "relnatts" user attributes
 	 * (with attnums ranging from 1 to relnatts) for this class.  It may
@@ -69,6 +70,7 @@ CATALOG(pg_class) BOOTSTRAP
 	bool		relhaspkey;		/* has PRIMARY KEY index */
 	bool		relhasrules;	/* has associated rules */
 	bool		relhassubclass; /* has derived classes */
+
 	/*
 	 * relacl may or may not be present, see note above!
 	 */
@@ -165,5 +167,4 @@ DESCR("");
 #define		  RELKIND_UNCATALOGED	  'u'		/* temporary heap */
 #define		  RELKIND_TOASTVALUE	  't'		/* moved off huge values */
 #define		  RELKIND_VIEW			  'v'		/* view */
-
 #endif	 /* PG_CLASS_H */

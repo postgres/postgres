@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.58 2001/05/27 20:48:51 tgl Exp $
+ * $Id: executor.h,v 1.59 2001/10/25 05:49:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ extern void ExecRestrPos(Plan *node);
  * prototypes from functions in execJunk.c
  */
 extern JunkFilter *ExecInitJunkFilter(List *targetList, TupleDesc tupType,
-									  TupleTableSlot *slot);
+				   TupleTableSlot *slot);
 extern void ExecFreeJunkFilter(JunkFilter *junkfilter);
 extern bool ExecGetJunkAttribute(JunkFilter *junkfilter, TupleTableSlot *slot,
 					 char *attrName, Datum *value, bool *isNull);
@@ -177,5 +177,4 @@ extern void ExecOpenIndices(ResultRelInfo *resultRelInfo);
 extern void ExecCloseIndices(ResultRelInfo *resultRelInfo);
 extern void ExecInsertIndexTuples(TupleTableSlot *slot, ItemPointer tupleid,
 					  EState *estate, bool is_update);
-
 #endif	 /* EXECUTOR_H	*/

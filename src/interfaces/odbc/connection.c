@@ -41,10 +41,10 @@
 extern GLOBAL_VALUES globals;
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_AllocConnect(
-				HENV henv,
-				HDBC FAR *phdbc)
+				   HENV henv,
+				   HDBC FAR * phdbc)
 {
 	EnvironmentClass *env = (EnvironmentClass *) henv;
 	ConnectionClass *conn;
@@ -80,15 +80,15 @@ PGAPI_AllocConnect(
 }
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_Connect(
-		   HDBC hdbc,
-		   UCHAR FAR *szDSN,
-		   SWORD cbDSN,
-		   UCHAR FAR *szUID,
-		   SWORD cbUID,
-		   UCHAR FAR *szAuthStr,
-		   SWORD cbAuthStr)
+			  HDBC hdbc,
+			  UCHAR FAR * szDSN,
+			  SWORD cbDSN,
+			  UCHAR FAR * szUID,
+			  SWORD cbUID,
+			  UCHAR FAR * szAuthStr,
+			  SWORD cbAuthStr)
 {
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
 	ConnInfo   *ci;
@@ -137,14 +137,14 @@ PGAPI_Connect(
 }
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_BrowseConnect(
-				 HDBC hdbc,
-				 UCHAR FAR *szConnStrIn,
-				 SWORD cbConnStrIn,
-				 UCHAR FAR *szConnStrOut,
-				 SWORD cbConnStrOutMax,
-				 SWORD FAR *pcbConnStrOut)
+					HDBC hdbc,
+					UCHAR FAR * szConnStrIn,
+					SWORD cbConnStrIn,
+					UCHAR FAR * szConnStrOut,
+					SWORD cbConnStrOutMax,
+					SWORD FAR * pcbConnStrOut)
 {
 	static char *func = "PGAPI_BrowseConnect";
 
@@ -155,9 +155,9 @@ PGAPI_BrowseConnect(
 
 
 /* Drop any hstmts open on hdbc and disconnect from database */
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_Disconnect(
-			  HDBC hdbc)
+				 HDBC hdbc)
 {
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
 	static char *func = "PGAPI_Disconnect";
@@ -194,9 +194,9 @@ PGAPI_Disconnect(
 }
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 PGAPI_FreeConnect(
-			   HDBC hdbc)
+				  HDBC hdbc)
 {
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
 	static char *func = "PGAPI_FreeConnect";
@@ -251,7 +251,7 @@ CC_Constructor()
 		memset(&rv->connInfo, 0, sizeof(ConnInfo));
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 		rv->connInfo.updatable_cursors = 1;
-#endif /* DRIVER_CURSOR_IMPLEMENT */
+#endif	 /* DRIVER_CURSOR_IMPLEMENT */
 		memcpy(&(rv->connInfo.drivers), &globals, sizeof(globals));
 		rv->sock = SOCK_Constructor(rv);
 		if (!rv->sock)
@@ -282,7 +282,7 @@ CC_Constructor()
 #ifdef	MULTIBYTE
 		rv->client_encoding = NULL;
 		rv->server_encoding = NULL;
-#endif	/* MULTIBYTE */
+#endif	 /* MULTIBYTE */
 
 
 		/* Initialize statement options to defaults */
@@ -297,7 +297,7 @@ CC_Constructor()
 
 
 char
-CC_Destructor(ConnectionClass *self)
+CC_Destructor(ConnectionClass * self)
 {
 	mylog("enter CC_Destructor, self=%u\n", self);
 
@@ -313,7 +313,7 @@ CC_Destructor(ConnectionClass *self)
 		free(self->client_encoding);
 	if (self->server_encoding)
 		free(self->server_encoding);
-#endif	/* MULTIBYTE */
+#endif	 /* MULTIBYTE */
 	/* Free up statement holders */
 	if (self->stmts)
 	{
@@ -349,7 +349,7 @@ CC_Destructor(ConnectionClass *self)
 
 /*	Return how many cursors are opened on this connection */
 int
-CC_cursor_count(ConnectionClass *self)
+CC_cursor_count(ConnectionClass * self)
 {
 	StatementClass *stmt;
 	int			i,
@@ -371,7 +371,7 @@ CC_cursor_count(ConnectionClass *self)
 
 
 void
-CC_clear_error(ConnectionClass *self)
+CC_clear_error(ConnectionClass * self)
 {
 	self->errornumber = 0;
 	self->errormsg = NULL;
@@ -384,7 +384,7 @@ CC_clear_error(ConnectionClass *self)
  *	We are almost always in the middle of a transaction.
  */
 char
-CC_abort(ConnectionClass *self)
+CC_abort(ConnectionClass * self)
 {
 	QResultClass *res;
 
@@ -410,7 +410,7 @@ CC_abort(ConnectionClass *self)
 
 /* This is called by SQLDisconnect also */
 char
-CC_cleanup(ConnectionClass *self)
+CC_cleanup(ConnectionClass * self)
 {
 	int			i;
 	StatementClass *stmt;
@@ -466,7 +466,7 @@ CC_cleanup(ConnectionClass *self)
 
 
 int
-CC_set_translation(ConnectionClass *self)
+CC_set_translation(ConnectionClass * self)
 {
 
 #ifdef WIN32
@@ -510,7 +510,7 @@ CC_set_translation(ConnectionClass *self)
 
 
 char
-CC_connect(ConnectionClass *self, char do_password)
+CC_connect(ConnectionClass * self, char do_password)
 {
 	StartupPacket sp;
 	StartupPacket6_2 sp62;
@@ -522,9 +522,10 @@ CC_connect(ConnectionClass *self, char do_password)
 	char		msgbuffer[ERROR_MSG_LENGTH];
 	char		salt[5];
 	static char *func = "CC_connect";
+
 #ifdef	MULTIBYTE
-	char	*encoding;
-#endif /* MULTIBYTE */
+	char	   *encoding;
+#endif	 /* MULTIBYTE */
 
 	mylog("%s: entering...\n", func);
 
@@ -556,7 +557,7 @@ CC_connect(ConnectionClass *self, char do_password)
 		if (encoding && strcmp(encoding, "OTHER"))
 			self->client_encoding = strdup(encoding);
 		else
-		{ 
+		{
 			encoding = check_client_encoding(ci->drivers.conn_settings);
 			if (encoding && strcmp(encoding, "OTHER"))
 				self->client_encoding = strdup(encoding);
@@ -588,6 +589,7 @@ CC_connect(ConnectionClass *self, char do_password)
 		mylog("CC_connect(): DSN = '%s', server = '%s', port = '%s', database = '%s', username = '%s', password='%s'\n", ci->dsn, ci->server, ci->port, ci->database, ci->username, ci->password);
 
 another_version_retry:
+
 		/*
 		 * If the socket was closed for some reason (like a SQLDisconnect,
 		 * but no SQLFreeConnect then create a socket now.
@@ -673,7 +675,9 @@ another_version_retry:
 
 	if (!PROTOCOL_62(ci))
 	{
-		BOOL before_64 = PG_VERSION_LT(self, 6.4), ReadyForQuery = FALSE;
+		BOOL		before_64 = PG_VERSION_LT(self, 6.4),
+					ReadyForQuery = FALSE;
+
 		do
 		{
 			if (do_password)
@@ -693,7 +697,7 @@ another_version_retry:
 					self->errormsg = msgbuffer;
 					qlog("ERROR from backend during authentication: '%s'\n", self->errormsg);
 					if (strncmp(msgbuffer, "Unsupported frontend protocol", 29) == 0)
-					{	/* retry older version */
+					{			/* retry older version */
 						if (PROTOCOL_63(ci))
 							strcpy(ci->protocol, PG62);
 						else
@@ -703,7 +707,7 @@ another_version_retry:
 						CC_initialize_pg_version(self);
 						goto another_version_retry;
 					}
-			
+
 					return 0;
 				case 'R':
 
@@ -775,12 +779,12 @@ another_version_retry:
 							return 0;
 					}
 					break;
-				case 'K':			/* Secret key (6.4 protocol) */
-					(void) SOCK_get_int(sock, 4);	/* pid */
-					(void) SOCK_get_int(sock, 4);	/* key */
+				case 'K':		/* Secret key (6.4 protocol) */
+					(void) SOCK_get_int(sock, 4);		/* pid */
+					(void) SOCK_get_int(sock, 4);		/* key */
 
 					break;
-				case 'Z':			/* Backend is ready for new query (6.4) */
+				case 'Z':		/* Backend is ready for new query (6.4) */
 					ReadyForQuery = TRUE;
 					break;
 				default:
@@ -789,9 +793,8 @@ another_version_retry:
 					return 0;
 			}
 
-			/* 
-			 *	There were no ReadyForQuery responce
-			 *	before 6.4.
+			/*
+			 * There were no ReadyForQuery responce before 6.4.
 			 */
 			if (before_64 && areq == AUTH_REQ_OK)
 				ReadyForQuery = TRUE;
@@ -851,7 +854,7 @@ another_version_retry:
 
 
 char
-CC_add_statement(ConnectionClass *self, StatementClass *stmt)
+CC_add_statement(ConnectionClass * self, StatementClass * stmt)
 {
 	int			i;
 
@@ -884,7 +887,7 @@ CC_add_statement(ConnectionClass *self, StatementClass *stmt)
 
 
 char
-CC_remove_statement(ConnectionClass *self, StatementClass *stmt)
+CC_remove_statement(ConnectionClass * self, StatementClass * stmt)
 {
 	int			i;
 
@@ -906,7 +909,7 @@ CC_remove_statement(ConnectionClass *self, StatementClass *stmt)
  *	error message with its socket error message.
  */
 char *
-CC_create_errormsg(ConnectionClass *self)
+CC_create_errormsg(ConnectionClass * self)
 {
 	SocketClass *sock = self->sock;
 	int			pos;
@@ -933,7 +936,7 @@ CC_create_errormsg(ConnectionClass *self)
 
 
 char
-CC_get_error(ConnectionClass *self, int *number, char **message)
+CC_get_error(ConnectionClass * self, int *number, char **message)
 {
 	int			rv;
 
@@ -971,16 +974,22 @@ CC_get_error(ConnectionClass *self, int *number, char **message)
  *	'declare cursor C3326857 for ...' and 'fetch 100 in C3326857' statements.
  */
 QResultClass *
-CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
+CC_send_query(ConnectionClass * self, char *query, QueryInfo * qi)
 {
-	QResultClass *result_in = NULL, *res = NULL, *retres = NULL;
-	char		swallow, *wq;
+	QResultClass *result_in = NULL,
+			   *res = NULL,
+			   *retres = NULL;
+	char		swallow,
+			   *wq;
 	int			id;
 	SocketClass *sock = self->sock;
-	int		maxlen, empty_reqs;
-	BOOL		msg_truncated, ReadyToReturn,
-			tuples_return = FALSE, query_completed = FALSE,
-			before_64 = PG_VERSION_LT(self, 6.4);
+	int			maxlen,
+				empty_reqs;
+	BOOL		msg_truncated,
+				ReadyToReturn,
+				tuples_return = FALSE,
+				query_completed = FALSE,
+				before_64 = PG_VERSION_LT(self, 6.4);
 
 	/* ERROR_MSG_LENGTH is suffcient */
 	static char msgbuffer[ERROR_MSG_LENGTH + 1];
@@ -1095,6 +1104,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 					mylog("send_query: returning res = %u\n", res);
 					if (!before_64)
 						break;
+
 					/*
 					 * (Quotation from the original comments) since
 					 * backend may produce more than one result for some
@@ -1188,9 +1198,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 					CC_set_no_trans(self);
 				}
 				else
-				{
 					self->errornumber = CONNECTION_SERVER_REPORTED_WARNING;
-				}
 				QR_set_status(res, PGRES_FATAL_ERROR);
 				QR_set_aborted(res, TRUE);
 				while (msg_truncated)
@@ -1232,9 +1240,10 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 				}
 				else
 				{				/* next fetch, so reuse an existing result */
+
 					/*
-					 *	called from QR_next_tuple
-					 *	and must return immediately.
+					 * called from QR_next_tuple and must return
+					 * immediately.
 					 */
 					ReadyToReturn = TRUE;
 					if (!QR_fetch_tuples(result_in, NULL, NULL))
@@ -1275,8 +1284,9 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 				retres = NULL;
 				break;
 		}
+
 		/*
-		 *	There were no ReadyForQuery response before 6.4.
+		 * There were no ReadyForQuery response before 6.4.
 		 */
 		if (before_64)
 		{
@@ -1284,8 +1294,9 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 				break;
 		}
 	}
-	/*	
-	 *	Break before being ready to return.
+
+	/*
+	 * Break before being ready to return.
 	 */
 	if (!ReadyToReturn)
 	{
@@ -1296,8 +1307,9 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 		else
 			retres = res;
 	}
+
 	/*
-	 *	set notice message to result_in.
+	 * set notice message to result_in.
 	 */
 	if (result_in && res && retres == result_in)
 	{
@@ -1305,8 +1317,9 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 			QR_set_status(result_in, QR_get_status(res));
 		QR_set_notice(result_in, QR_get_notice(res));
 	}
+
 	/*
-	 *	Cleanup garbage results before returning.
+	 * Cleanup garbage results before returning.
 	 */
 	if (res && retres != res)
 		QR_Destructor(res);
@@ -1322,7 +1335,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 
 
 int
-CC_send_function(ConnectionClass *self, int fnid, void *result_buf, int *actual_result_len, int result_is_int, LO_ARG *args, int nargs)
+CC_send_function(ConnectionClass * self, int fnid, void *result_buf, int *actual_result_len, int result_is_int, LO_ARG * args, int nargs)
 {
 	char		id,
 				c,
@@ -1474,7 +1487,7 @@ CC_send_function(ConnectionClass *self, int fnid, void *result_buf, int *actual_
 
 
 char
-CC_send_settings(ConnectionClass *self)
+CC_send_settings(ConnectionClass * self)
 {
 	/* char ini_query[MAX_MESSAGE_LEN]; */
 	ConnInfo   *ci = &(self->connInfo);
@@ -1583,7 +1596,7 @@ CC_send_settings(ConnectionClass *self)
  *	will go away and the define 'PG_TYPE_LO' will be updated.
  */
 void
-CC_lookup_lo(ConnectionClass *self)
+CC_lookup_lo(ConnectionClass * self)
 {
 	HSTMT		hstmt;
 	StatementClass *stmt;
@@ -1635,7 +1648,7 @@ CC_lookup_lo(ConnectionClass *self)
  *	h-inoue 01-2-2001
  */
 void
-CC_initialize_pg_version(ConnectionClass *self)
+CC_initialize_pg_version(ConnectionClass * self)
 {
 	strcpy(self->pg_version, self->connInfo.protocol);
 	if (PROTOCOL_62(&self->connInfo))
@@ -1665,7 +1678,7 @@ CC_initialize_pg_version(ConnectionClass *self)
  *	DJP - 25-1-2001
  */
 void
-CC_lookup_pg_version(ConnectionClass *self)
+CC_lookup_pg_version(ConnectionClass * self)
 {
 	HSTMT		hstmt;
 	StatementClass *stmt;
@@ -1731,7 +1744,7 @@ CC_lookup_pg_version(ConnectionClass *self)
 
 
 void
-CC_log_error(char *func, char *desc, ConnectionClass *self)
+CC_log_error(char *func, char *desc, ConnectionClass * self)
 {
 #ifdef PRN_NULLCHECK
 #define nullcheck(a) (a ? a : "(NULL)")
@@ -1760,17 +1773,19 @@ CC_log_error(char *func, char *desc, ConnectionClass *self)
 #undef PRN_NULLCHECK
 }
 
-int     CC_get_max_query_len(const ConnectionClass *conn)
+int
+CC_get_max_query_len(const ConnectionClass * conn)
 {
-		int     value;
-		/* Long Queries in 7.0+ */
-		if (PG_VERSION_GE(conn, 7.0))
-				value = 0 /* MAX_STATEMENT_LEN */;
-		/* Prior to 7.0 we used 2*BLCKSZ */
-		else if (PG_VERSION_GE(conn, 6.5))
-				value = (2 * BLCKSZ);
-		else
-				/* Prior to 6.5 we used BLCKSZ */
-				value = BLCKSZ;
-		return value;
+	int			value;
+
+	/* Long Queries in 7.0+ */
+	if (PG_VERSION_GE(conn, 7.0))
+		value = 0 /* MAX_STATEMENT_LEN */ ;
+	/* Prior to 7.0 we used 2*BLCKSZ */
+	else if (PG_VERSION_GE(conn, 6.5))
+		value = (2 * BLCKSZ);
+	else
+		/* Prior to 6.5 we used BLCKSZ */
+		value = BLCKSZ;
+	return value;
 }

@@ -57,10 +57,11 @@ typedef unsigned int BF_word;
 
 typedef BF_word BF_key[BF_N + 2];
 
-typedef struct {
-	BF_word S[4][0x100];
-	BF_key P;
-} BF_ctx;
+typedef struct
+{
+	BF_word		S[4][0x100];
+	BF_key		P;
+}			BF_ctx;
 
 /*
  * Magic IV for 64 Blowfish encryptions that we do at the end.
@@ -347,7 +348,7 @@ static BF_ctx BF_init_state = {
 };
 
 static unsigned char BF_itoa64[64 + 1] =
-	"./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+"./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
 static unsigned char BF_atoi64[0x60] = {
 	64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 0, 1,
@@ -367,22 +368,30 @@ do { \
 	(dst) = tmp; \
 } while (0)
 
-static int BF_decode(BF_word *dst, const char *src, int size)
+static int
+BF_decode(BF_word * dst, const char *src, int size)
 {
-	unsigned char *dptr = (unsigned char *)dst;
+	unsigned char *dptr = (unsigned char *) dst;
 	unsigned char *end = dptr + size;
-	unsigned char *sptr = (unsigned char *)src;
-	unsigned int tmp, c1, c2, c3, c4;
+	unsigned char *sptr = (unsigned char *) src;
+	unsigned int tmp,
+				c1,
+				c2,
+				c3,
+				c4;
 
-	do {
+	do
+	{
 		BF_safe_atoi64(c1, *sptr++);
 		BF_safe_atoi64(c2, *sptr++);
 		*dptr++ = (c1 << 2) | ((c2 & 0x30) >> 4);
-		if (dptr >= end) break;
+		if (dptr >= end)
+			break;
 
 		BF_safe_atoi64(c3, *sptr++);
 		*dptr++ = ((c2 & 0x0F) << 4) | ((c3 & 0x3C) >> 2);
-		if (dptr >= end) break;
+		if (dptr >= end)
+			break;
 
 		BF_safe_atoi64(c4, *sptr++);
 		*dptr++ = ((c3 & 0x03) << 6) | c4;
@@ -391,18 +400,22 @@ static int BF_decode(BF_word *dst, const char *src, int size)
 	return 0;
 }
 
-static void BF_encode(char *dst, const BF_word *src, int size)
+static void
+BF_encode(char *dst, const BF_word * src, int size)
 {
-	unsigned char *sptr = (unsigned char *)src;
+	unsigned char *sptr = (unsigned char *) src;
 	unsigned char *end = sptr + size;
-	unsigned char *dptr = (unsigned char *)dst;
-	unsigned int c1, c2;
+	unsigned char *dptr = (unsigned char *) dst;
+	unsigned int c1,
+				c2;
 
-	do {
+	do
+	{
 		c1 = *sptr++;
 		*dptr++ = BF_itoa64[c1 >> 2];
 		c1 = (c1 & 0x03) << 4;
-		if (sptr >= end) {
+		if (sptr >= end)
+		{
 			*dptr++ = BF_itoa64[c1];
 			break;
 		}
@@ -411,7 +424,8 @@ static void BF_encode(char *dst, const BF_word *src, int size)
 		c1 |= c2 >> 4;
 		*dptr++ = BF_itoa64[c1];
 		c1 = (c2 & 0x0f) << 2;
-		if (sptr >= end) {
+		if (sptr >= end)
+		{
 			*dptr++ = BF_itoa64[c1];
 			break;
 		}
@@ -423,18 +437,20 @@ static void BF_encode(char *dst, const BF_word *src, int size)
 	} while (sptr < end);
 }
 
-static void BF_swap(BF_word *x, int count)
+static void
+BF_swap(BF_word * x, int count)
 {
-	static int endianness_check = 1;
-	char *is_little_endian = (char *)&endianness_check;
-	BF_word tmp;
+	static int	endianness_check = 1;
+	char	   *is_little_endian = (char *) &endianness_check;
+	BF_word		tmp;
 
 	if (*is_little_endian)
-	do {
-		tmp = *x;
-		tmp = (tmp << 16) | (tmp >> 16);
-		*x++ = ((tmp & 0x00FF00FF) << 8) | ((tmp >> 8) & 0x00FF00FF);
-	} while (--count);
+		do
+		{
+			tmp = *x;
+			tmp = (tmp << 16) | (tmp >> 16);
+			*x++ = ((tmp & 0x00FF00FF) << 8) | ((tmp >> 8) & 0x00FF00FF);
+		} while (--count);
 }
 
 #if BF_SCALE
@@ -504,7 +520,8 @@ static void BF_swap(BF_word *x, int count)
 
 #if BF_ASM
 
-extern void _BF_body_r(BF_ctx *ctx);
+extern void _BF_body_r(BF_ctx * ctx);
+
 #define BF_body() \
 	_BF_body_r(&data.ctx);
 
@@ -527,22 +544,28 @@ extern void _BF_body_r(BF_ctx *ctx);
 		*(ptr - 2) = L; \
 		*(ptr - 1) = R; \
 	} while (ptr < &data.ctx.S[3][0xFF]);
-
 #endif
 
-static void BF_set_key(const char *key, BF_key expanded, BF_key initial)
+static void
+BF_set_key(const char *key, BF_key expanded, BF_key initial)
 {
 	const char *ptr = key;
-	int i, j;
-	BF_word tmp;
+	int			i,
+				j;
+	BF_word		tmp;
 
-	for (i = 0; i < BF_N + 2; i++) {
+	for (i = 0; i < BF_N + 2; i++)
+	{
 		tmp = 0;
-		for (j = 0; j < 4; j++) {
+		for (j = 0; j < 4; j++)
+		{
 			tmp <<= 8;
 			tmp |= *ptr;
 
-			if (!*ptr) ptr = key; else ptr++;
+			if (!*ptr)
+				ptr = key;
+			else
+				ptr++;
 		}
 
 		expanded[i] = tmp;
@@ -550,41 +573,51 @@ static void BF_set_key(const char *key, BF_key expanded, BF_key initial)
 	}
 }
 
-char *_crypt_blowfish_rn(const char *key, const char *setting,
-	char *output, int size)
+char *
+_crypt_blowfish_rn(const char *key, const char *setting,
+				   char *output, int size)
 {
-	struct {
-		BF_ctx ctx;
-		BF_key expanded_key;
-		union {
-			BF_word salt[4];
-			BF_word output[6];
-		} binary;
-	} data;
-	BF_word L, R;
-	BF_word tmp1, tmp2, tmp3, tmp4;
-	BF_word *ptr;
-	BF_word count;
-	int i;
+	struct
+	{
+		BF_ctx		ctx;
+		BF_key		expanded_key;
+		union
+		{
+			BF_word		salt[4];
+			BF_word		output[6];
+		}			binary;
+	}			data;
+	BF_word		L,
+				R;
+	BF_word		tmp1,
+				tmp2,
+				tmp3,
+				tmp4;
+	BF_word    *ptr;
+	BF_word		count;
+	int			i;
 
-	if (size < 7 + 22 + 31 + 1) {
+	if (size < 7 + 22 + 31 + 1)
+	{
 		__set_errno(ERANGE);
 		return NULL;
 	}
 
 	if (setting[0] != '$' ||
-	    setting[1] != '2' ||
-	    setting[2] != 'a' ||
-	    setting[3] != '$' ||
-	    setting[4] < '0' || setting[4] > '3' ||
-	    setting[5] < '0' || setting[5] > '9' ||
-	    setting[6] != '$') {
+		setting[1] != '2' ||
+		setting[2] != 'a' ||
+		setting[3] != '$' ||
+		setting[4] < '0' || setting[4] > '3' ||
+		setting[5] < '0' || setting[5] > '9' ||
+		setting[6] != '$')
+	{
 		__set_errno(EINVAL);
 		return NULL;
 	}
 
-	count = (BF_word)1 << ((setting[4] - '0') * 10 + (setting[5] - '0'));
-	if (count < 16 || BF_decode(data.binary.salt, &setting[7], 16)) {
+	count = (BF_word) 1 << ((setting[4] - '0') * 10 + (setting[5] - '0'));
+	if (count < 16 || BF_decode(data.binary.salt, &setting[7], 16))
+	{
 		memset(data.binary.salt, 0, sizeof(data.binary.salt));
 		__set_errno(EINVAL);
 		return NULL;
@@ -596,7 +629,8 @@ char *_crypt_blowfish_rn(const char *key, const char *setting,
 	memcpy(data.ctx.S, BF_init_state.S, sizeof(data.ctx.S));
 
 	L = R = 0;
-	for (i = 0; i < BF_N + 2; i += 2) {
+	for (i = 0; i < BF_N + 2; i += 2)
+	{
 		L ^= data.binary.salt[i & 2];
 		R ^= data.binary.salt[(i & 2) + 1];
 		BF_ENCRYPT;
@@ -605,7 +639,8 @@ char *_crypt_blowfish_rn(const char *key, const char *setting,
 	}
 
 	ptr = data.ctx.S[0];
-	do {
+	do
+	{
 		ptr += 4;
 		L ^= data.binary.salt[(BF_N + 2) & 3];
 		R ^= data.binary.salt[(BF_N + 3) & 3];
@@ -620,7 +655,8 @@ char *_crypt_blowfish_rn(const char *key, const char *setting,
 		*(ptr - 1) = R;
 	} while (ptr < &data.ctx.S[3][0xFF]);
 
-	do {
+	do
+	{
 		data.ctx.P[0] ^= data.expanded_key[0];
 		data.ctx.P[1] ^= data.expanded_key[1];
 		data.ctx.P[2] ^= data.expanded_key[2];
@@ -668,12 +704,14 @@ char *_crypt_blowfish_rn(const char *key, const char *setting,
 		BF_body();
 	} while (--count);
 
-	for (i = 0; i < 6; i += 2) {
+	for (i = 0; i < 6; i += 2)
+	{
 		L = BF_magic_w[i];
 		R = BF_magic_w[i + 1];
 
 		count = 64;
-		do {
+		do
+		{
 			BF_ENCRYPT;
 		} while (--count);
 
@@ -683,7 +721,7 @@ char *_crypt_blowfish_rn(const char *key, const char *setting,
 
 	memcpy(output, setting, 7 + 22 - 1);
 	output[7 + 22 - 1] = BF_itoa64[(int)
-		BF_atoi64[(int)setting[7 + 22 - 1] - 0x20] & 0x30];
+					 BF_atoi64[(int) setting[7 + 22 - 1] - 0x20] & 0x30];
 
 /* This has to be bug-compatible with the original implementation, so
  * only encode 23 of the 24 bytes. :-) */
@@ -698,4 +736,3 @@ char *_crypt_blowfish_rn(const char *key, const char *setting,
 
 	return output;
 }
-

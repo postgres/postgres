@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.38 2001/10/05 17:28:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.39 2001/10/25 05:49:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,11 +66,11 @@
 static void *DynaHashAlloc(Size size);
 static uint32 call_hash(HTAB *hashp, void *k);
 static HASHSEGMENT seg_alloc(HTAB *hashp);
-static bool	element_alloc(HTAB *hashp);
-static bool	dir_realloc(HTAB *hashp);
-static bool	expand_table(HTAB *hashp);
-static bool	hdefault(HTAB *hashp);
-static bool	init_htab(HTAB *hashp, long nelem);
+static bool element_alloc(HTAB *hashp);
+static bool dir_realloc(HTAB *hashp);
+static bool expand_table(HTAB *hashp);
+static bool hdefault(HTAB *hashp);
+static bool init_htab(HTAB *hashp, long nelem);
 static void hash_corrupted(HTAB *hashp);
 
 
@@ -104,7 +104,7 @@ HTAB *
 hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 {
 	HTAB	   *hashp;
-	HASHHDR	   *hctl;
+	HASHHDR    *hctl;
 
 	/* First time through, create a memory context for hash tables */
 	if (!DynaHashCxt)
@@ -132,7 +132,7 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 	if (flags & HASH_FUNCTION)
 		hashp->hash = info->hash;
 	else
-		hashp->hash = string_hash; /* default hash function */
+		hashp->hash = string_hash;		/* default hash function */
 
 	if (flags & HASH_SHARED_MEM)
 	{
@@ -212,20 +212,20 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 		{
 			/* hash table structures live in child of given context */
 			CurrentDynaHashCxt = AllocSetContextCreate(info->hcxt,
-											"DynaHashTable",
-											ALLOCSET_DEFAULT_MINSIZE,
-											ALLOCSET_DEFAULT_INITSIZE,
-											ALLOCSET_DEFAULT_MAXSIZE);
+													   "DynaHashTable",
+												ALLOCSET_DEFAULT_MINSIZE,
+											   ALLOCSET_DEFAULT_INITSIZE,
+											   ALLOCSET_DEFAULT_MAXSIZE);
 			hashp->hcxt = CurrentDynaHashCxt;
 		}
 		else
 		{
 			/* hash table structures live in child of DynaHashCxt */
 			CurrentDynaHashCxt = AllocSetContextCreate(DynaHashCxt,
-											"DynaHashTable",
-											ALLOCSET_DEFAULT_MINSIZE,
-											ALLOCSET_DEFAULT_INITSIZE,
-											ALLOCSET_DEFAULT_MAXSIZE);
+													   "DynaHashTable",
+												ALLOCSET_DEFAULT_MINSIZE,
+											   ALLOCSET_DEFAULT_INITSIZE,
+											   ALLOCSET_DEFAULT_MAXSIZE);
 			hashp->hcxt = CurrentDynaHashCxt;
 		}
 	}
@@ -244,7 +244,7 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 static bool
 hdefault(HTAB *hashp)
 {
-	HASHHDR	   *hctl = hashp->hctl;
+	HASHHDR    *hctl = hashp->hctl;
 
 	MemSet(hctl, 0, sizeof(HASHHDR));
 
@@ -274,7 +274,7 @@ hdefault(HTAB *hashp)
 static bool
 init_htab(HTAB *hashp, long nelem)
 {
-	HASHHDR	   *hctl = hashp->hctl;
+	HASHHDR    *hctl = hashp->hctl;
 	HASHSEGMENT *segp;
 	int			nbuckets;
 	int			nsegs;
@@ -372,7 +372,7 @@ hash_estimate_size(long num_entries, long entrysize)
 		nDirEntries <<= 1;		/* dir_alloc doubles dsize at each call */
 
 	/* fixed control info */
-	size += MAXALIGN(sizeof(HASHHDR));		/* but not HTAB, per above */
+	size += MAXALIGN(sizeof(HASHHDR));	/* but not HTAB, per above */
 	/* directory */
 	size += MAXALIGN(nDirEntries * sizeof(HASHSEGMENT));
 	/* segments */
@@ -429,15 +429,15 @@ hash_destroy(HTAB *hashp)
 		hash_stats("destroy", hashp);
 
 		/*
-		 * Free buckets, dir etc. by destroying the hash table's
-		 * memory context.
+		 * Free buckets, dir etc. by destroying the hash table's memory
+		 * context.
 		 */
 		MemoryContextDelete(hashp->hcxt);
 
 		/*
-		 * Free the HTAB and control structure, which are allocated
-		 * in the parent context (DynaHashCxt or the context given
-		 * by the caller of hash_create()).
+		 * Free the HTAB and control structure, which are allocated in the
+		 * parent context (DynaHashCxt or the context given by the caller
+		 * of hash_create()).
 		 */
 		MEM_FREE(hashp->hctl);
 		MEM_FREE(hashp->tabname);
@@ -460,7 +460,6 @@ hash_stats(const char *where, HTAB *hashp)
 			where, hash_accesses, hash_collisions);
 	fprintf(stderr, "hash_stats: total expansions %ld\n",
 			hash_expansions);
-
 #endif
 
 }
@@ -470,7 +469,7 @@ hash_stats(const char *where, HTAB *hashp)
 static uint32
 call_hash(HTAB *hashp, void *k)
 {
-	HASHHDR	   *hctl = hashp->hctl;
+	HASHHDR    *hctl = hashp->hctl;
 	long		hash_val,
 				bucket;
 
@@ -503,7 +502,7 @@ call_hash(HTAB *hashp, void *k)
  * HASH_ENTER case, but is redundant with the return value otherwise.
  *
  * The HASH_FIND_SAVE/HASH_REMOVE_SAVED interface is a hack to save one
- * table lookup in a find/process/remove scenario.  Note that no other
+ * table lookup in a find/process/remove scenario.	Note that no other
  * addition or removal in the table can safely happen in between.
  *----------
  */
@@ -513,17 +512,17 @@ hash_search(HTAB *hashp,
 			HASHACTION action,
 			bool *foundPtr)
 {
-	HASHHDR	   *hctl = hashp->hctl;
+	HASHHDR    *hctl = hashp->hctl;
 	uint32		bucket;
 	long		segment_num;
 	long		segment_ndx;
-	HASHSEGMENT	segp;
-	HASHBUCKET currBucket;
+	HASHSEGMENT segp;
+	HASHBUCKET	currBucket;
 	HASHBUCKET *prevBucketPtr;
 
 	static struct State
 	{
-		HASHBUCKET currBucket;
+		HASHBUCKET	currBucket;
 		HASHBUCKET *prevBucketPtr;
 	}			saveState;
 
@@ -631,7 +630,7 @@ hash_search(HTAB *hashp,
 			{
 				/* no free elements.  allocate another chunk of buckets */
 				if (!element_alloc(hashp))
-					return NULL; /* out of memory */
+					return NULL;		/* out of memory */
 				currBucket = hctl->freeList;
 				Assert(currBucket != NULL);
 			}
@@ -651,8 +650,9 @@ hash_search(HTAB *hashp,
 			if (++hctl->nentries / (hctl->max_bucket + 1) > hctl->ffactor)
 			{
 				/*
-				 * NOTE: failure to expand table is not a fatal error, it just
-				 * means we have to run at higher fill factor than we wanted.
+				 * NOTE: failure to expand table is not a fatal error, it
+				 * just means we have to run at higher fill factor than we
+				 * wanted.
 				 */
 				expand_table(hashp);
 			}
@@ -688,13 +688,13 @@ void *
 hash_seq_search(HASH_SEQ_STATUS *status)
 {
 	HTAB	   *hashp = status->hashp;
-	HASHHDR	   *hctl = hashp->hctl;
+	HASHHDR    *hctl = hashp->hctl;
 
 	while (status->curBucket <= hctl->max_bucket)
 	{
 		long		segment_num;
 		long		segment_ndx;
-		HASHSEGMENT	segp;
+		HASHSEGMENT segp;
 
 		if (status->curEntry != NULL)
 		{
@@ -703,7 +703,7 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 
 			curElem = status->curEntry;
 			status->curEntry = curElem->link;
-			if (status->curEntry == NULL) /* end of this bucket */
+			if (status->curEntry == NULL)		/* end of this bucket */
 				++status->curBucket;
 			return (void *) ELEMENTKEY(curElem);
 		}
@@ -731,7 +731,7 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 		 */
 		status->curEntry = segp[segment_ndx];
 
-		if (status->curEntry == NULL) /* empty bucket */
+		if (status->curEntry == NULL)	/* empty bucket */
 			++status->curBucket;
 	}
 
@@ -747,8 +747,8 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 static bool
 expand_table(HTAB *hashp)
 {
-	HASHHDR	   *hctl = hashp->hctl;
-	HASHSEGMENT	old_seg,
+	HASHHDR    *hctl = hashp->hctl;
+	HASHSEGMENT old_seg,
 				new_seg;
 	long		old_bucket,
 				new_bucket;
@@ -758,7 +758,7 @@ expand_table(HTAB *hashp)
 				old_segndx;
 	HASHBUCKET *oldlink,
 			   *newlink;
-	HASHBUCKET currElement,
+	HASHBUCKET	currElement,
 				nextElement;
 
 #ifdef HASH_STATISTICS
@@ -879,7 +879,7 @@ dir_realloc(HTAB *hashp)
 static HASHSEGMENT
 seg_alloc(HTAB *hashp)
 {
-	HASHSEGMENT	segp;
+	HASHSEGMENT segp;
 
 	CurrentDynaHashCxt = hashp->hcxt;
 	segp = (HASHSEGMENT) hashp->alloc(sizeof(HASHBUCKET) * hashp->hctl->ssize);
@@ -898,7 +898,7 @@ seg_alloc(HTAB *hashp)
 static bool
 element_alloc(HTAB *hashp)
 {
-	HASHHDR	   *hctl = hashp->hctl;
+	HASHHDR    *hctl = hashp->hctl;
 	Size		elementSize;
 	HASHELEMENT *tmpElement;
 	int			i;
@@ -930,7 +930,7 @@ hash_corrupted(HTAB *hashp)
 {
 	/*
 	 * If the corruption is in a shared hashtable, we'd better force a
-	 * systemwide restart.  Otherwise, just shut down this one backend.
+	 * systemwide restart.	Otherwise, just shut down this one backend.
 	 */
 	if (hashp->isshared)
 		elog(STOP, "Hash table '%s' corrupted", hashp->tabname);

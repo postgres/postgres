@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtstrat.c,v 1.14 2001/05/30 19:53:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtstrat.c,v 1.15 2001/10/25 05:49:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,5 +134,4 @@ _bt_invokestrat(Relation rel,
 	return (RelationInvokeStrategy(rel, &BTEvaluationData, attno, strat,
 								   left, right));
 }
-
 #endif

@@ -244,8 +244,8 @@ des_init()
 		}
 
 	/*
-	 * Convert the inverted S-boxes into 4 arrays of 8 bits.
-	 * Each will handle 12 bits of the S-box input.
+	 * Convert the inverted S-boxes into 4 arrays of 8 bits. Each will
+	 * handle 12 bits of the S-box input.
 	 */
 	for (b = 0; b < 4; b++)
 		for (i = 0; i < 64; i++)
@@ -409,10 +409,9 @@ des_setkey(const char *key)
 		&& rawkey1 == old_rawkey1)
 	{
 		/*
-		 * Already setup for this key.
-		 * This optimisation fails on a zero key (which is weak and
-		 * has bad parity anyway) in order to simplify the starting
-		 * conditions.
+		 * Already setup for this key. This optimisation fails on a zero
+		 * key (which is weak and has bad parity anyway) in order to
+		 * simplify the starting conditions.
 		 */
 		return (0);
 	}
@@ -420,7 +419,7 @@ des_setkey(const char *key)
 	old_rawkey1 = rawkey1;
 
 	/*
-	 *	Do key permutation and split into two 28-bit subkeys.
+	 * Do key permutation and split into two 28-bit subkeys.
 	 */
 	k0 = key_perm_maskl[0][rawkey0 >> 25]
 		| key_perm_maskl[1][(rawkey0 >> 17) & 0x7f]
@@ -438,8 +437,9 @@ des_setkey(const char *key)
 		| key_perm_maskr[5][(rawkey1 >> 17) & 0x7f]
 		| key_perm_maskr[6][(rawkey1 >> 9) & 0x7f]
 		| key_perm_maskr[7][(rawkey1 >> 1) & 0x7f];
+
 	/*
-	 *	Rotate subkeys and do compression permutation.
+	 * Rotate subkeys and do compression permutation.
 	 */
 	shifts = 0;
 	for (round = 0; round < 16; round++)
@@ -476,10 +476,10 @@ des_setkey(const char *key)
 }
 
 static int
-do_des(uint32 l_in, uint32 r_in, uint32 * l_out, uint32 * r_out, int count)
+do_des(uint32 l_in, uint32 r_in, uint32 *l_out, uint32 *r_out, int count)
 {
 	/*
-	 *	l_in, r_in, l_out, and r_out are in pseudo-"big-endian" format.
+	 * l_in, r_in, l_out, and r_out are in pseudo-"big-endian" format.
 	 */
 	uint32		l,
 				r,
@@ -513,7 +513,7 @@ do_des(uint32 l_in, uint32 r_in, uint32 * l_out, uint32 * r_out, int count)
 	}
 
 	/*
-	 *	Do initial permutation (IP).
+	 * Do initial permutation (IP).
 	 */
 	l = ip_maskl[0][l_in >> 24]
 		| ip_maskl[1][(l_in >> 16) & 0xff]
@@ -556,21 +556,24 @@ do_des(uint32 l_in, uint32 r_in, uint32 * l_out, uint32 * r_out, int count)
 				| ((r & 0x000001f8) << 3)
 				| ((r & 0x0000001f) << 1)
 				| ((r & 0x80000000) >> 31);
+
 			/*
-			 * Do salting for crypt() and friends, and
-			 * XOR with the permuted key.
+			 * Do salting for crypt() and friends, and XOR with the
+			 * permuted key.
 			 */
 			f = (r48l ^ r48r) & saltbits;
 			r48l ^= f ^ *kl++;
 			r48r ^= f ^ *kr++;
+
 			/*
-			 * Do sbox lookups (which shrink it back to 32 bits)
-			 * and do the pbox permutation at the same time.
+			 * Do sbox lookups (which shrink it back to 32 bits) and do
+			 * the pbox permutation at the same time.
 			 */
 			f = psbox[0][m_sbox[0][r48l >> 12]]
 				| psbox[1][m_sbox[1][r48l & 0xfff]]
 				| psbox[2][m_sbox[2][r48r >> 12]]
 				| psbox[3][m_sbox[3][r48r & 0xfff]];
+
 			/*
 			 * Now that we've permuted things, complete f().
 			 */
@@ -581,6 +584,7 @@ do_des(uint32 l_in, uint32 r_in, uint32 * l_out, uint32 * r_out, int count)
 		r = l;
 		l = f;
 	}
+
 	/*
 	 * Do final permutation (inverse of IP).
 	 */
@@ -654,8 +658,8 @@ px_crypt_des(const char *key, const char *setting)
 
 
 	/*
-	 * Copy the key, shifting each character up by one bit
-	 * and padding with zeros.
+	 * Copy the key, shifting each character up by one bit and padding
+	 * with zeros.
 	 */
 	q = (uint8 *) keybuf;
 	while (q - (uint8 *) keybuf - 8)
@@ -670,9 +674,8 @@ px_crypt_des(const char *key, const char *setting)
 	if (*setting == _PASSWORD_EFMT1)
 	{
 		/*
-		 * "new"-style:
-		 *	setting - underscore, 4 bytes of count, 4 bytes of salt
-		 *	key - unlimited characters
+		 * "new"-style: setting - underscore, 4 bytes of count, 4 bytes of
+		 * salt key - unlimited characters
 		 */
 		for (i = 1, count = 0L; i < 5; i++)
 			count |= ascii_to_bin(setting[i]) << (i - 1) * 6;
@@ -687,6 +690,7 @@ px_crypt_des(const char *key, const char *setting)
 			 */
 			if (des_cipher((uint8 *) keybuf, (uint8 *) keybuf, 0L, 1))
 				return (NULL);
+
 			/*
 			 * And XOR with the next 8 characters of the key.
 			 */
@@ -700,11 +704,10 @@ px_crypt_des(const char *key, const char *setting)
 		strncpy(output, setting, 9);
 
 		/*
-		 * Double check that we weren't given a short setting.
-		 * If we were, the above code will probably have created
-		 * wierd values for count and salt, but we don't really care.
-		 * Just make sure the output string doesn't have an extra
-		 * NUL in it.
+		 * Double check that we weren't given a short setting. If we were,
+		 * the above code will probably have created wierd values for
+		 * count and salt, but we don't really care. Just make sure the
+		 * output string doesn't have an extra NUL in it.
 		 */
 		output[9] = '\0';
 		p = output + strlen(output);
@@ -713,9 +716,7 @@ px_crypt_des(const char *key, const char *setting)
 #endif	 /* !DISABLE_XDES */
 	{
 		/*
-		 * "old"-style:
-		 *	setting - 2 bytes of salt
-		 *	key - up to 8 characters
+		 * "old"-style: setting - 2 bytes of salt key - up to 8 characters
 		 */
 		count = 25;
 
@@ -723,22 +724,24 @@ px_crypt_des(const char *key, const char *setting)
 			| ascii_to_bin(setting[0]);
 
 		output[0] = setting[0];
+
 		/*
-		 * If the encrypted password that the salt was extracted from
-		 * is only 1 character long, the salt will be corrupted.  We
-		 * need to ensure that the output string doesn't have an extra
-		 * NUL in it!
+		 * If the encrypted password that the salt was extracted from is
+		 * only 1 character long, the salt will be corrupted.  We need to
+		 * ensure that the output string doesn't have an extra NUL in it!
 		 */
 		output[1] = setting[1] ? setting[1] : output[0];
 
 		p = output + 2;
 	}
 	setup_salt(salt);
+
 	/*
 	 * Do it.
 	 */
 	if (do_des(0L, 0L, &r0, &r1, count))
 		return (NULL);
+
 	/*
 	 * Now encode the result...
 	 */

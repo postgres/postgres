@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.54 2001/10/18 17:30:14 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.55 2001/10/25 05:49:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -334,9 +334,10 @@ set_default_datestyle(void)
 	 */
 	DBDate = strdup(DBDate);
 
-	/* Parse desired setting into DateStyle/EuroDates
-	 * Use parse_datestyle_internal() to avoid any palloc() issues per above
-	 * - thomas 2001-10-15
+	/*
+	 * Parse desired setting into DateStyle/EuroDates Use
+	 * parse_datestyle_internal() to avoid any palloc() issues per above -
+	 * thomas 2001-10-15
 	 */
 	parse_datestyle_internal(DBDate);
 
@@ -380,7 +381,7 @@ parse_timezone(List *args)
 
 	foreach(arg, args)
 	{
-		A_Const *p;
+		A_Const    *p;
 
 		Assert(IsA(arg, List));
 		p = lfirst(arg);
@@ -394,24 +395,28 @@ parse_timezone(List *args)
 				Interval   *interval;
 
 				interval = DatumGetIntervalP(DirectFunctionCall3(interval_in,
-																 CStringGetDatum(p->val.val.str),
-																 ObjectIdGetDatum(InvalidOid),
-																 Int32GetDatum(-1)));
+										 CStringGetDatum(p->val.val.str),
+											ObjectIdGetDatum(InvalidOid),
+													 Int32GetDatum(-1)));
 				if (interval->month != 0)
 					elog(ERROR, "SET TIME ZONE illegal INTERVAL; month not allowed");
 				CTimeZone = interval->time;
 			}
 			else if (strcmp(type->name, "float8") == 0)
 			{
-				float8 time;
+				float8		time;
 
 				time = DatumGetFloat8(DirectFunctionCall1(float8in, CStringGetDatum(p->val.val.str)));
 				CTimeZone = time * 3600;
 			}
-			/* We do not actually generate an integer constant in gram.y so this is not used... */
+
+			/*
+			 * We do not actually generate an integer constant in gram.y
+			 * so this is not used...
+			 */
 			else if (strcmp(type->name, "int4") == 0)
 			{
-				int32 time;
+				int32		time;
 
 				time = p->val.val.ival;
 				CTimeZone = time * 3600;
@@ -462,11 +467,11 @@ parse_timezone(List *args)
 static bool
 show_timezone(void)
 {
-	char *tzn;
+	char	   *tzn;
 
 	if (HasCTZSet)
 	{
-		Interval interval;
+		Interval	interval;
 
 		interval.month = 0;
 		interval.time = CTimeZone;
@@ -474,9 +479,7 @@ show_timezone(void)
 		tzn = DatumGetCString(DirectFunctionCall1(interval_out, IntervalPGetDatum(&interval)));
 	}
 	else
-	{
 		tzn = getenv("TZ");
-	}
 
 	if (tzn != NULL)
 		elog(NOTICE, "Time zone is '%s'", tzn);
@@ -500,9 +503,7 @@ static bool
 reset_timezone(void)
 {
 	if (HasCTZSet)
-	{
 		HasCTZSet = false;
-	}
 
 	/* no time zone has been set in this session? */
 	else if (defaultTZ == NULL)
@@ -545,7 +546,7 @@ reset_timezone(void)
 static bool
 parse_XactIsoLevel(List *args)
 {
-	char *value;
+	char	   *value;
 
 	if (args == NULL)
 		return reset_XactIsoLevel();
@@ -603,8 +604,8 @@ reset_XactIsoLevel(void)
 static bool
 parse_random_seed(List *args)
 {
-	char   *value;
-	double	seed = 0;
+	char	   *value;
+	double		seed = 0;
 
 	if (args == NULL)
 		return reset_random_seed();
@@ -648,9 +649,10 @@ reset_random_seed(void)
 static bool
 parse_client_encoding(List *args)
 {
-	char   *value;
+	char	   *value;
+
 #ifdef MULTIBYTE
-	int		encoding;
+	int			encoding;
 #endif
 
 	if (args == NULL)
@@ -679,7 +681,7 @@ parse_client_encoding(List *args)
 	}
 #else
 	if (value &&
-	strcasecmp(value, pg_get_client_encoding_name()) != 0)
+		strcasecmp(value, pg_get_client_encoding_name()) != 0)
 		elog(ERROR, "Client encoding %s is not supported", value);
 #endif
 	return TRUE;
@@ -766,14 +768,14 @@ SetPGVariable(const char *name, List *args)
 		parse_random_seed(args);
 	else
 	{
-		/* For routines defined somewhere else,
-		 * go ahead and extract the string argument
-		 * to match the original interface definition.
+		/*
+		 * For routines defined somewhere else, go ahead and extract the
+		 * string argument to match the original interface definition.
 		 * Later, we can change this code too...
 		 */
-		char *value;
+		char	   *value;
 
-		value = ((args != NULL)? ((A_Const *) lfirst(args))->val.val.str: NULL);
+		value = ((args != NULL) ? ((A_Const *) lfirst(args))->val.val.str : NULL);
 
 		if (strcasecmp(name, "session_authorization") == 0)
 			SetSessionAuthorization(value);
