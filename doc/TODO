@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jul  4 22:10:04 EDT 2002
+Last updated:		Sun Jul  7 22:00:46 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -475,7 +475,7 @@ Source Code
 * Move some things from /contrib into main tree
 * Remove warnings created by -Wcast-align
 * Move platform-specific ps status display info from ps_status.c to ports
-* Make one version of simple_prompt() in code (Bruce, Tom)
+* -Make one version of simple_prompt() in code (Bruce, Tom)
 * -Compile in syslog functionaility by default (Tatsuo)
 * Modify regression tests to prevent failures do to minor numeric rounding
 * Use our own getopt() for FreeBSD/OpenBSD to allow --xxx flags (Bruce)
