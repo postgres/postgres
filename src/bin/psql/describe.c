@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.114 2005/04/01 05:30:38 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.115 2005/04/06 05:23:32 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1579,14 +1579,17 @@ listDomains(const char *pattern)
 					  "            WHEN t.typnotnull AND t.typdefault IS NULL THEN 'not null'\n"
 					  "            WHEN NOT t.typnotnull AND t.typdefault IS NOT NULL THEN 'default '||t.typdefault\n"
 					  "            ELSE ''\n"
-					  "       END as \"%s\"\n"
+					  "       END as \"%s\",\n"
+						"       pg_catalog.pg_get_constraintdef(r.oid, true) as \"%s\"\n"
 					  "FROM pg_catalog.pg_type t\n"
 	"     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\n"
+	"     LEFT JOIN pg_catalog.pg_constraint r ON t.oid = r.contypid\n"
 					  "WHERE t.typtype = 'd'\n",
 					  _("Schema"),
 					  _("Name"),
 					  _("Type"),
-					  _("Modifier"));
+					  _("Modifier"),
+					  _("Check"));
 
 	processNamePattern(&buf, pattern, true, false,
 					   "n.nspname", "t.typname", NULL,
