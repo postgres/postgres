@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jul 19 13:26:13 EDT 2002
+Last updated:		Sat Jul 20 12:44:41 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -62,7 +62,6 @@ Administration
 * -Make equals sign optional in CREATE DATABASE WITH param = 'val'
 * Remove unreferenced table files and temp tables during database vacuum
   or postmaster startup (Bruce)
-* Add table name mapping for numeric file names (Bruce)
 * Remove behavior of postmaster -o after making postmaster/postgres
   flags unique
 * Allow logging of query durations
@@ -83,7 +82,7 @@ Data Types
 * Change NUMERIC data type to use base 10,000 internally
 * Change NUMERIC to enforce the maximum precision, and increase it
 * Add function to return compressed length of TOAST data values (Tom)
-* Add GUC parameter for DATESTYLE
+* -Add GUC parameter for DATESTYLE
 
 * CONVERSION
 	o Store binary-compatible type information in the system
@@ -205,9 +204,9 @@ Commands
 	o Automatically maintain clustering on a table
 
 * COPY
-	o Allow specification of column names
+	o -Allow specification of column names
 	o Allow dump/load of CSV format
-	o Change syntax to WITH DELIMITER, (keep old syntax around?)
+	o -Change syntax to WITH DELIMITER, (keep old syntax around?)
 	o Allow COPY to report error lines and continue;  optionally
 	  allow error codes to be specified; requires savepoints or can
 	  not be run in a multi-statement transaction
@@ -233,11 +232,11 @@ Commands
 	o Add SHOW command to display locks
 	o -Add SET or BEGIN timeout parameter to cancel query
 	o Add SET REAL_FORMAT and SET DOUBLE_PRECISION_FORMAT using printf args
-	o Remove SET KSQO option now that OR processing is improved (Tom)
+	o -Remove SET KSQO option now that OR processing is improved (Tom)
 	o Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
 	  ANALYZE, and CLUSTER
 	o Add SHOW command to see locale
-	o Allow SHOW to output as a query result, like EXPLAIN
+	o -Allow SHOW to output as a query result, like EXPLAIN
 	o -Abort all SET changes made in an aborted transaction
 
 * SERVER-SIDE LANGUAGES
@@ -347,7 +346,7 @@ Exotic Features
 
 * Add sql3 recursive unions
 * Add the concept of dataspaces/tablespaces [tablespaces]
-* Allow SQL92 schemas (Tom) [schema]
+* -Add SQL92 schemas (Tom)
 * Allow queries across multiple databases [crossdb]
 * Add pre-parsing phase that converts non-ANSI features to supported features
 * Allow plug-in modules to emulate features from other databases
