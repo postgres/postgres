@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/port/thread.c,v 1.15 2004/02/11 21:44:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/port/thread.c,v 1.16 2004/03/02 18:35:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 
 #include <sys/types.h>
 #include <errno.h>
-#if defined(WIN32) && defined(_MSC_VER)
+#if defined(WIN32) && (defined(_MSC_VER) || defined(__BORLANDC__))
 #undef ERROR
 #else
 #include <pwd.h>

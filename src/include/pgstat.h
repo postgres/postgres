@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.18 2003/12/25 03:52:51 momjian Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.19 2004/03/02 18:35:58 momjian Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -271,7 +271,7 @@ typedef struct PgStat_MsgTabstat
  * ----------
  */
 #define PGSTAT_NUM_TABPURGE		((1000 - sizeof(PgStat_MsgHdr))			\
-								/ sizeof(PgStat_TableEntry))
+								/ sizeof(Oid))
 
 /* ----------
  * PgStat_MsgTabpurge			Sent by the backend to tell the collector
