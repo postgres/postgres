@@ -9,7 +9,7 @@
  * Dec 17, 1997 - Todd A. Brandys
  *	Orignal Version Completed.
  *
- * $Id: crypt.c,v 1.23 1999/07/17 20:17:01 momjian Exp $
+ * $Id: crypt.c,v 1.23.2.1 2001/02/07 23:42:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,7 @@ crypt_getpwdreloadfilename()
 	bufsize = strlen(pwdfilename) + strlen(CRYPT_PWD_RELOAD_SUFX) + 1;
 	rpfnam = (char *) palloc(bufsize);
 	snprintf(rpfnam, bufsize, "%s%s", pwdfilename, CRYPT_PWD_RELOAD_SUFX);
+	pfree(pwdfilename);
 
 	return rpfnam;
 }
@@ -78,6 +79,8 @@ crypt_openpwdfile()
 #else
 	pwdfile = AllocateFile(filename, "rb");
 #endif
+
+	pfree(filename);
 
 	return pwdfile;
 }
@@ -131,6 +134,7 @@ crypt_loadpwdfile()
 
 	filename = crypt_getpwdreloadfilename();
 	result = unlink(filename);
+	pfree(filename);
 
 	/*
 	 * We want to delete the flag file before reading the contents of the
