@@ -4,7 +4,7 @@
  * darcy@druid.net
  * http://www.druid.net/darcy/
  *
- * $Id: chkpass.c,v 1.3 2001/05/28 15:34:27 darcy Exp $
+ * $Id: chkpass.c,v 1.4 2001/05/30 02:11:46 darcy Exp $
  * best viewed with tabs set to 4
  */
 
@@ -75,14 +75,14 @@ chkpass_in(PG_FUNCTION_ARGS)
 		result = (chkpass *) palloc(sizeof(chkpass));
 		strncpy(result->password, str + 1, 13);
 		result->password[13] = 0;
-		return PointerGetDatum(result);
+		PG_RETURN_POINTER(result);
 	}
 
 	if (verify_pass(str) != 0)
 	{
 		elog(ERROR, "chkpass_in: purported CHKPASS \"%s\" is a weak password",
 		     str);
-		return PointerGetDatum(NULL);
+		PG_RETURN_POINTER(NULL);
 	}
 
 	result = (chkpass *) palloc(sizeof(chkpass));
@@ -98,7 +98,7 @@ chkpass_in(PG_FUNCTION_ARGS)
 	mysalt[2] = 0;				/* technically the terminator is not
 								 * necessary but I like to play safe */
 	strcpy(result->password, crypt(str, mysalt));
-	return PointerGetDatum(result);
+	PG_RETURN_POINTER(result);
 }
 
 /*
@@ -114,7 +114,7 @@ chkpass_out(PG_FUNCTION_ARGS)
 	char	   *result;
 
 	if (password == NULL)
-		return PointerGetDatum(NULL);
+		PG_RETURN_POINTER(NULL);
 
 	if ((result = (char *) palloc(16)) != NULL)
 	{
@@ -138,7 +138,7 @@ chkpass_rout(PG_FUNCTION_ARGS)
 	text	   *result = NULL;
 
 	if (password == NULL)
-		return PointerGetDatum(NULL);
+		PG_RETURN_POINTER(NULL);
 
 	if ((result = (text *) palloc(VARHDRSZ + 16)) != NULL)
 	{
@@ -181,7 +181,7 @@ chkpass_ne(PG_FUNCTION_ARGS)
 	char        str[10];
 	int         sz = 8;
 
-	if (!a1 || !a2) return 0;
+	if (!a1 || !a2) PG_RETURN_BOOL(0);
 	if (a2->vl_len < 12) sz = a2->vl_len - 4;
 	strncpy(str, a2->vl_dat, sz);
 	str[sz] = 0;
