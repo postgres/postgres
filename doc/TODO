@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Oct 12 21:54:30 EDT 2000
+Last updated:		Sat Oct 14 00:19:18 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -260,6 +260,7 @@ MISC
 * Remove pg_listener index
 * Remove ANALYZE from VACUUM so it can be run separately without locks
 * Gather more accurate dispersion statistics using indexes
+* Keep statistics about clustering of table rows
 * Improve statistics storage in pg_class [performance]
 * Improve VACUUM speed with indexes [vacuum]
 * Reduce VACUUM lock time by moving tuples with read lock, then write
