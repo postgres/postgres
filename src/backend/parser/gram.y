@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.95 1999/07/27 03:51:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.96 1999/07/28 17:39:38 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -55,7 +55,6 @@
 
 static char saved_relname[NAMEDATALEN];  /* need this for complex attributes */
 static bool QueryIsRule = FALSE;
-static List *saved_In_Expr = NIL;
 static Oid	*param_type_info;
 static int	pfunc_num_args;
 extern List *parsetree;
@@ -213,9 +212,8 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <defelt>	def_elem
 %type <node>	def_arg, columnElem, where_clause,
 				a_expr, a_expr_or_null, b_expr, AexprConst,
-				in_expr, in_expr_nodes, not_in_expr, not_in_expr_nodes,
-				having_clause
-%type <list>	row_descriptor, row_list, c_list, c_expr
+				in_expr, having_clause
+%type <list>	row_descriptor, row_list, c_list, c_expr, in_expr_nodes
 %type <node>	row_expr
 %type <str>		row_op
 %type <node>	case_expr, case_arg, when_clause, case_default
@@ -3986,33 +3984,59 @@ a_expr:  attr
 						makeA_Expr(OP, "<", $1, $4),
 						makeA_Expr(OP, ">", $1, $6));
 				}
-		| a_expr IN { saved_In_Expr = lcons($1,saved_In_Expr); } '(' in_expr ')'
+		| a_expr IN '(' in_expr ')'
 				{
-					saved_In_Expr = lnext(saved_In_Expr);
-					if (nodeTag($5) == T_SubLink)
+					/* in_expr returns a SubLink or a list of a_exprs */
+					if (IsA($4, SubLink))
 					{
-							SubLink *n = (SubLink *)$5;
+							SubLink *n = (SubLink *)$4;
 							n->lefthand = lcons($1, NIL);
 							n->oper = lcons("=",NIL);
 							n->useor = false;
 							n->subLinkType = ANY_SUBLINK;
 							$$ = (Node *)n;
 					}
-					else	$$ = $5;
-				}
-		| a_expr NOT IN { saved_In_Expr = lcons($1,saved_In_Expr); } '(' not_in_expr ')'
-				{
-					saved_In_Expr = lnext(saved_In_Expr);
-					if (nodeTag($6) == T_SubLink)
+					else
 					{
-							SubLink *n = (SubLink *)$6;
-							n->lefthand = lcons($1, NIL);
-							n->oper = lcons("<>",NIL);
-							n->useor = false;
-							n->subLinkType = ALL_SUBLINK;
-							$$ = (Node *)n;
+						Node *n = NULL;
+						List *l;
+						foreach(l, (List *) $4)
+						{
+							Node *cmp = makeA_Expr(OP, "=", $1, lfirst(l));
+							if (n == NULL)
+								n = cmp;
+							else
+								n = makeA_Expr(OR, NULL, n, cmp);
+						}
+						$$ = n;
 					}
-					else	$$ = $6;
+				}
+		| a_expr NOT IN '(' in_expr ')'
+				{
+					/* in_expr returns a SubLink or a list of a_exprs */
+					if (IsA($5, SubLink))
+					{
+						SubLink *n = (SubLink *)$5;
+						n->lefthand = lcons($1, NIL);
+						n->oper = lcons("<>",NIL);
+						n->useor = false;
+						n->subLinkType = ALL_SUBLINK;
+						$$ = (Node *)n;
+					}
+					else
+					{
+						Node *n = NULL;
+						List *l;
+						foreach(l, (List *) $5)
+						{
+							Node *cmp = makeA_Expr(OP, "<>", $1, lfirst(l));
+							if (n == NULL)
+								n = cmp;
+							else
+								n = makeA_Expr(AND, NULL, n, cmp);
+						}
+						$$ = n;
+					}
 				}
 		| a_expr Op '(' SubSelect ')'
 				{
@@ -4632,33 +4656,13 @@ in_expr:  SubSelect
 					$$ = (Node *)n;
 				}
 		| in_expr_nodes
-				{	$$ = $1; }
+				{	$$ = (Node *)$1; }
 		;
 
-in_expr_nodes:  AexprConst
-				{	$$ = makeA_Expr(OP, "=", lfirst(saved_In_Expr), $1); }
-		| in_expr_nodes ',' AexprConst
-				{	$$ = makeA_Expr(OR, NULL, $1,
-						makeA_Expr(OP, "=", lfirst(saved_In_Expr), $3));
-				}
-		;
-
-not_in_expr:  SubSelect
-				{
-					SubLink *n = makeNode(SubLink);
-					n->subselect = $1;
-					$$ = (Node *)n;
-				}
-		| not_in_expr_nodes
-				{	$$ = $1; }
-		;
-
-not_in_expr_nodes:  AexprConst
-				{	$$ = makeA_Expr(OP, "<>", lfirst(saved_In_Expr), $1); }
-		| not_in_expr_nodes ',' AexprConst
-				{	$$ = makeA_Expr(AND, NULL, $1,
-						makeA_Expr(OP, "<>", lfirst(saved_In_Expr), $3));
-				}
+in_expr_nodes:  a_expr
+				{	$$ = lcons($1, NIL); }
+		| in_expr_nodes ',' a_expr
+				{	$$ = lappend($1, $3); }
 		;
 
 /* Case clause
@@ -5239,7 +5243,6 @@ void parser_init(Oid *typev, int nargs)
 {
 	QueryIsRule = FALSE;
 	saved_relname[0]= '\0';
-	saved_In_Expr = NULL;
 
 	param_type_init(typev, nargs);
 }
