@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * dynahash.c--
+ * dynahash.c
  *	  dynamic hashing
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.16 1998/09/01 04:33:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.16.2.1 1999/03/07 02:01:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,7 +174,9 @@ hash_create(int nelem, HASHCTL *info, int flags)
 
 	if (flags & HASH_SHARED_MEM)
 	{
-		/* ctl structure is preallocated for shared memory tables */
+		/* ctl structure is preallocated for shared memory tables.
+		 * Note that HASH_DIRSIZE had better be set as well.
+		 */
 
 		hashp->hctl = (HHDR *) info->hctl;
 		hashp->segbase = (char *) info->segbase;
@@ -190,6 +192,7 @@ hash_create(int nelem, HASHCTL *info, int flags)
 	{
 		/* setup hash table defaults */
 
+		hashp->hctl = NULL;
 		hashp->alloc = (dhalloc_ptr) MEM_ALLOC;
 		hashp->dir = NULL;
 		hashp->segbase = NULL;
@@ -210,11 +213,6 @@ hash_create(int nelem, HASHCTL *info, int flags)
 	hctl->accesses = hctl->collisions = 0;
 #endif
 
-	if (flags & HASH_BUCKET)
-	{
-		hctl->bsize = info->bsize;
-		hctl->bshift = my_log2(info->bsize);
-	}
 	if (flags & HASH_SEGMENT)
 	{
 		hctl->ssize = info->ssize;
@@ -224,13 +222,12 @@ hash_create(int nelem, HASHCTL *info, int flags)
 		hctl->ffactor = info->ffactor;
 
 	/*
-	 * SHM hash tables have fixed maximum size (allocate a maximal sized
-	 * directory).
+	 * SHM hash tables have fixed directory size passed by the caller.
 	 */
 	if (flags & HASH_DIRSIZE)
 	{
-		hctl->max_dsize = my_log2(info->max_size);
-		hctl->dsize = my_log2(info->dsize);
+		hctl->max_dsize = info->max_dsize;
+		hctl->dsize = info->dsize;
 	}
 
 	/*
@@ -254,8 +251,8 @@ hash_create(int nelem, HASHCTL *info, int flags)
 }
 
 /*
-  Allocate and initialize an HTAB structure
-  */
+ * Set default HHDR parameters.
+ */
 static int
 hdefault(HTAB *hashp)
 {
@@ -264,8 +261,6 @@ hdefault(HTAB *hashp)
 	MemSet(hashp->hctl, 0, sizeof(HHDR));
 
 	hctl = hashp->hctl;
-	hctl->bsize = DEF_BUCKET_SIZE;
-	hctl->bshift = DEF_BUCKET_SHIFT;
 	hctl->ssize = DEF_SEGSIZE;
 	hctl->sshift = DEF_SEGSIZE_SHIFT;
 	hctl->dsize = DEF_DIRSIZE;
@@ -295,42 +290,44 @@ init_htab(HTAB *hashp, int nelem)
 	SEG_OFFSET *segp;
 	int			nbuckets;
 	int			nsegs;
-	int			l2;
 	HHDR	   *hctl;
 
 	hctl = hashp->hctl;
 
 	/*
-	 * Divide number of elements by the fill factor and determine a
+	 * Divide number of elements by the fill factor to determine a
 	 * desired number of buckets.  Allocate space for the next greater
 	 * power of two number of buckets
 	 */
 	nelem = (nelem - 1) / hctl->ffactor + 1;
 
-	l2 = my_log2(nelem);
-	nbuckets = 1 << l2;
+	nbuckets = 1 << my_log2(nelem);
 
 	hctl->max_bucket = hctl->low_mask = nbuckets - 1;
 	hctl->high_mask = (nbuckets << 1) - 1;
 
+	/*
+	 * Figure number of directory segments needed, round up to a power of 2
+	 */
 	nsegs = (nbuckets - 1) / hctl->ssize + 1;
 	nsegs = 1 << my_log2(nsegs);
 
-	if (nsegs > hctl->dsize)
-		hctl->dsize = nsegs;
-
-	/* Use two low order bits of points ???? */
-
 	/*
-	 * if ( !(hctl->mem = bit_alloc ( nbuckets )) ) return(-1); if (
-	 * !(hctl->mod = bit_alloc ( nbuckets )) ) return(-1);
+	 * Make sure directory is big enough.
+	 * If pre-allocated directory is too small, choke (caller screwed up).
 	 */
+	if (nsegs > hctl->dsize)
+	{
+		if (!(hashp->dir))
+			hctl->dsize = nsegs;
+		else
+			return -1;
+	}
 
-	/* allocate a directory */
+	/* Allocate a directory */
 	if (!(hashp->dir))
 	{
-		hashp->dir =
-			(SEG_OFFSET *) hashp->alloc(hctl->dsize * sizeof(SEG_OFFSET));
+		hashp->dir = (SEG_OFFSET *) hashp->alloc(hctl->dsize * sizeof(SEG_OFFSET));
 		if (!hashp->dir)
 			return -1;
 	}
@@ -347,11 +344,9 @@ init_htab(HTAB *hashp, int nelem)
 	}
 
 #if HASH_DEBUG
-	fprintf(stderr, "%s\n%s%x\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%x\n%s%x\n%s%d\n%s%d\n",
+	fprintf(stderr, "%s\n%s%x\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%x\n%s%x\n%s%d\n%s%d\n",
 			"init_htab:",
 			"TABLE POINTER   ", hashp,
-			"BUCKET SIZE     ", hctl->bsize,
-			"BUCKET SHIFT    ", hctl->bshift,
 			"DIRECTORY SIZE  ", hctl->dsize,
 			"SEGMENT SIZE    ", hctl->ssize,
 			"SEGMENT SHIFT   ", hctl->sshift,
@@ -365,14 +360,59 @@ init_htab(HTAB *hashp, int nelem)
 	return 0;
 }
 
+/*
+ * Estimate the space needed for a hashtable containing the given number
+ * of entries of given size.
+ * NOTE: this is used to estimate the footprint of hashtables in shared
+ * memory; therefore it does not count HTAB which is in local memory.
+ * NB: assumes that all hash structure parameters have default values!
+ */
+long
+hash_estimate_size(long num_entries, long keysize, long datasize)
+{
+	long	size = 0;
+	long	nBuckets,
+			nSegments,
+			nDirEntries,
+			nRecordAllocs,
+			recordSize;
+
+	/* estimate number of buckets wanted */
+	nBuckets = 1L << my_log2((num_entries - 1) / DEF_FFACTOR + 1);
+	/* # of segments needed for nBuckets */
+	nSegments = 1L << my_log2((nBuckets - 1) / DEF_SEGSIZE + 1);
+	/* directory entries */
+	nDirEntries = DEF_DIRSIZE;
+	while (nDirEntries < nSegments)
+		nDirEntries <<= 1;		/* dir_alloc doubles dsize at each call */
+
+	/* fixed control info */
+	size += MAXALIGN(sizeof(HHDR));	/* but not HTAB, per above */
+	/* directory */
+	size += MAXALIGN(nDirEntries * sizeof(SEG_OFFSET));
+	/* segments */
+	size += nSegments * MAXALIGN(DEF_SEGSIZE * sizeof(BUCKET_INDEX));
+	/* records --- allocated in groups of BUCKET_ALLOC_INCR */
+	recordSize = sizeof(BUCKET_INDEX) + keysize + datasize;
+	recordSize = MAXALIGN(recordSize);
+	nRecordAllocs = (num_entries - 1) / BUCKET_ALLOC_INCR + 1;
+	size += nRecordAllocs * BUCKET_ALLOC_INCR * recordSize;
+
+	return size;
+}
+
+
 /********************** DESTROY ROUTINES ************************/
+
+/*
+ * XXX this sure looks thoroughly broken to me --- tgl 2/99.
+ * It's freeing every entry individually --- but they weren't
+ * allocated individually, see bucket_alloc!!  Why doesn't it crash?
+ */
 
 void
 hash_destroy(HTAB *hashp)
 {
-	/* cannot destroy a shared memory hash table */
-	Assert(!hashp->segbase);
-
 	if (hashp != NULL)
 	{
 		SEG_OFFSET	segNum;
@@ -383,6 +423,13 @@ hash_destroy(HTAB *hashp)
 					p,
 					q;
 		ELEMENT    *curr;
+
+		/* cannot destroy a shared memory hash table */
+		Assert(!hashp->segbase);
+		/* allocation method must be one we know how to free, too */
+		Assert(hashp->alloc == (dhalloc_ptr) MEM_ALLOC);
+
+		hash_stats("destroy", hashp);
 
 		for (segNum = 0; nsegs > 0; nsegs--, segNum++)
 		{
@@ -397,11 +444,10 @@ hash_destroy(HTAB *hashp)
 					MEM_FREE((char *) curr);
 				}
 			}
-			free((char *) segp);
+			MEM_FREE((char *) segp);
 		}
 		MEM_FREE((char *) hashp->dir);
 		MEM_FREE((char *) hashp->hctl);
-		hash_stats("destroy", hashp);
 		MEM_FREE((char *) hashp);
 	}
 }
@@ -603,7 +649,7 @@ hash_search(HTAB *hashp,
 	/* link into chain */
 	*prevIndexPtr = currIndex;
 
-	/* copy key and data */
+	/* copy key into record */
 	destAddr = (char *) &(curr->key);
 	memmove(destAddr, keyPtr, hctl->keysize);
 	curr->next = INVALID_INDEX;
@@ -618,13 +664,10 @@ hash_search(HTAB *hashp,
 	 */
 	if (++hctl->nkeys / (hctl->max_bucket + 1) > hctl->ffactor)
 	{
-
-		/*
-		 * fprintf(stderr,"expanding on '%s'\n",keyPtr);
-		 * hash_stats("expanded table",hashp);
+		/* NOTE: failure to expand table is not a fatal error,
+		 * it just means we have to run at higher fill factor than we wanted.
 		 */
-		if (!expand_table(hashp))
-			return NULL;
+		expand_table(hashp);
 	}
 	return &(curr->key);
 }
@@ -725,23 +768,25 @@ expand_table(HTAB *hashp)
 #endif
 
 	hctl = hashp->hctl;
-	new_bucket = ++hctl->max_bucket;
-	old_bucket = (hctl->max_bucket & hctl->low_mask);
 
+	new_bucket = hctl->max_bucket + 1;
 	new_segnum = new_bucket >> hctl->sshift;
 	new_segndx = MOD(new_bucket, hctl->ssize);
 
 	if (new_segnum >= hctl->nsegs)
 	{
-
-		/* Allocate new segment if necessary */
+		/* Allocate new segment if necessary -- could fail if dir full */
 		if (new_segnum >= hctl->dsize)
-			dir_realloc(hashp);
+			if (! dir_realloc(hashp))
+				return 0;
 		if (!(hashp->dir[new_segnum] = seg_alloc(hashp)))
 			return 0;
 		hctl->nsegs++;
 	}
 
+	/* OK, we got a new bucket */
+	hctl->max_bucket++;
+	old_bucket = (hctl->max_bucket & hctl->low_mask);
 
 	if (new_bucket > hctl->high_mask)
 	{
@@ -790,31 +835,32 @@ static int
 dir_realloc(HTAB *hashp)
 {
 	char	   *p;
-	char	  **p_ptr;
+	char	   *old_p;
+	long		new_dsize;
 	long		old_dirsize;
 	long		new_dirsize;
-
 
 	if (hashp->hctl->max_dsize != NO_MAX_DSIZE)
 		return 0;
 
 	/* Reallocate directory */
-	old_dirsize = hashp->hctl->dsize * sizeof(SEGMENT *);
-	new_dirsize = old_dirsize << 1;
+	new_dsize = hashp->hctl->dsize << 1;
+	old_dirsize = hashp->hctl->dsize * sizeof(SEG_OFFSET);
+	new_dirsize = new_dsize * sizeof(SEG_OFFSET);
 
-	p_ptr = (char **) hashp->dir;
+	old_p = (char *) hashp->dir;
 	p = (char *) hashp->alloc((unsigned long) new_dirsize);
+
 	if (p != NULL)
 	{
-		memmove(p, *p_ptr, old_dirsize);
-		MemSet(*p_ptr + old_dirsize, 0, new_dirsize - old_dirsize);
-		free((char *) *p_ptr);
-		*p_ptr = p;
-		hashp->hctl->dsize = new_dirsize;
+		memmove(p, old_p, old_dirsize);
+		MemSet(p + old_dirsize, 0, new_dirsize - old_dirsize);
+		MEM_FREE((char *) old_p);
+		hashp->dir = (SEG_OFFSET *) p;
+		hashp->hctl->dsize = new_dsize;
 		return 1;
 	}
 	return 0;
-
 }
 
 
@@ -824,15 +870,14 @@ seg_alloc(HTAB *hashp)
 	SEGMENT		segp;
 	SEG_OFFSET	segOffset;
 
-
 	segp = (SEGMENT) hashp->alloc((unsigned long)
-								  sizeof(SEGMENT) * hashp->hctl->ssize);
+								  sizeof(BUCKET_INDEX) * hashp->hctl->ssize);
 
 	if (!segp)
 		return 0;
 
 	MemSet((char *) segp, 0,
-		   (long) sizeof(SEGMENT) * hashp->hctl->ssize);
+		   (long) sizeof(BUCKET_INDEX) * hashp->hctl->ssize);
 
 	segOffset = MAKE_HASHOFFSET(hashp, segp);
 	return segOffset;
@@ -850,11 +895,11 @@ bucket_alloc(HTAB *hashp)
 	BUCKET_INDEX tmpIndex,
 				lastIndex;
 
-	bucketSize =
-		sizeof(BUCKET_INDEX) + hashp->hctl->keysize + hashp->hctl->datasize;
+	/* Each bucket has a BUCKET_INDEX header plus user data. */
+	bucketSize = sizeof(BUCKET_INDEX) + hashp->hctl->keysize + hashp->hctl->datasize;
 
 	/* make sure its aligned correctly */
-	bucketSize += sizeof(long *) - (bucketSize % sizeof(long *));
+	bucketSize = MAXALIGN(bucketSize);
 
 	/*
 	 * tmpIndex is the shmem offset into the first bucket of the array.
@@ -871,8 +916,10 @@ bucket_alloc(HTAB *hashp)
 	lastIndex = hashp->hctl->freeBucketIndex;
 	hashp->hctl->freeBucketIndex = tmpIndex;
 
-	/* initialize each bucket to point to the one behind it */
-	for (i = 0; i < (BUCKET_ALLOC_INCR - 1); i++)
+	/* initialize each bucket to point to the one behind it.
+	 * NOTE: loop sets last bucket incorrectly; we fix below.
+	 */
+	for (i = 0; i < BUCKET_ALLOC_INCR; i++)
 	{
 		tmpBucket = GET_BUCKET(hashp, tmpIndex);
 		tmpIndex += bucketSize;
@@ -881,20 +928,21 @@ bucket_alloc(HTAB *hashp)
 
 	/*
 	 * the last bucket points to the old freelist head (which is probably
-	 * invalid or we wouldnt be here)
+	 * invalid or we wouldn't be here)
 	 */
 	tmpBucket->next = lastIndex;
 
 	return 1;
 }
 
-/* calculate the log base 2 of num */
+/* calculate ceil(log base 2) of num */
 int
 my_log2(long num)
 {
-	int			i = 1;
-	int			limit;
+	int			i;
+	long		limit;
 
-	for (i = 0, limit = 1; limit < num; limit = 2 * limit, i++);
+	for (i = 0, limit = 1; limit < num; i++, limit <<= 1)
+		;
 	return i;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.16 1998/09/01 03:25:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.16.2.1 1999/03/07 02:00:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,11 +71,17 @@ CreateSharedMemoryAndSemaphores(IPCKey key)
 	 * ----------------
 	 */
 	CreateSpinlocks(IPCKeyGetSpinLockSemaphoreKey(key));
-	size = BufferShmemSize() + LockShmemSize();
 
+	/*
+	 * Size of the primary shared-memory block is estimated via
+	 * moderately-accurate estimates for the big hogs, plus 100K for
+	 * the stuff that's too small to bother with estimating.
+	 */
+	size = BufferShmemSize() + LockShmemSize();
 #ifdef STABLE_MEMORY_STORAGE
 	size += MMShmemSize();
 #endif
+	size += 100000;
 
 	if (DebugLvl > 1)
 	{
@@ -113,8 +119,6 @@ CreateSharedMemoryAndSemaphores(IPCKey key)
 void
 AttachSharedMemoryAndSemaphores(IPCKey key)
 {
-	int			size;
-
 	/* ----------------
 	 *	create rather than attach if using private key
 	 * ----------------
@@ -136,8 +140,7 @@ AttachSharedMemoryAndSemaphores(IPCKey key)
 	 *	attach the buffer manager buffer pool (and semaphore)
 	 * ----------------
 	 */
-	size = BufferShmemSize() + LockShmemSize();
-	InitShmem(key, size);
+	InitShmem(key, 0);
 	InitBufferPool(key);
 
 	/* ----------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.38 1998/10/08 18:29:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.38.2.1 1999/03/07 02:00:49 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -42,7 +42,6 @@
 #include "storage/spin.h"
 #include "storage/proc.h"
 #include "storage/lock.h"
-#include "utils/dynahash.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 #include "utils/palloc.h"
@@ -340,8 +339,8 @@ LockMethodTableInit(char *tabName,
 	 * to find the different locks.
 	 * ----------------------
 	 */
-	info.keysize = sizeof(LOCKTAG);
-	info.datasize = sizeof(LOCK);
+	info.keysize = SHMEM_LOCKTAB_KEYSIZE;
+	info.datasize = SHMEM_LOCKTAB_DATASIZE;
 	info.hash = tag_hash;
 	hash_flags = (HASH_ELEM | HASH_FUNCTION);
 
@@ -362,8 +361,8 @@ LockMethodTableInit(char *tabName,
 	 * the same lock, additional information must be saved (locks per tx).
 	 * -------------------------
 	 */
-	info.keysize = XID_TAGSIZE;
-	info.datasize = sizeof(XIDLookupEnt);
+	info.keysize = SHMEM_XIDTAB_KEYSIZE;
+	info.datasize = SHMEM_XIDTAB_DATASIZE;
 	info.hash = tag_hash;
 	hash_flags = (HASH_ELEM | HASH_FUNCTION);
 
@@ -1491,35 +1490,26 @@ int
 LockShmemSize()
 {
 	int			size = 0;
-	int			nLockBuckets,
-				nLockSegs;
-	int			nXidBuckets,
-				nXidSegs;
 
-	nLockBuckets = 1 << (int) my_log2((NLOCKENTS - 1) / DEF_FFACTOR + 1);
-	nLockSegs = 1 << (int) my_log2((nLockBuckets - 1) / DEF_SEGSIZE + 1);
-
-	nXidBuckets = 1 << (int) my_log2((NLOCKS_PER_XACT - 1) / DEF_FFACTOR + 1);
-	nXidSegs = 1 << (int) my_log2((nLockBuckets - 1) / DEF_SEGSIZE + 1);
-
-	size += MAXALIGN(NBACKENDS * sizeof(PROC)); /* each MyProc */
-	size += MAXALIGN(NBACKENDS * sizeof(LOCKMETHODCTL));		/* each
-																 * lockMethodTable->ctl */
 	size += MAXALIGN(sizeof(PROC_HDR)); /* ProcGlobal */
+	size += MAXALIGN(MaxBackendId * sizeof(PROC)); /* each MyProc */
+	size += MAXALIGN(MaxBackendId * sizeof(LOCKMETHODCTL));		/* each
+																 * lockMethodTable->ctl */
 
-	size += MAXALIGN(my_log2(NLOCKENTS) * sizeof(void *));
-	size += MAXALIGN(sizeof(HHDR));
-	size += nLockSegs * MAXALIGN(DEF_SEGSIZE * sizeof(SEGMENT));
-	size += NLOCKENTS *			/* XXX not multiple of BUCKET_ALLOC_INCR? */
-		(MAXALIGN(sizeof(BUCKET_INDEX)) +
-		 MAXALIGN(sizeof(LOCK)));		/* contains hash key */
+	/* lockHash table */
+	size += hash_estimate_size(NLOCKENTS,
+							   SHMEM_LOCKTAB_KEYSIZE,
+							   SHMEM_LOCKTAB_DATASIZE);
 
-	size += MAXALIGN(my_log2(NBACKENDS) * sizeof(void *));
-	size += MAXALIGN(sizeof(HHDR));
-	size += nXidSegs * MAXALIGN(DEF_SEGSIZE * sizeof(SEGMENT));
-	size += NBACKENDS *			/* XXX not multiple of BUCKET_ALLOC_INCR? */
-		(MAXALIGN(sizeof(BUCKET_INDEX)) +
-		 MAXALIGN(sizeof(XIDLookupEnt)));		/* contains hash key */
+	/* xidHash table */
+	size += hash_estimate_size(MaxBackendId,
+							   SHMEM_XIDTAB_KEYSIZE,
+							   SHMEM_XIDTAB_DATASIZE);
+
+	/* Since the lockHash entry count above is only an estimate,
+	 * add 10% safety margin.
+	 */
+	size += size / 10;
 
 	return size;
 }

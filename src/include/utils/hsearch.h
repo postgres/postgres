@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hsearch.h,v 1.9 1998/09/01 04:39:12 momjian Exp $
+ * $Id: hsearch.h,v 1.9.2.1 1999/03/07 02:01:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,16 +16,23 @@
 
 /*
  * Constants
+ *
+ * A hash table has a top-level "directory", each of whose entries points
+ * to a "segment" of ssize bucket headers.  The maximum number of hash
+ * buckets is thus dsize * ssize (but dsize may be expansible).  Of course,
+ * the number of records in the table can be larger, but we don't want a
+ * whole lot of records per bucket or performance goes down.
+ *
+ * In a hash table allocated in shared memory, the directory cannot be
+ * expanded because it must stay at a fixed address.
  */
-#define DEF_BUCKET_SIZE		   256
-#define DEF_BUCKET_SHIFT	   8/* log2(BUCKET) */
 #define DEF_SEGSIZE			   256
-#define DEF_SEGSIZE_SHIFT			   8		/* log2(SEGSIZE)  */
+#define DEF_SEGSIZE_SHIFT	   8			/* log2(SEGSIZE)  */
 #define DEF_DIRSIZE			   256
-#define PRIME1				   37
+#define DEF_FFACTOR			   1			/* default fill factor */
+
+#define PRIME1				   37			/* for the hash function */
 #define PRIME2				   1048583
-#define DEF_FFACTOR			   1
-#define SPLTMAX				   8
 
 
 /*
@@ -46,10 +53,8 @@ typedef unsigned long SEG_OFFSET;
 
 typedef struct hashhdr
 {
-	long		bsize;			/* Bucket/Page Size */
-	long		bshift;			/* Bucket shift */
 	long		dsize;			/* Directory Size */
-	long		ssize;			/* Segment Size */
+	long		ssize;			/* Segment Size --- must be power of 2 */
 	long		sshift;			/* Segment shift */
 	long		max_bucket;		/* ID of Maximum bucket in use */
 	long		high_mask;		/* Mask to modulo into entire table */
@@ -59,8 +64,7 @@ typedef struct hashhdr
 	long		nsegs;			/* Number of allocated segments */
 	long		keysize;		/* hash key length in bytes */
 	long		datasize;		/* elem data length in bytes */
-	long		max_dsize;		/* 'dsize' limit if directory is fixed
-								 * size */
+	long		max_dsize;		/* 'dsize' limit if directory is fixed size */
 	BUCKET_INDEX freeBucketIndex;
 	/* index of first free bucket */
 #ifdef HASH_STATISTICS
@@ -83,14 +87,13 @@ typedef struct htab
 
 typedef struct hashctl
 {
-	long		bsize;			/* Bucket Size */
 	long		ssize;			/* Segment Size */
 	long		dsize;			/* Dirsize Size */
 	long		ffactor;		/* Fill factor */
 	long		(*hash) ();		/* Hash Function */
 	long		keysize;		/* hash key length in bytes */
 	long		datasize;		/* elem data length in bytes */
-	long		max_size;		/* limit to dsize if directory size is
+	long		max_dsize;		/* limit to dsize if directory size is
 								 * limited */
 	long	   *segbase;		/* base for calculating bucket + seg ptrs */
 	long	   *(*alloc) ();	/* memory allocation function */
@@ -100,7 +103,6 @@ typedef struct hashctl
 } HASHCTL;
 
 /* Flags to indicate action for hctl */
-#define HASH_BUCKET		0x001	/* Setting bucket size */
 #define HASH_SEGMENT	0x002	/* Setting segment size */
 #define HASH_DIRSIZE	0x004	/* Setting directory size */
 #define HASH_FFACTOR	0x008	/* Setting fill factor */
@@ -136,6 +138,7 @@ extern void hash_stats(char *where, HTAB *hashp);
 extern long *hash_search(HTAB *hashp, char *keyPtr, HASHACTION action,
 			bool *foundPtr);
 extern long *hash_seq(HTAB *hashp);
+extern long hash_estimate_size(long num_entries, long keysize, long datasize);
 
 /*
  * prototypes from functions in hashfn.c
