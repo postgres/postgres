@@ -1,12 +1,15 @@
-#!/bin/sh
+z#!/bin/sh
 #
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: Read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/contrib/pg_upgrade/Attic/pg_upgrade,v 1.3 2002/01/15 04:05:24 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/pg_upgrade/Attic/pg_upgrade,v 1.4 2002/01/15 04:50:37 momjian Exp $
 #
-# NOTE: we must be sure to update the version-checking code a few dozen lines
-# below for each new PostgreSQL release.
+# To migrate this to newer versions of PostgreSQL:  
+#	1)  Update the version numbers at the top of the file
+#	2)  Search for specific version mentions in the script and update
+#	    accordingly.
+#	3)  Add changes for next version.
 
 #set -x
 
@@ -15,8 +18,7 @@ ENABLE="Y"
 
 if [ "$ENABLE" != "Y" ]
 then
-	echo "Sorry, $0 cannot upgrade database
-version $SRC_VERSION to $DST_VERSION." 1>&2
+	echo "Sorry, $0 cannot upgrade database version $SRC_VERSION to $DST_VERSION." 1>&2
 	echo "The on-disk structure of tables has changed." 1>&2
 	echo "You will need to dump and restore using pg_dumpall." 1>&2
 	exit 1
@@ -59,8 +61,7 @@ then	echo "You must set the PGDATA environment variable or specify it with -D." 
 fi
 
 if [ ! -d "$PGDATA" ]
-then	echo "$PGDATA does not exist.
-$BASENAME aborted." 1>&2
+then	echo "$PGDATA does not exist.  Exiting." 1>&2
 	if [ "$PHASE" -eq 2 ]
 	then	echo "Perhaps you didn't run initdb." 1>&2
 	fi
@@ -68,8 +69,7 @@ $BASENAME aborted." 1>&2
 fi
 
 if [ "$USER" = "root" -o ! -r "$PGDATA"/PG_VERSION ]
-then	echo "You must run this as the PostgreSQL superuser.
-$BASENAME aborted." 1>&2
+then	echo "You must run this as the PostgreSQL superuser.  Exiting." 1>&2
 	exit 1
 fi
 
@@ -120,15 +120,15 @@ move_objfiles()
 
 	if [ ! -f "$SAVEDATA"/base/"$SRC_DBOID"/"$SRC_OID" -a \
 	     ! -h "$SAVEDATA"/base/"$SRC_DBOID"/"$SRC_OID" ]
-	then	echo "Move of database $DB, OID $SRC_OID, object $OBJ failed.
-File not found;  exiting" 1>&2
+	then	echo "Moving of database $DB, OID $SRC_OID, object $OBJ failed." 1>&2
+		echo "File not found.  Exiting." 1>&2
 		return 1
 	fi
 
 	if [ ! -f "$PGDATA"/base/"$DST_DBOID"/"$DST_OID" -a \
 	     ! -h "$PGDATA"/base/"$DST_DBOID"/"$DST_OID" ]
-	then	echo "Move of database $DB, OID $DST_OID, object $OBJ failed.
-File not found;  exiting" 1>&2
+	then	echo "Moving of database $DB, OID $DST_OID, object $OBJ failed." 1>&2
+		echo "File not found.  Exiting." 1>&2
 		return 1
 	fi
 
@@ -136,8 +136,8 @@ File not found;  exiting" 1>&2
 
 	mv -f "$SAVEDATA"/base/"$SRC_DBOID"/"$SRC_OID" "$PGDATA"/base/"$DST_DBOID"/"$DST_OID"
 	if [ "$?" -ne 0 ]
-	then	echo "Move of database $DB, OID $SRC_OID, object $OBJ
-to $DST_OID failed.;  exiting" 1>&2
+	then	echo "Moving of database $DB, OID $SRC_OID, object $OBJ" 1>&2
+		echo "to $DST_OID failed.  Exiting" 1>&2
 		return 1
 	fi
 
@@ -148,8 +148,8 @@ to $DST_OID failed.;  exiting" 1>&2
 		EXT=`basename "$FILE" | sed 's/^.*\.\(.*\)$/\1/'`
 		mv -f "$FILE" "$PGDATA"/base/"$DST_DBOID"/"$DST_OID"."$EXT"
 		if [ "$?" -ne 0 ]
-		then	echo "Move of database $DB, OID $SRC_OID, object $OBJ
-to $DST_OID failed.;  exiting" 1>&2
+		then	echo "Moving of database $DB, OID $SRC_OID, object $OBJ" 1>&2
+			echo "to $DST_OID failed.  Exiting." 1>&2
 			return 1
 		fi
 	done
@@ -171,17 +171,16 @@ then
 	# get version
 	SRC_VERSION=`cat "$PGDATA"/PG_VERSION`
 	if [ "$SRC_VERSION" = "" ]
-	then	echo "$BASENAME can not find PostgreSQL version file '$PGDATA/PG_VERSION'.
-$BASENAME aborted." 1>&2
+	then	echo "$BASENAME can not find the PostgreSQL version file" 1>&2
+		echo "'$PGDATA/PG_VERSION'.  Exiting." 1>&2
 		exit 1
 	fi
 
 	if [ 	"$SRC_VERSION" != "$CUR_VERSION" -a \
 		"$SRC_VERSION" != "$UPGRADE_VERSION" ]
 	then	echo "$BASENAME supports versions $UPGRADE_VERSION and $CUR_VERSION only." 1>&2
-		echo "However, your database is version $SRC_VERSION;
-$BASENAME aborted." 1>&2
-		echo "You will need to dump and restore using pg_dumpall." 1>&2
+		echo "However, your database is version $SRC_VERSION." 1>&2
+		echo "You will need to dump and restore using pg_dumpall.  Exiting." 1>&2
 		exit 1
 	fi
 
@@ -189,27 +188,26 @@ $BASENAME aborted." 1>&2
 	if ! pg_ctl status | sed -n '1p' | grep "is running" > /dev/null 2>&1
 	then	pg_ctl -w start
 		if [ $? -ne 0 ]
-		then	echo "Can not start server.
-$BASENAME aborted." 1>&2
+		then	echo "Can not start server.  Exiting." 1>&2
 			exit 1
 		fi
 	fi
 
 	# create directory for our data
 	if ! rm -rf "$INFODIR" 
-	then	echo "Deletion of old pg_upgrade_info directory failed, $INFODIR.
-$BASENAME aborted." 1>&2
+	then	echo "Deletion of old pg_upgrade_info directory $INFODIR failed." 1>&2
+		echo "Exiting." 1>&2
 		exit 1
 	fi
 	if ! mkdir "$INFODIR"
-	then	echo "Creation of new pg_upgrade_info directory failed, $INFODIR.
-$BASENAME aborted." 1>&2
+	then	echo "Creation of new pg_upgrade_info directory $INFODIR failed." 1>&2
+		echo "Exiting." 1>&2
 		exit 1
 	fi
 
 	if ! chmod og-rwx "$INFODIR"
- 	then	echo "Permission change on new pg_upgrade_info directory failed, $INFODIR.
-$BASENAME aborted." 1>&2
+ 	then	echo "Permission change on new pg_upgrade_info directory $INFODIR failed." 1>&2
+		echo "Exiting." 1>&2
 		exit 1
 	fi
 
@@ -238,8 +236,7 @@ $BASENAME aborted." 1>&2
 		else    print $0;
 	}' > "$INFODIR"/schema
 	if [ $? -ne 0 ]
-	then	echo "Can not dump schema.
-$BASENAME aborted." 1>&2
+	then	echo "Can not dump schema.  Exiting." 1>&2
 		exit 1
 	fi
 	
@@ -278,30 +275,27 @@ $BASENAME aborted." 1>&2
 
 	vacuumdb -a
 	if [ $? -ne 0 ]
-	then	echo "Can not vacuum server.
-$BASENAME aborted." 1>&2
+	then	echo "Can not vacuum server.  Exiting." 1>&2
 		exit 1
 	fi
 
 	# Stop server so we can move the directory.
 	pg_ctl -w stop
 	if [ $? -ne 0 ]
-	then	echo "Can not stop server.
-$BASENAME aborted." 1>&2
+	then	echo "Can not stop server.  Exiting." 1>&2
 		exit 1
 	fi
 	
 	# No matter what the directory name, call it data
 	mv "$PGDATA" "$INFODIR"/data
 	if [ $? -ne 0 ]
-	then	echo "Can not move old /$PGDATA out of the way.
-$BASENAME aborted." 1>&2
+	then	echo "Can not move old $PGDATA out of the way.  Exiting." 1>&2
 		exit 1
 	fi
 	echo
 	echo
-	echo "Plase 1 completed.
-Continue with the steps outlined in the $BASENAME manual page."
+	echo "Plase 1 completed."
+	echo "Continue with the steps outlined in the $BASENAME manual page."
 	exit 0
 fi
 
@@ -313,7 +307,7 @@ fi
 # check things
 
 if [ ! -d "$INFODIR" ]
-then	echo "There is no '$INFODIR' directory from a phase 1 run of $BASENAME." 1>&2
+then	echo "There is no '$INFODIR' directory from the phase 1 run of $BASENAME." 1>&2
 	exit 1	
 fi
 
@@ -347,8 +341,8 @@ DST_VERSION=`cat "$PGDATA"/PG_VERSION`
 # This code will need to be updated/reviewed for each new PostgreSQL release.
 
 if [ "$DST_VERSION" != "$CUR_VERSION" ]
-then	echo "$BASENAME is for PostgreSQL version $CUR_VERSION
-but $PGDATA/PG_VERSION contains $DST_VERSION." 1>&2
+then	echo "$BASENAME is for PostgreSQL version $CUR_VERSION" 1>&2
+	echo "but $PGDATA/PG_VERSION contains $DST_VERSION." 1>&2
 	echo "Did you run initdb for version $UPGRADE_VERSION by mistake?" 1>&2
 	exit 1
 fi
@@ -358,8 +352,7 @@ fi
 if pg_ctl status | sed -n '1p' | grep "is running" > /dev/null 2>&1
 then	pg_ctl -w stop
 	if [ $? -ne 0 ]
-	then	echo "Can no start server.
-$BASENAME aborted." 1>&2
+	then	echo "Can no start server.  Exiting." 1>&2
 		exit 1
 	fi
 fi
@@ -369,14 +362,15 @@ fi
 pg_resetxlog 2> /dev/null
 # file not found status is normally 127, not 1
 if [ "$?" -ne 1 ]
-then	echo "Unable to find pg_resetxlog in path.
-Install it from pgsql/contrib/pg_resetxlog and continue.;  exiting" 1>&2
+then	echo "Unable to find pg_resetxlog in your path." 1>&2
+	echo "Install it from pgsql/contrib/pg_resetxlog and continue.  Exiting." 1>&2
 	exit 1
 fi
 
 if ! pg_resetxlog -x 2>&1 | grep 'xid' > /dev/null 2>&1
-then	echo "Old version of pg_resetxlog found in path.
-Install a newer version from pgsql/contrib/pg_resetxlog.;  exiting" 1>&2
+then	echo "Old version of pg_resetxlog found in path." 1>&2
+	echo "Install a newer version of pg_resetxlog from pgsql/contrib/pg_resetxlog." 1>&2
+	echo "Exiting." 1>&2
 	exit 1
 fi
 
@@ -385,7 +379,7 @@ fi
 
 SRC_XID=`pg_resetxlog -n "$SAVEDATA" | grep "NextXID" | awk -F'  *' '{print $4}'`
 if [ "$SRC_VERSION" = "7.1" -a "$SRC_XID" -gt 2000000000 ]
-then	echo "XID too high for $BASENAME.;  exiting" 1>&2
+then	echo "XID too high for $BASENAME.  Exiting." 1>&2
 	exit 1
 fi
 DST_XID=`pg_resetxlog -n "$PGDATA" | grep "NextXID" | awk -F'  *' '{print $4}'`
@@ -395,7 +389,7 @@ DST_XID=`pg_resetxlog -n "$PGDATA" | grep "NextXID" | awk -F'  *' '{print $4}'`
 pg_resetxlog -n "$SAVEDATA" | grep "^LC_" > /tmp/$$.0
 pg_resetxlog -n "$PGDATA" | grep "^LC_" > /tmp/$$.1
 if ! diff /tmp/$$.0 /tmp/$$.1 > /dev/null
-then	echo "Locales do not match between the two versions.;  exiting" 1>&2
+then	echo "Locales do not match between the two versions.  Exiting." 1>&2
 	exit 1
 fi
 
@@ -403,8 +397,7 @@ fi
 
 pg_ctl -w start
 if [ $? -ne 0 ]
-then	echo "Can not start server.
-$BASENAME aborted." 1>&2
+then	echo "Can not start server.  Exiting." 1>&2
 	exit 1
 fi
 
@@ -418,12 +411,11 @@ fi
 
 psql template1 < "$INFODIR"/schema
 if [ $? -ne 0 ]
-then	echo "There were errors in the input script.
-$BASENAME aborted." 1>&2
+then	echo "There were errors in the input script.  Exiting." 1>&2
 	exit 1
 fi
 
-echo "Input script complete, fixing row commit statuses..."
+echo "Input script completed, fixing row commit statuses..."
 
 # XXX do we still need this?
 # Now vacuum each result database because our movement of transaction log
@@ -431,8 +423,7 @@ echo "Input script complete, fixing row commit statuses..."
 
 vacuumdb -a
 if [ $? -ne 0 ]
-then	echo "There were errors during VACUUM.
-$BASENAME aborted." 1>&2
+then	echo "There were errors during VACUUM.  Exiting." 1>&2
 	exit 1
 fi
 
@@ -445,7 +436,7 @@ make_dbobjoidmap > /tmp/$$.dbobjoidmap || exit "$?"
 
 pg_ctl -w stop
 if [ "$?" -ne 0 ]
-then	echo "Unable to stop database server.;  exiting" 1>&2
+then	echo "Unable to stop database server.  Exiting." 1>&2
 	exit 1
 fi
 
@@ -507,7 +498,7 @@ fi
 
 pg_resetxlog -x "$MAX_XID" "$PGDATA"
 if [ "$?" -ne 0 ]
-then	echo "Unable to set new XID.;  exiting" 1>&2
+then	echo "Unable to set new XID.  Exiting." 1>&2
 	exit 1
 fi
 
@@ -521,13 +512,13 @@ mv -f "$SAVEDATA"/pg_xlog "$PGDATA"
 LOG_ID=`pg_resetxlog -n "$SAVEDATA" | grep "Current log file id:" |
 	awk -F'  *' '{print $5}'`
 if [ "$LOG_ID" = "" ]
-then	echo "Unable to get old log file id.;  exiting" 1>&2
+then	echo "Unable to get old log file id.  Exiting." 1>&2
 	exit 1
 fi
 SEG_ID=`pg_resetxlog -n "$SAVEDATA" | grep "Next log file segment:" |
 	awk -F'  *' '{print $5}'`
 if [ "$SEG_ID" = "" ]
-then	echo "Unable to get old log segment id.;  exiting" 1>&2
+then	echo "Unable to get old log segment id.  Exiting." 1>&2
 	exit 1
 fi
 
@@ -535,7 +526,7 @@ fi
 
 pg_resetxlog -l "$LOG_ID" "$SEG_ID" "$PGDATA"
 if [ "$?" -ne 0 ]
-then	echo "Unable to set new log file/segment id.;  exiting" 1>&2
+then	echo "Unable to set new log file/segment id.  Exiting." 1>&2
 	exit 1
 fi
 
@@ -543,7 +534,7 @@ fi
 
 pg_ctl -w start
 if [ "$?" -ne 0 ]
-then	echo "Unable to restart database server.;  exiting" 1>&2
+then	echo "Unable to restart database server.  Exiting." 1>&2
 	exit 1
 fi
 
@@ -554,8 +545,7 @@ if [ "$SRC_VERSION" = "7.1" -o \
 then	echo "Set sequence values..."
 	psql -d template1 -At < "$INFODIR"/setval
 	if [ $? -ne 0 ]
-	then	echo "There were errors during int4 sequence restore.
-$BASENAME aborted." 1>&2
+	then	echo "There were errors during int4 sequence restore.  Exiting." 1>&2
 		exit 1
 	fi
 fi
@@ -563,5 +553,4 @@ fi
 echo
 echo
 echo "You may remove the old database files with 'rm -r $INFODIR'."
-
 exit 0

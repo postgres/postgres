@@ -10,13 +10,3 @@ Read the manual page for more information.  To view it:
 Bruce Momjian
 
 2002-01-14
-
---
-
-To migrate this to newer versions of PostgreSQL:  
-
-	1)  Update the version numbers at the top of the file
-	2)  Search for specific version mentions in the script and update
-	    accordingly.
-	3)  Add changes for next version.
-
