@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.306 2003/11/27 18:14:02 petere Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.307 2003/11/27 19:44:55 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -422,38 +422,16 @@ fi],
 [AC_MSG_RESULT(no)])
 AC_SUBST(with_java)
 
-dnl A note on the Kerberos and OpenSSL options:
-dnl
-dnl The user can give an argument to the option in order the specify
-dnl the base path of the respective installation (what he specified
-dnl perhaps as --prefix). If no argument is given ($withval is "yes")
-dnl then we take the path where the package installs by default. This
-dnl way the user doesn't have to use redundant --with-includes and
-dnl --with-libraries options, but he can still use them if the layout
-dnl is non-standard.
-
 #
 # Kerberos 4
 #
 AC_MSG_CHECKING([whether to build with Kerberos 4 support])
-PGAC_ARG_OPTARG(with, krb4, [[  --with-krb4[=DIR]       build with Kerberos 4 support [/usr/athena]]],
-                [krb4_prefix=/usr/athena],
-                [krb4_prefix=$withval],
+PGAC_ARG_BOOL(with, krb4, no, [  --with-krb4             build with Kerberos 4 support],
 [
-  AC_MSG_RESULT(yes)
   AC_DEFINE(KRB4, 1, [Define to build with Kerberos 4 support. (--with-krb4)])
-
-  if test -d "$krb4_prefix/include"; then
-    INCLUDES="$INCLUDES -I$krb4_prefix/include"
-  fi
-  if test -d "$krb4_prefix/lib"; then
-    LIBDIRS="$LIBDIRS -L$krb4_prefix/lib"
-  fi
-
   krb_srvtab="/etc/srvtab"
-],
-[AC_MSG_RESULT(no)])
-
+])
+AC_MSG_RESULT([$with_krb4])
 AC_SUBST(with_krb4)
 
 
@@ -461,24 +439,12 @@ AC_SUBST(with_krb4)
 # Kerberos 5
 #
 AC_MSG_CHECKING([whether to build with Kerberos 5 support])
-PGAC_ARG_OPTARG(with, krb5, [[  --with-krb5[=DIR]       build with Kerberos 5 support [/usr/athena]]],
-              [krb5_prefix=/usr/athena],
-              [krb5_prefix=$withval],
+PGAC_ARG_BOOL(with, krb5, no, [  --with-krb5             build with Kerberos 5 support],
 [
-  AC_MSG_RESULT([yes])
   AC_DEFINE(KRB5, 1, [Define to build with Kerberos 5 support. (--with-krb5)])
-
-  if test -d "$krb5_prefix/include"; then
-    INCLUDES="$INCLUDES -I$krb5_prefix/include"
-  fi
-  if test -d "$krb5_prefix/lib"; then
-    LIBDIRS="$LIBDIRS -L$krb5_prefix/lib"
-  fi
-
   krb_srvtab="FILE:\$(sysconfdir)/krb5.keytab"
-],
-[AC_MSG_RESULT(no)])
-
+])
+AC_MSG_RESULT([$with_krb5])
 AC_SUBST(with_krb5)
 
 
@@ -526,22 +492,10 @@ AC_SUBST(with_rendezvous)
 #
 # OpenSSL
 #
-PGAC_ARG_OPTARG(with, openssl,
-                [[  --with-openssl[=DIR]    build with OpenSSL support [/usr/local/ssl]]],
-                [openssl_prefix=/usr/local/ssl],
-                [openssl_prefix=$withval],
-[
-  AC_MSG_RESULT([building with OpenSSL support])
-  AC_DEFINE([USE_SSL], 1, [Define to build with (Open)SSL support. (--with-openssl)])
-
-  if test -d "${openssl_prefix}/include" ; then
-    INCLUDES="$INCLUDES -I${openssl_prefix}/include"
-  fi
-  if test -d "${openssl_prefix}/lib" ; then
-    LIBDIRS="$LIBDIRS -L${openssl_prefix}/lib"
-  fi
-])
-
+AC_MSG_CHECKING([whether to build with OpenSSL support])
+PGAC_ARG_BOOL(with, openssl, no, [  --with-openssl          build with OpenSSL support],
+              [AC_DEFINE([USE_SSL], 1, [Define to build with (Open)SSL support. (--with-openssl)])])
+AC_MSG_RESULT([$with_openssl])
 AC_SUBST(with_openssl)
 
 

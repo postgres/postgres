@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.185 2003/11/26 15:56:48 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.186 2003/11/27 19:44:56 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -812,28 +812,19 @@ JAVACMD=$JAVA_HOME/bin/java
       </varlistentry>
 
       <varlistentry>
-       <term><option>--with-krb4<optional>=<replaceable>DIRECTORY</></></option></term>
-       <term><option>--with-krb5<optional>=<replaceable>DIRECTORY</></></option></term>
+       <term><option>--with-krb4</option></term>
+       <term><option>--with-krb5</option></term>
        <listitem>
         <para>
          Build with support for Kerberos authentication. You can use
-         either Kerberos version 4 or 5, but not both. The
-         <replaceable>DIRECTORY</> argument specifies the root
-         directory of the Kerberos installation;
-         <filename>/usr/athena</> is assumed as default. If the
-         relevant header files and libraries are not under a common
-         parent directory, then you must use the
-         <option>--with-includes</> and <option>--with-libraries</>
-         options in addition to this option. If, on the other hand,
-         the required files are in a location that is searched by
-         default (e.g., <filename>/usr/lib</>), then you can leave off
-         the argument.
-        </para>
-
-        <para>
-         <filename>configure</> will check for the required header
-         files and libraries to make sure that your Kerberos
-         installation is sufficient before proceeding.
+         either Kerberos version 4 or 5, but not both.  On many
+         systems, the Kerberos system is not installed in a location
+         that is searched by default (e.g., <filename>/usr/include</>,
+         <filename>/usr/lib</>), so you must use the options
+         <option>--with-includes</> and <option>--with-libraries</> in
+         addition to this option.  <filename>configure</> will check
+         for the required header files and libraries to make sure that
+         your Kerberos installation is sufficient before proceeding.
         </para>
        </listitem>
       </varlistentry>
@@ -855,20 +846,15 @@ JAVACMD=$JAVA_HOME/bin/java
         <seealso>SSL</seealso>
        </indexterm>
 
-       <term><option>--with-openssl<optional>=<replaceable>DIRECTORY</></></option></term>
+       <term><option>--with-openssl</option></term>
        <listitem>
         <para>
-         Build with support for <acronym>SSL</> (encrypted) connections. 
-         This requires the <productname>OpenSSL</> package to be installed.
-         The <replaceable>DIRECTORY</> argument specifies the
-         root directory of the <productname>OpenSSL</> installation; the
-         default is <filename>/usr/local/ssl</>.
-        </para>
-
-        <para>
-         <filename>configure</> will check for the required header
-         files and libraries to make sure that your <productname>OpenSSL</>
-         installation is sufficient before proceeding.
+         Build with support for <acronym>SSL</> (encrypted)
+         connections. This requires the <productname>OpenSSL</>
+         package to be installed.  <filename>configure</> will check
+         for the required header files and libraries to make sure that
+         your <productname>OpenSSL</> installation is sufficient
+         before proceeding.
         </para>
        </listitem>
       </varlistentry>

@@ -865,12 +865,12 @@ Optional Packages:
   --with-perl             build Perl modules (PL/Perl)
   --with-python           build Python modules (PL/Python)
   --with-java             build JDBC interface and Java tools
-  --with-krb4[=DIR]       build with Kerberos 4 support [/usr/athena]
-  --with-krb5[=DIR]       build with Kerberos 5 support [/usr/athena]
+  --with-krb4             build with Kerberos 4 support
+  --with-krb5             build with Kerberos 5 support
   --with-krb-srvnam=NAME  name of the service principal in Kerberos [postgres]
   --with-pam              build with PAM support
   --with-rendezvous       build with Rendezvous support
-  --with-openssl[=DIR]    build with OpenSSL support [/usr/local/ssl]
+  --with-openssl          build with OpenSSL support
   --without-readline      do not use Readline
   --without-zlib          do not use Zlib
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
@@ -3309,7 +3309,6 @@ fi;
 
 
 
-
 #
 # Kerberos 4
 #
@@ -3324,47 +3323,32 @@ if test "${with_krb4+set}" = set; then
 
   case $withval in
     yes)
-      krb4_prefix=/usr/athena
-      ;;
-    no)
-      :
-      ;;
-    *)
-      with_krb4=yes
-krb4_prefix=$withval
-      ;;
-  esac
 
-else
-  with_krb4=no
-fi;
-
-
-if test "$with_krb4" = yes; then
-
-  echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
 
 cat >>confdefs.h <<\_ACEOF
 #define KRB4 1
 _ACEOF
 
-
-  if test -d "$krb4_prefix/include"; then
-    INCLUDES="$INCLUDES -I$krb4_prefix/include"
-  fi
-  if test -d "$krb4_prefix/lib"; then
-    LIBDIRS="$LIBDIRS -L$krb4_prefix/lib"
-  fi
-
   krb_srvtab="/etc/srvtab"
 
+      ;;
+    no)
+      :
+      ;;
+    *)
+      { { echo "$as_me:$LINENO: error: no argument expected for --with-krb4 option" >&5
+echo "$as_me: error: no argument expected for --with-krb4 option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+  esac
+
 else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
+  with_krb4=no
 
+fi;
 
+echo "$as_me:$LINENO: result: $with_krb4" >&5
+echo "${ECHO_T}$with_krb4" >&6
 
 
 
@@ -3382,47 +3366,32 @@ if test "${with_krb5+set}" = set; then
 
   case $withval in
     yes)
-      krb5_prefix=/usr/athena
-      ;;
-    no)
-      :
-      ;;
-    *)
-      with_krb5=yes
-krb5_prefix=$withval
-      ;;
-  esac
 
-else
-  with_krb5=no
-fi;
-
-
-if test "$with_krb5" = yes; then
-
-  echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
 
 cat >>confdefs.h <<\_ACEOF
 #define KRB5 1
 _ACEOF
 
-
-  if test -d "$krb5_prefix/include"; then
-    INCLUDES="$INCLUDES -I$krb5_prefix/include"
-  fi
-  if test -d "$krb5_prefix/lib"; then
-    LIBDIRS="$LIBDIRS -L$krb5_prefix/lib"
-  fi
-
   krb_srvtab="FILE:\$(sysconfdir)/krb5.keytab"
 
+      ;;
+    no)
+      :
+      ;;
+    *)
+      { { echo "$as_me:$LINENO: error: no argument expected for --with-krb5 option" >&5
+echo "$as_me: error: no argument expected for --with-krb5 option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+  esac
+
 else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
+  with_krb5=no
 
+fi;
 
+echo "$as_me:$LINENO: result: $with_krb5" >&5
+echo "${ECHO_T}$with_krb5" >&6
 
 
 
@@ -3556,6 +3525,8 @@ echo "${ECHO_T}$with_rendezvous" >&6
 #
 # OpenSSL
 #
+echo "$as_me:$LINENO: checking whether to build with OpenSSL support" >&5
+echo $ECHO_N "checking whether to build with OpenSSL support... $ECHO_C" >&6
 
 
 
@@ -3565,42 +3536,29 @@ if test "${with_openssl+set}" = set; then
 
   case $withval in
     yes)
-      openssl_prefix=/usr/local/ssl
-      ;;
-    no)
-      :
-      ;;
-    *)
-      with_openssl=yes
-openssl_prefix=$withval
-      ;;
-  esac
-
-else
-  with_openssl=no
-fi;
-
-
-if test "$with_openssl" = yes; then
-
-  echo "$as_me:$LINENO: result: building with OpenSSL support" >&5
-echo "${ECHO_T}building with OpenSSL support" >&6
 
 cat >>confdefs.h <<\_ACEOF
 #define USE_SSL 1
 _ACEOF
 
+      ;;
+    no)
+      :
+      ;;
+    *)
+      { { echo "$as_me:$LINENO: error: no argument expected for --with-openssl option" >&5
+echo "$as_me: error: no argument expected for --with-openssl option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+  esac
 
-  if test -d "${openssl_prefix}/include" ; then
-    INCLUDES="$INCLUDES -I${openssl_prefix}/include"
-  fi
-  if test -d "${openssl_prefix}/lib" ; then
-    LIBDIRS="$LIBDIRS -L${openssl_prefix}/lib"
-  fi
+else
+  with_openssl=no
 
-fi
+fi;
 
-
+echo "$as_me:$LINENO: result: $with_openssl" >&5
+echo "${ECHO_T}$with_openssl" >&6
 
 
 
