@@ -43,7 +43,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.15 2003/11/29 19:52:04 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.16 2003/12/01 23:15:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -801,7 +801,6 @@ static bool
 mkdatadir(char *subdir)
 {
 	char	   *path;
-	int			res;
 
 	path = xmalloc(strlen(pg_data) + 2 +
 				   (subdir == NULL ? 0 : strlen(subdir)));
@@ -811,13 +810,7 @@ mkdatadir(char *subdir)
 	else
 		strcpy(path, pg_data);
 
-	res = mkdir(path, 0700);
-	if (res == 0)
-		return true;
-	else if (subdir == NULL || errno != ENOENT)
-		return false;
-	else
-		return !mkdir_p(path, 0700);
+	return (mkdir_p(path, 0700) == 0);
 }
 
 
