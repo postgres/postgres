@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.93 1997/01/14 16:10:54 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.94 1997/01/14 22:58:10 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -409,7 +409,10 @@ ifeq ($(PRE_BSDI_2_1), false)
 # cc is gcc v1.42
 # gcc is gcc v2.7.2
   LEX= lex
-  LDADD_BE= -ltermcap -ldl -lipc
+  LDADD_BE= -ltermcap -ldl
+  ifeq ($(shell uname -r), 2.1)
+    LDADD_BE+= -lipc
+  endif
 else
 # cc is gcc v1.42
 # gcc is gcc v2.6.3
