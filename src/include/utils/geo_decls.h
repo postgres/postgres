@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/geo_decls.h,v 1.43 2003/11/29 22:41:15 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/geo_decls.h,v 1.44 2004/05/26 18:35:47 momjian Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.
@@ -305,6 +305,7 @@ extern Datum box_mul(PG_FUNCTION_ARGS);
 extern Datum box_div(PG_FUNCTION_ARGS);
 
 /* public path routines */
+extern Datum path_area(PG_FUNCTION_ARGS);
 extern Datum path_in(PG_FUNCTION_ARGS);
 extern Datum path_out(PG_FUNCTION_ARGS);
 extern Datum path_recv(PG_FUNCTION_ARGS);

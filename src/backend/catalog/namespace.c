@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.64 2004/05/26 04:41:07 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.65 2004/05/26 18:35:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1640,11 +1640,11 @@ InitTempTableNamespace(void)
 	 * tables.	We use a nonstandard error message here since
 	 * "databasename: permission denied" might be a tad cryptic.
 	 *
-	 * Note we apply the check to the session user, not the currently active
-	 * userid, since we are not going to change our minds about temp table
-	 * availability during the session.
+	 * ACL_CREATE_TEMP perms are also checked in
+	 * pg_namespace_aclcheck() that way only users who have TEMP
+	 * perms can create objects.
 	 */
-	if (pg_database_aclcheck(MyDatabaseId, GetSessionUserId(),
+	if (pg_database_aclcheck(MyDatabaseId, GetUserId(),
 							 ACL_CREATE_TEMP) != ACLCHECK_OK)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),

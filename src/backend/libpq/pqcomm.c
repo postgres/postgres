@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.168 2003/12/12 18:45:08 petere Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.169 2004/05/26 18:35:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,7 +251,8 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 			ereport(LOG,
 			 (errmsg("could not translate service \"%s\" to address: %s",
 					 service, gai_strerror(ret))));
-		freeaddrinfo_all(hint.ai_family, addrs);
+		if (addrs)
+			freeaddrinfo_all(hint.ai_family, addrs);
 		return STATUS_ERROR;
 	}
 

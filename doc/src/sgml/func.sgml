@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.204 2004/05/26 15:25:57 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.205 2004/05/26 18:35:31 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -6593,6 +6593,30 @@ SELECT NULLIF(value, '(none)') ...
       </row>
 
       <row>
+       <entry><function>inet_client_addr</function></entry>
+       <entry><type>inet</type></entry>
+       <entry>address of the remote connection</entry>
+      </row>
+
+      <row>
+       <entry><function>inet_client_port</function></entry>
+       <entry><type>int4</type></entry>
+       <entry>port of the remote connection</entry>
+      </row>
+
+      <row>
+       <entry><function>inet_server_addr</function></entry>
+       <entry><type>inet</type></entry>
+       <entry>address of the local connection</entry>
+      </row>
+
+      <row>
+       <entry><function>inet_server_port</function></entry>
+       <entry><type>int4</type></entry>
+       <entry>port of the local connection</entry>
+      </row>
+
+      <row>
        <entry><function>session_user</function></entry>
        <entry><type>name</type></entry>
        <entry>session user name</entry>
@@ -6646,6 +6670,17 @@ SELECT NULLIF(value, '(none)') ...
      they must be called without trailing parentheses.
     </para>
    </note>
+
+   <para>
+     <function>inet_client_addr</function> and
+     <function>inet_server_addr</function> return the IPv4 or IPv6 (if
+     configured) address of the remote or local host connecting to the
+     database, respectively.  <function>inet_client_port</function>
+     and <function>inet_server_port</function> return the port number
+     of the remote or local host connecting to the database,
+     respectively.  If the connection is not a network connection,
+     these functions will return <literal>NULL</literal>.
+   </para>
 
    <para>
     <function>current_schema</function> returns the name of the schema that is

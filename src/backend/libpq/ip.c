@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/ip.c,v 1.25 2004/04/24 20:10:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/ip.c,v 1.26 2004/05/26 18:35:33 momjian Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -73,11 +73,11 @@ getaddrinfo_all(const char *hostname, const char *servname,
 	*result = NULL;
 
 #ifdef HAVE_UNIX_SOCKETS
-	if (hintp != NULL && hintp->ai_family == AF_UNIX)
+	if (hintp->ai_family == AF_UNIX)
 		return getaddrinfo_unix(servname, hintp, result);
 #endif
 
-	/* NULL has special meaning to getaddrinfo */
+	/* NULL has special meaning to getaddrinfo(). */
 	return getaddrinfo((!hostname || hostname[0] == '\0') ? NULL : hostname,
 					   servname, hintp, result);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.270 2004/05/21 20:56:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.271 2004/05/26 18:35:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -946,7 +946,8 @@ connectDBStart(PGconn *conn)
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("could not translate Unix-domain socket path \"%s\" to address: %s\n"),
 							  portstr, gai_strerror(ret));
-		freeaddrinfo_all(hint.ai_family, addrs);
+		if (addrs)
+			freeaddrinfo_all(hint.ai_family, addrs);
 		goto connect_errReturn;
 	}
 

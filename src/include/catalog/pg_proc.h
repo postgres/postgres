@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.331 2004/05/26 18:14:36 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.332 2004/05/26 18:35:43 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1259,6 +1259,8 @@ DATA(insert OID = 977 (  height			   PGNSP PGUID 12 f f t f i 1 701 "603" _null_
 DESCR("box height");
 DATA(insert OID = 978 (  box_distance	   PGNSP PGUID 12 f f t f i 2 701 "603 603" _null_  box_distance - _null_ ));
 DESCR("distance between boxes");
+DATA(insert OID = 979 (  area			   PGNSP PGUID 12 f f t f i 1 701 "602" _null_  path_area - _null_ ));
+DESCR("area of a closed path");
 DATA(insert OID = 980 (  box_intersect	   PGNSP PGUID 12 f f t f i 2 603 "603 603" _null_  box_intersect - _null_ ));
 DESCR("box intersection (another box)");
 DATA(insert OID = 981 (  diagonal		   PGNSP PGUID 12 f f t f i 1 601 "603" _null_  box_diagonal - _null_ ));
@@ -2343,6 +2345,15 @@ DATA(insert OID = 910 (  inet_in			PGNSP PGUID 12 f f t f i 1 869 "2275" _null_ 
 DESCR("I/O");
 DATA(insert OID = 911 (  inet_out			PGNSP PGUID 12 f f t f i 1 2275 "869" _null_  inet_out - _null_ ));
 DESCR("I/O");
+
+DATA(insert OID = 912 (  inet_client_addr		PGNSP PGUID 12 f f f f s 0 869 "" _null_  inet_client_addr - _null_ ));
+DESCR("Returns the INET address of the client connected to the backend");
+DATA(insert OID = 913 (  inet_client_port		PGNSP PGUID 12 f f f f s 0 23 "" _null_  inet_client_port - _null_ ));
+DESCR("Returns the client's port number for this connection");
+DATA(insert OID = 914 (  inet_server_addr		PGNSP PGUID 12 f f f f s 0 869 "" _null_  inet_server_addr - _null_ ));
+DESCR("Returns the INET address that the backend is using to service the connection");
+DATA(insert OID = 915 (  inet_server_port		PGNSP PGUID 12 f f f f s 0 23 "" _null_  inet_server_port - _null_ ));
+DESCR("Returns the servers's port number for this connection");
 
 /* for cidr type support */
 DATA(insert OID = 1267 (  cidr_in			PGNSP PGUID 12 f f t f i 1 650 "2275" _null_  cidr_in - _null_ ));

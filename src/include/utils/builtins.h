@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.239 2004/05/26 15:26:18 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.240 2004/05/26 18:35:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -647,6 +647,10 @@ extern int inet_net_pton(int af, const char *src,
 			  void *dst, size_t size);
 
 /* network.c */
+extern Datum inet_client_addr(PG_FUNCTION_ARGS);
+extern Datum inet_client_port(PG_FUNCTION_ARGS);
+extern Datum inet_server_addr(PG_FUNCTION_ARGS);
+extern Datum inet_server_port(PG_FUNCTION_ARGS);
 extern Datum inet_in(PG_FUNCTION_ARGS);
 extern Datum inet_out(PG_FUNCTION_ARGS);
 extern Datum inet_recv(PG_FUNCTION_ARGS);
