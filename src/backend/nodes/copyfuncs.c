@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.145 2001/06/19 22:39:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.146 2001/07/10 22:09:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2258,6 +2258,7 @@ _copyVacuumStmt(VacuumStmt *from)
 	VacuumStmt *newnode = makeNode(VacuumStmt);
 
 	newnode->vacuum = from->vacuum;
+	newnode->full = from->full;
 	newnode->analyze = from->analyze;
 	newnode->verbose = from->verbose;
 	if (from->vacrel)
@@ -2404,14 +2405,7 @@ _copyCreateUserStmt(CreateUserStmt *from)
 
 	if (from->user)
 		newnode->user = pstrdup(from->user);
-	if (from->password)
-		newnode->password = pstrdup(from->password);
-	newnode->sysid = from->sysid;
-	newnode->createdb = from->createdb;
-	newnode->createuser = from->createuser;
-	Node_Copy(from, newnode, groupElts);
-	if (from->validUntil)
-		newnode->validUntil = pstrdup(from->validUntil);
+	Node_Copy(from, newnode, options);
 
 	return newnode;
 }
@@ -2423,12 +2417,7 @@ _copyAlterUserStmt(AlterUserStmt *from)
 
 	if (from->user)
 		newnode->user = pstrdup(from->user);
-	if (from->password)
-		newnode->password = pstrdup(from->password);
-	newnode->createdb = from->createdb;
-	newnode->createuser = from->createuser;
-	if (from->validUntil)
-		newnode->validUntil = pstrdup(from->validUntil);
+	Node_Copy(from, newnode, options);
 
 	return newnode;
 }

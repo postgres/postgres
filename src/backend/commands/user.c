@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.77 2001/06/14 01:09:22 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.78 2001/07/10 22:09:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,14 +197,80 @@ CreateUser(CreateUserStmt *stmt)
 	char		new_record_nulls[Natts_pg_shadow];
 	bool		user_exists = false,
 				sysid_exists = false,
-				havesysid;
+				havesysid = false;
 	int			max_id = -1;
-	List	   *item;
+	List	   *item, *option;
+	char	   *password = NULL;	/* PostgreSQL user password */
+	int			sysid = 0;			/* PgSQL system id (valid if havesysid) */
+	bool		createdb = false;	/* Can the user create databases? */
+	bool		createuser = false;	/* Can this user create users? */
+	List	   *groupElts = NIL;	/* The groups the user is a member of */
+	char	   *validUntil = NULL;	/* The time the login is valid until */
+    DefElem    *dpassword = NULL;
+    DefElem    *dsysid = NULL;
+    DefElem    *dcreatedb = NULL;
+    DefElem    *dcreateuser = NULL;
+    DefElem    *dgroupElts = NULL;
+    DefElem    *dvalidUntil = NULL;
 
-	havesysid = stmt->sysid > 0;
+	/* Extract options from the statement node tree */
+	foreach(option, stmt->options)
+	{
+		DefElem *defel = (DefElem *) lfirst(option);
+
+        if (strcasecmp(defel->defname, "password") == 0) {
+            if (dpassword)
+                elog(ERROR, "CREATE USER: conflicting options");
+            dpassword = defel;
+        }
+        else if (strcasecmp(defel->defname, "sysid") == 0) {
+            if (dsysid)
+                elog(ERROR, "CREATE USER: conflicting options");
+            dsysid = defel;
+        }
+        else if (strcasecmp(defel->defname, "createdb") == 0) {
+            if (dcreatedb)
+                elog(ERROR, "CREATE USER: conflicting options");
+            dcreatedb = defel;
+        }
+        else if (strcasecmp(defel->defname, "createuser") == 0) {
+            if (dcreateuser)
+                elog(ERROR, "CREATE USER: conflicting options");
+            dcreateuser = defel;
+        } 
+        else if (strcasecmp(defel->defname, "groupElts") == 0) {
+            if (dgroupElts)
+                elog(ERROR, "CREATE USER: conflicting options");
+            dgroupElts = defel;
+        }
+        else if (strcasecmp(defel->defname, "validUntil") == 0) {
+            if (dvalidUntil)
+                elog(ERROR, "CREATE USER: conflicting options");
+            dvalidUntil = defel;
+        }
+        else 
+            elog(ERROR,"CREATE USER: option \"%s\" not recognized",
+                 defel->defname);
+    }
+
+    if (dcreatedb)
+		createdb = intVal(dcreatedb->arg) != 0;
+    if (dcreateuser)
+		createuser = intVal(dcreateuser->arg) != 0;
+    if (dsysid)
+	{
+		sysid = intVal(dsysid->arg);
+		havesysid = true;
+	}
+    if (dvalidUntil)
+		validUntil = strVal(dvalidUntil->arg);
+    if (dpassword)
+		password = strVal(dpassword->arg);
+    if (dgroupElts)
+		groupElts = (List *) dgroupElts->arg;
 
 	/* Check some permissions first */
-	if (stmt->password)
+	if (password)
 		CheckPgUserAclNotNull();
 
 	if (!superuser())
@@ -235,7 +301,7 @@ CreateUser(CreateUserStmt *stmt)
 							 pg_shadow_dsc, &null);
 		Assert(!null);
 		if (havesysid)			/* customized id wanted */
-			sysid_exists = (DatumGetInt32(datum) == stmt->sysid);
+			sysid_exists = (DatumGetInt32(datum) == sysid);
 		else
 		{
 			/* pick 1 + max */
@@ -249,30 +315,33 @@ CreateUser(CreateUserStmt *stmt)
 		elog(ERROR, "CREATE USER: user name \"%s\" already exists",
 			 stmt->user);
 	if (sysid_exists)
-		elog(ERROR, "CREATE USER: sysid %d is already assigned",
-			 stmt->sysid);
+		elog(ERROR, "CREATE USER: sysid %d is already assigned", sysid);
+
+	/* If no sysid given, use max existing id + 1 */
+	if (! havesysid)
+		sysid = max_id + 1;
 
 	/*
 	 * Build a tuple to insert
 	 */
-	new_record[Anum_pg_shadow_usename - 1] = DirectFunctionCall1(namein,
-											CStringGetDatum(stmt->user));
-	new_record[Anum_pg_shadow_usesysid - 1] = Int32GetDatum(havesysid ? stmt->sysid : max_id + 1);
+	new_record[Anum_pg_shadow_usename - 1] =
+		DirectFunctionCall1(namein, CStringGetDatum(stmt->user));
+	new_record[Anum_pg_shadow_usesysid - 1] = Int32GetDatum(sysid);
 
-	AssertState(BoolIsValid(stmt->createdb));
-	new_record[Anum_pg_shadow_usecreatedb - 1] = BoolGetDatum(stmt->createdb);
+	AssertState(BoolIsValid(createdb));
+	new_record[Anum_pg_shadow_usecreatedb - 1] = BoolGetDatum(createdb);
 	new_record[Anum_pg_shadow_usetrace - 1] = BoolGetDatum(false);
-	AssertState(BoolIsValid(stmt->createuser));
-	new_record[Anum_pg_shadow_usesuper - 1] = BoolGetDatum(stmt->createuser);
+	AssertState(BoolIsValid(createuser));
+	new_record[Anum_pg_shadow_usesuper - 1] = BoolGetDatum(createuser);
 	/* superuser gets catupd right by default */
-	new_record[Anum_pg_shadow_usecatupd - 1] = BoolGetDatum(stmt->createuser);
+	new_record[Anum_pg_shadow_usecatupd - 1] = BoolGetDatum(createuser);
 
-	if (stmt->password)
+	if (password)
 		new_record[Anum_pg_shadow_passwd - 1] =
-			DirectFunctionCall1(textin, CStringGetDatum(stmt->password));
-	if (stmt->validUntil)
+			DirectFunctionCall1(textin, CStringGetDatum(password));
+	if (validUntil)
 		new_record[Anum_pg_shadow_valuntil - 1] =
-			DirectFunctionCall1(nabstimein, CStringGetDatum(stmt->validUntil));
+			DirectFunctionCall1(nabstimein, CStringGetDatum(validUntil));
 
 	new_record_nulls[Anum_pg_shadow_usename - 1] = ' ';
 	new_record_nulls[Anum_pg_shadow_usesysid - 1] = ' ';
@@ -282,8 +351,8 @@ CreateUser(CreateUserStmt *stmt)
 	new_record_nulls[Anum_pg_shadow_usesuper - 1] = ' ';
 	new_record_nulls[Anum_pg_shadow_usecatupd - 1] = ' ';
 
-	new_record_nulls[Anum_pg_shadow_passwd - 1] = stmt->password ? ' ' : 'n';
-	new_record_nulls[Anum_pg_shadow_valuntil - 1] = stmt->validUntil ? ' ' : 'n';
+	new_record_nulls[Anum_pg_shadow_passwd - 1] = password ? ' ' : 'n';
+	new_record_nulls[Anum_pg_shadow_valuntil - 1] = validUntil ? ' ' : 'n';
 
 	tuple = heap_formtuple(pg_shadow_dsc, new_record, new_record_nulls);
 
@@ -310,15 +379,14 @@ CreateUser(CreateUserStmt *stmt)
 	 * Add the user to the groups specified. We'll just call the below
 	 * AlterGroup for this.
 	 */
-	foreach(item, stmt->groupElts)
+	foreach(item, groupElts)
 	{
 		AlterGroupStmt ags;
 
 		ags.name = strVal(lfirst(item));		/* the group name to add
 												 * this in */
 		ags.action = +1;
-		ags.listUsers = makeList1(makeInteger(havesysid ?
-											  stmt->sysid : max_id + 1));
+		ags.listUsers = makeList1(makeInteger(sysid));
 		AlterGroup(&ags, "CREATE USER");
 	}
 
@@ -348,21 +416,69 @@ AlterUser(AlterUserStmt *stmt)
 	HeapTuple	tuple,
 				new_tuple;
 	bool		null;
+	List       *option;
+	char	   *password = NULL;	/* PostgreSQL user password */
+	int			createdb = -1;		/* Can the user create databases? */
+	int			createuser = -1;	/* Can this user create users? */
+	char	   *validUntil = NULL;	/* The time the login is valid until */
+	DefElem    *dpassword = NULL;
+	DefElem    *dcreatedb = NULL;
+	DefElem    *dcreateuser = NULL;
+	DefElem    *dvalidUntil = NULL;
 
-	if (stmt->password)
+	/* Extract options from the statement node tree */
+	foreach(option,stmt->options)
+	{
+		DefElem *defel = (DefElem *) lfirst(option);
+
+		if (strcasecmp(defel->defname, "password") == 0) {
+			if (dpassword)
+				elog(ERROR, "ALTER USER: conflicting options");
+			dpassword = defel;
+		}
+		else if (strcasecmp(defel->defname, "createdb") == 0) {
+			if (dcreatedb)
+				elog(ERROR, "ALTER USER: conflicting options");
+			dcreatedb = defel;
+		}
+		else if (strcasecmp(defel->defname, "createuser") == 0) {
+			if (dcreateuser)
+				elog(ERROR, "ALTER USER: conflicting options");
+			dcreateuser = defel;
+		} 
+		else if (strcasecmp(defel->defname, "validUntil") == 0) {
+			if (dvalidUntil)
+				elog(ERROR, "ALTER USER: conflicting options");
+			dvalidUntil = defel;
+		}
+		else 
+			elog(ERROR,"ALTER USER: option \"%s\" not recognized",
+				 defel->defname);
+	}
+ 
+	if (dcreatedb)
+		createdb = intVal(dcreatedb->arg);
+	if (dcreateuser)
+		createuser = intVal(dcreateuser->arg);
+	if (dvalidUntil)
+		validUntil = strVal(dvalidUntil->arg);
+	if (dpassword)
+		password = strVal(dpassword->arg);
+ 
+ 	if (password)
 		CheckPgUserAclNotNull();
 
 	/* must be superuser or just want to change your own password */
 	if (!superuser() &&
-		!(stmt->createdb == 0 &&
-		  stmt->createuser == 0 &&
-		  !stmt->validUntil &&
-		  stmt->password &&
+		!(createdb < 0 &&
+		  createuser < 0 &&
+		  !validUntil &&
+		  password &&
 		  strcmp(GetUserName(GetUserId()), stmt->user) == 0))
 		elog(ERROR, "ALTER USER: permission denied");
 
 	/* changes to the flat password file cannot be rolled back */
-	if (IsTransactionBlock() && stmt->password)
+	if (IsTransactionBlock() && password)
 		elog(NOTICE, "ALTER USER: password changes cannot be rolled back");
 
 	/*
@@ -391,7 +507,7 @@ AlterUser(AlterUserStmt *stmt)
 	new_record_nulls[Anum_pg_shadow_usesysid - 1] = null ? 'n' : ' ';
 
 	/* createdb */
-	if (stmt->createdb == 0)
+	if (createdb < 0)
 	{
 		/* don't change */
 		new_record[Anum_pg_shadow_usecreatedb - 1] = heap_getattr(tuple, Anum_pg_shadow_usecreatedb, pg_shadow_dsc, &null);
@@ -399,7 +515,7 @@ AlterUser(AlterUserStmt *stmt)
 	}
 	else
 	{
-		new_record[Anum_pg_shadow_usecreatedb - 1] = (Datum) (stmt->createdb > 0 ? true : false);
+		new_record[Anum_pg_shadow_usecreatedb - 1] = BoolGetDatum(createdb > 0);
 		new_record_nulls[Anum_pg_shadow_usecreatedb - 1] = ' ';
 	}
 
@@ -408,7 +524,7 @@ AlterUser(AlterUserStmt *stmt)
 	new_record_nulls[Anum_pg_shadow_usetrace - 1] = null ? 'n' : ' ';
 
 	/* createuser (superuser) */
-	if (stmt->createuser == 0)
+	if (createuser < 0)
 	{
 		/* don't change */
 		new_record[Anum_pg_shadow_usesuper - 1] = heap_getattr(tuple, Anum_pg_shadow_usesuper, pg_shadow_dsc, &null);
@@ -416,14 +532,14 @@ AlterUser(AlterUserStmt *stmt)
 	}
 	else
 	{
-		new_record[Anum_pg_shadow_usesuper - 1] = (Datum) (stmt->createuser > 0 ? true : false);
+		new_record[Anum_pg_shadow_usesuper - 1] = BoolGetDatum(createuser > 0);
 		new_record_nulls[Anum_pg_shadow_usesuper - 1] = ' ';
 	}
 
 	/* catupd - set to false if someone's superuser priv is being yanked */
-	if (stmt->createuser < 0)
+	if (createuser == 0)
 	{
-		new_record[Anum_pg_shadow_usecatupd - 1] = (Datum) (false);
+		new_record[Anum_pg_shadow_usecatupd - 1] = BoolGetDatum(false);
 		new_record_nulls[Anum_pg_shadow_usecatupd - 1] = ' ';
 	}
 	else
@@ -434,10 +550,10 @@ AlterUser(AlterUserStmt *stmt)
 	}
 
 	/* password */
-	if (stmt->password)
+	if (password)
 	{
 		new_record[Anum_pg_shadow_passwd - 1] =
-			DirectFunctionCall1(textin, CStringGetDatum(stmt->password));
+			DirectFunctionCall1(textin, CStringGetDatum(password));
 		new_record_nulls[Anum_pg_shadow_passwd - 1] = ' ';
 	}
 	else
@@ -449,10 +565,10 @@ AlterUser(AlterUserStmt *stmt)
 	}
 
 	/* valid until */
-	if (stmt->validUntil)
+	if (validUntil)
 	{
 		new_record[Anum_pg_shadow_valuntil - 1] =
-			DirectFunctionCall1(nabstimein, CStringGetDatum(stmt->validUntil));
+			DirectFunctionCall1(nabstimein, CStringGetDatum(validUntil));
 		new_record_nulls[Anum_pg_shadow_valuntil - 1] = ' ';
 	}
 	else
@@ -761,9 +877,10 @@ CreateGroup(CreateGroupStmt *stmt)
 	else
 		max_id++;
 
-	new_record[Anum_pg_group_groname - 1] = (Datum) (stmt->name);
-	new_record[Anum_pg_group_grosysid - 1] = (Datum) (max_id);
-	new_record[Anum_pg_group_grolist - 1] = (Datum) userarray;
+	new_record[Anum_pg_group_groname - 1] =
+		DirectFunctionCall1(namein, CStringGetDatum(stmt->name));
+	new_record[Anum_pg_group_grosysid - 1] = Int32GetDatum(max_id);
+	new_record[Anum_pg_group_grolist - 1] = PointerGetDatum(userarray);
 
 	new_record_nulls[Anum_pg_group_groname - 1] = ' ';
 	new_record_nulls[Anum_pg_group_grosysid - 1] = ' ';
@@ -832,7 +949,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 								 * create user */
 	{
 		Datum		new_record[Natts_pg_group];
-		char		new_record_nulls[Natts_pg_group] = {' ', ' ', ' '};
+		char		new_record_nulls[Natts_pg_group];
 		ArrayType  *newarray,
 				   *oldarray;
 		List	   *newlist = NULL,
@@ -914,9 +1031,13 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 		/*
 		 * Form a tuple with the new array and write it back.
 		 */
-		new_record[Anum_pg_group_groname - 1] = (Datum) (stmt->name);
+		new_record[Anum_pg_group_groname - 1] =
+			DirectFunctionCall1(namein, CStringGetDatum(stmt->name));
+		new_record_nulls[Anum_pg_group_groname - 1] = ' ';
 		new_record[Anum_pg_group_grosysid - 1] = heap_getattr(group_tuple, Anum_pg_group_grosysid, pg_group_dsc, &null);
+		new_record_nulls[Anum_pg_group_grosysid - 1] = null ? 'n' : ' ';
 		new_record[Anum_pg_group_grolist - 1] = PointerGetDatum(newarray);
+		new_record_nulls[Anum_pg_group_grolist - 1] = newarray ? ' ' : 'n';
 
 		tuple = heap_formtuple(pg_group_dsc, new_record, new_record_nulls);
 		simple_heap_update(pg_group_rel, &group_tuple->t_self, tuple);
@@ -950,7 +1071,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 		{
 			HeapTuple	tuple;
 			Datum		new_record[Natts_pg_group];
-			char		new_record_nulls[Natts_pg_group] = {' ', ' ', ' '};
+			char		new_record_nulls[Natts_pg_group];
 			ArrayType  *oldarray,
 					   *newarray;
 			List	   *newlist = NULL,
@@ -1014,9 +1135,13 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 			/*
 			 * Insert the new tuple with the updated user list
 			 */
-			new_record[Anum_pg_group_groname - 1] = (Datum) (stmt->name);
+			new_record[Anum_pg_group_groname - 1] =
+				DirectFunctionCall1(namein, CStringGetDatum(stmt->name));
+			new_record_nulls[Anum_pg_group_groname - 1] = ' ';
 			new_record[Anum_pg_group_grosysid - 1] = heap_getattr(group_tuple, Anum_pg_group_grosysid, pg_group_dsc, &null);
+			new_record_nulls[Anum_pg_group_grosysid - 1] = null ? 'n' : ' ';
 			new_record[Anum_pg_group_grolist - 1] = PointerGetDatum(newarray);
+			new_record_nulls[Anum_pg_group_grolist - 1] = newarray ? ' ' : 'n';
 
 			tuple = heap_formtuple(pg_group_dsc, new_record, new_record_nulls);
 			simple_heap_update(pg_group_rel, &group_tuple->t_self, tuple);

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.16 2000/10/12 22:08:42 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.17 2001/07/10 22:09:27 tgl Exp $
 Postgres documentation
 -->
 
@@ -20,16 +20,19 @@ Postgres documentation
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-07-20</date>
+   <date>2001-07-10</date>
   </refsynopsisdivinfo>
   <synopsis>
-CREATE USER <replaceable class="PARAMETER">username</replaceable>
-    [ WITH
-     [ SYSID <replaceable class="PARAMETER">uid</replaceable> ]
-     [ PASSWORD '<replaceable class="PARAMETER">password</replaceable>' ] ]
-    [ CREATEDB   | NOCREATEDB ] [ CREATEUSER | NOCREATEUSER ]
-    [ IN GROUP     <replaceable class="PARAMETER">groupname</replaceable> [, ...] ]
-    [ VALID UNTIL  '<replaceable class="PARAMETER">abstime</replaceable>' ]
+CREATE USER <replaceable class="PARAMETER">username</replaceable> [ [ WITH ] <replaceable class="PARAMETER">option</replaceable> [ ... ] ]
+
+where <replaceable class="PARAMETER">option</replaceable> can be:
+    
+	  SYSID <replaceable class="PARAMETER">uid</replaceable> 
+        | PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
+        | CREATEDB | NOCREATEDB
+        | CREATEUSER | NOCREATEUSER
+        | IN GROUP <replaceable class="PARAMETER">groupname</replaceable> [, ...]
+        | VALID UNTIL '<replaceable class="PARAMETER">abstime</replaceable>' 
   </synopsis>
   
   <refsect2 id="R2-SQL-CREATEUSER-1">
@@ -115,6 +118,7 @@ CREATE USER <replaceable class="PARAMETER">username</replaceable>
       <listitem>
        <para>
 	A name of a group into which to insert the user as a new member.
+	Multiple group names may be listed.
        </para>
       </listitem>
      </varlistentry>
@@ -164,7 +168,7 @@ CREATE USER <replaceable class="PARAMETER">username</replaceable>
    Description
   </title>
   <para>
-   CREATE USER will add a new user to an instance of 
+   <command>CREATE USER</command> will add a new user to an instance of 
    <productname>Postgres</productname>. Refer to the administrator's
    guide for information about managing users and authentication.
    You must be a database superuser to use this command.
@@ -173,7 +177,8 @@ CREATE USER <replaceable class="PARAMETER">username</replaceable>
    Use <xref linkend="SQL-ALTERUSER" endterm="SQL-ALTERUSER-title">
    to change a user's password and privileges, and <xref linkend="SQL-DROPUSER"
    endterm="SQL-DROPUSER-title"> to remove a user.
-   Use <command>ALTER GROUP</command> to add or remove the user from other groups.
+   Use <xref linkend="SQL-ALTERGROUP" endterm="SQL-ALTERGROUP-title">
+   to add or remove the user from other groups.
    <productname>Postgres</productname>
    comes with a script <xref linkend="APP-CREATEUSER"
    endterm="APP-CREATEUSER-title">

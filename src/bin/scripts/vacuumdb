@@ -12,7 +12,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.16 2001/02/18 18:34:02 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.17 2001/07/10 22:09:29 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,6 +20,7 @@ CMDNAME=`basename $0`
 PATHNAME=`echo $0 | sed "s,$CMDNAME\$,,"`
 
 PSQLOPT=
+full=
 verbose=
 analyze=
 table=
@@ -97,6 +98,9 @@ do
         --table=*)
                 table=`echo $1 | sed 's/^--table=//'`
                 ;;
+	--full|-f)
+		full="FULL"
+		;;
 	--verbose|-v)
 		verbose="VERBOSE"
 		;;
@@ -126,9 +130,10 @@ if [ "$usage" ]; then
 	echo "  -W, --password                  Prompt for password"
 	echo "  -d, --dbname=DBNAME             Database to vacuum"
 	echo "  -a, --all                       Vacuum all databases"
-	echo "  -z, --analyze                   Update optimizer hints"
 	echo "  -t, --table='TABLE[(columns)]'  Vacuum specific table only"
+	echo "  -f, --full                      Do full vacuuming"
 	echo "  -v, --verbose                   Write a lot of output"
+	echo "  -z, --analyze                   Update optimizer hints"
 	echo "  -e, --echo                      Show the command being sent to the backend"
         echo "  -q, --quiet                     Don't write any output"
         echo
@@ -154,7 +159,7 @@ fi
 for db in $dbname
 do
         [ "$alldb" -a "$quiet" -ne 1 ] && echo "Vacuuming $db"
-	${PATHNAME}psql $PSQLOPT $ECHOOPT -c "VACUUM $verbose $analyze $table" -d $db
+	${PATHNAME}psql $PSQLOPT $ECHOOPT -c "VACUUM $full $verbose $analyze $table" -d $db
 	if [ $? -ne 0 ]; then
 	    echo "$CMDNAME: vacuum $table $db failed" 1>&2
 	    exit 1

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.16 2001/05/25 15:45:31 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.17 2001/07/10 22:09:28 tgl Exp $
 Postgres documentation
 -->
 
@@ -20,16 +20,16 @@ Postgres documentation
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>2001-05-04</date>
+   <date>2001-07-10</date>
   </refsynopsisdivinfo>
   <synopsis>
-VACUUM [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> ]
-VACUUM [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">table</replaceable> [ (<replaceable class="PARAMETER">column</replaceable> [, ...] ) ] ]
+VACUUM [ FULL ] [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> ]
+VACUUM [ FULL ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">table</replaceable> [ (<replaceable class="PARAMETER">column</replaceable> [, ...] ) ] ]
   </synopsis>
 
   <refsect2 id="R2-SQL-VACUUM-1">
    <refsect2info>
-    <date>1998-10-04</date>
+    <date>2001-07-10</date>
    </refsect2info>
    <title>
     Inputs
@@ -37,6 +37,15 @@ VACUUM [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">table</replaceable> 
 
    <para>
     <variablelist>
+     <varlistentry>
+      <term>FULL</term>
+      <listitem>
+       <para>
+        Selects <quote>full</quote> vacuum, which may reclaim more space,
+	but takes much longer and exclusively locks the table.
+       </para>
+      </listitem>
+     </varlistentry>
      <varlistentry>
       <term>VERBOSE</term>
       <listitem>
@@ -58,7 +67,8 @@ VACUUM [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">table</replaceable> 
       <term><replaceable class="PARAMETER">table</replaceable></term>
       <listitem>
        <para>
-	The name of a specific table to vacuum. Defaults to all tables.
+	The name of a specific table to vacuum. Defaults to all tables
+	in the current database.
        </para>
       </listitem>
      </varlistentry>
@@ -138,7 +148,7 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
 
  <refsect1 id="R1-SQL-VACUUM-1">
   <refsect1info>
-   <date>1998-10-04</date>
+   <date>2001-07-10</date>
   </refsect1info>
   <title>
    Description
@@ -159,6 +169,16 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
   </para>
 
   <para>
+   Plain <command>VACUUM</command> simply reclaims space and makes it
+   available for re-use.  This form of the command can operate in parallel
+   with normal reading and writing of the table.  <command>VACUUM
+   FULL</command> does more extensive processing, including moving of tuples
+   across blocks to try to compact the table to the minimum number of disk
+   blocks.  This is much slower and requires an exclusive lock on each table
+   while it is being processed.
+  </para>
+
+  <para>
    <command>VACUUM ANALYZE</command> performs a <command>VACUUM</command>
    and then an <command>ANALYZE</command> for each selected table.  This
    is a handy combination form for routine maintenance scripts.  See
@@ -168,7 +188,7 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
 
   <refsect2 id="R2-SQL-VACUUM-3">
    <refsect2info>
-    <date>1998-10-04</date>
+    <date>2001-07-10</date>
    </refsect2info>
    <title>
     Notes
@@ -176,8 +196,8 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
 
    <para>
     We recommend that active production databases be
-    <command>VACUUM</command>-ed nightly, in order to remove
-    expired rows. After copying a large table into
+    <command>VACUUM</command>-ed frequently (at least nightly), in order to
+    remove expired rows. After copying a large table into
     <productname>Postgres</productname> or after deleting a large number
     of records, it may be a good idea to issue a <command>VACUUM
     ANALYZE</command> command for the affected table. This will update the
@@ -185,6 +205,14 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
     the results of all recent changes, and allow the
     <productname>Postgres</productname> query optimizer to make better
     choices in planning user queries.
+   </para>
+
+   <para>
+    The <option>FULL</option> option is not recommended for routine use,
+    but may be useful in special cases.  An example is when you have deleted
+    most of the rows in a table and would like the table to physically shrink
+    to occupy less disk space.  <command>VACUUM FULL</command> will usually
+    shrink the table more than a plain <command>VACUUM</command> would.
    </para>
 
   </refsect2>

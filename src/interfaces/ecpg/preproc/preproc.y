@@ -301,7 +301,8 @@ make_name(void)
 %type  <str>    NotifyStmt columnElem copy_dirn UnlistenStmt copy_null
 %type  <str>    copy_delimiter ListenStmt CopyStmt copy_file_name opt_binary
 %type  <str>    opt_with_copy FetchStmt direction fetch_how_many from_in
-%type  <str>    ClosePortalStmt DropStmt VacuumStmt AnalyzeStmt opt_verbose func_arg
+%type  <str>    ClosePortalStmt DropStmt VacuumStmt AnalyzeStmt opt_verbose
+%type  <str>    opt_full func_arg
 %type  <str>    analyze_keyword opt_name_list ExplainStmt index_params
 %type  <str>    index_list func_index index_elem opt_class access_method_clause
 %type  <str>    index_opt_unique IndexStmt func_return ConstInterval
@@ -309,14 +310,13 @@ make_name(void)
 %type  <str>    def_elem def_list definition DefineStmt select_with_parens
 %type  <str>    opt_instead event event_object RuleActionList opt_using
 %type  <str>	RuleActionStmtOrEmpty RuleActionMulti func_as reindex_type
-%type  <str>    RuleStmt opt_column opt_name oper_argtypes sysid_clause
+%type  <str>    RuleStmt opt_column opt_name oper_argtypes
 %type  <str>    MathOp RemoveFuncStmt aggr_argtype for_update_clause
 %type  <str>    RemoveAggrStmt ExtendStmt opt_procedural select_no_parens
-%type  <str>    RemoveOperStmt RenameStmt all_Op user_valid_clause
+%type  <str>    RemoveOperStmt RenameStmt all_Op
 %type  <str>    VariableSetStmt var_value zone_value VariableShowStmt
 %type  <str>    VariableResetStmt AlterTableStmt DropUserStmt from_list
-%type  <str>    user_passwd_clause user_createdb_clause opt_trans
-%type  <str>    user_createuser_clause user_list user_group_clause
+%type  <str>    opt_trans user_list OptUserList OptUserElem
 %type  <str>    CreateUserStmt AlterUserStmt CreateSeqStmt OptSeqList
 %type  <str>    OptSeqElem TriggerForSpec TriggerForOpt TriggerForType
 %type  <str>	DropTrigStmt TriggerOneEvent TriggerEvents RuleActionStmt
@@ -593,17 +593,13 @@ stmt:  AlterSchemaStmt 			{ output_statement($1, 0, NULL, connection); }
  *
  *****************************************************************************/
 
-CreateUserStmt: CREATE USER UserId
-		user_createdb_clause user_createuser_clause user_group_clause
-		user_valid_clause
-				{
-					$$ = cat_str(6, make_str("create user"), $3, $4, $5, $6, $7);
-				}
-		| CREATE USER UserId WITH sysid_clause user_passwd_clause
-		user_createdb_clause user_createuser_clause user_group_clause
-		user_valid_clause
+CreateUserStmt: CREATE USER UserId OptUserList
 		{
-					$$ = cat_str(9, make_str("create user"), $3, make_str("with"), $5, $6, $7, $8, $9, $10);
+			$$ = cat_str(3, make_str("create user"), $3, $4);
+		}
+              | CREATE USER UserId WITH OptUserList
+		{
+			$$ = cat_str(4, make_str("create user"), $3, make_str("with"), $5);
 		}
 		;
 
@@ -614,17 +610,14 @@ CreateUserStmt: CREATE USER UserId
  *
  *****************************************************************************/
 
-AlterUserStmt:  ALTER USER UserId user_createdb_clause
-				user_createuser_clause user_valid_clause
-				{
-					$$ = cat_str(5, make_str("alter user"), $3, $4, $5, $6);
-				}
-			| ALTER USER UserId WITH PASSWORD StringConst
-				user_createdb_clause
-				user_createuser_clause user_valid_clause
-				{
-					$$ = cat_str(7, make_str("alter user"), $3, make_str("with password"), $6, $7, $8, $9);
-				}
+AlterUserStmt: ALTER USER UserId OptUserList
+		{
+			$$ = cat_str(3, make_str("alter user"), $3, $4);
+		}
+              | ALTER USER UserId WITH OptUserList
+		{
+			$$ = cat_str(4, make_str("alter user"), $3, make_str("with"), $5);
+		}
 		;
 
 /*****************************************************************************
@@ -640,38 +633,46 @@ DropUserStmt:  DROP USER user_list
 				}
 		;
 
-user_passwd_clause:  PASSWORD StringConst	{ $$ = cat2_str(make_str("password") , $2); }
-			| /*EMPTY*/	{ $$ = EMPTY; }
+/*
+ * Options for CREATE USER and ALTER USER
+ */
+OptUserList: OptUserList OptUserElem		{ $$ = cat2_str($1, $2); }
+			| /* EMPTY */					{ $$ = EMPTY; }
 		;
 
-sysid_clause:	SYSID PosIntConst	{ if (atoi($2) <= 0)
-						mmerror(ET_ERROR, "sysid must be positive");
-
-					  $$ = cat2_str(make_str("sysid"), $2); }
-			| /*EMPTY*/     { $$ = EMPTY; }
-                ;
-
-user_createdb_clause:  CREATEDB
+OptUserElem:  PASSWORD Sconst
+                { 
+					$$ = cat2_str(make_str("password"), $2);
+				}
+              | SYSID Iconst
 				{
+					$$ = cat2_str(make_str("sysid"), $2);
+				}
+              | CREATEDB
+                { 
 					$$ = make_str("createdb");
 				}
-			| NOCREATEDB
-				{
+              | NOCREATEDB
+                { 
 					$$ = make_str("nocreatedb");
 				}
-			| /*EMPTY*/		{ $$ = EMPTY; }
-		;
-
-user_createuser_clause:  CREATEUSER
-				{
+              | CREATEUSER
+                { 
 					$$ = make_str("createuser");
 				}
-			| NOCREATEUSER
-				{
+              | NOCREATEUSER
+                { 
 					$$ = make_str("nocreateuser");
 				}
-			| /*EMPTY*/		{ $$ = NULL; }
-		;
+              | IN GROUP user_list
+                { 
+					$$ = cat2_str(make_str("in group"), $3); 
+				}
+              | VALID UNTIL Sconst
+                { 
+					$$ = cat2_str(make_str("valid until"), $3); 
+				}
+        ;
 
 user_list:  user_list ',' UserId
 				{
@@ -683,17 +684,6 @@ user_list:  user_list ',' UserId
 				}
 		;
 
-user_group_clause:  IN GROUP user_list
-			{
-				$$ = cat2_str(make_str("in group"), $3); 
-			}
-			| /*EMPTY*/		{ $$ = EMPTY; }
-		;
-
-user_valid_clause:  VALID UNTIL StringConst			{ $$ = cat2_str(make_str("valid until"), $3); }
-			| /*EMPTY*/			{ $$ = EMPTY; }
-		;
-
 
 /*****************************************************************************
  *
@@ -702,14 +692,18 @@ user_valid_clause:  VALID UNTIL StringConst			{ $$ = cat2_str(make_str("valid un
  *
  ****************************************************************************/
 CreateGroupStmt: CREATE GROUP UserId
-                 {
-			$$ = cat2_str(make_str("create group"), $3);
-		 }
-               | CREATE GROUP UserId WITH sysid_clause users_in_new_group_clause
-                 {
-			$$ = cat_str(5, make_str("create group"), $3, make_str("with"), $5, $6);
-                 }
-                ;
+				{
+					$$ = cat2_str(make_str("create group"), $3);
+				}
+			| CREATE GROUP UserId WITH users_in_new_group_clause
+				{
+					$$ = cat_str(4, make_str("create group"), $3, make_str("with"), $5);
+				}
+			| CREATE GROUP UserId WITH SYSID Iconst users_in_new_group_clause
+				{
+					$$ = cat_str(5, make_str("create group"), $3, make_str("with sysid"), $6, $7);
+				}
+			;
 
 users_in_new_group_clause:  USER user_list   { $$ = cat2_str(make_str("user"), $2); }
                             | /* EMPTY */          { $$ = EMPTY; }
@@ -2289,17 +2283,17 @@ ClusterStmt:  CLUSTER index_name ON relation_name
  *
  *****************************************************************************/
 
-VacuumStmt:  VACUUM opt_verbose
-				{
-					$$ = cat_str(2, make_str("vacuum"), $2);
-				}
-		| VACUUM opt_verbose relation_name
+VacuumStmt:  VACUUM opt_full opt_verbose
 				{
 					$$ = cat_str(3, make_str("vacuum"), $2, $3);
 				}
-		| VACUUM opt_verbose AnalyzeStmt
+		| VACUUM opt_full opt_verbose relation_name
 				{
-					$$ = cat_str(3, make_str("vacuum"), $2, $3);
+					$$ = cat_str(4, make_str("vacuum"), $2, $3, $4);
+				}
+		| VACUUM opt_full opt_verbose AnalyzeStmt
+				{
+					$$ = cat_str(4, make_str("vacuum"), $2, $3, $4);
 				}
 		;
 
@@ -2318,7 +2312,11 @@ analyze_keyword:  ANALYZE					{ $$ = make_str("analyze"); }
 		;
 
 opt_verbose:  VERBOSE					{ $$ = make_str("verbose"); }
-		| /*EMPTY*/				{ $$ = EMPTY; }
+		| /*EMPTY*/						{ $$ = EMPTY; }
+		;
+
+opt_full:  FULL							{ $$ = make_str("full"); }
+		| /*EMPTY*/						{ $$ = EMPTY; }
 		;
 
 opt_name_list:  '(' name_list ')'		{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }

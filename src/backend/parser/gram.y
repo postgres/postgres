@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.234 2001/07/09 22:18:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.235 2001/07/10 22:09:28 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -155,11 +155,10 @@ static void doNegateFloat(Value *v);
 %type <ival>	opt_lock, lock_type
 %type <boolean>	opt_force
 
-%type <ival>    user_createdb_clause, user_createuser_clause
-%type <str>		user_passwd_clause
-%type <ival>            sysid_clause
-%type <str>		user_valid_clause
-%type <list>	user_list, user_group_clause, users_in_new_group_clause
+%type <list>	user_list, users_in_new_group_clause
+
+%type <list>	OptUserList
+%type <defelt>	OptUserElem
 
 %type <boolean>	TriggerActionTime, TriggerForSpec, PLangTrusted, opt_procedural
 
@@ -212,7 +211,8 @@ static void doNegateFloat(Value *v);
 %type <node>	substr_from, substr_for
 
 %type <boolean>	opt_binary, opt_using, opt_instead, opt_cursor
-%type <boolean>	opt_with_copy, index_opt_unique, opt_verbose, analyze_keyword
+%type <boolean>	opt_with_copy, index_opt_unique, opt_verbose, opt_full
+%type <boolean>	analyze_keyword
 
 %type <ival>	copy_dirn, direction, reindex_type, drop_type,
 		opt_column, event, comment_type, comment_cl,
@@ -488,32 +488,18 @@ stmt :	AlterSchemaStmt
  *
  *****************************************************************************/
 
-CreateUserStmt:  CREATE USER UserId
-                 user_createdb_clause user_createuser_clause user_group_clause
-                 user_valid_clause
+CreateUserStmt:  CREATE USER UserId OptUserList 
 				{
 					CreateUserStmt *n = makeNode(CreateUserStmt);
 					n->user = $3;
-                    n->sysid = -1;
-					n->password = NULL;
-					n->createdb = $4 == +1 ? TRUE : FALSE;
-					n->createuser = $5 == +1 ? TRUE : FALSE;
-					n->groupElts = $6;
-					n->validUntil = $7;
+					n->options = $4;
 					$$ = (Node *)n;
 				}
-                | CREATE USER UserId WITH sysid_clause user_passwd_clause
-                user_createdb_clause user_createuser_clause user_group_clause
-                user_valid_clause
+                | CREATE USER UserId WITH OptUserList
                {
 					CreateUserStmt *n = makeNode(CreateUserStmt);
 					n->user = $3;
-                    n->sysid = $5;
-					n->password = $6;
-					n->createdb = $7 == +1 ? TRUE : FALSE;
-					n->createuser = $8 == +1 ? TRUE : FALSE;
-					n->groupElts = $9;
-					n->validUntil = $10;
+					n->options = $5;
 					$$ = (Node *)n;
                }                   
 		;
@@ -525,27 +511,18 @@ CreateUserStmt:  CREATE USER UserId
  *
  *****************************************************************************/
 
-AlterUserStmt:  ALTER USER UserId user_createdb_clause
-				user_createuser_clause user_valid_clause
+AlterUserStmt:  ALTER USER UserId OptUserList
 				{
 					AlterUserStmt *n = makeNode(AlterUserStmt);
 					n->user = $3;
-					n->password = NULL;
-					n->createdb = $4;
-					n->createuser = $5;
-					n->validUntil = $6;
+					n->options = $4;
 					$$ = (Node *)n;
 				}
-			| ALTER USER UserId WITH PASSWORD Sconst
-			  user_createdb_clause
-			  user_createuser_clause user_valid_clause
+			| ALTER USER UserId WITH OptUserList
 				{
 					AlterUserStmt *n = makeNode(AlterUserStmt);
 					n->user = $3;
-					n->password = $6;
-					n->createdb = $7;
-					n->createuser = $8;
-					n->validUntil = $9;
+					n->options = $5;
 					$$ = (Node *)n;
 				}
 		;
@@ -565,28 +542,62 @@ DropUserStmt:  DROP USER user_list
 				}
 		;
 
-user_passwd_clause:  PASSWORD Sconst			{ $$ = $2; }
-			| /*EMPTY*/							{ $$ = NULL; }
+/*
+ * Options for CREATE USER and ALTER USER
+ */
+OptUserList: OptUserList OptUserElem		{ $$ = lappend($1, $2); }
+			| /* EMPTY */					{ $$ = NIL; }
 		;
 
-sysid_clause: SYSID Iconst
-				{
-					if ($2 <= 0)
-						elog(ERROR, "sysid must be positive");
-					$$ = $2;
+OptUserElem:  PASSWORD Sconst
+                { 
+				  $$ = makeNode(DefElem);
+				  $$->defname = "password";
+				  $$->arg = (Node *)makeString($2);
 				}
-			| /*EMPTY*/							{ $$ = -1; }
-		;
-
-user_createdb_clause:  CREATEDB					{ $$ = +1; }
-			| NOCREATEDB						{ $$ = -1; }
-			| /*EMPTY*/							{ $$ = 0; }
-		;
-
-user_createuser_clause:  CREATEUSER				{ $$ = +1; }
-			| NOCREATEUSER						{ $$ = -1; }
-			| /*EMPTY*/							{ $$ = 0; }
-		;
+              | SYSID Iconst
+				{
+				  $$ = makeNode(DefElem);
+				  $$->defname = "sysid";
+				  $$->arg = (Node *)makeInteger($2);
+				}
+              | CREATEDB
+                { 
+				  $$ = makeNode(DefElem);
+				  $$->defname = "createdb";
+				  $$->arg = (Node *)makeInteger(TRUE);
+				}
+              | NOCREATEDB
+                { 
+				  $$ = makeNode(DefElem);
+				  $$->defname = "createdb";
+				  $$->arg = (Node *)makeInteger(FALSE);
+				}
+              | CREATEUSER
+                { 
+				  $$ = makeNode(DefElem);
+				  $$->defname = "createuser";
+				  $$->arg = (Node *)makeInteger(TRUE);
+				}
+              | NOCREATEUSER
+                { 
+				  $$ = makeNode(DefElem);
+				  $$->defname = "createuser";
+				  $$->arg = (Node *)makeInteger(FALSE);
+				}
+              | IN GROUP user_list
+                { 
+				  $$ = makeNode(DefElem);
+				  $$->defname = "groupElts";
+				  $$->arg = (Node *)$3;
+				}
+              | VALID UNTIL Sconst
+                { 
+				  $$ = makeNode(DefElem);
+				  $$->defname = "validUntil";
+				  $$->arg = (Node *)makeString($3);
+				}
+        ;
 
 user_list:  user_list ',' UserId
 				{
@@ -598,13 +609,6 @@ user_list:  user_list ',' UserId
 				}
 		;
 
-user_group_clause:  IN GROUP user_list			{ $$ = $3; }
-			| /*EMPTY*/							{ $$ = NULL; }
-		;
-
-user_valid_clause:  VALID UNTIL SCONST			{ $$ = $3; }
-			| /*EMPTY*/							{ $$ = NULL; }
-		;
 
 
 /*****************************************************************************
@@ -619,21 +623,29 @@ CreateGroupStmt:  CREATE GROUP UserId
 					CreateGroupStmt *n = makeNode(CreateGroupStmt);
 					n->name = $3;
 					n->sysid = -1;
-					n->initUsers = NULL;
+					n->initUsers = NIL;
 					$$ = (Node *)n;
 				}
-			| CREATE GROUP UserId WITH sysid_clause users_in_new_group_clause
+			| CREATE GROUP UserId WITH users_in_new_group_clause
 				{
 					CreateGroupStmt *n = makeNode(CreateGroupStmt);
 					n->name = $3;
-					n->sysid = $5;
-					n->initUsers = $6;
+					n->sysid = -1;
+					n->initUsers = $5;
+					$$ = (Node *)n;
+				}
+			| CREATE GROUP UserId WITH SYSID Iconst users_in_new_group_clause
+				{
+					CreateGroupStmt *n = makeNode(CreateGroupStmt);
+					n->name = $3;
+					n->sysid = $6;
+					n->initUsers = $7;
 					$$ = (Node *)n;
 				}
 		;
 
 users_in_new_group_clause:  USER user_list		{ $$ = $2; }
-			| /* EMPTY */						{ $$ = NULL; }
+			| /* EMPTY */						{ $$ = NIL; }
 		;                         
 
 /*****************************************************************************
@@ -3073,31 +3085,34 @@ ClusterStmt:  CLUSTER index_name ON relation_name
  *
  *****************************************************************************/
 
-VacuumStmt:  VACUUM opt_verbose
+VacuumStmt:  VACUUM opt_full opt_verbose
 				{
 					VacuumStmt *n = makeNode(VacuumStmt);
 					n->vacuum = true;
 					n->analyze = false;
-					n->verbose = $2;
+					n->full = $2;
+					n->verbose = $3;
 					n->vacrel = NULL;
 					n->va_cols = NIL;
 					$$ = (Node *)n;
 				}
-		| VACUUM opt_verbose relation_name
+		| VACUUM opt_full opt_verbose relation_name
 				{
 					VacuumStmt *n = makeNode(VacuumStmt);
 					n->vacuum = true;
 					n->analyze = false;
-					n->verbose = $2;
-					n->vacrel = $3;
+					n->full = $2;
+					n->verbose = $3;
+					n->vacrel = $4;
 					n->va_cols = NIL;
 					$$ = (Node *)n;
 				}
-		| VACUUM opt_verbose AnalyzeStmt
+		| VACUUM opt_full opt_verbose AnalyzeStmt
 				{
-					VacuumStmt *n = (VacuumStmt *) $3;
+					VacuumStmt *n = (VacuumStmt *) $4;
 					n->vacuum = true;
-					n->verbose |= $2;
+					n->full = $2;
+					n->verbose |= $3;
 					$$ = (Node *)n;
 				}
 		;
@@ -3107,6 +3122,7 @@ AnalyzeStmt:  analyze_keyword opt_verbose
 					VacuumStmt *n = makeNode(VacuumStmt);
 					n->vacuum = false;
 					n->analyze = true;
+					n->full = false;
 					n->verbose = $2;
 					n->vacrel = NULL;
 					n->va_cols = NIL;
@@ -3117,6 +3133,7 @@ AnalyzeStmt:  analyze_keyword opt_verbose
 					VacuumStmt *n = makeNode(VacuumStmt);
 					n->vacuum = false;
 					n->analyze = true;
+					n->full = false;
 					n->verbose = $2;
 					n->vacrel = $3;
 					n->va_cols = $4;
@@ -3129,6 +3146,10 @@ analyze_keyword:  ANALYZE						{ $$ = TRUE; }
 		;
 
 opt_verbose:  VERBOSE							{ $$ = TRUE; }
+		| /*EMPTY*/								{ $$ = FALSE; }
+		;
+
+opt_full:  FULL									{ $$ = TRUE; }
 		| /*EMPTY*/								{ $$ = FALSE; }
 		;
 

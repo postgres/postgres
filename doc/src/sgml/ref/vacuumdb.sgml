@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.16 2001/03/17 16:27:31 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.17 2001/07/10 22:09:28 tgl Exp $
 Postgres documentation
 -->
 
@@ -24,8 +24,9 @@ Postgres documentation
    <command>vacuumdb</command>
    <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
    <arg><arg>-d</arg> <replaceable>dbname</replaceable></arg>
-   <group><arg>--analyze</arg><arg>-z</arg></group>
+   <group><arg>--full</arg><arg>-f</arg></group>
    <group><arg>--verbose</arg><arg>-v</arg></group>
+   <group><arg>--analyze</arg><arg>-z</arg></group>
    <arg>--table '<replaceable>table</replaceable>
     <arg>( <replaceable class="parameter">column</replaceable> [,...] )</arg>'
    </arg>
@@ -33,8 +34,9 @@ Postgres documentation
    <command>vacuumdb</command>
    <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
    <group><arg>--all</arg><arg>-a</arg></group>
-   <group><arg>--analyze</arg><arg>-z</arg></group>
+   <group><arg>--full</arg><arg>-f</arg></group>
    <group><arg>--verbose</arg><arg>-v</arg></group>
+   <group><arg>--analyze</arg><arg>-z</arg></group>
   </cmdsynopsis>
 
   <refsect2 id="R2-APP-VACUUMDB-1">
@@ -56,16 +58,6 @@ Postgres documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-z</term>
-      <term>--analyze</term>
-      <listitem>
-       <para>
-	Calculate statistics on the database for use by the optimizer.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term>-a</term>
       <term>--alldb</term>
       <listitem>
@@ -76,11 +68,31 @@ Postgres documentation
      </varlistentry>
 
      <varlistentry>
+      <term>-f</term>
+      <term>--full</term>
+      <listitem>
+       <para>
+        Perform <quote>full</quote> vacuuming.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term>-v</term>
       <term>--verbose</term>
       <listitem>
        <para>
 	Print detailed information during processing.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-z</term>
+      <term>--analyze</term>
+      <listitem>
+       <para>
+	Calculate statistics for use by the optimizer.
        </para>
       </listitem>
      </varlistentry>
@@ -257,7 +269,7 @@ Postgres documentation
 
   <informalexample>
    <para>
-    To analyze for the optimzer a database named
+    To clean and analyze for the optimizer a database named
     <literal>bigdb</literal>:
 <screen>
 <prompt>$ </prompt><userinput>vacuumdb --analyze bigdb</userinput>
@@ -267,9 +279,10 @@ Postgres documentation
 
   <informalexample>
    <para>
-    To analyze a single column <literal>bar</literal> in table
+    To clean a single table
     <literal>foo</literal> in a database named
-    <literal>xyzzy</literal> for the optimizer:
+    <literal>xyzzy</literal>, and analyze a single column
+    <literal>bar</literal> of the table for the optimizer:
 <screen>
 <prompt>$ </prompt><userinput>vacuumdb --analyze --verbose --table 'foo(bar)' xyzzy</userinput>
 </screen>

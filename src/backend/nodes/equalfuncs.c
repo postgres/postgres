@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.93 2001/06/19 22:39:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.94 2001/07/10 22:09:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1125,6 +1125,8 @@ _equalVacuumStmt(VacuumStmt *a, VacuumStmt *b)
 {
 	if (a->vacuum != b->vacuum)
 		return false;
+	if (a->full != b->full)
+		return false;
 	if (a->analyze != b->analyze)
 		return false;
 	if (a->verbose != b->verbose)
@@ -1265,17 +1267,7 @@ _equalCreateUserStmt(CreateUserStmt *a, CreateUserStmt *b)
 {
 	if (!equalstr(a->user, b->user))
 		return false;
-	if (!equalstr(a->password, b->password))
-		return false;
-	if (a->sysid != b->sysid)
-		return false;
-	if (a->createdb != b->createdb)
-		return false;
-	if (a->createuser != b->createuser)
-		return false;
-	if (!equal(a->groupElts, b->groupElts))
-		return false;
-	if (!equalstr(a->validUntil, b->validUntil))
+	if (!equal(a->options, b->options))
 		return false;
 
 	return true;
@@ -1286,13 +1278,7 @@ _equalAlterUserStmt(AlterUserStmt *a, AlterUserStmt *b)
 {
 	if (!equalstr(a->user, b->user))
 		return false;
-	if (!equalstr(a->password, b->password))
-		return false;
-	if (a->createdb != b->createdb)
-		return false;
-	if (a->createuser != b->createuser)
-		return false;
-	if (!equalstr(a->validUntil, b->validUntil))
+	if (!equal(a->options, b->options))
 		return false;
 
 	return true;
