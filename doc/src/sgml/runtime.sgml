@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.17 2000/07/22 14:49:00 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.18 2000/08/11 18:31:06 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -683,8 +683,11 @@ env PGOPTIONS='--geqo=off' psql
         Turns on various assertion checks. This is a debugging aid. If
         you are experiencing strange problems or crashes you might
         want to turn this on, as it might expose programming mistakes.
-        To use this option, the macro <literal>USE_ASSERT_CHECKING</>
-        must be defined when Postgres is built.
+        To use this option, the macro <literal>USE_ASSERT_CHECKING</literal>
+        must be defined when Postgres is built (see the configure option
+	<literal>--enable-cassert</literal>).  Note that
+	<literal>DEBUG_ASSERTIONS</literal> defaults to ON if Postgres
+	has been built this way.
        </para>
       </listitem>
      </varlistentry>
