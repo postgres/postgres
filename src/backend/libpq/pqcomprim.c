@@ -4,7 +4,9 @@
 #include <netinet/in.h>
 
 #include "postgres.h"
+#include "miscadmin.h"
 #include "libpq/pqcomm.h"
+#include "libpq/libpq.h"
 
 
 /*
@@ -69,7 +71,7 @@
 
 /* --------------------------------------------------------------------- */
 int
-pqPutShort(int integer, FILE *f)
+pqPutShort(int integer)
 {
 	uint16		n;
 
@@ -79,15 +81,12 @@ pqPutShort(int integer, FILE *f)
 	n = ((PG_PROTOCOL_MAJOR(FrontendProtocol) == 0) ? hton_s(integer) : htons((uint16) integer));
 #endif
 
-	if (fwrite(&n, 2, 1, f) != 1)
-		return EOF;
-
-	return 0;
+	return pqPutNBytes((char *)&n, 2); /* 0 on success, EOF otherwise */
 }
 
 /* --------------------------------------------------------------------- */
 int
-pqPutLong(int integer, FILE *f)
+pqPutLong(int integer)
 {
 	uint32		n;
 
@@ -97,20 +96,17 @@ pqPutLong(int integer, FILE *f)
 	n = ((PG_PROTOCOL_MAJOR(FrontendProtocol) == 0) ? hton_l(integer) : htonl((uint32) integer));
 #endif
 
-	if (fwrite(&n, 4, 1, f) != 1)
-		return EOF;
-
-	return 0;
+        return pqPutNBytes((char *)&n,4);
 }
 
 /* --------------------------------------------------------------------- */
 int
-pqGetShort(int *result, FILE *f)
+pqGetShort(int *result)
 {
 	uint16		n;
 
-	if (fread(&n, 2, 1, f) != 1)
-		return EOF;
+	if (pqGetNBytes((char *)&n,2) != 0)
+	  return EOF;
 
 #ifdef FRONTEND
 	*result = (int) ntohs(n);
@@ -123,12 +119,12 @@ pqGetShort(int *result, FILE *f)
 
 /* --------------------------------------------------------------------- */
 int
-pqGetLong(int *result, FILE *f)
+pqGetLong(int *result)
 {
 	uint32		n;
 
-	if (fread(&n, 4, 1, f) != 1)
-		return EOF;
+	if (pqGetNBytes((char *)&n, 4) != 0)
+	  return EOF;
 
 #ifdef FRONTEND
 	*result = (int) ntohl(n);
@@ -145,47 +141,59 @@ pqGetLong(int *result, FILE *f)
 		Return 0 if ok.
 */
 int
-pqGetNBytes(char *s, size_t len, FILE *f)
+pqGetNBytes(char *s, size_t len)
 {
-	int			cnt;
+	int bytesDone = 0;
 
-	if (f == NULL)
-		return EOF;
+	do {
+	  int r = recv(MyProcPort->sock, s+bytesDone, len-bytesDone, MSG_WAITALL);
+	  if (r == 0 || r == -1) {
+	    if (errno != EINTR)
+	      return EOF; /* All other than signal-interrupted is error */
+	    continue; /* Otherwise, try again */
+	  }
+	  
+	  /* r contains number of bytes received */
+	  bytesDone += r;
 
-	cnt = fread(s, 1, len, f);
-	s[cnt] = '\0';
-
-	return (cnt == len) ? 0 : EOF;
+	} while (bytesDone < len);
+	/* Zero-termination now in pq_getnchar() instead */
+	return 0;
 }
 
 /* --------------------------------------------------------------------- */
 int
-pqPutNBytes(const char *s, size_t len, FILE *f)
+pqPutNBytes(const char *s, size_t len)
 {
-	if (f == NULL)
-		return EOF;
+        int bytesDone = 0;
 
-	if (fwrite(s, 1, len, f) != len)
-		return EOF;
+	do {
+	  int r = send(MyProcPort->sock, s+bytesDone, len-bytesDone, 0);
+	  if (r == 0 || r == -1) {
+	    if (errno != EINTR)
+	      return EOF; /* Only signal interruption allowed */
+	    continue; /* If interruped and read nothing, just try again */
+	  }
+	  
+	  /* r contains number of bytes sent so far */
+	  bytesDone += r;
+	} while (bytesDone < len);
 
 	return 0;
 }
 
 /* --------------------------------------------------------------------- */
 int
-pqGetString(char *s, size_t len, FILE *f)
+pqGetString(char *s, size_t len)
 {
 	int			c;
-
-	if (f == NULL)
-		return EOF;
 
 	/*
 	 * Keep on reading until we get the terminating '\0' and discard those
 	 * bytes we don't have room for.
 	 */
 
-	while ((c = getc(f)) != EOF && c != '\0')
+	while ((c = pq_getchar()) != EOF && c != '\0')
 		if (len > 1)
 		{
 			*s++ = c;
@@ -202,33 +210,8 @@ pqGetString(char *s, size_t len, FILE *f)
 
 /* --------------------------------------------------------------------- */
 int
-pqPutString(const char *s, FILE *f)
+pqPutString(const char *s)
 {
-	if (f == NULL)
-		return 0;
-
-	if (fputs(s, f) == EOF)
-		return EOF;
-
-	fputc('\0', f);				/* important to send an ending \0 since
-								 * backend expects it */
-
-	return 0;
+  return pqPutNBytes(s,strlen(s)+1);
 }
 
-/* --------------------------------------------------------------------- */
-int
-pqGetByte(FILE *f)
-{
-	return getc(f);
-}
-
-/* --------------------------------------------------------------------- */
-int
-pqPutByte(int c, FILE *f)
-{
-	if (!f)
-		return 0;
-
-	return (putc(c, f) == c) ? 0 : EOF;
-}

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.29 1998/09/01 04:36:31 momjian Exp $
+ * $Id: pqcomm.h,v 1.30 1999/01/12 12:49:52 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,7 +152,7 @@ typedef struct CancelRequestPacket
 }			CancelRequestPacket;
 
 
-/* in pqcompriv.c */
+/* in pqcomprim.c */
 int			pqGetShort(int *, FILE *);
 int			pqGetLong(int *, FILE *);
 int			pqGetNBytes(char *, size_t, FILE *);

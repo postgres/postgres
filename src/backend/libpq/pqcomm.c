@@ -5,19 +5,22 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: pqcomm.c,v 1.60 1999/01/11 03:56:06 scrappy Exp $
+ *  $Id: pqcomm.c,v 1.61 1999/01/12 12:49:51 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * INTERFACE ROUTINES
- *		pq_gettty		- return the name of the tty in the given buffer
+ *              pq_init                 - initialize libpq
  *		pq_getport		- return the PGPORT setting
  *		pq_close		- close input / output connections
  *		pq_flush		- flush pending output
  *		pq_getstr		- get a null terminated string from connection
- *		pq_getnchar		- get n characters from connection
+ *              pq_getchar              - get 1 character from connection
+ *              pq_peekchar             - peek at first character in connection
+ *		pq_getnchar		- get n characters from connection, and null-terminate
  *		pq_getint		- get an integer from connection
+ *              pq_putchar              - send 1 character to connection
  *		pq_putstr		- send a null terminated string to connection
  *		pq_putnchar		- send n characters to connection
  *		pq_putint		- send an integer to connection
@@ -26,12 +29,15 @@
  *					   the length)
  *		pq_getinaddr	- initialize address from host and port number
  *		pq_getinserv	- initialize address from host and service name
- *		pq_connect		- create remote input / output connection
- *		pq_accept		- accept remote input / output connection
  *
+ *              StreamDoUnlink          - Shutdown UNIX socket connectioin
+ *              StreamServerPort        - Open sock stream
+ *              StreamConnection        - Create new connection with client
+ *              StreamClose             - Close a client/backend connection
+ * 
  * NOTES
- *		These functions are used by both frontend applications and
- *		the postgres backend.
+ *              Frontend is now completey in interfaces/libpq, and no 
+ *              functions from this file is used.
  *
  */
 #include "postgres.h"
@@ -71,13 +77,7 @@
 #endif
 #include "utils/trace.h"
 
-/* ----------------
- *		declarations
- * ----------------
- */
-static FILE	*Pfout,
-			*Pfin,
-			*Pfdebug;			/* debugging libpq */
+extern FILE * debug_port; /* in util.c */
 
 /* --------------------------------
  *		pq_init - open portal file descriptors
@@ -86,15 +86,9 @@ static FILE	*Pfout,
 void
 pq_init(int fd)
 {
-	Pfin = fdopen(fd, "r");
-	Pfout = fdopen(dup(fd), "w");
-	if (!Pfin || !Pfout)
-		elog(FATAL, "pq_init: Couldn't initialize socket connection");
 	PQnotifies_init();
 	if (getenv("LIBPQ_DEBUG"))
-		Pfdebug = stderr;
-	else
-		Pfdebug = NULL;
+	  debug_port = stderr;
 }
 
 /* -------------------------
@@ -102,19 +96,23 @@ pq_init(int fd)
  *
  *	 get a character from the input file,
  *
- *	 if Pfdebug is set, also echo the character fetched into Pfdebug
- *
- *	 used for debugging libpq
  */
 
 int
 pq_getchar(void)
 {
-	int			c;
+	char c;
+	char isDone = 0;
 
-	c = getc(Pfin);
-	if (Pfdebug && c != EOF)
-		putc(c, Pfdebug);
+	do {
+	  if (recv(MyProcPort->sock,&c,1,MSG_WAITALL) != 1) {
+	    if (errno != EINTR)
+	      return EOF; /* Not interrupted, so something went wrong */
+	  }
+	  else
+	    isDone = 1;
+	} while (!isDone);
+	  
 	return c;
 }
 
@@ -124,22 +122,22 @@ pq_getchar(void)
  */
 int
 pq_peekchar(void) {
-  char c = getc(Pfin);
-  ungetc(c,Pfin);
-  return c;
+	char c;
+	char isDone = 0;
+
+	do {
+	  if (recv(MyProcPort->sock,&c,1,MSG_WAITALL | MSG_PEEK) != 1) {
+	    if (errno != EINTR)
+	      return EOF; /* Not interrupted, so something went wrong */
+	  }
+	  else
+	    isDone = 1;
+	} while (!isDone);
+	  
+	return c;
 }
   
 
-
-/* --------------------------------
- *		pq_gettty - return the name of the tty in the given buffer
- * --------------------------------
- */
-void
-pq_gettty(char *tp)
-{
-	strncpy(tp, ttyname(0), 19);
-}
 
 /* --------------------------------
  *		pq_getport - return the PGPORT setting
@@ -162,16 +160,7 @@ pq_getport()
 void
 pq_close()
 {
-	if (Pfin)
-	{
-		fclose(Pfin);
-		Pfin = NULL;
-	}
-	if (Pfout)
-	{
-		fclose(Pfout);
-		Pfout = NULL;
-	}
+        close(MyProcPort->sock);
 	PQnotifies_init();
 }
 
@@ -182,8 +171,7 @@ pq_close()
 void
 pq_flush()
 {
-	if (Pfout)
-		fflush(Pfout);
+  /* Not supported/required? */
 }
 
 /* --------------------------------
@@ -198,13 +186,7 @@ pq_getstr(char *s, int maxlen)
 	char	   *p;
 #endif
 
-	if (Pfin == (FILE *) NULL)
-	{
-/*		elog(DEBUG, "Input descriptor is null"); */
-		return EOF;
-	}
-
-	c = pqGetString(s, maxlen, Pfin);
+	c = pqGetString(s, maxlen);
 
 #ifdef MULTIBYTE
 	p = (char*) pg_client_to_server((unsigned char *) s, maxlen);
@@ -215,73 +197,16 @@ pq_getstr(char *s, int maxlen)
 	return c;
 }
 
-/*
- * USER FUNCTION - gets a newline-terminated string from the backend.
- *
- * Chiefly here so that applications can use "COPY <rel> to stdout"
- * and read the output string.	Returns a null-terminated string in s.
- *
- * PQgetline reads up to maxlen-1 characters (like fgets(3)) but strips
- * the terminating \n (like gets(3)).
- *
- * RETURNS:
- *		EOF if it is detected or invalid arguments are given
- *		0 if EOL is reached (i.e., \n has been read)
- *				(this is required for backward-compatibility -- this
- *				 routine used to always return EOF or 0, assuming that
- *				 the line ended within maxlen bytes.)
- *		1 in other cases
- */
-int
-PQgetline(char *s, int maxlen)
-{
-	if (!Pfin || !s || maxlen <= 1)
-		return EOF;
-
-	if (fgets(s, maxlen - 1, Pfin) == NULL)
-		return feof(Pfin) ? EOF : 1;
-	else
-	{
-		for (; *s; s++)
-		{
-			if (*s == '\n')
-			{
-				*s = '\0';
-				break;
-			}
-		}
-	}
-
-	return 0;
-}
-
-/*
- * USER FUNCTION - sends a string to the backend.
- *
- * Chiefly here so that applications can use "COPY <rel> from stdin".
- *
- * RETURNS:
- *		0 in all cases.
- */
-int
-PQputline(char *s)
-{
-	if (Pfout)
-	{
-		fputs(s, Pfout);
-		fflush(Pfout);
-	}
-	return 0;
-}
-
 /* --------------------------------
- *		pq_getnchar - get n characters from connection
+ *		pq_getnchar - get n characters from connection, and null terminate
  * --------------------------------
  */
 int
 pq_getnchar(char *s, int off, int maxlen)
 {
-	return pqGetNBytes(s + off, maxlen, Pfin);
+        int r = pqGetNBytes(s + off, maxlen);
+	s[off+maxlen] = '\0';
+	return r;
 }
 
 /* --------------------------------
@@ -297,9 +222,6 @@ pq_getint(int b)
 	int			n,
 				status = 1;
 
-	if (!Pfin)
-		return EOF;
-
 	/*
 	 * mjl: Seems inconsisten w/ return value of pq_putint (void). Also,
 	 * EOF is a valid return value for an int! XXX
@@ -308,13 +230,13 @@ pq_getint(int b)
 	switch (b)
 	{
 		case 1:
-			status = ((n = fgetc(Pfin)) == EOF);
+			status = ((n = pq_getchar()) == EOF);
 			break;
 		case 2:
-			status = pqGetShort(&n, Pfin);
+			status = pqGetShort(&n);
 			break;
 		case 4:
-			status = pqGetLong(&n, Pfin);
+			status = pqGetLong(&n);
 			break;
 		default:
 			fprintf(stderr, "** Unsupported size %d\n", b);
@@ -343,9 +265,9 @@ pq_putstr(char *s)
 	unsigned char *p;
 
 	p = pg_server_to_client(s, strlen(s));
-	if (pqPutString(p, Pfout))
+	if (pqPutString(p))
 #else
-	if			(pqPutString(s, Pfout))
+	if (pqPutString(s))
 #endif
 	{
 		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
@@ -362,10 +284,10 @@ pq_putstr(char *s)
 void
 pq_putnchar(char *s, int n)
 {
-	if (pqPutNBytes(s, n, Pfout))
+	if (pqPutNBytes(s, n))
 	{
 		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
-				"FATAL: pq_putnchar: fputc() failed: errno=%d\n",
+				"FATAL: pq_putnchar: pqPutNBytes() failed: errno=%d\n",
 				errno);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
@@ -384,20 +306,17 @@ pq_putint(int i, int b)
 {
 	int			status;
 
-	if (!Pfout)
-		return;
-
 	status = 1;
 	switch (b)
 	{
 		case 1:
-			status = (fputc(i, Pfout) == EOF);
+			status = (pq_putchar(i) == EOF);
 			break;
 		case 2:
-			status = pqPutShort(i, Pfout);
+			status = pqPutShort(i);
 			break;
 		case 4:
-			status = pqPutLong(i, Pfout);
+			status = pqPutLong(i);
 			break;
 		default:
 			fprintf(stderr, "** Unsupported size %d\n", b);
@@ -485,6 +404,19 @@ pq_getinserv(struct sockaddr_in * sin, char *host, char *serv)
  *		Stream functions are used for vanilla TCP connection protocol.
  */
 
+static char sock_path[MAXPGPATH + 1] = "";
+
+/* StreamDoUnlink()
+ * Shutdown routine for backend connection
+ * If a Unix socket is used for communication, explicitly close it.
+ */
+void
+StreamDoUnlink()
+{
+	Assert(sock_path[0]);
+	unlink(sock_path);
+}
+
 /*
  * StreamServerPort -- open a sock stream "listening" port.
  *
@@ -497,19 +429,6 @@ pq_getinserv(struct sockaddr_in * sin, char *host, char *serv)
  *
  * RETURNS: STATUS_OK or STATUS_ERROR
  */
-
-static char sock_path[MAXPGPATH + 1] = "";
-
-/* do_unlink()
- * Shutdown routine for backend connection
- * If a Unix socket is used for communication, explicitly close it.
- */
-void
-StreamDoUnlink()
-{
-	Assert(sock_path[0]);
-	unlink(sock_path);
-}
 
 int
 StreamServerPort(char *hostName, short portName, int *fdP)
@@ -707,81 +626,6 @@ StreamClose(int sock)
 	close(sock);
 }
 
-/* ---------------------------
- * StreamOpen -- From client, initiate a connection with the
- *		server (Postmaster).
- *
- * RETURNS: STATUS_OK or STATUS_ERROR
- *
- * NOTE: connection is NOT established just because this
- *		routine exits.	Local state is ok, but we haven't
- *		spoken to the postmaster yet.
- * ---------------------------
- */
-int
-StreamOpen(char *hostName, short portName, Port *port)
-{
-	SOCKET_SIZE_TYPE	len;
-	int			err;
-	struct hostent *hp;
-	extern int	errno;
-
-	/* set up the server (remote) address */
-	MemSet((char *) &port->raddr, 0, sizeof(port->raddr));
-	if (hostName)
-	{
-		if (!(hp = gethostbyname(hostName)) || hp->h_addrtype != AF_INET)
-		{
-			snprintf(PQerrormsg, ERROR_MSG_LENGTH,
-					"FATAL: StreamOpen: unknown hostname: %s\n", hostName);
-			fputs(PQerrormsg, stderr);
-			pqdebug("%s", PQerrormsg);
-			return STATUS_ERROR;
-		}
-		memmove((char *) &(port->raddr.in.sin_addr),
-				(char *) hp->h_addr,
-				hp->h_length);
-		port->raddr.in.sin_family = AF_INET;
-		port->raddr.in.sin_port = htons(portName);
-		len = sizeof(struct sockaddr_in);
-	}
-	else
-	{
-		port->raddr.un.sun_family = AF_UNIX;
-		len = UNIXSOCK_PATH(port->raddr.un, portName);
-	}
-	/* connect to the server */
-	if ((port->sock = socket(port->raddr.sa.sa_family, SOCK_STREAM, 0)) < 0)
-	{
-		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
-				"FATAL: StreamOpen: socket() failed: errno=%d\n", errno);
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
-		return STATUS_ERROR;
-	}
-	err = connect(port->sock, &port->raddr.sa, len);
-	if (err < 0)
-	{
-		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
-				"FATAL: StreamOpen: connect() failed: errno=%d\n", errno);
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
-		return STATUS_ERROR;
-	}
-
-	/* fill in the client address */
-	if (getsockname(port->sock, &port->laddr.sa, &len) < 0)
-	{
-		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
-				"FATAL: StreamOpen: getsockname() failed: errno=%d\n", errno);
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
-		return STATUS_ERROR;
-	}
-
-	return STATUS_OK;
-}
-
 #ifdef MULTIBYTE
 void
 pq_putncharlen(char *s, int n)
@@ -796,5 +640,26 @@ pq_putncharlen(char *s, int n)
 }
 
 #endif
+
+
+/* 
+ * Act like the stdio putc() function. Write one character
+ * to the stream. Return this character, or EOF on error.
+ */
+int pq_putchar(char c) 
+{
+  char isDone = 0;
+
+  do {
+    if (send(MyProcPort->sock, &c, 1, 0) != 1) {
+      if (errno != EINTR) 
+	return EOF; /* Anything other than interrupt is error! */
+    }
+    else
+      isDone = 1; /* Done if we sent one char */
+  } while (!isDone);
+  return c;
+}
+
 
 
