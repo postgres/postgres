@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.TH PURGE SQL 11/05/95 Postgres95 Postgres95
+.TH PURGE SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 purge \(em discard historical data
 .SH SYNOPSIS

@@ -1,7 +1,7 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/sql.l,v 1.2 1996/11/27 13:49:46 momjian Exp $
-.TH INTRODUCTION SQL 11/5/95 Postgres95 Postgres95
+.\" $Header: /cvsroot/pgsql/src/man/Attic/sql.l,v 1.2.2.1 1996/12/11 00:32:04 momjian Exp $
+.TH INTRODUCTION SQL 11/5/95 PostgreSQL PostgreSQL
 .SH "Section 4 \(em SQL Commands (COMMANDS)"
 .SH "General Information"
 .SH DESCRIPTION

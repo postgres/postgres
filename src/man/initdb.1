@@ -1,83 +1,248 @@
 .\" This is -*-nroff-*-
-.\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/initdb.1,v 1.1 1996/11/14 10:17:17 scrappy Exp $
-.TH INITDB UNIX 11/05/95 Postgres95 Postgres95
+.\" $Header: /cvsroot/pgsql/src/man/Attic/initdb.1,v 1.1.2.1 1996/12/11 00:31:37 momjian Exp $
+.TH INITDB UNIX 11/29/96 PostgreSQL PostgreSQL
 .SH NAME
-initdb \(em initalize the database templates and primary directories
+initdb \(em create a new Postgres database system
 .SH SYNOPSIS
 .BR "initdb"
 [\c
-.BR "-d"
+.BR "--pglib="\c
+.IR "directory"\c
 ]
 [\c
-.BR "-n"
+.BR "--pgdata="\c
+.IR "directory"\c
 ]
 [\c
-.BR "-r directory"
+.BR "--username="\c
+.IR "username"\c
 ]
 [\c
-.BR "-t"
+.BR "--template"\c
 ]
 [\c
-.BR "-u username"
+.BR "--noclean"\c
 ]
 [\c
-.BR "-v"
+.BR "--debug"\c
 ]
+
+.BR "initdb"
+[\c
+.BR "-l"
+.IR "directory"\c
+]
+[\c
+.BR "-r"
+.IR "directory"\c
+]
+[\c
+.BR "-u"
+.IR "username"\c
+]
+[\c
+.BR "-t"\c
+]
+[\c
+.BR "-n"\c
+]
+[\c
+.BR "-d"\c
+]
+
+
 .SH DESCRIPTION
 .IR Initdb
-sets up the initial template databases and is normally executed as
-part of the installation process.  The template database is created
-under the directory specified by the the environment variable 
-.SM PGDATA,
-or to a default specified at compile-time.  The template database
-is then 
-.BR vacuum ed.
+Creates a new Postgres database system.  A database system is a
+collection of databases that are all administered by the same Unix user
+and managed by a single postmaster.
 .PP
+Creating a database system consists of creating the directories in which
+the database data will live, generating the shared catalog tables 
+(tables that don't belong to any particular database), and
+creating the
+.IR template1
+database.  What is the 
+.IR template1
+database?  When you create a database, Postgres does it by copying
+everything from the
+.IR template1
+database.  It contains catalog tables filled in for things like the
+builtin types.
+.PP     
+After 
+.IR initdb
+creates the database, it 
+.BR vacuum 's
+it.
+.PP
+There are 3 ways to give parameters to 
+.IR initdb .
+First, you can use initdb command options.  Second, you can set environment
+variables before invoking initdb.  Third, you can have a program called
+.IR postconfig
+in your Unix command search path. 
 .IR Initdb
-is a shell script that invokes the backend server directly.  Hence, it
-must be executed by the Postgres super-user.
+invokes that program and the program writes 
+.IR initdb
+parameters to its standard output stream.
+.PP
+Command options always override parameters specified any other way.
+The values returned by
+.IR postconfig 
+override any environment variables, but your
+.IR postconfig 
+program may base its output on the environment variables if you want
+their values to be used.
+.PP
+The value that 
+.IR postconfig 
+outputs must have the format
+.PP
+    var1=value1 var2=value2 ...  
+.PP
+It can output nothing if it doesn't want to supply any parameters.
+The "varN" values are equal to the corresponding environment variable
+names.  For example, outputting "PGDATA=/tmp/postgres_test" has the
+same effect as invoking
+.IR initdb 
+with an environment variable called "PGDATA" whose value is
+"/tmp/postgres_test".
+.PP
+There are 3 parameters you must supply to initdb to tell it how to 
+create the database system:
+.PP
+1) Where are the files that make up Postgres?  Apart from files that
+have to go in particular directories because of their function, the
+files that make up the Postgres software were installed in a directory
+called the "pglib" directory.  An example of a file that will be found
+there that 
+.IR initdb
+needs is global1.bki.source, which contains all the information that goes
+into the shared catalog tables.  Use the 
+.BR --pglib
+(\c
+.BR -l )
+option or the 
+.BR PGLIB
+environment variable.
+.PP
+2) Where in your Unix filesystem do you want the database data to go?
+The top level directory is called the "pgdata" directory.  Use the
+.BR --pgdata 
+(\c
+.BR -d )
+option or the 
+.BR PGDATA
+environment variable.
+.PP
+3) Who will be the Postgres superuser for this database system?  The
+Postgres superuser is a Unix user that owns all files that store the database
+system and also owns the postmaster and backend processes that access them.
+Use the
+.BR --username
+(\c
+.BR -u )
+option or the 
+.BR PGUSER
+environment variable.  Or just let it default to you (the Unix user who
+runs
+.IR initdb ).
+Note that only the Unix superuser can create a database system with a
+different user as Postgres superuser.
+
+
+
 .PP
 .IR Initdb
 understands the following command-line options:
-.TP
-.BR "-d"
-Print debugging output from the backend server.  This option generates
-a tremendous amount of information.  This option also turns off the
-final vacuuming step.
-.TP
-.BR "-n"
-Run in \*(lqnoclean\*(rq mode.  By default, 
-.IR initdb
-cleans up (recursively unlinks) the data directory if any error
-occurs, which also removes any core files left by the backend server.
-This option inhibits any tidying-up.
-.TP
-.BR "-r directory"
-Use the specified data directory.
-.TP
+
+.BR "--pglib="\c
+.IR "directory"
+.BR "-l"
+.IR "directory"
+
+Use the Postgres files in the specified directory, as explained above.
+
+.BR "--pgdata="\c
+.IR "directory"
+.BR "-r"
+.IR "directory"
+
+Put the database system in this directory, as explained above.
+
+.BR "--username="\c
+.IR "username"
+.BR "-u"
+.IR "username"
+
+Build the database system with the specified Unix user as the Postgres
+superuser for it, as explained above.
+
+.BR "--template"
 .BR "-t"
-Update template database only.
-.TP
-.BR "-u username"
-Run as the specified username.
-.TP
-.BR "-v"
-Produce verbose output, printing messages stating where the
-directories are being created, etc.
+
+Replace the
+.IR template1
+database in an existing database system, and don't touch anything else.
+This is useful when you need to upgrade your 
+.IR template1
+database using 
+.IR initdb
+from a newer release of Postgres, or when your 
+.IR template1
+database has become corrupted by some system problem.  Normally the
+contents of
+.IR template1
+remain constant throughout the life of the database system.  You can't
+destroy anything by running
+.IR initdb
+with the 
+.BR --template
+option.
+
+.BR "--noclean"
+.BR "-n"
+
+Run in \*(lqnoclean\*(rq mode.  By default, 
+when 
+.IR initdb
+determines that error prevent it from completely creating the database
+system, it removes any files it may have created before determining
+that it can't finish the job.  That includes any core files left by
+the programs it invokes.  This option inhibits any tidying-up and is
+thus useful for debugging.
+
+.BR "--debug"
+.BR "-d"
+
+Print debugging output from the bootstrap backend.  
+The bootstrap backend is the program 
+.IR initdb
+uses to create the catalog tables.  This option generates a tremendous
+amount of output.  It also turns off the final vacuuming step.
+
+
 .SH FILES
 .TP
-\&$PGDATA/base
-The location of global (shared) classes.
+postconfig
+(Somewhere in the Unix command search path (defined by the PATH environment
+variable)).  This is a program that specifies defaults for some of the
+command options.  See above.
 .TP
-\&$PGDATA/base/template1
-The location of the template database.
+PGLIB/global1.bki.source
+Contents for the shared catalog tables in the new database system.  This
+file is part of the Postgres software.
 .TP
-\&$PGDATA/files/{global1,local1_template1}.bki
-Command files used to generate the global and template databases,
-generated and installed by the initial compilation process.
+PGLIB/local1_template1.bki.source
+Contents for the template1 tables in the new database system.  This
+file is part of the Postgres software.
+
 .SH "SEE ALSO"
-createdb(1),
 vacuum(l),
-bki(files),
-template(files).
+bki(5),
+create_database(l),
+createuser(1),
+psql(1)
+
+

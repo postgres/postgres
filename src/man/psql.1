@@ -1,7 +1,7 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/psql.1,v 1.3 1996/11/17 04:27:34 momjian Exp $
-.TH PSQL UNIX 1/20/96 Postgres95 Postgres95
+.\" $Header: /cvsroot/pgsql/src/man/Attic/psql.1,v 1.3.2.1 1996/12/11 00:31:54 momjian Exp $
+.TH PSQL UNIX 1/20/96 PostgreSQL PostgreSQL
 .SH NAME
 psql \(em run the interactive query front-end
 .SH SYNOPSIS
@@ -107,7 +107,7 @@ to use in connecting to the
 process.  The default is site-specific.
 .TP
 .BR "-A"
-Turn off fill justification when printing out attributes.
+Turn off fill justification when printing out table elements.
 .TP
 .BR "-c" " query"
 Specifies that
@@ -177,16 +177,16 @@ Run ins single-line mode where each query is terminated by a newline,
 instead of a semicolon.
 .TP
 .BR "-t"
-Turn off printing of attributes names.
+Turn off printing of column names.
 This is useful with the
 .BR -c
 option in shell scripts.
 .TP
 .BR "-x"
-Turns on extended field mode. When enabled each tuple will have its field
-names printed on the left with the field values printed on the right.
-This is useful for tuples which are otherwise too long to fit into
-one screen line. HTML tuple output supports this mode also.
+Turns on extended row format mode. When enabled each row will have its column
+names printed on the left with the column values printed on the right.
+This is useful for rows which are otherwise too long to fit into
+one screen line. HTML row output supports this mode also.
 .PP
 You may set environment variables to avoid typing some of the above
 options.  See the
@@ -231,12 +231,29 @@ and
 .IR notify (l).
 .PP
 .SH "PSQL COMMANDS"
+Anything you enter in psql that begins with an unquoted backslash is a psql
+command.  Anything else is SQL and simply goes into the current query buffer
+(and once you have at least one complete query, it gets automatically 
+submitted to the backend).  Psql commands are also called slash commands.
+.PP
+The format of a psql command is the backslash, followed immediately by
+a command verb, then any arguments.  The arguments are separated from the
+command verb and each other by any number of white space characters.
+.PP
+With single character command verbs, you don't actually need to separate the
+command verb from the argument with white space, for historical reasons.
+You should anyway.
 .IP "\ea"
-Toggle field alignment when printing out attributes.
+Toggle field alignment when printing out table elements.
 .IP "\eC \fIcaption\fR"
 Set the HTML3.0 table caption.
-.IP "\ec \fIdbname\fR"
+.IP "\econnect \fIdbname\fR"
 Establish a connection to a new database. The previous connection is closed.
+.IP "\ecopy \fItable\fR {FROM | TO} \fIfilename\fR"
+Perform a frontend copy.  This is an operation that runs a SQL COPY command,
+but instead of the backend reading or writing a specified file, and 
+consequently requiring special user privilege, psql reads or writes the 
+file and routes the data to or from the backend.
 .IP "\ed [\fItable\fR]"
 List tables in the database, or if
 .IR table
@@ -295,14 +312,14 @@ Reset(clear) the query buffer.
 Print or save the command line history to \fIfilename\fR.  (Only available if psql is
 configured to use readline)
 .IP "\et"
-Toggle display of output attribute name headings and row count (defaults to on).
+Toggle display of output column name headings and row count (defaults to on).
 .IP "\eT"
 Set html3.0 <table ...> options.
 .IP "\ex"
-Toggles extended field mode. When enabled each tuple will have its field
-names printed on the left with the field values printed on the right.
-This is useful for tuples which are otherwise too long to fit into
-one screen line. HTML tuple output mode supports this flag too.
+Toggles extended row format mode. When enabled each row will have its column
+names printed on the left with the column values printed on the right.
+This is useful for rows which are otherwise too long to fit into
+one screen line. HTML row output mode supports this flag too.
 .IP "\e! [\fIcommand\fR]"
 Escape to shell or execute
 .IR command.
@@ -350,3 +367,4 @@ introduction(libpq),
 monitor(1)
 postgres(1),
 postmaster(1).
+

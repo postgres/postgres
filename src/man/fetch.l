@@ -1,7 +1,7 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/fetch.l,v 1.1 1996/11/14 10:17:13 scrappy Exp $
-.TH FETCH SQL 01/23/93 Postgres95 Postgres95
+.\" $Header: /cvsroot/pgsql/src/man/Attic/fetch.l,v 1.1.2.1 1996/12/11 00:31:34 momjian Exp $
+.TH FETCH SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
 fetch \(em fetch instance(s) from a cursor
 .SH SYNOPSIS

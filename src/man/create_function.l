@@ -1,7 +1,7 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_function.l,v 1.1 1996/11/14 10:15:48 scrappy Exp $
-.TH "CREATE FUNCTION" SQL 11/05/95 Postgres95 Postgres95
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_function.l,v 1.1.2.1 1996/12/11 00:31:05 momjian Exp $
+.TH "CREATE FUNCTION" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH "NAME"
 create function \(em define a new function
 .SH "SYNOPSIS"

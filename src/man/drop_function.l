@@ -1,7 +1,7 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_function.l,v 1.1 1996/11/14 10:16:53 scrappy Exp $
-.TH "DROP FUNCTION" SQL 11/05/95 Postgres95 Postgres95
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_function.l,v 1.1.2.1 1996/12/11 00:31:27 momjian Exp $
+.TH "DROP FUNCTION" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 drop function \(em remove a user-defined C function 
 .SH SYNOPSIS

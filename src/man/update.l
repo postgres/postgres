@@ -1,7 +1,7 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/update.l,v 1.1 1996/11/14 10:18:11 scrappy Exp $
-.TH UPDATE SQL 11/05/95 Postgres95 Postgres95
+.\" $Header: /cvsroot/pgsql/src/man/Attic/update.l,v 1.1.2.1 1996/12/11 00:32:07 momjian Exp $
+.TH UPDATE SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 update \(em replace values of attributes in a class
 .SH SYNOPSIS

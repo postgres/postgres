@@ -1,7 +1,7 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_operator.l,v 1.2 1996/11/30 04:56:18 momjian Exp $
-.TH "CREATE OPERATOR" SQL 11/05/95 Postgres95 Postgres95
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_operator.l,v 1.2.2.1 1996/12/11 00:31:07 momjian Exp $
+.TH "CREATE OPERATOR" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 create operator \(em define a new user operator
 .SH SYNOPSIS

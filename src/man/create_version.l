@@ -1,7 +1,7 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_version.l,v 1.1 1996/11/14 10:16:15 scrappy Exp $
-.TH "CREATE VERSION" SQL 01/23/93 Postgres95 Postgres95
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_version.l,v 1.1.2.1 1996/12/11 00:31:13 momjian Exp $
+.TH "CREATE VERSION" SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
 create version \(em construct a version class 
 .SH SYNOPSIS

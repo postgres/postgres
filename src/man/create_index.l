@@ -1,7 +1,7 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_index.l,v 1.2 1996/11/16 05:45:56 momjian Exp $
-.TH "CREATE INDEX" SQL 11/05/95 Postgres95 Postgres95
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_index.l,v 1.2.2.1 1996/12/11 00:31:06 momjian Exp $
+.TH "CREATE INDEX" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 create index \(em construct a secondary index
 .SH SYNOPSIS

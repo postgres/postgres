@@ -1,7 +1,7 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_aggregate.l,v 1.1 1996/11/14 10:16:47 scrappy Exp $
-.TH "DROP AGGREGATE" SQL 11/05/95 Postgres95 Postgres95
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_aggregate.l,v 1.1.2.1 1996/12/11 00:31:25 momjian Exp $
+.TH "DROP AGGREGATE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 drop aggregate \(em remove the definition of an aggregate
 .SH SYNOPSIS

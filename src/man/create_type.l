@@ -1,7 +1,7 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_type.l,v 1.1 1996/11/14 10:16:12 scrappy Exp $
-.TH "CREATE TYPE" SQL 11/05/95 Postgres95 Postgres95
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_type.l,v 1.1.2.1 1996/12/11 00:31:11 momjian Exp $
+.TH "CREATE TYPE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 create type \(em define a new base data type 
 .SH SYNOPSIS
