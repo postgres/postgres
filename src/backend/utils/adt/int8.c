@@ -228,11 +228,7 @@ int8um(int64 *val)
 	if (!PointerIsValid(val))
 		return NULL;
 
-#if NOT_USED
-	*result = temp - (*val);
-#else
 	result = int8mi(&temp, val);
-#endif
 
 	return result;
 }	/* int8um() */
@@ -293,39 +289,27 @@ int8div(int64 *val1, int64 *val2)
 int64 *
 int8larger(int64 *val1, int64 *val2)
 {
-#if NOT_USED
 	int64	   *result = palloc(sizeof(int64));
-
-#endif
 
 	if ((!PointerIsValid(val1)) || (!PointerIsValid(val2)))
 		return NULL;
 
-#if NOT_USED
 	*result = ((*val1 > *val2) ? *val1 : *val2);
 
 	return result;
-#endif
-	return (*val1 > *val2) ? val1 : val2;
 }	/* int8larger() */
 
 int64 *
 int8smaller(int64 *val1, int64 *val2)
 {
-#if NOT_USED
 	int64	   *result = palloc(sizeof(int64));
-
-#endif
 
 	if ((!PointerIsValid(val1)) || (!PointerIsValid(val2)))
 		return NULL;
 
-#if NOT_USED
 	*result = ((*val1 < *val2) ? *val1 : *val2);
 
 	return result;
-#endif
-	return (*val1 < *val2) ? val1 : val2;
 }	/* int8smaller() */
 
 
@@ -458,7 +442,6 @@ int84(int64 *val)
 		elog(ERROR, "Invalid (null) int64, can't convert int8 to int4", NULL);
 
 #if NOT_USED
-
 	/*
 	 * Hmm. This conditional always tests true on my i686/linux box. It's
 	 * a gcc compiler bug, or I'm missing something obvious, which is more
@@ -466,8 +449,8 @@ int84(int64 *val)
 	 */
 	if ((*val < INT_MIN) || (*val > INT_MAX))
 #endif
-		if ((*val < (-pow(2, 31) + 1)) || (*val > (pow(2, 31) - 1)))
-			elog(ERROR, "int8 conversion to int4 is out of range", NULL);
+	if ((*val < (-pow(2, 31) + 1)) || (*val > (pow(2, 31) - 1)))
+		elog(ERROR, "int8 conversion to int4 is out of range", NULL);
 
 	result = *val;
 
