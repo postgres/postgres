@@ -82,9 +82,9 @@ BSD44_derived_dlsym(void *handle, const char *name)
 	return NULL;
 #else
 	void	   *vp;
+#ifndef __ELF__
 	char		buf[BUFSIZ];
 
-#ifndef __ELF__
 	if (*name != '_')
 	{
 		sprintf(buf, "_%s", name);
