@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.47 2003/09/25 23:02:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.48 2003/10/30 17:18:55 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -393,7 +393,7 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 					}
 				| decl_varname K_CURSOR
 					{ plpgsql_ns_push(NULL); }
-				  decl_cursor_args decl_is_from K_SELECT decl_cursor_query
+				  decl_cursor_args decl_is_from decl_cursor_query
 					{
 						PLpgSQL_var *new;
 						PLpgSQL_expr *curname_def;
@@ -430,7 +430,7 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 
 						new->datatype = plpgsql_parse_datatype("refcursor");
 
-						new->cursor_explicit_expr = $7;
+						new->cursor_explicit_expr = $6;
 						if ($4 == NULL)
 							new->cursor_explicit_argrow = -1;
 						else
@@ -447,7 +447,7 @@ decl_cursor_query :
 						PLpgSQL_expr *query;
 
 						plpgsql_ns_setlocal(false);
-						query = read_sql_stmt("SELECT ");
+						query = read_sql_stmt("");
 						plpgsql_ns_setlocal(true);
 						
 						$$ = query;
@@ -1396,7 +1396,9 @@ stmt_open		: K_OPEN lno cursor_varptr
 							switch (tok)
 							{
 								case K_SELECT:
-									new->query = read_sql_stmt("SELECT ");
+								case '(':
+									plpgsql_push_back_token(tok);
+									new->query = read_sql_stmt("");
 									break;
 
 								case K_EXECUTE:
