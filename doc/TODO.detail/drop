@@ -2,7 +2,7 @@ From pgsql-hackers-owner+M3040@hub.org Thu Jun  8 00:31:01 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA13157
 	for <pgman@candle.pha.pa.us>; Thu, 8 Jun 2000 00:31:00 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id AAA01089 for <pgman@candle.pha.pa.us>; Thu, 8 Jun 2000 00:17:19 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id AAA01089 for <pgman@candle.pha.pa.us>; Thu, 8 Jun 2000 00:17:19 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5846ib99782;
 	Thu, 8 Jun 2000 00:06:44 -0400 (EDT)
@@ -280,7 +280,7 @@ From Inoue@tpf.co.jp Sat Jun 10 01:01:01 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA10355
 	for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:01:00 -0400 (EDT)
-Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id AAA25467 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 00:41:32 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id AAA25467 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 00:41:32 -0400 (EDT)
 Received: from mcadnote1 (ppm110.noc.fukui.nsk.ne.jp [210.161.188.29] (may be forged))
           by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
    id NAA03125; Sat, 10 Jun 2000 13:40:40 +0900
@@ -411,7 +411,7 @@ From tgl@sss.pgh.pa.us Sat Jun 10 01:31:04 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA10922
 	for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:31:03 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id BAA27265 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:16:07 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id BAA27265 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:16:07 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id BAA06206;
 	Sat, 10 Jun 2000 01:14:37 -0400 (EDT)
@@ -457,7 +457,7 @@ From dhogaza@pacifier.com Sat Jun 10 09:30:59 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA25987
 	for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 09:30:58 -0400 (EDT)
-Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id JAA18716 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 09:15:08 -0400 (EDT)
+Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id JAA18716 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 09:15:08 -0400 (EDT)
 Received: from desktop (dsl-dhogaza.pacifier.net [207.202.226.68])
 	by smtp.pacifier.com (8.9.3/8.9.3pop) with SMTP id GAA15799;
 	Sat, 10 Jun 2000 06:14:28 -0700 (PDT)
@@ -509,7 +509,7 @@ From tgl@sss.pgh.pa.us Sun Jun 11 12:31:03 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA05771
 	for <pgman@candle.pha.pa.us>; Sun, 11 Jun 2000 12:31:01 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id MAA19315 for <pgman@candle.pha.pa.us>; Sun, 11 Jun 2000 12:24:06 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id MAA19315 for <pgman@candle.pha.pa.us>; Sun, 11 Jun 2000 12:24:06 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id MAA09503;
 	Sun, 11 Jun 2000 12:22:42 -0400 (EDT)
@@ -1860,4 +1860,363 @@ I meant to say is that the differene is very small.
 
 regards,
 Hiroshi Inoue
+
+From tgl@sss.pgh.pa.us Sat Apr 13 11:30:17 2002
+Return-path: <tgl@sss.pgh.pa.us>
+Received: from sss.pgh.pa.us (root@[192.204.191.242])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3DFUGS26218
+	for <pgman@candle.pha.pa.us>; Sat, 13 Apr 2002 11:30:16 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id g3DFTjF15655;
+	Sat, 13 Apr 2002 11:29:45 -0400 (EDT)
+To: "Christopher Kings-Lynne" <chriskl@familyhealth.com.au>
+cc: "Bruce Momjian" <pgman@candle.pha.pa.us>,
+   "Hiroshi Inoue" <Inoue@tpf.co.jp>, pgsql-hackers@postgresql.org
+Subject: Re: DROP COLUMN (was RFC: Restructuring pg_aggregate)
+In-Reply-To: <001701c1e2b2$e7b10a40$0200a8c0@SOL> 
+References: <20020411233659.O69846-100000@houston.familyhealth.com.au> <1824.1018542155@sss.pgh.pa.us> <001701c1e2b2$e7b10a40$0200a8c0@SOL>
+Comments: In-reply-to "Christopher Kings-Lynne" <chriskl@familyhealth.com.au>
+	message dated "Sat, 13 Apr 2002 14:17:34 +0800"
+Date: Sat, 13 Apr 2002 11:29:45 -0400
+Message-ID: <15652.1018711785@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: OR
+
+[ way past time to change the title of this thread ]
+
+"Christopher Kings-Lynne" <chriskl@familyhealth.com.au> writes:
+> OK, sounds fair.  However, is there a more aggressive way of reclaiming the
+> space?  The problem with updating all the rows to null for that column is
+> that the on-disk size is doubled anyway, right?  So, could a VACUUM FULL
+> process do the nulling for us?  Vacuum works outside of normal transaction
+> constraints anyway...?
+
+No, VACUUM has the same transactional constraints as everyone else
+(unless you'd like a crash during VACUUM to trash your table...)
+
+I do not think that we necessarily need to provide a special mechanism
+for this at all.  The docs for DROP COLUMN could simply explain that
+the DROP itself doesn't reclaim the space, but that the space will be
+reclaimed over time as extant rows are updated or deleted.  If you want
+to hurry the process along you could do
+	UPDATE table SET othercol = othercol
+	VACUUM FULL
+to force all the rows to be updated and then reclaim space.  But given
+the peak-space-is-twice-as-much behavior, this is not obviously a win.
+I'd sure object to an implementation that *forced* that approach on me,
+whether during DROP itself or the next VACUUM.
+
+> Also, it seems to me that at some point we are forced to break client
+> compatibility.  Either we add attisdropped field to pg_attribute, or we use
+> Hiroshi's (-1 * attnum - offset) idea.  Both Tom and Hiroshi have good
+> reasons for each of these - would it be possible for you guys to post with
+> your reasons for and against both the techniques.
+
+Er, didn't we do that already?
+
+			regards, tom lane
+
+From chriskl@familyhealth.com.au Sun Apr 14 01:06:31 2002
+Return-path: <chriskl@familyhealth.com.au>
+Received: from mail.iinet.net.au (symphony-03.iinet.net.au [203.59.3.35])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g3E56TS03274
+	for <pgman@candle.pha.pa.us>; Sun, 14 Apr 2002 01:06:30 -0400 (EDT)
+Received: (qmail 20365 invoked by uid 666); 14 Apr 2002 05:06:31 -0000
+Received: from unknown (HELO SOL) (203.59.168.230)
+  by mail.iinet.net.au with SMTP; 14 Apr 2002 05:06:31 -0000
+Message-ID: <00c601c1e371$0e324670$0200a8c0@SOL>
+From: "Christopher Kings-Lynne" <chriskl@familyhealth.com.au>
+To: "Tom Lane" <tgl@sss.pgh.pa.us>
+cc: "Bruce Momjian" <pgman@candle.pha.pa.us>,
+   "Hiroshi Inoue" <Inoue@tpf.co.jp>, <pgsql-hackers@postgresql.org>
+References: <20020411233659.O69846-100000@houston.familyhealth.com.au> <1824.1018542155@sss.pgh.pa.us> <001701c1e2b2$e7b10a40$0200a8c0@SOL> <15652.1018711785@sss.pgh.pa.us>
+Subject: Re: DROP COLUMN (was RFC: Restructuring pg_aggregate)
+Date: Sun, 14 Apr 2002 12:58:43 +0800
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 5.50.4522.1200
+X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4522.1200
+Status: OR
+
+> No, VACUUM has the same transactional constraints as everyone else
+> (unless you'd like a crash during VACUUM to trash your table...)
+
+Seriously, you can run VACUUM in a transaction and rollback the movement of
+a tuple on disk?  What do you mean by same transactional constraints?
+
+Chris
+
+
+From pgsql-hackers-owner+M21278@postgresql.org Sat Apr 13 12:21:20 2002
+Return-path: <pgsql-hackers-owner+M21278@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3DGLKS29823
+	for <pgman@candle.pha.pa.us>; Sat, 13 Apr 2002 12:21:20 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 9B4AF475CA6; Sat, 13 Apr 2002 12:21:12 -0400 (EDT)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by postgresql.org (Postfix) with ESMTP id 1ED76474E71
+	for <pgsql-hackers@postgresql.org>; Sat, 13 Apr 2002 12:20:07 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id g3DGJeF15983;
+	Sat, 13 Apr 2002 12:19:40 -0400 (EDT)
+To: Hannu Krosing <hannu@tm.ee>
+cc: Christopher Kings-Lynne <chriskl@familyhealth.com.au>,
+   Bruce Momjian <pgman@candle.pha.pa.us>, Hiroshi Inoue <Inoue@tpf.co.jp>,
+   pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] DROP COLUMN (was RFC: Restructuring pg_aggregate) 
+In-Reply-To: <1018716432.3360.9.camel@taru.tm.ee> 
+References: <20020411233659.O69846-100000@houston.familyhealth.com.au> <1824.1018542155@sss.pgh.pa.us> <001701c1e2b2$e7b10a40$0200a8c0@SOL> <15652.1018711785@sss.pgh.pa.us> <1018716432.3360.9.camel@taru.tm.ee>
+Comments: In-reply-to Hannu Krosing <hannu@tm.ee>
+	message dated "13 Apr 2002 18:47:07 +0200"
+Date: Sat, 13 Apr 2002 12:19:40 -0400
+Message-ID: <15980.1018714780@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Hannu Krosing <hannu@tm.ee> writes:
+>> No, VACUUM has the same transactional constraints as everyone else
+>> (unless you'd like a crash during VACUUM to trash your table...)
+
+> But can't it do the SET TO NULL thing if it knows that the transaction
+> that dropped the column has committed. 
+
+Hmm, you're thinking of allowing VACUUM to overwrite tuples in-place?
+Strikes me as unsafe, but I'm not really sure.
+
+In any case it's not that easy.  If the column is wide enough
+that reclaiming its space is actually worth doing, then presumably
+most of its entries are just TOAST links, and what has to be done is
+not just rewrite the main tuple but mark the TOAST rows deleted.
+This is not something that VACUUM does now; I'd be rather concerned
+about the locking implications (especially for lightweight VACUUM).
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M21277@postgresql.org Sat Apr 13 11:51:02 2002
+Return-path: <pgsql-hackers-owner+M21277@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3DFp1S28016
+	for <pgman@candle.pha.pa.us>; Sat, 13 Apr 2002 11:51:01 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id B76F5475D68; Sat, 13 Apr 2002 11:47:59 -0400 (EDT)
+Received: from gw.itmeedia.ee (gw.itmeedia.ee [213.180.3.226])
+	by postgresql.org (Postfix) with SMTP id 0635E475C6F
+	for <pgsql-hackers@postgresql.org>; Sat, 13 Apr 2002 11:47:01 -0400 (EDT)
+Received: (qmail 12309 invoked from network); 13 Apr 2002 15:47:06 -0000
+Received: from taru.itmeedia.ee (HELO taru.tm.ee) (213.180.3.230)
+  by gw.itmeedia.ee with SMTP; 13 Apr 2002 15:47:06 -0000
+Subject: Re: [HACKERS] DROP COLUMN (was RFC: Restructuring pg_aggregate)
+From: Hannu Krosing <hannu@tm.ee>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Christopher Kings-Lynne <chriskl@familyhealth.com.au>,
+   Bruce Momjian <pgman@candle.pha.pa.us>, Hiroshi Inoue <Inoue@tpf.co.jp>,
+   pgsql-hackers@postgresql.org
+In-Reply-To: <15652.1018711785@sss.pgh.pa.us>
+References: <20020411233659.O69846-100000@houston.familyhealth.com.au>
+	<1824.1018542155@sss.pgh.pa.us> <001701c1e2b2$e7b10a40$0200a8c0@SOL> 
+	<15652.1018711785@sss.pgh.pa.us>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+X-Mailer: Ximian Evolution 1.0.3.99 
+Date: 13 Apr 2002 18:47:07 +0200
+Message-ID: <1018716432.3360.9.camel@taru.tm.ee>
+MIME-Version: 1.0
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Sat, 2002-04-13 at 17:29, Tom Lane wrote:
+> [ way past time to change the title of this thread ]
+> 
+> "Christopher Kings-Lynne" <chriskl@familyhealth.com.au> writes:
+> > OK, sounds fair.  However, is there a more aggressive way of reclaiming the
+> > space?  The problem with updating all the rows to null for that column is
+> > that the on-disk size is doubled anyway, right?  So, could a VACUUM FULL
+> > process do the nulling for us?  Vacuum works outside of normal transaction
+> > constraints anyway...?
+> 
+> No, VACUUM has the same transactional constraints as everyone else
+> (unless you'd like a crash during VACUUM to trash your table...)
+
+But can't it do the SET TO NULL thing if it knows that the transaction
+that dropped the column has committed. 
+
+This could probably even be done in the light version of vacuum with a
+special flag (VACUUM RECLAIM). 
+
+Of course running this this makes sense only if the dropped column had
+some significant amount of data .
+
+> I do not think that we necessarily need to provide a special mechanism
+> for this at all.  The docs for DROP COLUMN could simply explain that
+> the DROP itself doesn't reclaim the space, but that the space will be
+> reclaimed over time as extant rows are updated or deleted.  If you want
+> to hurry the process along you could do
+> 	UPDATE table SET othercol = othercol
+> 	VACUUM FULL
+
+If only we could do it in namageable chunks:
+
+FOR i IN 0 TO (size(table)/chunk) DO
+    UPDATE table SET othercol = othercol OFFSET i*chunk LIMIT chunk
+    VACUUM FULL;
+END FOR;
+
+or even better - "VACUUM FULL OFFSET i*chunk LIMIT chunk" and then make
+chunk == 1 :)
+
+--------------
+Hannu
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M21292@postgresql.org Sun Apr 14 01:07:16 2002
+Return-path: <pgsql-hackers-owner+M21292@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3E57FS03403
+	for <pgman@candle.pha.pa.us>; Sun, 14 Apr 2002 01:07:15 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 78A86475DD7; Sun, 14 Apr 2002 01:07:12 -0400 (EDT)
+Received: from mail.iinet.net.au (symphony-03.iinet.net.au [203.59.3.35])
+	by postgresql.org (Postfix) with SMTP id DA1D447593E
+	for <pgsql-hackers@postgresql.org>; Sun, 14 Apr 2002 01:06:32 -0400 (EDT)
+Received: (qmail 20365 invoked by uid 666); 14 Apr 2002 05:06:31 -0000
+Received: from unknown (HELO SOL) (203.59.168.230)
+  by mail.iinet.net.au with SMTP; 14 Apr 2002 05:06:31 -0000
+Message-ID: <00c601c1e371$0e324670$0200a8c0@SOL>
+From: "Christopher Kings-Lynne" <chriskl@familyhealth.com.au>
+To: "Tom Lane" <tgl@sss.pgh.pa.us>
+cc: "Bruce Momjian" <pgman@candle.pha.pa.us>,
+   "Hiroshi Inoue" <Inoue@tpf.co.jp>, <pgsql-hackers@postgresql.org>
+References: <20020411233659.O69846-100000@houston.familyhealth.com.au> <1824.1018542155@sss.pgh.pa.us> <001701c1e2b2$e7b10a40$0200a8c0@SOL> <15652.1018711785@sss.pgh.pa.us>
+Subject: Re: [HACKERS] DROP COLUMN (was RFC: Restructuring pg_aggregate)
+Date: Sun, 14 Apr 2002 12:58:43 +0800
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 5.50.4522.1200
+X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4522.1200
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+> No, VACUUM has the same transactional constraints as everyone else
+> (unless you'd like a crash during VACUUM to trash your table...)
+
+Seriously, you can run VACUUM in a transaction and rollback the movement of
+a tuple on disk?  What do you mean by same transactional constraints?
+
+Chris
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From tgl@sss.pgh.pa.us Sun Apr 14 14:13:33 2002
+Return-path: <tgl@sss.pgh.pa.us>
+Received: from sss.pgh.pa.us (root@[192.204.191.242])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3EIDWS18224
+	for <pgman@candle.pha.pa.us>; Sun, 14 Apr 2002 14:13:32 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id g3EIDMF22681;
+	Sun, 14 Apr 2002 14:13:22 -0400 (EDT)
+To: "Christopher Kings-Lynne" <chriskl@familyhealth.com.au>
+cc: "Bruce Momjian" <pgman@candle.pha.pa.us>,
+   "Hiroshi Inoue" <Inoue@tpf.co.jp>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] DROP COLUMN (was RFC: Restructuring pg_aggregate) 
+In-Reply-To: <00c601c1e371$0e324670$0200a8c0@SOL> 
+References: <20020411233659.O69846-100000@houston.familyhealth.com.au> <1824.1018542155@sss.pgh.pa.us> <001701c1e2b2$e7b10a40$0200a8c0@SOL> <15652.1018711785@sss.pgh.pa.us> <00c601c1e371$0e324670$0200a8c0@SOL>
+Comments: In-reply-to "Christopher Kings-Lynne" <chriskl@familyhealth.com.au>
+	message dated "Sun, 14 Apr 2002 12:58:43 +0800"
+Date: Sun, 14 Apr 2002 14:13:21 -0400
+Message-ID: <22678.1018808001@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: OR
+
+"Christopher Kings-Lynne" <chriskl@familyhealth.com.au> writes:
+>> No, VACUUM has the same transactional constraints as everyone else
+>> (unless you'd like a crash during VACUUM to trash your table...)
+
+> Seriously, you can run VACUUM in a transaction and rollback the movement of
+> a tuple on disk?  What do you mean by same transactional constraints?
+
+In VACUUM FULL, tuples moved to compact the table aren't good until you
+commit.  In this hypothetical column-drop-implementing VACUUM, I think
+there'd need to be some similar rule --- otherwise it's not clear what
+happens to TOASTED data if you crash partway through.  (In particular,
+if we tried overwriting main tuples in place as Hannu was suggesting,
+we'd need a way of being certain the deletion of the corresponding TOAST
+rows occurs *before* we overwrite the only reference to them.)
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M21305@postgresql.org Sun Apr 14 14:14:46 2002
+Return-path: <pgsql-hackers-owner+M21305@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3EIEkS18333
+	for <pgman@candle.pha.pa.us>; Sun, 14 Apr 2002 14:14:46 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 8FA74475C4C; Sun, 14 Apr 2002 14:14:43 -0400 (EDT)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by postgresql.org (Postfix) with ESMTP id 8AC04475892
+	for <pgsql-hackers@postgresql.org>; Sun, 14 Apr 2002 14:13:52 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id g3EIDMF22681;
+	Sun, 14 Apr 2002 14:13:22 -0400 (EDT)
+To: "Christopher Kings-Lynne" <chriskl@familyhealth.com.au>
+cc: "Bruce Momjian" <pgman@candle.pha.pa.us>,
+   "Hiroshi Inoue" <Inoue@tpf.co.jp>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] DROP COLUMN (was RFC: Restructuring pg_aggregate) 
+In-Reply-To: <00c601c1e371$0e324670$0200a8c0@SOL> 
+References: <20020411233659.O69846-100000@houston.familyhealth.com.au> <1824.1018542155@sss.pgh.pa.us> <001701c1e2b2$e7b10a40$0200a8c0@SOL> <15652.1018711785@sss.pgh.pa.us> <00c601c1e371$0e324670$0200a8c0@SOL>
+Comments: In-reply-to "Christopher Kings-Lynne" <chriskl@familyhealth.com.au>
+	message dated "Sun, 14 Apr 2002 12:58:43 +0800"
+Date: Sun, 14 Apr 2002 14:13:21 -0400
+Message-ID: <22678.1018808001@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+"Christopher Kings-Lynne" <chriskl@familyhealth.com.au> writes:
+>> No, VACUUM has the same transactional constraints as everyone else
+>> (unless you'd like a crash during VACUUM to trash your table...)
+
+> Seriously, you can run VACUUM in a transaction and rollback the movement of
+> a tuple on disk?  What do you mean by same transactional constraints?
+
+In VACUUM FULL, tuples moved to compact the table aren't good until you
+commit.  In this hypothetical column-drop-implementing VACUUM, I think
+there'd need to be some similar rule --- otherwise it's not clear what
+happens to TOASTED data if you crash partway through.  (In particular,
+if we tried overwriting main tuples in place as Hannu was suggesting,
+we'd need a way of being certain the deletion of the corresponding TOAST
+rows occurs *before* we overwrite the only reference to them.)
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
 
