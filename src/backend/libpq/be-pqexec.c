@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.28 2000/01/11 03:33:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.29 2000/01/12 05:27:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,12 +58,16 @@ PQfn(int fnid,
 {
 	char	   *retval;			/* XXX - should be datum, maybe ? */
 	char	   *arg[FUNC_MAX_ARGS];
+	bool		isNull;
 	int			i;
 
 	/* ----------------
 	 *	fill args[] array
 	 * ----------------
 	 */
+	if (nargs > FUNC_MAX_ARGS)
+		elog(ERROR, "functions cannot have more than %d arguments",
+			 FUNC_MAX_ARGS);
 	for (i = 0; i < nargs; i++)
 	{
 		if (args[i].len == VAR_LENGTH_ARG)
@@ -78,18 +82,14 @@ PQfn(int fnid,
 	 *	call the postgres function manager
 	 * ----------------
 	 */
-	retval = (char *)
-		fmgr(fnid, arg[0], arg[1], arg[2], arg[3],
-			 arg[4], arg[5], arg[6], arg[7],
-			 arg[8], arg[9], arg[10], arg[11],
-			 arg[12], arg[13], arg[14], arg[15]);
+	retval = fmgr_array_args(fnid, nargs, arg, &isNull);
 
 	/* ----------------
 	 *	put the result in the buffer the user specified and
 	 *	return the proper code.
 	 * ----------------
 	 */
-	if (retval == (char *) NULL)/* void retval */
+	if (isNull)					/* void retval */
 		return "0";
 
 	if (result_is_int)
