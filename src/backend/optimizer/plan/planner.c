@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.124 2002/09/04 20:31:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.125 2002/09/24 18:38:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -337,16 +337,22 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 
 			/*
 			 * Now make a modifiable copy of the subquery that we can run
-			 * OffsetVarNodes on.
+			 * OffsetVarNodes and IncrementVarSublevelsUp on.
 			 */
 			subquery = copyObject(subquery);
 
 			/*
-			 * Adjust varnos in subquery so that we can append its
+			 * Adjust level-0 varnos in subquery so that we can append its
 			 * rangetable to upper query's.
 			 */
 			rtoffset = length(parse->rtable);
 			OffsetVarNodes((Node *) subquery, rtoffset, 0);
+
+			/*
+			 * Upper-level vars in subquery are now one level closer to their
+			 * parent than before.
+			 */
+			IncrementVarSublevelsUp((Node *) subquery, -1, 1);
 
 			/*
 			 * Replace all of the top query's references to the subquery's
