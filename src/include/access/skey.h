@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: skey.h,v 1.1 1996/08/27 21:50:24 scrappy Exp $
+ * $Id: skey.h,v 1.2 1996/10/19 04:36:08 scrappy Exp $
  *
  *
  * Note:
@@ -16,7 +16,6 @@
 #ifndef	SKEY_H
 #define SKEY_H
 
-#include "postgres.h"
 #include "access/attnum.h"
 
 
