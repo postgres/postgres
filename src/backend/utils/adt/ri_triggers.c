@@ -18,7 +18,7 @@
  * Portions Copyright (c) 2000-2001, PostgreSQL Global Development Group
  * Copyright 1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.33 2002/03/19 02:57:15 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.34 2002/04/01 02:02:34 tgl Exp $
  *
  * ----------
  */
@@ -36,6 +36,7 @@
 #include "catalog/pg_operator.h"
 #include "commands/trigger.h"
 #include "executor/spi_priv.h"
+#include "nodes/makefuncs.h"
 #include "miscadmin.h"
 
 
@@ -137,6 +138,18 @@ static void *ri_FetchPreparedPlan(RI_QueryKey *key);
 static void ri_HashPreparedPlan(RI_QueryKey *key, void *plan);
 
 
+/*
+ * very ugly, very temporary hack to allow RI triggers to find tables
+ * anywhere in the current search path.  This is just so that the regression
+ * tests don't break with new search path code; we MUST find a more bullet
+ * proof solution before release.
+ */
+static Relation
+kluge_openr(char *relationName, LOCKMODE lockmode)
+{
+	return heap_openrv(makeRangeVar(NULL, relationName), lockmode);
+}
+
 
 /* ----------
  * RI_FKey_check -
@@ -196,7 +209,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	 * tuple.
 	 */
 	fk_rel = trigdata->tg_relation;
-	pk_rel = heap_openr(tgargs[RI_PK_RELNAME_ARGNO], NoLock);
+	pk_rel = kluge_openr(tgargs[RI_PK_RELNAME_ARGNO], NoLock);
 	if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 	{
 		old_row = trigdata->tg_trigtuple;
@@ -563,7 +576,7 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 	 * Get the relation descriptors of the FK and PK tables and the old
 	 * tuple.
 	 */
-	fk_rel = heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	fk_rel = kluge_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
 
@@ -769,7 +782,7 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 	 * Get the relation descriptors of the FK and PK tables and the new
 	 * and old tuple.
 	 */
-	fk_rel = heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	fk_rel = kluge_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
 	old_row = trigdata->tg_trigtuple;
@@ -979,7 +992,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	 * Get the relation descriptors of the FK and PK tables and the old
 	 * tuple.
 	 */
-	fk_rel = heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	fk_rel = kluge_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
 	fk_owner = RelationGetForm(fk_rel)->relowner;
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
@@ -1174,7 +1187,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	 * Get the relation descriptors of the FK and PK tables and the new
 	 * and old tuple.
 	 */
-	fk_rel = heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	fk_rel = kluge_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
 	fk_owner = RelationGetForm(fk_rel)->relowner;
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
@@ -1403,7 +1416,7 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 	 * Get the relation descriptors of the FK and PK tables and the old
 	 * tuple.
 	 */
-	fk_rel = heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	fk_rel = kluge_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
 	fk_owner = RelationGetForm(fk_rel)->relowner;
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
@@ -1615,7 +1628,7 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 	 * Get the relation descriptors of the FK and PK tables and the new
 	 * and old tuple.
 	 */
-	fk_rel = heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	fk_rel = kluge_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
 	fk_owner = RelationGetForm(fk_rel)->relowner;
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
@@ -1829,7 +1842,7 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 	 * Get the relation descriptors of the FK and PK tables and the old
 	 * tuple.
 	 */
-	fk_rel = heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	fk_rel = kluge_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
 	fk_owner = RelationGetForm(fk_rel)->relowner;
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
@@ -2036,7 +2049,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 	 * Get the relation descriptors of the FK and PK tables and the old
 	 * tuple.
 	 */
-	fk_rel = heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	fk_rel = kluge_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
 	fk_owner = RelationGetForm(fk_rel)->relowner;
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
@@ -2286,7 +2299,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 	 * Get the relation descriptors of the FK and PK tables and the old
 	 * tuple.
 	 */
-	fk_rel = heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	fk_rel = kluge_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
 	fk_owner = RelationGetForm(fk_rel)->relowner;
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
@@ -2537,7 +2550,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 	 * Get the relation descriptors of the FK and PK tables and the old
 	 * tuple.
 	 */
-	fk_rel = heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	fk_rel = kluge_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
 	fk_owner = RelationGetForm(fk_rel)->relowner;
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
@@ -2793,7 +2806,7 @@ RI_FKey_keyequal_upd(TriggerData *trigdata)
 	 * Get the relation descriptors of the FK and PK tables and the new
 	 * and old tuple.
 	 */
-	fk_rel = heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	fk_rel = kluge_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
 	old_row = trigdata->tg_trigtuple;
