@@ -414,3 +414,129 @@ Do You Yahoo!?
 Get your free @yahoo.com address at http://mail.yahoo.com
 
 
+From pgsql-general-owner+M590@postgresql.org Tue Nov 14 16:30:40 2000
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA22313
+	for <pgman@candle.pha.pa.us>; Tue, 14 Nov 2000 17:30:39 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eAEMSJs66979;
+	Tue, 14 Nov 2000 17:28:21 -0500 (EST)
+	(envelope-from pgsql-general-owner+M590@postgresql.org)
+Received: from megazone23.bigpanda.com (138.210.6.64.reflexcom.com [64.6.210.138])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id eAEMREs66800
+	for <pgsql-general@postgresql.org>; Tue, 14 Nov 2000 17:27:14 -0500 (EST)
+	(envelope-from sszabo@megazone23.bigpanda.com)
+Received: from localhost (sszabo@localhost)
+	by megazone23.bigpanda.com (8.11.1/8.11.0) with ESMTP id eAEMPpH69059;
+	Tue, 14 Nov 2000 14:25:51 -0800 (PST)
+Date: Tue, 14 Nov 2000 14:25:51 -0800 (PST)
+From: Stephan Szabo <sszabo@megazone23.bigpanda.com>
+To: "Beth K. Gatewood" <bethg@mbt.washington.edu>
+cc: pgsql-general@postgresql.org
+Subject: Re: [GENERAL] a request for some experienced input.....
+In-Reply-To: <3A11ACA1.E5D847DD@mbt.washington.edu>
+Message-ID: <Pine.BSF.4.21.0011141403380.68986-100000@megazone23.bigpanda.com>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-general-owner@postgresql.org
+Status: OR
+
+
+On Tue, 14 Nov 2000, Beth K. Gatewood wrote:
+
+> >
+> 
+> Stephan-
+> 
+> Thank you so much for taking the effort to answer this these questions.  You
+> help is truly appreciated....
+> 
+> I just have a few points for clarification.
+> 
+> >
+> > MATCH PARTIAL is a specific match type which describes which rows are
+> > considered matching rows for purposes of meeting or failing the
+> > constraint.  (In match partial, a fktable (NULL, 2) would match a pk
+> > table (1,2) as well as a pk table (2,2).  It's different from match
+> > full in which case (NULL,2) would be invalid or match unspecified
+> > in which case it would match due to the existance of the NULL in any
+> > case).  There are some bizarre implementation details involved with
+> > it and it's different from the others in ways that make it difficult.
+> > It's in my list of things to do, but I haven't come up with an acceptable
+> > mechanism in my head yet.
+> 
+> Does this mean, currently that I can not have foreign keys with null values?
+
+Not exactly...
+
+Match full = In FK row, all columns must be NULL or the value of each
+	column must not be null and there is a row in the PK table where
+	each referencing column equals the corresponding referenced
+	column.
+
+Unspecified = In FK row, at least one column must be NULL or each
+	referencing column shall be equal to the corresponding referenced
+	column in some row of the referenced table
+
+Match partial is similar to match full except we ignore the null columns
+ for purposes of the each referencing column equals bit.
+
+For example:
+           PK Table Key values: (1,2), (1,3), (3,3)
+ Attempted FK Table Key values: (1,2), (1,NULL), (5,NULL), (NULL, NULL)
+ (hopefully I get this right)...
+ In match full, only the 1st and 4th fk values are valid.
+ In match partial, the 1st, 2nd, and 4th fk values are valid.
+ In match unspecified, all the fk values are valid.
+
+The other note is that generally speaking, all three are basically the
+same for the single column key.  If you're only doing references on one
+column, the match type is mostly meaningless.
+
+> > PENDANT adds that for each row of the referenced table the values of
+> > the specified column(s) are the same as the values of the specified
+> > column(s) in some row of the referencing tables.
+> 
+> I am not sure I know what you mean here.....Are you saying that the value for
+> the FK column must match the value for the PK column?
+
+I haven't really looked at PENDANT, the above was just a small rewrite of
+some descriptive text in the sql99 draft I have.  There's a whole bunch
+of rules in the actual text of the referential constraint definition.
+
+The base stuff seems to be: (Rf is the referencing columns, T is the
+referenced table)
+
+      3) If PENDANT is specified, then:
+         a) For a given row in the referencing table, let pendant
+           reference designate an instance in which all Rf are
+           non-null.
+
+         b) Let number of pendant paths be the number of pendant
+           references to the same referenced row in a referenced table
+           from all referencing rows in all base tables.
+
+         c) For every row in T, the number of pendant paths is equal to
+	   or greater than 1.
+
+So, I'd read it as every row in T must have at least one referencing row
+in some base table.
+
+There are some details about updates and that you can't mix PENDANT and
+MATCH PARTIAL or SET DEFAULT actions.
+
+> > The main issues in 7.0 are that older versions (might be fixed in
+> > 7.0.3) would fail very badly if you used alter table to rename tables that
+> > were referenced in a fk constraint and that you need to give update
+> > permission to the referenced table.  For the former, 7.1 will (and 7.0.3
+> > may) give an elog(ERROR) to you rather than crashing the backend and the
+> > latter should be fixed for 7.1 (although you still need to have write
+> > perms to the referencing table for referential actions to work properly)
+> 
+> Are the steps to this outlined somewhere then?
+
+The permissions stuff is just a matter of using GRANT and REVOKE to set
+the permissions that a user has to a table.  
+
+
