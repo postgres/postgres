@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.44 1997/09/08 21:49:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.45 1997/09/23 21:44:07 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -59,6 +59,7 @@
 #include "postgres.h"
 #include "access/htup.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_language.h"
 #include "catalog/pg_index.h"
 #include "libpq-fe.h"
 #ifndef HAVE_STRDUP
@@ -1718,7 +1719,9 @@ dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
 			(finfo[i].retset) ? " SETOF " : "",
 			findTypeByOid(tinfo, numTypes, finfo[i].prorettype),
 			(finfo[i].lang) ? finfo[i].probin : finfo[i].prosrc,
-			(finfo[i].lang) ? "C" : "SQL");
+			(finfo[i].lang == INTERNALlanguageId) ? "INTERNAL" :
+				(finfo[i].lang == ClanguageId) ? "C" :
+					(finfo[i].lang == SQLlanguageId) ? "SQL" : "unknown");
 
 	fputs(q, fout);
 
