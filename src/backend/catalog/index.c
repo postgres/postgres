@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.133 2000/12/22 23:12:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.134 2001/01/18 04:01:42 inoue Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1348,15 +1348,26 @@ LockClassinfoForUpdate(Oid relid, HeapTuple rtup,
 	rtup->t_self = classTuple->t_self;
 	ReleaseSysCache(classTuple);
 
-	test = heap_mark4update(relationRelation, rtup, buffer);
-	switch (test)
+	while (1)
 	{
-		case HeapTupleSelfUpdated:
-		case HeapTupleMayBeUpdated:
-			break;
-		default:
-			elog(ERROR, "LockStatsForUpdate couldn't lock relid %u", relid);
-			return false;
+		ItemPointerData	tidsave;
+
+		ItemPointerCopy(&(rtup->t_self), &tidsave);
+		test = heap_mark4update(relationRelation, rtup, buffer);
+		switch (test)
+		{
+			case HeapTupleSelfUpdated:
+			case HeapTupleMayBeUpdated:
+				break;
+			case HeapTupleUpdated:
+				ReleaseBuffer(*buffer);
+				if (!ItemPointerEquals(&(rtup->t_self), &tidsave))
+					continue;
+			default:
+				elog(ERROR, "LockClassinfoForUpdate couldn't lock relid %u", relid);
+				return false;
+		}
+		break;
 	}
 	RelationInvalidateHeapTuple(relationRelation, rtup);
 	if (confirmCommitted)
@@ -1634,8 +1645,7 @@ UpdateStats(Oid relid, long reltuples)
 #ifdef	OLD_FILE_NAMING
 	in_place_upd = (IsReindexProcessing() || IsBootstrapProcessingMode());
 #else
-	in_place_upd = (IsIgnoringSystemIndexes() || (IsReindexProcessing() &&
-			relid == RelOid_pg_class));
+	in_place_upd = (IsIgnoringSystemIndexes() || IsReindexProcessing());
 #endif /* OLD_FILE_NAMING */
 
 	if (!in_place_upd)
