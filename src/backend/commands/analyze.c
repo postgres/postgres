@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.81 2005/01/27 23:23:53 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.82 2005/02/11 00:41:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1548,7 +1548,7 @@ compute_minimal_stats(VacAttrStatsP stats,
 		}
 	}
 
-	/* We can only compute valid stats if we found some non-null values. */
+	/* We can only compute real stats if we found some non-null values. */
 	if (nonnull_cnt > 0)
 	{
 		int			nmultiple,
@@ -1705,6 +1705,17 @@ compute_minimal_stats(VacAttrStatsP stats,
 			stats->numvalues[0] = num_mcv;
 		}
 	}
+	else if (null_cnt > 0)
+	{
+		/* We found only nulls; assume the column is entirely null */
+		stats->stats_valid = true;
+		stats->stanullfrac = 1.0;
+		if (is_varwidth)
+			stats->stawidth = 0;				/* "unknown" */
+		else
+			stats->stawidth = stats->attrtype->typlen;
+		stats->stadistinct = 0.0;				/* "unknown" */
+	}
 
 	/* We don't need to bother cleaning up any of our temporary palloc's */
 }
@@ -1812,7 +1823,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 		values_cnt++;
 	}
 
-	/* We can only compute valid stats if we found some sortable values. */
+	/* We can only compute real stats if we found some sortable values. */
 	if (values_cnt > 0)
 	{
 		int			ndistinct,	/* # distinct values in sample */
@@ -2161,6 +2172,17 @@ compute_scalar_stats(VacAttrStatsP stats,
 			stats->numnumbers[slot_idx] = 1;
 			slot_idx++;
 		}
+	}
+	else if (nonnull_cnt == 0 && null_cnt > 0)
+	{
+		/* We found only nulls; assume the column is entirely null */
+		stats->stats_valid = true;
+		stats->stanullfrac = 1.0;
+		if (is_varwidth)
+			stats->stawidth = 0;				/* "unknown" */
+		else
+			stats->stawidth = stats->attrtype->typlen;
+		stats->stadistinct = 0.0;				/* "unknown" */
 	}
 
 	/* We don't need to bother cleaning up any of our temporary palloc's */
