@@ -1,6 +1,6 @@
-ODO list for PostgreSQL
+TODO list for PostgreSQL
 ========================
-Last updated:		Mon Oct 16 13:18:25 EDT 2000
+Last updated:		Mon Oct 16 15:49:18 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -117,7 +117,7 @@ INDEXES
 
 * Allow CREATE INDEX zman_index ON test (date_trunc( 'day', zman ) datetime_ops)
   fails index can't store constant parameters
-* Allow SQL function indexes
+* -Allow SQL function indexes
 * Add FILLFACTOR to index creation
 * Re-enable partial indexes
 * Allow inherited tables to inherit index
@@ -127,7 +127,7 @@ COMMANDS
 * ALTER TABLE ADD COLUMN to inherited table put column in wrong place [inherit]
 * -Add ALTER TABLE ALTER COLUMN feature(Peter E)
 * Add ALTER TABLE DROP COLUMN feature [drop]
-* Add ALTER TABLE command to change table ownership
+* Add ALTER TABLE command to change table ownership (Mark H)
 * Add ALTER FUNCTION 
 * Add ALTER TABLE ... DROP CONSTRAINT
 * Automatically drop constraints/functions when object is dropped
