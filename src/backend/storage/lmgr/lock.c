@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.54 1999/05/25 22:42:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.55 1999/05/29 06:14:42 vadim Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -1532,7 +1532,7 @@ LockShmemSize(int maxBackends)
 							   SHMEM_LOCKTAB_DATASIZE);
 
 	/* xidHash table */
-	size += hash_estimate_size(maxBackends,
+	size += hash_estimate_size(NLOCKENTS(maxBackends),
 							   SHMEM_XIDTAB_KEYSIZE,
 							   SHMEM_XIDTAB_DATASIZE);
 

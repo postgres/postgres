@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.28 1999/05/25 22:43:26 momjian Exp $
+ * $Id: lock.h,v 1.29 1999/05/29 06:14:42 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,10 +31,11 @@ typedef int MASK;
  * See LockShmemSize() in lock.c.
  *
  * NLOCKS_PER_XACT - The number of unique locks acquired in a transaction
+ *                   (should be configurable!)
  * NLOCKENTS - The maximum number of lock entries in the lock table.
  * ----------------------
  */
-#define NLOCKS_PER_XACT			40
+#define NLOCKS_PER_XACT			64
 #define NLOCKENTS(maxBackends)	(NLOCKS_PER_XACT*(maxBackends))
 
 typedef int LOCKMODE;
