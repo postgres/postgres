@@ -132,7 +132,7 @@
 #host         template1   192.168.12.10 255.255.255.255    crypt
 # 
 # The above allows a user from host 192.168.12.10 to connect to
-# database template1 if the password assigned to that user is
+# database template1 if the user's password in pg_shadow is
 # supplied. User passwords are optionally assigned when a 
 # user is created.
 #
