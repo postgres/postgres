@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.71 2003/03/18 22:15:44 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.72 2003/04/14 16:23:36 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -198,7 +198,7 @@ slashUsage(unsigned short int pager)
 
 	fprintf(output, _("Input/Output\n"));
 	fprintf(output, _("  \\i FILE        execute commands from file\n"));
-	fprintf(output, _("  \\o FILE        send all query results to file or |pipe\n"));
+	fprintf(output, _("  \\o [FILE]      send all query results to file or |pipe\n"));
 	fprintf(output, _("\n"));
 
 	fprintf(output, _("Informational\n"));
