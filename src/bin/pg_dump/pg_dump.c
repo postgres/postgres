@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.210 2001/05/30 14:15:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.211 2001/06/01 16:09:55 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -684,7 +684,7 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 			{
 				dumpFn = dumpClasses_nodumpData;
 				/* dumpClasses_nodumpData(fout, classname, oids); */
-				sprintf(copyBuf, "COPY %s %s FROM stdin;\n", fmtId(tblinfo[i].relname, force_quotes),
+				sprintf(copyBuf, "COPY %s %sFROM stdin;\n", fmtId(tblinfo[i].relname, force_quotes),
 						oidsPart);
 				copyStmt = copyBuf;
 			}
