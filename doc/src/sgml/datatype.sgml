@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.49 2001/02/10 18:02:35 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.50 2001/02/14 19:37:26 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -27,8 +27,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.49 2001/02/10 18:02:35 pe
 
   <para>
    <table id="datatype-table">
-    <title><productname>Postgres</productname> Data Types</title>
-    <titleabbrev>Data Types</titleabbrev>
+    <title>Data Types</title>
     <tgroup cols="3">
      <thead>
       <row>
@@ -60,7 +59,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.49 2001/02/10 18:02:35 pe
       <row>
        <entry><type>boolean</type></entry>
        <entry><type>bool</type></entry>
-       <entry>logical boolean (true/false)</entry>
+       <entry>logical Boolean (true/false)</entry>
       </row>
 
       <row>
@@ -265,12 +264,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.49 2001/02/10 18:02:35 pe
 
    <para>
     <table tocentry="1">
-     <title><productname>Postgres</productname> Numeric Types</title>
-     <titleabbrev>Numerics</titleabbrev>
+     <title>Numeric Types</title>
      <tgroup cols="4">
       <thead>
        <row>
-	<entry>Numeric Type</entry>
+	<entry>Type Name</entry>
 	<entry>Storage</entry>
 	<entry>Description</entry>
 	<entry>Range</entry>
@@ -326,7 +324,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.49 2001/02/10 18:02:35 pe
        <row>
 	<entry>serial</entry>
 	<entry>4 bytes</entry>
-	<entry>Identifer or cross-reference</entry>
+	<entry>Identifier or cross-reference</entry>
 	<entry>0 to +2147483647</entry>
        </row>
       </tbody>
@@ -424,12 +422,11 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
    <para>
     <table tocentry="1">
-     <title><productname>Postgres</productname> Monetary Types</title>
-     <titleabbrev>Money</titleabbrev>
+     <title>Monetary Types</title>
      <tgroup cols="4">
       <thead>
        <row>
-	<entry>Monetary Type</entry>
+	<entry>Type Name</entry>
 	<entry>Storage</entry>
 	<entry>Description</entry>
 	<entry>Range</entry>
@@ -470,12 +467,11 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
    <para>
     <table tocentry="1">
-     <title><productname>Postgres</productname> Character Types</title>
-     <titleabbrev>Characters</titleabbrev>
+     <title>Character Types</title>
      <tgroup cols="4">
       <thead>
        <row>
-	<entry>Character Type</entry>
+	<entry>Type Name</entry>
 	<entry>Storage</entry>
 	<entry>Recommendation</entry>
 	<entry>Description</entry>
@@ -530,12 +526,11 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
    <para>
     <table tocentry="1">
-     <title><productname>Postgres</productname> Specialty Character Type</title>
-     <titleabbrev>Specialty Characters</titleabbrev>
+     <title>Specialty Character Type</title>
      <tgroup cols="3">
       <thead>
        <row>
-	<entry>Character Type</entry>
+	<entry>Type Name</entry>
 	<entry>Storage</entry>
 	<entry>Description</entry>
        </row>
@@ -568,8 +563,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
    <para>
     <table tocentry="1">
-     <title><productname>Postgres</productname> Date/Time Types</title>
-     <titleabbrev>Date/Time</titleabbrev>
+     <title>Date/Time Types</title>
      <tgroup cols="4">
       <thead>
        <row>
@@ -588,7 +582,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
         <entry>8 bytes</entry>
         <entry>4713 BC</entry>
         <entry>AD 1465001</entry>
-        <entry>1 microsec / 14 digits</entry>
+        <entry>1 microsecond / 14 digits</entry>
        </row>
        <row>
         <entry><type>timestamp [ with time zone ]</type></entry>
@@ -596,7 +590,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
         <entry>8 bytes</entry>
         <entry>1903 AD</entry>
         <entry>2037 AD</entry>
-        <entry>1 microsec / 14 digits</entry>
+        <entry>1 microsecond / 14 digits</entry>
        </row>
        <row>
         <entry><type>interval</type></entry>
@@ -690,8 +684,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
      The following are possible inputs for the <type>date</type> type.
 
      <table tocentry="1">
-      <title><productname>Postgres</productname> Date Input</title>
-      <titleabbrev>Date Inputs</titleabbrev>
+      <title>Date Input</title>
       <tgroup cols="2">
        <thead>
 	<row>
@@ -747,8 +740,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
     <para>
      <table tocentry="1">
-      <title><productname>Postgres</productname> Month Abbreviations</title>
-      <titleabbrev>Month Abbreviations</titleabbrev>
+      <title>Month Abbreviations</title>
       <tgroup cols="2">
        <thead>
 	<row>
@@ -814,8 +806,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
     <para>
      <table tocentry="1">
-      <title><productname>Postgres</productname> Day of Week Abbreviations</title>
-      <titleabbrev>Day of Week Abbreviations</titleabbrev>
+      <title>Day of the Week Abbreviations</title>
       <tgroup cols="2">
        <thead>
 	<row>
@@ -870,8 +861,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
       The following are valid <type>time</type> inputs.
 
       <table tocentry="1">
-       <title><productname>Postgres</productname> Time Input</title>
-       <titleabbrev>Time Inputs</titleabbrev>
+       <title>Time Input</title>
        <tgroup cols="2">
 	<thead>
 	 <row>
@@ -940,9 +930,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
       as follows:
 
       <table tocentry="1">
-       <title><productname>Postgres</productname> Time With Time
-	Zone Input</title>
-       <titleabbrev>Time With Time Zone Inputs</titleabbrev>
+       <title>Time With Time Zone Input</title>
        <tgroup cols="2">
        <thead>
 	<row>
@@ -1002,8 +990,7 @@ January 8 04:05:06 1999 PST
 
      <para>
       <table tocentry="1" id="datatype-timezone-table">
-       <title><productname>Postgres</productname> Time Zone Input</title>
-       <titleabbrev>Time Zone Inputs</titleabbrev>
+       <title>Time Zone Input</title>
        <tgroup cols="2">
 	<thead>
 	 <row>
@@ -1062,7 +1049,7 @@ January 8 04:05:06 1999 PST
 
      <para>
       The following <acronym>SQL</acronym>-compatible functions can be used as date or time
-      input for the corresponding datatype: <literal>CURRENT_DATE</literal>,
+      input for the corresponding data type: <literal>CURRENT_DATE</literal>,
       <literal>CURRENT_TIME</literal>, <literal>CURRENT_TIMESTAMP</literal>.
      </para>
      <para>
@@ -1070,8 +1057,7 @@ January 8 04:05:06 1999 PST
       convenience.
 
      <table tocentry="1">
-      <title><productname>Postgres</productname> Special Date/Time Constants</title>
-      <titleabbrev>Constants</titleabbrev>
+      <title>Special Date/Time Constants</title>
       <tgroup cols="2">
        <thead>
 	<row>
@@ -1120,7 +1106,7 @@ January 8 04:05:06 1999 PST
       </tgroup>
      </table>
      <literal>'now'</literal> is resolved when the value is inserted, <literal>'current'</literal>
-     is resolved everytime the value is retrieved. So you probably want to use <literal>'now'</literal>
+     is resolved every time the value is retrieved. So you probably want to use <literal>'now'</literal>
      in most applications. (Of course you <emphasis>really</emphasis> want to use
      <literal>CURRENT_TIMESTAMP</literal>, which is equivalent to <literal>'now'</literal>.)
     </para>
@@ -1139,8 +1125,7 @@ January 8 04:05:06 1999 PST
      The default is the <acronym>ISO</acronym> format.
 
      <table tocentry="1">
-      <title><productname>Postgres</productname> Date/Time Output Styles</title>
-      <titleabbrev>Styles</titleabbrev>
+      <title>Date/Time Output Styles</title>
       <tgroup cols="3">
        <thead>
 	<row>
@@ -1182,12 +1167,11 @@ January 8 04:05:06 1999 PST
 
     <para>
      The <acronym>SQL</acronym> style has European and non-European (US) variants, 
-     which determines whether month follows day or vica versa. (See also above
+     which determines whether month follows day or vice versa. (See also above
      at Date/Time Input, how this setting affects interpretation of input values.)
 
      <table tocentry="1">
-      <title><productname>Postgres</productname> Date Order Conventions</title>
-      <titleabbrev>Date Order</titleabbrev>
+      <title>Date Order Conventions</title>
       <tgroup cols="3">
        <thead>
 	<row>
@@ -1360,7 +1344,7 @@ January 8 04:05:06 1999 PST
      <note>
       <para>
        If the compiler option USE_AUSTRALIAN_RULES is set 
-       then <literal>EST</literal> refers to Australia Eastern Std Time,
+       then <literal>EST</literal> refers to Australia Eastern Standard Time,
        which has an offset of +10:00 hours from UTC.
       </para>
      </note>
@@ -1381,7 +1365,7 @@ January 8 04:05:06 1999 PST
 
     <para>
      Date conventions before the 19th century make for interesting reading,
-     but are not consistant enough to warrant coding into a date/time handler.
+     but are not consistent enough to warrant coding into a date/time handler.
     </para>
    </sect2>
 
@@ -1391,45 +1375,80 @@ January 8 04:05:06 1999 PST
    <title>Boolean Type</title>
 
    <para>
-    <productname>Postgres</productname> supports the
-    <acronym>SQL99</acronym> <type>boolean</type> type.
-    <type>boolean</type> can have one of only two states: 'true' or
-    'false'.  A third state, 'unknown', is represented by the SQL NULL
-    state. <type>boolean</type> can be used in any boolean expression,
-    and boolean expressions always evaluate to a result compatible
-    with this type.
+    <productname>Postgres</productname> provides the
+    <acronym>SQL99</acronym> type <type>boolean</type>.
+    <type>boolean</type> can have one of only two states:
+    <quote>true</quote> or <quote>false</quote>.  A third state,
+    <quote>unknown</quote>, is represented by the
+    <acronym>SQL</acronym> NULL state.
    </para>
+
+   <para>
+    Valid literal values for the <quote>true</quote> state are:
+    <simplelist>
+     <member><literal>TRUE</literal></member>
+     <member><literal>'t'</literal></member>
+     <member><literal>'true'</literal></member>
+     <member><literal>'y'</literal></member>
+     <member><literal>'yes'</literal></member>
+     <member><literal>'1'</literal></member>
+    </simplelist>
+    For the <quote>false</quote> state, the following values can be
+    used:
+    <simplelist>
+     <member><literal>FALSE</literal></member>
+     <member><literal>'f'</literal></member>
+     <member><literal>'false'</literal></member>
+     <member><literal>'n'</literal></member>
+     <member><literal>'no'</literal></member>
+     <member><literal>'0'</literal></member>
+    </simplelist>
+    Using the key words <literal>TRUE</literal> and
+    <literal>FALSE</literal> is preferred (and
+    <acronym>SQL</acronym>-compliant).
+   </para>
+
+   <example id="datatype-boolean-example">
+    <title>Using the <type>boolean</type> type</title>
+
+<programlisting>
+CREATE TABLE test1 (a boolean, b text);
+INSERT INTO test1 VALUES (TRUE, 'sic est');
+INSERT INTO test1 VALUES (FALSE, 'non est');
+SELECT * FROM test1;
+ a |    b
+---+---------
+ t | sic est
+ f | non est
+
+SELECT * FROM test1 WHERE a;
+ a |    b
+---+---------
+ t | sic est
+</programlisting>
+   </example>
+
+   <para>
+    <xref linkend="datatype-boolean-example"> shows that
+    <type>boolean</type> values are output using the letters
+    <literal>t</literal> and <literal>f</literal>.
+   </para>
+
+   <tip>
+    <para>
+     Values of the <type>boolean</type> type cannot be cast directly
+     to other types (e.g., <literal>CAST
+     (<replaceable>boolval</replaceable> AS integer)</literal> does
+     not work).  This can be accomplished using the
+     <literal>CASE</literal> expression: <literal>CASE WHEN
+     <replaceable>boolval</replaceable> THEN 'value if true' ELSE
+     'value if false' END</literal>.  See also <xref
+     linkend="functions-conditional">.
+    </para>
+   </tip>
 
    <para>
     <type>boolean</type> uses 1 byte of storage.
-   </para>
-
-   <para>
-    <table tocentry="1">
-     <title><productname>Postgres</productname> Boolean Type</title>
-     <titleabbrev>Booleans</titleabbrev>
-     <tgroup cols="3">
-      <thead>
-       <row>
-	<entry>State</entry>
-	<entry>Input</entry>
-	<entry>Output</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-	<entry>True</entry>
-	<entry>TRUE, 't', 'true', 'y', 'yes', '1'</entry>
-	<entry><literal>t</literal></entry>
-       </row>
-       <row>
-	<entry>False</entry>
-	<entry>FALSE, 'f', 'false', 'n', 'no', '0'</entry>
-	<entry><literal>f</literal></entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
    </para>
   </sect1>
 
@@ -1444,8 +1463,7 @@ January 8 04:05:06 1999 PST
 
    <para>
     <table tocentry="1">
-     <title><productname>Postgres</productname> Geometric Types</title>
-     <titleabbrev>Geometrics</titleabbrev>
+     <title>Geometric Types</title>
      <tgroup cols="4">
       <thead>
        <row>
@@ -1578,7 +1596,7 @@ January 8 04:05:06 1999 PST
        <term>(<replaceable>x2</replaceable>,<replaceable>y2</replaceable>)</term>
        <listitem>
 	<para>
-	 The endpoints of the line segment.
+	 The end points of the line segment.
 	</para>
        </listitem>
       </varlistentry>
@@ -1662,7 +1680,7 @@ January 8 04:05:06 1999 PST
        <term>(<replaceable>x</replaceable>,<replaceable>y</replaceable>)</term>
        <listitem>
 	<para>
-	 Endpoints of the line segments comprising the path.
+	 End points of the line segments comprising the path.
 	 A leading square bracket ("[") indicates an open path, while
 	 a leading parenthesis ("(") indicates a closed path.
 	</para>
@@ -1702,7 +1720,7 @@ January 8 04:05:06 1999 PST
        <term>(<replaceable>x</replaceable>,<replaceable>y</replaceable>)</term>
        <listitem>
 	<para>
-	 Endpoints of the line segments comprising the boundary of the
+	 End points of the line segments comprising the boundary of the
 	 polygon.
 	</para>
        </listitem>
@@ -1822,7 +1840,7 @@ January 8 04:05:06 1999 PST
      The <type>inet</type> type holds an IP host address, and
      optionally the identity of the subnet it is in, all in one field.
      The subnet identity is represented by the number of bits in the
-     network part of the address (the "netmask").  If the netmask is 32,
+     network part of the address (the <quote>netmask</quote>).  If the netmask is 32,
      then the value does not indicate a subnet, only a single host.
      Note that if you want to accept networks only, you should use the
      <type>cidr</type> type rather than <type>inet</type>.
@@ -1989,7 +2007,7 @@ January 8 04:05:06 1999 PST
     <replaceable>x</replaceable> specifies the maximum length.
     <type>BIT</type> type data is automatically padded with 0's on the
     right to the maximum length, <type>BIT VARYING</type> is of
-    variable length.  <type>BIT</type> without length is requivalent
+    variable length.  <type>BIT</type> without length is equivalent
     to <literal>BIT(1)</literal>, <type>BIT VARYING</type> means
     unlimited length.  Input data that is longer than the allowed
     length will be truncated.  Refer to <xref
