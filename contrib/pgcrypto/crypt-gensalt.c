@@ -12,6 +12,7 @@
 
 #include "postgres.h"
 
+#include "px.h"
 #include "px-crypt.h"
 
 #include <errno.h>

@@ -1,4 +1,4 @@
-/*	$Id: sha1.c,v 1.10 2001/11/05 17:46:23 momjian Exp $ */
+/*	$Id: sha1.c,v 1.11 2001/11/29 19:40:37 momjian Exp $ */
 /*	   $KAME: sha1.c,v 1.3 2000/02/22 14:01:18 itojun Exp $    */
 
 /*
@@ -36,6 +36,7 @@
  */
 
 #include "postgres.h"
+#include "px.h"
 
 #include "sha1.h"
 

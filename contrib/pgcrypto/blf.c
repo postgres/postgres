@@ -41,6 +41,8 @@
  */
 
 #include <postgres.h>
+#include "px.h"
+
 #include "blf.h"
 
 #undef inline

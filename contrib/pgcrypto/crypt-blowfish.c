@@ -32,7 +32,9 @@
 
 #include "postgres.h"
 
+#include "px.h"
 #include "px-crypt.h"
+
 #define __set_errno(v)
 
 #ifndef __set_errno

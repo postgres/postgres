@@ -26,11 +26,20 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: px.h,v 1.5 2001/11/20 15:50:53 momjian Exp $
+ * $Id: px.h,v 1.6 2001/11/29 19:40:37 momjian Exp $
  */
 
 #ifndef __PX_H
 #define __PX_H
+
+#ifdef HAVE_ENDIAN_H
+#include <endian.h>
+#endif
+
+#ifndef BYTE_ORDER
+#error BYTE_ORDER must be defined as LITTLE_ENDIAN or BIG_ENDIAN
+#endif
+
 
 #if 1
 
