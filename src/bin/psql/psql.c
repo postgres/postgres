@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.21 1996/09/16 06:06:11 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.22 1996/10/09 00:15:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -805,15 +805,32 @@ HandleSlashCmds(PsqlSettings *settings,
 	char *cmd;
 	int i, numCmds;
 	int all_help = 0;
+	char left_center_right = 'L';
 
 	if (!optarg) {
 	    printf("type \\h <cmd> where <cmd> is one of the following:\n");
 	    i = 0;
 	    while (QL_HELP[i].cmd != NULL)
 	      {
-		printf("\t%s\n", QL_HELP[i].cmd);
+		switch(left_center_right)
+		{
+			case 'L':
+				printf("    %-25s", QL_HELP[i].cmd);
+				left_center_right = 'C';
+				break;
+			case 'C':
+				printf("%-25s", QL_HELP[i].cmd);
+				left_center_right = 'R';
+				break;
+			case 'R':
+				printf("%-25s\n", QL_HELP[i].cmd);
+				left_center_right = 'L';
+				break;
+	      	};
 		i++;
 	      }
+	     if (left_center_right != 'L')
+	     	puts("\n");
  	     printf("type \\h * for a complete description of all commands\n");
 	  }
 	else
