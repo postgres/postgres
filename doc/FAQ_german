@@ -5,8 +5,8 @@
    
    Deutsche Übersetzung von Ian Barwick (barwick@gmx.net).
    
-   Letzte Aktualisierung der deutschen Übersetzung: So., den 08.03.2003,
-   22:30 CET
+   Letzte Aktualisierung der deutschen Übersetzung: Sbd., den 26.04.2003,
+   22:00 CET
    
    Die aktuellste Version dieses Dokuments liegt auf der PostgreSQL
    Website:
@@ -230,6 +230,9 @@
    Microsoft-Plattform befinden sich unter
    http://techdocs.postgresql.org/guides/Windows (en.).
    
+   Eine Portierung für Novell Netware 6 gibt es unter
+   http://forge.novell.com.
+   
     1.5) Woher bekomme ich PostgreSQL?
     
    Der zentrale FTP-Server für PostgreSQL ist der ftp-Server
@@ -276,9 +279,10 @@
    
      http://www.PostgreSQL.org
      
-   Es gibt außerdem einen IRC-Channel im EFNet, Channel #PostgreSQL. Der
-   FAQ-Autor Bruce Momjian nutzt den Unix-Befehl: irc -c '#PostgreSQL'
-   "$USER" irc.phoenix.net um daran teilzunehmen.
+   Es gibt außerdem einen IRC-Channel bei EFNet und bei OpenProjects,
+   Channel #PostgreSQL. Der FAQ-Autor Bruce Momjian nutzt den
+   Unix-Befehl: irc -c '#PostgreSQL' "$USER" irc.phoenix.net um daran
+   teilzunehmen.
    
    Eine Liste von Unternehmen, die Support für PostgreSQL auf
    kommerzieller Basis leisten, kann unter
@@ -757,7 +761,7 @@
     
    Es bestehen folgende Obergrenzen:
     Maximale Größe eine Datenbank?           unbeschränkt (es existieren
-                                               Datenbanken mit >1TB)
+                                               Datenbanken mit 4TB)
     Maximale Größe einer Tabelle?            16 TB
     Maximale Größe einer Zeile?              1,6 TB
     Maximale Größe einer Spalte?             1 GB
@@ -1200,19 +1204,23 @@ BYTEA         bytea           Bytearray mit variabler Länge
    Systemkataloge lädt, ist eine datenbankübergreifende Abfrage nicht
    möglich.
    
-   contrib/dblink ermöglicht datenbankübergreifende Abfragen.
+   contrib/dblink ist eine Erweiterung, die datenbankübergreifende
+   Abfragen ermöglicht.
    
    Es ist natürlich möglich, dass eine Client-Anwendung gleichzeitige
    Verbindungen zu verschiedenen Datenbanken aufbaut und selber
    Datensätze zusammenfügt.
    
+   Ab 7.3 unterstützt PostgreSQL schemas, die die Aufteilung einer
+   Datenbank in mehrere logische Bereiche ermöglichen. Bei vielen
+   Anwendungen könnten dies einen geeigneten Ersatz für den Zugriff auf
+   eine andere Datenbank bieten.
+   
     4.25) Wie kann ich mehrere Zeilen bzw. Spalten von einer Funktion
     zurückgeben lassen?
     
-   "Result sets" können mittels refcursors von PL/PgSQL-Funktionen
-   zurückgegeben werden. Vgl.:
-   http://www.PostgreSQL.org/docs/view.php?version=current&idoc=1&file=pl
-   pgsql-cursors.html (Abschnitt 23.7.3.3).
+   Ab 7.3 können Funktionen mehrere Zeilen und Spalten zurückgeben, vgl.:
+   http://techdocs.postgresql.org/guides/SetReturningFunctions.
    
     4.26) Warum kann ich temporäre Tabellen in PL/PgSQL-Funktionen nicht
     zuverlässig erstellen bzw. löschen?

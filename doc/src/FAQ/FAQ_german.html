@@ -14,7 +14,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
     <p>Deutsche Übersetzung von Ian Barwick (<a href="mailto:barwick@gmx.net">barwick@gmx.net</a>).</p>
 
-    <p>Letzte Aktualisierung der deutschen Übersetzung: So., den 08.03.2003, 22:30 CET</p>
+    <p>Letzte Aktualisierung der deutschen Übersetzung: Sbd., den 26.04.2003, 22:00 CET</p>
 
     <p>Die aktuellste Version dieses Dokuments liegt auf der PostgreSQL Website:</p>
     <ul>
@@ -221,6 +221,8 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     <p>Weitere Informationen zum Status von PostgreSQL auf der Microsoft-Plattform
     befinden sich unter <a href="http://techdocs.postgresql.org/guides/Windows">http://techdocs.postgresql.org/guides/Windows</a> (en.).</p>
 
+    <p>Eine Portierung für Novell Netware 6 gibt es unter <a href="http://forge.novell.com">http://forge.novell.com</a>.</p>
+
     <h4><a name="1.5">1.5</a>) Woher bekomme ich PostgreSQL?</h4>
 
     <p>Der zentrale FTP-Server für PostgreSQL ist der ftp-Server
@@ -270,10 +272,9 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 <blockquote>
 <a href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</a>
 </blockquote>
-    <p>Es gibt außerdem einen IRC-Channel im EFNet, Channel <em>#PostgreSQL</em>. Der
-    FAQ-Autor Bruce Momjian nutzt den Unix-Befehl:
-    <small>irc -c '#PostgreSQL' "$USER" irc.phoenix.net</small>
-    um daran teilzunehmen.</p>
+    <p>Es gibt außerdem einen IRC-Channel bei EFNet und bei OpenProjects, Channel
+    <em>#PostgreSQL</em>. Der FAQ-Autor Bruce Momjian nutzt den Unix-Befehl:
+    <small>irc -c '#PostgreSQL' "$USER" irc.phoenix.net</small> um daran teilzunehmen.</p>
 
     <p>Eine Liste von Unternehmen, die Support für PostgreSQL auf kommerzieller
     Basis leisten, kann unter
@@ -759,7 +760,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     <p>Es bestehen folgende Obergrenzen:</p>
 <pre>
     Maximale Größe eine Datenbank?           unbeschränkt (es existieren
-                                               Datenbanken mit >1TB)
+                                               Datenbanken mit 4TB)
     Maximale Größe einer Tabelle?            16 TB
     Maximale Größe einer Zeile?              1,6 TB
     Maximale Größe einer Spalte?             1 GB
@@ -1214,18 +1215,21 @@ BYTEA         bytea           Bytearray mit variabler Länge
     zuzugreifen. Da PostgreSQL datenbank-spezifische Systemkataloge lädt, ist
     eine datenbankübergreifende Abfrage nicht möglich.</p>
 
-    <p><em>contrib/dblink</em> ermöglicht datenbankübergreifende Abfragen.</p>
+    <p><em>contrib/dblink</em> ist eine Erweiterung, die datenbankübergreifende Abfragen
+    ermöglicht.</p>
 
     <p>Es ist natürlich möglich, dass eine Client-Anwendung gleichzeitige Verbindungen
     zu verschiedenen Datenbanken aufbaut und selber Datensätze zusammenfügt.</p>
 
+    <p>Ab 7.3 unterstützt PostgreSQL <em>schemas</em>, die die Aufteilung einer Datenbank
+    in mehrere logische Bereiche ermöglichen. Bei vielen Anwendungen könnten dies 
+    einen geeigneten Ersatz für den Zugriff auf eine andere Datenbank bieten.</p>
+
     <h4><a name="4.25">4.25</a>) Wie kann ich mehrere Zeilen bzw. Spalten von einer Funktion
     zurückgeben lassen?</h4>
 
-    <p>"<em>Result sets</em>" können mittels <em>refcursors</em> von <small>PL/PgSQL</small>-Funktionen zurückgegeben
-    werden. Vgl.:
-    <a href="http://www.PostgreSQL.org/docs/view.php?version=current&amp;idoc=1&amp;file=plpgsql-cursors.html">http://www.PostgreSQL.org/docs/view.php?version=current&amp;idoc=1&amp;file=plpgsql-cursors.html</a>
-    (Abschnitt 23.7.3.3).</p>
+    <p>Ab 7.3 können Funktionen mehrere Zeilen und Spalten zurückgeben, vgl.:
+     <a href="http://techdocs.postgresql.org/guides/SetReturningFunctions">http://techdocs.postgresql.org/guides/SetReturningFunctions</a>.</p>
 
     <h4><a name="4.26">4.26</a>) Warum kann ich temporäre Tabellen in <small>PL/PgSQL</small>-Funktionen nicht
     zuverlässig erstellen bzw. löschen?</h4>
