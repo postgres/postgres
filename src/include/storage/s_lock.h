@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.38 1998/07/18 14:51:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.39 1998/07/18 14:58:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,39 +170,6 @@ tas(volatile slock_t *lock)
  * All non gcc
  */
 
-#if defined (nextstep)
-/*
- * NEXTSTEP (mach)
- * slock_t is defined as a struct mutex.
- */
-
-#define S_LOCK(lock)	mutex_lock(lock)
-#define S_UNLOCK(lock)	mutex_unlock(lock)
-#define S_INIT_LOCK(lock)	mutex_init(lock)
-/* For Mach, we have to delve inside the entrails of `struct mutex'.  Ick! */
-#define S_LOCK_FREE(alock)	((alock)->lock == 0)
-#endif /* nextstep */
-
-
-
-#if defined(__sgi)
-/*
- * SGI IRIX 5
- * slock_t is defined as a struct abilock_t, which has a single unsigned long
- * member.
- *
- * This stuff may be supplemented in the future with Masato Kataoka's MIPS-II
- * assembly from his NECEWS SVR4 port, but we probably ought to retain this
- * for the R3000 chips out there.
- */
-#define TAS(lock)	(!acquire_lock(lock))
-#define S_UNLOCK(lock)	release_lock(lock)
-#define S_INIT_LOCK(lock)	init_lock(lock)
-#define S_LOCK_FREE(lock)	(stat_lock(lock) == UNLOCKED)
-#endif /* __sgi */
-
-
-
 #if defined(__alpha)
 /*
  * OSF/1 (Alpha AXP)
@@ -218,22 +185,8 @@ tas(volatile slock_t *lock)
 
 
 
-#if defined(_AIX)
-/*
- * AIX (POWER)
- *
- * Note that slock_t on POWER/POWER2/PowerPC is int instead of char
- * (see storage/ipc.h).
- */
-#define TAS(lock)	cs((int *) (lock), 0, 1)
-#endif /* _AIX */
-
-
-
-
 #if defined(NEED_I386_TAS_ASM)
 /* non gcc i386 based things */
-
 
 #if defined(USE_UNIVEL_CC)
 #define TAS(lock)	tas(lock)
@@ -253,11 +206,16 @@ tas(slock_t *s_lock)
 }
 #endif /* USE_UNIVEL_CC */
 
-
 #endif /* NEED_I386_TAS_ASM */
 
 
-#endif /* else defined(__GNUC__) */
+#endif /* defined(__GNUC__) */
+
+
+
+/*************************************************************************
+ * These are the platforms that have common code for gcc and non-gcc
+ */
 
 #if defined(__hpux)
 /*
@@ -275,6 +233,50 @@ static const slock_t clear_lock =
 #define S_UNLOCK(lock)	(*(lock) = clear_lock)	/* struct assignment */
 #define S_LOCK_FREE(lock)	( *(int *) (((long) (lock) + 15) & ~15) != 0)
 #endif /* __hpux */
+
+
+#if defined(__sgi)
+/*
+ * SGI IRIX 5
+ * slock_t is defined as a struct abilock_t, which has a single unsigned long
+ * member.
+ *
+ * This stuff may be supplemented in the future with Masato Kataoka's MIPS-II
+ * assembly from his NECEWS SVR4 port, but we probably ought to retain this
+ * for the R3000 chips out there.
+ */
+#define TAS(lock)	(!acquire_lock(lock))
+#define S_UNLOCK(lock)	release_lock(lock)
+#define S_INIT_LOCK(lock)	init_lock(lock)
+#define S_LOCK_FREE(lock)	(stat_lock(lock) == UNLOCKED)
+#endif /* __sgi */
+
+
+#if defined(_AIX)
+/*
+ * AIX (POWER)
+ *
+ * Note that slock_t on POWER/POWER2/PowerPC is int instead of char
+ * (see storage/ipc.h).
+ */
+#define TAS(lock)	cs((int *) (lock), 0, 1)
+#endif /* _AIX */
+
+
+#if defined (nextstep)
+/*
+ * NEXTSTEP (mach)
+ * slock_t is defined as a struct mutex.
+ */
+
+#define S_LOCK(lock)	mutex_lock(lock)
+#define S_UNLOCK(lock)	mutex_unlock(lock)
+#define S_INIT_LOCK(lock)	mutex_init(lock)
+/* For Mach, we have to delve inside the entrails of `struct mutex'.  Ick! */
+#define S_LOCK_FREE(alock)	((alock)->lock == 0)
+#endif /* nextstep */
+
+
 
 
 /****************************************************************************
