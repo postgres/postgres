@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.11 2004/11/17 17:50:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.12 2004/11/18 17:13:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -392,7 +392,7 @@ pgarch_ArchiverCopyLoop(void)
 									xlog)));
 					return;		/* give up archiving for now */
 				}
-				sleep(1);		/* wait a bit before retrying */
+				pg_usleep(1000000L);	/* wait a bit before retrying */
 			}
 		}
 	}
