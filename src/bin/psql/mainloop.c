@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.46 2002/02/18 05:57:41 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.47 2002/03/27 19:16:13 petere Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -465,7 +465,8 @@ MainLoop(FILE *source)
 				/* handle backslash command */
 				slashCmdStatus = HandleSlashCmds(&line[i],
 						   query_buf->len > 0 ? query_buf : previous_buf,
-												 &end_of_cmd);
+												 &end_of_cmd,
+												 &paren_level);
 
 				success = slashCmdStatus != CMD_ERROR;
 

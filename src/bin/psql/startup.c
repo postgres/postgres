@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.54 2001/11/05 17:46:31 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.55 2002/03/27 19:16:13 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -256,7 +256,7 @@ main(int argc, char *argv[])
 
 		if ((value = GetVariable(pset.vars, "ECHO")) && strcmp(value, "all") == 0)
 			puts(options.action_string);
-		successResult = HandleSlashCmds(options.action_string, NULL, NULL) != CMD_ERROR
+		successResult = HandleSlashCmds(options.action_string, NULL, NULL, NULL) != CMD_ERROR
 			? EXIT_SUCCESS : EXIT_FAILURE;
 	}
 

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.h,v 1.13 2001/11/05 17:46:30 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.h,v 1.14 2002/03/27 19:16:13 petere Exp $
  */
 #ifndef COMMAND_H
 #define COMMAND_H
@@ -28,7 +28,8 @@ typedef enum _backslashResult
 
 backslashResult HandleSlashCmds(const char *line,
 				PQExpBuffer query_buf,
-				const char **end_of_cmd);
+				const char **end_of_cmd,
+				volatile int *paren_level);
 
 int
 			process_file(char *filename);

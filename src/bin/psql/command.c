@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.70 2002/03/19 02:32:21 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.71 2002/03/27 19:16:13 petere Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -52,7 +52,8 @@
 static backslashResult exec_command(const char *cmd,
 			 const char *options_string,
 			 const char **continue_parse,
-			 PQExpBuffer query_buf);
+			 PQExpBuffer query_buf,
+			 volatile int *paren_level);
 
 /* different ways for scan_option to handle parameter words */
 enum option_type
@@ -94,7 +95,8 @@ static bool do_shell(const char *command);
 backslashResult
 HandleSlashCmds(const char *line,
 				PQExpBuffer query_buf,
-				const char **end_of_cmd)
+				const char **end_of_cmd,
+				volatile int *paren_level)
 {
 	backslashResult status = CMD_SKIP_LINE;
 	char	   *my_line;
@@ -132,7 +134,7 @@ HandleSlashCmds(const char *line,
 		my_line[blank_loc] = '\0';
 	}
 
-	status = exec_command(my_line, options_string, &continue_parse, query_buf);
+	status = exec_command(my_line, options_string, &continue_parse, query_buf, paren_level);
 
 	if (status == CMD_UNKNOWN)
 	{
@@ -147,7 +149,7 @@ HandleSlashCmds(const char *line,
 		new_cmd[1] = '\0';
 
 		/* use line for options, because my_line was clobbered above */
-		status = exec_command(new_cmd, line + 1, &continue_parse, query_buf);
+		status = exec_command(new_cmd, line + 1, &continue_parse, query_buf, paren_level);
 
 		/*
 		 * continue_parse must be relative to my_line for calculation
@@ -192,7 +194,8 @@ static backslashResult
 exec_command(const char *cmd,
 			 const char *options_string,
 			 const char **continue_parse,
-			 PQExpBuffer query_buf)
+			 PQExpBuffer query_buf,
+			 volatile int *paren_level)
 {
 	bool		success = true; /* indicate here if the command ran ok or
 								 * failed */
@@ -636,6 +639,8 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "r") == 0 || strcmp(cmd, "reset") == 0)
 	{
 		resetPQExpBuffer(query_buf);
+		if (paren_level)
+			*paren_level = 0;
 		if (!quiet)
 			puts(gettext("Query buffer reset (cleared)."));
 	}
