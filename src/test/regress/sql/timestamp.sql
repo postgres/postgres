@@ -167,3 +167,48 @@ SELECT '' AS fortynine, date_part( 'quarter', d1) AS quarter, date_part( 'msec',
    date_part( 'usec', d1) AS usec
    FROM TIMESTAMP_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
 
+-- TO_CHAR()
+--
+SELECT '' AS to_char_1, to_char(d1, 'DAY Day day DY Dy dy MONTH Month month RM MON Mon mon') 
+   FROM TIMESTAMP_TBL;
+	
+SELECT '' AS to_char_2, to_char(d1, 'FMDAY FMDay FMday FMMONTH FMMonth FMmonth FMRM')
+   FROM TIMESTAMP_TBL;	
+
+SELECT '' AS to_char_3, to_char(d1, 'Y,YYY YYYY YYY YY Y CC Q MM WW DDD DD D J')
+   FROM TIMESTAMP_TBL;
+	
+SELECT '' AS to_char_4, to_char(d1, 'FMY,YYY FMYYYY FMYYY FMYY FMY FMCC FMQ FMMM FMWW FMDDD FMDD FMD FMJ') 
+   FROM TIMESTAMP_TBL;	
+	
+SELECT '' AS to_char_5, to_char(d1, 'HH HH12 HH24 MI SS SSSS') 
+   FROM TIMESTAMP_TBL;
+
+SELECT '' AS to_char_6, to_char(d1, '"HH:MI:SS is" HH:MI:SS "\\"text bettween quote marks\\""') 
+   FROM TIMESTAMP_TBL;		
+		
+SELECT '' AS to_char_7, to_char(d1, 'HH24--text--MI--text--SS')
+   FROM TIMESTAMP_TBL;		
+
+SELECT '' AS to_char_8, to_char(d1, 'YYYYTH YYYYth Jth') 
+   FROM TIMESTAMP_TBL;
+
+-- TO_TIMESTAMP()
+--
+SELECT '' AS to_timestamp_1, to_timestamp('0097/Feb/16 --> 08:14:30', 'YYYY/Mon/DD --> HH:MI:SS');
+	
+SELECT '' AS to_timestamp_2, to_timestamp('97/2/16 8:14:30', 'FMYYYY/FMMM/FMDD FMHH:FMMI:FMSS');
+
+SELECT '' AS to_timestamp_3, to_timestamp('1985 January 12', 'YYYY FMMonth DD');
+
+SELECT '' AS to_timestamp_4, to_timestamp('My birthday-> Year: 1976, Month: May, Day: 16',
+                    '"My birthday-> Year" YYYY, "Month:" FMMonth, "Day:" DD');
+
+SELECT '' AS to_timestamp_5, to_timestamp('1,582nd VIII 21', 'Y,YYYth FMRM DD');
+
+SELECT '' AS to_timestamp_6, to_timestamp('15 "text bettween quote marks" 98 54 45', 
+                    'HH "\\text bettween quote marks\\"" YY MI SS');
+    
+SELECT '' AS to_timestamp_7, to_timestamp('05121445482000', 'MMDDHHMISSYYYY');    
+
+SELECT '' AS to_timestamp_8, to_timestamp('2000January09Sunday', 'YYYYFMMonthDDFMDay');

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.4 2000/02/16 17:24:48 thomas Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.5 2000/03/08 01:34:36 momjian Exp $
  *
  *
  *   Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -630,7 +630,7 @@ static FormatNode *NUM_cache( int len, char *CacheStr, FormatNode *CacheFormat,
 static char *int_to_roman(int number);
 static void NUM_prepare_locale(NUMProc *Np);
 static char *get_last_relevant_decnum(char *num);
-static void NUM_numpart_from_char(NUMProc *Np, int id); 
+static void NUM_numpart_from_char(NUMProc *Np, int id, int plen); 
 static void NUM_numpart_to_char(NUMProc *Np, int id); 
 static char *NUM_processor (FormatNode *node, NUMDesc *Num, char *inout, char *number, 
 					int plen, int sign, int type);
@@ -1798,14 +1798,14 @@ timestamp_to_char(Timestamp *dt, text *fmt)
 	char			*str;
 	double          	fsec;
 	char       		*tzn;
-	int			len=0, tz;
+	int			len=0, tz, x=0;
 
 	if ((!PointerIsValid(dt)) || (!PointerIsValid(fmt)))
 		return NULL;
 	
 	len 	= VARSIZE(fmt) - VARHDRSZ; 
 	
-	if (!len) 
+	if ((!len) || (TIMESTAMP_NOT_FINITE(*dt))) 
 		return textin("");
 
 	tm->tm_sec	=0;	tm->tm_year	=0;
@@ -1814,15 +1814,18 @@ timestamp_to_char(Timestamp *dt, text *fmt)
 	tm->tm_mday	=1;	tm->tm_isdst	=0;
 	tm->tm_mon	=1;
 
-	if (TIMESTAMP_IS_EPOCH(*dt))
-	{
-		timestamp2tm(SetTimestamp(*dt), NULL, tm, &fsec, NULL);
+	if (TIMESTAMP_IS_EPOCH(*dt)) {
+		x = timestamp2tm(SetTimestamp(*dt), NULL, tm, &fsec, NULL);
+		
 	} else if (TIMESTAMP_IS_CURRENT(*dt)) {
-		timestamp2tm(SetTimestamp(*dt), &tz, tm, &fsec, &tzn);
+		x = timestamp2tm(SetTimestamp(*dt), &tz, tm, &fsec, &tzn);
+			
 	} else {
-		if (timestamp2tm(*dt, &tz, tm, &fsec, &tzn) != 0)
-			elog(ERROR, "to_char(): Unable to convert timestamp to tm");
+		x = timestamp2tm(*dt, &tz, tm, &fsec, &tzn);
 	}
+
+	if (x!=0)
+		elog(ERROR, "to_char(): Unable to convert timestamp to tm");
 
 	tm->tm_wday = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + 1) % 7; 
 	tm->tm_yday = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(tm->tm_year, 1,1) +1;
@@ -2330,7 +2333,7 @@ get_last_relevant_decnum(char *num)
 	char	*result, 
 		*p = strchr(num, '.');
 	
-	elog(NOTICE, "CALL: get_last_relevant_decnum()");
+	/*elog(NOTICE, "CALL: get_last_relevant_decnum()");*/
 	
 	if (!p)	
 		p = num;
@@ -2349,15 +2352,20 @@ get_last_relevant_decnum(char *num)
  * ----------
  */
 static void
-NUM_numpart_from_char(NUMProc *Np, int id) 
+NUM_numpart_from_char(NUMProc *Np, int id, int plen) 
 {
 	
 #ifdef DEBUG_TO_FROM_CHAR
 	elog(DEBUG_elog_output, " --- scan start --- ");
 #endif
 
+#define OVERLOAD_TEST	(Np->inout_p >= Np->inout + plen)
+
 	if (*Np->inout_p == ' ') 
 		Np->inout_p++;		
+
+	if (OVERLOAD_TEST)
+		return;
 
 	/* ----------
 	 * read sign
@@ -2413,6 +2421,9 @@ NUM_numpart_from_char(NUMProc *Np, int id)
 		} 		
 	}
 	
+	if (OVERLOAD_TEST)
+		return;
+	
 	/* ----------
 	 * read digit
 	 * ----------
@@ -2430,7 +2441,7 @@ NUM_numpart_from_char(NUMProc *Np, int id)
 
 #ifdef DEBUG_TO_FROM_CHAR	
 		elog(DEBUG_elog_output, "Read digit (%c).", *Np->inout_p);
-#endif	
+#endif		
 	
 	/* ----------
 	 * read decimal point
@@ -2821,7 +2832,7 @@ NUM_processor (FormatNode *node, NUMDesc *Num, char *inout, char *number,
 			 * Check non-string inout end
 			 * ----------
 			 */
-			if (Np->inout_p == Np->inout + plen) 
+			if (Np->inout_p >= Np->inout + plen) 
 				break;
 		}
 		
@@ -2847,7 +2858,7 @@ NUM_processor (FormatNode *node, NUMDesc *Num, char *inout, char *number,
 					NUM_numpart_to_char(Np, n->key->id);
 					continue;	/* for() */
 				} else {
-					NUM_numpart_from_char(Np, n->key->id);
+					NUM_numpart_from_char(Np, n->key->id, plen);
 					break;		/* switch() case: */
 				}
 			
