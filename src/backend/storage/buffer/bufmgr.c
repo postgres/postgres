@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.8 1997/01/16 08:11:41 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.9 1997/01/20 04:36:48 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -474,7 +474,19 @@ BufferAlloc(Relation reln,
 	    else
 	    {
 		BufferFlushCount++;
-		buf->flags &= ~BM_DIRTY;
+		/*
+		 * BM_JUST_DIRTIED cleared by BufferReplace and shouldn't
+		 * be setted by anyone.     - vadim 01/17/97
+		 */
+		if ( buf->flags & BM_JUST_DIRTIED )
+		{
+		    elog (FATAL, "BufferAlloc: content of block %u (%s) changed while flushing",
+			 buf->tag.blockNum, buf->sb_relname);
+		}
+		else
+		{
+		    buf->flags &= ~BM_DIRTY;
+		}
 	    }
 	    
 	    /*
@@ -488,7 +500,8 @@ BufferAlloc(Relation reln,
 	     * no reason to think that we have an immediate disaster on
 	     * our hands.
 	     */
-	    if (buf && buf->refcount > 1) {
+	    if ( buf && buf->refcount > 1 )
+	    {
 		inProgress = FALSE;
 		buf->flags &= ~BM_IO_IN_PROGRESS;
 #ifdef HAS_TEST_AND_SET
@@ -643,7 +656,7 @@ WriteBuffer(Buffer buffer)
 	
 	SpinAcquire(BufMgrLock);
 	Assert(bufHdr->refcount > 0);
-	bufHdr->flags |= BM_DIRTY; 
+	bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
 	UnpinBuffer(bufHdr);
 	SpinRelease(BufMgrLock);
     }
@@ -733,19 +746,36 @@ FlushBuffer(Buffer buffer, bool release)
     bufrel = RelationIdCacheGetRelation (bufHdr->tag.relId.relId);
     Assert (bufrel != (Relation) NULL);
 
+    /* To check if block content changed while flushing. - vadim 01/17/97 */
+    SpinAcquire(BufMgrLock); 
+    bufHdr->flags &= ~BM_JUST_DIRTIED; 
+    SpinRelease(BufMgrLock);
+
     status = smgrflush(bufHdr->bufsmgr, bufrel, bufHdr->tag.blockNum,
 			   (char *) MAKE_PTR(bufHdr->data));
     
     if (status == SM_FAIL)
     {
-	elog(WARN, "FlushBuffer: cannot flush block %u of the relation %.*s", 
-			bufHdr->tag.blockNum, 
-			NAMEDATALEN, bufrel->rd_rel->relname.data);
+	elog(WARN, "FlushBuffer: cannot flush block %u of the relation %s", 
+			bufHdr->tag.blockNum, bufHdr->sb_relname);
 	return (STATUS_ERROR);
     }
     
     SpinAcquire(BufMgrLock); 
-    bufHdr->flags &= ~BM_DIRTY; 
+    /*
+     * If this buffer was marked by someone as DIRTY while
+     * we were flushing it out we must not clear DIRTY flag
+     *  - vadim 01/17/97
+     */
+    if ( bufHdr->flags & BM_JUST_DIRTIED )
+    {
+	elog (NOTICE, "FlusfBuffer: content of block %u (%s) changed while flushing",
+			bufHdr->tag.blockNum, bufHdr->sb_relname);
+    }
+    else
+    {
+    	bufHdr->flags &= ~BM_DIRTY;
+    }
     if ( release )
     	UnpinBuffer(bufHdr);
     SpinRelease(BufMgrLock);
@@ -779,7 +809,7 @@ WriteNoReleaseBuffer(Buffer buffer)
 	bufHdr = &BufferDescriptors[buffer-1];
 	
 	SpinAcquire(BufMgrLock);
-	bufHdr->flags |= BM_DIRTY; 
+	bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
 	SpinRelease(BufMgrLock);
     }
     return(STATUS_OK);
@@ -878,13 +908,19 @@ BufferSync()
 		    UnpinBuffer(bufHdr);
 		    if (bufHdr->flags & BM_IO_ERROR)
 		    {
-			elog(WARN, "cannot write %u for %s",
+			elog(WARN, "BufferSync: write error %u for %s",
 				bufHdr->tag.blockNum, bufHdr->sb_relname);
 		    }
 		    if (reln != (Relation)NULL)
 			RelationDecrementReferenceCount(reln);
 		    continue;
 		}
+		
+		/*
+		 * To check if block content changed while flushing
+		 * (see below). - vadim 01/17/97
+		 */
+		bufHdr->flags &= ~BM_JUST_DIRTIED;
 
 		/*
 		 *  If we didn't have the reldesc in our local cache, flush this
@@ -912,15 +948,23 @@ BufferSync()
 		UnpinBuffer(bufHdr);
 		if (status == SM_FAIL) {
 		    bufHdr->flags |= BM_IO_ERROR;
-		    elog(WARN, "cannot write %u for %s",
+		    elog(WARN, "BufferSync: cannot write %u for %s",
 			 bufHdr->tag.blockNum, bufHdr->sb_relname);
 		}
 		/*
-		 * What if someone has marked this buffer as DIRTY after
-		 * smgr[blind]write but before SpinAcquire(BufMgrLock)
-		 * ??? - vadim 01/16/97
+		 * If this buffer was marked by someone as DIRTY while
+		 * we were flushing it out we must not clear DIRTY flag
+		 *  - vadim 01/17/97
 		 */
-		bufHdr->flags &= ~BM_DIRTY;
+		if ( bufHdr->flags & BM_JUST_DIRTIED )
+		{
+		    elog (NOTICE, "BufferSync: content of block %u (%s) changed while flushing",
+			 bufHdr->tag.blockNum, bufHdr->sb_relname);
+		}
+		else
+		{
+		    bufHdr->flags &= ~BM_DIRTY;
+		}
 		if (reln != (Relation)NULL)
 		    RelationDecrementReferenceCount(reln);
 	    }
@@ -1189,6 +1233,9 @@ BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld)
 	reln = RelationIdCacheGetRelation(bufrel);
     else
 	reln = (Relation) NULL;
+
+    /* To check if block content changed while flushing. - vadim 01/17/97 */
+    bufHdr->flags &= ~BM_JUST_DIRTIED;
     
     SpinRelease(BufMgrLock); 
     
