@@ -2153,6 +2153,10 @@ UnlistenStmt:  UNLISTEN relation_name
 				{
 					$$ = cat2_str(make1_str("unlisten"), $2);
                                 }
+		| UNLISTEN '*'
+				{
+					$$ = make1_str("unlisten *");
+                                }
 ;
 
 /*****************************************************************************
@@ -3796,9 +3800,9 @@ AexprConst:  Iconst
 				}
 		;
 
-ParamNo:  PARAM
+ParamNo:  PARAM opt_indirection
 				{
-					$$ = make_name();
+					$$ = cat2_str(make_name(), $2);
 				}
 		;
 
@@ -3896,6 +3900,7 @@ ColId:  ident					{ $$ = $1; }
 		| STDIN                         { $$ = make1_str("stdin"); }
 		| STDOUT                        { $$ = make1_str("stdout"); }
 		| TIME				{ $$ = make1_str("time"); }
+		| TIMESTAMP			{ $$ = make1_str("timestamp"); }
 		| TIMEZONE_HOUR                 { $$ = make1_str("timezone_hour"); }
                 | TIMEZONE_MINUTE               { $$ = make1_str("timezone_minute"); }
 		| TRIGGER			{ $$ = make1_str("trigger"); }

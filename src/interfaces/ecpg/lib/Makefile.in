@@ -104,7 +104,7 @@ ecpglib.o : ecpglib.c ../include/ecpglib.h ../include/ecpgtype.h
 typename.o : typename.c ../include/ecpgtype.h
 	$(CC) $(CFLAGS) -I../include $(PQ_INCLUDE) -c $< -o $@
 
-ecpglib.sho.o : ecpglib.c ../include/ecpglib.h ../include/ecpgtype.h
+ecpglib.sho : ecpglib.c ../include/ecpglib.h ../include/ecpgtype.h
 	$(CC) $(CFLAGS) $(CFLAGS_SL) -I../include $(PQ_INCLUDE) -c $< -o $@
-typename.sho.o : typename.c ../include/ecpgtype.h
+typename.sho : typename.c ../include/ecpgtype.h
 	$(CC) $(CFLAGS) $(CFLAGS_SL) -I../include $(PQ_INCLUDE) -c $< -o $@
