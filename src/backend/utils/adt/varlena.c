@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.5 1996/09/10 06:41:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.6 1996/09/23 08:31:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,7 +166,7 @@ textin(char *inputText)
     
     if (inputText == NULL)
 	return(NULL);
-    len = strlen(inputText) + VARHDRSZ;		
+    len = strlen(inputText) + VARHDRSZ + 1;		
     result = (struct varlena *) palloc(len);
     VARSIZE(result) = len;
     memmove(VARDATA(result), inputText, len - VARHDRSZ);	
