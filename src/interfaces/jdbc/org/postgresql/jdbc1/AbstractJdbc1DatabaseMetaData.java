@@ -12,7 +12,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 {
 
 	private static final String keywords = "abort,acl,add,aggregate,append,archive," +
-										   "arch_store,backward,binary,change,cluster," +
+										   "arch_store,backward,binary,boolean,change,cluster," +
 										   "copy,database,delimiter,delimiters,do,extend," +
 										   "explain,forward,heavy,index,inherits,isnull," +
 										   "light,listen,load,merge,nothing,notify," +

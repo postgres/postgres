@@ -2,7 +2,7 @@ package org.postgresql.jdbc3;
 
 import java.sql.*;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc3/Attic/AbstractJdbc3Connection.java,v 1.3 2003/05/07 03:03:30 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc3/Attic/AbstractJdbc3Connection.java,v 1.4 2003/06/30 21:10:55 davec Exp $
  * This class defines methods of the jdbc3 specification.  This class extends
  * org.postgresql.jdbc2.AbstractJdbc2Connection which provides the jdbc2
  * methods.  The real Connection class (for jdbc3) is org.postgresql.jdbc3.Jdbc3Connection
@@ -415,6 +415,7 @@ public abstract class AbstractJdbc3Connection extends org.postgresql.jdbc2.Abstr
 				"varchar", "text", "name", "filename",
 				"bytea",
 				"bool",
+				"bit",
 				"date",
 				"time",
 				"abstime", "timestamp", "timestamptz",
@@ -442,6 +443,7 @@ public abstract class AbstractJdbc3Connection extends org.postgresql.jdbc2.Abstr
 			Types.CHAR, Types.CHAR, Types.CHAR, Types.CHAR, Types.CHAR, Types.CHAR,
 			Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR,
 			Types.BINARY,
+			Types.BIT,
 			Types.BIT,
 			Types.DATE,
 			Types.TIME,

@@ -7,7 +7,7 @@ import java.sql.SQLData;
 import java.sql.SQLException;
 import java.sql.Types;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Connection.java,v 1.5 2003/05/29 04:39:48 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Connection.java,v 1.6 2003/06/30 21:10:55 davec Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1Connection which provides the jdbc1
  * methods.  The real Connection class (for jdbc2) is org.postgresql.jdbc2.Jdbc2Connection
@@ -126,6 +126,7 @@ public abstract class AbstractJdbc2Connection extends org.postgresql.jdbc1.Abstr
 				"varchar", "text", "name", "filename",
 				"bytea",
 				"bool",
+				"bit",
 				"date",
 				"time",
 				"abstime", "timestamp", "timestamptz",
@@ -153,6 +154,7 @@ public abstract class AbstractJdbc2Connection extends org.postgresql.jdbc1.Abstr
 												Types.CHAR, Types.CHAR, Types.CHAR, Types.CHAR, Types.CHAR, Types.CHAR,
 												Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR,
 												Types.BINARY,
+												Types.BIT,
 												Types.BIT,
 												Types.DATE,
 												Types.TIME,

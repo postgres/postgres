@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.20 2003/05/29 21:44:47 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.21 2003/06/30 21:10:55 davec Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1740,6 +1740,7 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 				"varchar", "text", "name", "filename",
 				"bytea",
 				"bool",
+				"bit",
 				"date",
 				"time",
 				"abstime", "timestamp", "timestamptz"
@@ -1763,6 +1764,7 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 		Types.CHAR, Types.CHAR, Types.CHAR, Types.CHAR, Types.CHAR, Types.CHAR,
 		Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR,
 		Types.BINARY,
+		Types.BIT,
 		Types.BIT,
 		Types.DATE,
 		Types.TIME,

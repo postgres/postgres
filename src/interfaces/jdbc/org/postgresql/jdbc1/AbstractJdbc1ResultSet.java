@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.12 2003/05/03 20:40:45 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.13 2003/06/30 21:10:55 davec Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,6 +189,19 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 		{
 			try
 			{
+				switch(fields[columnIndex-1].getSQLType())
+				{
+					case Types.NUMERIC:
+					case Types.REAL:
+					case Types.DOUBLE:
+					case Types.FLOAT:
+					case Types.DECIMAL:
+						s = (s.indexOf(".")==-1) ? s : s.substring(0,s.indexOf("."));
+						break;
+					case Types.CHAR:
+						s = s.trim();
+						break;
+				}
 				return Byte.parseByte(s);
 			}
 			catch (NumberFormatException e)
@@ -207,6 +220,19 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 		{
 			try
 			{
+				switch(fields[columnIndex-1].getSQLType())
+				{
+					case Types.NUMERIC:
+					case Types.REAL:
+					case Types.DOUBLE:
+					case Types.FLOAT:
+					case Types.DECIMAL:
+						s = (s.indexOf(".")==-1) ? s : s.substring(0,s.indexOf("."));
+						break;
+					case Types.CHAR:
+						s = s.trim();
+						break;
+				}
 				return Short.parseShort(s);
 			}
 			catch (NumberFormatException e)
@@ -778,6 +804,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 		{
 			try
 			{
+				s = s.trim();
 				return Integer.parseInt(s);
 			}
 			catch (NumberFormatException e)
@@ -794,6 +821,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 		{
 			try
 			{
+				s = s.trim();		
 				return Long.parseLong(s);
 			}
 			catch (NumberFormatException e)
@@ -811,6 +839,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 		{
 			try
 			{
+				s = s.trim();
 				val = new BigDecimal(s);
 			}
 			catch (NumberFormatException e)
@@ -837,6 +866,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 		{
 			try
 			{
+				s = s.trim();
 				return Float.valueOf(s).floatValue();
 			}
 			catch (NumberFormatException e)
@@ -853,6 +883,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 		{
 			try
 			{
+				s = s.trim();
 				return Double.valueOf(s).doubleValue();
 			}
 			catch (NumberFormatException e)
@@ -871,6 +902,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 		// length >  10: SQL Timestamp, assumes PGDATESTYLE=ISO
 		try
 		{
+			s = s.trim();
 			return java.sql.Date.valueOf((s.length() == 10) ? s : s.substring(0, 10));
 		}
 		catch (NumberFormatException e)
@@ -885,6 +917,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 			return null; // SQL NULL
 		try
 		{
+			s = s.trim();
 			if (s.length() == 8)
 			{
 				//value is a time value
@@ -952,6 +985,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 		if (s == null)
 			return null;
 
+		s = s.trim();
 		// We must be synchronized here incase more theads access the ResultSet
 		// bad practice but possible. Anyhow this is to protect sbuf and
 		// SimpleDateFormat objects

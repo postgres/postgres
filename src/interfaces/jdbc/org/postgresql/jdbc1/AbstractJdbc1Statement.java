@@ -25,7 +25,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.25 2003/06/30 16:38:30 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.26 2003/06/30 21:10:55 davec Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -1464,7 +1464,10 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		switch (targetSqlType)
 		{
 			case Types.INTEGER:
-				bind(parameterIndex, x.toString(), PG_INTEGER);
+				if (x instanceof Boolean)
+					bind(parameterIndex,((Boolean)x).booleanValue() ? "1" :"0", PG_BOOLEAN);
+				else
+					bind(parameterIndex, x.toString(), PG_INTEGER);
 				break;
 			case Types.TINYINT:
 			case Types.SMALLINT:
@@ -1497,6 +1500,10 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 				if (x instanceof Boolean)
 				{
 					bind(parameterIndex, ((Boolean)x).booleanValue() ? "TRUE" : "FALSE", PG_TEXT);
+				}
+				else if (x instanceof Number)
+				{
+					bind(parameterIndex, ((Number)x).intValue()==1 ? "TRUE" : "FALSE", PG_TEXT);
 				}
 				else
 				{
