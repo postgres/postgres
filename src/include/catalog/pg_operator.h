@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.122 2003/11/29 22:40:58 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.123 2003/12/01 21:52:37 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -122,12 +122,12 @@ DATA(insert OID = 375 (  "||"	   PGNSP PGUID b f 2277 2277 2277	0 0 0 0 0 0 arra
 
 DATA(insert OID = 352 (  "="	   PGNSP PGUID b t	28	28	16 352	 0	 0	 0	 0	 0 xideq eqsel eqjoinsel ));
 DATA(insert OID = 353 (  "="	   PGNSP PGUID b f	28	23	16	 0	 0	 0	 0	 0	 0 xideqint4 eqsel eqjoinsel ));
+DATA(insert OID = 388 (  "!"	   PGNSP PGUID r f  20   0  1700   0   0   0   0  0   0 numeric_fac - - ));
+DATA(insert OID = 389 (  "!!"	   PGNSP PGUID l f   0  20  1700   0   0   0   0  0   0 numeric_fac - - ));
 DATA(insert OID = 385 (  "="	   PGNSP PGUID b t	29	29	16 385	 0	 0	 0	 0	 0 cideq eqsel eqjoinsel ));
 DATA(insert OID = 386 (  "="	   PGNSP PGUID b t	22	22	16 386	 0	 0	 0	 0	 0 int2vectoreq eqsel eqjoinsel ));
 DATA(insert OID = 387 (  "="	   PGNSP PGUID b f	27	27	16 387	 0	 0	 0	 0	 0 tideq eqsel eqjoinsel ));
 #define TIDEqualOperator   387
-DATA(insert OID = 388 (  "!"	   PGNSP PGUID r f	20	 0	20	 0	 0	 0	 0	 0	 0 int8fac - - ));
-DATA(insert OID = 389 (  "!!"	   PGNSP PGUID l f	 0	20	20	 0	 0	 0	 0	 0	 0 int8fac - - ));
 
 DATA(insert OID = 410 ( "="		   PGNSP PGUID b t	20	20	16 410 411 412 412 412 413 int8eq eqsel eqjoinsel ));
 DATA(insert OID = 411 ( "<>"	   PGNSP PGUID b f	20	20	16 411 410 0 0 0 0 int8ne neqsel neqjoinsel ));
@@ -176,8 +176,6 @@ DATA(insert OID = 511 (  "@"	   PGNSP PGUID b f 600 603	16	 0	 0	 0	 0	 0	 0 on_
 DATA(insert OID = 512 (  "@"	   PGNSP PGUID b f 600 602	16 755	 0	 0	 0	 0	 0 on_ppath - - ));
 DATA(insert OID = 513 (  "@@"	   PGNSP PGUID l f	 0 603 600	 0	 0	 0	 0	 0	 0 box_center - - ));
 DATA(insert OID = 514 (  "*"	   PGNSP PGUID b f	23	23	23 514	 0	 0	 0	 0	 0 int4mul - - ));
-DATA(insert OID = 515 (  "!"	   PGNSP PGUID r f	23	 0	23	 0	 0	 0	 0	 0	 0 int4fac - - ));
-DATA(insert OID = 516 (  "!!"	   PGNSP PGUID l f	 0	23	23	 0	 0	 0	 0	 0	 0 int4fac - - ));
 DATA(insert OID = 517 (  "<->"	   PGNSP PGUID b f 600 600 701 517	 0	 0	 0	 0	 0 point_distance - - ));
 DATA(insert OID = 518 (  "<>"	   PGNSP PGUID b f	23	23	16 518	96	0  0   0   0 int4ne neqsel neqjoinsel ));
 DATA(insert OID = 519 (  "<>"	   PGNSP PGUID b f	21	21	16 519	94	0  0   0   0 int2ne neqsel neqjoinsel ));
@@ -507,8 +505,6 @@ DATA(insert OID = 1133 (  ">"		PGNSP PGUID b f  701	700  16 1122 1134  0 0 0 0 f
 DATA(insert OID = 1134 (  "<="		PGNSP PGUID b f  701	700  16 1125 1133  0 0 0 0 float84le scalarltsel scalarltjoinsel ));
 DATA(insert OID = 1135 (  ">="		PGNSP PGUID b f  701	700  16 1124 1132  0 0 0 0 float84ge scalargtsel scalargtjoinsel ));
 
-DATA(insert OID = 1158 (  "!"		PGNSP PGUID r f 21	  0   23 0 0 0 0 0 0 int2fac - - ));
-DATA(insert OID = 1175 (  "!!"		PGNSP PGUID l f  0	 21   23 0 0 0 0 0 0 int2fac - - ));
 
 /* LIKE hacks by Keith Parks. */
 DATA(insert OID = 1207 (  "~~"	  PGNSP PGUID b f  19	25	16 0 1208 0 0 0 0 namelike likesel likejoinsel ));

@@ -18,23 +18,21 @@ CREATE OPERATOR <% (
 );
 
 CREATE OPERATOR @#@ (
-   rightarg = int4,		-- left unary 
-   procedure = int4fac 
+   rightarg = int8,		-- left unary 
+   procedure = numeric_fac 
 );
 
 CREATE OPERATOR #@# (
-   leftarg = int4,		-- right unary
-   procedure = int4fac 
+   leftarg = int8,		-- right unary
+   procedure = numeric_fac
 );
 
 CREATE OPERATOR #%# ( 
-   leftarg = int4,		-- right unary 
-   procedure = int4fac 
+   leftarg = int8,		-- right unary 
+   procedure = numeric_fac 
 );
 
 -- Test comments
 COMMENT ON OPERATOR ###### (int4, NONE) IS 'bad right unary';
-COMMENT ON OPERATOR #%# (int4, NONE) IS 'right unary';
-COMMENT ON OPERATOR #%# (int4, NONE) IS NULL;
 
 

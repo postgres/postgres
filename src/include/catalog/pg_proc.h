@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.316 2003/11/29 22:40:58 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.317 2003/12/01 21:52:37 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -208,8 +208,6 @@ DESCR("PostgreSQL version string");
 
 /* OIDS 100 - 199 */
 
-DATA(insert OID = 100 (  int8fac		   PGNSP PGUID 12 f f t f i 1 20 "20"  int8fac - _null_ ));
-DESCR("factorial");
 DATA(insert OID = 101 (  eqsel			   PGNSP PGUID 12 f f t f s 4 701 "2281 26 2281 23"  eqsel - _null_ ));
 DESCR("restriction selectivity of = and related operators");
 DATA(insert OID = 102 (  neqsel			   PGNSP PGUID 12 f f t f s 4 701 "2281 26 2281 23"  neqsel - _null_ ));
@@ -231,7 +229,7 @@ DATA(insert OID =  109 (  unknownin		   PGNSP PGUID 12 f f t f i 1 705 "2275"	un
 DESCR("I/O");
 DATA(insert OID =  110 (  unknownout	   PGNSP PGUID 12 f f t f i 1 2275	"705"	unknownout - _null_ ));
 DESCR("I/O");
-
+DATA(insert OID = 111 (  numeric_fac	   PGNSP PGUID 12 f f t f i 1 1700 "20"  numeric_fac - _null_ ));
 DATA(insert OID = 112 (  text			   PGNSP PGUID 12 f f t f i 1  25 "23"	int4_text - _null_ ));
 DESCR("convert int4 to text");
 DATA(insert OID = 113 (  text			   PGNSP PGUID 12 f f t f i 1  25 "21"	int2_text - _null_ ));
@@ -294,8 +292,6 @@ DATA(insert OID = 140 (  areajoinsel	   PGNSP PGUID 12 f f t f s 4 701 "2281 26 
 DESCR("join selectivity for area-comparison operators");
 DATA(insert OID = 141 (  int4mul		   PGNSP PGUID 12 f f t f i 2 23 "23 23"	int4mul - _null_ ));
 DESCR("multiply");
-DATA(insert OID = 142 (  int4fac		   PGNSP PGUID 12 f f t f i 1 23 "23"  int4fac - _null_ ));
-DESCR("factorial");
 DATA(insert OID = 144 (  int4ne			   PGNSP PGUID 12 f f t f i 2 16 "23 23"	int4ne - _null_ ));
 DESCR("not equal");
 DATA(insert OID = 145 (  int2ne			   PGNSP PGUID 12 f f t f i 2 16 "21 21"	int2ne - _null_ ));
@@ -570,9 +566,6 @@ DATA(insert OID = 274 (  timeofday		   PGNSP PGUID 12 f f t f v 0 25 "" timeofda
 DESCR("Current date and time - increments during transactions");
 DATA(insert OID = 275 (  isfinite		   PGNSP PGUID 12 f f t f i 1 16 "702"	abstime_finite - _null_ ));
 DESCR("finite abstime?");
-
-DATA(insert OID = 276 (  int2fac		   PGNSP PGUID 12 f f t f i 1 23 "21"  int2fac - _null_ ));
-DESCR("factorial");
 
 DATA(insert OID = 277 (  inter_sl		   PGNSP PGUID 12 f f t f i 2 16 "601 628"	inter_sl - _null_ ));
 DESCR("intersect?");
@@ -1758,11 +1751,7 @@ DATA(insert OID = 1390 (  isfinite	   PGNSP PGUID 12 f f t f i 1 16 "1186"  inte
 DESCR("finite interval?");
 
 
-DATA(insert OID = 1391 (  factorial		   PGNSP PGUID 12 f f t f i 1 23 "21"  int2fac - _null_ ));
-DESCR("factorial");
-DATA(insert OID = 1392 (  factorial		   PGNSP PGUID 12 f f t f i 1 23 "23"  int4fac - _null_ ));
-DESCR("factorial");
-DATA(insert OID = 1393 (  factorial		   PGNSP PGUID 12 f f t f i 1 20 "20"  int8fac - _null_ ));
+DATA(insert OID = 1376 (  factorial        PGNSP PGUID 12 f f t f i 1 1700 "20"  numeric_fac - _null_ ));
 DESCR("factorial");
 DATA(insert OID = 1394 (  abs			   PGNSP PGUID 12 f f t f i 1 700 "700"  float4abs - _null_ ));
 DESCR("absolute value");

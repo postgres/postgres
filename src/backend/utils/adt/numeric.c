@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.68 2003/11/29 19:51:59 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.69 2003/12/01 21:52:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1287,6 +1287,55 @@ numeric_larger(PG_FUNCTION_ARGS)
  *
  * ----------------------------------------------------------------------
  */
+
+/*
+ * numeric_fac()
+ * Computer factorial
+ */
+
+Datum
+numeric_fac(PG_FUNCTION_ARGS)
+{
+
+	int64		num = PG_GETARG_INT64(0);
+	NumericVar	count;
+	NumericVar	fact;
+	NumericVar	zerovar;
+	NumericVar	result;
+	Numeric		res;
+
+	if(num < 1) {
+		res = make_result(&const_one);
+		PG_RETURN_NUMERIC(res);
+	}
+
+
+	init_var(&fact);
+	init_var(&count);
+	init_var(&result);
+	init_var(&zerovar);
+	zero_var(&zerovar);
+
+	int8_to_numericvar((int64)num, &result);
+	set_var_from_var(&const_one, &count);
+
+	for(num = num - 1; num > 0; num--) {
+		set_var_from_var(&result,&count);
+
+		int8_to_numericvar((int64)num,&fact);
+
+		mul_var(&count, &fact, &result, count.dscale + fact.dscale);
+	}
+
+	res = make_result(&count);
+
+	free_var(&count);
+	free_var(&fact);
+	free_var(&result);
+	free_var(&zerovar);
+
+	PG_RETURN_NUMERIC(res);
+}
 
 
 /*

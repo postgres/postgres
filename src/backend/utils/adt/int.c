@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.58 2003/11/29 19:51:58 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.59 2003/12/01 21:52:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
  *		 intpl, intmi, int4mul, intdiv
  *
  *		Arithmetic operators:
- *		 intmod, int4fac
+ *		 intmod
  */
 
 #include "postgres.h"
@@ -849,40 +849,6 @@ int42mod(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(arg1 % arg2);
 }
 
-/* int[24]fac()
- * Factorial
- */
-Datum
-int4fac(PG_FUNCTION_ARGS)
-{
-	int32		arg1 = PG_GETARG_INT32(0);
-	int32		result;
-
-	if (arg1 == 0)
-		result = 1;
-	else if (arg1 < 0)
-		result = 0;
-	else
-		for (result = 1; arg1 > 0; --arg1)
-			result *= arg1;
-	PG_RETURN_INT32(result);
-}
-
-Datum
-int2fac(PG_FUNCTION_ARGS)
-{
-	int16		arg1 = PG_GETARG_INT16(0);
-	int32		result;
-
-	if (arg1 == 0)
-		result = 1;
-	else if (arg1 < 0)
-		result = 0;
-	else
-		for (result = 1; arg1 > 0; --arg1)
-			result *= arg1;
-	PG_RETURN_INT32(result);
-}
 
 /* int[24]abs()
  * Absolute value
