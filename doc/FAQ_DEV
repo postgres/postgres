@@ -69,9 +69,14 @@ s
    back out twice to return to the original function. Most editors
    support this via tags or etags files.
    
-   Third, you need to get mkid from ftp.postgresql.org. By running
-   tools/make_mkid, an archive of source symbols can be created that can
-   be rapidly queried like grep or edited. Others prefer glimpse.
+   Third, you need to get id-utils from:
+        ftp://alpha.gnu.org/gnu/id-utils-3.2d.tar.gz
+        ftp://tug.org/gnu/id-utils-3.2d.tar.gz
+        ftp://ftp.enst.fr/pub/gnu/gnits/id-utils-3.2d.tar.gz
+
+   By running tools/make_mkid, an archive of source symbols can be
+   created that can be rapidly queried like grep or edited. Others prefer
+   glimpse.
    
    make_diff has tools to create patch diff files that can be applied to
    the distribution.

@@ -87,10 +87,16 @@ out twice to return to the original function.  Most editors support this
 via <I>tags</I> or <I>etags</I> files.<P>
 
 
-Third, you need to get <I>mkid</I> from ftp.postgresql.org.  By running
-<I>tools/make_mkid</I>, an archive of source symbols can be created that
-can be rapidly queried like <I>grep</I> or edited.  Others prefer
-<I>glimpse.</I><P>
+Third, you need to get <I>id-utils</I> from:
+<pre>
+	<a href="ftp://alpha.gnu.org/gnu/id-utils-3.2d.tar.gz">ftp://alpha.gnu.org/gnu/id-utils-3.2d.tar.gz</a>
+	<a href="ftp://tug.org/gnu/id-utils-3.2d.tar.gz">ftp://tug.org/gnu/id-utils-3.2d.tar.gz</a>
+	<a href="ftp://ftp.enst.fr/pub/gnu/gnits/id-utils-3.2d.tar.gz">ftp://ftp.enst.fr/pub/gnu/gnits/id-utils-3.2d.tar.gz</a>
+</pre>
+
+By running <I>tools/make_mkid</I>, an archive of source symbols can be
+created that can be rapidly queried like <I>grep</I> or edited.  Others
+prefer <I>glimpse.</I><P>
 
 
 <I>make_diff</I> has tools to create patch diff files that can be
