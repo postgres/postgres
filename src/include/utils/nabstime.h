@@ -7,13 +7,14 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nabstime.h,v 1.26 2000/06/09 01:11:15 tgl Exp $
+ * $Id: nabstime.h,v 1.27 2000/11/18 05:41:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef NABSTIME_H
 #define NABSTIME_H
 
+#include <limits.h>
 #include <time.h>
 
 #include "fmgr.h"
@@ -78,37 +79,25 @@ typedef TimeIntervalData *TimeInterval;
 #define CURRENT_ABSTIME ((AbsoluteTime) 0x7FFFFFFD)		/* 2147483646 (2^31 - 2) */
 #define NOEND_ABSTIME	((AbsoluteTime) 0x7FFFFFFC)		/* 2147483645 (2^31 - 3) */
 #define BIG_ABSTIME		((AbsoluteTime) 0x7FFFFFFB)		/* 2147483644 (2^31 - 4) */
-
-#if defined(_AIX)
-/*
- * AIX considers 2147483648 == -2147483648 (since they have the same bit
- * representation) but uses a different sign sense in a comparison to
- * these integer constants depending on whether the constant is signed
- * or not!
- */
-#define NOSTART_ABSTIME		 ((AbsoluteTime) INT_MIN)
-#else
-#define NOSTART_ABSTIME ((AbsoluteTime) 0x80000001)		/* -2147483647 (- 2^31) */
-#endif	 /* _AIX */
+#define NOSTART_ABSTIME	((AbsoluteTime) INT_MIN)		/* -2147483648 */
 
 #define INVALID_RELTIME ((RelativeTime) 0x7FFFFFFE)		/* 2147483647 (2^31 - 1) */
 
 #define AbsoluteTimeIsValid(time) \
 	((bool) ((time) != INVALID_ABSTIME))
 
+/*
+ * Because NOSTART_ABSTIME is defined as INT_MIN, there can't be any
+ * AbsoluteTime values less than it.  Therefore, we can code the test
+ * "time > NOSTART_ABSTIME" as "time != NOSTART_ABSTIME", which avoids
+ * compiler bugs on some platforms.  --- tgl & az, 11/2000
+ */
 #define AbsoluteTimeIsReal(time) \
-	((bool) (((AbsoluteTime) time) < NOEND_ABSTIME && \
-			 ((AbsoluteTime) time) > NOSTART_ABSTIME))
+	((bool) (((AbsoluteTime) (time)) < NOEND_ABSTIME && \
+			  ((AbsoluteTime) (time)) != NOSTART_ABSTIME))
 
 #define RelativeTimeIsValid(time) \
-	((bool) (((RelativeTime) time) != INVALID_RELTIME))
-
-/*
- * getSystemTime
- *		Returns system time.
- */
-#define getSystemTime() \
-	((time_t) (time(0l)))
+	((bool) (((RelativeTime) (time)) != INVALID_RELTIME))
 
 
 /*
