@@ -24,7 +24,7 @@
 
 # Original author:  Ryan Kirkpatrick <pgsql@rkirkpat.net>
 
-# $Header: /cvsroot/pgsql/contrib/start-scripts/linux,v 1.4 2003/06/12 02:02:24 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/start-scripts/linux,v 1.5 2003/07/26 20:42:55 momjian Exp $
 
 ## EDIT FROM HERE
 
@@ -83,6 +83,7 @@ case $1 in
         echo -n "Reload PostgreSQL: "
         su - $PGUSER -c "$DAEMON reload -D '$PGDATA' -s"
         echo "ok"
+        ;;
   status)
 	su - $PGUSER -c "$DAEMON status -D '$PGDATA'"
 	;;
