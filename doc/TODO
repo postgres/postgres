@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Oct 16 00:12:51 EDT 2003
+Last updated:		Mon Oct 20 22:47:57 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -77,7 +77,7 @@ Data Types
 * -Change NUMERIC data type to use base 10,000 internally
 * Change NUMERIC to enforce the maximum precision, and increase it
 * Add function to return compressed length of TOAST data values (Tom)
-* Allow INET subnet tests using non-constants
+* Allow INET subnet tests to use indexes
 * Add transaction_timestamp(), statement_timestamp(), clock_timestamp() functionality
 * -Add GUC variables to control floating number output digits (Pedro Ferreira)
 * Have sequence dependency track use of DEFAULT sequences, seqname.nextval
@@ -99,6 +99,7 @@ Data Types
 * ARRAYS
 	o Allow nulls in arrays
 	o -Allow arrays to be ORDER'ed
+	o Allow MIN()/MAX() on arrays
 	o -Support construction of array result values in expressions (Joe)
 	o Delay resolution of array expression type so assignment coercion 
 	  can be performed on empty array expressions (Joe)
@@ -141,7 +142,7 @@ Views / Rules
 Indexes
 =======
 
-* Allow CREATE INDEX zman_index ON test (date_trunc( 'day', zman ) datetime_ops)
+* -Allow CREATE INDEX zman_index ON test (date_trunc( 'day', zman ) datetime_ops)
   fails index can't store constant parameters
 * Order duplicate index entries by tid for faster heap lookups
 * Allow inherited tables to inherit index, UNIQUE constraint, and primary
@@ -163,7 +164,7 @@ Indexes
 * Prevent index uniqueness checks when UPDATE does not modify the column
 * Use bitmaps to fetch heap pages in sequential order [performance]
 * Use bitmaps to combine existing indexes [performance]
-* Improve handling of index scans for NULL
+* Allow use of indexes to search for NULLs
 * Allow SELECT * FROM tab WHERE int2col = 4 to use int2col index, int8,
   float4, numeric/decimal too [optimizer]
 * Add FILLFACTOR to btree index creation
@@ -201,6 +202,7 @@ Commands
 * Allow LISTEN/NOTIFY to store info in memory rather than tables
 * COMMENT ON [ CAST | CONVERSION | OPERATOR CLASS | LARGE OBJECT | LANGUAGE ] 
   (Christopher) 
+* Add optional textual message to NOTIFY
 
 
 * ALTER
@@ -249,7 +251,7 @@ Commands
 * SHOW/SET
 	o Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
 	  ANALYZE, and CLUSTER
-	o Add SET SCHEMA
+	o Add SET PATH for schemas
 	o -Allow EXPLAIN EXECUTE to see prepared plans
  	o -Allow SHOW of some non-modifiable variables, like pg_controldata
 
@@ -295,6 +297,7 @@ Clients
 * Add a libpq function to support Parse/DescribeStatement capability
 * Prevent libpq's PQfnumber() from lowercasing the column name
 * Allow pg_dump to dump CREATE CONVERSION (Christopher)
+* Allow fastpast to pass values in portable format
 
 
 * JDBC
@@ -342,6 +345,7 @@ Referential Integrity
 * Allow triggers to be disabled [trigger]
 * With disabled triggers, allow pg_dump to use ALTER TABLE ADD FOREIGN KEY
 * -Support statement-level triggers (Neil)
+* Allow statement-level triggers to access modified rows
 * Support triggers on columns (Neil)
 * Have AFTER triggers execute after the appropriate SQL statement in a 
   function, not at the end of the function
@@ -510,7 +514,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1152 2003/10/16 04:12:53 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1152 2003/10/16 04:12:53 momjian Exp $
+* Change CVS $Id: TODO,v 1.1153 2003/10/21 02:48:09 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1153 2003/10/21 02:48:09 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
@@ -523,14 +527,12 @@ Source Code
 * Wire Protocol Changes
 	o -Show transaction status in psql
 	o -Allow binding of query parameters, support for prepared queries
-	o Add optional textual message to NOTIFY
 	o -Remove hard-coded limits on user/db/password names
 	o -Remove unused elements of startup packet (unused, tty, passlength)
 	o -Fix COPY/fastpath protocol
-	o Allow fastpast to pass values in portable format
 	o -Error codes
 	o Dynamic character set handling
-	o Special passing of binary values in platform-neutral format (bytea?)
+	o -Special passing of binary values in platform-neutral format (bytea?)
 	o Add decoded type, length, precision
 	o Compression?
 	o -Report server version number, database encoding, client encoding
