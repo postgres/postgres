@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.4 1996/11/06 08:21:35 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.5 1996/12/03 05:50:11 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,7 +159,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 	pname = "Tee";
 	break;
     default:
-	pname = NULL;
+	pname = "";
 	break;
     }
 
