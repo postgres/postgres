@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.65 2000/01/26 05:56:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.66 2000/02/15 03:26:38 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,6 +79,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"cycle", CYCLE},
 	{"database", DATABASE},
 	{"day", DAY_P},
+	{"dec", DEC},
 	{"decimal", DECIMAL},
 	{"declare", DECLARE},
 	{"default", DEFAULT},
@@ -211,6 +212,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"sequence", SEQUENCE},
 	{"serial", SERIAL},
 	{"serializable", SERIALIZABLE},
+	{"session_user", SESSION_USER},
 	{"set", SET},
 	{"setof", SETOF},
 	{"share", SHARE},
