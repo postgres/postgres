@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.22 1997/08/22 14:10:24 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.23 1997/09/04 13:17:59 vadim Exp $
  *
  * INTERFACE ROUTINES
  *	heap_creatr()		- Create an uncataloged heap relation
@@ -41,6 +41,7 @@
 #include <catalog/pg_type.h>
 #include <catalog/pg_attrdef.h>
 #include <catalog/pg_relcheck.h>
+#include <commands/trigger.h>
 #include <storage/bufmgr.h>
 #include <storage/lmgr.h>
 #include <storage/smgr.h>
@@ -1297,6 +1298,10 @@ heap_destroy(char *relname)
     if (rdesc->rd_rules != NULL) {
 	RelationRemoveRules(rid);
     }
+    
+    /* triggers */
+    if ( rdesc->rd_rel->reltriggers > 0 )
+    	RelationRemoveTriggers (rdesc);
     
     /* ----------------
      *	delete attribute tuples
