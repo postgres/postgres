@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: ip.c,v 1.1 1998/10/03 05:40:49 momjian Exp $
+ *	$Id: ip.c,v 1.2 1998/10/04 15:31:06 momjian Exp $
  */
 
 #include <sys/types.h>
@@ -266,7 +266,7 @@ ipaddr_cmp(ipaddr *a1, ipaddr *a2)
  */
 
 int
-v4bitncmp(u_int32_t a1, u_int32_t a2, int bits)
+v4bitncmp(unsigned int a1, unsigned int a2, int bits)
 {
 	unsigned long mask = 0;
 	int			i;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.56 1998/10/03 05:40:59 momjian Exp $
+ * $Id: builtins.h,v 1.57 1998/10/04 15:31:07 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -532,7 +532,7 @@ bool		ipaddr_subeq(ipaddr * a1, ipaddr * a2);
 bool		ipaddr_sup(ipaddr * a1, ipaddr * a2);
 bool		ipaddr_supeq(ipaddr * a1, ipaddr * a2);
 int4		ipaddr_cmp(ipaddr * a1, ipaddr * a2);
-int			v4bitncmp(u_int32_t a1, u_int32_t a2, int bits);
+int			v4bitncmp(unsigned int a1, unsigned int a2, int bits);
 
 
 /* mac.c */

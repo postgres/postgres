@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: mac.h,v 1.1 1998/10/03 05:41:01 momjian Exp $
+ * $Id: mac.h,v 1.2 1998/10/04 15:31:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@ typedef struct
 	unsigned char bits;
 	union
 	{
-		u_int32_t	ipv4_addr;	/* network byte order */
+		unsigned int	ipv4_addr;	/* network byte order */
 		/* add IPV6 address type here */
 	}			addr;
 }			ipaddr_struct;
