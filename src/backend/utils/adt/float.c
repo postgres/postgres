@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.8 1997/01/06 00:20:11 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.9 1997/01/18 17:36:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ extern double	atof(const char *p);
 #ifdef NEED_RINT
 #define rint my_rint
 static double   rint(double x);
-else /* NEED_RINT */
+#else /* NEED_RINT */
 extern double   rint(double x);
 #endif /* NEED_RINT */
 
