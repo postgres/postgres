@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.25 2003/06/14 18:20:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.26 2003/08/04 00:26:49 momjian Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -463,7 +463,7 @@ verify_peer(PGconn *conn)
 	}
 	
 	/* what do we know about the peer's common name? */
-	if ((h == NULL)
+	if (h == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 		libpq_gettext("could not get information about host (%s): %s\n"),
