@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.125 2004/02/17 00:52:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.126 2004/04/06 18:46:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -918,23 +918,31 @@ cost_mergejoin(MergePath *path, Query *root)
 	 * all mergejoin paths associated with the merge clause, we cache the
 	 * results in the RestrictInfo node.
 	 */
-	firstclause = (RestrictInfo *) lfirst(mergeclauses);
-	if (firstclause->left_mergescansel < 0)		/* not computed yet? */
-		mergejoinscansel(root, (Node *) firstclause->clause,
-						 &firstclause->left_mergescansel,
-						 &firstclause->right_mergescansel);
-
-	if (bms_is_subset(firstclause->left_relids, outer_path->parent->relids))
+	if (mergeclauses)
 	{
-		/* left side of clause is outer */
-		outerscansel = firstclause->left_mergescansel;
-		innerscansel = firstclause->right_mergescansel;
+		firstclause = (RestrictInfo *) lfirst(mergeclauses);
+		if (firstclause->left_mergescansel < 0)	/* not computed yet? */
+			mergejoinscansel(root, (Node *) firstclause->clause,
+							 &firstclause->left_mergescansel,
+							 &firstclause->right_mergescansel);
+
+		if (bms_is_subset(firstclause->left_relids, outer_path->parent->relids))
+		{
+			/* left side of clause is outer */
+			outerscansel = firstclause->left_mergescansel;
+			innerscansel = firstclause->right_mergescansel;
+		}
+		else
+		{
+			/* left side of clause is inner */
+			outerscansel = firstclause->right_mergescansel;
+			innerscansel = firstclause->left_mergescansel;
+		}
 	}
 	else
 	{
-		/* left side of clause is inner */
-		outerscansel = firstclause->right_mergescansel;
-		innerscansel = firstclause->left_mergescansel;
+		/* cope with clauseless mergejoin */
+		outerscansel = innerscansel = 1.0;
 	}
 
 	/* convert selectivity to row count; must scan at least one row */
