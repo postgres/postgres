@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.44 1998/12/18 19:45:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.45 1998/12/29 18:29:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.44 1998/12/18 19:45:37 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.45 1998/12/29 18:29:18 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -449,7 +449,6 @@ ProcSleep(PROC_QUEUE *waitQueue,/* lock->waitProcs */
 	int			i;
 	bool		deadlock_checked = false;
 	PROC	   *proc;
-	struct timeval timeval;
 
 	/*
 	 * If the first entries in the waitQueue have a greater priority than
@@ -513,29 +512,24 @@ ProcSleep(PROC_QUEUE *waitQueue,/* lock->waitProcs */
 	SpinRelease(spinlock);
 
 	/* --------------
-	 * We set this so we can wake up periodically and check for a deadlock.
+	 * We set this so we can wake up after one second to check for a deadlock.
 	 * If a deadlock is detected, the handler releases the processes
 	 * semaphore and aborts the current transaction.
-	 *
-	 * Need to zero out struct to set the interval and the micro seconds fields
-	 * to 0.
 	 * --------------
 	 */
-	MemSet(&timeval, 0, sizeof(struct timeval));
-	timeval.tv_sec = \
-		(DeadlockCheckTimer ? DeadlockCheckTimer : DEADLOCK_CHECK_TIMER);
 
 	do
 	{
-		int expire;
+		int expired;
 		
 		MyProc->errType = NO_ERROR;		/* reset flag after deadlock check */
 
-		if ((expire = select(0, NULL, NULL, NULL,
-			(deadlock_checked == false) ? &timeval : NULL)) == -1)
-			elog(FATAL, "ProcSleep: Unable to set timer for process wakeup");
+		if (deadlock_checked == false)
+			expired = sleep(DeadlockCheckTimer ? DeadlockCheckTimer : DEADLOCK_CHECK_TIMER);
+		else
+			pause();
 
-		if (expire == 0 /* timeout reached */ && deadlock_checked == false)
+		if (expired == 0 && deadlock_checked == false)
 		{
 			HandleDeadLock();
 			deadlock_checked = true;
