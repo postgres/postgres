@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.99 2002/04/25 02:56:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.100 2002/04/28 00:49:13 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1805,23 +1805,12 @@ get_rule_expr(Node *node, deparse_context *context)
 		case T_RelabelType:
 			{
 				RelabelType *relabel = (RelabelType *) node;
-				HeapTuple	typetup;
-				Form_pg_type typeStruct;
-				char	   *extval;
 
 				appendStringInfoChar(buf, '(');
 				get_rule_expr(relabel->arg, context);
-				typetup = SearchSysCache(TYPEOID,
-								   ObjectIdGetDatum(relabel->resulttype),
-										 0, 0, 0);
-				if (!HeapTupleIsValid(typetup))
-					elog(ERROR, "cache lookup of type %u failed",
-						 relabel->resulttype);
-				typeStruct = (Form_pg_type) GETSTRUCT(typetup);
-				extval = pstrdup(NameStr(typeStruct->typname));
-				appendStringInfo(buf, ")::%s", quote_identifier(extval));
-				pfree(extval);
-				ReleaseSysCache(typetup);
+				appendStringInfo(buf, ")::%s",
+							format_type_with_typemod(relabel->resulttype,
+													 relabel->resulttypmod));
 			}
 			break;
 
@@ -2095,13 +2084,15 @@ strip_type_coercion(Node *expr, Oid resultType)
 			elog(ERROR, "cache lookup for proc %u failed", func->funcid);
 		procStruct = (Form_pg_proc) GETSTRUCT(procTuple);
 		/* Double-check func has one arg and correct result type */
+		/* Also, it must be an implicit coercion function */
 		if (procStruct->pronargs != 1 ||
-			procStruct->prorettype != resultType)
+			procStruct->prorettype != resultType ||
+			!procStruct->proimplicit)
 		{
 			ReleaseSysCache(procTuple);
 			return expr;
 		}
-		/* See if function has same name as its result type */
+		/* See if function has same name/namespace as its result type */
 		typeTuple = SearchSysCache(TYPEOID,
 								ObjectIdGetDatum(procStruct->prorettype),
 								   0, 0, 0);
@@ -2109,9 +2100,9 @@ strip_type_coercion(Node *expr, Oid resultType)
 			elog(ERROR, "cache lookup for type %u failed",
 				 procStruct->prorettype);
 		typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
-		if (strncmp(NameStr(procStruct->proname),
-					NameStr(typeStruct->typname),
-					NAMEDATALEN) != 0)
+		if (strcmp(NameStr(procStruct->proname),
+				   NameStr(typeStruct->typname)) != 0 ||
+			procStruct->pronamespace != typeStruct->typnamespace)
 		{
 			ReleaseSysCache(procTuple);
 			ReleaseSysCache(typeTuple);
@@ -2179,14 +2170,6 @@ get_const_expr(Const *constval, deparse_context *context)
 	char	   *extval;
 	char	   *valptr;
 
-	typetup = SearchSysCache(TYPEOID,
-							 ObjectIdGetDatum(constval->consttype),
-							 0, 0, 0);
-	if (!HeapTupleIsValid(typetup))
-		elog(ERROR, "cache lookup of type %u failed", constval->consttype);
-
-	typeStruct = (Form_pg_type) GETSTRUCT(typetup);
-
 	if (constval->constisnull)
 	{
 		/*
@@ -2194,12 +2177,18 @@ get_const_expr(Const *constval, deparse_context *context)
 		 * prevents misdecisions about the type, but it ensures that our
 		 * output is a valid b_expr.
 		 */
-		extval = pstrdup(NameStr(typeStruct->typname));
-		appendStringInfo(buf, "NULL::%s", quote_identifier(extval));
-		pfree(extval);
-		ReleaseSysCache(typetup);
+		appendStringInfo(buf, "NULL::%s",
+						 format_type_with_typemod(constval->consttype, -1));
 		return;
 	}
+
+	typetup = SearchSysCache(TYPEOID,
+							 ObjectIdGetDatum(constval->consttype),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(typetup))
+		elog(ERROR, "cache lookup of type %u failed", constval->consttype);
+
+	typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
 	extval = DatumGetCString(OidFunctionCall3(typeStruct->typoutput,
 											  constval->constvalue,
@@ -2251,9 +2240,9 @@ get_const_expr(Const *constval, deparse_context *context)
 			/* These types can be left unlabeled */
 			break;
 		default:
-			extval = pstrdup(NameStr(typeStruct->typname));
-			appendStringInfo(buf, "::%s", quote_identifier(extval));
-			pfree(extval);
+			appendStringInfo(buf, "::%s",
+							 format_type_with_typemod(constval->consttype,
+													  -1));
 			break;
 	}
 
@@ -2583,8 +2572,8 @@ const char *
 quote_identifier(const char *ident)
 {
 	/*
-	 * Can avoid quoting if ident starts with a lowercase letter and
-	 * contains only lowercase letters, digits, and underscores, *and* is
+	 * Can avoid quoting if ident starts with a lowercase letter or underscore
+	 * and contains only lowercase letters, digits, and underscores, *and* is
 	 * not any SQL keyword.  Otherwise, supply quotes.
 	 */
 	bool		safe;
@@ -2594,7 +2583,7 @@ quote_identifier(const char *ident)
 	 * would like to use <ctype.h> macros here, but they might yield
 	 * unwanted locale-specific results...
 	 */
-	safe = (ident[0] >= 'a' && ident[0] <= 'z');
+	safe = ((ident[0] >= 'a' && ident[0] <= 'z') || ident[0] == '_');
 	if (safe)
 	{
 		const char *ptr;
