@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.28 2003/03/29 05:00:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.29 2003/04/10 23:03:08 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -276,6 +276,7 @@ secure_read(Port *port, void *ptr, size_t len)
 #ifdef USE_SSL
 	if (port->ssl)
 	{
+	rloop:
 		n = SSL_read(port->ssl, ptr, len);
 		switch (SSL_get_error(port->ssl, n))
 		{
@@ -283,14 +284,13 @@ secure_read(Port *port, void *ptr, size_t len)
 				port->count += n;
 				break;
 			case SSL_ERROR_WANT_READ:
-				n = secure_read(port, ptr, len);
-				break;
 			case SSL_ERROR_WANT_WRITE:
-				n = secure_write(port, ptr, len);
-				break;
+				goto rloop;
 			case SSL_ERROR_SYSCALL:
 				if (n == -1)
-					elog(COMMERROR, "SSL SYSCALL error: %s", strerror(errno));
+					elog(COMMERROR, "SSL SYSCALL error: %m");
+				else
+					elog(COMMERROR, "SSL SYSCALL error: EOF detected");
 				break;
 			case SSL_ERROR_SSL:
 				elog(COMMERROR, "SSL error: %s", SSLerrmessage());
@@ -299,6 +299,9 @@ secure_read(Port *port, void *ptr, size_t len)
 				secure_close(port);
 				errno = ECONNRESET;
 				n = -1;
+				break;
+			default:
+				elog(COMMERROR, "Unknown SSL error code");
 				break;
 		}
 	}
@@ -322,18 +325,19 @@ secure_write(Port *port, void *ptr, size_t len)
 	{
 		if (port->count > RENEGOTIATION_LIMIT)
 		{
-		        SSL_set_session_id_context(port->ssl, (void *)&SSL_context, sizeof(SSL_context));
-
-		        if (SSL_renegotiate(port->ssl) <= 0)
-			  elog(COMMERROR, "SSL renegotiation failure");
+			SSL_set_session_id_context(port->ssl, (void *) &SSL_context,
+									   sizeof(SSL_context));
+			if (SSL_renegotiate(port->ssl) <= 0)
+				elog(COMMERROR, "SSL renegotiation failure");
 			if (SSL_do_handshake(port->ssl) <= 0)
-			  elog(COMMERROR, "SSL renegotiation failure");
-			port->ssl->state=SSL_ST_ACCEPT;
+				elog(COMMERROR, "SSL renegotiation failure");
+			port->ssl->state = SSL_ST_ACCEPT;
 			if (SSL_do_handshake(port->ssl) <= 0)
-			  elog(COMMERROR, "SSL renegotiation failure");
+				elog(COMMERROR, "SSL renegotiation failure");
 			port->count = 0;
 		}
 
+	wloop:
 		n = SSL_write(port->ssl, ptr, len);
 		switch (SSL_get_error(port->ssl, n))
 		{
@@ -341,14 +345,13 @@ secure_write(Port *port, void *ptr, size_t len)
 				port->count += n;
 				break;
 			case SSL_ERROR_WANT_READ:
-				n = secure_read(port, ptr, len);
-				break;
 			case SSL_ERROR_WANT_WRITE:
-				n = secure_write(port, ptr, len);
-				break;
+				goto wloop;
 			case SSL_ERROR_SYSCALL:
 				if (n == -1)
-					elog(COMMERROR, "SSL SYSCALL error: %s", strerror(errno));
+					elog(COMMERROR, "SSL SYSCALL error: %m");
+				else
+					elog(COMMERROR, "SSL SYSCALL error: EOF detected");
 				break;
 			case SSL_ERROR_SSL:
 				elog(COMMERROR, "SSL error: %s", SSLerrmessage());
@@ -357,6 +360,9 @@ secure_write(Port *port, void *ptr, size_t len)
 				secure_close(port);
 				errno = ECONNRESET;
 				n = -1;
+				break;
+			default:
+				elog(COMMERROR, "Unknown SSL error code");
 				break;
 		}
 	}

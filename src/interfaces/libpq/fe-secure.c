@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.21 2003/02/03 22:33:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.22 2003/04/10 23:03:08 tgl Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -266,19 +266,24 @@ pqsecure_read(PGconn *conn, void *ptr, size_t len)
 #ifdef USE_SSL
 	if (conn->ssl)
 	{
+	rloop:
 		n = SSL_read(conn->ssl, ptr, len);
 		switch (SSL_get_error(conn->ssl, n))
 		{
 			case SSL_ERROR_NONE:
 				break;
 			case SSL_ERROR_WANT_READ:
-			        n = pqsecure_read(conn, ptr, len);
-				break;
+			case SSL_ERROR_WANT_WRITE:
+				/* XXX to support nonblock I/O, we should return 0 here */
+				goto rloop;
 			case SSL_ERROR_SYSCALL:
 				if (n == -1)
 					printfPQExpBuffer(&conn->errorMessage,
 								libpq_gettext("SSL SYSCALL error: %s\n"),
 								  SOCK_STRERROR(SOCK_ERRNO));
+				else
+					printfPQExpBuffer(&conn->errorMessage,
+								libpq_gettext("SSL SYSCALL error: EOF detected\n"));
 				break;
 			case SSL_ERROR_SSL:
 				printfPQExpBuffer(&conn->errorMessage,
@@ -288,6 +293,10 @@ pqsecure_read(PGconn *conn, void *ptr, size_t len)
 				pqsecure_close(conn);
 				SOCK_ERRNO = ECONNRESET;
 				n = -1;
+				break;
+			default:
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("Unknown SSL error code\n"));
 				break;
 		}
 	}
@@ -313,19 +322,24 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 #ifdef USE_SSL
 	if (conn->ssl)
 	{
+	wloop:
 		n = SSL_write(conn->ssl, ptr, len);
 		switch (SSL_get_error(conn->ssl, n))
 		{
 			case SSL_ERROR_NONE:
 				break;
+			case SSL_ERROR_WANT_READ:
 			case SSL_ERROR_WANT_WRITE:
-			        n = pqsecure_write(conn, ptr, len);
-				break;
+				/* XXX to support nonblock I/O, we should return 0 here */
+				goto wloop;
 			case SSL_ERROR_SYSCALL:
 				if (n == -1)
 					printfPQExpBuffer(&conn->errorMessage,
 								libpq_gettext("SSL SYSCALL error: %s\n"),
 								  SOCK_STRERROR(SOCK_ERRNO));
+				else
+					printfPQExpBuffer(&conn->errorMessage,
+								libpq_gettext("SSL SYSCALL error: EOF detected\n"));
 				break;
 			case SSL_ERROR_SSL:
 				printfPQExpBuffer(&conn->errorMessage,
@@ -335,6 +349,10 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 				pqsecure_close(conn);
 				SOCK_ERRNO = ECONNRESET;
 				n = -1;
+				break;
+			default:
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("Unknown SSL error code\n"));
 				break;
 		}
 	}
