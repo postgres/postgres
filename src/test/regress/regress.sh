@@ -1,13 +1,13 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.22 1999/01/17 06:19:58 momjian Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.23 1999/01/23 21:36:00 tgl Exp $
 #
-if [ $# -eq 0 ];
+if [ $# -eq 0 ]
 then
-	echo "Syntaxe: $0 <portname>"
+	echo "Syntax: $0 <portname>"
 	exit 1
 fi
 
-if [ $1 == "win" ];
+if [ $1 = "win" ]
 then
 	HOST="-h localhost"
 else
