@@ -6,6 +6,8 @@ All work was done by Teodor Sigaev (teodor@stack.net) and Oleg Bartunov
 
 CHANGES:
 
+August 22, 2002
+	Fix works with 'bad' queries
 August 13, 2002
 	Use parser of OpenFTS v0.33.
 

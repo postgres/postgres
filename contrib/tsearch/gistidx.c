@@ -231,6 +231,9 @@ gtxtidx_consistent(PG_FUNCTION_ARGS) {
 		((GISTENTRY *)PG_GETARG_POINTER(0))->key
 	);
 
+	if ( !query->size )
+		PG_RETURN_BOOL(false);
+
 	if ( ISSIGNKEY(key) ) {
 		if ( ISALLTRUE(key) )
 			PG_RETURN_BOOL(true);

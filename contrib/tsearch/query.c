@@ -419,7 +419,7 @@ execqtxt(PG_FUNCTION_ARGS)
 	CHKVAL		chkval;
 	bool		result;
 
-	if (!val->size)
+	if (!val->size || !query->size)
 	{
 		PG_FREE_IF_COPY(val, 0);
 		PG_FREE_IF_COPY(query, 1);
@@ -593,8 +593,9 @@ mqtxt_in(PG_FUNCTION_ARGS)
 	res = clean_fakeval(GETQUERY(query), &len);
 	if (!res)
 	{
-		pfree(query);
-		PG_RETURN_NULL();
+		query->len=HDRSIZEQT;
+		query->size=0;
+		PG_RETURN_POINTER(query);
 	}
 	memcpy((void *) GETQUERY(query), (void *) res, len * sizeof(ITEM));
 #ifdef BS_DEBUG
@@ -738,8 +739,11 @@ qtxt_out(PG_FUNCTION_ARGS)
 	QUERYTYPE  *query = (QUERYTYPE *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
 	INFIX		nrm;
 
-	if (query->size == 0)
-		elog(ERROR, "Empty");
+	if (query->size == 0) {
+		char *b=palloc(1);
+		*b='\0';
+		PG_RETURN_POINTER(b);
+	}	
 	nrm.curpol = GETQUERY(query);
 	nrm.buflen = 32;
 	nrm.cur = nrm.buf = (char *) palloc(sizeof(char) * nrm.buflen);
@@ -765,8 +769,11 @@ querytree(PG_FUNCTION_ARGS)
 	int4		len;
 
 
-	if (query->size == 0)
-		elog(ERROR, "Empty");
+	if (query->size == 0) {
+		res = (text *) palloc(VARHDRSZ);
+		VARATT_SIZEP(res) = VARHDRSZ;
+		PG_RETURN_POINTER(res);
+	}	
 
 	q = clean_NOT(GETQUERY(query), &len);
 

@@ -283,7 +283,7 @@ clean_fakeval(ITEM * ptr, int4 *len)
 	resroot = clean_fakeval_intree(root, &result);
 	if (result != V_UNKNOWN)
 	{
-		elog(ERROR, "Your query contained only stopword(s), ignored");
+		elog(NOTICE, "Query contains only stopword(s) or doesn't contain lexem(s), ignored");
 		*len = 0;
 		return NULL;
 	}
