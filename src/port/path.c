@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.14 2004/05/25 18:18:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.15 2004/05/25 20:47:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
 #define	ISSEP(ch)	((ch) == '/' || (ch) == '\\')
 #endif
 
-static bool relative_path(const char *path1, const char *path2);
+const static char *relative_path(const char *bin_path, const char *other_path);
 static void trim_directory(char *path);
 static void trim_trailing_separator(char *path);
 
@@ -37,6 +37,14 @@ static void trim_trailing_separator(char *path);
 		(p)++; \
 }
 
+/* Macro creates a relative path */
+#define MAKE_RELATIVE \
+do { \
+		StrNCpy(path, my_exec_path, MAXPGPATH); \
+		trim_directory(path); \
+		trim_directory(path); \
+		snprintf(ret_path, MAXPGPATH, "%s/%s", path, p); \
+} while (0)
 
 /*
  *	first_path_separator
@@ -114,14 +122,10 @@ void
 get_share_path(const char *my_exec_path, char *ret_path)
 {
 	char path[MAXPGPATH];
+	const char *p;
 	
-	if (relative_path(PGBINDIR, PGSHAREDIR))
-	{
-		StrNCpy(path, my_exec_path, MAXPGPATH);
-		trim_directory(path);	/* trim off binary */
-		trim_directory(path);	/* trim off /bin */
-		snprintf(ret_path, MAXPGPATH, "%s/share", path);
-	}
+	if ((p = relative_path(PGBINDIR, PGSHAREDIR)))
+		MAKE_RELATIVE;
 	else
 		StrNCpy(ret_path, PGSHAREDIR, MAXPGPATH);
 }
@@ -135,14 +139,10 @@ void
 get_etc_path(const char *my_exec_path, char *ret_path)
 {
 	char path[MAXPGPATH];
+	const char *p;
 	
-	if (relative_path(PGBINDIR, SYSCONFDIR))
-	{
-		StrNCpy(path, my_exec_path, MAXPGPATH);
-		trim_directory(path);
-		trim_directory(path);
-		snprintf(ret_path, MAXPGPATH, "%s/etc", path);
-	}
+	if ((p = relative_path(PGBINDIR, SYSCONFDIR)))
+		MAKE_RELATIVE;
 	else
 		StrNCpy(ret_path, SYSCONFDIR, MAXPGPATH);
 }
@@ -156,14 +156,10 @@ void
 get_include_path(const char *my_exec_path, char *ret_path)
 {
 	char path[MAXPGPATH];
+	const char *p;
 	
-	if (relative_path(PGBINDIR, INCLUDEDIR))
-	{
-		StrNCpy(path, my_exec_path, MAXPGPATH);
-		trim_directory(path);
-		trim_directory(path);
-		snprintf(ret_path, MAXPGPATH, "%s/include", path);
-	}
+	if ((p = relative_path(PGBINDIR, INCLUDEDIR)))
+		MAKE_RELATIVE;
 	else
 		StrNCpy(ret_path, INCLUDEDIR, MAXPGPATH);
 }
@@ -177,14 +173,10 @@ void
 get_pkginclude_path(const char *my_exec_path, char *ret_path)
 {
 	char path[MAXPGPATH];
+	const char *p;
 	
-	if (relative_path(PGBINDIR, PKGINCLUDEDIR))
-	{
-		StrNCpy(path, my_exec_path, MAXPGPATH);
-		trim_directory(path);
-		trim_directory(path);
-		snprintf(ret_path, MAXPGPATH, "%s/include", path);
-	}
+	if ((p = relative_path(PGBINDIR, PKGINCLUDEDIR)))
+		MAKE_RELATIVE;
 	else
 		StrNCpy(ret_path, PKGINCLUDEDIR, MAXPGPATH);
 }
@@ -200,14 +192,10 @@ void
 get_pkglib_path(const char *my_exec_path, char *ret_path)
 {
 	char path[MAXPGPATH];
+	const char *p;
 	
-	if (relative_path(PGBINDIR, PKGLIBDIR))
-	{
-		StrNCpy(path, my_exec_path, MAXPGPATH);
-		trim_directory(path);
-		trim_directory(path);
-		snprintf(ret_path, MAXPGPATH, "%s/lib", path);
-	}
+	if ((p = relative_path(PGBINDIR, PKGLIBDIR)))
+		MAKE_RELATIVE;
 	else
 		StrNCpy(ret_path, PKGLIBDIR, MAXPGPATH);
 }
@@ -223,14 +211,10 @@ void
 get_locale_path(const char *my_exec_path, char *ret_path)
 {
 	char path[MAXPGPATH];
+	const char *p;
 	
-	if (relative_path(PGBINDIR, LOCALEDIR))
-	{
-		StrNCpy(path, my_exec_path, MAXPGPATH);
-		trim_directory(path);
-		trim_directory(path);
-		snprintf(ret_path, MAXPGPATH, "%s/share/locale", path);
-	}
+	if ((p = relative_path(PGBINDIR, LOCALEDIR)))
+		MAKE_RELATIVE;
 	else
 		StrNCpy(ret_path, LOCALEDIR, MAXPGPATH);
 }
@@ -271,68 +255,71 @@ set_pglocale(const char *argv0, const char *app)
  *
  *	Do the supplied paths differ only in their last component?
  */
-static bool
-relative_path(const char *path1, const char *path2)
+static const char *
+relative_path(const char *bin_path, const char *other_path)
 {
-
+	const char *other_sep = other_path;
+	
 #ifdef WIN32
 	/* Driver letters match? */
-	if (isalpha(*path1) && path1[1] == ':' &&
-		(!isalpha(*path2) || !path2[1] == ':'))
-		return false;
-	if ((!isalpha(*path1) || !path1[1] == ':') &&
-		(isalpha(*path2) && path2[1] == ':'))
-		return false;
-	if (isalpha(*path1) && path1[1] == ':' &&
-		isalpha(*path2) && path2[1] == ':')
+	if (isalpha(*bin_path) && bin_path[1] == ':' &&
+		(!isalpha(*other_path) || !other_path[1] == ':'))
+		return NULL;
+	if ((!isalpha(*bin_path) || !bin_path[1] == ':') &&
+		(isalpha(*other_path) && other_path[1] == ':'))
+		return NULL;
+	if (isalpha(*bin_path) && bin_path[1] == ':' &&
+		isalpha(*other_path) && other_path[1] == ':')
 	{
-		if (toupper(*path1) != toupper(*path2))
-			return false;
-		path1 += 2;
-		path2 += 2;
+		if (toupper(*bin_path) != toupper(*other_path))
+			return NULL;
+		bin_path += 2;
+		other_path += 2;
+		other_sep = other_path + 1;		/* past separator */
 	}
 #endif
 
 	while (1)
 	{
 		/* Move past adjacent slashes like //, and trailing ones */
-		MOVE_TO_SEP_END(path1);
-		MOVE_TO_SEP_END(path2);
+		MOVE_TO_SEP_END(bin_path);
+		MOVE_TO_SEP_END(other_path);
 
 		/* One of the paths is done? */
-		if (!*path1 || !*path2)
+		if (!*bin_path || !*other_path)
 			break;
 
 		/* Win32 filesystem is case insensitive */
+		if ((!ISSEP(*bin_path) || !ISSEP(*other_path)) &&
 #ifndef WIN32
-		if (*path1 != *path2)
+			*bin_path != *other_path)
 #else
-		if (toupper((unsigned char) *path1) != toupper((unsigned char)*path2))
+			toupper((unsigned char) *bin_path) != toupper((unsigned char)*other_path))
 #endif
-			break;
+				break;
 
-		path1++;
-		path2++;
+		if (ISSEP(*other_path))
+			other_sep = other_path + 1;		/* past separator */
+			
+		bin_path++;
+		other_path++;
 	}
 
-	/* both done, identical? */
-	if (!*path1 && !*path2)
-		return false;
+	/* identical? */
+	if (!*bin_path && !*other_path)
+		return NULL;
 
 	/* advance past directory name */	
-	while (!ISSEP(*path1) && *path1)
-		path1++;
-	while (!ISSEP(*path2) && *path2)
-		path2++;
+	while (!ISSEP(*bin_path) && *bin_path)
+		bin_path++;
 
-	MOVE_TO_SEP_END(path1);
-	MOVE_TO_SEP_END(path2);
+	MOVE_TO_SEP_END(bin_path);
 
-	/* Are both strings done? */
-	if (!*path1 && !*path2)
-		return true;
+	/* Is bin done? */
+	if (!*bin_path)
+		return other_path;
 	else
-		return false;
+		return NULL;
 }
 
 
@@ -372,4 +359,3 @@ trim_trailing_separator(char *path)
 		for (p--; p >= path && ISSEP(*p); p--)
 			*p = '\0';
 }
-
