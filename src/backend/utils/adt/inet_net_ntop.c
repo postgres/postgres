@@ -1,32 +1,36 @@
 /*
- * Copyright (c) 1996 by Internet Software Consortium.
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1996,1999 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/inet_net_ntop.c,v 1.18 2003/11/29 19:51:58 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/inet_net_ntop.c,v 1.19 2005/02/01 00:59:09 tgl Exp $
  */
+
+#if defined(LIBC_SCCS) && !defined(lint)
+static const char rcsid[] = "Id: inet_net_ntop.c,v 1.1.2.2 2004/03/09 09:17:27 marka Exp $";
+#endif
 
 #include "postgres.h"
 
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <errno.h>
-
 #include "utils/inet.h"
 #include "utils/builtins.h"
+
 
 #define NS_IN6ADDRSZ 16
 #define NS_INT16SZ 2
@@ -81,7 +85,7 @@ inet_cidr_ntop(int af, const void *src, int bits, char *dst, size_t size)
  *	pointer to dst, or NULL if an error occurred (check errno).
  * note:
  *	network byte order assumed.  this means 192.5.5.240/28 has
- *	0x11110000 in its fourth octet.
+ *	0b11110000 in its fourth octet.
  * author:
  *	Paul Vixie (ISC), July 1996
  */
@@ -98,23 +102,28 @@ inet_cidr_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 		errno = EINVAL;
 		return (NULL);
 	}
+
 	if (bits == 0)
 	{
 		if (size < sizeof "0")
 			goto emsgsize;
 		*dst++ = '0';
+		size--;
 		*dst = '\0';
 	}
 
 	/* Format whole octets. */
 	for (b = bits / 8; b > 0; b--)
 	{
-		if (size < sizeof ".255")
+		if (size <= sizeof "255.")
 			goto emsgsize;
 		t = dst;
-		if (dst != odst)
-			*dst++ = '.';
 		dst += SPRINTF((dst, "%u", *src++));
+		if (b > 1)
+		{
+			*dst++ = '.';
+			*dst = '\0';
+		}
 		size -= (size_t) (dst - t);
 	}
 
@@ -122,7 +131,7 @@ inet_cidr_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 	b = bits % 8;
 	if (b > 0)
 	{
-		if (size < sizeof ".255")
+		if (size <= sizeof ".255")
 			goto emsgsize;
 		t = dst;
 		if (dst != odst)
@@ -133,10 +142,9 @@ inet_cidr_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 	}
 
 	/* Format CIDR /width. */
-	if (size < sizeof "/32")
+	if (size <= sizeof "/32")
 		goto emsgsize;
 	dst += SPRINTF((dst, "/%u", bits));
-
 	return (odst);
 
 emsgsize:
@@ -146,7 +154,7 @@ emsgsize:
 
 /*
  * static char *
- * inet_net_ntop_ipv6(src, bits, fakebits, dst, size)
+ * inet_cidr_ntop_ipv6(src, bits, fakebits, dst, size)
  *	convert IPv6 network number from network to presentation format.
  *	generates CIDR style result always. Picks the shortest representation
  *	unless the IP is really IPv4.
@@ -173,7 +181,6 @@ inet_cidr_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 				tmp_zero_l;
 	int			i;
 	int			is_ipv4 = 0;
-	int			double_colon = 0;
 	unsigned char inbuf[16];
 	char		outbuf[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 	char	   *cp;
@@ -187,14 +194,12 @@ inet_cidr_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 	}
 
 	cp = outbuf;
-	double_colon = 0;
 
 	if (bits == 0)
 	{
 		*cp++ = ':';
 		*cp++ = ':';
 		*cp = '\0';
-		double_colon = 1;
 	}
 	else
 	{
@@ -244,8 +249,8 @@ inet_cidr_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 		}
 
 		if (zero_l != words && zero_s == 0 && ((zero_l == 6) ||
-					  ((zero_l == 5 && s[10] == 0xff && s[11] == 0xff) ||
-					   ((zero_l == 7 && s[14] != 0 && s[15] != 1)))))
+						  ((zero_l == 5 && s[10] == 0xff && s[11] == 0xff) ||
+						   ((zero_l == 7 && s[14] != 0 && s[15] != 1)))))
 			is_ipv4 = 1;
 
 		/* Format whole words. */
@@ -257,10 +262,7 @@ inet_cidr_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 				if (p == zero_s)
 					*cp++ = ':';
 				if (p == words - 1)
-				{
 					*cp++ = ':';
-					double_colon = 1;
-				}
 				s++;
 				s++;
 				continue;
@@ -286,18 +288,8 @@ inet_cidr_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 			}
 		}
 	}
-
-	if (!double_colon)
-	{
-		if (bits < 128 - 32)
-			cp += SPRINTF((cp, "::"));
-		else if (bits < 128 - 16)
-			cp += SPRINTF((cp, ":0"));
-	}
-
 	/* Format CIDR /width. */
 	SPRINTF((cp, "/%u", bits));
-
 	if (strlen(outbuf) + 1 > size)
 		goto emsgsize;
 	strcpy(dst, outbuf);
@@ -308,6 +300,7 @@ emsgsize:
 	errno = EMSGSIZE;
 	return (NULL);
 }
+
 
 /*
  * char *
@@ -368,7 +361,7 @@ inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 	/* Always format all four octets, regardless of mask length. */
 	for (b = len; b > 0; b--)
 	{
-		if (size < sizeof ".255")
+		if (size <= sizeof ".255")
 			goto emsgsize;
 		t = dst;
 		if (dst != odst)
@@ -380,7 +373,7 @@ inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 	/* don't print masklen if 32 bits */
 	if (bits != 32)
 	{
-		if (size < sizeof "/32")
+		if (size <= sizeof "/32")
 			goto emsgsize;
 		dst += SPRINTF((dst, "/%u", bits));
 	}
@@ -401,7 +394,7 @@ decoct(const u_char *src, int bytes, char *dst, size_t size)
 
 	for (b = 1; b <= bytes; b++)
 	{
-		if (size < sizeof "255.")
+		if (size <= sizeof "255.")
 			return (0);
 		t = dst;
 		dst += SPRINTF((dst, "%u", *src++));
