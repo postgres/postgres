@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.28 2000/10/20 21:04:25 petere Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.29 2000/10/23 21:44:07 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -36,6 +36,7 @@ pg_regress: pg_regress.sh GNUmakefile
 	    -e 's/@VERSION@/$(VERSION)/g' \
 	    -e 's/@host_tuple@/$(host_tuple)/g' \
 	    -e 's,@GMAKE@,$(MAKE),g' \
+	    -e 's/@enable_shared@/$(enable_shared)/g' \
 	  $< >$@
 	chmod a+x $@
 

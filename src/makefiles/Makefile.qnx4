@@ -8,6 +8,7 @@ LDOUT=
 LIBS= -lunix
 LDFLAGS=   $(LIBS)
 
+enable_shared = no
 DLSUFFIX = .so
 CFLAGS_SL =
 

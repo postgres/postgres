@@ -228,6 +228,14 @@ AC_DEFINE_UNQUOTED([DEF_MAXBACKENDS], [$with_maxbackends],
 
 
 #
+# Option to disable shared libraries
+#
+PGAC_ARG_BOOL(enable, shared, yes,
+              [  --disable-shared       do not build shared libraries])
+AC_SUBST(enable_shared)
+
+
+#
 # C compiler
 #
 

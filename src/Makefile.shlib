@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.26 2000/10/20 21:03:38 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.27 2000/10/23 21:43:56 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -51,19 +51,52 @@
 #
 # Got that?  Look at src/interfaces/libpq/Makefile for an example.
 
+ifndef cplusplus
+COMPILER = $(CC)
+else
+COMPILER = $(CXX)
+endif
 
-# shlib is empty by default. If we know how to build a shared library
-# it will contain the name of the file, otherwise it will remain
-# empty. Thus `ifdef shlib' could be used in the containing make file
-# to test whether shared libraries are available.
-shlib := 
 
-# For each platform we support shared libraries on, set shlib and
-# update flags as needed to build a shared lib. Note we depend on
-# Makefile.global (or really Makefile.port) to supply DLSUFFIX and
-# other symbols.
+# First, a few hacks for building *static* libraries.
+
+LINK.static = $(AR) $(AROPT)
+
+ifdef cplusplus
+
+ifeq ($(PORTNAME), irix5)
+  ifneq ($(GXX), yes)
+    LINK.static = $(CXX) -ar -o
+  endif
+endif
+
+ifeq ($(PORTNAME), solaris)
+  ifneq ($(GXX), yes)
+    LINK.static = $(CXX) -xar -o
+  endif
+endif
+
+endif # cplusplus
+
+
+
+ifeq ($(enable_shared), yes)
+
+# For each platform we support shared libraries on, set shlib to the
+# name of the library, LINK.shared to the command to link the library,
+# and adjust SHLIB_LINK if necessary.
 
 # Try to keep the sections in some kind of order, folks...
+
+# XXX fix Makefile.aix
+ifneq ($(PORTNAME), aix)
+  ifndef cplusplus
+    override CFLAGS	+= $(CFLAGS_SL)
+  else
+    override CXXFLAGS	+= $(CFLAGS_SL)
+  endif
+endif
+
 
 ifeq ($(PORTNAME), aix)
   shlib			:= lib$(NAME)$(DLSUFFIX)
@@ -71,134 +104,104 @@ ifeq ($(PORTNAME), aix)
 endif
 
 ifeq ($(PORTNAME), openbsd)
-  ifdef BSD_SHLIB
-    shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-    ifdef ELF_SYSTEM
-      LDFLAGS_SL	:= -x -Bshareable -soname $(shlib)
-    else
-      LDFLAGS_SL	:= -x -Bshareable -Bforcearchive
-    endif
-    override CFLAGS	+= $(CFLAGS_SL)
+  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  ifdef ELF_SYSTEM
+    LINK.shared		= $(LD) -x -Bshareable -soname $(shlib)
+  else
+    LINK.shared		= $(LD) -x -Bshareable -Bforcearchive
   endif
 endif
 
 ifeq ($(PORTNAME), bsdi)
-  ifdef BSD_SHLIB
-    ifeq ($(DLSUFFIX), .so)
-      shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-      LDFLAGS_SL                += -shared -soname $(shlib)
-      override CFLAGS		+= $(CFLAGS_SL)
-    endif
-    ifeq ($(DLSUFFIX), .o)
-      shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-      LD			:= shlicc
-      LDFLAGS_SL	 	+= -O $(LDREL)
-      override CFLAGS		+= $(CFLAGS_SL)
-    endif
+  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  ifeq ($(DLSUFFIX), .so)
+    LINK.shared		= $(LD) -shared -soname $(shlib)
+  endif
+  ifeq ($(DLSUFFIX), .o)
+    LINK.shared		= shlicc -O $(LDREL)
   endif
 endif
 
 ifeq ($(PORTNAME), freebsd)
-  ifdef BSD_SHLIB
-    ifdef ELF_SYSTEM
-      shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
-      LDFLAGS_SL	:= -x -shared -soname $(shlib)
-    else
-      shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-      LDFLAGS_SL	:= -x -Bshareable -Bforcearchive
-    endif
-    override CFLAGS	+= $(CFLAGS_SL)
+  ifdef ELF_SYSTEM
+    shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+    LINK.shared		= $(LD) -x -shared -soname $(shlib)
+  else
+    shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+    LINK.shared		= $(LD) -x -Bshareable -Bforcearchive
   endif
 endif
 
 ifeq ($(PORTNAME), netbsd)
-  ifdef BSD_SHLIB
-    soname		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
-    shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-    ifdef ELF_SYSTEM
-      LD		:= $(CC)
-      LDFLAGS_SL	:= -shared -Wl,-soname -Wl,$(soname)
-      ifneq ($(SHLIB_LINK),)
-        LDFLAGS_SL	+= -Wl,-R$(libdir)
-      endif
-    else
-      LDFLAGS_SL	:= -x -Bshareable -Bforcearchive
+  soname		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  ifdef ELF_SYSTEM
+    LINK.shared		= $(COMPILER) -shared -Wl,-soname -Wl,$(soname)
+    ifneq ($(SHLIB_LINK),)
+      LINK.shared	+= -Wl,-R$(libdir)
     endif
-    override CFLAGS	+= $(CFLAGS_SL)
+  else
+    LINK.shared		= $(LD) -x -Bshareable -Bforcearchive
   endif
 endif
 
 ifeq ($(PORTNAME), hpux)
 # HPUX doesn't believe in version numbers for shlibs
   shlib			:= lib$(NAME)$(DLSUFFIX)
-  LDFLAGS_SL		:= -b
-  override CFLAGS	+= $(CFLAGS_SL)
+  LINK.shared		= $(LD) -b
 endif
 
 ifeq ($(PORTNAME), irix5)
-  shlib := lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
-  LDFLAGS_SL := -shared -rpath $(libdir) -set_version sgi$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  override CFLAGS += $(CFLAGS_SL)
+  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+  LINK.shared		:= $(COMPILER) -shared -rpath $(libdir) -set_version sgi$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
 endif
 
 ifeq ($(PORTNAME), linux)
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LD			:= $(CC)
-  LDFLAGS_SL		:= -shared -Wl,-soname,$(shlib)
-  LDFLAGS_ODBC		:= -lm
-  override CFLAGS	+= $(CFLAGS_SL)
+  LINK.shared		= $(COMPILER) -shared -Wl,-soname,$(shlib)
 endif
 
 ifeq ($(PORTNAME), solaris)
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL		:= -G
+  LINK.shared		= $(COMPILER) -G
   SHLIB_LINK		+= -ldl -lsocket -lresolv -lnsl -lm -lc
-  override CFLAGS	+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), osf)
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL		+= -shared -expect_unresolved '*'
+  LINK.shared		= $(LD) -shared -expect_unresolved '*'
 endif
 
 ifeq ($(PORTNAME), svr4)
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL		:= -G
-  override CFLAGS	+= $(CFLAGS_SL)
+  LINK.shared		= $(LD) -G
 endif
 
 ifeq ($(PORTNAME), univel)
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL		:= -G -z text
-  override CFLAGS	+= $(CFLAGS_SL)
-  ifeq ($(CXX), CC)
-    override CXXFLAGS += -Xw
-    COMPILE.cc = $(CXX) $(CXXFLAGS:ll,alloca=ll) $(CPPFLAGS) $(TARGET_ARCH) -c
-  endif
+  LINK.shared		= $(LD) -G -z text
 endif
 
 ifeq ($(PORTNAME), unixware)
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL		:= -G -z text
-  override CFLAGS	+= $(CFLAGS_SL)
-  ifeq ($(CXX), CC)
-    override CXXFLAGS += -Xw
-    COMPILE.cc = $(CXX) $(CXXFLAGS:ll,alloca=ll) $(CPPFLAGS) $(TARGET_ARCH) -c
-  endif
+  LINK.shared		= $(LD) -G -z text
 endif
 
 ifeq ($(PORTNAME), win)
   shlib			:= $(NAME)$(DLSUFFIX)
+  ifdef cplusplus
+    SHLIB_LINK		+= --driver-name g++
+  endif
 endif
 
 ifeq ($(PORTNAME), beos)
-  install-shlib-dep	:= install-shlib
-  shlib				:= lib$(NAME)$(DLSUFFIX)
-  LDFLAGS_SL		:= -nostart -ltermcap -lstdc++.r4 -lbind -lsocket -L/boot/develop/lib/x86 
+  shlib			:= lib$(NAME)$(DLSUFFIX)
+  LINK.shared		= $(LD) -nostart
+  SHLIB_LINK		+= -ltermcap -lstdc++.r4 -lbind -lsocket -L/boot/develop/lib/x86
 endif
 
-# Note that in what follows, shlib is empty when not building a shared
-# library.
+endif # enable_shared
+
 
 
 ##
@@ -208,8 +211,6 @@ endif
 .PHONY: all-lib
 all-lib: lib$(NAME).a $(shlib)
 
-# Rules to build regular and shared libraries
-
 ifneq ($(PORTNAME), win)
 
 ifndef LORDER
@@ -218,22 +219,23 @@ endif
 
 lib$(NAME).a: $(OBJS)
 ifdef MK_NO_LORDER
-	$(AR) $(AROPT) $@ $^
+	$(LINK.static) $@ $^
 else
-	$(AR) $(AROPT) $@ `$(LORDER) $^ | tsort`
+	$(LINK.static) $@ `$(LORDER) $^ | tsort`
 endif
 	$(RANLIB) $@
 
 endif # not win
 
-ifdef shlib
+ifeq ($(enable_shared), yes)
+
 ifneq ($(PORTNAME), beos)
 ifneq ($(PORTNAME), win)
 ifneq ($(PORTNAME), aix)
 
 # Normal case
 $(shlib): $(OBJS)
-	$(LD) $(LDFLAGS_SL) -o $@ $(OBJS) $(SHLIB_LINK)
+	$(LINK.shared) -o $@ $(OBJS) $(SHLIB_LINK)
 # If we're using major and minor versions, then make a symlink to major-version-only.
 ifneq ($(shlib), lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION))
 	rm -f lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
@@ -275,7 +277,8 @@ $(shlib): $(OBJS)
 	$(CC) -Xlinker -soname=$@ $(LDFLAGS_SL) -o $@ _APP_ $(OBJS) $(SHLIB_LINK)
 
 endif # PORTNAME == beos
-endif # shlib
+
+endif # enable_shared
 
 
 ##
@@ -288,7 +291,7 @@ install-lib: install-lib-static install-lib-shared
 install-lib-static: lib$(NAME).a
 	$(INSTALL_DATA) $< $(DESTDIR)$(libdir)/lib$(NAME).a
 
-ifdef shlib
+ifeq ($(enable_shared), yes)
 install-lib-shared: $(shlib)
 	$(INSTALL_SHLIB) $< $(DESTDIR)$(libdir)/$(shlib)
 ifneq ($(PORTNAME), win)
@@ -304,7 +307,7 @@ ifneq ($(shlib), lib$(NAME)$(DLSUFFIX))
 endif
 
 endif # not win
-endif # shlib
+endif # enable_shared
 
 
 ##
@@ -314,11 +317,11 @@ endif # shlib
 .PHONY: uninstall-lib
 uninstall-lib:
 	rm -f $(DESTDIR)$(libdir)/lib$(NAME).a
-ifdef shlib
+ifeq ($(enable_shared), yes)
 	rm -f $(DESTDIR)$(libdir)/lib$(NAME)$(DLSUFFIX) \
 	  $(DESTDIR)$(libdir)/lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION) \
 	  $(DESTDIR)$(libdir)/lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-endif # shlib
+endif # enable_shared
 
 
 ##
@@ -328,7 +331,9 @@ endif # shlib
 .PHONY: clean-lib
 clean-lib:
 	rm -f lib$(NAME).a
+ifeq ($(enable_shared), yes)
 	rm -f $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION) lib$(NAME)$(DLSUFFIX)
+endif
 ifeq ($(PORTNAME), win)
 	rm -rf $(NAME).def
 endif

@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.8 2000/10/22 22:15:09 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.9 2000/10/23 21:44:12 petere Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -73,6 +73,7 @@ libdir='@libdir@'
 bindir='@bindir@'
 datadir='@datadir@'
 host_platform='@host_tuple@'
+enable_shared='@enable_shared@'
 
 unset mode
 unset schedule
@@ -406,17 +407,14 @@ fi
 # Install the PL/pgSQL language in it
 # ----------
 
-case $host_platform in
-    *-*-qnx*) : ;;
-    *)
+if [ "$enable_shared" = yes ]; then
         message "installing PL/pgSQL"
         "$bindir/createlang" -L "$libdir" $psql_options plpgsql $dbname
         if [ $? -ne 0 ] && [ $? -ne 2 ]; then
             echo "$me: createlang failed"
             (exit 2); exit
         fi
-        ;;
-esac
+fi
 
 
 # ----------
@@ -436,6 +434,7 @@ cat /dev/null >"$diff_file"
 
 lno=0
 (
+    [ "$enable_shared" != yes ] && echo "ignore: plpgsql"
     cat $schedule
     for x in $extra_tests; do
         echo "test: $x"
@@ -472,7 +471,7 @@ do
         $PSQL -d "$dbname" <"$inputdir/sql/$1.sql" >"$outputdir/results/$1.out" 2>&1
     else
         # Start a parallel group
-        $ECHO_N "parallel group ($# tests): " $ECHO_C
+        $ECHO_N "parallel group ($# tests): $ECHO_C"
         for name do
             ( $PSQL -d $dbname <"$inputdir/sql/$name.sql" >"$outputdir/results/$name.out" 2>&1
               $ECHO_N " $name$ECHO_C"

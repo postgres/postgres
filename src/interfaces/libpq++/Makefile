@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.26 2000/10/20 21:04:12 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.27 2000/10/23 21:43:57 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,37 +20,16 @@ override CPPFLAGS += -I$(libpq_srcdir)
 
 OBJS = pgconnection.o pgdatabase.o pgtransdb.o pgcursordb.o pglobject.o 
 
-ifeq ($(PORTNAME), win)
-SHLIB_LINK+= --driver-name g++ $(libpq)
-else
 SHLIB_LINK= $(libpq)
-endif
 
-# For CC on IRIX, must use CC as linker/archiver of C++ libraries
-ifeq ($(PORTNAME), irix5)
-  ifneq ($(GXX), yes)
-    AR		:= CC
-    AROPT	:= -ar -o
-    LD		:= CC
-  endif
-endif
-# Same for Solaris with native compiler
-ifeq ($(PORTNAME), solaris)
-  ifneq ($(GXX), yes)
-    AR		:= CC
-    AROPT	:= -xar -o
-    LD		:= CC
-  endif
-endif
+# communicate with Makefile.shlib
+cplusplus := yes
 
 
 all: all-lib
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
-
-# Pull shared-lib CFLAGS into CXXFLAGS
-override CXXFLAGS+= $(CFLAGS_SL)
 
 
 .PHONY: examples

@@ -2,7 +2,7 @@
 #
 # GNUMakefile for psqlodbc (Postgres ODBC driver)
 #
-# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile,v 1.5 2000/10/20 21:04:13 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile,v 1.6 2000/10/23 21:43:58 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,14 +23,12 @@ OBJS = info.o bind.o columninfo.o connection.o convert.o drvconn.o \
         pgtypes.o psqlodbc.o qresult.o results.o socket.o parse.o statement.o \
         gpps.o tuple.o tuplelist.o dlg_specific.o $(OBJX)
 
-SHLIB_LINK= $(LD_FLAGS)
+SHLIB_LINK= -lm
 
 all: all-lib
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
-
-LDFLAGS_SL+= $(LDFLAGS_ODBC)
 
 odbc_headers = isql.h isqlext.h iodbc.h
 odbc_includedir = $(includedir)/iodbc

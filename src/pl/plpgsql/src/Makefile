@@ -2,7 +2,7 @@
 #
 # Makefile for the plpgsql shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.8 2000/10/20 21:04:16 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.9 2000/10/23 21:44:03 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -32,7 +32,7 @@ include $(top_srcdir)/src/Makefile.shlib
 # rule and do this instead:
 
 install: installdirs all
-ifdef shlib
+ifeq ($(enable_shared), yes)
 	$(INSTALL_SHLIB) $(shlib) $(DESTDIR)$(libdir)/plpgsql$(DLSUFFIX)
 else
 	@echo "*****"; \
