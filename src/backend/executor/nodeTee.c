@@ -15,7 +15,7 @@
  *		ExecEndTee
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.20 1998/08/06 05:12:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.21 1998/08/19 02:02:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,7 +303,6 @@ ExecTee(Tee *node, Plan *parent)
 	HeapTuple	heapTuple;
 	Relation	bufferRel;
 	HeapScanDesc scanDesc;
-	Buffer		buffer;
 
 	estate = ((Plan *) node)->state;
 	teeState = node->teestate;
@@ -366,10 +365,7 @@ ExecTee(Tee *node, Plan *parent)
 				HeapTuple	throwAway;
 
 				/* Buffer buffer; */
-				throwAway = heap_getnext(scanDesc,
-										 ScanDirectionIsBackward(dir),
-				/* &buffer */
-										 (Buffer *) NULL);
+				throwAway = heap_getnext(scanDesc,ScanDirectionIsBackward(dir));
 			}
 
 			/*
@@ -393,9 +389,7 @@ ExecTee(Tee *node, Plan *parent)
 		scanDesc = (parent == node->leftParent) ?
 			teeState->tee_leftScanDesc : teeState->tee_rightScanDesc;
 
-		heapTuple = heap_getnext(scanDesc,
-								 ScanDirectionIsBackward(dir),
-								 &buffer);
+		heapTuple = heap_getnext(scanDesc, ScanDirectionIsBackward(dir));
 
 		/*
 		 * Increase the pin count on the buffer page, because the tuple
@@ -404,15 +398,15 @@ ExecTee(Tee *node, Plan *parent)
 		 * count on the next iteration.
 		 */
 
-		if (buffer != InvalidBuffer)
-			IncrBufferRefCount(buffer);
+		if (scanDesc->rs_cbuf != InvalidBuffer)
+			IncrBufferRefCount(scanDesc->rs_cbuf);
 
 		slot = teeState->cstate.cs_ResultTupleSlot;
 		slot->ttc_tupleDescriptor = RelationGetTupleDescriptor(bufferRel);
 
 		result = ExecStoreTuple(heapTuple,		/* tuple to store */
 								slot,	/* slot to store in */
-								buffer, /* this tuple's buffer */
+								scanDesc->rs_cbuf, /* this tuple's buffer */
 								false); /* don't free stuff from
 										 * heap_getnext */
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.23 1998/06/15 19:29:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.24 1998/08/19 02:02:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -614,7 +614,7 @@ datetime_datetime(DateADT date, TimeADT *time)
 
 
 int32							/* RelativeTime */
-int42reltime(int32 timevalue)
+int4reltime(int32 timevalue)
 {
 	return (timevalue);
 }

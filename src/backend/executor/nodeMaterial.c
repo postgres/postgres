@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.14 1998/07/27 19:37:57 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.15 1998/08/19 02:02:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,6 @@ ExecMaterial(Material *node)
 	HeapScanDesc currentScanDesc;
 	HeapTuple	heapTuple;
 	TupleTableSlot *slot;
-	Buffer		buffer;
 
 	/* ----------------
 	 *	get state info from node
@@ -162,10 +161,7 @@ ExecMaterial(Material *node)
 	 */
 	currentScanDesc = matstate->csstate.css_currentScanDesc;
 
-	heapTuple = heap_getnext(currentScanDesc,	/* scan desc */
-							 ScanDirectionIsBackward(dir),
-	/* bkwd flag */
-							 &buffer);	/* return: buffer */
+	heapTuple = heap_getnext(currentScanDesc, ScanDirectionIsBackward(dir));
 
 	/* ----------------
 	 *	put the tuple into the scan tuple slot and return the slot.
@@ -177,7 +173,7 @@ ExecMaterial(Material *node)
 
 	return ExecStoreTuple(heapTuple,	/* tuple to store */
 						  slot, /* slot to store in */
-						  buffer,		/* buffer for this tuple */
+						  currentScanDesc->rs_cbuf,	/* buffer for this tuple */
 						  false);		/* don't pfree this pointer */
 
 }
@@ -370,7 +366,7 @@ List							/* nothing of interest */
 ExecMaterialMarkPos(Material node)
 {
 	MaterialState matstate;
-	HeapScanDesc sdesc;
+	HeapScanDesc scan;
 
 	/* ----------------
 	 *	if we haven't materialized yet, just return NIL.
@@ -386,8 +382,8 @@ ExecMaterialMarkPos(Material node)
 	 *		they will never return positions for all I know -cim 10/16/89
 	 * ----------------
 	 */
-	sdesc = get_css_currentScanDesc((CommonScanState) matstate);
-	heap_markpos(sdesc);
+	scan = get_css_currentScanDesc((CommonScanState) matstate);
+	heap_markpos(scan);
 
 	return NIL;
 }
@@ -400,7 +396,7 @@ void
 ExecMaterialRestrPos(Material node)
 {
 	MaterialState matstate;
-	HeapScanDesc sdesc;
+	HeapScanDesc scan;
 
 	/* ----------------
 	 *	if we haven't materialized yet, just return.
@@ -414,8 +410,8 @@ ExecMaterialRestrPos(Material node)
 	 *	restore the scan to the previously marked position
 	 * ----------------
 	 */
-	sdesc = get_css_currentScanDesc((CommonScanState) matstate);
-	heap_restrpos(sdesc);
+	scan = get_css_currentScanDesc((CommonScanState) matstate);
+	heap_restrpos(scan);
 }
 
 #endif

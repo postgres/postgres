@@ -95,7 +95,6 @@ DefineUser(CreateUserStmt *stmt)
 	HeapScanDesc scan;
 	HeapTuple	tuple;
 	Datum		datum;
-	Buffer		buffer;
 	char		sql[512];
 	char	   *sql_end;
 	bool		exists = false,
@@ -135,7 +134,7 @@ DefineUser(CreateUserStmt *stmt)
 	RelationSetLockForWrite(pg_shadow_rel);
 
 	scan = heap_beginscan(pg_shadow_rel, false, SnapshotNow, 0, NULL);
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0, &buffer)))
+	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 	{
 		datum = heap_getattr(tuple, Anum_pg_shadow_usename, pg_shadow_dsc, &n);
 
@@ -145,8 +144,6 @@ DefineUser(CreateUserStmt *stmt)
 		datum = heap_getattr(tuple, Anum_pg_shadow_usesysid, pg_shadow_dsc, &n);
 		if ((int) datum > max_id)
 			max_id = (int) datum;
-
-		ReleaseBuffer(buffer);
 	}
 	heap_endscan(scan);
 
@@ -223,15 +220,10 @@ AlterUser(AlterUserStmt *stmt)
 	char	   *pg_shadow;
 	Relation	pg_shadow_rel;
 	TupleDesc	pg_shadow_dsc;
-	HeapScanDesc scan;
 	HeapTuple	tuple;
-	Datum		datum;
-	Buffer		buffer;
 	char		sql[512];
 	char	   *sql_end;
-	bool		exists = false,
-				n,
-				inblock;
+	bool		inblock;
 
 	if (stmt->password)
 		CheckPgUserAclNotNull();
@@ -264,25 +256,14 @@ AlterUser(AlterUserStmt *stmt)
 	 */
 	RelationSetLockForWrite(pg_shadow_rel);
 
-	scan = heap_beginscan(pg_shadow_rel, false, SnapshotNow, 0, NULL);
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0, &buffer)))
-	{
-		datum = heap_getattr(tuple, Anum_pg_shadow_usename, pg_shadow_dsc, &n);
-
-		if (!strncmp((char *) datum, stmt->user, strlen(stmt->user)))
-		{
-			exists = true;
-			ReleaseBuffer(buffer);
-			break;
-		}
-	}
-	heap_endscan(scan);
-
-	if (!exists)
+	tuple = SearchSysCacheTuple(USENAME,
+								PointerGetDatum(stmt->user),
+								0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
 	{
 		RelationUnsetLockForWrite(pg_shadow_rel);
 		heap_close(pg_shadow_rel);
-		UserAbortTransactionBlock();
+		UserAbortTransactionBlock(); /* needed? */
 		elog(ERROR, "alterUser: user \"%s\" does not exist", stmt->user);
 		return;
 	}
@@ -354,12 +335,11 @@ RemoveUser(char *user)
 	HeapScanDesc scan;
 	HeapTuple	tuple;
 	Datum		datum;
-	Buffer		buffer;
 	char		sql[512];
 	bool		n,
 				inblock;
-	int			usesysid = -1,
-				ndbase = 0;
+	int32		usesysid;
+	int			ndbase = 0;
 	char	  **dbase = NULL;
 
 	if (!(inblock = IsTransactionBlock()))
@@ -375,7 +355,6 @@ RemoveUser(char *user)
 		UserAbortTransactionBlock();
 		elog(ERROR, "removeUser: user \"%s\" does not have SELECT and DELETE privilege for \"%s\"",
 			 pg_shadow, ShadowRelationName);
-		return;
 	}
 
 	/*
@@ -393,29 +372,18 @@ RemoveUser(char *user)
 	 */
 	RelationSetLockForWrite(pg_shadow_rel);
 
-	scan = heap_beginscan(pg_shadow_rel, false, SnapshotNow, 0, NULL);
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0, &buffer)))
-	{
-		datum = heap_getattr(tuple, Anum_pg_shadow_usename, pg_dsc, &n);
-
-		if (!strncmp((char *) datum, user, strlen(user)))
-		{
-			usesysid = (int) heap_getattr(tuple, Anum_pg_shadow_usesysid, pg_dsc, &n);
-			ReleaseBuffer(buffer);
-			break;
-		}
-		ReleaseBuffer(buffer);
-	}
-	heap_endscan(scan);
-
-	if (usesysid == -1)
+	tuple = SearchSysCacheTuple(USENAME,
+								PointerGetDatum(user),
+								0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
 	{
 		RelationUnsetLockForWrite(pg_shadow_rel);
 		heap_close(pg_shadow_rel);
 		UserAbortTransactionBlock();
 		elog(ERROR, "removeUser: user \"%s\" does not exist", user);
-		return;
 	}
+
+	usesysid = (int32) heap_getattr(tuple, Anum_pg_shadow_usesysid, pg_dsc, &n);
 
 	/*
 	 * Perform a scan of the pg_database relation to find the databases
@@ -425,7 +393,7 @@ RemoveUser(char *user)
 	pg_dsc = RelationGetTupleDescriptor(pg_rel);
 
 	scan = heap_beginscan(pg_rel, false, SnapshotNow, 0, NULL);
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0, &buffer)))
+	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 	{
 		datum = heap_getattr(tuple, Anum_pg_database_datdba, pg_dsc, &n);
 
@@ -440,7 +408,6 @@ RemoveUser(char *user)
 				dbase[ndbase++][NAMEDATALEN] = '\0';
 			}
 		}
-		ReleaseBuffer(buffer);
 	}
 	heap_endscan(scan);
 	heap_close(pg_rel);
@@ -496,17 +463,18 @@ RemoveUser(char *user)
 static void
 CheckPgUserAclNotNull()
 {
-	HeapTuple	htp;
+	HeapTuple	htup;
 
-	htp = SearchSysCacheTuple(RELNAME, PointerGetDatum(ShadowRelationName),
+	htup = SearchSysCacheTuple(RELNAME,
+							  PointerGetDatum(ShadowRelationName),
 							  0, 0, 0);
-	if (!HeapTupleIsValid(htp))
+	if (!HeapTupleIsValid(htup))
 	{
 		elog(ERROR, "IsPgUserAclNull: class \"%s\" not found",
 			 ShadowRelationName);
 	}
 
-	if (heap_attisnull(htp, Anum_pg_class_relacl))
+	if (heap_attisnull(htup, Anum_pg_class_relacl))
 	{
 		elog(NOTICE, "To use passwords, you have to revoke permissions on pg_shadow");
 		elog(NOTICE, "so normal users can not read the passwords.");

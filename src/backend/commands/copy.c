@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.52 1998/07/27 19:37:51 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.53 1998/08/19 02:01:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,9 +257,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 		fwrite(&ntuples, sizeof(int32), 1, fp);
 	}
 
-	for (tuple = heap_getnext(scandesc, 0, NULL);
-		 tuple != NULL;
-		 tuple = heap_getnext(scandesc, 0, NULL))
+	while (HeapTupleIsValid(tuple = heap_getnext(scandesc, 0)))
 	{
 
 		if (oids && !binary)
@@ -417,7 +415,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 
 	if (rel->rd_rel->relhasindex)
 	{
-		GetIndexRelations(rel->rd_id, &n_indices, &index_rels);
+		GetIndexRelations(RelationGetRelid(rel), &n_indices, &index_rels);
 		if (n_indices > 0)
 		{
 			has_index = true;
@@ -435,7 +433,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 				itupdescArr[i] = RelationGetTupleDescriptor(index_rels[i]);
 				pgIndexTup =
 					SearchSysCacheTuple(INDEXRELID,
-								  ObjectIdGetDatum(index_rels[i]->rd_id),
+								  ObjectIdGetDatum(RelationGetRelid(index_rels[i])),
 										0, 0, 0);
 				Assert(pgIndexTup);
 				pgIndexP[i] = (IndexTupleForm) GETSTRUCT(pgIndexTup);
@@ -758,7 +756,6 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 								(AttrNumber *) &(pgIndexP[i]->indkey[0]),
 								   tuple,
 								   tupDesc,
-								   InvalidBuffer,
 								   idatum,
 								   index_nulls,
 								   finfoP[i]);
@@ -832,7 +829,6 @@ GetTypeElement(Oid type)
 	typeTuple = SearchSysCacheTuple(TYPOID,
 									ObjectIdGetDatum(type),
 									0, 0, 0);
-
 
 	if (HeapTupleIsValid(typeTuple))
 		return ((int) ((TypeTupleForm) GETSTRUCT(typeTuple))->typelem);
@@ -913,9 +909,7 @@ GetIndexRelations(Oid main_relation_oid,
 	scan = head;
 	head->next = NULL;
 
-	for (tuple = heap_getnext(scandesc, 0, NULL);
-		 tuple != NULL;
-		 tuple = heap_getnext(scandesc, 0, NULL))
+	while (HeapTupleIsValid(tuple = heap_getnext(scandesc, 0)))
 	{
 
 		index_relation_oid =
@@ -1168,10 +1162,9 @@ CountTuples(Relation relation)
 
 	scandesc = heap_beginscan(relation, 0, SnapshotNow, 0, NULL);
 
-	for (tuple = heap_getnext(scandesc, 0, NULL), i = 0;
-		 tuple != NULL;
-		 tuple = heap_getnext(scandesc, 0, NULL), i++)
-		;
+	i = 0;
+	while (HeapTupleIsValid(tuple = heap_getnext(scandesc, 0)))
+		i++;
 	heap_endscan(scandesc);
 	return (i);
 }

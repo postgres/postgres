@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.14 1998/04/01 15:35:01 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.15 1998/08/19 02:01:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,7 +155,8 @@ AggregateCreate(char *aggName,
 			elog(ERROR, "AggregateCreate: bogus function '%s'", aggfinalfnName);
 	}
 
-	tup = SearchSysCacheTuple(AGGNAME, PointerGetDatum(aggName),
+	tup = SearchSysCacheTuple(AGGNAME,
+							  PointerGetDatum(aggName),
 							  ObjectIdGetDatum(xbase),
 							  0, 0);
 	if (HeapTupleIsValid(tup))
@@ -286,7 +287,7 @@ AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
 
 	tup = SearchSysCacheTuple(AGGNAME,
 							  PointerGetDatum(aggName),
-							  PointerGetDatum(basetype),
+							  ObjectIdGetDatum(basetype),
 							  0, 0);
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "AggNameGetInitVal: cache lookup failed for aggregate '%s'",
@@ -325,7 +326,8 @@ AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
 	strInitVal = textout(textInitVal);
 	heap_close(aggRel);
 
-	tup = SearchSysCacheTuple(TYPOID, ObjectIdGetDatum(transtype),
+	tup = SearchSysCacheTuple(TYPOID,
+							  ObjectIdGetDatum(transtype),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(tup))
 	{

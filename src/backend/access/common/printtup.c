@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.31 1998/07/26 04:30:16 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.32 1998/08/19 02:00:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,8 +46,7 @@ typtoout(Oid type)
 									0, 0, 0);
 
 	if (HeapTupleIsValid(typeTuple))
-		return ((Oid)
-				((TypeTupleForm) GETSTRUCT(typeTuple))->typoutput);
+		return ((Oid) ((TypeTupleForm) GETSTRUCT(typeTuple))->typoutput);
 
 	elog(ERROR, "typtoout: Cache lookup of type %d failed", type);
 	return (InvalidOid);
@@ -63,8 +62,7 @@ gettypelem(Oid type)
 									0, 0, 0);
 
 	if (HeapTupleIsValid(typeTuple))
-		return ((Oid)
-				((TypeTupleForm) GETSTRUCT(typeTuple))->typelem);
+		return ((Oid) ((TypeTupleForm) GETSTRUCT(typeTuple))->typelem);
 
 	elog(ERROR, "typtoout: Cache lookup of type %d failed", type);
 	return (InvalidOid);

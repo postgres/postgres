@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.18 1998/02/26 04:35:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.19 1998/08/19 02:02:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,13 +76,13 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	/* a low tech search for now -- not optimized for scans */
 	for (i = 0; i < NLocBuffer; i++)
 	{
-		if (LocalBufferDescriptors[i].tag.relId.relId == reln->rd_id &&
+		if (LocalBufferDescriptors[i].tag.relId.relId == RelationGetRelid(reln) &&
 			LocalBufferDescriptors[i].tag.blockNum == blockNum)
 		{
 
 #ifdef LBDEBUG
 			fprintf(stderr, "LB ALLOC (%d,%d) %d\n",
-					reln->rd_id, blockNum, -i - 1);
+					RelationGetRelid(reln), blockNum, -i - 1);
 #endif
 			LocalRefCount[i]++;
 			*foundPtr = TRUE;
@@ -92,7 +92,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 
 #ifdef LBDEBUG
 	fprintf(stderr, "LB ALLOC (%d,%d) %d\n",
-			reln->rd_id, blockNum, -nextFreeLocalBuf - 1);
+			RelationGetRelid(reln), blockNum, -nextFreeLocalBuf - 1);
 #endif
 
 	/* need to get a new buffer (round robin for now) */
@@ -132,7 +132,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	/*
 	 * it's all ours now.
 	 */
-	bufHdr->tag.relId.relId = reln->rd_id;
+	bufHdr->tag.relId.relId = RelationGetRelid(reln);
 	bufHdr->tag.blockNum = blockNum;
 	bufHdr->flags &= ~BM_DIRTY;
 

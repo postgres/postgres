@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.14 1998/07/27 19:38:04 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.15 1998/08/19 02:02:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,6 @@ binary_oper_get_candidates(char *opname,
 	HeapScanDesc pg_operator_scan;
 	HeapTuple	tup;
 	OperatorTupleForm oper;
-	Buffer		buffer;
 	int			nkeys;
 	int			ncandidates = 0;
 	ScanKeyData opKey[3];
@@ -112,23 +111,18 @@ binary_oper_get_candidates(char *opname,
 									  nkeys,
 									  opKey);
 
-	do
+	while (HeapTupleIsValid(tup = heap_getnext(pg_operator_scan, 0)))
 	{
-		tup = heap_getnext(pg_operator_scan, 0, &buffer);
-		if (HeapTupleIsValid(tup))
-		{
-			current_candidate = (CandidateList) palloc(sizeof(struct _CandidateList));
-			current_candidate->args = (Oid *) palloc(2 * sizeof(Oid));
+		current_candidate = (CandidateList) palloc(sizeof(struct _CandidateList));
+		current_candidate->args = (Oid *) palloc(2 * sizeof(Oid));
 
-			oper = (OperatorTupleForm) GETSTRUCT(tup);
-			current_candidate->args[0] = oper->oprleft;
-			current_candidate->args[1] = oper->oprright;
-			current_candidate->next = *candidates;
-			*candidates = current_candidate;
-			ncandidates++;
-			ReleaseBuffer(buffer);
-		}
-	} while (HeapTupleIsValid(tup));
+		oper = (OperatorTupleForm) GETSTRUCT(tup);
+		current_candidate->args[0] = oper->oprleft;
+		current_candidate->args[1] = oper->oprright;
+		current_candidate->next = *candidates;
+		*candidates = current_candidate;
+		ncandidates++;
+	}
 
 	heap_endscan(pg_operator_scan);
 	heap_close(pg_operator_desc);
@@ -465,7 +459,7 @@ oper_exact(char *op, Oid arg1, Oid arg2, Node **ltree, Node **rtree, bool noWarn
 							  PointerGetDatum(op),
 							  ObjectIdGetDatum(arg1),
 							  ObjectIdGetDatum(arg2),
-							  Int8GetDatum('b'));
+							  CharGetDatum('b'));
 
 	/* Did not find anything? then try flipping arguments on a commutative operator... */
 	if (!HeapTupleIsValid(tup) && (arg1 != arg2))
@@ -474,7 +468,7 @@ oper_exact(char *op, Oid arg1, Oid arg2, Node **ltree, Node **rtree, bool noWarn
 								  PointerGetDatum(op),
 								  ObjectIdGetDatum(arg2),
 								  ObjectIdGetDatum(arg1),
-								  Int8GetDatum('b'));
+								  CharGetDatum('b'));
 
 		if (HeapTupleIsValid(tup))
 		{
@@ -545,7 +539,7 @@ oper_inexact(char *op, Oid arg1, Oid arg2, Node **ltree, Node **rtree, bool noWa
 								  PointerGetDatum(op),
 								  ObjectIdGetDatum(candidates->args[0]),
 								  ObjectIdGetDatum(candidates->args[1]),
-								  Int8GetDatum('b'));
+								  CharGetDatum('b'));
 		Assert(HeapTupleIsValid(tup));
 
 #if PARSEDEBUG
@@ -569,8 +563,7 @@ printf("oper_inexact: found candidate\n");
 									  PointerGetDatum(op),
 									  ObjectIdGetDatum(targetOids[0]),
 									  ObjectIdGetDatum(targetOids[1]),
-									  Int8GetDatum('b'));
-
+									  CharGetDatum('b'));
 		}
 		else
 			tup = NULL;
@@ -635,7 +628,6 @@ unary_oper_get_candidates(char *op,
 	HeapScanDesc pg_operator_scan;
 	HeapTuple	tup;
 	OperatorTupleForm oper;
-	Buffer		buffer;
 	int			ncandidates = 0;
 
 	static ScanKeyData opKey[2] = {
@@ -659,29 +651,24 @@ printf("unary_oper_get_candidates: start scan for '%s'\n", op);
 									  2,
 									  opKey);
 
-	do
+	while (HeapTupleIsValid(tup = heap_getnext(pg_operator_scan, 0)))
 	{
-		tup = heap_getnext(pg_operator_scan, 0, &buffer);
-		if (HeapTupleIsValid(tup))
-		{
-			current_candidate = (CandidateList) palloc(sizeof(struct _CandidateList));
-			current_candidate->args = (Oid *) palloc(sizeof(Oid));
+		current_candidate = (CandidateList) palloc(sizeof(struct _CandidateList));
+		current_candidate->args = (Oid *) palloc(sizeof(Oid));
 
-			oper = (OperatorTupleForm) GETSTRUCT(tup);
-			if (rightleft == 'r')
-				current_candidate->args[0] = oper->oprleft;
-			else
-				current_candidate->args[0] = oper->oprright;
-			current_candidate->next = *candidates;
-			*candidates = current_candidate;
+		oper = (OperatorTupleForm) GETSTRUCT(tup);
+		if (rightleft == 'r')
+			current_candidate->args[0] = oper->oprleft;
+		else
+			current_candidate->args[0] = oper->oprright;
+		current_candidate->next = *candidates;
+		*candidates = current_candidate;
 #ifdef PARSEDEBUG
 printf("unary_oper_get_candidates: found candidate '%s' for type %s\n",
  op, typeidTypeName(current_candidate->args[0]));
 #endif
-			ncandidates++;
-			ReleaseBuffer(buffer);
-		}
-	} while (HeapTupleIsValid(tup));
+		ncandidates++;
+	}
 
 	heap_endscan(pg_operator_scan);
 	heap_close(pg_operator_desc);
@@ -707,7 +694,7 @@ right_oper(char *op, Oid arg)
 							  PointerGetDatum(op),
 							  ObjectIdGetDatum(arg),
 							  ObjectIdGetDatum(InvalidOid),
-							  Int8GetDatum('r'));
+							  CharGetDatum('r'));
 
 	if (!HeapTupleIsValid(tup))
 	{
@@ -723,7 +710,7 @@ right_oper(char *op, Oid arg)
 									  PointerGetDatum(op),
 									  ObjectIdGetDatum(candidates->args[0]),
 									  ObjectIdGetDatum(InvalidOid),
-									  Int8GetDatum('r'));
+									  CharGetDatum('r'));
 			Assert(HeapTupleIsValid(tup));
 		}
 		else
@@ -736,7 +723,7 @@ right_oper(char *op, Oid arg)
 										  PointerGetDatum(op),
 										  ObjectIdGetDatum(InvalidOid),
 										  ObjectIdGetDatum(*targetOid),
-										  Int8GetDatum('r'));
+										  CharGetDatum('r'));
 			}
 			else
 				tup = NULL;
@@ -767,7 +754,7 @@ left_oper(char *op, Oid arg)
 							  PointerGetDatum(op),
 							  ObjectIdGetDatum(InvalidOid),
 							  ObjectIdGetDatum(arg),
-							  Int8GetDatum('l'));
+							  CharGetDatum('l'));
 
 	if (!HeapTupleIsValid(tup))
 	{
@@ -783,7 +770,7 @@ left_oper(char *op, Oid arg)
 									  PointerGetDatum(op),
 									  ObjectIdGetDatum(InvalidOid),
 									  ObjectIdGetDatum(candidates->args[0]),
-									  Int8GetDatum('l'));
+									  CharGetDatum('l'));
 			Assert(HeapTupleIsValid(tup));
 #ifdef PARSEDEBUG
 printf("left_oper: searched cache for single left oper candidate '%s %s'\n",
@@ -797,7 +784,7 @@ printf("left_oper: searched cache for single left oper candidate '%s %s'\n",
 									  PointerGetDatum(op),
 									  ObjectIdGetDatum(InvalidOid),
 									  ObjectIdGetDatum(*targetOid),
-									  Int8GetDatum('l'));
+									  CharGetDatum('l'));
 
 			if (!HeapTupleIsValid(tup))
 			{

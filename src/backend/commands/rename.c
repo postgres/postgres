@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.13 1998/07/26 04:30:24 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.14 1998/08/19 02:01:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include <utils/portal.h>
 #include <tcop/dest.h>
 #include <commands/command.h>
+#include <storage/bufmgr.h>
 #include <utils/excid.h>
 #include <utils/mcxt.h>
 #include <catalog/pg_proc.h>
@@ -52,7 +53,7 @@
  *		Attname attribute is changed in attribute catalog.
  *		No record of the previous attname is kept (correct?).
  *
- *		get proper reldesc from relation catalog (if not arg)
+ *		get proper relrelation from relation catalog (if not arg)
  *		scan attribute catalog
  *				for name conflict (within rel)
  *				for original attribute (if not arg)
@@ -70,14 +71,13 @@ renameatt(char *relname,
 		  char *userName,
 		  int recurse)
 {
-	Relation	relrdesc,
-				attrdesc;
+	Relation	attrelation;
 	HeapTuple	reltup,
 				oldatttup,
 				newatttup;
-	ItemPointerData oldTID;
-	Relation	idescs[Num_pg_attr_indices];
-
+	Relation	irelations[Num_pg_attr_indices];
+	Oid			relid;
+	
 	/*
 	 * permissions checking.  this would normally be done in utility.c,
 	 * but this particular routine is recursive.
@@ -110,18 +110,19 @@ renameatt(char *relname,
 		List	   *child,
 				   *children;
 
-		relrdesc = heap_openr(relname);
-		if (!RelationIsValid(relrdesc))
-		{
-			elog(ERROR, "renameatt: unknown relation: \"%s\"",
-				 relname);
-		}
-		myrelid = relrdesc->rd_id;
-		heap_close(relrdesc);
+		reltup = SearchSysCacheTuple(RELNAME,
+									 PointerGetDatum(relname),
+									 0, 0, 0);
 
+		if (!HeapTupleIsValid(reltup))
+		{
+			elog(ERROR, "renameatt: unknown relation: \"%s\"", relname);
+		}
+
+		myrelid = reltup->t_oid;
+		
 		/* this routine is actually in the planner */
 		children = find_all_inheritors(lconsi(myrelid, NIL), NIL);
-
 
 		/*
 		 * find_all_inheritors does the recursive search of the
@@ -130,72 +131,70 @@ renameatt(char *relname,
 		 */
 		foreach(child, children)
 		{
-			char	   *childname;
+			char	childname[NAMEDATALEN];
 
 			childrelid = lfirsti(child);
 			if (childrelid == myrelid)
 				continue;
-			relrdesc = heap_open(childrelid);
-			if (!RelationIsValid(relrdesc))
+			reltup = SearchSysCacheTuple(RELOID,
+										 ObjectIdGetDatum(childrelid),
+										 0, 0, 0);
+			if (!HeapTupleIsValid(reltup))
 			{
 				elog(ERROR, "renameatt: can't find catalog entry for inheriting class with oid %d",
 					 childrelid);
 			}
-			childname = (relrdesc->rd_rel->relname).data;
-			heap_close(relrdesc);
-			renameatt(childname, oldattname, newattname,
-					  userName, 0);		/* no more recursion! */
+			/* make copy of cache value, could disappear in call */
+			StrNCpy(childname,
+				((Form_pg_class) GETSTRUCT(reltup))->relname.data,
+				NAMEDATALEN);
+			/* no more recursion! */
+			renameatt(childname, oldattname, newattname,  userName, 0);
 		}
 	}
 
-	relrdesc = heap_openr(RelationRelationName);
-	reltup = ClassNameIndexScan(relrdesc, relname);
-	if (!PointerIsValid(reltup))
-	{
-		heap_close(relrdesc);
-		elog(ERROR, "renameatt: relation \"%s\" nonexistent",
-			 relname);
-		return;
-	}
-	heap_close(relrdesc);
+	reltup = SearchSysCacheTuple(RELNAME,
+								 PointerGetDatum(relname),
+								 0, 0, 0);
+	if (!HeapTupleIsValid(reltup))
+		elog(ERROR, "renameatt: relation \"%s\" nonexistent", relname);
 
-	attrdesc = heap_openr(AttributeRelationName);
-	oldatttup = AttributeNameIndexScan(attrdesc, reltup->t_oid, oldattname);
-	if (!PointerIsValid(oldatttup))
-	{
-		heap_close(attrdesc);
-		elog(ERROR, "renameatt: attribute \"%s\" nonexistent",
-			 oldattname);
-	}
+	relid = reltup->t_oid;
+
+	oldatttup = SearchSysCacheTupleCopy(ATTNAME,
+										 ObjectIdGetDatum(relid),
+										 PointerGetDatum(oldattname),
+										 0, 0);
+	if (!HeapTupleIsValid(oldatttup))
+		elog(ERROR, "renameatt: attribute \"%s\" nonexistent", oldattname);
+
 	if (((AttributeTupleForm) GETSTRUCT(oldatttup))->attnum < 0)
-	{
-		elog(ERROR, "renameatt: system attribute \"%s\" not renamed",
-			 oldattname);
-	}
+		elog(ERROR, "renameatt: system attribute \"%s\" not renamed", oldattname);
 
-	newatttup = AttributeNameIndexScan(attrdesc, reltup->t_oid, newattname);
-	if (PointerIsValid(newatttup))
+	newatttup = SearchSysCacheTuple(ATTNAME,
+									 ObjectIdGetDatum(relid),
+									 PointerGetDatum(newattname),
+									 0, 0);
+	/* should not already exist */
+	if (HeapTupleIsValid(newatttup))
 	{
 		pfree(oldatttup);
-		heap_close(attrdesc);
-		elog(ERROR, "renameatt: attribute \"%s\" exists",
-			 newattname);
+		elog(ERROR, "renameatt: attribute \"%s\" exists", newattname);
 	}
 
-	namestrcpy(&(((AttributeTupleForm) (GETSTRUCT(oldatttup)))->attname),
-			   newattname);
-	oldTID = oldatttup->t_ctid;
+	StrNCpy((((AttributeTupleForm) (GETSTRUCT(oldatttup)))->attname.data),
+			   newattname, NAMEDATALEN);
 
-	/* insert "fixed" tuple */
-	heap_replace(attrdesc, &oldTID, oldatttup);
+	attrelation = heap_openr(AttributeRelationName);
+	heap_replace(attrelation, &oldatttup->t_ctid, oldatttup);
 
 	/* keep system catalog indices current */
-	CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
-	CatalogIndexInsert(idescs, Num_pg_attr_indices, attrdesc, oldatttup);
-	CatalogCloseIndices(Num_pg_attr_indices, idescs);
+	CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, irelations);
+	CatalogIndexInsert(irelations, Num_pg_attr_indices, attrelation, oldatttup);
+	CatalogCloseIndices(Num_pg_attr_indices, irelations);
 
-	heap_close(attrdesc);
 	pfree(oldatttup);
+	heap_close(attrelation);
 }
 
 /*
@@ -215,67 +214,52 @@ renameatt(char *relname,
  *				properly replace the new relation tuple.
  */
 void
-renamerel(char oldrelname[], char newrelname[])
+renamerel(char *oldrelname, char *newrelname)
 {
-	Relation	relrdesc;		/* for RELATION relation */
+	Relation	relrelation;		/* for RELATION relation */
 	HeapTuple	oldreltup,
 				newreltup;
-	ItemPointerData oldTID;
 	char		oldpath[MAXPGPATH],
 				newpath[MAXPGPATH];
-	Relation	idescs[Num_pg_class_indices];
-
+	Relation	irelations[Num_pg_class_indices];
+	
 	if (IsSystemRelationName(oldrelname))
-	{
 		elog(ERROR, "renamerel: system relation \"%s\" not renamed",
 			 oldrelname);
-		return;
-	}
+
 	if (IsSystemRelationName(newrelname))
-	{
 		elog(ERROR, "renamerel: Illegal class name: \"%s\" -- pg_ is reserved for system catalogs",
 			 newrelname);
-		return;
-	}
 
-	relrdesc = heap_openr(RelationRelationName);
-	oldreltup = ClassNameIndexScan(relrdesc, oldrelname);
+	oldreltup = SearchSysCacheTupleCopy(RELNAME,
+										 PointerGetDatum(oldrelname),
+										 0, 0, 0);
+	if (!HeapTupleIsValid(oldreltup))
+		elog(ERROR, "renamerel: relation \"%s\" does not exist", oldrelname);
 
-	if (!PointerIsValid(oldreltup))
-	{
-		heap_close(relrdesc);
-		elog(ERROR, "renamerel: relation \"%s\" does not exist",
-			 oldrelname);
-	}
+	newreltup = SearchSysCacheTuple(RELNAME,
+									 PointerGetDatum(newrelname),
+									 0, 0, 0);
+	if (HeapTupleIsValid(newreltup))
+		elog(ERROR, "renamerel: relation \"%s\" exists", newrelname);
 
-	newreltup = ClassNameIndexScan(relrdesc, newrelname);
-	if (PointerIsValid(newreltup))
-	{
-		pfree(oldreltup);
-		heap_close(relrdesc);
-		elog(ERROR, "renamerel: relation \"%s\" exists",
-			 newrelname);
-	}
-
-	/* rename the directory first, so if this fails the rename's not done */
+	/* rename the path first, so if this fails the rename's not done */
 	strcpy(oldpath, relpath(oldrelname));
 	strcpy(newpath, relpath(newrelname));
 	if (rename(oldpath, newpath) < 0)
-		elog(ERROR, "renamerel: unable to rename file: %m");
+		elog(ERROR, "renamerel: unable to rename file: %s", oldpath);
 
-	memmove((char *) (((Form_pg_class) GETSTRUCT(oldreltup))->relname.data),
-			newrelname,
-			NAMEDATALEN);
-	oldTID = oldreltup->t_ctid;
+	StrNCpy((((Form_pg_class) GETSTRUCT(oldreltup))->relname.data),
+				newrelname, NAMEDATALEN);
 
 	/* insert fixed rel tuple */
-	heap_replace(relrdesc, &oldTID, oldreltup);
+	relrelation = heap_openr(RelationRelationName);
+	heap_replace(relrelation, &oldreltup->t_ctid, oldreltup);
 
 	/* keep the system catalog indices current */
-	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
-	CatalogIndexInsert(idescs, Num_pg_class_indices, relrdesc, oldreltup);
-	CatalogCloseIndices(Num_pg_class_indices, idescs);
+	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, irelations);
+	CatalogIndexInsert(irelations, Num_pg_class_indices, relrelation, oldreltup);
+	CatalogCloseIndices(Num_pg_class_indices, irelations);
 
-	pfree(oldreltup);
-	heap_close(relrdesc);
+	heap_close(relrelation);
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.31 1998/08/06 05:12:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.32 1998/08/19 02:01:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -404,7 +404,7 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 		char		nullarr[Natts_pg_inherits];
 
 		tuple = SearchSysCacheTuple(RELNAME,
-								  PointerGetDatum(strVal(lfirst(entry))),
+									PointerGetDatum(strVal(lfirst(entry))),
 									0, 0, 0);
 		AssertArg(HeapTupleIsValid(tuple));
 

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.20 1998/07/27 19:38:20 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.21 1998/08/19 02:03:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -295,7 +295,8 @@ getattdisbursion(Oid relid, AttrNumber attnum)
 	if (nvals > 0)
 		return (nvals);
 
-	atp = SearchSysCacheTuple(RELOID, ObjectIdGetDatum(relid),
+	atp = SearchSysCacheTuple(RELOID,
+							  ObjectIdGetDatum(relid),
 							  0, 0, 0);
 
 	/*
@@ -334,8 +335,8 @@ gethilokey(Oid relid,
 		   char **high,
 		   char **low)
 {
-	Relation	rdesc;
-	HeapScanDesc sdesc;
+	Relation	rel;
+	HeapScanDesc scan;
 	static ScanKeyData key[3] = {
 		{0, Anum_pg_statistic_starelid, F_OIDEQ, {0, 0, F_OIDEQ}},
 		{0, Anum_pg_statistic_staattnum, F_INT2EQ, {0, 0, F_INT2EQ}},
@@ -344,13 +345,13 @@ gethilokey(Oid relid,
 	bool		isnull;
 	HeapTuple	tuple;
 
-	rdesc = heap_openr(StatisticRelationName);
+	rel = heap_openr(StatisticRelationName);
 
 	key[0].sk_argument = ObjectIdGetDatum(relid);
 	key[1].sk_argument = Int16GetDatum((int16) attnum);
 	key[2].sk_argument = ObjectIdGetDatum(opid);
-	sdesc = heap_beginscan(rdesc, 0, SnapshotNow, 3, key);
-	tuple = heap_getnext(sdesc, 0, (Buffer *) NULL);
+	scan = heap_beginscan(rel, 0, SnapshotNow, 3, key);
+	tuple = heap_getnext(scan, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
 		*high = "n";
@@ -365,19 +366,19 @@ gethilokey(Oid relid,
 	*high = textout((struct varlena *)
 					heap_getattr(tuple,
 								 Anum_pg_statistic_stahikey,
-								 RelationGetTupleDescriptor(rdesc),
+								 RelationGetTupleDescriptor(rel),
 								 &isnull));
 	if (isnull)
 		elog(DEBUG, "gethilokey: high key is null");
 	*low = textout((struct varlena *)
 				   heap_getattr(tuple,
 								Anum_pg_statistic_stalokey,
-								RelationGetTupleDescriptor(rdesc),
+								RelationGetTupleDescriptor(rel),
 								&isnull));
 	if (isnull)
 		elog(DEBUG, "gethilokey: low key is null");
-	heap_endscan(sdesc);
-	heap_close(rdesc);
+	heap_endscan(scan);
+	heap_close(rel);
 }
 
 float64
@@ -497,7 +498,8 @@ hashsel(Oid operatorObjectId,
 		 * have selectivity functions
 		 */
 
-		atp = SearchSysCacheTuple(RELOID, ObjectIdGetDatum(indexrelid),
+		atp = SearchSysCacheTuple(RELOID,
+								  ObjectIdGetDatum(indexrelid),
 								  0, 0, 0);
 		if (!HeapTupleIsValid(atp))
 		{
@@ -549,7 +551,8 @@ hashnpage(Oid operatorObjectId,
 	int			npage;
 	int			ntuples;
 
-	atp = SearchSysCacheTuple(RELOID, ObjectIdGetDatum(indexrelid),
+	atp = SearchSysCacheTuple(RELOID,
+							  ObjectIdGetDatum(indexrelid),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(atp))
 	{

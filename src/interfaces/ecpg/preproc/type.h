@@ -75,7 +75,7 @@ struct when
 	char	   	*str;
 };
 
-struct index
+struct RelationGetRelidindex
 {
     int index1;
     int index2;

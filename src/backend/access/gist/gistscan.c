@@ -284,12 +284,12 @@ gistdropscan(IndexScanDesc s)
 }
 
 void
-gistadjscans(Relation r, int op, BlockNumber blkno, OffsetNumber offnum)
+gistadjscans(Relation rel, int op, BlockNumber blkno, OffsetNumber offnum)
 {
 	GISTScanList l;
 	Oid			relid;
 
-	relid = r->rd_id;
+	relid = RelationGetRelid(rel);
 	for (l = GISTScans; l != (GISTScanList) NULL; l = l->gsl_next)
 	{
 		if (l->gsl_scan->relation->rd_id == relid)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.19 1998/07/20 16:57:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.20 1998/08/19 02:03:15 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -67,262 +67,320 @@ typedef HeapTuple (*ScanFunc) ();
 static struct cachedesc cacheinfo[] = {
 	{AccessMethodOperatorRelationName,	/* AMOPOPID */
 		3,
-		{Anum_pg_amop_amopclaid,
+		{
+			Anum_pg_amop_amopclaid,
 			Anum_pg_amop_amopopr,
 			Anum_pg_amop_amopid,
-		0},
+			0
+		},
 		sizeof(FormData_pg_amop),
 		NULL,
 	(ScanFunc) NULL},
 	{AccessMethodOperatorRelationName,	/* AMOPSTRATEGY */
 		3,
-		{Anum_pg_amop_amopid,
+		{
+			Anum_pg_amop_amopid,
 			Anum_pg_amop_amopclaid,
 			Anum_pg_amop_amopstrategy,
-		0},
+			0
+		},
 		sizeof(FormData_pg_amop),
 		NULL,
 	(ScanFunc) NULL},
 	{AttributeRelationName,		/* ATTNAME */
 		2,
-		{Anum_pg_attribute_attrelid,
+		{
+			Anum_pg_attribute_attrelid,
 			Anum_pg_attribute_attname,
 			0,
-		0},
+			0
+		},
 		ATTRIBUTE_TUPLE_SIZE,
 		AttributeNameIndex,
 	(ScanFunc) AttributeNameIndexScan},
 	{AttributeRelationName,		/* ATTNUM */
 		2,
-		{Anum_pg_attribute_attrelid,
+		{
+			Anum_pg_attribute_attrelid,
 			Anum_pg_attribute_attnum,
 			0,
-		0},
+			0
+		},
 		ATTRIBUTE_TUPLE_SIZE,
 		AttributeNumIndex,
 	(ScanFunc) AttributeNumIndexScan},
 	{IndexRelationName,			/* INDEXRELID */
 		1,
-		{Anum_pg_index_indexrelid,
+		{
+			Anum_pg_index_indexrelid,
 			0,
 			0,
-		0},
+			0
+		},
 		offsetof(FormData_pg_index, indpred),
 		NULL,
 	NULL},
 	{LanguageRelationName,		/* LANNAME */
 		1,
-		{Anum_pg_language_lanname,
+		{
+			Anum_pg_language_lanname,
 			0,
 			0,
-		0},
+			0
+		},
 		offsetof(FormData_pg_language, lancompiler),
 		NULL,
 	NULL},
 	{OperatorRelationName,		/* OPRNAME */
 		4,
-		{Anum_pg_operator_oprname,
+		{
+			Anum_pg_operator_oprname,
 			Anum_pg_operator_oprleft,
 			Anum_pg_operator_oprright,
-		Anum_pg_operator_oprkind},
+			Anum_pg_operator_oprkind
+		},
 		sizeof(FormData_pg_operator),
 		NULL,
 	NULL},
 	{OperatorRelationName,		/* OPROID */
 		1,
-		{ObjectIdAttributeNumber,
+		{
+			ObjectIdAttributeNumber,
 			0,
 			0,
-		0},
+			0
+		},
 		sizeof(FormData_pg_operator),
 		NULL,
 	(ScanFunc) NULL},
 	{ProcedureRelationName,		/* PRONAME */
 		3,
-		{Anum_pg_proc_proname,
+		{
+			Anum_pg_proc_proname,
 			Anum_pg_proc_pronargs,
 			Anum_pg_proc_proargtypes,
-		0},
+			0
+		},
 		offsetof(FormData_pg_proc, prosrc),
 		ProcedureNameIndex,
 	(ScanFunc) ProcedureNameIndexScan},
 	{ProcedureRelationName,		/* PROOID */
 		1,
-		{ObjectIdAttributeNumber,
+		{
+			ObjectIdAttributeNumber,
 			0,
 			0,
-		0},
+			0
+		},
 		offsetof(FormData_pg_proc, prosrc),
 		ProcedureOidIndex,
 	(ScanFunc) ProcedureOidIndexScan},
 	{RelationRelationName,		/* RELNAME */
 		1,
-		{Anum_pg_class_relname,
+		{
+			Anum_pg_class_relname,
 			0,
 			0,
-		0},
+			0
+		},
 		CLASS_TUPLE_SIZE,
 		ClassNameIndex,
 	(ScanFunc) ClassNameIndexScan},
 	{RelationRelationName,		/* RELOID */
 		1,
-		{ObjectIdAttributeNumber,
+		{
+			ObjectIdAttributeNumber,
 			0,
 			0,
-		0},
+			0
+		},
 		CLASS_TUPLE_SIZE,
 		ClassOidIndex,
 	(ScanFunc) ClassOidIndexScan},
 	{TypeRelationName,			/* TYPNAME */
 		1,
-		{Anum_pg_type_typname,
+		{
+			Anum_pg_type_typname,
 			0,
 			0,
-		0},
+			0
+		},
 		offsetof(TypeTupleFormData, typalign) +sizeof(char),
 		TypeNameIndex,
 	TypeNameIndexScan},
 	{TypeRelationName,			/* TYPOID */
 		1,
-		{ObjectIdAttributeNumber,
+		{
+			ObjectIdAttributeNumber,
 			0,
 			0,
-		0},
+			0
+		},
 		offsetof(TypeTupleFormData, typalign) +sizeof(char),
 		TypeOidIndex,
 	TypeOidIndexScan},
 	{AccessMethodRelationName,	/* AMNAME */
 		1,
-		{Anum_pg_am_amname,
+		{
+			Anum_pg_am_amname,
 			0,
 			0,
-		0},
+			0
+		},
 		sizeof(FormData_pg_am),
 		NULL,
 	NULL},
 	{OperatorClassRelationName, /* CLANAME */
 		1,
-		{Anum_pg_opclass_opcname,
+		{
+			Anum_pg_opclass_opcname,
 			0,
 			0,
-		0},
+			0
+		},
 		sizeof(FormData_pg_opclass),
 		NULL,
 	NULL},
-	{IndexRelationName,			/* INDRELIDKEY */
+	{IndexRelationName,			/* INDRELIDKEY */ /* never used */
 		2,
-		{Anum_pg_index_indrelid,
+		{
+			Anum_pg_index_indrelid,
 			Anum_pg_index_indkey,
 			0,
-		0},
+			0
+		},
 		offsetof(FormData_pg_index, indpred),
 		NULL,
 	(ScanFunc) NULL},
 	{InheritsRelationName,		/* INHRELID */
 		2,
-		{Anum_pg_inherits_inhrel,
+		{
+			Anum_pg_inherits_inhrel,
 			Anum_pg_inherits_inhseqno,
 			0,
-		0},
+			0
+		},
 		sizeof(FormData_pg_inherits),
 		NULL,
 	(ScanFunc) NULL},
 	{RewriteRelationName,		/* RULOID */
 		1,
-		{ObjectIdAttributeNumber,
+		{
+			ObjectIdAttributeNumber,
 			0,
 			0,
-		0},
+			0
+		},
 		offsetof(FormData_pg_rewrite, ev_qual),
 		NULL,
 	(ScanFunc) NULL},
 	{AggregateRelationName,		/* AGGNAME */
 		2,
-		{Anum_pg_aggregate_aggname,
+		{
+			Anum_pg_aggregate_aggname,
 			Anum_pg_aggregate_aggbasetype,
 			0,
-		0},
+			0
+		},
 		offsetof(FormData_pg_aggregate, agginitval1),
 		NULL,
 	(ScanFunc) NULL},
 	{ListenerRelationName,		/* LISTENREL */
 		2,
-		{Anum_pg_listener_relname,
+		{
+			Anum_pg_listener_relname,
 			Anum_pg_listener_pid,
 			0,
-		0},
+			0
+		},
 		sizeof(FormData_pg_listener),
 		NULL,
 	(ScanFunc) NULL},
 	{ShadowRelationName,		/* USENAME */
 		1,
-		{Anum_pg_shadow_usename,
+		{
+			Anum_pg_shadow_usename,
 			0,
 			0,
-		0},
+			0
+		},
 		sizeof(FormData_pg_shadow),
 		NULL,
 	(ScanFunc) NULL},
 	{ShadowRelationName,		/* USESYSID */
 		1,
-		{Anum_pg_shadow_usesysid,
+		{
+			Anum_pg_shadow_usesysid,
 			0,
 			0,
-		0},
+			0
+		},
 		sizeof(FormData_pg_shadow),
 		NULL,
 	(ScanFunc) NULL},
 	{GroupRelationName,			/* GRONAME */
 		1,
-		{Anum_pg_group_groname,
+		{
+			Anum_pg_group_groname,
 			0,
 			0,
-		0},
+			0
+		},
 		offsetof(FormData_pg_group, grolist[0]),
 		NULL,
 	(ScanFunc) NULL},
 	{GroupRelationName,			/* GROSYSID */
 		1,
-		{Anum_pg_group_grosysid,
+		{
+			Anum_pg_group_grosysid,
 			0,
 			0,
-		0},
+			0
+		},
 		offsetof(FormData_pg_group, grolist[0]),
 		NULL,
 	(ScanFunc) NULL},
 	{RewriteRelationName,		/* REWRITENAME */
 		1,
-		{Anum_pg_rewrite_rulename,
+		{
+			Anum_pg_rewrite_rulename,
 			0,
 			0,
-		0},
+			0
+		},
 		offsetof(FormData_pg_rewrite, ev_qual),
 		NULL,
 	(ScanFunc) NULL},
 	{ProcedureRelationName,		/* PROSRC */
 		1,
-		{Anum_pg_proc_prosrc,
+		{
+			Anum_pg_proc_prosrc,
 			0,
 			0,
-		0},
+			0
+		},
 		offsetof(FormData_pg_proc, prosrc),
 		ProcedureSrcIndex,
 	(ScanFunc) ProcedureSrcIndexScan},
 	{OperatorClassRelationName, /* CLADEFTYPE */
 		1,
-		{Anum_pg_opclass_opcdeftype,
+		{
+			Anum_pg_opclass_opcdeftype,
 			0,
 			0,
-		0},
+			0
+		},
 		sizeof(FormData_pg_opclass),
 		NULL,
 	(ScanFunc) NULL},
 	{LanguageRelationName,		/* LANOID */
 		1,
-		{ObjectIdAttributeNumber,
+		{
+			ObjectIdAttributeNumber,
 			0,
 			0,
-		0},
+			0
+		},
 		offsetof(FormData_pg_language, lancompiler),
 		NULL,
 	NULL}
@@ -380,16 +438,39 @@ InitCatalogCache()
 		}
 	}
 }
+/*
+ * SearchSysCacheTupleCopy--
+ *
+ *	THis is like SearchSysCacheTuple, except it returns a copy of the tuple
+ *	that the user is required to pfree().
+ */
+HeapTuple
+SearchSysCacheTupleCopy(int cacheId,/* cache selection code */
+					Datum key1,
+					Datum key2,
+					Datum key3,
+					Datum key4)
+{
+	HeapTuple	cachetup;
+
+	cachetup = SearchSysCacheTuple(cacheId, key1, key2, key3, key4);
+	if (PointerIsValid(cachetup))
+		return heap_copytuple(cachetup);
+	else
+		return cachetup; /* NULL */
+}
+					
 
 /*
  * SearchSysCacheTuple--
  *
- *	  A layer on top of SearchSysCache that does the initialization and
- *	  key-setting for you.
+ *	A layer on top of SearchSysCache that does the initialization and
+ *	key-setting for you.
  *
- * Returns the tuple if one is found, NULL if not.
+ *	Returns the cache copy of the tuple if one is found, NULL if not.
+ *	The tuple is the 'cache' copy.
  *
- * XXX The tuple that is returned is NOT supposed to be pfree'd!
+ *	XXX The tuple that is returned is NOT supposed to be pfree'd!
  */
 HeapTuple
 SearchSysCacheTuple(int cacheId,/* cache selection code */
@@ -542,7 +623,6 @@ SearchSysCacheGetAttribute(int cacheId,
 
 	if (isNull)
 	{
-
 		/*
 		 * Used to be an elog(DEBUG, ...) here and a claim that it should
 		 * be a FATAL error, I don't think either is warranted -mer 6/9/92
@@ -622,7 +702,6 @@ TypeDefaultRetrieve(Oid typId)
 			 cacheinfo[TYPOID].name, TYPOID);
 #endif							/* defined(CACHEDEBUG) */
 		return (NULL);
-
 	}
 
 	dataSize = VARSIZE(typDefault) - VARHDRSZ;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.40 1998/08/01 15:26:12 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.41 1998/08/19 02:02:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,7 @@ static void BufferSync(void);
 static int	BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld);
 
 /* not static but used by vacuum only ... */
-int			BlowawayRelationBuffers(Relation rdesc, BlockNumber block);
+int			BlowawayRelationBuffers(Relation rel, BlockNumber block);
 
 /* ---------------------------------------------------
  * RelationGetBufferWithBuffer
@@ -135,7 +135,7 @@ RelationGetBufferWithBuffer(Relation relation,
 		else
 		{
 			bufHdr = &LocalBufferDescriptors[-buffer - 1];
-			if (bufHdr->tag.relId.relId == relation->rd_id &&
+			if (bufHdr->tag.relId.relId == RelationGetRelid(relation) &&
 				bufHdr->tag.blockNum == blockNumber)
 				return (buffer);
 		}
@@ -416,7 +416,7 @@ BufferAlloc(Relation reln,
 			}
 		}
 #ifdef BMTRACE
-		_bm_trace((reln->rd_rel->relisshared ? 0 : MyDatabaseId), reln->rd_id, blockNum, BufferDescriptorGetBuffer(buf), BMT_ALLOCFND);
+		_bm_trace((reln->rd_rel->relisshared ? 0 : MyDatabaseId), RelationGetRelid(reln), blockNum, BufferDescriptorGetBuffer(buf), BMT_ALLOCFND);
 #endif							/* BMTRACE */
 
 		SpinRelease(BufMgrLock);
@@ -660,7 +660,7 @@ BufferAlloc(Relation reln,
 	}
 
 #ifdef BMTRACE
-	_bm_trace((reln->rd_rel->relisshared ? 0 : MyDatabaseId), reln->rd_id, blockNum, BufferDescriptorGetBuffer(buf), BMT_ALLOCNOTFND);
+	_bm_trace((reln->rd_rel->relisshared ? 0 : MyDatabaseId), RelationGetRelid(reln), blockNum, BufferDescriptorGetBuffer(buf), BMT_ALLOCNOTFND);
 #endif							/* BMTRACE */
 
 	SpinRelease(BufMgrLock);
@@ -1389,19 +1389,19 @@ RelationGetNumberOfBlocks(Relation relation)
  * --------------------------------------------------------------------
  */
 void
-ReleaseRelationBuffers(Relation rdesc)
+ReleaseRelationBuffers(Relation rel)
 {
 	int			i;
 	int			holding = 0;
 	BufferDesc *buf;
 
-	if (rdesc->rd_islocal)
+	if (rel->rd_islocal)
 	{
 		for (i = 0; i < NLocBuffer; i++)
 		{
 			buf = &LocalBufferDescriptors[i];
 			if ((buf->flags & BM_DIRTY) &&
-				(buf->tag.relId.relId == rdesc->rd_id))
+				(buf->tag.relId.relId == RelationGetRelid(rel)))
 				buf->flags &= ~BM_DIRTY;
 		}
 		return;
@@ -1417,7 +1417,7 @@ ReleaseRelationBuffers(Relation rdesc)
 		}
 		if ((buf->flags & BM_DIRTY) &&
 			(buf->tag.relId.dbId == MyDatabaseId) &&
-			(buf->tag.relId.relId == rdesc->rd_id))
+			(buf->tag.relId.relId == RelationGetRelid(rel)))
 		{
 			buf->flags &= ~BM_DIRTY;
 			if (!(buf->flags & BM_FREE))
@@ -1559,29 +1559,29 @@ BufferPoolBlowaway()
  * --------------------------------------------------------------------
  */
 int
-BlowawayRelationBuffers(Relation rdesc, BlockNumber block)
+BlowawayRelationBuffers(Relation rel, BlockNumber block)
 {
 	int			i;
 	BufferDesc *buf;
 
-	if (rdesc->rd_islocal)
+	if (rel->rd_islocal)
 	{
 		for (i = 0; i < NLocBuffer; i++)
 		{
 			buf = &LocalBufferDescriptors[i];
-			if (buf->tag.relId.relId == rdesc->rd_id &&
+			if (buf->tag.relId.relId == RelationGetRelid(rel) &&
 				buf->tag.blockNum >= block)
 			{
 				if (buf->flags & BM_DIRTY)
 				{
 					elog(NOTICE, "BlowawayRelationBuffers(%s (local), %u): block %u is dirty",
-						 rdesc->rd_rel->relname.data, block, buf->tag.blockNum);
+						 rel->rd_rel->relname.data, block, buf->tag.blockNum);
 					return (-1);
 				}
 				if (LocalRefCount[i] > 0)
 				{
 					elog(NOTICE, "BlowawayRelationBuffers(%s (local), %u): block %u is referenced (%d)",
-						 rdesc->rd_rel->relname.data, block,
+						 rel->rd_rel->relname.data, block,
 						 buf->tag.blockNum, LocalRefCount[i]);
 					return (-2);
 				}
@@ -1596,7 +1596,7 @@ BlowawayRelationBuffers(Relation rdesc, BlockNumber block)
 	{
 		buf = &BufferDescriptors[i];
 		if (buf->tag.relId.dbId == MyDatabaseId &&
-			buf->tag.relId.relId == rdesc->rd_id &&
+			buf->tag.relId.relId == RelationGetRelid(rel) &&
 			buf->tag.blockNum >= block)
 		{
 			if (buf->flags & BM_DIRTY)

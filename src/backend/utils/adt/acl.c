@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.28 1998/06/15 19:29:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.29 1998/08/19 02:02:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,7 @@ getid(char *s, char *n)
 static char *
 aclparse(char *s, AclItem *aip, unsigned *modechg)
 {
-	HeapTuple	htp;
+	HeapTuple	htup;
 	char		name[NAMEDATALEN];
 
 	Assert(s && aip && modechg);
@@ -150,11 +150,12 @@ aclparse(char *s, AclItem *aip, unsigned *modechg)
 	switch (aip->ai_idtype)
 	{
 		case ACL_IDTYPE_UID:
-			htp = SearchSysCacheTuple(USENAME, PointerGetDatum(name),
-									  0, 0, 0);
-			if (!HeapTupleIsValid(htp))
+			htup = SearchSysCacheTuple(USENAME,
+										PointerGetDatum(name),
+									  	0, 0, 0);
+			if (!HeapTupleIsValid(htup))
 				elog(ERROR, "aclparse: non-existent user \"%s\"", name);
-			aip->ai_id = ((Form_pg_shadow) GETSTRUCT(htp))->usesysid;
+			aip->ai_id = ((Form_pg_shadow) GETSTRUCT(htup))->usesysid;
 			break;
 		case ACL_IDTYPE_GID:
 			aip->ai_id = get_grosysid(name);
@@ -241,7 +242,7 @@ aclitemout(AclItem *aip)
 {
 	char	   *p;
 	char	   *out;
-	HeapTuple	htp;
+	HeapTuple	htup;
 	unsigned	i;
 	static AclItem default_aclitem = {ACL_ID_WORLD,
 		ACL_IDTYPE_WORLD,
@@ -260,9 +261,10 @@ aclitemout(AclItem *aip)
 	switch (aip->ai_idtype)
 	{
 		case ACL_IDTYPE_UID:
-			htp = SearchSysCacheTuple(USESYSID, ObjectIdGetDatum(aip->ai_id),
-									  0, 0, 0);
-			if (!HeapTupleIsValid(htp))
+			htup = SearchSysCacheTuple(USESYSID,
+										ObjectIdGetDatum(aip->ai_id),
+									  	0, 0, 0);
+			if (!HeapTupleIsValid(htup))
 			{
 				char	   *tmp = int2out(aip->ai_id);
 
@@ -283,7 +285,7 @@ aclitemout(AclItem *aip)
 			}
 			else
 				strncat(p, (char *) &((Form_pg_shadow)
-									  GETSTRUCT(htp))->usename,
+									  GETSTRUCT(htup))->usename,
 						sizeof(NameData));
 			break;
 		case ACL_IDTYPE_GID:

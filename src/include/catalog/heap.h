@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.13 1998/08/06 05:13:01 momjian Exp $
+ * $Id: heap.h,v 1.14 1998/08/19 02:03:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@ extern Oid	heap_create_with_catalog(char *relname,
 									 TupleDesc tupdesc, char relkind);
 
 extern void heap_destroy_with_catalog(char relname[]);
-extern void heap_destroy(Relation r);
+extern void heap_destroy(Relation rel);
 
 extern void InitTempRelList(void);
 extern void DestroyTempRels(void);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.19 1998/07/27 19:37:35 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.20 1998/08/19 02:01:00 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -53,7 +53,6 @@ hashbuild(Relation heap,
 		  PredInfo *predInfo)
 {
 	HeapScanDesc hscan;
-	Buffer		buffer;
 	HeapTuple	htup;
 	IndexTuple	itup;
 	TupleDesc	htupdesc,
@@ -65,6 +64,7 @@ hashbuild(Relation heap,
 				nitups;
 	int			i;
 	HashItem	hitem;
+	Buffer		buffer = InvalidBuffer;
 
 #ifndef OMIT_PARTIAL_INDEX
 	ExprContext *econtext;
@@ -120,14 +120,13 @@ hashbuild(Relation heap,
 	}
 #endif							/* OMIT_PARTIAL_INDEX */
 
-	/* start a heap scan */
-	hscan = heap_beginscan(heap, 0, SnapshotNow, 0, (ScanKey) NULL);
-	htup = heap_getnext(hscan, 0, &buffer);
-
 	/* build the index */
 	nhtups = nitups = 0;
 
-	for (; HeapTupleIsValid(htup); htup = heap_getnext(hscan, 0, &buffer))
+	/* start a heap scan */
+	hscan = heap_beginscan(heap, 0, SnapshotNow, 0, (ScanKey) NULL);
+
+	while (HeapTupleIsValid(htup = heap_getnext(hscan, 0)))
 	{
 
 		nhtups++;
@@ -193,8 +192,7 @@ hashbuild(Relation heap,
 											attoff,
 											attnum,
 											finfo,
-											&attnull,
-											buffer);
+											&attnull);
 			nulls[attoff] = (attnull ? 'n' : ' ');
 		}
 
@@ -248,8 +246,8 @@ hashbuild(Relation heap,
 	 */
 	if (IsNormalProcessingMode())
 	{
-		hrelid = heap->rd_id;
-		irelid = index->rd_id;
+		hrelid = RelationGetRelid(heap);
+		irelid = RelationGetRelid(index);
 		heap_close(heap);
 		index_close(index);
 		UpdateStats(hrelid, nhtups, true);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.26 1998/07/27 19:37:49 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.27 1998/08/19 02:01:36 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -120,7 +120,7 @@ OperatorGetWithOpenRelation(Relation pg_operator_desc,
 	 */
 	pg_operator_scan = heap_beginscan(pg_operator_desc,
 									  0,
-									  SnapshotSelf,
+									  SnapshotSelf, /* no cache? */
 									  3,
 									  opKey);
 
@@ -129,7 +129,7 @@ OperatorGetWithOpenRelation(Relation pg_operator_desc,
 	 *	the proper return oid value.
 	 * ----------------
 	 */
-	tup = heap_getnext(pg_operator_scan, 0, (Buffer *) 0);
+	tup = heap_getnext(pg_operator_scan, 0);
 	operatorObjectId = HeapTupleIsValid(tup) ? tup->t_oid : InvalidOid;
 
 	/* ----------------
@@ -138,8 +138,7 @@ OperatorGetWithOpenRelation(Relation pg_operator_desc,
 	 */
 	heap_endscan(pg_operator_scan);
 
-	return
-		operatorObjectId;
+	return operatorObjectId;
 }
 
 /* ----------------------------------------------------------------
@@ -462,8 +461,6 @@ OperatorDef(char *operatorName,
 
 	HeapScanDesc pg_operator_scan;
 	HeapTuple	tup;
-	Buffer		buffer;
-	ItemPointerData itemPointerData;
 	char		nulls[Natts_pg_operator];
 	char		replaces[Natts_pg_operator];
 	Datum		values[Natts_pg_operator];
@@ -549,7 +546,7 @@ OperatorDef(char *operatorName,
 							  PointerGetDatum(typeId),
 							  0);
 
-	if (!PointerIsValid(tup))
+	if (!HeapTupleIsValid(tup))
 		func_error("OperatorDef", procedureName, nargs, typeId, NULL);
 
 	values[Anum_pg_operator_oprcode - 1] = ObjectIdGetDatum(tup->t_oid);
@@ -693,7 +690,7 @@ OperatorDef(char *operatorName,
 	/* last three fields were filled in first */
 
 	/*
-	 * If we are adding to an operator shell, get its t_ctid and a buffer.
+	 * If we are adding to an operator shell, get its t_ctid
 	 */
 	pg_operator_desc = heap_openr(OperatorRelationName);
 
@@ -705,30 +702,27 @@ OperatorDef(char *operatorName,
 
 		pg_operator_scan = heap_beginscan(pg_operator_desc,
 										  0,
-										  SnapshotSelf,
+										  SnapshotSelf, /* no cache? */
 										  3,
 										  opKey);
 
-		tup = heap_getnext(pg_operator_scan, 0, &buffer);
+		tup = heap_getnext(pg_operator_scan, 0);
 		if (HeapTupleIsValid(tup))
 		{
 			tup = heap_modifytuple(tup,
-								   buffer,
 								   pg_operator_desc,
 								   values,
 								   nulls,
 								   replaces);
 
-			ItemPointerCopy(&tup->t_ctid, &itemPointerData);
 			setheapoverride(true);
-			heap_replace(pg_operator_desc, &itemPointerData, tup);
+			heap_replace(pg_operator_desc, &tup->t_ctid, tup);
 			setheapoverride(false);
 		}
 		else
 			elog(ERROR, "OperatorDef: no operator %d", other_oid);
 
 		heap_endscan(pg_operator_scan);
-
 	}
 	else
 	{
@@ -777,8 +771,6 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 	Relation	pg_operator_desc;
 	HeapScanDesc pg_operator_scan;
 	HeapTuple	tup;
-	Buffer		buffer;
-	ItemPointerData itemPointerData;
 	char		nulls[Natts_pg_operator];
 	char		replaces[Natts_pg_operator];
 	Datum		values[Natts_pg_operator];
@@ -804,11 +796,11 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 
 	pg_operator_scan = heap_beginscan(pg_operator_desc,
 									  0,
-									  SnapshotSelf,
+									  SnapshotSelf, /* no cache? */
 									  1,
 									  opKey);
 
-	tup = heap_getnext(pg_operator_scan, 0, &buffer);
+	tup = heap_getnext(pg_operator_scan, 0);
 
 	/* if the commutator and negator are the same operator, do one update */
 	if (commId == negId)
@@ -837,16 +829,13 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 				}
 
 				tup = heap_modifytuple(tup,
-									   buffer,
 									   pg_operator_desc,
 									   values,
 									   nulls,
 									   replaces);
 
-				ItemPointerCopy(&tup->t_ctid, &itemPointerData);
-
 				setheapoverride(true);
-				heap_replace(pg_operator_desc, &itemPointerData, tup);
+				heap_replace(pg_operator_desc, &tup->t_ctid, tup);
 				setheapoverride(false);
 
 			}
@@ -854,10 +843,6 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 		heap_endscan(pg_operator_scan);
 
 		heap_close(pg_operator_desc);
-
-		/* release the buffer properly */
-		if (BufferIsValid(buffer))
-			ReleaseBuffer(buffer);
 
 		return;
 	}
@@ -869,24 +854,17 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 		values[Anum_pg_operator_oprcom - 1] = ObjectIdGetDatum(baseId);
 		replaces[Anum_pg_operator_oprcom - 1] = 'r';
 		tup = heap_modifytuple(tup,
-							   buffer,
 							   pg_operator_desc,
 							   values,
 							   nulls,
 							   replaces);
 
-		ItemPointerCopy(&tup->t_ctid, &itemPointerData);
 		setheapoverride(true);
-		heap_replace(pg_operator_desc, &itemPointerData, tup);
+		heap_replace(pg_operator_desc, &tup->t_ctid, tup);
 		setheapoverride(false);
 
 		values[Anum_pg_operator_oprcom - 1] = (Datum) NULL;
 		replaces[Anum_pg_operator_oprcom - 1] = ' ';
-
-		/* release the buffer properly */
-		if (BufferIsValid(buffer))
-			ReleaseBuffer(buffer);
-
 	}
 
 	/* check and update the negator, if necessary */
@@ -894,33 +872,26 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 
 	pg_operator_scan = heap_beginscan(pg_operator_desc,
 									  0,
-									  SnapshotSelf,
+									  SnapshotSelf, /* no cache? */
 									  1,
 									  opKey);
 
-	tup = heap_getnext(pg_operator_scan, 0, &buffer);
+	tup = heap_getnext(pg_operator_scan, 0);
 	if (HeapTupleIsValid(tup) &&
 		!(OidIsValid(((OperatorTupleForm) GETSTRUCT(tup))->oprnegate)))
 	{
 		values[Anum_pg_operator_oprnegate - 1] = ObjectIdGetDatum(baseId);
 		replaces[Anum_pg_operator_oprnegate - 1] = 'r';
 		tup = heap_modifytuple(tup,
-							   buffer,
 							   pg_operator_desc,
 							   values,
 							   nulls,
 							   replaces);
 
-		ItemPointerCopy(&tup->t_ctid, &itemPointerData);
-
 		setheapoverride(true);
-		heap_replace(pg_operator_desc, &itemPointerData, tup);
+		heap_replace(pg_operator_desc, &tup->t_ctid, tup);
 		setheapoverride(false);
 	}
-
-	/* release the buffer properly */
-	if (BufferIsValid(buffer))
-		ReleaseBuffer(buffer);
 
 	heap_endscan(pg_operator_scan);
 

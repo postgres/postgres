@@ -797,6 +797,7 @@ do
 # workaround indent bug
 	sed 's;^static[ 	][ 	]*;static ;g' |
 	sed 's;^}[ 	][ 	]*/\*;}   /*;' |
+	sed 's;^#endif[ 	][ 	]*/\*;#endif   /*;' |
 	detab -t8 -qc |
 	entab -t4 -qc |
 # move trailing * in function return type

@@ -5,7 +5,10 @@
 # finds oids that are duplicated in the system tables.
 #
 
-egrep '^DATA' pg_*.h | \
+# no multibytes files
+FILES=`ls pg_*.h |grep -v '_mb.h'`
+
+egrep '^DATA' $FILES | \
 	sed -e 's/^.*OID[^=]*=[^0-9]*//' -e 's/[^0-9].*$//' | \
 	sort -n >/tmp/alloids.$$
 uniq /tmp/alloids.$$ >/tmp/uniqoids.$$

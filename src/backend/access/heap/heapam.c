@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.31 1998/07/27 19:37:36 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.32 1998/08/19 02:01:05 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -104,11 +104,11 @@ static bool ImmediateInvalidation;
  */
 
 /* ----------------
- *		initsdesc - sdesc code common to heap_beginscan and heap_rescan
+ *		initscan - scan code common to heap_beginscan and heap_rescan
  * ----------------
  */
 static void
-initsdesc(HeapScanDesc sdesc,
+initscan(HeapScanDesc scan,
 		  Relation relation,
 		  int atend,
 		  unsigned nkeys,
@@ -120,8 +120,8 @@ initsdesc(HeapScanDesc sdesc,
 		 *	relation is empty
 		 * ----------------
 		 */
-		sdesc->rs_ntup = sdesc->rs_ctup = sdesc->rs_ptup = NULL;
-		sdesc->rs_nbuf = sdesc->rs_cbuf = sdesc->rs_pbuf = InvalidBuffer;
+		scan->rs_ntup = scan->rs_ctup = scan->rs_ptup = NULL;
+		scan->rs_nbuf = scan->rs_cbuf = scan->rs_pbuf = InvalidBuffer;
 	}
 	else if (atend)
 	{
@@ -129,10 +129,10 @@ initsdesc(HeapScanDesc sdesc,
 		 *	reverse scan
 		 * ----------------
 		 */
-		sdesc->rs_ntup = sdesc->rs_ctup = NULL;
-		sdesc->rs_nbuf = sdesc->rs_cbuf = InvalidBuffer;
-		sdesc->rs_ptup = NULL;
-		sdesc->rs_pbuf = UnknownBuffer;
+		scan->rs_ntup = scan->rs_ctup = NULL;
+		scan->rs_nbuf = scan->rs_cbuf = InvalidBuffer;
+		scan->rs_ptup = NULL;
+		scan->rs_pbuf = UnknownBuffer;
 	}
 	else
 	{
@@ -140,35 +140,35 @@ initsdesc(HeapScanDesc sdesc,
 		 *	forward scan
 		 * ----------------
 		 */
-		sdesc->rs_ctup = sdesc->rs_ptup = NULL;
-		sdesc->rs_cbuf = sdesc->rs_pbuf = InvalidBuffer;
-		sdesc->rs_ntup = NULL;
-		sdesc->rs_nbuf = UnknownBuffer;
+		scan->rs_ctup = scan->rs_ptup = NULL;
+		scan->rs_cbuf = scan->rs_pbuf = InvalidBuffer;
+		scan->rs_ntup = NULL;
+		scan->rs_nbuf = UnknownBuffer;
 	}							/* invalid too */
 
 	/* we don't have a marked position... */
-	ItemPointerSetInvalid(&(sdesc->rs_mptid));
-	ItemPointerSetInvalid(&(sdesc->rs_mctid));
-	ItemPointerSetInvalid(&(sdesc->rs_mntid));
-	ItemPointerSetInvalid(&(sdesc->rs_mcd));
+	ItemPointerSetInvalid(&(scan->rs_mptid));
+	ItemPointerSetInvalid(&(scan->rs_mctid));
+	ItemPointerSetInvalid(&(scan->rs_mntid));
+	ItemPointerSetInvalid(&(scan->rs_mcd));
 
 	/* ----------------
 	 *	copy the scan key, if appropriate
 	 * ----------------
 	 */
 	if (key != NULL)
-		memmove(sdesc->rs_key, key, nkeys * sizeof(ScanKeyData));
+		memmove(scan->rs_key, key, nkeys * sizeof(ScanKeyData));
 }
 
 /* ----------------
- *		unpinsdesc - code common to heap_rescan and heap_endscan
+ *		unpinscan - code common to heap_rescan and heap_endscan
  * ----------------
  */
 static void
-unpinsdesc(HeapScanDesc sdesc)
+unpinscan(HeapScanDesc scan)
 {
-	if (BufferIsValid(sdesc->rs_pbuf))
-		ReleaseBuffer(sdesc->rs_pbuf);
+	if (BufferIsValid(scan->rs_pbuf))
+		ReleaseBuffer(scan->rs_pbuf);
 
 	/* ------------------------------------
 	 *	Scan will pin buffer one for each non-NULL tuple pointer
@@ -176,11 +176,11 @@ unpinsdesc(HeapScanDesc sdesc)
 	 *	times.
 	 * ------------------------------------
 	 */
-	if (BufferIsValid(sdesc->rs_cbuf))
-		ReleaseBuffer(sdesc->rs_cbuf);
+	if (BufferIsValid(scan->rs_cbuf))
+		ReleaseBuffer(scan->rs_cbuf);
 
-	if (BufferIsValid(sdesc->rs_nbuf))
-		ReleaseBuffer(sdesc->rs_nbuf);
+	if (BufferIsValid(scan->rs_nbuf))
+		ReleaseBuffer(scan->rs_nbuf);
 }
 
 /* ------------------------------------------
@@ -202,13 +202,18 @@ nextpage(int page, int dir)
  *
  *		routine used by heap_getnext() which does most of the
  *		real work in scanning tuples.
+ *
+ *		The scan routines handle their own buffer lock/unlocking, so
+ *		there is no reason to request the buffer number unless
+ *		to want to perform some other operation with the result,
+ *		like pass it to another function.
  * ----------------
  */
 static HeapTuple
 heapgettup(Relation relation,
 		   ItemPointer tid,
 		   int dir,
-		   Buffer *b,
+		   Buffer *buf,
 		   Snapshot snapshot,
 		   int nkeys,
 		   ScanKey key)
@@ -248,7 +253,7 @@ heapgettup(Relation relation,
 		elog(DEBUG, "heapgettup(%s, tid=0x%x, dir=%d, ...)",
 			 RelationGetRelationName(relation), tid, dir);
 	}
-	elog(DEBUG, "heapgettup(..., b=0x%x, nkeys=%d, key=0x%x", b, nkeys, key);
+	elog(DEBUG, "heapgettup(..., b=0x%x, nkeys=%d, key=0x%x", buf, nkeys, key);
 
 	elog(DEBUG, "heapgettup: relation(%c)=`%s', %p",
 		 relation->rd_rel->relkind, &relation->rd_rel->relname,
@@ -278,19 +283,19 @@ heapgettup(Relation relation,
 		/* assume it is a valid TID XXX */
 		if (ItemPointerIsValid(tid) == false)
 		{
-			*b = InvalidBuffer;
+			*buf= InvalidBuffer;
 			return (NULL);
 		}
-		*b = RelationGetBufferWithBuffer(relation,
+		*buf = RelationGetBufferWithBuffer(relation,
 										 ItemPointerGetBlockNumber(tid),
-										 *b);
+										 *buf);
 
 #ifndef NO_BUFFERISVALID
-		if (!BufferIsValid(*b))
+		if (!BufferIsValid(*buf))
 			elog(ERROR, "heapgettup: failed ReadBuffer");
 #endif
 
-		dp = (Page) BufferGetPage(*b);
+		dp = (Page) BufferGetPage(*buf);
 		lineoff = ItemPointerGetOffsetNumber(tid);
 		lpp = PageGetItemId(dp, lineoff);
 
@@ -316,17 +321,17 @@ heapgettup(Relation relation,
 		}
 		if (page < 0)
 		{
-			*b = InvalidBuffer;
+			*buf = InvalidBuffer;
 			return (NULL);
 		}
 
-		*b = RelationGetBufferWithBuffer(relation, page, *b);
+		*buf = RelationGetBufferWithBuffer(relation, page, *buf);
 #ifndef NO_BUFFERISVALID
-		if (!BufferIsValid(*b))
+		if (!BufferIsValid(*buf))
 			elog(ERROR, "heapgettup: failed ReadBuffer");
 #endif
 
-		dp = (Page) BufferGetPage(*b);
+		dp = (Page) BufferGetPage(*buf);
 		lines = PageGetMaxOffsetNumber(dp);
 		if (tid == NULL)
 		{
@@ -360,18 +365,18 @@ heapgettup(Relation relation,
 
 		if (page >= pages)
 		{
-			*b = InvalidBuffer;
+			*buf = InvalidBuffer;
 			return (NULL);
 		}
 		/* page and lineoff now reference the physically next tid */
 
-		*b = RelationGetBufferWithBuffer(relation, page, *b);
+		*buf = RelationGetBufferWithBuffer(relation, page, *buf);
 #ifndef NO_BUFFERISVALID
-		if (!BufferIsValid(*b))
+		if (!BufferIsValid(*buf))
 			elog(ERROR, "heapgettup: failed ReadBuffer");
 #endif
 
-		dp = (Page) BufferGetPage(*b);
+		dp = (Page) BufferGetPage(*buf);
 		lines = PageGetMaxOffsetNumber(dp);
 	}
 
@@ -401,7 +406,7 @@ heapgettup(Relation relation,
 			 *	if current tuple qualifies, return it.
 			 * ----------------
 			 */
-			HeapTupleSatisfies(lpp, relation, *b, (PageHeader) dp,
+			HeapTupleSatisfies(lpp, relation, *buf, (PageHeader) dp,
 							   snapshot, nkeys, key, rtup);
 			if (rtup != NULL)
 			{
@@ -409,7 +414,6 @@ heapgettup(Relation relation,
 
 				if (ItemPointerGetBlockNumber(iptr) != page)
 				{
-
 					/*
 					 * set block id to the correct page number --- this is
 					 * a hack to support the virtual fragment concept
@@ -448,19 +452,19 @@ heapgettup(Relation relation,
 		 */
 		if (page < 0 || page >= pages)
 		{
-			if (BufferIsValid(*b))
-				ReleaseBuffer(*b);
-			*b = InvalidBuffer;
+			if (BufferIsValid(*buf))
+				ReleaseBuffer(*buf);
+			*buf = InvalidBuffer;
 			return (NULL);
 		}
 
-		*b = ReleaseAndReadBuffer(*b, relation, page);
+		*buf = ReleaseAndReadBuffer(*buf, relation, page);
 
 #ifndef NO_BUFFERISVALID
-		if (!BufferIsValid(*b))
+		if (!BufferIsValid(*buf))
 			elog(ERROR, "heapgettup: failed ReadBuffer");
 #endif
-		dp = (Page) BufferGetPage(*b);
+		dp = (Page) BufferGetPage(*buf);
 		lines = lineoff = PageGetMaxOffsetNumber((Page) dp);
 		linesleft = lines - 1;
 		if (dir < 0)
@@ -584,7 +588,7 @@ heap_beginscan(Relation relation,
 			   unsigned nkeys,
 			   ScanKey key)
 {
-	HeapScanDesc sdesc;
+	HeapScanDesc scan;
 
 	/* ----------------
 	 *	increment access statistics
@@ -620,29 +624,29 @@ heap_beginscan(Relation relation,
 	 *	allocate and initialize scan descriptor
 	 * ----------------
 	 */
-	sdesc = (HeapScanDesc) palloc(sizeof(HeapScanDescData));
+	scan = (HeapScanDesc) palloc(sizeof(HeapScanDescData));
 
 	relation->rd_nblocks = smgrnblocks(DEFAULT_SMGR, relation);
-	sdesc->rs_rd = relation;
+	scan->rs_rd = relation;
 
 	if (nkeys)
 
 		/*
-		 * we do this here instead of in initsdesc() because heap_rescan
-		 * also calls initsdesc() and we don't want to allocate memory
+		 * we do this here instead of in initscan() because heap_rescan
+		 * also calls initscan() and we don't want to allocate memory
 		 * again
 		 */
-		sdesc->rs_key = (ScanKey) palloc(sizeof(ScanKeyData) * nkeys);
+		scan->rs_key = (ScanKey) palloc(sizeof(ScanKeyData) * nkeys);
 	else
-		sdesc->rs_key = NULL;
+		scan->rs_key = NULL;
 
-	initsdesc(sdesc, relation, atend, nkeys, key);
+	initscan(scan, relation, atend, nkeys, key);
 
-	sdesc->rs_atend = atend;
-	sdesc->rs_snapshot = snapshot;
-	sdesc->rs_nkeys = (short) nkeys;
+	scan->rs_atend = atend;
+	scan->rs_snapshot = snapshot;
+	scan->rs_nkeys = (short) nkeys;
 
-	return (sdesc);
+	return (scan);
 }
 
 /* ----------------
@@ -650,7 +654,7 @@ heap_beginscan(Relation relation,
  * ----------------
  */
 void
-heap_rescan(HeapScanDesc sdesc,
+heap_rescan(HeapScanDesc scan,
 			bool scanFromEnd,
 			ScanKey key)
 {
@@ -667,14 +671,14 @@ heap_rescan(HeapScanDesc sdesc,
 	 *	unpin scan buffers
 	 * ----------------
 	 */
-	unpinsdesc(sdesc);
+	unpinscan(scan);
 
 	/* ----------------
 	 *	reinitialize scan descriptor
 	 * ----------------
 	 */
-	initsdesc(sdesc, sdesc->rs_rd, scanFromEnd, sdesc->rs_nkeys, key);
-	sdesc->rs_atend = (bool) scanFromEnd;
+	initscan(scan, scan->rs_rd, scanFromEnd, scan->rs_nkeys, key);
+	scan->rs_atend = (bool) scanFromEnd;
 }
 
 /* ----------------
@@ -685,7 +689,7 @@ heap_rescan(HeapScanDesc sdesc,
  * ----------------
  */
 void
-heap_endscan(HeapScanDesc sdesc)
+heap_endscan(HeapScanDesc scan)
 {
 	/* ----------------
 	 *	increment access statistics
@@ -700,36 +704,38 @@ heap_endscan(HeapScanDesc sdesc)
 	 *	unpin scan buffers
 	 * ----------------
 	 */
-	unpinsdesc(sdesc);
+	unpinscan(scan);
 
 	/* ----------------
 	 *	decrement relation reference count and free scan descriptor storage
 	 * ----------------
 	 */
-	RelationDecrementReferenceCount(sdesc->rs_rd);
+	RelationDecrementReferenceCount(scan->rs_rd);
 
 	/* ----------------
 	 * Non 2-phase read locks on catalog relations
 	 * ----------------
 	 */
-	if (IsSystemRelationName(RelationGetRelationName(sdesc->rs_rd)->data))
+	if (IsSystemRelationName(RelationGetRelationName(scan->rs_rd)->data))
 
-		RelationUnsetLockForRead(sdesc->rs_rd);
+		RelationUnsetLockForRead(scan->rs_rd);
 
-	pfree(sdesc);				/* XXX */
+	pfree(scan);				/* XXX */
 }
 
 /* ----------------
  *		heap_getnext	- retrieve next tuple in scan
  *
  *		Fix to work with index relations.
+ *		We don't return the buffer anymore, but you can get it from the
+ *		returned HeapTuple.
  * ----------------
  */
 
 #ifdef HEAPDEBUGALL
 #define HEAPDEBUG_1 \
-elog(DEBUG, "heap_getnext([%s,nkeys=%d],backw=%d,0x%x) called", \
-	 sdesc->rs_rd->rd_rel->relname.data, sdesc->rs_nkeys, backw, b)
+elog(DEBUG, "heap_getnext([%s,nkeys=%d],backw=%d) called", \
+	 scan->rs_rd->rd_rel->relname.data, scan->rs_nkeys, backw)
 
 #define HEAPDEBUG_2 \
 	 elog(DEBUG, "heap_getnext called with backw (no tracing yet)")
@@ -760,12 +766,9 @@ elog(DEBUG, "heap_getnext([%s,nkeys=%d],backw=%d,0x%x) called", \
 
 
 HeapTuple
-heap_getnext(HeapScanDesc scandesc,
-			 int backw,
-			 Buffer *b)
+heap_getnext(HeapScanDesc scandesc, int backw)
 {
-	HeapScanDesc sdesc = scandesc;
-	Buffer		localb;
+	HeapScanDesc scan = scandesc;
 
 	/* ----------------
 	 *	increment access statistics
@@ -780,16 +783,13 @@ heap_getnext(HeapScanDesc scandesc,
 	 *	argument checks
 	 * ----------------
 	 */
-	if (sdesc == NULL)
+	if (scan == NULL)
 		elog(ERROR, "heap_getnext: NULL relscan");
 
 	/* ----------------
 	 *	initialize return buffer to InvalidBuffer
 	 * ----------------
 	 */
-	if (!PointerIsValid(b))
-		b = &localb;
-	(*b) = InvalidBuffer;
 
 	HEAPDEBUG_1;				/* heap_getnext( info ) */
 
@@ -801,11 +801,11 @@ heap_getnext(HeapScanDesc scandesc,
 		 */
 		HEAPDEBUG_2;			/* heap_getnext called with backw */
 
-		if (sdesc->rs_ptup == sdesc->rs_ctup &&
-			BufferIsInvalid(sdesc->rs_pbuf))
+		if (scan->rs_ptup == scan->rs_ctup &&
+			BufferIsInvalid(scan->rs_pbuf))
 		{
-			if (BufferIsValid(sdesc->rs_nbuf))
-				ReleaseBuffer(sdesc->rs_nbuf);
+			if (BufferIsValid(scan->rs_nbuf))
+				ReleaseBuffer(scan->rs_nbuf);
 			return (NULL);
 		}
 
@@ -813,37 +813,37 @@ heap_getnext(HeapScanDesc scandesc,
 		 * Copy the "current" tuple/buffer to "next". Pin/unpin the
 		 * buffers accordingly
 		 */
-		if (sdesc->rs_nbuf != sdesc->rs_cbuf)
+		if (scan->rs_nbuf != scan->rs_cbuf)
 		{
-			if (BufferIsValid(sdesc->rs_nbuf))
-				ReleaseBuffer(sdesc->rs_nbuf);
-			if (BufferIsValid(sdesc->rs_cbuf))
-				IncrBufferRefCount(sdesc->rs_cbuf);
+			if (BufferIsValid(scan->rs_nbuf))
+				ReleaseBuffer(scan->rs_nbuf);
+			if (BufferIsValid(scan->rs_cbuf))
+				IncrBufferRefCount(scan->rs_cbuf);
 		}
-		sdesc->rs_ntup = sdesc->rs_ctup;
-		sdesc->rs_nbuf = sdesc->rs_cbuf;
+		scan->rs_ntup = scan->rs_ctup;
+		scan->rs_nbuf = scan->rs_cbuf;
 
-		if (sdesc->rs_ptup != NULL)
+		if (scan->rs_ptup != NULL)
 		{
-			if (sdesc->rs_cbuf != sdesc->rs_pbuf)
+			if (scan->rs_cbuf != scan->rs_pbuf)
 			{
-				if (BufferIsValid(sdesc->rs_cbuf))
-					ReleaseBuffer(sdesc->rs_cbuf);
-				if (BufferIsValid(sdesc->rs_pbuf))
-					IncrBufferRefCount(sdesc->rs_pbuf);
+				if (BufferIsValid(scan->rs_cbuf))
+					ReleaseBuffer(scan->rs_cbuf);
+				if (BufferIsValid(scan->rs_pbuf))
+					IncrBufferRefCount(scan->rs_pbuf);
 			}
-			sdesc->rs_ctup = sdesc->rs_ptup;
-			sdesc->rs_cbuf = sdesc->rs_pbuf;
+			scan->rs_ctup = scan->rs_ptup;
+			scan->rs_cbuf = scan->rs_pbuf;
 		}
 		else
 		{						/* NONTUP */
 			ItemPointer iptr;
 
-			iptr = (sdesc->rs_ctup != NULL) ?
-				&(sdesc->rs_ctup->t_ctid) : (ItemPointer) NULL;
+			iptr = (scan->rs_ctup != NULL) ?
+				&(scan->rs_ctup->t_ctid) : (ItemPointer) NULL;
 
 			/*
-			 * Don't release sdesc->rs_cbuf at this point, because
+			 * Don't release scan->rs_cbuf at this point, because
 			 * heapgettup doesn't increase PrivateRefCount if it is
 			 * already set. On a backward scan, both rs_ctup and rs_ntup
 			 * usually point to the same buffer page, so
@@ -851,33 +851,33 @@ heap_getnext(HeapScanDesc scandesc,
 			 * instance ctup is stored in a TupleTableSlot).  - 01/09/94
 			 */
 
-			sdesc->rs_ctup = (HeapTuple)
-				heapgettup(sdesc->rs_rd,
+			scan->rs_ctup = (HeapTuple)
+				heapgettup(scan->rs_rd,
 						   iptr,
 						   -1,
-						   &(sdesc->rs_cbuf),
-						   sdesc->rs_snapshot,
-						   sdesc->rs_nkeys,
-						   sdesc->rs_key);
+						   &(scan->rs_cbuf),
+						   scan->rs_snapshot,
+						   scan->rs_nkeys,
+						   scan->rs_key);
 		}
 
-		if (sdesc->rs_ctup == NULL && !BufferIsValid(sdesc->rs_cbuf))
+		if (scan->rs_ctup == NULL && !BufferIsValid(scan->rs_cbuf))
 		{
-			if (BufferIsValid(sdesc->rs_pbuf))
-				ReleaseBuffer(sdesc->rs_pbuf);
-			sdesc->rs_ptup = NULL;
-			sdesc->rs_pbuf = InvalidBuffer;
-			if (BufferIsValid(sdesc->rs_nbuf))
-				ReleaseBuffer(sdesc->rs_nbuf);
-			sdesc->rs_ntup = NULL;
-			sdesc->rs_nbuf = InvalidBuffer;
+			if (BufferIsValid(scan->rs_pbuf))
+				ReleaseBuffer(scan->rs_pbuf);
+			scan->rs_ptup = NULL;
+			scan->rs_pbuf = InvalidBuffer;
+			if (BufferIsValid(scan->rs_nbuf))
+				ReleaseBuffer(scan->rs_nbuf);
+			scan->rs_ntup = NULL;
+			scan->rs_nbuf = InvalidBuffer;
 			return (NULL);
 		}
 
-		if (BufferIsValid(sdesc->rs_pbuf))
-			ReleaseBuffer(sdesc->rs_pbuf);
-		sdesc->rs_ptup = NULL;
-		sdesc->rs_pbuf = UnknownBuffer;
+		if (BufferIsValid(scan->rs_pbuf))
+			ReleaseBuffer(scan->rs_pbuf);
+		scan->rs_ptup = NULL;
+		scan->rs_pbuf = UnknownBuffer;
 
 	}
 	else
@@ -886,11 +886,11 @@ heap_getnext(HeapScanDesc scandesc,
 		 *	handle forward scan
 		 * ----------------
 		 */
-		if (sdesc->rs_ctup == sdesc->rs_ntup &&
-			BufferIsInvalid(sdesc->rs_nbuf))
+		if (scan->rs_ctup == scan->rs_ntup &&
+			BufferIsInvalid(scan->rs_nbuf))
 		{
-			if (BufferIsValid(sdesc->rs_pbuf))
-				ReleaseBuffer(sdesc->rs_pbuf);
+			if (BufferIsValid(scan->rs_pbuf))
+				ReleaseBuffer(scan->rs_pbuf);
 			HEAPDEBUG_3;		/* heap_getnext returns NULL at end */
 			return (NULL);
 		}
@@ -899,38 +899,38 @@ heap_getnext(HeapScanDesc scandesc,
 		 * Copy the "current" tuple/buffer to "previous". Pin/unpin the
 		 * buffers accordingly
 		 */
-		if (sdesc->rs_pbuf != sdesc->rs_cbuf)
+		if (scan->rs_pbuf != scan->rs_cbuf)
 		{
-			if (BufferIsValid(sdesc->rs_pbuf))
-				ReleaseBuffer(sdesc->rs_pbuf);
-			if (BufferIsValid(sdesc->rs_cbuf))
-				IncrBufferRefCount(sdesc->rs_cbuf);
+			if (BufferIsValid(scan->rs_pbuf))
+				ReleaseBuffer(scan->rs_pbuf);
+			if (BufferIsValid(scan->rs_cbuf))
+				IncrBufferRefCount(scan->rs_cbuf);
 		}
-		sdesc->rs_ptup = sdesc->rs_ctup;
-		sdesc->rs_pbuf = sdesc->rs_cbuf;
+		scan->rs_ptup = scan->rs_ctup;
+		scan->rs_pbuf = scan->rs_cbuf;
 
-		if (sdesc->rs_ntup != NULL)
+		if (scan->rs_ntup != NULL)
 		{
-			if (sdesc->rs_cbuf != sdesc->rs_nbuf)
+			if (scan->rs_cbuf != scan->rs_nbuf)
 			{
-				if (BufferIsValid(sdesc->rs_cbuf))
-					ReleaseBuffer(sdesc->rs_cbuf);
-				if (BufferIsValid(sdesc->rs_nbuf))
-					IncrBufferRefCount(sdesc->rs_nbuf);
+				if (BufferIsValid(scan->rs_cbuf))
+					ReleaseBuffer(scan->rs_cbuf);
+				if (BufferIsValid(scan->rs_nbuf))
+					IncrBufferRefCount(scan->rs_nbuf);
 			}
-			sdesc->rs_ctup = sdesc->rs_ntup;
-			sdesc->rs_cbuf = sdesc->rs_nbuf;
+			scan->rs_ctup = scan->rs_ntup;
+			scan->rs_cbuf = scan->rs_nbuf;
 			HEAPDEBUG_5;		/* heap_getnext next tuple was cached */
 		}
 		else
 		{						/* NONTUP */
 			ItemPointer iptr;
 
-			iptr = (sdesc->rs_ctup != NULL) ?
-				&sdesc->rs_ctup->t_ctid : (ItemPointer) NULL;
+			iptr = (scan->rs_ctup != NULL) ?
+				&scan->rs_ctup->t_ctid : (ItemPointer) NULL;
 
 			/*
-			 * Don't release sdesc->rs_cbuf at this point, because
+			 * Don't release scan->rs_cbuf at this point, because
 			 * heapgettup doesn't increase PrivateRefCount if it is
 			 * already set. On a forward scan, both rs_ctup and rs_ptup
 			 * usually point to the same buffer page, so
@@ -938,34 +938,34 @@ heap_getnext(HeapScanDesc scandesc,
 			 * instance ctup is stored in a TupleTableSlot).  - 01/09/93
 			 */
 
-			sdesc->rs_ctup = (HeapTuple)
-				heapgettup(sdesc->rs_rd,
+			scan->rs_ctup = (HeapTuple)
+				heapgettup(scan->rs_rd,
 						   iptr,
 						   1,
-						   &sdesc->rs_cbuf,
-						   sdesc->rs_snapshot,
-						   sdesc->rs_nkeys,
-						   sdesc->rs_key);
+						   &scan->rs_cbuf,
+						   scan->rs_snapshot,
+						   scan->rs_nkeys,
+						   scan->rs_key);
 		}
 
-		if (sdesc->rs_ctup == NULL && !BufferIsValid(sdesc->rs_cbuf))
+		if (scan->rs_ctup == NULL && !BufferIsValid(scan->rs_cbuf))
 		{
-			if (BufferIsValid(sdesc->rs_nbuf))
-				ReleaseBuffer(sdesc->rs_nbuf);
-			sdesc->rs_ntup = NULL;
-			sdesc->rs_nbuf = InvalidBuffer;
-			if (BufferIsValid(sdesc->rs_pbuf))
-				ReleaseBuffer(sdesc->rs_pbuf);
-			sdesc->rs_ptup = NULL;
-			sdesc->rs_pbuf = InvalidBuffer;
+			if (BufferIsValid(scan->rs_nbuf))
+				ReleaseBuffer(scan->rs_nbuf);
+			scan->rs_ntup = NULL;
+			scan->rs_nbuf = InvalidBuffer;
+			if (BufferIsValid(scan->rs_pbuf))
+				ReleaseBuffer(scan->rs_pbuf);
+			scan->rs_ptup = NULL;
+			scan->rs_pbuf = InvalidBuffer;
 			HEAPDEBUG_6;		/* heap_getnext returning EOS */
 			return (NULL);
 		}
 
-		if (BufferIsValid(sdesc->rs_nbuf))
-			ReleaseBuffer(sdesc->rs_nbuf);
-		sdesc->rs_ntup = NULL;
-		sdesc->rs_nbuf = UnknownBuffer;
+		if (BufferIsValid(scan->rs_nbuf))
+			ReleaseBuffer(scan->rs_nbuf);
+		scan->rs_ntup = NULL;
+		scan->rs_nbuf = UnknownBuffer;
 	}
 
 	/* ----------------
@@ -973,24 +973,31 @@ heap_getnext(HeapScanDesc scandesc,
 	 *	point to the proper return buffer and return the tuple.
 	 * ----------------
 	 */
-	(*b) = sdesc->rs_cbuf;
 
 	HEAPDEBUG_7;				/* heap_getnext returning tuple */
 
-	return (sdesc->rs_ctup);
+	return scan->rs_ctup;
 }
 
 /* ----------------
  *		heap_fetch		- retrive tuple with tid
  *
  *		Currently ignores LP_IVALID during processing!
+ *
+ *		Because this is not part of a scan, there is no way to
+ *		automatically lock/unlock the shared buffers.
+ *		For this reason, we require that the user retrieve the buffer
+ *		value, and they are required to BuffferRelease() it when they
+ *		are done.  If they want to make a copy of it before releasing it,
+ *		they can call heap_copytyple().
+ 
  * ----------------
  */
 HeapTuple
 heap_fetch(Relation relation,
 		   Snapshot snapshot,
 		   ItemPointer tid,
-		   Buffer *b)
+		   Buffer *userbuf)
 {
 	ItemId		lp;
 	Buffer		buffer;
@@ -998,6 +1005,8 @@ heap_fetch(Relation relation,
 	HeapTuple	tuple;
 	OffsetNumber offnum;
 
+	AssertMacro(PointerIsValid(userbuf));	/* see comments above */
+	
 	/* ----------------
 	 *	increment access statistics
 	 * ----------------
@@ -1061,17 +1070,12 @@ heap_fetch(Relation relation,
 	/* ----------------
 	 *	all checks passed, now either return a copy of the tuple
 	 *	or pin the buffer page and return a pointer, depending on
-	 *	whether caller gave us a valid b.
+	 *	whether caller gave us a valid buf.
 	 * ----------------
 	 */
 
-	if (PointerIsValid(b))
-		*b = buffer;
-	else
-	{
-		tuple = heap_copytuple(tuple);
-		ReleaseBuffer(buffer);
-	}
+	*userbuf = buffer;	/* user is required to ReleaseBuffer() this */
+
 	return (tuple);
 }
 
@@ -1161,7 +1165,7 @@ heap_delete(Relation relation, ItemPointer tid)
 	ItemId		lp;
 	HeapTuple	tp;
 	PageHeader	dp;
-	Buffer		b;
+	Buffer		buf;
 
 	/* ----------------
 	 *	increment access statistics
@@ -1182,16 +1186,16 @@ heap_delete(Relation relation, ItemPointer tid)
 	 */
 	RelationSetLockForWrite(relation);
 
-	b = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
+	buf = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 
 #ifndef NO_BUFFERISVALID
-	if (!BufferIsValid(b))
+	if (!BufferIsValid(buf))
 	{							/* XXX L_SH better ??? */
 		elog(ERROR, "heap_delete: failed ReadBuffer");
 	}
 #endif							/* NO_BUFFERISVALID */
 
-	dp = (PageHeader) BufferGetPage(b);
+	dp = (PageHeader) BufferGetPage(buf);
 	lp = PageGetItemId(dp, ItemPointerGetOffsetNumber(tid));
 
 	/*
@@ -1208,20 +1212,20 @@ heap_delete(Relation relation, ItemPointer tid)
 		*/
 		if (IsSystemRelationName(RelationGetRelationName(relation)->data))
 			RelationUnsetLockForWrite(relation);
-		ReleaseBuffer(b);
+		ReleaseBuffer(buf);
 		return (1);
 	}
 	/* ----------------
 	 *	check that we're deleteing a valid item
 	 * ----------------
 	 */
-	HeapTupleSatisfies(lp, relation, b, dp,
+	HeapTupleSatisfies(lp, relation, buf, dp,
 					   false, 0, (ScanKey) NULL, tp);
 	if (!tp)
 	{
 
 		/* XXX call something else */
-		ReleaseBuffer(b);
+		ReleaseBuffer(buf);
 
 		elog(ERROR, "heap_delete: (am)invalid tid");
 	}
@@ -1248,7 +1252,7 @@ heap_delete(Relation relation, ItemPointer tid)
 	RelationInvalidateHeapTuple(relation, tp);
 	SetRefreshWhenInvalidate((bool) !ImmediateInvalidation);
 
-	WriteBuffer(b);
+	WriteBuffer(buf);
 	if (IsSystemRelationName(RelationGetRelationName(relation)->data))
 		RelationUnsetLockForWrite(relation);
 
@@ -1426,7 +1430,7 @@ heap_replace(Relation relation, ItemPointer otid, HeapTuple tup)
  * ----------------
  */
 void
-heap_markpos(HeapScanDesc sdesc)
+heap_markpos(HeapScanDesc scan)
 {
 
 	/* ----------------
@@ -1438,50 +1442,50 @@ heap_markpos(HeapScanDesc sdesc)
 
 	/* Note: no locking manipulations needed */
 
-	if (sdesc->rs_ptup == NULL &&
-		BufferIsUnknown(sdesc->rs_pbuf))
+	if (scan->rs_ptup == NULL &&
+		BufferIsUnknown(scan->rs_pbuf))
 	{							/* == NONTUP */
-		sdesc->rs_ptup = (HeapTuple)
-			heapgettup(sdesc->rs_rd,
-					   (sdesc->rs_ctup == NULL) ?
-					   (ItemPointer) NULL : &sdesc->rs_ctup->t_ctid,
+		scan->rs_ptup = (HeapTuple)
+			heapgettup(scan->rs_rd,
+					   (scan->rs_ctup == NULL) ?
+					   (ItemPointer) NULL : &scan->rs_ctup->t_ctid,
 					   -1,
-					   &sdesc->rs_pbuf,
-					   sdesc->rs_snapshot,
-					   sdesc->rs_nkeys,
-					   sdesc->rs_key);
+					   &scan->rs_pbuf,
+					   scan->rs_snapshot,
+					   scan->rs_nkeys,
+					   scan->rs_key);
 
 	}
-	else if (sdesc->rs_ntup == NULL &&
-			 BufferIsUnknown(sdesc->rs_nbuf))
+	else if (scan->rs_ntup == NULL &&
+			 BufferIsUnknown(scan->rs_nbuf))
 	{							/* == NONTUP */
-		sdesc->rs_ntup = (HeapTuple)
-			heapgettup(sdesc->rs_rd,
-					   (sdesc->rs_ctup == NULL) ?
-					   (ItemPointer) NULL : &sdesc->rs_ctup->t_ctid,
+		scan->rs_ntup = (HeapTuple)
+			heapgettup(scan->rs_rd,
+					   (scan->rs_ctup == NULL) ?
+					   (ItemPointer) NULL : &scan->rs_ctup->t_ctid,
 					   1,
-					   &sdesc->rs_nbuf,
-					   sdesc->rs_snapshot,
-					   sdesc->rs_nkeys,
-					   sdesc->rs_key);
+					   &scan->rs_nbuf,
+					   scan->rs_snapshot,
+					   scan->rs_nkeys,
+					   scan->rs_key);
 	}
 
 	/* ----------------
 	 * Should not unpin the buffer pages.  They may still be in use.
 	 * ----------------
 	 */
-	if (sdesc->rs_ptup != NULL)
-		sdesc->rs_mptid = sdesc->rs_ptup->t_ctid;
+	if (scan->rs_ptup != NULL)
+		scan->rs_mptid = scan->rs_ptup->t_ctid;
 	else
-		ItemPointerSetInvalid(&sdesc->rs_mptid);
-	if (sdesc->rs_ctup != NULL)
-		sdesc->rs_mctid = sdesc->rs_ctup->t_ctid;
+		ItemPointerSetInvalid(&scan->rs_mptid);
+	if (scan->rs_ctup != NULL)
+		scan->rs_mctid = scan->rs_ctup->t_ctid;
 	else
-		ItemPointerSetInvalid(&sdesc->rs_mctid);
-	if (sdesc->rs_ntup != NULL)
-		sdesc->rs_mntid = sdesc->rs_ntup->t_ctid;
+		ItemPointerSetInvalid(&scan->rs_mctid);
+	if (scan->rs_ntup != NULL)
+		scan->rs_mntid = scan->rs_ntup->t_ctid;
 	else
-		ItemPointerSetInvalid(&sdesc->rs_mntid);
+		ItemPointerSetInvalid(&scan->rs_mntid);
 }
 
 /* ----------------
@@ -1506,7 +1510,7 @@ heap_markpos(HeapScanDesc sdesc)
  * ----------------
  */
 void
-heap_restrpos(HeapScanDesc sdesc)
+heap_restrpos(HeapScanDesc scan)
 {
 	/* ----------------
 	 *	increment access statistics
@@ -1519,50 +1523,50 @@ heap_restrpos(HeapScanDesc sdesc)
 
 	/* Note: no locking manipulations needed */
 
-	unpinsdesc(sdesc);
+	unpinscan(scan);
 
 	/* force heapgettup to pin buffer for each loaded tuple */
-	sdesc->rs_pbuf = InvalidBuffer;
-	sdesc->rs_cbuf = InvalidBuffer;
-	sdesc->rs_nbuf = InvalidBuffer;
+	scan->rs_pbuf = InvalidBuffer;
+	scan->rs_cbuf = InvalidBuffer;
+	scan->rs_nbuf = InvalidBuffer;
 
-	if (!ItemPointerIsValid(&sdesc->rs_mptid))
-		sdesc->rs_ptup = NULL;
+	if (!ItemPointerIsValid(&scan->rs_mptid))
+		scan->rs_ptup = NULL;
 	else
 	{
-		sdesc->rs_ptup = (HeapTuple)
-			heapgettup(sdesc->rs_rd,
-					   &sdesc->rs_mptid,
+		scan->rs_ptup = (HeapTuple)
+			heapgettup(scan->rs_rd,
+					   &scan->rs_mptid,
 					   0,
-					   &sdesc->rs_pbuf,
+					   &scan->rs_pbuf,
 					   false,
 					   0,
 					   (ScanKey) NULL);
 	}
 
-	if (!ItemPointerIsValid(&sdesc->rs_mctid))
-		sdesc->rs_ctup = NULL;
+	if (!ItemPointerIsValid(&scan->rs_mctid))
+		scan->rs_ctup = NULL;
 	else
 	{
-		sdesc->rs_ctup = (HeapTuple)
-			heapgettup(sdesc->rs_rd,
-					   &sdesc->rs_mctid,
+		scan->rs_ctup = (HeapTuple)
+			heapgettup(scan->rs_rd,
+					   &scan->rs_mctid,
 					   0,
-					   &sdesc->rs_cbuf,
+					   &scan->rs_cbuf,
 					   false,
 					   0,
 					   (ScanKey) NULL);
 	}
 
-	if (!ItemPointerIsValid(&sdesc->rs_mntid))
-		sdesc->rs_ntup = NULL;
+	if (!ItemPointerIsValid(&scan->rs_mntid))
+		scan->rs_ntup = NULL;
 	else
 	{
-		sdesc->rs_ntup = (HeapTuple)
-			heapgettup(sdesc->rs_rd,
-					   &sdesc->rs_mntid,
+		scan->rs_ntup = (HeapTuple)
+			heapgettup(scan->rs_rd,
+					   &scan->rs_mntid,
 					   0,
-					   &sdesc->rs_nbuf,
+					   &scan->rs_nbuf,
 					   false,
 					   0,
 					   (ScanKey) NULL);

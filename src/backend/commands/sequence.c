@@ -395,18 +395,18 @@ init_sequence(char *caller, char *name)
 
 	if (elm != (SeqTable) NULL) /* we opened sequence from our */
 	{							/* SeqTable - check relid ! */
-		if (RelationGetRelationId(elm->rel) != elm->relid)
+		if (RelationGetRelid(elm->rel) != elm->relid)
 		{
 			elog(NOTICE, "%s.%s: sequence was re-created",
 				 name, caller, name);
 			elm->cached = elm->last = elm->increment = 0;
-			elm->relid = RelationGetRelationId(elm->rel);
+			elm->relid = RelationGetRelid(elm->rel);
 		}
 	}
 	else
 	{
 		elm = temp;
-		elm->relid = RelationGetRelationId(elm->rel);
+		elm->relid = RelationGetRelid(elm->rel);
 		if (seqtab == (SeqTable) NULL)
 			seqtab = elm;
 		else

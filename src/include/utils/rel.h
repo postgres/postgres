@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.17 1998/02/26 04:44:09 momjian Exp $
+ * $Id: rel.h,v 1.18 1998/08/19 02:04:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,12 +146,12 @@ typedef Relation *RelationPtr;
 
 
 /*
- * RelationGetRelationId --
+ * RelationGetRelid --
  *
  *	returns the object id of the relation
  *
  */
-#define RelationGetRelationId(relation) ((relation)->rd_id)
+#define RelationGetRelid(relation) ((relation)->rd_id)
 
 /*
  * RelationGetFile --

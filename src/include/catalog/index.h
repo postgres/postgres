@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.10 1998/02/26 04:40:40 momjian Exp $
+ * $Id: index.h,v 1.11 1998/08/19 02:03:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ extern void index_destroy(Oid indexId);
 extern void
 FormIndexDatum(int numberOfAttributes,
 			   AttrNumber attributeNumber[], HeapTuple heapTuple,
-			   TupleDesc heapDescriptor, Buffer buffer, Datum *datum,
+			   TupleDesc heapDescriptor, Datum *datum,
 			   char *nullv, FuncIndexInfoPtr fInfo);
 
 extern void UpdateStats(Oid relid, long reltuples, bool hasindex);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.18 1998/06/15 19:29:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.19 1998/08/19 02:03:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 			   *probinstring;
 	Datum		probinattr;
 	func_ptr	user_fn;
-	Relation	rdesc;
+	Relation	rel;
 	bool		isnull;
 
 	if (procedureId == procedureId_save)
@@ -71,7 +71,8 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 	 * The procedure isn't a builtin, so we'll have to do a catalog lookup
 	 * to find its pg_proc entry.
 	 */
-	procedureTuple = SearchSysCacheTuple(PROOID, ObjectIdGetDatum(procedureId),
+	procedureTuple = SearchSysCacheTuple(PROOID,
+										 ObjectIdGetDatum(procedureId),
 										 0, 0, 0);
 	if (!HeapTupleIsValid(procedureTuple))
 	{
@@ -87,13 +88,13 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 	/*
 	 * Extract the procedure info from the pg_proc tuple. Since probin is
 	 * varlena, do a amgetattr() on the procedure tuple.  To do that, we
-	 * need the rdesc for the procedure relation, so...
+	 * need the rel for the procedure relation, so...
 	 */
 
 	/* open pg_procedure */
 
-	rdesc = heap_openr(ProcedureRelationName);
-	if (!RelationIsValid(rdesc))
+	rel = heap_openr(ProcedureRelationName);
+	if (!RelationIsValid(rel))
 	{
 		elog(ERROR, "fmgr: Could not open relation %s",
 			 ProcedureRelationName);
@@ -101,10 +102,10 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 	}
 	probinattr = heap_getattr(procedureTuple,
 							  Anum_pg_proc_probin,
-							  RelationGetTupleDescriptor(rdesc), &isnull);
+							  RelationGetTupleDescriptor(rel), &isnull);
 	if (!PointerIsValid(probinattr) /* || isnull */ )
 	{
-		heap_close(rdesc);
+		heap_close(rel);
 		elog(ERROR, "fmgr: Could not extract probin for %d from %s",
 			 procedureId, ProcedureRelationName);
 		return ((func_ptr) NULL);

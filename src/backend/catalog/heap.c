@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.57 1998/08/17 16:03:31 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.58 1998/08/19 02:01:30 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
@@ -56,6 +56,7 @@
 #include "utils/builtins.h"
 #include "utils/mcxt.h"
 #include "utils/relcache.h"
+#include "utils/syscache.h"
 #include "utils/tqual.h"
 
 #ifndef HAVE_MEMMOVE
@@ -69,9 +70,9 @@ AddPgRelationTuple(Relation pg_class_desc,
 				 Relation new_rel_desc, Oid new_rel_oid, unsigned natts,
 				 char relkind);
 static void AddToTempRelList(Relation r);
-static void DeletePgAttributeTuples(Relation rdesc);
-static void DeletePgRelationTuple(Relation rdesc);
-static void DeletePgTypeTuple(Relation rdesc);
+static void DeletePgAttributeTuples(Relation rel);
+static void DeletePgRelationTuple(Relation rel);
+static void DeletePgTypeTuple(Relation rel);
 static int	RelationAlreadyExists(Relation pg_class_desc, char relname[]);
 static void RelationRemoveIndexes(Relation relation);
 static void RelationRemoveInheritance(Relation relation);
@@ -157,7 +158,7 @@ static TempRelList *tempRels = NULL;
  *		heap_create		- Create an uncataloged heap relation
  *
  *		Fields relpages, reltuples, reltuples, relkeys, relhistory,
- *		relisindexed, and relkind of rdesc->rd_rel are initialized
+ *		relisindexed, and relkind of rel->rd_rel are initialized
  *		to all zeros, as are rd_last and rd_hook.  Rd_refcnt is set to 1.
  *
  *		Remove the system relation specific code to elsewhere eventually.
@@ -176,7 +177,7 @@ heap_create(char *name,
 {
 	unsigned	i;
 	Oid			relid;
-	Relation	rdesc;
+	Relation	rel;
 	int			len;
 	bool		nailme = false;
 	char	   *relname = name;
@@ -259,13 +260,13 @@ heap_create(char *name,
 	 */
 	len = sizeof(RelationData);
 
-	rdesc = (Relation) palloc(len);
-	MemSet((char *) rdesc, 0, len);
+	rel = (Relation) palloc(len);
+	MemSet((char *) rel, 0, len);
 
 	/* ----------
 	   create a new tuple descriptor from the one passed in
 	*/
-	rdesc->rd_att = CreateTupleDescCopyConstr(tupDesc);
+	rel->rd_att = CreateTupleDescCopyConstr(tupDesc);
 
 	/* ----------------
 	 *	initialize the fields of our new relation descriptor
@@ -279,29 +280,29 @@ heap_create(char *name,
 	 * ----------------
 	 */
 	if (nailme)
-		rdesc->rd_isnailed = true;
+		rel->rd_isnailed = true;
 
-	RelationSetReferenceCount(rdesc, 1);
+	RelationSetReferenceCount(rel, 1);
 
-	rdesc->rd_rel = (Form_pg_class) palloc(sizeof *rdesc->rd_rel);
+	rel->rd_rel = (Form_pg_class) palloc(sizeof *rel->rd_rel);
 
-	MemSet((char *) rdesc->rd_rel, 0,
-		   sizeof *rdesc->rd_rel);
-	namestrcpy(&(rdesc->rd_rel->relname), relname);
-	rdesc->rd_rel->relkind = RELKIND_UNCATALOGED;
-	rdesc->rd_rel->relnatts = natts;
+	MemSet((char *) rel->rd_rel, 0,
+		   sizeof *rel->rd_rel);
+	namestrcpy(&(rel->rd_rel->relname), relname);
+	rel->rd_rel->relkind = RELKIND_UNCATALOGED;
+	rel->rd_rel->relnatts = natts;
 	if (tupDesc->constr)
-		rdesc->rd_rel->relchecks = tupDesc->constr->num_check;
+		rel->rd_rel->relchecks = tupDesc->constr->num_check;
 
 	for (i = 0; i < natts; i++)
-		rdesc->rd_att->attrs[i]->attrelid = relid;
+		rel->rd_att->attrs[i]->attrelid = relid;
 
-	rdesc->rd_id = relid;
+	RelationGetRelid(rel) = relid;
 
 	if (nailme)
 	{
 		/* for system relations, set the reltype field here */
-		rdesc->rd_rel->reltype = relid;
+		rel->rd_rel->reltype = relid;
 	}
 
 	/* ----------------
@@ -309,18 +310,18 @@ heap_create(char *name,
 	 * ----------------
 	 */
 
-	rdesc->rd_istemp = isTemp;
+	rel->rd_istemp = isTemp;
 
 	/* ----------------
 	 *	have the storage manager create the relation.
 	 * ----------------
 	 */
 
-	rdesc->rd_tmpunlinked = TRUE;		/* change once table is created */
-	rdesc->rd_fd = (File) smgrcreate(DEFAULT_SMGR, rdesc);
-	rdesc->rd_tmpunlinked = FALSE;
+	rel->rd_tmpunlinked = TRUE;		/* change once table is created */
+	rel->rd_fd = (File) smgrcreate(DEFAULT_SMGR, rel);
+	rel->rd_tmpunlinked = FALSE;
 
-	RelationRegisterRelation(rdesc);
+	RelationRegisterRelation(rel);
 
 	MemoryContextSwitchTo(oldcxt);
 
@@ -329,9 +330,9 @@ heap_create(char *name,
 	 * properly disposed of at the end of transaction
 	 */
 	if (isTemp)
-		AddToTempRelList(rdesc);
+		AddToTempRelList(rel);
 
-	return (rdesc);
+	return (rel);
 }
 
 
@@ -477,14 +478,13 @@ RelationAlreadyExists(Relation pg_class_desc, char relname[])
 
 	if (!IsBootstrapProcessingMode())
 	{
-		tup = ClassNameIndexScan(pg_class_desc, relname);
+		tup = SearchSysCacheTuple(RELNAME,
+									PointerGetDatum(relname),
+									0, 0, 0);
 		if (HeapTupleIsValid(tup))
-		{
-			pfree(tup);
-			return ((int) true);
-		}
+			return true;
 		else
-			return ((int) false);
+			return false;
 	}
 
 	/* ----------------
@@ -513,7 +513,7 @@ RelationAlreadyExists(Relation pg_class_desc, char relname[])
 	 *	didn't find an existing relation.
 	 * ----------------
 	 */
-	tup = heap_getnext(pg_class_scan, 0, (Buffer *) NULL);
+	tup = heap_getnext(pg_class_scan, 0);
 
 	/* ----------------
 	 *	end the scan and return existance of relation.
@@ -521,8 +521,7 @@ RelationAlreadyExists(Relation pg_class_desc, char relname[])
 	 */
 	heap_endscan(pg_class_scan);
 
-	return
-		(PointerIsValid(tup) == true);
+	return HeapTupleIsValid(tup);
 }
 
 /* --------------------------------
@@ -539,7 +538,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	AttributeTupleForm *dpp;
 	unsigned	i;
 	HeapTuple	tup;
-	Relation	rdesc;
+	Relation	rel;
 	bool		hasindex;
 	Relation	idescs[Num_pg_attr_indices];
 	int			natts = tupdesc->natts;
@@ -548,15 +547,15 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	 *	open pg_attribute
 	 * ----------------
 	 */
-	rdesc = heap_openr(AttributeRelationName);
+	rel = heap_openr(AttributeRelationName);
 
 	/* -----------------
 	 * Check if we have any indices defined on pg_attribute.
 	 * -----------------
 	 */
-	Assert(rdesc);
-	Assert(rdesc->rd_rel);
-	hasindex = RelationGetRelationTupleForm(rdesc)->relhasindex;
+	Assert(rel);
+	Assert(rel->rd_rel);
+	hasindex = RelationGetRelationTupleForm(rel)->relhasindex;
 	if (hasindex)
 		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
 
@@ -584,9 +583,9 @@ AddNewAttributeTuples(Oid new_rel_oid,
 							 ATTRIBUTE_TUPLE_SIZE,
 							 (char *) *dpp);
 
-		heap_insert(rdesc, tup);
+		heap_insert(rel, tup);
 		if (hasindex)
-			CatalogIndexInsert(idescs, Num_pg_attr_indices, rdesc, tup);
+			CatalogIndexInsert(idescs, Num_pg_attr_indices, rel, tup);
 
 		pfree(tup);
 		dpp++;
@@ -606,16 +605,16 @@ AddNewAttributeTuples(Oid new_rel_oid,
 							 ATTRIBUTE_TUPLE_SIZE,
 							 (char *) *dpp);
 
-		heap_insert(rdesc, tup);
+		heap_insert(rel, tup);
 
 		if (hasindex)
-			CatalogIndexInsert(idescs, Num_pg_attr_indices, rdesc, tup);
+			CatalogIndexInsert(idescs, Num_pg_attr_indices, rel, tup);
 
 		pfree(tup);
 		dpp++;
 	}
 
-	heap_close(rdesc);
+	heap_close(rel);
 
 	/*
 	 * close pg_attribute indices
@@ -878,7 +877,8 @@ RelationRemoveInheritance(Relation relation)
 	HeapTuple	tuple;
 	HeapScanDesc scan;
 	ScanKeyData entry;
-
+	bool		found = false;
+	
 	/* ----------------
 	 *	open pg_inherits
 	 * ----------------
@@ -892,7 +892,7 @@ RelationRemoveInheritance(Relation relation)
 	 */
 	ScanKeyEntryInitialize(&entry, 0x0, Anum_pg_inherits_inhparent,
 						   F_OIDEQ,
-					  ObjectIdGetDatum(RelationGetRelationId(relation)));
+					  ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	scan = heap_beginscan(catalogRelation,
 						  false,
@@ -904,7 +904,7 @@ RelationRemoveInheritance(Relation relation)
 	 *	if any subclasses exist, then we disallow the deletion.
 	 * ----------------
 	 */
-	tuple = heap_getnext(scan, 0, (Buffer *) NULL);
+	tuple = heap_getnext(scan, 0);
 	if (HeapTupleIsValid(tuple))
 	{
 		heap_endscan(scan);
@@ -928,12 +928,10 @@ RelationRemoveInheritance(Relation relation)
 						  1,
 						  &entry);
 
-	for (;;)
+	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 	{
-		tuple = heap_getnext(scan, 0, (Buffer *) NULL);
-		if (!HeapTupleIsValid(tuple))
-			break;
 		heap_delete(catalogRelation, &tuple->t_ctid);
+		found = true;
 	}
 
 	heap_endscan(scan);
@@ -943,8 +941,7 @@ RelationRemoveInheritance(Relation relation)
 	 *	now remove dead IPL tuples
 	 * ----------------
 	 */
-	catalogRelation =
-		heap_openr(InheritancePrecidenceListRelationName);
+	catalogRelation = heap_openr(InheritancePrecidenceListRelationName);
 
 	entry.sk_attno = Anum_pg_ipl_iplrel;
 
@@ -954,13 +951,8 @@ RelationRemoveInheritance(Relation relation)
 						  1,
 						  &entry);
 
-	for (;;)
-	{
-		tuple = heap_getnext(scan, 0, (Buffer *) NULL);
-		if (!HeapTupleIsValid(tuple))
-			break;
+	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 		heap_delete(catalogRelation, &tuple->t_ctid);
-	}
 
 	heap_endscan(scan);
 	heap_close(catalogRelation);
@@ -980,10 +972,10 @@ RelationRemoveIndexes(Relation relation)
 	ScanKeyData entry;
 
 	indexRelation = heap_openr(IndexRelationName);
-
+	
 	ScanKeyEntryInitialize(&entry, 0x0, Anum_pg_index_indrelid,
 						   F_OIDEQ,
-					  ObjectIdGetDatum(RelationGetRelationId(relation)));
+					  	   ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	scan = heap_beginscan(indexRelation,
 						  false,
@@ -991,14 +983,8 @@ RelationRemoveIndexes(Relation relation)
 						  1,
 						  &entry);
 
-	for (;;)
-	{
-		tuple = heap_getnext(scan, 0, (Buffer *) NULL);
-		if (!HeapTupleIsValid(tuple))
-			break;
-
+	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 		index_destroy(((IndexTupleForm) GETSTRUCT(tuple))->indexrelid);
-	}
 
 	heap_endscan(scan);
 	heap_close(indexRelation);
@@ -1010,11 +996,9 @@ RelationRemoveIndexes(Relation relation)
  * --------------------------------
  */
 static void
-DeletePgRelationTuple(Relation rdesc)
+DeletePgRelationTuple(Relation rel)
 {
 	Relation	pg_class_desc;
-	HeapScanDesc pg_class_scan;
-	ScanKeyData key;
 	HeapTuple	tup;
 
 	/* ----------------
@@ -1023,42 +1007,23 @@ DeletePgRelationTuple(Relation rdesc)
 	 */
 	pg_class_desc = heap_openr(RelationRelationName);
 
-	/* ----------------
-	 *	create a scan key to locate the relation oid of the
-	 *	relation to delete
-	 * ----------------
-	 */
-	ScanKeyEntryInitialize(&key, 0, ObjectIdAttributeNumber,
-						   F_INT4EQ, rdesc->rd_att->attrs[0]->attrelid);
-
-	pg_class_scan = heap_beginscan(pg_class_desc,
-								   0,
-								   SnapshotNow,
-								   1,
-								   &key);
-
-	/* ----------------
-	 *	use heap_getnext() to fetch the pg_class tuple.  If this
-	 *	tuple is not valid then something's wrong.
-	 * ----------------
-	 */
-	tup = heap_getnext(pg_class_scan, 0, (Buffer *) NULL);
-
-	if (!PointerIsValid(tup))
+	tup = SearchSysCacheTupleCopy(RELOID,
+									ObjectIdGetDatum(rel->rd_att->attrs[0]->attrelid),
+									0, 0, 0);
+	if (!HeapTupleIsValid(tup))
 	{
-		heap_endscan(pg_class_scan);
 		heap_close(pg_class_desc);
 		elog(ERROR, "DeletePgRelationTuple: %s relation nonexistent",
-			 &rdesc->rd_rel->relname);
+			 &rel->rd_rel->relname);
 	}
 
 	/* ----------------
 	 *	delete the relation tuple from pg_class, and finish up.
 	 * ----------------
 	 */
-	heap_endscan(pg_class_scan);
 	heap_delete(pg_class_desc, &tup->t_ctid);
-
+	pfree(tup);
+	
 	heap_close(pg_class_desc);
 }
 
@@ -1068,26 +1033,17 @@ DeletePgRelationTuple(Relation rdesc)
  * --------------------------------
  */
 static void
-DeletePgAttributeTuples(Relation rdesc)
+DeletePgAttributeTuples(Relation rel)
 {
 	Relation	pg_attribute_desc;
-	HeapScanDesc pg_attribute_scan;
-	ScanKeyData key;
 	HeapTuple	tup;
-
+	int2		attnum;
+	
 	/* ----------------
 	 *	open pg_attribute
 	 * ----------------
 	 */
 	pg_attribute_desc = heap_openr(AttributeRelationName);
-
-	/* ----------------
-	 *	create a scan key to locate the attribute tuples to delete
-	 *	and begin the scan.
-	 * ----------------
-	 */
-	ScanKeyEntryInitialize(&key, 0, Anum_pg_attribute_attrelid,
-						   F_INT4EQ, rdesc->rd_att->attrs[0]->attrelid);
 
 	/* -----------------
 	 * Get a write lock _before_ getting the read lock in the scan
@@ -1095,29 +1051,17 @@ DeletePgAttributeTuples(Relation rdesc)
 	 */
 	RelationSetLockForWrite(pg_attribute_desc);
 
-	pg_attribute_scan = heap_beginscan(pg_attribute_desc,
-									   0,
-									   SnapshotNow,
-									   1,
-									   &key);
+	attnum = FirstLowInvalidHeapAttributeNumber + 1; /* cmax */
 
-	/* ----------------
-	 *	use heap_getnext() / amdelete() until all attribute tuples
-	 *	have been deleted.
-	 * ----------------
-	 */
-	while (tup = heap_getnext(pg_attribute_scan, 0, (Buffer *) NULL),
-		   PointerIsValid(tup))
+	while (HeapTupleIsValid(tup = SearchSysCacheTupleCopy(ATTNUM,
+									ObjectIdGetDatum(rel->rd_att->attrs[0]->attrelid),
+									Int16GetDatum(attnum),
+									0, 0)))
 	{
-
 		heap_delete(pg_attribute_desc, &tup->t_ctid);
+		pfree(tup);
+		attnum++;
 	}
-
-	/* ----------------
-	 *	finish up.
-	 * ----------------
-	 */
-	heap_endscan(pg_attribute_scan);
 
 	/* ----------------
 	 * Release the write lock
@@ -1126,7 +1070,6 @@ DeletePgAttributeTuples(Relation rdesc)
 	RelationUnsetLockForWrite(pg_attribute_desc);
 	heap_close(pg_attribute_desc);
 }
-
 
 /* --------------------------------
  *		DeletePgTypeTuple
@@ -1138,7 +1081,7 @@ DeletePgAttributeTuples(Relation rdesc)
  * --------------------------------
  */
 static void
-DeletePgTypeTuple(Relation rdesc)
+DeletePgTypeTuple(Relation rel)
 {
 	Relation	pg_type_desc;
 	HeapScanDesc pg_type_scan;
@@ -1162,7 +1105,7 @@ DeletePgTypeTuple(Relation rdesc)
 	 * ----------------
 	 */
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_type_typrelid, F_INT4EQ,
-						   rdesc->rd_att->attrs[0]->attrelid);
+						   rel->rd_att->attrs[0]->attrelid);
 
 	pg_type_scan = heap_beginscan(pg_type_desc,
 								  0,
@@ -1175,14 +1118,14 @@ DeletePgTypeTuple(Relation rdesc)
 	 *	tuple is not valid then something's wrong.
 	 * ----------------
 	 */
-	tup = heap_getnext(pg_type_scan, 0, (Buffer *) NULL);
+	tup = heap_getnext(pg_type_scan, 0);
 
-	if (!PointerIsValid(tup))
+	if (!HeapTupleIsValid(tup))
 	{
 		heap_endscan(pg_type_scan);
 		heap_close(pg_type_desc);
 		elog(ERROR, "DeletePgTypeTuple: %s type nonexistent",
-			 &rdesc->rd_rel->relname);
+			 &rel->rd_rel->relname);
 	}
 
 	/* ----------------
@@ -1212,7 +1155,7 @@ DeletePgTypeTuple(Relation rdesc)
 	 *	the schema.
 	 * ----------------
 	 */
-	atttup = heap_getnext(pg_attribute_scan, 0, (Buffer *) NULL);
+	atttup = heap_getnext(pg_attribute_scan, 0);
 
 	if (PointerIsValid(atttup))
 	{
@@ -1224,7 +1167,7 @@ DeletePgTypeTuple(Relation rdesc)
 		heap_close(pg_attribute_desc);
 
 		elog(ERROR, "DeletePgTypeTuple: att of type %s exists in relation %d",
-			 &rdesc->rd_rel->relname, relid);
+			 &rel->rd_rel->relname, relid);
 	}
 	heap_endscan(pg_attribute_scan);
 	heap_close(pg_attribute_desc);
@@ -1235,9 +1178,9 @@ DeletePgTypeTuple(Relation rdesc)
 	 *	we release the read lock on pg_type.  -mer 13 Aug 1991
 	 * ----------------
 	 */
-	heap_endscan(pg_type_scan);
 	heap_delete(pg_type_desc, &tup->t_ctid);
 
+	heap_endscan(pg_type_scan);
 	heap_close(pg_type_desc);
 }
 
@@ -1249,7 +1192,7 @@ DeletePgTypeTuple(Relation rdesc)
 void
 heap_destroy_with_catalog(char *relname)
 {
-	Relation	rdesc;
+	Relation	rel;
 	Oid			rid;
 
 	/* ----------------
@@ -1257,50 +1200,50 @@ heap_destroy_with_catalog(char *relname)
 	 *	heap_openr() returns NULL.
 	 * ----------------
 	 */
-	rdesc = heap_openr(relname);
-	if (rdesc == NULL)
+	rel = heap_openr(relname);
+	if (rel == NULL)
 		elog(ERROR, "Relation %s Does Not Exist!", relname);
 
-	RelationSetLockForWrite(rdesc);
-	rid = rdesc->rd_id;
+	RelationSetLockForWrite(rel);
+	rid = rel->rd_id;
 
 	/* ----------------
 	 *	prevent deletion of system relations
 	 * ----------------
 	 */
-	if (IsSystemRelationName(RelationGetRelationName(rdesc)->data))
+	if (IsSystemRelationName(RelationGetRelationName(rel)->data))
 		elog(ERROR, "amdestroy: cannot destroy %s relation",
-			 &rdesc->rd_rel->relname);
+			 &rel->rd_rel->relname);
 
 	/* ----------------
 	 *	remove inheritance information
 	 * ----------------
 	 */
-	RelationRemoveInheritance(rdesc);
+	RelationRemoveInheritance(rel);
 
 	/* ----------------
 	 *	remove indexes if necessary
 	 * ----------------
 	 */
-	if (rdesc->rd_rel->relhasindex)
-		RelationRemoveIndexes(rdesc);
+	if (rel->rd_rel->relhasindex)
+		RelationRemoveIndexes(rel);
 
 	/* ----------------
 	 *	remove rules if necessary
 	 * ----------------
 	 */
-	if (rdesc->rd_rules != NULL)
+	if (rel->rd_rules != NULL)
 		RelationRemoveRules(rid);
 
 	/* triggers */
-	if (rdesc->rd_rel->reltriggers > 0)
-		RelationRemoveTriggers(rdesc);
+	if (rel->rd_rel->reltriggers > 0)
+		RelationRemoveTriggers(rel);
 
 	/* ----------------
 	 *	delete attribute tuples
 	 * ----------------
 	 */
-	DeletePgAttributeTuples(rdesc);
+	DeletePgAttributeTuples(rel);
 
 	/* ----------------
 	 *	delete type tuple.	here we want to see the effects
@@ -1308,41 +1251,41 @@ heap_destroy_with_catalog(char *relname)
 	 * ----------------
 	 */
 	setheapoverride(true);
-	DeletePgTypeTuple(rdesc);
+	DeletePgTypeTuple(rel);
 	setheapoverride(false);
 
 	/* ----------------
 	 *	delete relation tuple
 	 * ----------------
 	 */
-	DeletePgRelationTuple(rdesc);
+	DeletePgRelationTuple(rel);
 
 	/*
 	 * release dirty buffers of this relation
 	 */
-	ReleaseRelationBuffers(rdesc);
+	ReleaseRelationBuffers(rel);
 
 	/* ----------------
 	 *	flush the relation from the relcache
 	 * ----------------
 	 * Does nothing!!! Flushing moved below.	- vadim 06/04/97
-	RelationIdInvalidateRelationCacheByRelationId(rdesc->rd_id);
+	RelationIdInvalidateRelationCacheByRelationId(rel->rd_id);
 	 */
 
-	RemoveConstraints(rdesc);
+	RemoveConstraints(rel);
 
 	/* ----------------
 	 *	unlink the relation and finish up.
 	 * ----------------
 	 */
-	if (!(rdesc->rd_istemp) || !(rdesc->rd_tmpunlinked))
-		smgrunlink(DEFAULT_SMGR, rdesc);
+	if (!(rel->rd_istemp) || !(rel->rd_tmpunlinked))
+		smgrunlink(DEFAULT_SMGR, rel);
 
-	rdesc->rd_tmpunlinked = TRUE;
+	rel->rd_tmpunlinked = TRUE;
 
-	RelationUnsetLockForWrite(rdesc);
+	RelationUnsetLockForWrite(rel);
 
-	heap_close(rdesc);
+	heap_close(rel);
 
 	/* ok - flush the relation from the relcache */
 	RelationForgetRelation(rid);
@@ -1355,14 +1298,14 @@ heap_destroy_with_catalog(char *relname)
  */
 
 void
-heap_destroy(Relation rdesc)
+heap_destroy(Relation rel)
 {
-	ReleaseRelationBuffers(rdesc);
-	if (!(rdesc->rd_istemp) || !(rdesc->rd_tmpunlinked))
-		smgrunlink(DEFAULT_SMGR, rdesc);
-	rdesc->rd_tmpunlinked = TRUE;
-	heap_close(rdesc);
-	RemoveFromTempRelList(rdesc);
+	ReleaseRelationBuffers(rel);
+	if (!(rel->rd_istemp) || !(rel->rd_tmpunlinked))
+		smgrunlink(DEFAULT_SMGR, rel);
+	rel->rd_tmpunlinked = TRUE;
+	heap_close(rel);
+	RemoveFromTempRelList(rel);
 }
 
 
@@ -1456,17 +1399,17 @@ void
 DestroyTempRels(void)
 {
 	int			i;
-	Relation	rdesc;
+	Relation	rel;
 
 	if (!tempRels)
 		return;
 
 	for (i = 0; i < tempRels->num; i++)
 	{
-		rdesc = tempRels->rels[i];
-		/* rdesc may be NULL if it has been removed from the list already */
-		if (rdesc)
-			heap_destroy(rdesc);
+		rel = tempRels->rels[i];
+		/* rel may be NULL if it has been removed from the list already */
+		if (rel)
+			heap_destroy(rel);
 	}
 	free(tempRels->rels);
 	free(tempRels);
@@ -1649,7 +1592,7 @@ RemoveAttrDefault(Relation rel)
 
 	adscan = heap_beginscan(adrel, 0, SnapshotNow, 1, &key);
 
-	while (tup = heap_getnext(adscan, 0, (Buffer *) NULL), PointerIsValid(tup))
+	while (HeapTupleIsValid(tup = heap_getnext(adscan, 0)))
 		heap_delete(adrel, &tup->t_ctid);
 
 	heap_endscan(adscan);
@@ -1676,7 +1619,7 @@ RemoveRelCheck(Relation rel)
 
 	rcscan = heap_beginscan(rcrel, 0, SnapshotNow, 1, &key);
 
-	while (tup = heap_getnext(rcscan, 0, (Buffer *) NULL), PointerIsValid(tup))
+	while (HeapTupleIsValid(tup = heap_getnext(rcscan, 0)))
 		heap_delete(rcrel, &tup->t_ctid);
 
 	heap_endscan(rcscan);

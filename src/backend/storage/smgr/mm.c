@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.9 1998/06/23 15:35:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.10 1998/08/19 02:02:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,7 +181,7 @@ mmcreate(Relation reln)
 
 	(*MMCurRelno)++;
 
-	tag.mmrt_relid = reln->rd_id;
+	tag.mmrt_relid = RelationGetRelid(reln);
 	if (reln->rd_rel->relisshared)
 		tag.mmrt_dbid = (Oid) 0;
 	else
@@ -233,7 +233,7 @@ mmunlink(Relation reln)
 	for (i = 0; i < MMNBUFFERS; i++)
 	{
 		if (MMBlockTags[i].mmct_dbid == reldbid
-			&& MMBlockTags[i].mmct_relid == reln->rd_id)
+			&& MMBlockTags[i].mmct_relid == RelationGetRelid(reln))
 		{
 			entry = (MMHashEntry *) hash_search(MMCacheHT,
 												(char *) &MMBlockTags[i],
@@ -249,7 +249,7 @@ mmunlink(Relation reln)
 		}
 	}
 	rtag.mmrt_dbid = reldbid;
-	rtag.mmrt_relid = reln->rd_id;
+	rtag.mmrt_relid = RelationGetRelid(reln);
 
 	rentry = (MMRelHashEntry *) hash_search(MMRelCacheHT, (char *) &rtag,
 											HASH_REMOVE, &found);
@@ -290,7 +290,7 @@ mmextend(Relation reln, char *buffer)
 		reldbid = MyDatabaseId;
 
 	tag.mmct_dbid = rtag.mmrt_dbid = reldbid;
-	tag.mmct_relid = rtag.mmrt_relid = reln->rd_id;
+	tag.mmct_relid = rtag.mmrt_relid = RelationGetRelid(reln);
 
 	SpinAcquire(MMCacheLock);
 
@@ -334,7 +334,7 @@ mmextend(Relation reln, char *buffer)
 
 	entry->mmhe_bufno = i;
 	MMBlockTags[i].mmct_dbid = reldbid;
-	MMBlockTags[i].mmct_relid = reln->rd_id;
+	MMBlockTags[i].mmct_relid = RelationGetRelid(reln);
 	MMBlockTags[i].mmct_blkno = rentry->mmrhe_nblocks;
 
 	/* page numbers are zero-based, so we increment this at the end */
@@ -389,7 +389,7 @@ mmread(Relation reln, BlockNumber blocknum, char *buffer)
 	else
 		tag.mmct_dbid = MyDatabaseId;
 
-	tag.mmct_relid = reln->rd_id;
+	tag.mmct_relid = RelationGetRelid(reln);
 	tag.mmct_blkno = blocknum;
 
 	SpinAcquire(MMCacheLock);
@@ -436,7 +436,7 @@ mmwrite(Relation reln, BlockNumber blocknum, char *buffer)
 	else
 		tag.mmct_dbid = MyDatabaseId;
 
-	tag.mmct_relid = reln->rd_id;
+	tag.mmct_relid = RelationGetRelid(reln);
 	tag.mmct_blkno = blocknum;
 
 	SpinAcquire(MMCacheLock);
@@ -509,7 +509,7 @@ mmnblocks(Relation reln)
 	else
 		rtag.mmrt_dbid = MyDatabaseId;
 
-	rtag.mmrt_relid = reln->rd_id;
+	rtag.mmrt_relid = RelationGetRelid(reln);
 
 	SpinAcquire(MMCacheLock);
 

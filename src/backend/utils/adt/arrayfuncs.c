@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.31 1998/07/12 21:29:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.32 1998/08/19 02:02:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1302,7 +1302,8 @@ system_cache_lookup(Oid element_type,
 	HeapTuple	typeTuple;
 	TypeTupleForm typeStruct;
 
-	typeTuple = SearchSysCacheTuple(TYPOID, ObjectIdGetDatum(element_type),
+	typeTuple = SearchSysCacheTuple(TYPOID,
+									ObjectIdGetDatum(element_type),
 									0, 0, 0);
 
 	if (!HeapTupleIsValid(typeTuple))

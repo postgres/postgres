@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.24 1998/07/27 19:38:09 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.25 1998/08/19 02:02:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "nodes/parsenodes.h"
 #include "nodes/pg_list.h"
 #include "storage/buf.h"		/* for InvalidBuffer */
+#include "storage/bufmgr.h"
 #include "utils/builtins.h"		/* for textout */
 #include "utils/catcache.h"		/* for CacheContext */
 #include "utils/mcxt.h"			/* MemoryContext stuff */
@@ -89,9 +90,7 @@ int
 IsDefinedRewriteRule(char *ruleName)
 {
 	Relation	RewriteRelation = NULL;
-	HeapScanDesc scanDesc = NULL;
-	ScanKeyData scanKey;
-	HeapTuple	tuple = NULL;
+	HeapTuple	tuple;
 
 
 	/*
@@ -99,21 +98,13 @@ IsDefinedRewriteRule(char *ruleName)
 	 */
 	RewriteRelation = heap_openr(RewriteRelationName);
 
-	/*
-	 * Scan the RuleRelation ('pg_rewrite') until we find a tuple
-	 */
-	ScanKeyEntryInitialize(&scanKey, 0, Anum_pg_rewrite_rulename,
-					   F_NAMEEQ, PointerGetDatum(ruleName));
-	scanDesc = heap_beginscan(RewriteRelation,
-							  0, SnapshotNow, 1, &scanKey);
-
-	tuple = heap_getnext(scanDesc, 0, (Buffer *) NULL);
-
+	tuple = SearchSysCacheTuple(REWRITENAME,
+								 PointerGetDatum(ruleName),
+								 0, 0, 0);
 	/*
 	 * return whether or not the rewrite rule existed
 	 */
 	heap_close(RewriteRelation);
-	heap_endscan(scanDesc);
 	return (HeapTupleIsValid(tuple));
 }
 
@@ -122,40 +113,28 @@ setRelhasrulesInRelation(Oid relationId, bool relhasrules)
 {
 	Relation	relationRelation;
 	HeapTuple	tuple;
-	HeapTuple	newTuple;
 	Relation	idescs[Num_pg_class_indices];
-	Form_pg_class relp;
 
 	/*
 	 * Lock a relation given its Oid. Go to the RelationRelation (i.e.
 	 * pg_relation), find the appropriate tuple, and add the specified
 	 * lock to it.
 	 */
+	tuple = SearchSysCacheTupleCopy(RELOID,
+									 ObjectIdGetDatum(relationId),
+									 0, 0, 0);
+	Assert(HeapTupleIsValid(tuple));
+
 	relationRelation = heap_openr(RelationRelationName);
-	tuple = ClassOidIndexScan(relationRelation, relationId);
-
-	/*
-	 * Create a new tuple (i.e. a copy of the old tuple with its rule lock
-	 * field changed and replace the old tuple in the RelationRelation
-	 * NOTE: XXX ??? do we really need to make that copy ????
-	 */
-	newTuple = heap_copytuple(tuple);
-
-	relp = (Form_pg_class) GETSTRUCT(newTuple);
-	relp->relhasrules = relhasrules;
-
-	heap_replace(relationRelation, &(tuple->t_ctid), newTuple);
+	((Form_pg_class)GETSTRUCT(tuple))->relhasrules = relhasrules;
+	heap_replace(relationRelation, &tuple->t_ctid, tuple);
 
 	/* keep the catalog indices up to date */
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
-	CatalogIndexInsert(idescs, Num_pg_class_indices, relationRelation,
-					   newTuple);
+	CatalogIndexInsert(idescs, Num_pg_class_indices, relationRelation, tuple);
 	CatalogCloseIndices(Num_pg_class_indices, idescs);
 
-	/* be tidy */
 	pfree(tuple);
-	pfree(newTuple);
-
 	heap_close(relationRelation);
 }
 

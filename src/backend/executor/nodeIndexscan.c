@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.23 1998/08/04 18:42:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.24 1998/08/19 02:02:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,7 +123,6 @@ IndexNext(IndexScan *node)
 		{
 			tuple = heap_fetch(heapRelation, snapshot,
 								&result->heap_iptr, &buffer);
-			/* be tidy */
 			pfree(result);
 
 			if (tuple != NULL)
@@ -224,7 +223,7 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 	ScanDirection direction;
 	IndexScanDescPtr scanDescs;
 	ScanKey    *scanKeys;
-	IndexScanDesc sdesc;
+	IndexScanDesc scan;
 	ScanKey		skey;
 	int			numIndices;
 	int			i;
@@ -301,9 +300,9 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 				}
 			}
 		}
-		sdesc = scanDescs[i];
+		scan = scanDescs[i];
 		skey = scanKeys[i];
-		index_rescan(sdesc, direction, skey);
+		index_rescan(scan, direction, skey);
 	}
 	/* ----------------
 	 *	perhaps return something meaningful

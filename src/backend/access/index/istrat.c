@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.25 1998/08/11 22:39:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.26 1998/08/19 02:01:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "miscadmin.h"
 #include "access/heapam.h"
 #include "access/istrat.h"
 #include "catalog/catname.h"
@@ -22,6 +23,7 @@
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_operator.h"
+#include "utils/syscache.h"
 #include "fmgr.h"
 #include "utils/memutils.h"		/* could have been access/itup.h */
 
@@ -30,8 +32,7 @@ static bool StrategyEvaluationIsValid(StrategyEvaluation evaluation);
 static bool
 StrategyExpressionIsValid(StrategyExpression expression,
 						  StrategyNumber maxStrategy);
-static ScanKey
-StrategyMapGetScanKeyEntry(StrategyMap map,
+static ScanKey StrategyMapGetScanKeyEntry(StrategyMap map,
 						   StrategyNumber strategyNumber);
 static bool
 StrategyOperatorIsValid(StrategyOperator operator,
@@ -95,8 +96,7 @@ IndexStrategyGetStrategyMap(IndexStrategy indexStrategy,
 	Assert(AttributeNumberIsValid(attrNum));
 
 	maxStrategyNum = AMStrategies(maxStrategyNum);		/* XXX */
-	return
-		&indexStrategy->strategyMapData[maxStrategyNum * (attrNum - 1)];
+	return &indexStrategy->strategyMapData[maxStrategyNum * (attrNum - 1)];
 }
 
 /*
@@ -108,8 +108,7 @@ AttributeNumberGetIndexStrategySize(AttrNumber maxAttributeNumber,
 									StrategyNumber maxStrategyNumber)
 {
 	maxStrategyNumber = AMStrategies(maxStrategyNumber);		/* XXX */
-	return
-		maxAttributeNumber * maxStrategyNumber * sizeof(ScanKeyData);
+	return maxAttributeNumber * maxStrategyNumber * sizeof(ScanKeyData);
 }
 
 #ifdef USE_ASSERT_CHECKING
@@ -483,39 +482,52 @@ OperatorRelationFillScanKeyEntry(Relation operatorRelation,
 								 Oid operatorObjectId,
 								 ScanKey entry)
 {
-	HeapScanDesc scan;
-	ScanKeyData scanKeyData;
 	HeapTuple	tuple;
+	HeapScanDesc scan = NULL;
 
-	ScanKeyEntryInitialize(&scanKeyData, 0,
-						   ObjectIdAttributeNumber,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(operatorObjectId));
+	if (!IsBootstrapProcessingMode())
+	{
+		tuple = SearchSysCacheTuple(OPROID,
+									ObjectIdGetDatum(operatorObjectId),
+									0, 0, 0);
+	}
+	else
+	{
+		ScanKeyData scanKeyData;
+	
+		ScanKeyEntryInitialize(&scanKeyData, 0,
+							   ObjectIdAttributeNumber,
+							   F_OIDEQ,
+							   ObjectIdGetDatum(operatorObjectId));
 
-	scan = heap_beginscan(operatorRelation, false, SnapshotNow,
-						  1, &scanKeyData);
+		scan = heap_beginscan(operatorRelation, false, SnapshotNow,
+							  1, &scanKeyData);
+	
+		tuple = heap_getnext(scan, 0);
+	}
 
-	tuple = heap_getnext(scan, false, (Buffer *) NULL);
 	if (!HeapTupleIsValid(tuple))
 	{
+		if (IsBootstrapProcessingMode())
+			heap_endscan(scan);
 		elog(ERROR, "OperatorObjectIdFillScanKeyEntry: unknown operator %lu",
 			 (uint32) operatorObjectId);
 	}
 
 	entry->sk_flags = 0;
-	entry->sk_procedure =
-		((OperatorTupleForm) GETSTRUCT(tuple))->oprcode;
+	entry->sk_procedure = ((OperatorTupleForm) GETSTRUCT(tuple))->oprcode;
 	fmgr_info(entry->sk_procedure, &entry->sk_func);
 	entry->sk_nargs = entry->sk_func.fn_nargs;
 
+	if (IsBootstrapProcessingMode())
+		heap_endscan(scan);
+	
 	if (!RegProcedureIsValid(entry->sk_procedure))
 	{
 		elog(ERROR,
 		"OperatorObjectIdFillScanKeyEntry: no procedure for operator %lu",
 			 (uint32) operatorObjectId);
 	}
-
-	heap_endscan(scan);
 }
 
 
@@ -532,27 +544,37 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 					   StrategyNumber maxSupportNumber,
 					   AttrNumber maxAttributeNumber)
 {
-	Relation	relation;
-	Relation	operatorRelation;
-	HeapScanDesc scan;
-	HeapTuple	tuple;
+	Relation	relation = NULL;
+	HeapScanDesc scan = NULL;
 	ScanKeyData entry[2];
+	Relation	operatorRelation;
+	HeapTuple	tuple;
 	StrategyMap map;
 	AttrNumber	attributeNumber;
 	int			attributeIndex;
 	Oid			operatorClassObjectId[MaxIndexAttributeNumber];
 
-	maxStrategyNumber = AMStrategies(maxStrategyNumber);
+	if (!IsBootstrapProcessingMode())
+	{
+		tuple = SearchSysCacheTuple(INDEXRELID,
+									ObjectIdGetDatum(indexObjectId),
+									0, 0, 0);
+	}
+	else
+	{
+		ScanKeyEntryInitialize(&entry[0], 0, Anum_pg_index_indexrelid,
+							   F_OIDEQ,
+							   ObjectIdGetDatum(indexObjectId));
+	
+		relation = heap_openr(IndexRelationName);
+		scan = heap_beginscan(relation, false, SnapshotNow, 1, entry);
+		tuple = heap_getnext(scan, 0);
+	}
 
-	ScanKeyEntryInitialize(&entry[0], 0, Anum_pg_index_indexrelid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(indexObjectId));
-
-	relation = heap_openr(IndexRelationName);
-	scan = heap_beginscan(relation, false, SnapshotNow, 1, entry);
-	tuple = heap_getnext(scan, 0, (Buffer *) NULL);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "IndexSupportInitialize: corrupted catalogs");
+
+	maxStrategyNumber = AMStrategies(maxStrategyNumber);
 
 	/*
 	 * XXX note that the following assumes the INDEX tuple is well formed
@@ -574,9 +596,12 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 		operatorClassObjectId[attributeIndex] = iform->indclass[attributeIndex];
 	}
 
-	heap_endscan(scan);
-	heap_close(relation);
-
+	if (IsBootstrapProcessingMode())
+	{
+		heap_endscan(scan);
+		heap_close(relation);
+	}
+	
 	/* if support routines exist for this access method, load them */
 	if (maxSupportNumber > 0)
 	{
@@ -606,8 +631,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 
 			scan = heap_beginscan(relation, false, SnapshotNow, 2, entry);
 
-			while (tuple = heap_getnext(scan, 0, (Buffer *) NULL),
-				   HeapTupleIsValid(tuple))
+			while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 			{
 				form = (Form_pg_amproc) GETSTRUCT(tuple);
 				loc[(form->amprocnum - 1)] = form->amproc;
@@ -647,8 +671,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 
 		scan = heap_beginscan(relation, false, SnapshotNow, 2, entry);
 
-		while (tuple = heap_getnext(scan, 0, (Buffer *) NULL),
-			   HeapTupleIsValid(tuple))
+		while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 		{
 			Form_pg_amop form;
 

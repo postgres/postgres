@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.38 1998/06/15 19:27:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.39 1998/08/19 02:00:53 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -736,13 +736,6 @@ heap_copytuple(HeapTuple tuple)
 	if (!HeapTupleIsValid(tuple))
 		return (NULL);
 
-	/* XXX For now, just prevent an undetectable executor related error */
-	if (tuple->t_len > MAXTUPLEN)
-	{
-		elog(ERROR, "palloctup: cannot handle length %d tuples",
-			 tuple->t_len);
-	}
-
 	newTuple = (HeapTuple) palloc(tuple->t_len);
 	memmove((char *) newTuple, (char *) tuple, (int) tuple->t_len);
 	return (newTuple);
@@ -863,11 +856,11 @@ heap_formtuple(TupleDesc tupleDescriptor,
  *		heap_modifytuple
  *
  *		forms a new tuple from an old tuple and a set of replacement values.
+ *		returns a new palloc'ed tuple.
  * ----------------
  */
 HeapTuple
 heap_modifytuple(HeapTuple tuple,
-				 Buffer buffer,
 				 Relation relation,
 				 Datum replValue[],
 				 char replNull[],
@@ -879,7 +872,6 @@ heap_modifytuple(HeapTuple tuple,
 	char	   *nulls;
 	bool		isNull;
 	HeapTuple	newTuple;
-	int			madecopy;
 	uint8		infomask;
 
 	/* ----------------
@@ -887,25 +879,10 @@ heap_modifytuple(HeapTuple tuple,
 	 * ----------------
 	 */
 	Assert(HeapTupleIsValid(tuple));
-	Assert(BufferIsValid(buffer) || RelationIsValid(relation));
-	Assert(HeapTupleIsValid(tuple));
+	Assert(RelationIsValid(relation));
 	Assert(PointerIsValid(replValue));
 	Assert(PointerIsValid(replNull));
 	Assert(PointerIsValid(repl));
-
-	/* ----------------
-	 *	if we're pointing to a disk page, then first
-	 *	make a copy of our tuple so that all the attributes
-	 *	are available.	XXX this is inefficient -cim
-	 * ----------------
-	 */
-	madecopy = 0;
-	if (BufferIsValid(buffer) == true)
-	{
-		relation = (Relation) BufferGetRelation(buffer);
-		tuple = heap_copytuple(tuple);
-		madecopy = 1;
-	}
 
 	numberOfAttributes = RelationGetRelationTupleForm(relation)->relnatts;
 
@@ -933,10 +910,7 @@ heap_modifytuple(HeapTuple tuple,
 
 		}
 		else if (repl[attoff] != 'r')
-		{
 			elog(ERROR, "heap_modifytuple: repl is \\%3d", repl[attoff]);
-
-		}
 		else
 		{						/* == 'r' */
 			value[attoff] = replValue[attoff];
@@ -961,18 +935,8 @@ heap_modifytuple(HeapTuple tuple,
 			(char *) &tuple->t_oid,
 			((char *) &tuple->t_hoff - (char *) &tuple->t_oid));		/* XXX */
 	newTuple->t_infomask = infomask;
-	newTuple->t_natts = numberOfAttributes;		/* fix t_natts just in
-												 * case */
-
-	/* ----------------
-	 *	if we made a copy of the tuple, then free it.
-	 * ----------------
-	 */
-	if (madecopy)
-		pfree(tuple);
-
-	return
-		newTuple;
+	newTuple->t_natts = numberOfAttributes;		/* fix t_natts just in case */
+	return newTuple;
 }
 
 /* ----------------------------------------------------------------

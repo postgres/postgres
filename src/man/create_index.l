@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_index.l,v 1.11 1998/04/26 04:09:39 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_index.l,v 1.12 1998/08/19 02:04:12 momjian Exp $
 .TH "CREATE INDEX" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 create index - construct a secondary index
@@ -149,21 +149,6 @@ btree   |oid_ops    |<=
 btree   |oid_ops    |=       
 btree   |oid_ops    |>       
 btree   |oid_ops    |>=      
-btree   |oidint2_ops|<       
-btree   |oidint2_ops|<=      
-btree   |oidint2_ops|=       
-btree   |oidint2_ops|>       
-btree   |oidint2_ops|>=      
-btree   |oidint4_ops|<       
-btree   |oidint4_ops|<=      
-btree   |oidint4_ops|=       
-btree   |oidint4_ops|>       
-btree   |oidint4_ops|>=      
-btree   |oidname_ops|<       
-btree   |oidname_ops|<=      
-btree   |oidname_ops|=       
-btree   |oidname_ops|>       
-btree   |oidname_ops|>=      
 btree   |text_ops   |<       
 btree   |text_ops   |<=      
 btree   |text_ops   |=       
@@ -226,15 +211,6 @@ Similarly,
 support indices on int4 data that is to be compared against int2 data
 in queries.
 .PP
-The operator classes
-.IR oidint2_ops ,
-.IR oidint4_ops ,
-and
-.IR oidname_ops
-represent the use of 
-.IR "functional indices"
-to simulate multi-key indices.
-These are no longer needed now that multi-key indexes are supported.
 .PP
 The Postgres query optimizer will consider using btree indices in a scan
 whenever an indexed attribute is involved in a comparison using one of:

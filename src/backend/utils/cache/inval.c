@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.11 1998/06/15 19:29:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.12 1998/08/19 02:03:11 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -267,7 +267,7 @@ getmyrelids()
 	MyAMRelationId = tuple->t_oid;
 
 	tuple = SearchSysCacheTuple(RELNAME,
-					   PointerGetDatum(AccessMethodOperatorRelationName),
+								PointerGetDatum(AccessMethodOperatorRelationName),
 								0, 0, 0);
 	Assert(HeapTupleIsValid(tuple));
 	MyAMOPRelationId = tuple->t_oid;
@@ -476,7 +476,7 @@ RelationInvalidateRelationCache(Relation relation,
 	 * ----------------
 	 */
 	ValidateHacks();			/* XXX */
-	relationId = RelationGetRelationId(relation);
+	relationId = RelationGetRelid(relation);
 
 	/* ----------------
 	 *

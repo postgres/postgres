@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.18 1998/06/15 19:28:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.19 1998/08/19 02:01:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ ProcedureCreate(char *procedureName,
 				CommandDest dest)
 {
 	int			i;
-	Relation	rdesc;
+	Relation	rel;
 	HeapTuple	tup;
 	bool		defined;
 	uint16		parameterCount;
@@ -258,23 +258,23 @@ ProcedureCreate(char *procedureName,
 	values[i++] = (Datum) fmgr(F_TEXTIN, prosrc);		/* prosrc */
 	values[i++] = (Datum) fmgr(F_TEXTIN, probin);		/* probin */
 
-	rdesc = heap_openr(ProcedureRelationName);
+	rel = heap_openr(ProcedureRelationName);
 
-	tupDesc = rdesc->rd_att;
+	tupDesc = rel->rd_att;
 	tup = heap_formtuple(tupDesc,
 						 values,
 						 nulls);
 
-	heap_insert(rdesc, tup);
+	heap_insert(rel, tup);
 
-	if (RelationGetRelationTupleForm(rdesc)->relhasindex)
+	if (RelationGetRelationTupleForm(rel)->relhasindex)
 	{
 		Relation	idescs[Num_pg_proc_indices];
 
 		CatalogOpenIndices(Num_pg_proc_indices, Name_pg_proc_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_proc_indices, rdesc, tup);
+		CatalogIndexInsert(idescs, Num_pg_proc_indices, rel, tup);
 		CatalogCloseIndices(Num_pg_proc_indices, idescs);
 	}
-	heap_close(rdesc);
+	heap_close(rel);
 	return tup->t_oid;
 }

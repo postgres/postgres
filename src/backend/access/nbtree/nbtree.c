@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.28 1998/07/30 05:04:49 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.29 1998/08/19 02:01:16 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -66,7 +66,6 @@ btbuild(Relation heap,
 		PredInfo *predInfo)
 {
 	HeapScanDesc hscan;
-	Buffer		buffer;
 	HeapTuple	htup;
 	IndexTuple	itup;
 	TupleDesc	htupdesc,
@@ -113,7 +112,7 @@ btbuild(Relation heap,
 #endif
 
 	/* see if index is unique */
-	isunique = IndexIsUniqueNoCache(RelationGetRelationId(index));
+	isunique = IndexIsUniqueNoCache(RelationGetRelid(index));
 
 	/* initialize the btree index metadata page (if this is a new index) */
 	if (oldPred == NULL)
@@ -155,9 +154,6 @@ btbuild(Relation heap,
 #endif							/* OMIT_PARTIAL_INDEX */
 
 	/* start a heap scan */
-	hscan = heap_beginscan(heap, 0, SnapshotNow, 0, (ScanKey) NULL);
-	htup = heap_getnext(hscan, 0, &buffer);
-
 	/* build the index */
 	nhtups = nitups = 0;
 
@@ -167,9 +163,10 @@ btbuild(Relation heap,
 		res = (InsertIndexResult) NULL;
 	}
 
-	for (; HeapTupleIsValid(htup); htup = heap_getnext(hscan, 0, &buffer))
-	{
+	hscan = heap_beginscan(heap, 0, SnapshotNow, 0, (ScanKey) NULL);
 
+	while (HeapTupleIsValid(htup = heap_getnext(hscan, 0)))
+	{
 		nhtups++;
 
 		/*
@@ -228,8 +225,7 @@ btbuild(Relation heap,
 											attoff,
 											attnum,
 											finfo,
-											&attnull,
-											buffer);
+											&attnull);
 			nulls[attoff] = (attnull ? 'n' : ' ');
 		}
 
@@ -323,8 +319,8 @@ btbuild(Relation heap,
 	 */
 	if (IsNormalProcessingMode())
 	{
-		hrelid = heap->rd_id;
-		irelid = index->rd_id;
+		hrelid = RelationGetRelid(heap);
+		irelid = RelationGetRelid(index);
 		heap_close(heap);
 		index_close(index);
 		UpdateStats(hrelid, nhtups, true);
@@ -371,7 +367,7 @@ btinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation 
 	btitem = _bt_formitem(itup);
 
 	res = _bt_doinsert(rel, btitem,
-					 IndexIsUnique(RelationGetRelationId(rel)), heapRel);
+					 IndexIsUnique(RelationGetRelid(rel)), heapRel);
 
 	pfree(btitem);
 	pfree(itup);

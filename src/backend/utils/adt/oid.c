@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.15 1998/02/26 04:37:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.16 1998/08/19 02:02:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,6 +123,46 @@ bool
 oid8eq(Oid arg1[], Oid arg2[])
 {
 	return (bool) (memcmp(arg1, arg2, 8 * sizeof(Oid)) == 0);
+}
+
+bool
+oid8lt(Oid arg1[], Oid arg2[])
+{
+	int i;
+	for (i=0; i < 8; i++)
+		if (!int4eq(arg1[i], arg2[i]))
+			return int4lt(arg1[i], arg2[i]);
+	return false;
+}
+
+bool
+oid8le(Oid arg1[], Oid arg2[])
+{
+	int i;
+	for (i=0; i < 8; i++)
+		if (!int4eq(arg1[i], arg2[i]))
+			return int4le(arg1[i], arg2[i]);
+	return true;
+}
+
+bool
+oid8ge(Oid arg1[], Oid arg2[])
+{
+	int i;
+	for (i=0; i < 8; i++)
+		if (!int4eq(arg1[i], arg2[i]))
+			return int4ge(arg1[i], arg2[i]);
+	return true;
+}
+
+bool
+oid8gt(Oid arg1[], Oid arg2[])
+{
+	int i;
+	for (i=0; i < 8; i++)
+		if (!int4eq(arg1[i], arg2[i]))
+			return int4gt(arg1[i], arg2[i]);
+	return false;
 }
 
 bool

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.31 1998/07/27 19:38:22 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.32 1998/08/19 02:03:08 momjian Exp $
  *
  * Notes:
  *		XXX This needs to use exception.h to handle recovery when
@@ -36,11 +36,9 @@
 
 static void CatCacheRemoveCTup(CatCache *cache, Dlelem *e);
 static Index CatalogCacheComputeHashIndex(struct catcache * cacheInP);
-static Index
-CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
+static Index CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
 								  Relation relation, HeapTuple tuple);
-static void
-CatalogCacheInitializeCache(struct catcache * cache,
+static void CatalogCacheInitializeCache(struct catcache * cache,
 							Relation relation);
 static long comphash(long l, char *v);
 
@@ -182,7 +180,7 @@ CatalogCacheInitializeCache(struct catcache * cache,
 	 * ----------------
 	 */
 	Assert(RelationIsValid(relation));
-	cache->relationId = RelationGetRelationId(relation);
+	cache->relationId = RelationGetRelid(relation);
 	tupdesc = cache->cc_tupdesc = RelationGetTupleDescriptor(relation);
 
 	CACHE3_elog(DEBUG, "CatalogCacheInitializeCache: relid %d, %d keys",
@@ -250,7 +248,7 @@ CatalogCacheInitializeCache(struct catcache * cache,
 			 */
 			relation = index_openr(cache->cc_indname);
 			Assert(relation);
-			cache->indexId = RelationGetRelationId(relation);
+			cache->indexId = RelationGetRelid(relation);
 			index_close(relation);
 		}
 		else
@@ -827,7 +825,6 @@ SearchSysCache(struct catcache * cache,
 	CatCTup    *nct2;
 	Dlelem	   *elt;
 	HeapTuple	ntp = 0;
-	Buffer		buffer;
 
 	Relation	relation;
 	MemoryContext oldcxt;
@@ -997,8 +994,7 @@ SearchSysCache(struct catcache * cache,
 		sd = heap_beginscan(relation, 0, SnapshotNow,
 							cache->cc_nkeys, cache->cc_skey);
 
-		/* should this buffer be ReleaseBuffer'd?  --djm 8/20/96 */
-		ntp = heap_getnext(sd, 0, &buffer);
+		ntp = heap_getnext(sd, 0);
 
 		MemoryContextSwitchTo((MemoryContext) CacheCxt);
 
@@ -1129,7 +1125,7 @@ RelationInvalidateCatalogCacheTuple(Relation relation,
 	 *		   in the proper hash bucket
 	 * ----------------
 	 */
-	relationId = RelationGetRelationId(relation);
+	relationId = RelationGetRelid(relation);
 
 	for (ccp = Caches; ccp; ccp = ccp->cc_next)
 	{

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.17 1998/07/03 04:24:10 momjian Exp $
+ * $Id: postgres.h,v 1.18 1998/08/19 02:03:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,6 @@
  *				int28	  oid8
  *				bytea	   text
  *				NameData   Name
- *				oidint4    oidint2	  oidname
  *
  *	 TABLE OF CONTENTS
  *		1)		simple type definitions
@@ -98,48 +97,6 @@ typedef struct nameData
 	char		data[NAMEDATALEN];
 } NameData;
 typedef NameData *Name;
-
-/* ----------------
- *		oidint4
- *
- *		this is a new system type used by the file interface.
- * ----------------
- */
-typedef struct OidInt4Data
-{
-	Oid			oi_oid;
-	int32		oi_int4;
-} OidInt4Data;
-
-typedef struct OidInt4Data *OidInt4;
-
-/* ----------------
- *		oidint2
- *
- *		this is a new system type used to define indices on two attrs.
- * ----------------
- */
-typedef struct OidInt2Data
-{
-	Oid			oi_oid;
-	int16		oi_int2;
-} OidInt2Data;
-
-typedef struct OidInt2Data *OidInt2;
-
-/* ----------------
- *		oidname
- *
- *		this is a new system type used to define indices on two attrs.
- * ----------------
- */
-typedef struct OidNameData
-{
-	Oid			id;
-	NameData	name;
-} OidNameData;
-
-typedef struct OidNameData *OidName;
 
 /* ----------------------------------------------------------------
  *				Section 3: TransactionId and CommandId

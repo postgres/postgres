@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.46 1998/08/11 18:28:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.47 1998/08/19 02:03:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -337,7 +337,6 @@ scan_pg_rel_seq(RelationBuildDescInfo buildinfo)
 	Relation	pg_class_desc;
 	HeapScanDesc pg_class_scan;
 	ScanKeyData key;
-	Buffer		buf;
 
 	/* ----------------
 	 *	form a scan key
@@ -371,9 +370,8 @@ scan_pg_rel_seq(RelationBuildDescInfo buildinfo)
 	pg_class_desc = heap_openr(RelationRelationName);
 	if (!IsInitProcessingMode())
 		RelationSetLockForRead(pg_class_desc);
-	pg_class_scan =
-		heap_beginscan(pg_class_desc, 0, SnapshotNow, 1, &key);
-	pg_class_tuple = heap_getnext(pg_class_scan, 0, &buf);
+	pg_class_scan = heap_beginscan(pg_class_desc, 0, SnapshotNow, 1, &key);
+	pg_class_tuple = heap_getnext(pg_class_scan, 0);
 
 	/* ----------------
 	 *	get set to return tuple
@@ -394,7 +392,6 @@ scan_pg_rel_seq(RelationBuildDescInfo buildinfo)
 		memmove((char *) return_tuple,
 				(char *) pg_class_tuple,
 				(int) pg_class_tuple->t_len);
-		ReleaseBuffer(buf);
 	}
 
 	/* all done */
@@ -534,15 +531,14 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 	ScanKeyEntryInitialize(&key, 0,
 						   Anum_pg_attribute_attrelid,
 						   F_OIDEQ,
-						   ObjectIdGetDatum(relation->rd_id));
+						   ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	/* ----------------
 	 *	open pg_attribute and begin a scan
 	 * ----------------
 	 */
 	pg_attribute_desc = heap_openr(AttributeRelationName);
-	pg_attribute_scan =
-		heap_beginscan(pg_attribute_desc, 0, SnapshotNow, 1, &key);
+	pg_attribute_scan = heap_beginscan(pg_attribute_desc, 0, SnapshotNow, 1, &key);
 
 	/* ----------------
 	 *	add attribute data to relation->rd_att
@@ -550,7 +546,7 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 	 */
 	need = natts;
 
-	pg_attribute_tuple = heap_getnext(pg_attribute_scan, 0, (Buffer *) NULL);
+	pg_attribute_tuple = heap_getnext(pg_attribute_scan, 0);
 	while (HeapTupleIsValid(pg_attribute_tuple) && need > 0)
 	{
 		attp = (AttributeTupleForm) GETSTRUCT(pg_attribute_tuple);
@@ -565,13 +561,12 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 					ATTRIBUTE_TUPLE_SIZE);
 			need--;
 		}
-		pg_attribute_tuple = heap_getnext(pg_attribute_scan,
-										  0, (Buffer *) NULL);
+		pg_attribute_tuple = heap_getnext(pg_attribute_scan, 0);
 	}
 
 	if (need > 0)
 		elog(ERROR, "catalog is missing %d attribute%s for relid %d",
-			 need, (need == 1 ? "" : "s"), relation->rd_id);
+			 need, (need == 1 ? "" : "s"), RelationGetRelid(relation));
 
 	/* ----------------
 	 *	end the scan and close the attribute relation
@@ -600,8 +595,8 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 
 	for (i = 1; i <= relation->rd_rel->relnatts; i++)
 	{
-
-		atttup = (HeapTuple) AttributeNumIndexScan(attrel, relation->rd_id, i);
+		atttup = (HeapTuple) AttributeNumIndexScan(attrel,
+							RelationGetRelid(relation), i);
 
 		if (!HeapTupleIsValid(atttup))
 			elog(ERROR, "cannot find attribute %d of relation %s", i,
@@ -705,24 +700,21 @@ RelationBuildRuleLock(Relation relation)
 	ScanKeyEntryInitialize(&key, 0,
 						   Anum_pg_rewrite_ev_class,
 						   F_OIDEQ,
-						   ObjectIdGetDatum(relation->rd_id));
+						   ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	/* ----------------
 	 *	open pg_attribute and begin a scan
 	 * ----------------
 	 */
 	pg_rewrite_desc = heap_openr(RewriteRelationName);
-	pg_rewrite_scan =
-		heap_beginscan(pg_rewrite_desc, 0, SnapshotNow, 1, &key);
-	pg_rewrite_tupdesc =
-		RelationGetTupleDescriptor(pg_rewrite_desc);
+	pg_rewrite_scan = heap_beginscan(pg_rewrite_desc, 0, SnapshotNow, 1, &key);
+	pg_rewrite_tupdesc = RelationGetTupleDescriptor(pg_rewrite_desc);
 
 	/* ----------------
 	 *	add attribute data to relation->rd_att
 	 * ----------------
 	 */
-	while ((pg_rewrite_tuple = heap_getnext(pg_rewrite_scan, 0,
-											(Buffer *) NULL)) != NULL)
+	while (HeapTupleIsValid(pg_rewrite_tuple=heap_getnext(pg_rewrite_scan, 0)))
 	{
 		bool		isnull;
 		Datum		ruleaction;
@@ -867,7 +859,7 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo)
 	 *	initialize the relation's relation id (relation->rd_id)
 	 * ----------------
 	 */
-	relation->rd_id = relid;
+	RelationGetRelid(relation) = relid;
 
 	/* ----------------
 	 *	initialize relation->rd_refcnt
@@ -1093,7 +1085,7 @@ formrdesc(char *relationName,
 	 *	initialize relation id
 	 * ----------------
 	 */
-	relation->rd_id = relation->rd_att->attrs[0]->attrelid;
+	RelationGetRelid(relation) = relation->rd_att->attrs[0]->attrelid;
 
 	/* ----------------
 	 *	add new reldesc to relcache
@@ -1109,7 +1101,7 @@ formrdesc(char *relationName,
 	 * the check (and possible set) after cache insertion.
 	 */
 	relation->rd_rel->relhasindex =
-		CatalogHasIndex(relationName, relation->rd_id);
+		CatalogHasIndex(relationName, RelationGetRelid(relation));
 }
 
 
@@ -1328,7 +1320,7 @@ RelationFlushRelation(Relation *relationPtr,
 		RelationCacheDelete(relation);
 
 		FreeTupleDesc(relation->rd_att);
-		SystemCacheRelationFlushed(relation->rd_id);
+		SystemCacheRelationFlushed(RelationGetRelid(relation));
 
 		FreeTriggerDesc(relation);
 
@@ -1379,7 +1371,7 @@ RelationForgetRelation(Oid rid)
 			Relation	reln = lfirst(curr);
 
 			Assert(reln != NULL && reln->rd_islocal);
-			if (reln->rd_id == rid)
+			if (RelationGetRelid(reln) == rid)
 				break;
 			prev = curr;
 		}
@@ -1678,7 +1670,6 @@ AttrDefaultFetch(Relation relation)
 	Form_pg_attrdef adform;
 	IndexScanDesc sd;
 	RetrieveIndexResult indexRes;
-	Buffer		buffer;
 	ItemPointer iptr;
 	struct varlena *val;
 	bool		isnull;
@@ -1689,7 +1680,7 @@ AttrDefaultFetch(Relation relation)
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
 						   (RegProcedure) F_OIDEQ,
-						   ObjectIdGetDatum(relation->rd_id));
+						   ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	adrel = heap_openr(AttrDefaultRelationName);
 	irel = index_openr(AttrDefaultIndex);
@@ -1698,6 +1689,8 @@ AttrDefaultFetch(Relation relation)
 
 	for (found = 0;;)
 	{
+		Buffer	buffer;
+		
 		indexRes = index_getnext(sd, ForwardScanDirection);
 		if (!indexRes)
 			break;
@@ -1736,12 +1729,12 @@ AttrDefaultFetch(Relation relation)
 			attrdef[i].adsrc = textout(val);
 			break;
 		}
-
+		ReleaseBuffer(buffer);
+		
 		if (i >= ndef)
 			elog(ERROR, "AttrDefaultFetch: unexpected record found for attr %d in rel %s",
 				 adform->adnum,
 				 relation->rd_rel->relname.data);
-		ReleaseBuffer(buffer);
 	}
 
 	if (found < ndef)
@@ -1752,7 +1745,6 @@ AttrDefaultFetch(Relation relation)
 	pfree(sd);
 	index_close(irel);
 	heap_close(adrel);
-
 }
 
 static void
@@ -1766,7 +1758,6 @@ RelCheckFetch(Relation relation)
 	HeapTuple	tuple;
 	IndexScanDesc sd;
 	RetrieveIndexResult indexRes;
-	Buffer		buffer;
 	ItemPointer iptr;
 	Name		rcname;
 	struct varlena *val;
@@ -1777,7 +1768,7 @@ RelCheckFetch(Relation relation)
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
 						   (RegProcedure) F_OIDEQ,
-						   ObjectIdGetDatum(relation->rd_id));
+						   ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	rcrel = heap_openr(RelCheckRelationName);
 	irel = index_openr(RelCheckIndex);
@@ -1786,6 +1777,8 @@ RelCheckFetch(Relation relation)
 
 	for (found = 0;;)
 	{
+		Buffer buffer;
+		
 		indexRes = index_getnext(sd, ForwardScanDirection);
 		if (!indexRes)
 			break;
@@ -1821,7 +1814,6 @@ RelCheckFetch(Relation relation)
 				 relation->rd_rel->relname.data);
 		check[found].ccsrc = textout(val);
 		found++;
-
 		ReleaseBuffer(buffer);
 	}
 

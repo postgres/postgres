@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.15 1998/07/30 05:04:50 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.16 1998/08/19 02:01:17 momjian Exp $
  *
  *
  * NOTES
@@ -96,10 +96,10 @@ _bt_adjscans(Relation rel, ItemPointer tid, int op)
 	BTScanList	l;
 	Oid			relid;
 
-	relid = rel->rd_id;
+	relid = RelationGetRelid(rel);
 	for (l = BTScans; l != (BTScanList) NULL; l = l->btsl_next)
 	{
-		if (relid == l->btsl_scan->relation->rd_id)
+		if (relid == RelationGetRelid(l->btsl_scan->relation))
 			_bt_scandel(l->btsl_scan, op,
 						ItemPointerGetBlockNumber(tid),
 						ItemPointerGetOffsetNumber(tid));

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.11 1998/07/27 19:37:57 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.12 1998/08/19 02:02:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,6 @@ SeqNext(SeqScan *node)
 	EState	   *estate;
 	ScanDirection direction;
 	TupleTableSlot *slot;
-	Buffer		buffer;
 
 	/* ----------------
 	 *	get information from the estate and scan state
@@ -70,9 +69,7 @@ SeqNext(SeqScan *node)
 	 *	get the next tuple from the access methods
 	 * ----------------
 	 */
-	tuple = heap_getnext(scandesc,		/* scan desc */
-						 ScanDirectionIsBackward(direction),	/* backward flag */
-						 &buffer);		/* return: buffer */
+	tuple = heap_getnext(scandesc, ScanDirectionIsBackward(direction));
 
 	/* ----------------
 	 *	save the tuple and the buffer returned to us by the access methods
@@ -86,8 +83,7 @@ SeqNext(SeqScan *node)
 
 	slot = ExecStoreTuple(tuple,/* tuple to store */
 						  slot, /* slot to store in */
-						  buffer,		/* buffer associated with this
-										 * tuple */
+						  scandesc->rs_cbuf,/* buffer associated with this tuple */
 						  false);		/* don't pfree this pointer */
 
 	/* ----------------
@@ -364,8 +360,8 @@ ExecSeqReScan(SeqScan *node, ExprContext *exprCtxt, Plan *parent)
 	CommonScanState *scanstate;
 	EState	   *estate;
 	Plan	   *outerPlan;
-	Relation	rdesc;
-	HeapScanDesc sdesc;
+	Relation	rel;
+	HeapScanDesc scan;
 	ScanDirection direction;
 
 	scanstate = node->scanstate;
@@ -380,11 +376,11 @@ ExecSeqReScan(SeqScan *node, ExprContext *exprCtxt, Plan *parent)
 	else
 	{
 		/* otherwise, we are scanning a relation */
-		rdesc = scanstate->css_currentRelation;
-		sdesc = scanstate->css_currentScanDesc;
+		rel = scanstate->css_currentRelation;
+		scan = scanstate->css_currentScanDesc;
 		direction = estate->es_direction;
-		sdesc = ExecReScanR(rdesc, sdesc, direction, 0, NULL);
-		scanstate->css_currentScanDesc = sdesc;
+		scan = ExecReScanR(rel, scan, direction, 0, NULL);
+		scanstate->css_currentScanDesc = scan;
 	}
 }
 
@@ -399,7 +395,7 @@ ExecSeqMarkPos(SeqScan *node)
 {
 	CommonScanState *scanstate;
 	Plan	   *outerPlan;
-	HeapScanDesc sdesc;
+	HeapScanDesc scan;
 
 	scanstate = node->scanstate;
 
@@ -421,8 +417,8 @@ ExecSeqMarkPos(SeqScan *node)
 	 *
 	 * ----------------
 	 */
-	sdesc = scanstate->css_currentScanDesc;
-	heap_markpos(sdesc);
+	scan = scanstate->css_currentScanDesc;
+	heap_markpos(scan);
 
 	return;
 }
@@ -438,7 +434,7 @@ ExecSeqRestrPos(SeqScan *node)
 {
 	CommonScanState *scanstate;
 	Plan	   *outerPlan;
-	HeapScanDesc sdesc;
+	HeapScanDesc scan;
 
 	scanstate = node->scanstate;
 
@@ -459,6 +455,6 @@ ExecSeqRestrPos(SeqScan *node)
 	 *	position using the access methods..
 	 * ----------------
 	 */
-	sdesc = scanstate->css_currentScanDesc;
-	heap_restrpos(sdesc);
+	scan = scanstate->css_currentScanDesc;
+	heap_restrpos(scan);
 }

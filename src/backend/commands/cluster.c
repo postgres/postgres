@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.27 1998/08/06 05:12:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.28 1998/08/19 02:01:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,7 +128,7 @@ cluster(char oldrelname[], char oldindexname[])
 		elog(ERROR, "cluster: unknown relation: \"%s\"",
 			 oldrelname);
 	}
-	OIDOldHeap = OldHeap->rd_id;/* Get OID for the index scan	*/
+	OIDOldHeap = RelationGetRelid(OldHeap);/* Get OID for the index scan	*/
 
 	OldIndex = index_openr(oldindexname);		/* Open old index relation	*/
 	if (!RelationIsValid(OldIndex))
@@ -136,7 +136,7 @@ cluster(char oldrelname[], char oldindexname[])
 		elog(ERROR, "cluster: unknown index: \"%s\"",
 			 oldindexname);
 	}
-	OIDOldIndex = OldIndex->rd_id;		/* OID for the index scan		  */
+	OIDOldIndex = RelationGetRelid(OldIndex);		/* OID for the index scan		  */
 
 	heap_close(OldHeap);
 	index_close(OldIndex);
@@ -150,7 +150,7 @@ cluster(char oldrelname[], char oldindexname[])
 	 * with a pg_vlock.
 	 */
 	NewHeap = copy_heap(OIDOldHeap);
-	OIDNewHeap = NewHeap->rd_id;
+	OIDNewHeap = RelationGetRelid(NewHeap);
 	strcpy(NewHeapName, NewHeap->rd_rel->relname.data);
 
 
@@ -257,7 +257,7 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 	 */
 	Old_pg_index_Tuple =
 		SearchSysCacheTuple(INDEXRELID,
-							ObjectIdGetDatum(OldIndex->rd_id),
+							ObjectIdGetDatum(RelationGetRelid(OldIndex)),
 							0, 0, 0);
 
 	Assert(Old_pg_index_Tuple);
@@ -265,7 +265,7 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 
 	Old_pg_index_relation_Tuple =
 		SearchSysCacheTuple(RELOID,
-							ObjectIdGetDatum(OldIndex->rd_id),
+							ObjectIdGetDatum(RelationGetRelid(OldIndex)),
 							0, 0, 0);
 
 	Assert(Old_pg_index_relation_Tuple);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.19 1998/08/11 18:28:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.20 1998/08/19 02:01:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,7 +148,6 @@ get_pg_dbtup(char *command, char *dbname, Relation dbrel)
 {
 	HeapTuple	dbtup;
 	HeapTuple	tup;
-	Buffer		buf;
 	HeapScanDesc scan;
 	ScanKeyData scanKey;
 
@@ -163,13 +162,10 @@ get_pg_dbtup(char *command, char *dbname, Relation dbrel)
 	 * since we want to return the tuple out of this proc, and we're going
 	 * to close the relation, copy the tuple and return the copy.
 	 */
-	tup = heap_getnext(scan, 0, &buf);
+	tup = heap_getnext(scan, 0);
 
 	if (HeapTupleIsValid(tup))
-	{
 		dbtup = heap_copytuple(tup);
-		ReleaseBuffer(buf);
-	}
 	else
 		dbtup = tup;
 
@@ -205,8 +201,9 @@ check_permissions(char *command,
 	char		path[MAXPGPATH + 1];
 
 	userName = GetPgUserName();
-	utup = SearchSysCacheTuple(USENAME, PointerGetDatum(userName),
-							   0, 0, 0);
+	utup = SearchSysCacheTuple(USENAME,
+								PointerGetDatum(userName),
+							   	0, 0, 0);
 	*userIdP = ((Form_pg_shadow) GETSTRUCT(utup))->usesysid;
 	use_super = ((Form_pg_shadow) GETSTRUCT(utup))->usesuper;
 	use_createdb = ((Form_pg_shadow) GETSTRUCT(utup))->usecreatedb;

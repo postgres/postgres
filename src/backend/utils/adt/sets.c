@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.15 1998/07/27 19:38:21 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.16 1998/08/19 02:03:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,13 +56,6 @@ SetDefine(char *querystr, char *typename)
 	Datum		replValue[Natts_pg_proc];
 	char		replNull[Natts_pg_proc];
 	char		repl[Natts_pg_proc];
-	HeapScanDesc pg_proc_scan;
-	Buffer		buffer;
-	ItemPointerData ipdata;
-
-	static ScanKeyData oidKey[1] = {
-	{0, ObjectIdAttributeNumber, F_OIDEQ}};
-
 
 	setoid = ProcedureCreate(procname,	/* changed below, after oid known */
 							 true,		/* returnsSet */
@@ -117,37 +110,26 @@ SetDefine(char *querystr, char *typename)
 		/* change the pg_proc tuple */
 		procrel = heap_openr(ProcedureRelationName);
 		RelationSetLockForWrite(procrel);
-		fmgr_info(F_OIDEQ,
-				  &oidKey[0].sk_func);
-		oidKey[0].sk_nargs = oidKey[0].sk_func.fn_nargs;
-		oidKey[0].sk_argument = ObjectIdGetDatum(setoid);
-		pg_proc_scan = heap_beginscan(procrel,
-									  0,
-									  SnapshotSelf,
-									  1,
-									  oidKey);
-		tup = heap_getnext(pg_proc_scan, 0, &buffer);
+
+		tup = SearchSysCacheTuple(PROOID,
+									ObjectIdGetDatum(setoid),
+									0, 0, 0);
 		if (HeapTupleIsValid(tup))
 		{
 			newtup = heap_modifytuple(tup,
-									  buffer,
 									  procrel,
 									  replValue,
 									  replNull,
 									  repl);
 
-			/* XXX may not be necessary */
-			ItemPointerCopy(&tup->t_ctid, &ipdata);
-
 			setheapoverride(true);
-			heap_replace(procrel, &ipdata, newtup);
+			heap_replace(procrel, &tup->t_ctid, newtup);
 			setheapoverride(false);
 
 			setoid = newtup->t_oid;
 		}
 		else
 			elog(ERROR, "setin: could not find new set oid tuple");
-		heap_endscan(pg_proc_scan);
 
 		if (RelationGetRelationTupleForm(procrel)->relhasindex)
 		{

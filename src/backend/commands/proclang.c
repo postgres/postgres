@@ -53,7 +53,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	Oid			typev[8];
 	char		nulls[Natts_pg_language];
 	Datum		values[Natts_pg_language];
-	Relation	rdesc;
+	Relation	rel;
 	HeapTuple	tup;
 	TupleDesc	tupDesc;
 
@@ -90,7 +90,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	memset(typev, 0, sizeof(typev));
 	procTup = SearchSysCacheTuple(PRONAME,
 								  PointerGetDatum(stmt->plhandler),
-								  UInt16GetDatum(0),
+								  Int32GetDatum(0),
 								  PointerGetDatum(typev),
 								  0);
 	if (!HeapTupleIsValid(procTup))
@@ -121,14 +121,14 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	values[i++] = ObjectIdGetDatum(procTup->t_oid);
 	values[i++] = (Datum) fmgr(F_TEXTIN, stmt->plcompiler);
 
-	rdesc = heap_openr(LanguageRelationName);
+	rel = heap_openr(LanguageRelationName);
 
-	tupDesc = rdesc->rd_att;
+	tupDesc = rel->rd_att;
 	tup = heap_formtuple(tupDesc, values, nulls);
 
-	heap_insert(rdesc, tup);
+	heap_insert(rel, tup);
 
-	heap_close(rdesc);
+	heap_close(rel);
 	return;
 }
 
@@ -142,11 +142,7 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 {
 	char		languageName[NAMEDATALEN];
 	HeapTuple	langTup;
-
-	Relation	rdesc;
-	HeapScanDesc scanDesc;
-	ScanKeyData scanKeyData;
-	HeapTuple	tup;
+	Relation	rel;
 
 	/* ----------------
 	 * Check permission
@@ -165,7 +161,7 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 	 */
 	case_translate_language_name(stmt->plname, languageName);
 
-	langTup = SearchSysCacheTuple(LANNAME,
+	langTup = SearchSysCacheTupleCopy(LANNAME,
 								  PointerGetDatum(languageName),
 								  0, 0, 0);
 	if (!HeapTupleIsValid(langTup))
@@ -177,24 +173,9 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 			 languageName);
 	}
 
-	/* ----------------
-	 * Now scan pg_language and delete the PL tuple
-	 * ----------------
-	 */
-	rdesc = heap_openr(LanguageRelationName);
+	rel = heap_openr(LanguageRelationName);
+	heap_delete(rel, &langTup->t_ctid);
 
-	ScanKeyEntryInitialize(&scanKeyData, 0, Anum_pg_language_lanname,
-						   F_NAMEEQ, PointerGetDatum(languageName));
-
-	scanDesc = heap_beginscan(rdesc, 0, SnapshotNow, 1, &scanKeyData);
-
-	tup = heap_getnext(scanDesc, 0, (Buffer *) NULL);
-
-	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "Language with name '%s' not found", languageName);
-
-	heap_delete(rdesc, &(tup->t_ctid));
-
-	heap_endscan(scanDesc);
-	heap_close(rdesc);
+	pfree(langTup);
+	heap_close(rel);
 }

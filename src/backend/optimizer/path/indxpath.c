@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.30 1998/08/16 05:37:04 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.31 1998/08/19 02:02:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1071,7 +1071,7 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 	 * --Nels, Jan '93
 	 */
 	scan = heap_beginscan(relation, false, SnapshotNow, 2, entry);
-	tuple = heap_getnext(scan, false, (Buffer *) NULL);
+	tuple = heap_getnext(scan, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
 		elog(DEBUG, "clause_pred_clause_test: unknown pred_op");
@@ -1102,7 +1102,7 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 						   ObjectIdGetDatum(clause_op));
 
 	scan = heap_beginscan(relation, false, SnapshotNow, 3, entry);
-	tuple = heap_getnext(scan, false, (Buffer *) NULL);
+	tuple = heap_getnext(scan, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
 		elog(DEBUG, "clause_pred_clause_test: unknown clause_op");
@@ -1134,7 +1134,7 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 						   Int16GetDatum(test_strategy));
 
 	scan = heap_beginscan(relation, false, SnapshotNow, 3, entry);
-	tuple = heap_getnext(scan, false, (Buffer *) NULL);
+	tuple = heap_getnext(scan, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
 		elog(DEBUG, "clause_pred_clause_test: unknown test_op");

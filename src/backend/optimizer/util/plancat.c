@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.18 1998/07/27 19:38:00 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.19 1998/08/19 02:02:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ relation_info(Query *root, Index relid,
 
 	relationObjectId = getrelid(relid, root->rtable);
 	relationTuple = SearchSysCacheTuple(RELOID,
-									  ObjectIdGetDatum(relationObjectId),
+										ObjectIdGetDatum(relationObjectId),
 										0, 0, 0);
 	if (HeapTupleIsValid(relationTuple))
 	{
@@ -153,7 +153,7 @@ index_info(Query *root, bool first, int relid, IdxInfoRetval *info)
 	}
 	if (!HeapScanIsValid(scan))
 		elog(ERROR, "index_info: scan not started");
-	indexTuple = heap_getnext(scan, 0, (Buffer *) NULL);
+	indexTuple = heap_getnext(scan, 0);
 	if (!HeapTupleIsValid(indexTuple))
 	{
 		heap_endscan(scan);
@@ -414,9 +414,7 @@ find_inheritance_children(Oid inhparent)
 	key[0].sk_argument = ObjectIdGetDatum((Oid) inhparent);
 	relation = heap_openr(InheritsRelationName);
 	scan = heap_beginscan(relation, 0, SnapshotNow, 1, key);
-	while (HeapTupleIsValid(inheritsTuple =
-							heap_getnext(scan, 0,
-										 (Buffer *) NULL)))
+	while (HeapTupleIsValid(inheritsTuple = heap_getnext(scan, 0)))
 	{
 		inhrelid = ((InheritsTupleForm) GETSTRUCT(inheritsTuple))->inhrel;
 		list = lappendi(list, inhrelid);
@@ -450,12 +448,8 @@ VersionGetParents(Oid verrelid)
 	relation = heap_openr(VersionRelationName);
 	key[0].sk_argument = ObjectIdGetDatum(verrelid);
 	scan = heap_beginscan(relation, 0, SnapshotNow, 1, key);
-	for (;;)
+	while (HeapTupleIsValid(versionTuple = heap_getnext(scan, 0)))
 	{
-		versionTuple = heap_getnext(scan, 0,
-									(Buffer *) NULL);
-		if (!HeapTupleIsValid(versionTuple))
-			break;
 		verbaseid = ((VersionTupleForm)
 					 GETSTRUCT(versionTuple))->verbaseid;
 

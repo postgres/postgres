@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.21 1998/08/01 15:26:26 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.22 1998/08/19 02:02:44 momjian Exp $
  *
  * NOTES:
  *	 (1) The lock.c module assumes that the caller here is doing
@@ -248,7 +248,7 @@ MultiAcquire(LOCKMETHOD lockmethod,
 			 LOCKMODE lockmode,
 			 PG_LOCK_LEVEL level)
 {
-	LOCKMODE		locks[N_LEVELS];
+	LOCKMODE	locks[N_LEVELS];
 	int			i,
 				status;
 	LOCKTAG		xxTag,

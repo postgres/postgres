@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_opclass.h,v 1.9 1998/04/26 04:09:00 momjian Exp $
+ * $Id: pg_opclass.h,v 1.10 1998/08/19 02:03:52 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -62,8 +62,6 @@ typedef FormData_pg_opclass *Form_pg_opclass;
  * (see the README in this directory), so just put zeros
  * in, which are invalid OID's anyway.  --djm
  */
-DATA(insert OID = 1181 (	name_ops		 19   ));
-DESCR("");
 DATA(insert OID =  421 (	int2_ops		 21   ));
 DESCR("");
 DATA(insert OID =  422 (	box_ops			603   ));
@@ -91,11 +89,7 @@ DATA(insert OID =  433 (	bigbox_ops		  0   ));
 DESCR("");
 DATA(insert OID =  434 (	poly_ops		604   ));
 DESCR("");
-DATA(insert OID =  435 (	oidint4_ops		910   ));
-DESCR("");
-DATA(insert OID =  436 (	oidname_ops		911   ));
-DESCR("");
-DATA(insert OID =  437 (	oidint2_ops		810   ));
+DATA(insert OID =  435 (	oid8_ops		 30   ));
 DESCR("");
 DATA(insert OID =  714 (	circle_ops		718   ));
 DESCR("");
@@ -106,6 +100,8 @@ DESCR("");
 DATA(insert OID = 1114 (	date_ops	   1082   ));
 DESCR("");
 DATA(insert OID = 1115 (	time_ops	   1083   ));
+DESCR("");
+DATA(insert OID = 1181 (	name_ops		 19   ));
 DESCR("");
 DATA(insert OID = 1312 (	datetime_ops   1184   ));
 DESCR("");

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.43 1998/08/11 18:28:49 momjian Exp $
+ * $Id: pg_type.h,v 1.44 1998/08/19 02:03:56 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -298,14 +298,8 @@ DESCR("money '$d,ddd.cc'");
 DATA(insert OID = 791 (  _money    PGUID  -1 -1 f b t \054 0  790 array_in array_out array_in array_out i _null_ ));
 
 /* OIDS 800 - 899 */
-DATA(insert OID = 810 (  oidint2   PGUID  6  20 f b t \054 0   0 oidint2in oidint2out oidint2in oidint2out i _null_ ));
-DESCR("oid and int2 composed");
 
 /* OIDS 900 - 999 */
-DATA(insert OID = 910 (  oidint4   PGUID  8  20 f b t \054 0   0 oidint4in oidint4out oidint4in oidint4out i _null_ ));
-DESCR("oid and int4 composed");
-DATA(insert OID = 911 (  oidname   PGUID  OIDNAMELEN OIDNAMELEN f b t \054 0   0 oidnamein oidnameout oidnamein oidnameout i _null_ ));
-DESCR("oid and name composed");
 
 /* OIDS 1000 - 1099 */
 DATA(insert OID = 1000 (  _bool		 PGUID -1  -1 f b t \054 0	16 array_in array_out array_in array_out i _null_ ));

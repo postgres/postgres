@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.27 1998/07/27 19:37:39 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.28 1998/08/19 02:01:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,8 @@ _bt_doinsert(Relation rel, BTItem btitem, bool index_is_unique, Relation heapRel
 	BlockNumber blkno;
 	int			natts = rel->rd_rel->relnatts;
 	InsertIndexResult res;
-
+	Buffer		buffer;
+	
 	itup = &(btitem->bti_itup);
 
 	/* we need a scan key to do our search, so build one */
@@ -120,11 +121,12 @@ _bt_doinsert(Relation rel, BTItem btitem, bool index_is_unique, Relation heapRel
 			{					/* they're equal */
 				btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offset));
 				itup = &(btitem->bti_itup);
-				htup = heap_fetch(heapRel, SnapshotSelf, &(itup->t_tid), NULL);
+				htup = heap_fetch(heapRel, SnapshotSelf, &(itup->t_tid), &buffer);
 				if (htup != (HeapTuple) NULL)
 				{				/* it is a duplicate */
 					elog(ERROR, "Cannot insert a duplicate key into a unique index");
 				}
+				/* htup null so no buffer to release */
 				/* get next offnum */
 				if (offset < maxoff)
 					offset = OffsetNumberNext(offset);

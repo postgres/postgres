@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.14 1998/06/15 19:27:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.15 1998/08/19 02:01:04 momjian Exp $
  *
  * NOTES
  *	  Because we can be doing an index scan on a relation while we
@@ -90,7 +90,7 @@ _hash_adjscans(Relation rel, ItemPointer tid)
 	HashScanList l;
 	Oid			relid;
 
-	relid = rel->rd_id;
+	relid = RelationGetRelid(rel);
 	for (l = HashScans; l != (HashScanList) NULL; l = l->hashsl_next)
 	{
 		if (relid == l->hashsl_scan->relation->rd_id)

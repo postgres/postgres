@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.10 1998/02/26 04:44:11 momjian Exp $
+ * $Id: syscache.h,v 1.11 1998/08/19 02:04:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,8 @@
 
 #include <access/attnum.h>
 #include <access/htup.h>
+#include <storage/buf.h>
+#include <utils/rel.h>
 
  /* #define CACHEDEBUG *//* turns DEBUG elogs on */
 
@@ -67,8 +69,7 @@
  */
 struct cachedesc
 {
-	char	   *name;			/* this is Name * so that we can
-								 * initialize it */
+	char	   *name;			/* this is Name so that we can initialize it */
 	int			nkeys;
 	int			key[4];
 	int			size;			/* sizeof(appropriate struct) */
@@ -80,18 +81,18 @@ struct cachedesc
 extern void zerocaches(void);
 extern void InitCatalogCache(void);
 extern HeapTuple
-SearchSysCacheTuple(int cacheId, Datum key1, Datum key2,
-					Datum key3, Datum key4);
+SearchSysCacheTupleCopy(int cacheId,
+					Datum key1, Datum key2, Datum key3, Datum key4);
+extern HeapTuple
+SearchSysCacheTuple(int cacheId,
+					Datum key1, Datum key2, Datum key3, Datum key4);
 extern int32
 SearchSysCacheStruct(int cacheId, char *returnStruct,
 					 Datum key1, Datum key2, Datum key3, Datum key4);
 extern void *
 SearchSysCacheGetAttribute(int cacheId,
 						   AttrNumber attributeNumber,
-						   Datum key1,
-						   Datum key2,
-						   Datum key3,
-						   Datum key4);
+						   Datum key1, Datum key2, Datum key3, Datum key4);
 extern void *TypeDefaultRetrieve(Oid typId);
 
 #endif							/* SYSCACHE_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.20 1998/08/05 04:49:11 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.21 1998/08/19 02:02:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -683,7 +683,7 @@ printf("MakeTargetlistExpr: attrtypmod is %d\n", (int4) attrtypmod);
 										   lowerIndexpr,
 										   (Expr *) expr);
 			attrtype = attnumTypeId(rd, resdomno);
-			attrtypmod = get_atttypmod(rd->rd_id, resdomno);
+			attrtypmod = get_atttypmod(RelationGetRelid(rd), resdomno);
 		}
 	}
 	else

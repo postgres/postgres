@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.9 1998/04/26 04:05:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.10 1998/08/19 02:01:02 momjian Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -132,6 +132,18 @@ hashoid(Oid key)
 {
 	return ((uint32) ~key);
 }
+
+uint32
+hashoid8(Oid key[])
+{
+	int i;
+	uint32 result = 0;
+
+	for (i=0; i < 8; i++)
+		result = result ^ (~(uint32)key[i]);
+	return result;
+}
+
 
 #define PRIME1			37
 #define PRIME2			1048583

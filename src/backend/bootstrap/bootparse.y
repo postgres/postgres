@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.19 1998/08/06 05:12:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.20 1998/08/19 02:01:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,8 +78,8 @@ static Oid objectid;
 	int			ival;
 }
 
-%type <list>  boot_arg_list
-%type <ielem> boot_index_params boot_index_on
+%type <list>  boot_index_params
+%type <ielem> boot_index_param
 %type <ival> boot_const boot_ident
 %type <ival> optbootstrap optoideq boot_tuple boot_tuplelist
 
@@ -225,15 +225,12 @@ Boot_InsertStmt:
 Boot_DeclareIndexStmt:
 		  XDECLARE INDEX boot_ident ON boot_ident USING boot_ident LPAREN boot_index_params RPAREN
 				{
-					List *params;
-
 					DO_START;
 
-					params = lappend(NIL, (List*)$9);
 					DefineIndex(LexIDStr($5),
 								LexIDStr($3),
 								LexIDStr($7),
-								params, NIL, 0, 0, NIL);
+								$9, NIL, 0, 0, NIL);
 					DO_END;
 				}
 		;
@@ -241,37 +238,19 @@ Boot_DeclareIndexStmt:
 Boot_BuildIndsStmt:
 		  XBUILD INDICES		{ build_indices(); }
 
+
 boot_index_params:
-		boot_index_on boot_ident
+		boot_index_params COMMA boot_index_param	{ $$ = lappend($1, $3); }
+		| boot_index_param							{ $$ = lcons($1, NIL); }
+		;
+
+boot_index_param:
+		boot_ident boot_ident
 				{
-					IndexElem *n = (IndexElem*)$1;
+					IndexElem *n = makeNode(IndexElem);
+					n->name = LexIDStr($1);
 					n->class = LexIDStr($2);
 					$$ = n;
-				}
-
-boot_index_on:
-		  boot_ident
-				{
-					IndexElem *n = makeNode(IndexElem);
-					n->name = LexIDStr($1);
-					$$ = n;
-				}
-		| boot_ident LPAREN boot_arg_list RPAREN
-				{
-					IndexElem *n = makeNode(IndexElem);
-					n->name = LexIDStr($1);
-					n->args = (List*)$3;
-					$$ = n;
-				}
-
-boot_arg_list:
-		  boot_ident
-				{
-					$$ = lappend(NIL, makeString(LexIDStr($1)));
-				}
-		| boot_arg_list COMMA boot_ident
-				{
-					$$ = lappend((List*)$1, makeString(LexIDStr($3)));
 				}
 
 optbootstrap:

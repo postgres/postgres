@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.19 1998/08/16 05:38:41 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.20 1998/08/19 02:03:12 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -47,8 +47,7 @@ op_class(Oid oprno, int32 opclass, Oid amopid)
 {
 	FormData_pg_amop amoptup;
 
-	if (SearchSysCacheStruct(AMOPOPID,
-							 (char *) &amoptup,
+	if (SearchSysCacheStruct(AMOPOPID, (char *) &amoptup,
 							 ObjectIdGetDatum(opclass),
 							 ObjectIdGetDatum(oprno),
 							 ObjectIdGetDatum(amopid),
@@ -72,8 +71,7 @@ get_attname(Oid relid, AttrNumber attnum)
 {
 	FormData_pg_attribute att_tup;
 
-	if (SearchSysCacheStruct(ATTNUM,
-							 (char *) &att_tup,
+	if (SearchSysCacheStruct(ATTNUM, (char *) &att_tup,
 							 ObjectIdGetDatum(relid),
 							 UInt16GetDatum(attnum),
 							 0, 0))
@@ -115,8 +113,7 @@ get_atttype(Oid relid, AttrNumber attnum)
 {
 	AttributeTupleForm att_tup = (AttributeTupleForm) palloc(sizeof(*att_tup));
 
-	if (SearchSysCacheStruct(ATTNUM,
-							 (char *) att_tup,
+	if (SearchSysCacheStruct(ATTNUM, (char *) att_tup,
 							 ObjectIdGetDatum(relid),
 							 UInt16GetDatum(attnum),
 							 0, 0))
@@ -132,24 +129,24 @@ get_atttype(Oid relid, AttrNumber attnum)
 bool
 get_attisset(Oid relid, char *attname)
 {
-	HeapTuple	htup;
+	HeapTuple	tuple;
 	AttrNumber	attno;
 	AttributeTupleForm att_tup;
 
 	attno = get_attnum(relid, attname);
 
-	htup = SearchSysCacheTuple(ATTNAME,
+	tuple = SearchSysCacheTuple(ATTNAME,
 							   ObjectIdGetDatum(relid),
 							   PointerGetDatum(attname),
 							   0, 0);
-	if (!HeapTupleIsValid(htup))
+	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "get_attisset: no attribute %s in relation %d",
 			 attname, relid);
-	if (heap_attisnull(htup, attno))
+	if (heap_attisnull(tuple, attno))
 		return false;
 	else
 	{
-		att_tup = (AttributeTupleForm) GETSTRUCT(htup);
+		att_tup = (AttributeTupleForm) GETSTRUCT(tuple);
 		return att_tup->attisset;
 	}
 }
@@ -166,10 +163,9 @@ get_atttypmod(Oid relid, AttrNumber attnum)
 {
 	FormData_pg_attribute att_tup;
 
-	if (SearchSysCacheStruct(ATTNUM,
-							 (char *) &att_tup,
+	if (SearchSysCacheStruct(ATTNUM, (char *) &att_tup,
 							 ObjectIdGetDatum(relid),
-							 Int32GetDatum(attnum),
+							 Int16GetDatum(attnum),
 							 0, 0))
 		return att_tup.atttypmod;
 	else
@@ -400,8 +396,7 @@ get_rel_name(Oid relid)
 {
 	FormData_pg_class reltup;
 
-	if ((SearchSysCacheStruct(RELOID,
-							  (char *) &reltup,
+	if ((SearchSysCacheStruct(RELOID, (char *) &reltup,
 							  ObjectIdGetDatum(relid),
 							  0, 0, 0)))
 		return pstrdup(reltup.relname.data);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.13 1998/08/18 00:48:57 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.14 1998/08/19 02:02:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,7 +208,7 @@ addRangeTableEntry(ParseState *pstate,
 		elog(ERROR, "%s: %s",
 			 relname, aclcheck_error_strings[ACLCHECK_NO_CLASS]);
 
-	rte->relid = RelationGetRelationId(relation);
+	rte->relid = RelationGetRelid(relation);
 
 	heap_close(relation);
 
@@ -237,7 +237,7 @@ addRangeTableEntry(ParseState *pstate,
 List *
 expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 {
-	Relation	rdesc;
+	Relation	rel;
 	List	   *te_tail = NIL,
 			   *te_head = NIL;
 	Var		   *varnode;
@@ -249,13 +249,13 @@ expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 	if (rte == NULL)
 		rte = addRangeTableEntry(pstate, relname, refname, FALSE, FALSE);
 
-	rdesc = heap_open(rte->relid);
+	rel = heap_open(rte->relid);
 
-	if (rdesc == NULL)
+	if (rel == NULL)
 		elog(ERROR, "Unable to expand all -- heap_open failed on %s",
 			 rte->refname);
 
-	maxattrs = RelationGetNumberOfAttributes(rdesc);
+	maxattrs = RelationGetNumberOfAttributes(rel);
 
 	for (varattno = 0; varattno <= maxattrs - 1; varattno++)
 	{
@@ -263,7 +263,7 @@ expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 		char	   *resname = NULL;
 		TargetEntry *te = makeNode(TargetEntry);
 
-		attrname = pstrdup((rdesc->rd_att->attrs[varattno]->attname).data);
+		attrname = pstrdup((rel->rd_att->attrs[varattno]->attname).data);
 		varnode = (Var *) make_var(pstate, rte->relid, refname, attrname);
 
 		handleTargetColname(pstate, &resname, refname, attrname);
@@ -289,7 +289,7 @@ expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 			te_tail = lappend(te_tail, te);
 	}
 
-	heap_close(rdesc);
+	heap_close(rel);
 
 	return (te_head);
 }
@@ -343,7 +343,7 @@ attnameIsSet(Relation rd, char *name)
 			return (false);		/* no sys attr is a set */
 		}
 	}
-	return (get_attisset(rd->rd_id, name));
+	return (get_attisset(RelationGetRelid(rd), name));
 }
 
 /*

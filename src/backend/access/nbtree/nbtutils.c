@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.20 1998/06/15 19:27:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.21 1998/08/19 02:01:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,8 +61,7 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 			proc = index_getprocid(rel, i + 1, BTORDER_PROC);
 			flag = 0x0;
 		}
-		ScanKeyEntryInitialize(&skey[i],
-							   flag, (AttrNumber) (i + 1), proc, arg);
+		ScanKeyEntryInitialize(&skey[i], flag, (AttrNumber) (i + 1), proc, arg);
 	}
 
 	return (skey);

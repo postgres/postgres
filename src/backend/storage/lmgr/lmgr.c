@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.16 1998/08/01 15:26:24 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.17 1998/08/19 02:02:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@ RelationInitLockInfo(Relation relation)
 	extern GlobalMemory	CacheCxt;
 
 	Assert(RelationIsValid(relation));
-	Assert(OidIsValid(RelationGetRelationId(relation)));
+	Assert(OidIsValid(RelationGetRelid(relation)));
 
 	info = (LockInfo) relation->lockInfo;
 	
@@ -80,7 +80,7 @@ RelationInitLockInfo(Relation relation)
 	info = (LockInfo) palloc(sizeof(LockInfoData));
 	MemoryContextSwitchTo(oldcxt);
 
-	info->lockRelId.relId = RelationGetRelationId(relation);
+	info->lockRelId.relId = RelationGetRelid(relation);
 	if (IsSharedSystemRelationName(relname))
 		info->lockRelId.dbId = InvalidOid;
 	else

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.26 1998/07/27 19:37:53 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.27 1998/08/19 02:01:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,16 +51,13 @@ RemoveOperator(char *operatorName,		/* operator name */
 			   char *typeName2) /* optional second type name */
 {
 	Relation	relation;
-	HeapScanDesc scan;
 	HeapTuple	tup;
 	Oid			typeId1 = InvalidOid;
 	Oid			typeId2 = InvalidOid;
 	bool		defined;
-	ItemPointerData itemPointerData;
-	Buffer		buffer;
-	ScanKeyData operatorKey[3];
 	char	   *userName;
-
+	char		oprtype;
+	
 	if (typeName1)
 	{
 		typeId1 = TypeGet(typeName1, &defined);
@@ -81,24 +78,20 @@ RemoveOperator(char *operatorName,		/* operator name */
 		}
 	}
 
-	ScanKeyEntryInitialize(&operatorKey[0], 0x0,
-						   Anum_pg_operator_oprname,
-						   F_NAMEEQ,
-						   PointerGetDatum(operatorName));
+	if (OidIsValid(typeId1) && OidIsValid(typeId2))
+		oprtype = 'b';
+	else if (OidIsValid(typeId1))
+		oprtype = 'l';
+	else
+		oprtype = 'r';
 
-	ScanKeyEntryInitialize(&operatorKey[1], 0x0,
-						   Anum_pg_operator_oprleft,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(typeId1));
-
-	ScanKeyEntryInitialize(&operatorKey[2], 0x0,
-						   Anum_pg_operator_oprright,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(typeId2));
-
+	tup = SearchSysCacheTupleCopy(OPRNAME,
+								PointerGetDatum(operatorName),
+								ObjectIdGetDatum(typeId1),
+								ObjectIdGetDatum(typeId2),
+								CharGetDatum(oprtype));
+						   
 	relation = heap_openr(OperatorRelationName);
-	scan = heap_beginscan(relation, 0, SnapshotNow, 3, operatorKey);
-	tup = heap_getnext(scan, 0, &buffer);
 	if (HeapTupleIsValid(tup))
 	{
 #ifndef NO_SECURITY
@@ -109,8 +102,7 @@ RemoveOperator(char *operatorName,		/* operator name */
 			elog(ERROR, "RemoveOperator: operator '%s': permission denied",
 				 operatorName);
 #endif
-		ItemPointerCopy(&tup->t_ctid, &itemPointerData);
-		heap_delete(relation, &itemPointerData);
+		heap_delete(relation, &tup->t_ctid);
 	}
 	else
 	{
@@ -134,7 +126,7 @@ RemoveOperator(char *operatorName,		/* operator name */
 				 typeName2);
 		}
 	}
-	heap_endscan(scan);
+	pfree(tup);
 	heap_close(relation);
 }
 
@@ -150,31 +142,25 @@ RemoveOperator(char *operatorName,		/* operator name */
 static void
 SingleOpOperatorRemove(Oid typeOid)
 {
-	Relation	rdesc;
+	Relation	rel;
 	ScanKeyData key[3];
-	HeapScanDesc sdesc;
+	HeapScanDesc scan;
 	HeapTuple	tup;
-	ItemPointerData itemPointerData;
-	Buffer		buffer;
 	static		attnums[3] = {7, 8, 9}; /* left, right, return */
 	int			i;
 
 	ScanKeyEntryInitialize(&key[0],
 					   0, 0, F_OIDEQ, (Datum) typeOid);
-	rdesc = heap_openr(OperatorRelationName);
+	rel = heap_openr(OperatorRelationName);
 	for (i = 0; i < 3; ++i)
 	{
 		key[0].sk_attno = attnums[i];
-		sdesc = heap_beginscan(rdesc, 0, SnapshotNow, 1, key);
-		while (PointerIsValid(tup = heap_getnext(sdesc, 0, &buffer)))
-		{
-			ItemPointerCopy(&tup->t_ctid, &itemPointerData);
-			/* XXX LOCK not being passed */
-			heap_delete(rdesc, &itemPointerData);
-		}
-		heap_endscan(sdesc);
+		scan = heap_beginscan(rel, 0, SnapshotNow, 1, key);
+		while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
+			heap_delete(rel, &tup->t_ctid);
+		heap_endscan(scan);
 	}
-	heap_close(rdesc);
+	heap_close(rel);
 }
 
 /*
@@ -193,12 +179,10 @@ AttributeAndRelationRemove(Oid typeOid)
 	};
 	struct oidlist *oidptr,
 			   *optr;
-	Relation	rdesc;
+	Relation	rel;
 	ScanKeyData key[1];
-	HeapScanDesc sdesc;
+	HeapScanDesc scan;
 	HeapTuple	tup;
-	ItemPointerData itemPointerData;
-	Buffer		buffer;
 
 	/*
 	 * Get the oid's of the relations to be removed by scanning the entire
@@ -213,31 +197,30 @@ AttributeAndRelationRemove(Oid typeOid)
 	oidptr = (struct oidlist *) palloc(sizeof(*oidptr));
 	oidptr->next = NULL;
 	optr = oidptr;
-	rdesc = heap_openr(AttributeRelationName);
-	sdesc = heap_beginscan(rdesc, 0, SnapshotNow, 1, key);
-	while (PointerIsValid(tup = heap_getnext(sdesc, 0, &buffer)))
+	rel = heap_openr(AttributeRelationName);
+	scan = heap_beginscan(rel, 0, SnapshotNow, 1, key);
+	while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
 	{
-		ItemPointerCopy(&tup->t_ctid, &itemPointerData);
 		optr->reloid = ((AttributeTupleForm) GETSTRUCT(tup))->attrelid;
 		optr->next = (struct oidlist *) palloc(sizeof(*oidptr));
 		optr = optr->next;
 	}
 	optr->next = NULL;
-	heap_endscan(sdesc);
-	heap_close(rdesc);
+	heap_endscan(scan);
+	heap_close(rel);
 
 
 	ScanKeyEntryInitialize(&key[0], 0,
 						   ObjectIdAttributeNumber,
 						   F_OIDEQ, (Datum) 0);
 	optr = oidptr;
-	rdesc = heap_openr(RelationRelationName);
+	rel = heap_openr(RelationRelationName);
 	while (PointerIsValid((char *) optr->next))
 	{
 		key[0].sk_argument = (Datum) (optr++)->reloid;
-		sdesc = heap_beginscan(rdesc, 0, SnapshotNow, 1, key);
-		tup = heap_getnext(sdesc, 0, &buffer);
-		if (PointerIsValid(tup))
+		scan = heap_beginscan(rel, 0, SnapshotNow, 1, key);
+		tup = heap_getnext(scan, 0);
+		if (HeapTupleIsValid(tup))
 		{
 			char	   *name;
 
@@ -245,11 +228,11 @@ AttributeAndRelationRemove(Oid typeOid)
 			heap_destroy_with_catalog(name);
 		}
 	}
-	heap_endscan(sdesc);
-	heap_close(rdesc);
+	heap_endscan(scan);
+	heap_close(rel);
 }
 
-#endif							/* NOTYET */
+#endif	/* NOTYET */
 
 /*
  *	TypeRemove
@@ -260,13 +243,8 @@ void
 RemoveType(char *typeName)		/* type name to be removed */
 {
 	Relation	relation;
-	HeapScanDesc scan;
 	HeapTuple	tup;
 	Oid			typeOid;
-	ItemPointerData itemPointerData;
-	static ScanKeyData typeKey[1] = {
-		{0, Anum_pg_type_typname, F_NAMEEQ}
-	};
 	char	   *shadow_type;
 	char	   *userName;
 
@@ -278,44 +256,33 @@ RemoveType(char *typeName)		/* type name to be removed */
 #endif
 
 	relation = heap_openr(TypeRelationName);
-	fmgr_info(typeKey[0].sk_procedure, &typeKey[0].sk_func);
-	typeKey[0].sk_nargs = typeKey[0].sk_func.fn_nargs;
+	tup = SearchSysCacheTuple(TYPNAME,
+								PointerGetDatum(typeName),
+								0, 0, 0);
 
-	/* Delete the primary type */
-
-	typeKey[0].sk_argument = PointerGetDatum(typeName);
-
-	scan = heap_beginscan(relation, 0, SnapshotNow, 1, typeKey);
-	tup = heap_getnext(scan, 0, (Buffer *) 0);
 	if (!HeapTupleIsValid(tup))
 	{
-		heap_endscan(scan);
 		heap_close(relation);
-		elog(ERROR, "RemoveType: type '%s' does not exist",
-			 typeName);
+		elog(ERROR, "RemoveType: type '%s' does not exist", typeName);
 	}
+	
+	relation = heap_openr(TypeRelationName);
 	typeOid = tup->t_oid;
-	ItemPointerCopy(&tup->t_ctid, &itemPointerData);
-	heap_delete(relation, &itemPointerData);
-	heap_endscan(scan);
+	heap_delete(relation, &tup->t_ctid);
 
 	/* Now, Delete the "array of" that type */
 	shadow_type = makeArrayTypeName(typeName);
-	typeKey[0].sk_argument = NameGetDatum(shadow_type);
-
-	scan = heap_beginscan(relation, 0, SnapshotNow,
-						  1, (ScanKey) typeKey);
-	tup = heap_getnext(scan, 0, (Buffer *) 0);
-
+	tup = SearchSysCacheTuple(TYPNAME,
+								PointerGetDatum(shadow_type),
+								0, 0, 0);
 	if (!HeapTupleIsValid(tup))
 	{
-		elog(ERROR, "RemoveType: type '%s': array stub not found",
-			 typeName);
+		heap_close(relation);
+		elog(ERROR, "RemoveType: type '%s' does not exist", typeName);
 	}
+
 	typeOid = tup->t_oid;
-	ItemPointerCopy(&tup->t_ctid, &itemPointerData);
-	heap_delete(relation, &itemPointerData);
-	heap_endscan(scan);
+	heap_delete(relation, &tup->t_ctid);
 
 	heap_close(relation);
 }
@@ -335,24 +302,16 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 			   List *argNameList /* list of TypeNames */ )
 {
 	Relation	relation;
-	HeapScanDesc scan;
 	HeapTuple	tup;
-	Buffer		buffer = InvalidBuffer;
-	bool		bufferUsed = FALSE;
 	Oid			argList[8];
-	Form_pg_proc the_proc = NULL;
-	ItemPointerData itemPointerData;
-	static ScanKeyData key[3] = {
-		{0, Anum_pg_proc_proname, F_NAMEEQ}
-	};
 	char	   *userName;
 	char	   *typename;
 	int			i;
 
+	
 	MemSet(argList, 0, 8 * sizeof(Oid));
 	for (i = 0; i < nargs; i++)
 	{
-/*		typename = ((TypeName*)(lfirst(argNameList)))->name; */
 		typename = strVal(lfirst(argNameList));
 		argNameList = lnext(argNameList);
 
@@ -360,7 +319,8 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 			argList[i] = 0;
 		else
 		{
-			tup = SearchSysCacheTuple(TYPNAME, PointerGetDatum(typename),
+			tup = SearchSysCacheTuple(TYPNAME,
+									  PointerGetDatum(typename),
 									  0, 0, 0);
 
 			if (!HeapTupleIsValid(tup))
@@ -368,12 +328,6 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 			argList[i] = tup->t_oid;
 		}
 	}
-
-	tup = SearchSysCacheTuple(PRONAME, PointerGetDatum(functionName),
-							  Int32GetDatum(nargs),
-							  PointerGetDatum(argList), 0);
-	if (!HeapTupleIsValid(tup))
-		func_error("RemoveFunction", functionName, nargs, argList, NULL);
 
 #ifndef NO_SECURITY
 	userName = GetPgUserName();
@@ -384,48 +338,27 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 	}
 #endif
 
-	key[0].sk_argument = PointerGetDatum(functionName);
-
-	fmgr_info(key[0].sk_procedure, &key[0].sk_func);
-	key[0].sk_nargs = key[0].sk_func.fn_nargs;
-
 	relation = heap_openr(ProcedureRelationName);
-	scan = heap_beginscan(relation, 0, SnapshotNow, 1, key);
+	tup = SearchSysCacheTuple(PRONAME,
+								PointerGetDatum(functionName),
+								Int32GetDatum(nargs),
+								PointerGetDatum(argList),
+								0);
 
-	do
-	{							/* hope this is ok because it's indexed */
-		if (bufferUsed)
-		{
-			ReleaseBuffer(buffer);
-			bufferUsed = FALSE;
-		}
-		tup = heap_getnext(scan, 0, (Buffer *) &buffer);
-		if (!HeapTupleIsValid(tup))
-			break;
-		bufferUsed = TRUE;
-		the_proc = (Form_pg_proc) GETSTRUCT(tup);
-	} while ((namestrcmp(&(the_proc->proname), functionName) == 0) &&
-			 (the_proc->pronargs != nargs ||
-			  !oid8eq(&(the_proc->proargtypes[0]), &argList[0])));
-
-
-	if (!HeapTupleIsValid(tup) || namestrcmp(&(the_proc->proname),
-											 functionName) != 0)
+	if (!HeapTupleIsValid(tup))
 	{
-		heap_endscan(scan);
 		heap_close(relation);
 		func_error("RemoveFunction", functionName, nargs, argList, NULL);
 	}
 
-	/* ok, function has been found */
+	if ((((Form_pg_proc) GETSTRUCT(tup))->prolang) == INTERNALlanguageId)
+	{
+		heap_close(relation);	
+		elog(ERROR, "RemoveFunction: function \"%s\" is built-in",functionName);
+	}
 
-	if (the_proc->prolang == INTERNALlanguageId)
-		elog(ERROR, "RemoveFunction: function \"%s\" is built-in",
-			 functionName);
+	heap_delete(relation, &tup->t_ctid);
 
-	ItemPointerCopy(&tup->t_ctid, &itemPointerData);
-	heap_delete(relation, &itemPointerData);
-	heap_endscan(scan);
 	heap_close(relation);
 }
 
@@ -433,13 +366,10 @@ void
 RemoveAggregate(char *aggName, char *aggType)
 {
 	Relation	relation;
-	HeapScanDesc scan;
 	HeapTuple	tup;
-	ItemPointerData itemPointerData;
 	char	   *userName;
 	Oid			basetypeID = InvalidOid;
 	bool		defined;
-	ScanKeyData aggregateKey[3];
 
 
 	/*
@@ -461,9 +391,7 @@ RemoveAggregate(char *aggName, char *aggType)
 	else
 		basetypeID = 0;
 
-/*
 #ifndef NO_SECURITY
-*/
 	userName = GetPgUserName();
 	if (!pg_aggr_ownercheck(userName, aggName, basetypeID))
 	{
@@ -478,26 +406,16 @@ RemoveAggregate(char *aggName, char *aggType)
 				 aggName);
 		}
 	}
-/*
 #endif
-*/
-
-	ScanKeyEntryInitialize(&aggregateKey[0], 0x0,
-						   Anum_pg_aggregate_aggname,
-						   F_NAMEEQ,
-						   PointerGetDatum(aggName));
-
-	ScanKeyEntryInitialize(&aggregateKey[1], 0x0,
-						   Anum_pg_aggregate_aggbasetype,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(basetypeID));
 
 	relation = heap_openr(AggregateRelationName);
-	scan = heap_beginscan(relation, 0, SnapshotNow, 2, aggregateKey);
-	tup = heap_getnext(scan, 0, (Buffer *) 0);
+	tup = SearchSysCacheTuple(AGGNAME,
+							   PointerGetDatum(aggName),
+							   ObjectIdGetDatum(basetypeID),
+							   0, 0);
+
 	if (!HeapTupleIsValid(tup))
 	{
-		heap_endscan(scan);
 		heap_close(relation);
 		if (aggType)
 		{
@@ -510,8 +428,7 @@ RemoveAggregate(char *aggName, char *aggType)
 				 aggName);
 		}
 	}
-	ItemPointerCopy(&tup->t_ctid, &itemPointerData);
-	heap_delete(relation, &itemPointerData);
-	heap_endscan(scan);
+	heap_delete(relation, &tup->t_ctid);
+
 	heap_close(relation);
 }

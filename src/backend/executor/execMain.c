@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.52 1998/08/06 05:12:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.53 1998/08/19 02:01:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,7 +283,7 @@ ExecCheckPerms(CmdType operation,
 {
 	int			i = 1;
 	Oid			relid;
-	HeapTuple	htp;
+	HeapTuple	htup;
 	List	   *lp;
 	List	   *qvars,
 			   *tvars;
@@ -314,14 +314,14 @@ ExecCheckPerms(CmdType operation,
 		}
 
 		relid = rte->relid;
-		htp = SearchSysCacheTuple(RELOID,
+		htup = SearchSysCacheTuple(RELOID,
 								  ObjectIdGetDatum(relid),
 								  0, 0, 0);
-		if (!HeapTupleIsValid(htp))
+		if (!HeapTupleIsValid(htup))
 			elog(ERROR, "ExecCheckPerms: bogus RT relid: %d",
 				 relid);
 		StrNCpy(rname.data,
-				((Form_pg_class) GETSTRUCT(htp))->relname.data,
+				((Form_pg_class) GETSTRUCT(htup))->relname.data,
 				NAMEDATALEN);
 		if (i == resultRelation)
 		{						/* this is the result relation */
@@ -1290,9 +1290,10 @@ ExecAttrDefault(Relation rel, HeapTuple tuple)
 	if (repl == NULL)
 		return (tuple);
 
-	newtuple = heap_modifytuple(tuple, InvalidBuffer, rel, replValue, replNull, repl);
+	newtuple = heap_modifytuple(tuple, rel, replValue, replNull, repl);
 
 	pfree(repl);
+	pfree(tuple);
 	pfree(replNull);
 	pfree(replValue);
 
@@ -1323,7 +1324,7 @@ ExecRelCheck(Relation rel, HeapTuple tuple)
 	slot->ttc_whichplan = -1;
 	rte->relname = nameout(&(rel->rd_rel->relname));
 	rte->refname = rte->relname;
-	rte->relid = rel->rd_id;
+	rte->relid = RelationGetRelid(rel);
 	rte->inh = false;
 	rte->inFromCl = true;
 	rtlist = lcons(rte, NIL);

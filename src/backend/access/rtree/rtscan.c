@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.16 1998/06/15 19:28:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.17 1998/08/19 02:01:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -290,10 +290,10 @@ rtadjscans(Relation r, int op, BlockNumber blkno, OffsetNumber offnum)
 	RTScanList	l;
 	Oid			relid;
 
-	relid = r->rd_id;
+	relid = RelationGetRelid(r);
 	for (l = RTScans; l != (RTScanList) NULL; l = l->rtsl_next)
 	{
-		if (l->rtsl_scan->relation->rd_id == relid)
+		if (RelationGetRelid(l->rtsl_scan->relation) == relid)
 			rtadjone(l->rtsl_scan, op, blkno, offnum);
 	}
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.24 1998/07/27 19:38:02 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.25 1998/08/19 02:02:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -488,7 +488,8 @@ funcid_get_rettype(Oid funcid)
 	HeapTuple	func_tuple = NULL;
 	Oid			funcrettype = (Oid) 0;
 
-	func_tuple = SearchSysCacheTuple(PROOID, ObjectIdGetDatum(funcid),
+	func_tuple = SearchSysCacheTuple(PROOID,
+									 ObjectIdGetDatum(funcid),
 									 0, 0, 0);
 
 	if (!HeapTupleIsValid(func_tuple))
@@ -514,9 +515,7 @@ func_get_candidates(char *funcname, int nargs)
 	HeapTuple	tuple;
 	IndexScanDesc sd;
 	RetrieveIndexResult indexRes;
-	Buffer		buffer;
 	Form_pg_proc pgProcP;
-	bool		bufferUsed = FALSE;
 	CandidateList candidates = NULL;
 	CandidateList current_candidate;
 	int			i;
@@ -535,24 +534,19 @@ func_get_candidates(char *funcname, int nargs)
 	do
 	{
 		tuple = (HeapTuple) NULL;
-		if (bufferUsed)
-		{
-			ReleaseBuffer(buffer);
-			bufferUsed = FALSE;
-		}
 
 		indexRes = index_getnext(sd, ForwardScanDirection);
 		if (indexRes)
 		{
 			ItemPointer iptr;
-
+			Buffer		buffer;
+			
 			iptr = &indexRes->heap_iptr;
 			tuple = heap_fetch(heapRelation, SnapshotNow, iptr, &buffer);
 			pfree(indexRes);
 			if (HeapTupleIsValid(tuple))
 			{
 				pgProcP = (Form_pg_proc) GETSTRUCT(tuple);
-				bufferUsed = TRUE;
 				if (pgProcP->pronargs == nargs)
 				{
 					current_candidate = (CandidateList)
@@ -567,6 +561,7 @@ func_get_candidates(char *funcname, int nargs)
 					current_candidate->next = candidates;
 					candidates = current_candidate;
 				}
+				ReleaseBuffer(buffer);
 			}
 		}
 	} while (indexRes);
@@ -1000,7 +995,6 @@ find_inheritors(Oid relid, Oid **supervec)
 			   *elt;
 
 	Relation	rd;
-	Buffer		buf;
 	Datum		d;
 	bool		newrelid;
 	char		isNull;
@@ -1026,7 +1020,7 @@ find_inheritors(Oid relid, Oid **supervec)
 
 		inhscan = heap_beginscan(inhrel, 0, SnapshotNow, 1, &skey);
 
-		while (HeapTupleIsValid(inhtup = heap_getnext(inhscan, 0, &buf)))
+		while (HeapTupleIsValid(inhtup = heap_getnext(inhscan, 0)))
 		{
 			qentry = (SuperQE *) palloc(sizeof(SuperQE));
 
@@ -1036,8 +1030,6 @@ find_inheritors(Oid relid, Oid **supervec)
 
 			/* put this one on the queue */
 			DLAddTail(queue, DLNewElem(qentry));
-
-			ReleaseBuffer(buf);
 		}
 
 		heap_endscan(inhscan);
@@ -1311,7 +1303,7 @@ ParseComplexProjection(ParseState *pstate,
 					rd = heap_openr(typeidTypeName(argtype));
 					if (RelationIsValid(rd))
 					{
-						relid = RelationGetRelationId(rd);
+						relid = RelationGetRelid(rd);
 						heap_close(rd);
 					}
 					if (RelationIsValid(rd))
@@ -1369,7 +1361,7 @@ ParseComplexProjection(ParseState *pstate,
 					rd = heap_openr(typeidTypeName(argtype));
 					if (RelationIsValid(rd))
 					{
-						relid = RelationGetRelationId(rd);
+						relid = RelationGetRelid(rd);
 						heap_close(rd);
 					}
 					if (RelationIsValid(rd))
@@ -1406,7 +1398,7 @@ ParseComplexProjection(ParseState *pstate,
 				rd = heap_openr(typeidTypeName(param->paramtype));
 				if (RelationIsValid(rd))
 				{
-					relid = RelationGetRelationId(rd);
+					relid = RelationGetRelid(rd);
 					heap_close(rd);
 					if ((attnum = get_attnum(relid, funcname))
 						!= InvalidAttrNumber)

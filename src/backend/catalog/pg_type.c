@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.26 1998/07/27 19:37:49 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.27 1998/08/19 02:01:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "fmgr.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
+#include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
@@ -68,7 +69,7 @@ TypeGetWithOpenRelation(Relation pg_type_desc,
 
 	scan = heap_beginscan(pg_type_desc,
 						  0,
-						  SnapshotSelf,
+						  SnapshotSelf, /* cache? */
 						  1,
 						  typeKey);
 
@@ -76,7 +77,7 @@ TypeGetWithOpenRelation(Relation pg_type_desc,
 	 *	get the type tuple, if it exists.
 	 * ----------------
 	 */
-	tup = heap_getnext(scan, 0, (Buffer *) 0);
+	tup = heap_getnext(scan, 0);
 
 	/* ----------------
 	 *	if no type tuple exists for the given type name, then
@@ -99,8 +100,7 @@ TypeGetWithOpenRelation(Relation pg_type_desc,
 	heap_endscan(scan);
 	*defined = (bool) ((TypeTupleForm) GETSTRUCT(tup))->typisdefined;
 
-	return
-		tup->t_oid;
+	return tup->t_oid;
 }
 
 /* ----------------------------------------------------------------
@@ -143,8 +143,7 @@ TypeGet(char *typeName,			/* name of type to be fetched */
 	 */
 	heap_close(pg_type_desc);
 
-	return
-		typeoid;
+	return typeoid;
 }
 
 /* ----------------------------------------------------------------
@@ -312,11 +311,9 @@ TypeCreate(char *typeName,
 	char		replaces[Natts_pg_type];
 	Datum		values[Natts_pg_type];
 
-	Buffer		buffer;
 	char	   *procname;
 	char	   *procs[4];
 	bool		defined;
-	ItemPointerData itemPointerData;
 	NameData	name;
 	TupleDesc	tupDesc;
 	Oid			argList[8];
@@ -353,9 +350,7 @@ TypeCreate(char *typeName,
 	 * ----------------
 	 */
 	if (externalSize == 0)
-	{
 		externalSize = -1;		/* variable length */
-	}
 
 	/* ----------------
 	 *	initialize arrays needed by FormHeapTuple
@@ -470,7 +465,7 @@ TypeCreate(char *typeName,
 	typeKey[0].sk_argument = PointerGetDatum(typeName);
 	pg_type_scan = heap_beginscan(pg_type_desc,
 								  0,
-								  SnapshotSelf,
+								  SnapshotSelf, /* cache? */
 								  1,
 								  typeKey);
 
@@ -480,21 +475,17 @@ TypeCreate(char *typeName,
 	 *	already there.
 	 * ----------------
 	 */
-	tup = heap_getnext(pg_type_scan, 0, &buffer);
+	tup = heap_getnext(pg_type_scan, 0);
 	if (HeapTupleIsValid(tup))
 	{
 		tup = heap_modifytuple(tup,
-							   buffer,
 							   pg_type_desc,
 							   values,
 							   nulls,
 							   replaces);
 
-		/* XXX may not be necessary */
-		ItemPointerCopy(&tup->t_ctid, &itemPointerData);
-
 		setheapoverride(true);
-		heap_replace(pg_type_desc, &itemPointerData, tup);
+		heap_replace(pg_type_desc, &tup->t_ctid, tup);
 		setheapoverride(false);
 
 		typeObjectId = tup->t_oid;
@@ -529,9 +520,7 @@ TypeCreate(char *typeName,
 	RelationUnsetLockForWrite(pg_type_desc);
 	heap_close(pg_type_desc);
 
-
-	return
-		typeObjectId;
+	return typeObjectId;
 }
 
 /* ----------------------------------------------------------------
@@ -545,48 +534,42 @@ TypeRename(char *oldTypeName, char *newTypeName)
 {
 	Relation	pg_type_desc;
 	Relation	idescs[Num_pg_type_indices];
-	Oid			type_oid;
-	HeapTuple	tup;
-	bool		defined;
-	ItemPointerData itemPointerData;
-
-	/* check that that the new type is not already defined */
-	type_oid = TypeGet(newTypeName, &defined);
-	if (OidIsValid(type_oid) && defined)
-		elog(ERROR, "TypeRename: type %s already defined", newTypeName);
-
-	/* get the type tuple from the catalog index scan manager */
+	HeapTuple	oldtup, newtup;
+	
 	pg_type_desc = heap_openr(TypeRelationName);
-	tup = TypeNameIndexScan(pg_type_desc, oldTypeName);
 
-	/* ----------------
-	 *	change the name of the type
-	 * ----------------
-	 */
-	if (HeapTupleIsValid(tup))
+	oldtup = SearchSysCacheTupleCopy(TYPNAME,
+									 PointerGetDatum(oldTypeName),
+									 0, 0, 0);
+
+	if (!HeapTupleIsValid(oldtup))
 	{
-
-		namestrcpy(&(((TypeTupleForm) GETSTRUCT(tup))->typname), newTypeName);
-
-		ItemPointerCopy(&tup->t_ctid, &itemPointerData);
-
-		setheapoverride(true);
-		heap_replace(pg_type_desc, &itemPointerData, tup);
-		setheapoverride(false);
-
-		/* update the system catalog indices */
-		CatalogOpenIndices(Num_pg_type_indices, Name_pg_type_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_type_indices, pg_type_desc, tup);
-		CatalogCloseIndices(Num_pg_type_indices, idescs);
-
-		/* all done */
-		pfree(tup);
-
-	}
-	else
+		heap_close(pg_type_desc);
 		elog(ERROR, "TypeRename: type %s not defined", oldTypeName);
+	}
+	
+	newtup = SearchSysCacheTuple(TYPNAME,
+								 PointerGetDatum(newTypeName),
+								 0, 0, 0);
+	if (HeapTupleIsValid(newtup))
+	{
+		pfree(oldtup);
+		heap_close(pg_type_desc);
+		elog(ERROR, "TypeRename: type %s already defined", newTypeName);
+	}
+	
+	namestrcpy(&(((TypeTupleForm) GETSTRUCT(oldtup))->typname), newTypeName);
 
-	/* finish up */
+	setheapoverride(true);
+	heap_replace(pg_type_desc, &oldtup->t_ctid, oldtup);
+	setheapoverride(false);
+
+	/* update the system catalog indices */
+	CatalogOpenIndices(Num_pg_type_indices, Name_pg_type_indices, idescs);
+	CatalogIndexInsert(idescs, Num_pg_type_indices, pg_type_desc, oldtup);
+	CatalogCloseIndices(Num_pg_type_indices, idescs);
+
+	pfree(oldtup);
 	heap_close(pg_type_desc);
 }
 

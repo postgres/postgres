@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.15 1998/02/26 04:30:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.16 1998/08/19 02:01:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,7 +174,7 @@ fillatt(TupleDesc tupleDesc)
 	for (i = 0; i < natts;)
 	{
 		tuple = SearchSysCacheTuple(TYPOID,
-								  Int32GetDatum((*attributeP)->atttypid),
+									ObjectIdGetDatum((*attributeP)->atttypid),
 									0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
 		{

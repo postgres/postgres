@@ -87,7 +87,6 @@ gistbuild(Relation heap,
 		  PredInfo *predInfo)
 {
 	HeapScanDesc scan;
-	Buffer		buffer;
 	AttrNumber	i;
 	HeapTuple	htup;
 	IndexTuple	itup;
@@ -112,14 +111,15 @@ gistbuild(Relation heap,
 			   *oldPred;
 	GISTSTATE	giststate;
 	GISTENTRY	tmpcentry;
+	Buffer		buffer = InvalidBuffer;
 	bool	   *compvec;
 
 	/* GiSTs only know how to do stupid locking now */
 	RelationSetLockForWrite(index);
 
-	setheapoverride(TRUE);		/* so we can see the new pg_index tuple */
+	setheapoverride(true);		/* so we can see the new pg_index tuple */
 	initGISTstate(&giststate, index);
-	setheapoverride(FALSE);
+	setheapoverride(false);
 
 	pred = predInfo->pred;
 	oldPred = predInfo->oldPred;
@@ -170,15 +170,13 @@ gistbuild(Relation heap,
 		econtext = NULL;
 	}
 #endif							/* OMIT_PARTIAL_INDEX */
-	scan = heap_beginscan(heap, 0, SnapshotNow, 0, (ScanKey) NULL);
-	htup = heap_getnext(scan, 0, &buffer);
-
 	/* int the tuples as we insert them */
 	nh = ni = 0;
 
-	for (; HeapTupleIsValid(htup); htup = heap_getnext(scan, 0, &buffer))
-	{
+	scan = heap_beginscan(heap, 0, SnapshotNow, 0, (ScanKey) NULL);
 
+	while (HeapTupleIsValid(htup = heap_getnext(scan, 0)))
+	{
 		nh++;
 
 		/*
@@ -240,8 +238,7 @@ gistbuild(Relation heap,
 									  attoff,
 									  attnum,
 									  finfo,
-									  &attnull,
-									  buffer);
+									  &attnull);
 			nulls[attoff] = (attnull ? 'n' : ' ');
 		}
 
@@ -302,8 +299,8 @@ gistbuild(Relation heap,
 	 * flushed.  We close them to guarantee that they will be.
 	 */
 
-	hrelid = heap->rd_id;
-	irelid = index->rd_id;
+	hrelid = RelationGetRelid(heap);
+	irelid = RelationGetRelid(index);
 	heap_close(heap);
 	index_close(index);
 
@@ -1165,11 +1162,13 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 	fmgr_info(equal_proc, &giststate->equalFn);
 
 	/* see if key type is different from type of attribute being indexed */
-	htup = SearchSysCacheTuple(INDEXRELID, ObjectIdGetDatum(index->rd_id),
+	htup = SearchSysCacheTuple(INDEXRELID,
+							   ObjectIdGetDatum(RelationGetRelid(index)),
 							   0, 0, 0);
 	itupform = (IndexTupleForm) GETSTRUCT(htup);
 	if (!HeapTupleIsValid(htup))
-		elog(ERROR, "initGISTstate: index %d not found", index->rd_id);
+		elog(ERROR, "initGISTstate: index %d not found",
+		RelationGetRelid(index));
 	giststate->haskeytype = itupform->indhaskeytype;
 	if (giststate->haskeytype)
 	{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.23 1998/07/22 05:48:59 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.24 1998/08/19 02:02:09 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -182,7 +182,7 @@ lo_creat(int mode)
 		return InvalidOid;
 	}
 
-	lobjId = lobjDesc->heap_r->rd_id;
+	lobjId = RelationGetRelid(lobjDesc->heap_r);
 
 	inv_close(lobjDesc);
 
@@ -288,7 +288,7 @@ lo_import(text *filename)
 	 * the oid for the large object is just the oid of the relation
 	 * XInv??? which contains the data.
 	 */
-	lobjOid = lobj->heap_r->rd_id;
+	lobjOid = RelationGetRelid(lobj->heap_r);
 
 	/*
 	 * read in from the Unix file and write to the inversion file

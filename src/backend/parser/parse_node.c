@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.18 1998/07/20 11:17:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.19 1998/08/19 02:02:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -284,7 +284,7 @@ make_array_ref(Node *expr,
 
 	/* get the type tuple for the element type */
 	type_tuple = SearchSysCacheTuple(TYPOID,
-							ObjectIdGetDatum(type_struct_array->typelem),
+								ObjectIdGetDatum(type_struct_array->typelem),
 									 0, 0, 0);
 	if (!HeapTupleIsValid(type_tuple))
 		elog(ERROR, "make_array_ref: Cache lookup failed for type %d\n",
@@ -365,7 +365,7 @@ make_array_set(Expr *target_expr,
 			 type_struct_array->typname);
 	/* get the type tuple for the element type */
 	type_tuple = SearchSysCacheTuple(TYPOID,
-							ObjectIdGetDatum(type_struct_array->typelem),
+								ObjectIdGetDatum(type_struct_array->typelem),
 									 0, 0, 0);
 
 	if (!HeapTupleIsValid(type_tuple))

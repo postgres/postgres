@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.22 1998/06/15 18:39:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.23 1998/08/19 02:01:10 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -331,8 +331,7 @@ index_getnext(IndexScanDesc scan,
 	 *	have the am's gettuple proc do all the work.
 	 * ----------------
 	 */
-	result = (RetrieveIndexResult)
-		fmgr(procedure, scan, direction);
+	result = (RetrieveIndexResult)fmgr(procedure, scan, direction);
 
 	return result;
 }
@@ -376,8 +375,7 @@ GetIndexValue(HeapTuple tuple,
 			  int attOff,
 			  AttrNumber attrNums[],
 			  FuncIndexInfo *fInfo,
-			  bool *attNull,
-			  Buffer buffer)
+			  bool *attNull)
 {
 	Datum		returnVal;
 	bool		isNull;

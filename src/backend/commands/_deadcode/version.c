@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/version.c,v 1.13 1998/06/15 19:28:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/version.c,v 1.14 1998/08/19 02:01:58 momjian Exp $
  *
  * NOTES
  *	  At the point the version is defined, 2 physical relations are created
@@ -185,26 +185,26 @@ VersionCreate(char *vname, char *bname)
 static void
 setAttrList(char *bname)
 {
-	Relation	rdesc;
+	Relation	rel;
 	int			i = 0;
 	int			maxattrs = 0;
 	char	   *attrname;
 	char		temp_buf[512];
 	int			notfirst = 0;
 
-	rdesc = heap_openr(bname);
-	if (rdesc == NULL)
+	rel = heap_openr(bname);
+	if (rel == NULL)
 	{
 		elog(ERROR, "Unable to expand all -- amopenr failed ");
 		return;
 	}
-	maxattrs = RelationGetNumberOfAttributes(rdesc);
+	maxattrs = RelationGetNumberOfAttributes(rel);
 
 	attr_list[0] = '\0';
 
 	for (i = maxattrs - 1; i > -1; --i)
 	{
-		attrname = (rdesc->rd_att->attrs[i]->attname).data;
+		attrname = (rel->rd_att->attrs[i]->attname).data;
 
 		if (notfirst == 1)
 			sprintf(temp_buf, ", %s = new.%s", attrname, attrname);
@@ -216,7 +216,7 @@ setAttrList(char *bname)
 		strcat(attr_list, temp_buf);
 	}
 
-	heap_close(rdesc);
+	heap_close(rel);
 
 	return;
 }

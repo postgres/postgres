@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.16 1998/04/26 04:05:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.17 1998/08/19 02:01:13 momjian Exp $
  *
  *	NOTES
  *		These functions are stored in pg_amproc.  For each operator class
@@ -30,81 +30,96 @@
 int32
 btint2cmp(int16 a, int16 b)
 {
-	return ((int32) (a - b));
+	return (int32) (a - b);
 }
 
 int32
 btint4cmp(int32 a, int32 b)
 {
-	return (a - b);
+	return a - b;
 }
 
 int32
 btint24cmp(int16 a, int32 b)
 {
-	return (((int32) a) - b);
+	return ((int32) a) - b;
 }
 
 int32
 btint42cmp(int32 a, int16 b)
 {
-	return (a - ((int32) b));
+	return a - ((int32) b);
 }
 
 int32
 btfloat4cmp(float32 a, float32 b)
 {
 	if (*a > *b)
-		return (1);
+		return 1;
 	else if (*a == *b)
-		return (0);
+		return 0;
 	else
-		return (-1);
+		return -1;
 }
 
 int32
 btfloat8cmp(float64 a, float64 b)
 {
 	if (*a > *b)
-		return (1);
+		return 1;
 	else if (*a == *b)
-		return (0);
+		return 0;
 	else
-		return (-1);
+		return -1;
 }
 
 int32
 btoidcmp(Oid a, Oid b)
 {
 	if (a > b)
-		return (1);
+		return 1;
 	else if (a == b)
-		return (0);
+		return 0;
 	else
-		return (-1);
+		return -1;
 }
+
+int32
+btoid8cmp(Oid a[], Oid b[])
+{
+	int i;
+	for (i=0; i < 8; i++)
+		/* we use this because we need the int4gt, etc */
+		if (!int4eq(a[i], b[i])) 
+			if (int4gt(a[i], b[i]))
+				return 1;
+			else
+				return -1;
+	return 0;
+}
+
 
 int32
 btabstimecmp(AbsoluteTime a, AbsoluteTime b)
 {
 	if (AbsoluteTimeIsBefore(a, b))
-		return (-1);
+		return -1;
 	else if (AbsoluteTimeIsBefore(b, a))
-		return (1);
+		return 1;
 	else
-		return (0);
+		return 0;
 }
 
 int32
 btcharcmp(char a, char b)
 {
-	return ((int32) ((uint8) a - (uint8) b));
+	return (int32) ((uint8) a - (uint8) b);
 }
 
 int32
 btnamecmp(NameData *a, NameData *b)
 {
-	return (strncmp(a->data, b->data, NAMEDATALEN));
+	return strncmp(a->data, b->data, NAMEDATALEN);
 }
 
 int32
@@ -162,7 +177,7 @@ bttextcmp(struct varlena * a, struct varlena * b)
 #endif
 
 	if (res != 0 || VARSIZE(a) == VARSIZE(b))
-		return (res);
+		return res;
 
 	/*
 	 * The two strings are the same in the first len bytes, and they are
@@ -170,7 +185,7 @@ bttextcmp(struct varlena * a, struct varlena * b)
 	 */
 
 	if (VARSIZE(a) < VARSIZE(b))
-		return (-1);
+		return -1;
 	else
-		return (1);
+		return 1;
 }

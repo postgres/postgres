@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.13 1998/08/11 18:28:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.14 1998/08/19 02:01:27 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -33,6 +33,7 @@
 #include "fmgr.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_func.h"
+#include "storage/bufmgr.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
@@ -97,16 +98,10 @@ ChangeAcl(char *relname,
 	Acl		   *old_acl = (Acl *) NULL,
 			   *new_acl;
 	Relation	relation;
-	static ScanKeyData relkey[1] = {
-		{0, Anum_pg_class_relname, F_NAMEEQ}
-	};
-	HeapScanDesc hsdp;
-	HeapTuple	htp;
-	Buffer		buffer;
+	HeapTuple	tuple;
 	Datum		values[Natts_pg_class];
 	char		nulls[Natts_pg_class];
 	char		replaces[Natts_pg_class];
-	ItemPointerData tmp_ipd;
 	Relation	idescs[Num_pg_class_indices];
 	int			free_old_acl = 0;
 
@@ -115,40 +110,34 @@ ChangeAcl(char *relname,
 	 * there's no ACL, create a default using the pg_class.relowner field.
 	 *
 	 * We can't use the syscache here, since we need to do a heap_replace on
-	 * the tuple we find.  Feh.
+	 * the tuple we find.
 	 */
 	relation = heap_openr(RelationRelationName);
 	if (!RelationIsValid(relation))
 		elog(ERROR, "ChangeAcl: could not open '%s'??",
 			 RelationRelationName);
-	fmgr_info(F_NAMEEQ, &relkey[0].sk_func);
-	relkey[0].sk_nargs = relkey[0].sk_func.fn_nargs;
-	relkey[0].sk_argument = NameGetDatum(relname);
-	hsdp = heap_beginscan(relation,
-						  0,
-						  SnapshotNow,
-						  (unsigned) 1,
-						  relkey);
-	htp = heap_getnext(hsdp, 0, &buffer);
-	if (!HeapTupleIsValid(htp))
+	tuple = SearchSysCacheTuple(RELNAME,
+								PointerGetDatum(relname),
+								0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
 	{
-		heap_endscan(hsdp);
 		heap_close(relation);
 		elog(ERROR, "ChangeAcl: class \"%s\" not found",
 			 relname);
 		return;
 	}
-	if (!heap_attisnull(htp, Anum_pg_class_relacl))
-		old_acl = (Acl *) heap_getattr(htp,
+
+	if (!heap_attisnull(tuple, Anum_pg_class_relacl))
+		old_acl = (Acl *) heap_getattr(tuple,
 									   Anum_pg_class_relacl,
-									RelationGetTupleDescriptor(relation),
+									   RelationGetTupleDescriptor(relation),
 									   (bool *) NULL);
 	if (!old_acl || ACL_NUM(old_acl) < 1)
 	{
 #ifdef ACLDEBUG_TRACE
 		elog(DEBUG, "ChangeAcl: using default ACL");
 #endif
-/*		old_acl = acldefault(((Form_pg_class) GETSTRUCT(htp))->relowner); */
+/*		old_acl = acldefault(((Form_pg_class) GETSTRUCT(tuple))->relowner); */
 		old_acl = acldefault(relname);
 		free_old_acl = 1;
 	}
@@ -170,19 +159,16 @@ ChangeAcl(char *relname,
 	}
 	replaces[Anum_pg_class_relacl - 1] = 'r';
 	values[Anum_pg_class_relacl - 1] = (Datum) new_acl;
-	htp = heap_modifytuple(htp, buffer, relation, values, nulls, replaces);
-	/* XXX is this necessary? */
-	ItemPointerCopy(&htp->t_ctid, &tmp_ipd);
+	tuple = heap_modifytuple(tuple, relation, values, nulls, replaces);
 	/* XXX handle index on pg_class? */
 	setheapoverride(true);
-	heap_replace(relation, &tmp_ipd, htp);
+	heap_replace(relation, &tuple->t_ctid, tuple);
 	setheapoverride(false);
-	heap_endscan(hsdp);
 
 	/* keep the catalog indices up to date */
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices,
 					   idescs);
-	CatalogIndexInsert(idescs, Num_pg_class_indices, relation, htp);
+	CatalogIndexInsert(idescs, Num_pg_class_indices, relation, tuple);
 	CatalogCloseIndices(Num_pg_class_indices, idescs);
 
 	heap_close(relation);
@@ -194,13 +180,14 @@ ChangeAcl(char *relname,
 AclId
 get_grosysid(char *groname)
 {
-	HeapTuple	htp;
+	HeapTuple	tuple;
 	AclId		id = 0;
 
-	htp = SearchSysCacheTuple(GRONAME, PointerGetDatum(groname),
-							  0, 0, 0);
-	if (HeapTupleIsValid(htp))
-		id = ((Form_pg_group) GETSTRUCT(htp))->grosysid;
+	tuple = SearchSysCacheTuple(GRONAME,
+								PointerGetDatum(groname),
+							  	0, 0, 0);
+	if (HeapTupleIsValid(tuple))
+		id = ((Form_pg_group) GETSTRUCT(tuple))->grosysid;
 	else
 		elog(ERROR, "non-existent group \"%s\"", groname);
 	return (id);
@@ -209,13 +196,14 @@ get_grosysid(char *groname)
 char *
 get_groname(AclId grosysid)
 {
-	HeapTuple	htp;
+	HeapTuple	tuple;
 	char	   *name = NULL;
 
-	htp = SearchSysCacheTuple(GROSYSID, PointerGetDatum(grosysid),
-							  0, 0, 0);
-	if (HeapTupleIsValid(htp))
-		name = (((Form_pg_group) GETSTRUCT(htp))->groname).data;
+	tuple = SearchSysCacheTuple(GROSYSID,
+								ObjectIdGetDatum(grosysid),
+							  	0, 0, 0);
+	if (HeapTupleIsValid(tuple))
+		name = (((Form_pg_group) GETSTRUCT(tuple))->groname).data;
 	else
 		elog(NOTICE, "get_groname: group %d not found", grosysid);
 	return (name);
@@ -225,7 +213,7 @@ static int32
 in_group(AclId uid, AclId gid)
 {
 	Relation	relation;
-	HeapTuple	htp;
+	HeapTuple	tuple;
 	Acl		   *tmp;
 	unsigned	i,
 				num;
@@ -239,12 +227,13 @@ in_group(AclId uid, AclId gid)
 			 GroupRelationName);
 		return (0);
 	}
-	htp = SearchSysCacheTuple(GROSYSID, ObjectIdGetDatum(gid),
-							  0, 0, 0);
-	if (HeapTupleIsValid(htp) &&
-		!heap_attisnull(htp, Anum_pg_group_grolist))
+	tuple = SearchSysCacheTuple(GROSYSID,
+								ObjectIdGetDatum(gid),
+							  	0, 0, 0);
+	if (HeapTupleIsValid(tuple) &&
+		!heap_attisnull(tuple, Anum_pg_group_grolist))
 	{
-		tmp = (IdList *) heap_getattr(htp,
+		tmp = (IdList *) heap_getattr(tuple,
 									  Anum_pg_group_grolist,
 									RelationGetTupleDescriptor(relation),
 									  (bool *) NULL);
@@ -371,26 +360,27 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 int32
 pg_aclcheck(char *relname, char *usename, AclMode mode)
 {
-	HeapTuple	htp;
+	HeapTuple	tuple;
 	AclId		id;
 	Acl		   *acl = (Acl *) NULL,
 			   *tmp;
 	int32		result;
 	Relation	relation;
 
-	htp = SearchSysCacheTuple(USENAME, PointerGetDatum(usename),
-							  0, 0, 0);
-	if (!HeapTupleIsValid(htp))
+	tuple = SearchSysCacheTuple(USENAME,
+								PointerGetDatum(usename),
+							  	0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "pg_aclcheck: user \"%s\" not found",
 			 usename);
-	id = (AclId) ((Form_pg_shadow) GETSTRUCT(htp))->usesysid;
+	id = (AclId) ((Form_pg_shadow) GETSTRUCT(tuple))->usesysid;
 
 	/*
 	 * for the 'pg_database' relation, check the usecreatedb field before
 	 * checking normal permissions
 	 */
 	if (strcmp(DatabaseRelationName, relname) == 0 &&
-		(((Form_pg_shadow) GETSTRUCT(htp))->usecreatedb))
+		(((Form_pg_shadow) GETSTRUCT(tuple))->usecreatedb))
 	{
 
 		/*
@@ -409,7 +399,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 	 */
 	if (((mode & ACL_WR) || (mode & ACL_AP)) &&
 		IsSystemRelationName(relname) &&
-		!((Form_pg_shadow) GETSTRUCT(htp))->usecatupd)
+		!((Form_pg_shadow) GETSTRUCT(tuple))->usecatupd)
 	{
 		elog(DEBUG, "pg_aclcheck: catalog update to \"%s\": permission denied",
 			 relname);
@@ -419,7 +409,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 	/*
 	 * Otherwise, superusers bypass all permission-checking.
 	 */
-	if (((Form_pg_shadow) GETSTRUCT(htp))->usesuper)
+	if (((Form_pg_shadow) GETSTRUCT(tuple))->usesuper)
 	{
 #ifdef ACLDEBUG_TRACE
 		elog(DEBUG, "pg_aclcheck: \"%s\" is superuser",
@@ -429,18 +419,19 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 	}
 
 #ifndef ACLDEBUG
-	htp = SearchSysCacheTuple(RELNAME, PointerGetDatum(relname),
-							  0, 0, 0);
-	if (!HeapTupleIsValid(htp))
+	tuple = SearchSysCacheTuple(RELNAME,
+							   PointerGetDatum(relname),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
 	{
 		elog(ERROR, "pg_aclcheck: class \"%s\" not found",
 			 relname);
 		/* an elog(ERROR) kills us, so no need to return anything. */
 	}
-	if (!heap_attisnull(htp, Anum_pg_class_relacl))
+	if (!heap_attisnull(tuple, Anum_pg_class_relacl))
 	{
 		relation = heap_openr(RelationRelationName);
-		tmp = (Acl *) heap_getattr(htp,
+		tmp = (Acl *) heap_getattr(tuple,
 								   Anum_pg_class_relacl,
 								   RelationGetTupleDescriptor(relation),
 								   (bool *) NULL);
@@ -458,7 +449,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 		int4		ownerId;
 
 		relation = heap_openr(RelationRelationName);
-		ownerId = (int4) heap_getattr(htp,
+		ownerId = (int4) heap_getattr(tuple,
 									 Anum_pg_class_relowner,
 									 RelationGetTupleDescriptor(relation),
 									 (bool *) NULL);
@@ -469,7 +460,6 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 		static ScanKeyData relkey[1] = {
 			{0, Anum_pg_class_relname, F_NAMEEQ}
 		};
-		HeapScanDesc hsdp;
 
 		relation = heap_openr(RelationRelationName);
 		if (!RelationIsValid(relation))
@@ -478,23 +468,19 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 				 RelationRelationName);
 			return ACLCHECK_NO_CLASS;
 		}
-		fmgr_info(F_NAMEEQ,
-				  &relkey[0].sk_func,
-				  &relkey[0].sk_nargs);
-		relkey[0].sk_argument = NameGetDatum(relname);
-		hsdp = heap_beginscan(relation, 0, SnapshotNow, 1, relkey);
-		htp = heap_getnext(hsdp, 0, (Buffer *) 0);
-		if (HeapTupleIsValid(htp) &&
-			!heap_attisnull(htp, Anum_pg_class_relacl))
+		tuple = SearchSysCacheTuple(RELNAME,
+								   PointerGetDatum(relname),
+								   0, 0, 0);
+		if (HeapTupleIsValid(tuple) &&
+			!heap_attisnull(tuple, Anum_pg_class_relacl))
 		{
-			tmp = (Acl *) heap_getattr(htp,
+			tmp = (Acl *) heap_getattr(tuple,
 									   Anum_pg_class_relacl,
-									RelationGetTupleDescriptor(relation),
+										RelationGetTupleDescriptor(relation),
 									   (bool *) NULL);
 			acl = makeacl(ACL_NUM(tmp));
 			memmove((char *) acl, (char *) tmp, ACL_SIZE(tmp));
 		}
-		heap_endscan(hsdp);
 		heap_close(relation);
 	}
 #endif
@@ -509,21 +495,22 @@ pg_ownercheck(char *usename,
 			  char *value,
 			  int cacheid)
 {
-	HeapTuple	htp;
+	HeapTuple	tuple;
 	AclId		user_id,
 				owner_id = 0;
 
-	htp = SearchSysCacheTuple(USENAME, PointerGetDatum(usename),
-							  0, 0, 0);
-	if (!HeapTupleIsValid(htp))
+	tuple = SearchSysCacheTuple(USENAME,
+								PointerGetDatum(usename),
+							  	0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "pg_ownercheck: user \"%s\" not found",
 			 usename);
-	user_id = (AclId) ((Form_pg_shadow) GETSTRUCT(htp))->usesysid;
+	user_id = (AclId) ((Form_pg_shadow) GETSTRUCT(tuple))->usesysid;
 
 	/*
 	 * Superusers bypass all permission-checking.
 	 */
-	if (((Form_pg_shadow) GETSTRUCT(htp))->usesuper)
+	if (((Form_pg_shadow) GETSTRUCT(tuple))->usesuper)
 	{
 #ifdef ACLDEBUG_TRACE
 		elog(DEBUG, "pg_ownercheck: user \"%s\" is superuser",
@@ -532,33 +519,33 @@ pg_ownercheck(char *usename,
 		return (1);
 	}
 
-	htp = SearchSysCacheTuple(cacheid, PointerGetDatum(value),
+	tuple = SearchSysCacheTuple(cacheid, PointerGetDatum(value),
 							  0, 0, 0);
 	switch (cacheid)
 	{
 		case OPROID:
-			if (!HeapTupleIsValid(htp))
+			if (!HeapTupleIsValid(tuple))
 				elog(ERROR, "pg_ownercheck: operator %ld not found",
 					 PointerGetDatum(value));
-			owner_id = ((OperatorTupleForm) GETSTRUCT(htp))->oprowner;
+			owner_id = ((OperatorTupleForm) GETSTRUCT(tuple))->oprowner;
 			break;
 		case PRONAME:
-			if (!HeapTupleIsValid(htp))
+			if (!HeapTupleIsValid(tuple))
 				elog(ERROR, "pg_ownercheck: function \"%s\" not found",
 					 value);
-			owner_id = ((Form_pg_proc) GETSTRUCT(htp))->proowner;
+			owner_id = ((Form_pg_proc) GETSTRUCT(tuple))->proowner;
 			break;
 		case RELNAME:
-			if (!HeapTupleIsValid(htp))
+			if (!HeapTupleIsValid(tuple))
 				elog(ERROR, "pg_ownercheck: class \"%s\" not found",
 					 value);
-			owner_id = ((Form_pg_class) GETSTRUCT(htp))->relowner;
+			owner_id = ((Form_pg_class) GETSTRUCT(tuple))->relowner;
 			break;
 		case TYPNAME:
-			if (!HeapTupleIsValid(htp))
+			if (!HeapTupleIsValid(tuple))
 				elog(ERROR, "pg_ownercheck: type \"%s\" not found",
 					 value);
-			owner_id = ((TypeTupleForm) GETSTRUCT(htp))->typowner;
+			owner_id = ((TypeTupleForm) GETSTRUCT(tuple))->typowner;
 			break;
 		default:
 			elog(ERROR, "pg_ownercheck: invalid cache id: %d",
@@ -575,21 +562,22 @@ pg_func_ownercheck(char *usename,
 				   int nargs,
 				   Oid *arglist)
 {
-	HeapTuple	htp;
+	HeapTuple	tuple;
 	AclId		user_id,
 				owner_id;
 
-	htp = SearchSysCacheTuple(USENAME, PointerGetDatum(usename),
-							  0, 0, 0);
-	if (!HeapTupleIsValid(htp))
+	tuple = SearchSysCacheTuple(USENAME,
+								PointerGetDatum(usename),
+							  	0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "pg_func_ownercheck: user \"%s\" not found",
 			 usename);
-	user_id = (AclId) ((Form_pg_shadow) GETSTRUCT(htp))->usesysid;
+	user_id = (AclId) ((Form_pg_shadow) GETSTRUCT(tuple))->usesysid;
 
 	/*
 	 * Superusers bypass all permission-checking.
 	 */
-	if (((Form_pg_shadow) GETSTRUCT(htp))->usesuper)
+	if (((Form_pg_shadow) GETSTRUCT(tuple))->usesuper)
 	{
 #ifdef ACLDEBUG_TRACE
 		elog(DEBUG, "pg_ownercheck: user \"%s\" is superuser",
@@ -598,15 +586,15 @@ pg_func_ownercheck(char *usename,
 		return (1);
 	}
 
-	htp = SearchSysCacheTuple(PRONAME,
+	tuple = SearchSysCacheTuple(PRONAME,
 							  PointerGetDatum(funcname),
-							  PointerGetDatum(nargs),
+							  Int32GetDatum(nargs),
 							  PointerGetDatum(arglist),
 							  0);
-	if (!HeapTupleIsValid(htp))
+	if (!HeapTupleIsValid(tuple))
 		func_error("pg_func_ownercheck", funcname, nargs, arglist, NULL);
 
-	owner_id = ((Form_pg_proc) GETSTRUCT(htp))->proowner;
+	owner_id = ((Form_pg_proc) GETSTRUCT(tuple))->proowner;
 
 	return (user_id == owner_id);
 }
@@ -616,21 +604,22 @@ pg_aggr_ownercheck(char *usename,
 				   char *aggname,
 				   Oid basetypeID)
 {
-	HeapTuple	htp;
+	HeapTuple	tuple;
 	AclId		user_id,
 				owner_id;
 
-	htp = SearchSysCacheTuple(USENAME, PointerGetDatum(usename),
-							  0, 0, 0);
-	if (!HeapTupleIsValid(htp))
+	tuple = SearchSysCacheTuple(USENAME,
+								PointerGetDatum(usename),
+							  	0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "pg_aggr_ownercheck: user \"%s\" not found",
 			 usename);
-	user_id = (AclId) ((Form_pg_shadow) GETSTRUCT(htp))->usesysid;
+	user_id = (AclId) ((Form_pg_shadow) GETSTRUCT(tuple))->usesysid;
 
 	/*
 	 * Superusers bypass all permission-checking.
 	 */
-	if (((Form_pg_shadow) GETSTRUCT(htp))->usesuper)
+	if (((Form_pg_shadow) GETSTRUCT(tuple))->usesuper)
 	{
 #ifdef ACLDEBUG_TRACE
 		elog(DEBUG, "pg_aggr_ownercheck: user \"%s\" is superuser",
@@ -639,16 +628,15 @@ pg_aggr_ownercheck(char *usename,
 		return (1);
 	}
 
-	htp = SearchSysCacheTuple(AGGNAME,
+	tuple = SearchSysCacheTuple(AGGNAME,
 							  PointerGetDatum(aggname),
-							  PointerGetDatum(basetypeID),
-							  0,
-							  0);
+							  ObjectIdGetDatum(basetypeID),
+							  0, 0);
 
-	if (!HeapTupleIsValid(htp))
+	if (!HeapTupleIsValid(tuple))
 		agg_error("pg_aggr_ownercheck", aggname, basetypeID);
 
-	owner_id = ((Form_pg_aggregate) GETSTRUCT(htp))->aggowner;
+	owner_id = ((Form_pg_aggregate) GETSTRUCT(tuple))->aggowner;
 
 	return (user_id == owner_id);
 }

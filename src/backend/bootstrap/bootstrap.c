@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.47 1998/07/27 19:37:43 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.48 1998/08/19 02:01:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -448,8 +448,8 @@ boot_openrel(char *relname)
 {
 	int			i;
 	struct typmap **app;
-	Relation	rdesc;
-	HeapScanDesc sdesc;
+	Relation	rel;
+	HeapScanDesc scan;
 	HeapTuple	tup;
 
 	if (strlen(relname) >= NAMEDATALEN - 1)
@@ -458,25 +458,27 @@ boot_openrel(char *relname)
 	if (Typ == (struct typmap **) NULL)
 	{
 		StartPortalAllocMode(DefaultAllocMode, 0);
-		rdesc = heap_openr(TypeRelationName);
-		sdesc = heap_beginscan(rdesc, 0, SnapshotNow, 0, (ScanKey) NULL);
-		for (i = 0; PointerIsValid(tup = heap_getnext(sdesc, 0, (Buffer *) NULL)); ++i);
-		heap_endscan(sdesc);
+		rel = heap_openr(TypeRelationName);
+		scan = heap_beginscan(rel, 0, SnapshotNow, 0, (ScanKey) NULL);
+		i = 0;
+		while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
+			++i;
+		heap_endscan(scan);
 		app = Typ = ALLOC(struct typmap *, i + 1);
 		while (i-- > 0)
 			*app++ = ALLOC(struct typmap, 1);
 		*app = (struct typmap *) NULL;
-		sdesc = heap_beginscan(rdesc, 0, SnapshotNow, 0, (ScanKey) NULL);
+		scan = heap_beginscan(rel, 0, SnapshotNow, 0, (ScanKey) NULL);
 		app = Typ;
-		while (PointerIsValid(tup = heap_getnext(sdesc, 0, (Buffer *) NULL)))
+		while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
 		{
 			(*app)->am_oid = tup->t_oid;
 			memmove((char *) &(*app++)->am_typ,
 					(char *) GETSTRUCT(tup),
 					sizeof((*app)->am_typ));
 		}
-		heap_endscan(sdesc);
-		heap_close(rdesc);
+		heap_endscan(scan);
+		heap_close(rel);
 		EndPortalAllocMode();
 	}
 
@@ -505,7 +507,7 @@ boot_openrel(char *relname)
 		 * defined yet.
 		 */
 		if (namestrcmp(&attrtypes[i]->attname, "attisset") == 0)
-			attrtypes[i]->attisset = get_attisset(reldesc->rd_id,
+			attrtypes[i]->attisset = get_attisset(RelationGetRelid(reldesc),
 											 attrtypes[i]->attname.data);
 		else
 			attrtypes[i]->attisset = false;
@@ -786,8 +788,8 @@ static int
 gettype(char *type)
 {
 	int			i;
-	Relation	rdesc;
-	HeapScanDesc sdesc;
+	Relation	rel;
+	HeapScanDesc scan;
 	HeapTuple	tup;
 	struct typmap **app;
 
@@ -811,27 +813,27 @@ gettype(char *type)
 		}
 		if (DebugMode)
 			printf("bootstrap.c: External Type: %s\n", type);
-		rdesc = heap_openr(TypeRelationName);
-		sdesc = heap_beginscan(rdesc, 0, SnapshotNow, 0, (ScanKey) NULL);
+		rel = heap_openr(TypeRelationName);
+		scan = heap_beginscan(rel, 0, SnapshotNow, 0, (ScanKey) NULL);
 		i = 0;
-		while (PointerIsValid(tup = heap_getnext(sdesc, 0, (Buffer *) NULL)))
+		while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
 			++i;
-		heap_endscan(sdesc);
+		heap_endscan(scan);
 		app = Typ = ALLOC(struct typmap *, i + 1);
 		while (i-- > 0)
 			*app++ = ALLOC(struct typmap, 1);
 		*app = (struct typmap *) NULL;
-		sdesc = heap_beginscan(rdesc, 0, SnapshotNow, 0, (ScanKey) NULL);
+		scan = heap_beginscan(rel, 0, SnapshotNow, 0, (ScanKey) NULL);
 		app = Typ;
-		while (PointerIsValid(tup = heap_getnext(sdesc, 0, (Buffer *) NULL)))
+		while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
 		{
 			(*app)->am_oid = tup->t_oid;
 			memmove((char *) &(*app++)->am_typ,
 					(char *) GETSTRUCT(tup),
 					sizeof((*app)->am_typ));
 		}
-		heap_endscan(sdesc);
-		heap_close(rdesc);
+		heap_endscan(scan);
+		heap_close(rel);
 		return (gettype(type));
 	}
 	elog(ERROR, "Error: unknown type '%s'.\n", type);
@@ -1167,7 +1169,7 @@ build_indices()
 		 */
 		heap = heap_openr(ILHead->il_heap);
 
-		if (!BootstrapAlreadySeen(heap->rd_id))
-			UpdateStats(heap->rd_id, 0, true);
+		if (!BootstrapAlreadySeen(RelationGetRelid(heap)))
+			UpdateStats(RelationGetRelid(heap), 0, true);
 	}
 }

@@ -466,7 +466,7 @@ SPI_gettype(TupleDesc tupdesc, int fnumber)
 	}
 
 	typeTuple = SearchSysCacheTuple(TYPOID,
-				 ObjectIdGetDatum(tupdesc->attrs[fnumber - 1]->atttypid),
+					 ObjectIdGetDatum(tupdesc->attrs[fnumber - 1]->atttypid),
 									0, 0, 0);
 
 	if (!HeapTupleIsValid(typeTuple))

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.17 1998/06/15 19:29:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.18 1998/08/19 02:03:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,7 +172,7 @@ fmgr_info(Oid procedureId, FmgrInfo *finfo)
 	if (!(fcp = fmgr_isbuiltin(procedureId)))
 	{
 		procedureTuple = SearchSysCacheTuple(PROOID,
-										   ObjectIdGetDatum(procedureId),
+										   	 ObjectIdGetDatum(procedureId),
 											 0, 0, 0);
 		if (!HeapTupleIsValid(procedureTuple))
 		{

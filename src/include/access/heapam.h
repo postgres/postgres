@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.34 1998/07/27 19:38:29 vadim Exp $
+ * $Id: heapam.h,v 1.35 1998/08/19 02:03:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,17 +249,17 @@ extern void heap_close(Relation relation);
 extern HeapScanDesc
 heap_beginscan(Relation relation, int atend,
 			   Snapshot snapshot, unsigned nkeys, ScanKey key);
-extern void heap_rescan(HeapScanDesc sdesc, bool scanFromEnd, ScanKey key);
-extern void heap_endscan(HeapScanDesc sdesc);
-extern HeapTuple heap_getnext(HeapScanDesc scandesc, int backw, Buffer *b);
-extern HeapTuple heap_fetch(Relation relation, Snapshot snapshot, ItemPointer tid, Buffer *b);
+extern void heap_rescan(HeapScanDesc scan, bool scanFromEnd, ScanKey key);
+extern void heap_endscan(HeapScanDesc scan);
+extern HeapTuple heap_getnext(HeapScanDesc scandesc, int backw);
+extern HeapTuple heap_fetch(Relation relation, Snapshot snapshot, ItemPointer tid, Buffer *userbuf);
 extern Oid	heap_insert(Relation relation, HeapTuple tup);
 extern int	heap_delete(Relation relation, ItemPointer tid);
 extern int
 heap_replace(Relation relation, ItemPointer otid,
 			 HeapTuple tup);
-extern void heap_markpos(HeapScanDesc sdesc);
-extern void heap_restrpos(HeapScanDesc sdesc);
+extern void heap_markpos(HeapScanDesc scan);
+extern void heap_restrpos(HeapScanDesc scan);
 
 /* in common/heaptuple.c */
 extern Size ComputeDataSize(TupleDesc tupleDesc, Datum value[], char nulls[]);
@@ -279,8 +279,8 @@ extern HeapTuple
 heap_formtuple(TupleDesc tupleDescriptor,
 			   Datum value[], char nulls[]);
 extern HeapTuple
-heap_modifytuple(HeapTuple tuple, Buffer buffer,
-	 Relation relation, Datum replValue[], char replNull[], char repl[]);
+heap_modifytuple(HeapTuple tuple,
+		Relation relation, Datum replValue[], char replNull[], char repl[]);
 HeapTuple	heap_addheader(uint32 natts, int structlen, char *structure);
 
 /* in common/heap/stats.c */

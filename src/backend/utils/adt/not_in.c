@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.10 1998/07/27 19:38:18 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.11 1998/08/19 02:02:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,9 +78,8 @@ int4notin(int16 not_in_arg, char *relation_and_attr)
 	retval = true;
 
 	/* do a scan of the relation, and do the check */
-	for (current_tuple = heap_getnext(scan_descriptor, 0, NULL);
-		 current_tuple != NULL && retval;
-		 current_tuple = heap_getnext(scan_descriptor, 0, NULL))
+	while (HeapTupleIsValid(current_tuple = heap_getnext(scan_descriptor, 0)) &&
+			retval)
 	{
 		value = heap_getattr(current_tuple,
 							 (AttrNumber) attrid,

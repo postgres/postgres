@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.46 1998/07/12 21:29:38 momjian Exp $
+ * $Id: builtins.h,v 1.47 1998/08/19 02:04:03 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -165,6 +165,7 @@ extern int32 btint42cmp(int32 a, int16 b);
 extern int32 btfloat4cmp(float32 a, float32 b);
 extern int32 btfloat8cmp(float64 a, float64 b);
 extern int32 btoidcmp(Oid a, Oid b);
+extern int32 btoid8cmp(Oid a[], Oid b[]);
 extern int32 btabstimecmp(AbsoluteTime a, AbsoluteTime b);
 extern int32 btcharcmp(char a, char b);
 extern int32 btnamecmp(NameData *a, NameData *b);
@@ -334,6 +335,10 @@ extern char *oidout(Oid o);
 extern bool oideq(Oid arg1, Oid arg2);
 extern bool oidne(Oid arg1, Oid arg2);
 extern bool oid8eq(Oid arg1[], Oid arg2[]);
+extern bool oid8lt(Oid arg1[], Oid arg2[]);
+extern bool oid8le(Oid arg1[], Oid arg2[]);
+extern bool oid8ge(Oid arg1[], Oid arg2[]);
+extern bool oid8gt(Oid arg1[], Oid arg2[]);
 extern bool oideqint4(Oid arg1, int32 arg2);
 extern bool int4eqoid(int32 arg1, Oid arg2);
 extern text *oid_text(Oid arg1);
@@ -484,7 +489,7 @@ extern bool time_gt(TimeADT *time1, TimeADT *time2);
 extern bool time_ge(TimeADT *time1, TimeADT *time2);
 extern int	time_cmp(TimeADT *time1, TimeADT *time2);
 extern TimeADT *datetime_time(DateTime *datetime);
-extern int32 int42reltime(int32 timevalue);
+extern int32 int4reltime(int32 timevalue);
 
 /* like.c */
 extern bool namelike(NameData *n, struct varlena * p);

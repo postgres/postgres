@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amop.h,v 1.13 1998/08/11 05:32:45 momjian Exp $
+ * $Id: pg_amop.h,v 1.14 1998/08/19 02:03:49 momjian Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -178,6 +178,16 @@ DATA(insert OID = 0 (  403 427 612 4 btreesel btreenpage ));
 DATA(insert OID = 0 (  403 427 610 5 btreesel btreenpage ));
 
 /*
+ *	nbtree oid8_ops
+ */
+
+DATA(insert OID = 0 (  403 435	645 1 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 435  647 2 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 435	649 3 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 435  648 4 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 435  646 5 btreesel btreenpage ));
+
+/*
  *	nbtree float4_ops
  */
 
@@ -226,36 +236,6 @@ DATA(insert OID = 0 (  403 432 564 2 btreesel btreenpage ));
 DATA(insert OID = 0 (  403 432 560 3 btreesel btreenpage ));
 DATA(insert OID = 0 (  403 432 565 4 btreesel btreenpage ));
 DATA(insert OID = 0 (  403 432 563 5 btreesel btreenpage ));
-
-/*
- *	nbtree oidint4_ops
- */
-
-DATA(insert OID = 0 (  403 435 930 1 btreesel btreenpage ));
-DATA(insert OID = 0 (  403 435 931 2 btreesel btreenpage ));
-DATA(insert OID = 0 (  403 435 932 3 btreesel btreenpage ));
-DATA(insert OID = 0 (  403 435 933 4 btreesel btreenpage ));
-DATA(insert OID = 0 (  403 435 934 5 btreesel btreenpage ));
-
-/*
- *	nbtree oidint2_ops
- */
-
-DATA(insert OID = 0 (  403 437 830 1 btreesel btreenpage ));
-DATA(insert OID = 0 (  403 437 831 2 btreesel btreenpage ));
-DATA(insert OID = 0 (  403 437 832 3 btreesel btreenpage ));
-DATA(insert OID = 0 (  403 437 833 4 btreesel btreenpage ));
-DATA(insert OID = 0 (  403 437 834 5 btreesel btreenpage ));
-
-/*
- *	nbtree oidname_ops
- */
-
-DATA(insert OID = 0 (  403 436 676 1 btreesel btreenpage ));
-DATA(insert OID = 0 (  403 436 677 2 btreesel btreenpage ));
-DATA(insert OID = 0 (  403 436 678 3 btreesel btreenpage ));
-DATA(insert OID = 0 (  403 436 679 4 btreesel btreenpage ));
-DATA(insert OID = 0 (  403 436 680 5 btreesel btreenpage ));
 
 /*
  *	nbtree bpchar_ops
@@ -330,6 +310,8 @@ DATA(insert OID = 0 (  405	423  670 1 hashsel hashnpage ));
 DATA(insert OID = 0 (  405	426   96 1 hashsel hashnpage ));
 /* oid_ops */
 DATA(insert OID = 0 (  405	427  607 1 hashsel hashnpage ));
+/* oid8_ops */
+DATA(insert OID = 0 (  405	435  679 1 hashsel hashnpage ));
 /* float4_ops */
 DATA(insert OID = 0 (  405	428  620 1 hashsel hashnpage ));
 /* char_ops */

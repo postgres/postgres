@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.36 1998/07/27 19:37:50 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.37 1998/08/19 02:01:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,7 +172,6 @@ Async_Notify(char *relname)
 	HeapScanDesc sRel;
 	TupleDesc	tdesc;
 	ScanKeyData key;
-	Buffer		b;
 	Datum		d,
 				value[3];
 	bool		isnull;
@@ -211,16 +210,14 @@ Async_Notify(char *relname)
 	value[0] = value[1] = value[2] = (Datum) 0;
 	value[Anum_pg_listener_notify - 1] = Int32GetDatum(1);
 
-	while (HeapTupleIsValid(lTuple = heap_getnext(sRel, 0, &b)))
+	while (HeapTupleIsValid(lTuple = heap_getnext(sRel, 0)))
 	{
-		d = heap_getattr(lTuple, Anum_pg_listener_notify,
-						 tdesc, &isnull);
+		d = heap_getattr(lTuple, Anum_pg_listener_notify, tdesc, &isnull);
 		if (!DatumGetInt32(d))
 		{
-			rTuple = heap_modifytuple(lTuple, b, lRel, value, nulls, repl);
+			rTuple = heap_modifytuple(lTuple, lRel, value, nulls, repl);
 			heap_replace(lRel, &lTuple->t_ctid, rTuple);
 		}
-		ReleaseBuffer(b);
 	}
 	heap_endscan(sRel);
 	RelationUnsetLockForWrite(lRel);
@@ -260,7 +257,6 @@ Async_NotifyAtCommit()
 	ScanKeyData key;
 	Datum		d;
 	bool		isnull;
-	Buffer		b;
 	extern TransactionState CurrentTransactionState;
 
 	if (!pendingNotifies)
@@ -286,7 +282,7 @@ Async_NotifyAtCommit()
 			sRel = heap_beginscan(lRel, 0, SnapshotNow, 1, &key);
 			tdesc = RelationGetTupleDescriptor(lRel);
 
-			while (HeapTupleIsValid(lTuple = heap_getnext(sRel, 0, &b)))
+			while (HeapTupleIsValid(lTuple = heap_getnext(sRel, 0)))
 			{
 				d = heap_getattr(lTuple, Anum_pg_listener_relname,
 								 tdesc, &isnull);
@@ -317,7 +313,6 @@ Async_NotifyAtCommit()
 #endif
 					}
 				}
-				ReleaseBuffer(b);
 			}
 			heap_endscan(sRel);
 			RelationUnsetLockForWrite(lRel);
@@ -400,11 +395,10 @@ Async_Listen(char *relname, int pid)
 	Datum		values[Natts_pg_listener];
 	char		nulls[Natts_pg_listener];
 	TupleDesc	tdesc;
-	HeapScanDesc s;
-	HeapTuple	htup,
-				tup;
+	HeapScanDesc scan;
+	HeapTuple	tuple,
+				newtup;
 	Relation	lDesc;
-	Buffer		b;
 	Datum		d;
 	int			i;
 	bool		isnull;
@@ -431,22 +425,21 @@ Async_Listen(char *relname, int pid)
 
 	/* is someone already listening.  One listener per relation */
 	tdesc = RelationGetTupleDescriptor(lDesc);
-	s = heap_beginscan(lDesc, 0, SnapshotNow, 0, (ScanKey) NULL);
-	while (HeapTupleIsValid(htup = heap_getnext(s, 0, &b)))
+	scan = heap_beginscan(lDesc, 0, SnapshotNow, 0, (ScanKey) NULL);
+	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 	{
-		d = heap_getattr(htup, Anum_pg_listener_relname, tdesc,
+		d = heap_getattr(tuple, Anum_pg_listener_relname, tdesc,
 						 &isnull);
 		relnamei = DatumGetPointer(d);
 		if (!strncmp(relnamei, relname, NAMEDATALEN))
 		{
-			d = heap_getattr(htup, Anum_pg_listener_pid, tdesc, &isnull);
+			d = heap_getattr(tuple, Anum_pg_listener_pid, tdesc, &isnull);
 			pid = DatumGetInt32(d);
 			if (pid == MyProcPid)
 				alreadyListener = 1;
 		}
-		ReleaseBuffer(b);
 	}
-	heap_endscan(s);
+	heap_endscan(scan);
 
 	if (alreadyListener)
 	{
@@ -456,12 +449,12 @@ Async_Listen(char *relname, int pid)
 	}
 
 	tupDesc = lDesc->rd_att;
-	tup = heap_formtuple(tupDesc,
+	newtup = heap_formtuple(tupDesc,
 						 values,
 						 nulls);
-	heap_insert(lDesc, tup);
+	heap_insert(lDesc, newtup);
 
-	pfree(tup);
+	pfree(newtup);
 
 	/*
 	 * if (alreadyListener) { elog(NOTICE,"Async_Listen: already one
@@ -504,7 +497,8 @@ Async_Unlisten(char *relname, int pid)
 	Relation	lDesc;
 	HeapTuple	lTuple;
 
-	lTuple = SearchSysCacheTuple(LISTENREL, PointerGetDatum(relname),
+	lTuple = SearchSysCacheTuple(LISTENREL,
+								 PointerGetDatum(relname),
 								 Int32GetDatum(pid),
 								 0, 0);
 	lDesc = heap_openr(ListenerRelationName);
@@ -556,7 +550,6 @@ Async_NotifyFrontEnd()
 				value[3];
 	char		repl[3],
 				nulls[3];
-	Buffer		b;
 	bool		isnull;
 
 	notifyFrontEndPending = 0;
@@ -585,11 +578,10 @@ Async_NotifyFrontEnd()
 	value[0] = value[1] = value[2] = (Datum) 0;
 	value[Anum_pg_listener_notify - 1] = Int32GetDatum(0);
 
-	while (HeapTupleIsValid(lTuple = heap_getnext(sRel, 0, &b)))
+	while (HeapTupleIsValid(lTuple = heap_getnext(sRel, 0)))
 	{
-		d = heap_getattr(lTuple, Anum_pg_listener_relname,
-						 tdesc, &isnull);
-		rTuple = heap_modifytuple(lTuple, b, lRel, value, nulls, repl);
+		d = heap_getattr(lTuple, Anum_pg_listener_relname, tdesc, &isnull);
+		rTuple = heap_modifytuple(lTuple, lRel, value, nulls, repl);
 		heap_replace(lRel, &lTuple->t_ctid, rTuple);
 
 		/* notifying the front end */
@@ -603,8 +595,9 @@ Async_NotifyFrontEnd()
 		}
 		else
 			elog(NOTICE, "Async_NotifyFrontEnd: no asynchronous notification to frontend on interactive sessions");
-		ReleaseBuffer(b);
 	}
+	heap_endscan(sRel);
+	heap_close(lRel);
 	CommitTransactionCommand();
 }
 

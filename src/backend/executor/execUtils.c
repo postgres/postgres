@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.34 1998/07/27 19:37:56 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.35 1998/08/19 02:02:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -760,10 +760,7 @@ ExecOpenIndices(Oid resultRelationOid,
 	fiList = NIL;
 	predList = NIL;
 
-	while (tuple = heap_getnext(indexSd,		/* scan desc */
-								false,	/* scan backward flag */
-								NULL),	/* return: buffer */
-		   HeapTupleIsValid(tuple))
+	while (HeapTupleIsValid(tuple = heap_getnext(indexSd, 0)))
 	{
 
 		/* ----------------
@@ -1020,8 +1017,6 @@ ExecFormIndexTuple(HeapTuple heapTuple,
 				   keyAttributeNumbers, /* array of att nums to extract */
 				   heapTuple,	/* tuple from base relation */
 				   heapDescriptor,		/* heap tuple's descriptor */
-				   InvalidBuffer,		/* buffer associated with heap
-										 * tuple */
 				   datum,		/* return: array of attributes */
 				   nulls,		/* return: array of char's */
 				   fInfoP);		/* functional index information */
@@ -1136,8 +1131,6 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 												 * extract */
 					   heapTuple,		/* tuple from base relation */
 					   heapDescriptor,	/* heap tuple's descriptor */
-					   InvalidBuffer,	/* buffer associated with heap
-										 * tuple */
 					   datum,	/* return: array of attributes */
 					   nulls,	/* return: array of char's */
 					   fInfoP); /* functional index information */

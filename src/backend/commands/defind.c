@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.21 1998/06/15 19:28:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.22 1998/08/19 02:01:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,7 +118,8 @@ DefineIndex(char *heapRelationName,
 	/*
 	 * compute access method id
 	 */
-	tuple = SearchSysCacheTuple(AMNAME, PointerGetDatum(accessMethodName),
+	tuple = SearchSysCacheTuple(AMNAME,
+								PointerGetDatum(accessMethodName),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
@@ -244,7 +245,8 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 	/*
 	 * compute index relation id and access method id
 	 */
-	tuple = SearchSysCacheTuple(RELNAME, PointerGetDatum(indexRelationName),
+	tuple = SearchSysCacheTuple(RELNAME,
+								PointerGetDatum(indexRelationName),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{

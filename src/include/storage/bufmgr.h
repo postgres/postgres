@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.20 1998/06/15 18:40:02 momjian Exp $
+ * $Id: bufmgr.h,v 1.21 1998/08/19 02:03:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,7 +147,7 @@ extern void FlushBufferPool(int StableMainMemoryFlag);
 extern BlockNumber BufferGetBlockNumber(Buffer buffer);
 extern Relation BufferGetRelation(Buffer buffer);
 extern BlockNumber RelationGetNumberOfBlocks(Relation relation);
-extern void ReleaseRelationBuffers(Relation rdesc);
+extern void ReleaseRelationBuffers(Relation rel);
 extern void DropBuffers(Oid dbid);
 extern void PrintBufferDescs(void);
 extern void PrintPinnedBufs(void);

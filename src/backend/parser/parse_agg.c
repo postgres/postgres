@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.11 1998/06/15 19:28:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.12 1998/08/19 02:02:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -230,7 +230,8 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 	HeapTuple	theAggTuple;
 	bool		usenulls = false;
 
-	theAggTuple = SearchSysCacheTuple(AGGNAME, PointerGetDatum(aggname),
+	theAggTuple = SearchSysCacheTuple(AGGNAME,
+									  PointerGetDatum(aggname),
 									  ObjectIdGetDatum(basetype),
 									  0, 0);
 	if (!HeapTupleIsValid(theAggTuple))

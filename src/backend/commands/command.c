@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.29 1998/07/27 19:37:51 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.30 1998/08/19 02:01:42 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -272,7 +272,6 @@ PerformAddAttribute(char *relationName,
 {
 	Relation	relrdesc,
 				attrdesc;
-	HeapScanDesc attsdesc;
 	HeapTuple	reltup;
 	HeapTuple	attributeTuple;
 	AttributeTupleForm attribute;
@@ -281,8 +280,6 @@ PerformAddAttribute(char *relationName,
 	int			minattnum,
 				maxatts;
 	HeapTuple	tup;
-	ScanKeyData key[2];
-	ItemPointerData oldTID;
 	Relation	idescs[Num_pg_attr_indices];
 	Relation	ridescs[Num_pg_class_indices];
 	bool		hasindex;
@@ -334,7 +331,7 @@ PerformAddAttribute(char *relationName,
 				elog(ERROR, "PerformAddAttribute: unknown relation: \"%s\"",
 					 relationName);
 			}
-			myrelid = relrdesc->rd_id;
+			myrelid = RelationGetRelid(relrdesc);
 			heap_close(relrdesc);
 
 			/* this routine is actually in the planner */
@@ -364,9 +361,12 @@ PerformAddAttribute(char *relationName,
 	}
 
 	relrdesc = heap_openr(RelationRelationName);
-	reltup = ClassNameIndexScan(relrdesc, relationName);
 
-	if (!PointerIsValid(reltup))
+	reltup = SearchSysCacheTupleCopy(RELNAME,
+									 PointerGetDatum(relationName),
+									 0, 0, 0);
+
+	if (!HeapTupleIsValid(reltup))
 	{
 		heap_close(relrdesc);
 		elog(ERROR, "PerformAddAttribute: relation \"%s\" not found",
@@ -387,11 +387,10 @@ PerformAddAttribute(char *relationName,
 	maxatts = minattnum + 1;
 	if (maxatts > MaxHeapAttributeNumber)
 	{
-		pfree(reltup);			/* XXX temp */
-		heap_close(relrdesc);	/* XXX temp */
+		pfree(reltup);
+		heap_close(relrdesc);
 		elog(ERROR, "PerformAddAttribute: relations limited to %d attributes",
 			 MaxHeapAttributeNumber);
-		return;
 	}
 
 	attrdesc = heap_openr(AttributeRelationName);
@@ -406,18 +405,6 @@ PerformAddAttribute(char *relationName,
 	if (hasindex)
 		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
 
-	ScanKeyEntryInitialize(&key[0],
-						   (bits16) NULL,
-						   (AttrNumber) Anum_pg_attribute_attrelid,
-						   (RegProcedure) F_OIDEQ,
-						   (Datum) reltup->t_oid);
-
-	ScanKeyEntryInitialize(&key[1],
-						   (bits16) NULL,
-						   (AttrNumber) Anum_pg_attribute_attname,
-						   (RegProcedure) F_NAMEEQ,
-						   (Datum) NULL);
-
 	attributeD.attrelid = reltup->t_oid;
 
 	attributeTuple = heap_addheader(Natts_pg_attribute,
@@ -431,53 +418,44 @@ PerformAddAttribute(char *relationName,
 	{
 		HeapTuple	typeTuple;
 		TypeTupleForm form;
-		char	   *p;
+		char	   *typename;
 		int			attnelems;
 
-		/*
-		 * XXX use syscache here as an optimization
-		 */
-		key[1].sk_argument = (Datum) colDef->colname;
-		attsdesc = heap_beginscan(attrdesc, 0, SnapshotNow, 2, key);
+		tup = SearchSysCacheTuple(ATTNAME,
+									ObjectIdGetDatum(reltup->t_oid),
+									PointerGetDatum(colDef->colname),
+									0, 0);
 
-
-		tup = heap_getnext(attsdesc, 0, (Buffer *) NULL);
 		if (HeapTupleIsValid(tup))
 		{
-			pfree(reltup);		/* XXX temp */
-			heap_endscan(attsdesc);		/* XXX temp */
-			heap_close(attrdesc);		/* XXX temp */
-			heap_close(relrdesc);		/* XXX temp */
+			heap_close(attrdesc);
+			heap_close(relrdesc);
 			elog(ERROR, "PerformAddAttribute: attribute \"%s\" already exists in class \"%s\"",
-				 key[1].sk_argument,
-				 relationName);
-			return;
+				colDef->colname, relationName);
 		}
-		heap_endscan(attsdesc);
 
 		/*
 		 * check to see if it is an array attribute.
 		 */
 
-		p = colDef->typename->name;
+		typename = colDef->typename->name;
 
 		if (colDef->typename->arrayBounds)
 		{
 			attnelems = length(colDef->typename->arrayBounds);
-			p = makeArrayTypeName(colDef->typename->name);
+			typename = makeArrayTypeName(colDef->typename->name);
 		}
 		else
 			attnelems = 0;
 
 		typeTuple = SearchSysCacheTuple(TYPNAME,
-										PointerGetDatum(p),
+										PointerGetDatum(typename),
 										0, 0, 0);
 		form = (TypeTupleForm) GETSTRUCT(typeTuple);
 
 		if (!HeapTupleIsValid(typeTuple))
-			elog(ERROR, "Add: type \"%s\" nonexistent", p);
-		namestrcpy(&(attribute->attname), (char *) key[1].sk_argument);
-
+			elog(ERROR, "Add: type \"%s\" nonexistent", typename);
+		namestrcpy(&(attribute->attname), colDef->colname);
 		attribute->atttypid = typeTuple->t_oid;
 		attribute->attlen = form->typlen;
 		attributeD.attdisbursion = 0;
@@ -504,8 +482,7 @@ PerformAddAttribute(char *relationName,
 	heap_close(attrdesc);
 
 	((Form_pg_class) GETSTRUCT(reltup))->relnatts = maxatts;
-	oldTID = reltup->t_ctid;
-	heap_replace(relrdesc, &oldTID, reltup);
+	heap_replace(relrdesc, &reltup->t_ctid, reltup);
 
 	/* keep catalog indices current */
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);

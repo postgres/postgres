@@ -59,7 +59,6 @@ CreateTrigger(CreateTrigStmt *stmt)
 	ScanKeyData key;
 	Relation	relrdesc;
 	HeapTuple	tuple;
-	ItemPointerData oldTID;
 	Relation	idescs[Num_pg_trigger_indices];
 	Relation	ridescs[Num_pg_class_indices];
 	MemoryContext oldcxt;
@@ -118,9 +117,9 @@ CreateTrigger(CreateTrigStmt *stmt)
 	tgrel = heap_openr(TriggerRelationName);
 	RelationSetLockForWrite(tgrel);
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
-						   F_OIDEQ, rel->rd_id);
+						   F_OIDEQ, RelationGetRelid(rel));
 	tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &key);
-	while (tuple = heap_getnext(tgscan, 0, (Buffer *) NULL), PointerIsValid(tuple))
+	while (HeapTupleIsValid(tuple = heap_getnext(tgscan, 0)))
 	{
 		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
 
@@ -135,7 +134,9 @@ CreateTrigger(CreateTrigStmt *stmt)
 	MemSet(fargtypes, 0, 8 * sizeof(Oid));
 	tuple = SearchSysCacheTuple(PRONAME,
 								PointerGetDatum(stmt->funcname),
-								0, PointerGetDatum(fargtypes), 0);
+								Int32GetDatum(0),
+								PointerGetDatum(fargtypes),
+								0);
 	if (!HeapTupleIsValid(tuple) ||
 		((Form_pg_proc) GETSTRUCT(tuple))->prorettype != 0 ||
 		((Form_pg_proc) GETSTRUCT(tuple))->pronargs != 0)
@@ -157,7 +158,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 
 	MemSet(nulls, ' ', Natts_pg_trigger * sizeof(char));
 
-	values[Anum_pg_trigger_tgrelid - 1] = ObjectIdGetDatum(rel->rd_id);
+	values[Anum_pg_trigger_tgrelid - 1] = ObjectIdGetDatum(RelationGetRelid(rel));
 	values[Anum_pg_trigger_tgname - 1] = NameGetDatum(namein(stmt->trigname));
 	values[Anum_pg_trigger_tgfoid - 1] = ObjectIdGetDatum(tuple->t_oid);
 	values[Anum_pg_trigger_tgtype - 1] = Int16GetDatum(tgtype);
@@ -218,17 +219,16 @@ CreateTrigger(CreateTrigStmt *stmt)
 	pfree(DatumGetPointer(values[Anum_pg_trigger_tgargs - 1]));
 
 	/* update pg_class */
-	relrdesc = heap_openr(RelationRelationName);
-	tuple = ClassNameIndexScan(relrdesc, stmt->relname);
-	if (!PointerIsValid(tuple))
-	{
-		heap_close(relrdesc);
+	tuple = SearchSysCacheTupleCopy(RELNAME,
+									 PointerGetDatum(stmt->relname),
+									 0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "CreateTrigger: relation %s not found in pg_class", stmt->relname);
-	}
+
+	relrdesc = heap_openr(RelationRelationName);
 	((Form_pg_class) GETSTRUCT(tuple))->reltriggers = found + 1;
 	RelationInvalidateHeapTuple(relrdesc, tuple);
-	oldTID = tuple->t_ctid;
-	heap_replace(relrdesc, &oldTID, tuple);
+	heap_replace(relrdesc, &tuple->t_ctid, tuple);
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
 	CatalogIndexInsert(ridescs, Num_pg_class_indices, relrdesc, tuple);
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
@@ -254,12 +254,11 @@ DropTrigger(DropTrigStmt *stmt)
 	ScanKeyData key;
 	Relation	relrdesc;
 	HeapTuple	tuple;
-	ItemPointerData oldTID;
 	Relation	ridescs[Num_pg_class_indices];
 	MemoryContext oldcxt;
 	int			found = 0;
 	int			tgfound = 0;
-
+	
 #ifndef NO_SECURITY
 	if (!pg_ownercheck(GetPgUserName(), stmt->relname, RELNAME))
 		elog(ERROR, "%s: %s", stmt->relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
@@ -274,9 +273,9 @@ DropTrigger(DropTrigStmt *stmt)
 	tgrel = heap_openr(TriggerRelationName);
 	RelationSetLockForWrite(tgrel);
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
-						   F_OIDEQ, rel->rd_id);
+						   F_OIDEQ, RelationGetRelid(rel));
 	tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &key);
-	while (tuple = heap_getnext(tgscan, 0, (Buffer *) NULL), PointerIsValid(tuple))
+	while (HeapTupleIsValid(tuple = heap_getnext(tgscan, 0)))
 	{
 		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
 
@@ -298,18 +297,17 @@ DropTrigger(DropTrigStmt *stmt)
 	RelationUnsetLockForWrite(tgrel);
 	heap_close(tgrel);
 
+	tuple = SearchSysCacheTupleCopy(RELNAME,
+									 PointerGetDatum(stmt->relname),
+									 0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "DropTrigger: relation %s not found in pg_class", stmt->relname);
+
 	/* update pg_class */
 	relrdesc = heap_openr(RelationRelationName);
-	tuple = ClassNameIndexScan(relrdesc, stmt->relname);
-	if (!PointerIsValid(tuple))
-	{
-		heap_close(relrdesc);
-		elog(ERROR, "DropTrigger: relation %s not found in pg_class", stmt->relname);
-	}
 	((Form_pg_class) GETSTRUCT(tuple))->reltriggers = found;
 	RelationInvalidateHeapTuple(relrdesc, tuple);
-	oldTID = tuple->t_ctid;
-	heap_replace(relrdesc, &oldTID, tuple);
+	heap_replace(relrdesc, &tuple->t_ctid, tuple);
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
 	CatalogIndexInsert(ridescs, Num_pg_class_indices, relrdesc, tuple);
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
@@ -338,11 +336,11 @@ RelationRemoveTriggers(Relation rel)
 	tgrel = heap_openr(TriggerRelationName);
 	RelationSetLockForWrite(tgrel);
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
-						   F_OIDEQ, rel->rd_id);
+						   F_OIDEQ, RelationGetRelid(rel));
 
 	tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &key);
 
-	while (tup = heap_getnext(tgscan, 0, (Buffer *) NULL), PointerIsValid(tup))
+	while (HeapTupleIsValid(tup = heap_getnext(tgscan, 0)))
 		heap_delete(tgrel, &tup->t_ctid);
 
 	heap_endscan(tgscan);
@@ -377,7 +375,7 @@ RelationBuildTriggers(Relation relation)
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
 						   (RegProcedure) F_OIDEQ,
-						   ObjectIdGetDatum(relation->rd_id));
+						   ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	tgrel = heap_openr(TriggerRelationName);
 	RelationSetLockForRead(tgrel);

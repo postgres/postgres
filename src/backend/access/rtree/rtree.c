@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.25 1998/07/27 19:37:41 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.26 1998/08/19 02:01:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,6 @@ rtbuild(Relation heap,
 		PredInfo *predInfo)
 {
 	HeapScanDesc scan;
-	Buffer		buffer;
 	AttrNumber	i;
 	HeapTuple	htup;
 	IndexTuple	itup;
@@ -95,6 +94,7 @@ rtbuild(Relation heap,
 	InsertIndexResult res;
 	Datum	   *d;
 	bool	   *nulls;
+	Buffer		buffer = InvalidBuffer;
 	int			nb,
 				nh,
 				ni;
@@ -164,15 +164,14 @@ rtbuild(Relation heap,
 		slot = NULL;
 	}
 #endif							/* OMIT_PARTIAL_INDEX */
-	scan = heap_beginscan(heap, 0, SnapshotNow, 0, (ScanKey) NULL);
-	htup = heap_getnext(scan, 0, &buffer);
 
 	/* count the tuples as we insert them */
 	nh = ni = 0;
 
-	for (; HeapTupleIsValid(htup); htup = heap_getnext(scan, 0, &buffer))
-	{
+ 	scan = heap_beginscan(heap, 0, SnapshotNow, 0, (ScanKey) NULL);
 
+	while (HeapTupleIsValid(htup = heap_getnext(scan, 0)))
+	{
 		nh++;
 
 		/*
@@ -234,8 +233,7 @@ rtbuild(Relation heap,
 									  attoff,
 									  attnum,
 									  finfo,
-									  &attnull,
-									  buffer);
+									  &attnull);
 			nulls[attoff] = (attnull ? 'n' : ' ');
 		}
 
@@ -278,8 +276,8 @@ rtbuild(Relation heap,
 	 * flushed.  We close them to guarantee that they will be.
 	 */
 
-	hrelid = heap->rd_id;
-	irelid = index->rd_id;
+	hrelid = RelationGetRelid(heap);
+	irelid = RelationGetRelid(index);
 	heap_close(heap);
 	index_close(index);
 

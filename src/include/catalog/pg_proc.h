@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.65 1998/08/15 06:47:39 thomas Exp $
+ * $Id: pg_proc.h,v 1.66 1998/08/19 02:03:54 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -745,6 +745,8 @@ DATA(insert OID = 355 (  btfloat8cmp	   PGUID 11 f t f 2 f 23 "701 701" 100 0 0 
 DESCR("btree less-equal-greater");
 DATA(insert OID = 356 (  btoidcmp		   PGUID 11 f t f 2 f 23 "26 26" 100 0 0 100  foo bar ));
 DESCR("btree less-equal-greater");
+DATA(insert OID = 404 (  btoid8cmp		   PGUID 11 f t f 2 f 23 "30 30" 100 0 0 100  foo bar ));
+DESCR("btree less-equal-greater");
 DATA(insert OID = 357 (  btabstimecmp	   PGUID 11 f t f 2 f 23 "702 702" 100 0 0 100	foo bar ));
 DESCR("btree less-equal-greater");
 DATA(insert OID = 358 (  btcharcmp		   PGUID 11 f t f 2 f 23 "18 18" 100 0 0 100  foo bar ));
@@ -824,6 +826,8 @@ DESCR("hash");
 DATA(insert OID = 452 (  hashfloat8		   PGUID 11 f t f 2 f 23 "701 701" 100 0 0 100	foo bar ));
 DESCR("hash");
 DATA(insert OID = 453 (  hashoid		   PGUID 11 f t f 2 f 23 "26 26" 100 0 0 100  foo bar ));
+DESCR("hash");
+DATA(insert OID = 457 (  hashoid8		   PGUID 11 f t f 2 f 23 "30 30" 100 0 0 100  foo bar ));
 DESCR("hash");
 DATA(insert OID = 454 (  hashchar		   PGUID 11 f t f 2 f 23 "18 18" 100 0 0 100  foo bar ));
 DESCR("hash");
@@ -907,10 +911,18 @@ DESCR("not equal");
 DATA(insert OID = 668 (  bpchar			   PGUID 11 f t f 2 f 1042 "1042 23" 100 0 0 100  foo bar ));
 DATA(insert OID = 669 (  varchar		   PGUID 11 f t f 2 f 1043 "1043 23" 100 0 0 100  foo bar ));
 
-DATA(insert OID = 682 (  mktinterval	   PGUID 11 f t f 2 f 704 "702 702" 100 0 0 100 foo bar ));
+DATA(insert OID = 676 (  mktinterval	   PGUID 11 f t f 2 f 704 "702 702" 100 0 0 100 foo bar ));
 DESCR("convert to interval");
-DATA(insert OID = 683 (  oid8eq			   PGUID 11 f t f 2 f 16 "30 30" 100 0 0 100  foo bar ));
+DATA(insert OID = 677 (  oid8lt			   PGUID 11 f t f 2 f 16 "30 30" 100 0 0 100  foo bar ));
+DESCR("less-than");
+DATA(insert OID = 678 (  oid8le			   PGUID 11 f t f 2 f 16 "30 30" 100 0 0 100  foo bar ));
+DESCR("less-than-or-equal");
+DATA(insert OID = 679 (  oid8eq			   PGUID 11 f t f 2 f 16 "30 30" 100 0 0 100  foo bar ));
 DESCR("equal");
+DATA(insert OID = 680 (  oid8ge			   PGUID 11 f t f 2 f 16 "30 30" 100 0 0 100  foo bar ));
+DESCR("greater-than-or-equal");
+DATA(insert OID = 681 (  oid8gt			   PGUID 11 f t f 2 f 16 "30 30" 100 0 0 100  foo bar ));
+DESCR("greater-than");
 
 /* OIDS 700 - 799 */
 DATA(insert OID = 710 (  getpgusername	   PGUID 11 f t f 0 f 19 "0" 100 0 0 100  foo bar ));
@@ -1053,27 +1065,6 @@ DESCR("convert");
 DATA(insert OID = 819 (  text_int4		   PGUID 11 f t f 1 f 23 "25" 100 0 0 100  foo bar));
 DESCR("convert");
 
-DATA(insert OID = 820 (  oidint2in		   PGUID 11 f t f 1 f 810 "0" 100 0 0 100  foo bar));
-DESCR("(internal)");
-DATA(insert OID = 821 (  oidint2out		   PGUID 11 f t f 1 f 19 "0" 100 0 0 100  foo bar));
-DESCR("(internal)");
-DATA(insert OID = 822 (  oidint2lt		   PGUID 11 f t f 2 f 16 "810 810" 100 0 0 100	foo bar));
-DESCR("less-than");
-DATA(insert OID = 823 (  oidint2le		   PGUID 11 f t f 2 f 16 "810 810" 100 0 0 100	foo bar));
-DESCR("less-than-or-equal");
-DATA(insert OID = 824 (  oidint2eq		   PGUID 11 f t f 2 f 16 "810 810" 100 0 0 100	foo bar));
-DESCR("equal");
-DATA(insert OID = 825 (  oidint2ge		   PGUID 11 f t f 2 f 16 "810 810" 100 0 0 100	foo bar));
-DESCR("greater-than-or-equal");
-DATA(insert OID = 826 (  oidint2gt		   PGUID 11 f t f 2 f 16 "810 810" 100 0 0 100	foo bar));
-DESCR("greater-than");
-DATA(insert OID = 827 (  oidint2ne		   PGUID 11 f t f 2 f 16 "810 810" 100 0 0 100	foo bar));
-DESCR("not equal");
-DATA(insert OID = 828 (  oidint2cmp		   PGUID 11 f t f 2 f 21 "810 810" 100 0 0 100	foo bar));
-DESCR("less-equal-greater");
-DATA(insert OID = 829 (  mkoidint2		   PGUID 11 f t f 2 f 810 "26 21" 100 0 0 100  foo bar));
-DESCR("");
-
 DATA(insert OID =  849 (  textpos		   PGUID 11 f t f 2 f 23 "25 25" 100 0 1 0 foo bar ));
 DESCR("return position of substring");
 DATA(insert OID =  850 (  textlike		   PGUID 11 f t f 2 f 16 "25 25" 100 0 1 0 foo bar ));
@@ -1159,27 +1150,6 @@ DESCR("multiply");
 
 /* OIDS 900 - 999 */
 
-DATA(insert OID = 920 (  oidint4in		   PGUID 11 f t f 1 f 910 "0" 100 0 0 100  foo bar));
-DESCR("(internal)");
-DATA(insert OID = 921 (  oidint4out		   PGUID 11 f t f 1 f 19 "0" 100 0 0 100  foo bar));
-DESCR("(internal)");
-DATA(insert OID = 922 (  oidint4lt		   PGUID 11 f t f 2 f 16 "910 910" 100 0 0 100	foo bar));
-DESCR("less-than");
-DATA(insert OID = 923 (  oidint4le		   PGUID 11 f t f 2 f 16 "910 910" 100 0 0 100	foo bar));
-DESCR("less-than-or-equal");
-DATA(insert OID = 924 (  oidint4eq		   PGUID 11 f t f 2 f 16 "910 910" 100 0 0 100	foo bar));
-DESCR("equal");
-DATA(insert OID = 925 (  oidint4ge		   PGUID 11 f t f 2 f 16 "910 910" 100 0 0 100	foo bar));
-DESCR("greater-than-or-equal");
-DATA(insert OID = 926 (  oidint4gt		   PGUID 11 f t f 2 f 16 "910 910" 100 0 0 100	foo bar));
-DESCR("greater-than");
-DATA(insert OID = 927 (  oidint4ne		   PGUID 11 f t f 2 f 16 "910 910" 100 0 0 100	foo bar));
-DESCR("not equal");
-DATA(insert OID = 928 (  oidint4cmp		   PGUID 11 f t f 2 f 23 "910 910" 100 0 0 100	foo bar));
-DESCR("less-equal-greater");
-DATA(insert OID = 929 (  mkoidint4		   PGUID 11 f t f 2 f 910 "26 23" 100 0 0 100  foo bar));
-DESCR("");
-
 /* isoldpath, upgradepath, upgradepoly, revertpoly are used to update pre-v6.1 to v6.1 - tgl 97/06/03 */
 DATA(insert OID = 936 (  isoldpath		   PGUID 11 f t f 1 f  16 "602" 100 0 0 100  foo bar ));
 DESCR("");
@@ -1188,27 +1158,6 @@ DESCR("");
 DATA(insert OID = 938 (  upgradepoly	   PGUID 11 f t f 1 f 604 "604" 100 0 0 100  foo bar ));
 DESCR("");
 DATA(insert OID = 939 (  revertpoly		   PGUID 11 f t f 1 f 604 "604" 100 0 0 100  foo bar ));
-DESCR("");
-
-DATA(insert OID = 940 (  oidnamein		   PGUID 11 f t f 1 f 911 "0" 100 0 0 100  foo bar));
-DESCR("(internal)");
-DATA(insert OID = 941 (  oidnameout		   PGUID 11 f t f 1 f 19 "0" 100 0 0 100  foo bar));
-DESCR("(internal)");
-DATA(insert OID = 942 (  oidnamelt		   PGUID 11 f t f 2 f 16 "911 911" 100 0 0 100	foo bar));
-DESCR("less-than");
-DATA(insert OID = 943 (  oidnamele		   PGUID 11 f t f 2 f 16 "911 911" 100 0 0 100	foo bar));
-DESCR("less-than-or-equal");
-DATA(insert OID = 944 (  oidnameeq		   PGUID 11 f t f 2 f 16 "911 911" 100 0 0 100	foo bar));
-DESCR("equal");
-DATA(insert OID = 945 (  oidnamege		   PGUID 11 f t f 2 f 16 "911 911" 100 0 0 100	foo bar));
-DESCR("greater-than-or-equal");
-DATA(insert OID = 946 (  oidnamegt		   PGUID 11 f t f 2 f 16 "911 911" 100 0 0 100	foo bar));
-DESCR("greater-than");
-DATA(insert OID = 947 (  oidnamene		   PGUID 11 f t f 2 f 16 "911 911" 100 0 0 100	foo bar));
-DESCR("not equal");
-DATA(insert OID = 948 (  oidnamecmp		   PGUID 11 f t f 2 f 23 "911 911" 100 0 0 100	foo bar));
-DESCR("less-equal-greater");
-DATA(insert OID = 949 (  mkoidname		   PGUID 11 f t f 2 f 911 "26 19" 100 0 0 100  foo bar));
 DESCR("");
 
 DATA(insert OID = 950 (  istrue			   PGUID 11 f t f 1 f 16 "16" 100 0 0 100  foo bar ));
@@ -1508,7 +1457,7 @@ DESCR("date difference preserving months and years");
 
 /* OIDS 1200 - 1299 */
 
-DATA(insert OID = 1200 (  int42reltime	   PGUID 11 f t f 1 f  703 "21" 100 0 0 100  foo bar ));
+DATA(insert OID = 1200 (  int4reltime	   PGUID 11 f t f 1 f  703 "23" 100 0 0 100  foo bar ));
 DESCR("convert");
 
 DATA(insert OID = 1217 (  datetime_trunc   PGUID 11 f t f 2 f 1184 "25 1184" 100 0 0 100  foo bar ));
