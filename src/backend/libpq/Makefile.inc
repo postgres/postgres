@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/Makefile.inc,v 1.1.1.1 1996/07/09 06:21:30 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/Makefile.inc,v 1.2 1996/10/11 09:47:11 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,6 +21,8 @@ SRCS_LIBPQ= be-dumpdata.c be-fsstubs.c be-pqexec.c
 #
 # These files are shared with the frontend library.
 #
-SRCS_LIBPQ+= auth.c pqcomm.c portal.c portalbuf.c pqpacket.c pqsignal.c
+SRCS_LIBPQ+= auth.c hba.c pqcomm.c portal.c util.c portalbuf.c \
+             pqpacket.c pqsignal.c
 
-HEADERS+= auth.h be-fsstubs.h libpq-be.h libpq-fs.h libpq.h pqcomm.h pqsignal.h
+HEADERS+= auth.h hba.h be-fsstubs.h libpq-be.h libpq-fs.h libpq.h \
+          pqcomm.h pqsignal.h
