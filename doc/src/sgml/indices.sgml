@@ -1,132 +1,353 @@
- <chapter id="indices">
-  <title id="indices-title">Indices and Keys</title>
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.14 2001/02/20 22:27:56 petere Exp $ -->
+
+<chapter id="indices">
+ <title id="indices-title">Indices</title>
+
+ <para>
+  Indices are a common way to enhance database performance.  An index
+  allows the database server to find and retrieve specific rows much
+  faster than it could do without an index.  But indices also add
+  overhead to the database system as a whole, so they should be used
+  sensibly.
+ </para>
+
+
+ <sect1 id="indices-intro">
+  <title>Introduction</title>
 
   <para>
-   Indexes are commonly used to enhance database
-   performance. They should be defined on table columns (or class
-   attributes) that are used as qualifications in repetitive queries.
-   Inappropriate use will result in slower performance, since update
-   and insertion times are increased in the presence of indices.
+   The classical example for the need of an index is if there is a
+   table similar to this:
+<programlisting>
+CREATE TABLE test1 (
+    id integer,
+    content varchar
+);
+</programlisting>
+   and the application requires a lot of queries of the form
+<programlisting>
+SELECT content FROM test1 WHERE id = <replaceable>constant</replaceable>;
+</programlisting>
+   Ordinarily, the system would have to scan the entire
+   <structname>test1</structname> table row by row to find all
+   matching entries.  If there are a lot of rows in
+   <structname>test1</structname> and only a few rows (possibly zero
+   or one) returned by the query, then this is clearly an inefficient
+   method.  If the system were instructed to maintain an index on the
+   <structfield>id</structfield> column, then it could use a more
+   efficient method for locating matching rows.  For instance, it
+   might only have to walk a few levels deep into a search tree.
   </para>
 
   <para>
-   Indexes may also be used to enforce uniqueness of a table's primary key.
-   When an index is declared UNIQUE, multiple table rows with identical
-   index entries won't be allowed.
-   For this purpose, the goal is ensuring data consistency, not improving
-   performance, so the above caution about inappropriate use doesn't apply.
+   A similar approach is used in most books of non-fiction:  Terms and
+   concepts that are frequently looked up by readers are collected in
+   an alphabetic index at the end of the book.  The interested reader
+   can scan the index relatively quickly and flip to the appropriate
+   page, and would not have to read the entire book to find the
+   interesting location.  As it is the task of the author to
+   anticipate the items that the readers are most likely to look up,
+   it is the task of the database programmer to foresee which indexes
+   would be of advantage.
   </para>
 
   <para>
-   Two forms of indices may be defined:
-
-   <itemizedlist>
-    <listitem>
-     <para>
-      For a <firstterm>value index</firstterm>,
-      the key fields for the
-      index are specified as column names; multiple columns
-      can be specified if the index access method supports
-      multi-column indexes.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      For a <firstterm>functional index</firstterm>, an index is defined
-      on the result of a function applied
-      to one or more columns of a single table.
-      This is a single-column index (namely, the function result)
-      even if the function uses more than one input field.
-      Functional indices can be used to obtain fast access to data
-      based on operators that would normally require some
-      transformation to apply them to the base data.
-     </para>
-    </listitem>
-   </itemizedlist>
+   The following command would be used to create the index on the
+   <structfield>id</structfield> column, as discussed:
+<programlisting>
+CREATE INDEX test1_id_index ON test1 (id);
+</programlisting>
+   The name <structname>test1_id_index</structname> can be chosen
+   freely, but you should pick something that enables you to remember
+   later what the index was for.
   </para>
 
   <para>
-   Postgres provides btree, rtree and hash access methods for
-   indices.  The btree access method is an implementation of
-   Lehman-Yao high-concurrency btrees.  The rtree access method
-   implements standard rtrees using Guttman's quadratic split algorithm.
-   The hash access method is an implementation of Litwin's linear
-   hashing.  We mention the algorithms used solely to indicate that all
-   of these access methods are fully dynamic and do not have to be
-   optimized periodically (as is the case with, for example, static hash
-   access methods).
+   To remove an index, use the <command>DROP INDEX</command> command.
+   Indices can be added and removed from tables at any time.
   </para>
 
   <para>
-   The <productname>Postgres</productname>
-   query optimizer will consider using a btree index whenever
-   an indexed attribute is involved in a comparison using one of:
+   Once the index is created, no further intervention is required: the
+   system will use the index when it thinks it would be more efficient
+   than a sequential table scan.  But you may have to run the
+   <command>VACUUM ANALYZE</command> command regularly to update
+   statistics to allow the query planner to make educated decisions.
+   Also read <xref linkend="performance-tips"> for information about
+   how to find out whether an index is used and when and why the
+   planner may choose to <emphasis>not</emphasis> use an index.
+  </para>
+
+  <para>
+   Indices can also benefit <command>UPDATE</command>s and
+   <command>DELETE</command>s with search conditions.  Note that a
+   query or data manipulation commands can only use at most one index
+   per table.  Indices can also be used in table join methods.  Thus,
+   an index defined on a column that is part of a join condition can
+   significantly speed up queries with joins.
+  </para>
+
+  <para>
+   When an index is created, it has to be kept synchronized with the
+   table.  This adds overhead to data manipulation operations.
+   Therefore indices that are non-essential or do not get used at all
+   should be removed.
+  </para>
+ </sect1>
+
+
+ <sect1 id="indices-types">
+  <title>Index Types</title>
+
+  <para>
+   <productname>Postgres</productname> provides several index types:
+   B-tree, R-tree, and Hash.  Each index type is more appropriate for
+   a particular query type because of the algorithm it uses.  By
+   default, the <command>CREATE INDEX</command> command will create a
+   B-tree index, which fits the most common situations.  In
+   particular, the <productname>Postgres</productname> query optimizer
+   will consider using a B-tree index whenever an indexed column is
+   involved in a comparison using one of these operators:
 
    <simplelist type="inline">
-    <member>&lt;</member>
-    <member>&lt;=</member>
-    <member>=</member>
-    <member>&gt;=</member>
-    <member>&gt;</member>
+    <member><literal>&lt;</literal></member>
+    <member><literal>&lt;=</literal></member>
+    <member><literal>=</literal></member>
+    <member><literal>&gt;=</literal></member>
+    <member><literal>&gt;</literal></member>
    </simplelist>
   </para>
 
   <para>
-   The <productname>Postgres</productname>
-   query optimizer will consider using an rtree index whenever
-   an indexed attribute is involved in a comparison using one of:
+   R-tree indices are especially suited for spacial data.  To create
+   an R-tree index, use a command of the form
+<synopsis>
+CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING RTREE (<replaceable>column</replaceable>);
+</synopsis>
+   The <productname>Postgres</productname> query optimizer will
+   consider using an R-tree index whenever an indexed column is
+   involved in a comparison using one of these operators:
 
    <simplelist type="inline">
-    <member>&lt;&lt;</member>
-    <member>&amp;&lt;</member>
-    <member>&amp;&gt;</member>
-    <member>&gt;&gt;</member>
-    <member>@</member>
-    <member>~=</member>
-    <member>&amp;&amp;</member>
+    <member><literal>&lt;&lt;</literal></member>
+    <member><literal>&amp;&lt;</literal></member>
+    <member><literal>&amp;&gt;</literal></member>
+    <member><literal>&gt;&gt;</literal></member>
+    <member><literal>@</literal></member>
+    <member><literal>~=</literal></member>
+    <member><literal>&amp;&amp;</literal></member>
    </simplelist>
+   (Refer to <xref linkend="functions-geometry"> about the meaning of
+   these operators.)
   </para>
 
   <para>
-   The <productname>Postgres</productname>
-   query optimizer will consider using a hash index whenever
-   an indexed attribute is involved in a comparison using
-   the <literal>=</literal> operator.
+   The query optimizer will consider using a hash index whenever an
+   indexed column is involved in a comparison using the
+   <literal>=</literal> operator.  The following command is used to
+   create a hash index:
+<synopsis>
+CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING HASH (<replaceable>column</replaceable>);
+</synopsis>
+   <note>
+    <para>
+     Because of the limited utility of hash indices, a B-tree index
+     should generally be preferred over a hash index.  We do not have
+     sufficient evidence that hash indices are actually faster than
+     B-trees even for <literal>=</literal> comparisons.  Moreover,
+     hash indices require coarser locks; see <xref
+     linkend="locking-indices">.
+    </para>
+   </note>  
   </para>
 
   <para>
-   Currently, only the btree access method supports multi-column
-   indexes. Up to 16 keys may be specified by default (this limit
-   can be altered when building Postgres).
+   The B-tree index is an implementation of Lehman-Yao
+   high-concurrency B-trees.  The R-tree index method implements
+   standard R-trees using Guttman's quadratic split algorithm.  The
+   hash index is an implementation of Litwin's linear hashing.  We
+   mention the algorithms used solely to indicate that all of these
+   access methods are fully dynamic and do not have to be optimized
+   periodically (as is the case with, for example, static hash access
+   methods).
+  </para>
+ </sect1>
+
+
+ <sect1 id="indices-multicolumn">
+  <title>Multi-Column Indices</title>
+
+  <para>
+   An index can be defined on more than one column.  For example, if
+   you have a table of this form:
+<programlisting>
+CREATE TABLE test2 (
+  major int,
+  minor int,
+  name varchar
+);
+</programlisting>
+   (Say, you keep you your <filename class="directory">/dev</filename>
+   directory in a database...) and you frequently make queries like
+<programlisting>
+SELECT name FROM test2 WHERE major = <replaceable>constant</replaceable> AND minor = <replaceable>constant</replaceable>;
+</programlisting>
+   then it may be appropriate to define an index on the columns
+   <structfield>major</structfield> and
+   <structfield>minor</structfield> together, e.g.,
+<programlisting>
+CREATE INDEX test2_mm_idx ON test2 (major, minor);
+</programlisting>
   </para>
 
   <para>
-   An <firstterm>operator class</firstterm> can be specified for each
-   column of an index.  The operator class identifies the operators to
-   be used by the index for that column.  For example, a btree index on
-   four-byte integers would use the <literal>int4_ops</literal> class;
-   this operator class includes comparison functions for four-byte
-   integers.  In practice the default operator class for the field's
-   datatype is usually sufficient.  The main point of having operator classes
-   is that for some datatypes, there could be more than one meaningful
-   ordering.  For example, we might want to sort a complex-number datatype
-   either by absolute value or by real part.  We could do this by defining
-   two operator classes for the datatype and then selecting the proper
-   class when making an index.  There are also some operator classes with
-   special purposes:
+   Currently, only the B-tree implementation supports multi-column
+   indices.  Up to 16 columns may be specified.  (This limit can be
+   altered when building <productname>Postgres</productname>; see the
+   file <filename>config.h</filename>.)
+  </para>
+
+  <para>
+   The query optimizer can use a multi-column index for queries that
+   involve the first <parameter>n</parameter> consecutive columns in
+   the index (when used with appropriate operators), up to the total
+   number of columns specified in the index definition.  For example,
+   an index on <literal>(a, b, c)</literal> can be used in queries
+   involving all of <literal>a</literal>, <literal>b</literal>, and
+   <literal>c</literal>, or in queries involving both
+   <literal>a</literal> and <literal>b</literal>, or in queries
+   involving only <literal>a</literal>, but not in other combinations.
+   (In a query involving <literal>a</literal> and <literal>c</literal>
+   the optimizer might choose to use the index for
+   <literal>a</literal> only and treat <literal>c</literal> like an
+   ordinary unindexed column.)
+  </para>
+
+  <para>
+   Multi-column indexes can only be used if the clauses involving the
+   indexed columns are joined with <literal>AND</literal>.  For instance,
+<programlisting>
+SELECT name FROM test2 WHERE major = <replaceable>constant</replaceable> OR minor = <replaceable>constant</replaceable>;
+</programlisting>
+   cannot make use of the index <structname>test2_mm_idx</structname>
+   defined above to look up both columns.  (It can be used to look up
+   only the <structfield>major</structfield> column, however.)
+  </para>
+
+  <para>
+   Multi-column indices should be used sparingly.  Most of the time,
+   an index on a single column is sufficient and saves space and time.
+   Indexes with more than three columns are almost certainly
+   inappropriate.
+  </para>
+ </sect1>
+
+
+ <sect1 id="indices-unique">
+  <title>Unique Indices</title>
+
+  <para>
+   Indexes may also be used to enforce uniqueness of a column's value,
+   or the uniqueness of the combined values of more than one column.
+<synopsis>
+CREATE UNIQUE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> (<replaceable>column</replaceable> <optional>, ...</optional>);
+</synopsis>
+   Only B-tree indices can be declared unique.
+  </para>
+
+  <para>
+   When an index is declared unique, multiple table rows with equal
+   indexed values will not be allowed.  NULL values are not considered
+   equal.
+  </para>
+
+  <para>
+   <productname>PostgreSQL</productname> automatically creates unique
+   indices when a table is declared with a unique constraint or a
+   primary key, on the columns that make up the primary key or unique
+   columns (a multi-column index, if appropriate), to enforce that
+   constraint.  A unique index can be added to a table at any later
+   time, to add a unique constraint.  (But a primary key cannot be
+   added after table creation.)
+  </para>
+ </sect1>
+
+
+ <sect1 id="indices-functional">
+  <title>Functional Indices</title>
+
+  <para>
+   For a <firstterm>functional index</firstterm>, an index is defined
+   on the result of a function applied to one or more columns of a
+   single table.  Functional indices can be used to obtain fast access
+   to data based on the result of function calls.
+  </para>
+
+  <para>
+   For example, a common way to do case-insensitive comparisons is to
+   use the <function>lower</function>:
+<programlisting>
+SELECT * FROM test1 WHERE lower(col1) = 'value';
+</programlisting>
+   In order for that query to be able to use an index, it has to be
+   defined on the result of the <literal>lower(column)</literal>
+   operation:
+<programlisting>
+CREATE INDEX test1_lower_col1_idx ON test1 (lower(col1));
+</programlisting>
+  </para>
+
+  <para>
+   The function in the index definition can take more than one
+   argument, but they must be table columns, not constants.
+   Functional indices are always single-column (namely, the function
+   result) even if the function uses more than one input field; there
+   cannot be multi-column indices that contain function calls.
+  </para>
+
+  <tip>
+   <para>
+    The restrictions mentioned in the previous paragraph can easily be
+    worked around by defining custom functions to use in the index
+    definition that call the desired function(s) internally.
+   </para>
+  </tip>
+ </sect1>
+
+
+ <sect1 id="indices-opclass">
+  <title>Operator Classes</title>
+
+  <para>
+   An index definition may specify an <firstterm>operator
+   class</firstterm> for each column of an index.
+<synopsis>
+CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> (<replaceable>column</replaceable> <replaceable>opclass</replaceable> <optional>, ...</optional>);
+</synopsis>
+   The operator class identifies the operators to be used by the index
+   for that column.  For example, a B-tree index on four-byte integers
+   would use the <literal>int4_ops</literal> class; this operator
+   class includes comparison functions for four-byte integers.  In
+   practice the default operator class for the column's data type is
+   usually sufficient.  The main point of having operator classes is
+   that for some data types, there could be more than one meaningful
+   ordering.  For example, we might want to sort a complex-number data
+   type either by absolute value or by real part.  We could do this by
+   defining two operator classes for the data type and then selecting
+   the proper class when making an index.  There are also some
+   operator classes with special purposes:
 
    <itemizedlist>
     <listitem>
      <para>
       The operator classes <literal>box_ops</literal> and
-      <literal>bigbox_ops</literal> both support rtree indices on the
-      <literal>box</literal> datatype.
-      The difference between them is that <literal>bigbox_ops</literal>
-      scales box coordinates down, to avoid floating point exceptions from
-      doing multiplication, addition, and subtraction on very large
-      floating-point coordinates.  If the field on which your rectangles lie
-      is about 20,000 units square or larger, you should use
+      <literal>bigbox_ops</literal> both support R-tree indices on the
+      <literal>box</literal> data type.  The difference between them is
+      that <literal>bigbox_ops</literal> scales box coordinates down,
+      to avoid floating point exceptions from doing multiplication,
+      addition, and subtraction on very large floating point
+      coordinates.  If the field on which your rectangles lie is about
+      20 000 units square or larger, you should use
       <literal>bigbox_ops</literal>.
      </para>
     </listitem>
@@ -135,8 +356,7 @@
 
   <para>
    The following query shows all defined operator classes:
-
-   <programlisting>
+<programlisting>
 SELECT am.amname AS acc_name,
        opc.opcname AS ops_name,
        opr.oprname AS ops_comp
@@ -145,13 +365,11 @@ SELECT am.amname AS acc_name,
     WHERE amop.amopid = am.oid AND
           amop.amopclaid = opc.oid AND
           amop.amopopr = opr.oid
-    ORDER BY acc_name, ops_name, ops_comp
-   </programlisting>
+    ORDER BY acc_name, ops_name, ops_comp;
+</programlisting>
   </para>
+ </sect1>
 
-  <para>
-   Use <command>DROP INDEX</command> to remove an index.
-  </para>
 
   <sect1 id="keys">
    <title id="keys-title">Keys</title>
@@ -169,7 +387,7 @@ SELECT am.amname AS acc_name,
    </para>
 
    <para>
-    <programlisting>
+<literallayout>
 Subject: Re: [QUESTIONS] PRIMARY KEY | UNIQUE
 
         What's the difference between:
@@ -180,7 +398,7 @@ Subject: Re: [QUESTIONS] PRIMARY KEY | UNIQUE
        - Is this an alias?
        - If PRIMARY KEY is already unique, then why
          is there another kind of key named UNIQUE?
-    </programlisting>
+</literallayout>
    </para>
 
    <para>
@@ -199,7 +417,7 @@ Subject: Re: [QUESTIONS] PRIMARY KEY | UNIQUE
     However, my application requires that each collection will also have a
     unique name. Why? So that a human being who wants to modify a collection
     will be able to identify it. It's much harder to know, if you have two
-    collections named "Life Science", the the one tagged 24433 is the one you
+    collections named <quote>Life Science</quote>, the the one tagged 24433 is the one you
     need, and the one tagged 29882 is not.
    </para>
 
@@ -213,7 +431,7 @@ Subject: Re: [QUESTIONS] PRIMARY KEY | UNIQUE
    <para>
     Moreover, despite being unique, the collection name does not actually
     define the collection! For example, if somebody decided to change the name
-    of the collection from "Life Science" to "Biology", it will still be the
+    of the collection from <quote>Life Science</quote> to <quote>Biology</quote>, it will still be the
     same collection, only with a different name. As long as the name is unique,
     that's OK.
    </para>
@@ -256,7 +474,7 @@ Subject: Re: [QUESTIONS] PRIMARY KEY | UNIQUE
 	</listitem>
 	<listitem>
 	 <para>
-	  Are updateable, so long as they are kept unique.
+	  Are updatable, so long as they are kept unique.
 	 </para>
 	</listitem>
 	<listitem>
@@ -284,16 +502,16 @@ Subject: Re: [QUESTIONS] PRIMARY KEY | UNIQUE
    <para>
     Thus, you may query a table by any combination of its columns, despite the
     fact that you don't have an index on these columns. The indexes are merely
-    an implementational aid that each <acronym>RDBMS</acronym> offers
+    an implementation aid that each <acronym>RDBMS</acronym> offers
     you, in order to cause
     commonly used queries to be done more efficiently.
     Some <acronym>RDBMS</acronym> may give you
     additional measures, such as keeping a key stored in main memory. They will
     have a special command, for example
-    <programlisting>
-CREATE MEMSTORE ON &lt;table&gt; COLUMNS &lt;cols&gt;
-    </programlisting>
-    (this is not an existing command, just an example).
+<synopsis>
+CREATE MEMSTORE ON <replaceable>table</replaceable> COLUMNS <replaceable>cols</replaceable>
+</synopsis>
+    (This is not an existing command, just an example.)
    </para>
 
    <para>
@@ -317,6 +535,7 @@ CREATE MEMSTORE ON &lt;table&gt; COLUMNS &lt;cols&gt;
     from experience).
    </para>
   </sect1>
+
 
   <sect1 id="partial-index">
    <title id="partial-index-title">Partial Indices</title>
