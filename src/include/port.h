@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.51 2004/08/09 02:12:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.52 2004/08/12 18:32:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@ extern char *last_dir_separator(const char *filename);
 extern char *first_path_separator(const char *filename);
 
 extern void canonicalize_path(char *path);
+extern void make_native_path(char *path);
 extern const char *get_progname(const char *argv0);
 extern void get_share_path(const char *my_exec_path, char *ret_path);
 extern void get_etc_path(const char *my_exec_path, char *ret_path);

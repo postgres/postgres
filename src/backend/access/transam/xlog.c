@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.159 2004/08/11 04:07:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.160 2004/08/12 18:32:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1962,17 +1962,20 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 					/* %p: full path of target file */
 					sp++;
 					StrNCpy(dp, xlogpath, endp-dp);
-#ifndef WIN32
+					/*
+					 *	make_native_path() is required because COPY is an internal
+					 *	CMD.EXE command and doesn't process forward slashes in the
+					 *	same way as external commands.  Quoting the first argument
+					 *	to COPY does not convert forward to backward slashes, but
+					 *	COPY does properly process quoted forward slashes in the
+					 *	second argument.
+					 *
+					 *	COPY works with quoted forward slashes in the first argument
+					 *	only if the current directory is the same as the directory
+					 *	of the first argument.
+					 */
+					make_native_path(dp);
 					dp += strlen(dp);
-#else
-					/* On Windows, change / to \ in the substituted path */
-					while (*dp)
-					{
-						if (*dp == '/')
-							*dp = '\\';
-						dp++;
-					}
-#endif
 					break;
 				case 'f':
 					/* %f: filename of desired file */
