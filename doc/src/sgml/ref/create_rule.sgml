@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.36 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.37 2002/09/02 20:04:39 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,17 +21,15 @@ PostgreSQL documentation
    <date>2001-01-05</date>
   </refsynopsisdivinfo>
   <synopsis>
-CREATE RULE <replaceable class="parameter">name</replaceable> AS ON <replaceable class="parameter">event</replaceable>
+CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS ON <replaceable class="parameter">event</replaceable>
     TO <replaceable class="parameter">table</replaceable> [ WHERE <replaceable class="parameter">condition</replaceable> ]
     DO [ INSTEAD ] <replaceable class="parameter">action</replaceable>
 
 where <replaceable class="PARAMETER">action</replaceable> can be:
 
 NOTHING
-|
-<replaceable class="parameter">query</replaceable>
-|
-( <replaceable class="parameter">query</replaceable> ; <replaceable class="parameter">query</replaceable> ... )
+| <replaceable class="parameter">query</replaceable>
+| ( <replaceable class="parameter">query</replaceable> ; <replaceable class="parameter">query</replaceable> ... )
   </synopsis>
 
   <refsect2 id="R2-SQL-CREATERULE-1">
@@ -76,9 +74,10 @@ NOTHING
       <term><replaceable class="parameter">condition</replaceable></term>
       <listitem>
        <para>
-	Any SQL conditional expression (returning <type>boolean</type>).  The condition expression may not
+	Any SQL conditional expression (returning <type>boolean</type>).
+	The condition expression may not
 	refer to any tables except <literal>new</literal> and
-	<literal>old</literal>.
+	<literal>old</literal>, and may not contain aggregate functions.
        </para>
       </listitem>
      </varlistentry>
@@ -141,6 +140,14 @@ CREATE RULE
   <title>
    Description
   </title>
+
+  <para>
+   <command>CREATE RULE</command> defines a new rule applying to a specified
+   table or view.
+   <command>CREATE OR REPLACE RULE</command> will either create a
+   new rule, or replace an existing rule of the same name for the same
+   table.
+  </para>
 
   <para>
    The <productname>PostgreSQL</productname> 
@@ -318,7 +325,7 @@ UPDATE mytable SET name = 'foo' WHERE id = 42;
    </title>
 
    <para>
-    <command>CREATE RULE</command> statement is a <productname>PostgreSQL</productname>
+    <command>CREATE RULE</command> is a <productname>PostgreSQL</productname>
     language extension.
     There is no <command>CREATE RULE</command> statement in <acronym>SQL92</acronym>.
    </para>

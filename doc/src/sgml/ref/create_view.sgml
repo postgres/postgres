@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.18 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.19 2002/09/02 20:04:39 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
    <date>2000-03-25</date>
   </refsynopsisdivinfo>
   <synopsis>
-CREATE VIEW <replaceable class="PARAMETER">view</replaceable> [ ( <replaceable
+CREATE [ OR REPLACE ] VIEW <replaceable class="PARAMETER">view</replaceable> [ ( <replaceable
 class="PARAMETER">column name list</replaceable> ) ] AS SELECT <replaceable class="PARAMETER">query</replaceable>
   </synopsis>
 
@@ -132,11 +132,19 @@ CREATE VIEW vista AS SELECT text 'Hello World'
   <title>
    Description
   </title>
+
   <para>
-   <command>CREATE VIEW</command> will define a view of a query.
+   <command>CREATE VIEW</command> defines a view of a query.
    The view is not physically materialized. Instead, a query
    rewrite rule (an <literal>ON SELECT</> rule) is automatically generated to
    support SELECT operations on views.
+  </para>
+
+  <para>
+   <command>CREATE OR REPLACE VIEW</command> is similar, but if a view
+   of the same name already exists, it is replaced.  You can only replace
+   a view with a new query that generates the identical set of columns
+   (i.e., same column names and data types).
   </para>
 
   <para>
@@ -206,6 +214,7 @@ SELECT * FROM kinds;
    <title>
     SQL92
    </title>
+
    <para>
     SQL92 specifies some additional capabilities for the
     <command>CREATE VIEW</command> statement:
@@ -253,6 +262,12 @@ CREATE VIEW <replaceable class="parameter">view</replaceable> [ <replaceable cla
      </varlistentry>
     </variablelist>
    </para>
+
+   <para>
+    <command>CREATE OR REPLACE VIEW</command> is a
+    <productname>PostgreSQL</productname> language extension.
+   </para>
+
   </refsect2>
  </refsect1>
 </refentry>

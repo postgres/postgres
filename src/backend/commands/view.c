@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.69 2002/09/02 02:13:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.70 2002/09/02 20:04:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,9 @@
 #include "rewrite/rewriteSupport.h"
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
+
+
+static void checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc);
 
 
 /*---------------------------------------------------------------------
@@ -111,15 +114,9 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 		/*
 		 * Create a tuple descriptor to compare against the existing view,
 		 * and verify it matches.
-		 *
-		 * XXX the error message is a bit cheesy here: would be useful to
-		 * give a more specific complaint about the difference in the
-		 * descriptors.  No time for it at the moment though.
 		 */
 	    descriptor = BuildDescForRelation(attrList);
-		if (!equalTupleDescs(descriptor, rel->rd_att))
-			elog(ERROR, "Cannot change column set of existing view %s",
-				 RelationGetRelationName(rel));
+		checkViewTupleDesc(descriptor, rel->rd_att);
 
 		/*
 		 * Seems okay, so return the OID of the pre-existing view.
@@ -147,6 +144,46 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 		 */
 		return DefineRelation(createStmt, RELKIND_VIEW);
 	}
+}
+
+/*
+ * Verify that tupledesc associated with proposed new view definition
+ * matches tupledesc of old view.  This is basically a cut-down version
+ * of equalTupleDescs(), with code added to generate specific complaints.
+ */
+static void
+checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc)
+{
+	int			i;
+
+	if (newdesc->natts != olddesc->natts)
+		elog(ERROR, "Cannot change number of columns in view");
+	/* we can ignore tdhasoid */
+
+	for (i = 0; i < newdesc->natts; i++)
+	{
+		Form_pg_attribute newattr = newdesc->attrs[i];
+		Form_pg_attribute oldattr = olddesc->attrs[i];
+
+		/* XXX not right, but we don't support DROP COL on view anyway */
+		if (newattr->attisdropped != oldattr->attisdropped)
+			elog(ERROR, "Cannot change number of columns in view");
+
+		if (strcmp(NameStr(newattr->attname), NameStr(oldattr->attname)) != 0)
+			elog(ERROR, "Cannot change name of view column \"%s\"",
+				 NameStr(oldattr->attname));
+		/* XXX would it be safe to allow atttypmod to change?  Not sure */
+		if (newattr->atttypid != oldattr->atttypid ||
+			newattr->atttypmod != oldattr->atttypmod)
+			elog(ERROR, "Cannot change datatype of view column \"%s\"",
+				 NameStr(oldattr->attname));
+		/* We can ignore the remaining attributes of an attribute... */
+	}
+	/*
+	 * We ignore the constraint fields.  The new view desc can't have any
+	 * constraints, and the only ones that could be on the old view are
+	 * defaults, which we are happy to leave in place.
+	 */
 }
 
 static RuleStmt *
