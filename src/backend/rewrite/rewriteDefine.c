@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.42 2000/01/27 18:11:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.43 2000/02/26 06:36:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,9 +119,9 @@ InsertRule(char *rulname,
 	appendStringInfo(&rulebuf, "::text, '%s'::bool);",
 					 is_instead);
 
-	pg_exec_query_dest(NameStr(rulebuf), None, true);
+	pg_exec_query_dest(rulebuf.data, None, true);
 
-	pfree(NameStr(rulebuf));
+	pfree(rulebuf.data);
 
 	return LastOidProcessed;
 }
