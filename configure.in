@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.210 2002/09/20 18:38:57 petere Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.211 2002/09/25 13:23:15 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -21,7 +21,7 @@ dnl The GNU folks apparently haven't heard that some people don't use
 dnl Texinfo. Use this sorcery to use "docdir" instead of "infodir".
 m4_define([info], [doc])
 m4_define([infodir], [docdir])
-AC_INIT([PostgreSQL], [7.3b1], [pgsql-bugs@postgresql.org])
+AC_INIT([PostgreSQL], [7.3b2], [pgsql-bugs@postgresql.org])
 m4_undefine([infodir])
 m4_undefine([info])
 AC_SUBST(docdir)
