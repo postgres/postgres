@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Feb  5 12:02:12 EST 2000
+Last updated:		Wed Feb  9 15:08:47 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -155,7 +155,6 @@ INDEXES
 * Add FILLFACTOR to index creation
 * -Allow indexing of LIKE with localle character sets
 * -Allow indexing of more than eight columns
-* update pg_class.relhasindex during vacuum when all indexes are dropped
 
 COMMANDS
 
