@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.45 1997/01/02 07:07:32 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.46 1997/01/05 23:46:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -401,7 +401,10 @@ gets_noreadline(char *prompt, FILE * source)
 char           *
 gets_readline(char *prompt, FILE * source)
 {
-    return (readline(prompt));
+    char *s = readline(prompt);
+    fputc('\r', stdout);
+    fflush(stdout);
+    return s;
 }
 
 /*
