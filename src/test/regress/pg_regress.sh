@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.42 2004/05/03 13:25:23 momjian Exp $
+# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.43 2004/05/19 05:20:27 momjian Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -348,7 +348,7 @@ then
     # executables, not dlopen'ed ones)
     # ----------
     case $host_platform in
-        *-*-cygwin*)
+        *-*-cygwin*|*-*-mingw)
             PATH=$libdir:$PATH
             export PATH
             ;;
