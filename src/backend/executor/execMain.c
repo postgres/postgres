@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.111 2000/04/07 00:59:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.112 2000/04/07 07:24:47 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2022,15 +2022,21 @@ EndEvalPlanQual(EState *estate)
 	EState	   *epqstate = &(epq->estate);
 	evalPlanQual *oldepq;
 
-	if (epq->rti == 0)			/* still live? */
+	if (epq->rti == 0)			/* plans already shutdowned */
+	{
+		Assert(epq->estate.es_evalPlanQual == NULL);
 		return;
+	}
 
 	for (;;)
 	{
 		ExecEndNode(epq->plan, epq->plan);
 	    epqstate->es_tupleTable->next = 0;
-		heap_freetuple(epqstate->es_evTuple[epq->rti - 1]);
-		epqstate->es_evTuple[epq->rti - 1] = NULL;
+		if (epqstate->es_evTuple[epq->rti - 1] != NULL)
+		{
+			heap_freetuple(epqstate->es_evTuple[epq->rti - 1]);
+			epqstate->es_evTuple[epq->rti - 1] = NULL;
+		}
 		/* pop old PQ from the stack */
 		oldepq = (evalPlanQual *) epqstate->es_evalPlanQual;
 		if (oldepq == (evalPlanQual *) NULL)
