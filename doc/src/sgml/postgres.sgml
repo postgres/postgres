@@ -211,7 +211,7 @@ Information for extending <ProductName>Postgres</ProductName>.
 &dfunc;
 &trigger;
 &spi;
-&libpq;
+<!-- &libpq; -->
 </Part>
 
 <Part>
