@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: float.h,v 1.1.1.1 1996/07/09 06:21:44 scrappy Exp $
+ * $Id: float.h,v 1.1 1997/07/28 00:08:35 momjian Exp $
  *
  * NOTES
  *    These come straight out of ANSI X3.159-1989 (p.18) and

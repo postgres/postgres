@@ -4,7 +4,7 @@
 #    Makefile for port/sparc
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/sparc/Attic/Makefile,v 1.2 1996/11/09 06:20:07 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/sunos4/Attic/Makefile,v 1.1 1997/07/28 00:08:32 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
