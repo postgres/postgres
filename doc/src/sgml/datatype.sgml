@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.55 2001/05/22 16:37:15 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.56 2001/06/18 19:05:11 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -1518,8 +1518,9 @@ January 8 04:05:06 1999 PST
       </listitem>
       <listitem>
        <para>
-	The PGTZ environment variable set at the client used by libpq 
-	to send time zone information to the backend upon connection.
+	The PGTZ environment variable, if set at the client, is used by libpq 
+	to send a <command>SET TIME ZONE</command> command to the backend upon
+	connection.
        </para>
       </listitem>
       <listitem>
@@ -1552,9 +1553,9 @@ January 8 04:05:06 1999 PST
 
      <note>
       <para>
-       If the compiler option USE_AUSTRALIAN_RULES is set 
-       then <literal>EST</literal> refers to Australia Eastern Standard Time,
-       which has an offset of +10:00 hours from UTC.
+       If the runtime option <literal>AUSTRALIAN_TIMEZONES</literal> is set 
+       then <literal>CST</literal> and <literal>EST</literal> refer to
+       Australian timezones, not American ones.
       </para>
      </note>
     </para>

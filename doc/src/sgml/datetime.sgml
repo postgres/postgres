@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.18 2001/05/12 22:51:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.19 2001/06/18 19:05:11 tgl Exp $
 Date/time details
 -->
 
@@ -18,7 +18,7 @@ Date/time details
    information for time zone decoding, since there is no *nix standard
    system interface to provide access to general, cross-timezone
    information. The underlying OS <emphasis>is</emphasis> used to
-   provide time zone information for <emphasis>output</emphasis>.
+   provide time zone information for <emphasis>output</emphasis>, however.
 
    <table tocentry="1">
     <title><productname>Postgres</productname> Recognized Time Zones</title>
@@ -45,7 +45,7 @@ Date/time details
       <row>
        <entry>NZST</entry>
        <entry>+12:00</entry>
-       <entry>New Zealand Std Time</entry>
+       <entry>New Zealand Standard Time</entry>
       </row>
       <row>
        <entry>NZT</entry>
@@ -55,12 +55,12 @@ Date/time details
       <row>
        <entry>AESST</entry>
        <entry>+11:00 </entry>
-       <entry>Australia Eastern Summer Std Time</entry>
+       <entry>Australia Eastern Summer Standard Time</entry>
       </row>
       <row>
        <entry>ACSST</entry>
        <entry>+10:30 </entry>
-       <entry>Central Australia Summer Std Time</entry>
+       <entry>Central Australia Summer Standard Time</entry>
       </row>
       <row>
        <entry>CADT</entry>
@@ -75,17 +75,17 @@ Date/time details
       <row>
        <entry>AEST</entry>
        <entry>+10:00 </entry>
-       <entry>Australia Eastern Std Time</entry>
+       <entry>Australia Eastern Standard Time</entry>
       </row>
       <row>
        <entry>EAST</entry>
        <entry>+10:00 </entry>
-       <entry>East Australian Std Time</entry>
+       <entry>East Australian Standard Time</entry>
 	</row>
       <row>
        <entry>GST</entry>
        <entry>+10:00</entry>
-       <entry>Guam Std Time, USSR Zone 9</entry>
+       <entry>Guam Standard Time, USSR Zone 9</entry>
       </row>
       <row>
        <entry>LIGT</entry>
@@ -95,27 +95,27 @@ Date/time details
       <row>
        <entry>ACST</entry>
        <entry>+09:30 </entry>
-       <entry>Central Australia Std Time</entry>
+       <entry>Central Australia Standard Time</entry>
       </row>
       <row>
        <entry>SAST</entry>
        <entry>+09:30 </entry>
-       <entry>South Australia Std Time</entry>
+       <entry>South Australia Standard Time</entry>
       </row>
       <row>
        <entry>CAST</entry>
        <entry>+09:30 </entry>
-       <entry>Central Australia Std Time</entry>
+       <entry>Central Australia Standard Time</entry>
       </row>
       <row>
        <entry>AWSST</entry>
        <entry>+9:00 </entry>
-       <entry>Australia Western Summer Std Time</entry>
+       <entry>Australia Western Summer Standard Time</entry>
       </row>
       <row>
        <entry>JST</entry>
        <entry>+9:00</entry>
-       <entry>Japan Std Time,USSR Zone 8</entry>
+       <entry>Japan Standard Time,USSR Zone 8</entry>
       </row>
       <row>
        <entry>KST</entry>
@@ -135,7 +135,7 @@ Date/time details
       <row>
        <entry>AWST</entry>
        <entry>+8:00 </entry>
-       <entry>Australia Western Std Time</entry>
+       <entry>Australia Western Standard Time</entry>
       </row>
       <row>
        <entry>CCT</entry>
@@ -150,7 +150,7 @@ Date/time details
       <row>
        <entry>WST</entry>
        <entry>+8:00</entry>
-       <entry>West Australian Std Time</entry>
+       <entry>West Australian Standard Time</entry>
       </row>
       <row>
        <entry>JT</entry>
@@ -160,7 +160,7 @@ Date/time details
       <row>
        <entry>WAST</entry>
        <entry>+7:00</entry>
-       <entry>West Australian Std Time</entry>
+       <entry>West Australian Standard Time</entry>
 	</row>
       <row>
        <entry>IT</entry>
@@ -195,7 +195,7 @@ Date/time details
       <row>
        <entry>IST</entry>
        <entry>+2:00</entry>
-       <entry>Israel Std Time</entry>
+       <entry>Israel Standard Time</entry>
       </row>
       <row>
        <entry>MEST</entry>
@@ -305,7 +305,7 @@ Date/time details
       <row>
        <entry>AST</entry>
        <entry>-4:00 </entry>
-       <entry>Atlantic Std Time (Canada)</entry>
+       <entry>Atlantic Standard Time (Canada)</entry>
       </row>
       <row>
        <entry>EDT</entry>
@@ -339,7 +339,7 @@ Date/time details
       <row>
        <entry>CST</entry>
        <entry>-6:00 </entry>
-       <entry>Central Std Time</entry>
+       <entry>Central Standard Time</entry>
       </row>
       <row>
        <entry>MDT</entry>
@@ -366,7 +366,7 @@ Date/time details
       <row>
        <entry>PST</entry>
        <entry>-8:00</entry>
-       <entry>Pacific Std Time</entry>
+       <entry>Pacific Standard Time</entry>
       </row>
       <row>
        <entry>YDT</entry>
@@ -386,7 +386,7 @@ Date/time details
       <row>
        <entry>AHST</entry>
        <entry>-10:00 </entry>
-       <entry>Alaska-Hawaii Std Time</entry>
+       <entry>Alaska-Hawaii Standard Time</entry>
       </row>
       <row>
        <entry>CAT</entry>
@@ -415,17 +415,18 @@ Date/time details
     Australian time zones and their naming variants
     account for fully one quarter of all time zones in the 
     <productname>Postgres</productname> time zone lookup table.
-    There are two naming conflicts with common time zones defined
+    There are two naming conflicts with time zones commonly used
     in the United States, <literal>CST</literal> and <literal>EST</literal>.
    </para>
 
    <para>
-    If the compiler option USE_AUSTRALIAN_RULES is set 
+    If the runtime option <literal>AUSTRALIAN_TIMEZONES</literal> is set 
     then <literal>CST</literal>, <literal>EST</literal>, and
     <literal>SAT</literal> will be
-    interpreted using Australian conventions. Without this option,
-    <literal>SAT</literal> is interpreted as a noise word indicating
-    "<literal>Saturday</literal>".
+    interpreted as Australian timezone names.  Without this option,
+    <literal>CST</literal> and <literal>EST</literal> are taken as
+    American timezone names, while <literal>SAT</literal> is interpreted as a
+    noise word indicating "<literal>Saturday</literal>".
 
     <table tocentry="1">
      <title><productname>Postgres</productname> Australian Time Zones</title>
@@ -452,7 +453,7 @@ Date/time details
        <row>
 	<entry>SAT</entry>
 	<entry>+9:30</entry>
-	<entry>South Australian Std Time</entry>
+	<entry>South Australian Standard Time</entry>
        </row>
       </tbody>
      </tgroup>
