@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.56 1998/01/14 15:48:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.57 1998/01/17 23:17:46 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -400,7 +400,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions, cons
 			conn->pgpass = strdup(tmp);
 		}
 		else
-			conn->pgpass = 0;
+			conn->pgpass = DefaultPassword;
 
 		if (!error)
 		{
