@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.8 1997/12/19 22:46:15 scrappy Exp $
+ * $Id: sparc_solaris.h,v 1.1 1997/12/20 03:35:55 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
