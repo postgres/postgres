@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.23 1998/09/01 04:27:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.24 1998/10/06 02:39:58 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -901,6 +901,9 @@ CommitTransaction()
 	/* handle commit for large objects [ PA, 7/17/98 ] */
 	_lo_commit();
 
+	/* NOTIFY commit must also come before lower-level cleanup */
+	AtCommit_Notify();
+
 	CloseSequences();
 	DestroyTempRels();
 	AtEOXact_portals();
@@ -916,10 +919,6 @@ CommitTransaction()
 	 * ----------------
 	 */
 	s->state = TRANS_DEFAULT;
-	{							/* want this after commit */
-		if (IsNormalProcessingMode())
-			Async_NotifyAtCommit();
-	}
 
 	/*
 	 * Let others to know about no transaction in progress - vadim
@@ -967,6 +966,7 @@ AbortTransaction()
 	 *	do abort processing
 	 * ----------------
 	 */
+	AtAbort_Notify();
 	CloseSequences();
 	AtEOXact_portals();
 	RecordTransactionAbort();
@@ -982,17 +982,6 @@ AbortTransaction()
 	 * ----------------
 	 */
 	s->state = TRANS_DEFAULT;
-	{
-
-		/*
-		 * We need to do this in case another process notified us while we
-		 * are in the middle of an aborted transaction.  We need to notify
-		 * our frontend after we finish the current transaction. -- jw,
-		 * 1/3/94
-		 */
-		if (IsNormalProcessingMode())
-			Async_NotifyAtAbort();
-	}
 }
 
 /* --------------------------------
@@ -1453,6 +1442,30 @@ UserAbortTransactionBlock()
 	elog(NOTICE, "UserAbortTransactionBlock and not in in-progress state");
 	AbortTransaction();
 	s->blockState = TBLOCK_ENDABORT;
+}
+
+/* --------------------------------
+ *		AbortOutOfAnyTransaction
+ *
+ * This routine is provided for error recovery purposes.  It aborts any
+ * active transaction or transaction block, leaving the system in a known
+ * idle state.
+ * --------------------------------
+ */
+void
+AbortOutOfAnyTransaction()
+{
+	TransactionState s = CurrentTransactionState;
+
+	/*
+	 * Get out of any low-level transaction
+	 */
+	if (s->state != TRANS_DEFAULT)
+		AbortTransaction();
+	/*
+	 * Now reset the high-level state
+	 */
+	s->blockState = TBLOCK_DEFAULT;
 }
 
 bool

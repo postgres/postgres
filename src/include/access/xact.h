@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.15 1998/09/01 04:34:35 momjian Exp $
+ * $Id: xact.h,v 1.16 1998/10/06 02:40:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,6 +107,7 @@ extern void BeginTransactionBlock(void);
 extern void EndTransactionBlock(void);
 extern bool IsTransactionBlock(void);
 extern void UserAbortTransactionBlock(void);
+extern void AbortOutOfAnyTransaction(void);
 
 extern TransactionId DisabledTransactionId;
 

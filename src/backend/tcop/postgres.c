@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.90 1998/10/02 01:14:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.91 1998/10/06 02:40:01 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1511,7 +1511,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.90 $ $Date: 1998/10/02 01:14:14 $\n");
+		puts("$Revision: 1.91 $ $Date: 1998/10/06 02:40:01 $\n");
 	}
 
 	/* ----------------
@@ -1559,7 +1559,16 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		ReadyForQuery(whereToSendOutput);
 
 		/* ----------------
-		 *	 (2) read a command.
+		 *	 (2) deal with pending asynchronous NOTIFY from other backends,
+		 *   and enable async.c's signal handler to execute NOTIFY directly.
+		 * ----------------
+		 */
+		QueryCancel = false;	/* forget any earlier CANCEL signal */
+
+		EnableNotifyInterrupt();
+
+		/* ----------------
+		 *	 (3) read a command.
 		 * ----------------
 		 */
 		MemSet(parser_input, 0, MAX_PARSE_BUFFER);
@@ -1569,7 +1578,13 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		QueryCancel = false;	/* forget any earlier CANCEL signal */
 
 		/* ----------------
-		 *	 (3) process the command.
+		 *	 (4) disable async.c's signal handler.
+		 * ----------------
+		 */
+		DisableNotifyInterrupt();
+
+		/* ----------------
+		 *	 (5) process the command.
 		 * ----------------
 		 */
 		switch (firstchar)
@@ -1640,7 +1655,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		}
 
 		/* ----------------
-		 *	 (4) commit the current transaction
+		 *	 (6) commit the current transaction
 		 *
 		 *	 Note: if we had an empty input buffer, then we didn't
 		 *	 call pg_exec_query, so we don't bother to commit this transaction.

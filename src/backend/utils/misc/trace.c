@@ -70,10 +70,6 @@ static char *opt_names[] = {
 	"syslog",					/* use syslog for error messages */
 	"hostlookup",				/* enable hostname lookup in ps_status */
 	"showportnumber",			/* show port number in ps_status */
-	"notifyunlock",				/* enable unlock of pg_listener after
-								 * notify */
-	"notifyhack"				/* enable notify hack to remove duplicate
-								 * tuples */
 };
 
 /*

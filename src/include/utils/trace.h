@@ -66,10 +66,6 @@ enum pg_option_enum
 	OPT_SYSLOG,					/* use syslog for error messages */
 	OPT_HOSTLOOKUP,				/* enable hostname lookup in ps_status */
 	OPT_SHOWPORTNUMBER,			/* show port number in ps_status */
-	OPT_NOTIFYUNLOCK,			/* enable unlock of pg_listener after
-								 * notify */
-	OPT_NOTIFYHACK,				/* enable notify hack to remove duplicate
-								 * tuples */
 
 	NUM_PG_OPTIONS				/* must be the last item of enum */
 };
