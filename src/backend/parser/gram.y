@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.250 2001/09/06 04:57:28 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.251 2001/09/18 01:59:06 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3168,6 +3168,7 @@ opt_name_list:  '(' name_list ')'				{ $$ = $2; }
  *
  *		QUERY:
  *				EXPLAIN query
+ *				EXPLAIN ANALYZE query
  *
  *****************************************************************************/
 
@@ -3175,7 +3176,16 @@ ExplainStmt:  EXPLAIN opt_verbose OptimizableStmt
 				{
 					ExplainStmt *n = makeNode(ExplainStmt);
 					n->verbose = $2;
+					n->analyze = FALSE;
 					n->query = (Query*)$3;
+					$$ = (Node *)n;
+				}
+			| EXPLAIN analyze_keyword opt_verbose OptimizableStmt
+				{
+					ExplainStmt *n = makeNode(ExplainStmt);
+					n->verbose = $3;
+					n->analyze = TRUE;
+					n->query = (Query*)$4;
 					$$ = (Node *)n;
 				}
 		;

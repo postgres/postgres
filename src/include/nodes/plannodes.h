@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.49 2001/03/22 04:00:52 momjian Exp $
+ * $Id: plannodes.h,v 1.50 2001/09/18 01:59:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,9 +81,21 @@ typedef struct Plan
 	double		plan_rows;		/* number of rows plan is expected to emit */
 	int			plan_width;		/* average row width in bytes */
 
+	/*
+	 * execution state data.  Having Plan point to this, rather than the
+	 * other way round, is 100% bogus.
+	 */
 	EState	   *state;			/* at execution time, state's of
 								 * individual nodes point to one EState
 								 * for the whole top-level plan */
+
+	struct Instrumentation *instrument;  /* Optional runtime stats for this
+										  * plan node */
+
+	/*
+	 * Common structural data for all Plan types.  XXX chgParam is runtime
+	 * data and should be in the EState, not here.
+	 */
 	List	   *targetlist;
 	List	   *qual;			/* implicitly-ANDed qual conditions */
 	struct Plan *lefttree;

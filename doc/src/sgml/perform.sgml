@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.9 2001/09/13 15:55:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.10 2001/09/18 01:59:05 tgl Exp $
 -->
 
  <chapter id="performance-tips">
@@ -122,7 +122,7 @@ select * from pg_class where relname = 'tenk1';
 regression=# explain select * from tenk1 where unique1 &lt; 1000;
 NOTICE:  QUERY PLAN:
 
-Seq Scan on tenk1  (cost=0.00..358.00 rows=1003 width=148)
+Seq Scan on tenk1  (cost=0.00..358.00 rows=1007 width=148)
     </programlisting>
 
     The estimate of output rows has gone down because of the WHERE clause.
@@ -147,7 +147,7 @@ Seq Scan on tenk1  (cost=0.00..358.00 rows=1003 width=148)
 regression=# explain select * from tenk1 where unique1 &lt; 50;
 NOTICE:  QUERY PLAN:
 
-Index Scan using tenk1_unique1 on tenk1  (cost=0.00..173.32 rows=47 width=148)
+Index Scan using tenk1_unique1 on tenk1  (cost=0.00..181.09 rows=49 width=148)
     </programlisting>
 
     and you will see that if we make the WHERE condition selective
@@ -166,7 +166,7 @@ regression=# explain select * from tenk1 where unique1 &lt; 50 and
 regression-# stringu1 = 'xxx';
 NOTICE:  QUERY PLAN:
 
-Index Scan using tenk1_unique1 on tenk1  (cost=0.00..173.44 rows=1 width=148)
+Index Scan using tenk1_unique1 on tenk1  (cost=0.00..181.22 rows=1 width=148)
     </programlisting>
 
     The added clause <literal>stringu1 = 'xxx'</literal> reduces the output-rows estimate,
@@ -181,11 +181,11 @@ regression=# explain select * from tenk1 t1, tenk2 t2 where t1.unique1 &lt; 50
 regression-# and t1.unique2 = t2.unique2;
 NOTICE:  QUERY PLAN:
 
-Nested Loop  (cost=0.00..269.11 rows=47 width=296)
+Nested Loop  (cost=0.00..330.41 rows=49 width=296)
   -&gt;  Index Scan using tenk1_unique1 on tenk1 t1
-               (cost=0.00..173.32 rows=47 width=148)
+               (cost=0.00..181.09 rows=49 width=148)
   -&gt;  Index Scan using tenk2_unique2 on tenk2 t2
-               (cost=0.00..2.01 rows=1 width=148)
+               (cost=0.00..3.01 rows=1 width=148)
     </programlisting>
    </para>
 
@@ -202,7 +202,7 @@ Nested Loop  (cost=0.00..269.11 rows=47 width=296)
      same inner-scan plan and costs that we'd get from, say, <literal>explain select
      * from tenk2 where unique2 = 42</literal>.  The costs of the loop node are then set
      on the basis of the cost of the outer scan, plus one repetition of the
-     inner scan for each outer tuple (47 * 2.01, here), plus a little CPU
+     inner scan for each outer tuple (49 * 3.01, here), plus a little CPU
      time for join processing.
    </para>
 
@@ -229,12 +229,12 @@ regression=# explain select * from tenk1 t1, tenk2 t2 where t1.unique1 &lt; 50
 regression-# and t1.unique2 = t2.unique2;
 NOTICE:  QUERY PLAN:
 
-Hash Join  (cost=173.44..557.03 rows=47 width=296)
+Hash Join  (cost=181.22..564.83 rows=49 width=296)
   -&gt;  Seq Scan on tenk2 t2
                (cost=0.00..333.00 rows=10000 width=148)
-  -&gt;  Hash  (cost=173.32..173.32 rows=47 width=148)
+  -&gt;  Hash  (cost=181.09..181.09 rows=49 width=148)
         -&gt;  Index Scan using tenk1_unique1 on tenk1 t1
-               (cost=0.00..173.32 rows=47 width=148)
+               (cost=0.00..181.09 rows=49 width=148)
     </programlisting>
 
     This plan proposes to extract the 50 interesting rows of <classname>tenk1</classname>
@@ -245,8 +245,59 @@ Hash Join  (cost=173.44..557.03 rows=47 width=296)
     cost for the hash join, since we won't get any tuples out until we can
     start reading <classname>tenk2</classname>.  The total time estimate for the join also
     includes a hefty charge for CPU time to probe the hash table
-    10000 times.  Note, however, that we are NOT charging 10000 times 173.32;
+    10000 times.  Note, however, that we are NOT charging 10000 times 181.09;
     the hash table setup is only done once in this plan type.
+   </para>
+
+   <para>
+    It is possible to check on the accuracy of the planner's estimated costs
+    by using EXPLAIN ANALYZE.  This command actually executes the query,
+    and then displays the true runtime accumulated within each plan node
+    along with the same estimated costs that a plain EXPLAIN shows.
+    For example, we might get a result like this:
+
+    <programlisting>
+regression=# explain analyze select * from tenk1 t1, tenk2 t2 where t1.unique1 &lt; 50
+regression-# and t1.unique2 = t2.unique2;
+NOTICE:  QUERY PLAN:
+
+Nested Loop  (cost=0.00..330.41 rows=49 width=296) (actual time=1.31..28.90 rows=50 loops=1)
+  -&gt;  Index Scan using tenk1_unique1 on tenk1 t1
+               (cost=0.00..181.09 rows=49 width=148) (actual time=0.69..8.84 rows=50 loops=1)
+  -&gt;  Index Scan using tenk2_unique2 on tenk2 t2
+               (cost=0.00..3.01 rows=1 width=148) (actual time=0.28..0.31 rows=1 loops=50)
+Total runtime: 30.67 msec
+    </programlisting>
+
+    Note that the <quote>actual time</quote> values are in milliseconds of
+    real time, whereas the <quote>cost</quote> estimates are expressed in
+    arbitrary units of disk fetches; so they are unlikely to match up.
+    The thing to pay attention to is the ratios.
+   </para>
+
+   <para>
+    In some query plans, it is possible for a subplan node to be executed more
+    than once.  For example, the inner indexscan is executed once per outer
+    tuple in the above nested-loop plan.  In such cases, the
+    <quote>loops</quote> value reports the
+    total number of executions of the node, and the actual time and rows
+    values shown are averages per-execution.  This is done to make the numbers
+    comparable with the way that the cost estimates are shown.  Multiply by
+    the <quote>loops</quote> value to get the total time actually spent in
+    the node.
+   </para>
+
+   <para>
+    The <quote>total runtime</quote> shown by EXPLAIN ANALYZE includes
+    executor startup and shutdown time, as well as time spent processing
+    the result tuples.  It does not include parsing, rewriting, or planning
+    time.  For a SELECT query, the total runtime will normally be just a
+    little larger than the total time reported for the top-level plan node.
+    For INSERT, UPDATE, and DELETE queries, the total runtime may be
+    considerably larger, because it includes the time spent processing the
+    output tuples.  In these queries, the time for the top plan node
+    essentially is the time spent computing the new tuples and/or locating
+    the old ones, but it doesn't include the time spent making the changes.
    </para>
 
    <para>

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.143 2001/08/26 16:56:02 tgl Exp $
+ * $Id: parsenodes.h,v 1.144 2001/09/18 01:59:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -709,6 +709,7 @@ typedef struct ExplainStmt
 	NodeTag		type;
 	Query	   *query;			/* the query */
 	bool		verbose;		/* print plan info */
+	bool		analyze;		/* get statistics by executing plan */
 } ExplainStmt;
 
 /* ----------------------

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.155 2001/08/26 16:55:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.156 2001/09/18 01:59:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2262,6 +2262,7 @@ _copyExplainStmt(ExplainStmt *from)
 
 	Node_Copy(from, newnode, query);
 	newnode->verbose = from->verbose;
+	newnode->analyze = from->analyze;
 
 	return newnode;
 }

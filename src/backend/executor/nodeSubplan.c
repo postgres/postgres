@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.30 2001/03/22 03:59:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.31 2001/09/18 01:59:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,7 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 	}
 	Assert(pvar == NIL);
 
-	ExecReScan(plan, (ExprContext *) NULL, plan);
+	ExecReScan(plan, NULL, NULL);
 
 	/*
 	 * For all sublink types except EXPR_SUBLINK, the result is boolean as
@@ -96,9 +96,9 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 	result = BoolGetDatum(subLinkType == ALL_SUBLINK);
 	*isNull = false;
 
-	for (slot = ExecProcNode(plan, plan);
+	for (slot = ExecProcNode(plan, NULL);
 		 !TupIsNull(slot);
-		 slot = ExecProcNode(plan, plan))
+		 slot = ExecProcNode(plan, NULL))
 	{
 		HeapTuple	tup = slot->val;
 		TupleDesc	tdesc = slot->ttc_tupleDescriptor;
@@ -295,7 +295,7 @@ ExecInitSubPlan(SubPlan *node, EState *estate, Plan *parent)
 	node->needShutdown = false;
 	node->curTuple = NULL;
 
-	if (!ExecInitNode(node->plan, sp_estate, NULL))
+	if (!ExecInitNode(node->plan, sp_estate, parent))
 		return false;
 
 	node->needShutdown = true;	/* now we need to shutdown the subplan */
@@ -359,11 +359,11 @@ ExecSetParamPlan(SubPlan *node, ExprContext *econtext)
 		elog(ERROR, "ExecSetParamPlan: ANY/ALL subselect unsupported");
 
 	if (plan->chgParam != NULL)
-		ExecReScan(plan, (ExprContext *) NULL, plan);
+		ExecReScan(plan, NULL, NULL);
 
-	for (slot = ExecProcNode(plan, plan);
+	for (slot = ExecProcNode(plan, NULL);
 		 !TupIsNull(slot);
-		 slot = ExecProcNode(plan, plan))
+		 slot = ExecProcNode(plan, NULL))
 	{
 		HeapTuple	tup = slot->val;
 		TupleDesc	tdesc = slot->ttc_tupleDescriptor;
@@ -433,7 +433,7 @@ ExecSetParamPlan(SubPlan *node, ExprContext *econtext)
 
 	if (plan->extParam == NULL) /* un-correlated ... */
 	{
-		ExecEndNode(plan, plan);
+		ExecEndNode(plan, NULL);
 		node->needShutdown = false;
 	}
 
@@ -449,7 +449,7 @@ ExecEndSubPlan(SubPlan *node)
 {
 	if (node->needShutdown)
 	{
-		ExecEndNode(node->plan, node->plan);
+		ExecEndNode(node->plan, NULL);
 		node->needShutdown = false;
 	}
 	if (node->curTuple)
@@ -474,7 +474,7 @@ ExecReScanSetParamPlan(SubPlan *node, Plan *parent)
 
 	/*
 	 * Don't actual re-scan: ExecSetParamPlan does re-scan if
-	 * node->plan->chgParam is not NULL... ExecReScan (plan, NULL, plan);
+	 * node->plan->chgParam is not NULL... ExecReScan (plan, NULL, NULL);
 	 */
 
 	/*

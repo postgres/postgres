@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.58 2001/03/22 06:16:12 momjian Exp $
+ *	$Id: execAmi.c,v 1.59 2001/09/18 01:59:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "access/heapam.h"
 #include "catalog/heap.h"
 #include "executor/execdebug.h"
+#include "executor/instrument.h"
 #include "executor/nodeAgg.h"
 #include "executor/nodeAppend.h"
 #include "executor/nodeGroup.h"
@@ -260,6 +261,8 @@ ExecCloseR(Plan *node)
 void
 ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent)
 {
+	if (node->instrument)
+		InstrEndLoop(node->instrument);
 
 	if (node->chgParam != NULL) /* Wow! */
 	{

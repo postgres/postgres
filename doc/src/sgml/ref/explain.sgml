@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.12 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.13 2001/09/18 01:59:05 tgl Exp $
 Postgres documentation
 -->
 
@@ -24,7 +24,7 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-EXPLAIN [ VERBOSE ] <replaceable class="PARAMETER">query</replaceable>        
+EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="PARAMETER">query</replaceable>        
   </synopsis>
 
   <refsect2 id="R2-SQL-EXPLAIN-1">
@@ -37,6 +37,14 @@ EXPLAIN [ VERBOSE ] <replaceable class="PARAMETER">query</replaceable>
    <para>
 
     <variablelist>
+     <varlistentry>
+      <term>ANALYZE</term>
+      <listitem>
+       <para>
+	Flag to carry out the query and show actual runtimes.
+       </para>
+      </listitem>
+     </varlistentry>
      <varlistentry>
       <term>VERBOSE</term>
       <listitem>
@@ -125,10 +133,35 @@ EXPLAIN
   </para>
 
   <para>
+   The ANALYZE option causes the query to be actually executed, not only
+   planned.  The total elapsed time expended within each plan node (in
+   milliseconds) and total number of rows it actually returned are added to
+   the display.  This is useful for seeing whether the planner's estimates
+   are close to reality.
+  </para>
+
+  <para>
    The VERBOSE option emits the full internal representation of the plan tree,
    rather than just a summary (and sends it to the postmaster log file, too).
    Usually this option is only useful for debugging Postgres.
   </para>
+
+  <caution>
+   <para>
+    Keep in mind that the query is actually executed when ANALYZE is used.
+    Although <command>EXPLAIN</command> will discard any output that a SELECT
+    would return,
+    other side-effects of the query will happen as usual.
+    If you wish to use <command>EXPLAIN ANALYZE</command> on an INSERT,
+    UPDATE, or DELETE query without letting the query affect your data,
+    use this approach:
+      <programlisting>
+BEGIN;
+EXPLAIN ANALYZE ...;
+ROLLBACK;
+      </programlisting>
+   </para>
+  </caution>
 
   <refsect2 id="R2-SQL-EXPLAIN-3">
    <refsect2info>
@@ -140,11 +173,8 @@ EXPLAIN
    <para>
     There is only sparse documentation on the optimizer's use of cost
     information in <productname>Postgres</productname>.
-    General information on cost estimation for query optimization
-    can be found in database textbooks.
-    Refer to the <citetitle>Programmer's Guide</citetitle>
-    in the chapters on indexes and the genetic query optimizer for
-    more information.
+    Refer to the <citetitle>User's Guide</citetitle> and
+    <citetitle>Programmer's Guide</citetitle> for more information.
    </para>
   </refsect2>
  </refsect1>

@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.147 2001/09/17 00:29:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.148 2001/09/18 01:59:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -868,7 +868,7 @@ EndPlan(Plan *plan, EState *estate)
 	/*
 	 * shut down the node-type-specific query processing
 	 */
-	ExecEndNode(plan, plan);
+	ExecEndNode(plan, NULL);
 
 	/*
 	 * destroy the executor "tuple" table.
@@ -973,16 +973,15 @@ ExecutePlan(EState *estate,
 		/*
 		 * Execute the plan and obtain a tuple
 		 */
-		/* at the top level, the parent of a plan (2nd arg) is itself */
 lnext:	;
 		if (estate->es_useEvalPlan)
 		{
 			slot = EvalPlanQualNext(estate);
 			if (TupIsNull(slot))
-				slot = ExecProcNode(plan, plan);
+				slot = ExecProcNode(plan, NULL);
 		}
 		else
-			slot = ExecProcNode(plan, plan);
+			slot = ExecProcNode(plan, NULL);
 
 		/*
 		 * if the tuple is null, then we assume there is nothing more to
@@ -1758,7 +1757,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 			oldepq = (evalPlanQual *) epqstate->es_evalPlanQual;
 			Assert(oldepq->rti != 0);
 			/* stop execution */
-			ExecEndNode(epq->plan, epq->plan);
+			ExecEndNode(epq->plan, NULL);
 			ExecDropTupleTable(epqstate->es_tupleTable, true);
 			epqstate->es_tupleTable = NULL;
 			heap_freetuple(epqstate->es_evTuple[epq->rti - 1]);
@@ -1853,7 +1852,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 	if (endNode)
 	{
 		/* stop execution */
-		ExecEndNode(epq->plan, epq->plan);
+		ExecEndNode(epq->plan, NULL);
 		ExecDropTupleTable(epqstate->es_tupleTable, true);
 		epqstate->es_tupleTable = NULL;
 	}
@@ -1897,7 +1896,7 @@ EvalPlanQualNext(EState *estate)
 	Assert(epq->rti != 0);
 
 lpqnext:;
-	slot = ExecProcNode(epq->plan, epq->plan);
+	slot = ExecProcNode(epq->plan, NULL);
 
 	/*
 	 * No more tuples for this PQ. Continue previous one.
@@ -1905,7 +1904,7 @@ lpqnext:;
 	if (TupIsNull(slot))
 	{
 		/* stop execution */
-		ExecEndNode(epq->plan, epq->plan);
+		ExecEndNode(epq->plan, NULL);
 		ExecDropTupleTable(epqstate->es_tupleTable, true);
 		epqstate->es_tupleTable = NULL;
 		heap_freetuple(epqstate->es_evTuple[epq->rti - 1]);
@@ -1946,7 +1945,7 @@ EndEvalPlanQual(EState *estate)
 	for (;;)
 	{
 		/* stop execution */
-		ExecEndNode(epq->plan, epq->plan);
+		ExecEndNode(epq->plan, NULL);
 		ExecDropTupleTable(epqstate->es_tupleTable, true);
 		epqstate->es_tupleTable = NULL;
 		if (epqstate->es_evTuple[epq->rti - 1] != NULL)

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.9 2001/05/27 20:42:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.10 2001/09/18 01:59:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@ SubqueryNext(SubqueryScan *node)
 	 */
 	subquerystate->sss_SubEState->es_direction = direction;
 
-	slot = ExecProcNode(node->subplan, node->subplan);
+	slot = ExecProcNode(node->subplan, (Plan *) node);
 
 	subquerystate->csstate.css_ScanTupleSlot = slot;
 
@@ -159,7 +159,7 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, Plan *parent)
 		ExecCreateTupleTable(ExecCountSlotsNode(node->subplan) + 10);
 	sp_estate->es_snapshot = estate->es_snapshot;
 
-	if (!ExecInitNode(node->subplan, sp_estate, NULL))
+	if (!ExecInitNode(node->subplan, sp_estate, (Plan *) node))
 		return false;
 
 	subquerystate->csstate.css_ScanTupleSlot = NULL;
@@ -214,7 +214,7 @@ ExecEndSubqueryScan(SubqueryScan *node)
 	/*
 	 * close down subquery
 	 */
-	ExecEndNode(node->subplan, node->subplan);
+	ExecEndNode(node->subplan, (Plan *) node);
 
 	/*
 	 * clean up subquery's tuple table
@@ -256,7 +256,7 @@ ExecSubqueryReScan(SubqueryScan *node, ExprContext *exprCtxt, Plan *parent)
 	 * first ExecProcNode.
 	 */
 	if (node->subplan->chgParam == NULL)
-		ExecReScan(node->subplan, NULL, node->subplan);
+		ExecReScan(node->subplan, NULL, (Plan *) node);
 
 	subquerystate->csstate.css_ScanTupleSlot = NULL;
 }

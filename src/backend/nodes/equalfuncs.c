@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.103 2001/08/26 16:55:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.104 2001/09/18 01:59:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1134,6 +1134,8 @@ _equalExplainStmt(ExplainStmt *a, ExplainStmt *b)
 	if (!equal(a->query, b->query))
 		return false;
 	if (a->verbose != b->verbose)
+		return false;
+	if (a->analyze != b->analyze)
 		return false;
 
 	return true;

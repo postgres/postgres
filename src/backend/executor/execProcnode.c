@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.26 2001/03/22 06:16:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.27 2001/09/18 01:59:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,6 +78,7 @@
 #include "postgres.h"
 
 #include "executor/executor.h"
+#include "executor/instrument.h"
 #include "executor/nodeAgg.h"
 #include "executor/nodeAppend.h"
 #include "executor/nodeGroup.h"
@@ -123,6 +124,10 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 	if (node == NULL)
 		return FALSE;
 
+	/* Set up instrumentation for this node if the parent has it */
+	if (!node->instrument && parent && parent->instrument)
+		node->instrument = InstrAlloc();
+
 	foreach(subp, node->initPlan)
 	{
 		result = ExecInitSubPlan((SubPlan *) lfirst(subp), estate, node);
@@ -132,7 +137,6 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 
 	switch (nodeTag(node))
 	{
-
 			/*
 			 * control nodes
 			 */
@@ -218,6 +222,7 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 			elog(ERROR, "ExecInitNode: node type %d unsupported",
 				 (int) nodeTag(node));
 			result = FALSE;
+			break;
 	}
 
 	if (result != FALSE)
@@ -257,12 +262,14 @@ ExecProcNode(Plan *node, Plan *parent)
 	if (node->chgParam != NULL) /* something changed */
 		ExecReScan(node, NULL, parent); /* let ReScan handle this */
 
+	if (node->instrument)
+		InstrStartNode(node->instrument);
+
 	switch (nodeTag(node))
 	{
-
-			/*
-			 * control nodes
-			 */
+		/*
+		 * control nodes
+		 */
 		case T_Result:
 			result = ExecResult((Result *) node);
 			break;
@@ -344,7 +351,11 @@ ExecProcNode(Plan *node, Plan *parent)
 			elog(ERROR, "ExecProcNode: node type %d unsupported",
 				 (int) nodeTag(node));
 			result = NULL;
+			break;
 	}
+
+	if (node->instrument)
+		InstrStopNode(node->instrument, !TupIsNull(result));
 
 	return result;
 }
@@ -357,7 +368,6 @@ ExecCountSlotsNode(Plan *node)
 
 	switch (nodeTag(node))
 	{
-
 			/*
 			 * control nodes
 			 */
@@ -463,10 +473,9 @@ ExecEndNode(Plan *node, Plan *parent)
 
 	switch (nodeTag(node))
 	{
-
-			/*
-			 * control nodes
-			 */
+		/*
+		 * control nodes
+		 */
 		case T_Result:
 			ExecEndResult((Result *) node);
 			break;
@@ -549,6 +558,9 @@ ExecEndNode(Plan *node, Plan *parent)
 				 (int) nodeTag(node));
 			break;
 	}
+
+	if (node->instrument)
+		InstrEndLoop(node->instrument);
 }
 
 

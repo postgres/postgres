@@ -5,18 +5,20 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.65 2001/03/22 03:59:22 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.66 2001/09/18 01:59:06 tgl Exp $
  *
  */
 
 #include "postgres.h"
 
 #include "commands/explain.h"
+#include "executor/instrument.h"
 #include "lib/stringinfo.h"
 #include "nodes/print.h"
 #include "optimizer/planner.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteHandler.h"
+#include "tcop/pquery.h"
 #include "utils/relcache.h"
 
 typedef struct ExplainState
@@ -28,8 +30,8 @@ typedef struct ExplainState
 	List	   *rtable;			/* range table */
 } ExplainState;
 
-static char *Explain_PlanToString(Plan *plan, ExplainState *es);
-static void ExplainOneQuery(Query *query, bool verbose, CommandDest dest);
+static StringInfo Explain_PlanToString(Plan *plan, ExplainState *es);
+static void ExplainOneQuery(Query *query, bool verbose, bool analyze, CommandDest dest);
 
 /* Convert a null string pointer into "<>" */
 #define stringStringInfo(s) (((s) == NULL) ? "<>" : (s))
@@ -41,7 +43,7 @@ static void ExplainOneQuery(Query *query, bool verbose, CommandDest dest);
  *
  */
 void
-ExplainQuery(Query *query, bool verbose, CommandDest dest)
+ExplainQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
 {
 	List	   *rewritten;
 	List	   *l;
@@ -73,7 +75,7 @@ ExplainQuery(Query *query, bool verbose, CommandDest dest)
 
 	/* Explain every plan */
 	foreach(l, rewritten)
-		ExplainOneQuery(lfirst(l), verbose, dest);
+		ExplainOneQuery(lfirst(l), verbose, analyze, dest);
 }
 
 /*
@@ -82,11 +84,11 @@ ExplainQuery(Query *query, bool verbose, CommandDest dest)
  *
  */
 static void
-ExplainOneQuery(Query *query, bool verbose, CommandDest dest)
+ExplainOneQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
 {
-	char	   *s;
 	Plan	   *plan;
 	ExplainState *es;
+	double		totaltime = 0;
 
 	/* planner will not cope with utility statements */
 	if (query->commandType == CMD_UTILITY)
@@ -105,6 +107,34 @@ ExplainOneQuery(Query *query, bool verbose, CommandDest dest)
 	if (plan == NULL)
 		return;
 
+	/* Execute the plan for statistics if asked for */
+	if (analyze)
+	{
+		struct timeval starttime;
+		struct timeval endtime;
+
+		/*
+		 * Set up the instrumentation for the top node.
+		 * This will cascade during plan initialisation
+		 */
+		plan->instrument = InstrAlloc();
+
+		gettimeofday(&starttime, NULL);
+		ProcessQuery(query, plan, None);
+		CommandCounterIncrement();
+		gettimeofday(&endtime, NULL);
+
+		endtime.tv_sec  -= starttime.tv_sec;
+		endtime.tv_usec -= starttime.tv_usec;
+		while (endtime.tv_usec < 0)
+		{
+			endtime.tv_usec += 1000000;
+			endtime.tv_sec--;
+		}
+		totaltime = (double) endtime.tv_sec +
+			(double) endtime.tv_usec / 1000000.0;
+	}
+
 	es = (ExplainState *) palloc(sizeof(ExplainState));
 	MemSet(es, 0, sizeof(ExplainState));
 
@@ -117,6 +147,8 @@ ExplainOneQuery(Query *query, bool verbose, CommandDest dest)
 
 	if (es->printNodes)
 	{
+		char	   *s;
+
 		s = nodeToString(plan);
 		if (s)
 		{
@@ -127,12 +159,15 @@ ExplainOneQuery(Query *query, bool verbose, CommandDest dest)
 
 	if (es->printCost)
 	{
-		s = Explain_PlanToString(plan, es);
-		if (s)
-		{
-			elog(NOTICE, "QUERY PLAN:\n\n%s", s);
-			pfree(s);
-		}
+		StringInfo	str;
+
+		str = Explain_PlanToString(plan, es);
+		if (analyze)
+			appendStringInfo(str, "Total runtime: %.2f msec\n",
+							 1000.0 * totaltime);
+		elog(NOTICE, "QUERY PLAN:\n\n%s", str->data);
+		pfree(str->data);
+		pfree(str);
 	}
 
 	if (es->printNodes)
@@ -292,6 +327,17 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 		appendStringInfo(str, "  (cost=%.2f..%.2f rows=%.0f width=%d)",
 						 plan->startup_cost, plan->total_cost,
 						 plan->plan_rows, plan->plan_width);
+
+		if ( plan->instrument && plan->instrument->nloops > 0 )
+		{
+			double nloops = plan->instrument->nloops;
+
+			appendStringInfo(str, " (actual time=%.2f..%.2f rows=%.0f loops=%.0f)",
+							 1000.0 * plan->instrument->startup / nloops,
+							 1000.0 * plan->instrument->total / nloops,
+							 plan->instrument->ntuples / nloops,
+							 plan->instrument->nloops);
+		}
 	}
 	appendStringInfo(str, "\n");
 
@@ -393,14 +439,12 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 	}
 }
 
-static char *
+static StringInfo
 Explain_PlanToString(Plan *plan, ExplainState *es)
 {
-	StringInfoData str;
+	StringInfo str = makeStringInfo();
 
-	/* see stringinfo.h for an explanation of this maneuver */
-	initStringInfo(&str);
 	if (plan != NULL)
-		explain_outNode(&str, plan, 0, es);
-	return str.data;
+		explain_outNode(str, plan, 0, es);
+	return str;
 }
