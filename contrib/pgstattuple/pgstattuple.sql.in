@@ -1,0 +1,4 @@
+DROP FUNCTION pgstattuple(NAME);
+CREATE FUNCTION pgstattuple(NAME) RETURNS FLOAT8
+AS 'MODULE_PATHNAME', 'pgstattuple'
+LANGUAGE 'c' WITH (isstrict);

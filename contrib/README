@@ -137,6 +137,10 @@ pgcrypto -
 	Cryptographic functions
 	by Marko Kreen <marko@l-t.ee>
 
+pgstattuple -
+	A function returns the percentage of "dead" tuples in a table
+	by Tatsuo Ishii <t-ishii@sra.co.jp>
+
 retep -
 	tools to build retep tools packages
 	by Peter T Mount <peter@retep.org.uk>

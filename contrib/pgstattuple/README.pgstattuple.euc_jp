@@ -1,0 +1,70 @@
+$Id: README.pgstattuple.euc_jp,v 1.1 2001/10/01 01:52:38 ishii Exp $
+
+pgstattuple README		2001/10/01 石井達夫
+
+1. pgstattupleとは
+
+   pgstattupleは，UPDATEやDELETEで作られたテーブルのゴミ領域の大きさを，
+   テーブル自体の物理的な大きさに対するパーセンテージで返却します．つ
+   まり，返却値が大きければ，それだけゴミも多いので，vacuumをかける必
+   要があるという判断の助けになるわけです．
+
+   これだけでは情報量が少ないので，NOTICEメッセージでいろんな情報をつ
+   いでに出力します．
+
+test=# select pgstattuple('tellers');
+NOTICE:  physical length: 0.08MB live tuples: 20 (0.00MB, 1.17%) dead tuples: 320 (0.01MB, 18.75%) free/reusable space: 0.01MB (18.06%) overhead: 62.02%
+ pgstattuple 
+-------------
+       18.75
+(1 row)
+
+   この実行例では，19%ほどがゴミになっていることが伺えます．NOTICEメッ
+   セージの見方も書いておきます．
+
+   physical length	テーブルの物理的なサイズをMB単位で表示
+   live tuples		ゴミではないタプルに関する情報．タプル数，各
+			タプルが占める領域の合計，テーブル全体に対する
+			比率を表示します．
+   dead tuples		ゴミになったタプルに関する情報．
+   free/reusable space	利用可能な未使用領域や再利用可能領域
+   overhead		管理のための領域がテーブル全体に占める比率
+
+2. pgstattupleのインストール
+
+   PostgreSQLが/usr/local/pgsqlにインストール済であり，testデータベー
+   スにpgstattupleをインストールする場合の手順を示します．
+
+    $ make
+    $ make install
+
+    ユーザ定義関数を登録します．
+
+    $ psql -e -f /usr/local/pgsql/share/contrib/pgstattuple.sql test
+
+
+3. pgstattupleの使い方
+
+   pgstattupleの呼び出し形式は以下です．
+
+   pgstattuple(NAME) RETURNS FLOAT8
+
+   第一引数: テーブル名
+
+   関数の戻りはUPDATEやDELETEで作られたテーブルのゴミ領域の大きさで，
+   テーブルの物理的な大きさに対する割合(パーセント)で返却します．
+
+   なお，pgstattupleはテーブルに一切ロックをかけないので，pgstattuple
+   を実行中に該当テーブルに更新や削除が発生すると，正しくない結果を返
+   す可能性があります．
+
+4. pgstattupleのライセンス条件について
+
+   pgstattuple.cの冒頭に書いてある通りです．また，pgstattuple は完全に無保
+   証です．pgstattuple を使用したことによって生じるいかなる結果に関して
+   も責任を負いません．
+
+5. 改訂履歴
+
+   2001/10/01 PostgreSQL 7.2 用contrib moduleに登録
+   2001/08/30 pgstattuple バージョン 0.1リリース

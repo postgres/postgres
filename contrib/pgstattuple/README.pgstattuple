@@ -1,0 +1,47 @@
+pgstattuple README			2001/10/01 Tatsuo Ishii
+
+1. What is pgstattuple?
+
+   pgstattuple returns the percentage of the "dead" tuples of a
+   table. This will help users to judge if vacuum is needed.
+
+   In addition, pgstattuple prints more detailed information using
+   NOTICE.
+
+test=# select pgstattuple('tellers');
+NOTICE:  physical length: 0.08MB live tuples: 20 (0.00MB, 1.17%) dead tuples: 320 (0.01MB, 18.75%) free/reusable space: 0.01MB (18.06%) overhead: 62.02%
+ pgstattuple 
+-------------
+       18.75
+(1 row)
+
+   Above example shows tellers tables includes 18.75% dead tuples.
+
+   physical length	physical size of the table in MB
+   live tuples		information on the live tuples
+   dead tuples		information on the dead tuples
+   free/reusable space	available space
+   overhead		overhead space
+
+2. Installing pgstattuple
+
+    $ make
+    $ make install
+    $ psql -e -f /usr/local/pgsql/share/contrib/pgstattuple.sql test
+
+3. Using pgstattuple
+
+   pgstattuple can be called as a function:
+
+   pgstattuple(NAME) RETURNS FLOAT8
+
+   The argument is the table name.  pgstattuple returns the percentage
+   of the "dead" tuples of a table.
+
+4. Notes
+
+   pgstattuple does not lock the target table at all. So concurrent
+   update may affect the result.
+
+   pgstattuple judges a tuple is "dead" if HeapTupleSatisfiesNow()
+   returns false.
