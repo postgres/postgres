@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.15 1999/07/16 04:58:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.16 1999/11/23 20:06:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,6 +81,7 @@
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
 #include "executor/nodeIndexscan.h"
+#include "executor/nodeTidscan.h"
 #include "executor/nodeMaterial.h"
 #include "executor/nodeMergejoin.h"
 #include "executor/nodeNestloop.h"
@@ -193,6 +194,10 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 
 		case T_HashJoin:
 			result = ExecInitHashJoin((HashJoin *) node, estate, parent);
+			break;
+
+		case T_TidScan:
+			result = ExecInitTidScan((TidScan *) node, estate, parent);
 			break;
 
 		default:
@@ -310,6 +315,10 @@ ExecProcNode(Plan *node, Plan *parent)
 			result = ExecHashJoin((HashJoin *) node);
 			break;
 
+		case T_TidScan:
+			result = ExecTidScan((TidScan *) node);
+			break;
+
 		default:
 			elog(ERROR, "ExecProcNode: node %d unsupported", nodeTag(node));
 			result = NULL;
@@ -380,6 +389,9 @@ ExecCountSlotsNode(Plan *node)
 
 		case T_HashJoin:
 			return ExecCountSlotsHashJoin((HashJoin *) node);
+
+		case T_TidScan:
+			return ExecCountSlotsTidScan((TidScan *) node);
 
 		default:
 			elog(ERROR, "ExecCountSlotsNode: node not yet supported: %d",
@@ -495,6 +507,10 @@ ExecEndNode(Plan *node, Plan *parent)
 
 		case T_HashJoin:
 			ExecEndHashJoin((HashJoin *) node);
+			break;
+
+		case T_TidScan:
+			ExecEndTidScan((TidScan *) node);
 			break;
 
 		default:

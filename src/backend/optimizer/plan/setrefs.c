@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.58 1999/10/30 23:07:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.59 1999/11/23 20:06:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,6 +124,9 @@ set_plan_references(Plan *plan)
 			{
 				set_plan_references((Plan *) lfirst(pl));
 			}
+			break;
+		case T_TidScan:
+			/* nothing special */
 			break;
 		default:
 			elog(ERROR, "set_plan_references: unknown plan type %d",

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.27 1999/11/15 03:28:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.28 1999/11/23 20:06:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,6 +179,29 @@ _freeIndexScan(IndexScan *node)
 	freeList(node->indxid);
 	freeObject(node->indxqual);
 	freeObject(node->indxqualorig);
+
+	pfree(node);
+}
+
+/* ----------------
+ *		_freeTidScan
+ * ----------------
+ */
+static void
+_freeTidScan(TidScan *node)
+{
+	/* ----------------
+	 *	free node superclass fields
+	 * ----------------
+	 */
+	FreePlanFields((Plan *) node);
+	FreeScanFields((Scan *) node);
+
+	/* ----------------
+	 *	free remainder of node
+	 * ----------------
+	 */
+	freeObject(node->tideval);
 
 	pfree(node);
 }
@@ -782,6 +805,29 @@ _freeIndexPath(IndexPath *node)
 }
 
 /* ----------------
+ *		_freeTidPath
+ * ----------------
+ */
+static void
+_freeTidPath(TidPath *node)
+{
+	/* ----------------
+	 *	free the node superclass fields
+	 * ----------------
+	 */
+	FreePathFields((Path *) node);
+
+	/* ----------------
+	 *	free remainder of node
+	 * ----------------
+	 */
+	freeObject(node->tideval);
+	freeList(node->unjoined_relids);
+
+	pfree(node);
+}
+
+/* ----------------
  *		FreeJoinPathFields
  *
  *		This function frees the fields of the JoinPath node.  It is used by
@@ -1079,6 +1125,9 @@ freeObject(void *node)
 		case T_IndexScan:
 			_freeIndexScan(node);
 			break;
+		case T_TidScan:
+			_freeTidScan(node);
+			break;
 		case T_Join:
 			_freeJoin(node);
 			break;
@@ -1176,6 +1225,9 @@ freeObject(void *node)
 			break;
 		case T_IndexPath:
 			_freeIndexPath(node);
+			break;
+		case T_TidPath:
+			_freeTidPath(node);
 			break;
 		case T_NestPath:
 			_freeNestPath(node);

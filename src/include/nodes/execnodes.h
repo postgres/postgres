@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.37 1999/10/17 22:15:07 tgl Exp $
+ * $Id: execnodes.h,v 1.38 1999/11/23 20:07:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -414,6 +414,37 @@ typedef struct IndexScanState
 	HeapTupleData iss_htup;
 } IndexScanState;
 
+/* ----------------
+ *	 TidScanState information
+ *
+ *|		tid scans don't use CommonScanState because
+ *|		the underlying AM abstractions for heap scans and
+ *|		tid scans are too different..  It would be nice
+ *|		if the current abstraction was more useful but ... -cim 10/15/89
+ *
+ *		TidPtr		   current tid in use
+ *		NumTids		   number of tids in this scan
+ *		tidList		   evaluated item pointers
+ *
+ *	 CommonState information
+ *
+ *		OuterTupleSlot	   pointer to slot containing current "outer" tuple
+ *		ResultTupleSlot    pointer to slot in tuple table for projected tuple
+ *		ExprContext		   node's current expression context
+ *		ProjInfo		   info this node uses to form tuple projections
+ *		NumScanAttributes  size of ScanAttributes array
+ *		ScanAttributes	   attribute numbers of interest in this tuple
+ * ----------------
+ */
+typedef struct TidScanState
+{
+	CommonState cstate;			/* its first field is NodeTag */
+	int			tss_NumTids;
+	int			tss_TidPtr;
+	int			tss_MarkTidPtr;
+	ItemPointer		*tss_TidList;
+	HeapTupleData		tss_htup;
+} TidScanState;
 
 /* ----------------------------------------------------------------
  *				 Join State Information

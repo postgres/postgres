@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.51 1999/11/15 03:28:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.52 1999/11/23 20:06:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -331,6 +331,18 @@ _equalIndexPath(IndexPath *a, IndexPath *b)
 }
 
 static bool
+_equalTidPath(TidPath *a, TidPath *b)
+{
+	if (!_equalPath((Path *) a, (Path *) b))
+		return false;
+	if (!equal(a->tideval, b->tideval))
+		return false;
+	if (!equali(a->unjoined_relids, b->unjoined_relids))
+		return false;
+	return true;
+}
+
+static bool
 _equalJoinPath(JoinPath *a, JoinPath *b)
 {
 	if (!_equalPath((Path *) a, (Path *) b))
@@ -400,6 +412,28 @@ _equalIndexScan(IndexScan *a, IndexScan *b)
 
 	if (!equali(a->indxid, b->indxid))
 		return false;
+	return true;
+}
+
+static bool
+_equalTidScan(TidScan *a, TidScan *b)
+{
+	Assert(IsA(a, TidScan));
+	Assert(IsA(b, TidScan));
+
+	/*
+	 * if(a->scan.plan.cost != b->scan.plan.cost) return(false);
+	 */
+
+	if (a->needRescan != b->needRescan)
+		return false;
+
+	if (!equal(a->tideval, b->tideval))
+		return false;
+
+	if (a->scan.scanrelid != b->scan.scanrelid)
+		return false;
+
 	return true;
 }
 
@@ -756,6 +790,9 @@ equal(void *a, void *b)
 		case T_IndexPath:
 			retval = _equalIndexPath(a, b);
 			break;
+		case T_TidPath:
+			retval = _equalTidPath(a, b);
+			break;
 		case T_NestPath:
 			retval = _equalNestPath(a, b);
 			break;
@@ -767,6 +804,9 @@ equal(void *a, void *b)
 			break;
 		case T_IndexScan:
 			retval = _equalIndexScan(a, b);
+			break;
+		case T_TidScan:
+			retval = _equalTidScan(a, b);
 			break;
 		case T_SubPlan:
 			retval = _equalSubPlan(a, b);

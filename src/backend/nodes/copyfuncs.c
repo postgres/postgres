@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.96 1999/11/15 03:28:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.97 1999/11/23 20:06:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,6 +253,32 @@ _copyIndexScan(IndexScan *from)
 	return newnode;
 }
 
+/* ----------------
+ *              _copyTidScan
+ * ----------------
+ */
+static TidScan *
+_copyTidScan(TidScan *from)
+{
+	TidScan	*newnode = makeNode(TidScan);
+
+	/* ----------------
+ 	 *	copy node superclass fields
+	 * ----------------
+	 */
+	CopyPlanFields((Plan *) from, (Plan *) newnode);
+	CopyScanFields((Scan *) from, (Scan *) newnode);
+	/* ----------------
+	 *	copy remainder of node
+	 * ----------------
+	 */
+	newnode->needRescan = from->needRescan;
+	Node_Copy(from, newnode, tideval);
+
+	return newnode;
+}
+
+    
 /* ----------------
  *		CopyJoinFields
  *
@@ -1059,6 +1085,30 @@ _copyIndexPath(IndexPath *from)
 }
 
 /* ----------------
+ *              _copyTidPath
+ * ----------------
+ */
+static TidPath *
+_copyTidPath(TidPath *from)
+{
+	TidPath	*newnode = makeNode(TidPath);
+
+	/* ----------------
+	 *	copy the node superclass fields
+	 * ----------------
+	 */
+	CopyPathFields((Path *) from, (Path *) newnode);
+
+	/* ----------------
+	 *	copy remainder of node
+	 * ----------------
+	 */
+	Node_Copy(from, newnode, tideval);
+	newnode->unjoined_relids = listCopy(from->unjoined_relids);
+
+	return newnode;
+}
+/* ----------------
  *		CopyJoinPathFields
  *
  *		This function copies the fields of the JoinPath node.  It is used by
@@ -1437,6 +1487,9 @@ copyObject(void *from)
 		case T_IndexScan:
 			retval = _copyIndexScan(from);
 			break;
+		case T_TidScan:
+			retval = _copyTidScan(from);
+			break;
 		case T_Join:
 			retval = _copyJoin(from);
 			break;
@@ -1534,6 +1587,9 @@ copyObject(void *from)
 			break;
 		case T_IndexPath:
 			retval = _copyIndexPath(from);
+			break;
+		case T_TidPath:
+			retval = _copyTidPath(from);
 			break;
 		case T_NestPath:
 			retval = _copyNestPath(from);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.32 1999/08/16 02:17:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.33 1999/11/23 20:06:53 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -337,6 +337,9 @@ plannode_type(Plan *p)
 			break;
 		case T_Group:
 			return "GROUP";
+			break;
+		case T_TidScan:
+			return "TIDSCAN";
 			break;
 		default:
 			return "UNKNOWN";

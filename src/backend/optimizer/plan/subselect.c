@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.25 1999/11/15 02:00:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.26 1999/11/23 20:06:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -532,6 +532,11 @@ SS_finalize_plan(Plan *plan)
 		case T_Hash:
 			finalize_primnode((Node *) ((Hash *) plan)->hashkey,
 							  &results);
+			break;
+
+		case T_TidScan:
+			finalize_primnode((Node *) ((TidScan *) plan)->tideval,
+							&results);
 			break;
 
 		case T_Agg:

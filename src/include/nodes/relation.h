@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.38 1999/08/16 02:17:40 tgl Exp $
+ * $Id: relation.h,v 1.39 1999/11/23 20:07:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,6 +192,13 @@ typedef struct IndexPath
 	 */
 	Relids		joinrelids;			/* other rels mentioned in indexqual */
 } IndexPath;
+
+typedef struct TidPath
+{
+	Path	path;
+	List	*tideval;
+	Relids	unjoined_relids; /* some rels not yet part of my Path */
+} TidPath;  
 
 /*
  * All join-type paths share these fields.

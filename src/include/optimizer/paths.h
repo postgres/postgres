@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.35 1999/08/21 03:49:15 tgl Exp $
+ * $Id: paths.h,v 1.36 1999/11/23 20:07:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,12 @@ extern List *create_index_paths(Query *root, RelOptInfo *rel, List *indices,
 				   List *restrictinfo_list,
 				   List *joininfo_list);
 extern List *expand_indexqual_conditions(List *indexquals);
+
+/*
+ * tidpath.h
+ *	  routines to generate tid paths
+ */
+extern List *create_tidscan_paths(Query *root, RelOptInfo *rel);
 
 /*
  * joinpath.c

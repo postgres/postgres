@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.31 1999/11/07 23:08:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.32 1999/11/23 20:06:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -768,6 +768,13 @@ NodeGetResultTupleSlot(Plan *node)
 				HashJoinState *hashjoinstate = ((HashJoin *) node)->hashjoinstate;
 
 				slot = hashjoinstate->jstate.cs_ResultTupleSlot;
+			}
+			break;
+
+		case T_TidScan:
+			{
+				CommonScanState *scanstate = ((IndexScan *) node)->scan.scanstate;
+				slot = scanstate->cstate.cs_ResultTupleSlot;
 			}
 			break;
 

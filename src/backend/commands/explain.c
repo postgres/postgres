@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- *	  $Id: explain.c,v 1.49 1999/11/07 23:08:02 momjian Exp $
+ *	  $Id: explain.c,v 1.50 1999/11/23 20:06:48 momjian Exp $
  *
  */
 
@@ -196,6 +196,9 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 		case T_Hash:
 			pname = "Hash";
 			break;
+		case T_TidScan:
+			pname = "Tid Scan";
+			break;
 		default:
 			pname = "???";
 			break;
@@ -224,6 +227,20 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 			if (((Scan *) plan)->scanrelid > 0)
 			{
 				RangeTblEntry *rte = nth(((Scan *) plan)->scanrelid - 1, es->rtable);
+
+				appendStringInfo(str, " on ");
+				if (strcmp(rte->refname, rte->relname) != 0)
+				{
+					appendStringInfo(str, "%s ",
+									 stringStringInfo(rte->relname));
+				}
+				appendStringInfo(str, stringStringInfo(rte->refname));
+			}
+			break;
+		case T_TidScan:
+			if (((TidScan *) plan)->scan.scanrelid > 0)
+			{
+				RangeTblEntry *rte = nth(((TidScan *) plan)->scan.scanrelid - 1, es->rtable);
 
 				appendStringInfo(str, " on ");
 				if (strcmp(rte->refname, rte->relname) != 0)

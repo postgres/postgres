@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.33 1999/11/15 03:28:06 tgl Exp $
+ * $Id: plannodes.h,v 1.34 1999/11/23 20:07:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,7 +179,19 @@ typedef struct IndexScan
 	IndexScanState *indxstate;
 } IndexScan;
 
-/*
+/* ----------------
+ *              tid scan node
+ * ----------------
+ */
+typedef struct TidScan
+{
+        Scan            scan;
+	bool		needRescan;
+        List            *tideval;
+        TidScanState    *tidstate;
+} TidScan;
+
+/* 
  * ==========
  * Join nodes
  * ==========

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.54 1999/08/16 02:17:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.55 1999/11/23 20:07:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -314,6 +314,32 @@ create_index_path(Query *root,
 		clausesel = pow(selec, 1.0 / (double) length(restriction_clauses));
 		set_clause_selectivities(restriction_clauses, clausesel);
 	}
+
+	return pathnode;
+}
+
+/*
+ * create_tidscan_path
+ *	  Creates a path corresponding to a tid_direct scan, returning the
+ *	  pathnode.
+ *
+ */
+TidPath *
+create_tidscan_path(RelOptInfo *rel, List *tideval)
+{
+	TidPath	*pathnode = makeNode(TidPath);
+
+	pathnode->path.pathtype = T_TidScan;
+	pathnode->path.parent = rel;
+	pathnode->path.path_cost = 0.0;
+	pathnode->path.pathkeys = NIL;
+
+	pathnode->path.path_cost = cost_tidscan(tideval);
+	/* divide selectivity for each clause to get an equal selectivity
+	 * as IndexScan does OK ? 
+	*/
+	pathnode->tideval = copyObject(tideval);
+	pathnode->unjoined_relids = NIL;
 
 	return pathnode;
 }

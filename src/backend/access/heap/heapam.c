@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.58 1999/11/07 23:07:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.59 1999/11/23 20:06:47 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1062,7 +1062,13 @@ heap_fetch(Relation relation,
 	 * ----------------
 	 */
 
-	Assert(ItemIdIsUsed(lp));
+	if (!ItemIdIsUsed(lp))
+	{
+		ReleaseBuffer(buffer);
+		*userbuf = InvalidBuffer;
+		tuple->t_data = NULL;
+		return;
+	}
 
 	tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
 	tuple->t_len = ItemIdGetLength(lp);

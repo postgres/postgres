@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.76 1999/08/22 23:56:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.77 1999/11/23 20:06:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,8 @@ static SeqScan *create_seqscan_node(Path *best_path, List *tlist,
 					List *scan_clauses);
 static IndexScan *create_indexscan_node(IndexPath *best_path, List *tlist,
 					  List *scan_clauses);
+static TidScan *create_tidscan_node(TidPath *best_path, List *tlist,
+					  List *scan_clauses); 
 static NestLoop *create_nestloop_node(NestPath *best_path, List *tlist,
 					 List *clauses, Plan *outer_node, List *outer_tlist,
 					 Plan *inner_node, List *inner_tlist);
@@ -53,6 +55,8 @@ static Node *fix_indxqual_operand(Node *node, IndexPath *index_path,
 								  Form_pg_index index);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   List *indxid, List *indxqual, List *indxqualorig);
+static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
+                        List *tideval);
 static NestLoop *make_nestloop(List *qptlist, List *qpqual, Plan *lefttree,
 			  Plan *righttree);
 static HashJoin *make_hashjoin(List *tlist, List *qpqual,
@@ -101,6 +105,7 @@ create_plan(Path *best_path)
 	{
 		case T_IndexScan:
 		case T_SeqScan:
+		case T_TidScan:
 			plan_node = (Plan *) create_scan_node(best_path, tlist);
 			break;
 		case T_HashJoin:
@@ -164,6 +169,12 @@ create_scan_node(Path *best_path, List *tlist)
 
 		case T_IndexScan:
 			node = (Scan *) create_indexscan_node((IndexPath *) best_path,
+												  tlist,
+												  scan_clauses);
+			break;
+
+		case T_TidScan:
+			node = (Scan *) create_tidscan_node((TidPath *) best_path,
 												  tlist,
 												  scan_clauses);
 			break;
@@ -399,6 +410,62 @@ create_indexscan_node(IndexPath *best_path,
 	return scan_node;
 }
 
+static TidScan *
+make_tidscan(List *qptlist,
+			List *qpqual,
+			Index scanrelid,	
+			List *tideval)
+{
+        TidScan	*node = makeNode(TidScan);
+	Plan	*plan = &node->scan.plan;
+
+	plan->cost = 0;
+	plan->plan_size = 0;
+	plan->plan_width = 0;
+	plan->state = (EState *) NULL;
+	plan->targetlist = qptlist;
+	plan->qual = qpqual;
+	plan->lefttree = NULL;
+	plan->righttree = NULL;
+	node->scan.scanrelid = scanrelid;
+	node->tideval = copyObject(tideval);
+	node->needRescan = false;
+	node->scan.scanstate = (CommonScanState *) NULL;
+
+	return node;
+}
+
+/*
+ * create_tidscan_node
+ *	 Returns a tidscan node for the base relation scanned by 'best_path'
+ *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
+ */
+static TidScan *
+create_tidscan_node(TidPath *best_path, List *tlist, List *scan_clauses)
+{
+	TidScan	*scan_node = (TidScan *) NULL;
+	Index	scan_relid = -1;
+	List	*temp;
+
+	temp = best_path->path.parent->relids;
+	if (temp == NULL)
+		elog(ERROR, "scanrelid is empty");
+	else if (length(temp) != 1)
+		return scan_node;
+	else 
+		scan_relid = (Index) lfirsti(temp);
+	scan_node = make_tidscan(tlist,
+				 scan_clauses,
+				 scan_relid,
+				 best_path->tideval);
+
+	if (best_path->unjoined_relids)
+		scan_node->needRescan = true; 
+	scan_node->scan.plan.cost = best_path->path.path_cost;
+
+	return scan_node;
+}
+
 /*****************************************************************************
  *
  *	JOIN METHODS
@@ -487,6 +554,12 @@ create_nestloop_node(NestPath *best_path,
 												   innerrel);
 		}
 	}
+	else if (IsA(inner_node, TidScan))
+	{
+		List	*inner_tideval = ((TidScan *) inner_node)->tideval;
+		TidScan	*innerscan = (TidScan *) inner_node; 
+		((TidScan *) inner_node)->tideval = join_references(inner_tideval, outer_tlist, inner_tlist, innerscan->scan.scanrelid);
+	} 
 	else if (IsA_Join(inner_node))
 	{
 		/*

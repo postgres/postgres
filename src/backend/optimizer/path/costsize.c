@@ -18,7 +18,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.45 1999/08/22 20:14:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.46 1999/11/23 20:06:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,7 @@ bool		_enable_sort_ = true;
 bool		_enable_nestloop_ = true;
 bool		_enable_mergejoin_ = true;
 bool		_enable_hashjoin_ = true;
+bool		_enable_tidscan_ = true;
 
 Cost		 _cpu_page_weight_ = _CPU_PAGE_WEIGHT_;
 Cost		_cpu_index_page_weight_ = _CPU_INDEX_PAGE_WEIGHT_;
@@ -174,6 +175,29 @@ cost_index(Oid indexid,
 	return temp;
 }
 
+/*
+ * cost_tidscan
+ *	  Determines and returns the cost of scanning a relation using tid-s.
+ *
+ *		disk = number of tids
+ *		cpu = *CPU-PAGE-WEIGHT* * number_of_tids
+ *
+ * Returns a flonum.
+ *
+ */
+Cost
+cost_tidscan(List *tideval)
+{
+	Cost	temp = 0;
+
+	if (!_enable_tidscan_)
+		temp += _disable_cost_;
+
+	temp += (1.0 + _cpu_page_weight_) * length(tideval);
+
+	return temp;
+}
+ 
 /*
  * cost_sort
  *	  Determines and returns the cost of sorting a relation by considering

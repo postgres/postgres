@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.74 1999/10/07 04:23:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.75 1999/11/23 20:06:53 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -537,6 +537,33 @@ _readIndexScan()
 	token = lsptok(NULL, &length);		/* get indxorderdir */
 
 	local_node->indxorderdir = atoi(token);
+
+	return local_node;
+}
+
+/* ----------------
+ *		_readTidScan
+ *
+ *	TidScan is a subclass of Scan
+ * ----------------
+ */
+static TidScan *
+_readTidScan()
+{
+	TidScan  *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(TidScan);
+
+	_getScan((Scan *) local_node);
+
+	token = lsptok(NULL, &length);		/* eat :needrescan */
+	token = lsptok(NULL, &length);		/* get needrescan */
+	local_node->needRescan = atoi(token);
+
+	token = lsptok(NULL, &length);		/* eat :tideval */
+	local_node->tideval = nodeRead(true);	/* now read it */
 
 	return local_node;
 }
@@ -1477,6 +1504,41 @@ _readIndexPath()
 }
 
 /* ----------------
+ *		_readTidPath
+ *
+ *	TidPath is a subclass of Path.
+ * ----------------
+ */
+static TidPath *
+_readTidPath()
+{
+	TidPath  *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(TidPath);
+
+	token = lsptok(NULL, &length);		/* get :pathtype */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->path.pathtype = atol(token);
+
+	token = lsptok(NULL, &length);		/* get :cost */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->path.path_cost = (Cost) atof(token);
+
+	token = lsptok(NULL, &length);		/* get :pathkeys */
+	local_node->path.pathkeys = nodeRead(true); /* now read it */
+
+	token = lsptok(NULL, &length);		/* get :tideval */
+	local_node->tideval = nodeRead(true);	/* now read it */
+
+	token = lsptok(NULL, &length);		/* get :unjoined_relids */
+	local_node->unjoined_relids = toIntList(nodeRead(true));
+
+	return local_node;
+}
+
+/* ----------------
  *		_readNestPath
  *
  *	NestPath is a subclass of Path
@@ -1801,6 +1863,8 @@ parsePlanString(void)
 		return_value = _readSeqScan();
 	else if (!strncmp(token, "INDEXSCAN", length))
 		return_value = _readIndexScan();
+	else if (!strncmp(token, "TIDSCAN", length))
+		return_value = _readTidScan();
 	else if (!strncmp(token, "NONAME", length))
 		return_value = _readNoname();
 	else if (!strncmp(token, "SORT", length))
@@ -1845,6 +1909,8 @@ parsePlanString(void)
 		return_value = _readPath();
 	else if (!strncmp(token, "INDEXPATH", length))
 		return_value = _readIndexPath();
+	else if (!strncmp(token, "TIDPATH", length))
+		return_value = _readTidPath();
 	else if (!strncmp(token, "NESTPATH", length))
 		return_value = _readNestPath();
 	else if (!strncmp(token, "MERGEPATH", length))

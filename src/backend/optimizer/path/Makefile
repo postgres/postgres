@@ -4,7 +4,7 @@
 #    Makefile for optimizer/path
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/optimizer/path/Makefile,v 1.9 1999/08/16 02:17:50 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/optimizer/path/Makefile,v 1.10 1999/11/23 20:06:54 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,7 +14,8 @@ include ../../../Makefile.global
 CFLAGS += -I../..
 
 OBJS = allpaths.o clausesel.o costsize.o indxpath.o \
-       joinpath.o joinrels.o orindxpath.o pathkeys.o prune.o
+       joinpath.o joinrels.o orindxpath.o pathkeys.o prune.o \
+	tidpath.o
 
 all: SUBSYS.o
 

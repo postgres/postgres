@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.43 1999/11/04 08:00:57 inoue Exp $
+ *	$Id: execAmi.c,v 1.44 1999/11/23 20:06:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
 #include "executor/nodeIndexscan.h"
+#include "executor/nodeTidscan.h"
 #include "executor/nodeMaterial.h"
 #include "executor/nodeMergejoin.h"
 #include "executor/nodeNestloop.h"
@@ -217,6 +218,10 @@ ExecCloseR(Plan *node)
 			state = &(((Agg *) node)->aggstate->csstate);
 			break;
 
+		case T_TidScan:
+			state = ((TidScan *) node)->scan.scanstate;
+			break;
+
 		default:
 			elog(DEBUG, "ExecCloseR: not a scan, material, or sort node!");
 			return;
@@ -367,6 +372,10 @@ ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent)
 			ExecReScanAppend((Append *) node, exprCtxt, parent);
 			break;
 
+		case T_TidScan:
+			ExecTidReScan((TidScan *) node, exprCtxt, parent);
+			break;
+
 		default:
 			elog(ERROR, "ExecReScan: node type %u not supported", nodeTag(node));
 			return;
@@ -413,7 +422,7 @@ ExecMarkPos(Plan *node)
 {
 	switch (nodeTag(node))
 	{
-			case T_SeqScan:
+		case T_SeqScan:
 			ExecSeqMarkPos((SeqScan *) node);
 			break;
 
@@ -423,6 +432,10 @@ ExecMarkPos(Plan *node)
 
 		case T_Sort:
 			ExecSortMarkPos((Sort *) node);
+			break;
+
+		case T_TidScan:
+			ExecTidMarkPos((TidScan *) node);
 			break;
 
 		default:
