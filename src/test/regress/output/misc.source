@@ -39,9 +39,9 @@ DROP TABLE tmp;
 --
 -- copy
 --
-COPY onek TO '_OBJWD_/results/onek.data';
+COPY onek TO '@abs_builddir@/results/onek.data';
 DELETE FROM onek;
-COPY onek FROM '_OBJWD_/results/onek.data';
+COPY onek FROM '@abs_builddir@/results/onek.data';
 SELECT unique1 FROM onek WHERE unique1 < 2;
  unique1 
 ---------
@@ -50,7 +50,7 @@ SELECT unique1 FROM onek WHERE unique1 < 2;
 (2 rows)
 
 DELETE FROM onek2;
-COPY onek2 FROM '_OBJWD_/results/onek.data';
+COPY onek2 FROM '@abs_builddir@/results/onek.data';
 SELECT unique1 FROM onek2 WHERE unique1 < 2;
  unique1 
 ---------
@@ -58,9 +58,9 @@ SELECT unique1 FROM onek2 WHERE unique1 < 2;
        1
 (2 rows)
 
-COPY BINARY stud_emp TO '_OBJWD_/results/stud_emp.data';
+COPY BINARY stud_emp TO '@abs_builddir@/results/stud_emp.data';
 DELETE FROM stud_emp;
-COPY BINARY stud_emp FROM '_OBJWD_/results/stud_emp.data';
+COPY BINARY stud_emp FROM '@abs_builddir@/results/stud_emp.data';
 SELECT * FROM stud_emp;
  name  | age |  location  | salary | manager | gpa | percent 
 -------+-----+------------+--------+---------+-----+---------

@@ -3,34 +3,34 @@
 --
 CREATE FUNCTION widget_in(opaque)
    RETURNS widget
-   AS '_OBJWD_/regress_DLSUFFIX_'
+   AS '@abs_builddir@/regress@DLSUFFIX@'
    LANGUAGE 'c';
 NOTICE:  ProcedureCreate: type 'widget' is not yet defined
 CREATE FUNCTION widget_out(opaque)
    RETURNS opaque
-   AS '_OBJWD_/regress_DLSUFFIX_'
+   AS '@abs_builddir@/regress@DLSUFFIX@'
    LANGUAGE 'c';
 CREATE FUNCTION check_primary_key ()
 	RETURNS opaque
-	AS '_OBJWD_/../../../contrib/spi/refint_DLSUFFIX_'
+	AS '@abs_builddir@/../../../contrib/spi/refint@DLSUFFIX@'
 	LANGUAGE 'newC';
 CREATE FUNCTION check_foreign_key ()
 	RETURNS opaque
-	AS '_OBJWD_/../../../contrib/spi/refint_DLSUFFIX_'
+	AS '@abs_builddir@/../../../contrib/spi/refint@DLSUFFIX@'
 	LANGUAGE 'newC';
 CREATE FUNCTION autoinc ()
 	RETURNS opaque
-	AS '_OBJWD_/../../../contrib/spi/autoinc_DLSUFFIX_'
+	AS '@abs_builddir@/../../../contrib/spi/autoinc@DLSUFFIX@'
 	LANGUAGE 'newC';
 CREATE FUNCTION funny_dup17 ()
         RETURNS opaque
-        AS '_OBJWD_/regress_DLSUFFIX_'
+        AS '@abs_builddir@/regress@DLSUFFIX@'
         LANGUAGE 'newC';
 CREATE FUNCTION ttdummy ()
         RETURNS opaque
-        AS '_OBJWD_/regress_DLSUFFIX_'
+        AS '@abs_builddir@/regress@DLSUFFIX@'
         LANGUAGE 'newC';
 CREATE FUNCTION set_ttdummy (int4)
         RETURNS int4
-        AS '_OBJWD_/regress_DLSUFFIX_'
+        AS '@abs_builddir@/regress@DLSUFFIX@'
         LANGUAGE 'newC';

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.29 2000/10/23 21:44:07 petere Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.30 2000/10/27 20:00:19 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -60,11 +60,36 @@ output_files := $(foreach file, $(file_list), expected/$(file).out)
 
 all: $(input_files) $(output_files)
 
-sql/%.sql: input/%.source
-	pwd=`pwd` && sed "s,_OBJWD_,$$pwd,g;s/_DLSUFFIX_/$(DLSUFFIX)/g" $(srcdir)/$< >$@
+abs_srcdir := $(shell cd $(srcdir) && pwd)
+abs_builddir := $(shell pwd)
 
-expected/%.out: output/%.source
-	pwd=`pwd` && sed "s,_OBJWD_,$$pwd,g;s/_DLSUFFIX_/$(DLSUFFIX)/g" $(srcdir)/$< >$@
+define sed-command
+sed -e 's,@abs_srcdir@,$(abs_srcdir),g' \
+    -e 's,@abs_builddir@,$(abs_builddir),g' \
+    -e 's/@DLSUFFIX@/$(DLSUFFIX)/g' $< >$@
+endef
+
+$(input_files): sql/%.sql: input/%.source
+	$(sed-command)
+
+$(output_files): expected/%.out: output/%.source
+	$(sed-command)
+
+# When doing a VPATH build, copy over the remaining .sql and .out
+# files so that the driver script can find them.  We have to use an
+# absolute path for the targets, because otherwise make will try to
+# locate the missing files using VPATH, and will find them in
+# $(srcdir), but the point here is that we want to copy them from
+# $(srcdir) to the build directory.
+
+ifdef VPATH
+remaining_files_src := $(wildcard $(srcdir)/sql/*.sql) $(wildcard $(srcdir)/expected/*.out)
+remaining_files_build := $(patsubst $(srcdir)/%, $(abs_builddir)/%, $(remaining_files_src))
+
+all: $(remaining_files_build)
+$(remaining_files_build): $(abs_builddir)/%: $(srcdir)/%
+	ln -s $< $@
+endif
 
 
 # And finally some extra C modules...
@@ -81,10 +106,10 @@ all-spi:
 ##
 
 check: all
-	$(SHELL) ./pg_regress --temp-install --top-builddir=$(top_builddir) --schedule=parallel_schedule --multibyte=$(MULTIBYTE)
+	$(SHELL) ./pg_regress --temp-install --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE)
 
 installcheck: all
-	$(SHELL) ./pg_regress --schedule=serial_schedule --multibyte=$(MULTIBYTE)
+	$(SHELL) ./pg_regress --schedule=$(srcdir)/serial_schedule --multibyte=$(MULTIBYTE)
 
 
 # old interfaces follow...
@@ -172,4 +197,7 @@ clean distclean maintainer-clean:
 	rm -f regression.diffs regression.out regress.out run_check.out
 ifeq ($(PORTNAME), win)
 	rm -f regress.def
+endif
+ifdef VPATH
+	rm -f $(remaining_files_build)
 endif

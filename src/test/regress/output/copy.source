@@ -4,30 +4,30 @@
 -- CLASS POPULATION
 --	(any resemblance to real life is purely coincidental)
 --
-COPY aggtest FROM '_OBJWD_/data/agg.data';
-COPY onek FROM '_OBJWD_/data/onek.data';
-COPY onek TO '_OBJWD_/results/onek.data';
+COPY aggtest FROM '@abs_srcdir@/data/agg.data';
+COPY onek FROM '@abs_srcdir@/data/onek.data';
+COPY onek TO '@abs_builddir@/results/onek.data';
 DELETE FROM onek;
-COPY onek FROM '_OBJWD_/results/onek.data';
-COPY tenk1 FROM '_OBJWD_/data/tenk.data';
-COPY slow_emp4000 FROM '_OBJWD_/data/rect.data';
-COPY person FROM '_OBJWD_/data/person.data';
-COPY emp FROM '_OBJWD_/data/emp.data';
-COPY student FROM '_OBJWD_/data/student.data';
-COPY stud_emp FROM '_OBJWD_/data/stud_emp.data';
-COPY road FROM '_OBJWD_/data/streets.data';
-COPY real_city FROM '_OBJWD_/data/real_city.data';
-COPY hash_i4_heap FROM '_OBJWD_/data/hash.data';
-COPY hash_name_heap FROM '_OBJWD_/data/hash.data';
-COPY hash_txt_heap FROM '_OBJWD_/data/hash.data';
-COPY hash_f8_heap FROM '_OBJWD_/data/hash.data';
+COPY onek FROM '@abs_builddir@/results/onek.data';
+COPY tenk1 FROM '@abs_srcdir@/data/tenk.data';
+COPY slow_emp4000 FROM '@abs_srcdir@/data/rect.data';
+COPY person FROM '@abs_srcdir@/data/person.data';
+COPY emp FROM '@abs_srcdir@/data/emp.data';
+COPY student FROM '@abs_srcdir@/data/student.data';
+COPY stud_emp FROM '@abs_srcdir@/data/stud_emp.data';
+COPY road FROM '@abs_srcdir@/data/streets.data';
+COPY real_city FROM '@abs_srcdir@/data/real_city.data';
+COPY hash_i4_heap FROM '@abs_srcdir@/data/hash.data';
+COPY hash_name_heap FROM '@abs_srcdir@/data/hash.data';
+COPY hash_txt_heap FROM '@abs_srcdir@/data/hash.data';
+COPY hash_f8_heap FROM '@abs_srcdir@/data/hash.data';
 -- the data in this file has a lot of duplicates in the index key
 -- fields, leading to long bucket chains and lots of table expansion.
 -- this is therefore a stress test of the bucket overflow code (unlike
 -- the data in hash.data, which has unique index keys).
 --
--- COPY hash_ovfl_heap FROM '_OBJWD_/data/hashovfl.data';
-COPY bt_i4_heap FROM '_OBJWD_/data/desc.data';
-COPY bt_name_heap FROM '_OBJWD_/data/hash.data';
-COPY bt_txt_heap FROM '_OBJWD_/data/desc.data';
-COPY bt_f8_heap FROM '_OBJWD_/data/hash.data';
+-- COPY hash_ovfl_heap FROM '@abs_srcdir@/data/hashovfl.data';
+COPY bt_i4_heap FROM '@abs_srcdir@/data/desc.data';
+COPY bt_name_heap FROM '@abs_srcdir@/data/hash.data';
+COPY bt_txt_heap FROM '@abs_srcdir@/data/desc.data';
+COPY bt_f8_heap FROM '@abs_srcdir@/data/hash.data';

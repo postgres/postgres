@@ -29,31 +29,31 @@ CREATE FUNCTION user_relns()
 
 CREATE FUNCTION pt_in_widget(point, widget)
    RETURNS bool
-   AS '_OBJWD_/regress_DLSUFFIX_'
+   AS '@abs_builddir@/regress@DLSUFFIX@'
    LANGUAGE 'newC';
 
 CREATE FUNCTION overpaid(emp)
    RETURNS bool
-   AS '_OBJWD_/regress_DLSUFFIX_'
+   AS '@abs_builddir@/regress@DLSUFFIX@'
    LANGUAGE 'newC';
 
 CREATE FUNCTION boxarea(box)
    RETURNS float8
-   AS '_OBJWD_/regress_DLSUFFIX_'
+   AS '@abs_builddir@/regress@DLSUFFIX@'
    LANGUAGE 'newC';
 
 CREATE FUNCTION interpt_pp(path, path)
    RETURNS point
-   AS '_OBJWD_/regress_DLSUFFIX_'
+   AS '@abs_builddir@/regress@DLSUFFIX@'
    LANGUAGE 'newC';
 
 CREATE FUNCTION reverse_name(name)
    RETURNS name
-   AS '_OBJWD_/regress_DLSUFFIX_'
+   AS '@abs_builddir@/regress@DLSUFFIX@'
    LANGUAGE 'c';
 
 --
 -- Function dynamic loading
 --
-LOAD '_OBJWD_/regress_DLSUFFIX_';
+LOAD '@abs_builddir@/regress@DLSUFFIX@';
 
