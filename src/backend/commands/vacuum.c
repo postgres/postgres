@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.10 1996/11/28 04:37:38 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.11 1996/11/29 10:27:59 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -462,6 +462,7 @@ _vc_scanheap (VRelList curvrl, Relation onerel,
 {
     int nblocks, blkno;
     ItemId itemid;
+    ItemPointer itemptr;
     HeapTuple htup;
     Buffer buf;
     Page page, tempPage = NULL;
@@ -611,6 +612,33 @@ DELETE_TRANSACTION_ID_VALID %d, TUPGONE %d.",
 			tupgone);
 	    }
 	    
+	    /*
+	     * It's possibly! But from where it comes ?
+	     * And should we fix it ?  - vadim 11/28/96
+	     */
+	    itemptr = &(htup->t_ctid);
+	    if ( !ItemPointerIsValid (itemptr) || 
+	    		BlockIdGetBlockNumber(&(itemptr->ip_blkid)) != blkno )
+	    {
+	    	elog (NOTICE, "ITEM POINTER IS INVALID: %u/%u FOR %u/%u. TUPGONE %d.", 
+	    		BlockIdGetBlockNumber(&(itemptr->ip_blkid)), 
+	    		itemptr->ip_posid, blkno, offnum, tupgone);
+	    }
+
+	    /*
+	     * Other checks...
+	     */
+	    if ( htup->t_len != itemid->lp_len )
+	    {
+	    	elog (NOTICE, "PAGEHEADER' LEN %u IS NOT THE SAME AS HTUP' %u FOR %u/%u.TUPGONE %d.", 
+	    		itemid->lp_len, htup->t_len, blkno, offnum, tupgone);
+	    }
+	    if ( !OidIsValid(htup->t_oid) )
+	    {
+	    	elog (NOTICE, "OID IS INVALID FOR %u/%u.TUPGONE %d.", 
+	    		blkno, offnum, tupgone);
+	    }
+	    
 	    if (tupgone) {
 		ItemId lpp;
                                                     
@@ -676,6 +704,10 @@ DELETE_TRANSACTION_ID_VALID %d, TUPGONE %d.",
     /* save stats in the rel list for use later */
     curvrl->vrl_ntups = ntups;
     curvrl->vrl_npages = nblocks;
+    if ( ntups == 0 )
+    	min_tlen = max_tlen = 0;
+    curvrl->vrl_min_tlen = min_tlen;
+    curvrl->vrl_max_tlen = max_tlen;
     
     Vvpl->vpl_nemend = nemend;
     Fvpl->vpl_nemend = nemend;
@@ -746,6 +778,7 @@ _vc_rpfheap (VRelList curvrl, Relation onerel,
     InsertIndexResult iresult;
     VPageListData Nvpl;
     VPageDescr ToVpd = NULL, Fvplast, Vvplast, vpc, *vpp;
+    int ToVpI = 0;
     IndDesc *Idesc, *idcur;
     int Fblklast, Vblklast, i;
     Size tlen;
@@ -872,8 +905,31 @@ _vc_rpfheap (VRelList curvrl, Relation onerel,
 		! _vc_enough_space (ToVpd, tlen) )
 	    {
 		if ( ToBuf != InvalidBuffer )
+		{
 		    WriteBuffer(ToBuf);
-		ToBuf = InvalidBuffer;
+		    ToBuf = InvalidBuffer;
+ 		    /*
+ 		     * If no one tuple can't be added to this page -
+ 		     * remove page from Fvpl. - vadim 11/27/96
+ 		     */ 
+ 		    if ( !_vc_enough_space (ToVpd, curvrl->vrl_min_tlen) )
+ 		    {
+ 		    	if ( ToVpd != Fvplast )
+ 		    	{
+ 		    	    Assert ( Fnpages > ToVpI + 1 );
+ 		    	    memmove (Fvpl->vpl_pgdesc + ToVpI, 
+ 		    	    	Fvpl->vpl_pgdesc + ToVpI + 1, 
+ 		    	    	sizeof (VPageDescr*) * (Fnpages - ToVpI - 1));
+ 		    	}
+ 		    	Assert ( Fnpages >= 1 );
+ 		    	Fnpages--;
+ 		    	if ( Fnpages == 0 )
+ 		    	    break;
+			/* get prev reapped page from Fvpl */
+			Fvplast = Fvpl->vpl_pgdesc[Fnpages - 1];
+			Fblklast = Fvplast->vpd_blkno;
+ 		    }
+ 		}
 		for (i=0; i < Fnpages; i++)
 		{
 		    if ( _vc_enough_space (Fvpl->vpl_pgdesc[i], tlen) )
@@ -881,7 +937,8 @@ _vc_rpfheap (VRelList curvrl, Relation onerel,
 		}
 		if ( i == Fnpages )
 		    break;			/* can't move item anywhere */
-		ToVpd = Fvpl->vpl_pgdesc[i];
+ 		ToVpI = i;
+ 		ToVpd = Fvpl->vpl_pgdesc[ToVpI];
 		ToBuf = ReadBuffer(onerel, ToVpd->vpd_blkno);
 		ToPage = BufferGetPage(ToBuf);
 		/* if this page was not used before - clean it */
