@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.114 2002/12/12 15:49:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.115 2002/12/17 01:18:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -205,9 +205,11 @@ adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
 		{
 			RangeTblRef *rtr = lfirst(jjt);
 
-			if (IsA(rtr, RangeTblRef) &&rtr->rtindex == rt_index)
+			if (IsA(rtr, RangeTblRef) &&
+				rtr->rtindex == rt_index)
 			{
 				newjointree = lremove(rtr, newjointree);
+				/* foreach is safe because we exit loop after lremove... */
 				break;
 			}
 		}

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.257 2002/12/13 19:45:56 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.258 2002/12/17 01:18:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -521,32 +521,38 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 	 * Prepare columns for assignment to target table.
 	 */
 	attnos = attrnos;
-	foreach(tl, qry->targetList)
+	/* cannot use foreach here because of possible lremove */
+	tl = qry->targetList;
+	while (tl)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tl);
 		ResTarget  *col;
 
+		/* must advance tl before lremove possibly pfree's it */
+		tl = lnext(tl);
+
 		if (icolumns == NIL || attnos == NIL)
 			elog(ERROR, "INSERT has more expressions than target columns");
+
 		col = (ResTarget *) lfirst(icolumns);
+		Assert(IsA(col, ResTarget));
 
 		/*
 		 * When the value is to be set to the column default we can simply
-		 * drop it now and handle it later on using methods for missing
+		 * drop the TLE now and handle it later on using methods for missing
 		 * columns.
 		 */
-		if (!IsA(tle, InsertDefault))
+		if (IsA(tle, InsertDefault))
 		{
-			Assert(IsA(col, ResTarget));
-			Assert(!tle->resdom->resjunk);
-			updateTargetListEntry(pstate, tle, col->name, lfirsti(attnos),
-								  col->indirection);
+			qry->targetList = lremove(tle, qry->targetList);
+			/* Note: the stmt->cols list is not adjusted to match */
 		}
 		else
 		{
-			icolumns = lremove(icolumns, icolumns);
-			attnos = lremove(attnos, attnos);
-			qry->targetList = lremove(tle, qry->targetList);
+			/* Normal case */
+			Assert(!tle->resdom->resjunk);
+			updateTargetListEntry(pstate, tle, col->name, lfirsti(attnos),
+								  col->indirection);
 		}
 
 		icolumns = lnext(icolumns);
@@ -554,8 +560,9 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 	}
 
 	/*
-	 * Ensure that the targetlist has the same number of  entries that
-	 * were present in the columns list.  Don't do the check for select
+	 * Ensure that the targetlist has the same number of entries that
+	 * were present in the columns list.  Don't do the check unless
+	 * an explicit columns list was given, though.
 	 * statements.
 	 */
 	if (stmt->cols != NIL && (icolumns != NIL || attnos != NIL))

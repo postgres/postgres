@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.123 2002/12/12 15:49:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.124 2002/12/17 01:18:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1953,9 +1953,14 @@ estimate_num_groups(Query *root, List *groupClauses, double input_rows)
 		if (HeapTupleIsValid(statsTuple))
 			ReleaseSysCache(statsTuple);
 
-		foreach(l2, varinfos)
+		/* cannot use foreach here because of possible lremove */
+		l2 = varinfos;
+		while (l2)
 		{
 			MyVarInfo  *varinfo = (MyVarInfo *) lfirst(l2);
+
+			/* must advance l2 before lremove possibly pfree's it */
+			l2 = lnext(l2);
 
 			if (var->varno != varinfo->var->varno &&
 				vars_known_equal(root, var, varinfo->var))
@@ -1969,10 +1974,7 @@ estimate_num_groups(Query *root, List *groupClauses, double input_rows)
 				}
 				else
 				{
-					/*
-					 * Delete the older item.  We assume lremove() will not
-					 * break the lnext link of the item...
-					 */
+					/* Delete the older item */
 					varinfos = lremove(varinfo, varinfos);
 				}
 			}
