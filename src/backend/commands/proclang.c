@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.39 2002/08/05 03:29:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.40 2002/08/13 17:22:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	 * Check permission
 	 */
 	if (!superuser())
-		elog(ERROR, "Only users with Postgres superuser privilege are "
+		elog(ERROR, "Only users with superuser privilege are "
 			 "permitted to create procedural languages");
 
 	/*
@@ -77,10 +77,10 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	MemSet(typev, 0, sizeof(typev));
 	procOid = LookupFuncName(stmt->plhandler, 0, typev);
 	if (!OidIsValid(procOid))
-		elog(ERROR, "PL handler function %s() doesn't exist",
+		elog(ERROR, "function %s() doesn't exist",
 			 NameListToString(stmt->plhandler));
 	if (get_func_rettype(procOid) != InvalidOid)
-		elog(ERROR, "PL handler function %s() does not return type \"opaque\"",
+		elog(ERROR, "function %s() does not return type \"opaque\"",
 			 NameListToString(stmt->plhandler));
 
 	/* validate the validator function */
@@ -89,7 +89,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 		typev[0] = OIDOID;
 		valProcOid = LookupFuncName(stmt->plvalidator, 1, typev);
 		if (!OidIsValid(valProcOid))
-			elog(ERROR, "PL validator function %s(oid) doesn't exist",
+			elog(ERROR, "function %s(oid) doesn't exist",
 				 NameListToString(stmt->plvalidator));
 	}
 	else
@@ -162,7 +162,7 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 	 * Check permission
 	 */
 	if (!superuser())
-		elog(ERROR, "Only users with Postgres superuser privilege are "
+		elog(ERROR, "Only users with superuser privilege are "
 			 "permitted to drop procedural languages");
 
 	/*
@@ -176,10 +176,6 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 							 0, 0, 0);
 	if (!HeapTupleIsValid(langTup))
 		elog(ERROR, "Language %s doesn't exist", languageName);
-
-	if (!((Form_pg_language) GETSTRUCT(langTup))->lanispl)
-		elog(ERROR, "Language %s isn't a created procedural language",
-			 languageName);
 
 	object.classId = get_system_catalog_relid(LanguageRelationName);
 	object.objectId = HeapTupleGetOid(langTup);

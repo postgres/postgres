@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.52 2002/08/05 02:30:46 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.53 2002/08/13 17:22:08 petere Exp $
  -->
 
 <chapter id="catalogs">
@@ -1991,8 +1991,10 @@
       <entry></entry>
       <entry>
        This is false for internal languages (such as SQL) and true for
-       dynamically loaded language handler modules.  It essentially
-       means that, if it is true, the language may be dropped.
+       user-defined languages.  Currently,
+       <application>pg_dump</application> still uses this to determine
+       which languages need to be dumped, but this may be replaced by
+       a different mechanism sometime.
       </entry>
      </row>
 

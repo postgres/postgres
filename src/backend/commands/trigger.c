@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.124 2002/08/05 03:29:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.125 2002/08/13 17:22:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,6 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	HeapTuple	tuple;
 	Oid			fargtypes[FUNC_MAX_ARGS];
 	Oid			funcoid;
-	Oid			funclang;
 	Oid			trigoid;
 	int			found = 0;
 	int			i;
@@ -207,23 +206,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	if (((Form_pg_proc) GETSTRUCT(tuple))->prorettype != 0)
 		elog(ERROR, "CreateTrigger: function %s() must return OPAQUE",
 			 NameListToString(stmt->funcname));
-	funclang = ((Form_pg_proc) GETSTRUCT(tuple))->prolang;
 	ReleaseSysCache(tuple);
-
-	if (funclang != ClanguageId && funclang != INTERNALlanguageId)
-	{
-		HeapTuple	langTup;
-
-		langTup = SearchSysCache(LANGOID,
-								 ObjectIdGetDatum(funclang),
-								 0, 0, 0);
-		if (!HeapTupleIsValid(langTup))
-			elog(ERROR, "CreateTrigger: cache lookup for language %u failed",
-				 funclang);
-		if (((Form_pg_language) GETSTRUCT(langTup))->lanispl == false)
-			elog(ERROR, "CreateTrigger: only internal, C and PL functions are supported");
-		ReleaseSysCache(langTup);
-	}
 
 	/*
 	 * Build the new pg_trigger tuple.

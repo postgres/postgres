@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.60 2002/06/20 20:29:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.61 2002/08/13 17:22:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -324,6 +324,7 @@ fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 	Oid			language = procedureStruct->prolang;
 	HeapTuple	languageTuple;
 	Form_pg_language languageStruct;
+	FmgrInfo	plfinfo;
 
 	languageTuple = SearchSysCache(LANGOID,
 								   ObjectIdGetDatum(language),
@@ -332,27 +333,19 @@ fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 		elog(ERROR, "fmgr_info: cache lookup for language %u failed",
 			 language);
 	languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
-	if (languageStruct->lanispl)
-	{
-		FmgrInfo	plfinfo;
 
-		fmgr_info(languageStruct->lanplcallfoid, &plfinfo);
-		finfo->fn_addr = plfinfo.fn_addr;
+	fmgr_info(languageStruct->lanplcallfoid, &plfinfo);
+	finfo->fn_addr = plfinfo.fn_addr;
 
-		/*
-		 * If lookup of the PL handler function produced nonnull fn_extra,
-		 * complain --- it must be an oldstyle function! We no longer
-		 * support oldstyle PL handlers.
-		 */
-		if (plfinfo.fn_extra != NULL)
-			elog(ERROR, "fmgr_info: language %u has old-style handler",
-				 language);
-	}
-	else
-	{
-		elog(ERROR, "fmgr_info: function %u: unsupported language %u",
-			 functionId, language);
-	}
+	/*
+	 * If lookup of the PL handler function produced nonnull fn_extra,
+	 * complain --- it must be an oldstyle function! We no longer
+	 * support oldstyle PL handlers.
+	 */
+	if (plfinfo.fn_extra != NULL)
+		elog(ERROR, "fmgr_info: language %u has old-style handler",
+			 language);
+
 	ReleaseSysCache(languageTuple);
 }
 
