@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.28 2004/03/03 22:22:24 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.29 2004/06/09 19:08:13 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -77,7 +77,10 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> SET <replacea
     <term><replaceable class="PARAMETER">column</replaceable></term>
     <listitem>
      <para>
-      The name of a column in <replaceable class="PARAMETER">table</replaceable>.
+      The name of a column in <replaceable
+      class="PARAMETER">table</replaceable>.
+      The column name can be qualified with a subfield name or array
+      subscript, if needed.
      </para>
     </listitem>
    </varlistentry>

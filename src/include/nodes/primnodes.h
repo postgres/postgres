@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.99 2004/05/30 23:40:39 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.100 2004/06/09 19:08:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,14 +36,15 @@
  * ordinal position (counting from 1).  However, in an INSERT or UPDATE
  * targetlist, resno represents the attribute number of the destination
  * column for the item; so there may be missing or out-of-order resnos.
- * In an UPDATE, it is even legal to have duplicated resnos; consider
+ * It is even legal to have duplicated resnos; consider
  *		UPDATE table SET arraycol[1] = ..., arraycol[2] = ..., ...
  * The two meanings come together in the executor, because the planner
  * transforms INSERT/UPDATE tlists into a normalized form with exactly
  * one entry for each column of the destination table.  Before that's
  * happened, however, it is risky to assume that resno == position.
  * Generally get_tle_by_resno() should be used rather than list_nth()
- * to fetch tlist entries by resno.
+ * to fetch tlist entries by resno, and only in SELECT should you assume
+ * that resno is a unique identifier.
  *
  * resname is required to represent the correct column name in non-resjunk
  * entries of top-level SELECT targetlists, since it will be used as the
@@ -541,6 +542,31 @@ typedef struct FieldSelect
 } FieldSelect;
 
 /* ----------------
+ * FieldStore
+ *
+ * FieldStore represents the operation of modifying one field in a tuple
+ * value, yielding a new tuple value (the input is not touched!).  Like
+ * the assign case of ArrayRef, this is used to implement UPDATE of a
+ * portion of a column.
+ *
+ * A single FieldStore can actually represent updates of several different
+ * fields.  The parser only generates FieldStores with single-element lists,
+ * but the planner will collapse multiple updates of the same base column
+ * into one FieldStore.
+ * ----------------
+ */
+
+typedef struct FieldStore
+{
+	Expr		xpr;
+	Expr	   *arg;			/* input tuple value */
+	List	   *newvals;		/* new value(s) for field(s) */
+	List	   *fieldnums;		/* integer list of field attnums */
+	Oid			resulttype;		/* type of result (same as type of arg) */
+	/* Like RowExpr, we deliberately omit a typmod here */
+} FieldStore;
+
+/* ----------------
  * RelabelType
  *
  * RelabelType represents a "dummy" type coercion between two binary-
@@ -607,6 +633,9 @@ typedef struct CaseWhen
  * Placeholder node for the test value to be processed by a CASE expression.
  * This is effectively like a Param, but can be implemented more simply
  * since we need only one replacement value at a time.
+ *
+ * We also use this in nested UPDATE expressions.
+ * See transformAssignmentIndirection().
  */
 typedef struct CaseTestExpr
 {

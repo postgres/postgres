@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.156 2004/05/26 13:57:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.157 2004/06/09 19:08:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,6 +110,7 @@ typedef enum NodeTag
 	T_SubLink,
 	T_SubPlan,
 	T_FieldSelect,
+	T_FieldStore,
 	T_RelabelType,
 	T_CaseExpr,
 	T_CaseWhen,
@@ -143,6 +144,7 @@ typedef enum NodeTag
 	T_BoolExprState,
 	T_SubPlanState,
 	T_FieldSelectState,
+	T_FieldStoreState,
 	T_CaseExprState,
 	T_CaseWhenState,
 	T_ArrayExprState,
@@ -274,7 +276,7 @@ typedef enum NodeTag
 	T_A_Const,
 	T_FuncCall,
 	T_A_Indices,
-	T_ExprFieldSelect,
+	T_A_Indirection,
 	T_ResTarget,
 	T_TypeCast,
 	T_SortBy,

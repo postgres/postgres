@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.163 2004/06/05 19:48:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.164 2004/06/09 19:08:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,6 +118,9 @@ static Datum ExecEvalCoerceToDomainValue(ExprState *exprstate,
 static Datum ExecEvalFieldSelect(FieldSelectState *fstate,
 					ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalFieldStore(FieldStoreState *fstate,
+					ExprContext *econtext,
+					bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalRelabelType(GenericExprState *exprstate,
 					ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone);
@@ -217,6 +220,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 	ArrayType  *array_source;
 	ArrayType  *resultArray;
 	bool		isAssignment = (arrayRef->refassgnexpr != NULL);
+	bool		eisnull;
 	ListCell   *l;
 	int			i = 0,
 				j = 0;
@@ -224,38 +228,22 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 				lower;
 	int		   *lIndex;
 
-	/* Set default values for result flags: non-null, not a set result */
-	*isNull = false;
-	if (isDone)
-		*isDone = ExprSingleResult;
+	array_source = (ArrayType *)
+		DatumGetPointer(ExecEvalExpr(astate->refexpr,
+									 econtext,
+									 isNull,
+									 isDone));
 
-	if (arrayRef->refexpr != NULL)
+	/*
+	 * If refexpr yields NULL, and it's a fetch, then result is NULL.
+	 * In the assignment case, we'll cons up something below.
+	 */
+	if (*isNull)
 	{
-		array_source = (ArrayType *)
-			DatumGetPointer(ExecEvalExpr(astate->refexpr,
-										 econtext,
-										 isNull,
-										 isDone));
-
-		/*
-		 * If refexpr yields NULL, result is always NULL, for now anyway.
-		 * (This means you cannot assign to an element or slice of an
-		 * array that's NULL; it'll just stay NULL.)
-		 */
-		if (*isNull)
+		if (isDone && *isDone == ExprEndResult)
+			return (Datum) NULL; /* end of set result */
+		if (!isAssignment)
 			return (Datum) NULL;
-	}
-	else
-	{
-		/*
-		 * Empty refexpr indicates we are doing an INSERT into an array
-		 * column. For now, we just take the refassgnexpr (which the
-		 * parser will have ensured is an array value) and return it
-		 * as-is, ignoring any subscripts that may have been supplied in
-		 * the INSERT column list. This is a kluge, but it's not real
-		 * clear what the semantics ought to be...
-		 */
-		array_source = NULL;
 	}
 
 	foreach(l, astate->refupperindexpr)
@@ -270,14 +258,16 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 
 		upper.indx[i++] = DatumGetInt32(ExecEvalExpr(eltstate,
 													 econtext,
-													 isNull,
+													 &eisnull,
 													 NULL));
 		/* If any index expr yields NULL, result is NULL or source array */
-		if (*isNull)
+		if (eisnull)
 		{
-			if (!isAssignment || array_source == NULL)
+			if (!isAssignment)
+			{
+				*isNull = true;
 				return (Datum) NULL;
-			*isNull = false;
+			}
 			return PointerGetDatum(array_source);
 		}
 	}
@@ -296,18 +286,20 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 
 			lower.indx[j++] = DatumGetInt32(ExecEvalExpr(eltstate,
 														 econtext,
-														 isNull,
+														 &eisnull,
 														 NULL));
 
 			/*
 			 * If any index expr yields NULL, result is NULL or source
 			 * array
 			 */
-			if (*isNull)
+			if (eisnull)
 			{
-				if (!isAssignment || array_source == NULL)
+				if (!isAssignment)
+				{
+					*isNull = true;
 					return (Datum) NULL;
-				*isNull = false;
+				}
 				return PointerGetDatum(array_source);
 			}
 		}
@@ -321,25 +313,49 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 
 	if (isAssignment)
 	{
-		Datum		sourceData = ExecEvalExpr(astate->refassgnexpr,
-											  econtext,
-											  isNull,
-											  NULL);
+		Datum		sourceData;
+
+		/*
+		 * Evaluate the value to be assigned into the array.
+		 *
+		 * XXX At some point we'll need to look into making the old value of
+		 * the array element available via CaseTestExpr, as is done by
+		 * ExecEvalFieldStore.  This is not needed now but will be needed
+		 * to support arrays of composite types; in an assignment to a field
+		 * of an array member, the parser would generate a FieldStore that
+		 * expects to fetch its input tuple via CaseTestExpr.
+		 */
+		sourceData = ExecEvalExpr(astate->refassgnexpr,
+								  econtext,
+								  &eisnull,
+								  NULL);
 
 		/*
 		 * For now, can't cope with inserting NULL into an array, so make
 		 * it a no-op per discussion above...
 		 */
+		if (eisnull)
+			return PointerGetDatum(array_source);
+
+		/*
+		 * For an assignment, if all the subscripts and the input expression
+		 * are non-null but the original array is null, then substitute an
+		 * empty (zero-dimensional) array and proceed with the assignment.
+		 * This only works for varlena arrays, though; for fixed-length
+		 * array types we punt and return the null input array.
+		 */
 		if (*isNull)
 		{
-			if (array_source == NULL)
-				return (Datum) NULL;
-			*isNull = false;
-			return PointerGetDatum(array_source);
-		}
+			if (astate->refattrlength > 0) /* fixed-length array? */
+				return PointerGetDatum(array_source);
 
-		if (array_source == NULL)
-			return sourceData;	/* XXX do something else? */
+			array_source = construct_md_array(NULL, 0, NULL, NULL,
+											  arrayRef->refelemtype,
+											  astate->refelemlength,
+											  astate->refelembyval,
+											  astate->refelemalign);
+			*isNull = false;
+		}
 
 		if (lIndex == NULL)
 			resultArray = array_set(array_source, i,
@@ -2539,6 +2555,120 @@ ExecEvalFieldSelect(FieldSelectState *fstate,
 }
 
 /* ----------------------------------------------------------------
+ *		ExecEvalFieldStore
+ *
+ *		Evaluate a FieldStore node.
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalFieldStore(FieldStoreState *fstate,
+				   ExprContext *econtext,
+				   bool *isNull,
+				   ExprDoneCond *isDone)
+{
+	FieldStore *fstore = (FieldStore *) fstate->xprstate.expr;
+	HeapTuple	tuple;
+	Datum		tupDatum;
+	TupleDesc	tupDesc;
+	Datum	   *values;
+	char	   *nulls;
+	Datum		save_datum;
+	bool		save_isNull;
+	ListCell   *l1,
+			   *l2;
+
+	tupDatum = ExecEvalExpr(fstate->arg, econtext, isNull, isDone);
+
+	if (isDone && *isDone == ExprEndResult)
+		return tupDatum;
+
+	/* Lookup tupdesc if first time through or if type changes */
+	tupDesc = fstate->argdesc;
+	if (tupDesc == NULL ||
+		fstore->resulttype != tupDesc->tdtypeid)
+	{
+		MemoryContext oldcontext;
+
+		tupDesc = lookup_rowtype_tupdesc(fstore->resulttype, -1);
+		/* Copy the tupdesc into query storage for safety */
+		oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+		tupDesc = CreateTupleDescCopy(tupDesc);
+		if (fstate->argdesc)
+			FreeTupleDesc(fstate->argdesc);
+		fstate->argdesc = tupDesc;
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	/* Allocate workspace */
+	values = (Datum *) palloc(tupDesc->natts * sizeof(Datum));
+	nulls = (char *) palloc(tupDesc->natts * sizeof(char));
+
+	if (!*isNull)
+	{
+		/*
+		 * heap_deformtuple needs a HeapTuple not a bare HeapTupleHeader.
+		 * We set all the fields in the struct just in case.
+		 */
+		HeapTupleHeader tuphdr;
+		HeapTupleData tmptup;
+
+		tuphdr = DatumGetHeapTupleHeader(tupDatum);
+		tmptup.t_len = HeapTupleHeaderGetDatumLength(tuphdr);
+		ItemPointerSetInvalid(&(tmptup.t_self));
+		tmptup.t_tableOid = InvalidOid;
+		tmptup.t_data = tuphdr;
+
+		heap_deformtuple(&tmptup, tupDesc, values, nulls);
+	}
+	else
+	{
+		/* Convert null input tuple into an all-nulls row */
+		memset(nulls, 'n', tupDesc->natts * sizeof(char));
+	}
+
+	/* Result is never null */
+	*isNull = false;
+
+	save_datum = econtext->caseValue_datum;
+	save_isNull = econtext->caseValue_isNull;
+
+	forboth(l1, fstate->newvals, l2, fstore->fieldnums)
+	{
+		ExprState *newval = (ExprState *) lfirst(l1);
+		AttrNumber fieldnum = lfirst_int(l2);
+		bool		eisnull;
+
+		Assert(fieldnum > 0 && fieldnum <= tupDesc->natts);
+
+		/*
+		 * Use the CaseTestExpr mechanism to pass down the old value of the
+		 * field being replaced; this is useful in case we have a nested field
+		 * update situation.  It's safe to reuse the CASE mechanism because
+		 * there cannot be a CASE between here and where the value would be
+		 * needed.
+		 */
+		econtext->caseValue_datum = values[fieldnum - 1];
+		econtext->caseValue_isNull = (nulls[fieldnum - 1] == 'n');
+
+		values[fieldnum - 1] = ExecEvalExpr(newval,
+											econtext,
+											&eisnull,
+											NULL);
+		nulls[fieldnum - 1] = eisnull ? 'n' : ' ';
+	}
+
+	econtext->caseValue_datum = save_datum;
+	econtext->caseValue_isNull = save_isNull;
+
+	tuple = heap_formtuple(tupDesc, values, nulls);
+
+	pfree(values);
+	pfree(nulls);
+
+	return HeapTupleGetDatum(tuple);
+}
+
+/* ----------------------------------------------------------------
  *		ExecEvalRelabelType
  *
  *		Evaluate a RelabelType node.
@@ -2806,6 +2936,18 @@ ExecInitExpr(Expr *node, PlanState *parent)
 
 				fstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalFieldSelect;
 				fstate->arg = ExecInitExpr(fselect->arg, parent);
+				fstate->argdesc = NULL;
+				state = (ExprState *) fstate;
+			}
+			break;
+		case T_FieldStore:
+			{
+				FieldStore *fstore = (FieldStore *) node;
+				FieldStoreState *fstate = makeNode(FieldStoreState);
+
+				fstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalFieldStore;
+				fstate->arg = ExecInitExpr(fstore->arg, parent);
+				fstate->newvals = (List *) ExecInitExpr((Expr *) fstore->newvals, parent);
 				fstate->argdesc = NULL;
 				state = (ExprState *) fstate;
 			}

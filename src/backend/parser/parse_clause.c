@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.131 2004/05/30 23:40:34 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.132 2004/06/09 19:08:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1122,8 +1122,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
 	 *----------
 	 */
 	if (IsA(node, ColumnRef) &&
-		list_length(((ColumnRef *) node)->fields) == 1 &&
-		((ColumnRef *) node)->indirection == NIL)
+		list_length(((ColumnRef *) node)->fields) == 1)
 	{
 		char	   *name = strVal(linitial(((ColumnRef *) node)->fields));
 

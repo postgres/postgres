@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.106 2004/06/06 00:41:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.107 2004/06/09 19:08:19 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3851,6 +3851,18 @@ exec_simple_check_node(Node *node)
 
 		case T_FieldSelect:
 			return exec_simple_check_node((Node *) ((FieldSelect *) node)->arg);
+
+		case T_FieldStore:
+			{
+				FieldStore   *expr = (FieldStore *) node;
+
+				if (!exec_simple_check_node((Node *) expr->arg))
+					return FALSE;
+				if (!exec_simple_check_node((Node *) expr->newvals))
+					return FALSE;
+
+				return TRUE;
+			}
 
 		case T_RelabelType:
 			return exec_simple_check_node((Node *) ((RelabelType *) node)->arg);

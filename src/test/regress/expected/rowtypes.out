@@ -87,18 +87,22 @@ select * from people;
  (Joe,Blow,) | 01-10-1984
 (1 row)
 
--- This fails at the moment, would like it to work though:
+-- test insertion/updating of subfields
 update people set fn.suffix = 'Jr';
-ERROR:  syntax error at or near "." at character 21
-LINE 1: update people set fn.suffix = 'Jr';
-                            ^
--- ugly workaround:
-update people set fn = ((fn).first, (fn).last, 'III');
 select * from people;
-       fn       |     bd     
-----------------+------------
- (Joe,Blow,III) | 01-10-1984
+      fn       |     bd     
+---------------+------------
+ (Joe,Blow,Jr) | 01-10-1984
 (1 row)
+
+insert into quadtable (f1, q.c1.r, q.c2.i) values(44,55,66);
+select * from quadtable;
+ f1 |             q             
+----+---------------------------
+  1 | ("(3.3,4.4)","(5.5,6.6)")
+  2 | ("(,4.4)","(5.5,6.6)")
+ 44 | ("(55,)","(,66)")
+(3 rows)
 
 -- The object here is to ensure that toasted references inside
 -- composite values don't cause problems.  The large f1 value will

@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.170 2004/06/06 00:41:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.171 2004/06/09 19:08:18 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -204,7 +204,8 @@ static void get_from_clause_coldeflist(List *coldeflist,
 						   deparse_context *context);
 static void get_opclass_name(Oid opclass, Oid actual_datatype,
 				 StringInfo buf);
-static bool tleIsArrayAssign(TargetEntry *tle);
+static Node *processIndirection(Node *node, deparse_context *context);
+static void printSubscripts(ArrayRef *aref, deparse_context *context);
 static char *generate_relation_name(Oid relid);
 static char *generate_function_name(Oid funcid, int nargs, Oid *argtypes);
 static char *generate_operator_name(Oid operid, Oid arg1, Oid arg2);
@@ -2061,6 +2062,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 	RangeTblEntry *rte;
 	char	   *sep;
 	ListCell   *l;
+	List	   *strippedexprs;
 
 	/*
 	 * If it's an INSERT ... SELECT there will be a single subquery RTE
@@ -2087,11 +2089,15 @@ get_insert_query_def(Query *query, deparse_context *context)
 		context->indentLevel += PRETTYINDENT_STD;
 		appendStringInfoChar(buf, ' ');
 	}
-	appendStringInfo(buf, "INSERT INTO %s",
+	appendStringInfo(buf, "INSERT INTO %s (",
 					 generate_relation_name(rte->relid));
 
-	/* Add the insert-column-names list */
-	sep = " (";
+	/*
+	 * Add the insert-column-names list, and make a list of the actual
+	 * assignment source expressions.
+	 */
+	strippedexprs = NIL;
+	sep = "";
 	foreach(l, query->targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
@@ -2101,9 +2107,22 @@ get_insert_query_def(Query *query, deparse_context *context)
 
 		appendStringInfo(buf, sep);
 		sep = ", ";
+
+		/*
+		 * Put out name of target column; look in the catalogs, not at
+		 * tle->resname, since resname will fail to track RENAME.
+		 */
 		appendStringInfoString(buf,
 							   quote_identifier(get_relid_attribute_name(rte->relid,
 																		 tle->resdom->resno)));
+
+		/*
+		 * Print any indirection needed (subfields or subscripts), and strip
+		 * off the top-level nodes representing the indirection assignments.
+		 */
+		strippedexprs = lappend(strippedexprs,
+								processIndirection((Node *) tle->expr,
+												   context));
 	}
 	appendStringInfo(buf, ") ");
 
@@ -2113,16 +2132,13 @@ get_insert_query_def(Query *query, deparse_context *context)
 		appendContextKeyword(context, "VALUES (",
 							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 2);
 		sep = "";
-		foreach(l, query->targetList)
+		foreach(l, strippedexprs)
 		{
-			TargetEntry *tle = (TargetEntry *) lfirst(l);
-
-			if (tle->resdom->resjunk)
-				continue;		/* ignore junk entries */
+			Node   *expr = lfirst(l);
 
 			appendStringInfo(buf, sep);
 			sep = ", ";
-			get_rule_expr((Node *) tle->expr, context, false);
+			get_rule_expr(expr, context, false);
 		}
 		appendStringInfoChar(buf, ')');
 	}
@@ -2163,6 +2179,7 @@ get_update_query_def(Query *query, deparse_context *context)
 	foreach(l, query->targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
+		Node	*expr;
 
 		if (tle->resdom->resjunk)
 			continue;			/* ignore junk entries */
@@ -2171,15 +2188,22 @@ get_update_query_def(Query *query, deparse_context *context)
 		sep = ", ";
 
 		/*
-		 * If the update expression is an array assignment, we mustn't put
-		 * out "attname =" here; it will come out of the display of the
-		 * ArrayRef node instead.
+		 * Put out name of target column; look in the catalogs, not at
+		 * tle->resname, since resname will fail to track RENAME.
 		 */
-		if (!tleIsArrayAssign(tle))
-			appendStringInfo(buf, "%s = ",
+		appendStringInfoString(buf,
 						quote_identifier(get_relid_attribute_name(rte->relid,
 														tle->resdom->resno)));
-		get_rule_expr((Node *) tle->expr, context, false);
+
+		/*
+		 * Print any indirection needed (subfields or subscripts), and strip
+		 * off the top-level nodes representing the indirection assignments.
+		 */
+		expr = processIndirection((Node *) tle->expr, context);
+
+		appendStringInfo(buf, " = ");
+
+		get_rule_expr(expr, context, false);
 	}
 
 	/* Add the FROM clause if needed */
@@ -2451,6 +2475,13 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 			 * T_FieldSelect itself!
 			 */
 			return (IsA(parentNode, FieldSelect) ? false : true);
+
+		case T_FieldStore:
+
+			/*
+			 * treat like FieldSelect (probably doesn't matter)
+			 */
+			return (IsA(parentNode, FieldStore) ? false : true);
 
 		case T_CoerceToDomain:
 			/* maybe simple, check args */
@@ -2757,53 +2788,27 @@ get_rule_expr(Node *node, deparse_context *context,
 		case T_ArrayRef:
 			{
 				ArrayRef   *aref = (ArrayRef *) node;
-				bool		savevarprefix = context->varprefix;
 				bool		need_parens;
-				ListCell   *lowlist_item;
-				ListCell   *uplist_item;
 
 				/*
-				 * If we are doing UPDATE array[n] = expr, we need to
-				 * suppress any prefix on the array name.  Currently, that
-				 * is the only context in which we will see a non-null
-				 * refassgnexpr --- but someday a smarter test may be
-				 * needed.
+				 * Parenthesize the argument unless it's a simple Var or
+				 * a FieldSelect.  (In particular, if it's another ArrayRef,
+				 * we *must* parenthesize to avoid confusion.)
 				 */
-				if (aref->refassgnexpr)
-					context->varprefix = false;
-
-				/*
-				 * Parenthesize the argument unless it's a simple Var.
-				 */
-				need_parens = (aref->refassgnexpr == NULL) &&
-					!IsA(aref->refexpr, Var);
+				need_parens = !IsA(aref->refexpr, Var) &&
+					!IsA(aref->refexpr, FieldSelect);
 				if (need_parens)
 					appendStringInfoChar(buf, '(');
 				get_rule_expr((Node *) aref->refexpr, context, showimplicit);
 				if (need_parens)
 					appendStringInfoChar(buf, ')');
-				context->varprefix = savevarprefix;
-				lowlist_item = list_head(aref->reflowerindexpr);
-				foreach(uplist_item, aref->refupperindexpr)
-				{
-					appendStringInfo(buf, "[");
-					if (lowlist_item)
-					{
-						get_rule_expr((Node *) lfirst(lowlist_item), context,
-									  false);
-						appendStringInfo(buf, ":");
-						lowlist_item = lnext(lowlist_item);
-					}
-					get_rule_expr((Node *) lfirst(uplist_item),
-								  context, false);
-					appendStringInfo(buf, "]");
-				}
+				printSubscripts(aref, context);
+				/*
+				 * Array assignment nodes should have been handled in
+				 * processIndirection().
+				 */
 				if (aref->refassgnexpr)
-				{
-					appendStringInfo(buf, " = ");
-					get_rule_expr((Node *) aref->refassgnexpr, context,
-								  showimplicit);
-				}
+					elog(ERROR, "unexpected refassgnexpr");
 			}
 			break;
 
@@ -2935,6 +2940,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				Oid			argType = exprType((Node *) fselect->arg);
 				Oid			typrelid;
 				char	   *fieldname;
+				bool		need_parens;
 
 				/* lookup arg type and get the field name */
 				typrelid = get_typ_typrelid(argType);
@@ -2943,17 +2949,29 @@ get_rule_expr(Node *node, deparse_context *context,
 						 format_type_be(argType));
 				fieldname = get_relid_attribute_name(typrelid,
 													 fselect->fieldnum);
-
 				/*
-				 * If the argument is simple enough, we could emit
-				 * arg.fieldname, but most cases where FieldSelect is used
-				 * are *not* simple.  So, always use parenthesized syntax.
+				 * Parenthesize the argument unless it's an ArrayRef or
+				 * another FieldSelect.  Note in particular that it would be
+				 * WRONG to not parenthesize a Var argument; simplicity is not
+				 * the issue here, having the right number of names is.
 				 */
-				appendStringInfoChar(buf, '(');
-				get_rule_expr_paren((Node *) fselect->arg, context, true, node);
-				appendStringInfoChar(buf, ')');
+				need_parens = !IsA(fselect->arg, ArrayRef) &&
+					!IsA(fselect->arg, FieldSelect);
+				if (need_parens)
+					appendStringInfoChar(buf, '(');
+				get_rule_expr((Node *) fselect->arg, context, true);
+				if (need_parens)
+					appendStringInfoChar(buf, ')');
 				appendStringInfo(buf, ".%s", quote_identifier(fieldname));
 			}
+			break;
+
+		case T_FieldStore:
+			/*
+			 * We shouldn't see FieldStore here; it should have been
+			 * stripped off by processIndirection().
+			 */
+			elog(ERROR, "unexpected FieldStore");
 			break;
 
 		case T_RelabelType:
@@ -4043,29 +4061,89 @@ get_opclass_name(Oid opclass, Oid actual_datatype,
 }
 
 /*
- * tleIsArrayAssign			- check for array assignment
+ * processIndirection - take care of array and subfield assignment
+ *
+ * We strip any top-level FieldStore or assignment ArrayRef nodes that
+ * appear in the input, printing out the appropriate decoration for the
+ * base column name (that the caller just printed).  We return the
+ * subexpression that's to be assigned.
  */
-static bool
-tleIsArrayAssign(TargetEntry *tle)
+static Node *
+processIndirection(Node *node, deparse_context *context)
 {
-	ArrayRef   *aref;
+	StringInfo	buf = context->buf;
 
-	if (tle->expr == NULL || !IsA(tle->expr, ArrayRef))
-		return false;
-	aref = (ArrayRef *) tle->expr;
-	if (aref->refassgnexpr == NULL)
-		return false;
+	for (;;)
+	{
+		if (node == NULL)
+			break;
+		if (IsA(node, FieldStore))
+		{
+			FieldStore *fstore = (FieldStore *) node;
+			Oid			typrelid;
+			char	   *fieldname;
 
-	/*
-	 * Currently, it should only be possible to see non-null refassgnexpr
-	 * if we are indeed looking at an "UPDATE array[n] = expr" situation.
-	 * So aref->refexpr ought to match the tle's target.
-	 */
-	if (aref->refexpr == NULL || !IsA(aref->refexpr, Var) ||
-		((Var *) aref->refexpr)->varattno != tle->resdom->resno)
-		elog(ERROR, "unrecognized situation in array assignment");
+			/* lookup tuple type */
+			typrelid = get_typ_typrelid(fstore->resulttype);
+			if (!OidIsValid(typrelid))
+				elog(ERROR, "argument type %s of FieldStore is not a tuple type",
+					 format_type_be(fstore->resulttype));
+			/*
+			 * Get the field name.  Note we assume here that there's only
+			 * one field being assigned to.  This is okay in stored rules
+			 * but could be wrong in executable target lists.  Presently no
+			 * problem since explain.c doesn't print plan targetlists, but
+			 * someday may have to think of something ...
+			 */
+			fieldname = get_relid_attribute_name(typrelid,
+												 linitial_int(fstore->fieldnums));
+			appendStringInfo(buf, ".%s", quote_identifier(fieldname));
+			/*
+			 * We ignore arg since it should be an uninteresting reference
+			 * to the target column or subcolumn.
+			 */
+			node = (Node *) linitial(fstore->newvals);
+		}
+		else if (IsA(node, ArrayRef))
+		{
+			ArrayRef   *aref = (ArrayRef *) node;
 
-	return true;
+			if (aref->refassgnexpr == NULL)
+				break;
+			printSubscripts(aref, context);
+			/*
+			 * We ignore refexpr since it should be an uninteresting reference
+			 * to the target column or subcolumn.
+			 */
+			node = (Node *) aref->refassgnexpr;
+		}
+		else
+			break;
+	}
+
+	return node;
+}
+
+static void
+printSubscripts(ArrayRef *aref, deparse_context *context)
+{
+	StringInfo	buf = context->buf;
+	ListCell   *lowlist_item;
+	ListCell   *uplist_item;
+
+	lowlist_item = list_head(aref->reflowerindexpr); /* could be NULL */
+	foreach(uplist_item, aref->refupperindexpr)
+	{
+		appendStringInfoChar(buf, '[');
+		if (lowlist_item)
+		{
+			get_rule_expr((Node *) lfirst(lowlist_item), context, false);
+			appendStringInfoChar(buf, ':');
+			lowlist_item = lnext(lowlist_item);
+		}
+		get_rule_expr((Node *) lfirst(uplist_item), context, false);
+		appendStringInfoChar(buf, ']');
+	}
 }
 
 /*

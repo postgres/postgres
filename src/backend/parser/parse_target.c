@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.120 2004/06/01 03:28:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.121 2004/06/09 19:08:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,9 +25,18 @@
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 
 
 static void markTargetListOrigin(ParseState *pstate, Resdom *res, Var *var);
+static Node *transformAssignmentIndirection(ParseState *pstate,
+							   Node *basenode,
+							   const char *targetName,
+							   bool targetIsArray,
+							   Oid targetTypeId,
+							   int32 targetTypMod,
+							   ListCell *indirection,
+							   Node *rhs);
 static List *ExpandAllTables(ParseState *pstate);
 static char *FigureColname(Node *node);
 static int	FigureColnameInternal(Node *node, char **name);
@@ -87,7 +96,7 @@ transformTargetEntry(ParseState *pstate,
  * Turns a list of ResTarget's into a list of TargetEntry's.
  *
  * At this point, we don't care whether we are doing SELECT, INSERT,
- * or UPDATE; we just transform the given expressions.
+ * or UPDATE; we just transform the given expressions (the "val" fields).
  */
 List *
 transformTargetList(ParseState *pstate, List *targetlist)
@@ -284,14 +293,14 @@ markTargetListOrigin(ParseState *pstate, Resdom *res, Var *var)
  *	This is used in INSERT and UPDATE statements only.	It prepares a
  *	TargetEntry for assignment to a column of the target table.
  *	This includes coercing the given value to the target column's type
- *	(if necessary), and dealing with any subscripts attached to the target
- *	column itself.
+ *	(if necessary), and dealing with any subfield names or subscripts
+ *	attached to the target column itself.
  *
  * pstate		parse state
  * tle			target list entry to be modified
  * colname		target column name (ie, name of attribute to be assigned to)
  * attrno		target attribute number
- * indirection	subscripts for target column, if any
+ * indirection	subscripts/field names for target column, if any
  */
 void
 updateTargetListEntry(ParseState *pstate,
@@ -320,8 +329,8 @@ updateTargetListEntry(ParseState *pstate,
 	 * type/typmod into it so that exprType will report the right things.
 	 * (We expect that the eventually substituted default expression will
 	 * in fact have this type and typmod.)	Also, reject trying to update
-	 * an array element with DEFAULT, since there can't be any default for
-	 * individual elements of a column.
+	 * a subfield or array element with DEFAULT, since there can't be any
+	 * default for portions of a column.
 	 */
 	if (tle->expr && IsA(tle->expr, SetToDefault))
 	{
@@ -330,82 +339,81 @@ updateTargetListEntry(ParseState *pstate,
 		def->typeId = attrtype;
 		def->typeMod = attrtypmod;
 		if (indirection)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot set an array element to DEFAULT")));
+		{
+			if (IsA(linitial(indirection), A_Indices))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot set an array element to DEFAULT")));
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot set a subfield to DEFAULT")));
+		}
 	}
 
 	/* Now we can use exprType() safely. */
 	type_id = exprType((Node *) tle->expr);
 
 	/*
-	 * If there are subscripts on the target column, prepare an array
-	 * assignment expression.  This will generate an array value that the
-	 * source value has been inserted into, which can then be placed in
-	 * the new tuple constructed by INSERT or UPDATE. Note that
-	 * transformArraySubscripts takes care of type coercion.
+	 * If there is indirection on the target column, prepare an array or
+	 * subfield assignment expression.  This will generate a new column value
+	 * that the source value has been inserted into, which can then be placed
+	 * in the new tuple constructed by INSERT or UPDATE.
 	 */
 	if (indirection)
 	{
-		Node	   *arrayBase;
-		ArrayRef   *aref;
+		Node	   *colVar;
 
 		if (pstate->p_is_insert)
 		{
 			/*
-			 * The command is INSERT INTO table (arraycol[subscripts]) ...
-			 * so there is not really a source array value to work with.
-			 * Let the executor do something reasonable, if it can. Notice
-			 * that we force transformArraySubscripts to treat the
-			 * subscripting op as an array-slice op below, so the source
-			 * data will have been coerced to the array type.
+			 * The command is INSERT INTO table (col.something) ...
+			 * so there is not really a source value to work with.
+			 * Insert a NULL constant as the source value.
 			 */
-			arrayBase = NULL;	/* signal there is no source array */
+			colVar = (Node *) makeNullConst(attrtype);
 		}
 		else
 		{
 			/*
-			 * Build a Var for the array to be updated.
+			 * Build a Var for the column to be updated.
 			 */
-			arrayBase = (Node *) make_var(pstate,
-										  pstate->p_target_rangetblentry,
-										  attrno);
+			colVar = (Node *) make_var(pstate,
+									   pstate->p_target_rangetblentry,
+									   attrno);
 		}
 
-		aref = transformArraySubscripts(pstate,
-										arrayBase,
-										attrtype,
-										attrtypmod,
-										indirection,
-										pstate->p_is_insert,
-										(Node *) tle->expr);
-		tle->expr = (Expr *) aref;
+		tle->expr = (Expr *)
+			transformAssignmentIndirection(pstate,
+										   colVar,
+										   colname,
+										   false,
+										   attrtype,
+										   attrtypmod,
+										   list_head(indirection),
+										   (Node *) tle->expr);
 	}
 	else
 	{
 		/*
-		 * For normal non-subscripted target column, do type checking and
-		 * coercion.  But accept InvalidOid, which indicates the source is
-		 * a NULL constant.  (XXX is that still true?)
+		 * For normal non-qualified target column, do type checking and
+		 * coercion.
 		 */
-		if (type_id != InvalidOid)
-		{
-			tle->expr = (Expr *)
-				coerce_to_target_type(pstate,
-									  (Node *) tle->expr, type_id,
-									  attrtype, attrtypmod,
-									  COERCION_ASSIGNMENT,
-									  COERCE_IMPLICIT_CAST);
-			if (tle->expr == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("column \"%s\" is of type %s"
-								" but expression is of type %s",
-								colname,
-								format_type_be(attrtype),
-								format_type_be(type_id)),
-						 errhint("You will need to rewrite or cast the expression.")));
-		}
+		tle->expr = (Expr *)
+			coerce_to_target_type(pstate,
+								  (Node *) tle->expr, type_id,
+								  attrtype, attrtypmod,
+								  COERCION_ASSIGNMENT,
+								  COERCE_IMPLICIT_CAST);
+		if (tle->expr == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("column \"%s\" is of type %s"
+							" but expression is of type %s",
+							colname,
+							format_type_be(attrtype),
+							format_type_be(type_id)),
+					 errhint("You will need to rewrite or cast the expression.")));
 	}
 
 	/*
@@ -423,6 +431,208 @@ updateTargetListEntry(ParseState *pstate,
 	 */
 	resnode->resno = (AttrNumber) attrno;
 	resnode->resname = colname;
+}
+
+/*
+ * Process indirection (field selection or subscripting) of the target
+ * column in INSERT/UPDATE.  This routine recurses for multiple levels
+ * of indirection --- but note that several adjacent A_Indices nodes in
+ * the indirection list are treated as a single multidimensional subscript
+ * operation.
+ *
+ * In the initial call, basenode is a Var for the target column in UPDATE,
+ * or a null Const of the target's type in INSERT.  In recursive calls,
+ * basenode is NULL, indicating that a substitute node should be consed up if
+ * needed.
+ *
+ * targetName is the name of the field or subfield we're assigning to, and
+ * targetIsArray is true if we're subscripting it.  These are just for
+ * error reporting.
+ *
+ * targetTypeId and targetTypMod indicate the datatype of the object to
+ * be assigned to (initially the target column, later some subobject).
+ *
+ * indirection is the sublist remaining to process.  When it's NULL, we're
+ * done recursing and can just coerce and return the RHS.
+ *
+ * rhs is the already-transformed value to be assigned; note it has not been
+ * coerced to any particular type.
+ */
+static Node *
+transformAssignmentIndirection(ParseState *pstate,
+							   Node *basenode,
+							   const char *targetName,
+							   bool targetIsArray,
+							   Oid targetTypeId,
+							   int32 targetTypMod,
+							   ListCell *indirection,
+							   Node *rhs)
+{
+	Node	   *result;
+	List	   *subscripts = NIL;
+	bool		isSlice = false;
+	ListCell   *i;
+
+	if (indirection && !basenode)
+	{
+		/* Set up a substitution.  We reuse CaseTestExpr for this. */
+		CaseTestExpr *ctest = makeNode(CaseTestExpr);
+
+		ctest->typeId = targetTypeId;
+		ctest->typeMod = targetTypMod;
+		basenode = (Node *) ctest;
+	}
+
+	/*
+	 * We have to split any field-selection operations apart from
+	 * subscripting.  Adjacent A_Indices nodes have to be treated
+	 * as a single multidimensional subscript operation.
+	 */
+	for_each_cell(i, indirection)
+	{
+		Node	*n = lfirst(i);
+
+		if (IsA(n, A_Indices))
+		{
+			subscripts = lappend(subscripts, n);
+			if (((A_Indices *) n)->lidx != NULL)
+				isSlice = true;
+		}
+		else
+		{
+			FieldStore *fstore;
+			Oid		typrelid;
+			AttrNumber attnum;
+			Oid	fieldTypeId;
+			int32 fieldTypMod;
+
+			Assert(IsA(n, String));
+
+			/* process subscripts before this field selection */
+			if (subscripts)
+			{
+				Oid elementTypeId = transformArrayType(targetTypeId);
+				Oid	typeNeeded = isSlice ? targetTypeId : elementTypeId;
+
+				/* recurse to create appropriate RHS for array assign */
+				rhs = transformAssignmentIndirection(pstate,
+													 NULL,
+													 targetName,
+													 true,
+													 typeNeeded,
+													 targetTypMod,
+													 i,
+													 rhs);
+				/* process subscripts */
+				return (Node *) transformArraySubscripts(pstate,
+														 basenode,
+														 targetTypeId,
+														 elementTypeId,
+														 targetTypMod,
+														 subscripts,
+														 rhs);
+			}
+
+			/* No subscripts, so can process field selection here */
+
+			typrelid = typeidTypeRelid(targetTypeId);
+			if (!typrelid)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("cannot assign to a column of type %s because it is not a composite type",
+								format_type_be(targetTypeId))));
+
+			attnum = get_attnum(typrelid, strVal(n));
+			if (attnum == InvalidAttrNumber)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("column \"%s\" not found in data type %s",
+								strVal(n), format_type_be(targetTypeId))));
+			if (attnum < 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("cannot assign to system column \"%s\"",
+								strVal(n))));
+
+			get_atttypetypmod(typrelid, attnum,
+							  &fieldTypeId, &fieldTypMod);
+
+			/* recurse to create appropriate RHS for field assign */
+			rhs = transformAssignmentIndirection(pstate,
+												 NULL,
+												 strVal(n),
+												 false,
+												 fieldTypeId,
+												 fieldTypMod,
+												 lnext(i),
+												 rhs);
+
+			/* and build a FieldStore node */
+			fstore = makeNode(FieldStore);
+			fstore->arg = (Expr *) basenode;
+			fstore->newvals = list_make1(rhs);
+			fstore->fieldnums = list_make1_int(attnum);
+			fstore->resulttype = targetTypeId;
+
+			return (Node *) fstore;
+		}
+	}
+
+	/* process trailing subscripts, if any */
+	if (subscripts)
+	{
+		Oid elementTypeId = transformArrayType(targetTypeId);
+		Oid	typeNeeded = isSlice ? targetTypeId : elementTypeId;
+
+		/* recurse to create appropriate RHS for array assign */
+		rhs = transformAssignmentIndirection(pstate,
+											 NULL,
+											 targetName,
+											 true,
+											 typeNeeded,
+											 targetTypMod,
+											 NULL,
+											 rhs);
+		/* process subscripts */
+		return (Node *) transformArraySubscripts(pstate,
+												 basenode,
+												 targetTypeId,
+												 elementTypeId,
+												 targetTypMod,
+												 subscripts,
+												 rhs);
+	}
+
+	/* base case: just coerce RHS to match target type ID */
+
+	result = coerce_to_target_type(pstate,
+								   rhs, exprType(rhs),
+								   targetTypeId, targetTypMod,
+								   COERCION_ASSIGNMENT,
+								   COERCE_IMPLICIT_CAST);
+	if (result == NULL)
+	{
+		if (targetIsArray)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("array assignment to \"%s\" requires type %s"
+							" but expression is of type %s",
+							targetName,
+							format_type_be(targetTypeId),
+							format_type_be(exprType(rhs))),
+					 errhint("You will need to rewrite or cast the expression.")));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("subfield \"%s\" is of type %s"
+							" but expression is of type %s",
+							targetName,
+							format_type_be(targetTypeId),
+							format_type_be(exprType(rhs))),
+					 errhint("You will need to rewrite or cast the expression.")));
+	}
+
+	return result;
 }
 
 
@@ -466,21 +676,42 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 		/*
 		 * Do initial validation of user-supplied INSERT column list.
 		 */
+		List	   *wholecols = NIL;
 		ListCell   *tl;
 
 		foreach(tl, cols)
 		{
-			char	   *name = ((ResTarget *) lfirst(tl))->name;
+			ResTarget  *col = (ResTarget *) lfirst(tl);
+			char	   *name = col->name;
 			int			attrno;
 
 			/* Lookup column name, ereport on failure */
 			attrno = attnameAttNum(pstate->p_target_relation, name, false);
-			/* Check for duplicates */
-			if (list_member_int(*attrnos, attrno))
-				ereport(ERROR,
-						(errcode(ERRCODE_DUPLICATE_COLUMN),
-					  errmsg("column \"%s\" specified more than once",
-							 name)));
+
+			/*
+			 * Check for duplicates, but only of whole columns --- we
+			 * allow  INSERT INTO foo (col.subcol1, col.subcol2)
+			 */
+			if (col->indirection == NIL)
+			{
+				/* whole column; must not have any other assignment */
+				if (list_member_int(*attrnos, attrno))
+					ereport(ERROR,
+							(errcode(ERRCODE_DUPLICATE_COLUMN),
+							 errmsg("column \"%s\" specified more than once",
+									name)));
+				wholecols = lappend_int(wholecols, attrno);
+			}
+			else
+			{
+				/* partial column; must not have any whole assignment */
+				if (list_member_int(wholecols, attrno))
+					ereport(ERROR,
+							(errcode(ERRCODE_DUPLICATE_COLUMN),
+							 errmsg("column \"%s\" specified more than once",
+									name)));
+			}
+
 			*attrnos = lappend_int(*attrnos, attrno);
 		}
 	}
@@ -572,30 +803,45 @@ FigureColnameInternal(Node *node, char **name)
 	{
 		case T_ColumnRef:
 			{
-				char	   *cname = strVal(llast(((ColumnRef *) node)->fields));
+				char	   *fname = NULL;
+				ListCell   *l;
 
-				if (strcmp(cname, "*") != 0)
+				/* find last field name, if any, ignoring "*" */
+				foreach(l, ((ColumnRef *) node)->fields)
 				{
-					*name = cname;
+					Node   *i = lfirst(l);
+
+					if (strcmp(strVal(i), "*") != 0)
+						fname = strVal(i);
+				}
+				if (fname)
+				{
+					*name = fname;
 					return 2;
 				}
 			}
 			break;
-		case T_ExprFieldSelect:
+		case T_A_Indirection:
 			{
-				ExprFieldSelect *efs = (ExprFieldSelect *) node;
+				A_Indirection *ind = (A_Indirection *) node;
+				char	   *fname = NULL;
+				ListCell   *l;
 
-				if (efs->fields)
+				/* find last field name, if any, ignoring "*" */
+				foreach(l, ind->indirection)
 				{
-					char	   *fname = strVal(llast(efs->fields));
+					Node   *i = lfirst(l);
 
-					if (strcmp(fname, "*") != 0)
-					{
-						*name = fname;
-						return 2;
-					}
+					if (IsA(i, String) &&
+						strcmp(strVal(i), "*") != 0)
+						fname = strVal(i);
 				}
-				return FigureColnameInternal(efs->arg, name);
+				if (fname)
+				{
+					*name = fname;
+					return 2;
+				}
+				return FigureColnameInternal(ind->arg, name);
 			}
 			break;
 		case T_FuncCall:

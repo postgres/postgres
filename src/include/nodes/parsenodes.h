@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.257 2004/06/02 21:01:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.258 2004/06/09 19:08:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,26 +166,26 @@ typedef struct TypeName
  * ColumnRef - specifies a reference to a column, or possibly a whole tuple
  *
  *		The "fields" list must be nonempty; its last component may be "*"
- *		instead of a field name.  Subscripts are optional.
+ *		instead of a regular field name.
+ *
+ * Note: any array subscripting or selection of fields from composite columns
+ * is represented by an A_Indirection node above the ColumnRef.  However,
+ * for simplicity in the normal case, initial field selection from a table
+ * name is represented within ColumnRef and not by adding A_Indirection.
  */
 typedef struct ColumnRef
 {
 	NodeTag		type;
 	List	   *fields;			/* field names (list of Value strings) */
-	List	   *indirection;	/* subscripts (list of A_Indices) */
 } ColumnRef;
 
 /*
- * ParamRef - specifies a parameter reference
- *
- *		The parameter could be qualified with field names and/or subscripts
+ * ParamRef - specifies a $n parameter reference
  */
 typedef struct ParamRef
 {
 	NodeTag		type;
 	int			number;			/* the number of the parameter */
-	List	   *fields;			/* field names (list of Value strings) */
-	List	   *indirection;	/* subscripts (list of A_Indices) */
 } ParamRef;
 
 /*
@@ -267,40 +267,50 @@ typedef struct A_Indices
 } A_Indices;
 
 /*
- * ExprFieldSelect - select a field and/or array element from an expression
+ * A_Indirection - select a field and/or array element from an expression
  *
- *		This is used in the raw parsetree to represent selection from an
- *		arbitrary expression (not a column or param reference).  Either
- *		fields or indirection may be NIL if not used.
+ * The indirection list can contain both A_Indices nodes (representing
+ * subscripting) and string Value nodes (representing field selection
+ * --- the string value is the name of the field to select).  For example,
+ * a complex selection operation like
+ *				(foo).field1[42][7].field2
+ * would be represented with a single A_Indirection node having a 4-element
+ * indirection list.
+ *
+ * Note: as of Postgres 7.5, we don't support arrays of composite values,
+ * so cases in which a field select follows a subscript aren't actually
+ * semantically legal.  However the parser is prepared to handle such.
  */
-typedef struct ExprFieldSelect
+typedef struct A_Indirection
 {
 	NodeTag		type;
 	Node	   *arg;			/* the thing being selected from */
-	List	   *fields;			/* field names (list of Value strings) */
-	List	   *indirection;	/* subscripts (list of A_Indices) */
-} ExprFieldSelect;
+	List	   *indirection;	/* subscripts and/or field names */
+} A_Indirection;
 
 /*
  * ResTarget -
- *	  result target (used in target list of pre-transformed Parse trees)
+ *	  result target (used in target list of pre-transformed parse trees)
  *
- * In a SELECT or INSERT target list, 'name' is either NULL or
- * the column name assigned to the value.  (If there is an 'AS ColumnLabel'
- * clause, the grammar sets 'name' from it; otherwise 'name' is initially NULL
- * and is filled in during the parse analysis phase.)
- * The 'indirection' field is not used at all.
+ * In a SELECT or INSERT target list, 'name' is the column label from an
+ * 'AS ColumnLabel' clause, or NULL if there was none, and 'val' is the
+ * value expression itself.  The 'indirection' field is not used.
+ *
+ * INSERT has a second ResTarget list which is the target-column-names list.
+ * Here, 'val' is not used, 'name' is the name of the destination column,
+ * and 'indirection' stores any subscripts attached to the destination.
  *
  * In an UPDATE target list, 'name' is the name of the destination column,
- * and 'indirection' stores any subscripts attached to the destination.
- * That is, our representation is UPDATE table SET name [indirection] = val.
+ * 'indirection' stores any subscripts attached to the destination, and
+ * 'val' is the expression to assign.
+ *
+ * See A_Indirection for more info about what can appear in 'indirection'.
  */
 typedef struct ResTarget
 {
 	NodeTag		type;
 	char	   *name;			/* column name or NULL */
-	List	   *indirection;	/* subscripts for destination column, or
-								 * NIL */
+	List	   *indirection;	/* subscripts and field names, or NIL */
 	Node	   *val;			/* the value expression to compute or
 								 * assign */
 } ResTarget;

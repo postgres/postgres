@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.174 2004/06/05 19:48:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.175 2004/06/09 19:08:16 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -724,6 +724,13 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 		/* an aggregate could return non-null with null input */
 		return true;
 	}
+	if (IsA(node, ArrayRef))
+	{
+		/* array assignment is nonstrict */
+		if (((ArrayRef *) node)->refassgnexpr != NULL)
+			return true;
+		/* else fall through to check args */
+	}
 	if (IsA(node, FuncExpr))
 	{
 		FuncExpr   *expr = (FuncExpr *) node;
@@ -770,6 +777,8 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 		return true;
 	}
 	if (IsA(node, SubPlan))
+		return true;
+	if (IsA(node, FieldStore))
 		return true;
 	if (IsA(node, CaseExpr))
 		return true;
@@ -2450,6 +2459,16 @@ expression_tree_walker(Node *node,
 			break;
 		case T_FieldSelect:
 			return walker(((FieldSelect *) node)->arg, context);
+		case T_FieldStore:
+			{
+				FieldStore   *fstore = (FieldStore *) node;
+
+				if (walker(fstore->arg, context))
+					return true;
+				if (walker(fstore->newvals, context))
+					return true;
+			}
+			break;
 		case T_RelabelType:
 			return walker(((RelabelType *) node)->arg, context);
 		case T_CaseExpr:
@@ -2837,6 +2856,18 @@ expression_tree_mutator(Node *node,
 
 				FLATCOPY(newnode, fselect, FieldSelect);
 				MUTATE(newnode->arg, fselect->arg, Expr *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_FieldStore:
+			{
+				FieldStore *fstore = (FieldStore *) node;
+				FieldStore *newnode;
+
+				FLATCOPY(newnode, fstore, FieldStore);
+				MUTATE(newnode->arg, fstore->arg, Expr *);
+				MUTATE(newnode->newvals, fstore->newvals, List *);
+				newnode->fieldnums = list_copy(fstore->fieldnums);
 				return (Node *) newnode;
 			}
 			break;

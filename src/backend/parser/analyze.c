@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.303 2004/06/04 03:24:04 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.304 2004/06/09 19:08:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2461,6 +2461,7 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 		if (origTargetList == NULL)
 			elog(ERROR, "UPDATE target count mismatch --- internal error");
 		origTarget = (ResTarget *) lfirst(origTargetList);
+		Assert(IsA(origTarget, ResTarget));
 
 		updateTargetListEntry(pstate, tle, origTarget->name,
 							  attnameAttNum(pstate->p_target_relation,

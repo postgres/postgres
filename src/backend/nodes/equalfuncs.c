@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.223 2004/05/30 23:40:27 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.224 2004/06/09 19:08:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -346,6 +346,17 @@ _equalFieldSelect(FieldSelect *a, FieldSelect *b)
 	COMPARE_SCALAR_FIELD(fieldnum);
 	COMPARE_SCALAR_FIELD(resulttype);
 	COMPARE_SCALAR_FIELD(resulttypmod);
+
+	return true;
+}
+
+static bool
+_equalFieldStore(FieldStore *a, FieldStore *b)
+{
+	COMPARE_NODE_FIELD(arg);
+	COMPARE_NODE_FIELD(newvals);
+	COMPARE_NODE_FIELD(fieldnums);
+	COMPARE_SCALAR_FIELD(resulttype);
 
 	return true;
 }
@@ -1428,7 +1439,6 @@ static bool
 _equalColumnRef(ColumnRef *a, ColumnRef *b)
 {
 	COMPARE_NODE_FIELD(fields);
-	COMPARE_NODE_FIELD(indirection);
 
 	return true;
 }
@@ -1437,8 +1447,6 @@ static bool
 _equalParamRef(ParamRef *a, ParamRef *b)
 {
 	COMPARE_SCALAR_FIELD(number);
-	COMPARE_NODE_FIELD(fields);
-	COMPARE_NODE_FIELD(indirection);
 
 	return true;
 }
@@ -1474,10 +1482,9 @@ _equalAIndices(A_Indices *a, A_Indices *b)
 }
 
 static bool
-_equalExprFieldSelect(ExprFieldSelect *a, ExprFieldSelect *b)
+_equalA_Indirection(A_Indirection *a, A_Indirection *b)
 {
 	COMPARE_NODE_FIELD(arg);
-	COMPARE_NODE_FIELD(fields);
 	COMPARE_NODE_FIELD(indirection);
 
 	return true;
@@ -1805,6 +1812,9 @@ equal(void *a, void *b)
 		case T_FieldSelect:
 			retval = _equalFieldSelect(a, b);
 			break;
+		case T_FieldStore:
+			retval = _equalFieldStore(a, b);
+			break;
 		case T_RelabelType:
 			retval = _equalRelabelType(a, b);
 			break;
@@ -2127,8 +2137,8 @@ equal(void *a, void *b)
 		case T_A_Indices:
 			retval = _equalAIndices(a, b);
 			break;
-		case T_ExprFieldSelect:
-			retval = _equalExprFieldSelect(a, b);
+		case T_A_Indirection:
+			retval = _equalA_Indirection(a, b);
 			break;
 		case T_ResTarget:
 			retval = _equalResTarget(a, b);

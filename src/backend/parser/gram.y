@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.460 2004/06/02 21:01:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.461 2004/06/09 19:08:17 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -75,6 +75,7 @@ static bool QueryIsRule = FALSE;
  */
 /*#define __YYSCLASS*/
 
+static Node *makeColumnRef(char *relname, List *indirection);
 static Node *makeTypeCast(Node *arg, TypeName *typename);
 static Node *makeStringConst(char *str, TypeName *typename);
 static Node *makeIntConst(int val);
@@ -84,6 +85,7 @@ static Node *makeRowNullTest(NullTestType test, RowExpr *row);
 static DefElem *makeDefElem(char *name, Node *arg);
 static A_Const *makeBoolAConst(bool state);
 static FuncCall *makeOverlaps(List *largs, List *rargs);
+static List *check_func_name(List *names);
 static List *extractArgTypes(List *parameters);
 static SelectStmt *findLeftmostSelect(SelectStmt *node);
 static void insertSelectOptions(SelectStmt *stmt,
@@ -110,7 +112,6 @@ static void doNegateFloat(Value *v);
 	List				*list;
 	Node				*node;
 	Value				*value;
-	ColumnRef			*columnref;
 	ObjectType			objtype;
 
 	TypeName			*typnam;
@@ -221,9 +222,9 @@ static void doNegateFloat(Value *v);
 				sort_clause opt_sort_clause sortby_list index_params
 				name_list from_clause from_list opt_array_bounds
 				qualified_name_list any_name any_name_list
-				any_operator expr_list dotted_name attrs
+				any_operator expr_list attrs
 				target_list update_target_list insert_column_list
-				insert_target_list def_list opt_indirection
+				insert_target_list def_list indirection opt_indirection
 				group_clause TriggerFuncArgs select_limit
 				opt_select_limit opclass_item_list transaction_mode_list
 				transaction_mode_list_or_empty
@@ -274,8 +275,8 @@ static void doNegateFloat(Value *v);
 %type <node>	TableElement ConstraintElem TableFuncElement
 %type <node>	columnDef
 %type <defelt>	def_elem
-%type <node>	def_arg columnElem where_clause insert_column_item
-				a_expr b_expr c_expr AexprConst
+%type <node>	def_arg columnElem where_clause
+				a_expr b_expr c_expr AexprConst indirection_el columnref
 				in_expr having_clause func_table array_expr
 %type <list>	row type_list array_expr_list
 %type <node>	case_expr case_arg when_clause case_default
@@ -284,14 +285,13 @@ static void doNegateFloat(Value *v);
 %type <list>	OptCreateAs CreateAsList
 %type <node>	CreateAsElement
 %type <value>	NumericOnly FloatOnly IntegerOnly
-%type <columnref>	columnref
 %type <alias>	alias_clause
 %type <sortby>	sortby
 %type <ielem>	index_elem
 %type <node>	table_ref
 %type <jexpr>	joined_table
 %type <range>	relation_expr
-%type <target>	target_el insert_target_el update_target_el
+%type <target>	target_el insert_target_el update_target_el insert_column_item
 
 %type <typnam>	Typename SimpleTypename ConstTypename
 				GenericType Numeric opt_float
@@ -2102,12 +2102,11 @@ opt_trusted:
 
 /* This ought to be just func_name, but that causes reduce/reduce conflicts
  * (CREATE LANGUAGE is the only place where func_name isn't followed by '(').
- * Work around by using name and dotted_name separately.
+ * Work around by using simple names, instead.
  */
 handler_name:
-			name
-							{ $$ = list_make1(makeString($1)); }
-			| dotted_name							{ $$ = $1; }
+			name						{ $$ = list_make1(makeString($1)); }
+			| name attrs				{ $$ = lcons(makeString($1), $2); }
 		;
 
 opt_lancompiler:
@@ -2578,8 +2577,19 @@ any_name_list:
 		;
 
 any_name:	ColId						{ $$ = list_make1(makeString($1)); }
-			| dotted_name				{ $$ = $1; }
+			| ColId attrs				{ $$ = lcons(makeString($1), $2); }
 		;
+
+/*
+ * The slightly convoluted way of writing this production avoids reduce/reduce
+ * errors against indirection_el.
+ */
+attrs:		'.' attr_name
+					{ $$ = list_make1(makeString($2)); }
+			| '.' attr_name attrs
+					{ $$ = lcons(makeString($2), $3); }
+		;
+
 
 /*****************************************************************************
  *
@@ -4387,7 +4397,8 @@ insert_rest:
 		;
 
 insert_column_list:
-			insert_column_item						{ $$ = list_make1($1); }
+			insert_column_item
+					{ $$ = list_make1($1); }
 			| insert_column_list ',' insert_column_item
 					{ $$ = lappend($1, $3); }
 		;
@@ -4395,11 +4406,10 @@ insert_column_list:
 insert_column_item:
 			ColId opt_indirection
 				{
-					ResTarget *n = makeNode(ResTarget);
-					n->name = $1;
-					n->indirection = $2;
-					n->val = NULL;
-					$$ = (Node *)n;
+					$$ = makeNode(ResTarget);
+					$$->name = $1;
+					$$->indirection = $2;
+					$$->val = NULL;
 				}
 		;
 
@@ -6203,35 +6213,28 @@ b_expr:		c_expr
  * inside parentheses, such as function arguments; that cannot introduce
  * ambiguity to the b_expr syntax.
  */
-c_expr:		columnref								{ $$ = (Node *) $1; }
+c_expr:		columnref								{ $$ = $1; }
 			| AexprConst							{ $$ = $1; }
-			| PARAM attrs opt_indirection
+			| PARAM opt_indirection
 				{
-					/*
-					 * PARAM without field names is considered a constant,
-					 * but with 'em, it is not.  Not very consistent ...
-					 */
-					ParamRef *n = makeNode(ParamRef);
-					n->number = $1;
-					n->fields = $2;
-					n->indirection = $3;
-					$$ = (Node *)n;
-				}
-			| '(' a_expr ')' attrs opt_indirection
-				{
-					ExprFieldSelect *n = makeNode(ExprFieldSelect);
-					n->arg = $2;
-					n->fields = $4;
-					n->indirection = $5;
-					$$ = (Node *)n;
+					ParamRef *p = makeNode(ParamRef);
+					p->number = $1;
+					if ($2)
+					{
+						A_Indirection *n = makeNode(A_Indirection);
+						n->arg = (Node *) p;
+						n->indirection = $2;
+						$$ = (Node *) n;
+					}
+					else
+						$$ = (Node *) p;
 				}
 			| '(' a_expr ')' opt_indirection
 				{
 					if ($4)
 					{
-						ExprFieldSelect *n = makeNode(ExprFieldSelect);
+						A_Indirection *n = makeNode(A_Indirection);
 						n->arg = $2;
-						n->fields = NIL;
 						n->indirection = $4;
 						$$ = (Node *)n;
 					}
@@ -6806,25 +6809,6 @@ subquery_Op:
  */
 			;
 
-opt_indirection:
-			opt_indirection '[' a_expr ']'
-				{
-					A_Indices *ai = makeNode(A_Indices);
-					ai->lidx = NULL;
-					ai->uidx = $3;
-					$$ = lappend($1, ai);
-				}
-			| opt_indirection '[' a_expr ':' a_expr ']'
-				{
-					A_Indices *ai = makeNode(A_Indices);
-					ai->lidx = $3;
-					ai->uidx = $5;
-					$$ = lappend($1, ai);
-				}
-			| /*EMPTY*/
-				{ $$ = NIL; }
-		;
-
 expr_list:	a_expr
 				{
 					$$ = list_make1($1);
@@ -7050,41 +7034,57 @@ case_arg:	a_expr									{ $$ = $1; }
  * references can be accepted.	Note that when there are more than two
  * dotted names, the first name is not actually a relation name...
  */
-columnref:	relation_name opt_indirection
+columnref:	relation_name
 				{
-					$$ = makeNode(ColumnRef);
-					$$->fields = list_make1(makeString($1));
-					$$->indirection = $2;
+					$$ = makeColumnRef($1, NIL);
 				}
-			| dotted_name opt_indirection
+			| relation_name indirection
 				{
-					$$ = makeNode(ColumnRef);
-					$$->fields = $1;
-					$$->indirection = $2;
+					$$ = makeColumnRef($1, $2);
 				}
 		;
 
-dotted_name:
-			relation_name attrs
-					{ $$ = lcons(makeString($1), $2); }
-		;
-
-attrs:		'.' attr_name
-					{ $$ = list_make1(makeString($2)); }
+indirection_el:
+			'.' attr_name
+				{
+					$$ = (Node *) makeString($2);
+				}
 			| '.' '*'
-					{ $$ = list_make1(makeString("*")); }
-			| '.' attr_name attrs
-					{ $$ = lcons(makeString($2), $3); }
+				{
+					$$ = (Node *) makeString("*");
+				}
+			| '[' a_expr ']'
+				{
+					A_Indices *ai = makeNode(A_Indices);
+					ai->lidx = NULL;
+					ai->uidx = $2;
+					$$ = (Node *) ai;
+				}
+			| '[' a_expr ':' a_expr ']'
+				{
+					A_Indices *ai = makeNode(A_Indices);
+					ai->lidx = $2;
+					ai->uidx = $4;
+					$$ = (Node *) ai;
+				}
+		;
+
+indirection:
+			indirection_el							{ $$ = list_make1($1); }
+			| indirection indirection_el			{ $$ = lappend($1, $2); }
+		;
+
+opt_indirection:
+			/*EMPTY*/								{ $$ = NIL; }
+			| opt_indirection indirection_el		{ $$ = lappend($1, $2); }
 		;
 
 
 /*****************************************************************************
  *
- *	target lists
+ *	target lists for SELECT, UPDATE, INSERT
  *
  *****************************************************************************/
-
-/* Target lists as found in SELECT ... and INSERT VALUES ( ... ) */
 
 target_list:
 			target_el								{ $$ = list_make1($1); }
@@ -7110,7 +7110,7 @@ target_el:	a_expr AS ColLabel
 				{
 					ColumnRef *n = makeNode(ColumnRef);
 					n->fields = list_make1(makeString("*"));
-					n->indirection = NIL;
+
 					$$ = makeNode(ResTarget);
 					$$->name = NULL;
 					$$->indirection = NIL;
@@ -7118,12 +7118,6 @@ target_el:	a_expr AS ColLabel
 				}
 		;
 
-/* Target list as found in UPDATE table SET ...
-| '(' row_ ')' = '(' row_ ')'
-{
-	$$ = NULL;
-}
- */
 update_target_list:
 			update_target_el						{ $$ = list_make1($1); }
 			| update_target_list ',' update_target_el { $$ = lappend($1,$3); }
@@ -7153,7 +7147,13 @@ insert_target_list:
 		;
 
 insert_target_el:
-			target_el								{ $$ = $1; }
+			a_expr
+				{
+					$$ = makeNode(ResTarget);
+					$$->name = NULL;
+					$$->indirection = NIL;
+					$$->val = (Node *)$1;
+				}
 			| DEFAULT
 				{
 					$$ = makeNode(ResTarget);
@@ -7188,26 +7188,26 @@ qualified_name:
 					$$->schemaname = NULL;
 					$$->relname = $1;
 				}
-			| dotted_name
+			| relation_name attrs
 				{
 					$$ = makeNode(RangeVar);
-					switch (list_length($1))
+					switch (list_length($2))
 					{
-						case 2:
+						case 1:
 							$$->catalogname = NULL;
-							$$->schemaname = strVal(linitial($1));
-							$$->relname = strVal(lsecond($1));
+							$$->schemaname = $1;
+							$$->relname = strVal(linitial($2));
 							break;
-						case 3:
-							$$->catalogname = strVal(linitial($1));
-							$$->schemaname = strVal(lsecond($1));
-							$$->relname = strVal(lthird($1));
+						case 2:
+							$$->catalogname = $1;
+							$$->schemaname = strVal(linitial($2));
+							$$->relname = strVal(lsecond($2));
 							break;
 						default:
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("improper qualified name (too many dotted names): %s",
-											NameListToString($1))));
+											NameListToString(lcons(makeString($1), $2)))));
 							break;
 					}
 				}
@@ -7234,9 +7234,18 @@ index_name: ColId									{ $$ = $1; };
 
 file_name:	Sconst									{ $$ = $1; };
 
+/*
+ * The production for a qualified func_name has to exactly match the
+ * production for a qualified columnref, because we cannot tell which we
+ * are parsing until we see what comes after it ('(' for a func_name,
+ * anything else for a columnref).  Therefore we allow 'indirection' which
+ * may contain subscripts, and reject that case in the C code.  (If we
+ * ever implement SQL99-like methods, such syntax may actually become legal!)
+ */
 func_name:	function_name
 					{ $$ = list_make1(makeString($1)); }
-			| dotted_name							{ $$ = $1; }
+			| relation_name indirection
+					{ $$ = check_func_name(lcons(makeString($1), $2)); }
 		;
 
 
@@ -7323,14 +7332,6 @@ AexprConst: Iconst
 						$3 = MAX_INTERVAL_PRECISION;
 					}
 					n->typename->typmod = INTERVAL_TYPMOD($3, $6);
-					$$ = (Node *)n;
-				}
-			| PARAM opt_indirection
-				{
-					ParamRef *n = makeNode(ParamRef);
-					n->number = $1;
-					n->fields = NIL;
-					n->indirection = $2;
 					$$ = (Node *)n;
 				}
 			| TRUE_P
@@ -7782,6 +7783,48 @@ SpecialRuleRelation:
 %%
 
 static Node *
+makeColumnRef(char *relname, List *indirection)
+{
+	/*
+	 * Generate a ColumnRef node, with an A_Indirection node added if there
+	 * is any subscripting in the specified indirection list.  However,
+	 * any field selection at the start of the indirection list must be
+	 * transposed into the "fields" part of the ColumnRef node.
+	 */
+	ColumnRef  *c = makeNode(ColumnRef);
+	int		nfields = 0;
+	ListCell *l;
+
+	foreach(l, indirection)
+	{
+		if (IsA(lfirst(l), A_Indices))
+		{
+			A_Indirection *i = makeNode(A_Indirection);
+
+			if (nfields == 0)
+			{
+				/* easy case - all indirection goes to A_Indirection */
+				c->fields = list_make1(makeString(relname));
+				i->indirection = indirection;
+			}
+			else
+			{
+				/* got to split the list in two */
+				i->indirection = list_copy_tail(indirection, nfields);
+				indirection = list_truncate(indirection, nfields);
+				c->fields = lcons(makeString(relname), indirection);
+			}
+			i->arg = (Node *) c;
+			return (Node *) i;
+		}
+		nfields++;
+	}
+	/* No subscripting, so all indirection gets added to field list */
+	c->fields = lcons(makeString(relname), indirection);
+	return (Node *) c;
+}
+
+static Node *
 makeTypeCast(Node *arg, TypeName *typename)
 {
 	/*
@@ -7943,6 +7986,26 @@ makeOverlaps(List *largs, List *rargs)
 	n->agg_star = FALSE;
 	n->agg_distinct = FALSE;
 	return n;
+}
+
+/* check_func_name --- check the result of func_name production
+ *
+ * It's easiest to let the grammar production for func_name allow subscripts
+ * and '*', which we then must reject here.
+ */
+static List *
+check_func_name(List *names)
+{
+	ListCell   *i;
+
+	foreach(i, names)
+	{
+		if (!IsA(lfirst(i), String))
+			yyerror("syntax error");
+		else if (strcmp(strVal(lfirst(i)), "*") == 0)
+			yyerror("syntax error");
+	}
+	return names;
 }
 
 /* extractArgTypes()

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.138 2004/05/30 23:40:35 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.139 2004/06/09 19:08:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,7 @@ static void rewriteTargetList(Query *parsetree, Relation target_relation);
 static TargetEntry *process_matched_tle(TargetEntry *src_tle,
 										TargetEntry *prior_tle,
 										const char *attrName);
+static Node *get_assignment_input(Node *node);
 static void markQueryForUpdate(Query *qry, bool skipOldNew);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
 		   int varno, Query *parsetree);
@@ -273,8 +274,9 @@ adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
  * expressions.
  *
  * 2. Merge multiple entries for the same target attribute, or declare error
- * if we can't.  Presently, multiple entries are only allowed for UPDATE of
- * an array field, for example "UPDATE table SET foo[2] = 42, foo[4] = 43".
+ * if we can't.  Multiple entries are only allowed for INSERT/UPDATE of
+ * portions of an array or record field, for example
+ *			UPDATE table SET foo[2] = 42, foo[4] = 43;
  * We can merge such operations into a single assignment op.  Essentially,
  * the expression we want to produce in this case is like
  *		foo = array_set(array_set(foo, 2, 42), 4, 43)
@@ -431,8 +433,12 @@ process_matched_tle(TargetEntry *src_tle,
 					const char *attrName)
 {
 	Resdom	   *resdom = src_tle->resdom;
+	Node	   *src_expr;
+	Node	   *prior_expr;
+	Node	   *src_input;
+	Node	   *prior_input;
 	Node	   *priorbottom;
-	ArrayRef   *newexpr;
+	Node	   *newexpr;
 
 	if (prior_tle == NULL)
 	{
@@ -443,30 +449,55 @@ process_matched_tle(TargetEntry *src_tle,
 		return src_tle;
 	}
 
-	/*
+	/*----------
 	 * Multiple assignments to same attribute.	Allow only if all are
-	 * array-assign operators with same bottom array object.
+	 * FieldStore or ArrayRef assignment operations.  This is a bit
+	 * tricky because what we may actually be looking at is a nest of
+	 * such nodes; consider
+	 *		UPDATE tab SET col.fld1.subfld1 = x, col.fld2.subfld2 = y
+	 * The two expressions produced by the parser will look like
+	 *		FieldStore(col, fld1, FieldStore(placeholder, subfld1, x))
+	 *		FieldStore(col, fld2, FieldStore(placeholder, subfld2, x))
+	 * However, we can ignore the substructure and just consider the top
+	 * FieldStore or ArrayRef from each assignment, because it works to
+	 * combine these as
+	 *		FieldStore(FieldStore(col, fld1,
+	 *							  FieldStore(placeholder, subfld1, x)),
+	 *				   fld2, FieldStore(placeholder, subfld2, x))
+	 * Note the leftmost expression goes on the inside so that the
+	 * assignments appear to occur left-to-right.
+	 *
+	 * For FieldStore, instead of nesting we can generate a single
+	 * FieldStore with multiple target fields.  We must nest when
+	 * ArrayRefs are involved though.
+	 *----------
 	 */
-	if (src_tle->expr == NULL || !IsA(src_tle->expr, ArrayRef) ||
-		((ArrayRef *) src_tle->expr)->refassgnexpr == NULL ||
-		prior_tle->expr == NULL || !IsA(prior_tle->expr, ArrayRef) ||
-		((ArrayRef *) prior_tle->expr)->refassgnexpr == NULL ||
-		((ArrayRef *) src_tle->expr)->refrestype !=
-		((ArrayRef *) prior_tle->expr)->refrestype)
+	src_expr = (Node *) src_tle->expr;
+	prior_expr = (Node *) prior_tle->expr;
+	src_input = get_assignment_input(src_expr);
+	prior_input = get_assignment_input(prior_expr);
+	if (src_input == NULL ||
+		prior_input == NULL ||
+		exprType(src_expr) != exprType(prior_expr))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("multiple assignments to same column \"%s\"",
 						attrName)));
 
 	/*
-	 * Prior TLE could be a nest of ArrayRefs if we do this more than
+	 * Prior TLE could be a nest of assignments if we do this more than
 	 * once.
 	 */
-	priorbottom = (Node *) ((ArrayRef *) prior_tle->expr)->refexpr;
-	while (priorbottom != NULL && IsA(priorbottom, ArrayRef) &&
-		   ((ArrayRef *) priorbottom)->refassgnexpr != NULL)
-		priorbottom = (Node *) ((ArrayRef *) priorbottom)->refexpr;
-	if (!equal(priorbottom, ((ArrayRef *) src_tle->expr)->refexpr))
+	priorbottom = prior_input;
+	for (;;)
+	{
+		Node	*newbottom = get_assignment_input(priorbottom);
+
+		if (newbottom == NULL)
+			break;				/* found the original Var reference */
+		priorbottom = newbottom;
+	}
+	if (!equal(priorbottom, src_input))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("multiple assignments to same column \"%s\"",
@@ -475,13 +506,70 @@ process_matched_tle(TargetEntry *src_tle,
 	/*
 	 * Looks OK to nest 'em.
 	 */
-	newexpr = makeNode(ArrayRef);
-	memcpy(newexpr, src_tle->expr, sizeof(ArrayRef));
-	newexpr->refexpr = prior_tle->expr;
+	if (IsA(src_expr, FieldStore))
+	{
+		FieldStore   *fstore = makeNode(FieldStore);
+
+		if (IsA(prior_expr, FieldStore))
+		{
+			/* combine the two */
+			memcpy(fstore, prior_expr, sizeof(FieldStore));
+			fstore->newvals =
+				list_concat(list_copy(((FieldStore *) prior_expr)->newvals),
+							list_copy(((FieldStore *) src_expr)->newvals));
+			fstore->fieldnums =
+				list_concat(list_copy(((FieldStore *) prior_expr)->fieldnums),
+							list_copy(((FieldStore *) src_expr)->fieldnums));
+		}
+		else
+		{
+			/* general case, just nest 'em */
+			memcpy(fstore, src_expr, sizeof(FieldStore));
+			fstore->arg = (Expr *) prior_expr;
+		}
+		newexpr = (Node *) fstore;
+	}
+	else if (IsA(src_expr, ArrayRef))
+	{
+		ArrayRef   *aref = makeNode(ArrayRef);
+
+		memcpy(aref, src_expr, sizeof(ArrayRef));
+		aref->refexpr = (Expr *) prior_expr;
+		newexpr = (Node *) aref;
+	}
+	else
+	{
+		elog(ERROR, "can't happen");
+		newexpr = NULL;
+	}
 
 	return makeTargetEntry(resdom, (Expr *) newexpr);
 }
 
+/*
+ * If node is an assignment node, return its input; else return NULL
+ */
+static Node *
+get_assignment_input(Node *node)
+{
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, FieldStore))
+	{
+		FieldStore *fstore = (FieldStore *) node;
+
+		return (Node *) fstore->arg;
+	}
+	else if (IsA(node, ArrayRef))
+	{
+		ArrayRef   *aref = (ArrayRef *) node;
+
+		if (aref->refassgnexpr == NULL)
+			return NULL;
+		return (Node *) aref->refexpr;
+	}
+	return NULL;
+}
 
 /*
  * Make an expression tree for the default value for a column.

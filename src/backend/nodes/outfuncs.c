@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.238 2004/05/30 23:40:27 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.239 2004/06/09 19:08:15 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -746,6 +746,17 @@ _outFieldSelect(StringInfo str, FieldSelect *node)
 }
 
 static void
+_outFieldStore(StringInfo str, FieldStore *node)
+{
+	WRITE_NODE_TYPE("FIELDSTORE");
+
+	WRITE_NODE_FIELD(arg);
+	WRITE_NODE_FIELD(newvals);
+	WRITE_NODE_FIELD(fieldnums);
+	WRITE_OID_FIELD(resulttype);
+}
+
+static void
 _outRelabelType(StringInfo str, RelabelType *node)
 {
 	WRITE_NODE_TYPE("RELABELTYPE");
@@ -1166,8 +1177,24 @@ _outSelectStmt(StringInfo str, SelectStmt *node)
 {
 	WRITE_NODE_TYPE("SELECT");
 
-	/* XXX this is pretty durn incomplete */
 	WRITE_NODE_FIELD(whereClause);
+	WRITE_NODE_FIELD(distinctClause);
+	WRITE_NODE_FIELD(into);
+	WRITE_NODE_FIELD(intoColNames);
+	WRITE_ENUM_FIELD(intoHasOids, ContainsOids);
+	WRITE_NODE_FIELD(targetList);
+	WRITE_NODE_FIELD(fromClause);
+	WRITE_NODE_FIELD(whereClause);
+	WRITE_NODE_FIELD(groupClause);
+	WRITE_NODE_FIELD(havingClause);
+	WRITE_NODE_FIELD(sortClause);
+	WRITE_NODE_FIELD(limitOffset);
+	WRITE_NODE_FIELD(limitCount);
+	WRITE_NODE_FIELD(forUpdate);
+	WRITE_ENUM_FIELD(op, SetOperation);
+	WRITE_BOOL_FIELD(all);
+	WRITE_NODE_FIELD(larg);
+	WRITE_NODE_FIELD(rarg);
 }
 
 static void
@@ -1179,6 +1206,15 @@ _outFuncCall(StringInfo str, FuncCall *node)
 	WRITE_NODE_FIELD(args);
 	WRITE_BOOL_FIELD(agg_star);
 	WRITE_BOOL_FIELD(agg_distinct);
+}
+
+static void
+_outDefElem(StringInfo str, DefElem *node)
+{
+	WRITE_NODE_TYPE("DEFELEM");
+
+	WRITE_STRING_FIELD(defname);
+	WRITE_NODE_FIELD(arg);
 }
 
 static void
@@ -1439,7 +1475,6 @@ _outColumnRef(StringInfo str, ColumnRef *node)
 	WRITE_NODE_TYPE("COLUMNREF");
 
 	WRITE_NODE_FIELD(fields);
-	WRITE_NODE_FIELD(indirection);
 }
 
 static void
@@ -1448,27 +1483,43 @@ _outParamRef(StringInfo str, ParamRef *node)
 	WRITE_NODE_TYPE("PARAMREF");
 
 	WRITE_INT_FIELD(number);
-	WRITE_NODE_FIELD(fields);
-	WRITE_NODE_FIELD(indirection);
 }
 
 static void
 _outAConst(StringInfo str, A_Const *node)
 {
-	WRITE_NODE_TYPE("CONST ");
+	WRITE_NODE_TYPE("A_CONST");
 
 	_outValue(str, &(node->val));
 	WRITE_NODE_FIELD(typename);
 }
 
 static void
-_outExprFieldSelect(StringInfo str, ExprFieldSelect *node)
+_outA_Indices(StringInfo str, A_Indices *node)
 {
-	WRITE_NODE_TYPE("EXPRFIELDSELECT");
+	WRITE_NODE_TYPE("A_INDICES");
+
+	WRITE_NODE_FIELD(lidx);
+	WRITE_NODE_FIELD(uidx);
+}
+
+static void
+_outA_Indirection(StringInfo str, A_Indirection *node)
+{
+	WRITE_NODE_TYPE("A_INDIRECTION");
 
 	WRITE_NODE_FIELD(arg);
-	WRITE_NODE_FIELD(fields);
 	WRITE_NODE_FIELD(indirection);
+}
+
+static void
+_outResTarget(StringInfo str, ResTarget *node)
+{
+	WRITE_NODE_TYPE("RESTARGET");
+
+	WRITE_STRING_FIELD(name);
+	WRITE_NODE_FIELD(indirection);
+	WRITE_NODE_FIELD(val);
 }
 
 static void
@@ -1666,6 +1717,9 @@ _outNode(StringInfo str, void *obj)
 			case T_FieldSelect:
 				_outFieldSelect(str, obj);
 				break;
+			case T_FieldStore:
+				_outFieldStore(str, obj);
+				break;
 			case T_RelabelType:
 				_outRelabelType(str, obj);
 				break;
@@ -1815,8 +1869,14 @@ _outNode(StringInfo str, void *obj)
 			case T_A_Const:
 				_outAConst(str, obj);
 				break;
-			case T_ExprFieldSelect:
-				_outExprFieldSelect(str, obj);
+			case T_A_Indices:
+				_outA_Indices(str, obj);
+				break;
+			case T_A_Indirection:
+				_outA_Indirection(str, obj);
+				break;
+			case T_ResTarget:
+				_outResTarget(str, obj);
 				break;
 			case T_Constraint:
 				_outConstraint(str, obj);
@@ -1826,6 +1886,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_FuncCall:
 				_outFuncCall(str, obj);
+				break;
+			case T_DefElem:
+				_outDefElem(str, obj);
 				break;
 
 			default:

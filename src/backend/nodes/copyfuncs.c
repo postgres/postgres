@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.284 2004/05/30 23:40:27 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.285 2004/06/09 19:08:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -845,6 +845,22 @@ _copyFieldSelect(FieldSelect *from)
 }
 
 /*
+ * _copyFieldStore
+ */
+static FieldStore *
+_copyFieldStore(FieldStore *from)
+{
+	FieldStore *newnode = makeNode(FieldStore);
+
+	COPY_NODE_FIELD(arg);
+	COPY_NODE_FIELD(newvals);
+	COPY_NODE_FIELD(fieldnums);
+	COPY_SCALAR_FIELD(resulttype);
+
+	return newnode;
+}
+
+/*
  * _copyRelabelType
  */
 static RelabelType *
@@ -1275,7 +1291,6 @@ _copyColumnRef(ColumnRef *from)
 	ColumnRef  *newnode = makeNode(ColumnRef);
 
 	COPY_NODE_FIELD(fields);
-	COPY_NODE_FIELD(indirection);
 
 	return newnode;
 }
@@ -1286,8 +1301,6 @@ _copyParamRef(ParamRef *from)
 	ParamRef   *newnode = makeNode(ParamRef);
 
 	COPY_SCALAR_FIELD(number);
-	COPY_NODE_FIELD(fields);
-	COPY_NODE_FIELD(indirection);
 
 	return newnode;
 }
@@ -1347,13 +1360,12 @@ _copyAIndices(A_Indices *from)
 	return newnode;
 }
 
-static ExprFieldSelect *
-_copyExprFieldSelect(ExprFieldSelect *from)
+static A_Indirection *
+_copyA_Indirection(A_Indirection *from)
 {
-	ExprFieldSelect *newnode = makeNode(ExprFieldSelect);
+	A_Indirection *newnode = makeNode(A_Indirection);
 
 	COPY_NODE_FIELD(arg);
-	COPY_NODE_FIELD(fields);
 	COPY_NODE_FIELD(indirection);
 
 	return newnode;
@@ -2648,6 +2660,9 @@ copyObject(void *from)
 		case T_FieldSelect:
 			retval = _copyFieldSelect(from);
 			break;
+		case T_FieldStore:
+			retval = _copyFieldStore(from);
+			break;
 		case T_RelabelType:
 			retval = _copyRelabelType(from);
 			break;
@@ -2984,8 +2999,8 @@ copyObject(void *from)
 		case T_A_Indices:
 			retval = _copyAIndices(from);
 			break;
-		case T_ExprFieldSelect:
-			retval = _copyExprFieldSelect(from);
+		case T_A_Indirection:
+			retval = _copyA_Indirection(from);
 			break;
 		case T_ResTarget:
 			retval = _copyResTarget(from);

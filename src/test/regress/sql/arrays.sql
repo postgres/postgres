@@ -13,11 +13,10 @@ CREATE TABLE arrtest (
 );
 
 --
--- only this array as a 0-based 'e', the others are 1-based.
--- 'e' is also a large object.
+-- only the 'e' array is 0-based, the others are 1-based.
 --
 
-INSERT INTO arrtest (a[5], b[2][1][2], c, d, f, g)
+INSERT INTO arrtest (a[1:5], b[1:1][1:2][1:2], c, d, f, g)
    VALUES ('{1,2,3,4,5}', '{{{0,0},{1,2}}}', '{}', '{}', '{}', '{}');
 
 UPDATE arrtest SET e[0] = '1.1';
@@ -27,12 +26,12 @@ UPDATE arrtest SET e[1] = '2.2';
 INSERT INTO arrtest (f)
    VALUES ('{"too long"}');
 
-INSERT INTO arrtest (a, b[2][2][1], c, d, e, f, g)
+INSERT INTO arrtest (a, b[1:2][1:2], c, d, e, f, g)
    VALUES ('{11,12,23}', '{{3,4},{4,5}}', '{"foobar"}', 
            '{{"elt1", "elt2"}}', '{"3.4", "6.7"}',
            '{"abc","abcde"}', '{"abc","abcde"}');
 
-INSERT INTO arrtest (a, b[1][2][2], c, d[2][1])
+INSERT INTO arrtest (a, b[1:2], c, d[1:2])
    VALUES ('{}', '{3,4}', '{foo,bar}', '{bar,foo}');
 
 

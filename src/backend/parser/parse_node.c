@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.83 2004/05/26 04:41:30 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.84 2004/06/09 19:08:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,6 +68,39 @@ make_var(ParseState *pstate, RangeTblEntry *rte, int attrno)
 }
 
 /*
+ * transformArrayType()
+ *		Get the element type of an array type in preparation for subscripting
+ */
+Oid
+transformArrayType(Oid arrayType)
+{
+	Oid			elementType;
+	HeapTuple	type_tuple_array;
+	Form_pg_type type_struct_array;
+
+	/* Get the type tuple for the array */
+	type_tuple_array = SearchSysCache(TYPEOID,
+									  ObjectIdGetDatum(arrayType),
+									  0, 0, 0);
+	if (!HeapTupleIsValid(type_tuple_array))
+		elog(ERROR, "cache lookup failed for type %u", arrayType);
+	type_struct_array = (Form_pg_type) GETSTRUCT(type_tuple_array);
+
+	/* needn't check typisdefined since this will fail anyway */
+
+	elementType = type_struct_array->typelem;
+	if (elementType == InvalidOid)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+			errmsg("cannot subscript type %s because it is not an array",
+				   format_type_be(arrayType))));
+
+	ReleaseSysCache(type_tuple_array);
+
+	return elementType;
+}
+
+/*
  * transformArraySubscripts()
  *		Transform array subscripting.  This is used for both
  *		array fetch and array assignment.
@@ -83,68 +116,49 @@ make_var(ParseState *pstate, RangeTblEntry *rte, int attrno)
  *
  * pstate		Parse state
  * arrayBase	Already-transformed expression for the array as a whole
- *				(may be NULL if we are handling an INSERT)
- * arrayType	OID of array's datatype
- * arrayTypMod	typmod to be applied to array elements
+ * arrayType	OID of array's datatype (should match type of arrayBase)
+ * elementType	OID of array's element type (fetch with transformArrayType,
+ *				or pass InvalidOid to do it here)
+ * elementTypMod typmod to be applied to array elements (if storing)
  * indirection	Untransformed list of subscripts (must not be NIL)
- * forceSlice	If true, treat subscript as array slice in all cases
  * assignFrom	NULL for array fetch, else transformed expression for source.
  */
 ArrayRef *
 transformArraySubscripts(ParseState *pstate,
 						 Node *arrayBase,
 						 Oid arrayType,
-						 int32 arrayTypMod,
+						 Oid elementType,
+						 int32 elementTypMod,
 						 List *indirection,
-						 bool forceSlice,
 						 Node *assignFrom)
 {
-	Oid			elementType,
-				resultType;
-	HeapTuple	type_tuple_array;
-	Form_pg_type type_struct_array;
-	bool		isSlice = forceSlice;
+	Oid			resultType;
+	bool		isSlice = false;
 	List	   *upperIndexpr = NIL;
 	List	   *lowerIndexpr = NIL;
 	ListCell   *idx;
 	ArrayRef   *aref;
 
-	/* Get the type tuple for the array */
-	type_tuple_array = SearchSysCache(TYPEOID,
-									  ObjectIdGetDatum(arrayType),
-									  0, 0, 0);
-	if (!HeapTupleIsValid(type_tuple_array))
-		elog(ERROR, "cache lookup failed for type %u", arrayType);
-	type_struct_array = (Form_pg_type) GETSTRUCT(type_tuple_array);
-
-	elementType = type_struct_array->typelem;
-	if (elementType == InvalidOid)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-			errmsg("cannot subscript type %s because it is not an array",
-				   format_type_be(arrayType))));
+	/* Caller may or may not have bothered to determine elementType */
+	if (!OidIsValid(elementType))
+		elementType = transformArrayType(arrayType);
 
 	/*
 	 * A list containing only single subscripts refers to a single array
 	 * element.  If any of the items are double subscripts (lower:upper),
 	 * then the subscript expression means an array slice operation. In
 	 * this case, we supply a default lower bound of 1 for any items that
-	 * contain only a single subscript. The forceSlice parameter forces us
-	 * to treat the operation as a slice, even if no lower bounds are
-	 * mentioned.  Otherwise, we have to prescan the indirection list to
-	 * see if there are any double subscripts.
+	 * contain only a single subscript.  We have to prescan the indirection
+	 * list to see if there are any double subscripts.
 	 */
-	if (!isSlice)
+	foreach(idx, indirection)
 	{
-		foreach(idx, indirection)
-		{
-			A_Indices  *ai = (A_Indices *) lfirst(idx);
+		A_Indices  *ai = (A_Indices *) lfirst(idx);
 
-			if (ai->lidx != NULL)
-			{
-				isSlice = true;
-				break;
-			}
+		if (ai->lidx != NULL)
+		{
+			isSlice = true;
+			break;
 		}
 	}
 
@@ -166,6 +180,7 @@ transformArraySubscripts(ParseState *pstate,
 		A_Indices  *ai = (A_Indices *) lfirst(idx);
 		Node	   *subexpr;
 
+		Assert(IsA(ai, A_Indices));
 		if (isSlice)
 		{
 			if (ai->lidx)
@@ -209,28 +224,26 @@ transformArraySubscripts(ParseState *pstate,
 
 	/*
 	 * If doing an array store, coerce the source value to the right type.
+	 * (This should agree with the coercion done by updateTargetListEntry.)
 	 */
 	if (assignFrom != NULL)
 	{
 		Oid			typesource = exprType(assignFrom);
 		Oid			typeneeded = isSlice ? arrayType : elementType;
 
-		if (typesource != InvalidOid)
-		{
-			assignFrom = coerce_to_target_type(pstate,
-											   assignFrom, typesource,
-											   typeneeded, arrayTypMod,
-											   COERCION_ASSIGNMENT,
-											   COERCE_IMPLICIT_CAST);
-			if (assignFrom == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("array assignment requires type %s"
-								" but expression is of type %s",
-								format_type_be(typeneeded),
-								format_type_be(typesource)),
-						 errhint("You will need to rewrite or cast the expression.")));
-		}
+		assignFrom = coerce_to_target_type(pstate,
+										   assignFrom, typesource,
+										   typeneeded, elementTypMod,
+										   COERCION_ASSIGNMENT,
+										   COERCE_IMPLICIT_CAST);
+		if (assignFrom == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("array assignment requires type %s"
+							" but expression is of type %s",
+							format_type_be(typeneeded),
+							format_type_be(typesource)),
+					 errhint("You will need to rewrite or cast the expression.")));
 	}
 
 	/*
@@ -244,8 +257,6 @@ transformArraySubscripts(ParseState *pstate,
 	aref->reflowerindexpr = lowerIndexpr;
 	aref->refexpr = (Expr *) arrayBase;
 	aref->refassgnexpr = (Expr *) assignFrom;
-
-	ReleaseSysCache(type_tuple_array);
 
 	return aref;
 }

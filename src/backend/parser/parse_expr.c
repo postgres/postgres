@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.172 2004/05/30 23:40:35 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.173 2004/06/09 19:08:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,6 @@ transformExpr(ParseState *pstate, Node *expr)
 				int			paramno = pref->number;
 				ParseState *toppstate;
 				Param	   *param;
-				ListCell   *fields;
 
 				/*
 				 * Find topmost ParseState, which is where paramtype info
@@ -148,18 +147,6 @@ transformExpr(ParseState *pstate, Node *expr)
 				param->paramid = (AttrNumber) paramno;
 				param->paramtype = toppstate->p_paramtypes[paramno - 1];
 				result = (Node *) param;
-
-				/* handle qualification, if any */
-				foreach(fields, pref->fields)
-				{
-					result = ParseFuncOrColumn(pstate,
-											   list_make1(lfirst(fields)),
-											   list_make1(result),
-											   false, false, true);
-				}
-				/* handle subscripts, if any */
-				result = transformIndirection(pstate, result,
-											  pref->indirection);
 				break;
 			}
 		case T_A_Const:
@@ -173,23 +160,13 @@ transformExpr(ParseState *pstate, Node *expr)
 												 con->typename);
 				break;
 			}
-		case T_ExprFieldSelect:
+		case T_A_Indirection:
 			{
-				ExprFieldSelect *efs = (ExprFieldSelect *) expr;
-				ListCell	    *fields;
+				A_Indirection	*ind = (A_Indirection *) expr;
 
-				result = transformExpr(pstate, efs->arg);
-				/* handle qualification, if any */
-				foreach(fields, efs->fields)
-				{
-					result = ParseFuncOrColumn(pstate,
-											   list_make1(lfirst(fields)),
-											   list_make1(result),
-											   false, false, true);
-				}
-				/* handle subscripts, if any */
+				result = transformExpr(pstate, ind->arg);
 				result = transformIndirection(pstate, result,
-											  efs->indirection);
+											  ind->indirection);
 				break;
 			}
 		case T_TypeCast:
@@ -961,6 +938,7 @@ transformExpr(ParseState *pstate, Node *expr)
 		case T_NullIfExpr:
 		case T_BoolExpr:
 		case T_FieldSelect:
+		case T_FieldStore:
 		case T_RelabelType:
 		case T_CaseTestExpr:
 		case T_CoerceToDomain:
@@ -983,15 +961,55 @@ transformExpr(ParseState *pstate, Node *expr)
 static Node *
 transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 {
-	if (indirection == NIL)
-		return basenode;
-	return (Node *) transformArraySubscripts(pstate,
-											 basenode,
-											 exprType(basenode),
-											 exprTypmod(basenode),
-											 indirection,
-											 false,
-											 NULL);
+	Node	   *result = basenode;
+	List	   *subscripts = NIL;
+	ListCell   *i;
+
+	/*
+	 * We have to split any field-selection operations apart from
+	 * subscripting.  Adjacent A_Indices nodes have to be treated
+	 * as a single multidimensional subscript operation.
+	 */
+	foreach(i, indirection)
+	{
+		Node	*n = lfirst(i);
+
+		if (IsA(n, A_Indices))
+		{
+			subscripts = lappend(subscripts, n);
+		}
+		else
+		{
+			Assert(IsA(n, String));
+
+			/* process subscripts before this field selection */
+			if (subscripts)
+				result = (Node *) transformArraySubscripts(pstate,
+														   result,
+														   exprType(result),
+														   InvalidOid,
+														   -1,
+														   subscripts,
+														   NULL);
+			subscripts = NIL;
+
+			result = ParseFuncOrColumn(pstate,
+									   list_make1(n),
+									   list_make1(result),
+									   false, false, true);
+		}
+	}
+	/* process trailing subscripts, if any */
+	if (subscripts)
+		result = (Node *) transformArraySubscripts(pstate,
+												   result,
+												   exprType(result),
+												   InvalidOid,
+												   -1,
+												   subscripts,
+												   NULL);
+
+	return result;
 }
 
 static Node *
@@ -1051,17 +1069,15 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					}
 
 					/*
-					 * Try to find the name as a relation ... but not if
-					 * subscripts appear.  Note also that only relations
-					 * already entered into the rangetable will be
+					 * Try to find the name as a relation.  Note that only
+					 * relations already entered into the rangetable will be
 					 * recognized.
 					 *
 					 * This is a hack for backwards compatibility with
 					 * PostQUEL-inspired syntax.  The preferred form now
 					 * is "rel.*".
 					 */
-					if (cref->indirection == NIL &&
-						refnameRangeTblEntry(pstate, NULL, name,
+					if (refnameRangeTblEntry(pstate, NULL, name,
 											 &levels_up) != NULL)
 						node = transformWholeRowRef(pstate, NULL, name);
 					else
@@ -1172,7 +1188,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 			break;
 	}
 
-	return transformIndirection(pstate, node, cref->indirection);
+	return node;
 }
 
 /*
@@ -1384,6 +1400,9 @@ exprType(Node *expr)
 			break;
 		case T_FieldSelect:
 			type = ((FieldSelect *) expr)->resulttype;
+			break;
+		case T_FieldStore:
+			type = ((FieldStore *) expr)->resulttype;
 			break;
 		case T_RelabelType:
 			type = ((RelabelType *) expr)->resulttype;

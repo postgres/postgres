@@ -53,13 +53,14 @@ alter table fullname add column suffix text default null;
 
 select * from people;
 
--- This fails at the moment, would like it to work though:
+-- test insertion/updating of subfields
 update people set fn.suffix = 'Jr';
 
--- ugly workaround:
-update people set fn = ((fn).first, (fn).last, 'III');
-
 select * from people;
+
+insert into quadtable (f1, q.c1.r, q.c2.i) values(44,55,66);
+
+select * from quadtable;
 
 -- The object here is to ensure that toasted references inside
 -- composite values don't cause problems.  The large f1 value will

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.171 2004/05/30 23:40:27 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.172 2004/06/09 19:08:15 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -544,6 +544,22 @@ _readFieldSelect(void)
 }
 
 /*
+ * _readFieldStore
+ */
+static FieldStore *
+_readFieldStore(void)
+{
+	READ_LOCALS(FieldStore);
+
+	READ_NODE_FIELD(arg);
+	READ_NODE_FIELD(newvals);
+	READ_NODE_FIELD(fieldnums);
+	READ_OID_FIELD(resulttype);
+
+	READ_DONE();
+}
+
+/*
  * _readRelabelType
  */
 static RelabelType *
@@ -814,17 +830,6 @@ _readFromExpr(void)
  *	Stuff from parsenodes.h.
  */
 
-static ColumnRef *
-_readColumnRef(void)
-{
-	READ_LOCALS(ColumnRef);
-
-	READ_NODE_FIELD(fields);
-	READ_NODE_FIELD(indirection);
-
-	READ_DONE();
-}
-
 static ColumnDef *
 _readColumnDef(void)
 {
@@ -855,18 +860,6 @@ _readTypeName(void)
 	READ_BOOL_FIELD(pct_type);
 	READ_INT_FIELD(typmod);
 	READ_NODE_FIELD(arrayBounds);
-
-	READ_DONE();
-}
-
-static ExprFieldSelect *
-_readExprFieldSelect(void)
-{
-	READ_LOCALS(ExprFieldSelect);
-
-	READ_NODE_FIELD(arg);
-	READ_NODE_FIELD(fields);
-	READ_NODE_FIELD(indirection);
 
 	READ_DONE();
 }
@@ -974,6 +967,8 @@ parseNodeString(void)
 		return_value = _readSubLink();
 	else if (MATCH("FIELDSELECT", 11))
 		return_value = _readFieldSelect();
+	else if (MATCH("FIELDSTORE", 10))
+		return_value = _readFieldStore();
 	else if (MATCH("RELABELTYPE", 11))
 		return_value = _readRelabelType();
 	else if (MATCH("CASE", 4))
@@ -1008,14 +1003,10 @@ parseNodeString(void)
 		return_value = _readJoinExpr();
 	else if (MATCH("FROMEXPR", 8))
 		return_value = _readFromExpr();
-	else if (MATCH("COLUMNREF", 9))
-		return_value = _readColumnRef();
 	else if (MATCH("COLUMNDEF", 9))
 		return_value = _readColumnDef();
 	else if (MATCH("TYPENAME", 8))
 		return_value = _readTypeName();
-	else if (MATCH("EXPRFIELDSELECT", 15))
-		return_value = _readExprFieldSelect();
 	else if (MATCH("RTE", 3))
 		return_value = _readRangeTblEntry();
 	else if (MATCH("NOTIFY", 6))
