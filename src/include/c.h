@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.66 2000/03/20 04:02:46 momjian Exp $
+ * $Id: c.h,v 1.67 2000/04/12 05:24:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -531,9 +531,11 @@ typedef struct Exception
  *
  */
 #define Trap(condition, exception) \
-		{ if ((assert_enabled) && (condition)) \
+		do { \
+			if ((assert_enabled) && (condition)) \
 				ExceptionalCondition(CppAsString(condition), &(exception), \
-						(char*)NULL, __FILE__, __LINE__); }
+						(char*)NULL, __FILE__, __LINE__); \
+		} while (0)
 
 /*
  *	TrapMacro is the same as Trap but it's intended for use in macros:
@@ -577,9 +579,11 @@ extern int	assert_enabled;
  *
  */
 #define LogTrap(condition, exception, printArgs) \
-		{ if ((assert_enabled) && (condition)) \
+		do { \
+			if ((assert_enabled) && (condition)) \
 				ExceptionalCondition(CppAsString(condition), &(exception), \
-						vararg_format printArgs, __FILE__, __LINE__); }
+						vararg_format printArgs, __FILE__, __LINE__); \
+		} while (0)
 
 /*
  *	LogTrapMacro is the same as LogTrap but it's intended for use in macros:

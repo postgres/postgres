@@ -4,7 +4,7 @@
 
 [ "$#" -eq 0 ] && set regress.out
 
-for file in `cat "$@" | grep 'failed$' | cut -d " " -f 1`
+for file in `cat "$@" | grep 'failed$' | grep -v '^dropdb: ' | cut -d " " -f 1`
 do
 	echo "======   $file   ======"
 	diff -w expected/$file.out results
