@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpgeasy.sgml,v 2.8 2002/01/07 02:29:12 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpgeasy.sgml,v 2.9 2002/03/04 18:50:20 momjian Exp $
 -->
 
  <chapter id="pgeasy">
@@ -11,7 +11,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpgeasy.sgml,v 2.8 2002/01/07 02:29
    <para>
     Written by Bruce Momjian
     (<email>pgman@candle.pha.pa.us</email>)
-    and last updated 2000-03-30
+    and last updated 2002-03-04
    </para>
   </note>
 
@@ -19,13 +19,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpgeasy.sgml,v 2.8 2002/01/07 02:29
    <application>pgeasy</application> allows you to cleanly interface
    to the <application>libpq</application> library, more like a 4GL
    SQL interface.  Refer to <xref linkend="libpq"> for more
-   information about <application>libpq</application>
+   information about <application>libpq</application>.
   </para>
 
   <para>
-   It consists of set of simplified C functions that encapsulate the
-   functionality of <application>libpq</application>.
-   The functions are:
+   It consists of a set of simplified C functions that encapsulate the
+   functionality of <application>libpq</application>. The functions are:
 
    <itemizedlist>
     <listitem>
@@ -88,53 +87,50 @@ void        set_result(PGresult *newres);
 </synopsis>
     </listitem>
 
-    <listitem>
-<synopsis>
-void        unset_result(PGresult *oldres);
-</synopsis>
-    </listitem>
    </itemizedlist>
   </para>
 
   <para>
-   Many functions return a structure or value, so you can do more work
+   Many functions return a structure or value, so you can work
    with the result if required.
   </para>
 
   <para>
-   You basically connect to the database with <function>connectdb</function>,
-   issue your query with <function>doquery</function>,
-   fetch the results with <function>fetch</function>,
-   and finish with <function>disconnectdb</function>.
+   You basically connect to the database with
+   <function>connectdb</function>, issue your query with
+   <function>doquery</function>, fetch the results with
+   <function>fetch</function>, and finish with
+   <function>disconnectdb</function>.
   </para>
 
   <para>
    For <literal>SELECT</literal> queries, <function>fetch</function>
-   allows you to pass pointers as parameters, and on return the variables
-   are filled with data from the binary cursor you opened.  These binary
-   cursors cannot be used if you are running the
-   <application>pgeasy</application>
-   client on a system with a different architecture than the database
-   server.  If you pass a NULL pointer parameter, the column is skipped.
-   <function>fetchwithnulls</function> allows you to retrieve the NULL
-   status of the field by passing an <literal>int*</literal>
-   after each result pointer, which returns true or false if the field is null.
-   You can always use <application>libpq</application> functions on the <structname>PGresult</structname> pointer returned
-   by <function>doquery</function>.
-   <function>reset_fetch</function> starts the fetch back at the beginning.
+   allows you to pass pointers as parameters, and on return the
+   variables are filled with data from the binary cursor you opened.
+   These binary cursors cannot be used if you are running the
+   <application>pgeasy</application> client on a system with a different
+   architecture than the database server. If you pass a NULL pointer
+   parameter, the column is skipped. <function>fetchwithnulls</function>
+   allows you to retrieve the NULL status of the field by passing an
+   <literal>int*</literal> after each result pointer, which returns true
+   or false to indicate if the field is null. You can always use
+   <application>libpq</application> functions on the
+   <structname>PGresult</structname> pointer returned by
+   <function>doquery</function>. <function>reset_fetch</function> starts
+   the fetch back at the beginning.
   </para>
 
   <para>
-   <function>get_result</function>,
-   <function>set_result</function>,
-   and
-   <function>unset_result</function>
-   allow you to handle multiple result sets at the same time.
+   <function>get_result</function> and <function>set_result</function>
+   allow you to handle multiple open result sets. Use
+   <function>get_result</function> to save a result into an application
+   variable. You can then later use <function>set_result</function> to
+   return to the previously save result.
   </para>
 
   <para>
-   There are several demonstration programs in the
-   source directory.
+   There are several demonstration programs in
+   <filename>pgsql/src/interfaces/libpgeasy/examples</>.
   </para>
  </chapter>
 
