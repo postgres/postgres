@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.24 2002/01/20 22:19:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.25 2002/02/24 23:27:57 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -93,6 +93,15 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term>-O, --owner <replaceable class="parameter">owner</replaceable></term>
+      <listitem>
+       <para>
+	Specifies the database user who will own the new database.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term>-D, --location <replaceable class="parameter">datadir</replaceable></term>
       <listitem>
        <para>
@@ -144,12 +153,13 @@ PostgreSQL documentation
 
     </variablelist>
 
-    The options <literal>-h</literal>, <literal>-p</literal>, <literal>-U</literal>,
-    <literal>-W</literal>, and <literal>-e</literal> are passed on literally to
+    The options <option>-h</option>, <option>-p</option>, <option>-U</option>,
+    <option>-W</option>, and <option>-e</option> are passed on literally to
     <xref linkend="app-psql">.
 
-    The options <literal>-D</literal>, <literal>-T</literal>, and
-    <literal>-E</literal> are converted into options for the underlying
+    The options <option>-O</option>, <option>-D</option>,
+    <option>-T</option>, and
+    <option>-E</option> are converted into options for the underlying
     SQL command <xref linkend="SQL-CREATEDATABASE"
     endterm="SQL-CREATEDATABASE-title">; see there for more information
     about them.
@@ -202,7 +212,14 @@ PostgreSQL documentation
   </title>
   <para>
    <application>createdb</application> creates a new <productname>PostgreSQL</productname>
-   database. The user who executes this command becomes the database owner.
+   database.
+  </para>
+
+  <para>
+   Normally, the database user who executes this command becomes the owner of
+   the new database.
+   However a different owner can be specified via the <option>-O</option>
+   option, if the executing user has appropriate privileges.
   </para>
 
   <para>

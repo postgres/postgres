@@ -12,7 +12,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.19 2002/02/18 05:48:44 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.20 2002/02/24 23:27:58 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,6 +23,7 @@ MB=
 TEMPLATE=
 PSQLOPT=
 dbname=
+dbowner=
 dbcomment=
 dbpath=
 
@@ -71,6 +72,15 @@ do
 		PSQLOPT="$PSQLOPT -o /dev/null"
 		;;
 # options converted into SQL command
+	--owner|-O)
+		dbowner="$2"
+		shift;;
+        -O*)
+                dbowner=`echo "$1" | sed 's/^-O//'`
+                ;;
+        --owner=*)
+                dbowner=`echo "$1" | sed 's/^--owner=//'`
+                ;;
 	--location|-D)
 		dbpath="$2"
 		shift;;
@@ -127,6 +137,7 @@ if [ "$usage" ]; then
         echo "  $CMDNAME [options] [dbname] [description]"
         echo
 	echo "Options:"
+	echo "  -O, --owner=OWNER               Database user to own the new database"
 	echo "  -D, --location=PATH             Alternative place to store the database"
 	echo "  -T, --template=TEMPLATE         Template database to copy"
 	echo "  -E, --encoding=ENCODING         Multibyte encoding for the database"
@@ -170,6 +181,7 @@ dbname=`echo "$dbname" | sed 's/\"/\\\"/g'`
 TEMPLATE=`echo "$TEMPLATE" | sed 's/\"/\"\"/g'`
 
 withstring=
+[ "$dbowner" ] &&    withstring="$withstring OWNER = \"$dbowner\""
 [ "$dbpath" ] &&     withstring="$withstring LOCATION = '$dbpath'"
 [ "$MB" ] &&         withstring="$withstring ENCODING = '$MB'"
 [ "$TEMPLATE" ] &&   withstring="$withstring TEMPLATE = \"$TEMPLATE\""
