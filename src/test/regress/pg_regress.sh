@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.13 2000/11/22 01:47:47 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.14 2000/12/11 19:00:33 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -243,18 +243,21 @@ trap '
 # ----------
 
 cat /dev/null >$TMPFILE
-while read LINE
-do
-    HOSTPAT=`expr "$LINE" : '.*/\(.*\)='`
-    if [ `expr "$host_platform:$compiler" : "$HOSTPAT"` -ne 0 ]
-    then
-        # remove hostnamepattern from line so that there are no shell
-        # wildcards in SUBSTLIST; else later 'for' could expand them!
-        TESTNAME=`expr "$LINE" : '\(.*\)/'`
-        SUBST=`echo "$LINE" | sed 's/^.*=//'`
-        echo "$TESTNAME=$SUBST" >> $TMPFILE
-    fi
-done <"$inputdir/resultmap"
+if [ -f "$inputdir/resultmap" ]
+then
+    while read LINE
+    do
+	HOSTPAT=`expr "$LINE" : '.*/\(.*\)='`
+	if [ `expr "$host_platform:$compiler" : "$HOSTPAT"` -ne 0 ]
+	then
+	    # remove hostnamepattern from line so that there are no shell
+	    # wildcards in SUBSTLIST; else later 'for' could expand them!
+	    TESTNAME=`expr "$LINE" : '\(.*\)/'`
+	    SUBST=`echo "$LINE" | sed 's/^.*=//'`
+	    echo "$TESTNAME=$SUBST" >> $TMPFILE
+	fi
+    done <"$inputdir/resultmap"
+fi
 SUBSTLIST=`cat $TMPFILE`
 rm -f $TMPFILE
 
