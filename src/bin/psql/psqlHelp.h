@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.30 1997/10/02 13:58:06 vadim Exp $
+ * $Id: psqlHelp.h,v 1.31 1997/10/16 06:59:23 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,7 @@ static struct _helpStruct QL_HELP[] = {
 	"delete from <class_name> [where <qual>];"},
 	{"drop",
 		"Please more be specific:",
-	"\tdrop aggregate\n\tdrop database\n\tdrop function\n\tdrop index\n\tdrop operator\n\tdrop rule\n\tdrop sequence\n\tdrop table\n\tdrop type\n\tdrop view"},
+	"\tdrop aggregate\n\tdrop database\n\tdrop function\n\tdrop index\n\tdrop operator\n\tdrop rule\n\tdrop sequence\n\tdrop table\n\tdrop trigger\n\tdrop type\n\tdrop view"},
 	{"drop aggregate",
 		"remove an aggregate function",
 	"drop aggregate <agg_name> <agg_type>|*;"},
@@ -114,12 +114,15 @@ static struct _helpStruct QL_HELP[] = {
 	{"drop rule",
 		"remove a rule",
 	"drop rule <rulename>;"},
-	{"drop table",
-		"remove a table",
-	"drop table <class_name>[,...<class_nameN];"},
 	{"drop sequence",
 		"remove a sequence number generator",
 	"drop sequence <sequence_name>[,...<sequence_nameN];"},
+	{"drop table",
+		"remove a table",
+	"drop table <class_name>[,...<class_nameN];"},
+	{"drop trigger",
+		"remove a trigger",
+	"drop trigger <trigger_name> on <class_name>;"},
 	{"drop type",
 		"remove a user-defined base type",
 	"drop type <typename>;"},
