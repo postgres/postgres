@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.8 2002/06/17 15:19:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.9 2002/06/17 15:23:36 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -77,6 +77,7 @@
 #include "postgres.h"
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -583,7 +584,8 @@ static int
 initialize_SSL (void)
 {
 	char fnbuf[2048];
-
+	struct stat buf;
+	
 	if (!SSL_context)
 	{
 		SSL_library_init();
