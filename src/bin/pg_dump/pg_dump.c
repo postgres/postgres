@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.299 2002/09/18 21:35:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.300 2002/09/22 20:57:20 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -521,7 +521,7 @@ main(int argc, char **argv)
 			break;
 
 		default:
-			write_msg(NULL, "invalid output format '%s' specified\n", format);
+			write_msg(NULL, "invalid output format \"%s\" specified\n", format);
 			exit(1);
 	}
 
@@ -575,7 +575,7 @@ main(int argc, char **argv)
 		else
 			g_last_builtin_oid = findLastBuiltinOid_V70();
 		if (g_verbose)
-			write_msg(NULL, "last built-in oid is %u\n", g_last_builtin_oid);
+			write_msg(NULL, "last built-in OID is %u\n", g_last_builtin_oid);
 	}
 
 	/* Dump the database definition */
@@ -803,7 +803,7 @@ dumpClasses_nodumpData(Archive *fout, char *oid, void *dctxv)
 	const char *column_list;
 
 	if (g_verbose)
-		write_msg(NULL, "dumping out the contents of table %s\n", classname);
+		write_msg(NULL, "dumping contents of table %s\n", classname);
 
 	/*
 	 * Make sure we are in proper schema.  We will qualify the table name
@@ -1497,7 +1497,7 @@ findNamespace(const char *nsoid, const char *objoid)
 			if (strcmp(nsoid, nsinfo->oid) == 0)
 				return nsinfo;
 		}
-		write_msg(NULL, "Failed to find namespace with OID %s.\n", nsoid);
+		write_msg(NULL, "could not find namespace with OID %s\n", nsoid);
 		exit_nicely();
 	}
 	else
@@ -1768,7 +1768,7 @@ getOpclasses(int *numOpclasses)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		write_msg(NULL, "query to obtain list of opclasses failed: %s", PQerrorMessage(g_conn));
+		write_msg(NULL, "query to obtain list of operator classes failed: %s", PQerrorMessage(g_conn));
 		exit_nicely();
 	}
 
@@ -1793,7 +1793,7 @@ getOpclasses(int *numOpclasses)
 		if (g_fout->remoteVersion >= 70300)
 		{
 			if (strlen(opcinfo[i].usename) == 0)
-				write_msg(NULL, "WARNING: owner of opclass \"%s\" appears to be invalid\n",
+				write_msg(NULL, "WARNING: owner of operator class \"%s\" appears to be invalid\n",
 						  opcinfo[i].opcname);
 		}
 	}
@@ -2389,7 +2389,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		 * pg_attribute_relid_attnum_index.
 		 */
 		if (g_verbose)
-			write_msg(NULL, "finding the columns and types for table %s\n",
+			write_msg(NULL, "finding the columns and types of table %s\n",
 					  tbinfo->relname);
 
 		resetPQExpBuffer(q);
@@ -2491,7 +2491,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			int			numDefaults;
 
 			if (g_verbose)
-				write_msg(NULL, "finding DEFAULT expressions for table %s\n",
+				write_msg(NULL, "finding DEFAULT expressions of table %s\n",
 						  tbinfo->relname);
 
 			resetPQExpBuffer(q);
@@ -2534,7 +2534,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 
 				if (adnum <= 0 || adnum > ntups)
 				{
-					write_msg(NULL, "bogus adnum value %d for table %s\n",
+					write_msg(NULL, "invalid adnum value %d for table %s\n",
 							  adnum, tbinfo->relname);
 					exit_nicely();
 				}
@@ -2987,7 +2987,7 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		write_msg(NULL, "query to obtain type information for %s failed: %s",
+		write_msg(NULL, "query to obtain information on type %s failed: %s",
 				  tinfo->typname, PQerrorMessage(g_conn));
 		exit_nicely();
 	}
@@ -3663,7 +3663,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		write_msg(NULL, "query to obtain function information for %s failed: %s",
+		write_msg(NULL, "query to obtain information on function %s failed: %s",
 				  finfo->proname, PQerrorMessage(g_conn));
 		exit_nicely();
 	}
@@ -4320,7 +4320,7 @@ dumpOneOpclass(Archive *fout, OpclassInfo *opcinfo)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		write_msg(NULL, "query to obtain opclass details failed: %s", PQerrorMessage(g_conn));
+		write_msg(NULL, "query to obtain operator class details failed: %s", PQerrorMessage(g_conn));
 		exit_nicely();
 	}
 
@@ -4390,7 +4390,7 @@ dumpOneOpclass(Archive *fout, OpclassInfo *opcinfo)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		write_msg(NULL, "query to obtain opclass operators failed: %s", PQerrorMessage(g_conn));
+		write_msg(NULL, "query to obtain operator class operators failed: %s", PQerrorMessage(g_conn));
 		exit_nicely();
 	}
 
@@ -4435,7 +4435,7 @@ dumpOneOpclass(Archive *fout, OpclassInfo *opcinfo)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		write_msg(NULL, "query to obtain opclass functions failed: %s", PQerrorMessage(g_conn));
+		write_msg(NULL, "query to obtain operator class functions failed: %s", PQerrorMessage(g_conn));
 		exit_nicely();
 	}
 
@@ -4886,8 +4886,8 @@ dumpACL(Archive *fout, const char *type, const char *name,
 		eqpos = strchr(tok, '=');
 		if (!eqpos)
 		{
-			write_msg(NULL, "could not parse ACL list ('%s') for %s %s\n",
-					  acls, type, name);
+			write_msg(NULL, "could not parse ACL list (%s) for object %s (%s)\n",
+					  acls, name, type);
 			exit_nicely();
 		}
 		*eqpos = '\0';			/* it's ok to clobber aclbuf */
@@ -6566,7 +6566,7 @@ getFormattedTypeName(const char *oid, OidOptions opts)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		write_msg(NULL, "query to obtain type name for %s failed: %s",
+		write_msg(NULL, "query to obtain name of type %s failed: %s",
 				  oid, PQerrorMessage(g_conn));
 		exit_nicely();
 	}

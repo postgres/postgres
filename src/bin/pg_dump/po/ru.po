@@ -1,15 +1,18 @@
 # ru.po
 # PG_DUMP Translated Messages into the Russian Language (KOI8-R)
 #
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/po/Attic/ru.po,v 1.3 2002/09/22 20:57:21 petere Exp $
+#
 # Changelog:
 #   - September 2001 - August 2002: Maintenance, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - September 7, 2002: Post-7.3 beta 1 fuzzy messages fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
+#   - September 14, 2002: Post-7.3 beta 1, Take II, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.3.x\n"
-"POT-Creation-Date: 2002-09-07 16:20-0400\n"
-"PO-Revision-Date: 2002-09-07 16:44-0500\n"
+"POT-Creation-Date: 2002-09-14 11:20-0400\n"
+"PO-Revision-Date: 2002-09-14 12:33-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -588,13 +591,13 @@ msgstr "запрос по получению списка операторов не удался: %s"
 msgid "WARNING: owner of operator \"%s\" appears to be invalid\n"
 msgstr "ВНИМАНИЕ: владелец оператора \"%s\" возможно не верен\n"
 
-# TO REWVIEW
+# TO REVIEW
 #: pg_dump.c:1771
 #, c-format
 msgid "query to obtain list of opclasses failed: %s"
 msgstr "запрос по получению списка опклассов не удался: %s"
 
-# TO REWVIEW
+# TO REVIEW
 #: pg_dump.c:1796
 #, c-format
 msgid "WARNING: owner of opclass \"%s\" appears to be invalid\n"
@@ -1461,7 +1464,7 @@ msgstr "не получилось закрыть библиотеку компрессии: %s\n"
 msgid "could not write byte: %s\n"
 msgstr "не получилось записать байт: %s\n"
 
-#: pg_backup_custom.c:771
+#: pg_backup_custom.c:771 pg_backup_files.c:416
 #, c-format
 msgid "write error in _WriteBuf (%lu != %lu)\n"
 msgstr "ошибка записи в _WriteBuf (%lu != %lu)\n"
@@ -1473,7 +1476,7 @@ msgstr "не получилось закрыть файл архива: %s\n"
 
 #: pg_backup_custom.c:865
 msgid "WARNING: ftell mismatch with expected position -- ftell ignored\n"
-msgstr ""
+msgstr "ВНИМАНИЕ: ftell не соответствует ожидашейся позиции -- ftell проигнорирован\n"
 
 #: pg_backup_custom.c:944
 #, c-format
@@ -1698,11 +1701,6 @@ msgstr "не получилось закрыть файл оглавления для больших объектов: %s\n"
 msgid "could not write byte\n"
 msgstr "не получилось записать байт\n"
 
-#: pg_backup_files.c:416
-#, c-format
-msgid "write error in _WriteBuf (%d != %d)\n"
-msgstr "ошибка записи в _WriteBuf (%d != %d)\n"
-
 #: pg_backup_files.c:475
 #, c-format
 msgid "could not open large object TOC for output: %s\n"
@@ -1805,7 +1803,7 @@ msgstr "не получилось записать нулевой блок в конце tar-архива\n"
 
 #: pg_backup_tar.c:1021
 msgid "archive member too large for tar format\n"
-msgstr ""
+msgstr "компонент архива слишком велик для формата tar\n"
 
 #: pg_backup_tar.c:1031
 #, c-format
@@ -1855,22 +1853,22 @@ msgstr ""
 "выгрузка данных не по порядку не поддерживается для данного формата архива: %"
 "s необходим, но идёи до %s в файле архива.\n"
 
-#: pg_backup_tar.c:1165
+#: pg_backup_tar.c:1166
 #, c-format
 msgid "mismatch in actual vs. predicted file position (%s vs. %s)\n"
 msgstr "не совпадение реальной и предсказанной позиций в файле (%s vs. %s)\n"
 
-#: pg_backup_tar.c:1180
+#: pg_backup_tar.c:1181
 #, c-format
 msgid "incomplete tar header found (%lu bytes)\n"
 msgstr "найден неполный tar-заголовок (размер, байт: %lu)\n"
 
-#: pg_backup_tar.c:1214
+#: pg_backup_tar.c:1216
 #, c-format
 msgid "TOC Entry %s at %s (length %lu, checksum %d)\n"
 msgstr "Запись оглавления %s в %s (длинна: %lu, checksum: %d)\n"
 
-#: pg_backup_tar.c:1224
+#: pg_backup_tar.c:1226
 #, c-format
 msgid ""
 "corrupt tar header found in %s (expected %d, computed %d) file position %s\n"
@@ -1878,7 +1876,7 @@ msgstr ""
 "найден повреждённый tar-заголовок в %s (ожидалось: %d, сосчитано: %d), "
 "позиция в файле: %s\n"
 
-#: pg_backup_tar.c:1314
+#: pg_backup_tar.c:1316
 msgid "unable to write tar header\n"
 msgstr "не получается записать заголовок tar-архива\n"
 
@@ -1903,89 +1901,101 @@ msgstr ""
 
 #: pg_restore.c:382
 msgid "  -a, --data-only          restore only the data, no schema\n"
-msgstr ""
+msgstr "  -a, --data-only          восстановить тоько данные, без схемы\n"
 
 #: pg_restore.c:384
 msgid "  -C, --create             issue commands to create the database\n"
-msgstr ""
+msgstr "  -C, --create             выполнить команды по созданию базы\n"
 
 #: pg_restore.c:385
 msgid "  -d, --dbname=NAME        output database name\n"
-msgstr ""
+msgstr "  -d, --dbname=ИМЯ         вывести имя базы\n"
 
 #: pg_restore.c:387
 msgid "  -F, --format={c|t}       specify backup file format\n"
-msgstr ""
+msgstr "  -F, --format={c|t}       указать формат файла бэкапа\n"
 
 #: pg_restore.c:389
 msgid ""
 "  -i, --ignore-version     proceed even when server version mismatches\n"
 msgstr ""
+"  -i, --ignore-version     продолжить даже если версия сервера не совпадает\n"
 
 #: pg_restore.c:390
 msgid "  -I, --index=NAME         restore named index\n"
-msgstr ""
+msgstr "  -I, --index=ИМЯ          восстановить индекс с указанным именем\n"
 
 #: pg_restore.c:391
 msgid "  -l, --list               print summarized TOC of the archive\n"
-msgstr ""
+msgstr "  -l, --list               напечатать резюме оглавления архива\n"
 
 #: pg_restore.c:392
 msgid ""
 "  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
 "                           output from this file\n"
 msgstr ""
+"  -L, --use-list=ИМЯФАЙЛА  использовать указанное оглавление для упорядочивания\n"
+"                           вывод из этого файла\n"
 
 #: pg_restore.c:394
 msgid "  -N, --orig-order         restore in original dump order\n"
-msgstr ""
+msgstr "  -N, --orig-order         восстановить в изначальном порядке выгрузки\n"
 
 #: pg_restore.c:395
 msgid "  -o, --oid-order          restore in OID order\n"
-msgstr ""
+msgstr "  -o, --oid-order          восстановить в порядке OID\n"
 
 #: pg_restore.c:396
 msgid ""
 "  -O, --no-owner           do not reconnect to database to match\n"
 "                           object owner\n"
 msgstr ""
+"  -O, --no-owner           не подсоединяться к базе для сравнения\n"
+"                           владельца объекта\n"
 
 #: pg_restore.c:399
 msgid "  -P, --function=NAME(args)restore named function\n"
 msgstr ""
+"  -P, --function=ИМЯ(аргументы)\n"
+"                           восстановить функцию с указанным именем\n"
 
 #: pg_restore.c:400
 msgid ""
 "  -r, --rearrange          rearrange output to put indexes etc. at end\n"
 msgstr ""
+"  -r, --rearrange          переоганизовать вывод чтобы индексы и т.д. были в конце\n"
 
 #: pg_restore.c:401
 msgid "  -R, --no-reconnect       disallow ALL reconnections to the database\n"
-msgstr ""
+msgstr "  -R, --no-reconnect       не разрешать НИКАКИЕ подсодениения к базе\n"
 
 #: pg_restore.c:402
 msgid "  -s, --schema-only        restore only the schema, no data\n"
-msgstr ""
+msgstr "  -s, --schema-only        восстановить только схему, без данных\n"
 
 #: pg_restore.c:403
 msgid ""
 "  -S, --superuser=NAME     specify the superuser user name to use for\n"
 "                           disabling triggers\n"
 msgstr ""
+"  -S, --superuser=ИМЯ      указать имя суперпользователья для\n"
+"                           отключения триггеров\n"
 
 #: pg_restore.c:405
 msgid "  -t, --table=NAME         restore named table\n"
-msgstr ""
+msgstr "  -t, --table=ИМЯ          восстановить таблицу с указанным именем\n"
 
 #: pg_restore.c:406
 msgid "  -T, --trigger=NAME       restore named trigger\n"
-msgstr ""
+msgstr "  -T, --trigger=ИМЯ        восстановить триггер с указанным именем\n"
 
 #: pg_restore.c:410
 msgid ""
 "  -x, --no-privileges      skip restoration of access privileges (grant/"
 "revoke)\n"
 msgstr ""
+"  -x, --no-privileges      пропустить восстановление привилегий доступа (GRANT/"
+"REVOKE)\n"
 
 #: pg_restore.c:411
 msgid ""
@@ -1993,92 +2003,105 @@ msgid ""
 "                           use SET SESSION AUTHORIZATION commands instead\n"
 "                           of reconnecting, if possible\n"
 msgstr ""
+"  -X use-set-session-authorization, --use-set-session-authorization\n"
+"                           использовать команды SET SESSION AUTHORIZATION вместо\n"
+"                           переподсоединения (по возможности)\n"
 
 #: pg_restore.c:418
 msgid "  -a                       restore only the data, no schema\n"
-msgstr ""
+msgstr "  -a                       восстановить тоько данные, без схемы\n"
 
 #: pg_restore.c:420
 msgid "  -C                       issue commands to create the database\n"
-msgstr ""
+msgstr "  -C                       выполнить команды по созданию базы\n"
 
 #: pg_restore.c:421
 msgid "  -d NAME                  output database name\n"
-msgstr ""
+msgstr "  -d ИМЯ                   вывести имя базы\n"
 
 #: pg_restore.c:423
 msgid "  -F {c|t}                 specify backup file format\n"
-msgstr ""
+msgstr "  -F {c|t}                 указать формат файла бэкапа\n"
 
 #: pg_restore.c:425
 msgid ""
 "  -i                       proceed even when server version mismatches\n"
 msgstr ""
+"  -i                       продолжить даже если версия сервера не совпадает\n"
 
 #: pg_restore.c:426
 msgid "  -I NAME                  restore named index\n"
-msgstr ""
+msgstr "  -I ИМЯ                   восстановить индекс с указанным именем\n"
 
 #: pg_restore.c:427
 msgid "  -l                       print summarized TOC of the archive\n"
-msgstr ""
+msgstr "  -l                       напечатать резюме оглавления архива\n"
 
 #: pg_restore.c:428
 msgid ""
 "  -L FILENAME              use specified table of contents for ordering\n"
 "                           output from this file\n"
 msgstr ""
+"  -L ИМЯФАЙЛА              использовать указанное оглавление для упорядочивания\n"
+"                           вывод из этого файла\n"
 
 #: pg_restore.c:430
 msgid "  -N                       restore in original dump order\n"
-msgstr ""
+msgstr "  -N                       восстановить в изначальном порядке выгрузки\n"
 
 #: pg_restore.c:431
 msgid "  -o                       restore in OID order\n"
-msgstr ""
+msgstr "  -o                       восстановить в порядке OID\n"
 
 #: pg_restore.c:432
 msgid ""
 "  -O                       do not reconnect to database to match\n"
 "                           object owner\n"
 msgstr ""
+"  -O                       не подсоединяться к базе для сравнения\n"
+"                           владельца объекта\n"
 
 #: pg_restore.c:435
 msgid "  -P NAME(args)            restore named function\n"
-msgstr ""
+msgstr "  -P ИМЯ(аргументы)        восстановить функцию с указанным именем\n"
 
 #: pg_restore.c:436
 msgid ""
 "  -r                       rearrange output to put indexes etc. at end\n"
 msgstr ""
+"  -r                       переоганизовать вывод чтобы индексы и т.д. были в конце\n"
 
 #: pg_restore.c:437
 msgid "  -R                       disallow ALL reconnections to the database\n"
-msgstr ""
+msgstr "  -R                       не разрешать НИКАКИЕ подсодениения к базе\n"
 
 #: pg_restore.c:438
 msgid "  -s                       restore only the schema, no data\n"
-msgstr ""
+msgstr "  -s                       восстановить только схему, без данных\n"
 
 #: pg_restore.c:439
 msgid ""
 "  -S NAME                  specify the superuser user name to use for\n"
 "                           disabling triggers\n"
 msgstr ""
+"  -S ИМЯ                   указать имя суперпользователья для\n"
+"                           отключения триггеров\n"
 
 #: pg_restore.c:441
 msgid "  -t NAME                  restore named table\n"
-msgstr ""
+msgstr "  -t ИМЯ                   восстановить таблицу с указанным именем\n"
 
 #: pg_restore.c:442
 msgid "  -T NAME                  restore named trigger\n"
-msgstr ""
+msgstr "  -T ИМЯ                   восстановить триггер с указанным именем\n"
 
 #: pg_restore.c:446
 msgid ""
 "  -x                       skip restoration of access privileges (grant/"
 "revoke)\n"
 msgstr ""
+"  -x                       пропустить восстановление привилегий доступа (GRANT/"
+"REVOKE)\n"
 
 #: pg_restore.c:447
 msgid ""
@@ -2086,6 +2109,9 @@ msgid ""
 "                           use SET SESSION AUTHORIZATION commands instead\n"
 "                           of reconnecting, if possible\n"
 msgstr ""
+"  -X use-set-session-authorization\n"
+"                           использовать команды SET SESSION AUTHORIZATION вместо\n"
+"                           переподсоединения (по возможности)\n"
 
 #: pg_restore.c:453
 msgid ""
@@ -2118,11 +2144,14 @@ msgstr ""
 
 #: pg_dumpall.c:220
 msgid "  -c, --clean              clean (drop) databases prior to create\n"
-msgstr "  -c, --clean              очистить (сбросить) базы данных перед созданием\n"
+msgstr ""
+"  -c, --clean              очистить (сбросить) базы данных перед созданием\n"
 
 #: pg_dumpall.c:223
 msgid "  -g, --globals-only       dump only global objects, no databases\n"
-msgstr "  -g, --globals-only       выгрузить только глобальные объекты, без баз данных\n"
+msgstr ""
+"  -g, --globals-only       выгрузить только глобальные объекты, без баз "
+"данных\n"
 
 #: pg_dumpall.c:225
 msgid ""
@@ -2134,18 +2163,21 @@ msgstr ""
 
 #: pg_dumpall.c:233
 msgid "  -c                       clean (drop) databases prior to create\n"
-msgstr "  -c                       очистить (сбросить) базы данных перед созданием\n"
+msgstr ""
+"  -c                       очистить (сбросить) базы данных перед созданием\n"
 
 #: pg_dumpall.c:236
 msgid "  -g                       dump only global objects, no databases\n"
-msgstr "  -g                       выгрузить только глобальные объекты, без баз данных\n"
+msgstr ""
+"  -g                       выгрузить только глобальные объекты, без баз "
+"данных\n"
 
 #: pg_dumpall.c:238
 msgid ""
-"  -i                       продолжить даже если версия сервера не совпадает\n"
+"  -i                       proceed even when server version mismatches\n"
 "                           pg_dumpall version\n"
 msgstr ""
-"  -i                       proceed even when server version mismatches\n"
+"  -i                       продолжить даже если версия сервера не совпадает\n"
 "                           с версией pg_dumpall\n"
 
 #: pg_dumpall.c:247
@@ -2191,7 +2223,8 @@ msgstr "%s: не удалось получить версию сервера\n"
 #: pg_dumpall.c:670
 #, c-format
 msgid "%s: could not parse server version \"%s\"\n"
-msgstr "%s: не в состоянии проанализировать строку с номером версии сервера \"%s\"\n"
+msgstr ""
+"%s: не в состоянии проанализировать строку с номером версии сервера \"%s\"\n"
 
 #: pg_dumpall.c:692
 #, c-format
@@ -2212,7 +2245,3 @@ msgstr ""
 "%s: pg_dump не найден\n"
 "Удостовертесь что он в переменной окружения PATH или в той же директории что "
 "и %s.\n"
-
-##
-## EOF
-##

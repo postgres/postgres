@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.204 2002/09/06 02:33:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.205 2002/09/22 20:57:21 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2950,7 +2950,7 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 	if (stat_buf.st_mode & (S_IRWXG | S_IRWXO))
 	{
 		fprintf(stderr,
-				libpq_gettext("WARNING: Password file %s has world or group read access; permission should be u=rw (0600)"),
+				libpq_gettext("WARNING: Password file %s has world or group read access; permission should be u=rw (0600)\n"),
 				pgpassfile);
 		free(pgpassfile);
 		return NULL;

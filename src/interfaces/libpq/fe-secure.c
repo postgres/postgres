@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.12 2002/09/05 18:27:13 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.13 2002/09/22 20:57:21 petere Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -394,7 +394,7 @@ verify_peer(PGconn *conn)
 	if ((h = gethostbyname(conn->peer_cn)) == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-		libpq_gettext("error getting information about host (%s): %s\n"),
+		libpq_gettext("could not get information about host (%s): %s\n"),
 						  conn->peer_cn, hstrerror(h_errno));
 		return -1;
 	}
@@ -413,7 +413,7 @@ verify_peer(PGconn *conn)
 
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
-			  libpq_gettext("sorry, this protocol not yet supported\n"));
+			  libpq_gettext("unsupported protocol\n"));
 			return -1;
 	}
 
@@ -435,14 +435,14 @@ verify_peer(PGconn *conn)
 			l = ntohl(sin->sin_addr.s_addr);
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext(
-											"server common name '%s' does not resolve to %ld.%ld.%ld.%ld\n"),
+											"server common name \"%s\" does not resolve to %ld.%ld.%ld.%ld\n"),
 					 conn->peer_cn, (l >> 24) % 0x100, (l >> 16) % 0x100,
 							  (l >> 8) % 0x100, l % 0x100);
 			break;
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext(
-			"server common name '%s' does not resolve to peer address\n"),
+			"server common name \"%s\" does not resolve to peer address\n"),
 							  conn->peer_cn);
 	}
 
@@ -610,7 +610,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	if ((pwd = getpwuid(getuid())) == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-					  libpq_gettext("unable to get user information\n"));
+					  libpq_gettext("could not get user information\n"));
 		return -1;
 	}
 
@@ -622,14 +622,14 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	if ((fp = fopen(fnbuf, "r")) == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-				  libpq_gettext("unable to open certificate (%s): %s\n"),
+				  libpq_gettext("could not open certificate (%s): %s\n"),
 						  fnbuf, strerror(errno));
 		return -1;
 	}
 	if (PEM_read_X509(fp, x509, NULL, NULL) == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-				  libpq_gettext("unable to read certificate (%s): %s\n"),
+				  libpq_gettext("could not read certificate (%s): %s\n"),
 						  fnbuf, SSLerrmessage());
 		fclose(fp);
 		return -1;
@@ -651,14 +651,14 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 		buf.st_uid != getuid())
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-		 libpq_gettext("private key has bad permissions (%s)\n"), fnbuf);
+						  libpq_gettext("private key (%s) has wrong permissions\n"), fnbuf);
 		X509_free(*x509);
 		return -1;
 	}
 	if ((fp = fopen(fnbuf, "r")) == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-			 libpq_gettext("unable to open private key file (%s): %s\n"),
+			 libpq_gettext("could not open private key file (%s): %s\n"),
 						  fnbuf, strerror(errno));
 		X509_free(*x509);
 		return -1;
@@ -667,14 +667,14 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 		buf.st_dev != buf2.st_dev || buf.st_ino != buf2.st_ino)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-			libpq_gettext("private key changed under us (%s)\n"), fnbuf);
+			libpq_gettext("private key (%s) changed during execution\n"), fnbuf);
 		X509_free(*x509);
 		return -1;
 	}
 	if (PEM_read_PrivateKey(fp, pkey, cb, NULL) == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-				  libpq_gettext("unable to read private key (%s): %s\n"),
+				  libpq_gettext("could not read private key (%s): %s\n"),
 						  fnbuf, SSLerrmessage());
 		X509_free(*x509);
 		fclose(fp);
@@ -727,14 +727,14 @@ initialize_SSL(PGconn *conn)
 		if (stat(fnbuf, &buf) == -1)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-				 libpq_gettext("could not read  root cert list(%s): %s"),
+				 libpq_gettext("could not read root certificate list (%s): %s\n"),
 							  fnbuf, strerror(errno));
 			return -1;
 		}
 		if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, 0))
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-				 libpq_gettext("could not read root cert list (%s): %s"),
+				 libpq_gettext("could not read root certificate list (%s): %s\n"),
 							  fnbuf, SSLerrmessage());
 			return -1;
 		}

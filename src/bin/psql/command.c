@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.80 2002/09/04 20:31:35 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.81 2002/09/22 20:57:21 petere Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -455,7 +455,7 @@ exec_command(const char *cmd,
 		{
 			/* set encoding */
 			if (PQsetClientEncoding(pset.db, encoding) == -1)
-				psql_error("%s: invalid encoding name or conversion proc not found\n", encoding);
+				psql_error("%s: invalid encoding name or conversion procedure not found\n", encoding);
 
 			else
 			{

@@ -1,15 +1,18 @@
 # ru.po
 # POSTGRES Translated Messages into the Russian Language (KOI8-R)
 #
+# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.8 2002/09/22 20:57:20 petere Exp $
+#
 # Changelog:
 #   - September 2001 - August 2002: Maintenance, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - September 7, 2002: Post-7.3 beta 1 updates messages, Serguei A. Mokhov <mokhov@cs.concordia.ca>
+#   - September 14, 2002: Post-7.3 beta 1, Take II, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.3.x\n"
-"POT-Creation-Date: 2002-09-07 16:50-0400\n"
-"PO-Revision-Date: 2002-09-07 17:42-0500\n"
+"POT-Creation-Date: 2002-09-14 10:48-0400\n"
+"PO-Revision-Date: 2002-09-14 11:18-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -72,7 +75,9 @@ msgstr "TypeGetTupleDesc: алиасы колонок не указаны"
 
 #: access/common/tupdesc.c:682
 msgid "Unable to determine tuple description for function returning \"record\""
-msgstr "Не в состоянии определить описание строки для функции возпращающей тип \"record\""
+msgstr ""
+"Не в состоянии определить описание строки для функции возпращающей тип "
+"\"record\""
 
 #: access/common/tupdesc.c:684 catalog/pg_proc.c:463
 #: executor/nodeFunctionscan.c:230 parser/parse_relation.c:1383
@@ -1043,8 +1048,9 @@ msgstr ""
 msgid "XLogInsert: invalid record length %u"
 msgstr ""
 
-#: access/transam/xlog.c:786 access/transam/xlog.c:2622 utils/adt/name.c:52
-#: utils/adt/varchar.c:83 utils/adt/varchar.c:378 utils/adt/varlena.c:225
+#: access/transam/xlog.c:786 access/transam/xlog.c:2622 scan.l:35
+#: utils/adt/name.c:52 utils/adt/varchar.c:83 utils/adt/varchar.c:378
+#: utils/adt/varlena.c:225
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -1668,6 +1674,64 @@ msgid ""
 "handle."
 msgstr ""
 
+#: bootparse.y:59
+msgid "start transaction"
+msgstr "начало транзакции"
+
+#: bootparse.y:67
+msgid "commit transaction"
+msgstr "подтверждение транзакции"
+
+#: bootparse.y:158
+#, c-format
+msgid "creating%s%s relation %s..."
+msgstr ""
+
+#: bootparse.y:179
+msgid "create bootstrap: warning, open relation exists, closing first"
+msgstr ""
+
+#: bootparse.y:189
+msgid "bootstrap relation created"
+msgstr ""
+
+#: bootparse.y:201
+#, c-format
+msgid "relation created with oid %u"
+msgstr ""
+
+#: bootparse.y:212
+#, c-format
+msgid "inserting row with oid %u..."
+msgstr "добавляется строка с OID %u..."
+
+#: bootparse.y:214
+msgid "inserting row..."
+msgstr "добавляется строка..."
+
+#: bootparse.y:220
+#, c-format
+msgid "incorrect number of columns in row (expected %d, got %d)"
+msgstr "неверое число колонок в строке (ожидалось %d, получено %d)"
+
+#: bootparse.y:224
+msgid "relation not open"
+msgstr "объект не открыт"
+
+#: bootparse.y:305
+msgid "too many columns"
+msgstr "слишком много колонок"
+
+#: bootscanner.l:128
+#, c-format
+msgid "syntax error at line %d: unexpected character %s"
+msgstr "ошибка синтаксиса в строке %d: неожидаемый символ %s"
+
+#: bootscanner.l:138
+#, c-format
+msgid "syntax error at line %d: unexpected token %s"
+msgstr "ошибка синтаксиса в строке %d: неожидаемый токен %s"
+
 #: catalog/aclchk.c:60
 #, c-format
 msgid "acl size = %d, # acls = %d"
@@ -1797,7 +1861,7 @@ msgstr ""
 msgid "aclcheck: bogus ACL id type: %d"
 msgstr ""
 
-#: catalog/aclchk.c:879 commands/user.c:1228
+#: catalog/aclchk.c:879 commands/user.c:1232
 #, c-format
 msgid "%s: permission denied"
 msgstr "%s: нет доступа"
@@ -1940,76 +2004,81 @@ msgstr "doDeletion: Связь %u не существует"
 msgid "doDeletion: Unsupported object class %u"
 msgstr ""
 
-#: catalog/dependency.c:712
+#: catalog/dependency.c:718
 #, c-format
 msgid "find_expr_references_walker: bogus varlevelsup %d"
 msgstr ""
 
-#: catalog/dependency.c:716
+#: catalog/dependency.c:722
 #, c-format
 msgid "find_expr_references_walker: bogus varno %d"
 msgstr ""
 
-#: catalog/dependency.c:756
+#: catalog/dependency.c:737
+#, c-format
+msgid "find_expr_references_walker: bogus varattno %d"
+msgstr ""
+
+#: catalog/dependency.c:776
 msgid "find_expr_references_walker: already-planned subqueries not supported"
 msgstr ""
 
-#: catalog/dependency.c:1109
+#: catalog/dependency.c:1130
 #, c-format
 msgid "getObjectClass: Unknown object class %u"
 msgstr ""
 
-#: catalog/dependency.c:1166
+#: catalog/dependency.c:1187
 #, c-format
 msgid "getObjectDescription: Cast %u does not exist"
 msgstr ""
 
-#: catalog/dependency.c:1200
+#: catalog/dependency.c:1221
 #, c-format
 msgid "getObjectDescription: Constraint %u does not exist"
 msgstr ""
 
-#: catalog/dependency.c:1230
+#: catalog/dependency.c:1251
 #, c-format
 msgid "getObjectDescription: Conversion %u does not exist"
 msgstr ""
 
-#: catalog/dependency.c:1259
+#: catalog/dependency.c:1280
 #, c-format
 msgid "getObjectDescription: Default %u does not exist"
 msgstr ""
 
-#: catalog/dependency.c:1284
+#: catalog/dependency.c:1305
 #, c-format
 msgid "getObjectDescription: Language %u does not exist"
 msgstr "getObjectDescription: Язык %u не существует"
 
-#: catalog/dependency.c:1309
+#: catalog/dependency.c:1330
 #, c-format
 msgid "cache lookup of opclass %u failed"
 msgstr "поиск в кзше опкласса %u не удался"
 
-#: catalog/dependency.c:1327 utils/adt/ruleutils.c:424
+#: catalog/dependency.c:1348 utils/adt/ruleutils.c:424
 #, c-format
 msgid "syscache lookup for AM %u failed"
 msgstr "поиск в системном кзше AM %u не удался"
 
-#: catalog/dependency.c:1359
+#: catalog/dependency.c:1380
 #, c-format
 msgid "getObjectDescription: Rule %u does not exist"
 msgstr "getObjectDescription: Првило %u не существует"
 
-#: catalog/dependency.c:1393
+#: catalog/dependency.c:1414
 #, c-format
 msgid "getObjectDescription: Trigger %u does not exist"
 msgstr "getObjectDescription: Триггер %u не существует"
 
-#: catalog/dependency.c:1413
+#: catalog/dependency.c:1434
 #, c-format
 msgid "getObjectDescription: Schema %u does not exist"
 msgstr "getObjectDescription: Схема %u не существует"
 
-#: catalog/dependency.c:1445 catalog/heap.c:1622 catalog/pg_constraint.c:429
+#: catalog/dependency.c:1466 catalog/heap.c:1622 catalog/pg_constraint.c:429
 #: utils/adt/ruleutils.c:3147
 #, c-format
 msgid "cache lookup of relation %u failed"
@@ -2320,7 +2389,7 @@ msgstr "Поиск в кэше операторы %u не удался"
 msgid "Cache lookup failed for opclass %u"
 msgstr "Поиск в кэше опкласса %u не удался"
 
-#: catalog/namespace.c:1075
+#: catalog/namespace.c:1075 gram.y:2269 gram.y:6806
 #, c-format
 msgid "Improper qualified name (too many dotted names): %s"
 msgstr ""
@@ -4670,7 +4739,7 @@ msgstr ""
 
 #: commands/user.c:719
 msgid "ALTER USER: permission denied"
-msgstr ""
+msgstr "ALTER USER: нет доступа"
 
 #: commands/user.c:723
 msgid "ALTER USER: password changes cannot be rolled back"
@@ -4679,114 +4748,121 @@ msgstr ""
 #: commands/user.c:737
 #, c-format
 msgid "ALTER USER: user \"%s\" does not exist"
-msgstr ""
+msgstr "ALTER USER: пользователь \"%s\" не существует"
 
 #: commands/user.c:847 commands/variable.c:549 utils/cache/lsyscache.c:1498
 #: utils/init/miscinit.c:556
 #, c-format
 msgid "user \"%s\" does not exist"
-msgstr ""
+msgstr "пользователь \"%s\" не существует"
 
 #: commands/user.c:903
 msgid "DROP USER: permission denied"
-msgstr ""
+msgstr "DROP USER: нед доступа"
 
 #: commands/user.c:906
 msgid "DROP USER cannot be rolled back completely"
 msgstr ""
 
-#: commands/user.c:931
+#: commands/user.c:933
 #, c-format
-msgid "DROP USER: user \"%s\" does not exist%s"
-msgstr ""
+msgid "DROP USER: user \"%s\" does not exist (no users removed)"
+msgstr "DROP USER: пользователь \"%s\" не существует (никто из поользователей не удалён)"
 
-#: commands/user.c:937
+#: commands/user.c:935
+#, c-format
+msgid "DROP USER: user \"%s\" does not exist"
+msgstr "DROP USER: пользователь \"%s\" не существует"
+
+#: commands/user.c:941
 msgid "current user cannot be dropped"
 msgstr ""
 
-#: commands/user.c:939
+#: commands/user.c:943
 msgid "session user cannot be dropped"
 msgstr ""
 
-#: commands/user.c:963
+#: commands/user.c:967
 #, c-format
 msgid "DROP USER: user \"%s\" owns database \"%s\", cannot be removed%s"
 msgstr ""
 
-#: commands/user.c:1042
+#: commands/user.c:1046
 #, c-format
 msgid "CheckPgUserAclNotNull: \"%s\" not found"
 msgstr ""
 
-#: commands/user.c:1047
+#: commands/user.c:1051
 #, c-format
 msgid ""
 "To use passwords, you have to revoke permissions on %s so normal users "
 "cannot read the passwords. Try 'REVOKE ALL ON \"%s\" FROM PUBLIC'."
 msgstr ""
+"Для использования паролей требуется отнять права на %s так чтобы обычные пользователи "
+"не смогли их читать. Попробуйте 'REVOKE ALL ON \"%s\" FROM PUBLIC'."
 
-#: commands/user.c:1089 commands/user.c:1095
+#: commands/user.c:1093 commands/user.c:1099
 msgid "CREATE GROUP: conflicting options"
-msgstr ""
+msgstr "CREATE GROUP: конфликт опций"
 
-#: commands/user.c:1099
+#: commands/user.c:1103
 #, c-format
 msgid "CREATE GROUP: option \"%s\" not recognized"
-msgstr ""
+msgstr "CREATE GROUP: опция \"%s\" не распознана"
 
-#: commands/user.c:1107
+#: commands/user.c:1111
 msgid "group id must be positive"
 msgstr ""
 
-#: commands/user.c:1118
+#: commands/user.c:1122
 msgid "CREATE GROUP: permission denied"
-msgstr ""
+msgstr "CREATE GROUP: нет доступа"
 
-#: commands/user.c:1121
+#: commands/user.c:1125
 #, c-format
 msgid "CREATE GROUP: group name \"%s\" is reserved"
 msgstr ""
 
-#: commands/user.c:1150
+#: commands/user.c:1154
 #, c-format
 msgid "CREATE GROUP: group name \"%s\" already exists"
 msgstr ""
 
-#: commands/user.c:1153
+#: commands/user.c:1157
 #, c-format
 msgid "CREATE GROUP: group sysid %d is already assigned"
 msgstr ""
 
-#: commands/user.c:1240
+#: commands/user.c:1244
 #, c-format
 msgid "%s: group \"%s\" does not exist"
 msgstr ""
 
-#: commands/user.c:1281
+#: commands/user.c:1285
 #, c-format
 msgid "AlterGroup: unknown tag %s"
 msgstr ""
 
-#: commands/user.c:1293
+#: commands/user.c:1297
 #, c-format
 msgid "%s: user \"%s\" is already in group \"%s\""
 msgstr ""
 
-#: commands/user.c:1308
+#: commands/user.c:1312
 #, c-format
 msgid "ALTER GROUP: group \"%s\" does not have any members"
 msgstr ""
 
-#: commands/user.c:1333
+#: commands/user.c:1337
 #, c-format
 msgid "ALTER GROUP: user \"%s\" is not in group \"%s\""
 msgstr ""
 
-#: commands/user.c:1461
+#: commands/user.c:1465
 msgid "DROP GROUP: permission denied"
 msgstr ""
 
-#: commands/user.c:1472
+#: commands/user.c:1476
 #, c-format
 msgid "DROP GROUP: group \"%s\" does not exist"
 msgstr ""
@@ -6622,7 +6698,7 @@ msgstr ""
 msgid "expression_tree_walker: Unexpected node type %d"
 msgstr ""
 
-#: optimizer/util/clauses.c:2369
+#: optimizer/util/clauses.c:2371
 #, c-format
 msgid "expression_tree_mutator: Unexpected node type %d"
 msgstr ""
@@ -6945,7 +7021,7 @@ msgstr ""
 msgid "Misplaced NOT DEFERRABLE clause"
 msgstr ""
 
-#: parser/analyze.c:3020 parser/analyze.c:3038
+#: parser/analyze.c:3020 parser/analyze.c:3038 gram.y:2128 gram.y:2142
 msgid "INITIALLY DEFERRED constraint must be DEFERRABLE"
 msgstr ""
 
@@ -7623,6 +7699,281 @@ msgstr "typeidTypeRelid: Не верный тип - OID = %u"
 #, c-format
 msgid "Invalid type name '%s'"
 msgstr "Неверное имя типа '%s'"
+
+#: /usr/share/bison/bison.simple:179
+msgid "syntax error: cannot back up"
+msgstr ""
+
+#: gram.y:926
+msgid "SET TRANSACTION/READ ONLY not yet supported"
+msgstr "SET TRANSACTION/READ ONLY пока не поддерживается"
+
+#: gram.y:963 gram.y:980
+msgid "Time zone interval must be HOUR or HOUR TO MINUTE"
+msgstr ""
+
+#: gram.y:974 gram.y:4906 gram.y:6912 utils/adt/timestamp.c:693
+#, c-format
+msgid "INTERVAL(%d) precision must be between %d and %d"
+msgstr ""
+
+#: gram.y:1416 gram.y:1422 gram.y:4309 gram.y:4316
+msgid "GLOBAL TEMPORARY TABLE is not currently supported"
+msgstr ""
+
+#: gram.y:1459
+#, c-format
+msgid "CREATE TABLE / COLLATE %s not yet implemented; clause ignored"
+msgstr ""
+
+#: gram.y:1643
+msgid "LIKE in table definitions not yet supported"
+msgstr ""
+
+#: gram.y:1747
+msgid "FOREIGN KEY/MATCH PARTIAL not yet implemented"
+msgstr ""
+
+#: gram.y:1821
+msgid "CREATE TABLE AS may not specify INTO"
+msgstr "CREATE TABLE AS не может указывать INTO"
+
+#: gram.y:2192
+msgid "CREATE ASSERTION is not yet supported"
+msgstr "CREATE ASSERTION пока не поддерживается"
+
+#: gram.y:2206
+msgid "DROP ASSERTION is not yet supported"
+msgstr "DROP ASSERTION пока не поддерживается"
+
+#: gram.y:2576
+msgid "FETCH / RELATIVE at current position is not supported"
+msgstr ""
+
+#: gram.y:2704
+msgid "FETCH / ABSOLUTE not supported, using RELATIVE"
+msgstr ""
+
+#: gram.y:2866 gram.y:2874
+msgid "grant options are not implemented"
+msgstr ""
+
+#: gram.y:3050
+msgid "CREATE FUNCTION / OUT parameters are not supported"
+msgstr "CREATE FUNCTION / OUT параметры не поддерживаются"
+
+#: gram.y:3056
+msgid "CREATE FUNCTION / INOUT parameters are not supported"
+msgstr "CREATE FUNCTION / INOUT параметры не поддерживаются"
+
+#: gram.y:3208
+msgid "parser: argument type missing (use NONE for unary operators)"
+msgstr ""
+
+#: gram.y:3620
+msgid "%s is not a valid encoding name"
+msgstr "%s не является верным именем кодировки"
+
+#: gram.y:3632
+#, c-format
+msgid "%d is not a valid encoding code"
+msgstr "%d не является верным кодом кодировки"
+
+#: gram.y:3716
+#, c-format
+msgid "CREATE DOMAIN / COLLATE %s not yet implemented; clause ignored"
+msgstr ""
+
+#: gram.y:4395
+msgid ""
+"LIMIT #,# syntax not supported.\n"
+"\tUse separate LIMIT and OFFSET clauses."
+msgstr ""
+"Синтаксис LIMIT #,# больше не поддерживается.\n"
+"\tИспользуете LIMIT и OFFSET для этих целей."
+
+#: gram.y:4411
+msgid "LIMIT must not be negative"
+msgstr "LIMIT не должен быть отрицательным"
+
+#: gram.y:4453
+msgid "OFFSET must not be negative"
+msgstr "OFFSET не должен быть отрицательным"
+
+#: gram.y:4597
+msgid ""
+"sub-SELECT in FROM must have an alias\n"
+"\tFor example, FROM (SELECT ...) [AS] foo"
+msgstr ""
+
+#: gram.y:5000
+msgid "precision for FLOAT must be at least 1"
+msgstr ""
+
+#: gram.y:5007
+msgid "precision for FLOAT must be less than 16"
+msgstr ""
+
+#: gram.y:5020 gram.y:5033
+#, c-format
+msgid "NUMERIC precision %d must be between 1 and %d"
+msgstr ""
+
+#: gram.y:5024
+#, c-format
+msgid "NUMERIC scale %d must be between 0 and precision %d"
+msgstr ""
+
+#: gram.y:5050 gram.y:5063
+#, c-format
+msgid "DECIMAL precision %d must be between 1 and %d"
+msgstr ""
+
+#: gram.y:5054
+#, c-format
+msgid "DECIMAL scale %d must be between 0 and precision %d"
+msgstr ""
+
+#: gram.y:5109 gram.y:5183
+#, c-format
+msgid "length for type '%s' must be at least 1"
+msgstr ""
+
+#: gram.y:5112 gram.y:5186
+#, c-format
+msgid "length for type '%s' cannot exceed %d"
+msgstr ""
+
+#: gram.y:5263
+#, c-format
+msgid "TIMESTAMP(%d)%s precision must be between %d and %d"
+msgstr ""
+
+#: gram.y:5295
+#, c-format
+msgid "TIME(%d)%s precision must be between %d and %d"
+msgstr ""
+
+#: gram.y:5445 gram.y:7465 gram.y:7517
+msgid "Unequal number of entries in row expression"
+msgstr ""
+
+#: gram.y:5846
+msgid "UNIQUE predicate is not yet implemented"
+msgstr ""
+
+#: gram.y:6075
+#, c-format
+msgid "CURRENT_TIME(%d) precision must be between %d and %d"
+msgstr ""
+
+#: gram.y:6120
+#, c-format
+msgid "CURRENT_TIMESTAMP(%d) precision must be between %d and %d"
+msgstr ""
+
+#: gram.y:6165
+#, c-format
+msgid "LOCALTIME(%d) precision must be between %d and %d"
+msgstr ""
+
+#: gram.y:6210
+#, c-format
+msgid "LOCALTIMESTAMP(%d) precision must be between %d and %d"
+msgstr ""
+
+#: gram.y:6536
+#, c-format
+msgid "Conversion \"%s\" does not exist"
+msgstr "Конверсия \"%s\" не существует"
+
+#: gram.y:7338
+msgid "OLD used in non-rule query"
+msgstr ""
+
+#: gram.y:7345
+msgid "NEW used in non-rule query"
+msgstr ""
+
+#: /usr/share/bison/bison.simple:795
+msgid "parse error; also virtual memory exhausted"
+msgstr ""
+
+#: /usr/share/bison/bison.simple:799
+msgid "parse error"
+msgstr ""
+
+#: /usr/share/bison/bison.simple:924
+msgid "parser stack overflow"
+msgstr ""
+
+#: gram.y:7499
+#, c-format
+msgid "Operator '%s' not implemented for row expressions"
+msgstr ""
+
+#: gram.y:7575
+msgid "Wrong number of parameters on left side of OVERLAPS expression"
+msgstr ""
+
+#: gram.y:7580
+msgid "Wrong number of parameters on right side of OVERLAPS expression"
+msgstr ""
+
+#: gram.y:7617
+msgid "Multiple ORDER BY clauses not allowed"
+msgstr ""
+
+#: gram.y:7623
+msgid "Multiple FOR UPDATE clauses not allowed"
+msgstr ""
+
+#: gram.y:7629
+msgid "Multiple OFFSET clauses not allowed"
+msgstr ""
+
+#: gram.y:7635
+msgid "Multiple LIMIT clauses not allowed"
+msgstr ""
+
+#: scan.l:294
+msgid "unterminated /* comment"
+msgstr ""
+
+#: scan.l:322
+msgid "unterminated bit string literal"
+msgstr ""
+
+#: scan.l:341
+msgid "unterminated hexadecimal string literal"
+msgstr ""
+
+#: scan.l:387
+msgid "unterminated quoted string"
+msgstr ""
+
+#: scan.l:398
+msgid "zero-length delimited identifier"
+msgstr ""
+
+#: scan.l:405 scan.l:561
+#, c-format
+msgid "identifier \"%s\" will be truncated to \"%.*s\""
+msgstr ""
+
+#: scan.l:419
+msgid "unterminated quoted identifier"
+msgstr ""
+
+#: scan.l:579
+#, c-format
+msgid "parser: %s at end of input"
+msgstr ""
+
+#: scan.l:581
+#, c-format
+msgid "parser: %s at or near \"%s\" at character %d"
+msgstr ""
 
 #: port/ipc_test.c:93 storage/ipc/ipc.c:171
 msgid "Out of on_shmem_exit slots"
@@ -8426,12 +8777,12 @@ msgstr ""
 msgid "Relation \"%s\" is not empty. Cannot convert it to view"
 msgstr ""
 
-#: rewrite/rewriteDefine.c:511
+#: rewrite/rewriteDefine.c:512
 #, c-format
 msgid "RenameRewriteRule: rule \"%s\" does not exist"
 msgstr ""
 
-#: rewrite/rewriteDefine.c:515
+#: rewrite/rewriteDefine.c:516
 #, c-format
 msgid "Attempt to rename rule \"%s\" failed: \"%s\" already exists"
 msgstr ""
@@ -8458,34 +8809,34 @@ msgstr ""
 msgid "ApplyRetrieveRule: can't handle per-attribute ON SELECT rule"
 msgstr ""
 
-#: rewrite/rewriteHandler.c:843
+#: rewrite/rewriteHandler.c:844
 msgid "fireRIRrules: failed to remove aggs from qual"
 msgstr ""
 
-#: rewrite/rewriteHandler.c:1114
+#: rewrite/rewriteHandler.c:1115
 #, c-format
 msgid "query rewritten %d times, may contain cycles"
 msgstr ""
 
-#: rewrite/rewriteHandler.c:1238
+#: rewrite/rewriteHandler.c:1239
 msgid ""
 "Cannot insert into a view\n"
 "\tYou need an unconditional ON INSERT DO INSTEAD rule"
 msgstr ""
 
-#: rewrite/rewriteHandler.c:1242
+#: rewrite/rewriteHandler.c:1243
 msgid ""
 "Cannot update a view\n"
 "\tYou need an unconditional ON UPDATE DO INSTEAD rule"
 msgstr ""
 
-#: rewrite/rewriteHandler.c:1246
+#: rewrite/rewriteHandler.c:1247
 msgid ""
 "Cannot delete from a view\n"
 "\tYou need an unconditional ON DELETE DO INSTEAD rule"
 msgstr ""
 
-#: rewrite/rewriteHandler.c:1250
+#: rewrite/rewriteHandler.c:1251
 #, c-format
 msgid "QueryRewrite: unexpected commandType %d"
 msgstr ""
@@ -11807,11 +12158,6 @@ msgstr ""
 msgid "AdjustIntervalForTypmod(): internal coding error"
 msgstr ""
 
-#: utils/adt/timestamp.c:693
-#, c-format
-msgid "INTERVAL(%d) precision must be between %d and %d"
-msgstr ""
-
 #: utils/adt/timestamp.c:1517
 msgid "Unable to subtract non-finite timestamps"
 msgstr ""
@@ -12845,9 +13191,9 @@ msgid "FindExec: found \"%s\" using PATH"
 msgstr ""
 
 #: utils/init/miscinit.c:144 utils/init/miscinit.c:163
-#: utils/init/miscinit.c:171 utils/misc/guc.c:925 utils/misc/guc.c:1108
-#: utils/misc/guc.c:1902 utils/misc/guc.c:1916 utils/misc/guc.c:2667
-#: utils/misc/guc.c:2673 utils/misc/guc.c:2680
+#: utils/init/miscinit.c:171 utils/misc/guc.c:927 utils/misc/guc.c:1110
+#: utils/misc/guc.c:1904 utils/misc/guc.c:1918 utils/misc/guc.c:2673
+#: utils/misc/guc.c:2679 utils/misc/guc.c:2686
 msgid "out of memory"
 msgstr "не хватает памяти"
 
@@ -12935,8 +13281,8 @@ msgid ""
 "The data directory was initialized by PostgreSQL version %ld.%ld, which is "
 "not compatible with this version %s."
 msgstr ""
-"Директория данных была инициализирована с помощьб PostgreSQL, версии %ld.%ld, которая "
-"не совместима с этой версией: %s."
+"Директория данных была инициализирована с помощьб PostgreSQL, версии %ld.%"
+"ld, которая не совместима с этой версией: %s."
 
 #: utils/init/postinit.c:114
 #, c-format
@@ -13037,107 +13383,107 @@ msgstr ""
 msgid "Could not convert UTF-8 to ISO8859-1"
 msgstr "Не получилось сконвертировать из UTF-8 в ISO8859-1"
 
-#: utils/misc/guc.c:1204 utils/misc/guc.c:1219 utils/misc/guc.c:1234
-#: utils/misc/guc.c:1263
+#: utils/misc/guc.c:1206 utils/misc/guc.c:1221 utils/misc/guc.c:1236
+#: utils/misc/guc.c:1265
 #, c-format
 msgid "Failed to reset %s"
 msgstr ""
 
-#: utils/misc/guc.c:1331 utils/misc/guc.c:1353 utils/misc/guc.c:1375
-#: utils/misc/guc.c:1405
+#: utils/misc/guc.c:1333 utils/misc/guc.c:1355 utils/misc/guc.c:1377
+#: utils/misc/guc.c:1407
 #, c-format
 msgid "Failed to commit %s"
 msgstr ""
 
-#: utils/misc/guc.c:1584
+#: utils/misc/guc.c:1586 utils/misc/guc.c:2136
 #, c-format
 msgid "'%s' is not a valid option name"
 msgstr ""
 
-#: utils/misc/guc.c:1601
+#: utils/misc/guc.c:1603
 #, c-format
 msgid "'%s' cannot be changed after server start"
 msgstr ""
 
-#: utils/misc/guc.c:1609
+#: utils/misc/guc.c:1611
 #, c-format
 msgid "'%s' cannot be changed now"
 msgstr ""
 
-#: utils/misc/guc.c:1636
+#: utils/misc/guc.c:1638
 #, c-format
 msgid "'%s' cannot be set after connection start"
 msgstr ""
 
-#: utils/misc/guc.c:1644
+#: utils/misc/guc.c:1646
 #, c-format
 msgid "'%s': permission denied"
 msgstr "'%s': нет доступа"
 
-#: utils/misc/guc.c:1674
+#: utils/misc/guc.c:1676
 #, c-format
 msgid "%s: setting ignored because previous source is higher priority"
 msgstr ""
 
-#: utils/misc/guc.c:1695
+#: utils/misc/guc.c:1697
 #, c-format
 msgid "option '%s' requires a boolean value"
 msgstr "опция '%s' требует булевское значение"
 
-#: utils/misc/guc.c:1709 utils/misc/guc.c:1780
+#: utils/misc/guc.c:1711 utils/misc/guc.c:1782
 #, c-format
 msgid "invalid value for option '%s': %d"
 msgstr "не верное значение для опции '%s': %d"
 
-#: utils/misc/guc.c:1759
+#: utils/misc/guc.c:1761
 #, c-format
 msgid "option '%s' expects an integer value"
 msgstr "опция '%s' ожидает целое значение"
 
-#: utils/misc/guc.c:1765
+#: utils/misc/guc.c:1767
 #, c-format
 msgid "option '%s' value %d is outside of permissible range [%d .. %d]"
 msgstr ""
 
-#: utils/misc/guc.c:1830
+#: utils/misc/guc.c:1832
 #, c-format
 msgid "option '%s' expects a real number"
 msgstr "опция '%s' ожидает реальное число"
 
-#: utils/misc/guc.c:1836
+#: utils/misc/guc.c:1838
 #, c-format
 msgid "option '%s' value %g is outside of permissible range [%g .. %g]"
 msgstr ""
 
-#: utils/misc/guc.c:1851
+#: utils/misc/guc.c:1853
 #, c-format
 msgid "invalid value for option '%s': %g"
 msgstr "не верное значение для опции '%s': %g"
 
-#: utils/misc/guc.c:1945
+#: utils/misc/guc.c:1947
 #, c-format
 msgid "invalid value for option '%s': '%s'"
 msgstr "не верное значение для опции '%s': '%s'"
 
-#: utils/misc/guc.c:2046 utils/misc/guc.c:2080 utils/misc/guc.c:2390
+#: utils/misc/guc.c:2048 utils/misc/guc.c:2082 utils/misc/guc.c:2396
 #, c-format
 msgid "Option '%s' is not recognized"
 msgstr "Опция '%s' не распознана"
 
-#: utils/misc/guc.c:2137
+#: utils/misc/guc.c:2143
 #, c-format
 msgid "SET %s takes only one argument"
 msgstr "SET %s принимает только один аргумент"
 
-#: utils/misc/guc.c:2150 utils/misc/guc.c:2199
+#: utils/misc/guc.c:2156 utils/misc/guc.c:2205
 msgid "flatten_set_variable_args: unexpected input"
 msgstr ""
 
-#: utils/misc/guc.c:2238
+#: utils/misc/guc.c:2244
 msgid "SET variable name is required"
 msgstr "SET требуется имя переменной"
 
-#: utils/misc/guc.c:2774
+#: utils/misc/guc.c:2780
 #, c-format
 msgid "cannot parse setting \"%s\""
 msgstr "не получилось проанализировать опцию \"%s\""
@@ -13377,7 +13723,3 @@ msgstr "tuplestore: неожиданный конец данных"
 #: utils/sort/tuplestore.c:644 utils/sort/tuplestore.c:648
 msgid "tuplestore: write failed"
 msgstr "tuplestore: запись не удалась"
-
-##
-## EOF
-##

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.7 2002/09/07 16:14:33 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.8 2002/09/22 20:57:20 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -690,7 +690,7 @@ executeQuery(PGconn *conn, const char *query)
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		fprintf(stderr, _("%s: query failed: %s"), progname, PQerrorMessage(conn));
-		fprintf(stderr, _("%s: query was: %s"), progname, query);
+		fprintf(stderr, _("%s: query was: %s\n"), progname, query);
 		PQfinish(conn);
 		exit(1);
 	}
