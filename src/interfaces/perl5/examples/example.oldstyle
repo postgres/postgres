@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 
-# $Id: example.oldstyle,v 1.6 1998/09/27 19:12:35 mergl Exp $
+# $Id: example.oldstyle,v 1.1 2000/06/01 03:05:24 momjian Exp $
 
 ######################### globals
 
