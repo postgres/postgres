@@ -7,10 +7,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.3 1996/07/22 21:56:00 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.4 1996/08/27 07:32:27 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#include "config.h"
+
 #include <ctype.h>
 #include <stdio.h>
 

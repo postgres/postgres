@@ -7,10 +7,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.1.1.1 1996/07/09 06:22:02 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.2 1996/08/27 07:32:25 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#include "config.h"
+
 #include <ctype.h>
 #include <string.h>
 #include "postgres.h"

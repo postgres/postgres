@@ -7,10 +7,12 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/datetimes.c,v 1.2 1996/07/19 07:19:56 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/datetimes.c,v 1.3 1996/08/27 07:32:30 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "config.h"
+
 #include <stdio.h>		/* for sprintf() */
 #include <string.h>
 #include "postgres.h"
@@ -58,13 +60,13 @@ date_in(char *datestr)
     DateADT *date = (DateADT*)&result;
 
 #if 0
-#ifdef USE_SHORT_YEAR
-#define CHECK_DATE_LEN(datestr) (strlen(datestr) >= 8)
+# ifdef USE_SHORT_YEAR
+#  define CHECK_DATE_LEN(datestr) (strlen(datestr) >= 8)
+# else
+#  define CHECK_DATE_LEN(datestr) (strlen(datestr) == 10)
+# endif /* USE_SHORT_YEAR */
 #else
-#define CHECK_DATE_LEN(datestr) (strlen(datestr) == 10)
-#endif /* USE_SHORT_YEAR */
-#else
-#define CHECK_DATE_LEN(datestr) 1
+# define CHECK_DATE_LEN(datestr) 1
 #endif
 
 #ifdef AMERICAN_STYLE
