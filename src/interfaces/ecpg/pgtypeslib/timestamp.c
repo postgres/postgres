@@ -13,6 +13,7 @@
 #include "extern.h"
 #include "pgtypes_error.h"
 #include "pgtypes_timestamp.h"
+#include "pgtypes_interval.h"
 #include "datetime.h"
 
 #ifdef HAVE_INT64_TIMESTAMP
@@ -368,7 +369,7 @@ dtcvasc (char *str, Timestamp *ts)
 }
 
 int
-dtsub (Timestamp *ts1, Timestamp *ts2, Timestamp *iv)
+dtsub (Timestamp *ts1, Timestamp *ts2, Interval *iv)
 {
 	return 0;
 }
@@ -386,8 +387,30 @@ dttofmtasc (Timestamp *ts, char *output, int str_len, char *fmtstr)
 }
 
 int
-intoasc(Timestamp *i, char *str)
+intoasc(Interval *i, char *str)
 {
 	return 0;
+}
+
+Interval *
+PGTYPESinterval_atoi(char *str, char **endptr)
+{
+	Interval	*result = NULL;
+	
+	return result;
+}
+
+char *
+PGTYPESinterval_itoa(Interval *intvl)
+{
+        char            buf[MAXDATELEN + 1];
+
+        return pgtypes_strdup(buf);
+}
+
+int 
+PGTYPESinterval_copy(Interval *intvlsrc, Interval *intrcldest)
+{
+		return 0;
 }
 

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.2 2003/03/20 15:56:50 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.3 2003/03/27 14:29:17 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -13,6 +13,7 @@
 #include "pgtypes_numeric.h"
 #include "pgtypes_date.h"
 #include "pgtypes_timestamp.h"
+#include "pgtypes_interval.h"
 
 bool
 ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
@@ -100,9 +101,10 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				unsigned long ures;
 				double		dres;
 				char	   *scan_length;
-				NumericVar *nres;
+				Numeric *nres;
 				Date	   ddres;
 				Timestamp	tres;
+				Interval	*ires;
 
 			case ECPGt_short:
 			case ECPGt_int:
@@ -392,16 +394,39 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
 						|| (!isarray && *scan_length != '\0'))	/* Garbage left */
 					{
-						ECPGraise(lineno, ECPG_FLOAT_FORMAT, pval);
+						ECPGraise(lineno, ECPG_NUMERIC_FORMAT, pval);
 						return (false);
 					}
 				}
 				else
 					nres = PGTYPESnumeric_aton("0.0", &scan_length);
 
-				PGTYPESnumeric_copy(nres, (NumericVar *)(var + offset * act_tuple));
+				PGTYPESnumeric_copy(nres, (Numeric *)(var + offset * act_tuple));
 				break;
 				
+			case ECPGt_interval:
+				if (pval)
+				{
+					if (isarray && *pval == '"')
+						ires = PGTYPESinterval_atoi(pval + 1, &scan_length);
+					else
+						ires = PGTYPESinterval_atoi(pval, &scan_length);
+
+					if (isarray && *scan_length == '"')
+						scan_length++;
+
+					if ((isarray && *scan_length != ',' && *scan_length != '}')
+						|| (!isarray && *scan_length != '\0'))	/* Garbage left */
+					{
+						ECPGraise(lineno, ECPG_INTERVAL_FORMAT, pval);
+						return (false);
+					}
+				}
+				else
+					ires = PGTYPESinterval_atoi("0 seconds", NULL);
+
+				PGTYPESinterval_copy(ires, (Interval *)(var + offset * act_tuple));
+				break;
 			case ECPGt_date:
 				if (pval)
 				{
@@ -416,7 +441,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
 						|| (!isarray && *scan_length != '\0'))	/* Garbage left */
 					{
-						ECPGraise(lineno, ECPG_FLOAT_FORMAT, pval);
+						ECPGraise(lineno, ECPG_DATE_FORMAT, pval);
 						return (false);
 					}
 
@@ -438,7 +463,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
 						|| (!isarray && *scan_length != '\0'))	/* Garbage left */
 					{
-						ECPGraise(lineno, ECPG_FLOAT_FORMAT, pval);
+						ECPGraise(lineno, ECPG_TIMESTAMP_FORMAT, pval);
 						return (false);
 					}
 

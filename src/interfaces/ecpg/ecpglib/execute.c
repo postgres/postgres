@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.5 2003/03/25 02:44:36 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.6 2003/03/27 14:29:17 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -29,6 +29,7 @@
 #include "pgtypes_numeric.h"
 #include "pgtypes_date.h"
 #include "pgtypes_timestamp.h"
+#include "pgtypes_interval.h"
 
 /* variables visible to the programs */
 struct sqlca sqlca =
@@ -846,7 +847,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
-							str = PGTYPESnumeric_ntoa((NumericVar *)((var + var->offset * element)->value));
+							str = PGTYPESnumeric_ntoa((Numeric *)((var + var->offset * element)->value));
 							slen = strlen (str);
 							
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + 5, stmt->lineno)))
@@ -862,7 +863,48 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					}
 					else
 					{
-						str = PGTYPESnumeric_ntoa((NumericVar *)(var->value));
+						str = PGTYPESnumeric_ntoa((Numeric *)(var->value));
+						slen = strlen (str);
+					
+						if (!(mallocedval = ECPGalloc(slen + 1, stmt->lineno)))
+							return false;
+
+						strncpy(mallocedval, str , slen);
+						mallocedval[slen] = '\0';
+					}
+					
+					*tobeinserted_p = mallocedval;
+					*malloced_p = true;
+					free(str);
+				}
+				break;
+
+			case ECPGt_interval:
+				{
+					char *str = NULL;
+					int slen;
+					
+					if (var->arrsize > 1)
+					{
+						for (element = 0; element < var->arrsize; element++)
+						{
+							str = PGTYPESinterval_itoa((Interval *)((var + var->offset * element)->value));
+							slen = strlen (str);
+							
+							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + 5, stmt->lineno)))
+								return false;
+							
+							if (!element)
+								strcpy(mallocedval, "'{");
+							
+							strncpy(mallocedval + strlen(mallocedval), str , slen + 1);
+							strcpy(mallocedval + strlen(mallocedval), ",");
+						}
+						strcpy(mallocedval + strlen(mallocedval) - 1, "}'");
+					}
+					else
+					{
+						str = PGTYPESinterval_itoa((Interval *)(var->value));
 						slen = strlen (str);
 					
 						if (!(mallocedval = ECPGalloc(slen + 1, stmt->lineno)))

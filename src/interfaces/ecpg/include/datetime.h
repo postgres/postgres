@@ -1,11 +1,12 @@
 #include <pgtypes_timestamp.h>
+#include <pgtypes_interval.h>
 
 #ifndef dtime_t
 #define dtime_t Timestamp
 #endif /* dtime_t */
 
 #ifndef intrvl_t
-#define intrvl_t Timestamp
+#define intrvl_t Interval
 #endif /* intrvl_t */
 
 extern void dtcurrent (dtime_t *);

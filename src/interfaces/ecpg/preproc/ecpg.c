@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.63 2003/03/18 10:46:39 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.64 2003/03/27 14:29:17 meskes Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -157,7 +157,8 @@ main(int argc, char *const argv[])
 				if (strcmp(optarg, "INFORMIX") == 0)
 				{
 					compat = ECPG_COMPAT_INFORMIX;
-					add_preprocessor_define("dec_t=NumericVar");
+					add_preprocessor_define("dec_t=Numeric");
+					add_preprocessor_define("intrvl_t=Interval");
 				}
 				else
 				{

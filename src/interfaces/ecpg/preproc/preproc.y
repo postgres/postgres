@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.214 2003/03/21 14:17:47 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.215 2003/03/27 14:29:17 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -4258,8 +4258,8 @@ single_vt_type: common_type
 			}
 			else if (strcmp($1, "interval") == 0)
 			{
-				$$.type_enum = ECPGt_timestamp;
-				$$.type_str = make_str("Timestamp");
+				$$.type_enum = ECPGt_interval;
+				$$.type_str = EMPTY;
 				$$.type_dimension = -1;
 				$$.type_index = -1;
 				$$.type_sizeof = NULL;
@@ -4526,8 +4526,8 @@ var_type:	common_type
 			}
 			else if (strcmp($1, "interval") == 0)
 			{
-				$$.type_enum = ECPGt_timestamp;
-				$$.type_str = make_str("Timestamp");
+				$$.type_enum = ECPGt_interval;
+				$$.type_str = EMPTY;
 				$$.type_dimension = -1;
 				$$.type_index = -1;
 				$$.type_sizeof = NULL;
@@ -4732,9 +4732,21 @@ variable: opt_pointer ECPGColLabelCommon opt_array_bounds opt_initializer
                                                 type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length), dimension);
 
 					if (dimension < 0)
-						$$ = cat_str(4, mm_strdup(actual_storage[struct_level]), make_str("NumericVar"), mm_strdup($2), $4);
+						$$ = cat_str(4, mm_strdup(actual_storage[struct_level]), make_str("Numeric"), mm_strdup($2), $4);
 					else
-						$$ = cat_str(5, mm_strdup(actual_storage[struct_level]), make_str("NumericVar"), mm_strdup($2), mm_strdup(dim), $4);
+						$$ = cat_str(5, mm_strdup(actual_storage[struct_level]), make_str("Numeric"), mm_strdup($2), mm_strdup(dim), $4);
+					break;
+				
+				case ECPGt_interval:
+					if (dimension < 0)
+                                                type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length);
+                                        else
+                                                type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length), dimension);
+
+					if (dimension < 0)
+						$$ = cat_str(4, mm_strdup(actual_storage[struct_level]), make_str("Interval"), mm_strdup($2), $4);
+					else
+						$$ = cat_str(5, mm_strdup(actual_storage[struct_level]), make_str("Interval"), mm_strdup($2), mm_strdup(dim), $4);
 					break;
 					
 				default:

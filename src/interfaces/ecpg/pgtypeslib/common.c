@@ -1,5 +1,4 @@
 #include <errno.h>
-#include <stdlib.h>
 
 #include "extern.h"
 	

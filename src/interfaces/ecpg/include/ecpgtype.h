@@ -54,7 +54,8 @@ enum ECPGttype
 	ECPGt_descriptor,			/* sql descriptor, no C variable */
 	ECPGt_numeric,
 	ECPGt_date,
-	ECPGt_timestamp
+	ECPGt_timestamp,
+	ECPGt_interval
 };
 
  /* descriptor items */

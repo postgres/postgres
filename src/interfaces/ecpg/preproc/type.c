@@ -172,6 +172,9 @@ get_type(enum ECPGttype type)
 		case ECPGt_numeric:
 			return ("ECPGt_numeric");
 			break;
+		case ECPGt_interval:
+			return ("ECPGt_interval");
+			break;
 		case ECPGt_descriptor:
 			return ("ECPGt_descriptor");
 			break;
@@ -334,7 +337,15 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				 *  we have to use a pointer here
 				 */
 				sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
-				sprintf(offset, "sizeof(struct NumericVar)");
+				sprintf(offset, "sizeof(Numeric)");
+				break;
+			case ECPGt_interval:
+
+				/*
+				 *  we have to use a pointer here
+				 */
+				sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
+				sprintf(offset, "sizeof(Interval)");
 				break;
 			case ECPGt_date:
 
