@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.16 2001/08/15 18:42:14 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.17 2001/08/16 16:24:15 momjian Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -194,7 +194,22 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
 
          <para>
           The password is sent over the wire in clear text. For better
-          protection, use the <literal>crypt</literal> method.
+          protection, use the <literal>md5</literal> or 
+          <literal>crypt</literal> methods.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term>md5</>
+        <listitem>
+         <para>
+          Like the <literal>password</literal> method, but the password
+          is sent over the wire encrypted using a simple
+          challenge-response protocol. This protects against incidental
+          wire-sniffing. The name of a file may follow the
+          <literal>md5</literal> keyword.  It contains a list of users
+          for this record.
          </para>
         </listitem>
        </varlistentry>
@@ -203,12 +218,8 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
         <term>crypt</>
         <listitem>
          <para>
-          Like the <literal>password</literal> method, but the password
-          is sent over the wire encrypted using a simple
-          challenge-response protocol. This protects against incidental
-          wire-sniffing. The name of a file may follow the
-          <literal>crypt</literal> keyword.  It contains a list of users
-          for this record.
+          Like the <literal>md5</literal> method but uses older crypt
+          authentication for pre-7.2 clients.
          </para>
         </listitem>
        </varlistentry>
@@ -328,7 +339,7 @@ host         template1   192.168.93.0  255.255.255.0      ident     sameuser
 # Allow a user from host 192.168.12.10 to connect to database "template1"
 # if the user's password in pg_shadow is correctly supplied:
 
-host         template1   192.168.12.10 255.255.255.255    crypt
+host         template1   192.168.12.10 255.255.255.255    md5
 
 # In the absence of preceding "host" lines, these two lines will reject
 # all connection attempts from 192.168.54.1 (since that entry will be
@@ -377,11 +388,11 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
    </para>
 
    <para>
-    To restrict the set of users that are allowed to connect to
-    certain databases, list the set of users in a separate file (one
-    user name per line) in the same directory that
-    <filename>pg_hba.conf</> is in, and mention the (base) name of the
-    file after the <literal>password</> or <literal>crypt</> keyword,
+    To restrict the set of users that are allowed to connect to certain
+    databases, list the set of users in a separate file (one user name
+    per line) in the same directory that <filename>pg_hba.conf</> is in,
+    and mention the (base) name of the file after the
+    <literal>password</>, <literal>md5</>, or <literal>crypt</> keyword,
     respectively, in <filename>pg_hba.conf</>. If you do not use this
     feature, then any user that is known to the database system can
     connect to any database (so long as he passes password
@@ -414,8 +425,8 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
    </para>
 
    <para>
-    Alternative passwords cannot be used when using the
-    <literal>crypt</> method. The file will still be evaluated as
+    Alternative passwords cannot be used when using the <literal>md5</>
+    or <literal>crypt</> methods. The file will still be evaluated as
     usual but the password field will simply be ignored and the
     <literal>pg_shadow</> password will be used.
    </para>

@@ -115,13 +115,15 @@
 # 		utility. Remember, these passwords override pg_shadow
 # 		passwords.
 # 
-#   crypt:  	Same as "password", but authentication is done by
+#   md5:  	Same as "password", but authentication is done by
 #		encrypting the password sent over the network. This is
 #		always preferable to "password" except for old clients
-#		that don't support "crypt". Also, crypt can use
-#		usernames stored in secondary password files but not
-#		secondary passwords.
+#		that don't support it. Also, md5 can use usernames stored
+#		in secondary password files but not secondary passwords.
 # 
+#   crypt:  	Same as "md5", but uses crypt for pre-7.2 clients.  You can
+#		not store encrypted passwords if you use this option.
+#
 #   ident:	For TCP/IP connections, authentication is done by contacting
 #		the ident server on the client host.  (CAUTION: this is only
 #		as secure as the client machine!)  On machines that support
@@ -173,7 +175,7 @@
 # if the user's password in pg_shadow is correctly supplied:
 # 
 # TYPE       DATABASE    IP_ADDRESS    MASK               AUTH_TYPE  AUTH_ARGUMENT
-# host       template1   192.168.12.10 255.255.255.255    crypt
+# host       template1   192.168.12.10 255.255.255.255    md5
 # 
 # In the absence of preceding "host" lines, these two lines will reject
 # all connection from 192.168.54.1 (since that entry will be matched

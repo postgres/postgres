@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.20 2001/03/11 11:06:59 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.21 2001/08/16 16:24:15 momjian Exp $
 -->
 
  <chapter id="jdbc">
@@ -162,7 +162,7 @@ java uk.org.retep.finder.Main
     <filename>pg_hba.conf</filename> file may need to be configured.
     Refer to the <citetitle>Administrator's Guide</citetitle> for
     details.  The <acronym>JDBC</acronym> Driver supports trust,
-    ident, password, and crypt authentication methods.
+    ident, password, and md5, crypt authentication methods.
    </para>
   </sect2>
  </sect1>
