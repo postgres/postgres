@@ -323,23 +323,12 @@ PostgresPollingStatusType *PQconnectPoll(PQconn *conn)
      </listitem>
      <listitem>
       <para>
-      CONNECTION_AWAITING_RESPONSE: Waiting for a response from the backend.
+      CONNECTION_AWAITING_RESPONSE: Waiting for a response from the postmaster.
       </para>
      </listitem>
      <listitem>
       <para>
-      CONNECTION_AUTH_RESPONSE: Got an authentication response; about to deal
-      with it.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-      CONNECTION_ERROR_RESPONSE: Got an error response; about to deal with it.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-      CONNECTION_AUTH_OK: Received authentication; waiting for ReadyForQuery etc.
+      CONNECTION_AUTH_OK: Received authentication; waiting for backend startup.
       </para>
      </listitem>
      <listitem>
@@ -373,7 +362,7 @@ PostgresPollingStatusType *PQconnectPoll(PQconn *conn)
   </para>
   <para>
    Note that if PQconnectStart returns a non-NULL pointer, you must call
-   PQfinish upon that, when you are finished with it, in order to dispose of
+   PQfinish when you are finished with it, in order to dispose of
    the structure and any associated memory blocks. This must be done even if a
    call to PQconnectStart or PQconnectPoll failed.
   </para>

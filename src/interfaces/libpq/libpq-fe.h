@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.53 1999/11/30 03:08:19 momjian Exp $
+ * $Id: libpq-fe.h,v 1.54 2000/01/14 05:33:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,16 +41,9 @@ extern		"C"
 		CONNECTION_STARTED,     /* Waiting for connection to be made.  */
 		CONNECTION_MADE,        /* Connection OK; waiting to send.     */
 		CONNECTION_AWAITING_RESPONSE,   /* Waiting for a response
-										   from the backend.           */
-		CONNECTION_AUTH_RESPONSE,       /* Got an authentication
-										   response; about to deal
-										   with it.                    */
-		CONNECTION_ERROR_RESPONSE,      /* Got an error
-										   response; about to deal 
-										   with it.                    */
+										   from the postmaster.        */
 		CONNECTION_AUTH_OK,             /* Received authentication;
-										   waiting for ReadyForQuery
-										   etc.                        */
+										   waiting for backend startup. */
 		CONNECTION_SETENV               /* Negotiating environment.    */
 	} ConnStatusType;
 
