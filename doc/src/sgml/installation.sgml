@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.90 2002/10/26 20:45:40 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.91 2002/10/27 23:50:05 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1537,10 +1537,10 @@ gunzip -c user.ps.gz \
        <row>
 	<entry><systemitem class="osname">IRIX</></entry>
 	<entry><systemitem>MIPS</></entry>
-	<entry>7.2</entry>
-	<entry>2001-11-28,
-	 Luis Amigo (<email>lamigo@atc.unican.es</email>)</entry>
-	<entry>6.5.13, MIPSPro 7.30</entry>
+	<entry>7.3</entry>
+	<entry>2002-10-27,
+	 Ian Barwick (<email>barwick@gmx.net</email>)</entry>
+	<entry>Irix64 Komma 6.5</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
