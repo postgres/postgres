@@ -295,7 +295,7 @@
 #---------------------------------------------------------------------------
 
 #deadlock_timeout = 1000	# in milliseconds
-#max_locks_per_transaction = 64	# min 10, ~260*max_connections bytes each
+#max_locks_per_transaction = 64	# min 10, ~200*max_connections bytes each
 
 
 #---------------------------------------------------------------------------
