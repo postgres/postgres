@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.200 2003/02/03 15:07:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.201 2003/03/10 03:53:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -537,9 +537,7 @@ InitPlan(QueryDesc *queryDesc)
 	 */
 	do_select_into = false;
 
-	if (operation == CMD_SELECT &&
-		!parseTree->isPortal &&
-		parseTree->into != NULL)
+	if (operation == CMD_SELECT && parseTree->into != NULL)
 	{
 		do_select_into = true;
 		/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.200 2003/02/16 02:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.201 2003/03/10 03:53:49 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1082,6 +1082,16 @@ _outNotifyStmt(StringInfo str, NotifyStmt *node)
 }
 
 static void
+_outDeclareCursorStmt(StringInfo str, DeclareCursorStmt *node)
+{
+	WRITE_NODE_TYPE("DECLARECURSOR");
+
+	WRITE_STRING_FIELD(portalname);
+	WRITE_INT_FIELD(options);
+	WRITE_NODE_FIELD(query);
+}
+
+static void
 _outSelectStmt(StringInfo str, SelectStmt *node)
 {
 	WRITE_NODE_TYPE("SELECT");
@@ -1173,6 +1183,7 @@ _outQuery(StringInfo str, Query *node)
 			case T_CreateStmt:
 			case T_IndexStmt:
 			case T_NotifyStmt:
+			case T_DeclareCursorStmt:
 				WRITE_NODE_FIELD(utilityStmt);
 				break;
 			default:
@@ -1185,8 +1196,6 @@ _outQuery(StringInfo str, Query *node)
 
 	WRITE_INT_FIELD(resultRelation);
 	WRITE_NODE_FIELD(into);
-	WRITE_BOOL_FIELD(isPortal);
-	WRITE_BOOL_FIELD(isBinary);
 	WRITE_BOOL_FIELD(hasAggs);
 	WRITE_BOOL_FIELD(hasSubLinks);
 	WRITE_NODE_FIELD(rtable);
@@ -1683,6 +1692,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_NotifyStmt:
 				_outNotifyStmt(str, obj);
+				break;
+			case T_DeclareCursorStmt:
+				_outDeclareCursorStmt(str, obj);
 				break;
 			case T_SelectStmt:
 				_outSelectStmt(str, obj);

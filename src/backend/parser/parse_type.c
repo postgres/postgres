@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.53 2003/02/19 23:41:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.54 2003/03/10 03:53:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -455,7 +455,6 @@ parseTypeString(const char *str, Oid *type_id, int32 *typmod)
 		stmt->groupClause != NIL ||
 		stmt->havingClause != NULL ||
 		stmt->sortClause != NIL ||
-		stmt->portalname != NULL ||
 		stmt->limitOffset != NULL ||
 		stmt->limitCount != NULL ||
 		stmt->forUpdate != NIL ||

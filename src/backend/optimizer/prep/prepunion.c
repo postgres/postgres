@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.91 2003/03/05 20:01:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.92 2003/03/10 03:53:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,8 +134,7 @@ recurse_set_operations(Node *setOp, Query *parse,
 		/*
 		 * Generate plan for primitive subquery
 		 */
-		subplan = subquery_planner(subquery,
-								   -1.0 /* default case */ );
+		subplan = subquery_planner(subquery, 0.0 /* default case */ );
 
 		/*
 		 * Add a SubqueryScan with the caller-requested targetlist

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.150 2003/03/05 20:01:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.151 2003/03/10 03:53:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
+#include "executor/executor.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #ifdef OPTIMIZER_DEBUG
@@ -73,8 +74,9 @@ static List *postprocess_setop_tlist(List *new_tlist, List *orig_tlist);
  *
  *****************************************************************************/
 Plan *
-planner(Query *parse)
+planner(Query *parse, bool isCursor, int cursorOptions)
 {
+	double		tuple_fraction;
 	Plan	   *result_plan;
 	Index		save_PlannerQueryLevel;
 	List	   *save_PlannerParamVar;
@@ -99,10 +101,37 @@ planner(Query *parse)
 	PlannerQueryLevel = 0;		/* will be 1 in top-level subquery_planner */
 	PlannerParamVar = NIL;
 
+	/* Determine what fraction of the plan is likely to be scanned */
+	if (isCursor)
+	{
+		/*
+		 * We have no real idea how many tuples the user will ultimately
+		 * FETCH from a cursor, but it seems a good bet that he
+		 * doesn't want 'em all.  Optimize for 10% retrieval (you
+		 * gotta better number?  Should this be a SETtable parameter?)
+		 */
+		tuple_fraction = 0.10;
+	}
+	else
+	{
+		/* Default assumption is we need all the tuples */
+		tuple_fraction = 0.0;
+	}
+
 	/* primary planning entry point (may recurse for subqueries) */
-	result_plan = subquery_planner(parse, -1.0 /* default case */ );
+	result_plan = subquery_planner(parse, tuple_fraction);
 
 	Assert(PlannerQueryLevel == 0);
+
+	/*
+	 * If creating a plan for a scrollable cursor, make sure it can
+	 * run backwards on demand.  Add a Material node at the top at need.
+	 */
+	if (isCursor && (cursorOptions & CURSOR_OPT_SCROLL))
+	{
+		if (!ExecSupportsBackwardScan(result_plan))
+			result_plan = materialize_finished_plan(result_plan);
+	}
 
 	/* executor wants to know total number of Params used overall */
 	result_plan->nParamExec = length(PlannerParamVar);
@@ -505,14 +534,11 @@ inheritance_planner(Query *parse, List *inheritlist)
  * tuple_fraction is the fraction of tuples we expect will be retrieved
  *
  * tuple_fraction is interpreted as follows:
- *	  < 0: determine fraction by inspection of query (normal case)
- *	  0: expect all tuples to be retrieved
+ *	  0: expect all tuples to be retrieved (normal case)
  *	  0 < tuple_fraction < 1: expect the given fraction of tuples available
  *		from the plan to be retrieved
  *	  tuple_fraction >= 1: tuple_fraction is the absolute number of tuples
  *		expected to be retrieved (ie, a LIMIT specification)
- * The normal case is to pass -1, but some callers pass values >= 0 to
- * override this routine's determination of the appropriate fraction.
  *
  * Returns a query plan.  Also, parse->query_pathkeys is returned as the
  * actual output ordering of the plan (in pathkey format).
@@ -692,29 +718,6 @@ grouping_planner(Query *parse, double tuple_fraction)
 			parse->query_pathkeys = sort_pathkeys;
 		else
 			parse->query_pathkeys = NIL;
-
-		/*
-		 * Figure out whether we expect to retrieve all the tuples that
-		 * the plan can generate, or to stop early due to outside factors
-		 * such as a cursor.  If the caller passed a value >= 0, believe
-		 * that value, else do our own examination of the query context.
-		 */
-		if (tuple_fraction < 0.0)
-		{
-			/* Initial assumption is we need all the tuples */
-			tuple_fraction = 0.0;
-
-			/*
-			 * Check for retrieve-into-portal, ie DECLARE CURSOR.
-			 *
-			 * We have no real idea how many tuples the user will ultimately
-			 * FETCH from a cursor, but it seems a good bet that he
-			 * doesn't want 'em all.  Optimize for 10% retrieval (you
-			 * gotta better number?  Should this be a SETtable parameter?)
-			 */
-			if (parse->isPortal)
-				tuple_fraction = 0.10;
-		}
 
 		/*
 		 * Adjust tuple_fraction if we see that we are going to apply

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.69 2003/02/09 00:30:39 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.70 2003/03/10 03:53:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,4 +280,62 @@ ExecSupportsMarkRestore(NodeTag plantype)
 	}
 
 	return false;
+}
+
+/*
+ * ExecSupportsBackwardScan - does a plan type support backwards scanning?
+ *
+ * Ideally, all plan types would support backwards scan, but that seems
+ * unlikely to happen soon.  In some cases, a plan node passes the backwards
+ * scan down to its children, and so supports backwards scan only if its
+ * children do.  Therefore, this routine must be passed a complete plan tree.
+ */
+bool
+ExecSupportsBackwardScan(Plan *node)
+{
+	if (node == NULL)
+		return false;
+
+	switch (nodeTag(node))
+	{
+		case T_Result:
+			if (outerPlan(node) != NULL)
+				return ExecSupportsBackwardScan(outerPlan(node));
+			else
+				return false;
+
+		case T_Append:
+		{
+			List   *l;
+
+			foreach(l, ((Append *) node)->appendplans)
+			{
+				if (!ExecSupportsBackwardScan((Plan *) lfirst(l)))
+					return false;
+			}
+			return true;
+		}
+
+		case T_SeqScan:
+		case T_IndexScan:
+		case T_TidScan:
+		case T_FunctionScan:
+			return true;
+
+		case T_SubqueryScan:
+			return ExecSupportsBackwardScan(((SubqueryScan *) node)->subplan);
+
+		case T_Material:
+		case T_Sort:
+			return true;
+
+		case T_Unique:
+			return ExecSupportsBackwardScan(outerPlan(node));
+
+		case T_Limit:
+			return ExecSupportsBackwardScan(outerPlan(node));
+
+		default:
+			return false;
+	}
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.8 2003/01/08 00:22:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.9 2003/03/10 03:53:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,39 +19,88 @@
 
 #include "commands/portalcmds.h"
 #include "executor/executor.h"
+#include "optimizer/planner.h"
+#include "rewrite/rewriteHandler.h"
+
+
+static Portal PreparePortal(char *portalName);
 
 
 /*
- * PortalCleanup
- *
- * Clean up a portal when it's dropped.  Since this mainly exists to run
- * ExecutorEnd(), it should not be set as the cleanup hook until we have
- * called ExecutorStart() on the portal's query.
+ * PerformCursorOpen
+ *		Execute SQL DECLARE CURSOR command.
  */
 void
-PortalCleanup(Portal portal)
+PerformCursorOpen(DeclareCursorStmt *stmt, CommandDest dest)
 {
-	/*
-	 * sanity checks
-	 */
-	AssertArg(PortalIsValid(portal));
-	AssertArg(portal->cleanup == PortalCleanup);
+	List	   *rewritten;
+	Query	   *query;
+	Plan	   *plan;
+	Portal		portal;
+	MemoryContext oldContext;
+	char	   *cursorName;
+	QueryDesc  *queryDesc;
+
+	/* Check for invalid context (must be in transaction block) */
+	RequireTransactionChain((void *) stmt, "DECLARE CURSOR");
 
 	/*
-	 * tell the executor to shutdown the query
+	 * The query has been through parse analysis, but not rewriting or
+	 * planning as yet.  Note that the grammar ensured we have a SELECT
+	 * query, so we are not expecting rule rewriting to do anything strange.
 	 */
-	ExecutorEnd(PortalGetQueryDesc(portal));
+	rewritten = QueryRewrite((Query *) stmt->query);
+	if (length(rewritten) != 1 || !IsA(lfirst(rewritten), Query))
+		elog(ERROR, "PerformCursorOpen: unexpected rewrite result");
+	query = (Query *) lfirst(rewritten);
+	if (query->commandType != CMD_SELECT)
+		elog(ERROR, "PerformCursorOpen: unexpected rewrite result");
+
+	if (query->into)
+		elog(ERROR, "DECLARE CURSOR may not specify INTO");
+	if (query->rowMarks != NIL)
+		elog(ERROR, "DECLARE/UPDATE is not supported"
+			 "\n\tCursors must be READ ONLY");
+
+	plan = planner(query, true, stmt->options);
+
+	/* If binary cursor, switch to alternate output format */
+	if ((stmt->options & CURSOR_OPT_BINARY) && dest == Remote)
+		dest = RemoteInternal;
 
 	/*
-	 * This should be unnecessary since the querydesc should be in the
-	 * portal's memory context, but do it anyway for symmetry.
+	 * Create a portal and copy the query and plan into its memory context.
 	 */
-	FreeQueryDesc(PortalGetQueryDesc(portal));
+	portal = PreparePortal(stmt->portalname);
+
+	oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
+	query = copyObject(query);
+	plan = copyObject(plan);
+
+	/*
+	 * Create the QueryDesc object in the portal context, too.
+	 */
+	cursorName = pstrdup(stmt->portalname);
+	queryDesc = CreateQueryDesc(query, plan, dest, cursorName, NULL, false);
+
+	/*
+	 * call ExecStart to prepare the plan for execution
+	 */
+	ExecutorStart(queryDesc);
+
+	/* Arrange to shut down the executor if portal is dropped */
+	PortalSetQuery(portal, queryDesc, PortalCleanup);
+
+	/*
+	 * We're done; the query won't actually be run until PerformPortalFetch
+	 * is called.
+	 */
+	MemoryContextSwitchTo(oldContext);
 }
-
 
 /*
  * PerformPortalFetch
+ *		Execute SQL FETCH or MOVE command.
  *
  *	name: name of portal
  *	forward: forward or backward fetch?
@@ -70,28 +119,20 @@ PerformPortalFetch(char *name,
 				   char *completionTag)
 {
 	Portal		portal;
-	QueryDesc  *queryDesc;
-	EState	   *estate;
-	MemoryContext oldcontext;
-	ScanDirection direction;
-	bool		temp_desc = false;
+	long		nprocessed;
 
 	/* initialize completion status in case of early exit */
 	if (completionTag)
 		strcpy(completionTag, (dest == None) ? "MOVE 0" : "FETCH 0");
 
-	/*
-	 * sanity checks
-	 */
+	/* sanity checks */
 	if (name == NULL)
 	{
 		elog(WARNING, "PerformPortalFetch: missing portal name");
 		return;
 	}
 
-	/*
-	 * get the portal from the portal name
-	 */
+	/* get the portal from the portal name */
 	portal = GetPortalByName(name);
 	if (!PortalIsValid(portal))
 	{
@@ -99,6 +140,31 @@ PerformPortalFetch(char *name,
 			 name);
 		return;
 	}
+
+	/* Do it */
+	nprocessed = DoPortalFetch(portal, forward, count, dest);
+
+	/* Return command status if wanted */
+	if (completionTag)
+		snprintf(completionTag, COMPLETION_TAG_BUFSIZE, "%s %ld",
+				 (dest == None) ? "MOVE" : "FETCH",
+				 nprocessed);
+}
+
+/*
+ * DoPortalFetch
+ *		Guts of PerformPortalFetch --- shared with SPI cursor operations
+ *
+ * Returns number of rows processed.
+ */
+long
+DoPortalFetch(Portal portal, bool forward, long count, CommandDest dest)
+{
+	QueryDesc  *queryDesc;
+	EState	   *estate;
+	MemoryContext oldcontext;
+	ScanDirection direction;
+	bool		temp_desc = false;
 
 	/*
 	 * Zero count means to re-fetch the current row, if any (per SQL92)
@@ -113,9 +179,7 @@ PerformPortalFetch(char *name,
 		if (dest == None)
 		{
 			/* MOVE 0 returns 0/1 based on if FETCH 0 would return a row */
-			if (completionTag && on_row)
-				strcpy(completionTag, "MOVE 1");
-			return;
+			return on_row ? 1L : 0L;
 		}
 		else
 		{
@@ -128,9 +192,9 @@ PerformPortalFetch(char *name,
 			 */
 			if (on_row)
 			{
-				PerformPortalFetch(name, false /* backward */, 1L,
-								   None, /* throw away output */
-								   NULL /* do not modify the command tag */);
+				DoPortalFetch(portal,
+							  false /* backward */, 1L,
+							  None /* throw away output */);
 				/* Set up to fetch one row forward */
 				count = 1;
 				forward = true;
@@ -202,6 +266,10 @@ PerformPortalFetch(char *name,
 	}
 	else
 	{
+		if (!portal->backwardOK)
+			elog(ERROR, "Cursor cannot scan backwards"
+				 "\n\tDeclare it with SCROLL option to enable backward scan");
+
 		if (portal->atStart || count == 0)
 			direction = NoMovementScanDirection;
 		else
@@ -222,12 +290,6 @@ PerformPortalFetch(char *name,
 		}
 	}
 
-	/* Return command status if wanted */
-	if (completionTag)
-		snprintf(completionTag, COMPLETION_TAG_BUFSIZE, "%s %u",
-				 (dest == None) ? "MOVE" : "FETCH",
-				 estate->es_processed);
-
 	/*
 	 * Clean up and switch back to old context.
 	 */
@@ -235,18 +297,21 @@ PerformPortalFetch(char *name,
 		pfree(queryDesc);
 
 	MemoryContextSwitchTo(oldcontext);
+
+	return estate->es_processed;
 }
 
 /*
  * PerformPortalClose
+ *		Close a cursor.
  */
 void
-PerformPortalClose(char *name, CommandDest dest)
+PerformPortalClose(char *name)
 {
 	Portal		portal;
 
 	/*
-	 * sanity checks
+	 * sanity checks ... why is this case allowed by the grammar, anyway?
 	 */
 	if (name == NULL)
 	{
@@ -269,4 +334,65 @@ PerformPortalClose(char *name, CommandDest dest)
 	 * Note: PortalCleanup is called as a side-effect
 	 */
 	PortalDrop(portal);
+}
+
+
+/*
+ * PreparePortal
+ */
+static Portal
+PreparePortal(char *portalName)
+{
+	Portal		portal;
+
+	/*
+	 * Check for already-in-use portal name.
+	 */
+	portal = GetPortalByName(portalName);
+	if (PortalIsValid(portal))
+	{
+		/*
+		 * XXX Should we raise an error rather than closing the old
+		 * portal?
+		 */
+		elog(WARNING, "Closing pre-existing portal \"%s\"",
+			 portalName);
+		PortalDrop(portal);
+	}
+
+	/*
+	 * Create the new portal.
+	 */
+	portal = CreatePortal(portalName);
+
+	return portal;
+}
+
+
+/*
+ * PortalCleanup
+ *
+ * Clean up a portal when it's dropped.  Since this mainly exists to run
+ * ExecutorEnd(), it should not be set as the cleanup hook until we have
+ * called ExecutorStart() on the portal's query.
+ */
+void
+PortalCleanup(Portal portal)
+{
+	/*
+	 * sanity checks
+	 */
+	AssertArg(PortalIsValid(portal));
+	AssertArg(portal->cleanup == PortalCleanup);
+
+	/*
+	 * tell the executor to shutdown the query
+	 */
+	ExecutorEnd(PortalGetQueryDesc(portal));
+
+	/*
+	 * This should be unnecessary since the querydesc should be in the
+	 * portal's memory context, but do it anyway for symmetry.
+	 */
+	FreeQueryDesc(PortalGetQueryDesc(portal));
 }

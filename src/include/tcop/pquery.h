@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pquery.h,v 1.23 2002/12/05 15:50:39 tgl Exp $
+ * $Id: pquery.h,v 1.24 2003/03/10 03:53:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,12 +15,9 @@
 #define PQUERY_H
 
 #include "executor/execdesc.h"
-#include "utils/portal.h"
 
 
 extern void ProcessQuery(Query *parsetree, Plan *plan, CommandDest dest,
 			 char *completionTag);
-
-extern Portal PreparePortal(char *portalName);
 
 #endif   /* PQUERY_H */

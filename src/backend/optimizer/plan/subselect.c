@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.72 2003/02/09 06:56:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.73 2003/03/10 03:53:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,7 +222,7 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 			 slink->subLinkType == ANY_SUBLINK)
 		tuple_fraction = 0.5;	/* 50% */
 	else
-		tuple_fraction = -1.0;	/* default behavior */
+		tuple_fraction = 0.0;	/* default behavior */
 
 	/*
 	 * Generate the plan for the subquery.
@@ -336,12 +336,6 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 		 * is anything more complicated than a plain sequential scan, and we
 		 * do it even for seqscan if the qual appears selective enough to
 		 * eliminate many tuples.
-		 *
-		 * XXX It's pretty ugly to be inserting a MATERIAL node at this
-		 * point.  Since subquery_planner has already run SS_finalize_plan
-		 * on the subplan tree, we have to kluge up parameter lists for
-		 * the MATERIAL node.  Possibly this could be fixed by postponing
-		 * SS_finalize_plan processing until setrefs.c is run.
 		 */
 		else if (node->parParam == NIL)
 		{
@@ -380,23 +374,7 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 			}
 			if (use_material)
 			{
-				Plan	   *matplan;
-				Path		matpath; /* dummy for result of cost_material */
-
-				matplan = (Plan *) make_material(plan->targetlist, plan);
-				/* need to calculate costs */
-				cost_material(&matpath,
-							  plan->total_cost,
-							  plan->plan_rows,
-							  plan->plan_width);
-				matplan->startup_cost = matpath.startup_cost;
-				matplan->total_cost = matpath.total_cost;
-				matplan->plan_rows = plan->plan_rows;
-				matplan->plan_width = plan->plan_width;
-				/* parameter kluge --- see comments above */
-				matplan->extParam = bms_copy(plan->extParam);
-				matplan->allParam = bms_copy(plan->allParam);
-				node->plan = plan = matplan;
+				node->plan = plan = materialize_finished_plan(plan);
 			}
 		}
 

@@ -8,19 +8,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.58 2002/12/15 16:17:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.59 2003/03/10 03:53:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "commands/portalcmds.h"
-#include "executor/execdefs.h"
 #include "executor/executor.h"
 #include "tcop/pquery.h"
-#include "utils/memutils.h"
-#include "utils/ps_status.h"
 
 
 /*
@@ -64,38 +60,6 @@ FreeQueryDesc(QueryDesc *qdesc)
 	pfree(qdesc);
 }
 
-/* ----------------
- *		PreparePortal
- * ----------------
- */
-Portal
-PreparePortal(char *portalName)
-{
-	Portal		portal;
-
-	/*
-	 * Check for already-in-use portal name.
-	 */
-	portal = GetPortalByName(portalName);
-	if (PortalIsValid(portal))
-	{
-		/*
-		 * XXX Should we raise an error rather than closing the old
-		 * portal?
-		 */
-		elog(WARNING, "Closing pre-existing portal \"%s\"",
-			 portalName);
-		PortalDrop(portal);
-	}
-
-	/*
-	 * Create the new portal.
-	 */
-	portal = CreatePortal(portalName);
-
-	return portal;
-}
-
 
 /*
  * ProcessQuery
@@ -116,10 +80,6 @@ ProcessQuery(Query *parsetree,
 			 char *completionTag)
 {
 	int			operation = parsetree->commandType;
-	bool		isRetrieveIntoPortal = false;
-	char	   *intoName = NULL;
-	Portal		portal = NULL;
-	MemoryContext oldContext = NULL;
 	QueryDesc  *queryDesc;
 
 	/*
@@ -127,16 +87,7 @@ ProcessQuery(Query *parsetree,
 	 */
 	if (operation == CMD_SELECT)
 	{
-		if (parsetree->isPortal)
-		{
-			isRetrieveIntoPortal = true;
-			/* If binary portal, switch to alternate output format */
-			if (dest == Remote && parsetree->isBinary)
-				dest = RemoteInternal;
-			/* Check for invalid context (must be in transaction block) */
-			RequireTransactionChain((void *) parsetree, "DECLARE CURSOR");
-		}
-		else if (parsetree->into != NULL)
+		if (parsetree->into != NULL)
 		{
 			/*
 			 * SELECT INTO table (a/k/a CREATE AS ... SELECT).
@@ -150,57 +101,17 @@ ProcessQuery(Query *parsetree,
 	}
 
 	/*
-	 * If retrieving into a portal, set up the portal and copy the
-	 * parsetree and plan into its memory context.
+	 * Create the QueryDesc object
 	 */
-	if (isRetrieveIntoPortal)
-	{
-		intoName = parsetree->into->relname;
-		portal = PreparePortal(intoName);
-		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
-		parsetree = copyObject(parsetree);
-		plan = copyObject(plan);
-		intoName = parsetree->into->relname;	/* use copied name in
-												 * QueryDesc */
-
-		/*
-		 * We stay in portal's memory context for now, so that query desc
-		 * is also allocated in the portal context.
-		 */
-	}
+	queryDesc = CreateQueryDesc(parsetree, plan, dest, NULL, NULL, false);
 
 	/*
-	 * Now we can create the QueryDesc object.
-	 */
-	queryDesc = CreateQueryDesc(parsetree, plan, dest, intoName, NULL, false);
-
-	/*
-	 * call ExecStart to prepare the plan for execution
+	 * Call ExecStart to prepare the plan for execution
 	 */
 	ExecutorStart(queryDesc);
 
 	/*
-	 * If retrieve into portal, stop now; we do not run the plan until a
-	 * FETCH command is received.
-	 */
-	if (isRetrieveIntoPortal)
-	{
-		/* Arrange to shut down the executor if portal is dropped */
-		PortalSetQuery(portal, queryDesc, PortalCleanup);
-
-		/* Now we can return to caller's memory context. */
-		MemoryContextSwitchTo(oldContext);
-
-		/* Set completion tag.	SQL calls this operation DECLARE CURSOR */
-		if (completionTag)
-			strcpy(completionTag, "DECLARE CURSOR");
-
-		return;
-	}
-
-	/*
-	 * Now we get to the important call to ExecutorRun() where we actually
-	 * run the plan..
+	 * And run the plan.
 	 */
 	ExecutorRun(queryDesc, ForwardScanDirection, 0L);
 

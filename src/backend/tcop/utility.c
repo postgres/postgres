@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.193 2003/02/19 03:59:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.194 2003/03/10 03:53:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -306,13 +306,17 @@ ProcessUtility(Node *parsetree,
 			break;
 
 			/*
-			 * ************************* portal manipulation ***************************
+			 * Portal (cursor) manipulation
 			 */
+		case T_DeclareCursorStmt:
+			PerformCursorOpen((DeclareCursorStmt *) parsetree, dest);
+			break;
+
 		case T_ClosePortalStmt:
 			{
 				ClosePortalStmt *stmt = (ClosePortalStmt *) parsetree;
 
-				PerformPortalClose(stmt->portalname, dest);
+				PerformPortalClose(stmt->portalname);
 			}
 			break;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.316 2003/03/06 00:04:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.317 2003/03/10 03:53:51 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -483,7 +483,7 @@ pg_plan_query(Query *querytree)
 		ResetUsage();
 
 	/* call the optimizer */
-	plan = planner(querytree);
+	plan = planner(querytree, false, 0);
 
 	if (log_planner_stats)
 		ShowUsage("PLANNER STATISTICS");
@@ -1789,7 +1789,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.316 $ $Date: 2003/03/06 00:04:27 $\n");
+		puts("$Revision: 1.317 $ $Date: 2003/03/10 03:53:51 $\n");
 	}
 
 	/*
@@ -2243,6 +2243,10 @@ CreateCommandTag(Node *parsetree)
 						break;
 				}
 			}
+			break;
+
+		case T_DeclareCursorStmt:
+			tag = "DECLARE CURSOR";
 			break;
 
 		case T_ClosePortalStmt:

@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.6 2003/02/10 17:08:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.7 2003/03/10 03:53:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -362,8 +362,7 @@ is_simple_subquery(Query *subquery)
 	if (!IsA(subquery, Query) ||
 		subquery->commandType != CMD_SELECT ||
 		subquery->resultRelation != 0 ||
-		subquery->into != NULL ||
-		subquery->isPortal)
+		subquery->into != NULL)
 		elog(ERROR, "is_simple_subquery: subquery is bogus");
 
 	/*

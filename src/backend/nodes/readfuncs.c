@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.149 2003/02/16 02:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.150 2003/03/10 03:53:49 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -198,8 +198,6 @@ _readQuery(void)
 	READ_NODE_FIELD(utilityStmt);
 	READ_INT_FIELD(resultRelation);
 	READ_NODE_FIELD(into);
-	READ_BOOL_FIELD(isPortal);
-	READ_BOOL_FIELD(isBinary);
 	READ_BOOL_FIELD(hasAggs);
 	READ_BOOL_FIELD(hasSubLinks);
 	READ_NODE_FIELD(rtable);
@@ -229,6 +227,21 @@ _readNotifyStmt(void)
 	READ_LOCALS(NotifyStmt);
 
 	READ_NODE_FIELD(relation);
+
+	READ_DONE();
+}
+
+/*
+ * _readDeclareCursorStmt
+ */
+static DeclareCursorStmt *
+_readDeclareCursorStmt(void)
+{
+	READ_LOCALS(DeclareCursorStmt);
+
+	READ_STRING_FIELD(portalname);
+	READ_INT_FIELD(options);
+	READ_NODE_FIELD(query);
 
 	READ_DONE();
 }
@@ -894,8 +907,6 @@ parseNodeString(void)
 
 	if (MATCH("QUERY", 5))
 		return_value = _readQuery();
-	else if (MATCH("NOTIFY", 6))
-		return_value = _readNotifyStmt();
 	else if (MATCH("SORTCLAUSE", 10))
 		return_value = _readSortClause();
 	else if (MATCH("GROUPCLAUSE", 11))
@@ -966,6 +977,10 @@ parseNodeString(void)
 		return_value = _readExprFieldSelect();
 	else if (MATCH("RTE", 3))
 		return_value = _readRangeTblEntry();
+	else if (MATCH("NOTIFY", 6))
+		return_value = _readNotifyStmt();
+	else if (MATCH("DECLARECURSOR", 13))
+		return_value = _readDeclareCursorStmt();
 	else
 	{
 		elog(ERROR, "badly formatted node string \"%.32s\"...", token);

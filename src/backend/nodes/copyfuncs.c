@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.245 2003/03/05 20:01:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.246 2003/03/10 03:53:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1465,8 +1465,6 @@ _copyQuery(Query *from)
 	COPY_NODE_FIELD(utilityStmt);
 	COPY_SCALAR_FIELD(resultRelation);
 	COPY_NODE_FIELD(into);
-	COPY_SCALAR_FIELD(isPortal);
-	COPY_SCALAR_FIELD(isBinary);
 	COPY_SCALAR_FIELD(hasAggs);
 	COPY_SCALAR_FIELD(hasSubLinks);
 	COPY_NODE_FIELD(rtable);
@@ -1547,8 +1545,6 @@ _copySelectStmt(SelectStmt *from)
 	COPY_NODE_FIELD(groupClause);
 	COPY_NODE_FIELD(havingClause);
 	COPY_NODE_FIELD(sortClause);
-	COPY_STRING_FIELD(portalname);
-	COPY_SCALAR_FIELD(binary);
 	COPY_NODE_FIELD(limitOffset);
 	COPY_NODE_FIELD(limitCount);
 	COPY_NODE_FIELD(forUpdate);
@@ -1648,6 +1644,17 @@ _copyInsertDefault(InsertDefault *from)
 	return newnode;
 }
 
+static DeclareCursorStmt *
+_copyDeclareCursorStmt(DeclareCursorStmt *from)
+{
+	DeclareCursorStmt *newnode = makeNode(DeclareCursorStmt);
+
+	COPY_STRING_FIELD(portalname);
+	COPY_SCALAR_FIELD(options);
+	COPY_NODE_FIELD(query);
+
+	return newnode;
+}
 
 static ClosePortalStmt *
 _copyClosePortalStmt(ClosePortalStmt *from)
@@ -2631,6 +2638,9 @@ copyObject(void *from)
 			break;
 		case T_GrantStmt:
 			retval = _copyGrantStmt(from);
+			break;
+		case T_DeclareCursorStmt:
+			retval = _copyDeclareCursorStmt(from);
 			break;
 		case T_ClosePortalStmt:
 			retval = _copyClosePortalStmt(from);

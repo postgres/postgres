@@ -2,7 +2,7 @@
  *
  * spi.h
  *
- * $Id: spi.h,v 1.35 2002/12/30 22:10:54 tgl Exp $
+ * $Id: spi.h,v 1.36 2003/03/10 03:53:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,9 +30,10 @@
 #include "tcop/utility.h"
 #include "tcop/dest.h"
 #include "nodes/params.h"
-#include "utils/datum.h"
-#include "utils/syscache.h"
 #include "utils/builtins.h"
+#include "utils/datum.h"
+#include "utils/portal.h"
+#include "utils/syscache.h"
 #include "catalog/pg_language.h"
 #include "access/heapam.h"
 #include "access/xact.h"

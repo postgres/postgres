@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.264 2003/02/13 22:50:01 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.265 2003/03/10 03:53:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,6 +96,8 @@ static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt);
 static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
+static Query *transformDeclareCursorStmt(ParseState *pstate,
+										 DeclareCursorStmt *stmt);
 static Query *transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt);
 static Query *transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt);
 static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
@@ -313,6 +315,11 @@ transformStmt(ParseState *pstate, Node *parseTree,
 											   (SelectStmt *) parseTree);
 			break;
 
+		case T_DeclareCursorStmt:
+			result = transformDeclareCursorStmt(pstate,
+												(DeclareCursorStmt *) parseTree);
+			break;
+
 		default:
 
 			/*
@@ -445,7 +452,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 
 		Assert(IsA(selectQuery, Query));
 		Assert(selectQuery->commandType == CMD_SELECT);
-		if (selectQuery->into || selectQuery->isPortal)
+		if (selectQuery->into)
 			elog(ERROR, "INSERT ... SELECT may not specify INTO");
 
 		/*
@@ -1616,27 +1623,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->commandType = CMD_SELECT;
 
-	if (stmt->portalname)
-	{
-		/* DECLARE CURSOR */
-		if (stmt->into)
-			elog(ERROR, "DECLARE CURSOR must not specify INTO");
-		if (stmt->forUpdate)
-			elog(ERROR, "DECLARE/UPDATE is not supported"
-				 "\n\tCursors must be READ ONLY");
-		qry->into = makeNode(RangeVar);
-		qry->into->relname = stmt->portalname;
-		qry->isPortal = TRUE;
-		qry->isBinary = stmt->binary;	/* internal portal */
-	}
-	else
-	{
-		/* SELECT */
-		qry->into = stmt->into;
-		qry->isPortal = FALSE;
-		qry->isBinary = FALSE;
-	}
-
 	/* make FOR UPDATE clause available to addRangeTableEntry */
 	pstate->p_forUpdate = stmt->forUpdate;
 
@@ -1646,6 +1632,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	/* transform targetlist */
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
+	/* handle any SELECT INTO/CREATE TABLE AS spec */
+	qry->into = stmt->into;
 	if (stmt->intoColNames)
 		applyColumnNames(qry->targetList, stmt->intoColNames);
 
@@ -1708,8 +1696,6 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	SetOperationStmt *sostmt;
 	RangeVar   *into;
 	List	   *intoColNames;
-	char	   *portalname;
-	bool		binary;
 	List	   *sortClause;
 	Node	   *limitOffset;
 	Node	   *limitCount;
@@ -1738,14 +1724,10 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 		   leftmostSelect->larg == NULL);
 	into = leftmostSelect->into;
 	intoColNames = leftmostSelect->intoColNames;
-	portalname = stmt->portalname;
-	binary = stmt->binary;
 
 	/* clear them to prevent complaints in transformSetOperationTree() */
 	leftmostSelect->into = NULL;
 	leftmostSelect->intoColNames = NIL;
-	stmt->portalname = NULL;
-	stmt->binary = false;
 
 	/*
 	 * These are not one-time, exactly, but we want to process them here
@@ -1825,36 +1807,13 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	}
 
 	/*
-	 * Insert one-time items into top-level query
+	 * Handle SELECT INTO/CREATE TABLE AS.
 	 *
-	 * This needs to agree with transformSelectStmt!
-	 */
-	if (portalname)
-	{
-		/* DECLARE CURSOR */
-		if (into)
-			elog(ERROR, "DECLARE CURSOR must not specify INTO");
-		if (forUpdate)
-			elog(ERROR, "DECLARE/UPDATE is not supported"
-				 "\n\tCursors must be READ ONLY");
-		qry->into = makeNode(RangeVar);
-		qry->into->relname = portalname;
-		qry->isPortal = TRUE;
-		qry->isBinary = binary; /* internal portal */
-	}
-	else
-	{
-		/* SELECT */
-		qry->into = into;
-		qry->isPortal = FALSE;
-		qry->isBinary = FALSE;
-	}
-
-	/*
 	 * Any column names from CREATE TABLE AS need to be attached to both
 	 * the top level and the leftmost subquery.  We do not do this earlier
 	 * because we do *not* want the targetnames list to be affected.
 	 */
+	qry->into = into;
 	if (intoColNames)
 	{
 		applyColumnNames(qry->targetList, intoColNames);
@@ -1938,8 +1897,6 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 	 */
 	if (stmt->into)
 		elog(ERROR, "INTO is only allowed on first SELECT of UNION/INTERSECT/EXCEPT");
-	if (stmt->portalname)		/* should not happen */
-		elog(ERROR, "Portal may not appear in UNION/INTERSECT/EXCEPT");
 	/* We don't support forUpdate with set ops at the moment. */
 	if (stmt->forUpdate)
 		elog(ERROR, "SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT");
@@ -2326,6 +2283,27 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 
 	return qry;
 }
+
+static Query *
+transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
+{
+	Query	   *result = makeNode(Query);
+	List	   *extras_before = NIL,
+			   *extras_after = NIL;
+
+	result->commandType = CMD_UTILITY;
+	result->utilityStmt = (Node *) stmt;
+
+	stmt->query = (Node *) transformStmt(pstate, stmt->query,
+										 &extras_before, &extras_after);
+
+	/* Shouldn't get any extras, since grammar only allows SelectStmt */
+	if (extras_before || extras_after)
+		elog(ERROR, "transformDeclareCursorStmt: internal error");
+
+	return result;
+}
+
 
 static Query *
 transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt)

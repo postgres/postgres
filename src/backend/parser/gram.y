@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.404 2003/02/16 02:30:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.405 2003/03/10 03:53:50 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -135,12 +135,12 @@ static void doNegateFloat(Value *v);
 		CreateDomainStmt CreateGroupStmt CreateOpClassStmt CreatePLangStmt
 		CreateSchemaStmt CreateSeqStmt CreateStmt
 		CreateAssertStmt CreateTrigStmt CreateUserStmt
-		CreatedbStmt CursorStmt DefineStmt DeleteStmt
+		CreatedbStmt DeclareCursorStmt DefineStmt DeleteStmt
 		DropGroupStmt DropOpClassStmt DropPLangStmt DropStmt
 		DropAssertStmt DropTrigStmt DropRuleStmt DropCastStmt
 		DropUserStmt DropdbStmt ExplainStmt FetchStmt
 		GrantStmt IndexStmt InsertStmt ListenStmt LoadStmt
-		LockStmt NotifyStmt OptimizableStmt
+		LockStmt NotifyStmt ExplainableStmt PreparableStmt
 		CreateFunctionStmt ReindexStmt RemoveAggrStmt
 		RemoveFuncStmt RemoveOperStmt RenameStmt RevokeStmt
 		RuleActionStmt RuleActionStmtOrEmpty RuleStmt
@@ -241,7 +241,7 @@ static void doNegateFloat(Value *v);
 %type <ival>	opt_interval
 %type <node>	overlay_placing substr_from substr_for
 
-%type <boolean> opt_instead opt_cursor opt_analyze
+%type <boolean> opt_instead opt_analyze
 %type <boolean> index_opt_unique opt_verbose opt_full
 %type <boolean> opt_freeze opt_default opt_recheck
 %type <defelt>	opt_binary opt_oids copy_delimiter
@@ -249,7 +249,7 @@ static void doNegateFloat(Value *v);
 %type <boolean> copy_from
 
 %type <ival>	direction reindex_type drop_type
-				opt_column event comment_type
+				opt_column event comment_type cursor_options
 
 %type <ival>	fetch_how_many
 
@@ -481,68 +481,72 @@ stmt :
 			| AlterDomainStmt
 			| AlterGroupStmt
 			| AlterTableStmt
-			| AlterUserStmt
 			| AlterUserSetStmt
+			| AlterUserStmt
+			| AnalyzeStmt
+			| CheckPointStmt
 			| ClosePortalStmt
+			| ClusterStmt
+			| CommentStmt
+			| ConstraintsSetStmt
 			| CopyStmt
-			| CreateStmt
 			| CreateAsStmt
+			| CreateAssertStmt
 			| CreateCastStmt
+			| CreateConversionStmt
 			| CreateDomainStmt
 			| CreateFunctionStmt
-			| CreateSchemaStmt
 			| CreateGroupStmt
-			| CreateSeqStmt
 			| CreateOpClassStmt
 			| CreatePLangStmt
-			| CreateAssertStmt
+			| CreateSchemaStmt
+			| CreateSeqStmt
+			| CreateStmt
 			| CreateTrigStmt
 			| CreateUserStmt
-			| ClusterStmt
+			| CreatedbStmt
 			| DeallocateStmt
+			| DeclareCursorStmt
 			| DefineStmt
-			| DropStmt
-			| TruncateStmt
-			| CommentStmt
+			| DeleteStmt
+			| DropAssertStmt
 			| DropCastStmt
 			| DropGroupStmt
 			| DropOpClassStmt
 			| DropPLangStmt
-			| DropAssertStmt
-			| DropTrigStmt
 			| DropRuleStmt
+			| DropStmt
+			| DropTrigStmt
 			| DropUserStmt
+			| DropdbStmt
 			| ExecuteStmt
 			| ExplainStmt
 			| FetchStmt
 			| GrantStmt
 			| IndexStmt
+			| InsertStmt
 			| ListenStmt
-			| UnlistenStmt
+			| LoadStmt
 			| LockStmt
 			| NotifyStmt
 			| PrepareStmt
 			| ReindexStmt
 			| RemoveAggrStmt
-			| RemoveOperStmt
 			| RemoveFuncStmt
+			| RemoveOperStmt
 			| RenameStmt
 			| RevokeStmt
-			| OptimizableStmt
 			| RuleStmt
+			| SelectStmt
 			| TransactionStmt
-			| ViewStmt
-			| LoadStmt
-			| CreatedbStmt
-			| DropdbStmt
+			| TruncateStmt
+			| UnlistenStmt
+			| UpdateStmt
 			| VacuumStmt
-			| AnalyzeStmt
+			| VariableResetStmt
 			| VariableSetStmt
 			| VariableShowStmt
-			| VariableResetStmt
-			| ConstraintsSetStmt
-			| CheckPointStmt
-			| CreateConversionStmt
+			| ViewStmt
 			| /*EMPTY*/
 				{ $$ = (Node *)NULL; }
 		;
@@ -3961,8 +3965,7 @@ opt_name_list:
  *
  *****************************************************************************/
 
-ExplainStmt:
-			EXPLAIN opt_analyze opt_verbose OptimizableStmt
+ExplainStmt: EXPLAIN opt_analyze opt_verbose ExplainableStmt
 				{
 					ExplainStmt *n = makeNode(ExplainStmt);
 					n->analyze = $2;
@@ -3970,14 +3973,15 @@ ExplainStmt:
 					n->query = (Query*)$4;
 					$$ = (Node *)n;
 				}
-			| EXPLAIN opt_analyze opt_verbose ExecuteStmt
-				{
-					ExplainStmt *n = makeNode(ExplainStmt);
-					n->analyze = $2;
-					n->verbose = $3;
-					n->query = (Query*)$4;
-					$$ = (Node *)n;
-				}
+		;
+
+ExplainableStmt:
+			SelectStmt
+			| InsertStmt
+			| UpdateStmt
+			| DeleteStmt
+			| DeclareCursorStmt
+			| ExecuteStmt					/* by default all are $$=$1 */
 		;
 
 opt_analyze:
@@ -3992,7 +3996,7 @@ opt_analyze:
  *
  *****************************************************************************/
 
-PrepareStmt: PREPARE name prep_type_clause AS OptimizableStmt
+PrepareStmt: PREPARE name prep_type_clause AS PreparableStmt
 				{
 					PrepareStmt *n = makeNode(PrepareStmt);
 					n->name = $2;
@@ -4009,6 +4013,13 @@ prep_type_clause: '(' prep_type_list ')'	{ $$ = $2; }
 prep_type_list: Typename			{ $$ = makeList1($1); }
 			  | prep_type_list ',' Typename
 									{ $$ = lappend($1, $3); }
+		;
+
+PreparableStmt:
+			SelectStmt
+			| InsertStmt
+			| UpdateStmt
+			| DeleteStmt					/* by default all are $$=$1 */
 		;
 
 /*****************************************************************************
@@ -4052,26 +4063,6 @@ DeallocateStmt: DEALLOCATE name
 						$$ = (Node *) n;
 					}
 		;
-
-/*****************************************************************************
- *																			 *
- *		Optimizable Stmts:													 *
- *																			 *
- *		one of the five queries processed by the planner					 *
- *																			 *
- *		[ultimately] produces query-trees as specified						 *
- *		in the query-spec document in ~postgres/ref							 *
- *																			 *
- *****************************************************************************/
-
-OptimizableStmt:
-			SelectStmt
-			| CursorStmt
-			| UpdateStmt
-			| InsertStmt
-			| DeleteStmt					/* by default all are $$=$1 */
-		;
-
 
 /*****************************************************************************
  *
@@ -4213,20 +4204,20 @@ UpdateStmt: UPDATE relation_expr
  *				CURSOR STATEMENTS
  *
  *****************************************************************************/
-CursorStmt: DECLARE name opt_cursor CURSOR FOR SelectStmt
+DeclareCursorStmt: DECLARE name cursor_options CURSOR FOR SelectStmt
 				{
-					SelectStmt *n = (SelectStmt *)$6;
+					DeclareCursorStmt *n = makeNode(DeclareCursorStmt);
 					n->portalname = $2;
-					n->binary = $3;
-					$$ = $6;
+					n->options = $3;
+					n->query = $6;
+					$$ = (Node *)n;
 				}
 		;
 
-opt_cursor: BINARY									{ $$ = TRUE; }
-			| INSENSITIVE							{ $$ = FALSE; }
-			| SCROLL								{ $$ = FALSE; }
-			| INSENSITIVE SCROLL					{ $$ = FALSE; }
-			| /*EMPTY*/								{ $$ = FALSE; }
+cursor_options: /*EMPTY*/					{ $$ = 0; }
+			| cursor_options BINARY			{ $$ = $1 | CURSOR_OPT_BINARY; }
+			| cursor_options SCROLL			{ $$ = $1 | CURSOR_OPT_SCROLL; }
+			| cursor_options INSENSITIVE	{ $$ = $1 | CURSOR_OPT_INSENSITIVE; }
 		;
 
 /*****************************************************************************

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.103 2003/02/10 17:06:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.104 2003/03/10 03:53:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,9 @@ ExplainQuery(ExplainStmt *stmt, CommandDest dest)
 	if (query->commandType == CMD_UTILITY)
 	{
 		/* Rewriter will not cope with utility statements */
-		if (query->utilityStmt && IsA(query->utilityStmt, ExecuteStmt))
+		if (query->utilityStmt && IsA(query->utilityStmt, DeclareCursorStmt))
+			ExplainOneQuery(query, stmt, tstate);
+		else if (query->utilityStmt && IsA(query->utilityStmt, ExecuteStmt))
 			ExplainExecuteQuery(stmt, tstate);
 		else
 			do_text_output_oneline(tstate, "Utility statements have no plan structure");
@@ -125,30 +127,45 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 {
 	Plan	   *plan;
 	QueryDesc  *queryDesc;
+	bool		isCursor = false;
+	int			cursorOptions = 0;
 
 	/* planner will not cope with utility statements */
 	if (query->commandType == CMD_UTILITY)
 	{
-		if (query->utilityStmt && IsA(query->utilityStmt, NotifyStmt))
+		if (query->utilityStmt && IsA(query->utilityStmt, DeclareCursorStmt))
+		{
+			DeclareCursorStmt *dcstmt;
+			List	   *rewritten;
+
+			dcstmt = (DeclareCursorStmt *) query->utilityStmt;
+			query = (Query *) dcstmt->query;
+			isCursor = true;
+			cursorOptions = dcstmt->options;
+			/* Still need to rewrite cursor command */
+			Assert(query->commandType == CMD_SELECT);
+			rewritten = QueryRewrite(query);
+			if (length(rewritten) != 1)
+				elog(ERROR, "ExplainOneQuery: unexpected rewrite result");
+			query = (Query *) lfirst(rewritten);
+			Assert(query->commandType == CMD_SELECT);
+			/* do not actually execute the underlying query! */
+			stmt->analyze = false;
+		}
+		else if (query->utilityStmt && IsA(query->utilityStmt, NotifyStmt))
+		{
 			do_text_output_oneline(tstate, "NOTIFY");
+			return;
+		}
 		else
+		{
 			do_text_output_oneline(tstate, "UTILITY");
-		return;
+			return;
+		}
 	}
 
-	/*
-	 * We don't support DECLARE CURSOR in EXPLAIN, but parser will take it
-	 * because it's an OptimizableStmt
-	 */
-	if (query->isPortal)
-		elog(ERROR, "EXPLAIN / DECLARE CURSOR is not supported");
-
 	/* plan the query */
-	plan = planner(query);
-
-	/* pg_plan could have failed */
-	if (plan == NULL)
-		return;
+	plan = planner(query, isCursor, cursorOptions);
 
 	/* Create a QueryDesc requesting no output */
 	queryDesc = CreateQueryDesc(query, plan, None, NULL, NULL,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.51 2002/12/30 22:10:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.52 2003/03/10 03:53:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,16 +33,25 @@
 
 #include "postgres.h"
 
+#include "executor/executor.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 #include "utils/portal.h"
+
+
+/*
+ * estimate of the maximum number of open portals a user would have,
+ * used in initially sizing the PortalHashTable in EnablePortalManager()
+ */
+#define PORTALS_PER_USER	   64
+
 
 /* ----------------
  *		Global state
  * ----------------
  */
 
-#define MAX_PORTALNAME_LEN		64
+#define MAX_PORTALNAME_LEN		NAMEDATALEN
 
 typedef struct portalhashent
 {
@@ -158,7 +167,8 @@ PortalSetQuery(Portal portal,
 	AssertArg(PortalIsValid(portal));
 
 	portal->queryDesc = queryDesc;
-	portal->atStart = true;		/* Allow fetch forward only */
+	portal->backwardOK = ExecSupportsBackwardScan(queryDesc->plantree);
+	portal->atStart = true;		/* Allow fetch forward only, to start */
 	portal->atEnd = false;
 	portal->cleanup = cleanup;
 }
@@ -201,6 +211,7 @@ CreatePortal(const char *name)
 
 	/* initialize portal query */
 	portal->queryDesc = NULL;
+	portal->backwardOK = false;
 	portal->atStart = true;		/* disallow fetches until query is set */
 	portal->atEnd = true;
 	portal->cleanup = NULL;

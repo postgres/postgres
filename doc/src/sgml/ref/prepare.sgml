@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/prepare.sgml,v 1.2 2003/02/02 23:46:37 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/prepare.sgml,v 1.3 2003/03/10 03:53:49 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -51,6 +51,15 @@ PostgreSQL documentation
 		The data-type of a parameter to the prepared query.
 		To refer to the parameters in the prepared query itself,
 		use <literal>$1</literal>, <literal>$2</literal>, etc.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="PARAMETER">query</replaceable></term>
+      <listitem>
+       <para>
+	Any <command>SELECT</>, <command>INSERT</>, <command>UPDATE</>,
+	or <command>DELETE</> query.
        </para>
       </listitem>
      </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.23 2003/02/02 23:46:37 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.24 2003/03/10 03:53:49 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -56,7 +56,8 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="PARAMETER">query</replaceabl
       <listitem>
        <para>
 	Any <command>SELECT</>, <command>INSERT</>, <command>UPDATE</>,
-	<command>DELETE</>, or <command>EXECUTE</> query.
+	<command>DELETE</>, <command>EXECUTE</>,
+	or <command>DECLARE CURSOR</> query.
        </para>
       </listitem>
      </varlistentry>

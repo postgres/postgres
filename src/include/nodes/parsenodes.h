@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.231 2003/02/16 02:30:39 tgl Exp $
+ * $Id: parsenodes.h,v 1.232 2003/03/10 03:53:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,9 +38,6 @@ typedef enum QuerySource
  *	  for further processing by the optimizer
  *	  utility statements (i.e. non-optimizable statements)
  *	  have the *utilityStmt field set.
- *
- * we need the isPortal flag because portal names can be null too; can
- * get rid of it if we support CURSOR as a commandType.
  */
 typedef struct Query
 {
@@ -54,10 +51,8 @@ typedef struct Query
 								 * statement */
 
 	int			resultRelation; /* target relation (index into rtable) */
-	RangeVar   *into;			/* target relation or portal (cursor) for
-								 * portal just name is meaningful */
-	bool		isPortal;		/* is this a retrieve into portal? */
-	bool		isBinary;		/* binary portal? */
+
+	RangeVar   *into;			/* target relation for SELECT INTO */
 
 	bool		hasAggs;		/* has aggregates in tlist or havingQual */
 	bool		hasSubLinks;	/* has subquery SubLink */
@@ -597,6 +592,8 @@ typedef struct SelectStmt
 
 	/*
 	 * These fields are used only in "leaf" SelectStmts.
+	 *
+	 * into and intoColNames are a kluge; they belong somewhere else...
 	 */
 	List	   *distinctClause; /* NULL, list of DISTINCT ON exprs, or
 								 * lcons(NIL,NIL) for all (SELECT
@@ -611,11 +608,9 @@ typedef struct SelectStmt
 
 	/*
 	 * These fields are used in both "leaf" SelectStmts and upper-level
-	 * SelectStmts.  portalname/binary may only be set at the top level.
+	 * SelectStmts.
 	 */
 	List	   *sortClause;		/* sort clause (a list of SortGroupBy's) */
-	char	   *portalname;		/* the portal (cursor) to create */
-	bool		binary;			/* a binary (internal) portal? */
 	Node	   *limitOffset;	/* # of result tuples to skip */
 	Node	   *limitCount;		/* # of result tuples to return */
 	List	   *forUpdate;		/* FOR UPDATE clause */
@@ -814,16 +809,6 @@ typedef struct PrivTarget
 	GrantObjectType objtype;
 	List	   *objs;
 } PrivTarget;
-
-/* ----------------------
- *		Close Portal Statement
- * ----------------------
- */
-typedef struct ClosePortalStmt
-{
-	NodeTag		type;
-	char	   *portalname;		/* name of the portal (cursor) */
-} ClosePortalStmt;
 
 /* ----------------------
  *		Copy Statement
@@ -1212,7 +1197,33 @@ typedef struct CommentStmt
 } CommentStmt;
 
 /* ----------------------
- *		Fetch Statement
+ *		Declare Cursor Statement
+ * ----------------------
+ */
+#define CURSOR_OPT_BINARY		0x0001
+#define CURSOR_OPT_SCROLL		0x0002
+#define CURSOR_OPT_INSENSITIVE	0x0004
+
+typedef struct DeclareCursorStmt
+{
+	NodeTag		type;
+	char	   *portalname;		/* name of the portal (cursor) */
+	int			options;		/* bitmask of options (see above) */
+	Node	   *query;			/* the SELECT query */
+} DeclareCursorStmt;
+
+/* ----------------------
+ *		Close Portal Statement
+ * ----------------------
+ */
+typedef struct ClosePortalStmt
+{
+	NodeTag		type;
+	char	   *portalname;		/* name of the portal (cursor) */
+} ClosePortalStmt;
+
+/* ----------------------
+ *		Fetch Statement (also Move)
  * ----------------------
  */
 typedef enum FetchDirection

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.110 2003/02/16 02:30:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.111 2003/03/10 03:53:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -414,7 +414,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 
 	if (query->commandType != CMD_SELECT)
 		elog(ERROR, "Expected SELECT query from subselect in FROM");
-	if (query->resultRelation != 0 || query->into != NULL || query->isPortal)
+	if (query->resultRelation != 0 || query->into != NULL)
 		elog(ERROR, "Subselect in FROM may not have SELECT INTO");
 
 	/*

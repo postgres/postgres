@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.86 2003/02/14 21:12:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.87 2003/03/10 03:53:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -725,9 +725,7 @@ SPI_cursor_open(const char *name, void *plan, Datum *Values, const char *Nulls)
 
 	if (queryTree->commandType != CMD_SELECT)
 		elog(ERROR, "plan in SPI_cursor_open() is not a SELECT");
-	if (queryTree->isPortal)
-		elog(ERROR, "plan in SPI_cursor_open() must NOT be a DECLARE already");
-	else if (queryTree->into != NULL)
+	if (queryTree->into != NULL)
 		elog(ERROR, "plan in SPI_cursor_open() must NOT be a SELECT INTO");
 
 	/* Increment CommandCounter to see changes made by now */
@@ -764,19 +762,11 @@ SPI_cursor_open(const char *name, void *plan, Datum *Values, const char *Nulls)
 
 	/* Create the portal */
 	portal = CreatePortal(name);
-	if (portal == NULL)
-		elog(ERROR, "failed to create portal \"%s\"", name);
 
 	/* Switch to portals memory and copy the parsetree and plan to there */
 	oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 	queryTree = copyObject(queryTree);
 	planTree = copyObject(planTree);
-
-	/* Modify the parsetree to be a cursor */
-	queryTree->isPortal = true;
-	queryTree->into = makeNode(RangeVar);
-	queryTree->into->relname = pstrdup(name);
-	queryTree->isBinary = false;
 
 	/* If the plan has parameters, set them up */
 	if (spiplan->nargs > 0)
@@ -812,7 +802,7 @@ SPI_cursor_open(const char *name, void *plan, Datum *Values, const char *Nulls)
 		paramLI = NULL;
 
 	/* Create the QueryDesc object */
-	queryDesc = CreateQueryDesc(queryTree, planTree, SPI, NULL,
+	queryDesc = CreateQueryDesc(queryTree, planTree, SPI, pstrdup(name),
 								paramLI, false);
 
 	/* Start the executor */
@@ -1106,7 +1096,8 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 					if (stmt->filename == NULL)
 						return SPI_ERROR_COPY;
 				}
-				else if (IsA(queryTree->utilityStmt, ClosePortalStmt) ||
+				else if (IsA(queryTree->utilityStmt, DeclareCursorStmt) ||
+						 IsA(queryTree->utilityStmt, ClosePortalStmt) ||
 						 IsA(queryTree->utilityStmt, FetchStmt))
 					return SPI_ERROR_CURSOR;
 				else if (IsA(queryTree->utilityStmt, TransactionStmt))
@@ -1263,12 +1254,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 static int
 _SPI_pquery(QueryDesc *queryDesc, bool runit, int tcount)
 {
-	Query	   *parseTree = queryDesc->parsetree;
 	int			operation = queryDesc->operation;
-	CommandDest dest = queryDesc->dest;
-	bool		isRetrieveIntoPortal = false;
-	bool		isRetrieveIntoRelation = false;
-	char	   *intoName = NULL;
 	int			res;
 	Oid			save_lastoid;
 
@@ -1276,20 +1262,10 @@ _SPI_pquery(QueryDesc *queryDesc, bool runit, int tcount)
 	{
 		case CMD_SELECT:
 			res = SPI_OK_SELECT;
-			if (parseTree->isPortal)
-			{
-				isRetrieveIntoPortal = true;
-				intoName = parseTree->into->relname;
-				parseTree->isBinary = false;	/* */
-
-				return SPI_ERROR_CURSOR;
-
-			}
-			else if (parseTree->into != NULL)	/* select into table */
+			if (queryDesc->parsetree->into != NULL)	/* select into table */
 			{
 				res = SPI_OK_SELINTO;
-				isRetrieveIntoRelation = true;
-				queryDesc->dest = None; /* */
+				queryDesc->dest = None; /* don't output results anywhere */
 			}
 			break;
 		case CMD_INSERT:
@@ -1315,14 +1291,6 @@ _SPI_pquery(QueryDesc *queryDesc, bool runit, int tcount)
 
 	ExecutorStart(queryDesc);
 
-	/*
-	 * Don't work currently --- need to rearrange callers so that we
-	 * prepare the portal before doing ExecutorStart() etc. See
-	 * pquery.c for the correct order of operations.
-	 */
-	if (isRetrieveIntoPortal)
-		elog(FATAL, "SPI_select: retrieve into portal not implemented");
-
 	ExecutorRun(queryDesc, ForwardScanDirection, (long) tcount);
 
 	_SPI_current->processed = queryDesc->estate->es_processed;
@@ -1334,7 +1302,7 @@ _SPI_pquery(QueryDesc *queryDesc, bool runit, int tcount)
 			elog(FATAL, "SPI_select: # of processed tuples check failed");
 	}
 
-	if (dest == SPI)
+	if (queryDesc->dest == SPI)
 	{
 		SPI_processed = _SPI_current->processed;
 		SPI_lastoid = save_lastoid;
@@ -1367,12 +1335,6 @@ static void
 _SPI_cursor_operation(Portal portal, bool forward, int count,
 					  CommandDest dest)
 {
-	QueryDesc  *querydesc;
-	EState	   *estate;
-	MemoryContext oldcontext;
-	ScanDirection direction;
-	CommandDest olddest;
-
 	/* Check that the portal is valid */
 	if (!PortalIsValid(portal))
 		elog(ERROR, "invalid portal in SPI cursor operation");
@@ -1386,53 +1348,9 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 	_SPI_current->processed = 0;
 	_SPI_current->tuptable = NULL;
 
-	/* Switch to the portals memory context */
-	oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
-
-	querydesc = PortalGetQueryDesc(portal);
-	estate = querydesc->estate;
-
-	/* Save the queries command destination and set it to SPI (for fetch) */
-	/* or None (for move) */
-	olddest = querydesc->dest;
-	querydesc->dest = dest;
-
-	/* Run the executor like PerformPortalFetch and remember states */
-	if (forward)
-	{
-		if (portal->atEnd)
-			direction = NoMovementScanDirection;
-		else
-			direction = ForwardScanDirection;
-
-		ExecutorRun(querydesc, direction, (long) count);
-
-		if (estate->es_processed > 0)
-			portal->atStart = false;	/* OK to back up now */
-		if (count <= 0 || (int) estate->es_processed < count)
-			portal->atEnd = true;		/* we retrieved 'em all */
-	}
-	else
-	{
-		if (portal->atStart)
-			direction = NoMovementScanDirection;
-		else
-			direction = BackwardScanDirection;
-
-		ExecutorRun(querydesc, direction, (long) count);
-
-		if (estate->es_processed > 0)
-			portal->atEnd = false;		/* OK to go forward now */
-		if (count <= 0 || (int) estate->es_processed < count)
-			portal->atStart = true;		/* we retrieved 'em all */
-	}
-
-	_SPI_current->processed = estate->es_processed;
-
-	/* Restore the old command destination and switch back to callers */
-	/* memory context */
-	querydesc->dest = olddest;
-	MemoryContextSwitchTo(oldcontext);
+	/* Run the cursor */
+	_SPI_current->processed = DoPortalFetch(portal, forward, (long) count,
+											dest);
 
 	if (dest == SPI && _SPI_checktuples())
 		elog(FATAL, "SPI_fetch: # of processed tuples check failed");

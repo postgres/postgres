@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.130 2003/02/16 02:30:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.131 2003/03/10 03:53:50 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1787,7 +1787,6 @@ inline_function(Oid funcid, List *args, HeapTuple func_tuple,
 		querytree->commandType != CMD_SELECT ||
 		querytree->resultRelation != 0 ||
 		querytree->into ||
-		querytree->isPortal ||
 		querytree->hasAggs ||
 		querytree->hasSubLinks ||
 		querytree->rtable ||

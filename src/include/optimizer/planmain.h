@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.68 2003/01/24 03:58:44 tgl Exp $
+ * $Id: planmain.h,v 1.69 2003/03/10 03:53:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@ extern Group *make_group(Query *root, List *tlist,
 						 double numGroups,
 						 Plan *lefttree);
 extern Material *make_material(List *tlist, Plan *lefttree);
+extern Plan *materialize_finished_plan(Plan *subplan);
 extern Unique *make_unique(List *tlist, Plan *lefttree, List *distinctList);
 extern Limit *make_limit(List *tlist, Plan *lefttree,
 		   Node *limitOffset, Node *limitCount);

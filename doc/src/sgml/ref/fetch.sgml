@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.25 2003/02/04 11:23:58 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.26 2003/03/10 03:53:49 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -13,7 +13,7 @@ PostgreSQL documentation
    FETCH
   </refname>
   <refpurpose>
-   retrieve rows from a table using a cursor
+   retrieve rows from a query using a cursor
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
@@ -66,7 +66,7 @@ FETCH [ FORWARD | BACKWARD | RELATIVE ] [ <replaceable class="PARAMETER">#</repl
 	  <term>RELATIVE</term>
 	  <listitem>
 	   <para>
-	    Noise word for SQL92 compatibility.
+	    Same as FORWARD; provided for SQL92 compatibility.
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -247,13 +247,20 @@ WARNING:  FETCH/ABSOLUTE not supported, using RELATIVE
    </title>
 
    <para>
-    Note that the FORWARD, BACKWARD, and ALL keywords are
+    A cursor to be used in backwards fetching should be declared with the
+    SCROLL option.  In simple cases, <productname>PostgreSQL</productname>
+    will allow backwards fetch from cursors not declared with SCROLL, but
+    this behavior is best not relied on.
+   </para>
+
+   <para>
+    The FORWARD, BACKWARD, and ALL keywords are
     <productname>PostgreSQL</productname> extensions.
     See below for details on compatibility issues.
    </para>
 
    <para>
-    Updating data in a cursor is not supported by 
+    Updating data via a cursor is not supported by 
     <productname>PostgreSQL</productname>,
     because mapping cursor updates back to base tables is
     not generally possible, as is also the case with VIEW updates.
@@ -262,8 +269,7 @@ WARNING:  FETCH/ABSOLUTE not supported, using RELATIVE
    </para>
 
    <para>
-    Cursors may only be used inside of transactions because
-    the data that they store spans multiple user queries.
+    Cursors may only be used inside transaction blocks.
    </para>
 
    <para>
@@ -288,7 +294,7 @@ WARNING:  FETCH/ABSOLUTE not supported, using RELATIVE
   </title>
 
   <para>
-   The following examples traverses a table using a cursor.
+   The following example traverses a table using a cursor.
 
 <programlisting>
 -- Set up and use a cursor:

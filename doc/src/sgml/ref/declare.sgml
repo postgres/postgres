@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.18 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.19 2003/03/10 03:53:48 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -47,8 +47,7 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
       <term>BINARY</term>
       <listitem>
        <para>
-	Causes the cursor to fetch data in binary
-	rather than in text format.
+	Causes the cursor to return data in binary rather than in text format.
        </para>
       </listitem>
      </varlistentry>
@@ -70,9 +69,8 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
       <term>SCROLL</term>
       <listitem>
        <para>
-	<acronym>SQL92</acronym> keyword indicating that data may be retrieved
-	in multiple rows per FETCH operation. Since this is allowed at all times
-	by <productname>PostgreSQL</productname> this keyword has no effect.
+	Specifies that the cursor may be used to retrieve rows
+	in a nonsequential fashion (e.g., backwards).
        </para>
       </listitem>
      </varlistentry>
@@ -81,10 +79,10 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
       <term><replaceable class="parameter">query</replaceable></term>
       <listitem>
        <para>
-	An SQL query which will provide the rows to be governed by the
-	cursor.
-	Refer to the SELECT statement for further information about
-	valid arguments.
+	A <command>SELECT</> query which will provide the rows to be
+	returned by the cursor.
+	Refer to <xref linkend="sql-select" endterm="sql-select-title">
+	for further information about valid arguments.
        </para>
       </listitem>
      </varlistentry>
@@ -125,6 +123,10 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
      </varlistentry>
 
     </variablelist>
+   </para>
+
+   <para>
+    The BINARY, INSENSITIVE, and SCROLL keywords may appear in any order.
    </para>
   </refsect2>
 
@@ -193,9 +195,8 @@ ERROR:  DECLARE CURSOR may only be used in begin/end transaction blocks
   </para>
 
   <para>
-   Normal cursors return data in text format, either ASCII or another
-   encoding scheme depending on how the <productname>PostgreSQL</productname>
-   backend was built. Since
+   Normal cursors return data in text format, the same as a <command>SELECT</>
+   would produce.  Since
    data is stored natively in binary format, the system must
    do a conversion to produce the text format. In addition,
    text formats are often larger in size than the corresponding binary format.
@@ -228,15 +229,11 @@ ERROR:  DECLARE CURSOR may only be used in begin/end transaction blocks
    representations (e.g., <quote>big-endian</quote> versus <quote>little-endian</quote>),
    you will probably not want your data returned in
    binary format.
-   However, binary cursors may be a
-   little more efficient since there is less conversion overhead in
-   the server to client data transfer.
 
    <tip>
     <para>
-     If you intend to display the data in
-     ASCII,  getting it back in ASCII will save you some
-     effort on the client side.
+     If you intend to display the data as text, retrieving it in text form
+     will save you some effort on the client side.
     </para>
    </tip>
   </para>
@@ -250,12 +247,21 @@ ERROR:  DECLARE CURSOR may only be used in begin/end transaction blocks
    </title>
 
    <para>
-    Cursors are only available in transactions. Use to
+    Cursors are only available within transactions. Use
     <xref linkend="sql-begin" endterm="sql-begin-title">,
     <xref linkend="sql-commit" endterm="sql-commit-title">
     and
     <xref linkend="sql-rollback" endterm="sql-rollback-title">
     to define a transaction block.
+   </para>
+
+   <para>
+    The <literal>SCROLL</> option should be specified when defining a cursor 
+    that will be used to fetch backwards.  This is required by
+    <acronym>SQL92</acronym>.  However, for compatibility with
+    earlier versions, <productname>PostgreSQL</productname> will allow
+    backward fetches without <literal>SCROLL</>, if the cursor's query plan
+    is simple enough that no extra overhead is needed to support it.
    </para>
 
    <para>
