@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.22 2003/11/04 09:55:38 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.23 2003/11/05 00:05:32 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -12,8 +12,7 @@
   Subsequently, we discuss how tables can be organized into
   schemas, and how privileges can be assigned to tables.  Finally,
   we will briefly look at other features that affect the data storage,
-  such as views, functions, and triggers.  Detailed information on
-  these topics is found in <xref linkend="server-programming">.
+  such as views, functions, and triggers.
  </para>
 
  <sect1 id="ddl-basics">
@@ -522,7 +521,7 @@ CREATE TABLE products (
    <para>
     It should be noted that a check constraint is satisfied if the
     check expression evaluates to true or the null value.  Since most
-    expressions will evaluate to the null value if one operand is null
+    expressions will evaluate to the null value if one operand is null,
     they will not prevent null values in the constrained columns.  To
     ensure that a column does not contain null values, the not-null
     constraint described in the next section should be used.
@@ -586,7 +585,7 @@ CREATE TABLE products (
     The <literal>NULL</literal> constraint is not defined in the SQL
     standard and should not be used in portable applications.  (It was
     only added to <productname>PostgreSQL</productname> to be
-    compatible with other database systems.)  Some users, however,
+    compatible with some other database systems.)  Some users, however,
     like it because it makes it easy to toggle the constraint in a
     script file.  For example, you could start with
 <programlisting>
@@ -820,7 +819,7 @@ CREATE TABLE orders (
 );
 </programlisting>
     because in absence of a column list the primary key of the
-    referenced table is used as referenced column.
+    referenced table is used as the referenced column.
    </para>
 
    <para>
@@ -1094,9 +1093,10 @@ WHERE c.altitude &gt; 500 and c.tableoid = p.oid;
    <title>Deprecated</title> 
    <para>
      In previous versions of <productname>PostgreSQL</productname>, the
-     default was not to get access to child tables. This was found to
-     be error prone and is also in violation of the SQL99 standard. Under the old
-     syntax, to get the sub-tables you append <literal>*</literal> to the table name.
+     default behavior was not to include child tables in queries. This was
+     found to be error prone and is also in violation of the SQL99
+     standard. Under the old syntax, to get the sub-tables you append
+     <literal>*</literal> to the table name.
      For example
 <programlisting>
 SELECT * from cities*;
@@ -1270,6 +1270,12 @@ ALTER TABLE products ALTER COLUMN product_no SET NOT NULL;
 <programlisting>
 ALTER TABLE products DROP CONSTRAINT some_name;
 </programlisting>
+    (If you are dealing with a generated constraint name like <literal>$2</>,
+    don't forget that you'll need to double-quote it to make it a valid
+    identifier.)
+   </para>
+
+   <para>
     This works the same for all constraint types except not-null
     constraints. To drop a not null constraint use
 <programlisting>
@@ -1739,9 +1745,11 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
     A user can also be allowed to create objects in someone else's
     schema.  To allow that, the <literal>CREATE</literal> privilege on
     the schema needs to be granted.  Note that by default, everyone
-    has the <literal>CREATE</literal> privilege on the schema
-    <literal>public</literal>.  This allows all users that manage to
-    connect to a given database to create objects there.  If you do
+    has <literal>CREATE</literal> and <literal>USAGE</literal> privileges on
+    the schema 
+    <literal>public</literal>.  This allows all users that are able to
+    connect to a given database to create objects in its
+    <literal>public</literal> schema.  If you do
     not want to allow that, you can revoke that privilege:
 <programlisting>
 REVOKE CREATE ON SCHEMA public FROM PUBLIC;
@@ -1905,6 +1913,11 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
     </para>
    </listitem>
   </itemizedlist>
+
+  <para>
+   Detailed information on
+   these topics appears in <xref linkend="server-programming">.
+  </para>
  </sect1>
 
  <sect1 id="ddl-depend">
