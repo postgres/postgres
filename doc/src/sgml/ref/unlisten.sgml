@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.10 2000/07/21 04:48:33 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.11 2000/07/21 04:49:23 momjian Exp $
 Postgres documentation
 -->
 
@@ -143,9 +143,9 @@ UNLISTEN { <replaceable class="PARAMETER">notifyname</replaceable> | * }
    To subscribe to an existing registration:
 
 <programlisting>
-postgres=> LISTEN virtual;
+LISTEN virtual;
 LISTEN
-postgres=> NOTIFY virtual;
+NOTIFY virtual;
 NOTIFY
 Asynchronous NOTIFY 'virtual' from backend with pid '8448' received
 </programlisting>
