@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.149 2003/11/29 19:51:59 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.150 2003/12/07 04:14:10 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,6 +184,7 @@ static Selectivity prefix_selectivity(Query *root, Var *var,
 static Selectivity pattern_selectivity(Const *patt, Pattern_Type ptype);
 static Datum string_to_datum(const char *str, Oid datatype);
 static Const *string_to_const(const char *str, Oid datatype);
+static Const *string_to_bytea_const(const char *str, size_t str_len);
 
 
 /*
@@ -3135,20 +3136,31 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 	}
 	else
 	{
-		patt = DatumGetCString(DirectFunctionCall1(byteaout, patt_const->constvalue));
-		pattlen = toast_raw_datum_size(patt_const->constvalue) - VARHDRSZ;
+		bytea   *bstr = DatumGetByteaP(patt_const->constvalue);
+
+		pattlen = VARSIZE(bstr) - VARHDRSZ;
+		if (pattlen > 0)
+		{
+			patt = (char *) palloc(pattlen);
+			memcpy(patt, VARDATA(bstr), pattlen);
+		}
+		else
+			patt = NULL;
+
+		if ((Pointer) bstr != DatumGetPointer(patt_const->constvalue))
+			pfree(bstr);
 	}
 
 	match = palloc(pattlen + 1);
 	match_pos = 0;
-
 	for (pos = 0; pos < pattlen; pos++)
 	{
 		/* % and _ are wildcard characters in LIKE */
 		if (patt[pos] == '%' ||
 			patt[pos] == '_')
 			break;
-		/* Backslash quotes the next character */
+
+		/* Backslash escapes the next character */
 		if (patt[pos] == '\\')
 		{
 			pos++;
@@ -3174,10 +3186,19 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 	match[match_pos] = '\0';
 	rest = &patt[pos];
 
-	*prefix_const = string_to_const(match, typeid);
-	*rest_const = string_to_const(rest, typeid);
+	if (typeid != BYTEAOID)
+	{
+		*prefix_const = string_to_const(match, typeid);
+		*rest_const = string_to_const(rest, typeid);
+	}
+	else
+	{
+		*prefix_const = string_to_bytea_const(match, match_pos);
+		*rest_const = string_to_bytea_const(rest, pattlen - pos);
+	}
 
-	pfree(patt);
+	if (patt != NULL)
+		pfree(patt);
 	pfree(match);
 
 	/* in LIKE, an empty pattern is an exact match! */
@@ -3500,9 +3521,22 @@ like_selectivity(Const *patt_const, bool case_insensitive)
 	}
 	else
 	{
-		patt = DatumGetCString(DirectFunctionCall1(byteaout, patt_const->constvalue));
-		pattlen = toast_raw_datum_size(patt_const->constvalue) - VARHDRSZ;
+		bytea   *bstr = DatumGetByteaP(patt_const->constvalue);
+
+		pattlen = VARSIZE(bstr) - VARHDRSZ;
+		if (pattlen > 0)
+		{
+			patt = (char *) palloc(pattlen);
+			memcpy(patt, VARDATA(bstr), pattlen);
+		}
+		else
+			patt = NULL;
+
+		if ((Pointer) bstr != DatumGetPointer(patt_const->constvalue))
+			pfree(bstr);
 	}
+	/* patt should never be NULL in practice */
+	Assert(patt != NULL);
 
 	/* Skip any leading %; it's already factored into initial sel */
 	start = (*patt == '%') ? 1 : 0;
@@ -3693,8 +3727,8 @@ pattern_selectivity(Const *patt, Pattern_Type ptype)
 
 /*
  * Try to generate a string greater than the given string or any
- * string it is a prefix of.  If successful, return a palloc'd string;
- * else return NULL.
+ * string it is a prefix of.  If successful, return a palloc'd string
+ * in the form of a Const pointer; else return NULL.
  *
  * The key requirement here is that given a prefix string, say "foo",
  * we must be able to generate another string "fop" that is greater
@@ -3712,27 +3746,38 @@ Const *
 make_greater_string(const Const *str_const)
 {
 	Oid			datatype = str_const->consttype;
-	char	   *str;
 	char	   *workstr;
 	int			len;
 
 	/* Get the string and a modifiable copy */
 	if (datatype == NAMEOID)
 	{
-		str = DatumGetCString(DirectFunctionCall1(nameout, str_const->constvalue));
-		len = strlen(str);
+		workstr = DatumGetCString(DirectFunctionCall1(nameout,
+													  str_const->constvalue));
+		len = strlen(workstr);
 	}
 	else if (datatype == BYTEAOID)
 	{
-		str = DatumGetCString(DirectFunctionCall1(byteaout, str_const->constvalue));
-		len = toast_raw_datum_size(str_const->constvalue) - VARHDRSZ;
+		bytea   *bstr = DatumGetByteaP(str_const->constvalue);
+
+		len = VARSIZE(bstr) - VARHDRSZ;
+		if (len > 0)
+		{
+			workstr = (char *) palloc(len);
+			memcpy(workstr, VARDATA(bstr), len);
+		}
+		else
+			workstr = NULL;
+
+		if ((Pointer) bstr != DatumGetPointer(str_const->constvalue))
+			pfree(bstr);
 	}
 	else
 	{
-		str = DatumGetCString(DirectFunctionCall1(textout, str_const->constvalue));
-		len = strlen(str);
+		workstr = DatumGetCString(DirectFunctionCall1(textout,
+													  str_const->constvalue));
+		len = strlen(workstr);
 	}
-	workstr = pstrdup(str);
 
 	while (len > 0)
 	{
@@ -3747,9 +3792,11 @@ make_greater_string(const Const *str_const)
 			Const	   *workstr_const;
 
 			(*lastchar)++;
-			workstr_const = string_to_const(workstr, datatype);
+			if (datatype != BYTEAOID)
+				workstr_const = string_to_const(workstr, datatype);
+			else
+				workstr_const = string_to_bytea_const(workstr, len);
 
-			pfree(str);
 			pfree(workstr);
 			return workstr_const;
 		}
@@ -3771,8 +3818,8 @@ make_greater_string(const Const *str_const)
 	}
 
 	/* Failed... */
-	pfree(str);
-	pfree(workstr);
+	if (workstr != NULL)
+		pfree(workstr);
 
 	return (Const *) NULL;
 }
@@ -3809,6 +3856,22 @@ string_to_const(const char *str, Oid datatype)
 
 	return makeConst(datatype, ((datatype == NAMEOID) ? NAMEDATALEN : -1),
 					 conval, false, false);
+}
+
+/*
+ * Generate a Const node of bytea type from a binary C string and a length.
+ */
+static Const *
+string_to_bytea_const(const char *str, size_t str_len)
+{
+	bytea  *bstr = palloc(VARHDRSZ + str_len);
+	Datum	conval;
+
+	memcpy(VARDATA(bstr), str, str_len);
+	VARATT_SIZEP(bstr) = VARHDRSZ + str_len;
+	conval = PointerGetDatum(bstr);
+
+	return makeConst(BYTEAOID, -1, conval, false, false);
 }
 
 /*-------------------------------------------------------------------------
