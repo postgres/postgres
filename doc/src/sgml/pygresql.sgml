@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/Attic/pygresql.sgml,v 1.1 2001/03/04 18:54:07 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/Attic/pygresql.sgml,v 1.2 2001/09/10 04:15:41 momjian Exp $ -->
 
 <chapter id="pygresql">
  <title><application>PyGreSQL</application> - <application>Python</application> Interface</title>
@@ -418,7 +418,6 @@ make && make install
      <varlistentry>
       <term><varname>INV_READ</varname></term>
       <term><varname>INV_WRITE</varname></term>
-      <term><varname>INV_ARCHIVE</varname></term>
       <listitem>
        <para>
         large objects access modes, used by
@@ -2253,7 +2252,7 @@ locreate(<replaceable>mode</replaceable>)
       <para>
         <function>locreate()</function> method creates a large object in the database.
         The mode can be defined by OR-ing the constants defined in the pg module
-        (<literal>INV_READ, INV_WRITE</literal> and <literal>INV_ARCHIVE</literal>).
+        (<literal>INV_READ and INV_WRITE</literal>).
       </para>
     </refsect1>
 

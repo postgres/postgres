@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.17 2001/09/10 03:02:06 ishii Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.18 2001/09/10 04:15:41 momjian Exp $
 -->
 
  <chapter id="largeObjects">
@@ -117,17 +117,13 @@ Oid lo_creat(PGconn *<replaceable class="parameter">conn</replaceable>, int <rep
      <filename>$<envar>PGROOT</envar>/src/backend/libpq/libpq-fs.h</filename>
      The access type (read, write, or both) is controlled by
      OR ing together the bits <acronym>INV_READ</acronym>  and
-     <acronym>INV_WRITE</acronym>.   If
-     the large object should be archived -- that is, if 
-     historical versions of it should be moved periodically  to
-     a  special archive relation -- then the <acronym>INV_ARCHIVE</acronym> bit
-     should be set.  The low-order sixteen bits of mask  are
+     <acronym>INV_WRITE</acronym>.  The low-order sixteen bits of mask  are
      the  storage  manager  number on which the large object
      should reside.  For sites other  than  Berkeley,  these
      bits should always be zero.
      The commands below create an (Inversion) large object:
      <programlisting>
-inv_oid = lo_creat(INV_READ|INV_WRITE|INV_ARCHIVE);
+inv_oid = lo_creat(INV_READ|INV_WRITE);
      </programlisting>
     </para>
    </sect2>
