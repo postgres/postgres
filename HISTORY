@@ -65,9 +65,11 @@ Overview
 Migration to version 7.3
 
    A dump/restore using "pg_dump" is required for those wishing to migrate
-   data from any previous release.  A summary of changes needed in client
-   applications is at 
-   http://www.ca.postgresql.org/docs/momjian/upgrade_tips_7.3.
+   data from any previous release.  If your application examines the
+   system catalogs, additional changes will be required due to the
+   introduction of schemas in 7.3; for more information, see
+
+		http://www.ca.postgresql.org/docs/momjian/upgrade_tips_7.3
 
    Observe the following incompatibilities:
 
@@ -79,21 +81,19 @@ Migration to version 7.3
 
      * LIMIT #,# is disabled, use LIMIT # OFFSET #.
 
-     * LIMIT can now appear before FOR UPDATE, for portability.
-
      * INSERTs with column lists must specify all values, e.g. 
-       INSERT INTO tab (col1, col2) VALUES ('val1') is now invalid
+       INSERT INTO tab (col1, col2) VALUES ('val1') is now invalid.
 
      * DROP object now takes either CASCADE or RESTRICT to control
-       whether dependent objects are also dropped
+       whether dependent objects are also dropped.
 
-     * An index is now not automatically created for SERIAL columns
+     * An index is now not automatically created for SERIAL columns.
 
-     * A SET inside an aborted transaction is now rolled back
+     * A SET inside an aborted transaction is now rolled back.
 
-     * COPY no longer considers missing trailing columns to be NULL
+     * COPY no longer considers missing trailing columns to be NULL.
 
-     * TIMESTAMP and TIME data types now default to WITHOUT TIMEZONE
+     * TIMESTAMP and TIME data types now default to WITHOUT TIMEZONE.
 
      * Pre-7.3 databases loaded into 7.3 will not have the new object
        dependencies for SERIAL, UNIQUE constraints, and foreign keys. See
@@ -176,7 +176,7 @@ Queries
 =======
 Make cursors insensitive, meaning their contents do not change (Tom)
 Disable LIMIT #,# syntax; now only LIMIT # OFFSET # supported (Bruce)
-Increase identifier length to 64 (Neil, Bruce)
+Increase identifier length to 63 (Neil, Bruce)
 UNION fixes for merging >= 3 columns of different lengths (Tom)
 Add DEFAULT keyword to INSERT, i.e INSERT ... (..., DEFAULT, ) (Rod)
 Allow views to have default values using ALTER COLUMN ... SET DEFAULT (Neil)
@@ -222,7 +222,6 @@ Automatically drop constraints/functions when object is dropped (Rod)
 Add CREATE/DROP OPERATOR CLASS (Bill Studenmund, Tom)
 Add ALTER TABLE DROP COLUMN (Christopher, Tom, Hiroshi)
 Prevent inherited columns from being removed or renamed (Alvaro Herrera)
-Add CREATE OR REPLACE VIEW, CREATE OR REPLACE RULE (Gavin, Neil, Tom)
 Fix foreign key constraints to not error on intermediate db states (Stephan)
 Propagate column or table renaming to foreign key constraints
 Add CREATE OR REPLACE VIEW (Gavin, Neil, Tom)
@@ -336,7 +335,8 @@ Allow recursive SQL function (Peter)
 Change PL/Tcl build to use configured compiler and Makefile.shlib (Peter)
 Overhaul the PL/pgSQL FOUND variable to be more Oracle-compatible (Tom, Neil)
 Allow PL/pgSQL to handle quoted identifiers (Tom)
-Allow PL/pgSQL functions can return sets (Neil)
+Allow set-returning PL/pgSQL functions (Neil)
+Make PL/pgSQL schema-aware (Joe)
 
 Psql
 ====
@@ -367,13 +367,12 @@ Allow jdbc to compile with jdk 1.4 (Dave)
 Add jdbc3 support (Barry)
 Allows jdbc to set loglevel by adding ?loglevel=X to the connection URL (Barry)
 Add jdbc Driver.info() message that prints out the version number (Barry)
-Add jdbc updateable result sets
-Add jdbc support for callable statements
+Add jdbc updateable result sets (Raghu Nidagal, Dave)
+Add jdbc support for callable statements (Paul Bethe)
 Add jdbc query cancel capability
 Add refresh row to jdbc (Dave)
 Fix jdbc MD5 encryption handling for multibyte servers (Jun Kawai)
 Add JDBC support for prepared statements (Barry)
-Add support for new prepared statements
 
 ECPG
 ====
