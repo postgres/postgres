@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fmgr.h,v 1.10 2000/08/24 03:29:11 tgl Exp $
+ * $Id: fmgr.h,v 1.11 2000/11/20 20:36:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,6 +209,43 @@ extern struct varlena * pg_detoast_datum_copy(struct varlena * datum);
 
 
 /*-------------------------------------------------------------------------
+ *		Support for detecting call convention of dynamically-loaded functions
+ *
+ * Dynamically loaded functions may use either the version-1 ("new style")
+ * or version-0 ("old style") calling convention.  Version 1 is the call
+ * convention defined in this header file; version 0 is the old "plain C"
+ * convention.  A version-1 function must be accompanied by the macro call
+ *
+ *		PG_FUNCTION_INFO_V1(function_name);
+ *
+ * Note that internal functions do not need this decoration since they are
+ * assumed to be version-1.
+ *
+ *-------------------------------------------------------------------------
+ */
+
+typedef struct
+{
+	int			api_version;	/* specifies call convention version number */
+	/* More fields may be added later, for version numbers > 1. */
+} Pg_finfo_record;
+
+/* Expected signature of an info function */
+typedef Pg_finfo_record * (*PGFInfoFunction) (void);
+
+/* Macro to build an info function associated with the given function name */
+
+#define PG_FUNCTION_INFO_V1(funcname) \
+extern Pg_finfo_record * CppConcat(pg_finfo_,funcname) (void); \
+Pg_finfo_record * \
+CppConcat(pg_finfo_,funcname) (void) \
+{ \
+	static Pg_finfo_record my_finfo = { 1 }; \
+	return &my_finfo; \
+}
+
+
+/*-------------------------------------------------------------------------
  *		Support routines and macros for callers of fmgr-compatible functions
  *-------------------------------------------------------------------------
  */
@@ -297,13 +334,14 @@ extern Datum OidFunctionCall9(Oid functionId, Datum arg1, Datum arg2,
 /*
  * Routines in fmgr.c
  */
-extern Oid fmgr_internal_language(const char *proname);
+extern Pg_finfo_record *fetch_finfo_record(char *filename, char *funcname);
+extern Oid fmgr_internal_function(const char *proname);
 
 /*
  * Routines in dfmgr.c
  */
-extern PGFunction fmgr_dynamic(Oid functionId);
-extern PGFunction load_external_function(char *filename, char *funcname);
+extern PGFunction load_external_function(char *filename, char *funcname,
+										 bool signalNotFound);
 extern void load_file(char *filename);
 
 

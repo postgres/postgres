@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.5 2000/05/29 01:59:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.6 2000/11/20 20:36:52 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -66,6 +66,8 @@ static PLpgSQL_function *compiled_functions = NULL;
  * call this function for execution of PL/pgSQL procedures.
  * ----------
  */
+PG_FUNCTION_INFO_V1(plpgsql_call_handler);
+
 Datum
 plpgsql_call_handler(PG_FUNCTION_ARGS)
 {

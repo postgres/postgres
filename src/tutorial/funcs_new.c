@@ -30,6 +30,8 @@ Datum   c_overpaid(PG_FUNCTION_ARGS);
 
 /* By Value */
          
+PG_FUNCTION_INFO_V1(add_one);
+
 Datum
 add_one(PG_FUNCTION_ARGS)
 {
@@ -40,6 +42,8 @@ add_one(PG_FUNCTION_ARGS)
 
 /* By Reference, Fixed Length */
 
+PG_FUNCTION_INFO_V1(add_one_float8);
+
 Datum
 add_one_float8(PG_FUNCTION_ARGS)
 {
@@ -48,6 +52,8 @@ add_one_float8(PG_FUNCTION_ARGS)
 
     PG_RETURN_FLOAT8(arg + 1.0);
 }
+
+PG_FUNCTION_INFO_V1(makepoint);
 
 Datum
 makepoint(PG_FUNCTION_ARGS)
@@ -63,6 +69,8 @@ makepoint(PG_FUNCTION_ARGS)
 }
 
 /* By Reference, Variable Length */
+
+PG_FUNCTION_INFO_V1(copytext);
 
 Datum
 copytext(PG_FUNCTION_ARGS)
@@ -82,6 +90,8 @@ copytext(PG_FUNCTION_ARGS)
     PG_RETURN_TEXT_P(new_t);
 }
 
+PG_FUNCTION_INFO_V1(concat_text);
+
 Datum
 concat_text(PG_FUNCTION_ARGS)
 {
@@ -98,6 +108,8 @@ concat_text(PG_FUNCTION_ARGS)
 }
 
 /* Composite types */
+
+PG_FUNCTION_INFO_V1(c_overpaid);
 
 Datum
 c_overpaid(PG_FUNCTION_ARGS)

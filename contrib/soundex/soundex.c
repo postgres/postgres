@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/contrib/soundex/Attic/soundex.c,v 1.7 2000/10/04 19:25:34 petere Exp $ */
+/* $Header: /cvsroot/pgsql/contrib/soundex/Attic/soundex.c,v 1.8 2000/11/20 20:36:57 tgl Exp $ */
 #include "postgres.h"
 #include "fmgr.h"
 #include "utils/builtins.h"
@@ -7,11 +7,9 @@
 #include <stdio.h>
 
 
-Datum
-text_soundex(PG_FUNCTION_ARGS);
+Datum text_soundex(PG_FUNCTION_ARGS);
 
-static void
-soundex(const char *instr, char *outstr);
+static void soundex(const char *instr, char *outstr);
 
 #define SOUNDEX_LEN 4
 
@@ -24,6 +22,8 @@ soundex(const char *instr, char *outstr);
 /*
  * SQL function: text_soundex(text) returns text
  */
+PG_FUNCTION_INFO_V1(text_soundex);
+
 Datum
 text_soundex(PG_FUNCTION_ARGS)
 {
@@ -36,6 +36,7 @@ text_soundex(PG_FUNCTION_ARGS)
 
 	PG_RETURN_TEXT_P(_textin(outstr));
 }
+
 #endif /* not SOUNDEX_TEST */
 
 

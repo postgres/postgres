@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.13 2000/11/04 21:04:54 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.14 2000/11/20 20:36:46 tgl Exp $
 Postgres documentation
 -->
 
@@ -163,7 +163,8 @@ ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable
     <note>
      <para>
       In <productname>Postgres</productname> 7.1 and later, call handlers
-      must adhere to the "new style" function manager interface.
+      must adhere to the "version 1" function manager interface, not the
+      old-style interface.
      </para>
     </note>
 
@@ -180,7 +181,7 @@ ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable
    </para>
 
    <para>
-    The call handler is called in the same way as any other new-style
+    The call handler is called in the same way as any other
     function: it receives a pointer to a FunctionCallInfoData struct
     containing argument values and information about the called function,
     and it is expected to return a Datum result (and possibly set the
@@ -269,9 +270,7 @@ ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable
    lanname   | lanispl | lanpltrusted | lanplcallfoid | lancompiler
 -------------+---------+--------------+---------------+-------------
  internal    | f       | f            |             0 | n/a
- newinternal | f       | f            |             0 | n/a
  C           | f       | f            |             0 | /bin/cc
- newC        | f       | f            |             0 | /bin/cc
  sql         | f       | f            |             0 | postgres
 </computeroutput>
 </programlisting>
@@ -279,8 +278,9 @@ ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable
 
    <para>
     The call handler for a procedural language must normally be written
-    in C and registered as 'newinternal' or 'newC' language, depending
+    in C and registered as 'internal' or 'C' language, depending
     on whether it is linked into the backend or dynamically loaded.
+    The call handler cannot use the old-style 'C' function interface.
    </para>
 
    <para> 
@@ -305,6 +305,8 @@ ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable
 #include "utils/syscache.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+
+PG_FUNCTION_INFO_V1(plsample_call_handler);
 
 Datum
 plsample_call_handler(PG_FUNCTION_ARGS)
@@ -344,7 +346,7 @@ plsample_call_handler(PG_FUNCTION_ARGS)
    <programlisting>
 CREATE FUNCTION plsample_call_handler () RETURNS opaque
     AS '/usr/local/pgsql/lib/plsample.so'
-    LANGUAGE 'newC';
+    LANGUAGE 'C';
 CREATE PROCEDURAL LANGUAGE 'plsample'
     HANDLER plsample_call_handler
     LANCOMPILER 'PL/Sample';

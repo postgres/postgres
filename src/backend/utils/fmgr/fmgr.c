@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.47 2000/11/16 22:30:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.48 2000/11/20 20:36:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "executor/functions.h"
 #include "utils/builtins.h"
 #include "utils/fmgrtab.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 /*
@@ -42,7 +43,19 @@ typedef int32 ((*func_ptr) ());
 typedef char *((*func_ptr) ());
 #endif
 
+/*
+ * For an oldstyle function, fn_extra points to a record like this:
+ */
+typedef struct
+{
+	func_ptr	func;			/* Address of the oldstyle function */
+	bool		arg_toastable[FUNC_MAX_ARGS]; /* is n'th arg of a toastable
+											   * datatype? */
+} Oldstyle_fnextra;
 
+
+static void fmgr_info_C_lang(FmgrInfo *finfo, HeapTuple procedureTuple);
+static void fmgr_info_other_lang(FmgrInfo *finfo, HeapTuple procedureTuple);
 static Datum fmgr_oldstyle(PG_FUNCTION_ARGS);
 static Datum fmgr_untrusted(PG_FUNCTION_ARGS);
 
@@ -104,9 +117,6 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 	const FmgrBuiltin *fbp;
 	HeapTuple	procedureTuple;
 	Form_pg_proc procedureStruct;
-	HeapTuple	languageTuple;
-	Form_pg_language languageStruct;
-	Oid			language;
 	char	   *prosrc;
 
 	finfo->fn_oid = functionId;
@@ -120,16 +130,8 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 		 */
 		finfo->fn_nargs = fbp->nargs;
 		finfo->fn_strict = fbp->strict;
-		finfo->fn_retset = false; /* assume no builtins return sets! */
-		if (fbp->oldstyle)
-		{
-			finfo->fn_addr = fmgr_oldstyle;
-			finfo->fn_extra = (void *) fbp->func;
-		}
-		else
-		{
-			finfo->fn_addr = fbp->func;
-		}
+		finfo->fn_retset = fbp->retset;
+		finfo->fn_addr = fbp->func;
 		return;
 	}
 
@@ -148,16 +150,15 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 
 	if (!procedureStruct->proistrusted)
 	{
+		/* This isn't really supported anymore... */
 		finfo->fn_addr = fmgr_untrusted;
 		ReleaseSysCache(procedureTuple);
 		return;
 	}
 
-	language = procedureStruct->prolang;
-	switch (language)
+	switch (procedureStruct->prolang)
 	{
 		case INTERNALlanguageId:
-		case NEWINTERNALlanguageId:
 			/*
 			 * For an ordinary builtin function, we should never get
 			 * here because the isbuiltin() search above will have
@@ -175,24 +176,12 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 				elog(ERROR, "fmgr_info: function %s not in internal table",
 					 prosrc);
 			pfree(prosrc);
-			if (fbp->oldstyle)
-			{
-				finfo->fn_addr = fmgr_oldstyle;
-				finfo->fn_extra = (void *) fbp->func;
-			}
-			else
-			{
-				finfo->fn_addr = fbp->func;
-			}
+			/* Should we check that nargs, strict, retset match the table? */
+			finfo->fn_addr = fbp->func;
 			break;
 
 		case ClanguageId:
-			finfo->fn_addr = fmgr_oldstyle;
-			finfo->fn_extra = (void *) fmgr_dynamic(functionId);
-			break;
-
-		case NEWClanguageId:
-			finfo->fn_addr = fmgr_dynamic(functionId);
+			fmgr_info_C_lang(finfo, procedureTuple);
 			break;
 
 		case SQLlanguageId:
@@ -200,92 +189,234 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 			break;
 
 		default:
-			/*
-			 * Might be a created procedural language; try to look it up.
-			 */
-			languageTuple = SearchSysCache(LANGOID,
-										   ObjectIdGetDatum(language),
-										   0, 0, 0);
-			if (!HeapTupleIsValid(languageTuple))
-				elog(ERROR, "fmgr_info: cache lookup for language %u failed",
-					 language);
-			languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
-			if (languageStruct->lanispl)
-			{
-				FmgrInfo	plfinfo;
-
-				fmgr_info(languageStruct->lanplcallfoid, &plfinfo);
-				finfo->fn_addr = plfinfo.fn_addr;
-				/*
-				 * If lookup of the PL handler function produced nonnull
-				 * fn_extra, complain --- it must be an oldstyle function!
-				 * We no longer support oldstyle PL handlers.
-				 */
-				if (plfinfo.fn_extra != NULL)
-					elog(ERROR, "fmgr_info: language %u has old-style handler",
-						 language);
-			}
-			else
-			{
-				elog(ERROR, "fmgr_info: function %u: unsupported language %u",
-					 functionId, language);
-			}
-			ReleaseSysCache(languageTuple);
+			fmgr_info_other_lang(finfo, procedureTuple);
 			break;
 	}
 
 	ReleaseSysCache(procedureTuple);
 }
 
+/*
+ * Special fmgr_info processing for C-language functions
+ */
+static void
+fmgr_info_C_lang(FmgrInfo *finfo, HeapTuple procedureTuple)
+{
+	Form_pg_proc procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
+	Datum		prosrcattr,
+				probinattr;
+	char	   *prosrcstring,
+			   *probinstring;
+	PGFunction	user_fn;
+	Pg_finfo_record *inforec;
+	Oldstyle_fnextra *fnextra;
+	bool		isnull;
+	int			i;
+
+	/* Get prosrc and probin strings (link symbol and library filename) */
+	prosrcattr = SysCacheGetAttr(PROCOID, procedureTuple,
+								 Anum_pg_proc_prosrc, &isnull);
+	if (isnull)
+		elog(ERROR, "fmgr: Could not extract prosrc for %u from pg_proc",
+			 finfo->fn_oid);
+	prosrcstring = DatumGetCString(DirectFunctionCall1(textout, prosrcattr));
+
+	probinattr = SysCacheGetAttr(PROCOID, procedureTuple,
+								 Anum_pg_proc_probin, &isnull);
+	if (isnull)
+		elog(ERROR, "fmgr: Could not extract probin for %u from pg_proc",
+			 finfo->fn_oid);
+	probinstring = DatumGetCString(DirectFunctionCall1(textout, probinattr));
+
+	/* Look up the function itself */
+	user_fn = load_external_function(probinstring, prosrcstring, true);
+
+	/* Get the function information record (real or default) */
+	inforec = fetch_finfo_record(probinstring, prosrcstring);
+
+	switch (inforec->api_version)
+	{
+		case 0:
+			/* Old style: need to use a handler */
+			finfo->fn_addr = fmgr_oldstyle;
+			/* OK to use palloc here because fn_mcxt is CurrentMemoryContext */
+			fnextra = (Oldstyle_fnextra *) palloc(sizeof(Oldstyle_fnextra));
+			finfo->fn_extra = (void *) fnextra;
+			MemSet(fnextra, 0, sizeof(Oldstyle_fnextra));
+			fnextra->func = (func_ptr) user_fn;
+			for (i = 0; i < procedureStruct->pronargs; i++)
+			{
+				fnextra->arg_toastable[i] =
+					TypeIsToastable(procedureStruct->proargtypes[i]);
+			}
+			break;
+		case 1:
+			/* New style: call directly */
+			finfo->fn_addr = user_fn;
+			break;
+		default:
+			/* Shouldn't get here if fetch_finfo_record did its job */
+			elog(ERROR, "Unknown function API version %d",
+				 inforec->api_version);
+			break;
+	}
+
+	pfree(prosrcstring);
+	pfree(probinstring);
+}
 
 /*
- * Specialized lookup routine for pg_proc.c: given the alleged name of
- * an internal function, return the OID of the function's language.
- * If the name is not known, return InvalidOid.
+ * Special fmgr_info processing for other-language functions
+ */
+static void
+fmgr_info_other_lang(FmgrInfo *finfo, HeapTuple procedureTuple)
+{
+	Form_pg_proc procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
+	Oid			language = procedureStruct->prolang;
+	HeapTuple	languageTuple;
+	Form_pg_language languageStruct;
+
+	languageTuple = SearchSysCache(LANGOID,
+								   ObjectIdGetDatum(language),
+								   0, 0, 0);
+	if (!HeapTupleIsValid(languageTuple))
+		elog(ERROR, "fmgr_info: cache lookup for language %u failed",
+			 language);
+	languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
+	if (languageStruct->lanispl)
+	{
+		FmgrInfo	plfinfo;
+
+		fmgr_info(languageStruct->lanplcallfoid, &plfinfo);
+		finfo->fn_addr = plfinfo.fn_addr;
+		/*
+		 * If lookup of the PL handler function produced nonnull
+		 * fn_extra, complain --- it must be an oldstyle function!
+		 * We no longer support oldstyle PL handlers.
+		 */
+		if (plfinfo.fn_extra != NULL)
+			elog(ERROR, "fmgr_info: language %u has old-style handler",
+				 language);
+	}
+	else
+	{
+		elog(ERROR, "fmgr_info: function %u: unsupported language %u",
+			 finfo->fn_oid, language);
+	}
+	ReleaseSysCache(languageTuple);
+}
+
+/*
+ * Fetch and validate the information record for the given external function.
+ *
+ * If no info function exists for the given name, it is not an error.
+ * Instead we return a default info record for a version-0 function.
+ * We want to raise an error here only if the info function returns
+ * something bogus.
+ *
+ * This function is broken out of fmgr_info_C_lang() so that ProcedureCreate()
+ * can validate the information record for a function not yet entered into
+ * pg_proc.
+ */
+Pg_finfo_record *
+fetch_finfo_record(char *filename, char *funcname)
+{
+	char	   *infofuncname;
+	PGFInfoFunction infofunc;
+	Pg_finfo_record *inforec;
+	static Pg_finfo_record default_inforec = { 0 };
+
+	/* Compute name of info func */
+	infofuncname = (char *) palloc(strlen(funcname) + 10);
+	sprintf(infofuncname, "pg_finfo_%s", funcname);
+
+	/* Try to look up the info function */
+	infofunc = (PGFInfoFunction) load_external_function(filename,
+														infofuncname,
+														false);
+	if (infofunc == (PGFInfoFunction) NULL)
+	{
+		/* Not found --- assume version 0 */
+		pfree(infofuncname);
+		return &default_inforec;
+	}
+
+	/* Found, so call it */
+	inforec = (*infofunc)();
+
+	/* Validate result as best we can */
+	if (inforec == NULL)
+		elog(ERROR, "Null result from %s", infofuncname);
+	switch (inforec->api_version)
+	{
+		case 0:
+		case 1:
+			/* OK, no additional fields to validate */
+			break;
+		default:
+			elog(ERROR, "Unknown version %d reported by %s",
+				 inforec->api_version, infofuncname);
+			break;
+	}
+
+	pfree(infofuncname);
+	return inforec;
+}
+
+
+/*
+ * Specialized lookup routine for ProcedureCreate(): given the alleged name
+ * of an internal function, return the OID of the function.
+ * If the name is not recognized, return InvalidOid.
  */
 Oid
-fmgr_internal_language(const char *proname)
+fmgr_internal_function(const char *proname)
 {
 	const FmgrBuiltin *fbp = fmgr_lookupByName(proname);
 
 	if (fbp == NULL)
 		return InvalidOid;
-	return fbp->oldstyle ? INTERNALlanguageId : NEWINTERNALlanguageId;
+	return fbp->foid;
 }
 
 
 /*
- * Handler for old-style internal and "C" language functions
- *
- * We expect fmgr_info to have placed the old-style function's address
- * in fn_extra of *flinfo.  This is a bit of a hack since fn_extra is really
- * void * which might be a different size than a pointer to function, but
- * it will work on any machine that our old-style call interface works on...
+ * Handler for old-style "C" language functions
  */
 static Datum
 fmgr_oldstyle(PG_FUNCTION_ARGS)
 {
-	char	   *returnValue = NULL;
+	Oldstyle_fnextra *fnextra;
 	int			n_arguments = fcinfo->nargs;
 	int			i;
 	bool		isnull;
 	func_ptr	user_fn;
+	char	   *returnValue;
 
 	if (fcinfo->flinfo == NULL || fcinfo->flinfo->fn_extra == NULL)
-		elog(ERROR, "Internal error: fmgr_oldstyle received NULL function pointer");
+		elog(ERROR, "Internal error: fmgr_oldstyle received NULL pointer");
+	fnextra = (Oldstyle_fnextra *) fcinfo->flinfo->fn_extra;
 
 	/*
 	 * Result is NULL if any argument is NULL, but we still call the function
 	 * (peculiar, but that's the way it worked before, and after all this is
 	 * a backwards-compatibility wrapper).  Note, however, that we'll never
 	 * get here with NULL arguments if the function is marked strict.
+	 *
+	 * We also need to detoast any TOAST-ed inputs, since it's unlikely that
+	 * an old-style function knows about TOASTing.
 	 */
 	isnull = false;
 	for (i = 0; i < n_arguments; i++)
-		isnull |= PG_ARGISNULL(i);
+	{
+		if (PG_ARGISNULL(i))
+			isnull = true;
+		else if (fnextra->arg_toastable[i])
+			fcinfo->arg[i] = PointerGetDatum(PG_DETOAST_DATUM(fcinfo->arg[i]));
+	}
 	fcinfo->isnull = isnull;
 
-	user_fn = (func_ptr) fcinfo->flinfo->fn_extra;
+	user_fn = fnextra->func;
 
 	switch (n_arguments)
 	{
@@ -411,6 +542,7 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 			 */
 			elog(ERROR, "fmgr_oldstyle: function %u: too many arguments (%d > %d)",
 				 fcinfo->flinfo->fn_oid, n_arguments, 16);
+			returnValue = NULL;	/* keep compiler quiet */
 			break;
 	}
 

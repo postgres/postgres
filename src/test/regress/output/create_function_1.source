@@ -13,24 +13,24 @@ CREATE FUNCTION widget_out(opaque)
 CREATE FUNCTION check_primary_key ()
 	RETURNS opaque
 	AS '@abs_builddir@/../../../contrib/spi/refint@DLSUFFIX@'
-	LANGUAGE 'newC';
+	LANGUAGE 'C';
 CREATE FUNCTION check_foreign_key ()
 	RETURNS opaque
 	AS '@abs_builddir@/../../../contrib/spi/refint@DLSUFFIX@'
-	LANGUAGE 'newC';
+	LANGUAGE 'C';
 CREATE FUNCTION autoinc ()
 	RETURNS opaque
 	AS '@abs_builddir@/../../../contrib/spi/autoinc@DLSUFFIX@'
-	LANGUAGE 'newC';
+	LANGUAGE 'C';
 CREATE FUNCTION funny_dup17 ()
         RETURNS opaque
         AS '@abs_builddir@/regress@DLSUFFIX@'
-        LANGUAGE 'newC';
+        LANGUAGE 'C';
 CREATE FUNCTION ttdummy ()
         RETURNS opaque
         AS '@abs_builddir@/regress@DLSUFFIX@'
-        LANGUAGE 'newC';
+        LANGUAGE 'C';
 CREATE FUNCTION set_ttdummy (int4)
         RETURNS int4
         AS '@abs_builddir@/regress@DLSUFFIX@'
-        LANGUAGE 'newC';
+        LANGUAGE 'C';

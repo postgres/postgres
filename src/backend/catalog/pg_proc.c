@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.50 2000/11/16 22:30:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.51 2000/11/20 20:36:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,50 +229,35 @@ ProcedureCreate(char *procedureName,
 	 * FUNCTION xyz AS '' LANGUAGE 'internal'.	To preserve some modicum
 	 * of backwards compatibility, accept an empty 'prosrc' value as
 	 * meaning the supplied SQL function name.
-	 *
-	 * XXX: we could treat "internal" and "newinternal" language specs
-	 * as equivalent, and take the actual language ID from the table of
-	 * known builtin functions.  Is that a better idea than making the
-	 * user specify the right thing?  Not sure.
 	 */
 
-	if (languageObjectId == INTERNALlanguageId ||
-		languageObjectId == NEWINTERNALlanguageId)
+	if (languageObjectId == INTERNALlanguageId)
 	{
-		Oid			actualLangID;
-
 		if (strlen(prosrc) == 0)
 			prosrc = procedureName;
-		actualLangID = fmgr_internal_language(prosrc);
-		if (actualLangID == InvalidOid)
+		if (fmgr_internal_function(prosrc) == InvalidOid)
 			elog(ERROR,
 				 "ProcedureCreate: there is no builtin function named \"%s\"",
 				 prosrc);
-		if (actualLangID != languageObjectId)
-			elog(ERROR,
-				 "ProcedureCreate: \"%s\" is not %s internal function",
-				 prosrc,
-				 ((languageObjectId == INTERNALlanguageId) ?
-				  "an old-style" : "a new-style"));
 	}
 
 	/*
 	 * If this is a dynamically loadable procedure, make sure that the
 	 * library file exists, is loadable, and contains the specified link
-	 * symbol.
+	 * symbol.  Also check for a valid function information record.
 	 *
 	 * We used to perform these checks only when the function was first
 	 * called, but it seems friendlier to verify the library's validity
 	 * at CREATE FUNCTION time.
 	 */
 
-	if (languageObjectId == ClanguageId ||
-		languageObjectId == NEWClanguageId)
+	if (languageObjectId == ClanguageId)
 	{
 		/* If link symbol is specified as "-", substitute procedure name */
 		if (strcmp(prosrc, "-") == 0)
 			prosrc = procedureName;
-		(void) load_external_function(probin, prosrc);
+		(void) load_external_function(probin, prosrc, true);
+		(void) fetch_finfo_record(probin, prosrc);
 	}
 
 	/*

@@ -4,9 +4,9 @@ DROP FUNCTION set_timetravel(name, int4);
 CREATE FUNCTION timetravel() 
 	RETURNS opaque 
 	AS 'MODULE_PATHNAME'
-	LANGUAGE 'newC';
+	LANGUAGE 'C';
 
 CREATE FUNCTION set_timetravel(name, int4) 
 	RETURNS int4 
 	AS 'MODULE_PATHNAME'
-	LANGUAGE 'newC' WITH (isStrict);
+	LANGUAGE 'C' WITH (isStrict);

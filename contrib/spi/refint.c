@@ -36,6 +36,8 @@ static EPlan *find_plan(char *ident, EPlan ** eplan, int *nplans);
  * check_primary_key ('Fkey1', 'Fkey2', 'Ptable', 'Pkey1', 'Pkey2').
  */
 
+PG_FUNCTION_INFO_V1(check_primary_key);
+
 Datum
 check_primary_key(PG_FUNCTION_ARGS)
 {
@@ -215,6 +217,8 @@ check_primary_key(PG_FUNCTION_ARGS)
  * check_foreign_key (2, 'restrict', 'Pkey1', 'Pkey2',
  * 'Ftable1', 'Fkey11', 'Fkey12', 'Ftable2', 'Fkey21', 'Fkey22').
  */
+
+PG_FUNCTION_INFO_V1(check_foreign_key);
 
 Datum
 check_foreign_key(PG_FUNCTION_ARGS)

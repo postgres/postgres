@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: pgcrypto.c,v 1.1 2000/10/31 13:11:28 petere Exp $
+ * $Id: pgcrypto.c,v 1.2 2000/11/20 20:36:56 tgl Exp $
  */
 
 #include <postgres.h>
@@ -59,6 +59,8 @@ find_digest(pg_digest *hbuf, text *name, int silent);
 
 
 /* SQL function: hash(text, text) returns text */
+PG_FUNCTION_INFO_V1(digest);
+
 Datum
 digest(PG_FUNCTION_ARGS)
 {
@@ -95,6 +97,8 @@ digest(PG_FUNCTION_ARGS)
 }
 
 /* check if given hash exists */
+PG_FUNCTION_INFO_V1(digest_exists);
+
 Datum
 digest_exists(PG_FUNCTION_ARGS)
 {

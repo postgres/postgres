@@ -17,7 +17,7 @@
 	Example:
 
 create function fti() returns opaque as
-'/home/boekhold/src/postgresql-6.2/contrib/fti/fti.so' language 'newC';
+'/home/boekhold/src/postgresql-6.2/contrib/fti/fti.so' language 'C';
 
 create table title_fti (string varchar(25), id oid);
 create index title_fti_idx on title_fti (string);
@@ -93,6 +93,8 @@ static int	nDeletePlans = 0;
 static EPlan *find_plan(char *ident, EPlan ** eplan, int *nplans);
 
 /***********************************************************************/
+PG_FUNCTION_INFO_V1(fti);
+
 Datum
 fti(PG_FUNCTION_ARGS)
 {

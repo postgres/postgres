@@ -38,6 +38,7 @@ DROP FUNCTION interpt_pp(path,path);
 
 DROP FUNCTION reverse_name(name);
 
+DROP FUNCTION oldstyle_length(int4, text);
 
 --
 -- OPERATOR REMOVAL

@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for managed LargeObjects.
  *
- *	$Id: lo.c,v 1.4 2000/06/09 01:10:58 tgl Exp $
+ *	$Id: lo.c,v 1.5 2000/11/20 20:36:55 tgl Exp $
  *
  */
 
@@ -140,6 +140,8 @@ lo(Oid oid)
 /*
  * This handles the trigger that protects us from orphaned large objects
  */
+PG_FUNCTION_INFO_V1(lo_manage);
+
 Datum
 lo_manage(PG_FUNCTION_ARGS)
 {

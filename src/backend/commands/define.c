@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.48 2000/11/16 22:30:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.49 2000/11/20 20:36:47 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -66,7 +66,7 @@ case_translate_language_name(const char *input, char *output)
 {
 /*-------------------------------------------------------------------------
   Translate the input language name to lower case, except if it's "C",
-  translate to upper case, or "newC", translate to that spelling.
+  translate to upper case.
 --------------------------------------------------------------------------*/
 	int			i;
 
@@ -77,8 +77,6 @@ case_translate_language_name(const char *input, char *output)
 
 	if (strcmp(output, "c") == 0)
 		output[0] = 'C';
-	else if (strcmp(output, "newc") == 0)
-		output[3] = 'C';
 }
 
 
@@ -183,8 +181,7 @@ interpret_AS_clause(const char *languageName, const List *as,
 {
 	Assert(as != NIL);
 
-	if (strcmp(languageName, "C") == 0 ||
-		strcmp(languageName, "newC") == 0)
+	if (strcmp(languageName, "C") == 0)
 	{
 
 		/*
@@ -230,8 +227,8 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 
 	char		languageName[NAMEDATALEN];
 	/*
-	 * name of language of function, with case adjusted: "C", "newC",
-	 * "internal", "newinternal", "sql", etc.
+	 * name of language of function, with case adjusted: "C",
+	 * "internal", "sql", etc.
 	 */
 
 	bool		returnsSet;
@@ -255,9 +252,7 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 	 * Apply appropriate security checks depending on language.
 	 */
 	if (strcmp(languageName, "C") == 0 ||
-		strcmp(languageName, "newC") == 0 ||
-		strcmp(languageName, "internal") == 0 ||
-		strcmp(languageName, "newinternal") == 0)
+		strcmp(languageName, "internal") == 0)
 	{
 		if (!superuser())
 			elog(ERROR,
@@ -283,8 +278,8 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 		if (!HeapTupleIsValid(languageTuple))
 			elog(ERROR,
 				 "Unrecognized language specified in a CREATE FUNCTION: "
-				 "'%s'.\n\tRecognized languages are sql, C, newC, "
-				 "internal, newinternal, and created procedural languages.",
+				 "'%s'.\n\tRecognized languages are sql, C, "
+				 "internal, and created procedural languages.",
 				 languageName);
 
 		/* Check that this language is a PL */

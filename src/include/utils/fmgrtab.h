@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fmgrtab.h,v 1.13 2000/05/28 17:56:20 tgl Exp $
+ * $Id: fmgrtab.h,v 1.14 2000/11/20 20:36:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@ typedef struct
 	const char *funcName;		/* C name of the function */
     short       nargs;			/* 0..FUNC_MAX_ARGS, or -1 if variable count */
     bool        strict;			/* T if function is "strict" */
-	bool		oldstyle;		/* T if function uses old fmgr interface */
+	bool		retset;			/* T if function returns a set */
     PGFunction  func;			/* pointer to compiled function */
 } FmgrBuiltin;
 

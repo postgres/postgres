@@ -216,6 +216,19 @@ SELECT user_relns() AS user_relns
 
 
 --
+-- check that old-style C functions work properly with TOASTed values
+--
+create table oldstyle_test(i int4, t text);
+insert into oldstyle_test values(null,null);
+insert into oldstyle_test values(0,'12');
+insert into oldstyle_test values(1000,'12');
+insert into oldstyle_test values(0, repeat('x', 50000));
+
+select i, length(t), octet_length(t), oldstyle_length(i,t) from oldstyle_test;
+
+drop table oldstyle_test;
+
+--
 -- functional joins
 --
 

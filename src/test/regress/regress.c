@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.44 2000/08/24 23:34:11 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.45 2000/11/20 20:36:53 tgl Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -25,10 +25,13 @@ extern void regress_lseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
 extern Datum overpaid(PG_FUNCTION_ARGS);
 extern Datum boxarea(PG_FUNCTION_ARGS);
 extern char *reverse_name(char *string);
+extern int oldstyle_length(int n, text *t);
 
 /*
 ** Distance from a point to a path
 */
+PG_FUNCTION_INFO_V1(regress_dist_ptpath);
+
 Datum
 regress_dist_ptpath(PG_FUNCTION_ARGS)
 {
@@ -69,6 +72,8 @@ regress_dist_ptpath(PG_FUNCTION_ARGS)
 
 /* this essentially does a cartesian product of the lsegs in the
    two paths, and finds the min distance between any two lsegs */
+PG_FUNCTION_INFO_V1(regress_path_dist);
+
 Datum
 regress_path_dist(PG_FUNCTION_ARGS)
 {
@@ -129,6 +134,8 @@ POLYGON    *poly;
 }
 
 /* return the point where two paths intersect, or NULL if no intersection. */
+PG_FUNCTION_INFO_V1(interpt_pp);
+
 Datum
 interpt_pp(PG_FUNCTION_ARGS)
 {
@@ -181,6 +188,8 @@ Point	   *pt2;
 	lseg->p[1].y = pt2->y;
 	lseg->m = point_sl(pt1, pt2);
 }
+
+PG_FUNCTION_INFO_V1(overpaid);
 
 Datum
 overpaid(PG_FUNCTION_ARGS)
@@ -254,6 +263,8 @@ WIDGET	   *widget;
 	return result;
 }
 
+PG_FUNCTION_INFO_V1(pt_in_widget);
+
 Datum
 pt_in_widget(PG_FUNCTION_ARGS)
 {
@@ -264,6 +275,8 @@ pt_in_widget(PG_FUNCTION_ARGS)
 }
 
 #define ABS(X) ((X) >= 0 ? (X) : -(X))
+
+PG_FUNCTION_INFO_V1(boxarea);
 
 Datum
 boxarea(PG_FUNCTION_ARGS)
@@ -278,8 +291,7 @@ boxarea(PG_FUNCTION_ARGS)
 }
 
 char *
-reverse_name(string)
-char	   *string;
+reverse_name(char *string)
 {
 	int			i;
 	int			len;
@@ -301,6 +313,20 @@ char	   *string;
 	return new_string;
 }
 
+/* This rather silly function is just to test that oldstyle functions
+ * work correctly on toast-able inputs.
+ */
+int
+oldstyle_length(int n, text *t)
+{
+	int		len = 0;
+
+	if (t)
+		len = VARSIZE(t) - VARHDRSZ;
+
+	return n + len;
+}
+
 #include "executor/spi.h"		/* this is what you need to work with SPI */
 #include "commands/trigger.h"	/* -"- and triggers */
 
@@ -311,6 +337,8 @@ static int	fd17a_level = 0;
 static bool fd17b_recursion = true;
 static bool fd17a_recursion = true;
 extern Datum funny_dup17(PG_FUNCTION_ARGS);
+
+PG_FUNCTION_INFO_V1(funny_dup17);
 
 Datum
 funny_dup17(PG_FUNCTION_ARGS)
@@ -427,6 +455,8 @@ extern Datum set_ttdummy(PG_FUNCTION_ARGS);
 
 static void *splan = NULL;
 static bool ttoff = false;
+
+PG_FUNCTION_INFO_V1(ttdummy);
 
 Datum
 ttdummy(PG_FUNCTION_ARGS)
@@ -624,6 +654,8 @@ ttdummy(PG_FUNCTION_ARGS)
 
 	return PointerGetDatum(rettuple);
 }
+
+PG_FUNCTION_INFO_V1(set_ttdummy);
 
 Datum
 set_ttdummy(PG_FUNCTION_ARGS)

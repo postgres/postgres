@@ -5,6 +5,8 @@
 
 extern Datum autoinc(PG_FUNCTION_ARGS);
 
+PG_FUNCTION_INFO_V1(autoinc);
+
 Datum
 autoinc(PG_FUNCTION_ARGS)
 {

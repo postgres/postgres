@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.19 2000/11/13 23:37:53 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.20 2000/11/20 20:36:50 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -259,7 +259,7 @@ fi
 # ----------
 # Create the call handler and the language
 # ----------
-$PSQL "CREATE FUNCTION $handler () RETURNS OPAQUE AS '$PGLIB/${object}$DLSUFFIX' LANGUAGE 'newC'"
+$PSQL "CREATE FUNCTION $handler () RETURNS OPAQUE AS '$PGLIB/${object}$DLSUFFIX' LANGUAGE 'C'"
 if [ $? -ne 0 ]; then
 	echo "$CMDNAME: language installation failed" 1>&2
 	exit 1

@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.15 2000/11/16 22:30:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.16 2000/11/20 20:36:51 tgl Exp $
  *
  **********************************************************************/
 
@@ -258,6 +258,7 @@ plperl_init_safe_interp(void)
  *				  call this function for execution of
  *				  perl procedures.
  **********************************************************************/
+PG_FUNCTION_INFO_V1(plperl_call_handler);
 
 /* keep non-static */
 Datum

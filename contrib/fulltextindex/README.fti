@@ -57,7 +57,7 @@ sub-string will fit.
 The create the function that contains the trigger::
 
 	create function fti() returns opaque as
-	    '/path/to/fti.so' language 'newC';
+	    '/path/to/fti.so' language 'C';
 
 And finally define the trigger on the 'cds' table:
 

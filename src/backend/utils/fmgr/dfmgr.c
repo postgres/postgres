@@ -8,20 +8,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.45 2000/11/16 22:30:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.46 2000/11/20 20:36:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "postgres.h"
-
-#include "catalog/pg_proc.h"
 #include "dynloader.h"
 #include "utils/dynamic_loader.h"
-#include "utils/builtins.h"
-#include "utils/syscache.h"
 
 
 /*
@@ -46,55 +43,16 @@ static DynamicFileList *file_tail = (DynamicFileList *) NULL;
 #define SAME_INODE(A,B) ((A).st_ino == (B).inode && (A).st_dev == (B).device)
 
 
+/*
+ * Load the specified dynamic-link library file, and look for a function
+ * named funcname in it.  If the function is not found, we raise an error
+ * if signalNotFound is true, else return (PGFunction) NULL.  Note that
+ * errors in loading the library will provoke elog regardless of
+ * signalNotFound. 
+ */
 PGFunction
-fmgr_dynamic(Oid functionId)
-{
-	HeapTuple	procedureTuple;
-	Form_pg_proc procedureStruct;
-	char	   *proname,
-			   *prosrcstring,
-			   *probinstring;
-	Datum		prosrcattr,
-				probinattr;
-	PGFunction	user_fn;
-	bool		isnull;
-
-	procedureTuple = SearchSysCache(PROCOID,
-									ObjectIdGetDatum(functionId),
-									0, 0, 0);
-	if (!HeapTupleIsValid(procedureTuple))
-		elog(ERROR, "fmgr_dynamic: function %u: cache lookup failed",
-			 functionId);
-	procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
-
-	proname = NameStr(procedureStruct->proname);
-
-	prosrcattr = SysCacheGetAttr(PROCOID, procedureTuple,
-								 Anum_pg_proc_prosrc, &isnull);
-	if (isnull)
-		elog(ERROR, "fmgr: Could not extract prosrc for %u from pg_proc",
-			 functionId);
-	prosrcstring = DatumGetCString(DirectFunctionCall1(textout, prosrcattr));
-
-	probinattr = SysCacheGetAttr(PROCOID, procedureTuple,
-								 Anum_pg_proc_probin, &isnull);
-	if (isnull)
-		elog(ERROR, "fmgr: Could not extract probin for %u from pg_proc",
-			 functionId);
-	probinstring = DatumGetCString(DirectFunctionCall1(textout, probinattr));
-
-	user_fn = load_external_function(probinstring, prosrcstring);
-
-	pfree(prosrcstring);
-	pfree(probinstring);
-
-	ReleaseSysCache(procedureTuple);
-
-	return user_fn;
-}
-
-PGFunction
-load_external_function(char *filename, char *funcname)
+load_external_function(char *filename, char *funcname,
+					   bool signalNotFound)
 {
 	DynamicFileList *file_scanner;
 	PGFunction	retval;
@@ -164,7 +122,7 @@ load_external_function(char *filename, char *funcname)
 
 	retval = pg_dlsym(file_scanner->handle, funcname);
 
-	if (retval == (PGFunction) NULL)
+	if (retval == (PGFunction) NULL && signalNotFound)
 		elog(ERROR, "Can't find function %s in file %s", funcname, filename);
 
 	return retval;
@@ -217,5 +175,5 @@ load_file(char *filename)
 		}
 	}
 
-	load_external_function(filename, (char *) NULL);
+	load_external_function(filename, (char *) NULL, false);
 }

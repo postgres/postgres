@@ -657,6 +657,24 @@ SELECT user_relns() AS user_relns
 
 --SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer'))) AS equip_name;
 --
+-- check that old-style C functions work properly with TOASTed values
+--
+create table oldstyle_test(i int4, t text);
+insert into oldstyle_test values(null,null);
+insert into oldstyle_test values(0,'12');
+insert into oldstyle_test values(1000,'12');
+insert into oldstyle_test values(0, repeat('x', 50000));
+select i, length(t), octet_length(t), oldstyle_length(i,t) from oldstyle_test;
+  i   | length | octet_length | oldstyle_length 
+------+--------+--------------+-----------------
+      |        |              |                
+    0 |      2 |            2 |               2
+ 1000 |      2 |            2 |            1002
+    0 |  50000 |          581 |           50000
+(4 rows)
+
+drop table oldstyle_test;
+--
 -- functional joins
 --
 --

@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.29 2000/11/16 22:30:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.30 2000/11/20 20:36:52 tgl Exp $
  *
  **********************************************************************/
 
@@ -325,6 +325,7 @@ pltcl_init_load_unknown(void)
  *				  call this function for execution of
  *				  PL/Tcl procedures.
  **********************************************************************/
+PG_FUNCTION_INFO_V1(pltcl_call_handler);
 
 /* keep non-static */
 Datum
@@ -370,6 +371,12 @@ pltcl_call_handler(PG_FUNCTION_ARGS)
 
 	return retval;
 }
+
+
+/*
+ * Alternate handler for unsafe functions
+ */
+PG_FUNCTION_INFO_V1(pltclu_call_handler);
 
 /* keep non-static */
 Datum

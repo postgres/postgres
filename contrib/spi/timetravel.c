@@ -47,6 +47,8 @@ static EPlan *find_plan(char *ident, EPlan ** eplan, int *nplans);
  * timetravel ('date_on', 'date_off').
  */
 
+PG_FUNCTION_INFO_V1(timetravel);
+
 Datum
 timetravel(PG_FUNCTION_ARGS)
 {
@@ -326,6 +328,8 @@ timetravel(PG_FUNCTION_ARGS)
  * set_timetravel (relname, on) --
  *					turn timetravel for specified relation ON/OFF
  */
+PG_FUNCTION_INFO_V1(set_timetravel);
+
 Datum
 set_timetravel(PG_FUNCTION_ARGS)
 {

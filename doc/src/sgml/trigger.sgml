@@ -22,7 +22,7 @@
    <para>
     The trigger function must be created before the trigger is created as a
     function taking no arguments and returning opaque.  If the function is
-    written in C, it must follow the "new style" function manager interface.
+    written in C, it must use the "version 1" function manager interface.
    </para>
 
    <para>
@@ -447,6 +447,8 @@ execution of Q) or after Q is done.
 
 extern Datum trigf(PG_FUNCTION_ARGS);
 
+PG_FUNCTION_INFO_V1(trigf);
+
 Datum
 trigf(PG_FUNCTION_ARGS)
 {
@@ -513,7 +515,7 @@ trigf(PG_FUNCTION_ARGS)
 
     <programlisting>
 create function trigf () returns opaque as 
-'...path_to_so' language 'newC';
+'...path_to_so' language 'C';
 
 create table ttest (x int4);
     </programlisting>

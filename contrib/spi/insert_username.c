@@ -12,6 +12,8 @@
 
 extern Datum	insert_username(PG_FUNCTION_ARGS);
 
+PG_FUNCTION_INFO_V1(insert_username);
+
 Datum
 insert_username(PG_FUNCTION_ARGS)
 {

@@ -4,9 +4,9 @@
 
 CREATE FUNCTION digest(text, text) RETURNS text
   AS '@MODULE_FILENAME@',
-  'digest' LANGUAGE 'newC';
+  'digest' LANGUAGE 'C';
 
 CREATE FUNCTION digest_exists(text) RETURNS bool
   AS '@MODULE_FILENAME@',
-  'digest_exists' LANGUAGE 'newC';
+  'digest_exists' LANGUAGE 'C';
 

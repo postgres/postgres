@@ -16,6 +16,8 @@ extern Datum noup(PG_FUNCTION_ARGS);
  * EXECUTE PROCEDURE noup ('col').
  */
 
+PG_FUNCTION_INFO_V1(noup);
+
 Datum
 noup(PG_FUNCTION_ARGS)
 {

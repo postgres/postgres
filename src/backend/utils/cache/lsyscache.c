@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.47 2000/11/16 22:30:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.48 2000/11/20 20:36:49 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -730,6 +730,27 @@ get_typalign(Oid typid)
 }
 
 #endif
+
+char
+get_typstorage(Oid typid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache(TYPEOID,
+						ObjectIdGetDatum(typid),
+						0, 0, 0);
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+		char	result;
+
+		result = typtup->typstorage;
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return 'p';
+}
 
 /*
  * get_typdefault

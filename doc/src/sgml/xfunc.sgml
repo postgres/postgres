@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.22 2000/10/23 00:46:06 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.23 2000/11/20 20:36:47 tgl Exp $
 -->
 
  <chapter id="xfunc">
@@ -339,9 +339,9 @@ SELECT clean_EMP();
    </para>
 
    <para>
-    There are two procedural languages available with the standard
-    <productname>Postgres</productname> distribution (PLTCL and PLSQL), and other
-    languages can be defined.
+    There are currently three procedural languages available in the standard
+    <productname>Postgres</productname> distribution (PLSQL, PLTCL and
+    PLPERL), and other languages can be defined.
     Refer to <xref linkend="xplang-title" endterm="xplang-title"> for
     more information.
    </para>
@@ -366,12 +366,7 @@ SELECT clean_EMP();
 
    <para>
     Internal functions are declared in <command>CREATE FUNCTION</command>
-    with language name <literal>internal</literal> or
-    <literal>newinternal</literal>, depending on whether they follow the
-    old (pre-7.1) or new (7.1 and later) function call conventions.
-    The details of the call conventions are the same as for
-    <literal>C</literal> and <literal>newC</literal> functions respectively;
-    see the next section for details.
+    with language name <literal>internal</literal>.
    </para>
   </sect1>
 
@@ -404,9 +399,9 @@ SELECT clean_EMP();
    <para>
     The string which specifies the object file (the first string in the AS
     clause) should be the <emphasis>full path</emphasis> of the object
-    code file for the function, bracketed by quotation marks.  If a
+    code file for the function, bracketed by single quote marks.  If a
     link symbol is given in the AS clause, the link symbol should also be
-    bracketed by single quotation marks, and should be exactly the
+    bracketed by single quote marks, and should be exactly the
     same as the name of the function in the C source code. On Unix systems
     the command <command>nm</command> will print all of the link
     symbols in a dynamically loadable object.
@@ -422,11 +417,11 @@ SELECT clean_EMP();
 
    <para>
     Two different calling conventions are currently used for C functions.
-    The "old style" (pre-<productname>Postgres</productname>-7.1) method
-    is selected by writing language name '<literal>C</literal>' in the
-    <command>CREATE FUNCTION</command> command, while the "new style"
-    (7.1 and later) method is selecting by writing language name
-    '<literal>newC</literal>'.  Old-style functions are now deprecated
+    The newer "version 1" calling convention is indicated by writing
+    a <literal>PG_FUNCTION_INFO_V1()</literal> macro call for the function,
+    as illustrated below.  Lack of such a macro indicates an old-style
+    ("version 0") function.  The language name specified in CREATE FUNCTION
+    is 'C' in either case.  Old-style functions are now deprecated
     because of portability problems and lack of functionality, but they
     are still supported for compatibility reasons.
    </para>
@@ -484,7 +479,7 @@ SELECT clean_EMP();
 	 <entry>include/postgres.h</entry>
 	</row>
 	<row>
-	 <entry>char</entry>
+	 <entry>"char"</entry>
 	 <entry>char</entry>
 	 <entry>N/A</entry>
 	</row>
@@ -582,16 +577,6 @@ SELECT clean_EMP();
 	 <entry>tinterval</entry>
 	 <entry>TimeInterval</entry>
 	 <entry>utils/nabstime.h</entry>
-	</row>
-	<row>
-	 <entry>uint2</entry>
-	 <entry>uint16</entry>
-	 <entry>include/c.h</entry>
-	</row>
-	<row>
-	 <entry>uint4</entry>
-	 <entry>uint32</entry>
-	 <entry>include/c.h</entry>
 	</row>
 	<row>
 	 <entry>xid</entry>
@@ -694,7 +679,7 @@ typedef struct {
     </para>
 
     <para>
-     Obviously,  the  data  field is not long enough to hold
+     Obviously,  the  data  field shown here is not long enough to hold
      all possible strings; it's impossible to declare such
      a  structure  in  <acronym>C</acronym>.  When manipulating 
      variable-length types, we must  be  careful  to  allocate  
@@ -721,12 +706,12 @@ memmove(destination-&gt;data, buffer, 40);
    </sect2>
 
    <sect2>
-    <title>Old-style Calling Conventions for C-Language Functions</title>
+    <title>Version-0 Calling Conventions for C-Language Functions</title>
 
     <para>
      We present the "old style" calling convention first --- although
      this approach is now deprecated, it's easier to get a handle on
-     initially.  In the "old style" method, the arguments and result
+     initially.  In the version-0 method, the arguments and result
      of the C function are just declared in normal C style, but being
      careful to use the C representation of each SQL data type as shown
      above.
@@ -854,26 +839,39 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
     </para>
 
     <para>
-     Although this old-style calling convention is simple to use,
+     Although this calling convention is simple to use,
      it is not very portable; on some architectures there are problems
      with passing smaller-than-int data types this way.  Also, there is
      no simple way to return a NULL result, nor to cope with NULL arguments
-     in any way other than making the function strict.  The new-style
+     in any way other than making the function strict.  The version-1
      convention, presented next, overcomes these objections.
     </para>
    </sect2>
 
    <sect2>
-    <title>New-style Calling Conventions for C-Language Functions</title>
+    <title>Version-1 Calling Conventions for C-Language Functions</title>
 
     <para>
-     The new-style calling convention relies on macros to suppress most
+     The version-1 calling convention relies on macros to suppress most
      of the complexity of passing arguments and results.  The C declaration
-     of a new-style function is always
+     of a version-1 function is always
      <programlisting>
                 Datum funcname(PG_FUNCTION_ARGS)
      </programlisting>
-     Each actual argument is fetched using a PG_GETARG_xxx() macro that
+     In addition, the macro call
+     <programlisting>
+                PG_FUNCTION_INFO_V1(funcname);
+     </programlisting>
+     must appear in the same source file (conventionally it's written
+     just before the function itself).  This macro call is not needed
+     for "internal"-language functions, since Postgres currently assumes
+     all internal functions are version-1.  However, it is
+     <emphasis>required</emphasis> for dynamically-loaded functions.
+    </para>
+
+    <para>
+     In a version-1 function,
+     each actual argument is fetched using a PG_GETARG_xxx() macro that
      corresponds to the argument's datatype, and the result is returned
      using a PG_RETURN_xxx() macro for the return type.
     </para>
@@ -887,6 +885,8 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
 #include "fmgr.h"
 
 /* By Value */
+
+PG_FUNCTION_INFO_V1(add_one);
          
 Datum
 add_one(PG_FUNCTION_ARGS)
@@ -898,6 +898,8 @@ add_one(PG_FUNCTION_ARGS)
 
 /* By Reference, Fixed Length */
 
+PG_FUNCTION_INFO_V1(add_one_float8);
+
 Datum
 add_one_float8(PG_FUNCTION_ARGS)
 {
@@ -906,6 +908,8 @@ add_one_float8(PG_FUNCTION_ARGS)
 
     PG_RETURN_FLOAT8(arg + 1.0);
 }
+
+PG_FUNCTION_INFO_V1(makepoint);
 
 Datum
 makepoint(PG_FUNCTION_ARGS)
@@ -921,6 +925,8 @@ makepoint(PG_FUNCTION_ARGS)
 }
 
 /* By Reference, Variable Length */
+
+PG_FUNCTION_INFO_V1(copytext);
 
 Datum
 copytext(PG_FUNCTION_ARGS)
@@ -939,6 +945,8 @@ copytext(PG_FUNCTION_ARGS)
            VARSIZE(t)-VARHDRSZ);        /* how many bytes */
     PG_RETURN_TEXT_P(new_t);
 }
+
+PG_FUNCTION_INFO_V1(concat_text);
 
 Datum
 concat_text(PG_FUNCTION_ARGS)
@@ -959,12 +967,11 @@ concat_text(PG_FUNCTION_ARGS)
 
     <para>
      The <command>CREATE FUNCTION</command> commands are the same as
-     for the old-style equivalents, except that the language is specified
-     as '<literal>newC</literal>' not '<literal>C</literal>'.
+     for the old-style equivalents.
     </para>
 
     <para>
-     At first glance, the new-style coding conventions may appear to be
+     At first glance, the version-1 coding conventions may appear to be
      just pointless obscurantism.  However, they do offer a number of
      improvements, because the macros can hide unnecessary detail.
      An example is that in coding add_one_float8, we no longer need to
@@ -973,11 +980,14 @@ concat_text(PG_FUNCTION_ARGS)
      to deal with fetching "toasted" (compressed or out-of-line) values.
      The old-style copytext and concat_text functions shown above are
      actually wrong in the presence of toasted values, because they don't
-     call pg_detoast_datum() on their inputs.
+     call pg_detoast_datum() on their inputs.  (The handler for old-style
+     dynamically-loaded functions currently takes care of this detail,
+     but it does so less efficiently than is possible for a version-1
+     function.)
     </para>
 
     <para>
-     The new-style function call conventions also make it possible to
+     The version-1 function call conventions also make it possible to
      test for NULL inputs to a non-strict function, return a NULL result
      (from either strict or non-strict functions), return "set" results,
      and implement trigger functions and procedural-language call handlers.
@@ -1026,7 +1036,9 @@ c_overpaid(TupleTableSlot *t, /* the current instance of EMP */
     return salary &gt; limit;
 }
 
-/* In new-style coding, the above would look like this: */
+/* In version-1 coding, the above would look like this: */
+
+PG_FUNCTION_INFO_V1(c_overpaid);
 
 Datum
 c_overpaid(PG_FUNCTION_ARGS)

@@ -3,4 +3,4 @@ DROP FUNCTION insert_username();
 CREATE FUNCTION insert_username() 
 	RETURNS opaque 
 	AS 'MODULE_PATHNAME'
-	LANGUAGE 'newC';
+	LANGUAGE 'C';

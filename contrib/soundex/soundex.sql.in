@@ -1,5 +1,5 @@
 CREATE FUNCTION text_soundex(text) RETURNS text
-  AS '@MODULE_FILENAME@', 'text_soundex' LANGUAGE 'newC';
+  AS '@MODULE_FILENAME@', 'text_soundex' LANGUAGE 'C';
 
 CREATE FUNCTION soundex(text) RETURNS text
-  AS '@MODULE_FILENAME@', 'text_soundex' LANGUAGE 'newC';
+  AS '@MODULE_FILENAME@', 'text_soundex' LANGUAGE 'C';
