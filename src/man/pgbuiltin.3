@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/pgbuiltin.3,v 1.6 1997/10/01 17:05:16 thomas Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/pgbuiltin.3,v 1.7 1997/10/01 18:53:26 momjian Exp $
 .TH PGBUILTIN INTRO 04/01/97 PostgreSQL PostgreSQL
 .SH "DESCRIPTION"
 This section describes the data types, functions and operators
@@ -1088,8 +1088,8 @@ float8   |lseg      |box       |<->    |dist_sb
 float8   |lseg      |line      |<->    |dist_sl            
 float8   |lseg      |lseg      |<->    |lseg_distance      
 float8   |path      |path      |<->    |path_distance      
-float8   |point     |box       |<->    |dist_pb            
 float8   |point     |box       |<->    |dist_pl            
+float8   |point     |box       |<->    |dist_pb            
 float8   |point     |lseg      |<->    |dist_ps            
 float8   |point     |path      |<->    |dist_ppath         
 float8   |point     |point     |<->    |point_distance     
@@ -1167,7 +1167,6 @@ timespan |timespan  |timespan  |-      |timespan_mi
 timespan |timespan  |timespan  |/      |timespan_div       
 tinterval|abstime   |abstime   |<#>    |mktinterval        
 (462 rows)
-
 .ec
 .fi
 .SH "LEFT UNARY OPERATORS"
@@ -1193,21 +1192,21 @@ left_unary|operand  |return_type
 @@        |circle   |point      
 -         |float4   |float4     
 @         |float4   |float4     
+;         |float8   |float8     
 -         |float8   |float8     
 @         |float8   |float8     
-|/        |float8   |float8     
-||/       |float8   |float8     
+|/       |float8   |float8     
+||/     |float8   |float8     
 %         |float8   |float8     
 :         |float8   |float8     
-;         |float8   |float8     
 -         |int2     |int2       
-!!        |int4     |int4       
 -         |int4     |int4       
+!!        |int4     |int4       
+?|        |lseg     |bool       
 @@        |lseg     |point      
 ?-        |lseg     |bool       
-?|        |lseg     |bool       
-#         |path     |int4       
 ??        |path     |float8     
+#         |path     |int4       
 @@        |path     |point      
 @@        |polygon  |point      
 #         |polygon  |int4       

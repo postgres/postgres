@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.6 1997/09/12 21:25:10 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.7 1997/10/01 18:53:28 momjian Exp $
 .TH SET SQL 05/14/97 PostgreSQL PostgreSQL
 .SH NAME
 set \(em set run-time parameters for session
@@ -47,7 +47,7 @@ for more information on available styles.
 .IR GEQO
 enables or disables the genetic optimizer algorithm. This algorithm is
 .IR on
-by default, which used GEQO for statements of six or more tables.
+by default, which used GEQO for statements of eight or more tables.
 See the GEQO README for more information.
 
 .ce 1
