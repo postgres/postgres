@@ -3,13 +3,13 @@ Frequently Asked Questions (FAQ) for PostgreSQL 7.3
 SCO UnixWare and OpenServer specific
 to be read in conjunction with the installation instructions
 ============================================================
-last updated:           $Date: 2002/11/08 16:49:15 $
+last updated:           $Date: 2004/05/20 04:19:26 $
 
 current maintainer:     Billy G. Allie (Bill.Allie@mug.org)
 original author:        Andrew Merrill (andrew@compclass.com)
 
 
-PostgreSQL 7.3 can be built on SCO UnixWare 7 and SCO OpenServer 5.
+PostgreSQL 7.5 can be built on SCO UnixWare 7 and SCO OpenServer 5.
 On OpenServer, you can use either the OpenServer Development Kit or 
 the Universal Development Kit.
 
@@ -23,6 +23,8 @@ Topics:
 *) Compiling PostgreSQL using the UDK
 *) Reading the PostgreSQL man pages
 *) C99 Issues with the 7.1.1b Feature Supplement 
+*) --enable-thread-safety and UnixWare
+*) float4/float8 regression failures on NaN and inf I/O.
 
 
 ***************************************************************************
@@ -44,6 +46,8 @@ Skunkware has different versions for UnixWare and OpenServer.  Make sure
 you install the correct version for your operating system, except as noted
 below.
 
+Note: on UnixWare 7.1.3 and beyond, the GCC compiler is included on the UDK
+CD as is GNUMake.
 
 ***************************************************************************
 *) GNU Make
@@ -51,6 +55,9 @@ below.
 You need to use the GNU make program, which is on the Skunkware CD.  By
 default, it installs as /usr/local/bin/make.  To avoid confusion with the
 SCO make program, you may want to rename GNU make to gmake.
+
+As of UnixWare 7.1.3 and above, the GNU Make program is is the OSTK portion
+of the UDK CD, and is in /usr/gnu/bin/gmake.
 
 
 ***************************************************************************
@@ -149,4 +156,28 @@ For compilers earlier than the one released with OpenUNIX 8.0.0(UnixWare
 error in compiling tuplesort.c referencing inline functions. 
 
 Apparently there was a change in the 7.1.2(8.0.0) compiler and beyond.
+
+
+***************************************************************************
+*) --enable-thread-safety and UnixWare
+
+If you use the --enable-thread-safety configure flag, you *MUST* use -Kpthread
+on ALL libpq using programs.
+
+libpq uses pthread_* calls, which are only available with the
+-Kpthread/-Kthread flag.
+
+***************************************************************************
+*) float4/float8 regression failures on NaN and inf I/O.
+
+You will see regression failures for the float4 and float8 regression
+tests on the NaN and inf I/O functions.  This is due to a bug in SCO's strtod
+library function on BOTH UnixWare and OpenServer.  It's slated to be fixed
+in the first maintenance / update for UnixWare 7.1.4, and probably the
+next MP/UP for OpenServer 5.0.7 (I'm not sure on the OSR side as of the time
+I'm writing this (2004-05-14).
+
+You might also see Join test failures due to ordering differences, and these
+are ok.
+
 
