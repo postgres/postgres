@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.21 1999/05/10 00:44:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.22 1999/06/19 05:05:52 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -455,6 +455,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 									  RelationGetDescr(relation),
 									  (bool *) NULL);
 		acl = aclownerdefault(relname, (AclId) ownerId);
+		heap_close(relation);
 	}
 #else
 	{							/* This is why the syscache is great... */
