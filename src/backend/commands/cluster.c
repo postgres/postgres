@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.116 2003/09/25 06:57:58 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.116.2.1 2004/08/31 23:16:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -787,9 +787,8 @@ swap_relfilenodes(Oid r1, Oid r2)
 	 * their new owning relations.	Otherwise the wrong one will get
 	 * dropped ...
 	 *
-	 * NOTE: for now, we can assume the new table will have a TOAST table if
-	 * and only if the old one does.  This logic might need work if we get
-	 * smarter about dropped columns.
+	 * NOTE: it is possible that only one table has a toast table; this can
+	 * happen in CLUSTER if there were dropped columns in the old table.
 	 *
 	 * NOTE: at present, a TOAST table's only dependency is the one on its
 	 * owning table.  If more are ever created, we'd need to use something
@@ -802,35 +801,43 @@ swap_relfilenodes(Oid r1, Oid r2)
 					toastobject;
 		long		count;
 
-		if (!(relform1->reltoastrelid && relform2->reltoastrelid))
-			elog(ERROR, "expected both swapped tables to have TOAST tables");
-
 		/* Delete old dependencies */
-		count = deleteDependencyRecordsFor(RelOid_pg_class,
-										   relform1->reltoastrelid);
-		if (count != 1)
-			elog(ERROR, "expected one dependency record for TOAST table, found %ld",
-				 count);
-		count = deleteDependencyRecordsFor(RelOid_pg_class,
-										   relform2->reltoastrelid);
-		if (count != 1)
-			elog(ERROR, "expected one dependency record for TOAST table, found %ld",
-				 count);
+		if (relform1->reltoastrelid)
+		{
+			count = deleteDependencyRecordsFor(RelOid_pg_class,
+											   relform1->reltoastrelid);
+			if (count != 1)
+				elog(ERROR, "expected one dependency record for TOAST table, found %ld",
+					 count);
+		}
+		if (relform2->reltoastrelid)
+		{
+			count = deleteDependencyRecordsFor(RelOid_pg_class,
+											   relform2->reltoastrelid);
+			if (count != 1)
+				elog(ERROR, "expected one dependency record for TOAST table, found %ld",
+					 count);
+		}
 
 		/* Register new dependencies */
 		baseobject.classId = RelOid_pg_class;
-		baseobject.objectId = r1;
 		baseobject.objectSubId = 0;
 		toastobject.classId = RelOid_pg_class;
-		toastobject.objectId = relform1->reltoastrelid;
 		toastobject.objectSubId = 0;
 
-		recordDependencyOn(&toastobject, &baseobject, DEPENDENCY_INTERNAL);
+		if (relform1->reltoastrelid)
+		{
+			baseobject.objectId = r1;
+			toastobject.objectId = relform1->reltoastrelid;
+			recordDependencyOn(&toastobject, &baseobject, DEPENDENCY_INTERNAL);
+		}
 
-		baseobject.objectId = r2;
-		toastobject.objectId = relform2->reltoastrelid;
-
-		recordDependencyOn(&toastobject, &baseobject, DEPENDENCY_INTERNAL);
+		if (relform2->reltoastrelid)
+		{
+			baseobject.objectId = r2;
+			toastobject.objectId = relform2->reltoastrelid;
+			recordDependencyOn(&toastobject, &baseobject, DEPENDENCY_INTERNAL);
+		}
 	}
 
 	/*
