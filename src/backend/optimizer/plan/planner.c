@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.136 2002/12/19 23:25:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.137 2003/01/13 00:29:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -966,6 +966,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 		List	   *sub_tlist;
 		List	   *group_pathkeys;
 		AttrNumber *groupColIdx = NULL;
+		QualCost	tlist_cost;
 		double		sub_tuple_fraction;
 		Path	   *cheapest_path;
 		Path	   *sorted_path;
@@ -1452,6 +1453,27 @@ grouping_planner(Query *parse, double tuple_fraction)
 			 */
 			result_plan->targetlist = sub_tlist;
 		}
+		/*
+		 * Also, account for the cost of evaluation of the sub_tlist.
+		 *
+		 * Up to now, we have only been dealing with "flat" tlists, containing
+		 * just Vars.  So their evaluation cost is zero according to the
+		 * model used by cost_qual_eval() (or if you prefer, the cost is
+		 * factored into cpu_tuple_cost).  Thus we can avoid accounting for
+		 * tlist cost throughout query_planner() and subroutines.
+		 * But now we've inserted a tlist that might contain actual operators,
+		 * sub-selects, etc --- so we'd better account for its cost.
+		 *
+		 * Below this point, any tlist eval cost for added-on nodes should
+		 * be accounted for as we create those nodes.  Presently, of the
+		 * node types we can add on, only Agg and Group project new tlists
+		 * (the rest just copy their input tuples) --- so make_agg() and
+		 * make_group() are responsible for computing the added cost.
+		 */
+		cost_qual_eval(&tlist_cost, sub_tlist);
+		result_plan->startup_cost += tlist_cost.startup;
+		result_plan->total_cost += tlist_cost.startup +
+			tlist_cost.per_tuple * result_plan->plan_rows;
 
 		/*
 		 * Insert AGG or GROUP node if needed, plus an explicit sort step

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.128 2002/12/12 15:49:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.129 2003/01/13 00:29:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1366,6 +1366,7 @@ make_subqueryscan(List *qptlist,
 	SubqueryScan *node = makeNode(SubqueryScan);
 	Plan	   *plan = &node->scan.plan;
 
+	/* cost is figured here for the convenience of prepunion.c */
 	copy_plan_costsize(plan, subplan);
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
@@ -1488,7 +1489,7 @@ make_hash(List *tlist, List *hashkeys, Plan *lefttree)
 	 */
 	plan->startup_cost = plan->total_cost;
 	plan->targetlist = tlist;
-	plan->qual = NULL;
+	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
 	node->hashkeys = hashkeys;
@@ -1646,6 +1647,7 @@ make_agg(Query *root, List *tlist, List *qual,
 	Agg		   *node = makeNode(Agg);
 	Plan	   *plan = &node->plan;
 	Path		agg_path;		/* dummy for result of cost_agg */
+	QualCost	qual_cost;
 
 	node->aggstrategy = aggstrategy;
 	node->numCols = numGroupCols;
@@ -1671,6 +1673,27 @@ make_agg(Query *root, List *tlist, List *qual,
 	else
 		plan->plan_rows = numGroups;
 
+	/*
+	 * We also need to account for the cost of evaluation of the qual
+	 * (ie, the HAVING clause) and the tlist.  Note that cost_qual_eval
+	 * doesn't charge anything for Aggref nodes; this is okay since
+	 * they are really comparable to Vars.
+	 *
+	 * See notes in grouping_planner about why this routine and make_group
+	 * are the only ones in this file that worry about tlist eval cost.
+	 */
+	if (qual)
+	{
+		cost_qual_eval(&qual_cost, qual);
+		plan->startup_cost += qual_cost.startup;
+		plan->total_cost += qual_cost.startup;
+		plan->total_cost += qual_cost.per_tuple * plan->plan_rows;
+	}
+	cost_qual_eval(&qual_cost, tlist);
+	plan->startup_cost += qual_cost.startup;
+	plan->total_cost += qual_cost.startup;
+	plan->total_cost += qual_cost.per_tuple * plan->plan_rows;
+
 	plan->qual = qual;
 	plan->targetlist = tlist;
 	plan->lefttree = lefttree;
@@ -1690,6 +1713,7 @@ make_group(Query *root,
 	Group	   *node = makeNode(Group);
 	Plan	   *plan = &node->plan;
 	Path		group_path;		/* dummy for result of cost_group */
+	QualCost	qual_cost;
 
 	node->numCols = numGroupCols;
 	node->grpColIdx = grpColIdx;
@@ -1706,7 +1730,23 @@ make_group(Query *root,
 	/* One output tuple per estimated result group */
 	plan->plan_rows = numGroups;
 
-	plan->qual = NULL;
+	/*
+	 * We also need to account for the cost of evaluation of the tlist.
+	 *
+	 * XXX this double-counts the cost of evaluation of any expressions
+	 * used for grouping, since in reality those will have been evaluated
+	 * at a lower plan level and will only be copied by the Group node.
+	 * Worth fixing?
+	 *
+	 * See notes in grouping_planner about why this routine and make_agg
+	 * are the only ones in this file that worry about tlist eval cost.
+	 */
+	cost_qual_eval(&qual_cost, tlist);
+	plan->startup_cost += qual_cost.startup;
+	plan->total_cost += qual_cost.startup;
+	plan->total_cost += qual_cost.per_tuple * plan->plan_rows;
+
+	plan->qual = NIL;
 	plan->targetlist = tlist;
 	plan->lefttree = lefttree;
 	plan->righttree = (Plan *) NULL;
@@ -1718,7 +1758,6 @@ make_group(Query *root,
  * distinctList is a list of SortClauses, identifying the targetlist items
  * that should be considered by the Unique filter.
  */
-
 Unique *
 make_unique(List *tlist, Plan *lefttree, List *distinctList)
 {
@@ -1909,6 +1948,16 @@ make_result(List *tlist,
 		plan->total_cost = cpu_tuple_cost;
 		plan->plan_rows = 1;	/* wrong if we have a set-valued function? */
 		plan->plan_width = 0;	/* XXX try to be smarter? */
+	}
+
+	if (resconstantqual)
+	{
+		QualCost	qual_cost;
+
+		cost_qual_eval(&qual_cost, (List *) resconstantqual);
+		/* resconstantqual is evaluated once at startup */
+		plan->startup_cost += qual_cost.startup + qual_cost.per_tuple;
+		plan->total_cost += qual_cost.startup + qual_cost.per_tuple;
 	}
 
 	plan->targetlist = tlist;

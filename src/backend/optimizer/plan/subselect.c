@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.64 2003/01/12 04:03:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.65 2003/01/13 00:29:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -378,6 +378,8 @@ make_subplan(SubLink *slink, List *lefthand)
 							  plan->plan_width);
 				matplan->startup_cost = matpath.startup_cost;
 				matplan->total_cost = matpath.total_cost;
+				matplan->plan_rows = plan->plan_rows;
+				matplan->plan_width = plan->plan_width;
 				/* parameter kluge --- see comments above */
 				matplan->extParam = listCopy(plan->extParam);
 				matplan->locParam = listCopy(plan->locParam);
