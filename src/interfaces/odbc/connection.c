@@ -610,7 +610,7 @@ CC_connect(ConnectionClass *self, char do_password)
 	int			areq = -1;
 	int			beresp;
 	static char		msgbuffer[ERROR_MSG_LENGTH];
-	char		salt[5];
+	char		salt[5], notice[512];
 	static char *func = "CC_connect";
 
 #ifdef	MULTIBYTE
@@ -892,6 +892,9 @@ another_version_retry:
 					break;
 				case 'Z':		/* Backend is ready for new query (6.4) */
 					ReadyForQuery = TRUE;
+					break;
+				case 'N':	/* Notices may come */
+					while (SOCK_get_string(sock, notice, sizeof(notice) - 1)) ;
 					break;
 				default:
 					self->errormsg = "Unexpected protocol character during authentication";

@@ -5,7 +5,7 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- * $Id: psqlodbc.h,v 1.63 2002/04/02 10:50:49 inoue Exp $
+ * $Id: psqlodbc.h,v 1.64 2002/04/10 08:18:53 inoue Exp $
  *
  */
 
@@ -124,6 +124,7 @@ typedef UInt4 Oid;
 #define BYTELEN						8
 #define VARHDRSZ					sizeof(Int4)
 
+#define MAX_SCHEMA_LEN				32
 #define MAX_TABLE_LEN				32
 #define MAX_COLUMN_LEN				32
 #define MAX_CURSOR_LEN				32

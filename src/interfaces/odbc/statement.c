@@ -301,6 +301,7 @@ SC_Constructor(void)
 		rv->inaccurate_result = FALSE;
 		rv->miscinfo = 0;
 		rv->updatable = FALSE;
+		rv->error_recsize = -1;
 	}
 	return rv;
 }

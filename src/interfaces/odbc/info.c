@@ -342,6 +342,8 @@ PGAPI_GetInfo(
 		case SQL_MAX_OWNER_NAME_LEN:	/* ODBC 1.0 */
 			len = 2;
 			value = 0;
+			if (conn->schema_support)
+				value = MAX_SCHEMA_LEN;
 			break;
 
 		case SQL_MAX_PROCEDURE_NAME_LEN:		/* ODBC 1.0 */
@@ -484,12 +486,21 @@ PGAPI_GetInfo(
 			break;
 
 		case SQL_OWNER_TERM:	/* ODBC 1.0 */
-			p = "owner";
+			if (conn->schema_support)
+				p = "schema";
+			else
+				p = "owner";
 			break;
 
 		case SQL_OWNER_USAGE:	/* ODBC 2.0 */
 			len = 4;
 			value = 0;
+			if (conn->schema_support)
+				value = SQL_OU_DML_STATEMENTS
+					| SQL_OU_TABLE_DEFINITION
+					| SQL_OU_INDEX_DEFINITION
+					| SQL_OU_PRIVILEGE_DEFINITION
+					;
 			break;
 
 		case SQL_POS_OPERATIONS:		/* ODBC 2.0 */
