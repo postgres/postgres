@@ -82,7 +82,12 @@ return "sha hash of " + plain + " is " + digest.hexdigest()'
 
 CREATE FUNCTION argument_test_one(users, text, text) RETURNS text
 	AS
-'words = args[1] + " " + args[2] + " => " + str(args[0])
+'keys = args[0].keys()
+keys.sort()
+out = []
+for key in keys:
+    out.append("%s: %s" % (key, args[0][key]))
+words = args[1] + " " + args[2] + " => {" + ", ".join(out) + "}"
 return words'
 	LANGUAGE 'plpython';
 
