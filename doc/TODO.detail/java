@@ -907,3 +907,61 @@ TIP 3: if posting/reading through Usenet, please send an appropriate
 subscribe-nomail command to majordomo@postgresql.org so that your
 message can get through to the mailing list cleanly
 
+From pgsql-hackers-owner+M14652=candle.pha.pa.us=pgman@postgresql.org Thu Oct 25 22:24:44 2001
+Return-path: <pgsql-hackers-owner+M14652=candle.pha.pa.us=pgman@postgresql.org>
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id f9Q1Oim04694
+	for <pgman@candle.pha.pa.us>; Thu, 25 Oct 2001 21:24:44 -0400 (EDT)
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id f9Q1CeR31737
+	for <pgman@candle.pha.pa.us>; Thu, 25 Oct 2001 20:21:26 -0500 (CDT)
+	(envelope-from pgsql-hackers-owner+M14652=candle.pha.pa.us=pgman@postgresql.org)
+Received: from smaug.polygnosis.com (smaug.polygnosis.com [195.139.160.201])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id f9Q16NP39474
+	for <pgsql-hackers@postgresql.org>; Thu, 25 Oct 2001 21:06:23 -0400 (EDT)
+	(envelope-from gunnar@smaug.polygnosis.com)
+Received: (from gunnar@localhost)
+	by smaug.polygnosis.com (8.11.0/8.11.0) id f9Q15nC01560;
+	Fri, 26 Oct 2001 03:05:49 +0200
+To: tweekie <None@news.tht.net>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] java virtual machine
+References: <3bd825e2_1@Usenet.com>
+From: Gunnar =?iso-8859-1?q?R=F8nning?= <gunnar@polygnosis.com>
+Date: 26 Oct 2001 03:05:49 +0200
+In-Reply-To: <3bd825e2_1@Usenet.com>
+Message-ID: <m28zdzmcr6.fsf@smaug.polygnosis.com>
+Lines: 19
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+* tweekie <None@news.tht.net> wrote:
+|
+| I asked this question a while back but got no response - is there any way of 
+| creating a Java stored procedure in a postgres database ? I can see that 
+| there is a built-in PL/sql type of environment and a python one but it would  
+| be nice if I could migrate Java stored procedures in an Oracle database into  
+| postgres.
+| 
+| Any comments?
+
+
+It would rock ;-) An Hungarian guy just sent a mail indicating that he
+had a first prototype version of something with Kaffe up and running.
+But I believe there is a lot of issues to be solved, especially
+threading issues...
+
+-- 
+Gunnar Rønning - gunnar@polygnosis.com
+Senior Consultant, Polygnosis AS, http://www.polygnosis.com/
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
