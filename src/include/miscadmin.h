@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.143 2004/01/09 21:08:50 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.144 2004/01/09 23:29:31 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -96,19 +96,22 @@ do { \
 	CritSectionCount--; \
 } while(0)
 
+#ifndef WIN32
 #define PG_USLEEP(_usec) \
 do { \
-#ifndef WIN32
 	/* This will overflow on systems with 32-bit ints for > ~2000 secs */ \
 	struct timeval delay; \
 	\
 	delay.tv_sec = (_usec) / 1000000; \
 	delay.tv_usec = ((_usec) % 1000000); \
 	(void) select(0, NULL, NULL, NULL, &delay); \
-#else
-	Sleep(_usec < 500) ? 1 : (_usec+500)/ 1000);
-#endif
 } while(0)
+#else
+#define PG_USLEEP(_usec) \
+do { \
+	Sleep(_usec < 500) ? 1 : (_usec+500)/ 1000); \
+} while(0)
+#endif
 
 /*****************************************************************************
  *	  globals.h --															 *
