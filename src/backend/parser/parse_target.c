@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.95 2003/02/09 06:56:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.96 2003/02/13 05:06:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,13 +42,16 @@ static int	FigureColnameInternal(Node *node, char **name);
  * colname	the column name to be assigned, or NULL if none yet set.
  * resjunk	true if the target should be marked resjunk, ie, it is not
  *			wanted in the final projected tuple.
+ * retset	if non-NULL, and the entry is a function expression, pass back
+ *			expr->funcretset
  */
 TargetEntry *
 transformTargetEntry(ParseState *pstate,
 					 Node *node,
 					 Node *expr,
 					 char *colname,
-					 bool resjunk)
+					 bool resjunk,
+					 bool *retset)
 {
 	Oid			type_id;
 	int32		type_mod;
@@ -60,6 +63,9 @@ transformTargetEntry(ParseState *pstate,
 
 	if (IsA(expr, RangeVar))
 		elog(ERROR, "You can't use relation names alone in the target list, try relation.*.");
+
+	if (retset && IsA(expr, FuncExpr))
+		*retset = ((FuncExpr *) expr)->funcretset;
 
 	type_id = exprType(expr);
 	type_mod = exprTypmod(expr);
@@ -93,10 +99,12 @@ transformTargetEntry(ParseState *pstate,
 List *
 transformTargetList(ParseState *pstate, List *targetlist)
 {
+	bool		retset = false;
 	List	   *p_target = NIL;
 
 	while (targetlist != NIL)
 	{
+		bool		entry_retset = false;
 		ResTarget  *res = (ResTarget *) lfirst(targetlist);
 
 		if (IsA(res->val, ColumnRef))
@@ -173,7 +181,8 @@ transformTargetList(ParseState *pstate, List *targetlist)
 														res->val,
 														NULL,
 														res->name,
-														false));
+														false,
+														&entry_retset));
 			}
 		}
 		else if (IsA(res->val, InsertDefault))
@@ -194,8 +203,15 @@ transformTargetList(ParseState *pstate, List *targetlist)
 													res->val,
 													NULL,
 													res->name,
-													false));
+													false,
+													&entry_retset));
 		}
+
+		if (retset && entry_retset)
+			elog(ERROR, "Only one target list entry may return a set result");
+
+		if (entry_retset)
+			retset = true;
 
 		targetlist = lnext(targetlist);
 	}
