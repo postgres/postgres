@@ -10,7 +10,7 @@
 # please send them to me.
 
 # Arguements for pg_ctl and then for the postmaster. Change as needed.
-ARGS="-w -D /home/postgres/data"
+ARGS="-w -D /usr/local/pgsql/data"
 PM_ARGS="-i -F"
 
 # Changes should not be needed beyond this point.
@@ -39,13 +39,13 @@ case "$1" in
   start)
 	# Start the postmaster using pg_ctl and given options.
 	echo -n "Starting $DESC: "
-	su - postgres sh -c "$DAEMON start $ARGS -o \"$PM_ARGS\" $LOG 2>&1"
+	su - postgres sh -c "$DAEMON start $ARGS -o \"$PM_ARGS\" > $LOG 2>&1"
 	echo "$NAME."
 	;;
   stop)
 	# Stop the postmaster using pg_ctl.
 	echo -n "Stopping $DESC: "
-	su - postgres sh -c "$DAEMON stop > /dev/null 2>&1"
+	su - postgres sh -c "$DAEMON stop > /dev/null 2>&1" 
 	echo "$NAME."
 	;;
   restart)
@@ -61,7 +61,7 @@ case "$1" in
   *)
 	# Print help.
 	N=/etc/init.d/$FILE
-	echo "Usage: $N {start|stop|restart|status}" 1>&2
+	echo "Usage: $N {start|stop|restart|status}" >&2
 	exit 1
 	;;
 esac
