@@ -8,7 +8,7 @@ import org.postgresql.util.*;
 /*
  * Converts to and from the character encoding used by the backend.
  *
- * $Id: Encoding.java,v 1.6 2002/09/06 21:23:05 momjian Exp $
+ * $Id: Encoding.java,v 1.7 2002/10/20 02:55:50 barry Exp $
  */
 
 public class Encoding
@@ -161,6 +161,9 @@ public class Encoding
 			}
 			else
 			{
+				if (encoding.equals("UTF-8")) {
+					return decodeUTF8(encodedString, offset, length);
+				}
 				return new String(encodedString, offset, length, encoding);
 			}
 		}
@@ -223,4 +226,44 @@ public class Encoding
 			return false;
 		}
 	}
+
+	/**
+	 * custom byte[] -> String conversion routine, 3x-10x faster than
+	 * standard new String(byte[])
+	 */
+	private static final int pow2_6 = 64;		// 26
+	private static final int pow2_12 = 4096;	// 212
+	private static char[] cdata = new char[50];
+
+	private synchronized String decodeUTF8(byte data[], int offset, int length) {
+		char[] l_cdata = cdata;
+		if (l_cdata.length < (length-offset)) {
+			l_cdata = new char[length-offset];
+		}
+		int i = offset;
+		int j = 0;
+		int z, y, x, val;
+		while (i < length) {
+			z = data[i] & 0xFF;
+			if (z < 0x80) {
+				l_cdata[j++] = (char)data[i];
+				i++;
+			} else if (z >= 0xE0) {		// length == 3
+				y = data[i+1] & 0xFF;
+				x = data[i+2] & 0xFF;
+				val = (z-0xE0)*pow2_12 + (y-0x80)*pow2_6 + (x-0x80);
+				l_cdata[j++] = (char) val;
+				i+= 3;
+			} else {		// length == 2 (maybe add checking for length > 3, throw exception if it is
+				y = data[i+1] & 0xFF;
+				val = (z - 0xC0)* (pow2_6)+(y-0x80);
+				l_cdata[j++] = (char) val;
+				i+=2;
+			} 
+		}
+	
+		String s = new String(l_cdata, 0, j);
+		return s;
+	}
+
 }

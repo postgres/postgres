@@ -14,7 +14,7 @@ import org.postgresql.largeobject.LargeObjectManager;
 import org.postgresql.util.*;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.11 2002/10/17 05:33:52 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.12 2002/10/20 02:55:50 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Connection which adds the jdbc2
  * methods.  The real Connection class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Connection
@@ -367,10 +367,16 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 		//jdbc by default assumes autocommit is on until setAutoCommit(false)
 		//is called.  Therefore we need to ensure a new connection is 
 		//initialized to autocommit on.
+		//We also set the client encoding so that the driver only needs 
+		//to deal with utf8.  We can only do this in 7.3 because multibyte 
+		//support is now always included
 		if (haveMinimumServerVersion("7.3")) 
 		{
 			java.sql.ResultSet acRset =
-				ExecSQL("show autocommit");
+				ExecSQL("set client_encoding = 'UNICODE'; show autocommit");
+
+			//set encoding to be unicode
+			encoding = Encoding.getEncoding("UNICODE", null);
 
 			if (!acRset.next())
 			{

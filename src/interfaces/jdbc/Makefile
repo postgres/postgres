@@ -4,7 +4,7 @@
 #
 # Copyright (c) 2001, PostgreSQL Global Development Group
 #
-# $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.35 2002/07/23 03:59:54 barry Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.36 2002/10/20 02:55:50 barry Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ install: installdirs
 	  -Dinstall.directory=$(javadir) $(properties)
 
 installdirs:
-	$(mkinstalldirs) $(javadir)
+	$(mkinstalldirs) $(javadir) 
 
 uninstall:
 	$(ANT) -buildfile $(srcdir)/build.xml uninstall \
@@ -39,4 +39,4 @@ clean distclean maintainer-clean:
 	$(ANT) -buildfile $(srcdir)/build.xml clean
 
 check: all
-	$(ANT) -buildfile $(srcdir)/build.xml test
+	$(ANT) -buildfile $(srcdir)/build.xml test $(properties)
