@@ -1,12 +1,12 @@
 # translation of psql-ro.po to Romanian
 # translation of psql.po to Romanian
-# Alin Vaida <alin.vaida@gmail.com>, 2004.
+# Alin Vaida <alin.vaida@gmail.com>, 2004, 2005.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: psql-ro-8.0\n"
-"POT-Creation-Date: 2004-11-23 01:12+0000\n"
-"PO-Revision-Date: 2004-11-23 23:33+0200\n"
+"POT-Creation-Date: 2005-01-07 07:07+0000\n"
+"PO-Revision-Date: 2005-01-07 13:01+0200\n"
 "Last-Translator: Alin Vaida <alin.vaida@gmail.com>\n"
 "Language-Team: Romanian <translators@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -28,220 +28,220 @@ msgstr "Comandã incorectã \\%s. Încercaþi \\? pentru ajutor.\n"
 msgid "invalid command \\%s\n"
 msgstr "comandã incorectã \\%s\n"
 
-#: command.c:135
+#: command.c:137
 #, c-format
 msgid "\\%s: extra argument \"%s\" ignored\n"
 msgstr "\\%s: argument suplimentar \"%s\" ignorat\n"
 
-#: command.c:244
+#: command.c:254
 #, c-format
 msgid "could not get home directory: %s\n"
 msgstr "imposibil de obþinut directorul de bazã: %s\n"
 
-#: command.c:260
+#: command.c:270
 #, c-format
 msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s: imposibil de schimbat directorul în \"%s\": %s\n"
 
-#: command.c:374 command.c:764
+#: command.c:384 command.c:776
 msgid "no query buffer\n"
 msgstr "fãrã memorie tampon pentru interogãri\n"
 
-#: command.c:437
+#: command.c:447
 #, c-format
 msgid "%s: invalid encoding name or conversion procedure not found\n"
 msgstr "%s: nume de codificare incorect sau procedurã de conversie negãsitã\n"
 
-#: command.c:505 command.c:539 command.c:553 command.c:570 command.c:616
-#: command.c:744 command.c:775
+#: command.c:515 command.c:549 command.c:563 command.c:580 command.c:626
+#: command.c:756 command.c:787
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s: lipseºte argumentul solicitat\n"
 
-#: command.c:602
+#: command.c:612
 msgid "Query buffer is empty."
 msgstr "Memoria tampon pentru interogãri este goalã."
 
-#: command.c:636
+#: command.c:646
 msgid "Query buffer reset (cleared)."
 msgstr "Memoria tampon pentru interogãri reiniþializatã (curãþatã)."
 
-#: command.c:650
+#: command.c:660
 #, c-format
 msgid "Wrote history to file \"%s\".\n"
 msgstr "Istoric scris în fiºierul \"%s\".\n"
 
-#: command.c:685 common.c:85 common.c:99 mainloop.c:71 print.c:230 print.c:237
+#: command.c:697 common.c:85 common.c:99 mainloop.c:71 print.c:230 print.c:237
 #: print.c:256 print.c:440 print.c:464 print.c:488 print.c:517 print.c:535
 #: print.c:1156 print.c:1168 print.c:1189 print.c:1196 print.c:1211
 msgid "out of memory\n"
 msgstr "memorie insuficientã\n"
 
-#: command.c:700 command.c:749
+#: command.c:712 command.c:761
 #, c-format
 msgid "\\%s: error\n"
 msgstr "\\%s: eroare\n"
 
-#: command.c:730
+#: command.c:742
 msgid "Timing is on."
 msgstr "Cronometrare pornitã."
 
-#: command.c:732
+#: command.c:744
 msgid "Timing is off."
 msgstr "Cronometrare opritã."
 
-#: command.c:792 command.c:812 command.c:1197 command.c:1204 command.c:1214
-#: command.c:1226 command.c:1239 command.c:1253 command.c:1275 command.c:1306
+#: command.c:804 command.c:824 command.c:1209 command.c:1216 command.c:1226
+#: command.c:1238 command.c:1251 command.c:1265 command.c:1287 command.c:1318
 #: common.c:170 copy.c:530 copy.c:575
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
-#: command.c:919 command.c:943 startup.c:188 startup.c:206
+#: command.c:931 command.c:955 startup.c:188 startup.c:206
 msgid "Password: "
 msgstr "Parolã: "
 
-#: command.c:957 common.c:216 common.c:685 common.c:740 common.c:983
+#: command.c:969 common.c:216 common.c:685 common.c:740 common.c:983
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: command.c:961
+#: command.c:973
 msgid "Previous connection kept\n"
 msgstr "Conexiune precedentã menþinutã\n"
 
-#: command.c:973
+#: command.c:985
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\conect: %s"
 
-#: command.c:985
+#: command.c:997
 #, c-format
 msgid "You are now connected to database \"%s\".\n"
 msgstr "Sunteþi conectat la baza de date \"%s\".\n"
 
-#: command.c:987
+#: command.c:999
 #, c-format
 msgid "You are now connected as new user \"%s\".\n"
 msgstr "Sunteþi conectat ca utilizatorul nou \"%s\".\n"
 
-#: command.c:990
+#: command.c:1002
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr "Sunteþi conectat la baza de date \"%s\" ca utilizatorul \"%s\".\n"
 
-#: command.c:1115
+#: command.c:1127
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "imposibil de pornit editorul \"%s\"\n"
 
-#: command.c:1117
+#: command.c:1129
 msgid "could not start /bin/sh\n"
 msgstr "imposibil de pornit /bin/sh\n"
 
-#: command.c:1156
+#: command.c:1168
 #, c-format
 msgid "cannot locate temporary directory: %s"
 msgstr "imposibil de localizat directorul temporar: %s"
 
-#: command.c:1182
+#: command.c:1194
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "imposibil de deschis fiºierul temporar \"%s\": %s\n"
 
-#: command.c:1374
+#: command.c:1386
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex\n"
 msgstr "\\pset: formatele permise sunt unaligned, aligned, html, latex\n"
 
-#: command.c:1379
+#: command.c:1391
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Formatul de ieºire este %s.\n"
 
-#: command.c:1389
+#: command.c:1401
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Stilul de bordurã este %d.\n"
 
-#: command.c:1398
+#: command.c:1410
 msgid "Expanded display is on.\n"
 msgstr "Afiºare extinsã pornitã.\n"
 
-#: command.c:1399
+#: command.c:1411
 msgid "Expanded display is off.\n"
 msgstr "Afiºare extinsã opritã.\n"
 
-#: command.c:1411
+#: command.c:1423
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Afiºarea nulã este \"%s\".\n"
 
-#: command.c:1423
+#: command.c:1435
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Separatorul de câmpuri este \"%s\".\n"
 
-#: command.c:1437
+#: command.c:1449
 msgid "Record separator is <newline>."
 msgstr "Separatorul de înregistrãri este <linienouã>."
 
-#: command.c:1439
+#: command.c:1451
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Separatorul de înregistrãri este \"%s\".\n"
 
-#: command.c:1450
+#: command.c:1462
 msgid "Showing only tuples."
 msgstr "Afiºare doar liste de valori."
 
-#: command.c:1452
+#: command.c:1464
 msgid "Tuples only is off."
 msgstr "Lista de valori este dezactivatã."
 
-#: command.c:1468
+#: command.c:1480
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Titlul este \"%s\".\n"
 
-#: command.c:1470
+#: command.c:1482
 msgid "Title is unset.\n"
 msgstr "Titlul este anulat.\n"
 
-#: command.c:1486
+#: command.c:1498
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "Atributul tabelei este \"%s\".\n"
 
-#: command.c:1488
+#: command.c:1500
 msgid "Table attributes unset.\n"
 msgstr "Atributul tabelei este anulat.\n"
 
-#: command.c:1504
+#: command.c:1516
 msgid "Pager is used for long output."
 msgstr "Paginatorul este folosit pentru ieºirile lungi."
 
-#: command.c:1506
+#: command.c:1518
 msgid "Pager is always used."
 msgstr "Paginatorul este folosit tot timpul."
 
-#: command.c:1508
+#: command.c:1520
 msgid "Pager usage is off."
 msgstr "Folosire paginator opritã."
 
-#: command.c:1519
+#: command.c:1531
 msgid "Default footer is on."
 msgstr "Subsolul implicit este pornit."
 
-#: command.c:1521
+#: command.c:1533
 msgid "Default footer is off."
 msgstr "Subsolul implicit este oprit."
 
-#: command.c:1527
+#: command.c:1539
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: opþiune necunoscutã: %s\n"
 
-#: command.c:1578
+#: command.c:1592
 msgid "\\!: failed\n"
 msgstr "\\!: eºuat\n"
 
@@ -303,11 +303,9 @@ msgid ""
 "***(press return to proceed or enter x and return to cancel)"
 "********************\n"
 msgstr ""
-"***(Mod cu un singur pas: verificare comandã)"
-"*****************************************\n"
+"***(Mod cu un singur pas: verificare comandã)*****************************************\n"
 "%s\n"
-"***(apãsaþi Enter pentru continuare sau x ºi Enter pentru anulare)"
-"********************\n"
+"***(apãsaþi Enter pentru continuare sau x ºi Enter pentru anulare)********************\n"
 
 #: common.c:1010
 #, c-format
@@ -350,20 +348,20 @@ msgstr ""
 "Introduceþi datele de copiat urmate de o linie nouã.\n"
 "Terminaþi cu un backslash ºi un punct singure pe o linie."
 
-#: help.c:48
+#: help.c:49
 msgid "on"
 msgstr "pornit"
 
-#: help.c:48
+#: help.c:49
 msgid "off"
 msgstr "oprit"
 
-#: help.c:70
+#: help.c:71
 #, c-format
 msgid "could not get current user name: %s\n"
 msgstr "imposibil de determinat numele utilizatorului curent: %s\n"
 
-#: help.c:83
+#: help.c:84
 #, c-format
 msgid ""
 "This is psql %s, the PostgreSQL interactive terminal.\n"
@@ -372,54 +370,52 @@ msgstr ""
 "Acesta este psql %s, terminalul interactiv pentru PostgreSQL.\n"
 "\n"
 
-#: help.c:85
+#: help.c:86
 msgid "Usage:"
 msgstr "Utilizare:"
 
-#: help.c:86
+#: help.c:87
 msgid "  psql [OPTIONS]... [DBNAME [USERNAME]]\n"
 msgstr "  psql [OPÞIUNI]... [NUMEBD [NUMEUTILIZATOR]]\n"
 
-#: help.c:88
+#: help.c:89
 msgid "General options:"
 msgstr "Opþiuni generale:"
 
-#: help.c:93
+#: help.c:94
 #, c-format
 msgid "  -d DBNAME       specify database name to connect to (default: \"%s\")\n"
-msgstr ""
-"  -d NUMEBD       specificã numele bazei de date pentru conectare (implicit: "
-"\"%s\")\n"
+msgstr "  -d NUMEBD       specificã numele bazei de date pentru conectare (implicit: \"%s\")\n"
 
-#: help.c:94
+#: help.c:95
 msgid "  -c COMMAND      run only single command (SQL or internal) and exit"
 msgstr "  -c COMANDÃ      ruleazã o singurã comandã (SQL sau internã), apoi iese"
 
-#: help.c:95
+#: help.c:96
 msgid "  -f FILENAME     execute commands from file, then exit"
 msgstr "  -f NUMEFIªIER   executã comenzile din fiºier, apoi iese"
 
-#: help.c:96
+#: help.c:97
 msgid "  -l              list available databases, then exit"
 msgstr "  -l              enumerã bazele de date disponibile, apoi iese"
 
-#: help.c:97
+#: help.c:98
 msgid "  -v NAME=VALUE   set psql variable NAME to VALUE"
 msgstr "  -v NUME=VALOARE seteazã variabila psql NUME la VALOARE"
 
-#: help.c:98
+#: help.c:99
 msgid "  -X              do not read startup file (~/.psqlrc)"
 msgstr "  -X              nu se citeºte fiºierul de pornire (~/.psqlrc)"
 
-#: help.c:99
+#: help.c:100
 msgid "  --help          show this help, then exit"
 msgstr "  --help          afiºeazã acest ajutor, apoi iese"
 
-#: help.c:100
+#: help.c:101
 msgid "  --version       output version information, then exit"
 msgstr "  --version       afiºeazã informaþiile despre versiune, apoi iese"
 
-#: help.c:102
+#: help.c:103
 msgid ""
 "\n"
 "Input and output options:"
@@ -427,43 +423,39 @@ msgstr ""
 "\n"
 "Opþiuni pentru intrare ºi ieºire:"
 
-#: help.c:103
+#: help.c:104
 msgid "  -a              echo all input from script"
 msgstr "  -a              afiºeazã toate intrãrile din script"
 
-#: help.c:104
+#: help.c:105
 msgid "  -e              echo commands sent to server"
 msgstr "  -e              afiºeazã comenzile trimise serverului"
 
-#: help.c:105
+#: help.c:106
 msgid "  -E              display queries that internal commands generate"
 msgstr "  -E              afiºeazã interogãrile generate de comenzile interne"
 
-#: help.c:106
-msgid "  -q              run quietly (no messages, only query output)"
-msgstr ""
-"  -q              ruleazã în mod silenþios (fãrã mesaje, doar ieºirile "
-"interogãrilor)"
-
 #: help.c:107
+msgid "  -q              run quietly (no messages, only query output)"
+msgstr "  -q              ruleazã în mod silenþios (fãrã mesaje, doar ieºirile interogãrilor)"
+
+#: help.c:108
 msgid "  -o FILENAME     send query results to file (or |pipe)"
 msgstr "  -o NUMEFIªIER   trimite rezultatele interogãrilor în fiºier (sau |conductã)"
 
-#: help.c:108
+#: help.c:109
 msgid "  -n              disable enhanced command line editing (readline)"
 msgstr "  -n              dezactiveazã editarea extinsã a liniei de comandã (readline)"
 
-#: help.c:109
+#: help.c:110
 msgid "  -s              single-step mode (confirm each query)"
 msgstr "  -s              mod cu un pas (se confirmã fiecare interogare)"
 
-#: help.c:110
+#: help.c:111
 msgid "  -S              single-line mode (end of line terminates SQL command)"
-msgstr ""
-"  -S              mod cu o singurã linie (sfârºitul de linie terminã comanda "
-"SQL)"
+msgstr "  -S              mod cu o singurã linie (sfârºitul de linie terminã comanda SQL)"
 
-#: help.c:112
+#: help.c:113
 msgid ""
 "\n"
 "Output format options:"
@@ -471,44 +463,42 @@ msgstr ""
 "\n"
 "Opþiuni pentru formatarea ieºirii:"
 
-#: help.c:113
+#: help.c:114
 msgid "  -A              unaligned table output mode (-P format=unaligned)"
 msgstr "  -A              mod tabel nealiniat (-P format=unaligned)"
 
-#: help.c:114
+#: help.c:115
 msgid "  -H              HTML table output mode (-P format=html)"
 msgstr "  -H              mod tabel HTML (-P format=html)"
 
-#: help.c:115
+#: help.c:116
 msgid "  -t              print rows only (-P tuples_only)"
 msgstr "  -t              afiºare numai rânduri (-P tuples_only)"
 
-#: help.c:116
+#: help.c:117
 msgid ""
 "  -T TEXT         set HTML table tag attributes (width, border) (-P "
 "tableattr=)"
-msgstr ""
-"  -T TEXT         seteazã atributele etichetei HTML pentru tabelã (lãþime, "
-"bordurã) (-P tableattr=)"
+msgstr "  -T TEXT         seteazã atributele etichetei HTML pentru tabelã (lãþime, bordurã) (-P tableattr=)"
 
-#: help.c:117
+#: help.c:118
 msgid "  -x              turn on expanded table output (-P expanded)"
 msgstr "  -x              activeazã ieºirea tabel extins (-P expanded)"
 
-#: help.c:118
+#: help.c:119
 msgid "  -P VAR[=ARG]    set printing option VAR to ARG (see \\pset command)"
 msgstr "  -P VAR[=ARG]    seteazã opþiunea de afiºare VAR la ARG (vezi comanda \\pset)"
 
-#: help.c:119
+#: help.c:120
 #, c-format
 msgid "  -F STRING       set field separator (default: \"%s\") (-P fieldsep=)\n"
 msgstr "  -F ªIR          seteazã separatorul de câmp (implicit: \"%s\") (-P fieldsep=)\n"
 
-#: help.c:121
+#: help.c:122
 msgid "  -R STRING       set record separator (default: newline) (-P recordsep=)"
 msgstr "  -R ªIR          seteazã separatorul de înregistrare (implicit: linie nouã) (-P recordsep=)"
 
-#: help.c:123
+#: help.c:124
 msgid ""
 "\n"
 "Connection options:"
@@ -516,34 +506,32 @@ msgstr ""
 "\n"
 "Opþiuni pentru conectare:"
 
-#: help.c:126
+#: help.c:127
 #, c-format
 msgid ""
 "  -h HOSTNAME     database server host or socket directory (default: \"%s"
 "\")\n"
-msgstr ""
-"  -h NUMEGAZDÃ    gazda serverului de baze de date sau directorul soclului "
-"(implicit: \"%s\")\n"
+msgstr "  -h NUMEGAZDÃ    gazda serverului de baze de date sau directorul soclului (implicit: \"%s\")\n"
 
-#: help.c:127
+#: help.c:128
 msgid "local socket"
 msgstr "soclu local"
 
-#: help.c:130
+#: help.c:131
 #, c-format
 msgid "  -p PORT         database server port (default: \"%s\")\n"
 msgstr "  -p PORT         portul serverului de baze de date (implicit: \"%s\")\n"
 
-#: help.c:136
+#: help.c:137
 #, c-format
 msgid "  -U NAME         database user name (default: \"%s\")\n"
 msgstr "  -U NUME         numele utilizatorului bazei de date (implicit: \"%s\")\n"
 
-#: help.c:137
+#: help.c:138
 msgid "  -W              prompt for password (should happen automatically)"
 msgstr "  -W              solicitã parola (în mod normal, se face automat)"
 
-#: help.c:140
+#: help.c:141
 msgid ""
 "\n"
 "For more information, type \"\\?\" (for internal commands) or \"\\help\"\n"
@@ -559,11 +547,11 @@ msgstr ""
 "\n"
 "Raportaþi erorile la <pgsql-bugs@postgresql.org>."
 
-#: help.c:174
+#: help.c:175
 msgid "General\n"
 msgstr "General\n"
 
-#: help.c:175
+#: help.c:176
 #, c-format
 msgid ""
 "  \\c[onnect] [DBNAME|- [USER]]\n"
@@ -572,15 +560,15 @@ msgstr ""
 "  \\c[onnect] [NUMEBD|- [UTILIZATOR]]\n"
 "                 conectare la o nouã bazã de date (în prezent \"%s\")\n"
 
-#: help.c:178
+#: help.c:179
 msgid "  \\cd [DIR]      change the current working directory\n"
 msgstr "  \\cd [DIR]      schimbã directorul de lucru curent\n"
 
-#: help.c:179
+#: help.c:180
 msgid "  \\copyright     show PostgreSQL usage and distribution terms\n"
 msgstr "  \\copyright     afiºeazã termenii de folosire ºi de distribuþie a PostgreSQL\n"
 
-#: help.c:180
+#: help.c:181
 msgid ""
 "  \\encoding [ENCODING]\n"
 "                 show or set client encoding\n"
@@ -588,91 +576,84 @@ msgstr ""
 "  \\encoding [CODIFICARE]\n"
 "                 afiºeazã sau seteazã codificarea clientului\n"
 
-#: help.c:182
+#: help.c:183
 msgid "  \\h [NAME]      help on syntax of SQL commands, * for all commands\n"
 msgstr ""
 "  \\h [NUME]      ajutor pentru sintaxa comenzilor SQL, * pentru toate "
 "comenzile\n"
 
-#: help.c:183
+#: help.c:184
 msgid "  \\q             quit psql\n"
 msgstr "  \\q             terminare psql\n"
 
-#: help.c:184
+#: help.c:185
 msgid ""
 "  \\set [NAME [VALUE]]\n"
 "                 set internal variable, or list all if no parameters\n"
 msgstr ""
 "  \\set [NUME [VALOARE]]\n"
-"                 seteazã o variabilã internã sau le afiºeazã pe toate dacã "
-"nu sunt furnizaþi parametri\n"
+"                 seteazã o variabilã internã sau le afiºeazã pe toate dacã nu sunt furnizaþi parametri\n"
 
-#: help.c:186
+#: help.c:187
 #, c-format
 msgid "  \\timing        toggle timing of commands (currently %s)\n"
 msgstr "  \\timing        comutã cronometrarea comenzilor (în prezent %s)\n"
 
-#: help.c:188
+#: help.c:189
 msgid "  \\unset NAME    unset (delete) internal variable\n"
 msgstr "  \\unset NUME    reseteazã (ºterge) variabila internã\n"
 
-#: help.c:189
+#: help.c:190
 msgid "  \\! [COMMAND]   execute command in shell or start interactive shell\n"
-msgstr ""
-"  \\! [COMANDÃ]   executã comanda în interpretor sau porneºte un interpretor "
-"interactiv\n"
+msgstr "  \\! [COMANDÃ]   executã comanda în interpretor sau porneºte un interpretor interactiv\n"
 
-#: help.c:192
+#: help.c:193
 msgid "Query Buffer\n"
 msgstr "Memorie tampon pentru interogãri\n"
 
-#: help.c:193
-msgid "  \\e [FILE]      edit the query buffer (or file) with external editor\n"
-msgstr ""
-"  \\e [FIªIER]    editeazã memoria tampon pentru interogãri (sau fiºierul) "
-"cu un editor extern\n"
-
 #: help.c:194
+msgid "  \\e [FILE]      edit the query buffer (or file) with external editor\n"
+msgstr "  \\e [FIªIER]    editeazã memoria tampon pentru interogãri (sau fiºierul) cu un editor extern\n"
+
+#: help.c:195
 msgid ""
 "  \\g [FILE]      send query buffer to server (and results to file or |"
 "pipe)\n"
-msgstr ""
-"  \\g [FIªIER]    trimite memoria tampon pentru interogãri serverului (ºi "
-"rezultatele într-un fiºier sau |conductã)\n"
+msgstr "  \\g [FIªIER]    trimite memoria tampon pentru interogãri serverului (ºi rezultatele într-un fiºier sau |conductã)\n"
 
-#: help.c:195
+#: help.c:196
 msgid "  \\p             show the contents of the query buffer\n"
 msgstr "  \\p             afiºeazã conþinutul memoriei tampon pentru interogãri\n"
 
-#: help.c:196
+#: help.c:197
 msgid "  \\r             reset (clear) the query buffer\n"
 msgstr "  \\r             reseteazã (ºterge) memoria tampon pentru interogãri\n"
 
-#: help.c:198
+#: help.c:199
 msgid "  \\s [FILE]      display history or save it to file\n"
 msgstr "  \\s [FIªIER]    afiºeazã istoricul sau îl salveazã în fiºier\n"
 
-#: help.c:200
+#: help.c:201
 msgid "  \\w FILE        write query buffer to file\n"
 msgstr "  \\w FIªIER      scrie memoria tampon pentru interogãri în fiºier\n"
 
-#: help.c:203
+#: help.c:204
 msgid "Input/Output\n"
 msgstr "Intrare/Ieºire\n"
 
-#: help.c:204
+#: help.c:205
 msgid "  \\echo [STRING] write string to standard output\n"
 msgstr "  \\echo [ªIR]    afiºeazã ºirul la ieºirea standard\n"
 
-#: help.c:205
+#: help.c:206
 msgid "  \\i FILE        execute commands from file\n"
 msgstr "  \\i FIªIER      executã comenzile din fiºier\n"
 
-#: help.c:206
+#: help.c:207
 msgid "  \\o [FILE]      send all query results to file or |pipe\n"
 msgstr "  \\o [FIªIER]    salveazã toate rezultatele interogãrilor în fiºier sau |conductã\n"
 
-#: help.c:207
+#: help.c:208
 msgid ""
 "  \\qecho [STRING]\n"
 "                 write string to query output stream (see \\o)\n"
@@ -680,15 +661,15 @@ msgstr ""
 "  \\qecho [ªIR]\n"
 "                 scrie ºirul în fluxul de ieºire al interogãrilor (vezi \\o)\n"
 
-#: help.c:211
+#: help.c:212
 msgid "Informational\n"
 msgstr "Informaþional\n"
 
-#: help.c:212
+#: help.c:213
 msgid "  \\d [NAME]      describe table, index, sequence, or view\n"
 msgstr "  \\d [NUME]      descrie tabela, indexul, secvenþa sau vizualizarea\n"
 
-#: help.c:213
+#: help.c:214
 msgid ""
 "  \\d{t|i|s|v|S} [PATTERN] (add \"+\" for more detail)\n"
 "                 list tables/indexes/sequences/views/system tables\n"
@@ -696,112 +677,94 @@ msgstr ""
 "  \\d{t|i|s|v|S} [MODEL]   (adãugaþi \"+\" pentru mai multe detalii)\n"
 "                 listeazã tabelele/indexuri/secvenþele/vizualizãrile/tabelele sistem\n"
 
-#: help.c:215
+#: help.c:216
 msgid "  \\da [PATTERN]  list aggregate functions\n"
 msgstr "  \\da [MODEL]    listeazã funcþiile de agregare\n"
 
-#: help.c:216
-msgid "  \\db [PATTERN]  list tablespaces (add \"+\" for more detail)\n"
-msgstr ""
-"  \\db [MODEL]    listeazã spaþiile de tabele (adãugaþi \"+\" pentru mai "
-"multe detalii)\n"
-
 #: help.c:217
+msgid "  \\db [PATTERN]  list tablespaces (add \"+\" for more detail)\n"
+msgstr "  \\db [MODEL]    listeazã spaþiile de tabele (adãugaþi \"+\" pentru mai multe detalii)\n"
+
+#: help.c:218
 msgid "  \\dc [PATTERN]  list conversions\n"
 msgstr "  \\dc [MODEL]    listeazã conversiile\n"
 
-#: help.c:218
+#: help.c:219
 msgid "  \\dC            list casts\n"
 msgstr "  \\dC            listeazã conversiile de tip\n"
 
-#: help.c:219
+#: help.c:220
 msgid "  \\dd [PATTERN]  show comment for object\n"
 msgstr "  \\dd [MODEL]    afiºeazã comentariile pentru obiecte\n"
 
-#: help.c:220
+#: help.c:221
 msgid "  \\dD [PATTERN]  list domains\n"
 msgstr "  \\dD [MODEL]    listeazã domeniile\n"
 
-#: help.c:221
-msgid "  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"
-msgstr ""
-"  \\df [MODEL]    listeazã funcþiile (adãugaþi \"+\" pentru mai multe "
-"detalii)\n"
-
 #: help.c:222
+msgid "  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"
+msgstr "  \\df [MODEL]    listeazã funcþiile (adãugaþi \"+\" pentru mai multe detalii)\n"
+
+#: help.c:223
 msgid "  \\dg [PATTERN]  list groups\n"
 msgstr "  \\dg [MODEL]    listeazã grupurile\n"
 
-#: help.c:223
-msgid "  \\dn [PATTERN]  list schemas (add \"+\" for more detail)\n"
-msgstr ""
-"  \\dn [MODEL]    listeazã schemele (adãugaþi \"+\" pentru mai multe "
-"detalii)\n"
-
 #: help.c:224
+msgid "  \\dn [PATTERN]  list schemas (add \"+\" for more detail)\n"
+msgstr "  \\dn [MODEL]    listeazã schemele (adãugaþi \"+\" pentru mai multe detalii)\n"
+
+#: help.c:225
 msgid "  \\do [NAME]     list operators\n"
 msgstr "  \\do [NUME]     listeazã operatorii\n"
 
-#: help.c:225
+#: help.c:226
 msgid "  \\dl            list large objects, same as \\lo_list\n"
 msgstr "  \\dl            listeazã obiectele mari, similar cu \\lo_list\n"
 
-#: help.c:226
-msgid "  \\dp [PATTERN]  list table, view, and sequence access privileges\n"
-msgstr ""
-"  \\dp [MODEL]    listeazã drepturile de acces pentru tabele, vizualizãri ºi "
-"secvenþe\n"
-
 #: help.c:227
-msgid "  \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"
-msgstr ""
-"  \\dT [MODEL]    listeazã tipurile de date (adãugaþi \"+\" pentru mai multe "
-"detalii)\n"
+msgid "  \\dp [PATTERN]  list table, view, and sequence access privileges\n"
+msgstr "  \\dp [MODEL]    listeazã drepturile de acces pentru tabele, vizualizãri ºi secvenþe\n"
 
 #: help.c:228
+msgid "  \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"
+msgstr "  \\dT [MODEL]    listeazã tipurile de date (adãugaþi \"+\" pentru mai multe detalii)\n"
+
+#: help.c:229
 msgid "  \\du [PATTERN]  list users\n"
 msgstr "  \\du [MODEL]    listeazã utilizatorii\n"
 
-#: help.c:229
-msgid "  \\l             list all databases (add \"+\" for more detail)\n"
-msgstr ""
-"  \\l             listeazã toate bazele de date (adãugaþi \"+\" pentru mai "
-"multe detalii)\n"
-
 #: help.c:230
+msgid "  \\l             list all databases (add \"+\" for more detail)\n"
+msgstr "  \\l             listeazã toate bazele de date (adãugaþi \"+\" pentru mai multe detalii)\n"
+
+#: help.c:231
 msgid ""
 "  \\z [PATTERN]   list table, view, and sequence access privileges (same as "
 "\\dp)\n"
-msgstr ""
-"  \\z [MODEL]     listeazã drepturile de acces pentru tabele, vizualizãri ºi "
-"secvenþe (similar cu \\dp)\n"
+msgstr "  \\z [MODEL]     listeazã drepturile de acces pentru tabele, vizualizãri ºi secvenþe (similar cu \\dp)\n"
 
-#: help.c:233
+#: help.c:234
 msgid "Formatting\n"
 msgstr "Formatare\n"
 
-#: help.c:234
+#: help.c:235
 msgid "  \\a             toggle between unaligned and aligned output mode\n"
 msgstr "  \\a             comutã între modurile de ieºire aliniat ºi nealiniat\n"
 
-#: help.c:235
-msgid "  \\C [STRING]    set table title, or unset if none\n"
-msgstr ""
-"  \\C [ªIR]       seteazã titlul tabelei, sau îl reseteazã dacã nu este "
-"specificatã valoarea\n"
-
 #: help.c:236
-msgid "  \\f [STRING]    show or set field separator for unaligned query output\n"
-msgstr ""
-"  \\f [ªIR]       afiºeazã sau seteazã separatorul pentru ieºirea nealiniatã "
-"a interogãrii\n"
+msgid "  \\C [STRING]    set table title, or unset if none\n"
+msgstr "  \\C [ªIR]       seteazã titlul tabelei, sau îl reseteazã dacã nu este specificatã valoarea\n"
 
 #: help.c:237
+msgid "  \\f [STRING]    show or set field separator for unaligned query output\n"
+msgstr "  \\f [ªIR]       afiºeazã sau seteazã separatorul pentru ieºirea nealiniatã a interogãrii\n"
+
+#: help.c:238
 #, c-format
 msgid "  \\H             toggle HTML output mode (currently %s)\n"
 msgstr "  \\H             comutã modul de ieºire HTML (în prezent %s)\n"
 
-#: help.c:239
+#: help.c:240
 msgid ""
 "  \\pset NAME [VALUE]\n"
 "                 set table output option\n"
@@ -813,31 +776,31 @@ msgstr ""
 "                 (NUME := {format|border|expanded|fieldsep|footer|null|\n"
 "                 recordsep|tuples_only|title|tableattr|pager})\n"
 
-#: help.c:243
+#: help.c:244
 #, c-format
 msgid "  \\t             show only rows (currently %s)\n"
 msgstr "  \\t             afiºeazã numai rânduri (în prezent %s)\n"
 
-#: help.c:245
+#: help.c:246
 msgid "  \\T [STRING]    set HTML <table> tag attributes, or unset if none\n"
 msgstr ""
 "  \\T [ªIR]       seteazã atributele tag-ului HTML <table>, sau le reseteazã\n"
 "                 dacã nu este specificatã o valoare\n"
 
-#: help.c:246
+#: help.c:247
 #, c-format
 msgid "  \\x             toggle expanded output (currently %s)\n"
 msgstr "  \\x             comutã modul de ieºire extins (în prezent %s)\n"
 
-#: help.c:250
+#: help.c:251
 msgid "Copy, Large Object\n"
 msgstr "Copiere, Obiecte Mari\n"
 
-#: help.c:251
+#: help.c:252
 msgid "  \\copy ...      perform SQL COPY with data stream to the client host\n"
 msgstr "  \\copy ...      executã SQL COPY cu fluxul de date cãtre gazda clientului\n"
 
-#: help.c:252
+#: help.c:253
 msgid ""
 "  \\lo_export LOBOID FILE\n"
 "  \\lo_import FILE [COMMENT]\n"
@@ -849,11 +812,11 @@ msgstr ""
 "  \\lo_list\n"
 "  \\lo_unlink OID_OBM    operaþiuni cu obiecte mari\n"
 
-#: help.c:285
+#: help.c:286
 msgid "Available help:\n"
 msgstr "Ajutor disponibil:\n"
 
-#: help.c:344
+#: help.c:345
 #, c-format
 msgid ""
 "Command:     %s\n"
@@ -868,7 +831,7 @@ msgstr ""
 "%s\n"
 "\n"
 
-#: help.c:357
+#: help.c:358
 #, c-format
 msgid ""
 "No help available for \"%-.*s\".\n"
@@ -877,12 +840,12 @@ msgstr ""
 "Nu existã ajutor disponibil pentru \"%-.*s\".\n"
 "Încercaþi \\h fãrã argumente pentru a vedea ajutorul disponibil.\n"
 
-#: input.c:210
+#: input.c:211
 #, c-format
 msgid "could not save history to file \"%s\": %s\n"
 msgstr "imposibil de salvat istoricul în fiºierul \"%s\": %s\n"
 
-#: input.c:213
+#: input.c:214
 msgid "history is not supported by this installation\n"
 msgstr "istoricul nu este suportat de aceastã instalare\n"
 
@@ -929,7 +892,7 @@ msgstr "(1 rând)"
 msgid "(%d rows)"
 msgstr "(%d rânduri)"
 
-#: startup.c:133
+#: startup.c:138
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: memorie insuficientã\n"
@@ -989,11 +952,11 @@ msgstr "%s: avertisment: argument în linia de comandã suplimentar \"%s\" ignorat
 msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
 msgstr "%s: Avertisment: Opþiunea -u este depãºitã. Folosiþi -U.\n"
 
-#: startup.c:630
+#: startup.c:627
 msgid "contains support for command-line editing"
 msgstr "conþine suport pentru editarea liniei de comandã"
 
-#: startup.c:653
+#: startup.c:650
 #, c-format
 msgid ""
 "SSL connection (cipher: %s, bits: %i)\n"
@@ -1659,8 +1622,7 @@ msgstr ""
 "    ALTER [ COLUMN ] coloanã DROP DEFAULT\n"
 "    ALTER [ COLUMN ] coloanã { SET | DROP } NOT NULL\n"
 "    ALTER [ COLUMN ] coloanã SET STATISTICS întreg\n"
-"    ALTER [ COLUMN ] coloanã SET STORAGE { PLAIN | EXTERNAL | EXTENDED | "
-"MAIN }\n"
+"    ALTER [ COLUMN ] coloanã SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }\n"
 "    ADD restricþie_tabelã\n"
 "    DROP CONSTRAINT nume_restricþie [ RESTRICT | CASCADE ]\n"
 "    CLUSTER ON nume_index\n"
@@ -2108,10 +2070,8 @@ msgid ""
 "   | STORAGE storage_type\n"
 "  } [, ... ]"
 msgstr ""
-"CREATE OPERATOR CLASS nume [ DEFAULT ] FOR TYPE tip_date USING metodã_index "
-"AS\n"
-"  {  OPERATOR numãr_strategie nume_operator [ ( tip_operator, "
-"tip_operator ) ] [ RECHECK ]\n"
+"CREATE OPERATOR CLASS nume [ DEFAULT ] FOR TYPE tip_date USING metodã_index AS\n"
+"  {  OPERATOR numãr_strategie nume_operator [ ( tip_operator, tip_operator ) ] [ RECHECK ]\n"
 "   | FUNCTION numãr_suport nume_funcþie ( tip_argument [, ...] )\n"
 "   | STORAGE tip_stocare\n"
 "  } [, ... ]"
@@ -2138,8 +2098,7 @@ msgstr ""
 "    [, COMMUTATOR = operator_comutare ] [, NEGATOR = operator_negaþie ]\n"
 "    [, RESTRICT = procedurã_restricþie ] [, JOIN = procedurã_relaþionare]\n"
 "    [, HASHES ] [, MERGES ]\n"
-"    [, SORT1 = operator_sortare_stânga ] [, SORT2 = "
-"operator_sortare_dreapta ]\n"
+"    [, SORT1 = operator_sortare_stânga ] [, SORT2 = operator_sortare_dreapta ]\n"
 "    [, LTCMP = operator_mai_mic ] [, GTCMP = operator_mai_mare ]\n"
 ")"
 
@@ -2168,8 +2127,7 @@ msgid ""
 "CREATE SCHEMA AUTHORIZATION username [ schema_element [ ... ] ]"
 msgstr ""
 "CREATE SCHEMA nume_schemã [ AUTHORIZATION nume_utilizator ] [ element_schemã [ ... ] ]\n"
-"CREATE SCHEMA AUTHORIZATION nume_utilizator "
-"[ element_schemã [ ... ] ]"
+"CREATE SCHEMA AUTHORIZATION nume_utilizator [ element_schemã [ ... ] ]"
 
 #: sql_help.h:185
 msgid "define a new sequence generator"
@@ -2231,11 +2189,9 @@ msgid ""
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 msgstr ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE nume_tabelã (\n"
-"  { nume_coloanã tip_datã [ DEFAULT expresie_implicitã ] "
-"[ restricþie_coloanã [ ... ] ]\n"
+"  { nume_coloanã tip_datã [ DEFAULT expresie_implicitã ] [ restricþie_coloanã [ ... ] ]\n"
 "    | restricþie coloanã\n"
-"    | LIKE tabelã_pãrinte [ { INCLUDING | EXCLUDING } DEFAULTS ] }  "
-"[, ... ]\n"
+"    | LIKE tabelã_pãrinte [ { INCLUDING | EXCLUDING } DEFAULTS ] }  [, ... ]\n"
 ")\n"
 "[ INHERITS ( tabelã_pãrinte [, ... ] ) ]\n"
 "[ WITH OIDS | WITHOUT OIDS ]\n"
@@ -2250,8 +2206,7 @@ msgstr ""
 "  UNIQUE [ USING INDEX TABLESPACE spaþiu_tabele ] |\n"
 "  PRIMARY KEY [ USING INDEX TABLESPACE spaþiu_tabele ] |\n"
 "  CHECK (expresie) |\n"
-"  REFERENCES tabelã_referitã [ ( coloanã_referitã ) ] [ MATCH FULL | MATCH "
-"PARTIAL | MATCH SIMPLE ]\n"
+"  REFERENCES tabelã_referitã [ ( coloanã_referitã ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]\n"
 "    [ ON DELETE acþiune ] [ ON UPDATE acþiune ] }\n"
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
 "IMMEDIATE ]\n"
@@ -2259,15 +2214,11 @@ msgstr ""
 "ºi restricþie_tabelã este:\n"
 "\n"
 "[ CONSTRAINT nume_restricþie ]\n"
-"{ UNIQUE ( nume_coloanã [, ... ] ) [ USING INDEX TABLESPACE spaþiu_tabele ] "
-"|\n"
-"  PRIMARY KEY ( nume_coloanã [, ... ] ) [ USING INDEX TABLESPACE "
-"spaþiu_tabele ] |\n"
+"{ UNIQUE ( nume_coloanã [, ... ] ) [ USING INDEX TABLESPACE spaþiu_tabele ] |\n"
+"  PRIMARY KEY ( nume_coloanã [, ... ] ) [ USING INDEX TABLESPACE spaþiu_tabele ] |\n"
 "  CHECK ( expresie ) |\n"
-"  FOREIGN KEY ( nume_coloanã [, ... ] ) REFERENCES tabelã_referitã "
-"[ ( coloanã_referitã [, ... ] ) ]\n"
-"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE acþiune ] [ ON "
-"UPDATE acþiune ] }\n"
+"  FOREIGN KEY ( nume_coloanã [, ... ] ) REFERENCES tabelã_referitã [ ( coloanã_referitã [, ... ] ) ]\n"
+"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE acþiune ] [ ON UPDATE acþiune ] }\n"
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 
 #: sql_help.h:193 sql_help.h:389
@@ -2280,8 +2231,7 @@ msgid ""
 "[ (column_name [, ...] ) ] [ [ WITH | WITHOUT ] OIDS ]\n"
 "    AS query"
 msgstr ""
-"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE nume_tabelã "
-"[ (nume_coloanã [, ...] ) ] [ [ WITH | WITHOUT ] OIDS ]\n"
+"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE nume_tabelã [ (nume_coloanã [, ...] ) ] [ [ WITH | WITHOUT ] OIDS ]\n"
 "    AS interogare"
 
 #: sql_help.h:197
@@ -2502,9 +2452,7 @@ msgstr "eliminã un operator"
 msgid ""
 "DROP OPERATOR name ( { lefttype | NONE } , { righttype | NONE } ) [ CASCADE "
 "| RESTRICT ]"
-msgstr ""
-"DROP OPERATOR nume ( { tip_stânga | NONE } , { tip_dreapta | NONE } ) "
-"[ CASCADE | RESTRICT ]"
+msgstr "DROP OPERATOR nume ( { tip_stânga | NONE } , { tip_dreapta | NONE } ) [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:273
 msgid "remove a rewrite rule"
@@ -2681,27 +2629,33 @@ msgstr ""
 "GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
 "    [,...] | ALL [ PRIVILEGES ] }\n"
 "    ON [ TABLE ] nume_tabelã [, ...]\n"
-"    TO { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    TO { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
 "\n"
 "GRANT { { CREATE | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
 "    ON DATABASE nume_bd [, ...]\n"
-"    TO { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    TO { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
 "\n"
 "GRANT { EXECUTE | ALL [ PRIVILEGES ] }\n"
 "    ON FUNCTION nume_funcþie ([tip, ...]) [, ...]\n"
-"    TO { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    TO { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
 "\n"
 "GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
 "    ON LANGUAGE nume_limbaj [, ...]\n"
-"    TO { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    TO { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
 "\n"
 "GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
 "    ON SCHEMA nume_schemã [, ...]\n"
-"    TO { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    TO { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
 "\n"
 "GRANT { CREATE | ALL [ PRIVILEGES ] }\n"
 "    ON TABLESPACE nume_spaþiu_tabele [, ...]\n"
-"    TO { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...] [ WITH GRANT OPTION ]"
+"    TO { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]"
 
 #: sql_help.h:329
 msgid "create new rows in a table"
@@ -2794,9 +2748,7 @@ msgstr "RELEASE [ SAVEPOINT ] nume_punct_salvare"
 
 #: sql_help.h:365
 msgid "restore the value of a run-time parameter to the default value"
-msgstr ""
-"restabileºte valoarea unui parametru de la momentul rulãrii la valoarea "
-"implicitã"
+msgstr "restabileºte valoarea unui parametru de la momentul rulãrii la valoarea implicitã"
 
 #: sql_help.h:366
 msgid ""
@@ -2948,14 +2900,11 @@ msgstr ""
 "\n"
 "unde din_element poate fi unul dintre:\n"
 "\n"
-"    [ ONLY ] nume_tabelã [ * ] [ [ AS ] alias [ ( alias_coloanã "
-"[, ...] ) ] ]\n"
+"    [ ONLY ] nume_tabelã [ * ] [ [ AS ] alias [ ( alias_coloanã [, ...] ) ] ]\n"
 "    ( select ) [ AS ] alias [ ( alias_coloanã [, ...] ) ]\n"
-"    nume_funcþie ( [ argument [, ...] ] ) [ AS ] alias [ ( alias_coloanã "
-"[, ...] | definiþie_coloanã [, ...] ) ]\n"
+"    nume_funcþie ( [ argument [, ...] ] ) [ AS ] alias [ ( alias_coloanã [, ...] | definiþie_coloanã [, ...] ) ]\n"
 "    nume_funcþie ( [ argument [, ...] ] ) AS ( definiþie_coloanã [, ...] )\n"
-"    din_element [ NATURAL ] tip_relaþionare from_item [ ON "
-"condiþie_relaþionare | USING ( coloanã_relaþionare [, ...] ) ]"
+"    din_element [ NATURAL ] tip_relaþionare from_item [ ON condiþie_relaþionare | USING ( coloanã_relaþionare [, ...] ) ]"
 
 #: sql_help.h:390
 msgid ""
@@ -3009,9 +2958,7 @@ msgstr "SET CONSTRAINTS { ALL | nume [, ...] } { DEFERRED | IMMEDIATE }"
 msgid ""
 "set the session user identifier and the current user identifier of the "
 "current session"
-msgstr ""
-"seteazã identificatorul de sesiune al utilizatorului ºi identificatorul "
-"curent al utilizatorului pentru sesiunea curentã"
+msgstr "seteazã identificatorul de sesiune al utilizatorului ºi identificatorul curent al utilizatorului pentru sesiunea curentã"
 
 #: sql_help.h:402
 msgid ""
@@ -3113,11 +3060,39 @@ msgstr "curãþã o bazã de date ºi, opþional, o analizeazã"
 
 #: sql_help.h:430
 msgid ""
-"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
-"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column "
-"[, ...] ) ] ]"
+"VACUUM [ FULL | FREEZE ] [ VERBOSE ] [ table ]\n"
+"VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column [, ...] ) ] ]"
 msgstr ""
-"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ tabelã ]\n"
-"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ tabelã [ (coloanã "
-"[, ...] ) ] ]"
+"VACUUM [ FULL | FREEZE ] [ VERBOSE ] [ tabelã ]\n"
+"VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ tabelã [ (coloanã [, ...] ) ] ]"
+
+#: ../../port/exec.c:193 ../../port/exec.c:306 ../../port/exec.c:349
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "imposibil de identificat directorul curent: %s"
+
+#: ../../port/exec.c:322 ../../port/exec.c:358
+#, c-format
+msgid "could not change directory to \"%s\""
+msgstr "imposibil de schimbat directorul în \"%s\""
+
+#: ../../port/exec.c:337
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "imposibil de citit legãtura simbolicã \"%s\""
+
+#: ../../port/exec.c:585
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "procesul fiu a ieºit cu codul %d"
+
+#: ../../port/exec.c:588
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "procesul fiu a fost terminat cu semnalul %d"
+
+#: ../../port/exec.c:591
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "procesul fiu a ieºit cu starea nerecunoscutã %d"
 

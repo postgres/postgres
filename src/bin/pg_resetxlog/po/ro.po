@@ -1,12 +1,12 @@
 # translation of pg_resetxlog-ro.po to Romanian
 # translation of pg_resetxlog.po to Romanian
-# Alin Vaida <alin.vaida@gmail.com>, 2004.
+# Alin Vaida <alin.vaida@gmail.com>, 2004, 2005.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetxlog-ro-8.0\n"
-"POT-Creation-Date: 2004-11-23 01:11+0000\n"
-"PO-Revision-Date: 2004-11-24 00:33+0200\n"
+"POT-Creation-Date: 2005-01-07 07:07+0000\n"
+"PO-Revision-Date: 2005-01-07 13:00+0200\n"
 "Last-Translator: Alin Vaida <alin.vaida@gmail.com>\n"
 "Language-Team: Romanian <translators@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -14,48 +14,58 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: KBabel 1.10\n"
 
-#: pg_resetxlog.c:123
+#: pg_resetxlog.c:125
 #, c-format
 msgid "%s: invalid argument for option -x\n"
 msgstr "%s: argument incorect pentru opþiunea -x\n"
 
-#: pg_resetxlog.c:124 pg_resetxlog.c:139 pg_resetxlog.c:154 pg_resetxlog.c:161
-#: pg_resetxlog.c:167 pg_resetxlog.c:175
+#: pg_resetxlog.c:126 pg_resetxlog.c:141 pg_resetxlog.c:156 pg_resetxlog.c:163
+#: pg_resetxlog.c:170 pg_resetxlog.c:176 pg_resetxlog.c:184
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Încercaþi \"%s --help\" pentru mai multe informaþii.\n"
 
-#: pg_resetxlog.c:129
+#: pg_resetxlog.c:131
 #, c-format
 msgid "%s: transaction ID (-x) must not be 0\n"
 msgstr "%s: ID-ul tranzacþiei (-x) trebuie sã fie diferit de 0\n"
 
-#: pg_resetxlog.c:138
+#: pg_resetxlog.c:140
 #, c-format
 msgid "%s: invalid argument for option -o\n"
 msgstr "%s: argument incorect pentru opþiunea -o\n"
 
-#: pg_resetxlog.c:144
+#: pg_resetxlog.c:146
 #, c-format
 msgid "%s: OID (-o) must not be 0\n"
 msgstr "%s: OID (-o) trebuie sã fie diferit de 0\n"
 
-#: pg_resetxlog.c:153 pg_resetxlog.c:160
+#: pg_resetxlog.c:155 pg_resetxlog.c:162 pg_resetxlog.c:169
 #, c-format
 msgid "%s: invalid argument for option -l\n"
 msgstr "%s: argument incorect pentru opþiunea -l\n"
 
-#: pg_resetxlog.c:174
+#: pg_resetxlog.c:183
 #, c-format
 msgid "%s: no data directory specified\n"
 msgstr "%s: nici un director de date specificat\n"
 
-#: pg_resetxlog.c:194 pg_resetxlog.c:290
+#: pg_resetxlog.c:198
+#, c-format
+msgid "%s: cannot be executed by \"root\"\n"
+msgstr "%s: nu poate fi executat de cãtre \"root\"\n"
+
+#: pg_resetxlog.c:200
+#, c-format
+msgid "You must run %s as the PostgreSQL superuser.\n"
+msgstr "Trebuie sã rulaþi %s ca utilizatorul privilegiat pentru PostgreSQL.\n"
+
+#: pg_resetxlog.c:222 pg_resetxlog.c:321
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: imposibil de deschis fiºierul \"%s\" pentru citire: %s\n"
 
-#: pg_resetxlog.c:200
+#: pg_resetxlog.c:228
 #, c-format
 msgid ""
 "%s: lock file \"%s\" exists\n"
@@ -64,7 +74,7 @@ msgstr ""
 "%s: fiºierul de blocare \"%s\" existã\n"
 "Ruleazã un server?  Dacã nu, ºtergeþi fiºierul de blocare ºi încercaþi din nou.\n"
 
-#: pg_resetxlog.c:239
+#: pg_resetxlog.c:270
 msgid ""
 "\n"
 "If these values seem acceptable, use -f to force reset.\n"
@@ -72,7 +82,7 @@ msgstr ""
 "\n"
 "Dacã aceste valori sunt acceptabile, folosiþi -f pentru a forþa reiniþializarea\n"
 
-#: pg_resetxlog.c:251
+#: pg_resetxlog.c:282
 msgid ""
 "The database server was not shut down cleanly.\n"
 "Resetting the transaction log may cause data to be lost.\n"
@@ -82,11 +92,11 @@ msgstr ""
 "Reiniþializarea jurnalului de tranzacþii poate cauza pierderi de date.\n"
 "Dacã doriþi sã continuaþi oricum, folosiþi -f pentru a forþa reiniþializarea.\n"
 
-#: pg_resetxlog.c:264
+#: pg_resetxlog.c:295
 msgid "Transaction log reset\n"
 msgstr "Jurnalul de tranzacþii reiniþializat\n"
 
-#: pg_resetxlog.c:293
+#: pg_resetxlog.c:324
 #, c-format
 msgid ""
 "If you are sure the data directory path is correct, execute\n"
@@ -97,32 +107,32 @@ msgstr ""
 "  touch %s\n"
 "ºi încercaþi din nou.\n"
 
-#: pg_resetxlog.c:306
+#: pg_resetxlog.c:337
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
 msgstr "%s: imposibil de citit fiºierul \"%s\": %s\n"
 
-#: pg_resetxlog.c:329
+#: pg_resetxlog.c:360
 #, c-format
 msgid "%s: pg_control exists but has invalid CRC; proceed with caution\n"
 msgstr "%s: pg_control existã, dar are suma de control CRC incorectã; continuaþi cu atenþie\n"
 
-#: pg_resetxlog.c:338
+#: pg_resetxlog.c:369
 #, c-format
 msgid "%s: pg_control exists but is broken or unknown version; ignoring it\n"
 msgstr "%s: pg_control existã, dar este defect sau are o versiune necunoscutã; se ignorã\n"
 
-#: pg_resetxlog.c:402
+#: pg_resetxlog.c:433
 #, c-format
 msgid "%s: invalid LC_COLLATE setting\n"
 msgstr "%s: setare LC_COLLATE incorectã\n"
 
-#: pg_resetxlog.c:409
+#: pg_resetxlog.c:440
 #, c-format
 msgid "%s: invalid LC_CTYPE setting\n"
 msgstr "%s: setare LC_CTYPE incorectã\n"
 
-#: pg_resetxlog.c:433
+#: pg_resetxlog.c:464
 msgid ""
 "Guessed pg_control values:\n"
 "\n"
@@ -130,7 +140,7 @@ msgstr ""
 "Valori pg_control ghicite:\n"
 "\n"
 
-#: pg_resetxlog.c:435
+#: pg_resetxlog.c:466
 msgid ""
 "pg_control values:\n"
 "\n"
@@ -138,140 +148,140 @@ msgstr ""
 "Valori pg_control:\n"
 "\n"
 
-#: pg_resetxlog.c:444
+#: pg_resetxlog.c:475
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr "Numãr versiune pg_control:            %u\n"
 
-#: pg_resetxlog.c:445
+#: pg_resetxlog.c:476
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "Numãr versiune catalog:               %u\n"
 
-#: pg_resetxlog.c:446
+#: pg_resetxlog.c:477
 #, c-format
 msgid "Database system identifier:           %s\n"
 msgstr "Identificator sistem baze de date:    %s\n"
 
-#: pg_resetxlog.c:447
+#: pg_resetxlog.c:478
 #, c-format
 msgid "Current log file ID:                  %u\n"
 msgstr "ID fiºier jurnal curent:              %u\n"
 
-#: pg_resetxlog.c:448
+#: pg_resetxlog.c:479
 #, c-format
 msgid "Next log file segment:                %u\n"
 msgstr "Segment fiºier jurnal urmãtor:        %u\n"
 
-#: pg_resetxlog.c:449
+#: pg_resetxlog.c:480
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "TimeLineID ultimul punct de salvare:  %u\n"
 
-#: pg_resetxlog.c:450
+#: pg_resetxlog.c:481
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u\n"
 msgstr "NextXID ultimul punct de salvare:     %u\n"
 
-#: pg_resetxlog.c:451
+#: pg_resetxlog.c:482
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "NextOID ultimul punct de salvare:     %u\n"
 
-#: pg_resetxlog.c:452
+#: pg_resetxlog.c:483
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Dimensiune bloc bazã de date:         %u\n"
 
-#: pg_resetxlog.c:453
+#: pg_resetxlog.c:484
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "Blocuri/segment pentru relaþii mari:  %u\n"
 
-#: pg_resetxlog.c:454
+#: pg_resetxlog.c:485
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "Lungime maximã a identificatorilor:   %u\n"
 
-#: pg_resetxlog.c:455
+#: pg_resetxlog.c:486
 #, c-format
 msgid "Maximum number of function arguments: %u\n"
 msgstr "Nr. maxim argumente pentru funcþii:   %u\n"
 
-#: pg_resetxlog.c:456
+#: pg_resetxlog.c:487
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Stocare tip datã/timp:                %s\n"
 
-#: pg_resetxlog.c:457
+#: pg_resetxlog.c:488
 msgid "64-bit integers"
 msgstr "întregi pe 64 de biþi"
 
-#: pg_resetxlog.c:457
+#: pg_resetxlog.c:488
 msgid "floating-point numbers"
 msgstr "numere în virgulã mobilã"
 
-#: pg_resetxlog.c:458
+#: pg_resetxlog.c:489
 #, c-format
 msgid "Maximum length of locale name:        %u\n"
 msgstr "Lungime maximã a numelui localizãrii: %u\n"
 
-#: pg_resetxlog.c:459
+#: pg_resetxlog.c:490
 #, c-format
 msgid "LC_COLLATE:                           %s\n"
 msgstr "LC_COLLATE:                           %s\n"
 
-#: pg_resetxlog.c:460
+#: pg_resetxlog.c:491
 #, c-format
 msgid "LC_CTYPE:                             %s\n"
 msgstr "LC_CTYPE:                             %s\n"
 
-#: pg_resetxlog.c:521
+#: pg_resetxlog.c:552
 #, c-format
 msgid "%s: internal error -- sizeof(ControlFileData) is too large ... fix xlog.c\n"
 msgstr "%s: eroare internã -- sizeof(ControlFileData) este prea mare ... corectaþi xlog.c\n"
 
-#: pg_resetxlog.c:534
+#: pg_resetxlog.c:565
 #, c-format
 msgid "%s: could not create pg_control file: %s\n"
 msgstr "%s: imposibil de creat fiºierul pg_control: %s\n"
 
-#: pg_resetxlog.c:545
+#: pg_resetxlog.c:576
 #, c-format
 msgid "%s: could not write pg_control file: %s\n"
 msgstr "%s: imposibil de scris fiºierul pg_control: %s\n"
 
-#: pg_resetxlog.c:552 pg_resetxlog.c:708
+#: pg_resetxlog.c:583 pg_resetxlog.c:739
 #, c-format
 msgid "%s: fsync error: %s\n"
 msgstr "%s: eroare fsync: %s\n"
 
-#: pg_resetxlog.c:573
+#: pg_resetxlog.c:604
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
 msgstr "%s: imposibil de deschis directorul \"%s\": %s\n"
 
-#: pg_resetxlog.c:587
+#: pg_resetxlog.c:618
 #, c-format
 msgid "%s: could not delete file \"%s\": %s\n"
 msgstr "%s: imposibil de ºters directorul \"%s\": %s\n"
 
-#: pg_resetxlog.c:606
+#: pg_resetxlog.c:637
 #, c-format
 msgid "%s: could not read from directory \"%s\": %s\n"
 msgstr "%s: imposibil de citit din directorul \"%s\": %s\n"
 
-#: pg_resetxlog.c:675
+#: pg_resetxlog.c:706
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: imposibil de deschis fiºierul \"%s\": %s\n"
 
-#: pg_resetxlog.c:686 pg_resetxlog.c:700
+#: pg_resetxlog.c:717 pg_resetxlog.c:731
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
 msgstr "%s: imposibil de scris fiºierul \"%s\": %s\n"
 
-#: pg_resetxlog.c:719
+#: pg_resetxlog.c:750
 #, c-format
 msgid ""
 "%s resets the PostgreSQL transaction log.\n"
@@ -280,7 +290,7 @@ msgstr ""
 "%s reiniþializeazã jurnalul de tranzacþii PostgreSQL.\n"
 "\n"
 
-#: pg_resetxlog.c:720
+#: pg_resetxlog.c:751
 #, c-format
 msgid ""
 "Usage:\n"
@@ -291,43 +301,43 @@ msgstr ""
 "  %s [OPÞIUNE]... DIRDATE\n"
 "\n"
 
-#: pg_resetxlog.c:721
+#: pg_resetxlog.c:752
 msgid "Options:\n"
 msgstr "Opþiuni:\n"
 
-#: pg_resetxlog.c:722
+#: pg_resetxlog.c:753
 msgid "  -f              force update to be done\n"
 msgstr "  -f              forþeazã actualizarea\n"
 
-#: pg_resetxlog.c:723
+#: pg_resetxlog.c:754
 msgid ""
-"  -l FILEID,SEG   force minimum WAL starting location for new transaction "
+"  -l TLI,FILE,SEG force minimum WAL starting location for new transaction "
 "log\n"
-msgstr "  -l IDFIªIER,SEG forþeazã locaþia de start minimã WAL pentru noul jurnal de tranzacþii\n"
+msgstr "  -l TLI,FIªIER,SEG forþeazã locaþia de start minimã WAL pentru noul jurnal de tranzacþii\n"
 
-#: pg_resetxlog.c:724
+#: pg_resetxlog.c:755
 msgid ""
 "  -n              no update, just show extracted control values (for "
 "testing)\n"
 msgstr "  -n              fãrã actualizare, doar afiºeazã valorile de control extrase (pentru testare)\n"
 
-#: pg_resetxlog.c:725
+#: pg_resetxlog.c:756
 msgid "  -o OID          set next OID\n"
 msgstr "  -o OID          seteazã urmãtorul OID\n"
 
-#: pg_resetxlog.c:726
+#: pg_resetxlog.c:757
 msgid "  -x XID          set next transaction ID\n"
 msgstr "  -x XID          seteazã urmãtorul ID de tranzacþie\n"
 
-#: pg_resetxlog.c:727
+#: pg_resetxlog.c:758
 msgid "  --help          show this help, then exit\n"
 msgstr "  --help          afiºeazã acest ajutor, apoi iese\n"
 
-#: pg_resetxlog.c:728
+#: pg_resetxlog.c:759
 msgid "  --version       output version information, then exit\n"
 msgstr "  --version       afiºeazã informaþiile despre versiune, apoi iese\n"
 
-#: pg_resetxlog.c:729
+#: pg_resetxlog.c:760
 msgid ""
 "\n"
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"

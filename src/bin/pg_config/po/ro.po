@@ -1,12 +1,12 @@
 # translation of pg_config-ro.po to Romanian
 # translation of pg_config.po to Romanian
-# Alin Vaida <alin.vaida@gmail.com>, 2004.
+# Alin Vaida <alin.vaida@gmail.com>, 2004, 2005.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config-ro-8.0\n"
-"POT-Creation-Date: 2004-11-04 19:15+0000\n"
-"PO-Revision-Date: 2004-11-24 00:35+0200\n"
+"POT-Creation-Date: 2005-01-07 07:05+0000\n"
+"PO-Revision-Date: 2005-01-07 12:51+0200\n"
 "Last-Translator: Alin Vaida <alin.vaida@gmail.com>\n"
 "Language-Team: Romanian <translators@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -115,4 +115,34 @@ msgstr "%s: argument incorect: %s\n"
 #, c-format
 msgid "%s: could not find own executable\n"
 msgstr "%s: imposibil de gãsit propriul executabil\n"
+
+#: ../../port/exec.c:193 ../../port/exec.c:306 ../../port/exec.c:349
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "imposibil de identificat directorul curent: %s"
+
+#: ../../port/exec.c:322 ../../port/exec.c:358
+#, c-format
+msgid "could not change directory to \"%s\""
+msgstr "imposibil de schimbat directorul în \"%s\""
+
+#: ../../port/exec.c:337
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "imposibil de citit legãtura simbolicã \"%s\""
+
+#: ../../port/exec.c:585
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "procesul fiu a ieºit cu codul %d"
+
+#: ../../port/exec.c:588
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "procesul fiu a fost terminat cu semnalul %d"
+
+#: ../../port/exec.c:591
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "procesul fiu a ieºit cu starea nerecunoscutã %d"
 
