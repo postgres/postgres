@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.46 2002/09/04 20:31:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.47 2002/09/23 20:43:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
@@ -211,6 +212,19 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 		if (!vacstmt->vacuum)
 			elog(WARNING, "Skipping \"%s\" --- can not process indexes, views or special system tables",
 				 RelationGetRelationName(onerel));
+		relation_close(onerel, AccessShareLock);
+		return;
+	}
+
+	/*
+	 * Silently ignore tables that are temp tables of other backends ---
+	 * trying to analyze these is rather pointless, since their
+	 * contents are probably not up-to-date on disk.  (We don't throw a
+	 * warning here; it would just lead to chatter during a database-wide
+	 * ANALYZE.)
+	 */
+	if (isOtherTempNamespace(RelationGetNamespace(onerel)))
+	{
 		relation_close(onerel, AccessShareLock);
 		return;
 	}

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.35 2002/09/04 20:31:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.36 2002/09/23 20:43:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1215,6 +1215,28 @@ isTempNamespace(Oid namespaceId)
 	if (OidIsValid(myTempNamespace) && myTempNamespace == namespaceId)
 		return true;
 	return false;
+}
+
+/*
+ * isOtherTempNamespace - is the given namespace some other backend's
+ * temporary-table namespace?
+ */
+bool
+isOtherTempNamespace(Oid namespaceId)
+{
+	bool		result;
+	char	   *nspname;
+
+	/* If it's my own temp namespace, say "false" */
+	if (isTempNamespace(namespaceId))
+		return false;
+	/* Else, if the namespace name starts with "pg_temp_", say "true" */
+	nspname = get_namespace_name(namespaceId);
+	if (!nspname)
+		return false;			/* no such namespace? */
+	result = (strncmp(nspname, "pg_temp_", 8) == 0);
+	pfree(nspname);
+	return result;
 }
 
 /*

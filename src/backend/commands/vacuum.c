@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.239 2002/09/23 00:42:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.240 2002/09/23 20:43:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -770,6 +770,20 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	{
 		elog(WARNING, "Skipping \"%s\" --- can not process indexes, views or special system tables",
 			 RelationGetRelationName(onerel));
+		relation_close(onerel, lmode);
+		CommitTransactionCommand(true);
+		return;
+	}
+
+	/*
+	 * Silently ignore tables that are temp tables of other backends ---
+	 * trying to vacuum these will lead to great unhappiness, since their
+	 * contents are probably not up-to-date on disk.  (We don't throw a
+	 * warning here; it would just lead to chatter during a database-wide
+	 * VACUUM.)
+	 */
+	if (isOtherTempNamespace(RelationGetNamespace(onerel)))
+	{
 		relation_close(onerel, lmode);
 		CommitTransactionCommand(true);
 		return;

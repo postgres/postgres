@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.43 2002/09/22 19:42:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.44 2002/09/23 20:43:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,12 +367,20 @@ TruncateRelation(const RangeVar *relation)
 			 RelationGetRelationName(rel));
 	}
 
+	/* Permissions checks */
 	if (!allowSystemTableMods && IsSystemRelation(rel))
 		elog(ERROR, "TRUNCATE cannot be used on system tables. '%s' is a system table",
 			 RelationGetRelationName(rel));
 
 	if (!pg_class_ownercheck(relid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+
+	/*
+	 * Don't allow truncate on temp tables of other backends ... their
+	 * local buffer manager is not going to cope.
+	 */
+	if (isOtherTempNamespace(RelationGetNamespace(rel)))
+		elog(ERROR, "TRUNCATE cannot be used on temp tables of other processes");
 
 	/*
 	 * Don't allow truncate on tables which are referenced by foreign keys
