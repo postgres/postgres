@@ -302,6 +302,9 @@ INSERT INTO clstr_2 VALUES (2);
 INSERT INTO clstr_2 VALUES (1);
 INSERT INTO clstr_3 VALUES (2);
 INSERT INTO clstr_3 VALUES (1);
+-- "CLUSTER <tablename>" on a table that hasn't been clustered
+CLUSTER clstr_2;
+ERROR:  CLUSTER: No previously clustered index found on table clstr_2
 CLUSTER clstr_1_pkey ON clstr_1;
 CLUSTER clstr_2_pkey ON clstr_2;
 SELECT * FROM clstr_1 UNION ALL
@@ -343,6 +346,18 @@ SELECT * FROM clstr_1 UNION ALL
  2
  1
 (6 rows)
+
+-- cluster a single table using the indisclustered bit previously set
+DELETE FROM clstr_1;
+INSERT INTO clstr_1 VALUES (2);
+INSERT INTO clstr_1 VALUES (1);
+CLUSTER clstr_1;
+SELECT * FROM clstr_1;
+ a 
+---
+ 1
+ 2
+(2 rows)
 
 -- clean up
 \c -
