@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.6 2000/05/15 16:12:38 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.7 2000/06/01 23:40:31 momjian Exp $
 Postgres documentation
 -->
 
@@ -176,7 +176,7 @@ createlang [ <replaceable class="parameter">connection options</replaceable> ] -
   <para>
    To install <literal>pltcl</literal>:
 <programlisting>
-$ createlang pltcl
+$ createlang pltcl dbname
 </programlisting>
   </para>
  </refsect1>
