@@ -13,7 +13,7 @@
  *	  columns. (ie. tuples from the same group are consecutive)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.20 1998/07/16 01:49:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.21 1998/07/16 02:58:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -425,4 +425,8 @@ ExecReScanGroup(Group *node, ExprContext *exprCtxt, Plan *parent)
 
 	grpstate->grp_useFirstTuple = FALSE;
 	grpstate->grp_done = FALSE;
+
+	if (((Plan *) node)->lefttree &&
+		((Plan *) node)->lefttree->chgParam == NULL)
+		ExecReScan(((Plan *) node)->lefttree, exprCtxt, (Plan *) node);
 }
