@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.116 2004/08/29 05:06:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.117 2004/09/16 16:58:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,8 @@
 #include "miscadmin.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/resowner.h"
+
 
 /*
  * We don't want to log each fetching of a value from a sequence,
@@ -754,9 +756,20 @@ static void
 init_sequence(RangeVar *relation, SeqTable *p_elm, Relation *p_rel)
 {
 	Oid			relid = RangeVarGetRelid(relation, false);
-	TransactionId thisxid = GetCurrentTransactionId();
-	SeqTable	elm;
+	TransactionId thisxid = GetTopTransactionId();
+	volatile SeqTable elm;
 	Relation	seqrel;
+
+	/*
+	 * Open the sequence relation.
+	 */
+	seqrel = relation_open(relid, NoLock);
+
+	if (seqrel->rd_rel->relkind != RELKIND_SEQUENCE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a sequence",
+						relation->relname)));
 
 	/* Look to see if we already have a seqtable entry for relation */
 	for (elm = seqtab; elm != NULL; elm = elm->next)
@@ -764,21 +777,6 @@ init_sequence(RangeVar *relation, SeqTable *p_elm, Relation *p_rel)
 		if (elm->relid == relid)
 			break;
 	}
-
-	/*
-	 * Open the sequence relation, acquiring AccessShareLock if we don't
-	 * already have a lock in the current xact.
-	 */
-	if (elm == NULL || elm->xid != thisxid)
-		seqrel = relation_open(relid, AccessShareLock);
-	else
-		seqrel = relation_open(relid, NoLock);
-
-	if (seqrel->rd_rel->relkind != RELKIND_SEQUENCE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a sequence",
-						relation->relname)));
 
 	/*
 	 * Allocate new seqtable entry if we didn't find one.
@@ -799,14 +797,42 @@ init_sequence(RangeVar *relation, SeqTable *p_elm, Relation *p_rel)
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of memory")));
 		elm->relid = relid;
+		elm->xid = InvalidTransactionId;
 		/* increment is set to 0 until we do read_info (see currval) */
 		elm->last = elm->cached = elm->increment = 0;
 		elm->next = seqtab;
 		seqtab = elm;
 	}
 
-	/* Flag that we have a lock in the current xact. */
-	elm->xid = thisxid;
+	/*
+	 * If we haven't touched the sequence already in this transaction,
+	 * we need to acquire AccessShareLock.  We arrange for the lock to
+	 * be owned by the top transaction, so that we don't need to do it
+	 * more than once per xact.
+	 */
+	if (elm->xid != thisxid)
+	{
+		ResourceOwner currentOwner;
+
+		currentOwner = CurrentResourceOwner;
+		PG_TRY();
+		{
+			CurrentResourceOwner = TopTransactionResourceOwner;
+
+			LockRelation(seqrel, AccessShareLock);
+		}
+		PG_CATCH();
+		{
+			/* Ensure CurrentResourceOwner is restored on error */
+			CurrentResourceOwner = currentOwner;
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
+		CurrentResourceOwner = currentOwner;
+
+		/* Flag that we have a lock in the current xact. */
+		elm->xid = thisxid;
+	}
 
 	*p_elm = elm;
 	*p_rel = seqrel;

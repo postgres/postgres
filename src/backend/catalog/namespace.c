@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.70 2004/08/29 05:06:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.71 2004/09/16 16:58:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,16 +108,16 @@ static bool namespaceSearchPathValid = true;
  * in a particular backend session (this happens when a CREATE TEMP TABLE
  * command is first executed).	Thereafter it's the OID of the temp namespace.
  *
- * myTempNamespaceXID shows whether we've created the TEMP namespace in the
- * current transaction.  The TransactionId propagates up the transaction tree,
+ * myTempNamespaceSubID shows whether we've created the TEMP namespace in the
+ * current subtransaction.  The flag propagates up the subtransaction tree,
  * so the main transaction will correctly recognize the flag if all
- * intermediate subtransactions commit.  When it is InvalidTransactionId,
+ * intermediate subtransactions commit.  When it is InvalidSubTransactionId,
  * we either haven't made the TEMP namespace yet, or have successfully
  * committed its creation, depending on whether myTempNamespace is valid.
  */
 static Oid	myTempNamespace = InvalidOid;
 
-static TransactionId myTempNamespaceXID = InvalidTransactionId;
+static SubTransactionId myTempNamespaceSubID = InvalidSubTransactionId;
 
 /*
  * "Special" namespace for CREATE SCHEMA.  If set, it's the first search
@@ -1696,8 +1696,8 @@ InitTempTableNamespace(void)
 	myTempNamespace = namespaceId;
 
 	/* It should not be done already. */
-	AssertState(myTempNamespaceXID == InvalidTransactionId);
-	myTempNamespaceXID = GetCurrentTransactionId();
+	AssertState(myTempNamespaceSubID == InvalidSubTransactionId);
+	myTempNamespaceSubID = GetCurrentSubTransactionId();
 
 	namespaceSearchPathValid = false;	/* need to rebuild list */
 }
@@ -1716,7 +1716,7 @@ AtEOXact_Namespace(bool isCommit)
 	 * temp tables at backend shutdown.  (We only want to register the
 	 * callback once per session, so this is a good place to do it.)
 	 */
-	if (myTempNamespaceXID == GetCurrentTransactionId())
+	if (myTempNamespaceSubID != InvalidSubTransactionId)
 	{
 		if (isCommit)
 			on_shmem_exit(RemoveTempRelationsCallback, 0);
@@ -1725,7 +1725,7 @@ AtEOXact_Namespace(bool isCommit)
 			myTempNamespace = InvalidOid;
 			namespaceSearchPathValid = false;	/* need to rebuild list */
 		}
-		myTempNamespaceXID = InvalidTransactionId;
+		myTempNamespaceSubID = InvalidSubTransactionId;
 	}
 
 	/*
@@ -1742,21 +1742,21 @@ AtEOXact_Namespace(bool isCommit)
  * AtEOSubXact_Namespace
  *
  * At subtransaction commit, propagate the temp-namespace-creation
- * flag to the parent transaction.
+ * flag to the parent subtransaction.
  *
  * At subtransaction abort, forget the flag if we set it up.
  */
 void
-AtEOSubXact_Namespace(bool isCommit, TransactionId myXid,
-					  TransactionId parentXid)
+AtEOSubXact_Namespace(bool isCommit, SubTransactionId mySubid,
+					  SubTransactionId parentSubid)
 {
-	if (myTempNamespaceXID == myXid)
+	if (myTempNamespaceSubID == mySubid)
 	{
 		if (isCommit)
-			myTempNamespaceXID = parentXid;
+			myTempNamespaceSubID = parentSubid;
 		else
 		{
-			myTempNamespaceXID = InvalidTransactionId;
+			myTempNamespaceSubID = InvalidSubTransactionId;
 			/* TEMP namespace creation failed, so reset state */
 			myTempNamespace = InvalidOid;
 			namespaceSearchPathValid = false;	/* need to rebuild list */

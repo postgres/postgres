@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.127 2004/09/13 20:06:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.128 2004/09/16 16:58:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,7 @@ SPI_connect(void)
 	_SPI_current = &(_SPI_stack[_SPI_connected]);
 	_SPI_current->processed = 0;
 	_SPI_current->tuptable = NULL;
-	_SPI_current->connectXid = GetCurrentTransactionId();
+	_SPI_current->connectSubid = GetCurrentSubTransactionId();
 
 	/*
 	 * Create memory contexts for this procedure
@@ -198,10 +198,10 @@ AtEOXact_SPI(bool isCommit)
  * Clean up SPI state at subtransaction commit or abort.
  *
  * During commit, there shouldn't be any unclosed entries remaining from
- * the current transaction; we throw them away if found.
+ * the current subtransaction; we emit a warning if any are found.
  */
 void
-AtEOSubXact_SPI(bool isCommit, TransactionId childXid)
+AtEOSubXact_SPI(bool isCommit, SubTransactionId mySubid)
 {
 	bool		found = false;
 
@@ -209,7 +209,7 @@ AtEOSubXact_SPI(bool isCommit, TransactionId childXid)
 	{
 		_SPI_connection *connection = &(_SPI_stack[_SPI_connected]);
 
-		if (connection->connectXid != childXid)
+		if (connection->connectSubid != mySubid)
 			break;				/* couldn't be any underneath it either */
 
 		found = true;
@@ -235,7 +235,7 @@ AtEOSubXact_SPI(bool isCommit, TransactionId childXid)
 		ereport(WARNING,
 				(errcode(ERRCODE_WARNING),
 				 errmsg("subtransaction left non-empty SPI stack"),
-				 errhint("Check for missing \"SPI_finish\" calls")));
+				 errhint("Check for missing \"SPI_finish\" calls.")));
 }
 
 
@@ -1692,8 +1692,7 @@ _SPI_copy_plan(_SPI_plan *plan, int location)
 		parentcxt = _SPI_current->procCxt;
 	else if (location == _SPI_CPLAN_TOPCXT)
 		parentcxt = TopMemoryContext;
-	else
-/* (this case not currently used) */
+	else	/* (this case not currently used) */
 		parentcxt = CurrentMemoryContext;
 
 	/*

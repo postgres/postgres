@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.119 2004/09/13 20:09:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.120 2004/09/16 16:58:44 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -4240,52 +4240,38 @@ exec_set_found(PLpgSQL_execstate *estate, bool state)
 }
 
 /*
- * plpgsql_eoxact --- post-transaction-commit-or-abort cleanup
+ * plpgsql_xact_cb --- post-transaction-commit-or-abort cleanup
  *
  * If a simple_eval_estate was created in the current transaction,
  * it has to be cleaned up, and we have to mark all active PLpgSQL_expr
  * structs that are using it as no longer active.
+ *
+ * XXX Do we need to do anything at subtransaction events?
+ * Maybe subtransactions need to have their own simple_eval_estate?
+ * It would get a lot messier, so for now let's assume we don't need that.
  */
 void
-plpgsql_xact_cb(XactEvent event, TransactionId parentXid, void *arg)
+plpgsql_xact_cb(XactEvent event, void *arg)
 {
 	PLpgSQL_expr *expr;
 	PLpgSQL_expr *enext;
 
-	switch (event)
+	/* Mark all active exprs as inactive */
+	for (expr = active_simple_exprs; expr; expr = enext)
 	{
-			/*
-			 * Nothing to do at subtransaction events
-			 *
-			 * XXX really?	Maybe subtransactions need to have their own
-			 * simple_eval_estate?	It would get a lot messier, so for now
-			 * let's assume we don't need that.
-			 */
-		case XACT_EVENT_START_SUB:
-		case XACT_EVENT_ABORT_SUB:
-		case XACT_EVENT_COMMIT_SUB:
-			break;
-
-		case XACT_EVENT_ABORT:
-		case XACT_EVENT_COMMIT:
-			/* Mark all active exprs as inactive */
-			for (expr = active_simple_exprs; expr; expr = enext)
-			{
-				enext = expr->expr_simple_next;
-				expr->expr_simple_state = NULL;
-				expr->expr_simple_next = NULL;
-			}
-			active_simple_exprs = NULL;
-
-			/*
-			 * If we are doing a clean transaction shutdown, free the
-			 * EState (so that any remaining resources will be released
-			 * correctly). In an abort, we expect the regular abort
-			 * recovery procedures to release everything of interest.
-			 */
-			if (event == XACT_EVENT_COMMIT && simple_eval_estate)
-				FreeExecutorState(simple_eval_estate);
-			simple_eval_estate = NULL;
-			break;
+		enext = expr->expr_simple_next;
+		expr->expr_simple_state = NULL;
+		expr->expr_simple_next = NULL;
 	}
+	active_simple_exprs = NULL;
+
+	/*
+	 * If we are doing a clean transaction shutdown, free the
+	 * EState (so that any remaining resources will be released
+	 * correctly). In an abort, we expect the regular abort
+	 * recovery procedures to release everything of interest.
+	 */
+	if (event == XACT_EVENT_COMMIT && simple_eval_estate)
+		FreeExecutorState(simple_eval_estate);
+	simple_eval_estate = NULL;
 }

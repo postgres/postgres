@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/namespace.h,v 1.33 2004/08/29 05:06:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/namespace.h,v 1.34 2004/09/16 16:58:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,8 +91,8 @@ extern Oid	FindDefaultConversionProc(int4 for_encoding, int4 to_encoding);
 /* initialization & transaction cleanup code */
 extern void InitializeSearchPath(void);
 extern void AtEOXact_Namespace(bool isCommit);
-extern void AtEOSubXact_Namespace(bool isCommit, TransactionId myXid,
-					  TransactionId parentXid);
+extern void AtEOSubXact_Namespace(bool isCommit, SubTransactionId mySubid,
+								  SubTransactionId parentSubid);
 
 /* stuff for search_path GUC variable */
 extern char *namespace_search_path;

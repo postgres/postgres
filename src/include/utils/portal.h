@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.52 2004/08/29 05:06:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.53 2004/09/16 16:58:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,11 @@ typedef struct PortalData
 	MemoryContext heap;			/* subsidiary memory for portal */
 	ResourceOwner resowner;		/* resources owned by portal */
 	void		(*cleanup) (Portal portal);		/* cleanup hook */
-	TransactionId createXact;	/* the xid of the creating xact */
+	SubTransactionId createSubid;	/* the ID of the creating subxact */
+	/*
+	 * if createSubid is InvalidSubTransactionId, the portal is held over
+	 * from a previous transaction
+	 */
 
 	/* The query or queries the portal will execute */
 	const char *sourceText;		/* text of query, if known (may be NULL) */
@@ -181,11 +185,13 @@ extern void EnablePortalManager(void);
 extern void AtCommit_Portals(void);
 extern void AtAbort_Portals(void);
 extern void AtCleanup_Portals(void);
-extern void AtSubCommit_Portals(TransactionId parentXid,
-					ResourceOwner parentXactOwner);
-extern void AtSubAbort_Portals(TransactionId parentXid,
-				   ResourceOwner parentXactOwner);
-extern void AtSubCleanup_Portals(void);
+extern void AtSubCommit_Portals(SubTransactionId mySubid,
+								SubTransactionId parentSubid,
+								ResourceOwner parentXactOwner);
+extern void AtSubAbort_Portals(SubTransactionId mySubid,
+							   SubTransactionId parentSubid,
+							   ResourceOwner parentXactOwner);
+extern void AtSubCleanup_Portals(SubTransactionId mySubid);
 extern Portal CreatePortal(const char *name, bool allowDup, bool dupSilent);
 extern Portal CreateNewPortal(void);
 extern void PortalDrop(Portal portal, bool isTopCommit);

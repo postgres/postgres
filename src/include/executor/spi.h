@@ -2,7 +2,7 @@
  *
  * spi.h
  *
- * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.48 2004/09/13 20:07:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.49 2004/09/16 16:58:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,6 +126,6 @@ extern void SPI_cursor_move(Portal portal, bool forward, int count);
 extern void SPI_cursor_close(Portal portal);
 
 extern void AtEOXact_SPI(bool isCommit);
-extern void AtEOSubXact_SPI(bool isCommit, TransactionId childXid);
+extern void AtEOSubXact_SPI(bool isCommit, SubTransactionId mySubid);
 
 #endif   /* SPI_H */

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.188 2004/09/13 20:06:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.189 2004/09/16 16:58:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,19 @@
 
 
 /*
+ *	User-tweakable parameters
+ */
+int			DefaultXactIsoLevel = XACT_READ_COMMITTED;
+int			XactIsoLevel;
+
+bool		DefaultXactReadOnly = false;
+bool		XactReadOnly;
+
+int			CommitDelay = 0;	/* precommit delay in microseconds */
+int			CommitSiblings = 5; /* # concurrent xacts needed to sleep */
+
+
+/*
  *	transaction states - transaction state from server perspective
  */
 typedef enum TransState
@@ -59,29 +72,33 @@ typedef enum TransState
 
 /*
  *	transaction block states - transaction state of client queries
+ *
+ * Note: the subtransaction states are used only for non-topmost
+ * transactions; the others appear only in the topmost transaction.
  */
 typedef enum TBlockState
 {
 	/* not-in-transaction-block states */
-	TBLOCK_DEFAULT,
-	TBLOCK_STARTED,
+	TBLOCK_DEFAULT,				/* idle */
+	TBLOCK_STARTED,				/* running single-query transaction */
 
 	/* transaction block states */
-	TBLOCK_BEGIN,
-	TBLOCK_INPROGRESS,
-	TBLOCK_END,
-	TBLOCK_ABORT,
-	TBLOCK_ENDABORT,
+	TBLOCK_BEGIN,				/* starting transaction block */
+	TBLOCK_INPROGRESS,			/* live transaction */
+	TBLOCK_END,					/* COMMIT received */
+	TBLOCK_ABORT,				/* failed xact, awaiting ROLLBACK */
+	TBLOCK_ABORT_END,			/* failed xact, ROLLBACK received */
+	TBLOCK_ABORT_PENDING,		/* live xact, ROLLBACK received */
 
 	/* subtransaction states */
-	TBLOCK_SUBBEGIN,
-	TBLOCK_SUBINPROGRESS,
-	TBLOCK_SUBEND,
-	TBLOCK_SUBABORT,
-	TBLOCK_SUBABORT_PENDING,
-	TBLOCK_SUBENDABORT_ALL,
-	TBLOCK_SUBENDABORT_RELEASE,
-	TBLOCK_SUBENDABORT
+	TBLOCK_SUBBEGIN,			/* starting a subtransaction */
+	TBLOCK_SUBINPROGRESS,		/* live subtransaction */
+	TBLOCK_SUBEND,				/* RELEASE received */
+	TBLOCK_SUBABORT,			/* failed subxact, awaiting ROLLBACK */
+	TBLOCK_SUBABORT_END,		/* failed subxact, ROLLBACK received */
+	TBLOCK_SUBABORT_PENDING,	/* live subxact, ROLLBACK received */
+	TBLOCK_SUBRESTART,			/* live subxact, ROLLBACK TO received */
+	TBLOCK_SUBABORT_RESTART		/* failed subxact, ROLLBACK TO received */
 } TBlockState;
 
 /*
@@ -89,10 +106,10 @@ typedef enum TBlockState
  */
 typedef struct TransactionStateData
 {
-	TransactionId transactionIdData;	/* my XID */
+	TransactionId transactionId;		/* my XID, or Invalid if none */
+	SubTransactionId subTransactionId;	/* my subxact ID */
 	char	   *name;			/* savepoint name, if any */
 	int			savepointLevel; /* savepoint level */
-	CommandId	commandId;		/* current CID */
 	TransState	state;			/* low-level state */
 	TBlockState blockState;		/* high-level state */
 	int			nestingLevel;	/* nest depth */
@@ -115,42 +132,6 @@ typedef TransactionStateData *TransactionState;
 #define lfirst_xid(lc)				((TransactionId) lfirst_int(lc))
 #define lappend_xid(list, datum)	lappend_int(list, (int) (datum))
 
-
-static void AbortTransaction(void);
-static void AtAbort_Memory(void);
-static void AtCleanup_Memory(void);
-static void AtCommit_LocalCache(void);
-static void AtCommit_Memory(void);
-static void AtStart_Cache(void);
-static void AtStart_Memory(void);
-static void AtStart_ResourceOwner(void);
-static void CallXactCallbacks(XactEvent event, TransactionId parentXid);
-static void CleanupTransaction(void);
-static void CommitTransaction(void);
-static void RecordTransactionAbort(void);
-static void StartTransaction(void);
-
-static void RecordSubTransactionCommit(void);
-static void StartSubTransaction(void);
-static void CommitSubTransaction(void);
-static void AbortSubTransaction(void);
-static void CleanupSubTransaction(void);
-static void StartAbortedSubTransaction(void);
-static void PushTransaction(void);
-static void PopTransaction(void);
-static char *CleanupAbortedSubTransactions(bool returnName);
-
-static void AtSubAbort_Memory(void);
-static void AtSubCleanup_Memory(void);
-static void AtSubCommit_Memory(void);
-static void AtSubStart_Memory(void);
-static void AtSubStart_ResourceOwner(void);
-
-static void ShowTransactionState(const char *str);
-static void ShowTransactionStateRec(TransactionState state);
-static const char *BlockStateAsString(TBlockState blockState);
-static const char *TransStateAsString(TransState state);
-
 /*
  * CurrentTransactionState always points to the current transaction state
  * block.  It will point to TopTransactionStateData when not in a
@@ -158,9 +139,9 @@ static const char *TransStateAsString(TransState state);
  */
 static TransactionStateData TopTransactionStateData = {
 	0,							/* transaction id */
+	0,							/* subtransaction id */
 	NULL,						/* savepoint name */
 	0,							/* savepoint level */
-	FirstCommandId,				/* command id */
 	TRANS_DEFAULT,				/* transaction state */
 	TBLOCK_DEFAULT,				/* transaction block state from the client
 								 * perspective */
@@ -176,26 +157,19 @@ static TransactionStateData TopTransactionStateData = {
 static TransactionState CurrentTransactionState = &TopTransactionStateData;
 
 /*
+ * The subtransaction ID and command ID assignment counters are global
+ * to a whole transaction, so we do not keep them in the state stack.
+ */
+static SubTransactionId currentSubTransactionId;
+static CommandId currentCommandId;
+
+/*
  * These vars hold the value of now(), ie, the transaction start time.
  * This does not change as we enter and exit subtransactions, so we don't
  * keep it inside the TransactionState stack.
  */
 static AbsoluteTime xactStartTime;		/* integer part */
 static int	xactStartTimeUsec;	/* microsecond part */
-
-
-/*
- *	User-tweakable parameters
- */
-int			DefaultXactIsoLevel = XACT_READ_COMMITTED;
-int			XactIsoLevel;
-
-bool		DefaultXactReadOnly = false;
-bool		XactReadOnly;
-
-int			CommitDelay = 0;	/* precommit delay in microseconds */
-int			CommitSiblings = 5; /* number of concurrent xacts needed to
-								 * sleep */
 
 
 /*
@@ -210,8 +184,59 @@ typedef struct XactCallbackItem
 
 static XactCallbackItem *Xact_callbacks = NULL;
 
+/*
+ * List of add-on start- and end-of-subxact callbacks
+ */
+typedef struct SubXactCallbackItem
+{
+	struct SubXactCallbackItem *next;
+	SubXactCallback callback;
+	void	   *arg;
+} SubXactCallbackItem;
+
+static SubXactCallbackItem *SubXact_callbacks = NULL;
+
 static void (*_RollbackFunc) (void *) = NULL;
 static void *_RollbackData = NULL;
+
+
+/* local function prototypes */
+static void AssignSubTransactionId(TransactionState s);
+static void AbortTransaction(void);
+static void AtAbort_Memory(void);
+static void AtCleanup_Memory(void);
+static void AtCommit_LocalCache(void);
+static void AtCommit_Memory(void);
+static void AtStart_Cache(void);
+static void AtStart_Memory(void);
+static void AtStart_ResourceOwner(void);
+static void CallXactCallbacks(XactEvent event);
+static void CallSubXactCallbacks(SubXactEvent event,
+								 SubTransactionId mySubid,
+								 SubTransactionId parentSubid);
+static void CleanupTransaction(void);
+static void CommitTransaction(void);
+static void RecordTransactionAbort(void);
+static void StartTransaction(void);
+
+static void RecordSubTransactionCommit(void);
+static void StartSubTransaction(void);
+static void CommitSubTransaction(void);
+static void AbortSubTransaction(void);
+static void CleanupSubTransaction(void);
+static void PushTransaction(void);
+static void PopTransaction(void);
+
+static void AtSubAbort_Memory(void);
+static void AtSubCleanup_Memory(void);
+static void AtSubCommit_Memory(void);
+static void AtSubStart_Memory(void);
+static void AtSubStart_ResourceOwner(void);
+
+static void ShowTransactionState(const char *str);
+static void ShowTransactionStateRec(TransactionState state);
+static const char *BlockStateAsString(TBlockState blockState);
+static const char *TransStateAsString(TransState state);
 
 
 /* ----------------------------------------------------------------
@@ -278,19 +303,99 @@ IsAbortedTransactionBlockState(void)
 TransactionId
 GetTopTransactionId(void)
 {
-	return TopTransactionStateData.transactionIdData;
+	return TopTransactionStateData.transactionId;
 }
 
 
 /*
  *	GetCurrentTransactionId
+ *
+ * We do not assign XIDs to subtransactions until/unless this is called.
+ * When we do assign an XID to a subtransaction, recursively make sure
+ * its parent has one as well (this maintains the invariant that a child
+ * transaction has an XID following its parent's).
  */
 TransactionId
 GetCurrentTransactionId(void)
 {
 	TransactionState s = CurrentTransactionState;
 
-	return s->transactionIdData;
+	if (!TransactionIdIsValid(s->transactionId))
+		AssignSubTransactionId(s);
+
+	return s->transactionId;
+}
+
+static void
+AssignSubTransactionId(TransactionState s)
+{
+	ResourceOwner currentOwner;
+
+	Assert(s->parent != NULL);
+	Assert(s->state == TRANS_INPROGRESS);
+	if (!TransactionIdIsValid(s->parent->transactionId))
+		AssignSubTransactionId(s->parent);
+
+	/*
+	 * Generate a new Xid and record it in PG_PROC and pg_subtrans.
+	 *
+	 * NB: we must make the subtrans entry BEFORE the Xid appears anywhere
+	 * in shared storage other than PG_PROC; because if there's no room for
+	 * it in PG_PROC, the subtrans entry is needed to ensure that other
+	 * backends see the Xid as "running".  See GetNewTransactionId.
+	 */
+	s->transactionId = GetNewTransactionId(true);
+
+	SubTransSetParent(s->transactionId, s->parent->transactionId);
+
+	/*
+	 * Acquire lock on the transaction XID.  (We assume this cannot block.)
+	 * We have to be sure that the lock is assigned to the transaction's
+	 * ResourceOwner.
+	 */
+	currentOwner = CurrentResourceOwner;
+	PG_TRY();
+	{
+		CurrentResourceOwner = s->curTransactionOwner;
+
+		XactLockTableInsert(s->transactionId);
+	}
+	PG_CATCH();
+	{
+		/* Ensure CurrentResourceOwner is restored on error */
+		CurrentResourceOwner = currentOwner;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	CurrentResourceOwner = currentOwner;
+}
+
+
+/*
+ *	GetCurrentTransactionIdIfAny
+ *
+ * Unlike GetCurrentTransactionId, this will return InvalidTransactionId
+ * if we are currently not in a transaction, or in a transaction or
+ * subtransaction that has not yet assigned itself an XID.
+ */
+TransactionId
+GetCurrentTransactionIdIfAny(void)
+{
+	TransactionState s = CurrentTransactionState;
+
+	return s->transactionId;
+}
+
+
+/*
+ *	GetCurrentSubTransactionId
+ */
+SubTransactionId
+GetCurrentSubTransactionId(void)
+{
+	TransactionState s = CurrentTransactionState;
+
+	return s->subTransactionId;
 }
 
 
@@ -300,9 +405,8 @@ GetCurrentTransactionId(void)
 CommandId
 GetCurrentCommandId(void)
 {
-	TransactionState s = CurrentTransactionState;
-
-	return s->commandId;
+	/* this is global to a transaction, not subtransaction-local */
+	return currentCommandId;
 }
 
 
@@ -374,7 +478,9 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 
 		if (s->state == TRANS_ABORT)
 			continue;
-		if (TransactionIdEquals(xid, s->transactionIdData))
+		if (!TransactionIdIsValid(s->transactionId))
+			continue;			/* it can't have any child XIDs either */
+		if (TransactionIdEquals(xid, s->transactionId))
 			return true;
 		foreach(cell, s->childXids)
 		{
@@ -393,19 +499,20 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 void
 CommandCounterIncrement(void)
 {
-	TransactionState s = CurrentTransactionState;
-
-	s->commandId += 1;
-	if (s->commandId == FirstCommandId) /* check for overflow */
+	currentCommandId += 1;
+	if (currentCommandId == FirstCommandId) /* check for overflow */
+	{
+		currentCommandId -= 1;
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("cannot have more than 2^32-1 commands in a transaction")));
+	}
 
 	/* Propagate new command ID into static snapshots, if set */
 	if (SerializableSnapshot)
-		SerializableSnapshot->curcid = s->commandId;
+		SerializableSnapshot->curcid = currentCommandId;
 	if (LatestSnapshot)
-		LatestSnapshot->curcid = s->commandId;
+		LatestSnapshot->curcid = currentCommandId;
 
 	/*
 	 * make cache changes visible to me.
@@ -786,7 +893,7 @@ AtSubCommit_childXids(void)
 	old_cxt = MemoryContextSwitchTo(s->parent->curTransactionContext);
 
 	s->parent->childXids = lappend_xid(s->parent->childXids,
-									   s->transactionIdData);
+									   s->transactionId);
 
 	s->parent->childXids = list_concat(s->parent->childXids, s->childXids);
 	s->childXids = NIL;			/* ensure list not doubly referenced */
@@ -1063,7 +1170,8 @@ RecordSubTransactionAbort(void)
 
 		/*
 		 * Mark the transaction aborted in clog.  This is not absolutely
-		 * necessary but we may as well do it while we are here.
+		 * necessary but XactLockTableWait makes use of it to avoid waiting
+		 * for already-aborted subtransactions.
 		 */
 		TransactionIdAbort(xid);
 		TransactionIdAbortTree(nchildren, children);
@@ -1142,7 +1250,9 @@ AtSubCleanup_Memory(void)
 	 * can go too (note this also kills CurTransactionContexts from any
 	 * children of the subxact).
 	 */
-	MemoryContextDelete(s->curTransactionContext);
+	if (s->curTransactionContext)
+		MemoryContextDelete(s->curTransactionContext);
+	s->curTransactionContext = NULL;
 }
 
 /* ----------------------------------------------------------------
@@ -1156,7 +1266,13 @@ AtSubCleanup_Memory(void)
 static void
 StartTransaction(void)
 {
-	TransactionState s = CurrentTransactionState;
+	TransactionState s;
+
+	/*
+	 * Let's just make sure the state stack is empty
+	 */
+	s = &TopTransactionStateData;
+	CurrentTransactionState = s;
 
 	/*
 	 * check the current transaction state
@@ -1180,6 +1296,13 @@ StartTransaction(void)
 	XactReadOnly = DefaultXactReadOnly;
 
 	/*
+	 * reinitialize within-transaction counters
+	 */
+	s->subTransactionId = TopSubTransactionId;
+	currentSubTransactionId = TopSubTransactionId;
+	currentCommandId = FirstCommandId;
+
+	/*
 	 * must initialize resource-management stuff first
 	 */
 	AtStart_Memory();
@@ -1188,9 +1311,9 @@ StartTransaction(void)
 	/*
 	 * generate a new transaction id
 	 */
-	s->transactionIdData = GetNewTransactionId(false);
+	s->transactionId = GetNewTransactionId(false);
 
-	XactLockTableInsert(s->transactionIdData);
+	XactLockTableInsert(s->transactionId);
 
 	/*
 	 * set now()
@@ -1200,7 +1323,6 @@ StartTransaction(void)
 	/*
 	 * initialize current transaction state fields
 	 */
-	s->commandId = FirstCommandId;
 	s->nestingLevel = 1;
 	s->childXids = NIL;
 
@@ -1332,7 +1454,7 @@ CommitTransaction(void)
 	 * backend-wide state.
 	 */
 
-	CallXactCallbacks(XACT_EVENT_COMMIT, InvalidTransactionId);
+	CallXactCallbacks(XACT_EVENT_COMMIT);
 
 	ResourceOwnerRelease(TopTransactionResourceOwner,
 						 RESOURCE_RELEASE_BEFORE_LOCKS,
@@ -1365,7 +1487,7 @@ CommitTransaction(void)
 
 	AtEOXact_GUC(true, false);
 	AtEOXact_SPI(true);
-	AtEOXact_on_commit_actions(true, s->transactionIdData);
+	AtEOXact_on_commit_actions(true);
 	AtEOXact_Namespace(true);
 	/* smgrcommit already done */
 	AtEOXact_Files();
@@ -1379,6 +1501,8 @@ CommitTransaction(void)
 
 	AtCommit_Memory();
 
+	s->transactionId = InvalidTransactionId;
+	s->subTransactionId = InvalidSubTransactionId;
 	s->nestingLevel = 0;
 	s->childXids = NIL;
 
@@ -1486,7 +1610,7 @@ AbortTransaction(void)
 	 * ordering.
 	 */
 
-	CallXactCallbacks(XACT_EVENT_ABORT, InvalidTransactionId);
+	CallXactCallbacks(XACT_EVENT_ABORT);
 
 	ResourceOwnerRelease(TopTransactionResourceOwner,
 						 RESOURCE_RELEASE_BEFORE_LOCKS,
@@ -1502,7 +1626,7 @@ AbortTransaction(void)
 
 	AtEOXact_GUC(false, false);
 	AtEOXact_SPI(false);
-	AtEOXact_on_commit_actions(false, s->transactionIdData);
+	AtEOXact_on_commit_actions(false);
 	AtEOXact_Namespace(false);
 	smgrabort();
 	AtEOXact_Files();
@@ -1535,13 +1659,16 @@ CleanupTransaction(void)
 	AtCleanup_Portals();		/* now safe to release portal memory */
 
 	CurrentResourceOwner = NULL;	/* and resource owner */
-	ResourceOwnerDelete(TopTransactionResourceOwner);
+	if (TopTransactionResourceOwner)
+		ResourceOwnerDelete(TopTransactionResourceOwner);
 	s->curTransactionOwner = NULL;
 	CurTransactionResourceOwner = NULL;
 	TopTransactionResourceOwner = NULL;
 
 	AtCleanup_Memory();			/* and transaction memory */
 
+	s->transactionId = InvalidTransactionId;
+	s->subTransactionId = InvalidSubTransactionId;
 	s->nestingLevel = 0;
 	s->childXids = NIL;
 
@@ -1572,20 +1699,23 @@ StartTransactionCommand(void)
 			break;
 
 			/*
-			 * This is the case when we are somewhere in a transaction
-			 * block and about to start a new command.	For now we do
-			 * nothing but someday we may do command-local resource
-			 * initialization.
+			 * We are somewhere in a transaction block or subtransaction
+			 * and about to start a new command.  For now we do nothing,
+			 * but someday we may do command-local resource initialization.
+			 * (Note that any needed CommandCounterIncrement was done by
+			 * the previous CommitTransactionCommand.)
 			 */
 		case TBLOCK_INPROGRESS:
 		case TBLOCK_SUBINPROGRESS:
 			break;
 
 			/*
-			 * Here we are in the middle of a transaction block but one of
-			 * the commands caused an abort so we do nothing but remain in
-			 * the abort state.  Eventually we will get to the "END
-			 * TRANSACTION" which will set things straight.
+			 * Here we are in a failed transaction block (one of
+			 * the commands caused an abort) so we do nothing but remain in
+			 * the abort state.  Eventually we will get a ROLLBACK command
+			 * which will get us out of this state.  (It is up to other
+			 * code to ensure that no commands other than ROLLBACK will be
+			 * processed in these states.)
 			 */
 		case TBLOCK_ABORT:
 		case TBLOCK_SUBABORT:
@@ -1597,12 +1727,13 @@ StartTransactionCommand(void)
 		case TBLOCK_SUBBEGIN:
 		case TBLOCK_END:
 		case TBLOCK_SUBEND:
-		case TBLOCK_SUBENDABORT_ALL:
-		case TBLOCK_SUBENDABORT:
+		case TBLOCK_ABORT_END:
+		case TBLOCK_SUBABORT_END:
+		case TBLOCK_ABORT_PENDING:
 		case TBLOCK_SUBABORT_PENDING:
-		case TBLOCK_SUBENDABORT_RELEASE:
-		case TBLOCK_ENDABORT:
-			elog(FATAL, "StartTransactionCommand: unexpected state %s",
+		case TBLOCK_SUBRESTART:
+		case TBLOCK_SUBABORT_RESTART:
+			elog(ERROR, "StartTransactionCommand: unexpected state %s",
 				 BlockStateAsString(s->blockState));
 			break;
 	}
@@ -1628,18 +1759,16 @@ CommitTransactionCommand(void)
 			/*
 			 * This shouldn't happen, because it means the previous
 			 * StartTransactionCommand didn't set the STARTED state
-			 * appropriately, or we didn't manage previous pending abort
-			 * states.
+			 * appropriately.
 			 */
 		case TBLOCK_DEFAULT:
-		case TBLOCK_SUBABORT_PENDING:
 			elog(FATAL, "CommitTransactionCommand: unexpected state %s",
 				 BlockStateAsString(s->blockState));
 			break;
 
 			/*
 			 * If we aren't in a transaction block, just do our usual
-			 * transaction commit.
+			 * transaction commit, and return to the idle state.
 			 */
 		case TBLOCK_STARTED:
 			CommitTransaction();
@@ -1647,10 +1776,10 @@ CommitTransactionCommand(void)
 			break;
 
 			/*
-			 * This is the case right after we get a "BEGIN TRANSACTION"
-			 * command, but the user hasn't done anything else yet, so we
+			 * We are completing a "BEGIN TRANSACTION" command, so we
 			 * change to the "transaction block in progress" state and
-			 * return.
+			 * return.  (We assume the BEGIN did nothing to the database,
+			 * so we need no CommandCounterIncrement.)
 			 */
 		case TBLOCK_BEGIN:
 			s->blockState = TBLOCK_INPROGRESS;
@@ -1662,13 +1791,13 @@ CommitTransactionCommand(void)
 			 * command counter and return.
 			 */
 		case TBLOCK_INPROGRESS:
+		case TBLOCK_SUBINPROGRESS:
 			CommandCounterIncrement();
 			break;
 
 			/*
-			 * This is the case when we just got the "END TRANSACTION"
-			 * statement, so we commit the transaction and go back to the
-			 * default state.
+			 * We are completing a "COMMIT" command.  Do it and return to
+			 * the idle state.
 			 */
 		case TBLOCK_END:
 			CommitTransaction();
@@ -1678,32 +1807,31 @@ CommitTransactionCommand(void)
 			/*
 			 * Here we are in the middle of a transaction block but one of
 			 * the commands caused an abort so we do nothing but remain in
-			 * the abort state.  Eventually we will get to the "END
-			 * TRANSACTION" which will set things straight.
+			 * the abort state.  Eventually we will get a ROLLBACK comand.
 			 */
 		case TBLOCK_ABORT:
+		case TBLOCK_SUBABORT:
 			break;
 
 			/*
-			 * Here we were in an aborted transaction block which just
-			 * processed the "END TRANSACTION" command from the user, so
-			 * clean up and return to the default state.
+			 * Here we were in an aborted transaction block and we just
+			 * got the ROLLBACK command from the user, so clean up the
+			 * already-aborted transaction and return to the idle state.
 			 */
-		case TBLOCK_ENDABORT:
+		case TBLOCK_ABORT_END:
 			CleanupTransaction();
 			s->blockState = TBLOCK_DEFAULT;
 			break;
 
 			/*
-			 * Ditto, but in a subtransaction.	AbortOutOfAnyTransaction
-			 * will do the dirty work.
+			 * Here we were in a perfectly good transaction block but the
+			 * user told us to ROLLBACK anyway.  We have to abort the
+			 * transaction and then clean up.
 			 */
-		case TBLOCK_SUBENDABORT_ALL:
-			AbortOutOfAnyTransaction();
-			s = CurrentTransactionState;		/* changed by
-												 * AbortOutOfAnyTransaction
-												 * */
-			/* AbortOutOfAnyTransaction sets the blockState */
+		case TBLOCK_ABORT_PENDING:
+			AbortTransaction();
+			CleanupTransaction();
+			s->blockState = TBLOCK_DEFAULT;
 			break;
 
 			/*
@@ -1718,23 +1846,15 @@ CommitTransactionCommand(void)
 			break;
 
 			/*
-			 * Inside a subtransaction, increment the command counter.
-			 */
-		case TBLOCK_SUBINPROGRESS:
-			CommandCounterIncrement();
-			break;
-
-			/*
 			 * We were issued a COMMIT or RELEASE command, so we end the
 			 * current subtransaction and return to the parent transaction.
-			 * Lather, rinse, and repeat until we get out of all SUBEND'ed
-			 * subtransaction levels.
+			 * The parent might be ended too, so repeat till we are all the
+			 * way out or find an INPROGRESS transaction.
 			 */
 		case TBLOCK_SUBEND:
 			do
 			{
 				CommitSubTransaction();
-				PopTransaction();
 				s = CurrentTransactionState;	/* changed by pop */
 			} while (s->blockState == TBLOCK_SUBEND);
 			/* If we had a COMMIT command, finish off the main xact too */
@@ -1744,36 +1864,82 @@ CommitTransactionCommand(void)
 				CommitTransaction();
 				s->blockState = TBLOCK_DEFAULT;
 			}
-			break;
-
-			/*
-			 * If we are in an aborted subtransaction, do nothing.
-			 */
-		case TBLOCK_SUBABORT:
-			break;
-
-			/*
-			 * The current subtransaction is ending.  Do the equivalent of
-			 * a ROLLBACK TO followed by a RELEASE command.
-			 */
-		case TBLOCK_SUBENDABORT_RELEASE:
-			CleanupAbortedSubTransactions(false);
-			break;
-
-			/*
-			 * The current subtransaction is ending due to a ROLLBACK TO
-			 * command, so close all savepoints up to the target level.
-			 * When finished, recreate the savepoint.
-			 */
-		case TBLOCK_SUBENDABORT:
+			else
 			{
-				char	   *name = CleanupAbortedSubTransactions(true);
+				Assert(s->blockState == TBLOCK_INPROGRESS ||
+					   s->blockState == TBLOCK_SUBINPROGRESS);
+			}
+			break;
 
-				Assert(PointerIsValid(name));
-				DefineSavepoint(name);
-				s = CurrentTransactionState;	/* changed by
-												 * DefineSavepoint */
-				pfree(name);
+			/*
+			 * The current already-failed subtransaction is ending due to a
+			 * ROLLBACK or ROLLBACK TO command, so pop it and recursively
+			 * examine the parent (which could be in any of several states).
+			 */
+		case TBLOCK_SUBABORT_END:
+			CleanupSubTransaction();
+			CommitTransactionCommand();
+			break;
+
+			/*
+			 * As above, but it's not dead yet, so abort first.
+			 */
+		case TBLOCK_SUBABORT_PENDING:
+			AbortSubTransaction();
+			CleanupSubTransaction();
+			CommitTransactionCommand();
+			break;
+
+			/*
+			 * The current subtransaction is the target of a ROLLBACK TO
+			 * command.  Abort and pop it, then start a new subtransaction
+			 * with the same name.
+			 */
+		case TBLOCK_SUBRESTART:
+			{
+				char	   *name;
+				int			savepointLevel;
+
+				/* save name and keep Cleanup from freeing it */
+				name = s->name;
+				s->name = NULL;
+				savepointLevel = s->savepointLevel;
+
+				AbortSubTransaction();
+				CleanupSubTransaction();
+
+				DefineSavepoint(NULL);
+				s = CurrentTransactionState;	/* changed by push */
+				s->name = name;
+				s->savepointLevel = savepointLevel;
+
+				/* This is the same as TBLOCK_SUBBEGIN case */
+				AssertState(s->blockState == TBLOCK_SUBBEGIN);
+				StartSubTransaction();
+				s->blockState = TBLOCK_SUBINPROGRESS;
+			}
+			break;
+
+			/*
+			 * Same as above, but the subtransaction had already failed,
+			 * so we don't need AbortSubTransaction.
+			 */
+		case TBLOCK_SUBABORT_RESTART:
+			{
+				char	   *name;
+				int			savepointLevel;
+
+				/* save name and keep Cleanup from freeing it */
+				name = s->name;
+				s->name = NULL;
+				savepointLevel = s->savepointLevel;
+
+				CleanupSubTransaction();
+
+				DefineSavepoint(NULL);
+				s = CurrentTransactionState;	/* changed by push */
+				s->name = name;
+				s->savepointLevel = savepointLevel;
 
 				/* This is the same as TBLOCK_SUBBEGIN case */
 				AssertState(s->blockState == TBLOCK_SUBBEGIN);
@@ -1782,55 +1948,6 @@ CommitTransactionCommand(void)
 			}
 			break;
 	}
-}
-
-/*
- * CleanupAbortedSubTransactions
- *
- * Helper function for CommitTransactionCommand.  Aborts and cleans up
- * dead subtransactions after a ROLLBACK TO command.  Optionally returns
- * the name of the last dead subtransaction so it can be reused to redefine
- * the savepoint.  (Caller is responsible for pfree'ing the result.)
- */
-static char *
-CleanupAbortedSubTransactions(bool returnName)
-{
-	TransactionState s = CurrentTransactionState;
-	char	   *name = NULL;
-
-	AssertState(PointerIsValid(s->parent));
-	Assert(s->parent->blockState == TBLOCK_SUBINPROGRESS ||
-		   s->parent->blockState == TBLOCK_INPROGRESS ||
-		   s->parent->blockState == TBLOCK_STARTED ||
-		   s->parent->blockState == TBLOCK_SUBABORT_PENDING);
-
-	/*
-	 * Abort everything up to the target level.  The current
-	 * subtransaction only needs cleanup.  If we need to save the name,
-	 * look for the last subtransaction in TBLOCK_SUBABORT_PENDING state.
-	 */
-	if (returnName && s->parent->blockState != TBLOCK_SUBABORT_PENDING)
-		name = MemoryContextStrdup(TopMemoryContext, s->name);
-
-	CleanupSubTransaction();
-	PopTransaction();
-	s = CurrentTransactionState;	/* changed by pop */
-
-	while (s->blockState == TBLOCK_SUBABORT_PENDING)
-	{
-		AbortSubTransaction();
-		if (returnName && s->parent->blockState != TBLOCK_SUBABORT_PENDING)
-			name = MemoryContextStrdup(TopMemoryContext, s->name);
-		CleanupSubTransaction();
-		PopTransaction();
-		s = CurrentTransactionState;
-	}
-
-	AssertState(s->blockState == TBLOCK_SUBINPROGRESS ||
-				s->blockState == TBLOCK_INPROGRESS ||
-				s->blockState == TBLOCK_STARTED);
-
-	return name;
 }
 
 /*
@@ -1861,32 +1978,32 @@ AbortCurrentTransaction(void)
 
 			/*
 			 * If we are in TBLOCK_BEGIN it means something screwed up
-			 * right after reading "BEGIN TRANSACTION" so we enter the
-			 * abort state.  Eventually an "END TRANSACTION" will fix
-			 * things.
+			 * right after reading "BEGIN TRANSACTION".  We assume that
+			 * the user will interpret the error as meaning the BEGIN
+			 * failed to get him into a transaction block, so we should
+			 * abort and return to idle state.
 			 */
 		case TBLOCK_BEGIN:
 			AbortTransaction();
-			s->blockState = TBLOCK_ABORT;
-			/* CleanupTransaction happens when we exit TBLOCK_ENDABORT */
+			CleanupTransaction();
+			s->blockState = TBLOCK_DEFAULT;
 			break;
 
 			/*
-			 * This is the case when we are somewhere in a transaction
-			 * block and we've gotten a failure, so we abort the
-			 * transaction and set up the persistent ABORT state.  We will
-			 * stay in ABORT until we get an "END TRANSACTION".
+			 * We are somewhere in a transaction block and we've gotten a
+			 * failure, so we abort the transaction and set up the persistent
+			 * ABORT state.  We will stay in ABORT until we get a ROLLBACK.
 			 */
 		case TBLOCK_INPROGRESS:
 			AbortTransaction();
 			s->blockState = TBLOCK_ABORT;
-			/* CleanupTransaction happens when we exit TBLOCK_ENDABORT */
+			/* CleanupTransaction happens when we exit TBLOCK_ABORT_END */
 			break;
 
 			/*
-			 * Here, the system was fouled up just after the user wanted
-			 * to end the transaction block so we abort the transaction
-			 * and return to the default state.
+			 * Here, we failed while trying to COMMIT.  Clean up the
+			 * transaction and return to idle state (we do not want to
+			 * stay in the transaction).
 			 */
 		case TBLOCK_END:
 			AbortTransaction();
@@ -1896,73 +2013,64 @@ AbortCurrentTransaction(void)
 
 			/*
 			 * Here, we are already in an aborted transaction state and
-			 * are waiting for an "END TRANSACTION" to come along and lo
-			 * and behold, we abort again! So we just remain in the abort
-			 * state.
+			 * are waiting for a ROLLBACK, but for some reason we failed
+			 * again!  So we just remain in the abort state.
 			 */
 		case TBLOCK_ABORT:
 		case TBLOCK_SUBABORT:
 			break;
 
 			/*
-			 * Here we were in an aborted transaction block which just
-			 * processed the "END TRANSACTION" command but somehow aborted
-			 * again.. since we must have done the abort processing, we
-			 * clean up and return to the default state.
+			 * We are in a failed transaction and we got the ROLLBACK command.
+			 * We have already aborted, we just need to cleanup and go to
+			 * idle state.
 			 */
-		case TBLOCK_ENDABORT:
+		case TBLOCK_ABORT_END:
 			CleanupTransaction();
 			s->blockState = TBLOCK_DEFAULT;
 			break;
 
 			/*
-			 * If we are just starting a subtransaction, put it in aborted
-			 * state.
+			 * We are in a live transaction and we got a ROLLBACK command.
+			 * Abort, cleanup, go to idle state.
 			 */
-		case TBLOCK_SUBBEGIN:
-			StartAbortedSubTransaction();
-			s->blockState = TBLOCK_SUBABORT;
+		case TBLOCK_ABORT_PENDING:
+			AbortTransaction();
+			CleanupTransaction();
+			s->blockState = TBLOCK_DEFAULT;
 			break;
 
+			/*
+			 * We got an error inside a subtransaction.  Abort just the
+			 * subtransaction, and go to the persistent SUBABORT state
+			 * until we get ROLLBACK.
+			 */
 		case TBLOCK_SUBINPROGRESS:
 			AbortSubTransaction();
 			s->blockState = TBLOCK_SUBABORT;
 			break;
 
 			/*
-			 * If we are aborting an ending transaction, we have to abort
-			 * the parent transaction too.
+			 * If we failed while trying to create a subtransaction, clean up
+			 * the broken subtransaction and abort the parent.  The same
+			 * applies if we get a failure while ending a subtransaction.
 			 */
+		case TBLOCK_SUBBEGIN:
 		case TBLOCK_SUBEND:
 		case TBLOCK_SUBABORT_PENDING:
+		case TBLOCK_SUBRESTART:
 			AbortSubTransaction();
 			CleanupSubTransaction();
-			PopTransaction();
-			s = CurrentTransactionState;		/* changed by pop */
-			Assert(s->blockState != TBLOCK_SUBEND &&
-				   s->blockState != TBLOCK_SUBENDABORT);
 			AbortCurrentTransaction();
 			break;
 
 			/*
 			 * Same as above, except the Abort() was already done.
 			 */
-		case TBLOCK_SUBENDABORT:
-		case TBLOCK_SUBENDABORT_RELEASE:
+		case TBLOCK_SUBABORT_END:
+		case TBLOCK_SUBABORT_RESTART:
 			CleanupSubTransaction();
-			PopTransaction();
-			s = CurrentTransactionState;		/* changed by pop */
-			Assert(s->blockState != TBLOCK_SUBEND &&
-				   s->blockState != TBLOCK_SUBENDABORT);
 			AbortCurrentTransaction();
-			break;
-
-			/*
-			 * We are already aborting the whole transaction tree. Do
-			 * nothing, CommitTransactionCommand will call
-			 * AbortOutOfAnyTransaction and set things straight.
-			 */
-		case TBLOCK_SUBENDABORT_ALL:
 			break;
 	}
 }
@@ -2113,9 +2221,7 @@ IsInTransactionChain(void *stmtNode)
  * (mainly because it's easier to control the order that way, where needed).
  *
  * At transaction end, the callback occurs post-commit or post-abort, so the
- * callback functions can only do noncritical cleanup.	At subtransaction
- * start, the callback is called when the subtransaction has finished
- * initializing.
+ * callback functions can only do noncritical cleanup.
  */
 void
 RegisterXactCallback(XactCallback callback, void *arg)
@@ -2152,12 +2258,69 @@ UnregisterXactCallback(XactCallback callback, void *arg)
 }
 
 static void
-CallXactCallbacks(XactEvent event, TransactionId parentXid)
+CallXactCallbacks(XactEvent event)
 {
 	XactCallbackItem *item;
 
 	for (item = Xact_callbacks; item; item = item->next)
-		(*item->callback) (event, parentXid, item->arg);
+		(*item->callback) (event, item->arg);
+}
+
+
+/*
+ * Register or deregister callback functions for start- and end-of-subxact
+ * operations.
+ *
+ * Pretty much same as above, but for subtransaction events.
+ *
+ * At subtransaction end, the callback occurs post-subcommit or post-subabort,
+ * so the callback functions can only do noncritical cleanup.  At
+ * subtransaction start, the callback is called when the subtransaction has
+ * finished initializing.
+ */
+void
+RegisterSubXactCallback(SubXactCallback callback, void *arg)
+{
+	SubXactCallbackItem *item;
+
+	item = (SubXactCallbackItem *)
+		MemoryContextAlloc(TopMemoryContext, sizeof(SubXactCallbackItem));
+	item->callback = callback;
+	item->arg = arg;
+	item->next = SubXact_callbacks;
+	SubXact_callbacks = item;
+}
+
+void
+UnregisterSubXactCallback(SubXactCallback callback, void *arg)
+{
+	SubXactCallbackItem *item;
+	SubXactCallbackItem *prev;
+
+	prev = NULL;
+	for (item = SubXact_callbacks; item; prev = item, item = item->next)
+	{
+		if (item->callback == callback && item->arg == arg)
+		{
+			if (prev)
+				prev->next = item->next;
+			else
+				SubXact_callbacks = item->next;
+			pfree(item);
+			break;
+		}
+	}
+}
+
+static void
+CallSubXactCallbacks(SubXactEvent event,
+					 SubTransactionId mySubid,
+					 SubTransactionId parentSubid)
+{
+	SubXactCallbackItem *item;
+
+	for (item = SubXact_callbacks; item; item = item->next)
+		(*item->callback) (event, mySubid, parentSubid, item->arg);
 }
 
 
@@ -2197,17 +2360,18 @@ BeginTransactionBlock(void)
 				  errmsg("there is already a transaction in progress")));
 			break;
 
-			/* These cases are invalid.  Reject them altogether. */
+			/* These cases are invalid. */
 		case TBLOCK_DEFAULT:
 		case TBLOCK_BEGIN:
 		case TBLOCK_SUBBEGIN:
-		case TBLOCK_ENDABORT:
 		case TBLOCK_END:
-		case TBLOCK_SUBENDABORT_ALL:
-		case TBLOCK_SUBENDABORT:
-		case TBLOCK_SUBABORT_PENDING:
-		case TBLOCK_SUBENDABORT_RELEASE:
 		case TBLOCK_SUBEND:
+		case TBLOCK_ABORT_END:
+		case TBLOCK_SUBABORT_END:
+		case TBLOCK_ABORT_PENDING:
+		case TBLOCK_SUBABORT_PENDING:
+		case TBLOCK_SUBRESTART:
+		case TBLOCK_SUBABORT_RESTART:
 			elog(FATAL, "BeginTransactionBlock: unexpected state %s",
 				 BlockStateAsString(s->blockState));
 			break;
@@ -2220,6 +2384,11 @@ BeginTransactionBlock(void)
  *
  * Since COMMIT may actually do a ROLLBACK, the result indicates what
  * happened: TRUE for COMMIT, FALSE for ROLLBACK.
+ *
+ * Note that we don't actually do anything here except change blockState.
+ * The real work will be done in the upcoming CommitTransactionCommand().
+ * We do it this way because it's not convenient to change memory context,
+ * resource owner, etc while executing inside a Portal.
  */
 bool
 EndTransactionBlock(void)
@@ -2230,11 +2399,8 @@ EndTransactionBlock(void)
 	switch (s->blockState)
 	{
 			/*
-			 * We are in a transaction block which should commit when we
-			 * get to the upcoming CommitTransactionCommand() so we set
-			 * the state to "END".	CommitTransactionCommand() will
-			 * recognize this and commit the transaction and return us to
-			 * the default state.
+			 * We are in a transaction block, so tell CommitTransactionCommand
+			 * to COMMIT.
 			 */
 		case TBLOCK_INPROGRESS:
 			s->blockState = TBLOCK_END;
@@ -2242,14 +2408,11 @@ EndTransactionBlock(void)
 			break;
 
 			/*
-			 * We are in a transaction block which aborted. Since the
-			 * AbortTransaction() was already done, we need only change to
-			 * the special "END ABORT" state.  The upcoming
-			 * CommitTransactionCommand() will recognise this and then put
-			 * us back in the default state.
+			 * We are in a failed transaction block.  Tell
+			 * CommitTransactionCommand it's time to exit the block.
 			 */
 		case TBLOCK_ABORT:
-			s->blockState = TBLOCK_ENDABORT;
+			s->blockState = TBLOCK_ABORT_END;
 			break;
 
 			/*
@@ -2259,25 +2422,46 @@ EndTransactionBlock(void)
 		case TBLOCK_SUBINPROGRESS:
 			while (s->parent != NULL)
 			{
-				Assert(s->blockState == TBLOCK_SUBINPROGRESS);
-				s->blockState = TBLOCK_SUBEND;
+				if (s->blockState == TBLOCK_SUBINPROGRESS)
+					s->blockState = TBLOCK_SUBEND;
+				else
+					elog(FATAL, "EndTransactionBlock: unexpected state %s",
+						 BlockStateAsString(s->blockState));
 				s = s->parent;
 			}
-			Assert(s->blockState == TBLOCK_INPROGRESS);
-			s->blockState = TBLOCK_END;
+			if (s->blockState == TBLOCK_INPROGRESS)
+				s->blockState = TBLOCK_END;
+			else
+				elog(FATAL, "EndTransactionBlock: unexpected state %s",
+					 BlockStateAsString(s->blockState));
 			result = true;
 			break;
 
 			/*
-			 * Here we are inside an aborted subtransaction.  Go to the
-			 * "abort the whole tree" state so that
-			 * CommitTransactionCommand() calls AbortOutOfAnyTransaction.
+			 * Here we are inside an aborted subtransaction.  Treat the
+			 * COMMIT as ROLLBACK: set up to abort everything and exit
+			 * the main transaction.
 			 */
 		case TBLOCK_SUBABORT:
-			s->blockState = TBLOCK_SUBENDABORT_ALL;
+			while (s->parent != NULL)
+			{
+				if (s->blockState == TBLOCK_SUBINPROGRESS)
+					s->blockState = TBLOCK_SUBABORT_PENDING;
+				else if (s->blockState == TBLOCK_SUBABORT)
+					s->blockState = TBLOCK_SUBABORT_END;
+				else
+					elog(FATAL, "EndTransactionBlock: unexpected state %s",
+						 BlockStateAsString(s->blockState));
+				s = s->parent;
+			}
+			if (s->blockState == TBLOCK_INPROGRESS)
+				s->blockState = TBLOCK_ABORT_PENDING;
+			else if (s->blockState == TBLOCK_ABORT)
+				s->blockState = TBLOCK_ABORT_END;
+			else
+				elog(FATAL, "EndTransactionBlock: unexpected state %s",
+					 BlockStateAsString(s->blockState));
 			break;
-
-		case TBLOCK_STARTED:
 
 			/*
 			 * here, the user issued COMMIT when not inside a transaction.
@@ -2285,24 +2469,25 @@ EndTransactionBlock(void)
 			 * to CommitTransactionCommand() will then put us back into
 			 * the default state.
 			 */
+		case TBLOCK_STARTED:
 			ereport(WARNING,
 					(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
 					 errmsg("there is no transaction in progress")));
-			AbortTransaction();
-			s->blockState = TBLOCK_ENDABORT;
+			s->blockState = TBLOCK_ABORT_PENDING;
 			break;
 
-			/* these cases are invalid. */
+			/* These cases are invalid. */
 		case TBLOCK_DEFAULT:
 		case TBLOCK_BEGIN:
-		case TBLOCK_ENDABORT:
-		case TBLOCK_END:
 		case TBLOCK_SUBBEGIN:
+		case TBLOCK_END:
 		case TBLOCK_SUBEND:
-		case TBLOCK_SUBENDABORT_ALL:
-		case TBLOCK_SUBENDABORT:
+		case TBLOCK_ABORT_END:
+		case TBLOCK_SUBABORT_END:
+		case TBLOCK_ABORT_PENDING:
 		case TBLOCK_SUBABORT_PENDING:
-		case TBLOCK_SUBENDABORT_RELEASE:
+		case TBLOCK_SUBRESTART:
+		case TBLOCK_SUBABORT_RESTART:
 			elog(FATAL, "EndTransactionBlock: unexpected state %s",
 				 BlockStateAsString(s->blockState));
 			break;
@@ -2314,6 +2499,8 @@ EndTransactionBlock(void)
 /*
  *	UserAbortTransactionBlock
  *		This executes a ROLLBACK command.
+ *
+ * As above, we don't actually do anything here except change blockState.
  */
 void
 UserAbortTransactionBlock(void)
@@ -2323,46 +2510,48 @@ UserAbortTransactionBlock(void)
 	switch (s->blockState)
 	{
 			/*
-			 * We are inside a failed transaction block and we got an
-			 * abort command from the user.  Abort processing is already
-			 * done, we just need to move to the ENDABORT state so we will
-			 * end up in the default state after the upcoming
-			 * CommitTransactionCommand().
-			 */
-		case TBLOCK_ABORT:
-			s->blockState = TBLOCK_ENDABORT;
-			break;
-
-			/*
-			 * We are inside a failed subtransaction and we got an abort
-			 * command from the user.  Abort processing is already done,
-			 * so go to the "abort all" state and CommitTransactionCommand
-			 * will call AbortOutOfAnyTransaction to set things straight.
-			 */
-		case TBLOCK_SUBABORT:
-			s->blockState = TBLOCK_SUBENDABORT_ALL;
-			break;
-
-			/*
-			 * We are inside a transaction block and we got an abort
-			 * command from the user, so we move to the ENDABORT state and
-			 * do abort processing so we will end up in the default state
-			 * after the upcoming CommitTransactionCommand().
+			 * We are inside a transaction block and we got a ROLLBACK
+			 * command from the user, so tell CommitTransactionCommand
+			 * to abort and exit the transaction block.
 			 */
 		case TBLOCK_INPROGRESS:
-			AbortTransaction();
-			s->blockState = TBLOCK_ENDABORT;
+			s->blockState = TBLOCK_ABORT_PENDING;
 			break;
 
 			/*
-			 * We are inside a subtransaction.	Abort the current
-			 * subtransaction and go to the "abort all" state, so
-			 * CommitTransactionCommand will call AbortOutOfAnyTransaction
-			 * to set things straight.
+			 * We are inside a failed transaction block and we got a ROLLBACK
+			 * command from the user.  Abort processing is already done,
+			 * so CommitTransactionCommand just has to cleanup and go back
+			 * to idle state.
+			 */
+		case TBLOCK_ABORT:
+			s->blockState = TBLOCK_ABORT_END;
+			break;
+
+			/*
+			 * We are inside a subtransaction.  Mark everything
+			 * up to top level as exitable.
 			 */
 		case TBLOCK_SUBINPROGRESS:
-			AbortSubTransaction();
-			s->blockState = TBLOCK_SUBENDABORT_ALL;
+		case TBLOCK_SUBABORT:
+			while (s->parent != NULL)
+			{
+				if (s->blockState == TBLOCK_SUBINPROGRESS)
+					s->blockState = TBLOCK_SUBABORT_PENDING;
+				else if (s->blockState == TBLOCK_SUBABORT)
+					s->blockState = TBLOCK_SUBABORT_END;
+				else
+					elog(FATAL, "UserAbortTransactionBlock: unexpected state %s",
+						 BlockStateAsString(s->blockState));
+				s = s->parent;
+			}
+			if (s->blockState == TBLOCK_INPROGRESS)
+				s->blockState = TBLOCK_ABORT_PENDING;
+			else if (s->blockState == TBLOCK_ABORT)
+				s->blockState = TBLOCK_ABORT_END;
+			else
+				elog(FATAL, "UserAbortTransactionBlock: unexpected state %s",
+					 BlockStateAsString(s->blockState));
 			break;
 
 			/*
@@ -2375,21 +2564,21 @@ UserAbortTransactionBlock(void)
 			ereport(WARNING,
 					(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
 					 errmsg("there is no transaction in progress")));
-			AbortTransaction();
-			s->blockState = TBLOCK_ENDABORT;
+			s->blockState = TBLOCK_ABORT_PENDING;
 			break;
 
 			/* These cases are invalid. */
 		case TBLOCK_DEFAULT:
 		case TBLOCK_BEGIN:
-		case TBLOCK_END:
-		case TBLOCK_ENDABORT:
-		case TBLOCK_SUBEND:
-		case TBLOCK_SUBENDABORT_ALL:
-		case TBLOCK_SUBENDABORT:
-		case TBLOCK_SUBABORT_PENDING:
-		case TBLOCK_SUBENDABORT_RELEASE:
 		case TBLOCK_SUBBEGIN:
+		case TBLOCK_END:
+		case TBLOCK_SUBEND:
+		case TBLOCK_ABORT_END:
+		case TBLOCK_SUBABORT_END:
+		case TBLOCK_ABORT_PENDING:
+		case TBLOCK_SUBABORT_PENDING:
+		case TBLOCK_SUBRESTART:
+		case TBLOCK_SUBABORT_RESTART:
 			elog(FATAL, "UserAbortTransactionBlock: unexpected state %s",
 				 BlockStateAsString(s->blockState));
 			break;
@@ -2414,28 +2603,28 @@ DefineSavepoint(char *name)
 			s = CurrentTransactionState;		/* changed by push */
 
 			/*
-			 * Note that we are allocating the savepoint name in the
-			 * parent transaction's CurTransactionContext, since we don't
-			 * yet have a transaction context for the new guy.
+			 * Savepoint names, like the TransactionState block itself,
+			 * live in TopTransactionContext.
 			 */
-			s->name = MemoryContextStrdup(CurTransactionContext, name);
-			s->blockState = TBLOCK_SUBBEGIN;
+			if (name)
+				s->name = MemoryContextStrdup(TopTransactionContext, name);
 			break;
 
-			/* These cases are invalid.  Reject them altogether. */
+			/* These cases are invalid. */
 		case TBLOCK_DEFAULT:
 		case TBLOCK_STARTED:
 		case TBLOCK_BEGIN:
 		case TBLOCK_SUBBEGIN:
+		case TBLOCK_END:
+		case TBLOCK_SUBEND:
 		case TBLOCK_ABORT:
 		case TBLOCK_SUBABORT:
-		case TBLOCK_ENDABORT:
-		case TBLOCK_END:
-		case TBLOCK_SUBENDABORT_ALL:
-		case TBLOCK_SUBENDABORT:
+		case TBLOCK_ABORT_END:
+		case TBLOCK_SUBABORT_END:
+		case TBLOCK_ABORT_PENDING:
 		case TBLOCK_SUBABORT_PENDING:
-		case TBLOCK_SUBENDABORT_RELEASE:
-		case TBLOCK_SUBEND:
+		case TBLOCK_SUBRESTART:
+		case TBLOCK_SUBABORT_RESTART:
 			elog(FATAL, "DefineSavepoint: unexpected state %s",
 				 BlockStateAsString(s->blockState));
 			break;
@@ -2445,6 +2634,8 @@ DefineSavepoint(char *name)
 /*
  * ReleaseSavepoint
  *		This executes a RELEASE command.
+ *
+ * As above, we don't actually do anything here except change blockState.
  */
 void
 ReleaseSavepoint(List *options)
@@ -2455,13 +2646,13 @@ ReleaseSavepoint(List *options)
 	ListCell   *cell;
 	char	   *name = NULL;
 
-	/*
-	 * Check valid block state transaction status.
-	 */
 	switch (s->blockState)
 	{
+			/*
+			 * We can't rollback to a savepoint if there is no savepoint
+			 * defined.
+			 */
 		case TBLOCK_INPROGRESS:
-		case TBLOCK_ABORT:
 			ereport(ERROR,
 					(errcode(ERRCODE_S_E_INVALID_SPECIFICATION),
 					 errmsg("no such savepoint")));
@@ -2474,19 +2665,21 @@ ReleaseSavepoint(List *options)
 		case TBLOCK_SUBINPROGRESS:
 			break;
 
-			/* these cases are invalid. */
+			/* These cases are invalid. */
 		case TBLOCK_DEFAULT:
 		case TBLOCK_STARTED:
 		case TBLOCK_BEGIN:
-		case TBLOCK_ENDABORT:
-		case TBLOCK_END:
-		case TBLOCK_SUBABORT:
 		case TBLOCK_SUBBEGIN:
+		case TBLOCK_END:
 		case TBLOCK_SUBEND:
-		case TBLOCK_SUBENDABORT_ALL:
-		case TBLOCK_SUBENDABORT:
+		case TBLOCK_ABORT:
+		case TBLOCK_SUBABORT:
+		case TBLOCK_ABORT_END:
+		case TBLOCK_SUBABORT_END:
+		case TBLOCK_ABORT_PENDING:
 		case TBLOCK_SUBABORT_PENDING:
-		case TBLOCK_SUBENDABORT_RELEASE:
+		case TBLOCK_SUBRESTART:
+		case TBLOCK_SUBABORT_RESTART:
 			elog(FATAL, "ReleaseSavepoint: unexpected state %s",
 				 BlockStateAsString(s->blockState));
 			break;
@@ -2539,6 +2732,8 @@ ReleaseSavepoint(List *options)
 /*
  * RollbackToSavepoint
  *		This executes a ROLLBACK TO <savepoint> command.
+ *
+ * As above, we don't actually do anything here except change blockState.
  */
 void
 RollbackToSavepoint(List *options)
@@ -2552,11 +2747,11 @@ RollbackToSavepoint(List *options)
 	switch (s->blockState)
 	{
 			/*
-			 * We can't rollback to a savepoint if there is no saveopint
+			 * We can't rollback to a savepoint if there is no savepoint
 			 * defined.
 			 */
-		case TBLOCK_ABORT:
 		case TBLOCK_INPROGRESS:
+		case TBLOCK_ABORT:
 			ereport(ERROR,
 					(errcode(ERRCODE_S_E_INVALID_SPECIFICATION),
 					 errmsg("no such savepoint")));
@@ -2565,27 +2760,23 @@ RollbackToSavepoint(List *options)
 			/*
 			 * There is at least one savepoint, so proceed.
 			 */
-		case TBLOCK_SUBABORT:
 		case TBLOCK_SUBINPROGRESS:
-
-			/*
-			 * Have to do AbortSubTransaction, but first check if this is
-			 * the right subtransaction
-			 */
+		case TBLOCK_SUBABORT:
 			break;
 
-			/* these cases are invalid. */
+			/* These cases are invalid. */
 		case TBLOCK_DEFAULT:
 		case TBLOCK_STARTED:
 		case TBLOCK_BEGIN:
-		case TBLOCK_END:
-		case TBLOCK_ENDABORT:
-		case TBLOCK_SUBEND:
-		case TBLOCK_SUBENDABORT_ALL:
-		case TBLOCK_SUBENDABORT:
-		case TBLOCK_SUBABORT_PENDING:
-		case TBLOCK_SUBENDABORT_RELEASE:
 		case TBLOCK_SUBBEGIN:
+		case TBLOCK_END:
+		case TBLOCK_SUBEND:
+		case TBLOCK_ABORT_END:
+		case TBLOCK_SUBABORT_END:
+		case TBLOCK_ABORT_PENDING:
+		case TBLOCK_SUBABORT_PENDING:
+		case TBLOCK_SUBRESTART:
+		case TBLOCK_SUBABORT_RESTART:
 			elog(FATAL, "RollbackToSavepoint: unexpected state %s",
 				 BlockStateAsString(s->blockState));
 			break;
@@ -2619,27 +2810,34 @@ RollbackToSavepoint(List *options)
 				 errmsg("no such savepoint")));
 
 	/*
-	 * Abort the current subtransaction, if needed.  We can't Cleanup the
-	 * savepoint yet, so signal CommitTransactionCommand to do it and
-	 * close all savepoints up to the target level.
-	 */
-	if (s->blockState == TBLOCK_SUBINPROGRESS)
-		AbortSubTransaction();
-	s->blockState = TBLOCK_SUBENDABORT;
-
-	/*
 	 * Mark "abort pending" all subtransactions up to the target
-	 * subtransaction.	(Except the current subtransaction!)
+	 * subtransaction.	The actual aborts will happen when control gets
+	 * to CommitTransactionCommand.
 	 */
 	xact = CurrentTransactionState;
-
-	while (xact != target)
+	for (;;)
 	{
+		if (xact == target)
+			break;
+		if (xact->blockState == TBLOCK_SUBINPROGRESS)
+			xact->blockState = TBLOCK_SUBABORT_PENDING;
+		else if (xact->blockState == TBLOCK_SUBABORT)
+			xact->blockState = TBLOCK_SUBABORT_END;
+		else
+			elog(FATAL, "RollbackToSavepoint: unexpected state %s",
+				 BlockStateAsString(xact->blockState));
 		xact = xact->parent;
 		Assert(PointerIsValid(xact));
-		Assert(xact->blockState == TBLOCK_SUBINPROGRESS);
-		xact->blockState = TBLOCK_SUBABORT_PENDING;
 	}
+
+	/* And mark the target as "restart pending" */
+	if (xact->blockState == TBLOCK_SUBINPROGRESS)
+		xact->blockState = TBLOCK_SUBRESTART;
+	else if (xact->blockState == TBLOCK_SUBABORT)
+		xact->blockState = TBLOCK_SUBABORT_RESTART;
+	else
+		elog(FATAL, "RollbackToSavepoint: unexpected state %s",
+			 BlockStateAsString(xact->blockState));
 }
 
 /*
@@ -2649,8 +2847,6 @@ RollbackToSavepoint(List *options)
  *		be called when not inside a BEGIN block.  Also, we automatically
  *		cycle through CommitTransactionCommand/StartTransactionCommand
  *		instead of expecting the caller to do it.
- *
- * Optionally, name can be NULL to create an unnamed savepoint.
  */
 void
 BeginInternalSubTransaction(char *name)
@@ -2667,28 +2863,27 @@ BeginInternalSubTransaction(char *name)
 			s = CurrentTransactionState;		/* changed by push */
 
 			/*
-			 * Note that we are allocating the savepoint name in the
-			 * parent transaction's CurTransactionContext, since we don't
-			 * yet have a transaction context for the new guy.
+			 * Savepoint names, like the TransactionState block itself,
+			 * live in TopTransactionContext.
 			 */
 			if (name)
-				s->name = MemoryContextStrdup(CurTransactionContext, name);
-			s->blockState = TBLOCK_SUBBEGIN;
+				s->name = MemoryContextStrdup(TopTransactionContext, name);
 			break;
 
-			/* These cases are invalid.  Reject them altogether. */
+			/* These cases are invalid. */
 		case TBLOCK_DEFAULT:
 		case TBLOCK_BEGIN:
 		case TBLOCK_SUBBEGIN:
+		case TBLOCK_END:
+		case TBLOCK_SUBEND:
 		case TBLOCK_ABORT:
 		case TBLOCK_SUBABORT:
-		case TBLOCK_ENDABORT:
-		case TBLOCK_END:
-		case TBLOCK_SUBENDABORT_ALL:
-		case TBLOCK_SUBENDABORT:
+		case TBLOCK_ABORT_END:
+		case TBLOCK_SUBABORT_END:
+		case TBLOCK_ABORT_PENDING:
 		case TBLOCK_SUBABORT_PENDING:
-		case TBLOCK_SUBENDABORT_RELEASE:
-		case TBLOCK_SUBEND:
+		case TBLOCK_SUBRESTART:
+		case TBLOCK_SUBABORT_RESTART:
 			elog(FATAL, "BeginInternalSubTransaction: unexpected state %s",
 				 BlockStateAsString(s->blockState));
 			break;
@@ -2716,7 +2911,6 @@ ReleaseCurrentSubTransaction(void)
 	Assert(s->state == TRANS_INPROGRESS);
 	MemoryContextSwitchTo(CurTransactionContext);
 	CommitSubTransaction();
-	PopTransaction();
 	s = CurrentTransactionState; /* changed by pop */
 	Assert(s->state == TRANS_INPROGRESS);
 }
@@ -2736,24 +2930,25 @@ RollbackAndReleaseCurrentSubTransaction(void)
 	switch (s->blockState)
 	{
 			/* Must be in a subtransaction */
-		case TBLOCK_SUBABORT:
 		case TBLOCK_SUBINPROGRESS:
+		case TBLOCK_SUBABORT:
 			break;
 
-			/* these cases are invalid. */
+			/* These cases are invalid. */
 		case TBLOCK_DEFAULT:
 		case TBLOCK_STARTED:
-		case TBLOCK_ABORT:
-		case TBLOCK_INPROGRESS:
 		case TBLOCK_BEGIN:
-		case TBLOCK_END:
-		case TBLOCK_ENDABORT:
-		case TBLOCK_SUBEND:
-		case TBLOCK_SUBENDABORT_ALL:
-		case TBLOCK_SUBENDABORT:
-		case TBLOCK_SUBABORT_PENDING:
-		case TBLOCK_SUBENDABORT_RELEASE:
 		case TBLOCK_SUBBEGIN:
+		case TBLOCK_INPROGRESS:
+		case TBLOCK_END:
+		case TBLOCK_SUBEND:
+		case TBLOCK_ABORT:
+		case TBLOCK_ABORT_END:
+		case TBLOCK_SUBABORT_END:
+		case TBLOCK_ABORT_PENDING:
+		case TBLOCK_SUBABORT_PENDING:
+		case TBLOCK_SUBRESTART:
+		case TBLOCK_SUBABORT_RESTART:
 			elog(FATAL, "RollbackAndReleaseCurrentSubTransaction: unexpected state %s",
 				 BlockStateAsString(s->blockState));
 			break;
@@ -2764,10 +2959,14 @@ RollbackAndReleaseCurrentSubTransaction(void)
 	 */
 	if (s->blockState == TBLOCK_SUBINPROGRESS)
 		AbortSubTransaction();
-	s->blockState = TBLOCK_SUBENDABORT_RELEASE;
 
 	/* And clean it up, too */
-	CleanupAbortedSubTransactions(false);
+	CleanupSubTransaction();
+
+	s = CurrentTransactionState;	/* changed by pop */
+	AssertState(s->blockState == TBLOCK_SUBINPROGRESS ||
+				s->blockState == TBLOCK_INPROGRESS ||
+				s->blockState == TBLOCK_STARTED);
 }
 
 /*
@@ -2796,46 +2995,38 @@ AbortOutOfAnyTransaction(void)
 			case TBLOCK_BEGIN:
 			case TBLOCK_INPROGRESS:
 			case TBLOCK_END:
+			case TBLOCK_ABORT_PENDING:
 				/* In a transaction, so clean up */
 				AbortTransaction();
 				CleanupTransaction();
 				s->blockState = TBLOCK_DEFAULT;
 				break;
 			case TBLOCK_ABORT:
-			case TBLOCK_ENDABORT:
+			case TBLOCK_ABORT_END:
 				/* AbortTransaction already done, still need Cleanup */
 				CleanupTransaction();
 				s->blockState = TBLOCK_DEFAULT;
 				break;
-			case TBLOCK_SUBBEGIN:
-
-				/*
-				 * We didn't get as far as starting the subxact, so
-				 * there's nothing to abort.  Just pop back to parent.
-				 */
-				PopTransaction();
-				s = CurrentTransactionState;	/* changed by pop */
-				break;
-			case TBLOCK_SUBINPROGRESS:
-			case TBLOCK_SUBEND:
-			case TBLOCK_SUBABORT_PENDING:
 
 				/*
 				 * In a subtransaction, so clean it up and abort parent
 				 * too
 				 */
+			case TBLOCK_SUBBEGIN:
+			case TBLOCK_SUBINPROGRESS:
+			case TBLOCK_SUBEND:
+			case TBLOCK_SUBABORT_PENDING:
+			case TBLOCK_SUBRESTART:
 				AbortSubTransaction();
 				CleanupSubTransaction();
-				PopTransaction();
 				s = CurrentTransactionState;	/* changed by pop */
 				break;
+
 			case TBLOCK_SUBABORT:
-			case TBLOCK_SUBENDABORT_ALL:
-			case TBLOCK_SUBENDABORT:
-			case TBLOCK_SUBENDABORT_RELEASE:
+			case TBLOCK_SUBABORT_END:
+			case TBLOCK_SUBABORT_RESTART:
 				/* As above, but AbortSubTransaction already done */
 				CleanupSubTransaction();
-				PopTransaction();
 				s = CurrentTransactionState;	/* changed by pop */
 				break;
 		}
@@ -2891,19 +3082,20 @@ TransactionBlockStatusCode(void)
 		case TBLOCK_STARTED:
 			return 'I';			/* idle --- not in transaction */
 		case TBLOCK_BEGIN:
-		case TBLOCK_INPROGRESS:
-		case TBLOCK_END:
-		case TBLOCK_SUBINPROGRESS:
 		case TBLOCK_SUBBEGIN:
+		case TBLOCK_INPROGRESS:
+		case TBLOCK_SUBINPROGRESS:
+		case TBLOCK_END:
 		case TBLOCK_SUBEND:
 			return 'T';			/* in transaction */
 		case TBLOCK_ABORT:
-		case TBLOCK_ENDABORT:
 		case TBLOCK_SUBABORT:
-		case TBLOCK_SUBENDABORT_ALL:
-		case TBLOCK_SUBENDABORT:
+		case TBLOCK_ABORT_END:
+		case TBLOCK_SUBABORT_END:
+		case TBLOCK_ABORT_PENDING:
 		case TBLOCK_SUBABORT_PENDING:
-		case TBLOCK_SUBENDABORT_RELEASE:
+		case TBLOCK_SUBRESTART:
+		case TBLOCK_SUBABORT_RESTART:
 			return 'E';			/* in failed transaction */
 	}
 
@@ -2929,6 +3121,15 @@ IsSubTransaction(void)
 
 /*
  * StartSubTransaction
+ *
+ * If you're wondering why this is separate from PushTransaction: it's because
+ * we can't conveniently do this stuff right inside DefineSavepoint.  The
+ * SAVEPOINT utility command will be executed inside a Portal, and if we
+ * muck with CurrentMemoryContext or CurrentResourceOwner then exit from
+ * the Portal will undo those settings.  So we make DefineSavepoint just
+ * push a dummy transaction block, and when control returns to the main
+ * idle loop, CommitTransactionCommand will be called, and we'll come here
+ * to finish starting the subtransaction.
  */
 static void
 StartSubTransaction(void)
@@ -2942,33 +3143,12 @@ StartSubTransaction(void)
 	s->state = TRANS_START;
 
 	/*
+	 * Initialize subsystems for new subtransaction
+	 *
 	 * must initialize resource-management stuff first
 	 */
 	AtSubStart_Memory();
 	AtSubStart_ResourceOwner();
-
-	/*
-	 * Generate a new Xid and record it in pg_subtrans.  NB: we must make
-	 * the subtrans entry BEFORE the Xid appears anywhere in shared
-	 * storage, such as in the lock table; because until it's made the Xid
-	 * may not appear to be "running" to other backends. See
-	 * GetNewTransactionId.
-	 */
-	s->transactionIdData = GetNewTransactionId(true);
-
-	SubTransSetParent(s->transactionIdData, s->parent->transactionIdData);
-
-	XactLockTableInsert(s->transactionIdData);
-
-	/*
-	 * Finish setup of other transaction state fields.
-	 */
-	s->currentUser = GetUserId();
-	s->prevXactReadOnly = XactReadOnly;
-
-	/*
-	 * Initialize other subsystems for new subtransaction
-	 */
 	AtSubStart_Inval();
 	AtSubStart_Notify();
 	AfterTriggerBeginSubXact();
@@ -2978,13 +3158,17 @@ StartSubTransaction(void)
 	/*
 	 * Call start-of-subxact callbacks
 	 */
-	CallXactCallbacks(XACT_EVENT_START_SUB, s->parent->transactionIdData);
+	CallSubXactCallbacks(SUBXACT_EVENT_START_SUB, s->subTransactionId,
+						 s->parent->subTransactionId);
 
 	ShowTransactionState("StartSubTransaction");
 }
 
 /*
  * CommitSubTransaction
+ *
+ *	The caller has to make sure to always reassign CurrentTransactionState
+ *	if it has a local pointer to it after calling this function.
  */
 static void
 CommitSubTransaction(void)
@@ -3005,28 +3189,42 @@ CommitSubTransaction(void)
 	CommandCounterIncrement();
 
 	/* Mark subtransaction as subcommitted */
-	RecordSubTransactionCommit();
-	AtSubCommit_childXids();
+	if (TransactionIdIsValid(s->transactionId))
+	{
+		RecordSubTransactionCommit();
+		AtSubCommit_childXids();
+	}
 
 	/* Post-commit cleanup */
 	AfterTriggerEndSubXact(true);
-	AtSubCommit_Portals(s->parent->transactionIdData,
+	AtSubCommit_Portals(s->subTransactionId,
+						s->parent->subTransactionId,
 						s->parent->curTransactionOwner);
-	AtEOSubXact_LargeObject(true, s->transactionIdData,
-							s->parent->transactionIdData);
+	AtEOSubXact_LargeObject(true, s->subTransactionId,
+							s->parent->subTransactionId);
 	AtSubCommit_Notify();
-	AtEOSubXact_UpdatePasswordFile(true, s->transactionIdData,
-								   s->parent->transactionIdData);
+	AtEOSubXact_UpdatePasswordFile(true, s->subTransactionId,
+								   s->parent->subTransactionId);
 
-	CallXactCallbacks(XACT_EVENT_COMMIT_SUB, s->parent->transactionIdData);
+	CallSubXactCallbacks(SUBXACT_EVENT_COMMIT_SUB, s->subTransactionId,
+						 s->parent->subTransactionId);
 
 	ResourceOwnerRelease(s->curTransactionOwner,
 						 RESOURCE_RELEASE_BEFORE_LOCKS,
 						 true, false);
-	AtEOSubXact_RelationCache(true, s->transactionIdData,
-							  s->parent->transactionIdData);
+	AtEOSubXact_RelationCache(true, s->subTransactionId,
+							  s->parent->subTransactionId);
 	AtEOSubXact_Inval(true);
 	AtSubCommit_smgr();
+
+	/*
+	 * The only lock we actually release here is the subtransaction XID lock.
+	 * The rest just get transferred to the parent resource owner.
+	 */
+	CurrentResourceOwner = s->curTransactionOwner;
+	if (TransactionIdIsValid(s->transactionId))
+		XactLockTableDelete(s->transactionId);
+
 	ResourceOwnerRelease(s->curTransactionOwner,
 						 RESOURCE_RELEASE_LOCKS,
 						 true, false);
@@ -3035,13 +3233,13 @@ CommitSubTransaction(void)
 						 true, false);
 
 	AtEOXact_GUC(true, true);
-	AtEOSubXact_SPI(true, s->transactionIdData);
-	AtEOSubXact_on_commit_actions(true, s->transactionIdData,
-								  s->parent->transactionIdData);
-	AtEOSubXact_Namespace(true, s->transactionIdData,
-						  s->parent->transactionIdData);
-	AtEOSubXact_Files(true, s->transactionIdData,
-					  s->parent->transactionIdData);
+	AtEOSubXact_SPI(true, s->subTransactionId);
+	AtEOSubXact_on_commit_actions(true, s->subTransactionId,
+								  s->parent->subTransactionId);
+	AtEOSubXact_Namespace(true, s->subTransactionId,
+						  s->parent->subTransactionId);
+	AtEOSubXact_Files(true, s->subTransactionId,
+					  s->parent->subTransactionId);
 
 	/*
 	 * We need to restore the upper transaction's read-only state, in case
@@ -3058,6 +3256,8 @@ CommitSubTransaction(void)
 	AtSubCommit_Memory();
 
 	s->state = TRANS_DEFAULT;
+
+	PopTransaction();
 }
 
 /*
@@ -3099,43 +3299,53 @@ AbortSubTransaction(void)
 	 */
 	AtSubAbort_Memory();
 
-	AfterTriggerEndSubXact(false);
-	AtSubAbort_Portals(s->parent->transactionIdData,
-					   s->parent->curTransactionOwner);
-	AtEOSubXact_LargeObject(false, s->transactionIdData,
-							s->parent->transactionIdData);
-	AtSubAbort_Notify();
-	AtEOSubXact_UpdatePasswordFile(false, s->transactionIdData,
-								   s->parent->transactionIdData);
+	/*
+	 * We can skip all this stuff if the subxact failed before creating
+	 * a ResourceOwner...
+	 */
+	if (s->curTransactionOwner)
+	{
+		AfterTriggerEndSubXact(false);
+		AtSubAbort_Portals(s->subTransactionId,
+						   s->parent->subTransactionId,
+						   s->parent->curTransactionOwner);
+		AtEOSubXact_LargeObject(false, s->subTransactionId,
+								s->parent->subTransactionId);
+		AtSubAbort_Notify();
+		AtEOSubXact_UpdatePasswordFile(false, s->subTransactionId,
+									   s->parent->subTransactionId);
 
-	/* Advertise the fact that we aborted in pg_clog. */
-	RecordSubTransactionAbort();
+		/* Advertise the fact that we aborted in pg_clog. */
+		if (TransactionIdIsValid(s->transactionId))
+			RecordSubTransactionAbort();
 
-	/* Post-abort cleanup */
-	CallXactCallbacks(XACT_EVENT_ABORT_SUB, s->parent->transactionIdData);
+		/* Post-abort cleanup */
+		CallSubXactCallbacks(SUBXACT_EVENT_ABORT_SUB, s->subTransactionId,
+							 s->parent->subTransactionId);
 
-	ResourceOwnerRelease(s->curTransactionOwner,
-						 RESOURCE_RELEASE_BEFORE_LOCKS,
-						 false, false);
-	AtEOSubXact_RelationCache(false, s->transactionIdData,
-							  s->parent->transactionIdData);
-	AtEOSubXact_Inval(false);
-	AtSubAbort_smgr();
-	ResourceOwnerRelease(s->curTransactionOwner,
-						 RESOURCE_RELEASE_LOCKS,
-						 false, false);
-	ResourceOwnerRelease(s->curTransactionOwner,
-						 RESOURCE_RELEASE_AFTER_LOCKS,
-						 false, false);
+		ResourceOwnerRelease(s->curTransactionOwner,
+							 RESOURCE_RELEASE_BEFORE_LOCKS,
+							 false, false);
+		AtEOSubXact_RelationCache(false, s->subTransactionId,
+								  s->parent->subTransactionId);
+		AtEOSubXact_Inval(false);
+		AtSubAbort_smgr();
+		ResourceOwnerRelease(s->curTransactionOwner,
+							 RESOURCE_RELEASE_LOCKS,
+							 false, false);
+		ResourceOwnerRelease(s->curTransactionOwner,
+							 RESOURCE_RELEASE_AFTER_LOCKS,
+							 false, false);
 
-	AtEOXact_GUC(false, true);
-	AtEOSubXact_SPI(false, s->transactionIdData);
-	AtEOSubXact_on_commit_actions(false, s->transactionIdData,
-								  s->parent->transactionIdData);
-	AtEOSubXact_Namespace(false, s->transactionIdData,
-						  s->parent->transactionIdData);
-	AtEOSubXact_Files(false, s->transactionIdData,
-					  s->parent->transactionIdData);
+		AtEOXact_GUC(false, true);
+		AtEOSubXact_SPI(false, s->subTransactionId);
+		AtEOSubXact_on_commit_actions(false, s->subTransactionId,
+									  s->parent->subTransactionId);
+		AtEOSubXact_Namespace(false, s->subTransactionId,
+							  s->parent->subTransactionId);
+		AtEOSubXact_Files(false, s->subTransactionId,
+						  s->parent->subTransactionId);
+	}
 
 	/*
 	 * Reset user id which might have been changed transiently.  Here we
@@ -3165,6 +3375,9 @@ AbortSubTransaction(void)
 
 /*
  * CleanupSubTransaction
+ *
+ *	The caller has to make sure to always reassign CurrentTransactionState
+ *	if it has a local pointer to it after calling this function.
  */
 static void
 CleanupSubTransaction(void)
@@ -3177,67 +3390,24 @@ CleanupSubTransaction(void)
 		elog(WARNING, "CleanupSubTransaction while in %s state",
 			 TransStateAsString(s->state));
 
-	AtSubCleanup_Portals();
+	AtSubCleanup_Portals(s->subTransactionId);
 
 	CurrentResourceOwner = s->parent->curTransactionOwner;
 	CurTransactionResourceOwner = s->parent->curTransactionOwner;
-	ResourceOwnerDelete(s->curTransactionOwner);
+	if (s->curTransactionOwner)
+		ResourceOwnerDelete(s->curTransactionOwner);
 	s->curTransactionOwner = NULL;
 
 	AtSubCleanup_Memory();
 
 	s->state = TRANS_DEFAULT;
-}
 
-/*
- * StartAbortedSubTransaction
- *
- * This function is used to start a subtransaction and put it immediately
- * into aborted state.	The end result should be equivalent to
- * StartSubTransaction immediately followed by AbortSubTransaction.
- * The reason we don't implement it just that way is that many of the backend
- * modules aren't designed to handle starting a subtransaction when not
- * inside a valid transaction.	Rather than making them all capable of
- * doing that, we just omit the paired start and abort calls in this path.
- */
-static void
-StartAbortedSubTransaction(void)
-{
-	TransactionState s = CurrentTransactionState;
-
-	if (s->state != TRANS_DEFAULT)
-		elog(WARNING, "StartAbortedSubTransaction while in %s state",
-			 TransStateAsString(s->state));
-
-	s->state = TRANS_START;
-
-	/*
-	 * We don't bother to generate a new Xid, so the end state is not
-	 * *exactly* like we had done a full Start/AbortSubTransaction...
-	 */
-	s->transactionIdData = InvalidTransactionId;
-
-	/* Make sure currentUser is reasonably valid */
-	Assert(s->parent != NULL);
-	s->currentUser = s->parent->currentUser;
-
-	/*
-	 * Initialize only what has to be there for CleanupSubTransaction to
-	 * work.
-	 */
-	AtSubStart_Memory();
-	AtSubStart_ResourceOwner();
-
-	s->state = TRANS_ABORT;
-
-	AtSubAbort_Memory();
-
-	ShowTransactionState("StartAbortedSubTransaction");
+	PopTransaction();
 }
 
 /*
  * PushTransaction
- *		Set up transaction state for a subtransaction
+ *		Create transaction state stack entry for a subtransaction
  *
  *	The caller has to make sure to always reassign CurrentTransactionState
  *	if it has a local pointer to it after calling this function.
@@ -3247,6 +3417,13 @@ PushTransaction(void)
 {
 	TransactionState p = CurrentTransactionState;
 	TransactionState s;
+	AclId	currentUser;
+
+	/*
+	 * At present, GetUserId cannot fail, but let's not assume that.  Get
+	 * the ID before entering the critical code sequence.
+	 */
+	currentUser = GetUserId();
 
 	/*
 	 * We keep subtransaction state nodes in TopTransactionContext.
@@ -3254,25 +3431,40 @@ PushTransaction(void)
 	s = (TransactionState)
 		MemoryContextAllocZero(TopTransactionContext,
 							   sizeof(TransactionStateData));
+	/*
+	 * Assign a subtransaction ID, watching out for counter wraparound.
+	 */
+	currentSubTransactionId += 1;
+	if (currentSubTransactionId == InvalidSubTransactionId)
+	{
+		currentSubTransactionId -= 1;
+		pfree(s);
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("cannot have more than 2^32-1 subtransactions in a transaction")));
+	}
+	/*
+	 * We can now stack a minimally valid subtransaction without fear of
+	 * failure.
+	 */
+	s->transactionId = InvalidTransactionId; /* until assigned */
+	s->subTransactionId = currentSubTransactionId;
 	s->parent = p;
 	s->nestingLevel = p->nestingLevel + 1;
 	s->savepointLevel = p->savepointLevel;
 	s->state = TRANS_DEFAULT;
 	s->blockState = TBLOCK_SUBBEGIN;
-
-	/* Command IDs count in a continuous sequence through subtransactions */
-	s->commandId = p->commandId;
-
-	/*
-	 * Copy down some other data so that we will have valid state until
-	 * StartSubTransaction runs.
-	 */
-	s->transactionIdData = p->transactionIdData;
-	s->curTransactionContext = p->curTransactionContext;
-	s->curTransactionOwner = p->curTransactionOwner;
-	s->currentUser = p->currentUser;
+	s->currentUser = currentUser;
+	s->prevXactReadOnly = XactReadOnly;
 
 	CurrentTransactionState = s;
+
+	/*
+	 * AbortSubTransaction and CleanupSubTransaction have to be able to
+	 * cope with the subtransaction from here on out; in particular they
+	 * should not assume that it necessarily has a transaction context,
+	 * resource owner, or XID.
+	 */
 }
 
 /*
@@ -3293,9 +3485,6 @@ PopTransaction(void)
 
 	if (s->parent == NULL)
 		elog(FATAL, "PopTransaction with no parent");
-
-	/* Command IDs count in a continuous sequence through subtransactions */
-	s->parent->commandId = s->commandId;
 
 	CurrentTransactionState = s->parent;
 
@@ -3340,12 +3529,13 @@ ShowTransactionStateRec(TransactionState s)
 
 	/* use ereport to suppress computation if msg will not be printed */
 	ereport(DEBUG2,
-			(errmsg_internal("name: %s; blockState: %13s; state: %7s, xid/cid: %u/%02u, nestlvl: %d, children: %s",
+			(errmsg_internal("name: %s; blockState: %13s; state: %7s, xid/subid/cid: %u/%u/%u, nestlvl: %d, children: %s",
 						   PointerIsValid(s->name) ? s->name : "unnamed",
 							 BlockStateAsString(s->blockState),
 							 TransStateAsString(s->state),
-							 (unsigned int) s->transactionIdData,
-							 (unsigned int) s->commandId,
+							 (unsigned int) s->transactionId,
+							 (unsigned int) s->subTransactionId,
+							 (unsigned int) currentCommandId,
 							 s->nestingLevel,
 							 nodeToString(s->childXids))));
 }
@@ -3371,8 +3561,10 @@ BlockStateAsString(TBlockState blockState)
 			return "END";
 		case TBLOCK_ABORT:
 			return "ABORT";
-		case TBLOCK_ENDABORT:
-			return "ENDABORT";
+		case TBLOCK_ABORT_END:
+			return "ABORT END";
+		case TBLOCK_ABORT_PENDING:
+			return "ABORT PEND";
 		case TBLOCK_SUBBEGIN:
 			return "SUB BEGIN";
 		case TBLOCK_SUBINPROGRESS:
@@ -3381,14 +3573,14 @@ BlockStateAsString(TBlockState blockState)
 			return "SUB END";
 		case TBLOCK_SUBABORT:
 			return "SUB ABORT";
-		case TBLOCK_SUBENDABORT_ALL:
-			return "SUB ENDAB ALL";
-		case TBLOCK_SUBENDABORT:
-			return "SUB ENDAB";
+		case TBLOCK_SUBABORT_END:
+			return "SUB ABORT END";
 		case TBLOCK_SUBABORT_PENDING:
 			return "SUB ABRT PEND";
-		case TBLOCK_SUBENDABORT_RELEASE:
-			return "SUB ENDAB REL";
+		case TBLOCK_SUBRESTART:
+			return "SUB RESTART";
+		case TBLOCK_SUBABORT_RESTART:
+			return "SUB AB RESTRT";
 	}
 	return "UNRECOGNIZED";
 }

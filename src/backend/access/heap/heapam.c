@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.174 2004/09/11 18:28:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.175 2004/09/16 16:58:25 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1108,6 +1108,7 @@ heap_get_latest_tid(Relation relation,
 Oid
 heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 {
+	TransactionId xid = GetCurrentTransactionId();
 	Buffer		buffer;
 
 	if (relation->rd_rel->relhasoids)
@@ -1139,7 +1140,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 
 	tup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
 	tup->t_data->t_infomask |= HEAP_XMAX_INVALID;
-	HeapTupleHeaderSetXmin(tup->t_data, GetCurrentTransactionId());
+	HeapTupleHeaderSetXmin(tup->t_data, xid);
 	HeapTupleHeaderSetCmin(tup->t_data, cid);
 	HeapTupleHeaderSetCmax(tup->t_data, 0);		/* zero out Datum fields */
 	tup->t_tableOid = relation->rd_id;
@@ -1277,6 +1278,7 @@ heap_delete(Relation relation, ItemPointer tid,
 			ItemPointer ctid, CommandId cid,
 			Snapshot crosscheck, bool wait)
 {
+	TransactionId xid = GetCurrentTransactionId();
 	ItemId		lp;
 	HeapTupleData tp;
 	PageHeader	dp;
@@ -1365,7 +1367,7 @@ l1:
 							   HEAP_XMAX_INVALID |
 							   HEAP_MARKED_FOR_UPDATE |
 							   HEAP_MOVED);
-	HeapTupleHeaderSetXmax(tp.t_data, GetCurrentTransactionId());
+	HeapTupleHeaderSetXmax(tp.t_data, xid);
 	HeapTupleHeaderSetCmax(tp.t_data, cid);
 	/* Make sure there is no forward chain link in t_ctid */
 	tp.t_data->t_ctid = tp.t_self;
@@ -1495,6 +1497,7 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 			ItemPointer ctid, CommandId cid,
 			Snapshot crosscheck, bool wait)
 {
+	TransactionId xid = GetCurrentTransactionId();
 	ItemId		lp;
 	HeapTupleData oldtup;
 	PageHeader	dp;
@@ -1603,7 +1606,7 @@ l2:
 
 	newtup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
 	newtup->t_data->t_infomask |= (HEAP_XMAX_INVALID | HEAP_UPDATED);
-	HeapTupleHeaderSetXmin(newtup->t_data, GetCurrentTransactionId());
+	HeapTupleHeaderSetXmin(newtup->t_data, xid);
 	HeapTupleHeaderSetCmin(newtup->t_data, cid);
 	HeapTupleHeaderSetCmax(newtup->t_data, 0);	/* zero out Datum fields */
 
@@ -1644,7 +1647,7 @@ l2:
 									   HEAP_MARKED_FOR_UPDATE |
 									   HEAP_MOVED);
 		oldtup.t_data->t_infomask |= HEAP_XMAX_UNLOGGED;
-		HeapTupleHeaderSetXmax(oldtup.t_data, GetCurrentTransactionId());
+		HeapTupleHeaderSetXmax(oldtup.t_data, xid);
 		HeapTupleHeaderSetCmax(oldtup.t_data, cid);
 		already_marked = true;
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
@@ -1735,7 +1738,7 @@ l2:
 									   HEAP_XMAX_INVALID |
 									   HEAP_MARKED_FOR_UPDATE |
 									   HEAP_MOVED);
-		HeapTupleHeaderSetXmax(oldtup.t_data, GetCurrentTransactionId());
+		HeapTupleHeaderSetXmax(oldtup.t_data, xid);
 		HeapTupleHeaderSetCmax(oldtup.t_data, cid);
 	}
 
@@ -1836,6 +1839,7 @@ int
 heap_mark4update(Relation relation, HeapTuple tuple, Buffer *buffer,
 				 CommandId cid)
 {
+	TransactionId xid = GetCurrentTransactionId();
 	ItemPointer tid = &(tuple->t_self);
 	ItemId		lp;
 	PageHeader	dp;
@@ -1912,7 +1916,7 @@ l3:
 								   HEAP_XMAX_INVALID |
 								   HEAP_MOVED);
 	tuple->t_data->t_infomask |= HEAP_MARKED_FOR_UPDATE;
-	HeapTupleHeaderSetXmax(tuple->t_data, GetCurrentTransactionId());
+	HeapTupleHeaderSetXmax(tuple->t_data, xid);
 	HeapTupleHeaderSetCmax(tuple->t_data, cid);
 	/* Make sure there is no forward chain link in t_ctid */
 	tuple->t_data->t_ctid = *tid;
@@ -2584,6 +2588,7 @@ newsame:;
 static void
 _heap_unlock_tuple(void *data)
 {
+	TransactionId xid = GetCurrentTransactionId();
 	xl_heaptid *xltid = (xl_heaptid *) data;
 	Relation	reln = XLogOpenRelation(false, RM_HEAP_ID, xltid->node);
 	Buffer		buffer;
@@ -2614,13 +2619,12 @@ _heap_unlock_tuple(void *data)
 
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
 
-	if (!TransactionIdEquals(HeapTupleHeaderGetXmax(htup), GetCurrentTransactionId()))
+	if (!TransactionIdEquals(HeapTupleHeaderGetXmax(htup), xid))
 		elog(PANIC, "_heap_unlock_tuple: invalid xmax in rollback");
 	htup->t_infomask &= ~HEAP_XMAX_UNLOGGED;
 	htup->t_infomask |= HEAP_XMAX_INVALID;
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	WriteBuffer(buffer);
-	return;
 }
 
 void

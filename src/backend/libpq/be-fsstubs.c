@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.75 2004/09/11 15:56:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.76 2004/09/16 16:58:30 tgl Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -551,11 +551,11 @@ AtEOXact_LargeObject(bool isCommit)
  *		Take care of large objects at subtransaction commit/abort
  *
  * Reassign LOs created/opened during a committing subtransaction
- * to the parent transaction.  On abort, just close them.
+ * to the parent subtransaction.  On abort, just close them.
  */
 void
-AtEOSubXact_LargeObject(bool isCommit, TransactionId myXid,
-						TransactionId parentXid)
+AtEOSubXact_LargeObject(bool isCommit, SubTransactionId mySubid,
+						SubTransactionId parentSubid)
 {
 	int			i;
 
@@ -566,10 +566,10 @@ AtEOSubXact_LargeObject(bool isCommit, TransactionId myXid,
 	{
 		LargeObjectDesc *lo = cookies[i];
 
-		if (lo != NULL && lo->xid == myXid)
+		if (lo != NULL && lo->subid == mySubid)
 		{
 			if (isCommit)
-				lo->xid = parentXid;
+				lo->subid = parentSubid;
 			else
 			{
 				/*

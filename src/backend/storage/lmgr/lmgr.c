@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.69 2004/08/29 05:06:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.70 2004/09/16 16:58:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "catalog/catalog.h"
 #include "miscadmin.h"
 #include "storage/lmgr.h"
+#include "storage/sinval.h"
 #include "utils/inval.h"
 
 
@@ -311,9 +312,6 @@ UnlockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
  * Insert a lock showing that the given transaction ID is running ---
  * this is done during xact startup.  The lock can then be used to wait
  * for the transaction to finish.
- *
- * We need no corresponding unlock function, since the lock will always
- * be released implicitly at transaction commit/abort, never any other way.
  */
 void
 XactLockTableInsert(TransactionId xid)
@@ -325,9 +323,30 @@ XactLockTableInsert(TransactionId xid)
 	tag.dbId = InvalidOid;		/* xids are globally unique */
 	tag.objId.xid = xid;
 
-	if (!LockAcquire(LockTableId, &tag, xid,
+	if (!LockAcquire(LockTableId, &tag, GetTopTransactionId(),
 					 ExclusiveLock, false))
 		elog(ERROR, "LockAcquire failed");
+}
+
+/*
+ *		XactLockTableDelete
+ *
+ * Delete the lock showing that the given transaction ID is running.
+ * (This is never used for main transaction IDs; those locks are only
+ * released implicitly at transaction end.  But we do use it for subtrans
+ * IDs.)
+ */
+void
+XactLockTableDelete(TransactionId xid)
+{
+	LOCKTAG		tag;
+
+	MemSet(&tag, 0, sizeof(tag));
+	tag.relId = XactLockTableId;
+	tag.dbId = InvalidOid;		/* xids are globally unique */
+	tag.objId.xid = xid;
+
+	LockRelease(LockTableId, &tag, GetTopTransactionId(), ExclusiveLock);
 }
 
 /*
@@ -335,9 +354,12 @@ XactLockTableInsert(TransactionId xid)
  *
  * Wait for the specified transaction to commit or abort.
  *
- * Note that this does the right thing for subtransactions: if we
- * wait on a subtransaction, we will be awakened as soon as it aborts
- * or its parent commits.
+ * Note that this does the right thing for subtransactions: if we wait on a
+ * subtransaction, we will exit as soon as it aborts or its top parent commits.
+ * It takes some extra work to ensure this, because to save on shared memory
+ * the XID lock of a subtransaction is released when it ends, whether
+ * successfully or unsuccessfully.  So we have to check if it's "still running"
+ * and if so wait for its parent.
  */
 void
 XactLockTableWait(TransactionId xid)
@@ -345,18 +367,24 @@ XactLockTableWait(TransactionId xid)
 	LOCKTAG		tag;
 	TransactionId myxid = GetTopTransactionId();
 
-	Assert(!TransactionIdEquals(xid, myxid));
+	for (;;)
+	{
+		Assert(TransactionIdIsValid(xid));
+		Assert(!TransactionIdEquals(xid, myxid));
 
-	MemSet(&tag, 0, sizeof(tag));
-	tag.relId = XactLockTableId;
-	tag.dbId = InvalidOid;
-	tag.objId.xid = xid;
+		MemSet(&tag, 0, sizeof(tag));
+		tag.relId = XactLockTableId;
+		tag.dbId = InvalidOid;
+		tag.objId.xid = xid;
 
-	if (!LockAcquire(LockTableId, &tag, myxid,
-					 ShareLock, false))
-		elog(ERROR, "LockAcquire failed");
+		if (!LockAcquire(LockTableId, &tag, myxid, ShareLock, false))
+			elog(ERROR, "LockAcquire failed");
+		LockRelease(LockTableId, &tag, myxid, ShareLock);
 
-	LockRelease(LockTableId, &tag, myxid, ShareLock);
+		if (!TransactionIdIsInProgress(xid))
+			break;
+		xid = SubTransGetParent(xid);
+	}
 
 	/*
 	 * Transaction was committed/aborted/crashed - we have to update

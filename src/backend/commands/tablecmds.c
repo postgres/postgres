@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.131 2004/08/31 23:27:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.132 2004/09/16 16:58:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,14 +71,14 @@ typedef struct OnCommitItem
 	OnCommitAction oncommit;	/* what to do at end of xact */
 
 	/*
-	 * If this entry was created during this xact, it should be deleted at
-	 * xact abort.	Conversely, if this entry was deleted during this
-	 * xact, it should be removed at xact commit.  We leave deleted
-	 * entries in the list until commit so that we can roll back if
-	 * needed.
+	 * If this entry was created during the current transaction,
+	 * creating_subid is the ID of the creating subxact; if created in a prior
+	 * transaction, creating_subid is zero.  If deleted during the current
+	 * transaction, deleting_subid is the ID of the deleting subxact; if no
+	 * deletion request is pending, deleting_subid is zero.
 	 */
-	TransactionId creating_xid;
-	TransactionId deleting_xid;
+	SubTransactionId creating_subid;
+	SubTransactionId deleting_subid;
 } OnCommitItem;
 
 static List *on_commits = NIL;
@@ -5821,8 +5821,8 @@ register_on_commit_action(Oid relid, OnCommitAction action)
 	oc = (OnCommitItem *) palloc(sizeof(OnCommitItem));
 	oc->relid = relid;
 	oc->oncommit = action;
-	oc->creating_xid = GetCurrentTransactionId();
-	oc->deleting_xid = InvalidTransactionId;
+	oc->creating_subid = GetCurrentSubTransactionId();
+	oc->deleting_subid = InvalidSubTransactionId;
 
 	on_commits = lcons(oc, on_commits);
 
@@ -5845,7 +5845,7 @@ remove_on_commit_action(Oid relid)
 
 		if (oc->relid == relid)
 		{
-			oc->deleting_xid = GetCurrentTransactionId();
+			oc->deleting_subid = GetCurrentSubTransactionId();
 			break;
 		}
 	}
@@ -5860,7 +5860,6 @@ remove_on_commit_action(Oid relid)
 void
 PreCommit_on_commit_actions(void)
 {
-	TransactionId xid = GetCurrentTransactionId();
 	ListCell   *l;
 
 	foreach(l, on_commits)
@@ -5868,7 +5867,7 @@ PreCommit_on_commit_actions(void)
 		OnCommitItem *oc = (OnCommitItem *) lfirst(l);
 
 		/* Ignore entry if already dropped in this xact */
-		if (oc->deleting_xid == xid)
+		if (oc->deleting_subid != InvalidSubTransactionId)
 			continue;
 
 		switch (oc->oncommit)
@@ -5895,7 +5894,7 @@ PreCommit_on_commit_actions(void)
 					 * remove_on_commit_action, so the entry should get
 					 * marked as deleted.
 					 */
-					Assert(oc->deleting_xid == xid);
+					Assert(oc->deleting_subid != InvalidSubTransactionId);
 					break;
 				}
 		}
@@ -5911,7 +5910,7 @@ PreCommit_on_commit_actions(void)
  * during abort, remove those created during this transaction.
  */
 void
-AtEOXact_on_commit_actions(bool isCommit, TransactionId xid)
+AtEOXact_on_commit_actions(bool isCommit)
 {
 	ListCell   *cur_item;
 	ListCell   *prev_item;
@@ -5923,8 +5922,8 @@ AtEOXact_on_commit_actions(bool isCommit, TransactionId xid)
 	{
 		OnCommitItem *oc = (OnCommitItem *) lfirst(cur_item);
 
-		if (isCommit ? TransactionIdEquals(oc->deleting_xid, xid) :
-			TransactionIdEquals(oc->creating_xid, xid))
+		if (isCommit ? oc->deleting_subid != InvalidSubTransactionId :
+			oc->creating_subid != InvalidSubTransactionId)
 		{
 			/* cur_item must be removed */
 			on_commits = list_delete_cell(on_commits, cur_item, prev_item);
@@ -5937,8 +5936,8 @@ AtEOXact_on_commit_actions(bool isCommit, TransactionId xid)
 		else
 		{
 			/* cur_item must be preserved */
-			oc->creating_xid = InvalidTransactionId;
-			oc->deleting_xid = InvalidTransactionId;
+			oc->creating_subid = InvalidSubTransactionId;
+			oc->deleting_subid = InvalidSubTransactionId;
 			prev_item = cur_item;
 			cur_item = lnext(prev_item);
 		}
@@ -5953,8 +5952,8 @@ AtEOXact_on_commit_actions(bool isCommit, TransactionId xid)
  * this subtransaction as being the parent's responsibility.
  */
 void
-AtEOSubXact_on_commit_actions(bool isCommit, TransactionId childXid,
-							  TransactionId parentXid)
+AtEOSubXact_on_commit_actions(bool isCommit, SubTransactionId mySubid,
+							  SubTransactionId parentSubid)
 {
 	ListCell   *cur_item;
 	ListCell   *prev_item;
@@ -5966,7 +5965,7 @@ AtEOSubXact_on_commit_actions(bool isCommit, TransactionId childXid,
 	{
 		OnCommitItem *oc = (OnCommitItem *) lfirst(cur_item);
 
-		if (!isCommit && TransactionIdEquals(oc->creating_xid, childXid))
+		if (!isCommit && oc->creating_subid == mySubid)
 		{
 			/* cur_item must be removed */
 			on_commits = list_delete_cell(on_commits, cur_item, prev_item);
@@ -5979,10 +5978,10 @@ AtEOSubXact_on_commit_actions(bool isCommit, TransactionId childXid,
 		else
 		{
 			/* cur_item must be preserved */
-			if (TransactionIdEquals(oc->creating_xid, childXid))
-				oc->creating_xid = parentXid;
-			if (TransactionIdEquals(oc->deleting_xid, childXid))
-				oc->deleting_xid = isCommit ? parentXid : InvalidTransactionId;
+			if (oc->creating_subid == mySubid)
+				oc->creating_subid = parentSubid;
+			if (oc->deleting_subid == mySubid)
+				oc->deleting_subid = isCommit ? parentSubid : InvalidSubTransactionId;
 			prev_item = cur_item;
 			cur_item = lnext(prev_item);
 		}

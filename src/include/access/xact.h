@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.72 2004/09/05 23:01:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.73 2004/09/16 16:58:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,14 +46,21 @@ extern bool XactReadOnly;
  */
 typedef enum
 {
-	XACT_EVENT_ABORT,
 	XACT_EVENT_COMMIT,
-	XACT_EVENT_START_SUB,
-	XACT_EVENT_ABORT_SUB,
-	XACT_EVENT_COMMIT_SUB
+	XACT_EVENT_ABORT
 } XactEvent;
 
-typedef void (*XactCallback) (XactEvent event, TransactionId parentXid, void *arg);
+typedef void (*XactCallback) (XactEvent event, void *arg);
+
+typedef enum
+{
+	SUBXACT_EVENT_START_SUB,
+	SUBXACT_EVENT_COMMIT_SUB,
+	SUBXACT_EVENT_ABORT_SUB
+} SubXactEvent;
+
+typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
+								 SubTransactionId parentSubid, void *arg);
 
 
 /* ----------------
@@ -101,6 +108,8 @@ extern bool IsTransactionState(void);
 extern bool IsAbortedTransactionBlockState(void);
 extern TransactionId GetTopTransactionId(void);
 extern TransactionId GetCurrentTransactionId(void);
+extern TransactionId GetCurrentTransactionIdIfAny(void);
+extern SubTransactionId GetCurrentSubTransactionId(void);
 extern CommandId GetCurrentCommandId(void);
 extern AbsoluteTime GetCurrentTransactionStartTime(void);
 extern AbsoluteTime GetCurrentTransactionStartTimeUsec(int *usec);
@@ -129,6 +138,8 @@ extern void RequireTransactionChain(void *stmtNode, const char *stmtType);
 extern bool IsInTransactionChain(void *stmtNode);
 extern void RegisterXactCallback(XactCallback callback, void *arg);
 extern void UnregisterXactCallback(XactCallback callback, void *arg);
+extern void RegisterSubXactCallback(SubXactCallback callback, void *arg);
+extern void UnregisterSubXactCallback(SubXactCallback callback, void *arg);
 
 extern void RecordTransactionCommit(void);
 

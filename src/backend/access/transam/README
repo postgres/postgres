@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.1 2004/08/01 20:57:59 tgl Exp $
+$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.2 2004/09/16 16:58:26 tgl Exp $
 
 The Transaction System
 ----------------------
@@ -9,7 +9,7 @@ the mainloop's control code, which in turn implements user-visible
 transactions and savepoints.
 
 The middle layer of code is called by postgres.c before and after the
-processing of each query:
+processing of each query, or after detecting an error:
 
 		StartTransactionCommand
 		CommitTransactionCommand
@@ -44,9 +44,9 @@ effects of previous commands within the same transaction.  Note that this is
 done automatically by CommitTransactionCommand after each query inside a
 transaction block, but some utility functions also do it internally to allow
 some operations (usually in the system catalogs) to be seen by future
-operations in the same utility command (for example, in DefineRelation it is
+operations in the same utility command.  (For example, in DefineRelation it is
 done after creating the heap so the pg_class row is visible, to be able to
-lock it).
+lock it.)
 
 
 For example, consider the following sequence of user commands:
@@ -60,26 +60,26 @@ In the main processing loop, this results in the following function call
 sequence:
 
 	 /	StartTransactionCommand;
-	/	ProcessUtility;				<< BEGIN
-1) <			BeginTransactionBlock;
-	\	CommitTransactionCommand;
-	 \		StartTransaction;
+	/		StartTransaction;
+1) <		ProcessUtility;				<< BEGIN
+	\		BeginTransactionBlock;
+	 \	CommitTransactionCommand;
 
 	/	StartTransactionCommand;
-2) /		ProcessQuery;				<< SELECT * FROM foo
+2) /		ProcessQuery;				<< SELECT ...
    \		CommitTransactionCommand;
 	\		CommandCounterIncrement;
 
 	/	StartTransactionCommand;
-3) /		ProcessQuery;				<< INSERT INTO foo VALUES (...)
+3) /		ProcessQuery;				<< INSERT ...
    \		CommitTransactionCommand;
 	\		CommandCounterIncrement;
 
 	 /	StartTransactionCommand;
 	/	ProcessUtility;				<< COMMIT
 4) <			EndTransactionBlock;
-	\			CommitTransaction;
-	 \	CommitTransactionCommand;
+	\	CommitTransactionCommand;
+	 \		CommitTransaction;
 
 The point of this example is to demonstrate the need for
 StartTransactionCommand and CommitTransactionCommand to be state smart -- they
@@ -118,7 +118,7 @@ to do all the real work.  The only difference is what state we enter after
 AbortTransaction does its work:
 
 * AbortCurrentTransaction leaves us in TBLOCK_ABORT,
-* UserAbortTransactionBlock leaves us in TBLOCK_ENDABORT
+* UserAbortTransactionBlock leaves us in TBLOCK_ABORT_END
 
 Low-level transaction abort handling is divided in two phases:
 * AbortTransaction executes as soon as we realize the transaction has
@@ -126,7 +126,7 @@ Low-level transaction abort handling is divided in two phases:
   not delay other backends unnecessarily.
 * CleanupTransaction executes when we finally see a user COMMIT
   or ROLLBACK command; it cleans things up and gets us out of the transaction
-  internally.  In particular, we mustn't destroy TopTransactionContext until
+  completely.  In particular, we mustn't destroy TopTransactionContext until
   this point.
 
 Also, note that when a transaction is committed, we don't close it right away.
@@ -163,28 +163,48 @@ called so the system returns to the parent transaction.
 One important point regarding subtransaction handling is that several may need
 to be closed in response to a single user command.  That's because savepoints
 have names, and we allow to commit or rollback a savepoint by name, which is
-not necessarily the one that was last opened.  In the case of subtransaction
-commit this is not a problem, and we close all the involved subtransactions
-right away by calling CommitTransactionToLevel, which in turn calls
-CommitSubTransaction and PopTransaction as many times as needed.
+not necessarily the one that was last opened.  Also a COMMIT or ROLLBACK
+command must be able to close out the entire stack.  We handle this by having
+the utility command subroutine mark all the state stack entries as commit-
+pending or abort-pending, and then when the main loop reaches
+CommitTransactionCommand, the real work is done.  The main point of doing
+things this way is that if we get an error while popping state stack entries,
+the remaining stack entries still show what we need to do to finish up.
 
-In the case of subtransaction abort (when the user issues ROLLBACK TO
-<savepoint>), things are not so easy.  We have to keep the subtransactions
-open and return control to the main loop.  So what RollbackToSavepoint does is
-abort the innermost subtransaction and put it in TBLOCK_SUBENDABORT state, and
-put the rest in TBLOCK_SUBABORT_PENDING state.  Then we return control to the
-main loop, which will in turn return control to us by calling
-CommitTransactionCommand.  At this point we can close all subtransactions that
-are marked with the "abort pending" state.  When that's done, the outermost
-subtransaction is created again, to conform to SQL's definition of ROLLBACK TO.
+In the case of ROLLBACK TO <savepoint>, we abort all the subtransactions up
+through the one identified by the savepoint name, and then re-create that
+subtransaction level with the same name.  So it's a completely new
+subtransaction as far as the internals are concerned.
 
 Other subsystems are allowed to start "internal" subtransactions, which are
 handled by BeginInternalSubtransaction.  This is to allow implementing
 exception handling, e.g. in PL/pgSQL.  ReleaseCurrentSubTransaction and
 RollbackAndReleaseCurrentSubTransaction allows the subsystem to close said
 subtransactions.  The main difference between this and the savepoint/release
-path is that BeginInternalSubtransaction is allowed when no explicit
-transaction block has been established, while DefineSavepoint is not.
+path is that we execute the complete state transition immediately in each
+subroutine, rather than deferring some work until CommitTransactionCommand.
+Another difference is that BeginInternalSubtransaction is allowed when no
+explicit transaction block has been established, while DefineSavepoint is not.
+
+
+Subtransaction numbering
+------------------------
+
+A top-level transaction is always given a TransactionId (XID) as soon as it is
+created.  This is necessary for a number of reasons, notably XMIN bookkeeping
+for VACUUM.  However, a subtransaction doesn't need its own XID unless it
+(or one of its child subxacts) writes tuples into the database.  Therefore,
+we postpone assigning XIDs to subxacts until and unless they call
+GetCurrentTransactionId.  The subsidiary actions of obtaining a lock on the
+XID and and entering it into pg_subtrans and PG_PROC are done at the same time.
+
+Internally, a backend needs a way to identify subtransactions whether or not
+they have XIDs; but this need only lasts as long as the parent top transaction
+endures.  Therefore, we have SubTransactionId, which is somewhat like
+CommandId in that it's generated from a counter that we reset at the start of
+each top transaction.  The top-level transaction itself has SubTransactionId 1,
+and subtransactions have IDs 2 and up.  (Zero is reserved for
+InvalidSubTransactionId.)
 
 
 pg_clog and pg_subtrans
@@ -197,27 +217,28 @@ there's a long running transaction or a backend sitting idle with an open
 transaction, it may be necessary to be able to read and write this information
 from disk.  They also allow information to be permanent across server restarts.
 
-pg_clog records the commit status for each transaction.  A transaction can be
-in progress, committed, aborted, or "sub-committed".  This last state means
-that it's a subtransaction that's no longer running, but its parent has not
-updated its state yet (either it is still running, or the backend crashed
-without updating its status).  A sub-committed transaction's status will be
-updated again to the final value as soon as the parent commits or aborts, or
-when the parent is detected to be aborted.
+pg_clog records the commit status for each transaction that has been assigned
+an XID.  A transaction can be in progress, committed, aborted, or
+"sub-committed".  This last state means that it's a subtransaction that's no
+longer running, but its parent has not updated its state yet (either it is
+still running, or the backend crashed without updating its status).  A
+sub-committed transaction's status will be updated again to the final value as
+soon as the parent commits or aborts, or when the parent is detected to be
+aborted.
 
 Savepoints are implemented using subtransactions.  A subtransaction is a
-transaction inside a transaction; it gets its own TransactionId, but its
-commit or abort status is not only dependent on whether it committed itself,
-but also whether its parent transaction committed.  To implement multiple
-savepoints in a transaction we allow unlimited transaction nesting depth, so
-any particular subtransaction's commit state is dependent on the commit status
-of each and every ancestor transaction.
+transaction inside a transaction; its commit or abort status is not only
+dependent on whether it committed itself, but also whether its parent
+transaction committed.  To implement multiple savepoints in a transaction we
+allow unlimited transaction nesting depth, so any particular subtransaction's
+commit state is dependent on the commit status of each and every ancestor
+transaction.
 
 The "subtransaction parent" (pg_subtrans) mechanism records, for each
-transaction, the TransactionId of its parent transaction.  This information is
-stored as soon as the subtransaction is created.  Top-level transactions do
-not have a parent, so they leave their pg_subtrans entries set to the default
-value of zero (InvalidTransactionId).
+transaction with an XID, the TransactionId of its parent transaction.  This
+information is stored as soon as the subtransaction is assigned an XID.
+Top-level transactions do not have a parent, so they leave their pg_subtrans
+entries set to the default value of zero (InvalidTransactionId).
 
 pg_subtrans is used to check whether the transaction in question is still
 running --- the main Xid of a transaction is recorded in the PGPROC struct,

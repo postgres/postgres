@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.47 2004/08/29 05:06:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.48 2004/09/16 16:58:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,7 +269,7 @@ StrategyBufferLookup(BufferTag *tagPtr, bool recheck,
 		if (!strategy_hint_vacuum)
 		{
 			if (!cdb->t1_vacuum &&
-				!TransactionIdIsCurrentTransactionId(cdb->t1_xid))
+				!TransactionIdEquals(cdb->t1_xid, GetTopTransactionId()))
 			{
 				STRAT_LIST_REMOVE(cdb);
 				STRAT_MRU_INSERT(cdb, STRAT_LIST_T2);
@@ -286,7 +286,7 @@ StrategyBufferLookup(BufferTag *tagPtr, bool recheck,
 				 */
 				if (cdb->t1_vacuum)
 				{
-					cdb->t1_xid = GetCurrentTransactionId();
+					cdb->t1_xid = GetTopTransactionId();
 					cdb->t1_vacuum = false;
 				}
 			}
@@ -644,7 +644,8 @@ StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
 		 */
 		if (strategy_hint_vacuum)
 		{
-			if (TransactionIdIsCurrentTransactionId(strategy_vacuum_xid))
+			if (TransactionIdEquals(strategy_vacuum_xid,
+									GetTopTransactionId()))
 				STRAT_LRU_INSERT(cdb_found, STRAT_LIST_T1);
 			else
 			{
@@ -661,7 +662,7 @@ StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
 		 * single UPDATE promoting a newcomer straight into T2. Also
 		 * remember if it was loaded for VACUUM.
 		 */
-		cdb_found->t1_xid = GetCurrentTransactionId();
+		cdb_found->t1_xid = GetTopTransactionId();
 		cdb_found->t1_vacuum = strategy_hint_vacuum;
 	}
 }
@@ -727,7 +728,7 @@ void
 StrategyHintVacuum(bool vacuum_active)
 {
 	strategy_hint_vacuum = vacuum_active;
-	strategy_vacuum_xid = GetCurrentTransactionId();
+	strategy_vacuum_xid = GetTopTransactionId();
 }
 
 /*

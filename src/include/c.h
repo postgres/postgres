@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.171 2004/09/10 15:51:47 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.172 2004/09/16 16:58:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -351,7 +351,7 @@ typedef float float4;
 typedef double float8;
 
 /*
- * Oid, RegProcedure, TransactionId, CommandId, AclId
+ * Oid, RegProcedure, TransactionId, SubTransactionId, CommandId, AclId
  */
 
 /* typedef Oid is in postgres_ext.h */
@@ -364,6 +364,11 @@ typedef Oid regproc;
 typedef regproc RegProcedure;
 
 typedef uint32 TransactionId;
+
+typedef uint32 SubTransactionId;
+
+#define InvalidSubTransactionId		((SubTransactionId) 0)
+#define TopSubTransactionId			((SubTransactionId) 1)
 
 typedef uint32 CommandId;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.210 2004/08/29 05:06:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.211 2004/09/16 16:58:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -836,7 +836,7 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	 */
 	relation->rd_refcnt = 0;
 	relation->rd_isnailed = false;
-	relation->rd_createxact = InvalidTransactionId;
+	relation->rd_createSubid = InvalidSubTransactionId;
 	relation->rd_istemp = isTempNamespace(relation->rd_rel->relnamespace);
 
 	/*
@@ -1287,7 +1287,7 @@ formrdesc(const char *relationName,
 	 * for new or temp relations.
 	 */
 	relation->rd_isnailed = true;
-	relation->rd_createxact = InvalidTransactionId;
+	relation->rd_createSubid = InvalidSubTransactionId;
 	relation->rd_istemp = false;
 
 	/*
@@ -1578,7 +1578,7 @@ RelationClose(Relation relation)
 
 #ifdef RELCACHE_FORCE_RELEASE
 	if (RelationHasReferenceCountZero(relation) &&
-		!TransactionIdIsValid(relation->rd_createxact))
+		relation->rd_createSubid == InvalidSubTransactionId)
 		RelationClearRelation(relation, false);
 #endif
 }
@@ -1736,7 +1736,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 	{
 		/*
 		 * When rebuilding an open relcache entry, must preserve ref count
-		 * and rd_createxact state.  Also attempt to preserve the
+		 * and rd_createSubid state.  Also attempt to preserve the
 		 * tupledesc and rewrite-rule substructures in place.
 		 *
 		 * Note that this process does not touch CurrentResourceOwner; which
@@ -1744,7 +1744,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 		 * necessarily belong to that resource owner.
 		 */
 		int			old_refcnt = relation->rd_refcnt;
-		TransactionId old_createxact = relation->rd_createxact;
+		SubTransactionId old_createSubid = relation->rd_createSubid;
 		TupleDesc	old_att = relation->rd_att;
 		RuleLock   *old_rules = relation->rd_rules;
 		MemoryContext old_rulescxt = relation->rd_rulescxt;
@@ -1765,7 +1765,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 				 buildinfo.i.info_id);
 		}
 		relation->rd_refcnt = old_refcnt;
-		relation->rd_createxact = old_createxact;
+		relation->rd_createSubid = old_createSubid;
 		if (equalTupleDescs(old_att, relation->rd_att))
 		{
 			/* needn't flush typcache here */
@@ -1802,7 +1802,7 @@ RelationFlushRelation(Relation relation)
 {
 	bool		rebuild;
 
-	if (TransactionIdIsValid(relation->rd_createxact))
+	if (relation->rd_createSubid != InvalidSubTransactionId)
 	{
 		/*
 		 * New relcache entries are always rebuilt, not flushed; else we'd
@@ -1948,7 +1948,7 @@ RelationCacheInvalidate(void)
 		}
 
 		/* Ignore new relations, since they are never SI targets */
-		if (TransactionIdIsValid(relation->rd_createxact))
+		if (relation->rd_createSubid != InvalidSubTransactionId)
 			continue;
 
 		relcacheInvalsReceived++;
@@ -2032,10 +2032,10 @@ AtEOXact_RelationCache(bool isCommit)
 		 * flush, the entry will get deleted anyway by shared-cache-inval
 		 * processing of the aborted pg_class insertion.)
 		 */
-		if (TransactionIdIsValid(relation->rd_createxact))
+		if (relation->rd_createSubid != InvalidSubTransactionId)
 		{
 			if (isCommit)
-				relation->rd_createxact = InvalidTransactionId;
+				relation->rd_createSubid = InvalidSubTransactionId;
 			else
 			{
 				RelationClearRelation(relation, false);
@@ -2097,8 +2097,8 @@ AtEOXact_RelationCache(bool isCommit)
  * Note: this must be called *before* processing invalidation messages.
  */
 void
-AtEOSubXact_RelationCache(bool isCommit, TransactionId myXid,
-						  TransactionId parentXid)
+AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
+						  SubTransactionId parentSubid)
 {
 	HASH_SEQ_STATUS status;
 	RelIdCacheEnt *idhentry;
@@ -2115,10 +2115,10 @@ AtEOSubXact_RelationCache(bool isCommit, TransactionId myXid,
 		 * During subcommit, mark it as belonging to the parent, instead.
 		 * During subabort, simply delete the relcache entry.
 		 */
-		if (TransactionIdEquals(relation->rd_createxact, myXid))
+		if (relation->rd_createSubid == mySubid)
 		{
 			if (isCommit)
-				relation->rd_createxact = parentXid;
+				relation->rd_createSubid = parentSubid;
 			else
 			{
 				Assert(RelationHasReferenceCountZero(relation));
@@ -2182,7 +2182,7 @@ RelationBuildLocalRelation(const char *relname,
 	rel->rd_refcnt = nailit ? 1 : 0;
 
 	/* it's being created in this transaction */
-	rel->rd_createxact = GetCurrentTransactionId();
+	rel->rd_createSubid = GetCurrentSubTransactionId();
 
 	/* is it a temporary relation? */
 	rel->rd_istemp = isTempNamespace(relnamespace);

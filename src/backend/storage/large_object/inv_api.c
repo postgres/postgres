@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.106 2004/08/29 05:06:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.107 2004/09/16 16:58:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,7 +167,7 @@ inv_create(int flags)
 	retval = (LargeObjectDesc *) palloc(sizeof(LargeObjectDesc));
 
 	retval->id = file_oid;
-	retval->xid = GetCurrentTransactionId();
+	retval->subid = GetCurrentSubTransactionId();
 	retval->offset = 0;
 
 	if (flags & INV_WRITE)
@@ -199,7 +199,7 @@ inv_open(Oid lobjId, int flags)
 	retval = (LargeObjectDesc *) palloc(sizeof(LargeObjectDesc));
 
 	retval->id = lobjId;
-	retval->xid = GetCurrentTransactionId();
+	retval->subid = GetCurrentSubTransactionId();
 	retval->offset = 0;
 
 	if (flags & INV_WRITE)

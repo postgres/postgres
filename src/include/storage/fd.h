@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/fd.h,v 1.48 2004/08/29 05:06:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/fd.h,v 1.49 2004/09/16 16:58:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,8 +85,8 @@ extern int	BasicOpenFile(FileName fileName, int fileFlags, int fileMode);
 extern void set_max_safe_fds(void);
 extern void closeAllVfds(void);
 extern void AtEOXact_Files(void);
-extern void AtEOSubXact_Files(bool isCommit, TransactionId myXid,
-				  TransactionId parentXid);
+extern void AtEOSubXact_Files(bool isCommit, SubTransactionId mySubid,
+							  SubTransactionId parentSubid);
 extern void RemovePgTempFiles(void);
 extern int	pg_fsync(int fd);
 extern int	pg_fdatasync(int fd);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.112 2004/08/29 05:06:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.113 2004/09/16 16:58:32 tgl Exp $
  *
  * NOTES:
  *
@@ -123,7 +123,7 @@ typedef struct vfd
 {
 	signed short fd;			/* current FD, or VFD_CLOSED if none */
 	unsigned short fdstate;		/* bitflags for VFD's state */
-	TransactionId create_xid;	/* for XACT_TEMPORARY fds, creating Xid */
+	SubTransactionId create_subid;	/* for TEMPORARY fds, creating subxact */
 	File		nextFree;		/* link to next free VFD, if in freelist */
 	File		lruMoreRecently;	/* doubly linked recency-of-use list */
 	File		lruLessRecently;
@@ -171,7 +171,7 @@ typedef struct
 		FILE	   *file;
 		DIR		   *dir;
 	}			desc;
-	TransactionId create_xid;
+	SubTransactionId create_subid;
 } AllocateDesc;
 
 static int	numAllocatedDescs = 0;
@@ -887,7 +887,7 @@ OpenTemporaryFile(bool interXact)
 	if (!interXact)
 	{
 		VfdCache[file].fdstate |= FD_XACT_TEMPORARY;
-		VfdCache[file].create_xid = GetCurrentTransactionId();
+		VfdCache[file].create_subid = GetCurrentSubTransactionId();
 	}
 
 	return file;
@@ -1166,7 +1166,7 @@ TryAgain:
 
 		desc->kind = AllocateDescFile;
 		desc->desc.file = file;
-		desc->create_xid = GetCurrentTransactionId();
+		desc->create_subid = GetCurrentSubTransactionId();
 		numAllocatedDescs++;
 		return desc->desc.file;
 	}
@@ -1281,7 +1281,7 @@ TryAgain:
 
 		desc->kind = AllocateDescDir;
 		desc->desc.dir = dir;
-		desc->create_xid = GetCurrentTransactionId();
+		desc->create_subid = GetCurrentSubTransactionId();
 		numAllocatedDescs++;
 		return desc->desc.dir;
 	}
@@ -1359,10 +1359,11 @@ closeAllVfds(void)
  *
  * Take care of subtransaction commit/abort.  At abort, we close temp files
  * that the subtransaction may have opened.  At commit, we reassign the
- * files that were opened to the parent transaction.
+ * files that were opened to the parent subtransaction.
  */
 void
-AtEOSubXact_Files(bool isCommit, TransactionId myXid, TransactionId parentXid)
+AtEOSubXact_Files(bool isCommit, SubTransactionId mySubid,
+				  SubTransactionId parentSubid)
 {
 	Index		i;
 
@@ -1374,10 +1375,10 @@ AtEOSubXact_Files(bool isCommit, TransactionId myXid, TransactionId parentXid)
 			unsigned short fdstate = VfdCache[i].fdstate;
 
 			if ((fdstate & FD_XACT_TEMPORARY) &&
-				VfdCache[i].create_xid == myXid)
+				VfdCache[i].create_subid == mySubid)
 			{
 				if (isCommit)
-					VfdCache[i].create_xid = parentXid;
+					VfdCache[i].create_subid = parentSubid;
 				else if (VfdCache[i].fileName != NULL)
 					FileClose(i);
 			}
@@ -1386,10 +1387,10 @@ AtEOSubXact_Files(bool isCommit, TransactionId myXid, TransactionId parentXid)
 
 	for (i = 0; i < numAllocatedDescs; i++)
 	{
-		if (allocatedDescs[i].create_xid == myXid)
+		if (allocatedDescs[i].create_subid == mySubid)
 		{
 			if (isCommit)
-				allocatedDescs[i].create_xid = parentXid;
+				allocatedDescs[i].create_subid = parentSubid;
 			else
 			{
 				/* have to recheck the item after FreeDesc (ugly) */

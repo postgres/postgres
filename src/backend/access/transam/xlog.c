@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.169 2004/09/06 03:04:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.170 2004/09/16 16:58:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -747,7 +747,7 @@ begin:;
 	/* Insert record header */
 
 	record->xl_prev = Insert->PrevRecord;
-	record->xl_xid = GetCurrentTransactionId();
+	record->xl_xid = GetCurrentTransactionIdIfAny();
 	record->xl_len = len;		/* doesn't include backup blocks */
 	record->xl_info = info;
 	record->xl_rmid = rmid;

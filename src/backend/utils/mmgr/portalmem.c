@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.71 2004/08/29 05:06:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.72 2004/09/16 16:58:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,7 +192,7 @@ CreatePortal(const char *name, bool allowDup, bool dupSilent)
 
 	/* initialize portal fields that don't start off zero */
 	portal->cleanup = PortalCleanup;
-	portal->createXact = GetCurrentTransactionId();
+	portal->createSubid = GetCurrentSubTransactionId();
 	portal->strategy = PORTAL_MULTI_QUERY;
 	portal->cursorOptions = CURSOR_OPT_NO_SCROLL;
 	portal->atStart = true;
@@ -427,7 +427,6 @@ AtCommit_Portals(void)
 {
 	HASH_SEQ_STATUS status;
 	PortalHashEnt *hentry;
-	TransactionId xact = GetCurrentTransactionId();
 
 	hash_seq_init(&status, PortalHashTable);
 
@@ -450,12 +449,9 @@ AtCommit_Portals(void)
 
 		/*
 		 * Do nothing else to cursors held over from a previous
-		 * transaction. (This test must include checking CURSOR_OPT_HOLD,
-		 * else we will fail to clean up a VACUUM portal if it fails after
-		 * its first sub-transaction.)
+		 * transaction.
 		 */
-		if (portal->createXact != xact &&
-			(portal->cursorOptions & CURSOR_OPT_HOLD))
+		if (portal->createSubid == InvalidSubTransactionId)
 			continue;
 
 		if ((portal->cursorOptions & CURSOR_OPT_HOLD) &&
@@ -479,6 +475,12 @@ AtCommit_Portals(void)
 			 * longer have its own resources.
 			 */
 			portal->resowner = NULL;
+
+			/*
+			 * Having successfully exported the holdable cursor, mark it
+			 * as not belonging to this transaction.
+			 */
+			portal->createSubid = InvalidSubTransactionId;
 		}
 		else
 		{
@@ -502,7 +504,6 @@ AtAbort_Portals(void)
 {
 	HASH_SEQ_STATUS status;
 	PortalHashEnt *hentry;
-	TransactionId xact = GetCurrentTransactionId();
 
 	hash_seq_init(&status, PortalHashTable);
 
@@ -515,12 +516,9 @@ AtAbort_Portals(void)
 
 		/*
 		 * Do nothing else to cursors held over from a previous
-		 * transaction. (This test must include checking CURSOR_OPT_HOLD,
-		 * else we will fail to clean up a VACUUM portal if it fails after
-		 * its first sub-transaction.)
+		 * transaction.
 		 */
-		if (portal->createXact != xact &&
-			(portal->cursorOptions & CURSOR_OPT_HOLD))
+		if (portal->createSubid == InvalidSubTransactionId)
 			continue;
 
 		/* let portalcmds.c clean up the state it knows about */
@@ -548,7 +546,6 @@ AtCleanup_Portals(void)
 {
 	HASH_SEQ_STATUS status;
 	PortalHashEnt *hentry;
-	TransactionId xact = GetCurrentTransactionId();
 
 	hash_seq_init(&status, PortalHashTable);
 
@@ -556,14 +553,8 @@ AtCleanup_Portals(void)
 	{
 		Portal		portal = hentry->portal;
 
-		/*
-		 * Do nothing else to cursors held over from a previous
-		 * transaction. (This test must include checking CURSOR_OPT_HOLD,
-		 * else we will fail to clean up a VACUUM portal if it fails after
-		 * its first sub-transaction.)
-		 */
-		if (portal->createXact != xact &&
-			(portal->cursorOptions & CURSOR_OPT_HOLD))
+		/* Do nothing to cursors held over from a previous transaction */
+		if (portal->createSubid == InvalidSubTransactionId)
 		{
 			Assert(portal->status != PORTAL_ACTIVE);
 			Assert(portal->resowner == NULL);
@@ -579,15 +570,15 @@ AtCleanup_Portals(void)
  * Pre-subcommit processing for portals.
  *
  * Reassign the portals created in the current subtransaction to the parent
- * transaction.
+ * subtransaction.
  */
 void
-AtSubCommit_Portals(TransactionId parentXid,
+AtSubCommit_Portals(SubTransactionId mySubid,
+					SubTransactionId parentSubid,
 					ResourceOwner parentXactOwner)
 {
 	HASH_SEQ_STATUS status;
 	PortalHashEnt *hentry;
-	TransactionId curXid = GetCurrentTransactionId();
 
 	hash_seq_init(&status, PortalHashTable);
 
@@ -595,9 +586,9 @@ AtSubCommit_Portals(TransactionId parentXid,
 	{
 		Portal		portal = hentry->portal;
 
-		if (portal->createXact == curXid)
+		if (portal->createSubid == mySubid)
 		{
-			portal->createXact = parentXid;
+			portal->createSubid = parentSubid;
 			if (portal->resowner)
 				ResourceOwnerNewParent(portal->resowner, parentXactOwner);
 		}
@@ -612,12 +603,12 @@ AtSubCommit_Portals(TransactionId parentXid,
  * in descendants of the subtransaction too.
  */
 void
-AtSubAbort_Portals(TransactionId parentXid,
+AtSubAbort_Portals(SubTransactionId mySubid,
+				   SubTransactionId parentSubid,
 				   ResourceOwner parentXactOwner)
 {
 	HASH_SEQ_STATUS status;
 	PortalHashEnt *hentry;
-	TransactionId curXid = GetCurrentTransactionId();
 
 	hash_seq_init(&status, PortalHashTable);
 
@@ -625,7 +616,7 @@ AtSubAbort_Portals(TransactionId parentXid,
 	{
 		Portal		portal = hentry->portal;
 
-		if (portal->createXact != curXid)
+		if (portal->createSubid != mySubid)
 			continue;
 
 		/*
@@ -644,7 +635,7 @@ AtSubAbort_Portals(TransactionId parentXid,
 		 */
 		if (portal->status == PORTAL_READY)
 		{
-			portal->createXact = parentXid;
+			portal->createSubid = parentSubid;
 			if (portal->resowner)
 				ResourceOwnerNewParent(portal->resowner, parentXactOwner);
 		}
@@ -674,11 +665,10 @@ AtSubAbort_Portals(TransactionId parentXid,
  * we will not drop any that were reassigned to the parent above).
  */
 void
-AtSubCleanup_Portals(void)
+AtSubCleanup_Portals(SubTransactionId mySubid)
 {
 	HASH_SEQ_STATUS status;
 	PortalHashEnt *hentry;
-	TransactionId curXid = GetCurrentTransactionId();
 
 	hash_seq_init(&status, PortalHashTable);
 
@@ -686,7 +676,7 @@ AtSubCleanup_Portals(void)
 	{
 		Portal		portal = hentry->portal;
 
-		if (portal->createXact != curXid)
+		if (portal->createSubid != mySubid)
 			continue;
 
 		/* AtSubAbort_Portals should have fixed these: */
