@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.116 2003/03/04 21:51:21 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.117 2003/03/20 04:51:44 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -60,6 +60,7 @@ extern int	CheckPointTimeout;
 extern bool autocommit;
 extern int	CommitDelay;
 extern int	CommitSiblings;
+extern char *preload_libraries_string;
 
 #ifdef HAVE_SYSLOG
 extern char *Syslog_facility;
@@ -812,6 +813,12 @@ static struct config_string
 	{
 		{"lc_time", PGC_USERSET}, &locale_time,
 		"C", locale_time_assign, NULL
+	},
+
+	{
+		{"preload_libraries", PGC_POSTMASTER, GUC_LIST_INPUT | GUC_LIST_QUOTE},
+		&preload_libraries_string,
+		"", NULL, NULL
 	},
 
 	{

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.307 2003/02/23 04:48:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.308 2003/03/20 04:51:44 momjian Exp $
  *
  * NOTES
  *
@@ -205,6 +205,8 @@ bool		LogSourcePort;
 bool		Log_connections = false;
 bool		Db_user_namespace = false;
 
+/* list of library:init-function to be preloaded */
+char       *preload_libraries_string = NULL;
 
 /* Startup/shutdown state */
 static pid_t StartupPID = 0,
@@ -644,6 +646,13 @@ PostmasterMain(int argc, char *argv[])
 	if (EnableSSL)
 		secure_initialize();
 #endif
+
+	/*
+	 * process any libraries that should be preloaded and
+	 * optionally pre-initialized
+	 */
+	if (preload_libraries_string)
+		process_preload_libraries(preload_libraries_string);
 
 	/*
 	 * Fork away from controlling terminal, if -S specified.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.100 2003/01/27 00:51:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.101 2003/03/20 04:51:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1044,3 +1044,92 @@ ValidatePgVersion(const char *path)
 			 "which is not compatible with this version %s.",
 			 file_major, file_minor, version_string);
 }
+
+/*-------------------------------------------------------------------------
+ *				Library preload support
+ *-------------------------------------------------------------------------
+ */
+
+#if defined(__mc68000__) && defined(__ELF__)
+typedef int32 ((*func_ptr) ());
+#else
+typedef char *((*func_ptr) ());
+#endif
+
+/*
+ * process any libraries that should be preloaded and
+ * optionally pre-initialized
+ */
+void
+process_preload_libraries(char *preload_libraries_string)
+{
+	char	   *rawstring;
+	List	   *elemlist;
+	List	   *l;
+
+	if (preload_libraries_string == NULL)
+		return;
+
+	/* Need a modifiable copy of string */
+	rawstring = pstrdup(preload_libraries_string);
+
+	/* Parse string into list of identifiers */
+	if (!SplitIdentifierString(rawstring, ',', &elemlist))
+	{
+		/* syntax error in list */
+		pfree(rawstring);
+		freeList(elemlist);
+		elog(LOG, "invalid list syntax for preload_libraries configuration option");
+	}
+
+	foreach(l, elemlist)
+	{
+		char	   *tok = (char *) lfirst(l);
+		char	   *sep = strstr(tok, ":");
+		char	   *filename = NULL;
+		char	   *funcname = NULL;
+		func_ptr	initfunc;
+
+		if (sep)
+		{
+			/*
+			 * a colon separator implies there is an initialization function
+			 * that we need to run in addition to loading the library
+			 */
+			size_t		filename_len = sep - tok;
+			size_t		funcname_len = strlen(tok) - filename_len - 1;
+
+			filename = (char *) palloc(filename_len + 1);
+			memset(filename, '\0', filename_len + 1);
+			snprintf(filename, filename_len + 1, "%s", tok);
+
+			funcname = (char *) palloc(funcname_len + 1);
+			memset(funcname, '\0', funcname_len + 1);
+			snprintf(funcname, funcname_len + 1, "%s", sep + 1);
+		}
+		else
+		{
+			/*
+			 * no separator -- just load the library
+			 */
+			filename = pstrdup(tok);
+			funcname = NULL;
+		}
+
+		initfunc = (func_ptr) load_external_function(filename, funcname, false, NULL);
+		if (initfunc)
+			(*initfunc)();
+
+		elog(LOG, "preloaded library %s with initialization function %s", filename, funcname);
+
+		if (filename != NULL)
+			pfree(filename);
+
+		if (funcname != NULL)
+			pfree(funcname);
+	}
+
+	pfree(rawstring);
+	freeList(elemlist);
+}
+

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.116 2003/02/22 05:57:45 tgl Exp $
+ * $Id: miscadmin.h,v 1.117 2003/03/20 04:51:44 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -288,6 +288,7 @@ extern void RecordSharedMemoryInLockFile(unsigned long id1,
 							 unsigned long id2);
 
 extern void ValidatePgVersion(const char *path);
+extern void process_preload_libraries(char *preload_libraries_string);
 
 /* these externs do not belong here... */
 extern void IgnoreSystemIndexes(bool mode);

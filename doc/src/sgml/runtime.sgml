@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.171 2003/03/20 03:34:55 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.172 2003/03/20 04:51:44 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1795,6 +1795,35 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        <para>
         The TCP port the server listens on; 5432 by default. This
         option can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>PRELOAD_LIBRARIES</varname> (<type>string</type>)</term>
+      <indexterm><primary>preload_libraries</></>
+      <listitem>
+       <para>
+        This variable specifies one or more shared libraries that are to be
+	preloaded at Postmaster start. An initialization function can also be
+	optionally specified by adding a colon followed by the name of the
+	initialization function after the library name. For example
+	<literal>'$libdir/mylib:init_mylib'</literal> would cause <literal>mylib</>
+    to be preloaded and <literal>init_mylib</> to be executed. If more than
+	one library is to be loaded, they must be delimited with a comma.
+       </para>
+
+       <para>
+        If <literal>mylib</> is not found, the postmaster will fail to start.
+	However, if <literal>init_mylib</> is not found, <literal>mylib</> will
+	still be preloaded without executing the initialization function.
+       </para>
+
+       <para>
+        By preloading a shared library (and initializing it if applicable),
+	the library startup time is avoided when the library is used later in a
+	specific backend. However there is a cost in terms of memory duplication
+	as every backend is forked, whether or not the library is used.
        </para>
       </listitem>
      </varlistentry>
