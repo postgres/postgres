@@ -321,11 +321,13 @@ timetravel(PG_FUNCTION_ARGS)
 			if(!(tupdesc->attrs[i - 1]->attisdropped))	/* skip dropped columns */
 			    snprintf(sql + strlen(sql), sizeof(sql) - strlen(sql), "$%d%s",
 					i, (i < natts) ? ", " : ")" );
-//			    snprintf(sql + strlen(sql), sizeof(sql) - strlen(sql), "$%d /* %d */ %s",
-//					i, ctypes[i-1], (i < natts) ? ", " : ")" );
+#if 0
+			    snprintf(sql + strlen(sql), sizeof(sql) - strlen(sql), "$%d /* %d */ %s",
+					i, ctypes[i-1], (i < natts) ? ", " : ")" );
+#endif
 		}
 
-//		elog(NOTICE, "timetravel (%s) update: sql: %s", relname, sql);
+		elog(DEBUG4, "timetravel (%s) update: sql: %s", relname, sql);
 
 		/* Prepare plan for query */
 		pplan = SPI_prepare(sql, natts, ctypes);
@@ -395,10 +397,9 @@ timetravel(PG_FUNCTION_ARGS)
 		 * SPI_copytuple allocates tmptuple in upper executor context -
 		 * have to free allocation using SPI_pfree
 		 */
-//		SPI_pfree(tmptuple);
+		/* SPI_pfree(tmptuple); */
 	}
-	else
-/* DELETE */
+	else						/* DELETE case */
 		rettuple = trigtuple;
 
 	SPI_finish();				/* don't forget say Bye to SPI mgr */
