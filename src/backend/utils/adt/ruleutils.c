@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.89.2.1 2002/06/15 18:38:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.89.2.2 2002/09/20 21:37:07 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1608,6 +1608,17 @@ phony_equal(Node *expr1, Node *expr2, int levelsup)
 		if (!phony_equal(a->expr, b->expr, levelsup))
 			return false;
 		if (!phony_equal(a->result, b->result, levelsup))
+			return false;
+		return true;
+	}
+	if (IsA(expr1, NullTest))
+	{
+		NullTest   *a = (NullTest *) expr1;
+		NullTest   *b = (NullTest *) expr2;
+
+		if (!phony_equal(a->arg, b->arg, levelsup))
+			return false;
+		if (a->nulltesttype != b->nulltesttype)
 			return false;
 		return true;
 	}
