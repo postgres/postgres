@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.13 1998/04/27 04:07:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.14 1998/07/20 16:57:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ SetDefine(char *querystr, char *typename)
 	Oid			setoid;
 	char	   *procname = GENERICSETNAME;
 	char	   *fileName = "-";
-	char		realprocname[16];
+	char		realprocname[NAMEDATALEN];
 	HeapTuple	tup,
 				newtup = NULL;
 	Form_pg_proc proc;

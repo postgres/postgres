@@ -1347,7 +1347,7 @@ text_range_out(TXTRANGE *r)
 
 	if (r == NULL)
 		return (NULL);
-	result = (char *) palloc(16 + VARSIZE(TRLOWER(r)) + VARSIZE(TRUPPER(r))
+	result = (char *) palloc(NAMEDATALEN + VARSIZE(TRLOWER(r)) + VARSIZE(TRUPPER(r))
 							 - 2 * VARHDRSZ);
 
 	lower = (char *) palloc(VARSIZE(TRLOWER(r)) + 1 - VARHDRSZ);

@@ -83,7 +83,7 @@ typedef enum {
 #define NO_AUTHENTICATION	7
 #define PATH_SIZE			64
 #define ARGV_SIZE			64
-#define NAMEDATALEN			16
+#define NAMEDATALEN			32
 
 typedef unsigned int ProtocolVersion;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.29 1998/06/16 02:53:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.30 1998/07/20 16:56:53 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -239,18 +239,18 @@ heapgettup(Relation relation,
 #ifdef	HEAPDEBUGALL
 	if (ItemPointerIsValid(tid))
 	{
-		elog(DEBUG, "heapgettup(%.16s, tid=0x%x[%d,%d], dir=%d, ...)",
+		elog(DEBUG, "heapgettup(%s, tid=0x%x[%d,%d], dir=%d, ...)",
 			 RelationGetRelationName(relation), tid, tid->ip_blkid,
 			 tid->ip_posid, dir);
 	}
 	else
 	{
-		elog(DEBUG, "heapgettup(%.16s, tid=0x%x, dir=%d, ...)",
+		elog(DEBUG, "heapgettup(%s, tid=0x%x, dir=%d, ...)",
 			 RelationGetRelationName(relation), tid, dir);
 	}
 	elog(DEBUG, "heapgettup(..., b=0x%x, nkeys=%d, key=0x%x", b, nkeys, key);
 
-	elog(DEBUG, "heapgettup: relation(%c)=`%.16s', %s",
+	elog(DEBUG, "heapgettup: relation(%c)=`%s', %s",
 		 relation->rd_rel->relkind, &relation->rd_rel->relname,
 		 (seeself == true) ? "SeeSelf" : "NoSeeSelf");
 #endif							/* !defined(HEAPDEBUGALL) */

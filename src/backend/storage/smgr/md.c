@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.32 1998/07/20 16:14:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.33 1998/07/20 16:56:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -686,7 +686,7 @@ mdnblocks(Relation reln)
 			{
 				v->mdfd_chain = _mdfd_openseg(reln, segno, O_CREAT);
 				if (v->mdfd_chain == (MdfdVec *) NULL)
-					elog(ERROR, "cannot count blocks for %.16s -- open failed",
+					elog(ERROR, "cannot count blocks for %s -- open failed",
 						 RelationGetRelationName(reln));
 			}
 
@@ -940,7 +940,7 @@ _mdfd_getseg(Relation reln, int blkno, int oflag)
 	if (fd < 0)
 	{
 		if ((fd = mdopen(reln)) < 0)
-			elog(ERROR, "cannot open relation %.16s",
+			elog(ERROR, "cannot open relation %s",
 				 RelationGetRelationName(reln));
 		reln->rd_fd = fd;
 	}
@@ -956,7 +956,7 @@ _mdfd_getseg(Relation reln, int blkno, int oflag)
 			v->mdfd_chain = _mdfd_openseg(reln, i, oflag);
 
 			if (v->mdfd_chain == (MdfdVec *) NULL)
-				elog(ERROR, "cannot open segment %d of relation %.16s",
+				elog(ERROR, "cannot open segment %d of relation %s",
 					 i, RelationGetRelationName(reln));
 		}
 		v = v->mdfd_chain;

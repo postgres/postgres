@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.23 1998/07/13 16:34:55 momjian Exp $
+ * $Id: buf_internals.h,v 1.24 1998/07/20 16:57:10 momjian Exp $
  *
  * NOTE
  *		If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -85,15 +85,6 @@ struct buftag
 
 #define BAD_BUFFER_ID(bid) ((bid<1) || (bid>(NBuffers)))
 #define INVALID_DESCRIPTOR (-3)
-
-/*
- *	bletch hack -- anyplace that we declare space for relation or
- *	database names, we just use '16', not a symbolic constant, to
- *	specify their lengths.	BM_NAMESIZE is the length of these names,
- *	and is used in the buffer manager code.  somebody with lots of
- *	spare time should do this for all the other modules, too.
- */
-#define BM_NAMESIZE		16
 
 /*
  *	struct sbufdesc -- shared buffer cache metadata for a single

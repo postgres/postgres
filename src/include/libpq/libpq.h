@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.19 1998/07/18 18:34:23 momjian Exp $
+ * $Id: libpq.h,v 1.20 1998/07/20 16:57:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ typedef struct
  *		Information about an attribute.
  * ----------------
  */
-#define NameLength 16
+#define NameLength NAMEDATALEN
 
 typedef struct TypeBlock
 {

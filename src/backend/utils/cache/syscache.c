@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.18 1998/06/15 19:29:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.19 1998/07/20 16:57:05 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -372,7 +372,7 @@ InitCatalogCache()
 			if (!PointerIsValid((char *) SysCache[cacheId]))
 			{
 				elog(ERROR,
-					 "InitCatalogCache: Can't init cache %.16s(%d)",
+					 "InitCatalogCache: Can't init cache %s(%d)",
 					 cacheinfo[cacheId].name,
 					 cacheId);
 			}
@@ -419,7 +419,7 @@ SearchSysCacheTuple(int cacheId,/* cache selection code */
 						 cacheinfo[cacheId].iScanFunc);
 		if (!PointerIsValid(SysCache[cacheId]))
 			elog(ERROR,
-				 "InitCatalogCache: Can't init cache %.16s(%d)",
+				 "InitCatalogCache: Can't init cache %s(%d)",
 				 cacheinfo[cacheId].name,
 				 cacheId);
 	}

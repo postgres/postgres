@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.6 1997/09/08 21:47:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.7 1998/07/20 16:56:54 momjian Exp $
  *
  * NOTES
  *
@@ -99,7 +99,7 @@ SHMQueueDelete(SHM_QUEUE *queue)
 void
 dumpQ(SHM_QUEUE *q, char *s)
 {
-	char		elem[16];
+	char		elem[NAMEDATALEN];
 	char		buf[1024];
 	SHM_QUEUE  *start = q;
 	int			count = 0;

@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.26 1998/04/26 04:10:07 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.27 1998/07/20 16:57:18 momjian Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -283,15 +283,15 @@ char	   *string;
 	int			len;
 	char	   *new_string;
 
-	if (!(new_string = palloc(16)))
+	if (!(new_string = palloc(NAMEDATALEN)))
 	{
 		fprintf(stderr, "reverse_name: palloc failed\n");
 		return (NULL);
 	}
-	MemSet(new_string, 0, 16);
-	for (i = 0; i < 16 && string[i]; ++i)
+	MemSet(new_string, 0, NAMEDATALEN);
+	for (i = 0; i < NAMEDATALEN && string[i]; ++i)
 		;
-	if (i == 16 || !string[i])
+	if (i == NAMEDATALEN || !string[i])
 		--i;
 	len = i;
 	for (; i >= 0; --i)

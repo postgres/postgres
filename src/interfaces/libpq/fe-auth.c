@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.19 1998/07/09 03:32:09 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.20 1998/07/20 16:57:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@
 
 struct authsvc
 {
-	char		name[16];		/* service nickname (for command line) */
+	char		name[NAMEDATALEN];	/* service nickname (for command line) */
 	MsgType		msgtype;		/* startup packet header type */
 	int			allowed;		/* initially allowed (before command line
 								 * option parsing)? */
