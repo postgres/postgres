@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.28 1997/01/27 22:37:52 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.29 1997/02/03 04:43:31 scrappy Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -1283,7 +1283,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
         puts("\nPOSTGRES backend interactive interface");
-        puts("$Revision: 1.28 $ $Date: 1997/01/27 22:37:52 $");
+        puts("$Revision: 1.29 $ $Date: 1997/02/03 04:43:31 $");
     }
     
     /* ----------------
@@ -1481,11 +1481,11 @@ PostgresMain(int argc, char *argv[])
 }
 
 #ifndef WIN32
-#ifdef NEED_RUSAGE
+#ifdef HAVE_RUSAGE
 #include "rusagestub.h"
-#else /* NEED_RUSAGE */
+#else /* HAVE_RUSAGE */
 #include <sys/resource.h>
-#endif /* NEED_RUSAGE */
+#endif /* HAVE_RUSAGE */
 
 struct rusage Save_r;
 struct timeval Save_t;
@@ -1549,7 +1549,7 @@ ShowUsage(void)
             (long int) user.tv_usec, 
             (long int) sys.tv_sec, 
             (long int) sys.tv_usec);
-#ifndef NEED_RUSAGE
+#ifndef HAVE_RUSAGE
     fprintf(StatFp, 
             "!\t%ld/%ld [%ld/%ld] filesystem blocks in/out\n",
             r.ru_inblock - Save_r.ru_inblock,
@@ -1575,7 +1575,7 @@ ShowUsage(void)
             r.ru_nvcsw - Save_r.ru_nvcsw,
             r.ru_nivcsw - Save_r.ru_nivcsw,
             r.ru_nvcsw, r.ru_nivcsw);
-#endif /* NEED_RUSAGE */
+#endif /* HAVE_RUSAGE */
     fprintf(StatFp, "! postgres usage stats:\n");
     PrintBufferUsage(StatFp);
 /*     DisplayTupleCount(StatFp); */
