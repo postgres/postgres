@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.36 1999/09/18 19:07:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.37 1999/10/21 01:46:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "access/heapam.h"
 #include "catalog/pg_rewrite.h"
+#include "lib/stringinfo.h"
 #include "parser/parse_relation.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteSupport.h"
@@ -24,23 +25,32 @@
 
 Oid			LastOidProcessed = InvalidOid;
 
-static void
-strcpyq(char *dest, char *source)
-{
-	char	   *current = source,
-			   *destp = dest;
 
+/*
+ * Convert given string to a suitably quoted string constant,
+ * and append it to the StringInfo buffer.
+ * XXX Any MULTIBYTE considerations here?
+ */
+static void
+quoteString(StringInfo buf, char *source)
+{
+	char	   *current;
+
+	appendStringInfoChar(buf, '\'');
 	for (current = source; *current; current++)
 	{
-		if (*current == '\"')
+		char	ch = *current;
+		if (ch == '\'' || ch == '\\')
 		{
-			*destp = '\\';
-			destp++;
+			appendStringInfoChar(buf, '\\');
+			appendStringInfoChar(buf, ch);
 		}
-		*destp = *current;
-		destp++;
+		else if (ch >= 0 && ch < ' ')
+			appendStringInfo(buf, "\\%03o", (int) ch);
+		else
+			appendStringInfoChar(buf, ch);
 	}
-	*destp = '\0';
+	appendStringInfoChar(buf, '\'');
 }
 
 /*
@@ -68,15 +78,11 @@ InsertRule(char *rulname,
 		   bool evinstead,
 		   char *actiontree)
 {
-	static char rulebuf[MaxAttrSize];
-	static char actionbuf[MaxAttrSize];
-	static char qualbuf[MaxAttrSize];
-	Oid			eventrel_oid = InvalidOid;
-	AttrNumber	evslot_index = InvalidAttrNumber;
-	Relation	eventrel = NULL;
+	StringInfoData rulebuf;
+	Relation	eventrel;
+	Oid			eventrel_oid;
+	AttrNumber	evslot_index;
 	char	   *is_instead = "f";
-	extern void eval_as_new_xact();
-	char	   *template;
 
 	eventrel = heap_openr(evobj, AccessShareLock);
 	eventrel_oid = RelationGetRelid(eventrel);
@@ -87,7 +93,7 @@ InsertRule(char *rulname,
 	if (evslot == NULL)
 		evslot_index = -1;
 	else
-		evslot_index = attnameAttNum(eventrel, (char *) evslot);
+		evslot_index = attnameAttNum(eventrel, evslot);
 	heap_close(eventrel, AccessShareLock);
 
 	if (evinstead)
@@ -99,22 +105,21 @@ InsertRule(char *rulname,
 	if (IsDefinedRewriteRule(rulname))
 		elog(ERROR, "Attempt to insert rule '%s' failed: already exists",
 			 rulname);
-	strcpyq(actionbuf, actiontree);
-	strcpyq(qualbuf, evqual);
 
-	template = "INSERT INTO pg_rewrite \
-(rulename, ev_type, ev_class, ev_attr, ev_action, ev_qual, is_instead) VALUES \
-('%s', %d::char, %u::oid, %d::int2, '%s'::text, '%s'::text, \
- '%s'::bool);";
-	if (MAXALIGN(sizeof(FormData_pg_rewrite)) +
-		MAXALIGN(strlen(actionbuf)) +
-		MAXALIGN(strlen(qualbuf)) > MaxAttrSize)
-		elog(ERROR, "DefineQueryRewrite: rule plan string too big.");
-	sprintf(rulebuf, template,
-			rulname, evtype, eventrel_oid, evslot_index, actionbuf,
-			qualbuf, is_instead);
+	initStringInfo(&rulebuf);
+	appendStringInfo(&rulebuf,
+					 "INSERT INTO pg_rewrite (rulename, ev_type, ev_class, ev_attr, ev_action, ev_qual, is_instead) VALUES (");
+	quoteString(&rulebuf, rulname);
+	appendStringInfo(&rulebuf, ", %d::char, %u::oid, %d::int2, ",
+					 evtype, eventrel_oid, evslot_index);
+	quoteString(&rulebuf, actiontree);
+	appendStringInfo(&rulebuf, "::text, ");
+	quoteString(&rulebuf, evqual);
+	appendStringInfo(&rulebuf, "::text, '%s'::bool);",
+					 is_instead);
 
-	pg_exec_query_acl_override(rulebuf);
+	pg_exec_query_acl_override(rulebuf.data);
+	pfree(rulebuf.data);
 
 	return LastOidProcessed;
 }
