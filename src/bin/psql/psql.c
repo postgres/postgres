@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.194 1999/10/25 03:07:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.195 1999/10/26 04:40:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,7 +274,7 @@ slashUsage(PsqlSettings *pset)
 	fprintf(fout, " \\copy table {from | to} <fname>\n");
 	fprintf(fout, " \\d [<table>] -- list tables and indices, columns in <table>, or * for all\n");
 	fprintf(fout, " \\da          -- list aggregates\n");
-	fprintf(fout, " \\dd [<object>]- list comment for table, field, type, function, or operator.\n");
+	fprintf(fout, " \\dd [<object>]- list comment an object.\n");
 	fprintf(fout, " \\df          -- list functions\n");
 	fprintf(fout, " \\di          -- list only indices\n");
 	fprintf(fout, " \\do          -- list operators\n");
