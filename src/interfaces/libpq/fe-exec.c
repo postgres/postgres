@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.71 1998/11/29 01:53:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.72 1999/02/03 20:19:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1650,7 +1650,7 @@ PQfnumber(PGresult *res, const char *field_name)
 
 	for (i = 0; i < res->numAttributes; i++)
 	{
-		if (strcmp(field_name, res->attDescs[i].name) == 0)
+		if (strcmp(field_case, res->attDescs[i].name) == 0)
 		{
 			free(field_case);
 			return i;
