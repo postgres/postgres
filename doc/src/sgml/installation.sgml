@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.152 2003/10/24 20:39:09 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.153 2003/10/24 20:44:19 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1629,7 +1629,8 @@ gunzip -c postgres.ps.gz \
 	<entry><systemitem>PPC</></entry>
 	<entry>7.4</entry>
 	<entry>2003-10-24,
-	 10.2.8, Adam Witney (<email>awitney@sghms.ac.uk</email>)</entry>
+	 10.2.8, Adam Witney (<email>awitney@sghms.ac.uk</email>),
+	 10.3, Marko Karppinen (<email>marko@karppinen.fi</email>)</entry>
 	<entry></entry>
        </row>
        <row>
@@ -1669,8 +1670,9 @@ gunzip -c postgres.ps.gz \
         <entry><systemitem class="osname">SCO OpenServer 5</></entry>
         <entry><systemitem>x86</></entry>
         <entry>7.3.1</entry>
-        <entry>2002-12-11, Shibashish Satpathy (<email>shib@postmark.net</>)</entry>
-        <entry>5.0.4, <command>gcc</>;  see also <filename>doc/FAQ_SCO</filename></entry>
+        <entry>2002-12-11, 
+         5.0.4, Shibashish Satpathy (<email>shib@postmark.net</>)</entry>
+        <entry><command>gcc</>;  see also <filename>doc/FAQ_SCO</filename></entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Solaris</></entry>
