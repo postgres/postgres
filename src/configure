@@ -890,9 +890,9 @@ EOF
  echo "$ac_t""$with_maxbackends" 1>&6
 else
   cat >> confdefs.h <<EOF
-#define DEF_MAXBACKENDS 64
+#define DEF_MAXBACKENDS 32
 EOF
- echo "$ac_t""64" 1>&6
+ echo "$ac_t""32" 1>&6
 
 fi
 
