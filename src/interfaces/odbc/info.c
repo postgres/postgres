@@ -418,7 +418,7 @@ RETCODE result;
         break;
 
     case SQL_ORDER_BY_COLUMNS_IN_SELECT: /* ODBC 2.0 */
-		p = "Y";
+		p = (PROTOCOL_62(ci) || PROTOCOL_63(ci)) ? "Y" : "N";		
         break;
 
     case SQL_OUTER_JOINS: /* ODBC 1.0 */
@@ -1181,7 +1181,7 @@ RETCODE result;
 char table_owner[MAX_INFO_STRING], table_name[MAX_INFO_STRING], field_name[MAX_INFO_STRING], field_type_name[MAX_INFO_STRING];
 Int2 field_number, result_cols;
 Int4 field_type, the_type, field_length, mod_length;
-char not_null[MAX_INFO_STRING];
+char not_null[MAX_INFO_STRING], relhasrules[MAX_INFO_STRING];
 ConnInfo *ci;
 
 
@@ -1200,7 +1200,8 @@ ConnInfo *ci;
 	// **********************************************************************
 	//	Create the query to find out the columns (Note: pre 6.3 did not have the atttypmod field)
 	// **********************************************************************
-	sprintf(columns_query, "select u.usename, c.relname, a.attname, a.atttypid,t.typname, a.attnum, a.attlen, %s, a.attnotnull from pg_user u, pg_class c, pg_attribute a, pg_type t where "
+	sprintf(columns_query, "select u.usename, c.relname, a.attname, a.atttypid,t.typname, a.attnum, a.attlen, %s, a.attnotnull, c.relhasrules "
+		"from pg_user u, pg_class c, pg_attribute a, pg_type t where "
 		"int4out(u.usesysid) = int4out(c.relowner) and c.oid= a.attrelid and a.atttypid = t.oid and (a.attnum > 0)",
 		PROTOCOL_62(ci) ? "a.attlen" : "a.atttypmod");
 
@@ -1324,6 +1325,16 @@ ConnInfo *ci;
         return SQL_ERROR;
     }
 
+    result = SQLBindCol(hcol_stmt, 10, SQL_C_CHAR,
+                        relhasrules, MAX_INFO_STRING, NULL);
+    if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		stmt->errormsg = col_stmt->errormsg;
+		stmt->errornumber = col_stmt->errornumber;
+		SC_log_error(func, "", stmt);
+		SQLFreeStmt(hcol_stmt, SQL_DROP);
+        return SQL_ERROR;
+    }
+
     stmt->result = QR_Constructor();
     if(!stmt->result) {
 		stmt->errormsg = "Couldn't allocate memory for SQLColumns result.";
@@ -1368,7 +1379,9 @@ ConnInfo *ci;
 
 	if (result != SQL_ERROR && ! stmt->internal) {
 
-		if (atoi(ci->show_oid_column) || strncmp(table_name, POSTGRES_SYS_PREFIX, strlen(POSTGRES_SYS_PREFIX)) == 0) {
+		if (relhasrules[0] != '1' && 
+		    (atoi(ci->show_oid_column) || 
+			 strncmp(table_name, POSTGRES_SYS_PREFIX, strlen(POSTGRES_SYS_PREFIX)) == 0)) {
 
 			/*	For OID fields */
 			the_type = PG_TYPE_OID;
@@ -1466,7 +1479,7 @@ ConnInfo *ci;
 
 	//	Put the row version column at the end so it might not be
 	//	mistaken for a key field.
-	if ( ! stmt->internal && atoi(ci->row_versioning)) {
+	if ( relhasrules[0] != '1' && ! stmt->internal && atoi(ci->row_versioning)) {
 		/*	For Row Versioning fields */
 		the_type = PG_TYPE_INT4;
 
@@ -1521,6 +1534,12 @@ static char *func = "SQLSpecialColumns";
 TupleNode *row;
 StatementClass *stmt = (StatementClass *) hstmt;
 ConnInfo *ci;
+HSTMT hcol_stmt;
+StatementClass *col_stmt;
+char columns_query[MAX_STATEMENT_LEN];
+RETCODE result;
+char relhasrules[MAX_INFO_STRING];
+
 
 
 mylog("%s: entering...stmt=%u\n", func, stmt);
@@ -1532,6 +1551,53 @@ mylog("%s: entering...stmt=%u\n", func, stmt);
 	ci = &stmt->hdbc->connInfo;
 
 	stmt->manual_result = TRUE;
+
+
+	// **********************************************************************
+	//	Create the query to find out if this is a view or not...
+	// **********************************************************************
+	sprintf(columns_query, "select c.relhasrules "
+		"from pg_user u, pg_class c where "
+		"int4out(u.usesysid) = int4out(c.relowner) ");
+
+	my_strcat(columns_query, " and c.relname like '%.*s'", szTableName, cbTableName);
+	my_strcat(columns_query, " and u.usename like '%.*s'", szTableOwner, cbTableOwner);
+
+
+    result = SQLAllocStmt( stmt->hdbc, &hcol_stmt);
+    if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		stmt->errornumber = STMT_NO_MEMORY_ERROR;
+		stmt->errormsg = "Couldn't allocate statement for SQLSpecialColumns result.";
+		SC_log_error(func, "", stmt);
+        return SQL_ERROR;
+    }
+	col_stmt = (StatementClass *) hcol_stmt;
+
+	mylog("SQLSpecialColumns: hcol_stmt = %u, col_stmt = %u\n", hcol_stmt, col_stmt);
+
+    result = SQLExecDirect(hcol_stmt, columns_query,
+                           strlen(columns_query));
+    if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		stmt->errormsg = SC_create_errormsg(hcol_stmt);
+		stmt->errornumber = col_stmt->errornumber;
+		SC_log_error(func, "", stmt);
+		SQLFreeStmt(hcol_stmt, SQL_DROP);
+        return SQL_ERROR;
+    }
+
+    result = SQLBindCol(hcol_stmt, 1, SQL_C_CHAR,
+                        relhasrules, MAX_INFO_STRING, NULL);
+    if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		stmt->errormsg = col_stmt->errormsg;
+		stmt->errornumber = col_stmt->errornumber;
+		SC_log_error(func, "", stmt);
+		SQLFreeStmt(hcol_stmt, SQL_DROP);
+        return SQL_ERROR;
+    }
+
+	result = SQLFetch(hcol_stmt);
+	SQLFreeStmt(hcol_stmt, SQL_DROP);
+
     stmt->result = QR_Constructor();
     extend_bindings(stmt, 8);
 
@@ -1545,40 +1611,45 @@ mylog("%s: entering...stmt=%u\n", func, stmt);
     QR_set_field_info(stmt->result, 6, "SCALE", PG_TYPE_INT2, 2);
     QR_set_field_info(stmt->result, 7, "PSEUDO_COLUMN", PG_TYPE_INT2, 2);
 
-    /* use the oid value for the rowid */
-    if(fColType == SQL_BEST_ROWID) {
-        row = (TupleNode *)malloc(sizeof(TupleNode) + (8 - 1) * sizeof(TupleField));
-
-        set_tuplefield_int2(&row->tuple[0], SQL_SCOPE_SESSION);
-        set_tuplefield_string(&row->tuple[1], "oid");
-        set_tuplefield_int2(&row->tuple[2], pgtype_to_sqltype(stmt, PG_TYPE_OID));
-        set_tuplefield_string(&row->tuple[3], "OID");
-        set_tuplefield_int4(&row->tuple[4], pgtype_precision(stmt, PG_TYPE_OID, PG_STATIC, PG_STATIC));
-        set_tuplefield_int4(&row->tuple[5], pgtype_length(stmt, PG_TYPE_OID, PG_STATIC, PG_STATIC));
-        set_tuplefield_int2(&row->tuple[6], pgtype_scale(stmt, PG_TYPE_OID));
-        set_tuplefield_int2(&row->tuple[7], SQL_PC_PSEUDO);
-
-        QR_add_tuple(stmt->result, row);
-
-    } else if(fColType == SQL_ROWVER) {
-
-		Int2 the_type = PG_TYPE_INT4;
-
-		if (atoi(ci->row_versioning)) {
+    if ( relhasrules[0] != '1' ) {
+		/* use the oid value for the rowid */
+		if(fColType == SQL_BEST_ROWID) {
 			row = (TupleNode *)malloc(sizeof(TupleNode) + (8 - 1) * sizeof(TupleField));
 
-			set_tuplefield_null(&row->tuple[0]);
-			set_tuplefield_string(&row->tuple[1], "xmin");
-			set_tuplefield_int2(&row->tuple[2], pgtype_to_sqltype(stmt, the_type));
-			set_tuplefield_string(&row->tuple[3], pgtype_to_name(stmt, the_type));
-			set_tuplefield_int4(&row->tuple[4], pgtype_precision(stmt, the_type, PG_STATIC, PG_STATIC));
-			set_tuplefield_int4(&row->tuple[5], pgtype_length(stmt, the_type, PG_STATIC, PG_STATIC));
-			set_tuplefield_int2(&row->tuple[6], pgtype_scale(stmt, the_type));
+			set_tuplefield_int2(&row->tuple[0], SQL_SCOPE_SESSION);
+			set_tuplefield_string(&row->tuple[1], "oid");
+			set_tuplefield_int2(&row->tuple[2], pgtype_to_sqltype(stmt, PG_TYPE_OID));
+			set_tuplefield_string(&row->tuple[3], "OID");
+			set_tuplefield_int4(&row->tuple[4], pgtype_precision(stmt, PG_TYPE_OID, PG_STATIC, PG_STATIC));
+			set_tuplefield_int4(&row->tuple[5], pgtype_length(stmt, PG_TYPE_OID, PG_STATIC, PG_STATIC));
+			set_tuplefield_int2(&row->tuple[6], pgtype_scale(stmt, PG_TYPE_OID));
 			set_tuplefield_int2(&row->tuple[7], SQL_PC_PSEUDO);
 
 			QR_add_tuple(stmt->result, row);
+
+		} else if(fColType == SQL_ROWVER) {
+
+			Int2 the_type = PG_TYPE_INT4;
+
+			if (atoi(ci->row_versioning)) {
+				row = (TupleNode *)malloc(sizeof(TupleNode) + (8 - 1) * sizeof(TupleField));
+
+				set_tuplefield_null(&row->tuple[0]);
+				set_tuplefield_string(&row->tuple[1], "xmin");
+				set_tuplefield_int2(&row->tuple[2], pgtype_to_sqltype(stmt, the_type));
+				set_tuplefield_string(&row->tuple[3], pgtype_to_name(stmt, the_type));
+				set_tuplefield_int4(&row->tuple[4], pgtype_precision(stmt, the_type, PG_STATIC, PG_STATIC));
+				set_tuplefield_int4(&row->tuple[5], pgtype_length(stmt, the_type, PG_STATIC, PG_STATIC));
+				set_tuplefield_int2(&row->tuple[6], pgtype_scale(stmt, the_type));
+				set_tuplefield_int2(&row->tuple[7], SQL_PC_PSEUDO);
+
+				QR_add_tuple(stmt->result, row);
+			}
 		}
 	}
+
+
+
     stmt->status = STMT_FINISHED;
     stmt->currTuple = -1;
 	stmt->rowset_start = -1;
@@ -1613,7 +1684,7 @@ TupleNode *row;
 int i;
 HSTMT hcol_stmt;
 StatementClass *col_stmt, *indx_stmt;
-char column_name[MAX_INFO_STRING];
+char column_name[MAX_INFO_STRING], relhasrules[MAX_INFO_STRING];
 char **column_names = 0;
 Int4 column_name_len;
 int total_columns = 0;
@@ -1742,7 +1813,7 @@ mylog("%s: entering...stmt=%u\n", func, stmt);
     }
 	indx_stmt = (StatementClass *) hindx_stmt;
 
-	sprintf(index_query, "select c.relname, i.indkey, i.indisunique, i.indisclustered from pg_index i, pg_class c, pg_class d where c.oid = i.indexrelid and d.relname = '%s' and d.oid = i.indrelid", 
+	sprintf(index_query, "select c.relname, i.indkey, i.indisunique, i.indisclustered, c.relhasrules from pg_index i, pg_class c, pg_class d where c.oid = i.indexrelid and d.relname = '%s' and d.oid = i.indrelid", 
 		table_name);
 
     result = SQLExecDirect(hindx_stmt, index_query, strlen(index_query));
@@ -1795,8 +1866,17 @@ mylog("%s: entering...stmt=%u\n", func, stmt);
 
     }
 
+    result = SQLBindCol(hindx_stmt, 5, SQL_C_CHAR,
+                        relhasrules, MAX_INFO_STRING, NULL);
+    if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		stmt->errormsg = indx_stmt->errormsg;
+		stmt->errornumber = indx_stmt->errornumber;
+		SQLFreeStmt(hindx_stmt, SQL_DROP);
+        goto SEEYA;
+    }
+
 	/*	fake index of OID */
-	if (atoi(ci->show_oid_column) && atoi(ci->fake_oid_index)) {
+	if ( relhasrules[0] != '1' && atoi(ci->show_oid_column) && atoi(ci->fake_oid_index)) {
 		row = (TupleNode *)malloc(sizeof(TupleNode) + 
 					  (13 - 1) * sizeof(TupleField));
 
