@@ -1,0 +1,15 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(src/preproc/type.c)
+
+AC_PROG_CC
+AC_PROG_LEX
+AC_PROG_YACC
+
+dnl This is actually not pwd, it is the location of the configure file.
+dnl This handling, and the fact that not all Makefiles are created by
+dnl this configure script makes it impossible to compile somewhere else.
+[TOPSRC=`pwd`/../..]
+
+AC_SUBST(TOPSRC)
+
+AC_OUTPUT(src/include/Makefile src/lib/Makefile src/preproc/Makefile src/preproc/ecpg)
