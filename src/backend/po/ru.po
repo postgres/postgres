@@ -1,10 +1,10 @@
 # ru.po
 # POSTGRES Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.18 2004/08/04 21:33:57 tgl Exp $
+# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.19 2004/08/10 18:38:19 petere Exp $
 #
 # ChangeLog:
-#   - March 27 - June 24, 2004: updates for 7.4 - 8.0 branches; <mokhov@cs.concordia.ca>
+#   - March 27 - August 9, 2004: updates for 7.4/8.0 branches; <mokhov@cs.concordia.ca>
 #   - July - August 23, 2003: updates for 7.4.x; <mokhov@cs.concordia.ca>
 #   - January 2, 2003: Fuzzy Fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - October 12, 2002: Post-7.3 beta 2, Fuzzy Fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -15,8 +15,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4.x\n"
-"POT-Creation-Date: 2004-06-21 01:17-0300\n"
-"PO-Revision-Date: 2004-06-24 00:04-0500\n"
+"POT-Creation-Date: 2004-07-25 13:13-0300\n"
+"PO-Revision-Date: 2004-08-09 02:04-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -160,12 +160,12 @@ msgstr "указаны многочисленные значения по умолчанию для колонки \"%s\" в таблиц
 #: parser/analyze.c:1393
 #, c-format
 msgid "inherited relation \"%s\" is not a table"
-msgstr ""
+msgstr "наследованное отношение \"%s\" не является таблицей"
 
 #: parser/analyze.c:1322
 #, c-format
 msgid "multiple primary keys for table \"%s\" are not allowed"
-msgstr ""
+msgstr "многочисленные первичные ключи для таблицы \"%s\" не дозволены"
 
 #: commands/indexcmds.c:232
 #: parser/analyze.c:1442
@@ -245,7 +245,7 @@ msgstr "INTO можно использовать только в первом SELECT'е в UNION/INTERSECT/EXCEP
 
 #: parser/analyze.c:2310
 msgid "UNION/INTERSECT/EXCEPT member statement may not refer to other relations of same query level"
-msgstr ""
+msgstr "команда, состоящая в UNION/INTERSECT/EXCEPT не может ссылаться на другие отношения на том же уровне запросов"
 
 #: parser/analyze.c:2363
 #, c-format
@@ -289,7 +289,7 @@ msgstr ""
 #: parser/parse_target.c:425
 #: rewrite/rewriteHandler.c:563
 msgid "You will need to rewrite or cast the expression."
-msgstr ""
+msgstr "Вам придёться переписать или выполнить преобразование выражения."
 
 #: parser/analyze.c:2813
 msgid "SELECT FOR UPDATE is not allowed with DISTINCT clause"
@@ -322,42 +322,42 @@ msgstr "отношение \"%s\" в выражении FOR UPDATE не найдено в выражении FROM"
 
 #: parser/analyze.c:3016
 msgid "misplaced DEFERRABLE clause"
-msgstr ""
+msgstr "неправильно расположенное выражение DEFERRABLE"
 
 #: parser/analyze.c:3020
 #: parser/analyze.c:3033
 msgid "multiple DEFERRABLE/NOT DEFERRABLE clauses not allowed"
-msgstr ""
+msgstr "многочисленные выражения DEFERRABLE/NOT DEFERRABLE не дозволены"
 
 #: parser/analyze.c:3029
 msgid "misplaced NOT DEFERRABLE clause"
-msgstr ""
+msgstr "неправильно расположенное выражение NOT DEFERRABLE"
 
 #: gram.y:2193
 #: gram.y:2208
 #: parser/analyze.c:3040
 #: parser/analyze.c:3064
 msgid "constraint declared INITIALLY DEFERRED must be DEFERRABLE"
-msgstr ""
+msgstr "ограничение задекларированное как INITIALLY DEFERRED также должно быть DEFERRABLE"
 
 #: parser/analyze.c:3047
 msgid "misplaced INITIALLY DEFERRED clause"
-msgstr ""
+msgstr "неправильно расположенное выражение INITIALLY DEFERRED"
 
 #: parser/analyze.c:3051
 #: parser/analyze.c:3075
 msgid "multiple INITIALLY IMMEDIATE/DEFERRED clauses not allowed"
-msgstr ""
+msgstr "многочисленные выражения INITIALLY IMMEDIATE/DEFERRED не дозволены"
 
 #: parser/analyze.c:3071
 msgid "misplaced INITIALLY IMMEDIATE clause"
-msgstr ""
+msgstr "неправильно расположенное выражение INITIALLY IMMEDIATE"
 
 #: parser/analyze.c:3184
 #: parser/analyze.c:3205
 #, c-format
 msgid "CREATE specifies a schema (%s) different from the one being created (%s)"
-msgstr ""
+msgstr "CREATE указывает схему (%s) отличную от создаваемой (%s)"
 
 #: parser/analyze.c:3259
 #: parser/parse_coerce.c:245
@@ -399,7 +399,7 @@ msgstr "колонка \"%s.%s\" должна фигурировать в выражении GROUP BY или использов
 #: parser/parse_agg.c:321
 #, c-format
 msgid "subquery uses ungrouped column \"%s.%s\" from outer query"
-msgstr ""
+msgstr "подзапрос использует несгруппированную колонку \"%s.%s\" из внешнего запроса"
 
 #: parser/parse_coerce.c:261
 #, c-format
@@ -448,18 +448,18 @@ msgstr "%s не в состоянии сконвертировать тип %s в %s"
 
 #: parser/parse_coerce.c:917
 msgid "arguments declared \"anyelement\" are not all alike"
-msgstr ""
+msgstr "аргументы задекларированные как \"anyelement\" не все одинаковые"
 
 #: parser/parse_coerce.c:934
 msgid "arguments declared \"anyarray\" are not all alike"
-msgstr ""
+msgstr "аргументы задекларированные как \"anyarray\" не все одинаковые"
 
 #: parser/parse_coerce.c:963
 #: parser/parse_coerce.c:1075
 #: parser/parse_coerce.c:1102
 #, c-format
 msgid "argument declared \"anyarray\" is not an array but type %s"
-msgstr ""
+msgstr "аргумент задекларированный как \"anyarray\" не является массивом а является типом %s"
 
 #: parser/parse_coerce.c:980
 msgid "argument declared \"anyarray\" is not consistent with argument declared \"anyelement\""
@@ -478,7 +478,7 @@ msgstr ""
 #: parser/parse_oper.c:920
 #, c-format
 msgid "could not find array type for data type %s"
-msgstr ""
+msgstr "тип массива для типа данных %s не найден"
 
 #: parser/parse_relation.c:174
 #: parser/parse_relation.c:189
@@ -510,7 +510,7 @@ msgstr "ссылка на колонку \"%s\" неоднозначна"
 #: parser/parse_relation.c:979
 #, c-format
 msgid "table \"%s\" has %d columns available but %d columns specified"
-msgstr ""
+msgstr "у таблицы \"%s\" колонок доступно: %d, но указано: %d"
 
 #: parser/parse_relation.c:936
 msgid "a column definition list is only allowed for functions returning \"record\""
@@ -523,24 +523,24 @@ msgstr ""
 #: parser/parse_relation.c:1008
 #, c-format
 msgid "too many column aliases specified for function %s"
-msgstr ""
+msgstr "указано слишком много алиасов колонки для функции %s"
 
 #: parser/parse_relation.c:1031
 #, c-format
 msgid "function \"%s\" in FROM has unsupported return type"
-msgstr ""
+msgstr "функция \"%s\" в FROM имеет неподдерживаемый тип возрата"
 
 #: parser/parse_relation.c:1423
 #: parser/parse_relation.c:1667
 msgid "function in FROM has unsupported return type"
-msgstr ""
+msgstr "функция в FROM имеет неподдерживаемый тип возрата"
 
 #: commands/comment.c:386
-#: commands/tablecmds.c:1934
-#: commands/tablecmds.c:2078
-#: commands/tablecmds.c:2206
-#: commands/tablecmds.c:2370
-#: commands/tablecmds.c:2575
+#: commands/tablecmds.c:1948
+#: commands/tablecmds.c:2092
+#: commands/tablecmds.c:2220
+#: commands/tablecmds.c:2384
+#: commands/tablecmds.c:2589
 #: parser/parse_func.c:1270
 #: parser/parse_relation.c:1584
 #: parser/parse_relation.c:1642
@@ -577,19 +577,19 @@ msgstr "слишком сложное выражение"
 #: parser/parse_expr.c:106
 #, c-format
 msgid "Nesting depth exceeds maximum expression depth %d."
-msgstr ""
+msgstr "Глубина вложенности превышает максимальную глубину выражений %d."
 
 #: parser/parse_expr.c:108
 msgid "Increase the configuration parameter \"max_expr_depth\"."
-msgstr ""
+msgstr "Увеличте параметр конфигурации \"max_expr_depth\"."
 
 #: parser/parse_expr.c:352
 msgid "IS DISTINCT FROM requires = operator to yield boolean"
-msgstr ""
+msgstr "IS DISTINCT FROM требует оператор = возвращать булевское значение"
 
 #: parser/parse_expr.c:375
 msgid "NULLIF requires = operator to yield boolean"
-msgstr ""
+msgstr "NULLIF требует оператор = возвращать булевское значение"
 
 #: parser/parse_expr.c:497
 msgid "subquery must return a column"
@@ -602,7 +602,7 @@ msgstr "подзапрос должен вернуть только одну колонку"
 #: parser/parse_expr.c:559
 #, c-format
 msgid "row comparison cannot use operator %s"
-msgstr ""
+msgstr "нельзя использовать оператор %s при сравнении строк"
 
 #: parser/parse_expr.c:586
 msgid "subquery has too many columns"
@@ -640,7 +640,7 @@ msgstr "колонка \"%s\" не существует"
 #: parser/parse_expr.c:1118
 #: parser/parse_target.c:162
 msgid "cross-database references are not implemented"
-msgstr ""
+msgstr "ссылки между базами не реализованы"
 
 #: catalog/namespace.c:1172
 #: gram.y:2340
@@ -671,12 +671,12 @@ msgstr "число аргументов функции не может быть более %d"
 #: parser/parse_func.c:224
 #, c-format
 msgid "cannot pass result of subquery or join \"%s\" to a function"
-msgstr ""
+msgstr "нельзя передавать результат подзапроса или JOIN \"%s\" в функцию"
 
 #: parser/parse_func.c:265
 #, c-format
 msgid "%s(*) specified, but %s is not an aggregate function"
-msgstr ""
+msgstr "указано: %s(*), но %s не является агрегатной функцией"
 
 #: parser/parse_func.c:271
 #, c-format
@@ -719,7 +719,7 @@ msgstr ""
 
 #: parser/parse_func.c:371
 msgid "aggregates may not return sets"
-msgstr ""
+msgstr "агрегаты не могут возвращать множества"
 
 #: parser/parse_func.c:1353
 #, c-format
@@ -966,14 +966,14 @@ msgstr "интервал временной зоны должен быть HOUR или HOUR TO MINUTE"
 #: gram.y:7188
 #, c-format
 msgid "INTERVAL(%d) precision must not be negative"
-msgstr ""
+msgstr "INTERVAL(%d): точность должна быть неотрицательна"
 
 #: gram.y:978
 #: gram.y:5096
 #: gram.y:7194
 #, c-format
 msgid "INTERVAL(%d) precision reduced to maximum allowed, %d"
-msgstr ""
+msgstr "INTERVAL(%d): точность уменьшена до дозволенного максимума: %d"
 
 #: gram.y:1770
 #: utils/adt/ri_triggers.c:300
@@ -1085,22 +1085,22 @@ msgstr ""
 #: gram.y:5469
 #, c-format
 msgid "TIMESTAMP(%d)%s precision must not be negative"
-msgstr ""
+msgstr "TIMESTAMP(%d)%s: точность должна быть неотрицательна"
 
 #: gram.y:5475
 #, c-format
 msgid "TIMESTAMP(%d)%s precision reduced to maximum allowed, %d"
-msgstr ""
+msgstr "TIMESTAMP(%d)%s: точность уменьшена до дозволенного максимума: %d"
 
 #: gram.y:5510
 #, c-format
 msgid "TIME(%d)%s precision must not be negative"
-msgstr ""
+msgstr "TIME(%d)%s: точность должна быть неотрицательна"
 
 #: gram.y:5516
 #, c-format
 msgid "TIME(%d)%s precision reduced to maximum allowed, %d"
-msgstr ""
+msgstr "TIME(%d)%s: точность уменьшена до дозволенного максимума: %d"
 
 #: gram.y:5662
 #: gram.y:7766
@@ -1110,59 +1110,59 @@ msgstr ""
 
 #: gram.y:6075
 msgid "UNIQUE predicate is not yet implemented"
-msgstr ""
+msgstr "предикат UNIQUE ещё не реализован"
 
 #: gram.y:6317
 #, c-format
 msgid "CURRENT_TIME(%d) precision must not be negative"
-msgstr ""
+msgstr "CURRENT_TIME(%d): точность должна быть неотрицательна"
 
 #: gram.y:6323
 #, c-format
 msgid "CURRENT_TIME(%d) precision reduced to maximum allowed, %d"
-msgstr ""
+msgstr "CURRENT_TIME(%d): точность уменьшена до дозволенного максимума: %d"
 
 #: gram.y:6371
 #, c-format
 msgid "CURRENT_TIMESTAMP(%d) precision must not be negative"
-msgstr ""
+msgstr "CURRENT_TIMESTAMP(%d): точность должна быть неотрицательна"
 
 #: gram.y:6377
 #, c-format
 msgid "CURRENT_TIMESTAMP(%d) precision reduced to maximum allowed, %d"
-msgstr ""
+msgstr "CURRENT_TIMESTAMP(%d): точность уменьшена до дозволенного максимума: %d"
 
 #: gram.y:6424
 #, c-format
 msgid "LOCALTIME(%d) precision must not be negative"
-msgstr ""
+msgstr "LOCALTIME(%d): точность должна быть неотрицательна"
 
 #: gram.y:6430
 #, c-format
 msgid "LOCALTIME(%d) precision reduced to maximum allowed, %d"
-msgstr ""
+msgstr "LOCALTIME(%d): точность уменьшена до дозволенного максимума: %d"
 
 #: gram.y:6478
 #, c-format
 msgid "LOCALTIMESTAMP(%d) precision must not be negative"
-msgstr ""
+msgstr "LOCALTIMESTAMP(%d): точность должна быть неотрицательна"
 
 #: gram.y:6484
 #, c-format
 msgid "LOCALTIMESTAMP(%d) precision reduced to maximum allowed, %d"
-msgstr ""
+msgstr "LOCALTIMESTAMP(%d): точность уменьшена до дозволенного максимума: %d"
 
 #: gram.y:7635
 msgid "OLD used in query that is not in a rule"
-msgstr ""
+msgstr "OLD использован в запросе не являющемся правилом"
 
 #: gram.y:7644
 msgid "NEW used in query that is not in a rule"
-msgstr ""
+msgstr "NEW использован в запросе не являющемся правилом"
 
 #: y.tab.c:18246
 msgid "syntax error; also virtual memory exhausted"
-msgstr ""
+msgstr "ошибка синтаксиса; также виртуальная память исчерпана"
 
 #: y.tab.c:18250
 msgid "syntax error"
@@ -1179,27 +1179,27 @@ msgstr ""
 
 #: gram.y:7879
 msgid "wrong number of parameters on left side of OVERLAPS expression"
-msgstr ""
+msgstr "неверное число параметров слева в выражении OVERLAPS"
 
 #: gram.y:7885
 msgid "wrong number of parameters on right side of OVERLAPS expression"
-msgstr ""
+msgstr "неверное число параметров справа в выражении OVERLAPS"
 
 #: gram.y:7923
 msgid "multiple ORDER BY clauses not allowed"
-msgstr ""
+msgstr "многочисленные выражения ORDER BY не дозволены"
 
 #: gram.y:7931
 msgid "multiple FOR UPDATE clauses not allowed"
-msgstr ""
+msgstr "многочисленные выражения FOR UPDATE не дозволены"
 
 #: gram.y:7939
 msgid "multiple OFFSET clauses not allowed"
-msgstr ""
+msgstr "многочисленные выражения OFFSET не дозволены"
 
 #: gram.y:7947
 msgid "multiple LIMIT clauses not allowed"
-msgstr ""
+msgstr "многочисленные выражения LIMIT не дозволены"
 
 #: access/index/indexam.c:134
 #: access/index/indexam.c:159
@@ -1278,7 +1278,7 @@ msgstr ""
 
 #: access/hash/hashutil.c:133
 msgid "Please REINDEX it."
-msgstr ""
+msgstr "Пожалуйста, выполните REINDEX для него."
 
 #: access/heap/heapam.c:580
 #: access/heap/heapam.c:615
@@ -1328,7 +1328,7 @@ msgstr "индекс \"%s\" не является b-деревом"
 #: access/nbtree/nbtpage.c:341
 #, c-format
 msgid "version mismatch in index \"%s\": file version %d, code version %d"
-msgstr ""
+msgstr "не совпадение версии в индексе \"%s\": версия файла: %d, версия кода: %d"
 
 #: access/rtree/rtree.c:645
 msgid "variable-length rtree keys are not supported"
@@ -1648,7 +1648,7 @@ msgstr ""
 #: access/transam/xlog.c:2238
 #: access/transam/xlog.c:2268
 msgid "It looks like you need to initdb."
-msgstr ""
+msgstr "Похоже вам надо выполнить initdb."
 
 #: access/transam/xlog.c:2248
 msgid "incorrect checksum in control file"
@@ -1672,7 +1672,7 @@ msgstr ""
 #: access/transam/xlog.c:2311
 #: access/transam/xlog.c:2320
 msgid "It looks like you need to recompile or initdb."
-msgstr ""
+msgstr "Похоже вам надо перекомпилировать или выполнить initdb."
 
 #: access/transam/xlog.c:2279
 #, c-format
@@ -2272,7 +2272,7 @@ msgid "System catalog modifications are currently disallowed."
 msgstr ""
 
 #: catalog/heap.c:356
-#: commands/tablecmds.c:1757
+#: commands/tablecmds.c:1771
 #, c-format
 msgid "tables can have at most %d columns"
 msgstr "максимальное число колонок на таблицу: %d"
@@ -2314,8 +2314,8 @@ msgid "relation \"%s\" already exists"
 msgstr "объект \"%s\" уже существует"
 
 #: catalog/heap.c:1556
-#: commands/tablecmds.c:2798
-#: commands/tablecmds.c:2840
+#: commands/tablecmds.c:2812
+#: commands/tablecmds.c:2854
 #, c-format
 msgid "constraint \"%s\" for relation \"%s\" already exists"
 msgstr "констрейнт \"%s\" для связи \"%s\" уже существует"
@@ -2331,13 +2331,13 @@ msgid "only table \"%s\" can be referenced in check constraint"
 msgstr ""
 
 #: catalog/heap.c:1643
-#: commands/tablecmds.c:2927
+#: commands/tablecmds.c:2941
 #: commands/typecmds.c:1811
 msgid "cannot use subquery in check constraint"
 msgstr ""
 
 #: catalog/heap.c:1647
-#: commands/tablecmds.c:2931
+#: commands/tablecmds.c:2945
 msgid "cannot use aggregate function in check constraint"
 msgstr ""
 
@@ -2652,7 +2652,7 @@ msgid "there is no previously clustered index for table \"%s\""
 msgstr ""
 
 #: commands/cluster.c:164
-#: commands/tablecmds.c:3918
+#: commands/tablecmds.c:3932
 #, c-format
 msgid "index \"%s\" for table \"%s\" does not exist"
 msgstr "индекс \"%s\" для таблицы \"%s\" не существует"
@@ -2715,15 +2715,15 @@ msgstr "\"%s\" не является последовательностью"
 #: commands/indexcmds.c:639
 #: commands/lockcmds.c:68
 #: commands/tablecmds.c:377
-#: commands/tablecmds.c:1593
-#: commands/tablecmds.c:1884
-#: commands/tablecmds.c:2028
-#: commands/tablecmds.c:2262
-#: commands/tablecmds.c:2428
-#: commands/tablecmds.c:2554
-#: commands/tablecmds.c:2735
-#: commands/tablecmds.c:3746
-#: commands/tablecmds.c:4012
+#: commands/tablecmds.c:1607
+#: commands/tablecmds.c:1898
+#: commands/tablecmds.c:2042
+#: commands/tablecmds.c:2276
+#: commands/tablecmds.c:2442
+#: commands/tablecmds.c:2568
+#: commands/tablecmds.c:2749
+#: commands/tablecmds.c:3760
+#: commands/tablecmds.c:4026
 #: commands/trigger.c:144
 #: commands/trigger.c:546
 #: tcop/utility.c:76
@@ -3788,16 +3788,16 @@ msgstr ""
 #: commands/tablecmds.c:388
 #: commands/tablecmds.c:1064
 #: commands/tablecmds.c:1271
-#: commands/tablecmds.c:1609
-#: commands/tablecmds.c:1895
-#: commands/tablecmds.c:2039
-#: commands/tablecmds.c:2167
-#: commands/tablecmds.c:2276
-#: commands/tablecmds.c:2439
-#: commands/tablecmds.c:2565
-#: commands/tablecmds.c:2746
-#: commands/tablecmds.c:3045
-#: commands/tablecmds.c:3757
+#: commands/tablecmds.c:1623
+#: commands/tablecmds.c:1909
+#: commands/tablecmds.c:2053
+#: commands/tablecmds.c:2181
+#: commands/tablecmds.c:2290
+#: commands/tablecmds.c:2453
+#: commands/tablecmds.c:2579
+#: commands/tablecmds.c:2760
+#: commands/tablecmds.c:3059
+#: commands/tablecmds.c:3771
 #: commands/trigger.c:150
 #: commands/trigger.c:552
 #: tcop/utility.c:162
@@ -3870,172 +3870,172 @@ msgid "cannot rename inherited column \"%s\""
 msgstr "нельзя переименовать наследованную колонку \"%s\""
 
 #: commands/tablecmds.c:1148
-#: commands/tablecmds.c:1749
+#: commands/tablecmds.c:1763
 #, c-format
 msgid "column \"%s\" of relation \"%s\" already exists"
 msgstr "колонка \"%s\" для связи \"%s\" уже существует"
 
-#: commands/tablecmds.c:1662
+#: commands/tablecmds.c:1676
 #, c-format
 msgid "child table \"%s\" has different type for column \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:1670
+#: commands/tablecmds.c:1684
 #, c-format
 msgid "merging definition of column \"%s\" for child \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:1702
+#: commands/tablecmds.c:1716
 msgid "column must be added to child tables too"
 msgstr ""
 
-#: commands/tablecmds.c:1721
+#: commands/tablecmds.c:1735
 msgid "adding columns with defaults is not implemented"
 msgstr ""
 
-#: commands/tablecmds.c:1722
+#: commands/tablecmds.c:1736
 msgid "Add the column, then use ALTER TABLE SET DEFAULT."
 msgstr ""
 
-#: commands/tablecmds.c:1727
+#: commands/tablecmds.c:1741
 msgid "adding NOT NULL columns is not implemented"
 msgstr ""
 
-#: commands/tablecmds.c:1728
+#: commands/tablecmds.c:1742
 msgid "Add the column, then use ALTER TABLE SET NOT NULL."
 msgstr ""
 
-#: commands/tablecmds.c:1941
-#: commands/tablecmds.c:2085
-#: commands/tablecmds.c:2213
-#: commands/tablecmds.c:2377
+#: commands/tablecmds.c:1955
+#: commands/tablecmds.c:2099
+#: commands/tablecmds.c:2227
+#: commands/tablecmds.c:2391
 #, c-format
 msgid "cannot alter system column \"%s\""
 msgstr "нельзя поменять системную колонку \"%s\""
 
-#: commands/tablecmds.c:1977
+#: commands/tablecmds.c:1991
 #, c-format
 msgid "column \"%s\" is in a primary key"
 msgstr "колонка \"%s\" находится в первичном ключе"
 
-#: commands/tablecmds.c:2106
+#: commands/tablecmds.c:2120
 #, c-format
 msgid "column \"%s\" contains null values"
 msgstr "колонка \"%s\" содержит значения NULL"
 
-#: commands/tablecmds.c:2156
+#: commands/tablecmds.c:2170
 #, c-format
 msgid "\"%s\" is not a table or view"
 msgstr "\"%s\" не является таблицей или видом"
 
-#: commands/tablecmds.c:2295
+#: commands/tablecmds.c:2309
 #, c-format
 msgid "statistics target %d is too low"
 msgstr ""
 
-#: commands/tablecmds.c:2303
+#: commands/tablecmds.c:2317
 #, c-format
 msgid "lowering statistics target to %d"
 msgstr ""
 
-#: commands/tablecmds.c:2326
+#: commands/tablecmds.c:2340
 #, c-format
 msgid "invalid storage type \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:2396
+#: commands/tablecmds.c:2410
 #, c-format
 msgid "column data type %s can only have storage PLAIN"
 msgstr ""
 
-#: commands/tablecmds.c:2502
+#: commands/tablecmds.c:2516
 msgid "ALTER TABLE WITH OIDS is not yet implemented"
 msgstr ""
 
-#: commands/tablecmds.c:2583
+#: commands/tablecmds.c:2597
 #, c-format
 msgid "cannot drop system column \"%s\""
 msgstr "нельзя удалить системную колонку \"%s\""
 
-#: commands/tablecmds.c:2591
+#: commands/tablecmds.c:2605
 #, c-format
 msgid "cannot drop inherited column \"%s\""
 msgstr "нельзя удалить наследованную колонку \"%s\""
 
-#: commands/tablecmds.c:2918
+#: commands/tablecmds.c:2932
 #, c-format
 msgid "check constraint may only reference relation \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:2982
+#: commands/tablecmds.c:2996
 #, c-format
 msgid "check constraint \"%s\" is violated by some row"
 msgstr ""
 
-#: commands/tablecmds.c:3033
+#: commands/tablecmds.c:3047
 #, c-format
 msgid "referenced relation \"%s\" is not a table"
 msgstr ""
 
-#: commands/tablecmds.c:3067
+#: commands/tablecmds.c:3081
 msgid "cannot reference temporary table from permanent table constraint"
 msgstr ""
 
-#: commands/tablecmds.c:3074
+#: commands/tablecmds.c:3088
 msgid "cannot reference permanent table from temporary table constraint"
 msgstr ""
 
-#: commands/tablecmds.c:3116
-#: commands/tablecmds.c:3552
+#: commands/tablecmds.c:3130
+#: commands/tablecmds.c:3566
 msgid "number of referencing and referenced columns for foreign key disagree"
 msgstr ""
 
-#: commands/tablecmds.c:3198
+#: commands/tablecmds.c:3212
 #, c-format
 msgid "column \"%s\" referenced in foreign key constraint does not exist"
 msgstr ""
 
-#: commands/tablecmds.c:3203
+#: commands/tablecmds.c:3217
 #, c-format
 msgid "cannot have more than %d keys in a foreign key"
 msgstr ""
 
-#: commands/tablecmds.c:3266
+#: commands/tablecmds.c:3280
 #, c-format
 msgid "there is no primary key for referenced table \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:3380
+#: commands/tablecmds.c:3394
 #, c-format
 msgid "there is no unique constraint matching given keys for referenced table \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:3802
+#: commands/tablecmds.c:3816
 #: commands/trigger.c:2306
 #, c-format
 msgid "constraint \"%s\" does not exist"
 msgstr ""
 
-#: commands/tablecmds.c:3807
+#: commands/tablecmds.c:3821
 #, c-format
 msgid "multiple constraints named \"%s\" were dropped"
 msgstr ""
 
-#: commands/tablecmds.c:3849
+#: commands/tablecmds.c:3863
 #, c-format
 msgid "\"%s\" is not a table, TOAST table, index, view, or sequence"
 msgstr ""
 
-#: commands/tablecmds.c:4033
+#: commands/tablecmds.c:4047
 msgid "shared tables cannot be toasted after initdb"
 msgstr ""
 
-#: commands/tablecmds.c:4048
+#: commands/tablecmds.c:4062
 #, c-format
 msgid "table \"%s\" already has a TOAST table"
 msgstr "таблица \"%s\" уже имеет соответствующую TOAST-таблицу"
 
-#: commands/tablecmds.c:4065
+#: commands/tablecmds.c:4079
 #, c-format
 msgid "table \"%s\" does not need a TOAST table"
 msgstr "таблица \"%s\" не нуждается в соответствующей TOAST-таблице"
@@ -4758,7 +4758,7 @@ msgstr "SQL-функция \"%s\""
 msgid "SQL function \"%s\" during startup"
 msgstr "SQL-функция \"%s\" при старте"
 
-#: executor/nodeAgg.c:1326
+#: executor/nodeAgg.c:1330
 #, c-format
 msgid "aggregate %u needs to have compatible input type and transition type"
 msgstr ""
@@ -7832,7 +7832,7 @@ msgstr "неверный входной синтаксис для типа tid: \"%s\""
 #: utils/adt/timestamp.c:326
 #, c-format
 msgid "timestamp out of range: \"%s\""
-msgstr ""
+msgstr "timestamp вне диапазона: \"%s\""
 
 #: utils/adt/timestamp.c:118
 #: utils/adt/timestamp.c:344
@@ -8004,7 +8004,7 @@ msgstr ""
 
 #: utils/adt/varlena.c:1515
 msgid "new bit must be 0 or 1"
-msgstr ""
+msgstr "новый бит должен быть 0 или 1"
 
 #: utils/adt/varlena.c:2015
 msgid "field position must be greater than zero"

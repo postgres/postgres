@@ -1,11 +1,12 @@
 # Traditional Chinese translation for backend.
 # 2004-08-02 Zhenbang Wei <forth@zbwei.net>
+# 2004-08-06 JiaYun <jiayun@jiayun.org>
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-08-02 19:00-0300\n"
-"PO-Revision-Date: 2004-08-03 13:42+0800\n"
+"Project-Id-Version: PostgreSQL 7.5\n"
+"POT-Creation-Date: 2004-08-04 01:34-0300\n"
+"PO-Revision-Date: 2004-08-06 00:56+0800\n"
 "Last-Translator: Zhenbang Wei <forth@zbwei.net>\n"
 "Language-Team: Zhenbang Wei <forth@zbwei.net>\n"
 "MIME-Version: 1.0\n"
@@ -161,24 +162,28 @@ msgid "cannot have more than 2^32-1 commands in a transaction"
 msgstr "每筆交易不能超過2^32-1個命令"
 
 #  translator: %s represents an SQL statement name
+#. translator: %s represents an SQL statement name
 #: access/transam/xact.c:1951
 #, c-format
 msgid "%s cannot run inside a transaction block"
 msgstr "%s 不能在交易中執行"
 
 #  translator: %s represents an SQL statement name
+#. translator: %s represents an SQL statement name
 #: access/transam/xact.c:1961
 #, c-format
 msgid "%s cannot run inside a subtransaction"
 msgstr "%s 不能在子交易中執行"
 
 #  translator: %s represents an SQL statement name
+#. translator: %s represents an SQL statement name
 #: access/transam/xact.c:1973
 #, c-format
 msgid "%s cannot be executed from a function"
 msgstr "%s 不能在函式中執行"
 
 #  translator: %s represents an SQL statement name
+#. translator: %s represents an SQL statement name
 #: access/transam/xact.c:2024
 #, c-format
 msgid "%s may only be used in transaction blocks"
@@ -196,8 +201,8 @@ msgstr "沒有執行中的交易"
 #: access/transam/xact.c:2406
 #: access/transam/xact.c:2454
 #: access/transam/xact.c:2482
-#: access/transam/xact.c:2535
-#: access/transam/xact.c:2541
+#: access/transam/xact.c:2532
+#: access/transam/xact.c:2538
 msgid "no such savepoint"
 msgstr "沒有這個savepoint"
 
@@ -233,6 +238,8 @@ msgstr "無法開啟檔案\"%s\"：%m"
 #: access/transam/xlog.c:1521
 #: access/transam/xlog.c:1642
 #: access/transam/xlog.c:2876
+#: access/transam/xlog.c:5126
+#: access/transam/xlog.c:5235
 #: postmaster/postmaster.c:3363
 #, c-format
 msgid "could not create file \"%s\": %m"
@@ -277,6 +284,7 @@ msgstr ""
 #: access/transam/slru.c:990
 #: commands/tablespace.c:426
 #: commands/tablespace.c:580
+#: utils/adt/misc.c:173
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "無法開啟目錄\"%s\"：%m"
@@ -308,7 +316,7 @@ msgstr "無法寫入備份狀態檔\"%s\"：%m"
 #: access/transam/xlog.c:5006
 #, c-format
 msgid "could not close log file %u, segment %u: %m"
-msgstr "無法關閉日誌檔 %u，區段 %u：%m"
+msgstr "無法關閉日誌? %u，區段 %u：%m"
 
 #: access/transam/xlog.c:1231
 #: access/transam/xlog.c:2386
@@ -348,6 +356,8 @@ msgstr "無法寫入檔案\"%s\"：%m"
 
 #: access/transam/xlog.c:1655
 #: access/transam/xlog.c:2907
+#: access/transam/xlog.c:5209
+#: access/transam/xlog.c:5256
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "無法讀取檔案\"%s\"：%m"
@@ -369,11 +379,13 @@ msgstr "無法將檔案\"%s\"重新命名為\"%s\"(初始化日誌檔 %u，區�
 
 #: access/transam/xlog.c:1931
 #: access/transam/xlog.c:2032
+#: access/transam/xlog.c:5110
 #, c-format
 msgid "could not stat \"%s\": %m"
 msgstr ""
 
 #: access/transam/xlog.c:1939
+#: access/transam/xlog.c:5261
 #: postmaster/postmaster.c:3495
 #, c-format
 msgid "could not remove file \"%s\": %m"
@@ -621,7 +633,7 @@ msgstr "資料庫檔案與伺服器不相容"
 #: access/transam/xlog.c:3151
 #, c-format
 msgid "The database cluster was initialized with PG_CONTROL_VERSION %d, but the server was compiled with PG_CONTROL_VERSION %d."
-msgstr ""
+msgstr "資料庫 cluster 已以 PG_CONTROL_VERSION %d 初始化，但伺服器是以 PG_CONTROL_VERSION %d 編譯。"
 
 #: access/transam/xlog.c:3154
 #: access/transam/xlog.c:3184
@@ -635,12 +647,12 @@ msgstr "控制檔的checksum不正確"
 #: access/transam/xlog.c:3181
 #, c-format
 msgid "The database cluster was initialized with CATALOG_VERSION_NO %d, but the server was compiled with CATALOG_VERSION_NO %d."
-msgstr ""
+msgstr "資料庫 cluster 已以 CATALOG_VERSION_NO %d 初始化，但伺服器是以 CATALOG_VERSION_NO %d 編譯。"
 
 #: access/transam/xlog.c:3188
 #, c-format
 msgid "The database cluster was initialized with BLCKSZ %d, but the server was compiled with BLCKSZ %d."
-msgstr ""
+msgstr "資料庫 cluster 已以 BLCKSZ %d 初始化，但伺服器是以 BLCKSZ %d 編譯。"
 
 #: access/transam/xlog.c:3191
 #: access/transam/xlog.c:3198
@@ -656,35 +668,35 @@ msgstr "你可能需要重新編譯initdb。"
 #: access/transam/xlog.c:3195
 #, c-format
 msgid "The database cluster was initialized with RELSEG_SIZE %d, but the server was compiled with RELSEG_SIZE %d."
-msgstr ""
+msgstr "資料庫 cluster 已以 RELSEG_SIZE %d 初始化，但伺服器是以 RELSEG_SIZE %d 編譯。"
 
 #: access/transam/xlog.c:3202
 #, c-format
 msgid "The database cluster was initialized with XLOG_SEG_SIZE %d, but the server was compiled with XLOG_SEG_SIZE %d."
-msgstr ""
+msgstr "資料庫 cluster 已以 XLOG_SEG_SIZE %d 初始化，但伺服器是以 XLOG_SEG_SIZE %d 編譯。"
 
 #: access/transam/xlog.c:3209
 #, c-format
 msgid "The database cluster was initialized with NAMEDATALEN %d, but the server was compiled with NAMEDATALEN %d."
-msgstr ""
+msgstr "資料庫 cluster 已以 NAMEDATALEN %d 初始化，但伺服器是以 NAMEDATALEN %d 編譯。"
 
 #: access/transam/xlog.c:3216
 #, c-format
 msgid "The database cluster was initialized with FUNC_MAX_ARGS %d, but the server was compiled with FUNC_MAX_ARGS %d."
-msgstr ""
+msgstr "資料庫 cluster 已以 FUNC_MAX_ARGS %d 初始化，但伺服器是以 FUNC_MAX_ARGS %d 編譯。"
 
 #: access/transam/xlog.c:3225
 msgid "The database cluster was initialized without HAVE_INT64_TIMESTAMP but the server was compiled with HAVE_INT64_TIMESTAMP."
-msgstr ""
+msgstr "資料庫 cluster 已以非 HAVE_INT64_TIMESTAMP 初始化，但伺服器是以 HAVE_INT64_TIMESTAMP 編譯。"
 
 #: access/transam/xlog.c:3232
 msgid "The database cluster was initialized with HAVE_INT64_TIMESTAMP but the server was compiled without HAVE_INT64_TIMESTAMP."
-msgstr ""
+msgstr "資料庫 cluster 已以 HAVE_INT64_TIMESTAMP 初始化，但伺服器是以非 HAVE_INT64_TIMESTAMP 編譯。"
 
 #: access/transam/xlog.c:3240
 #, c-format
 msgid "The database cluster was initialized with LOCALE_NAME_BUFLEN %d, but the server was compiled with LOCALE_NAME_BUFLEN %d."
-msgstr ""
+msgstr "資料庫 cluster 已以 LOCALE_NAME_BUFLEN %d 初始化，但伺服器是以 LOCALE_NAME_BUFLEN %d 編譯。"
 
 #: access/transam/xlog.c:3246
 #: access/transam/xlog.c:3253
@@ -694,7 +706,7 @@ msgstr "資料庫檔案與作業系統不相容"
 #: access/transam/xlog.c:3247
 #, c-format
 msgid "The database cluster was initialized with LC_COLLATE \"%s\", which is not recognized by setlocale()."
-msgstr ""
+msgstr "資料庫 cluster 已以 LC_COLLATE \"%s\" 初始化，但 setlocale() 無法辨識該 LC_COLLATE。"
 
 #: access/transam/xlog.c:3250
 #: access/transam/xlog.c:3257
@@ -704,7 +716,7 @@ msgstr "你可能需要執行initdb或安裝locale支援。"
 #: access/transam/xlog.c:3254
 #, c-format
 msgid "The database cluster was initialized with LC_CTYPE \"%s\", which is not recognized by setlocale()."
-msgstr ""
+msgstr "資料庫 cluster 已以 LC_CTYPE \"%s\" 初始化，但 setlocale() 無法辨識該 LC_CTYPE。"
 
 #: access/transam/xlog.c:3480
 #, c-format
@@ -1003,6 +1015,38 @@ msgstr "無法fsync日誌檔 %u，區段 %u：%m"
 #, c-format
 msgid "could not fdatasync log file %u, segment %u: %m"
 msgstr "無法fdatasync日誌檔 %u，區段 %u：%m"
+
+#: access/transam/xlog.c:5081
+#: access/transam/xlog.c:5178
+#, fuzzy
+msgid "must be superuser to run a backup"
+msgstr "只有管理者能建立使用者"
+
+#: access/transam/xlog.c:5116
+#, fuzzy
+msgid "a backup is already in progress"
+msgstr "已經有交易在執行中"
+
+#: access/transam/xlog.c:5117
+#, c-format
+msgid "If you're sure there is no backup in progress, remove file \"%s\" and try again."
+msgstr "如果您確定沒有備份動作正在進行，移除檔案 \"%s\" 並重試。"
+
+#: access/transam/xlog.c:5135
+#: access/transam/xlog.c:5248
+#, fuzzy, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "無法寫入檔案\"%s\"：%m"
+
+#: access/transam/xlog.c:5213
+#, fuzzy
+msgid "a backup is not in progress"
+msgstr "沒有執行中的交易"
+
+#: access/transam/xlog.c:5224
+#, fuzzy, c-format
+msgid "invalid data in file \"%s\""
+msgstr "歷史記錄檔\"%s\"中有無效資料"
 
 #: bootstrap/bootstrap.c:302
 #: postmaster/postmaster.c:494
@@ -1678,12 +1722,12 @@ msgstr ""
 
 #: catalog/index.c:521
 msgid "shared indexes cannot be created after initdb"
-msgstr ""
+msgstr "共享的索引無法在 initdb 後建立"
 
 #: catalog/index.c:1687
 #, c-format
 msgid "shared index \"%s\" can only be reindexed in stand-alone mode"
-msgstr ""
+msgstr "共享的索引 \"%s\" 只能在 stand-alone 模式下重新索引"
 
 #: catalog/namespace.c:173
 #: catalog/namespace.c:228
@@ -2311,7 +2355,7 @@ msgstr "範本資料庫\"%s\"不存在"
 #: commands/dbcommands.c:238
 #, c-format
 msgid "permission denied to copy database \"%s\""
-msgstr "複製資料庫\"%s\"被拒"
+msgstr "複製?料庫\"%s\"被拒"
 
 #: commands/dbcommands.c:251
 #, c-format
@@ -3393,16 +3437,16 @@ msgstr ""
 #: commands/tablecmds.c:2179
 #, c-format
 msgid "cannot rewrite system relation \"%s\""
-msgstr ""
+msgstr "無法重寫系統relation \"%s\""
 
 #: commands/tablecmds.c:2189
 msgid "cannot rewrite temporary tables of other sessions"
-msgstr ""
+msgstr "無法重寫其它session的暫存資料表"
 
 #: commands/tablecmds.c:2477
 #, c-format
 msgid "check constraint \"%s\" is violated by some row"
-msgstr ""
+msgstr "有資料行違反check constraint \"%s\""
 
 #: commands/tablecmds.c:2490
 #, c-format
@@ -3421,12 +3465,12 @@ msgstr ""
 
 #: commands/tablecmds.c:2793
 msgid "column must be added to child tables too"
-msgstr ""
+msgstr "欄位也必須被加入子資料表"
 
 #: commands/tablecmds.c:2836
 #, c-format
 msgid "child table \"%s\" has different type for column \"%s\""
-msgstr ""
+msgstr "子資料表\"%s\"的欄位\"%s\"有不同的型別"
 
 #: commands/tablecmds.c:2848
 #, c-format
@@ -3487,7 +3531,7 @@ msgstr "無法刪除被繼承的欄位\"%s\""
 #: commands/tablecmds.c:3742
 #, c-format
 msgid "referenced relation \"%s\" is not a table"
-msgstr ""
+msgstr "被參照的relation \"%s\"不是資料表"
 
 #: commands/tablecmds.c:3776
 msgid "cannot reference temporary table from permanent table constraint"
@@ -3611,11 +3655,11 @@ msgstr ""
 #: commands/tablecmds.c:5338
 #, c-format
 msgid "cannot move system relation \"%s\""
-msgstr ""
+msgstr "無法搬移系統relation \"%s\""
 
 #: commands/tablecmds.c:5348
 msgid "cannot move temporary tables of other sessions"
-msgstr ""
+msgstr "無法替其它session搬移暫存資料表"
 
 #: commands/tablecmds.c:5544
 msgid "shared tables cannot be toasted after initdb"
@@ -3624,12 +3668,12 @@ msgstr ""
 #: commands/tablecmds.c:5559
 #, c-format
 msgid "table \"%s\" already has a TOAST table"
-msgstr ""
+msgstr "資料表\"%s\"已經有TOAST資料表"
 
 #: commands/tablecmds.c:5576
 #, c-format
 msgid "table \"%s\" does not need a TOAST table"
-msgstr ""
+msgstr "資料表\"%s\"不需要TOAST資料表"
 
 #: commands/trigger.c:134
 #, c-format
@@ -3956,22 +4000,22 @@ msgstr ""
 
 #: commands/user.c:1375
 msgid "group ID must be positive"
-msgstr ""
+msgstr "群組ID必需是正數"
 
 #: commands/user.c:1388
 msgid "must be superuser to create groups"
-msgstr ""
+msgstr "只有管理者才能建立群組"
 
 #: commands/user.c:1393
 #, c-format
 msgid "group name \"%s\" is reserved"
-msgstr ""
+msgstr "群組名稱\"%s\"被保留"
 
 #: commands/user.c:1430
 #: commands/user.c:1812
 #, c-format
 msgid "group \"%s\" already exists"
-msgstr ""
+msgstr "群組\"%s\"已經存在"
 
 #: commands/user.c:1435
 #, c-format
@@ -3980,25 +4024,25 @@ msgstr ""
 
 #: commands/user.c:1515
 msgid "must be superuser to alter groups"
-msgstr ""
+msgstr "只有管理者才能修改群組"
 
 #: commands/user.c:1594
 #, c-format
 msgid "group \"%s\" does not have any members"
-msgstr ""
+msgstr "群組\"%s\"沒有任何成員"
 
 #: commands/user.c:1622
 #, c-format
 msgid "user \"%s\" is not in group \"%s\""
-msgstr ""
+msgstr "使用者\"%s\"不屬於群組\"%s\""
 
 #: commands/user.c:1754
 msgid "must be superuser to drop groups"
-msgstr ""
+msgstr "只有管理者能刪除群組"
 
 #: commands/user.c:1818
 msgid "must be superuser to rename groups"
-msgstr ""
+msgstr "只有管理者能重新命名群組"
 
 #: commands/vacuum.c:590
 msgid "oldest xmin is far in the past"
@@ -4232,16 +4276,16 @@ msgstr ""
 #: commands/tablespace.c:163
 #, c-format
 msgid "\"%s\" exists but is not a directory"
-msgstr ""
+msgstr "\"%s\"存在，但不是目錄"
 
 #: commands/tablespace.c:200
 #, c-format
 msgid "permission denied to create tablespace \"%s\""
-msgstr ""
+msgstr "建立tablespace \"%s\"被拒"
 
 #: commands/tablespace.c:202
 msgid "Must be superuser to create a tablespace."
-msgstr ""
+msgstr "只有管理者能建立tablespace。"
 
 #: commands/tablespace.c:221
 msgid "tablespace location may not contain single quotes"
@@ -4281,7 +4325,7 @@ msgstr ""
 #: commands/tablespace.c:311
 #, c-format
 msgid "directory \"%s\" is not empty"
-msgstr ""
+msgstr "目錄\"%s\"不是空的"
 
 #: commands/tablespace.c:332
 #, c-format
@@ -4291,37 +4335,37 @@ msgstr "無法建立symbolic link \"%s\"：%m"
 #: commands/tablespace.c:343
 #: commands/tablespace.c:508
 msgid "tablespaces are not supported on this platform"
-msgstr ""
+msgstr "這個平臺不支援tablespace"
 
 #: commands/tablespace.c:448
 #, c-format
 msgid "tablespace \"%s\" is not empty"
-msgstr ""
+msgstr "tablespace \"%s\"不是空的"
 
 #: commands/tablespace.c:455
 #, c-format
 msgid "could not delete directory \"%s\": %m"
-msgstr ""
+msgstr "無法刪除目錄\"%s\"：%m"
 
 #: commands/tablespace.c:482
 #, c-format
 msgid "could not unlink file \"%s\": %m"
-msgstr ""
+msgstr "無法刪除檔案\"%s\"：%m"
 
 #: commands/tablespace.c:488
 #, c-format
 msgid "could not unlink symbolic link \"%s\": %m"
-msgstr ""
+msgstr "無法刪除符號連結\"%s\"：%m"
 
 #: executor/execMain.c:839
 #, c-format
 msgid "cannot change sequence \"%s\""
-msgstr ""
+msgstr "無法修改sequence \"%s\""
 
 #: executor/execMain.c:845
 #, c-format
 msgid "cannot change TOAST relation \"%s\""
-msgstr ""
+msgstr "無法修改TOAST relation \"%s\""
 
 #: executor/execMain.c:851
 #, c-format
@@ -5054,7 +5098,7 @@ msgstr ""
 #: main/main.c:234
 #, c-format
 msgid "%s: real and effective user IDs must match\n"
-msgstr "%s：真實使用者ID和有效使用者ID必須符合\n"
+msgstr "%s：真實使?者ID和有效使用者ID必須符合\n"
 
 #: main/main.c:241
 msgid ""
@@ -6631,11 +6675,11 @@ msgstr ""
 #: postmaster/postmaster.c:2427
 #, c-format
 msgid "could not fork new process for connection: %m"
-msgstr ""
+msgstr "無法為連線建立新行程: %m"
 
 #: postmaster/postmaster.c:2466
 msgid "could not fork new process for connection: "
-msgstr ""
+msgstr "無法為連線建立新行程:"
 
 #: postmaster/postmaster.c:2608
 #, c-format
@@ -6645,17 +6689,17 @@ msgstr "getnameinfo_all()失敗：%s"
 #: postmaster/postmaster.c:2617
 #, c-format
 msgid "connection received: host=%s port=%s"
-msgstr ""
+msgstr "連線已接收: host=%s port=%s"
 
 #: postmaster/postmaster.c:2689
 #, c-format
 msgid "connection authorized: user=%s database=%s"
-msgstr ""
+msgstr "連線已授權: user=%s database=%s"
 
 #: postmaster/postmaster.c:2865
 #, c-format
 msgid "could not exec backend process \"%s\": %m"
-msgstr ""
+msgstr "無法執行後端行程 \"%s\": %m"
 
 #: postmaster/postmaster.c:3253
 #, c-format
@@ -6665,12 +6709,12 @@ msgstr "無法fork啟動行程：%m"
 #: postmaster/postmaster.c:3257
 #, c-format
 msgid "could not fork background writer process: %m"
-msgstr ""
+msgstr "無法建立 background writer 行程: %m"
 
 #: postmaster/postmaster.c:3261
 #, c-format
 msgid "could not fork process: %m"
-msgstr ""
+msgstr "無法建立行程: %m"
 
 #: postmaster/postmaster.c:3442
 #, c-format
@@ -6917,7 +6961,7 @@ msgstr ""
 
 #: rewrite/rewriteDefine.c:235
 msgid "Use views or triggers instead."
-msgstr ""
+msgstr "改用 views 或 triggers。"
 
 #: rewrite/rewriteDefine.c:239
 msgid "rule actions on NEW are not implemented"
@@ -6925,7 +6969,7 @@ msgstr ""
 
 #: rewrite/rewriteDefine.c:240
 msgid "Use triggers instead."
-msgstr ""
+msgstr "改用 triggers。"
 
 #: rewrite/rewriteDefine.c:257
 msgid "INSTEAD NOTHING rules on SELECT are not implemented"
@@ -6933,7 +6977,7 @@ msgstr ""
 
 #: rewrite/rewriteDefine.c:258
 msgid "Use views instead."
-msgstr ""
+msgstr "改用 views。"
 
 #: rewrite/rewriteDefine.c:266
 msgid "multiple actions for rules on SELECT are not implemented"
@@ -7151,7 +7195,7 @@ msgstr "發現deadlock"
 #: storage/lmgr/lock.c:456
 #: storage/lmgr/lock.c:504
 msgid "You may need to increase max_locks_per_transaction."
-msgstr ""
+msgstr "您可能必須增加 max_locks_per_transaction。"
 
 #: storage/page/bufpage.c:135
 #: storage/page/bufpage.c:334
@@ -7711,23 +7755,23 @@ msgstr ""
 #: utils/adt/arrayfuncs.c:224
 #: utils/adt/arrayfuncs.c:236
 msgid "missing dimension value"
-msgstr ""
+msgstr "缺少維度值"
 
 #: utils/adt/arrayfuncs.c:246
 msgid "missing \"]\" in array dimensions"
-msgstr ""
+msgstr "陣列維度缺少 \"]\""
 
 #: utils/adt/arrayfuncs.c:254
 msgid "upper bound cannot be less than lower bound"
-msgstr ""
+msgstr "上界不能少於下界"
 
 #: utils/adt/arrayfuncs.c:266
 msgid "array value must start with \"{\" or dimension information"
-msgstr ""
+msgstr "陣列值必須以 \"{\" 或維度數起始"
 
 #: utils/adt/arrayfuncs.c:277
 msgid "missing assignment operator"
-msgstr ""
+msgstr "缺少賦值運算子"
 
 #: utils/adt/arrayfuncs.c:305
 msgid "missing left brace"
@@ -7743,7 +7787,7 @@ msgstr "缺少左大括號"
 #: utils/adt/arrayfuncs.c:575
 #, c-format
 msgid "malformed array literal: \"%s\""
-msgstr ""
+msgstr "陣列實量格式錯誤: \"%s\""
 
 #: utils/adt/arrayfuncs.c:907
 msgid "invalid array flags"
@@ -7751,7 +7795,7 @@ msgstr "不合法的陣列旗標"
 
 #: utils/adt/arrayfuncs.c:915
 msgid "wrong element type"
-msgstr ""
+msgstr "錯誤的元素型別"
 
 #: utils/adt/arrayfuncs.c:958
 #: utils/cache/lsyscache.c:1756
@@ -7826,17 +7870,17 @@ msgstr ""
 #: utils/adt/ascii.c:68
 #, c-format
 msgid "encoding conversion from %s to ASCII not supported"
-msgstr ""
+msgstr "不支援由 %s 到 ASCII 的編碼轉換"
 
 #: utils/adt/bool.c:80
 #, c-format
 msgid "invalid input syntax for type boolean: \"%s\""
-msgstr ""
+msgstr "無效的 boolean 型別輸入語法: \"%s\""
 
 #: utils/adt/cash.c:198
 #, c-format
 msgid "invalid input syntax for type money: \"%s\""
-msgstr ""
+msgstr "無效的 money 型別輸入語法: \"%s\""
 
 #: utils/adt/cash.c:496
 #: utils/adt/cash.c:548
@@ -7863,13 +7907,13 @@ msgstr ""
 #: utils/adt/numeric.c:3820
 #: utils/adt/timestamp.c:2169
 msgid "division by zero"
-msgstr ""
+msgstr "除以 0"
 
 #: utils/adt/date.c:87
 #: utils/adt/datetime.c:1312
 #: utils/adt/datetime.c:2086
 msgid "date/time value \"current\" is no longer supported"
-msgstr ""
+msgstr "date/time 的值 \"current\" 已不再受支援"
 
 #: utils/adt/date.c:732
 #: utils/adt/date.c:775
@@ -7919,12 +7963,12 @@ msgstr ""
 #: utils/adt/date.c:863
 #, c-format
 msgid "invalid input syntax for type date: \"%s\""
-msgstr ""
+msgstr "無效的 date 型別輸入語法: \"%s\""
 
 #: utils/adt/date.c:1579
 #, c-format
 msgid "invalid input syntax for type time: \"%s\""
-msgstr ""
+msgstr "無效的 time 型別輸入語法: \"%s\""
 
 #: utils/adt/date.c:1671
 #: utils/adt/date.c:1690
@@ -7935,7 +7979,7 @@ msgstr ""
 #: utils/adt/date.c:2330
 #, c-format
 msgid "invalid input syntax for type time with time zone: \"%s\""
-msgstr ""
+msgstr "無效的 time 型別帶時區輸入語法: \"%s\""
 
 #: utils/adt/date.c:2436
 #: utils/adt/date.c:2455
@@ -7953,7 +7997,7 @@ msgstr "無法識別的時區\"%s\""
 #: utils/adt/date.c:2532
 #, c-format
 msgid "\"interval\" time zone \"%s\" not valid"
-msgstr ""
+msgstr "\"interval\" 時區 \"%s\" 無效"
 
 #: utils/adt/datetime.c:1494
 #: utils/adt/datetime.c:2368
@@ -7966,16 +8010,16 @@ msgstr ""
 #: utils/adt/datetime.c:3319
 #, c-format
 msgid "date/time field value out of range: \"%s\""
-msgstr ""
+msgstr "date/time 欄位值超出範圍: \"%s\""
 
 #: utils/adt/datetime.c:3321
 msgid "Perhaps you need a different \"datestyle\" setting."
-msgstr ""
+msgstr "或許您需要一個不同的 \"datestyle\" 設定。"
 
 #: utils/adt/datetime.c:3326
 #, c-format
 msgid "interval field value out of range: \"%s\""
-msgstr ""
+msgstr "interval 欄位值超出範圍: \"%s\""
 
 #: utils/adt/datetime.c:3332
 #, c-format
@@ -7983,7 +8027,7 @@ msgid "time zone displacement out of range: \"%s\""
 msgstr ""
 
 #  translator: first %s is inet or cidr
-#. translator: first %s is inet or cidr
+#  translator: first %s is inet or cidr
 #: utils/adt/datetime.c:3339
 #: utils/adt/network.c:93
 #, c-format
@@ -7999,16 +8043,16 @@ msgstr "無效的Datum指標"
 #: utils/adt/encode.c:91
 #, c-format
 msgid "unrecognized encoding: \"%s\""
-msgstr ""
+msgstr "無法識別的編碼: \"%s\""
 
 #: utils/adt/encode.c:150
 #, c-format
 msgid "invalid hexadecimal digit: \"%c\""
-msgstr ""
+msgstr "無效的十六進位數字: \"%c\""
 
 #: utils/adt/encode.c:178
 msgid "invalid hexadecimal data: odd number of digits"
-msgstr ""
+msgstr "無效的十六進位資料: 奇數個數字"
 
 #: utils/adt/encode.c:295
 msgid "unexpected \"=\""
@@ -8058,7 +8102,7 @@ msgstr ""
 #: utils/adt/float.c:312
 #, c-format
 msgid "\"%s\" is out of range for type real"
-msgstr ""
+msgstr "\"%s\" 超出 real 型別範圍"
 
 #: utils/adt/float.c:317
 #: utils/adt/float.c:329
@@ -8073,7 +8117,7 @@ msgstr ""
 #: utils/adt/float.c:477
 #, c-format
 msgid "\"%s\" is out of range for type double precision"
-msgstr ""
+msgstr "\"%s\" 超出 double precision 型別範圍"
 
 #: utils/adt/float.c:482
 #: utils/adt/float.c:494
@@ -8164,23 +8208,23 @@ msgstr ""
 
 #: utils/adt/formatting.c:1060
 msgid "cannot use \"S\" and \"PL\"/\"MI\"/\"SG\"/\"PR\" together"
-msgstr ""
+msgstr "無法同時使用 \"S\" 和 \"PL\"/\"MI\"/\"SG\"/\"PR\""
 
 #: utils/adt/formatting.c:1084
 msgid "cannot use \"S\" and \"MI\" together"
-msgstr ""
+msgstr "無法同時使用 \"S\" 和 \"MI\""
 
 #: utils/adt/formatting.c:1097
 msgid "cannot use \"S\" and \"PL\" together"
-msgstr ""
+msgstr "無法同時使用 \"S\" 和 \"PL\""
 
 #: utils/adt/formatting.c:1110
 msgid "cannot use \"S\" and \"SG\" together"
-msgstr ""
+msgstr "無法同時使用 \"S\" 和 \"SG\""
 
 #: utils/adt/formatting.c:1122
 msgid "cannot use \"PR\" and \"S\"/\"PL\"/\"MI\"/\"SG\" together"
-msgstr ""
+msgstr "無法同時使用 \"PR\" 和 \"S\"/\"PL\"/\"MI\"/\"SG\""
 
 #: utils/adt/formatting.c:1152
 msgid "\"E\" is not supported"
@@ -8206,7 +8250,7 @@ msgstr "%s 的值不合法"
 
 #: utils/adt/formatting.c:3136
 msgid "AM/PM hour must be between 1 and 12"
-msgstr ""
+msgstr "AM/PM 小時必須介於 1 到 12 之間"
 
 #: utils/adt/formatting.c:3210
 msgid "cannot calculate day of year without year information"
@@ -8344,7 +8388,7 @@ msgstr ""
 
 #: utils/adt/int8.c:896
 msgid "OID out of range"
-msgstr ""
+msgstr "OID 超出範圍"
 
 #: utils/adt/oracle_compat.c:99
 #: utils/adt/oracle_compat.c:138
@@ -8371,28 +8415,31 @@ msgstr ""
 msgid "text too long to convert to MAC address"
 msgstr ""
 
-#: utils/adt/misc.c:79
-msgid "only superuser can signal other backends"
+#: utils/adt/misc.c:80
+#, fuzzy
+msgid "must be superuser to signal other server processes"
+msgstr "只有管理者能建立使用者"
+
+#: utils/adt/misc.c:89
+#, fuzzy, c-format
+msgid "PID %d is not a PostgreSQL server process"
+msgstr ""
+"%s 是PostgreSQL伺服器。\n"
+"\n"
+
+#: utils/adt/misc.c:97
+#, fuzzy, c-format
+msgid "could not send signal to process %d: %m"
+msgstr "無法傳送資料給用戶端：%m"
+
+#: utils/adt/misc.c:155
+msgid "global tablespace never has databases"
 msgstr ""
 
-#: utils/adt/misc.c:86
-#, c-format
-msgid "pid %i is not a postgresql backend"
-msgstr ""
-
-#: utils/adt/misc.c:94
-#, c-format
-msgid "failed to send signal to backend %i: %m"
-msgstr ""
-
-#: utils/adt/misc.c:145
-msgid "global tablespace never has databases."
-msgstr ""
-
-#: utils/adt/misc.c:160
-#, c-format
-msgid "%d is no tablespace oid."
-msgstr ""
+#: utils/adt/misc.c:176
+#, fuzzy, c-format
+msgid "%u is not a tablespace oid"
+msgstr "\"%s\"不是資料表或索引"
 
 #: utils/adt/nabstime.c:244
 #, c-format
@@ -8407,7 +8454,7 @@ msgstr ""
 #: utils/adt/nabstime.c:822
 #, c-format
 msgid "invalid input syntax for type tinterval: \"%s\""
-msgstr ""
+msgstr "無效的 tinterval 型別輸入語法: \"%s\""
 
 #: utils/adt/nabstime.c:885
 msgid "invalid status in external \"tinterval\" value"
@@ -8490,13 +8537,13 @@ msgstr ""
 
 #: utils/adt/numeric.c:848
 msgid "lower bound cannot equal upper bound"
-msgstr ""
+msgstr "下界不能等於上界"
 
 #: utils/adt/numeric.c:1761
 #: utils/adt/numeric.c:1829
 #: utils/adt/numeric.c:1877
 msgid "cannot convert NaN to integer"
-msgstr ""
+msgstr "無法將 NaN 轉換成 integer"
 
 #: utils/adt/numeric.c:2720
 #: utils/adt/numeric.c:2743
@@ -8533,7 +8580,7 @@ msgstr ""
 #: utils/adt/numutils.c:97
 #, c-format
 msgid "invalid input syntax for integer: \"%s\""
-msgstr ""
+msgstr "無效的 integer 輸入語法: \"%s\""
 
 #: utils/adt/numutils.c:111
 #, c-format
@@ -8559,7 +8606,7 @@ msgstr ""
 #: utils/adt/oid.c:87
 #, c-format
 msgid "invalid input syntax for type oid: \"%s\""
-msgstr ""
+msgstr "無效的 oid 型別輸入語法: \"%s\""
 
 #: utils/adt/oid.c:72
 #: utils/adt/oid.c:110
@@ -8740,7 +8787,7 @@ msgstr ""
 #: utils/adt/regproc.c:644
 #: utils/adt/regproc.c:1276
 msgid "too many arguments"
-msgstr ""
+msgstr "參數過多"
 
 #: utils/adt/regproc.c:645
 msgid "Provide two argument types for operator."
@@ -8748,19 +8795,19 @@ msgstr ""
 
 #: utils/adt/regproc.c:1174
 msgid "expected a left parenthesis"
-msgstr ""
+msgstr "預期應有左圓括號"
 
 #: utils/adt/regproc.c:1190
 msgid "expected a right parenthesis"
-msgstr ""
+msgstr "預期應有右圓括號"
 
 #: utils/adt/regproc.c:1209
 msgid "expected a type name"
-msgstr ""
+msgstr "預期應有型別名稱"
 
 #: utils/adt/regproc.c:1241
 msgid "improper type name"
-msgstr ""
+msgstr "不合適的型別名稱"
 
 #: utils/adt/ruleutils.c:1715
 #, c-format
@@ -8770,37 +8817,37 @@ msgstr ""
 #: utils/adt/selfuncs.c:3375
 #: utils/adt/selfuncs.c:3762
 msgid "case insensitive matching not supported on type bytea"
-msgstr ""
+msgstr "bytea 型別不支援不區分大小寫的匹配"
 
 #: utils/adt/selfuncs.c:3480
 #: utils/adt/selfuncs.c:3923
 msgid "regular-expression matching not supported on type bytea"
-msgstr ""
+msgstr "bytea 型別不支援正規表示式匹配"
 
 #: utils/adt/tid.c:66
 #: utils/adt/tid.c:74
 #: utils/adt/tid.c:82
 #, c-format
 msgid "invalid input syntax for type tid: \"%s\""
-msgstr ""
+msgstr "無效的 tid 型別輸入語法: \"%s\""
 
 #: utils/adt/timestamp.c:98
 #: utils/adt/timestamp.c:338
 #, c-format
 msgid "timestamp out of range: \"%s\""
-msgstr ""
+msgstr "timestamp 超過範圍: \"%s\""
 
 #: utils/adt/timestamp.c:116
 #: utils/adt/timestamp.c:356
 #: utils/adt/timestamp.c:534
 #, c-format
 msgid "date/time value \"%s\" is no longer supported"
-msgstr ""
+msgstr "date/time 的值 \"%s\" 已不再受支援"
 
 #: utils/adt/timestamp.c:270
 #, c-format
 msgid "timestamp(%d) precision must be between %d and %d"
-msgstr ""
+msgstr "timestamp(%d) 精確度必須介於 %d 和 %d 之間"
 
 #: utils/adt/timestamp.c:527
 #: utils/adt/timestamp.c:2380
@@ -8812,7 +8859,7 @@ msgstr "interval超過範圍"
 #: utils/adt/timestamp.c:859
 #, c-format
 msgid "interval(%d) precision must be between %d and %d"
-msgstr ""
+msgstr "interval(%d) 精確度必須介於 %d 和 %d 之間"
 
 #: utils/adt/timestamp.c:1856
 msgid "cannot subtract infinite timestamps"
@@ -8821,17 +8868,17 @@ msgstr ""
 #: utils/adt/timestamp.c:2551
 #, c-format
 msgid "invalid input syntax for type timestamp: \"%s\""
-msgstr ""
+msgstr "無效的 timestamp 型別輸入語法: \"%s\""
 
 #: utils/adt/timestamp.c:2611
 #, c-format
 msgid "invalid input syntax for type timestamp with time zone: \"%s\""
-msgstr ""
+msgstr "無效的 timestamp 型別帶時區輸入語法: \"%s\""
 
 #: utils/adt/timestamp.c:2672
 #, c-format
 msgid "invalid input syntax for type interval: \"%s\""
-msgstr ""
+msgstr "無效的 interval 型別輸入語法: \"%s\""
 
 #: utils/adt/timestamp.c:2768
 #: utils/adt/timestamp.c:3264
@@ -8945,11 +8992,11 @@ msgstr ""
 #: utils/adt/varlena.c:1517
 #, c-format
 msgid "index %d out of valid range, 0..%d"
-msgstr ""
+msgstr "索引 %d 超出有效範圍，0..%d"
 
 #: utils/adt/varlena.c:1529
 msgid "new bit must be 0 or 1"
-msgstr ""
+msgstr "新位元必須是 0 或 1"
 
 #: utils/adt/varlena.c:2014
 msgid "field position must be greater than zero"
@@ -8973,12 +9020,12 @@ msgstr ""
 
 #: utils/adt/rowtypes.c:125
 msgid "Missing left parenthesis."
-msgstr ""
+msgstr "缺少左圓括號。"
 
 #: utils/adt/rowtypes.c:156
 #: utils/adt/rowtypes.c:164
 msgid "Unexpected end of input."
-msgstr ""
+msgstr "非預期的輸入終止。"
 
 #: utils/adt/rowtypes.c:212
 #: utils/adt/rowtypes.c:231
@@ -9001,7 +9048,7 @@ msgstr ""
 #: utils/adt/rowtypes.c:487
 #, c-format
 msgid "wrong data type: %u, expected %u"
-msgstr ""
+msgstr "錯誤的資料型別: %u, 預期應為 %u"
 
 #: utils/adt/rowtypes.c:545
 #, c-format
@@ -9212,7 +9259,7 @@ msgstr "無法建立鎖定檔\"%s\"：%m"
 #: utils/init/miscinit.c:507
 #, c-format
 msgid "could not open lock file \"%s\": %m"
-msgstr ""
+msgstr "無法開啟鎖定檔 \"%s\": %m"
 
 #: utils/init/miscinit.c:513
 #, c-format
@@ -9222,7 +9269,7 @@ msgstr "無法讀取鎖定檔\"%s\"：%m"
 #: utils/init/miscinit.c:544
 #, c-format
 msgid "lock file \"%s\" already exists"
-msgstr ""
+msgstr "鎖定檔 \"%s\" 已存在"
 
 #: utils/init/miscinit.c:547
 #, c-format
@@ -9237,21 +9284,21 @@ msgstr ""
 #: utils/init/miscinit.c:579
 #, c-format
 msgid "pre-existing shared memory block (key %lu, ID %lu) is still in use"
-msgstr ""
+msgstr "既存的共享記憶體區塊 (key %lu, ID %lu) 仍在使用中。"
 
 #: utils/init/miscinit.c:582
 #, c-format
 msgid "If you're sure there are no old server processes still running, remove the shared memory block with the command \"ipcrm\", or just delete the file \"%s\"."
-msgstr ""
+msgstr "如果您確定沒有舊伺服器的行程仍在運行，以 \"ipcrm\" 命令移除共享記憶體區塊，或直接刪除 \"%s\" 檔案。"
 
 #: utils/init/miscinit.c:599
 #, c-format
 msgid "could not remove old lock file \"%s\": %m"
-msgstr ""
+msgstr "無法移除舊的鎖定檔 \"%s\": %m"
 
 #: utils/init/miscinit.c:601
 msgid "The file seems accidentally left over, but it could not be removed. Please remove the file by hand and try again."
-msgstr ""
+msgstr "檔案似乎意外地殘留，但它無法被移除。請手動移除該檔案並重試。"
 
 #: utils/init/miscinit.c:623
 #: utils/init/miscinit.c:633
@@ -9269,26 +9316,26 @@ msgstr "無法讀取鎖定檔\"%s\"：%m"
 #: utils/init/miscinit.c:847
 #, c-format
 msgid "\"%s\" is not a valid data directory"
-msgstr ""
+msgstr "\"%s\" 不是有效的資料目錄"
 
 #: utils/init/miscinit.c:836
 #, c-format
 msgid "File \"%s\" is missing."
-msgstr ""
+msgstr "遺失檔案 \"%s\"。"
 
 #: utils/init/miscinit.c:849
 #, c-format
 msgid "File \"%s\" does not contain valid data."
-msgstr ""
+msgstr "檔案 \"%s\" 不含有效資料。"
 
 #: utils/init/miscinit.c:851
 msgid "You may need to initdb."
-msgstr ""
+msgstr "您可能必須 initdb。"
 
 #: utils/init/miscinit.c:859
 #, c-format
 msgid "The data directory was initialized by PostgreSQL version %ld.%ld, which is not compatible with this version %s."
-msgstr ""
+msgstr "資料目錄是由 PostgreSQL 版本 %ld.%ld 初始化，並不相容於目前的版本 %s。"
 
 #: utils/init/miscinit.c:901
 msgid "invalid list syntax for parameter \"preload_libraries\""
@@ -9312,35 +9359,35 @@ msgstr ""
 #: utils/init/postinit.c:130
 #, c-format
 msgid "database \"%s\" is not currently accepting connections"
-msgstr ""
+msgstr "資料庫 \"%s\" 目前並不接受連線。"
 
 #: utils/init/postinit.c:278
 #, c-format
 msgid "The database subdirectory \"%s\" is missing."
-msgstr ""
+msgstr "遺失資料庫子目錄 \"%s\"。"
 
 #: utils/init/postinit.c:283
 #, c-format
 msgid "could not access directory \"%s\": %m"
-msgstr ""
+msgstr "無法存取目錄 \"%s\": %m"
 
 #: utils/init/postinit.c:292
 #, c-format
 msgid "could not change directory to \"%s\": %m"
-msgstr ""
+msgstr "無法切換目錄到 \"%s\": %m"
 
 #: utils/init/postinit.c:375
 msgid "no users are defined in this database system"
-msgstr ""
+msgstr "沒有任何使用者被定義在這個資料庫系統"
 
 #: utils/init/postinit.c:376
 #, c-format
 msgid "You should immediately run CREATE USER \"%s\" WITH SYSID %d CREATEUSER;."
-msgstr ""
+msgstr "您必須立刻執行 CREATE USER \"%s\" WITH SYSID %d CREATEUSER;。"
 
 #: utils/init/postinit.c:412
 msgid "connection limit exceeded for non-superusers"
-msgstr ""
+msgstr "非特權使用者連線數已達限制量"
 
 #: utils/mb/conv.c:376
 #, c-format
@@ -9875,7 +9922,7 @@ msgid "Vacuum cost amount available before napping."
 msgstr ""
 
 #: utils/misc/guc.c:1036
-msgid "Vacuum cost delay in milliseconds."
+msgid "Vacuum cost naptime in milliseconds."
 msgstr ""
 
 #: utils/misc/guc.c:1045
@@ -9984,7 +10031,7 @@ msgstr "顯示識別字最大長度"
 
 #: utils/misc/guc.c:1280
 msgid "Shows size of a disk block"
-msgstr "顯示磁碟區塊大小"
+msgstr "顯示磁碟區塊大?"
 
 #: utils/misc/guc.c:1299
 msgid "Sets the planner's assumption about size of the disk cache."

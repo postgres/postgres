@@ -4,8 +4,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-07-29 19:16-0300\n"
-"PO-Revision-Date: 2004-08-01 13:22+0800\n"
+"POT-Creation-Date: 2004-08-05 02:24-0300\n"
+"PO-Revision-Date: 2004-08-05 18:22+0800\n"
 "Last-Translator: Zhenbang Wei <forth@zbwei.net>\n"
 "Language-Team: Zhenbang Wei <forth@zbwei.net>\n"
 "MIME-Version: 1.0\n"
@@ -15,14 +15,14 @@ msgstr ""
 #: pg_dump.c:363
 #: pg_restore.c:225
 msgid "User name: "
-msgstr "使用者名稱: "
+msgstr "使用者名稱："
 
 #: pg_dump.c:399
 #: pg_dumpall.c:238
 #: pg_restore.c:252
 #, c-format
 msgid "%s: invalid -X option -- %s\n"
-msgstr "%s: 無效的 -X 選項 -- %s\n"
+msgstr "%s：無效的 -X 選項 -- %s\n"
 
 #: pg_dump.c:401
 #: pg_dump.c:415
@@ -74,7 +74,7 @@ msgstr "(INSERT命令不能設定OID。)\n"
 
 #: pg_dump.c:468
 msgid "large-object output is not supported for plain-text dump files\n"
-msgstr "不支援對純文字檔案備份large-object\n"
+msgstr "不支援對?文字?案備份large-object\n"
 
 #: pg_dump.c:469
 msgid "(Use a different output format.)\n"
@@ -114,7 +114,7 @@ msgstr ""
 #: pg_dumpall.c:311
 #: pg_restore.c:354
 msgid "Usage:\n"
-msgstr "使用方法:\n"
+msgstr "使用方法：\n"
 
 #: pg_dump.c:665
 #, c-format
@@ -129,7 +129,7 @@ msgid ""
 "General options:\n"
 msgstr ""
 "\n"
-"一般選項:\n"
+"一般選項：\n"
 
 #: pg_dump.c:668
 #: pg_restore.c:359
@@ -297,7 +297,7 @@ msgstr "  -p, --port=埠號          資料庫伺服器埠號\n"
 #: pg_dumpall.c:341
 #: pg_restore.c:392
 msgid "  -U, --username=NAME      connect as specified database user\n"
-msgstr "  -U, --username=NAME      以指定的資料庫使用者連線\n"
+msgstr "  -U, --username=NAME      以指定的資料庫使用者連?\n"
 
 #: pg_dump.c:705
 #: pg_dumpall.c:342
@@ -338,16 +338,16 @@ msgid "SQL command to dump the contents of table \"%s\" failed: PQendcopy() fail
 msgstr "備分資料表\"%s\"的SQL命令失敗: PQendcopy()失敗。\n"
 
 #: pg_dump.c:912
-#: pg_dump.c:8009
+#: pg_dump.c:8057
 #, c-format
 msgid "Error message from server: %s"
-msgstr "收到伺服器的錯誤訊息: %s"
+msgstr "收到伺服器的錯誤訊息：%s"
 
 #: pg_dump.c:913
-#: pg_dump.c:8010
+#: pg_dump.c:8058
 #, c-format
 msgid "The command was: %s\n"
-msgstr "命令是: %s\n"
+msgstr "命令是：%s\n"
 
 #: pg_dump.c:1182
 msgid "saving database definition\n"
@@ -374,12 +374,12 @@ msgstr "儲存large object\n"
 #: pg_dump.c:1426
 #, c-format
 msgid "dumpBlobs(): could not open large object: %s"
-msgstr "dumpBlobs(): 無法開啟large object: %s"
+msgstr "dumpBlobs()：無法開啟large object：%s"
 
 #: pg_dump.c:1439
 #, c-format
 msgid "dumpBlobs(): error reading large object: %s"
-msgstr "dumpBlobs(): 無法讀取large object: %s"
+msgstr "dumpBlobs()：無法讀取large object：%s"
 
 #: pg_dump.c:1573
 #, c-format
@@ -431,189 +431,189 @@ msgstr "警告：資料表\"%s\"的擁有者無效\n"
 msgid "specified table \"%s\" does not exist\n"
 msgstr "指定的資料表\"%s\"不存在\n"
 
-#: pg_dump.c:2714
+#: pg_dump.c:2715
 #, c-format
 msgid "reading indexes for table \"%s\"\n"
 msgstr "讀取資料表\"%s\"的索引\n"
 
-#: pg_dump.c:2921
+#: pg_dump.c:2952
 #, c-format
 msgid "reading foreign key constraints for table \"%s\"\n"
 msgstr "為資料表\"%s\"讀取外鍵constraints\n"
 
-#: pg_dump.c:3196
+#: pg_dump.c:3227
 #, c-format
 msgid "reading triggers for table \"%s\"\n"
 msgstr "為資料表\"%s\"讀取triggers\n"
 
-#: pg_dump.c:3268
+#: pg_dump.c:3299
 #, c-format
 msgid "expected %d triggers on table \"%s\" but found %d\n"
 msgstr "預期有 %d 個triggers在資料表\"%s\"，但是找到 %d 個\n"
 
-#: pg_dump.c:3313
+#: pg_dump.c:3344
 #, c-format
 msgid "query produced null referenced table name for foreign key trigger \"%s\" on table \"%s\" (OID of table: %u)\n"
-msgstr ""
+msgstr "查詢產生null被參照資料表名稱給外鍵trigger \"%s\"於資料表\"%s\"(資料表OID：%u)\n"
 
-#: pg_dump.c:3613
+#: pg_dump.c:3644
 #, c-format
 msgid "finding the columns and types of table \"%s\"\n"
 msgstr "尋找資料表\"%s\"的欄位和型別\n"
 
-#: pg_dump.c:3699
+#: pg_dump.c:3730
 #, c-format
 msgid "invalid column numbering in table \"%s\"\n"
 msgstr "無效的欄位編號於資料表\"%s\"\n"
 
-#: pg_dump.c:3733
+#: pg_dump.c:3764
 #, c-format
 msgid "finding default expressions of table \"%s\"\n"
 msgstr "尋找資料表\"%s\"的預設expressions\n"
 
-#: pg_dump.c:3816
+#: pg_dump.c:3847
 #, c-format
 msgid "invalid adnum value %d for table \"%s\"\n"
 msgstr "無效的adnum值 %d 於資料表\"%s\"\n"
 
-#: pg_dump.c:3834
+#: pg_dump.c:3865
 #, c-format
 msgid "finding check constraints for table \"%s\"\n"
 msgstr "尋找資料表\"%s\"的check constraints\n"
 
-#: pg_dump.c:3898
+#: pg_dump.c:3929
 #, c-format
 msgid "expected %d check constraints on table \"%s\" but found %d\n"
 msgstr "預期有 %d 個check constraints在資料表\"%s\"上，但是找到 %d 個\n"
 
-#: pg_dump.c:3900
+#: pg_dump.c:3931
 msgid "(The system catalogs might be corrupted.)\n"
 msgstr "(系統catalog可能已經損壞。)\n"
 
-#: pg_dump.c:4586
-#: pg_dump.c:4751
-#: pg_dump.c:5151
-#: pg_dump.c:5535
-#: pg_dump.c:5832
-#: pg_dump.c:6032
-#: pg_dump.c:6215
+#: pg_dump.c:4617
+#: pg_dump.c:4782
+#: pg_dump.c:5188
+#: pg_dump.c:5572
+#: pg_dump.c:5869
+#: pg_dump.c:6069
+#: pg_dump.c:6252
 #, c-format
 msgid "Got %d rows instead of one from: %s"
-msgstr "從到 %d 筆資料，而非一筆來自: %s"
+msgstr "從到 %d 筆資料，而非一筆來自：%s"
 
-#: pg_dump.c:4859
+#: pg_dump.c:4891
 #, c-format
 msgid "query yielded no rows: %s\n"
 msgstr "放棄查詢，沒有資料: %s\n"
 
-#: pg_dump.c:5206
+#: pg_dump.c:5243
 msgid "WARNING: could not parse proargnames array\n"
 msgstr "警告：無法解讀proargnames陣列\n"
 
-#: pg_dump.c:5243
+#: pg_dump.c:5280
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\"\n"
 msgstr "無法識別函式\"%s\"的provolatile值\n"
 
-#: pg_dump.c:5757
+#: pg_dump.c:5794
 #, c-format
 msgid "WARNING: could not find operator with OID %s\n"
 msgstr "警告：找不到OID為%s的operator\n"
 
-#: pg_dump.c:6243
+#: pg_dump.c:6280
 #, c-format
 msgid "WARNING: aggregate function %s could not be dumped correctly for this database version; ignored\n"
 msgstr "警告：此資料庫版本無法正確備份aggregate function %s，予以忽略\n"
 
-#: pg_dump.c:6375
+#: pg_dump.c:6412
 #, c-format
 msgid "could not parse ACL list (%s) for object \"%s\" (%s)\n"
 msgstr "無法解讀ACL清單(%s)於物件\"%s\" (%s)\n"
 
-#: pg_dump.c:6468
+#: pg_dump.c:6505
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data\n"
 msgstr "用來取得view \"%s\"定義的查詢未傳回資料\n"
 
-#: pg_dump.c:6471
+#: pg_dump.c:6508
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition\n"
 msgstr "用來取得view \"%s\"定義的查詢傳回一筆以上的定義\n"
 
-#: pg_dump.c:6480
+#: pg_dump.c:6517
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)\n"
 msgstr "view \"%s\"的定義似乎是空的(長度為0)\n"
 
-#: pg_dump.c:6787
+#: pg_dump.c:6824
 #, c-format
 msgid "invalid column number %d for table \"%s\"\n"
 msgstr "無效的欄位編號 %d 於資料表\"%s\"\n"
 
-#: pg_dump.c:6888
+#: pg_dump.c:6925
 #, c-format
 msgid "missing index for constraint %s\n"
 msgstr "找不到constraint %s 的索引\n"
 
-#: pg_dump.c:7044
+#: pg_dump.c:7092
 msgid "unexpected constraint type\n"
 msgstr "預期外的constraint型別\n"
 
-#: pg_dump.c:7086
+#: pg_dump.c:7134
 msgid "inserted invalid OID\n"
 msgstr "插入無效的OID\n"
 
-#: pg_dump.c:7092
+#: pg_dump.c:7140
 #, c-format
 msgid "maximum system OID is %u\n"
 msgstr "最大的系統OID是%u\n"
 
-#: pg_dump.c:7133
+#: pg_dump.c:7181
 msgid "missing pg_database entry for this database\n"
 msgstr "資料庫中沒有pg_database\n"
 
-#: pg_dump.c:7138
+#: pg_dump.c:7186
 msgid "found more than one pg_database entry for this database\n"
 msgstr "資料庫中發現一個以上的pg_database\n"
 
-#: pg_dump.c:7170
+#: pg_dump.c:7218
 msgid "could not find entry for pg_indexes in pg_class\n"
 msgstr "pg_class中找不到pg_indexes\n"
 
-#: pg_dump.c:7175
+#: pg_dump.c:7223
 msgid "found more than one entry for pg_indexes in pg_class\n"
 msgstr "pg_class中發現一個以上的pg_indexes\n"
 
-#: pg_dump.c:7224
+#: pg_dump.c:7272
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d rows (expected 1)\n"
 msgstr "取得sequence \"%s\"資料的查詢傳回 %d 筆資料(預期是 1)\n"
 
-#: pg_dump.c:7233
+#: pg_dump.c:7281
 #, c-format
 msgid "query to get data of sequence \"%s\" returned name \"%s\"\n"
 msgstr "取得sequence \"%s\"資料的查詢傳回名稱\"%s\"\n"
 
-#: pg_dump.c:7468
+#: pg_dump.c:7516
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\"\n"
-msgstr ""
+msgstr "無效的參數的字串(%s)給trigger \"%s\"於資料表\"%s\"\n"
 
-#: pg_dump.c:7574
+#: pg_dump.c:7622
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned"
-msgstr "取得rule \"%s\"於資料表\"%s\"的查詢失敗: 傳回錯誤的筆數"
+msgstr "取得rule \"%s\"於資料表\"%s\"的查詢失敗：傳回錯誤的筆數"
 
-#: pg_dump.c:7641
+#: pg_dump.c:7689
 msgid "fetching dependency data\n"
 msgstr "讀取依存資料\n"
 
-#: pg_dump.c:7817
+#: pg_dump.c:7865
 #, c-format
 msgid "query yielded %d rows instead of one: %s\n"
-msgstr "查詢放棄 %d 筆記錄，而非一筆: %s\n"
+msgstr "查詢放棄 %d 筆記錄，而非一筆：%s\n"
 
-#: pg_dump.c:8004
+#: pg_dump.c:8052
 msgid "SQL command failed\n"
 msgstr "SQL命令失敗\n"
 
@@ -714,15 +714,15 @@ msgstr "記憶體用盡\n"
 #: common.c:728
 #, c-format
 msgid "failed sanity check, parent OID %u of table \"%s\" (OID %u) not found\n"
-msgstr ""
+msgstr "完整性檢查失敗，找不到父OID %u於資料表\"%s\"(OID %u)\n"
 
 #: common.c:770
 msgid "could not parse numeric array: too many numbers\n"
-msgstr "無法解讀數字陣列: 過多數字\n"
+msgstr "無法解讀數字陣列：過多數字\n"
 
 #: common.c:785
 msgid "could not parse numeric array: invalid character in number\n"
-msgstr "無法解讀數字陣列: 數字包含無效字元\n"
+msgstr "無法解讀數字陣列：數字包含無效字元\n"
 
 #: pg_backup_archiver.c:45
 msgid "archiver"
@@ -757,7 +757,7 @@ msgstr "刪除 %s %s\n"
 #: pg_backup_archiver.c:253
 #, c-format
 msgid "warning from original dump file: %s\n"
-msgstr "來自備份檔的警告訊息: %s\n"
+msgstr "來自備份檔的警告訊息：%s\n"
 
 #: pg_backup_archiver.c:260
 #, c-format
@@ -854,7 +854,7 @@ msgstr "寫入large object剩餘的 %lu 個位元組(結果=%lu)\n"
 #: pg_backup_archiver.c:1117
 #, c-format
 msgid "could not write to large object (result: %lu, expected: %lu)\n"
-msgstr "無法寫至large object(結果: %lu，預期: %lu)\n"
+msgstr "無法寫至large object(結果：%lu，預期：%lu)\n"
 
 #: pg_backup_archiver.c:870
 msgid "could not open TOC file\n"
@@ -863,7 +863,7 @@ msgstr "無法開啟TOC檔案\n"
 #: pg_backup_archiver.c:891
 #, c-format
 msgid "WARNING: line ignored: %s\n"
-msgstr "警告：忽略行: %s\n"
+msgstr "警告：忽略行：%s\n"
 
 #: pg_backup_archiver.c:898
 #, c-format
@@ -875,18 +875,18 @@ msgstr "找不到ID為 %d 的entry\n"
 #: pg_backup_files.c:439
 #, c-format
 msgid "could not close TOC file: %s\n"
-msgstr "無法關閉TOC檔案: %s\n"
+msgstr "無法關閉TOC檔案：%s\n"
 
 #: pg_backup_archiver.c:1008
 #: pg_backup_files.c:130
 #, c-format
 msgid "could not open output file: %s\n"
-msgstr "無法開啟備份檔: %s\n"
+msgstr "無法開啟備份檔：%s\n"
 
 #: pg_backup_archiver.c:1024
 #, c-format
 msgid "could not close output file: %s\n"
-msgstr "無法關閉備份檔: %s\n"
+msgstr "無法關閉備份檔：%s\n"
 
 #: pg_backup_archiver.c:1113
 #, c-format
@@ -923,12 +923,12 @@ msgstr "嘗試確認備份檔格式\n"
 #: pg_backup_files.c:148
 #, c-format
 msgid "could not open input file: %s\n"
-msgstr "無法開啟輸入檔: %s\n"
+msgstr "無法開啟輸入檔：%s\n"
 
 #: pg_backup_archiver.c:1514
 #, c-format
 msgid "could not read input file: %s\n"
-msgstr "無法讀取輸入檔: %s\n"
+msgstr "無法讀取輸入檔：%s\n"
 
 #: pg_backup_archiver.c:1516
 #, c-format
@@ -937,7 +937,7 @@ msgstr "輸入檔太小(讀到 %lu，預期 5)\n"
 
 #: pg_backup_archiver.c:1569
 msgid "input file does not appear to be a valid archive (too short?)\n"
-msgstr "輸入檔似乎不是正確的備份檔(太小？)\n"
+msgstr "輸入檔似乎不是正確的備份檔(是否太小？)\n"
 
 #: pg_backup_archiver.c:1572
 msgid "input file does not appear to be a valid archive\n"
@@ -951,7 +951,7 @@ msgstr "讀取 %lu 個位元組進入lookahead緩衝區\n"
 #: pg_backup_archiver.c:1597
 #, c-format
 msgid "could not close the input file after reading header: %s\n"
-msgstr "讀取header後無法關閉輸入檔: %s\n"
+msgstr "讀取header後無法關閉輸入檔：%s\n"
 
 #: pg_backup_archiver.c:1614
 #, c-format
@@ -976,12 +976,12 @@ msgstr "entry ID %d 超過範圍 -- 也許是TOC損壞\n"
 #: pg_backup_archiver.c:1905
 #, c-format
 msgid "read TOC entry %d (ID %d) for %s %s\n"
-msgstr ""
+msgstr "讀取TOC entry %d (ID %d)給%s %s\n"
 
 #: pg_backup_archiver.c:2064
 #, c-format
 msgid "could not set session user to \"%s\": %s"
-msgstr "無法將session使用者設為\"%s\": %s"
+msgstr "無法將session使用者設為\"%s\"：%s"
 
 #: pg_backup_archiver.c:2427
 msgid "WARNING: requested compression not available in this installation -- archive will be uncompressed\n"
@@ -1026,7 +1026,7 @@ msgstr "自定壓縮器"
 #: pg_backup_custom.c:191
 #, c-format
 msgid "could not open archive file \"%s\": %s\n"
-msgstr "無法開啟備份檔\"%s\": %s\n"
+msgstr "無法開啟備份檔\"%s\"：%s\n"
 
 #: pg_backup_custom.c:389
 msgid "invalid OID for large object\n"
@@ -1044,7 +1044,7 @@ msgstr "尋找備份檔時發現無法識別的資料區塊型別(%d)\n"
 #: pg_backup_custom.c:473
 #, c-format
 msgid "error during file seek: %s\n"
-msgstr "檔案seek發生錯誤: %s\n"
+msgstr "檔案seek發生錯誤：%s\n"
 
 #: pg_backup_custom.c:480
 #, c-format
@@ -1064,7 +1064,7 @@ msgstr "還原備份檔時無法識別資料區塊類型 %d\n"
 #: pg_backup_custom.c:893
 #, c-format
 msgid "could not initialize compression library: %s\n"
-msgstr "無法初始化壓縮程式庫: %s\n"
+msgstr "無法初始化壓縮程式庫：%s\n"
 
 #: pg_backup_custom.c:553
 #: pg_backup_custom.c:676
@@ -1076,17 +1076,17 @@ msgstr "無法讀取資料區塊 -- 預期是 %lu，實際是 %lu\n"
 #: pg_backup_custom.c:601
 #, c-format
 msgid "could not uncompress data: %s\n"
-msgstr "無法解壓縮資料: %s\n"
+msgstr "無法解壓縮資料：%s\n"
 
 #: pg_backup_custom.c:607
 #, c-format
 msgid "could not close compression library: %s\n"
-msgstr "無法關閉壓縮程式庫: %s\n"
+msgstr "無法關閉壓縮程式庫：%s\n"
 
 #: pg_backup_custom.c:704
 #, c-format
 msgid "could not write byte: %s\n"
-msgstr "無法寫入位元組: %s\n"
+msgstr "無法寫入位元組：%s\n"
 
 #: pg_backup_custom.c:748
 #: pg_backup_files.c:414
@@ -1097,7 +1097,7 @@ msgstr "發生寫入錯誤於_WriteBuf (%lu != %lu)\n"
 #: pg_backup_custom.c:819
 #, c-format
 msgid "could not close archive file: %s\n"
-msgstr "無法關閉備份檔: %s\n"
+msgstr "無法關閉備份檔：%s\n"
 
 #: pg_backup_custom.c:842
 msgid "WARNING: ftell mismatch with expected position -- ftell used\n"
@@ -1106,7 +1106,7 @@ msgstr "警告：ftell與預期位置不符 -- 已使用ftell\n"
 #: pg_backup_custom.c:925
 #, c-format
 msgid "could not compress data: %s\n"
-msgstr "無法壓縮資料: %s\n"
+msgstr "無法壓縮資料：%s\n"
 
 #: pg_backup_custom.c:945
 msgid "could not write compressed chunk\n"
@@ -1119,7 +1119,7 @@ msgstr "無法寫入解壓縮資料\n"
 #: pg_backup_custom.c:1005
 #, c-format
 msgid "could not close compression stream: %s\n"
-msgstr "無法關閉壓縮串流: %s\n"
+msgstr "無法關閉壓縮串流：%s\n"
 
 #: pg_backup_db.c:31
 msgid "archiver (db)"
@@ -1132,7 +1132,7 @@ msgstr "無法從libpq取得server_version\n"
 #: pg_backup_db.c:74
 #, c-format
 msgid "server version: %s; %s version: %s\n"
-msgstr "伺服器版本: %s; %s 版本: %s\n"
+msgstr "伺服器版本：%s，%s 版本：%s\n"
 
 #: pg_backup_db.c:77
 msgid "proceeding despite version mismatch\n"
@@ -1154,7 +1154,7 @@ msgstr "連線至資料庫\"%s\"以使用者\"%s\"\n"
 #: pg_dumpall.c:887
 #: pg_dumpall.c:913
 msgid "Password: "
-msgstr "密碼: "
+msgstr "密碼："
 
 #: pg_backup_db.c:162
 msgid "failed to reconnect to database\n"
@@ -1163,7 +1163,7 @@ msgstr "重新連線至資料庫失敗\n"
 #: pg_backup_db.c:186
 #, c-format
 msgid "could not reconnect to database: %s"
-msgstr "無法重新連線至資料庫: %s"
+msgstr "無法重新連線至資料庫：%s"
 
 #: pg_backup_db.c:222
 msgid "already connected to a database\n"
@@ -1176,7 +1176,7 @@ msgstr "連線至資料庫失敗\n"
 #: pg_backup_db.c:264
 #, c-format
 msgid "connection to database \"%s\" failed: %s"
-msgstr "連線至資料庫\"%s\"失敗: %s"
+msgstr "連線至資料庫\"%s\"失敗：%s"
 
 #: pg_backup_db.c:279
 #, c-format
@@ -1207,7 +1207,7 @@ msgstr "無法執行查詢"
 #: pg_backup_db.c:583
 #, c-format
 msgid "could not find OID columns of table \"%s\": %s"
-msgstr "資料表\"%s\"中找不到OID欄位: %s"
+msgstr "資料表\"%s\"中找不到OID欄位：%s"
 
 #: pg_backup_db.c:589
 #, c-format
@@ -1222,17 +1222,17 @@ msgstr "為 %s.%s 修正large object交叉參考\n"
 #: pg_backup_db.c:642
 #, c-format
 msgid "SQL: %s\n"
-msgstr ""
+msgstr "SQL：%s\n"
 
 #: pg_backup_db.c:647
 #, c-format
 msgid "could not update column \"%s\" of table \"%s\": %s"
-msgstr "無法更新欄位\"%s\"於資料表\"%s\": %s"
+msgstr "無法更新欄位\"%s\"於資料表\"%s\"：%s"
 
 #: pg_backup_db.c:652
 #, c-format
 msgid "error while updating column \"%s\" of table \"%s\": %s"
-msgstr "更新欄位\"%s\"錯誤於資料表\"%s\": %s"
+msgstr "更新欄位\"%s\"錯誤於資料表\"%s\"：%s"
 
 #: pg_backup_db.c:675
 msgid "creating table for large object cross-references\n"
@@ -1303,13 +1303,13 @@ msgstr "讀取後無法開啟資料檔\n"
 #: pg_backup_files.c:362
 #, c-format
 msgid "could not open large object TOC for input: %s\n"
-msgstr "無法開啟large object TOC做輸入: %s\n"
+msgstr "無法開啟large object TOC做輸入：%s\n"
 
 #: pg_backup_files.c:375
 #: pg_backup_files.c:545
 #, c-format
 msgid "could not close large object TOC file: %s\n"
-msgstr "無法開啟large object TOC檔: %s\n"
+msgstr "無法開啟large object TOC檔：%s\n"
 
 #: pg_backup_files.c:387
 msgid "could not write byte\n"
@@ -1318,7 +1318,7 @@ msgstr "無法寫入位元組\n"
 #: pg_backup_files.c:473
 #, c-format
 msgid "could not open large object TOC for output: %s\n"
-msgstr "無法開啟large object TOC做輸出: %s\n"
+msgstr "無法開啟large object TOC做輸出：%s\n"
 
 #: pg_backup_files.c:493
 #: pg_backup_tar.c:884
@@ -1345,7 +1345,7 @@ msgstr "tar壓縮器"
 #: pg_backup_tar.c:183
 #, c-format
 msgid "could not open TOC file for output: %s\n"
-msgstr "無法開啟TOC檔以輸出: %s\n"
+msgstr "無法開啟TOC檔以輸出：%s\n"
 
 #: pg_backup_tar.c:208
 msgid "compression not supported by tar output format\n"
@@ -1354,7 +1354,7 @@ msgstr "tar備份格式不支援壓縮\n"
 #: pg_backup_tar.c:220
 #, c-format
 msgid "could not open TOC file for input: %s\n"
-msgstr "無法開啟TOC檔以讀取: %s\n"
+msgstr "無法開啟TOC檔以讀取：%s\n"
 
 #: pg_backup_tar.c:341
 #, c-format
@@ -1368,7 +1368,7 @@ msgstr "此種備份格式的壓縮支援被關閉\n"
 #: pg_backup_tar.c:367
 #, c-format
 msgid "could not generate temporary file name: %s\n"
-msgstr "無法產生暫存檔名稱: %s\n"
+msgstr "無法產生暫存檔名稱：%s\n"
 
 #: pg_backup_tar.c:376
 msgid "could not open temporary file\n"
@@ -1400,7 +1400,7 @@ msgstr "非法的COPY敘述 -- 在字串\"%s\"中找不到\"copy\"\n"
 #: pg_backup_tar.c:656
 #, c-format
 msgid "invalid COPY statement -- could not find \"from stdin\" in string \"%s\" starting at position %lu\n"
-msgstr ""
+msgstr "無效的COPY敘述 -- 找不到\"from stdin\"於字串\"%s\"的位置 %lu\n"
 
 #: pg_backup_tar.c:692
 #, c-format
@@ -1418,12 +1418,12 @@ msgstr "tar格式中的備份檔成員太大\n"
 #: pg_backup_tar.c:1033
 #, c-format
 msgid "write error appending to tar archive (wrote %lu, attempted %lu)\n"
-msgstr "write error appending to tar archive (wrote %lu, attempted %lu)\n"
+msgstr "寫入資料至tar備份檔時發生錯誤(已寫入 %lu，打算寫入 %lu)\n"
 
 #: pg_backup_tar.c:1039
 #, c-format
 msgid "could not close tar member: %s\n"
-msgstr "無法關閉tar成員: %s\n"
+msgstr "無法關閉tar成員：%s\n"
 
 #: pg_backup_tar.c:1048
 #, c-format
@@ -1458,7 +1458,7 @@ msgstr "跳過tar成員 %s\n"
 #: pg_backup_tar.c:1120
 #, c-format
 msgid "dumping data out of order is not supported in this archive format: %s is required, but comes before %s in the archive file.\n"
-msgstr "此種備份格式不支援不依順序備分: 需要 %s，但是要在備份檔的 %s 之前。\n"
+msgstr "此種備份格式不支援不依順序備分：需要 %s，但是要在備份檔的 %s 之前。\n"
 
 #: pg_backup_tar.c:1168
 #, c-format
@@ -1473,7 +1473,7 @@ msgstr "發現不完整的tar header(%lu bytes)\n"
 #: pg_backup_tar.c:1218
 #, c-format
 msgid "TOC Entry %s at %s (length %lu, checksum %d)\n"
-msgstr ""
+msgstr "TOC Entry %s 於 %s (長度 %lu，checksum %d)\n"
 
 #: pg_backup_tar.c:1228
 #, c-format
@@ -1487,12 +1487,12 @@ msgstr "無法寫入tar header\n"
 #: pg_restore.c:279
 #, c-format
 msgid "%s: cannot specify both -d and -f output\n"
-msgstr "%s: 不能同時使用-d和-f進行備份\n"
+msgstr "%s：不能同時使用-d和-f進行備份\n"
 
 #: pg_restore.c:339
 #, c-format
 msgid "WARNING, errors ignored on restore: %d\n"
-msgstr "警告，還原時忽略錯誤: %d\n"
+msgstr "警告，還原時忽略錯誤：%d\n"
 
 #: pg_restore.c:353
 #, c-format
@@ -1650,60 +1650,60 @@ msgstr ""
 #: pg_dumpall.c:539
 #, c-format
 msgid "%s: could not parse ACL list (%s) for tablespace \"%s\"\n"
-msgstr "%s: 無法解讀ACL清單(%s)，tablespace是\"%s\"\n"
+msgstr "%s：無法解讀ACL清單(%s)，tablespace是\"%s\"\n"
 
 #: pg_dumpall.c:671
 #, c-format
 msgid "%s: could not parse ACL list (%s) for database \"%s\"\n"
-msgstr "%s: 無法解讀ACL清單(%s)，資料庫是\"%s\"\n"
+msgstr "%s：無法解讀ACL清單(%s)，資料庫是\"%s\"\n"
 
 #: pg_dumpall.c:817
 #, c-format
 msgid "%s: dumping database \"%s\"...\n"
-msgstr "%s: 備份資料庫\"%s\"...\n"
+msgstr "%s：備份資料庫\"%s\"...\n"
 
 #: pg_dumpall.c:823
 #, c-format
 msgid "%s: pg_dump failed on database \"%s\", exiting\n"
-msgstr "%s: pg_dump處理資料庫\"%s\"失敗，結束\n"
+msgstr "%s：pg_dump處理資料庫\"%s\"失敗，結束\n"
 
 #: pg_dumpall.c:859
 #, c-format
 msgid "%s: running \"%s\"\n"
-msgstr "%s: 正在執行\"%s\"\n"
+msgstr "%s：正在執行\"%s\"\n"
 
 #: pg_dumpall.c:900
 #, c-format
 msgid "%s: could not connect to database \"%s\"\n"
-msgstr "%s: 無法連線至資料庫\"%s\"\n"
+msgstr "%s：無法連線至資料庫\"%s\"\n"
 
 #: pg_dumpall.c:923
 #, c-format
 msgid "%s: could not connect to database \"%s\": %s\n"
-msgstr "%s: 無法連線至資料庫\"%s\": %s\n"
+msgstr "%s：無法連線至資料庫\"%s\"：%s\n"
 
 #: pg_dumpall.c:931
 #, c-format
 msgid "%s: could not get server version\n"
-msgstr "%s: 無法取得伺服器版本\n"
+msgstr "%s：無法取得伺服器版本\n"
 
 #: pg_dumpall.c:937
 #, c-format
 msgid "%s: could not parse server version \"%s\"\n"
-msgstr "%s: 無法解讀伺服器版本\"%s\"\n"
+msgstr "%s：無法解讀伺服器版本\"%s\"\n"
 
 #: pg_dumpall.c:956
 #, c-format
 msgid "%s: executing %s\n"
-msgstr "%s: 執行 %s\n"
+msgstr "%s：執行 %s\n"
 
 #: pg_dumpall.c:962
 #, c-format
 msgid "%s: query failed: %s"
-msgstr "%s: 查詢失敗: %s"
+msgstr "%s：查詢失敗：%s"
 
 #: pg_dumpall.c:963
 #, c-format
 msgid "%s: query was: %s\n"
-msgstr "%s: 查詢是: %s\n"
+msgstr "%s：查詢是：%s\n"
 
