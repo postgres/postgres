@@ -3466,7 +3466,7 @@ else
 fi
 done
 
-for ac_func in sigprocmask waitpid setsid random fcvt
+for ac_func in sigprocmask waitpid setsid random srandom fcvt
 do
 echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
 echo "configure:3473: checking for $ac_func" >&5

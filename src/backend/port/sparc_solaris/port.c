@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/sparc_solaris/Attic/port.c,v 1.6 1997/09/08 02:27:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/sparc_solaris/Attic/port.c,v 1.7 1997/09/18 16:09:15 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,17 +22,21 @@
 #include "rusagestub.h"
 #endif							/* HAVE_GETRUSAGE */
 
+#ifndef HAVE_RANDOM
 long
 random()
 {
 	return (lrand48());
 }
+#endif
 
+#ifndef HAVE_RANDOM
 void
 srandom(int seed)
 {
 	srand48((long int) seed);
 }
+#endif
 
 #ifndef HAVE_GETRUSAGE
 int

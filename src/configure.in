@@ -416,7 +416,7 @@ AC_FUNC_MEMCMP
 AC_TYPE_SIGNAL
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(isinf tzset getrusage vfork memmove sigsetjmp kill sysconf)
-AC_CHECK_FUNCS(sigprocmask waitpid setsid random fcvt)
+AC_CHECK_FUNCS(sigprocmask waitpid setsid random srandom fcvt)
 AC_CHECK_FUNC(inet_aton, AC_DEFINE(HAVE_INET_ATON), INET_ATON='inet_aton.o')
 AC_CHECK_FUNC(strerror, AC_DEFINE(HAVE_STRERROR), [STRERROR='strerror.o' STRERROR2='../../backend/port/strerror.o'])
 AC_CHECK_FUNC(strdup, AC_DEFINE(HAVE_STRDUP), STRDUP='../../utils/strdup.o')

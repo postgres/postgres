@@ -104,6 +104,12 @@
 /* Set to 1 if you have strdup() */
 #undef HAVE_STRDUP
 
+/* Set to 1 if you have random() */
+#undef HAVE_RANDOM
+
+/* Set to 1 if you have srandom() */
+#undef HAVE_SRANDOM
+
 /* Set to 1 if you have libreadline.a */
 #undef HAVE_LIBREADLINE
 
