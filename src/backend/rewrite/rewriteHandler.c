@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.1.1.1 1996/07/09 06:21:51 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.2 1996/11/24 05:58:57 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,50 +57,47 @@ gatherRewriteMeta(Query *parsetree,
     info->rt_index = rt_index;
     info->event = event;
     info->instead_flag = *instead_flag;
-/*    info->rule_action = rule_action;  this needs to be a copy here, I think! - jolly*/
     info->rule_action = (Query*)copyObject(rule_action);
     info->rule_qual = (Node*)copyObject(rule_qual);
-    info->nothing = FALSE;
-    info->action = info->rule_action->commandType;
     if (info->rule_action == NULL) info->nothing = TRUE;
-    if (info->nothing)
-	return info;
+    else {
+        info->nothing = FALSE;
+        info->action = info->rule_action->commandType;
+        info->current_varno = rt_index;
+        info->rt = parsetree->rtable;
+        rt_length = length(info->rt);
+        info->rt = append(info->rt, info->rule_action->rtable); 
 
-    info->current_varno = rt_index;
-    info->rt = parsetree->rtable;
-    rt_length = length(info->rt);
-    info->rt = append(info->rt, info->rule_action->rtable); 
+        info->new_varno = PRS2_NEW_VARNO + rt_length;
+        OffsetVarNodes(info->rule_action->qual, rt_length);
+        OffsetVarNodes((Node*)info->rule_action->targetList, rt_length);
+        OffsetVarNodes(info->rule_qual, rt_length);
+        ChangeVarNodes((Node*)info->rule_action->qual,
+                       PRS2_CURRENT_VARNO+rt_length, rt_index);
+        ChangeVarNodes((Node*)info->rule_action->targetList,
+                       PRS2_CURRENT_VARNO+rt_length, rt_index);
+        ChangeVarNodes(info->rule_qual, 
+                       PRS2_CURRENT_VARNO+rt_length, rt_index);
 
-
-    info->new_varno = PRS2_NEW_VARNO + rt_length;
-    OffsetVarNodes(info->rule_action->qual, rt_length);
-    OffsetVarNodes((Node*)info->rule_action->targetList, rt_length);
-    OffsetVarNodes(info->rule_qual, rt_length);
-    ChangeVarNodes((Node*)info->rule_action->qual,
-		   PRS2_CURRENT_VARNO+rt_length, rt_index);
-    ChangeVarNodes((Node*)info->rule_action->targetList,
-		   PRS2_CURRENT_VARNO+rt_length, rt_index);
-    ChangeVarNodes(info->rule_qual, PRS2_CURRENT_VARNO+rt_length, rt_index);
-
-    /*
-     * bug here about replace CURRENT  -- sort of
-     * replace current is deprecated now so this code shouldn't really
-     * need to be so clutzy but.....
-     */
-    if (info->action != CMD_SELECT) {	/* i.e update XXXXX */
-	int new_result_reln = 0;
-	result_reln = info->rule_action->resultRelation;
-	switch (result_reln) {
-	case PRS2_CURRENT_VARNO: new_result_reln = rt_index;
-	    break; 
-	case PRS2_NEW_VARNO:	/* XXX */
-	default:
-	    new_result_reln = result_reln + rt_length;
-	    break;
-	}
-	info->rule_action->resultRelation = new_result_reln;
+        /*
+         * bug here about replace CURRENT  -- sort of
+         * replace current is deprecated now so this code shouldn't really
+         * need to be so clutzy but.....
+         */
+        if (info->action != CMD_SELECT) {	/* i.e update XXXXX */
+            int new_result_reln = 0;
+            result_reln = info->rule_action->resultRelation;
+            switch (result_reln) {
+              case PRS2_CURRENT_VARNO: new_result_reln = rt_index;
+                break; 
+              case PRS2_NEW_VARNO:	/* XXX */
+              default:
+                new_result_reln = result_reln + rt_length;
+                break;
+            }
+            info->rule_action->resultRelation = new_result_reln;
+        }
     }
-    
     return info;
 }
 
