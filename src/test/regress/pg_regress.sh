@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.43 2004/05/19 05:20:27 momjian Exp $
+# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.44 2004/05/20 00:21:36 momjian Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -348,7 +348,7 @@ then
     # executables, not dlopen'ed ones)
     # ----------
     case $host_platform in
-        *-*-cygwin*|*-*-mingw)
+        *-*-cygwin*|*-*-mingw32*)
             PATH=$libdir:$PATH
             export PATH
             ;;
@@ -438,6 +438,17 @@ then
     fi
 
 else # not temp-install
+
+    # ----------
+    # Windows needs shared libraries in PATH. (Only those linked into
+    # executables, not dlopen'ed ones)
+    # ----------
+    case $host_platform in
+        *-*-cygwin*|*-*-mingw32*)
+            PATH=$libdir:$PATH
+            export PATH
+            ;;
+    esac
 
     # If Unix sockets are not available, use the local host by default.
     if [ "$unix_sockets" = no ]; then
