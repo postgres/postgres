@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.371 2002/10/31 02:31:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.372 2002/11/01 22:52:33 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -7777,3 +7777,5 @@ doNegateFloat(Value *v)
 		v->val.str = newval;
 	}
 }
+
+#include "scan.c"

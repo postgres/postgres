@@ -179,4 +179,4 @@ int seg_yyerror ( char *msg ) {
   return 0;
 }
 
-
+#include "segscan.c"

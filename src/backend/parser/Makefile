@@ -2,7 +2,7 @@
 #
 # Makefile for parser
 #
-# $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.37 2002/04/20 21:56:14 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.38 2002/11/01 22:52:33 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -10,9 +10,11 @@ subdir = src/backend/parser
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
+override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
+
 OBJS= analyze.o gram.o keywords.o parser.o parse_agg.o parse_clause.o \
       parse_expr.o parse_func.o parse_node.o parse_oper.o parse_relation.o \
-      parse_type.o parse_coerce.o parse_target.o scan.o scansup.o
+      parse_type.o parse_coerce.o parse_target.o scansup.o
 
 FLEXFLAGS = -CF
 
@@ -21,6 +23,10 @@ all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) $@ $^
+
+
+# scan is compiled as part of gram
+gram.o: $(srcdir)/scan.c
 
 
 # There is no correct way to write a rule that generates two files.
@@ -52,7 +58,7 @@ endif
 
 # Force these dependencies to be known even without dependency info built:
 
-keywords.o parse_clause.o parse_expr.o parser.o scan.o: $(srcdir)/parse.h
+keywords.o parse_clause.o parse_expr.o parser.o gram.o: $(srcdir)/parse.h
 
 
 # gram.c, parse.h, and scan.c are in the distribution tarball, so they

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.199 2002/10/21 13:09:31 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.200 2002/11/01 22:52:33 tgl Exp $ */
 
 /* Copyright comment */
 %{
@@ -5567,3 +5567,5 @@ void yyerror( char * error)
 	buf[sizeof(buf)-1]=0;
 	mmerror(PARSE_ERROR, ET_ERROR, buf);
 }
+
+#include "pgc.c"

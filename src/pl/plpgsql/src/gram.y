@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.38 2002/09/22 21:56:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.39 2002/11/01 22:52:34 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1997,3 +1997,5 @@ check_assignable(PLpgSQL_datum *datum)
 			break;
 	}
 }
+
+#include "pl_scan.c"

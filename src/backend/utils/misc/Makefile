@@ -1,10 +1,12 @@
-# $Header: /cvsroot/pgsql/src/backend/utils/misc/Makefile,v 1.19 2000/10/20 21:03:55 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/utils/misc/Makefile,v 1.20 2002/11/01 22:52:33 tgl Exp $
 
 subdir = src/backend/utils/misc
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = database.o superuser.o guc.o guc-file.o ps_status.o
+override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
+
+OBJS = database.o superuser.o guc.o ps_status.o
 
 # This location might depend on the installation directories. Therefore
 # we can't subsitute it into config.h.
@@ -17,6 +19,9 @@ all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
+
+# guc-file is compiled as part of guc
+guc.o: $(srcdir)/guc-file.c
 
 $(srcdir)/guc-file.c: guc-file.l
 ifdef FLEX

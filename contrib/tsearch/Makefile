@@ -1,15 +1,18 @@
-# $Header: /cvsroot/pgsql/contrib/tsearch/Attic/Makefile,v 1.1 2001/10/12 23:19:09 tgl Exp $
+# $Header: /cvsroot/pgsql/contrib/tsearch/Attic/Makefile,v 1.2 2002/11/01 22:52:33 tgl Exp $
 
 subdir = contrib/tsearch
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
 MODULE_big = tsearch
-OBJS = parser.o crc32.o morph.o txtidx.o query.o gistidx.o rewrite.o
+OBJS = crc32.o morph.o txtidx.o query.o gistidx.o rewrite.o
 
 DATA_built = tsearch.sql
 DOCS = README.tsearch
 REGRESS = tsearch
+
+# parser is compiled as part of query
+query.o: parser.c
 
 parser.c: parser.l
 ifdef FLEX

@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.87 2002/10/21 18:05:24 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.88 2002/11/01 22:52:33 tgl Exp $
 
 subdir = src/interfaces/ecpg/preproc
 top_builddir = ../../../..
@@ -17,7 +17,7 @@ ifeq ($(GCC), yes)
 override CFLAGS += -Wno-error
 endif
 
-OBJS=preproc.o pgc.o type.o ecpg.o ecpg_keywords.o output.o\
+OBJS=preproc.o type.o ecpg.o ecpg_keywords.o output.o\
     keywords.o c_keywords.o ../lib/typename.o descriptor.o variable.o
 
 
@@ -25,6 +25,9 @@ all: submake-libpgport ecpg
 
 ecpg: $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBS) -o $@
+
+# pgc is compiled as part of preproc
+preproc.o: $(srcdir)/pgc.c
 
 $(srcdir)/preproc.c: $(srcdir)/preproc.h ;
 
@@ -44,7 +47,7 @@ else
 	@$(missing) flex $< $@
 endif
 
-c_keywords.o ecpg_keywords.o keywords.o pgc.o: preproc.h
+c_keywords.o ecpg_keywords.o keywords.o preproc.o: preproc.h
 
 
 distprep: $(srcdir)/preproc.c $(srcdir)/preproc.h $(srcdir)/pgc.c

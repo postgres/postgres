@@ -805,3 +805,5 @@ querytree(PG_FUNCTION_ARGS)
 
 	PG_RETURN_POINTER(res);
 }
+
+#include "parser.c"

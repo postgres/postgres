@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.98 2002/10/31 21:34:17 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.99 2002/11/01 22:52:33 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -3014,3 +3014,5 @@ assign_msglvl(int *var, const char *newval, bool doit, bool interactive)
 		return NULL;			/* fail */
 	return newval;				/* OK */
 }
+
+#include "guc-file.c"

@@ -276,3 +276,4 @@ static NDBOX * write_point_as_box(char *str, int dim)
   return(bp);
 }
 
+#include "cubescan.c"

@@ -1,7 +1,7 @@
 %{
 /*-------------------------------------------------------------------------
  *
- * bootscanner.lex
+ * bootscanner.l
  *	  a lexical scanner for the bootstrap parser
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.25 2002/07/30 16:33:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.26 2002/11/01 22:52:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.52 2002/09/02 01:05:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.53 2002/11/01 22:52:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -335,3 +335,5 @@ boot_ident :
 		  ID	{ $$=yylval.ival; }
 		;
 %%
+
+#include "bootscanner.c"

@@ -1,15 +1,18 @@
-# $Header: /cvsroot/pgsql/contrib/seg/Makefile,v 1.6 2001/11/16 16:32:33 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/seg/Makefile,v 1.7 2002/11/01 22:52:33 tgl Exp $
 
 subdir = contrib/seg
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
 MODULE_big = seg
-OBJS = seg.o segparse.o segscan.o buffer.o
+OBJS = seg.o segparse.o buffer.o
 DATA_built = seg.sql
 DOCS = README.seg
 REGRESS = seg
 
+
+# segscan is compiled as part of segparse
+segparse.o: segscan.c
 
 segparse.c: segparse.h ;
 
