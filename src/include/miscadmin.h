@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.15 1997/09/18 05:38:09 vadim Exp $
+ * $Id: miscadmin.h,v 1.16 1997/09/18 14:42:22 vadim Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -91,7 +91,6 @@ extern char DateFormat[];
 
 extern int	fsyncOff;
 extern int	SortMem;
-extern int	SortTuplesInTree;
 
 extern Oid	LastOidProcessed;	/* for query rewrite */
 

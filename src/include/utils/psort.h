@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psort.h,v 1.12 1997/09/18 05:42:01 vadim Exp $
+ * $Id: psort.h,v 1.13 1997/09/18 14:42:35 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,8 +57,6 @@ typedef struct Psortstate
 	int			tupcount;
 
 	struct leftist *Tuples;
-	int			lt_tupcount;
-	HeapTuple	lasttuple;
 
 	FILE	   *psort_grab_file;
 	long		psort_current;	/* could be file offset, or array index */
