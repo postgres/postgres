@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.65 2002/09/04 20:31:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.66 2002/09/11 14:48:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ checkExprHasAggs(Node *node)
 	 */
 	if (node && IsA(node, Query))
 		return query_tree_walker((Query *) node, checkExprHasAggs_walker,
-								 NULL, false);
+								 NULL, QTW_IGNORE_SUBQUERIES);
 	else
 		return checkExprHasAggs_walker(node, NULL);
 }
@@ -79,7 +79,7 @@ checkExprHasSubLink(Node *node)
 	 */
 	if (node && IsA(node, Query))
 		return query_tree_walker((Query *) node, checkExprHasSubLink_walker,
-								 NULL, false);
+								 NULL, QTW_IGNORE_SUBQUERIES);
 	else
 		return checkExprHasSubLink_walker(node, NULL);
 }
@@ -155,7 +155,7 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node, OffsetVarNodes_walker,
-								   (void *) context, true);
+								   (void *) context, 0);
 		context->sublevels_up--;
 		return result;
 	}
@@ -196,7 +196,7 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 				lfirsti(l) += offset;
 		}
 		query_tree_walker(qry, OffsetVarNodes_walker,
-						  (void *) &context, true);
+						  (void *) &context, 0);
 	}
 	else
 		OffsetVarNodes_walker(node, &context);
@@ -265,7 +265,7 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node, ChangeVarNodes_walker,
-								   (void *) context, true);
+								   (void *) context, 0);
 		context->sublevels_up--;
 		return result;
 	}
@@ -310,7 +310,7 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 			}
 		}
 		query_tree_walker(qry, ChangeVarNodes_walker,
-						  (void *) &context, true);
+						  (void *) &context, 0);
 	}
 	else
 		ChangeVarNodes_walker(node, &context);
@@ -361,7 +361,7 @@ IncrementVarSublevelsUp_walker(Node *node,
 		context->min_sublevels_up++;
 		result = query_tree_walker((Query *) node,
 								   IncrementVarSublevelsUp_walker,
-								   (void *) context, true);
+								   (void *) context, 0);
 		context->min_sublevels_up--;
 		return result;
 	}
@@ -385,7 +385,7 @@ IncrementVarSublevelsUp(Node *node, int delta_sublevels_up,
 	 */
 	if (node && IsA(node, Query))
 		query_tree_walker((Query *) node, IncrementVarSublevelsUp_walker,
-						  (void *) &context, true);
+						  (void *) &context, 0);
 	else
 		IncrementVarSublevelsUp_walker(node, &context);
 }
@@ -443,7 +443,7 @@ rangeTableEntry_used_walker(Node *node,
 
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node, rangeTableEntry_used_walker,
-								   (void *) context, true);
+								   (void *) context, 0);
 		context->sublevels_up--;
 		return result;
 	}
@@ -466,7 +466,7 @@ rangeTableEntry_used(Node *node, int rt_index, int sublevels_up)
 	 */
 	if (node && IsA(node, Query))
 		return query_tree_walker((Query *) node, rangeTableEntry_used_walker,
-								 (void *) &context, true);
+								 (void *) &context, 0);
 	else
 		return rangeTableEntry_used_walker(node, &context);
 }
@@ -508,7 +508,7 @@ attribute_used_walker(Node *node,
 
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node, attribute_used_walker,
-								   (void *) context, true);
+								   (void *) context, 0);
 		context->sublevels_up--;
 		return result;
 	}
@@ -532,7 +532,7 @@ attribute_used(Node *node, int rt_index, int attno, int sublevels_up)
 	 */
 	if (node && IsA(node, Query))
 		return query_tree_walker((Query *) node, attribute_used_walker,
-								 (void *) &context, true);
+								 (void *) &context, 0);
 	else
 		return attribute_used_walker(node, &context);
 }
@@ -851,7 +851,7 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 
 		FLATCOPY(newnode, query, Query);
 		context->sublevels_up++;
-		query_tree_mutator(newnode, ResolveNew_mutator, context, true);
+		query_tree_mutator(newnode, ResolveNew_mutator, context, 0);
 		context->sublevels_up--;
 		return (Node *) newnode;
 	}
@@ -883,7 +883,7 @@ ResolveNew(Node *node, int target_varno, int sublevels_up,
 
 		FLATCOPY(newnode, query, Query);
 		query_tree_mutator(newnode, ResolveNew_mutator,
-						   (void *) &context, true);
+						   (void *) &context, 0);
 		return (Node *) newnode;
 	}
 	else
@@ -991,7 +991,7 @@ HandleRIRAttributeRule_mutator(Node *node,
 		FLATCOPY(newnode, query, Query);
 		context->sublevels_up++;
 		query_tree_mutator(newnode, HandleRIRAttributeRule_mutator,
-						   context, true);
+						   context, 0);
 		context->sublevels_up--;
 		return (Node *) newnode;
 	}
@@ -1019,7 +1019,7 @@ HandleRIRAttributeRule(Query *parsetree,
 	context.sublevels_up = 0;
 
 	query_tree_mutator(parsetree, HandleRIRAttributeRule_mutator,
-					   (void *) &context, true);
+					   (void *) &context, 0);
 }
 
 #endif   /* NOT_USED */

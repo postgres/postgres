@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.9 2002/09/04 20:31:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.10 2002/09/11 14:48:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -684,6 +684,12 @@ recordDependencyOnExpr(const ObjectAddress *depender,
 
 /*
  * Recursively search an expression tree for object references.
+ *
+ * Note: we avoid creating references to columns of tables that participate
+ * in an SQL JOIN construct, but are not actually used anywhere in the query.
+ * To do so, we do not scan the joinaliasvars list of a join RTE while
+ * scanning the query rangetable, but instead scan each individual entry
+ * of the alias list when we find a reference to it.
  */
 static bool
 find_expr_references_walker(Node *node,
@@ -716,10 +722,24 @@ find_expr_references_walker(Node *node,
 			elog(ERROR, "find_expr_references_walker: bogus varno %d",
 				 var->varno);
 		rte = rt_fetch(var->varno, rtable);
-		/* If it's a plain relation, reference this column */
 		if (rte->rtekind == RTE_RELATION)
+		{
+			/* If it's a plain relation, reference this column */
+			/* NB: this code works for whole-row Var with attno 0, too */
 			add_object_address(OCLASS_CLASS, rte->relid, var->varattno,
 							   &context->addrs);
+		}
+		else if (rte->rtekind == RTE_JOIN)
+		{
+			/* Scan join output column to add references to join inputs */
+			if (var->varattno <= 0 ||
+				var->varattno > length(rte->joinaliasvars))
+				elog(ERROR, "find_expr_references_walker: bogus varattno %d",
+					 var->varattno);
+			find_expr_references_walker((Node *) nth(var->varattno - 1,
+													 rte->joinaliasvars),
+										context);
+		}
 		return false;
 	}
 	if (IsA(node, Expr))
@@ -766,7 +786,7 @@ find_expr_references_walker(Node *node,
 		 * Add whole-relation refs for each plain relation mentioned in
 		 * the subquery's rtable.  (Note: query_tree_walker takes care of
 		 * recursing into RTE_FUNCTION and RTE_SUBQUERY RTEs, so no need
-		 * to do that here.)
+		 * to do that here.  But keep it from looking at join alias lists.)
 		 */
 		foreach(rtable, query->rtable)
 		{
@@ -781,7 +801,8 @@ find_expr_references_walker(Node *node,
 		context->rtables = lcons(query->rtable, context->rtables);
 		result = query_tree_walker(query,
 								   find_expr_references_walker,
-								   (void *) context, true);
+								   (void *) context,
+								   QTW_IGNORE_JOINALIASES);
 		context->rtables = lnext(context->rtables);
 		return result;
 	}

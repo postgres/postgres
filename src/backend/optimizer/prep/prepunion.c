@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.78 2002/09/04 20:31:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.79 2002/09/11 14:48:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -774,7 +774,7 @@ adjust_inherited_attrs(Node *node,
 		if (newnode->resultRelation == old_rt_index)
 			newnode->resultRelation = new_rt_index;
 		query_tree_mutator(newnode, adjust_inherited_attrs_mutator,
-						   (void *) &context, false);
+						   (void *) &context, QTW_IGNORE_SUBQUERIES);
 		return (Node *) newnode;
 	}
 	else

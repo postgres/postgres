@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.39 2002/09/04 20:31:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.40 2002/09/11 14:48:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,7 @@ pull_varnos(Node *node)
 	 */
 	if (node && IsA(node, Query))
 		query_tree_walker((Query *) node, pull_varnos_walker,
-						  (void *) &context, true);
+						  (void *) &context, 0);
 	else
 		pull_varnos_walker(node, &context);
 
@@ -128,7 +128,7 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
 
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node, pull_varnos_walker,
-								   (void *) context, true);
+								   (void *) context, 0);
 		context->sublevels_up--;
 		return result;
 	}
@@ -165,7 +165,7 @@ contain_var_reference(Node *node, int varno, int varattno, int levelsup)
 	if (node && IsA(node, Query))
 		return query_tree_walker((Query *) node,
 								 contain_var_reference_walker,
-								 (void *) &context, true);
+								 (void *) &context, 0);
 	else
 		return contain_var_reference_walker(node, &context);
 }
@@ -212,7 +212,7 @@ contain_var_reference_walker(Node *node,
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node,
 								   contain_var_reference_walker,
-								   (void *) context, true);
+								   (void *) context, 0);
 		context->sublevels_up--;
 		return result;
 	}

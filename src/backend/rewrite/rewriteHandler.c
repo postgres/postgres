@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.108 2002/09/04 20:31:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.109 2002/09/11 14:48:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -822,11 +822,12 @@ fireRIRrules(Query *parsetree)
 	}
 
 	/*
-	 * Recurse into sublink subqueries, too.
+	 * Recurse into sublink subqueries, too.  But we already did the ones
+	 * in the rtable.
 	 */
 	if (parsetree->hasSubLinks)
 		query_tree_walker(parsetree, fireRIRonSubLink, NULL,
-						false /* already handled the ones in rtable */ );
+						  QTW_IGNORE_SUBQUERIES);
 
 	/*
 	 * If the query was marked having aggregates, check if this is still

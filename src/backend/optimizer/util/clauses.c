@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.108 2002/09/04 20:31:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.109 2002/09/11 14:48:54 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1788,7 +1788,7 @@ simplify_op_or_func(Expr *expr, List *args)
  *		{
  *			adjust context for subquery;
  *			result = query_tree_walker((Query *) node, my_walker, context,
- *									   true); // to visit subquery RTEs too
+ *									   0); // to visit rtable items too
  *			restore context if needed;
  *			return result;
  *		}
@@ -1994,16 +1994,17 @@ expression_tree_walker(Node *node,
  * walker intends to descend into subqueries.  It is also useful for
  * descending into subqueries within a walker.
  *
- * If visitQueryRTEs is true, the walker will also be called on sub-Query
- * nodes present in subquery rangetable entries of the given Query.  This
- * is optional since some callers handle those sub-queries separately,
- * or don't really want to see subqueries anyway.
+ * Some callers want to suppress visitation of certain items in the sub-Query,
+ * typically because they need to process them specially, or don't actually
+ * want to recurse into subqueries.  This is supported by the flags argument,
+ * which is the bitwise OR of flag values to suppress visitation of
+ * indicated items.  (More flag bits may be added as needed.)
  */
 bool
 query_tree_walker(Query *query,
 				  bool (*walker) (),
 				  void *context,
-				  bool visitQueryRTEs)
+				  int flags)
 {
 	List	   *rt;
 
@@ -2028,13 +2029,14 @@ query_tree_walker(Query *query,
 				/* nothing to do */
 				break;
 			case RTE_SUBQUERY:
-				if (visitQueryRTEs)
+				if (! (flags & QTW_IGNORE_SUBQUERIES))
 					if (walker(rte->subquery, context))
 						return true;
 				break;
 			case RTE_JOIN:
-				if (walker(rte->joinaliasvars, context))
-					return true;
+				if (! (flags & QTW_IGNORE_JOINALIASES))
+					if (walker(rte->joinaliasvars, context))
+						return true;
 				break;
 			case RTE_FUNCTION:
 				if (walker(rte->funcexpr, context))
@@ -2388,16 +2390,17 @@ expression_tree_mutator(Node *node,
  * if you don't want to change the original.  All substructure is safely
  * copied, however.
  *
- * If visitQueryRTEs is true, the mutator will also be called on sub-Query
- * nodes present in subquery rangetable entries of the given Query.  This
- * is optional since some callers handle those sub-queries separately,
- * or don't really want to see subqueries anyway.
+ * Some callers want to suppress mutating of certain items in the sub-Query,
+ * typically because they need to process them specially, or don't actually
+ * want to recurse into subqueries.  This is supported by the flags argument,
+ * which is the bitwise OR of flag values to suppress mutating of
+ * indicated items.  (More flag bits may be added as needed.)
  */
 void
 query_tree_mutator(Query *query,
 				   Node *(*mutator) (),
 				   void *context,
-				   bool visitQueryRTEs)
+				   int flags)
 {
 	List	   *newrt = NIL;
 	List	   *rt;
@@ -2420,7 +2423,7 @@ query_tree_mutator(Query *query,
 				/* nothing to do, don't bother to make a copy */
 				break;
 			case RTE_SUBQUERY:
-				if (visitQueryRTEs)
+				if (! (flags & QTW_IGNORE_SUBQUERIES))
 				{
 					FLATCOPY(newrte, rte, RangeTblEntry);
 					CHECKFLATCOPY(newrte->subquery, rte->subquery, Query);
@@ -2429,9 +2432,12 @@ query_tree_mutator(Query *query,
 				}
 				break;
 			case RTE_JOIN:
-				FLATCOPY(newrte, rte, RangeTblEntry);
-				MUTATE(newrte->joinaliasvars, rte->joinaliasvars, List *);
-				rte = newrte;
+				if (! (flags & QTW_IGNORE_JOINALIASES))
+				{
+					FLATCOPY(newrte, rte, RangeTblEntry);
+					MUTATE(newrte->joinaliasvars, rte->joinaliasvars, List *);
+					rte = newrte;
+				}
 				break;
 			case RTE_FUNCTION:
 				FLATCOPY(newrte, rte, RangeTblEntry);
