@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.18 1997/04/24 15:46:44 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.19 1997/05/05 03:41:19 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -751,16 +751,38 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
     ScanKeyData skdata;
     Size keysok;
     
+    rel = scan->relation;
     so = (BTScanOpaque) scan->opaque;
-    if ( so->qual_ok == 0 )		/* may be set by _bt_orderkeys */
+    
+    /* 
+     * Order the keys in the qualification and be sure
+     * that the scan exploits the tree order.
+     */
+    so->numberOfFirstKeys = 0;		/* may be changed by _bt_orderkeys */
+    so->qual_ok = 1;			/* may be changed by _bt_orderkeys */
+    scan->scanFromEnd = false;
+    if ( so->numberOfKeys > 0 )
+    {
+    	_bt_orderkeys(rel, so);
+    	
+	strat = _bt_getstrat(rel, 1, so->keyData[0].sk_procedure);
+
+	/* NOTE: it assumes ForwardScanDirection */
+	if ( strat == BTLessStrategyNumber || 
+		strat == BTLessEqualStrategyNumber )
+	    scan->scanFromEnd = true;
+    }
+    else
+    	scan->scanFromEnd = true;
+
+    if ( so->qual_ok == 0 )
     	return ((RetrieveIndexResult) NULL);
     
     /* if we just need to walk down one edge of the tree, do that */
     if (scan->scanFromEnd)
 	return (_bt_endpoint(scan, dir));
     
-    rel = scan->relation;
-    itupdesc = RelationGetTupleDescriptor(scan->relation);
+    itupdesc = RelationGetTupleDescriptor(rel);
     current = &(scan->currentItemData);
     
     /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.18 1997/04/18 03:37:53 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.19 1997/05/05 03:41:17 vadim Exp $
  *
  * NOTES
  *    This file contains only the public interface routines.
@@ -410,7 +410,6 @@ btrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey)
 {
     ItemPointer iptr;
     BTScanOpaque so;
-    StrategyNumber strat;
     
     so = (BTScanOpaque) scan->opaque;
     
@@ -439,10 +438,11 @@ btrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey)
 	scan->flags = 0x0;
     }
     
-    /* reset the scan key */
+    /* 
+     * Reset the scan keys. Note that keys ordering stuff
+     * moved to _bt_first.	- vadim 05/05/97
+     */
     so->numberOfKeys = scan->numberOfKeys;
-    so->numberOfFirstKeys = 0;		/* may be changed by _bt_orderkeys */
-    so->qual_ok = 1;			/* may be changed by _bt_orderkeys */
     if (scan->numberOfKeys > 0) {
 	memmove(scan->keyData,
 		scankey,
@@ -450,21 +450,6 @@ btrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey)
 	memmove(so->keyData,
 		scankey,
 		so->numberOfKeys * sizeof(ScanKeyData));
-	/* order the keys in the qualification */
-	_bt_orderkeys(scan->relation, so);
-    }
-    
-    /* finally, be sure that the scan exploits the tree order */
-    scan->scanFromEnd = false;
-    if ( so->numberOfKeys > 0 ) {
-	strat = _bt_getstrat(scan->relation, 1 /* XXX */,
-			     so->keyData[0].sk_procedure);
-	
-	if (strat == BTLessStrategyNumber
-	    || strat == BTLessEqualStrategyNumber)
-	    scan->scanFromEnd = true;
-    } else {
-	scan->scanFromEnd = true;
     }
 
 }
