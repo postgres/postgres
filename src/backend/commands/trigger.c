@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.126 2002/08/17 12:15:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.127 2002/08/18 11:20:05 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,6 +86,11 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 
 	rel = heap_openrv(stmt->relation, AccessExclusiveLock);
 
+	if (stmt->constrrel != NULL)
+		constrrelid = RangeVarGetRelid(stmt->constrrel, false);
+	else
+		constrrelid = InvalidOid;
+
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "CreateTrigger: relation \"%s\" is not a table",
 			 stmt->relation->relname);
@@ -94,10 +99,29 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 		elog(ERROR, "CreateTrigger: can't create trigger for system relation %s",
 			stmt->relation->relname);
 
-	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
-						  stmt->isconstraint ? ACL_REFERENCES : ACL_TRIGGER);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, RelationGetRelationName(rel));
+	/* permission checks */
+
+	if (stmt->isconstraint)
+	{
+		/* foreign key constraint trigger */
+
+		aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(), ACL_REFERENCES);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, RelationGetRelationName(rel));
+		if (constrrelid != InvalidOid)
+		{
+			aclresult = pg_class_aclcheck(constrrelid, GetUserId(), ACL_REFERENCES);
+			if (aclresult != ACLCHECK_OK)
+				aclcheck_error(aclresult, get_rel_name(constrrelid));
+		}
+	}
+	else
+	{
+		/* real trigger */
+		aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(), ACL_TRIGGER);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, RelationGetRelationName(rel));
+	}
 
 	/*
 	 * Generate the trigger's OID now, so that we can use it in the name
@@ -123,11 +147,6 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 		trigname = stmt->trigname;
 		constrname = "";
 	}
-
-	if (stmt->constrrel != NULL)
-		constrrelid = RangeVarGetRelid(stmt->constrrel, false);
-	else
-		constrrelid = InvalidOid;
 
 	TRIGGER_CLEAR_TYPE(tgtype);
 	if (stmt->before)
