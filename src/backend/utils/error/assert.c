@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.8 1998/06/18 16:32:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.9 1998/06/18 16:35:38 momjian Exp $
  *
  * NOTE
  *	  This should eventually work with elog(), dlog(), etc.
@@ -15,6 +15,7 @@
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
+#include <unistd.h>
 
 #include "postgres.h"			/* where the declaration goes */
 #include "utils/module.h"
@@ -54,8 +55,10 @@ ExceptionalCondition(char *conditionName,
 	}
 
 #ifdef ABORT_ON_ASSERT
-	sleep(99999);
 	abort();
+#endif
+#ifdef SLEEP_ON_ASSERT
+	sleep(1000000);
 #endif
 
 	/*
