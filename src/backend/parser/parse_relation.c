@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.90 2003/09/25 06:58:01 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.90.2.1 2004/04/18 18:13:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -513,13 +513,14 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
 }
 
 /*
- * colnameToVar
+ * colNameToVar
  *	  Search for an unqualified column name.
  *	  If found, return the appropriate Var node (or expression).
  *	  If not found, return NULL.  If the name proves ambiguous, raise error.
+ *	  If localonly is true, only names in the innermost query are considered.
  */
 Node *
-colnameToVar(ParseState *pstate, char *colname)
+colNameToVar(ParseState *pstate, char *colname, bool localonly)
 {
 	Node	   *result = NULL;
 	ParseState *orig_pstate = pstate;
@@ -576,8 +577,8 @@ colnameToVar(ParseState *pstate, char *colname)
 			}
 		}
 
-		if (result != NULL)
-			break;				/* found */
+		if (result != NULL || localonly)
+			break;				/* found, or don't want to look at parent */
 
 		pstate = pstate->parentParseState;
 		levels_up++;

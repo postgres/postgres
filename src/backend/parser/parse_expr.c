@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.163 2003/09/26 15:27:35 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.163.2.1 2004/04/18 18:13:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -990,7 +990,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				char	   *name = strVal(lfirst(cref->fields));
 
 				/* Try to identify as an unqualified column */
-				node = colnameToVar(pstate, name);
+				node = colNameToVar(pstate, name, false);
 
 				if (node == NULL)
 				{
