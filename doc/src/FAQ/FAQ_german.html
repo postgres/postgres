@@ -12,10 +12,9 @@ Häufig gestellte Fragen (FAQ) zu PostgreSQL
 Current maintainer:	Bruce Momjian (<a
 href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
-    <p>Deutsche Übersetzung von Ian Barwick (<a href="mailto:barwick@gmx.net">barwick@gmx.net</a>).<br />
-    Basiert teilweise auf einer Übersetzung von Karsten Schulz (<a href="mailto:schulz@linux-systemhaus.de">schulz@linux-systemhaus.de</a>).</p>
+    <p>Deutsche Übersetzung von Ian Barwick (<a href="mailto:barwick@gmx.net">barwick@gmx.net</a>).</p>
 
-    <p>Letzte Aktualisierung der deutschen Übersetzung: Mo., den 21.10.2002, 23:00 CET</p>
+    <p>Letzte Aktualisierung der deutschen Übersetzung: So., den 15.12.2002, 18:00 CET</p>
 
     <p>Die aktuellste Version dieses Dokuments liegt auf der PostgreSQL Website:</p>
     <ul>
@@ -51,8 +50,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
 <a href="#2.1">2.1</a>) Gibt es ODBC-Treiber für PostgreSQL?<br />
 <a href="#2.2">2.2</a>) Welche Werkzeuge gibt es, um Web-Seiten mit PostgreSQL zu verbinden?<br />
-<a href="#2.3">2.3</a>) Hat PostgreSQL eine grafische Benutzerschnittstelle?
-Einen Report-Generator? Eine eingebaute Query-Schnittstelle?<br />
+<a href="#2.3">2.3</a>) Hat PostgreSQL eine grafische Benutzerschnittstelle?<br />
 <a href="#2.4">2.4</a>) Welche Programmiersprachen können mit PostgreSQL kommunizieren?<br />
 
 
@@ -277,7 +275,7 @@ Einen Report-Generator? Eine eingebaute Query-Schnittstelle?<br />
 
     <h4><a name="1.7">1.7</a>) Was ist die neueste Version von PostgreSQL?</h4>
 
-    <p>Die neueste Version von PostgreSQL ist 7.2.3.</p>
+    <p>Die neueste Version von PostgreSQL ist 7.3.</p>
 
     <p>Wir planen alle 4 Monate eine neue Version herauszugeben.</p>
 
@@ -438,11 +436,11 @@ Einen Report-Generator? Eine eingebaute Query-Schnittstelle?<br />
 
     <p>Es sind zwei ODBC-Treiber verfügbar: PsqlODBC und OpenLink ODBC.</p>
 
-    <p>PsqlODBC ist in der Distribution enthalten. Weitere Informationen können
-    unter <a href="ftp://ftp.PostgreSQL.org/pub/odbc/">ftp://ftp.PostgreSQL.org/pub/odbc/</a> abgerufen werden.</p>
+    <p>PsqlODBC kann von <a href="http://gborg.postgresql.org/project/psqlodbc/projdisplay.php">http://gborg.postgresql.org/project/psqlodbc/projdisplay.php</a>
+    heruntergeladen werden.</p>
 
     <p>OpenLink ODBC kann unter <a href="http://www.openlinksw.com/">http://www.openlinksw.com</a> geholt werden. Die
-    Software arbeitet mit dem Standard-ODBC-Client der Firma, so dass
+    Software arbeitet mit dem Standard-ODBC-Client dieser Firma, so dass
     PostgreSQL-ODBC auf jeder Client-Plattform zur Verfügung steht, die
     unterstützt wird (Win, Mac, Unix, VMS).</p>
 
@@ -450,8 +448,6 @@ Einen Report-Generator? Eine eingebaute Query-Schnittstelle?<br />
     kommerziellen Support benötigen, dennoch wird immer eine
     Freeware-Version verfügbar sein. Fragen dazu bitte an
     <a href="mailto:postgres95@openlink.co.uk">postgres95@openlink.co.uk</a>. </p>
-
-    <p>Bitte beachten Sie auch das Kapitel zu ODBC im Progammer's Guide.</p>
 
     <h4><a name="2.2">2.2</a>) Welche Werkzeuge gibt es, um Web-Seiten mit PostgreSQL zu
     verbinden?</h4>
@@ -465,40 +461,41 @@ Einen Report-Generator? Eine eingebaute Query-Schnittstelle?<br />
     <p>Für komplexere Aufgaben bietet sich die Perl-Schnittstelle mit CGI.pm
     oder mod_perl.</p>
 
-    <h4><a name="2.3">2.3</a>) Hat PostgreSQL eine grafische Benutzerschnittstelle? Einen
-    Report-Generator? Eine eingebaute Query-Schnittstelle?</h4>
-
-    <p>Wir haben eine nette grafische Benutzerschnittstelle namens
-    PgAccess, der außerdem einen Reportgenerator enthält:
-      <a href="http://www.pgaccess.org">http://www.pgaccess.org</a></p>
-
-    <p>Die Distribution enthält außerdem <em>ecpg</em>, die eine eingebettete
-    SQL-Query-Schnittstelle für C zur Verfügung stellt.</p>
+    <h4><a name="2.3">2.3</a>) Hat PostgreSQL eine grafische Benutzerschnittstelle?</h4>
+   
+    <p>Es gibt mehrere grafische Schnittstellen für PostgreSQL, darunter
+    PgAccess ( <a href="http://www.pgaccess.org">http://www.pgaccess.org</a>), 
+    PgAdmin II (<a
+    href="http://www.pgadmin.org">http://www.pgadmin.org</a>,
+    nur für Win32), RHDB Admin (<a
+    href="http://sources.redhat.com/rhdb/">http://sources.redhat.com/rhdb/
+    </a>) und Rekall (<a href="http://www.thekompany.com/products/rekall/">
+    http://www.thekompany.com/products/rekall/</a>, proprietär). Es gibt 
+    außerdem PHPPgAdmin (<a href="http://phppgadmin.sourceforge.net/">
+    http://phppgadmin.sourceforge.net/ </a>), eine web-basierte Schnittstelle. 
 
     <h4><a name="2.4">2.4</a>) Welche Programmiersprachen und Schnittstellen gibt es?</h4>
 
-    <p>PostgreSQL bietet:</p>
+    <p>Die meisten gängigen Programmiersprachen bieten Schnittstellen für
+    PostgreSQL.
+    </p>
+    <p>Die folgenden Schnittstellen werden mit der PostgreSQL-Distribution 
+    ausgeliefert:</p>
     <ul>
       <li>C (libpq)</li>
-
-      <li>C++ (libpq++)</li>
 
       <li>Embedded C (ecpg)</li>
 
       <li>Java (jdbc)</li>
 
-      <li>Perl (perl5, DBD::Pg)</li>
-
-      <li>ODBC (odbc)</li>
-
       <li>Python (PyGreSQL)</li>
 
       <li>TCL (libpgtcl)</li>
-
-      <li>C Easy API (libpgeasy)</li>
-
-      <li>PHP ('pg_' functions, Pear::DB)</li>
     </ul>
+    <p>Weitere Schnittstellen für andere Sprachen können über 
+    <a href="http://gborg.postgresql.org">http://gborg.postgresql.org</a>
+    (Bereich <em>Drivers/Interfaces</em>) bezogen werden.
+    </p>
     <hr />
     <h2 align="center">Administrative Fragen</h2><p>
 
@@ -1300,6 +1297,8 @@ BYTEA         bytea           Bytearray mit variabler Länge
     zum Inhalt der FAQ freue ich mich. Ich nehme auch allgemeine Fragen zu PostgreSQL gerne
     entgegen, kann aber leider keine zeitige Antwort garantieren.</p>
 
+    <p>Diese Übersetzung basiert teilweise auf einer früheren Übersetzung von Karsten
+    Schulz (<a href="mailto:schulz@linux-systemhaus.de">schulz@linux-systemhaus.de</a>).</p>
 </body>
 </html>
 

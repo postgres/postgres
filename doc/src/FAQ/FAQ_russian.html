@@ -13,7 +13,7 @@
   alink="#0000ff">
     <H1>Ответы на часто задаваемые вопросы по PostgreSQL</H1>
 
-    <P>Дата последнего обновления: Воскресенье 20 Октября 20:47:14 EDT 2002</P>
+    <P>Дата последнего обновления: Четверг 5 Декабря 00:47:26 EDT 2002</P>
 
     <P>Английский вариант сопровождает: Брюс Момьян (Bruce Momjian) (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -56,8 +56,7 @@
      <A href="#2.2">2.2</A>) Какие инструменты существуют для использования
     PostgreSQL через Web?<BR>
      <A href="#2.3">2.3</A>) Есть ли у PostgreSQL графический интерфейс
-    пользователя? Генератор отчетов? Встроенный интерфейс для языка
-    запросов?<BR>
+    пользователя?<BR>
      <A href="#2.4">2.4</A>) Какие языки могут взаимодействовать с
     PostgreSQL?<BR>
      
@@ -521,9 +520,8 @@
     <P>Существует два <SMALL>ODBC</SMALL> драйвера, PsqlODBC
     и OpenLink <SMALL>ODBC</SMALL>.</P>
 
-    <P>PsqlODBC включается в дистрибутив. Больше информации об этом драйвере
-    можно найти на <A href=
-    "ftp://ftp.PostgreSQL.org/pub/odbc/">ftp://ftp.PostgreSQL.org/pub/odbc/</A>.</P>
+    <P>Вы можете скачать PsqlODBC с <A href="http://gborg.postgresql.org/project/psqlodbc/projdisplay.php">
+    http://gborg.postgresql.org/project/psqlodbc/projdisplay.php</A>.</P>
 
     <P>OpenLink <SMALL>ODBC</SMALL> можно взять на <A href=
     "http://www.openlinksw.com/">http://www.openlinksw.com</A>. Этот
@@ -537,10 +535,6 @@
     направляйте вопросы на адрес <A href=
     "mailto:postgres95@openlink.co.uk">postgres95@openlink.co.uk</A>.</P>
 
-    <P>Также посмотрите <A href=
-    "http://www.postgresql.org/devel-corner/docs/programmer/odbc.html">ODBC
-    раздел в руководстве программиста</A>.</P>
-
     <H4><A name="2.2">2.2</A>) Какие инструменты существуют для использования
     PostgreSQL через Web?</H4>
 
@@ -553,45 +547,45 @@
     <P>Для комплексных решений, многие пользуются Perl интерфейсом и CGI.pm или mod_perl.</P>
 
     <H4><A name="2.3">2.3</A>) Есть ли у PostgreSQL графический интерфейс
-    пользователя? Генератор отчетов? Встроенный интерфейс для языка
-    запросов?</H4>
+    пользователя?</H4>
+
+    <P>Да, существует несколько графических интерфейсов для PostgreSQL.
+    Это PgAccess (<A href="http://www.pgaccess.com/">http://www.pgaccess.com</A>,
+    PgAdmin II (<A href="http://www.pgadmin.org/">http://www.pgadmin.org</A>,
+    Win32-only), RHDB Admin (<A href="http://sources.redhat.com/rhdb/">
+    http://sources.redhat.com/rhdb/</A>) и Rekall
+    (<A href="http://www.thekompany.com/products/rekall/">
+    http://www.thekompany.com/products/rekall/</A>, коммерческий). Также есть
+    PHPPgAdmin (<A href="http://phppgadmin.sourceforge.net/">
+    http://phppgadmin.sourceforge.net/</A>) - интерфейс к PostgreSQL, основанный
+    на Web.
 
     <P>У нас есть прекрасный горафический интерфейс, называемый
     PgAccess, который также можно использовать как генератор отчетов.
     Его страничка <A href="http://www.pgaccess.org">http://www.pgaccess.org/</A></P>
 
-    <P>Мы также включаем <I>ecpg</I>, который предоставляет встроенный
-    интерфейс к языку запросов SQL из C.</P>
-
     <H4><A name="2.4">2.4</A>) Какие языки могут взаимодействовать с PostgreSQL?</H4>
 
-    <P>Вот эти:</P>
-
+    <P>Какие-либо интерфейсы для PostgreSQL существуют для большинства
+    популярных языков программирования. Посмотрите список модулей расширения
+    для тех языков программирования, которыми вы пользуетесь.</P>
+ 
+    <P>Следующие интерфейсы включаются в дистрибутив PostgreSQL:</P>
     <UL>
       <LI>C (libpq)</LI>
-
-      <LI>C++ (libpq++)</LI>
 
       <LI>Embedded C (ecpg)</LI>
 
       <LI>Java (jdbc)</LI>
 
-      <LI>Perl (DBD::Pg и perl5)</LI>
-
-      <LI>ODBC (odbc)</LI>
-
       <LI>Python (PyGreSQL)</LI>
 
       <LI>TCL (libpgtcl)</LI>
 
-      <LI>C Easy API (libpgeasy)</LI>
-
-      <LI>PHP ('pg_' functions, Pear::DB)</LI>
     </UL>
     <P>Дополнительные интерфейсы доступны по адресу
-    <A href="http://www.postgresql.org/interfaces.html">http://www.PostgreSQL.org/interfaces.html.</A>
-    и
-    <A href="http://gborg.postgresql.org/">http://gborg.PostgreSQL.org</a>.
+    <A href="http://gborg.postgresql.org/">http://gborg.PostgreSQL.org</a>
+    в секции <i>Drivers/Interfaces</i>.
     </P>
     <HR>
 

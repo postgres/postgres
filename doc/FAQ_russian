@@ -1,8 +1,7 @@
 
                Otvety na chasto zadavaemye voprosy po PostgreSQL
                                        
-   Data poslednego obnovleniya: Voskresen'e 20 Oktyabrya 20:47:14 EDT
-   2002
+   Data poslednego obnovleniya: CHetverg 5 Dekabrya 00:47:26 EDT 2002
    
    Anglijskij variant soprovozhdaet: Bryus Mom'yan (Bruce Momjian)
    (pgman@candle.pha.pa.us)
@@ -41,7 +40,6 @@
    2.2) Kakie instrumenty suschestvuyut dlya ispol'zovaniya PostgreSQL
    cherez Web?
    2.3) Est' li u PostgreSQL graficheskij interfejs pol'zovatelya?
-   Generator otchetov? Vstroennyj interfejs dlya yazyka zaprosov?
    2.4) Kakie yazyki mogut vzaimodejstvovat' s PostgreSQL?
    
                          Voprosy administrirovaniya
@@ -442,8 +440,8 @@
     
    Suschestvuet dva ODBC drajvera, PsqlODBC i OpenLink ODBC.
    
-   PsqlODBC vklyuchaetsya v distributiv. Bol'she informacii ob `etom
-   drajvere mozhno najti na ftp://ftp.PostgreSQL.org/pub/odbc/.
+   Vy mozhete skachat' PsqlODBC s
+   http://gborg.postgresql.org/project/psqlodbc/projdisplay.php.
    
    OpenLink ODBC mozhno vzyat' na http://www.openlinksw.com. `Etot
    drajver rabotaet s ih standartnym klientskim programmnym
@@ -455,8 +453,6 @@
    kommercheskaya podderzhka, no besplatnaya versiya vsegda budet
    dostupna. Pozhalujsta, napravlyajte voprosy na adres
    postgres95@openlink.co.uk.
-   
-   Takzhe posmotrite ODBC razdel v rukovodstve programmista.
    
     2.2) Kakie instrumenty suschestvuyut dlya ispol'zovaniya PostgreSQL cherez
     Web?
@@ -470,33 +466,36 @@
    Dlya kompleksnyh reshenij, mnogie pol'zuyutsya Perl interfejsom i
    CGI.pm ili mod_perl.
    
-    2.3) Est' li u PostgreSQL graficheskij interfejs pol'zovatelya? Generator
-    otchetov? Vstroennyj interfejs dlya yazyka zaprosov?
+    2.3) Est' li u PostgreSQL graficheskij interfejs pol'zovatelya?
     
+   Da, suschestvuet neskol'ko graficheskih interfejsov dlya PostgreSQL.
+   `Eto PgAccess (http://www.pgaccess.com, PgAdmin II
+   (http://www.pgadmin.org, Win32-only), RHDB Admin (
+   http://sources.redhat.com/rhdb/) i Rekall (
+   http://www.thekompany.com/products/rekall/, kommercheskij). Takzhe
+   est' PHPPgAdmin ( http://phppgadmin.sourceforge.net/) - interfejs k
+   PostgreSQL, osnovannyj na Web.
+   
    U nas est' prekrasnyj goraficheskij interfejs, nazyvaemyj PgAccess,
    kotoryj takzhe mozhno ispol'zovat' kak generator otchetov. Ego
    stranichka http://www.pgaccess.org/
    
-   My takzhe vklyuchaem ecpg, kotoryj predostavlyaet vstroennyj interfejs
-   k yazyku zaprosov SQL iz C.
-   
     2.4) Kakie yazyki mogut vzaimodejstvovat' s PostgreSQL?
     
-   Vot `eti:
+   Kakie-libo interfejsy dlya PostgreSQL suschestvuyut dlya bol'shinstva
+   populyarnyh yazykov programmirovaniya. Posmotrite spisok modulej
+   rasshireniya dlya teh yazykov programmirovaniya, kotorymi vy
+   pol'zuetes'.
+   
+   Sleduyuschie interfejsy vklyuchayutsya v distributiv PostgreSQL:
      * C (libpq)
-     * C++ (libpq++)
      * Embedded C (ecpg)
      * Java (jdbc)
-     * Perl (DBD::Pg i perl5)
-     * ODBC (odbc)
      * Python (PyGreSQL)
      * TCL (libpgtcl)
-     * C Easy API (libpgeasy)
-     * PHP ('pg_' functions, Pear::DB)
        
    Dopolnitel'nye interfejsy dostupny po adresu
-   http://www.PostgreSQL.org/interfaces.html. i
-   http://gborg.PostgreSQL.org.
+   http://gborg.PostgreSQL.org v sekcii Drivers/Interfaces.
      _________________________________________________________________
    
                          Voprosy administrirovaniya
