@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.176 2001/09/06 02:07:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.177 2001/10/06 23:21:43 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -973,10 +973,8 @@ RelationTruncateIndexes(Oid heapId)
 
 	while (HeapTupleIsValid(indexTuple = heap_getnext(scan, 0)))
 	{
-		Oid			indexId,
-					accessMethodId;
+		Oid			indexId;
 		IndexInfo  *indexInfo;
-		HeapTuple	classTuple;
 		Relation	heapRelation,
 					currentIndex;
 
@@ -985,16 +983,6 @@ RelationTruncateIndexes(Oid heapId)
 		 */
 		indexId = ((Form_pg_index) GETSTRUCT(indexTuple))->indexrelid;
 		indexInfo = BuildIndexInfo(indexTuple);
-
-		/* Fetch access method from pg_class tuple for this index */
-		classTuple = SearchSysCache(RELOID,
-									ObjectIdGetDatum(indexId),
-									0, 0, 0);
-		if (!HeapTupleIsValid(classTuple))
-			elog(ERROR, "RelationTruncateIndexes: index %u not found in pg_class",
-				 indexId);
-		accessMethodId = ((Form_pg_class) GETSTRUCT(classTuple))->relam;
-		ReleaseSysCache(classTuple);
 
 		/*
 		 * We have to re-open the heap rel each time through this loop
@@ -1022,8 +1010,6 @@ RelationTruncateIndexes(Oid heapId)
 		currentIndex->rd_targblock = InvalidBlockNumber;
 
 		/* Initialize the index and rebuild */
-		InitIndexStrategy(indexInfo->ii_NumIndexAttrs,
-						  currentIndex, accessMethodId);
 		index_build(heapRelation, currentIndex, indexInfo);
 
 		/*

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fmgr.h,v 1.14 2001/05/17 17:44:18 petere Exp $
+ * $Id: fmgr.h,v 1.15 2001/10/06 23:21:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@ typedef Datum (*PGFunction) (FunctionCallInfo fcinfo);
  * to be called multiple times, the lookup need be done only once and the
  * info struct saved for re-use.
  */
-typedef struct
+typedef struct FmgrInfo
 {
 	PGFunction	fn_addr;		/* pointer to function or handler to be
 								 * called */
@@ -71,6 +71,20 @@ typedef struct FunctionCallInfoData
  * of the function to be called.
  */
 extern void fmgr_info(Oid functionId, FmgrInfo *finfo);
+
+/*
+ * Same, when the FmgrInfo struct is in a memory context longer-lived than
+ * CurrentMemoryContext.  The specified context will be set as fn_mcxt
+ * and used to hold all subsidiary data of finfo.
+ */
+extern void fmgr_info_cxt(Oid functionId, FmgrInfo *finfo,
+						  MemoryContext mcxt);
+
+/*
+ * Copy an FmgrInfo struct
+ */
+extern void fmgr_info_copy(FmgrInfo *dstinfo, FmgrInfo *srcinfo,
+						   MemoryContext destcxt);
 
 /*
  * This macro invokes a function given a filled-in FunctionCallInfoData
@@ -341,16 +355,18 @@ extern Datum OidFunctionCall9(Oid functionId, Datum arg1, Datum arg2,
 /*
  * Routines in fmgr.c
  */
-extern Pg_finfo_record *fetch_finfo_record(char *filename, char *funcname);
+extern Pg_finfo_record *fetch_finfo_record(void *filehandle, char *funcname);
 extern Oid	fmgr_internal_function(const char *proname);
 
 /*
  * Routines in dfmgr.c
  */
-extern PGFunction load_external_function(char *filename, char *funcname,
-					   bool signalNotFound);
-extern void load_file(char *filename);
 extern char * Dynamic_library_path;
+
+extern PGFunction load_external_function(char *filename, char *funcname,
+					   bool signalNotFound, void **filehandle);
+extern PGFunction lookup_external_function(void *filehandle, char *funcname);
+extern void load_file(char *filename);
 
 
 /*

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.18 2001/05/22 16:37:16 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.19 2001/10/06 23:21:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "catalog/pg_type.h"
 #include "utils/array.h"
 #include "utils/fmgroids.h"
+#include "utils/memutils.h"
 #include "utils/varbit.h"
 
 #define HEXDIG(z)	 ((z)<10 ? ((z)+'0') : ((z)-10+'A'))
@@ -238,7 +239,7 @@ _bit(PG_FUNCTION_ARGS)
 	static FmgrInfo bit_finfo;
 
 	if (bit_finfo.fn_oid == InvalidOid)
-		fmgr_info(F_BIT, &bit_finfo);
+		fmgr_info_cxt(F_BIT, &bit_finfo, TopMemoryContext);
 
 	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
 	locfcinfo.flinfo = &bit_finfo;
@@ -452,7 +453,7 @@ _varbit(PG_FUNCTION_ARGS)
 	static FmgrInfo varbit_finfo;
 
 	if (varbit_finfo.fn_oid == InvalidOid)
-		fmgr_info(F_VARBIT, &varbit_finfo);
+		fmgr_info_cxt(F_VARBIT, &varbit_finfo, TopMemoryContext);
 
 	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
 	locfcinfo.flinfo = &varbit_finfo;

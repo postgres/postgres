@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relcache.h,v 1.25 2001/06/29 21:08:25 tgl Exp $
+ * $Id: relcache.h,v 1.26 2001/10/06 23:21:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,8 @@ extern void RelationClose(Relation relation);
  * Routines to compute/retrieve additional cached information
  */
 extern List *RelationGetIndexList(Relation relation);
+
+extern void RelationInitIndexAccessInfo(Relation relation);
 
 /*
  * Routines for backend startup
@@ -61,6 +63,7 @@ extern void RelationPurgeLocalRelation(bool xactComitted);
 extern void RelationCacheAbort(void);
 
 
+/* XLOG support */
 extern void CreateDummyCaches(void);
 extern void DestroyDummyCaches(void);
 

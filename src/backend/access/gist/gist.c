@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.83 2001/08/22 18:24:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.84 2001/10/06 23:21:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1542,13 +1542,6 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 void
 initGISTstate(GISTSTATE *giststate, Relation index)
 {
-	RegProcedure consistent_proc,
-				union_proc,
-				compress_proc,
-				decompress_proc,
-				penalty_proc,
-				picksplit_proc,
-				equal_proc;
 	int i;
 
 	if (index->rd_att->natts > INDEX_MAX_KEYS)
@@ -1559,20 +1552,27 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 
 	for (i = 0; i < index->rd_att->natts; i++)
 	{
-		consistent_proc = index_getprocid(index, i+1, GIST_CONSISTENT_PROC	);
-		union_proc 	= index_getprocid(index, i+1, GIST_UNION_PROC		);
-		compress_proc 	= index_getprocid(index, i+1, GIST_COMPRESS_PROC	);
-		decompress_proc = index_getprocid(index, i+1, GIST_DECOMPRESS_PROC	);
-		penalty_proc 	= index_getprocid(index, i+1, GIST_PENALTY_PROC		);
-		picksplit_proc 	= index_getprocid(index, i+1, GIST_PICKSPLIT_PROC	);
-		equal_proc 	= index_getprocid(index, i+1, GIST_EQUAL_PROC		);
-		fmgr_info(consistent_proc, 	&((giststate->consistentFn)[i]) 	);
-		fmgr_info(union_proc, 		&((giststate->unionFn)[i]) 		);
-		fmgr_info(compress_proc, 	&((giststate->compressFn)[i]) 		);
-		fmgr_info(decompress_proc, 	&((giststate->decompressFn)[i]) 	);
-		fmgr_info(penalty_proc, 	&((giststate->penaltyFn)[i]) 		);
-		fmgr_info(picksplit_proc, 	&((giststate->picksplitFn)[i]) 		);
-		fmgr_info(equal_proc, 		&((giststate->equalFn)[i]) 		);
+		fmgr_info_copy(&(giststate->consistentFn[i]),
+					   index_getprocinfo(index, i+1, GIST_CONSISTENT_PROC),
+					   CurrentMemoryContext);
+		fmgr_info_copy(&(giststate->unionFn[i]),
+					   index_getprocinfo(index, i+1, GIST_UNION_PROC),
+					   CurrentMemoryContext);
+		fmgr_info_copy(&(giststate->compressFn[i]),
+					   index_getprocinfo(index, i+1, GIST_COMPRESS_PROC),
+					   CurrentMemoryContext);
+		fmgr_info_copy(&(giststate->decompressFn[i]),
+					   index_getprocinfo(index, i+1, GIST_DECOMPRESS_PROC),
+					   CurrentMemoryContext);
+		fmgr_info_copy(&(giststate->penaltyFn[i]),
+					   index_getprocinfo(index, i+1, GIST_PENALTY_PROC),
+					   CurrentMemoryContext);
+		fmgr_info_copy(&(giststate->picksplitFn[i]),
+					   index_getprocinfo(index, i+1, GIST_PICKSPLIT_PROC),
+					   CurrentMemoryContext);
+		fmgr_info_copy(&(giststate->equalFn[i]),
+					   index_getprocinfo(index, i+1, GIST_EQUAL_PROC),
+					   CurrentMemoryContext);
 	}
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.64 2001/09/29 03:46:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.65 2001/10/06 23:21:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1264,17 +1264,15 @@ rtbulkdelete(PG_FUNCTION_ARGS)
 static void
 initRtstate(RTSTATE *rtstate, Relation index)
 {
-	RegProcedure union_proc,
-				size_proc,
-				inter_proc;
-
-	union_proc = index_getprocid(index, 1, RT_UNION_PROC);
-	size_proc = index_getprocid(index, 1, RT_SIZE_PROC);
-	inter_proc = index_getprocid(index, 1, RT_INTER_PROC);
-	fmgr_info(union_proc, &rtstate->unionFn);
-	fmgr_info(size_proc, &rtstate->sizeFn);
-	fmgr_info(inter_proc, &rtstate->interFn);
-	return;
+	fmgr_info_copy(&rtstate->unionFn,
+				   index_getprocinfo(index, 1, RT_UNION_PROC),
+				   CurrentMemoryContext);
+	fmgr_info_copy(&rtstate->sizeFn,
+				   index_getprocinfo(index, 1, RT_SIZE_PROC),
+				   CurrentMemoryContext);
+	fmgr_info_copy(&rtstate->interFn,
+				   index_getprocinfo(index, 1, RT_INTER_PROC),
+				   CurrentMemoryContext);
 }
 
 /* for sorting SPLITCOST records in descending order */

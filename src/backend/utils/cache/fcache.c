@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.40 2001/09/21 00:11:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.41 2001/10/06 23:21:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,26 +23,22 @@
 FunctionCachePtr
 init_fcache(Oid foid, int nargs, MemoryContext fcacheCxt)
 {
-	MemoryContext oldcontext;
 	FunctionCachePtr retval;
 
 	/* Safety check (should never fail, as parser should check sooner) */
 	if (nargs > FUNC_MAX_ARGS)
 		elog(ERROR, "init_fcache: too many arguments");
 
-	/* Switch to a context long-lived enough for the fcache entry */
-	oldcontext = MemoryContextSwitchTo(fcacheCxt);
-
-	retval = (FunctionCachePtr) palloc(sizeof(FunctionCache));
+	/* Create fcache entry in the desired context */
+	retval = (FunctionCachePtr) MemoryContextAlloc(fcacheCxt,
+												   sizeof(FunctionCache));
 	MemSet(retval, 0, sizeof(FunctionCache));
 
 	/* Set up the primary fmgr lookup information */
-	fmgr_info(foid, &(retval->func));
+	fmgr_info_cxt(foid, &(retval->func), fcacheCxt);
 
 	/* Initialize additional info */
 	retval->setArgsValid = false;
-
-	MemoryContextSwitchTo(oldcontext);
 
 	return retval;
 }

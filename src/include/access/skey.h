@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: skey.h,v 1.16 2001/06/09 18:16:59 tgl Exp $
+ * $Id: skey.h,v 1.17 2001/10/06 23:21:44 tgl Exp $
  *
  * Note:
  *		Needs more accessor/assignment routines.
@@ -44,5 +44,8 @@ typedef ScanKeyData *ScanKey;
 extern void ScanKeyEntrySetIllegal(ScanKey entry);
 extern void ScanKeyEntryInitialize(ScanKey entry, bits16 flags,
 	 AttrNumber attributeNumber, RegProcedure procedure, Datum argument);
+extern void ScanKeyEntryInitializeWithInfo(ScanKey entry, bits16 flags,
+	 AttrNumber attributeNumber, FmgrInfo *finfo,
+	 MemoryContext mcxt, Datum argument);
 
 #endif	 /* SKEY_H */

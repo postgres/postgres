@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.52 2001/10/04 19:13:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.53 2001/10/06 23:21:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,14 +55,20 @@ static char * substitute_libpath_macro(const char * name);
 
 /*
  * Load the specified dynamic-link library file, and look for a function
- * named funcname in it.  If the function is not found, we raise an error
- * if signalNotFound is true, else return (PGFunction) NULL.  Note that
- * errors in loading the library will provoke elog regardless of
- * signalNotFound.
- */
+ * named funcname in it.  (funcname can be NULL to just load the file.)
+ *
+ * If the function is not found, we raise an error if signalNotFound is true,
+ * else return (PGFunction) NULL.  Note that errors in loading the library
+ * will provoke elog regardless of signalNotFound.
+ *
+ * If filehandle is not NULL, then *filehandle will be set to a handle
+ * identifying the library file.  The filehandle can be used with
+ * lookup_external_function to lookup additional functions in the same file
+ * at less cost than repeating load_external_function.
+  */
 PGFunction
 load_external_function(char *filename, char *funcname,
-					   bool signalNotFound)
+					   bool signalNotFound, void **filehandle)
 {
 	DynamicFileList *file_scanner;
 	PGFunction	retval;
@@ -129,6 +135,10 @@ load_external_function(char *filename, char *funcname,
 			file_tail->next = file_scanner;
 		file_tail = file_scanner;
 	}
+
+	/* Return handle if caller wants it. */
+	if (filehandle)
+		*filehandle = file_scanner->handle;
 
 	/*
 	 * If funcname is NULL, we only wanted to load the file.
@@ -201,11 +211,20 @@ load_file(char *filename)
 		}
 	}
 
-	load_external_function(fullname, (char *) NULL, false);
+	load_external_function(fullname, (char *) NULL, false, (void *) NULL);
 
 	pfree(fullname);
 }
 
+/*
+ * Lookup a function whose library file is already loaded.
+ * Return (PGFunction) NULL if not found.
+ */
+PGFunction
+lookup_external_function(void *filehandle, char *funcname)
+{
+	return pg_dlsym(filehandle, funcname);
+}
 
 
 static bool
@@ -305,7 +324,7 @@ substitute_libpath_macro(const char * name)
 
 	AssertArg(name != NULL);
 
-	if (strlen(name) == 0 || name[0] != '$')
+	if (name[0] != '$')
 		return pstrdup(name);
 
 	macroname_len = strcspn(name + 1, "/") + 1;

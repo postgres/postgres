@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.145 2001/10/05 17:28:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.146 2001/10/06 23:21:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,7 +249,6 @@ static void build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 				  Relation relation);
 static Relation RelationBuildDesc(RelationBuildDescInfo buildinfo,
 				  Relation oldrelation);
-static void IndexedAccessMethodInitialize(Relation relation);
 static void AttrDefaultFetch(Relation relation);
 static void RelCheckFetch(Relation relation);
 static List *insert_ordered_oid(List *list, Oid datum);
@@ -1044,7 +1043,7 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	 * initialize index strategy and support information for this relation
 	 */
 	if (OidIsValid(relam))
-		IndexedAccessMethodInitialize(relation);
+		RelationInitIndexAccessInfo(relation);
 
 	/*
 	 * initialize the relation lock manager information
@@ -1087,41 +1086,75 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	return relation;
 }
 
-static void
-IndexedAccessMethodInitialize(Relation relation)
+/*
+ * Initialize index-access-method support data for an index relation
+ */
+void
+RelationInitIndexAccessInfo(Relation relation)
 {
+	MemoryContext indexcxt;
 	IndexStrategy strategy;
 	RegProcedure *support;
+	FmgrInfo   *supportinfo;
 	int			natts;
-	Size		stratSize;
-	Size		supportSize;
 	uint16		amstrategies;
 	uint16		amsupport;
+	Size		stratSize;
 
 	natts = relation->rd_rel->relnatts;
 	amstrategies = relation->rd_am->amstrategies;
 	amsupport = relation->rd_am->amsupport;
 
+	/*
+	 * Make the private context to hold index access info.  The reason
+	 * we need a context, and not just a couple of pallocs, is so that
+	 * we won't leak any subsidiary info attached to fmgr lookup records.
+	 *
+	 * Context parameters are set on the assumption that it'll probably not
+	 * contain much data.
+	 */
+	indexcxt = AllocSetContextCreate(CacheMemoryContext,
+									 RelationGetRelationName(relation),
+									 0,			/* minsize */
+									 512,		/* initsize */
+									 1024);		/* maxsize */
+	relation->rd_indexcxt = indexcxt;
+
+	/*
+	 * Allocate arrays to hold data
+	 */
 	stratSize = AttributeNumberGetIndexStrategySize(natts, amstrategies);
-	strategy = (IndexStrategy) MemoryContextAlloc(CacheMemoryContext,
-												  stratSize);
+	strategy = (IndexStrategy) MemoryContextAlloc(indexcxt, stratSize);
 
 	if (amsupport > 0)
 	{
-		supportSize = natts * (amsupport * sizeof(RegProcedure));
-		support = (RegProcedure *) MemoryContextAlloc(CacheMemoryContext,
-													  supportSize);
+		int		nsupport = natts * amsupport;
+
+		support = (RegProcedure *)
+			MemoryContextAlloc(indexcxt, nsupport * sizeof(RegProcedure));
+		supportinfo = (FmgrInfo *)
+			MemoryContextAlloc(indexcxt, nsupport * sizeof(FmgrInfo));
+		MemSet(supportinfo, 0, nsupport * sizeof(FmgrInfo));
 	}
 	else
-		support = (RegProcedure *) NULL;
+	{
+		support = NULL;
+		supportinfo = NULL;
+	}
 
+	/*
+	 * Fill the strategy map and the support RegProcedure arrays.
+	 * (supportinfo is left as zeroes, and is filled on-the-fly when used)
+	 */
 	IndexSupportInitialize(strategy, support,
 						   &relation->rd_uniqueindex,
 						   RelationGetRelid(relation),
 						   relation->rd_rel->relam,
 						   amstrategies, amsupport, natts);
 
-	RelationSetIndexSupport(relation, strategy, support);
+	relation->rd_istrat = strategy;
+	relation->rd_support = support;
+	relation->rd_supportinfo = supportinfo;
 }
 
 /*
@@ -1595,11 +1628,9 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 		pfree(relation->rd_am);
 	if (relation->rd_rel)
 		pfree(relation->rd_rel);
-	if (relation->rd_istrat)
-		pfree(relation->rd_istrat);
-	if (relation->rd_support)
-		pfree(relation->rd_support);
 	freeList(relation->rd_indexlist);
+	if (relation->rd_indexcxt)
+		MemoryContextDelete(relation->rd_indexcxt);
 
 	/*
 	 * If we're really done with the relcache entry, blow it away. But if
@@ -2624,8 +2655,11 @@ init_irels(void)
 	Relation	ird;
 	Form_pg_am	am;
 	Form_pg_class relform;
+	MemoryContext indexcxt;
 	IndexStrategy strat;
 	RegProcedure *support;
+	int			nstrategies,
+				nsupport;
 	int			i;
 	int			relno;
 
@@ -2646,6 +2680,13 @@ init_irels(void)
 			return;
 		}
 
+		/* safety check for incompatible relcache layout */
+		if (len != sizeof(RelationData))
+		{
+			write_irels();
+			return;
+		}
+
 		ird = irel[relno] = (Relation) palloc(len);
 		MemSet(ird, 0, len);
 
@@ -2659,6 +2700,7 @@ init_irels(void)
 		/* reset transient fields */
 		ird->rd_targblock = InvalidBlockNumber;
 		ird->rd_fd = -1;
+		ird->rd_refcnt = 0;
 
 		ird->rd_node.tblNode = MyDatabaseId;
 
@@ -2716,6 +2758,17 @@ init_irels(void)
 			}
 		}
 
+		/*
+		 * prepare index info context --- parameters should match
+		 * RelationInitIndexAccessInfo
+		 */
+		indexcxt = AllocSetContextCreate(CacheMemoryContext,
+										 RelationGetRelationName(ird),
+										 0,			/* minsize */
+										 512,		/* initsize */
+										 1024);		/* maxsize */
+		ird->rd_indexcxt = indexcxt;
+
 		/* next, read the index strategy map */
 		if ((nread = FileRead(fd, (char *) &len, sizeof(len))) != sizeof(len))
 		{
@@ -2723,27 +2776,18 @@ init_irels(void)
 			return;
 		}
 
-		strat = (IndexStrategy) palloc(len);
+		strat = (IndexStrategy) MemoryContextAlloc(indexcxt, len);
 		if ((nread = FileRead(fd, (char *) strat, len)) != len)
 		{
 			write_irels();
 			return;
 		}
 
-		/* oh, for god's sake... */
-#define SMD(i)	strat->strategyMapData[i].entry[0]
+		/* have to invalidate any FmgrInfo data in the strategy maps */
+		nstrategies = am->amstrategies * relform->relnatts;
+		for (i = 0; i < nstrategies; i++)
+			strat->strategyMapData[i].entry[0].sk_func.fn_oid = InvalidOid;
 
-		/* have to reinit the function pointers in the strategy maps */
-		for (i = 0; i < am->amstrategies * relform->relnatts; i++)
-		{
-			fmgr_info(SMD(i).sk_procedure,
-					  &(SMD(i).sk_func));
-		}
-
-		/*
-		 * use a real field called rd_istrat instead of the bogosity of
-		 * hanging invisible fields off the end of a structure - jolly
-		 */
 		ird->rd_istrat = strat;
 
 		/* finally, read the vector of support procedures */
@@ -2753,13 +2797,18 @@ init_irels(void)
 			return;
 		}
 
-		support = (RegProcedure *) palloc(len);
+		support = (RegProcedure *) MemoryContextAlloc(indexcxt, len);
 		if ((nread = FileRead(fd, (char *) support, len)) != len)
 		{
 			write_irels();
 			return;
 		}
 		ird->rd_support = support;
+
+		nsupport = relform->relnatts * am->amsupport;
+		ird->rd_supportinfo = (FmgrInfo *)
+			MemoryContextAlloc(indexcxt, nsupport * sizeof(FmgrInfo));
+		MemSet(ird->rd_supportinfo, 0, nsupport * sizeof(FmgrInfo));
 
 		RelationInitLockInfo(ird);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.54 2001/08/14 22:21:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.55 2001/10/06 23:21:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,11 +121,21 @@ fmgr_lookupByName(const char *name)
  * will be allocated in that context.  The caller must ensure that this
  * context is at least as long-lived as the info struct itself.  This is
  * not a problem in typical cases where the info struct is on the stack or
- * in freshly-palloc'd space, but one must take extra care when the info
- * struct is in a long-lived table.
+ * in freshly-palloc'd space.  However, if one intends to store an info
+ * struct in a long-lived table, it's better to use fmgr_info_cxt.
  */
 void
 fmgr_info(Oid functionId, FmgrInfo *finfo)
+{
+	fmgr_info_cxt(functionId, finfo, CurrentMemoryContext);
+}
+
+/*
+ * Fill a FmgrInfo struct, specifying a memory context in which its
+ * subsidiary data should go.
+ */
+void
+fmgr_info_cxt(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt)
 {
 	const FmgrBuiltin *fbp;
 	HeapTuple	procedureTuple;
@@ -139,7 +149,7 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 	 */
 	finfo->fn_oid = InvalidOid;
 	finfo->fn_extra = NULL;
-	finfo->fn_mcxt = CurrentMemoryContext;
+	finfo->fn_mcxt = mcxt;
 
 	if ((fbp = fmgr_isbuiltin(functionId)) != NULL)
 	{
@@ -228,6 +238,7 @@ fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 				probinattr;
 	char	   *prosrcstring,
 			   *probinstring;
+	void	   *libraryhandle;
 	PGFunction	user_fn;
 	Pg_finfo_record *inforec;
 	Oldstyle_fnextra *fnextra;
@@ -250,22 +261,19 @@ fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 	probinstring = DatumGetCString(DirectFunctionCall1(textout, probinattr));
 
 	/* Look up the function itself */
-	user_fn = load_external_function(probinstring, prosrcstring, true);
+	user_fn = load_external_function(probinstring, prosrcstring, true,
+									 &libraryhandle);
 
 	/* Get the function information record (real or default) */
-	inforec = fetch_finfo_record(probinstring, prosrcstring);
+	inforec = fetch_finfo_record(libraryhandle, prosrcstring);
 
 	switch (inforec->api_version)
 	{
 		case 0:
 			/* Old style: need to use a handler */
 			finfo->fn_addr = fmgr_oldstyle;
-
-			/*
-			 * OK to use palloc here because fn_mcxt is
-			 * CurrentMemoryContext
-			 */
-			fnextra = (Oldstyle_fnextra *) palloc(sizeof(Oldstyle_fnextra));
+			fnextra = (Oldstyle_fnextra *)
+				MemoryContextAlloc(finfo->fn_mcxt, sizeof(Oldstyle_fnextra));
 			finfo->fn_extra = (void *) fnextra;
 			MemSet(fnextra, 0, sizeof(Oldstyle_fnextra));
 			fnextra->func = (func_ptr) user_fn;
@@ -335,6 +343,8 @@ fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 
 /*
  * Fetch and validate the information record for the given external function.
+ * The function is specified by a handle for the containing library
+ * (obtained from load_external_function) as well as the function name.
  *
  * If no info function exists for the given name, it is not an error.
  * Instead we return a default info record for a version-0 function.
@@ -346,7 +356,7 @@ fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
  * pg_proc.
  */
 Pg_finfo_record *
-fetch_finfo_record(char *filename, char *funcname)
+fetch_finfo_record(void *filehandle, char *funcname)
 {
 	char	   *infofuncname;
 	PGFInfoFunction infofunc;
@@ -355,12 +365,12 @@ fetch_finfo_record(char *filename, char *funcname)
 
 	/* Compute name of info func */
 	infofuncname = (char *) palloc(strlen(funcname) + 10);
-	sprintf(infofuncname, "pg_finfo_%s", funcname);
+	strcpy(infofuncname, "pg_finfo_");
+	strcat(infofuncname, funcname);
 
 	/* Try to look up the info function */
-	infofunc = (PGFInfoFunction) load_external_function(filename,
-														infofuncname,
-														false);
+	infofunc = (PGFInfoFunction) lookup_external_function(filehandle,
+														  infofuncname);
 	if (infofunc == (PGFInfoFunction) NULL)
 	{
 		/* Not found --- assume version 0 */
@@ -388,6 +398,34 @@ fetch_finfo_record(char *filename, char *funcname)
 
 	pfree(infofuncname);
 	return inforec;
+}
+
+
+/*
+ * Copy an FmgrInfo struct
+ *
+ * This is inherently somewhat bogus since we can't reliably duplicate
+ * language-dependent subsidiary info.  We cheat by zeroing fn_extra,
+ * instead, meaning that subsidiary info will have to be recomputed.
+ */
+void
+fmgr_info_copy(FmgrInfo *dstinfo, FmgrInfo *srcinfo,
+			   MemoryContext destcxt)
+{
+	memcpy(dstinfo, srcinfo, sizeof(FmgrInfo));
+	dstinfo->fn_mcxt = destcxt;
+	if (dstinfo->fn_addr == fmgr_oldstyle)
+	{
+		/* For oldstyle functions we must copy fn_extra */
+		Oldstyle_fnextra *fnextra;
+
+		fnextra = (Oldstyle_fnextra *)
+			MemoryContextAlloc(destcxt, sizeof(Oldstyle_fnextra));
+		memcpy(fnextra, srcinfo->fn_extra, sizeof(Oldstyle_fnextra));
+		dstinfo->fn_extra = (void *) fnextra;
+	}
+	else
+		dstinfo->fn_extra = NULL;
 }
 
 

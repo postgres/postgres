@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.60 2001/10/02 21:39:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.61 2001/10/06 23:21:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,11 +246,14 @@ ProcedureCreate(char *procedureName,
 
 	if (languageObjectId == ClanguageId)
 	{
+		void   *libraryhandle;
+
 		/* If link symbol is specified as "-", substitute procedure name */
 		if (strcmp(prosrc, "-") == 0)
 			prosrc = procedureName;
-		(void) load_external_function(probin, prosrc, true);
-		(void) fetch_finfo_record(probin, prosrc);
+		(void) load_external_function(probin, prosrc, true,
+									  &libraryhandle);
+		(void) fetch_finfo_record(libraryhandle, prosrc);
 	}
 
 	/*

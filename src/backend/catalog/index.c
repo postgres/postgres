@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.164 2001/09/26 21:09:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.165 2001/10/06 23:21:43 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -644,76 +644,6 @@ UpdateIndexRelation(Oid indexoid,
 	heap_freetuple(tuple);
 }
 
-/* ----------------------------------------------------------------
- *		InitIndexStrategy
- *
- * XXX this is essentially the same as relcache.c's
- * IndexedAccessMethodInitialize(), and probably ought to be merged with it.
- * ----------------------------------------------------------------
- */
-void
-InitIndexStrategy(int numatts,
-				  Relation indexRelation,
-				  Oid accessMethodObjectId)
-{
-	IndexStrategy strategy;
-	RegProcedure *support;
-	uint16		amstrategies;
-	uint16		amsupport;
-	Size		strsize;
-
-	/*
-	 * get information from the index relation descriptor
-	 */
-	amstrategies = indexRelation->rd_am->amstrategies;
-	amsupport = indexRelation->rd_am->amsupport;
-
-	/*
-	 * compute the size of the strategy array
-	 */
-	strsize = AttributeNumberGetIndexStrategySize(numatts, amstrategies);
-
-	/*
-	 * allocate the new index strategy structure
-	 *
-	 * the index strategy has to be allocated in the same context as the
-	 * relation descriptor cache or else it will be lost at the end of the
-	 * transaction.
-	 */
-	if (!CacheMemoryContext)
-		CreateCacheMemoryContext();
-
-	strategy = (IndexStrategy) MemoryContextAlloc(CacheMemoryContext,
-												  strsize);
-
-	if (amsupport > 0)
-	{
-		strsize = numatts * (amsupport * sizeof(RegProcedure));
-		support = (RegProcedure *) MemoryContextAlloc(CacheMemoryContext,
-													  strsize);
-	}
-	else
-		support = (RegProcedure *) NULL;
-
-	/*
-	 * fill in the index strategy structure with information from the
-	 * catalogs.  First we must advance the command counter so that we
-	 * will see the newly-entered index catalog tuples.
-	 */
-	CommandCounterIncrement();
-
-	IndexSupportInitialize(strategy, support,
-						   &indexRelation->rd_uniqueindex,
-						   RelationGetRelid(indexRelation),
-						   accessMethodObjectId,
-						   amstrategies, amsupport, numatts);
-
-	/*
-	 * store the strategy information in the index reldesc
-	 */
-	RelationSetIndexSupport(indexRelation, strategy, support);
-}
-
 
 /* ----------------------------------------------------------------
  *		index_create
@@ -839,11 +769,13 @@ index_create(char *heapRelationName,
 						classObjectId, primary);
 
 	/*
-	 * initialize the index strategy
+	 * fill in the index strategy structure with information from the
+	 * catalogs.  First we must advance the command counter so that we
+	 * will see the newly-entered index catalog tuples.
 	 */
-	InitIndexStrategy(indexInfo->ii_NumIndexAttrs,
-					  indexRelation,
-					  accessMethodObjectId);
+	CommandCounterIncrement();
+
+	RelationInitIndexAccessInfo(indexRelation);
 
 	/*
 	 * If this is bootstrap (initdb) time, then we don't actually fill in
@@ -1935,11 +1867,9 @@ reindex_index(Oid indexId, bool force, bool inplace)
 				heapRelation;
 	ScanKeyData entry;
 	HeapScanDesc scan;
-	HeapTuple	indexTuple,
-				classTuple;
+	HeapTuple	indexTuple;
 	IndexInfo  *indexInfo;
-	Oid			heapId,
-				accessMethodId;
+	Oid			heapId;
 	bool		old;
 
 	/*
@@ -1969,15 +1899,6 @@ reindex_index(Oid indexId, bool force, bool inplace)
 	/* Complete the scan and close pg_index */
 	heap_endscan(scan);
 	heap_close(indexRelation, AccessShareLock);
-
-	/* Fetch the classTuple associated with this index */
-	classTuple = SearchSysCache(RELOID,
-								ObjectIdGetDatum(indexId),
-								0, 0, 0);
-	if (!HeapTupleIsValid(classTuple))
-		elog(ERROR, "reindex_index: index %u not found in pg_class", indexId);
-	accessMethodId = ((Form_pg_class) GETSTRUCT(classTuple))->relam;
-	ReleaseSysCache(classTuple);
 
 	/* Open our index relation */
 	heapRelation = heap_open(heapId, ExclusiveLock);
@@ -2012,7 +1933,6 @@ reindex_index(Oid indexId, bool force, bool inplace)
 	}
 
 	/* Initialize the index and rebuild */
-	InitIndexStrategy(indexInfo->ii_NumIndexAttrs, iRel, accessMethodId);
 	index_build(heapRelation, iRel, indexInfo);
 
 	/*

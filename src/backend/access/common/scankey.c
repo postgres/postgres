@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/scankey.c,v 1.19 2001/06/01 02:41:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/scankey.c,v 1.20 2001/10/06 23:21:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,6 +66,34 @@ ScanKeyEntryInitialize(ScanKey entry,
 	entry->sk_procedure = procedure;
 	entry->sk_argument = argument;
 	fmgr_info(procedure, &entry->sk_func);
+
+	Assert(ScanKeyEntryIsLegal(entry));
+}
+
+/*
+ * ScanKeyEntryInitializeWithInfo
+ *		Initializes a scan key entry using an already-completed FmgrInfo
+ *		function lookup record.
+ *
+ * mcxt is the memory context holding the scan key; it'll be used for
+ * any subsidiary info attached to the scankey's FmgrInfo record.
+ */
+void
+ScanKeyEntryInitializeWithInfo(ScanKey entry,
+							   bits16 flags,
+							   AttrNumber attributeNumber,
+							   FmgrInfo *finfo,
+							   MemoryContext mcxt,
+							   Datum argument)
+{
+	Assert(PointerIsValid(entry));
+	Assert(RegProcedureIsValid(finfo->fn_oid));
+
+	entry->sk_flags = flags;
+	entry->sk_attno = attributeNumber;
+	entry->sk_procedure = finfo->fn_oid;
+	entry->sk_argument = argument;
+	fmgr_info_copy(&entry->sk_func, finfo, mcxt);
 
 	Assert(ScanKeyEntryIsLegal(entry));
 }

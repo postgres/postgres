@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.52 2001/07/15 22:48:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.53 2001/10/06 23:21:43 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -428,12 +428,58 @@ index_getprocid(Relation irel,
 {
 	RegProcedure *loc;
 	int			nproc;
+	int			procindex;
 
 	nproc = irel->rd_am->amsupport;
+
+	Assert(procnum > 0 && procnum <= (uint16) nproc);
+
+	procindex = (nproc * (attnum - 1)) + (procnum - 1);
 
 	loc = irel->rd_support;
 
 	Assert(loc != NULL);
 
-	return loc[(nproc * (attnum - 1)) + (procnum - 1)];
+	return loc[procindex];
+}
+
+/* ----------------
+ *		index_getprocinfo
+ *
+ *		This routine allows index AMs to keep fmgr lookup info for
+ *		support procs in the relcache.
+ * ----------------
+ */
+struct FmgrInfo *
+index_getprocinfo(Relation irel,
+				  AttrNumber attnum,
+				  uint16 procnum)
+{
+	FmgrInfo   *locinfo;
+	int			nproc;
+	int			procindex;
+
+	nproc = irel->rd_am->amsupport;
+
+	Assert(procnum > 0 && procnum <= (uint16) nproc);
+
+	procindex = (nproc * (attnum - 1)) + (procnum - 1);
+
+	locinfo = irel->rd_supportinfo;
+
+	Assert(locinfo != NULL);
+
+	locinfo += procindex;
+
+	/* Initialize the lookup info if first time through */
+	if (locinfo->fn_oid == InvalidOid)
+	{
+		RegProcedure *loc = irel->rd_support;
+
+		Assert(loc != NULL);
+
+		fmgr_info_cxt(loc[procindex], locinfo, irel->rd_indexcxt);
+	}
+
+	return locinfo;
 }

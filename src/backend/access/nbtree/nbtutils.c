@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.45 2001/05/17 14:59:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.46 2001/10/06 23:21:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 	TupleDesc	itupdesc;
 	int			natts;
 	int			i;
-	RegProcedure proc;
+	FmgrInfo   *procinfo;
 	Datum		arg;
 	bool		null;
 	bits16		flag;
@@ -48,14 +48,15 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 
 	for (i = 0; i < natts; i++)
 	{
-		proc = index_getprocid(rel, i + 1, BTORDER_PROC);
+		procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
 		arg = index_getattr(itup, i + 1, itupdesc, &null);
 		flag = null ? SK_ISNULL : 0x0;
-		ScanKeyEntryInitialize(&skey[i],
-							   flag,
-							   (AttrNumber) (i + 1),
-							   proc,
-							   arg);
+		ScanKeyEntryInitializeWithInfo(&skey[i],
+									   flag,
+									   (AttrNumber) (i + 1),
+									   procinfo,
+									   CurrentMemoryContext,
+									   arg);
 	}
 
 	return skey;
@@ -76,7 +77,7 @@ _bt_mkscankey_nodata(Relation rel)
 	ScanKey		skey;
 	int			natts;
 	int			i;
-	RegProcedure proc;
+	FmgrInfo   *procinfo;
 
 	natts = RelationGetNumberOfAttributes(rel);
 
@@ -84,12 +85,13 @@ _bt_mkscankey_nodata(Relation rel)
 
 	for (i = 0; i < natts; i++)
 	{
-		proc = index_getprocid(rel, i + 1, BTORDER_PROC);
-		ScanKeyEntryInitialize(&skey[i],
-							   SK_ISNULL,
-							   (AttrNumber) (i + 1),
-							   proc,
-							   (Datum) NULL);
+		procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
+		ScanKeyEntryInitializeWithInfo(&skey[i],
+									   SK_ISNULL,
+									   (AttrNumber) (i + 1),
+									   procinfo,
+									   CurrentMemoryContext,
+									   (Datum) 0);
 	}
 
 	return skey;

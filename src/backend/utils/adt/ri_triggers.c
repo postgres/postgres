@@ -18,7 +18,7 @@
  * Portions Copyright (c) 2000-2001, PostgreSQL Global Development Group
  * Copyright 1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.27 2001/10/05 17:28:12 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.28 2001/10/06 23:21:44 tgl Exp $
  *
  * ----------
  */
@@ -3243,7 +3243,6 @@ ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 	{
 		HeapTuple	opr_tup;
 		Oid			opr_proc;
-		MemoryContext	oldcontext;
 		FmgrInfo	finfo;
 
 		opr_tup = SearchSysCache(OPERNAME,
@@ -3265,9 +3264,7 @@ ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 		 * table entry, we must make sure any subsidiary structures of the
 		 * fmgr record are kept in TopMemoryContext.
 		 */
-		oldcontext = MemoryContextSwitchTo(TopMemoryContext);
-		fmgr_info(opr_proc, &finfo);
-		MemoryContextSwitchTo(oldcontext);
+		fmgr_info_cxt(opr_proc, &finfo, TopMemoryContext);
 
 		entry = (RI_OpreqHashEntry *) hash_search(ri_opreq_cache,
 												  (void *) &typeid,

@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.26 2001/02/22 21:48:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.27 2001/10/06 23:21:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/hash.h"
 #include "access/iqual.h"
 
@@ -27,8 +28,8 @@ _hash_mkscankey(Relation rel, IndexTuple itup, HashMetaPage metap)
 	int			natts;
 	AttrNumber	i;
 	Datum		arg;
-	RegProcedure proc;
-	bool		null;
+	FmgrInfo   *procinfo;
+	bool		isnull;
 
 	natts = rel->rd_rel->relnatts;
 	itupdesc = RelationGetDescr(rel);
@@ -37,10 +38,14 @@ _hash_mkscankey(Relation rel, IndexTuple itup, HashMetaPage metap)
 
 	for (i = 0; i < natts; i++)
 	{
-		arg = index_getattr(itup, i + 1, itupdesc, &null);
-		proc = metap->hashm_procid;
-		ScanKeyEntryInitialize(&skey[i],
-							   0x0, (AttrNumber) (i + 1), proc, arg);
+		arg = index_getattr(itup, i + 1, itupdesc, &isnull);
+		procinfo = index_getprocinfo(rel, i + 1, HASHPROC);
+		ScanKeyEntryInitializeWithInfo(&skey[i],
+									   0x0,
+									   (AttrNumber) (i + 1),
+									   procinfo,
+									   CurrentMemoryContext,
+									   arg);
 	}
 
 	return skey;
@@ -89,10 +94,13 @@ _hash_formitem(IndexTuple itup)
 Bucket
 _hash_call(Relation rel, HashMetaPage metap, Datum key)
 {
+	FmgrInfo   *procinfo;
 	uint32		n;
 	Bucket		bucket;
 
-	n = DatumGetUInt32(OidFunctionCall1(metap->hashm_procid, key));
+	/* XXX assumes index has only one attribute */
+	procinfo = index_getprocinfo(rel, 1, HASHPROC);
+	n = DatumGetUInt32(FunctionCall1(procinfo, key));
 	bucket = n & metap->hashm_highmask;
 	if (bucket > metap->hashm_maxbucket)
 		bucket = bucket & metap->hashm_lowmask;

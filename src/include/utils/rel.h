@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.51 2001/06/27 23:31:40 tgl Exp $
+ * $Id: rel.h,v 1.52 2001/10/06 23:21:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,8 +23,6 @@
 #include "storage/fd.h"
 #include "storage/relfilenode.h"
 
-/* added to prevent circular dependency.  bjm 1999/11/15 */
-extern char *get_temp_rel_by_physicalname(const char *relname);
 
 /*
  * LockRelId and LockInfo really belong to lmgr.h, but it's more convenient
@@ -115,7 +113,7 @@ typedef struct RelationData
 	bool		rd_isnailed;	/* rel is nailed in cache */
 	bool		rd_indexfound;	/* true if rd_indexlist is valid */
 	bool		rd_uniqueindex; /* true if rel is a UNIQUE index */
-	Form_pg_am	rd_am;			/* AM tuple */
+	Form_pg_am	rd_am;			/* AM tuple (if an index) */
 	Form_pg_class rd_rel;		/* RELATION tuple */
 	Oid			rd_id;			/* relation's object id */
 	List	   *rd_indexlist;	/* list of OIDs of indexes on relation */
@@ -123,10 +121,16 @@ typedef struct RelationData
 	TupleDesc	rd_att;			/* tuple descriptor */
 	RuleLock   *rd_rules;		/* rewrite rules */
 	MemoryContext rd_rulescxt;	/* private memory cxt for rd_rules, if any */
-	IndexStrategy rd_istrat;	/* info needed if rel is an index */
-	RegProcedure *rd_support;
 	TriggerDesc *trigdesc;		/* Trigger info, or NULL if rel has none */
 
+	/* index access support info (used only for an index relation) */
+	MemoryContext rd_indexcxt;	/* private memory cxt for this stuff */
+	IndexStrategy rd_istrat;	/* operator strategy map */
+	RegProcedure *rd_support;	/* OIDs of support procedures */
+	struct FmgrInfo *rd_supportinfo; /* lookup info for support procedures */
+	/* "struct FmgrInfo" avoids need to include fmgr.h here */
+
+	/* statistics collection area */
 	PgStat_Info	pgstat_info;
 } RelationData;
 
@@ -229,13 +233,6 @@ typedef Relation *RelationPtr;
 #define RelationGetIndexStrategy(relation) ((relation)->rd_istrat)
 
 /*
- * Routines in utils/cache/rel.c
- */
-extern void RelationSetIndexSupport(Relation relation,
-						IndexStrategy strategy,
-						RegProcedure *support);
-
-/*
  * Handle temp relations
  */
 #define PG_TEMP_REL_PREFIX "pg_temp"
@@ -279,5 +276,7 @@ extern void RelationSetIndexSupport(Relation relation,
 		RelationGetPhysicalRelationName(relation) \
 )
 
+/* added to prevent circular dependency.  bjm 1999/11/15 */
+extern char *get_temp_rel_by_physicalname(const char *relname);
 
 #endif	 /* REL_H */

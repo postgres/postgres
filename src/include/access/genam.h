@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.26 2001/07/15 22:48:18 tgl Exp $
+ * $Id: genam.h,v 1.27 2001/10/06 23:21:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,6 +56,8 @@ extern IndexBulkDeleteResult *index_bulk_delete(Relation relation,
 extern RegProcedure index_cost_estimator(Relation relation);
 extern RegProcedure index_getprocid(Relation irel, AttrNumber attnum,
 				uint16 procnum);
+extern struct FmgrInfo *index_getprocinfo(Relation irel, AttrNumber attnum,
+										  uint16 procnum);
 
 /* in genam.c */
 extern IndexScanDesc RelationGetIndexScan(Relation relation, bool scanFromEnd,
