@@ -916,6 +916,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 	int			id;
 	SocketClass *sock = self->sock;
 	int		maxlen;
+	BOOL		msg_truncated;
 
 	/* ERROR_MSG_LENGTH is suffcient */
 	static char msgbuffer[ERROR_MSG_LENGTH + 1];
@@ -1004,6 +1005,8 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 					self->errormsg = "No response from backend while receiving a portal query command";
 					mylog("send_query: 'C' - %s\n", self->errormsg);
 					CC_set_no_trans(self);
+					if (res)
+						QR_Destructor(res);
 					return NULL;
 				}
 				else
@@ -1018,7 +1021,8 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 					mylog("send_query: setting cmdbuffer = '%s'\n", cmdbuffer);
 
 					/* Only save the first command */
-					QR_set_status(res, PGRES_COMMAND_OK);
+					if (QR_command_successful(res))
+						QR_set_status(res, PGRES_COMMAND_OK);
 					QR_set_command(res, cmdbuffer);
 
 					/*
@@ -1049,11 +1053,16 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 								qlog("Command response: '%s'\n", cmdbuffer);
 								break;
 							case 'N':
-								SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
+								msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
+								if (QR_command_successful(res))
+									QR_set_status(res, PGRES_NONFATAL_ERROR);
+								QR_set_notice(res, cmdbuffer);	/* will dup this string */
 								qlog("NOTICE from backend during clear: '%s'\n", cmdbuffer);
+								while (msg_truncated)
+									msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
 								break;
 							case 'E':
-								SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
+								msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
 								qlog("ERROR from backend during clear: '%s'\n", cmdbuffer);
 
 								/*
@@ -1071,8 +1080,10 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 								}
 								else
 									self->errornumber = CONNECTION_SERVER_REPORTED_WARNING;
-								QR_set_status(res, PGRES_NONFATAL_ERROR);
+								QR_set_status(res, PGRES_FATAL_ERROR);
 								QR_set_aborted(res, TRUE);
+								while (msg_truncated)
+									msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
 								break;
 						}
 					}
@@ -1088,14 +1099,17 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 			case 'Z':			/* Backend is ready for new query (6.4) */
 				break;
 			case 'N':			/* NOTICE: */
-				SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
-
-				res = QR_Constructor();
-				QR_set_status(res, PGRES_NONFATAL_ERROR);
+				msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
+				if (!res)
+					res = QR_Constructor();
+				if (QR_command_successful(res))
+					QR_set_status(res, PGRES_NONFATAL_ERROR);
 				QR_set_notice(res, cmdbuffer);	/* will dup this string */
 
 				mylog("~~~ NOTICE: '%s'\n", cmdbuffer);
 				qlog("NOTICE from backend during send_query: '%s'\n", cmdbuffer);
+				while (msg_truncated)
+					msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
 
 				continue;		/* dont return a result -- continue
 								 * reading */
@@ -1107,20 +1121,22 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 				{
 					self->errornumber = CONNECTION_BACKEND_CRAZY;
 					self->errormsg = "Unexpected protocol character from backend (send_query - I)";
-					res = QR_Constructor();
+					if (!res)
+						res = QR_Constructor();
 					QR_set_status(res, PGRES_FATAL_ERROR);
 					return res;
 				}
 				else
 				{
 					/* We return the empty query */
-					res = QR_Constructor();
+					if (!res)
+						res = QR_Constructor();
 					QR_set_status(res, PGRES_EMPTY_QUERY);
 					return res;
 				}
 				break;
 			case 'E':
-				SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
+				msg_truncated = SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
 
 				/* Remove a newline */
 				if (msgbuffer[0] != '\0' && msgbuffer[strlen(msgbuffer) - 1] == '\n')
@@ -1132,20 +1148,22 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 				qlog("ERROR from backend during send_query: '%s'\n", self->errormsg);
 
 				/* We should report that an error occured. Zoltan */
-				res = QR_Constructor();
+				if (!res)
+					res = QR_Constructor();
 
 				if (!strncmp(self->errormsg, "FATAL", 5))
 				{
 					self->errornumber = CONNECTION_SERVER_REPORTED_ERROR;
 					CC_set_no_trans(self);
-					QR_set_status(res, PGRES_FATAL_ERROR);
 				}
 				else
 				{
 					self->errornumber = CONNECTION_SERVER_REPORTED_WARNING;
-					QR_set_status(res, PGRES_NONFATAL_ERROR);
 				}
+				QR_set_status(res, PGRES_FATAL_ERROR);
 				QR_set_aborted(res, TRUE);
+				while (msg_truncated)
+					msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
 
 				return res;		/* instead of NULL. Zoltan */
 
@@ -1188,12 +1206,16 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 
 				return result_in;
 			case 'D':			/* Copy in command began successfully */
-				res = QR_Constructor();
-				QR_set_status(res, PGRES_COPY_IN);
+				if (!res)
+					res = QR_Constructor();
+				if (QR_command_successful(res))
+					QR_set_status(res, PGRES_COPY_IN);
 				return res;
 			case 'B':			/* Copy out command began successfully */
-				res = QR_Constructor();
-				QR_set_status(res, PGRES_COPY_OUT);
+				if (!res)
+					res = QR_Constructor();
+				if (QR_command_successful(res))
+					QR_set_status(res, PGRES_COPY_OUT);
 				return res;
 			default:
 				self->errornumber = CONNECTION_BACKEND_CRAZY;
@@ -1201,6 +1223,8 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 				CC_set_no_trans(self);
 
 				mylog("send_query: error - %s\n", self->errormsg);
+				if (res)
+					QR_Destructor(res);
 				return NULL;
 		}
 	}

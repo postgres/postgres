@@ -195,17 +195,19 @@ SOCK_put_n_char(SocketClass *self, char *buffer, int len)
 /*
  *	bufsize must include room for the null terminator
  *	will read at most bufsize-1 characters + null.
+ *	returns TRUE if truncation occurs.
  */
-void
+BOOL
 SOCK_get_string(SocketClass *self, char *buffer, int bufsize)
 {
 	register int lf = 0;
 
 	for (lf = 0; lf < bufsize; lf++)
 		if (!(buffer[lf] = SOCK_get_next_byte(self)))
-			return;
+			return FALSE;
 
 	buffer[bufsize - 1] = '\0';
+	return TRUE;
 }
 
 

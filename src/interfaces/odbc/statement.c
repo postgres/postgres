@@ -652,6 +652,8 @@ SC_create_errormsg(StatementClass *self)
 			sprintf(&msg[pos], ";\n%s", sock->errormsg);
 		}
 	}
+	if (!msg[0] && res && QR_get_notice(res))
+		return QR_get_notice(res);
 
 	return msg;
 }
@@ -1044,14 +1046,11 @@ SC_execute(StatementClass *self)
 
 	if (self->errornumber == STMT_OK)
 		return SQL_SUCCESS;
-
+	else if (self->errornumber == STMT_INFO_ONLY)
+		return SQL_SUCCESS_WITH_INFO;
 	else
 	{
-		/* Modified, 2000-04-29, Zoltan */
-		if (self->errornumber == STMT_INFO_ONLY)
-			self->errormsg = "Error while executing the query (non-fatal)";
-		else
-			self->errormsg = "Unknown error";
+		self->errormsg = "Error while executing the query";
 		SC_log_error(func, "", self);
 		return SQL_ERROR;
 	}
