@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.77 2003/12/18 20:21:37 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.78 2004/03/02 18:56:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,4 +347,69 @@ ExecSupportsBackwardScan(Plan *node)
 		default:
 			return false;
 	}
+}
+
+/*
+ * ExecMayReturnRawTuples
+ *		Check whether a plan tree may return "raw" disk tuples (that is,
+ *		pointers to original data in disk buffers, as opposed to temporary
+ *		tuples constructed by projection steps).  In the case of Append,
+ *		some subplans may return raw tuples and others projected tuples;
+ *		we return "true" if any of the returned tuples could be raw.
+ *
+ * This must be passed an already-initialized planstate tree, because we
+ * need to look at the results of ExecAssignScanProjectionInfo().
+ */
+bool
+ExecMayReturnRawTuples(PlanState *node)
+{
+	/*
+	 * At a table scan node, we check whether ExecAssignScanProjectionInfo
+	 * decided to do projection or not.  Most non-scan nodes always project
+	 * and so we can return "false" immediately.  For nodes that don't
+	 * project but just pass up input tuples, we have to recursively
+	 * examine the input plan node.
+	 *
+	 * Note: Hash and Material are listed here because they sometimes
+	 * return an original input tuple, not a copy.  But Sort and SetOp
+	 * never return an original tuple, so they can be treated like
+	 * projecting nodes.
+	 */
+	switch (nodeTag(node))
+	{
+		/* Table scan nodes */
+		case T_SeqScanState:
+		case T_IndexScanState:
+		case T_TidScanState:
+		case T_SubqueryScanState:
+		case T_FunctionScanState:
+			if (node->ps_ProjInfo == NULL)
+				return true;
+			break;
+
+		/* Non-projecting nodes */
+		case T_HashState:
+		case T_MaterialState:
+		case T_UniqueState:
+		case T_LimitState:
+			return ExecMayReturnRawTuples(node->lefttree);
+
+		case T_AppendState:
+		{
+			AppendState *appendstate = (AppendState *) node;
+			int			j;
+
+			for (j = 0; j < appendstate->as_nplans; j++)
+			{
+				if (ExecMayReturnRawTuples(appendstate->appendplans[j]))
+					return true;
+			}
+			break;
+		}
+
+		/* All projecting node types come here */
+		default:
+			break;
+	}
+	return false;
 }

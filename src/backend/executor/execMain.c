@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.228 2004/01/22 02:23:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.229 2004/03/02 18:56:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -659,10 +659,10 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 	/*
 	 * Initialize the junk filter if needed.  SELECT and INSERT queries
 	 * need a filter if there are any junk attrs in the tlist.	INSERT and
-	 * SELECT INTO also need a filter if the top plan node is a scan node
-	 * that's not doing projection (else we'll be scribbling on the scan
-	 * tuple!)	UPDATE and DELETE always need a filter, since there's
-	 * always a junk 'ctid' attribute present --- no need to look first.
+	 * SELECT INTO also need a filter if the plan may return raw disk tuples
+	 * (else heap_insert will be scribbling on the source relation!).
+	 * UPDATE and DELETE always need a filter, since there's always a junk
+	 * 'ctid' attribute present --- no need to look first.
 	 */
 	{
 		bool		junk_filter_needed = false;
@@ -683,18 +683,9 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 					}
 				}
 				if (!junk_filter_needed &&
-					(operation == CMD_INSERT || do_select_into))
-				{
-					if (IsA(planstate, SeqScanState) ||
-						IsA(planstate, IndexScanState) ||
-						IsA(planstate, TidScanState) ||
-						IsA(planstate, SubqueryScanState) ||
-						IsA(planstate, FunctionScanState))
-					{
-						if (planstate->ps_ProjInfo == NULL)
-							junk_filter_needed = true;
-					}
-				}
+					(operation == CMD_INSERT || do_select_into) &&
+					ExecMayReturnRawTuples(planstate))
+					junk_filter_needed = true;
 				break;
 			case CMD_UPDATE:
 			case CMD_DELETE:
