@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.14 2004/05/07 00:24:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.15 2004/05/14 16:11:25 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -124,9 +124,9 @@ DefineOperator(List *names, List *parameters)
 		else if (pg_strcasecmp(defel->defname, "join") == 0)
 			joinName = defGetQualifiedName(defel);
 		else if (pg_strcasecmp(defel->defname, "hashes") == 0)
-			canHash = TRUE;
+			canHash = defGetBoolean(defel);
 		else if (pg_strcasecmp(defel->defname, "merges") == 0)
-			canMerge = TRUE;
+			canMerge = defGetBoolean(defel);
 		else if (pg_strcasecmp(defel->defname, "sort1") == 0)
 			leftSortName = defGetQualifiedName(defel);
 		else if (pg_strcasecmp(defel->defname, "sort2") == 0)

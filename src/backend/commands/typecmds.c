@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.55 2004/05/07 00:24:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.56 2004/05/14 16:11:25 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -176,7 +176,7 @@ DefineType(List *names, List *parameters)
 		else if (pg_strcasecmp(defel->defname, "default") == 0)
 			defaultValue = defGetString(defel);
 		else if (pg_strcasecmp(defel->defname, "passedbyvalue") == 0)
-			byValue = true;
+			byValue = defGetBoolean(defel);
 		else if (pg_strcasecmp(defel->defname, "alignment") == 0)
 		{
 			char	   *a = defGetString(defel);

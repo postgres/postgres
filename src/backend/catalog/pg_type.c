@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.93 2004/02/12 23:41:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.94 2004/05/14 16:11:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,7 +201,7 @@ TypeCreate(const char *typeName,
 		(internalSize <= 0 || internalSize > (int16) sizeof(Datum)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("invalid type internal size %d",
+				 errmsg("internal size %d is invalid for passed-by-value type",
 						internalSize)));
 
 	/* Only varlena types can be toasted */
