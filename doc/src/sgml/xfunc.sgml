@@ -369,8 +369,8 @@ WARN::function declared to return type EMP does not retrieve (EMP.*)
     has the same name as the C source function the first form of the
     statement is used. The string argument in the AS clause is the
     full pathname of the file that contains the dynamically loadable
-    compiled object.  If the name of C function is different from the
-    name of the SQL function, then the second form is used. In this
+    compiled object.  If the name of the C function is different from the
+    desired name of the SQL function, then the second form is used. In this
     form the AS clause takes two string arguments, the first is the
     full pathname of the dynamically loadable object file, and the
     second is the link symbol that the dynamic loader should search
@@ -392,7 +392,7 @@ WARN::function declared to return type EMP does not retrieve (EMP.*)
     code file for the function, bracketed by quotation marks.  If a
     link symbol is used in the AS clause, the link symbol should also be
     bracketed by single quotation marks, and should be exactly the
-    same as the name of function in the C source code. On UNIX systems
+    same as the name of the function in the C source code. On UNIX systems
     the command <command>nm</command> will print all of the link
     symbols in a dynamically loadable object.
     (<productname>Postgres</productname> will not compile a function
@@ -991,7 +991,7 @@ memmove(destination-&gt;data, buffer, 40);
     </para>
 
     <sect3>
-     <title>Pre-v6.5</title>
+     <title>Pre-v6.6</title>
 
      <para>
       For functions written in C, the SQL name declared in
@@ -1029,7 +1029,9 @@ memmove(destination-&gt;data, buffer, 40);
       they can be declared with the same SQL names (as long as their
       argument types differ, of course).  This way avoids the overhead of
       an SQL wrapper function, at the cost of more effort to prepare a
-      custom backend executable.
+      custom backend executable.  (This option is only available in version
+      6.5 and later, since prior versions required internal functions to
+      have the same name in SQL as in the C code.)
      </para>
     </sect3>
    </sect2>

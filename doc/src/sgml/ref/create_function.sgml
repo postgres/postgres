@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.10 1999/09/28 04:34:39 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.11 1999/10/02 21:27:49 tgl Exp $
 Postgres documentation
 -->
 
@@ -20,19 +20,21 @@ Postgres documentation
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-07-20</date>
+   <date>1999-10-02</date>
   </refsynopsisdivinfo>
   <synopsis>
 CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">ftype</replaceable> [, ...] ] )
     RETURNS <replaceable class="parameter">rtype</replaceable>
+    [ WITH ( <replaceable class="parameter">attribute</replaceable> [, ...] ) ]
     AS <replaceable class="parameter">definition</replaceable>   
     LANGUAGE '<replaceable class="parameter">langname</replaceable>'
 
 
 CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">ftype</replaceable> [, ...] ] )
     RETURNS <replaceable class="parameter">rtype</replaceable>
+    [ WITH ( <replaceable class="parameter">attribute</replaceable> [, ...] ) ]
     AS <replaceable class="parameter">obj_file</replaceable> , <replaceable class="parameter">link_symbol</replaceable>  
-    LANGUAGE 'c'
+    LANGUAGE 'C'
   </synopsis>
   
   <refsect2 id="R2-SQL-CREATEFUNCTION-1">
@@ -80,6 +82,22 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
       </listitem>
      </varlistentry>
      <varlistentry>
+      <term><replaceable class="parameter">attribute</replaceable></term>
+      <listitem>
+       <para>
+        An optional piece of information about the function, used for
+	optimization.  The only attribute currently supported is
+	<literal>iscachable</literal>.
+	<literal>iscachable</literal> indicates that the function always
+	returns the same result when given the same input values (i.e.,
+	it does not do database lookups or otherwise use information not
+	directly present in its parameter list).  The optimizer uses
+	<literal>iscachable</literal> to know whether it is safe to
+	pre-evaluate a call of the function.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
       <term><replaceable class="parameter">definition</replaceable></term>
       <listitem>
        <para>
@@ -113,8 +131,7 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
 	'<literal>internal</literal>'
 	or '<replaceable class="parameter">plname</replaceable>',
 	where '<replaceable class="parameter">plname</replaceable>'
-	is the name of a created procedural
-	language. See
+	is the name of a created procedural language. See
 	<xref linkend="sql-createlanguage-title" endterm="sql-createlanguage-title">
 	for details.
        </para>
