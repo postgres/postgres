@@ -227,7 +227,7 @@
    <listitem>
     <para>
      Additional <acronym>SQL92</acronym>-compliant language features have been added,
-     including primary keys, quoted identifiers, literal string type coersion, 
+     including primary keys, quoted identifiers, literal string type coercion,
      type casting, and binary and hexadecimal integer input.
     </para>
    </listitem>

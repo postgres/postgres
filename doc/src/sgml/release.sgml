@@ -414,7 +414,7 @@ Fix bug in pg_dump -z
 Memory overrun cleanups(Tatsuo)
 Fix for lo_import crash(Tatsuo)
 Adjust handling of data type names to suppress double quotes(Thomas)
-Use type coersion for matching columns and DEFAULT(Thomas)
+Use type coercion for matching columns and DEFAULT(Thomas)
 Fix deadlock so it only checks once after one second of sleep(Bruce)
 Fixes for aggregates and PL/pgsql(Hiroshi)
 Fix for subquery crash(Vadim)
@@ -475,7 +475,7 @@ EXPLAIN all indices used(Tom)
 Implement CASE, COALESCE, NULLIF  expression(Thomas)
 New pg_dump table output format(Constantin)
 Add string min()/max() functions(Thomas)
-Extend new type coersion techniques to aggregates(Thomas)
+Extend new type coercion techniques to aggregates(Thomas)
 New moddatetime contrib(Terry)
 Update to pgaccess 0.96(Constantin)
 Add routines for single-byte "char" type(Thomas)
@@ -672,7 +672,7 @@ Fix for lo_import() crash(Bruce)
 Better search for install program(Tom)
 Timezone fixes(Tom)
 HPUX fixes(Tom)
-Use implicit type coersion for matching DEFAULT values(Thomas)
+Use implicit type coercion for matching DEFAULT values(Thomas)
 Add routines to help with single-byte (internal) character type(Thomas)
 Compilation of libpq for Win32 fixes(Magnus)
 Upgrade to PyGreSQL 2.2(D'Arcy)
@@ -734,7 +734,7 @@ asynchronous messages and interrupts thanks to Tom Lane.
 
 <listitem>
 <para>
-The parser will now perform automatic type coersion to match arguments
+The parser will now perform automatic type coercion to match arguments
 to available operators and functions, and to match columns and expressions
 with target columns. This uses a generic mechanism which supports
 the type extensibility features of <productname>Postgres</productname>.

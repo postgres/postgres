@@ -14,7 +14,7 @@ to understand the details of the type conversion mechanism.
 However, the implicit conversions done by <productname>Postgres</productname>
 can affect the apparent results of a query, and these results
 can be tailored by a user or programmer
-using <emphasis>explicit</emphasis> type coersion.
+using <emphasis>explicit</emphasis> type coercion.
 </para>
 
 <para>
@@ -26,7 +26,7 @@ for more information on specific data types and allowed functions and operators.
 
 <para>
 The Programmer's Guide has more details on the exact algorithms used for
-implicit type conversion and coersion.
+implicit type conversion and coercion.
 </para>
 
 <sect1>
@@ -163,14 +163,14 @@ All type conversion rules are designed with several principles in mind:
 <itemizedlist mark="bullet" spacing="compact">
 <listitem>
 <para>
-Implicit conversions should never have suprising or unpredictable outcomes.
+Implicit conversions should never have surprising or unpredictable outcomes.
 </para>
 </listitem>
 
 <listitem>
 <para>
-User-defined types, of which the parser has no apriori knowledge, should be
-"higher" in the type heirarchy. In mixed-type expressions, native types shall always
+User-defined types, of which the parser has no a-priori knowledge, should be
+"higher" in the type hierarchy. In mixed-type expressions, native types shall always
 be converted to a user-defined type (of course, only if conversion is necessary).
 </para>
 </listitem>
