@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.171 2001/07/31 02:14:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.172 2001/08/03 22:11:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -697,16 +697,16 @@ update_db_info(PGconn *conn)
 static int
 connectMakeNonblocking(PGconn *conn)
 {
-#ifdef WIN32
+#if defined(WIN32) || defined(__BEOS__)
 	int			on = 1;
+#endif
 
+#if defined(WIN32)
 	if (ioctlsocket(conn->sock, FIONBIO, &on) != 0)
 #elif defined(__BEOS__)
-		int			on = 1;
-
 	if (ioctl(conn->sock, FIONBIO, &on) != 0)
 #else
-	if			(fcntl(conn->sock, F_SETFL, O_NONBLOCK) < 0)
+	if (fcntl(conn->sock, F_SETFL, O_NONBLOCK) < 0)
 #endif
 	{
 		printfPQExpBuffer(&conn->errorMessage,
@@ -1194,6 +1194,8 @@ keep_going:						/* We will come back to here until there
 		case CONNECTION_STARTED:
 			{
 				ACCEPT_TYPE_ARG3 laddrlen;
+				int			optval;
+				ACCEPT_TYPE_ARG3 optlen = sizeof(optval);
 
 				/*
 				 * Write ready, since we've made it here, so the
@@ -1205,10 +1207,6 @@ keep_going:						/* We will come back to here until there
 				 * state waiting for us on the socket.
 				 */
 
-#ifndef WIN32
-				int   optval;
-				ACCEPT_TYPE_ARG3 optlen = sizeof(optval);
-
 				if (getsockopt(conn->sock, SOL_SOCKET, SO_ERROR,
 							   (char *) &optval, &optlen) == -1)
 				{
@@ -1217,23 +1215,8 @@ keep_going:						/* We will come back to here until there
 									  strerror(errno));
 					goto error_return;
 				}
-#else
-				char far  optval[8];
-				ACCEPT_TYPE_ARG3 optlen = sizeof(optval);
-			
-				int OptResult=getsockopt(conn->sock, SOL_SOCKET, SO_ERROR,optval, &optlen);
-				if (OptResult==SOCKET_ERROR)
-				{
-					printfPQExpBuffer(&conn->errorMessage,
-							"PQconnectPoll() -- getsockopt() failed: "
-							"errno=%i\n", errno);
-					connectFailureMessage(conn, OptResult);
-					goto error_return;
-				}
-#endif
 				else if (optval != 0)
 				{
-
 					/*
 					 * When using a nonblocking connect, we will typically
 					 * see connect failures at this point, so provide a

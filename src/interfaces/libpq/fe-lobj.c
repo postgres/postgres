@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.35 2001/07/15 13:45:04 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.36 2001/08/03 22:11:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,11 @@
 #endif
 
 #include "libpq/libpq-fs.h"		/* must come after sys/stat.h */
+
+
+#ifdef WIN32					/* need to use normal errno in this file */
+#undef errno
+#endif
 
 
 #define LO_BUFSIZE		  8192

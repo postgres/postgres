@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.104 2001/07/20 17:45:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.105 2001/08/03 22:11:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2037,6 +2037,10 @@ PQoidStatus(const PGresult *res)
 	return buf;
 }
 
+#ifdef WIN32					/* need to get at normal errno here */
+#undef errno
+#endif
+
 /*
   PQoidValue -
 		a perhaps preferable form of the above which just returns
@@ -2051,11 +2055,7 @@ PQoidValue(const PGresult *res)
 	if (!res || !res->cmdStatus || strncmp(res->cmdStatus, "INSERT ", 7) != 0)
 		return InvalidOid;
 
-#ifdef WIN32
-	WSASetLastError(0);
-#else
 	errno = 0;
-#endif
 	result = strtoul(res->cmdStatus + 7, &endptr, 10);
 
 	if (!endptr || (*endptr != ' ' && *endptr != '\0') || errno == ERANGE)
@@ -2063,6 +2063,10 @@ PQoidValue(const PGresult *res)
 	else
 		return (Oid) result;
 }
+
+#ifdef WIN32					/* back to socket errno */
+#define errno WSAGetLastError()
+#endif
 
 /*
    PQcmdTuples -
