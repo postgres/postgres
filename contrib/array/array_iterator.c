@@ -361,7 +361,41 @@ array_all_oidne(ArrayType *array, Oid value)
 						  array, (Datum) value);
 }
 
-/* end of file */
+int32
+array_ineteq(ArrayType *array, Oid value)
+{
+	return array_iterator((Oid) 869,	/* inet */
+						  (Oid) 920,	/* network_eq */
+						  0,	/* logical or */
+						  array, (Datum) value);
+}
+
+int32
+array_all_ineteq(ArrayType *array, Oid value)
+{
+	return array_iterator((Oid) 869,	/* inet */
+						  (Oid) 920,	/* network_eq */
+						  1,	/* logical and */
+						  array, (Datum) value);
+}
+
+int32
+array_inetne(ArrayType *array, Oid value)
+{
+	return array_iterator((Oid) 869,	/* inet */
+						  (Oid) 925,	/* network_ne */
+						  0,	/* logical and */
+						  array, (Datum) value);
+}
+
+int32
+array_all_inetne(ArrayType *array, Oid value)
+{
+	return array_iterator((Oid) 869,	/* inet */
+						  (Oid) 925,	/* network_ne */
+						  1,	/* logical and */
+						  array, (Datum) value);
+}
 
 /*
  * Local Variables:
