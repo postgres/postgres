@@ -11,18 +11,19 @@
 #
 # MAPNAME  IDENT-USERNAME  PG-USERNAME
 #
-# (The uppercase quantities should be replaced by actual values.)
+# (The uppercase quantities must be replaced by actual values.)
+#
 # MAPNAME is the (otherwise freely chosen) map name that was used in
 # pg_hba.conf.  IDENT-USERNAME is the detected user name of the
-# client.  PG-USERNAME is the request PostgreSQL user name.  The
+# client.  PG-USERNAME is the requested PostgreSQL user name.  The
 # existence of a record specifies that IDENT-USERNAME may connect as
 # PG-USERNAME.  Multiple maps may be specified in this file and used
 # by pg_hba.conf.
 #
 # This file is read on server startup and when the postmaster receives
 # a SIGHUP signal.  If you edit the file on a running system, you have
-# to SIGHUP the postmaster for the changes to take effect, or use
-# "pg_ctl reload".
+# to SIGHUP the postmaster for the changes to take effect.  You can use
+# "pg_ctl reload" to do that.
 
 # Put your actual configuration here
 # ----------------------------------
