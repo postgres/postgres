@@ -155,9 +155,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	 */
 	public String getString(int columnIndex) throws SQLException
 	{
-		if (columnIndex < 1 || columnIndex > fields.length)
-			throw new PSQLException("postgresql.res.colrange");
-
+		checkResultSet( columnIndex );
 		wasNullFlag = (this_row[columnIndex - 1] == null);
 		if (wasNullFlag)
 			return null;
@@ -388,9 +386,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	 */
 	public byte[] getBytes(int columnIndex) throws SQLException
 	{
-		if (columnIndex < 1 || columnIndex > fields.length)
-			throw new PSQLException("postgresql.res.colrange");
-
+		checkResultSet( columnIndex );
 		wasNullFlag = (this_row[columnIndex - 1] == null);
 		if (!wasNullFlag)
 		{
@@ -623,6 +619,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	 */
 	public InputStream getAsciiStream(int columnIndex) throws SQLException
 	{
+		checkResultSet( columnIndex );
 		wasNullFlag = (this_row[columnIndex - 1] == null);
 		if (wasNullFlag)
 			return null;
@@ -665,6 +662,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	 */
 	public InputStream getUnicodeStream(int columnIndex) throws SQLException
 	{
+		checkResultSet( columnIndex );
 		wasNullFlag = (this_row[columnIndex - 1] == null);
 		if (wasNullFlag)
 			return null;
@@ -707,6 +705,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	 */
 	public InputStream getBinaryStream(int columnIndex) throws SQLException
 	{
+		checkResultSet( columnIndex );
 		wasNullFlag = (this_row[columnIndex - 1] == null);
 		if (wasNullFlag)
 			return null;

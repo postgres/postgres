@@ -255,5 +255,10 @@ public abstract class ResultSet
 	    else
 		this.warnings = warnings;
 	}
+	protected void checkResultSet( int column ) throws SQLException
+	{
+		if ( this_row == null ) throw new PSQLException("postgresql.res.nextrequired");
+		if ( column < 1 || column > fields.length ) throw new PSQLException("postgresql.res.colrange" );
+	}
 }
 
