@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.9 1997/01/01 06:01:03 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.10 1997/01/23 05:59:47 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -496,10 +496,6 @@ heap_open(Oid relationId)
     
     r = (Relation) RelationIdGetRelation(relationId);
 
-    if(RelationIsValid(r) && r->rd_istemp) {
-        r->rd_tmpunlinked = FALSE; /* now we can unlink it */
-    }
-    
     if (RelationIsValid(r) && r->rd_rel->relkind == RELKIND_INDEX) {
 	elog(WARN, "%s is an index relation", r->rd_rel->relname.data);
     }
@@ -528,10 +524,6 @@ heap_openr(char *relationName)
     
     r = RelationNameGetRelation(relationName);
     
-    if(RelationIsValid(r) && r->rd_istemp) {
-        r->rd_tmpunlinked = FALSE; /* now we can unlink it */
-    }
-
     if (RelationIsValid(r) && r->rd_rel->relkind == RELKIND_INDEX) {
 	elog(WARN, "%s is an index relation", r->rd_rel->relname.data);
     }
