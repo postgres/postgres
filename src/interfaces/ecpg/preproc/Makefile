@@ -4,10 +4,11 @@
 #
 # Copyright (c) 1998-2002, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.108 2004/10/04 13:43:58 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.109 2004/10/05 19:30:25 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
+PGFILEDESC = "ecpg - embedded SQL precompiler for C"
 subdir = src/interfaces/ecpg/preproc
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
@@ -25,8 +26,9 @@ override CFLAGS += -Wno-error
 endif
 override CFLAGS += $(PTHREAD_CFLAGS)
 
-OBJS=	preproc.o type.o ecpg.o ecpg_keywords.o output.o\
-	keywords.o c_keywords.o ../ecpglib/typename.o descriptor.o variable.o
+OBJS=	preproc.o type.o ecpg.o ecpg_keywords.o output.o \
+	keywords.o c_keywords.o ../ecpglib/typename.o descriptor.o variable.o \
+	$(WIN32RES)
 
 all: submake-libpgport ecpg
 

@@ -4,17 +4,18 @@
 #
 # Copyright (c) 1998-2002, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/bin/pg_resetxlog/Makefile,v 1.12 2004/10/04 13:43:57 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/pg_resetxlog/Makefile,v 1.13 2004/10/05 19:30:23 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
+PGFILEDESC = "pg_resetxlog - reset PostgreSQL WAL log"
 subdir = src/bin/pg_resetxlog
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS += -DFRONTEND
 
-OBJS= pg_resetxlog.o pg_crc.o
+OBJS= pg_resetxlog.o pg_crc.o $(WIN32RES)
 
 all: submake-libpgport pg_resetxlog
 

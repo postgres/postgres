@@ -5,10 +5,11 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/pg_dump/Makefile,v 1.55 2004/10/04 20:32:58 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/pg_dump/Makefile,v 1.56 2004/10/05 19:30:23 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
+PGFILEDESC = "pg_dump/pg_restore/pg_dumpall - backup and restore PostgreSQL databases"
 subdir = src/bin/pg_dump
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
@@ -17,7 +18,7 @@ override CPPFLAGS := -DFRONTEND -I$(libpq_srcdir) $(CPPFLAGS)
 
 OBJS=	pg_backup_archiver.o pg_backup_db.o pg_backup_custom.o \
 	pg_backup_files.o pg_backup_null.o pg_backup_tar.o \
-	dumputils.o
+	dumputils.o $(WIN32RES)
 
 EXTRA_OBJS = $(top_builddir)/src/backend/parser/keywords.o
 
@@ -35,7 +36,7 @@ pg_restore: pg_restore.o $(OBJS) $(libpq_builddir)/libpq.a
 	$(CC) $(CFLAGS) pg_restore.o $(OBJS) $(EXTRA_OBJS) $(libpq) $(LDFLAGS) $(LIBS) -o $@$(X)
 
 pg_dumpall: pg_dumpall.o dumputils.o $(libpq_builddir)/libpq.a
-	$(CC) $(CFLAGS) pg_dumpall.o dumputils.o $(EXTRA_OBJS) $(libpq) $(LDFLAGS) $(LIBS) -o $@$(X)
+	$(CC) $(CFLAGS) pg_dumpall.o dumputils.o $(EXTRA_OBJS) $(WIN32RES) $(libpq) $(LDFLAGS) $(LIBS) -o $@$(X)
 
 .PHONY: submake-backend
 submake-backend:

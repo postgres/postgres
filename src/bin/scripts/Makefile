@@ -5,10 +5,11 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/scripts/Makefile,v 1.30 2004/10/04 18:05:55 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/Makefile,v 1.31 2004/10/05 19:30:25 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
+PGFILEDESC = "PostgreSQL utility"
 subdir = src/bin/scripts
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
@@ -19,7 +20,7 @@ override CPPFLAGS := -DFRONTEND -I$(top_srcdir)/src/bin/pg_dump -I$(top_srcdir)/
 
 all: submake-libpq submake-backend $(PROGRAMS)
 
-%: %.o
+%: %.o $(WIN32RES)
 	$(CC) $(CFLAGS) $^ $(libpq) $(LDFLAGS) $(LIBS) -o $@$(X)
 
 createdb: createdb.o common.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
@@ -61,5 +62,5 @@ uninstall:
 
 clean distclean maintainer-clean:
 	rm -f $(addsuffix $(X), $(PROGRAMS)) $(addsuffix .o, $(PROGRAMS))
-	rm -f common.o dumputils.o print.o mbprint.o
+	rm -f common.o dumputils.o print.o mbprint.o $(WIN32RES)
 	rm -f dumputils.c print.c mbprint.c

@@ -1,0 +1,31 @@
+#include <winver.h>
+#include "pg_config.h"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION    7,4,999,999
+ PRODUCTVERSION 7,4,999,999
+ FILEFLAGSMASK  0x17L
+ FILEFLAGS      0x0L
+ FILEOS         VOS_NT_WINDOWS32
+ FILETYPE	VFT_APP
+ FILESUBTYPE    0x0L
+BEGIN
+ BLOCK "StringFileInfo"
+ BEGIN
+  BLOCK "000004b0"
+  BEGIN
+   VALUE "CompanyName",      "PostgreSQL Global Development Group"
+   VALUE "FileDescription",  FILEDESC
+   VALUE "FileVersion",      PG_VERSION
+   VALUE "LegalCopyright", "Portions Copyright (C) 1996-2004 PostgreSQL Global Development Group. Portions Copyright (C) 1994, Regents of the University of California."
+   VALUE "ProductName",      "PostgreSQL"
+   VALUE "ProductVersion",   PG_VERSION
+  END
+ END
+ BLOCK "VarFileInfo"
+ BEGIN
+  VALUE "Translation", 0x0, 1200
+ END
+END
+
+_ICO_
