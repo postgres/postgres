@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.25 2000/11/30 01:47:32 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.26 2000/12/03 14:36:46 petere Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -207,8 +207,8 @@ ConfigureNamesBool[] =
 	{"debug_deadlocks",         PGC_SUSET,      &Debug_deadlocks,       false},
 #endif
 
-	{"hostlookup",              PGC_SIGHUP,     &HostnameLookup,        false},
-	{"showportnumber",          PGC_SIGHUP,     &ShowPortNumber,        false},
+	{"hostname_lookup",         PGC_SIGHUP,     &HostnameLookup,        false},
+	{"show_source_port",        PGC_SIGHUP,     &ShowPortNumber,        false},
 
 	{"sql_inheritance",         PGC_USERSET,    &SQL_inheritance,       true},
 
@@ -219,7 +219,7 @@ ConfigureNamesBool[] =
 static struct config_int
 ConfigureNamesInt[] =
 {
-	{"geqo_rels",               PGC_USERSET,            &geqo_rels,
+	{"geqo_threshold",          PGC_USERSET,            &geqo_rels,
 	 DEFAULT_GEQO_RELS, 2, INT_MAX},
 	{"geqo_pool_size",          PGC_USERSET,            &Geqo_pool_size,
 	 DEFAULT_GEQO_POOL_SIZE, 0, MAX_GEQO_POOL_SIZE},

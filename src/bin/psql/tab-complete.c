@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.22 2000/10/25 20:36:52 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.23 2000/12/03 14:36:47 petere Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -201,6 +201,7 @@ psql_completion(char *text, int start, int end)
 		/* these SET arguments are known in gram.y */
 		"CONSTRAINTS",
 		"NAMES",
+		"SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL",
 		"TRANSACTION ISOLATION LEVEL",
 		/* these are treated in backend/commands/variable.c */
 		"DateStyle",
@@ -208,9 +209,7 @@ psql_completion(char *text, int start, int end)
 		"client_encoding",
 		"server_encoding",
 		"random_seed",
-		/* the rest should match USERSET and SUSET entries in
-		 * backend/utils/misc/guc.c, but feel free to leave out the
-		 * esoteric or debug settings */
+		/* the rest should match USERSET entries in backend/utils/misc/guc.c */
 		"enable_seqscan",
 		"enable_indexscan",
 		"enable_tidscan",
@@ -220,15 +219,36 @@ psql_completion(char *text, int start, int end)
 		"enable_hashjoin",
 		"geqo",
 		"ksqo",
+		"fsync",
+		"debug_assertions",
+		"debug_print_query",
+		"debug_print_parse",
+		"debug_print_rewritten",
+		"debug_print_plan",
+		"debug_pretty_print",
+		"show_parser_stats",
+		"show_planner_stats",
+		"show_executor_stats",
+		"show_query_stats",
+		"trace_notify",
 		"sql_inheritance",
+
+		"geqo_threshold",
+		"geqo_pool_size",
+		"geqo_effort",
+		"geqo_generations",
+		"geqo_random_seed",
 		"sort_mem",
 		"debug_level",
 		"max_expr_depth",
+		"commit_delay",
+
 		"effective_cache_size",
 		"random_page_cost",
 		"cpu_tuple_cost",
 		"cpu_index_tuple_cost",
 		"cpu_operator_cost",
+		"geqo_selection_bias",
 		NULL
 	};
 
@@ -592,7 +612,7 @@ psql_completion(char *text, int start, int end)
 			 strcasecmp(prev2_wd, "TRANSACTION") == 0 &&
 			 strcasecmp(prev_wd, "ISOLATION") == 0)
 		COMPLETE_WITH_CONST("LEVEL");
-	else if (strcasecmp(prev4_wd, "SET") == 0 &&
+	else if ((strcasecmp(prev4_wd, "SET") == 0 || strcasecmp(prev4_wd, "AS") == 0) &&
 			 strcasecmp(prev3_wd, "TRANSACTION") == 0 &&
 			 strcasecmp(prev2_wd, "ISOLATION") == 0 &&
 			 strcasecmp(prev_wd, "LEVEL") == 0)

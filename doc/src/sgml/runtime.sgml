@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.40 2000/11/30 23:20:50 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.41 2000/12/03 14:36:45 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -638,7 +638,7 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
-      <term>GEQO_RELS (<type>integer</type>)</term>
+      <term>GEQO_THRESHOLD (<type>integer</type>)</term>
       <listitem>
        <para>
         Only use genetic query optimization for queries with at least
@@ -751,7 +751,7 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
-      <term>HOSTLOOKUP (<type>boolean</type>)</term>
+      <term>HOSTNAME_LOOKUP (<type>boolean</type>)</term>
       <listitem>
        <para>
         By default, connection logs only show the IP address of the
@@ -811,14 +811,14 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
-      <term>SHOWPORTNUMBER (<type>boolean</type>)</term>
+      <term>SHOW_SOURCE_PORT (<type>boolean</type>)</term>
       <listitem>
        <para>
-        Shows the port number of the connecting host in the connection
-        log messages. You could trace back the port number to find out
-        what user initiated the connection. Other than that it's
-        pretty useless and therefore off by default. This option can
-        only be set at server start.
+        Shows the outgoing port number of the connecting host in the
+        connection log messages. You could trace back the port number
+        to find out what user initiated the connection. Other than
+        that it's pretty useless and therefore off by default. This
+        option can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -1015,12 +1015,12 @@ env PGOPTIONS='-c geqo=off' psql
       <term>SILENT_MODE (<type>bool</type>)</term>
       <listitem>
        <para>
-	    Runs postmaster silently. If this option is set, postmaser
+        Runs postmaster silently. If this option is set, postmaster
         will automatically run in background and any controlling ttys
-        are disassociated, thus no message is put to stdout or
-        stderr(same effect as postmaster's -S option). Unless some
-        logging systems such as syslog is enabled, using this option
-        is discouraged since it makes difficult to find error
+        are disassociated, thus no messages are written to stdout or
+        stderr (same effect as postmaster's -S option). Unless some
+        logging system such as syslog is enabled, using this option is
+        discouraged since it makes it impossible to see error
         messages.
        </para>
       </listitem>
