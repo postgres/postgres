@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.121 2002/06/20 20:29:42 momjian Exp $
+ * $Id: c.h,v 1.122 2002/08/21 17:20:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,6 +60,7 @@
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
+#include <sys/types.h>
 
 #ifdef __CYGWIN__
 #include <errno.h>
