@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.22 1999/02/15 02:04:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.23 1999/02/15 03:22:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,20 +31,15 @@ bool		_use_right_sided_plans_ = false;
 
 #endif
 
-static List *find_clause_joins(Query *root, RelOptInfo *outer_rel, List *joininfo_list);
-static List *find_clauseless_joins(RelOptInfo *outer_rel, List *inner_rels);
-static RelOptInfo *init_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo * joininfo);
-static List *new_join_tlist(List *tlist, List *other_relids,
-			   int first_resdomno);
 static List *new_joininfo_list(List *joininfo_list, List *join_relids);
 static void add_superrels(RelOptInfo *rel, RelOptInfo *super_rel);
 static bool nonoverlap_rels(RelOptInfo *rel1, RelOptInfo *rel2);
 static bool nonoverlap_sets(List *s1, List *s2);
 static void set_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel, RelOptInfo *inner_rel,
-				 JoinInfo * jinfo);
+				 JoinInfo *jinfo);
 
 /*
- * make_new_rels_by_joins
+ * make_rels_by_joins
  *	  Find all possible joins for each of the outer join relations in
  *	  'outer_rels'.  A rel node is created for each possible join relation,
  *	  and the resulting list of nodes is returned.	If at all possible, only
@@ -57,7 +52,7 @@ static void set_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel, RelOptI
  * Returns a list of rel nodes corresponding to the new join relations.
  */
 List *
-make_new_rels_by_joins(Query *root, List *outer_rels)
+make_rels_by_joins(Query *root, List *outer_rels)
 {
 	List	   *joins = NIL;
 	List	   *join_list = NIL;
@@ -67,16 +62,20 @@ make_new_rels_by_joins(Query *root, List *outer_rels)
 	{
 		RelOptInfo *outer_rel = (RelOptInfo *) lfirst(r);
 
-		if (!(joins = find_clause_joins(root, outer_rel, outer_rel->joininfo)))
+		if (!(joins = make_rels_by_clause_joins(root, outer_rel,
+													outer_rel->joininfo,
+													NIL)))
 		{
 			/*
 			 * Oops, we have a relation that is not joined to any other
 			 * relation.  Cartesian product time.
 			 */
+#ifdef NOT_USED
 			if (BushyPlanFlag)
-				joins = find_clauseless_joins(outer_rel, outer_rels);
+				joins = make_rels_by_clauseless_joins(outer_rel, outer_rels);
 			else
-				joins = find_clauseless_joins(outer_rel, root->base_rel_list);
+#endif
+			joins = make_rels_by_clauseless_joins(outer_rel, root->base_rel_list);
 		}
 
 		join_list = nconc(join_list, joins);
@@ -86,7 +85,7 @@ make_new_rels_by_joins(Query *root, List *outer_rels)
 }
 
 /*
- * find_clause_joins
+ * make_rels_by_clause_joins
  *	  Determines whether joins can be performed between an outer relation
  *	  'outer_rel' and those relations within 'outer_rel's joininfo nodes
  *	  (i.e., relations that participate in join clauses that 'outer_rel'
@@ -100,8 +99,9 @@ make_new_rels_by_joins(Query *root, List *outer_rels)
  *
  * Returns a list of new join relations.
  */
-static List *
-find_clause_joins(Query *root, RelOptInfo *outer_rel, List *joininfo_list)
+List *
+make_rels_by_clause_joins(Query *root, RelOptInfo *outer_rel,
+				 				List *joininfo_list, List *only_relids)
 {
 	List	   *join_list = NIL;
 	List	   *i = NIL;
@@ -111,15 +111,18 @@ find_clause_joins(Query *root, RelOptInfo *outer_rel, List *joininfo_list)
 		JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
 		RelOptInfo *rel;
 
-		if (!joininfo->inactive)
+		if (!joininfo->bushy_inactive)
 		{
 			List	   *other_rels = joininfo->otherrels;
 
 			if (other_rels != NIL)
 			{
-				if (length(other_rels) == 1)
+				if (length(other_rels) == 1 &&
+					(only_relids == NIL ||
+					/* geqo only wants certain relids to make new rels */
+					 same(joininfo->otherrels, only_relids)))
 				{
-					rel = init_join_rel(outer_rel,
+					rel = make_join_rel(outer_rel,
 								 get_base_rel(root, lfirsti(other_rels)),
 										joininfo);
 					/* how about right-sided plan ? */
@@ -128,18 +131,20 @@ find_clause_joins(Query *root, RelOptInfo *outer_rel, List *joininfo_list)
 					{
 						if (rel != NULL)
 							join_list = lappend(join_list, rel);
-						rel = init_join_rel(get_base_rel(root,
+						rel = make_join_rel(get_base_rel(root,
 														 lfirsti(other_rels)),
 											outer_rel,
 											joininfo);
 					}
 				}
+#ifdef NOT_USED
 				else if (BushyPlanFlag)
 				{
-					rel = init_join_rel(outer_rel,
+					rel = make_join_rel(outer_rel,
 										get_join_rel(root, other_rels),
 										joininfo);
 				}
+#endif
 				else
 					rel = NULL;
 
@@ -153,15 +158,15 @@ find_clause_joins(Query *root, RelOptInfo *outer_rel, List *joininfo_list)
 }
 
 /*
- * find_clauseless_joins
+ * make_rels_by_clauseless_joins
  *	  Given an outer relation 'outer_rel' and a list of inner relations
  *	  'inner_rels', create a join relation between 'outer_rel' and each
  *	  member of 'inner_rels' that isn't already included in 'outer_rel'.
  *
  * Returns a list of new join relations.
  */
-static List *
-find_clauseless_joins(RelOptInfo *outer_rel, List *inner_rels)
+List *
+make_rels_by_clauseless_joins(RelOptInfo *outer_rel, List *inner_rels)
 {
 	RelOptInfo *inner_rel;
 	List	   *t_list = NIL;
@@ -173,7 +178,7 @@ find_clauseless_joins(RelOptInfo *outer_rel, List *inner_rels)
 		if (nonoverlap_rels(inner_rel, outer_rel))
 		{
 			t_list = lappend(t_list,
-							 init_join_rel(outer_rel,
+							 make_join_rel(outer_rel,
 										   inner_rel,
 										   (JoinInfo *) NULL));
 		}
@@ -183,7 +188,7 @@ find_clauseless_joins(RelOptInfo *outer_rel, List *inner_rels)
 }
 
 /*
- * init_join_rel
+ * make_join_rel
  *	  Creates and initializes a new join relation.
  *
  * 'outer_rel' and 'inner_rel' are relation nodes for the relations to be
@@ -193,8 +198,8 @@ find_clauseless_joins(RelOptInfo *outer_rel, List *inner_rels)
  *
  * Returns the new join relation node.
  */
-static RelOptInfo *
-init_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo * joininfo)
+RelOptInfo *
+make_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo *joininfo)
 {
 	RelOptInfo *joinrel = makeNode(RelOptInfo);
 	List	   *joinrel_joininfo_list = NIL;
@@ -217,7 +222,7 @@ init_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo * joininfo)
 	joinrel->pages = 0;
 	joinrel->tuples = 0;
 	joinrel->width = 0;
-/*	  joinrel->targetlist = NIL;*/
+/*	joinrel->targetlist = NIL;*/
 	joinrel->pathlist = NIL;
 	joinrel->cheapestpath = (Path *) NULL;
 	joinrel->pruneable = true;
@@ -229,9 +234,11 @@ init_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo * joininfo)
 	joinrel->innerjoin = NIL;
 	joinrel->superrels = NIL;
 
-	joinrel->relids = lcons(outer_rel->relids,	/* ??? aren't they lists?
-												 * -ay */
-							lcons(inner_rel->relids, NIL));
+	/*
+	 * This function uses a trick to pass inner/outer rels as
+	 * different lists, and then flattens it out later.
+	 */
+	joinrel->relids = lcons(outer_rel->relids, lcons(inner_rel->relids, NIL));
 
 	new_outer_tlist = nconc(new_outer_tlist, new_inner_tlist);
 	joinrel->targetlist = new_outer_tlist;
@@ -239,8 +246,10 @@ init_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo * joininfo)
 	if (joininfo)
 	{
 		joinrel->restrictinfo = joininfo->jinfo_restrictinfo;
+#ifdef NOT_USED
 		if (BushyPlanFlag)
-			joininfo->inactive = true;
+			joininfo->bushy_inactive = true;
+#endif
 	}
 
 	joinrel_joininfo_list = new_joininfo_list(append(outer_rel->joininfo, inner_rel->joininfo),
@@ -269,7 +278,7 @@ init_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo * joininfo)
  *
  * Returns the new target list.
  */
-static List *
+List *
 new_join_tlist(List *tlist,
 			   List *other_relids,
 			   int first_resdomno)
@@ -352,7 +361,7 @@ new_joininfo_list(List *joininfo_list, List *join_relids)
 				other_joininfo->jinfo_restrictinfo = joininfo->jinfo_restrictinfo;
 				other_joininfo->mergejoinable = joininfo->mergejoinable;
 				other_joininfo->hashjoinable = joininfo->hashjoinable;
-				other_joininfo->inactive = false;
+				other_joininfo->bushy_inactive = false;
 
 				current_joininfo_list = lcons(other_joininfo,
 											  current_joininfo_list);
@@ -418,7 +427,7 @@ add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 				new_joininfo->jinfo_restrictinfo = restrict_info;
 				new_joininfo->mergejoinable = mergejoinable;
 				new_joininfo->hashjoinable = hashjoinable;
-				new_joininfo->inactive = false;
+				new_joininfo->bushy_inactive = false;
 				rel->joininfo = lappend(rel->joininfo, new_joininfo);
 
 				foreach(xsuper_rel, super_rels)
@@ -444,7 +453,7 @@ add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 							new_joininfo->jinfo_restrictinfo = restrict_info;
 							new_joininfo->mergejoinable = mergejoinable;
 							new_joininfo->hashjoinable = hashjoinable;
-							new_joininfo->inactive = false;
+							new_joininfo->bushy_inactive = false;
 							joinrel->joininfo = lappend(joinrel->joininfo,
 										new_joininfo);
 						}
@@ -461,6 +470,7 @@ add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 	}
 }
 
+#ifdef NOT_USED
 /*
  * final_join_rels
  *	   Find the join relation that includes all the original
@@ -470,11 +480,11 @@ add_new_joininfos(Query *root, List *joinrels, List *outerrels)
  *
  * Returns the list of final join relations.
  */
-List *
+RelOptInfo *
 final_join_rels(List *join_rel_list)
 {
 	List	   *xrel = NIL;
-	List	   *t_list = NIL;
+	RelOptInfo *final_rel = NULL;
 
 	/*
 	 * find the relations that has no further joins, i.e., its joininfos
@@ -497,13 +507,14 @@ final_join_rels(List *join_rel_list)
 			}
 		}
 		if (final)
-		{
-			t_list = lappend(t_list, rel);
-		}
+			if (final_rel == NULL ||
+				path_is_cheaper(rel->cheapestpath, final_rel->cheapestpath))
+				final_rel = rel;
 	}
 
-	return t_list;
+	return final_rel;
 }
+#endif
 
 /*
  * add_superrels
@@ -551,7 +562,7 @@ nonoverlap_sets(List *s1, List *s2)
 }
 
 static void
-set_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo * jinfo)
+set_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo *jinfo)
 {
 	int			ntuples;
 	float		selec;

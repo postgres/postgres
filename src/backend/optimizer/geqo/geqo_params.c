@@ -5,7 +5,7 @@
 *
 * Copyright (c) 1994, Regents of the University of California
 *
-* $Id: geqo_params.c,v 1.13 1999/02/13 23:16:10 momjian Exp $
+* $Id: geqo_params.c,v 1.14 1999/02/15 03:22:01 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -61,6 +61,7 @@
 static int	gimme_pool_size(int string_length);
 static int	gimme_number_generations(int pool_size, int effort);
 static int	next_token(FILE *, char *, int);
+static double geqo_log(double x, double b);
 
 /*
  * geqo_param
@@ -337,4 +338,10 @@ gimme_number_generations(int pool_size, int effort)
 	number_gens = (int) ceil(geqo_log((double) pool_size, 2.0));
 
 	return effort * number_gens;
+}
+
+static double
+geqo_log(double x, double b)
+{
+	return (log(x) / log(b));
 }

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.72 1999/02/13 23:15:59 momjian Exp $
+ *  $Id: outfuncs.c,v 1.73 1999/02/15 03:21:59 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1196,7 +1196,7 @@ _outHashInfo(StringInfo str, HashInfo *node)
  *	JoinInfo is a subclass of Node.
  */
 static void
-_outJoinInfo(StringInfo str, JoinInfo * node)
+_outJoinInfo(StringInfo str, JoinInfo *node)
 {
 	appendStringInfo(str, " JINFO :otherrels ");
 	_outIntList(str, node->otherrels);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: internal.h,v 1.14 1999/02/13 23:21:49 momjian Exp $
+ * $Id: internal.h,v 1.15 1999/02/15 03:22:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,9 @@
 #define FLOAT_EQUAL(X,Y) ((X) - (Y) < TOLERANCE)
 #define FLOAT_IS_ZERO(X) (FLOAT_EQUAL(X,0.0))
 
+#ifdef NOT_USED
 extern int	BushyPlanFlag;
+#endif
 
 /* #define deactivate_joininfo(joininfo)		joininfo->inactive=true*/
 /*#define joininfo_inactive(joininfo)	joininfo->inactive */

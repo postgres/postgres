@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.26 1999/02/15 02:04:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.27 1999/02/15 03:22:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,6 +78,7 @@ update_rels_pathlist_for_joins(Query *root, List *joinrels)
 		Path	   *bestinnerjoin;
 		List	   *pathlist = NIL;
 
+		/* flatten out relids later in this function */
 		innerrelids = lsecond(joinrel->relids);
 		outerrelids = lfirst(joinrel->relids);
 

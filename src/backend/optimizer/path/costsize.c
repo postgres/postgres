@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.32 1999/02/13 23:16:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.33 1999/02/15 03:22:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -440,21 +440,19 @@ compute_joinrel_size(JoinPath *joinpath)
 	Cost		temp = 1.0;
 	int			temp1 = 0;
 
+	/* cartesian product */
 	temp *= ((Path *) joinpath->outerjoinpath)->parent->size;
 	temp *= ((Path *) joinpath->innerjoinpath)->parent->size;
 
 	temp = temp * product_selec(joinpath->pathinfo);
-	if (temp >= (MAXINT - 1))
-		temp1 = MAXINT;
-	else
+	if (temp >= (MAXINT-1)/2)
 	{
-
-		/*
-		 * should be ceil here, we don't want joinrel size's of one, do
-		 * we?
-		 */
-		temp1 = ceil((double) temp);
+		/* if we exceed (MAXINT-1)/2, we switch to log scale */
+		/* +1 prevents log(0) */
+		temp1 = ceil(log(temp + 1 - (MAXINT-1)/2) + (MAXINT-1)/2);
 	}
+	else
+		temp1 = ceil((double) temp);
 	Assert(temp1 >= 0);
 
 	return temp1;

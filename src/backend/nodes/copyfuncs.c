@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.70 1999/02/13 23:15:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.71 1999/02/15 03:21:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1420,7 +1420,7 @@ _copyMergeInfo(MergeInfo *from)
  * ----------------
  */
 static JoinInfo *
-_copyJoinInfo(JoinInfo * from)
+_copyJoinInfo(JoinInfo *from)
 {
 	JoinInfo   *newnode = makeNode(JoinInfo);
 
@@ -1433,7 +1433,7 @@ _copyJoinInfo(JoinInfo * from)
 
 	newnode->mergejoinable = from->mergejoinable;
 	newnode->hashjoinable = from->hashjoinable;
-	newnode->inactive = from->inactive;
+	newnode->bushy_inactive = from->bushy_inactive;
 
 	return newnode;
 }

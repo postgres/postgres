@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.32 1999/02/13 23:15:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.33 1999/02/15 03:21:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -522,7 +522,7 @@ _equalSubPlan(SubPlan *a, SubPlan *b)
 }
 
 static bool
-_equalJoinInfo(JoinInfo * a, JoinInfo * b)
+_equalJoinInfo(JoinInfo *a, JoinInfo *b)
 {
 	Assert(IsA(a, JoinInfo));
 	Assert(IsA(b, JoinInfo));

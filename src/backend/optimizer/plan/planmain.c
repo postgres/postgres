@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.32 1999/02/14 04:56:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.33 1999/02/15 03:22:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -215,7 +215,6 @@ query_planner(Query *root,
 	}
 
 #ifdef NOT_USED
-
 	/*
 	 * Destructively modify the query plan's targetlist to add fjoin lists
 	 * to flatten functions that return sets of base types
@@ -243,7 +242,6 @@ subplanner(Query *root,
 		   List *qual)
 {
 	RelOptInfo *final_rel;
-	List	   *final_rel_list;
 
 	/*
 	 * Initialize the targetlist and qualification, adding entries to
@@ -259,12 +257,7 @@ subplanner(Query *root,
 
 	set_joininfo_mergeable_hashable(root->base_rel_list);
 
-	final_rel_list = find_paths(root, root->base_rel_list);
-
-	if (final_rel_list)
-		final_rel = (RelOptInfo *) lfirst(final_rel_list);
-	else
-		final_rel = (RelOptInfo *) NIL;
+	final_rel = make_one_rel(root, root->base_rel_list);
 
 #if 0							/* fix xfunc */
 
@@ -297,7 +290,7 @@ subplanner(Query *root,
 		return create_plan((Path *) final_rel->cheapestpath);
 	else
 	{
-		elog(NOTICE, "final relation is nil");
+		elog(NOTICE, "final relation is null");
 		return create_plan((Path *) NULL);
 	}
 

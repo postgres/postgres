@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.25 1999/02/15 01:06:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.26 1999/02/15 03:22:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -339,14 +339,14 @@ set_joininfo_mergeable_hashable(List *rel_list)
 
 					if (_enable_mergejoin_)
 						sortop = mergejoinop(clause);
-					if (_enable_hashjoin_)
-						hashop = hashjoinop(clause);
-
 					if (sortop)
 					{
 						restrictinfo->mergejoinorder = sortop;
 						joininfo->mergejoinable = true;
 					}
+
+					if (_enable_hashjoin_)
+						hashop = hashjoinop(clause);
 					if (hashop)
 					{
 						restrictinfo->hashjoinoperator = hashop;

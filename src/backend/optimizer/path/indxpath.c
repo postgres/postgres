@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.46 1999/02/15 02:04:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.47 1999/02/15 03:22:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1302,13 +1302,13 @@ index_innerjoin(Query *root, RelOptInfo *rel, List *clausegroup_list,
 		pathnode->path.joinid = ((RestrictInfo *) lfirst(clausegroup))->restrictinfojoinid;
 
 		pathnode->path.path_cost = cost_index((Oid) lfirsti(index->relids),
-					   (int) temp_pages,
-					   temp_selec,
-					   rel->pages,
-					   rel->tuples,
-					   index->pages,
-					   index->tuples,
-					   true);
+											   (int) temp_pages,
+											   temp_selec,
+											   rel->pages,
+											   rel->tuples,
+											   index->pages,
+											   index->tuples,
+											   true);
 
 		/*
 		 * copy restrictinfo list into path for expensive function

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.23 1999/02/13 23:21:42 momjian Exp $
+ * $Id: relation.h,v 1.24 1999/02/15 03:22:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -250,7 +250,7 @@ typedef struct JoinInfo
 	List	   *jinfo_restrictinfo;
 	bool		mergejoinable;
 	bool		hashjoinable;
-	bool		inactive;
+	bool		bushy_inactive;
 } JoinInfo;
 
 typedef struct Iter

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.10 1999/02/13 23:15:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.11 1999/02/15 03:21:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1018,7 +1018,7 @@ _freeMergeInfo(MergeInfo *node)
  * ----------------
  */
 static void
-_freeJoinInfo(JoinInfo * node)
+_freeJoinInfo(JoinInfo *node)
 {
 	/* ----------------
 	 *	free remainder of node

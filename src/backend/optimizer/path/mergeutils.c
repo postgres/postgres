@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.18 1999/02/13 23:16:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.19 1999/02/15 03:22:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,6 @@ group_clauses_by_order(List *restrictinfo_list,
 
 		if (merge_ordering)
 		{
-
 			/*
 			 * Create a new mergeinfo node and add it to 'mergeinfo_list'
 			 * if one does not yet exist for this merge ordering.

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.99 1999/02/13 23:18:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.100 1999/02/15 03:22:21 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -173,8 +173,10 @@ int			UseNewLine = 0;		/* Use EOF as query delimiters */
  *		plans
  * ----------------
  */
+#ifdef NOT_USED
 int			BushyPlanFlag = 0;	/* default to false -- consider only
 								 * left-deep trees */
+#endif
 
 /*
 ** Flags for expensive function optimization -- JMH 3/9/92
@@ -1041,6 +1043,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 #endif
 				break;
 
+#ifdef NOT_USED
 			case 'b':
 				/* ----------------
 				 *	set BushyPlanFlag to true.
@@ -1048,6 +1051,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 */
 				BushyPlanFlag = 1;
 				break;
+#endif
 
 			case 'B':
 				/* ----------------
@@ -1538,7 +1542,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.99 $ $Date: 1999/02/13 23:18:45 $\n");
+		puts("$Revision: 1.100 $ $Date: 1999/02/15 03:22:21 $\n");
 	}
 
 	/* ----------------
