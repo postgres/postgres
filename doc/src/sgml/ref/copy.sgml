@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.44 2003/04/20 01:52:55 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.45 2003/05/07 22:23:27 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -119,7 +119,7 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
     <term><literal>BINARY</literal></term>
     <listitem>
      <para>
-      Forces all data to be stored or read in binary format rather
+      Causes all data to be stored or read in binary format rather
       than as text. You cannot specify the <option>DELIMITER</option>
       or <option>NULL</option> options in binary mode.
      </para>
@@ -193,17 +193,18 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
    </para>
 
    <para>
-    The <literal>BINARY</literal> key word will force all data to be
+    The <literal>BINARY</literal> key word causes all data to be
     stored/read as binary format rather than as text.  It is
-    somewhat faster than the normal text mode, but a binary format
-    file is not portable across machine architectures.
+    somewhat faster than the normal text mode, but a binary-format
+    file is less portable across machine architectures and
+    <productname>PostgreSQL</productname> versions.
    </para>
 
    <para>
-    You must have select privilege on any table
+    You must have select privilege on the table
     whose values are read by <command>COPY TO</command>, and
-    insert privilege on a table into which values
-    are being inserted by <command>COPY FROM</command>.
+    insert privilege on the table into which values
+    are inserted by <command>COPY FROM</command>.
    </para>
 
    <para>
@@ -279,8 +280,8 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
     End of data can be represented by a single line containing just
     backslash-period (<literal>\.</>).  An end-of-data marker is
     not necessary when reading from a file, since the end of file
-    serves perfectly well; but an end marker must be provided when copying
-    data to or from a client application.
+    serves perfectly well; it is needed only when copying data to or from
+    client applications using pre-3.0 client protocol.
    </para>
 
    <para>
@@ -358,6 +359,9 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
     possible to represent a data carriage return by a backslash and carriage
     return, and to represent a data newline by a backslash and newline.  
     However, these representations might not be accepted in future releases.
+    They are also highly vulnerable to corruption if the COPY file is
+    transferred across different machines (for example, from Unix to Windows
+    or vice versa).
    </para>
 
    <para>
@@ -374,7 +378,7 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
 
    <para>
     The file format used for <command>COPY BINARY</command> changed in
-    <application>PostgreSQL</application> 7.1. The new format consists
+    <application>PostgreSQL</application> 7.4. The new format consists
     of a file header, zero or more tuples containing the row data, and
     a file trailer.
    </para>
@@ -383,7 +387,7 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
     <title>File Header</title>
 
     <para>
-     The file header consists of 24 bytes of fixed fields, followed
+     The file header consists of 15 bytes of fixed fields, followed
      by a variable-length header extension area.  The fixed fields are:
 
     <variablelist>
@@ -391,7 +395,7 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
       <term>Signature</term>
       <listitem>
        <para>
-12-byte sequence <literal>PGBCOPY\n\377\r\n\0</> --- note that the zero byte
+11-byte sequence <literal>PGCOPY\n\377\r\n\0</> --- note that the zero byte
 is a required part of the signature.  (The signature is designed to allow
 easy identification of files that have been munged by a non-8-bit-clean
 transfer.  This signature will be changed by end-of-line-translation
@@ -401,23 +405,13 @@ filters, dropped zero bytes, dropped high bits, or parity changes.)
      </varlistentry>
 
      <varlistentry>
-      <term>Integer layout field</term>
-      <listitem>
-       <para>
-32-bit integer constant 0x01020304 in source's byte order. Potentially, a reader
-could engage in byte-flipping of subsequent fields if the wrong byte
-order is detected here.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term>Flags field</term>
       <listitem>
        <para>
-32-bit integer bit mask to denote important aspects of the file format. Bits are
-numbered from 0 (<acronym>LSB</>) to 31 (<acronym>MSB</>) --- note that this field is stored
-with source's endianness, as are all subsequent integer fields. Bits
+32-bit integer bit mask to denote important aspects of the file format. Bits
+are numbered from 0 (<acronym>LSB</>) to 31 (<acronym>MSB</>).  Note that
+this field is stored in network byte order (most significant byte first),
+as are all the integer fields used in the file format.  Bits
 16-31 are reserved to denote critical file format issues; a reader
 should abort if it finds an unexpected bit set in this range. Bits 0-15
 are reserved to signal backwards-compatible format issues; a reader
@@ -471,72 +465,28 @@ is left for a later release.
     <title>Tuples</title>
     <para>
 Each tuple begins with a 16-bit integer count of the number of fields in the
-tuple.  (Presently, all tuples in a table will have the same count, but
-that might not always be true.)  Then, repeated for each field in the
-tuple, there is a 16-bit integer <structfield>typlen</> word possibly followed by field data.
-The <structfield>typlen</> field is interpreted thus:
-
-    <variablelist>
-     <varlistentry>
-      <term>Zero</term>
-      <listitem>
-       <para>
-	Field is null.  No data follows.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>&gt; 0</term>
-      <listitem>
-       <para>
-        Field is a fixed-length data type.  Exactly that many
-	bytes of data follow the <structfield>typlen</> word.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-1</term>
-      <listitem>
-       <para>
-	Field is a <literal>varlena</> data type.  The next four
-	bytes are the <literal>varlena</> header, which contains
-	the total value length including the header itself.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>&lt; -1</term>
-      <listitem>
-       <para>
-	Reserved for future use.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-    </para>
-
-    <para>
-For nonnull fields, the reader can check that the <structfield>typlen</> matches the
-expected <structfield>typlen</> for the destination column.  This provides a simple
-but very useful check that the data is as expected.
+tuple.  (Presently, all tuples in a table will have the same count, but that
+might not always be true.)  Then, repeated for each field in the tuple, there
+is a 32-bit length word followed by that many bytes of field data.  (The
+length word does not include itself, and can be zero.)  As a special case,
+-1 indicates a NULL field value.  No value bytes follow in the NULL case.
     </para>
 
     <para>
 There is no alignment padding or any other extra data between fields.
-Note also that the format does not distinguish whether a data type is
-pass-by-reference or pass-by-value.  Both of these provisions are
-deliberate: they might help improve portability of the files (although
-of course endianness and floating-point-format issues can still keep
-you from moving a binary file across machines).
+    </para>
+
+    <para>
+Presently, all data values in a <command>COPY BINARY</command> file are
+assumed to be in binary format (format code one).  It is anticipated that a
+future extension may add a header field that allows per-column format codes
+to be specified.
     </para>
 
     <para>
 If OIDs are included in the file, the OID field immediately follows the
 field-count word.  It is a normal field except that it's not included
-in the field-count.  In particular it has a <structfield>typlen</> --- this will allow
+in the field-count.  In particular it has a length word --- this will allow
 handling of 4-byte vs. 8-byte OIDs without too much pain, and will allow
 OIDs to be shown as null if that ever proves desirable.
     </para>
@@ -546,8 +496,8 @@ OIDs to be shown as null if that ever proves desirable.
     <title>File Trailer</title>
 
     <para>
-     The file trailer consists of an 16-bit integer word containing -1.  This is
-     easily distinguished from a tuple's field-count word.
+     The file trailer consists of a 16-bit integer word containing -1.  This
+     is easily distinguished from a tuple's field-count word.
     </para>
 
     <para>
@@ -579,17 +529,20 @@ COPY country FROM '/usr1/proj/bray/sql/country_data';
 
   <para>
    Here is a sample of data suitable for copying into a table from
-   <literal>STDIN</literal> (so it must have the termination sequence on the
-   last line):
+   <literal>STDIN</literal>:
 <programlisting>
 AF      AFGHANISTAN
 AL      ALBANIA
 DZ      ALGERIA
 ZM      ZAMBIA
 ZW      ZIMBABWE
-\.
 </programlisting>
    Note that the white space on each line is actually a tab character.
+  </para>
+
+  <para>
+   XXX the following example is OBSOLETE and needs to be updated for the
+   7.4 binary format:
   </para>
 
   <para>
