@@ -1166,5 +1166,9 @@ Thu Dec  6 14:02:56 CET 2001
 
 	- Removed debug message from preproc.y.
 	- Fixed some bugs in exec sql var and exec sql type command.
+
+Sat Dec  8 21:35:45 CET 2001
+
+	- Fix ecpg to allow pointer to structs.
 	- Set ecpg version to 2.9.0.
         - Set library version to 3.3.0.

@@ -19,10 +19,10 @@ main ()
 exec sql begin declare section;
 	struct personal_struct	{	str name;
 					birthinfo birth;
-				} personal;
+				} personal, *p;
 	struct personal_indicator {	int ind_name;
 					birthinfo ind_birth;
-				  } ind_personal;
+				  } ind_personal, *i;
 	float ind_married;
 	ind children;
 	ind ind_children;
@@ -63,9 +63,11 @@ exec sql end declare section;
 
 	exec sql whenever not found do break;
 
+	p=&personal;
+	i=&ind_personal;
 	while (1) {
 		strcpy(msg, "fetch");
-		exec sql fetch cur into :personal:ind_personal, :married:ind_married, :children.integer:ind_children.smallint;
+		exec sql fetch cur into :p:i, :married:ind_married, :children.integer:ind_children.smallint;
 		printf("%8.8s", personal.name.arr);
 		if (ind_personal.ind_birth.born >= 0)
 			printf(", born %ld", personal.birth.born);
@@ -124,7 +126,6 @@ exec sql end declare section;
 
 	if (dbgs != NULL)
                 fclose(dbgs);
-
 
 	return (0);
 }

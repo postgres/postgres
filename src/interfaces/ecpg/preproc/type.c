@@ -361,7 +361,7 @@ ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, long arrsiz, 
 	struct ECPGstruct_member *p,
 			   *ind_p = NULL;
 	char		obuf[BUFSIZ];
-	char		pbuf[BUFSIZ],
+	char		pbuf[BUFSIZ*2],
 				ind_pbuf[BUFSIZ];
 	const char *offset;
 
@@ -373,7 +373,11 @@ ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, long arrsiz, 
 	else
 		offset = offsetarg;
 
-	sprintf(pbuf, "%s%s.", prefix ? prefix : "", name);
+	if (arrsiz != 0)
+		sprintf(pbuf, "%s%s.", prefix ? prefix : "", name);
+	else
+		sprintf(pbuf, "%s%s->", prefix ? prefix : "", name);
+		
 	prefix = pbuf;
 
 	if (ind_typ == &ecpg_no_indicator)
@@ -382,7 +386,11 @@ ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, long arrsiz, 
 	}
 	else if (ind_typ != NULL)
 	{
-		sprintf(ind_pbuf, "%s%s.", ind_prefix ? ind_prefix : "", ind_name);
+		if (arrsiz != 0)
+			sprintf(ind_pbuf, "%s%s.", ind_prefix ? ind_prefix : "", ind_name);
+		else
+			sprintf(ind_pbuf, "%s%s->", ind_prefix ? ind_prefix : "", ind_name);
+					
 		ind_prefix = ind_pbuf;
 		ind_p = ind_typ->u.members;
 	}
