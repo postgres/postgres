@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.1.1.1 1996/07/09 06:21:55 scrappy Exp $
+$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.2 1998/01/28 02:29:26 momjian Exp $
 
 This file is an attempt to save me (and future code maintainers) some
 time and a lot of headaches.  The existing lock manager code at the time
@@ -88,6 +88,12 @@ activeHolders -
     holders, summing the values of activeHolders should total to the value
     of nActive.
 
+---------------------------------------------------------------------------
 
-This is all I had the stomach for right now..... I will get back to this
-someday.	-mer 17 June 1992 12:00 am
+Locks are accessed in two ways.  Each PROC structure has a lockQueue,
+that is a circular linked list of LOCK pointers that this process holds
+or is waiting on.
+
+Second, there is a hash table that can do a lookup by combined LOCK
+address and transaction id(xid) which allows a process to see what
+type of locks it holds on that table.

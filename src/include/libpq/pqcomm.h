@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.21 1998/01/27 15:35:22 momjian Exp $
+ * $Id: pqcomm.h,v 1.22 1998/01/28 02:29:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,10 +35,10 @@ typedef union SockAddr {
 
 #define	UNIXSOCK_PATH(sun,port) \
 	(sprintf((sun).sun_path, "/tmp/.s.PGSQL.%d", (port)) + \
-		+ 1 + sizeof ((sun).sun_family))
+		offsetof(struct sockaddr_un, sun_path))
 /*
- *		+ 1 is for BSD-specific sizeof((sun).sun_len)
- *		We never actually set sun_len, and I can't think of a
+ *		We do this because sun_len is in BSD's struct, while others don't.
+ *		We never actually set BSD's sun_len, and I can't think of a
  *		platform-safe way of doing it, but the code still works. bjm
  */
 
