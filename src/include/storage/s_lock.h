@@ -63,7 +63,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.120 2003/12/23 03:31:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.121 2003/12/23 03:52:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,6 +72,7 @@
 
 #include "storage/pg_sema.h"
 
+#ifdef HAVE_SPINLOCKS	/* skip spinlocks if requested */
 
 #if defined(__GNUC__) || defined(__ICC)
 /*************************************************************************
@@ -438,7 +439,7 @@ typedef unsigned char slock_t;
  * Uses non-gcc inline assembly:
  */
 
-#if !defined(HAS_TEST_AND_SET)
+#if !defined(HAS_TEST_AND_SET)	/* We didn't trigger above, let's try here */
 
 #if defined(USE_UNIVEL_CC)
 typedef unsigned char slock_t;
@@ -604,6 +605,7 @@ typedef unsigned char slock_t;
 
 #endif	/* !defined(HAS_TEST_AND_SET */
 
+#endif	/* HAVE_SPINLOCKS */
 
 
 #ifndef HAS_TEST_AND_SET
