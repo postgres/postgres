@@ -9413,8 +9413,8 @@ cat >>confdefs.h <<\_ACEOF
 #define HAVE_TM_ZONE 1
 _ACEOF
 
-else
-  echo "$as_me:$LINENO: checking for tzname" >&5
+fi
+echo "$as_me:$LINENO: checking for tzname" >&5
 echo $ECHO_N "checking for tzname... $ECHO_C" >&6
 if test "${ac_cv_var_tzname+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -9463,13 +9463,12 @@ rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 fi
 echo "$as_me:$LINENO: result: $ac_cv_var_tzname" >&5
 echo "${ECHO_T}$ac_cv_var_tzname" >&6
-  if test $ac_cv_var_tzname = yes; then
+if test $ac_cv_var_tzname = yes; then
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_TZNAME 1
 _ACEOF
 
-  fi
 fi
 
 echo "$as_me:$LINENO: checking for union semun" >&5

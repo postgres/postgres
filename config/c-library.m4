@@ -1,5 +1,5 @@
 # Macros that test various C library quirks
-# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.18 2003/04/12 23:25:42 tgl Exp $
+# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.19 2003/05/22 16:39:26 tgl Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -16,6 +16,38 @@ int res;],
 if test x"$pgac_cv_var_int_timezone" = xyes ; then
   AC_DEFINE(HAVE_INT_TIMEZONE,, [Define to 1 if you have the global variable 'int timezone'.])
 fi])# PGAC_VAR_INT_TIMEZONE
+
+
+# PGAC_STRUCT_TIMEZONE
+# ------------------
+# Figure out how to get the current timezone.  If `struct tm' has a
+# `tm_zone' member, define `HAVE_TM_ZONE'.  Also, if the
+# external array `tzname' is found, define `HAVE_TZNAME'.
+# This is the same as the standard macro AC_STRUCT_TIMEZONE, except that
+# tzname[] is checked for regardless of whether we find tm_zone.
+AC_DEFUN([PGAC_STRUCT_TIMEZONE],
+[AC_REQUIRE([AC_STRUCT_TM])dnl
+AC_CHECK_MEMBERS([struct tm.tm_zone],,,[#include <sys/types.h>
+#include <$ac_cv_struct_tm>
+])
+if test "$ac_cv_member_struct_tm_tm_zone" = yes; then
+  AC_DEFINE(HAVE_TM_ZONE, 1,
+            [Define to 1 if your `struct tm' has `tm_zone'. Deprecated, use
+             `HAVE_STRUCT_TM_TM_ZONE' instead.])
+fi
+AC_CACHE_CHECK(for tzname, ac_cv_var_tzname,
+[AC_TRY_LINK(
+[#include <time.h>
+#ifndef tzname /* For SGI.  */
+extern char *tzname[]; /* RS6000 and others reject char **tzname.  */
+#endif
+],
+[atoi(*tzname);], ac_cv_var_tzname=yes, ac_cv_var_tzname=no)])
+if test $ac_cv_var_tzname = yes; then
+    AC_DEFINE(HAVE_TZNAME, 1,
+              [Define to 1 if you have the external array `tzname'.])
+fi
+])# PGAC_STRUCT_TIMEZONE
 
 
 # PGAC_FUNC_GETTIMEOFDAY_1ARG
