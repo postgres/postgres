@@ -24,7 +24,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.115 2000/11/21 01:11:49 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.116 2000/11/21 20:55:57 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -337,6 +337,7 @@ TEMPLATE1_DESCR="$datadir"/template1.description
 GLOBAL_DESCR="$datadir"/global.description
 
 PG_HBA_SAMPLE="$datadir"/pg_hba.conf.sample
+PG_IDENT_SAMPLE="$datadir"/pg_ident.conf.sample
 POSTGRESQL_CONF_SAMPLE="$datadir"/postgresql.conf.sample
 
 if [ "$show_setting" = yes ] || [ "$debug" = yes ]
@@ -345,7 +346,8 @@ then
     echo "Initdb variables:"
     for var in PGDATA datadir PGPATH TEMPFILE MULTIBYTE MULTIBYTEID \
         POSTGRES_SUPERUSERNAME POSTGRES_SUPERUSERID TEMPLATE1_BKI GLOBAL_BKI \
-        TEMPLATE1_DESCR GLOBAL_DESCR POSTGRESQL_CONF_SAMPLE PG_HBA_SAMPLE ; do
+        TEMPLATE1_DESCR GLOBAL_DESCR POSTGRESQL_CONF_SAMPLE \
+	PG_HBA_SAMPLE PG_IDENT_SAMPLE ; do
         eval "echo '  '$var=\$$var"
     done
 fi
@@ -354,7 +356,8 @@ if [ "$show_setting" = yes ] ; then
     exit 0
 fi
 
-for PREREQ_FILE in "$TEMPLATE1_BKI" "$GLOBAL_BKI" "$PG_HBA_SAMPLE"
+for PREREQ_FILE in "$TEMPLATE1_BKI" "$GLOBAL_BKI" "$PG_HBA_SAMPLE" \
+    "$PG_IDENT_SAMPLE"
 do
     if [ ! -f "$PREREQ_FILE" ] ; then
       (
@@ -485,9 +488,11 @@ then
 
     echo $short_version > "$PGDATA/PG_VERSION" || exit_nicely
 
-    cp "$PG_HBA_SAMPLE" "$PGDATA"/pg_hba.conf     || exit_nicely
+    cp "$PG_HBA_SAMPLE" "$PGDATA"/pg_hba.conf              || exit_nicely
+    cp "$PG_IDENT_SAMPLE" "$PGDATA"/pg_ident.conf          || exit_nicely
     cp "$POSTGRESQL_CONF_SAMPLE" "$PGDATA"/postgresql.conf || exit_nicely
-    chmod 0600 "$PGDATA"/pg_hba.conf "$PGDATA"/postgresql.conf
+    chmod 0600 "$PGDATA"/pg_hba.conf "$PGDATA"/pg_ident.conf \
+	"$PGDATA"/postgresql.conf
 
 fi
 
