@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.48 1999/12/17 14:47:35 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.49 2000/01/17 02:04:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -757,7 +757,7 @@ transformUnionClause(List *unionClause, List *targetlist)
 					Node	   *expr;
 
 					expr = ((TargetEntry *) lfirst(next_target))->expr;
-					expr = CoerceTargetExpr(NULL, expr, itype, otype);
+					expr = CoerceTargetExpr(NULL, expr, itype, otype, -1);
 					if (expr == NULL)
 					{
 						elog(ERROR, "Unable to transform %s to %s"

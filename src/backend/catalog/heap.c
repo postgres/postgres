@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.115 2000/01/16 19:57:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.116 2000/01/17 02:04:12 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1966,8 +1966,8 @@ AddRelationRawConstraints(Relation rel,
 
 			if (type_id != atp->atttypid)
 			{
-				if (CoerceTargetExpr(NULL, expr,
-									 type_id, atp->atttypid) == NULL)
+				if (CoerceTargetExpr(NULL, expr, type_id,
+									 atp->atttypid, atp->atttypmod) == NULL)
 					elog(ERROR, "Attribute '%s' is of type '%s'"
 						 " but default expression is of type '%s'"
 						 "\n\tYou will need to rewrite or cast the expression",

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.35 2000/01/15 02:59:32 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.36 2000/01/17 02:04:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -319,8 +319,8 @@ transformArraySubscripts(ParseState *pstate,
 			{
 				subexpr = transformExpr(pstate, ai->lidx, EXPR_COLUMN_FIRST);
 				/* If it's not int4 already, try to coerce */
-				subexpr = CoerceTargetExpr(pstate, subexpr,
-										   exprType(subexpr), INT4OID);
+				subexpr = CoerceTargetExpr(pstate, subexpr, exprType(subexpr),
+										   INT4OID, -1);
 				if (subexpr == NULL)
 					elog(ERROR, "array index expressions must be integers");
 			}
@@ -339,8 +339,8 @@ transformArraySubscripts(ParseState *pstate,
 		}
 		subexpr = transformExpr(pstate, ai->uidx, EXPR_COLUMN_FIRST);
 		/* If it's not int4 already, try to coerce */
-		subexpr = CoerceTargetExpr(pstate, subexpr,
-								   exprType(subexpr), INT4OID);
+		subexpr = CoerceTargetExpr(pstate, subexpr, exprType(subexpr),
+								   INT4OID, -1);
 		if (subexpr == NULL)
 			elog(ERROR, "array index expressions must be integers");
 		upperIndexpr = lappend(upperIndexpr, subexpr);
@@ -358,8 +358,10 @@ transformArraySubscripts(ParseState *pstate,
 		{
 			if (typesource != typeneeded)
 			{
+				/* XXX fixme: need to get the array's atttypmod? */
 				assignFrom = CoerceTargetExpr(pstate, assignFrom,
-											  typesource, typeneeded);
+											  typesource, typeneeded,
+											  -1);
 				if (assignFrom == NULL)
 					elog(ERROR, "Array assignment requires type '%s'"
 						 " but expression is of type '%s'"

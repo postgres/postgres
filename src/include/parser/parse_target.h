@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_target.h,v 1.16 1999/11/01 05:06:20 tgl Exp $
+ * $Id: parse_target.h,v 1.17 2000/01/17 02:04:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@ extern void updateTargetListEntry(ParseState *pstate, TargetEntry *tle,
 								  char *colname, int attrno,
 								  List *indirection);
 extern Node *CoerceTargetExpr(ParseState *pstate, Node *expr,
-							  Oid type_id, Oid attrtype);
+							  Oid type_id, Oid attrtype, int32 attrtypmod);
 extern List *checkInsertTargets(ParseState *pstate, List *cols,
 								List **attrnos);
 

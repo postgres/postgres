@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.52 2000/01/17 00:14:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.53 2000/01/17 02:04:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,8 +229,8 @@ updateTargetListEntry(ParseState *pstate,
 		{
 			if (type_id != attrtype)
 			{
-				tle->expr = CoerceTargetExpr(pstate, tle->expr,
-											 type_id, attrtype);
+				tle->expr = CoerceTargetExpr(pstate, tle->expr, type_id,
+											 attrtype, attrtypmod);
 				if (tle->expr == NULL)
 					elog(ERROR, "Attribute '%s' is of type '%s'"
 						 " but expression is of type '%s'"
@@ -264,10 +264,11 @@ Node *
 CoerceTargetExpr(ParseState *pstate,
 				 Node *expr,
 				 Oid type_id,
-				 Oid attrtype)
+				 Oid attrtype,
+				 int32 attrtypmod)
 {
 	if (can_coerce_type(1, &type_id, &attrtype))
-		expr = coerce_type(pstate, expr, type_id, attrtype, -1);
+		expr = coerce_type(pstate, expr, type_id, attrtype, attrtypmod);
 
 #ifndef DISABLE_STRING_HACKS
 
@@ -283,7 +284,7 @@ CoerceTargetExpr(ParseState *pstate,
 		{
 		}
 		else if (can_coerce_type(1, &type_id, &text_id))
-			expr = coerce_type(pstate, expr, type_id, text_id, -1);
+			expr = coerce_type(pstate, expr, type_id, text_id, attrtypmod);
 		else
 			expr = NULL;
 	}

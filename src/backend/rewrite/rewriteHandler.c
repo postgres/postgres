@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.64 2000/01/05 18:23:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.65 2000/01/17 02:04:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1696,7 +1696,7 @@ check_targetlists_are_compatible(List *prev_target, List *current_target)
 			Node	   *expr;
 
 			expr = ((TargetEntry *) lfirst(next_target))->expr;
-			expr = CoerceTargetExpr(NULL, expr, itype, otype);
+			expr = CoerceTargetExpr(NULL, expr, itype, otype, -1);
 			if (expr == NULL)
 			{
 				elog(ERROR, "Unable to transform %s to %s"
