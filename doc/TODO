@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Nov  4 11:19:28 EST 2004
+Last updated:		Thu Nov  4 11:49:35 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -221,7 +221,7 @@ Indexes
   (dup) should fail [inheritance]
 
   The main difficulty with this item is the problem of creating an index
-  that can spam more than one table.
+  that can span more than one table.
 
 * Add UNIQUE capability to non-btree indexes
 * Add rtree index support for line, lseg, path, point
@@ -236,7 +236,7 @@ Indexes
 
   For an index on col1,col2,col3, and a WHERE clause of col1 = 5 and
   col3 = 9, spin though the index checking for col1 and col3 matches,
-  rather than just col1
+  rather than just col1; also called skip-scanning.
 
 * Prevent index uniqueness checks when UPDATE does not modify the column
 
@@ -638,7 +638,8 @@ Fsync
 
 Cache
 =====
-* Add free-behind capability for large sequential scans [fadvise]
+* Allow free-behind capability for large sequential scans, perhaps using
+  posix_fadvise() [fadvise]
 * Consider use of open/fcntl(O_DIRECT) to minimize OS caching
 * Cache last known per-tuple offsets to speed long tuple access
 
