@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.58 1998/01/05 03:33:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.59 1998/01/07 21:06:00 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -125,7 +125,7 @@ jmp_buf		Warn_restart;
 sigjmp_buf	Warn_restart;
 
 #endif							/* defined(nextstep) */
-int			InErrorOrAbort;
+int			InError;
 
 extern int	NBuffers;
 
@@ -728,7 +728,7 @@ pg_exec_query_dest(char *query_string,/* string to execute */
  *		signal handler routines used in PostgresMain()
  *
  *		handle_warn() is used to catch kill(getpid(),1) which
- *		occurs when elog(ABORT) is called.
+ *		occurs when elog(ERROR) is called.
  *
  *		quickdie() occurs when signalled by the postmaster.
  *		Some backend has bought the farm,
@@ -774,7 +774,7 @@ die(SIGNAL_ARGS)
 static void
 FloatExceptionHandler(SIGNAL_ARGS)
 {
-	elog(ABORT, "floating point exception!"
+	elog(ERROR, "floating point exception!"
 		" The last floating point operation either exceeded legal ranges"
 		" or was a divide by zero");
 }
@@ -1343,7 +1343,7 @@ PostgresMain(int argc, char *argv[])
 	 *	so that the slaves signal the master to abort the transaction
 	 *	rather than calling AbortCurrentTransaction() themselves.
 	 *
-	 *	Note:  elog(ABORT) causes a kill(getpid(),1) to occur sending
+	 *	Note:  elog(ERROR) causes a kill(getpid(),1) to occur sending
 	 *		   us back here.
 	 * ----------------
 	 */
@@ -1352,7 +1352,7 @@ PostgresMain(int argc, char *argv[])
 
 	if (sigsetjmp(Warn_restart, 1) != 0)
 	{
-		InErrorOrAbort = 1;
+		InError = 1;
 
 		time(&tim);
 
@@ -1363,7 +1363,7 @@ PostgresMain(int argc, char *argv[])
 
 		AbortCurrentTransaction();
 	}
-	InErrorOrAbort = 0;
+	InError = 0;
 
 	/* ----------------
 	 *	POSTGRES main processing loop begins here
@@ -1372,7 +1372,7 @@ PostgresMain(int argc, char *argv[])
 	if (IsUnderPostmaster == false)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.58 $ $Date: 1998/01/05 03:33:46 $");
+		puts("$Revision: 1.59 $ $Date: 1998/01/07 21:06:00 $");
 	}
 
 	/* ----------------
@@ -1565,7 +1565,7 @@ PostgresMain(int argc, char *argv[])
 				break;
 
 			default:
-				elog(ABORT, "unknown frontend message was recieved");
+				elog(ERROR, "unknown frontend message was recieved");
 		}
 
 		/* ----------------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.8 1998/01/05 03:32:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.9 1998/01/07 21:04:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,7 +189,7 @@ GetFreeBuffer()
 	{
 
 		/* queue is empty. All buffers in the buffer pool are pinned. */
-		elog(ABORT, "out of free buffers: time to abort !\n");
+		elog(ERROR, "out of free buffers: time to abort !\n");
 		return (NULL);
 	}
 	buf = &(BufferDescriptors[SharedFreeList->freeNext]);

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.10 1998/01/05 03:31:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.11 1998/01/07 21:03:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -461,7 +461,7 @@ xfunc_local_expense(LispValue clause)
 	}
 	else
 	{
-		elog(ABORT, "Clause node of undetermined type");
+		elog(ERROR, "Clause node of undetermined type");
 		return (-1);
 	}
 }
@@ -497,7 +497,7 @@ xfunc_func_expense(LispValue node, LispValue args)
 	{
 		/* don't trust the opid in the Oper node.  Use the opno. */
 		if (!(funcid = get_opcode(get_opno((Oper) node))))
-			elog(ABORT, "Oper's function is undefined");
+			elog(ERROR, "Oper's function is undefined");
 	}
 	else
 	{
@@ -507,7 +507,7 @@ xfunc_func_expense(LispValue node, LispValue args)
 	/* look up tuple in cache */
 	tupl = SearchSysCacheTuple(PROOID, ObjectIdGetDatum(funcid), 0, 0, 0);
 	if (!HeapTupleIsValid(tupl))
-		elog(ABORT, "Cache lookup failed for procedure %d", funcid);
+		elog(ERROR, "Cache lookup failed for procedure %d", funcid);
 	proc = (Form_pg_proc) GETSTRUCT(tupl);
 
 	/*
@@ -622,7 +622,7 @@ xfunc_width(LispValue clause)
 							  PointerGetDatum(get_vartype((Var) clause)),
 								   0, 0, 0);
 		if (!HeapTupleIsValid(tupl))
-			elog(ABORT, "Cache lookup failed for type %d",
+			elog(ERROR, "Cache lookup failed for type %d",
 				 get_vartype((Var) clause));
 		type = (TypeTupleForm) GETSTRUCT(tupl);
 		if (get_varattno((Var) clause) == 0)
@@ -686,7 +686,7 @@ xfunc_width(LispValue clause)
 					   ObjectIdGetDatum(get_opno((Oper) get_op(clause))),
 								   0, 0, 0);
 		if (!HeapTupleIsValid(tupl))
-			elog(ABORT, "Cache lookup failed for procedure %d",
+			elog(ERROR, "Cache lookup failed for procedure %d",
 				 get_opno((Oper) get_op(clause)));
 		return (xfunc_func_width
 				((RegProcedure) (((OperatorTupleForm) (GETSTRUCT(tupl)))->oprcode),
@@ -717,7 +717,7 @@ xfunc_width(LispValue clause)
 	}
 	else
 	{
-		elog(ABORT, "Clause node of undetermined type");
+		elog(ERROR, "Clause node of undetermined type");
 		return (-1);
 	}
 
@@ -855,7 +855,7 @@ xfunc_find_references(LispValue clause)
 	}
 	else
 	{
-		elog(ABORT, "Clause node of undetermined type");
+		elog(ERROR, "Clause node of undetermined type");
 		return ((List) LispNil);
 	}
 }
@@ -1192,7 +1192,7 @@ xfunc_fixvars(LispValue clause, /* clause being pulled up */
 			xfunc_fixvars(lfirst(tmpclause), rel, varno);
 	else
 	{
-		elog(ABORT, "Clause node of undetermined type");
+		elog(ERROR, "Clause node of undetermined type");
 	}
 }
 
@@ -1320,7 +1320,7 @@ xfunc_func_width(RegProcedure funcid, LispValue args)
 	Assert(RegProcedureIsValid(funcid));
 	tupl = SearchSysCacheTuple(PROOID, ObjectIdGetDatum(funcid), 0, 0, 0);
 	if (!HeapTupleIsValid(tupl))
-		elog(ABORT, "Cache lookup failed for procedure %d", funcid);
+		elog(ERROR, "Cache lookup failed for procedure %d", funcid);
 	proc = (Form_pg_proc) GETSTRUCT(tupl);
 
 	/* if function returns a tuple, get the width of that */
@@ -1338,7 +1338,7 @@ xfunc_func_width(RegProcedure funcid, LispValue args)
 								   ObjectIdGetDatum(proc->prorettype),
 								   0, 0, 0);
 		if (!HeapTupleIsValid(tupl))
-			elog(ABORT, "Cache lookup failed for type %d", proc->prorettype);
+			elog(ERROR, "Cache lookup failed for type %d", proc->prorettype);
 		type = (TypeTupleForm) GETSTRUCT(tupl);
 		/* if the type length is known, return that */
 		if (type->typlen != -1)
@@ -1421,7 +1421,7 @@ xfunc_LispRemove(LispValue foo, List bar)
 			sanity = true;		/* found a matching item to remove! */
 
 	if (!sanity)
-		elog(ABORT, "xfunc_LispRemove: didn't find a match!");
+		elog(ERROR, "xfunc_LispRemove: didn't find a match!");
 
 	return (result);
 }

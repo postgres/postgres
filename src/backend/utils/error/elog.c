@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.23 1998/01/05 04:10:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.24 1998/01/07 21:06:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,9 +90,6 @@ elog(int lev, const char *fmt,...)
 		case ERROR:
 			cp = "ERROR:  ";
 			break;
-		case ABORT:
-			cp = "ABORT:  ";
-			break;
 		default:
 			sprintf(line, "FATAL %d:  ", lev);
 			cp = line;
@@ -173,12 +170,12 @@ elog(int lev, const char *fmt,...)
 	}
 #endif							/* !PG_STANDALONE */
 
-	if (lev == ERROR || lev == ABORT)
+	if (lev == ERROR)
 	{
-		extern int	InErrorOrAbort;
+		extern int	InError;
 
 		ProcReleaseSpins(NULL); /* get rid of spinlocks we hold */
-		if (!InErrorOrAbort)
+		if (!InError)
 		{
 			kill(getpid(), 1);	/* abort to traffic cop */
 			pause();

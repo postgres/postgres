@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.11 1998/01/05 03:29:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.12 1998/01/07 21:00:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ _hash_doinsert(Relation rel, HashItem hitem)
 	/* we need a scan key to do our search, so build one */
 	itup = &(hitem->hash_itup);
 	if ((natts = rel->rd_rel->relnatts) != 1)
-		elog(ABORT, "Hash indices valid for only one index key.");
+		elog(ERROR, "Hash indices valid for only one index key.");
 	itup_scankey = _hash_mkscankey(rel, itup, metap);
 
 	/*
@@ -167,7 +167,7 @@ _hash_insertonpg(Relation rel,
 			if (PageGetFreeSpace(page) < itemsz)
 			{
 				/* it doesn't fit on an empty page -- give up */
-				elog(ABORT, "hash item too large");
+				elog(ERROR, "hash item too large");
 			}
 		}
 		_hash_checkpage(page, LH_OVERFLOW_PAGE);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.12 1998/01/07 15:32:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.13 1998/01/07 21:04:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,7 @@ InsertRule(char *rulname,
 	eventrel = heap_openr(evobj);
 	if (eventrel == NULL)
 	{
-		elog(ABORT, "rules cannot be defined on relations not in schema");
+		elog(ERROR, "rules cannot be defined on relations not in schema");
 	}
 	eventrel_oid = RelationGetRelationId(eventrel);
 
@@ -118,7 +118,7 @@ InsertRule(char *rulname,
 		evqual = "<>";
 
 	if (IsDefinedRewriteRule(rulname))
-		elog(ABORT, "Attempt to insert rule '%s' failed: already exists",
+		elog(ERROR, "Attempt to insert rule '%s' failed: already exists",
 			 rulname);
 	strcpyq(actionbuf, actiontree);
 	strcpyq(qualbuf, evqual);
@@ -130,7 +130,7 @@ InsertRule(char *rulname,
 	if (strlen(template) + strlen(rulname) + strlen(actionbuf) +
 		strlen(qualbuf) + 20 /* fudge fac */ > RULE_PLAN_SIZE)
 	{
-		elog(ABORT, "DefineQueryRewrite: rule plan string too big.");
+		elog(ERROR, "DefineQueryRewrite: rule plan string too big.");
 	}
 	sprintf(rulebuf, template,
 			rulname, evtype, eventrel_oid, evslot_index, actionbuf,
@@ -156,12 +156,12 @@ ValidateRule(int event_type,
 	if (((event_type == CMD_INSERT) || (event_type == CMD_DELETE)) &&
 		eslot_string)
 	{
-		elog(ABORT,
+		elog(ERROR,
 		"rules not allowed for insert or delete events to an attribute");
 	}
 
 	if (event_qual && !*action && is_instead)
-		elog(ABORT,
+		elog(ERROR,
 		"event_quals on 'instead nothing' rules not currently supported");
 
 #if 0
@@ -211,7 +211,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 	event_relation = heap_openr(event_obj->relname);
 	if (event_relation == NULL)
 	{
-		elog(ABORT, "virtual relations not supported yet");
+		elog(ERROR, "virtual relations not supported yet");
 	}
 	ev_relid = RelationGetRelationId(event_relation);
 
@@ -265,7 +265,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 
 		/* what is the max size of type text? XXX -- glass */
 		if (length(action) > 15)
-			elog(ABORT, "max # of actions exceeded");
+			elog(ERROR, "max # of actions exceeded");
 		prs2_addToRelation(ev_relid, ruleId, event_type, event_attno,
 						   is_instead, event_qual, action);
 	}

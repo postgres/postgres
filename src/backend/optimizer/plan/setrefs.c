@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.11 1998/01/05 03:32:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.12 1998/01/07 21:04:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,7 +201,7 @@ set_temp_tlist_references(Temp *temp)
 	}
 	else
 	{
-		elog(ABORT, "calling set_temp_tlist_references with empty lefttree");
+		elog(ERROR, "calling set_temp_tlist_references with empty lefttree");
 	}
 }
 
@@ -651,7 +651,7 @@ replace_result_clause(List *clause,
 		/*
 		 * Ooops! we can not handle that!
 		 */
-		elog(ABORT, "replace_result_clause: Can not handle this tlist!\n");
+		elog(ERROR, "replace_result_clause: Can not handle this tlist!\n");
 	}
 }
 
@@ -809,7 +809,7 @@ replace_agg_clause(Node *clause, List *subplanTargetList)
 		/*
 		 * Ooops! we can not handle that!
 		 */
-		elog(ABORT, "replace_agg_clause: Can not handle this tlist!\n");
+		elog(ERROR, "replace_agg_clause: Can not handle this tlist!\n");
 	}
 
 }
@@ -902,7 +902,7 @@ del_agg_clause(Node *clause)
 		/*
 		 * Ooops! we can not handle that!
 		 */
-		elog(ABORT, "del_agg_clause: Can not handle this tlist!\n");
+		elog(ERROR, "del_agg_clause: Can not handle this tlist!\n");
 	}
 	return NULL;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.12 1998/01/05 03:29:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.13 1998/01/07 21:01:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ _hash_formitem(IndexTuple itup)
 
 	/* disallow nulls in hash keys */
 	if (itup->t_info & INDEX_NULL_MASK)
-		elog(ABORT, "hash indices cannot include null keys");
+		elog(ERROR, "hash indices cannot include null keys");
 
 	/* make a copy of the index tuple with room for the sequence number */
 	tuplen = IndexTupleSize(itup);

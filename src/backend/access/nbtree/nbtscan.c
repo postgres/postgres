@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.11 1998/01/05 03:29:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.12 1998/01/07 21:01:54 momjian Exp $
  *
  *
  * NOTES
@@ -77,7 +77,7 @@ _bt_dropscan(IndexScanDesc scan)
 	}
 
 	if (chk == (BTScanList) NULL)
-		elog(ABORT, "btree scan list trashed; can't find 0x%lx", scan);
+		elog(ERROR, "btree scan list trashed; can't find 0x%lx", scan);
 
 	if (last == (BTScanList) NULL)
 		BTScans = chk->btsl_next;
@@ -154,7 +154,7 @@ _bt_scandel(IndexScanDesc scan, int op, BlockNumber blkno, OffsetNumber offno)
 				_bt_step(scan, &buf, BackwardScanDirection);
 				break;
 			default:
-				elog(ABORT, "_bt_scandel: bad operation '%d'", op);
+				elog(ERROR, "_bt_scandel: bad operation '%d'", op);
 				/* NOTREACHED */
 		}
 		so->btso_curbuf = buf;
@@ -179,7 +179,7 @@ _bt_scandel(IndexScanDesc scan, int op, BlockNumber blkno, OffsetNumber offno)
 				_bt_step(scan, &buf, BackwardScanDirection);
 				break;
 			default:
-				elog(ABORT, "_bt_scandel: bad operation '%d'", op);
+				elog(ERROR, "_bt_scandel: bad operation '%d'", op);
 				/* NOTREACHED */
 		}
 		so->btso_mrkbuf = buf;

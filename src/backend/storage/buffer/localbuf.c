@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.15 1998/01/05 03:32:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.16 1998/01/07 21:04:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,7 +110,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 		}
 	}
 	if (bufHdr == NULL)
-		elog(ABORT, "no empty local buffer.");
+		elog(ERROR, "no empty local buffer.");
 
 	/*
 	 * this buffer is not referenced but it might still be dirty (the last

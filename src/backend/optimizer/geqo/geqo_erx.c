@@ -3,7 +3,7 @@
 * geqo_erx.c--
 *	 edge recombination crossover [ER]
 *
-* $Id: geqo_erx.c,v 1.6 1998/01/05 03:31:48 momjian Exp $
+* $Id: geqo_erx.c,v 1.7 1998/01/07 21:03:40 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -353,7 +353,7 @@ gimme_gene(Edge edge, Edge *edge_table)
 			minimum_count = 1;
 		}
 		else if (minimum_count == -1)
-			elog(ABORT, "gimme_gene: Internal error - minimum_count not set");
+			elog(ERROR, "gimme_gene: Internal error - minimum_count not set");
 		else if (edge_table[(int) friend].unused_edges == minimum_edges)
 			minimum_count++;
 
@@ -379,7 +379,7 @@ gimme_gene(Edge edge, Edge *edge_table)
 	}
 
 	/* ... should never be reached */
-	elog(ABORT, "gimme_gene: neither shared nor minimum number nor random edge found");
+	elog(ERROR, "gimme_gene: neither shared nor minimum number nor random edge found");
 	return 0;					/* to keep the compiler quiet */
 }
 
@@ -487,6 +487,6 @@ edge_failure(Gene *gene, int index, Edge *edge_table, int num_gene)
 
 
 /* ... should never be reached */
-	elog(ABORT, "edge_failure: no edge detected");
+	elog(ERROR, "edge_failure: no edge detected");
 	return 0;					/* to keep the compiler quiet */
 }

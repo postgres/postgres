@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.28 1998/01/05 03:33:00 momjian Exp $
+ *	  $Id: fd.c,v 1.29 1998/01/07 21:04:58 momjian Exp $
  *
  * NOTES:
  *
@@ -586,7 +586,7 @@ tryAgain:
 
 	if (fileName == NULL)
 	{
-		elog(ABORT, "fileNameOpenFile: NULL fname");
+		elog(ERROR, "fileNameOpenFile: NULL fname");
 	}
 	vfdP->fileName = malloc(strlen(fileName) + 1);
 	strcpy(vfdP->fileName, fileName);
@@ -763,7 +763,7 @@ FileSeek(File file, long offset, int whence)
 					lseek(VfdCache[file].fd, offset, whence);
 				return returnCode;
 			default:
-				elog(ABORT, "FileSeek: invalid whence: %d", whence);
+				elog(ERROR, "FileSeek: invalid whence: %d", whence);
 				break;
 		}
 	}

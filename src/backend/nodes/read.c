@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.9 1998/01/07 15:32:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.10 1998/01/07 21:03:34 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -283,7 +283,7 @@ nodeRead(bool read_car_only)
 			make_dotted_pair_cell = true;
 			break;
 		default:
-			elog(ABORT, "nodeRead: Bad type %d", type);
+			elog(ERROR, "nodeRead: Bad type %d", type);
 			break;
 	}
 	if (make_dotted_pair_cell)

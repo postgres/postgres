@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.31 1998/01/05 03:34:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.32 1998/01/07 21:06:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -371,7 +371,7 @@ scan_pg_rel_seq(RelationBuildDescInfo buildinfo)
 			break;
 
 		default:
-			elog(ABORT, "ScanPgRelation: bad buildinfo");
+			elog(ERROR, "ScanPgRelation: bad buildinfo");
 			return NULL;
 	}
 
@@ -441,7 +441,7 @@ scan_pg_rel_ind(RelationBuildDescInfo buildinfo)
 			break;
 
 		default:
-			elog(ABORT, "ScanPgRelation: bad buildinfo");
+			elog(ERROR, "ScanPgRelation: bad buildinfo");
 
 			/*
 			 * XXX I hope this is right.  It seems better than returning
@@ -583,7 +583,7 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 	}
 
 	if (need > 0)
-		elog(ABORT, "catalog is missing %d attribute%s for relid %d",
+		elog(ERROR, "catalog is missing %d attribute%s for relid %d",
 			 need, (need == 1 ? "" : "s"), relation->rd_id);
 
 	/* ----------------
@@ -617,7 +617,7 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 		atttup = (HeapTuple) AttributeNumIndexScan(attrel, relation->rd_id, i);
 
 		if (!HeapTupleIsValid(atttup))
-			elog(ABORT, "cannot find attribute %d of relation %.*s", i,
+			elog(ERROR, "cannot find attribute %d of relation %.*s", i,
 				 NAMEDATALEN, &(relation->rd_rel->relname.data[0]));
 		attp = (AttributeTupleForm) GETSTRUCT(atttup);
 
@@ -1738,7 +1738,7 @@ AttrDefaultFetch(Relation relation)
 			if (adform->adnum != attrdef[i].adnum)
 				continue;
 			if (attrdef[i].adsrc != NULL)
-				elog(ABORT, "AttrDefaultFetch: second record found for attr %.*s in rel %.*s",
+				elog(ERROR, "AttrDefaultFetch: second record found for attr %.*s in rel %.*s",
 					 NAMEDATALEN, relation->rd_att->attrs[adform->adnum - 1]->attname.data,
 					 NAMEDATALEN, relation->rd_rel->relname.data);
 
@@ -1746,7 +1746,7 @@ AttrDefaultFetch(Relation relation)
 												 Anum_pg_attrdef_adbin,
 												 adrel->rd_att, &isnull);
 			if (isnull)
-				elog(ABORT, "AttrDefaultFetch: adbin IS NULL for attr %.*s in rel %.*s",
+				elog(ERROR, "AttrDefaultFetch: adbin IS NULL for attr %.*s in rel %.*s",
 					 NAMEDATALEN, relation->rd_att->attrs[adform->adnum - 1]->attname.data,
 					 NAMEDATALEN, relation->rd_rel->relname.data);
 			attrdef[i].adbin = textout(val);
@@ -1754,7 +1754,7 @@ AttrDefaultFetch(Relation relation)
 												 Anum_pg_attrdef_adsrc,
 												 adrel->rd_att, &isnull);
 			if (isnull)
-				elog(ABORT, "AttrDefaultFetch: adsrc IS NULL for attr %.*s in rel %.*s",
+				elog(ERROR, "AttrDefaultFetch: adsrc IS NULL for attr %.*s in rel %.*s",
 					 NAMEDATALEN, relation->rd_att->attrs[adform->adnum - 1]->attname.data,
 					 NAMEDATALEN, relation->rd_rel->relname.data);
 			attrdef[i].adsrc = textout(val);
@@ -1762,14 +1762,14 @@ AttrDefaultFetch(Relation relation)
 		}
 
 		if (i >= ndef)
-			elog(ABORT, "AttrDefaultFetch: unexpected record found for attr %d in rel %.*s",
+			elog(ERROR, "AttrDefaultFetch: unexpected record found for attr %d in rel %.*s",
 				 adform->adnum,
 				 NAMEDATALEN, relation->rd_rel->relname.data);
 		ReleaseBuffer(buffer);
 	}
 
 	if (found < ndef)
-		elog(ABORT, "AttrDefaultFetch: %d record not found for rel %.*s",
+		elog(ERROR, "AttrDefaultFetch: %d record not found for rel %.*s",
 			 ndef - found,
 			 NAMEDATALEN, relation->rd_rel->relname.data);
 
@@ -1821,28 +1821,28 @@ RelCheckFetch(Relation relation)
 		if (!HeapTupleIsValid(tuple))
 			continue;
 		if (found == ncheck)
-			elog(ABORT, "RelCheckFetch: unexpected record found for rel %.*s",
+			elog(ERROR, "RelCheckFetch: unexpected record found for rel %.*s",
 				 NAMEDATALEN, relation->rd_rel->relname.data);
 
 		rcname = (Name) fastgetattr(tuple,
 									Anum_pg_relcheck_rcname,
 									rcrel->rd_att, &isnull);
 		if (isnull)
-			elog(ABORT, "RelCheckFetch: rcname IS NULL for rel %.*s",
+			elog(ERROR, "RelCheckFetch: rcname IS NULL for rel %.*s",
 				 NAMEDATALEN, relation->rd_rel->relname.data);
 		check[found].ccname = nameout(rcname);
 		val = (struct varlena *) fastgetattr(tuple,
 											 Anum_pg_relcheck_rcbin,
 											 rcrel->rd_att, &isnull);
 		if (isnull)
-			elog(ABORT, "RelCheckFetch: rcbin IS NULL for rel %.*s",
+			elog(ERROR, "RelCheckFetch: rcbin IS NULL for rel %.*s",
 				 NAMEDATALEN, relation->rd_rel->relname.data);
 		check[found].ccbin = textout(val);
 		val = (struct varlena *) fastgetattr(tuple,
 											 Anum_pg_relcheck_rcsrc,
 											 rcrel->rd_att, &isnull);
 		if (isnull)
-			elog(ABORT, "RelCheckFetch: rcsrc IS NULL for rel %.*s",
+			elog(ERROR, "RelCheckFetch: rcsrc IS NULL for rel %.*s",
 				 NAMEDATALEN, relation->rd_rel->relname.data);
 		check[found].ccsrc = textout(val);
 		found++;
@@ -1851,7 +1851,7 @@ RelCheckFetch(Relation relation)
 	}
 
 	if (found < ncheck)
-		elog(ABORT, "RelCheckFetch: %d record not found for rel %.*s",
+		elog(ERROR, "RelCheckFetch: %d record not found for rel %.*s",
 			 ncheck - found,
 			 NAMEDATALEN, relation->rd_rel->relname.data);
 

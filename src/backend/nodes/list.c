@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.9 1998/01/05 03:31:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.10 1998/01/07 21:03:29 momjian Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -237,7 +237,7 @@ nconc(List *l1, List *l2)
 	if (l2 == NIL)
 		return l1;
 	if (l1 == l2)
-		elog(ABORT, "tryout to nconc a list to itself");
+		elog(ERROR, "tryout to nconc a list to itself");
 
 	for (temp = l1; lnext(temp) != NULL; temp = lnext(temp))
 		;

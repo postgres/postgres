@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.14 1998/01/05 03:31:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.15 1998/01/07 21:02:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -315,7 +315,7 @@ ExecAllocTableSlot(TupleTable table)
 		 * table->size =  newsize;
 		 */
 		elog(NOTICE, "Plan requires more slots than are available");
-		elog(ABORT, "send mail to your local executor guru to fix this");
+		elog(ERROR, "send mail to your local executor guru to fix this");
 	}
 
 	/* ----------------
@@ -859,7 +859,7 @@ NodeGetResultTupleSlot(Plan *node)
 			 *	  should never get here
 			 * ----------------
 			 */
-			elog(ABORT, "NodeGetResultTupleSlot: node not yet supported: %d ",
+			elog(ERROR, "NodeGetResultTupleSlot: node not yet supported: %d ",
 				 nodeTag(node));
 
 			return NULL;

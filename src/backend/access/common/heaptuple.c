@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.29 1998/01/05 03:28:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.30 1998/01/07 21:00:40 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -93,7 +93,7 @@ ComputeDataSize(TupleDesc tupleDesc,
 				break;
 			default:
 				if (att[i]->attlen < sizeof(int32))
-					elog(ABORT, "ComputeDataSize: attribute %d has len %d",
+					elog(ERROR, "ComputeDataSize: attribute %d has len %d",
 						 i, att[i]->attlen);
 				if (att[i]->attalign == 'd')
 					data_length = DOUBLEALIGN(data_length) + att[i]->attlen;
@@ -194,7 +194,7 @@ DataFill(char *data,
 				break;
 			default:
 				if (att[i]->attlen < sizeof(int32))
-					elog(ABORT, "DataFill: attribute %d has len %d",
+					elog(ERROR, "DataFill: attribute %d has len %d",
 						 i, att[i]->attlen);
 				if (att[i]->attalign == 'd')
 				{
@@ -249,10 +249,10 @@ heap_attisnull(HeapTuple tup, int attnum)
 				break;
 
 			case 0:
-				elog(ABORT, "heap_attisnull: zero attnum disallowed");
+				elog(ERROR, "heap_attisnull: zero attnum disallowed");
 
 			default:
-				elog(ABORT, "heap_attisnull: undefined negative attnum");
+				elog(ERROR, "heap_attisnull: undefined negative attnum");
 		}
 
 	return (0);
@@ -290,7 +290,7 @@ heap_sysattrlen(AttrNumber attno)
 			return sizeof f->t_cmax;
 
 		default:
-			elog(ABORT, "sysattrlen: System attribute number %d unknown.", attno);
+			elog(ERROR, "sysattrlen: System attribute number %d unknown.", attno);
 			return 0;
 	}
 }
@@ -328,7 +328,7 @@ heap_sysattrbyval(AttrNumber attno)
 			break;
 		default:
 			byval = true;
-			elog(ABORT, "sysattrbyval: System attribute number %d unknown.",
+			elog(ERROR, "sysattrbyval: System attribute number %d unknown.",
 				 attno);
 			break;
 	}
@@ -358,7 +358,7 @@ heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
 		case MaxCommandIdAttributeNumber:
 			return ((Datum) (long) tup->t_cmax);
 		default:
-			elog(ABORT, "heap_getsysattr: undefined attnum %d", attnum);
+			elog(ERROR, "heap_getsysattr: undefined attnum %d", attnum);
 	}
 	return ((Datum) NULL);
 }
@@ -538,7 +538,7 @@ fastgetattr(HeapTuple tup,
 				default:
 					if (att[j]->attlen < sizeof(int32))
 					{
-						elog(ABORT,
+						elog(ERROR,
 							 "fastgetattr: attribute %d has len %d",
 							 j, att[j]->attlen);
 					}
@@ -598,7 +598,7 @@ fastgetattr(HeapTuple tup,
 					break;
 				default:
 					if (att[i]->attlen < sizeof(int32))
-						elog(ABORT,
+						elog(ERROR,
 							 "fastgetattr2: attribute %d has len %d",
 							 i, att[i]->attlen);
 					if (att[i]->attalign == 'd')
@@ -657,7 +657,7 @@ fastgetattr(HeapTuple tup,
 				break;
 			default:
 				if (att[attnum]->attlen < sizeof(int32))
-					elog(ABORT, "fastgetattr3: attribute %d has len %d",
+					elog(ERROR, "fastgetattr3: attribute %d has len %d",
 						 attnum, att[attnum]->attlen);
 				if (att[attnum]->attalign == 'd')
 					off = DOUBLEALIGN(off);
@@ -686,7 +686,7 @@ heap_copytuple(HeapTuple tuple)
 	/* XXX For now, just prevent an undetectable executor related error */
 	if (tuple->t_len > MAXTUPLEN)
 	{
-		elog(ABORT, "palloctup: cannot handle length %d tuples",
+		elog(ERROR, "palloctup: cannot handle length %d tuples",
 			 tuple->t_len);
 	}
 
@@ -773,7 +773,7 @@ heap_formtuple(TupleDesc tupleDescriptor,
 	}
 
 	if (numberOfAttributes > MaxHeapAttributeNumber)
-		elog(ABORT, "heap_formtuple: numberOfAttributes of %d > %d",
+		elog(ERROR, "heap_formtuple: numberOfAttributes of %d > %d",
 			 numberOfAttributes, MaxHeapAttributeNumber);
 
 	if (hasnull)
@@ -883,7 +883,7 @@ heap_modifytuple(HeapTuple tuple,
 		}
 		else if (repl[attoff] != 'r')
 		{
-			elog(ABORT, "heap_modifytuple: repl is \\%3d", repl[attoff]);
+			elog(ERROR, "heap_modifytuple: repl is \\%3d", repl[attoff]);
 
 		}
 		else

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.14 1998/01/05 03:31:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.15 1998/01/07 21:02:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,7 +90,7 @@ ExecHash(Hash *node)
 
 	hashtable = node->hashtable;
 	if (hashtable == NULL)
-		elog(ABORT, "ExecHash: hash table is NULL.");
+		elog(ERROR, "ExecHash: hash table is NULL.");
 
 	nbatch = hashtable->nbatch;
 
@@ -359,7 +359,7 @@ ExecHashTableCreate(Hash *node)
 
 	if (hashtable == NULL)
 	{
-		elog(ABORT, "not enough memory for hashjoin.");
+		elog(ERROR, "not enough memory for hashjoin.");
 	}
 	/* ----------------
 	 *	initialize the hash table header
@@ -635,7 +635,7 @@ ExecHashOverflowInsert(HashJoinTable hashtable,
 		if (hashtable == NULL)
 		{
 			perror("repalloc");
-			elog(ABORT, "can't expand hashtable.");
+			elog(ERROR, "can't expand hashtable.");
 		}
 #else
 		/* ------------------
@@ -644,7 +644,7 @@ ExecHashOverflowInsert(HashJoinTable hashtable,
 		 *	- Chris Dunlop, <chris@onthe.net.au>
 		 * ------------------
 		 */
-		elog(ABORT, "hash table out of memory. Use -B parameter to increase buffers.");
+		elog(ERROR, "hash table out of memory. Use -B parameter to increase buffers.");
 #endif
 
 	}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.18 1998/01/05 03:30:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.19 1998/01/07 21:02:24 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -497,7 +497,7 @@ CommandCounterIncrement()
 	if (CurrentTransactionStateData.commandId == FirstCommandId)
 	{
 		CommandIdCounterOverflowFlag = true;
-		elog(ABORT, "You may only have 2^32-1 commands per transaction");
+		elog(ERROR, "You may only have 2^32-1 commands per transaction");
 	}
 
 	CurrentTransactionStateData.scanCommandId =

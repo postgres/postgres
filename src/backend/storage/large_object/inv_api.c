@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.25 1998/01/05 03:33:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.26 1998/01/07 21:05:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,14 +111,14 @@ inv_create(int flags)
 	if (SearchSysCacheTuple(RELNAME, PointerGetDatum(objname),
 							0, 0, 0) != NULL)
 	{
-		elog(ABORT,
+		elog(ERROR,
 		  "internal error: %s already exists -- cannot create large obj",
 			 objname);
 	}
 	if (SearchSysCacheTuple(RELNAME, PointerGetDatum(indname),
 							0, 0, 0) != NULL)
 	{
-		elog(ABORT,
+		elog(ERROR,
 		  "internal error: %s already exists -- cannot create large obj",
 			 indname);
 	}
@@ -147,7 +147,7 @@ inv_create(int flags)
 
 	if (!RelationIsValid(r))
 	{
-		elog(ABORT, "cannot create large object on %s under inversion",
+		elog(ERROR, "cannot create large object on %s under inversion",
 			 smgrout(DEFAULT_SMGR));
 	}
 
@@ -172,7 +172,7 @@ inv_create(int flags)
 
 	if (!RelationIsValid(indr))
 	{
-		elog(ABORT, "cannot create index for large obj on %s under inversion",
+		elog(ERROR, "cannot create index for large obj on %s under inversion",
 			 smgrout(DEFAULT_SMGR));
 	}
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.12 1998/01/05 03:33:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.13 1998/01/07 21:05:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,7 +134,7 @@ PageAddItem(Page page,
 			if (((*itemId).lp_flags & LP_USED) ||
 				((*itemId).lp_len != 0))
 			{
-				elog(ABORT, "PageAddItem: tried overwrite of used ItemId");
+				elog(ERROR, "PageAddItem: tried overwrite of used ItemId");
 				return (InvalidOffsetNumber);
 			}
 		}

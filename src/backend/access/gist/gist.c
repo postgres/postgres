@@ -130,7 +130,7 @@ gistbuild(Relation heap,
 	 */
 
 	if (oldPred == NULL && (nb = RelationGetNumberOfBlocks(index)) != 0)
-		elog(ABORT, "%.16s already contains data", &(index->rd_rel->relname.data[0]));
+		elog(ERROR, "%.16s already contains data", &(index->rd_rel->relname.data[0]));
 
 	/* initialize the root page (if this is a new index) */
 	if (oldPred == NULL)
@@ -1182,7 +1182,7 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 							   0, 0, 0);
 	itupform = (IndexTupleForm) GETSTRUCT(htup);
 	if (!HeapTupleIsValid(htup))
-		elog(ABORT, "initGISTstate: index %d not found", index->rd_id);
+		elog(ERROR, "initGISTstate: index %d not found", index->rd_id);
 	giststate->haskeytype = itupform->indhaskeytype;
 	if (giststate->haskeytype)
 	{
@@ -1193,7 +1193,7 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 								   0, 0);
 		if (!HeapTupleIsValid(htup))
 		{
-			elog(ABORT, "initGISTstate: no attribute tuple %d %d",
+			elog(ERROR, "initGISTstate: no attribute tuple %d %d",
 				 itupform->indexrelid, FirstOffsetNumber);
 			return;
 		}

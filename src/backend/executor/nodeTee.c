@@ -15,7 +15,7 @@
  *		ExecEndTee
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.14 1998/01/05 03:31:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.15 1998/01/07 21:02:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -329,7 +329,7 @@ ExecTee(Tee *node, Plan *parent)
 	}
 	else
 	{
-		elog(ABORT, "A Tee node can only be executed from its left or right parent\n");
+		elog(ERROR, "A Tee node can only be executed from its left or right parent\n");
 		return NULL;
 	}
 

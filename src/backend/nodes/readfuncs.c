@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.16 1998/01/07 08:08:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.17 1998/01/07 21:03:37 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -2114,7 +2114,7 @@ parsePlanString(void)
 	}
 	else
 	{
-		elog(ABORT, "badly formatted planstring \"%.10s\"...\n", token);
+		elog(ERROR, "badly formatted planstring \"%.10s\"...\n", token);
 	}
 
 	return ((Node *) return_value);
@@ -2153,7 +2153,7 @@ readDatum(Oid type)
 	{
 		if (length > sizeof(Datum))
 		{
-			elog(ABORT, "readValue: byval & length = %d", length);
+			elog(ERROR, "readValue: byval & length = %d", length);
 		}
 		s = (char *) (&res);
 		for (i = 0; i < sizeof(Datum); i++)
@@ -2181,7 +2181,7 @@ readDatum(Oid type)
 	token = lsptok(NULL, &tokenLength); /* skip the ']' */
 	if (token[0] != ']')
 	{
-		elog(ABORT, "readValue: ']' expected, length =%d", length);
+		elog(ERROR, "readValue: ']' expected, length =%d", length);
 	}
 
 	return (res);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.18 1998/01/05 03:31:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.19 1998/01/07 21:03:12 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -100,12 +100,12 @@ lo_close(int fd)
 
 	if (fd >= MAX_LOBJ_FDS)
 	{
-		elog(ABORT, "lo_close: large obj descriptor (%d) out of range", fd);
+		elog(ERROR, "lo_close: large obj descriptor (%d) out of range", fd);
 		return -2;
 	}
 	if (cookies[fd] == NULL)
 	{
-		elog(ABORT, "lo_close: invalid large obj descriptor (%d)", fd);
+		elog(ERROR, "lo_close: invalid large obj descriptor (%d)", fd);
 		return -3;
 	}
 #if FSDB
@@ -150,7 +150,7 @@ lo_lseek(int fd, int offset, int whence)
 
 	if (fd >= MAX_LOBJ_FDS)
 	{
-		elog(ABORT, "lo_seek: large obj descriptor (%d) out of range", fd);
+		elog(ERROR, "lo_seek: large obj descriptor (%d) out of range", fd);
 		return -2;
 	}
 
@@ -200,12 +200,12 @@ lo_tell(int fd)
 {
 	if (fd >= MAX_LOBJ_FDS)
 	{
-		elog(ABORT, "lo_tell: large object descriptor (%d) out of range", fd);
+		elog(ERROR, "lo_tell: large object descriptor (%d) out of range", fd);
 		return -2;
 	}
 	if (cookies[fd] == NULL)
 	{
-		elog(ABORT, "lo_tell: invalid large object descriptor (%d)", fd);
+		elog(ERROR, "lo_tell: invalid large object descriptor (%d)", fd);
 		return -3;
 	}
 	return inv_tell(cookies[fd]);
@@ -273,7 +273,7 @@ lo_import(text *filename)
 	fd = open(fnamebuf, O_RDONLY, 0666);
 	if (fd < 0)
 	{							/* error */
-		elog(ABORT, "be_lo_import: can't open unix file\"%s\"\n",
+		elog(ERROR, "be_lo_import: can't open unix file\"%s\"\n",
 			 fnamebuf);
 	}
 
@@ -283,7 +283,7 @@ lo_import(text *filename)
 	lobj = inv_create(INV_READ | INV_WRITE);
 	if (lobj == NULL)
 	{
-		elog(ABORT, "lo_import: can't create inv object for \"%s\"",
+		elog(ERROR, "lo_import: can't create inv object for \"%s\"",
 			 fnamebuf);
 	}
 
@@ -301,7 +301,7 @@ lo_import(text *filename)
 		tmp = inv_write(lobj, buf, nbytes);
 		if (tmp < nbytes)
 		{
-			elog(ABORT, "lo_import: error while reading \"%s\"",
+			elog(ERROR, "lo_import: error while reading \"%s\"",
 				 fnamebuf);
 		}
 	}
@@ -335,7 +335,7 @@ lo_export(Oid lobjId, text *filename)
 	lobj = inv_open(lobjId, INV_READ);
 	if (lobj == NULL)
 	{
-		elog(ABORT, "lo_export: can't open inv object %d",
+		elog(ERROR, "lo_export: can't open inv object %d",
 			 lobjId);
 	}
 
@@ -348,7 +348,7 @@ lo_export(Oid lobjId, text *filename)
 	umask(oumask);
 	if (fd < 0)
 	{							/* error */
-		elog(ABORT, "lo_export: can't open unix file\"%s\"",
+		elog(ERROR, "lo_export: can't open unix file\"%s\"",
 			 fnamebuf);
 	}
 
@@ -360,7 +360,7 @@ lo_export(Oid lobjId, text *filename)
 		tmp = write(fd, buf, nbytes);
 		if (tmp < nbytes)
 		{
-			elog(ABORT, "lo_export: error while writing \"%s\"",
+			elog(ERROR, "lo_export: error while writing \"%s\"",
 				 fnamebuf);
 		}
 	}

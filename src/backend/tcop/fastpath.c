@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.9 1998/01/05 03:33:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.10 1998/01/07 21:05:54 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -199,7 +199,7 @@ update_fp_info(Oid func_id, struct fp_info * fip)
 	 * Since the validity of this structure is determined by whether the
 	 * funcid is OK, we clear the funcid here.	It must not be set to the
 	 * correct value until we are about to return with a good struct
-	 * fp_info, since we can be interrupted (i.e., with an elog(ABORT,
+	 * fp_info, since we can be interrupted (i.e., with an elog(ERROR,
 	 * ...)) at any time.
 	 */
 	MemSet((char *) fip, 0, (int) sizeof(struct fp_info));
@@ -209,7 +209,7 @@ update_fp_info(Oid func_id, struct fp_info * fip)
 								   0, 0, 0);
 	if (!HeapTupleIsValid(func_htp))
 	{
-		elog(ABORT, "update_fp_info: cache lookup for function %d failed",
+		elog(ERROR, "update_fp_info: cache lookup for function %d failed",
 			 func_id);
 	}
 	pp = (Form_pg_proc) GETSTRUCT(func_htp);
@@ -226,7 +226,7 @@ update_fp_info(Oid func_id, struct fp_info * fip)
 										   0, 0, 0);
 			if (!HeapTupleIsValid(type_htp))
 			{
-				elog(ABORT, "update_fp_info: bad argument type %d for %d",
+				elog(ERROR, "update_fp_info: bad argument type %d for %d",
 					 argtypes[i], func_id);
 			}
 			tp = (TypeTupleForm) GETSTRUCT(type_htp);
@@ -241,7 +241,7 @@ update_fp_info(Oid func_id, struct fp_info * fip)
 									   0, 0, 0);
 		if (!HeapTupleIsValid(type_htp))
 		{
-			elog(ABORT, "update_fp_info: bad return type %d for %d",
+			elog(ERROR, "update_fp_info: bad return type %d for %d",
 				 rettype, func_id);
 		}
 		tp = (TypeTupleForm) GETSTRUCT(type_htp);
@@ -267,7 +267,7 @@ update_fp_info(Oid func_id, struct fp_info * fip)
  *
  * RETURNS:
  *		nothing of significance.
- *		All errors result in elog(ABORT,...).
+ *		All errors result in elog(ERROR,...).
  */
 int
 HandleFunctionRequest()
@@ -297,7 +297,7 @@ HandleFunctionRequest()
 
 	if (fip->nargs != nargs)
 	{
-		elog(ABORT, "HandleFunctionRequest: actual arguments (%d) != registered arguments (%d)",
+		elog(ERROR, "HandleFunctionRequest: actual arguments (%d) != registered arguments (%d)",
 			 nargs, fip->nargs);
 	}
 
@@ -328,7 +328,7 @@ HandleFunctionRequest()
 				{				/* ... varlena */
 					if (!(p = palloc(argsize + VARHDRSZ)))
 					{
-						elog(ABORT, "HandleFunctionRequest: palloc failed");
+						elog(ERROR, "HandleFunctionRequest: palloc failed");
 					}
 					VARSIZE(p) = argsize + VARHDRSZ;
 					pq_getnchar(VARDATA(p), 0, argsize);
@@ -338,7 +338,7 @@ HandleFunctionRequest()
 					/* XXX cross our fingers and trust "argsize" */
 					if (!(p = palloc(argsize)))
 					{
-						elog(ABORT, "HandleFunctionRequest: palloc failed");
+						elog(ERROR, "HandleFunctionRequest: palloc failed");
 					}
 					pq_getnchar(p, 0, argsize);
 				}

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.16 1998/01/05 03:31:49 momjian Exp $
+ * $Id: geqo_eval.c,v 1.17 1998/01/07 21:03:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -737,6 +737,6 @@ geqo_nth(int stop, List *rels)
 			return lfirst(r);
 		i++;
 	}
-	elog(ABORT, "geqo_nth: Internal error - ran off end of list");
+	elog(ERROR, "geqo_nth: Internal error - ran off end of list");
 	return NULL;				/* to keep compiler happy */
 }

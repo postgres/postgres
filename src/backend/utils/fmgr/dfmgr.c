@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.15 1998/01/05 03:34:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.16 1998/01/07 21:06:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 										 0, 0, 0);
 	if (!HeapTupleIsValid(procedureTuple))
 	{
-		elog(ABORT, "fmgr: Cache lookup failed for procedure %d\n",
+		elog(ERROR, "fmgr: Cache lookup failed for procedure %d\n",
 			 procedureId);
 		return ((func_ptr) NULL);
 	}
@@ -95,7 +95,7 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 	rdesc = heap_openr(ProcedureRelationName);
 	if (!RelationIsValid(rdesc))
 	{
-		elog(ABORT, "fmgr: Could not open relation %s",
+		elog(ERROR, "fmgr: Could not open relation %s",
 			 ProcedureRelationName);
 		return ((func_ptr) NULL);
 	}
@@ -105,7 +105,7 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 	if (!PointerIsValid(probinattr) /* || isnull */ )
 	{
 		heap_close(rdesc);
-		elog(ABORT, "fmgr: Could not extract probin for %d from %s",
+		elog(ERROR, "fmgr: Could not extract probin for %d from %s",
 			 procedureId, ProcedureRelationName);
 		return ((func_ptr) NULL);
 	}
@@ -150,7 +150,7 @@ handle_load(char *filename, char *funcname)
 		{
 			if (stat(filename, &stat_buf) == -1)
 			{
-				elog(ABORT, "stat failed on file %s", filename);
+				elog(ERROR, "stat failed on file %s", filename);
 			}
 
 			for (file_scanner = file_list;
@@ -211,7 +211,7 @@ handle_load(char *filename, char *funcname)
 			}
 
 			free((char *) file_scanner);
-			elog(ABORT, "Load of file %s failed: %s", filename, load_error);
+			elog(ERROR, "Load of file %s failed: %s", filename, load_error);
 		}
 
 		/*
@@ -227,7 +227,7 @@ handle_load(char *filename, char *funcname)
 
 	if (retval == (func_ptr) NULL)
 	{
-		elog(ABORT, "Can't find function %s in file %s", funcname, filename);
+		elog(ERROR, "Can't find function %s in file %s", funcname, filename);
 	}
 
 	return (retval);
@@ -255,7 +255,7 @@ load_file(char *filename)
 
 	if (stat(filename, &stat_buf) == -1)
 	{
-		elog(ABORT, "stat failed on file %s", filename);
+		elog(ERROR, "stat failed on file %s", filename);
 	}
 
 	if (file_list != (DynamicFileList *) NULL

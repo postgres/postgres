@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.6 1998/01/05 03:31:51 momjian Exp $
+ * $Id: geqo_misc.c,v 1.7 1998/01/07 21:03:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ avg_pool(Pool *pool)
 	double		cumulative = 0.0;
 
 	if (pool->size == 0)
-		elog(ABORT, "avg_pool: pool_size of zero");
+		elog(ERROR, "avg_pool: pool_size of zero");
 
 	for (i = 0; i < pool->size; i++)
 		cumulative = cumulative + pool->data[i].worth;

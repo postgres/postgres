@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.32 1998/01/05 03:31:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.33 1998/01/07 21:03:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -694,7 +694,7 @@ StreamConnection(int server_fd, Port *port)
 							 (struct sockaddr *) & port->raddr,
 							 &addrlen)) < 0)
 	{
-		elog(ABORT, "postmaster: StreamConnection: accept: %m");
+		elog(ERROR, "postmaster: StreamConnection: accept: %m");
 		return (STATUS_ERROR);
 	}
 
@@ -703,7 +703,7 @@ StreamConnection(int server_fd, Port *port)
 	if (getsockname(port->sock, (struct sockaddr *) & port->laddr,
 					&addrlen) < 0)
 	{
-		elog(ABORT, "postmaster: StreamConnection: getsockname: %m");
+		elog(ERROR, "postmaster: StreamConnection: getsockname: %m");
 		return (STATUS_ERROR);
 	}
 	if (family == AF_INET)
@@ -714,13 +714,13 @@ StreamConnection(int server_fd, Port *port)
 		pe = getprotobyname("TCP");
 		if (pe == NULL)
 		{
-			elog(ABORT, "postmaster: getprotobyname failed");
+			elog(ERROR, "postmaster: getprotobyname failed");
 			return (STATUS_ERROR);
 		}
 		if (setsockopt(port->sock, pe->p_proto, TCP_NODELAY,
 					   &on, sizeof(on)) < 0)
 		{
-			elog(ABORT, "postmaster: setsockopt failed");
+			elog(ERROR, "postmaster: setsockopt failed");
 			return (STATUS_ERROR);
 		}
 	}

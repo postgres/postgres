@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.36 1998/01/05 03:31:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.37 1998/01/07 21:02:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -328,7 +328,7 @@ ExecCheckPerms(CmdType operation,
 								  ObjectIdGetDatum(relid),
 								  0, 0, 0);
 		if (!HeapTupleIsValid(htp))
-			elog(ABORT, "ExecCheckPerms: bogus RT relid: %d",
+			elog(ERROR, "ExecCheckPerms: bogus RT relid: %d",
 				 relid);
 		StrNCpy(rname.data,
 				((Form_pg_class) GETSTRUCT(htp))->relname.data,
@@ -361,7 +361,7 @@ ExecCheckPerms(CmdType operation,
 					opstr = "write";
 					break;
 				default:
-					elog(ABORT, "ExecCheckPerms: bogus operation %d",
+					elog(ERROR, "ExecCheckPerms: bogus operation %d",
 						 operation);
 			}
 		}
@@ -377,7 +377,7 @@ ExecCheckPerms(CmdType operation,
 	}
 	if (!ok)
 	{
-		elog(ABORT, "%s: %s", rname.data, aclcheck_error_strings[aclcheck_result]);
+		elog(ERROR, "%s: %s", rname.data, aclcheck_error_strings[aclcheck_result]);
 	}
 }
 
@@ -447,7 +447,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 		resultRelationDesc = heap_open(resultRelationOid);
 
 		if (resultRelationDesc->rd_rel->relkind == RELKIND_SEQUENCE)
-			elog(ABORT, "You can't change sequence relation %s",
+			elog(ERROR, "You can't change sequence relation %s",
 				 resultRelationDesc->rd_rel->relname.data);
 
 		/*
@@ -778,10 +778,10 @@ ExecutePlan(EState *estate,
 										  "ctid",
 										  &datum,
 										  &isNull))
-					elog(ABORT, "ExecutePlan: NO (junk) `ctid' was found!");
+					elog(ERROR, "ExecutePlan: NO (junk) `ctid' was found!");
 
 				if (isNull)
-					elog(ABORT, "ExecutePlan: (junk) `ctid' is NULL!");
+					elog(ERROR, "ExecutePlan: (junk) `ctid' is NULL!");
 
 				tupleid = (ItemPointer) DatumGetPointer(datum);
 				tuple_ctid = *tupleid;	/* make sure we don't free the
@@ -1376,7 +1376,7 @@ ExecConstraints(char *caller, Relation rel, HeapTuple tuple)
 		for (attrChk = 1; attrChk <= rel->rd_att->natts; attrChk++)
 		{
 			if (rel->rd_att->attrs[attrChk - 1]->attnotnull && heap_attisnull(tuple, attrChk))
-				elog(ABORT, "%s: Fail to add null value in not null attribute %s",
+				elog(ERROR, "%s: Fail to add null value in not null attribute %s",
 				  caller, rel->rd_att->attrs[attrChk - 1]->attname.data);
 		}
 	}
@@ -1386,7 +1386,7 @@ ExecConstraints(char *caller, Relation rel, HeapTuple tuple)
 		char	   *failed;
 
 		if ((failed = ExecRelCheck(rel, tuple)) != NULL)
-			elog(ABORT, "%s: rejected due to CHECK constraint %s", caller, failed);
+			elog(ERROR, "%s: rejected due to CHECK constraint %s", caller, failed);
 	}
 
 	return (newtuple);

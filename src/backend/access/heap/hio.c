@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.12 1998/01/05 03:29:30 momjian Exp $
+ *	  $Id: hio.c,v 1.13 1998/01/07 21:01:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ RelationPutHeapTuple(Relation relation,
 #ifndef NO_BUFFERISVALID
 	if (!BufferIsValid(buffer))
 	{
-		elog(ABORT, "RelationPutHeapTuple: no buffer for %ld in %s",
+		elog(ERROR, "RelationPutHeapTuple: no buffer for %ld in %s",
 			 blockIndex, &relation->rd_rel->relname);
 	}
 #endif
@@ -157,7 +157,7 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 		PageInit(pageHeader, BufferGetPageSize(buffer), 0);
 
 		if (len > PageGetFreeSpace(pageHeader))
-			elog(ABORT, "Tuple is too big: size %d", len);
+			elog(ERROR, "Tuple is too big: size %d", len);
 	}
 
 	offnum = PageAddItem((Page) pageHeader, (Item) tuple,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.11 1998/01/05 03:31:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.12 1998/01/07 21:02:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ FormSortKeys(Sort *sortnode)
 	 * ----------------
 	 */
 	if (keycount <= 0)
-		elog(ABORT, "FormSortKeys: keycount <= 0");
+		elog(ERROR, "FormSortKeys: keycount <= 0");
 	sortkeys = (ScanKey) palloc(keycount * sizeof(ScanKeyData));
 
 	/* ----------------

@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: nbtsort.c,v 1.25 1998/01/05 03:29:55 momjian Exp $
+ *	  $Id: nbtsort.c,v 1.26 1998/01/07 21:01:59 momjian Exp $
  *
  * NOTES
  *
@@ -212,7 +212,7 @@ _bt_isortcmp(BTSortKey *k1, BTSortKey *k2)
 	if (_bt_inspool->isunique && !equal_isnull)
 	{
 		_bt_spooldestroy((void *) _bt_inspool);
-		elog(ABORT, "Cannot create unique index. Table contains non-unique values");
+		elog(ERROR, "Cannot create unique index. Table contains non-unique values");
 	}
 	return (0);					/* 1 = 2 */
 }
@@ -333,7 +333,7 @@ _bt_pqadd(BTPriQueue *q, BTPriQueueElem *e)
 
 	if (q->btpq_nelem >= MAXELEM)
 	{
-		elog(ABORT, "_bt_pqadd: queue overflow");
+		elog(ERROR, "_bt_pqadd: queue overflow");
 	}
 
 	child = q->btpq_nelem++;
@@ -426,7 +426,7 @@ _bt_tapecreate(char *fname)
 
 	if (tape == (BTTapeBlock *) NULL)
 	{
-		elog(ABORT, "_bt_tapecreate: out of memory");
+		elog(ERROR, "_bt_tapecreate: out of memory");
 	}
 
 	tape->bttb_magic = BTTAPEMAGIC;
@@ -563,7 +563,7 @@ _bt_spoolinit(Relation index, int ntapes, bool isunique)
 
 	if (btspool == (BTSpool *) NULL || fname == (char *) NULL)
 	{
-		elog(ABORT, "_bt_spoolinit: out of memory");
+		elog(ERROR, "_bt_spoolinit: out of memory");
 	}
 	MemSet((char *) btspool, 0, sizeof(BTSpool));
 	btspool->bts_ntapes = ntapes;
@@ -577,7 +577,7 @@ _bt_spoolinit(Relation index, int ntapes, bool isunique)
 	if (btspool->bts_itape == (BTTapeBlock **) NULL ||
 		btspool->bts_otape == (BTTapeBlock **) NULL)
 	{
-		elog(ABORT, "_bt_spoolinit: out of memory");
+		elog(ERROR, "_bt_spoolinit: out of memory");
 	}
 
 	for (i = 0; i < ntapes; ++i)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.13 1998/01/05 03:32:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.14 1998/01/07 21:04:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ RuleIdGetActionInfo(Oid ruleoid, bool *instead_flag, Query **parseTrees)
 									ObjectIdGetDatum(ruleoid),
 									0, 0, 0);
 	if (ruletuple == NULL)
-		elog(ABORT, "rule %u isn't in rewrite system relation", ruleoid);
+		elog(ERROR, "rule %u isn't in rewrite system relation", ruleoid);
 
 	ruleaction = (char *)heap_getattr(ruletuple,
 									  InvalidBuffer,
@@ -72,7 +72,7 @@ RuleIdGetActionInfo(Oid ruleoid, bool *instead_flag, Query **parseTrees)
 
 	if (action_is_null || instead_is_null)
 	{
-		elog(ABORT, "internal error: rewrite rule not properly set up");
+		elog(ERROR, "internal error: rewrite rule not properly set up");
 	}
 
 	ruleaction = textout((struct varlena *) ruleaction);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.14 1998/01/07 18:46:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.15 1998/01/07 21:02:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@ rt_box_union(BOX *a, BOX *b)
 	BOX		   *n;
 
 	if ((n = (BOX *) palloc(sizeof(*n))) == (BOX *) NULL)
-		elog(ABORT, "Cannot allocate box for union");
+		elog(ERROR, "Cannot allocate box for union");
 
 	n->high.x = Max(a->high.x, b->high.x);
 	n->high.y = Max(a->high.y, b->high.y);
@@ -45,7 +45,7 @@ rt_box_inter(BOX *a, BOX *b)
 	BOX		   *n;
 
 	if ((n = (BOX *) palloc(sizeof(*n))) == (BOX *) NULL)
-		elog(ABORT, "Cannot allocate box for union");
+		elog(ERROR, "Cannot allocate box for union");
 
 	n->high.x = Min(a->high.x, b->high.x);
 	n->high.y = Min(a->high.y, b->high.y);
@@ -94,7 +94,7 @@ rt_poly_union(POLYGON *a, POLYGON *b)
 	p = (POLYGON *) palloc(sizeof(POLYGON));
 
 	if (!PointerIsValid(p))
-		elog(ABORT, "Cannot allocate polygon for union");
+		elog(ERROR, "Cannot allocate polygon for union");
 
 	MemSet((char *) p, 0, sizeof(POLYGON));		/* zero any holes */
 	p->size = sizeof(POLYGON);
@@ -136,7 +136,7 @@ rt_poly_inter(POLYGON *a, POLYGON *b)
 	p = (POLYGON *) palloc(sizeof(POLYGON));
 
 	if (!PointerIsValid(p))
-		elog(ABORT, "Cannot allocate polygon for intersection");
+		elog(ERROR, "Cannot allocate polygon for intersection");
 
 	MemSet((char *) p, 0, sizeof(POLYGON));		/* zero any holes */
 	p->size = sizeof(POLYGON);

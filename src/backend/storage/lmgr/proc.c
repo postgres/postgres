@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.24 1998/01/05 03:33:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.25 1998/01/07 21:05:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.24 1998/01/05 03:33:26 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.25 1998/01/07 21:05:36 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -163,13 +163,13 @@ InitProcess(IPCKey key)
 	if (!found)
 	{
 		/* this should not happen. InitProcGlobal() is called before this. */
-		elog(ABORT, "InitProcess: Proc Header uninitialized");
+		elog(ERROR, "InitProcess: Proc Header uninitialized");
 	}
 
 	if (MyProc != NULL)
 	{
 		SpinRelease(ProcStructLock);
-		elog(ABORT, "ProcInit: you already exist");
+		elog(ERROR, "ProcInit: you already exist");
 		return;
 	}
 
@@ -803,7 +803,7 @@ ProcGetNewSemKeyAndNum(IPCKey *key, int *semNum)
 	}
 
 	/* if we reach here, all the semaphores are in use. */
-	elog(ABORT, "InitProc: cannot allocate a free semaphore");
+	elog(ERROR, "InitProc: cannot allocate a free semaphore");
 }
 
 /*

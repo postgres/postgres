@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.21 1998/01/05 03:31:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.22 1998/01/07 21:04:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,7 +185,7 @@ create_scan_node(Path *best_path, List *tlist)
 			break;
 
 		default:
-			elog(ABORT, "create_scan_node: unknown node type",
+			elog(ERROR, "create_scan_node: unknown node type",
 				 best_path->pathtype);
 			break;
 	}
@@ -252,7 +252,7 @@ create_join_node(JoinPath *best_path, List *tlist)
 			break;
 		default:
 			/* do nothing */
-			elog(ABORT, "create_join_node: unknown node type",
+			elog(ERROR, "create_join_node: unknown node type",
 				 best_path->path.pathtype);
 	}
 
@@ -294,7 +294,7 @@ create_seqscan_node(Path *best_path, List *tlist, List *scan_clauses)
 
 	temp = best_path->parent->relids;
 	if (temp == NULL)
-		elog(ABORT, "scanrelid is empty");
+		elog(ERROR, "scanrelid is empty");
 	else
 		scan_relid = (Index) lfirsti(temp);		/* ??? who takes care of
 												 * lnext? - ay */
@@ -364,7 +364,7 @@ create_indexscan_node(IndexPath *best_path,
 										 ObjectIdGetDatum(lfirsti(ixid)),
 										 0, 0, 0);
 		if (!HeapTupleIsValid(indexTuple))
-			elog(ABORT, "create_plan: index %d not found",
+			elog(ERROR, "create_plan: index %d not found",
 				 lfirsti(ixid));
 		index = (IndexTupleForm) GETSTRUCT(indexTuple);
 		if (index->indislossy)
@@ -915,7 +915,7 @@ make_temp(List *tlist,
 			break;
 
 		default:
-			elog(ABORT, "make_temp: unknown temp type %d", temptype);
+			elog(ERROR, "make_temp: unknown temp type %d", temptype);
 
 	}
 	return (retval);

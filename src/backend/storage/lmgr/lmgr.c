@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.10 1998/01/05 03:33:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.11 1998/01/07 21:05:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -434,7 +434,7 @@ RelationUnsetLockForRead(Relation relation)
 	 */
 	if (!LockInfoIsValid(linfo))
 	{
-		elog(ABORT,
+		elog(ERROR,
 			 "Releasing a lock on %s with invalid lock information",
 			 RelationGetRelationName(relation));
 	}
@@ -527,7 +527,7 @@ RelationUnsetLockForWrite(Relation relation)
 
 	if (!LockInfoIsValid(linfo))
 	{
-		elog(ABORT,
+		elog(ERROR,
 			 "Releasing a lock on %s with invalid lock information",
 			 RelationGetRelationName(relation));
 	}
@@ -769,7 +769,7 @@ RelationUnsetSingleWLockPage(Relation relation,
 		return;
 
 	if (!LockInfoIsValid(relation->lockInfo))
-		elog(ABORT,
+		elog(ERROR,
 			 "Releasing a lock on %s with invalid lock information",
 			 RelationGetRelationName(relation));
 
@@ -816,7 +816,7 @@ RelationUnsetSingleRLockPage(Relation relation,
 		return;
 
 	if (!LockInfoIsValid(relation->lockInfo))
-		elog(ABORT,
+		elog(ERROR,
 			 "Releasing a lock on %s with invalid lock information",
 			 RelationGetRelationName(relation));
 

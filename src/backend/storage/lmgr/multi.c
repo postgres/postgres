@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.9 1998/01/05 03:33:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.10 1998/01/07 21:05:35 momjian Exp $
  *
  * NOTES:
  *	 (1) The lock.c module assumes that the caller here is doing
@@ -100,14 +100,14 @@ InitMultiLevelLockm()
 	MultiTableId = tableId;
 	if (!(MultiTableId))
 	{
-		elog(ABORT, "InitMultiLockm: couldnt initialize lock table");
+		elog(ERROR, "InitMultiLockm: couldnt initialize lock table");
 	}
 	/* -----------------------
 	 * No short term lock table for now.  -Jeff 15 July 1991
 	 *
 	 * ShortTermTableId = LockTabRename(tableId);
 	 * if (! (ShortTermTableId)) {
-	 *	 elog(ABORT,"InitMultiLockm: couldnt rename lock table");
+	 *	 elog(ERROR,"InitMultiLockm: couldnt rename lock table");
 	 * }
 	 * -----------------------
 	 */
@@ -237,7 +237,7 @@ MultiAcquire(LockTableId tableId,
 			locks[2] = lockt;
 			break;
 		default:
-			elog(ABORT, "MultiAcquire: bad lock level");
+			elog(ERROR, "MultiAcquire: bad lock level");
 			return (FALSE);
 	}
 
@@ -390,7 +390,7 @@ MultiRelease(LockTableId tableId,
 			locks[2] = lockt;
 			break;
 		default:
-			elog(ABORT, "MultiRelease: bad lockt");
+			elog(ERROR, "MultiRelease: bad lockt");
 	}
 
 	/*
@@ -435,7 +435,7 @@ MultiRelease(LockTableId tableId,
 			status = LockRelease(tableId, tmpTag, locks[i]);
 			if (!status)
 			{
-				elog(ABORT, "MultiRelease: couldn't release after error");
+				elog(ERROR, "MultiRelease: couldn't release after error");
 			}
 		}
 	}

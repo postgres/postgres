@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.12 1998/01/05 03:32:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.13 1998/01/07 21:04:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,7 @@ relation_info(Query *root, Index relid,
 	}
 	else
 	{
-		elog(ABORT, "RelationCatalogInformation: Relation %d not found",
+		elog(ERROR, "RelationCatalogInformation: Relation %d not found",
 			 relationObjectId);
 	}
 
@@ -152,7 +152,7 @@ index_info(Query *root, bool first, int relid, IdxInfoRetval *info)
 							  1, &indexKey);
 	}
 	if (!HeapScanIsValid(scan))
-		elog(ABORT, "index_info: scan not started");
+		elog(ERROR, "index_info: scan not started");
 	indexTuple = heap_getnext(scan, 0, (Buffer *) NULL);
 	if (!HeapTupleIsValid(indexTuple))
 	{
@@ -218,7 +218,7 @@ index_info(Query *root, bool first, int relid, IdxInfoRetval *info)
 										UInt16GetDatum(amstrategy),
 										0);
 		if (!HeapTupleIsValid(amopTuple))
-			elog(ABORT, "index_info: no amop %d %d %d",
+			elog(ERROR, "index_info: no amop %d %d %d",
 				 relam, index->indclass[i], amstrategy);
 		info->orderOprs[i] =
 			((Form_pg_amop) GETSTRUCT(amopTuple))->amopopr;
@@ -349,10 +349,10 @@ restriction_selectivity(Oid functionObjectId,
 							(char *) constFlag,
 							NULL);
 	if (!PointerIsValid(result))
-		elog(ABORT, "RestrictionClauseSelectivity: bad pointer");
+		elog(ERROR, "RestrictionClauseSelectivity: bad pointer");
 
 	if (*result < 0.0 || *result > 1.0)
-		elog(ABORT, "RestrictionClauseSelectivity: bad value %lf",
+		elog(ERROR, "RestrictionClauseSelectivity: bad value %lf",
 			 *result);
 
 	return ((Cost) *result);
@@ -388,10 +388,10 @@ join_selectivity(Oid functionObjectId,
 							(char *) (int) attributeNumber2,
 							NULL);
 	if (!PointerIsValid(result))
-		elog(ABORT, "JoinClauseSelectivity: bad pointer");
+		elog(ERROR, "JoinClauseSelectivity: bad pointer");
 
 	if (*result < 0.0 || *result > 1.0)
-		elog(ABORT, "JoinClauseSelectivity: bad value %lf",
+		elog(ERROR, "JoinClauseSelectivity: bad value %lf",
 			 *result);
 
 	return ((Cost) *result);
@@ -532,7 +532,7 @@ IndexSelectivity(Oid indexrelid,
 								 ObjectIdGetDatum(indexrelid),
 								 0, 0, 0);
 	if (!HeapTupleIsValid(indRel))
-		elog(ABORT, "IndexSelectivity: index %d not found",
+		elog(ERROR, "IndexSelectivity: index %d not found",
 			 indexrelid);
 	relam = ((Form_pg_class) GETSTRUCT(indRel))->relam;
 
@@ -540,7 +540,7 @@ IndexSelectivity(Oid indexrelid,
 									 ObjectIdGetDatum(indexrelid),
 									 0, 0, 0);
 	if (!HeapTupleIsValid(indexTuple))
-		elog(ABORT, "IndexSelectivity: index %d not found",
+		elog(ERROR, "IndexSelectivity: index %d not found",
 			 indexrelid);
 	index = (IndexTupleForm) GETSTRUCT(indexTuple);
 
@@ -595,7 +595,7 @@ IndexSelectivity(Oid indexrelid,
 										ObjectIdGetDatum(relam),
 										0);
 		if (!HeapTupleIsValid(amopTuple))
-			elog(ABORT, "IndexSelectivity: no amop %d %d",
+			elog(ERROR, "IndexSelectivity: no amop %d %d",
 				 indclass, operatorObjectIds[n]);
 		amop = (Form_pg_amop) GETSTRUCT(amopTuple);
 

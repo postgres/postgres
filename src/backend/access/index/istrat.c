@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.14 1998/01/05 03:29:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.15 1998/01/07 21:01:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -349,7 +349,7 @@ RelationGetStrategy(Relation relation,
 	{
 		if (!StrategyNumberIsValid(strategy))
 		{
-			elog(ABORT, "RelationGetStrategy: corrupted evaluation");
+			elog(ERROR, "RelationGetStrategy: corrupted evaluation");
 		}
 	}
 
@@ -481,7 +481,7 @@ RelationInvokeStrategy(Relation relation,
 		}
 	}
 
-	elog(ABORT, "RelationInvokeStrategy: cannot evaluate strategy %d",
+	elog(ERROR, "RelationInvokeStrategy: cannot evaluate strategy %d",
 		 strategy);
 
 	/* not reached, just to make compiler happy */
@@ -514,7 +514,7 @@ OperatorRelationFillScanKeyEntry(Relation operatorRelation,
 	tuple = heap_getnext(scan, false, (Buffer *) NULL);
 	if (!HeapTupleIsValid(tuple))
 	{
-		elog(ABORT, "OperatorObjectIdFillScanKeyEntry: unknown operator %lu",
+		elog(ERROR, "OperatorObjectIdFillScanKeyEntry: unknown operator %lu",
 			 (uint32) operatorObjectId);
 	}
 
@@ -525,7 +525,7 @@ OperatorRelationFillScanKeyEntry(Relation operatorRelation,
 
 	if (!RegProcedureIsValid(entry->sk_procedure))
 	{
-		elog(ABORT,
+		elog(ERROR,
 		"OperatorObjectIdFillScanKeyEntry: no procedure for operator %lu",
 			 (uint32) operatorObjectId);
 	}
@@ -567,7 +567,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 	scan = heap_beginscan(relation, false, false, 1, entry);
 	tuple = heap_getnext(scan, 0, (Buffer *) NULL);
 	if (!HeapTupleIsValid(tuple))
-		elog(ABORT, "IndexSupportInitialize: corrupted catalogs");
+		elog(ERROR, "IndexSupportInitialize: corrupted catalogs");
 
 	/*
 	 * XXX note that the following assumes the INDEX tuple is well formed
@@ -583,7 +583,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 		{
 			if (attributeIndex == 0)
 			{
-				elog(ABORT, "IndexSupportInitialize: no pg_index tuple");
+				elog(ERROR, "IndexSupportInitialize: no pg_index tuple");
 			}
 			break;
 		}

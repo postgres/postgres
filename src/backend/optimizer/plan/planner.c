@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.19 1998/01/05 03:32:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.20 1998/01/07 21:04:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -279,7 +279,7 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
 		if (rettype == InvalidOid)
 			return;
 		else
-			elog(ABORT, "return type mismatch in function decl: final query is a catalog utility");
+			elog(ERROR, "return type mismatch in function decl: final query is a catalog utility");
 	}
 
 	/* okay, it's an ordinary query */
@@ -294,7 +294,7 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
 	if (rettype == InvalidOid)
 	{
 		if (cmd == CMD_SELECT)
-			elog(ABORT,
+			elog(ERROR,
 				 "function declared with no return type, but final query is a retrieve");
 		else
 			return;
@@ -302,14 +302,14 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
 
 	/* by here, the function is declared to return some type */
 	if ((typ = typeidType(rettype)) == NULL)
-		elog(ABORT, "can't find return type %d for function\n", rettype);
+		elog(ERROR, "can't find return type %d for function\n", rettype);
 
 	/*
 	 * test 3:	if the function is declared to return a value, then the
 	 * final query had better be a retrieve.
 	 */
 	if (cmd != CMD_SELECT)
-		elog(ABORT, "function declared to return type %s, but final query is not a retrieve", typeTypeName(typ));
+		elog(ERROR, "function declared to return type %s, but final query is not a retrieve", typeTypeName(typ));
 
 	/*
 	 * test 4:	for base type returns, the target list should have exactly
@@ -319,11 +319,11 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
 	if (typeTypeRelid(typ) == InvalidOid)
 	{
 		if (exec_tlist_length(tlist) > 1)
-			elog(ABORT, "function declared to return %s returns multiple values in final retrieve", typeTypeName(typ));
+			elog(ERROR, "function declared to return %s returns multiple values in final retrieve", typeTypeName(typ));
 
 		resnode = (Resdom *) ((TargetEntry *) lfirst(tlist))->resdom;
 		if (resnode->restype != rettype)
-			elog(ABORT, "return type mismatch in function: declared to return %s, returns %s", typeTypeName(typ), typeidTypeName(resnode->restype));
+			elog(ERROR, "return type mismatch in function: declared to return %s, returns %s", typeTypeName(typ), typeidTypeName(resnode->restype));
 
 		/* by here, base return types match */
 		return;
@@ -352,13 +352,13 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
 	reln = heap_open(typeTypeRelid(typ));
 
 	if (!RelationIsValid(reln))
-		elog(ABORT, "cannot open relation relid %d", typeTypeRelid(typ));
+		elog(ERROR, "cannot open relation relid %d", typeTypeRelid(typ));
 
 	relid = reln->rd_id;
 	relnatts = reln->rd_rel->relnatts;
 
 	if (exec_tlist_length(tlist) != relnatts)
-		elog(ABORT, "function declared to return type %s does not retrieve (%s.*)", typeTypeName(typ), typeTypeName(typ));
+		elog(ERROR, "function declared to return type %s does not retrieve (%s.*)", typeTypeName(typ), typeTypeName(typ));
 
 	/* expect attributes 1 .. n in order */
 	for (i = 1; i <= relnatts; i++)
@@ -388,14 +388,14 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
 			else if (IsA(thenode, Func))
 				tletype = (Oid) get_functype((Func *) thenode);
 			else
-				elog(ABORT, "function declared to return type %s does not retrieve (%s.all)", typeTypeName(typ), typeTypeName(typ));
+				elog(ERROR, "function declared to return type %s does not retrieve (%s.all)", typeTypeName(typ), typeTypeName(typ));
 		}
 		else
-			elog(ABORT, "function declared to return type %s does not retrieve (%s.all)", typeTypeName(typ), typeTypeName(typ));
+			elog(ERROR, "function declared to return type %s does not retrieve (%s.all)", typeTypeName(typ), typeTypeName(typ));
 #endif
 		/* reach right in there, why don't you? */
 		if (tletype != reln->rd_att->attrs[i - 1]->atttypid)
-			elog(ABORT, "function declared to return type %s does not retrieve (%s.all)", typeTypeName(typ), typeTypeName(typ));
+			elog(ERROR, "function declared to return type %s does not retrieve (%s.all)", typeTypeName(typ), typeTypeName(typ));
 	}
 
 	heap_close(reln);
