@@ -1,13 +1,13 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jan 13 20:06:46 EST 2000
+Last updated:		Sat Jan 15 14:31:42 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
 The most recent version of this document can be viewed at
 the PostgreSQL web site, http://www.PostgreSQL.org.
 
-A dash(-) marks changes that will appear in the next release.
+A dash(-) marks changes that will appear in the upcoming 7.0 release.
 
 Names in brackets "[]" indicate more detailed information is available in
 the directory pgsql/doc/TODO.detail/ under that name.
@@ -66,14 +66,14 @@ VIEWS
 
 MISC
 
-* User who can create databases can modify pg_database table
+* -User who can create databases can modify pg_database table(Peter)
 * Plpgsql does not handle quoted mixed-case identifiers
 * -Fix btree to give a useful elog when key > 1/2 (page - overhead)(Tom)
 * -pg_dump should preserve primary key information
 * plpgsql regression tests fails on BSD/OS
 * -database names with spaces fail
 * insert of 0.0 into DECIMAL(4,4) field fails
-* Interlock to prevent DROP DATABASE on a database with running backends
+* -* Interlock to prevent DROP DATABASE on a database with running backendsInterlock to prevent DROP DATABASE on a database with running backends
 * Buffer reference counting bugfixes
 * Fix libpq bug that causes it to drop backend error message sent
   just before connection closure (ie, any FATAL error message
@@ -92,7 +92,7 @@ URGENT
 
 ADMIN
 
-* Better interface for adding to pg_group
+* -Better interface for adding to pg_group(Peter)
 * More access control over who can create tables and access the database
 * Test syslog functionality
 * Allow elog() to return error codes, not just messages
@@ -121,7 +121,7 @@ TYPES
 * Add support for & operator
 * Allow LOCALE on a per-column basis, default to ASCII
 * -Allow LOCALE to use indexes in regular expression searches(Tom)
-* Allow array on int8[]
+* -Allow array on int8[](Thomas)
 * Allow nulls in arrays
 * Allow arrays to be ORDER'ed
 * Remove Money type, add money formatting for decimal type
@@ -143,7 +143,7 @@ INDEXES
 * Allow CREATE INDEX zman_index ON test (date_trunc( 'day', zman ) datetime_ops)
   fails index can't store constant parameters
 * Allow creation of functional indexes to use default types
-* Permissions on indexes, prevent them?
+* -Permissions on indexes, prevent them(Peter)
 * Allow SQL function indexes
 * Add FILLFACTOR to index creation
 * -Allow indexing of LIKE with localle character sets
@@ -215,7 +215,7 @@ MISC
 * -Overhaul mdmgr/smgr to fix double unlinking and double opens, cleanup
 * Overhaul bufmgr/lockmgr/transaction manager
 * Add PL/Perl(Mark Hollomon)
-* Make postgres user have a password by default
+* -Add option for postgres user have a password by default(Peter)
 * Add configure test to check for C++ need for *.h and namespaces
 * Allow BLCKSZ <= 64k, not <= 32k
 * redesign UNION structures to have separarate target lists
