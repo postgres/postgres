@@ -1,153 +1,106 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_passwd.sgml,v 1.3 2000/07/21 00:24:37 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_passwd.sgml,v 1.4 2000/11/18 19:05:58 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="APP-PG-PASSWD">
+ <docinfo>
+  <date>2000-11-18</date>
+ </docinfo>
+
  <refmeta>
-  <refentrytitle id="APP-PG-PASSWD-TITLE">
-   <application>pg_passwd</application>
-  </refentrytitle>
+  <refentrytitle id="APP-PG-PASSWD-TITLE"><application>pg_passwd</application></refentrytitle>
+  <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   <application>pg_passwd</application>
-  </refname>
-  <refpurpose>
-   Manipulate the flat password file
-  </refpurpose>
+  <refname>pg_passwd</refname>
+  <refpurpose>Manipulate a text password file</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-pg_passwd <replaceable class="parameter">filename</replaceable>
-  </synopsis>
+  <cmdsynopsis>
+   <command>pg_passwd</command>
+   <arg choice="plain"><replaceable>filename</replaceable></arg>
+  </cmdsynopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-APP-PG-PASSWD-1">
-  <refsect1info>
-   <date>1999-07-20</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1 id="app-pg-passwd-description">
+  <title>Description</title>
   <para>
-   <application>pg_passwd</application>
-   is a tool to manipulate the
-   flat password file functionality of
-   <productname>Postgres</productname>. This style of password
-   authentication is not <emphasis>required</emphasis> in an
-   installation, but is one of several supported security mechanisms.
+   <application>pg_passwd</application> is a tool to manipulate a flat
+   text password file for the purpose of using that file to control
+   the client authentication of the
+   <productname>PostgreSQL</productname> server.  More information
+   about setting up this authentication mechanism can be found in the
+   <citetitle>Administrator's Guide</citetitle>.
   </para>
 
   <para>
-   Specify the password file in the same style of
-   <literal>Ident</literal> authentication in
-   <filename>$PGDATA/pg_hba.conf</filename>:
-
-   <programlisting>
-host  unv     133.65.96.250   255.255.255.255 password passwd
-   </programlisting>
-
-   where the above line allows access from 133.65.96.250 using the passwords listed
-   in <filename>$PGDATA/passwd</filename>.
-   The format of the password file follows those of
-   <filename>/etc/passwd</filename>
-   and
-   <filename>/etc/shadow</filename>.
-   The first field is the user name, and  the second field
-   is the encrypted password.
-   The rest is completely ignored.
-   Thus the following three sample lines specify the same user and password pair:
-
-   <programlisting>
-pg_guest:/nB7.w5Auq.BY:10031::::::
-pg_guest:/nB7.w5Auq.BY:93001:930::/home/guest:/bin/tcsh
-pg_guest:/nB7.w5Auq.BY:93001
-   </programlisting>
+   The form of a text password file is one entry per line; the fields
+   of each entry are separated by colons.  The first field is the user
+   name, the second field is the encrypted password.  Other fields are
+   ignored (to allow password files to be shared between applications
+   that use similar formats).  The functionality of the
+   <application>pg_passwd</application> utility is to enable a user to
+   interactively add entries to such a file, to alter passwords of
+   existing entries, and to take care of encrypting the passwords.
   </para>
 
   <para>
-   Supply the password file to the pg_passwd command.
-   In the case described above, after changing the working directory to
-   <envar>PGDATA</envar>, the following command execution specifies
-   the new password for <literal>pg_guest</literal>:
+   Supply the name of the password file as argument to the pg_passwd
+   command.  To be of use for client authentication the file needs to
+   be location in the server's data directory, and the base name of
+   the file needs to be specified in the
+   <filename>pg_hba.conf</filename> access control file.
 
-   <programlisting>
-	$ pg_passwd passwd
-	Username: pg_guest
-	Password:
-	Re-enter password:
-   </programlisting>
+<screen>
+<prompt>$</prompt> <userinput>pg_passwd /usr/local/pgsql/data/passwords</userinput>
+<computeroutput>File "/usr/local/pgsql/data/passwords" does not exist.  Create? (y/n):</computeroutput> <userinput>y</userinput>
+<prompt>Username:</prompt> <userinput>guest</userinput>
+<prompt>Password:</prompt>
+<prompt>Re-enter password:</prompt>
+</screen>
 
-   where the <literal>Password:</literal>
-   and <literal>Re-enter password:</literal>
-   prompts require the same password input which are not displayed
-   on the terminal.
+   where the <literal>Password:</literal> and <literal>Re-enter
+   password:</literal> prompts require the same password input which
+   is not displayed on the terminal.
+  </para>
+
+  <para>
    The original password file is renamed to
-   <filename>passwd.bk</filename>.
+   <filename>passwords.bk</filename>.
   </para>
 
   <para>
-   <application>psql</application>
-   uses the <option>-u</option>
-   option to invoke this style of
-   authentication.
-  </para>
-
-  <para>
-   The following lines show the sample usage of the option:
+   To make use of this password file, put a line like the following in
+   <filename>pg_hba.conf</filename>:
 
 <programlisting>
-$ psql -h hyalos -u unv
-Username: pg_guest
-Password:
-Welcome to the POSTGRESQL interactive sql monitor:
-  Please read the file COPYRIGHT for copyright terms of POSTGRESQL
-   type \? for help on slash commands
-   type \q to quit
-   type \g or terminate with semicolon to execute query
- You are currently connected to the database: unv
-unv=>
-   </programlisting>
+host  unv     133.65.96.250   255.255.255.255 password passwords
+</programlisting>
+
+   which would allow access from host 133.65.96.250 using the
+   passwords listed in the <filename>passwords</filename> file (and
+   only to the users listed in the file).
   </para>
 
+  <note>
+   <para>
+    It is also useful to have entries in password file with an empty
+    password field.  (This is different from an empty password.)
+    These entries cannot be managed by
+    <application>pg_passwd</application>, but it is always possible to
+    edit password files manually.
+   </para>
+  </note>
+ </refsect1>
+
+ <refsect1 id="app-pg-passwd-seealso">
+  <title>See also</title>
   <para>
-   Perl5 authentication
-   uses the new style of the <filename>Pg.pm</filename> like this:
-
-   <programlisting>
-$conn = Pg::connectdb("host=hyalos dbname=unv
-                       user=pg_guest password=xxxxxxx");
-   </programlisting>
-
-   For more details, refer to 
-   <filename>src/interfaces/perl5/Pg.pm</filename>.
-  </para>
-
-  <para>
-   Pg{tcl,tk}sh authentication
-   uses the
-   <function>pg_connect</function>
-   command with the
-   <option>-conninfo</option>
-   option thusly:
-
-<programlisting>
-% set conn [pg_connect -conninfo \\
-            "host=hyalos dbname=unv \\
-             user=pg_guest password=xxxxxxx "]
-   </programlisting>
-
-   You can list all of the keys for the option by executing the following
-   command:
-
-   <programlisting>
-% puts [ pg_conndefaults]
-   </programlisting>
+   <citetitle>PostgreSQL Administrator's Guide</citetitle>
   </para>
  </refsect1>
 </refentry>
