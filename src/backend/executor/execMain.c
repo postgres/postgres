@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.185 2002/11/13 00:39:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.186 2002/11/13 00:44:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1116,7 +1116,8 @@ lnext:	;
 
 		/*
 		 * check our tuple count.. if we've processed the proper number
-		 * then quit, else loop again and process more tuples..
+		 * then quit, else loop again and process more tuples.  Zero
+		 * number_tuples means no limit.
 		 */
 		current_tuple_count++;
 		if (numberTuples == current_tuple_count)

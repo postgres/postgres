@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.376 2002/11/11 22:19:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.377 2002/11/13 00:44:08 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -49,6 +49,7 @@
 #include "postgres.h"
 
 #include <ctype.h>
+#include <limits.h>
 
 #include "access/htup.h"
 #include "catalog/index.h"
@@ -358,7 +359,7 @@ static void doNegateFloat(Value *v);
 
 	KEY
 
-	LANCOMPILER LANGUAGE LEADING LEFT LEVEL LIKE LIMIT
+	LANCOMPILER LANGUAGE LAST LEADING LEFT LEVEL LIKE LIMIT
 	LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
 	LOCK_P
 
@@ -2661,7 +2662,7 @@ FetchStmt:	FETCH direction fetch_how_many from_in name
 					if ($3 < 0)
 					{
 						$3 = -$3;
-						$2 = (($2 == FORWARD)? BACKWARD: FORWARD);
+						$2 = (($2 == FORWARD) ? BACKWARD: FORWARD);
 					}
 					n->direction = $2;
 					n->howMany = $3;
@@ -2729,8 +2730,8 @@ direction:	FORWARD									{ $$ = FORWARD; }
 fetch_how_many:
 			Iconst									{ $$ = $1; }
 			| '-' Iconst							{ $$ = - $2; }
-											/* 0 means fetch all tuples*/
-			| ALL									{ $$ = 0; }
+			| ALL									{ $$ = INT_MAX; }
+			| LAST									{ $$ = INT_MAX; }
 			| NEXT									{ $$ = 1; }
 			| PRIOR									{ $$ = -1; }
 		;
@@ -7060,6 +7061,7 @@ unreserved_keyword:
 			| KEY
 			| LANGUAGE
 			| LANCOMPILER
+			| LAST
 			| LEVEL
 			| LISTEN
 			| LOAD

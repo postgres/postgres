@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portalcmds.h,v 1.2 2002/09/04 20:31:42 momjian Exp $
+ * $Id: portalcmds.h,v 1.3 2002/11/13 00:44:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 
 /*
  * PerformPortalFetch
- *		Performs the POSTQUEL function FETCH.  Fetches count (or all if 0)
+ *		Performs the POSTQUEL function FETCH.  Fetches count
  * tuples in portal with name in the forward direction iff goForward.
  *
  * Exceptions:

@@ -8,12 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.3 2002/09/04 20:31:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.4 2002/11/13 00:44:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
+
+#include <limits.h>
 
 #include "commands/portalcmds.h"
 #include "executor/executor.h"
@@ -55,7 +57,7 @@ PortalCleanup(Portal portal)
  *
  *	name: name of portal
  *	forward: forward or backward fetch?
- *	count: # of tuples to fetch (0 implies all)
+ *	count: # of tuples to fetch
  *	dest: where to send results
  *	completionTag: points to a buffer of size COMPLETION_TAG_BUFSIZE
  *		in which to store a command completion status string.
@@ -100,6 +102,14 @@ PerformPortalFetch(char *name,
 		return;
 	}
 
+	/* If zero count, we are done */
+	if (count == 0)
+		return;
+
+	/* Internally, zero count processes all portal rows */
+	if (count == INT_MAX)
+		count = 0;
+		
 	/*
 	 * switch into the portal context
 	 */
