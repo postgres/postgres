@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.26.2.3 2003/01/31 22:35:27 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.26.2.4 2003/02/13 23:06:19 tgl Exp $
  *
  *********************************************************************
  */
@@ -630,7 +630,7 @@ PLy_modify_tuple(PLyProcedure * proc, PyObject * pltd, TriggerData *tdata,
 			modvalues[j] = FunctionCall3(&proc->result.out.r.atts[atti].typfunc,
 										 CStringGetDatum(src),
 				 ObjectIdGetDatum(proc->result.out.r.atts[atti].typelem),
-							Int32GetDatum(tupdesc->attrs[j]->atttypmod));
+							Int32GetDatum(tupdesc->attrs[atti]->atttypmod));
 			modnulls[j] = ' ';
 
 			Py_DECREF(plstr);
