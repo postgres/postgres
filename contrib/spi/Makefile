@@ -3,7 +3,7 @@ SRCDIR= ../../src
 
 include $(SRCDIR)/Makefile.global
 
-CONTRIBDIR=$(LIBDIR)/contrib
+CONTRIBDIR=$(LIBDIR)/modules
 
 CFLAGS+= $(CFLAGS_SL) -I$(SRCDIR)/include
 

@@ -71,7 +71,7 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 
 	/* Lookup the function entry point */
 	proc_fn = (func_ptr) NULL;
-	fmgr_info(proc, &proc_fn, &pronargs);
+	fmgr_info(proc, &pronargs);	/* (proc, &proc_fn, &pronargs);	*/
 	if ((proc_fn == NULL) || (pronargs != 2))
 	{
 		elog(ERROR, "array_iterator: fmgr_info lookup failed for oid %d", proc);

@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------
 
 ifndef PGDIR
-PGDIR= /opt/postgres/current
+PGDIR= ../..
 endif
 
 SRCDIR= $(PGDIR)/src
@@ -27,13 +27,13 @@ include $(SRCDIR)/Makefile.global
 # Comment out this re-declaration of LIBDIR
 #  if you are installing as the postgres superuser
 #   into a specific database or into template1.
-LIBDIR= /home/tgl/lib
+#LIBDIR= /home/tgl/lib
 
 CFLAGS+= -I$(PGDIR)/include -I$(PGDIR)/src/include -I$(LIBPQDIR)
 
 # This extra library is for the 64-bit division routine on my Linux box
 # and probably will need to be commented-out for most other platforms.
-CLIBS+= /usr/lib/gcc-lib/i486-linux/2.7.2/libgcc.a
+#CLIBS+= /usr/lib/gcc-lib/i486-linux/2.7.2/libgcc.a
 
 TARGETS= int8.sql int8$(DLSUFFIX)
 
@@ -44,7 +44,7 @@ int8$(DLSUFFIX):	int8.o
 
 install:
 	$(MAKE) all
-	cp -p int8$(DLSUFFIX) $(LIBDIR)
+	cp -p int8$(DLSUFFIX) $(LIBDIR)/modules
 
 %.sql: %.source
 	if [ -z "$$USER" ]; then USER=$$LOGNAME; fi; \
@@ -53,7 +53,7 @@ install:
 	rm -f $@; \
 	C=`pwd`; \
 	O=$C; \
-	if [ -d ${LIBDIR} ]; then O=${LIBDIR}; fi; \
+	if [ -d ${LIBDIR}/contrib ]; then O=${LIBDIR}/contrib; fi; \
 	sed -e "s:_CWD_:$$C:g" \
 	    -e "s:_OBJWD_:$$O:g" \
 	    -e "s:_DLSUFFIX_:$(DLSUFFIX):g" \

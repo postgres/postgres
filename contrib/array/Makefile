@@ -40,16 +40,16 @@ module:		$(MODULE)
 sql:		$(MODNAME).sql
 
 install:	$(MODULE)
-		cp -p $(MODULE) $(LIBDIR)
-		cd $(LIBDIR); strip $(MODULE)
+		cp -p $(MODULE) $(LIBDIR)/modules
+		cd $(LIBDIR)/modules; strip $(MODULE)
 
 %.sql: %.sql.in
-		sed "s|MODULE_PATHNAME|$(LIBDIR)/$(MODULE)|" < $< > $@
+		sed "s|MODULE_PATHNAME|$(LIBDIR)/modules/$(MODULE)|" < $< > $@
 
 .SUFFIXES: $(DLSUFFIX)
 
 %$(DLSUFFIX): %.c
-		cc $(CFLAGS) -shared -o $@ $<
+		$(CC) $(CFLAGS) -shared -o $@ $<
 
 depend dep:
 		$(CC) -MM $(INCLUDE_OPT) *.c >depend

@@ -1,25 +1,37 @@
 #
 #	PostgreSQL types for IP and MAC addresses
 #
-#	$Id: Makefile,v 1.2 1998/02/14 17:58:02 scrappy Exp $
+#	$Id: Makefile,v 1.3 1998/04/22 04:14:11 scrappy Exp $
 
-all: ip.so mac.so
+SRCDIR= ../../src
 
-ip.so: ip.o
-	ld -Bshareable -o ip.so ip.o
+include $(SRCDIR)/Makefile.global
 
-ip.o: ip.c
-	cc -g -O -fPIC -I/usr/local/pgsql/include -c ip.c
+CONTRIBDIR=$(LIBDIR)/modules
 
-mac.so: mac.o
-	ld -Bshareable -o mac.so mac.o
+CFLAGS+= $(CFLAGS_SL) -I$(SRCDIR)/include
 
-mac.o: mac.c mac.h
-	cc -g -O -fPIC -I/usr/local/pgsql/include -c mac.c
+ifdef REFINT_VERBOSE
+CFLAGS+= -DREFINT_VERBOSE
+endif
 
-install: ip.so mac.so
-	install -c ip.so mac.so /usr/local/pgsql/modules
+TARGETS= ip$(DLSUFFIX) ip.sql mac$(DLSUFFIX) mac.sql
 
-#
-#	eof
-#
+CLEANFILES+= $(TARGETS)
+
+all:: $(TARGETS)
+
+install:: all $(CONTRIBDIR)
+	for f in *$(DLSUFFIX); do $(INSTALL) -c $$f $(CONTRIBDIR)/$$f; done
+
+$(CONTRIBDIR):
+	mkdir -p $(CONTRIBDIR)
+
+%.sql: %.sql.in
+	rm -f $@; \
+	C=`pwd`; \
+	sed -e "s:_OBJWD_:$(CONTRIBDIR):g" \
+	    -e "s:_DLSUFFIX_:$(DLSUFFIX):g" < $< > $@
+
+clean: 
+	rm -f $(TARGETS) *.o
