@@ -117,6 +117,7 @@ TYPES
 * Allow user to define char1 column
 * Add support for & operator
 * Allow LOCALE on a per-column basis, default to ASCII
+* Allow LOCALE to use indexes in regular expression searches
 * Allow array on int8[]
 * Allow nulls in arrays
 * Allow arrays to be ORDER'ed
