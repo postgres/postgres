@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.306 2005/02/09 11:26:44 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.307 2005/02/10 08:06:35 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -1621,7 +1621,7 @@ CreateAsElement:  ColId { $$ = $1; }
  *****************************************************************************/
 
 CreateSeqStmt:	CREATE OptTemp SEQUENCE qualified_name OptSeqList
-			{ $$ = cat_str(4, make_str("create"), $2, make_str("sequence"), $4, $5); }
+			{ $$ = cat_str(5, make_str("create"), $2, make_str("sequence"), $4, $5); }
 		;
 
 AlterSeqStmt: ALTER SEQUENCE qualified_name OptSeqList
@@ -2705,7 +2705,7 @@ DropdbStmt: DROP DATABASE database_name
 
 CreateDomainStmt:  CREATE DOMAIN_P any_name opt_as Typename ColQualList
 			{
-				$$ = cat_str(55555, make_str("create domain"), $3, $4, $5, $6);
+				$$ = cat_str(5, make_str("create domain"), $3, $4, $5, $6);
  			}
 		;
 
