@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.15 2002/12/06 03:28:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.16 2002/12/06 03:42:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,6 @@
 #include "commands/proclang.h"
 #include "commands/schemacmds.h"
 #include "commands/trigger.h"
-#include "commands/typecmds.h"
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.133 2002/12/06 03:28:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.134 2002/12/06 03:43:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -629,14 +629,6 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 
 		case T_DomainConstraintValue:
 			{
-				/*
-				 * If domVal is NULL, we are not translating an expression that
-				 * can use it
-				 */
-				if (domVal == NULL)
-					elog(ERROR, "VALUE is not allowed in expression for node %d",
-						 nodeTag(expr));
-
 				result = (Node *) copyObject(domVal);
 
 				break;

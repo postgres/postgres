@@ -115,7 +115,7 @@ INSERT INTO nulltest DEFAULT VALUES;
 ERROR:  Domain dnotnull does not allow NULL values
 INSERT INTO nulltest values ('a', 'b', 'c', 'd', 'c');  -- Good
 insert into nulltest values ('a', 'b', 'c', 'd', NULL);
-ERROR:  ExecEvalConstraintTest: Domain dcheck constraint $1 failed
+ERROR:  Domain $1 constraint dcheck failed
 insert into nulltest values ('a', 'b', 'c', 'd', 'a');
 ERROR:  ExecInsert: rejected due to CHECK constraint "nulltest_col5" on "nulltest"
 INSERT INTO nulltest values (NULL, 'b', 'c', 'd', 'd');
@@ -127,7 +127,7 @@ ERROR:  ExecInsert: Fail to add null value in not null attribute col3
 INSERT INTO nulltest values ('a', 'b', 'c', NULL, 'd'); -- Good
 -- Test copy
 COPY nulltest FROM stdin; --fail
-ERROR:  copy: line 1, ExecEvalConstraintTest: Domain dcheck constraint $1 failed
+ERROR:  copy: line 1, Domain $1 constraint dcheck failed
 lost synchronization with server, resetting connection
 SET autocommit TO 'on';
 -- Last row is bad
@@ -158,7 +158,6 @@ ERROR:  Domain dnotnull does not allow NULL values
 drop table nulltest;
 drop domain dnotnull restrict;
 drop domain dnull restrict;
-drop domain dcheck restrict;
 create domain ddef1 int4 DEFAULT 3;
 create domain ddef2 oid DEFAULT '12';
 -- Type mixing, function returns int8
@@ -192,80 +191,7 @@ select * from defaulttest;
 (4 rows)
 
 drop sequence ddef4_seq;
-drop table defaulttest cascade;
--- Test ALTER DOMAIN .. NOT NULL
-create domain dnotnulltest integer;
-create table domnotnull
-( col1 dnotnulltest
-, col2 dnotnulltest
-);
-insert into domnotnull default values;
-alter domain dnotnulltest set not null; -- fails
-ERROR:  ALTER DOMAIN: Relation "domnotnull" Attribute "col1" contains NULL values
-update domnotnull set col1 = 5;
-alter domain dnotnulltest set not null; -- fails
-ERROR:  ALTER DOMAIN: Relation "domnotnull" Attribute "col2" contains NULL values
-update domnotnull set col2 = 6;
-alter domain dnotnulltest set not null;
-alter domain dnotnulltest set not null; -- fails
-ERROR:  AlterDomain: dnotnulltest is already set to NOT NULL
-update domnotnull set col1 = null; -- fails
-ERROR:  Domain dnotnulltest does not allow NULL values
-alter domain dnotnulltest drop not null;
-alter domain dnotnulltest drop not null; -- fails
-ERROR:  AlterDomain: dnotnulltest is already set to NULL
-update domnotnull set col1 = null;
-drop domain dnotnulltest cascade;
-NOTICE:  Drop cascades to table domnotnull column col2
-NOTICE:  Drop cascades to table domnotnull column col1
--- Test ALTER DOMAIN .. DEFAULT ..
-create table domdeftest (col1 ddef1);
-insert into domdeftest default values;
-select * from domdeftest;
- col1 
-------
- 3
-(1 row)
-
-alter domain ddef1 set default '42';
-insert into domdeftest default values;
-select * from domdeftest;
- col1 
-------
- 3
- 42
-(2 rows)
-
-alter domain ddef1 drop default;
-insert into domdeftest default values;
-select * from domdeftest;
- col1 
-------
- 3
- 42
- 
-(3 rows)
-
-drop table domdeftest;
--- Test ALTER DOMAIN .. CONSTRAINT ..
-create domain con as integer;
-create table domcontest (col1 con);
-insert into domcontest values (1);
-insert into domcontest values (2);
-alter domain con add constraint t check (VALUE < 1); -- fails
-ERROR:  AlterDomainAddConstraint: Domain con constraint t failed
-alter domain con add constraint t check (VALUE < 34);
-alter domain con add check (VALUE > 0);
-insert into domcontest values (-5); -- fails
-ERROR:  ExecEvalConstraintTest: Domain con constraint $1 failed
-insert into domcontest values (42); -- fails
-ERROR:  ExecEvalConstraintTest: Domain con constraint t failed
-insert into domcontest values (5);
-alter domain con drop constraint t;
-insert into domcontest values (-5); --fails
-ERROR:  ExecEvalConstraintTest: Domain con constraint $1 failed
-insert into domcontest values (42);
--- cleanup
+drop table defaulttest;
 drop domain ddef1 restrict;
 drop domain ddef2 restrict;
 drop domain ddef3 restrict;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.114 2002/12/06 03:28:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.115 2002/12/06 03:42:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1610,8 +1610,8 @@ ExecEvalConstraintTest(ConstraintTest *constraint, ExprContext *econtext,
 				conResult = ExecEvalExpr(constraint->check_expr, econtext, isNull, isDone);
 
 				if (!DatumGetBool(conResult))
-					elog(ERROR, "ExecEvalConstraintTest: Domain %s constraint %s failed",
-						 constraint->domname, constraint->name);
+					elog(ERROR, "Domain %s constraint %s failed",
+						 constraint->name, constraint->domname);
 			}
 			break;
 		default:

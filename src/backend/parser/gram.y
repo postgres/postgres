@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.384 2002/12/06 03:28:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.385 2002/12/06 03:43:08 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -128,7 +128,7 @@ static void doNegateFloat(Value *v);
 }
 
 %type <node>	stmt schema_stmt
-		AlterDatabaseSetStmt AlterDomainStmt AlterGroupStmt
+		AlterDatabaseSetStmt AlterGroupStmt
 		AlterTableStmt AlterUserStmt AlterUserSetStmt
 		AnalyzeStmt ClosePortalStmt ClusterStmt CommentStmt
 		ConstraintsSetStmt CopyStmt CreateAsStmt CreateCastStmt
@@ -479,7 +479,6 @@ stmtmulti:	stmtmulti ';' stmt
 
 stmt :
 			AlterDatabaseSetStmt
-			| AlterDomainStmt
 			| AlterGroupStmt
 			| AlterTableStmt
 			| AlterUserStmt
@@ -3729,53 +3728,6 @@ CreateDomainStmt:
 					$$ = (Node *)n;
 				}
 		;
-
-AlterDomainStmt:
-			/* ALTER DOMAIN <domain> {SET DEFAULT <expr>|DROP DEFAULT} */
-			ALTER DOMAIN_P any_name alter_column_default
-				{
-					AlterDomainStmt *n = makeNode(AlterDomainStmt);
-					n->subtype = 'T';
-					n->typename = $3;
-					n->def = $4;
-					$$ = (Node *)n;
-				}
-			/* ALTER DOMAIN <domain> DROP NOT NULL */
-			| ALTER DOMAIN_P any_name DROP NOT NULL_P
-				{
-					AlterDomainStmt *n = makeNode(AlterDomainStmt);
-					n->subtype = 'N';
-					n->typename = $3;
-					$$ = (Node *)n;
-				}
-			/* ALTER DOMAIN <domain> SET NOT NULL */
-			| ALTER DOMAIN_P any_name SET NOT NULL_P
-				{
-					AlterDomainStmt *n = makeNode(AlterDomainStmt);
-					n->subtype = 'O';
-					n->typename = $3;
-					$$ = (Node *)n;
-				}
-			/* ALTER DOMAIN <domain> ADD CONSTRAINT ... */
-			| ALTER DOMAIN_P any_name ADD TableConstraint
-				{
-					AlterDomainStmt *n = makeNode(AlterDomainStmt);
-					n->subtype = 'C';
-					n->typename = $3;
-					n->def = $5;
-					$$ = (Node *)n;
-				}
-			/* ALTER DOMAIN <domain> DROP CONSTRAINT <name> [RESTRICT|CASCADE] */
-			| ALTER DOMAIN_P any_name DROP CONSTRAINT name opt_drop_behavior
-				{
-					AlterDomainStmt *n = makeNode(AlterDomainStmt);
-					n->subtype = 'X';
-					n->typename = $3;
-					n->name = $6;
-					n->behavior = $7;
-					$$ = (Node *)n;
-				}
-			;
 
 opt_as:		AS										{}
 			| /* EMPTY */							{}
