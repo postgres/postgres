@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.154 2004/04/24 22:58:40 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.155 2004/05/14 18:04:02 neilc Exp $
 -->
 
  <chapter id="libpq">
@@ -1336,12 +1336,20 @@ localized translation of one of these.  Always present.
 </varlistentry>
 
 <varlistentry>
+ <indexterm>
+  <primary>error codes</primary>
+  <secondary>libpq</secondary>
+ </indexterm>
 <term><symbol>PG_DIAG_SQLSTATE</>
 </term>
 <listitem>
 <para>
-The SQLSTATE code for the error (see <xref linkend="errcodes-appendix">).
-Not localizable.  Always present.
+The SQLSTATE code for the error. The SQLSTATE code identifies the type
+of error that has occurred; it can be used by front-end applications
+to perform specific operations (such as error handling) in response to
+a particular database error. For a list of the possible SQLSTATE
+codes, see <xref linkend="errcodes-appendix">. This field is not
+localizable, and is always present.
 </para>
 </listitem>
 </varlistentry>
@@ -1871,7 +1879,7 @@ on <function>PQfsize</function> to obtain the actual data length.
           Prints out all the rows and,  optionally,  the
           column names  to  the specified output stream.
 <synopsis>
-void PQprint(FILE* fout,      /* output stream */
+void PQprint(FILE *fout,      /* output stream */
              const PGresult *res,
              const PQprintOpt *po);
 
@@ -3217,15 +3225,15 @@ typedef enum {
 
 PGVerbosity PQsetErrorVerbosity(PGconn *conn, PGVerbosity verbosity);
 </synopsis>
-<function>PQsetErrorVerbosity</> sets the verbosity mode, returning the
-connection's previous setting.
-In <firstterm>terse</> mode, returned messages include severity, primary text, and position
-only; this will normally fit on a single line.  The default mode produces
-messages that include the above plus any detail, hint, or context fields
-(these may span multiple lines).  The <firstterm>VERBOSE</> mode includes all available
-fields.  Changing the verbosity does not affect the messages available from
-already-existing <structname>PGresult</> objects, only subsequently-created
-ones.
+<function>PQsetErrorVerbosity</> sets the verbosity mode, returning
+the connection's previous setting.  In <firstterm>TERSE</> mode,
+returned messages include severity, primary text, and position only;
+this will normally fit on a single line.  The default mode produces
+messages that include the above plus any detail, hint, or context
+fields (these may span multiple lines).  The <firstterm>VERBOSE</>
+mode includes all available fields.  Changing the verbosity does not
+affect the messages available from already-existing
+<structname>PGresult</> objects, only subsequently-created ones.
 </para>
 </listitem>
 </varlistentry>

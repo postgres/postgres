@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.3 2004/03/04 21:47:18 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.4 2004/05/14 18:04:02 neilc Exp $ -->
 
 <appendix id="errcodes-appendix">
  <title><productname>PostgreSQL</productname> Error Codes</title>
@@ -9,13 +9,18 @@
  </indexterm>
 
  <para>
-  All messages emitted by the <productname>PostgreSQL</productname> server
-  are assigned five-character error codes that follow the SQL standard's
-  conventions for <quote>SQLSTATE</> codes.  Applications that need to know
-  which error condition has occurred should usually test the error code,
-  rather than looking at the textual error message.  The error codes are
-  less likely to change across <productname>PostgreSQL</productname> releases,
-  and also are not subject to change due to localization of error messages.
+  All messages emitted by the <productname>PostgreSQL</productname>
+  server are assigned five-character error codes that follow the SQL
+  standard's conventions for <quote>SQLSTATE</> codes.  Applications
+  that need to know which error condition has occurred should usually
+  test the error code, rather than looking at the textual error
+  message.  The error codes are less likely to change across
+  <productname>PostgreSQL</> releases, and also are not subject to
+  change due to localization of error messages. Note that some, but
+  not all, of the error codes produced by <productname>PostgreSQL</>
+  are defined by the SQL standard; some additional error codes for
+  conditions not defined by the standard have been invented or
+  borrowed from other databases.
  </para>
 
  <para>

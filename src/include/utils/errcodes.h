@@ -11,7 +11,7 @@
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.8 2004/03/04 21:47:18 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.9 2004/05/14 18:04:02 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,8 +30,24 @@
  * class (the first two characters of the code value identify the class).
  * The listing is organized by class to make this prominent.
  *
- * The generic '000' class code should be used for an error only when there
- * is not a more-specific code defined.
+ * The generic '000' subclass code should be used for an error only
+ * when there is not a more-specific subclass code defined.
+ *
+ * The SQL spec requires that all the elements of a SQLSTATE code be
+ * either digits or upper-case ASCII characters.
+ *
+ * Classes that begin with 0-4 or A-H are defined by the
+ * standard. Within such a class, subclass values defined by the
+ * standard must begin with 0-4 or A-H. To define a new error code,
+ * ensure that it is either in an "implementation-defined class" (it
+ * begins with 5-9 or I-Z), or its subclass falls outside the range of
+ * error codes that could be present in future versions of the
+ * standard (i.e. the subclass value begins with 5-9 or I-Z).
+ *
+ * The convention is that new error codes defined by PostgreSQL in a
+ * class defined by the standard have a subclass value that begins
+ * with 'P'. In addition, error codes defined by PostgreSQL clients
+ * (such as ecpg) have a class value that begins with 'Y'.
  */
 
 /* Class 00 - Successful Completion */
