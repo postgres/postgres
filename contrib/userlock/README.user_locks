@@ -1,0 +1,55 @@
+User locks, by Massimo Dal Zotto <dz@cs.unitn.it>
+Copyright (C) 1999, Massimo Dal Zotto <dz@cs.unitn.it>
+
+This software is distributed under the GNU General Public License
+either version 2, or (at your option) any later version.
+
+
+This loadable module, together with my user-lock.patch applied to the
+backend, provides support for user-level long-term cooperative locks.
+For example one can write:
+
+  select some_fields, user_write_lock_oid(oid) from table where id='key';
+
+Now if the returned user_write_lock_oid field is 1 you have acquired an
+user lock on the oid of the selected tuple and can now do some long operation
+on it, like let the data being edited by the user.
+If it is 0 it means that the lock has been already acquired by some other
+process and you should not use that item until the other has finished.
+Note that in this case the query returns 0 immediately without waiting on
+the lock. This is good if the lock is held for long time.
+After you have finished your work on that item you can do:
+
+  update table set some_fields where id='key';
+  select user_write_unlock_oid(oid) from table where id='key';
+
+You can also ignore the failure and go ahead but this could produce conflicts
+or inconsistent data in your application. User locks require a cooperative
+behavior between users. User locks don't interfere with the normal locks
+used by postgres for transaction processing.
+
+This could also be done by setting a flag in the record itself but in
+this case you have the overhead of the updates to the records and there
+could be some locks not released if the backend or the application crashes
+before resetting the lock flag.
+It could also be done with a begin/end block but in this case the entire
+table would be locked by postgres and it is not acceptable to do this for
+a long period because other transactions would block completely.
+
+The generic user locks use two values, group and id, to identify a lock,
+which correspond to ip_posid and ip_blkid of an ItemPointerData.
+Group is a 16 bit value while id is a 32 bit integer which could also be
+an oid. The oid user lock functions, which take only an oid as argument,
+use a group equal to 0.
+
+The meaning of group and id is defined by the application. The user
+lock code just takes two numbers and tells you if the corresponding
+entity has been succesfully locked. What this mean is up to you.
+
+My succestion is that you use the group to identify an area of your
+application and the id to identify an object in this area.
+Or you can just lock the oid of the tuples which are by definition unique.
+
+Note also that a process can acquire more than one lock on the same entity
+and it must release the lock the corresponding number of times. This can
+be done calling the unlock funtion until it returns 0.

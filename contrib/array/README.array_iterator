@@ -1,0 +1,49 @@
+Array iterator functions, by Massimo Dal Zotto <dz@cs.unitn.it>
+Copyright (C) 1999, Massimo Dal Zotto <dz@cs.unitn.it>
+
+This software is distributed under the GNU General Public License
+either version 2, or (at your option) any later version.
+
+
+This loadable module defines a new class of functions which take
+an array and a scalar value, iterate a scalar operator over the
+elements of the array and the value, and compute a result as
+the logical OR or AND of the iteration results.
+For example array_int4eq returns true if some of the elements
+of an array of int4 is equal to the given value:
+
+	array_int4eq({1,2,3}, 1)  -->  true
+	array_int4eq({1,2,3}, 4)  -->  false
+
+If we have defined T array types and O scalar operators we can
+define T x O x 2 array functions, each of them has a name like
+"array_[all_]<basetype><operation>" and takes an array of type T
+iterating the operator O over all the elements. Note however
+that some of the possible combination are invalid, for example
+the array_int4_like because there is no like operator for int4.
+
+We can then define new operators based on these functions and use
+them to write queries with qualification clauses based on the
+values of some of the elements of an array.
+For example to select rows having some or all element of an array
+attribute equal to a given value or matching a regular expression:
+
+	create table t(id int4[], txt text[]);
+
+	-- select tuples with some id element equal to 123
+	select * from t where t.id *= 123;
+
+	-- select tuples with some txt element matching '[a-z]'
+	select * from t where t.txt *~ '[a-z]';
+
+	-- select tuples with all txt elements matching '^[A-Z]'
+	select * from t where t.txt[1:3] **~ '^[A-Z]';
+
+The scheme is quite general, each operator which operates on a base type
+can be iterated over the elements of an array. It seem to work well but
+defining each new operators requires writing a different C function.
+Furthermore in each function there are two hardcoded OIDs which reference
+a base type and a procedure. Not very portable. Can anyone suggest a
+better and more portable way to do it ?
+
+See also array_iterator.sql for an example on how to use this module.

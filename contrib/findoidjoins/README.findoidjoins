@@ -1,0 +1,90 @@
+
+   			      findoidjoins
+
+This program scans a database, and prints oid fields (also regproc fields)
+and the tables they join to.  CAUTION: it is ver-r-r-y slow on a large
+database, or even a not-so-large one.  We don't really recommend running
+it on anything but an empty database, such as template1.
+
+Uses pgeasy library.
+
+Run on an empty database, it returns the system join relationships (shown
+below for 7.0).  Note that unexpected matches may indicate bogus entries
+in system tables --- don't accept a peculiar match without question.
+In particular, a field shown as joining to more than one target table is
+probably messed up.  In 7.0, the *only* field that should join to more
+than one target is pg_description.objoid.  (Running make_oidjoins_check
+is an easy way to spot fields joining to more than one table, BTW.)
+
+The shell script make_oidjoins_check converts findoidjoins' output
+into an SQL script that checks for dangling links (entries in an
+OID or REGPROC column that don't match any row in the expected table).
+Note that fields joining to more than one table are NOT processed.
+
+The result of make_oidjoins_check should be installed as the "oidjoins"
+regression test.  The oidjoins test should be updated after any
+revision in the patterns of cross-links between system tables.
+(Ideally we'd just regenerate the script as part of the regression
+tests themselves, but that seems too slow...)
+
+---------------------------------------------------------------------------
+
+Join pg_aggregate.aggtransfn1 => pg_proc.oid
+Join pg_aggregate.aggtransfn2 => pg_proc.oid
+Join pg_aggregate.aggfinalfn => pg_proc.oid
+Join pg_aggregate.aggbasetype => pg_type.oid
+Join pg_aggregate.aggtranstype1 => pg_type.oid
+Join pg_aggregate.aggtranstype2 => pg_type.oid
+Join pg_aggregate.aggfinaltype => pg_type.oid
+Join pg_am.amgettuple => pg_proc.oid
+Join pg_am.aminsert => pg_proc.oid
+Join pg_am.amdelete => pg_proc.oid
+Join pg_am.ambeginscan => pg_proc.oid
+Join pg_am.amrescan => pg_proc.oid
+Join pg_am.amendscan => pg_proc.oid
+Join pg_am.ammarkpos => pg_proc.oid
+Join pg_am.amrestrpos => pg_proc.oid
+Join pg_am.ambuild => pg_proc.oid
+Join pg_am.amcostestimate => pg_proc.oid
+Join pg_amop.amopid => pg_am.oid
+Join pg_amop.amopclaid => pg_opclass.oid
+Join pg_amop.amopopr => pg_operator.oid
+Join pg_amproc.amid => pg_am.oid
+Join pg_amproc.amopclaid => pg_opclass.oid
+Join pg_amproc.amproc => pg_proc.oid
+Join pg_attribute.attrelid => pg_class.oid
+Join pg_attribute.atttypid => pg_type.oid
+Join pg_class.reltype => pg_type.oid
+Join pg_class.relam => pg_am.oid
+Join pg_description.objoid => pg_proc.oid
+Join pg_description.objoid => pg_type.oid
+Join pg_index.indexrelid => pg_class.oid
+Join pg_index.indrelid => pg_class.oid
+Join pg_opclass.opcdeftype => pg_type.oid
+Join pg_operator.oprleft => pg_type.oid
+Join pg_operator.oprright => pg_type.oid
+Join pg_operator.oprresult => pg_type.oid
+Join pg_operator.oprcom => pg_operator.oid
+Join pg_operator.oprnegate => pg_operator.oid
+Join pg_operator.oprlsortop => pg_operator.oid
+Join pg_operator.oprrsortop => pg_operator.oid
+Join pg_operator.oprcode => pg_proc.oid
+Join pg_operator.oprrest => pg_proc.oid
+Join pg_operator.oprjoin => pg_proc.oid
+Join pg_proc.prolang => pg_language.oid
+Join pg_proc.prorettype => pg_type.oid
+Join pg_rewrite.ev_class => pg_class.oid
+Join pg_statistic.starelid => pg_class.oid
+Join pg_statistic.staop => pg_operator.oid
+Join pg_trigger.tgrelid => pg_class.oid
+Join pg_trigger.tgfoid => pg_proc.oid
+Join pg_type.typrelid => pg_class.oid
+Join pg_type.typelem => pg_type.oid
+Join pg_type.typinput => pg_proc.oid
+Join pg_type.typoutput => pg_proc.oid
+Join pg_type.typreceive => pg_proc.oid
+Join pg_type.typsend => pg_proc.oid
+
+---------------------------------------------------------------------------
+
+Bruce Momjian (root@candle.pha.pa.us)

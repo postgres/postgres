@@ -1,0 +1,69 @@
+PostgreSQL type extension for managing Large Objects
+----------------------------------------------------
+
+Overview
+
+One of the problems with the JDBC driver (and this affects the ODBC driver
+also), is that the specification assumes that references to BLOBS (Binary
+Large OBjectS) are stored within a table, and if that entry is changed, the
+associated BLOB is deleted from the database.
+
+As PostgreSQL stands, this doesn't occur. It allocates an OID for each object,
+and it is up to the application to store, and ultimately delete the objects.
+
+Now this is fine for new postgresql specific applications, but existing ones
+using JDBC or ODBC wont delete the objects, arising to orphaning - objects
+that are not referenced by anything, and simply occupy disk space.
+
+The Fix
+
+I've fixed this by creating a new data type 'lo', some support functions, and
+a Trigger which handles the orphaning problem.
+
+The 'lo' type was created because we needed to differenciate between normal
+Oid's and Large Objects. Currently the JDBC driver handles this dilema easily,
+but (after talking to Byron), the ODBC driver needed a unique type. They had created an 'lo' type, but not the solution to orphaning.
+
+Install
+
+Ok, first build the shared library, and install. Typing 'make install' in the
+contrib/lo directory should do it.
+
+Then, as the postgres super user, run the lo.sql script. This will install the
+type, and define the support functions.
+
+How to Use
+
+The easiest way is by an example:
+
+> create table image (title text,raster lo);
+> create trigger t_image before update or delete on image for each row execute procedure lo_manage(raster);
+
+Here, a trigger is created for each column that contains a lo type.
+
+Issues
+
+* dropping a table will still orphan any objects it contains, as the trigger
+  is not actioned.
+
+  For now, precede the 'drop table' with 'delete from {table}'. However, this
+  could be fixed by having 'drop table' perform an additional
+
+      'select lo_unlink({colname}::oid) from {tablename}'
+
+  for each column, before actually dropping the table.
+
+* Some frontends may create their own tables, and will not create the
+  associated trigger(s). Also, users may not remember (or know) to create
+  the triggers.
+
+  This can be solved, but would involve changes to the parser.
+
+As the ODBC driver needs a permanent lo type (& JDBC could be optimised to
+use it if it's Oid is fixed), and as the above issues can only be fixed by
+some internal changes, I feel it should become a permanent built-in type.
+
+I'm releasing this into contrib, just to get it out, and tested.
+
+Peter Mount <peter@retep.org.uk> June 13 1998
+
