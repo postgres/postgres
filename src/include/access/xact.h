@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.12 1998/02/26 04:40:32 momjian Exp $
+ * $Id: xact.h,v 1.13 1998/04/24 14:42:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,6 +60,17 @@ typedef TransactionStateData *TransactionState;
 #define StoreInvalidTransactionId(dest) \
 	(*((TransactionId*)dest) = NullTransactionId)
 
+
+/* ----------------------------------------------------------------
+ *		TransactionIdEquals
+ * ----------------------------------------------------------------
+ */
+#define TransactionIdEquals(id1, id2) \
+( \
+	((bool) ((id1) == (id2))) \
+)
+
+
 /* ----------------
  *		extern definitions
  * ----------------
@@ -95,7 +106,6 @@ extern TransactionId DisabledTransactionId;
 extern TransactionId xidin(char *representation);
 extern char *xidout(TransactionId transactionId);
 extern bool xideq(TransactionId xid1, TransactionId xid2);
-extern bool TransactionIdEquals(TransactionId id1, TransactionId id2);
 extern bool TransactionIdIsLessThan(TransactionId id1, TransactionId id2);
 extern void TransactionIdAdd(TransactionId *xid, int value);
 

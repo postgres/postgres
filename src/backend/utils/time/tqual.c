@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.14 1998/02/26 04:38:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.15 1998/04/24 14:42:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,8 +31,8 @@ extern bool PostgresIsInitialized;
  */
 #ifndef GOODAMI
 
-static TransactionId HeapSpecialTransactionId = InvalidTransactionId;
-static CommandId HeapSpecialCommandId = FirstCommandId;
+TransactionId HeapSpecialTransactionId = InvalidTransactionId;
+CommandId HeapSpecialCommandId = FirstCommandId;
 
 void
 setheapoverride(bool on)
@@ -49,53 +49,10 @@ setheapoverride(bool on)
 	}
 }
 
-/* static, but called in debug macro */
-bool
-heapisoverride()
-{
-	if (!TransactionIdIsValid(HeapSpecialTransactionId))
-	{
-		return (false);
-	}
-
-	if (!TransactionIdEquals(GetCurrentTransactionId(),
-							 HeapSpecialTransactionId) ||
-		GetCurrentCommandId() != HeapSpecialCommandId)
-	{
-		HeapSpecialTransactionId = InvalidTransactionId;
-
-		return (false);
-	}
-	return (true);
-}
-
 #endif							/* !defined(GOODAMI) */
 /*
  * XXX Transaction system override hacks end here
  */
-
-static bool HeapTupleSatisfiesItself(HeapTuple tuple);
-static bool HeapTupleSatisfiesNow(HeapTuple tuple);
-
-/*
- * HeapTupleSatisfiesScope --
- *		True iff heap tuple satsifies a time qual.
- *
- * Note:
- *		Assumes heap tuple is valid.
- */
-bool
-HeapTupleSatisfiesVisibility(HeapTuple tuple, bool seeself)
-{
-
-	if (TransactionIdEquals(tuple->t_xmax, AmiTransactionId))
-		return (false);
-
-	if (seeself == true || heapisoverride())
-		return (HeapTupleSatisfiesItself(tuple));
-	else
-		return (HeapTupleSatisfiesNow(tuple));
-}
 
 /*
  * HeapTupleSatisfiesItself --
@@ -119,7 +76,7 @@ HeapTupleSatisfiesVisibility(HeapTuple tuple, bool seeself)
  *			(Xmax != my-transaction &&			the row was deleted by another transaction
  *			 Xmax is not committed)))			that has not been committed
  */
-static bool
+bool
 HeapTupleSatisfiesItself(HeapTuple tuple)
 {
 
@@ -215,7 +172,7 @@ HeapTupleSatisfiesItself(HeapTuple tuple)
  *		the serializability guarantees we provide don't extend to xacts
  *		that do catalog accesses.  this is unfortunate, but not critical.
  */
-static bool
+bool
 HeapTupleSatisfiesNow(HeapTuple tuple)
 {
 	if (AMI_OVERRIDE)

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.21 1998/02/26 04:41:19 momjian Exp $
+ * $Id: executor.h,v 1.22 1998/04/24 14:43:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,9 +14,47 @@
 #define EXECUTOR_H
 
 #include <catalog/pg_index.h>
+#include <storage/bufmgr.h>
 #include <access/itup.h>
 #include <stdio.h>
 #include <executor/execdesc.h>
+
+/* ----------------
+ *		TupIsNull
+ *
+ *		This is used mainly to detect when there are no more
+ *		tuples to process.
+ * ----------------
+ */
+/* return: true if tuple in slot is NULL, slot is slot to test */
+#define TupIsNull(slot) \
+( \
+	((slot) == NULL) ? \
+		true \
+	: \
+	( \
+		((slot)->val == NULL) ? \
+			true \
+		: \
+			false \
+	) \
+)
+
+/* --------------------------------
+ *		ExecIncrSlotBufferRefcnt
+ *
+ *		When we pass around buffers in the tuple table, we have to
+ *		be careful to increment reference counts appropriately.
+ *		This is used mainly in the mergejoin code.
+ * --------------------------------
+ */
+#define ExecIncrSlotBufferRefcnt(slot) \
+( \
+	BufferIsValid((slot)->ttc_buffer) ? \
+		IncrBufferRefCount((slot)->ttc_buffer) \
+	: (void)NULL \
+)
+
 
 /*
  * prototypes from functions in execAmi.c
@@ -107,8 +145,6 @@ extern TupleDesc
 ExecSetSlotDescriptor(TupleTableSlot *slot,
 					  TupleDesc tupdesc);
 extern void ExecSetSlotDescriptorIsNew(TupleTableSlot *slot, bool isNew);
-extern void ExecIncrSlotBufferRefcnt(TupleTableSlot *slot);
-extern bool TupIsNull(TupleTableSlot *slot);
 extern void ExecInitResultTupleSlot(EState *estate, CommonState *commonstate);
 extern void
 ExecInitScanTupleSlot(EState *estate,

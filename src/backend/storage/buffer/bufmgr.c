@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.36 1998/04/05 21:04:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.37 1998/04/24 14:42:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1263,25 +1263,6 @@ FlushBufferPool(int StableMainMemoryFlag)
 }
 
 /*
- * BufferIsValid --
- *		True iff the refcnt of the local buffer is > 0
- * Note:
- *		BufferIsValid(InvalidBuffer) is False.
- *		BufferIsValid(UnknownBuffer) is False.
- */
-bool
-BufferIsValid(Buffer bufnum)
-{
-	if (BufferIsLocal(bufnum))
-		return (bufnum >= -NLocBuffer && LocalRefCount[-bufnum - 1] > 0);
-
-	if (BAD_BUFFER_ID(bufnum))
-		return (false);
-
-	return ((bool) (PrivateRefCount[bufnum - 1] > 0));
-}
-
-/*
  * BufferGetBlockNumber --
  *		Returns the block number associated with a buffer.
  *
@@ -1411,24 +1392,6 @@ RelationGetNumberOfBlocks(Relation relation)
 	return
 	((relation->rd_islocal) ? relation->rd_nblocks :
 	 smgrnblocks(DEFAULT_SMGR, relation));
-}
-
-/*
- * BufferGetBlock --
- *		Returns a reference to a disk page image associated with a buffer.
- *
- * Note:
- *		Assumes buffer is valid.
- */
-Block
-BufferGetBlock(Buffer buffer)
-{
-	Assert(BufferIsValid(buffer));
-
-	if (BufferIsLocal(buffer))
-		return ((Block) MAKE_PTR(LocalBufferDescriptors[-buffer - 1].data));
-	else
-		return ((Block) MAKE_PTR(BufferDescriptors[buffer - 1].data));
 }
 
 /* ---------------------------------------------------------------------
@@ -1679,24 +1642,7 @@ BlowawayRelationBuffers(Relation rdesc, BlockNumber block)
 	return (0);
 }
 
-#undef IncrBufferRefCount
 #undef ReleaseBuffer
-
-void
-IncrBufferRefCount(Buffer buffer)
-{
-	if (BufferIsLocal(buffer))
-	{
-		Assert(LocalRefCount[-buffer - 1] >= 0);
-		LocalRefCount[-buffer - 1]++;
-	}
-	else
-	{
-		Assert(!BAD_BUFFER_ID(buffer));
-		Assert(PrivateRefCount[buffer - 1] >= 0);
-		PrivateRefCount[buffer - 1]++;
-	}
-}
 
 /*
  * ReleaseBuffer -- remove the pin on a buffer without

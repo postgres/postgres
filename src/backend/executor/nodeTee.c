@@ -15,7 +15,7 @@
  *		ExecEndTee
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.16 1998/02/26 04:31:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.17 1998/04/24 14:41:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 #include "utils/palloc.h"
 #include "utils/relcache.h"
 #include "utils/mcxt.h"
-#include "storage/bufmgr.h"		/* for IncrBufferRefCount */
+#include "storage/bufmgr.h"
 #include "storage/smgr.h"
 #include "optimizer/internal.h"
 #include "executor/executor.h"

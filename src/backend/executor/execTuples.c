@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.17 1998/02/26 04:31:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.18 1998/04/24 14:41:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,10 +40,10 @@
  *		ExecSetNewSlotDescriptor - set a desc and the is-new-flag all at once
  *		ExecSlotBuffer			- return buffer of tuple in slot
  *		ExecSetSlotBuffer		- set the buffer for tuple in slot
- *		ExecIncrSlotBufferRefcnt - bump the refcnt of the slot buffer
+ *		ExecIncrSlotBufferRefcnt - bump the refcnt of the slot buffer(Macro)
  *
  *	 SLOT STATUS PREDICATES
- *		TupIsNull				- true when slot contains no tuple
+ *		TupIsNull				- true when slot contains no tuple(Macro)
  *		ExecSlotDescriptorIsNew - true if we're now storing a different
  *								  type of tuple in a slot
  *
@@ -566,58 +566,10 @@ ExecSetSlotBuffer(TupleTableSlot *slot, /* slot to change */
 
 #endif
 
-/* --------------------------------
- *		ExecIncrSlotBufferRefcnt
- *
- *		When we pass around buffers in the tuple table, we have to
- *		be careful to increment reference counts appropriately.
- *		This is used mainly in the mergejoin code.
- * --------------------------------
- */
-void
-ExecIncrSlotBufferRefcnt(TupleTableSlot *slot)	/* slot to bump refcnt */
-{
-/*	  Buffer b = SlotBuffer((TupleTableSlot*) slot); */
-	Buffer		b = slot->ttc_buffer;
-
-	if (BufferIsValid(b))
-		IncrBufferRefCount(b);
-}
-
 /* ----------------------------------------------------------------
  *				  tuple table slot status predicates
  * ----------------------------------------------------------------
  */
-
-/* ----------------
- *		TupIsNull
- *
- *		This is used mainly to detect when there are no more
- *		tuples to process.
- * ----------------
- */
-bool							/* return: true if tuple in slot is NULL */
-TupIsNull(TupleTableSlot *slot) /* slot to check */
-{
-	HeapTuple	tuple;			/* contents of slot (returned) */
-
-	/* ----------------
-	 *	if the slot itself is null then we return true
-	 * ----------------
-	 */
-	if (slot == NULL)
-		return true;
-
-	/* ----------------
-	 *	get information from the slot and return true or
-	 *	false depending on the contents of the slot.
-	 * ----------------
-	 */
-	tuple = slot->val;
-
-	return
-		(tuple == NULL ? true : false);
-}
 
 /* --------------------------------
  *		ExecSlotDescriptorIsNew

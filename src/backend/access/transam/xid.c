@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.14 1998/04/07 18:10:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.15 1998/04/24 14:41:39 momjian Exp $
  *
  * OLD COMMENTS
  * XXX WARNING
@@ -51,16 +51,6 @@ xidout(TransactionId transactionId)
 
 	return (representation);
 
-}
-
-/* ----------------------------------------------------------------
- *		TransactionIdEquals
- * ----------------------------------------------------------------
- */
-bool
-TransactionIdEquals(TransactionId id1, TransactionId id2)
-{
-	return ((bool) (id1 == id2));
 }
 
 /* ----------------------------------------------------------------

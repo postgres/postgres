@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.11 1997/11/20 23:24:03 momjian Exp $
+ * $Id: tqual.h,v 1.12 1998/04/24 14:43:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,12 +15,51 @@
 
 #include <access/htup.h>
 
-/* As above, plus updates in this command */
+extern TransactionId HeapSpecialTransactionId;
+extern CommandId HeapSpecialCommandId;
+
+/*
+ * HeapTupleSatisfiesVisibility --
+ *		True iff heap tuple satsifies a time qual.
+ *
+ * Note:
+ *		Assumes heap tuple is valid.
+ */
+#define HeapTupleSatisfiesVisibility(tuple, seeself) \
+( \
+	TransactionIdEquals((tuple)->t_xmax, AmiTransactionId) ? \
+		false \
+	: \
+	( \
+		((seeself) == true || heapisoverride()) ? \
+			HeapTupleSatisfiesItself(tuple) \
+		: \
+			HeapTupleSatisfiesNow(tuple) \
+	) \
+)
+
+#define	heapisoverride() \
+( \
+	(!TransactionIdIsValid(HeapSpecialTransactionId)) ? \
+		false \
+	: \
+	( \
+		(!TransactionIdEquals(GetCurrentTransactionId(), \
+							 HeapSpecialTransactionId) || \
+		 GetCurrentCommandId() != HeapSpecialCommandId) ? \
+		( \
+			HeapSpecialTransactionId = InvalidTransactionId, \
+			false \
+		) \
+		: \
+			true \
+	) \
+)
+
+extern bool HeapTupleSatisfiesItself(HeapTuple tuple);
+extern bool HeapTupleSatisfiesNow(HeapTuple tuple);
 
 extern void setheapoverride(bool on);
-extern bool heapisoverride(void);
-
-extern bool HeapTupleSatisfiesVisibility(HeapTuple tuple, bool seeself);
 
 
 #endif							/* TQUAL_H */

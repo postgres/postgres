@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.17 1998/02/26 04:43:24 momjian Exp $
+ * $Id: bufpage.h,v 1.18 1998/04/24 14:43:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,6 +280,21 @@ typedef enum
  */
 #define BufferGetPage(buffer) ((Page)BufferGetBlock(buffer))
 
+/*
+ * PageGetMaxOffsetNumber --
+ *		Returns the maximum offset number used by the given page.
+ *
+ *		NOTE: The offset is invalid if the page is non-empty.
+ *		Test whether PageIsEmpty before calling this routine
+ *		and/or using its return value.
+ */
+#define PageGetMaxOffsetNumber(page) \
+( \
+	(((PageHeader) (page))->pd_lower - \
+		(sizeof(PageHeaderData) - sizeof(ItemIdData))) \
+	/ sizeof(ItemIdData) \
+)
+
 
 /* ----------------------------------------------------------------
  *		extern declarations
@@ -292,7 +307,6 @@ PageAddItem(Page page, Item item, Size size,
 			OffsetNumber offsetNumber, ItemIdFlags flags);
 extern Page PageGetTempPage(Page page, Size specialSize);
 extern void PageRestoreTempPage(Page tempPage, Page oldPage);
-extern OffsetNumber PageGetMaxOffsetNumber(Page page);
 extern void PageRepairFragmentation(Page page);
 extern Size PageGetFreeSpace(Page page);
 extern void PageManagerModeSet(PageManagerMode mode);

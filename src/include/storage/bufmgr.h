@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.18 1998/02/26 04:43:22 momjian Exp $
+ * $Id: bufmgr.h,v 1.19 1998/04/24 14:43:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include <storage/ipc.h>
 #include <storage/block.h>
 #include <storage/buf.h>
+#include <storage/buf_internals.h>
 #include <utils/rel.h>
 
 /*
@@ -73,6 +74,59 @@ extern int	ShowPinTrace;
 #define BUFFER_LATE_WRITE		1		/* delayed write: mark as DIRTY */
 
 /*
+ * BufferIsValid --
+ *		True iff the refcnt of the local buffer is > 0
+ * Note:
+ *		BufferIsValid(InvalidBuffer) is False.
+ *		BufferIsValid(UnknownBuffer) is False.
+ */
+#define BufferIsValid(bufnum) \
+( \
+	BufferIsLocal(bufnum) ? \
+		((bufnum) >= -NLocBuffer && LocalRefCount[-(bufnum) - 1] > 0) \
+	: \
+	( \
+		BAD_BUFFER_ID(bufnum) ? \
+			false \
+		: \
+			(PrivateRefCount[(bufnum) - 1] > 0) \
+	) \
+)
+
+#define IncrBufferRefCount(buffer) \
+( \
+	BufferIsLocal(buffer) ? \
+	( \
+		(void)AssertMacro(LocalRefCount[-(buffer) - 1] >= 0), \
+		(void)LocalRefCount[-(buffer) - 1]++ \
+	) \
+	: \
+	( \
+		(void)AssertMacro(!BAD_BUFFER_ID(buffer)), \
+		(void)AssertMacro(PrivateRefCount[(buffer) - 1] >= 0), \
+		(void)PrivateRefCount[(buffer) - 1]++ \
+	) \
+)
+
+/*
+ * BufferGetBlock --
+ *		Returns a reference to a disk page image associated with a buffer.
+ *
+ * Note:
+ *		Assumes buffer is valid.
+ */
+#define BufferGetBlock(buffer) \
+( \
+	(void)AssertMacro(BufferIsValid(buffer)), \
+\
+	BufferIsLocal(buffer) ? \
+		((Block) MAKE_PTR(LocalBufferDescriptors[-(buffer) - 1].data)) \
+	: \
+		((Block) MAKE_PTR(BufferDescriptors[(buffer) - 1].data)) \
+)
+
+
+/*
  * prototypes for functions in bufmgr.c
  */
 extern Buffer
@@ -91,17 +145,14 @@ extern void ResetBufferUsage(void);
 extern void ResetBufferPool(void);
 extern int	BufferPoolCheckLeak(void);
 extern void FlushBufferPool(int StableMainMemoryFlag);
-extern bool BufferIsValid(Buffer bufnum);
 extern BlockNumber BufferGetBlockNumber(Buffer buffer);
 extern Relation BufferGetRelation(Buffer buffer);
 extern BlockNumber RelationGetNumberOfBlocks(Relation relation);
-extern Block BufferGetBlock(Buffer buffer);
 extern void ReleaseRelationBuffers(Relation rdesc);
 extern void DropBuffers(Oid dbid);
 extern void PrintBufferDescs(void);
 extern void PrintPinnedBufs(void);
 extern int	BufferShmemSize(void);
-extern void IncrBufferRefCount(Buffer buffer);
 extern int	ReleaseBuffer(Buffer buffer);
 
 extern void BufferRefCountReset(int *refcountsave);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.16 1998/04/06 02:38:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.17 1998/04/24 14:42:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,27 +223,6 @@ PageRestoreTempPage(Page tempPage, Page oldPage)
 	memmove((char *) oldPage, (char *) tempPage, pageSize);
 
 	pfree(tempPage);
-}
-
-/*
- * PageGetMaxOffsetNumber --
- *		Returns the maximum offset number used by the given page.
- *
- *		NOTE: The offset is invalid if the page is non-empty.
- *		Test whether PageIsEmpty before calling this routine
- *		and/or using its return value.
- */
-OffsetNumber
-PageGetMaxOffsetNumber(Page page)
-{
-	LocationIndex low;
-	OffsetNumber i;
-
-	low = ((PageHeader) page)->pd_lower;
-	i = (low - (sizeof(PageHeaderData) - sizeof(ItemIdData)))
-		/ sizeof(ItemIdData);
-
-	return (i);
 }
 
 /* ----------------
