@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.7 2002/10/24 17:48:54 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.8 2002/10/24 21:10:58 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -1462,7 +1462,7 @@ SET search_path TO myschema;
    </para>
 
    <para>
-    See also <xref linkend="set-search-path"> for other ways to access
+    See also <xref linkend="functions-misc"> for other ways to access
     the schema search path.
    </para>
 
