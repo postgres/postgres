@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.81 2004/03/03 21:28:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.82 2004/05/20 17:13:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,8 +50,8 @@ static int	numCatalogIds = 0;
  * them into findTableByOid() and friends.
  */
 static TableInfo  *tblinfo;
-static TypeInfo   *tinfo;
-static FuncInfo   *finfo;
+static TypeInfo   *typinfo;
+static FuncInfo   *funinfo;
 static OprInfo    *oprinfo;
 static int		numTables;
 static int		numTypes;
@@ -101,12 +101,12 @@ getSchemaData(int *numTablesPtr,
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined functions\n");
-	finfo = getFuncs(&numFuncs);
+	funinfo = getFuncs(&numFuncs);
 
 	/* this must be after getFuncs */
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined types\n");
-	tinfo = getTypes(&numTypes);
+	typinfo = getTypes(&numTypes);
 
 	/* this must be after getFuncs, too */
 	if (g_verbose)
@@ -631,7 +631,7 @@ findTableByOid(Oid oid)
 
 /*
  * findTypeByOid
- *	  finds the entry (in tinfo) of the type with the given oid
+ *	  finds the entry (in typinfo) of the type with the given oid
  *	  returns NULL if not found
  *
  * NOTE:  should hash this, but just do linear search for now
@@ -643,15 +643,15 @@ findTypeByOid(Oid oid)
 
 	for (i = 0; i < numTypes; i++)
 	{
-		if (tinfo[i].dobj.catId.oid == oid)
-			return &tinfo[i];
+		if (typinfo[i].dobj.catId.oid == oid)
+			return &typinfo[i];
 	}
 	return NULL;
 }
 
 /*
  * findFuncByOid
- *	  finds the entry (in finfo) of the function with the given oid
+ *	  finds the entry (in funinfo) of the function with the given oid
  *	  returns NULL if not found
  *
  * NOTE:  should hash this, but just do linear search for now
@@ -663,8 +663,8 @@ findFuncByOid(Oid oid)
 
 	for (i = 0; i < numFuncs; i++)
 	{
-		if (finfo[i].dobj.catId.oid == oid)
-			return &finfo[i];
+		if (funinfo[i].dobj.catId.oid == oid)
+			return &funinfo[i];
 	}
 	return NULL;
 }
