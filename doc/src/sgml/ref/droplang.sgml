@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.12 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.13 2001/09/14 09:49:00 ishii Exp $
 Postgres documentation
 -->
 
@@ -186,7 +186,7 @@ Postgres documentation
    <para>
     To remove <literal>pltcl</literal>:
 <screen>
-<prompt>$ </prompt><userinput>droplang pltcl</userinput>
+<prompt>$ </prompt><userinput>droplang pltcl dbname</userinput>
 </screen>
    </para>
   </informalexample>
