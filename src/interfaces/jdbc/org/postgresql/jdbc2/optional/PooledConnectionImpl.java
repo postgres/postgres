@@ -4,6 +4,7 @@ import javax.sql.*;
 import java.sql.*;
 import java.util.*;
 import java.lang.reflect.*;
+import org.postgresql.PGConnection;
 
 /**
  * PostgreSQL implementation of the PooledConnection interface.  This shouldn't
@@ -12,7 +13,7 @@ import java.lang.reflect.*;
  * @see ConnectionPool
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class PooledConnectionImpl implements PooledConnection
 {
@@ -114,7 +115,7 @@ public class PooledConnectionImpl implements PooledConnection
 		con.setAutoCommit(autoCommit);
 		ConnectionHandler handler = new ConnectionHandler(con);
 		last = handler;
-		Connection con = (Connection)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Connection.class}, handler);
+		Connection con = (Connection)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Connection.class, PGConnection.class}, handler);
         last.setProxy(con);
         return con;
 	}
@@ -213,7 +214,7 @@ public class PooledConnectionImpl implements PooledConnection
                                     throw e.getTargetException();
                                 }
 			}
-			// All the rest is from the Connection interface
+			// All the rest is from the Connection or PGConnection interface
 			if (method.getName().equals("isClosed"))
 			{
 				return con == null ? Boolean.TRUE : Boolean.FALSE;

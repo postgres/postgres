@@ -3,6 +3,7 @@ package org.postgresql.test.jdbc2.optional;
 import junit.framework.TestCase;
 import org.postgresql.test.TestUtil;
 import org.postgresql.jdbc2.optional.BaseDataSource;
+import org.postgresql.PGConnection;
 
 import java.sql.*;
 import java.util.*;
@@ -16,7 +17,7 @@ import javax.naming.*;
  * tests.
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public abstract class BaseDataSourceTest extends TestCase
 {
@@ -178,6 +179,24 @@ public abstract class BaseDataSourceTest extends TestCase
 			fail(e.getMessage());
 		}
 	}
+
+    /**
+     * Test to make sure that PGConnection methods can be called on the
+     * pooled Connection.
+     */
+    public void testPGConnection()
+    {
+        try
+        {
+            con = getDataSourceConnection();
+            ((PGConnection)con).getEncoding().name();
+            con.close();
+        }
+        catch (Exception e)
+        {
+            fail("Unable to call PGConnection method on pooled connection due to "+e.getClass().getName()+" ("+e.getMessage()+")");
+        }
+    }
 
     /**
      * Uses the mini-JNDI implementation for testing purposes
