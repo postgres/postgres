@@ -154,7 +154,7 @@ INDEXES
 COMMANDS
 
 * ALTER TABLE ADD COLUMN to inherited table put column in wrong place [inherit]
-* Add ALTER TABLE DROP/ALTER COLUMN feature
+* -Add ALTER TABLE DROP/ALTER COLUMN feature(Peter E.)
 * Allow CLUSTER on all tables at once, and improve CLUSTER, loses NOT
 	NULL specification, indexes, permissions, etc on table[cluster]
 * Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
@@ -307,13 +307,14 @@ Developers who have claimed items are:
 	* David is David Hartwig <daveh@insightdist.com>
 	* Edmund is Edmund Mergl <E.Mergl@bawue.de>
 	* Goran is Goran Thyni <goran@kyla.kiruna.se>
-      >::	* Hiroshi is Hiroshi Inoue<Inoue@tpf.co.jp>
+	* Hiroshi is Hiroshi Inoue<Inoue@tpf.co.jp>
 	* Jan is Jan Wieck <wieck@sapserv.debis.de>
  	* Marc is Marc Fournier <scrappy@hub.org>
 	* Massimo Dal Zotto <dz@cs.unitn.it>
 	* Michael is Michael Meskes <meskes@postgresql.org>
 	* Oleg is Oleg Bartunov <oleg@sai.msu.su>
 	* Peter is Peter T Mount <peter@retep.org.uk>
+	* Peter E is Peter Eisentraut<peter_e@gmx.net>
 	* Ryan is Ryan Bradetich <rbrad@hpb50023.boi.hp.com>
 	* Stefan Simkovics <ssimkovi@rainbow.studorg.tuwien.ac.at>
 	* Tatsuo is Tatsuo Ishii <t-ishii@sra.co.jp>
