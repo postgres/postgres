@@ -99,7 +99,9 @@ o options
 		number of tuples generated will be multiple of the
 		scaling factor. For example, -s 100 will imply 10M
 		(10,000,000) tuples in the accounts table.
-		default is 1.
+		default is 1.  NOTE: scaling factor should be at least
+		as large as the largest number of clients you intend
+		to test; else you'll mostly be measuring update contention.
 
 	-U login
 		Specify db user's login name if it is different from
