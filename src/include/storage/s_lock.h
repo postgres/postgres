@@ -66,7 +66,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.133 2004/12/31 22:03:42 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.134 2005/03/10 21:41:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,13 +168,15 @@ spin_delay(void)
 #endif	 /* __i386__ || __x86_64__ */
 
 
-#if defined(__ia64__) || defined(__ia64)  /* __ia64 used by ICC compiler? */
+#if defined(__ia64__) || defined(__ia64)
 /* Intel Itanium */
 #define HAS_TEST_AND_SET
 
 typedef unsigned int slock_t;
 
 #define TAS(lock) tas(lock)
+
+#ifndef __INTEL_COMPILER
 
 static __inline__ int
 tas(volatile slock_t *lock)
@@ -189,6 +191,19 @@ tas(volatile slock_t *lock)
 	return (int) ret;
 }
 
+#else
+
+static __inline__ int
+tas(volatile slock_t *lock)
+{
+	int		ret;
+
+	ret = _InterlockedExchange(lock,1);	/* this is a xchg asm macro */
+
+	return ret;
+}
+
+#endif
 #endif	 /* __ia64__ || __ia64 */
 
 
