@@ -22,19 +22,19 @@ select * from nonesuch;
 ERROR:  parser: parse error at or near "select"
 -- bad name in target list
 select nonesuch from pg_database;
-ERROR:  attribute 'nonesuch' not found
+ERROR:  Attribute 'nonesuch' not found
 -- bad attribute name on lhs of operator
 select * from pg_database where nonesuch = pg_database.datname;
-ERROR:  attribute 'nonesuch' not found
+ERROR:  Attribute 'nonesuch' not found
 -- bad attribute name on rhs of operator
 select * from pg_database where pg_database.datname = nonesuch;
-ERROR:  attribute 'nonesuch' not found
+ERROR:  Attribute 'nonesuch' not found
 -- bad select distinct on syntax, distinct attribute missing
 select distinct on (foobar) from pg_database;
 ERROR:  parser: parse error at or near "from"
 -- bad select distinct on syntax, distinct attribute not in target list
 select distinct on (foobar) * from pg_database;
-ERROR:  attribute 'foobar' not found
+ERROR:  Attribute 'foobar' not found
 --
 -- DELETE
  
