@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.12 1999/03/20 19:46:53 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.13 1999/04/26 05:28:47 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,6 +213,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"substring", SUBSTRING},
 	{"table", TABLE},
 	{"temp", TEMP},
+	{"temporary", TEMPORARY},
 	{"then", THEN},
 	{"time", TIME},
 	{"timestamp", TIMESTAMP},

@@ -563,6 +563,12 @@ Wed Apr 14 17:59:06 CEST 1999
 Fri Apr 16 18:25:18 CEST 1999
 
 	- Fixed small bug in ECPGfinish().
+
+Sat Apr 24 12:39:07 CEST 1999
+
+	- Synced preproc.y with gram.y.
+	- Allow more than one blank between EXEC and SQL.
+	- Allow statements to be prepared from a character string, too.
 	- Set library version to 3.0.0
 	- Set ecpg version to 2.6.0
 

@@ -487,7 +487,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 				}
 <SQL>{space}			{ /* ignore */ }
 <SQL>{other}			{ return yytext[0]; }
-<C>{exec}{space}{sql}		{ BEGIN SQL; return SQL_START; }
+<C>{exec}{space}*{sql}		{ BEGIN SQL; return SQL_START; }
 <C>{ccomment}			{ /* ignore */ } 
 <C>{cppline}			{
 					yylval.str = mm_strdup((char*)yytext);

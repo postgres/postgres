@@ -692,8 +692,8 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
                 PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
                 READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
                 SCROLL, SECOND_P, SELECT, SET, SUBSTRING,
-                TABLE, TEMP, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR, TIMEZONE_MINUTE,
-		TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
+                TABLE, TEMP, TEMPORARY, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR,
+		TIMEZONE_MINUTE, TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
                 UNION, UNIQUE, UPDATE, USER, USING,
                 VALUES, VARCHAR, VARYING, VIEW,
                 WHEN, WHERE, WITH, WORK, YEAR_P, ZONE
@@ -1301,6 +1301,7 @@ CreateStmt:  CREATE OptTemp TABLE relation_name '(' OptTableElementList ')'
 		;
 
 OptTemp:	  TEMP		{ $$ = make1_str("temp"); }
+		| TEMPORARY	{ $$ = make1_str("temporary"); }
 		| /* EMPTY */	{ $$ = make1_str(""); }
 		;
 
@@ -5140,7 +5141,7 @@ variablelist: cinputvariable | cinputvariable ',' variablelist
  * As long as the prepare statement is not supported by the backend, we will
  * try to simulate it here so we get dynamic SQL 
  */
-ECPGPrepare: SQL_PREPARE ident FROM char_variable
+ECPGPrepare: SQL_PREPARE ident FROM execstring
 	{
 		$$ = make4_str(make1_str("\""), $2, make1_str("\", "), $4);
 	}
