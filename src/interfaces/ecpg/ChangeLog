@@ -925,31 +925,36 @@ Wed May 17 07:52:59 CEST 2000
 	  handling.
 	- Set library version to 3.1.1.
 
-Mon Sep  4 14:10:38 PDT 2000
+Mon Sep  4 14:10:38 CEST 2000
 
 	- Synced preproc.y with gram.y.  
 	- Synced keyword.c. 
 
-Mon Sep 18 13:55:11 PDT 2000
+Mon Sep 18 13:55:11 CEST 2000
 
 	- Added int8 support based on a patch by Martijn Schoemaker <martijn@osp.nl>
 
-Wed Sep 20 12:40:27 PDT 2000
+Wed Sep 20 12:40:27 CEST 2000
 
 	- Added patch by Christof Petig <christof.petig@wtal.de> to process
 	  backend NOTICEs.
 	- Added patch by Christof Petig <christof.petig@wtal.de> to cache
 	  type information.
 
-Thu Sep 21 13:54:13 PDT 2000
+Thu Sep 21 13:54:13 CEST 2000
 
 	- Enabled parser to accept ip addresses instead of host names.
 
-Tue Sep 26 13:00:16 PDT 2000
+Tue Sep 26 13:00:16 CEST 2000
 
 	- Synced preproc.y with gram.y.
         - Synced keyword.c.   
 	- Added patch by Christof Petig <christof.petig@wtal.de> to fix NOT
 	  FOUND problem on update/insert/delete.
+
+Wed Oct  4 14:36:51 CEST 2000
+
+	- Added patch by Christof Petig <christof.petig@wtal.de> to fix
+	  missing NOTICE.
 	- Set ecpg version to 2.8.0. 
 	- Set library version to 3.2.0.

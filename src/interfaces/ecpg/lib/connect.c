@@ -158,7 +158,8 @@ ECPGnoticeProcessor(void *arg, const char *message)
 	}
 	
 	/* NOTICE:  PerformPortalClose: portal "*" not found */
-	if (!strncmp(message,"PerformPortalClose: portal",26) 
+	if ((!strncmp(message,"PerformPortalClose: portal",26) 
+		|| !strncmp(message,"PerformPortalFetch: portal",26)) 
 		&& strstr(message+26,"not found"))
 	{
 		ECPGnoticeProcessor_raise(ECPG_NOTICE_UNKNOWN_PORTAL, message);
