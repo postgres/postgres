@@ -465,7 +465,23 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     if(s==null)
 	return null;
     
-    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    // This works, but it's commented out because Michael Stephenson's
+    // solution is better still:
+    //SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    
+    // Michael Stephenson's solution:
+    SimpleDateFormat df = null;
+    if (s.length()>21 && s.indexOf('.') != -1) {
+	df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSzzz");
+    } else if (s.length()>19 && s.indexOf('.') == -1) {
+	df = new SimpleDateFormat("yyyy-MM-dd HH:MM:sszzz");
+    } else if (s.length()>19 && s.indexOf('.') != -1) {
+	df = new SimpleDateFormat("yyyy-MM-dd HH:MM:ss.SS");
+    } else if (s.length()>10 && s.length()<=18) {
+	df = new SimpleDateFormat("yyyy-MM-dd HH:MM:ss");
+    } else {
+	df = new SimpleDateFormat("yyyy-MM-dd");
+    }
     
     try {
 	return new Timestamp(df.parse(s).getTime());

@@ -1,3 +1,8 @@
+Tue Oct 17 15:35:00 BST 2000 petermount@maidstone.gov.uk
+	- Changed getTimestamp() again. This time Michael Stephenson's
+	  <mstephenson@tirin.openworld.co.uk> solution looked far better
+	  than the original solution put in June.
+	
 Tue Oct 10 13:12:00 BST 2000 peter@retep.org.uk
 	- DatabaseMetaData.supportsAlterTableWithDropColumn() as psql doesn't
 	  support dropping of individual columns
@@ -13,7 +18,6 @@ Mon Sep 25 14:22:00 BST 2000 peter@retep.org.uk
 	- Removed the DriverClass kludge. Now the org.postgresql.Driver class
 	  is compiled from a template file, and now has both the connection
 	  class (ie jdbc1/jdbc2) and the current version's from Makefile.global
-	- 
 	
 Thu Jul 20 16:30:00 BST 2000 petermount@it.maidstone.gov.uk
 	- Fixed DatabaseMetaData.getTableTypes()
