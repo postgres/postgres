@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.74 1999/05/25 22:42:57 momjian Exp $
+ * $Id: parsenodes.h,v 1.75 1999/07/13 21:17:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,6 @@ typedef struct Query
 								 * BY */
 	Node	   *havingQual;		/* qualification of each group */
 
-	/***S*I***/
 	List	   *intersectClause;
 
 	List	   *unionClause;	/* unions are linked under the previous
@@ -613,7 +612,6 @@ typedef struct InsertStmt
 	Node	   *havingClause;	/* having conditional-expression */
 	List	   *unionClause;	/* union subselect parameters */
 	bool		unionall;		/* union without unique sort */
-	/***S*I***/
 	List	   *intersectClause;
 	List	   *forUpdate;		/* FOR UPDATE clause */
 } InsertStmt;
@@ -656,7 +654,6 @@ typedef struct SelectStmt
 	Node	   *whereClause;	/* qualifications */
 	List	   *groupClause;	/* group by clause */
 	Node	   *havingClause;	/* having conditional-expression */
-	/***S*I***/
 	List	   *intersectClause;
 	List	   *exceptClause;
 

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.48 1999/07/11 17:54:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.49 1999/07/13 21:17:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 #include "parser/parse_relation.h"
 #include "nodes/parsenodes.h"
 
-/***S*I***/
 #include "parser/parse_node.h"
 #include "parser/parse_target.h"
 
@@ -1692,7 +1691,6 @@ apply_RIR_view(Node **nodePtr, int rt_index, RangeTblEntry *rte, List *tlist, in
 							   modified,
 							   sublevels_up + 1);
 
-				/***S*I***/
 				tmp_lefthand = sub->lefthand;
 				foreach(tmp_oper, sub->oper)
 				{
@@ -2709,8 +2707,6 @@ QueryRewrite(Query *parsetree)
 	List	   *rewritten,
 			   *rewritten_item;
 
-	/***S*I***/
-
 	/*
 	 * Rewrite Union, Intersect and Except Queries to normal Union Queries
 	 * using IN and NOT IN subselects
@@ -2741,7 +2737,6 @@ QueryRewrite(Query *parsetree)
 	return rewritten;
 }
 
-/***S*I***/
 /* This function takes two targetlists as arguments and checks if the
  * targetlists are compatible (i.e. both select for the same number of
  * attributes and the types are compatible */
@@ -2817,7 +2812,6 @@ check_targetlists_are_compatible(List *prev_target, List *current_target)
 	}
 }
 
-/***S*I***/
 /* Rewrites UNION INTERSECT and EXCEPT queries to semantiacally equivalent
  * queries that use IN and NOT IN subselects.
  *

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.35 1999/05/25 16:08:34 momjian Exp $
+ *	$Id: execAmi.c,v 1.36 1999/07/13 21:17:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,6 @@
 #include "executor/nodeNestloop.h"
 #include "executor/nodeHashjoin.h"
 #include "executor/nodeHash.h"
-/***S*I***/
 #include "executor/nodeGroup.h"
 
 #include "executor/nodeAgg.h"

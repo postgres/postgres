@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.110 1999/06/05 20:22:30 tgl Exp $
+ *	$Id: analyze.c,v 1.111 1999/07/13 21:17:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,6 @@
 #include "parser/parse_node.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
-/***S*I***/
 #include "parser/parse_expr.h"
 #include "catalog/pg_type.h"
 #include "parse.h"
@@ -381,8 +380,6 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 * unionClause may be false ,
 	 */
 	qry->unionall = stmt->unionall;
-
-	/***S*I***/
 
 	/*
 	 * Just hand through the unionClause and intersectClause. We will
@@ -1022,8 +1019,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	 */
 	qry->unionall = stmt->unionall;
 
-	/***S*I***/
-
 	/*
 	 * Just hand through the unionClause and intersectClause. We will
 	 * handle it in the function Except_Intersect_Rewrite()
@@ -1104,7 +1099,6 @@ transformCursorStmt(ParseState *pstate, SelectStmt *stmt)
 	return qry;
 }
 
-/***S*I***/
 /* This function steps through the tree
  * built up by the select_w_o_sort rule
  * and builds a list of all SelectStmt Nodes found

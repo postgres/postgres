@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.13 1999/04/26 05:28:47 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.14 1999/07/13 21:17:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"else", ELSE},
 	{"encoding", ENCODING},
 	{"end", END_TRANS},
-	/***S*I***/
 	{"except", EXCEPT},
 
 	{"execute", EXECUTE},
@@ -121,7 +120,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"insensitive", INSENSITIVE},
 	{"insert", INSERT},
 	{"instead", INSTEAD},
-	/***S*I***/
 	{"intersect", INTERSECT},
 
 	{"interval", INTERVAL},

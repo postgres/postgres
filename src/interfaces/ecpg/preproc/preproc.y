@@ -2622,7 +2622,6 @@ OptimizableStmt:  SelectStmt
  *
  *****************************************************************************/
 
-/***S*I***/
 /* This rule used 'opt_column_list' between 'relation_name' and 'insert_rest'
  * originally. When the second rule of 'insert_rest' was changed to use
  * the new 'SelectStmt' rule (for INTERSECT and EXCEPT) it produced a shift/red uce
@@ -2778,7 +2777,6 @@ opt_cursor:  BINARY             { $$ = make1_str("binary"); }
  *
  *****************************************************************************/
 
-/***S*I***/
 /* The new 'SelectStmt' rule adapted for the optional use of INTERSECT EXCEPT a nd UNION
  * accepts the use of '(' and ')' to select an order of set operations.
  * The rule returns a SelectStmt Node having the set operations attached to
@@ -2794,7 +2792,6 @@ SelectStmt:      select_clause sort_clause for_update_clause opt_select_limit
 					$$ = cat4_str($1, $2, $3, $4);
 				}
 
-/***S*I***/ 
 /* This rule parses Select statements including UNION INTERSECT and EXCEPT.
  * '(' and ')' can be used to specify the order of the operations 
  * (UNION EXCEPT INTERSECT). Without the use of '(' and ')' we want the
@@ -2827,7 +2824,6 @@ select_clause: '(' select_clause ')'
 			}
 		;
 
-/***S*I***/
 SubSelect:     SELECT opt_unique res_target_list2
                          result from_clause where_clause
                          group_clause having_clause

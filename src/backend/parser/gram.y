@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.88 1999/07/09 21:59:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.89 1999/07/13 21:17:33 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2465,7 +2465,6 @@ OptimizableStmt:  SelectStmt
  *
  *****************************************************************************/
 
-/***S*I***/
 /* This rule used 'opt_column_list' between 'relation_name' and 'insert_rest'
  * originally. When the second rule of 'insert_rest' was changed to use
  * the new 'SelectStmt' rule (for INTERSECT and EXCEPT) it produced a shift/reduce
@@ -2500,10 +2499,8 @@ insert_rest:  VALUES '(' res_target_list2 ')'
 					$$->groupClause = NIL;
 					$$->havingClause = NULL;
 					$$->unionClause = NIL;
-					/***S*I***/
 				 	$$->intersectClause = NIL;
 				}
-		/***S*I***/
 		/* We want the full power of SelectStatements including INTERSECT and EXCEPT
                  * for insertion */
 		| SelectStmt
@@ -2534,7 +2531,6 @@ insert_rest:  VALUES '(' res_target_list2 ')'
 					$$->groupClause = NIL;
 					$$->havingClause = NULL;
 					$$->unionClause = NIL; 
-					/***S*I***/
 				 	$$->intersectClause = NIL;
 				}
 		| '(' columnList ')' SelectStmt
@@ -2646,7 +2642,6 @@ UpdateStmt:  UPDATE relation_name
  *				CURSOR STATEMENTS
  *
  *****************************************************************************/
-/***S*I***/
 CursorStmt:  DECLARE name opt_cursor CURSOR FOR SelectStmt
   				{
  					SelectStmt *n;
@@ -2685,7 +2680,6 @@ opt_cursor:  BINARY						{ $$ = TRUE; }
  *				SELECT STATEMENTS
  *
  *****************************************************************************/
-/***S*I***/
 /* The new 'SelectStmt' rule adapted for the optional use of INTERSECT EXCEPT and UNION
  * accepts the use of '(' and ')' to select an order of set operations.
  * 
@@ -2770,7 +2764,6 @@ SelectStmt:	  select_clause sort_clause for_update_clause opt_select_limit
 			}
 		;
 
-/***S*I***/ 
 /* This rule parses Select statements including UNION INTERSECT and EXCEPT.
  * '(' and ')' can be used to specify the order of the operations 
  * (UNION EXCEPT INTERSECT). Without the use of '(' and ')' we want the
@@ -2812,7 +2805,6 @@ select_clause: '(' select_clause ')'
 			}
 		; 
 
-/***S*I***/
 SubSelect:	SELECT opt_unique res_target_list2
 			 result from_clause where_clause
 			 group_clause having_clause
@@ -2821,7 +2813,6 @@ SubSelect:	SELECT opt_unique res_target_list2
 					n->unique = $2;
 					n->unionall = FALSE;
 					n->targetList = $3;
-					/***S*I***/
 					/* This is new: Subselects support the INTO clause
 					 * which allows queries that are not part of the
 					 * SQL92 standard and should not be formulated!

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.57 1999/05/12 07:22:52 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.58 1999/07/13 21:17:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"else", ELSE},
 	{"encoding", ENCODING},
 	{"end", END_TRANS},
-	/***S*I***/
 	{"except", EXCEPT},
 	{"exclusive", EXCLUSIVE},
 	{"execute", EXECUTE},
@@ -123,7 +122,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"insensitive", INSENSITIVE},
 	{"insert", INSERT},
 	{"instead", INSTEAD},
-	/***S*I***/
 	{"intersect", INTERSECT},
 	{"interval", INTERVAL},
 	{"into", INTO},
