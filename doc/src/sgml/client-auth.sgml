@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.26 2001/11/12 19:19:39 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.27 2001/11/18 23:24:16 tgl Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -27,9 +27,10 @@
  </para>
 
  <para>
-  <productname>Postgres</productname> offers client authentication by
-  (client) host and by database, with a number of different
-  authentication methods available.
+  <productname>Postgres</productname> offers a number of different
+  client authentication methods.  The method to be used can be selected
+  on the basis of (client) host and database; some authentication methods
+  allow you to restrict by user name as well.
  </para>
 
  <para>
@@ -197,16 +198,15 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
         <term><literal>password</></term>
         <listitem>
          <para>
-          The client is required to supply a password with the connection
-          attempt which is required to match the password that was set up
-          for the user.
+          The client is required to supply a password which is required to
+	  match the database password that was set up for the user.
          </para>
 
          <para>
           An optional file name may be specified after the
           <literal>password</literal> keyword. This file is expected to
-          contain a list of users that this record pertains to, and
-          optionally alternative passwords.
+          contain a list of users who may connect using this record,
+          and optionally alternative passwords for them.
          </para>
 
          <para>
@@ -224,9 +224,14 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
           Like the <literal>password</literal> method, but the password
           is sent over the wire encrypted using a simple
           challenge-response protocol. This protects against incidental
-          wire-sniffing. The name of a file may follow the
+          wire-sniffing.  This is now the recommended choice for
+	  password-based authentication.
+         </para>
+
+         <para>
+	  The name of a file may follow the
           <literal>md5</literal> keyword.  It contains a list of users
-          for this record.
+          who may connect using this record.
          </para>
         </listitem>
        </varlistentry>
@@ -236,9 +241,10 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
         <listitem>
          <para>
           Like the <literal>md5</literal> method but uses older crypt
-          authentication for pre-7.2 clients. <literal>md5</literal> is
+          encryption, which is needed for pre-7.2
+	  clients. <literal>md5</literal> is
           preferred for 7.2 and later clients. The <literal>crypt</>
-          method is also not compatible with encrypting passwords in
+          method is not compatible with encrypting passwords in
           <filename>pg_shadow</>, and may fail if client and server
           machines have different implementations of the crypt() library
           routine.
@@ -333,7 +339,7 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
      <listitem>
       <para>
        This field is interpreted differently depending on the
-       authentication method, as described there.
+       authentication method, as described above.
       </para>
      </listitem>
     </varlistentry>
@@ -412,6 +418,17 @@ host         all        0.0.0.0        0.0.0.0            krb5
 # says "bryanh" is allowed to connect as "guest1":
 
 host         all        192.168.0.0    255.255.0.0        ident     omicron
+
+# If these are the only two lines for local connections, they will allow
+# local users to connect only to their own databases (database named the
+# same as the user name), except for administrators who may connect to
+# all databases.  The file $PGDATA/admins lists the user names who are
+# permitted to connect to all databases.  Passwords are required in all
+# cases.  (If you prefer to use ident authorization, an ident map can
+# serve a parallel purpose to the password list file used here.)
+
+local        sameuser                                     md5
+local        all                                          md5  admins
 </programlisting>
    </example>
   </para>
@@ -434,7 +451,7 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
    </indexterm>
 
    <para>
-    <productname>Postgres</> database passwords are separate from any
+    <productname>Postgres</> database passwords are separate from
     operating system user passwords. Ordinarily, the password for each
     database user is stored in the pg_shadow system catalog table.
     Passwords can be managed with the query language commands
@@ -453,8 +470,8 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
     <literal>password</>, <literal>md5</>, or <literal>crypt</> keyword,
     respectively, in <filename>pg_hba.conf</>. If you do not use this
     feature, then any user that is known to the database system can
-    connect to any database (so long as he passes password
-    authentication, of course).
+    connect to any database (so long as he supplies the correct password,
+    of course).
    </para>
 
    <para>
@@ -492,8 +509,8 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
    <para>
     Note that using alternative passwords like this means that one can
     no longer use <command>ALTER USER</command> to change one's
-    password. It will still appear to work but the password one is
-    actually changing is not the password that the system will end up
+    password. It will appear to work but the password one is
+    changing is not the password that the system will end up
     using.
    </para>
 

@@ -16,6 +16,13 @@
 # Blank lines are ignored. A record consists of tokens separated by 
 # multiple spaces or tabs.
 # 
+# Each record specifies the authentication method to be used for connections
+# of a certain type that match a certain set of IP addresses (if relevant
+# for the connection type) and a certain database or databases.  The
+# postmaster finds the first record that matches the connection type,
+# client address, and database name, and uses that record to perform client
+# authentication.  If no record matches, the connection is rejected.
+#
 # The first token of a record indicates its type. The remainder of the
 # record is interpreted based on its type.
 # 
@@ -30,7 +37,7 @@
 # host
 # ----
 # 
-# This record identifies the networked hosts that are permitted to connect
+# This record identifies networked hosts that are permitted to connect
 # via IP connections.
 # 
 # Format:
@@ -48,12 +55,7 @@
 # domain or host names.
 # 
 # AUTH_TYPE and AUTH_ARGUMENT are described below.
-# 
-# There can be multiple "host" records, possibly with overlapping sets of
-# host addresses. The postmaster finds the first entry that matches the
-# connecting host IP address and the requested database name. If no entry
-# matches the database/hostname combination, the connection is rejected.
-# 
+#
 # 
 # hostssl
 # -------
@@ -62,8 +64,8 @@
 # 
 # This record identifies a set of network hosts that are permitted to
 # connect to databases over secure SSL IP connections. Note that a "host"
-# record will also allow SSL connections.  "hostssl" forces these
-# hosts to use *only* SSL-secured connections.
+# record will also allow SSL connections.  "hostssl" matches *only*
+# SSL-secured connections.
 # 
 # This keyword is only available if the server was compiled with SSL
 # support enabled.
@@ -81,10 +83,7 @@
 # 
 # This format is identical to the "host" record type except the IP_ADDRESS
 # and ADDRESS_MASK fields are omitted.
-# 
-# As with "host" records, the first "local" record matching the requested
-# database name is used.
-# 
+#
 # 
 # 
 # Authentication Types (AUTH_TYPE)
@@ -105,24 +104,26 @@
 # 
 # 		If AUTH_ARGUMENT is specified, the username is looked up
 # 		in that file in the $PGDATA directory. If the username
-# 		exists but there is no password, the password is looked
+# 		is found but there is no password, the password is looked
 # 		up in pg_shadow. If a password exists in the file, it is
-# 		it used instead. These secondary files allow fine-grained
+# 		used instead. These secondary files allow fine-grained
 # 		control over who can access which databases and whether
-# 		a non-default passwords are required. The same file can be
+# 		a non-default password is required. The same file can be
 # 		used in multiple records for easier administration.
 # 		Password files can be maintained with the pg_passwd(1)
 # 		utility. Remember, these passwords override pg_shadow
 # 		passwords.
 # 
-#   md5:  	Same as "password", but authentication is done by
-#		encrypting the password sent over the network. This is
-#		always preferable to "password" except for pre-7.2 clients
-#		that don't support it. Also, md5 can use usernames stored
-#		in secondary password files but not passwords stored there.
+#   md5:  	Same as "password", but the password is encrypted while
+#		being sent over the network. This method is preferable to
+#		"password" except for pre-7.2 clients that don't support it.
+#		NOTE: md5 can use usernames stored in secondary password
+#		files but ignores passwords stored there.  The pg_shadow
+#		password will always be used.
 # 
 #   crypt:  	Same as "md5", but uses crypt for pre-7.2 clients.  You can
-#		not store encrypted passwords if you use this option.
+#		not store encrypted passwords in pg_shadow if you use this
+#		method.
 #
 #   ident:	For TCP/IP connections, authentication is done by contacting
 #		the ident server on the client host.  Remember, this is
@@ -168,7 +169,7 @@
 # TYPE       DATABASE    IP_ADDRESS    MASK               AUTH_TYPE  AUTH_ARGUMENT
 # local      all                                          trust
 # 
-# The same using IP connections on the same machine:
+# The same using local loopback IP connections:
 # TYPE       DATABASE    IP_ADDRESS    MASK               AUTH_TYPE  AUTH_ARGUMENT
 # host       all         127.0.0.1     255.255.255.255    trust     
 # 
@@ -204,14 +205,28 @@
 # 
 # TYPE       DATABASE    IP_ADDRESS    MASK               AUTH_TYPE  AUTH_ARGUMENT
 # host       all        192.168.0.0    255.255.0.0        ident      phoenix
+#
+# If these are the only two lines for local connections, they will allow
+# local users to connect only to their own databases (database named the
+# same as the user name), except for administrators who may connect to
+# all databases.  The file $PGDATA/admins lists the user names who are
+# permitted to connect to all databases.  Passwords are required in all
+# cases.  (If you prefer to use ident authorization, an ident map can
+# serve a parallel purpose to the password list file used here.)
+#
+# TYPE       DATABASE    IP_ADDRESS    MASK               AUTH_TYPE  AUTH_ARGUMENT
+# local      sameuser                                     md5
+# local      all                                          md5  admins
 # 
 # See $PGDATA/pg_ident.conf for more information on Ident maps.
+#
+#
 # 
 # Put your actual configuration here
 # ==================================
 # 
 # This default configuration allows any local user to connect with any
-# PostgreSQL username, over either UNIX domain sockets or IP:
+# PostgreSQL username, over either UNIX domain sockets or IP.
 # 
 # If you want to allow non-local connections, you will need to add more
 # "host" records. Also, remember IP connections are only enabled if you
