@@ -124,6 +124,7 @@ CLEAN :
 	-@erase "$(OUTDIR)\blibpqdll.lib"
 	-@erase "$(OUTDIR)\blibpq.dll"
 	-@erase "$(OUTDIR)\blibpq.tds"
+	-@erase "$(INTDIR)\pg_config_paths.h"
 
 config: ..\..\include\pg_config.h pthread.h pg_config_paths.h
 

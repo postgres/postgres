@@ -75,7 +75,7 @@ CLEAN :
 	-@erase "$(INTDIR)\wchar.obj"
 	-@erase "$(INTDIR)\encnames.obj"
 	-@erase "$(INTDIR)\pthread-win32.obj"
-
+	-@erase "$(INTDIR)\pg_config_paths.h"
 
 
 config: ..\..\include\pg_config.h pthread.h pg_config_paths.h

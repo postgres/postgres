@@ -41,6 +41,7 @@ CLEAN :
 	-@erase "$(INTDIR)\mbprint.obj"
 	-@erase "$(INTDIR)\*psql.pch"
 	-@erase "$(OUTDIR)\psql.exe"
+	-@erase "$(INTDIR)\pg_config_paths.h"
 
 pg_config_paths.h: win32.mak
 	echo "#define PGBINDIR "">$@

@@ -81,6 +81,7 @@ CLEAN :
 	-@erase "$(INTDIR)\psql.ils"
 	-@erase "$(INTDIR)\psql.ilf"
 	-@erase "$(OUTDIR)\psql.exe"
+	-@erase "$(INTDIR)\pg_config_paths.h"
 
 pg_config_paths.h: win32.mak
 	echo "#define PGBINDIR "">$@
