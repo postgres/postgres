@@ -19,14 +19,7 @@ Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
 #include	<ctype.h>
 #include	<locale.h>
 
-#ifdef		TEST_MAIN
-# include	<stdlib.h>
-# define	palloc malloc
-#else
-# include	<palloc.h>
-#endif
-
-#include	"cash.h"
+#include	<utils/cash.h>
 
 /* when we go to 64 bit values we will have to modify this */
 #define		CASH_BUFSZ	24
