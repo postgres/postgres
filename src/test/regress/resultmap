@@ -3,6 +3,7 @@ float4/i.86-pc-mingw32=float4-exp-three-digits
 float8/i.86-.*-freebsd[234]=float8-small-is-zero
 float8/i.86-.*-openbsd=float8-small-is-zero
 float8/i.86-.*-netbsd=float8-small-is-zero
+float8/m68k-.*-netbsd=float8-small-is-zero
 float8/.*-qnx=float8-exp-three-digits
 float8/i.86-pc-mingw32=float8-exp-three-digits-win32
 float8/i.86-pc-cygwin=float8-small-is-zero
