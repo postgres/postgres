@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.51 2001/01/24 19:42:51 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.52 2001/02/13 08:44:09 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1015,7 +1015,6 @@ XLogFileOpen(uint32 log, uint32 seg, bool econt)
 				 logId, logSeg);
 			return (fd);
 		}
-		abort();
 		elog(STOP, "open(logfile %u seg %u) failed: %m",
 			 logId, logSeg);
 	}
