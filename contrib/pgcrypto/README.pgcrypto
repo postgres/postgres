@@ -44,4 +44,13 @@ HASHES
   kerberos5 (heimdal):
 	MD5, SHA1
 
+ENCRYPTION
+
+  There is experimental version out with encryption, HMAC
+  and UN*X crypt() support in
+
+    http://www.l-t.ee/marko/pgsql/
+
+  Current latest release is pgcrypto-0.3.tar.gz.
+
 
