@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.23 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.24 2001/10/05 15:50:11 momjian Exp $
 Postgres documentation
 -->
 
@@ -62,7 +62,7 @@ Postgres documentation
   </para>
 
   <para>
-   The SQL script will be written to the standard ouput.  Shell
+   The SQL script will be written to the standard output.  Shell
    operators should be used to redirect it into a file.
   </para>
 
