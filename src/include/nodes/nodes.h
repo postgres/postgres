@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.88 2001/03/22 06:16:20 momjian Exp $
+ * $Id: nodes.h,v 1.89 2001/04/24 00:08:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,8 +165,7 @@ typedef enum NodeTag
 	T_RemoveAggrStmt,
 	T_RemoveFuncStmt,
 	T_RemoveOperStmt,
-	T_RemoveStmt_XXX,			/* not used anymore; this tag# is
-								 * available */
+	T_RemoveStmt_XXX,			/* not used anymore; tag# available */
 	T_RenameStmt,
 	T_RuleStmt,
 	T_NotifyStmt,
@@ -219,14 +218,11 @@ typedef enum NodeTag
 	T_RangeTblEntry,
 	T_SortClause,
 	T_GroupClause,
-	T_SubSelectXXX,				/* not used anymore; this tag# is
-								 * available */
-	T_oldJoinExprXXX,			/* not used anymore; this tag# is
-								 * available */
+	T_SubSelectXXX,				/* not used anymore; tag# available */
+	T_oldJoinExprXXX,			/* not used anymore; tag# available */
 	T_CaseExpr,
 	T_CaseWhen,
-	T_RowMarkXXX,				/* not used anymore; this tag# is
-								 * available */
+	T_RowMarkXXX,				/* not used anymore; tag# available */
 	T_FkConstraint,
 
 	/*
