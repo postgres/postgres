@@ -1,15 +1,15 @@
 =======================================================
-Frequently Asked Questions (FAQ) for PostgreSQL  V6.5
+Frequently Asked Questions (FAQ) for PostgreSQL  V7.0
 SCO UnixWare and OpenServer Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-last updated:           Tue May 25 12:00:00 PDT 1999
+last updated:           Mon Apr 24 04:31:44 EDT 2000
 
-current maintainer:     Andrew Merrill (andrew@compclass.com)
+current maintainer:     Billy G. Allie (Bill.Allie@mug.org)
 original author:        Andrew Merrill (andrew@compclass.com)
 
 
-PostgreSQL 6.5 can be built on SCO UnixWare 7 and SCO OpenServer 5.
+PostgreSQL 7.0 can be built on SCO UnixWare 7 and SCO OpenServer 5.
 On OpenServer, you can use either the OpenServer Development Kit or 
 the Universal Development Kit.
 
@@ -21,6 +21,7 @@ Topics:
 *) C++ and libpq++
 *) Readline
 *) Using the UDK on OpenServer
+*) Compiling PostgreSQL using the UDK
 *) Shared Memory and SHMMAX
 *) Java and JDBC
 *) Reading the PostgreSQL man pages on UnixWare
@@ -114,6 +115,38 @@ Putting these together with the no-C++ and readline options from above:
 
 ./configure --with-template=unixware --with-libs="/udk/usr/lib /usr/local/lib" --with-includes="/udk/usr/include /usr/local/include" --without-CXX
 
+***************************************************************************
+*) Compiling PostgreSQL 7.0 with the UDK
+
+The program, backend/utils/adt/int8.c, tickles a compiler bug with in the
+following version of the C compiler:
+
+	Optimizing C Compilation System  (CCS) 3.2  08/18/98 (u701)
+
+If you encounter an error compiling backend/utils/adt/int8.c, please apply
+the following patch:
+
+------------------------------8< CUT HERE >8------------------------------
+*** ./src/backend/utils/adt/int8.c.orig	Mon Apr  3 13:24:12 2000
+--- ./src/backend/utils/adt/int8.c	Mon Apr  3 13:28:47 2000
+***************
+*** 410,416 ****
+  	if (*arg1 < 1)
+  		*result = 0;
+  	else
+! 		for (i = *arg1, *result = 1; i > 0; --i)
+  			*result *= i;
+  
+  	return result;
+--- 410,416 ----
+  	if (*arg1 < 1)
+  		*result = 0;
+  	else
+! 		for (i = *arg1, *result = 1; 0 < i; --i)
+  			*result *= i;
+  
+  	return result;
+------------------------------8< CUT HERE >8------------------------------
 
 ***************************************************************************
 *) Shared Memory and SHMMAX
@@ -221,26 +254,44 @@ By default, the PostgreSQL man pages are installed into /usr/local/pgsql/man.
 By default, UnixWare does not look there for man pages, so you will not
 be able to read them.
 
-You need to make two changes to access the PostgreSQL man pages from UnixWare.
+You need to make the following changes to access the PostgreSQL man pages
+from UnixWare.
 
-1) You need to modify the MANPATH environment variable.  I use:
+1) You need to modify the MANPATH variable in /etc/default/man.  I use:
 
-MANPATH=/usr/local/pgsql/man:/usr/dt/man:/usr/man:/usr/share/man:scohelp
-export MANPATH
+	MANPATH=/usr/lib/scohelp/%L/man:/usr/dt/man:/usr/man:/usr/share/man:scohelp:/usr/local/man:/usr/local/pgsql/man
 
-2) The man pages for SQL commands are, by default, placed in section l
-(normally used for "l"ocal pages).  UnixWare does not support the l section.
+2) Add a line that says '1sql' to /etc/default/manSection.
 
-The solution I use is to move all these pages from section l to an unused
-section, such as section 6.  To accomplish that:
+3) The man pages for SQL commands are, by default, placed in section 'l'
+   (normally used for "l"ocal pages).  UnixWare does not support the 'l'
+   section.
 
+The solution I use is to move all these pages from section 'l' to a section
+named '1sql'.  To following KSH script will perform the move and change the
+section names in the man page:
+
+------------------------------8< CUT HERE >8------------------------------
+#!/bin/ksh
 cd /usr/local/pgsql/man
-mv manl man6
-cd man6
-for file in *.l
+mv man1 man.1
+mkdir ../man.1sql
+
+cd /usr/local/pgsql/man/manl
+for i in *.l
 do
-	mv $file `basename $file .l`.6
+	sed -e '/^\.TH/s/"l"/"1sql"/' $i >../man.1sql/${i%.l}.1sql
 done
+cd /usr/local/pgsql/man
+rm -rf manl
+------------------------------8< CUT HERE >8------------------------------
+
+After running this script, you can view the man pages using the 'man'
+command.  They will not be usable from the scohelp system.
+
+I am working on integrating the man pages into the scohelp system.  When I
+generate a PostgreSQL package for UnixWare 7.x, the man pages will be
+integrated into the scohelp system.
 
 I have not tried using the PostgreSQL man pages on OpenServer.  Volunteers??
 
