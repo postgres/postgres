@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.156 2002/03/31 06:26:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.157 2002/04/08 22:42:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,7 +157,8 @@ ExecutorStart(QueryDesc *queryDesc, EState *estate)
  *		except to start up/shut down the destination.  Otherwise,
  *		we retrieve up to 'count' tuples in the specified direction.
  *
- *		Note: count = 0 is interpreted as "no limit".
+ *		Note: count = 0 is interpreted as no portal limit, e.g. run to
+ *		completion.
  *
  * ----------------------------------------------------------------
  */
