@@ -10,7 +10,7 @@
  * Unfortunately, COPY OUT was designed to commandeer the communication
  * channel (it just transfers data without wrapping it into messages).
  * No other messages can be sent while COPY OUT is in progress; and if the
- * copy is aborted by an elog(ERROR), we need to close out the copy so that
+ * copy is aborted by an ereport(ERROR), we need to close out the copy so that
  * the frontend gets back into sync.  Therefore, these routines have to be
  * aware of COPY OUT state.  (New COPY-OUT is message-based and does *not*
  * set the DoingCopyOut flag.)
@@ -20,8 +20,8 @@
  * to send.  Instead, use the routines in pqformat.c to construct the message
  * in a buffer and then emit it in one call to pq_putmessage.  This ensures
  * that the channel will not be clogged by an incomplete message if execution
- * is aborted by elog(ERROR) partway through the message.  The only non-libpq
- * code that should call pq_putbytes directly is old-style COPY OUT.
+ * is aborted by ereport(ERROR) partway through the message.  The only
+ * non-libpq code that should call pq_putbytes directly is old-style COPY OUT.
  *
  * At one time, libpq was shared between frontend and backend, but now
  * the backend's "backend/libpq" is quite separate from "interfaces/libpq".
@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.157 2003/06/12 07:36:51 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.158 2003/07/22 19:00:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,8 +237,9 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	ret = getaddrinfo2(hostName, service, &hint, &addrs);
 	if (ret || addrs == NULL)
 	{
-		elog(LOG, "server socket failure: getaddrinfo2(): %s",
-			 gai_strerror(ret));
+		ereport(LOG,
+				(errmsg("failed to translate hostname to address: %s",
+						gai_strerror(ret))));
 		freeaddrinfo2(hint.ai_family, addrs);
 		return STATUS_ERROR;
 	}
@@ -269,8 +270,9 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		if ((fd = socket(addr->ai_family, addr->ai_socktype,
 			addr->ai_protocol)) < 0)
 		{
-			elog(LOG, "server socket failure: socket(): %s",
-				 strerror(errno));
+			ereport(LOG,
+					(errcode_for_socket_access(),
+					 errmsg("failed to create socket: %m")));
 			continue;
 		}
 
@@ -281,9 +283,9 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 			if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
 				(char *) &one, sizeof(one))) == -1)
 			{
-				elog(LOG, "server socket failure: "
-					"setsockopt(SO_REUSEADDR): %s",
-					strerror(errno));
+				ereport(LOG,
+						(errcode_for_socket_access(),
+						 errmsg("setsockopt(SO_REUSEADDR) failed: %m")));
 				closesocket(fd);
 				continue;
 			}
@@ -295,9 +297,9 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 			if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY,
 				(char *)&one, sizeof(one)) == -1)
 			{
-				elog(LOG, "server socket failure: "
-					"setsockopt(IPV6_V6ONLY): %s",
-					strerror(errno));
+				ereport(LOG,
+						(errcode_for_socket_access(),
+						 errmsg("setsockopt(IPV6_V6ONLY) failed: %m")));
 				closesocket(fd);
 				continue;
 			}
@@ -313,19 +315,16 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		err = bind(fd, addr->ai_addr, addr->ai_addrlen);
 		if (err < 0)
 		{
-			elog(LOG, "server socket failure: bind(): %s\n"
-				"\tIs another postmaster already running on "
-				"port %d?", strerror(errno), (int) portNumber);
-			if (addr->ai_family == AF_UNIX)
-			{
-				elog(LOG, "\tIf not, remove socket node (%s) "
-					"and retry.", sock_path);
-			}
-			else
-			{
-				elog(LOG, "\tIf not, wait a few seconds and "
-					"retry.");
-			}
+			ereport(LOG,
+					(errcode_for_socket_access(),
+					 errmsg("failed to bind server socket: %m"),
+					 (addr->ai_family == AF_UNIX) ?
+					 errhint("Is another postmaster already running on port %d?"
+							 " If not, remove socket node \"%s\" and retry.",
+							 (int) portNumber, sock_path) :
+					 errhint("Is another postmaster already running on port %d?"
+							 " If not, wait a few seconds and retry.",
+							 (int) portNumber)));
 			closesocket(fd);
 			continue;
 		}
@@ -354,8 +353,9 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		err = listen(fd, maxconn);
 		if (err < 0)
 		{
-			elog(LOG, "server socket failure: listen(): %s",
-				 strerror(errno));
+			ereport(LOG,
+					(errcode_for_socket_access(),
+					 errmsg("failed to listen on server socket: %m")));
 			closesocket(fd);
 			continue;
 		}
@@ -417,7 +417,7 @@ Setup_AF_UNIX(void)
 	if (Unix_socket_group[0] != '\0')
 	{
 #ifdef WIN32
-		elog(FATAL, "Config value 'unix_socket_group' not supported on this platform");
+		elog(WARNING, "configuration item unix_socket_group is not supported on this platform");
 #else
 		char	   *endptr;
 		unsigned long int val;
@@ -435,16 +435,19 @@ Setup_AF_UNIX(void)
 			gr = getgrnam(Unix_socket_group);
 			if (!gr)
 			{
-				elog(LOG, "server socket failure: no such group '%s'",
-					 Unix_socket_group);
+				ereport(LOG,
+						(errmsg("group \"%s\" does not exist",
+								Unix_socket_group)));
 				return STATUS_ERROR;
 			}
 			gid = gr->gr_gid;
 		}
 		if (chown(sock_path, -1, gid) == -1)
 		{
-			elog(LOG, "server socket failure: could not set group of %s: %s",
-				 sock_path, strerror(errno));
+			ereport(LOG,
+					(errcode_for_file_access(),
+					 errmsg("could not set group of \"%s\": %m",
+							sock_path)));
 			return STATUS_ERROR;
 		}
 #endif
@@ -452,8 +455,10 @@ Setup_AF_UNIX(void)
 
 	if (chmod(sock_path, Unix_socket_permissions) == -1)
 	{
-		elog(LOG, "server socket failure: could not set permissions on %s: %s",
-			 sock_path, strerror(errno));
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not set permissions of \"%s\": %m",
+						sock_path)));
 		return STATUS_ERROR;
 	}
 	return STATUS_OK;
@@ -475,13 +480,15 @@ Setup_AF_UNIX(void)
 int
 StreamConnection(int server_fd, Port *port)
 {
-	/* accept connection (and fill in the client (remote) address) */
+	/* accept connection and fill in the client (remote) address */
 	port->raddr.salen = sizeof(port->raddr.addr);
 	if ((port->sock = accept(server_fd,
 			 (struct sockaddr *) &port->raddr.addr,
 			 &port->raddr.salen)) < 0)
 	{
-		elog(LOG, "StreamConnection: accept() failed: %m");
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not accept new connection: %m")));
 		return STATUS_ERROR;
 	}
 
@@ -496,30 +503,33 @@ StreamConnection(int server_fd, Port *port)
 
 	/* fill in the server (local) address */
 	port->laddr.salen = sizeof(port->laddr.addr);
-	if (getsockname(port->sock, (struct sockaddr *) & port->laddr.addr,
+	if (getsockname(port->sock,
+					(struct sockaddr *) & port->laddr.addr,
 					&port->laddr.salen) < 0)
 	{
-		elog(LOG, "StreamConnection: getsockname() failed: %m");
+		elog(LOG, "getsockname() failed: %m");
 		return STATUS_ERROR;
 	}
 
 	/* select NODELAY and KEEPALIVE options if it's a TCP connection */
 	if (!IS_AF_UNIX(port->laddr.addr.ss_family))
 	{
-		int			on = 1;
+		int			on;
 
 #ifdef	TCP_NODELAY
+		on = 1;
 		if (setsockopt(port->sock, IPPROTO_TCP, TCP_NODELAY,
 					   (char *) &on, sizeof(on)) < 0)
 		{
-			elog(LOG, "StreamConnection: setsockopt(TCP_NODELAY) failed: %m");
+			elog(LOG, "setsockopt(TCP_NODELAY) failed: %m");
 			return STATUS_ERROR;
 		}
 #endif
+		on = 1;
 		if (setsockopt(port->sock, SOL_SOCKET, SO_KEEPALIVE,
 					   (char *) &on, sizeof(on)) < 0)
 		{
-			elog(LOG, "StreamConnection: setsockopt(SO_KEEPALIVE) failed: %m");
+			elog(LOG, "setsockopt(SO_KEEPALIVE) failed: %m");
 			return STATUS_ERROR;
 		}
 	}
@@ -622,11 +632,13 @@ pq_recvbuf(void)
 				continue;		/* Ok if interrupted */
 
 			/*
-			 * Careful: an elog() that tries to write to the client would
+			 * Careful: an ereport() that tries to write to the client would
 			 * cause recursion to here, leading to stack overflow and core
 			 * dump!  This message must go *only* to the postmaster log.
 			 */
-			elog(COMMERROR, "pq_recvbuf: recv() failed: %m");
+			ereport(COMMERROR,
+					(errcode_for_socket_access(),
+					 errmsg("could not receive data from client: %m")));
 			return EOF;
 		}
 		if (r == 0)
@@ -787,7 +799,9 @@ pq_getmessage(StringInfo s, int maxlen)
 	/* Read message length word */
 	if (pq_getbytes((char *) &len, 4) == EOF)
 	{
-		elog(COMMERROR, "unexpected EOF within message length word");
+		ereport(COMMERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("unexpected EOF within message length word")));
 		return EOF;
 	}
 
@@ -797,7 +811,9 @@ pq_getmessage(StringInfo s, int maxlen)
 	if (len < 0 ||
 		(maxlen > 0 && len > maxlen))
 	{
-		elog(COMMERROR, "invalid message length");
+		ereport(COMMERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("invalid message length")));
 		return EOF;
 	}
 
@@ -809,7 +825,9 @@ pq_getmessage(StringInfo s, int maxlen)
 		/* And grab the message */
 		if (pq_getbytes(s->data, len) == EOF)
 		{
-			elog(COMMERROR, "incomplete client message");
+			ereport(COMMERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("incomplete message from client")));
 			return EOF;
 		}
 		s->len = len;
@@ -874,7 +892,7 @@ pq_flush(void)
 				continue;		/* Ok if we were interrupted */
 
 			/*
-			 * Careful: an elog() that tries to write to the client would
+			 * Careful: an ereport() that tries to write to the client would
 			 * cause recursion to here, leading to stack overflow and core
 			 * dump!  This message must go *only* to the postmaster log.
 			 *
@@ -885,7 +903,9 @@ pq_flush(void)
 			if (errno != last_reported_send_errno)
 			{
 				last_reported_send_errno = errno;
-				elog(COMMERROR, "pq_flush: send() failed: %m");
+				ereport(COMMERROR,
+						(errcode_for_socket_access(),
+						 errmsg("could not send data to client: %m")));
 			}
 
 			/*

@@ -689,8 +689,8 @@ FETCH 1 FROM foo24;
 (1 row)
 
 FETCH BACKWARD 1 FROM foo24; -- should fail
-ERROR:  Cursor can only scan forward
-	Declare it with SCROLL option to enable backward scan
+ERROR:  cursor can only scan forward
+HINT:  Declare it with SCROLL option to enable backward scan.
 END;
 --
 -- Cursors outside transaction blocks

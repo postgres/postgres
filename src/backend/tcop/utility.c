@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.201 2003/06/27 14:45:30 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.202 2003/07/22 19:00:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,69 +60,90 @@
  * Error-checking support for DROP commands
  */
 
-struct kindstrings
+struct msgstrings
 {
 	char		kind;
-	char	   *indef_article;
-	char	   *name;
-	char	   *command;
+	int			nonexistent_code;
+	const char *nonexistent_msg;
+	const char *nota_msg;
+	const char *drophint_msg;
 };
 
-static struct kindstrings kindstringarray[] = {
-	{RELKIND_RELATION, "a", "table", "TABLE"},
-	{RELKIND_SEQUENCE, "a", "sequence", "SEQUENCE"},
-	{RELKIND_VIEW, "a", "view", "VIEW"},
-	{RELKIND_INDEX, "an", "index", "INDEX"},
-	{RELKIND_COMPOSITE_TYPE, "a", "type", "TYPE"},
-	{'\0', "a", "???", "???"}
+static const struct msgstrings msgstringarray[] = {
+	{ RELKIND_RELATION,
+	  ERRCODE_UNDEFINED_TABLE,
+	  gettext_noop("table \"%s\" does not exist"),
+	  gettext_noop("\"%s\" is not a table"),
+	  gettext_noop("Use DROP TABLE to remove a table.") },
+	{ RELKIND_SEQUENCE,
+	  ERRCODE_UNDEFINED_TABLE,
+	  gettext_noop("sequence \"%s\" does not exist"),
+	  gettext_noop("\"%s\" is not a sequence"),
+	  gettext_noop("Use DROP SEQUENCE to remove a sequence.") },
+	{ RELKIND_VIEW,
+	  ERRCODE_UNDEFINED_TABLE,
+	  gettext_noop("view \"%s\" does not exist"),
+	  gettext_noop("\"%s\" is not a view"),
+	  gettext_noop("Use DROP VIEW to remove a view.") },
+	{ RELKIND_INDEX,
+	  ERRCODE_UNDEFINED_OBJECT,
+	  gettext_noop("index \"%s\" does not exist"),
+	  gettext_noop("\"%s\" is not an index"),
+	  gettext_noop("Use DROP INDEX to remove an index.") },
+	{ RELKIND_COMPOSITE_TYPE,
+	  ERRCODE_UNDEFINED_OBJECT,
+	  gettext_noop("type \"%s\" does not exist"),
+	  gettext_noop("\"%s\" is not a type"),
+	  gettext_noop("Use DROP TYPE to remove a type.") },
+	{ '\0', 0, NULL, NULL, NULL }
 };
 
 
 static void
 DropErrorMsg(char *relname, char wrongkind, char rightkind)
 {
-	struct kindstrings *rentry;
-	struct kindstrings *wentry;
+	const struct msgstrings *rentry;
+	const struct msgstrings *wentry;
 
-	for (rentry = kindstringarray; rentry->kind != '\0'; rentry++)
+	for (rentry = msgstringarray; rentry->kind != '\0'; rentry++)
 		if (rentry->kind == rightkind)
 			break;
 	Assert(rentry->kind != '\0');
 
-	for (wentry = kindstringarray; wentry->kind != '\0'; wentry++)
+	for (wentry = msgstringarray; wentry->kind != '\0'; wentry++)
 		if (wentry->kind == wrongkind)
 			break;
 	/* wrongkind could be something we don't have in our table... */
-	if (wentry->kind != '\0')
-		elog(ERROR, "\"%s\" is not %s %s. Use DROP %s to remove %s %s",
-			 relname, rentry->indef_article, rentry->name,
-			 wentry->command, wentry->indef_article, wentry->name);
-	else
-		elog(ERROR, "\"%s\" is not %s %s",
-			 relname, rentry->indef_article, rentry->name);
+
+	ereport(ERROR,
+			(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+			 errmsg(rentry->nota_msg, relname),
+			 (wentry->kind != '\0') ? errhint(wentry->drophint_msg) : 0));
 }
 
 static void
 CheckDropPermissions(RangeVar *rel, char rightkind)
 {
-	struct kindstrings *rentry;
+	const struct msgstrings *rentry;
 	Oid			relOid;
 	HeapTuple	tuple;
 	Form_pg_class classform;
 
-	for (rentry = kindstringarray; rentry->kind != '\0'; rentry++)
+	for (rentry = msgstringarray; rentry->kind != '\0'; rentry++)
 		if (rentry->kind == rightkind)
 			break;
 	Assert(rentry->kind != '\0');
 
 	relOid = RangeVarGetRelid(rel, true);
 	if (!OidIsValid(relOid))
-		elog(ERROR, "%s \"%s\" does not exist", rentry->name, rel->relname);
+		ereport(ERROR,
+				(errcode(rentry->nonexistent_code),
+				 errmsg(rentry->nonexistent_msg, rel->relname)));
 	tuple = SearchSysCache(RELOID,
 						   ObjectIdGetDatum(relOid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "%s \"%s\" does not exist", rentry->name, rel->relname);
+		elog(ERROR, "cache lookup failed for relation %u", relOid);
 
 	classform = (Form_pg_class) GETSTRUCT(tuple);
 
@@ -135,14 +156,22 @@ CheckDropPermissions(RangeVar *rel, char rightkind)
 		aclcheck_error(ACLCHECK_NOT_OWNER, rel->relname);
 
 	if (!allowSystemTableMods && IsSystemClass(classform))
-		elog(ERROR, "%s \"%s\" is a system %s",
-			 rentry->name, rel->relname, rentry->name);
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("\"%s\" is a system catalog",
+						rel->relname)));
 
 	ReleaseSysCache(tuple);
 }
 
-static void
-CheckOwnership(RangeVar *rel, bool noCatalogs)
+/*
+ * Verify user has ownership of specified relation, else ereport.
+ *
+ * If noCatalogs is true then we also deny access to system catalogs,
+ * except when allowSystemTableMods is true.
+ */
+void
+CheckRelationOwnership(RangeVar *rel, bool noCatalogs)
 {
 	Oid			relOid;
 	HeapTuple	tuple;
@@ -151,8 +180,8 @@ CheckOwnership(RangeVar *rel, bool noCatalogs)
 	tuple = SearchSysCache(RELOID,
 						   ObjectIdGetDatum(relOid),
 						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "Relation \"%s\" does not exist", rel->relname);
+	if (!HeapTupleIsValid(tuple)) /* should not happen */
+		elog(ERROR, "cache lookup failed for relation %u", relOid);
 
 	if (!pg_class_ownercheck(relOid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, rel->relname);
@@ -161,8 +190,10 @@ CheckOwnership(RangeVar *rel, bool noCatalogs)
 	{
 		if (!allowSystemTableMods &&
 			IsSystemClass((Form_pg_class) GETSTRUCT(tuple)))
-			elog(ERROR, "relation \"%s\" is a system catalog",
-				 rel->relname);
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("\"%s\" is a system catalog",
+							rel->relname)));
 	}
 
 	ReleaseSysCache(tuple);
@@ -222,10 +253,13 @@ check_xact_readonly(Node *parsetree)
 		case T_DropUserStmt:
 		case T_GrantStmt:
 		case T_TruncateStmt:
-			elog(ERROR, "transaction is read-only");
+			ereport(ERROR,
+					(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
+					 errmsg("transaction is read-only")));
 			break;
 		default:
-			/*nothing*/;
+			/* do nothing */
+			break;
 	}
 }
 
@@ -407,7 +441,9 @@ ProcessUtility(Node *parsetree,
 							break;
 
 						default:
-							elog(ERROR, "invalid object type for DropStmt: %d", stmt->removeType);
+							elog(ERROR, "unrecognized drop object type: %d",
+								 (int) stmt->removeType);
+							break;
 					}
 
 					/*
@@ -551,7 +587,9 @@ ProcessUtility(Node *parsetree,
 					case 'U':	/* ALTER OWNER */
 						/* check that we are the superuser */
 						if (!superuser())
-							elog(ERROR, "ALTER TABLE: permission denied");
+							ereport(ERROR,
+									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+									 errmsg("permission denied")));
 						/* get_usesysid raises an error if no such user */
 						AlterTableOwner(relid,
 										get_usesysid(stmt->name));
@@ -565,8 +603,8 @@ ProcessUtility(Node *parsetree,
 											false);
 						break;
 					default:	/* oops */
-						elog(ERROR, "ProcessUtility: Invalid type for AlterTableStmt: %d",
-							 stmt->subtype);
+						elog(ERROR, "unrecognized alter table type: %d",
+							 (int) stmt->subtype);
 						break;
 				}
 			}
@@ -611,14 +649,16 @@ ProcessUtility(Node *parsetree,
 					case 'U':	/* OWNER TO */
 						/* check that we are the superuser */
 						if (!superuser())
-							elog(ERROR, "ALTER DOMAIN: permission denied");
+							ereport(ERROR,
+									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+									 errmsg("permission denied")));
 						/* get_usesysid raises an error if no such user */
 						AlterTypeOwner(stmt->typename,
 									   get_usesysid(stmt->name));
 						break;
 					default:	/* oops */
-						elog(ERROR, "ProcessUtility: Invalid type for AlterDomainStmt: %d",
-							 stmt->subtype);
+						elog(ERROR, "unrecognized alter domain type: %d",
+							 (int) stmt->subtype);
 						break;
 				}
 			}
@@ -650,7 +690,9 @@ ProcessUtility(Node *parsetree,
 						DefineType(stmt->defnames, stmt->definition);
 						break;
 					default:
-						elog(ERROR, "invalid object type for DefineStmt: %d", stmt->kind);
+						elog(ERROR, "unrecognized define stmt type: %d",
+							 (int) stmt->kind);
+						break;
 				}
 			}
 			break;
@@ -679,7 +721,7 @@ ProcessUtility(Node *parsetree,
 			{
 				IndexStmt  *stmt = (IndexStmt *) parsetree;
 
-				CheckOwnership(stmt->relation, true);
+				CheckRelationOwnership(stmt->relation, true);
 
 				DefineIndex(stmt->relation,		/* relation */
 							stmt->idxname,		/* index name */
@@ -865,7 +907,9 @@ ProcessUtility(Node *parsetree,
 									stmt->behavior);
 						break;
 					default:
-						elog(ERROR, "invalid object type for DropPropertyStmt: %d", stmt->removeType);
+						elog(ERROR, "unrecognized object type: %d",
+							 (int) stmt->removeType);
+						break;
 				}
 			}
 			break;
@@ -926,7 +970,9 @@ ProcessUtility(Node *parsetree,
 
 		case T_CheckPointStmt:
 			if (!superuser())
-				elog(ERROR, "CHECKPOINT: permission denied");
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("permission denied")));
 			CreateCheckPoint(false, false);
 			break;
 
@@ -937,18 +983,20 @@ ProcessUtility(Node *parsetree,
 				switch (stmt->kind)
 				{
 					case OBJECT_INDEX:
-						CheckOwnership(stmt->relation, false);
+						CheckRelationOwnership(stmt->relation, false);
 						ReindexIndex(stmt->relation, stmt->force);
 						break;
 					case OBJECT_TABLE:
-						CheckOwnership(stmt->relation, false);
+						CheckRelationOwnership(stmt->relation, false);
 						ReindexTable(stmt->relation, stmt->force);
 						break;
 					case OBJECT_DATABASE:
 						ReindexDatabase(stmt->name, stmt->force, false);
 						break;
 					default:
-						elog(ERROR, "invalid object type for ReindexStmt: %d", stmt->kind);
+						elog(ERROR, "unrecognized object type: %d",
+							 (int) stmt->kind);
+						break;
 				}
 				break;
 			}
@@ -975,8 +1023,8 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		default:
-			elog(ERROR, "ProcessUtility: command #%d unsupported",
-				 nodeTag(parsetree));
+			elog(ERROR, "unrecognized node type: %d",
+				 (int) nodeTag(parsetree));
 			break;
 	}
 }
@@ -1500,8 +1548,8 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		default:
-			elog(LOG, "CreateCommandTag: unknown parse node type %d",
-				 nodeTag(parsetree));
+			elog(NOTICE, "unrecognized node type: %d",
+				 (int) nodeTag(parsetree));
 			tag = "???";
 			break;
 	}

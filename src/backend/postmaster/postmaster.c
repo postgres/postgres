@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.333 2003/06/12 07:36:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.334 2003/07/22 19:00:10 tgl Exp $
  *
  * NOTES
  *
@@ -327,10 +327,15 @@ checkDataDir(const char *checkdir)
 	if (stat(checkdir, &stat_buf) == -1)
 	{
 		if (errno == ENOENT)
-			elog(FATAL, "data directory %s was not found", checkdir);
+			ereport(FATAL,
+					(errcode_for_file_access(),
+					 errmsg("data directory \"%s\" does not exist",
+							checkdir)));
 		else
-			elog(FATAL, "could not read permissions of directory %s: %m",
-				 checkdir);
+			ereport(FATAL,
+					(errcode_for_file_access(),
+					 errmsg("could not read permissions of directory \"%s\": %m",
+							checkdir)));
 	}
 
 	/*
@@ -342,8 +347,11 @@ checkDataDir(const char *checkdir)
 	 */
 #if !defined(__CYGWIN__) && !defined(WIN32)
 	if (stat_buf.st_mode & (S_IRWXG | S_IRWXO))
-		elog(FATAL, "data directory %s has group or world access; permissions should be u=rwx (0700)",
-			 checkdir);
+		ereport(FATAL,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("data directory \"%s\" has group or world access",
+						checkdir),
+				 errdetail("permissions should be u=rwx (0700)")));
 #endif
 
 	/* Look for PG_VERSION before looking for pg_control */
@@ -560,9 +568,15 @@ PostmasterMain(int argc, char *argv[])
 					if (!value)
 					{
 						if (opt == '-')
-							elog(ERROR, "--%s requires argument", optarg);
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("--%s requires a value",
+											optarg)));
 						else
-							elog(ERROR, "-c %s requires argument", optarg);
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("-c %s requires a value",
+											optarg)));
 					}
 
 					SetConfigOption(name, value, PGC_POSTMASTER, PGC_S_ARGV);
@@ -654,8 +668,9 @@ PostmasterMain(int argc, char *argv[])
 	 * On some systems our dynloader code needs the executable's pathname.
 	 */
 	if (FindExec(pg_pathname, progname, "postgres") < 0)
-		elog(FATAL, "%s: could not locate executable, bailing out...",
-			 progname);
+		ereport(FATAL,
+				(errmsg("%s: could not locate postgres executable",
+						progname)));
 
 	/*
 	 * Initialize SSL library, if specified.
@@ -830,7 +845,7 @@ PostmasterMain(int argc, char *argv[])
 
 	/*
 	 * Reset whereToSendOutput from Debug (its starting state) to None.
-	 * This prevents elog from sending log messages to stderr unless the
+	 * This prevents ereport from sending log messages to stderr unless the
 	 * syslog/stderr switch permits.  We don't do this until the
 	 * postmaster is fully launched, since startup failures may as well be
 	 * reported to stderr.
@@ -1049,7 +1064,9 @@ ServerLoop(void)
 			PG_SETMASK(&BlockSig);
 			if (errno == EINTR || errno == EWOULDBLOCK)
 				continue;
-			elog(LOG, "ServerLoop: select failed: %m");
+			ereport(LOG,
+					(errcode_for_socket_access(),
+					 errmsg("select failed in postmaster: %m")));
 			return STATUS_ERROR;
 		}
 
@@ -1138,10 +1155,10 @@ initMasks(fd_set *rmask, fd_set *wmask)
 /*
  * Read the startup packet and do something according to it.
  *
- * Returns STATUS_OK or STATUS_ERROR, or might call elog(FATAL) and
+ * Returns STATUS_OK or STATUS_ERROR, or might call ereport(FATAL) and
  * not return at all.
  *
- * (Note that elog(FATAL) stuff is sent to the client, so only use it
+ * (Note that ereport(FATAL) stuff is sent to the client, so only use it
  * if that's what you want.  Return STATUS_ERROR if you don't want to
  * send anything to the client, which would typically be appropriate
  * if we detect a communications failure.)
@@ -1163,7 +1180,9 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 		 * so don't clutter the log with a complaint.
 		 */
 		if (!SSLdone)
-			elog(COMMERROR, "incomplete startup packet");
+			ereport(COMMERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("incomplete startup packet")));
 		return STATUS_ERROR;
 	}
 
@@ -1173,7 +1192,9 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	if (len < (int32) sizeof(ProtocolVersion) ||
 		len > MAX_STARTUP_PACKET_LENGTH)
 	{
-		elog(COMMERROR, "invalid length of startup packet");
+		ereport(COMMERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("invalid length of startup packet")));
 		return STATUS_ERROR;
 	}
 
@@ -1190,7 +1211,9 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 
 	if (pq_getbytes(buf, len) == EOF)
 	{
-		elog(COMMERROR, "incomplete startup packet");
+		ereport(COMMERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("incomplete startup packet")));
 		return STATUS_ERROR;
 	}
 
@@ -1221,7 +1244,9 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 #endif
 		if (send(port->sock, &SSLok, 1, 0) != 1)
 		{
-			elog(COMMERROR, "failed to send SSL negotiation response: %m");
+			ereport(COMMERROR,
+					(errcode_for_socket_access(),
+					 errmsg("failed to send SSL negotiation response: %m")));
 			return STATUS_ERROR;	/* close the connection */
 		}
 
@@ -1237,7 +1262,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	/* Could add additional special packet types here */
 
 	/*
-	 * Set FrontendProtocol now so that elog() knows what format to send
+	 * Set FrontendProtocol now so that ereport() knows what format to send
 	 * if we fail during startup.
 	 */
 	FrontendProtocol = proto;
@@ -1248,11 +1273,13 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 		PG_PROTOCOL_MAJOR(proto) > PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST) ||
 		(PG_PROTOCOL_MAJOR(proto) == PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST) &&
 		 PG_PROTOCOL_MINOR(proto) > PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST)))
-		elog(FATAL, "unsupported frontend protocol %u.%u: server supports %u.0 to %u.%u",
-			 PG_PROTOCOL_MAJOR(proto), PG_PROTOCOL_MINOR(proto),
-			 PG_PROTOCOL_MAJOR(PG_PROTOCOL_EARLIEST),
-			 PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST),
-			 PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST));
+		ereport(FATAL,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("unsupported frontend protocol %u.%u: server supports %u.0 to %u.%u",
+						PG_PROTOCOL_MAJOR(proto), PG_PROTOCOL_MINOR(proto),
+						PG_PROTOCOL_MAJOR(PG_PROTOCOL_EARLIEST),
+						PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST),
+						PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST))));
 
 	/*
 	 * Now fetch parameters out of startup packet and save them into the
@@ -1309,7 +1336,9 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 		 * given packet length, complain.
 		 */
 		if (offset != len-1)
-			elog(FATAL, "invalid startup packet layout: expected terminator as last byte");
+			ereport(FATAL,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("invalid startup packet layout: expected terminator as last byte")));
 	}
 	else
 	{
@@ -1335,7 +1364,9 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 
 	/* Check a user name was given. */
 	if (port->user_name == NULL || port->user_name[0] == '\0')
-		elog(FATAL, "no PostgreSQL user name specified in startup packet");
+		ereport(FATAL,
+				(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+				 errmsg("no PostgreSQL user name specified in startup packet")));
 
 	/* The database defaults to the user name. */
 	if (port->database_name == NULL || port->database_name[0] == '\0')
@@ -1388,16 +1419,24 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	switch (cac)
 	{
 		case CAC_STARTUP:
-			elog(FATAL, "The database system is starting up");
+			ereport(FATAL,
+					(errcode(ERRCODE_CANNOT_CONNECT_NOW),
+					 errmsg("the database system is starting up")));
 			break;
 		case CAC_SHUTDOWN:
-			elog(FATAL, "The database system is shutting down");
+			ereport(FATAL,
+					(errcode(ERRCODE_CANNOT_CONNECT_NOW),
+					 errmsg("the database system is shutting down")));
 			break;
 		case CAC_RECOVERY:
-			elog(FATAL, "The database system is in recovery mode");
+			ereport(FATAL,
+					(errcode(ERRCODE_CANNOT_CONNECT_NOW),
+					 errmsg("the database system is in recovery mode")));
 			break;
 		case CAC_TOOMANY:
-			elog(FATAL, "Sorry, too many clients already");
+			ereport(FATAL,
+					(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
+					 errmsg("sorry, too many clients already")));
 			break;
 		case CAC_OK:
 		default:
@@ -1427,7 +1466,8 @@ processCancelRequest(Port *port, void *pkt)
 
 	if (backendPID == CheckPointPID)
 	{
-		elog(DEBUG2, "processCancelRequest: CheckPointPID in cancel request for process %d", backendPID);
+		elog(DEBUG2, "ignoring cancel request for checkpoint process %d",
+			 backendPID);
 		return;
 	}
 	else if (ExecBackend)
@@ -1501,7 +1541,9 @@ ConnCreate(int serverFd)
 
 	if (!(port = (Port *) calloc(1, sizeof(Port))))
 	{
-		elog(LOG, "ConnCreate: malloc failed");
+		ereport(LOG,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 		SignalChildren(SIGQUIT);
 		ExitPostmaster(1);
 	}
@@ -1600,7 +1642,8 @@ SIGHUP_handler(SIGNAL_ARGS)
 
 	if (Shutdown <= SmartShutdown)
 	{
-		elog(LOG, "Received SIGHUP, reloading configuration files");
+		ereport(LOG,
+				(errmsg("received SIGHUP, reloading configuration files")));
 		ProcessConfigFile(PGC_SIGHUP);
 #ifdef EXEC_BACKEND
 		write_nondefault_variables(PGC_SIGHUP);
@@ -1627,7 +1670,7 @@ pmdie(SIGNAL_ARGS)
 
 	PG_SETMASK(&BlockSig);
 
-	elog(DEBUG2, "pmdie %d", postgres_signal_arg);
+	elog(DEBUG2, "postmaster received signal %d", postgres_signal_arg);
 
 	switch (postgres_signal_arg)
 	{
@@ -1641,7 +1684,8 @@ pmdie(SIGNAL_ARGS)
 			if (Shutdown >= SmartShutdown)
 				break;
 			Shutdown = SmartShutdown;
-			elog(LOG, "smart shutdown request");
+			ereport(LOG,
+					(errmsg("received smart shutdown request")));
 			if (DLGetHead(BackendList)) /* let reaper() handle this */
 				break;
 
@@ -1671,13 +1715,15 @@ pmdie(SIGNAL_ARGS)
 			 */
 			if (Shutdown >= FastShutdown)
 				break;
-			elog(LOG, "fast shutdown request");
+			ereport(LOG,
+					(errmsg("received fast shutdown request")));
 			if (DLGetHead(BackendList)) /* let reaper() handle this */
 			{
 				Shutdown = FastShutdown;
 				if (!FatalError)
 				{
-					elog(LOG, "aborting any active transactions");
+					ereport(LOG,
+							(errmsg("aborting any active transactions")));
 					SignalChildren(SIGTERM);
 				}
 				break;
@@ -1713,7 +1759,8 @@ pmdie(SIGNAL_ARGS)
 			 * abort all children with SIGQUIT and exit without attempt to
 			 * properly shutdown data base system.
 			 */
-			elog(LOG, "immediate shutdown request");
+			ereport(LOG,
+					(errmsg("received immediate shutdown request")));
 			if (ShutdownPID > 0)
 				kill(ShutdownPID, SIGQUIT);
 			if (StartupPID > 0)
@@ -1795,7 +1842,8 @@ reaper(SIGNAL_ARGS)
 			{
 				LogChildExit(LOG, gettext("startup process"),
 							 pid, exitstatus);
-				elog(LOG, "aborting startup due to startup process failure");
+				ereport(LOG,
+						(errmsg("aborting startup due to startup process failure")));
 				ExitPostmaster(1);
 			}
 			StartupPID = 0;
@@ -1849,7 +1897,8 @@ reaper(SIGNAL_ARGS)
 		 */
 		if (DLGetHead(BackendList) || StartupPID > 0 || ShutdownPID > 0)
 			goto reaper_done;
-		elog(LOG, "all server processes terminated; reinitializing shared memory and semaphores");
+		ereport(LOG,
+				(errmsg("all server processes terminated; reinitializing")));
 
 		shmem_exit(0);
 		reset_shared(PostPortNumber);
@@ -1936,7 +1985,8 @@ CleanupProc(int pid,
 					 (pid == CheckPointPID) ? gettext("checkpoint process") :
 					 gettext("server process"),
 					 pid, exitstatus);
-		elog(LOG, "terminating any other active server processes");
+		ereport(LOG,
+				(errmsg("terminating any other active server processes")));
 	}
 
 	curr = DLGetHead(BackendList);
@@ -1957,7 +2007,7 @@ CleanupProc(int pid,
 			 */
 			if (!FatalError)
 			{
-				elog(DEBUG2, "CleanupProc: sending %s to process %d",
+				elog(DEBUG2, "sending %s to process %d",
 					 (SendStop ? "SIGSTOP" : "SIGQUIT"), (int) bp->pid);
 				kill(bp->pid, (SendStop ? SIGSTOP : SIGQUIT));
 			}
@@ -1996,19 +2046,30 @@ CleanupProc(int pid,
 static void
 LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 {
-	/*
-	 * translator: the first %s in these messages is a noun phrase
-	 * describing a child process, such as "server process"
-	 */
 	if (WIFEXITED(exitstatus))
-		elog(lev, "%s (pid %d) exited with exit code %d",
-			 procname, pid, WEXITSTATUS(exitstatus));
+		ereport(lev,
+				/*
+				 * translator: %s is a noun phrase describing a child process,
+				 * such as "server process"
+				 */
+				(errmsg("%s (pid %d) exited with exit code %d",
+						procname, pid, WEXITSTATUS(exitstatus))));
 	else if (WIFSIGNALED(exitstatus))
-		elog(lev, "%s (pid %d) was terminated by signal %d",
-			 procname, pid, WTERMSIG(exitstatus));
+		ereport(lev,
+				/*
+				 * translator: %s is a noun phrase describing a child process,
+				 * such as "server process"
+				 */
+				(errmsg("%s (pid %d) was terminated by signal %d",
+						procname, pid, WTERMSIG(exitstatus))));
 	else
-		elog(lev, "%s (pid %d) exited with unexpected status %d",
-			 procname, pid, exitstatus);
+		ereport(lev,
+				/*
+				 * translator: %s is a noun phrase describing a child process,
+				 * such as "server process"
+				 */
+				(errmsg("%s (pid %d) exited with unexpected status %d",
+						procname, pid, exitstatus)));
 }
 
 /*
@@ -2029,7 +2090,7 @@ SignalChildren(int signal)
 
 		if (bp->pid != MyProcPid)
 		{
-			elog(DEBUG2, "SignalChildren: sending signal %d to process %d",
+			elog(DEBUG2, "sending signal %d to process %d",
 				 signal, (int) bp->pid);
 			kill(bp->pid, signal);
 		}
@@ -2067,7 +2128,9 @@ BackendStartup(Port *port)
 	bn = (Backend *) malloc(sizeof(Backend));
 	if (!bn)
 	{
-		elog(LOG, "out of memory; connection startup aborted");
+		ereport(LOG,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 		return STATUS_ERROR;
 	}
 
@@ -2118,7 +2181,8 @@ BackendStartup(Port *port)
 		status = BackendFork(port);
 
 		if (status != 0)
-			elog(LOG, "connection startup failed");
+			ereport(LOG,
+					(errmsg("connection startup failed")));
 		proc_exit(status);
 	}
 
@@ -2132,15 +2196,16 @@ BackendStartup(Port *port)
 		beos_backend_startup_failed();
 #endif
 		free(bn);
-		elog(LOG, "connection startup failed (fork failure): %s",
-			 strerror(save_errno));
+		errno = save_errno;
+		ereport(LOG,
+				(errmsg("could not fork new process for connection: %m")));
 		report_fork_failure_to_client(port, save_errno);
 		return STATUS_ERROR;
 	}
 
 	/* in parent, normal */
-	elog(DEBUG2, "BackendStartup: forked pid=%d socket=%d", (int) pid,
-		 port->sock);
+	elog(DEBUG2, "forked new backend, pid=%d socket=%d",
+		 (int) pid, port->sock);
 
 	/*
 	 * Everything's been successful, it's safe to add this backend to our
@@ -2166,9 +2231,9 @@ report_fork_failure_to_client(Port *port, int errnum)
 {
 	char		buffer[1000];
 
-	/* Format the error message packet */
+	/* Format the error message packet (always V2 protocol) */
 	snprintf(buffer, sizeof(buffer), "E%s%s\n",
-			 gettext("Server process fork() failed: "),
+			 gettext("could not fork new process for connection: "),
 			 strerror(errnum));
 
 	/* Set port to non-blocking.  Don't do send() if this fails */
@@ -2262,12 +2327,12 @@ BackendFork(Port *port)
 	MyProcPid = getpid();
 
 	/*
-	 * Initialize libpq and enable reporting of elog errors to the client.
+	 * Initialize libpq and enable reporting of ereport errors to the client.
 	 * Must do this now because authentication uses libpq to send
 	 * messages.
 	 */
 	pq_init();					/* initialize libpq to talk to client */
-	whereToSendOutput = Remote; /* now safe to elog to client */
+	whereToSendOutput = Remote; /* now safe to ereport to client */
 
 	/*
 	 * We arrange for a simple exit(0) if we receive SIGTERM or SIGQUIT
@@ -2286,10 +2351,10 @@ BackendFork(Port *port)
 	remote_host[0] = '\0';
 	remote_port[0] = '\0';
 	if (!getnameinfo((struct sockaddr *)&port->raddr.addr,
-		port->raddr.salen,
-		remote_host, sizeof(remote_host),
-		remote_port, sizeof(remote_host),
-		(log_hostname ? 0 : NI_NUMERICHOST) | NI_NUMERICSERV))
+					 port->raddr.salen,
+					 remote_host, sizeof(remote_host),
+					 remote_port, sizeof(remote_host),
+					 (log_hostname ? 0 : NI_NUMERICHOST) | NI_NUMERICSERV))
 	{
 		getnameinfo((struct sockaddr *)&port->raddr.addr,
 			port->raddr.salen,
@@ -2299,21 +2364,17 @@ BackendFork(Port *port)
 	}
 
 	if (Log_connections)
-	{
-		elog(LOG, "connection received: host=%s port=%s",
-			remote_host, remote_port);
-	}
+		ereport(LOG,
+				(errmsg("connection received: host=%s port=%s",
+						remote_host, remote_port)));
 
 	if (LogSourcePort)
 	{
 		/* modify remote_host for use in ps status */
-		int		slen = strlen(remote_host) + 10;
-		char		*str = palloc(slen);
+		char	tmphost[sizeof(remote_host) + 10];
 
-		snprintf(str, slen, "%s:%s", remote_host, remote_port);
-		strncpy(remote_host, str, sizeof(remote_host));
-		remote_host[sizeof(remote_host) - 1] = '\0';
-		pfree(str);
+		snprintf(tmphost, sizeof(tmphost), "%s:%s", remote_host, remote_port);
+		StrNCpy(remote_host, tmphost, sizeof(remote_host));
 	}
 
 	/*
@@ -2332,7 +2393,7 @@ BackendFork(Port *port)
 	 * indefinitely.  PreAuthDelay doesn't count against the time limit.
 	 */
 	if (!enable_sig_alarm(AuthenticationTimeout * 1000, false))
-		elog(FATAL, "BackendFork: Unable to set timer for auth timeout");
+		elog(FATAL, "could not set timer for authorization timeout");
 
 	/*
 	 * Receive the startup packet (which might turn out to be a cancel
@@ -2361,12 +2422,13 @@ BackendFork(Port *port)
 	 * SIGTERM/SIGQUIT again until backend startup is complete.
 	 */
 	if (!disable_sig_alarm(false))
-		elog(FATAL, "BackendFork: Unable to disable timer for auth timeout");
+		elog(FATAL, "could not disable timer for authorization timeout");
 	PG_SETMASK(&BlockSig);
 
 	if (Log_connections)
-		elog(LOG, "connection authorized: user=%s database=%s",
-			 port->user_name, port->database_name);
+		ereport(LOG,
+				(errmsg("connection authorized: user=%s database=%s",
+						port->user_name, port->database_name)));
 
 	/*
 	 * Don't want backend to be able to see the postmaster random number
@@ -2519,9 +2581,10 @@ sigusr1_handler(SIGNAL_ARGS)
 				int		elapsed_secs = now - LastSignalledCheckpoint;
 
 				if (elapsed_secs < CheckPointWarning)
-					elog(LOG, "Checkpoint segments are being created too frequently (%d secs)"
-						 "\n\tConsider increasing CHECKPOINT_SEGMENTS",
-						 elapsed_secs);
+					ereport(LOG,
+							(errmsg("checkpoints are occurring too frequently (%d seconds apart)",
+									elapsed_secs),
+							 errhint("Consider increasing CHECKPOINT_SEGMENTS.")));
 			}
 			LastSignalledCheckpoint = now;
 		}
@@ -2787,15 +2850,20 @@ SSDataBase(int xlop)
 		switch (xlop)
 		{
 			case BS_XLOG_STARTUP:
-				elog(LOG, "could not launch startup process (fork failure): %m");
+				ereport(LOG,
+						(errmsg("could not fork startup process: %m")));
 				break;
 			case BS_XLOG_CHECKPOINT:
-				elog(LOG, "could not launch checkpoint process (fork failure): %m");
+				ereport(LOG,
+						(errmsg("could not fork checkpoint process: %m")));
 				break;
 			case BS_XLOG_SHUTDOWN:
-				elog(LOG, "could not launch shutdown process (fork failure): %m");
+				ereport(LOG,
+						(errmsg("could not fork shutdown process: %m")));
 				break;
 			default:
+				ereport(LOG,
+						(errmsg("could not fork process: %m")));
 				break;
 		}
 
@@ -2817,7 +2885,9 @@ SSDataBase(int xlop)
 	{
 		if (!(bn = (Backend *) malloc(sizeof(Backend))))
 		{
-			elog(LOG, "CheckPointDataBase: malloc failed");
+			ereport(LOG,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 			ExitPostmaster(1);
 		}
 
@@ -2857,7 +2927,7 @@ CreateOptsFile(int argc, char *argv[])
 
 	if ((fp = fopen(filename, "w")) == NULL)
 	{
-		postmaster_error("cannot create file %s: %s",
+		postmaster_error("cannot create file \"%s\": %s",
 						 filename, strerror(errno));
 		return false;
 	}
@@ -2880,7 +2950,7 @@ CreateOptsFile(int argc, char *argv[])
 
 /*
  * This should be used only for reporting "interactive" errors (ie, errors
- * during startup.	Once the postmaster is launched, use elog.
+ * during startup).  Once the postmaster is launched, use ereport.
  */
 void
 postmaster_error(const char *fmt,...)

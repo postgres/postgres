@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.53 2003/05/12 23:08:50 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.54 2003/07/22 19:00:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,8 +58,8 @@ md5_crypt_verify(const Port *port, const char *user, char *client_pass)
 	/* We can't do crypt with pg_shadow MD5 passwords */
 	if (isMD5(shadow_pass) && port->auth_method == uaCrypt)
 	{
-		elog(LOG, "Password is stored MD5 encrypted.  "
-			 "'crypt' auth method cannot be used.");
+		ereport(LOG,
+				(errmsg("cannot use CRYPT auth method because password is MD5-encrypted")));
 		return STATUS_ERROR;
 	}
 

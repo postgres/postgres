@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.350 2003/07/09 06:47:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.351 2003/07/22 19:00:11 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -275,7 +275,9 @@ SocketBackend(StringInfo inBuf)
 
 	if (qtype == EOF)			/* frontend disconnected */
 	{
-		elog(COMMERROR, "unexpected EOF on client connection");
+		ereport(COMMERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("unexpected EOF on client connection")));
 		return qtype;
 	}
 
@@ -296,7 +298,9 @@ SocketBackend(StringInfo inBuf)
 				/* old style without length word; convert */
 				if (pq_getstring(inBuf))
 				{
-					elog(COMMERROR, "unexpected EOF on client connection");
+					ereport(COMMERROR,
+							(errcode(ERRCODE_PROTOCOL_VIOLATION),
+							 errmsg("unexpected EOF on client connection")));
 					return EOF;
 				}
 			}
@@ -321,7 +325,9 @@ SocketBackend(StringInfo inBuf)
 			doing_extended_query_message = true;
 			/* these are only legal in protocol 3 */
 			if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
-				elog(FATAL, "Socket command type %c unknown", qtype);
+				ereport(FATAL,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("invalid frontend message type %d", qtype)));
 			break;
 
 		case 'S':				/* sync */
@@ -331,7 +337,9 @@ SocketBackend(StringInfo inBuf)
 			doing_extended_query_message = false;
 			/* only legal in protocol 3 */
 			if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
-				elog(FATAL, "Socket command type %c unknown", qtype);
+				ereport(FATAL,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("invalid frontend message type %d", qtype)));
 			break;
 
 		case 'd':				/* copy data */
@@ -340,7 +348,9 @@ SocketBackend(StringInfo inBuf)
 			doing_extended_query_message = false;
 			/* these are only legal in protocol 3 */
 			if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
-				elog(FATAL, "Socket command type %c unknown", qtype);
+				ereport(FATAL,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("invalid frontend message type %d", qtype)));
 			break;
 
 		default:
@@ -349,7 +359,9 @@ SocketBackend(StringInfo inBuf)
 			 * as fatal because we have probably lost message boundary sync,
 			 * and there's no good way to recover.
 			 */
-			elog(FATAL, "Socket command type %c unknown", qtype);
+			ereport(FATAL,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("invalid frontend message type %d", qtype)));
 			break;
 	}
 
@@ -446,7 +458,8 @@ pg_parse_query(const char *query_string)
 	List	   *raw_parsetree_list;
 
 	if (log_statement)
-		elog(LOG, "query: %s", query_string);
+		ereport(LOG,
+				(errmsg("query: %s", query_string)));
 
 	if (log_parser_stats)
 		ResetUsage();
@@ -544,7 +557,8 @@ pg_rewrite_queries(List *querytree_list)
 	new_list = (List *) copyObject(querytree_list);
 	/* This checks both copyObject() and the equal() routines... */
 	if (!equal(new_list, querytree_list))
-		elog(WARNING, "pg_rewrite_queries: copyObject failed on parse tree");
+		ereport(WARNING,
+				(errmsg("copyObject failed to produce an equal parse tree")));
 	else
 		querytree_list = new_list;
 #endif
@@ -588,7 +602,8 @@ pg_plan_query(Query *querytree)
 #ifdef NOT_USED
 		/* This checks both copyObject() and the equal() routines... */
 		if (!equal(new_plan, plan))
-			elog(WARNING, "pg_plan_query: copyObject failed on plan tree");
+			ereport(WARNING,
+					(errmsg("copyObject failed to produce an equal plan tree")));
 		else
 #endif
 			plan = new_plan;
@@ -774,8 +789,10 @@ exec_simple_query(const char *query_string)
 			}
 
 			if (!allowit)
-				elog(ERROR, "current transaction is aborted, "
-					 "queries ignored until end of transaction block");
+				ereport(ERROR,
+						(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
+						 errmsg("current transaction is aborted, "
+					 "queries ignored until end of transaction block")));
 		}
 
 		/* Make sure we are in a transaction command */
@@ -936,19 +953,21 @@ exec_simple_query(const char *query_string)
 		 * min duration.
 		 */
 		if (usecs >= save_log_min_duration_statement * 1000)
-			elog(LOG, "duration_statement: %ld.%06ld %s",
-				(long) (stop_t.tv_sec - start_t.tv_sec),
-				(long) (stop_t.tv_usec - start_t.tv_usec),
-				query_string);
+			ereport(LOG,
+					(errmsg("duration_statement: %ld.%06ld %s",
+							(long) (stop_t.tv_sec - start_t.tv_sec),
+							(long) (stop_t.tv_usec - start_t.tv_usec),
+							query_string)));
 
 		/* 
 		 * If the user is requesting logging of all durations, then log
 		 * that as well.
 		 */
 		if (save_log_duration)
-			elog(LOG, "duration: %ld.%06ld sec",
-				 (long) (stop_t.tv_sec - start_t.tv_sec),
-				 (long) (stop_t.tv_usec - start_t.tv_usec));
+			ereport(LOG,
+					(errmsg("duration: %ld.%06ld sec",
+							(long) (stop_t.tv_sec - start_t.tv_sec),
+							(long) (stop_t.tv_usec - start_t.tv_usec))));
 	}
 
 	if (save_log_statement_stats)
@@ -1050,7 +1069,9 @@ exec_parse_message(const char *query_string,	/* string to execute */
 	 * to worry about multiple result tupdescs and things like that.
 	 */
 	if (length(parsetree_list) > 1)
-		elog(ERROR, "Cannot insert multiple commands into a prepared statement");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("cannot insert multiple commands into a prepared statement")));
 
 	if (parsetree_list != NIL)
 	{
@@ -1084,8 +1105,10 @@ exec_parse_message(const char *query_string,	/* string to execute */
 			}
 
 			if (!allowit)
-				elog(ERROR, "current transaction is aborted, "
-					 "queries ignored until end of transaction block");
+				ereport(ERROR,
+						(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
+						 errmsg("current transaction is aborted, "
+					 "queries ignored until end of transaction block")));
 		}
 
 		/*
@@ -1110,8 +1133,10 @@ exec_parse_message(const char *query_string,	/* string to execute */
 			Oid		ptype = paramTypes[i];
 
 			if (ptype == InvalidOid || ptype == UNKNOWNOID)
-				elog(ERROR, "Could not determine datatype of parameter $%d",
-					 i + 1);
+				ereport(ERROR,
+						(errcode(ERRCODE_INDETERMINATE_DATATYPE),
+						 errmsg("could not determine datatype of parameter $%d",
+								i + 1)));
 			param_list = lappendo(param_list, ptype);
 		}
 
@@ -1237,8 +1262,10 @@ exec_bind_message(StringInfo input_message)
 	numParams = pq_getmsgint(input_message, 2);
 
 	if (numPFormats > 1 && numPFormats != numParams)
-		elog(ERROR, "BIND message has %d parameter formats but %d parameters",
-			 numPFormats, numParams);
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("bind message has %d parameter formats but %d parameters",
+						numPFormats, numParams)));
 
 	/* Find prepared statement */
 	if (stmt_name[0] != '\0')
@@ -1248,12 +1275,16 @@ exec_bind_message(StringInfo input_message)
 		/* special-case the unnamed statement */
 		pstmt = unnamed_stmt_pstmt;
 		if (!pstmt)
-			elog(ERROR, "Unnamed prepared statement does not exist");
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_PSTATEMENT),
+					 errmsg("unnamed prepared statement does not exist")));
 	}
 
 	if (numParams != length(pstmt->argtype_list))
-		elog(ERROR, "Bind message supplies %d parameters, but prepared statement \"%s\" requires %d",
-			 numParams, stmt_name, length(pstmt->argtype_list));
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("bind message supplies %d parameters, but prepared statement \"%s\" requires %d",
+						numParams, stmt_name, length(pstmt->argtype_list))));
 
 	/*
 	 * Create the portal.  Allow silent replacement of an existing portal
@@ -1375,12 +1406,17 @@ exec_bind_message(StringInfo input_message)
 
 						/* Trouble if it didn't eat the whole buffer */
 						if (pbuf.cursor != pbuf.len)
-							elog(ERROR, "Improper binary format in BIND parameter %d",
-								 i + 1);
+							ereport(ERROR,
+									(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+									 errmsg("incorrect binary data format in bind parameter %d",
+								 i + 1)));
 					}
 					else
 					{
-						elog(ERROR, "Invalid format code %d", pformat);
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("unsupported format code: %d",
+										pformat)));
 					}
 
 					/* Restore message buffer contents */
@@ -1453,7 +1489,9 @@ exec_execute_message(const char *portal_name, long max_rows)
 
 	portal = GetPortalByName(portal_name);
 	if (!PortalIsValid(portal))
-		elog(ERROR, "Portal \"%s\" not found", portal_name);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_CURSOR),
+				 errmsg("portal \"%s\" does not exist", portal_name)));
 
 	/*
 	 * If the original query was a null string, just return EmptyQueryResponse.
@@ -1517,8 +1555,10 @@ exec_execute_message(const char *portal_name, long max_rows)
 	if (IsAbortedTransactionBlockState())
 	{
 		if (!is_trans_exit)
-			elog(ERROR, "current transaction is aborted, "
-				 "queries ignored until end of transaction block");
+			ereport(ERROR,
+					(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
+					 errmsg("current transaction is aborted, "
+				 "queries ignored until end of transaction block")));
 	}
 
 	/* Check for cancel signal before we start execution */
@@ -1591,7 +1631,9 @@ exec_describe_statement_message(const char *stmt_name)
 		/* special-case the unnamed statement */
 		pstmt = unnamed_stmt_pstmt;
 		if (!pstmt)
-			elog(ERROR, "Unnamed prepared statement does not exist");
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_PSTATEMENT),
+					 errmsg("unnamed prepared statement does not exist")));
 	}
 
 	if (whereToSendOutput != Remote)
@@ -1642,7 +1684,9 @@ exec_describe_portal_message(const char *portal_name)
 
 	portal = GetPortalByName(portal_name);
 	if (!PortalIsValid(portal))
-		elog(ERROR, "Portal \"%s\" not found", portal_name);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_CURSOR),
+				 errmsg("portal \"%s\" does not exist", portal_name)));
 
 	if (whereToSendOutput != Remote)
 		return;					/* can't actually do anything... */
@@ -1724,13 +1768,19 @@ void
 quickdie(SIGNAL_ARGS)
 {
 	PG_SETMASK(&BlockSig);
-	elog(WARNING, "Message from PostgreSQL backend:"
-		 "\n\tThe Postmaster has informed me that some other backend"
-		 "\n\tdied abnormally and possibly corrupted shared memory."
-		 "\n\tI have rolled back the current transaction and am"
-	   "\n\tgoing to terminate your database system connection and exit."
-	"\n\tPlease reconnect to the database system and repeat your query.");
-
+	/*
+	 * Ideally this should be ereport(FATAL), but then we'd not get control
+	 * back (perhaps could fix by doing local sigsetjmp?)
+	 */
+	ereport(WARNING,
+			(errcode(ERRCODE_CRASH_SHUTDOWN),
+			 errmsg("terminating connection due to crash of another backend"),
+			 errdetail("The postmaster has commanded this backend to roll back"
+					   " the current transaction and exit, because another"
+					   " backend exited abnormally and possibly corrupted"
+					   " shared memory."),
+			 errhint("In a moment you should be able to reconnect to the"
+					 " database and repeat your query.")));
 	/*
 	 * DO NOT proc_exit() -- we're here because shared memory may be
 	 * corrupted, so we don't want to try to clean up our transaction.
@@ -1741,7 +1791,6 @@ quickdie(SIGNAL_ARGS)
 	 * random backend.	This is necessary precisely because we don't clean
 	 * up our shared memory state.
 	 */
-
 	exit(1);
 }
 
@@ -1842,9 +1891,12 @@ StatementCancelHandler(SIGNAL_ARGS)
 static void
 FloatExceptionHandler(SIGNAL_ARGS)
 {
-	elog(ERROR, "floating point exception!"
-		 " The last floating point operation either exceeded legal ranges"
-		 " or was a divide by zero");
+	ereport(ERROR,
+			(errcode(ERRCODE_FLOATING_POINT_EXCEPTION),
+			 errmsg("floating-point exception"),
+			 errdetail("An invalid floating-point operation was signaled. "
+					   "This probably means an out-of-range result or an "
+					   "invalid operation, such as division by zero.")));
 }
 
 /* SIGHUP: set flag to re-read config file at next convenient time */
@@ -1875,14 +1927,18 @@ ProcessInterrupts(void)
 		QueryCancelPending = false;		/* ProcDie trumps QueryCancel */
 		ImmediateInterruptOK = false;	/* not idle anymore */
 		DisableNotifyInterrupt();
-		elog(FATAL, "This connection has been terminated by the administrator.");
+		ereport(FATAL,
+				(errcode(ERRCODE_ADMIN_SHUTDOWN),
+				 errmsg("terminating connection due to administrator command")));
 	}
 	if (QueryCancelPending)
 	{
 		QueryCancelPending = false;
 		ImmediateInterruptOK = false;	/* not idle anymore */
 		DisableNotifyInterrupt();
-		elog(ERROR, "Query was canceled.");
+		ereport(ERROR,
+				(errcode(ERRCODE_QUERY_CANCELED),
+				 errmsg("canceling query due to user request")));
 	}
 	/* If we get here, do nothing (probably, QueryCancelPending was reset) */
 }
@@ -2028,7 +2084,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 #ifdef USE_ASSERT_CHECKING
 				SetConfigOption("debug_assertions", optarg, ctx, gucsource);
 #else
-				elog(WARNING, "Assert checking is not compiled in");
+				ereport(WARNING,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("assert checking is not compiled in")));
 #endif
 				break;
 
@@ -2313,9 +2371,15 @@ PostgresMain(int argc, char *argv[], const char *username)
 					if (!value)
 					{
 						if (flag == '-')
-							elog(ERROR, "--%s requires argument", optarg);
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("--%s requires a value",
+											optarg)));
 						else
-							elog(ERROR, "-c %s requires argument", optarg);
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("-c %s requires a value",
+											optarg)));
 					}
 
 					SetConfigOption(name, value, ctx, gucsource);
@@ -2372,7 +2436,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (log_statement_stats &&
 		(log_parser_stats || log_planner_stats || log_executor_stats))
 	{
-		elog(WARNING, "Query statistics are disabled because parser, planner, or executor statistics are on.");
+		ereport(WARNING,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("query-level statistics are disabled because parser, planner, or executor statistics are on")));
 		SetConfigOption("show_statement_stats", "false", ctx, gucsource);
 	}
 
@@ -2452,10 +2518,10 @@ PostgresMain(int argc, char *argv[], const char *username)
 		/* noninteractive case: nothing should be left after switches */
 		if (errs || argc != optind || dbname == NULL)
 		{
-			elog(WARNING, "%s: invalid command line arguments\nTry -? for help.",
-				 argv[0]);
-			proc_exit(0);		/* not 1, that causes system-wide
-								 * restart... */
+			ereport(FATAL,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("invalid backend command-line arguments"),
+					 errhint("Try -? for help.")));
 		}
 		BaseInit();
 #ifdef EXECBACKEND
@@ -2467,17 +2533,20 @@ PostgresMain(int argc, char *argv[], const char *username)
 		/* interactive case: database name can be last arg on command line */
 		if (errs || argc - optind > 1)
 		{
-			elog(WARNING, "%s: invalid command line arguments\nTry -? for help.",
-				 argv[0]);
-			proc_exit(1);
+			ereport(FATAL,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("%s: invalid command-line arguments",
+							argv[0]),
+					 errhint("Try -? for help.")));
 		}
 		else if (argc - optind == 1)
 			dbname = argv[optind];
 		else if ((dbname = username) == NULL)
 		{
-			elog(WARNING, "%s: user name undefined and no database specified",
-				 argv[0]);
-			proc_exit(1);
+			ereport(FATAL,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("%s: no database nor user name specified",
+							argv[0])));
 		}
 
 		/*
@@ -2485,8 +2554,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 * pathname.  (If under postmaster, this was done already.)
 		 */
 		if (FindExec(pg_pathname, argv[0], "postgres") < 0)
-			elog(FATAL, "%s: could not locate executable, bailing out...",
-				 argv[0]);
+			ereport(FATAL,
+					(errmsg("%s: could not locate postgres executable",
+							argv[0])));
 
 		/*
 		 * Validate we have been given a reasonable-looking DataDir (if
@@ -2556,7 +2626,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.350 $ $Date: 2003/07/09 06:47:34 $\n");
+		puts("$Revision: 1.351 $ $Date: 2003/07/22 19:00:11 $\n");
 	}
 
 	/*
@@ -2594,7 +2664,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 *
 		 * Make sure we're not interrupted while cleaning up.  Also forget
 		 * any pending QueryCancel request, since we're aborting anyway.
-		 * Force InterruptHoldoffCount to a known state in case we elog'd
+		 * Force InterruptHoldoffCount to a known state in case we ereport'd
 		 * from inside a holdoff section.
 		 */
 		ImmediateInterruptOK = false;
@@ -2648,7 +2718,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		RESUME_INTERRUPTS();
 	}
 
-	Warn_restart_ready = true;	/* we can now handle elog(ERROR) */
+	Warn_restart_ready = true;	/* we can now handle ereport(ERROR) */
 
 	PG_SETMASK(&UnBlockSig);
 
@@ -2826,7 +2896,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 					/* lost frontend connection during F message input */
 
 					/*
-					 * Reset whereToSendOutput to prevent elog from
+					 * Reset whereToSendOutput to prevent ereport from
 					 * attempting to send any more messages to client.
 					 */
 					if (whereToSendOutput == Remote)
@@ -2877,8 +2947,10 @@ PostgresMain(int argc, char *argv[], const char *username)
 							}
 							break;
 						default:
-							elog(ERROR, "Invalid Close message subtype %d",
-								 close_type);
+							ereport(ERROR,
+									(errcode(ERRCODE_PROTOCOL_VIOLATION),
+									 errmsg("invalid CLOSE message subtype %d",
+											close_type)));
 							break;
 					}
 
@@ -2905,8 +2977,10 @@ PostgresMain(int argc, char *argv[], const char *username)
 							exec_describe_portal_message(describe_target);
 							break;
 						default:
-							elog(ERROR, "Invalid Describe message subtype %d",
-								 describe_type);
+							ereport(ERROR,
+									(errcode(ERRCODE_PROTOCOL_VIOLATION),
+									 errmsg("invalid DESCRIBE message subtype %d",
+											describe_type)));
 							break;
 					}
 				}
@@ -2933,7 +3007,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 			case EOF:
 
 				/*
-				 * Reset whereToSendOutput to prevent elog from attempting
+				 * Reset whereToSendOutput to prevent ereport from attempting
 				 * to send any more messages to client.
 				 */
 				if (whereToSendOutput == Remote)
@@ -2959,7 +3033,10 @@ PostgresMain(int argc, char *argv[], const char *username)
 				break;
 
 			default:
-				elog(FATAL, "Socket command type %c unknown", firstchar);
+				ereport(FATAL,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("invalid frontend message type %d",
+								firstchar)));
 		}
 
 #ifdef MEMORY_CONTEXT_CHECKING
@@ -3088,7 +3165,9 @@ ShowUsage(const char *title)
 	if (str.data[str.len - 1] == '\n')
 		str.data[--str.len] = '\0';
 
-	elog(LOG, "%s\n%s", title, str.data);
+	ereport(LOG,
+			(errmsg_internal("%s", title),
+			 errdetail("%s", str.data)));
 
 	pfree(str.data);
 }

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.104 2003/06/15 16:21:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.105 2003/07/22 19:00:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,10 @@ next_token(FILE *fp, char *buf, const int bufsz)
 
 			if (buf >= end_buf)
 			{
-				elog(LOG, "Token too long in authentication file, skipping, %s", buf);
+				ereport(LOG,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("authentication file token too long, skipping: \"%s\"",
+								buf)));
 				/* Discard remainder of line */
 				while ((c = getc(fp)) != EOF && c != '\n')
 					;
@@ -257,8 +260,10 @@ tokenize_inc_file(const char *inc_filename)
 	inc_file = AllocateFile(inc_fullname, "r");
 	if (!inc_file)
 	{
-		elog(LOG, "tokenize_inc_file: Unable to open secondary authentication file \"@%s\" as \"%s\": %m",
-			 inc_filename, inc_fullname);
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not open secondary authentication file \"@%s\" as \"%s\": %m",
+						inc_filename, inc_fullname)));
 		pfree(inc_fullname);
 
 		/* return empty string, it matches nothing */
@@ -631,9 +636,7 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		/* Check if it has a CIDR suffix and if so isolate it */
 		cidr_slash = strchr(token,'/');
 		if (cidr_slash)
-		{
 			*cidr_slash = '\0';
-		}
 
 		hints.ai_flags = AI_NUMERICHOST;
 		hints.ai_family = PF_UNSPEC;
@@ -646,13 +649,14 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 
 		/* Get the IP address either way */
 		ret = getaddrinfo2(token, NULL, &hints, &file_ip_addr);
-		if (ret)
+		if (ret || !file_ip_addr)
 		{
-			elog(LOG, "getaddrinfo2() returned %d", ret);
+			ereport(LOG,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("failed to interpret IP address \"%s\" in config file: %s",
+							token, gai_strerror(ret))));
 			if (cidr_slash)
-			{
 				*cidr_slash = '/';
-			}
 			goto hba_syntax;
 		}
 
@@ -669,9 +673,7 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			*cidr_slash = '/';
 			if (SockAddr_cidr_mask(&mask, cidr_slash + 1,
 				file_ip_addr->ai_family) < 0)
-			{
-                               goto hba_syntax;
-			}
+				goto hba_syntax;
 		}
 		else
 		{
@@ -682,16 +684,13 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			token = lfirst(line);
 
 			ret = getaddrinfo2(token, NULL, &hints, &file_ip_mask);
-			if (ret)
-			{
+			if (ret || !file_ip_mask)
 				goto hba_syntax;
-			}
+
 			mask = (struct sockaddr_storage *)file_ip_mask->ai_addr;
 
 			if(file_ip_addr->ai_family != mask->ss_family)
-			{
 				goto hba_syntax;
-			}
 		}
 
 		/* Read the rest of the line. */
@@ -705,14 +704,11 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		/* Must meet network restrictions */
 		if (!rangeSockAddr(&port->raddr.addr,
 			(struct sockaddr_storage *)file_ip_addr->ai_addr, mask))
-		{
 			goto hba_freeaddr;
-		}
+
 		freeaddrinfo2(hints.ai_family, file_ip_addr);
 		if (file_ip_mask)
-		{
 			freeaddrinfo2(hints.ai_family, file_ip_mask);
-		}
 	}
 	else
 		goto hba_syntax;
@@ -727,22 +723,24 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 	return;
 
 hba_syntax:
-	elog(LOG, "parse_hba: invalid syntax in pg_hba.conf file at line %d, token \"%s\"",
-		 line_number,
-		 line ? (const char *) lfirst(line) : "(end of line)");
+	if (line)
+		ereport(LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("invalid entry in pg_hba.conf file at line %d, token \"%s\"",
+						line_number, (const char *) lfirst(line))));
+	else
+		ereport(LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("missing entry in pg_hba.conf file at end of line %d",
+						line_number)));
 
 	*error_p = true;
 
 hba_freeaddr:
 	if (file_ip_addr)
-	{
 		freeaddrinfo2(hints.ai_family, file_ip_addr);
-	}
 	if (file_ip_mask)
-	{
 		freeaddrinfo2(hints.ai_family, file_ip_mask);
-	}
-	return;
 }
 
 
@@ -790,7 +788,9 @@ group_openfile(void)
 	groupfile = AllocateFile(filename, "r");
 
 	if (groupfile == NULL && errno != ENOENT)
-		elog(LOG, "could not open %s: %m", filename);
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not open \"%s\": %m", filename)));
 
 	pfree(filename);
 
@@ -812,7 +812,9 @@ user_openfile(void)
 	pwdfile = AllocateFile(filename, "r");
 
 	if (pwdfile == NULL && errno != ENOENT)
-		elog(LOG, "could not open %s: %m", filename);
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not open \"%s\": %m", filename)));
 
 	pfree(filename);
 
@@ -929,9 +931,10 @@ load_hba(void)
 
 	file = AllocateFile(conf_file, "r");
 	if (file == NULL)
-		elog(FATAL,
-			 "load_hba: Unable to open authentication config file \"%s\": %m",
-			 conf_file);
+		ereport(FATAL,
+				(errcode_for_file_access(),
+				 errmsg("could not open config file \"%s\": %m",
+						conf_file)));
 
 	hba_lines = tokenize_file(file);
 	FreeFile(file);
@@ -989,12 +992,18 @@ parse_ident_usermap(List *line, const char *usermap_name, const char *pg_user,
 	return;
 
 ident_syntax:
-	elog(LOG, "parse_ident_usermap: invalid syntax in pg_ident.conf file at line %d, token \"%s\"",
-		 line_number,
-		 line ? (const char *) lfirst(line) : "(end of line)");
+	if (line)
+		ereport(LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("invalid entry in pg_ident.conf file at line %d, token \"%s\"",
+						line_number, (const char *) lfirst(line))));
+	else
+		ereport(LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("missing entry in pg_ident.conf file at end of line %d",
+						line_number)));
 
 	*error_p = true;
-	return;
 }
 
 
@@ -1021,10 +1030,9 @@ check_ident_usermap(const char *usermap_name,
 
 	if (usermap_name == NULL || usermap_name[0] == '\0')
 	{
-		elog(LOG, "check_ident_usermap: hba configuration file does not "
-		   "have the usermap field filled in in the entry that pertains "
-		  "to this connection.  That field is essential for Ident-based "
-			 "authentication.");
+		ereport(LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("cannot use IDENT authentication without usermap field")));
 		found_entry = false;
 	}
 	else if (strcmp(usermap_name, "sameuser") == 0)
@@ -1070,9 +1078,10 @@ load_ident(void)
 	file = AllocateFile(map_file, "r");
 	if (file == NULL)
 	{
-		/* The open of the map file failed.  */
-		elog(LOG, "load_ident: Unable to open usermap file \"%s\": %m",
-			 map_file);
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not open usermap file \"%s\": %m",
+						map_file)));
 	}
 	else
 	{
@@ -1192,18 +1201,22 @@ ident_inet(const SockAddr remote_addr,
 	char		local_addr_s[NI_MAXHOST];
 	char		local_port[NI_MAXSERV];
 	char		ident_port[NI_MAXSERV];
+	char		ident_query[80];
+	char		ident_response[80 + IDENT_USERNAME_MAX];
 	struct addrinfo	*ident_serv = NULL, *la = NULL, hints;
 
-	/* Might look a little weird to first convert it to text and
-	 * then back to sockaddr, but it's protocol indepedant. */
-	getnameinfo((struct sockaddr *)&remote_addr.addr,
-		remote_addr.salen, remote_addr_s, sizeof(remote_addr_s),
-		remote_port, sizeof(remote_port),
-		NI_NUMERICHOST|NI_NUMERICSERV);
-	getnameinfo((struct sockaddr *)&local_addr.addr,
-		local_addr.salen, local_addr_s,	sizeof(local_addr_s),
-		local_port, sizeof(local_port),
-		NI_NUMERICHOST|NI_NUMERICSERV);
+	/*
+	 * Might look a little weird to first convert it to text and
+	 * then back to sockaddr, but it's protocol independent.
+	 */
+	getnameinfo((struct sockaddr *)&remote_addr.addr, remote_addr.salen,
+				remote_addr_s, sizeof(remote_addr_s),
+				remote_port, sizeof(remote_port),
+				NI_NUMERICHOST | NI_NUMERICSERV);
+	getnameinfo((struct sockaddr *)&local_addr.addr, local_addr.salen,
+				local_addr_s, sizeof(local_addr_s),
+				local_port, sizeof(local_port),
+				NI_NUMERICHOST | NI_NUMERICSERV);
 
 	snprintf(ident_port, sizeof(ident_port), "%d", IDENT_PORT);
 	hints.ai_flags = AI_NUMERICHOST;
@@ -1214,94 +1227,104 @@ ident_inet(const SockAddr remote_addr,
 	hints.ai_canonname = NULL;
 	hints.ai_addr = NULL;
 	hints.ai_next = NULL;
-	getaddrinfo2(remote_addr_s, ident_port, &hints, &ident_serv);
-	getaddrinfo2(local_addr_s, NULL, &hints, &la);
+	rc = getaddrinfo2(remote_addr_s, ident_port, &hints, &ident_serv);
+	if (rc || !ident_serv)
+		return false;			/* we don't expect this to happen */
+
+	hints.ai_flags = AI_NUMERICHOST;
+	hints.ai_family = local_addr.addr.ss_family;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = 0;
+	hints.ai_addrlen = 0;
+	hints.ai_canonname = NULL;
+	hints.ai_addr = NULL;
+	hints.ai_next = NULL;
+	rc = getaddrinfo2(local_addr_s, NULL, &hints, &la);
+	if (rc || !la)
+		return false;			/* we don't expect this to happen */
 	
 	sock_fd = socket(ident_serv->ai_family, ident_serv->ai_socktype,
-		ident_serv->ai_protocol);
-
-	if (sock_fd == -1)
+					 ident_serv->ai_protocol);
+	if (sock_fd < 0)
 	{
-		elog(LOG, "Failed to create socket on which to talk to Ident server: %m");
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not create socket for IDENT connection: %m")));
 		ident_return = false;
+		goto ident_inet_done;
 	}
-	else
+	/*
+	 * Bind to the address which the client originally contacted,
+	 * otherwise the ident server won't be able to match up the right
+	 * connection. This is necessary if the PostgreSQL server is
+	 * running on an IP alias.
+	 */
+	rc = bind(sock_fd, la->ai_addr, la->ai_addrlen);
+	if (rc != 0)
 	{
-		/*
-		 * Bind to the address which the client originally contacted,
-		 * otherwise the ident server won't be able to match up the right
-		 * connection. This is necessary if the PostgreSQL server is
-		 * running on an IP alias.
-		 */
-
-		rc = bind(sock_fd, la->ai_addr, la->ai_addrlen);
-		if (rc == 0)
-		{
-			rc = connect(sock_fd, ident_serv->ai_addr, 
-				ident_serv->ai_addrlen);
-		}
-		if (rc != 0)
-		{
-			int	save_errno = errno;
-
-			elog(LOG, "Unable to connect to Ident server on the host which is "
-				 "trying to connect to Postgres "
-				 "(Address %s, Port %s): %s", remote_addr_s,
-				 ident_port, strerror(save_errno));
-			ident_return = false;
-		}
-		else
-		{
-			char		ident_query[80];
-
-			/* The query we send to the Ident server */
-			snprintf(ident_query, sizeof(ident_query), "%s,%s\r\n",
-				remote_port, local_port);
-			/* loop in case send is interrupted */
-			do
-			{
-				rc = send(sock_fd, ident_query, strlen(ident_query), 0);
-			} while (rc < 0 && errno == EINTR);
-			if (rc < 0)
-			{
-				int			save_errno = errno;
-
-				elog(LOG, "Unable to send query to Ident server on the host which is "
-					 "trying to connect to Postgres (Host %s, Port %s), "
-					 "even though we successfully connected to it: %s",
-					 remote_addr_s, ident_port, strerror(save_errno));
-				ident_return = false;
-			}
-			else
-			{
-				char		ident_response[80 + IDENT_USERNAME_MAX];
-
-				rc = recv(sock_fd, ident_response,
-						  sizeof(ident_response) - 1, 0);
-				if (rc < 0)
-				{
-					int			save_errno = errno;
-
-					elog(LOG, "Unable to receive response from Ident server "
-						 "on the host which is "
-					 "trying to connect to Postgres (Host %s, Port %s), "
-						 "even though we successfully sent our query to it: %s",
-						 remote_addr_s, ident_port,
-						 strerror(save_errno));
-					ident_return = false;
-				}
-				else
-				{
-					ident_response[rc] = '\0';
-					ident_return = interpret_ident_response(ident_response,
-															ident_user);
-				}
-			}
-			closesocket(sock_fd);
-		}
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not bind to local address \"%s\": %m",
+						local_addr_s)));
+		ident_return = false;
+		goto ident_inet_done;
 	}
-	freeaddrinfo2(hints.ai_family, la);
-	freeaddrinfo2(hints.ai_family, ident_serv);
+
+	rc = connect(sock_fd, ident_serv->ai_addr, 
+				 ident_serv->ai_addrlen);
+	if (rc != 0)
+	{
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not connect to IDENT server at address \"%s\", port %s): %m",
+						remote_addr_s, ident_port)));
+		ident_return = false;
+		goto ident_inet_done;
+	}
+
+	/* The query we send to the Ident server */
+	snprintf(ident_query, sizeof(ident_query), "%s,%s\r\n",
+			 remote_port, local_port);
+
+	/* loop in case send is interrupted */
+	do
+	{
+		rc = send(sock_fd, ident_query, strlen(ident_query), 0);
+	} while (rc < 0 && errno == EINTR);
+
+	if (rc < 0)
+	{
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not send query to IDENT server at address \"%s\", port %s): %m",
+						remote_addr_s, ident_port)));
+		ident_return = false;
+		goto ident_inet_done;
+	}
+
+	do
+	{
+		rc = recv(sock_fd, ident_response, sizeof(ident_response) - 1, 0);
+	} while (rc < 0 && errno == EINTR);
+
+	if (rc < 0)
+	{
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not receive response from IDENT server at address \"%s\", port %s): %m",
+						remote_addr_s, ident_port)));
+		ident_return = false;
+		goto ident_inet_done;
+	}
+
+	ident_response[rc] = '\0';
+	ident_return = interpret_ident_response(ident_response, ident_user);
+
+ident_inet_done:
+	if (sock_fd >= 0)
+		closesocket(sock_fd);
+	freeaddrinfo2(remote_addr.addr.ss_family, ident_serv);
+	freeaddrinfo2(local_addr.addr.ss_family, la);
 	return ident_return;
 }
 
@@ -1325,7 +1348,9 @@ ident_unix(int sock, char *ident_user)
 	if (getpeereid(sock,&uid,&gid) != 0)
 	{
 		/* We didn't get a valid credentials struct. */
-		elog(LOG, "ident_unix: error receiving credentials: %m");
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not receive credentials: %m")));
 		return false;
 	}
 
@@ -1333,8 +1358,9 @@ ident_unix(int sock, char *ident_user)
 
 	if (pass == NULL)
 	{
-		elog(LOG, "ident_unix: unknown local user with uid %d",
-			 (int) uid);
+		ereport(LOG,
+				(errmsg("local user with uid %d is not known to getpwuid",
+						(int) uid)));
 		return false;
 	}
 
@@ -1353,7 +1379,9 @@ ident_unix(int sock, char *ident_user)
 		so_len != sizeof(peercred))
 	{
 		/* We didn't get a valid credentials struct. */
-		elog(LOG, "ident_unix: error receiving credentials: %m");
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not receive credentials: %m")));
 		return false;
 	}
 
@@ -1361,8 +1389,9 @@ ident_unix(int sock, char *ident_user)
 
 	if (pass == NULL)
 	{
-		elog(LOG, "ident_unix: unknown local user with uid %d",
-			 (int) peercred.uid);
+		ereport(LOG,
+				(errmsg("local user with uid %d is not known to getpwuid",
+						(int) peercred.uid);
 		return false;
 	}
 
@@ -1418,17 +1447,21 @@ ident_unix(int sock, char *ident_user)
 		cmsg->cmsg_len < sizeof(cmsgmem) ||
 		cmsg->cmsg_type != SCM_CREDS)
 	{
-		elog(LOG, "ident_unix: error receiving credentials: %m");
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not receive credentials: %m")));
 		return false;
 	}
 
 	cred = (Cred *) CMSG_DATA(cmsg);
 
 	pw = getpwuid(cred->cruid);
+
 	if (pw == NULL)
 	{
-		elog(LOG, "ident_unix: unknown local user with uid %d",
-			 (int) cred->cruid);
+		ereport(LOG,
+				(errmsg("local user with uid %d is not known to getpwuid",
+						(int) cred->cruid);
 		return false;
 	}
 
@@ -1437,7 +1470,9 @@ ident_unix(int sock, char *ident_user)
 	return true;
 
 #else
-	elog(LOG, "'ident' auth is not supported on local connections on this platform");
+	ereport(LOG,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("IDENT auth is not supported on local connections on this platform")));
 
 	return false;
 #endif

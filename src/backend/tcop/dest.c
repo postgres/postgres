@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.58 2003/05/08 18:16:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.59 2003/07/22 19:00:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,7 @@ CreateDestReceiver(CommandDest dest, Portal portal)
 		case Remote:
 		case RemoteExecute:
 			if (portal == NULL)
-				elog(ERROR, "CreateDestReceiver: no portal specified");
+				elog(ERROR, "no portal specified for Remote receiver");
 			return printtup_create_DR(dest, portal);
 
 		case None:
@@ -118,10 +118,10 @@ CreateDestReceiver(CommandDest dest, Portal portal)
 
 		case Tuplestore:
 			if (portal == NULL)
-				elog(ERROR, "CreateDestReceiver: no portal specified");
+				elog(ERROR, "no portal specified for Tuplestore receiver");
 			if (portal->holdStore == NULL ||
 				portal->holdContext == NULL)
-				elog(ERROR, "CreateDestReceiver: portal has no holdStore");
+				elog(ERROR, "portal has no holdStore");
 			return CreateTuplestoreDestReceiver(portal->holdStore,
 												portal->holdContext);
 	}

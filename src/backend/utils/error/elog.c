@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.113 2003/07/18 23:20:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.114 2003/07/22 19:00:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -561,6 +561,42 @@ errcode_for_file_access(void)
 		/* Hardware failure */
 		case EIO:				/* I/O error */
 			edata->sqlerrcode = ERRCODE_IO_ERROR;
+			break;
+
+		/* All else is classified as internal errors */
+		default:
+			edata->sqlerrcode = ERRCODE_INTERNAL_ERROR;
+			break;
+	}
+
+	return 0;					/* return value does not matter */
+}
+
+/*
+ * errcode_for_socket_access --- add SQLSTATE error code to the current error
+ *
+ * The SQLSTATE code is chosen based on the saved errno value.  We assume
+ * that the failing operation was some type of socket access.
+ *
+ * NOTE: the primary error message string should generally include %m
+ * when this is used.
+ */
+int
+errcode_for_socket_access(void)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+
+	/* we don't bother incrementing recursion_depth */
+	CHECK_STACK_DEPTH();
+
+	switch (edata->saved_errno)
+	{
+		/* Loss of connection */
+		case EPIPE:
+#ifdef ECONNRESET
+		case ECONNRESET:
+#endif
+			edata->sqlerrcode = ERRCODE_CONNECTION_FAILURE;
 			break;
 
 		/* All else is classified as internal errors */

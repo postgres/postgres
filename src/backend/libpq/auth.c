@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.103 2003/06/25 01:19:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.104 2003/07/22 19:00:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,20 +109,22 @@ pg_krb4_recvauth(Port *port)
 						  version);
 	if (status != KSUCCESS)
 	{
-		elog(LOG, "pg_krb4_recvauth: kerberos error: %s",
-			 krb_err_txt[status]);
+		ereport(LOG,
+				(errmsg("kerberos error: %s", krb_err_txt[status])));
 		return STATUS_ERROR;
 	}
 	if (strncmp(version, PG_KRB4_VERSION, KRB_SENDAUTH_VLEN) != 0)
 	{
-		elog(LOG, "pg_krb4_recvauth: protocol version \"%s\" != \"%s\"",
-			 version, PG_KRB4_VERSION);
+		ereport(LOG,
+				(errmsg("kerberos protocol version \"%s\" != \"%s\"",
+						version, PG_KRB4_VERSION)));
 		return STATUS_ERROR;
 	}
 	if (strncmp(port->user_name, auth_data.pname, SM_DATABASE_USER) != 0)
 	{
-		elog(LOG, "pg_krb4_recvauth: name \"%s\" != \"%s\"",
-			 port->user_name, auth_data.pname);
+		ereport(LOG,
+				(errmsg("kerberos user name \"%s\" != \"%s\"",
+						port->user_name, auth_data.pname)));
 		return STATUS_ERROR;
 	}
 	return STATUS_OK;
@@ -133,7 +135,9 @@ pg_krb4_recvauth(Port *port)
 static int
 pg_krb4_recvauth(Port *port)
 {
-	elog(LOG, "pg_krb4_recvauth: Kerberos not implemented on this server");
+	ereport(LOG,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("kerberos v4 not implemented on this server")));
 	return STATUS_ERROR;
 }
 #endif   /* KRB4 */
@@ -193,8 +197,9 @@ pg_krb5_init(void)
 	retval = krb5_init_context(&pg_krb5_context);
 	if (retval)
 	{
-		elog(LOG, "pg_krb5_init: krb5_init_context returned Kerberos error %d",
-			 retval);
+		ereport(LOG,
+				(errmsg("kerberos init returned error %d",
+						retval)));
 		com_err("postgres", retval, "while initializing krb5");
 		return STATUS_ERROR;
 	}
@@ -202,9 +207,10 @@ pg_krb5_init(void)
 	retval = krb5_kt_resolve(pg_krb5_context, pg_krb_server_keyfile, &pg_krb5_keytab);
 	if (retval)
 	{
-		elog(LOG, "pg_krb5_init: krb5_kt_resolve returned Kerberos error %d",
-			 retval);
-		com_err("postgres", retval, "while resolving keytab file %s",
+		ereport(LOG,
+				(errmsg("kerberos keytab resolve returned error %d",
+						retval)));
+		com_err("postgres", retval, "while resolving keytab file \"%s\"",
 				pg_krb_server_keyfile);
 		krb5_free_context(pg_krb5_context);
 		return STATUS_ERROR;
@@ -214,10 +220,11 @@ pg_krb5_init(void)
 									 KRB5_NT_SRV_HST, &pg_krb5_server);
 	if (retval)
 	{
-		elog(LOG, "pg_krb5_init: krb5_sname_to_principal returned Kerberos error %d",
-			 retval);
+		ereport(LOG,
+				(errmsg("kerberos sname_to_principal(\"%s\") returned error %d",
+						PG_KRB_SRVNAM, retval)));
 		com_err("postgres", retval,
-				"while getting server principal for service %s",
+				"while getting server principal for service \"%s\"",
 				PG_KRB_SRVNAM);
 		krb5_kt_close(pg_krb5_context, pg_krb5_keytab);
 		krb5_free_context(pg_krb5_context);
@@ -258,8 +265,9 @@ pg_krb5_recvauth(Port *port)
 						   pg_krb5_server, 0, pg_krb5_keytab, &ticket);
 	if (retval)
 	{
-		elog(LOG, "pg_krb5_recvauth: krb5_recvauth returned Kerberos error %d",
-			 retval);
+		ereport(LOG,
+				(errmsg("kerberos recvauth returned error %d",
+						retval)));
 		com_err("postgres", retval, "from krb5_recvauth");
 		return STATUS_ERROR;
 	}
@@ -282,8 +290,9 @@ pg_krb5_recvauth(Port *port)
 #endif
 	if (retval)
 	{
-		elog(LOG, "pg_krb5_recvauth: krb5_unparse_name returned Kerberos error %d",
-			 retval);
+		ereport(LOG,
+				(errmsg("kerberos unparse_name returned error %d",
+						retval)));
 		com_err("postgres", retval, "while unparsing client name");
 		krb5_free_ticket(pg_krb5_context, ticket);
 		krb5_auth_con_free(pg_krb5_context, auth_context);
@@ -293,8 +302,9 @@ pg_krb5_recvauth(Port *port)
 	kusername = pg_an_to_ln(kusername);
 	if (strncmp(port->user_name, kusername, SM_DATABASE_USER))
 	{
-		elog(LOG, "pg_krb5_recvauth: user name \"%s\" != krb5 name \"%s\"",
-			 port->user_name, kusername);
+		ereport(LOG,
+				(errmsg("kerberos user name \"%s\" != \"%s\"",
+						port->user_name, kusername)));
 		ret = STATUS_ERROR;
 	}
 	else
@@ -312,7 +322,9 @@ pg_krb5_recvauth(Port *port)
 static int
 pg_krb5_recvauth(Port *port)
 {
-	elog(LOG, "pg_krb5_recvauth: Kerberos not implemented on this server");
+	ereport(LOG,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("kerberos v5 not implemented on this server")));
 	return STATUS_ERROR;
 }
 #endif   /* KRB5 */
@@ -377,8 +389,10 @@ auth_failed(Port *port, int status)
 #endif   /* USE_PAM */
 	}
 
-	elog(FATAL, "%s authentication failed for user \"%s\"",
-		 authmethod, port->user_name);
+	ereport(FATAL,
+			(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+			 errmsg("%s authentication failed for user \"%s\"",
+					authmethod, port->user_name)));
 	/* doesn't return */
 }
 
@@ -399,7 +413,10 @@ ClientAuthentication(Port *port)
 	 * an error message into the postmaster logfile if it failed.
 	 */
 	if (hba_getauthmethod(port) != STATUS_OK)
-		elog(FATAL, "Missing or erroneous pg_hba.conf file, see postmaster log for details");
+		ereport(FATAL,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("missing or erroneous pg_hba.conf file"),
+				 errhint("See postmaster log for details.")));
 
 	switch (port->auth_method)
 	{
@@ -417,15 +434,16 @@ ClientAuthentication(Port *port)
 			{
 				char	hostinfo[NI_MAXHOST];
 
-				getnameinfo(
-					(struct sockaddr *)&port->raddr.addr,
-					port->raddr.salen,
-					hostinfo, sizeof(hostinfo),
-					NULL, 0, NI_NUMERICHOST);
+				getnameinfo((struct sockaddr *) &port->raddr.addr,
+							port->raddr.salen,
+							hostinfo, sizeof(hostinfo),
+							NULL, 0,
+							NI_NUMERICHOST);
 
-				elog(FATAL,
-					"No pg_hba.conf entry for host %s, user %s, database %s",
-					hostinfo, port->user_name, port->database_name);
+				ereport(FATAL,
+						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						 errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\"",
+								hostinfo, port->user_name, port->database_name)));
 				break;
 			}
 
@@ -433,10 +451,9 @@ ClientAuthentication(Port *port)
 			/* Kerberos 4 only seems to work with AF_INET. */
 			if (port->raddr.addr.ss_family != AF_INET
 				|| port->laddr.addr.ss_family != AF_INET)
-			{
-				elog(FATAL,
-					"Unsupported protocol for Kerberos 4");
-			}
+				ereport(FATAL,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("kerberos 4 only supports IPv4 connections")));
 			sendAuthRequest(port, AUTH_REQ_KRB4);
 			status = pg_krb4_recvauth(port);
 			break;
@@ -466,7 +483,9 @@ ClientAuthentication(Port *port)
 				int			on = 1;
 
 				if (setsockopt(port->sock, 0, LOCAL_CREDS, &on, sizeof(on)) < 0)
-					elog(FATAL, "pg_local_sendauth: can't do setsockopt: %m");
+					ereport(FATAL,
+							(errcode_for_socket_access(),
+							 errmsg("failed to enable credential receipt: %m")));
 			}
 #endif
 			if (port->raddr.addr.ss_family == AF_UNIX)
@@ -552,12 +571,14 @@ pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg,
 		switch (msg[0]->msg_style)
 		{
 			case PAM_ERROR_MSG:
-				elog(LOG, "pam_passwd_conv_proc: Error from underlying PAM layer: '%s'",
-					 msg[0]->msg);
+				ereport(LOG,
+						(errmsg("error from underlying PAM layer: %s",
+								msg[0]->msg)));
 				return PAM_CONV_ERR;
 			default:
-				elog(LOG, "pam_passwd_conv_proc: Unexpected PAM conversation %d/'%s'",
-					 msg[0]->msg_style, msg[0]->msg);
+				ereport(LOG,
+						(errmsg("unsupported PAM conversation %d/%s",
+								msg[0]->msg_style, msg[0]->msg)));
 				return PAM_CONV_ERR;
 		}
 	}
@@ -587,7 +608,8 @@ pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg,
 
 		if (strlen(passwd) == 0)
 		{
-			elog(LOG, "pam_passwd_conv_proc: no password");
+			ereport(LOG,
+					(errmsg("empty password returned by client")));
 			return PAM_CONV_ERR;
 		}
 		appdata_ptr = passwd;
@@ -600,7 +622,9 @@ pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg,
 	*resp = calloc(num_msg, sizeof(struct pam_response));
 	if (!*resp)
 	{
-		elog(LOG, "pam_passwd_conv_proc: Out of memory!");
+		ereport(LOG,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 		return PAM_CONV_ERR;
 	}
 
@@ -644,8 +668,9 @@ CheckPAMAuth(Port *port, char *user, char *password)
 
 	if (retval != PAM_SUCCESS)
 	{
-		elog(LOG, "CheckPAMAuth: Failed to create PAM authenticator: '%s'",
-			 pam_strerror(pamh, retval));
+		ereport(LOG,
+				(errmsg("Failed to create PAM authenticator: %s",
+						pam_strerror(pamh, retval))));
 		pam_passwd = NULL;		/* Unset pam_passwd */
 		return STATUS_ERROR;
 	}
@@ -654,8 +679,9 @@ CheckPAMAuth(Port *port, char *user, char *password)
 
 	if (retval != PAM_SUCCESS)
 	{
-		elog(LOG, "CheckPAMAuth: pam_set_item(PAM_USER) failed: '%s'",
-			 pam_strerror(pamh, retval));
+		ereport(LOG,
+				(errmsg("pam_set_item(PAM_USER) failed: %s",
+						pam_strerror(pamh, retval))));
 		pam_passwd = NULL;		/* Unset pam_passwd */
 		return STATUS_ERROR;
 	}
@@ -664,8 +690,9 @@ CheckPAMAuth(Port *port, char *user, char *password)
 
 	if (retval != PAM_SUCCESS)
 	{
-		elog(LOG, "CheckPAMAuth: pam_set_item(PAM_CONV) failed: '%s'",
-			 pam_strerror(pamh, retval));
+		ereport(LOG,
+				(errmsg("pam_set_item(PAM_CONV) failed: %s",
+						pam_strerror(pamh, retval))));
 		pam_passwd = NULL;		/* Unset pam_passwd */
 		return STATUS_ERROR;
 	}
@@ -674,8 +701,9 @@ CheckPAMAuth(Port *port, char *user, char *password)
 
 	if (retval != PAM_SUCCESS)
 	{
-		elog(LOG, "CheckPAMAuth: pam_authenticate failed: '%s'",
-			 pam_strerror(pamh, retval));
+		ereport(LOG,
+				(errmsg("pam_authenticate failed: %s",
+						pam_strerror(pamh, retval))));
 		pam_passwd = NULL;		/* Unset pam_passwd */
 		return STATUS_ERROR;
 	}
@@ -684,8 +712,9 @@ CheckPAMAuth(Port *port, char *user, char *password)
 
 	if (retval != PAM_SUCCESS)
 	{
-		elog(LOG, "CheckPAMAuth: pam_acct_mgmt failed: '%s'",
-			 pam_strerror(pamh, retval));
+		ereport(LOG,
+				(errmsg("pam_acct_mgmt failed: %s",
+						pam_strerror(pamh, retval))));
 		pam_passwd = NULL;		/* Unset pam_passwd */
 		return STATUS_ERROR;
 	}
@@ -694,8 +723,9 @@ CheckPAMAuth(Port *port, char *user, char *password)
 
 	if (retval != PAM_SUCCESS)
 	{
-		elog(LOG, "CheckPAMAuth: Failed to release PAM authenticator: '%s'",
-			 pam_strerror(pamh, retval));
+		ereport(LOG,
+				(errmsg("failed to release PAM authenticator: %s",
+						pam_strerror(pamh, retval))));
 	}
 
 	pam_passwd = NULL;			/* Unset pam_passwd */
@@ -730,7 +760,10 @@ recv_password_packet(Port *port)
 			 * the log.
 			 */
 			if (mtype != EOF)
-				elog(COMMERROR, "Expected password response, got %c", mtype);
+				ereport(COMMERROR,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("expected password response, got msg type %d",
+								mtype)));
 			return NULL;		/* EOF or bad message type */
 		}
 	}
@@ -755,10 +788,13 @@ recv_password_packet(Port *port)
 	 * StringInfo is guaranteed to have an appended '\0'.
 	 */
 	if (strlen(buf.data) + 1 != buf.len)
-		elog(COMMERROR, "bogus password packet size");
+		ereport(COMMERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("invalid password packet size")));
 
 	/* Do not echo password to logs, for security. */
-	elog(DEBUG5, "received password packet");
+	ereport(DEBUG5,
+			(errmsg("received password packet")));
 
 	/*
 	 * Return the received string.  Note we do not attempt to do any

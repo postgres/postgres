@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.203 2003/07/21 17:04:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.204 2003/07/22 19:00:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1923,7 +1923,7 @@ CopyReadBinaryAttribute(int column_no, FmgrInfo *flinfo, Oid typelem,
 	/* Trouble if it didn't eat the whole buffer */
 	if (attribute_buf.cursor != attribute_buf.len)
 		ereport(ERROR,
-				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("incorrect binary data format in field %d",
 						column_no)));
 

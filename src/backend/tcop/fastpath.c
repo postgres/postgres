@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.64 2003/05/09 18:18:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.65 2003/07/22 19:00:11 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -101,8 +101,10 @@ GetOldFunctionMessage(StringInfo buf)
 		if (argsize < -1)
 		{
 			/* FATAL here since no hope of regaining message sync */
-			elog(FATAL, "HandleFunctionRequest: bogus argsize %d",
-				 argsize);
+			ereport(FATAL,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("invalid argument size %d in function call message",
+							argsize)));
 		}
 		/* and arg contents */
 		if (argsize > 0)
@@ -180,7 +182,9 @@ SendFunctionResult(Datum retval, bool isnull, Oid rettype, int16 format)
 			pfree(outputbytes);
 		}
 		else
-			elog(ERROR, "Invalid format code %d", format);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("unsupported format code: %d", format)));
 	}
 
 	if (!newstyle)
@@ -208,7 +212,7 @@ fetch_fp_info(Oid func_id, struct fp_info * fip)
 	 * Since the validity of this structure is determined by whether the
 	 * funcid is OK, we clear the funcid here.	It must not be set to the
 	 * correct value until we are about to return with a good struct
-	 * fp_info, since we can be interrupted (i.e., with an elog(ERROR,
+	 * fp_info, since we can be interrupted (i.e., with an ereport(ERROR,
 	 * ...)) at any time.  [No longer really an issue since we don't save
 	 * the struct fp_info across transactions anymore, but keep it
 	 * anyway.]
@@ -222,8 +226,9 @@ fetch_fp_info(Oid func_id, struct fp_info * fip)
 							  ObjectIdGetDatum(func_id),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(func_htp))
-		elog(ERROR, "fetch_fp_info: cache lookup for function %u failed",
-			 func_id);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("function with OID %u does not exist", func_id)));
 	pp = (Form_pg_proc) GETSTRUCT(func_htp);
 
 	fip->namespace = pp->pronamespace;
@@ -254,8 +259,8 @@ fetch_fp_info(Oid func_id, struct fp_info * fip)
  * RETURNS:
  *		0 if successful completion, EOF if frontend connection lost.
  *
- * Note: All ordinary errors result in elog(ERROR,...).  However,
- * if we lose the frontend connection there is no one to elog to,
+ * Note: All ordinary errors result in ereport(ERROR,...).  However,
+ * if we lose the frontend connection there is no one to ereport to,
  * and no use in proceeding...
  *
  * Note: palloc()s done here and in the called function do not need to be
@@ -282,19 +287,23 @@ HandleFunctionRequest(StringInfo msgBuf)
 	{
 		if (GetOldFunctionMessage(msgBuf))
 		{
-			elog(COMMERROR, "unexpected EOF on client connection");
+			ereport(COMMERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("unexpected EOF on client connection")));
 			return EOF;
 		}
 	}
 
 	/*
 	 * Now that we've eaten the input message, check to see if we actually
-	 * want to do the function call or not.  It's now safe to elog(); we won't
-	 * lose sync with the frontend.
+	 * want to do the function call or not.  It's now safe to ereport();
+	 * we won't lose sync with the frontend.
 	 */
 	if (IsAbortedTransactionBlockState())
-		elog(ERROR, "current transaction is aborted, "
-			 "queries ignored until end of transaction block");
+		ereport(ERROR,
+				(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
+				 errmsg("current transaction is aborted, "
+						"queries ignored until end of transaction block")));
 
 	/*
 	 * Begin parsing the buffer contents.
@@ -404,14 +413,18 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
 	nargs = pq_getmsgint(msgBuf, 2);	/* # of arguments */
 
 	if (fip->flinfo.fn_nargs != nargs || nargs > FUNC_MAX_ARGS)
-		elog(ERROR, "HandleFunctionRequest: actual arguments (%d) != registered arguments (%d)",
-			 nargs, fip->flinfo.fn_nargs);
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("function call message contains %d arguments but function requires %d",
+						nargs, fip->flinfo.fn_nargs)));
 
 	fcinfo->nargs = nargs;
 
 	if (numAFormats > 1 && numAFormats != nargs)
-		elog(ERROR, "Function Call message has %d argument formats but %d arguments",
-			 numAFormats, nargs);
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("function call message contains %d argument formats but %d arguments",
+						numAFormats, nargs)));
 
 	initStringInfo(&abuf);
 
@@ -430,8 +443,10 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
 			continue;
 		}
 		if (argsize < 0)
-			elog(ERROR, "HandleFunctionRequest: bogus argsize %d",
-				 argsize);
+			ereport(ERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("invalid argument size %d in function call message",
+							argsize)));
 
 		/* Reset abuf to empty, and insert raw data into it */
 		abuf.len = 0;
@@ -489,11 +504,15 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
 
 			/* Trouble if it didn't eat the whole buffer */
 			if (abuf.cursor != abuf.len)
-				elog(ERROR, "Improper binary format in function argument %d",
-					 i + 1);
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+						 errmsg("incorrect binary data format in function argument %d",
+								i + 1)));
 		}
 		else
-			elog(ERROR, "Invalid format code %d", aformat);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("unsupported format code: %d", aformat)));
 	}
 
 	/* Return result format code */
@@ -517,8 +536,10 @@ parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info *fip,
 	nargs = pq_getmsgint(msgBuf, 4);	/* # of arguments */
 
 	if (fip->flinfo.fn_nargs != nargs || nargs > FUNC_MAX_ARGS)
-		elog(ERROR, "HandleFunctionRequest: actual arguments (%d) != registered arguments (%d)",
-			 nargs, fip->flinfo.fn_nargs);
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("function call message contains %d arguments but function requires %d",
+						nargs, fip->flinfo.fn_nargs)));
 
 	fcinfo->nargs = nargs;
 
@@ -545,8 +566,10 @@ parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info *fip,
 			continue;
 		}
 		if (argsize < 0)
-			elog(ERROR, "HandleFunctionRequest: bogus argsize %d",
-				 argsize);
+			ereport(ERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("invalid argument size %d in function call message",
+							argsize)));
 
 		/* Reset abuf to empty, and insert raw data into it */
 		abuf.len = 0;
@@ -566,8 +589,10 @@ parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info *fip,
 
 		/* Trouble if it didn't eat the whole buffer */
 		if (abuf.cursor != abuf.len)
-			elog(ERROR, "Improper binary format in function argument %d",
-				 i + 1);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+					 errmsg("incorrect binary data format in function argument %d",
+							i + 1)));
 	}
 
 	/* Desired result format is always binary in protocol 2.0 */

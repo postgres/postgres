@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/alter.c,v 1.2 2003/07/20 21:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/alter.c,v 1.3 2003/07/22 19:00:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,39 +29,10 @@
 #include "commands/user.h"
 #include "miscadmin.h"
 #include "parser/parse_clause.h"
+#include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-
-
-static void
-CheckOwnership(RangeVar *rel, bool noCatalogs)
-{
-	Oid			relOid;
-	HeapTuple	tuple;
-
-	relOid = RangeVarGetRelid(rel, false);
-	tuple = SearchSysCache(RELOID,
-						   ObjectIdGetDatum(relOid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple)) /* should not happen */
-		elog(ERROR, "cache lookup failed for relation %u", relOid);
-
-	if (!pg_class_ownercheck(relOid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, rel->relname);
-
-	if (noCatalogs)
-	{
-		if (!allowSystemTableMods &&
-			IsSystemClass((Form_pg_class) GETSTRUCT(tuple)))
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("relation \"%s\" is a system catalog",
-							rel->relname)));
-	}
-
-	ReleaseSysCache(tuple);
-}
 
 
 void
@@ -111,7 +82,7 @@ ExecRenameStmt(RenameStmt *stmt)
 		{
 			Oid			relid;
 
-			CheckOwnership(stmt->relation, true);
+			CheckRelationOwnership(stmt->relation, true);
 
 			relid = RangeVarGetRelid(stmt->relation, false);
 

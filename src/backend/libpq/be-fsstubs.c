@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.64 2003/05/27 17:49:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.65 2003/07/22 19:00:10 tgl Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -119,7 +119,9 @@ lo_close(PG_FUNCTION_ARGS)
 
 	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
 	{
-		elog(ERROR, "lo_close: invalid large obj descriptor (%d)", fd);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("invalid large-object descriptor: %d", fd)));
 		PG_RETURN_INT32(-1);
 	}
 #if FSDB
@@ -155,7 +157,9 @@ lo_read(int fd, char *buf, int len)
 
 	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
 	{
-		elog(ERROR, "lo_read: invalid large obj descriptor (%d)", fd);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("invalid large-object descriptor: %d", fd)));
 		return -1;
 	}
 
@@ -177,7 +181,9 @@ lo_write(int fd, char *buf, int len)
 
 	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
 	{
-		elog(ERROR, "lo_write: invalid large obj descriptor (%d)", fd);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("invalid large-object descriptor: %d", fd)));
 		return -1;
 	}
 
@@ -203,7 +209,9 @@ lo_lseek(PG_FUNCTION_ARGS)
 
 	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
 	{
-		elog(ERROR, "lo_lseek: invalid large obj descriptor (%d)", fd);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("invalid large-object descriptor: %d", fd)));
 		PG_RETURN_INT32(-1);
 	}
 
@@ -258,7 +266,9 @@ lo_tell(PG_FUNCTION_ARGS)
 
 	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
 	{
-		elog(ERROR, "lo_tell: invalid large object descriptor (%d)", fd);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("invalid large-object descriptor: %d", fd)));
 		PG_RETURN_INT32(-1);
 	}
 
@@ -360,9 +370,10 @@ lo_import(PG_FUNCTION_ARGS)
 
 #ifndef ALLOW_DANGEROUS_LO_FUNCTIONS
 	if (!superuser())
-		elog(ERROR, "You must have Postgres superuser privilege to use "
-			 "server-side lo_import().\n\tAnyone can use the "
-			 "client-side lo_import() provided by libpq.");
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to use server-side lo_import()"),
+				 errhint("Anyone can use the client-side lo_import() provided by libpq.")));
 #endif
 
 	/*
@@ -375,16 +386,15 @@ lo_import(PG_FUNCTION_ARGS)
 	fnamebuf[nbytes] = '\0';
 	fd = PathNameOpenFile(fnamebuf, O_RDONLY | PG_BINARY, 0666);
 	if (fd < 0)
-		elog(ERROR, "lo_import: can't open unix file \"%s\": %m",
-			 fnamebuf);
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not open server file \"%s\": %m",
+						fnamebuf)));
 
 	/*
-	 * create an inversion "object"
+	 * create an inversion object
 	 */
 	lobj = inv_create(INV_READ | INV_WRITE);
-	if (lobj == NULL)
-		elog(ERROR, "lo_import: can't create inv object for \"%s\"",
-			 fnamebuf);
 	lobjOid = lobj->id;
 
 	/*
@@ -393,10 +403,14 @@ lo_import(PG_FUNCTION_ARGS)
 	while ((nbytes = FileRead(fd, buf, BUFSIZE)) > 0)
 	{
 		tmp = inv_write(lobj, buf, nbytes);
-		if (tmp != nbytes)
-			elog(ERROR, "lo_import: error while reading \"%s\"",
-				 fnamebuf);
+		Assert(tmp == nbytes);
 	}
+
+	if (nbytes < 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not read server file \"%s\": %m",
+						fnamebuf)));
 
 	FileClose(fd);
 	inv_close(lobj);
@@ -423,17 +437,16 @@ lo_export(PG_FUNCTION_ARGS)
 
 #ifndef ALLOW_DANGEROUS_LO_FUNCTIONS
 	if (!superuser())
-		elog(ERROR, "You must have Postgres superuser privilege to use "
-			 "server-side lo_export().\n\tAnyone can use the "
-			 "client-side lo_export() provided by libpq.");
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to use server-side lo_export()"),
+				 errhint("Anyone can use the client-side lo_export() provided by libpq.")));
 #endif
 
 	/*
-	 * open the inversion "object"
+	 * open the inversion object (no need to test for failure)
 	 */
 	lobj = inv_open(lobjId, INV_READ);
-	if (lobj == NULL)
-		elog(ERROR, "lo_export: can't open inv object %u", lobjId);
 
 	/*
 	 * open the file to be written to
@@ -451,8 +464,10 @@ lo_export(PG_FUNCTION_ARGS)
 	fd = PathNameOpenFile(fnamebuf, O_CREAT | O_WRONLY | O_TRUNC | PG_BINARY, 0666);
 	umask(oumask);
 	if (fd < 0)
-		elog(ERROR, "lo_export: can't open unix file \"%s\": %m",
-			 fnamebuf);
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not create server file \"%s\": %m",
+						fnamebuf)));
 
 	/*
 	 * read in from the inversion file and write to the Unix file
@@ -461,12 +476,14 @@ lo_export(PG_FUNCTION_ARGS)
 	{
 		tmp = FileWrite(fd, buf, nbytes);
 		if (tmp != nbytes)
-			elog(ERROR, "lo_export: error while writing \"%s\"",
-				 fnamebuf);
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not write server file \"%s\": %m",
+							fnamebuf)));
 	}
 
-	inv_close(lobj);
 	FileClose(fd);
+	inv_close(lobj);
 
 	PG_RETURN_INT32(1);
 }

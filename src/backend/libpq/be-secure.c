@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.35 2003/07/01 13:49:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.36 2003/07/22 19:00:10 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -277,12 +277,18 @@ secure_read(Port *port, void *ptr, size_t len)
 				goto rloop;
 			case SSL_ERROR_SYSCALL:
 				if (n == -1)
-					elog(COMMERROR, "SSL SYSCALL error: %m");
+					ereport(COMMERROR,
+							(errcode_for_socket_access(),
+							 errmsg("SSL SYSCALL error: %m")));
 				else
-					elog(COMMERROR, "SSL SYSCALL error: EOF detected");
+					ereport(COMMERROR,
+							(errcode(ERRCODE_PROTOCOL_VIOLATION),
+							 errmsg("SSL SYSCALL error: EOF detected")));
 				break;
 			case SSL_ERROR_SSL:
-				elog(COMMERROR, "SSL error: %s", SSLerrmessage());
+				ereport(COMMERROR,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("SSL error: %s", SSLerrmessage())));
 				/* fall through */
 			case SSL_ERROR_ZERO_RETURN:
 				secure_close(port);
@@ -290,7 +296,9 @@ secure_read(Port *port, void *ptr, size_t len)
 				n = -1;
 				break;
 			default:
-				elog(COMMERROR, "Unknown SSL error code");
+				ereport(COMMERROR,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("unrecognized SSL error code")));
 				break;
 		}
 	}
@@ -317,15 +325,23 @@ secure_write(Port *port, void *ptr, size_t len)
 			SSL_set_session_id_context(port->ssl, (void *) &SSL_context,
 									   sizeof(SSL_context));
 			if (SSL_renegotiate(port->ssl) <= 0)
-				elog(COMMERROR, "SSL renegotiation failure");
+				ereport(COMMERROR,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("SSL renegotiation failure")));
 			if (SSL_do_handshake(port->ssl) <= 0)
-				elog(COMMERROR, "SSL renegotiation failure");
+				ereport(COMMERROR,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("SSL renegotiation failure")));
 			if (port->ssl->state != SSL_ST_OK)
-				elog(COMMERROR, "SSL failed to send renegotiation request");
+				ereport(COMMERROR,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("SSL failed to send renegotiation request")));
 			port->ssl->state |= SSL_ST_ACCEPT;
 			SSL_do_handshake(port->ssl);
 			if (port->ssl->state != SSL_ST_OK)
-				elog(COMMERROR, "SSL renegotiation failure");
+				ereport(COMMERROR,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("SSL renegotiation failure")));
 			port->count = 0;
 		}
 
@@ -341,12 +357,18 @@ secure_write(Port *port, void *ptr, size_t len)
 				goto wloop;
 			case SSL_ERROR_SYSCALL:
 				if (n == -1)
-					elog(COMMERROR, "SSL SYSCALL error: %m");
+					ereport(COMMERROR,
+							(errcode_for_socket_access(),
+							 errmsg("SSL SYSCALL error: %m")));
 				else
-					elog(COMMERROR, "SSL SYSCALL error: EOF detected");
+					ereport(COMMERROR,
+							(errcode(ERRCODE_PROTOCOL_VIOLATION),
+							 errmsg("SSL SYSCALL error: EOF detected")));
 				break;
 			case SSL_ERROR_SSL:
-				elog(COMMERROR, "SSL error: %s", SSLerrmessage());
+				ereport(COMMERROR,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("SSL error: %s", SSLerrmessage())));
 				/* fall through */
 			case SSL_ERROR_ZERO_RETURN:
 				secure_close(port);
@@ -354,7 +376,9 @@ secure_write(Port *port, void *ptr, size_t len)
 				n = -1;
 				break;
 			default:
-				elog(COMMERROR, "Unknown SSL error code");
+				ereport(COMMERROR,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("unrecognized SSL error code")));
 				break;
 		}
 	}
@@ -419,7 +443,7 @@ load_dh_file(int keylength)
 			(codes & DH_CHECK_P_NOT_SAFE_PRIME))
 		{
 			elog(LOG,
-			   "DH error (%s): neither suitable generator or safe prime",
+				 "DH error (%s): neither suitable generator or safe prime",
 				 fnbuf);
 			return NULL;
 		}
@@ -690,7 +714,10 @@ open_server_SSL(Port *port)
 		!SSL_set_fd(port->ssl, port->sock) ||
 		SSL_accept(port->ssl) <= 0)
 	{
-		elog(COMMERROR, "failed to initialize SSL connection: %s", SSLerrmessage());
+		ereport(COMMERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("failed to initialize SSL connection: %s",
+						SSLerrmessage())));
 		close_SSL(port);
 		return -1;
 	}
@@ -712,7 +739,7 @@ open_server_SSL(Port *port)
 				   NID_commonName, port->peer_cn, sizeof(port->peer_cn));
 		port->peer_cn[sizeof(port->peer_cn) - 1] = '\0';
 	}
-	elog(DEBUG2, "secure connection from '%s'", port->peer_cn);
+	elog(DEBUG2, "secure connection from \"%s\"", port->peer_cn);
 
 	/* set up debugging/info callback */
 	SSL_CTX_set_info_callback(SSL_context, info_cb);

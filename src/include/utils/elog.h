@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.53 2003/07/21 20:29:39 tgl Exp $
+ * $Id: elog.h,v 1.54 2003/07/22 19:00:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,6 +155,8 @@
 #define ERRCODE_UNTERMINATED_C_STRING		MAKE_SQLSTATE('2','2', '0','2','4')
 #define ERRCODE_ZERO_LENGTH_CHARACTER_STRING		MAKE_SQLSTATE('2','2', '0','0','F')
 #define ERRCODE_BAD_COPY_FILE_FORMAT		MAKE_SQLSTATE('2','2', 'P','0','1')
+#define ERRCODE_INVALID_BINARY_REPRESENTATION	MAKE_SQLSTATE('2','2', 'P','0','2')
+#define ERRCODE_FLOATING_POINT_EXCEPTION	MAKE_SQLSTATE('2','2', 'P','0','3')
 
 /* Class 23 - Integrity Constraint Violation */
 #define ERRCODE_INTEGRITY_CONSTRAINT_VIOLATION		MAKE_SQLSTATE('2','3', '0','0','0')
@@ -178,6 +180,7 @@
 #define ERRCODE_READ_ONLY_SQL_TRANSACTION	MAKE_SQLSTATE('2','5', '0','0','6')
 #define ERRCODE_SCHEMA_AND_DATA_STATEMENT_MIXING_NOT_SUPPORTED	MAKE_SQLSTATE('2','5', '0','0','7')
 #define ERRCODE_NO_ACTIVE_SQL_TRANSACTION	MAKE_SQLSTATE('2','5', 'P','0','1')
+#define ERRCODE_IN_FAILED_SQL_TRANSACTION	MAKE_SQLSTATE('2','5', 'P','0','2')
 
 /* Class 26 - Invalid SQL Statement Name */
 /* (we take this to mean prepared statements) */
@@ -244,6 +247,7 @@
 #define ERRCODE_NAME_TOO_LONG				MAKE_SQLSTATE('4','2', '6','2','2')
 #define ERRCODE_RESERVED_NAME				MAKE_SQLSTATE('4','2', '9','3','9')
 #define ERRCODE_DATATYPE_MISMATCH			MAKE_SQLSTATE('4','2', '8','0','4')
+#define ERRCODE_INDETERMINATE_DATATYPE		MAKE_SQLSTATE('4','2', 'P','1','8')
 #define ERRCODE_WRONG_OBJECT_TYPE			MAKE_SQLSTATE('4','2', '8','0','9')
 /*
  * Note: for ERRCODE purposes, we divide namable objects into these categories:
@@ -314,10 +318,16 @@
 /* Class 57 - Operator Intervention (class borrowed from DB2) */
 #define ERRCODE_OPERATOR_INTERVENTION		MAKE_SQLSTATE('5','7', '0','0','0')
 #define ERRCODE_QUERY_CANCELED				MAKE_SQLSTATE('5','7', '0','1','4')
+#define ERRCODE_ADMIN_SHUTDOWN				MAKE_SQLSTATE('5','7', 'P','0','1')
+#define ERRCODE_CRASH_SHUTDOWN				MAKE_SQLSTATE('5','7', 'P','0','2')
+#define ERRCODE_CANNOT_CONNECT_NOW			MAKE_SQLSTATE('5','7', 'P','0','3')
 
 /* Class 58 - System Error (class borrowed from DB2) */
 /* (we define this as errors external to PostgreSQL itself) */
 #define ERRCODE_IO_ERROR					MAKE_SQLSTATE('5','8', '0','3','0')
+
+/* Class F0 - Configuration File Error (PostgreSQL-specific error class) */
+#define ERRCODE_CONFIG_FILE_ERROR			MAKE_SQLSTATE('F','0', '0','0','0')
 
 /* Class XX - Internal Error (PostgreSQL-specific error class) */
 /* (this is for "can't-happen" conditions and software bugs) */
@@ -361,6 +371,7 @@ extern void errfinish(int dummy, ...);
 extern int errcode(int sqlerrcode);
 
 extern int errcode_for_file_access(void);
+extern int errcode_for_socket_access(void);
 
 extern int errmsg(const char *fmt, ...)
 /* This extension allows gcc to check the format string for consistency with

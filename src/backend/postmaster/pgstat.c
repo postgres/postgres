@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.37 2003/06/12 07:36:51 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.38 2003/07/22 19:00:10 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -81,12 +81,14 @@ static time_t last_pgstat_start_time;
 static long pgStatNumMessages = 0;
 
 static bool pgStatRunningInCollector = FALSE;
+
 static int	pgStatTabstatAlloc = 0;
 static int	pgStatTabstatUsed = 0;
 static PgStat_MsgTabstat **pgStatTabstatMessages = NULL;
+#define TABSTAT_QUANTUM		4	/* we alloc this many at a time */
+
 static int	pgStatXactCommit = 0;
 static int	pgStatXactRollback = 0;
-
 
 static TransactionId pgStatDBHashXact = InvalidTransactionId;
 static HTAB *pgStatDBHash = NULL;
@@ -145,7 +147,7 @@ void
 pgstat_init(void)
 {
 	ACCEPT_TYPE_ARG3	alen;
-	struct	addrinfo	*addr, hints;
+	struct	addrinfo	*addr = NULL, hints;
 	int			ret;
 
 	/*
@@ -190,15 +192,18 @@ pgstat_init(void)
 	ret = getaddrinfo2("localhost", NULL, &hints, &addr);
 	if (ret || !addr)
 	{
-		elog(LOG, "PGSTAT: getaddrinfo2() failed: %s",
-			gai_strerror(ret));
+		ereport(LOG,
+				(errmsg("getaddrinfo2(\"localhost\") failed: %s",
+						gai_strerror(ret))));
 		goto startup_failed;
 	}
 	
 	if ((pgStatSock = socket(addr->ai_family,
-		addr->ai_socktype, addr->ai_protocol)) < 0)
+							 addr->ai_socktype, addr->ai_protocol)) < 0)
 	{
-		elog(LOG, "PGSTAT: socket() failed: %m");
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not create socket for statistics: %m")));
 		goto startup_failed;
 	}
 
@@ -208,7 +213,9 @@ pgstat_init(void)
 	 */
 	if (bind(pgStatSock, addr->ai_addr, addr->ai_addrlen) < 0)
 	{
-		elog(LOG, "PGSTAT: bind() failed: %m");
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not bind socket for statistics: %m")));
 		goto startup_failed;
 	}
 	freeaddrinfo2(hints.ai_family, addr);
@@ -217,7 +224,9 @@ pgstat_init(void)
 	alen = sizeof(pgStatAddr);
 	if (getsockname(pgStatSock, (struct sockaddr *)&pgStatAddr, &alen) < 0)
 	{
-		elog(LOG, "PGSTAT: getsockname() failed: %m");
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not get address of socket for statistics: %m")));
 		goto startup_failed;
 	}
 
@@ -229,7 +238,9 @@ pgstat_init(void)
 	 */
 	if (connect(pgStatSock, (struct sockaddr *) & pgStatAddr, alen) < 0)
 	{
-		elog(LOG, "PGSTAT: connect() failed: %m");
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not connect socket for statistics: %m")));
 		goto startup_failed;
 	}
 
@@ -241,7 +252,9 @@ pgstat_init(void)
 	 */
 	if (FCNTL_NONBLOCK(pgStatSock) < 0)
 	{
-		elog(LOG, "PGSTAT: fcntl() failed: %m");
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not set statistics socket to nonblock mode: %m")));
 		goto startup_failed;
 	}
 
@@ -250,7 +263,9 @@ pgstat_init(void)
 	 */
 	if (pipe(pgStatPmPipe) < 0)
 	{
-		elog(LOG, "PGSTAT: pipe() failed: %m");
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not create pipe for statistics collector: %m")));
 		goto startup_failed;
 	}
 
@@ -258,9 +273,7 @@ pgstat_init(void)
 
 startup_failed:
 	if (addr)
-	{
 		freeaddrinfo2(hints.ai_family, addr);
-	}
 
 	if (pgStatSock >= 0)
 		closesocket(pgStatSock);
@@ -312,7 +325,8 @@ pgstat_start(void)
 	 */
 	if (pgStatSock < 0)
 	{
-		elog(LOG, "PGSTAT: statistics collector startup skipped");
+		ereport(LOG,
+				(errmsg("statistics collector startup skipped")));
 		/*
 		 * We can only get here if someone tries to manually turn
 		 * pgstat_collect_startcollector on after it had been off.
@@ -340,7 +354,8 @@ pgstat_start(void)
 			/* Specific beos actions */
 			beos_backend_startup_failed();
 #endif
-			elog(LOG, "PGSTAT: fork() failed: %m");
+			ereport(LOG,
+					(errmsg("could not fork statistics buffer: %m")));
 			return;
 
 		case 0:
@@ -744,7 +759,9 @@ pgstat_reset_counters(void)
 		return;
 
 	if (!superuser())
-		elog(ERROR, "Only database superusers can reset statistic counters");
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to reset statistics counters")));
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_RESETCOUNTER);
 	pgstat_send(&msg, sizeof(msg));
@@ -802,32 +819,41 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 	}
 
 	/*
-	 * On the first of all calls initialize the message buffers.
+	 * On the first of all calls create some message buffers.
 	 */
-	if (pgStatTabstatAlloc == 0)
+	if (pgStatTabstatMessages == NULL)
 	{
-		pgStatTabstatAlloc = 4;
-		pgStatTabstatMessages = (PgStat_MsgTabstat **)
-			malloc(sizeof(PgStat_MsgTabstat *) * pgStatTabstatAlloc);
-		if (pgStatTabstatMessages == NULL)
+		PgStat_MsgTabstat *newMessages;
+		PgStat_MsgTabstat **msgArray;
+
+		newMessages = (PgStat_MsgTabstat *)
+			malloc(sizeof(PgStat_MsgTabstat) * TABSTAT_QUANTUM);
+		if (newMessages == NULL)
 		{
-			elog(LOG, "PGSTATBE: malloc() failed");
+			ereport(LOG,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 			return;
 		}
-		for (i = 0; i < pgStatTabstatAlloc; i++)
+		msgArray = (PgStat_MsgTabstat **)
+			malloc(sizeof(PgStat_MsgTabstat *) * TABSTAT_QUANTUM);
+		if (msgArray == NULL)
 		{
-			pgStatTabstatMessages[i] = (PgStat_MsgTabstat *)
-				malloc(sizeof(PgStat_MsgTabstat));
-			if (pgStatTabstatMessages[i] == NULL)
-			{
-				elog(LOG, "PGSTATBE: malloc() failed");
-				return;
-			}
+			free(newMessages);
+			ereport(LOG,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
+			return;
 		}
+		MemSet(newMessages, 0, sizeof(PgStat_MsgTabstat) * TABSTAT_QUANTUM);
+		for (i = 0; i < TABSTAT_QUANTUM; i++)
+			msgArray[i] = newMessages++;
+		pgStatTabstatMessages = msgArray;
+		pgStatTabstatAlloc = TABSTAT_QUANTUM;
 	}
 
 	/*
-	 * Lookup the so far used table slots for this relation.
+	 * Search the already-used message slots for this relation.
 	 */
 	for (mb = 0; mb < pgStatTabstatUsed; mb++)
 	{
@@ -849,7 +875,6 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 		 */
 		i = pgStatTabstatMessages[mb]->m_nentries++;
 		useent = &pgStatTabstatMessages[mb]->m_entry[i];
-		memset(useent, 0, sizeof(PgStat_TableEntry));
 		useent->t_id = rel_id;
 		stats->tabentry = (void *) useent;
 		return;
@@ -860,27 +885,35 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 	 */
 	if (pgStatTabstatUsed >= pgStatTabstatAlloc)
 	{
-		pgStatTabstatAlloc += 4;
-		pgStatTabstatMessages = (PgStat_MsgTabstat **)
-			realloc(pgStatTabstatMessages,
-					sizeof(PgStat_MsgTabstat *) * pgStatTabstatAlloc);
-		if (pgStatTabstatMessages == NULL)
+		int		newAlloc = pgStatTabstatAlloc + TABSTAT_QUANTUM;
+		PgStat_MsgTabstat *newMessages;
+		PgStat_MsgTabstat **msgArray;
+
+		newMessages = (PgStat_MsgTabstat *)
+			malloc(sizeof(PgStat_MsgTabstat) * TABSTAT_QUANTUM);
+		if (newMessages == NULL)
 		{
-			pgStatTabstatAlloc -= 4;
-			elog(LOG, "PGSTATBE: malloc() failed");
+			ereport(LOG,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 			return;
 		}
-		for (i = pgStatTabstatUsed; i < pgStatTabstatAlloc; i++)
+		msgArray = (PgStat_MsgTabstat **)
+			realloc(pgStatTabstatMessages,
+					sizeof(PgStat_MsgTabstat *) * newAlloc);
+		if (msgArray == NULL)
 		{
-			pgStatTabstatMessages[i] = (PgStat_MsgTabstat *)
-				malloc(sizeof(PgStat_MsgTabstat));
-			if (pgStatTabstatMessages[i] == NULL)
-			{
-				pgStatTabstatAlloc -= 4;
-				elog(LOG, "PGSTATBE: malloc() failed");
-				return;
-			}
+			free(newMessages);
+			ereport(LOG,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
+			return;
 		}
+		MemSet(newMessages, 0, sizeof(PgStat_MsgTabstat) * TABSTAT_QUANTUM);
+		for (i = 0; i < TABSTAT_QUANTUM; i++)
+			msgArray[pgStatTabstatAlloc + i] = newMessages++;
+		pgStatTabstatMessages = msgArray;
+		pgStatTabstatAlloc = newAlloc;
 	}
 
 	/*
@@ -889,10 +922,8 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 	mb = pgStatTabstatUsed++;
 	pgStatTabstatMessages[mb]->m_nentries = 1;
 	useent = &pgStatTabstatMessages[mb]->m_entry[0];
-	memset(useent, 0, sizeof(PgStat_TableEntry));
 	useent->t_id = rel_id;
 	stats->tabentry = (void *) useent;
-	return;
 }
 
 
@@ -1205,14 +1236,17 @@ pgstat_main(void)
 	 */
 	if (pipe(pgStatPipe) < 0)
 	{
-		elog(LOG, "PGSTAT: pipe() failed: %m");
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not create pipe for statistics buffer: %m")));
 		exit(1);
 	}
 
 	switch (fork())
 	{
 		case -1:
-			elog(LOG, "PGSTAT: fork() failed: %m");
+			ereport(LOG,
+					(errmsg("could not fork statistics collector: %m")));
 			exit(1);
 
 		case 0:
@@ -1266,7 +1300,10 @@ pgstat_main(void)
 							   &hash_ctl, HASH_ELEM | HASH_FUNCTION);
 	if (pgStatBeDead == NULL)
 	{
-		elog(LOG, "PGSTAT: Creation of dead backend hash table failed");
+		/* assume the problem is out-of-memory */
+		ereport(LOG,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory in statistics collector --- abort")));
 		exit(1);
 	}
 
@@ -1277,7 +1314,8 @@ pgstat_main(void)
 							   sizeof(PgStat_StatBeEntry) * MaxBackends);
 	if (pgStatBeTable == NULL)
 	{
-		elog(LOG, "PGSTAT: Allocation of backend table failed");
+		ereport(LOG,
+				(errmsg("allocation of backend table failed")));
 		exit(1);
 	}
 	memset(pgStatBeTable, 0, sizeof(PgStat_StatBeEntry) * MaxBackends);
@@ -1341,7 +1379,9 @@ pgstat_main(void)
 		{
 			if (errno == EINTR)
 				continue;
-			elog(LOG, "PGSTAT: select() failed: %m");
+			ereport(LOG,
+					(errcode_for_socket_access(),
+					 errmsg("select failed in statistics collector: %m")));
 			exit(1);
 		}
 
@@ -1381,7 +1421,9 @@ pgstat_main(void)
 				{
 					if (errno == EINTR)
 						continue;
-					elog(LOG, "PGSTAT: read() failed: %m");
+					ereport(LOG,
+							(errcode_for_socket_access(),
+							 errmsg("could not read from statistics pipe: %m")));
 					exit(1);
 				}
 				if (len == 0)	/* EOF on the pipe! */
@@ -1399,7 +1441,8 @@ pgstat_main(void)
 						 * sync with the buffer process somehow. Abort so
 						 * that we can restart both processes.
 						 */
-						elog(LOG, "PGSTAT: bogus message length");
+						ereport(LOG,
+								(errmsg("invalid statistics message length")));
 						exit(1);
 					}
 				}
@@ -1549,7 +1592,9 @@ pgstat_recvbuffer(void)
 	 */
 	if (FCNTL_NONBLOCK(writePipe) < 0)
 	{
-		elog(LOG, "PGSTATBUFF: fcntl() failed: %m");
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not set statistics pipe to nonblock mode: %m")));
 		exit(1);
 	}
 
@@ -1559,7 +1604,9 @@ pgstat_recvbuffer(void)
 	msgbuffer = (char *) malloc(PGSTAT_RECVBUFFERSZ);
 	if (msgbuffer == NULL)
 	{
-		elog(LOG, "PGSTATBUFF: malloc() failed");
+		ereport(LOG,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory in statistics collector --- abort")));
 		exit(1);
 	}
 
@@ -1586,7 +1633,8 @@ pgstat_recvbuffer(void)
 		{
 			if (!overflow)
 			{
-				elog(LOG, "PGSTATBUFF: Warning - receive buffer full");
+				ereport(LOG,
+						(errmsg("statistics buffer is full")));
 				overflow = true;
 			}
 		}
@@ -1617,7 +1665,9 @@ pgstat_recvbuffer(void)
 		{
 			if (errno == EINTR)
 				continue;
-			elog(LOG, "PGSTATBUFF: select() failed: %m");
+			ereport(LOG,
+					(errcode_for_socket_access(),
+					 errmsg("select failed in statistics buffer: %m")));
 			exit(1);
 		}
 
@@ -1633,7 +1683,9 @@ pgstat_recvbuffer(void)
 				(struct sockaddr *) &fromaddr, &fromlen);
 			if (len < 0)
 			{
-				elog(LOG, "PGSTATBUFF: recvfrom() failed: %m");
+				ereport(LOG,
+						(errcode_for_socket_access(),
+						 errmsg("failed to read statistics message: %m")));
 				exit(1);
 			}
 
@@ -1706,7 +1758,9 @@ pgstat_recvbuffer(void)
 			{
 				if (errno == EINTR || errno == EAGAIN)
 					continue;	/* not enough space in pipe */
-				elog(LOG, "PGSTATBUFF: write() failed: %m");
+				ereport(LOG,
+						(errcode_for_socket_access(),
+						 errmsg("failed to write statistics pipe: %m")));
 				exit(1);
 			}
 			/* NB: len < xfr is okay */
@@ -1759,7 +1813,8 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 	 */
 	if (msg->m_backendid < 1 || msg->m_backendid > MaxBackends)
 	{
-		elog(LOG, "PGSTAT: Invalid backend ID %d", msg->m_backendid);
+		ereport(LOG,
+				(errmsg("invalid backend ID %d", msg->m_backendid)));
 		return -1;
 	}
 
@@ -1817,7 +1872,9 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 												 HASH_ENTER, &found);
 	if (dbentry == NULL)
 	{
-		elog(LOG, "PGSTAT: DB hash table out of memory - abort");
+		ereport(LOG,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory in statistics collector --- abort")));
 		exit(1);
 	}
 
@@ -1846,8 +1903,10 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 									  HASH_ELEM | HASH_FUNCTION);
 		if (dbentry->tables == NULL)
 		{
-			elog(LOG, "PGSTAT: failed to initialize hash table for "
-				 "new database entry");
+			/* assume the problem is out-of-memory */
+			ereport(LOG,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory in statistics collector --- abort")));
 			exit(1);
 		}
 	}
@@ -1895,10 +1954,13 @@ pgstat_sub_backend(int procpid)
 			 */
 			deadbe = (PgStat_StatBeDead *) hash_search(pgStatBeDead,
 													   (void *) &procpid,
-													 HASH_ENTER, &found);
+													   HASH_ENTER,
+													   &found);
 			if (deadbe == NULL)
 			{
-				elog(LOG, "PGSTAT: dead backend hash table out of memory");
+				ereport(LOG,
+						(errcode(ERRCODE_OUT_OF_MEMORY),
+						 errmsg("out of memory in statistics collector --- abort")));
 				exit(1);
 			}
 			if (!found)
@@ -1945,8 +2007,10 @@ pgstat_write_statsfile(void)
 	fpout = fopen(pgStat_tmpfname, PG_BINARY_W);
 	if (fpout == NULL)
 	{
-		elog(LOG, "PGSTAT: cannot open temp stats file %s: %m",
-			 pgStat_tmpfname);
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("cannot write temp statistics file \"%s\": %m",
+						pgStat_tmpfname)));
 		return;
 	}
 
@@ -1971,8 +2035,9 @@ pgstat_write_statsfile(void)
 								(void *) &(dbentry->databaseid),
 								HASH_REMOVE, NULL) == NULL)
 				{
-					elog(LOG, "PGSTAT: database hash table corrupted "
-						 "during cleanup - abort");
+					ereport(LOG,
+							(errmsg("database hash table corrupted "
+									"during cleanup --- abort")));
 					exit(1);
 				}
 			}
@@ -2007,10 +2072,11 @@ pgstat_write_statsfile(void)
 									(void *) &(tabentry->tableid),
 									HASH_REMOVE, NULL) == NULL)
 					{
-						elog(LOG, "PGSTAT: tables hash table for "
-							 "database %d corrupted during "
-							 "cleanup - abort",
-							 dbentry->databaseid);
+						ereport(LOG,
+								(errmsg("tables hash table for "
+										"database %u corrupted during "
+										"cleanup --- abort",
+										dbentry->databaseid)));
 						exit(1);
 					}
 				}
@@ -2049,20 +2115,24 @@ pgstat_write_statsfile(void)
 
 	/*
 	 * No more output to be done. Close the temp file and replace the old
-	 * pgstat.stat with it's content.
+	 * pgstat.stat with it.
 	 */
 	fputc('E', fpout);
 	if (fclose(fpout) < 0)
 	{
-		elog(LOG, "PGSTAT: Error closing temp stats file %s: %m",
-			 pgStat_tmpfname);
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not write temp statistics file \"%s\": %m",
+						pgStat_tmpfname)));
 	}
 	else
 	{
 		if (rename(pgStat_tmpfname, pgStat_fname) < 0)
 		{
-			elog(LOG, "PGSTAT: Cannot rename temp stats file %s: %m",
-				 pgStat_fname);
+			ereport(LOG,
+					(errcode_for_file_access(),
+					 errmsg("could not rename temp statistics file \"%s\" to \"%s\": %m",
+							pgStat_tmpfname, pgStat_fname)));
 		}
 	}
 
@@ -2082,8 +2152,9 @@ pgstat_write_statsfile(void)
 							(void *) &(deadbe->procpid),
 							HASH_REMOVE, NULL) == NULL)
 			{
-				elog(LOG, "PGSTAT: dead backend hash table corrupted "
-					 "during cleanup - abort");
+				ereport(LOG,
+						(errmsg("dead-backend hash table corrupted "
+								"during cleanup --- abort")));
 				exit(1);
 			}
 		}
@@ -2145,13 +2216,18 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 						  HASH_ELEM | HASH_FUNCTION | mcxt_flags);
 	if (*dbhash == NULL)
 	{
+		/* assume the problem is out-of-memory */
 		if (pgStatRunningInCollector)
 		{
-			elog(LOG, "PGSTAT: Creation of DB hash table failed");
+			ereport(LOG,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory in statistics collector --- abort")));
 			exit(1);
 		}
 		/* in backend, can do normal error */
-		elog(ERROR, "PGSTAT: Creation of DB hash table failed");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 	}
 
 	/*
@@ -2187,18 +2263,10 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 			case 'D':
 				if (fread(&dbbuf, 1, sizeof(dbbuf), fpin) != sizeof(dbbuf))
 				{
-					if (pgStatRunningInCollector)
-					{
-						elog(LOG, "PGSTAT: corrupted pgstat.stat file");
-						fclose(fpin);
-						return;
-					}
-					else
-					{
-						elog(WARNING, "PGSTAT: corrupted pgstat.stat file");
-						fclose(fpin);
-						return;
-					}
+					ereport(pgStatRunningInCollector ? LOG : WARNING,
+							(errmsg("corrupted pgstat.stat file")));
+					fclose(fpin);
+					return;
 				}
 
 				/*
@@ -2206,34 +2274,31 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				 */
 				dbentry = (PgStat_StatDBEntry *) hash_search(*dbhash,
 											  (void *) &dbbuf.databaseid,
-													 HASH_ENTER, &found);
+															 HASH_ENTER,
+															 &found);
 				if (dbentry == NULL)
 				{
 					if (pgStatRunningInCollector)
 					{
-						elog(LOG, "PGSTAT: DB hash table out of memory");
+						ereport(LOG,
+								(errcode(ERRCODE_OUT_OF_MEMORY),
+								 errmsg("out of memory in statistics collector --- abort")));
 						exit(1);
 					}
 					else
 					{
 						fclose(fpin);
-						elog(ERROR, "PGSTAT: DB hash table out of memory");
+						ereport(ERROR,
+								(errcode(ERRCODE_OUT_OF_MEMORY),
+								 errmsg("out of memory")));
 					}
 				}
 				if (found)
 				{
-					if (pgStatRunningInCollector)
-					{
-						elog(LOG, "PGSTAT: corrupted pgstat.stat file");
-						fclose(fpin);
-						return;
-					}
-					else
-					{
-						elog(WARNING, "PGSTAT: corrupted pgstat.stat file");
-						fclose(fpin);
-						return;
-					}
+					ereport(pgStatRunningInCollector ? LOG : WARNING,
+							(errmsg("corrupted pgstat.stat file")));
+					fclose(fpin);
+					return;
 				}
 
 				memcpy(dbentry, &dbbuf, sizeof(PgStat_StatDBEntry));
@@ -2247,7 +2312,6 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				if (onlydb != InvalidOid && onlydb != dbbuf.databaseid)
 					break;
 
-
 				memset(&hash_ctl, 0, sizeof(hash_ctl));
 				hash_ctl.keysize = sizeof(Oid);
 				hash_ctl.entrysize = sizeof(PgStat_StatTabEntry);
@@ -2259,18 +2323,19 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 								 HASH_ELEM | HASH_FUNCTION | mcxt_flags);
 				if (dbentry->tables == NULL)
 				{
+					/* assume the problem is out-of-memory */
 					if (pgStatRunningInCollector)
 					{
-						elog(LOG, "PGSTAT: failed to initialize "
-							 "hash table for new database entry");
+						ereport(LOG,
+								(errcode(ERRCODE_OUT_OF_MEMORY),
+								 errmsg("out of memory in statistics collector --- abort")));
 						exit(1);
 					}
-					else
-					{
-						fclose(fpin);
-						elog(ERROR, "PGSTAT: failed to initialize "
-							 "hash table for new database entry");
-					}
+					/* in backend, can do normal error */
+					fclose(fpin);
+					ereport(ERROR,
+							(errcode(ERRCODE_OUT_OF_MEMORY),
+							 errmsg("out of memory")));
 				}
 
 				/*
@@ -2293,18 +2358,10 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 			case 'T':
 				if (fread(&tabbuf, 1, sizeof(tabbuf), fpin) != sizeof(tabbuf))
 				{
-					if (pgStatRunningInCollector)
-					{
-						elog(LOG, "PGSTAT: corrupted pgstat.stat file");
-						fclose(fpin);
-						return;
-					}
-					else
-					{
-						elog(WARNING, "PGSTAT: corrupted pgstat.stat file");
-						fclose(fpin);
-						return;
-					}
+					ereport(pgStatRunningInCollector ? LOG : WARNING,
+							(errmsg("corrupted pgstat.stat file")));
+					fclose(fpin);
+					return;
 				}
 
 				/*
@@ -2320,30 +2377,24 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				{
 					if (pgStatRunningInCollector)
 					{
-						elog(LOG, "PGSTAT: Tab hash table out of memory");
+						ereport(LOG,
+								(errcode(ERRCODE_OUT_OF_MEMORY),
+								 errmsg("out of memory in statistics collector --- abort")));
 						exit(1);
 					}
-					else
-					{
-						fclose(fpin);
-						elog(ERROR, "PGSTAT: Tab hash table out of memory");
-					}
+					/* in backend, can do normal error */
+					fclose(fpin);
+					ereport(ERROR,
+							(errcode(ERRCODE_OUT_OF_MEMORY),
+							 errmsg("out of memory")));
 				}
 
 				if (found)
 				{
-					if (pgStatRunningInCollector)
-					{
-						elog(LOG, "PGSTAT: corrupted pgstat.stat file");
-						fclose(fpin);
-						return;
-					}
-					else
-					{
-						elog(WARNING, "PGSTAT: corrupted pgstat.stat file");
-						fclose(fpin);
-						return;
-					}
+					ereport(pgStatRunningInCollector ? LOG : WARNING,
+							(errmsg("corrupted pgstat.stat file")));
+					fclose(fpin);
+					return;
 				}
 
 				memcpy(tabentry, &tabbuf, sizeof(tabbuf));
@@ -2361,18 +2412,10 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				if (fread(&maxbackends, 1, sizeof(maxbackends), fpin) !=
 					sizeof(maxbackends))
 				{
-					if (pgStatRunningInCollector)
-					{
-						elog(LOG, "PGSTAT: corrupted pgstat.stat file");
-						fclose(fpin);
-						return;
-					}
-					else
-					{
-						elog(WARNING, "PGSTAT: corrupted pgstat.stat file");
-						fclose(fpin);
-						return;
-					}
+					ereport(pgStatRunningInCollector ? LOG : WARNING,
+							(errmsg("corrupted pgstat.stat file")));
+					fclose(fpin);
+					return;
 				}
 				if (maxbackends == 0)
 				{
@@ -2415,18 +2458,10 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 						  sizeof(PgStat_StatBeEntry), fpin) !=
 					sizeof(PgStat_StatBeEntry))
 				{
-					if (pgStatRunningInCollector)
-					{
-						elog(LOG, "PGSTAT: corrupted pgstat.stat file");
-						fclose(fpin);
-						return;
-					}
-					else
-					{
-						elog(WARNING, "PGSTAT: corrupted pgstat.stat file");
-						fclose(fpin);
-						return;
-					}
+					ereport(pgStatRunningInCollector ? LOG : WARNING,
+							(errmsg("corrupted pgstat.stat file")));
+					fclose(fpin);
+					return;
 				}
 
 				/*
@@ -2456,18 +2491,10 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				return;
 
 			default:
-				if (pgStatRunningInCollector)
-				{
-					elog(LOG, "PGSTAT: corrupted pgstat.stat file");
-					fclose(fpin);
-					return;
-				}
-				else
-				{
-					elog(WARNING, "PGSTAT: corrupted pgstat.stat file");
-					fclose(fpin);
-					return;
-				}
+				ereport(pgStatRunningInCollector ? LOG : WARNING,
+						(errmsg("corrupted pgstat.stat file")));
+				fclose(fpin);
+				return;
 		}
 	}
 
@@ -2579,8 +2606,9 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 													 HASH_ENTER, &found);
 		if (tabentry == NULL)
 		{
-			elog(LOG, "PGSTAT: tables hash table out of memory for "
-				 "database %d - abort", dbentry->databaseid);
+			ereport(LOG,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory in statistics collector --- abort")));
 			exit(1);
 		}
 
@@ -2759,8 +2787,10 @@ pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
 								  HASH_ELEM | HASH_FUNCTION);
 	if (dbentry->tables == NULL)
 	{
-		elog(LOG, "PGSTAT: failed to reinitialize hash table for "
-			 "database entry");
+		/* assume the problem is out-of-memory */
+		ereport(LOG,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory in statistics collector --- abort")));
 		exit(1);
 	}
 }

@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/libpq/pqformat.c,v 1.31 2003/05/09 21:19:49 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/pqformat.c,v 1.32 2003/07/22 19:00:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -231,7 +231,7 @@ pq_sendint(StringInfo buf, int i, int b)
 			appendBinaryStringInfo(buf, (char *) &n32, 4);
 			break;
 		default:
-			elog(ERROR, "pq_sendint: unsupported size %d", b);
+			elog(ERROR, "unsupported integer size %d", b);
 			break;
 	}
 }
@@ -440,7 +440,9 @@ int
 pq_getmsgbyte(StringInfo msg)
 {
 	if (msg->cursor >= msg->len)
-		elog(ERROR, "pq_getmsgbyte: no data left in message");
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("no data left in message")));
 	return (unsigned char) msg->data[msg->cursor++];
 }
 
@@ -473,7 +475,7 @@ pq_getmsgint(StringInfo msg, int b)
 			result = ntohl(n32);
 			break;
 		default:
-			elog(ERROR, "pq_getmsgint: unsupported size %d", b);
+			elog(ERROR, "unsupported integer size %d", b);
 			result = 0;			/* keep compiler quiet */
 			break;
 	}
@@ -586,7 +588,9 @@ pq_getmsgbytes(StringInfo msg, int datalen)
 	const char *result;
 
 	if (datalen < 0 || datalen > (msg->len - msg->cursor))
-		elog(ERROR, "pq_getmsgbytes: insufficient data left in message");
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("insufficient data left in message")));
 	result = &msg->data[msg->cursor];
 	msg->cursor += datalen;
 	return result;
@@ -602,7 +606,9 @@ void
 pq_copymsgbytes(StringInfo msg, char *buf, int datalen)
 {
 	if (datalen < 0 || datalen > (msg->len - msg->cursor))
-		elog(ERROR, "pq_copymsgbytes: insufficient data left in message");
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("insufficient data left in message")));
 	memcpy(buf, &msg->data[msg->cursor], datalen);
 	msg->cursor += datalen;
 }
@@ -621,7 +627,9 @@ pq_getmsgtext(StringInfo msg, int rawbytes, int *nbytes)
 	char   *p;
 
 	if (rawbytes < 0 || rawbytes > (msg->len - msg->cursor))
-		elog(ERROR, "pq_getmsgtext: insufficient data left in message");
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("insufficient data left in message")));
 	str = &msg->data[msg->cursor];
 	msg->cursor += rawbytes;
 
@@ -661,7 +669,9 @@ pq_getmsgstring(StringInfo msg)
 	 */
 	slen = strlen(str);
 	if (msg->cursor + slen >= msg->len)
-		elog(ERROR, "pq_getmsgstring: invalid string in message");
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("invalid string in message")));
 	msg->cursor += slen + 1;
 
 	return (const char *) pg_client_to_server((unsigned char *) str, slen);
@@ -675,5 +685,7 @@ void
 pq_getmsgend(StringInfo msg)
 {
 	if (msg->cursor != msg->len)
-		elog(ERROR, "pq_getmsgend: invalid message format");
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("invalid message format")));
 }

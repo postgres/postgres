@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.66 2003/05/28 16:03:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.67 2003/07/22 19:00:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -341,8 +341,10 @@ PortalSetResultFormat(Portal portal, int nFormats, int16 *formats)
 	{
 		/* format specified for each column */
 		if (nFormats != natts)
-			elog(ERROR, "BIND message has %d result formats but query has %d columns",
-				 nFormats, natts);
+			ereport(ERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("bind message has %d result formats but query has %d columns",
+							nFormats, natts)));
 		memcpy(portal->formats, formats, natts * sizeof(int16));
 	} else if (nFormats > 0)
 	{
@@ -401,9 +403,13 @@ PortalRun(Portal portal, long count,
 	 * Check for improper portal use, and mark portal active.
 	 */
 	if (portal->portalDone)
-		elog(ERROR, "Portal \"%s\" cannot be run anymore", portal->name);
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("portal \"%s\" cannot be run anymore", portal->name)));
 	if (portal->portalActive)
-		elog(ERROR, "Portal \"%s\" already active", portal->name);
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("portal \"%s\" already active", portal->name)));
 	portal->portalActive = true;
 
 	/*
@@ -468,7 +474,8 @@ PortalRun(Portal portal, long count,
 			break;
 
 		default:
-			elog(ERROR, "PortalRun: bogus portal strategy");
+			elog(ERROR, "unrecognized portal strategy: %d",
+				 (int) portal->strategy);
 			result = false;		/* keep compiler quiet */
 			break;
 	}
@@ -577,8 +584,10 @@ PortalRunSelect(Portal portal,
 	else
 	{
 		if (portal->cursorOptions & CURSOR_OPT_NO_SCROLL)
-			elog(ERROR, "Cursor can only scan forward"
-				 "\n\tDeclare it with SCROLL option to enable backward scan");
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("cursor can only scan forward"),
+					 errhint("Declare it with SCROLL option to enable backward scan.")));
 
 		if (portal->atStart || count <= 0)
 			direction = NoMovementScanDirection;
@@ -900,9 +909,13 @@ PortalRunFetch(Portal portal,
 	 * Check for improper portal use, and mark portal active.
 	 */
 	if (portal->portalDone)
-		elog(ERROR, "Portal \"%s\" cannot be run anymore", portal->name);
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("portal \"%s\" cannot be run anymore", portal->name)));
 	if (portal->portalActive)
-		elog(ERROR, "Portal \"%s\" already active", portal->name);
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("portal \"%s\" already active", portal->name)));
 	portal->portalActive = true;
 
 	/*
@@ -922,7 +935,7 @@ PortalRunFetch(Portal portal,
 			break;
 
 		default:
-			elog(ERROR, "PortalRunFetch: unsupported portal strategy");
+			elog(ERROR, "unsupported portal strategy");
 			result = 0;			/* keep compiler quiet */
 			break;
 	}
@@ -1053,7 +1066,7 @@ DoPortalRunFetch(Portal portal,
 			}
 			break;
 		default:
-			elog(ERROR, "PortalRunFetch: bogus direction");
+			elog(ERROR, "bogus direction");
 			break;
 	}
 

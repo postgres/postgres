@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sources.sgml,v 2.9 2003/07/18 23:20:32 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sources.sgml,v 2.10 2003/07/22 19:00:07 tgl Exp $
 -->
 
  <chapter id="source">
@@ -232,6 +232,13 @@ less -x4
      <literal>errno</> to determine which error code to generate.
      Usually this should be used in combination with <literal>%m</> in the
      primary error message text.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <function>errcode_for_socket_access</>() is a convenience function that
+     selects an appropriate SQLSTATE error identifier for a failure in a
+     socket-related system call.
     </para>
    </listitem>
   </itemizedlist>
