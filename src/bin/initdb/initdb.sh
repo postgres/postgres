@@ -23,7 +23,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.109 2000/11/02 19:48:39 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.110 2000/11/04 12:47:48 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -423,11 +423,6 @@ else
         mkdir "$PGDATA"/pg_xlog || exit_nicely
     fi
 fi
-
-# Be sure that PGDATA is an absolute path, otherwise backend croaks.
-
-unset CDPATH
-PGDATA=`cd $PGDATA && pwd`
 
 
 ##########################################################################
