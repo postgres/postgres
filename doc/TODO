@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Oct 23 18:15:18 EDT 2000
+Last updated:		Mon Oct 23 21:59:07 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -21,18 +21,18 @@ PARSER
 * SELECT pg_class FROM pg_class generates strange error
 * Alter TABLE ADD COLUMN does not honor DEFAULT, add CONSTRAINT
 * -Creating index of TIMESTAMP & RELTIME fails, or rename to DATETIME(Thomas)
-* SELECT foo UNION SELECT foo is incorrectly simplified to SELECT foo
+* -SELECT foo UNION SELECT foo is incorrectly simplified to SELECT foo
 * Unique index on base column not honored on inserts from inherited table
   INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
   [inherit] 
-* Be smarter about promoting types when UNION merges different data types
-* redesign INSERT ... SELECT to have two levels of target list
+* -Be smarter about promoting types when UNION merges different data types
+* -redesign INSERT ... SELECT to have two levels of target list
 * have INTERSECT/EXCEPT prevent duplicates unless ALL is specified
 * SELECT col::DECIMAL(12,10); fails
 
 VIEWS
 
-* Views containing aggregates sometimes fail(Jan)
+* -Views containing aggregates sometimes fail(Jan)
 * Creating view and inheriting the view causes view* to show
   duplicates(inherit) 
 * -Disallow LOCK on view(Mark Hollomon)
@@ -43,8 +43,8 @@ MISC
 * Buffer reference counting bugfixes
 * Fix libpq bug that causes it to drop backend error message sent
   just before connection closure (ie, any FATAL error message)
-* SELECT ... UNION ... ORDER BY fails when sort expr not in result list
-* SELECT ... UNION ... GROUP BY fails if column types disagree, no type
+* -SELECT ... UNION ... ORDER BY fails when sort expr not in result list
+* -SELECT ... UNION ... GROUP BY fails if column types disagree, no type
   promotion occurs
 * Modification  of  pg_class  can  happen while table in use by
   another backend.  Might  lead  to  MVCC  inside  of  syscache
@@ -56,7 +56,7 @@ ENHANCEMENTS
 URGENT
 
 * -Add OUTER joins, left and right[outer](Tom, Thomas)
-* Allow long tuples by chaining or auto-storing outside db (TOAST)(Jan)
+* -Allow long tuples by chaining or auto-storing outside db (TOAST)(Jan)
 * Fix memory leak for expressions[memory](Tom?) 
 
 ADMIN
@@ -74,12 +74,12 @@ TYPES
 * Nchar (as distinguished from ordinary varchar),
 * Domain capability
 * -Add STDDEV/VARIANCE() function for standard deviation computation/variance
-* Allow compression of large fields or a compressed field type
-* Large objects
-	o Fix large object mapping scheme, own typeid or reltype(Peter)
-	o Not to stuff everything as files in a single directory, hash dirs
-	o Allow large object vacuuming
-	o Tables that start with xinv confused to be large objects
+* -Allow compression of large fields or a compressed field type
+* -Large objects
+	o -Fix large object mapping scheme, own typeid or reltype(Peter)
+	o -Not to stuff everything as files in a single directory, hash dirs
+	o -Allow large object vacuuming
+	o -Tables that start with xinv confused to be large objects
 * Add IPv6 capability to INET/CIDR types
 * Fix improper masking of some inet/cidr types [cidr]
 * Make a separate SERIAL type?
@@ -109,9 +109,9 @@ TYPES
 
 VIEWS
 
-* Allow DISTINCT on views
-* Allow views of aggregate columns
-* Allow views with subselects
+* -Allow DISTINCT on views
+* -Allow views of aggregate columns
+* -Allow views with subselects
 * Create insert, update and delete rules for simple one table views
 * -Change elog for complex view ins|upd|del to "cannot {ins|upd|del}
 * Add the functionality for "with check option" clause of create view
@@ -145,7 +145,7 @@ COMMANDS
 * Rewrite the LIKE handling by rewriting the user string with the 
   supplied ESCAPE [like]
 * Allow RULE recompilation
-* Support UNION/INTERSECT/EXCEPT in sub-selects
+* -Support UNION/INTERSECT/EXCEPT in sub-selects
 * -Allow DELETE and UPDATE to use inheritance
 * Allow INSERT INTO my_table VALUES (a, b, c, DEFAULT, x, y, z, ...)
 * Allow BINARY option to SELECT, like we do with DECLARE
@@ -208,15 +208,15 @@ MISC
   with after-row images(Vadim) [logging](Vadim)(in-progress)
 * Populate backend status area and write program to dump status data
 * Make oid use unsigned int more reliably, pg_atoi()
-* Put sort files, large objects in their own directory
+* Put sort files in their own directory
 * Do autocommit so always in a transaction block(?)
 * Show location of syntax error in query [yacc]
-* Redesign the function call interface to handle NULLs better[function](Tom)
+* -Redesign the function call interface to handle NULLs better[function](Tom)
 * Missing optimizer selectivities for date, r-tree, etc. [optimizer]
 * Overhaul bufmgr/lockmgr/transaction manager
 * Allow BLCKSZ <= 64k, not <= 32k
-* redesign UNION structures to have separarate target lists
-* Allow multi-level query trees for INSERT INTO ... SELECT
+* -redesign UNION structures to have separarate target lists
+* -Allow multi-level query trees for INSERT INTO ... SELECT
 * Use IPC_EXCL when creating shared memory and semaphores
 * have pg_upgrade use pg_ctl to stop/start postmaster
 * Encrpyt passwords in pg_shadow table using MD5
@@ -258,16 +258,17 @@ MISC
 * Improve Subplan list handling
 * Allow Subplans to use efficient joins(hash, merge) with upper variable
   [subquery]
-* use fmgr_info()/fmgr_faddr() instead of fmgr() calls in high-traffic
+* -use fmgr_info()/fmgr_faddr() instead of fmgr() calls in high-traffic
   places, like GROUP BY, UNIQUE, index processing, etc.
 * improve dynamic memory allocation by introducing tuple-context memory
   allocation [memory]
-* In WHERE tab1.x=3 AND tab1.x=tab2.y, add tab2.y=3
+* -In WHERE tab1.x=3 AND tab1.x=tab2.y, add tab2.y=3
 * Allow persistent backends [persistent]
 * prevent labels from being output for stored rules (Tom)
 * allow configuration of maximum number of open files
 * Remove pg_listener index
-* Remove ANALYZE from VACUUM so it can be run separately without locks
+* -Redesign ANALYZE in VACUUM so it can be run separately without locks
+* Make ANALYZE a separate command
 * Gather more accurate dispersion statistics using indexes
 * Keep statistics about clustering of table rows [optimizer]
 * Improve statistics storage in pg_class [performance]
