@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Sep 22 21:38:57 EDT 2002
+Last updated:		Mon Sep 23 10:52:15 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -68,6 +68,7 @@ Administration
 * Allow configuration files to be specified in a different directory
 * -Reserve last few process slots for super-user if max_connections reached
 * -Add GUC parameter to print queries that generate errors
+* Add start time to pg_stat_activity
 
 
 Data Types
