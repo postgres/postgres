@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Aug 19 22:16:31 EDT 2002
+Last updated:		Tue Aug 20 01:12:40 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -186,8 +186,6 @@ Commands
 * Allow UPDATE to handle complex aggregates [update]
 * -Prevent create/drop scripts from allowing extra args (Bruce)
 * Allow command blocks to ignore certain types of errors
-* Add checks for missing parameters to shell script, to prevent
-  over-shifting
 * Allow backslash handling in quoted strings to be disabled for portability
 
 * ALTER
