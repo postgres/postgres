@@ -8,7 +8,7 @@
 
 
 #define NO_UNISTD_H
-
+#define SOCKET_SIZE_TYPE int
 
 /*
  * Some compat functions
