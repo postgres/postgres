@@ -4,7 +4,7 @@
 #    Makefile for the plpgsql shared object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.14 1999/02/07 22:10:47 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.15 1999/03/20 18:00:38 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -60,18 +60,16 @@ pl_funcs.o:	pl_funcs.c plpgsql.h pl.tab.h
 pl_parse.o:	pl_gram.c pl_scan.c plpgsql.h
 	$(CC) $(CFLAGS) -c -o $@ pl_gram.c
 
-pl_gram.c:	gram.c
-	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' <gram.c >pl_gram.c
+pl_gram.c pl.tab.h:	gram.y
+	$(YACC) $(YFLAGS) $<
+	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' <y.tab.c >pl_gram.c
 	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' <y.tab.h >pl.tab.h
+	rm -f y.tab.c y.tab.h
 
-pl_scan.c:	scan.c
-	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' <scan.c >pl_scan.c
-
-gram.c:		gram.y
-
-scan.c:		scan.l
-
-pl.tab.h:	pl_gram.c
+pl_scan.c:	scan.l
+	$(LEX) $<
+	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' <lex.yy.c >pl_scan.c
+	rm -f lex.yy.c
 
 
 .PHONY: install clean
@@ -79,6 +77,8 @@ pl.tab.h:	pl_gram.c
 clean:
 	rm -f lib$(NAME).a $(shlib)
 	rm -f *.o pl.tab.h pl_gram.c pl_scan.c
+# And the garbage that might have been left behind by partial build:
+	rm -f y.tab.c y.tab.h lex.yy.c
 ifeq ($(PORTNAME), win)
 	rm -f $(NAME).def
 endif
