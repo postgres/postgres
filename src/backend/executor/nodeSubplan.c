@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.16 1999/11/15 02:00:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.17 1999/11/15 03:28:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,9 +107,18 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 			if (found)
 				elog(ERROR, "ExecSubPlan: more than one tuple returned by expression subselect");
 			found = true;
-			/* XXX need to copy tuple in case pass by ref */
-			/* XXX need to ref-count the tuple to avoid mem leak! */
+			/*
+			 * We need to copy the subplan's tuple in case the result is of
+			 * pass-by-ref type --- our return value will point into this
+			 * copied tuple!  Can't use the subplan's instance of the tuple
+			 * since it won't still be valid after next ExecProcNode() call.
+			 * node->curTuple keeps track of the copied tuple for eventual
+			 * freeing.
+			 */
 			tup = heap_copytuple(tup);
+			if (node->curTuple)
+				pfree(node->curTuple);
+			node->curTuple = tup;
 			result = heap_getattr(tup, col, tdesc, isNull);
 			/* keep scanning subplan to make sure there's only one tuple */
 			continue;
@@ -253,10 +262,13 @@ ExecInitSubPlan(SubPlan *node, EState *estate, Plan *parent)
 		ExecCreateTupleTable(ExecCountSlotsNode(node->plan) + 10);
 	sp_estate->es_snapshot = estate->es_snapshot;
 
+	node->shutdown = false;
+	node->curTuple = NULL;
+
 	if (!ExecInitNode(node->plan, sp_estate, NULL))
 		return false;
 
-	node->shutdown = true;
+	node->shutdown = true;		/* now we need to shutdown the subplan */
 
 	/*
 	 * If this plan is un-correlated or undirect correlated one and want
@@ -332,13 +344,15 @@ ExecSetParamPlan(SubPlan *node)
 		found = true;
 
 		/*
-		 * If this is uncorrelated subquery then its plan will be closed
-		 * (see below) and this tuple will be free-ed - bad for not byval
-		 * types... But is free-ing possible in the next ExecProcNode in
-		 * this loop ? Who knows... Someday we'll keep track of saved
-		 * tuples...
+		 * We need to copy the subplan's tuple in case any of the params
+		 * are pass-by-ref type --- the pointers stored in the param structs
+		 * will point at this copied tuple!  node->curTuple keeps track
+		 * of the copied tuple for eventual freeing.
 		 */
 		tup = heap_copytuple(tup);
+		if (node->curTuple)
+			pfree(node->curTuple);
+		node->curTuple = tup;
 
 		foreach(lst, node->setParam)
 		{
@@ -387,13 +401,16 @@ ExecSetParamPlan(SubPlan *node)
 void
 ExecEndSubPlan(SubPlan *node)
 {
-
 	if (node->shutdown)
 	{
 		ExecEndNode(node->plan, node->plan);
 		node->shutdown = false;
 	}
-
+	if (node->curTuple)
+	{
+		pfree(node->curTuple);
+		node->curTuple = NULL;
+	}
 }
 
 void

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.50 1999/10/07 04:23:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.51 1999/11/15 03:28:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -406,7 +406,11 @@ _equalIndexScan(IndexScan *a, IndexScan *b)
 static bool
 _equalSubPlan(SubPlan *a, SubPlan *b)
 {
+	/* should compare plans, but have to settle for comparing plan IDs */
 	if (a->plan_id != b->plan_id)
+		return false;
+
+	if (!equal(a->rtable, b->rtable))
 		return false;
 
 	if (!equal(a->sublink, b->sublink))

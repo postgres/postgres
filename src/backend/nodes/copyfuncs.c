@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.95 1999/11/15 02:00:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.96 1999/11/15 03:28:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -550,6 +550,10 @@ _copySubPlan(SubPlan *from)
 	newnode->setParam = listCopy(from->setParam);
 	newnode->parParam = listCopy(from->parParam);
 	Node_Copy(from, newnode, sublink);
+
+	/* do not copy execution state */
+	newnode->shutdown = false;
+	newnode->curTuple = NULL;
 
 	return newnode;
 }

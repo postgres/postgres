@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.26 1999/08/21 03:48:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.27 1999/11/15 03:28:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -440,6 +440,9 @@ _freeSubPlan(SubPlan *node)
 	freeList(node->setParam);
 	freeList(node->parParam);
 	freeObject(node->sublink);
+
+	if (node->curTuple)
+		pfree(node->curTuple);
 
 	pfree(node);
 }
