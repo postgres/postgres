@@ -4,7 +4,7 @@
 #
 # Written by Peter Eisentraut  <peter_e@gmx.net>
 #
-# $Header: /cvsroot/pgsql/src/interfaces/python/Attic/GNUmakefile,v 1.3 2000/12/30 00:24:09 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/python/Attic/GNUmakefile,v 1.4 2001/02/04 13:21:46 petere Exp $
 #
 #-------------------------------------------------------------------
 
@@ -28,7 +28,7 @@ Makefile.pre.in: $(python_extmakefile)
 Setup.in: Setup.in.raw
 	sed -e 's,@libpq_srcdir@,$(libpq_srcdir),g' \
 	    -e 's,@libpq_builddir@,$(libpq_builddir),g' \
-	    -e 's,@EXTRA_LIBS@,$(LIBS),g' \
+	    -e 's%@EXTRA_LIBS@%$(LDFLAGS) $(LIBS)%g' \
 	    -e 's,@pg_includedir@,$(top_srcdir)/src/include,g' \
 	    $< > $@
 
