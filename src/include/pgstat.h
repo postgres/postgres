@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.20 2004/03/02 18:37:52 momjian Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.21 2004/03/09 05:11:53 momjian Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -368,6 +368,9 @@ extern void pgstat_mainChild(PGSTAT_FORK_ARGS);
  * Functions called from postmaster
  * ----------
  */
+#ifdef EXEC_BACKEND
+extern void pgstat_init_forkexec_backend(void);
+#endif
 extern void pgstat_init(void);
 extern void pgstat_start(void);
 extern bool pgstat_ispgstat(int pid);

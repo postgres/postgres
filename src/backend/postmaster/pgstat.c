@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.58 2004/02/02 16:37:46 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.59 2004/03/09 05:11:52 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -50,6 +50,10 @@
 #include "utils/hsearch.h"
 #include "utils/ps_status.h"
 #include "utils/syscache.h"
+
+#ifdef EXEC_BACKEND
+#include "utils/guc.h"
+#endif
 
 #ifdef WIN32
 extern pid_t win32_forkexec(const char* path, char *argv[]);
@@ -158,6 +162,17 @@ extern int pgpipe(int handles[2]); /* pgpipe() is in /src/port */
  * ------------------------------------------------------------
  */
 
+#ifdef EXEC_BACKEND
+
+void
+pgstat_init_forkexec_backend(void)
+{
+	Assert(DataDir != NULL);
+	snprintf(pgStat_fname, MAXPGPATH,
+			 PGSTAT_STAT_FILENAME, DataDir);
+}
+
+#endif
 
 /* ----------
  * pgstat_init() -
@@ -364,9 +379,9 @@ static pid_t
 pgstat_forkexec(STATS_PROCESS_TYPE procType)
 {
 	pid_t pid;
-	char *av[11];
+	char *av[13];
 	int ac = 0, bufc = 0, i;
-	char pgstatBuf[8][MAXPGPATH];
+	char pgstatBuf[10][MAXPGPATH];
 
 	av[ac++] = "postgres";
 	switch (procType)
@@ -391,11 +406,15 @@ pgstat_forkexec(STATS_PROCESS_TYPE procType)
 	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",pgStatPipe[0]);
 	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",pgStatPipe[1]);
 
+	/* + misc */
+	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",MaxBackends);
+
 	/* + the pstat file names, and postgres pathname */
 	/* FIXME: [fork/exec] whitespaces in directories? */
 	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%s",pgStat_tmpfname);
 	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%s",pgStat_fname);
 	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%s",pg_pathname);
+	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%s",DataDir);
 
 	/* Add to the arg list */
 	Assert(bufc <= lengthof(pgstatBuf));
@@ -427,16 +446,20 @@ pgstat_forkexec(STATS_PROCESS_TYPE procType)
 static void
 pgstat_parseArgs(PGSTAT_FORK_ARGS)
 {
-	Assert(argc == 8);
+	Assert(argc == 10);
 	argc = 0;
 	pgStatSock 		= atoi(argv[argc++]);
 	pgStatPmPipe[0]	= atoi(argv[argc++]);
 	pgStatPmPipe[1]	= atoi(argv[argc++]);
 	pgStatPipe[0]	= atoi(argv[argc++]);
 	pgStatPipe[1]	= atoi(argv[argc++]);
+	MaxBackends		= atoi(argv[argc++]);
 	strncpy(pgStat_tmpfname,argv[argc++],MAXPGPATH);
 	strncpy(pgStat_fname,	argv[argc++],MAXPGPATH);
 	strncpy(pg_pathname,	argv[argc++],MAXPGPATH);
+	DataDir			= strdup(argv[argc++]);
+
+	read_nondefault_variables();
 }
 
 #endif
@@ -504,7 +527,7 @@ pgstat_start(void)
 #endif
 
 #ifdef EXEC_BACKEND
-	switch ((pgStatSock = (int) pgstat_forkexec(STAT_PROC_BUFFER)))
+	switch ((pgStatPid = (int) pgstat_forkexec(STAT_PROC_BUFFER)))
 #else
 	switch ((pgStatPid = (int) fork()))
 #endif
@@ -1344,6 +1367,10 @@ pgstat_mainInit(void)
 	/* In EXEC case we will not have inherited these settings */
 	IsPostmasterEnvironment = true;
 	whereToSendOutput = None;
+
+	/* Setup global context */
+	MemoryContextInit(); /* before any elog'ing can occur */
+	InitializeGUCOptions();
 #endif
 
 	MyProcPid = getpid();		/* reset MyProcPid */
@@ -1382,7 +1409,6 @@ NON_EXEC_STATIC void
 pgstat_main(PGSTAT_FORK_ARGS)
 {
 	pgstat_mainInit(); /* Note: for *both* EXEC_BACKEND and regular cases */
-
 #ifdef EXEC_BACKEND
 	pgstat_parseArgs(argc,argv);
 #endif
@@ -1458,9 +1484,7 @@ pgstat_mainChild(PGSTAT_FORK_ARGS)
 	HASHCTL		hash_ctl;
 
 #ifdef EXEC_BACKEND
-	MemoryContextInit(); /* before any elog'ing can occur */
-
-	pgstat_mainInit();
+	pgstat_mainInit();  /* Note: only in EXEC_BACKEND case */
 	pgstat_parseArgs(argc,argv);
 #else
 	MyProcPid = getpid();		/* reset MyProcPid */
