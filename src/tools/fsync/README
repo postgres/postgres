@@ -1,0 +1,7 @@
+This program tests fsync.  If first times a simple read.  Then, it times
+an fsync that is part of a write, and one that is done on a newly opened
+file.  Third, it tests various fsync methods.
+
+The program writes to /var/tmp because /tmp is sometimes a memory file
+system.
+
