@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.256 2003/07/28 00:09:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.257 2003/08/01 21:27:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -366,7 +366,7 @@ connectOptions1(PGconn *conn, const char *conninfo)
 		/* here warn that the requiressl option is deprecated? */
 		if (conn->sslmode)
 			free(conn->sslmode);
-		conn->sslmode = "require";
+		conn->sslmode = strdup("require");
 	}
 #endif
 
@@ -466,15 +466,14 @@ connectOptions2(PGconn *conn)
 			case 'r': /* "require" */
 				conn->status = CONNECTION_BAD;
 				printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("sslmode \"%s\" invalid when SSL "
-												"support is not compiled in\n"),
+								  libpq_gettext("sslmode \"%s\" invalid when SSL support is not compiled in\n"),
 								  conn->sslmode);
 				return false;
 		}
 #endif
 	}
 	else
-		conn->sslmode = DefaultSSLMode;
+		conn->sslmode = strdup(DefaultSSLMode);
 
 	return true;
 }
@@ -1351,7 +1350,8 @@ retry_connect:
 					/* Don't bother requesting SSL over a Unix socket */
 					conn->allow_ssl_try = false;
 				}
-				if (conn->allow_ssl_try && !conn->wait_ssl_try && conn->ssl == NULL)
+				if (conn->allow_ssl_try && !conn->wait_ssl_try &&
+					conn->ssl == NULL)
 				{
 					ProtocolVersion pv;
 
@@ -1455,22 +1455,13 @@ retry_ssl_read:
 					}
 					else if (SSLok == 'N')
 					{
-						switch (conn->sslmode[0]) {
-							case 'r':  /* "require" */
-								/* Require SSL, but server does not want it */
-								printfPQExpBuffer(&conn->errorMessage,
-												  libpq_gettext("server does not support SSL, but SSL was required\n"));
-								goto error_return;
-							case 'a':  /* "allow" */
-								/*
-								 * normal startup already failed,
-								 * so SSL failure means the end
-								 */
-								printfPQExpBuffer(&conn->errorMessage,
-												  libpq_gettext("server does not support SSL, and previous non-SSL attempt failed\n"));
-								goto error_return;
+						if (conn->sslmode[0] == 'r')  /* "require" */
+						{
+							/* Require SSL, but server does not want it */
+							printfPQExpBuffer(&conn->errorMessage,
+											  libpq_gettext("server does not support SSL, but SSL was required\n"));
+							goto error_return;
 						}
-
 						/* Otherwise, proceed with normal startup */
 						conn->allow_ssl_try = false;
 						conn->status = CONNECTION_MADE;
@@ -1481,22 +1472,13 @@ retry_ssl_read:
 						/* Received error - probably protocol mismatch */
 						if (conn->Pfdebug)
 							fprintf(conn->Pfdebug, "Postmaster reports error, attempting fallback to pre-7.0.\n");
-						switch (conn->sslmode[0]) {
-							case 'r':  /* "require" */
-								/* Require SSL, but server is too old */
-								printfPQExpBuffer(&conn->errorMessage,
-												  libpq_gettext("server does not support SSL, but SSL was required\n"));
-								goto error_return;
-							case 'a':  /* "allow" */
-								/*
-								 * normal startup already failed,
-								 * so SSL failure means the end
-								 */
-								printfPQExpBuffer(&conn->errorMessage,
-												  libpq_gettext("server does not support SSL, and previous non-SSL attempt failed\n"));
-								goto error_return;
+						if (conn->sslmode[0] == 'r')  /* "require" */
+						{
+							/* Require SSL, but server is too old */
+							printfPQExpBuffer(&conn->errorMessage,
+											  libpq_gettext("server does not support SSL, but SSL was required\n"));
+							goto error_return;
 						}
-
 						/* Otherwise, try again without SSL */
 						conn->allow_ssl_try = false;
 						/* Assume it ain't gonna handle protocol 3, either */
@@ -1686,13 +1668,15 @@ retry_ssl_read:
 
 #ifdef USE_SSL
 					/*
-					 * if sslmode is "allow" and we haven't tried an
-					 * SSL connection already, then retry with an SSL connection
+					 * if sslmode is "allow" and we haven't tried an SSL
+					 * connection already, then retry with an SSL connection
 					 */
-					if (conn->wait_ssl_try
+					if (conn->sslmode[0] == 'a' /* "allow" */
 						&& conn->ssl == NULL
-						&& conn->allow_ssl_try)
+						&& conn->allow_ssl_try
+						&& conn->wait_ssl_try)
 					{
+						/* only retry once */
 						conn->wait_ssl_try = false;
 						/* Must drop the old connection */
 						closesocket(conn->sock);
@@ -1703,20 +1687,19 @@ retry_ssl_read:
 
 					/*
 					 * if sslmode is "prefer" and we're in an SSL
-					 * connection and we haven't already tried a non-SSL
-					 * for "allow", then do a non-SSL retry
+					 * connection, then do a non-SSL retry
 					 */
-					if (!conn->wait_ssl_try
+					if (conn->sslmode[0] == 'p' /* "prefer" */
 						&& conn->ssl
-						&& conn->allow_ssl_try
-						&& conn->sslmode[0] == 'p')  /* "prefer" */
+						&& conn->allow_ssl_try /* redundant? */
+						&& !conn->wait_ssl_try)	/* redundant? */
 					{
+						/* only retry once */
 						conn->allow_ssl_try = false;
 						/* Must drop the old connection */
 						pqsecure_close(conn);
 						closesocket(conn->sock);
 						conn->sock = -1;
-						free(conn->ssl);
 						conn->status = CONNECTION_NEEDED;
 						goto keep_going;
 					}
@@ -1773,44 +1756,6 @@ retry_ssl_read:
 				if (fe_sendauth(areq, conn, conn->pghost, conn->pgpass,
 								conn->errorMessage.data) != STATUS_OK)
 				{
-#ifdef USE_SSL
-					/*
-					 * if sslmode is "allow" and we haven't tried an
-					 * SSL connection already, then retry with an SSL connection
-					 */
-					if (conn->wait_ssl_try
-						&& conn->ssl == NULL
-						&& conn->allow_ssl_try)
-					{
-						conn->wait_ssl_try = false;
-						/* Must drop the old connection */
-						closesocket(conn->sock);
-						conn->sock = -1;
-						conn->status = CONNECTION_NEEDED;
-						goto keep_going;
-					}
-
-					/*
-					 * if sslmode is "prefer" and we're in an SSL
-					 * connection and we haven't already tried a non-SSL
-					 * for "allow", then do a non-SSL retry
-					 */
-					if (!conn->wait_ssl_try
-						&& conn->ssl
-						&& conn->allow_ssl_try
-						&& conn->sslmode[0] == 'p')  /* "prefer" */
-					{
-						conn->allow_ssl_try = false;
-						/* Must drop the old connection */
-						pqsecure_close(conn);
-						closesocket(conn->sock);
-						conn->sock = -1;
-						free(conn->ssl);
-						conn->status = CONNECTION_NEEDED;
-						goto keep_going;
-					}
-#endif
-
 					conn->errorMessage.len = strlen(conn->errorMessage.data);
 					goto error_return;
 				}
@@ -1968,26 +1913,20 @@ error_return:
 static PGconn *
 makeEmptyPGconn(void)
 {
-	PGconn	   *conn = (PGconn *) malloc(sizeof(PGconn));
+	PGconn	   *conn;
 
-/* needed to use the static libpq under windows as well */
 #ifdef WIN32
+	/* needed to use the static libpq under windows as well */
 	WSADATA wsaData;
+
+	if (WSAStartup(MAKEWORD(1, 1), &wsaData))
+		return (PGconn*) NULL; 
+	WSASetLastError(0);
 #endif
 
+	conn = (PGconn *) malloc(sizeof(PGconn));
 	if (conn == NULL)
 		return conn;
-
-#ifdef WIN32
-	if (WSAStartup(MAKEWORD(1, 1), &wsaData))
-	{
-		free(conn);
-		return (PGconn*) NULL; 
-	}
-
-	WSASetLastError(0);
-
-#endif
 
 	/* Zero all pointers and booleans */
 	MemSet((char *) conn, 0, sizeof(PGconn));
@@ -2003,7 +1942,8 @@ makeEmptyPGconn(void)
 	conn->notifyList = DLNewList();
 	conn->sock = -1;
 #ifdef USE_SSL
-	conn->allow_ssl_try = TRUE;
+	conn->allow_ssl_try = true;
+	conn->wait_ssl_try = false;
 #endif
 
 	/*
@@ -2073,6 +2013,8 @@ freePGconn(PGconn *conn)
 		free(conn->pguser);
 	if (conn->pgpass)
 		free(conn->pgpass);
+	if (conn->sslmode)
+		free(conn->sslmode);
 	/* Note that conn->Pfdebug is not ours to close or free */
 	if (conn->notifyList)
 		DLFreeList(conn->notifyList);
