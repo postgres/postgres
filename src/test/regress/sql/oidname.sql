@@ -10,11 +10,11 @@ INSERT INTO OIDNAME_TBL(f1) VALUES ('1235,efgh');
 
 INSERT INTO OIDNAME_TBL(f1) VALUES ('987,XXXX');
 
--- no char16 component 
+-- no name component 
 INSERT INTO OIDNAME_TBL(f1) VALUES ('123456');
 
--- char16 component too long 
-INSERT INTO OIDNAME_TBL(f1) VALUES ('123456,abcdefghijklmnopqrsutvwyz');
+-- name component too long 
+INSERT INTO OIDNAME_TBL(f1) VALUES ('123456,abcdefghijklmnopqrsutvwyz0123456789');
 
 -- bad inputs 
 INSERT INTO OIDNAME_TBL(f1) VALUES ('');

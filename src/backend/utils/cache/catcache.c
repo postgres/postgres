@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.24 1998/02/26 04:37:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.25 1998/03/30 17:24:21 momjian Exp $
  *
  * Notes:
  *		XXX This needs to use exception.h to handle recovery when
@@ -79,7 +79,7 @@ static int	DisableCache;
  * ----------------
  */
 static long eqproc[] = {
-	F_BOOLEQ, 0l, F_CHAREQ, F_CHAR16EQ, 0l,
+	F_BOOLEQ, 0l, F_CHAREQ, F_NAMEEQ, 0l,
 	F_INT2EQ, F_KEYFIRSTEQ, F_INT4EQ, 0l, F_TEXTEQ,
 	F_OIDEQ, 0l, 0l, 0l, F_OID8EQ
 };

@@ -1,9 +1,6 @@
 boolean
 char
-char2
-char4
-char8
-char16
+name
 varchar
 text
 strings

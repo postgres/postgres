@@ -7,21 +7,20 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.11 1998/02/26 04:35:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.12 1998/03/30 17:23:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "access/skey.h"
-#include "catalog/pg_rewrite.h"
-#include "catalog/catname.h"	/* for RewriteRelationName */
-#include "utils/syscache.h"
-#include "utils/elog.h"			/* for elog stuff */
-#include "utils/palloc.h"
+#include "fmgr.h"				/* for F_NAMEEQ */
+
 #include "access/heapam.h"		/* heap AM calls defined here */
-#include "fmgr.h"				/* for CHAR_16_EQ */
+#include "access/skey.h"
+#include "catalog/catname.h"	/* for RewriteRelationName */
+#include "catalog/pg_rewrite.h"
+#include "utils/syscache.h"
 
 #include "rewrite/rewriteRemove.h"		/* where the decls go */
 #include "rewrite/rewriteSupport.h"
@@ -86,7 +85,7 @@ RemoveRewriteRule(char *ruleName)
 	 * Scan the RuleRelation ('pg_rewrite') until we find a tuple
 	 */
 	ScanKeyEntryInitialize(&scanKeyData, 0, Anum_pg_rewrite_rulename,
-						   F_CHAR16EQ, NameGetDatum(ruleName));
+						   F_NAMEEQ, NameGetDatum(ruleName));
 	scanDesc = heap_beginscan(RewriteRelation,
 							  0, false, 1, &scanKeyData);
 

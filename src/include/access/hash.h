@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.13 1998/02/26 04:39:59 momjian Exp $
+ * $Id: hash.h,v 1.14 1998/03/30 17:24:40 momjian Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -272,10 +272,6 @@ extern uint32 hashfloat4(float32 keyp);
 extern uint32 hashfloat8(float64 keyp);
 extern uint32 hashoid(Oid key);
 extern uint32 hashchar(char key);
-extern uint32 hashchar2(uint16 intkey);
-extern uint32 hashchar4(uint32 intkey);
-extern uint32 hashchar8(char *key);
-extern uint32 hashchar16(char *key);
 extern uint32 hashtext(struct varlena * key);
 extern uint32 hashname(NameData *n);
 

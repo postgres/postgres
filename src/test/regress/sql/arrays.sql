@@ -26,7 +26,7 @@ SELECT array_dims(arrtest.b) AS x;
 SELECT *
    FROM arrtest
    WHERE arrtest.a[1] < 5 and 
-         arrtest.c = '{"foobar"}'::_char16;
+         arrtest.c = '{"foobar"}'::_name;
 
 -- updating array subranges seems to be broken
 -- 

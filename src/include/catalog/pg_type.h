@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.35 1998/02/26 04:41:01 momjian Exp $
+ * $Id: pg_type.h,v 1.36 1998/03/30 17:25:31 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -166,8 +166,6 @@ DATA(insert OID = 19 (	name	   PGUID NAMEDATALEN NAMEDATALEN  f b t \054 0	18 na
 DESCR("31-character type for storing system identifiers");
 #define NAMEOID 19
 
-DATA(insert OID = 20 (	char16	   PGUID 16  16 f b t \054 0  18 char16in char16out char16in char16out i _null_ ));
-DESCR("16 characters, fixed length");
 DATA(insert OID = 21 (	int2	   PGUID  2   5 t b t \054 0   0 int2in int2out int2in int2out s _null_ ));
 DESCR("two-byte integer, -32k to 32k");
 #define INT2OID			21
@@ -232,12 +230,6 @@ DESCR("storage manager");
 /* OIDS 300 - 399 */
 
 /* OIDS 400 - 499 */
-DATA(insert OID = 409 (  char2	   PGUID 2	2 t b t \054 0	18 char2in char2out char2in char2out s _null_ ));
-DESCR("2 characters");
-DATA(insert OID = 410 (  char4	   PGUID 4	4 t b t \054 0	18 char4in char4out char4in char4out i _null_ ));
-DESCR("4 characters");
-DATA(insert OID = 411 (  char8	   PGUID 8	8 f b t \054 0	18 char8in char8out char8in char8out i _null_ ));
-DESCR("8 characters");
 
 /* OIDS 500 - 599 */
 
@@ -301,7 +293,6 @@ DATA(insert OID = 1000 (  _bool		 PGUID -1  -1 f b t \054 0	16 array_in array_ou
 DATA(insert OID = 1001 (  _bytea	 PGUID -1  -1 f b t \054 0	17 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1002 (  _char		 PGUID -1  -1 f b t \054 0	18 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1003 (  _name		 PGUID -1  -1 f b t \054 0	19 array_in array_out array_in array_out i _null_ ));
-DATA(insert OID = 1004 (  _char16	 PGUID -1  -1 f b t \054 0	20 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1005 (  _int2		 PGUID -1  -1 f b t \054 0	21 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1006 (  _int28	 PGUID -1  -1 f b t \054 0	22 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1007 (  _int4		 PGUID -1  -1 f b t \054 0	23 array_in array_out array_in array_out i _null_ ));
@@ -330,10 +321,6 @@ DATA(insert OID = 1027 (  _polygon	 PGUID -1  -1 f b t \054 0 604 array_in array
 DATA(insert OID = 1033 (  aclitem	 PGUID 8   -1 f b t \054 0 0 aclitemin aclitemout aclitemin aclitemout i _null_ ));
 DESCR("access control list");
 DATA(insert OID = 1034 (  _aclitem	 PGUID -1  -1 f b t \054 0 1033 array_in array_out array_in array_out i _null_ ));
-
-DATA(insert OID = 1039 (  _char2	 PGUID -1  -1 f b t \054 0	409 array_in array_out array_in array_out i _null_ ));
-DATA(insert OID = 1040 (  _char4	 PGUID -1  -1 f b t \054 0	410 array_in array_out array_in array_out i _null_ ));
-DATA(insert OID = 1041 (  _char8	 PGUID -1  -1 f b t \054 0	411 array_in array_out array_in array_out i _null_ ));
 
 DATA(insert OID = 1042 ( bpchar		 PGUID -1  -1 f b t \054 0	18 bpcharin bpcharout bpcharin bpcharout i _null_ ));
 DESCR("blank-padded characters, length specifed when created");

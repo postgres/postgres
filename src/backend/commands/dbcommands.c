@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.8 1998/02/26 04:30:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.9 1998/03/30 17:22:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@ createdb(char *dbname, char *dbpath)
 
 #if FALSE
 	sprintf(buf, "insert into pg_database (datname, datdba, datpath) \
-                  values (\'%s\'::char16, \'%d\'::oid, \'%s\'::text);",
+                  values (\'%s\'::name, \'%d\'::oid, \'%s\'::text);",
 			dbname, user_id, dbname);
 #endif
 

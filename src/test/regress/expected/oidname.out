@@ -4,18 +4,18 @@ QUERY: INSERT INTO OIDNAME_TBL(f1) VALUES ('1235,efgh');
 QUERY: INSERT INTO OIDNAME_TBL(f1) VALUES ('987,XXXX');
 QUERY: INSERT INTO OIDNAME_TBL(f1) VALUES ('123456');
 ERROR:  Bad input data for type oidname
-QUERY: INSERT INTO OIDNAME_TBL(f1) VALUES ('123456,abcdefghijklmnopqrsutvwyz');
+QUERY: INSERT INTO OIDNAME_TBL(f1) VALUES ('123456,abcdefghijklmnopqrsutvwyz0123456789');
 QUERY: INSERT INTO OIDNAME_TBL(f1) VALUES ('');
 ERROR:  Bad input data for type oidname
 QUERY: INSERT INTO OIDNAME_TBL(f1) VALUES ('asdfasd');
 ERROR:  Bad input data for type oidname
 QUERY: SELECT '' AS four, OIDNAME_TBL.*;
-four|f1                              
-----+--------------------------------
-    |1234,abcd                       
-    |1235,efgh                       
-    |987,XXXX                        
-    |123456,abcdefghijklmnopqrsutvwyz
+four|f1                                    
+----+--------------------------------------
+    |1234,abcd                             
+    |1235,efgh                             
+    |987,XXXX                              
+    |123456,abcdefghijklmnopqrsutvwyz012345
 (4 rows)
 
 QUERY: SELECT '' AS one, o.* FROM OIDNAME_TBL o WHERE o.f1 = '1234,abcd';
@@ -25,11 +25,11 @@ one|f1
 (1 row)
 
 QUERY: SELECT '' AS three, o.* FROM OIDNAME_TBL o WHERE o.f1 <> '1234,abcd';
-three|f1                              
------+--------------------------------
-     |1235,efgh                       
-     |987,XXXX                        
-     |123456,abcdefghijklmnopqrsutvwyz
+three|f1                                    
+-----+--------------------------------------
+     |1235,efgh                             
+     |987,XXXX                              
+     |123456,abcdefghijklmnopqrsutvwyz012345
 (3 rows)
 
 QUERY: SELECT '' AS two, o.* FROM OIDNAME_TBL o WHERE o.f1 <= '1234,abcd';
@@ -46,18 +46,18 @@ one|f1
 (1 row)
 
 QUERY: SELECT '' AS three, o.* FROM OIDNAME_TBL o WHERE o.f1 >= '1234,abcd';
-three|f1                              
------+--------------------------------
-     |1234,abcd                       
-     |1235,efgh                       
-     |123456,abcdefghijklmnopqrsutvwyz
+three|f1                                    
+-----+--------------------------------------
+     |1234,abcd                             
+     |1235,efgh                             
+     |123456,abcdefghijklmnopqrsutvwyz012345
 (3 rows)
 
 QUERY: SELECT '' AS two, o.* FROM OIDNAME_TBL o WHERE o.f1 > '1234,abcd';
-two|f1                              
----+--------------------------------
-   |1235,efgh                       
-   |123456,abcdefghijklmnopqrsutvwyz
+two|f1                                    
+---+--------------------------------------
+   |1235,efgh                             
+   |123456,abcdefghijklmnopqrsutvwyz012345
 (2 rows)
 
 QUERY: DROP TABLE  OIDNAME_TBL;

@@ -23,24 +23,24 @@ seqno|    random
 (1 row)
 
 QUERY: SELECT b.*
-   FROM bt_c16_heap b
-   WHERE b.seqno < '1'::char16;
+   FROM bt_name_heap b
+   WHERE b.seqno < '1'::name;
 seqno|    random
 -----+----------
     0|1935401906
 (1 row)
 
 QUERY: SELECT b.*
-   FROM bt_c16_heap b
-   WHERE b.seqno >= '9999'::char16;
+   FROM bt_name_heap b
+   WHERE b.seqno >= '9999'::name;
 seqno|    random
 -----+----------
  9999|1227676208
 (1 row)
 
 QUERY: SELECT b.*
-   FROM bt_c16_heap b
-   WHERE b.seqno = '4500'::char16;
+   FROM bt_name_heap b
+   WHERE b.seqno = '4500'::name;
 seqno|    random
 -----+----------
  4500|2080851358

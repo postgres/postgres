@@ -1,5 +1,5 @@
 .\" This is -*-nroff-*-
-.\" $Header: /cvsroot/pgsql/src/man/Attic/bki.5,v 1.1 1996/11/14 10:15:12 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/bki.5,v 1.2 1998/03/30 17:25:47 momjian Exp $
 .TH BKI 5 11/04/96 Postgres Postgres
 .SH NAME
 *.bki
@@ -207,7 +207,7 @@ collection as object
 .IR 421,
 print out the class, and then close it.
 .nf
-create pg_opclass (opcname=char16)
+create pg_opclass (opcname=name)
 open pg_opclass
 insert oid=421 (int_ops)
 print

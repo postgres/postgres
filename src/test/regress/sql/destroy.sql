@@ -1,7 +1,7 @@
 --
 -- destroy.source
 --
--- $Header: /cvsroot/pgsql/src/test/regress/sql/Attic/destroy.sql,v 1.3 1997/05/22 00:17:15 scrappy Exp $
+-- $Header: /cvsroot/pgsql/src/test/regress/sql/Attic/destroy.sql,v 1.4 1998/03/30 17:28:09 momjian Exp $
 --
 
 --
@@ -38,7 +38,7 @@ DROP FUNCTION boxarea(box);
 
 DROP FUNCTION interpt_pp(path,path);
 
-DROP FUNCTION reverse_c16(char16);
+DROP FUNCTION reverse_name(name);
 
 
 --
@@ -125,7 +125,7 @@ DROP INDEX six;
 
 DROP INDEX hash_i4_index;
 
-DROP INDEX hash_c16_index;
+DROP INDEX hash_name_index;
 
 DROP INDEX hash_txt_index;
 
@@ -135,7 +135,7 @@ DROP INDEX hash_f8_index;
 
 DROP INDEX bt_i4_index;
 
-DROP INDEX bt_c16_index;
+DROP INDEX bt_name_index;
 
 DROP INDEX bt_txt_index;
 
@@ -213,7 +213,7 @@ DROP TABLE  city;
 
 DROP TABLE  hash_i4_heap;
 
-DROP TABLE  hash_c16_heap;
+DROP TABLE  hash_name_heap;
 
 DROP TABLE  hash_txt_heap;
 
@@ -223,7 +223,7 @@ DROP TABLE  hash_f8_heap;
 
 DROP TABLE  bt_i4_heap;
 
-DROP TABLE  bt_c16_heap;
+DROP TABLE  bt_name_heap;
 
 DROP TABLE  bt_txt_heap;
 

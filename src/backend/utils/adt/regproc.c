@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.15 1998/02/26 04:37:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.16 1998/03/30 17:24:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ regprocin(char *proname)
 	ScanKeyEntryInitialize(&key,
 						   (bits16) 0,
 						   (AttrNumber) 1,
-						   (RegProcedure) F_CHAR16EQ,
+						   (RegProcedure) F_NAMEEQ,
 						   (Datum) proname);
 
 	procscan = heap_beginscan(proc, 0, false, 1, &key);

@@ -3,13 +3,13 @@ QUERY: UPDATE onek
 QUERY: UPDATE onek
    SET unique1 = onek.unique1 - 1;
 QUERY: UPDATE temp
-   SET stringu1 = reverse_c16(onek.stringu1)
+   SET stringu1 = reverse_name(onek.stringu1)
    WHERE onek.stringu1 = 'JBAAAA' and
 	  onek.stringu1 = temp.stringu1;
 NOTICE:  Non-functional update, only first update is performed
 NOTICE:  Non-functional update, only first update is performed
 QUERY: UPDATE temp
-   SET stringu1 = reverse_c16(onek2.stringu1)
+   SET stringu1 = reverse_name(onek2.stringu1)
    WHERE onek2.stringu1 = 'JCAAAA' and
 	  onek2.stringu1 = temp.stringu1;
 NOTICE:  Non-functional update, only first update is performed
@@ -449,9 +449,9 @@ arrtest
 b_star         
 box_tbl        
 bprime         
-bt_c16_heap    
 bt_f8_heap     
 bt_i4_heap     
+bt_name_heap   
 bt_txt_heap    
 c_star         
 char_tbl       
@@ -474,9 +474,9 @@ f_star
 fast_emp4000   
 float4_tbl     
 float8_tbl     
-hash_c16_heap  
 hash_f8_heap   
 hash_i4_heap   
+hash_name_heap 
 hash_txt_heap  
 hobbies_r      
 iexit          
