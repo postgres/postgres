@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.188 2004/02/27 03:59:23 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.189 2004/02/29 15:45:53 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -6111,6 +6111,7 @@ SELECT TIMESTAMP 'now';
     <literal>6</literal> for IPv6</entry>
     <entry><literal>family('::1')</literal></entry>
     <entry><literal>6</literal></entry>
+       </row>
       </tbody>
      </tgroup>
     </table>
