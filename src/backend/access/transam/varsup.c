@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.54 2004/01/07 18:56:24 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.55 2004/01/26 19:15:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,10 +45,8 @@ GetNewTransactionId(void)
 
 	xid = ShmemVariableCache->nextXid;
 
-	TransactionIdAdvance(ShmemVariableCache->nextXid);
-
 	/*
-	 * If we have just allocated the first XID of a new page of the commit
+	 * If we are allocating the first XID of a new page of the commit
 	 * log, zero out that commit-log page before returning. We must do
 	 * this while holding XidGenLock, else another xact could acquire and
 	 * commit a later XID before we zero the page.	Fortunately, a page of
@@ -56,6 +54,14 @@ GetNewTransactionId(void)
 	 * do this very often.
 	 */
 	ExtendCLOG(xid);
+
+	/*
+	 * Now advance the nextXid counter.  This must not happen until after
+	 * we have successfully completed ExtendCLOG() --- if that routine fails,
+	 * we want the next incoming transaction to try it again.  We cannot
+	 * assign more XIDs until there is CLOG space for them.
+	 */
+	TransactionIdAdvance(ShmemVariableCache->nextXid);
 
 	/*
 	 * Must set MyProc->xid before releasing XidGenLock.  This ensures
@@ -74,7 +80,7 @@ GetNewTransactionId(void)
 	 *
 	 * A solution to the atomic-store problem would be to give each PGPROC
 	 * its own spinlock used only for fetching/storing that PGPROC's xid.
-	 * (SInvalLock would then mean primarily that PROCs couldn't be added/
+	 * (SInvalLock would then mean primarily that PGPROCs couldn't be added/
 	 * removed while holding the lock.)
 	 */
 	if (MyProc != NULL)
