@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.43 1998/06/15 19:29:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.44 1998/07/19 10:08:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,12 +78,6 @@ GetCurrentAbsoluteTime(void)
 		 * tzname? - tgl 97/03/18
 		 */
 		strftime(CTZName, MAXTZLEN, "%Z", tm);
-
-		/*
-		 * XXX FreeBSD man pages indicate that this should work - tgl
-		 * 97/04/23
-		 */
-		strcpy(CTZName, tm->tm_zone);
 #endif
 #else							/* ! USE_POSIX_TIME */
 		CTimeZone = tb.timezone * 60;
