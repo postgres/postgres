@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.104 2001/05/18 22:35:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.105 2001/05/18 22:54:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,8 +236,10 @@ agg_select_candidate(Oid typeid, CandidateList candidates)
 
 /*
  * 	parse function
- * 	This code is confusing code because the database can accept relation.column
- * 	column.function, or relation.column.function.
+ * 	This code is confusing code because the database can accept
+ *  relation.column, column.function, or relation.column.function.
+ *  It can also be called as func(col) or func(col,col).
+ *
  *	Funcname is the first parameter, and fargs are the rest.
  */
 Node *
