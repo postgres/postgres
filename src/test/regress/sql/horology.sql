@@ -149,6 +149,3 @@ SELECT '' AS sixty_three, d1 AS european_sql FROM TIMESTAMP_TBL;
 SELECT '' AS eight, f1 AS european_sql FROM ABSTIME_TBL;
 
 RESET DateStyle;
-
-SHOW DateStyle;
-

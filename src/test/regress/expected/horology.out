@@ -1124,5 +1124,3 @@ SELECT '' AS eight, f1 AS european_sql FROM ABSTIME_TBL;
 (8 rows)
 
 RESET DateStyle;
-SHOW DateStyle;
-NOTICE:  DateStyle is ISO with US (NonEuropean) conventions
