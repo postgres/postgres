@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.136 2000/01/19 22:23:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.137 2000/01/20 20:01:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,7 @@ static void vc_vacuum(NameData *VacRelP, bool analyze, List *va_cols);
 static VRelList vc_getrels(NameData *VacRelP);
 static void vc_vacone(Oid relid, bool analyze, List *va_cols);
 static void vc_scanheap(VRelStats *vacrelstats, Relation onerel, VPageList vacuum_pages, VPageList fraged_pages);
-static void vc_rpfheap(VRelStats *vacrelstats, Relation onerel, VPageList vacuum_pages, VPageList fraged_pages, int nindices, Relation *Irel);
+static void vc_repair_frag(VRelStats *vacrelstats, Relation onerel, VPageList vacuum_pages, VPageList fraged_pages, int nindices, Relation *Irel);
 static void vc_vacheap(VRelStats *vacrelstats, Relation onerel, VPageList vpl);
 static void vc_vacpage(Page page, VPageDescr vpd);
 static void vc_vaconeind(VPageList vpl, Relation indrel, int num_tuples, int keep_tuples);
@@ -83,7 +83,7 @@ static void vc_attrstats(Relation onerel, VRelStats *vacrelstats, HeapTuple tupl
 static void vc_bucketcpy(Form_pg_attribute attr, Datum value, Datum *bucket, int *bucket_len);
 static void vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *vacrelstats);
 static void vc_delstats(Oid relid, int attcnt, int *attnums);
-static VPageDescr vc_tidreapped(ItemPointer itemptr, VPageList vpl);
+static VPageDescr vc_tid_reaped(ItemPointer itemptr, VPageList vpl);
 static void vc_reappage(VPageList vpl, VPageDescr vpc);
 static void vc_vpinsert(VPageList vpl, VPageDescr vpnew);
 static void vc_getindices(Oid relid, int *nindices, Relation **Irel);
@@ -95,7 +95,7 @@ static int	vc_cmp_blk(const void *left, const void *right);
 static int	vc_cmp_offno(const void *left, const void *right);
 static int	vc_cmp_vtlinks(const void *left, const void *right);
 static bool vc_enough_space(VPageDescr vpd, Size len);
-static char *vc_show_rusage(struct rusage *ru0);
+static char *vc_show_rusage(struct rusage * ru0);
 
 
 void
@@ -112,11 +112,12 @@ vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
 
 	/*
 	 * We cannot run VACUUM inside a user transaction block; if we were
-	 * inside a transaction, then our commit- and start-transaction-command
-	 * calls would not have the intended effect!  Furthermore, the forced
-	 * commit that occurs before truncating the relation's file would have
-	 * the effect of committing the rest of the user's transaction too,
-	 * which would certainly not be the desired behavior.
+	 * inside a transaction, then our commit- and
+	 * start-transaction-command calls would not have the intended effect!
+	 * Furthermore, the forced commit that occurs before truncating the
+	 * relation's file would have the effect of committing the rest of the
+	 * user's transaction too, which would certainly not be the desired
+	 * behavior.
 	 */
 	if (IsTransactionBlock())
 		elog(ERROR, "VACUUM cannot run inside a BEGIN/END block");
@@ -285,9 +286,11 @@ vc_getrels(NameData *VacRelP)
 
 	if (NameStr(*VacRelP))
 	{
-	/* we could use the cache here, but it is clearer to use
-	 *  scankeys for both vacuum cases, bjm 2000/01/19
-	 */
+
+		/*
+		 * we could use the cache here, but it is clearer to use scankeys
+		 * for both vacuum cases, bjm 2000/01/19
+		 */
 		ScanKeyEntryInitialize(&key, 0x0, Anum_pg_class_relname,
 							   F_NAMEEQ,
 							   PointerGetDatum(NameStr(*VacRelP)));
@@ -379,8 +382,8 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 	StartTransactionCommand();
 
 	/*
-	 * Check for user-requested abort.  Note we want this to be inside
-	 * a transaction, so xact.c doesn't issue useless NOTICE.
+	 * Check for user-requested abort.	Note we want this to be inside a
+	 * transaction, so xact.c doesn't issue useless NOTICE.
 	 */
 	if (QueryCancel)
 		CancelQuery();
@@ -425,9 +428,13 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 	vacrelstats->relid = relid;
 	vacrelstats->num_pages = vacrelstats->num_tuples = 0;
 	vacrelstats->hasindex = false;
-	/* we can VACUUM ANALYZE any table except pg_statistic; see vc_updstats */
+
+	/*
+	 * we can VACUUM ANALYZE any table except pg_statistic; see
+	 * vc_updstats
+	 */
 	if (analyze &&
-		strcmp(RelationGetRelationName(onerel), StatisticRelationName) != 0)
+	 strcmp(RelationGetRelationName(onerel), StatisticRelationName) != 0)
 	{
 		int			attr_cnt,
 				   *attnums = NULL;
@@ -573,7 +580,7 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 	}
 
 	if (fraged_pages.vpl_num_pages > 0) /* Try to shrink heap */
-		vc_rpfheap(vacrelstats, onerel, &vacuum_pages, &fraged_pages, nindices, Irel);
+		vc_repair_frag(vacrelstats, onerel, &vacuum_pages, &fraged_pages, nindices, Irel);
 	else
 	{
 		if (Irel != (Relation *) NULL)
@@ -583,7 +590,7 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 			vc_vacheap(vacrelstats, onerel, &vacuum_pages);
 	}
 
-	/* ok - free vacuum_pages list of reapped pages */
+	/* ok - free vacuum_pages list of reaped pages */
 	if (vacuum_pages.vpl_num_pages > 0)
 	{
 		vpp = vacuum_pages.vpl_pagedesc;
@@ -769,6 +776,7 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 					}
 					else if (!TransactionIdIsInProgress(tuple.t_data->t_xmin))
 					{
+
 						/*
 						 * Not Aborted, Not Committed, Not in Progress -
 						 * so it's from crashed process. - vadim 11/26/96
@@ -819,6 +827,7 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 				}
 				else if (!TransactionIdIsInProgress(tuple.t_data->t_xmax))
 				{
+
 					/*
 					 * Not Aborted, Not Committed, Not in Progress - so it
 					 * from crashed process. - vadim 06/02/97
@@ -922,7 +931,7 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 		else
 			dobufrel = true;
 
-	if (tempPage != (Page) NULL)
+		if (tempPage != (Page) NULL)
 		{						/* Some tuples are gone */
 			PageRepairFragmentation(tempPage);
 			vpc->vpd_free = ((PageHeader) tempPage)->pd_upper - ((PageHeader) tempPage)->pd_lower;
@@ -961,7 +970,7 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 
 	/*
 	 * Try to make fraged_pages keeping in mind that we can't use free
-	 * space of "empty" end-pages and last page if it reapped.
+	 * space of "empty" end-pages and last page if it reaped.
 	 */
 	if (do_shrinking && vacuum_pages->vpl_num_pages - empty_end_pages > 0)
 	{
@@ -996,7 +1005,7 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 		pfree(vtlinks);
 	}
 
-	elog(MESSAGE_LEVEL, "Pages %u: Changed %u, Reapped %u, Empty %u, New %u; \
+	elog(MESSAGE_LEVEL, "Pages %u: Changed %u, reaped %u, Empty %u, New %u; \
 Tup %u: Vac %u, Keep/VTL %u/%u, Crash %u, UnUsed %u, MinLen %u, MaxLen %u; \
 Re-using: Free/Avail. Space %u/%u; EndEmpty/Avail. Pages %u/%u. %s",
 		 nblocks, changed_pages, vacuum_pages->vpl_num_pages, empty_pages,
@@ -1010,7 +1019,7 @@ Re-using: Free/Avail. Space %u/%u; EndEmpty/Avail. Pages %u/%u. %s",
 
 
 /*
- *	vc_rpfheap() -- try to repair relation's fragmentation
+ *	vc_repair_frag() -- try to repair relation's fragmentation
  *
  *		This routine marks dead tuples as unused and tries re-use dead space
  *		by moving tuples (and inserting indices if needed). It constructs
@@ -1020,9 +1029,9 @@ Re-using: Free/Avail. Space %u/%u; EndEmpty/Avail. Pages %u/%u. %s",
  *		if some end-blocks are gone away.
  */
 static void
-vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
-		   VPageList vacuum_pages, VPageList fraged_pages,
-		   int nindices, Relation *Irel)
+vc_repair_frag(VRelStats *vacrelstats, Relation onerel,
+			   VPageList vacuum_pages, VPageList fraged_pages,
+			   int nindices, Relation *Irel)
 {
 	TransactionId myXID;
 	CommandId	myCID;
@@ -1094,14 +1103,14 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 
 	/*
 	 * Scan pages backwards from the last nonempty page, trying to move
-	 * tuples down to lower pages.  Quit when we reach a page that we
-	 * have moved any tuples onto.  Note that if a page is still in the
+	 * tuples down to lower pages.	Quit when we reach a page that we have
+	 * moved any tuples onto.  Note that if a page is still in the
 	 * fraged_pages list (list of candidate move-target pages) when we
 	 * reach it, we will remove it from the list.  This ensures we never
 	 * move a tuple up to a higher page number.
 	 *
-	 * NB: this code depends on the vacuum_pages and fraged_pages lists
-	 * being in order, and on fraged_pages being a subset of vacuum_pages.
+	 * NB: this code depends on the vacuum_pages and fraged_pages lists being
+	 * in order, and on fraged_pages being a subset of vacuum_pages.
 	 */
 	nblocks = vacrelstats->num_pages;
 	for (blkno = nblocks - vacuum_pages->vpl_empty_end_pages - 1;
@@ -1116,7 +1125,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 		isempty = PageIsEmpty(page);
 
 		dowrite = false;
-		if (blkno == last_vacuum_block) /* it's reapped page */
+		if (blkno == last_vacuum_block) /* it's reaped page */
 		{
 			if (last_vacuum_page->vpd_offsets_free > 0) /* there are dead tuples */
 			{					/* on this page - clean */
@@ -1129,7 +1138,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 			--vacuumed_pages;
 			if (vacuumed_pages > 0)
 			{
-				/* get prev reapped page from vacuum_pages */
+				/* get prev reaped page from vacuum_pages */
 				last_vacuum_page = vacuum_pages->vpl_pagedesc[vacuumed_pages - 1];
 				last_vacuum_block = last_vacuum_page->vpd_blkno;
 			}
@@ -1140,7 +1149,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 			}
 			if (num_fraged_pages > 0 &&
 				blkno ==
-				fraged_pages->vpl_pagedesc[num_fraged_pages-1]->vpd_blkno)
+			 fraged_pages->vpl_pagedesc[num_fraged_pages - 1]->vpd_blkno)
 			{
 				/* page is in fraged_pages too; remove it */
 				--num_fraged_pages;
@@ -1230,7 +1239,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 				HeapTupleData tp = tuple;
 				Size		tlen = tuple_len;
 				VTupleMove	vtmove = (VTupleMove)
-					palloc(100 * sizeof(VTupleMoveData));
+				palloc(100 * sizeof(VTupleMoveData));
 				int			num_vtmove = 0;
 				int			free_vtmove = 100;
 				VPageDescr	to_vpd = NULL;
@@ -1264,19 +1273,20 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 									  ItemPointerGetOffsetNumber(&Ctid));
 					if (!ItemIdIsUsed(Citemid))
 					{
+
 						/*
-						 * This means that in the middle of chain there was
-						 * tuple updated by older (than XmaxRecent) xaction
-						 * and this tuple is already deleted by me. Actually,
-						 * upper part of chain should be removed and seems
-						 * that this should be handled in vc_scanheap(), but
-						 * it's not implemented at the moment and so we
-						 * just stop shrinking here.
+						 * This means that in the middle of chain there
+						 * was tuple updated by older (than XmaxRecent)
+						 * xaction and this tuple is already deleted by
+						 * me. Actually, upper part of chain should be
+						 * removed and seems that this should be handled
+						 * in vc_scanheap(), but it's not implemented at
+						 * the moment and so we just stop shrinking here.
 						 */
 						ReleaseBuffer(Cbuf);
 						pfree(vtmove);
 						vtmove = NULL;
-						elog(NOTICE, "Child itemid in update-chain marked as unused - can't continue vc_rpfheap");
+						elog(NOTICE, "Child itemid in update-chain marked as unused - can't continue vc_repair_frag");
 						break;
 					}
 					tp.t_datamcxt = NULL;
@@ -1292,15 +1302,17 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 					if (to_vpd == NULL ||
 						!vc_enough_space(to_vpd, tlen))
 					{
-						/* if to_vpd no longer has enough free space to be
+
+						/*
+						 * if to_vpd no longer has enough free space to be
 						 * useful, remove it from fraged_pages list
 						 */
 						if (to_vpd != NULL &&
-							!vc_enough_space(to_vpd, vacrelstats->min_tlen))
+						 !vc_enough_space(to_vpd, vacrelstats->min_tlen))
 						{
 							Assert(num_fraged_pages > to_item);
 							memmove(fraged_pages->vpl_pagedesc + to_item,
-									fraged_pages->vpl_pagedesc + to_item + 1,
+								fraged_pages->vpl_pagedesc + to_item + 1,
 									sizeof(VPageDescr) * (num_fraged_pages - to_item - 1));
 							num_fraged_pages--;
 						}
@@ -1310,9 +1322,9 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 								break;
 						}
 
-			/* can't move item anywhere */
+						/* can't move item anywhere */
 						if (i == num_fraged_pages)
-			{
+						{
 							for (i = 0; i < num_vtmove; i++)
 							{
 								Assert(vtmove[i].vpd->vpd_offsets_used > 0);
@@ -1379,18 +1391,20 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 						Ptp.t_datamcxt = NULL;
 						Ptp.t_data = (HeapTupleHeader) PageGetItem(Ppage, Pitemid);
 						Assert(ItemPointerEquals(&(vtld.new_tid),
-												&(Ptp.t_data->t_ctid)));
+												 &(Ptp.t_data->t_ctid)));
+
 						/*
-						 * Read above about cases when !ItemIdIsUsed(Citemid)
-						 * (child item is removed)... Due to the fact that
-						 * at the moment we don't remove unuseful part of
-						 * update-chain, it's possible to get too old
-						 * parent row here. Like as in the case which
-						 * caused this problem, we stop shrinking here.
-						 * I could try to find real parent row but want
-						 * not to do it because of real solution will
-						 * be implemented anyway, latter, and we are too
-						 * close to 6.5 release.		- vadim 06/11/99
+						 * Read above about cases when
+						 * !ItemIdIsUsed(Citemid) (child item is
+						 * removed)... Due to the fact that at the moment
+						 * we don't remove unuseful part of update-chain,
+						 * it's possible to get too old parent row here.
+						 * Like as in the case which caused this problem,
+						 * we stop shrinking here. I could try to find
+						 * real parent row but want not to do it because
+						 * of real solution will be implemented anyway,
+						 * latter, and we are too close to 6.5 release.
+						 * - vadim 06/11/99
 						 */
 						if (Ptp.t_data->t_xmax != tp.t_data->t_xmin)
 						{
@@ -1404,10 +1418,12 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 								(vtmove[i].vpd->vpd_offsets_used)--;
 							}
 							num_vtmove = 0;
-							elog(NOTICE, "Too old parent tuple found - can't continue vc_rpfheap");
+							elog(NOTICE, "Too old parent tuple found - can't continue vc_repair_frag");
 							break;
 						}
-#ifdef NOT_USED			/* I'm not sure that this will wotk properly... */
+#ifdef NOT_USED					/* I'm not sure that this will wotk
+								 * properly... */
+
 						/*
 						 * If this tuple is updated version of row and it
 						 * was created by the same transaction then no one
@@ -1560,9 +1576,10 @@ moving chain: failed to add item with len = %u to page %u",
 				{
 					WriteBuffer(cur_buffer);
 					cur_buffer = InvalidBuffer;
+
 					/*
-					 * If previous target page is now too full to add
-					 * *any* tuple to it, remove it from fraged_pages.
+					 * If previous target page is now too full to add *any*
+					 * tuple to it, remove it from fraged_pages.
 					 */
 					if (!vc_enough_space(cur_page, vacrelstats->min_tlen))
 					{
@@ -1659,7 +1676,7 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 				}
 			}
 
-		}  		/* walk along page */
+		}						/* walk along page */
 
 		if (offnum < maxoff && keep_tuples > 0)
 		{
@@ -1683,8 +1700,8 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 				if (tuple.t_data->t_infomask & HEAP_MOVED_OFF)
 				{
 					/* some chains was moved while */
-		    if (chain_tuple_moved)
-		    {			/* cleaning this page */
+					if (chain_tuple_moved)
+					{			/* cleaning this page */
 						Assert(vpc->vpd_offsets_free > 0);
 						for (i = 0; i < vpc->vpd_offsets_free; i++)
 						{
@@ -1751,7 +1768,7 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 	}
 
 	/*
-	 * Clean uncleaned reapped pages from vacuum_pages list list and set
+	 * Clean uncleaned reaped pages from vacuum_pages list list and set
 	 * xmin committed for inserted tuples
 	 */
 	checked_moved = 0;
@@ -1865,7 +1882,7 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 			WriteBuffer(buf);
 		}
 
-		/* now - free new list of reapped pages */
+		/* now - free new list of reaped pages */
 		vpp = Nvpl.vpl_pagedesc;
 		for (i = 0; i < Nvpl.vpl_num_pages; i++, vpp++)
 			pfree(*vpp);
@@ -1877,7 +1894,7 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 	{
 		i = FlushRelationBuffers(onerel, blkno, false);
 		if (i < 0)
-			elog(FATAL, "VACUUM (vc_rpfheap): FlushRelationBuffers returned %d", i);
+			elog(FATAL, "VACUUM (vc_repair_frag): FlushRelationBuffers returned %d", i);
 		blkno = smgrtruncate(DEFAULT_SMGR, onerel, blkno);
 		Assert(blkno >= 0);
 		vacrelstats->num_pages = blkno; /* set new number of blocks */
@@ -1895,7 +1912,7 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 	if (vacrelstats->vtlinks != NULL)
 		pfree(vacrelstats->vtlinks);
 
-}	/* vc_rpfheap */
+}	/* vc_repair_frag */
 
 /*
  *	vc_vacheap() -- free dead tuples
@@ -1937,8 +1954,8 @@ vc_vacheap(VRelStats *vacrelstats, Relation onerel, VPageList vacuum_pages)
 			 vacrelstats->num_pages, nblocks);
 
 		/*
-		 * We have to flush "empty" end-pages (if changed, but who knows it)
-		 * before truncation
+		 * We have to flush "empty" end-pages (if changed, but who knows
+		 * it) before truncation
 		 */
 		FlushBufferPool();
 
@@ -2055,7 +2072,7 @@ vc_vaconeind(VPageList vpl, Relation indrel, int num_tuples, int keep_tuples)
 	{
 		heapptr = &res->heap_iptr;
 
-		if ((vp = vc_tidreapped(heapptr, vpl)) != (VPageDescr) NULL)
+		if ((vp = vc_tid_reaped(heapptr, vpl)) != (VPageDescr) NULL)
 		{
 #ifdef NOT_USED
 			elog(DEBUG, "<%x,%x> -> <%x,%x>",
@@ -2065,7 +2082,7 @@ vc_vaconeind(VPageList vpl, Relation indrel, int num_tuples, int keep_tuples)
 				 ItemPointerGetOffsetNumber(&(res->heap_iptr)));
 #endif
 			if (vp->vpd_offsets_free == 0)
-			{					/* this is EmptyPage !!! */
+			{
 				elog(NOTICE, "Index %s: pointer to EmptyPage (blk %u off %u) - fixing",
 					 RelationGetRelationName(indrel),
 					 vp->vpd_blkno, ItemPointerGetOffsetNumber(heapptr));
@@ -2093,17 +2110,17 @@ vc_vaconeind(VPageList vpl, Relation indrel, int num_tuples, int keep_tuples)
 	if (num_index_tuples != num_tuples + keep_tuples)
 		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u).\
 \n\tRecreate the index.",
-			 RelationGetRelationName(indrel), num_index_tuples, num_tuples);
+		  RelationGetRelationName(indrel), num_index_tuples, num_tuples);
 
 }	/* vc_vaconeind */
 
 /*
- *	vc_tidreapped() -- is a particular tid reapped?
+ *	vc_tid_reaped() -- is a particular tid reaped?
  *
  *		vpl->VPageDescr_array is sorted in right order.
  */
 static VPageDescr
-vc_tidreapped(ItemPointer itemptr, VPageList vpl)
+vc_tid_reaped(ItemPointer itemptr, VPageList vpl)
 {
 	OffsetNumber ioffno;
 	OffsetNumber *voff;
@@ -2139,14 +2156,14 @@ vc_tidreapped(ItemPointer itemptr, VPageList vpl)
 
 	return vp;
 
-}	/* vc_tidreapped */
+}	/* vc_tid_reaped */
 
 /*
  *	vc_attrstats() -- compute column statistics used by the optimzer
  *
  *	We compute the column min, max, null and non-null counts.
  *	Plus we attempt to find the count of the value that occurs most
- *	frequently in each column.  These figures are used to compute
+ *	frequently in each column.	These figures are used to compute
  *	the selectivity of the column.
  *
  *	We use a three-bucked cache to get the most frequent item.
@@ -2387,38 +2404,49 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex,
 					break;
 			}
 			if (i >= natts)
-				continue;				/* skip attr if no stats collected */
+				continue;		/* skip attr if no stats collected */
 			stats = &(vacattrstats[i]);
 
 			if (VacAttrStatsEqValid(stats))
 			{
-				float32data selratio;		/* average ratio of rows selected
-											 * for a random constant */
+				float32data selratio;	/* average ratio of rows selected
+										 * for a random constant */
 
 				/* Compute disbursion */
 				if (stats->nonnull_cnt == 0 && stats->null_cnt == 0)
 				{
-					/* empty relation, so put a dummy value in attdisbursion */
+
+					/*
+					 * empty relation, so put a dummy value in
+					 * attdisbursion
+					 */
 					selratio = 0;
 				}
 				else if (stats->null_cnt <= 1 && stats->best_cnt == 1)
 				{
-					/* looks like we have a unique-key attribute ---
-					 * flag this with special -1.0 flag value.
+
+					/*
+					 * looks like we have a unique-key attribute --- flag
+					 * this with special -1.0 flag value.
 					 *
 					 * The correct disbursion is 1.0/numberOfRows, but since
 					 * the relation row count can get updated without
-					 * recomputing disbursion, we want to store a "symbolic"
-					 * value and figure 1.0/numberOfRows on the fly.
+					 * recomputing disbursion, we want to store a
+					 * "symbolic" value and figure 1.0/numberOfRows on the
+					 * fly.
 					 */
 					selratio = -1;
 				}
 				else
 				{
 					if (VacAttrStatsLtGtValid(stats) &&
-						stats->min_cnt + stats->max_cnt == stats->nonnull_cnt)
+					stats->min_cnt + stats->max_cnt == stats->nonnull_cnt)
 					{
-						/* exact result when there are just 1 or 2 values... */
+
+						/*
+						 * exact result when there are just 1 or 2
+						 * values...
+						 */
 						double		min_cnt_d = stats->min_cnt,
 									max_cnt_d = stats->max_cnt,
 									null_cnt_d = stats->null_cnt;
@@ -2487,18 +2515,18 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex,
 					i = 0;
 					values[i++] = (Datum) relid;		/* starelid */
 					values[i++] = (Datum) attp->attnum; /* staattnum */
-					values[i++] = (Datum) stats->op_cmplt;	/* staop */
+					values[i++] = (Datum) stats->op_cmplt;		/* staop */
 					/* hack: this code knows float4 is pass-by-ref */
 					values[i++] = PointerGetDatum(&nullratio);	/* stanullfrac */
 					values[i++] = PointerGetDatum(&bestratio);	/* stacommonfrac */
 					out_string = (*fmgr_faddr(&out_function)) (stats->best, stats->typelem, stats->attr->atttypmod);
-					values[i++] = PointerGetDatum(textin(out_string)); /* stacommonval */
+					values[i++] = PointerGetDatum(textin(out_string));	/* stacommonval */
 					pfree(out_string);
 					out_string = (*fmgr_faddr(&out_function)) (stats->min, stats->typelem, stats->attr->atttypmod);
-					values[i++] = PointerGetDatum(textin(out_string)); /* staloval */
+					values[i++] = PointerGetDatum(textin(out_string));	/* staloval */
 					pfree(out_string);
 					out_string = (char *) (*fmgr_faddr(&out_function)) (stats->max, stats->typelem, stats->attr->atttypmod);
-					values[i++] = PointerGetDatum(textin(out_string)); /* stahival */
+					values[i++] = PointerGetDatum(textin(out_string));	/* stahival */
 					pfree(out_string);
 
 					stup = heap_formtuple(sd->rd_att, values, nulls);
@@ -2514,7 +2542,7 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex,
 					 *
 					 *	We could reduce the probability of overflow, but not
 					 *	prevent it, by storing the data values as compressed
-					 *	text; is that worth doing?  The problem should go
+					 *	text; is that worth doing?	The problem should go
 					 *	away whenever long tuples get implemented...
 					 * ----------------
 					 */
@@ -2530,9 +2558,9 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex,
 					}
 
 					/* release allocated space */
-					pfree(DatumGetPointer(values[Anum_pg_statistic_stacommonval-1]));
-					pfree(DatumGetPointer(values[Anum_pg_statistic_staloval-1]));
-					pfree(DatumGetPointer(values[Anum_pg_statistic_stahival-1]));
+					pfree(DatumGetPointer(values[Anum_pg_statistic_stacommonval - 1]));
+					pfree(DatumGetPointer(values[Anum_pg_statistic_staloval - 1]));
+					pfree(DatumGetPointer(values[Anum_pg_statistic_stahival - 1]));
 					heap_freetuple(stup);
 				}
 			}
@@ -2582,17 +2610,18 @@ vc_delstats(Oid relid, int attcnt, int *attnums)
 	}
 
 	heap_endscan(scan);
+
 	/*
-	 * Close rel, but *keep* lock; we will need to reacquire it later,
-	 * so there's a possibility of deadlock against another VACUUM process
-	 * if we let go now.  Keeping the lock shouldn't delay any common
+	 * Close rel, but *keep* lock; we will need to reacquire it later, so
+	 * there's a possibility of deadlock against another VACUUM process if
+	 * we let go now.  Keeping the lock shouldn't delay any common
 	 * operation other than an attempted VACUUM of pg_statistic itself.
 	 */
 	heap_close(pgstatistic, NoLock);
 }
 
 /*
- *	vc_reappage() -- save a page on the array of reapped pages.
+ *	vc_reappage() -- save a page on the array of reaped pages.
  *
  *		As a side effect of the way that the vacuuming loop for a given
  *		relation works, higher pages come after lower pages in the array
@@ -2915,10 +2944,10 @@ vc_enough_space(VPageDescr vpd, Size len)
  * threadable...
  */
 static char *
-vc_show_rusage(struct rusage *ru0)
+vc_show_rusage(struct rusage * ru0)
 {
-	static char		result[64];
-	struct rusage	ru1;
+	static char result[64];
+	struct rusage ru1;
 
 	getrusage(RUSAGE_SELF, &ru1);
 
@@ -2938,7 +2967,7 @@ vc_show_rusage(struct rusage *ru0)
 			 (int) (ru1.ru_stime.tv_sec - ru0->ru_stime.tv_sec),
 			 (int) (ru1.ru_stime.tv_usec - ru0->ru_stime.tv_usec) / 10000,
 			 (int) (ru1.ru_utime.tv_sec - ru0->ru_utime.tv_sec),
-			 (int) (ru1.ru_utime.tv_usec - ru0->ru_utime.tv_usec) / 10000);
+		   (int) (ru1.ru_utime.tv_usec - ru0->ru_utime.tv_usec) / 10000);
 
 	return result;
 }
