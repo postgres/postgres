@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.20 2003/07/25 16:10:26 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.21 2003/08/01 08:21:04 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -124,7 +124,7 @@ create_statement(int lineno, int compat, int force_indicator, struct connection 
 			/* if variable is NULL, the statement hasn't been prepared */
 			if (var->pointer == NULL)
 			{
-				ECPGraise(lineno, ECPG_INVALID_STMT, NULL);
+				ECPGraise(lineno, ECPG_INVALID_STMT, NULL, compat);
 				ECPGfree(var);
 				return false;
 			}
@@ -351,7 +351,7 @@ ECPGstore_result(const PGresult *results, int act_field,
 		{
 			ECPGlog("ECPGexecute line %d: Incorrect number of matches: %d don't fit into array of %d\n",
 					stmt->lineno, ntuples, var->arrsize);
-			ECPGraise(stmt->lineno, ECPG_TOO_MANY_MATCHES, NULL);
+			ECPGraise(stmt->lineno, ECPG_TOO_MANY_MATCHES, NULL, ECPG_COMPAT_PGSQL);
 			return false;
 		}
 	}
@@ -362,7 +362,7 @@ ECPGstore_result(const PGresult *results, int act_field,
 		 */
 		if (var->arrsize == 0)
 		{
-			ECPGraise(stmt->lineno, ECPG_NO_ARRAY, NULL);
+			ECPGraise(stmt->lineno, ECPG_NO_ARRAY, NULL, ECPG_COMPAT_PGSQL);
 			return false;
 		}
 	}
@@ -484,7 +484,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 
 /*	 if (var->arrsize > 1 && ...)
 	 {
-		ECPGraise(stmt->lineno, ECPG_ARRAY_INSERT, NULL);
+		ECPGraise(stmt->lineno, ECPG_ARRAY_INSERT, NULL, compat);
 		return false;
 	 }*/
 
@@ -757,7 +757,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 						for (element = 0; element < var->arrsize; element++)
 							sprintf(mallocedval + strlen(mallocedval), "%c,", (((int *) var->value)[element]) ? 't' : 'f');
 					else
-						ECPGraise(stmt->lineno, ECPG_CONVERT_BOOL, "different size");
+						ECPGraise(stmt->lineno, ECPG_CONVERT_BOOL, "different size", ECPG_COMPAT_PGSQL);
 
 					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 				}
@@ -768,7 +768,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					else if (var->offset == sizeof(int))
 						sprintf(mallocedval, "'%c'", (*((int *) var->value)) ? 't' : 'f');
 					else
-						ECPGraise(stmt->lineno, ECPG_CONVERT_BOOL, "different size");
+						ECPGraise(stmt->lineno, ECPG_CONVERT_BOOL, "different size", ECPG_COMPAT_PGSQL);
 				}
 
 				*tobeinserted_p = mallocedval;
@@ -1021,7 +1021,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				
 			default:
 				/* Not implemented yet */
-				ECPGraise(stmt->lineno, ECPG_UNSUPPORTED, (char *) ECPGtype_name(var->type));
+				ECPGraise(stmt->lineno, ECPG_UNSUPPORTED, (char *) ECPGtype_name(var->type), ECPG_COMPAT_PGSQL);
 				return false;
 				break;
 		}
@@ -1073,7 +1073,7 @@ ECPGexecute(struct statement * stmt)
 			 * We have an argument but we dont have the matched up string
 			 * in the string
 			 */
-			ECPGraise(stmt->lineno, ECPG_TOO_MANY_ARGUMENTS, NULL);
+			ECPGraise(stmt->lineno, ECPG_TOO_MANY_ARGUMENTS, NULL, stmt->compat);
 			return false;
 		}
 		else
@@ -1111,7 +1111,7 @@ ECPGexecute(struct statement * stmt)
 	/* Check if there are unmatched things left. */
 	if (next_insert(copiedquery) != NULL)
 	{
-		ECPGraise(stmt->lineno, ECPG_TOO_FEW_ARGUMENTS, NULL);
+		ECPGraise(stmt->lineno, ECPG_TOO_FEW_ARGUMENTS, NULL, stmt->compat);
 		return false;
 	}
 
@@ -1121,7 +1121,7 @@ ECPGexecute(struct statement * stmt)
 	{
 		if ((results = PQexec(stmt->connection->connection, "begin transaction")) == NULL)
 		{
-			ECPGraise(stmt->lineno, ECPG_TRANS, NULL);
+			ECPGraise(stmt->lineno, ECPG_TRANS, NULL, stmt->compat);
 			return false;
 		}
 		PQclear(results);
@@ -1136,7 +1136,7 @@ ECPGexecute(struct statement * stmt)
 	{
 		errmsg = PQerrorMessage(stmt->connection->connection);
 		ECPGlog("ECPGexecute line %d: error: %s", stmt->lineno, errmsg);
-		ECPGraise(stmt->lineno, ECPG_PGSQL, errmsg);
+		ECPGraise(stmt->lineno, ECPG_PGSQL, errmsg, stmt->compat);
 	}
 	else
 
@@ -1167,7 +1167,7 @@ ECPGexecute(struct statement * stmt)
 					if (ntuples)
 						ECPGlog("ECPGexecute line %d: Incorrect number of matches: %d\n",
 								stmt->lineno, ntuples);
-					ECPGraise(stmt->lineno, ECPG_NOT_FOUND, NULL);
+					ECPGraise(stmt->lineno, ECPG_NOT_FOUND, NULL, stmt->compat);
 					status = false;
 					break;
 				}
@@ -1198,21 +1198,21 @@ ECPGexecute(struct statement * stmt)
 						}
 						else if (!INFORMIX_MODE(stmt->compat))
 						{
-							ECPGraise(stmt->lineno, ECPG_TOO_FEW_ARGUMENTS, NULL);
+							ECPGraise(stmt->lineno, ECPG_TOO_FEW_ARGUMENTS, NULL, stmt->compat);
 							return (false);
 						}
 					}
 
 				if (status && var != NULL)
 				{
-					ECPGraise(stmt->lineno, ECPG_TOO_MANY_ARGUMENTS, NULL);
+					ECPGraise(stmt->lineno, ECPG_TOO_MANY_ARGUMENTS, NULL, stmt->compat);
 					status = false;
 				}
 
 				break;
 			case PGRES_EMPTY_QUERY:
 				/* do nothing */
-				ECPGraise(stmt->lineno, ECPG_EMPTY, NULL);
+				ECPGraise(stmt->lineno, ECPG_EMPTY, NULL, stmt->compat);
 				break;
 			case PGRES_COMMAND_OK:
 				status = true;
@@ -1225,13 +1225,13 @@ ECPGexecute(struct statement * stmt)
 							( !strncmp(cmdstat, "UPDATE", 6)
 							  || !strncmp(cmdstat, "INSERT", 6)
 							  || !strncmp(cmdstat, "DELETE", 6)))
-					ECPGraise(stmt->lineno, ECPG_NOT_FOUND, NULL);
+					ECPGraise(stmt->lineno, ECPG_NOT_FOUND, NULL, stmt->compat);
 				break;
 			case PGRES_NONFATAL_ERROR:
 			case PGRES_FATAL_ERROR:
 			case PGRES_BAD_RESPONSE:
 				ECPGlog("ECPGexecute line %d: Error: %s", stmt->lineno, errmsg);
-				ECPGraise(stmt->lineno, ECPG_PGSQL, errmsg);
+				ECPGraise(stmt->lineno, ECPG_PGSQL, errmsg, stmt->compat);
 				status = false;
 				break;
 			case PGRES_COPY_OUT:
@@ -1245,7 +1245,7 @@ ECPGexecute(struct statement * stmt)
 			default:
 				ECPGlog("ECPGexecute line %d: Got something else, postgres error.\n",
 						stmt->lineno);
-				ECPGraise(stmt->lineno, ECPG_PGSQL, errmsg);
+				ECPGraise(stmt->lineno, ECPG_PGSQL, errmsg, stmt->compat);
 				status = false;
 				break;
 		}
@@ -1300,7 +1300,7 @@ ECPGdo(int lineno, int compat, int force_indicator, const char *connection_name,
 	if (con == NULL || con->connection == NULL)
 	{
 		free_statement(stmt);
-		ECPGraise(lineno, ECPG_NOT_CONN, (con) ? con->name : "<empty>");
+		ECPGraise(lineno, ECPG_NOT_CONN, (con) ? con->name : "<empty>", stmt->compat);
 		setlocale(LC_NUMERIC, oldlocale);
 		ECPGfree(oldlocale);
 		return false;

@@ -13,6 +13,9 @@
 #include "pgtypes_date.h"
 #include "datetime.h"
 
+int PGTYPEStimestamp_defmt_scan(char**, char*, Timestamp *, int*, int*, int*,
+		                int*, int*, int*, int*);
+
 #ifdef HAVE_INT64_TIMESTAMP
 static int64
 time2t(const int hour, const int min, const int sec, const fsec_t fsec)
@@ -47,7 +50,7 @@ dt2local(Timestamp dt, int tz)
  *
  * Returns -1 on failure (overflow).
  */
-static int
+int
 tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 {
 #ifdef HAVE_INT64_TIMESTAMP
@@ -372,7 +375,7 @@ static int
 dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 					char* output, int *pstr_len, char *fmtstr)
 {
-	union un_fmt_replace replace_val;
+	union un_fmt_comb replace_val;
 	int replace_type;
 	int i;
 	char* p = fmtstr;
@@ -382,35 +385,35 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 		if (*p == '%') {
 			p++;
 			/* fix compiler warning */
-			replace_type = PGTYPES_REPLACE_NOTHING;
+			replace_type = PGTYPES_TYPE_NOTHING;
 			switch (*p) {
 				case 'a':
-					replace_val.replace_str = pgtypes_date_weekdays_short[dow];
-					replace_type = PGTYPES_REPLACE_STRING_CONSTANT;
+					replace_val.str_val = pgtypes_date_weekdays_short[dow];
+					replace_type = PGTYPES_TYPE_STRING_CONSTANT;
 					break;
 				case 'A':
-					replace_val.replace_str = days[dow];
-					replace_type = PGTYPES_REPLACE_STRING_CONSTANT;
+					replace_val.str_val = days[dow];
+					replace_type = PGTYPES_TYPE_STRING_CONSTANT;
 					break;
 				case 'b':
 				case 'h':
-					replace_val.replace_str = months[tm->tm_mon];
-					replace_type = PGTYPES_REPLACE_STRING_CONSTANT;
+					replace_val.str_val = months[tm->tm_mon];
+					replace_type = PGTYPES_TYPE_STRING_CONSTANT;
 					break;
 				case 'B':
-					replace_val.replace_str = pgtypes_date_months[tm->tm_mon];
-					replace_type = PGTYPES_REPLACE_STRING_CONSTANT;
+					replace_val.str_val = pgtypes_date_months[tm->tm_mon];
+					replace_type = PGTYPES_TYPE_STRING_CONSTANT;
 					break;
 				case 'c':
 					/* XXX */
 					break;
 				case 'C':
-					replace_val.replace_uint = (tm->tm_year + 1900) / 100;
-					replace_type = PGTYPES_REPLACE_UINT_2_LZ;
+					replace_val.uint_val = (tm->tm_year + 1900) / 100;
+					replace_type = PGTYPES_TYPE_UINT_2_LZ;
 					break;
 				case 'd':
-					replace_val.replace_uint = tm->tm_mday;
-					replace_type = PGTYPES_REPLACE_UINT_2_LZ;
+					replace_val.uint_val = tm->tm_mday;
+					replace_type = PGTYPES_TYPE_UINT_2_LZ;
 					break;
 				case 'D':
 					/* ts, dDate, dow, tm is
@@ -428,8 +431,8 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 					if (i) { return i; }
 					break;
 				case 'e':
-					replace_val.replace_uint = tm->tm_mday;
-					replace_type = PGTYPES_REPLACE_UINT_2_LS;
+					replace_val.uint_val = tm->tm_mday;
+					replace_type = PGTYPES_TYPE_UINT_2_LS;
 					break;
 				case 'E':
 					{
@@ -450,7 +453,7 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 							(*pstr_len)--;
 						}
 						tm->tm_mon += 1;
-						replace_type = PGTYPES_REPLACE_NOTHING;
+						replace_type = PGTYPES_TYPE_NOTHING;
 						break;
 					}
 				case 'G':
@@ -463,7 +466,7 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 						(*pstr_len)--;
 					}
 					tm->tm_mon += 1;
-					replace_type = PGTYPES_REPLACE_NOTHING;
+					replace_type = PGTYPES_TYPE_NOTHING;
 					break;
 				case 'g':
 					/* XXX: fall back to strftime */
@@ -478,56 +481,56 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 							(*pstr_len)--;
 						}
 						tm->tm_mon += 1;
-						replace_type = PGTYPES_REPLACE_NOTHING;
+						replace_type = PGTYPES_TYPE_NOTHING;
 					}
 					break;
 				case 'H':
-					replace_val.replace_uint = tm->tm_hour;
-					replace_type = PGTYPES_REPLACE_UINT_2_LZ;
+					replace_val.uint_val = tm->tm_hour;
+					replace_type = PGTYPES_TYPE_UINT_2_LZ;
 					break;
 				case 'I':
-					replace_val.replace_uint = tm->tm_hour % 12;
-					replace_type = PGTYPES_REPLACE_UINT_2_LZ;
+					replace_val.uint_val = tm->tm_hour % 12;
+					replace_type = PGTYPES_TYPE_UINT_2_LZ;
 					break;
 				case 'j':
-					replace_val.replace_uint = tm->tm_yday;
-					replace_type = PGTYPES_REPLACE_UINT_3_LZ;
+					replace_val.uint_val = tm->tm_yday;
+					replace_type = PGTYPES_TYPE_UINT_3_LZ;
 					break;
 				case 'k':
-					replace_val.replace_uint = tm->tm_hour;
-					replace_type = PGTYPES_REPLACE_UINT_2_LS;
+					replace_val.uint_val = tm->tm_hour;
+					replace_type = PGTYPES_TYPE_UINT_2_LS;
 					break;
 				case 'l':
-					replace_val.replace_uint = tm->tm_hour % 12;
-					replace_type = PGTYPES_REPLACE_UINT_2_LS;
+					replace_val.uint_val = tm->tm_hour % 12;
+					replace_type = PGTYPES_TYPE_UINT_2_LS;
 					break;
 				case 'm':
-					replace_val.replace_uint = tm->tm_mon;
-					replace_type = PGTYPES_REPLACE_UINT_2_LZ;
+					replace_val.uint_val = tm->tm_mon;
+					replace_type = PGTYPES_TYPE_UINT_2_LZ;
 					break;
 				case 'M':
-					replace_val.replace_uint = tm->tm_min;
-					replace_type = PGTYPES_REPLACE_UINT_2_LZ;
+					replace_val.uint_val = tm->tm_min;
+					replace_type = PGTYPES_TYPE_UINT_2_LZ;
 					break;
 				case 'n':
-					replace_val.replace_char = '\n';
-					replace_type = PGTYPES_REPLACE_CHAR;
+					replace_val.char_val = '\n';
+					replace_type = PGTYPES_TYPE_CHAR;
 					break;
 				case 'p':
 					if (tm->tm_hour < 12) {
-						replace_val.replace_str = "AM";
+						replace_val.str_val = "AM";
 					} else {
-						replace_val.replace_str = "PM";
+						replace_val.str_val = "PM";
 					}
-					replace_type = PGTYPES_REPLACE_STRING_CONSTANT;
+					replace_type = PGTYPES_TYPE_STRING_CONSTANT;
 					break;
 				case 'P':
 					if (tm->tm_hour < 12) {
-						replace_val.replace_str = "am";
+						replace_val.str_val = "am";
 					} else {
-						replace_val.replace_str = "pm";
+						replace_val.str_val = "pm";
 					}
-					replace_type = PGTYPES_REPLACE_STRING_CONSTANT;
+					replace_type = PGTYPES_TYPE_STRING_CONSTANT;
 					break;
 				case 'r':
 					i = dttofmtasc_replace(ts, dDate, dow, tm,
@@ -544,19 +547,19 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 				case 's':
 #ifdef HAVE_INT64_TIMESTAMP
 					replace_val.replace_int64 = ((*ts - SetEpochTimestamp()) / 1000000e0);
-					replace_type = PGTYPES_REPLACE_INT64;
+					replace_type = PGTYPES_TYPE_INT64;
 #else
-					replace_val.replace_double = *ts - SetEpochTimestamp();
-					replace_type = PGTYPES_REPLACE_DOUBLE_NF;
+					replace_val.double_val = *ts - SetEpochTimestamp();
+					replace_type = PGTYPES_TYPE_DOUBLE_NF;
 #endif
 					break;
 				case 'S':
-					replace_val.replace_uint = tm->tm_sec;
-					replace_type = PGTYPES_REPLACE_UINT;
+					replace_val.uint_val = tm->tm_sec;
+					replace_type = PGTYPES_TYPE_UINT;
 					break;
 				case 't':
-					replace_val.replace_char = '\t';
-					replace_type = PGTYPES_REPLACE_CHAR;
+					replace_val.char_val = '\t';
+					replace_type = PGTYPES_TYPE_CHAR;
 					break;
 				case 'T':
 					i = dttofmtasc_replace(ts, dDate, dow, tm,
@@ -566,8 +569,8 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 					break;
 				case 'u':
 					if (dow == 0) { dow = 7; }
-					replace_val.replace_uint = dow;
-					replace_type = PGTYPES_REPLACE_UINT;
+					replace_val.uint_val = dow;
+					replace_type = PGTYPES_TYPE_UINT;
 					break;
 				case 'U':
 					/* XXX: fall back to strftime */
@@ -579,7 +582,7 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 						(*pstr_len)--;
 					}
 					tm->tm_mon += 1;
-					replace_type = PGTYPES_REPLACE_NOTHING;
+					replace_type = PGTYPES_TYPE_NOTHING;
 					break;
 				case 'V':
 					/* XXX: fall back to strftime */
@@ -589,11 +592,11 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 						q++;
 						(*pstr_len)--;
 					}
-					replace_type = PGTYPES_REPLACE_NOTHING;
+					replace_type = PGTYPES_TYPE_NOTHING;
 					break;
 				case 'w':
-					replace_val.replace_uint = dow;
-					replace_type = PGTYPES_REPLACE_UINT;
+					replace_val.uint_val = dow;
+					replace_type = PGTYPES_TYPE_UINT;
 					break;
 				case 'W':
 					/* XXX: fall back to strftime */
@@ -605,7 +608,7 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 						(*pstr_len)--;
 					}
 					tm->tm_mon += 1;
-					replace_type = PGTYPES_REPLACE_NOTHING;
+					replace_type = PGTYPES_TYPE_NOTHING;
 					break;
 				case 'x':
 					/* XXX: fall back to strftime */
@@ -620,7 +623,7 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 							(*pstr_len)--;
 						}
 						tm->tm_mon += 1;
-						replace_type = PGTYPES_REPLACE_NOTHING;
+						replace_type = PGTYPES_TYPE_NOTHING;
 					}
 					break;
 				case 'X':
@@ -633,15 +636,15 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 						(*pstr_len)--;
 					}
 					tm->tm_mon += 1;
-					replace_type = PGTYPES_REPLACE_NOTHING;
+					replace_type = PGTYPES_TYPE_NOTHING;
 					break;
 				case 'y':
-					replace_val.replace_uint = tm->tm_year % 100;
-					replace_type = PGTYPES_REPLACE_UINT_2_LZ;
+					replace_val.uint_val = tm->tm_year % 100;
+					replace_type = PGTYPES_TYPE_UINT_2_LZ;
 					break;
 				case 'Y':
-					replace_val.replace_uint = tm->tm_year + 1900;
-					replace_type = PGTYPES_REPLACE_UINT;
+					replace_val.uint_val = tm->tm_year + 1900;
+					replace_type = PGTYPES_TYPE_UINT;
 					break;
 				case 'z':
 					/* XXX: fall back to strftime */
@@ -653,7 +656,7 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 						(*pstr_len)--;
 					}
 					tm->tm_mon += 1;
-					replace_type = PGTYPES_REPLACE_NOTHING;
+					replace_type = PGTYPES_TYPE_NOTHING;
 					break;
 				case 'Z':
 					/* XXX: fall back to strftime */
@@ -665,11 +668,11 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 						(*pstr_len)--;
 					}
 					tm->tm_mon += 1;
-					replace_type = PGTYPES_REPLACE_NOTHING;
+					replace_type = PGTYPES_TYPE_NOTHING;
 					break;
 				case '%':
-					replace_val.replace_char = '%';
-					replace_type = PGTYPES_REPLACE_CHAR;
+					replace_val.char_val = '%';
+					replace_type = PGTYPES_TYPE_CHAR;
 					break;
 				case '\0':
 					/* fmtstr: blabla%' */
@@ -747,5 +750,35 @@ PGTYPEStimestamp_sub (Timestamp *ts1, Timestamp *ts2, Interval *iv)
 	iv->month = 0;
 
 	return 0;
+}
+
+int PGTYPEStimestamp_defmt_asc(char* str, char *fmt, Timestamp *d) {
+	int year, month, day;
+	int hour, minute, second;
+	int tz;
+
+	int i;
+	char* mstr;
+	char* mfmt;
+
+	if (!fmt) {
+		fmt = "%Y-%m-%d %H:%M:%S";
+	}
+	if (!fmt[0]) {
+		return 1;
+	}
+
+	mstr = pgtypes_strdup(str);
+	mfmt = pgtypes_strdup(fmt);
+	/* initialize with impossible values so that we can see if the
+	 * fields where specified at all */
+	/* XXX ambiguity with 1 BC for year? */
+	year = -1; month = -1; day = -1; hour = 0; minute = -1; second = -1;
+	tz = 0;
+
+	i = PGTYPEStimestamp_defmt_scan(&mstr, mfmt, d, &year, &month, &day, &hour, &minute, &second, &tz);
+	free(mstr);
+	free(mfmt);
+	return i;
 }
 

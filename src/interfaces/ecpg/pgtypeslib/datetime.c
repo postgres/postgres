@@ -168,10 +168,7 @@ PGTYPESdate_fmt_asc(Date dDate, char* fmtstring, char* outbuf) {
 			 { NULL, 0 }
 	};
 
-	union {
-		char* replace_str;
-		unsigned int replace_uint;
-	} replace_val;
+	union un_fmt_comb replace_val;
 	int replace_type;
 
 	int i;
@@ -191,76 +188,76 @@ PGTYPESdate_fmt_asc(Date dDate, char* fmtstring, char* outbuf) {
 		while ((start_pattern = strstr(outbuf, mapping[i].format)) != NULL) {
 			switch(mapping[i].component) {
 				case PGTYPES_FMTDATE_DOW_LITERAL_SHORT:
-					replace_val.replace_str = pgtypes_date_weekdays_short[dow];
-					replace_type = PGTYPES_REPLACE_STRING_CONSTANT;
+					replace_val.str_val = pgtypes_date_weekdays_short[dow];
+					replace_type = PGTYPES_TYPE_STRING_CONSTANT;
 					break;
 				case PGTYPES_FMTDATE_DAY_DIGITS_LZ:
-					replace_val.replace_uint = tm.tm_mday;
-					replace_type = PGTYPES_REPLACE_UINT_2_LZ;
+					replace_val.uint_val = tm.tm_mday;
+					replace_type = PGTYPES_TYPE_UINT_2_LZ;
 					break;
 				case PGTYPES_FMTDATE_MONTH_LITERAL_SHORT:
-					replace_val.replace_str = months[tm.tm_mon-1];
-					replace_type = PGTYPES_REPLACE_STRING_CONSTANT;
+					replace_val.str_val = months[tm.tm_mon-1];
+					replace_type = PGTYPES_TYPE_STRING_CONSTANT;
 					break;
 				case PGTYPES_FMTDATE_MONTH_DIGITS_LZ:
-					replace_val.replace_uint = tm.tm_mon;
-					replace_type = PGTYPES_REPLACE_UINT_2_LZ;
+					replace_val.uint_val = tm.tm_mon;
+					replace_type = PGTYPES_TYPE_UINT_2_LZ;
 					break;
 				case PGTYPES_FMTDATE_YEAR_DIGITS_LONG:
-					replace_val.replace_uint = tm.tm_year;
-					replace_type = PGTYPES_REPLACE_UINT_4_LZ;
+					replace_val.uint_val = tm.tm_year;
+					replace_type = PGTYPES_TYPE_UINT_4_LZ;
 					break;
 				case PGTYPES_FMTDATE_YEAR_DIGITS_SHORT:
-					replace_val.replace_uint = tm.tm_year % 1000;
-					replace_type = PGTYPES_REPLACE_UINT_2_LZ;
+					replace_val.uint_val = tm.tm_year % 1000;
+					replace_type = PGTYPES_TYPE_UINT_2_LZ;
 					break;
 				default:
 					/* should not happen, set something
 					 * anyway */
-					replace_val.replace_str = " ";
-					replace_type = PGTYPES_REPLACE_STRING_CONSTANT;
+					replace_val.str_val = " ";
+					replace_type = PGTYPES_TYPE_STRING_CONSTANT;
 			}
 			switch(replace_type) {
-				case PGTYPES_REPLACE_STRING_MALLOCED:
-				case PGTYPES_REPLACE_STRING_CONSTANT:
-					strncpy(start_pattern, replace_val.replace_str,
-							strlen(replace_val.replace_str));
-					if (replace_type == PGTYPES_REPLACE_STRING_MALLOCED) {
-						free(replace_val.replace_str);
+				case PGTYPES_TYPE_STRING_MALLOCED:
+				case PGTYPES_TYPE_STRING_CONSTANT:
+					strncpy(start_pattern, replace_val.str_val,
+							strlen(replace_val.str_val));
+					if (replace_type == PGTYPES_TYPE_STRING_MALLOCED) {
+						free(replace_val.str_val);
 					}
 					break;
-				case PGTYPES_REPLACE_UINT:
+				case PGTYPES_TYPE_UINT:
 					{
 						char* t = pgtypes_alloc(PGTYPES_DATE_NUM_MAX_DIGITS);
 						if (!t) {
 							return -1;
 						}
 						snprintf(t, PGTYPES_DATE_NUM_MAX_DIGITS,
-								"%u", replace_val.replace_uint);
+								"%u", replace_val.uint_val);
 						strncpy(start_pattern, t, strlen(t));
 						free(t);
 					}
 					break;
-				case PGTYPES_REPLACE_UINT_2_LZ:
+				case PGTYPES_TYPE_UINT_2_LZ:
 					{
 						char* t = pgtypes_alloc(PGTYPES_DATE_NUM_MAX_DIGITS);
 						if (!t) {
 							return -1;
 						}
 						snprintf(t, PGTYPES_DATE_NUM_MAX_DIGITS,
-								"%02u", replace_val.replace_uint);
+								"%02u", replace_val.uint_val);
 						strncpy(start_pattern, t, strlen(t));
 						free(t);
 					}
 					break;
-				case PGTYPES_REPLACE_UINT_4_LZ:
+				case PGTYPES_TYPE_UINT_4_LZ:
 					{
 						char* t = pgtypes_alloc(PGTYPES_DATE_NUM_MAX_DIGITS);
 						if (!t) {
 							return -1;
 						}
 						snprintf(t, PGTYPES_DATE_NUM_MAX_DIGITS,
-								"%04u", replace_val.replace_uint);
+								"%04u", replace_val.uint_val);
 						strncpy(start_pattern, t, strlen(t));
 						free(t);
 					}
@@ -268,7 +265,7 @@ PGTYPESdate_fmt_asc(Date dDate, char* fmtstring, char* outbuf) {
 				default:
 					/* doesn't happen (we set
 					 * replace_type to
-					 * PGTYPES_REPLACE_STRING_CONSTANT
+					 * PGTYPES_TYPE_STRING_CONSTANT
 					 * in case of an error above) */
 					break;
 			}

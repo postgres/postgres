@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.3 2003/06/15 04:07:58 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.4 2003/08/01 08:21:04 meskes Exp $
  */
 
 #define POSTGRES_ECPG_INTERNAL
@@ -103,7 +103,7 @@ get_int_item(int lineno, void *var, enum ECPGttype vartype, int value)
 			*(double *) var = (double) value;
 			break;
 		default:
-			ECPGraise(lineno, ECPG_VAR_NOT_NUMERIC, NULL);
+			ECPGraise(lineno, ECPG_VAR_NOT_NUMERIC, NULL, ECPG_COMPAT_PGSQL);
 			return (false);
 	}
 
@@ -135,7 +135,7 @@ get_char_item(int lineno, void *var, enum ECPGttype vartype, char *value, int va
 			}
 			break;
 		default:
-			ECPGraise(lineno, ECPG_VAR_NOT_CHAR, NULL);
+			ECPGraise(lineno, ECPG_VAR_NOT_CHAR, NULL, ECPG_COMPAT_PGSQL);
 			return (false);
 	}
 
@@ -162,13 +162,13 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 	ntuples = PQntuples(ECPGresult);
 	if (ntuples < 1)
 	{
-		ECPGraise(lineno, ECPG_NOT_FOUND, NULL);
+		ECPGraise(lineno, ECPG_NOT_FOUND, NULL, ECPG_COMPAT_PGSQL);
 		return (false);
 	}
 
 	if (index < 1 || index > PQnfields(ECPGresult))
 	{
-		ECPGraise(lineno, ECPG_INVALID_DESCRIPTOR_INDEX, NULL);
+		ECPGraise(lineno, ECPG_INVALID_DESCRIPTOR_INDEX, NULL, ECPG_COMPAT_PGSQL);
 		return (false);
 	}
 
@@ -300,7 +300,7 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 				{
 					ECPGlog("ECPGget_desc line %d: Incorrect number of matches: %d don't fit into array of %d\n",
 							lineno, ntuples, arrsize);
-					ECPGraise(lineno, ECPG_TOO_MANY_MATCHES, NULL);
+					ECPGraise(lineno, ECPG_TOO_MANY_MATCHES, NULL, ECPG_COMPAT_PGSQL);
 					return false;
 				}
 				/* allocate storage if needed */
@@ -324,7 +324,7 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 
 			default:
 				snprintf(type_str, sizeof(type_str), "%d", type);
-				ECPGraise(lineno, ECPG_UNKNOWN_DESCRIPTOR_ITEM, type_str);
+				ECPGraise(lineno, ECPG_UNKNOWN_DESCRIPTOR_ITEM, type_str, ECPG_COMPAT_PGSQL);
 				return (false);
 		}
 
@@ -361,7 +361,7 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 		{
 			ECPGlog("ECPGget_desc line %d: Incorrect number of matches (indicator): %d don't fit into array of %d\n",
 					lineno, ntuples, data_var.ind_arrsize);
-			ECPGraise(lineno, ECPG_TOO_MANY_MATCHES, NULL);
+			ECPGraise(lineno, ECPG_TOO_MANY_MATCHES, NULL, ECPG_COMPAT_PGSQL);
 			return false;
 		}
 		/* allocate storage if needed */
@@ -404,7 +404,7 @@ ECPGdeallocate_desc(int line, const char *name)
 			return true;
 		}
 	}
-	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, name);
+	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, name, ECPG_COMPAT_PGSQL);
 	return false;
 }
 
@@ -430,7 +430,7 @@ ECPGallocate_desc(int line, const char *name)
 	{
 		ECPGfree(new->name);
 		ECPGfree(new);
-		ECPGraise(line, ECPG_OUT_OF_MEMORY, NULL);
+		ECPGraise(line, ECPG_OUT_OF_MEMORY, NULL, ECPG_COMPAT_PGSQL);
 		return false;
 	}
 	strcpy(new->name, name);
@@ -449,7 +449,7 @@ ECPGdescriptor_lvalue(int line, const char *descriptor)
 			return &i->result;
 	}
 
-	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, (char *) descriptor);
+	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, (char *) descriptor, ECPG_COMPAT_PGSQL);
 	return NULL;
 }
 

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.10 2003/07/17 07:54:29 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.11 2003/08/01 08:21:04 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -103,7 +103,7 @@ ECPGinit(const struct connection * con, const char *connection_name, const int l
 	ECPGinit_sqlca(sqlca);
 	if (con == NULL)
 	{
-		ECPGraise(lineno, ECPG_NO_CONN, connection_name ? connection_name : "NULL");
+		ECPGraise(lineno, ECPG_NO_CONN, connection_name ? connection_name : "NULL", ECPG_COMPAT_PGSQL);
 		return (false);
 	}
 
@@ -150,7 +150,7 @@ ECPGstatus(int lineno, const char *connection_name)
 	/* are we connected? */
 	if (con->connection == NULL)
 	{
-		ECPGraise(lineno, ECPG_NOT_CONN, con->name);
+		ECPGraise(lineno, ECPG_NOT_CONN, con->name, ECPG_COMPAT_PGSQL);
 		return false;
 	}
 
@@ -179,7 +179,7 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 		{
 			if ((res = PQexec(con->connection, transaction)) == NULL)
 			{
-				ECPGraise(lineno, ECPG_TRANS, NULL);
+				ECPGraise(lineno, ECPG_TRANS, NULL, ECPG_COMPAT_PGSQL);
 				return FALSE;
 			}
 			PQclear(res);

@@ -71,7 +71,7 @@ bool ECPGdo_descriptor(int line, const char *connection,
 				  const char *descriptor, const char *query);
 bool		ECPGdeallocate_desc(int line, const char *name);
 bool		ECPGallocate_desc(int line, const char *name);
-void		ECPGraise(int line, int code, const char *str);
+void		ECPGraise(int line, int code, const char *str, int);
 bool		ECPGget_desc_header(int, char *, int *);
 bool		ECPGget_desc(int, char *, int,...);
 

@@ -17,6 +17,6 @@ extern char *PGTYPEStimestamp_to_asc(Timestamp);
 extern int PGTYPEStimestamp_sub (Timestamp *, Timestamp *, Interval *);
 extern int PGTYPEStimestamp_fmt_asc (Timestamp *, char *, int, char *);
 extern void PGTYPEStimestamp_current (Timestamp *);
-	
+extern int PGTYPEStimestamp_defmt_asc(char *, char *, Timestamp *);
 
 #endif /* PGTYPES_TIMESTAMP */

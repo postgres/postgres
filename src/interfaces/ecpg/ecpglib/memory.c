@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/memory.c,v 1.2 2003/06/15 04:07:58 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/memory.c,v 1.3 2003/08/01 08:21:04 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -21,7 +21,7 @@ ECPGalloc(long size, int lineno)
 
 	if (!new)
 	{
-		ECPGraise(lineno, ECPG_OUT_OF_MEMORY, NULL);
+		ECPGraise(lineno, ECPG_OUT_OF_MEMORY, NULL, ECPG_COMPAT_PGSQL);
 		return NULL;
 	}
 
@@ -36,7 +36,7 @@ ECPGrealloc(void *ptr, long size, int lineno)
 
 	if (!new)
 	{
-		ECPGraise(lineno, ECPG_OUT_OF_MEMORY, NULL);
+		ECPGraise(lineno, ECPG_OUT_OF_MEMORY, NULL, ECPG_COMPAT_PGSQL);
 		return NULL;
 	}
 
@@ -50,7 +50,7 @@ ECPGstrdup(const char *string, int lineno)
 
 	if (!new)
 	{
-		ECPGraise(lineno, ECPG_OUT_OF_MEMORY, NULL);
+		ECPGraise(lineno, ECPG_OUT_OF_MEMORY, NULL, ECPG_COMPAT_PGSQL);
 		return NULL;
 	}
 

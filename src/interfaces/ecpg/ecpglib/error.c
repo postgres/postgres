@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.3 2003/07/15 12:38:38 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.4 2003/08/01 08:21:04 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -12,7 +12,7 @@
 #include "sqlca.h"
 
 void
-ECPGraise(int line, int code, const char *str)
+ECPGraise(int line, int code, const char *str, int compat)
 {
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 	sqlca->sqlcode = code;
@@ -139,9 +139,9 @@ ECPGraise(int line, int code, const char *str)
 				snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
 						 "'%.*s' in line %d.", slen, str, line);
 				if (strncmp(str, "ERROR:  Cannot insert a duplicate key", strlen("ERROR:  Cannot insert a duplicate key")) == 0)
-						sqlca->sqlcode = ECPG_DUPLICATE_KEY;
+					sqlca->sqlcode = INFORMIX_MODE(compat) ? ECPG_INFORMIX_DUPLICATE_KEY : ECPG_DUPLICATE_KEY;
 				else if (strncmp(str, "ERROR:  More than one tuple returned by a subselect", strlen("ERROR:  More than one tuple returned by a subselect")) == 0)
-						sqlca->sqlcode = ECPG_SUBSELECT_NOT_ONE;
+					sqlca->sqlcode = INFORMIX_MODE(compat) ? ECPG_INFORMIX_SUBSELECT_NOT_ONE : ECPG_SUBSELECT_NOT_ONE;
 				
 				break;
 			}

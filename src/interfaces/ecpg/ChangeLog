@@ -1595,6 +1595,11 @@ Thu Jul 24 10:33:51 CEST 2003
 Fri Jul 25 18:08:18 CEST 2003
 
 	- Added explicit casts for date/timestamp/interval.
+	
+Fri Aug  1 08:54:02 CEST 2003
+	
+	- Added some Informix error codes in Informix mode.
+	- Added just another pgtypeslib function.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0

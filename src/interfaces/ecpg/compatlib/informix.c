@@ -823,7 +823,7 @@ rtypwidth(int sqltype, int sqllen)
 int
 dtcvfmtasc (char *inbuf, char *fmtstr, dtime_t *dtvalue)
 {
-	return 0;
+	return PGTYPEStimestamp_defmt_asc(inbuf, fmtstr, dtvalue); 
 }
 
 static struct var_list
