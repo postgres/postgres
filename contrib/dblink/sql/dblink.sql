@@ -1,10 +1,27 @@
 --
--- First, create a slave database and define the functions.
--- Turn off echoing so that expected file does not depend on
--- contents of dblink.sql.
+-- First, create a slave database and define the functions and test data
+-- therein.
 --
+-- This initial hackery is to allow successive runs without failures.
+--
+CREATE OR REPLACE FUNCTION conditional_drop() RETURNS text AS '
+DECLARE
+    dbname    text;
+BEGIN
+    SELECT INTO dbname datname FROM pg_database WHERE datname = ''regression_slave'';
+    IF FOUND THEN
+        DROP DATABASE regression_slave;
+    END IF;
+    RETURN ''OK'';
+END;
+' LANGUAGE 'plpgsql';
+SELECT conditional_drop();
+
 CREATE DATABASE regression_slave;
 \connect regression_slave
+
+-- Turn off echoing so that expected file does not depend on
+-- contents of dblink.sql.
 \set ECHO none
 \i dblink.sql
 \set ECHO all
@@ -112,38 +129,3 @@ select * from dblink('select * from foo') as t(a int, b text, c text[]) where a 
 
 -- close the persistent connection
 select dblink_disconnect();
-
--- now wait for the connection to the slave to be cleared before
--- we try to drop the database
-CREATE FUNCTION wait() RETURNS TEXT AS '
-DECLARE
-	rec           record;
-    cntr          int;
-BEGIN
-    cntr = 0;
-
-    select into rec d.datname
-    from pg_database d,
-        (select pg_stat_get_backend_dbid(pg_stat_get_backend_idset()) AS dbid) b
-    where d.oid = b.dbid and d.datname = ''regression_slave'';
-
-    WHILE FOUND LOOP
-        cntr = cntr + 1;
-
-        select into rec d.datname
-        from pg_database d,
-            (select pg_stat_get_backend_dbid(pg_stat_get_backend_idset()) AS dbid) b
-        where d.oid = b.dbid and d.datname = ''regression_slave'';
-
-        -- safety valve
-        if cntr > 1000 THEN
-            EXIT;
-        end if;
-	END LOOP;
-	RETURN ''OK'';
-END;
-' LANGUAGE 'plpgsql';
-SELECT wait();
-
--- OK, safe to drop the slave
-DROP DATABASE regression_slave;
