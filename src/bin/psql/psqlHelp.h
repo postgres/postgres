@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.12 1997/04/23 06:41:56 vadim Exp $
+ * $Id: psqlHelp.h,v 1.13 1997/05/17 06:16:34 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,6 +152,9 @@ static struct _helpStruct QL_HELP[] = {
   { "purge",
       "purge historical data",
       "purge <class_name> [before <abstime>] [after <reltime>];"},
+  { "reset",
+      "set run-time environment back to default",
+      "reset {DateStyle | GEQO}"},
   { "revoke",
       "revoke access control from a user or group",
       "revoke <privilege[,privilege,...]> on <rel1>[,...<reln>] from \n[public | group <group> | <username>]\n\t privilege is {ALL | SELECT | INSERT | UPDATE | DELETE | RULE}"},
@@ -161,6 +164,12 @@ static struct _helpStruct QL_HELP[] = {
   { "select",
       "retrieve tuples",
       "select [distinct on <attr>] <expr1> [as <attr1>], ... <exprN> [as <attrN>]\n\t[into table <class_name>] [from <from_list>]\n\t[where <qual>]\n\t[order by <attr1>\n\t\t[using <op1>],..<attrN> [[using <opN>] | ASC | DESC]];" },
+  { "set",
+      "set run-time environment",
+      "set DateStyle = {'ISO' | 'SQL' | 'Postgres' | 'European' | 'US' | 'NonEuropean'\nset GEQO = {'ON' | 'OFF'}"},
+  { "show",
+      "show current run-time environment",
+      "show {DateStyle | GEQO}"},
   { "update",
       "update tuples",
       "update <class_name> set <attr1>=<expr1>,...<attrN>=<exprN> [from <from_clause>] [where <qual>];"},
