@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.41 2004/02/03 17:34:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.42 2004/03/17 22:24:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2020,7 +2020,8 @@ comparetup_index(Tuplesortstate *state, const void *a, const void *b)
 {
 	/*
 	 * This is almost the same as _bt_tuplecompare(), but we need to keep
-	 * track of whether any null fields are present.
+	 * track of whether any null fields are present.  Also see the special
+	 * treatment for equal keys at the end.
 	 */
 	IndexTuple	tuple1 = (IndexTuple) a;
 	IndexTuple	tuple2 = (IndexTuple) b;
@@ -2080,6 +2081,27 @@ comparetup_index(Tuplesortstate *state, const void *a, const void *b)
 				(errcode(ERRCODE_UNIQUE_VIOLATION),
 				 errmsg("could not create unique index"),
 				 errdetail("Table contains duplicated values.")));
+
+	/*
+	 * If key values are equal, we sort on ItemPointer.  This does not
+	 * affect validity of the finished index, but it offers cheap insurance
+	 * against performance problems with bad qsort implementations that have
+	 * trouble with large numbers of equal keys.
+	 */
+	{
+		BlockNumber blk1 = ItemPointerGetBlockNumber(&tuple1->t_tid);
+		BlockNumber blk2 = ItemPointerGetBlockNumber(&tuple2->t_tid);
+
+		if (blk1 != blk2)
+			return (blk1 < blk2) ? -1 : 1;
+	}
+	{
+		OffsetNumber pos1 = ItemPointerGetOffsetNumber(&tuple1->t_tid);
+		OffsetNumber pos2 = ItemPointerGetOffsetNumber(&tuple2->t_tid);
+
+		if (pos1 != pos2)
+			return (pos1 < pos2) ? -1 : 1;
+	}
 
 	return 0;
 }
