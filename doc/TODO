@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jan 18 21:53:43 EST 2001
+Last updated:		Thu Jan 18 23:07:47 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -213,7 +213,7 @@ EXOTIC FEATURES
 * Add the concept of dataspaces/tablespaces [tablespaces]
 * Allow queries across multiple databases
 * Allow nested transactions (Vadim)
-* Allow INSERT/UPDATE to return new.col or old.col (Philip)
+* Allow [INSERT/UPDATE] ... RETURNING new.col or old.col (Philip)
 * SQL*Net listener that makes PostgreSQL appear as an Oracle database 
   to clients
 * Incremental backups
