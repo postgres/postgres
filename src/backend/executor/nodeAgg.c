@@ -437,7 +437,7 @@ ExecAgg(Agg *node)
 				args[0] = (char *) value2[i];
 			}
 			else
-				elog(WARN, "ExecAgg: no valid transition functions??");
+				elog(NOTICE, "ExecAgg: no valid transition functions??");
 			value1[i] = (Datum) fmgr_c(&aggfns->finalfn,
 						(FmgrValues *) args, &(nulls[i]));
 		}

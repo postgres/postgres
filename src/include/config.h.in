@@ -52,6 +52,9 @@
 
 /* Set to 1 if you have isinf() */
 #undef HAVE_ISINF
+#ifndef HAVE_ISINF
+int isinf(double x);
+#endif
 
 /* Set to 1 if you have tzset() */
 #undef HAVE_TZSET
@@ -59,7 +62,7 @@
 /* Set to 1 if you have gethostname() */
 #undef HAVE_GETHOSTNAME
 #ifndef HAVE_GETHOSTNAME
-extern int  gethostname(char *name, int namelen);
+int  gethostname(char *name, int namelen);
 #endif
 
 /* Set to 1 if you have int timezone */
