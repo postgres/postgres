@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.29 1998/10/12 01:23:23 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.30 1998/10/12 02:40:59 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -146,6 +146,7 @@ install-libpgtcl: libpgtcl.a
 install-shlib: $(shlib)
 	$(INSTALL) $(INSTL_SHLIB_OPTS) $(shlib) \
 		$(LIBDIR)/$(shlib)
+	rm -f $(LIBDIR)/libpgtcl.so
 	$(LN_S) -f $(shlib) $(LIBDIR)/libpgtcl.so
 
 .PHONY: clean

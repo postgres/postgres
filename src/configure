@@ -6118,7 +6118,7 @@ fi
 if test "$USE_TCL"; then
 	echo $ac_n "checking for tclConfig.sh""... $ac_c" 1>&6
 echo "configure:6121: checking for tclConfig.sh" >&5
-	library_dirs="/usr/lib $LIBRARY_DIRS"
+	library_dirs="$LIBRARY_DIRS /usr/lib"
 	TCL_CONFIG_SH=
 	for dir in $library_dirs; do
 		for tcl_dir in $tcl_dirs; do
@@ -6267,6 +6267,36 @@ fi
 	CPPFLAGS="$ice_save_CPPFLAGS"
 	LDFLAGS="$ice_save_LDFLAGS"
 fi
+
+if test "$USE_TCL"; then
+	echo $ac_n "checking for tkConfig.sh""... $ac_c" 1>&6
+echo "configure:6121: checking for tkConfig.sh" >&5
+	library_dirs="$LIBRARY_DIRS /usr/lib"
+	TK_CONFIG_SH=
+	for dir in $library_dirs; do
+		for tk_dir in $tk_dirs; do
+			if test -z "$TK_CONFIG_SH"; then
+				if test -d "$dir/$tk_dir" -a -r "$dir/$tk_dir/tkConfig.sh"; then
+					TK_CONFIG_SH=$dir/$tk_dir/tkConfig.sh
+				fi
+			fi
+		done
+		if test -z "$TK_CONFIG_SH"; then
+			if test -d "$dir" -a -r "$dir/tkConfig.sh"; then
+				TK_CONFIG_SH=$dir/tkConfig.sh
+			fi
+		fi
+	done
+	if test -z "$TK_CONFIG_SH"; then
+		echo "$ac_t""no" 1>&6
+		echo "configure: warning: tcl support disabled; Tk configuration script missing" 1>&2
+		USE_TCL=
+	else
+		echo "$ac_t""$TK_CONFIG_SH" 1>&6
+		
+	fi
+fi
+
 
 #if test "X$USE_ODBC" = "Xtrue"
 #then
@@ -6424,6 +6454,7 @@ trap 'rm -fr `echo "GNUmakefile
 	bin/pg_dump/Makefile
 	bin/pg_version/Makefile
 	bin/psql/Makefile
+	bin/pgtclsh/mkMakefile.tcltkdefs.sh
 	include/version.h
 	interfaces/libpq/Makefile
 	interfaces/ecpg/lib/Makefile
@@ -6532,6 +6563,7 @@ s%@X11_LIBS@%$X11_LIBS%g
 s%@TCL_LIB@%$TCL_LIB%g
 s%@TCL_CONFIG_SH@%$TCL_CONFIG_SH%g
 s%@TK_LIB@%$TK_LIB%g
+s%@TK_CONFIG_SH@%$TK_CONFIG_SH%g
 
 CEOF
 EOF
@@ -6580,6 +6612,7 @@ CONFIG_FILES=\${CONFIG_FILES-"GNUmakefile
 	bin/pg_dump/Makefile
 	bin/pg_version/Makefile
 	bin/psql/Makefile
+	bin/pgtclsh/mkMakefile.tcltkdefs.sh
 	include/version.h
 	interfaces/libpq/Makefile
 	interfaces/ecpg/lib/Makefile

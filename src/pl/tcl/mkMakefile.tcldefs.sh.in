@@ -1,15 +1,21 @@
 
-if [ -f @TCL_CONFIG_SH@ ]; then
-    . @TCL_CONFIG_SH@
-else
+if [ ! -f @TCL_CONFIG_SH@ ]; then
     echo "@TCL_CONFIG_SH@ not found"
     echo "I need this file! Please make a symbolic link to this file"
     echo "and start make again."
     exit 1
 fi
 
-for v in `set | grep '^TCL' | sed -e 's/=.*//'` ; do
-    echo $v = `eval "echo \\$$v"`
-done >Makefile.tcldefs
+. @TCL_CONFIG_SH@
+
+set												| 
+    egrep '^TCL_|^TK_'							|
+    sed -e 's/=[ 	]*/="/' -e 's/[ 	]*$/"/'	|
+    while read v
+    do
+		eval "$v"
+		v1=`echo $v | sed -e 's/=.*//'`
+		eval "echo $v1 = \"\$$v1\""
+    done >Makefile.tcldefs
 
 exit 0

@@ -801,13 +801,12 @@ if test "$USE_TCL" = "true"; then
 	else
 		TCL_LIB=-l$TCL_LIB
 	fi
-	AC_SUBST(TCL_LIB)
 fi
 
 dnl Check for Tcl configuration script tclConfig.sh
 if test "$USE_TCL"; then
 	AC_MSG_CHECKING(for tclConfig.sh)
-	library_dirs="/usr/lib $LIBRARY_DIRS"
+	library_dirs="$LIBRARY_DIRS /usr/lib"
 	TCL_CONFIG_SH=
 	for dir in $library_dirs; do
 		for tcl_dir in $tcl_dirs; do
@@ -886,12 +885,39 @@ then
 		TK_LIB=-l$TK_LIB
 	fi
 
-	AC_SUBST(TK_LIB)
-
 	LIBS="$ice_save_LIBS"
 	CFLAGS="$ice_save_CFLAGS"
 	CPPFLAGS="$ice_save_CPPFLAGS"
 	LDFLAGS="$ice_save_LDFLAGS"
+fi
+
+dnl Check for Tk configuration script tkConfig.sh
+if test "$USE_TCL"; then
+	AC_MSG_CHECKING(for tkConfig.sh)
+	library_dirs="$LIBRARY_DIRS /usr/lib"
+	TK_CONFIG_SH=
+	for dir in $library_dirs; do
+		for tk_dir in $tk_dirs; do
+			if test -z "$TK_CONFIG_SH"; then
+				if test -d "$dir/$tk_dir" -a -r "$dir/$tk_dir/tkConfig.sh"; then
+					TK_CONFIG_SH=$dir/$tk_dir/tkConfig.sh
+				fi
+			fi
+		done
+		if test -z "$TK_CONFIG_SH"; then
+			if test -d "$dir" -a -r "$dir/tkConfig.sh"; then
+				TK_CONFIG_SH=$dir/tkConfig.sh
+			fi
+		fi
+	done
+	if test -z "$TK_CONFIG_SH"; then
+		AC_MSG_RESULT(no)
+		AC_MSG_WARN(tcl support disabled; Tk configuration script missing)
+		USE_TCL=
+	else
+		AC_MSG_RESULT($TK_CONFIG_SH)
+		AC_SUBST(TK_CONFIG_SH)
+	fi
 fi
 
 dnl cause configure to recurse into subdirectories with their own configure
@@ -925,6 +951,7 @@ AC_OUTPUT(
 	bin/pg_dump/Makefile
 	bin/pg_version/Makefile
 	bin/psql/Makefile
+	bin/pgtclsh/mkMakefile.tcltkdefs.sh
 	include/version.h
 	interfaces/libpq/Makefile
 	interfaces/ecpg/lib/Makefile

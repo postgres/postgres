@@ -7,14 +7,19 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.18 1998/05/12 15:42:08 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.19 1998/10/12 02:40:58 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
 include ../../Makefile.global
 
-CFLAGS+=  $(X_CFLAGS) -I$(SRCDIR)/interfaces/libpgtcl
+#
+# Include definitions from the tclConfig.sh file
+#
+include Makefile.tcltkdefs
+
+CFLAGS+=  -I$(SRCDIR)/interfaces/libpgtcl 
 
 ifdef KRBVERS
 LDFLAGS+= $(KRBLIBS)
@@ -27,14 +32,17 @@ LIBPQ= -L$(LIBPQDIR) -lpq
 
 all: pgtclsh pgtksh
 
+Makefile.tcltkdefs:
+	/bin/sh mkMakefile.tcltkdefs.sh
+
 pgtclsh: pgtclAppInit.o
-	$(CC) $(CFLAGS) -o $@ pgtclAppInit.o \
-	  $(LIBPGTCL) $(LIBPQ) $(TCL_LIB) -lm $(LDFLAGS)
+	$(CC) $(CFLAGS) $(TCL_DEFS) -o $@ pgtclAppInit.o \
+	  $(LIBPGTCL) $(LIBPQ) $(TCL_LIB_SPEC) $(TCL_LIBS) $(LDFLAGS)
 
 pgtksh: pgtkAppInit.o
-	$(CC) $(CFLAGS) -o $@ pgtkAppInit.o \
-	  $(LIBPGTCL) $(LIBPQ) $(X_LIBS) $(TK_LIB) $(TCL_LIB) \
-	  $(X11_LIBS) -lm $(LDFLAGS)
+	$(CC) $(CFLAGS) $(TK_DEFS) -o $@ pgtkAppInit.o \
+	  $(LIBPGTCL) $(LIBPQ) $(TK_LIB_SPEC) $(TK_LIBS) \
+	  $(TCL_LIB_SPEC) $(TCL_LIB) $(LDFLAGS)
 
 install: pgtclsh pgtksh
 	$(INSTALL) $(INSTL_EXE_OPTS) pgtclsh $(BINDIR)/pgtclsh
