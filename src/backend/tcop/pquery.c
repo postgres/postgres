@@ -8,19 +8,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.31 2000/06/04 01:44:33 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.32 2000/06/04 22:08:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "commands/command.h"
 #include "executor/execdefs.h"
 #include "executor/executor.h"
 #include "tcop/pquery.h"
 #include "utils/ps_status.h"
-
-#include "commands/command.h"
 
 static char *CreateOperationTag(int operationType);
 static void ProcessQueryDesc(QueryDesc *queryDesc, Node *limoffset,
@@ -140,15 +139,32 @@ ProcessPortal(char *portalName,
 	MemoryContext portalContext;
 
 	/* ----------------
-	 *	 convert the current blank portal into the user-specified
-	 *	 portal and initialize the state and query descriptor.
+	 *	 Check for reserved or already-in-use portal name.
 	 * ----------------
 	 */
 
 	if (PortalNameIsSpecial(portalName))
 		elog(ERROR,
-			 "The portal name %s is reserved for internal use",
+			 "The portal name \"%s\" is reserved for internal use",
 			 portalName);
+
+	portal = GetPortalByName(portalName);
+	if (PortalIsValid(portal))
+	{
+		/* XXX Should we raise an error rather than closing the old portal? */
+		elog(NOTICE, "Closing pre-existing portal \"%s\"",
+			 portalName);
+		PortalDrop(&portal);
+	}
+
+	/* ----------------
+	 *	 Convert the current blank portal into the user-specified
+	 *	 portal and initialize the state and query descriptor.
+	 *
+	 *	 Since the parsetree has been created in the current blank portal,
+	 *	 we don't have to do any work to copy it into the user-named portal.
+	 * ----------------
+	 */
 
 	portal = BlankPortalAssignName(portalName);
 
@@ -159,8 +175,8 @@ ProcessPortal(char *portalName,
 				   PortalCleanup);
 
 	/* ----------------
-	 *	now create a new blank portal and switch to it.
-	 *	Otherwise, the new named portal will be cleaned.
+	 *	Now create a new blank portal and switch to it.
+	 *	Otherwise, the new named portal will be cleaned at statement end.
 	 *
 	 *	Note: portals will only be supported within a BEGIN...END
 	 *	block in the near future.  Later, someone will fix it to
