@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.38 1998/04/06 00:20:33 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.39 1998/04/12 01:18:35 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -255,4 +255,5 @@ endif
 
 ifdef PROFILE
    CFLAGS+= $(PROFILE)
+   LDFLAGS+= $(PROFILE)
 endif
