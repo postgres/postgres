@@ -8,6 +8,9 @@
 #ifndef _DBF_H
 #define _DBF_H
 
+#ifdef _WIN32
+#include <gmon.h>			/* we need it to define u_char type */
+#endif
 #include <sys/types.h>
 
 /**********************************************************************

@@ -57,7 +57,7 @@ void		do_create(PGconn *, char *, dbhead *);
 void		do_inserts(PGconn *, char *, dbhead *);
 int			check_table(PGconn *, char *);
 
-char	   *Escape(char *);
+char	   *Escape_db(char *);
 
 #ifdef HAVE_ICONV_H
 char	   *convert_charset(char *string);
@@ -110,7 +110,7 @@ strtolower(char *string)
 
 /* FIXME: should this check for overflow? */
 char *
-Escape(char *string)
+Escape_db(char *string)
 {
 	char	   *foo,
 			   *bar;
@@ -466,7 +466,7 @@ do_inserts(PGconn *conn, char *table, dbhead * dbh)
 				if (charset_from)
 					foo = convert_charset(foo);
 #endif
-				foo = Escape(foo);
+				foo = Escape_db(foo);
 
 				/* handle the date first - liuk */
 				if (fields[h].db_type == 'D')
