@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.155 2004/01/17 20:09:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.156 2004/02/02 03:07:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3742,6 +3742,11 @@ pattern_selectivity(Const *patt, Pattern_Type ptype)
  *
  * This could be rather slow in the worst case, but in most cases we
  * won't have to try more than one or two strings before succeeding.
+ *
+ * NOTE: at present this assumes we are in the C locale, so that simple
+ * bytewise comparison applies.  However, we might be in a multibyte
+ * encoding such as UTF-8, so we do have to watch out for generating
+ * invalid encoding sequences.
  */
 Const *
 make_greater_string(const Const *str_const)
@@ -3788,13 +3793,20 @@ make_greater_string(const Const *str_const)
 		/*
 		 * Try to generate a larger string by incrementing the last byte.
 		 */
-		if (*lastchar < (unsigned char) 255)
+		while (*lastchar < (unsigned char) 255)
 		{
 			Const	   *workstr_const;
 
 			(*lastchar)++;
+
 			if (datatype != BYTEAOID)
+			{
+				/* do not generate invalid encoding sequences */
+				if (!pg_verifymbstr((const unsigned char *) workstr,
+									len, true))
+					continue;
 				workstr_const = string_to_const(workstr, datatype);
+			}
 			else
 				workstr_const = string_to_bytea_const(workstr, len);
 
