@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.227 2004/12/02 17:39:54 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.228 2004/12/02 21:04:47 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -6930,6 +6930,18 @@ SELECT NULLIF(value, '(none)') ...
       </tbody>
      </tgroup>
     </table>
+  <note>
+  <para>
+    Although it is not strictly a function and does not appear in \df
+    in psql, <command>ARRAY()</command>, mentioned in <xref
+    linkend="sql-syntax-array-constructors"> acts much like a
+    <literal>table function</literal> (equivalently, a
+    <literal>set-returning function</literal> or a
+    <acronym>SRF</acronym>--see <xref linkend="queries-tablefunctions">)
+    which takes <type>anyarray</type> and returns a set of
+    <type>anyelement</type>.
+  </para>
+  </note>
   </sect1>
 
  <sect1 id="functions-aggregate">
