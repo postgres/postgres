@@ -1,8 +1,2558 @@
 <Chapter Id="jdbc">
 <Title>JDBC Interface</Title>
 
-<Para>
-There is a JDBC interface available for Postgres. It is documented elsewhere using
-the accepted tool for Java-language code.
+<para>
+<note>
+<title>Author</title>
+<para>
+Written by <ulink url="peter@retep.org.uk">Peter T. Mount</ulink>, the
+author of the <acronym>JDBC</acronym> driver.
+</note>
 
-</Chapter>
+<para>
+<acronym>JDBC</acronym> is a core <acronym>API</acronym> of Java 1.1 and later.
+It provides a standard set of
+interfaces to <acronym>SQL</acronym>-compliant databases.
+<para>
+<application>Postgres</application> provides 
+a type 4 <acronym>JDBC</acronym> Driver. Type 4 indicates that the driver
+is written in Pure Java, and communicates in the database's own network
+protocol. Because of this, the driver is platform independent. Once compiled,
+the driver can be used on any platform.
+
+<sect1>
+<title>Building the <acronym>JDBC</acronym> Interface</title>
+
+<para>
+
+<sect2>
+<title>Compiling the Driver</title>
+
+<para>
+The driver's source is located in the <filename>src/interfaces/jdbc</filename>
+ directory of the
+source tree. To compile simply change directory to that directory, and type:
+
+<programlisting>
+% make
+</programlisting>
+
+<para>
+Upon completion, you will find the archive <filename>postgresql.jar</filename>
+ in the current
+directory. This is the <acronym>JDBC</acronym> driver.
+
+<note>
+<para>
+You must use <application>make</application>,
+not <application>javac</application>, 
+as the driver uses some dynamic
+loading techniques for performance reasons, 
+and <application>javac</application> cannot cope.
+The <filename>Makefile</filename> will generate the jar archive.
+<para>
+
+<sect2>
+<title>Installing the Driver</title>
+
+<para>
+To use the driver, the jar archive postgresql.jar needs to be included in
+the CLASSPATH.
+<para>
+Example:
+<para>
+I have an application that uses the <acronym>JDBC</acronym> driver to access a large database
+containing astronomical objects. I have the application and the jdbc driver
+installed in the /usr/local/lib directory, and the java jdk installed in /usr/local/jdk1.1.6.
+
+<para>
+To run the application, I would use:
+<para>
+export CLASSPATH = \
+        /usr/local/lib/finder.jar:/usr/local/lib/postgresql.jar:.
+java uk.org.retep.finder.Main
+<para>
+Loading the driver is covered later on in this chapter.
+<para>
+
+<sect1>
+<title>Preparing the database for <acronym>JDBC</acronym></title>
+
+<para>
+Because Java can only use TCP/IP connections, the <application>Postgres</application> postmaster
+must be running with the -i flag.
+<para>
+Also, the <filename>pg_hba.conf</filename> file must be configured. It's located in the PGDATA
+directory. In a default installation, this file permits access only by UNIX
+domain sockets. For the <acronym>JDBC</acronym> driver to connect to the same localhost, you need
+to add something like:
+<para>
+host         all         127.0.0.1     255.255.255.255   password
+<para>
+Here access to all databases are possible from the local machine with <acronym>JDBC</acronym>.
+
+<para>
+The <acronym>JDBC</acronym> Driver supports trust, ident, password and crypt authentication methods.
+
+<para>
+
+<sect1>
+<title>Using the Driver</title>
+
+<para>
+This section is not intended as a complete guide to 
+<acronym>JDBC</acronym> programming, but
+should help to get you started. For more information refer to the standard
+<acronym>JDBC</acronym> <acronym>API</acronym> documentation.
+<para>
+Also, take a look at the examples included with the source. The basic
+example is used here.
+<para>
+
+<sect1>
+<title>Importing <acronym>JDBC</acronym></title>
+
+<para>
+Any source that uses <acronym>JDBC</acronym>
+needs to import the java.sql package, using:
+
+<programlisting>
+import java.sql.*;
+</programlisting>
+
+<important>
+<para>
+Do not import the postgresql package. If you do, your source will not
+compile, as javac will get confused.
+</important>
+
+<sect1>
+<title>Loading the Driver</title>
+
+<para>
+Before you can connect to a database, you need to load the driver. There
+are two methods available, and it depends on your code to the best one to use.
+
+<para>
+In the first method, your code implicitly loads the driver using the
+Class.forName() method. For <application>Postgres</application>, you would use:
+
+<programlisting>
+Class.forName(<literal>postgresql.Driver</literal>);
+</programlisting>
+
+This will load the driver, and while loading, the driver will automatically
+register itself with <acronym>JDBC</acronym>.
+
+<para>
+Note: The <function>forName()</function> method
+ can throw a ClassNotFoundException, so you will
+need to catch it if the driver is not available.
+
+<para>
+This is the most common method to use, but restricts your code to use just
+<application>Postgres</application>. 
+If your code may access another database in the future, and you
+don't use our extensions, then the second method is advisable.
+
+<para>
+The second method passes the driver as a parameter to the JVM as it starts,
+using the -D argument.
+<para>
+Example:
+
+<programlisting>
+% java -Djdbc.drivers=postgresql.Driver example.ImageViewer
+</programlisting>
+
+<para>
+In this example, the JVM will attempt to load the driver as part of it's
+initialisation. Once done, the ImageViewer is started.
+
+<para>
+Now, this method is the better one to use because it allows your code to
+be used with other databases, without recompiling the code. The only thing
+that would also change is the URL, which is covered next.
+
+<para>
+One last thing. When your code then tries to open a Connection, and you get
+a <literal>No driver available</literal> SQLException being thrown,
+ this is probably
+caused by the driver not being in the classpath, or the value in the parameter
+not being correct.
+
+<sect1>
+<title>Connecting to the Database</title>
+
+<para>
+With <acronym>JDBC</acronym>, a database is represented by a URL 
+(Uniform Resource Locator).
+With <application>Postgres</application>, this takes one of the following
+forms:
+
+<itemizedlist>
+<listitem>
+<para>
+jdbc:postgresql:<replaceable class="parameter>database</replaceable>
+
+<listitem>
+<para>
+jdbc:postgresql://<replaceable class="parameter>host</replaceable>/<replaceable class="parameter>database</replaceable>
+
+<listitem>
+<para>
+jdbc:postgresql://<replaceable class="parameter>host</replaceable>:<replaceable class="parameter>port</replaceable>/<replaceable class="parameter>database</replaceable>
+</itemizedlist>
+
+where:
+
+<variablelist>
+<varlistentry>
+<term>
+<replaceable class="parameter>host</replaceable>
+
+<listitem>
+<para>
+The hostname of the server. Defaults to "localhost".
+
+<varlistentry>
+<term>
+<replaceable class="parameter>port</replaceable>
+
+<listitem>
+<para>
+The port number the server is listening on. Defaults to the Postgres
+standard port number (5432).
+
+<varlistentry>
+<term>
+<replaceable class="parameter>database</replaceable>
+
+<listitem>
+<para>
+The database name.
+
+</variablelist>
+
+<para>
+To connect, you need to get a Connection instance from 
+<acronym>JDBC</acronym>. To do this,
+you would use the DriverManager.getConnection() method:
+<para>
+Connection db = DriverManager.getConnection(url,user,pwd);
+<para>
+
+<sect1>
+<title>Issuing a query and processing the result</title>
+
+<para>
+Any time you want to issue SQL statements to the database, you require a
+Statement instance. Once you have a Statement, you can use the executeQuery()
+method to issue a query. This will return a ResultSet instance, which contains
+the entire result.
+<para>
+
+<sect1>
+<title>Some notes about using the Statement interface:</title>
+
+<itemizedlist>
+<para>
+<listitem>
+<para>
+You can use a Statement instance as many times as you want. You could
+create one as soon as you open the connection, and use it for the connections
+lifetime. You have to remember that only one ResultSet can exist per Statement.
+
+<listitem>
+<para>
+If you need to perform a query while processing a ResultSet, you can
+simply create and use another Statement.
+<listitem>
+<para>
+If you are using Threads, and several are using the database, you must
+use a separate Statement for each thread. Refer to the sections covering
+Threads and Servlets later in this document if you are thinking of using them,
+as it covers some important points.
+</itemizedlist>
+
+
+<sect1>
+<title>Some notes about using the ResultSet interface:</title>
+
+<itemizedlist>
+<para>
+<listitem>
+<para>
+Before reading any values, you must call next(). This returns true if
+there is a result, but more importantly, it prepares the row for processing.
+
+<listitem>
+<para>
+Under the <acronym>JDBC</acronym> spec, you should access a field only once. It's safest
+to stick to this rule, although at the current time, the <application>Postgres</application> driver
+will allow you to access a field as many times as you want.
+<listitem>
+<para>
+You must close() a ResultSet once you have finished with it.
+<listitem>
+<para>
+Once you request another query with the Statement used to create a
+ResultSet, the currently open instance is closed().
+</itemizedlist>
+
+Statement st = db.createStatement();
+ResultSet rs = st.executeQuery(<literal>select * from mytable</literal>);
+while(rs.next()) {
+<itemizedlist>
+<para>
+<listitem>
+<para>
+System.out.print(<literal>Column 1 returned </literal>);
+<listitem>
+<para>
+System.out.println(rs.getString(1));
+}
+rs.close();
+st.close();
+</itemizedlist>
+
+
+<sect1>
+<title>Performing updates</title>
+
+<para>
+To perform an update (or any other SQL statement that does not return a
+result), you simply use the executeUpdate() method:
+<para>
+ st.executeUpdate(<literal>create table basic (a int2, b int2)</literal>);
+
+<para>
+
+<sect1>
+<title>Closing the connection</title>
+
+<para>
+To close the database connection, simply call the close() method to the Connection:
+
+<para>
+db.close();
+<para>
+
+<sect1>
+<title>Using Large Objects</title>
+
+<para>
+In <application>Postgres</application>, large objects (also known as BLOBS) are used to hold data in
+the database that cannot be stored in a normal SQL table. They are stored as a
+Table/Index pair, and are refered to from your own tables, by an OID value.
+
+<para>
+Now, there are you methods of using Large Objects. The first is the
+standard <acronym>JDBC</acronym> way, and is documented here. The other, uses our own extension
+to the api, which presents the libpq large object <acronym>API</acronym> to Java, providing even
+better access to large objects than the standard. Internally, the driver uses
+the extension to provide large object support.
+<para>
+In <acronym>JDBC</acronym>, the standard way to access them is using the getBinaryStream()
+method in ResultSet, and setBinaryStream() method in PreparedStatement. These
+methods make the large object appear as a Java stream, allowing you to use the
+java.io package, and others, to manipulate the object.
+<para>
+Example:
+<para>
+You have a table containing the file name of an image, and a large object
+containing that image:
+<para>
+    create table images (imgname name,imgoid oid);
+<para>
+To insert an image, you would use:
+<para>
+<itemizedlist>
+<para>
+<listitem>
+<para>
+File file = new File(<literal>myimage.gif</literal>);
+<listitem>
+<para>
+FileInputStream fis = new FileInputStream(file);
+<listitem>
+<para>
+PreparedStatement ps = conn.prepareStatement(<literal>insert into images
+values (?,?)<literal>);
+<listitem>
+<para>
+ps.setString(1,file.getName());
+<listitem>
+<para>
+ps.setBinaryStream(2,fis,file.length());
+<listitem>
+<para>
+ps.executeUpdate();
+<listitem>
+<para>
+ps.close();
+<listitem>
+<para>
+fis.close();
+</itemizedlist>
+
+Now in this example, setBinaryStream transfers a set number of bytes from a
+stream into a large object, and stores the OID into the field holding a
+reference to it.
+<para>
+Retrieving an image is even easier (I'm using PreparedStatement here, but
+Statement can equally be used):
+<para>
+<itemizedlist>
+<para>
+<listitem>
+<para>
+PreparedStatement ps = con.prepareStatement(<literal>select oid from
+images where name=?<literal>);
+<listitem>
+<para>
+ps.setString(1,<literal>myimage.gif</literal>);
+<listitem>
+<para>
+ResultSet rs = ps.executeQuery();
+<listitem>
+<para>
+if(rs!=null) {
+<listitem>
+<para>
+    while(rs.next()) {
+<listitem>
+<para>
+&#9;InputStream is = rs.getBinaryInputStream(1);
+<listitem>
+<para>
+&#9;// use the stream in some way here
+<listitem>
+<para>
+&#9;is.close();
+<listitem>
+<para>
+    }
+<listitem>
+<para>
+    rs.close();
+<listitem>
+<para>
+}
+<listitem>
+<para>
+ps.close();
+</itemizedlist>
+
+Now here you can see where the Large Object is retrieved as an InputStream.
+You'll also notice that we close the stream before processing the next row in
+the result. This is part of the <acronym>JDBC</acronym> Specification, which states that any
+InputStream returned is closed when ResultSet.next() or ResultSet.close() is called.
+
+<para>
+
+<sect1>
+<title><application>Postgres</application> Extensions to the <acronym>JDBC</acronym> <acronym>API</acronym></title>
+
+<para>
+<application>Postgres</application> is an extensible database system. You can add your own functions
+to the backend, which can then be called from queries, or even add your own
+data types.
+<para>
+Now, as these are facilities unique to us, we support them from Java, with
+a set of extension <acronym>API</acronym>'s. Some features within the core of the standard driver
+actually use these extensions to implement Large Objects, etc.
+<para>
+
+<!--
+  -- Nothing marked up from here on. It looks like it will be tricky:
+  -- what do we want to do with the class inheritance diagrams?
+  -- - thomas 1998-10-23
+  -->
+<programlisting>
+Accessing the extensions
+
+To access some of the extensions, you need to use some extra methods 
+in the postgresql.Connection class. In this case, you would need to 
+case the return value of Driver.getConnection().
+
+For example:
+
+    Connection db = Driver.getConnection(url,user,pass);
+
+    // later on
+    Fastpath fp = ((postgresql.Connection)db).getFastpathAPI();
+
+Class postgresql.Connection
+                                
+java.lang.Object
+   |
+   +----postgresql.Connection
+
+   public class Connection extends Object implements Connection
+
+These are the extra methods used to gain access to our extensions. I 
+have not listed the methods defined by java.sql.Connection.
+
+ public Fastpath getFastpathAPI() throws SQLException
+
+          This returns the Fastpath <acronym>API</acronym> for the current connection.
+
+          NOTE: This is not part of <acronym>JDBC</acronym>, but allows access to 
+functions on the postgresql backend itself.
+
+          It is primarily used by the LargeObject <acronym>API</acronym>
+
+          The best way to use this is as follows:
+
+ import postgresql.fastpath.*;
+ ...
+ Fastpath fp = ((postgresql.Connection)myconn).getFastpathAPI();
+
+          where myconn is an open Connection to postgresql.
+
+        Returns:
+                Fastpath object allowing access to functions on the 
+postgresql backend.
+
+        Throws: SQLException
+                by Fastpath when initialising for first time
+          
+ public LargeObjectManager getLargeObjectAPI() throws SQLException
+
+          This returns the LargeObject <acronym>API</acronym> for the current connection.
+
+          NOTE: This is not part of <acronym>JDBC</acronym>, but allows access to 
+functions on the postgresql backend itself.
+   
+          The best way to use this is as follows:
+
+ import postgresql.largeobject.*;
+ ...
+ LargeObjectManager lo = 
+((postgresql.Connection)myconn).getLargeObjectAPI();
+
+          where myconn is an open Connection to postgresql.
+
+        Returns:
+                LargeObject object that implements the <acronym>API</acronym>
+
+        Throws: SQLException
+                by LargeObject when initialising for first time
+
+ public void addDataType(String type,
+                         String name)
+
+          This allows client code to add a handler for one of 
+postgresql's more unique data types. Normally, a data type not known 
+by the driver is returned by ResultSet.getObject() as a PGobject 
+instance.
+
+This method allows you to write a class that extends PGobject, and 
+tell the driver the type name, and class name to use.
+
+The down side to this, is that you must call this method each time a 
+connection is made.
+
+          NOTE: This is not part of <acronym>JDBC</acronym>, but an extension.
+
+          The best way to use this is as follows:
+
+ ...
+ ((postgresql.Connection)myconn).addDataType("mytype","my.class.name"-
+);
+ ...
+
+          where myconn is an open Connection to postgresql.
+
+          The handling class must extend postgresql.util.PGobject
+
+        See Also:
+                PGobject
+
+Fastpath
+
+Fastpath is an <acronym>API</acronym> that exists within the libpq C interface, and 
+allows a client machine to execute a function on the database backend. 
+Most client code will not need to use this method, but it's provided 
+because the Large Object <acronym>API</acronym> uses it.
+
+To use, you need to import the postgresql.fastpath package, using the 
+line:
+     import postgresql.fastpath.*;
+
+Then, in your code, you need to get a FastPath object:
+     Fastpath fp = ((postgresql.Connection)conn).getFastpathAPI();
+
+This will return an instance associated with the database connection 
+that you can use to issue commands. The casing of Connection to 
+postgresql.Connection is required, as the getFastpathAPI() is one of 
+our own methods, not <acronym>JDBC</acronym>'s.
+
+Once you have a Fastpath instance, you can use the fastpath() methods 
+to execute a backend function.
+
+Class postgresql.fastpath.Fastpath
+
+java.lang.Object
+   |
+   +----postgresql.fastpath.Fastpath
+
+   public class Fastpath
+
+   extends Object
+
+   This class implements the Fastpath api.
+
+   This is a means of executing functions imbeded in the postgresql 
+backend from within a java application.
+
+   It is based around the file src/interfaces/libpq/fe-exec.c
+
+   See Also:
+          FastpathFastpathArg, LargeObject
+
+Methods
+
+ public Object fastpath(int fnid,
+                        boolean resulttype,
+                        FastpathArg args[]) throws SQLException
+
+          Send a function call to the PostgreSQL backend
+          
+        Parameters:
+                fnid - Function id
+                resulttype - True if the result is an integer, false 
+for
+                other results
+                args - FastpathArguments to pass to fastpath
+
+        Returns:
+                null if no data, Integer if an integer result, or 
+byte[]
+                otherwise
+         
+        Throws: SQLException
+                if a database-access error occurs.
+
+ public Object fastpath(String name,
+                        boolean resulttype,
+                        FastpathArg args[]) throws SQLException
+
+          Send a function call to the PostgreSQL backend by name. 
+
+Note:
+          the mapping for the procedure name to function id needs to 
+exist, usually to an earlier call to addfunction(). This is the 
+prefered method to call, as function id's can/may change between 
+versions of the backend. For an example of how this works, refer to 
+postgresql.LargeObject
+
+        Parameters:
+                name - Function name
+                resulttype - True if the result is an integer, false 
+for
+                other results
+                args - FastpathArguments to pass to fastpath
+
+        Returns:
+                null if no data, Integer if an integer result, or 
+byte[]
+                otherwise
+
+        Throws: SQLException
+                if name is unknown or if a database-access error 
+occurs.
+
+        See Also:
+                LargeObject
+          
+ public int getInteger(String name,
+                       FastpathArg args[]) throws SQLException
+
+          This convenience method assumes that the return value is an 
+Integer
+
+        Parameters:
+                name - Function name
+                args - Function arguments
+
+        Returns:
+                integer result
+
+        Throws: SQLException
+                if a database-access error occurs or no result
+
+ public byte[] getData(String name,
+                       FastpathArg args[]) throws SQLException
+
+          This convenience method assumes that the return value is 
+binary data
+
+        Parameters:
+                name - Function name
+                args - Function arguments
+
+        Returns:
+                byte[] array containing result
+
+        Throws: SQLException
+                if a database-access error occurs or no result
+
+ public void addFunction(String name,
+                         int fnid)
+
+          This adds a function to our lookup table.
+
+          User code should use the addFunctions method, which is based 
+upon a query, rather than hard coding the oid. The oid for a function 
+is not guaranteed to remain static, even on different servers of the 
+same version.
+
+        Parameters:
+                name - Function name
+                fnid - Function id
+
+ public void addFunctions(ResultSet rs) throws SQLException
+                       
+          This takes a ResultSet containing two columns. Column 1 
+contains the function name, Column 2 the oid.
+
+          It reads the entire ResultSet, loading the values into the 
+function table.
+
+          REMEMBER to close() the resultset after calling this!!
+
+          Implementation note about function name lookups:
+          
+          PostgreSQL stores the function id's and their corresponding 
+names in the pg_proc table. To speed things up locally, instead of 
+querying each function from that table when required, a Hashtable is 
+used. Also, only the function's required are entered into this table, 
+keeping connection times as fast as possible.
+
+          The postgresql.LargeObject class performs a query upon it's 
+startup, and passes the returned ResultSet to the addFunctions() 
+method here.
+       
+          Once this has been done, the LargeObject api refers to the 
+functions by name.
+          
+          Dont think that manually converting them to the oid's will 
+work. Ok, they will for now, but they can change during development 
+(there was some discussion about this for V7.0), so this is 
+implemented to prevent any unwarranted headaches in the future.
+
+        Parameters:
+                rs - ResultSet
+
+        Throws: SQLException
+                if a database-access error occurs.
+          
+        See Also:
+                LargeObjectManager
+
+ public int getID(String name) throws SQLException
+          
+          This returns the function id associated by its name
+          
+          If addFunction() or addFunctions() have not been called for 
+this name, then an SQLException is thrown.
+
+        Parameters:
+                name - Function name to lookup
+
+        Returns:
+                Function ID for fastpath call
+
+        Throws: SQLException
+                is function is unknown.
+
+Class postgresql.fastpath.FastpathArg
+
+java.lang.Object
+   |
+   +----postgresql.fastpath.FastpathArg
+
+   public class FastpathArg extends Object
+        
+   Each fastpath call requires an array of arguments, the number and 
+type dependent on the function being called.
+
+   This class implements methods needed to provide this capability.
+
+   For an example on how to use this, refer to the 
+postgresql.largeobject package
+
+   See Also:
+          Fastpath, LargeObjectManager, LargeObject
+
+Constructors
+
+ public FastpathArg(int value)
+ 
+          Constructs an argument that consists of an integer value
+
+        Parameters:
+                value - int value to set
+
+ public FastpathArg(byte bytes[])
+          
+          Constructs an argument that consists of an array of bytes
+
+        Parameters:
+                bytes - array to store
+
+ public FastpathArg(byte buf[],
+                    int off,
+                    int len)
+
+           Constructs an argument that consists of part of a byte 
+array
+
+        Parameters:
+                buf - source array
+                off - offset within array
+                len - length of data to include
+
+ public FastpathArg(String s)
+          
+          Constructs an argument that consists of a String.
+      
+        Parameters:
+                s - String to store
+
+Geometric Data Types
+
+PostgreSQL has a set of datatypes that can store geometric features 
+into a table. These range from single points, lines, and polygons.
+
+We support these types in Java with the postgresql.geometric package.
+
+It contains classes that extend the postgresql.util.PGobject class. 
+Refer to that class for details on how to implement your own data type 
+handlers.
+
+Class postgresql.geometric.PGbox
+
+java.lang.Object
+   |
+   +----postgresql.util.PGobject
+           |
+           +----postgresql.geometric.PGbox
+
+   public class PGbox extends PGobject implements Serializable, 
+Cloneable
+
+   This represents the box datatype within postgresql.
+
+Variables
+
+ public PGpoint point[]
+
+          These are the two corner points of the box.
+
+Constructors
+
+ public PGbox(double x1,
+              double y1,
+              double x2,
+              double y2)
+
+        Parameters:
+                x1 - first x coordinate
+                y1 - first y coordinate
+                x2 - second x coordinate
+                y2 - second y coordinate
+
+ public PGbox(PGpoint p1,
+              PGpoint p2)
+
+        Parameters:
+                p1 - first point
+                p2 - second point
+
+ public PGbox(String s) throws SQLException
+                            
+        Parameters:
+                s - Box definition in PostgreSQL syntax
+
+        Throws: SQLException
+                if definition is invalid
+                
+ public PGbox()
+
+          Required constructor
+              
+Methods
+
+ public void setValue(String value) throws SQLException
+                
+          This method sets the value of this object. It should be 
+overidden, but still called by subclasses.
+                            
+        Parameters:
+                value - a string representation of the value of the 
+object
+        Throws: SQLException
+                thrown if value is invalid for this type
+
+        Overrides:
+                setValue in class PGobject
+
+ public boolean equals(Object obj)
+
+        Parameters:
+                obj - Object to compare with
+                
+        Returns:
+                true if the two boxes are identical
+          
+        Overrides:
+                equals in class PGobject
+
+ public Object clone()
+        
+          This must be overidden to allow the object to be cloned
+
+        Overrides:
+                clone in class PGobject
+   
+ public String getValue()
+        
+        Returns:
+                the PGbox in the syntax expected by postgresql
+
+        Overrides:
+                getValue in class PGobject
+
+Class postgresql.geometric.PGcircle
+
+java.lang.Object
+   |
+   +----postgresql.util.PGobject
+           |
+           +----postgresql.geometric.PGcircle
+        
+   public class PGcircle extends PGobject implements Serializable, 
+Cloneable
+               
+   This represents postgresql's circle datatype, consisting of a point 
+and a radius
+
+Variables
+
+ public PGpoint center
+           
+          This is the centre point
+ 
+public double radius
+           
+          This is the radius
+   
+Constructors   
+
+ public PGcircle(double x,
+                 double y,
+                 double r)
+          
+        Parameters:
+               x - coordinate of centre
+                y - coordinate of centre
+                r - radius of circle
+
+ public PGcircle(PGpoint c,
+                 double r)
+          
+        Parameters:
+                c - PGpoint describing the circle's centre
+                r - radius of circle
+
+ public PGcircle(String s) throws SQLException
+
+        Parameters:
+                s - definition of the circle in PostgreSQL's syntax.
+
+        Throws: SQLException
+                on conversion failure
+
+ public PGcircle()
+
+          This constructor is used by the driver.
+            
+Methods   
+
+ public void setValue(String s) throws SQLException
+
+        Parameters:
+                s - definition of the circle in PostgreSQL's syntax.
+
+        Throws: SQLException
+                on conversion failure
+
+        Overrides:
+                setValue in class PGobject
+
+ public boolean equals(Object obj)
+
+        Parameters:
+                obj - Object to compare with
+            
+        Returns:
+                true if the two boxes are identical
+
+        Overrides:
+                equals in class PGobject
+
+ public Object clone()
+
+          This must be overidden to allow the object to be cloned
+
+        Overrides:
+                clone in class PGobject
+
+ public String getValue()
+
+        Returns:
+                the PGcircle in the syntax expected by postgresql
+        
+        Overrides:
+                getValue in class PGobject
+
+Class postgresql.geometric.PGline
+
+java.lang.Object
+   |
+   +----postgresql.util.PGobject
+           |
+           +----postgresql.geometric.PGline
+
+   public class PGline extends PGobject implements Serializable, 
+Cloneable
+
+   This implements a line consisting of two points. Currently line is 
+not yet implemented in the backend, but this class ensures that when 
+it's done were ready for it.
+
+Variables
+   
+ public PGpoint point[]
+     
+          These are the two points.
+
+Constructors
+
+ public PGline(double x1,
+               double y1,
+               double x2,
+               double y2)
+
+        Parameters:
+                x1 - coordinate for first point
+                y1 - coordinate for first point
+                x2 - coordinate for second point
+                y2 - coordinate for second point
+
+ public PGline(PGpoint p1,
+               PGpoint p2)
+     
+        Parameters:
+                p1 - first point
+                p2 - second point
+
+ public PGline(String s) throws SQLException
+               
+        Parameters:
+                s - definition of the circle in PostgreSQL's syntax.
+
+        Throws: SQLException
+                on conversion failure
+
+ public PGline()
+
+          reuired by the driver
+               
+Methods
+
+ public void setValue(String s) throws SQLException
+
+        Parameters:
+                s - Definition of the line segment in PostgreSQL's 
+syntax
+
+        Throws: SQLException
+                on conversion failure
+
+        Overrides:
+                setValue in class PGobject
+                
+ public boolean equals(Object obj)
+
+        Parameters:
+                obj - Object to compare with
+               
+        Returns:
+                true if the two boxes are identical
+   
+        Overrides:
+                equals in class PGobject
+
+ public Object clone()
+        
+          This must be overidden to allow the object to be cloned
+
+        Overrides:
+                clone in class PGobject
+
+ public String getValue()
+   
+        Returns:
+                the PGline in the syntax expected by postgresql
+        
+        Overrides:
+                getValue in class PGobject
+
+Class postgresql.geometric.PGlseg
+             
+java.lang.Object
+   |
+   +----postgresql.util.PGobject
+           |
+           +----postgresql.geometric.PGlseg
+          
+   public class PGlseg extends PGobject implements Serializable, 
+Cloneable
+ 
+   This implements a lseg (line segment) consisting of two points
+
+Variables
+
+ public PGpoint point[]
+           
+          These are the two points.
+
+Constructors
+   
+ public PGlseg(double x1,
+               double y1,
+               double x2,
+               double y2)
+     
+        Parameters:
+
+                x1 - coordinate for first point
+                y1 - coordinate for first point
+                x2 - coordinate for second point
+                y2 - coordinate for second point
+
+ public PGlseg(PGpoint p1,
+               PGpoint p2)
+           
+        Parameters:
+                p1 - first point
+                p2 - second point
+   
+ public PGlseg(String s) throws SQLException
+
+        Parameters:
+                s - definition of the circle in PostgreSQL's syntax.
+
+        Throws: SQLException
+                on conversion failure
+
+ public PGlseg()
+
+          reuired by the driver
+               
+Methods    
+   
+ public void setValue(String s) throws SQLException
+   
+        Parameters:
+                s - Definition of the line segment in PostgreSQL's 
+syntax
+
+        Throws: SQLException
+                on conversion failure
+     
+        Overrides:
+                setValue in class PGobject
+                
+ public boolean equals(Object obj)
+
+        Parameters:
+                obj - Object to compare with
+               
+        Returns:
+                true if the two boxes are identical
+   
+        Overrides:
+                equals in class PGobject
+   
+ public Object clone()
+
+          This must be overidden to allow the object to be cloned
+
+        Overrides:
+               clone in class PGobject
+
+ public String getValue()
+
+        Returns:
+                the PGlseg in the syntax expected by postgresql
+        
+        Overrides:
+                getValue in class PGobject
+
+Class postgresql.geometric.PGpath
+                                
+java.lang.Object
+   |
+   +----postgresql.util.PGobject
+           |
+           +----postgresql.geometric.PGpath
+          
+   public class PGpath extends PGobject implements Serializable, 
+Cloneable
+               
+   This implements a path (a multiple segmented line, which may be 
+closed)
+           
+Variables
+
+ public boolean open
+               
+          True if the path is open, false if closed
+
+ public PGpoint points[]
+
+          The points defining this path
+
+Constructors   
+
+ public PGpath(PGpoint points[],
+               boolean open)
+          
+        Parameters:
+                points - the PGpoints that define the path
+                open - True if the path is open, false if closed
+
+ public PGpath()
+
+          Required by the driver
+
+ public PGpath(String s) throws SQLException
+
+        Parameters:
+                s - definition of the circle in PostgreSQL's syntax.
+
+        Throws: SQLException
+                on conversion failure
+
+Methods
+
+ public void setValue(String s) throws SQLException
+   
+        Parameters:
+                s - Definition of the path in PostgreSQL's syntax
+           
+        Throws: SQLException
+                on conversion failure
+
+        Overrides:
+                setValue in class PGobject
+
+ public boolean equals(Object obj)
+
+        Parameters:
+                obj - Object to compare with
+
+        Returns:
+                true if the two boxes are identical
+
+        Overrides:
+                equals in class PGobject
+
+ public Object clone()
+
+          This must be overidden to allow the object to be cloned
+
+        Overrides:
+                clone in class PGobject
+
+ public String getValue()
+
+          This returns the polygon in the syntax expected by 
+postgresql
+
+        Overrides:
+                getValue in class PGobject
+
+ public boolean isOpen()
+
+     This returns true if the path is open
+
+ public boolean isClosed()
+
+     This returns true if the path is closed
+
+ public void closePath()
+
+     Marks the path as closed
+
+ public void openPath()
+
+     Marks the path as open
+
+Class postgresql.geometric.PGpoint
+                                
+java.lang.Object
+   |
+   +----postgresql.util.PGobject
+           |
+           +----postgresql.geometric.PGpoint
+          
+   public class PGpoint extends PGobject implements Serializable, 
+Cloneable
+
+   This implements a version of java.awt.Point, except it uses double 
+to represent the coordinates.
+
+   It maps to the point datatype in postgresql.
+
+Variables
+
+ public double x
+
+          The X coordinate of the point
+
+ public double y
+
+          The Y coordinate of the point
+
+Constructors
+
+ public PGpoint(double x,
+                double y)
+
+        Parameters:
+                x - coordinate
+                y - coordinate
+
+ public PGpoint(String value) throws SQLException
+     
+          This is called mainly from the other geometric types, when a 
+point is imbeded within their definition.
+             
+        Parameters:
+                value - Definition of this point in PostgreSQL's 
+syntax
+   
+ public PGpoint()
+          
+          Required by the driver
+
+Methods
+
+ public void setValue(String s) throws SQLException
+
+        Parameters:
+                s - Definition of this point in PostgreSQL's syntax
+
+        Throws: SQLException
+                on conversion failure
+
+        Overrides:
+                setValue in class PGobject
+          
+ public boolean equals(Object obj)
+
+        Parameters:
+                obj - Object to compare with
+
+        Returns:
+                true if the two boxes are identical
+
+        Overrides:
+                equals in class PGobject
+
+ public Object clone()
+                
+          This must be overidden to allow the object to be cloned
+
+        Overrides:
+                clone in class PGobject
+          
+ public String getValue()       
+    
+        Returns:
+                the PGpoint in the syntax expected by postgresql
+
+        Overrides:
+                getValue in class PGobject
+          
+ public void translate(int x,
+                       int y)
+
+          Translate the point with the supplied amount.
+
+        Parameters:
+                x - integer amount to add on the x axis
+                y - integer amount to add on the y axis
+
+ public void translate(double x,
+                       double y)
+          
+          Translate the point with the supplied amount.
+ 
+        Parameters:
+                x - double amount to add on the x axis
+                y - double amount to add on the y axis
+
+ public void move(int x,
+                  int y)
+                
+          Moves the point to the supplied coordinates.
+
+        Parameters:
+                x - integer coordinate
+                y - integer coordinate
+
+public void move(double x,
+                  double y)
+          
+          Moves the point to the supplied coordinates.
+
+        Parameters:
+                x - double coordinate
+                y - double coordinate
+
+ public void setLocation(int x,
+                         int y)
+
+          Moves the point to the supplied coordinates. refer to
+          java.awt.Point for description of this
+
+        Parameters:
+                x - integer coordinate
+                y - integer coordinate
+
+        See Also:
+                Point
+
+ public void setLocation(Point p)
+
+          Moves the point to the supplied java.awt.Point refer to
+          java.awt.Point for description of this
+
+        Parameters:
+                p - Point to move to
+
+        See Also:
+                Point
+
+Class postgresql.geometric.PGpolygon
+                                
+java.lang.Object
+   |
+   +----postgresql.util.PGobject
+           |
+           +----postgresql.geometric.PGpolygon
+
+   public class PGpolygon extends PGobject implements Serializable, 
+Cloneable
+               
+   This implements the polygon datatype within PostgreSQL.
+
+Variables
+
+ public PGpoint points[]
+
+          The points defining the polygon
+                                
+Constructors
+
+ public PGpolygon(PGpoint points[])
+
+          Creates a polygon using an array of PGpoints
+
+        Parameters:
+                points - the points defining the polygon
+
+ public PGpolygon(String s) throws SQLException
+                 
+        Parameters:
+                s - definition of the circle in PostgreSQL's syntax.
+
+        Throws: SQLException
+                on conversion failure
+
+ public PGpolygon()
+
+          Required by the driver
+
+Methods
+
+ public void setValue(String s) throws SQLException
+
+        Parameters:
+                s - Definition of the polygon in PostgreSQL's syntax
+
+        Throws: SQLException
+                on conversion failure
+
+        Overrides:
+                setValue in class PGobject
+
+ public boolean equals(Object obj)
+     
+        Parameters:
+                obj - Object to compare with
+                                
+        Returns:
+                true if the two boxes are identical
+
+        Overrides:
+                equals in class PGobject
+
+ public Object clone()
+        
+          This must be overidden to allow the object to be cloned
+
+        Overrides:
+                clone in class PGobject
+                 
+ public String getValue()
+
+        Returns:
+                the PGpolygon in the syntax expected by postgresql
+
+        Overrides:
+                getValue in class PGobject
+
+Large Objects
+
+Large objects are supported in the standard <acronym>JDBC</acronym> specification. 
+However, that interface is limited, and the api provided by PostgreSQL 
+allows for random access to the objects contents, as if it was a local 
+file.
+
+The postgresql.largeobject package profides to Java the libpq C 
+interface's large object <acronym>API</acronym>. It consists of two classes, 
+LargeObjectManager, which deals with creating, opening and deleting 
+large obejects, and LargeObject which deals with an individual object.
+
+Class postgresql.largeobject.LargeObject
+
+java.lang.Object
+   |
+   +----postgresql.largeobject.LargeObject
+
+public class LargeObject extends Object
+
+This class implements the large object interface to postgresql.
+
+   It provides the basic methods required to run the interface, plus a 
+pair of methods that provide InputStream and OutputStream classes for 
+this object.
+
+   Normally, client code would use the getAsciiStream, 
+getBinaryStream, or getUnicodeStream methods in ResultSet, or 
+setAsciiStream, setBinaryStream, or setUnicodeStream methods in 
+PreparedStatement to access Large Objects.
+
+   However, sometimes lower level access to Large Objects are 
+required, that are not supported by the <acronym>JDBC</acronym> specification.
+
+   Refer to postgresql.largeobject.LargeObjectManager on how to gain 
+access to a Large Object, or how to create one.
+
+   See Also:
+          LargeObjectManager
+
+Variables
+
+ public static final int SEEK_SET
+
+          Indicates a seek from the begining of a file
+
+ public static final int SEEK_CUR
+
+          Indicates a seek from the current position
+
+ public static final int SEEK_END
+
+          Indicates a seek from the end of a file
+
+Methods
+
+ public int getOID()
+
+        Returns:
+                the OID of this LargeObject
+
+ public void close() throws SQLException
+
+          This method closes the object. You must not call methods in 
+this object after this is called.
+
+    Throws: SQLException
+                if a database-access error occurs.
+
+ public byte[] read(int len) throws SQLException
+
+          Reads some data from the object, and return as a byte[] 
+array
+
+        Parameters:
+                len - number of bytes to read
+
+        Returns:
+                byte[] array containing data read
+
+        Throws: SQLException
+                if a database-access error occurs.
+
+ public void read(byte buf[],
+                  int off,
+                  int len) throws SQLException
+
+          Reads some data from the object into an existing array
+
+        Parameters:
+                buf - destination array
+                off - offset within array
+                len - number of bytes to read
+
+        Throws: SQLException
+                if a database-access error occurs.
+
+ public void write(byte buf[]) throws SQLException
+
+          Writes an array to the object
+
+
+        Parameters:
+                buf - array to write
+
+        Throws: SQLException
+                if a database-access error occurs.
+
+ public void write(byte buf[],
+                   int off,
+                   int len) throws SQLException
+
+          Writes some data from an array to the object
+
+        Parameters:
+                buf - destination array
+                off - offset within array
+                len - number of bytes to write
+
+        Throws: SQLException
+                if a database-access error occurs.
+
+ public void seek(int pos,
+                  int ref) throws SQLException
+
+          Sets the current position within the object.
+
+          This is similar to the fseek() call in the standard C 
+library.It allows you to have random access to the large object.
+
+        Parameters:
+                pos - position within object
+                ref - Either SEEK_SET, SEEK_CUR or SEEK_END
+        Throws: SQLException
+                if a database-access error occurs.
+
+ public void seek(int pos) throws SQLException
+
+          Sets the current position within the object.
+
+          This is similar to the fseek() call in the standard C 
+library.It allows you to have random access to the large object.
+
+        Parameters:
+                pos - position within object from begining
+
+        Throws: SQLException
+                if a database-access error occurs.
+
+ public int tell() throws SQLException
+
+        Returns:
+                the current position within the object
+
+        Throws: SQLException
+                if a database-access error occurs.
+
+ public int size() throws SQLException
+
+          This method is inefficient, as the only way to find out the 
+size of the object is to seek to the end, record the current position, 
+then return to the original position.
+
+          A better method will be found in the future.
+
+        Returns:
+                the size of the large object
+
+        Throws: SQLException
+                if a database-access error occurs.
+
+ public InputStream getInputStream() throws SQLException
+
+          Returns an InputStream from this object.
+
+          This InputStream can then be used in any method that 
+requires an InputStream.
+
+        Throws: SQLException
+                if a database-access error occurs.
+
+ public OutputStream getOutputStream() throws SQLException
+
+          Returns an OutputStream to this object
+
+          This OutputStream can then be used in any method that 
+requires an OutputStream.
+
+        Throws: SQLException
+                if a database-access error occurs.
+
+Class postgresql.largeobject.LargeObjectManager
+                                
+java.lang.Object
+   |
+   +----postgresql.largeobject.LargeObjectManager
+
+public class LargeObjectManager extends Object
+
+This class implements the large object interface to postgresql.
+        
+   It provides methods that allow client code to create, open and 
+delete large objects from the database. When opening an object, an 
+instance of postgresql.largeobject.LargeObject is returned, and its 
+methods then allow access to the object.
+
+This class can only be created by postgresql.Connection
+
+To get access to this class, use the following segment of code:
+
+ import postgresql.largeobject.*;
+ Connection  conn;
+ LargeObjectManager lobj;
+ ... code that opens a connection ...
+ lobj = ((postgresql.Connection)myconn).getLargeObjectAPI();
+
+Normally, client code would use the getAsciiStream, getBinaryStream, 
+or getUnicodeStream methods in ResultSet, or setAsciiStream, 
+setBinaryStream, or setUnicodeStream methods in PreparedStatement to 
+access Large Objects.
+
+   However, sometimes lower level access to Large Objects are 
+required, that are not supported by the <acronym>JDBC</acronym> specification.
+
+   Refer to postgresql.largeobject.LargeObject on how to manipulate 
+the contents of a Large Object.
+
+   See Also:
+          LargeObject
+
+Variables
+
+ public static final int WRITE
+
+          This mode indicates we want to write to an object
+
+ public static final int READ
+
+          This mode indicates we want to read an object
+
+ public static final int READWRITE
+
+          This mode is the default. It indicates we want read and 
+write access to a large object
+
+Methods
+
+ public LargeObject open(int oid) throws SQLException
+          
+          This opens an existing large object, based on its OID. This
+          method assumes that READ and WRITE access is required (the 
+default).
+
+        Parameters:
+                oid - of large object
+
+        Returns:
+                LargeObject instance providing access to the object
+
+        Throws: SQLException
+                on error
+
+ public LargeObject open(int oid,
+                         int mode) throws SQLException
+          
+          This opens an existing large object, based on its OID
+  
+        Parameters:
+                oid - of large object
+                mode - mode of open
+
+        Returns:
+                LargeObject instance providing access to the object
+
+        Throws: SQLException
+                on error
+
+ public int create() throws SQLException
+
+          This creates a large object, returning its OID.
+
+          It defaults to READWRITE for the new object's attributes.
+
+        Returns:
+                oid of new object
+
+        Throws: SQLException
+                on error
+
+ public int create(int mode) throws SQLException
+
+          This creates a large object, returning its OID
+
+        Parameters:
+                mode - a bitmask describing different attributes of 
+the
+                new object
+
+        Returns:
+                oid of new object
+
+        Throws: SQLException
+                on error
+
+ public void delete(int oid) throws SQLException
+          
+          This deletes a large object.
+          
+        Parameters:
+                oid - describing object to delete
+
+        Throws: SQLException
+                on error
+
+ public void unlink(int oid) throws SQLException
+
+          This deletes a large object.
+
+          It is identical to the delete method, and is supplied as the 
+C <acronym>API</acronym> uses unlink.
+
+        Parameters:
+                oid - describing object to delete
+
+        Throws: SQLException
+                on error
+
+Object Serialisation
+PostgreSQL is not a normal SQL Database. It is far more extensible 
+than most other databases, and does support Object Oriented features 
+that are unique to it. 
+
+One of the consequences of this, is that you can have one table refer 
+to a row in another table. For example:
+
+test=> create table users (username name,fullname text);
+CREATE
+test=> create table server (servername name,adminuser users);
+CREATE
+test=> insert into users values ('peter','Peter Mount');
+INSERT 2610132 1
+test=> insert into server values ('maidast',2610132::users);
+INSERT 2610133 1
+test=> select * from users;
+username|fullname      
+--------+--------------
+peter   |Peter Mount   
+(1 row)
+
+test=> select * from server;
+servername|adminuser
+----------+---------
+maidast   |  2610132
+(1 row)
+
+Ok, the above example shows that we can use a table name as a field, 
+and the row's oid value is stored in that field.
+
+What does this have to do with Java?
+
+In Java, you can store an object to a Stream as long as it's class 
+implements the java.io.Serializable interface. This process, known as 
+Object Serialization, can be used to store complex objects into the 
+database.
+
+Now, under <acronym>JDBC</acronym>, you would have to use a LargeObject to store them. 
+However, you cannot perform queries on those objects.
+
+What the postgresql.util.Serialize class does, is provide a means of 
+storing an object as a table, and to retrieve that object from a 
+table. In most cases, you would not need to access this class direct, 
+but you would use the PreparedStatement.setObject() and 
+ResultSet.getObject() methods. Those methods will check the objects 
+class name against the table's in the database. If a match is found, 
+it assumes that the object is a Serialized object, and retrieves it 
+from that table. As it does so, if the object contains other 
+serialized objects, then it recurses down the tree.
+
+Sound's complicated? In fact, it's simpler than what I wrote - it's 
+just difficult to explain.
+
+The only time you would access this class, is to use the create() 
+methods. These are not used by the driver, but issue one or more 
+"create table" statements to the database, based on a Java Object or 
+Class that you want to serialize.
+
+Oh, one last thing. If your object contains a line like:
+
+     public int oid;
+
+then, when the object is retrieved from the table, it is set to the 
+oid within the table. Then, if the object is modified, and re-
+serialized, the existing entry is updated.
+
+If the oid variable is not present, then when the object is 
+serialized, it is always inserted into the table, and any existing 
+entry in the table is preserved.
+
+Setting oid to 0 before serialization, will also cause the object to 
+be inserted. This enables an object to be duplicated in the database.
+
+Class postgresql.util.Serialize
+
+java.lang.Object
+   |
+   +----postgresql.util.Serialize
+
+   public class Serialize extends Object
+
+   This class uses PostgreSQL's object oriented features to store Java 
+Objects. It does this by mapping a Java Class name to a table in the 
+database. Each entry in this new table then represents a Serialized 
+instance of this class. As each entry has an OID (Object IDentifier), 
+this OID can be included in another table. This is too complex to show 
+here, and will be documented in the main documents in more detail.
+
+Constructors
+
+ public Serialize(Connection c,
+                  String type) throws SQLException
+
+          This creates an instance that can be used to serialize 
+ordeserialize a Java object from a PostgreSQL table.
+
+Methods
+
+ public Object fetch(int oid) throws SQLException
+
+          This fetches an object from a table, given it's OID
+
+        Parameters:
+                oid - The oid of the object
+
+        Returns:
+                Object relating to oid
+
+        Throws: SQLException
+                on error
+
+ public int store(Object o) throws SQLException
+
+          This stores an object into a table, returning it's OID.
+
+          If the object has an int called OID, and it is > 0, then 
+that value is used for the OID, and the table will be updated. If the 
+value of OID is 0, then a new row will be created, and the value of 
+OID will be set in the object. This enables an object's value in the 
+database to be updateable. If the object has no int called OID, then 
+the object is stored. However if the object is later retrieved, 
+amended and stored again, it's new state will be appended to the 
+table, and will not overwrite the old entries.
+
+        Parameters:
+                o - Object to store (must implement Serializable)
+
+        Returns:
+                oid of stored object
+
+        Throws: SQLException
+                on error
+ 
+ public static void create(Connection con,
+                           Object o) throws SQLException
+
+          This method is not used by the driver, but it creates a 
+table, given a Serializable Java Object. It should be used before 
+serializing any objects.
+
+        Parameters:
+                c - Connection to database
+                o - Object to base table on
+
+        Throws: SQLException
+                on error
+
+                   Returns:
+                Object relating to oid
+
+        Throws: SQLException
+                on error
+
+ public int store(Object o) throws SQLException
+
+          This stores an object into a table, returning it's OID.
+
+          If the object has an int called OID, and it is > 0, then 
+that value is used for the OID, and the table will be updated. If the 
+value of OID is 0, then a new row will be created, and the value of 
+OID will be set in the object. This enables an object's value in the 
+database to be updateable. If the object has no int called OID, then 
+the object is stored. However if the object is later retrieved, 
+amended and stored again, it's new state will be appended to the 
+table, and will not overwrite the old entries.
+
+        Parameters:
+                o - Object to store (must implement Serializable)
+
+        Returns:
+                oid of stored object
+
+        Throws: SQLException
+                on error
+ 
+ public static void create(Connection con,
+                           Object o) throws SQLException
+
+          This method is not used by the driver, but it creates a 
+table, given a Serializable Java Object. It should be used before 
+serializing any objects.
+
+        Parameters:
+                c - Connection to database
+                o - Object to base table on
+
+        Throws: SQLException
+                on error
+                
+ public static void create(Connection con,
+                           Class c) throws SQLException
+
+          This method is not used by the driver, but it creates a 
+table, given a Serializable Java Object. It should be used before 
+serializing any objects.
+
+        Parameters:
+                c - Connection to database
+                o - Class to base table on
+
+        Throws: SQLException
+                on error
+
+ public static String toPostgreSQL(String name) throws SQLException
+          
+          This converts a Java Class name to a postgresql table, by
+          replacing . with _
+
+          Because of this, a Class name may not have _ in the name.
+
+          Another limitation, is that the entire class name (including
+          packages) cannot be longer than 31 characters (a limit 
+forced by PostgreSQL).
+
+        Parameters:
+                name - Class name
+
+        Returns:
+                PostgreSQL table name
+
+        Throws: SQLException
+                on error
+          
+ public static String toClassName(String name) throws SQLException
+
+          This converts a postgresql table to a Java Class name, by
+          replacing _ with .
+
+        Parameters:
+                name - PostgreSQL table name
+  
+        Returns:
+                Class name
+
+        Throws: SQLException
+                on error
+
+Utility Classes
+
+The postgresql.util package contains classes used by the internals of 
+the main driver, and the other extensions.
+
+Class postgresql.util.PGmoney
+                                
+java.lang.Object
+   |
+   +----postgresql.util.PGobject
+           |
+           +----postgresql.util.PGmoney
+
+   public class PGmoney extends PGobject implements Serializable, 
+Cloneable
+               
+   This implements a class that handles the PostgreSQL money type
+
+Variables
+
+ public double val
+                                
+          The value of the field
+
+Constructors
+           
+ public PGmoney(double value)
+   
+        Parameters:
+                value - of field
+               
+ public PGmoney(String value) throws SQLException
+   
+          This is called mainly from the other geometric types, when a 
+point is imbeded within their definition.
+
+        Parameters:
+                value - Definition of this point in PostgreSQL's 
+syntax
+
+ public PGmoney()
+
+          Required by the driver
+
+Methods
+
+ public void setValue(String s) throws SQLException
+
+        Parameters:
+                s - Definition of this point in PostgreSQL's syntax
+
+        Throws: SQLException
+                on conversion failure
+
+        Overrides:
+                setValue in class PGobject
+
+ public boolean equals(Object obj)
+
+        Parameters:
+                obj - Object to compare with
+                                
+        Returns:
+                true if the two boxes are identical
+
+        Overrides:
+                equals in class PGobject
+
+ public Object clone()
+                
+          This must be overidden to allow the object to be cloned
+
+        Overrides:
+                clone in class PGobject
+
+ public String getValue()
+
+        Returns:
+                the PGpoint in the syntax expected by postgresql
+
+        Overrides:
+                getValue in class PGobject
+
+Class postgresql.util.PGobject
+
+java.lang.Object
+   |
+   +----postgresql.util.PGobject
+
+   public class PGobject extends Object implements Serializable, 
+Cloneable
+               
+   This class is used to describe data types that are unknown by <acronym>JDBC</acronym> 
+Standard.
+    A call to postgresql.Connection permits a class that extends this 
+class to be associated with a named type. This is how the 
+postgresql.geometric package operates.
+    ResultSet.getObject() will return this class for any type that is 
+not recognised on having it's own handler. Because of this, any 
+postgresql data type is supported.
+
+Constructors
+
+ public PGobject()
+
+          This is called by postgresql.Connection.getObject() to 
+create the object.
+
+Methods
+
+ public final void setType(String type)
+
+          This method sets the type of this object.
+
+          It should not be extended by subclasses, hence its final
+
+        Parameters:
+                type - a string describing the type of the object
+
+ public void setValue(String value) throws SQLException
+
+          This method sets the value of this object. It must be 
+overidden.
+
+        Parameters:
+                value - a string representation of the value of the
+                object
+
+        Throws: SQLException
+                thrown if value is invalid for this type
+    
+ public final String getType()
+
+          As this cannot change during the life of the object, it's 
+final.
+
+        Returns:
+                the type name of this object
+
+ public String getValue()
+
+          This must be overidden, to return the value of the object, 
+in the form required by postgresql.
+
+        Returns:
+                the value of this object
+
+ public boolean equals(Object obj)
+
+          This must be overidden to allow comparisons of objects
+
+        Parameters:
+                obj - Object to compare with
+
+        Returns:
+                true if the two boxes are identical
+
+        Overrides:
+                equals in class Object
+
+ public Object clone()
+
+          This must be overidden to allow the object to be cloned
+
+        Overrides:
+                clone in class Object
+
+ public String toString()
+
+          This is defined here, so user code need not overide it.
+          
+        Returns:
+                the value of this object, in the syntax expected by 
+postgresql
+
+        Overrides:
+                toString in class Object
+
+Class postgresql.util.PGtokenizer
+
+java.lang.Object
+   |
+   +----postgresql.util.PGtokenizer
+
+   public class PGtokenizer extends Object
+
+   This class is used to tokenize the text output of postgres.
+
+   We could have used StringTokenizer to do this, however, we needed 
+to handle nesting of '(' ')' '[' ']' '<' and '>' as these are used by 
+the geometric data types.
+
+   It's mainly used by the geometric classes, but is useful in parsing 
+any output from custom data types output from postgresql.
+                 
+   See Also:
+          PGbox, PGcircle, PGlseg, PGpath, PGpoint, PGpolygon
+          
+Constructors
+
+ public PGtokenizer(String string,
+                    char delim)
+
+          Create a tokeniser.
+
+        Parameters:
+                string - containing tokens
+                delim - single character to split the tokens
+
+Methods
+        
+ public int tokenize(String string,
+                     char delim)
+
+          This resets this tokenizer with a new string and/or 
+delimiter.
+
+        Parameters:
+                string - containing tokens
+                delim - single character to split the tokens
+
+ public int getSize()
+
+        Returns:
+                the number of tokens available
+
+ public String getToken(int n)
+
+        Parameters:
+                n - Token number ( 0 ... getSize()-1 )
+
+        Returns:
+                The token value
+
+ public PGtokenizer tokenizeToken(int n,
+                                  char delim)
+
+          This returns a new tokenizer based on one of our tokens. The 
+geometric datatypes use this to process nested tokens (usually 
+PGpoint).
+
+        Parameters:
+                n - Token number ( 0 ... getSize()-1 )
+                delim - The delimiter to use
+
+        Returns:
+                A new instance of PGtokenizer based on the token
+
+ public static String remove(String s,
+                             String l,
+                             String t)
+
+          This removes the lead/trailing strings from a string
+
+        Parameters:
+                s - Source string
+                l - Leading string to remove
+                t - Trailing string to remove
+                
+        Returns:
+                String without the lead/trailing strings
+
+ public void remove(String l,
+                    String t)
+
+          This removes the lead/trailing strings from all tokens
+
+        Parameters:
+                l - Leading string to remove
+                t - Trailing string to remove
+
+ public static String removePara(String s)
+
+          Removes ( and ) from the beginning and end of a string
+
+        Parameters:
+                s - String to remove from
+
+        Returns:
+                String without the ( or )
+
+ public void removePara()
+
+          Removes ( and ) from the beginning and end of all tokens
+
+        Returns:
+                String without the ( or )
+
+ public static String removeBox(String s)
+   
+          Removes [ and ] from the beginning and end of a string
+
+        Parameters:
+                s - String to remove from
+   
+        Returns:
+                String without the [ or ]
+
+ public void removeBox()
+
+          Removes [ and ] from the beginning and end of all tokens
+
+        Returns:
+                String without the [ or ]
+
+ public static String removeAngle(String s)
+
+          Removes < and > from the beginning and end of a string
+
+        Parameters:
+                s - String to remove from
+
+        Returns:
+                String without the < or >
+
+ public void removeAngle()
+
+          Removes < and > from the beginning and end of all tokens
+
+        Returns:
+                String without the < or >
+
+Class postgresql.util.Serialize
+
+This was documented earlier under Object Serialisation.
+
+Class postgresql.util.UnixCrypt
+              
+java.lang.Object
+   |
+   +----postgresql.util.UnixCrypt
+
+   public class UnixCrypt extends Object
+
+   This class provides us with the ability to encrypt passwords when 
+sent over the network stream
+
+   Contains static methods to encrypt and compare passwords with Unix 
+encrypted passwords.
+
+   See John Dumas's Java Crypt page for the original source.
+
+   http://www.zeh.com/local/jfd/crypt.html
+
+Methods
+
+ public static final String crypt(String salt,
+                                  String original)
+
+          Encrypt a password given the cleartext password and a 
+"salt".
+   
+        Parameters:
+                salt - A two-character string representing the salt 
+used
+                to iterate the encryption engine in lots of different
+                ways. If you are generating a new encryption then this
+                value should be randomised.
+                original - The password to be encrypted.
+
+        Returns:
+                A string consisting of the 2-character salt followed 
+by
+                the encrypted password.
+              
+ public static final String crypt(String original)
+
+          Encrypt a password given the cleartext password. This method 
+generates a random salt using the 'java.util.Random' class.
+
+        Parameters:
+                original - The password to be encrypted.
+   
+        Returns: 
+                A string consisting of the 2-character salt followed 
+by
+                the encrypted password.
+               
+ public static final boolean matches(String encryptedPassword,
+                                     String enteredPassword)
+                 
+          Check that enteredPassword encrypts to encryptedPassword.
+               
+        Parameters:
+                encryptedPassword - The encryptedPassword. The first 
+two characters are assumed to be the salt. This string would be the 
+same as one found in a Unix /etc/passwd file.
+                enteredPassword - The password as entered by the user 
+(or otherwise aquired).
+
+        Returns:
+                true if the password should be considered correct.
+
+Using the driver in a multi Threaded or Servlet environment
+
+A problem with many <acronym>JDBC</acronym> drivers, is that only one thread can use a 
+Connection at any one time - otherwise a thread could send a query 
+while another one is receiving results, and this would be a bad thing 
+for the database engine.
+
+PostgreSQL 6.4, brings thread safety to the entire driver. Standard 
+<acronym>JDBC</acronym> was thread safe in 6.3.x, but the Fastpath <acronym>API</acronym> wasn't.
+
+So, if your application uses multiple threads (which most decent ones 
+would), then you don't have to worry about complex schemes to ensure 
+only one uses the database at any time.
+
+If a thread attempts to use the connection while another is using it, 
+it will wait until the other thread has finished it's current 
+operation.
+
+If it's a standard SQL statement, then the operation is sending the 
+statement, and retrieving any ResultSet (in full).
+
+If it's a Fastpath call (ie: reading a block from a LargeObject), then 
+it's the time to send, and retrieve that block.
+
+This is fine for applications & applets, but can cause a performance 
+problem with servlets.
+
+With servlets, you can have a heavy load on the connection. If you 
+have several threads performing queries, then each one will pause, 
+which may not be what you are after.
+
+To solve this, you would be advised to create a pool of Connections.
+
+When ever a thread needs to use the database, it asks a manager class 
+for a Connection. It hands a free connection to the thread, and marks 
+it as busy. If a free connection is not available, it opens one.
+
+Once the thread has finished with it, it returns it to the manager, 
+who can then either close it, or add it to the pool. The manager would 
+also check that the connection is still alive, and remove it from the 
+pool if it's dead.
+
+So, with servlets, it's up to you to use either a single connection, 
+or a pool. The plus side for a pool is that threads will not be hit by 
+the bottle neck caused by a single network connection. The down side, 
+is that it increases the load on the server, as a backend is created 
+for each Connection.
+
+It's up to you, and your applications requirements.
+</programlisting>
+
+<sect1>
+<title>Further Reading</title>
+
+<para>
+If you have not yet read it, I'd advise you read the <acronym>JDBC</acronym>
+ <acronym>API</acronym> 
+Documentation (supplied with Sun's <acronym>JDK</acronym>),
+ and the <acronym>JDBC</acronym> Specification. 
+Both are available on 
+<ulink url="http://www.javasoft.com>JavaSoft's web site</ulink>.
+
+<para>
+<ulink url="http://www.retep.org.uk>My own web site</ulink>
+ contains updated information not included in this 
+document, and also includes precompiled drivers for v6.4, and earlier.
+
+</chapter>
