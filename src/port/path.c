@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.12 2004/05/25 01:00:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.13 2004/05/25 01:42:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,7 +251,10 @@ set_pglocale(const char *argv0, const char *app)
 	char path[MAXPGPATH];
 	char my_exec_path[MAXPGPATH];
 
-	setlocale(LC_ALL, "");
+	/* don't set LC_ALL in the backend */
+	if (strcmp(app, "postgres") != 0)
+		setlocale(LC_ALL, "");
+
 	if (find_my_exec(argv0, my_exec_path) < 0)
 		return;
 		
