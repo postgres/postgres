@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.166 2004/09/18 19:39:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.167 2004/11/09 00:34:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,45 +109,6 @@
 #include "utils/pg_locale.h"
 #include "utils/selfuncs.h"
 #include "utils/syscache.h"
-
-
-/*
- * Note: the default selectivity estimates are not chosen entirely at random.
- * We want them to be small enough to ensure that indexscans will be used if
- * available, for typical table densities of ~100 tuples/page.	Thus, for
- * example, 0.01 is not quite small enough, since that makes it appear that
- * nearly all pages will be hit anyway.  Also, since we sometimes estimate
- * eqsel as 1/num_distinct, we probably want DEFAULT_NUM_DISTINCT to equal
- * 1/DEFAULT_EQ_SEL.
- */
-
-/* default selectivity estimate for equalities such as "A = b" */
-#define DEFAULT_EQ_SEL	0.005
-
-/* default selectivity estimate for inequalities such as "A < b" */
-#define DEFAULT_INEQ_SEL  (1.0 / 3.0)
-
-/* default selectivity estimate for pattern-match operators such as LIKE */
-#define DEFAULT_MATCH_SEL	0.005
-
-/* default number of distinct values in a table */
-#define DEFAULT_NUM_DISTINCT  200
-
-/* default selectivity estimate for boolean and null test nodes */
-#define DEFAULT_UNK_SEL			0.005
-#define DEFAULT_NOT_UNK_SEL		(1.0 - DEFAULT_UNK_SEL)
-
-/*
- * Clamp a computed probability estimate (which may suffer from roundoff or
- * estimation errors) to valid range.  Argument must be a float variable.
- */
-#define CLAMP_PROBABILITY(p) \
-	do { \
-		if (p < 0.0) \
-			p = 0.0; \
-		else if (p > 1.0) \
-			p = 1.0; \
-	} while (0)
 
 
 /* Return data from examine_variable and friends */

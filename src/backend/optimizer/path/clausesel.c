@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.70 2004/08/29 05:06:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.71 2004/11/09 00:34:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,9 +80,10 @@ static void addRangeClause(RangeQueryClause **rqlist, Node *clause,
  * interpreting it as a value.	Then the available range is 1-losel to hisel.
  * However, this calculation double-excludes nulls, so really we need
  * hisel + losel + null_frac - 1.)
- * If the calculation yields zero or negative, however, we chicken out and
- * use a default estimate; that probably means that one or both
- * selectivities is a default estimate rather than an actual range value.
+ *
+ * If either selectivity is exactly DEFAULT_INEQ_SEL, we forget this equation
+ * and instead use DEFAULT_RANGE_INEQ_SEL.  The same applies if the equation
+ * yields an impossible (negative) result.
  *
  * A free side-effect is that we can recognize redundant inequalities such
  * as "x < 4 AND x < 5"; only the tighter constraint will be counted.
@@ -194,37 +195,51 @@ clauselist_selectivity(Query *root,
 		if (rqlist->have_lobound && rqlist->have_hibound)
 		{
 			/* Successfully matched a pair of range clauses */
-			Selectivity s2 = rqlist->hibound + rqlist->lobound - 1.0;
-
-			/* Adjust for double-exclusion of NULLs */
-			s2 += nulltestsel(root, IS_NULL, rqlist->var, varRelid);
+			Selectivity s2;
 
 			/*
-			 * A zero or slightly negative s2 should be converted into a
-			 * small positive value; we probably are dealing with a very
-			 * tight range and got a bogus result due to roundoff errors.
-			 * However, if s2 is very negative, then we probably have
-			 * default selectivity estimates on one or both sides of the
-			 * range.  In that case, insert a not-so-wildly-optimistic
-			 * default estimate.
+			 * Exact equality to the default value probably means the
+			 * selectivity function punted.  This is not airtight but
+			 * should be good enough.
 			 */
-			if (s2 <= 0.0)
+			if (rqlist->hibound == DEFAULT_INEQ_SEL ||
+				rqlist->lobound == DEFAULT_INEQ_SEL)
 			{
-				if (s2 < -0.01)
+				s2 = DEFAULT_RANGE_INEQ_SEL;
+			}
+			else
+			{
+				s2 = rqlist->hibound + rqlist->lobound - 1.0;
+
+				/* Adjust for double-exclusion of NULLs */
+				s2 += nulltestsel(root, IS_NULL, rqlist->var, varRelid);
+
+				/*
+				 * A zero or slightly negative s2 should be converted into a
+				 * small positive value; we probably are dealing with a very
+				 * tight range and got a bogus result due to roundoff errors.
+				 * However, if s2 is very negative, then we probably have
+				 * default selectivity estimates on one or both sides of the
+				 * range that we failed to recognize above for some reason.
+				 */
+				if (s2 <= 0.0)
 				{
-					/*
-					 * No data available --- use a default estimate that
-					 * is small, but not real small.
-					 */
-					s2 = 0.005;
-				}
-				else
-				{
-					/*
-					 * It's just roundoff error; use a small positive
-					 * value
-					 */
-					s2 = 1.0e-10;
+					if (s2 < -0.01)
+					{
+						/*
+						 * No data available --- use a default estimate that
+						 * is small, but not real small.
+						 */
+						s2 = DEFAULT_RANGE_INEQ_SEL;
+					}
+					else
+					{
+						/*
+						 * It's just roundoff error; use a small positive
+						 * value
+						 */
+						s2 = 1.0e-10;
+					}
 				}
 			}
 			/* Merge in the selectivity of the pair of clauses */
