@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.133 2002/09/14 19:59:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.134 2003/02/13 05:35:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -424,7 +424,7 @@ BufferAlloc(Relation reln,
 			{
 				/*
 				 * BM_JUST_DIRTIED cleared by BufferReplace and shouldn't
-				 * be setted by anyone.		- vadim 01/17/97
+				 * be set by anyone.		- vadim 01/17/97
 				 */
 				if (buf->flags & BM_JUST_DIRTIED)
 				{

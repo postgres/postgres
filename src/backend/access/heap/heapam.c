@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.149 2002/09/26 22:46:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.150 2003/02/13 05:35:07 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -123,12 +123,6 @@ heapgettup(Relation relation,
 	OffsetNumber lineoff;
 	int			linesleft;
 	ItemPointer tid;
-
-	/*
-	 * increment access statistics
-	 */
-	IncrHeapAccessStat(local_heapgettup);
-	IncrHeapAccessStat(global_heapgettup);
 
 	tid = (tuple->t_data == NULL) ? (ItemPointer) NULL : &(tuple->t_self);
 
@@ -461,12 +455,6 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 
 	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
 
-	/*
-	 * increment access statistics
-	 */
-	IncrHeapAccessStat(local_open);
-	IncrHeapAccessStat(global_open);
-
 	/* The relcache does all the real work... */
 	r = RelationIdGetRelation(relationId);
 
@@ -536,12 +524,6 @@ relation_openr(const char *sysRelationName, LOCKMODE lockmode)
 	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
 
 	/*
-	 * increment access statistics
-	 */
-	IncrHeapAccessStat(local_openr);
-	IncrHeapAccessStat(global_openr);
-
-	/*
 	 * We assume we should not need to worry about the rel's OID changing,
 	 * hence no need for AcceptInvalidationMessages here.
 	 */
@@ -571,12 +553,6 @@ void
 relation_close(Relation relation, LOCKMODE lockmode)
 {
 	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
-
-	/*
-	 * increment access statistics
-	 */
-	IncrHeapAccessStat(local_close);
-	IncrHeapAccessStat(global_close);
 
 	if (lockmode != NoLock)
 		UnlockRelation(relation, lockmode);
@@ -686,12 +662,6 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 	HeapScanDesc scan;
 
 	/*
-	 * increment access statistics
-	 */
-	IncrHeapAccessStat(local_beginscan);
-	IncrHeapAccessStat(global_beginscan);
-
-	/*
 	 * sanity checks
 	 */
 	if (!RelationIsValid(relation))
@@ -744,12 +714,6 @@ heap_rescan(HeapScanDesc scan,
 			ScanKey key)
 {
 	/*
-	 * increment access statistics
-	 */
-	IncrHeapAccessStat(local_rescan);
-	IncrHeapAccessStat(global_rescan);
-
-	/*
 	 * unpin scan buffers
 	 */
 	if (BufferIsValid(scan->rs_cbuf))
@@ -773,12 +737,6 @@ heap_rescan(HeapScanDesc scan,
 void
 heap_endscan(HeapScanDesc scan)
 {
-	/*
-	 * increment access statistics
-	 */
-	IncrHeapAccessStat(local_endscan);
-	IncrHeapAccessStat(global_endscan);
-
 	/* Note: no locking manipulations needed */
 
 	/*
@@ -827,12 +785,6 @@ heap_endscan(HeapScanDesc scan)
 HeapTuple
 heap_getnext(HeapScanDesc scan, ScanDirection direction)
 {
-	/*
-	 * increment access statistics
-	 */
-	IncrHeapAccessStat(local_getnext);
-	IncrHeapAccessStat(global_getnext);
-
 	/* Note: no locking manipulations needed */
 
 	/*
@@ -915,12 +867,6 @@ heap_fetch(Relation relation,
 	PageHeader	dp;
 	OffsetNumber offnum;
 	bool		valid;
-
-	/*
-	 * increment access statistics
-	 */
-	IncrHeapAccessStat(local_fetch);
-	IncrHeapAccessStat(global_fetch);
 
 	/*
 	 * get the buffer from the relation descriptor. Note that this does a
@@ -1110,10 +1056,6 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 {
 	Buffer		buffer;
 
-	/* increment access statistics */
-	IncrHeapAccessStat(local_insert);
-	IncrHeapAccessStat(global_insert);
-
 	if (relation->rd_rel->relhasoids)
 	{
 #ifdef NOT_USED
@@ -1271,10 +1213,6 @@ heap_delete(Relation relation, ItemPointer tid,
 	PageHeader	dp;
 	Buffer		buffer;
 	int			result;
-
-	/* increment access statistics */
-	IncrHeapAccessStat(local_delete);
-	IncrHeapAccessStat(global_delete);
 
 	Assert(ItemPointerIsValid(tid));
 
@@ -1470,10 +1408,6 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	Size		newtupsize,
 				pagefree;
 	int			result;
-
-	/* increment access statistics */
-	IncrHeapAccessStat(local_replace);
-	IncrHeapAccessStat(global_replace);
 
 	Assert(ItemPointerIsValid(otid));
 
@@ -1796,10 +1730,6 @@ heap_mark4update(Relation relation, HeapTuple tuple, Buffer *buffer,
 	PageHeader	dp;
 	int			result;
 
-	/* increment access statistics */
-	IncrHeapAccessStat(local_mark4update);
-	IncrHeapAccessStat(global_mark4update);
-
 	*buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 
 	if (!BufferIsValid(*buffer))
@@ -1901,12 +1831,6 @@ l3:
 void
 heap_markpos(HeapScanDesc scan)
 {
-	/*
-	 * increment access statistics
-	 */
-	IncrHeapAccessStat(local_markpos);
-	IncrHeapAccessStat(global_markpos);
-
 	/* Note: no locking manipulations needed */
 
 	if (scan->rs_ctup.t_data != NULL)
@@ -1935,12 +1859,6 @@ heap_markpos(HeapScanDesc scan)
 void
 heap_restrpos(HeapScanDesc scan)
 {
-	/*
-	 * increment access statistics
-	 */
-	IncrHeapAccessStat(local_restrpos);
-	IncrHeapAccessStat(global_restrpos);
-
 	/* XXX no amrestrpos checking that ammarkpos called */
 
 	/* Note: no locking manipulations needed */

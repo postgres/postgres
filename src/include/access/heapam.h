@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.79 2002/09/04 20:31:36 momjian Exp $
+ * $Id: heapam.h,v 1.80 2003/02/13 05:35:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,13 +24,6 @@
 #include "storage/lmgr.h"
 #include "utils/rel.h"
 #include "utils/tqual.h"
-
-/* ----------------------------------------------------------------
- *				leftover cruft from old statistics code
- * ----------------------------------------------------------------
- */
-
-#define IncrHeapAccessStat(x)	((void) 0)
 
 /* ----------------
  *		fastgetattr

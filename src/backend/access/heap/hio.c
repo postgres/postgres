@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.46 2002/08/06 02:36:33 tgl Exp $
+ *	  $Id: hio.c,v 1.47 2003/02/13 05:35:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,12 +36,6 @@ RelationPutHeapTuple(Relation relation,
 	OffsetNumber offnum;
 	ItemId		itemId;
 	Item		item;
-
-	/*
-	 * increment access statistics
-	 */
-	IncrHeapAccessStat(local_RelationPutHeapTuple);
-	IncrHeapAccessStat(global_RelationPutHeapTuple);
 
 	/* Add the tuple to the page */
 	pageHeader = BufferGetPage(buffer);
