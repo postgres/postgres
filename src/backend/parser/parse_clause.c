@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.57 2000/03/15 23:31:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.58 2000/03/23 07:38:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,10 +74,9 @@ void
 setTargetTable(ParseState *pstate, char *relname)
 {
 	RangeTblEntry *rte;
-	int			sublevels_up;
 
-	if ((refnameRangeTablePosn(pstate, relname, &sublevels_up) == 0)
-		|| (sublevels_up != 0))
+	/* look for relname only at current nesting level... */
+	if (refnameRangeTablePosn(pstate, relname, NULL) == 0)
 		rte = addRangeTableEntry(pstate, relname,
 								 makeAttr(relname, NULL),
 								 FALSE, FALSE, FALSE);

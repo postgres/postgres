@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.38 2000/03/17 02:36:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.39 2000/03/23 07:38:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,11 +93,7 @@ refnameRangeTableEntries(ParseState *pstate, char *refname)
 			if (strcmp(rte->eref->relname, refname) == 0)
 				rteList = lappend(rteList, rte);
 		}
-		/* only allow correlated columns in WHERE clause */
-		if (pstate->p_in_where_clause)
-			pstate = pstate->parentParseState;
-		else
-			break;
+		pstate = pstate->parentParseState;
 	}
 	return rteList;
 }
@@ -117,16 +113,15 @@ refnameRangeTableEntry(ParseState *pstate, char *refname)
 			if (strcmp(rte->eref->relname, refname) == 0)
 				return rte;
 		}
-		/* only allow correlated columns in WHERE clause */
-		if (pstate->p_in_where_clause)
-			pstate = pstate->parentParseState;
-		else
-			break;
+		pstate = pstate->parentParseState;
 	}
 	return NULL;
 }
 
-/* given refname, return id of variable; position starts with 1 */
+/* given refname, return RT index (starting with 1) of the relation,
+ * and optionally get its nesting depth (0 = current).  If sublevels_up
+ * is NULL, only consider rels at the current nesting level.
+ */
 int
 refnameRangeTablePosn(ParseState *pstate, char *refname, int *sublevels_up)
 {
@@ -147,13 +142,9 @@ refnameRangeTablePosn(ParseState *pstate, char *refname, int *sublevels_up)
 				return index;
 			index++;
 		}
-		/* only allow correlated columns in WHERE clause */
-		if (pstate->p_in_where_clause)
-		{
-			pstate = pstate->parentParseState;
-			if (sublevels_up)
-				(*sublevels_up)++;
-		}
+		pstate = pstate->parentParseState;
+		if (sublevels_up)
+			(*sublevels_up)++;
 		else
 			break;
 	}
@@ -168,9 +159,8 @@ colnameRangeTableEntry(ParseState *pstate, char *colname)
 {
 	List	   *et;
 	List	   *rtable;
-	RangeTblEntry *rte_result;
+	RangeTblEntry *rte_result = NULL;
 
-	rte_result = NULL;
 	while (pstate != NULL)
 	{
 		if (pstate->p_is_rule)
@@ -226,11 +216,10 @@ colnameRangeTableEntry(ParseState *pstate, char *colname)
 				rte_result = rte;
 		}
 
-		/* only allow correlated columns in WHERE clause */
-		if (pstate->p_in_where_clause && rte_result == NULL)
-			pstate = pstate->parentParseState;
-		else
-			break;
+		if (rte_result != NULL)
+			break;				/* found */
+
+		pstate = pstate->parentParseState;
 	}
 	return rte_result;
 }
