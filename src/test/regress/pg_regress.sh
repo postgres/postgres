@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.11 2000/11/21 17:34:21 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.12 2000/11/21 23:40:28 petere Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -74,6 +74,13 @@ bindir='@bindir@'
 datadir='@datadir@'
 host_platform='@host_tuple@'
 enable_shared='@enable_shared@'
+GCC=@GCC@
+
+if [ "$GCC" = yes ]; then
+    compiler=gcc
+else
+    compiler=cc
+fi
 
 unset mode
 unset schedule
@@ -223,9 +230,12 @@ trap '
 # ----------
 # Scan resultmap file to find which platform-specific expected files to use.
 # The format of each line of the file is
-#               testname/hostplatformpattern=substitutefile
+#         testname/hostplatformpattern=substitutefile
 # where the hostplatformpattern is evaluated per the rules of expr(1),
 # namely, it is a standard regular expression with an implicit ^ at the start.
+# What hostplatformpattern will be matched against is the config.guess output
+# followed by either ':gcc' or ':cc' (independent of the actual name of the
+# compiler executable).
 #
 # The tempfile hackery is needed because some shells will run the loop
 # inside a subshell, whereupon shell variables set therein aren't seen
@@ -236,7 +246,7 @@ cat /dev/null >$TMPFILE
 while read LINE
 do
     HOSTPAT=`expr "$LINE" : '.*/\(.*\)='`
-    if [ `expr "$host_platform" : "$HOSTPAT"` -ne 0 ]
+    if [ `expr "$host_platform:$compiler" : "$HOSTPAT"` -ne 0 ]
     then
         # remove hostnamepattern from line so that there are no shell
         # wildcards in SUBSTLIST; else later 'for' could expand them!

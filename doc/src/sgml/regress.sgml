@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.12 2000/10/22 19:11:05 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.13 2000/11/21 23:40:27 petere Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -272,52 +272,61 @@ diff results/random.out expected/random.out
 
 <!-- We might want to move the following section into the developer's guide. -->
   <sect1 id="regress-platform">
-    <title>Platform-specific comparison files</title>
+   <title>Platform-specific comparison files</title>
 
-     <para>
-  Since some of the tests inherently produce platform-specific results,
-  we have provided a way to supply platform-specific result comparison
-  files.  Frequently, the same variation applies to multiple platforms;
-  rather than supplying a separate comparison file for every platform,
-  there is a mapping file that defines which comparison file to use.
-  So, to eliminate bogus test "failures" for a particular platform,
-  you must choose or make a variant result file, and then add a line
-  to the mapping file, which is "resultmap".
-     </para>
+   <para>
+    Since some of the tests inherently produce platform-specific
+    results, we have provided a way to supply platform-specific result
+    comparison files.  Frequently, the same variation applies to
+    multiple platforms; rather than supplying a separate comparison
+    file for every platform, there is a mapping file that defines
+    which comparison file to use.  So, to eliminate bogus test
+    <quote>failures</quote> for a particular platform, you must choose
+    or make a variant result file, and then add a line to the mapping
+    file, which is <filename>resultmap</filename>.
+   </para>
 
-     <para>
-  Each line in the mapping file is of the form
-	<programlisting>
-		testname/platformnamepattern=comparisonfilename
-	</programlisting>
-  The test name is just the name of the particular regression test module.
-  The platform name pattern is a pattern in the style of expr(1) (that is,
-  a regular expression with an implicit ^ anchor at the start).  It is matched
-  against the platform name as printed by config.guess.  The comparison
-  file name is the name of the substitute result comparison file.
-     </para>
+   <para>
+    Each line in the mapping file is of the form
+<synopsis>
+testname/platformnamepattern=comparisonfilename
+</synopsis>
+    The test name is just the name of the particular regression test
+    module.  The platform name pattern is a pattern in the style of
+    expr(1) (that is, a regular expression with an implicit ^ anchor
+    at the start).  It is matched against the platform name as printed
+    by <filename>config.guess</filename> with an appended
+    <literal>:gcc</literal> or <literal>:cc</literal>, depending on
+    whether you use the GNU compiler or the system's native compiler
+    (on systems where there is a difference).  The comparison file
+    name is the name of the substitute result comparison file.
+   </para>
 
-     <para>
-  For example: the int2 regress test includes a deliberate entry of a value
-  that is too large to fit in int2.  The specific error message that is
-  produced is platform-dependent; our reference platform emits
-	<programlisting>
-    ERROR:  pg_atoi: error reading "100000": Numerical result out of range
-	</programlisting>
-  but a fair number of other Unix platforms emit
-	<programlisting>
-    ERROR:  pg_atoi: error reading "100000": Result too large
-	</programlisting>
-  Therefore, we provide a variant comparison file, int2-too-large.out,
-  that includes this spelling of the error message.  To silence the
-  bogus "failure" message on HPPA platforms,  resultmap includes
-	<programlisting>
-		int2/hppa=int2-too-large
-	</programlisting>
-  which will trigger on any machine for which config.guess's output
-  begins with 'hppa'.  Other lines in resultmap select the variant
-  comparison file for other platforms where it's appropriate.
-     </para>
+   <para>
+    For example: the int2 regression test includes a deliberate entry
+    of a value that is too large to fit in int2.  The specific error
+    message that is produced is platform-dependent; our reference
+    platform emits
+<screen>
+<computeroutput>ERROR:  pg_atoi: error reading "100000": Numerical result out of range</computeroutput>
+</screen>
+    but a fair number of other Unix platforms emit
+<screen>
+<computeroutput>ERROR:  pg_atoi: error reading "100000": Result too large</computeroutput>
+</screen>
+    Therefore, we provide a variant comparison file,
+    <filename>int2-too-large.out</filename>, that includes this
+    spelling of the error message.  To silence the bogus
+    <quote>failure</quote> message on HPPA platforms, resultmap
+    includes
+<programlisting>
+int2/hppa=int2-too-large
+</programlisting>
+    which will trigger on any machine for which config.guess's output
+    begins with <quote><literal>hppa</literal></quote>.  Other lines
+    in resultmap select the variant comparison file for other
+    platforms where it's appropriate.
+   </para>
     
   </sect1>
   
