@@ -284,12 +284,12 @@ pg_stat_get_backend_activity(PG_FUNCTION_ARGS)
 	int			len;
 	text	   *result;
 
-	if (!superuser())
-		PG_RETURN_NULL();
-
 	beid = PG_GETARG_INT32(0);
 
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
+		PG_RETURN_NULL();
+
+	if (!superuser() && beentry->userid != GetUserId())
 		PG_RETURN_NULL();
 
 	len = strlen(beentry->activity);

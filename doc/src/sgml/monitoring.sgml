@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.16 2003/03/20 03:34:55 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.17 2003/03/20 18:51:16 momjian Exp $
 -->
 
 <chapter id="monitoring">
@@ -212,9 +212,10 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       data on the current query are only available if the
       <varname>STATS_COMMAND_STRING</varname> configuration option has
       been enabled. Furthermore, these columns can only be accessed by
-      superusers; to other users, they always appear NULL. (Note that
-      because of the collector's reporting delay, current query will
-      only be up-to-date for long-running queries.)</entry>
+      superusers; or when the user examining the view is the same as the user
+      in the row; for others it reads as null.  (Note that because of the 
+      collector's reporting delay, current query will only be up-to-date for 
+      long-running queries.)</entry>
      </row>
 
      <row>
@@ -534,7 +535,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><type>text</type></entry>
       <entry>
        Current query of backend process (NULL if caller is not
-       superuser, or <varname>STATS_COMMAND_STRING</varname> is not enabled)
+       superuser, or is the same user as that of the backend being queried,
+       or <varname>STATS_COMMAND_STRING</varname> is not enabled)
       </entry>
      </row>
 
