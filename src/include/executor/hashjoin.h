@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hashjoin.h,v 1.14 1999/07/15 15:21:08 momjian Exp $
+ * $Id: hashjoin.h,v 1.15 1999/10/13 15:02:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,7 @@
 #define HASHJOIN_H
 
 #include "access/htup.h"
+#include "storage/buffile.h"
 
 /* ----------------------------------------------------------------
  *				hash-join hash table structures

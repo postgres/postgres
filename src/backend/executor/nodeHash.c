@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.38 1999/07/17 20:16:58 momjian Exp $
+ *	$Id: nodeHash.c,v 1.39 1999/10/13 15:02:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,12 +75,7 @@ ExecHash(Hash *node)
 		 * ----------------
 		 */
 		for (i = 0; i < nbatch; i++)
-		{
-			File		tfile = OpenTemporaryFile();
-
-			Assert(tfile >= 0);
-			hashtable->innerBatchFile[i] = BufFileCreate(tfile);
-		}
+			hashtable->innerBatchFile[i] = BufFileCreateTemp();
 	}
 
 	/* ----------------

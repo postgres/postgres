@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeHashjoin.h,v 1.15 1999/07/15 15:21:12 momjian Exp $
+ * $Id: nodeHashjoin.h,v 1.16 1999/10/13 15:02:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,7 @@
 #define NODEHASHJOIN_H
 
 #include "nodes/plannodes.h"
+#include "storage/buffile.h"
 
 extern TupleTableSlot *ExecHashJoin(HashJoin *node);
 extern bool ExecInitHashJoin(HashJoin *node, EState *estate, Plan *parent);

@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.48 1999/09/27 15:47:49 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.49 1999/10/13 15:02:29 tgl Exp $
  *
  * NOTES:
  *
@@ -49,7 +49,6 @@
 #include "miscadmin.h"
 #include "storage/fd.h"
 
-bool	ReleaseDataFile(void);
 /*
  * Problem: Postgres does a system(ld...) to do dynamic loading.
  * This will open several extra files in addition to those used by
@@ -188,7 +187,6 @@ static int	FileAccess(File file);
 static File fileNameOpenFile(FileName fileName, int fileFlags, int fileMode);
 static char *filepath(char *filename);
 static long pg_nofile(void);
-static int	BufFileFlush(BufFile *file);
 
 /*
  * pg_fsync --- same as fsync except does nothing if -F switch was given
@@ -411,6 +409,9 @@ ReleaseLruFile()
 	LruDelete(VfdCache[0].lruMoreRecently);
 }
 
+/*
+ * Force one kernel file descriptor to be released (temporarily).
+ */
 bool
 ReleaseDataFile()
 {
@@ -506,8 +507,11 @@ FreeVfd(File file)
 
 /* filepath()
  * Convert given pathname to absolute.
- * (Is this actually necessary, considering that we should be cd'd
- * into the database directory??)
+ *
+ * (Generally, this isn't actually necessary, considering that we
+ * should be cd'd into the database directory.  Presently it is only
+ * necessary to do it in "bootstrap" mode.  Maybe we should change
+ * bootstrap mode to do the cd, and save a few cycles/bytes here.)
  */
 static char *
 filepath(char *filename)
@@ -851,7 +855,7 @@ FileTell(File file)
 #endif
 
 int
-FileTruncate(File file, int offset)
+FileTruncate(File file, long offset)
 {
 	int			returnCode;
 
@@ -862,7 +866,7 @@ FileTruncate(File file, int offset)
 
 	FileSync(file);
 	FileAccess(file);
-	returnCode = ftruncate(VfdCache[file].fd, offset);
+	returnCode = ftruncate(VfdCache[file].fd, (size_t) offset);
 	return returnCode;
 }
 
@@ -888,18 +892,6 @@ FileSync(File file)
 	}
 
 	return returnCode;
-}
-
-int
-FileNameUnlink(char *filename)
-{
-	int			retval;
-	char	   *fname;
-
-	fname = filepath(filename);
-	retval = unlink(fname);
-	pfree(fname);
-	return retval;
 }
 
 /*
@@ -1022,187 +1014,4 @@ AtEOXact_Files(void)
 	 * helps keep the names from growing unreasonably long.
 	 */
 	tempFileCounter = 0;
-}
-
-
-/*
- * Operations on BufFiles --- a very incomplete emulation of stdio
- * atop virtual Files.	Currently, we only support the buffered-I/O
- * aspect of stdio: a read or write of the low-level File occurs only
- * when the buffer is filled or emptied.  This is an even bigger win
- * for virtual Files than ordinary kernel files, since reducing the
- * frequency with which a virtual File is touched reduces "thrashing"
- * of opening/closing file descriptors.
- *
- * Note that BufFile structs are allocated with palloc(), and therefore
- * will go away automatically at transaction end.  If the underlying
- * virtual File is made with OpenTemporaryFile, then all resources for
- * the file are certain to be cleaned up even if processing is aborted
- * by elog(ERROR).
- */
-
-struct BufFile
-{
-	File		file;			/* the underlying virtual File */
-	bool		dirty;			/* does buffer need to be written? */
-	int			pos;			/* next read/write position in buffer */
-	int			nbytes;			/* total # of valid bytes in buffer */
-	char		buffer[BLCKSZ];
-};
-
-
-/*
- * Create a BufFile and attach it to an (already opened) virtual File.
- *
- * This is comparable to fdopen() in stdio.
- */
-BufFile    *
-BufFileCreate(File file)
-{
-	BufFile    *bfile = (BufFile *) palloc(sizeof(BufFile));
-
-	bfile->file = file;
-	bfile->dirty = false;
-	bfile->pos = 0;
-	bfile->nbytes = 0;
-
-	return bfile;
-}
-
-/*
- * Close a BufFile
- *
- * Like fclose(), this also implicitly FileCloses the underlying File.
- */
-void
-BufFileClose(BufFile *file)
-{
-	/* flush any unwritten data */
-	BufFileFlush(file);
-	/* close the underlying (with delete if it's a temp file) */
-	FileClose(file->file);
-	/* release the buffer space */
-	pfree(file);
-}
-
-/* BufFileRead
- *
- * Like fread() except we assume 1-byte element size.
- */
-size_t
-BufFileRead(BufFile *file, void *ptr, size_t size)
-{
-	size_t		nread = 0;
-	size_t		nthistime;
-
-	if (file->dirty)
-	{
-		elog(NOTICE, "BufFileRead: should have flushed after writing");
-		BufFileFlush(file);
-	}
-
-	while (size > 0)
-	{
-		if (file->pos >= file->nbytes)
-		{
-			/* Try to load more data into buffer */
-			file->pos = 0;
-			file->nbytes = FileRead(file->file, file->buffer,
-									sizeof(file->buffer));
-			if (file->nbytes < 0)
-				file->nbytes = 0;
-			if (file->nbytes <= 0)
-				break;			/* no more data available */
-		}
-
-		nthistime = file->nbytes - file->pos;
-		if (nthistime > size)
-			nthistime = size;
-		Assert(nthistime > 0);
-
-		memcpy(ptr, file->buffer + file->pos, nthistime);
-
-		file->pos += nthistime;
-		ptr = (void *) ((char *) ptr + nthistime);
-		size -= nthistime;
-		nread += nthistime;
-	}
-
-	return nread;
-}
-
-/* BufFileWrite
- *
- * Like fwrite() except we assume 1-byte element size.
- */
-size_t
-BufFileWrite(BufFile *file, void *ptr, size_t size)
-{
-	size_t		nwritten = 0;
-	size_t		nthistime;
-
-	while (size > 0)
-	{
-		if (file->pos >= BLCKSZ)
-		{
-			/* Buffer full, dump it out */
-			if (file->dirty)
-			{
-				if (FileWrite(file->file, file->buffer, file->nbytes) < 0)
-					break;		/* I/O error */
-				file->dirty = false;
-			}
-			file->pos = 0;
-			file->nbytes = 0;
-		}
-
-		nthistime = BLCKSZ - file->pos;
-		if (nthistime > size)
-			nthistime = size;
-		Assert(nthistime > 0);
-
-		memcpy(file->buffer + file->pos, ptr, nthistime);
-
-		file->dirty = true;
-		file->pos += nthistime;
-		if (file->nbytes < file->pos)
-			file->nbytes = file->pos;
-		ptr = (void *) ((char *) ptr + nthistime);
-		size -= nthistime;
-		nwritten += nthistime;
-	}
-
-	return nwritten;
-}
-
-/* BufFileFlush
- *
- * Like fflush()
- */
-static int
-BufFileFlush(BufFile *file)
-{
-	if (file->dirty)
-	{
-		if (FileWrite(file->file, file->buffer, file->nbytes) < 0)
-			return EOF;
-		file->dirty = false;
-	}
-
-	return 0;
-}
-
-/* BufFileSeek
- *
- * Like fseek(), or really more like lseek() since the return value is
- * the new file offset (or -1 in case of error).
- */
-long
-BufFileSeek(BufFile *file, long offset, int whence)
-{
-	if (BufFileFlush(file) < 0)
-		return -1L;
-	file->pos = 0;
-	file->nbytes = 0;
-	return FileSeek(file->file, offset, whence);
 }

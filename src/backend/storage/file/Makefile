@@ -4,7 +4,7 @@
 #    Makefile for storage/file
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/file/Makefile,v 1.5 1998/04/06 00:25:05 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/file/Makefile,v 1.6 1999/10/13 15:02:29 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +13,7 @@ include ../../../Makefile.global
 
 CFLAGS += -I../..
 
-OBJS = fd.o
+OBJS = fd.o buffile.o
 
 all: SUBSYS.o
 

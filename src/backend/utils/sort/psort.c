@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: psort.c,v 1.56 1999/07/17 20:18:16 momjian Exp $
+ *	  $Id: psort.c,v 1.57 1999/10/13 15:02:31 tgl Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -142,7 +142,8 @@ psort_begin(Sort *node, int nkeys, ScanKey key)
 		PS(node)->psort_grab_file = mergeruns(node);
 
 	PS(node)->psort_current = 0;
-	PS(node)->psort_saved = 0;
+	PS(node)->psort_saved_fileno = 0;
+	PS(node)->psort_saved = 0L;
 
 	return true;
 }
@@ -227,7 +228,7 @@ inittapes(Sort *node)
 
 #define SETTUPLEN(TUP, LEN)		((TUP)->t_len = (LEN) - HEAPTUPLESIZE)
 
-#define rewind(FP)		BufFileSeek(FP, 0L, SEEK_SET)
+#define rewind(FP)		BufFileSeek(FP, 0, 0L, SEEK_SET)
 
  /*
   * USEMEM			- record use of memory FREEMEM		   - record
@@ -764,9 +765,6 @@ psort_grabtuple(Sort *node, bool *should_free)
 				tup = ALLOCTUP(tuplen);
 				SETTUPLEN(tup, tuplen);
 				GETTUP(node, tup, tuplen, PS(node)->psort_grab_file);
-
-				/* Update current merged sort file position */
-				PS(node)->psort_current += tuplen + sizeof(tlendummy);
 				return tup;
 			}
 			else
@@ -775,70 +773,67 @@ psort_grabtuple(Sort *node, bool *should_free)
 				return NULL;
 			}
 		}
-		/* Backward */
-		if (PS(node)->psort_current <= sizeof(tlendummy))
-			return NULL;
-
-		/*
+		/* Backward.
+		 *
 		 * if all tuples are fetched already then we return last tuple,
 		 * else - tuple before last returned.
 		 */
 		if (PS(node)->all_fetched)
 		{
-
 			/*
-			 * psort_current is pointing to the zero tuplen at the end of
-			 * file
+			 * Assume seek position is pointing just past the zero tuplen
+			 * at the end of file; back up and fetch last tuple's ending
+			 * length word.  If seek fails we must have a completely empty
+			 * file.
 			 */
-			BufFileSeek(PS(node)->psort_grab_file,
-				  PS(node)->psort_current - sizeof(tlendummy), SEEK_SET);
+			if (BufFileSeek(PS(node)->psort_grab_file, 0,
+							- (long) (2 * sizeof(tlendummy)), SEEK_CUR))
+				return NULL;
 			GETLEN(tuplen, PS(node)->psort_grab_file);
-			if (PS(node)->psort_current < tuplen)
-				elog(ERROR, "psort_grabtuple: too big last tuple len in backward scan");
 			PS(node)->all_fetched = false;
 		}
 		else
 		{
-			/* move to position of end tlen of prev tuple */
-			PS(node)->psort_current -= sizeof(tlendummy);
-			BufFileSeek(PS(node)->psort_grab_file,
-						PS(node)->psort_current, SEEK_SET);
-			GETLEN(tuplen, PS(node)->psort_grab_file);	/* get tlen of prev
-														 * tuple */
+			/*
+			 * Back up and fetch prev tuple's ending length word.
+			 * If seek fails, assume we are at start of file.
+			 */
+			if (BufFileSeek(PS(node)->psort_grab_file, 0,
+							- (long) sizeof(tlendummy), SEEK_CUR))
+				return NULL;
+			GETLEN(tuplen, PS(node)->psort_grab_file);
 			if (tuplen == 0)
 				elog(ERROR, "psort_grabtuple: tuplen is 0 in backward scan");
-			if (PS(node)->psort_current <= tuplen + sizeof(tlendummy))
-			{					/* prev tuple should be first one */
-				if (PS(node)->psort_current != tuplen)
-					elog(ERROR, "psort_grabtuple: first tuple expected in backward scan");
-				PS(node)->psort_current = 0;
-				BufFileSeek(PS(node)->psort_grab_file,
-							PS(node)->psort_current, SEEK_SET);
+			/*
+			 * Back up to get ending length word of tuple before it.
+			 */
+			if (BufFileSeek(PS(node)->psort_grab_file, 0,
+							- (long) (tuplen + 2*sizeof(tlendummy)), SEEK_CUR))
+			{
+				/* If fail, presumably the prev tuple is the first in the file.
+				 * Back up so that it becomes next to read in forward direction
+				 * (not obviously right, but that is what in-memory case does)
+				 */
+				if (BufFileSeek(PS(node)->psort_grab_file, 0,
+								- (long) (tuplen + sizeof(tlendummy)), SEEK_CUR))
+					elog(ERROR, "psort_grabtuple: too big last tuple len in backward scan");
 				return NULL;
 			}
-
-			/*
-			 * Get position of prev tuple. This tuple becomes current
-			 * tuple now and we have to return previous one.
-			 */
-			PS(node)->psort_current -= tuplen;
-			/* move to position of end tlen of prev tuple */
-			BufFileSeek(PS(node)->psort_grab_file,
-				  PS(node)->psort_current - sizeof(tlendummy), SEEK_SET);
 			GETLEN(tuplen, PS(node)->psort_grab_file);
-			if (PS(node)->psort_current < tuplen + sizeof(tlendummy))
-				elog(ERROR, "psort_grabtuple: too big tuple len in backward scan");
 		}
 
 		/*
-		 * move to prev (or last) tuple start position + sizeof(t_len)
+		 * Now we have the length of the prior tuple, back up and read it.
+		 * Note: GETTUP expects we are positioned after the initial length
+		 * word of the tuple, so back up to that point.
 		 */
-		BufFileSeek(PS(node)->psort_grab_file,
-					PS(node)->psort_current - tuplen, SEEK_SET);
+		if (BufFileSeek(PS(node)->psort_grab_file, 0,
+						- (long) tuplen, SEEK_CUR))
+			elog(ERROR, "psort_grabtuple: too big tuple len in backward scan");
 		tup = ALLOCTUP(tuplen);
 		SETTUPLEN(tup, tuplen);
 		GETTUP(node, tup, tuplen, PS(node)->psort_grab_file);
-		return tup;				/* file position is equal to psort_current */
+		return tup;
 	}
 	else
 	{
@@ -875,6 +870,8 @@ psort_grabtuple(Sort *node, bool *should_free)
 
 /*
  *		psort_markpos	- saves current position in the merged sort file
+ *
+ * XXX I suspect these need to save & restore the all_fetched flag as well!
  */
 void
 psort_markpos(Sort *node)
@@ -882,7 +879,12 @@ psort_markpos(Sort *node)
 	Assert(node != (Sort *) NULL);
 	Assert(PS(node) != (Psortstate *) NULL);
 
-	PS(node)->psort_saved = PS(node)->psort_current;
+	if (PS(node)->using_tape_files == true)
+		BufFileTell(PS(node)->psort_grab_file,
+					& PS(node)->psort_saved_fileno,
+					& PS(node)->psort_saved);
+	else
+		PS(node)->psort_saved = PS(node)->psort_current;
 }
 
 /*
@@ -897,8 +899,11 @@ psort_restorepos(Sort *node)
 
 	if (PS(node)->using_tape_files == true)
 		BufFileSeek(PS(node)->psort_grab_file,
-					PS(node)->psort_saved, SEEK_SET);
-	PS(node)->psort_current = PS(node)->psort_saved;
+					PS(node)->psort_saved_fileno,
+					PS(node)->psort_saved,
+					SEEK_SET);
+	else
+		PS(node)->psort_current = PS(node)->psort_saved;
 }
 
 /*
@@ -952,7 +957,8 @@ psort_rescan(Sort *node)
 	{
 		PS(node)->all_fetched = false;
 		PS(node)->psort_current = 0;
-		PS(node)->psort_saved = 0;
+		PS(node)->psort_saved_fileno = 0;
+		PS(node)->psort_saved = 0L;
 		if (PS(node)->using_tape_files == true)
 			rewind(PS(node)->psort_grab_file);
 	}
@@ -973,11 +979,7 @@ psort_rescan(Sort *node)
 static BufFile *
 gettape()
 {
-	File		tfile;
-
-	tfile = OpenTemporaryFile();
-	Assert(tfile >= 0);
-	return BufFileCreate(tfile);
+	return BufFileCreateTemp();
 }
 
 /*
