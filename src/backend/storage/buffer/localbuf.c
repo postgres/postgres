@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.31 2000/10/18 05:50:15 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.32 2000/10/23 04:10:06 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,7 +103,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	 */
 	if (bufHdr->flags & BM_DIRTY)
 	{
-		Relation	bufrel = RelationIdCacheGetRelation(bufHdr->relId.relId);
+		Relation	bufrel = RelationNodeCacheGetRelation(bufHdr->tag.rnode);
 
 		Assert(bufrel != NULL);
 
@@ -127,7 +127,6 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	 */
 	bufHdr->tag.rnode = reln->rd_node;
 	bufHdr->tag.blockNum = blockNum;
-	bufHdr->relId = reln->rd_lockInfo.lockRelId;
 	bufHdr->flags &= ~BM_DIRTY;
 
 	/*
@@ -192,7 +191,7 @@ FlushLocalBuffer(Buffer buffer, bool release)
 	bufid = -(buffer + 1);
 	bufHdr = &LocalBufferDescriptors[bufid];
 	bufHdr->flags &= ~BM_DIRTY;
-	bufrel = RelationIdCacheGetRelation(bufHdr->relId.relId);
+	bufrel = RelationNodeCacheGetRelation(bufHdr->tag.rnode);
 
 	Assert(bufrel != NULL);
 	smgrflush(DEFAULT_SMGR, bufrel, bufHdr->tag.blockNum,
@@ -268,7 +267,7 @@ LocalBufferSync(void)
 #ifdef LBDEBUG
 			fprintf(stderr, "LB SYNC %d\n", -i - 1);
 #endif
-			bufrel = RelationIdCacheGetRelation(buf->relId.relId);
+			bufrel = RelationNodeCacheGetRelation(buf->tag.rnode);
 
 			Assert(bufrel != NULL);
 
@@ -279,7 +278,6 @@ LocalBufferSync(void)
 			/* drop relcache refcount from RelationIdCacheGetRelation */
 			RelationDecrementReferenceCount(bufrel);
 
-			buf->relId.relId = InvalidOid;
 			buf->flags &= ~BM_DIRTY;
 		}
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.74 2000/10/21 15:43:22 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.75 2000/10/23 04:10:05 vadim Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -676,6 +676,7 @@ RecordTransactionCommit()
 	 */
 	leak = BufferPoolCheckLeak();
 
+#ifndef XLOG
 	/*
 	 * If no one shared buffer was changed by this transaction then we
 	 * don't flush shared buffers and don't record commit status.
@@ -686,6 +687,7 @@ RecordTransactionCommit()
 		if (leak)
 			ResetBufferPool(true);
 
+#endif
 		/*
 		 * have the transaction access methods record the status of this
 		 * transaction id in the pg_log relation.
@@ -717,13 +719,14 @@ RecordTransactionCommit()
 			MyLastRecPtr.xlogid = 0;
 			MyLastRecPtr.xrecoff = 0;
 		}
-#endif
+#else
 		/*
 		 * Now write the log info to the disk too.
 		 */
 		leak = BufferPoolCheckLeak();
 		FlushBufferPool();
 	}
+#endif
 
 	if (leak)
 		ResetBufferPool(true);

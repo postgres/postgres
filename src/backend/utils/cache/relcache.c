@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.112 2000/10/16 14:52:13 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.113 2000/10/23 04:10:08 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,6 +84,13 @@ static HTAB *RelationNameCache;
 static HTAB *RelationIdCache;
 
 /*
+ * Bufmgr uses RelFileNode for lookup. Actually, I would like to do
+ * not pass Relation to bufmgr & beyond at all and keep some cache
+ * in smgr, but no time to do it right way now.		-- vadim 10/22/2000
+ */
+static HTAB *RelationNodeCache;
+
+/*
  * newlyCreatedRelns -
  *	  relations created during this transaction. We need to keep track of
  *	  these.
@@ -114,17 +121,23 @@ typedef struct RelationBuildDescInfo
 	}			i;
 } RelationBuildDescInfo;
 
+typedef struct relnamecacheent
+{
+	NameData	relname;
+	Relation	reldesc;
+} RelNameCacheEnt;
+
 typedef struct relidcacheent
 {
 	Oid			reloid;
 	Relation	reldesc;
 } RelIdCacheEnt;
 
-typedef struct relnamecacheent
+typedef struct relnodecacheent
 {
-	NameData	relname;
+	RelFileNode	relnode;
 	Relation	reldesc;
-} RelNameCacheEnt;
+} RelNodeCacheEnt;
 
 /* -----------------
  *		macros to manipulate name cache and id cache
@@ -133,7 +146,7 @@ typedef struct relnamecacheent
 #define RelationCacheInsert(RELATION)	\
 do { \
 	RelIdCacheEnt *idhentry; RelNameCacheEnt *namehentry; \
-	char *relname; Oid reloid; bool found; \
+	char *relname; RelNodeCacheEnt *nodentry; bool found; \
 	relname = RelationGetPhysicalRelationName(RELATION); \
 	namehentry = (RelNameCacheEnt*)hash_search(RelationNameCache, \
 											   relname, \
@@ -144,9 +157,8 @@ do { \
 	if (found && !IsBootstrapProcessingMode()) \
 		/* used to give notice -- now just keep quiet */ ; \
 	namehentry->reldesc = RELATION; \
-	reloid = RELATION->rd_id; \
 	idhentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
-										   (char *)&reloid, \
+										   (char *)&(RELATION->rd_id), \
 										   HASH_ENTER, \
 										   &found); \
 	if (idhentry == NULL) \
@@ -154,6 +166,15 @@ do { \
 	if (found && !IsBootstrapProcessingMode()) \
 		/* used to give notice -- now just keep quiet */ ; \
 	idhentry->reldesc = RELATION; \
+	nodentry = (RelNodeCacheEnt*)hash_search(RelationNodeCache, \
+										   (char *)&(RELATION->rd_node), \
+										   HASH_ENTER, \
+										   &found); \
+	if (nodentry == NULL) \
+		elog(FATAL, "can't insert into relation descriptor cache"); \
+	if (found && !IsBootstrapProcessingMode()) \
+		/* used to give notice -- now just keep quiet */ ; \
+	nodentry->reldesc = RELATION; \
 } while(0)
 
 #define RelationNameCacheLookup(NAME, RELATION) \
@@ -183,10 +204,24 @@ do { \
 		RELATION = NULL; \
 } while(0)
 
+#define RelationNodeCacheLookup(NODE, RELATION) \
+do { \
+	RelNodeCacheEnt *hentry; \
+	bool found; \
+	hentry = (RelNodeCacheEnt*)hash_search(RelationNodeCache, \
+									 (char *)&(NODE),HASH_FIND, &found); \
+	if (hentry == NULL) \
+		elog(FATAL, "error in CACHE"); \
+	if (found) \
+		RELATION = hentry->reldesc; \
+	else \
+		RELATION = NULL; \
+} while(0)
+
 #define RelationCacheDelete(RELATION) \
 do { \
 	RelNameCacheEnt *namehentry; RelIdCacheEnt *idhentry; \
-	char *relname; Oid reloid; bool found; \
+	char *relname; RelNodeCacheEnt *nodentry; bool found; \
 	relname = RelationGetPhysicalRelationName(RELATION); \
 	namehentry = (RelNameCacheEnt*)hash_search(RelationNameCache, \
 											   relname, \
@@ -196,11 +231,17 @@ do { \
 		elog(FATAL, "can't delete from relation descriptor cache"); \
 	if (!found) \
 		elog(NOTICE, "trying to delete a reldesc that does not exist."); \
-	reloid = RELATION->rd_id; \
 	idhentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
-										   (char *)&reloid, \
+										   (char *)&(RELATION->rd_id), \
 										   HASH_REMOVE, &found); \
 	if (idhentry == NULL) \
+		elog(FATAL, "can't delete from relation descriptor cache"); \
+	if (!found) \
+		elog(NOTICE, "trying to delete a reldesc that does not exist."); \
+	nodentry = (RelNodeCacheEnt*)hash_search(RelationNodeCache, \
+										   (char *)&(RELATION->rd_node), \
+										   HASH_REMOVE, &found); \
+	if (nodentry == NULL) \
 		elog(FATAL, "can't delete from relation descriptor cache"); \
 	if (!found) \
 		elog(NOTICE, "trying to delete a reldesc that does not exist."); \
@@ -1192,18 +1233,18 @@ formrdesc(char *relationName,
 	 */
 	RelationInitLockInfo(relation);		/* see lmgr.c */
 
-	/* ----------------
-	 *	add new reldesc to relcache
-	 * ----------------
-	 */
-	RelationCacheInsert(relation);
-
 	if (IsSharedSystemRelationName(relationName))
 		relation->rd_node.tblNode = InvalidOid;
 	else
 		relation->rd_node.tblNode = MyDatabaseId;
 	relation->rd_node.relNode = 
 		relation->rd_rel->relfilenode = RelationGetRelid(relation);
+
+	/* ----------------
+	 *	add new reldesc to relcache
+	 * ----------------
+	 */
+	RelationCacheInsert(relation);
 
 	/*
 	 * Determining this requires a scan on pg_class, but to do the scan
@@ -1327,6 +1368,28 @@ RelationNameCacheGetRelation(const char *relationName)
 	 */
 	namestrcpy(&name, relationName);
 	RelationNameCacheLookup(NameStr(name), rd);
+
+	if (RelationIsValid(rd))
+	{
+		if (rd->rd_fd == -1 && rd->rd_rel->relkind != RELKIND_VIEW)
+		{
+			rd->rd_fd = smgropen(DEFAULT_SMGR, rd);
+			Assert(rd->rd_fd != -1 || rd->rd_unlinked);
+		}
+
+		RelationIncrementReferenceCount(rd);
+
+	}
+
+	return rd;
+}
+
+Relation
+RelationNodeCacheGetRelation(RelFileNode rnode)
+{
+	Relation	rd;
+
+	RelationNodeCacheLookup(rnode, rd);
 
 	if (RelationIsValid(rd))
 	{
@@ -1940,6 +2003,11 @@ RelationCacheInitialize(void)
 	ctl.keysize = sizeof(Oid);
 	ctl.hash = tag_hash;
 	RelationIdCache = hash_create(INITRELCACHESIZE, &ctl,
+								  HASH_ELEM | HASH_FUNCTION);
+
+	ctl.keysize = sizeof(RelFileNode);
+	ctl.hash = tag_hash;
+	RelationNodeCache = hash_create(INITRELCACHESIZE, &ctl,
 								  HASH_ELEM | HASH_FUNCTION);
 
 	/* ----------------

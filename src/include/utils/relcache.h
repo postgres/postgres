@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relcache.h,v 1.21 2000/08/06 04:39:55 tgl Exp $
+ * $Id: relcache.h,v 1.22 2000/10/23 04:10:24 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
  */
 extern Relation RelationIdGetRelation(Oid relationId);
 extern Relation RelationNameGetRelation(const char *relationName);
+extern Relation RelationNodeCacheGetRelation(RelFileNode rnode);
 
 /* finds an existing cache entry, but won't make a new one */
 extern Relation RelationIdCacheGetRelation(Oid relationId);

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.19 2000/10/21 15:43:22 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.20 2000/10/23 04:10:05 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -991,6 +991,7 @@ got_record:;
 			nextRecord = (XLogRecord *) ((char *) subrecord + 
 				MAXALIGN(subrecord->xl_len) + SizeOfXLogSubRecord);
 		}
+		record->xl_len = len;
 		EndRecPtr.xlogid = readId;
 		EndRecPtr.xrecoff = readSeg * XLogSegSize + readOff * BLCKSZ +
 			SizeOfXLogPHD + SizeOfXLogSubRecord + 
@@ -1412,7 +1413,9 @@ StartupXLOG()
 				{
 					char	buf[8192];
 
-					sprintf(buf, "REDO @ %u/%u: ", ReadRecPtr.xlogid, ReadRecPtr.xrecoff);
+					sprintf(buf, "REDO @ %u/%u; LSN %u/%u: ", 
+						ReadRecPtr.xlogid, ReadRecPtr.xrecoff,
+						EndRecPtr.xlogid, EndRecPtr.xrecoff);
 					xlog_outrec(buf, record);
 					strcat(buf, " - ");
 					RmgrTable[record->xl_rmid].rm_desc(buf, 

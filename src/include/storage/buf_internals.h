@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.40 2000/10/20 11:01:21 vadim Exp $
+ * $Id: buf_internals.h,v 1.41 2000/10/23 04:10:14 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,22 +109,6 @@ typedef struct sbufdesc
 	bool		ri_lock;		/* read-intent lock */
 	bool		w_lock;			/* context exclusively locked */
 
-	/* 
-	 * This is logical information about relation.
-	 * IT MUST CORRESPOND TO BUFFER TAG!
-	 * If you're going to play with relation file node (ie change relation
-	 * file) then you have to exclusively lock relation, create new one
-	 * (with new relID), make data transformation, flush from pool buffers
-	 * of both files (old and new), flush old relation from cache,
-	 * update relfilenode in pg_class, flush new relation version from
-	 * cache, open it - now you can use relation with new file.
-	 *
-	 * Why we keep relId here? To re-use file descriptors. On rollback
-	 * WAL uses dummy relId - bad (more blind writes - open/close calls),
-	 * but allowable. Obviously we should have another cache in file manager
-	 * - fd is not relcache deal.
-	 */
-	LockRelId	relId;
 	BufferBlindId blind;		/* was used to support blind write */
 
 	/*

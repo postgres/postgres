@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.90 2000/10/22 20:20:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.91 2000/10/23 04:10:06 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,10 @@
 #include "storage/s_lock.h"
 #include "storage/smgr.h"
 #include "utils/relcache.h"
+
+#ifdef XLOG
+#include "catalog/pg_database.h"
+#endif
 
 extern SPINLOCK BufMgrLock;
 extern long int ReadBufferCount;
@@ -611,7 +615,6 @@ BufferAlloc(Relation reln,
 	/* record the database name and relation name for this buffer */
 	strcpy(buf->blind.dbname, (DatabaseName) ? DatabaseName : "Recovery");
 	strcpy(buf->blind.relname, RelationGetPhysicalRelationName(reln));
-	buf->relId = reln->rd_lockInfo.lockRelId;
 
 	INIT_BUFFERTAG(&(buf->tag), reln, blockNum);
 	if (!BufTableInsert(buf))
@@ -711,7 +714,6 @@ int
 FlushBuffer(Buffer buffer, bool release)
 {
 	BufferDesc *bufHdr;
-	Oid			bufdb;
 	Relation	bufrel;
 	int			status;
 
@@ -725,10 +727,7 @@ FlushBuffer(Buffer buffer, bool release)
 
 	bufHdr = &BufferDescriptors[buffer - 1];
 
-	bufdb = bufHdr->relId.dbId;
-
-	Assert(bufdb == MyDatabaseId || bufdb == (Oid) NULL);
-	bufrel = RelationIdCacheGetRelation(bufHdr->relId.relId);
+	bufrel = RelationNodeCacheGetRelation(bufHdr->tag.rnode);
 
 	Assert(bufrel != (Relation) NULL);
 
@@ -904,7 +903,7 @@ SetBufferDirtiedByMe(Buffer buffer, BufferDesc *bufHdr)
 		SpinRelease(BufMgrLock);
 #endif	 /* OPTIMIZE_SINGLE */
 
-		reln = RelationIdCacheGetRelation(BufferRelidLastDirtied[buffer - 1].relId);
+		reln = RelationNodeCacheGetRelation(tagLastDirtied->rnode);
 
 		if (reln == (Relation) NULL)
 		{
@@ -938,7 +937,6 @@ SetBufferDirtiedByMe(Buffer buffer, BufferDesc *bufHdr)
 	}
 
 	*tagLastDirtied = bufHdr->tag;
-	BufferRelidLastDirtied[buffer - 1] = bufHdr->relId;
 	BufferBlindLastDirtied[buffer - 1] = bufHdr->blind;
 	BufferDirtiedByMe[buffer - 1] = true;
 }
@@ -1010,15 +1008,14 @@ BufferSync()
 			if (RelFileNodeEquals(bufHdr->tag.rnode, BufferTagLastDirtied[i].rnode) &&
 				bufHdr->tag.blockNum == BufferTagLastDirtied[i].blockNum)
 			{
-				Oid		bufrel = bufHdr->relId.relId;
-
 				/*
 				 * Try to find relation for buf.  This could fail, if the
 				 * rel has been flushed from the relcache since we dirtied
 				 * the page.  That should be uncommon, so paying the extra
 				 * cost of a blind write when it happens seems OK.
 				 */
-				reln = RelationIdCacheGetRelation(bufrel);
+				if (!InRecovery)
+					reln = RelationNodeCacheGetRelation(bufHdr->tag.rnode);
 
 				/*
 				 * We have to pin buffer to keep anyone from stealing it
@@ -1083,8 +1080,6 @@ BufferSync()
 					}
 					else
 					{
-						Assert(RelFileNodeEquals(reln->rd_node,
-									BufferTagLastDirtied[i].rnode));
 						status = smgrwrite(DEFAULT_SMGR, reln,
 										   bufHdr->tag.blockNum,
 										(char *) MAKE_PTR(bufHdr->data));
@@ -1138,7 +1133,7 @@ BufferSync()
 			SpinRelease(BufMgrLock);
 #endif	 /* OPTIMIZE_SINGLE */
 
-			reln = RelationIdCacheGetRelation(BufferRelidLastDirtied[i].relId);
+			reln = RelationNodeCacheGetRelation(BufferTagLastDirtied[i].rnode);
 			if (reln == (Relation) NULL)
 			{
 				status = smgrblindmarkdirty(DEFAULT_SMGR,
@@ -1147,8 +1142,6 @@ BufferSync()
 			}
 			else
 			{
-				Assert(RelFileNodeEquals(reln->rd_node,
-							BufferTagLastDirtied[i].rnode));
 				status = smgrmarkdirty(DEFAULT_SMGR, reln,
 									   BufferTagLastDirtied[i].blockNum);
 
@@ -1420,21 +1413,14 @@ static int
 BufferReplace(BufferDesc *bufHdr)
 {
 	Relation	reln;
-	Oid			bufdb,
-				bufrel;
 	int			status;
 
 	/*
 	 * first try to find the reldesc in the cache, if no luck, don't
 	 * bother to build the reldesc from scratch, just do a blind write.
 	 */
-	bufdb = bufHdr->relId.dbId;
-	bufrel = bufHdr->relId.relId;
 
-	if (bufdb == MyDatabaseId || bufdb == (Oid) NULL)
-		reln = RelationIdCacheGetRelation(bufrel);
-	else
-		reln = (Relation) NULL;
+	reln = RelationNodeCacheGetRelation(bufHdr->tag.rnode);
 
 	/* To check if block content changed while flushing. - vadim 01/17/97 */
 	bufHdr->flags &= ~BM_JUST_DIRTIED;
@@ -1450,7 +1436,6 @@ BufferReplace(BufferDesc *bufHdr)
 
 	if (reln != (Relation) NULL)
 	{
-		Assert(RelFileNodeEquals(bufHdr->tag.rnode, reln->rd_node));
 		status = smgrwrite(DEFAULT_SMGR, reln, bufHdr->tag.blockNum,
 						   (char *) MAKE_PTR(bufHdr->data));
 	}
@@ -1519,7 +1504,6 @@ RelationGetNumberOfBlocks(Relation relation)
 void
 ReleaseRelationBuffers(Relation rel)
 {
-	Oid			relid = RelationGetRelid(rel);
 	int			i;
 	BufferDesc *bufHdr;
 
@@ -1533,10 +1517,6 @@ ReleaseRelationBuffers(Relation rel)
 				bufHdr->flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
 				LocalRefCount[i] = 0;
 				bufHdr->tag.rnode.relNode = InvalidOid;
-			}
-			else
-			{
-				Assert(bufHdr->relId.relId != relid);
 			}
 		}
 		return;
@@ -1590,12 +1570,6 @@ recheck:
 			 */
 			BufTableDelete(bufHdr);
 		}
-		else
-		{
-			Assert(bufHdr->relId.relId != relid ||
-				   (bufHdr->relId.dbId != MyDatabaseId &&
-					bufHdr->relId.dbId != InvalidOid));
-		}
 
 		/*
 		 * Also check to see if BufferDirtiedByMe info for this buffer
@@ -1608,7 +1582,7 @@ recheck:
 		 * this rel, since we hold exclusive lock on this rel.
 		 */
 		if (RelFileNodeEquals(rel->rd_node, 
-							  BufferTagLastDirtied[i - 1].rnode))
+					  BufferTagLastDirtied[i - 1].rnode))
 			BufferDirtiedByMe[i - 1] = false;
 	}
 
@@ -1673,11 +1647,6 @@ recheck:
 			 */
 			BufTableDelete(bufHdr);
 		}
-		else
-		{
-			Assert(bufHdr->relId.dbId != dbid);
-		}
-
 		/*
 		 * Also check to see if BufferDirtiedByMe info for this buffer
 		 * refers to the target database, and clear it if so.  This is
@@ -1824,7 +1793,6 @@ BufferPoolBlowaway()
 int
 FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 {
-	Oid			relid = RelationGetRelid(rel);
 	int			i;
 	BufferDesc *bufHdr;
 
@@ -1856,10 +1824,6 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 				{
 					bufHdr->tag.rnode.relNode = InvalidOid;
 				}
-			}
-			else
-			{
-				Assert(bufHdr->relId.relId != relid);
 			}
 		}
 		return 0;
@@ -1905,12 +1869,6 @@ recheck:
 			{
 				BufTableDelete(bufHdr);
 			}
-		}
-		else
-		{
-			Assert(bufHdr->relId.relId != relid ||
-				(bufHdr->relId.dbId != MyDatabaseId &&
-				bufHdr->relId.dbId != InvalidOid));
 		}
 	}
 	SpinRelease(BufMgrLock);
