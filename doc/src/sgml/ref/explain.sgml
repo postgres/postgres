@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.27 2003/08/31 17:32:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.28 2003/09/08 22:33:13 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -30,7 +30,7 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="parameter">statement</replac
   <para>
    This command displays the execution plan that the
    <productname>PostgreSQL</productname> planner generates for the
-   supplied statenebt.  The execution plan shows how the table(s)
+   supplied statement.  The execution plan shows how the table(s)
    referenced by the statement will be scanned---by plain sequential scan,
    index scan, etc.---and if multiple tables are referenced, what join
    algorithms will be used to bring together the required row from
