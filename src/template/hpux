@@ -2,7 +2,6 @@ if test "$GCC" = yes ; then
   CFLAGS=-O2
   CCC=g++
 else
-  CFLAGS=-Ae
-  CPP='cc -E -Ae'
+  CC="$CC -Ae"
   CCC=aCC
 fi
