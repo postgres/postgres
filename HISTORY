@@ -2,12 +2,24 @@
                                Release Notes
                                       
                                 Release 7.4
-     _________________________________________________________________
-   
+                                      
                                   Overview
                                       
    Major changes in this release:
    
+   Performance
+          IN/NOT IN subqueries are now much more efficient
+          
+          Improved GROUP BY processing by using hash buckets
+          
+          New multi-key hash join capability
+          
+          ANSI joins are now better optimized
+          
+          Faster and more powerful regular expression code
+          
+          Function-inlining for simple SQL functions
+          
    IPv6
           Full support for IPv6 connections and IPv6 address data types
           
@@ -19,7 +31,9 @@
           and other free space management improvements.
           
    Standards Compliance
-          Implement information schema Support for read-only transactions
+          Implement information schema
+          
+          Support for read-only transactions
           
           Make cursors comply more closely with the SQL standard
           
@@ -27,19 +41,6 @@
           New protocol improves connection speed/reliability, and adds
           error codes, status information, a binary protocol, error
           reporting verbosity, and cleaner startup packets.
-          
-   Performance
-          IN/NOT IN subqueries now perform as efficiently as joins
-          
-          Improved GROUP BY processing by using hash buckets
-          
-          New multi-key hash join capability
-          
-          ANSI joins are now better optimized
-          
-          Faster and more powerful regular expression code
-          
-          Function-inlining for simple SQL functions
           
    Holdable Cursors
           Allow cursors to exist outside transactions
@@ -67,8 +68,8 @@
        in client applications and languages.
      * Error message wording has changed substantially in this release,
        and error codes have been added.
-     * ANSI joins may behave differently because they are now better
-       optimized
+     * ANSI inner joins may behave differently because they are now
+       better optimized
      * A number of server variables have been renamed for clarity
      * MOVE/FETCH 0 now does nothing; return value of MOVE/FETCH 1/0
        varies based on the current offset in the cursor
@@ -144,11 +145,12 @@ Performance
      * Assume WHERE a.x = b.y and b.y = 42 also means a.x = 42 (Tom)
      * Allow hash/merge joins on complex joins (Tom)
      * Allow hash joins for more data types (Tom)
-     * Allow join optimization of ANSI joins, disable with
+     * Allow join optimization of ANSI inner joins, disable with
        join_collapse_limit (Tom)
      * Add from_collapse_limit to control conversion of subqueries to
        joins (Tom)
-     * Use faster regular expression code from TCL (Henry Spencer, Tom)
+     * Use faster and more powerful regular expression code from TCL
+       (Henry Spencer, Tom)
      * Use bit-mapped relation sets in the optimizer (Tom)
      * Improve backend startup time (Tom)
      * Improve trigger/constraint performance (Stephan)
@@ -157,6 +159,8 @@ Performance
      * Improve hash index concurrency and speed (Tom)
      * Align shared buffers on 32-byte boundary for copy speed
        improvement (Manfred Spraul)
+     * The NUMERIC datatype has been reimplemented for better performance
+       (Tom)
      _________________________________________________________________
    
 Server Configuration
@@ -182,11 +186,11 @@ Server Configuration
      * New is_superuser read-only variable (Tom)
      * New server-side parameter log_error_verbosity to control error
        detail (Tom)
-     * postgres --help-config now dumps server config variables (Aizaz
-       Ahmed)
+     * postgres --describe-config now dumps server config variables
+       (Aizaz Ahmed, Peter)
      * Make default shared_buffers 1000 and max_connections 100, if
        possible (Tom)
-     * Add new columns in pg_settings: context, type, source , min_val,
+     * Add new columns in pg_settings: context, type, source, min_val,
        max_val (Joe)
      * New pg_hba.conf 'hostnossl' to prevent SSL connections (Jon
        Jensen)
@@ -237,10 +241,10 @@ Object Manipulation
    
 Utility Commands
 
-     * Add ON COMMIT PRESERVE ROWS for temp tables (Gavin)
+     * Add ON COMMIT clause to CREATE TABLE for temp tables (Gavin)
      * Allow cursors outside transactions using WITH HOLD (Neil)
      * Make MOVE/FETCH 0 actually move/fetch 0 (Bruce)
-     * Cause FETCH 1 to return the current cursor row, or zero if at
+     * Cause FETCH 1 to return the next cursor row number, or zero if at
        beginning/end of cursor, per SQL spec (Bruce)
      * Have MOVE return 0 or 1 depending on cursor position (Bruce)
      * Properly handle SCROLL with cursors, or report an error (Neil)
@@ -277,7 +281,8 @@ Utility Commands
      * Improve VACUUM performance on indexes by reducing WAL traffic
        (Tom)
      * Allow pg_ctl to better handle non-standard ports (Greg)
-     * Functional indexes now support indexes on column expressions (Tom)
+     * Functional indexes have been generalized into expressional indexes
+       (Tom)
      * Syntax errors now reported as 'syntax error' rather than 'parse
        error' (Tom)
      * Have SHOW TRANSACTION_ISOLATION match input to SET
@@ -289,6 +294,7 @@ Utility Commands
        indexes (Tom)
      * pg_dump --use-set-session-authorization and --no-reconnect now do
        nothing, all dumps use SET SESSION AUTHORIZATION
+     * Long options for pg_dump are now available on all platforms
      _________________________________________________________________
    
 Data Types and Functions
@@ -331,8 +337,7 @@ Data Types and Functions
      * Allow the creation of special LIKE indexes for non-C locales
        (Peter)
      * Disallow invalid timezone names (Tom)
-     * Trim trailing spaces when CHAR() data is cast to VARCHAR or TEXT
-       (Tom)
+     * Trim trailing spaces when CHAR() is cast to VARCHAR or TEXT (Tom)
      * Make FLOAT(p) measure the precision p in bits, not decimal digits
        (Tom)
      * Add IPv6 support to the inet and cidr data types (Michael Graff)
@@ -340,7 +345,6 @@ Data Types and Functions
        (Michael Graff)
      * Have SHOW DATESTYLE generate output similar to that used by SET
        DATESTYLE (Tom)
-     * Change DATESTYLE to output its value in a more common format (Tom)
      * Make EXTRACT(TIMEZONE) and SET/SHOW TIMEZONE follow the SQL
        convention for the sign of timezone offsets, ie, positive is east
        from UTC (Tom)
@@ -387,7 +391,8 @@ Psql
      * Add "\pset pager always" to always use pager (Greg)
      * Improve tab completion (Rod, Ross Reedstrom, Ian Barwick)
      * Reorder \? help into groupings (Harald Armin Massa, Bruce)
-     * Add schema, cast, and conversion backslash commands (Christopher)
+     * Add backslash commands for listing schemas, casts, and conversions
+       (Christopher)
      * \encoding now changes based on client_encoding server variable
        (Tom)
      * Save edit history into readline history (Ross)
@@ -396,6 +401,7 @@ Psql
      * New '\set AUTOCOMMIT off' capability (Tom)
      * New '\set VERBOSITY' to control error detail (Tom)
      * New %T prompt string to show transaction status (Tom)
+     * Long options for psql are now available on all platforms
      _________________________________________________________________
    
 Libpq
@@ -448,7 +454,7 @@ Source Code
        files (Tom)
      * Improved PPC locking primitive (Reinhard Max)
      * Embed LD_LIBRARY_PATH used for build process into binaries (Billy)
-     * New palloc0 to allocate and clear memory (Bruce)
+     * New palloc0 function to allocate and clear memory (Bruce)
      * Fix locking code for s390x CPU (64-bit) (Tom)
      * Allow OpenBSD to use local ident credentials (William Ahern)
      * Make query plan trees read-only to executor (Tom)
@@ -457,7 +463,8 @@ Source Code
        Karl Waclawek)
      * Use our own version of getopt_long() if needed (Peter)
      * Convert administration scripts to C (Peter)
-     * Bison >=1.85 is now required for grammar changes
+     * Bison >= 1.85 is now required to build the PostgreSQL grammar, if
+       building from CVS
      * Merge documentation into one book (Peter)
      * Add Win32 compatibility functions (Bruce)
      * Allow client interfaces to compile under MinGW/Win32 (Bruce)
@@ -465,7 +472,7 @@ Source Code
      * Support Intel Linux compiler (Peter)
      * Improve Linux startup scripts (Slawomir Sudnik, Darko Prenosil)
      * Add support for AMD Opteron and Itanium (Jeffrey W. Baker, Bruce)
-     * Remove configure --enable-recode
+     * Remove --enable-recode option to configure
      * Generate a compile error if spinlock code is not found (Bruce)
      _________________________________________________________________
    
@@ -500,60 +507,11 @@ Contrib
    
 Other Uncategorized
 
-     * EXTRACT(TIMEZONE) and "SET/SHOW TIMEZONE " now follow SQL sign
-       convention (positive = east of UTC)
      * "DATESTYLE" can now be set to DMY, YMD, or MDY to specify input
        field order
      * Input date order must now be YYYY-MM-DD (with 4-digit year) or
        match DATESTYLE
-     * Output of "SHOW DATESTYLE" is now in the same format accepted by
-       "SET DATESTYLE"
-     * PL/Python is now an untrusted language, and is renamed to
-       plpythonu
-     * Dollar sign ($) is no longer allowed in operator names
-     * Dollar sign ($) can be a non-first character in identifiers
-     * Precision in FLOAT(p) is now interpreted as bits, not decimal
-       digits
-     * Functional indexes have been generalized into expressional indexes
-     * CHAR(n) to TEXT conversion automatically strips trailing blanks
      * Pattern matching operations can use indexes regardless of locale
-     * New frontend/backend protocol supports many long-requested
-       features
-     * "SET AUTOCOMMIT TO OFF" is no longer supported; psql has an
-       AUTOCOMMIT variable
-     * Reimplementation of NUMERIC datatype for more speed
-     * New regular expression package, many more regexp features (most of
-       Perl5)
-     * Can now do " EXPLAIN" ... "EXECUTE" to see plan used for a
-       prepared query
-     * Explicit "JOIN"s no longer constrain query plan, unless
-       "JOIN_COLLAPSE_LIMIT = 1"
-     * Performance of "foo IN (SELECT ...)" queries has been considerably
-       improved
-     * "FETCH 0" now re-fetches cursor's current row, per SQL spec
-     * Revised executor state representation; plan trees are read-only to
-       executor now
-     * Information schema
-     * Domains now support "CHECK" constraints
-     * psql backslash commands for listing conversions, casts, and
-       schemas
-     * "TRUNCATE TABLE" is transaction-safe
-     * "CLUSTER" can re-cluster a previously clustered table, or all such
-       tables
-     * Statement-level triggers
-     * System can use either hash- or sort-based strategy for grouped
-       aggregation
-     * "ON COMMIT" options for temp tables
-     * extra_float_digits option allows pg_dump to dump float data
-       accurately
-     * Long options for psql and pg_dump are now available on all
-       platforms
-     * Read-only transactions
-     * Object owners can allow grantees to grant the privilege to others
-       (grant option)
-     * Added "contrib" module for pg_autovacuum which monitors inserts
-       and deletes, and does "ANALYZE" or " VACUUM ANALYZE " when
-       quantities exceed specified thresholds.
      _________________________________________________________________
    
                                Release 7.3.4
