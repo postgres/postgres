@@ -6,15 +6,20 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.10 1997/09/08 21:51:47 momjian Exp $
+ * $Id: vacuum.h,v 1.11 1997/11/26 01:26:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef VACUUM_H
 #define VACUUM_H
 
-#include <access/funcindex.h>
-#include <catalog/pg_index.h>
+#include "access/funcindex.h"
+#include "catalog/pg_index.h"
+#include "catalog/pg_attribute.h"
+#include "nodes/pg_list.h"
+#include "storage/block.h"
+#include "storage/off.h"
+  
 
 typedef struct VAttListData
 {
