@@ -2,20 +2,18 @@
 The PostgreSQL contrib tree
 ---------------------------
 
-This subtree contains tools, modules, and examples that are not
-maintained as part of the core PostgreSQL system, mainly because
-they only address a limited audience or are too inelegant to be
-sold as an official feature.  That, however, does not preclude
-their usefulness.
+This subtree contains utilities, conversion tools, and features that are
+not part of the core PostgreSQL system, mainly because they address a
+limited audience or are too experimental to be part of the main source
+tree.  This does not preclude their usefulness.
 
 Each subdirectory contains a README file with information about the
-module.  Most items can be built with `gmake all' and installed
-with `gmake install' in the usual fashion, after you have run the
-`configure' script in the top-level directory.  Some directories
-supply new user-defined functions, operators, or types.  After you
-have installed the files you need to register the new entities in
-the database system by running the commands in the supplied .sql
-file.  For example,
+module.  Most items can be built with `gmake all' and installed with
+`gmake install' in the usual fashion, after you have run the `configure'
+script in the top-level directory.  Some directories supply new
+user-defined functions, operators, or types.  After you have installed
+the files you need to register the new entities in the database system
+by running the commands in the supplied .sql file.  For example,
 
 	$ psql -d dbname -f module.sql
 

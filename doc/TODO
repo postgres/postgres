@@ -466,6 +466,7 @@ SOURCE CODE
 * Evaluate AIX cs() spinlock macro for performance optimizations (Tatsuo)
 * Clarify use of 'application' and 'command' tags in SGML docs
 * Allow ability to easily build only certain interfaces (Marc)
+* Remove or relicense modules that are not under the BSD license, if possible
 
 
 ---------------------------------------------------------------------------
