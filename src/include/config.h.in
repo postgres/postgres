@@ -17,6 +17,9 @@
 /* Set to 1 if you have <fp_class.h> */
 #undef HAVE_FP_CLASS_H
 
+/* Set to 1 if you have <netinet/in.h> */
+#undef HAVE_NETINET_IN_H
+
 /* Set to 1 if you have <ieeefp.h> */
 #undef HAVE_IEEEFP_H
 
@@ -96,6 +99,9 @@ int  gethostname(char *name, int namelen);
 #undef HAVE_INET_ATON
 #ifndef HAVE_INET_ATON
 # ifdef HAVE_ARPA_INET_H
+#  ifdef HAVE_NETINET_IN_H
+#   include <netinet/in.h>
+#  endif
 #  include <arpa/inet.h>
 # endif
 extern int  inet_aton(const char *cp, struct in_addr * addr);

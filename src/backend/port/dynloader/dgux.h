@@ -1,30 +1,31 @@
 /*-------------------------------------------------------------------------
  *
- * port-protos.h--
- *	  port-specific prototypes for SunOS 4
- *
- *
+ * dgux.h--
+ *	  
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dgux.h,v 1.1 1997/12/20 04:48:04 scrappy Exp $
+ * $Id: dgux.h,v 1.2 1998/02/14 19:56:21 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PORT_PROTOS_H
 #define PORT_PROTOS_H
 
+#include <dlfcn.h>
 #include "fmgr.h"				/* for func_ptr */
 #include "utils/dynamic_loader.h"
-#include "dlfcn.h"
 
-/* dynloader.c */
-
-/* #define		pg_dlopen(f)	dlopen(f, 1) */
-#define pg_dlopen(f)	dlopen(f, 2)
+/*
+ * Dynamic Loader on DG/UX.
+ *
+ * this dynamic loader uses the system dynamic loading interface for shared
+ * libraries (ie. dlopen/dlsym/dlclose). The user must specify a shared
+ * library as the file to be dynamically loaded.
+ *
+ */
+#define pg_dlopen(f)  dlopen(f,1)
 #define pg_dlsym		dlsym
 #define pg_dlclose		dlclose
 #define pg_dlerror		dlerror
-
-/* port.c */
 
 #endif							/* PORT_PROTOS_H */
