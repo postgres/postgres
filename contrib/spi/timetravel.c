@@ -15,6 +15,7 @@
 /* AbsoluteTime currabstime(void); */
 Datum		timetravel(PG_FUNCTION_ARGS);
 Datum		set_timetravel(PG_FUNCTION_ARGS);
+Datum		get_timetravel(PG_FUNCTION_ARGS);
 
 typedef struct
 {
@@ -31,7 +32,7 @@ typedef struct _TTOffList
     char		name[1];
 } TTOffList;
 
-static TTOffList TTOff = {NULL,0};
+static TTOffList TTOff = {NULL,{0}};
 
 static int findTTStatus(char *name);
 static EPlan *find_plan(char *ident, EPlan ** eplan, int *nplans);
@@ -306,7 +307,6 @@ timetravel(PG_FUNCTION_ARGS)
 		void	*pplan;
 		Oid	*ctypes;
 		char	sql[8192];
-		int	j;
 
 		/* allocate ctypes for preparation */
 		ctypes = (Oid *) palloc(natts * sizeof(Oid));
@@ -355,7 +355,6 @@ timetravel(PG_FUNCTION_ARGS)
 	/* Tuple to return to upper Executor ... */
 	if(newtuple)
 	{ /* UPDATE */
-		HeapTuple	tmptuple;
 		int		chnattrs = 0;
 		int		chattrs[MaxAttrNum];
 		Datum		newvals[MaxAttrNum];
@@ -477,7 +476,7 @@ PG_FUNCTION_INFO_V1(get_timetravel);
 Datum
 get_timetravel(PG_FUNCTION_ARGS)
 {
-        Name		relname = PG_GETARG_NAME(0);
+	Name		relname = PG_GETARG_NAME(0);
 	TTOffList	*pp;
 
 	for(pp = TTOff.next; pp; pp = pp->next)
