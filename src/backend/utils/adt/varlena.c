@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.1.1.1 1996/07/09 06:22:06 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.2 1996/07/19 06:08:21 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,6 +198,24 @@ textout(struct varlena *vlena)
 
 /* ========== PUBLIC ROUTINES ========== */
 
+/* 
+
+/*
+ * textlen -
+ *    returns the actual length of a text* (which may be less than
+ *    the VARSIZE of the text*)
+ */
+
+int textlen (text* t)
+{
+    int i = 0;
+    int max = VARSIZE(t) - VARHDRSZ;
+    char *ptr = VARDATA(t);
+    while (i < max && *ptr++)
+        i++;
+    return i;
+}
+
 /*
  * textcat -
  *    takes two text* and returns a text* that is the concatentation of 
@@ -206,28 +224,21 @@ textout(struct varlena *vlena)
 text* 
 textcat(text* t1, text* t2)
 {
-    int newlen;
-    char *str1, *str2;
+    int len1, len2, newlen;
     text* result;
 
     if (t1 == NULL) return t2;
     if (t2 == NULL) return t1;
 
-    /* since t1, and t2 are non-null, str1 and str2 must also be non-null */
-    str1 = textout(t1);
-    str2 = textout(t2);
-    /* we use strlen here to calculate the length because the size fields
-       of t1, t2 may be longer than necessary to hold the string */
-    newlen = strlen(str1) + strlen(str2) + VARHDRSZ;
-    result = (text*)palloc(newlen);
-    strcpy(VARDATA(result), str1);
-    strncat(VARDATA(result), str2, newlen - VARHDRSZ);
-    /* [TRH] Was:
-      strcat(VARDATA(result), str2);
-      which may corrupt the malloc arena due to writing trailing \0. */
+    len1 = textlen (t1);
+    len2 = textlen (t2);
+    newlen = len1 + len2 + VARHDRSZ;
+    result = (text*) palloc (newlen);
 
-    pfree(str1);
-    pfree(str2);
+    VARSIZE(result) = newlen;
+    memcpy (VARDATA(result),        VARDATA(t1), len1);
+    memcpy (VARDATA(result) + len1, VARDATA(t2), len2);
+
     return result;
 }
 
