@@ -130,7 +130,6 @@ Utility Commands
 Add ON COMMIT PRESERVE ROWS for temp tables (Gavin)
 Allow cursors outside transactions using WITH HOLD (Neil)
 Make MOVE/FETCH 0 actually move/fetch 0 (Bruce)
-Add MOVE ALL to move to end of cursor (Bruce)
 Cause FETCH 1 to return the current cursor row, or zero if at
   beginning/end of cursor, per SQL spec (Bruce)
 Have MOVE return 0 or 1 depending on cursor position (Bruce)
