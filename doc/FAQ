@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Jun 20 22:00:57 EDT 2002
+   Last updated: Sun Jun 23 17:16:13 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -723,7 +723,7 @@
    Indexes are not automatically used by every query. Indexes are only
    used if the table is larger than a minimum size, and the query selects
    only a small percentage of the rows in the table. This is because the
-   random disk access caused by an index scan is sometimes slower than a
+   random disk access caused by an index scan can be slower than a
    straight read through the table, or sequential scan.
    
    To determine if an index should be used, PostgreSQL must have
@@ -738,8 +738,14 @@
    sequential scan followed by an explicit sort is usually faster than an
    index scan of a large table.
    However, LIMIT combined with ORDER BY often will use an index because
-   only a small portion of the table is returned.
-   
+   only a small portion of the table is returned. In fact, though MAX()
+   and MIN() don't use indexes, it is possible to retrieve such values
+   using an index with ORDER BY and LIMIT:
+    SELECT col
+    FROM tab
+    ORDER BY col
+    LIMIT 1
+
    When using wild-card operators such as LIKE or ~, indexes can only be
    used if the beginning of the search is anchored to the start of the
    string. Therefore, to use indexes, LIKE patterns must not start with
