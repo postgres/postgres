@@ -5,7 +5,7 @@ AROPT:crs
 # This is defined here because a bunch of clients include tmp/c.h,
 # which is where the work is done on HP-UX.  It only affects the
 # backend on Ultrix and OSF/1.
-CFLAGS:-DNOFIXADE -std -O4 -Olimit 2000
+CFLAGS:-D__alpha__ -DNOFIXADE -std -O4 -Olimit 2000
 SHARED_LIB:
 ALL:
 SRCH_INC:
