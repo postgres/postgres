@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.62 2001/06/19 22:39:08 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.63 2001/07/03 02:42:18 momjian Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -851,7 +851,7 @@
        </indexterm>
       </entry>
       <entry>substring('Thomas' from 2 for 3)</entry>
-      <entry>oma</entry>
+      <entry>hom</entry>
      </row>
 
      <row>
