@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.261 2004/04/21 13:18:28 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.262 2004/04/22 04:18:37 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2135,16 +2135,19 @@ SET ENABLE_SEQSCAN TO OFF;
         <literal>UPDATE</>, <literal>DELETE</>, <literal>TRUNCATE</>,
         and <literal>COPY FROM</>. <literal>PREPARE</> and
         <literal>EXPLAIN ANALYZE</> statements are also considered for
-        appropriate commands. The default is <literal>none</>. Only
-        superusers can reduce the detail of this option if it has been
-        set by an administrator.
+        appropriate commands. 
+       </para>
+       <para>
+        The default is <literal>none</>. Only superusers can reduce 
+        the detail of this option if it has been set by an administrator.
        </para>
 
        <note>
         <para>
-         When the <command>EXECUTE</command> statement is logged, only
-         the name of the prepared statement is recorded, not the
-         entire prepared statement.
+         The <command>EXECUTE</command> statement not considered a
+         <literal>ddl</> or <literal>mod</> statement.  When it is logged, 
+         only the name of the prepared statement is reported, not the
+         actual prepared statement.
         </para>
 
         <para>

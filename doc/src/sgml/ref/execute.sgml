@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/execute.sgml,v 1.8 2004/01/26 17:26:30 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/execute.sgml,v 1.9 2004/04/22 04:18:41 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -45,6 +45,8 @@ EXECUTE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable c
   </para>
 
   <para>
+   The command tag returned by <command>EXECUTE</command>
+   is that of the prepared statement, and not <literal>EXECUTE</>.
    For more information on the creation and usage of prepared statements,
    see <xref linkend="sql-prepare" endterm="sql-prepare-title">.
   </para>
