@@ -7,7 +7,7 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
-LDFLAGS += $(libpq)
+override LDLIBS := $(libpq) -lpgport $(LDLIBS)
 
 
 PROGS = testlibpq testlibpq2 testlibpq3 testlibpq4 testlo
