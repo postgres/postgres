@@ -609,7 +609,7 @@ ac_config_sub=$ac_aux_dir/config.sub
 ac_configure=$ac_aux_dir/configure # This should be Cygnus configure.
 
 
-VERSION='7.1RC2'
+VERSION='7.1RC3'
 
 cat >> confdefs.h <<EOF
 #define PG_VERSION "$VERSION"

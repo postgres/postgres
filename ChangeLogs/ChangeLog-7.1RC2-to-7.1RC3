@@ -1,0 +1,211 @@
+2001-04-06 05:23  inoue
+
+	* src/interfaces/odbc/convert.c: 1) Fit the precision of floating
+	point to that of server side	(fix by Hiroki kataoka).  2) Ensure
+	the definition of atof()(#include stdlib.h).	(suggestion by
+	Masaaki Sakaida).
+
+2001-04-06 01:52  thomas
+
+	* doc/src/sgml/installation.sgml: Final (?) platform update for the
+	7.1 release. Includes new platform  NetBSD/PPC from Henry Hotz,
+	several other platform updates, and move  QNX to the unsupported
+	list for now.
+
+2001-04-06 01:50  thomas
+
+	* src/test/regress/: expected/horology-no-DST-before-1970.out,
+	expected/horology-solaris-1947.out, expected/horology.out,
+	sql/horology.sql: Alter the previous test for "time with time zone"
+	implicit time zone  (which failed miserably during DST) to just
+	compare against a time	derived from a timestamp value.  Certainly
+	not a direct check for a correct result, but should work  at any
+	time of year.
+
+2001-04-05 22:06  tgl
+
+	* src/pl/plpgsql/src/pl_comp.c: Since plpgsql keeps its compiled
+	function parsetrees until backend exit, it needs to ensure that
+	data structures attached to fmgr info records in the trees will
+	stick around that long, too.  Current code was crashing on cases
+	like datatypes with old-style I/O functions.
+
+2001-04-05 12:55  tgl
+
+	* src/backend/access/transam/xlog.c: Fix comment that Vadim found
+	confusing.
+
+2001-04-05 05:34  vadim
+
+	* src/backend/access/transam/xlog.c: StartupXLOG(): initialize
+	XLogCtl->Insert to new page if there is no room for a record on
+	last log page.
+
+2001-04-05 04:21  meskes
+
+	* src/interfaces/ecpg/: ChangeLog, lib/typename.c,
+	preproc/preproc.y: Hopefully fixed the long long problem.
+
+2001-04-04 22:50  tgl
+
+	* src/bin/pg_dump/pg_dump.c: pg_dump needs to use ONLY when
+	selecting data from user tables, in case they have children.  As it
+	stood, -d dump mode was badly broken.
+
+2001-04-04 18:57  tgl
+
+	* src/makefiles/Makefile.aix: Clean up AIX makefile to recognize
+	subversions of AIX 4.1 correctly.  This patch is Peter E's, but I'm
+	applying it on his behalf so it'll get into 7.1RC3 tonight (I'm
+	guessing Peter went to bed already).
+
+2001-04-04 17:15  tgl
+
+	* contrib/spi/Makefile, src/backend/Makefile,
+	src/makefiles/Makefile.win, src/pl/plpgsql/src/Makefile,
+	src/test/regress/GNUmakefile: Fix/cleanup DLLLIBS handling for
+	Cygwin port.  If it works it's to Jason Tishler's credit, if it's
+	broken it's my fault ...
+
+2001-04-04 16:03  tgl
+
+	* src/test/regress/: expected/horology-no-DST-before-1970.out,
+	expected/horology-solaris-1947.out, expected/horology.out,
+	sql/horology.sql: Remove daylight-savings-time-dependent tests of
+	'time with time zone' datatype.  Perhaps someday we can figure out
+	a way of getting reproducible results from testing this type, but
+	for now ...
+
+2001-04-04 16:02  petere
+
+	* doc/FAQ_Solaris: update
+
+2001-04-04 11:43  vadim
+
+	* src/backend/commands/sequence.c: Have to lock buffer while
+	changing page' LSN.  Thanks to Tom.
+
+2001-04-04 02:47  pjw
+
+	* src/bin/pg_dump/: pg_backup_archiver.h, pg_dump.c: Don't dump
+	CHECK constraints with same source and names both starting with
+	'$'.
+
+2001-04-03 17:58  vadim
+
+	* src/backend/commands/sequence.c: Log sequence creation (to
+	initialize magic number on recovery).
+
+2001-04-03 15:06  tgl
+
+	* contrib/pg_controldata/Makefile: Provide snprintf() if system
+	hasn't got it.
+
+2001-04-03 15:01  tgl
+
+	* contrib/pg_resetxlog/Makefile: Provide snprintf() if system
+	hasn't got it.
+
+2001-04-03 14:14  momjian
+
+	* doc/FAQ_MSWIN: See attached for a minor documentation patch that
+	more accurately reflects the current state of and the issues with
+	PostgreSQL on Windows.
+	
+	Thanks, Jason
+	
+	-- Jason Tishler
+
+2001-04-03 14:05  tgl
+
+	* src/backend/utils/adt/: datetime.c, timestamp.c: Correct bogus
+	mktime() calls.
+
+2001-04-03 09:38  momjian
+
+	* doc/src/sgml/release.sgml: Remove last-updated date stamp for
+	7.1.
+
+2001-04-03 04:52  pjw
+
+	* src/bin/pg_dump/: common.c, pg_backup_archiver.h, pg_dump.c,
+	pg_dump.h: - Handle overridden attrs as per discussions 2-Apr-2001
+	- Dump CHECK constraints in OID order
+
+2001-04-03 00:07  tgl
+
+	* src/backend/storage/file/fd.c: Check for failure of malloc() and
+	realloc() when allocating space for VFD entries.  On platforms
+	where dereferencing a null pointer doesn't lead to coredump, it's
+	possible that this omission could have led to unpleasant behavior
+	like deleting the wrong file.
+
+2001-04-02 22:31  tgl
+
+	* src/backend/storage/file/fd.c: open(2) flags saved for re-opening
+	a virtual file should probably not include O_CREAT.
+
+2001-04-02 19:30  tgl
+
+	* src/backend/utils/cache/relcache.c: Restore pre-7.1 behavior of
+	allowing DROP of a table whose underlying physical file has
+	disappeared.  There is no really good reason why relcache should be
+	opening the underlying file at all, AFAICS.  In any case we needn't
+	raise a hard error here.
+
+2001-04-02 19:20  tgl
+
+	* src/backend/storage/smgr/md.c: _mdfd_getrelnfd() should include
+	kernel error code in failure message.
+
+2001-04-02 14:30  tgl
+
+	* src/backend/commands/creatinh.c: Complain if the same column name
+	is inherited from multiple parents with different default values,
+	unless the child table redeclares the column with an explicit
+	default.  This was judged to be the approach least likely to cause
+	unpleasant surprises.
+
+2001-04-02 13:59  momjian
+
+	* HISTORY, doc/src/sgml/release.sgml: Update HISTORY/release.sgml
+	to current.
+
+2001-04-02 11:19  thomas
+
+	* doc/src/sgml/installation.sgml: Update info for platforms BeOS,
+	Tru64, Linux/MIPS, Linux/x86, NetBSD/Alpha,  NetBSD/arm,
+	NetBSD/VAX, OpenBSD/Sparc, Solaris, Ultrix.
+
+2001-04-02 10:34  momjian
+
+	* src/backend/catalog/index.c: Disable creation of indexes on
+	system tables.
+
+2001-04-02 04:17  meskes
+
+	* src/interfaces/ecpg/: ChangeLog, preproc/pgc.l: Synced pgc.l with
+	scan.l.
+
+2001-04-01 23:21  tgl
+
+	* src/backend/Makefile: Remove duplicate definition of DLLLIBS, per
+	gripe from Fred Yankowski.
+
+2001-04-01 23:08  tgl
+
+	* src/backend/port/dynloader/: freebsd.c, netbsd.c, openbsd.c: Tom
+	Ivar Helbekkmo <tih@kpnQwest.no> says that dynamic linking works
+	now on VAX NetBSD.  Hence, remove #ifdef'd disable tests.
+
+2001-04-01 18:37  tgl
+
+	* src/backend/optimizer/plan/planner.c: Planner wasn't correctly
+	handling adjustment of tuple_fraction for the case of LIMIT in a
+	sub-select.
+
+2001-04-01 15:15  scrappy
+
+	* configure, configure.in, ChangeLogs/ChangeLog-7.1RC1-to-7.1RC2: 
+	RC2 preparations ...
+
