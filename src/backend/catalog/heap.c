@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.9 1996/12/31 06:58:27 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.10 1997/01/01 06:01:16 momjian Exp $
  *
  * INTERFACE ROUTINES
  *	heap_creatr()		- Create an uncataloged heap relation
@@ -303,7 +303,8 @@ heap_creatr(char *name,
      */
 
     rdesc->rd_istemp = isTemp;
-
+    rdesc->rd_tmpunlinked = TRUE;	/* change once table is opened */
+    
     /* ----------------
      *	have the storage manager create the relation.
      * ----------------
