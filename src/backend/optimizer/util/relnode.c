@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.58 2004/05/30 23:40:31 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.59 2004/06/01 03:03:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,7 +130,7 @@ make_base_rel(Query *root, int relid)
 	rel->relids = bms_make_singleton(relid);
 	rel->rows = 0;
 	rel->width = 0;
-	FastListInit(&rel->reltargetlist);
+	rel->reltargetlist = NIL;
 	rel->pathlist = NIL;
 	rel->cheapest_startup_path = NULL;
 	rel->cheapest_total_path = NULL;
@@ -285,7 +285,7 @@ build_join_rel(Query *root,
 	joinrel->relids = bms_copy(joinrelids);
 	joinrel->rows = 0;
 	joinrel->width = 0;
-	FastListInit(&joinrel->reltargetlist);
+	joinrel->reltargetlist = NIL;
 	joinrel->pathlist = NIL;
 	joinrel->cheapest_startup_path = NULL;
 	joinrel->cheapest_total_path = NULL;
@@ -365,7 +365,7 @@ build_joinrel_tlist(Query *root, RelOptInfo *joinrel)
 	Relids		relids = joinrel->relids;
 	ListCell   *rels;
 
-	FastListInit(&joinrel->reltargetlist);
+	joinrel->reltargetlist = NIL;
 	joinrel->width = 0;
 
 	foreach(rels, root->base_rel_list)
@@ -376,14 +376,14 @@ build_joinrel_tlist(Query *root, RelOptInfo *joinrel)
 		if (!bms_is_member(baserel->relid, relids))
 			continue;
 
-		foreach(vars, FastListValue(&baserel->reltargetlist))
+		foreach(vars, baserel->reltargetlist)
 		{
 			Var		   *var = (Var *) lfirst(vars);
 			int			ndx = var->varattno - baserel->min_attr;
 
 			if (bms_nonempty_difference(baserel->attr_needed[ndx], relids))
 			{
-				FastAppend(&joinrel->reltargetlist, var);
+				joinrel->reltargetlist = lappend(joinrel->reltargetlist, var);
 				Assert(baserel->attr_widths[ndx] > 0);
 				joinrel->width += baserel->attr_widths[ndx];
 			}

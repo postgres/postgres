@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.58 2004/05/30 23:40:28 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.59 2004/06/01 03:02:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -721,12 +721,11 @@ find_indexkey_var(Query *root, RelOptInfo *rel, AttrNumber varattno)
 				vartypeid;
 	int32		type_mod;
 
-	foreach(temp, FastListValue(&rel->reltargetlist))
+	foreach(temp, rel->reltargetlist)
 	{
 		Var		   *var = (Var *) lfirst(temp);
 
-		if (IsA(var, Var) &&
-			var->varattno == varattno)
+		if (var->varattno == varattno)
 			return var;
 	}
 

@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.128 2004/05/30 23:40:28 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.129 2004/06/01 03:02:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1701,7 +1701,7 @@ set_rel_width(Query *root, RelOptInfo *rel)
 	int32		tuple_width = 0;
 	ListCell   *tllist;
 
-	foreach(tllist, FastListValue(&rel->reltargetlist))
+	foreach(tllist, rel->reltargetlist)
 	{
 		Var		   *var = (Var *) lfirst(tllist);
 		int			ndx = var->varattno - rel->min_attr;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.116 2004/05/30 23:40:28 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.117 2004/06/01 03:02:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,7 +246,6 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 		RangeTblEntry *childrte;
 		Oid			childOID;
 		RelOptInfo *childrel;
-		List	   *reltlist;
 		ListCell   *parentvars;
 		ListCell   *childvars;
 
@@ -268,14 +267,12 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 		 * the individual tables.  Also, we just zap attr_needed rather
 		 * than trying to adjust it; it won't be looked at in the child.
 		 */
-		reltlist = FastListValue(&rel->reltargetlist);
-		reltlist = (List *)
-			adjust_inherited_attrs((Node *) reltlist,
+		childrel->reltargetlist = (List *)
+			adjust_inherited_attrs((Node *) rel->reltargetlist,
 								   parentRTindex,
 								   parentOID,
 								   childRTindex,
 								   childOID);
-		FastListFromList(&childrel->reltargetlist, reltlist);
 		childrel->attr_needed = NULL;
 		childrel->baserestrictinfo = (List *)
 			adjust_inherited_attrs((Node *) rel->baserestrictinfo,
@@ -300,8 +297,8 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 		if (childrel->width > rel->width)
 			rel->width = childrel->width;
 
-		childvars = list_head(FastListValue(&childrel->reltargetlist));
-		foreach(parentvars, FastListValue(&rel->reltargetlist))
+		forboth(parentvars, rel->reltargetlist,
+				childvars, childrel->reltargetlist)
 		{
 			Var		   *parentvar = (Var *) lfirst(parentvars);
 			Var		   *childvar = (Var *) lfirst(childvars);
@@ -310,7 +307,6 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 
 			if (childrel->attr_widths[childndx] > rel->attr_widths[parentndx])
 				rel->attr_widths[parentndx] = childrel->attr_widths[childndx];
-			childvars = lnext(childvars);
 		}
 	}
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.94 2004/04/25 18:23:57 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.95 2004/06/01 03:03:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,7 +186,7 @@ typedef struct RelOptInfo
 	int			width;			/* estimated avg width of result tuples */
 
 	/* materialization information */
-	FastList	reltargetlist;
+	List	   *reltargetlist;	/* needed Vars */
 	List	   *pathlist;		/* Path structures */
 	struct Path *cheapest_startup_path;
 	struct Path *cheapest_total_path;

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.171 2004/05/30 23:40:28 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.172 2004/06/01 03:02:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -261,20 +261,19 @@ create_scan_plan(Query *root, Path *best_path)
 static List *
 build_relation_tlist(RelOptInfo *rel)
 {
-	FastList	tlist;
+	List	   *tlist = NIL;
 	int			resdomno = 1;
 	ListCell   *v;
 
-	FastListInit(&tlist);
-	foreach(v, FastListValue(&rel->reltargetlist))
+	foreach(v, rel->reltargetlist)
 	{
 		/* Do we really need to copy here?	Not sure */
 		Var		   *var = (Var *) copyObject(lfirst(v));
 
-		FastAppend(&tlist, create_tl_element(var, resdomno));
+		tlist = lappend(tlist, create_tl_element(var, resdomno));
 		resdomno++;
 	}
-	return FastListValue(&tlist);
+	return tlist;
 }
 
 /*
@@ -701,7 +700,7 @@ create_indexscan_plan(Query *root,
 	List	   *indxstrategy;
 	List	   *indxsubtype;
 	List	   *indxlossy;
-	FastList	indexids;
+	List	   *indexids;
 	ListCell   *l;
 	IndexScan  *scan_plan;
 
@@ -737,12 +736,12 @@ create_indexscan_plan(Query *root,
 	scan_clauses = order_qual_clauses(root, scan_clauses);
 
 	/* Build list of index OIDs */
-	FastListInit(&indexids);
+	indexids = NIL;
 	foreach(l, best_path->indexinfo)
 	{
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(l);
 
-		FastAppendo(&indexids, index->indexoid);
+		indexids = lappend_oid(indexids, index->indexoid);
 	}
 
 	/*
@@ -801,7 +800,7 @@ create_indexscan_plan(Query *root,
 	scan_plan = make_indexscan(tlist,
 							   qpqual,
 							   baserelid,
-							   FastListValue(&indexids),
+							   indexids,
 							   fixed_indxquals,
 							   stripped_indxquals,
 							   indxstrategy,
@@ -1427,28 +1426,27 @@ get_switched_clauses(List *clauses, Relids outerrelids)
 static List *
 order_qual_clauses(Query *root, List *clauses)
 {
-	FastList	nosubplans;
-	FastList	withsubplans;
+	List	   *nosubplans;
+	List	   *withsubplans;
 	ListCell   *l;
 
 	/* No need to work hard if the query is subselect-free */
 	if (!root->hasSubLinks)
 		return clauses;
 
-	FastListInit(&nosubplans);
-	FastListInit(&withsubplans);
+	nosubplans = NIL;
+	withsubplans = NIL;
 	foreach(l, clauses)
 	{
 		Node	   *clause = (Node *) lfirst(l);
 
 		if (contain_subplans(clause))
-			FastAppend(&withsubplans, clause);
+			withsubplans = lappend(withsubplans, clause);
 		else
-			FastAppend(&nosubplans, clause);
+			nosubplans = lappend(nosubplans, clause);
 	}
 
-	FastConcFast(&nosubplans, &withsubplans);
-	return FastListValue(&nosubplans);
+	return list_concat(nosubplans, withsubplans);
 }
 
 /*
