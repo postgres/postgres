@@ -3,7 +3,7 @@
  *			  out of its tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.48 2000/04/12 17:15:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.48.2.1 2000/09/23 21:32:55 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -956,7 +956,7 @@ get_select_query_def(Query *query, deparse_context *context)
 
 		/* Check if we must say AS ... */
 		if (!IsA(tle->expr, Var))
-			tell_as = strcmp(tle->resdom->resname, "?column?");
+			tell_as = (strcmp(tle->resdom->resname, "?column?") != 0);
 		else
 		{
 			Var		   *var = (Var *) (tle->expr);
