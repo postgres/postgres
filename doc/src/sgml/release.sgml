@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.128 2002/03/25 21:24:08 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.129 2002/04/01 04:35:37 tgl Exp $
 -->
 
 <appendix id="release">
@@ -24,6 +24,7 @@ CDATA means the content is "SGML-free", so you can write without
 worries about funny characters.
 -->
 <literallayout><![CDATA[
+ALTER TABLE ALTER COLUMN SET/DROP NOT NULL
 EXPLAIN output comes out as a query result, not a NOTICE message
 DOMAINs (types that are constrained versions of base types)
 Access privileges on functions

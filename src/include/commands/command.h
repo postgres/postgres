@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: command.h,v 1.36 2002/03/29 19:06:21 tgl Exp $
+ * $Id: command.h,v 1.37 2002/04/01 04:35:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,12 @@ extern void AlterTableAddColumn(Oid myrelid, bool inherits, ColumnDef *colDef);
 
 extern void AlterTableAlterColumnDefault(Oid myrelid, bool inh,
 										 const char *colName, Node *newDefault);
+
+extern void AlterTableAlterColumnDropNotNull(Oid myrelid,
+							 bool inh, const char *colName);
+
+extern void AlterTableAlterColumnSetNotNull(Oid myrelid,
+							 bool inh, const char *colName);
 
 extern void AlterTableAlterColumnFlags(Oid myrelid,
 									   bool inh, const char *colName,

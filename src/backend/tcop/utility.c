@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.144 2002/03/31 07:49:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.145 2002/04/01 04:35:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -436,6 +436,16 @@ ProcessUtility(Node *parsetree,
 													 interpretInhOption(stmt->relation->inhOpt),
 													 stmt->name,
 													 stmt->def);
+						break;
+					case 'N':	/* ALTER COLUMN DROP NOT NULL */
+						AlterTableAlterColumnDropNotNull(RangeVarGetRelid(stmt->relation, false),
+										interpretInhOption(stmt->relation->inhOpt),
+													stmt->name);
+						break;
+					case 'O':	/* ALTER COLUMN SET NOT NULL */
+						AlterTableAlterColumnSetNotNull(RangeVarGetRelid(stmt->relation, false),
+										interpretInhOption(stmt->relation->inhOpt),
+													stmt->name);
 						break;
 					case 'S':	/* ALTER COLUMN STATISTICS */
 					case 'M':   /* ALTER COLUMN STORAGE */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.169 2002/03/31 06:26:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.170 2002/04/01 04:35:38 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -403,7 +403,7 @@ AlterTableAddColumn(Oid myrelid,
 
 	if (colDef->is_not_null)
 		elog(ERROR, "Adding NOT NULL columns is not implemented."
-			 "\n\tAdd the column, then use ALTER TABLE ADD CONSTRAINT.");
+			 "\n\tAdd the column, then use ALTER TABLE ... SET NOT NULL.");
 
 	pgclass = heap_openr(RelationRelationName, RowExclusiveLock);
 
@@ -527,18 +527,19 @@ AlterTableAddColumn(Oid myrelid,
 	AlterTableCreateToastTable(myrelid, true);
 }
 
-
 /*
- * ALTER TABLE ALTER COLUMN SET/DROP DEFAULT
+ * ALTER TABLE ALTER COLUMN DROP NOT NULL
  */
 void
-AlterTableAlterColumnDefault(Oid myrelid,
-							 bool inh, const char *colName,
-							 Node *newDefault)
+AlterTableAlterColumnDropNotNull(Oid myrelid,
+								 bool inh, const char *colName)
 {
 	Relation	rel;
 	HeapTuple	tuple;
-	int16		attnum;
+	AttrNumber	attnum;
+	Relation	attr_rel;
+	List	   	*indexoidlist;
+	List	   	*indexoidscan;
 
 	rel = heap_open(myrelid, AccessExclusiveLock);
 
@@ -552,7 +553,288 @@ AlterTableAlterColumnDefault(Oid myrelid,
 			 RelationGetRelationName(rel));
 
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		elog(ERROR, "ALTER TABLE: \"%s\" permission denied",
+		elog(ERROR, "ALTER TABLE: \"%s\": permission denied",
+			 RelationGetRelationName(rel));
+
+	/*
+	 * Propagate to children if desired
+	 */
+	if (inh)
+	{
+		List	   *child,
+				   *children;
+
+		/* this routine is actually in the planner */
+		children = find_all_inheritors(myrelid);
+
+		/*
+		 * find_all_inheritors does the recursive search of the
+		 * inheritance hierarchy, so all we have to do is process all of
+		 * the relids in the list that it returns.
+		 */
+		foreach(child, children)
+		{
+			Oid			childrelid = lfirsti(child);
+
+			if (childrelid == myrelid)
+				continue;
+			AlterTableAlterColumnDropNotNull(childrelid,
+											 false, colName);
+		}
+	}
+
+	/* -= now do the thing on this relation =- */
+
+	/*
+	 * get the number of the attribute
+	 */
+	tuple = SearchSysCache(ATTNAME,
+						   ObjectIdGetDatum(myrelid),
+						   PointerGetDatum(colName),
+						   0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
+			 RelationGetRelationName(rel), colName);
+
+	attnum = ((Form_pg_attribute) GETSTRUCT(tuple))->attnum;
+	ReleaseSysCache(tuple);
+
+	/* Prevent them from altering a system attribute */
+	if (attnum < 0)
+		elog(ERROR, "ALTER TABLE: Cannot alter system attribute \"%s\"",
+			 colName);
+
+	/* 
+	 * Check that the attribute is not in a primary key
+	 */
+		
+	/* Loop over all indices on the relation */
+	indexoidlist = RelationGetIndexList(rel);
+
+	foreach(indexoidscan, indexoidlist)
+	{
+		Oid		indexoid = lfirsti(indexoidscan);
+		HeapTuple	indexTuple;
+		Form_pg_index 	indexStruct;
+		int		i;
+
+		indexTuple = SearchSysCache(INDEXRELID,
+									ObjectIdGetDatum(indexoid),
+									0, 0, 0);
+		if (!HeapTupleIsValid(indexTuple))
+			elog(ERROR, "ALTER TABLE: Index %u not found",
+				 indexoid);
+		indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
+
+		/* If the index is not a primary key, skip the check */
+		if (indexStruct->indisprimary)
+		{
+			/*
+			 * Loop over each attribute in the primary key and
+			 * see if it matches the to-be-altered attribute
+			 */
+			for (i = 0; i < INDEX_MAX_KEYS &&
+					 indexStruct->indkey[i] != InvalidAttrNumber; i++)
+			{
+				if (indexStruct->indkey[i] == attnum)
+					elog(ERROR, "ALTER TABLE: Attribute \"%s\" is in a primary key", colName);
+			}
+		}
+
+		ReleaseSysCache(indexTuple);
+	}
+
+	freeList(indexoidlist);
+
+	/*
+	 * Okay, actually perform the catalog change
+	 */
+	attr_rel = heap_openr(AttributeRelationName, RowExclusiveLock);
+
+	tuple = SearchSysCacheCopy(ATTNAME,
+							   ObjectIdGetDatum(myrelid),
+							   PointerGetDatum(colName),
+							   0, 0);
+	if (!HeapTupleIsValid(tuple)) /* shouldn't happen */
+		elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
+			 RelationGetRelationName(rel), colName);
+
+	((Form_pg_attribute) GETSTRUCT(tuple))->attnotnull = FALSE;
+
+	simple_heap_update(attr_rel, &tuple->t_self, tuple);
+
+	/* keep the system catalog indices current */
+	if (RelationGetForm(attr_rel)->relhasindex)
+	{
+		Relation	idescs[Num_pg_attr_indices];
+
+		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
+		CatalogIndexInsert(idescs, Num_pg_attr_indices, attr_rel, tuple);
+		CatalogCloseIndices(Num_pg_attr_indices, idescs);
+	}
+
+	heap_close(attr_rel, RowExclusiveLock);
+
+	heap_close(rel, NoLock);
+}
+
+/*
+ * ALTER TABLE ALTER COLUMN SET NOT NULL
+ */
+void
+AlterTableAlterColumnSetNotNull(Oid myrelid,
+								bool inh, const char *colName)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	AttrNumber	attnum;
+	Relation	attr_rel;
+	HeapScanDesc 	scan;
+	TupleDesc	tupdesc;
+
+	rel = heap_open(myrelid, AccessExclusiveLock);
+
+	if (rel->rd_rel->relkind != RELKIND_RELATION)
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
+			 RelationGetRelationName(rel));
+
+	if (!allowSystemTableMods
+		&& IsSystemRelationName(RelationGetRelationName(rel)))
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
+			 RelationGetRelationName(rel));
+
+	if (!pg_class_ownercheck(myrelid, GetUserId()))
+		elog(ERROR, "ALTER TABLE: \"%s\": permission denied",
+			 RelationGetRelationName(rel));
+
+	/*
+	 * Propagate to children if desired
+	 */
+	if (inh)
+	{
+		List	   *child,
+				   *children;
+
+		/* this routine is actually in the planner */
+		children = find_all_inheritors(myrelid);
+
+		/*
+		 * find_all_inheritors does the recursive search of the
+		 * inheritance hierarchy, so all we have to do is process all of
+		 * the relids in the list that it returns.
+		 */
+		foreach(child, children)
+		{
+			Oid			childrelid = lfirsti(child);
+
+			if (childrelid == myrelid)
+				continue;
+			AlterTableAlterColumnSetNotNull(childrelid,
+											false, colName);
+		}
+	}
+
+	/* -= now do the thing on this relation =- */
+
+	/*
+	 * get the number of the attribute
+	 */
+	tuple = SearchSysCache(ATTNAME,
+						   ObjectIdGetDatum(myrelid),
+						   PointerGetDatum(colName),
+						   0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
+			 RelationGetRelationName(rel), colName);
+
+	attnum = ((Form_pg_attribute) GETSTRUCT(tuple))->attnum;
+	ReleaseSysCache(tuple);
+
+	/* Prevent them from altering a system attribute */
+	if (attnum < 0)
+		elog(ERROR, "ALTER TABLE: Cannot alter system attribute \"%s\"",
+			 colName);
+
+	/*
+	 * Perform a scan to ensure that there are no NULL
+	 * values already in the relation
+	 */
+	tupdesc = RelationGetDescr(rel);
+
+	scan = heap_beginscan(rel, false, SnapshotNow, 0, NULL);
+
+	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	{
+		Datum 		d;
+		bool		isnull;
+
+		d = heap_getattr(tuple, attnum, tupdesc, &isnull);
+
+		if (isnull)
+			elog(ERROR, "ALTER TABLE: Attribute \"%s\" contains NULL values",
+				 colName);
+	}
+
+	heap_endscan(scan);
+
+	/*
+	 * Okay, actually perform the catalog change
+	 */
+	attr_rel = heap_openr(AttributeRelationName, RowExclusiveLock);
+
+	tuple = SearchSysCacheCopy(ATTNAME,
+							   ObjectIdGetDatum(myrelid),
+							   PointerGetDatum(colName),
+							   0, 0);
+	if (!HeapTupleIsValid(tuple)) /* shouldn't happen */
+		elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
+			 RelationGetRelationName(rel), colName);
+
+	((Form_pg_attribute) GETSTRUCT(tuple))->attnotnull = TRUE;
+
+	simple_heap_update(attr_rel, &tuple->t_self, tuple);
+
+	/* keep the system catalog indices current */
+	if (RelationGetForm(attr_rel)->relhasindex)
+	{
+		Relation	idescs[Num_pg_attr_indices];
+
+		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
+		CatalogIndexInsert(idescs, Num_pg_attr_indices, attr_rel, tuple);
+		CatalogCloseIndices(Num_pg_attr_indices, idescs);
+	}
+
+	heap_close(attr_rel, RowExclusiveLock);
+
+	heap_close(rel, NoLock);
+}
+
+
+/*
+ * ALTER TABLE ALTER COLUMN SET/DROP DEFAULT
+ */
+void
+AlterTableAlterColumnDefault(Oid myrelid,
+							 bool inh, const char *colName,
+							 Node *newDefault)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	AttrNumber	attnum;
+
+	rel = heap_open(myrelid, AccessExclusiveLock);
+
+	if (rel->rd_rel->relkind != RELKIND_RELATION)
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
+			 RelationGetRelationName(rel));
+
+	if (!allowSystemTableMods
+		&& IsSystemRelationName(RelationGetRelationName(rel)))
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
+			 RelationGetRelationName(rel));
+
+	if (!pg_class_ownercheck(myrelid, GetUserId()))
+		elog(ERROR, "ALTER TABLE: \"%s\": permission denied",
 			 RelationGetRelationName(rel));
 
 	/*
@@ -620,44 +902,36 @@ AlterTableAlterColumnDefault(Oid myrelid,
 	{
 		/* DROP DEFAULT */
 		Relation	attr_rel;
-		ScanKeyData scankeys[3];
-		HeapScanDesc scan;
 
+		/* Fix the pg_attribute row */
 		attr_rel = heap_openr(AttributeRelationName, RowExclusiveLock);
-		ScanKeyEntryInitialize(&scankeys[0], 0x0,
-							   Anum_pg_attribute_attrelid, F_OIDEQ,
-							   ObjectIdGetDatum(myrelid));
-		ScanKeyEntryInitialize(&scankeys[1], 0x0,
-							   Anum_pg_attribute_attnum, F_INT2EQ,
-							   Int16GetDatum(attnum));
-		ScanKeyEntryInitialize(&scankeys[2], 0x0,
-							   Anum_pg_attribute_atthasdef, F_BOOLEQ,
-							   BoolGetDatum(true));
 
-		scan = heap_beginscan(attr_rel, false, SnapshotNow, 3, scankeys);
-		AssertState(scan != NULL);
+		tuple = SearchSysCacheCopy(ATTNAME,
+								   ObjectIdGetDatum(myrelid),
+								   PointerGetDatum(colName),
+								   0, 0);
+		if (!HeapTupleIsValid(tuple)) /* shouldn't happen */
+			elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
+				 RelationGetRelationName(rel), colName);
 
-		if (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+		((Form_pg_attribute) GETSTRUCT(tuple))->atthasdef = FALSE;
+
+		simple_heap_update(attr_rel, &tuple->t_self, tuple);
+
+		/* keep the system catalog indices current */
+		if (RelationGetForm(attr_rel)->relhasindex)
 		{
-			HeapTuple	newtuple;
-			Relation	irelations[Num_pg_attr_indices];
+			Relation	idescs[Num_pg_attr_indices];
 
-			/* update to false */
-			newtuple = heap_copytuple(tuple);
-			((Form_pg_attribute) GETSTRUCT(newtuple))->atthasdef = FALSE;
-			simple_heap_update(attr_rel, &tuple->t_self, newtuple);
-
-			/* keep the system catalog indices current */
-			CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, irelations);
-			CatalogIndexInsert(irelations, Num_pg_attr_indices, attr_rel, newtuple);
-			CatalogCloseIndices(Num_pg_attr_indices, irelations);
-
-			/* get rid of actual default definition */
-			drop_default(myrelid, attnum);
+			CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
+			CatalogIndexInsert(idescs, Num_pg_attr_indices, attr_rel, tuple);
+			CatalogCloseIndices(Num_pg_attr_indices, idescs);
 		}
 
-		heap_endscan(scan);
-		heap_close(attr_rel, NoLock);
+		heap_close(attr_rel, RowExclusiveLock);
+
+		/* get rid of actual default definition in pg_attrdef */
+		drop_default(myrelid, attnum);
 	}
 
 	heap_close(rel, NoLock);
@@ -722,7 +996,7 @@ AlterTableAlterColumnFlags(Oid myrelid,
 			 RelationGetRelationName(rel));
 
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		elog(ERROR, "ALTER TABLE: \"%s\" permission denied",
+		elog(ERROR, "ALTER TABLE: \"%s\": permission denied",
 			 RelationGetRelationName(rel));
 
 	/*
@@ -1011,7 +1285,7 @@ AlterTableDropColumn(Oid myrelid,
 			 RelationGetRelationName(rel));
 
 	if (!allowSystemTableMods
-		&& IsSystemRelationName(RelationGetRelationName(rel))
+		&& IsSystemRelationName(RelationGetRelationName(rel)))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
 			 RelationGetRelationName(rel));
 
@@ -1022,7 +1296,8 @@ AlterTableDropColumn(Oid myrelid,
 	 * normally, only the owner of a class can change its schema.
 	 */
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		elog(ERROR, "ALTER TABLE: permission denied");
+		elog(ERROR, "ALTER TABLE: \"%s\": permission denied",
+			 RelationGetRelationName(rel));
 
 	heap_close(rel, NoLock);	/* close rel but keep lock! */
 
@@ -1670,7 +1945,8 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 			 RelationGetRelationName(rel));
 
 	if (!pg_class_ownercheck(relOid, GetUserId()))
-		elog(ERROR, "ALTER TABLE: permission denied");
+		elog(ERROR, "ALTER TABLE: \"%s\": permission denied",
+			 RelationGetRelationName(rel));
 
 	/*
 	 * lock the pg_class tuple for update (is that really needed?)

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.40 2002/03/06 20:42:38 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.41 2002/04/01 04:35:37 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -28,6 +28,8 @@ ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET DEFAULT <replaceable
     class="PARAMETER">value</replaceable> | DROP DEFAULT }
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET | DROP } NOT NULL
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
@@ -168,6 +170,9 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    allow you to set or remove the default for the column. Note that defaults
    only apply to subsequent <command>INSERT</command> commands; they do not
    cause rows already in the table to change.
+   The <literal>ALTER COLUMN SET/DROP NOT NULL</literal> forms allow you to
+   change whether a column is marked to allow NULL values or to reject NULL
+   values.
    The <literal>ALTER COLUMN SET STATISTICS</literal> form allows you to
    set the statistics-gathering target for subsequent
    <xref linkend="sql-analyze" endterm="sql-analyze-title"> operations.
@@ -276,6 +281,17 @@ ALTER TABLE distributors RENAME COLUMN address TO city;
    To rename an existing table:
    <programlisting>
 ALTER TABLE distributors RENAME TO suppliers;
+   </programlisting>
+  </para>
+
+  <para>
+   To add a NOT NULL constraint to a column:
+   <programlisting>
+ALTER TABLE distributors ALTER COLUMN street SET NOT NULL;
+   </programlisting>
+   To remove a NOT NULL constraint from a column:
+   <programlisting>
+ALTER TABLE distributors ALTER COLUMN street DROP NOT NULL;
    </programlisting>
   </para>
 

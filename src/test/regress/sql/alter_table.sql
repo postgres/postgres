@@ -452,3 +452,64 @@ insert into atacc1 (test2, test) values (3, 3);
 insert into atacc1 (test2, test) values (2, 3);
 insert into atacc1 (test2, test) values (1, NULL);
 drop table atacc1;
+
+-- alter table / alter column [set/drop] not null tests
+-- try altering system catalogs, should fail
+alter table pg_class alter column relname drop not null;
+alter table pg_class alter relname set not null;
+
+-- try altering non-existent table, should fail
+alter table foo alter column bar set not null;
+alter table foo alter column bar drop not null;
+
+-- test setting columns to null and not null and vice versa
+-- test checking for null values and primary key
+create table atacc1 (test int not null);
+alter table atacc1 add constraint "atacc1_pkey" primary key (test);
+alter table atacc1 alter column test drop not null;
+drop index atacc1_pkey;
+alter table atacc1 alter column test drop not null;
+insert into atacc1 values (null);
+alter table atacc1 alter test set not null;
+delete from atacc1;
+alter table atacc1 alter test set not null;
+
+-- try altering a non-existent column, should fail
+alter table atacc1 alter bar set not null;
+alter table atacc1 alter bar drop not null;
+
+-- try altering the oid column, should fail
+alter table atacc1 alter oid set not null;
+alter table atacc1 alter oid drop not null;
+
+-- try creating a view and altering that, should fail
+create view myview as select * from atacc1;
+alter table myview alter column test drop not null;
+alter table myview alter column test set not null;
+drop view myview;
+
+drop table atacc1;
+
+-- test inheritance
+create table parent (a int);
+create table child (b varchar(255)) inherits (parent);
+
+alter table parent alter a set not null;
+insert into parent values (NULL);
+insert into child (a, b) values (NULL, 'foo');
+alter table parent alter a drop not null;
+insert into parent values (NULL);
+insert into child (a, b) values (NULL, 'foo');
+alter table only parent alter a set not null;
+alter table child alter a set not null;
+delete from parent;
+alter table only parent alter a set not null;
+insert into parent values (NULL);
+alter table child alter a set not null;
+insert into child (a, b) values (NULL, 'foo');
+delete from child;
+alter table child alter a set not null;
+insert into child (a, b) values (NULL, 'foo');
+drop table child;
+drop table parent;
+
