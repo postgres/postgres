@@ -6,7 +6,7 @@
 --
 -- Copyright (c) 1994-5, Regents of the University of California
 --
--- $Id: funcs.source,v 1.1.1.1 1996/07/09 06:22:34 scrappy Exp $
+-- $Id: funcs.source,v 1.2 1998/02/11 03:51:38 thomas Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -55,10 +55,10 @@ CREATE TABLE EMP (
 	dept		char16
 );
 
-INSERT INTO EMP VALUES ('Sam', 1200, 16, 'toy')
-INSERT INTO EMP VALUES ('Claire', 5000, 32, 'shoe')
-INSERT INTO EMP VALUES ('Andy', -1000, 2, 'candy')
-INSERT INTO EMP VALUES ('Bill', 4200, 36, 'shoe')
+INSERT INTO EMP VALUES ('Sam', 1200, 16, 'toy');
+INSERT INTO EMP VALUES ('Claire', 5000, 32, 'shoe');
+INSERT INTO EMP VALUES ('Andy', -1000, 2, 'candy');
+INSERT INTO EMP VALUES ('Bill', 4200, 36, 'shoe');
 INSERT INTO EMP VALUES ('Ginger', 4800, 30, 'candy');
 
 -- the argument of a function can also be a tuple. For instance, 
@@ -107,7 +107,7 @@ SELECT name(high_pay()) AS overpaid;
 SELECT * FROM EMP;
 
 CREATE FUNCTION clean_EMP () RETURNS int4
-   AS 'DELETE FROM EMP WHERE EMP.salary <= 0
+   AS 'DELETE FROM EMP WHERE EMP.salary <= 0\;
        SELECT 1 AS ignore_this'
    LANGUAGE 'sql';
 
@@ -146,13 +146,13 @@ WHERE name = 'Bill' or name = 'Sam';
 
 -- remove functions that were created in this file
 
-DROP FUNCTION c_overpaid(EMP, int4)
-DROP FUNCTION copytext(text)
-DROP FUNCTION concat16(char16,char16)
-DROP FUNCTION add_one(int4)
-DROP FUNCTION clean_EMP()
-DROP FUNCTION new_emp()
-DROP FUNCTION add_em(int4, int4)
+DROP FUNCTION c_overpaid(EMP, int4);
+DROP FUNCTION copytext(text);
+DROP FUNCTION concat16(char16,char16);
+DROP FUNCTION add_one(int4);
+DROP FUNCTION clean_EMP();
+DROP FUNCTION new_emp();
+DROP FUNCTION add_em(int4, int4);
 DROP FUNCTION one();
 
 DROP TABLE EMP;
