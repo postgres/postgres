@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.104 2000/10/03 03:11:14 momjian Exp $
+ *	$Id: pqcomm.c,v 1.105 2000/10/05 20:18:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,12 +172,10 @@ StreamServerPort(int family, unsigned short portName, int *fdP)
 	SockAddr	saddr;
 	int			fd,
 				err;
-	size_t		len;
+	size_t		len = 0;
 	int			one = 1;
-
 #ifdef HAVE_FCNTL_SETLK
 	int			lock_fd;
-
 #endif
 
 	Assert(family == AF_INET || family == AF_UNIX);
@@ -209,11 +207,7 @@ StreamServerPort(int family, unsigned short portName, int *fdP)
 	MemSet((char *) &saddr, 0, sizeof(saddr));
 	saddr.sa.sa_family = family;
 
-/* I know this isn't a good way of testing, but until we have a 
- * define for this it'll do!
- * we have Unix sockets... 
- */
-#ifdef HAVE_SYS_UN_H 
+#ifdef HAVE_UNIX_SOCKETS
 	if (family == AF_UNIX)
 	{
 		len = UNIXSOCK_PATH(saddr.un, portName);
@@ -236,7 +230,7 @@ StreamServerPort(int family, unsigned short portName, int *fdP)
 		}
 #endif	 /* HAVE_FCNTL_SETLK */
 	}
-#endif /* HAVE_SYS_UN_H */
+#endif /* HAVE_UNIX_SOCKETS */
 
     if (family == AF_INET) 
     {
@@ -266,7 +260,7 @@ StreamServerPort(int family, unsigned short portName, int *fdP)
 		return STATUS_ERROR;
 	}
 
-#ifdef HAVE_SYS_UN_H /* yeah I know... */
+#ifdef HAVE_UNIX_SOCKETS
 	if (family == AF_UNIX)
 	{
 		on_proc_exit(StreamDoUnlink, 0);
@@ -288,7 +282,7 @@ StreamServerPort(int family, unsigned short portName, int *fdP)
 		}
 #endif	 /* HAVE_FCNTL_SETLK */
 	}
-#endif /* HAVE_SYS_UN_H */
+#endif /* HAVE_UNIX_SOCKETS */
 
 	listen(fd, SOMAXCONN);
 
