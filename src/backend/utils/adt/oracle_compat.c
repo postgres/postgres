@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.36 2001/10/25 05:49:45 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.37 2002/01/08 17:03:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,10 +200,8 @@ lpad(PG_FUNCTION_ARGS)
 #ifdef MULTIBYTE
 	bytelen = pg_database_encoding_max_length() * len;
 	ret = (text *) palloc(VARHDRSZ + bytelen);
-	VARATT_SIZEP(ret) = VARHDRSZ + bytelen;
 #else
 	ret = (text *) palloc(VARHDRSZ + len);
-	VARATT_SIZEP(ret) = VARHDRSZ + len;
 #endif
 	m = len - s1len;
 
@@ -246,6 +244,8 @@ lpad(PG_FUNCTION_ARGS)
 	while (s1len--)
 		*ptr_ret++ = *ptr1++;
 #endif
+
+	VARATT_SIZEP(ret) = ptr_ret - (char *) ret;
 
 	PG_RETURN_TEXT_P(ret);
 }
@@ -311,10 +311,8 @@ rpad(PG_FUNCTION_ARGS)
 #ifdef MULTIBYTE
 	bytelen = pg_database_encoding_max_length() * len;
 	ret = (text *) palloc(VARHDRSZ + bytelen);
-	VARATT_SIZEP(ret) = VARHDRSZ + bytelen;
 #else
 	ret = (text *) palloc(VARHDRSZ + len);
-	VARATT_SIZEP(ret) = VARHDRSZ + len;
 #endif
 	m = len - s1len;
 
@@ -357,6 +355,8 @@ rpad(PG_FUNCTION_ARGS)
 			ptr2 = VARDATA(string2);
 	}
 #endif
+
+	VARATT_SIZEP(ret) = ptr_ret - (char *) ret;
 
 	PG_RETURN_TEXT_P(ret);
 }
