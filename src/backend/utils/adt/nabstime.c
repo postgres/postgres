@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.19 1997/03/26 03:14:37 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.20 1997/03/28 06:54:51 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,9 @@
 #include <miscadmin.h>
 #ifdef HAVE_FLOAT_H
 # include <float.h>
+#endif
+#ifdef HAVE_LIMITS_H
+# include <limits.h>
 #endif
 #ifndef USE_POSIX_TIME
 #include <sys/timeb.h>
