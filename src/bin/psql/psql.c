@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.173 1999/03/24 06:55:14 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.174 1999/03/30 05:00:42 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,7 @@ char	   *__progname = "psql";
 
 #ifdef MULTIBYTE
 /* flag to indicate if PGCLIENTENCODING has been set by a user */
-static	int	   has_client_encoding;
+static	char	   *has_client_encoding = 0;
 #endif
 
 /* This prompt string is assumed to have at least 3 characters by code in MainLoop().
@@ -133,6 +133,7 @@ typedef struct _psqlSettings
 	bool		notty;			/* input or output is not a tty */
 	bool		pipe;			/* queryFout is from a popen() */
 	bool		echoQuery;		/* echo the query before sending it */
+	bool		echoAllQueries;		/* echo all queries before sending it*/
 	bool		quiet;			/* run quietly, no messages, no promt */
 	bool		singleStep;		/* prompt before for each query */
 	bool		singleLineMode; /* query terminated by newline */
@@ -178,6 +179,8 @@ static int
 static int	MainLoop(PsqlSettings *pset, char *query, FILE *source);
 static FILE *setFout(PsqlSettings *pset, char *fname);
 
+static char *selectVersion(PsqlSettings *pset);
+
 /*
  * usage print out usage for command line arguments
  */
@@ -191,6 +194,7 @@ usage(char *progname)
 	fprintf(stderr, "\t -c query                run single query (slash commands too)\n");
 	fprintf(stderr, "\t -d dbName               specify database name\n");
 	fprintf(stderr, "\t -e                      echo the query sent to the backend\n");
+	fprintf(stderr, "\t -E                      echo all queries sent to the backend\n");
 	fprintf(stderr, "\t -f filename             use file as a source of queries\n");
 	fprintf(stderr, "\t -F sep                  set the field separator (default is '|')\n");
 	fprintf(stderr, "\t -h host                 set database server host\n");
@@ -242,7 +246,7 @@ slashUsage(PsqlSettings *pset)
 	if (pset->notty == 0 &&
 		(pagerenv = getenv("PAGER")) &&
 		(pagerenv[0] != '\0') &&
-		screen_size.ws_row <= 28 &&
+		screen_size.ws_row <= 35 &&
 		(fout = popen(pagerenv, "w")))
 	{
 		usePipe = 1;
@@ -299,6 +303,13 @@ static PGresult *
 PSQLexec(PsqlSettings *pset, char *query)
 {
 	PGresult   *res;
+
+        if (pset->echoAllQueries)
+        {
+                fprintf(stderr, "QUERY: %s\n", query);
+                fprintf(stderr, "\n");
+                fflush(stderr);
+        }
 
 	res = PQexec(pset->db, query);
 	if (!res)
@@ -490,7 +501,7 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type,
 		{
 			/* Display the information */
 
-			fprintf(fout, "\nDatabase    = %s\n", PQdb(pset->db));
+			fprintf(fout, "Database    = %s\n", PQdb(pset->db));
 			fprintf(fout, " +------------------+----------------------------------+----------+\n");
 			fprintf(fout, " |  Owner           |             Relation             |   Type   |\n");
 			fprintf(fout, " +------------------+----------------------------------+----------+\n");
@@ -511,6 +522,7 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type,
 				fprintf(fout, "\n");
 			}
 			fprintf(fout, " +------------------+----------------------------------+----------+\n");
+                        fprintf(fout, "\n") ;
 			PQclear(res);
 		}
 		if (usePipe)
@@ -614,7 +626,7 @@ rightsList(PsqlSettings *pset)
 
 		/* Display the information */
 
-		fprintf(fout, "\nDatabase    = %s\n", PQdb(pset->db));
+		fprintf(fout, "Database    = %s\n", PQdb(pset->db));
 		fprintf(fout, " +");
 		emitNtimes(fout, "-", maxCol1Len+2);
 		fprintf(fout, "+");
@@ -780,12 +792,12 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 		if(PQntuples(res2)) {
 		  /*
 		   * display the query.
-		   * -Ryan 2/14/99
+o		   * -Ryan 2/14/99
 		   */
-		  fprintf(fout, "\nView    = %s\n", table);
+		  fprintf(fout, "View    = %s\n", table);
 		  fprintf(fout, "Query   = %s\n", PQgetvalue(res2, 0, 1));
 		} else {
-		  fprintf(fout, "\nTable    = %s\n", table);
+		  fprintf(fout, "Table    = %s\n", table);
 		}
 		PQclear(res2);
 
@@ -889,6 +901,7 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 						fprintf(fout, "%s\n", PQgetvalue(res, i, 0));
 					else
 						fprintf(fout, "          %s\n", PQgetvalue(res, i, 0));
+				fprintf(fout, "\n");
 			}
 			PQclear(res);
 		}
@@ -2815,6 +2828,7 @@ main(int argc, char **argv)
 	int			c;
 
 	char	   *home = NULL;	/* Used to store $HOME */
+	char       *version = NULL;     /* PostgreSQL version */
 
 	MemSet(&settings, 0, sizeof settings);
 	settings.opt.align = 1;
@@ -2845,7 +2859,7 @@ main(int argc, char **argv)
 	has_client_encoding = getenv("PGCLIENTENCODING");
 #endif
 
-	while ((c = getopt(argc, argv, "Aa:c:d:ef:F:lh:Hnso:p:qStT:ux")) != EOF)
+	while ((c = getopt(argc, argv, "Aa:c:d:eEf:F:lh:Hnso:p:qStT:ux")) != EOF)
 	{
 		switch (c)
 		{
@@ -2866,6 +2880,10 @@ main(int argc, char **argv)
 				dbname = optarg;
 				break;
 			case 'e':
+				settings.echoQuery = 1;
+				break;
+			case 'E':
+				settings.echoAllQueries = 1;
 				settings.echoQuery = 1;
 				break;
 			case 'f':
@@ -2956,7 +2974,12 @@ main(int argc, char **argv)
 	{
 		printf("Welcome to the POSTGRESQL interactive sql monitor:\n");
 		printf("  Please read the file COPYRIGHT for copyright terms "
-			   "of POSTGRESQL\n\n");
+			   "of POSTGRESQL\n");
+
+                if ( (version = selectVersion(&settings)) != NULL ) 
+	                printf("[%s]\n", version); 
+
+	        printf("\n");
 		printf("   type \\? for help on slash commands\n");
 		printf("   type \\q to quit\n");
 		printf("   type \\g or terminate with semicolon to execute query\n");
@@ -3229,4 +3252,29 @@ prompt_for_password(char *username, char *password)
 		password[length - 1] = '\0';
 
 	printf("\n\n");
+}
+
+static char *
+selectVersion(PsqlSettings *pset)
+{
+#define PGVERSIONBUFSZ 128
+	static char version[PGVERSIONBUFSZ+1];
+	PGresult   *res;
+	char	   *query = "select version();";
+
+	if (!(res = PQexec(pset->db, query))) return(NULL);
+
+	if (PQresultStatus(res) == PGRES_COMMAND_OK ||
+	    PQresultStatus(res) == PGRES_TUPLES_OK  ) 
+	{
+		strncpy(version, PQgetvalue(res,0,0), PGVERSIONBUFSZ);
+		version[PGVERSIONBUFSZ] = '\0';
+		PQclear(res);
+		return(version);
+        }
+	else 
+	{
+		PQclear(res);
+		return(NULL);
+	}
 }
