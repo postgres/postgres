@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.50 2001/11/08 20:37:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.51 2001/11/13 02:05:27 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2045,7 +2045,8 @@ exec_stmt_execsql(PLpgSQL_execstate * estate,
 			break;
 
 		case SPI_OK_SELECT:
-			elog(ERROR, "unexpected SELECT query in exec_stmt_execsql()");
+			elog(ERROR, "SELECT query has no destination for result data."
+				 "\n\tIf you want to discard the results, use PERFORM instead.");
 
 		default:
 			elog(ERROR, "error executing query \"%s\"",
