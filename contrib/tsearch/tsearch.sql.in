@@ -171,7 +171,7 @@ WHERE o.oprleft = t.oid and o.oprright=tq.oid
    and ( tq.typname='query_txt' or tq.typname='mquery_txt' );
 
 INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 1, false, c.opoid
+   SELECT opcl.oid, 1, true, c.opoid
    FROM pg_opclass opcl, txtidx_ops_tmp c
    WHERE
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
@@ -179,7 +179,7 @@ INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
       and c.oprname = '@@';
 
 INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 2, false, c.opoid
+   SELECT opcl.oid, 2, true, c.opoid
    FROM pg_opclass opcl, txtidx_ops_tmp c
    WHERE
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')

@@ -10,6 +10,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "storage/bufpage.h"
+#include "access/tuptoaster.h"
 
 #include "txtidx.h"
 #include "query.h"
@@ -86,6 +87,15 @@ uniqueint( int4* a, int4 l ) {
 	return res + 1 - a;
 }
 
+static void
+makesign( BITVECP sign, GISTTYPE *a) {
+	int4 k,len = ARRNELEM( a );
+	int4 *ptr = GETARR( a );
+	MemSet( (void*)sign, 0, sizeof(BITVEC) );
+	for(k=0;k<len;k++)
+		HASH( sign, ptr[k] );
+}
+
 Datum
 gtxtidx_compress(PG_FUNCTION_ARGS) {
 	GISTENTRY *entry = (GISTENTRY *)PG_GETARG_POINTER(0);
@@ -110,8 +120,6 @@ gtxtidx_compress(PG_FUNCTION_ARGS) {
 			*arr = crc32_sz( (uint8*)&words[ ptr->pos ], ptr->len );
 			arr++; ptr++; 
 		}
-		if ( val != toastedval )
-			pfree(val);
 
 		len = uniqueint( GETARR(res), val->size );
 		if ( len != val->size ) { 
@@ -120,7 +128,22 @@ gtxtidx_compress(PG_FUNCTION_ARGS) {
 			len = CALCGTSIZE( ARRKEY, len );
 			res = (GISTTYPE*)repalloc( (void*)res, len );
 			res->len = len;
-		} 	
+		}
+		if ( val != toastedval )
+			pfree(val);
+
+		/* make signature, if array is too long */
+		if ( res->len > TOAST_INDEX_TARGET ) {
+			GISTTYPE *ressign;
+
+			len = CALCGTSIZE( SIGNKEY, 0 );
+			ressign = (GISTTYPE*)palloc( len );
+			ressign->len = len;
+			ressign->flag = SIGNKEY;
+			makesign( GETSIGN(ressign), res );
+			pfree(res);
+			res = ressign;
+		}
 		
 		retval = (GISTENTRY*)palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(res), 
@@ -379,15 +402,6 @@ gtxtidx_penalty(PG_FUNCTION_ARGS) {
 	PG_RETURN_POINTER( penalty );
 }
 
-static void
-makesign( BITVECP sign, GISTTYPE *a) {
-	int4 k,len = ARRNELEM( a );
-	int4 *ptr = GETARR( a );
-	MemSet( (void*)sign, 0, sizeof(BITVEC) );
-	for(k=0;k<len;k++)
-		HASH( sign, ptr[k] );
-}
-
 typedef struct {
 	bool	allistrue;
 	BITVEC	sign;
@@ -502,6 +516,11 @@ gtxtidx_picksplit(PG_FUNCTION_ARGS) {
 	v->spl_nleft = 0;
 	right = v->spl_right;
 	v->spl_nright = 0;
+
+	if ( seed_1 == 0 || seed_2 == 0 ) {
+		seed_1 = 1;
+		seed_2 = 2;
+	}
 
 	/* form initial .. */ 
 	if ( cache[seed_1].allistrue ) {

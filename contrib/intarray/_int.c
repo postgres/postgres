@@ -1457,6 +1457,10 @@ _int_common_picksplit(bytea *entryvec,
 	v->spl_nleft = 0;
 	right = v->spl_right;
 	v->spl_nright = 0;
+	if ( seed_1 == 0 || seed_2 == 0 ) {
+		seed_1 = 1;
+		seed_2 = 2;
+	}
 
 	datum_alpha = (ArrayType *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[seed_1].key);
 	datum_l = copy_intArrayType(datum_alpha);

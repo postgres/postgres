@@ -198,23 +198,6 @@ Don't forget to do
   make clean; make; make install
 
 2.
-As it was mentioned above we don't use explicitly ID of lexems
-as in OpenFTS but use hash function (crc32) instead to map lexem to
-integer. Our experiments show that probability of collision is quite small:
-for english text it's about 10**(-6) and 10**(-5) for russian collection.
-Default installation doesn't check for collisions but if your application
-does need to guarantee an exact (no collisions) search, you need 
-to update system table to mark index islossy:
-
-  update pg_amop set amopreqcheck = true where amopclaid = 
-      (select oid from pg_opclass where opcname = 'gist_txtidx_ops');
-
-If you don't bother about collisions :
-
-  update pg_amop set amopreqcheck = false where amopclaid = 
-      (select oid from pg_opclass where opcname = 'gist_txtidx_ops');
-
-3.
 txtidx doesn't preserve words ordering (this is not critical for searching)
 for performance reason, for example:
 
@@ -224,7 +207,7 @@ test=# select 'page two'::txtidx;
  'two' 'page'
 (1 row)
 
-4. 
+3. 
 Indexed access provided by txtidx data type isn't always good
 because of internal data structure we use (RD-Tree). Particularly,
 queries like '!gist' will be  slower than just a sequential scan,
@@ -265,7 +248,7 @@ test=# select querytree( '!gist'::query_txt );
 These two queries will be processed by scanning of full index !
 Very slow !
 
-5.
+4.
 Following selects produce the same result
 
   select title from titles where titleidx @@ 'patch&gist';
