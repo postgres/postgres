@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.28 1997/04/02 18:26:25 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.29 1997/04/15 19:08:13 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -313,6 +313,7 @@ PQsetdb(const char *pghost, const char* pgport, const char* pgoptions, const cha
     fprintf(stderr,
             "FATAL: PQsetdb() -- unable to allocate memory for a PGconn");
   else {
+    conn->lobjfuncs = (PGlobjfuncs *) NULL;
     conn->Pfout = NULL;
     conn->Pfin = NULL;
     conn->Pfdebug = NULL;
