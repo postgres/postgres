@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.63 2003/05/06 00:20:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.64 2003/05/06 20:26:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -245,7 +245,7 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 {
 	Assert(es->qd == NULL);
 	es->qd = CreateQueryDesc(es->query, es->plan,
-							 None, NULL,
+							 None_Receiver, NULL,
 							 fcache->paramLI, false);
 
 	/* Utility commands don't need Executor. */

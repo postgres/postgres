@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.207 2003/05/06 00:20:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.208 2003/05/06 20:26:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,9 +72,9 @@ static TupleTableSlot *ExecutePlan(EState *estate, PlanState *planstate,
 			CmdType operation,
 			long numberTuples,
 			ScanDirection direction,
-			DestReceiver *destfunc);
+			DestReceiver *dest);
 static void ExecSelect(TupleTableSlot *slot,
-		   DestReceiver *destfunc,
+		   DestReceiver *dest,
 		   EState *estate);
 static void ExecInsert(TupleTableSlot *slot, ItemPointer tupleid,
 		   EState *estate);
@@ -188,8 +188,7 @@ ExecutorRun(QueryDesc *queryDesc,
 {
 	EState	   *estate;
 	CmdType		operation;
-	CommandDest dest;
-	DestReceiver *destfunc;
+	DestReceiver *dest;
 	TupleTableSlot *result;
 	MemoryContext oldcontext;
 
@@ -218,11 +217,10 @@ ExecutorRun(QueryDesc *queryDesc,
 	estate->es_processed = 0;
 	estate->es_lastoid = InvalidOid;
 
-	destfunc = DestToFunction(dest);
-	(*destfunc->setup) (destfunc, operation,
-						queryDesc->portalName,
-						queryDesc->tupDesc,
-						queryDesc->planstate->plan->targetlist);
+	(*dest->startup) (dest, operation,
+					  queryDesc->portalName,
+					  queryDesc->tupDesc,
+					  queryDesc->planstate->plan->targetlist);
 
 	/*
 	 * run plan
@@ -235,12 +233,12 @@ ExecutorRun(QueryDesc *queryDesc,
 							 operation,
 							 count,
 							 direction,
-							 destfunc);
+							 dest);
 
 	/*
 	 * shutdown receiver
 	 */
-	(*destfunc->cleanup) (destfunc);
+	(*dest->shutdown) (dest);
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -962,7 +960,7 @@ ExecutePlan(EState *estate,
 			CmdType operation,
 			long numberTuples,
 			ScanDirection direction,
-			DestReceiver *destfunc)
+			DestReceiver *dest)
 {
 	JunkFilter			*junkfilter;
 	TupleTableSlot		*slot;
@@ -1162,8 +1160,7 @@ lnext:	;
 		{
 			case CMD_SELECT:
 				ExecSelect(slot,	/* slot containing tuple */
-						   destfunc,	/* destination's tuple-receiver
-										 * obj */
+						   dest,	/* destination's tuple-receiver obj */
 						   estate);
 				result = slot;
 				break;
@@ -1237,7 +1234,7 @@ lnext:	;
  */
 static void
 ExecSelect(TupleTableSlot *slot,
-		   DestReceiver *destfunc,
+		   DestReceiver *dest,
 		   EState *estate)
 {
 	HeapTuple	tuple;
@@ -1251,6 +1248,8 @@ ExecSelect(TupleTableSlot *slot,
 
 	/*
 	 * insert the tuple into the "into relation"
+	 *
+	 * XXX this probably ought to be replaced by a separate destination
 	 */
 	if (estate->es_into_relation_descriptor != NULL)
 	{
@@ -1260,9 +1259,9 @@ ExecSelect(TupleTableSlot *slot,
 	}
 
 	/*
-	 * send the tuple to the front end (or the screen)
+	 * send the tuple to the destination
 	 */
-	(*destfunc->receiveTuple) (tuple, attrtype, destfunc);
+	(*dest->receiveTuple) (tuple, attrtype, dest);
 	IncrRetrieved();
 	(estate->es_processed)++;
 }

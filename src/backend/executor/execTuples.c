@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.64 2003/05/06 00:20:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.65 2003/05/06 20:26:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -591,6 +591,49 @@ ExecTypeFromTL(List *targetList, bool hasoid)
 	return typeInfo;
 }
 
+/* ----------------------------------------------------------------
+ *		ExecCleanTypeFromTL
+ *
+ *		Same as above, but resjunk columns are omitted from the result.
+ * ----------------------------------------------------------------
+ */
+TupleDesc
+ExecCleanTypeFromTL(List *targetList, bool hasoid)
+{
+	TupleDesc	typeInfo;
+	List	   *tlitem;
+	int			len;
+	int			cleanresno;
+
+	/*
+	 * allocate a new typeInfo
+	 */
+	len = ExecCleanTargetListLength(targetList);
+	typeInfo = CreateTemplateTupleDesc(len, hasoid);
+
+	/*
+	 * scan list, generate type info for each entry
+	 */
+	cleanresno = 1;
+	foreach(tlitem, targetList)
+	{
+		TargetEntry *tle = lfirst(tlitem);
+		Resdom	   *resdom = tle->resdom;
+
+		if (resdom->resjunk)
+			continue;
+		TupleDescInitEntry(typeInfo,
+						   cleanresno++,
+						   resdom->resname,
+						   resdom->restype,
+						   resdom->restypmod,
+						   0,
+						   false);
+	}
+
+	return typeInfo;
+}
+
 /*
  * TupleDescGetSlot - Initialize a slot based on the supplied tupledesc
  */
@@ -713,17 +756,17 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
  * Table Function capability. Currently used by EXPLAIN and SHOW ALL
  */
 TupOutputState *
-begin_tup_output_tupdesc(CommandDest dest, TupleDesc tupdesc)
+begin_tup_output_tupdesc(DestReceiver *dest, TupleDesc tupdesc)
 {
 	TupOutputState *tstate;
 
 	tstate = (TupOutputState *) palloc(sizeof(TupOutputState));
 
 	tstate->metadata = TupleDescGetAttInMetadata(tupdesc);
-	tstate->destfunc = DestToFunction(dest);
+	tstate->dest = dest;
 
-	(*tstate->destfunc->setup) (tstate->destfunc, (int) CMD_SELECT,
-								NULL, tupdesc, NIL);
+	(*tstate->dest->startup) (tstate->dest, (int) CMD_SELECT,
+							  NULL, tupdesc, NIL);
 
 	return tstate;
 }
@@ -741,9 +784,9 @@ do_tup_output(TupOutputState *tstate, char **values)
 	HeapTuple	tuple = BuildTupleFromCStrings(tstate->metadata, values);
 
 	/* send the tuple to the receiver */
-	(*tstate->destfunc->receiveTuple) (tuple,
-									   tstate->metadata->tupdesc,
-									   tstate->destfunc);
+	(*tstate->dest->receiveTuple) (tuple,
+								   tstate->metadata->tupdesc,
+								   tstate->dest);
 	/* clean up */
 	heap_freetuple(tuple);
 }
@@ -766,7 +809,7 @@ do_text_output_multiline(TupOutputState *tstate, char *text)
 		if (eol)
 			*eol++ = '\0';
 		else
-			eol = text +strlen(text);
+			eol = text + strlen(text);
 
 		do_tup_output(tstate, &text);
 		text = eol;
@@ -776,7 +819,8 @@ do_text_output_multiline(TupOutputState *tstate, char *text)
 void
 end_tup_output(TupOutputState *tstate)
 {
-	(*tstate->destfunc->cleanup) (tstate->destfunc);
+	(*tstate->dest->shutdown) (tstate->dest);
+	/* note that destroying the dest is not ours to do */
 	/* XXX worth cleaning up the attinmetadata? */
 	pfree(tstate);
 }

@@ -2,14 +2,14 @@
  *
  * printtup.c
  *	  Routines to print out tuples to the destination (both frontend
- *	  clients and interactive backends are supported here).
+ *	  clients and standalone backends are supported here).
  *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.69 2003/05/06 00:20:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.70 2003/05/06 20:26:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,11 +22,13 @@
 #include "utils/lsyscache.h"
 
 
-static void printtup_setup(DestReceiver *self, int operation,
+static void printtup_startup(DestReceiver *self, int operation,
 			   const char *portalName, TupleDesc typeinfo, List *targetlist);
 static void printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self);
 static void printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self);
-static void printtup_cleanup(DestReceiver *self);
+static void printtup_shutdown(DestReceiver *self);
+static void printtup_destroy(DestReceiver *self);
+
 
 /* ----------------------------------------------------------------
  *		printtup / debugtup support
@@ -59,13 +61,41 @@ typedef struct
  * ----------------
  */
 DestReceiver *
-printtup_create_DR(bool isBinary, bool sendDescrip)
+printtup_create_DR(CommandDest dest)
 {
 	DR_printtup *self = (DR_printtup *) palloc(sizeof(DR_printtup));
+	bool	isBinary;
+	bool	sendDescrip;
+
+	switch (dest)
+	{
+		case Remote:
+			isBinary = false;
+			sendDescrip = true;
+			break;
+		case RemoteInternal:
+			isBinary = true;
+			sendDescrip = true;
+			break;
+		case RemoteExecute:
+			isBinary = false;
+			sendDescrip = false; /* no T message for Execute */
+			break;
+		case RemoteExecuteInternal:
+			isBinary = true;
+			sendDescrip = false; /* no T message for Execute */
+			break;
+
+		default:
+			elog(ERROR, "printtup_create_DR: unsupported dest");
+			return NULL;
+	}
 
 	self->pub.receiveTuple = isBinary ? printtup_internal : printtup;
-	self->pub.setup = printtup_setup;
-	self->pub.cleanup = printtup_cleanup;
+	self->pub.startup = printtup_startup;
+	self->pub.shutdown = printtup_shutdown;
+	self->pub.destroy = printtup_destroy;
+	self->pub.mydest = dest;
 
 	self->sendDescrip = sendDescrip;
 
@@ -77,8 +107,8 @@ printtup_create_DR(bool isBinary, bool sendDescrip)
 }
 
 static void
-printtup_setup(DestReceiver *self, int operation,
-			   const char *portalName, TupleDesc typeinfo, List *targetlist)
+printtup_startup(DestReceiver *self, int operation,
+				 const char *portalName, TupleDesc typeinfo, List *targetlist)
 {
 	DR_printtup *myState = (DR_printtup *) self;
 
@@ -288,17 +318,28 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 }
 
 /* ----------------
- *		printtup_cleanup
+ *		printtup_shutdown
  * ----------------
  */
 static void
-printtup_cleanup(DestReceiver *self)
+printtup_shutdown(DestReceiver *self)
 {
 	DR_printtup *myState = (DR_printtup *) self;
 
 	if (myState->myinfo)
 		pfree(myState->myinfo);
-	pfree(myState);
+	myState->myinfo = NULL;
+	myState->attrinfo = NULL;
+}
+
+/* ----------------
+ *		printtup_destroy
+ * ----------------
+ */
+static void
+printtup_destroy(DestReceiver *self)
+{
+	pfree(self);
 }
 
 /* ----------------
@@ -340,12 +381,12 @@ showatts(const char *name, TupleDesc tupleDesc)
 }
 
 /* ----------------
- *		debugSetup - prepare to print tuples for an interactive backend
+ *		debugStartup - prepare to print tuples for an interactive backend
  * ----------------
  */
 void
-debugSetup(DestReceiver *self, int operation,
-		   const char *portalName, TupleDesc typeinfo, List *targetlist)
+debugStartup(DestReceiver *self, int operation,
+			 const char *portalName, TupleDesc typeinfo, List *targetlist)
 {
 	/*
 	 * show the return type of the tuples

@@ -7,13 +7,14 @@
  * Copyright 2000-2003 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $Id: guc.h,v 1.30 2003/05/02 22:02:47 momjian Exp $
+ * $Id: guc.h,v 1.31 2003/05/06 20:26:28 tgl Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
 #define GUC_H
 
 #include "nodes/pg_list.h"
+#include "tcop/dest.h"
 #include "utils/array.h"
 
 
@@ -119,14 +120,15 @@ extern void ParseLongOption(const char *string, char **name, char **value);
 extern bool set_config_option(const char *name, const char *value,
 				  GucContext context, GucSource source,
 				  bool isLocal, bool DoIt);
-extern void ShowGUCConfigOption(const char *name);
-extern void ShowAllGUCConfig(void);
+extern void ShowGUCConfigOption(const char *name, DestReceiver *dest);
+extern void ShowAllGUCConfig(DestReceiver *dest);
 extern char *GetConfigOptionByName(const char *name, const char **varname);
 extern char *GetConfigOptionByNum(int varnum, const char **varname, bool *noshow);
 extern int	GetNumConfigOptions(void);
 
 extern void SetPGVariable(const char *name, List *args, bool is_local);
-extern void GetPGVariable(const char *name);
+extern void GetPGVariable(const char *name, DestReceiver *dest);
+extern TupleDesc GetPGVariableResultDesc(const char *name);
 extern void ResetPGVariable(const char *name);
 
 extern char *flatten_set_variable_args(const char *name, List *args);

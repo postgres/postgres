@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.8 2003/04/29 22:13:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.9 2003/05/06 20:26:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 			/* schemas should contain only utility stmts */
 			Assert(querytree->commandType == CMD_UTILITY);
 			/* do this step */
-			ProcessUtility(querytree->utilityStmt, None, NULL);
+			ProcessUtility(querytree->utilityStmt, None_Receiver, NULL);
 			/* make sure later steps can see the object created here */
 			CommandCounterIncrement();
 		}

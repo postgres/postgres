@@ -8,14 +8,14 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.56 2003/05/06 00:20:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.57 2003/05/06 20:26:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  *	 INTERFACE ROUTINES
  *		BeginCommand - initialize the destination at start of command
- *		DestToFunction - identify per-tuple processing routines
+ *		CreateDestReceiver - create tuple receiver object for destination
  *		EndCommand - clean up the destination at end of command
  *		NullCommand - tell dest that an empty query string was recognized
  *		ReadyForQuery - tell dest that we are ready for a new query
@@ -30,7 +30,6 @@
 
 #include "access/printtup.h"
 #include "access/xact.h"
-#include "executor/tstoreReceiver.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 
@@ -45,14 +44,15 @@ donothingReceive(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 }
 
 static void
-donothingSetup(DestReceiver *self, int operation,
-			   const char *portalName, TupleDesc typeinfo, List *targetlist)
+donothingStartup(DestReceiver *self, int operation,
+				 const char *portalName, TupleDesc typeinfo, List *targetlist)
 {
 }
 
 static void
 donothingCleanup(DestReceiver *self)
 {
+	/* this is used for both shutdown and destroy methods */
 }
 
 /* ----------------
@@ -60,16 +60,23 @@ donothingCleanup(DestReceiver *self)
  * ----------------
  */
 static DestReceiver donothingDR = {
-	donothingReceive, donothingSetup, donothingCleanup
+	donothingReceive, donothingStartup, donothingCleanup, donothingCleanup,
+	None
 };
 
 static DestReceiver debugtupDR = {
-	debugtup, debugSetup, donothingCleanup
+	debugtup, debugStartup, donothingCleanup, donothingCleanup,
+	Debug
 };
 
 static DestReceiver spi_printtupDR = {
-	spi_printtup, spi_dest_setup, donothingCleanup
+	spi_printtup, spi_dest_startup, donothingCleanup, donothingCleanup,
+	SPI
 };
+
+/* Globally available receiver for None */
+DestReceiver *None_Receiver = &donothingDR;
+
 
 /* ----------------
  *		BeginCommand - initialize the destination at start of command
@@ -82,26 +89,19 @@ BeginCommand(const char *commandTag, CommandDest dest)
 }
 
 /* ----------------
- *		DestToFunction - return appropriate receiver function set for dest
+ *		CreateDestReceiver - return appropriate receiver function set for dest
  * ----------------
  */
 DestReceiver *
-DestToFunction(CommandDest dest)
+CreateDestReceiver(CommandDest dest)
 {
 	switch (dest)
 	{
 		case Remote:
-			return printtup_create_DR(false, true);
-
 		case RemoteInternal:
-			return printtup_create_DR(true, true);
-
 		case RemoteExecute:
-			/* like Remote, but suppress output of T message */
-			return printtup_create_DR(false, false);
-
 		case RemoteExecuteInternal:
-			return printtup_create_DR(true, false);
+			return printtup_create_DR(dest);
 
 		case None:
 			return &donothingDR;
@@ -113,7 +113,12 @@ DestToFunction(CommandDest dest)
 			return &spi_printtupDR;
 
 		case Tuplestore:
-			return tstoreReceiverCreateDR();
+			/*
+			 * This is disallowed, you must use tstoreReceiver.c's
+			 * specialized function to create a Tuplestore DestReceiver
+			 */
+			elog(ERROR, "CreateDestReceiver: cannot handle Tuplestore");
+			break;
 	}
 
 	/* should never get here */

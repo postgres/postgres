@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tstoreReceiver.h,v 1.1 2003/03/27 16:55:11 momjian Exp $
+ * $Id: tstoreReceiver.h,v 1.2 2003/05/06 20:26:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,10 @@
 #define TSTORE_RECEIVER_H
 
 #include "tcop/dest.h"
+#include "utils/tuplestore.h"
 
-extern DestReceiver *tstoreReceiverCreateDR(void);
+
+extern DestReceiver *CreateTuplestoreDestReceiver(Tuplestorestate *tStore,
+												  MemoryContext tContext);
 
 #endif	/* TSTORE_RECEIVER_H */

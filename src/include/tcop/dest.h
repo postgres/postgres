@@ -21,30 +21,40 @@
  * dest.c defines three functions that implement destination management:
  *
  * BeginCommand: initialize the destination at start of command.
- * DestToFunction: return a pointer to a struct of destination-specific
+ * CreateDestReceiver: return a pointer to a struct of destination-specific
  * receiver functions.
  * EndCommand: clean up the destination at end of command.
  *
  * BeginCommand/EndCommand are executed once per received SQL query.
  *
- * DestToFunction, and the receiver functions it links to, are executed
- * each time we run the executor to produce tuples, which may occur
- * multiple times per received query (eg, due to additional queries produced
- * by rewrite rules).
+ * CreateDestReceiver returns a receiver object appropriate to the specified
+ * destination.  The executor, as well as utility statements that can return
+ * tuples, are passed the resulting DestReceiver* pointer.  Each executor run
+ * or utility execution calls the receiver's startup method, then the
+ * receiveTuple method (zero or more times), then the shutdown method.
+ * The same receiver object may be re-used multiple times; eventually it is
+ * destroyed by calling its destroy method.
  *
- * The DestReceiver object returned by DestToFunction may be a statically
- * allocated object (for destination types that require no local state)
- * or can be a palloc'd object that has DestReceiver as its first field
- * and contains additional fields (see printtup.c for an example).	These
- * additional fields are then accessible to the DestReceiver functions
- * by casting the DestReceiver* pointer passed to them.
- * The palloc'd object is pfree'd by the DestReceiver's cleanup function.
+ * The DestReceiver object returned by CreateDestReceiver may be a statically
+ * allocated object (for destination types that require no local state),
+ * in which case destroy is a no-op.  Alternatively it can be a palloc'd
+ * object that has DestReceiver as its first field and contains additional
+ * fields (see printtup.c for an example).	These additional fields are then
+ * accessible to the DestReceiver functions by casting the DestReceiver*
+ * pointer passed to them.  The palloc'd object is pfree'd by the destroy
+ * method.  Note that the caller of CreateDestReceiver should take care to
+ * do so in a memory context that is long-lived enough for the receiver
+ * object not to disappear while still needed.
+ *
+ * Special provision: None_Receiver is a permanently available receiver
+ * object for the None destination.  This avoids useless creation/destroy
+ * calls in portal and cursor manipulations.
  *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.36 2003/05/06 00:20:33 tgl Exp $
+ * $Id: dest.h,v 1.37 2003/05/06 20:26:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +73,7 @@
  *		destination.  Someday this will probably need to be improved.
  *
  * Note: only the values None, Debug, Remote are legal for the global
- * variable whereToSendOutput.  The other values may be selected
+ * variable whereToSendOutput.  The other values may be used
  * as the destination for individual commands.
  * ----------------
  */
@@ -84,6 +94,11 @@ typedef enum
  *		DestReceiver is a base type for destination-specific local state.
  *		In the simplest cases, there is no state info, just the function
  *		pointers that the executor must call.
+ *
+ * Note: the receiveTuple routine must be passed a TupleDesc identical to the
+ * one given to the startup routine.  The reason for passing it again is just
+ * that some destinations would otherwise need dynamic state merely to
+ * remember the tupledesc pointer.
  * ----------------
  */
 typedef struct _DestReceiver DestReceiver;
@@ -93,19 +108,25 @@ struct _DestReceiver
 	/* Called for each tuple to be output: */
 	void		(*receiveTuple) (HeapTuple tuple, TupleDesc typeinfo,
 								 DestReceiver *self);
-	/* Initialization and teardown: */
-	void		(*setup) (DestReceiver *self, int operation,
-						  const char *portalName,
-						  TupleDesc typeinfo,
-						  List *targetlist);
-	void		(*cleanup) (DestReceiver *self);
+	/* Per-executor-run initialization and shutdown: */
+	void		(*startup) (DestReceiver *self, int operation,
+							const char *portalName,
+							TupleDesc typeinfo,
+							List *targetlist);
+	void		(*shutdown) (DestReceiver *self);
+	/* Destroy the receiver object itself (if dynamically allocated) */
+	void		(*destroy) (DestReceiver *self);
+	/* CommandDest code for this receiver */
+	CommandDest	mydest;
 	/* Private fields might appear beyond this point... */
 };
+
+extern DestReceiver *None_Receiver;	/* permanent receiver for None */
 
 /* The primary destination management functions */
 
 extern void BeginCommand(const char *commandTag, CommandDest dest);
-extern DestReceiver *DestToFunction(CommandDest dest);
+extern DestReceiver *CreateDestReceiver(CommandDest dest);
 extern void EndCommand(const char *commandTag, CommandDest dest);
 
 /* Additional functions that go with destination management, more or less. */

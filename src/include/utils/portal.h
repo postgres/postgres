@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.42 2003/05/02 20:54:36 tgl Exp $
+ * $Id: portal.h,v 1.43 2003/05/06 20:26:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,10 +156,6 @@ typedef struct PortalData
 #define PortalGetHeapMemory(portal) ((portal)->heap)
 
 
-/* Currently executing Portal, if any */
-extern DLLIMPORT Portal CurrentPortal;
-
-
 /* Prototypes for functions in utils/mmgr/portalmem.c */
 extern void EnablePortalManager(void);
 extern void AtCommit_Portals(void);
@@ -176,5 +172,6 @@ extern void PortalDefineQuery(Portal portal,
 							  List *parseTrees,
 							  List *planTrees,
 							  MemoryContext queryContext);
+extern void PortalCreateHoldStore(Portal portal);
 
 #endif   /* PORTAL_H */

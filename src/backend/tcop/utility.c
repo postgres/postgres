@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.198 2003/05/02 20:54:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.199 2003/05/06 20:26:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,7 @@
 #include "parser/parse_type.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteRemove.h"
+#include "tcop/pquery.h"
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/guc.h"
@@ -244,7 +245,7 @@ check_xact_readonly(Node *parsetree)
  */
 void
 ProcessUtility(Node *parsetree,
-			   CommandDest dest,
+			   DestReceiver *dest,
 			   char *completionTag)
 {
 	check_xact_readonly(parsetree);
@@ -310,7 +311,7 @@ ProcessUtility(Node *parsetree,
 			 * Portal (cursor) manipulation
 			 */
 		case T_DeclareCursorStmt:
-			PerformCursorOpen((DeclareCursorStmt *) parsetree, dest);
+			PerformCursorOpen((DeclareCursorStmt *) parsetree);
 			break;
 
 		case T_ClosePortalStmt:
@@ -880,7 +881,7 @@ ProcessUtility(Node *parsetree,
 			{
 				VariableShowStmt *n = (VariableShowStmt *) parsetree;
 
-				GetPGVariable(n->name);
+				GetPGVariable(n->name, dest);
 			}
 			break;
 
@@ -1025,6 +1026,137 @@ ProcessUtility(Node *parsetree,
 			elog(ERROR, "ProcessUtility: command #%d unsupported",
 				 nodeTag(parsetree));
 			break;
+	}
+}
+
+/*
+ * UtilityReturnsTuples
+ *		Return "true" if this utility statement will send output to the
+ *		destination.
+ *
+ * Generally, there should be a case here for each case in ProcessUtility
+ * where "dest" is passed on.
+ */
+bool
+UtilityReturnsTuples(Node *parsetree)
+{
+	switch (nodeTag(parsetree))
+	{
+		case T_FetchStmt:
+			{
+				FetchStmt *stmt = (FetchStmt *) parsetree;
+				Portal	portal;
+
+				if (stmt->ismove)
+					return false;
+				portal = GetPortalByName(stmt->portalname);
+				if (!PortalIsValid(portal))
+					return false; /* not our business to raise error */
+				/*
+				 * Note: if portal contains multiple statements then it's
+				 * possible some of them will return tuples, but we don't
+				 * handle that case here.
+				 */
+				return portal->tupDesc ? true : false;
+			}
+
+		case T_ExecuteStmt:
+			{
+				ExecuteStmt *stmt = (ExecuteStmt *) parsetree;
+				PreparedStatement *entry;
+
+				if (stmt->into)
+					return false;
+				entry = FetchPreparedStatement(stmt->name, false);
+				if (!entry)
+					return false; /* not our business to raise error */
+				switch (ChoosePortalStrategy(entry->query_list))
+				{
+					case PORTAL_ONE_SELECT:
+						return true;
+					case PORTAL_UTIL_SELECT:
+						return true;
+					case PORTAL_MULTI_QUERY:
+						/* can't figure it out, per note above */
+						break;
+				}
+				return false;
+			}
+
+		case T_ExplainStmt:
+			return true;
+
+		case T_VariableShowStmt:
+			return true;
+
+		default:
+			return false;
+	}
+}
+
+/*
+ * UtilityTupleDescriptor
+ *		Fetch the actual output tuple descriptor for a utility statement
+ *		for which UtilityReturnsTuples() previously returned "true".
+ *
+ * The returned descriptor is created in (or copied into) the current memory
+ * context.
+ */
+TupleDesc
+UtilityTupleDescriptor(Node *parsetree)
+{
+	switch (nodeTag(parsetree))
+	{
+		case T_FetchStmt:
+			{
+				FetchStmt *stmt = (FetchStmt *) parsetree;
+				Portal	portal;
+
+				if (stmt->ismove)
+					return NULL;
+				portal = GetPortalByName(stmt->portalname);
+				if (!PortalIsValid(portal))
+					return NULL; /* not our business to raise error */
+				return CreateTupleDescCopy(portal->tupDesc);
+			}
+
+		case T_ExecuteStmt:
+			{
+				ExecuteStmt *stmt = (ExecuteStmt *) parsetree;
+				PreparedStatement *entry;
+				Query  *query;
+
+				if (stmt->into)
+					return NULL;
+				entry = FetchPreparedStatement(stmt->name, false);
+				if (!entry)
+					return NULL; /* not our business to raise error */
+				switch (ChoosePortalStrategy(entry->query_list))
+				{
+					case PORTAL_ONE_SELECT:
+						query = (Query *) lfirst(entry->query_list);
+						return ExecCleanTypeFromTL(query->targetList, false);
+					case PORTAL_UTIL_SELECT:
+						query = (Query *) lfirst(entry->query_list);
+						return UtilityTupleDescriptor(query->utilityStmt);
+					case PORTAL_MULTI_QUERY:
+						break;
+				}
+				return NULL;
+			}
+
+		case T_ExplainStmt:
+			return ExplainResultDesc((ExplainStmt *) parsetree);
+
+		case T_VariableShowStmt:
+			{
+				VariableShowStmt *n = (VariableShowStmt *) parsetree;
+
+				return GetPGVariableResultDesc(n->name);
+			}
+
+		default:
+			return NULL;
 	}
 }
 

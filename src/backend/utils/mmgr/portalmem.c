@@ -12,12 +12,13 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.57 2003/05/05 00:44:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.58 2003/05/06 20:26:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "miscadmin.h"
 #include "commands/portalcmds.h"
 #include "executor/executor.h"
 #include "utils/hsearch.h"
@@ -35,9 +36,6 @@
  *		Global state
  * ----------------
  */
-
-Portal	CurrentPortal = NULL;	/* globally visible pointer */
-
 
 #define MAX_PORTALNAME_LEN		NAMEDATALEN
 
@@ -252,6 +250,38 @@ PortalDefineQuery(Portal portal,
 }
 
 /*
+ * PortalCreateHoldStore
+ *		Create the tuplestore for a portal.
+ */
+void
+PortalCreateHoldStore(Portal portal)
+{
+	MemoryContext oldcxt;
+
+	Assert(portal->holdContext == NULL);
+	Assert(portal->holdStore == NULL);
+
+	/*
+	 * Create the memory context that is used for storage of the tuple set.
+	 * Note this is NOT a child of the portal's heap memory.
+	 */
+	portal->holdContext =
+		AllocSetContextCreate(PortalMemory,
+							  "PortalHeapMemory",
+							  ALLOCSET_DEFAULT_MINSIZE,
+							  ALLOCSET_DEFAULT_INITSIZE,
+							  ALLOCSET_DEFAULT_MAXSIZE);
+
+	/* Create the tuple store, selecting cross-transaction temp files. */
+	oldcxt = MemoryContextSwitchTo(portal->holdContext);
+
+	/* XXX: Should SortMem be used for this? */
+	portal->holdStore = tuplestore_begin_heap(true, true, SortMem);
+
+	MemoryContextSwitchTo(oldcxt);
+}
+
+/*
  * PortalDrop
  *		Destroy the portal.
  *
@@ -278,6 +308,21 @@ PortalDrop(Portal portal, bool isError)
 	/* let portalcmds.c clean up the state it knows about */
 	if (PointerIsValid(portal->cleanup))
 		(*portal->cleanup) (portal, isError);
+
+	/*
+	 * Delete tuplestore if present.  We should do this even under error
+	 * conditions; since the tuplestore would have been using cross-
+	 * transaction storage, its temp files need to be explicitly deleted.
+	 */
+	if (portal->holdStore)
+	{
+		MemoryContext oldcontext;
+
+		oldcontext = MemoryContextSwitchTo(portal->holdContext);
+		tuplestore_end(portal->holdStore);
+		MemoryContextSwitchTo(oldcontext);
+		portal->holdStore = NULL;
+	}
 
 	/* delete tuplestore storage, if any */
 	if (portal->holdContext)
@@ -360,27 +405,12 @@ AtCommit_Portals(void)
 			 * We are exiting the transaction that created a holdable
 			 * cursor.  Instead of dropping the portal, prepare it for
 			 * access by later transactions.
-			 */
-
-			/*
-			 * Create the memory context that is used for storage of
-			 * the held cursor's tuple set.  Note this is NOT a child
-			 * of the portal's heap memory.
-			 */
-			portal->holdContext =
-				AllocSetContextCreate(PortalMemory,
-									  "PortalHeapMemory",
-									  ALLOCSET_DEFAULT_MINSIZE,
-									  ALLOCSET_DEFAULT_INITSIZE,
-									  ALLOCSET_DEFAULT_MAXSIZE);
-
-			/*
-			 * Transfer data into the held tuplestore.
 			 *
 			 * Note that PersistHoldablePortal() must release all
 			 * resources used by the portal that are local to the creating
 			 * transaction.
 			 */
+			PortalCreateHoldStore(portal);
 			PersistHoldablePortal(portal);
 		}
 		else

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.107 2003/05/06 00:20:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.108 2003/05/06 20:26:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,21 +67,15 @@ static Node *make_ors_ands_explicit(List *orclauses);
  *	  execute an EXPLAIN command
  */
 void
-ExplainQuery(ExplainStmt *stmt, CommandDest dest)
+ExplainQuery(ExplainStmt *stmt, DestReceiver *dest)
 {
 	Query	   *query = stmt->query;
 	TupOutputState *tstate;
-	TupleDesc	tupdesc;
 	List	   *rewritten;
 	List	   *l;
 
-	/* need a tuple descriptor representing a single TEXT column */
-	tupdesc = CreateTemplateTupleDesc(1, false);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "QUERY PLAN",
-					   TEXTOID, -1, 0, false);
-
 	/* prepare for projection of tuples */
-	tstate = begin_tup_output_tupdesc(dest, tupdesc);
+	tstate = begin_tup_output_tupdesc(dest, ExplainResultDesc(stmt));
 
 	if (query->commandType == CMD_UTILITY)
 	{
@@ -117,6 +111,22 @@ ExplainQuery(ExplainStmt *stmt, CommandDest dest)
 	}
 
 	end_tup_output(tstate);
+}
+
+/*
+ * ExplainResultDesc -
+ *	  construct the result tupledesc for an EXPLAIN
+ */
+TupleDesc
+ExplainResultDesc(ExplainStmt *stmt)
+{
+	TupleDesc	tupdesc;
+
+	/* need a tuple descriptor representing a single TEXT column */
+	tupdesc = CreateTemplateTupleDesc(1, false);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "QUERY PLAN",
+					   TEXTOID, -1, 0, false);
+	return tupdesc;
 }
 
 /*
@@ -169,7 +179,7 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 	plan = planner(query, isCursor, cursorOptions);
 
 	/* Create a QueryDesc requesting no output */
-	queryDesc = CreateQueryDesc(query, plan, None, NULL, NULL,
+	queryDesc = CreateQueryDesc(query, plan, None_Receiver, NULL, NULL,
 								stmt->analyze);
 
 	ExplainOnePlan(queryDesc, stmt, tstate);

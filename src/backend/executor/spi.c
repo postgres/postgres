@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.95 2003/05/06 00:20:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.96 2003/05/06 20:26:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@ static int _SPI_execute_plan(_SPI_plan *plan,
 				  Datum *Values, const char *Nulls, int tcount);
 
 static void _SPI_cursor_operation(Portal portal, bool forward, int count,
-					  CommandDest dest);
+					  DestReceiver *dest);
 
 static _SPI_plan *_SPI_copy_plan(_SPI_plan *plan, int location);
 
@@ -841,7 +841,8 @@ SPI_cursor_find(const char *name)
 void
 SPI_cursor_fetch(Portal portal, bool forward, int count)
 {
-	_SPI_cursor_operation(portal, forward, count, SPI);
+	_SPI_cursor_operation(portal, forward, count, CreateDestReceiver(SPI));
+	/* we know that the SPI receiver doesn't need a destroy call */
 }
 
 
@@ -853,7 +854,7 @@ SPI_cursor_fetch(Portal portal, bool forward, int count)
 void
 SPI_cursor_move(Portal portal, bool forward, int count)
 {
-	_SPI_cursor_operation(portal, forward, count, None);
+	_SPI_cursor_operation(portal, forward, count, None_Receiver);
 }
 
 
@@ -874,13 +875,13 @@ SPI_cursor_close(Portal portal)
 /* =================== private functions =================== */
 
 /*
- * spi_dest_setup
+ * spi_dest_startup
  *		Initialize to receive tuples from Executor into SPITupleTable
  *		of current SPI procedure
  */
 void
-spi_dest_setup(DestReceiver *self, int operation,
-			   const char *portalName, TupleDesc typeinfo, List *targetlist)
+spi_dest_startup(DestReceiver *self, int operation,
+				 const char *portalName, TupleDesc typeinfo, List *targetlist)
 {
 	SPITupleTable *tuptable;
 	MemoryContext oldcxt;
@@ -891,12 +892,12 @@ spi_dest_setup(DestReceiver *self, int operation,
 	 * _SPI_connected
 	 */
 	if (_SPI_curid != _SPI_connected || _SPI_connected < 0)
-		elog(FATAL, "SPI: improper call to spi_dest_setup");
+		elog(FATAL, "SPI: improper call to spi_dest_startup");
 	if (_SPI_current != &(_SPI_stack[_SPI_curid]))
-		elog(FATAL, "SPI: stack corrupted in spi_dest_setup");
+		elog(FATAL, "SPI: stack corrupted in spi_dest_startup");
 
 	if (_SPI_current->tuptable != NULL)
-		elog(FATAL, "SPI: improper call to spi_dest_setup");
+		elog(FATAL, "SPI: improper call to spi_dest_startup");
 
 	oldcxt = _SPI_procmem();	/* switch to procedure memory context */
 
@@ -1029,10 +1030,12 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 			Query	   *queryTree = (Query *) lfirst(query_list_item);
 			Plan	   *planTree;
 			QueryDesc  *qdesc;
+			DestReceiver *dest;
 
 			planTree = pg_plan_query(queryTree);
 			plan_list = lappend(plan_list, planTree);
 
+			dest = CreateDestReceiver(queryTree->canSetTag ? SPI : None);
 			if (queryTree->commandType == CMD_UTILITY)
 			{
 				if (IsA(queryTree->utilityStmt, CopyStmt))
@@ -1051,14 +1054,13 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 				res = SPI_OK_UTILITY;
 				if (plan == NULL)
 				{
-					ProcessUtility(queryTree->utilityStmt, None, NULL);
+					ProcessUtility(queryTree->utilityStmt, dest, NULL);
 					CommandCounterIncrement();
 				}
 			}
 			else if (plan == NULL)
 			{
-				qdesc = CreateQueryDesc(queryTree, planTree,
-										queryTree->canSetTag ? SPI : None,
+				qdesc = CreateQueryDesc(queryTree, planTree, dest,
 										NULL, NULL, false);
 				res = _SPI_pquery(qdesc, true,
 								  queryTree->canSetTag ? tcount : 0);
@@ -1068,8 +1070,7 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 			}
 			else
 			{
-				qdesc = CreateQueryDesc(queryTree, planTree,
-										queryTree->canSetTag ? SPI : None,
+				qdesc = CreateQueryDesc(queryTree, planTree, dest,
 										NULL, NULL, false);
 				res = _SPI_pquery(qdesc, false, 0);
 				if (res < 0)
@@ -1144,20 +1145,21 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 			Query  *queryTree = (Query *) lfirst(query_list_item);
 			Plan	   *planTree;
 			QueryDesc  *qdesc;
+			DestReceiver *dest;
 
 			planTree = lfirst(plan_list);
 			plan_list = lnext(plan_list);
 
+			dest = CreateDestReceiver(queryTree->canSetTag ? SPI : None);
 			if (queryTree->commandType == CMD_UTILITY)
 			{
-				ProcessUtility(queryTree->utilityStmt, None, NULL);
+				ProcessUtility(queryTree->utilityStmt, dest, NULL);
 				res = SPI_OK_UTILITY;
 				CommandCounterIncrement();
 			}
 			else
 			{
-				qdesc = CreateQueryDesc(queryTree, planTree,
-										queryTree->canSetTag ? SPI : None,
+				qdesc = CreateQueryDesc(queryTree, planTree, dest,
 										NULL, paramLI, false);
 				res = _SPI_pquery(qdesc, true,
 								  queryTree->canSetTag ? tcount : 0);
@@ -1185,7 +1187,7 @@ _SPI_pquery(QueryDesc *queryDesc, bool runit, int tcount)
 			if (queryDesc->parsetree->into != NULL)	/* select into table */
 			{
 				res = SPI_OK_SELINTO;
-				queryDesc->dest = None; /* don't output results anywhere */
+				queryDesc->dest = None_Receiver; /* don't output results */
 			}
 			break;
 		case CMD_INSERT:
@@ -1216,13 +1218,13 @@ _SPI_pquery(QueryDesc *queryDesc, bool runit, int tcount)
 	_SPI_current->processed = queryDesc->estate->es_processed;
 	save_lastoid = queryDesc->estate->es_lastoid;
 
-	if (operation == CMD_SELECT && queryDesc->dest == SPI)
+	if (operation == CMD_SELECT && queryDesc->dest->mydest == SPI)
 	{
 		if (_SPI_checktuples())
 			elog(FATAL, "SPI_select: # of processed tuples check failed");
 	}
 
-	if (queryDesc->dest == SPI)
+	if (queryDesc->dest->mydest == SPI)
 	{
 		SPI_processed = _SPI_current->processed;
 		SPI_lastoid = save_lastoid;
@@ -1253,7 +1255,7 @@ _SPI_pquery(QueryDesc *queryDesc, bool runit, int tcount)
  */
 static void
 _SPI_cursor_operation(Portal portal, bool forward, int count,
-					  CommandDest dest)
+					  DestReceiver *dest)
 {
 	/* Check that the portal is valid */
 	if (!PortalIsValid(portal))
@@ -1275,7 +1277,7 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 					   (long) count,
 					   dest);
 
-	if (dest == SPI && _SPI_checktuples())
+	if (dest->mydest == SPI && _SPI_checktuples())
 		elog(FATAL, "SPI_fetch: # of processed tuples check failed");
 
 	/* Put the result into place for access by caller */
@@ -1343,7 +1345,7 @@ _SPI_checktuples(void)
 	SPITupleTable *tuptable = _SPI_current->tuptable;
 	bool		failed = false;
 
-	if (tuptable == NULL)	/* spi_dest_setup was not called */
+	if (tuptable == NULL)	/* spi_dest_startup was not called */
 		failed = true;
 	else if (processed != (tuptable->alloced - tuptable->free))
 		failed = true;

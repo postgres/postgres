@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * tstore_receiver.c
+ * tstoreReceiver.c
  *	  an implementation of DestReceiver that stores the result tuples in
  *	  a Tuplestore
  *
@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/tstoreReceiver.c,v 1.4 2003/05/06 00:20:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/tstoreReceiver.c,v 1.5 2003/05/06 20:26:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,8 +17,7 @@
 #include "postgres.h"
 
 #include "executor/tstoreReceiver.h"
-#include "utils/memutils.h"
-#include "utils/portal.h"
+
 
 typedef struct
 {
@@ -30,32 +29,13 @@ typedef struct
 
 /*
  * Prepare to receive tuples from executor.
- *
- * XXX: As currently implemented, this routine is a hack: there should
- * be no tie between this code and the portal system. Instead, the
- * receiver function that is part of DestFunction should be passed a
- * QueryDesc, so that the call site of ExecutorRun can "sub-class"
- * QueryDesc and pass in any necessary addition information (in this
- * case, the Tuplestore to use).
  */
 static void
-tstoreSetupReceiver(DestReceiver *self, int operation,
-					const char *portalname,
-					TupleDesc typeinfo, List *targetlist)
+tstoreStartupReceiver(DestReceiver *self, int operation,
+					  const char *portalname,
+					  TupleDesc typeinfo, List *targetlist)
 {
-	TStoreState *myState = (TStoreState *) self;
-
-	/* Should only be called within a suitably-prepped portal */
-	if (CurrentPortal == NULL ||
-		CurrentPortal->holdStore == NULL)
-		elog(ERROR, "Tuplestore destination used in wrong context");
-
-	/* Debug check: make sure portal's result tuple desc is correct */
-	Assert(CurrentPortal->tupDesc != NULL);
-	Assert(equalTupleDescs(CurrentPortal->tupDesc, typeinfo));
-
-	myState->tstore = CurrentPortal->holdStore;
-	myState->cxt = CurrentPortal->holdContext;
+	/* do nothing */
 }
 
 /*
@@ -73,28 +53,40 @@ tstoreReceiveTuple(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 }
 
 /*
- * Clean up
+ * Clean up at end of an executor run
  */
 static void
-tstoreCleanupReceiver(DestReceiver *self)
+tstoreShutdownReceiver(DestReceiver *self)
 {
 	/* do nothing */
+}
+
+/*
+ * Destroy receiver when done with it
+ */
+static void
+tstoreDestroyReceiver(DestReceiver *self)
+{
+	pfree(self);
 }
 
 /*
  * Initially create a DestReceiver object.
  */
 DestReceiver *
-tstoreReceiverCreateDR(void)
+CreateTuplestoreDestReceiver(Tuplestorestate *tStore,
+							 MemoryContext tContext)
 {
 	TStoreState *self = (TStoreState *) palloc(sizeof(TStoreState));
 
 	self->pub.receiveTuple = tstoreReceiveTuple;
-	self->pub.setup = tstoreSetupReceiver;
-	self->pub.cleanup = tstoreCleanupReceiver;
+	self->pub.startup = tstoreStartupReceiver;
+	self->pub.shutdown = tstoreShutdownReceiver;
+	self->pub.destroy = tstoreDestroyReceiver;
+	self->pub.mydest = Tuplestore;
 
-	self->tstore = NULL;
-	self->cxt = NULL;
+	self->tstore = tStore;
+	self->cxt = tContext;
 
 	return (DestReceiver *) self;
 }

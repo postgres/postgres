@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.14 2003/05/05 00:44:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.15 2003/05/06 20:26:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,9 +23,9 @@
 
 #include <limits.h>
 
-#include "miscadmin.h"
 #include "commands/portalcmds.h"
 #include "executor/executor.h"
+#include "executor/tstoreReceiver.h"
 #include "optimizer/planner.h"
 #include "rewrite/rewriteHandler.h"
 #include "tcop/pquery.h"
@@ -37,7 +37,7 @@
  *		Execute SQL DECLARE CURSOR command.
  */
 void
-PerformCursorOpen(DeclareCursorStmt *stmt, CommandDest dest)
+PerformCursorOpen(DeclareCursorStmt *stmt)
 {
 	List	   *rewritten;
 	Query	   *query;
@@ -142,9 +142,10 @@ PerformCursorOpen(DeclareCursorStmt *stmt, CommandDest dest)
  */
 void
 PerformPortalFetch(FetchStmt *stmt,
-				   CommandDest dest,
+				   DestReceiver *dest,
 				   char *completionTag)
 {
+	DestReceiver *mydest = dest;
 	Portal		portal;
 	long		nprocessed;
 
@@ -168,7 +169,7 @@ PerformPortalFetch(FetchStmt *stmt,
 	}
 
 	/*
-	 * Adjust dest if needed.  MOVE wants dest = None.
+	 * Adjust dest if needed.  MOVE wants destination None.
 	 *
 	 * If fetching from a binary cursor and the requested destination is
 	 * Remote, change it to RemoteInternal.  Note we do NOT change if the
@@ -176,21 +177,26 @@ PerformPortalFetch(FetchStmt *stmt,
 	 * specification wins out over the cursor's type.
 	 */
 	if (stmt->ismove)
-		dest = None;
-	else if (dest == Remote && (portal->cursorOptions & CURSOR_OPT_BINARY))
-		dest = RemoteInternal;
+		mydest = CreateDestReceiver(None);
+	else if (dest->mydest == Remote &&
+			 (portal->cursorOptions & CURSOR_OPT_BINARY))
+		mydest = CreateDestReceiver(RemoteInternal);
 
 	/* Do it */
 	nprocessed = PortalRunFetch(portal,
 								stmt->direction,
 								stmt->howMany,
-								dest);
+								mydest);
 
 	/* Return command status if wanted */
 	if (completionTag)
 		snprintf(completionTag, COMPLETION_TAG_BUFSIZE, "%s %ld",
 				 stmt->ismove ? "MOVE" : "FETCH",
 				 nprocessed);
+
+	/* Clean up if we created a local destination */
+	if (mydest != dest)
+		(mydest->destroy) (mydest);
 }
 
 /*
@@ -244,21 +250,6 @@ PortalCleanup(Portal portal, bool isError)
 	AssertArg(portal->cleanup == PortalCleanup);
 
 	/*
-	 * Delete tuplestore if present.  (Note: portalmem.c is responsible
-	 * for removing holdContext.)  We should do this even under error
-	 * conditions; since the tuplestore would have been using cross-
-	 * transaction storage, its temp files need to be explicitly deleted.
-	 */
-	if (portal->holdStore)
-	{
-		MemoryContext oldcontext;
-
-		oldcontext = MemoryContextSwitchTo(portal->holdContext);
-		tuplestore_end(portal->holdStore);
-		MemoryContextSwitchTo(oldcontext);
-		portal->holdStore = NULL;
-	}
-	/*
 	 * Shut down executor, if still running.  We skip this during error
 	 * abort, since other mechanisms will take care of releasing executor
 	 * resources, and we can't be sure that ExecutorEnd itself wouldn't fail.
@@ -284,7 +275,6 @@ void
 PersistHoldablePortal(Portal portal)
 {
 	QueryDesc *queryDesc = PortalGetQueryDesc(portal);
-	Portal		saveCurrentPortal;
 	MemoryContext savePortalContext;
 	MemoryContext saveQueryContext;
 	MemoryContext oldcxt;
@@ -294,26 +284,22 @@ PersistHoldablePortal(Portal portal)
 	 * inside the transaction that originally created it.
 	 */
 	Assert(portal->createXact == GetCurrentTransactionId());
-	Assert(portal->holdStore == NULL);
 	Assert(queryDesc != NULL);
 	Assert(portal->portalReady);
 	Assert(!portal->portalDone);
 
 	/*
-	 * This context is used to store the tuple set.
-	 * Caller must have created it already.
+	 * Caller must have created the tuplestore already.
 	 */
 	Assert(portal->holdContext != NULL);
-	oldcxt = MemoryContextSwitchTo(portal->holdContext);
-
-	/* XXX: Should SortMem be used for this? */
-	portal->holdStore = tuplestore_begin_heap(true, true, SortMem);
+	Assert(portal->holdStore != NULL);
 
 	/*
-	 * Before closing down the executor, we must copy the tupdesc, since
-	 * it was created in executor memory.  Note we are copying it into
-	 * the holdContext.
+	 * Before closing down the executor, we must copy the tupdesc into
+	 * long-term memory, since it was created in executor memory.
 	 */
+	oldcxt = MemoryContextSwitchTo(portal->holdContext);
+
 	portal->tupDesc = CreateTupleDescCopy(portal->tupDesc);
 
 	MemoryContextSwitchTo(oldcxt);
@@ -326,10 +312,8 @@ PersistHoldablePortal(Portal portal)
 	portal->portalActive = true;
 
 	/*
-	 * Set global portal and context pointers.
+	 * Set global portal context pointers.
 	 */
-	saveCurrentPortal = CurrentPortal;
-	CurrentPortal = portal;
 	savePortalContext = PortalContext;
 	PortalContext = PortalGetHeapMemory(portal);
 	saveQueryContext = QueryContext;
@@ -344,11 +328,15 @@ PersistHoldablePortal(Portal portal)
 	 */
 	ExecutorRewind(queryDesc);
 
-	/* Set the destination to output to the tuplestore */
-	queryDesc->dest = Tuplestore;
+	/* Change the destination to output to the tuplestore */
+	queryDesc->dest = CreateTuplestoreDestReceiver(portal->holdStore,
+												   portal->holdContext);
 
 	/* Fetch the result set into the tuplestore */
 	ExecutorRun(queryDesc, ForwardScanDirection, 0L);
+
+	(*queryDesc->dest->destroy) (queryDesc->dest);
+	queryDesc->dest = NULL;
 
 	/*
 	 * Now shut down the inner executor.
@@ -359,7 +347,6 @@ PersistHoldablePortal(Portal portal)
 	/* Mark portal not active */
 	portal->portalActive = false;
 
-	CurrentPortal = saveCurrentPortal;
 	PortalContext = savePortalContext;
 	QueryContext = saveQueryContext;
 
