@@ -1743,7 +1743,7 @@ In general, however, v6.4 should be slightly faster than the previous release (t
 <Para>
 <ProgramListing>
   Time   System
-  02:35  Dual Pentium Pro 180, 96MB, UW-SCSI, Linux 2.0.30, gcc 2.7.2.1 -O2 -m486
+  02:26  Dual Pentium Pro 180, 96MB, UW-SCSI, Linux 2.0.30, gcc 2.7.2.1 -O2 -m486
 </ProgramListing>
 
 <Sect2>
