@@ -10,12 +10,12 @@
 # databases they can access.  Records take one of seven forms:
 #
 # local      DATABASE  USER  METHOD  [OPTION]
-# host       DATABASE  USER  IP-ADDRESS  IP-MASK   METHOD  [OPTION]
-# hostssl    DATABASE  USER  IP-ADDRESS  IP-MASK   METHOD  [OPTION]
-# hostnossl  DATABASE  USER  IP-ADDRESS  IP-MASK   METHOD  [OPTION]
-# host       DATABASE  USER  IP-ADDRESS/CIDR-MASK  METHOD  [OPTION]
-# hostssl    DATABASE  USER  IP-ADDRESS/CIDR-MASK  METHOD  [OPTION]
-# hostnossl  DATABASE  USER  IP-ADDRESS/CIDR-MASK  METHOD  [OPTION]
+# host       DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTION]
+# hostssl    DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTION]
+# hostnossl  DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTION]
+# host       DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTION]
+# hostssl    DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTION]
+# hostnossl  DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTION]
 #
 # (The uppercase quantities should be replaced by actual values.)
 # The first field is the connection type: "local" is a Unix-domain socket,
@@ -24,16 +24,21 @@
 # DATABASE can be "all", "sameuser", "samegroup", a database name (or
 # a comma-separated list thereof), or a file name prefixed with "@".
 # USER can be "all", an actual user name or a group name prefixed with
-# "+" or a list containing either.  IP-ADDRESS and IP-MASK specify the
-# set of hosts the record matches.  CIDR-MASK is an integer between 0
-# and 32 (IPv6) or 128(IPv6) inclusive, that specifies the number of
-# significant bits in the mask, so an IPv4 CIDR-MASK of 8 is equivalent
-# to an IP-MASK of 255.0.0.0, and an IPv6 CIDR-MASK of 64 is equivalent
-# to an IP-MASK of ffff:ffff:ffff:ffff::. METHOD can be "trust", "reject",
-# "md5", "crypt", "password", "krb4", "krb5", "ident", or "pam".  Note
-# that "password" uses clear-text passwords; "md5" is preferred for
-# encrypted passwords.  OPTION is the ident map or the name of the PAM
-# service.
+# "+" or a list containing either.
+#
+# CIDR-ADDRESS specifies the set of hosts the record matches.
+# It is made up of an IP address and a CIDR mask that is an integer 
+# between 0 and 32 (IPv6) or 128(IPv6) inclusive, that specifies 
+# the number of significant bits in the mask, e.g. an IPv4 CIDR mask
+# of 8 is equivalent to an IP mask of 255.0.0.0, an IPv6 CIDR mask 
+# of 64 is equivalent to an IP mask of ffff:ffff:ffff:ffff::. A 
+# IPv4 CIDR mask of 32 is used for single hosts. Also, you can use a 
+# separate IP address and netmask to specify the set of hosts.
+#
+# METHOD can be "trust", "reject", "md5", "crypt", "password", 
+# "krb4", "krb5", "ident", or "pam".  Note that "password" uses 
+# clear-text passwords; "md5" is preferred for encrypted passwords.  
+# OPTION is the ident map or the name of the PAM service.
 #
 # Database and user names containing spaces, commas, quotes and other special
 # characters can be quoted. Quoting one of the keywords "all", "sameuser" or
@@ -56,10 +61,10 @@
 
 @authcomment@
 
-# TYPE  DATABASE    USER        IP-ADDRESS        IP-MASK           METHOD
+# TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
 
-local   all         all                                             @authmethod@
+local   all         all                               @authmethod@
 # IPv4-style local connections:
-host    all         all         127.0.0.1/32                        @authmethod@
+host    all         all         127.0.0.1/32          @authmethod@
 # IPv6-style local connections:
-host    all         all         ::1/128                             @authmethod@
+host    all         all         ::1/128               @authmethod@
