@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.6 1996/08/06 16:16:50 scrappy Exp $
+ * $Id: libpq-fe.h,v 1.7 1996/08/13 01:34:29 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,6 +83,9 @@ typedef struct pgresAttDesc {
    For binary tuples, the first four bytes of the value is the size,
    and the bytes afterwards are the value.  The binary value is 
    not guaranteed to be null-terminated.  In fact, it can have embedded nulls*/
+
+#define NULL_LEN	(-1)	/* pg_result len for NULL value */
+
 typedef struct pgresAttValue {
   int len; /* length in bytes of the value */
   char *value; /* actual value */
@@ -178,6 +181,7 @@ extern char* PQcmdStatus(PGresult *res);
 extern const char* PQoidStatus(PGresult *res);
 extern char* PQgetvalue(PGresult *res, int tup_num, int field_num);
 extern int PQgetlength(PGresult *res, int tup_num, int field_num);
+extern int PQgetisnull(PGresult *res, int tup_num, int field_num);
 extern void PQclear(PGresult* res);
 /* PQdisplayTuples() is a better version of PQprintTuples() */
 extern void PQdisplayTuples(PGresult *res,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.14 1996/08/10 00:22:48 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.15 1996/08/13 01:34:27 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,11 +156,9 @@ getTuple(PGconn *conn, PGresult* result, int binary)
   for (i=0;i<nfields;i++) {
     if (!(bmap & 0200)) {
 	/* if the field value is absent, make it '\0' */
-	/* XXX this makes it impossible to distinguish NULL 
-	   attributes from "".  Is that OK?   */
 	tup[i].value = (char*)malloc(1);
 	tup[i].value[0] = '\0';
-	tup[i].len = 0;
+	tup[i].len = NULL_LEN;
     }
     else {
       /* get the value length (the first four bytes are for length) */
@@ -1469,6 +1467,35 @@ PQgetlength(PGresult *res, int tup_num, int field_num)
 		"PQgetlength: ERROR! field %d(of %d) of tuple %d(of %d) is not available", 
 		field_num, res->numAttributes - 1, tup_num, res->ntups);
     }
-	
-    return res->tuples[tup_num][field_num].len;
+
+    if (res->tuples[tup_num][field_num].len != NULL_LEN)
+	return res->tuples[tup_num][field_num].len;
+    else
+	return 0;
   }
+
+/* PQgetisnull:
+     returns the null status of a field value.
+*/
+int
+PQgetisnull(PGresult *res, int tup_num, int field_num)
+{
+    if (!res) {
+      fprintf(stderr, "PQgetisnull() -- pointer to PQresult is null");
+        return (int)NULL;
+    }
+
+    if (tup_num > (res->ntups - 1 )||
+	field_num > (res->numAttributes - 1))  {
+	fprintf(stderr,
+		"PQgetisnull: ERROR! field %d(of %d) of tuple %d(of %d) is not available", 
+		field_num, res->numAttributes - 1, tup_num, res->ntups);
+    }
+
+    if (res->tuples[tup_num][field_num].len == NULL_LEN)
+	return 1;
+    else
+	return 0;
+  }
+
+
