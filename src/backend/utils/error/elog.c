@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.6 1996/10/13 18:39:41 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.7 1996/10/31 10:23:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,9 +49,9 @@ elog(int lev, const char *fmt, ... )
     register char	*bp;
     register const char *cp;
     extern	int	errno, sys_nerr;
-#if !defined(PORTNAME_BSD44_derived) && \
-    !defined(PORTNAME_bsdi) && \
-    !defined(PORTNAME_bsdi_2_1)
+#if !defined(BSD44_derived) && \
+    !defined(bsdi) && \
+    !defined(bsdi_2_1)
     extern	char	*sys_errlist[];
 #endif /* bsd derived */
 #ifndef PG_STANDALONE

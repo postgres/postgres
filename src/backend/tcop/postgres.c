@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.11 1996/10/30 21:18:22 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.12 1996/10/31 10:20:56 scrappy Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -16,11 +16,11 @@
  *-------------------------------------------------------------------------
  */
 #include "libpq/pqsignal.h"	/* substitute for <signal.h> */
-#if defined(PORTNAME_linux)
+#if defined(linux)
 #ifndef __USE_POSIX
 #define __USE_POSIX
 #endif
-#endif /* defined(PORTNAME_linux) */
+#endif /* defined(linux) */
 #include <setjmp.h>
 #include <stdio.h>
 #include <string.h>
@@ -31,9 +31,9 @@
 #include <netdb.h>		/* for MAXHOSTNAMELEN on some */
 #endif
 #include <errno.h>
-#ifdef PORTNAME_aix
+#ifdef aix
 #include <sys/select.h>
-#endif /* PORTNAME_aix */
+#endif /* aix */
 
 
 #include "postgres.h"
@@ -104,13 +104,13 @@ static bool	IsEmptyQuery = false;
 Relation	reldesc;		/* current relation descritor */
 char		relname[80];		/* current relation name */
 
-#if defined(WIN32) || defined(PORTNAME_next)
+#if defined(WIN32) || defined(next)
 jmp_buf    Warn_restart;
 #define sigsetjmp(x,y)  setjmp(x)
 #define siglongjmp longjmp
 #else
 sigjmp_buf Warn_restart;
-#endif /*defined(WIN32) || defined(PORTNAME_next) */
+#endif /*defined(WIN32) || defined(next) */
 int InWarn;
 
 extern int	NBuffers;
@@ -1265,7 +1265,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
 	puts("\nPOSTGRES backend interactive interface");
-	puts("$Revision: 1.11 $ $Date: 1996/10/30 21:18:22 $");
+	puts("$Revision: 1.12 $ $Date: 1996/10/31 10:20:56 $");
     }
     
     /* ----------------

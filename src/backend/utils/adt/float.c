@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.5 1996/10/26 05:03:24 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.6 1996/10/31 10:23:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1229,7 +1229,7 @@ double x;
 
 #ifdef NEED_ISINF
 
-#if defined(PORTNAME_aix)
+#if defined(aix)
 #ifdef CLASS_CONFLICT
 /* we want the math symbol */
 #undef class
@@ -1245,9 +1245,9 @@ static int isinf(x)
 	return(-1);
     return(0);
 }
-#endif /* PORTNAME_aix */
+#endif /* aix */
 
-#if defined(PORTNAME_ultrix4)
+#if defined(ultrix4)
 #include <fp_class.h>
 static int isinf(x)
      double x;
@@ -1259,9 +1259,9 @@ static int isinf(x)
 	return(-1);
     return(0);
 }
-#endif /* PORTNAME_ultrix4 */
+#endif /* ultrix4 */
 
-#if defined(PORTNAME_alpha)
+#if defined(alpha)
 #include <fp_class.h>
 static int isinf(x)
      double x;
@@ -1273,9 +1273,9 @@ static int isinf(x)
 	return(-1);
     return(0);
 }
-#endif /* PORTNAME_alpha */
+#endif /* alpha */
 
-#if defined(sparc_solaris) || defined(i386_solaris)  || defined(PORTNAME_svr4)
+#if defined(sparc_solaris) || defined(i386_solaris)  || defined(svr4)
 #include <ieeefp.h>
 static int
     isinf(d)
@@ -1294,9 +1294,9 @@ double d;
     
     return (0);
 }
-#endif /* PORTNAME_sparc_solaris */
+#endif /* sparc_solaris */
 
-#if defined(PORTNAME_irix5)
+#if defined(irix5)
 #include <ieeefp.h>
 static int
     isinf(d)
@@ -1315,6 +1315,6 @@ double d;
     
     return (0);
 }
-#endif /* PORTNAME_irix5 */
+#endif /* irix5 */
 
 #endif /* NEED_ISINF */

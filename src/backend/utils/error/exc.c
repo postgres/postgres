@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.3 1996/07/22 21:58:28 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.4 1996/10/31 10:23:28 scrappy Exp $
  *
  * NOTE
  *    XXX this code needs improvement--check for state violations and
@@ -90,9 +90,9 @@ ExcPrint(Exception *excP,
 {
     extern	int	errno;
     extern	int	sys_nerr;
-#if !defined(PORTNAME_BSD44_derived) && \
-    !defined(PORTNAME_bsdi) && \
-    !defined(PORTNAME_bsdi_2_1)
+#if !defined(BSD44_derived) && \
+    !defined(bsdi) && \
+    !defined(bsdi_2_1)
     extern	char	*sys_errlist[];
 #endif /* ! bsd_derived */
     
