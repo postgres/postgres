@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.15 1996/11/13 20:48:55 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.16 1996/11/26 03:17:45 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,8 @@
 
 #include "optimizer/clauses.h"
 #include "access/heapam.h"
+
+#include "port-protos.h"        /* strdup() */
 
 /* convert the parse tree into a query tree */
 static Query *transformStmt(ParseState *pstate, Node *stmt);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.33 1996/11/24 04:44:24 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.34 1996/11/26 03:19:58 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,8 +23,8 @@
 #include "postgres.h"
 #include "libpq-fe.h"
 #include "stringutils.h"
-
 #include "psqlHelp.h"
+#include <port-protos.h> /* for strdup() */
 
 #ifdef NOREADLINE
 #include "rlstubs.h"

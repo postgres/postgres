@@ -37,6 +37,8 @@
  *	@(#)utils.h	8.3 (Berkeley) 3/20/94
  */
 
+#include "config.h"  /* HAVE_MEMMOVE */
+
 /* utility definitions */
 #define	DUPMAX		100000000	/* xxx is this right? */
 #define	INFINITY	(DUPMAX + 1)

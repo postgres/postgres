@@ -4,7 +4,7 @@
 
 .include <postgres.global.mk>
 
-CFLAGS+= -I${.CURDIR}/../../backend/tmp
+CFLAGS+= -I${.CURDIR}/../../backend/tmp -I${.CURDIR}/../../backend/port/${PORTNAME}
 
 PROG= pg4_dump
 

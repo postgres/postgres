@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.7 1996/10/07 03:30:40 scrappy Exp $
+ * $Id: pg_dump.h,v 1.8 1996/11/26 03:19:49 bryanh Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -158,7 +158,6 @@ extern void flagInhAttrs(TableInfo* tbinfo, int numTables,
 			   InhInfo* inhinfo, int numInherits);
 
 extern void check_conn_and_db(void);
-extern char* dupstr(const char *s);
 extern int strInArray(const char* pattern, char** arr, int arr_size);
 extern void parseArgTypes(char **argtypes, const char* str);
 extern int isArchiveName(const char*);

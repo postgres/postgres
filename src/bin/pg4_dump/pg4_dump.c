@@ -36,6 +36,7 @@
 #include "tmp/postgres.h"
 #include "tmp/libpq-fe.h"
 #include "libpq/auth.h"
+#include <port-protos.h> /* for strdup () */
 
 #include "pg_dump.h"
 

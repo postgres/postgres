@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.16 1996/11/20 22:32:55 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.17 1996/11/26 03:19:45 bryanh Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -54,6 +54,7 @@
 #include "postgres.h"
 #include "access/htup.h"
 #include "libpq-fe.h"
+#include <port-protos.h> /* for strdup() */
 
 #include "pg_dump.h"
 

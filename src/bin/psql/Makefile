@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.13 1996/11/13 10:35:26 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.14 1996/11/26 03:19:54 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,7 +16,8 @@ include ../../Makefile.global
 
 INCLUDE_OPT:= \
                -I$(LIBPQDIR) \
-               -I../../include
+               -I../../include \
+               -I../../backend/port/$(PORTNAME)
 
 CFLAGS+= $(INCLUDE_OPT)
 #

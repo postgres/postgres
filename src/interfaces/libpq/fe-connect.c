@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.19 1996/11/14 10:25:50 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.20 1996/11/26 03:20:35 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,11 +30,12 @@
 #include "fe-auth.h"
 #include "libpq-fe.h"
 
+#include <port-protos.h>  /* for strdup() */
+
 #if defined(ultrix4) || defined(next)
   /* ultrix is lame and doesn't have strdup in libc for some reason */
  /* [TRH] So doesn't NEXTSTEP.  But whaddaya expect for a non-ANSI  
 standard function? (My, my. Touchy today, are we?) */
-static
 char *
 strdup(const char *string)
 {

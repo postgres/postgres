@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dl.h,v 1.2 1996/11/14 20:08:57 scrappy Exp $
+ * $Id: dl.h,v 1.3 1996/11/26 03:18:46 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 #ifndef _DL_HEADER_
 #define _DL_HEADER_
 
+#include <stdio.h> /* needed to declare FILE for ldfcn.h */
 #include <filehdr.h>
 #include <syms.h>
 #include <ldfcn.h>

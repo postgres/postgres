@@ -7,14 +7,18 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/port/ultrix4/Attic/strdup.c,v 1.1.1.1 1996/07/09 06:21:45 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/port/ultrix4/Attic/strdup.c,v 1.2 1996/11/26 03:19:04 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 
+#include <utils/palloc.h>
+
+#include "port-protos.h"
+
 char *
-strdup(char *string)
+strdup(char const *string)
 {
     char *nstr;
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dynamic_loader.h,v 1.2 1996/11/04 08:14:05 scrappy Exp $
+ * $Id: dynamic_loader.h,v 1.3 1996/11/26 03:20:17 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,8 @@
 #define DYNAMIC_LOADER_H
 
 #include <sys/types.h>
+
+#include <postgres.h>
 
 #ifdef MIN
 #undef MIN

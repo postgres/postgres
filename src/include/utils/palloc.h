@@ -6,12 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: palloc.h,v 1.2 1996/10/31 09:51:28 scrappy Exp $
+ * $Id: palloc.h,v 1.3 1996/11/26 03:20:23 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	PALLOC_H
 #define PALLOC_H
+
+#include <c.h>
 
 extern void*   palloc(Size size);
 extern void    pfree(void *pointer); 

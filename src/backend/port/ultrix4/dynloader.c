@@ -9,13 +9,14 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/port/ultrix4/Attic/dynloader.c,v 1.2 1996/11/14 20:08:58 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/port/ultrix4/Attic/dynloader.c,v 1.3 1996/11/26 03:18:50 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
 #include <postgres.h>
 #include "dl.h"
+#include <utils/dynamic_loader.h>
 #include "c.h"
 #include "fmgr.h"
 #include "port-protos.h"

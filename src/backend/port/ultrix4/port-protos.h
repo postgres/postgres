@@ -6,15 +6,12 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.1.1.1 1996/07/09 06:21:45 scrappy Exp $
+ * $Id: port-protos.h,v 1.2 1996/11/26 03:18:58 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PORT_PORTOS_H
 #define PORT_PORTOS_H
-
-#include "utils/dynamic_loader.h"
-#include "dl.h"
 
 /* dynloader.c */
 /*
@@ -32,5 +29,8 @@
 /* port.c */
 
 extern void init_address_fixup(void);
+
+/* strdup.c: strdup() is not part of libc on Ultrix */
+extern char* strdup(char const*);
 
 #endif 	/* PORT_PORTOS_H */

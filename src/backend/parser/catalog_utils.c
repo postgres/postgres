@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.10 1996/11/13 20:48:58 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.11 1996/11/26 03:17:47 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,8 @@
 #include "storage/bufmgr.h"
 #include "utils/lsyscache.h"
 #include "storage/lmgr.h"
+
+#include "port-protos.h"              /* strdup() */
 
 struct {
     char *field;

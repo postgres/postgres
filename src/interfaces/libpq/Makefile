@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.18 1996/11/17 19:27:38 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.19 1996/11/26 03:20:33 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ SRCDIR= ..
 include ../Makefile.global
 
 # We need the backend directory here for its fmgr.h
-INCLUDE_OPT= -I../include -I../backend
+INCLUDE_OPT= -I../include -I../backend -I../backend/port/$(PORTNAME)
 
 CFLAGS+= $(INCLUDE_OPT) 
 
@@ -73,7 +73,7 @@ postgres.h: ../include/postgres.h
 	echo "#define NAMEDATALEN $(NAMEDATALEN)" >> postgres.h
 	echo "#define OIDNAMELEN $(OIDNAMELEN)" >> postgres.h
 	cat ../include/postgres.h >> postgres.h
-	
+
 c.h: ../include/c.h
 	rm -f c.h
 	echo "#undef PORTNAME" >  c.h
