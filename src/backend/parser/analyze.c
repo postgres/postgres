@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.161 2000/10/07 00:58:17 tgl Exp $
+ *	$Id: analyze.c,v 1.162 2000/11/04 18:29:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -965,6 +965,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 		foreach(keys, constraint->keys)
 		{
+			int found=0;
 			key = (Ident *) lfirst(keys);
 			Assert(IsA(key, Ident));
 			column = NULL;
@@ -975,14 +976,44 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 				if (strcmp(column->colname, key->name) == 0)
 					break;
 			}
-			if (columns == NIL) /* fell off end of list? */
+			if (columns == NIL) { /* try inherited tables */
+				List *inher;
+				List *inhRelnames=stmt->inhRelnames;
+				Relation rel;
+				foreach (inher, inhRelnames) {
+					int count=0;
+					Value *inh=lfirst(inher);
+					if (inh->type!=T_String) {
+						elog(ERROR, "inherited table name list returns a non-string");
+					}
+					rel=heap_openr(inh->val.str, AccessShareLock);
+					if (rel->rd_rel->relkind != RELKIND_RELATION)
+						elog(ERROR, "inherited table \"%s\" is not a relation",
+							inh->val.str);
+					for (; count<rel->rd_att->natts; count++) {
+						char *name=NameStr(rel->rd_att->attrs[count]->attname);
+						if (strcmp(key->name, name) == 0) {
+							found=1;
+							break;
+						}
+					}
+					heap_close(rel, NoLock);
+					if (found)
+						break;
+				}
+			}
+			else {
+				found=1;
+			}
+
+			if (!found)
 				elog(ERROR, "CREATE TABLE: column '%s' named in key does not exist",
 					 key->name);
 
 			if (constraint->contype == CONSTR_PRIMARY)
 				column->is_not_null = TRUE;
 			iparam = makeNode(IndexElem);
-			iparam->name = pstrdup(column->colname);
+			iparam->name = pstrdup(key->name);
 			iparam->args = NIL;
 			iparam->class = NULL;
 			index->indexParams = lappend(index->indexParams, iparam);
@@ -1112,8 +1143,37 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					if (!found)
 						break;
 				}
+				if (!found) { /* try inherited tables */
+					List *inher;
+					List *inhRelnames=stmt->inhRelnames;
+					Relation rel;
+					foreach (inher, inhRelnames) {
+						int count=0;
+						Value *inh=lfirst(inher);
+						if (inh->type!=T_String) {
+								elog(ERROR, "inherited table name list returns a non-string");
+						}
+						rel=heap_openr(inh->val.str, AccessShareLock);
+						if (rel->rd_rel->relkind != RELKIND_RELATION)
+							elog(ERROR, "inherited table \"%s\" is not a relation",
+								inh->val.str);
+						for (; count<rel->rd_att->natts; count++) {
+							char *name=NameStr(rel->rd_att->attrs[count]->attname);
+							if (strcmp(fkattr->name, name) == 0) {
+								found=1;
+								break;
+							}
+						}
+						heap_close(rel, NoLock);
+						if (found)
+							break;
+					}
+				}
+				else {
+					found=1;
+				}
 				if (!found)
-					elog(ERROR, "columns referenced in foreign key constraint not found.");
+					elog(ERROR, "columns in foreign key table of constraint not found.");
 			}
 
 			/*
