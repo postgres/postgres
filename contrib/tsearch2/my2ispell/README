@@ -1,0 +1,12 @@
+Utility for convert MySpell dictionary and affix from
+myspell to ispell format.
+Utility tested on nb_NO.zip and nn_NO.zip from
+OpenOffice (http://lingucomponent.openoffice.org/download_dictionary.html)
+
+usage:
+For example, make norwegian dictionary and affix:
+% cp nb_NO.zip my2ispell
+% cd my2ispell
+% gmake ZIPFILE=nb_NO LANGUAGE=norsk 
+
+Author: Teodor Sigaev <teodor@sigaev.ru>
