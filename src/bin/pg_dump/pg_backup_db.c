@@ -44,6 +44,7 @@ _prompt_for_password(char *username, char *password)
 {
 	char		buf[512];
 	int			length;
+	int			buflen;
 
 #ifdef HAVE_TERMIOS_H
 	struct termios t_orig,
@@ -57,15 +58,18 @@ _prompt_for_password(char *username, char *password)
 	{
 		fprintf(stderr, "Username: ");
 		fflush(stderr);
-		fgets(username, 100, stdin);
+		if (fgets(username, 100, stdin) == NULL)
+			username[0] = '\0';
 		length = strlen(username);
-		/* skip rest of the line */
 		if (length > 0 && username[length - 1] != '\n')
 		{
+			/* eat rest of the line */
 			do
 			{
-				fgets(buf, 512, stdin);
-			} while (buf[strlen(buf) - 1] != '\n');
+				if (fgets(buf, sizeof(buf), stdin) == NULL)
+					break;
+				buflen = strlen(buf);
+			} while (buflen > 0 && buf[buflen - 1] != '\n');
 		}
 		if (length > 0 && username[length - 1] == '\n')
 			username[length - 1] = '\0';
@@ -79,19 +83,22 @@ _prompt_for_password(char *username, char *password)
 #endif
 	fprintf(stderr, "Password: ");
 	fflush(stderr);
-	fgets(password, 100, stdin);
+	if (fgets(password, 100, stdin) == NULL)
+		password[0] = '\0';
 #ifdef HAVE_TERMIOS_H
 	tcsetattr(0, TCSADRAIN, &t_orig);
 #endif
 
 	length = strlen(password);
-	/* skip rest of the line */
 	if (length > 0 && password[length - 1] != '\n')
 	{
+		/* eat rest of the line */
 		do
 		{
-			fgets(buf, 512, stdin);
-		} while (buf[strlen(buf) - 1] != '\n');
+			if (fgets(buf, sizeof(buf), stdin) == NULL)
+				break;
+			buflen = strlen(buf);
+		} while (buflen > 0 && buf[buflen - 1] != '\n');
 	}
 	if (length > 0 && password[length - 1] == '\n')
 		password[length - 1] = '\0';
