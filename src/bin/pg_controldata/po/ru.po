@@ -1,19 +1,19 @@
 # ru.po
 # PG_CONTROLDATA Translated Messages into the Russian Language (KOI8-R)
 #
-# $PostgreSQL: pgsql/src/bin/pg_controldata/po/ru.po,v 1.9 2004/08/10 18:42:19 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_controldata/po/ru.po,v 1.10 2004/08/13 16:34:23 petere Exp $
 #
 # ChangeLog:
-#   - March 27 - August 7, 2004: Update for 8.0; <mokhov@cs.concordia.ca>
-#   - July 24 - August 23, 2003: Update for 7.4.*; <mokhov@cs.concordia.ca>
+#   - March 27 - August 11, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
+#   - July 24 - August 23, 2003: Updates for 7.4.*; <mokhov@cs.concordia.ca>
 #   - September 7, 2002: Complete post 7.3beta1 Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - August 31, 2002: Initial Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-07-17 13:09-0300\n"
-"PO-Revision-Date: 2004-03-27 14:05-0500\n"
+"POT-Creation-Date: 2004-08-11 07:15-0300\n"
+"PO-Revision-Date: 2004-08-11 11:58-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -46,7 +46,7 @@ msgstr ""
 "Опции:\n"
 "  ДИРДАННЫХ      показать информацию по управлению кластера для ДИРДАННЫХ\n"
 "  --help         показать эту подсказку и выйти\n"
-"  --version      показать версию pg_controldata и выйти\n"
+"  --version      показать версию и выйти\n"
 "\n"
 
 #: pg_controldata.c:41
@@ -57,8 +57,8 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Если директория данных не указана, будет использоваться значение переменной\n"
-"окружения PGDATA.\n"
+"Если директория данных не указана, будет использоваться значение\n"
+"переменной окружения PGDATA.\n"
 "\n"
 
 #: pg_controldata.c:42
@@ -178,8 +178,8 @@ msgstr "UNDO последней checkpoint:            %X/%X\n"
 
 #: pg_controldata.c:168
 #, c-format
-msgid "Latest checkpoint's StartUpID:        %u\n"
-msgstr "StartUpID последней checkpoint:       %u\n"
+msgid "Latest checkpoint's TimeLineID:       %u\n"
+msgstr "TimeLineID последней checkpoint:      %u\n"
 
 #: pg_controldata.c:169
 #, c-format
@@ -248,3 +248,4 @@ msgstr "LC_COLLATE:                           %s\n"
 #, c-format
 msgid "LC_CTYPE:                             %s\n"
 msgstr "LC_CTYPE:                             %s\n"
+

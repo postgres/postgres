@@ -1,22 +1,21 @@
 # ru.po
 # PGSCRIPTS Translated Messages into the Russian Language (KOI8-R)
 #
-# $PostgreSQL: pgsql/src/bin/scripts/po/ru.po,v 1.7 2004/08/10 18:42:21 petere Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/po/ru.po,v 1.8 2004/08/13 16:34:31 petere Exp $
 #
 # To the new translator:
 #   PG Russian Translation Discussion Group: <http://groups.yahoo.com/group/pgsql-rus/>
 #   PG Glossary: <http://www.sai.msu.su/~megera/oddmuse/index.cgi?Pgsql_Glossary>
 #
 # ChangeLog:
-#   - May 28 - August 7, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
+#   - May 28 - August 11, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
 #   - July 24 - August 25, 2003: Complete Initial Translation for 7.4.*; Serguei A. Mokhov, <mokhov@cs.concordia.ca>
 #
-
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-07-17 13:11-0300\n"
-"PO-Revision-Date: 2004-08-07 18:30-0500\n"
+"POT-Creation-Date: 2004-08-11 19:17-0300\n"
+"PO-Revision-Date: 2004-08-11 23:41-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -156,6 +155,14 @@ msgstr ""
 "\n"
 "Опции подсоединения:\n"
 
+#: createdb.c:230
+msgid "  -h, --host=HOSTNAME          database server host or socket directory\n"
+msgstr "  -h, --host=ХОСТ              сервер баз данных или директория сокетов\n"
+
+#: createdb.c:231
+msgid "  -p, --port=PORT              database server port\n"
+msgstr "  -p, --port=ПОРТ              порт сервера баз данных\n"
+
 #: createdb.c:232
 msgid "  -U, --username=USERNAME      user name to connect as\n"
 msgstr "  -U, --username=ПОЛЬЗОВАТЕЛЬ  имя пользователя для подсоединения\n"
@@ -210,7 +217,7 @@ msgstr "Доверяемый?"
 #: createlang.c:150
 #: droplang.c:147
 msgid "Procedural Languages"
-msgstr "Процедурные Языки"
+msgstr "Процедурные языки"
 
 #: createlang.c:159
 #: droplang.c:156
@@ -254,7 +261,7 @@ msgstr "  %s [ОПЦИЯ]... ЯЗЫК [ИМЯБД]\n"
 
 #: createlang.c:302
 msgid "  -d, --dbname=DBNAME       database to install language in\n"
-msgstr "  -d, --dbname=ИМЯБД       база в которой установить язык\n"
+msgstr "  -d, --dbname=ИМЯБД        база в которой установить язык\n"
 
 #: clusterdb.c:242
 #: createlang.c:303
@@ -613,7 +620,7 @@ msgstr "%s: ошибка при сборке мусора в таблице \"%s\" в базе \"%s\": %s"
 #: vacuumdb.c:210
 #, c-format
 msgid "%s: vacuuming of database \"%s\" failed: %s"
-msgstr "%s: vacuuming of database \"%s\" failed: %s"
+msgstr "%s: ошибка при сборке базы \"%s\": %s"
 
 #: vacuumdb.c:247
 #, c-format
@@ -680,7 +687,7 @@ msgstr ""
 #: common.c:86
 #: common.c:112
 msgid "Password: "
-msgstr "Пароль:"
+msgstr "Пароль: "
 
 #: common.c:99
 #, c-format
@@ -700,7 +707,7 @@ msgstr "%s: запрос не удался: %s"
 #: common.c:147
 #, c-format
 msgid "%s: query was: %s\n"
-msgstr "%s: запрос: %s\n"
+msgstr "%s: запрос был: %s\n"
 
 #. translator: Make sure the (y/n) prompts match the translation of this.
 #: common.c:161
