@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.52 2001/02/18 17:17:17 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.53 2001/02/19 00:01:18 tgl Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -10,7 +10,7 @@
   <citetitle>Programmer's Guide</citetitle>.  The
   <application>psql</application> commands <command>\df</command> and
   <command>\do</command> can be used to show the list of all actually
-  available function and operators, respectively.
+  available functions and operators, respectively.
  </para>
 
  <para>
@@ -84,6 +84,13 @@
        <entry>FALSE</entry>
        <entry>NULL</entry>
        <entry>FALSE</entry>
+       <entry>NULL</entry>
+      </row>
+
+      <row>
+       <entry>NULL</entry>
+       <entry>NULL</entry>
+       <entry>NULL</entry>
        <entry>NULL</entry>
       </row>
      </tbody>
@@ -218,8 +225,8 @@
    <literal><replaceable>expression</replaceable> = NULL</literal>
    because NULL is not <quote>equal to</quote> NULL.  (NULL represents
    an unknown value, so it is not known whether two unknown values are
-   equal.)  <productname>Postgres</productname> implicitly converts
-   <literal>= NULL</literal> clauses to <literal>IS NULL</literal> to
+   equal.)  <productname>Postgres</productname> presently converts
+   <literal>x = NULL</literal> clauses to <literal>x IS NULL</literal> to
    allow some broken client applications (such as
    <productname>Microsoft Access</productname>) to work, but this may
    be discontinued in a future release.
@@ -309,7 +316,7 @@
 
      <row>
       <entry> <literal>!!</literal> </entry>
-      <entry>Factorial (left operator)</entry>
+      <entry>Factorial (prefix operator)</entry>
       <entry>!! 5</entry>
       <entry>120</entry>
      </row>
