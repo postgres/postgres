@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.6 1999/01/04 11:20:33 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.7 1999/01/04 12:53:23 wieck Exp $
  *
  * ----------
  */
@@ -2377,7 +2377,7 @@ apply_typmod(NumericVar *var, int32 typmod)
 	}
 
 	i = scale + var->weight + 1;
-	if (var->ndigits > i)
+	if (i >= 0 && var->ndigits > i)
 	{
 		long	carry = (var->digits[i] > 4) ? 1 : 0;
 
@@ -2395,6 +2395,10 @@ apply_typmod(NumericVar *var, int32 typmod)
 			var->ndigits++;
 			var->weight++;
 		}
+	}
+	else
+	{
+		var->ndigits = MAX(0, MIN(i, var->ndigits));
 	}
 
 	var->rscale = scale;
