@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.59 2004/10/07 18:57:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.60 2004/10/10 23:37:31 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1881,7 +1881,7 @@ trapsig(int signum)
  * call exit_nicely() if we got a signal, or else output "ok".
  */
 static void
-check_ok()
+check_ok(void)
 {
 	if (caught_signal)
 	{
@@ -2066,7 +2066,7 @@ main(int argc, char *argv[])
 		{"debug", no_argument, NULL, 'd'},
 		{"show", no_argument, NULL, 's'},
 		{"noclean", no_argument, NULL, 'n'},
-		{0, 0, 0, 0}
+		{NULL, 0, NULL, 0}
 	};
 
 	int			c,

@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.7 2004/10/06 17:21:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.8 2004/10/10 23:37:34 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 static char *progname;
 
 static void
-help()
+help(void)
 {
 	printf(_("\n%s provides information about the installed version of PostgreSQL.\n\n"), progname);
 	printf(_("Usage:\n"));
@@ -52,7 +52,7 @@ help()
 }
 
 static void
-advice()
+advice(void)
 {
 	fprintf(stderr, _("\nTry \"%s --help\" for more information\n"), progname);
 }

@@ -97,7 +97,7 @@ ECPGmake_simple_type(enum ECPGttype type, char *size)
 
 	ne->type = type;
 	ne->size = size;
-	ne->u.element = 0;
+	ne->u.element = NULL;
 	ne->struct_sizeof = NULL;
 
 	return ne;
@@ -291,7 +291,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 			if (indicator_set && (ind_type->type == ECPGt_struct || ind_type->type == ECPGt_array))
 				mmerror(INDICATOR_NOT_SIMPLE, ET_FATAL, "Indicator for simple datatype has to be simple.\n");
 
-			ECPGdump_a_simple(o, name, type->type, 0, make_str("-1"), NULL, prefix);
+			ECPGdump_a_simple(o, name, type->type, NULL, make_str("-1"), NULL, prefix);
 			ECPGdump_a_simple(o, ind_name, ind_type->type, ind_type->size, make_str("-1"), NULL, ind_prefix);
 			break;
 		default:

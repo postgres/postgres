@@ -38,10 +38,7 @@
 #include "mb/pg_wchar.h"
 
 int
-pg_wchar_strncmp(s1, s2, n)
-register const pg_wchar *s1,
-		   *s2;
-register size_t n;
+pg_wchar_strncmp(const pg_wchar *s1, const pg_wchar *s2, size_t n)
 {
 	if (n == 0)
 		return 0;
@@ -56,10 +53,7 @@ register size_t n;
 }
 
 int
-pg_char_and_wchar_strncmp(s1, s2, n)
-register const char *s1;
-register const pg_wchar *s2;
-register size_t n;
+pg_char_and_wchar_strncmp(const char *s1, const pg_wchar *s2, size_t n)
 {
 	if (n == 0)
 		return 0;
@@ -74,10 +68,9 @@ register size_t n;
 }
 
 size_t
-pg_wchar_strlen(str)
-const pg_wchar *str;
+pg_wchar_strlen(const pg_wchar *str)
 {
-	register const pg_wchar *s;
+	const pg_wchar *s;
 
 	for (s = str; *s; ++s)
 		;

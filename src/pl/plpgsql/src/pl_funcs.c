@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.37 2004/09/14 23:46:46 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.38 2004/10/10 23:37:45 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -166,7 +166,7 @@ plpgsql_ns_push(char *label)
  * ----------
  */
 void
-plpgsql_ns_pop()
+plpgsql_ns_pop(void)
 {
 	int			i;
 	PLpgSQL_ns *old;
@@ -503,7 +503,7 @@ static void dump_expr(PLpgSQL_expr *expr);
 
 
 static void
-dump_ind()
+dump_ind(void)
 {
 	int			i;
 

@@ -315,7 +315,7 @@ struct variable *
 descriptor_variable(const char *name, int input)
 {
 	static char descriptor_names[2][MAX_DESCRIPTOR_NAMELEN];
-	static const struct ECPGtype descriptor_type = {ECPGt_descriptor, 0};
+	static const struct ECPGtype descriptor_type = {ECPGt_descriptor, NULL};
 	static const struct variable varspace[2] = {
 		{descriptor_names[0], (struct ECPGtype *) & descriptor_type, 0, NULL},
 		{descriptor_names[1], (struct ECPGtype *) & descriptor_type, 0, NULL}

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.241 2004/10/09 23:13:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.242 2004/10/10 23:37:28 neilc Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -4378,7 +4378,7 @@ DefineCustomStringVariable(
 	define_custom_variable(&var->gen);
 }
 
-extern void
+void
 EmitWarningsOnPlaceholders(const char *className)
 {
 	struct config_generic **vars = guc_variables;

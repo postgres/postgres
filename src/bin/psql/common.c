@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.91 2004/09/20 18:51:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.92 2004/10/10 23:37:40 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -268,7 +268,7 @@ handle_sigint(SIGNAL_ARGS)
  * Returns whether our backend connection is still there.
  */
 static bool
-ConnectionUp()
+ConnectionUp(void)
 {
 	return PQstatus(pset.db) != CONNECTION_BAD;
 }
