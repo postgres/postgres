@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon Jan 31 21:31:39 EST 2005</P>
+    <P>Last updated: Mon Jan 31 21:35:15 EST 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)
@@ -1006,7 +1006,7 @@ length</TD></TR>
 
     <P>Use <I>CURRENT_TIMESTAMP</I>:</P>
 <PRE>
-    CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
+    CREATE TABLE test (x int, modtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
 </PRE>
 
     <H4><A name="4.17">4.17</A>) How do I perform an outer join?</H4>
@@ -1031,23 +1031,6 @@ length</TD></TR>
     optional and is assumed in <SMALL>LEFT</SMALL>,
     <SMALL>RIGHT</SMALL>, and <SMALL>FULL</SMALL> joins. Ordinary joins
     are called <SMALL>INNER</SMALL> joins.</P>
-
-    <P>In previous releases, outer joins can be simulated using
-    <SMALL>UNION</SMALL> and <SMALL>NOT IN</SMALL>. For example, when
-    joining <I>tab1</I> and <I>tab2</I>, the following query does an
-    <I>outer</I> join of the two tables:<BR>
-    <BR>
-    </P>
-<PRE>
-    SELECT tab1.col1, tab2.col2
-    FROM tab1, tab2
-    WHERE tab1.col1 = tab2.col1
-    UNION ALL
-    SELECT tab1.col1, NULL
-    FROM tab1
-    WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)
-    ORDER BY col1
-</PRE>
 
     <H4><A name="4.18">4.18</A>) How do I perform queries using
     multiple databases?</H4>

@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Jan 31 21:31:39 EST 2005
+   Last updated: Mon Jan 31 21:35:15 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -781,7 +781,7 @@
     4.16) How do I create a column that will default to the current time?
     
    Use CURRENT_TIMESTAMP:
-    CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
+    CREATE TABLE test (x int, modtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
 
     4.17) How do I perform an outer join?
     
@@ -801,18 +801,6 @@
    is assumed in LEFT, RIGHT, and FULL joins. Ordinary joins are called
    INNER joins.
    
-   In previous releases, outer joins can be simulated using UNION and NOT
-   IN. For example, when joining tab1 and tab2, the following query does
-   an outer join of the two tables:
-    SELECT tab1.col1, tab2.col2
-    FROM tab1, tab2
-    WHERE tab1.col1 = tab2.col1
-    UNION ALL
-    SELECT tab1.col1, NULL
-    FROM tab1
-    WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)
-    ORDER BY col1
-
     4.18) How do I perform queries using multiple databases?
     
    There is no way to query a database other than the current one.
