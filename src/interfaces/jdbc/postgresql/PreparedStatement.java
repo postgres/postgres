@@ -308,24 +308,21 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	public void setDate(int parameterIndex, java.sql.Date x) throws SQLException
 	{
 	  SimpleDateFormat df = new SimpleDateFormat("''"+connection.getDateStyle()+"''");
-	  	  
-	  // Ideally the following should work:
+	  
+	  set(parameterIndex, df.format(x));
+	  
+	  // The above is how the date should be handled.
 	  //
-	  //    set(parameterIndex, df.format(x));
+	  // However, in JDK's prior to 1.1.6 (confirmed with the
+	  // Linux jdk1.1.3 and the Win95 JRE1.1.5), SimpleDateFormat seems
+	  // to format a date to the previous day. So the fix is to add a day
+	  // before formatting.
 	  //
-	  // however, SimpleDateFormat seems to format a date to the previous
-	  // day. So a fix (for now) is to add a day before formatting.
-	  // This needs more people to confirm this is really happening, or
-	  // possibly for us to implement our own formatting code.
+	  // PS: 86400000 is one day
 	  //
-	  // I've tested this with the Linux jdk1.1.3 and the Win95 JRE1.1.5
-	  //
-	  set(parameterIndex, df.format(new java.util.Date(x.getTime()+DAY)));
+	  //set(parameterIndex, df.format(new java.util.Date(x.getTime()+86400000)));
 	}
   
-  // This equates to 1 day
-  private static final int DAY = 86400000;
-
 	/**
 	 * Set a parameter to a java.sql.Time value.  The driver converts
 	 * this to a SQL TIME value when it sends it to the database.

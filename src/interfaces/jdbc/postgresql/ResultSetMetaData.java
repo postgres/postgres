@@ -121,11 +121,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
   {
     String type_name = getField(column).getTypeName();
     
-    if (type_name.equals("cash"))
-      return true;
-    if (type_name.equals("money"))
-      return true;
-    return false;
+    return type_name.equals("cash") || type_name.equals("money");
   }
   
   /**
@@ -214,11 +210,14 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
    *
    * @param column the first column is 1, the second is 2, etc.
    * @return the column name
-   * @exception SQLException if a databvase access error occurs
+   * @exception SQLException if a database access error occurs
    */
   public String getColumnName(int column) throws SQLException
   {
-    return getField(column).name;
+    Field f = getField(column);
+    if(f!=null)
+      return f.name;
+    return "field"+column;
   }
   
   /**
@@ -233,13 +232,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
    */
   public String getSchemaName(int column) throws SQLException
   {
-    String table_name = getTableName(column);
-    
-    // If the table name is invalid, so are we.
-    if (table_name.equals(""))
-      return "";	
-    return "";		// Ok, so I don't know how to
-    // do this as yet.
+    return "";
   }
   
   /**
@@ -328,12 +321,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
    */
   public String getCatalogName(int column) throws SQLException
   {
-    String table_name = getTableName(column);
-    
-    if (table_name.equals(""))
-      return "";
-    return "";		// As with getSchemaName(), this
-    // is just the start of it.
+    return "";
   }
   
   /**

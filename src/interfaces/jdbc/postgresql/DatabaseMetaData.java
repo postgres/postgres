@@ -37,6 +37,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   static final int iInt4Oid = 23;	// OID for int4
   static final int VARHDRSZ =  4;	// length for int4
   
+  // This is a default value for remarks
+  private static final byte defaultRemarks[]="no remarks".getBytes();
+  
   public DatabaseMetaData(Connection conn)
   {
     this.connection = conn;
@@ -170,7 +173,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public String getDatabaseProductVersion() throws SQLException
   {
-    return ("6.3");
+    return ("6.4");
   }
   
   /**
@@ -1473,39 +1476,37 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     Field f[] = new Field[8];
     ResultSet r;	// ResultSet for the SQL query that we need to do
     Vector v = new Vector();		// The new ResultSet tuple stuff
-    String remarks = new String("no remarks");
     
-    f[0] = new Field(connection, new String("PROCEDURE_CAT"), iVarcharOid, 32);
-    f[1] = new Field(connection, new String("PROCEDURE_SCHEM"), iVarcharOid, 32);
-    f[2] = new Field(connection, new String("PROCEDURE_NAME"), iVarcharOid, 32);
-    f[3] = null;
-    f[4] = null;
-    f[5] = null;
-    f[6] = new Field(connection, new String("REMARKS"), iVarcharOid, 8192);
-    f[7] = new Field(connection, new String("PROCEDURE_TYPE"), iInt2Oid, 2);
-    r = connection.ExecSQL("select proname, proretset from pg_proc order by proname");
-    if (r.getColumnCount() != 2 || r.getTupleCount() <= 1)
-      throw new SQLException("Unexpected return from query for procedure list");
+    byte remarks[] = defaultRemarks;
+    
+    f[0] = new Field(connection, "PROCEDURE_CAT",   iVarcharOid, 32);
+    f[1] = new Field(connection, "PROCEDURE_SCHEM", iVarcharOid, 32);
+    f[2] = new Field(connection, "PROCEDURE_NAME",  iVarcharOid, 32);
+    f[3] = f[4] = f[5] = null;	// reserved, must be null for now
+    f[6] = new Field(connection, "REMARKS",	   iVarcharOid, 8192);
+    f[7] = new Field(connection, "PROCEDURE_TYPE", iInt2Oid,	2);
+    
+    // If the pattern is null, then set it to the default
+    if(procedureNamePattern==null)
+      procedureNamePattern="%";
+    
+    r = connection.ExecSQL("select proname, proretset from pg_proc where proname like '"+procedureNamePattern.toLowerCase()+"' order by proname");
+    
     while (r.next())
       {
 	byte[][] tuple = new byte[8][0];
 	
-	String name = r.getString(1);
-	remarks = new String("no remarks");
-	boolean retset = r.getBoolean(2);
-	
 	tuple[0] = null;			// Catalog name
 	tuple[1] = null;			// Schema name
-	tuple[2] = name.getBytes();	// Procedure name
-	tuple[3] = null;			// Reserved
-	tuple[4] = null;			// Reserved
-	tuple[5] = null;			// Reserved
-	tuple[6] = remarks.getBytes();	// Remarks
-	tuple[7] = new byte[1];
-	if (retset)
-	  tuple[7][0] = (byte)java.sql.DatabaseMetaData.procedureReturnsResult;
+	tuple[2] = r.getBytes(1);		// Procedure name
+	tuple[3] = tuple[4] = tuple[5] = null;	// Reserved
+	tuple[6] = remarks;			// Remarks
+	
+	if (r.getBoolean(2))
+	  tuple[7] = Integer.toString(java.sql.DatabaseMetaData.procedureReturnsResult).getBytes();
 	else
-	  tuple[7][0] = (byte)java.sql.DatabaseMetaData.procedureNoResult;
+	  tuple[7] = Integer.toString(java.sql.DatabaseMetaData.procedureNoResult).getBytes();
+	
 	v.addElement(tuple);
       }
     return new ResultSet(connection, f, v, "OK", 1);
@@ -1559,6 +1560,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   // Implementation note: This is required for Borland's JBuilder to work
   public java.sql.ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern, String columnNamePattern) throws SQLException
   {
+    if(procedureNamePattern==null)
+      procedureNamePattern="%";
+    
+    if(columnNamePattern==null)
+      columnNamePattern="%";
+    
     // for now, this returns an empty result set.
     Field f[] = new Field[13];
     ResultSet r;	// ResultSet for the SQL query that we need to do
@@ -1577,6 +1584,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     f[10] = new Field(connection, new String("RADIX"), iInt2Oid, 2);
     f[11] = new Field(connection, new String("NULLABLE"), iInt2Oid, 2);
     f[12] = new Field(connection, new String("REMARKS"), iVarcharOid, 32);
+    
+    // add query loop here
     
     return new ResultSet(connection, f, v, "OK", 1);
   }
@@ -1612,13 +1621,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * @param types a list of table types to include; null returns
    * all types
    * @return each row is a table description      
-   * @exception SQLException if a database-access error occurs.                     
+   * @exception SQLException if a database-access error occurs.
    */
   public java.sql.ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern, String types[]) throws SQLException
   {
     // Handle default value for types
     if(types==null)
       types = defaultTableTypes;
+    
+    if(tableNamePattern==null)
+      tableNamePattern="%";
     
     // the field descriptors for the new ResultSet
     Field f[] = new Field[5];
@@ -1632,7 +1644,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     f[4] = new Field(connection, new String("REMARKS"), iVarcharOid, 32);
     
     // Now form the query
-    StringBuffer sql = new StringBuffer("select relname,oid from pg_class where ");
+    StringBuffer sql = new StringBuffer("select relname,oid from pg_class where (");
     boolean notFirst=false;
     for(int i=0;i<types.length;i++) {
       if(notFirst)
@@ -1644,32 +1656,35 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	}
     }
     
+    // Added by Stefan Andreasen <stefan@linux.kapow.dk>
+    // Now take the pattern into account
+    sql.append(") and relname like '");
+    sql.append(tableNamePattern.toLowerCase());
+    sql.append("'");
+    
     // Now run the query
     r = connection.ExecSQL(sql.toString());
     
-    if (r.getColumnCount() != 2)
-      throw new SQLException("Unexpected return from query for table list");
+    byte remarks[];
     
     while (r.next())
       {
 	byte[][] tuple = new byte[5][0];
 	
-	String name = r.getString(1);
-	String remarks = new String("no remarks");
-	
 	// Fetch the description for the table (if any)
 	ResultSet dr = connection.ExecSQL("select description from pg_description where objoid="+r.getInt(2));
 	if(dr.getTupleCount()==1) {
 	  dr.next();
-	  remarks=dr.getString(1);
-	}
+	  remarks = dr.getBytes(1);
+	} else
+	  remarks = defaultRemarks;
 	dr.close();
 	
-	tuple[0] = null;			// Catalog name
-	tuple[1] = null;			// Schema name
-	tuple[2] = name.getBytes();		// Table name
-	tuple[3] = null;			// Table type
-	tuple[4] = remarks.getBytes();		// Remarks
+	tuple[0] = null;		// Catalog name
+	tuple[1] = null;		// Schema name
+	tuple[2] = r.getBytes(1);	// Table name
+	tuple[3] = null;		// Table type
+	tuple[4] = remarks;		// Remarks
 	v.addElement(tuple);
       }
     r.close();
@@ -1848,28 +1863,34 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     f[16] = new Field(connection, new String("ORDINAL_POSITION"), iInt4Oid,4);
     f[17] = new Field(connection, new String("IS_NULLABLE"), iVarcharOid, 32);
     
+    // Added by Stefan Andreasen <stefan@linux.kapow.dk>
+    // If the pattern are  null then set them to %
+    if (tableNamePattern == null) tableNamePattern="%";
+    if (columnNamePattern == null) columnNamePattern="%";
+    
     // Now form the query
-    r = connection.ExecSQL("select a.oid,c.relname,a.attname,a.atttypid,a.attnum,a.attnotnull,a.attlen,a.atttypmod from pg_class c, pg_attribute a where a.attrelid=c.oid and c.relname like '"+tableNamePattern+"' and a.attname like '"+columnNamePattern+"' and a.attnum>0 order by c.relname,a.attnum");
+    // Modified by Stefan Andreasen <stefan@linux.kapow.dk>
+    r = connection.ExecSQL("select a.oid,c.relname,a.attname,a.atttypid,a.attnum,a.attnotnull,a.attlen,a.atttypmod from pg_class c, pg_attribute a where a.attrelid=c.oid and c.relname like '"+tableNamePattern.toLowerCase()+"' and a.attname like '"+columnNamePattern.toLowerCase()+"' and a.attnum>0 order by c.relname,a.attnum");
+    
+    byte remarks[];
     
     while(r.next()) {
 	byte[][] tuple = new byte[18][0];
-	
-	String name = r.getString(1);
-	String remarks = new String("no remarks");
-	String columnSize;
 	
 	// Fetch the description for the table (if any)
 	ResultSet dr = connection.ExecSQL("select description from pg_description where objoid="+r.getInt(1));
 	if(dr.getTupleCount()==1) {
 	  dr.next();
-	  remarks=dr.getString(1);
-	}
+	  tuple[11] = dr.getBytes(1);
+	} else
+	  tuple[11] = defaultRemarks;
+	
 	dr.close();
 	
 	tuple[0] = "".getBytes();	// Catalog name
 	tuple[1] = "".getBytes();	// Schema name
-	tuple[2] = r.getString(2).getBytes();	// Table name
-	tuple[3] = r.getString(3).getBytes();	// Column name
+	tuple[2] = r.getBytes(2);	// Table name
+	tuple[3] = r.getBytes(3);	// Column name
 	
 	dr = connection.ExecSQL("select typname from pg_type where oid = "+r.getString(4));
 	dr.next();
@@ -1877,16 +1898,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	dr.close();
 	tuple[4] = Integer.toString(Field.getSQLType(typname)).getBytes();	// Data type
 	tuple[5] = typname.getBytes();	// Type name
-
+	
+	// Column size
 	// Looking at the psql source,
 	// I think the length of a varchar as specified when the table was created
 	// should be extracted from atttypmod which contains this length + sizeof(int32)
 	if (typname.equals("bpchar") || typname.equals("varchar")) {
 	  int atttypmod = r.getInt(8);
-	  columnSize = Integer.toString(atttypmod != -1 ? atttypmod - VARHDRSZ : 0);
+	  tuple[6] = Integer.toString(atttypmod != -1 ? atttypmod - VARHDRSZ : 0).getBytes();
 	} else
-	  columnSize = r.getString(7);
-	tuple[6] = columnSize.getBytes();	// Column size
+	  tuple[6] = r.getBytes(7);
 	
 	tuple[7] = null;	// Buffer length
 	
@@ -1894,8 +1915,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	tuple[9] = "10".getBytes();	// Num Prec Radix - assume decimal
 	
 	// tuple[10] is below
-	
-	tuple[11] = remarks.getBytes();		// Remarks
+	// tuple[11] is above
 	
 	tuple[12] = null;	// column default
 	
@@ -1904,7 +1924,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	
 	tuple[15] = tuple[6];	// char octet length
 	
-	tuple[16] = r.getString(5).getBytes();	// ordinal position
+	tuple[16] = r.getBytes(5);	// ordinal position
 	
 	String nullFlag = r.getString(6);
 	tuple[10] = Integer.toString(nullFlag.equals("f")?java.sql.DatabaseMetaData.columnNullable:java.sql.DatabaseMetaData.columnNoNulls).getBytes();	// Nullable
@@ -1948,6 +1968,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     Field f[] = new Field[8];
     Vector v = new Vector();
     
+    if(table==null)
+      table="%";
+    
+    if(columnNamePattern==null)
+      columnNamePattern="%";
+    else
+      columnNamePattern=columnNamePattern.toLowerCase();
+    
     f[0] = new Field(connection,new String("TABLE_CAT"),iVarcharOid,32);
     f[1] = new Field(connection,new String("TABLE_SCHEM"),iVarcharOid,32);
     f[2] = new Field(connection,new String("TABLE_NAME"),iVarcharOid,32);
@@ -1958,11 +1986,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     f[7] = new Field(connection,new String("IS_GRANTABLE"),iVarcharOid,32);
     
     // This is taken direct from the psql source
-    ResultSet r = connection.ExecSQL("SELECT relname, relacl FROM pg_class, pg_user WHERE ( relkind = 'r' OR relkind = 'i') and relname !~ '^pg_' and relname !~ '^xin[vx][0-9]+' and usesysid = relowner ORDER BY relname");
+    ResultSet r = connection.ExecSQL("SELECT relname, relacl FROM pg_class, pg_user WHERE ( relkind = 'r' OR relkind = 'i') and relname !~ '^pg_' and relname !~ '^xin[vx][0-9]+' and usesysid = relowner and relname like '"+table.toLowerCase()+"' ORDER BY relname");
     while(r.next()) {
       byte[][] tuple = new byte[8][0];
       tuple[0] = tuple[1]= "".getBytes();
       DriverManager.println("relname=\""+r.getString(1)+"\" relacl=\""+r.getString(2)+"\"");
+      
+      // For now, don't add to the result as relacl needs to be processed.
       //v.addElement(tuple);
     }
     
@@ -2122,7 +2152,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 						     "'1' as KEY_SEQ,"+ // -- fake it as a String for now
 						     "t.typname as PK_NAME " +
 						     " FROM pg_class bc, pg_class ic, pg_index i, pg_attribute a, pg_type t " +
-						     " WHERE relkind = 'r' " + //    -- not indices
+						     " WHERE bc.relkind = 'r' " + //    -- not indices
 						     "  and bc.relname ~ '"+table+"'" +
 						     "  and i.indrelid = bc.oid" +
 						     "  and i.indexrelid = ic.oid" +
@@ -2379,22 +2409,30 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
       f[16] = new Field(connection, new String("SQL_DATETIME_SUB"), iInt4Oid, 4);
       f[17] = new Field(connection, new String("NUM_PREC_RADIX"), iInt4Oid, 4);
       
+      // cache some results, this will keep memory useage down, and speed
+      // things up a little.
+      byte b9[]  = "9".getBytes();
+      byte b10[] = "10".getBytes();
+      byte bf[]  = "f".getBytes();
+      byte bnn[] = Integer.toString(typeNoNulls).getBytes();
+      byte bts[] = Integer.toString(typeSearchable).getBytes();
+      
       while(rs.next()) {
 	byte[][] tuple = new byte[18][];
 	String typname=rs.getString(1);
 	tuple[0] = typname.getBytes();
 	tuple[1] = Integer.toString(Field.getSQLType(typname)).getBytes();
-	tuple[2] = "9".getBytes();	// for now
-	tuple[6] = Integer.toString(typeNoNulls).getBytes(); // for now
-	tuple[7] = "f".getBytes(); // false for now - not case sensitive
-	tuple[8] = Integer.toString(typeSearchable).getBytes();
-	tuple[9] = "f".getBytes(); // false for now - it's signed
-	tuple[10] = "f".getBytes(); // false for now - must handle money
-	tuple[11] = "f".getBytes(); // false for now - handle autoincrement
+	tuple[2] = b9;	// for now
+	tuple[6] = bnn; // for now
+	tuple[7] = bf; // false for now - not case sensitive
+	tuple[8] = bts;
+	tuple[9] = bf; // false for now - it's signed
+	tuple[10] = bf; // false for now - must handle money
+	tuple[11] = bf; // false for now - handle autoincrement
 	// 12 - LOCAL_TYPE_NAME is null
 	// 13 & 14 ?
 	// 15 & 16 are unused so we return null
-	tuple[17] = "10".getBytes(); // everything is base 10
+	tuple[17] = b10; // everything is base 10
 	v.addElement(tuple);
       }
       rs.close();
@@ -2431,7 +2469,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    *      within index; zero when TYPE is tableIndexStatistic
    *	<LI><B>COLUMN_NAME</B> String => column name; null when TYPE is
    *      tableIndexStatistic
-   *	<LI><B>ASC_OR_DESC</B> String => column sort sequence, "A" => ascending,
+   *	<LI><B>ASC_OR_DESC</B> String => column sort sequence, "A" => ascending
    *      "D" => descending, may be null if sort sequence is not supported;
    *      null when TYPE is tableIndexStatistic
    *	<LI><B>CARDINALITY</B> int => When TYPE is tableIndexStatisic then

@@ -123,7 +123,7 @@ public class psql
 	if(rs.wasNull())
 	  System.out.print("{null}"+(i<cols?"\t":"\n"));
 	else
-	  System.out.print(rs.getObject(i).toString()+(i<cols?"\t":"\n"));
+	  System.out.print(o.toString()+(i<cols?"\t":"\n"));
       }
     }
     

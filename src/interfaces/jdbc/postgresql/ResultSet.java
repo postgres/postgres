@@ -714,6 +714,12 @@ public class ResultSet implements java.sql.ResultSet
       throw new SQLException("Column index out of range");
     field = fields[columnIndex - 1];
     
+    // some fields can be null, mainly from those returned by MetaData methods
+    if(field==null) {
+      wasNullFlag=true;
+      return null;
+    }
+    
     switch (field.getSQLType())
       {
       case Types.BIT:

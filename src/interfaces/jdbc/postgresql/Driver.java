@@ -27,7 +27,7 @@ public class Driver implements java.sql.Driver
   // These should be in sync with the backend that the driver was
   // distributed with
   static final int MAJORVERSION = 6;
-  static final int MINORVERSION = 3;
+  static final int MINORVERSION = 4;
   
   static 
   {

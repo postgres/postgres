@@ -34,6 +34,9 @@ public class Connection implements java.sql.Connection
   // This is set by postgresql.Statement.setMaxRows()
   protected int maxrows = 0;		// maximum no. of rows; 0 = unlimited
   
+  // This is a cache of the DatabaseMetaData instance for this connection
+  protected DatabaseMetaData metadata;
+  
   private String PG_HOST;
   private int PG_PORT;
   private String PG_USER;
@@ -43,17 +46,6 @@ public class Connection implements java.sql.Connection
   
   public boolean CONNECTION_OK = true;
   public boolean CONNECTION_BAD = false;
-  
-  //private static final int STARTUP_LEN  = 288;	// Length of a startup packet
-  
-  // These are defined in src/include/libpq/pqcomm.h
-  //private int STARTUP_CODE = STARTUP_USER;
-  //private static final int STARTUP_USER = 7;	// User auth
-  //private static final int STARTUP_KRB4 = 10;	// Kerberos 4 (unused)
-  //private static final int STARTUP_KRB5 = 11;	// Kerberos 5 (unused)
-  //private static final int STARTUP_HBA  = 12;	// Host Based
-  //private static final int STARTUP_NONE = 13;	// Unauthenticated (unused)
-  //private static final int STARTUP_PASS = 14;	// Password auth
   
   private boolean autoCommit = true;
   private boolean readOnly = false;
@@ -81,12 +73,6 @@ public class Connection implements java.sql.Connection
   
   // New for 6.3, salt value for crypt authorisation
   private String salt;
-  
-  // This is used by Field to cache oid -> names.
-  // It's here, because it's shared across this connection only.
-  // Hence it cannot be static within the Field class, because it would then
-  // be across all connections, which could be to different backends.
-  protected Hashtable fieldCache = new Hashtable();
   
   // This is used by Field to cache oid -> names.
   // It's here, because it's shared across this connection only.
@@ -150,8 +136,6 @@ public class Connection implements java.sql.Connection
    */
   public Connection(String host, int port, Properties info, String database, String url, Driver d) throws SQLException
   {
-    //int len = STARTUP_LEN;	// Length of a startup packet
-    
     // Throw an exception if the user or password properties are missing
     // This occasionally occurs when the client uses the properties version
     // of getConnection(), and is a common question on the email lists
@@ -169,30 +153,15 @@ public class Connection implements java.sql.Connection
     PG_HOST = new String(host);
     PG_STATUS = CONNECTION_BAD;
     
-    // Pre 6.3 code
-    // This handles the auth property. Any value begining with p enables
-    // password authentication, while anything begining with i enables
-    // ident (RFC 1413) authentication. Any other values default to trust.
-    //
-    // Also, the postgresql.auth system property can be used to change the
-    // local default, if the auth property is not present.
-    //
-    //String auth = info.getProperty("auth",System.getProperty("postgresql.auth","trust")).toLowerCase();
-    //if(auth.startsWith("p")) {
-    //// Password authentication
-    //STARTUP_CODE=STARTUP_PASS;
-    //} else if(auth.startsWith("i")) {
-    //// Ident (RFC 1413) authentication
-    //STARTUP_CODE=STARTUP_HBA;
-    //} else {
-    //// Anything else defaults to trust authentication
-    //STARTUP_CODE=STARTUP_USER;
-    //}
-    
     // Now make the initial connection
     try
       {
 	pg_stream = new PG_Stream(host, port);
+      } catch (ConnectException cex) {
+	// Added by Peter Mount <peter@retep.org.uk>
+	// ConnectException is thrown when the connection cannot be made.
+	// we trap this an return a more meaningful message for the end user
+	throw new SQLException ("Connection refused. Check that the hostname and port is correct, and that the postmaster is running with the -i flag, which enables TCP/IP networking.");
       } catch (IOException e) {
 	throw new SQLException ("Connection failed: " + e.toString());
       }
@@ -200,30 +169,17 @@ public class Connection implements java.sql.Connection
       // Now we need to construct and send a startup packet
       try
 	{
-	  // Pre 6.3 code
-	  //pg_stream.SendInteger(len, 4);			len -= 4;
-	  //pg_stream.SendInteger(STARTUP_CODE, 4);		len -= 4;
-	  //pg_stream.Send(database.getBytes(), 64);	len -= 64;
-	  //pg_stream.Send(PG_USER.getBytes(), len);
-	  //
-	  //// Send the password packet if required
-	  //if(STARTUP_CODE == STARTUP_PASS) {
-	  //len=STARTUP_LEN;
-	  //pg_stream.SendInteger(len, 4);			len -= 4;
-	  //pg_stream.SendInteger(STARTUP_PASS, 4);		len -= 4;
-	  //pg_stream.Send(PG_USER.getBytes(), PG_USER.length());
-	  //len-=PG_USER.length();
-	  //pg_stream.SendInteger(0,1);			len -= 1;
-	  //pg_stream.Send(PG_PASSWORD.getBytes(), len);
-	  //}
-	  
 	  // Ver 6.3 code
 	  pg_stream.SendInteger(4+4+SM_DATABASE+SM_USER+SM_OPTIONS+SM_UNUSED+SM_TTY,4);
 	  pg_stream.SendInteger(PG_PROTOCOL_LATEST_MAJOR,2);
 	  pg_stream.SendInteger(PG_PROTOCOL_LATEST_MINOR,2);
 	  pg_stream.Send(database.getBytes(),SM_DATABASE);
+	  
+	  // This last send includes the unused fields
 	  pg_stream.Send(PG_USER.getBytes(),SM_USER+SM_OPTIONS+SM_UNUSED+SM_TTY);
-	  // The last send includes the unused fields
+	  
+	  // now flush the startup packets to the backend
+	  pg_stream.flush();
 	  
 	  // Now get the response from the backend, either an error message
 	  // or an authentication request
@@ -233,6 +189,12 @@ public class Connection implements java.sql.Connection
 	    switch(beresp)
 	      {
 	      case 'E':
+		// An error occured, so pass the error message to the
+		// user.
+		//
+		// The most common one to be thrown here is:
+		// "User authentication failed"
+		//
 		throw new SQLException(pg_stream.ReceiveString(4096));
 		
 	      case 'R':
@@ -267,7 +229,7 @@ public class Connection implements java.sql.Connection
 		    pg_stream.SendInteger(5+PG_PASSWORD.length(),4);
 		    pg_stream.Send(PG_PASSWORD.getBytes());
 		    pg_stream.SendInteger(0,1);
-		    //pg_stream.SendPacket(PG_PASSWORD.getBytes());
+		    pg_stream.flush();
 		    break;
 		    
 		  case AUTH_REQ_CRYPT:
@@ -276,11 +238,11 @@ public class Connection implements java.sql.Connection
 		    pg_stream.SendInteger(5+crypted.length(),4);
 		    pg_stream.Send(crypted.getBytes());
 		    pg_stream.SendInteger(0,1);
-		    //pg_stream.SendPacket(UnixCrypt.crypt(salt,PG_PASSWORD).getBytes());
+		    pg_stream.flush();
 		    break;
 		    
 		  default:
-		    throw new SQLException("Authentication type "+areq+" not supported");
+		    throw new SQLException("Authentication type "+areq+" not supported. Check that you have configured the pg_hba.conf file to include the client's IP address or Subnet, and is using a supported authentication scheme.");
 		  }
 		break;
 		
@@ -511,7 +473,9 @@ public class Connection implements java.sql.Connection
    */
   public java.sql.DatabaseMetaData getMetaData() throws SQLException
   {
-    return new DatabaseMetaData(this);
+    if(metadata==null)
+      metadata = new DatabaseMetaData(this);
+    return metadata;
   }
   
   /**
@@ -631,8 +595,6 @@ public class Connection implements java.sql.Connection
    */
   public void addWarning(String msg)
   {
-    //PrintStream log = DriverManager.getLogStream();
-    //if(log!=null) 
     DriverManager.println(msg);
     
     // Add the warning to the chain
@@ -691,6 +653,7 @@ public class Connection implements java.sql.Connection
 	buf = sql.getBytes();
 	pg_stream.Send(buf);
 	pg_stream.SendChar(0);
+	pg_stream.flush();
       } catch (IOException e) {
 	throw new SQLException("I/O Error: " + e.toString());
       }
@@ -726,6 +689,7 @@ public class Connection implements java.sql.Connection
 		      pg_stream.SendChar('Q');
 		      pg_stream.SendChar(' ');
 		      pg_stream.SendChar(0);
+		      pg_stream.flush();
 		    } catch (IOException e) {
 		      throw new SQLException("I/O Error: " + e.toString());
 		    }
@@ -964,6 +928,8 @@ public class Connection implements java.sql.Connection
 	  return ((Serialize)o).fetch(Integer.parseInt(value));
       }
     } catch(SQLException sx) {
+      // rethrow the exception. Done because we capture any others next
+      sx.fillInStackTrace();
       throw sx;
     } catch(Exception ex) {
       throw new SQLException("Failed to create object for "+type+": "+ex);
@@ -999,14 +965,17 @@ public class Connection implements java.sql.Connection
       // If so, then call it's fetch method.
       if(x instanceof Serialize)
 	return ((Serialize)x).store(o);
+      
+      // Thow an exception because the type is unknown
+      throw new SQLException("The object could not be stored. Check that any tables required have already been created in the database.");
+      
     } catch(SQLException sx) {
+      // rethrow the exception. Done because we capture any others next
+      sx.fillInStackTrace();
       throw sx;
     } catch(Exception ex) {
       throw new SQLException("Failed to store object: "+ex);
     }
-    
-    // should never be reached
-    return 0;
   }
   
   /**
@@ -1045,10 +1014,12 @@ public class Connection implements java.sql.Connection
   private static final String defaultObjectTypes[][] = {
     {"box",	"postgresql.geometric.PGbox"},
     {"circle",	"postgresql.geometric.PGcircle"},
+    {"line",	"postgresql.geometric.PGline"},
     {"lseg",	"postgresql.geometric.PGlseg"},
     {"path",	"postgresql.geometric.PGpath"},
     {"point",	"postgresql.geometric.PGpoint"},
-    {"polygon",	"postgresql.geometric.PGpolygon"}
+    {"polygon",	"postgresql.geometric.PGpolygon"},
+    {"money",	"postgresql.util.PGmoney"}
   };
   
   // This initialises the objectTypes hashtable
