@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.4 1997/09/08 21:45:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.5 1998/02/26 04:32:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ best_or_subclause_index(Query *root, Rel *rel, Expr *subclause,
  * Returns a list of these index path nodes.
  *
  */
-List	   *
+List *
 create_or_index_paths(Query *root,
 					  Rel *rel, List *clauses)
 {

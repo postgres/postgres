@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.28 1998/02/24 15:19:44 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.29 1998/02/26 04:37:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,8 @@
 #include "utils/builtins.h"
 
 #ifdef CYR_RECODE
-char *convertstr(char *,int,int);
+char	   *convertstr(char *, int, int);
+
 #endif
 
 /*
@@ -90,7 +91,7 @@ bpcharin(char *s, int dummy, int16 atttypmod)
 	}
 
 #ifdef CYR_RECODE
-	convertstr(result + VARHDRSZ,len,0);
+	convertstr(result + VARHDRSZ, len, 0);
 #endif
 
 	/* blank pad the string if necessary */
@@ -117,11 +118,11 @@ bpcharout(char *s)
 	{
 		len = VARSIZE(s) - VARHDRSZ;
 		result = (char *) palloc(len + 1);
-		StrNCpy(result, VARDATA(s), len+1);	/* these are blank-padded */
+		StrNCpy(result, VARDATA(s), len + 1);	/* these are blank-padded */
 	}
 
 #ifdef CYR_RECODE
-	convertstr(result,len,1);
+	convertstr(result, len, 1);
 #endif
 
 	return (result);
@@ -148,7 +149,7 @@ varcharin(char *s, int dummy, int16 atttypmod)
 
 	len = strlen(s) + VARHDRSZ;
 	if (atttypmod != -1 && len > atttypmod)
-		len = atttypmod;	/* clip the string at max length */
+		len = atttypmod;		/* clip the string at max length */
 
 	if (len > 4096)
 		elog(ERROR, "varcharin: length of char() must be less than 4096");
@@ -158,7 +159,7 @@ varcharin(char *s, int dummy, int16 atttypmod)
 	strncpy(VARDATA(result), s, len - VARHDRSZ);
 
 #ifdef CYR_RECODE
-	convertstr(result + VARHDRSZ,len,0);
+	convertstr(result + VARHDRSZ, len, 0);
 #endif
 
 	return (result);
@@ -180,11 +181,11 @@ varcharout(char *s)
 	{
 		len = VARSIZE(s) - VARHDRSZ;
 		result = (char *) palloc(len + 1);
-		StrNCpy(result, VARDATA(s), len+1);
+		StrNCpy(result, VARDATA(s), len + 1);
 	}
 
 #ifdef CYR_RECODE
-	convertstr(result,len,1);
+	convertstr(result, len, 1);
 #endif
 
 	return (result);
@@ -216,7 +217,7 @@ bpcharlen(char *arg)
 	if (!PointerIsValid(arg))
 		elog(ERROR, "Bad (null) char() external representation", NULL);
 
-	return(bcTruelen(arg));
+	return (bcTruelen(arg));
 }
 
 bool
@@ -356,7 +357,7 @@ varcharlen(char *arg)
 	if (!PointerIsValid(arg))
 		elog(ERROR, "Bad (null) varchar() external representation", NULL);
 
-	return(VARSIZE(arg) - VARHDRSZ);
+	return (VARSIZE(arg) - VARHDRSZ);
 }
 
 bool

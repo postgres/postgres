@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.63 1998/02/18 15:33:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.64 1998/02/26 04:38:54 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -47,7 +47,7 @@
  *
  *
  * Modifications - 1/26/98 - pjlobo@euitt.upm.es
- *       - Added support for password authentication
+ *		 - Added support for password authentication
  *-------------------------------------------------------------------------
  */
 
@@ -79,8 +79,9 @@
 #include "pg_dump.h"
 
 static void dumpSequence(FILE *fout, TableInfo tbinfo);
-static void	dumpTriggers(FILE *fout, const char *tablename, 
-						TableInfo *tblinfo, int numTables);
+static void
+dumpTriggers(FILE *fout, const char *tablename,
+			 TableInfo *tblinfo, int numTables);
 static char *checkForQuote(const char *s);
 static void clearTableInfo(TableInfo *, int);
 static void
@@ -92,7 +93,7 @@ static void setMaxOid(FILE *fout);
 
 static char *AddAcl(char *s, const char *add);
 static char *GetPrivledges(char *s);
-static ACL *ParseACL(const char *acls,int *count);
+static ACL *ParseACL(const char *acls, int *count);
 
 extern char *optarg;
 extern int	optind,
@@ -126,7 +127,7 @@ usage(const char *progname)
 	fprintf(stderr,
 			"\t -d          \t\t dump data as proper insert strings\n");
 	fprintf(stderr,
-			"\t -D          \t\t dump data as inserts with attribute names\n");
+	  "\t -D          \t\t dump data as inserts with attribute names\n");
 	fprintf(stderr,
 			"\t -f filename \t\t script output filename\n");
 	fprintf(stderr,
@@ -421,7 +422,7 @@ dumpClasses(const TableInfo tblinfo[], const int numTables, FILE *fout,
 	if (g_verbose)
 		fprintf(stderr, "%s dumping out the contents of %s of %d tables %s\n",
 				g_comment_start, all_only, numTables, g_comment_end);
-	
+
 	/* Dump SEQUENCEs first (if dataOnly) */
 	if (dataOnly)
 	{
@@ -433,7 +434,7 @@ dumpClasses(const TableInfo tblinfo[], const int numTables, FILE *fout,
 			{
 				if (g_verbose)
 					fprintf(stderr, "%s dumping out schema of sequence %s %s\n",
-						  g_comment_start, tblinfo[i].relname, g_comment_end);
+					 g_comment_start, tblinfo[i].relname, g_comment_end);
 				fprintf(fout, "\\connect - %s\n", tblinfo[i].usename);
 				dumpSequence(fout, tblinfo[i]);
 			}
@@ -447,8 +448,8 @@ dumpClasses(const TableInfo tblinfo[], const int numTables, FILE *fout,
 		/* Skip VIEW relations */
 		if (isViewRule(tblinfo[i].relname))
 			continue;
-		
-		if (tblinfo[i].sequence)	/* already dumped */
+
+		if (tblinfo[i].sequence)/* already dumped */
 			continue;
 
 		if (!onlytable || (!strcmp(classname, onlytable)))
@@ -532,16 +533,16 @@ main(int argc, char **argv)
 	const char *dbname = NULL;
 	const char *pghost = NULL;
 	const char *pgport = NULL;
-	char *tablename = NULL;
+	char	   *tablename = NULL;
 	int			oids = 0,
 				acls = 0;
 	TableInfo  *tblinfo;
 	int			numTables;
-	char connect_string[512] = "";
-	char tmp_string[128];
-	char username[64];
-	char password[64];
-	int use_password = 0;
+	char		connect_string[512] = "";
+	char		tmp_string[128];
+	char		username[64];
+	char		password[64];
+	int			use_password = 0;
 
 	g_verbose = false;
 
@@ -585,7 +586,7 @@ main(int argc, char **argv)
 				break;
 			case 't':			/* Dump data for this table only */
 				{
-					int i;
+					int			i;
 
 					tablename = strdup(optarg);
 					for (i = 0; tablename[i]; i++)
@@ -633,28 +634,32 @@ main(int argc, char **argv)
 		exit(2);
 	}
 
-	/*g_conn = PQsetdb(pghost, pgport, NULL, NULL, dbname);*/
-	if (pghost != NULL) {
-	  sprintf(tmp_string, "host=%s ", pghost);
-	  strcat(connect_string, tmp_string);
+	/* g_conn = PQsetdb(pghost, pgport, NULL, NULL, dbname); */
+	if (pghost != NULL)
+	{
+		sprintf(tmp_string, "host=%s ", pghost);
+		strcat(connect_string, tmp_string);
 	}
-	if (pgport != NULL) {
-	  sprintf(tmp_string, "port=%s ", pgport);
-	  strcat(connect_string, tmp_string);
+	if (pgport != NULL)
+	{
+		sprintf(tmp_string, "port=%s ", pgport);
+		strcat(connect_string, tmp_string);
 	}
-	if (dbname != NULL) {
-	  sprintf(tmp_string, "dbname=%s ", dbname);
-	  strcat(connect_string, tmp_string);
+	if (dbname != NULL)
+	{
+		sprintf(tmp_string, "dbname=%s ", dbname);
+		strcat(connect_string, tmp_string);
 	}
-	if (use_password) {
-	  prompt_for_password(username, password);
-	  strcat(connect_string, "authtype=password ");
-	  sprintf(tmp_string, "user=%s ", username);
-	  strcat(connect_string, tmp_string);
-	  sprintf(tmp_string, "password=%s ", password);
-	  strcat(connect_string, tmp_string);
-	  bzero(tmp_string, sizeof(tmp_string));
-	  bzero(password, sizeof(password));
+	if (use_password)
+	{
+		prompt_for_password(username, password);
+		strcat(connect_string, "authtype=password ");
+		sprintf(tmp_string, "user=%s ", username);
+		strcat(connect_string, tmp_string);
+		sprintf(tmp_string, "password=%s ", password);
+		strcat(connect_string, tmp_string);
+		bzero(tmp_string, sizeof(tmp_string));
+		bzero(password, sizeof(password));
 	}
 	g_conn = PQconnectdb(connect_string);
 	bzero(connect_string, sizeof(connect_string));
@@ -685,7 +690,8 @@ main(int argc, char **argv)
 		dumpClasses(tblinfo, numTables, g_fout, tablename, oids);
 	}
 
-	if (!dataOnly)		/* dump indexes and triggers at the end for performance */
+	if (!dataOnly)				/* dump indexes and triggers at the end
+								 * for performance */
 	{
 		dumpSchemaIdx(g_fout, tablename, tblinfo, numTables);
 		dumpTriggers(g_fout, tablename, tblinfo, numTables);
@@ -1407,8 +1413,8 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	PQclear(res);
 
 	sprintf(query,
-	   "SELECT pg_class.oid, relname, relkind, relacl, usename, "
-	   		"relchecks, reltriggers "
+			"SELECT pg_class.oid, relname, relkind, relacl, usename, "
+			"relchecks, reltriggers "
 			"from pg_class, pg_user "
 			"where relowner = usesysid and "
 			"(relkind = 'r' or relkind = 'S') and relname !~ '^pg_' "
@@ -1445,27 +1451,28 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 		tblinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
 		tblinfo[i].ncheck = atoi(PQgetvalue(res, i, i_relchecks));
 		tblinfo[i].ntrig = atoi(PQgetvalue(res, i, i_reltriggers));
-		
+
 		/* Get CHECK constraints */
 		if (tblinfo[i].ncheck > 0)
 		{
 			PGresult   *res2;
-			int			i_rcname, i_rcsrc;
+			int			i_rcname,
+						i_rcsrc;
 			int			ntups2;
 			int			i2;
-			
+
 			if (g_verbose)
 				fprintf(stderr, "%s finding CHECK constraints for relation: %s %s\n",
 						g_comment_start,
 						tblinfo[i].relname,
 						g_comment_end);
-			
+
 			sprintf(query, "SELECT rcname, rcsrc from pg_relcheck "
 					"where rcrelid = '%s'::oid ",
 					tblinfo[i].oid);
 			res2 = PQexec(g_conn, query);
 			if (!res2 ||
-					PQresultStatus(res2) != PGRES_TUPLES_OK)
+				PQresultStatus(res2) != PGRES_TUPLES_OK)
 			{
 				fprintf(stderr, "getTables(): SELECT (for CHECK) failed\n");
 				exit_nicely(g_conn);
@@ -1474,49 +1481,53 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			if (ntups2 != tblinfo[i].ncheck)
 			{
 				fprintf(stderr, "getTables(): relation %s: %d CHECKs were expected, but got %d\n",
-					tblinfo[i].relname, tblinfo[i].ncheck, ntups2);
+						tblinfo[i].relname, tblinfo[i].ncheck, ntups2);
 				exit_nicely(g_conn);
 			}
 			i_rcname = PQfnumber(res2, "rcname");
 			i_rcsrc = PQfnumber(res2, "rcsrc");
-			tblinfo[i].check_expr = (char **) malloc (ntups2 * sizeof (char *));
+			tblinfo[i].check_expr = (char **) malloc(ntups2 * sizeof(char *));
 			for (i2 = 0; i2 < ntups2; i2++)
 			{
-				char   *name = PQgetvalue(res2, i2, i_rcname);
-				char   *expr = PQgetvalue(res2, i2, i_rcsrc);
-				
+				char	   *name = PQgetvalue(res2, i2, i_rcname);
+				char	   *expr = PQgetvalue(res2, i2, i_rcsrc);
+
 				query[0] = 0;
-				if ( name[0] != '$' )
-					sprintf (query, "CONSTRAINT %s ", name);
-				sprintf (query, "%sCHECK %s", query, expr);
-				tblinfo[i].check_expr[i2] = strdup (query);
+				if (name[0] != '$')
+					sprintf(query, "CONSTRAINT %s ", name);
+				sprintf(query, "%sCHECK %s", query, expr);
+				tblinfo[i].check_expr[i2] = strdup(query);
 			}
 			PQclear(res2);
 		}
 		else
 			tblinfo[i].check_expr = NULL;
-		
+
 		/* Get Triggers */
 		if (tblinfo[i].ntrig > 0)
 		{
 			PGresult   *res2;
-			int			i_tgname, i_tgfoid, i_tgtype, i_tgnargs, i_tgargs;
+			int			i_tgname,
+						i_tgfoid,
+						i_tgtype,
+						i_tgnargs,
+						i_tgargs;
 			int			ntups2;
 			int			i2;
-			
+
 			if (g_verbose)
 				fprintf(stderr, "%s finding Triggers for relation: %s %s\n",
 						g_comment_start,
 						tblinfo[i].relname,
 						g_comment_end);
-			
+
 			sprintf(query, "SELECT tgname, tgfoid, tgtype, tgnargs, tgargs "
 					"from pg_trigger "
 					"where tgrelid = '%s'::oid ",
 					tblinfo[i].oid);
 			res2 = PQexec(g_conn, query);
 			if (!res2 ||
-					PQresultStatus(res2) != PGRES_TUPLES_OK)
+				PQresultStatus(res2) != PGRES_TUPLES_OK)
 			{
 				fprintf(stderr, "getTables(): SELECT (for TRIGGER) failed\n");
 				exit_nicely(g_conn);
@@ -1525,7 +1536,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			if (ntups2 != tblinfo[i].ntrig)
 			{
 				fprintf(stderr, "getTables(): relation %s: %d Triggers were expected, but got %d\n",
-					tblinfo[i].relname, tblinfo[i].ntrig, ntups2);
+						tblinfo[i].relname, tblinfo[i].ntrig, ntups2);
 				exit_nicely(g_conn);
 			}
 			i_tgname = PQfnumber(res2, "tgname");
@@ -1533,72 +1544,73 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			i_tgtype = PQfnumber(res2, "tgtype");
 			i_tgnargs = PQfnumber(res2, "tgnargs");
 			i_tgargs = PQfnumber(res2, "tgargs");
-			tblinfo[i].triggers = (char **) malloc (ntups2 * sizeof (char *));
+			tblinfo[i].triggers = (char **) malloc(ntups2 * sizeof(char *));
 			for (i2 = 0, query[0] = 0; i2 < ntups2; i2++)
 			{
-				char   *tgfunc = PQgetvalue(res2, i2, i_tgfoid);
-				int2	tgtype = atoi(PQgetvalue(res2, i2, i_tgtype));
-				int		tgnargs = atoi(PQgetvalue(res2, i2, i_tgnargs));
-				char   *tgargs = PQgetvalue(res2, i2, i_tgargs);
-				char   *p;
-				char	farg[MAXQUERYLEN];
-				int		findx;
-				
+				char	   *tgfunc = PQgetvalue(res2, i2, i_tgfoid);
+				int2		tgtype = atoi(PQgetvalue(res2, i2, i_tgtype));
+				int			tgnargs = atoi(PQgetvalue(res2, i2, i_tgnargs));
+				char	   *tgargs = PQgetvalue(res2, i2, i_tgargs);
+				char	   *p;
+				char		farg[MAXQUERYLEN];
+				int			findx;
+
 				for (findx = 0; findx < numFuncs; findx++)
 				{
 					if (strcmp(finfo[findx].oid, tgfunc) == 0 &&
-						finfo[findx].lang == ClanguageId && 
-						finfo[findx].nargs == 0 && 
+						finfo[findx].lang == ClanguageId &&
+						finfo[findx].nargs == 0 &&
 						strcmp(finfo[findx].prorettype, "0") == 0)
 						break;
 				}
 				if (findx == numFuncs)
 				{
 					fprintf(stderr, "getTables(): relation %s: cannot find function with oid %s for trigger %s\n",
-						tblinfo[i].relname, tgfunc, PQgetvalue(res2, i2, i_tgname));
+							tblinfo[i].relname, tgfunc, PQgetvalue(res2, i2, i_tgname));
 					exit_nicely(g_conn);
 				}
 				tgfunc = finfo[findx].proname;
-				sprintf (query, "CREATE TRIGGER %s ", PQgetvalue(res2, i2, i_tgname));
+				sprintf(query, "CREATE TRIGGER %s ", PQgetvalue(res2, i2, i_tgname));
 				/* Trigger type */
 				findx = 0;
 				if (TRIGGER_FOR_BEFORE(tgtype))
-					strcat (query, "BEFORE");
+					strcat(query, "BEFORE");
 				else
-					strcat (query, "AFTER");
+					strcat(query, "AFTER");
 				if (TRIGGER_FOR_INSERT(tgtype))
 				{
-					strcat (query, " INSERT");
+					strcat(query, " INSERT");
 					findx++;
 				}
 				if (TRIGGER_FOR_DELETE(tgtype))
 				{
 					if (findx > 0)
-						strcat (query, " OR DELETE");
+						strcat(query, " OR DELETE");
 					else
-						strcat (query, " DELETE");
+						strcat(query, " DELETE");
 					findx++;
 				}
 				if (TRIGGER_FOR_UPDATE(tgtype))
 					if (findx > 0)
-						strcat (query, " OR UPDATE");
+						strcat(query, " OR UPDATE");
 					else
-						strcat (query, " UPDATE");
-				sprintf (query, "%s ON %s FOR EACH ROW EXECUTE PROCEDURE %s (",
-					query, tblinfo[i].relname, tgfunc);
+						strcat(query, " UPDATE");
+				sprintf(query, "%s ON %s FOR EACH ROW EXECUTE PROCEDURE %s (",
+						query, tblinfo[i].relname, tgfunc);
 				for (findx = 0; findx < tgnargs; findx++)
 				{
-					char   *s, *d;
-					
-					for (p = tgargs; ; )
+					char	   *s,
+							   *d;
+
+					for (p = tgargs;;)
 					{
-						p = strchr (p, '\\');
+						p = strchr(p, '\\');
 						if (p == NULL)
 						{
 							fprintf(stderr, "getTables(): relation %s: bad argument string (%s) for trigger %s\n",
-								tblinfo[i].relname, 
-								PQgetvalue(res2, i2, i_tgargs), 
-								PQgetvalue(res2, i2, i_tgname));
+									tblinfo[i].relname,
+									PQgetvalue(res2, i2, i_tgargs),
+									PQgetvalue(res2, i2, i_tgname));
 							exit_nicely(g_conn);
 						}
 						p++;
@@ -1607,23 +1619,23 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 							p++;
 							continue;
 						}
-						if ( p[0] == '0' && p[1] == '0' && p[2] == '0')
+						if (p[0] == '0' && p[1] == '0' && p[2] == '0')
 							break;
 					}
 					p--;
-					for (s = tgargs, d = &(farg[0]); s < p; )
+					for (s = tgargs, d = &(farg[0]); s < p;)
 					{
 						if (*s == '\'')
 							*d++ = '\\';
 						*d++ = *s++;
 					}
 					*d = 0;
-					sprintf (query, "%s'%s'%s", query, farg, 
-						(findx < tgnargs - 1) ? ", " : "");
+					sprintf(query, "%s'%s'%s", query, farg,
+							(findx < tgnargs - 1) ? ", " : "");
 					tgargs = p + 4;
 				}
-				strcat (query, ");\n");
-				tblinfo[i].triggers[i2] = strdup (query);
+				strcat(query, ");\n");
+				tblinfo[i].triggers[i2] = strdup(query);
 			}
 			PQclear(res2);
 		}
@@ -1786,19 +1798,19 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			if (PQgetvalue(res, j, i_atthasdef)[0] == 't')
 			{
 				PGresult   *res2;
-				
+
 				if (g_verbose)
 					fprintf(stderr, "%s finding DEFAULT expression for attr: %s %s\n",
 							g_comment_start,
 							tblinfo[i].attnames[j],
 							g_comment_end);
-		
+
 				sprintf(q, "SELECT adsrc from pg_attrdef "
 						"where adrelid = '%s'::oid and adnum = %d ",
 						tblinfo[i].oid, j + 1);
 				res2 = PQexec(g_conn, q);
 				if (!res2 ||
-						PQresultStatus(res2) != PGRES_TUPLES_OK)
+					PQresultStatus(res2) != PGRES_TUPLES_OK)
 				{
 					fprintf(stderr, "getTableAttrs(): SELECT (for DEFAULT) failed\n");
 					exit_nicely(g_conn);
@@ -2037,11 +2049,11 @@ dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
 			(finfo[i].retset) ? " SETOF " : "",
 			fmtId(findTypeByOid(tinfo, numTypes, finfo[i].prorettype)),
 			(finfo[i].lang == INTERNALlanguageId) ? finfo[i].prosrc :
-				(finfo[i].lang == ClanguageId) ? finfo[i].probin :
-					(finfo[i].lang == SQLlanguageId) ? finfo[i].prosrc : "unknown",
+			(finfo[i].lang == ClanguageId) ? finfo[i].probin :
+		  (finfo[i].lang == SQLlanguageId) ? finfo[i].prosrc : "unknown",
 			(finfo[i].lang == INTERNALlanguageId) ? "INTERNAL" :
-				(finfo[i].lang == ClanguageId) ? "C" :
-					(finfo[i].lang == SQLlanguageId) ? "SQL" : "unknown");
+			(finfo[i].lang == ClanguageId) ? "C" :
+			(finfo[i].lang == SQLlanguageId) ? "SQL" : "unknown");
 
 	fputs(q, fout);
 
@@ -2091,13 +2103,13 @@ dumpOprs(FILE *fout, OprInfo *oprinfo, int numOperators,
 			strcmp(oprinfo[i].oprkind, "b") == 0)
 		{
 			sprintf(leftarg, ", LEFTARG = %s ",
-					fmtId(findTypeByOid(tinfo, numTypes, oprinfo[i].oprleft)));
+			  fmtId(findTypeByOid(tinfo, numTypes, oprinfo[i].oprleft)));
 		}
 		if (strcmp(oprinfo[i].oprkind, "l") == 0 ||
 			strcmp(oprinfo[i].oprkind, "b") == 0)
 		{
 			sprintf(rightarg, ", RIGHTARG = %s ",
-					fmtId(findTypeByOid(tinfo, numTypes, oprinfo[i].oprright)));
+			 fmtId(findTypeByOid(tinfo, numTypes, oprinfo[i].oprright)));
 		}
 		if (strcmp(oprinfo[i].oprcom, "0") == 0)
 			commutator[0] = '\0';
@@ -2177,10 +2189,10 @@ dumpAggs(FILE *fout, AggInfo *agginfo, int numAggs,
 		/* skip all the builtin oids */
 		if (atoi(agginfo[i].oid) < g_last_builtin_oid)
 			continue;
-		
+
 		sprintf(basetype,
 				"BASETYPE = %s, ",
-			  fmtId(findTypeByOid(tinfo, numTypes, agginfo[i].aggbasetype)));
+		  fmtId(findTypeByOid(tinfo, numTypes, agginfo[i].aggbasetype)));
 
 		if (strcmp(agginfo[i].aggtransfn1, "-") == 0)
 			sfunc1[0] = '\0';
@@ -2203,7 +2215,7 @@ dumpAggs(FILE *fout, AggInfo *agginfo, int numAggs,
 			sprintf(sfunc2,
 					"SFUNC2 = %s, STYPE2 = %s",
 					agginfo[i].aggtransfn2,
-			   fmtId(findTypeByOid(tinfo, numTypes, agginfo[i].aggtranstype2)));
+					fmtId(findTypeByOid(tinfo, numTypes, agginfo[i].aggtranstype2)));
 			if (agginfo[i].agginitval2)
 				sprintf(sfunc2, "%s, INITCOND2 = '%s'",
 						sfunc2, agginfo[i].agginitval2);
@@ -2257,16 +2269,17 @@ dumpAggs(FILE *fout, AggInfo *agginfo, int numAggs,
 static char *
 AddAcl(char *s, const char *add)
 {
-	char *t;
+	char	   *t;
 
-	if (s == (char *)NULL)
+	if (s == (char *) NULL)
 		return (strdup(add));
 
-	t=(char *)calloc((strlen(s) + strlen(add)+1),sizeof(char));
-	sprintf(t,"%s,%s",s,add);
+	t = (char *) calloc((strlen(s) + strlen(add) + 1), sizeof(char));
+	sprintf(t, "%s,%s", s, add);
 
-	return(t);
+	return (t);
 }
+
 /*
  * This will take a string of 'arwR' and return a
  * comma delimited string of SELECT,INSERT,UPDATE,DELETE,RULE
@@ -2274,92 +2287,96 @@ AddAcl(char *s, const char *add)
 static char *
 GetPrivledges(char *s)
 {
-	char *acls=NULL;
+	char	   *acls = NULL;
 
-	/*Grant All           == arwR */
-	/*      INSERT        == ar   */
-    /*      UPDATE/DELETE ==  rw  */
-    /*      SELECT        ==  r   */
-    /*      RULE          ==    R */
+	/* Grant All		   == arwR */
+	/* INSERT		 == ar	 */
+	/* UPDATE/DELETE ==  rw  */
+	/* SELECT		 ==  r	 */
+	/* RULE			 ==    R */
 
-	if (strstr(s,"arwR"))
-		return(strdup("ALL"));
+	if (strstr(s, "arwR"))
+		return (strdup("ALL"));
 
-	if (strstr(s,"ar"))
-		acls=AddAcl(acls,"INSERT");
+	if (strstr(s, "ar"))
+		acls = AddAcl(acls, "INSERT");
 
-	if (strstr(s,"rw"))
-		acls=AddAcl(acls,"UPDATE,DELETE");
-	else
-		if (strchr(s,'r'))
-			acls=AddAcl(acls,"SELECT");
+	if (strstr(s, "rw"))
+		acls = AddAcl(acls, "UPDATE,DELETE");
+	else if (strchr(s, 'r'))
+		acls = AddAcl(acls, "SELECT");
 
-	if (strchr(s,'R'))
-		acls=AddAcl(acls,"RULES");
+	if (strchr(s, 'R'))
+		acls = AddAcl(acls, "RULES");
 
-	return(acls);
+	return (acls);
 }
+
 /* This will parse the acl string of TableInfo
  * into a two deminsional aray:
- *    user | Privledges
+ *	  user | Privledges
  * So to reset the acls I need to grant these priviledges
  * to user
  */
 static ACL *
-ParseACL(const char *acls,int *count)
+ParseACL(const char *acls, int *count)
 {
-	ACL *ParsedAcl=NULL;
-	int i,
-	    len,
-	    NumAcls=1,  /*There is always public*/
-	    AclLen=0;
-	char *s=NULL,
-	     *user=NULL,
-	     *priv=NULL,
-	     *tok;
+	ACL		   *ParsedAcl = NULL;
+	int			i,
+				len,
+				NumAcls = 1,	/* There is always public */
+				AclLen = 0;
+	char	   *s = NULL,
+			   *user = NULL,
+			   *priv = NULL,
+			   *tok;
 
-	AclLen=strlen(acls);
+	AclLen = strlen(acls);
 
-	if (AclLen == 0) {
-		*count=0;
+	if (AclLen == 0)
+	{
+		*count = 0;
 		return (ACL *) NULL;
 	}
 
-	for (i=0;i<AclLen;i++)
+	for (i = 0; i < AclLen; i++)
 		if (acls[i] == ',')
 			NumAcls++;
 
-	ParsedAcl=(ACL *)calloc(AclLen,sizeof(ACL));
-	if (!ParsedAcl) {
-		fprintf(stderr,"Could not allocate space for ACLS!\n");
+	ParsedAcl = (ACL *) calloc(AclLen, sizeof(ACL));
+	if (!ParsedAcl)
+	{
+		fprintf(stderr, "Could not allocate space for ACLS!\n");
 		exit_nicely(g_conn);
 	}
 
-	s=strdup(acls);
+	s = strdup(acls);
 
-	/* Setup up public*/
-	ParsedAcl[0].user=strdup("Public");
-	tok=strtok(s,",");
-	ParsedAcl[0].privledges=GetPrivledges(strchr(tok,'='));
+	/* Setup up public */
+	ParsedAcl[0].user = strdup("Public");
+	tok = strtok(s, ",");
+	ParsedAcl[0].privledges = GetPrivledges(strchr(tok, '='));
 
-	/*Do the rest of the users*/
-	i=1;
-	while ((i < NumAcls) && ((tok=strtok(NULL,",")) != (char *)NULL)) {
-		/*User name is string up to = in tok*/
-		len=strchr(tok,'=') - tok -1 ;
-		user=(char*)calloc(len+1,sizeof(char));
-		strncpy(user,tok+1,len);
-		if (user[len-1] == '\"')
-			user[len-1]=(char)NULL;
-		priv=GetPrivledges(tok+len+2);
-		ParsedAcl[i].user=user;
-		ParsedAcl[i].privledges=priv;
+	/* Do the rest of the users */
+	i = 1;
+	while ((i < NumAcls) && ((tok = strtok(NULL, ",")) != (char *) NULL))
+	{
+		/* User name is string up to = in tok */
+		len = strchr(tok, '=') - tok - 1;
+		user = (char *) calloc(len + 1, sizeof(char));
+		strncpy(user, tok + 1, len);
+		if (user[len - 1] == '\"')
+			user[len - 1] = (char) NULL;
+		priv = GetPrivledges(tok + len + 2);
+		ParsedAcl[i].user = user;
+		ParsedAcl[i].privledges = priv;
 		i++;
 	}
 
-	*count=NumAcls;
+	*count = NumAcls;
 	return (ParsedAcl);
 }
+
 /*
  * dumpTables:
  *	  write out to fout all the user-define tables
@@ -2379,8 +2396,8 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 	char	  **parentRels;		/* list of names of parent relations */
 	int			numParents;
 	int			actual_atts;	/* number of attrs in this CREATE statment */
-	ACL			*ACLlist;
-	
+	ACL		   *ACLlist;
+
 	/* First - dump SEQUENCEs */
 	for (i = 0; i < numTables; i++)
 	{
@@ -2392,10 +2409,10 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 			dumpSequence(fout, tblinfo[i]);
 		}
 	}
-	
+
 	for (i = 0; i < numTables; i++)
 	{
-		if (tblinfo[i].sequence)	/* already dumped */
+		if (tblinfo[i].sequence)/* already dumped */
 			continue;
 
 		if (!tablename || (!strcmp(tblinfo[i].relname, tablename)))
@@ -2427,7 +2444,7 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 
 						sprintf(q, "%s(%d)",
 								q,
-								tblinfo[i].atttypmod[j]-VARHDRSZ);
+								tblinfo[i].atttypmod[j] - VARHDRSZ);
 						actual_atts++;
 					}
 					else if (!strcmp(tblinfo[i].typnames[j], "varchar"))
@@ -2440,7 +2457,7 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 
 						sprintf(q, "%s(%d)",
 								q,
-								tblinfo[i].atttypmod[j]-VARHDRSZ);
+								tblinfo[i].atttypmod[j] - VARHDRSZ);
 						actual_atts++;
 					}
 					else
@@ -2486,25 +2503,28 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 			}
 			strcat(q, ";\n");
 			fputs(q, fout);
-			
-			if (acls) {
+
+			if (acls)
+			{
 				ACLlist = ParseACL(tblinfo[i].relacl, &l);
-				if (ACLlist == (ACL *)NULL)
+				if (ACLlist == (ACL *) NULL)
 					if (l == 0)
 						continue;
-					else {
-						fprintf(stderr,"Could not parse ACL list for %s...Exiting!\n",
-							tblinfo[i].relname);
+					else
+					{
+						fprintf(stderr, "Could not parse ACL list for %s...Exiting!\n",
+								tblinfo[i].relname);
 						exit_nicely(g_conn);
-						}
+					}
 
 				/* Revoke Default permissions for PUBLIC */
 				fprintf(fout,
-					"REVOKE ALL on %s from PUBLIC;\n",
+						"REVOKE ALL on %s from PUBLIC;\n",
 						tblinfo[i].relname);
 
-				for(k = 0; k < l; k++) {
-					if (ACLlist[k].privledges != (char *)NULL)
+				for (k = 0; k < l; k++)
+				{
+					if (ACLlist[k].privledges != (char *) NULL)
 						fprintf(fout,
 								"GRANT %s on %s to %s;\n",
 								ACLlist[k].privledges, tblinfo[i].relname,
@@ -2913,16 +2933,17 @@ dumpSequence(FILE *fout, TableInfo tbinfo)
 }
 
 
-static void	
-dumpTriggers(FILE *fout, const char *tablename, 
-						TableInfo *tblinfo, int numTables)
+static void
+dumpTriggers(FILE *fout, const char *tablename,
+			 TableInfo *tblinfo, int numTables)
 {
-	int	i, j;
-	
+	int			i,
+				j;
+
 	if (g_verbose)
 		fprintf(stderr, "%s dumping out triggers %s\n",
 				g_comment_start, g_comment_end);
-	
+
 	for (i = 0; i < numTables; i++)
 	{
 		if (tablename && strcmp(tblinfo[i].relname, tablename))
@@ -2934,4 +2955,3 @@ dumpTriggers(FILE *fout, const char *tablename,
 		}
 	}
 }
-

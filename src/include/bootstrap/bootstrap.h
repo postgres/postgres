@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bootstrap.h,v 1.10 1998/01/24 22:48:15 momjian Exp $
+ * $Id: bootstrap.h,v 1.11 1998/02/26 04:40:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,8 @@ extern int	numattr;
 extern int	DebugMode;
 
 extern int	BootstrapMain(int ac, char *av[]);
-extern void index_register(char *heap,
+extern void
+index_register(char *heap,
 			   char *ind,
 			   int natts,
 			   AttrNumber *attnos,

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.10 1998/01/27 03:00:43 momjian Exp $
+ * $Id: lock.h,v 1.11 1998/02/26 04:43:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,10 +204,12 @@ extern SPINLOCK LockMgrLock;
  */
 extern void InitLocks(void);
 extern void LockDisable(int status);
-extern LockTableId LockTabInit(char *tabName, MASK *conflictsP, int *prioP,
+extern LockTableId
+LockTabInit(char *tabName, MASK *conflictsP, int *prioP,
 			int ntypes);
 extern bool LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt);
-extern int LockResolveConflicts(LOCKTAB *ltable, LOCK *lock, LOCKT lockt,
+extern int
+LockResolveConflicts(LOCKTAB *ltable, LOCK *lock, LOCKT lockt,
 					 TransactionId xid);
 extern bool LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt);
 extern void GrantLock(LOCK *lock, LOCKT lockt);
@@ -215,6 +217,7 @@ extern bool LockReleaseAll(LockTableId tableId, SHM_QUEUE *lockQueue);
 extern int	LockShmemSize(void);
 extern bool LockingDisabled(void);
 extern bool DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check);
+
 #ifdef DEADLOCK_DEBUG
 extern void DumpLocks(void);
 

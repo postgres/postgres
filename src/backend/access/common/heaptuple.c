@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.36 1998/02/11 19:09:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.37 1998/02/26 04:29:15 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -34,14 +34,14 @@
 #endif
 
 /* Used by heap_getattr() macro, for speed */
-long heap_sysoffset[] = {
+long		heap_sysoffset[] = {
 /* Only the first one is pass-by-ref, and is handled specially in the macro */
-		offsetof(HeapTupleData, t_ctid),		
-		offsetof(HeapTupleData, t_oid),
-		offsetof(HeapTupleData, t_xmin),
-		offsetof(HeapTupleData, t_cmin),
-		offsetof(HeapTupleData, t_xmax),
-		offsetof(HeapTupleData, t_cmax)
+	offsetof(HeapTupleData, t_ctid),
+	offsetof(HeapTupleData, t_oid),
+	offsetof(HeapTupleData, t_xmin),
+	offsetof(HeapTupleData, t_cmin),
+	offsetof(HeapTupleData, t_xmax),
+	offsetof(HeapTupleData, t_cmax)
 };
 
 /* ----------------------------------------------------------------
@@ -350,7 +350,7 @@ heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
 {
 	switch (attnum)
 	{
-		case  SelfItemPointerAttributeNumber:
+			case SelfItemPointerAttributeNumber:
 			return ((Datum) &tup->t_ctid);
 		case ObjectIdAttributeNumber:
 			return ((Datum) (long) tup->t_oid);
@@ -389,16 +389,16 @@ heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
  */
 Datum
 nocachegetattr(HeapTuple tup,
-			int attnum,
-			TupleDesc tupleDesc,
-			bool *isnull)
+			   int attnum,
+			   TupleDesc tupleDesc,
+			   bool *isnull)
 {
 	char	   *tp;				/* ptr to att in tuple */
-	bits8	   *bp = tup->t_bits; /* ptr to att in tuple */
+	bits8	   *bp = tup->t_bits;		/* ptr to att in tuple */
 	int			slow;			/* do we have to walk nulls? */
 	AttributeTupleForm *att = tupleDesc->attrs;
 
-	
+
 #if IN_MACRO
 /* This is handled in the macro */
 	Assert(attnum > 0);
@@ -430,6 +430,7 @@ nocachegetattr(HeapTuple tup,
 		}
 		else if (attnum == 0)
 		{
+
 			/*
 			 * first attribute is always at position zero
 			 */
@@ -470,11 +471,11 @@ nocachegetattr(HeapTuple tup,
 		 * ----------------
 		 */
 		{
-			int i = 0; /* current offset in bp */
-			int mask;	/* bit in byte we're looking at */
-			char n;	/* current byte in bp */
-			int byte,
-						 finalbit;
+			int			i = 0;	/* current offset in bp */
+			int			mask;	/* bit in byte we're looking at */
+			char		n;		/* current byte in bp */
+			int			byte,
+						finalbit;
 
 			byte = attnum >> 3;
 			finalbit = attnum & 0x07;
@@ -486,14 +487,14 @@ nocachegetattr(HeapTuple tup,
 				{
 					/* check for nulls in any "earlier" bytes */
 					if ((~n) != 0)
-						slow=1;
+						slow = 1;
 				}
 				else
 				{
 					/* check for nulls "before" final bit of last byte */
 					mask = (1 << finalbit) - 1;
 					if ((~n) & mask)
-						slow=1;
+						slow = 1;
 				}
 			}
 		}
@@ -508,8 +509,8 @@ nocachegetattr(HeapTuple tup,
 	{
 		if (att[attnum]->attcacheoff != -1)
 		{
-			return (Datum)fetchatt(&(att[attnum]),
-						tp + att[attnum]->attcacheoff);
+			return (Datum) fetchatt(&(att[attnum]),
+									tp + att[attnum]->attcacheoff);
 		}
 		else if (attnum == 0)
 		{
@@ -517,11 +518,11 @@ nocachegetattr(HeapTuple tup,
 		}
 		else if (!HeapTupleAllFixed(tup))
 		{
-			int j = 0;
+			int			j = 0;
 
 			/*
-			 *	In for(), we make this <= and not < because we want to
-			 *	test if we can go past it in initializing offsets.
+			 * In for(), we make this <= and not < because we want to test
+			 * if we can go past it in initializing offsets.
 			 */
 			for (j = 0; j <= attnum && !slow; j++)
 				if (att[j]->attlen < 1 && !VARLENA_FIXED_SIZE(att[j]))
@@ -536,8 +537,8 @@ nocachegetattr(HeapTuple tup,
 	 */
 	if (!slow)
 	{
-		int j = 1;
-		long off;
+		int			j = 1;
+		long		off;
 
 		/*
 		 * need to set cache for some atts
@@ -554,13 +555,14 @@ nocachegetattr(HeapTuple tup,
 			off = att[j - 1]->attcacheoff + att[j - 1]->atttypmod;
 
 		for (; j <= attnum ||
-				/* Can we compute more?  We will probably need them */
-				(j < tup->t_natts &&
-				 att[j]->attcacheoff == -1 &&
-				 (HeapTupleNoNulls(tup) || !att_isnull(j, bp)) &&
-				 (HeapTupleAllFixed(tup)||
-					 att[j]->attlen > 0 || VARLENA_FIXED_SIZE(att[j]))); j++)
+		/* Can we compute more?  We will probably need them */
+			 (j < tup->t_natts &&
+			  att[j]->attcacheoff == -1 &&
+			  (HeapTupleNoNulls(tup) || !att_isnull(j, bp)) &&
+			  (HeapTupleAllFixed(tup) ||
+			   att[j]->attlen > 0 || VARLENA_FIXED_SIZE(att[j]))); j++)
 		{
+
 			/*
 			 * Fix me when going to a machine with more than a four-byte
 			 * word!
@@ -605,7 +607,7 @@ nocachegetattr(HeapTuple tup,
 					break;
 				case -1:
 					Assert(!VARLENA_FIXED_SIZE(att[j]) ||
-							att[j]->atttypmod == VARSIZE(tp + off));
+						   att[j]->atttypmod == VARSIZE(tp + off));
 					off += VARSIZE(tp + off);
 					break;
 				default:
@@ -618,9 +620,9 @@ nocachegetattr(HeapTuple tup,
 	}
 	else
 	{
-		bool usecache = true;
-		int off = 0;
-		int i;
+		bool		usecache = true;
+		int			off = 0;
+		int			i;
 
 		/*
 		 * Now we know that we have to walk the tuple CAREFULLY.
@@ -665,7 +667,7 @@ nocachegetattr(HeapTuple tup,
 					default:
 						if (att[i]->attlen < sizeof(int32))
 							elog(ERROR,
-								 "nocachegetattr2: attribute %d has len %d",
+							  "nocachegetattr2: attribute %d has len %d",
 								 i, att[i]->attlen);
 						if (att[i]->attalign == 'd')
 							off = DOUBLEALIGN(off);
@@ -690,7 +692,7 @@ nocachegetattr(HeapTuple tup,
 					break;
 				case -1:
 					Assert(!VARLENA_FIXED_SIZE(att[i]) ||
-							att[i]->atttypmod == VARSIZE(tp + off));
+						   att[i]->atttypmod == VARSIZE(tp + off));
 					off += VARSIZE(tp + off);
 					if (!VARLENA_FIXED_SIZE(att[i]))
 						usecache = false;
@@ -965,9 +967,9 @@ heap_modifytuple(HeapTuple tuple,
 	 * ----------------
 	 */
 	infomask = newTuple->t_infomask;
-	memmove((char *) &newTuple->t_oid, /* XXX */
+	memmove((char *) &newTuple->t_oid,	/* XXX */
 			(char *) &tuple->t_oid,
-			((char *) &tuple->t_hoff - (char *) &tuple->t_oid));	/* XXX */
+			((char *) &tuple->t_hoff - (char *) &tuple->t_oid));		/* XXX */
 	newTuple->t_infomask = infomask;
 	newTuple->t_natts = numberOfAttributes;		/* fix t_natts just in
 												 * case */
@@ -993,7 +995,7 @@ heap_addheader(uint32 natts,	/* max domain index */
 			   int structlen,	/* its length */
 			   char *structure) /* pointer to the struct */
 {
-	char 		*tp;			/* tuple data pointer */
+	char	   *tp;				/* tuple data pointer */
 	HeapTuple	tup;
 	long		len;
 	int			hoff;
@@ -1018,4 +1020,3 @@ heap_addheader(uint32 natts,	/* max domain index */
 
 	return (tup);
 }
-

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.16 1998/01/26 01:41:23 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.17 1998/02/26 04:36:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ void		(*
 {
 	switch (dest)
 	{
-		case RemoteInternal:
+			case RemoteInternal:
 			return printtup_internal;
 			break;
 

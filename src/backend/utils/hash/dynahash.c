@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.12 1998/02/11 19:13:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.13 1998/02/26 04:37:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,10 +154,10 @@ static long hash_accesses,
 
 /************************** CREATE ROUTINES **********************/
 
-HTAB	   *
+HTAB *
 hash_create(int nelem, HASHCTL *info, int flags)
 {
-	HHDR *hctl;
+	HHDR	   *hctl;
 	HTAB	   *hashp;
 
 
@@ -303,8 +303,8 @@ static int
 init_htab(HTAB *hashp, int nelem)
 {
 	SEG_OFFSET *segp;
-	int nbuckets;
-	int nsegs;
+	int			nbuckets;
+	int			nsegs;
 	int			l2;
 	HHDR	   *hctl;
 
@@ -387,7 +387,7 @@ hash_destroy(HTAB *hashp)
 
 	if (hashp != NULL)
 	{
-		SEG_OFFSET segNum;
+		SEG_OFFSET	segNum;
 		SEGMENT		segp;
 		int			nsegs = hashp->hctl->nsegs;
 		int			j;
@@ -469,7 +469,7 @@ call_hash(HTAB *hashp, char *k, int len)
  *		foundPtr is TRUE if we found an element in the table
  *		(FALSE if we entered one).
  */
-long	   *
+long *
 hash_search(HTAB *hashp,
 			char *keyPtr,
 			HASHACTION action,	/* HASH_FIND / HASH_ENTER / HASH_REMOVE
@@ -480,7 +480,7 @@ hash_search(HTAB *hashp,
 	long		segment_num;
 	long		segment_ndx;
 	SEGMENT		segp;
-	ELEMENT *curr;
+	ELEMENT    *curr;
 	HHDR	   *hctl;
 	BUCKET_INDEX currIndex;
 	BUCKET_INDEX *prevIndexPtr;
@@ -653,7 +653,7 @@ hash_search(HTAB *hashp,
  *			   return TRUE in the end.
  *
  */
-long	   *
+long *
 hash_seq(HTAB *hashp)
 {
 	static uint32 curBucket = 0;
@@ -811,7 +811,7 @@ expand_table(HTAB *hashp)
 static int
 dir_realloc(HTAB *hashp)
 {
-	char *p;
+	char	   *p;
 	char	  **p_ptr;
 	long		old_dirsize;
 	long		new_dirsize;

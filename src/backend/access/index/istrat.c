@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.16 1998/01/15 19:42:02 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.17 1998/02/26 04:29:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,17 +242,17 @@ StrategyTermEvaluate(StrategyTerm term,
 		switch (operator->flags ^ entry->sk_flags)
 		{
 			case 0x0:
-				tmpres = (long) FMGR_PTR2(&entry->sk_func, 
+				tmpres = (long) FMGR_PTR2(&entry->sk_func,
 										  left, right);
 				break;
 
 			case SK_NEGATE:
-				tmpres = (long) !FMGR_PTR2(&entry->sk_func, 
+				tmpres = (long) !FMGR_PTR2(&entry->sk_func,
 										   left, right);
 				break;
 
 			case SK_COMMUTE:
-				tmpres = (long) FMGR_PTR2(&entry->sk_func, 
+				tmpres = (long) FMGR_PTR2(&entry->sk_func,
 										  right, left);
 				break;
 

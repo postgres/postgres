@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.8 1998/02/13 03:26:40 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.9 1998/02/26 04:31:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,14 +116,14 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 	 */
 	if (node == NULL)
 		return FALSE;
-	
-	foreach (subp, node->initPlan)
+
+	foreach(subp, node->initPlan)
 	{
-		result = ExecInitSubPlan ((SubPlan*) lfirst (subp), estate, node);
-		if ( result == FALSE )
+		result = ExecInitSubPlan((SubPlan *) lfirst(subp), estate, node);
+		if (result == FALSE)
 			return (FALSE);
 	}
-	
+
 	switch (nodeTag(node))
 	{
 			/* ----------------
@@ -202,13 +202,13 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 			elog(ERROR, "ExecInitNode: node %d unsupported", nodeTag(node));
 			result = FALSE;
 	}
-	
-	if ( result != FALSE )
+
+	if (result != FALSE)
 	{
-		foreach (subp, node->subPlan)
+		foreach(subp, node->subPlan)
 		{
-			result = ExecInitSubPlan ((SubPlan*) lfirst (subp), estate, node);
-			if ( result == FALSE )
+			result = ExecInitSubPlan((SubPlan *) lfirst(subp), estate, node);
+			if (result == FALSE)
 				return (FALSE);
 		}
 	}
@@ -235,10 +235,10 @@ ExecProcNode(Plan *node, Plan *parent)
 	 */
 	if (node == NULL)
 		return NULL;
-	
-	if ( node->chgParam != NULL )				/* something changed */
-		ExecReScan (node, NULL, parent);		/* let ReScan handle this */
-	
+
+	if (node->chgParam != NULL) /* something changed */
+		ExecReScan(node, NULL, parent); /* let ReScan handle this */
+
 	switch (nodeTag(node))
 	{
 			/* ----------------
@@ -410,7 +410,7 @@ void
 ExecEndNode(Plan *node, Plan *parent)
 {
 	List	   *subp;
-	
+
 	/* ----------------
 	 *	do nothing when we get to the end
 	 *	of a leaf on tree.
@@ -418,18 +418,18 @@ ExecEndNode(Plan *node, Plan *parent)
 	 */
 	if (node == NULL)
 		return;
-	
-	foreach (subp, node->initPlan)
+
+	foreach(subp, node->initPlan)
 	{
-		ExecEndSubPlan ((SubPlan*) lfirst (subp));
+		ExecEndSubPlan((SubPlan *) lfirst(subp));
 	}
-	foreach (subp, node->subPlan)
+	foreach(subp, node->subPlan)
 	{
-		ExecEndSubPlan ((SubPlan*) lfirst (subp));
+		ExecEndSubPlan((SubPlan *) lfirst(subp));
 	}
-	if ( node->chgParam != NULL )
+	if (node->chgParam != NULL)
 	{
-		freeList (node->chgParam);
+		freeList(node->chgParam);
 		node->chgParam = NULL;
 	}
 

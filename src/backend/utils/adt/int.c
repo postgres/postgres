@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.14 1998/02/11 19:12:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.15 1998/02/26 04:37:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ int2out(int16 sh)
 int16 *
 int28in(char *shs)
 {
-	int16 (*result)[];
+	int16		(*result)[];
 	int			nums;
 
 	if (shs == NULL)
@@ -109,9 +109,9 @@ int28in(char *shs)
 char *
 int28out(int16 (*shs)[])
 {
-	int num;
-	int16 *sp;
-	char *rp;
+	int			num;
+	int16	   *sp;
+	char	   *rp;
 	char	   *result;
 
 	if (shs == NULL)
@@ -145,7 +145,7 @@ int32 *
 int44in(char *input_string)
 {
 	int32	   *foo = (int32 *) palloc(4 * sizeof(int32));
-	int i = 0;
+	int			i = 0;
 
 	i = sscanf(input_string,
 			   "%d, %d, %d, %d",
@@ -242,10 +242,10 @@ i4toi2(int32 arg1)
 text *
 int2_text(int16 arg1)
 {
-	text *result;
+	text	   *result;
 
-	int len;
-	char *str;
+	int			len;
+	char	   *str;
 
 	str = int2out(arg1);
 	len = (strlen(str) + VARHDRSZ);
@@ -257,36 +257,36 @@ int2_text(int16 arg1)
 
 	pfree(str);
 
-	return(result);
-} /* int2_text() */
+	return (result);
+}	/* int2_text() */
 
 int16
 text_int2(text *string)
 {
-	int16 result;
+	int16		result;
 
-	int len;
-	char *str;
+	int			len;
+	char	   *str;
 
 	len = (VARSIZE(string) - VARHDRSZ);
 
-	str = palloc(len+1);
+	str = palloc(len + 1);
 	memmove(str, VARDATA(string), len);
-	*(str+len) = '\0';
+	*(str + len) = '\0';
 
 	result = int2in(str);
 	pfree(str);
- 
-	return(result);
-} /* text_int2() */
+
+	return (result);
+}	/* text_int2() */
 
 text *
 int4_text(int32 arg1)
 {
-	text *result;
+	text	   *result;
 
-	int len;
-	char *str;
+	int			len;
+	char	   *str;
 
 	str = int4out(arg1);
 	len = (strlen(str) + VARHDRSZ);
@@ -298,28 +298,28 @@ int4_text(int32 arg1)
 
 	pfree(str);
 
-	return(result);
-} /* int4_text() */
+	return (result);
+}	/* int4_text() */
 
 int32
 text_int4(text *string)
 {
-	int32 result;
+	int32		result;
 
-	int len;
-	char *str;
+	int			len;
+	char	   *str;
 
 	len = (VARSIZE(string) - VARHDRSZ);
 
-	str = palloc(len+1);
+	str = palloc(len + 1);
 	memmove(str, VARDATA(string), len);
-	*(str+len) = '\0';
+	*(str + len) = '\0';
 
 	result = int4in(str);
 	pfree(str);
- 
-	return(result);
-} /* text_int4() */
+
+	return (result);
+}	/* text_int4() */
 
 
 /*

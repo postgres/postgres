@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.21 1998/01/07 18:46:34 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.22 1998/02/26 04:36:53 momjian Exp $
  */
 
 #include <stdio.h>
@@ -34,6 +34,7 @@ static const char *num_word(Cash value);
 
 #ifdef USE_LOCALE
 static struct lconv *lconvert = NULL;
+
 #endif
 
 /* cash_in()
@@ -46,7 +47,7 @@ static struct lconv *lconvert = NULL;
  *	monetary values returned by localeconv() can be multiple
  *	bytes/characters. This code assumes one byte only. - tgl 97/04/14
  */
-Cash	   *
+Cash *
 cash_in(const char *str)
 {
 	Cash	   *result;
@@ -73,7 +74,7 @@ cash_in(const char *str)
 
 	/* frac_digits in the C locale seems to return CHAR_MAX */
 	/* best guess is 2 in this case I think */
-	fpoint = ((lconvert->frac_digits != CHAR_MAX) ? lconvert->frac_digits : 2);		/* int_frac_digits? */
+	fpoint = ((lconvert->frac_digits != CHAR_MAX) ? lconvert->frac_digits : 2); /* int_frac_digits? */
 
 	dsymbol = *lconvert->mon_decimal_point;
 	ssymbol = *lconvert->mon_thousands_sep;
@@ -90,8 +91,8 @@ cash_in(const char *str)
 #endif
 
 #ifdef CASHDEBUG
-printf( "cashin- precision %d; decimal %c; thousands %c; currency %c; positive %c; negative %c\n",
- fpoint, dsymbol, ssymbol, csymbol, psymbol, nsymbol);
+	printf("cashin- precision %d; decimal %c; thousands %c; currency %c; positive %c; negative %c\n",
+		   fpoint, dsymbol, ssymbol, csymbol, psymbol, nsymbol);
 #endif
 
 	/* we need to add all sorts of checking here.  For now just */
@@ -164,7 +165,7 @@ printf( "cashin- precision %d; decimal %c; thousands %c; currency %c; positive %
 	*result = (value * sgn);
 
 	return (result);
-}								/* cash_in() */
+}	/* cash_in() */
 
 
 /* cash_out()
@@ -201,7 +202,7 @@ cash_out(Cash *in_value)
 	nsymbol = lconvert->negative_sign;
 	/* frac_digits in the C locale seems to return CHAR_MAX */
 	/* best guess is 2 in this case I think */
-	points = ((lconvert->frac_digits != CHAR_MAX) ? lconvert->frac_digits : 2);		/* int_frac_digits? */
+	points = ((lconvert->frac_digits != CHAR_MAX) ? lconvert->frac_digits : 2); /* int_frac_digits? */
 	convention = lconvert->n_sign_posn;
 #else
 	mon_group = 3;
@@ -276,7 +277,7 @@ cash_out(Cash *in_value)
 	}
 
 	return (result);
-}								/* cash_out() */
+}	/* cash_out() */
 
 
 bool
@@ -286,7 +287,7 @@ cash_eq(Cash *c1, Cash *c2)
 		return (FALSE);
 
 	return (*c1 == *c2);
-}								/* cash_eq() */
+}	/* cash_eq() */
 
 bool
 cash_ne(Cash *c1, Cash *c2)
@@ -295,7 +296,7 @@ cash_ne(Cash *c1, Cash *c2)
 		return (FALSE);
 
 	return (*c1 != *c2);
-}								/* cash_ne() */
+}	/* cash_ne() */
 
 bool
 cash_lt(Cash *c1, Cash *c2)
@@ -304,7 +305,7 @@ cash_lt(Cash *c1, Cash *c2)
 		return (FALSE);
 
 	return (*c1 < *c2);
-}								/* cash_lt() */
+}	/* cash_lt() */
 
 bool
 cash_le(Cash *c1, Cash *c2)
@@ -313,7 +314,7 @@ cash_le(Cash *c1, Cash *c2)
 		return (FALSE);
 
 	return (*c1 <= *c2);
-}								/* cash_le() */
+}	/* cash_le() */
 
 bool
 cash_gt(Cash *c1, Cash *c2)
@@ -322,7 +323,7 @@ cash_gt(Cash *c1, Cash *c2)
 		return (FALSE);
 
 	return (*c1 > *c2);
-}								/* cash_gt() */
+}	/* cash_gt() */
 
 bool
 cash_ge(Cash *c1, Cash *c2)
@@ -331,13 +332,13 @@ cash_ge(Cash *c1, Cash *c2)
 		return (FALSE);
 
 	return (*c1 >= *c2);
-}								/* cash_ge() */
+}	/* cash_ge() */
 
 
 /* cash_pl()
  * Add two cash values.
  */
-Cash	   *
+Cash *
 cash_pl(Cash *c1, Cash *c2)
 {
 	Cash	   *result;
@@ -351,13 +352,13 @@ cash_pl(Cash *c1, Cash *c2)
 	*result = (*c1 + *c2);
 
 	return (result);
-}								/* cash_pl() */
+}	/* cash_pl() */
 
 
 /* cash_mi()
  * Subtract two cash values.
  */
-Cash	   *
+Cash *
 cash_mi(Cash *c1, Cash *c2)
 {
 	Cash	   *result;
@@ -371,13 +372,13 @@ cash_mi(Cash *c1, Cash *c2)
 	*result = (*c1 - *c2);
 
 	return (result);
-}								/* cash_mi() */
+}	/* cash_mi() */
 
 
 /* cash_mul_flt8()
  * Multiply cash by float8.
  */
-Cash	   *
+Cash *
 cash_mul_flt8(Cash *c, float8 *f)
 {
 	Cash	   *result;
@@ -391,17 +392,17 @@ cash_mul_flt8(Cash *c, float8 *f)
 	*result = ((*f) * (*c));
 
 	return (result);
-}								/* cash_mul_flt8() */
+}	/* cash_mul_flt8() */
 
 
 /* flt8_mul_cash()
  * Multiply float8 by cash.
  */
-Cash	   *
+Cash *
 flt8_mul_cash(float8 *f, Cash *c)
 {
 	return (cash_mul_flt8(c, f));
-}								/* flt8_mul_cash() */
+}	/* flt8_mul_cash() */
 
 
 /* cash_div_flt8()
@@ -410,7 +411,7 @@ flt8_mul_cash(float8 *f, Cash *c)
  * XXX Don't know if rounding or truncating is correct behavior.
  * Round for now. - tgl 97/04/15
  */
-Cash	   *
+Cash *
 cash_div_flt8(Cash *c, float8 *f)
 {
 	Cash	   *result;
@@ -427,12 +428,12 @@ cash_div_flt8(Cash *c, float8 *f)
 	*result = rint(*c / *f);
 
 	return (result);
-}								/* cash_div_flt8() */
+}	/* cash_div_flt8() */
 
 /* cash_mul_flt4()
  * Multiply cash by float4.
  */
-Cash	   *
+Cash *
 cash_mul_flt4(Cash *c, float4 *f)
 {
 	Cash	   *result;
@@ -446,17 +447,17 @@ cash_mul_flt4(Cash *c, float4 *f)
 	*result = ((*f) * (*c));
 
 	return (result);
-}								/* cash_mul_flt4() */
+}	/* cash_mul_flt4() */
 
 
 /* flt4_mul_cash()
  * Multiply float4 by float4.
  */
-Cash	   *
+Cash *
 flt4_mul_cash(float4 *f, Cash *c)
 {
 	return (cash_mul_flt4(c, f));
-}								/* flt4_mul_cash() */
+}	/* flt4_mul_cash() */
 
 
 /* cash_div_flt4()
@@ -465,7 +466,7 @@ flt4_mul_cash(float4 *f, Cash *c)
  * XXX Don't know if rounding or truncating is correct behavior.
  * Round for now. - tgl 97/04/15
  */
-Cash	   *
+Cash *
 cash_div_flt4(Cash *c, float4 *f)
 {
 	Cash	   *result;
@@ -482,13 +483,13 @@ cash_div_flt4(Cash *c, float4 *f)
 	*result = rint(*c / *f);
 
 	return (result);
-}								/* cash_div_flt4() */
+}	/* cash_div_flt4() */
 
 
 /* cash_mul_int4()
  * Multiply cash by int4.
  */
-Cash	   *
+Cash *
 cash_mul_int4(Cash *c, int4 i)
 {
 	Cash	   *result;
@@ -502,17 +503,17 @@ cash_mul_int4(Cash *c, int4 i)
 	*result = ((i) * (*c));
 
 	return (result);
-}								/* cash_mul_int4() */
+}	/* cash_mul_int4() */
 
 
 /* int4_mul_cash()
  * Multiply int4 by cash.
  */
-Cash	   *
+Cash *
 int4_mul_cash(int4 i, Cash *c)
 {
 	return (cash_mul_int4(c, i));
-}								/* int4_mul_cash() */
+}	/* int4_mul_cash() */
 
 
 /* cash_div_int4()
@@ -521,7 +522,7 @@ int4_mul_cash(int4 i, Cash *c)
  * XXX Don't know if rounding or truncating is correct behavior.
  * Round for now. - tgl 97/04/15
  */
-Cash	   *
+Cash *
 cash_div_int4(Cash *c, int4 i)
 {
 	Cash	   *result;
@@ -538,13 +539,13 @@ cash_div_int4(Cash *c, int4 i)
 	*result = rint(*c / i);
 
 	return (result);
-}								/* cash_div_int4() */
+}	/* cash_div_int4() */
 
 
 /* cash_mul_int2()
  * Multiply cash by int2.
  */
-Cash	   *
+Cash *
 cash_mul_int2(Cash *c, int2 s)
 {
 	Cash	   *result;
@@ -558,17 +559,17 @@ cash_mul_int2(Cash *c, int2 s)
 	*result = ((s) * (*c));
 
 	return (result);
-}								/* cash_mul_int2() */
+}	/* cash_mul_int2() */
 
 
 /* int2_mul_cash()
  * Multiply int2 by cash.
  */
-Cash	   *
+Cash *
 int2_mul_cash(int2 s, Cash *c)
 {
 	return (cash_mul_int2(c, s));
-}								/* int2_mul_cash() */
+}	/* int2_mul_cash() */
 
 
 /* cash_div_int2()
@@ -577,7 +578,7 @@ int2_mul_cash(int2 s, Cash *c)
  * XXX Don't know if rounding or truncating is correct behavior.
  * Round for now. - tgl 97/04/15
  */
-Cash	   *
+Cash *
 cash_div_int2(Cash *c, int2 s)
 {
 	Cash	   *result;
@@ -594,13 +595,13 @@ cash_div_int2(Cash *c, int2 s)
 	*result = rint(*c / s);
 
 	return (result);
-}								/* cash_div_int2() */
+}	/* cash_div_int2() */
 
 
 /* cashlarger()
  * Return larger of two cash values.
  */
-Cash	   *
+Cash *
 cashlarger(Cash *c1, Cash *c2)
 {
 	Cash	   *result;
@@ -614,13 +615,13 @@ cashlarger(Cash *c1, Cash *c2)
 	*result = ((*c1 > *c2) ? *c1 : *c2);
 
 	return (result);
-}								/* cashlarger() */
+}	/* cashlarger() */
 
 
 /* cashsmaller()
  * Return smaller of two cash values.
  */
-Cash	   *
+Cash *
 cashsmaller(Cash *c1, Cash *c2)
 {
 	Cash	   *result;
@@ -634,7 +635,7 @@ cashsmaller(Cash *c1, Cash *c2)
 	*result = ((*c1 < *c2) ? *c1 : *c2);
 
 	return (result);
-}								/* cashsmaller() */
+}	/* cashsmaller() */
 
 
 /* cash_words_out()
@@ -691,7 +692,7 @@ cash_words_out(Cash *value)
 	strcat(buf, m0 == 1 ? " cent" : " cents");
 	*buf = toupper(*buf);
 	return (buf);
-}								/* cash_words_out() */
+}	/* cash_words_out() */
 
 
 /*************************************************************************
@@ -749,4 +750,4 @@ num_word(Cash value)
 	}
 
 	return (buf);
-}								/* num_word() */
+}	/* num_word() */

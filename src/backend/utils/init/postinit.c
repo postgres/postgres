@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.24 1998/02/23 18:43:06 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.25 1998/02/26 04:38:12 momjian Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -49,7 +49,8 @@
 #include "storage/bufmgr.h"
 #include "access/transam.h"		/* XXX dependency problem */
 #include "utils/syscache.h"
-#include "storage/bufpage.h"	/* for page layout, for InitMyDatabaseInfo() */
+#include "storage/bufpage.h"	/* for page layout, for
+								 * InitMyDatabaseInfo() */
 #include "storage/sinval.h"
 #include "storage/sinvaladt.h"
 #include "storage/lmgr.h"
@@ -117,7 +118,7 @@ InitMyDatabaseInfo(char *name)
 {
 	Oid			owner;
 	char	   *path,
-				myPath[MAXPGPATH+1];
+				myPath[MAXPGPATH + 1];
 
 	SetDatabaseName(name);
 	GetRawDatabaseInfo(name, &owner, &MyDatabaseId, myPath);
@@ -132,7 +133,7 @@ InitMyDatabaseInfo(char *name)
 	SetDatabasePath(path);
 
 	return;
-} /* InitMyDatabaseInfo() */
+}	/* InitMyDatabaseInfo() */
 
 
 /*
@@ -180,15 +181,15 @@ VerifySystemDatabase()
 		ValidatePgVersion(DataDir, &reason);
 		if (reason != NULL)
 			sprintf(errormsg,
-			 "InitPostgres could not validate that the database"
-			   " system version is compatible with this level of"
-			   " Postgres.\n\tYou may need to run initdb to create"
-			   " a new database system.\n\t%s", reason);
+					"InitPostgres could not validate that the database"
+					" system version is compatible with this level of"
+					" Postgres.\n\tYou may need to run initdb to create"
+					" a new database system.\n\t%s", reason);
 	}
 	if (errormsg[0] != '\0')
 		elog(FATAL, errormsg);
 	/* Above does not return */
-} /* VerifySystemDatabase() */
+}	/* VerifySystemDatabase() */
 
 
 static void
@@ -207,42 +208,43 @@ VerifyMyDatabase()
 
 	if ((fd = open(myPath, O_RDONLY, 0)) == -1)
 		sprintf(errormsg,
-			"Database '%s' does not exist."
+				"Database '%s' does not exist."
 			"\n\tWe know this because the directory '%s' does not exist."
-			"\n\tYou can create a database with the SQL command"
-			" CREATE DATABASE.\n\tTo see what databases exist,"
-			" look at the subdirectories of '%s/base/'.",
-			name, myPath, DataDir);
+				"\n\tYou can create a database with the SQL command"
+				" CREATE DATABASE.\n\tTo see what databases exist,"
+				" look at the subdirectories of '%s/base/'.",
+				name, myPath, DataDir);
 	else
 	{
 		close(fd);
 		ValidatePgVersion(myPath, &reason);
 		if (reason != NULL)
 			sprintf(errormsg,
-				"InitPostgres could not validate that the database"
-				 " version is compatible with this level of Postgres"
-				 "\n\teven though the database system as a whole"
-				 " appears to be at a compatible level."
-				 "\n\tYou may need to recreate the database with SQL"
-				 " commands DROP DATABASE and CREATE DATABASE."
-				 "\n\t%s", reason);
+					"InitPostgres could not validate that the database"
+					" version is compatible with this level of Postgres"
+					"\n\teven though the database system as a whole"
+					" appears to be at a compatible level."
+					"\n\tYou may need to recreate the database with SQL"
+					" commands DROP DATABASE and CREATE DATABASE."
+					"\n\t%s", reason);
 		else
 		{
+
 			/*
 			 * The directories and PG_VERSION files are in order.
 			 */
-			int rc; /* return code from some function we call */
+			int			rc;		/* return code from some function we call */
 
 #ifdef FILEDEBUG
-printf("Try changing directory for database %s to %s\n", name, myPath);
+			printf("Try changing directory for database %s to %s\n", name, myPath);
 #endif
 
 			rc = chdir(myPath);
 			if (rc < 0)
 				sprintf(errormsg,
-					"InitPostgres unable to change "
-					"current directory to '%s', errno = %s (%d).",
-					myPath, strerror(errno), errno);
+						"InitPostgres unable to change "
+						"current directory to '%s', errno = %s (%d).",
+						myPath, strerror(errno), errno);
 			else
 				errormsg[0] = '\0';
 		}
@@ -251,7 +253,7 @@ printf("Try changing directory for database %s to %s\n", name, myPath);
 	if (errormsg[0] != '\0')
 		elog(FATAL, errormsg);
 	/* Above does not return */
-} /* VerifyMyDatabase() */
+}	/* VerifyMyDatabase() */
 
 
 /* --------------------------------
@@ -280,9 +282,9 @@ InitUserid()
 static void
 InitCommunication()
 {
-        char *postid;       /* value of environment variable */
-        char *postport;     /* value of environment variable */
-        char *ipc_key;       /* value of environemnt variable */
+	char	   *postid;			/* value of environment variable */
+	char	   *postport;		/* value of environment variable */
+	char	   *ipc_key;		/* value of environemnt variable */
 	IPCKey		key = 0;
 
 	/* ----------------
@@ -303,14 +305,17 @@ InitCommunication()
 	}
 
 
-        ipc_key = getenv("IPC_KEY");
-        if (!PointerIsValid(ipc_key)) {
-            key = -1;
-        } else {
-            key = atoi(ipc_key);
-            Assert(MyBackendTag >= 0);
-        }
-     
+	ipc_key = getenv("IPC_KEY");
+	if (!PointerIsValid(ipc_key))
+	{
+		key = -1;
+	}
+	else
+	{
+		key = atoi(ipc_key);
+		Assert(MyBackendTag >= 0);
+	}
+
 	postport = getenv("POSTPORT");
 
 	if (PointerIsValid(postport))
@@ -329,11 +334,8 @@ InitCommunication()
 		 * To enable emulation, run the following shell commands (in addition
 		 * to enabling this goto)
 		 *
-		 * % setenv POSTID 1 
-                 * % setenv POSTPORT 4321 
-                 * % setenv IPC_KEY 4321000
-                 * % postmaster & 
-                 * % kill -9 %1
+		 * % setenv POSTID 1 % setenv POSTPORT 4321 % setenv IPC_KEY 4321000
+		 * % postmaster & % kill -9 %1
 		 *
 		 * Upon doing this, Postmaster will have allocated the shared memory
 		 * resources that Postgres will attach to if you enable
@@ -503,19 +505,19 @@ InitPostgres(char *name)		/* database name */
 
 	/*
 	 * ********************************
+	 *
 	 * code after this point assumes we are in the proper directory!
 	 *
-	 * So, how do we implement alternate locations for databases?
-	 * There are two possible locations for tables and we need to look
-	 * in DataDir/pg_database to find the true location of an
-	 * individual database. We can brute-force it as done in
-	 * InitMyDatabaseInfo(), or we can be patient and wait until we
-	 * open pg_database gracefully. Will try that, but may not work...
-	 * - thomas 1997-11-01
-	 * ********************************
+	 * So, how do we implement alternate locations for databases? There are
+	 * two possible locations for tables and we need to look in
+	 * DataDir/pg_database to find the true location of an individual
+	 * database. We can brute-force it as done in InitMyDatabaseInfo(), or
+	 * we can be patient and wait until we open pg_database gracefully.
+	 * Will try that, but may not work... - thomas 1997-11-01 ********************************
+	 *
 	 */
 
-	/*  Does not touch files (?) - thomas 1997-11-01 */
+	/* Does not touch files (?) - thomas 1997-11-01 */
 	smgrinit();
 
 	/* ----------------
@@ -534,7 +536,8 @@ InitPostgres(char *name)		/* database name */
 	 * after initdb is done. -mer 15 June 1992
 	 */
 	RelationInitialize();		/* pre-allocated reldescs created here */
-	InitializeTransactionSystem();	/* pg_log,etc init/crash recovery here */
+	InitializeTransactionSystem();		/* pg_log,etc init/crash recovery
+										 * here */
 
 	LockDisable(false);
 
@@ -564,7 +567,7 @@ InitPostgres(char *name)		/* database name */
 
 	/* ----------------
 	 *	initialize the access methods.
-	 *  Does not touch files (?) - thomas 1997-11-01
+	 *	Does not touch files (?) - thomas 1997-11-01
 	 * ----------------
 	 */
 	initam();
@@ -574,8 +577,10 @@ InitPostgres(char *name)		/* database name */
 	 * ----------------
 	 */
 	zerocaches();
-	/*  Does not touch files since all routines are builtins (?)
-	 *  - thomas 1997-11-01
+
+	/*
+	 * Does not touch files since all routines are builtins (?) - thomas
+	 * 1997-11-01
 	 */
 	InitCatalogCache();
 

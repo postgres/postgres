@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.6 1998/02/13 19:45:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.7 1998/02/26 04:33:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@ typeidIsValid(Oid id)
 }
 
 /* return a type name, given a typeid */
-char	   *
+char *
 typeidTypeName(Oid id)
 {
 	HeapTuple	tup;
@@ -114,7 +114,7 @@ typeByVal(Type t)
 }
 
 /* given type (as type struct), return the name of type */
-char	   *
+char *
 typeTypeName(Type t)
 {
 	TypeTupleForm typ;
@@ -142,7 +142,8 @@ stringTypeString(Type tp, char *string, int16 atttypmod)
 	Oid			typelem;
 
 	op = ((TypeTupleForm) GETSTRUCT(tp))->typinput;
-	typelem = ((TypeTupleForm) GETSTRUCT(tp))->typelem;	/* XXX - used for array_in */
+	typelem = ((TypeTupleForm) GETSTRUCT(tp))->typelem; /* XXX - used for
+														 * array_in */
 	return ((char *) fmgr(op, string, typelem, atttypmod));
 }
 

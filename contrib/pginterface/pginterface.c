@@ -30,7 +30,7 @@ static int	tuple;
 **		connectdb - returns PGconn structure
 **
 */
-PGconn	   *
+PGconn *
 connectdb(char *dbName,
 		  char *pghost,
 		  char *pgport,

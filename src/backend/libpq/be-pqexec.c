@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.14 1998/01/26 01:41:06 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.15 1998/02/26 04:31:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ static char *strmake(char *str, int len);
  *		This code scavanged from HandleFunctionRequest() in tcop/fastpath.h
  * ----------------
  */
-char	   *
+char *
 PQfn(int fnid,
 	 int *result_buf,			/* can't use void, dec compiler barfs */
 	 int result_len,
@@ -129,7 +129,7 @@ PQfn(int fnid,
  *		returns because the system longjmp's back to the main loop.
  * ----------------
  */
-char	   *
+char *
 PQexec(char *query)
 {
 	PortalEntry *entry = NULL;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.18 1998/01/07 21:05:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.19 1998/02/26 04:35:38 momjian Exp $
  *
  * NOTES
  *
@@ -561,7 +561,7 @@ IpcMemoryDetach(int status, char *shmaddr)
 /* CALL IT:  addr = (struct <MemoryStructure> *) IpcMemoryAttach(memId);	*/
 /*																			*/
 /****************************************************************************/
-char	   *
+char *
 IpcMemoryAttach(IpcMemoryId memId)
 {
 	char	   *memAddress;
@@ -618,7 +618,7 @@ IpcMemoryKill(IpcMemoryKey memKey)
  */
 
 /* used in spin.c */
-SLock *SLockArray = NULL;
+SLock	   *SLockArray = NULL;
 
 static SLock **FreeSLockPP;
 static int *UnusedSLockIP;
@@ -686,6 +686,7 @@ LockIsFree(int lockid)
 {
 	return (SLockArray[lockid].flag == NOLOCK);
 }
+
 #endif
 
 #endif							/* HAS_TEST_AND_SET */

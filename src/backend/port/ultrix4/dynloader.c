@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/ultrix4/Attic/dynloader.c,v 1.5 1997/09/08 02:27:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/ultrix4/Attic/dynloader.c,v 1.6 1998/02/26 04:34:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 
 extern char pg_pathname[];
 
-void	   *
+void *
 pg_dlopen(char *filename)
 {
 	static int	dl_initialized = 0;

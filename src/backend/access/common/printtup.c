@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.26 1998/02/11 19:09:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.27 1998/02/26 04:29:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ printtup(HeapTuple tuple, TupleDesc typeinfo)
 		{
 			outputstr = fmgr(typoutput, attr,
 							 gettypelem(typeinfo->attrs[i]->atttypid),
-										typeinfo->attrs[i]->atttypmod);
+							 typeinfo->attrs[i]->atttypmod);
 			pq_putint(strlen(outputstr) + VARHDRSZ, VARHDRSZ);
 			pq_putnchar(outputstr, strlen(outputstr));
 			pfree(outputstr);
@@ -176,8 +176,8 @@ showatts(char *name, TupleDesc tupleDesc)
 void
 debugtup(HeapTuple tuple, TupleDesc typeinfo)
 {
-	int i;
-	Datum	    attr;
+	int			i;
+	Datum		attr;
 	char	   *value;
 	bool		isnull;
 	Oid			typoutput;
@@ -191,7 +191,7 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo)
 		{
 			value = fmgr(typoutput, attr,
 						 gettypelem(typeinfo->attrs[i]->atttypid),
-									typeinfo->attrs[i]->atttypmod);
+						 typeinfo->attrs[i]->atttypmod);
 			printatt((unsigned) i + 1, typeinfo->attrs[i], value);
 			pfree(value);
 		}
@@ -313,7 +313,7 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo)
 					pq_putnchar(DatumGetPointer(attr), len);
 #ifdef IPORTAL_DEBUG
 					fprintf(stderr, "byref length %d data %x\n", len,
-												DatumGetPointer(attr));
+							DatumGetPointer(attr));
 #endif
 				}
 			}

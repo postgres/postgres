@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.25 1998/02/07 21:41:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.26 1998/02/26 04:30:49 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -97,10 +97,10 @@ PerformPortalFetch(char *name,
 				   char *tag,
 				   CommandDest dest)
 {
-	Portal			portal;
-	int				feature;
-	QueryDesc	   *queryDesc;
-	MemoryContext	context;
+	Portal		portal;
+	int			feature;
+	QueryDesc  *queryDesc;
+	MemoryContext context;
 
 	/* ----------------
 	 *	sanity checks
@@ -148,16 +148,16 @@ PerformPortalFetch(char *name,
 	 * ----------------
 	 */
 	queryDesc = PortalGetQueryDesc(portal);
-	
-	if ( dest == None )		/* MOVE */
+
+	if (dest == None)			/* MOVE */
 	{
-		QueryDesc	*qdesc = (QueryDesc *) palloc (sizeof (QueryDesc));
-		
-		memcpy (qdesc, queryDesc, sizeof (QueryDesc));
+		QueryDesc  *qdesc = (QueryDesc *) palloc(sizeof(QueryDesc));
+
+		memcpy(qdesc, queryDesc, sizeof(QueryDesc));
 		qdesc->dest = dest;
 		queryDesc = qdesc;
 	}
-	
+
 	BeginCommand(name,
 				 queryDesc->operation,
 				 portal->attinfo,		/* QueryDescGetTypeInfo(queryDesc),
@@ -178,9 +178,9 @@ PerformPortalFetch(char *name,
 
 	ExecutorRun(queryDesc, PortalGetState(portal), feature, count);
 
-	if ( dest == None )		/* MOVE */
-		pfree (queryDesc);
-	
+	if (dest == None)			/* MOVE */
+		pfree(queryDesc);
+
 	/* ----------------
 	 * Note: the "end-of-command" tag is returned by higher-level
 	 *		 utility code

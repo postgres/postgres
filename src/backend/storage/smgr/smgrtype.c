@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgrtype.c,v 1.7 1998/01/07 21:05:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgrtype.c,v 1.8 1998/02/26 04:36:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ smgrin(char *s)
 	return 0;
 }
 
-char	   *
+char *
 smgrout(int2 i)
 {
 	char	   *s;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.29 1998/02/06 20:18:00 momjian Exp $
+ * $Id: heapam.h,v 1.30 1998/02/26 04:40:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,7 +99,7 @@ typedef HeapAccessStatisticsData *HeapAccessStatistics;
 			 (attnum) == 1) ? \
 			( \
 				(Datum)fetchatt(&((tupleDesc)->attrs[(attnum)-1]), \
-			  		(char *) (tup) + (tup)->t_hoff + \
+					(char *) (tup) + (tup)->t_hoff + \
 					( \
 						((attnum) != 1) ? \
 							(tupleDesc)->attrs[(attnum)-1]->attcacheoff \
@@ -131,7 +131,7 @@ typedef HeapAccessStatisticsData *HeapAccessStatistics;
 )
 
 
-	
+
 /* ----------------
  *		heap_getattr
  *
@@ -205,7 +205,8 @@ extern void doinsert(Relation relation, HeapTuple tup);
 extern Relation heap_open(Oid relationId);
 extern Relation heap_openr(char *relationName);
 extern void heap_close(Relation relation);
-extern HeapScanDesc heap_beginscan(Relation relation, int atend,
+extern HeapScanDesc
+heap_beginscan(Relation relation, int atend,
 			   bool seeself, unsigned nkeys, ScanKey key);
 extern void heap_rescan(HeapScanDesc sdesc, bool scanFromEnd, ScanKey key);
 extern void heap_endscan(HeapScanDesc sdesc);
@@ -213,26 +214,31 @@ extern HeapTuple heap_getnext(HeapScanDesc scandesc, int backw, Buffer *b);
 extern HeapTuple heap_fetch(Relation relation, bool seeself, ItemPointer tid, Buffer *b);
 extern Oid	heap_insert(Relation relation, HeapTuple tup);
 extern int	heap_delete(Relation relation, ItemPointer tid);
-extern int heap_replace(Relation relation, ItemPointer otid,
+extern int
+heap_replace(Relation relation, ItemPointer otid,
 			 HeapTuple tup);
 extern void heap_markpos(HeapScanDesc sdesc);
 extern void heap_restrpos(HeapScanDesc sdesc);
 
 /* in common/heaptuple.c */
 extern Size ComputeDataSize(TupleDesc tupleDesc, Datum value[], char nulls[]);
-extern void DataFill(char *data, TupleDesc tupleDesc,
+extern void
+DataFill(char *data, TupleDesc tupleDesc,
 		 Datum value[], char nulls[], uint16 *infomask,
 		 bits8 *bit);
 extern int	heap_attisnull(HeapTuple tup, int attnum);
 extern int	heap_sysattrlen(AttrNumber attno);
 extern bool heap_sysattrbyval(AttrNumber attno);
 extern Datum heap_getsysattr(HeapTuple tup, Buffer b, int attnum);
-extern Datum nocachegetattr(HeapTuple tup, int attnum,
-						 TupleDesc att, bool *isnull);
+extern Datum
+nocachegetattr(HeapTuple tup, int attnum,
+			   TupleDesc att, bool *isnull);
 extern HeapTuple heap_copytuple(HeapTuple tuple);
-extern HeapTuple heap_formtuple(TupleDesc tupleDescriptor,
+extern HeapTuple
+heap_formtuple(TupleDesc tupleDescriptor,
 			   Datum value[], char nulls[]);
-extern HeapTuple heap_modifytuple(HeapTuple tuple, Buffer buffer,
+extern HeapTuple
+heap_modifytuple(HeapTuple tuple, Buffer buffer,
 	 Relation relation, Datum replValue[], char replNull[], char repl[]);
 HeapTuple	heap_addheader(uint32 natts, int structlen, char *structure);
 
@@ -241,7 +247,8 @@ extern void PrintHeapAccessStatistics(HeapAccessStatistics stats);
 extern void initam(void);
 
 /* hio.c */
-extern void RelationPutHeapTuple(Relation relation, BlockNumber blockIndex,
+extern void
+RelationPutHeapTuple(Relation relation, BlockNumber blockIndex,
 					 HeapTuple tuple);
 extern void RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple);
 

@@ -12,8 +12,8 @@
 int
 verify_password(char *auth_arg, char *user, char *password)
 {
-	char	*pw_file_fullname;
-	FILE	*pw_file;
+	char	   *pw_file_fullname;
+	FILE	   *pw_file;
 
 	pw_file_fullname = (char *) palloc(strlen(DataDir) + strlen(auth_arg) + 2);
 	strcpy(pw_file_fullname, DataDir);
@@ -36,9 +36,12 @@ verify_password(char *auth_arg, char *user, char *password)
 
 	while (!feof(pw_file))
 	{
-		char pw_file_line[255], *p, *test_user, *test_pw;
+		char		pw_file_line[255],
+				   *p,
+				   *test_user,
+				   *test_pw;
 
-		fgets(pw_file_line, sizeof (pw_file_line), pw_file);
+		fgets(pw_file_line, sizeof(pw_file_line), pw_file);
 		p = pw_file_line;
 
 		test_user = strtok(p, ":");

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.14 1998/02/11 19:09:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.15 1998/02/26 04:30:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
  * relpath				- path to the relation
  *		Perhaps this should be in-line code in relopen().
  */
-char	   *
+char *
 relpath(char relname[])
 {
 	char	   *path;

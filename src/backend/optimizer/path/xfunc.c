@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.12 1998/01/13 04:04:07 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.13 1998/02/26 04:32:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
 #include "optimizer/internal.h"
 #include "optimizer/keys.h"
 #include "optimizer/pathnode.h"
-#include "optimizer/tlist.h"			/* for get_expr */
+#include "optimizer/tlist.h"	/* for get_expr */
 #include "optimizer/xfunc.h"
 #include "storage/buf_internals.h"		/* for NBuffers */
 #include "tcop/dest.h"
@@ -532,7 +532,7 @@ xfunc_func_expense(LispValue node, LispValue args)
 			if (nargs > 0)
 				argOidVect = proc->proargtypes;
 			planlist = (List) pg_parse_and_plan(pq_src, argOidVect, nargs,
-									  &parseTree_list, None);
+												&parseTree_list, None);
 			if (IsA(node, Func))
 				set_func_planlist((Func) node, planlist);
 

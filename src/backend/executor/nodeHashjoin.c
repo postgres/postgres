@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.10 1998/02/13 03:26:47 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.11 1998/02/26 04:31:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,7 +156,7 @@ ExecHashJoin(HashJoin *node)
 	}
 	else if (hashtable == NULL)
 		return (NULL);
-	
+
 	nbatch = hashtable->nbatch;
 	outerbatches = hjstate->hj_OuterBatches;
 	if (nbatch > 0 && outerbatches == NULL)
@@ -212,12 +212,14 @@ ExecHashJoin(HashJoin *node)
 
 		while (curbatch <= nbatch && TupIsNull(outerTupleSlot))
 		{
+
 			/*
 			 * if the current batch runs out, switch to new batch
 			 */
 			curbatch = ExecHashJoinNewBatch(hjstate);
 			if (curbatch > nbatch)
 			{
+
 				/*
 				 * when the last batch runs out, clean up
 				 */
@@ -350,6 +352,7 @@ ExecHashJoin(HashJoin *node)
 			curbatch = ExecHashJoinNewBatch(hjstate);
 			if (curbatch > nbatch)
 			{
+
 				/*
 				 * when the last batch runs out, clean up
 				 */
@@ -806,7 +809,7 @@ ExecHashJoinGetBatch(int bucketno, HashJoinTable hashtable, int nbatch)
  * ----------------------------------------------------------------
  */
 
-char	   *
+char *
 ExecHashJoinSaveTuple(HeapTuple heapTuple,
 					  char *buffer,
 					  File file,
@@ -845,16 +848,16 @@ ExecHashJoinSaveTuple(HeapTuple heapTuple,
 void
 ExecReScanHashJoin(HashJoin *node, ExprContext *exprCtxt, Plan *parent)
 {
-	HashJoinState  *hjstate = node->hashjoinstate;
+	HashJoinState *hjstate = node->hashjoinstate;
 
 	if (!node->hashdone)
 		return;
-	
+
 	node->hashdone = false;
-	
-	/* 
-	 * Unfortunately, currently we have to destroy hashtable 
-	 * in all cases...
+
+	/*
+	 * Unfortunately, currently we have to destroy hashtable in all
+	 * cases...
 	 */
 	if (hjstate->hj_HashTable)
 	{
@@ -872,14 +875,14 @@ ExecReScanHashJoin(HashJoin *node, ExprContext *exprCtxt, Plan *parent)
 
 	hjstate->jstate.cs_OuterTupleSlot = (TupleTableSlot *) NULL;
 	hjstate->jstate.cs_TupFromTlist = (bool) false;
-	
-	/* 
-	 * if chgParam of subnodes is not null then plans
-	 * will be re-scanned by first ExecProcNode.
+
+	/*
+	 * if chgParam of subnodes is not null then plans will be re-scanned
+	 * by first ExecProcNode.
 	 */
-	if (((Plan*) node)->lefttree->chgParam == NULL)
-		ExecReScan (((Plan*) node)->lefttree, exprCtxt, (Plan *) node);
-	if (((Plan*) node)->righttree->chgParam == NULL)
-		ExecReScan (((Plan*) node)->righttree, exprCtxt, (Plan *) node);
-	
+	if (((Plan *) node)->lefttree->chgParam == NULL)
+		ExecReScan(((Plan *) node)->lefttree, exprCtxt, (Plan *) node);
+	if (((Plan *) node)->righttree->chgParam == NULL)
+		ExecReScan(((Plan *) node)->righttree, exprCtxt, (Plan *) node);
+
 }

@@ -4,7 +4,7 @@
  *	  Interface to hba.c
  *
  *
- * $Id: hba.h,v 1.7 1998/01/26 01:42:15 scrappy Exp $
+ * $Id: hba.h,v 1.8 1998/02/26 04:41:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 #define MAX_TOKEN 80
 /* Maximum size of one token in the configuration file	*/
 
-#define MAX_AUTH_ARG	80	/* Max size of an authentication arg */
+#define MAX_AUTH_ARG	80		/* Max size of an authentication arg */
 
 #define IDENT_PORT 113
  /* Standard TCP port number for Ident service.  Assigned by IANA */
@@ -39,7 +39,8 @@
 #define IDENT_USERNAME_MAX 512
  /* Max size of username ident server can return */
 
-typedef enum UserAuth {
+typedef enum UserAuth
+{
 	uaReject,
 	uaKrb4,
 	uaKrb5,
@@ -49,9 +50,11 @@ typedef enum UserAuth {
 	uaCrypt
 } UserAuth;
 
-int hba_getauthmethod(SockAddr *raddr, char *database, char *auth_arg,
-						UserAuth *auth_method);
-int authident(struct sockaddr_in *raddr, struct sockaddr_in *laddr,
-				const char postgres_username[], const char auth_arg[]);
+int
+hba_getauthmethod(SockAddr *raddr, char *database, char *auth_arg,
+				  UserAuth *auth_method);
+int
+authident(struct sockaddr_in * raddr, struct sockaddr_in * laddr,
+		  const char postgres_username[], const char auth_arg[]);
 
 #endif

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.4 1997/09/08 21:45:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.5 1998/02/26 04:32:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,7 @@ new_matching_subkeys(Var *subkey, List *considered_subkeys,
  * Returns a list of matched join keys and a list of matched join clauses
  * in matchedJoinClausesPtr.  - ay 11/94
  */
-List	   *
+List *
 match_pathkeys_joinkeys(List *pathkeys,
 						List *joinkeys,
 						List *joinclauses,
@@ -211,7 +211,7 @@ every_func(List *joinkeys, List *pathkey, int which_subkey)
  * match_paths_joinkeys -
  *	  find the cheapest path that matches the join keys
  */
-Path	   *
+Path *
 match_paths_joinkeys(List *joinkeys,
 					 PathOrder *ordering,
 					 List *paths,
@@ -263,7 +263,7 @@ match_paths_joinkeys(List *joinkeys,
  * Returns a list of pathkeys: ((tlvar1)(tlvar2)...(tlvarN)).
  * [I've no idea why they have to be list of lists. Should be fixed. -ay 12/94]
  */
-List	   *
+List *
 extract_path_keys(List *joinkeys,
 				  List *tlist,
 				  int which_subkey)
@@ -325,7 +325,7 @@ extract_path_keys(List *joinkeys,
  * Returns the list of new path keys.
  *
  */
-List	   *
+List *
 new_join_pathkeys(List *outer_pathkeys,
 				  List *join_rel_tlist,
 				  List *joinclauses)

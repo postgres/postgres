@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.14 1998/02/10 16:03:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.15 1998/02/26 04:33:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,34 +43,39 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
-static Node *ParseComplexProjection(ParseState *pstate,
-						   char *funcname,
-						   Node *first_arg,
-						   bool *attisset);
-static Oid ** argtype_inherit(int nargs, Oid *oid_array);
+static Node *
+ParseComplexProjection(ParseState *pstate,
+					   char *funcname,
+					   Node *first_arg,
+					   bool *attisset);
+static Oid **argtype_inherit(int nargs, Oid *oid_array);
 static bool can_coerce(int nargs, Oid *input_typeids, Oid *func_typeids);
-static int find_inheritors(Oid relid, Oid **supervec);
+static int	find_inheritors(Oid relid, Oid **supervec);
 static CandidateList func_get_candidates(char *funcname, int nargs);
-static bool func_get_detail(char *funcname,
-					int nargs,
-					Oid *oid_array,
-					Oid *funcid,	/* return value */
-					Oid *rettype,	/* return value */
-					bool *retset,	/* return value */
-					Oid **true_typeids);
-static Oid * func_select_candidate(int nargs,
-						  Oid *input_typeids,
-						  CandidateList candidates);
-static Oid funcid_get_rettype(Oid funcid);
+static bool
+func_get_detail(char *funcname,
+				int nargs,
+				Oid *oid_array,
+				Oid *funcid,	/* return value */
+				Oid *rettype,	/* return value */
+				bool *retset,	/* return value */
+				Oid **true_typeids);
+static Oid *
+func_select_candidate(int nargs,
+					  Oid *input_typeids,
+					  CandidateList candidates);
+static Oid	funcid_get_rettype(Oid funcid);
 static Oid **gen_cross_product(InhPaths *arginh, int nargs);
-static void make_arguments(int nargs,
-				   List *fargs,
-				   Oid *input_typeids,
-				   Oid *function_typeids);
-static int match_argtypes(int nargs,
-				   Oid *input_typeids,
-				   CandidateList function_typeids,
-				   CandidateList *candidates);
+static void
+make_arguments(int nargs,
+			   List *fargs,
+			   Oid *input_typeids,
+			   Oid *function_typeids);
+static int
+match_argtypes(int nargs,
+			   Oid *input_typeids,
+			   CandidateList function_typeids,
+			   CandidateList *candidates);
 static List *setup_tlist(char *attname, Oid relid);
 static List *setup_base_tlist(Oid typeid);
 
@@ -99,9 +104,9 @@ ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int *curr_resno, int pre
 		Param	   *param = (Param *) transformExpr(pstate, (Node *) attr->paramNo, EXPR_RELATION_FIRST);
 
 		retval = ParseFuncOrColumn(pstate, strVal(lfirst(attr->attrs)),
-					  lcons(param, NIL),
-					  curr_resno,
-					  precedence);
+								   lcons(param, NIL),
+								   curr_resno,
+								   precedence);
 	}
 	else
 	{
@@ -110,18 +115,18 @@ ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int *curr_resno, int pre
 		ident->name = attr->relname;
 		ident->isRel = TRUE;
 		retval = ParseFuncOrColumn(pstate, strVal(lfirst(attr->attrs)),
-					  lcons(ident, NIL),
-					  curr_resno,
-					  precedence);
+								   lcons(ident, NIL),
+								   curr_resno,
+								   precedence);
 	}
 
 	/* Do more attributes follow this one? */
 	foreach(mutator_iter, lnext(attr->attrs))
 	{
 		retval = ParseFuncOrColumn(pstate, strVal(lfirst(mutator_iter)),
-						   lcons(retval, NIL),
-						   curr_resno,
-						   precedence);
+								   lcons(retval, NIL),
+								   curr_resno,
+								   precedence);
 	}
 
 	return (retval);
@@ -132,7 +137,7 @@ ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int *curr_resno, int pre
  */
 Node *
 ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
-		int *curr_resno, int precedence)
+				  int *curr_resno, int precedence)
 {
 	Oid			rettype = (Oid) 0;
 	Oid			argrelid = (Oid) 0;
@@ -174,6 +179,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		{
 			RangeTblEntry *rte;
 			Ident	   *ident = (Ident *) first_arg;
+
 			/*
 			 * first arg is a relation. This could be a projection.
 			 */
@@ -193,9 +199,9 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			if (get_attnum(relid, funcname) != InvalidAttrNumber)
 			{
 				return (Node *) make_var(pstate,
-									   relid,
-									   refname,
-									   funcname);
+										 relid,
+										 refname,
+										 funcname);
 			}
 			else
 			{
@@ -262,8 +268,8 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 									PointerGetDatum(funcname),
 									ObjectIdGetDatum(basetype),
 									0, 0))
-				return (Node *)ParseAgg(pstate, funcname, basetype,
-										fargs, precedence);
+				return (Node *) ParseAgg(pstate, funcname, basetype,
+										 fargs, precedence);
 		}
 	}
 
@@ -285,6 +291,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 
 		if (nodeTag(pair) == T_Ident && ((Ident *) pair)->isRel)
 		{
+
 			/*
 			 * a relation
 			 */
@@ -415,15 +422,15 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		char	   *seqrel;
 		text	   *seqname;
 		int32		aclcheck_result = -1;
-		extern text *lower (text *string);
+		extern text *lower(text *string);
 
 		Assert(length(fargs) == 1);
 		seq = (Const *) lfirst(fargs);
 		if (!IsA((Node *) seq, Const))
 			elog(ERROR, "%s: only constant sequence names are acceptable", funcname);
-		seqname = lower ((text*)DatumGetPointer(seq->constvalue));
-		pfree (DatumGetPointer(seq->constvalue));
-		seq->constvalue = PointerGetDatum (seqname);
+		seqname = lower((text *) DatumGetPointer(seq->constvalue));
+		pfree(DatumGetPointer(seq->constvalue));
+		seq->constvalue = PointerGetDatum(seqname);
 		seqrel = textout(seqname);
 
 		if ((aclcheck_result = pg_aclcheck(seqrel, GetPgUserName(),
@@ -827,7 +834,8 @@ argtype_inherit(int nargs, Oid *oid_array)
 	return (gen_cross_product(arginh, nargs));
 }
 
-static int find_inheritors(Oid relid, Oid **supervec)
+static int
+find_inheritors(Oid relid, Oid **supervec)
 {
 	Oid		   *relidvec;
 	Relation	inhrel;
@@ -1065,7 +1073,7 @@ setup_tlist(char *attname, Oid relid)
 
 	typeid = get_atttype(relid, attno);
 	type_mod = get_atttypmod(relid, attno);
-	
+
 	resnode = makeResdom(1,
 						 typeid,
 						 type_mod,
@@ -1301,9 +1309,12 @@ func_error(char *caller, char *funcname, int nargs, Oid *argtypes)
 		ptr += strlen(ptr);
 	}
 
-  if(caller == NULL) {
-	  elog(ERROR, "function %s(%s) does not exist", funcname, p);
-  } else {
-	  elog(ERROR, "%s: function %s(%s) does not exist", caller, funcname, p);
-  }
+	if (caller == NULL)
+	{
+		elog(ERROR, "function %s(%s) does not exist", funcname, p);
+	}
+	else
+	{
+		elog(ERROR, "%s: function %s(%s) does not exist", caller, funcname, p);
+	}
 }

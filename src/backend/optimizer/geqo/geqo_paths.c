@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_paths.c,v 1.7 1997/09/08 21:44:32 momjian Exp $
+ * $Id: geqo_paths.c,v 1.8 1998/02/26 04:32:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ static Path *set_paths(Rel *rel, Path *unorderedpath);
  * Returns the resulting list.
  *
  */
-List	   *
+List *
 geqo_prune_rels(List *rel_list)
 {
 	List	   *temp_list = NIL;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fe-connect.h,v 1.7 1998/01/29 03:24:36 scrappy Exp $
+ * $Id: fe-connect.h,v 1.8 1998/02/26 04:45:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,6 @@
  *----------------------------------------------------------------
  */
 
-int packetSend(PGconn *conn, const char *buf, size_t len);
+int			packetSend(PGconn *conn, const char *buf, size_t len);
 
 #endif							/* FE_CONNECT_H */

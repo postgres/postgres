@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.11 1998/01/15 18:59:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.12 1998/02/26 04:32:08 momjian Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -29,7 +29,7 @@
 #include "utils/elog.h"
 #include "utils/palloc.h"
 
-List	   *
+List *
 makeList(void *elem,...)
 {
 	va_list		args;
@@ -57,7 +57,7 @@ makeList(void *elem,...)
 	return (retval);
 }
 
-List	   *
+List *
 lcons(void *obj, List *list)
 {
 	List	   *l = makeNode(List);
@@ -67,7 +67,7 @@ lcons(void *obj, List *list)
 	return l;
 }
 
-List	   *
+List *
 lconsi(int datum, List *list)
 {
 	List	   *l = makeNode(List);
@@ -77,19 +77,19 @@ lconsi(int datum, List *list)
 	return l;
 }
 
-List	   *
+List *
 lappend(List *list, void *obj)
 {
 	return nconc(list, lcons(obj, NIL));
 }
 
-List	   *
+List *
 lappendi(List *list, int datum)
 {
 	return nconc(list, lconsi(datum, NIL));
 }
 
-List	   *
+List *
 nconc(List *l1, List *l2)
 {
 	List	   *temp;
@@ -109,7 +109,7 @@ nconc(List *l1, List *l2)
 }
 
 
-List	   *
+List *
 nreverse(List *list)
 {
 	List	   *rlist = NIL;
@@ -131,7 +131,7 @@ nreverse(List *list)
 	return (list);
 }
 
-Value	   *
+Value *
 makeInteger(long i)
 {
 	Value	   *v = makeNode(Value);
@@ -141,7 +141,7 @@ makeInteger(long i)
 	return v;
 }
 
-Value	   *
+Value *
 makeFloat(double d)
 {
 	Value	   *v = makeNode(Value);
@@ -151,7 +151,7 @@ makeFloat(double d)
 	return v;
 }
 
-Value	   *
+Value *
 makeString(char *str)
 {
 	Value	   *v = makeNode(Value);
@@ -162,7 +162,7 @@ makeString(char *str)
 }
 
 /* n starts with 0 */
-void	   *
+void *
 nth(int n, List *l)
 {
 	/* XXX assume list is long enough */
@@ -228,7 +228,7 @@ freeList(List *list)
 /*
  * below are for backwards compatibility
  */
-List	   *
+List *
 append(List *l1, List *l2)
 {
 	List	   *newlist,
@@ -250,7 +250,7 @@ append(List *l1, List *l2)
 /*
  * below are for backwards compatibility
  */
-List	   *
+List *
 intAppend(List *l1, List *l2)
 {
 	List	   *newlist,
@@ -299,7 +299,7 @@ same(List *l1, List *l2)
 
 }
 
-List	   *
+List *
 LispUnion(List *l1, List *l2)
 {
 	List	   *retval = NIL;
@@ -331,7 +331,7 @@ LispUnion(List *l1, List *l2)
 	return (retval);
 }
 
-List	   *
+List *
 LispUnioni(List *l1, List *l2)
 {
 	List	   *retval = NIL;
@@ -394,7 +394,7 @@ intMember(int l1, List *l2)
  * lremove -
  *	  only does pointer comparisons. Removes 'elem' from the the linked list.
  */
-List	   *
+List *
 lremove(void *elem, List *list)
 {
 	List	   *l;
@@ -421,7 +421,7 @@ lremove(void *elem, List *list)
 	return result;
 }
 
-List	   *
+List *
 LispRemove(void *elem, List *list)
 {
 	List	   *temp = NIL;
@@ -446,7 +446,7 @@ LispRemove(void *elem, List *list)
 }
 
 #ifdef NOT_USED
-List	   *
+List *
 intLispRemove(int elem, List *list)
 {
 	List	   *temp = NIL;
@@ -472,7 +472,7 @@ intLispRemove(int elem, List *list)
 
 #endif
 
-List	   *
+List *
 set_difference(List *l1, List *l2)
 {
 	List	   *temp1 = NIL;
@@ -489,7 +489,7 @@ set_difference(List *l1, List *l2)
 	return (result);
 }
 
-List	   *
+List *
 set_differencei(List *l1, List *l2)
 {
 	List	   *temp1 = NIL;

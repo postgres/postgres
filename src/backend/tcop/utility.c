@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.37 1998/01/25 05:14:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.38 1998/02/26 04:36:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,9 +56,9 @@
 #include "utils/syscache.h"
 #endif
 
-void DefineUser(CreateUserStmt *stmt);
-void AlterUser(AlterUserStmt *stmt);
-void RemoveUser(char *username);
+void		DefineUser(CreateUserStmt *stmt);
+void		AlterUser(AlterUserStmt *stmt);
+void		RemoveUser(char *username);
 
 /* ----------------
  *		CHECK_IF_ABORTED() is used to avoid doing unnecessary
@@ -78,7 +78,7 @@ void RemoveUser(char *username);
  * ----------------
  */
 void
-ProcessUtility(Node * parsetree,
+ProcessUtility(Node *parsetree,
 			   CommandDest dest)
 {
 	char	   *commandTag = NULL;
@@ -242,12 +242,13 @@ ProcessUtility(Node * parsetree,
 				CHECK_IF_ABORTED();
 
 				/*
-				 * owner checking done in PerformAddAttribute (now recursive)
+				 * owner checking done in PerformAddAttribute (now
+				 * recursive)
 				 */
 				PerformAddAttribute(stmt->relname,
 									userName,
 									stmt->inh,
-									(ColumnDef *)stmt->colDef);
+									(ColumnDef *) stmt->colDef);
 			}
 			break;
 
@@ -723,30 +724,30 @@ ProcessUtility(Node * parsetree,
 			DropProceduralLanguage((DropPLangStmt *) parsetree);
 			break;
 
-                      /*
-                       * ******************************** USER statements ****
-                       *
-                       */
-                case T_CreateUserStmt:
-                        commandTag = "CREATE USER";
-                        CHECK_IF_ABORTED();
+			/*
+			 * ******************************** USER statements ****
+			 *
+			 */
+		case T_CreateUserStmt:
+			commandTag = "CREATE USER";
+			CHECK_IF_ABORTED();
 
-                        DefineUser((CreateUserStmt*)parsetree);
-                        break;
+			DefineUser((CreateUserStmt *) parsetree);
+			break;
 
-                case T_AlterUserStmt:
-                        commandTag = "ALTER USER";
-                        CHECK_IF_ABORTED();
+		case T_AlterUserStmt:
+			commandTag = "ALTER USER";
+			CHECK_IF_ABORTED();
 
-                        AlterUser((AlterUserStmt*)parsetree);
-                        break;
+			AlterUser((AlterUserStmt *) parsetree);
+			break;
 
-                case T_DropUserStmt:
-                        commandTag = "DROP USER";
-                        CHECK_IF_ABORTED();
+		case T_DropUserStmt:
+			commandTag = "DROP USER";
+			CHECK_IF_ABORTED();
 
-                        RemoveUser(((DropUserStmt*)parsetree)->user);
-                        break;
+			RemoveUser(((DropUserStmt *) parsetree)->user);
+			break;
 
 
 			/*

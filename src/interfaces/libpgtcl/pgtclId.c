@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.6 1997/09/08 21:55:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.7 1998/02/26 04:44:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ PgSetConnectionId(Pg_clientData * cd, char *id, PGconn *conn)
 /*
  * Get back the connection from the Id
  */
-PGconn	   *
+PGconn *
 PgGetConnectionId(Pg_clientData * cd, char *id)
 {
 	Tcl_HashEntry *hent;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.66 1998/02/24 15:19:23 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.67 1998/02/26 04:36:31 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -371,12 +371,13 @@ ReadCommand(char *inBuf)
 		return InteractiveBackend(inBuf);
 }
 
-List	   *
-pg_parse_and_plan(char *query_string,		/* string to execute */
-		Oid *typev,				/* argument types */
-		int nargs,				/* number of arguments */
-		QueryTreeList **queryListP,		/* pointer to the parse trees */
-		CommandDest dest)		/* where results should go */
+List *
+pg_parse_and_plan(char *query_string,	/* string to execute */
+				  Oid *typev,	/* argument types */
+				  int nargs,	/* number of arguments */
+				  QueryTreeList **queryListP,	/* pointer to the parse
+												 * trees */
+				  CommandDest dest)		/* where results should go */
 {
 	QueryTreeList *querytree_list;
 	int			i;
@@ -416,8 +417,10 @@ pg_parse_and_plan(char *query_string,		/* string to execute */
 								 * rewrites */
 	for (i = 0; i < querytree_list->len; i++)
 	{
-		List *union_result, *union_list, *rewritten_list;
-		
+		List	   *union_result,
+				   *union_list,
+				   *rewritten_list;
+
 		querytree = querytree_list->qtrees[i];
 
 
@@ -446,14 +449,15 @@ pg_parse_and_plan(char *query_string,		/* string to execute */
 		rewritten = QueryRewrite(querytree);
 
 		/*
-		 *	Rewrite the UNIONS.
+		 * Rewrite the UNIONS.
 		 */
 		foreach(rewritten_list, rewritten)
 		{
-			Query *qry = (Query *)lfirst(rewritten_list);
+			Query	   *qry = (Query *) lfirst(rewritten_list);
+
 			union_result = NIL;
 			foreach(union_list, qry->unionClause)
-				union_result = nconc(union_result, QueryRewrite((Query *)lfirst(union_list)));
+				union_result = nconc(union_result, QueryRewrite((Query *) lfirst(union_list)));
 			qry->unionClause = union_result;
 		}
 
@@ -598,11 +602,11 @@ pg_exec_query(char *query_string, char **argv, Oid *typev, int nargs)
 }
 
 void
-pg_exec_query_dest(char *query_string,/* string to execute */
-			 char **argv,		/* arguments */
-			 Oid *typev,		/* argument types */
-			 int nargs,			/* number of arguments */
-			 CommandDest dest)	/* where results should go */
+pg_exec_query_dest(char *query_string,	/* string to execute */
+				   char **argv, /* arguments */
+				   Oid *typev,	/* argument types */
+				   int nargs,	/* number of arguments */
+				   CommandDest dest)	/* where results should go */
 {
 	List	   *plan_list;
 	Plan	   *plan;
@@ -740,11 +744,11 @@ static void
 quickdie(SIGNAL_ARGS)
 {
 	elog(NOTICE, "Message from PostgreSQL backend:"
-		"\n\tThe Postmaster has informed me that some other backend"
-		" died abnormally and possibly corrupted shared memory."
-		"\n\tI have rolled back the current transaction and am"
-		" going to terminate your database system connection and exit."
-		"\n\tPlease reconnect to the database system and repeat your query.");
+		 "\n\tThe Postmaster has informed me that some other backend"
+		 " died abnormally and possibly corrupted shared memory."
+		 "\n\tI have rolled back the current transaction and am"
+		 " going to terminate your database system connection and exit."
+	"\n\tPlease reconnect to the database system and repeat your query.");
 
 
 	/*
@@ -767,8 +771,8 @@ static void
 FloatExceptionHandler(SIGNAL_ARGS)
 {
 	elog(ERROR, "floating point exception!"
-		" The last floating point operation either exceeded legal ranges"
-		" or was a divide by zero");
+		 " The last floating point operation either exceeded legal ranges"
+		 " or was a divide by zero");
 }
 
 
@@ -868,14 +872,15 @@ PostgresMain(int argc, char *argv[])
 #endif
 
 	/*
-	 * get hostname is either the environment variable PGHOST or NULL
-	 * NULL means Unix-socket only
+	 * get hostname is either the environment variable PGHOST or NULL NULL
+	 * means Unix-socket only
 	 */
 	DataDir = getenv("PGDATA");
+
 	/*
-	 * Try to get initial values for date styles and formats.
-	 * Does not do a complete job, but should be good enough for backend.
-	 * Cannot call parse_date() since palloc/pfree memory is not set up yet.
+	 * Try to get initial values for date styles and formats. Does not do
+	 * a complete job, but should be good enough for backend. Cannot call
+	 * parse_date() since palloc/pfree memory is not set up yet.
 	 */
 	DBDate = getenv("PGDATESTYLE");
 	if (DBDate != NULL)
@@ -1068,10 +1073,10 @@ PostgresMain(int argc, char *argv[])
 				 * ----------------
 				 */
 				{
-					int S;
-					
+					int			S;
+
 					S = atoi(optarg);
-					if ( S >= 4*BLCKSZ/1024 )
+					if (S >= 4 * BLCKSZ / 1024)
 						SortMem = S;
 				}
 				break;
@@ -1117,7 +1122,7 @@ PostgresMain(int argc, char *argv[])
 				break;
 
 			case 'v':
-				FrontendProtocol = (ProtocolVersion)atoi(optarg);
+				FrontendProtocol = (ProtocolVersion) atoi(optarg);
 				break;
 
 			case 'x':
@@ -1169,7 +1174,7 @@ PostgresMain(int argc, char *argv[])
 	userName = GetPgUserName();
 
 #ifdef CYR_RECODE
-	SetCharSet();           
+	SetCharSet();
 #endif
 
 	if (FindBackend(pg_pathname, argv[0]) < 0)
@@ -1297,7 +1302,7 @@ PostgresMain(int argc, char *argv[])
 	if (IsUnderPostmaster == false)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.66 $ $Date: 1998/02/24 15:19:23 $");
+		puts("$Revision: 1.67 $ $Date: 1998/02/26 04:36:31 $");
 	}
 
 	/* ----------------

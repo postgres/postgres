@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.23 1998/02/25 13:06:12 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.24 1998/02/26 04:30:57 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -265,39 +265,42 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 	}
 	else
 	{
-		HeapTuple		languageTuple;
-		Form_pg_language	languageStruct;
+		HeapTuple	languageTuple;
+		Form_pg_language languageStruct;
 
-	        /* Lookup the language in the system cache */
+		/* Lookup the language in the system cache */
 		languageTuple = SearchSysCacheTuple(LANNAME,
-			PointerGetDatum(languageName),
-			0, 0, 0);
-		
-		if (!HeapTupleIsValid(languageTuple)) {
+											PointerGetDatum(languageName),
+											0, 0, 0);
 
-		    elog(ERROR,
-			 "Unrecognized language specified in a CREATE FUNCTION: "
-			 "'%s'.  Recognized languages are sql, C, internal "
-			 "and the created procedural languages.",
-			 languageName);
+		if (!HeapTupleIsValid(languageTuple))
+		{
+
+			elog(ERROR,
+				 "Unrecognized language specified in a CREATE FUNCTION: "
+				 "'%s'.  Recognized languages are sql, C, internal "
+				 "and the created procedural languages.",
+				 languageName);
 		}
 
 		/* Check that this language is a PL */
 		languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
-		if (!(languageStruct->lanispl)) {
-		    elog(ERROR,
-		    	"Language '%s' isn't defined as PL", languageName);
+		if (!(languageStruct->lanispl))
+		{
+			elog(ERROR,
+				 "Language '%s' isn't defined as PL", languageName);
 		}
 
 		/*
-		 * Functions in untrusted procedural languages are
-		 * restricted to be defined by postgres superusers only
+		 * Functions in untrusted procedural languages are restricted to
+		 * be defined by postgres superusers only
 		 */
-		if (languageStruct->lanpltrusted == false && !superuser()) {
-		    elog(ERROR, "Only users with Postgres superuser privilege "
-		    	"are permitted to create a function in the '%s' "
-			"language.",
-			languageName);
+		if (languageStruct->lanpltrusted == false && !superuser())
+		{
+			elog(ERROR, "Only users with Postgres superuser privilege "
+				 "are permitted to create a function in the '%s' "
+				 "language.",
+				 languageName);
 		}
 
 		lanisPL = true;

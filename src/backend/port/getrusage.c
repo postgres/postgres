@@ -1,20 +1,21 @@
-/* $Id: getrusage.c,v 1.6 1998/02/24 03:45:06 scrappy Exp $ */
+/* $Id: getrusage.c,v 1.7 1998/02/26 04:34:00 momjian Exp $ */
 
-#include <math.h>               /* for pow() prototype */
+#include <math.h>				/* for pow() prototype */
 
 #include <errno.h>
 #include "rusagestub.h"
 
-#if 0 /* this is from univel port ... how does compiler define? */
-      /* same for i386_solaris port ... how does compiler define? */
-      /* same for sco port ... how does compiler define? */
-      /* same for sparc_solaris port ... how does compiler define? */
-      /* same for svr4 port ... how does compiler define? */
+#if 0							/* this is from univel port ... how does
+								 * compiler define? */
+ /* same for i386_solaris port ... how does compiler define? */
+ /* same for sco port ... how does compiler define? */
+ /* same for sparc_solaris port ... how does compiler define? */
+ /* same for svr4 port ... how does compiler define? */
 int
 getrusage(int who, struct rusage * rusage)
 {
 	struct tms	tms;
-	int tick_rate = CLK_TCK;	/* ticks per second */
+	int			tick_rate = CLK_TCK;	/* ticks per second */
 	clock_t		u,
 				s;
 
@@ -50,11 +51,14 @@ getrusage(int who, struct rusage * rusage)
 	rusage->ru_stime.tv_usec = TICK_TO_USEC(u, tick_rate);
 	return (0);
 }
+
 #endif
 
-#if 0 /* this is for hpux port ... how does compiler define? */
+#if 0							/* this is for hpux port ... how does
+								 * compiler define? */
 getrusage(int who, struct rusage * ru)
 {
-    return (syscall(SYS_GETRUSAGE, who, ru));
+	return (syscall(SYS_GETRUSAGE, who, ru));
 }
+
 #endif

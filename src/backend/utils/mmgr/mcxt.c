@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.6 1997/09/08 21:49:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.7 1998/02/26 04:38:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -293,7 +293,7 @@ MemoryContextRealloc(MemoryContext context,
  *		BadArgumentsErr if firstTime is true for subsequent calls.
  */
 #ifdef NOT_USED
-char	   *
+char *
 MemoryContextGetName(MemoryContext context)
 {
 	AssertState(MemoryContextEnabled);

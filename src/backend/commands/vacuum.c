@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.62 1998/02/25 23:40:32 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.63 1998/02/26 04:31:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,9 +54,9 @@
 #include <sys/resource.h>
 #endif
 
-/* #include <port-protos.h> */ /* Why? */
+ /* #include <port-protos.h> *//* Why? */
 
-extern int BlowawayRelationBuffers(Relation rdesc, BlockNumber block);
+extern int	BlowawayRelationBuffers(Relation rdesc, BlockNumber block);
 
 bool		VacuumRunning = false;
 
@@ -136,7 +136,7 @@ vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
 	old = MemoryContextSwitchTo((MemoryContext) pmem);
 
 	if (va_spec != NIL && !analyze)
-		elog(ERROR,"Can't vacuum columns, only tables.  You can 'vacuum analyze' columns.");
+		elog(ERROR, "Can't vacuum columns, only tables.  You can 'vacuum analyze' columns.");
 
 	foreach(le, va_spec)
 	{
@@ -725,8 +725,9 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 					}
 					else if (!TransactionIdIsInProgress(htup->t_xmin))
 					{
+
 						/*
-						 * Not Aborted, Not Committed, Not in Progress - 
+						 * Not Aborted, Not Committed, Not in Progress -
 						 * so it's from crashed process. - vadim 11/26/96
 						 */
 						ncrash++;
@@ -741,11 +742,11 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 				}
 			}
 
-			/* 
-			 * here we are concerned about tuples with xmin committed 
-			 * and xmax unknown or committed
+			/*
+			 * here we are concerned about tuples with xmin committed and
+			 * xmax unknown or committed
 			 */
-			if (htup->t_infomask & HEAP_XMIN_COMMITTED && 
+			if (htup->t_infomask & HEAP_XMIN_COMMITTED &&
 				!(htup->t_infomask & HEAP_XMAX_INVALID))
 			{
 				if (htup->t_infomask & HEAP_XMAX_COMMITTED)
@@ -759,6 +760,7 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 					tupgone = true;
 				else if (!TransactionIdIsInProgress(htup->t_xmax))
 				{
+
 					/*
 					 * Not Aborted, Not Committed, Not in Progress - so it
 					 * from crashed process. - vadim 06/02/97
@@ -916,7 +918,7 @@ Tup %u: Vac %u, Crash %u, UnUsed %u, MinLen %u, MaxLen %u; Re-using: Free/Avail.
 		 ru1.ru_stime.tv_sec - ru0.ru_stime.tv_sec,
 		 ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
 
-}								/* vc_scanheap */
+}	/* vc_scanheap */
 
 
 /*
@@ -1087,15 +1089,15 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 					 * But we can't remove last page - this is our
 					 * "show-stopper" !!!	- vadim 02/25/98
 					 */
-					if (ToVpd != Fvplast && 
+					if (ToVpd != Fvplast &&
 						!vc_enough_space(ToVpd, vacrelstats->min_tlen))
 					{
 						Assert(Fnpages > ToVpI + 1);
 						memmove(Fvpl->vpl_pgdesc + ToVpI,
 								Fvpl->vpl_pgdesc + ToVpI + 1,
-								sizeof(VPageDescr *) * (Fnpages - ToVpI - 1));
+						   sizeof(VPageDescr *) * (Fnpages - ToVpI - 1));
 						Fnpages--;
-						Assert (Fvplast == Fvpl->vpl_pgdesc[Fnpages - 1]);
+						Assert(Fvplast == Fvpl->vpl_pgdesc[Fnpages - 1]);
 					}
 				}
 				for (i = 0; i < Fnpages; i++)
@@ -1333,7 +1335,7 @@ Elapsed %u/%u sec.",
 	{
 		i = BlowawayRelationBuffers(onerel, blkno);
 		if (i < 0)
-			elog (FATAL, "VACUUM (vc_rpfheap): BlowawayRelationBuffers returned %d", i);
+			elog(FATAL, "VACUUM (vc_rpfheap): BlowawayRelationBuffers returned %d", i);
 		blkno = smgrtruncate(DEFAULT_SMGR, onerel, blkno);
 		Assert(blkno >= 0);
 		vacrelstats->npages = blkno;	/* set new number of blocks */
@@ -1349,7 +1351,7 @@ Elapsed %u/%u sec.",
 
 	pfree(vpc);
 
-}								/* vc_rpfheap */
+}	/* vc_rpfheap */
 
 /*
  *	vc_vacheap() -- free dead tuples
@@ -1367,7 +1369,7 @@ vc_vacheap(VRelStats *vacrelstats, Relation onerel, VPageList Vvpl)
 	int			i;
 
 	nblocks = Vvpl->vpl_npages;
-	nblocks -= Vvpl->vpl_nemend;	/* nothing to do with them */
+	nblocks -= Vvpl->vpl_nemend;/* nothing to do with them */
 
 	for (i = 0, vpp = Vvpl->vpl_pgdesc; i < nblocks; i++, vpp++)
 	{
@@ -1394,17 +1396,17 @@ vc_vacheap(VRelStats *vacrelstats, Relation onerel, VPageList Vvpl)
 		 * it) before truncation
 		 */
 		FlushBufferPool(!TransactionFlushEnabled());
-		
+
 		i = BlowawayRelationBuffers(onerel, nblocks);
 		if (i < 0)
-			elog (FATAL, "VACUUM (vc_vacheap): BlowawayRelationBuffers returned %d", i);
+			elog(FATAL, "VACUUM (vc_vacheap): BlowawayRelationBuffers returned %d", i);
 
 		nblocks = smgrtruncate(DEFAULT_SMGR, onerel, nblocks);
 		Assert(nblocks >= 0);
 		vacrelstats->npages = nblocks;	/* set new number of blocks */
 	}
 
-}								/* vc_vacheap */
+}	/* vc_vacheap */
 
 /*
  *	vc_vacpage() -- free dead tuples on a page
@@ -1424,7 +1426,7 @@ vc_vacpage(Page page, VPageDescr vpd)
 	}
 	PageRepairFragmentation(page);
 
-}								/* vc_vacpage */
+}	/* vc_vacpage */
 
 /*
  *	_vc_scanoneind() -- scan one index relation to update statistic.
@@ -1470,7 +1472,7 @@ vc_scanoneind(Relation indrel, int nhtups)
 		elog(NOTICE, "Ind %s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u)",
 			 indrel->rd_rel->relname.data, nitups, nhtups);
 
-}								/* vc_scanoneind */
+}	/* vc_scanoneind */
 
 /*
  *	vc_vaconeind() -- vacuum one index relation.
@@ -1553,7 +1555,7 @@ vc_vaconeind(VPageList vpl, Relation indrel, int nhtups)
 		elog(NOTICE, "Ind %s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u)",
 			 indrel->rd_rel->relname.data, nitups, nhtups);
 
-}								/* vc_vaconeind */
+}	/* vc_vaconeind */
 
 /*
  *	vc_tidreapped() -- is a particular tid reapped?
@@ -1597,7 +1599,7 @@ vc_tidreapped(ItemPointer itemptr, VPageList vpl)
 
 	return (vp);
 
-}								/* vc_tidreapped */
+}	/* vc_tidreapped */
 
 /*
  *	vc_attrstats() -- compute column statistics used by the optimzer
@@ -2011,7 +2013,7 @@ vc_reappage(VPageList vpl, VPageDescr vpc)
 	/* insert this page into vpl list */
 	vc_vpinsert(vpl, newvpd);
 
-}								/* vc_reappage */
+}	/* vc_reappage */
 
 static void
 vc_vpinsert(VPageList vpl, VPageDescr vpnew)
@@ -2101,7 +2103,7 @@ vc_find_eq(char *bot, int nelem, int size, char *elm, int (*compar) (char *, cha
 		first_move = true;
 	}
 
-}								/* vc_find_eq */
+}	/* vc_find_eq */
 
 static int
 vc_cmp_blk(char *left, char *right)
@@ -2118,7 +2120,7 @@ vc_cmp_blk(char *left, char *right)
 		return (0);
 	return (1);
 
-}								/* vc_cmp_blk */
+}	/* vc_cmp_blk */
 
 static int
 vc_cmp_offno(char *left, char *right)
@@ -2130,7 +2132,7 @@ vc_cmp_offno(char *left, char *right)
 		return (0);
 	return (1);
 
-}								/* vc_cmp_offno */
+}	/* vc_cmp_offno */
 
 
 static void
@@ -2207,7 +2209,7 @@ vc_getindices(Oid relid, int *nindices, Relation **Irel)
 		*Irel = (Relation *) NULL;
 	}
 
-}								/* vc_getindices */
+}	/* vc_getindices */
 
 
 static void
@@ -2223,7 +2225,7 @@ vc_clsindices(int nindices, Relation *Irel)
 	}
 	pfree(Irel);
 
-}								/* vc_clsindices */
+}	/* vc_clsindices */
 
 
 static void
@@ -2262,7 +2264,7 @@ vc_mkindesc(Relation onerel, int nindices, Relation *Irel, IndDesc **Idesc)
 		idcur->natts = natts;
 	}
 
-}								/* vc_mkindesc */
+}	/* vc_mkindesc */
 
 
 static bool
@@ -2283,4 +2285,4 @@ vc_enough_space(VPageDescr vpd, Size len)
 
 	return (false);
 
-}								/* vc_enough_space */
+}	/* vc_enough_space */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.10 1998/02/10 04:01:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.11 1998/02/26 04:33:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,8 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 
-static void checkTargetTypes(ParseState *pstate, char *target_colname,
+static void
+checkTargetTypes(ParseState *pstate, char *target_colname,
 				 char *refname, char *colname);
 
 struct
@@ -76,14 +77,15 @@ refnameRangeTableEntry(ParseState *pstate, char *refname)
 		foreach(temp, pstate->p_rtable)
 		{
 			RangeTblEntry *rte = lfirst(temp);
-	
+
 			if (!strcmp(rte->refname, refname))
 				return rte;
 		}
 		/* only allow correlated columns in WHERE clause */
 		if (pstate->p_in_where_clause)
 			pstate = pstate->parentParseState;
-		else	break;
+		else
+			break;
 	}
 	return NULL;
 }
@@ -95,7 +97,7 @@ refnameRangeTablePosn(ParseState *pstate, char *refname, int *sublevels_up)
 	int			index;
 	List	   *temp;
 
-	
+
 	if (sublevels_up)
 		*sublevels_up = 0;
 
@@ -105,7 +107,7 @@ refnameRangeTablePosn(ParseState *pstate, char *refname, int *sublevels_up)
 		foreach(temp, pstate->p_rtable)
 		{
 			RangeTblEntry *rte = lfirst(temp);
-	
+
 			if (!strcmp(rte->refname, refname))
 				return index;
 			index++;
@@ -117,7 +119,8 @@ refnameRangeTablePosn(ParseState *pstate, char *refname, int *sublevels_up)
 			if (sublevels_up)
 				(*sublevels_up)++;
 		}
-		else	break;
+		else
+			break;
 	}
 	return 0;
 }
@@ -143,11 +146,11 @@ colnameRangeTableEntry(ParseState *pstate, char *colname)
 		foreach(et, rtable)
 		{
 			RangeTblEntry *rte = lfirst(et);
-	
+
 			/* only entries on outer(non-function?) scope */
 			if (!rte->inFromCl && rte != pstate->p_target_rangetblentry)
 				continue;
-	
+
 			if (get_attnum(rte->relid, colname) != InvalidAttrNumber)
 			{
 				if (rte_result != NULL)
@@ -163,7 +166,8 @@ colnameRangeTableEntry(ParseState *pstate, char *colname)
 		/* only allow correlated columns in WHERE clause */
 		if (pstate->p_in_where_clause && rte_result == NULL)
 			pstate = pstate->parentParseState;
-		else	break;
+		else
+			break;
 	}
 	return rte_result;
 }
@@ -181,31 +185,30 @@ addRangeTableEntry(ParseState *pstate,
 {
 	Relation	relation;
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
-	int	sublevels_up;
+	int			sublevels_up;
 
 	if (pstate != NULL)
 	{
 		if (refnameRangeTablePosn(pstate, refname, &sublevels_up) != 0 &&
-		   (!inFromCl || sublevels_up == 0))
+			(!inFromCl || sublevels_up == 0))
 			elog(ERROR, "Table name %s specified more than once", refname);
 	}
-	
+
 	rte->relname = pstrdup(relname);
 	rte->refname = pstrdup(refname);
 
 	relation = heap_openr(relname);
 	if (relation == NULL)
 		elog(ERROR, "%s: %s",
-				relname, aclcheck_error_strings[ACLCHECK_NO_CLASS]);
+			 relname, aclcheck_error_strings[ACLCHECK_NO_CLASS]);
 
 	rte->relid = RelationGetRelationId(relation);
 
 	heap_close(relation);
 
 	/*
-	 * Flags - zero or more from inheritance,union,version or
-	 * recursive (transitive closure) [we don't support them all -- ay
-	 * 9/94 ]
+	 * Flags - zero or more from inheritance,union,version or recursive
+	 * (transitive closure) [we don't support them all -- ay 9/94 ]
 	 */
 	rte->inh = inh;
 
@@ -225,7 +228,7 @@ addRangeTableEntry(ParseState *pstate,
  * expandAll -
  *	  makes a list of attributes
  */
-List	   *
+List *
 expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 {
 	Relation	rdesc;
@@ -308,7 +311,7 @@ attnameAttNum(Relation rd, char *a)
 	/* on failure */
 	elog(ERROR, "Relation %s does not have attribute %s",
 		 RelationGetRelationName(rd), a);
-	return 0;  /* lint */
+	return 0;					/* lint */
 }
 
 /*

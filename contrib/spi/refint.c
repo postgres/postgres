@@ -190,7 +190,7 @@ check_primary_key()
 	 * Ok, execute prepared plan.
 	 */
 	ret = SPI_execp(*(plan->splan), kvals, NULL, 1);
-		/* we have no NULLs - so we pass   ^^^^   here */
+	/* we have no NULLs - so we pass   ^^^^   here */
 
 	if (ret < 0)
 		elog(ERROR, "check_primary_key: SPI_execp returned %d", ret);
@@ -481,7 +481,7 @@ check_foreign_key()
 		relname = args[0];
 
 		ret = SPI_execp(plan->splan[r], kvals, NULL, tcount);
-			/* we have no NULLs - so we pass   ^^^^	 here */
+		/* we have no NULLs - so we pass   ^^^^  here */
 
 		if (ret < 0)
 			elog(ERROR, "check_foreign_key: SPI_execp returned %d", ret);

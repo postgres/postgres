@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.23 1998/02/11 19:12:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.24 1998/02/26 04:36:57 momjian Exp $
  *
  * NOTES
  *	 This code is actually (almost) unused.
@@ -155,13 +155,13 @@ reltimein(char *str)
 
 	elog(ERROR, "Bad reltime (internal coding error) '%s'", str);
 	return (INVALID_RELTIME);
-}								/* reltimein() */
+}	/* reltimein() */
 
 
 /*
  *		reltimeout		- converts the internal format to a reltime string
  */
-char	   *
+char *
 reltimeout(int32 time)
 {
 	char	   *result;
@@ -184,7 +184,7 @@ reltimeout(int32 time)
 	strcpy(result, buf);
 
 	return (result);
-}								/* reltimeout() */
+}	/* reltimeout() */
 
 
 #define TMODULO(t,q,u) {q = (t / u); \
@@ -201,12 +201,12 @@ reltime2tm(int32 time, struct tm * tm)
 	TMODULO(time, tm->tm_sec, 1);
 
 	return;
-}								/* reltime2tm() */
+}	/* reltime2tm() */
 
 #if FALSE
 char	   *timestring;
 long		quantity;
-int i;
+int			i;
 int			unitnr;
 
 timestring = (char *) palloc(Max(strlen(INVALID_RELTIME_STR),
@@ -274,7 +274,7 @@ tintervalin(char *intervalstr)
  *		tintervalout	- converts an internal interval format to a string
  *
  */
-char	   *
+char *
 tintervalout(TimeInterval interval)
 {
 	char	   *i_str,
@@ -350,7 +350,7 @@ timespan_reltime(TimeSpan *timespan)
 	}
 
 	return (time);
-}								/* timespan_reltime() */
+}	/* timespan_reltime() */
 
 
 TimeSpan   *
@@ -378,7 +378,7 @@ reltime_timespan(RelativeTime reltime)
 	}
 
 	return (result);
-}								/* reltime_timespan() */
+}	/* reltime_timespan() */
 
 
 /*
@@ -575,7 +575,7 @@ intervalsame(TimeInterval i1, TimeInterval i2)
 		return (FALSE);			/* invalid interval */
 	return (abstimeeq(i1->data[0], i2->data[0]) &&
 			abstimeeq(i1->data[1], i2->data[1]));
-} /* intervalsame() */
+}	/* intervalsame() */
 
 
 /*
@@ -585,7 +585,10 @@ intervalsame(TimeInterval i1, TimeInterval i2)
 bool
 intervaleq(TimeInterval i1, TimeInterval i2)
 {
-	AbsoluteTime t10, t11, t20, t21;
+	AbsoluteTime t10,
+				t11,
+				t20,
+				t21;
 
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
 		return (FALSE);			/* invalid interval */
@@ -596,7 +599,7 @@ intervaleq(TimeInterval i1, TimeInterval i2)
 	t21 = i2->data[1];
 
 	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
-	 || (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
+		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
 		return (FALSE);
 
 	if (t10 == CURRENT_ABSTIME)
@@ -608,8 +611,8 @@ intervaleq(TimeInterval i1, TimeInterval i2)
 	if (t21 == CURRENT_ABSTIME)
 		t21 = GetCurrentTransactionStartTime();
 
-	return ((t11-t10) == (t21-t20));
-} /* intervaleq() */
+	return ((t11 - t10) == (t21 - t20));
+}	/* intervaleq() */
 
 /*
  *		intervalne		- returns 1, iff interval i1 is not equal to interval i2
@@ -618,7 +621,10 @@ intervaleq(TimeInterval i1, TimeInterval i2)
 bool
 intervalne(TimeInterval i1, TimeInterval i2)
 {
-	AbsoluteTime t10, t11, t20, t21;
+	AbsoluteTime t10,
+				t11,
+				t20,
+				t21;
 
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
 		return (FALSE);			/* invalid interval */
@@ -629,7 +635,7 @@ intervalne(TimeInterval i1, TimeInterval i2)
 	t21 = i2->data[1];
 
 	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
-	 || (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
+		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
 		return (FALSE);
 
 	if (t10 == CURRENT_ABSTIME)
@@ -641,8 +647,8 @@ intervalne(TimeInterval i1, TimeInterval i2)
 	if (t21 == CURRENT_ABSTIME)
 		t21 = GetCurrentTransactionStartTime();
 
-	return ((t11-t10) != (t21-t20));
-} /* intervalne() */
+	return ((t11 - t10) != (t21 - t20));
+}	/* intervalne() */
 
 /*
  *		intervallt		- returns TRUE, iff interval i1 is less than interval i2
@@ -651,7 +657,10 @@ intervalne(TimeInterval i1, TimeInterval i2)
 bool
 intervallt(TimeInterval i1, TimeInterval i2)
 {
-	AbsoluteTime t10, t11, t20, t21;
+	AbsoluteTime t10,
+				t11,
+				t20,
+				t21;
 
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
 		return (FALSE);			/* invalid interval */
@@ -662,7 +671,7 @@ intervallt(TimeInterval i1, TimeInterval i2)
 	t21 = i2->data[1];
 
 	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
-	 || (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
+		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
 		return (FALSE);
 
 	if (t10 == CURRENT_ABSTIME)
@@ -674,8 +683,8 @@ intervallt(TimeInterval i1, TimeInterval i2)
 	if (t21 == CURRENT_ABSTIME)
 		t21 = GetCurrentTransactionStartTime();
 
-	return ((t11-t10) < (t21-t20));
-} /* intervallt() */
+	return ((t11 - t10) < (t21 - t20));
+}	/* intervallt() */
 
 /*
  *		intervalle		- returns TRUE, iff interval i1 is less than or equal to interval i2
@@ -684,7 +693,10 @@ intervallt(TimeInterval i1, TimeInterval i2)
 bool
 intervalle(TimeInterval i1, TimeInterval i2)
 {
-	AbsoluteTime t10, t11, t20, t21;
+	AbsoluteTime t10,
+				t11,
+				t20,
+				t21;
 
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
 		return (FALSE);			/* invalid interval */
@@ -695,7 +707,7 @@ intervalle(TimeInterval i1, TimeInterval i2)
 	t21 = i2->data[1];
 
 	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
-	 || (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
+		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
 		return (FALSE);
 
 	if (t10 == CURRENT_ABSTIME)
@@ -707,8 +719,8 @@ intervalle(TimeInterval i1, TimeInterval i2)
 	if (t21 == CURRENT_ABSTIME)
 		t21 = GetCurrentTransactionStartTime();
 
-	return ((t11-t10) <= (t21-t20));
-} /* intervalle() */
+	return ((t11 - t10) <= (t21 - t20));
+}	/* intervalle() */
 
 /*
  *		intervalgt		- returns TRUE, iff interval i1 is less than interval i2
@@ -717,7 +729,10 @@ intervalle(TimeInterval i1, TimeInterval i2)
 bool
 intervalgt(TimeInterval i1, TimeInterval i2)
 {
-	AbsoluteTime t10, t11, t20, t21;
+	AbsoluteTime t10,
+				t11,
+				t20,
+				t21;
 
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
 		return (FALSE);			/* invalid interval */
@@ -728,7 +743,7 @@ intervalgt(TimeInterval i1, TimeInterval i2)
 	t21 = i2->data[1];
 
 	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
-	 || (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
+		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
 		return (FALSE);
 
 	if (t10 == CURRENT_ABSTIME)
@@ -740,8 +755,8 @@ intervalgt(TimeInterval i1, TimeInterval i2)
 	if (t21 == CURRENT_ABSTIME)
 		t21 = GetCurrentTransactionStartTime();
 
-	return ((t11-t10) > (t21-t20));
-} /* intervalgt() */
+	return ((t11 - t10) > (t21 - t20));
+}	/* intervalgt() */
 
 /*
  *		intervalge		- returns TRUE, iff interval i1 is less than or equal to interval i2
@@ -750,7 +765,10 @@ intervalgt(TimeInterval i1, TimeInterval i2)
 bool
 intervalge(TimeInterval i1, TimeInterval i2)
 {
-	AbsoluteTime t10, t11, t20, t21;
+	AbsoluteTime t10,
+				t11,
+				t20,
+				t21;
 
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
 		return (FALSE);			/* invalid interval */
@@ -761,7 +779,7 @@ intervalge(TimeInterval i1, TimeInterval i2)
 	t21 = i2->data[1];
 
 	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
-	 || (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
+		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
 		return (FALSE);
 
 	if (t10 == CURRENT_ABSTIME)
@@ -773,8 +791,8 @@ intervalge(TimeInterval i1, TimeInterval i2)
 	if (t21 == CURRENT_ABSTIME)
 		t21 = GetCurrentTransactionStartTime();
 
-	return ((t11-t10) >= (t21-t20));
-} /* intervalge() */
+	return ((t11 - t10) >= (t21 - t20));
+}	/* intervalge() */
 
 
 /*
@@ -963,11 +981,11 @@ isreltime(char *str)
 	}
 
 	return 0;
-}								/* isreltime() */
+}	/* isreltime() */
 
 #if FALSE
-char *p;
-char c;
+char	   *p;
+char		c;
 int			i;
 char		unit[UNITMAXLEN];
 char		direction[DIRMAXLEN];
@@ -1156,9 +1174,9 @@ istinterval(char *i_string,
 			AbsoluteTime *i_start,
 			AbsoluteTime *i_end)
 {
-	char *p,
+	char	   *p,
 			   *p1;
-	char c;
+	char		c;
 
 	p = i_string;
 	/* skip leading blanks up to '[' */
@@ -1259,7 +1277,7 @@ istinterval(char *i_string,
  *	   the Wisconsin benchmark with Illustra whose TimeNow() shows current
  *	   time with precision up to microsecs.)			  - ay 3/95
  */
-text	   *
+text *
 timeofday(void)
 {
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.19 1997/11/21 19:02:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.20 1998/02/26 04:38:41 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -56,7 +56,7 @@ static int	strInArray(const char *pattern, char **arr, int arr_size);
  * NOTE:  should hash this, but just do linear search for now
  */
 
-char	   *
+char *
 findTypeByOid(TypeInfo *tinfo, int numTypes, const char *oid)
 {
 	int			i;
@@ -84,7 +84,7 @@ findTypeByOid(TypeInfo *tinfo, int numTypes, const char *oid)
  * NOTE:  should hash this, but just do linear search for now
  *
  */
-char	   *
+char *
 findOprByOid(OprInfo *oprinfo, int numOprs, const char *oid)
 {
 	int			i;
@@ -482,15 +482,19 @@ fmtId(const char *rawid)
 	static char id[MAXQUERYLEN];
 
 	for (cp = rawid; *cp != '\0'; cp++)
-		if (! (islower(*cp) || isdigit(*cp) || (*cp == '_'))) break;
+		if (!(islower(*cp) || isdigit(*cp) || (*cp == '_')))
+			break;
 
-	if (*cp != '\0') {
+	if (*cp != '\0')
+	{
 		strcpy(id, "\"");
 		strcat(id, rawid);
 		strcat(id, "\"");
 		cp = id;
-	} else {
+	}
+	else
+	{
 		cp = rawid;
 	}
-	return(cp);
-} /* fmtId() */
+	return (cp);
+}	/* fmtId() */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.19 1998/02/11 19:12:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.20 1998/02/26 04:37:35 momjian Exp $
  *
  * NOTE
  *	  XXX this code needs improvement--check for state violations and
@@ -179,7 +179,7 @@ ExcRaise(Exception *excP,
 		 ExcData data,
 		 ExcMessage message)
 {
-	ExcFrame *efp;
+	ExcFrame   *efp;
 
 	efp = ExcCurFrameP;
 	if (efp == NULL)

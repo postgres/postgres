@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.5 1997/09/08 21:45:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.6 1998/02/26 04:33:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
  * exists.
  *
  */
-JInfo	   *
+JInfo *
 joininfo_member(List *join_relids, List *joininfo_list)
 {
 	List	   *i = NIL;
@@ -61,7 +61,7 @@ joininfo_member(List *join_relids, List *joininfo_list)
  * Returns a joininfo node.
  *
  */
-JInfo	   *
+JInfo *
 find_joininfo_node(Rel *this_rel, List *join_relids)
 {
 	JInfo	   *joininfo = joininfo_member(join_relids,
@@ -88,7 +88,7 @@ find_joininfo_node(Rel *this_rel, List *join_relids)
  * Returns the other var node in the joinclause if it is, nil if not.
  *
  */
-Var		   *
+Var *
 other_join_clause_var(Var *var, Expr *clause)
 {
 	Var		   *retval;

@@ -27,7 +27,7 @@
  *				   SeqScan (emp.all)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.7 1998/02/18 07:19:34 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.8 1998/02/26 04:31:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,8 +79,8 @@ ExecResult(Result *node)
 	 */
 	if (resstate->rs_checkqual)
 	{
-		bool	qualResult = ExecQual((List *) node->resconstantqual, econtext);
-		
+		bool		qualResult = ExecQual((List *) node->resconstantqual, econtext);
+
 		resstate->rs_checkqual = false;
 		if (qualResult == false)
 		{
@@ -195,7 +195,7 @@ ExecInitResult(Result *node, EState *estate, Plan *parent)
 	resstate->rs_done = false;
 	resstate->rs_checkqual = (node->resconstantqual == NULL) ? false : true;
 	node->resstate = resstate;
-	
+
 	/* ----------------
 	 *	Miscellanious initialization
 	 *
@@ -281,18 +281,18 @@ ExecEndResult(Result *node)
 void
 ExecReScanResult(Result *node, ExprContext *exprCtxt, Plan *parent)
 {
-	ResultState	   *resstate = node->resstate;
+	ResultState *resstate = node->resstate;
 
 	resstate->rs_done = false;
 	resstate->cstate.cs_TupFromTlist = false;
 	resstate->rs_checkqual = (node->resconstantqual == NULL) ? false : true;
-	
-	/* 
-	 * if chgParam of subnode is not null then plan
-	 * will be re-scanned by first ExecProcNode.
+
+	/*
+	 * if chgParam of subnode is not null then plan will be re-scanned by
+	 * first ExecProcNode.
 	 */
-	if (((Plan*) node)->lefttree && 
-			((Plan*) node)->lefttree->chgParam == NULL)
-		ExecReScan (((Plan*) node)->lefttree, exprCtxt, (Plan *) node);
-	
+	if (((Plan *) node)->lefttree &&
+		((Plan *) node)->lefttree->chgParam == NULL)
+		ExecReScan(((Plan *) node)->lefttree, exprCtxt, (Plan *) node);
+
 }

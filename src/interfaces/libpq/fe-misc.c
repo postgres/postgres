@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.9 1998/01/26 01:42:36 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.10 1998/02/26 04:45:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ pqPutnchar(const char *s, int len, FILE *f, FILE *debug)
 int
 pqGetnchar(char *s, int len, FILE *f, FILE *debug)
 {
-	int status;
+	int			status;
 
 	status = pqGetNBytes(s, len, f);
 
@@ -82,7 +82,7 @@ pqGetnchar(char *s, int len, FILE *f, FILE *debug)
 int
 pqGets(char *s, int len, FILE *f, FILE *debug)
 {
-	int status;
+	int			status;
 
 	status = pqGetString(s, len, f);
 

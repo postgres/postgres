@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.20 1998/02/21 16:58:49 momjian Exp $
+ * $Id: primnodes.h,v 1.21 1998/02/26 04:42:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,7 +269,7 @@ typedef struct Aggreg
 	char	   *aggname;
 	Oid			basetype;
 	Oid			aggtype;
-	Node	   *target;	
+	Node	   *target;
 	int			aggno;
 	bool		usenulls;
 } Aggreg;
@@ -292,11 +292,11 @@ typedef enum SubLinkType
 typedef struct SubLink
 {
 	NodeTag		type;
-	SubLinkType	subLinkType;
+	SubLinkType subLinkType;
 	bool		useor;
-	List		*lefthand;
-	List		*oper;
-	Node		*subselect;
+	List	   *lefthand;
+	List	   *oper;
+	Node	   *subselect;
 } SubLink;
 
 /* ----------------

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_pool.c,v 1.4 1997/09/08 21:44:34 momjian Exp $
+ * $Id: geqo_pool.c,v 1.5 1998/02/26 04:32:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ static int	compare(void *arg1, void *arg2);
  * alloc-pool--
  *		allocates memory for GA pool
  */
-Pool	   *
+Pool *
 alloc_pool(int pool_size, int string_length)
 {
 	Pool	   *new_pool;

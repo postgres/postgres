@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.10 1998/01/15 19:45:29 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.11 1998/02/26 04:37:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -282,10 +282,13 @@ init_fcache(Oid foid,
 
 
 
-	if (retval->language != SQLlanguageId) {
+	if (retval->language != SQLlanguageId)
+	{
 		fmgr_info(foid, &(retval->func));
 		retval->nargs = retval->func.fn_nargs;
-	} else {
+	}
+	else
+	{
 		retval->func.fn_addr = (func_ptr) NULL;
 	}
 

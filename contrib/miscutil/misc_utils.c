@@ -13,38 +13,38 @@
 
 #include "misc_utils.h"
 
-extern int ExecutorLimit(int limit);
+extern int	ExecutorLimit(int limit);
 extern void Async_Unlisten(char *relname, int pid);
 
 int
 query_limit(int limit)
 {
-    return ExecutorLimit(limit);
+	return ExecutorLimit(limit);
 }
 
 int
 backend_pid()
 {
-    return getpid();
+	return getpid();
 }
 
 int
 unlisten(char *relname)
 {
-    Async_Unlisten(relname, getpid());
-    return 0;
+	Async_Unlisten(relname, getpid());
+	return 0;
 }
 
 int
 max(int x, int y)
 {
-    return ((x > y) ? x : y);
+	return ((x > y) ? x : y);
 }
 
 int
 min(int x, int y)
 {
-    return ((x < y) ? x : y);
+	return ((x < y) ? x : y);
 }
 
 /* end of file */

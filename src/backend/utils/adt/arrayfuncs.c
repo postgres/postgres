@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.26 1998/02/14 18:00:37 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.27 1998/02/26 04:36:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,8 @@
 
 /*-=-=--=-=-=-=-=-=-=-=--=-=-=-=-=-=-=-=--=-=-=-=-=-=-=-=--=-=-=-=-=-=-=-*/
 static int	_ArrayCount(char *str, int dim[], int typdelim);
-static char *_ReadArrayStr(char *arrayStr, int nitems, int ndim, int dim[],
+static char *
+_ReadArrayStr(char *arrayStr, int nitems, int ndim, int dim[],
 			  FmgrInfo *inputproc, Oid typelem, int16 typmod,
 			  char typdelim, int typlen, bool typbyval,
 			  char typalign, int *nbytes);
@@ -90,7 +91,7 @@ static char *array_seek(char *ptr, int eltsize, int nitems);
  *		  the internal representation of the input array
  *--------------------------------------------------------------------
  */
-char	   *
+char *
 array_in(char *string,			/* input array in external form */
 		 Oid element_type,		/* type OID of an array element */
 		 int16 typmod)
@@ -208,7 +209,7 @@ array_in(char *string,			/* input array in external form */
 		/* array not a large object */
 		dataPtr =
 			(char *) _ReadArrayStr(p, nitems, ndim, dim, &inputproc, typelem,
-								   typmod, typdelim, typlen, typbyval, typalign,
+							typmod, typdelim, typlen, typbyval, typalign,
 								   &nbytes);
 		nbytes += ARR_OVERHEAD(ndim);
 		retval = (ArrayType *) palloc(nbytes);
@@ -612,7 +613,7 @@ _CopyArrayEls(char **values,
  *		  containing the array in its external format.
  *-------------------------------------------------------------------------
  */
-char	   *
+char *
 array_out(ArrayType *v, Oid element_type)
 {
 	int			typlen;
@@ -769,7 +770,7 @@ array_out(ArrayType *v, Oid element_type)
  *		  returns the dimension of the array pointed to by "v"
  *----------------------------------------------------------------------------
  */
-char	   *
+char *
 array_dims(ArrayType *v, bool *isNull)
 {
 	char	   *p,
@@ -1071,7 +1072,7 @@ array_clip(ArrayType *array,
  *		  returns a pointer to the modified array.
  *-----------------------------------------------------------------------------
  */
-char	   *
+char *
 array_set(ArrayType *array,
 		  int n,
 		  int indx[],
@@ -1206,7 +1207,7 @@ array_set(ArrayType *array,
  *		  returns a pointer to the modified array.
  *----------------------------------------------------------------------------
  */
-char	   *
+char *
 array_assgn(ArrayType *array,
 			int n,
 			int upperIndx[],
@@ -1722,7 +1723,7 @@ _LOtransfer(char **destfd,
 #undef MAX_READ
 }
 
-char	   *
+char *
 _array_newLO(int *fd, int flag)
 {
 	char	   *p;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.21 1998/01/07 18:46:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.22 1998/02/26 04:36:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,7 +110,7 @@ date_in(char *str)
 	date = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1));
 
 	return (date);
-} /* date_in() */
+}	/* date_in() */
 
 /* date_out()
  * Given internal format date, convert to text string.
@@ -133,7 +133,7 @@ date_out(DateADT date)
 	strcpy(result, buf);
 
 	return (result);
-} /* date_out() */
+}	/* date_out() */
 
 bool
 date_eq(DateADT dateVal1, DateADT dateVal2)
@@ -151,25 +151,25 @@ bool
 date_lt(DateADT dateVal1, DateADT dateVal2)
 {
 	return (dateVal1 < dateVal2);
-} /* date_lt() */
+}	/* date_lt() */
 
 bool
 date_le(DateADT dateVal1, DateADT dateVal2)
 {
 	return (dateVal1 <= dateVal2);
-} /* date_le() */
+}	/* date_le() */
 
 bool
 date_gt(DateADT dateVal1, DateADT dateVal2)
 {
 	return (dateVal1 > dateVal2);
-} /* date_gt() */
+}	/* date_gt() */
 
 bool
 date_ge(DateADT dateVal1, DateADT dateVal2)
 {
 	return (dateVal1 >= dateVal2);
-} /* date_ge() */
+}	/* date_ge() */
 
 int
 date_cmp(DateADT dateVal1, DateADT dateVal2)
@@ -183,19 +183,19 @@ date_cmp(DateADT dateVal1, DateADT dateVal2)
 		return 1;
 	}
 	return 0;
-} /* date_cmp() */
+}	/* date_cmp() */
 
 DateADT
 date_larger(DateADT dateVal1, DateADT dateVal2)
 {
 	return (date_gt(dateVal1, dateVal2) ? dateVal1 : dateVal2);
-} /* date_larger() */
+}	/* date_larger() */
 
 DateADT
 date_smaller(DateADT dateVal1, DateADT dateVal2)
 {
 	return (date_lt(dateVal1, dateVal2) ? dateVal1 : dateVal2);
-} /* date_smaller() */
+}	/* date_smaller() */
 
 /* Compute difference between two dates in days.
  */
@@ -203,7 +203,7 @@ int4
 date_mi(DateADT dateVal1, DateADT dateVal2)
 {
 	return (dateVal1 - dateVal2);
-} /* date_mi() */
+}	/* date_mi() */
 
 /* Add a number of days to a date, giving a new date.
  * Must handle both positive and negative numbers of days.
@@ -212,7 +212,7 @@ DateADT
 date_pli(DateADT dateVal, int4 days)
 {
 	return (dateVal + days);
-} /* date_pli() */
+}	/* date_pli() */
 
 /* Subtract a number of days from a date, giving a new date.
  */
@@ -220,13 +220,13 @@ DateADT
 date_mii(DateADT dateVal, int4 days)
 {
 	return (date_pli(dateVal, -days));
-} /* date_mii() */
+}	/* date_mii() */
 
 
 /* date_datetime()
  * Convert date to datetime data type.
  */
-DateTime *
+DateTime   *
 date_datetime(DateADT dateVal)
 {
 	DateTime   *result;
@@ -250,7 +250,7 @@ date_datetime(DateADT dateVal)
 		elog(ERROR, "Datetime out of range", NULL);
 
 	return (result);
-} /* date_datetime() */
+}	/* date_datetime() */
 
 
 /* datetime_date()
@@ -291,7 +291,7 @@ datetime_date(DateTime *datetime)
 	result = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1));
 
 	return (result);
-} /* datetime_date() */
+}	/* datetime_date() */
 
 
 /* abstime_date()
@@ -333,7 +333,7 @@ abstime_date(AbsoluteTime abstime)
 	}
 
 	return (result);
-} /* abstime_date() */
+}	/* abstime_date() */
 
 
 /* date2tm()
@@ -416,7 +416,7 @@ date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn)
 	}
 
 	return 0;
-} /* date2tm() */
+}	/* date2tm() */
 
 
 /*****************************************************************************
@@ -424,7 +424,7 @@ date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn)
  *****************************************************************************/
 
 
-TimeADT *
+TimeADT    *
 time_in(char *str)
 {
 	TimeADT    *time;
@@ -458,7 +458,7 @@ time_in(char *str)
 	*time = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
 
 	return (time);
-} /* time_in() */
+}	/* time_in() */
 
 
 char *
@@ -487,7 +487,7 @@ time_out(TimeADT *time)
 	strcpy(result, buf);
 
 	return (result);
-} /* time_out() */
+}	/* time_out() */
 
 
 bool
@@ -497,7 +497,7 @@ time_eq(TimeADT *time1, TimeADT *time2)
 		return (FALSE);
 
 	return (*time1 == *time2);
-} /* time_eq() */
+}	/* time_eq() */
 
 bool
 time_ne(TimeADT *time1, TimeADT *time2)
@@ -506,7 +506,7 @@ time_ne(TimeADT *time1, TimeADT *time2)
 		return (FALSE);
 
 	return (*time1 != *time2);
-} /* time_eq() */
+}	/* time_eq() */
 
 bool
 time_lt(TimeADT *time1, TimeADT *time2)
@@ -515,7 +515,7 @@ time_lt(TimeADT *time1, TimeADT *time2)
 		return (FALSE);
 
 	return (*time1 < *time2);
-} /* time_eq() */
+}	/* time_eq() */
 
 bool
 time_le(TimeADT *time1, TimeADT *time2)
@@ -524,7 +524,7 @@ time_le(TimeADT *time1, TimeADT *time2)
 		return (FALSE);
 
 	return (*time1 <= *time2);
-} /* time_eq() */
+}	/* time_eq() */
 
 bool
 time_gt(TimeADT *time1, TimeADT *time2)
@@ -533,7 +533,7 @@ time_gt(TimeADT *time1, TimeADT *time2)
 		return (FALSE);
 
 	return (*time1 > *time2);
-} /* time_eq() */
+}	/* time_eq() */
 
 bool
 time_ge(TimeADT *time1, TimeADT *time2)
@@ -542,22 +542,22 @@ time_ge(TimeADT *time1, TimeADT *time2)
 		return (FALSE);
 
 	return (*time1 >= *time2);
-} /* time_eq() */
+}	/* time_eq() */
 
 int
 time_cmp(TimeADT *time1, TimeADT *time2)
 {
 	return ((*time1 < *time2) ? -1 : (((*time1 > *time2) ? 1 : 0)));
-} /* time_cmp() */
+}	/* time_cmp() */
 
 
 /* datetime_time()
  * Convert datetime to time data type.
  */
-TimeADT *
+TimeADT    *
 datetime_time(DateTime *datetime)
 {
-	TimeADT		*result;
+	TimeADT    *result;
 	struct tm	tt,
 			   *tm = &tt;
 	int			tz;
@@ -591,13 +591,13 @@ datetime_time(DateTime *datetime)
 	*result = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
 
 	return (result);
-} /* datetime_time() */
+}	/* datetime_time() */
 
 
 /* datetime_datetime()
  * Convert date and time to datetime data type.
  */
-DateTime *
+DateTime   *
 datetime_datetime(DateADT date, TimeADT *time)
 {
 	DateTime   *result;
@@ -606,13 +606,15 @@ datetime_datetime(DateADT date, TimeADT *time)
 	{
 		result = palloc(sizeof(DateTime));
 		DATETIME_INVALID(*result);
-	} else {
+	}
+	else
+	{
 		result = date_datetime(date);
 		*result += *time;
 	}
 
 	return (result);
-} /* datetime_datetime() */
+}	/* datetime_datetime() */
 
 
 int32							/* RelativeTime */

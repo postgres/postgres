@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.7 1997/12/18 12:54:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.8 1998/02/26 04:32:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ static List *remove_duplicates(List *list);
  *		and from the rule manager (removeAndFlag = false).
  *
  */
-List	   *
+List *
 cnfify(Expr *qual, bool removeAndFlag)
 {
 	Expr	   *newqual = NULL;

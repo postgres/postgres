@@ -19,7 +19,7 @@ exit_nicely(PGconn *conn1, PGconn *conn2)
 }
 
 static void
-check_conn(PGconn *conn, const char* dbName)
+check_conn(PGconn *conn, const char *dbName)
 {
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(conn) == CONNECTION_BAD)
@@ -31,23 +31,24 @@ check_conn(PGconn *conn, const char* dbName)
 }
 
 int
-main(int argc, char** argv)
+main(int argc, char **argv)
 {
 	char	   *pghost,
 			   *pgport,
 			   *pgoptions,
 			   *pgtty;
 	char	   *dbName1,
-				*dbName2;
+			   *dbName2;
 	char	   *tblName;
 	int			nFields;
 	int			i,
 				j;
 
 	PGconn	   *conn1,
-				*conn2;
-	/* PGresult   *res1,
-	 *			*res2;
+			   *conn2;
+
+	/*
+	 * PGresult   *res1, *res2;
 	 */
 	PGresult   *res1;
 
@@ -105,7 +106,7 @@ main(int argc, char** argv)
 	{
 		fprintf(stderr, "DECLARE CURSOR command failed\n");
 		PQclear(res1);
-		exit_nicely(conn1,(PGconn*)NULL);
+		exit_nicely(conn1, (PGconn *) NULL);
 	}
 	PQclear(res1);
 
@@ -114,7 +115,7 @@ main(int argc, char** argv)
 	{
 		fprintf(stderr, "FETCH ALL command didn't return tuples properly\n");
 		PQclear(res1);
-		exit_nicely(conn1,(PGconn*)NULL);
+		exit_nicely(conn1, (PGconn *) NULL);
 	}
 
 	/* first, print out the attribute names */
@@ -149,5 +150,6 @@ main(int argc, char** argv)
 	PQfinish(conn1);
 
 /*	 fclose(debug); */
-	return 0;			/* Though PQfinish(conn1) has called exit(1) */
+	return 0;					/* Though PQfinish(conn1) has called
+								 * exit(1) */
 }

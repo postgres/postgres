@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.34 1998/02/11 19:11:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.35 1998/02/26 04:35:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,7 @@ static void BufferSync(void);
 static int	BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld);
 
 /* not static but used by vacuum only ... */
-int BlowawayRelationBuffers(Relation rdesc, BlockNumber block);
+int			BlowawayRelationBuffers(Relation rdesc, BlockNumber block);
 
 /* ---------------------------------------------------
  * RelationGetBufferWithBuffer
@@ -829,7 +829,7 @@ FlushBuffer(Buffer buffer, bool release)
 
 	status = smgrflush(DEFAULT_SMGR, bufrel, bufHdr->tag.blockNum,
 					   (char *) MAKE_PTR(bufHdr->data));
-	
+
 	RelationDecrementReferenceCount(bufrel);
 
 	if (status == SM_FAIL)
@@ -1197,7 +1197,7 @@ ResetBufferUsage()
 void
 ResetBufferPool()
 {
-	int i;
+	int			i;
 
 	for (i = 1; i <= NBuffers; i++)
 	{
@@ -1225,7 +1225,7 @@ ResetBufferPool()
 int
 BufferPoolCheckLeak()
 {
-	int i;
+	int			i;
 	int			error = 0;
 
 	for (i = 1; i <= NBuffers; i++)
@@ -1384,7 +1384,7 @@ BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld)
 							  bufHdr->tag.blockNum,
 							  (char *) MAKE_PTR(bufHdr->data));
 	}
-	
+
 	if (reln != (Relation) NULL)
 		RelationDecrementReferenceCount(reln);
 
@@ -1444,7 +1444,7 @@ BufferGetBlock(Buffer buffer)
 void
 ReleaseRelationBuffers(Relation rdesc)
 {
-	int i;
+	int			i;
 	int			holding = 0;
 	BufferDesc *buf;
 
@@ -1501,7 +1501,7 @@ ReleaseRelationBuffers(Relation rdesc)
 void
 DropBuffers(Oid dbid)
 {
-	int i;
+	int			i;
 	BufferDesc *buf;
 
 	SpinAcquire(BufMgrLock);
@@ -1587,7 +1587,7 @@ blockNum=%d, flags=0x%x, refcount=%d %d)\n",
 void
 BufferPoolBlowaway()
 {
-	int i;
+	int			i;
 
 	BufferSync();
 	for (i = 1; i <= NBuffers; i++)
@@ -1608,9 +1608,9 @@ BufferPoolBlowaway()
  *
  *		This function blowaway all the pages with blocknumber >= passed
  *		of a relation in the buffer pool. Used by vacuum before truncation...
- *		
+ *
  *		Returns: 0 - Ok, -1 - DIRTY, -2 - PINNED
- *		
+ *
  *		XXX currently it sequentially searches the buffer pool, should be
  *		changed to more clever ways of searching.
  * --------------------------------------------------------------------
@@ -1618,28 +1618,28 @@ BufferPoolBlowaway()
 int
 BlowawayRelationBuffers(Relation rdesc, BlockNumber block)
 {
-	int	i;
-	BufferDesc	   *buf;
+	int			i;
+	BufferDesc *buf;
 
 	if (rdesc->rd_islocal)
 	{
 		for (i = 0; i < NLocBuffer; i++)
 		{
 			buf = &LocalBufferDescriptors[i];
-			if (buf->tag.relId.relId == rdesc->rd_id && 
+			if (buf->tag.relId.relId == rdesc->rd_id &&
 				buf->tag.blockNum >= block)
 			{
 				if (buf->flags & BM_DIRTY)
 				{
-					elog (NOTICE, "BlowawayRelationBuffers(%s (local), %u): block %u is dirty",
-						rdesc->rd_rel->relname.data, block, buf->tag.blockNum);
+					elog(NOTICE, "BlowawayRelationBuffers(%s (local), %u): block %u is dirty",
+						 rdesc->rd_rel->relname.data, block, buf->tag.blockNum);
 					return (-1);
 				}
 				if (LocalRefCount[i] > 0)
 				{
-					elog (NOTICE, "BlowawayRelationBuffers(%s (local), %u): block %u is referenced (%d)",
-						rdesc->rd_rel->relname.data, block, 
-						buf->tag.blockNum, LocalRefCount[i]);
+					elog(NOTICE, "BlowawayRelationBuffers(%s (local), %u): block %u is referenced (%d)",
+						 rdesc->rd_rel->relname.data, block,
+						 buf->tag.blockNum, LocalRefCount[i]);
 					return (-2);
 				}
 				buf->tag.relId.relId = InvalidOid;
@@ -1653,22 +1653,22 @@ BlowawayRelationBuffers(Relation rdesc, BlockNumber block)
 	{
 		buf = &BufferDescriptors[i];
 		if (buf->tag.relId.dbId == MyDatabaseId &&
-			buf->tag.relId.relId == rdesc->rd_id && 
+			buf->tag.relId.relId == rdesc->rd_id &&
 			buf->tag.blockNum >= block)
 		{
 			if (buf->flags & BM_DIRTY)
 			{
-				elog (NOTICE, "BlowawayRelationBuffers(%s, %u): block %u is dirty (private %d, last %d, global %d)",
-					buf->sb_relname, block, buf->tag.blockNum, 
-					PrivateRefCount[i], LastRefCount[i], buf->refcount);
+				elog(NOTICE, "BlowawayRelationBuffers(%s, %u): block %u is dirty (private %d, last %d, global %d)",
+					 buf->sb_relname, block, buf->tag.blockNum,
+					 PrivateRefCount[i], LastRefCount[i], buf->refcount);
 				SpinRelease(BufMgrLock);
 				return (-1);
 			}
 			if (!(buf->flags & BM_FREE))
 			{
-				elog (NOTICE, "BlowawayRelationBuffers(%s, %u): block %u is referenced (private %d, last %d, global %d)",
-					buf->sb_relname, block, buf->tag.blockNum, 
-					PrivateRefCount[i], LastRefCount[i], buf->refcount);
+				elog(NOTICE, "BlowawayRelationBuffers(%s, %u): block %u is referenced (private %d, last %d, global %d)",
+					 buf->sb_relname, block, buf->tag.blockNum,
+					 PrivateRefCount[i], LastRefCount[i], buf->refcount);
 				SpinRelease(BufMgrLock);
 				return (-2);
 			}

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.8 1998/01/21 04:24:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.9 1998/02/26 04:35:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
  */
 static bool
 nodeThisLockWasTriggered(Node *node, int varno, AttrNumber attnum,
-			int sublevels_up)
+						 int sublevels_up)
 {
 	if (node == NULL)
 		return FALSE;
@@ -48,7 +48,7 @@ nodeThisLockWasTriggered(Node *node, int varno, AttrNumber attnum,
 				Expr	   *expr = (Expr *) node;
 
 				return nodeThisLockWasTriggered((Node *) expr->args, varno,
-						attnum, sublevels_up);
+												attnum, sublevels_up);
 			}
 			break;
 		case T_TargetEntry:
@@ -56,15 +56,15 @@ nodeThisLockWasTriggered(Node *node, int varno, AttrNumber attnum,
 				TargetEntry *tle = (TargetEntry *) node;
 
 				return nodeThisLockWasTriggered(tle->expr, varno, attnum,
-									sublevels_up);
+												sublevels_up);
 			}
 			break;
 		case T_Aggreg:
 			{
-				Aggreg *agg = (Aggreg *) node;
+				Aggreg	   *agg = (Aggreg *) node;
 
 				return nodeThisLockWasTriggered(agg->target, varno, attnum,
-								sublevels_up);
+												sublevels_up);
 			}
 			break;
 		case T_List:
@@ -74,7 +74,7 @@ nodeThisLockWasTriggered(Node *node, int varno, AttrNumber attnum,
 				foreach(l, (List *) node)
 				{
 					if (nodeThisLockWasTriggered(lfirst(l), varno, attnum,
-								sublevels_up))
+												 sublevels_up))
 						return TRUE;
 				}
 				return FALSE;
@@ -82,11 +82,11 @@ nodeThisLockWasTriggered(Node *node, int varno, AttrNumber attnum,
 			break;
 		case T_SubLink:
 			{
-				SubLink		   *sublink = (SubLink *) node;
-				Query		   *query = (Query *)sublink->subselect;
+				SubLink    *sublink = (SubLink *) node;
+				Query	   *query = (Query *) sublink->subselect;
 
 				return nodeThisLockWasTriggered(query->qual, varno, attnum,
-									sublevels_up + 1);
+												sublevels_up + 1);
 			}
 			break;
 		default:
@@ -106,7 +106,7 @@ thisLockWasTriggered(int varno,
 					 AttrNumber attnum,
 					 Query *parsetree)
 {
-	
+
 	if (nodeThisLockWasTriggered(parsetree->qual, varno, attnum, 0))
 		return true;
 
@@ -114,14 +114,14 @@ thisLockWasTriggered(int varno,
 		return true;
 
 	return false;
-		
+
 }
 
 /*
  * matchLocks -
  *	  match the list of locks and returns the matching rules
  */
-List	   *
+List *
 matchLocks(CmdType event,
 		   RuleLock *rulelocks,
 		   int varno,

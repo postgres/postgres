@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.11 1998/02/25 13:08:09 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.12 1998/02/26 04:38:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,7 @@ extern char *DatabasePath;
 #ifdef CYR_RECODE
 unsigned char RecodeForwTable[128];
 unsigned char RecodeBackTable[128];
+
 #endif
 
 
@@ -228,7 +229,7 @@ GetProcessingMode()
  *		Returns path to database.
  *
  */
-char	   *
+char *
 GetDatabasePath()
 {
 	return strdup(DatabasePath);
@@ -238,7 +239,7 @@ GetDatabasePath()
  * GetDatabaseName --
  *		Returns name of database.
  */
-char	   *
+char *
 GetDatabaseName()
 {
 	return strdup(DatabaseName);
@@ -264,7 +265,7 @@ SetDatabaseName(char *name)
 }
 
 #ifdef CYR_RECODE
-#define MAX_TOKEN   80
+#define MAX_TOKEN	80
 
 /* Some standard C libraries, including GNU, have an isblank() function.
    Others, including Solaris, do not.  So we have our own.
@@ -326,80 +327,87 @@ read_through_eol(FILE *file)
 	while (c != '\n' && c != EOF);
 }
 
-void SetCharSet()
+void
+SetCharSet()
 {
-  FILE *file;
-  char *p,c,eof=false;
-  char *map_file;
-  char buf[MAX_TOKEN];
-  int i;
-  unsigned char FromChar,ToChar;
+	FILE	   *file;
+	char	   *p,
+				c,
+				eof = false;
+	char	   *map_file;
+	char		buf[MAX_TOKEN];
+	int			i;
+	unsigned char FromChar,
+				ToChar;
 
-  for(i=0; i<128; i++)
-  {
-    RecodeForwTable[i] = i+128;
-    RecodeBackTable[i] = i+128;
-  }
+	for (i = 0; i < 128; i++)
+	{
+		RecodeForwTable[i] = i + 128;
+		RecodeBackTable[i] = i + 128;
+	}
 
-  p = getenv("PG_RECODETABLE");
-  if (p && *p != '\0')
-  {
-    map_file = (char *) malloc((strlen(DataDir) +
-                                strlen(p)+2)*sizeof(char));
-    sprintf(map_file, "%s/%s", DataDir, p);
-    file = fopen(map_file, "r");
-    if (file == NULL)
-      return;
-    eof=false;
-    while (!eof)
-    {
-      c = getc(file);
-      ungetc(c, file);
-      if (c == EOF)
-        eof = true;
-      else
-      {
-        if (c == '#')
-          read_through_eol(file);
-        else
-        {
-          /* Read the FromChar */
-          next_token(file, buf, sizeof(buf));
-          if (buf[0] != '\0')
-          {
-            FromChar = strtoul(buf,0,0);
-            /* Read the ToChar */
-            next_token(file, buf, sizeof(buf));
-            if (buf[0] != '\0')
-            {
-              ToChar = strtoul(buf,0,0);
-              RecodeForwTable[FromChar-128] = ToChar;
-              RecodeBackTable[ToChar-128] = FromChar;
-            }
-            read_through_eol(file);
-          }
-        }
-      }
-    }
-    fclose(file);
-    free(map_file);
-  }
+	p = getenv("PG_RECODETABLE");
+	if (p && *p != '\0')
+	{
+		map_file = (char *) malloc((strlen(DataDir) +
+									strlen(p) + 2) * sizeof(char));
+		sprintf(map_file, "%s/%s", DataDir, p);
+		file = fopen(map_file, "r");
+		if (file == NULL)
+			return;
+		eof = false;
+		while (!eof)
+		{
+			c = getc(file);
+			ungetc(c, file);
+			if (c == EOF)
+				eof = true;
+			else
+			{
+				if (c == '#')
+					read_through_eol(file);
+				else
+				{
+					/* Read the FromChar */
+					next_token(file, buf, sizeof(buf));
+					if (buf[0] != '\0')
+					{
+						FromChar = strtoul(buf, 0, 0);
+						/* Read the ToChar */
+						next_token(file, buf, sizeof(buf));
+						if (buf[0] != '\0')
+						{
+							ToChar = strtoul(buf, 0, 0);
+							RecodeForwTable[FromChar - 128] = ToChar;
+							RecodeBackTable[ToChar - 128] = FromChar;
+						}
+						read_through_eol(file);
+					}
+				}
+			}
+		}
+		fclose(file);
+		free(map_file);
+	}
 }
 
-char* convertstr(unsigned char *buff,int len,int dest)
+char *
+convertstr(unsigned char *buff, int len, int dest)
 {
-  int i;
-  char *ch=buff;
-  for (i = 0; i < len; i++,buff++)
-  {
-    if (*buff >127)
-    if (dest)
-      *buff = RecodeForwTable[*buff-128];
-    else
-      *buff = RecodeBackTable[*buff-128];
-  }
-  return ch;
+	int			i;
+	char	   *ch = buff;
+
+	for (i = 0; i < len; i++, buff++)
+	{
+		if (*buff > 127)
+			if (dest)
+				*buff = RecodeForwTable[*buff - 128];
+			else
+				*buff = RecodeBackTable[*buff - 128];
+	}
+	return ch;
 }
+
 #endif
 
 /* ----------------
@@ -413,7 +421,7 @@ char* convertstr(unsigned char *buff,int len,int dest)
  *		in pg_proc.h). Define GetPgUserName() as a macro - tgl 97/04/26
  * ----------------
  */
-char	   *
+char *
 getpgusername()
 {
 	return UserName;

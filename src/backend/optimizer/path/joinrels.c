@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.7 1997/09/08 21:45:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.8 1998/02/26 04:32:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ set_joinrel_size(Rel *joinrel, Rel *outer_rel, Rel *inner_rel,
  *
  * Returns a list of rel nodes corresponding to the new join relations.
  */
-List	   *
+List *
 find_join_rels(Query *root, List *outer_rels)
 {
 	List	   *joins = NIL;
@@ -486,7 +486,7 @@ add_new_joininfos(Query *root, List *joinrels, List *outerrels)
  *
  * Returns the list of final join relations.
  */
-List	   *
+List *
 final_join_rels(List *join_rel_list)
 {
 	List	   *xrel = NIL;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.10 1998/01/31 04:38:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.11 1998/02/26 04:35:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
  * RewriteGetRuleEventRel
  *-----------------------------------------------------------------------
  */
-char	   *
+char *
 RewriteGetRuleEventRel(char *rulename)
 {
 	HeapTuple	htp;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.13 1998/02/13 03:29:39 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.14 1998/02/26 04:32:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,7 +113,7 @@ static bool SingleAttributeIndex(Rel *index);
  * Returns a list of index nodes.
  *
  */
-List	   *
+List *
 find_index_paths(Query *root,
 				 Rel *rel,
 				 List *indices,

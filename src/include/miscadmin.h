@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.19 1998/01/25 05:15:01 momjian Exp $
+ * $Id: miscadmin.h,v 1.20 1998/02/26 04:39:48 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -64,7 +64,7 @@ extern short DebugLvl;
  *	USE_POSTGRES_DATES specifies traditional postgres format for output.
  *	USE_ISO_DATES specifies ISO-compliant format for output.
  *	USE_SQL_DATES specified Oracle/Ingres-compliant format for output.
- *  USE_GERMAN_DATES specifies German-style dd.mm/yyyy date format.
+ *	USE_GERMAN_DATES specifies German-style dd.mm/yyyy date format.
  *
  * DateStyle specifies preference for date formatting for output.
  * EuroDates if client prefers dates interpreted and written w/European conventions.
@@ -112,7 +112,7 @@ extern Oid	LastOidProcessed;	/* for query rewrite */
 
 /* in utils/misc/database.c */
 extern void GetRawDatabaseInfo(char *name, Oid *owner, Oid *db_id, char *path);
-extern int GetDatabaseInfo(char *name, Oid *owner, char *path);
+extern int	GetDatabaseInfo(char *name, Oid *owner, char *path);
 extern char *ExpandDatabasePath(char *path);
 
 /* now in utils/init/miscinit.c */

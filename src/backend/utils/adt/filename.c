@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.13 1998/01/05 16:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.14 1998/02/26 04:37:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 #include <miscadmin.h>
 #include "utils/builtins.h"		/* where function declarations go */
 
-char	   *
+char *
 filename_in(char *file)
 {
 	char	   *str;
@@ -72,7 +72,7 @@ filename_in(char *file)
 			else
 			{
 				len = (p - file) - 1;
-				StrNCpy(name, file + 1, len+1);
+				StrNCpy(name, file + 1, len + 1);
 			}
 			/* printf("name: %s\n"); */
 			if ((pw = getpwnam(name)) == NULL)
@@ -102,7 +102,7 @@ filename_in(char *file)
 		else
 		{
 			len = (p - file) - 1;
-			StrNCpy(environment, file + 1, len+1);
+			StrNCpy(environment, file + 1, len + 1);
 		}
 		envirp = getenv(environment);
 		if (envirp)
@@ -123,7 +123,7 @@ filename_in(char *file)
 	return (str);
 }
 
-char	   *
+char *
 filename_out(char *s)
 {
 	char	   *ret;

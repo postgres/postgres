@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.9 1998/02/10 04:01:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.10 1998/02/26 04:33:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ new_relation_targetlist(Oid relid, Index rt_index,
  *
  *	  Returns the new targetlist.
  */
-List	   *
+List *
 preprocess_targetlist(List *tlist,
 					  int command_type,
 					  Index result_relation,
@@ -297,7 +297,7 @@ new_relation_targetlist(Oid relid, Index rt_index, NodeTag node_type)
 									  temp,
 									  (Datum) typedefault,
 								(typedefault == (struct varlena *) NULL),
-									/* XXX ? */
+					/* XXX ? */
 									  false,
 									  false,	/* not a set */
 									  false);
@@ -325,7 +325,7 @@ new_relation_targetlist(Oid relid, Index rt_index, NodeTag node_type)
 
 					temp_list = MakeTLE(makeResdom(attno,
 												   atttype,
-												   get_atttypmod(relid, attno),
+											 get_atttypmod(relid, attno),
 												   attname,
 												   0,
 												   (Oid) 0,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.5 1998/02/13 03:29:36 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.6 1998/02/26 04:32:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,16 +273,17 @@ compute_selec(Query *root, List *clauses, List *or_selectivities)
 		/* this isn't an Oper, it's a Func!! */
 
 		/*
-		 * This is not an operator, so we guess at the selectivity. 
-		 * THIS IS A HACK TO GET V4 OUT THE DOOR.  FUNCS SHOULD BE ABLE
-		 * TO HAVE SELECTIVITIES THEMSELVES.	   -- JMH 7/9/92
+		 * This is not an operator, so we guess at the selectivity. THIS
+		 * IS A HACK TO GET V4 OUT THE DOOR.  FUNCS SHOULD BE ABLE TO HAVE
+		 * SELECTIVITIES THEMSELVES.	   -- JMH 7/9/92
 		 */
 		s1 = 0.1;
 	}
-	else if (is_subplan ((Node *) clause))
+	else if (is_subplan((Node *) clause))
 	{
+
 		/*
-		 * Just for the moment! FIX ME!	- vadim 02/04/98
+		 * Just for the moment! FIX ME! - vadim 02/04/98
 		 */
 		s1 = 1.0;
 	}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.17 1997/11/20 23:19:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.18 1998/02/26 04:29:28 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -306,7 +306,7 @@ hashinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid, Relatio
 /*
  *	hashgettuple() -- Get the next tuple in the scan.
  */
-char	   *
+char *
 hashgettuple(IndexScanDesc scan, ScanDirection dir)
 {
 	RetrieveIndexResult res;
@@ -329,7 +329,7 @@ hashgettuple(IndexScanDesc scan, ScanDirection dir)
 /*
  *	hashbeginscan() -- start a scan on a hash index
  */
-char	   *
+char *
 hashbeginscan(Relation rel,
 			  bool fromEnd,
 			  uint16 keysz,

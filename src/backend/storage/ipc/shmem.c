@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.16 1998/01/07 21:05:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.17 1998/02/26 04:35:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,7 +276,7 @@ InitShmem(unsigned int key, unsigned int size)
  *		of space.  Has to return a real pointer in order
  *		to be compatable with malloc().
  */
-long	   *
+long *
 ShmemAlloc(unsigned long size)
 {
 	unsigned long tmpFree;
@@ -338,7 +338,7 @@ ShmemIsValid(unsigned long addr)
  * table at once.  Use SpinAlloc() to create a spinlock
  * for the structure before creating the structure itself.
  */
-HTAB	   *
+HTAB *
 ShmemInitHash(char *name,		/* table string name for binding */
 			  long init_size,	/* initial size */
 			  long max_size,	/* max size of the table */
@@ -496,7 +496,7 @@ ShmemPIDDestroy(int pid)
  *		the object is already in the binding table (hence, already
  *		initialized).
  */
-long	   *
+long *
 ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 {
 	BindingEnt *result,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/clauseinfo.c,v 1.6 1997/09/08 21:45:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/clauseinfo.c,v 1.7 1998/02/26 04:33:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ valid_or_clause(CInfo *clauseinfo)
  * Returns a list containing the clauses from 'clauseinfo-list'.
  *
  */
-List	   *
+List *
 get_actual_clauses(List *clauseinfo_list)
 {
 	List	   *temp = NIL;
@@ -173,7 +173,7 @@ get_joinvars(Oid relid,
  *	  of a list of clauseinfo nodes to be used with an index.
  *
  */
-List	   *
+List *
 get_opnos(List *clauseinfo_list)
 {
 	CInfo	   *temp = (CInfo *) NULL;

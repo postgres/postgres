@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.11 1998/02/13 03:40:21 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.12 1998/02/26 04:33:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ tlistentry_member(Var *var, List *targetlist)
  * REQUIRES: "test" operates on lispval unions,
  *
  */
-Expr	   *
+Expr *
 matching_tlvar(Var *var, List *targetlist)
 {
 	TargetEntry *tlentry;
@@ -153,7 +153,7 @@ create_tl_element(Var *var, int resdomno)
  *	  Returns the targetlist elements from a relation tlist.
  *
  */
-List	   *
+List *
 get_actual_tlist(List *tlist)
 {
 
@@ -200,7 +200,7 @@ get_actual_tlist(List *tlist)
  * Returns the resdom entry of the matching var node.
  *
  */
-Resdom	   *
+Resdom *
 tlist_member(Var *var, List *tlist)
 {
 	List	   *i = NIL;
@@ -230,7 +230,7 @@ tlist_member(Var *var, List *tlist)
 /*
  *	 Routine to get the resdom out of a targetlist.
  */
-Resdom	   *
+Resdom *
 tlist_resdom(List *tlist, Resdom *resnode)
 {
 	Resdom	   *resdom = (Resdom *) NULL;
@@ -273,7 +273,7 @@ match_varid(Var *test_var, List *tlist)
 
 	type_var = (Oid) test_var->vartype;
 
-	Assert (test_var->varlevelsup == 0);
+	Assert(test_var->varlevelsup == 0);
 	foreach(tl, tlist)
 	{
 		TargetEntry *entry;
@@ -289,9 +289,9 @@ match_varid(Var *test_var, List *tlist)
 		 * we test the original varno (instead of varno which might be
 		 * changed to INNER/OUTER.
 		 */
-		Assert (tlvar->varlevelsup == 0);
+		Assert(tlvar->varlevelsup == 0);
 		if (tlvar->varnoold == test_var->varnoold &&
-				tlvar->varoattno == test_var->varoattno)
+			tlvar->varoattno == test_var->varoattno)
 		{
 
 			if (tlvar->vartype == type_var)
@@ -313,7 +313,7 @@ match_varid(Var *test_var, List *tlist)
  * Returns the resulting target list.
  *
  */
-List	   *
+List *
 new_unsorted_tlist(List *targetlist)
 {
 	List	   *new_targetlist = (List *) copyObject((Node *) targetlist);
@@ -341,7 +341,7 @@ new_unsorted_tlist(List *targetlist)
  * Returns a new target list.
  *
  */
-List	   *
+List *
 copy_vars(List *target, List *source)
 {
 	List	   *result = NIL;
@@ -369,7 +369,7 @@ copy_vars(List *target, List *source)
  * Returns the "flattened" new target list.
  *
  */
-List	   *
+List *
 flatten_tlist(List *tlist)
 {
 	int			last_resdomno = 1;
@@ -425,7 +425,7 @@ flatten_tlist(List *tlist)
  * Returns the modified actual target list.
  *
  */
-List	   *
+List *
 flatten_tlist_vars(List *full_tlist, List *flat_tlist)
 {
 	List	   *x = NIL;
@@ -556,7 +556,7 @@ MakeTLE(Resdom *resdom, Node *expr)
 	return rt;
 }
 
-Var		   *
+Var *
 get_expr(TargetEntry *tle)
 {
 	Assert(tle != NULL);

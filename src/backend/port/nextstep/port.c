@@ -50,7 +50,7 @@ sigemptyset(int *set)
 	return (*set = 0);
 }
 
-char	   *
+char *
 getcwd(char *buf, size_t size)
 {
 	return getwd(buf);

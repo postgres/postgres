@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.18 1998/02/23 06:26:53 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.19 1998/02/26 04:31:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -296,29 +296,32 @@ void
 ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent)
 {
 
-	if ( node->chgParam != NULL )	/* Wow! */
+	if (node->chgParam != NULL) /* Wow! */
 	{
-		List   *lst;
-		
-		foreach (lst, node->initPlan)
+		List	   *lst;
+
+		foreach(lst, node->initPlan)
 		{
-			Plan   *splan = ((SubPlan*) lfirst (lst))->plan;
-			if ( splan->extParam != NULL )	/* don't care about child locParam */
-				SetChangedParamList (splan, node->chgParam);
-			if ( splan->chgParam != NULL )
-				ExecReScanSetParamPlan ((SubPlan*) lfirst (lst), node);
+			Plan	   *splan = ((SubPlan *) lfirst(lst))->plan;
+
+			if (splan->extParam != NULL)		/* don't care about child
+												 * locParam */
+				SetChangedParamList(splan, node->chgParam);
+			if (splan->chgParam != NULL)
+				ExecReScanSetParamPlan((SubPlan *) lfirst(lst), node);
 		}
-		foreach (lst, node->subPlan)
+		foreach(lst, node->subPlan)
 		{
-			Plan   *splan = ((SubPlan*) lfirst (lst))->plan;
-			if ( splan->extParam != NULL )
-				SetChangedParamList (splan, node->chgParam);
+			Plan	   *splan = ((SubPlan *) lfirst(lst))->plan;
+
+			if (splan->extParam != NULL)
+				SetChangedParamList(splan, node->chgParam);
 		}
 		/* Well. Now set chgParam for left/right trees. */
-		if ( node->lefttree != NULL )
-			SetChangedParamList (node->lefttree, node->chgParam);
-		if ( node->righttree != NULL )
-			SetChangedParamList (node->righttree, node->chgParam);
+		if (node->lefttree != NULL)
+			SetChangedParamList(node->lefttree, node->chgParam);
+		if (node->righttree != NULL)
+			SetChangedParamList(node->righttree, node->chgParam);
 	}
 
 	switch (nodeTag(node))
@@ -332,38 +335,38 @@ ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent)
 			break;
 
 		case T_Material:
-			ExecMaterialReScan((Material*) node, exprCtxt, parent);
+			ExecMaterialReScan((Material *) node, exprCtxt, parent);
 			break;
 
 		case T_NestLoop:
-			ExecReScanNestLoop((NestLoop*) node, exprCtxt, parent);
+			ExecReScanNestLoop((NestLoop *) node, exprCtxt, parent);
 			break;
 
 		case T_HashJoin:
-			ExecReScanHashJoin((HashJoin*) node, exprCtxt, parent);
+			ExecReScanHashJoin((HashJoin *) node, exprCtxt, parent);
 			break;
 
 		case T_Hash:
-			ExecReScanHash((Hash*) node, exprCtxt, parent);
+			ExecReScanHash((Hash *) node, exprCtxt, parent);
 			break;
 
 		case T_Agg:
-			ExecReScanAgg((Agg*) node, exprCtxt, parent);
+			ExecReScanAgg((Agg *) node, exprCtxt, parent);
 			break;
 
 		case T_Result:
-			ExecReScanResult((Result*) node, exprCtxt, parent);
+			ExecReScanResult((Result *) node, exprCtxt, parent);
 			break;
 
 		case T_Unique:
-			ExecReScanUnique((Unique*) node, exprCtxt, parent);
+			ExecReScanUnique((Unique *) node, exprCtxt, parent);
 			break;
 
 		case T_Sort:
-			ExecReScanSort((Sort*) node, exprCtxt, parent);
+			ExecReScanSort((Sort *) node, exprCtxt, parent);
 			break;
 
-/* 
+/*
  * Tee is never used
 		case T_Tee:
 			ExecTeeReScan((Tee *) node, exprCtxt, parent);
@@ -373,10 +376,10 @@ ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent)
 			elog(ERROR, "ExecReScan: node type %u not supported", nodeTag(node));
 			return;
 	}
-	
-	if ( node->chgParam != NULL )
+
+	if (node->chgParam != NULL)
 	{
-		freeList (node->chgParam);
+		freeList(node->chgParam);
 		node->chgParam = NULL;
 	}
 }
@@ -415,7 +418,7 @@ ExecMarkPos(Plan *node)
 {
 	switch (nodeTag(node))
 	{
-		case T_SeqScan:
+			case T_SeqScan:
 			ExecSeqMarkPos((SeqScan *) node);
 			break;
 
@@ -445,7 +448,7 @@ ExecRestrPos(Plan *node)
 {
 	switch (nodeTag(node))
 	{
-		case T_SeqScan:
+			case T_SeqScan:
 			ExecSeqRestrPos((SeqScan *) node);
 			return;
 
@@ -510,7 +513,7 @@ ExecCreatR(TupleDesc tupType,
 		 * '\0 '
 		 */
 		relDesc = heap_create("", tupType);
-  	}
+	}
 	else
 	{
 		/* ----------------

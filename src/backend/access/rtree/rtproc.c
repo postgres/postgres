@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.15 1998/01/07 21:02:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.16 1998/02/26 04:30:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ rt_box_union(BOX *a, BOX *b)
 	return (n);
 }
 
-BOX		   *
+BOX *
 rt_box_inter(BOX *a, BOX *b)
 {
 	BOX		   *n;

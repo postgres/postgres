@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: nbtsort.c,v 1.28 1998/02/21 19:23:14 scrappy Exp $
+ *	  $Id: nbtsort.c,v 1.29 1998/02/26 04:29:54 momjian Exp $
  *
  * NOTES
  *
@@ -553,7 +553,7 @@ _bt_tapeadd(BTTapeBlock *tape, BTItem item, int itemsz)
  * create and initialize a spool structure, including the underlying
  * files.
  */
-void	   *
+void *
 _bt_spoolinit(Relation index, int ntapes, bool isunique)
 {
 	BTSpool    *btspool = (BTSpool *) palloc(sizeof(BTSpool));

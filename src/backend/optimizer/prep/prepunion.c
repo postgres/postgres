@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.19 1998/02/13 03:39:26 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.20 1998/02/26 04:33:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,16 +34,21 @@
 #include "optimizer/planner.h"
 #include "optimizer/planmain.h"
 
-static List *plan_inherit_query(List *relids, Index rt_index,
-				 RangeTblEntry *rt_entry, Query *parse,
-				 List **union_rtentriesPtr);
-static RangeTblEntry *new_rangetable_entry(Oid new_relid,
+static List *
+plan_inherit_query(List *relids, Index rt_index,
+				   RangeTblEntry *rt_entry, Query *parse,
+				   List **union_rtentriesPtr);
+static RangeTblEntry *
+new_rangetable_entry(Oid new_relid,
 					 RangeTblEntry *old_entry);
-static Query *subst_rangetable(Query *root, Index index,
+static Query *
+subst_rangetable(Query *root, Index index,
 				 RangeTblEntry *new_entry);
-static void fix_parsetree_attnums(Index rt_index, Oid old_relid,
+static void
+fix_parsetree_attnums(Index rt_index, Oid old_relid,
 					  Oid new_relid, Query *parsetree);
-static Append *make_append(List *unionplans, List *unionrts, Index rt_index,
+static Append *
+make_append(List *unionplans, List *unionrts, Index rt_index,
 			List *union_rt_entries, List *tlist);
 
 
@@ -54,61 +59,43 @@ static Append *make_append(List *unionplans, List *unionrts, Index rt_index,
  *
  * Returns a list containing a list of plans and a list of rangetables
  */
-Append	   *
+Append *
 plan_union_queries(Query *parse)
 {
-	List	*union_plans = NIL, *ulist, *unionall_queries, *union_rts,
-			*last_union = NIL;
-	bool	union_all_found = false, union_found = false,
-			last_unionall_flag = false;
-	
+	List	   *union_plans = NIL,
+			   *ulist,
+			   *unionall_queries,
+			   *union_rts,
+			   *last_union = NIL;
+	bool		union_all_found = false,
+				union_found = false,
+				last_unionall_flag = false;
+
 	/*
-	 *	Do we need to split up our unions because we have UNION
-	 *	and UNION ALL?
+	 * Do we need to split up our unions because we have UNION and UNION
+	 * ALL?
 	 *
-	 *	We are checking for the case of:
-	 *		SELECT 1
-	 *		UNION
-	 *		SELECT 2
-	 *		UNION
-	 *		SELECT 3
-	 *		UNION ALL
-	 *		SELECT 4
-	 *		UNION ALL
-	 *		SELECT 5
+	 * We are checking for the case of: SELECT 1 UNION SELECT 2 UNION SELECT
+	 * 3 UNION ALL SELECT 4 UNION ALL SELECT 5
 	 *
-	 *	where we have to do a DISTINCT on the output of the first three
-	 *	queries, then add the rest.  If they have used UNION and
-	 *	UNION ALL, we grab all queries up to the last UNION query,
-	 *	make them their own UNION with the owner as the first query
-	 *	in the list.  Then, we take the remaining queries, which is UNION
-	 *	ALL, and add them to the list of union queries.
+	 * where we have to do a DISTINCT on the output of the first three
+	 * queries, then add the rest.	If they have used UNION and UNION ALL,
+	 * we grab all queries up to the last UNION query, make them their own
+	 * UNION with the owner as the first query in the list.  Then, we take
+	 * the remaining queries, which is UNION ALL, and add them to the list
+	 * of union queries.
 	 *
-	 *	So the above query becomes:
+	 * So the above query becomes:
 	 *
-	 *	Append Node
-	 *	{
-	 *		Sort and Unique
-	 *		{
-	 *			Append Node
-	 *			{
-	 *				SELECT 1				This is really a sub-UNION,
-	 *				unionClause				We run a DISTINCT on these.
-	 *				{
-	 *					SELECT 2			
-	 *					SELECT 3	 		
-	 *				}
-	 *			}
-	 *		}
-	 *		SELECT 4
-	 *		SELECT 5
-	 *	}
-	 *		
+	 * Append Node { Sort and Unique { Append Node { SELECT 1
+	 * This is really a sub-UNION, unionClause			   We run a
+	 * DISTINCT on these. { SELECT 2 SELECT 3 } } } SELECT 4 SELECT 5 }
+	 *
 	 */
 
 	foreach(ulist, parse->unionClause)
 	{
-		Query	*union_query = lfirst(ulist);
+		Query	   *union_query = lfirst(ulist);
 
 		if (union_query->unionall)
 			union_all_found = true;
@@ -123,18 +110,18 @@ plan_union_queries(Query *parse)
 	/* Is this a simple one */
 	if (!union_all_found ||
 		!union_found ||
-		/*	A trailing UNION negates the affect of earlier UNION ALLs */
+	/* A trailing UNION negates the affect of earlier UNION ALLs */
 		!last_unionall_flag)
 	{
-		List *hold_unionClause = parse->unionClause;
+		List	   *hold_unionClause = parse->unionClause;
 
-		parse->unionClause = NIL;	/* prevent recursion */
+		parse->unionClause = NIL;		/* prevent recursion */
 		union_plans = lcons(union_planner(parse), NIL);
 		union_rts = lcons(parse->rtable, NIL);
 
 		foreach(ulist, hold_unionClause)
 		{
-			Query *union_query = lfirst(ulist);
+			Query	   *union_query = lfirst(ulist);
 
 			union_plans = lappend(union_plans, union_planner(union_query));
 			union_rts = lappend(union_rts, union_query->rtable);
@@ -142,22 +129,23 @@ plan_union_queries(Query *parse)
 	}
 	else
 	{
+
 		/*
-		 *	We have mixed unions and non-unions
+		 * We have mixed unions and non-unions
 		 *
-		 *	We need to restructure this to put the UNIONs on their own
-		 *	so we can do a DISTINCT.
+		 * We need to restructure this to put the UNIONs on their own so we
+		 * can do a DISTINCT.
 		 */
 
-		 /* save off everthing past the last UNION */
+		/* save off everthing past the last UNION */
 		unionall_queries = lnext(last_union);
 
 		/* clip off the list to remove the trailing UNION ALLs */
 		lnext(last_union) = NIL;
 
 		/*
-		 *	Recursion, but UNION only.
-		 *	The last one is a UNION, so it will not come here in recursion,
+		 * Recursion, but UNION only. The last one is a UNION, so it will
+		 * not come here in recursion,
 		 */
 		union_plans = lcons(union_planner(parse), NIL);
 		union_rts = lcons(parse->rtable, NIL);
@@ -165,20 +153,20 @@ plan_union_queries(Query *parse)
 		/* Append the remainging UNION ALLs */
 		foreach(ulist, unionall_queries)
 		{
-			Query	*unionall_query = lfirst(ulist);
+			Query	   *unionall_query = lfirst(ulist);
 
 			union_plans = lappend(union_plans, union_planner(unionall_query));
 			union_rts = lappend(union_rts, unionall_query->rtable);
 		}
 	}
-		
+
 	/* We have already split UNION and UNION ALL and we made it consistent */
 	if (!last_unionall_flag)
 	{
 		parse->uniqueFlag = "*";
 		parse->sortClause = transformSortClause(NULL, NIL,
-			parse->sortClause,
-			parse->targetList, "*");
+												parse->sortClause,
+												parse->targetList, "*");
 	}
 	else
 		/* needed so we don't take the flag from the first query */
@@ -204,7 +192,7 @@ plan_union_queries(Query *parse)
  * entries to be inserted into an APPEND node.
  * XXX - what exactly does this mean, look for make_append
  */
-Append	   *
+Append *
 plan_inherit_queries(Query *parse, Index rt_index)
 {
 	List	   *union_plans = NIL;
@@ -218,6 +206,7 @@ plan_inherit_queries(Query *parse, Index rt_index)
 		find_all_inheritors(lconsi(rt_entry->relid,
 								   NIL),
 							NIL);
+
 	/*
 	 * Remove the flag for this relation, since we're about to handle it
 	 * (do it before recursing!). XXX destructive parse tree change
@@ -225,7 +214,7 @@ plan_inherit_queries(Query *parse, Index rt_index)
 	rt_fetch(rt_index, rangetable)->inh = false;
 
 	union_plans = plan_inherit_query(union_relids, rt_index, rt_entry,
-								   parse, &union_rt_entries);
+									 parse, &union_rt_entries);
 
 	return (make_append(union_plans,
 						NULL,
@@ -241,10 +230,10 @@ plan_inherit_queries(Query *parse, Index rt_index)
  */
 static List *
 plan_inherit_query(List *relids,
-				 Index rt_index,
-				 RangeTblEntry *rt_entry,
-				 Query *root,
-				 List **union_rtentriesPtr)
+				   Index rt_index,
+				   RangeTblEntry *rt_entry,
+				   Query *root,
+				   List **union_rtentriesPtr)
 {
 	List	   *i;
 	List	   *union_plans = NIL;
@@ -290,7 +279,7 @@ plan_inherit_query(List *relids,
  *		attributes from any relations listed in either of the argument relid
  *		lists.
  */
-List	   *
+List *
 find_all_inheritors(List *unexamined_relids,
 					List *examined_relids)
 {

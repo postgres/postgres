@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.21 1998/02/11 19:10:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.22 1998/02/26 04:30:41 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -224,7 +224,7 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 								  Oid leftObjectId,
 								  Oid rightObjectId)
 {
-	int i;
+	int			i;
 	HeapTuple	tup;
 	Datum		values[Natts_pg_operator];
 	char		nulls[Natts_pg_operator];
@@ -782,7 +782,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 	};
 
 	fmgr_info(ObjectIdEqualRegProcedure, &opKey[0].sk_func);
-        opKey[0].sk_nargs = opKey[0].sk_func.fn_nargs;
+	opKey[0].sk_nargs = opKey[0].sk_func.fn_nargs;
 
 	for (i = 0; i < Natts_pg_operator; ++i)
 	{

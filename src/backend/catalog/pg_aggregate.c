@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.12 1998/02/11 19:10:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.13 1998/02/26 04:30:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -267,7 +267,7 @@ AggregateCreate(char *aggName,
 
 }
 
-char	   *
+char *
 AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
 {
 	HeapTuple	tup;

@@ -3,19 +3,19 @@
  * pg_shadow.h--
  *	  definition of the system "shadow" relation (pg_shadow)
  *	  along with the relation's initial contents.
- *        pg_user is now a public accessible view on pg_shadow.
+ *		  pg_user is now a public accessible view on pg_shadow.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_shadow.h,v 1.1 1998/02/25 13:09:26 scrappy Exp $
+ * $Id: pg_shadow.h,v 1.2 1998/02/26 04:41:00 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
  *	  information from the DATA() statements.
  *
- *        WHENEVER the definition for pg_shadow changes, the
- *        view creation of pg_user must be changed in initdb.sh!
+ *		  WHENEVER the definition for pg_shadow changes, the
+ *		  view creation of pg_user must be changed in initdb.sh!
  *
  *-------------------------------------------------------------------------
  */

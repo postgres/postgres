@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.12 1998/01/20 22:55:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.13 1998/02/26 04:33:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,8 +26,9 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 
-static TargetEntry *find_targetlist_entry(ParseState *pstate,
-			SortGroupBy *sortgroupby, List *tlist);
+static TargetEntry *
+find_targetlist_entry(ParseState *pstate,
+					  SortGroupBy *sortgroupby, List *tlist);
 static void parseFromClause(ParseState *pstate, List *frmList);
 
 /*
@@ -39,8 +40,8 @@ void
 makeRangeTable(ParseState *pstate, char *relname, List *frmList)
 {
 	RangeTblEntry *rte;
-	int	sublevels_up;
-	
+	int			sublevels_up;
+
 	parseFromClause(pstate, frmList);
 
 	if (relname == NULL)
@@ -48,7 +49,7 @@ makeRangeTable(ParseState *pstate, char *relname, List *frmList)
 
 	if (refnameRangeTablePosn(pstate, relname, &sublevels_up) == 0 ||
 		sublevels_up != 0)
-    	rte = addRangeTableEntry(pstate, relname, relname, FALSE, FALSE);
+		rte = addRangeTableEntry(pstate, relname, relname, FALSE, FALSE);
 	else
 		rte = refnameRangeTableEntry(pstate, relname);
 
@@ -69,7 +70,7 @@ transformWhereClause(ParseState *pstate, Node *a_expr)
 	Node	   *qual;
 
 	if (a_expr == NULL)
-		return NULL;	/* no qualifiers */
+		return NULL;			/* no qualifiers */
 
 	pstate->p_in_where_clause = true;
 	qual = transformExpr(pstate, a_expr, EXPR_COLUMN_FIRST);
@@ -139,7 +140,7 @@ find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
 	TargetEntry *target_result = NULL;
 
 	if (sortgroupby->range)
-		real_rtable_pos = refnameRangeTablePosn(pstate,	sortgroupby->range, NULL);
+		real_rtable_pos = refnameRangeTablePosn(pstate, sortgroupby->range, NULL);
 
 	foreach(i, tlist)
 	{
@@ -216,21 +217,21 @@ transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 		else
 		{
 			List	   *i;
-			
-			foreach (i, glist)
+
+			foreach(i, glist)
 			{
-				GroupClause *gcl = (GroupClause *) lfirst (i);
-				
-				if ( gcl->entry == grpcl->entry )
+				GroupClause *gcl = (GroupClause *) lfirst(i);
+
+				if (gcl->entry == grpcl->entry)
 					break;
 			}
-			if ( i == NIL )			/* not in grouplist already */
+			if (i == NIL)		/* not in grouplist already */
 			{
 				lnext(gl) = lcons(grpcl, NIL);
 				gl = lnext(gl);
 			}
 			else
-				pfree (grpcl);		/* get rid of this */
+				pfree(grpcl);	/* get rid of this */
 		}
 		grouplist = lnext(grouplist);
 	}
@@ -259,7 +260,7 @@ transformSortClause(ParseState *pstate,
 		TargetEntry *restarget;
 		Resdom	   *resdom;
 
-		
+
 		restarget = find_targetlist_entry(pstate, sortby, targetlist);
 		if (restarget == NULL)
 			elog(ERROR, "The field being ordered by must appear in the target list");
@@ -273,21 +274,21 @@ transformSortClause(ParseState *pstate,
 		else
 		{
 			List	   *i;
-			
-			foreach (i, sortlist)
+
+			foreach(i, sortlist)
 			{
-				SortClause *scl = (SortClause *) lfirst (i);
-				
-				if ( scl->resdom == sortcl->resdom )
+				SortClause *scl = (SortClause *) lfirst(i);
+
+				if (scl->resdom == sortcl->resdom)
 					break;
 			}
-			if ( i == NIL )			/* not in sortlist already */
+			if (i == NIL)		/* not in sortlist already */
 			{
 				lnext(s) = lcons(sortcl, NIL);
 				s = lnext(s);
 			}
 			else
-				pfree (sortcl);		/* get rid of this */
+				pfree(sortcl);	/* get rid of this */
 		}
 		orderlist = lnext(orderlist);
 	}
@@ -295,7 +296,7 @@ transformSortClause(ParseState *pstate,
 	if (uniqueFlag)
 	{
 		List	   *i;
-		
+
 		if (uniqueFlag[0] == '*')
 		{
 
@@ -342,7 +343,7 @@ transformSortClause(ParseState *pstate,
 			}
 			if (i == NIL)
 				elog(ERROR, "The field specified in the UNIQUE ON clause is not in the targetlist");
-				
+
 			foreach(s, sortlist)
 			{
 				SortClause *sortcl = lfirst(s);
@@ -375,15 +376,15 @@ transformSortClause(ParseState *pstate,
 List *
 transformUnionClause(List *unionClause, List *targetlist)
 {
-	List *union_list = NIL;
+	List	   *union_list = NIL;
 	QueryTreeList *qlist;
-	int i;
+	int			i;
 
 	if (unionClause)
 	{
 		qlist = parse_analyze(unionClause, NULL);
 
-		for (i=0; i < qlist->len; i++)
+		for (i = 0; i < qlist->len; i++)
 			union_list = lappend(union_list, qlist->qtrees[i]);
 		/* we need to check return types are consistent here */
 		return union_list;

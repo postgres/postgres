@@ -43,7 +43,7 @@ case_translate_language_name(const char *input, char *output)
  * ---------------------------------------------------------------------
  */
 void
-CreateProceduralLanguage(CreatePLangStmt * stmt)
+CreateProceduralLanguage(CreatePLangStmt *stmt)
 {
 	char		languageName[NAMEDATALEN];
 	HeapTuple	langTup;
@@ -139,7 +139,7 @@ CreateProceduralLanguage(CreatePLangStmt * stmt)
  * ---------------------------------------------------------------------
  */
 void
-DropProceduralLanguage(DropPLangStmt * stmt)
+DropProceduralLanguage(DropPLangStmt *stmt)
 {
 	char		languageName[NAMEDATALEN];
 	HeapTuple	langTup;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/utils/Attic/strdup.c,v 1.4 1997/09/08 02:41:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/utils/Attic/strdup.c,v 1.5 1998/02/26 04:46:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include "strdup.h"
 
-char	   *
+char *
 strdup(char const * string)
 {
 	char	   *nstr;

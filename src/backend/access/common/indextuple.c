@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.27 1998/02/11 19:09:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.28 1998/02/26 04:29:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ index_formtuple(TupleDesc tupleDescriptor,
 				Datum value[],
 				char null[])
 {
-	char *tp;			/* tuple pointer */
+	char	   *tp;				/* tuple pointer */
 	IndexTuple	tuple;			/* return tuple */
 	Size		size,
 				hoff;
@@ -133,14 +133,14 @@ index_formtuple(TupleDesc tupleDescriptor,
  */
 Datum
 nocache_index_getattr(IndexTuple tup,
-			 int attnum,
-			 TupleDesc tupleDesc,
-			 bool *isnull)
+					  int attnum,
+					  TupleDesc tupleDesc,
+					  bool *isnull)
 {
-	char *tp;			/* ptr to att in tuple */
-	char *bp = NULL;	/* ptr to att in tuple */
+	char	   *tp;				/* ptr to att in tuple */
+	char	   *bp = NULL;		/* ptr to att in tuple */
 	int			slow;			/* do we have to walk nulls? */
-	int data_off;		/* tuple data offset */
+	int			data_off;		/* tuple data offset */
 	AttributeTupleForm *att = tupleDesc->attrs;
 
 	/* ----------------
@@ -174,7 +174,7 @@ nocache_index_getattr(IndexTuple tup,
 
 #ifdef IN_MACRO
 /* This is handled in the macro */
-	
+
 		/* first attribute is always at position zero */
 
 		if (attnum == 1)
@@ -184,8 +184,8 @@ nocache_index_getattr(IndexTuple tup,
 		if (att[attnum]->attcacheoff != -1)
 		{
 			return (Datum) fetchatt(&(att[attnum]),
-							 (char *) tup + data_off +
-							 att[attnum]->attcacheoff);
+									(char *) tup + data_off +
+									att[attnum]->attcacheoff);
 		}
 #endif
 
@@ -206,11 +206,11 @@ nocache_index_getattr(IndexTuple tup,
 												 * here! */
 #ifdef IN_MACRO
 /* This is handled in the macro */
-		
+
 		if (att_isnull(attnum, bp))
 		{
 			*isnull = true;
-			return (Datum)NULL;
+			return (Datum) NULL;
 		}
 #endif
 
@@ -219,11 +219,11 @@ nocache_index_getattr(IndexTuple tup,
 		 * ----------------
 		 */
 		{
-			int i = 0; /* current offset in bp */
-			int mask;	/* bit in byte we're looking at */
-			char n;	/* current byte in bp */
-			int byte,
-						 finalbit;
+			int			i = 0;	/* current offset in bp */
+			int			mask;	/* bit in byte we're looking at */
+			char		n;		/* current byte in bp */
+			int			byte,
+						finalbit;
 
 			byte = attnum >> 3;
 			finalbit = attnum & 0x07;
@@ -235,14 +235,14 @@ nocache_index_getattr(IndexTuple tup,
 				{
 					/* check for nulls in any "earlier" bytes */
 					if ((~n) != 0)
-						slow=1;
+						slow = 1;
 				}
 				else
 				{
 					/* check for nulls "before" final bit of last byte */
 					mask = (1 << finalbit) - 1;
 					if ((~n) & mask)
-						slow=1;
+						slow = 1;
 				}
 			}
 		}
@@ -257,7 +257,7 @@ nocache_index_getattr(IndexTuple tup,
 		if (att[attnum]->attcacheoff != -1)
 		{
 			return (Datum) fetchatt(&(att[attnum]),
-							 tp + att[attnum]->attcacheoff);
+									tp + att[attnum]->attcacheoff);
 		}
 		else if (attnum == 0)
 		{
@@ -265,7 +265,7 @@ nocache_index_getattr(IndexTuple tup,
 		}
 		else if (!IndexTupleAllFixed(tup))
 		{
-			int j = 0;
+			int			j = 0;
 
 			for (j = 0; j < attnum && !slow; j++)
 				if (att[j]->attlen < 1 && !VARLENA_FIXED_SIZE(att[j]))
@@ -281,8 +281,8 @@ nocache_index_getattr(IndexTuple tup,
 
 	if (!slow)
 	{
-		int j = 1;
-		long off;
+		int			j = 1;
+		long		off;
 
 		/*
 		 * need to set cache for some atts
@@ -293,13 +293,14 @@ nocache_index_getattr(IndexTuple tup,
 		while (att[j]->attcacheoff != -1)
 			j++;
 
-		if (!VARLENA_FIXED_SIZE(att[j-1]))
+		if (!VARLENA_FIXED_SIZE(att[j - 1]))
 			off = att[j - 1]->attcacheoff + att[j - 1]->attlen;
 		else
 			off = att[j - 1]->attcacheoff + att[j - 1]->atttypmod;
 
 		for (; j < attnum + 1; j++)
 		{
+
 			/*
 			 * Fix me when going to a machine with more than a four-byte
 			 * word!
@@ -346,9 +347,9 @@ nocache_index_getattr(IndexTuple tup,
 	}
 	else
 	{
-		bool usecache = true;
-		int off = 0;
-		int i;
+		bool		usecache = true;
+		int			off = 0;
+		int			i;
 
 		/*
 		 * Now we know that we have to walk the tuple CAREFULLY.
@@ -387,7 +388,7 @@ nocache_index_getattr(IndexTuple tup,
 					default:
 						if (att[i]->attlen < sizeof(int32))
 							elog(ERROR,
-								 "nocachegetiattr2: attribute %d has len %d",
+							 "nocachegetiattr2: attribute %d has len %d",
 								 i, att[i]->attlen);
 						if (att[i]->attalign == 'd')
 							off = DOUBLEALIGN(off);
@@ -412,7 +413,7 @@ nocache_index_getattr(IndexTuple tup,
 					break;
 				case -1:
 					Assert(!VARLENA_FIXED_SIZE(att[i]) ||
-							att[i]->atttypmod == VARSIZE(tp + off));
+						   att[i]->atttypmod == VARSIZE(tp + off));
 					off += VARSIZE(tp + off);
 					if (!VARLENA_FIXED_SIZE(att[i]))
 						usecache = false;

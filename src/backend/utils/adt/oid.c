@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.14 1998/02/11 19:12:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.15 1998/02/26 04:37:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,10 +28,10 @@
  *		Note:
  *				Fills any nonexistent digits with NULL oids.
  */
-Oid	*
+Oid *
 oid8in(char *oidString)
 {
-	Oid (*result)[];
+	Oid			(*result)[];
 	int			nums;
 
 	if (oidString == NULL)
@@ -60,9 +60,9 @@ oid8in(char *oidString)
 char *
 oid8out(Oid (*oidArray)[])
 {
-	int num;
-	Oid *sp;
-	char *rp;
+	int			num;
+	Oid		   *sp;
+	char	   *rp;
 	char	   *result;
 
 	if (oidArray == NULL)
@@ -142,10 +142,10 @@ int4eqoid(int32 arg1, Oid arg2)
 text *
 oid_text(Oid oid)
 {
-	text *result;
+	text	   *result;
 
-	int	len;
-	char *str;
+	int			len;
+	char	   *str;
 
 	str = oidout(oid);
 	len = (strlen(str) + VARHDRSZ);
@@ -153,28 +153,28 @@ oid_text(Oid oid)
 	result = palloc(len);
 
 	VARSIZE(result) = len;
-	memmove(VARDATA(result), str, (len-VARHDRSZ));
+	memmove(VARDATA(result), str, (len - VARHDRSZ));
 	pfree(str);
 
-	return(result);
-} /* oid_text() */
+	return (result);
+}	/* oid_text() */
 
 Oid
 text_oid(text *string)
 {
-	Oid result;
+	Oid			result;
 
-	int	len;
-	char *str;
+	int			len;
+	char	   *str;
 
-    len = (VARSIZE(string) - VARHDRSZ);
+	len = (VARSIZE(string) - VARHDRSZ);
 
-	str = palloc(len+1);
+	str = palloc(len + 1);
 	memmove(str, VARDATA(string), len);
-	*(str+len) = '\0';
+	*(str + len) = '\0';
 
 	result = oidin(str);
 	pfree(str);
 
-	return(result);
-} /* oid_text() */
+	return (result);
+}	/* oid_text() */

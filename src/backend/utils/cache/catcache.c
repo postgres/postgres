@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.23 1998/02/23 17:43:19 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.24 1998/02/26 04:37:27 momjian Exp $
  *
  * Notes:
  *		XXX This needs to use exception.h to handle recovery when
@@ -677,7 +677,7 @@ InitSysCache(char *relname,
 			 HeapTuple (*iScanfuncP) ())
 {
 	CatCache   *cp;
-	int i;
+	int			i;
 	MemoryContext oldcxt;
 
 	char	   *indname;
@@ -862,8 +862,8 @@ SearchSysCache(struct catcache * cache,
 		 elt;
 		 elt = DLGetSucc(elt))
 	{
-		bool res;
-		
+		bool		res;
+
 		ct = (CatCTup *) DLE_VAL(elt);
 		/* ----------------
 		 *	see if the cached tuple matches our key.
@@ -871,10 +871,10 @@ SearchSysCache(struct catcache * cache,
 		 * ----------------
 		 */
 		HeapKeyTest(ct->ct_tup,
-						 cache->cc_tupdesc,
-						 cache->cc_nkeys,
-						 cache->cc_skey,
-						 res);
+					cache->cc_tupdesc,
+					cache->cc_nkeys,
+					cache->cc_skey,
+					res);
 		if (res)
 			break;
 	}

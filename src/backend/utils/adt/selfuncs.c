@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.17 1998/02/11 19:12:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.18 1998/02/26 04:37:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -334,7 +334,7 @@ gethilokey(Oid relid,
 		   char **high,
 		   char **low)
 {
-	Relation rdesc;
+	Relation	rdesc;
 	HeapScanDesc sdesc;
 	static ScanKeyData key[3] = {
 		{0, Anum_pg_statistic_starelid, F_OIDEQ, {0, 0, F_OIDEQ}},

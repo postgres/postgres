@@ -1,0 +1,40 @@
+#
+# Example PostgreSQL charsets control file.
+#
+# Should be placed in $PG_DATA directory.
+#
+# On the fly recoding charsets, based on client's IP address.
+# For example: koi8-u (koi) <-> cp1251 (win) <-> cp866 (alt)
+# 
+
+# Base charset for backend
+# Most Unices use koi8-r(u) as base charset. But Solaris
+# use iso8859-5 and some networkless workstations use cp866.
+BaseCharset	koi
+
+# There are recode table definitions from base charset to
+# other. Table names are relative to $PG_DATA directory.
+# Tables are taken from Russian Apache <http://apache.lexa.ru>.
+RecodeTable	koi	alt	koi-alt.tab
+RecodeTable	koi	win	koi-win.tab
+RecodeTable	koi	iso	koi-iso.tab
+RecodeTable	koi	koi	koi-koi.tab
+RecodeTable	alt	win	othertabs/alt-win.tab
+RecodeTable	alt	koi	othertabs/alt-koi.tab
+RecodeTable	iso	koi	othertabs/iso-koi.tab
+
+# Local loopback
+HostCharset	127.0.0.1	koi
+
+# Yet another Unix (maybe ;)
+HostCharset	192.168.0.1	koi
+
+# There are Windows on 192.168.1.64 through 192.168.1.95
+HostCharset	192.168.1.64/27		win
+
+# There are cp866 (alt) systems on 192.168.2.3 through
+# 192.168.2.7 (exept 192.168.2.4 - see below)
+HostCharset	192.168.2.3-192.168.2.7		alt
+
+# This is exeption from previous rule!
+HostCharset	192.168.2.4	win

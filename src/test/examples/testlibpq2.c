@@ -37,9 +37,9 @@ main()
 			   *pgoptions,
 			   *pgtty;
 	char	   *dbName;
-	/* int			nFields;
-	 * int			i,
-	 *			j;
+
+	/*
+	 * int			nFields; int		  i, j;
 	 */
 
 	PGconn	   *conn;
@@ -106,5 +106,6 @@ main()
 
 	/* close the connection to the database and cleanup */
 	PQfinish(conn);
-	return 0;			/* Though PQfinish(conn1) has called exit(1) */
+	return 0;					/* Though PQfinish(conn1) has called
+								 * exit(1) */
 }

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.11 1998/01/26 01:49:19 scrappy Exp $
+ * $Id: libpq.h,v 1.12 1998/02/26 04:41:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,9 +180,11 @@ extern int	PQninstancesGroup(PortalBuffer *portal, int group_index);
 extern int	PQnfieldsGroup(PortalBuffer *portal, int group_index);
 extern int	PQfnumberGroup(PortalBuffer *portal, int group_index, char *field_name);
 extern char *PQfnameGroup(PortalBuffer *portal, int group_index, int field_number);
-extern int PQftypeGroup(PortalBuffer *portal, int group_index,
+extern int
+PQftypeGroup(PortalBuffer *portal, int group_index,
 			 int field_number);
-extern int PQfsizeGroup(PortalBuffer *portal, int group_index,
+extern int
+PQfsizeGroup(PortalBuffer *portal, int group_index,
 			 int field_number);
 extern GroupBuffer *PQgroup(PortalBuffer *portal, int tuple_index);
 extern int	PQgetgroup(PortalBuffer *portal, int tuple_index);
@@ -270,7 +272,8 @@ extern int	pq_sendoob(char *msg, int len);
 extern int	pq_recvoob(char *msgPtr, int *lenPtr);
 extern int	pq_getinaddr(struct sockaddr_in * sin, char *host, int port);
 extern int	pq_getinserv(struct sockaddr_in * sin, char *host, char *serv);
-extern int pq_connect(char *dbname, char *user, char *args, char *hostName,
+extern int
+pq_connect(char *dbname, char *user, char *args, char *hostName,
 		   char *debugTty, char *execFile, short portName);
 extern int	StreamOpen(char *hostName, short portName, Port *port);
 extern void pq_regoob(void (*fptr) ());

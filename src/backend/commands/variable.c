@@ -1,8 +1,8 @@
 /*
  * Routines for handling of 'SET var TO',
- *  'SHOW var' and 'RESET var' statements.
+ *	'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.3 1998/02/03 16:06:49 thomas Exp $
+ * $Id: variable.c,v 1.4 1998/02/26 04:31:05 momjian Exp $
  *
  */
 
@@ -61,7 +61,7 @@ get_token(char **tok, char **val, const char *str)
 	}
 
 	*tok = (char *) palloc(len + 1);
-	StrNCpy(*tok, start, len+1);
+	StrNCpy(*tok, start, len + 1);
 
 	/* skip white spaces */
 	while (isspace(*str))
@@ -107,7 +107,7 @@ get_token(char **tok, char **val, const char *str)
 	}
 
 	*val = (char *) palloc(len + 1);
-	StrNCpy(*val, start, len+1);
+	StrNCpy(*val, start, len + 1);
 
 	/* skip white spaces */
 	while (isspace(*str))
@@ -342,18 +342,21 @@ parse_date(const char *value)
 			DateStyle = USE_GERMAN_DATES;
 			dcnt++;
 			EuroDates = TRUE;
-			if ((ecnt > 0) && (! EuroDates)) ecnt++;
+			if ((ecnt > 0) && (!EuroDates))
+				ecnt++;
 		}
 		else if (!strncasecmp(tok, "EURO", 4))
 		{
 			EuroDates = TRUE;
-			if ((dcnt <= 0) || (DateStyle != USE_GERMAN_DATES)) ecnt++;
+			if ((dcnt <= 0) || (DateStyle != USE_GERMAN_DATES))
+				ecnt++;
 		}
 		else if ((!strcasecmp(tok, "US"))
 				 || (!strncasecmp(tok, "NONEURO", 7)))
 		{
 			EuroDates = FALSE;
-			if ((dcnt <= 0) || (DateStyle == USE_GERMAN_DATES)) ecnt++;
+			if ((dcnt <= 0) || (DateStyle == USE_GERMAN_DATES))
+				ecnt++;
 		}
 		else if (!strcasecmp(tok, "DEFAULT"))
 		{
@@ -445,7 +448,7 @@ parse_timezone(const char *value)
 			if ((defaultTZ = getenv("TZ")) != NULL)
 				strcpy(TZvalue, defaultTZ);
 
-			/* found nothing so mark with an invalid pointer */
+		/* found nothing so mark with an invalid pointer */
 			else
 				defaultTZ = (char *) -1;
 
@@ -459,7 +462,7 @@ parse_timezone(const char *value)
 	}
 
 	return TRUE;
-} /* parse_timezone() */
+}	/* parse_timezone() */
 
 bool
 show_timezone()
@@ -468,10 +471,10 @@ show_timezone()
 
 	tz = getenv("TZ");
 
-	elog(NOTICE, "Time zone is %s", ((tz != NULL)? tz: "unknown"));
+	elog(NOTICE, "Time zone is %s", ((tz != NULL) ? tz : "unknown"));
 
 	return TRUE;
-} /* show_timezone() */
+}	/* show_timezone() */
 
 /* reset_timezone()
  * Set TZ environment variable to original value.
@@ -501,7 +504,10 @@ reset_timezone()
 		tzset();
 	}
 
-	/* otherwise, time zone was set but no original explicit time zone available */
+	/*
+	 * otherwise, time zone was set but no original explicit time zone
+	 * available
+	 */
 	else
 	{
 		strcpy(tzbuf, "=");
@@ -511,7 +517,7 @@ reset_timezone()
 	}
 
 	return TRUE;
-} /* reset_timezone() */
+}	/* reset_timezone() */
 
 /*-----------------------------------------------------------------------*/
 struct VariableParsers
@@ -523,13 +529,27 @@ struct VariableParsers
 }			VariableParsers[] =
 
 {
-	{	"datestyle", parse_date, show_date, reset_date },
-	{	"timezone", parse_timezone, show_timezone, reset_timezone },
-	{	"cost_heap", parse_cost_heap, show_cost_heap, reset_cost_heap },
-	{	"cost_index", parse_cost_index, show_cost_index, reset_cost_index },
-	{	"geqo", parse_geqo, show_geqo, reset_geqo },
-	{	"r_plans", parse_r_plans, show_r_plans, reset_r_plans },
-	{	NULL, NULL, NULL, NULL }
+	{
+		"datestyle", parse_date, show_date, reset_date
+	},
+	{
+		"timezone", parse_timezone, show_timezone, reset_timezone
+	},
+	{
+		"cost_heap", parse_cost_heap, show_cost_heap, reset_cost_heap
+	},
+	{
+		"cost_index", parse_cost_index, show_cost_index, reset_cost_index
+	},
+	{
+		"geqo", parse_geqo, show_geqo, reset_geqo
+	},
+	{
+		"r_plans", parse_r_plans, show_r_plans, reset_r_plans
+	},
+	{
+		NULL, NULL, NULL, NULL
+	}
 };
 
 /*-----------------------------------------------------------------------*/

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.10 1997/10/25 01:10:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.11 1998/02/26 04:37:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ namein(char *s)
 /*
  *		nameout - converts internal reprsentation to "..."
  */
-char	   *
+char *
 nameout(NameData *s)
 {
 	if (s == NULL)

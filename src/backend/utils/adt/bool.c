@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.13 1998/01/05 16:39:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.14 1998/02/26 04:36:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,9 +33,10 @@
 bool
 boolin(char *b)
 {
-	switch(*b) {
-		case 't':
-		case 'T':
+	switch (*b)
+	{
+			case 't':
+			case 'T':
 			if (strncasecmp(b, "true", strlen(b)) == 0)
 				return (TRUE);
 			break;
@@ -72,10 +73,10 @@ boolin(char *b)
 			break;
 	}
 
-	elog(ERROR,"Bad boolean external representation '%s'", b);
+	elog(ERROR, "Bad boolean external representation '%s'", b);
 	/* not reached */
 	return (FALSE);
-} /* boolin() */
+}	/* boolin() */
 
 /*
  *		boolout			- converts 1 or 0 to "t" or "f"
@@ -88,7 +89,7 @@ boolout(bool b)
 	*result = (b) ? 't' : 'f';
 	result[1] = '\0';
 	return (result);
-} /* boolout() */
+}	/* boolout() */
 
 
 /*****************************************************************************
@@ -122,11 +123,11 @@ boolgt(bool arg1, bool arg2)
 bool
 istrue(bool arg1)
 {
-	return(arg1 == TRUE);
-} /* istrue() */
+	return (arg1 == TRUE);
+}	/* istrue() */
 
 bool
 isfalse(bool arg1)
 {
-	return(arg1 != TRUE);
-} /* isfalse() */
+	return (arg1 != TRUE);
+}	/* isfalse() */

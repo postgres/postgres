@@ -6,9 +6,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #if defined(HAVE_STRING_H)
-# include <string.h>
+#include <string.h>
 #else
-# include <strings.h>
+#include <strings.h>
 #endif
 #include <unistd.h>
 #include <errno.h>

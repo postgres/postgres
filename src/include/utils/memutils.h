@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.13 1998/01/24 22:50:51 momjian Exp $
+ * $Id: memutils.h,v 1.14 1998/02/26 04:44:08 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -90,7 +90,7 @@ s...)
 		(((long)(LEN) + (sizeof (double) - 1)) & ~(sizeof (double) -1))
 #else
 #define DOUBLEALIGN(LEN) INTALIGN(LEN)
-#define MAXALIGN(LEN)    INTALIGN(LEN)
+#define MAXALIGN(LEN)	 INTALIGN(LEN)
 #endif
 
 /*****************************************************************************
@@ -233,7 +233,8 @@ extern void AllocSetReset(AllocSet set);
 extern bool AllocSetContains(AllocSet set, AllocPointer pointer);
 extern AllocPointer AllocSetAlloc(AllocSet set, Size size);
 extern void AllocSetFree(AllocSet set, AllocPointer pointer);
-extern AllocPointer AllocSetRealloc(AllocSet set, AllocPointer pointer,
+extern AllocPointer
+AllocSetRealloc(AllocSet set, AllocPointer pointer,
 				Size size);
 
 extern void AllocSetDump(AllocSet set);

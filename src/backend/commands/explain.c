@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.17 1998/02/13 03:21:30 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.18 1998/02/26 04:30:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,23 +204,23 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 		appendStringInfo(str, buf);
 	}
 	appendStringInfo(str, "\n");
-	
+
 	/* initPlan-s */
 	if (plan->initPlan)
 	{
-		List   *saved_rtable = es->rtable;
-		List   *lst;
-		
+		List	   *saved_rtable = es->rtable;
+		List	   *lst;
+
 		for (i = 0; i < indent; i++)
 			appendStringInfo(str, "  ");
 		appendStringInfo(str, "  InitPlan\n");
-		foreach (lst, plan->initPlan)
+		foreach(lst, plan->initPlan)
 		{
-			es->rtable = ((SubPlan*) lfirst(lst))->rtable;
+			es->rtable = ((SubPlan *) lfirst(lst))->rtable;
 			for (i = 0; i < indent; i++)
 				appendStringInfo(str, "  ");
 			appendStringInfo(str, "    ->  ");
-			explain_outNode(str, ((SubPlan*) lfirst(lst))->plan, indent + 4, es);
+			explain_outNode(str, ((SubPlan *) lfirst(lst))->plan, indent + 4, es);
 		}
 		es->rtable = saved_rtable;
 	}
@@ -242,23 +242,23 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 		appendStringInfo(str, "  ->  ");
 		explain_outNode(str, innerPlan(plan), indent + 3, es);
 	}
-	
+
 	/* subPlan-s */
 	if (plan->subPlan)
 	{
-		List   *saved_rtable = es->rtable;
-		List   *lst;
-		
+		List	   *saved_rtable = es->rtable;
+		List	   *lst;
+
 		for (i = 0; i < indent; i++)
 			appendStringInfo(str, "  ");
 		appendStringInfo(str, "  SubPlan\n");
-		foreach (lst, plan->subPlan)
+		foreach(lst, plan->subPlan)
 		{
-			es->rtable = ((SubPlan*) lfirst(lst))->rtable;
+			es->rtable = ((SubPlan *) lfirst(lst))->rtable;
 			for (i = 0; i < indent; i++)
 				appendStringInfo(str, "  ");
 			appendStringInfo(str, "    ->  ");
-			explain_outNode(str, ((SubPlan*) lfirst(lst))->plan, indent + 4, es);
+			explain_outNode(str, ((SubPlan *) lfirst(lst))->plan, indent + 4, es);
 		}
 		es->rtable = saved_rtable;
 	}

@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include "Varray.h"
 
-Varray	   *
+Varray *
 NewVarray(size_t nobj, size_t size)
 /*
  * NewVarray -- allocate a Varray to contain an array of val each of which

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.36 1998/02/23 17:43:25 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.37 1998/02/26 04:37:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,11 +258,14 @@ static HeapTuple ScanPgRelation(RelationBuildDescInfo buildinfo);
 static HeapTuple scan_pg_rel_seq(RelationBuildDescInfo buildinfo);
 static HeapTuple scan_pg_rel_ind(RelationBuildDescInfo buildinfo);
 static Relation AllocateRelationDesc(u_int natts, Form_pg_class relp);
-static void RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
+static void
+RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 					   Relation relation, u_int natts);
-static void build_tupdesc_seq(RelationBuildDescInfo buildinfo,
+static void
+build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 				  Relation relation, u_int natts);
-static void build_tupdesc_ind(RelationBuildDescInfo buildinfo,
+static void
+build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 				  Relation relation, u_int natts);
 static Relation RelationBuildDesc(RelationBuildDescInfo buildinfo);
 static void IndexedAccessMethodInitialize(Relation relation);
@@ -766,11 +769,11 @@ RelationBuildRuleLock(Relation relation)
 						 Anum_pg_rewrite_ev_qual, pg_rewrite_tupdesc,
 						 &isnull);
 
-		ruleaction = PointerGetDatum (textout((struct varlena *) DatumGetPointer (ruleaction)));
-		rule_evqual_string = PointerGetDatum (textout((struct varlena *) DatumGetPointer (rule_evqual_string)));
+		ruleaction = PointerGetDatum(textout((struct varlena *) DatumGetPointer(ruleaction)));
+		rule_evqual_string = PointerGetDatum(textout((struct varlena *) DatumGetPointer(rule_evqual_string)));
 
-		rule->actions = (List *) stringToNode(DatumGetPointer (ruleaction));
-		rule->qual = (Node *) stringToNode(DatumGetPointer (rule_evqual_string));
+		rule->actions = (List *) stringToNode(DatumGetPointer(ruleaction));
+		rule->qual = (Node *) stringToNode(DatumGetPointer(rule_evqual_string));
 
 		rules[numlocks++] = rule;
 		if (numlocks == maxlocks)
@@ -2017,7 +2020,7 @@ init_irels(void)
 		for (i = 0; i < am->amstrategies; i++)
 			fmgr_info(SMD(i).sk_procedure,
 					  &(SMD(i).sk_func));
-			SMD(i).sk_nargs = SMD(i).sk_func.fn_nargs;
+		SMD(i).sk_nargs = SMD(i).sk_func.fn_nargs;
 
 
 		/*

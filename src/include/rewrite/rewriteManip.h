@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteManip.h,v 1.6 1998/01/21 04:24:46 momjian Exp $
+ * $Id: rewriteManip.h,v 1.7 1998/02/26 04:43:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,8 +19,9 @@
 
 /* RewriteManip.c */
 void		OffsetVarNodes(Node *node, int offset);
-void		ChangeVarNodes(Node *node, int old_varno, int new_varno,
-							int sublevels_up);
+void
+ChangeVarNodes(Node *node, int old_varno, int new_varno,
+			   int sublevels_up);
 void		AddQual(Query *parsetree, Node *qual);
 void		AddNotQual(Query *parsetree, Node *qual);
 void		FixResdomTypes(List *user_tlist);

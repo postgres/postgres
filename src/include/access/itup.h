@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.12 1998/02/06 20:18:01 momjian Exp $
+ * $Id: itup.h,v 1.13 1998/02/26 04:40:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,7 +127,7 @@ typedef struct PredInfo
 			 (attnum) == 1) ? \
 			( \
 				(Datum)fetchatt(&((tupleDesc)->attrs[(attnum)-1]), \
-			  		(char *) (tup) + \
+					(char *) (tup) + \
 					( \
 						IndexTupleHasMinHeader(tup) ? \
 							sizeof (*(tup)) \
@@ -164,13 +164,16 @@ typedef struct PredInfo
 	) \
 )
 
-	
+
 /* indextuple.h */
-extern IndexTuple index_formtuple(TupleDesc tupleDescriptor,
+extern IndexTuple
+index_formtuple(TupleDesc tupleDescriptor,
 				Datum value[], char null[]);
-extern Datum nocache_index_getattr(IndexTuple tup, int attnum,
-			  TupleDesc tupleDesc, bool *isnull);
-extern RetrieveIndexResult FormRetrieveIndexResult(ItemPointer indexItemPointer,
+extern Datum
+nocache_index_getattr(IndexTuple tup, int attnum,
+					  TupleDesc tupleDesc, bool *isnull);
+extern RetrieveIndexResult
+FormRetrieveIndexResult(ItemPointer indexItemPointer,
 						ItemPointer heapItemPointer);
 extern void CopyIndexTuple(IndexTuple source, IndexTuple *target);
 

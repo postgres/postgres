@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.29 1998/01/16 23:20:43 momjian Exp $
+ * $Id: pg_dump.h,v 1.30 1998/02/26 04:39:01 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -156,9 +156,10 @@ typedef struct _oprInfo
  *
  * Matthew C. Aycock 12/02/97
  */
-typedef struct _AclType {
-  char *user;
-  char *privledges;
+typedef struct _AclType
+{
+	char	   *user;
+	char	   *privledges;
 } ACL;
 
 
@@ -242,7 +243,7 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 			TableInfo *tbinfo, int numTables, const char *tablename);
 
 extern const char *
-fmtId(const char *identifier);
+			fmtId(const char *identifier);
 
 /* largest query string size */
 #define MAXQUERYLEN  5000

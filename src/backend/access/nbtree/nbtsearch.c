@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.30 1998/01/15 19:42:13 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.31 1998/02/26 04:29:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,12 +197,11 @@ _bt_moveright(Relation rel,
 			 * if number of attrs > keysize. Example: (2,0) - last items
 			 * on this page, (2,1) - first item on next page (hikey), our
 			 * scankey is x = 2. Scankey == (2,1) because of we compare
-			 * first attrs only, but we shouldn't to move right of here. 
-			 * 			- vadim 04/15/97
-			 * 
+			 * first attrs only, but we shouldn't to move right of here. -
+			 * vadim 04/15/97
+			 *
 			 * Also, if this page is not LEAF one (and # of attrs > keysize)
-			 * then we can't move too.
-			 *			- vadim 10/22/97
+			 * then we can't move too. - vadim 10/22/97
 			 */
 
 			if (_bt_skeycmp(rel, keysz, scankey, page, hikey,

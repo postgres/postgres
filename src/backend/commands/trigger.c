@@ -38,7 +38,7 @@ TriggerData *CurrentTriggerData = NULL;
 void		RelationBuildTriggers(Relation relation);
 void		FreeTriggerDesc(Relation relation);
 
-static void DescribeTrigger(TriggerDesc * trigdesc, Trigger * trigger);
+static void DescribeTrigger(TriggerDesc *trigdesc, Trigger *trigger);
 static HeapTuple
 GetTupleForTrigger(Relation relation, ItemPointer tid,
 				   bool before);
@@ -46,7 +46,7 @@ GetTupleForTrigger(Relation relation, ItemPointer tid,
 extern GlobalMemory CacheCxt;
 
 void
-CreateTrigger(CreateTrigStmt * stmt)
+CreateTrigger(CreateTrigStmt *stmt)
 {
 	int16		tgtype;
 	int16		tgattr[8] = {0};
@@ -249,7 +249,7 @@ CreateTrigger(CreateTrigStmt * stmt)
 }
 
 void
-DropTrigger(DropTrigStmt * stmt)
+DropTrigger(DropTrigStmt *stmt)
 {
 	Relation	rel;
 	Relation	tgrel;
@@ -519,7 +519,7 @@ FreeTriggerDesc(Relation relation)
 }
 
 static void
-DescribeTrigger(TriggerDesc * trigdesc, Trigger * trigger)
+DescribeTrigger(TriggerDesc *trigdesc, Trigger *trigger)
 {
 	uint16	   *n;
 	Trigger  ***t,
@@ -593,7 +593,7 @@ DescribeTrigger(TriggerDesc * trigdesc, Trigger * trigger)
 }
 
 static HeapTuple
-ExecCallTriggerFunc(Trigger * trigger)
+ExecCallTriggerFunc(Trigger *trigger)
 {
 
 	if (trigger->tgfunc.fn_addr == NULL)
@@ -601,9 +601,10 @@ ExecCallTriggerFunc(Trigger * trigger)
 		fmgr_info(trigger->tgfoid, &trigger->tgfunc);
 	}
 
-	if (trigger->tgfunc.fn_plhandler != NULL) {
+	if (trigger->tgfunc.fn_plhandler != NULL)
+	{
 		return (HeapTuple) (*(trigger->tgfunc.fn_plhandler))
-							(&trigger->tgfunc);
+			(&trigger->tgfunc);
 	}
 
 	return (HeapTuple) ((*fmgr_faddr(&trigger->tgfunc)) ());

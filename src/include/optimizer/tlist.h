@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tlist.h,v 1.7 1998/01/24 22:49:51 momjian Exp $
+ * $Id: tlist.h,v 1.8 1998/02/26 04:42:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,8 @@ extern TargetEntry *match_varid(Var *test_var, List *tlist);
 extern List *new_unsorted_tlist(List *targetlist);
 extern List *copy_vars(List *target, List *source);
 extern List *flatten_tlist(List *tlist);
-extern List * flatten_tlist_vars(List *full_tlist,
+extern List *
+flatten_tlist_vars(List *full_tlist,
 				   List *flat_tlist);
 
 #endif							/* TLIST_H */

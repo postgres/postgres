@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.32 1998/02/21 18:17:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.33 1998/02/26 04:32:12 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -102,9 +102,9 @@ _outIndexStmt(StringInfo str, IndexStmt *node)
 	appendStringInfo(str, " :rangetable ");
 	_outNode(str, node->rangetable);
 	appendStringInfo(str, " :lossy ");
-	appendStringInfo(str, (node->lossy ? "true": "false"));
+	appendStringInfo(str, (node->lossy ? "true" : "false"));
 	appendStringInfo(str, " :unique ");
-	appendStringInfo(str, (node->unique ? "true": "false"));
+	appendStringInfo(str, (node->unique ? "true" : "false"));
 }
 
 static void
@@ -117,7 +117,7 @@ _outColumnDef(StringInfo str, ColumnDef *node)
 	appendStringInfo(str, " :typename ");
 	_outNode(str, node->typename);
 	appendStringInfo(str, " :is_not_null ");
-	appendStringInfo(str, (node->is_not_null ? "true": "false"));
+	appendStringInfo(str, (node->is_not_null ? "true" : "false"));
 	appendStringInfo(str, " :defval ");
 	appendStringInfo(str, node->defval);
 	appendStringInfo(str, " :constraints");
@@ -127,8 +127,8 @@ _outColumnDef(StringInfo str, ColumnDef *node)
 static void
 _outTypeName(StringInfo str, TypeName *node)
 {
-	char buf[500];
-	
+	char		buf[500];
+
 	appendStringInfo(str, "TYPENAME");
 
 	appendStringInfo(str, " :name ");
@@ -138,7 +138,7 @@ _outTypeName(StringInfo str, TypeName *node)
 	appendStringInfo(str, " :setof ");
 	appendStringInfo(str, (node->setof ? "true" : "false"));
 	appendStringInfo(str, " :typmod ");
-	sprintf(buf," %d ", node->typmod);
+	sprintf(buf, " %d ", node->typmod);
 	appendStringInfo(str, buf);
 	appendStringInfo(str, " :arrayBounds ");
 	_outNode(str, node->arrayBounds);
@@ -163,11 +163,11 @@ static void
 _outQuery(StringInfo str, Query *node)
 {
 	char		buf[500];
-	
+
 	appendStringInfo(str, "QUERY");
 
 	appendStringInfo(str, " :command ");
-	sprintf(buf," %d ", node->commandType);
+	sprintf(buf, " %d ", node->commandType);
 	appendStringInfo(str, buf);
 
 	if (node->utilityStmt)
@@ -227,26 +227,26 @@ _outQuery(StringInfo str, Query *node)
 	appendStringInfo(str, " :groupClause ");
 	_outNode(str, node->groupClause);
 	appendStringInfo(str, " :havingQual ");
- 	_outNode(str, node->havingQual);
+	_outNode(str, node->havingQual);
 	appendStringInfo(str, " :hasAggs ");
 	appendStringInfo(str, (node->hasAggs ? "true" : "false"));
 	appendStringInfo(str, " :hasSubLinks ");
 	appendStringInfo(str, (node->hasSubLinks ? "true" : "false"));
 	appendStringInfo(str, " :unionClause ");
- 	_outNode(str, node->unionClause);
+	_outNode(str, node->unionClause);
 }
 
 static void
 _outSortClause(StringInfo str, SortClause *node)
 {
 	char		buf[500];
-	
+
 	appendStringInfo(str, "SORTCLAUSE");
 
 	appendStringInfo(str, " :resdom ");
 	_outNode(str, node->resdom);
 	appendStringInfo(str, " :opoid ");
-	sprintf(buf," %u ", node->opoid);
+	sprintf(buf, " %u ", node->opoid);
 	appendStringInfo(str, buf);
 }
 
@@ -254,13 +254,13 @@ static void
 _outGroupClause(StringInfo str, GroupClause *node)
 {
 	char		buf[500];
-	
+
 	appendStringInfo(str, "GROUPCLAUSE");
 
 	appendStringInfo(str, " :entry ");
 	_outNode(str, node->entry);
 	appendStringInfo(str, " :grpOpoid ");
-	sprintf(buf," %u ", node->grpOpoid);
+	sprintf(buf, " %u ", node->grpOpoid);
 	appendStringInfo(str, buf);
 }
 
@@ -279,7 +279,7 @@ _outPlanInfo(StringInfo str, Plan *node)
 	sprintf(buf, " :width %d ", node->plan_width);
 	appendStringInfo(str, buf);
 	appendStringInfo(str, " :state ");
-	appendStringInfo(str,  node->state ? "not-NULL" : "<>");
+	appendStringInfo(str, node->state ? "not-NULL" : "<>");
 	appendStringInfo(str, " :qptargetlist ");
 	_outNode(str, node->targetlist);
 	appendStringInfo(str, " :qpqual ");
@@ -428,9 +428,9 @@ _outSubPlan(StringInfo str, SubPlan *node)
 	appendStringInfo(str, " :rtable ");
 	_outNode(str, node->rtable);
 	appendStringInfo(str, " :setprm ");
-	_outIntList (str, node->setParam);
+	_outIntList(str, node->setParam);
 	appendStringInfo(str, " :parprm ");
-	_outIntList (str, node->parParam);
+	_outIntList(str, node->parParam);
 	appendStringInfo(str, " :slink ");
 	_outNode(str, node->sublink);
 }
@@ -1815,7 +1815,7 @@ _outNode(StringInfo str, void *obj)
  * nodeToString -
  *	   returns the ascii representation of the Node
  */
-char	   *
+char *
 nodeToString(void *obj)
 {
 	StringInfo	str;

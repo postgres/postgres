@@ -1,4 +1,4 @@
-/* $Id: inet_aton.c,v 1.13 1998/02/11 19:11:05 momjian Exp $
+/* $Id: inet_aton.c,v 1.14 1998/02/26 04:34:04 momjian Exp $
  *
  *	This inet_aton() function was taken from the GNU C library and
  *	incorporated into Postgres for those systems which do not have this
@@ -57,11 +57,11 @@ int
 inet_aton(const char *cp, struct in_addr * addr)
 {
 	unsigned int val;
-	int base,
+	int			base,
 				n;
-	char c;
+	char		c;
 	u_int		parts[4];
-	u_int *pp = parts;
+	u_int	   *pp = parts;
 
 	for (;;)
 	{

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.9 1998/02/13 03:46:54 vadim Exp $
+ * $Id: clauses.h,v 1.10 1998/02/26 04:42:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,13 +42,15 @@ extern bool join_clause_p(Node *clause);
 extern bool qual_clause_p(Node *clause);
 extern void fix_opid(Node *clause);
 extern List *fix_opids(List *clauses);
-extern void get_relattval(Node *clause, int *relid,
+extern void
+get_relattval(Node *clause, int *relid,
 			  AttrNumber *attno, Datum *constval, int *flag);
-extern void get_rels_atts(Node *clause, int *relid1,
+extern void
+get_rels_atts(Node *clause, int *relid1,
 			  AttrNumber *attno1, int *relid2, AttrNumber *attno2);
 extern void CommuteClause(Node *clause);
 
-#define	is_subplan(clause)	((Node*) clause != NULL && \
+#define is_subplan(clause)	((Node*) clause != NULL && \
 						nodeTag((Node*) clause) == T_Expr && \
 						((Expr *) clause)->opType == SUBPLAN_EXPR)
 

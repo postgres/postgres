@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.12 1997/09/08 02:33:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.13 1998/02/26 04:39:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ leftTrim(char *s)
 
 #endif
 
-char	   *
+char *
 rightTrim(char *s)
 {
 	char	   *sEnd;

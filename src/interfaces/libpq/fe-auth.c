@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.14 1998/01/29 03:24:03 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.15 1998/02/26 04:44:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -477,14 +477,14 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
  */
 int
 fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
-		  const char *password, char *PQerrormsg)
+			const char *password, char *PQerrormsg)
 {
 	switch (areq)
 	{
-	case AUTH_REQ_OK:
-		break;
+			case AUTH_REQ_OK:
+			break;
 
-	case AUTH_REQ_KRB4:
+		case AUTH_REQ_KRB4:
 #ifdef KRB4
 			if (pg_krb4_sendauth(PQerrormsg, conn->sock, &conn->laddr.in,
 								 &conn->raddr.in,
@@ -496,12 +496,12 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			}
 			break;
 #else
-		(void)sprintf(PQerrormsg,
-				"fe_sendauth: krb4 authentication not supported\n");
-		return (STATUS_ERROR);
+			(void) sprintf(PQerrormsg,
+					 "fe_sendauth: krb4 authentication not supported\n");
+			return (STATUS_ERROR);
 #endif
 
-	case AUTH_REQ_KRB5:
+		case AUTH_REQ_KRB5:
 #ifdef KRB5
 			if (pg_krb5_sendauth(PQerrormsg, conn->sock, &conn->laddr.in,
 								 &conn->raddr.in,
@@ -513,27 +513,27 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			}
 			break;
 #else
-		(void)sprintf(PQerrormsg,
-				"fe_sendauth: krb5 authentication not supported\n");
-		return (STATUS_ERROR);
+			(void) sprintf(PQerrormsg,
+					 "fe_sendauth: krb5 authentication not supported\n");
+			return (STATUS_ERROR);
 #endif
 
-	case AUTH_REQ_PASSWORD:
-	case AUTH_REQ_CRYPT:
-		if (pg_password_sendauth(conn, password, areq) != STATUS_OK)
-		{
-			(void)sprintf(PQerrormsg,
-					"fe_sendauth: error sending password authentication\n");
+		case AUTH_REQ_PASSWORD:
+		case AUTH_REQ_CRYPT:
+			if (pg_password_sendauth(conn, password, areq) != STATUS_OK)
+			{
+				(void) sprintf(PQerrormsg,
+				 "fe_sendauth: error sending password authentication\n");
+				return (STATUS_ERROR);
+			}
+
+			break;
+
+		default:
+			(void) sprintf(PQerrormsg,
+			"fe_sendauth: authentication type %u not supported\n", areq);
 			return (STATUS_ERROR);
-		}
-
-		break;
-
-	default:
-		(void)sprintf(PQerrormsg,
-				"fe_sendauth: authentication type %u not supported\n",areq);
-		return (STATUS_ERROR);
- 	}
+	}
 
 	return (STATUS_OK);
 }
@@ -580,7 +580,7 @@ fe_getauthsvc(char *PQerrormsg)
  *					 name the user has authenticated to the system
  * if there is an error, return the error message in PQerrormsg
  */
-char	   *
+char *
 fe_getauthname(char *PQerrormsg)
 {
 	char	   *name = (char *) NULL;

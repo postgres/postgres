@@ -28,7 +28,7 @@ tuple 1: got
  */
 #include <stdio.h>
 #include <string.h>
-#include "postgres.h"		/* -> "c.h" -> int16, in access/attnum.h */
+#include "postgres.h"			/* -> "c.h" -> int16, in access/attnum.h */
 #include "libpq-fe.h"
 #include "utils/geo_decls.h"	/* for the POLYGON type */
 
@@ -47,9 +47,9 @@ main()
 			   *pgoptions,
 			   *pgtty;
 	char	   *dbName;
-	/* int			nFields;
-	 * int			i,
-	 *			j;
+
+	/*
+	 * int			nFields; int		  i, j;
 	 */
 	int			i;
 	int			i_fnum,
@@ -180,5 +180,6 @@ main()
 
 	/* close the connection to the database and cleanup */
 	PQfinish(conn);
-	return 0;			/* Though PQfinish(conn1) has called exit(1) */
+	return 0;					/* Though PQfinish(conn1) has called
+								 * exit(1) */
 }

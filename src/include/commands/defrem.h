@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.11 1998/01/24 22:48:45 momjian Exp $
+ * $Id: defrem.h,v 1.12 1998/02/26 04:41:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,8 @@
 /*
  * prototypes in defind.c
  */
-extern void DefineIndex(char *heapRelationName,
+extern void
+DefineIndex(char *heapRelationName,
 			char *indexRelationName,
 			char *accessMethodName,
 			List *attributeList,
@@ -27,7 +28,8 @@ extern void DefineIndex(char *heapRelationName,
 			bool unique,
 			Expr *predicate,
 			List *rangetable);
-extern void ExtendIndex(char *indexRelationName,
+extern void
+ExtendIndex(char *indexRelationName,
 			Expr *predicate,
 			List *rangetable);
 extern void RemoveIndex(char *name);
@@ -45,7 +47,8 @@ extern void CreateFunction(ProcedureStmt *stmt, CommandDest dest);
  * prototypes in remove.c
  */
 extern void RemoveFunction(char *functionName, int nargs, List *argNameList);
-extern void RemoveOperator(char *operatorName,
+extern void
+RemoveOperator(char *operatorName,
 			   char *typeName1, char *typeName2);
 extern void RemoveType(char *typeName);
 extern void RemoveAggregate(char *aggName, char *aggType);

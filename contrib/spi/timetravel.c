@@ -9,38 +9,38 @@
 
 #define ABSTIMEOID	702			/* it should be in pg_type.h */
 
-AbsoluteTime	currabstime(void);
-HeapTuple		timetravel(void);
-int32			set_timetravel(Name relname, int32 on);
+AbsoluteTime currabstime(void);
+HeapTuple	timetravel(void);
+int32		set_timetravel(Name relname, int32 on);
 
 typedef struct
 {
-	char   *ident;
-	void   *splan;
-} EPlan;
+	char	   *ident;
+	void	   *splan;
+}			EPlan;
 
 static EPlan *Plans = NULL;		/* for UPDATE/DELETE */
 static int	nPlans = 0;
 
-static char	  **TTOff = NULL;
-static int		nTTOff = 0;
+static char **TTOff = NULL;
+static int	nTTOff = 0;
 
 static EPlan *find_plan(char *ident, EPlan ** eplan, int *nplans);
 
 /*
- * timetravel () -- 
- *		1.	IF an update affects tuple with stop_date eq INFINITY 
- * 			then form (and return) new tuple with stop_date eq current date 
- * 			and all other column values as in old tuple, and insert tuple 
- * 			with new data and start_date eq current date and 
- * 			stop_date eq INFINITY
- * 			ELSE - skip updation of tuple.
- * 		2.	IF an delete affects tuple with stop_date eq INFINITY
- * 			then insert the same tuple with stop_date eq current date
- * 			ELSE - skip deletion of tuple.
- * 		3.	On INSERT, if start_date is NULL then current date will be
- * 			inserted, if stop_date is NULL then INFINITY will be inserted.
- * 
+ * timetravel () --
+ *		1.	IF an update affects tuple with stop_date eq INFINITY
+ *			then form (and return) new tuple with stop_date eq current date
+ *			and all other column values as in old tuple, and insert tuple
+ *			with new data and start_date eq current date and
+ *			stop_date eq INFINITY
+ *			ELSE - skip updation of tuple.
+ *		2.	IF an delete affects tuple with stop_date eq INFINITY
+ *			then insert the same tuple with stop_date eq current date
+ *			ELSE - skip deletion of tuple.
+ *		3.	On INSERT, if start_date is NULL then current date will be
+ *			inserted, if stop_date is NULL then INFINITY will be inserted.
+ *
  * In CREATE TRIGGER you are to specify start_date and stop_date column
  * names:
  * EXECUTE PROCEDURE
@@ -53,8 +53,10 @@ timetravel()
 	Trigger    *trigger;		/* to get trigger name */
 	char	  **args;			/* arguments */
 	int			attnum[2];		/* fnumbers of start/stop columns */
-	Datum		oldon, oldoff;
-	Datum		newon, newoff;
+	Datum		oldon,
+				oldoff;
+	Datum		newon,
+				newoff;
 	Datum	   *cvals;			/* column values */
 	char	   *cnulls;			/* column nulls */
 	char	   *relname;		/* triggered relation name */
@@ -78,11 +80,11 @@ timetravel()
 	/* Called by trigger manager ? */
 	if (!CurrentTriggerData)
 		elog(ERROR, "timetravel: triggers are not initialized");
-	
+
 	/* Should be called for ROW trigger */
 	if (TRIGGER_FIRED_FOR_STATEMENT(CurrentTriggerData->tg_event))
 		elog(ERROR, "timetravel: can't process STATEMENT events");
-	
+
 	/* Should be called BEFORE */
 	if (TRIGGER_FIRED_AFTER(CurrentTriggerData->tg_event))
 		elog(ERROR, "timetravel: must be fired before event");
@@ -90,196 +92,197 @@ timetravel()
 	/* INSERT ? */
 	if (TRIGGER_FIRED_BY_INSERT(CurrentTriggerData->tg_event))
 		isinsert = true;
-	
+
 	if (TRIGGER_FIRED_BY_UPDATE(CurrentTriggerData->tg_event))
 		newtuple = CurrentTriggerData->tg_newtuple;
-	
+
 	trigtuple = CurrentTriggerData->tg_trigtuple;
-	
+
 	rel = CurrentTriggerData->tg_relation;
 	relname = SPI_getrelname(rel);
-	
+
 	/* check if TT is OFF for this relation */
 	for (i = 0; i < nTTOff; i++)
-		if (strcasecmp (TTOff[i], relname) == 0)
+		if (strcasecmp(TTOff[i], relname) == 0)
 			break;
 	if (i < nTTOff)				/* OFF - nothing to do */
 	{
-		pfree (relname);
+		pfree(relname);
 		return ((newtuple != NULL) ? newtuple : trigtuple);
 	}
-	
+
 	trigger = CurrentTriggerData->tg_trigger;
 
 	if (trigger->tgnargs != 2)
-		elog(ERROR, "timetravel (%s): invalid (!= 2) number of arguments %d", 
-				relname, trigger->tgnargs);
-	
+		elog(ERROR, "timetravel (%s): invalid (!= 2) number of arguments %d",
+			 relname, trigger->tgnargs);
+
 	args = trigger->tgargs;
 	tupdesc = rel->rd_att;
 	natts = tupdesc->natts;
-	
+
 	/*
 	 * Setting CurrentTriggerData to NULL prevents direct calls to trigger
 	 * functions in queries. Normally, trigger functions have to be called
 	 * by trigger manager code only.
 	 */
 	CurrentTriggerData = NULL;
-	
-	for (i = 0; i < 2; i++ )
+
+	for (i = 0; i < 2; i++)
 	{
-		attnum[i] = SPI_fnumber (tupdesc, args[i]);
-		if ( attnum[i] < 0 )
+		attnum[i] = SPI_fnumber(tupdesc, args[i]);
+		if (attnum[i] < 0)
 			elog(ERROR, "timetravel (%s): there is no attribute %s", relname, args[i]);
-		if (SPI_gettypeid (tupdesc, attnum[i]) != ABSTIMEOID)
-			elog(ERROR, "timetravel (%s): attributes %s and %s must be of abstime type", 
-					relname, args[0], args[1]);
+		if (SPI_gettypeid(tupdesc, attnum[i]) != ABSTIMEOID)
+			elog(ERROR, "timetravel (%s): attributes %s and %s must be of abstime type",
+				 relname, args[0], args[1]);
 	}
-	
-	if (isinsert)								/* INSERT */
+
+	if (isinsert)				/* INSERT */
 	{
-		int		chnattrs = 0;
-		int		chattrs[2];
-		Datum	newvals[2];
-		
-		oldon = SPI_getbinval (trigtuple, tupdesc, attnum[0], &isnull);
+		int			chnattrs = 0;
+		int			chattrs[2];
+		Datum		newvals[2];
+
+		oldon = SPI_getbinval(trigtuple, tupdesc, attnum[0], &isnull);
 		if (isnull)
 		{
-			newvals[chnattrs] = GetCurrentAbsoluteTime ();
+			newvals[chnattrs] = GetCurrentAbsoluteTime();
 			chattrs[chnattrs] = attnum[0];
 			chnattrs++;
 		}
-		
-		oldoff = SPI_getbinval (trigtuple, tupdesc, attnum[1], &isnull);
+
+		oldoff = SPI_getbinval(trigtuple, tupdesc, attnum[1], &isnull);
 		if (isnull)
 		{
-			if ((chnattrs == 0 && DatumGetInt32 (oldon) >= NOEND_ABSTIME) || 
-				(chnattrs > 0 && DatumGetInt32 (newvals[0]) >= NOEND_ABSTIME))
-				elog (ERROR, "timetravel (%s): %s ge %s", 
-						relname, args[0], args[1]);
+			if ((chnattrs == 0 && DatumGetInt32(oldon) >= NOEND_ABSTIME) ||
+			(chnattrs > 0 && DatumGetInt32(newvals[0]) >= NOEND_ABSTIME))
+				elog(ERROR, "timetravel (%s): %s ge %s",
+					 relname, args[0], args[1]);
 			newvals[chnattrs] = NOEND_ABSTIME;
 			chattrs[chnattrs] = attnum[1];
 			chnattrs++;
 		}
 		else
 		{
-			if ((chnattrs == 0 && DatumGetInt32 (oldon) >= 
-										DatumGetInt32 (oldoff)) || 
-				(chnattrs > 0 && DatumGetInt32 (newvals[0]) >= 
-										DatumGetInt32 (oldoff)))
-				elog (ERROR, "timetravel (%s): %s ge %s", 
-						relname, args[0], args[1]);
+			if ((chnattrs == 0 && DatumGetInt32(oldon) >=
+				 DatumGetInt32(oldoff)) ||
+				(chnattrs > 0 && DatumGetInt32(newvals[0]) >=
+				 DatumGetInt32(oldoff)))
+				elog(ERROR, "timetravel (%s): %s ge %s",
+					 relname, args[0], args[1]);
 		}
-		
-		pfree (relname);
-		if ( chnattrs <= 0 )
+
+		pfree(relname);
+		if (chnattrs <= 0)
 			return (trigtuple);
-		
-		rettuple = SPI_modifytuple (rel, trigtuple, chnattrs, 
-									chattrs, newvals, NULL);
+
+		rettuple = SPI_modifytuple(rel, trigtuple, chnattrs,
+								   chattrs, newvals, NULL);
 		return (rettuple);
 	}
-	
-	oldon = SPI_getbinval (trigtuple, tupdesc, attnum[0], &isnull);
+
+	oldon = SPI_getbinval(trigtuple, tupdesc, attnum[0], &isnull);
 	if (isnull)
 		elog(ERROR, "timetravel (%s): %s must be NOT NULL", relname, args[0]);
-	
-	oldoff = SPI_getbinval (trigtuple, tupdesc, attnum[1], &isnull);
+
+	oldoff = SPI_getbinval(trigtuple, tupdesc, attnum[1], &isnull);
 	if (isnull)
 		elog(ERROR, "timetravel (%s): %s must be NOT NULL", relname, args[1]);
+
 	/*
-	 * If DELETE/UPDATE of tuple with stop_date neq INFINITY
-	 * then say upper Executor to skip operation for this tuple
+	 * If DELETE/UPDATE of tuple with stop_date neq INFINITY then say
+	 * upper Executor to skip operation for this tuple
 	 */
-	if (newtuple != NULL)						/* UPDATE */
+	if (newtuple != NULL)		/* UPDATE */
 	{
-		newon = SPI_getbinval (newtuple, tupdesc, attnum[0], &isnull);
+		newon = SPI_getbinval(newtuple, tupdesc, attnum[0], &isnull);
 		if (isnull)
 			elog(ERROR, "timetravel (%s): %s must be NOT NULL", relname, args[0]);
-		newoff = SPI_getbinval (newtuple, tupdesc, attnum[1], &isnull);
+		newoff = SPI_getbinval(newtuple, tupdesc, attnum[1], &isnull);
 		if (isnull)
 			elog(ERROR, "timetravel (%s): %s must be NOT NULL", relname, args[1]);
-		
-		if ( oldon != newon || oldoff != newoff )
-			elog (ERROR, "timetravel (%s): you can't change %s and/or %s columns (use set_timetravel)",
-					relname, args[0], args[1]);
-		
-		if ( newoff != NOEND_ABSTIME )
+
+		if (oldon != newon || oldoff != newoff)
+			elog(ERROR, "timetravel (%s): you can't change %s and/or %s columns (use set_timetravel)",
+				 relname, args[0], args[1]);
+
+		if (newoff != NOEND_ABSTIME)
 		{
-			pfree (relname);	/* allocated in upper executor context */
+			pfree(relname);		/* allocated in upper executor context */
 			return (NULL);
 		}
 	}
-	else if (oldoff != NOEND_ABSTIME)		/* DELETE */
+	else if (oldoff != NOEND_ABSTIME)	/* DELETE */
 	{
-		pfree (relname);
+		pfree(relname);
 		return (NULL);
 	}
-	
-	newoff = GetCurrentAbsoluteTime ();
-	
+
+	newoff = GetCurrentAbsoluteTime();
+
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
 		elog(ERROR, "timetravel (%s): SPI_connect returned %d", relname, ret);
-	
+
 	/* Fetch tuple values and nulls */
-	cvals = (Datum *) palloc (natts * sizeof (Datum));
-	cnulls = (char *) palloc (natts * sizeof (char));
+	cvals = (Datum *) palloc(natts * sizeof(Datum));
+	cnulls = (char *) palloc(natts * sizeof(char));
 	for (i = 0; i < natts; i++)
 	{
-		cvals[i] = SPI_getbinval ((newtuple != NULL) ? newtuple : trigtuple, 
-								  tupdesc, i + 1, &isnull);
+		cvals[i] = SPI_getbinval((newtuple != NULL) ? newtuple : trigtuple,
+								 tupdesc, i + 1, &isnull);
 		cnulls[i] = (isnull) ? 'n' : ' ';
 	}
-	
+
 	/* change date column(s) */
-	if (newtuple)					/* UPDATE */
+	if (newtuple)				/* UPDATE */
 	{
-		cvals[attnum[0] - 1] = newoff;			/* start_date eq current date */
+		cvals[attnum[0] - 1] = newoff;	/* start_date eq current date */
 		cnulls[attnum[0] - 1] = ' ';
 		cvals[attnum[1] - 1] = NOEND_ABSTIME;	/* stop_date eq INFINITY */
 		cnulls[attnum[1] - 1] = ' ';
 	}
-	else							/* DELETE */
+	else
+/* DELETE */
 	{
-		cvals[attnum[1] - 1] = newoff;			/* stop_date eq current date */
+		cvals[attnum[1] - 1] = newoff;	/* stop_date eq current date */
 		cnulls[attnum[1] - 1] = ' ';
 	}
-	
+
 	/*
-	 * Construct ident string as TriggerName $ TriggeredRelationId 
-	 * and try to find prepared execution plan.
+	 * Construct ident string as TriggerName $ TriggeredRelationId and try
+	 * to find prepared execution plan.
 	 */
 	sprintf(ident, "%s$%u", trigger->tgname, rel->rd_id);
 	plan = find_plan(ident, &Plans, &nPlans);
-	
+
 	/* if there is no plan ... */
 	if (plan->splan == NULL)
 	{
 		void	   *pplan;
 		Oid		   *ctypes;
 		char		sql[8192];
-		
+
 		/* allocate ctypes for preparation */
 		ctypes = (Oid *) palloc(natts * sizeof(Oid));
-		
+
 		/*
-		 * Construct query: 
-		 * 	INSERT INTO _relation_ VALUES ($1, ...)
+		 * Construct query: INSERT INTO _relation_ VALUES ($1, ...)
 		 */
 		sprintf(sql, "INSERT INTO %s VALUES (", relname);
 		for (i = 1; i <= natts; i++)
 		{
 			sprintf(sql + strlen(sql), "$%d%s",
-				i, (i < natts) ? ", " : ")");
+					i, (i < natts) ? ", " : ")");
 			ctypes[i - 1] = SPI_gettypeid(tupdesc, i);
 		}
-		
+
 		/* Prepare plan for query */
 		pplan = SPI_prepare(sql, natts, ctypes);
 		if (pplan == NULL)
 			elog(ERROR, "timetravel (%s): SPI_prepare returned %d", relname, SPI_result);
-		
+
 		/*
 		 * Remember that SPI_prepare places plan in current memory context
 		 * - so, we have to save plan in Top memory context for latter
@@ -288,101 +291,103 @@ timetravel()
 		pplan = SPI_saveplan(pplan);
 		if (pplan == NULL)
 			elog(ERROR, "timetravel (%s): SPI_saveplan returned %d", relname, SPI_result);
-		
+
 		plan->splan = pplan;
 	}
-	
+
 	/*
 	 * Ok, execute prepared plan.
 	 */
 	ret = SPI_execp(plan->splan, cvals, cnulls, 0);
-	
+
 	if (ret < 0)
 		elog(ERROR, "timetravel (%s): SPI_execp returned %d", relname, ret);
-	
+
 	/* Tuple to return to upper Executor ... */
-	if (newtuple)									/* UPDATE */
+	if (newtuple)				/* UPDATE */
 	{
 		HeapTuple	tmptuple;
-		
-		tmptuple = SPI_copytuple (trigtuple);
-		rettuple = SPI_modifytuple (rel, tmptuple, 1, &(attnum[1]), &newoff, NULL);
+
+		tmptuple = SPI_copytuple(trigtuple);
+		rettuple = SPI_modifytuple(rel, tmptuple, 1, &(attnum[1]), &newoff, NULL);
+
 		/*
 		 * SPI_copytuple allocates tmptuple in upper executor context -
 		 * have to free allocation using SPI_pfree
 		 */
-		SPI_pfree (tmptuple);
+		SPI_pfree(tmptuple);
 	}
-	else											/* DELETE */
+	else
+/* DELETE */
 		rettuple = trigtuple;
-	
-	SPI_finish();		/* don't forget say Bye to SPI mgr */
-	
-	pfree (relname);
+
+	SPI_finish();				/* don't forget say Bye to SPI mgr */
+
+	pfree(relname);
 
 	return (rettuple);
 }
 
 /*
  * set_timetravel () --
- * 					turn timetravel for specified relation ON/OFF
+ *					turn timetravel for specified relation ON/OFF
  */
 int32
 set_timetravel(Name relname, int32 on)
 {
-	char   *rname;
-	char   *d;
-	char   *s;
-	int		i;
-	
+	char	   *rname;
+	char	   *d;
+	char	   *s;
+	int			i;
+
 	for (i = 0; i < nTTOff; i++)
-		if (namestrcmp (relname, TTOff[i]) == 0)
+		if (namestrcmp(relname, TTOff[i]) == 0)
 			break;
-	
+
 	if (i < nTTOff)				/* OFF currently */
 	{
 		if (on == 0)
 			return (0);
-		
+
 		/* turn ON */
-		free (TTOff[i]);
+		free(TTOff[i]);
 		if (nTTOff == 1)
-			free (TTOff);
+			free(TTOff);
 		else
 		{
 			if (i < nTTOff - 1)
-				memcpy (&(TTOff[i]), &(TTOff[i + 1]), (nTTOff - i) * sizeof (char*));
-			TTOff = realloc (TTOff, (nTTOff - 1) * sizeof (char*));
+				memcpy(&(TTOff[i]), &(TTOff[i + 1]), (nTTOff - i) * sizeof(char *));
+			TTOff = realloc(TTOff, (nTTOff - 1) * sizeof(char *));
 		}
 		nTTOff--;
 		return (0);
 	}
-	
+
 	/* ON currently */
 	if (on != 0)
 		return (1);
-	
+
 	/* turn OFF */
 	if (nTTOff == 0)
-		TTOff = malloc (sizeof (char*));
+		TTOff = malloc(sizeof(char *));
 	else
-		TTOff = realloc (TTOff, (nTTOff + 1) * sizeof (char*));
-	s = rname = nameout (relname);
-	d = TTOff[nTTOff] = malloc (strlen (rname) + 1);
+		TTOff = realloc(TTOff, (nTTOff + 1) * sizeof(char *));
+	s = rname = nameout(relname);
+	d = TTOff[nTTOff] = malloc(strlen(rname) + 1);
 	while (*s)
-		*d++ = tolower (*s++);
+		*d++ = tolower(*s++);
 	*d = 0;
-	pfree (rname);
+	pfree(rname);
 	nTTOff++;
-	
+
 	return (1);
 
 }
 
 AbsoluteTime
-currabstime ()
+currabstime()
 {
-	return (GetCurrentAbsoluteTime ());
+	return (GetCurrentAbsoluteTime());
 }
 
 static EPlan *

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.15 1998/02/13 03:27:44 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.16 1998/02/26 04:32:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -512,7 +512,7 @@ _equalSubPlan(SubPlan *a, SubPlan *b)
 
 	if (!equal((a->sublink->oper), (b->sublink->oper)))
 		return (false);
-	
+
 	return (true);
 }
 

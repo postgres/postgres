@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupmacs.h,v 1.3 1998/02/01 05:38:40 momjian Exp $
+ * $Id: tupmacs.h,v 1.4 1998/02/26 04:40:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@
 		( \
 			(char *) (long) *((int32 *)(T)) \
 		) \
-	 	: \
+		: \
 		( \
 			(*(A))->attlen < sizeof(int16) ? \
 				(char *) (long) *((char *)(T)) \

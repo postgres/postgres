@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.43 1998/02/25 13:06:08 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.44 1998/02/26 04:30:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,8 @@ static Oid	GetOutputFunction(Oid type);
 static Oid	GetTypeElement(Oid type);
 static Oid	GetInputFunction(Oid type);
 static Oid	IsTypeByVal(Oid type);
-static void GetIndexRelations(Oid main_relation_oid,
+static void
+GetIndexRelations(Oid main_relation_oid,
 				  int *n_indices,
 				  Relation **index_rels);
 
@@ -64,7 +65,7 @@ static void CopyAttributeOut(FILE *fp, char *string, char *delim);
 static int	CountTuples(Relation relation);
 
 extern FILE *Pfout,
-			*Pfin;
+		   *Pfin;
 
 static int	lineno;
 
@@ -275,7 +276,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 				if (!isnull)
 				{
 					string = (char *) (*fmgr_faddr(&out_functions[i]))
-							(value, elements[i], typmod[i]);
+						(value, elements[i], typmod[i]);
 					CopyAttributeOut(fp, string, delim);
 					pfree(string);
 				}
@@ -582,8 +583,8 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 				{
 					values[i] =
 						(Datum) (*fmgr_faddr(&in_functions[i])) (string,
-												   elements[i],
-												   typmod[i]);
+															 elements[i],
+															  typmod[i]);
 
 					/*
 					 * Sanity check - by reference attributes cannot
@@ -592,7 +593,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 					if (!PointerIsValid(values[i]) &&
 						!(rel->rd_att->attrs[i]->attbyval))
 					{
-						elog(ERROR, "copy from line %d: Bad file format",lineno);
+						elog(ERROR, "copy from line %d: Bad file format", lineno);
 					}
 				}
 			}

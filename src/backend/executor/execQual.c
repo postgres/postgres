@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.25 1998/02/13 03:26:42 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.26 1998/02/26 04:31:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,19 +71,24 @@ int			execConstLen;
 
 /* static functions decls */
 static Datum ExecEvalAggreg(Aggreg *agg, ExprContext *econtext, bool *isNull);
-static Datum ExecEvalArrayRef(ArrayRef *arrayRef, ExprContext *econtext,
+static Datum
+ExecEvalArrayRef(ArrayRef *arrayRef, ExprContext *econtext,
 				 bool *isNull, bool *isDone);
 static Datum ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull);
-static Datum ExecEvalFunc(Expr *funcClause, ExprContext *econtext,
+static Datum
+ExecEvalFunc(Expr *funcClause, ExprContext *econtext,
 			 bool *isNull, bool *isDone);
-static void ExecEvalFuncArgs(FunctionCachePtr fcache, ExprContext *econtext,
+static void
+ExecEvalFuncArgs(FunctionCachePtr fcache, ExprContext *econtext,
 				 List *argList, Datum argV[], bool *argIsDone);
 static Datum ExecEvalNot(Expr *notclause, ExprContext *econtext, bool *isNull);
-static Datum ExecEvalOper(Expr *opClause, ExprContext *econtext,
+static Datum
+ExecEvalOper(Expr *opClause, ExprContext *econtext,
 			 bool *isNull);
 static Datum ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull);
-static Datum ExecMakeFunctionResult(Node *node, List *arguments,
+static Datum
+ExecMakeFunctionResult(Node *node, List *arguments,
 					   ExprContext *econtext, bool *isNull, bool *isDone);
 static bool ExecQualClause(Node *clause, ExprContext *econtext);
 
@@ -301,10 +306,11 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 		return (Datum) tempSlot;
 	}
 
-	result = heap_getattr(heapTuple, /* tuple containing attribute */
-						  attnum,	/* attribute number of desired attribute */
-					 	  tuple_type,/* tuple descriptor of tuple */
-						  isNull);	/* return: is attribute null? */
+	result = heap_getattr(heapTuple,	/* tuple containing attribute */
+						  attnum,		/* attribute number of desired
+										 * attribute */
+						  tuple_type,	/* tuple descriptor of tuple */
+						  isNull);		/* return: is attribute null? */
 
 	/* ----------------
 	 *	return null if att is null
@@ -379,18 +385,18 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
 	AttrNumber	thisParameterId = expression->paramid;
 	int			matchFound;
 	ParamListInfo paramList;
-	
-	if ( thisParameterKind == PARAM_EXEC )
+
+	if (thisParameterKind == PARAM_EXEC)
 	{
-		ParamExecData   *prm = &(econtext->ecxt_param_exec_vals[thisParameterId]);
-		
-		if ( prm->execPlan != NULL )
-			ExecSetParamPlan (prm->execPlan);
-		Assert (prm->execPlan == NULL);
+		ParamExecData *prm = &(econtext->ecxt_param_exec_vals[thisParameterId]);
+
+		if (prm->execPlan != NULL)
+			ExecSetParamPlan(prm->execPlan);
+		Assert(prm->execPlan == NULL);
 		*isNull = prm->isnull;
 		return (prm->value);
 	}
-	
+
 	thisParameterName = expression->paramname;
 	paramList = econtext->ecxt_param_list_info;
 
@@ -544,7 +550,7 @@ GetAttributeByNum(TupleTableSlot *slot,
 
 /* XXX char16 name for catalogs */
 #ifdef NOT_USED
-char	   *
+char *
 att_by_num(TupleTableSlot *slot,
 		   AttrNumber attrno,
 		   bool *isNull)
@@ -554,7 +560,7 @@ att_by_num(TupleTableSlot *slot,
 
 #endif
 
-char	   *
+char *
 GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
 {
 	AttrNumber	attrno;
@@ -605,7 +611,7 @@ GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
 
 /* XXX char16 name for catalogs */
 #ifdef NOT_USED
-char	   *
+char *
 att_by_name(TupleTableSlot *slot, char *attname, bool *isNull)
 {
 	return (GetAttributeByName(slot, attname, isNull));
@@ -1045,19 +1051,21 @@ ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull)
 		if (*isNull)
 		{
 			IsNull = *isNull;
+
 			/*
-			 * Many functions don't (or can't!) check is an argument
-			 * NULL or NOT_NULL and may return TRUE (1) with *isNull TRUE
-			 * (an_int4_column <> 1: int4ne returns TRUE for NULLs).
-			 * Not having time to fix function manager I want to fix
-			 * OR: if we had 'x <> 1 OR x isnull' then TRUE, TRUE were
-			 * returned by 'x <> 1' for NULL ... but ExecQualClause say
-			 * that qualification *fails* if isnull is TRUE for all values
-			 * returned by ExecEvalExpr. So, force this rule here: if isnull 
-			 * is TRUE then clause failed. Note: nullvalue() & nonnullvalue() 
-			 * always set isnull to FALSE for NULLs.	- vadim 09/22/97
+			 * Many functions don't (or can't!) check is an argument NULL
+			 * or NOT_NULL and may return TRUE (1) with *isNull TRUE
+			 * (an_int4_column <> 1: int4ne returns TRUE for NULLs). Not
+			 * having time to fix function manager I want to fix OR: if we
+			 * had 'x <> 1 OR x isnull' then TRUE, TRUE were returned by
+			 * 'x <> 1' for NULL ... but ExecQualClause say that
+			 * qualification *fails* if isnull is TRUE for all values
+			 * returned by ExecEvalExpr. So, force this rule here: if
+			 * isnull is TRUE then clause failed. Note: nullvalue() &
+			 * nonnullvalue() always set isnull to FALSE for NULLs.    -
+			 * vadim 09/22/97
 			 */
-		    const_value = 0;
+			const_value = 0;
 		}
 
 		/* ----------------
@@ -1238,7 +1246,7 @@ ExecEvalExpr(Node *expression,
 						retDatum = (Datum) ExecEvalNot(expr, econtext, isNull);
 						break;
 					case SUBPLAN_EXPR:
-						retDatum = (Datum) ExecSubPlan((SubPlan*) expr->oper, expr->args, econtext);
+						retDatum = (Datum) ExecSubPlan((SubPlan *) expr->oper, expr->args, econtext);
 						break;
 					default:
 						elog(ERROR, "ExecEvalExpr: unknown expression type %d", expr->opType);

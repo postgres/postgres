@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.20 1998/02/11 19:13:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.21 1998/02/26 04:44:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@
 static inline char *
 translate_escape(char *p, int isArray)
 {
-	char c,
+	char		c,
 			   *q,
 			   *s;
 
@@ -155,7 +155,7 @@ tcl_value(char *value)
 {
 	int			literal,
 				last;
-	char *p;
+	char	   *p;
 
 	if (!value)
 	{
@@ -645,7 +645,7 @@ Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 #ifdef TCL_ARRAYS
 		for (i = 0; i < PQnfields(result); i++)
 		{
-			Tcl_AppendElement(interp, PQgetvalue(result,tupno,i));
+			Tcl_AppendElement(interp, PQgetvalue(result, tupno, i));
 		}
 #else
 /*		Tcl_AppendResult(interp, PQgetvalue(result,tupno,0),NULL); */
@@ -1323,17 +1323,24 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 
 		for (column = 0; column < ncols; column++)
 		{
-			Tcl_SetVar2(interp, argv[3], info[column].cname, 
-				PQgetvalue(result, tupno, column), 0);
+			Tcl_SetVar2(interp, argv[3], info[column].cname,
+						PQgetvalue(result, tupno, column), 0);
 		}
 
 		Tcl_SetVar2(interp, argv[3], ".command", "update", 0);
 
 		if ((r = Tcl_Eval(interp, argv[4])) != TCL_OK && r != TCL_CONTINUE)
 		{
-			if (r == TCL_BREAK) {
-				/* I suppose that memory used by info and result must be released */
-				free(info); PQclear(result);Tcl_UnsetVar(interp, argv[3], 0);
+			if (r == TCL_BREAK)
+			{
+
+				/*
+				 * I suppose that memory used by info and result must be
+				 * released
+				 */
+				free(info);
+				PQclear(result);
+				Tcl_UnsetVar(interp, argv[3], 0);
 				return TCL_OK;
 			}
 			if (r == TCL_ERROR)
@@ -1345,7 +1352,9 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 				Tcl_AddErrorInfo(interp, msg);
 			}
 			/* also, releasing memory used by info and result */
-			free(info); PQclear(result);Tcl_UnsetVar(interp, argv[3], 0);
+			free(info);
+			PQclear(result);
+			Tcl_UnsetVar(interp, argv[3], 0);
 			return r;
 		}
 	}

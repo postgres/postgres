@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.46 1998/01/26 01:42:35 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.47 1998/02/26 04:45:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -457,10 +457,11 @@ process_response_from_backend(FILE *pfin, FILE *pfout, FILE *pfdebug,
 		{
 			/* hmm,  no response from the backend-end, that's bad */
 			(void) sprintf(reason, "PQexec() -- Request was sent to backend"
-				", but backend closed the channel before responding."
-				"\n\tThis probably means the backend terminated abnormally"
-				" before or while processing the request.\n");
-			conn->status = CONNECTION_BAD;	/* No more connection to backend */
+					", but backend closed the channel before responding."
+			  "\n\tThis probably means the backend terminated abnormally"
+						   " before or while processing the request.\n");
+			conn->status = CONNECTION_BAD;		/* No more connection to
+												 * backend */
 			*result_p = (PGresult *) NULL;
 			done = true;
 		}
@@ -1643,7 +1644,7 @@ PQnfields(PGresult *res)
 /*
    returns NULL if the field_num is invalid
 */
-char	   *
+char *
 PQfname(PGresult *res, int field_num)
 {
 	if (!res)
@@ -1756,7 +1757,7 @@ PQfsize(PGresult *res, int field_num)
 		return 0;
 }
 
-char	   *
+char *
 PQcmdStatus(PGresult *res)
 {
 	if (!res)
@@ -1853,7 +1854,7 @@ PQcmdTuples(PGresult *res)
 
 	if res is not binary, a null-terminated ASCII string is returned.
 */
-char	   *
+char *
 PQgetvalue(PGresult *res, int tup_num, int field_num)
 {
 	if (!res)

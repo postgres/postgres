@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portal.c,v 1.12 1997/12/09 03:10:43 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portal.c,v 1.13 1998/02/26 04:31:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -295,7 +295,7 @@ PQfnumberGroup(PortalBuffer *portal, int group_index, char *field_name)
  *						the group index and field index.
  * --------------------------------
  */
-char	   *
+char *
 PQfnameGroup(PortalBuffer *portal, int group_index, int field_number)
 {
 	GroupBuffer *gbp;
@@ -451,7 +451,7 @@ PQfnumber(PortalBuffer *portal, int tuple_index, char *field_name)
  *		PQfname - Return the name of a field
  * --------------------------------
  */
-char	   *
+char *
 PQfname(PortalBuffer *portal, int tuple_index, int field_number)
 {
 	GroupBuffer *gbp;
@@ -578,7 +578,7 @@ PQGetTupleBlock(PortalBuffer *portal,
  *		PQgetvalue - Return an attribute (field) value
  * --------------------------------
  */
-char	   *
+char *
 PQgetvalue(PortalBuffer *portal,
 		   int tuple_index,
 		   int field_number)
@@ -598,7 +598,7 @@ PQgetvalue(PortalBuffer *portal,
  *		a copy.  The CALLER is responsible for free'ing the data returned.
  * --------------------------------
  */
-char	   *
+char *
 PQgetAttr(PortalBuffer *portal,
 		  int tuple_index,
 		  int field_number)

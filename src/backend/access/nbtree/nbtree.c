@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.24 1997/11/20 23:20:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.25 1998/02/26 04:29:44 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -389,7 +389,7 @@ btinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation 
 /*
  *	btgettuple() -- Get the next tuple in the scan.
  */
-char	   *
+char *
 btgettuple(IndexScanDesc scan, ScanDirection dir)
 {
 	RetrieveIndexResult res;
@@ -411,7 +411,7 @@ btgettuple(IndexScanDesc scan, ScanDirection dir)
 /*
  *	btbeginscan() -- start a scan on a btree index
  */
-char	   *
+char *
 btbeginscan(Relation rel, bool fromEnd, uint16 keysz, ScanKey scankey)
 {
 	IndexScanDesc scan;

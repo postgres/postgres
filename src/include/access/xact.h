@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.11 1997/11/07 18:39:38 thomas Exp $
+ * $Id: xact.h,v 1.12 1998/02/26 04:40:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ typedef TransactionStateData *TransactionState;
 #define TransactionIdIsValid(xid)		((bool) (xid != NullTransactionId))
 #define TransactionIdStore(xid, dest)	\
 	(*((TransactionId*)dest) = (TransactionId)xid)
-#define StoreInvalidTransactionId(dest)	\
+#define StoreInvalidTransactionId(dest) \
 	(*((TransactionId*)dest) = NullTransactionId)
 
 /* ----------------

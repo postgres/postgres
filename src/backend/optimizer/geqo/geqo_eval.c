@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.17 1998/01/07 21:03:42 momjian Exp $
+ * $Id: geqo_eval.c,v 1.18 1998/02/26 04:32:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,7 @@ geqo_eval(Query *root, Gene *tour, int num_gene)
  *
  * Returns a new join relation incorporating all joins in a left-sided tree.
  */
-Rel		   *
+Rel *
 gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, Rel *outer_rel)
 {
 	Rel		   *inner_rel;		/* current relation */

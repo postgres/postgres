@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.9 1997/09/18 20:22:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.10 1998/02/26 04:38:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -704,7 +704,7 @@ PortalGetQueryDesc(Portal portal)
  *		BadState if called when disabled.
  *		BadArg if portal is invalid.
  */
-EState	   *
+EState *
 PortalGetState(Portal portal)
 {
 	AssertState(PortalManagerEnabled);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.38 1998/02/07 21:41:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.39 1998/02/26 04:30:38 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -119,7 +119,7 @@ DefaultBuild(Relation heapRelation, Relation indexRelation,
  */
 static FormData_pg_attribute sysatts[] = {
 	{0l, {"ctid"}, 27l, 0l, 6, -1, 0, -1, -1, '\0', '\0', 'i', '\0', '\0'},
-	{0l, {"oid"},  26l, 0l, 4, -2, 0, -1, -1, '\001', '\0', 'i', '\0', '\0'},
+	{0l, {"oid"}, 26l, 0l, 4, -2, 0, -1, -1, '\001', '\0', 'i', '\0', '\0'},
 	{0l, {"xmin"}, 28l, 0l, 4, -3, 0, -1, -1, '\0', '\0', 'i', '\0', '\0'},
 	{0l, {"cmin"}, 29l, 0l, 4, -4, 0, -1, -1, '\001', '\0', 'i', '\0', '\0'},
 	{0l, {"xmax"}, 28l, 0l, 4, -5, 0, -1, -1, '\0', '\0', 'i', '\0', '\0'},
@@ -460,7 +460,7 @@ ConstructTupleDescriptor(Oid heapoid,
 				((TypeTupleForm) ((char *) tup + tup->t_hoff))->typbyval;
 
 			((AttributeTupleForm) to)->attlen =
-					((TypeTupleForm) ((char *) tup + tup->t_hoff))->typlen;
+				((TypeTupleForm) ((char *) tup + tup->t_hoff))->typlen;
 
 			((AttributeTupleForm) to)->atttypmod = IndexKeyType->typmod;
 		}
@@ -1100,7 +1100,7 @@ index_create(char *heapRelationName,
 	 * write lock heap to guarantee exclusive access
 	 * ----------------
 	RelationSetLockForWrite(heapRelation);
-	 *                ^^^^^
+	 *				  ^^^^^
 	 * Does it have any sense ?		- vadim 10/27/97
 	 */
 
@@ -1611,7 +1611,7 @@ DefaultBuild(Relation heapRelation,
 	 */
 	scan = heap_beginscan(heapRelation, /* relation */
 						  0,	/* start at end */
-						  false, /* seeself */
+						  false,/* seeself */
 						  0,	/* number of keys */
 						  (ScanKey) NULL);		/* scan key */
 

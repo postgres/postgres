@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.20 1998/02/10 04:00:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.21 1998/02/26 04:31:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,7 +118,7 @@ DefineVirtualRelation(char *relname, List *tlist)
  * This routine is called when defining/removing a view.
  *------------------------------------------------------------------
  */
-char	   *
+char *
 MakeRetrieveViewRuleName(char *viewName)
 {
 	char	   *buf;

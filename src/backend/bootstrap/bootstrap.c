@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.36 1998/02/11 19:09:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.37 1998/02/26 04:30:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,19 +200,21 @@ int			numattr;			/* number of attributes for cur. rel */
 extern int	fsyncOff;			/* do not fsync the database */
 
 /* The test for HAVE_SIGSETJMP fails on Linux 2.0.x because the test
- *  explicitly disallows sigsetjmp being a #define, which is how it
- *  is declared in Linux. So, to avoid compiler warnings about
- *  sigsetjmp() being redefined, let's not redefine unless necessary.
+ *	explicitly disallows sigsetjmp being a #define, which is how it
+ *	is declared in Linux. So, to avoid compiler warnings about
+ *	sigsetjmp() being redefined, let's not redefine unless necessary.
  * - thomas 1997-12-27
  */
 
 #if !defined(HAVE_SIGSETJMP) && !defined(sigsetjmp)
 static jmp_buf Warn_restart;
+
 #define sigsetjmp(x,y)	setjmp(x)
 #define siglongjmp longjmp
 
 #else
 static sigjmp_buf Warn_restart;
+
 #endif
 
 int			DebugMode;
@@ -472,8 +474,8 @@ boot_openrel(char *relname)
 	HeapScanDesc sdesc;
 	HeapTuple	tup;
 
-	if (strlen(relname) >= NAMEDATALEN-1)
-		relname[NAMEDATALEN-1] = '\0';
+	if (strlen(relname) >= NAMEDATALEN - 1)
+		relname[NAMEDATALEN - 1] = '\0';
 
 	if (Typ == (struct typmap **) NULL)
 	{
@@ -907,7 +909,7 @@ AllocateAttribute()
  * be freed by the CALLER.
  * ----------------
  */
-char	   *
+char *
 MapArrayTypeName(char *s)
 {
 	int			i,
@@ -960,7 +962,7 @@ EnterString(char *str)
  *		associated with the idnum
  * ----------------
  */
-char	   *
+char *
 LexIDStr(int ident_num)
 {
 	return (strtable[ident_num]);
@@ -979,7 +981,7 @@ LexIDStr(int ident_num)
 static int
 CompHash(char *str, int len)
 {
-	int result;
+	int			result;
 
 	result = (NUM * str[0] + NUMSQR * str[len - 1] + NUMCUBE * str[(len - 1) / 2]);
 

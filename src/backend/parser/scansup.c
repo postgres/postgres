@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.9 1997/11/26 01:11:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.10 1998/02/26 04:33:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@
  * ----------------
  */
 
-char	   *
+char *
 scanstr(char *s)
 {
 	static char newStr[MAX_PARSE_BUFFER];

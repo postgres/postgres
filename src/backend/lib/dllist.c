@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.8 1997/09/08 21:43:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.9 1998/02/26 04:31:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 
 #include <lib/dllist.h>
 
-Dllist	   *
+Dllist *
 DLNewList(void)
 {
 	Dllist	   *l;
@@ -42,7 +42,7 @@ DLFreeList(Dllist *l)
 	free(l);
 }
 
-Dlelem	   *
+Dlelem *
 DLNewElem(void *val)
 {
 	Dlelem	   *e;
@@ -61,7 +61,7 @@ DLFreeElem(Dlelem *e)
 	free(e);
 }
 
-Dlelem	   *
+Dlelem *
 DLGetHead(Dllist *l)
 {
 	return (l ? l->dll_head : 0);
@@ -69,7 +69,7 @@ DLGetHead(Dllist *l)
 
 /* get the value stored in the first element */
 #ifdef NOT_USED
-void	   *
+void *
 DLGetHeadVal(Dllist *l)
 {
 	Dlelem	   *e = DLGetHead(l);
@@ -79,7 +79,7 @@ DLGetHeadVal(Dllist *l)
 
 #endif
 
-Dlelem	   *
+Dlelem *
 DLGetTail(Dllist *l)
 {
 	return (l ? l->dll_tail : 0);
@@ -87,7 +87,7 @@ DLGetTail(Dllist *l)
 
 /* get the value stored in the first element */
 #ifdef NOT_USED
-void	   *
+void *
 DLGetTailVal(Dllist *l)
 {
 	Dlelem	   *e = DLGetTail(l);
@@ -97,13 +97,13 @@ DLGetTailVal(Dllist *l)
 
 #endif
 
-Dlelem	   *
+Dlelem *
 DLGetPred(Dlelem *e)			/* get predecessor */
 {
 	return (e ? e->dle_prev : 0);
 }
 
-Dlelem	   *
+Dlelem *
 DLGetSucc(Dlelem *e)			/* get successor */
 {
 	return (e ? e->dle_next : 0);
@@ -162,7 +162,7 @@ DLAddTail(Dllist *l, Dlelem *e)
 		l->dll_head = l->dll_tail;
 }
 
-Dlelem	   *
+Dlelem *
 DLRemHead(Dllist *l)
 {
 	/* remove and return the head */
@@ -188,7 +188,7 @@ DLRemHead(Dllist *l)
 	return result;
 }
 
-Dlelem	   *
+Dlelem *
 DLRemTail(Dllist *l)
 {
 	/* remove and return the tail */

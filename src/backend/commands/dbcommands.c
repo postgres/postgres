@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.7 1998/02/25 13:06:09 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.8 1998/02/26 04:30:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,10 +61,10 @@ createdb(char *dbname, char *dbpath)
 	closeAllVfds();
 
 	/* Now create directory for this new database */
-	if ((dbpath != NULL) && (strcmp(dbpath,dbname) != 0))
+	if ((dbpath != NULL) && (strcmp(dbpath, dbname) != 0))
 	{
-		if (*(dbpath+strlen(dbpath)-1) == SEP_CHAR)
-			*(dbpath+strlen(dbpath)-1) = '\0';
+		if (*(dbpath + strlen(dbpath) - 1) == SEP_CHAR)
+			*(dbpath + strlen(dbpath) - 1) = '\0';
 		sprintf(loc, "%s%c%s", dbpath, SEP_CHAR, dbname);
 	}
 	else
@@ -75,12 +75,12 @@ createdb(char *dbname, char *dbpath)
 	lp = ExpandDatabasePath(loc);
 
 	if (lp == NULL)
-		elog(ERROR,"Unable to locate path '%s'"
-			"\n\tThis may be due to a missing environment variable"
-			" in the server",loc);
+		elog(ERROR, "Unable to locate path '%s'"
+			 "\n\tThis may be due to a missing environment variable"
+			 " in the server", loc);
 
-	if (mkdir(lp,S_IRWXU) != 0)
-		elog(ERROR,"Unable to create database directory %s",lp);
+	if (mkdir(lp, S_IRWXU) != 0)
+		elog(ERROR, "Unable to create database directory %s", lp);
 
 	sprintf(buf, "%s %s%cbase%ctemplate1%c* %s",
 			COPY_CMD, DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR, lp);
@@ -93,7 +93,7 @@ createdb(char *dbname, char *dbpath)
 #endif
 
 	sprintf(buf, "insert into pg_database (datname, datdba, datpath)"
-		" values (\'%s\', \'%d\', \'%s\');", dbname, user_id, loc);
+			" values (\'%s\', \'%d\', \'%s\');", dbname, user_id, loc);
 
 	pg_exec_query(buf, (char **) NULL, (Oid *) NULL, 0);
 }
@@ -104,7 +104,7 @@ destroydb(char *dbname)
 	Oid			user_id,
 				db_id;
 	char	   *path;
-	char		dbpath[MAXPGPATH+1];
+	char		dbpath[MAXPGPATH + 1];
 	char		buf[512];
 
 	/*
@@ -122,10 +122,10 @@ destroydb(char *dbname)
 	stop_vacuum(dbpath, dbname);
 
 	path = ExpandDatabasePath(dbpath);
-    if (path == NULL)
-		elog(ERROR,"Unable to locate path '%s'"
-			"\n\tThis may be due to a missing environment variable"
-			" in the server",dbpath);
+	if (path == NULL)
+		elog(ERROR, "Unable to locate path '%s'"
+			 "\n\tThis may be due to a missing environment variable"
+			 " in the server", dbpath);
 
 	/*
 	 * remove the pg_database tuple FIRST, this may fail due to
@@ -206,7 +206,7 @@ check_permissions(char *command,
 	bool		use_super;
 	char	   *userName;
 	text	   *dbtext;
-	char		path[MAXPGPATH+1];
+	char		path[MAXPGPATH + 1];
 
 	userName = GetPgUserName();
 	utup = SearchSysCacheTuple(USENAME, PointerGetDatum(userName),
@@ -264,12 +264,12 @@ check_permissions(char *command,
 									 (char *) NULL);
 		*dbIdP = dbtup->t_oid;
 		dbtext = (text *) heap_getattr(dbtup,
-								 Anum_pg_database_datpath,
-								 RelationGetTupleDescriptor(dbrel),
-								 (char *) NULL);
+									   Anum_pg_database_datpath,
+									   RelationGetTupleDescriptor(dbrel),
+									   (char *) NULL);
 
-		strncpy(path, VARDATA(dbtext), (VARSIZE(dbtext)-VARHDRSZ));
-		 *(path+VARSIZE(dbtext)-VARHDRSZ) = '\0';
+		strncpy(path, VARDATA(dbtext), (VARSIZE(dbtext) - VARHDRSZ));
+		*(path + VARSIZE(dbtext) - VARHDRSZ) = '\0';
 	}
 	else
 	{
@@ -304,7 +304,7 @@ check_permissions(char *command,
 
 	if (dbfound && !strcmp(command, "destroydb"))
 		strcpy(dbpath, path);
-} /* check_permissions() */
+}	/* check_permissions() */
 
 /*
  *	stop_vacuum() -- stop the vacuum daemon on the database, if one is running.
@@ -319,7 +319,7 @@ stop_vacuum(char *dbpath, char *dbname)
 	if (strchr(dbpath, SEP_CHAR) != 0)
 	{
 		sprintf(filename, "%s%cbase%c%s%c%s.vacuum", DataDir, SEP_CHAR, SEP_CHAR,
-			dbname, SEP_CHAR, dbname);
+				dbname, SEP_CHAR, dbname);
 	}
 	else
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.10 1998/01/07 21:03:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.11 1998/02/26 04:32:16 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -28,7 +28,7 @@
  * stringToNode -
  *	  returns a Node with a given legal ascii representation
  */
-void	   *
+void *
 stringToNode(char *str)
 {
 	void	   *retval;
@@ -94,7 +94,7 @@ nodeTokenType(char *token, int length)
 
 		retval = (*token != '.') ? T_Integer : T_Float;
 	}
-	else if (isalpha(*token) || *token == '_' || 
+	else if (isalpha(*token) || *token == '_' ||
 			 (token[0] == '<' && token[1] == '>'))
 		retval = ATOM_TOKEN;
 	else if (*token == '(')
@@ -117,7 +117,7 @@ nodeTokenType(char *token, int length)
  * returning a token by calling lsptok with length == NULL.
  *
  */
-char	   *
+char *
 lsptok(char *string, int *length)
 {
 	static char *local_str;
@@ -151,8 +151,8 @@ lsptok(char *string, int *length)
 		(*length)++;
 		local_str++;
 	}
-			/* NULL */
-	else if (local_str[0] == '<' && local_str[1] == '>' )
+	/* NULL */
+	else if (local_str[0] == '<' && local_str[1] == '>')
 	{
 		*length = 0;
 		local_str += 2;
@@ -182,7 +182,7 @@ lsptok(char *string, int *length)
  * Secrets:  He assumes that lsptok already has the string (see below).
  * Any callers should set read_car_only to true.
  */
-void	   *
+void *
 nodeRead(bool read_car_only)
 {
 	char	   *token;

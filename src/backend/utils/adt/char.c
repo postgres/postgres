@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.14 1997/11/02 15:25:57 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.15 1998/02/26 04:36:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ charin(char *ch)
 /*
  *		charout			- converts 'x' to "x"
  */
-char	   *
+char *
 charout(int32 ch)
 {
 	char	   *result = (char *) palloc(2);
@@ -75,7 +75,7 @@ cidin(char *s)
  *		NOTE: we must no use 'charout' because cid might be a non
  *		printable character...
  */
-char	   *
+char *
 cidout(int32 c)
 {
 	char	   *result;
@@ -93,7 +93,7 @@ cidout(int32 c)
  *		Note:
  *				Currently if strlen(s) < 14, the extra chars are nulls
  */
-char	   *
+char *
 char16in(char *s)
 {
 	char	   *result;
@@ -108,7 +108,7 @@ char16in(char *s)
 /*
  *		char16out		- converts internal reprsentation to "..."
  */
-char	   *
+char *
 char16out(char *s)
 {
 	char	   *result = (char *) palloc(17);
@@ -272,7 +272,7 @@ char2in(char *s)
 	return (res);
 }
 
-char	   *
+char *
 char2out(uint16 s)
 {
 	char	   *result = (char *) palloc(3);
@@ -338,7 +338,7 @@ char4in(char *s)
 	return (res);
 }
 
-char	   *
+char *
 char4out(s)
 uint32		s;
 {
@@ -392,7 +392,7 @@ char4cmp(uint32 a, uint32 b)
 }
 
 /* ============================== char8 ============================== */
-char	   *
+char *
 char8in(char *s)
 {
 	char	   *result;
@@ -405,7 +405,7 @@ char8in(char *s)
 	return (result);
 }
 
-char	   *
+char *
 char8out(char *s)
 {
 	char	   *result = (char *) palloc(9);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: shmem.h,v 1.10 1998/01/24 22:50:13 momjian Exp $
+ * $Id: shmem.h,v 1.11 1998/02/26 04:43:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,11 +64,13 @@ extern void ShmemCreate(unsigned int key, unsigned int size);
 extern int	InitShmem(unsigned int key, unsigned int size);
 extern long *ShmemAlloc(unsigned long size);
 extern int	ShmemIsValid(unsigned long addr);
-extern HTAB * ShmemInitHash(char *name, long init_size, long max_size,
+extern HTAB *
+ShmemInitHash(char *name, long init_size, long max_size,
 			  HASHCTL *infoP, int hash_flags);
 extern bool ShmemPIDLookup(int pid, SHMEM_OFFSET *locationPtr);
 extern SHMEM_OFFSET ShmemPIDDestroy(int pid);
-extern long * ShmemInitStruct(char *name, unsigned long size,
+extern long *
+ShmemInitStruct(char *name, unsigned long size,
 				bool *foundPtr);
 extern bool TransactionIdIsInProgress(TransactionId xid);
 
@@ -98,7 +100,8 @@ extern void SHMQueueInit(SHM_QUEUE *queue);
 extern void SHMQueueElemInit(SHM_QUEUE *queue);
 extern void SHMQueueDelete(SHM_QUEUE *queue);
 extern void SHMQueueInsertTL(SHM_QUEUE *queue, SHM_QUEUE *elem);
-extern void SHMQueueFirst(SHM_QUEUE *queue, Pointer *nextPtrPtr,
+extern void
+SHMQueueFirst(SHM_QUEUE *queue, Pointer *nextPtrPtr,
 			  SHM_QUEUE *nextQueue);
 extern bool SHMQueueEmpty(SHM_QUEUE *queue);
 

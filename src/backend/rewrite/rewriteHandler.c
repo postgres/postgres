@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.13 1998/02/25 13:07:18 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.14 1998/02/26 04:35:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,13 +34,15 @@
 #include "utils/acl.h"
 #include "catalog/pg_shadow.h"
 
-static void ApplyRetrieveRule(Query *parsetree, RewriteRule *rule,
+static void
+ApplyRetrieveRule(Query *parsetree, RewriteRule *rule,
 				  int rt_index, int relation_level,
 				  Relation relation, int *modified);
-static List *fireRules(Query *parsetree, int rt_index, CmdType event,
+static List *
+fireRules(Query *parsetree, int rt_index, CmdType event,
 		  bool *instead_flag, List *locks, List **qual_products);
 static void QueryRewriteSubLink(Node *node);
-static List	   *QueryRewriteOne(Query *parsetree);
+static List *QueryRewriteOne(Query *parsetree);
 static List *deepRewriteQuery(Query *parsetree);
 static void CheckViewPerms(Relation view, List *rtable);
 
@@ -270,34 +272,30 @@ ApplyRetrieveRule(Query *parsetree,
 	if (rule->actions)
 	{
 		if (length(rule->actions) > 1)	/* ??? because we don't handle
-						 * rules with more than one
-						 * action? -ay */
+										 * rules with more than one
+										 * action? -ay */
 
-						/* WARNING!!!
-						 * If we sometimes handle
-						 * rules with more than one
-						 * action, the view acl checks
-						 * might get broken. 
-						 * viewAclOverride should only
-						 * become true (below) if this
-						 * is a relation_level, instead,
-						 * select query - Jan
-						 */
+			/*
+			 * WARNING!!! If we sometimes handle rules with more than one
+			 * action, the view acl checks might get broken.
+			 * viewAclOverride should only become true (below) if this is
+			 * a relation_level, instead, select query - Jan
+			 */
 			return;
 		rule_action = copyObject(lfirst(rule->actions));
 		nothing = FALSE;
 
 		/*
-		 * If this rule is on the relation level, the rule action
-		 * is a select and the rule is instead then it must be
-		 * a view. Permissions for views now follow the owner of
-		 * the view, not the current user.
+		 * If this rule is on the relation level, the rule action is a
+		 * select and the rule is instead then it must be a view.
+		 * Permissions for views now follow the owner of the view, not the
+		 * current user.
 		 */
 		if (relation_level && rule_action->commandType == CMD_SELECT
-					&& rule->isInstead)
+			&& rule->isInstead)
 		{
-		    CheckViewPerms(relation, rule_action->rtable);
-		    viewAclOverride = TRUE;
+			CheckViewPerms(relation, rule_action->rtable);
+			viewAclOverride = TRUE;
 		}
 	}
 	else
@@ -320,8 +318,9 @@ ApplyRetrieveRule(Query *parsetree,
 
 	if (viewAclOverride)
 	{
-		List		*rule_rtable, *rule_rt;
-		RangeTblEntry	*rte;
+		List	   *rule_rtable,
+				   *rule_rt;
+		RangeTblEntry *rte;
 
 		rule_rtable = copyObject(rule_action->rtable);
 		foreach(rule_rt, rule_rtable)
@@ -329,8 +328,8 @@ ApplyRetrieveRule(Query *parsetree,
 			rte = lfirst(rule_rt);
 
 			/*
-			 * tell the executor that the ACL check on this
-			 * range table entry is already done
+			 * tell the executor that the ACL check on this range table
+			 * entry is already done
 			 */
 			rte->skipAcl = true;
 		}
@@ -655,8 +654,8 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 		Query	   *other;
 
 		/*
-		 *	ApplyRetrieveRule changes the range table
-		 *	XXX Unions are copied again.
+		 * ApplyRetrieveRule changes the range table XXX Unions are copied
+		 * again.
 		 */
 		other = copyObject(parsetree);
 
@@ -681,7 +680,7 @@ static int	numQueryRewriteInvoked = 0;
  *	  rewrite one query via QueryRewrite system, possibly returning 0, or many
  *	  queries
  */
-List	   *
+List *
 QueryRewrite(Query *parsetree)
 {
 
@@ -712,7 +711,7 @@ QueryRewriteSubLink(Node *node)
 			{
 				Expr	   *expr = (Expr *) node;
 
-				QueryRewriteSubLink((Node *)expr->args);
+				QueryRewriteSubLink((Node *) expr->args);
 			}
 			break;
 		case T_Var:
@@ -727,15 +726,15 @@ QueryRewriteSubLink(Node *node)
 			break;
 		case T_SubLink:
 			{
-				SubLink		   *sublink = (SubLink *) node;
-				Query		   *query = (Query *)sublink->subselect;
-				List		   *ret;
+				SubLink    *sublink = (SubLink *) node;
+				Query	   *query = (Query *) sublink->subselect;
+				List	   *ret;
 
 				/*
-				 *	Nest down first.  We do this so if a rewrite adds a
-				 *	SubLink we don't process it as part of this loop.
+				 * Nest down first.  We do this so if a rewrite adds a
+				 * SubLink we don't process it as part of this loop.
 				 */
-				QueryRewriteSubLink((Node *)query->qual);
+				QueryRewriteSubLink((Node *) query->qual);
 
 				ret = QueryRewriteOne(query);
 				if (!ret)
@@ -743,7 +742,7 @@ QueryRewriteSubLink(Node *node)
 				else if (lnext(ret) == NIL)
 					sublink->subselect = lfirst(ret);
 				else
-					elog(ERROR,"Don't know how to process subquery that rewrites to multiple queries.");
+					elog(ERROR, "Don't know how to process subquery that rewrites to multiple queries.");
 			}
 			break;
 		default:
@@ -757,7 +756,7 @@ QueryRewriteSubLink(Node *node)
  * QueryOneRewrite -
  *	  rewrite one query
  */
-static List	   *
+static List *
 QueryRewriteOne(Query *parsetree)
 {
 	numQueryRewriteInvoked = 0;
@@ -813,8 +812,8 @@ CheckViewPerms(Relation view, List *rtable)
 {
 	HeapTuple	utup;
 	NameData	uname;
-	List		*rt;
-	RangeTblEntry	*rte;
+	List	   *rt;
+	RangeTblEntry *rte;
 	int32		aclcheck_res;
 
 	/*
@@ -824,19 +823,19 @@ CheckViewPerms(Relation view, List *rtable)
 	if (!HeapTupleIsValid(utup))
 	{
 		elog(ERROR, "cache lookup for userid %d failed",
-						view->rd_rel->relowner);
+			 view->rd_rel->relowner);
 	}
 	StrNCpy(uname.data,
 			((Form_pg_shadow) GETSTRUCT(utup))->usename.data,
 			NAMEDATALEN);
 
 	/*
-	 * check that we have read access to all the
-	 * classes in the range table of the view
+	 * check that we have read access to all the classes in the range
+	 * table of the view
 	 */
 	foreach(rt, rtable)
 	{
-		rte = (RangeTblEntry *)lfirst(rt);
+		rte = (RangeTblEntry *) lfirst(rt);
 
 		aclcheck_res = pg_aclcheck(rte->relname, uname.data, ACL_RD);
 		if (aclcheck_res != ACLCHECK_OK)
@@ -845,6 +844,3 @@ CheckViewPerms(Relation view, List *rtable)
 		}
 	}
 }
-
-
-

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.17 1998/01/13 04:04:20 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.18 1998/02/26 04:35:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -205,7 +205,7 @@ FlushLocalBuffer(Buffer buffer, bool release)
 			  (char *) MAKE_PTR(bufHdr->data));
 	LocalBufferFlushCount++;
 	RelationDecrementReferenceCount(bufrel);
-	
+
 	Assert(LocalRefCount[bufid] > 0);
 	if (release)
 		LocalRefCount[bufid]--;
@@ -279,7 +279,7 @@ LocalBufferSync(void)
 					  (char *) MAKE_PTR(buf->data));
 			LocalBufferFlushCount++;
 			RelationDecrementReferenceCount(bufrel);
-			
+
 			buf->tag.relId.relId = InvalidOid;
 			buf->flags &= ~BM_DIRTY;
 		}

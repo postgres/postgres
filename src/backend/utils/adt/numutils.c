@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.22 1998/02/11 19:12:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.23 1998/02/26 04:37:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,9 +184,9 @@ ftoa(double value, char *ascii, int width, int prec1, char format)
 #else
 	auto int	expon;
 	auto int	sign;
-	int avail = 0;
-	char *a = NULL;
-	char *p = NULL;
+	int			avail = 0;
+	char	   *a = NULL;
+	char	   *p = NULL;
 	char		mode;
 	int			lowercase;
 	int			prec;
@@ -333,7 +333,7 @@ frac_out:
 	*a = 0;
 	avail = a - ascii;
 	return (avail);
-#endif	
+#endif
 }
 
 #endif
@@ -370,13 +370,13 @@ frac_out:
 int
 atof1(char *str, double *val)
 {
-	char *p;
+	char	   *p;
 	double		v;
 	double		fact;
 	int			minus;
-	char c;
+	char		c;
 	int			expon;
-	int gotmant;
+	int			gotmant;
 
 	v = 0.0;
 	p = str;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.62 1998/01/31 21:27:28 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.63 1998/02/26 04:44:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ static void closePGconn(PGconn *conn);
 static int	conninfo_parse(const char *conninfo, char *errorMessage);
 static char *conninfo_getval(char *keyword);
 static void conninfo_free(void);
-void PQsetenv(PGconn *conn);
+void		PQsetenv(PGconn *conn);
 
 #define NOTIFYLIST_INITIAL_SIZE 10
 #define NOTIFYLIST_GROWBY 10
@@ -114,15 +114,29 @@ struct EnvironmentOptions
 
 {
 	/* common user-interface settings */
-	{	"PGDATESTYLE",	"datestyle" },
-	{	"PGTZ",			"timezone" },
+	{
+		"PGDATESTYLE", "datestyle"
+	},
+	{
+		"PGTZ", "timezone"
+	},
 
 	/* internal performance-related settings */
-	{	"PGCOSTHEAP",	"cost_heap" },
-	{	"PGCOSTINDEX",	"cost_index" },
-	{	"PGRPLANS",		"r_plans" },
-	{	"PGGEQO",		"geqo" },
-	{	NULL }
+	{
+		"PGCOSTHEAP", "cost_heap"
+	},
+	{
+		"PGCOSTINDEX", "cost_index"
+	},
+	{
+		"PGRPLANS", "r_plans"
+	},
+	{
+		"PGGEQO", "geqo"
+	},
+	{
+		NULL
+	}
 };
 
 /* ----------------
@@ -149,7 +163,8 @@ PQconnectdb(const char *conninfo)
 {
 	PGconn	   *conn;
 	char		errorMessage[ERROR_MSG_LENGTH];
-	char* tmp;
+	char	   *tmp;
+
 	/* ----------
 	 * Allocate memory for the conn structure
 	 * ----------
@@ -190,7 +205,7 @@ PQconnectdb(const char *conninfo)
 	tmp = conninfo_getval("port");
 	conn->pgport = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval("tty");
-	conn->pgtty  = tmp ? strdup(tmp) : NULL;
+	conn->pgtty = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval("options");
 	conn->pgoptions = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval("user");
@@ -291,7 +306,7 @@ PQconndefaults(void)
  *
  * ----------------
  */
-PGconn	   *
+PGconn *
 PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions, const char *pgtty, const char *dbName, const char *login, const char *pwd)
 {
 	PGconn	   *conn;
@@ -399,8 +414,8 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions, cons
 				conn->dbName = strdup(conn->pguser);
 
 			/*
-			 * if the database name is surrounded by double-quotes,
-			 *  then don't convert case
+			 * if the database name is surrounded by double-quotes, then
+			 * don't convert case
 			 */
 			if (*conn->dbName == '"')
 			{
@@ -455,8 +470,8 @@ connectDB(PGconn *conn)
 {
 	struct hostent *hp;
 
-	StartupPacket	sp;
-	AuthRequest	areq;
+	StartupPacket sp;
+	AuthRequest areq;
 	int			laddrlen = sizeof(SockAddr);
 	int			portno,
 				family,
@@ -466,9 +481,9 @@ connectDB(PGconn *conn)
 	 * Initialize the startup packet.
 	 */
 
-	MemSet((char *)&sp, 0, sizeof (StartupPacket));
+	MemSet((char *) &sp, 0, sizeof(StartupPacket));
 
-	sp.protoVersion = (ProtocolVersion)htonl(PG_PROTOCOL_LATEST);
+	sp.protoVersion = (ProtocolVersion) htonl(PG_PROTOCOL_LATEST);
 
 	strncpy(sp.user, conn->pguser, SM_USER);
 	strncpy(sp.database, conn->dbName, SM_DATABASE);
@@ -491,7 +506,8 @@ connectDB(PGconn *conn)
 						   conn->pghost);
 			goto connect_errReturn;
 		}
-	} else
+	}
+	else
 		hp = NULL;
 
 #if FALSE
@@ -572,7 +588,7 @@ connectDB(PGconn *conn)
 
 	/* Send the startup packet. */
 
-	if (packetSend(conn, (char *)&sp, sizeof(StartupPacket)) != STATUS_OK)
+	if (packetSend(conn, (char *) &sp, sizeof(StartupPacket)) != STATUS_OK)
 	{
 		sprintf(conn->errorMessage,
 				"connectDB() --  couldn't send complete packet: errno=%d\n%s\n", errno, strerror(errno));
@@ -586,12 +602,12 @@ connectDB(PGconn *conn)
 
 	do
 	{
-		int beresp;
+		int			beresp;
 
 		if ((beresp = pqGetc(conn->Pfin, conn->Pfdebug)) == EOF)
 		{
-			(void)sprintf(conn->errorMessage,
-					"connectDB() -- error getting authentication request\n");
+			(void) sprintf(conn->errorMessage,
+				"connectDB() -- error getting authentication request\n");
 
 			goto connect_errReturn;
 		}
@@ -600,8 +616,8 @@ connectDB(PGconn *conn)
 
 		if (beresp == 'E')
 		{
-			pqGets(conn->errorMessage, sizeof (conn->errorMessage),
-				conn->Pfin, conn->Pfdebug);
+			pqGets(conn->errorMessage, sizeof(conn->errorMessage),
+				   conn->Pfin, conn->Pfdebug);
 
 			goto connect_errReturn;
 		}
@@ -610,18 +626,18 @@ connectDB(PGconn *conn)
 
 		if (beresp != 'R')
 		{
-			(void)sprintf(conn->errorMessage,
-					"connectDB() -- expected authentication request\n");
+			(void) sprintf(conn->errorMessage,
+					 "connectDB() -- expected authentication request\n");
 
 			goto connect_errReturn;
 		}
 
 		/* Get the type of request. */
 
-		if (pqGetInt((int *)&areq, 4, conn->Pfin, conn->Pfdebug))
+		if (pqGetInt((int *) &areq, 4, conn->Pfin, conn->Pfdebug))
 		{
-			(void)sprintf(conn->errorMessage,
-					"connectDB() -- error getting authentication request type\n");
+			(void) sprintf(conn->errorMessage,
+			"connectDB() -- error getting authentication request type\n");
 
 			goto connect_errReturn;
 		}
@@ -629,11 +645,11 @@ connectDB(PGconn *conn)
 		/* Get the password salt if there is one. */
 
 		if (areq == AUTH_REQ_CRYPT &&
-			pqGetnchar(conn->salt, sizeof (conn->salt),
-					conn->Pfin, conn->Pfdebug))
+			pqGetnchar(conn->salt, sizeof(conn->salt),
+					   conn->Pfin, conn->Pfdebug))
 		{
-			(void)sprintf(conn->errorMessage,
-					"connectDB() -- error getting password salt\n");
+			(void) sprintf(conn->errorMessage,
+						 "connectDB() -- error getting password salt\n");
 
 			goto connect_errReturn;
 		}
@@ -642,7 +658,7 @@ connectDB(PGconn *conn)
 		/* Respond to the request. */
 
 		if (fe_sendauth(areq, conn, conn->pghost, conn->pgpass,
-					conn->errorMessage) != STATUS_OK)
+						conn->errorMessage) != STATUS_OK)
 			goto connect_errReturn;
 	}
 	while (areq != AUTH_REQ_OK);
@@ -664,7 +680,7 @@ void
 PQsetenv(PGconn *conn)
 {
 	struct EnvironmentOptions *eo;
-	char setQuery[80];		/* mjl: size okay? XXX */
+	char		setQuery[80];	/* mjl: size okay? XXX */
 
 	for (eo = EnvironmentOptions; eo->envName; eo++)
 	{
@@ -679,13 +695,13 @@ PQsetenv(PGconn *conn)
 			else
 				sprintf(setQuery, "SET %s = '%.60s'", eo->pgName, val);
 #ifdef CONNECTDEBUG
-printf("Use environment variable %s to send %s\n", eo->envName, setQuery);
+			printf("Use environment variable %s to send %s\n", eo->envName, setQuery);
 #endif
 			res = PQexec(conn, setQuery);
-			PQclear(res);	/* Don't care? */
+			PQclear(res);		/* Don't care? */
 		}
 	}
-} /* PQsetenv() */
+}	/* PQsetenv() */
 
 /*
  * freePGconn
@@ -1095,7 +1111,7 @@ conninfo_free()
 }
 
 /* =========== accessor functions for PGconn ========= */
-char	   *
+char *
 PQdb(PGconn *conn)
 {
 	if (!conn)
@@ -1106,7 +1122,7 @@ PQdb(PGconn *conn)
 	return conn->dbName;
 }
 
-char	   *
+char *
 PQuser(PGconn *conn)
 {
 	if (!conn)
@@ -1117,7 +1133,7 @@ PQuser(PGconn *conn)
 	return conn->pguser;
 }
 
-char	   *
+char *
 PQhost(PGconn *conn)
 {
 	if (!conn)
@@ -1129,7 +1145,7 @@ PQhost(PGconn *conn)
 	return conn->pghost;
 }
 
-char	   *
+char *
 PQoptions(PGconn *conn)
 {
 	if (!conn)
@@ -1140,7 +1156,7 @@ PQoptions(PGconn *conn)
 	return conn->pgoptions;
 }
 
-char	   *
+char *
 PQtty(PGconn *conn)
 {
 	if (!conn)
@@ -1151,7 +1167,7 @@ PQtty(PGconn *conn)
 	return conn->pgtty;
 }
 
-char	   *
+char *
 PQport(PGconn *conn)
 {
 	if (!conn)
@@ -1173,7 +1189,7 @@ PQstatus(PGconn *conn)
 	return conn->status;
 }
 
-char	   *
+char *
 PQerrorMessage(PGconn *conn)
 {
 	if (!conn)

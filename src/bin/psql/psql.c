@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.135 1998/02/25 14:50:36 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.136 1998/02/26 04:39:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,12 +99,14 @@ typedef struct _psqlSettings
 
 #ifdef TIOCGWINSZ
 struct winsize screen_size;
+
 #else
 struct winsize
 {
 	int			ws_row;
 	int			ws_col;
 }			screen_size;
+
 #endif
 
 /* declarations for functions in this file */
@@ -114,8 +116,9 @@ static void handleCopyOut(PGresult *res, FILE *copystream);
 static void
 handleCopyIn(PGresult *res, const bool mustprompt,
 			 FILE *copystream);
-static int	tableList(PsqlSettings *pset, bool deep_tablelist,
-				char info_type, bool system_tables);
+static int
+tableList(PsqlSettings *pset, bool deep_tablelist,
+		  char info_type, bool system_tables);
 static int	tableDesc(PsqlSettings *pset, char *table, FILE *fout);
 static int	objectDescription(PsqlSettings *pset, char *object, FILE *fout);
 static int	rightsList(PsqlSettings *pset);
@@ -211,7 +214,7 @@ slashUsage(PsqlSettings *pset)
 	else
 		fout = stdout;
 
-		/* if you add/remove a line here, change the row test above */
+	/* if you add/remove a line here, change the row test above */
 	fprintf(fout, " \\?           -- help\n");
 	fprintf(fout, " \\a           -- toggle field-alignment (currenty %s)\n", on(pset->opt.align));
 	fprintf(fout, " \\C [<captn>] -- set html3 caption (currently '%s')\n", pset->opt.caption ? pset->opt.caption : "");
@@ -306,7 +309,7 @@ listAllDbs(PsqlSettings *pset)
  */
 int
 tableList(PsqlSettings *pset, bool deep_tablelist, char info_type,
-	bool system_tables)
+		  bool system_tables)
 {
 	char		listbuf[512];
 	int			nColumns;
@@ -330,7 +333,7 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type,
 #ifdef TIOCGWINSZ
 	}
 #endif
-	
+
 	listbuf[0] = '\0';
 	strcat(listbuf, "SELECT usename, relname, relkind, relhasrules ");
 	strcat(listbuf, "FROM pg_class, pg_user ");
@@ -408,27 +411,27 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type,
 		{
 			/* Display the information */
 
-			fprintf(fout,"\nDatabase    = %s\n", PQdb(pset->db));
-			fprintf(fout," +------------------+----------------------------------+----------+\n");
-			fprintf(fout," |  Owner           |             Relation             |   Type   |\n");
-			fprintf(fout," +------------------+----------------------------------+----------+\n");
+			fprintf(fout, "\nDatabase    = %s\n", PQdb(pset->db));
+			fprintf(fout, " +------------------+----------------------------------+----------+\n");
+			fprintf(fout, " |  Owner           |             Relation             |   Type   |\n");
+			fprintf(fout, " +------------------+----------------------------------+----------+\n");
 
 			/* next, print out the instances */
 			for (i = 0; i < PQntuples(res); i++)
 			{
-				fprintf(fout," | %-16.16s", PQgetvalue(res, i, 0));
-				fprintf(fout," | %-32.32s | ", PQgetvalue(res, i, 1));
+				fprintf(fout, " | %-16.16s", PQgetvalue(res, i, 0));
+				fprintf(fout, " | %-32.32s | ", PQgetvalue(res, i, 1));
 				rk = PQgetvalue(res, i, 2);
 				rr = PQgetvalue(res, i, 3);
 				if (strcmp(rk, "r") == 0)
-					fprintf(fout,"%-8.8s |", (rr[0] == 't') ? "view?" : "table");
+					fprintf(fout, "%-8.8s |", (rr[0] == 't') ? "view?" : "table");
 				else if (strcmp(rk, "i") == 0)
-					fprintf(fout,"%-8.8s |", "index");
+					fprintf(fout, "%-8.8s |", "index");
 				else
-					fprintf(fout,"%-8.8s |", "sequence");
-				fprintf(fout,"\n");
+					fprintf(fout, "%-8.8s |", "sequence");
+				fprintf(fout, "\n");
 			}
-			fprintf(fout," +------------------+----------------------------------+----------+\n");
+			fprintf(fout, " +------------------+----------------------------------+----------+\n");
 			PQclear(res);
 		}
 		if (usePipe)
@@ -518,19 +521,19 @@ rightsList(PsqlSettings *pset)
 
 		/* Display the information */
 
-		fprintf(fout,"\nDatabase    = %s\n", PQdb(pset->db));
-		fprintf(fout," +------------------+----------------------------------------------------+\n");
-		fprintf(fout," |  Relation        |             Grant/Revoke Permissions               |\n");
-		fprintf(fout," +------------------+----------------------------------------------------+\n");
+		fprintf(fout, "\nDatabase    = %s\n", PQdb(pset->db));
+		fprintf(fout, " +------------------+----------------------------------------------------+\n");
+		fprintf(fout, " |  Relation        |             Grant/Revoke Permissions               |\n");
+		fprintf(fout, " +------------------+----------------------------------------------------+\n");
 
 		/* next, print out the instances */
 		for (i = 0; i < PQntuples(res); i++)
 		{
-			fprintf(fout," | %-16.16s", PQgetvalue(res, i, 0));
-			fprintf(fout," | %-50.50s | ", PQgetvalue(res, i, 1));
-			fprintf(fout,"\n");
+			fprintf(fout, " | %-16.16s", PQgetvalue(res, i, 0));
+			fprintf(fout, " | %-50.50s | ", PQgetvalue(res, i, 1));
+			fprintf(fout, "\n");
 		}
-		fprintf(fout," +------------------+----------------------------------------------------+\n");
+		fprintf(fout, " +------------------+----------------------------------------------------+\n");
 		PQclear(res);
 		if (usePipe)
 		{
@@ -562,8 +565,10 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 	char	   *rnotnull;
 	char	   *rhasdef;
 	int			i;
-	int			attlen, atttypmod;
-	PGresult   *res, *res2;
+	int			attlen,
+				atttypmod;
+	PGresult   *res,
+			   *res2;
 	int			usePipe = 0;
 	char	   *pagerenv;
 
@@ -580,15 +585,18 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 #ifdef TIOCGWINSZ
 	}
 #endif
-	
+
 	/* Build the query */
 
-	/* if the table name is surrounded by double-quotes, then don't convert case */
+	/*
+	 * if the table name is surrounded by double-quotes, then don't
+	 * convert case
+	 */
 	if (*table == '"')
 	{
 		table++;
-		if (*(table+strlen(table)-1) == '"')
-			*(table+strlen(table)-1) = '\0';
+		if (*(table + strlen(table) - 1) == '"')
+			*(table + strlen(table) - 1) = '\0';
 	}
 	else
 	{
@@ -628,21 +636,22 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 			else
 				fout = stdout;
 		}
+
 		/*
-		 *	Display the information
+		 * Display the information
 		 */
 
-		fprintf(fout,"\nTable    = %s\n", table);
-		fprintf(fout,"+----------------------------------+----------------------------------+-------+\n");
-		fprintf(fout,"|              Field               |              Type                | Length|\n");
-		fprintf(fout,"+----------------------------------+----------------------------------+-------+\n");
+		fprintf(fout, "\nTable    = %s\n", table);
+		fprintf(fout, "+----------------------------------+----------------------------------+-------+\n");
+		fprintf(fout, "|              Field               |              Type                | Length|\n");
+		fprintf(fout, "+----------------------------------+----------------------------------+-------+\n");
 
 		/* next, print out the instances */
 		for (i = 0; i < PQntuples(res); i++)
 		{
-			char type_str[33];
-			
-			fprintf(fout,"| %-32.32s | ", PQgetvalue(res, i, 1));
+			char		type_str[33];
+
+			fprintf(fout, "| %-32.32s | ", PQgetvalue(res, i, 1));
 			rtype = PQgetvalue(res, i, 2);
 			attlen = atoi(PQgetvalue(res, i, 3));
 			atttypmod = atoi(PQgetvalue(res, i, 4));
@@ -660,10 +669,10 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 				strncat(type_str, "[]", 32 - strlen(type_str));
 				type_str[32] = '\0';
 			}
-			
+
 			if (rnotnull[0] == 't')
 			{
-				strncat(type_str," not null", 32 - strlen(type_str));
+				strncat(type_str, " not null", 32 - strlen(type_str));
 				type_str[32] = '\0';
 			}
 			if (rhasdef[0] == 't')
@@ -679,27 +688,27 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 				strcat(descbuf, PQgetvalue(res, i, 0));
 				if (!(res2 = PSQLexec(pset, descbuf)))
 					return -1;
-				strcat(type_str," default ");
-				strncat(type_str, PQgetvalue(res2, 0, 0), 32-strlen(type_str));
+				strcat(type_str, " default ");
+				strncat(type_str, PQgetvalue(res2, 0, 0), 32 - strlen(type_str));
 				type_str[32] = '\0';
 			}
-			fprintf(fout,"%-32.32s |", type_str);
+			fprintf(fout, "%-32.32s |", type_str);
 
 			if (strcmp(rtype, "text") == 0)
-				fprintf(fout,"%6s |", "var");
+				fprintf(fout, "%6s |", "var");
 			else if (strcmp(rtype, "bpchar") == 0 ||
 					 strcmp(rtype, "varchar") == 0)
-				fprintf(fout,"%6i |", atttypmod != -1 ? atttypmod - VARHDRSZ : 0);
+				fprintf(fout, "%6i |", atttypmod != -1 ? atttypmod - VARHDRSZ : 0);
 			else
 			{
 				if (attlen > 0)
-					fprintf(fout,"%6i |", attlen);
+					fprintf(fout, "%6i |", attlen);
 				else
-					fprintf(fout,"%6s |", "var");
+					fprintf(fout, "%6s |", "var");
 			}
-			fprintf(fout,"\n");
+			fprintf(fout, "\n");
 		}
-		fprintf(fout,"+----------------------------------+----------------------------------+-------+\n");
+		fprintf(fout, "+----------------------------------+----------------------------------+-------+\n");
 		PQclear(res);
 		if (usePipe)
 		{
@@ -745,18 +754,21 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 #ifdef TIOCGWINSZ
 	}
 #endif
-	
+
 	/* Build the query */
 
 	while (isspace(*object))
 		object++;
-		
-	/* if the object name is surrounded by double-quotes, then don't convert case */
+
+	/*
+	 * if the object name is surrounded by double-quotes, then don't
+	 * convert case
+	 */
 	if (*object == '"')
 	{
 		object++;
-		if (*(object+strlen(object)-1) == '"')
-			*(object+strlen(object)-1) = '\0';
+		if (*(object + strlen(object) - 1) == '"')
+			*(object + strlen(object) - 1) = '\0';
 	}
 	else
 	{
@@ -766,14 +778,15 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 	}
 
 	descbuf[0] = '\0';
-	if (strchr(object,'.') != NULL)
+	if (strchr(object, '.') != NULL)
 	{
-		char	table[NAMEDATALEN],column[NAMEDATALEN];
+		char		table[NAMEDATALEN],
+					column[NAMEDATALEN];
 
-		StrNCpy(table,object,
-			((strchr(object,'.')-object+1) < NAMEDATALEN) ?
-				(strchr(object,'.')-object+1) : NAMEDATALEN);
-		StrNCpy(column,strchr(object,'.')+1,NAMEDATALEN);
+		StrNCpy(table, object,
+				((strchr(object, '.') - object + 1) < NAMEDATALEN) ?
+				(strchr(object, '.') - object + 1) : NAMEDATALEN);
+		StrNCpy(column, strchr(object, '.') + 1, NAMEDATALEN);
 		strcat(descbuf, "SELECT DISTINCT description ");
 		strcat(descbuf, "FROM pg_class, pg_attribute, pg_description ");
 		strcat(descbuf, "WHERE pg_class.relname = '");
@@ -783,18 +796,18 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 		strcat(descbuf, "pg_attribute.attname = '");
 		strcat(descbuf, column);
 		strcat(descbuf, "' and ");
-		strcat(descbuf, " pg_attribute.oid = pg_description.objoid " );
+		strcat(descbuf, " pg_attribute.oid = pg_description.objoid ");
 		if (!(res = PSQLexec(pset, descbuf)))
 			return -1;
 	}
 	else
-	{		
+	{
 		strcat(descbuf, "SELECT DISTINCT description ");
 		strcat(descbuf, "FROM pg_class, pg_description ");
 		strcat(descbuf, "WHERE pg_class.relname = '");
 		strcat(descbuf, object);
-		strcat(descbuf, "'" );
-		strcat(descbuf, " and pg_class.oid = pg_description.objoid " );
+		strcat(descbuf, "'");
+		strcat(descbuf, " and pg_class.oid = pg_description.objoid ");
 		if (!(res = PSQLexec(pset, descbuf)))
 			return -1;
 		else if (PQntuples(res) <= 0)
@@ -806,7 +819,7 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 			strcat(descbuf, "WHERE pg_type.typname = '");
 			strcat(descbuf, object);
 			strcat(descbuf, "' and ");
-			strcat(descbuf, " pg_type.oid = pg_description.objoid " );
+			strcat(descbuf, " pg_type.oid = pg_description.objoid ");
 			if (!(res = PSQLexec(pset, descbuf)))
 				return -1;
 			else if (PQntuples(res) <= 0)
@@ -817,8 +830,8 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 				strcat(descbuf, "FROM pg_proc, pg_description ");
 				strcat(descbuf, "WHERE pg_proc.proname = '");
 				strcat(descbuf, object);
-				strcat(descbuf, "'" );
-				strcat(descbuf, " and pg_proc.oid = pg_description.objoid " );
+				strcat(descbuf, "'");
+				strcat(descbuf, " and pg_proc.oid = pg_description.objoid ");
 				if (!(res = PSQLexec(pset, descbuf)))
 					return -1;
 				else if (PQntuples(res) <= 0)
@@ -829,9 +842,9 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 					strcat(descbuf, "FROM pg_operator, pg_description ");
 					strcat(descbuf, "WHERE pg_operator.oprname = '");
 					strcat(descbuf, object);
-					strcat(descbuf, "'" );
+					strcat(descbuf, "'");
 					/* operator descriptions are attached to the proc */
-					strcat(descbuf, " and RegprocToOid(pg_operator.oprcode) = pg_description.objoid " );
+					strcat(descbuf, " and RegprocToOid(pg_operator.oprcode) = pg_description.objoid ");
 					if (!(res = PSQLexec(pset, descbuf)))
 						return -1;
 					else if (PQntuples(res) <= 0)
@@ -842,8 +855,8 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 						strcat(descbuf, "FROM pg_aggregate, pg_description ");
 						strcat(descbuf, "WHERE pg_aggregate.aggname = '");
 						strcat(descbuf, object);
-						strcat(descbuf, "'" );
-						strcat(descbuf, " and pg_aggregate.oid = pg_description.objoid " );
+						strcat(descbuf, "'");
+						strcat(descbuf, " and pg_aggregate.oid = pg_description.objoid ");
 						if (!(res = PSQLexec(pset, descbuf)))
 							return -1;
 					}
@@ -868,15 +881,16 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 			else
 				fout = stdout;
 		}
+
 		/*
 		 * * Display the information
 		 */
 
-		fprintf(fout,"\nObject    = %s\n", object);
+		fprintf(fout, "\nObject    = %s\n", object);
 
 		/* next, print out the instances */
 		for (i = 0; i < PQntuples(res); i++)
-			fprintf(fout,"%s\n",PQgetvalue(res, i, 0));
+			fprintf(fout, "%s\n", PQgetvalue(res, i, 0));
 
 		PQclear(res);
 		if (usePipe)
@@ -1376,7 +1390,7 @@ do_connect(const char *new_dbname,
 			dbparam = PQdb(olddb);
 
 		pset->db = PQsetdb(PQhost(olddb), PQport(olddb),
-							   NULL, NULL, dbparam);
+						   NULL, NULL, dbparam);
 		if (!pset->quiet)
 		{
 			if (!new_user)
@@ -1625,6 +1639,7 @@ HandleSlashCmds(PsqlSettings *pset,
 	int			status = CMD_SKIP_LINE;
 	char	   *optarg;
 	bool		success;
+
 	/*
 	 * Pointer inside the <cmd> string to the argument of the slash
 	 * command, assuming it is a one-character slash command.  If it's not
@@ -1736,36 +1751,40 @@ HandleSlashCmds(PsqlSettings *pset,
 				}
 			}
 			break;
-		case 'd':	/* \d describe database information */
+		case 'd':				/* \d describe database information */
 			if (strncmp(cmd, "da", 2) == 0)
 			{
-								/* aggregates */
-				SendQuery(&success, pset,"\
+				/* aggregates */
+				SendQuery(&success, pset, "\
 					SELECT	a.aggname AS aggname, \
 							t.typname AS typname, \
 							obj_description(a.oid) as description \
 					FROM	pg_aggregate a, pg_type t \
 					WHERE	a.aggbasetype = t.oid \
 					ORDER BY aggname, typname;",
-						false, false, 0);
-				SendQuery(&success, pset,"\
+						  false, false, 0);
+				SendQuery(&success, pset, "\
 					SELECT	a.aggname AS aggname, \
 							'all types' as all_types, \
 							obj_description(a.oid) as description \
 					FROM	pg_aggregate a \
 					WHERE	a.aggbasetype = 0 \
 					ORDER BY aggname;",
-						false, false, 0);
+						  false, false, 0);
 			}
 			else if (strncmp(cmd, "dd", 2) == 0)
-								/* descriptions */
-				objectDescription(pset, optarg+1, NULL);
+				/* descriptions */
+				objectDescription(pset, optarg + 1, NULL);
 			else if (strncmp(cmd, "df", 2) == 0)
 			{
-								/* functions/procedures */
-			/* we skip in/out funcs by excluding functions that take
-			   some arguments, but have no types defined for those arguments */
-				SendQuery(&success, pset,"\
+				/* functions/procedures */
+
+				/*
+				 * we skip in/out funcs by excluding functions that take
+				 * some arguments, but have no types defined for those
+				 * arguments
+				 */
+				SendQuery(&success, pset, "\
 					SELECT	t.typname as return_type, \
 							p.proname as function, \
 							substr(oid8types(p.proargtypes),1,20) as arguments, \
@@ -1775,8 +1794,8 @@ HandleSlashCmds(PsqlSettings *pset,
 							(pronargs = 0 or oid8types(p.proargtypes) != '') and \
 							t.typname != 'bool' \
 					ORDER BY return_type, function;",
-					false, false, 0);
-				SendQuery(&success, pset,"\
+						  false, false, 0);
+				SendQuery(&success, pset, "\
 					SELECT	t.typname as rtns, \
 							p.proname as function, \
 							oid8types(p.proargtypes) as arguments, \
@@ -1786,15 +1805,15 @@ HandleSlashCmds(PsqlSettings *pset,
 							(pronargs = 0 or oid8types(p.proargtypes) != '') and \
 							t.typname = 'bool' \
 					ORDER BY rtns, function;",
-					false, false, 0);
+						  false, false, 0);
 			}
 			else if (strncmp(cmd, "di", 2) == 0)
-								/* only indices */
+				/* only indices */
 				tableList(pset, false, 'i', false);
 			else if (strncmp(cmd, "do", 2) == 0)
 			{
-								/* operators */
-				SendQuery(&success, pset,"\
+				/* operators */
+				SendQuery(&success, pset, "\
 					SELECT	o.oprname AS op, \
 							t0.typname AS result, \
 							t1.typname AS left_type, \
@@ -1809,8 +1828,8 @@ HandleSlashCmds(PsqlSettings *pset,
 							o.oprleft = t1.oid AND \
 							o.oprright = t2.oid \
 					ORDER BY op, result, left_type, right_type;",
-						false, false, 0);
-				SendQuery(&success, pset,"\
+						  false, false, 0);
+				SendQuery(&success, pset, "\
 					SELECT	o.oprname AS left_unary, \
 							t0.typname AS return_type, \
 							t1.typname AS operand, \
@@ -1821,8 +1840,8 @@ HandleSlashCmds(PsqlSettings *pset,
 							o.oprkind = 'l' AND \
 							o.oprright = t1.oid \
 					ORDER BY left_unary, return_type, operand;",
-						false, false, 0);
-				SendQuery(&success, pset,"\
+						  false, false, 0);
+				SendQuery(&success, pset, "\
 					SELECT	o.oprname AS right_unary, \
 							t0.typname AS return_type, \
 							t1.typname AS operand, \
@@ -1833,29 +1852,29 @@ HandleSlashCmds(PsqlSettings *pset,
 							o.oprkind = 'r' AND \
 							o.oprleft = t1.oid \
 					ORDER BY right_unary, return_type, operand;",
-						false, false, 0);
+						  false, false, 0);
 			}
 			else if (strncmp(cmd, "ds", 2) == 0)
-								/* only sequences */
+				/* only sequences */
 				tableList(pset, false, 'S', false);
 			else if (strncmp(cmd, "dS", 2) == 0)
-								/* system tables */
+				/* system tables */
 				tableList(pset, false, 'b', true);
 			else if (strncmp(cmd, "dt", 2) == 0)
-								/* only tables */
+				/* only tables */
 				tableList(pset, false, 't', false);
 			else if (strncmp(cmd, "dT", 2) == 0)
-								/* types */
-				SendQuery(&success, pset,"\
+				/* types */
+				SendQuery(&success, pset, "\
 					SELECT	typname AS type, \
 							obj_description(oid) as description \
 					FROM	pg_type \
 					WHERE	typrelid = 0 AND \
 							typname !~ '^_.*' \
 					ORDER BY type;",
-					false, false, 0);
+						  false, false, 0);
 			else if (!optarg)
-								/* show tables, sequences and indices */
+				/* show tables, sequences and indices */
 				tableList(pset, false, 'b', false);
 			else if (strcmp(optarg, "*") == 0)
 			{					/* show everything */
@@ -1863,11 +1882,11 @@ HandleSlashCmds(PsqlSettings *pset,
 					tableList(pset, true, 'b', false);
 			}
 			else if (strncmp(cmd, "d ", 2) == 0)
-								/* describe the specified table */
+				/* describe the specified table */
 				tableDesc(pset, optarg, NULL);
 			else
 				slashUsage(pset);
-			
+
 			break;
 		case 'e':				/* edit */
 			{
@@ -2049,7 +2068,7 @@ HandleSlashCmds(PsqlSettings *pset,
 	}
 	free(cmd);
 	return status;
-}								/* HandleSlashCmds() */
+}	/* HandleSlashCmds() */
 
 /* MainLoop()
  * Main processing loop for reading lines of input
@@ -2087,17 +2106,20 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 	/* We've reached the end of our command input. */
 	bool		success;
 	bool		in_quote;
-	bool		was_bslash;	/* backslash */
+	bool		was_bslash;		/* backslash */
 	int			paren_level;
 	char	   *query_start;
 
 	if (query_alloced == false)
 	{
-		if((query = malloc(MAX_QUERY_BUFFER)) == NULL) {
-	
+		if ((query = malloc(MAX_QUERY_BUFFER)) == NULL)
+		{
+
 			perror("Memory Allocation Failed");
 
-		} else {
+		}
+		else
+		{
 			query_alloced = true;
 		}
 	}
@@ -2177,7 +2199,8 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 		 */
 
 		if (line == NULL || (!interactive && *line == '\0'))
-		{		/* 	No more input.	Time to quit, or \i done */
+		{						/* No more input.  Time to quit, or \i
+								 * done */
 			if (!pset->quiet)
 				printf("EOF\n");/* Goes on prompt line */
 			eof = true;
@@ -2247,7 +2270,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 					}
 					line[i] = hold_char;
 					query_start = line + i;
-					break;	/* handle command */
+					break;		/* handle command */
 
 					/* start an extended comment? */
 				}
@@ -2260,15 +2283,16 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 
 				if (was_bslash)
 					was_bslash = false;
-				else if (i > 0 && line[i-1] == '\\')
+				else if (i > 0 && line[i - 1] == '\\')
 					was_bslash = true;
 
 				/* inside a quote? */
 				if (in_quote && (line[i] != '\'' || was_bslash))
 				{
-					/* do nothing */;
+					 /* do nothing */ ;
 				}
-				else if (xcomment != NULL)	/*inside an extended comment?*/
+				else if (xcomment != NULL)		/* inside an extended
+												 * comment? */
 				{
 					if (line[i] == '*' && line[i + 1] == '/')
 					{
@@ -2276,28 +2300,28 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 						i++;
 					}
 				}
-					/* possible backslash command? */
+				/* possible backslash command? */
 				else if (line[i] == '/' && line[i + 1] == '*')
 				{
 					xcomment = line + i;
 					i++;
 
 				}
-					/* single-line comment? truncate line */
+				/* single-line comment? truncate line */
 				else if ((line[i] == '-' && line[i + 1] == '-') ||
 						 (line[i] == '/' && line[i + 1] == '/'))
 				{
 					/* print comment at top of query */
 					if (pset->singleStep)
 						fprintf(stdout, "%s\n", line + i);
-					line[i] = '\0'; /* remove comment */
+					line[i] = '\0';		/* remove comment */
 					break;
 				}
 				else if (line[i] == '\'')
 				{
 					in_quote ^= 1;
 				}
-					/* semi-colon? then send query now */
+				/* semi-colon? then send query now */
 				else if (!paren_level && line[i] == ';')
 				{
 					char		hold_char = line[i + 1];
@@ -2317,10 +2341,10 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 					successResult &= success;
 					line[i + 1] = hold_char;
 					query_start = line + i + 1;
-						/* sometimes, people do ';\g', don't execute twice */
+					/* sometimes, people do ';\g', don't execute twice */
 					if (*query_start && /* keeps us from going off the end */
 						*query_start == '\\' &&
-						*(query_start+1) == 'g')
+						*(query_start + 1) == 'g')
 						query_start += 2;
 					querySent = true;
 				}
@@ -2397,7 +2421,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 		free(query);
 
 	return successResult;
-}								/* MainLoop() */
+}	/* MainLoop() */
 
 int
 main(int argc, char **argv)
@@ -2416,11 +2440,11 @@ main(int argc, char **argv)
 	char	   *singleQuery = NULL;
 
 	bool		listDatabases = 0;
-	int		successResult = 1;
+	int			successResult = 1;
 	bool		singleSlashCmd = 0;
-	int		c;
+	int			c;
 
-	char		*home = NULL;  /* Used to store $HOME */
+	char	   *home = NULL;	/* Used to store $HOME */
 
 	MemSet(&settings, 0, sizeof settings);
 	settings.opt.align = 1;
@@ -2565,16 +2589,20 @@ main(int argc, char **argv)
 	/*
 	 * 20.06.97 ACRM See if we've got a /etc/psqlrc or .psqlrc file
 	 */
-	if(!access("/etc/psqlrc",R_OK))
+	if (!access("/etc/psqlrc", R_OK))
 		HandleSlashCmds(&settings, "\\i /etc/psqlrc", "");
-	if((home = getenv("HOME"))!=NULL) {
-		char *psqlrc = NULL,
-		*line   = NULL;
+	if ((home = getenv("HOME")) != NULL)
+	{
+		char	   *psqlrc = NULL,
+				   *line = NULL;
 
-		if((psqlrc = (char *)malloc(strlen(home) + 10))!=NULL) {
+		if ((psqlrc = (char *) malloc(strlen(home) + 10)) != NULL)
+		{
 			sprintf(psqlrc, "%s/.psqlrc", home);
-			if(!access(psqlrc, R_OK)) {
-				if((line = (char *)malloc(strlen(psqlrc) + 5))!=NULL) {
+			if (!access(psqlrc, R_OK))
+			{
+				if ((line = (char *) malloc(strlen(psqlrc) + 5)) != NULL)
+				{
 					sprintf(line, "\\i %s", psqlrc);
 					HandleSlashCmds(&settings, line, "");
 					free(line);

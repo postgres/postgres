@@ -15,7 +15,7 @@
  *		ExecEndTee
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.15 1998/01/07 21:02:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.16 1998/02/26 04:31:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,7 +168,7 @@ ExecInitTee(Tee *node, EState *currentEstate, Plan *parent)
 			bufferRel = heap_openr(teeState->tee_bufferRelname);
 		else
 			bufferRel = heap_open(
-				heap_create_with_catalog(teeState->tee_bufferRelname, tupType));
+								  heap_create_with_catalog(teeState->tee_bufferRelname, tupType));
 	}
 	else
 	{
@@ -177,7 +177,7 @@ ExecInitTee(Tee *node, EState *currentEstate, Plan *parent)
 				newoid());
 /*		bufferRel = ExecCreatR(len, tupType, _TEMP_RELATION_ID); */
 		bufferRel = heap_open(
-				heap_create_with_catalog(teeState->tee_bufferRelname, tupType));
+		 heap_create_with_catalog(teeState->tee_bufferRelname, tupType));
 	}
 
 	teeState->tee_bufferRel = bufferRel;
@@ -246,7 +246,7 @@ initTeeScanDescs(Tee *node)
 	{
 		teeState->tee_leftScanDesc = heap_beginscan(bufferRel,
 											ScanDirectionIsBackward(dir),
-													false, /* seeself */
+													false,		/* seeself */
 													0,	/* num scan keys */
 													NULL		/* scan keys */
 			);
@@ -255,7 +255,7 @@ initTeeScanDescs(Tee *node)
 	{
 		teeState->tee_rightScanDesc = heap_beginscan(bufferRel,
 											ScanDirectionIsBackward(dir),
-													 false, /* seeself */
+													 false,		/* seeself */
 													 0, /* num scan keys */
 													 NULL		/* scan keys */
 			);

@@ -18,7 +18,7 @@ typedef struct
 	Portal		portal;			/* portal per procedure */
 	MemoryContext savedcxt;
 	CommandId	savedId;
-}			_SPI_connection;
+} _SPI_connection;
 
 static Portal _SPI_portal = (Portal) NULL;
 static _SPI_connection *_SPI_stack = NULL;
@@ -38,24 +38,24 @@ typedef struct
 	List	   *ptlist;
 	int			nargs;
 	Oid		   *argtypes;
-}			_SPI_plan;
+} _SPI_plan;
 
-static int	_SPI_execute(char *src, int tcount, _SPI_plan * plan);
-static int	_SPI_pquery(QueryDesc * queryDesc, EState * state, int tcount);
+static int	_SPI_execute(char *src, int tcount, _SPI_plan *plan);
+static int	_SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount);
 
 #if 0
-static void _SPI_fetch(FetchStmt * stmt);
+static void _SPI_fetch(FetchStmt *stmt);
 
 #endif
 static int
-_SPI_execute_plan(_SPI_plan * plan,
-				  Datum * Values, char *Nulls, int tcount);
+_SPI_execute_plan(_SPI_plan *plan,
+				  Datum *Values, char *Nulls, int tcount);
 
 #define _SPI_CPLAN_CURCXT	0
 #define _SPI_CPLAN_PROCXT	1
 #define _SPI_CPLAN_TOPCXT	2
 
-static _SPI_plan *_SPI_copy_plan(_SPI_plan * plan, int location);
+static _SPI_plan *_SPI_copy_plan(_SPI_plan *plan, int location);
 
 static int	_SPI_begin_call(bool execmem);
 static int	_SPI_end_call(bool procmem);
@@ -202,7 +202,7 @@ SPI_exec(char *src, int tcount)
 }
 
 int
-SPI_execp(void *plan, Datum * Values, char *Nulls, int tcount)
+SPI_execp(void *plan, Datum *Values, char *Nulls, int tcount)
 {
 	int			res;
 
@@ -225,8 +225,8 @@ SPI_execp(void *plan, Datum * Values, char *Nulls, int tcount)
 	return (res);
 }
 
-void	   *
-SPI_prepare(char *src, int nargs, Oid * argtypes)
+void *
+SPI_prepare(char *src, int nargs, Oid *argtypes)
 {
 	_SPI_plan  *plan;
 
@@ -257,7 +257,7 @@ SPI_prepare(char *src, int nargs, Oid * argtypes)
 
 }
 
-void	   *
+void *
 SPI_saveplan(void *plan)
 {
 	_SPI_plan  *newplan;
@@ -310,7 +310,7 @@ SPI_copytuple(HeapTuple tuple)
 
 HeapTuple
 SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
-				Datum * Values, char *Nulls)
+				Datum *Values, char *Nulls)
 {
 	MemoryContext oldcxt = NULL;
 	HeapTuple	mtuple;
@@ -392,7 +392,7 @@ SPI_fnumber(TupleDesc tupdesc, char *fname)
 	return (SPI_ERROR_NOATTRIBUTE);
 }
 
-char	   *
+char *
 SPI_fname(TupleDesc tupdesc, int fnumber)
 {
 
@@ -406,7 +406,7 @@ SPI_fname(TupleDesc tupdesc, int fnumber)
 	return (nameout(&(tupdesc->attrs[fnumber - 1]->attname)));
 }
 
-char	   *
+char *
 SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 {
 	Datum		val;
@@ -431,12 +431,12 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 	}
 
 	return (fmgr(foutoid, val,
-			gettypelem(tupdesc->attrs[fnumber - 1]->atttypid),
-				  	   tupdesc->attrs[fnumber - 1]->atttypmod));
+				 gettypelem(tupdesc->attrs[fnumber - 1]->atttypid),
+				 tupdesc->attrs[fnumber - 1]->atttypmod));
 }
 
 Datum
-SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber, bool * isnull)
+SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber, bool *isnull)
 {
 	Datum		val;
 
@@ -453,7 +453,7 @@ SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber, bool * isnull)
 	return (val);
 }
 
-char	   *
+char *
 SPI_gettype(TupleDesc tupdesc, int fnumber)
 {
 	HeapTuple	typeTuple;
@@ -492,70 +492,70 @@ SPI_gettypeid(TupleDesc tupdesc, int fnumber)
 	return (tupdesc->attrs[fnumber - 1]->atttypid);
 }
 
-char	   *
+char *
 SPI_getrelname(Relation rel)
 {
 	return (pstrdup(rel->rd_rel->relname.data));
 }
 
 void *
-SPI_palloc (Size size)
+SPI_palloc(Size size)
 {
-	MemoryContext	oldcxt = NULL;
-	void		   *pointer;
-	
+	MemoryContext oldcxt = NULL;
+	void	   *pointer;
+
 	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
 	{
 		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
 			elog(FATAL, "SPI: stack corrupted");
 		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
 	}
-	
-	pointer = palloc (size);
-	
+
+	pointer = palloc(size);
+
 	if (oldcxt)
 		MemoryContextSwitchTo(oldcxt);
-	
+
 	return (pointer);
 }
 
 void *
-SPI_repalloc (void *pointer, Size size)
+SPI_repalloc(void *pointer, Size size)
 {
-	MemoryContext	oldcxt = NULL;
-	
+	MemoryContext oldcxt = NULL;
+
 	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
 	{
 		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
 			elog(FATAL, "SPI: stack corrupted");
 		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
 	}
-	
-	pointer = repalloc (pointer, size);
-	
+
+	pointer = repalloc(pointer, size);
+
 	if (oldcxt)
 		MemoryContextSwitchTo(oldcxt);
-	
+
 	return (pointer);
 }
 
-void 
-SPI_pfree (void *pointer)
+void
+SPI_pfree(void *pointer)
 {
-	MemoryContext	oldcxt = NULL;
-	
+	MemoryContext oldcxt = NULL;
+
 	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
 	{
 		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
 			elog(FATAL, "SPI: stack corrupted");
 		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
 	}
-	
-	pfree (pointer);
-	
+
+	pfree(pointer);
+
 	if (oldcxt)
 		MemoryContextSwitchTo(oldcxt);
-	
+
 	return;
 }
 
@@ -613,7 +613,7 @@ spi_printtup(HeapTuple tuple, TupleDesc tupdesc)
  */
 
 static int
-_SPI_execute(char *src, int tcount, _SPI_plan * plan)
+_SPI_execute(char *src, int tcount, _SPI_plan *plan)
 {
 	QueryTreeList *queryTree_list;
 	List	   *planTree_list;
@@ -710,7 +710,7 @@ _SPI_execute(char *src, int tcount, _SPI_plan * plan)
 }
 
 static int
-_SPI_execute_plan(_SPI_plan * plan, Datum * Values, char *Nulls, int tcount)
+_SPI_execute_plan(_SPI_plan *plan, Datum *Values, char *Nulls, int tcount)
 {
 	QueryTreeList *queryTree_list = plan->qtlist;
 	List	   *planTree_list = plan->ptlist;
@@ -781,12 +781,12 @@ _SPI_execute_plan(_SPI_plan * plan, Datum * Values, char *Nulls, int tcount)
 }
 
 static int
-_SPI_pquery(QueryDesc * queryDesc, EState * state, int tcount)
+_SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 {
 	Query	   *parseTree = queryDesc->parsetree;
 	Plan	   *plan = queryDesc->plantree;
 	int			operation = queryDesc->operation;
-	CommandDest	dest = queryDesc->dest;
+	CommandDest dest = queryDesc->dest;
 	TupleDesc	tupdesc;
 	bool		isRetrieveIntoPortal = false;
 	bool		isRetrieveIntoRelation = false;
@@ -810,7 +810,7 @@ _SPI_pquery(QueryDesc * queryDesc, EState * state, int tcount)
 			{
 				res = SPI_OK_SELINTO;
 				isRetrieveIntoRelation = true;
-				queryDesc->dest = None;			/* */
+				queryDesc->dest = None; /* */
 			}
 			break;
 		case CMD_INSERT:
@@ -878,7 +878,7 @@ _SPI_pquery(QueryDesc * queryDesc, EState * state, int tcount)
 
 #if 0
 static void
-_SPI_fetch(FetchStmt * stmt)
+_SPI_fetch(FetchStmt *stmt)
 {
 	char	   *name = stmt->portalname;
 	int			feature = (stmt->direction == FORWARD) ? EXEC_FOR : EXEC_BACK;
@@ -1001,7 +1001,8 @@ _SPI_checktuples()
 		if (tuptable != NULL)
 			failed = true;
 	}
-	else	/* some tuples were processed */
+	else
+/* some tuples were processed */
 	{
 		if (tuptable == NULL)	/* spi_printtup was not called */
 			failed = true;
@@ -1013,7 +1014,7 @@ _SPI_checktuples()
 }
 
 static _SPI_plan *
-_SPI_copy_plan(_SPI_plan * plan, int location)
+_SPI_copy_plan(_SPI_plan *plan, int location)
 {
 	_SPI_plan  *newplan;
 	MemoryContext oldcxt = NULL;

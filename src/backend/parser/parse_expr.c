@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.21 1998/02/13 08:10:33 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.22 1998/02/26 04:33:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 				/* what if att.attrs == "*"? */
 				temp = ParseNestedFuncOrColumn(pstate, att, &pstate->p_last_resno,
-										precedence);
+											   precedence);
 				if (att->indirection != NIL)
 				{
 					List	   *idx = att->indirection;
@@ -147,8 +147,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 							result = ParseFuncOrColumn(pstate,
 										  "nullvalue", lcons(lexpr, NIL),
-											   &pstate->p_last_resno,
-											   precedence);
+												   &pstate->p_last_resno,
+													   precedence);
 						}
 						break;
 					case NOTNULL:
@@ -157,8 +157,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 							result = ParseFuncOrColumn(pstate,
 									   "nonnullvalue", lcons(lexpr, NIL),
-											   &pstate->p_last_resno,
-											   precedence);
+												   &pstate->p_last_resno,
+													   precedence);
 						}
 						break;
 					case AND:
@@ -169,11 +169,11 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 							if (exprType(lexpr) != BOOLOID)
 								elog(ERROR, "left-hand side of AND is type '%s', not bool",
-									typeidTypeName(exprType(lexpr)));
+									 typeidTypeName(exprType(lexpr)));
 
 							if (exprType(rexpr) != BOOLOID)
 								elog(ERROR, "right-hand side of AND is type '%s', not bool",
-									typeidTypeName(exprType(rexpr)));
+									 typeidTypeName(exprType(rexpr)));
 
 							expr->typeOid = BOOLOID;
 							expr->opType = AND_EXPR;
@@ -218,6 +218,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 			}
 		case T_Ident:
 			{
+
 				/*
 				 * look for a column name or a relation name (the default
 				 * behavior)
@@ -234,58 +235,59 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				foreach(args, fn->args)
 					lfirst(args) = transformExpr(pstate, (Node *) lfirst(args), precedence);
 				result = ParseFuncOrColumn(pstate,
-						  fn->funcname, fn->args, &pstate->p_last_resno,
-						  precedence);
+						   fn->funcname, fn->args, &pstate->p_last_resno,
+										   precedence);
 				break;
 			}
 		case T_SubLink:
 			{
-				SubLink			*sublink = (SubLink *) expr;
-				QueryTreeList	*qtree;
-				List			*llist;
+				SubLink    *sublink = (SubLink *) expr;
+				QueryTreeList *qtree;
+				List	   *llist;
 
 				pstate->p_hasSubLinks = true;
-				qtree = parse_analyze(lcons(sublink->subselect,NIL), pstate);
-				if (qtree->len != 1 || 
-						qtree->qtrees[0]->commandType != CMD_SELECT || 
-								qtree->qtrees[0]->resultRelation != 0 )
-					elog (ERROR, "parser: bad query in subselect");
+				qtree = parse_analyze(lcons(sublink->subselect, NIL), pstate);
+				if (qtree->len != 1 ||
+					qtree->qtrees[0]->commandType != CMD_SELECT ||
+					qtree->qtrees[0]->resultRelation != 0)
+					elog(ERROR, "parser: bad query in subselect");
 				sublink->subselect = (Node *) qtree->qtrees[0];
-					
+
 				if (sublink->subLinkType != EXISTS_SUBLINK)
 				{
-					char *op = lfirst(sublink->oper);
-					List *left_expr = sublink->lefthand;
-					List *right_expr = ((Query*) sublink->subselect)->targetList;
-					List *elist;
+					char	   *op = lfirst(sublink->oper);
+					List	   *left_expr = sublink->lefthand;
+					List	   *right_expr = ((Query *) sublink->subselect)->targetList;
+					List	   *elist;
 
 					foreach(llist, left_expr)
 						lfirst(llist) = transformExpr(pstate, lfirst(llist), precedence);
-					
+
 					if (length(left_expr) !=
 						length(right_expr))
-							elog(ERROR,"parser: Subselect has too many or too few fields.");
-					
+						elog(ERROR, "parser: Subselect has too many or too few fields.");
+
 					sublink->oper = NIL;
 					foreach(elist, left_expr)
 					{
-						Node		   *lexpr = lfirst(elist);
-						Node		   *rexpr = lfirst(right_expr);
-						TargetEntry	   *tent = (TargetEntry *)rexpr;
-						Expr		   *op_expr;						
+						Node	   *lexpr = lfirst(elist);
+						Node	   *rexpr = lfirst(right_expr);
+						TargetEntry *tent = (TargetEntry *) rexpr;
+						Expr	   *op_expr;
 
 						op_expr = make_op(op, lexpr, tent->expr);
+
 						/*
-						 * HACK! Second IF is more valid but currently
-						 * we don't support EXPR subqueries inside
+						 * HACK! Second IF is more valid but currently we
+						 * don't support EXPR subqueries inside
 						 * expressions generally, only in WHERE clauses.
 						 * After fixing this, first IF must be removed.
 						 */
 						if (op_expr->typeOid != BOOLOID)
-							elog (ERROR, "parser: '%s' must return 'bool' to be used with subquery", op);
-						if (op_expr->typeOid != BOOLOID && 
-								sublink->subLinkType != EXPR_SUBLINK)
-							elog (ERROR, "parser: '%s' must return 'bool' to be used with quantified predicate subquery", op);
+							elog(ERROR, "parser: '%s' must return 'bool' to be used with subquery", op);
+						if (op_expr->typeOid != BOOLOID &&
+							sublink->subLinkType != EXPR_SUBLINK)
+							elog(ERROR, "parser: '%s' must return 'bool' to be used with quantified predicate subquery", op);
 						sublink->oper = lappend(sublink->oper, op_expr);
 						right_expr = lnext(right_expr);
 					}
@@ -325,7 +327,7 @@ transformIdent(ParseState *pstate, Node *expr, int precedence)
 		att->attrs = lcons(makeString(ident->name), NIL);
 		column_result =
 			(Node *) ParseNestedFuncOrColumn(pstate, att, &pstate->p_last_resno,
-								precedence);
+											 precedence);
 	}
 
 	/* try to find the ident as a relation */
@@ -407,7 +409,7 @@ exprType(Node *expr)
 	return type;
 }
 
-static Node	   *
+static Node *
 parser_typecast(Value *expr, TypeName *typename, int16 atttypmod)
 {
 	/* check for passing non-ints */
@@ -432,7 +434,7 @@ parser_typecast(Value *expr, TypeName *typename, int16 atttypmod)
 			break;
 		default:
 			elog(ERROR,
-			"parser_typecast: cannot cast this expression to type '%s'",
+			 "parser_typecast: cannot cast this expression to type '%s'",
 				 typename->name);
 	}
 
@@ -485,7 +487,7 @@ parser_typecast(Value *expr, TypeName *typename, int16 atttypmod)
 	return (Node *) adt;
 }
 
-Node	   *
+Node *
 parser_typecast2(Node *expr, Oid exprType, Type tp, int16 atttypmod)
 {
 	/* check for passing non-ints */
@@ -605,10 +607,11 @@ parser_typecast2(Node *expr, Oid exprType, Type tp, int16 atttypmod)
 					true /* is cast */ );
 
 	/*
-	 * printf("adt %s : %u %d %d\n",CString(expr),typeTypeId(tp) , len,cp);
+	 * printf("adt %s : %u %d %d\n",CString(expr),typeTypeId(tp) ,
+	 * len,cp);
 	 */
 	if (string_palloced)
 		pfree(const_string);
 
 	return ((Node *) adt);
-} 
+}

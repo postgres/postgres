@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.14 1998/01/31 20:12:09 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.15 1998/02/26 04:31:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,30 +33,31 @@
  * Set up a packet read for the postmaster event loop.
  */
 
-void PacketReceiveSetup(Packet *pkt, void (*iodone)(), char *arg)
+void		PacketReceiveSetup(Packet *pkt, void (*iodone) (), char *arg)
 {
-	pkt->nrtodo = sizeof (pkt->len);
-	pkt->ptr = (char *)&pkt->len;
+	pkt->nrtodo = sizeof(pkt->len);
+	pkt->ptr = (char *) &pkt->len;
 	pkt->iodone = iodone;
 	pkt->arg = arg;
 	pkt->state = ReadingPacketLength;
 
 	/* Clear the destination. */
 
-	MemSet(&pkt->pkt, 0, sizeof (pkt->pkt));
+	MemSet(&pkt->pkt, 0, sizeof(pkt->pkt));
 }
 
 
 /*
- * Read a packet fragment.  Return STATUS_OK if the connection should stay
+ * Read a packet fragment.	Return STATUS_OK if the connection should stay
  * open.
  */
 
-int PacketReceiveFragment(Packet *pkt, int sock)
+int
+PacketReceiveFragment(Packet *pkt, int sock)
 {
-	int got;
+	int			got;
 
-	if ((got = read(sock,pkt->ptr,pkt->nrtodo)) > 0)
+	if ((got = read(sock, pkt->ptr, pkt->nrtodo)) > 0)
 	{
 		pkt->nrtodo -= got;
 		pkt->ptr += got;
@@ -67,18 +68,18 @@ int PacketReceiveFragment(Packet *pkt, int sock)
 		{
 			pkt->len = ntohl(pkt->len);
 
-			if (pkt->len < sizeof (pkt->len) ||
-			    pkt->len > sizeof (pkt->len) + sizeof (pkt->pkt))
+			if (pkt->len < sizeof(pkt->len) ||
+				pkt->len > sizeof(pkt->len) + sizeof(pkt->pkt))
 			{
-				PacketSendError(pkt,"Invalid packet length");
+				PacketSendError(pkt, "Invalid packet length");
 
 				return STATUS_OK;
 			}
 
 			/* Set up for the rest of the packet. */
 
-			pkt->nrtodo = pkt->len - sizeof (pkt->len);
-			pkt->ptr = (char *)&pkt->pkt;
+			pkt->nrtodo = pkt->len - sizeof(pkt->len);
+			pkt->ptr = (char *) &pkt->pkt;
 			pkt->state = ReadingPacket;
 		}
 
@@ -93,8 +94,8 @@ int PacketReceiveFragment(Packet *pkt, int sock)
 			if (pkt->iodone == NULL)
 				return STATUS_ERROR;
 
-			(*pkt->iodone)(pkt->arg, pkt->len - sizeof (pkt->len), 
-					(char *)&pkt->pkt);
+			(*pkt->iodone) (pkt->arg, pkt->len - sizeof(pkt->len),
+							(char *) &pkt->pkt);
 		}
 
 		return STATUS_OK;
@@ -116,10 +117,10 @@ int PacketReceiveFragment(Packet *pkt, int sock)
  * Set up a packet write for the postmaster event loop.
  */
 
-void PacketSendSetup(Packet *pkt, int nbytes, void (*iodone)(), char *arg)
+void		PacketSendSetup(Packet *pkt, int nbytes, void (*iodone) (), char *arg)
 {
 	pkt->nrtodo = nbytes;
-	pkt->ptr = (char *)&pkt->pkt;
+	pkt->ptr = (char *) &pkt->pkt;
 	pkt->iodone = iodone;
 	pkt->arg = arg;
 	pkt->state = WritingPacket;
@@ -131,11 +132,12 @@ void PacketSendSetup(Packet *pkt, int nbytes, void (*iodone)(), char *arg)
  * open.
  */
 
-int PacketSendFragment(Packet *pkt, int sock)
+int
+PacketSendFragment(Packet *pkt, int sock)
 {
-	int done;
+	int			done;
 
-	if ((done = write(sock,pkt->ptr,pkt->nrtodo)) > 0)
+	if ((done = write(sock, pkt->ptr, pkt->nrtodo)) > 0)
 	{
 		pkt->nrtodo -= done;
 		pkt->ptr += done;
@@ -151,7 +153,7 @@ int PacketSendFragment(Packet *pkt, int sock)
 			if (pkt->iodone == NULL)
 				return STATUS_ERROR;
 
-			(*pkt->iodone)(pkt->arg);
+			(*pkt->iodone) (pkt->arg);
 		}
 
 		return STATUS_OK;
@@ -173,12 +175,13 @@ int PacketSendFragment(Packet *pkt, int sock)
  * Send an error message from the postmaster to the frontend.
  */
 
-void PacketSendError(Packet *pkt, char *errormsg)
+void
+PacketSendError(Packet *pkt, char *errormsg)
 {
 	fprintf(stderr, "%s\n", errormsg);
 
 	pkt->pkt.em.data[0] = 'E';
-	StrNCpy(&pkt->pkt.em.data[1], errormsg, sizeof (pkt->pkt.em.data) - 2);
+	StrNCpy(&pkt->pkt.em.data[1], errormsg, sizeof(pkt->pkt.em.data) - 2);
 
 	/*
 	 * The NULL i/o callback will cause the connection to be broken when

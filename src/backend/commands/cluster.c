@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.22 1998/01/10 05:19:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.23 1998/02/26 04:30:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,8 +212,8 @@ copy_heap(Oid OIDOldHeap)
 	OldHeapDesc = RelationGetTupleDescriptor(OldHeap);
 
 	/*
-	 * Need to make a copy of the tuple descriptor, heap_create_with_catalog
-	 * modifies it.
+	 * Need to make a copy of the tuple descriptor,
+	 * heap_create_with_catalog modifies it.
 	 */
 
 	tupdesc = CreateTupleDescCopy(OldHeapDesc);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.8 1998/01/20 05:04:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.9 1998/02/26 04:33:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,9 +218,9 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 }
 
 
-Aggreg	   *
+Aggreg *
 ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
-			List *target, int precedence)
+		 List *target, int precedence)
 {
 	Oid			fintype;
 	Oid			vartype;
@@ -229,7 +229,7 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 	Aggreg	   *aggreg;
 	HeapTuple	theAggTuple;
 	bool		usenulls = false;
-	
+
 	theAggTuple = SearchSysCacheTuple(AGGNAME, PointerGetDatum(aggname),
 									  ObjectIdGetDatum(basetype),
 									  0, 0);
@@ -237,34 +237,33 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 		elog(ERROR, "aggregate %s does not exist", aggname);
 
 	/*
-	 *	We do a major hack for count(*) here.
+	 * We do a major hack for count(*) here.
 	 *
-	 *	Count(*) poses several problems.  First, we need a field that is
-	 *	guaranteed to be in the range table, and unique.  Using a constant
-	 *	causes the optimizer to properly remove the aggragate from any
-	 *	elements of the query.
-	 *	Using just 'oid', which can not be null, in the parser fails on:
+	 * Count(*) poses several problems.  First, we need a field that is
+	 * guaranteed to be in the range table, and unique.  Using a constant
+	 * causes the optimizer to properly remove the aggragate from any
+	 * elements of the query. Using just 'oid', which can not be null, in
+	 * the parser fails on:
 	 *
-	 *		select count(*) from tab1, tab2	    -- oid is not unique
-	 *		select count(*) from viewtable		-- views don't have real oids
+	 * select count(*) from tab1, tab2	   -- oid is not unique select
+	 * count(*) from viewtable		-- views don't have real oids
 	 *
-	 *	So, for an aggregate with parameter '*', we use the first valid
-	 *	range table entry, and pick the first column from the table.
-	 *	We set a flag to count nulls, because we could have nulls in
-	 *	that column.
+	 * So, for an aggregate with parameter '*', we use the first valid range
+	 * table entry, and pick the first column from the table. We set a
+	 * flag to count nulls, because we could have nulls in that column.
 	 *
-	 *	It's an ugly job, but someone has to do it.
-	 *	bjm 1998/1/18
+	 * It's an ugly job, but someone has to do it. bjm 1998/1/18
 	 */
-		
+
 	if (nodeTag(lfirst(target)) == T_Const)
 	{
-		Const *con = (Const *)lfirst(target);
-		
+		Const	   *con = (Const *) lfirst(target);
+
 		if (con->consttype == UNKNOWNOID && VARSIZE(con->constvalue) == VARHDRSZ)
 		{
-			Attr 		*attr = makeNode(Attr);
-			List	   *rtable, *rlist;
+			Attr	   *attr = makeNode(Attr);
+			List	   *rtable,
+					   *rlist;
 			RangeTblEntry *first_valid_rte;
 
 			Assert(lnext(target) == NULL);
@@ -273,12 +272,12 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 				rtable = lnext(lnext(pstate->p_rtable));
 			else
 				rtable = pstate->p_rtable;
-		
+
 			first_valid_rte = NULL;
 			foreach(rlist, rtable)
 			{
 				RangeTblEntry *rte = lfirst(rlist);
-		
+
 				/* only entries on outer(non-function?) scope */
 				if (!rte->inFromCl && rte != pstate->p_target_rangetblentry)
 					continue;
@@ -288,16 +287,16 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 			}
 			if (first_valid_rte == NULL)
 				elog(ERROR, "Can't find column to do aggregate(*) on.");
-				
+
 			attr->relname = first_valid_rte->refname;
 			attr->attrs = lcons(makeString(
-							get_attname(first_valid_rte->relid,1)),NIL);
+						   get_attname(first_valid_rte->relid, 1)), NIL);
 
 			lfirst(target) = transformExpr(pstate, (Node *) attr, precedence);
 			usenulls = true;
 		}
 	}
-	
+
 	aggform = (Form_pg_aggregate) GETSTRUCT(theAggTuple);
 	fintype = aggform->aggfinaltype;
 	xfn1 = aggform->aggtransfn1;

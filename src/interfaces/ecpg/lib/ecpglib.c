@@ -45,7 +45,7 @@ register_error(int code, char *fmt,...)
    in the argument quoted with \.
  */
 static
-char	   *
+char *
 quote_postgres(char *arg)
 {
 	char	   *res = (char *) malloc(2 * strlen(arg) + 1);
@@ -89,9 +89,10 @@ ECPGdo(int lineno, char *query,...)
 	type = va_arg(ap, enum ECPGttype);
 
 	/*
-	 * Now, if the type is one of the fill in types then we take the argument
-	 * and enter that in the string at the first %s position. Then if there
-	 * are any more fill in types we fill in at the next and so on.
+	 * Now, if the type is one of the fill in types then we take the
+	 * argument and enter that in the string at the first %s position.
+	 * Then if there are any more fill in types we fill in at the next and
+	 * so on.
 	 */
 	while (type != ECPGt_EOIT)
 	{
@@ -106,8 +107,11 @@ ECPGdo(int lineno, char *query,...)
 		char	   *p;
 		char		buff[20];
 
-		/* Some special treatment is needed for records since we want their
-		   contents to arrive in a comma-separated list on insert (I think). */
+		/*
+		 * Some special treatment is needed for records since we want
+		 * their contents to arrive in a comma-separated list on insert (I
+		 * think).
+		 */
 
 		value = va_arg(ap, void *);
 		varcharsize = va_arg(ap, long);
@@ -157,8 +161,8 @@ ECPGdo(int lineno, char *query,...)
 			case ECPGt_unsigned_char:
 				{
 					/* set slen to string length if type is char * */
-					int slen = (varcharsize == 0) ? strlen((char *) value) : varcharsize;
-				
+					int			slen = (varcharsize == 0) ? strlen((char *) value) : varcharsize;
+
 					newcopy = (char *) malloc(slen + 1);
 					strncpy(newcopy, (char *) value, slen);
 					newcopy[slen] = '\0';
@@ -203,8 +207,9 @@ ECPGdo(int lineno, char *query,...)
 				break;
 		}
 
-		/* Now tobeinserted points to an area that is to be inserted at
-		   the first %s
+		/*
+		 * Now tobeinserted points to an area that is to be inserted at
+		 * the first %s
 		 */
 		newcopy = (char *) malloc(strlen(copiedquery)
 								  + strlen(tobeinserted)
@@ -212,8 +217,10 @@ ECPGdo(int lineno, char *query,...)
 		strcpy(newcopy, copiedquery);
 		if ((p = strstr(newcopy, ";;")) == NULL)
 		{
-			/* We have an argument but we dont have the matched up string
-			   in the string
+
+			/*
+			 * We have an argument but we dont have the matched up string
+			 * in the string
 			 */
 			register_error(-1, "Too many arguments line %d.", lineno);
 			return false;
@@ -221,16 +228,20 @@ ECPGdo(int lineno, char *query,...)
 		else
 		{
 			strcpy(p, tobeinserted);
-			/* The strange thing in the second argument is the rest of the
-			   string from the old string */
+
+			/*
+			 * The strange thing in the second argument is the rest of the
+			 * string from the old string
+			 */
 			strcat(newcopy,
 				   copiedquery
 				   + (p - newcopy)
 				   + 2 /* Length of ;; */ );
 		}
 
-		/* Now everything is safely copied to the newcopy. Lets free the
-		   oldcopy and let the copiedquery get the value from the newcopy.
+		/*
+		 * Now everything is safely copied to the newcopy. Lets free the
+		 * oldcopy and let the copiedquery get the value from the newcopy.
 		 */
 		if (mallocedval != NULL)
 		{
@@ -283,9 +294,11 @@ ECPGdo(int lineno, char *query,...)
 							x;
 
 			case PGRES_TUPLES_OK:
-				/* XXX Cheap Hack. For now, we see only the last group
-				 * of tuples.  This is clearly not the right
-				 * way to do things !!
+
+				/*
+				 * XXX Cheap Hack. For now, we see only the last group of
+				 * tuples.	This is clearly not the right way to do things
+				 * !!
 				 */
 
 				m = PQnfields(results);
@@ -318,10 +331,10 @@ ECPGdo(int lineno, char *query,...)
 
 					char	   *pval = PQgetvalue(results, 0, x);
 
-					/*long int	* res_int;
-					   char    ** res_charstar;
-					   char    * res_char;
-					   int	   res_len; */
+					/*
+					 * long int  * res_int; char	** res_charstar; char	 *
+					 * res_char; int	 res_len;
+					 */
 					char	   *scan_length;
 
 					ECPGlog("ECPGdo line %d: RESULT: %s\n", lineno, pval ? pval : "");
@@ -476,7 +489,7 @@ ECPGdo(int lineno, char *query,...)
 									strncpy((char *) value, pval, varcharsize);
 							}
 							break;
-							
+
 						case ECPGt_varchar:
 							{
 								struct ECPGgeneric_varchar *var =
@@ -673,8 +686,9 @@ ECPGlog(const char *format,...)
 }
 
 /* print out an error message */
-void sqlprint(void)
+void
+sqlprint(void)
 {
 	sqlca.sqlerrm.sqlerrmc[sqlca.sqlerrm.sqlerrml] = '\0';
-	printf ("sql error %s\n", sqlca.sqlerrm.sqlerrmc);
+	printf("sql error %s\n", sqlca.sqlerrm.sqlerrmc);
 }

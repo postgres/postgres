@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.23 1998/01/24 22:50:08 momjian Exp $
+ * $Id: ipc.h,v 1.24 1998/02/26 04:43:26 momjian Exp $
  *
  * NOTES
  *	  This file is very architecture-specific.	This stuff should actually
@@ -75,7 +75,8 @@ extern void exitpg(int code);
 extern void quasi_exitpg(void);
 extern int	on_exitpg(void (*function) (), caddr_t arg);
 
-extern IpcSemaphoreId IpcSemaphoreCreate(IpcSemaphoreKey semKey,
+extern IpcSemaphoreId
+IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 				   int semNum, int permission, int semStartValue,
 				   int removeOnExit, int *status);
 extern void IpcSemaphoreKill(IpcSemaphoreKey key);
@@ -83,7 +84,8 @@ extern void IpcSemaphoreLock(IpcSemaphoreId semId, int sem, int lock);
 extern void IpcSemaphoreUnlock(IpcSemaphoreId semId, int sem, int lock);
 extern int	IpcSemaphoreGetCount(IpcSemaphoreId semId, int sem);
 extern int	IpcSemaphoreGetValue(IpcSemaphoreId semId, int sem);
-extern IpcMemoryId IpcMemoryCreate(IpcMemoryKey memKey, uint32 size,
+extern IpcMemoryId
+IpcMemoryCreate(IpcMemoryKey memKey, uint32 size,
 				int permission);
 extern IpcMemoryId IpcMemoryIdGet(IpcMemoryKey memKey, uint32 size);
 extern char *IpcMemoryAttach(IpcMemoryId memId);

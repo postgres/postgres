@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.2 1998/02/02 00:10:10 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.3 1998/02/26 04:34:26 momjian Exp $
  *
  *	NOTES
  *		all functions are defined here -- it's impossible to trace the
@@ -24,7 +24,7 @@
 #include "utils/dynamic_loader.h"
 #include "dynloader.h"
 
-void	   *
+void *
 pg_dlopen(char *filename)
 {
 	shl_t		handle = shl_load(filename, BIND_DEFERRED, 0);
@@ -50,7 +50,7 @@ pg_dlclose(void *handle)
 	shl_unload((shl_t) handle);
 }
 
-char	   *
+char *
 pg_dlerror()
 {
 	static char errmsg[] = "shl_load failed";

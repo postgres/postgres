@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.25 1998/02/10 04:00:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.26 1998/02/26 04:30:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ DefineRelation(CreateStmt *stmt)
 	if (strlen(stmt->relname) >= NAMEDATALEN)
 		elog(ERROR, "the relation name %s is >= %d characters long", stmt->relname,
 			 NAMEDATALEN);
-	StrNCpy(relname, stmt->relname, NAMEDATALEN);	/* make full length for
+	StrNCpy(relname, stmt->relname, NAMEDATALEN);		/* make full length for
 														 * copy */
 
 	/* ----------------
@@ -253,7 +253,7 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 		if (relation == NULL)
 		{
 			elog(ERROR,
-			"MergeAttr: Can't inherit from non-existent superclass '%s'", name);
+				 "MergeAttr: Can't inherit from non-existent superclass '%s'", name);
 		}
 		if (relation->rd_rel->relkind == 'S')
 		{
@@ -334,7 +334,8 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 
 			for (i = 0; i < constr->num_check; i++)
 			{
-				Constraint *cdef = (Constraint *) makeNode(Constraint); /* palloc(sizeof(Constraint)); */
+				Constraint *cdef = (Constraint *) makeNode(Constraint); /* palloc(sizeof(Constrai
+																		 * nt)); */
 
 				cdef->contype = CONSTR_CHECK;
 				if (check[i].ccname[0] == '$')

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.13 1998/01/05 16:40:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.14 1998/02/26 04:37:20 momjian Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -189,7 +189,7 @@ fixedlen_regexeq(char *s, struct varlena * p, int charlen, int cflags)
 
 	/* be sure sterm is null-terminated */
 	sterm = (char *) palloc(charlen + 1);
-	StrNCpy(sterm, s, charlen+1);
+	StrNCpy(sterm, s, charlen + 1);
 
 	result = RE_compile_and_execute(p, sterm, cflags);
 

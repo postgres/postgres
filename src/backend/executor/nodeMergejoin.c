@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.12 1997/09/08 21:43:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.13 1998/02/26 04:31:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -749,7 +749,8 @@ ExecMergeJoin(MergeJoin *node)
 				 *
 				 * new outer tuple > marked tuple
 				 *
-				*****************************
+				****************************
+				 *
 				 *
 				 *
 				 *
@@ -831,7 +832,8 @@ ExecMergeJoin(MergeJoin *node)
 				 * we have to advance the outer scan until we find the outer
 				 * 8.
 				 *
-				*****************************
+				****************************
+				 *
 				 *
 				 *
 				 *
@@ -935,7 +937,8 @@ ExecMergeJoin(MergeJoin *node)
 				 * we have to advance the inner scan until we find the inner
 				 * 12.
 				 *
-				*****************************
+				****************************
+				 *
 				 *
 				 *
 				 *

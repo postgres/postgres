@@ -6,7 +6,7 @@
  * Copyright (c) 1996, Massimo Dal Zotto <dz@cs.unitn.it>
  */
 
-#include <stdio.h>		/* for sprintf() */
+#include <stdio.h>				/* for sprintf() */
 #include <string.h>
 #include <limits.h>
 #ifdef HAVE_FLOAT_H
@@ -32,45 +32,47 @@
  * to hh:mm like in timetables.
  */
 
-TimeADT *
+TimeADT    *
 hhmm_in(char *str)
 {
-    TimeADT *time;
+	TimeADT    *time;
 
-    double fsec;
-    struct tm tt, *tm = &tt;
+	double		fsec;
+	struct tm	tt,
+			   *tm = &tt;
 
-    int nf;
-    char lowstr[MAXDATELEN+1];
-    char *field[MAXDATEFIELDS];
-    int dtype;
-    int ftype[MAXDATEFIELDS];
+	int			nf;
+	char		lowstr[MAXDATELEN + 1];
+	char	   *field[MAXDATEFIELDS];
+	int			dtype;
+	int			ftype[MAXDATEFIELDS];
 
-    if (!PointerIsValid(str))
-        elog(ERROR,"Bad (null) time external representation",NULL);
+	if (!PointerIsValid(str))
+		elog(ERROR, "Bad (null) time external representation", NULL);
 
-    if ((ParseDateTime( str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
-     || (DecodeTimeOnly( field, ftype, nf, &dtype, tm, &fsec) != 0))
-        elog(ERROR,"Bad time external representation '%s'",str);
+	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
+		|| (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec) != 0))
+		elog(ERROR, "Bad time external representation '%s'", str);
 
-    if (tm->tm_hour<0 || tm->tm_hour>24 || 
-	(tm->tm_hour==24 && (tm->tm_min!=0 || tm->tm_sec!=0 || fsec!= 0))) {
-        elog(ERROR,
-	     "time_in: hour must be limited to values 0 through 24:00 "
-	     "in \"%s\"",
-	     str);
-    }
-    if ((tm->tm_min < 0) || (tm->tm_min > 59))
-	elog(ERROR,"Minute must be limited to values 0 through 59 in '%s'",str);
-    if ((tm->tm_sec < 0) || ((tm->tm_sec + fsec) >= 60))
-	elog(ERROR,"Second must be limited to values 0 through < 60 in '%s'",
-	     str);
+	if (tm->tm_hour < 0 || tm->tm_hour > 24 ||
+		(tm->tm_hour == 24 && (tm->tm_min != 0 || tm->tm_sec != 0 || fsec != 0)))
+	{
+		elog(ERROR,
+			 "time_in: hour must be limited to values 0 through 24:00 "
+			 "in \"%s\"",
+			 str);
+	}
+	if ((tm->tm_min < 0) || (tm->tm_min > 59))
+		elog(ERROR, "Minute must be limited to values 0 through 59 in '%s'", str);
+	if ((tm->tm_sec < 0) || ((tm->tm_sec + fsec) >= 60))
+		elog(ERROR, "Second must be limited to values 0 through < 60 in '%s'",
+			 str);
 
-    time = palloc(sizeof(TimeADT));
+	time = palloc(sizeof(TimeADT));
 
-    *time = ((((tm->tm_hour*60)+tm->tm_min)*60));
+	*time = ((((tm->tm_hour * 60) + tm->tm_min) * 60));
 
-    return(time);
+	return (time);
 }
 
 /*
@@ -82,132 +84,143 @@ hhmm_in(char *str)
 char *
 hhmm_out(TimeADT *time)
 {
-    char *result;
-    struct tm tt, *tm = &tt;
-    char buf[MAXDATELEN+1];
+	char	   *result;
+	struct tm	tt,
+			   *tm = &tt;
+	char		buf[MAXDATELEN + 1];
 
-    if (!PointerIsValid(time))
-	return NULL;
+	if (!PointerIsValid(time))
+		return NULL;
 
-    tm->tm_hour = (*time / (60*60));
-    tm->tm_min = (((int) (*time / 60)) % 60);
-    tm->tm_sec = (((int) *time) % 60);
+	tm->tm_hour = (*time / (60 * 60));
+	tm->tm_min = (((int) (*time / 60)) % 60);
+	tm->tm_sec = (((int) *time) % 60);
 
-    if (tm->tm_sec == 0) {
-	sprintf(buf, "%02d:%02d", tm->tm_hour, tm->tm_min);
-    } else {
-	sprintf(buf, "%02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
-    }
+	if (tm->tm_sec == 0)
+	{
+		sprintf(buf, "%02d:%02d", tm->tm_hour, tm->tm_min);
+	}
+	else
+	{
+		sprintf(buf, "%02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
+	}
 
-    result = palloc(strlen(buf)+1);
+	result = palloc(strlen(buf) + 1);
 
-    strcpy( result, buf);
+	strcpy(result, buf);
 
-    return(result);
+	return (result);
 }
 
-TimeADT *
+TimeADT    *
 hhmm(TimeADT *time)
 {
-    TimeADT *result = palloc(sizeof(TimeADT));
+	TimeADT    *result = palloc(sizeof(TimeADT));
 
-    *result = (((int) *time) / 60 * 60);
+	*result = (((int) *time) / 60 * 60);
 
-    return(result);
+	return (result);
 }
 
-TimeADT *
+TimeADT    *
 time_difference(TimeADT *time1, TimeADT *time2)
 {
-    TimeADT *time = palloc(sizeof(TimeADT));
+	TimeADT    *time = palloc(sizeof(TimeADT));
 
-    *time = (*time1 - *time2);
-    return(time);
+	*time = (*time1 - *time2);
+	return (time);
 }
 
 int4
 time_hours(TimeADT *time)
 {
-    return (((int) *time) / 3600);
+	return (((int) *time) / 3600);
 }
 
 int4
 time_minutes(TimeADT *time)
 {
-    return ((((int) *time) / 60) % 60);
+	return ((((int) *time) / 60) % 60);
 }
 
 int4
 time_seconds(TimeADT *time)
 {
-    return (((int) *time) % 60);
+	return (((int) *time) % 60);
 }
 
 int4
 as_minutes(TimeADT *time)
 {
-    return (((int) *time) / 60);
+	return (((int) *time) / 60);
 }
 
 int4
 as_seconds(TimeADT *time)
 {
-    return ((int) *time);
+	return ((int) *time);
 }
 
 int4
 date_day(DateADT val)
 {
-    int year, month, day;
+	int			year,
+				month,
+				day;
 
-    j2date(val + JDATE_2000, &year, &month, &day);
+	j2date(val + JDATE_2000, &year, &month, &day);
 
-    return (day);
+	return (day);
 }
 
 int4
 date_month(DateADT val)
 {
-    int year, month, day;
+	int			year,
+				month,
+				day;
 
-    j2date(val + JDATE_2000, &year, &month, &day);
+	j2date(val + JDATE_2000, &year, &month, &day);
 
-    return (month);
+	return (month);
 }
 
 int4
 date_year(DateADT val)
 {
-    int year, month, day;
+	int			year,
+				month,
+				day;
 
-    j2date(val + JDATE_2000, &year, &month, &day);
+	j2date(val + JDATE_2000, &year, &month, &day);
 
-    return (year);
+	return (year);
 }
 
-TimeADT *
+TimeADT    *
 currenttime()
 {
-    TimeADT *result = palloc(sizeof(TimeADT));
-    struct tm *tm;
-    time_t current_time;
+	TimeADT    *result = palloc(sizeof(TimeADT));
+	struct tm  *tm;
+	time_t		current_time;
 
-    current_time = time(NULL);
-    tm = localtime(&current_time);
-    *result = ((((tm->tm_hour*60)+tm->tm_min)*60)+tm->tm_sec);
+	current_time = time(NULL);
+	tm = localtime(&current_time);
+	*result = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec);
 
-    return (result);
+	return (result);
 }
 
 DateADT
 currentdate()
 {
-    DateADT date;
-    struct tm tt, *tm = &tt;
+	DateADT		date;
+	struct tm	tt,
+			   *tm = &tt;
 
-    GetCurrentTime(tm);
-    date = (date2j( tm->tm_year, tm->tm_mon, tm->tm_mday) - JDATE_2000);
-    return (date);
+	GetCurrentTime(tm);
+	date = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - JDATE_2000);
+	return (date);
 }
 
 /* end of file */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.28 1998/02/23 13:58:04 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.29 1998/02/26 04:36:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@ static MemoryContext MdCxt;
  * The number needs to be (2 ** 31) / BLCKSZ, but to be keep
  * the math under MAXINT, pre-divide by 256 and use ...
  *
- *           (((2 ** 23) / BLCKSZ) * (2 ** 8))
+ *			 (((2 ** 23) / BLCKSZ) * (2 ** 8))
  *
  * 07 Jan 98  darrenk
  */
@@ -505,33 +505,35 @@ mdblindwrt(char *dbstr,
 	/* user table? then put in user database area... */
 	else if (dbid == MyDatabaseId)
 	{
-		extern char	   *DatabasePath;
-		
+		extern char *DatabasePath;
+
 		path = (char *) palloc(strlen(DatabasePath) + 2 * sizeof(NameData) + 2 + nchars);
 		if (segno == 0)
 			sprintf(path, "%s%c%s", DatabasePath, SEP_CHAR, relstr);
 		else
 			sprintf(path, "%s%c%s.%d", DatabasePath, SEP_CHAR, relstr, segno);
 	}
-	else	/* this is work arround only !!! */
+	else
+/* this is work arround only !!! */
 	{
-		char	dbpath[MAXPGPATH+1];
-		Oid		owner, id;
-		char   *tmpPath;
-		
+		char		dbpath[MAXPGPATH + 1];
+		Oid			owner,
+					id;
+		char	   *tmpPath;
+
 		GetRawDatabaseInfo(dbstr, &owner, &id, dbpath);
-		
+
 		if (id != dbid)
-			elog (FATAL, "mdblindwrt: oid of db %s is not %u", dbstr, dbid);
+			elog(FATAL, "mdblindwrt: oid of db %s is not %u", dbstr, dbid);
 		tmpPath = ExpandDatabasePath(dbpath);
 		if (tmpPath == NULL)
-			elog (FATAL, "mdblindwrt: can't expand path for db %s", dbstr);
+			elog(FATAL, "mdblindwrt: can't expand path for db %s", dbstr);
 		path = (char *) palloc(strlen(tmpPath) + 2 * sizeof(NameData) + 2 + nchars);
 		if (segno == 0)
 			sprintf(path, "%s%c%s", tmpPath, SEP_CHAR, relstr);
 		else
 			sprintf(path, "%s%c%s.%d", tmpPath, SEP_CHAR, relstr, segno);
-		pfree (tmpPath);
+		pfree(tmpPath);
 	}
 
 	if ((fd = open(path, O_RDWR, 0600)) < 0)
@@ -635,7 +637,7 @@ mdtruncate(Relation reln, int nblocks)
 
 	return (nblocks);
 
-}								/* mdtruncate */
+}	/* mdtruncate */
 
 /*
  *	mdcommit() -- Commit a transaction.

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/format.c,v 1.5 1997/09/08 02:31:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/format.c,v 1.6 1998/02/26 04:37:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@ static char FormBuf[FormMaxSize];
  *		form
  * ----------------
  */
-char	   *
+char *
 form(const char *fmt,...)
 {
 	va_list		args;

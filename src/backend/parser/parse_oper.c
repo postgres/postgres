@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.8 1998/01/20 05:04:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.9 1998/02/26 04:33:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,21 +26,24 @@
 #include "storage/bufmgr.h"
 #include "utils/syscache.h"
 
-static int binary_oper_get_candidates(char *opname,
+static int
+binary_oper_get_candidates(char *opname,
 						   Oid leftTypeId,
 						   Oid rightTypeId,
 						   CandidateList *candidates);
-static CandidateList binary_oper_select_candidate(Oid arg1,
+static CandidateList
+binary_oper_select_candidate(Oid arg1,
 							 Oid arg2,
 							 CandidateList candidates);
 static bool equivalentOpersAfterPromotion(CandidateList candidates);
 static void op_error(char *op, Oid arg1, Oid arg2);
-static int unary_oper_get_candidates(char *op,
+static int
+unary_oper_get_candidates(char *op,
 						  Oid typeId,
 						  CandidateList *candidates,
 						  char rightleft);
 
-							 
+
 Oid
 any_ordering_op(int restype)
 {
@@ -577,7 +580,7 @@ op_error(char *op, Oid arg1, Oid arg2)
 		 op, typeTypeName(tp1), typeTypeName(tp2));
 #endif
 	elog(ERROR, "There is no operator '%s' for types '%s' and '%s'"
-		"\n\tYou will either have to retype this query using an explicit cast,"
-		"\n\tor you will have to define the operator using CREATE OPERATOR",
-		op, typeTypeName(tp1), typeTypeName(tp2));
+		 "\n\tYou will either have to retype this query using an explicit cast,"
+	 "\n\tor you will have to define the operator using CREATE OPERATOR",
+		 op, typeTypeName(tp1), typeTypeName(tp2));
 }

@@ -53,13 +53,13 @@ long
 strtol(nptr, endptr, base)
 const char *nptr;
 char	  **endptr;
-int base;
+int			base;
 {
 	const char *s = nptr;
 	unsigned long acc;
-	int c;
+	int			c;
 	unsigned long cutoff;
-	int neg = 0,
+	int			neg = 0,
 				any,
 				cutlim;
 

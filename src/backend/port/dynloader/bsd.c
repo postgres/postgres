@@ -48,7 +48,7 @@ static char sccsid[] = "@(#)dl.c	5.4 (Berkeley) 2/23/91";
 
 static char error_message[BUFSIZ];
 
-char	   *
+char *
 BSD44_derived_dlerror(void)
 {
 	static char ret[BUFSIZ];
@@ -58,7 +58,7 @@ BSD44_derived_dlerror(void)
 	return ((ret[0] == 0) ? (char *) NULL : ret);
 }
 
-void	   *
+void *
 BSD44_derived_dlopen(const char *file, int num)
 {
 #if defined(__mips__) || (defined(__NetBSD__) && defined(vax))
@@ -75,7 +75,7 @@ BSD44_derived_dlopen(const char *file, int num)
 #endif
 }
 
-void	   *
+void *
 BSD44_derived_dlsym(void *handle, const char *name)
 {
 #if defined(__mips__) || (defined(__NetBSD__) && defined(vax))

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.26 1998/02/24 06:04:55 scrappy Exp $
+ * $Id: libpq-fe.h,v 1.27 1998/02/26 04:45:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,10 +138,10 @@ extern		"C"
 		FILE	   *Pfin;
 		FILE	   *Pfout;
 		FILE	   *Pfdebug;
-		int			sock;	/* The socket */
-		SockAddr		laddr;	/* Local address */
-		SockAddr		raddr;	/* Remote address */
-		char			salt[2];
+		int			sock;		/* The socket */
+		SockAddr	laddr;		/* Local address */
+		SockAddr	raddr;		/* Remote address */
+		char		salt[2];
 		int			asyncNotifyWaiting;
 		Dllist	   *notifyList;
 		char	   *pguser;		/* Postgres username of user who is
@@ -224,7 +224,7 @@ extern		"C"
 	extern PGconn *PQconnectdb(const char *conninfo);
 	extern PQconninfoOption *PQconndefaults(void);
 	extern PGconn *PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
-					  const char *pgtty, const char *dbName, const char *login, const char *pwd);
+											const char *pgtty, const char *dbName, const char *login, const char *pwd);
 #define PQsetdb(M_PGHOST,M_PGPORT,M_PGOPT,M_PGTTY,M_DBNAME)   PQsetdbLogin(M_PGHOST, M_PGPORT, M_PGOPT, M_PGTTY, M_DBNAME, NULL, NULL)
 	/* close the current connection and free the PGconn data structure */
 	extern void PQfinish(PGconn *conn);

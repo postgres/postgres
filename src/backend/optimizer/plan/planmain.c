@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.19 1998/02/13 03:36:57 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.20 1998/02/26 04:32:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ make_groupPlan(List **tlist, bool tuplePerGroup,
  *
  *	  Returns a query plan.
  */
-Plan	   *
+Plan *
 query_planner(Query *root,
 			  int command_type,
 			  List *tlist,
@@ -74,18 +74,18 @@ query_planner(Query *root,
 	List	   *var_only_tlist = NIL;
 	List	   *level_tlist = NIL;
 	Plan	   *subplan = NULL;
-	
-	if ( PlannerQueryLevel > 1 )
+
+	if (PlannerQueryLevel > 1)
 	{
 		/* should copy be made ? */
-		tlist = (List *) SS_replace_correlation_vars ((Node*)tlist);
-		qual = (List *) SS_replace_correlation_vars ((Node*)qual);
+		tlist = (List *) SS_replace_correlation_vars((Node *) tlist);
+		qual = (List *) SS_replace_correlation_vars((Node *) qual);
 	}
 	if (root->hasSubLinks)
-		qual = (List *) SS_process_sublinks ((Node*) qual);
-	
+		qual = (List *) SS_process_sublinks((Node *) qual);
+
 	qual = cnfify((Expr *) qual, true);
-	
+
 	/*
 	 * A command without a target list or qualification is an error,
 	 * except for "delete foo".
@@ -158,7 +158,7 @@ query_planner(Query *root,
 					if (constant_qual != NULL)
 					{
 						return ((Plan *) make_result(tlist,
-													 (Node *) constant_qual,
+												  (Node *) constant_qual,
 													 (Plan *) scan));
 					}
 					else
@@ -187,10 +187,10 @@ query_planner(Query *root,
 	 */
 	if (constant_qual)
 	{
-		subplan = (Plan *)make_result((!root->hasAggs && !root->groupClause)
-											? tlist : subplan->targetlist,
-										(Node *) constant_qual,
-										subplan);
+		subplan = (Plan *) make_result((!root->hasAggs && !root->groupClause)
+									   ? tlist : subplan->targetlist,
+									   (Node *) constant_qual,
+									   subplan);
 
 		/*
 		 * Change all varno's of the Result's node target list.
@@ -200,6 +200,7 @@ query_planner(Query *root,
 
 		return subplan;
 	}
+
 	/*
 	 * fix up the flattened target list of the plan root node so that
 	 * expressions are evaluated.  this forces expression evaluations that
@@ -213,15 +214,16 @@ query_planner(Query *root,
 	 * aggregates fixing only other entries (i.e. - GroupBy-ed and so
 	 * fixed by make_groupPlan).	 - vadim 04/05/97
 	 */
-	 else
-	 {
+	else
+	{
 		if (!root->hasAggs && !root->groupClause)
 			subplan->targetlist = flatten_tlist_vars(tlist,
-												 subplan->targetlist);
+													 subplan->targetlist);
 		return subplan;
-	 }
-	 
+	}
+
 #ifdef NOT_USED
+
 	/*
 	 * Destructively modify the query plan's targetlist to add fjoin lists
 	 * to flatten functions that return sets of base types
@@ -330,7 +332,7 @@ make_result(List *tlist,
 #ifdef NOT_USED
 	tlist = generate_fjoin(tlist);
 #endif
-    plan->cost = (subplan ? subplan->cost : 0);
+	plan->cost = (subplan ? subplan->cost : 0);
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->lefttree = subplan;
@@ -379,9 +381,9 @@ make_groupPlan(List **tlist,
 	 */
 	foreach(sl, sort_tlist)
 	{
-		Resdom		   *resdom = NULL;
-		TargetEntry	   *te = (TargetEntry *) lfirst(sl);
-		int				keyno = 0;
+		Resdom	   *resdom = NULL;
+		TargetEntry *te = (TargetEntry *) lfirst(sl);
+		int			keyno = 0;
 
 		foreach(gl, groupClause)
 		{

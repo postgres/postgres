@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.25 1998/01/28 06:52:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.26 1998/02/26 04:36:07 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -50,9 +50,10 @@
 #include "access/xact.h"
 #include "access/transam.h"
 
-static int WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock,
+static int
+WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock,
 		   LOCKT lockt);
-		   
+
 /*#define LOCK_MGR_DEBUG*/
 
 #ifndef LOCK_MGR_DEBUG
@@ -542,7 +543,7 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 	 * word alignment and ensures hashing consistency).
 	 * ------------------
 	 */
-	MemSet(&item, 0, XID_TAGSIZE); /* must clear padding, needed */
+	MemSet(&item, 0, XID_TAGSIZE);		/* must clear padding, needed */
 	TransactionIdStore(myXid, &item.tag.xid);
 	item.tag.lock = MAKE_OFFSET(lock);
 #if 0
@@ -713,12 +714,12 @@ LockResolveConflicts(LOCKTAB *ltable,
 	{
 		/* ------------------------
 		 * If someone with a greater priority is waiting for the lock,
-		 * do not continue and share the lock, even if we can.  bjm
+		 * do not continue and share the lock, even if we can.	bjm
 		 * ------------------------
 		 */
-		int				myprio = ltable->ctl->prio[lockt];
-		PROC_QUEUE		*waitQueue = &(lock->waitProcs);
-		PROC			*topproc = (PROC *) MAKE_PTR(waitQueue->links.prev);
+		int			myprio = ltable->ctl->prio[lockt];
+		PROC_QUEUE *waitQueue = &(lock->waitProcs);
+		PROC	   *topproc = (PROC *) MAKE_PTR(waitQueue->links.prev);
 
 		if (waitQueue->size && topproc->prio > myprio)
 			return STATUS_FOUND;
@@ -902,7 +903,8 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 #endif
 
 	/*
-	 * let the caller print its own error message, too. Do not elog(ERROR).
+	 * let the caller print its own error message, too. Do not
+	 * elog(ERROR).
 	 */
 	if (!lock)
 	{
@@ -1430,16 +1432,16 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 	SHMEM_OFFSET end = MAKE_OFFSET(lockQueue);
 	LOCK	   *lock;
 
-	LOCKTAB *ltable;
+	LOCKTAB    *ltable;
 	XIDLookupEnt *result,
 				item;
 	HTAB	   *xidTable;
 	bool		found;
 
-	static PROC*	checked_procs[MaxBackendId];
-	static int		nprocs;
-	static bool		MyNHolding;
-	
+	static PROC *checked_procs[MaxBackendId];
+	static int	nprocs;
+	static bool MyNHolding;
+
 	/* initialize at start of recursion */
 	if (skip_check)
 	{
@@ -1455,15 +1457,15 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 #if 0
 		item.tag.pid = pid;
 #endif
-	
+
 		if (!(result = (XIDLookupEnt *)
-				  hash_search(xidTable, (Pointer) &item, HASH_FIND, &found)) || !found)
+			  hash_search(xidTable, (Pointer) &item, HASH_FIND, &found)) || !found)
 		{
 			elog(NOTICE, "LockAcquire: xid table corrupted");
 			return true;
 		}
 		MyNHolding = result->nHolding;
-	}	
+	}
 	if (SHMQueueEmpty(lockQueue))
 		return false;
 
@@ -1487,19 +1489,19 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 		/*
 		 * This is our only check to see if we found the lock we want.
 		 *
-		 * The lock we are waiting for is already in MyProc->lockQueue
-		 * so we need to skip it here.  We are trying to find it in
-		 * someone else's lockQueue.
+		 * The lock we are waiting for is already in MyProc->lockQueue so we
+		 * need to skip it here.  We are trying to find it in someone
+		 * else's lockQueue.
 		 */
 		if (lock == findlock && !skip_check)
 			return true;
 
-		 {
-			PROC_QUEUE  *waitQueue = &(lock->waitProcs);
-			PROC		*proc;
+		{
+			PROC_QUEUE *waitQueue = &(lock->waitProcs);
+			PROC	   *proc;
 			int			i;
 			int			j;
-			
+
 			proc = (PROC *) MAKE_PTR(waitQueue->links.prev);
 			for (i = 0; i < waitQueue->size; i++)
 			{
@@ -1507,23 +1509,24 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 					lock == findlock && /* skip_check also true */
 					MyNHolding) /* I already hold some lock on it */
 				{
+
 					/*
-					 *	For findlock's wait queue, we are interested in
-					 *	procs who are blocked waiting for a write-lock on the
-					 *	table we are waiting on, and already hold a lock on it.
-					 *	We first check to see if there is an escalation
-					 *	deadlock, where we hold a readlock and want a
-					 *	writelock, and someone else holds readlock on
-					 *	the same table, and wants a writelock.
+					 * For findlock's wait queue, we are interested in
+					 * procs who are blocked waiting for a write-lock on
+					 * the table we are waiting on, and already hold a
+					 * lock on it. We first check to see if there is an
+					 * escalation deadlock, where we hold a readlock and
+					 * want a writelock, and someone else holds readlock
+					 * on the same table, and wants a writelock.
 					 *
-					 *	Basically, the test is, "Do we both hold some lock
-					 *	on findlock, and we are both waiting in the lock
-					 *	queue?"
+					 * Basically, the test is, "Do we both hold some lock on
+					 * findlock, and we are both waiting in the lock
+					 * queue?"
 					 */
 
 					Assert(skip_check);
 					Assert(MyProc->prio == 2);
-					
+
 					ltable = AllTables[1];
 					xidTable = ltable->xidHash;
 
@@ -1533,9 +1536,9 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 #if 0
 					item.tag.pid = pid;
 #endif
-				
+
 					if (!(result = (XIDLookupEnt *)
-							  hash_search(xidTable, (Pointer) &item, HASH_FIND, &found)) || !found)
+						  hash_search(xidTable, (Pointer) &item, HASH_FIND, &found)) || !found)
 					{
 						elog(NOTICE, "LockAcquire: xid table corrupted");
 						return true;
@@ -1543,11 +1546,11 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 					if (result->nHolding)
 						return true;
 				}
+
 				/*
-				 *	No sense in looking at the wait queue of the lock we are
-				 *	looking for.
-				 *  If lock == findlock, and I got here, skip_check must be
-				 *	true too.
+				 * No sense in looking at the wait queue of the lock we
+				 * are looking for. If lock == findlock, and I got here,
+				 * skip_check must be true too.
 				 */
 				if (lock != findlock)
 				{
@@ -1558,13 +1561,14 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 					{
 						checked_procs[nprocs++] = proc;
 						Assert(nprocs <= MaxBackendId);
+
 						/*
-						 *	For non-MyProc entries, we are looking only waiters,
-						 *	not necessarily people who already hold locks and are
-						 *	waiting.
-						 *	Now we check for cases where we have two or more
-						 *	tables in a deadlock.  We do this by continuing
-						 *	to search for someone holding a lock
+						 * For non-MyProc entries, we are looking only
+						 * waiters, not necessarily people who already
+						 * hold locks and are waiting. Now we check for
+						 * cases where we have two or more tables in a
+						 * deadlock.  We do this by continuing to search
+						 * for someone holding a lock
 						 */
 						if (DeadLockCheck(&(proc->lockQueue), findlock, false))
 							return true;
@@ -1573,7 +1577,7 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 				proc = (PROC *) MAKE_PTR(proc->links.prev);
 			}
 		}
-			
+
 		if (done)
 			break;
 		SHMQueueFirst(&xidLook->queue, (Pointer *) &tmp, &tmp->queue);
@@ -1601,7 +1605,8 @@ DumpLocks()
 	SPINLOCK	masterLock;
 	int			nLockTypes;
 	LOCK	   *lock;
-				count;
+
+	count;
 	int			tableId = 1;
 	LOCKTAB    *ltable;
 

@@ -62,7 +62,7 @@ complex_in(char *str)
  * pointer. POSTGRES thinks all output functions are:
  *	   char *out_func(char *);
  */
-char	   *
+char *
 complex_out(Complex * complex)
 {
 	char	   *result;

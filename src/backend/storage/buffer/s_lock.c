@@ -7,15 +7,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.2 1998/01/07 17:02:52 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.3 1998/02/26 04:35:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * S_LOCK() -- Implements the S_LOCK function for the Linux/Alpha platform.
- *         This function is usually an inlined macro for all other platforms,
- *         but must be a seperate function for the Linux/Alpha platform, due
- *         to the assembly code involved.
+ *		   This function is usually an inlined macro for all other platforms,
+ *		   but must be a seperate function for the Linux/Alpha platform, due
+ *		   to the assembly code involved.
  */
 
 
@@ -38,14 +38,16 @@
 #include "storage/s_lock.h"
 
 #if defined(__alpha__) && defined(linux)
-void S_LOCK(slock_t* lock)
+void
+S_LOCK(slock_t *lock)
 {
-  do
-  {
-    slock_t _res;
-    do
-    {
-      __asm__("    ldq   $0, %0              \n\
+	do
+	{
+		slock_t		_res;
+
+		do
+		{
+	__asm__("    ldq   $0, %0              \n\
                    bne   $0, already_set     \n\
                    ldq_l $0, %0	             \n\
                    bne   $0, already_set     \n\
@@ -58,7 +60,8 @@ void S_LOCK(slock_t* lock)
         stqc_fail: or    $31, 1, $0	     \n\
       already_set: bis   $0, $0, %1	     \n\
               end: nop      ": "=m"(*lock), "=r"(_res): :"0");
-    } while (_res != 0);
-  } while (0);
+		} while (_res != 0);
+	} while (0);
 }
+
 #endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.13 1998/02/10 16:03:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.14 1998/02/26 04:31:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -313,8 +313,8 @@ be_printtup(HeapTuple tuple, TupleDesc typeinfo)
 		if (!isnull && OidIsValid(typoutput))
 		{
 			values[i] = fmgr(typoutput, attr,
-					gettypelem(typeinfo->attrs[i]->atttypid),
-							   typeinfo->attrs[i]->atttypmod);
+							 gettypelem(typeinfo->attrs[i]->atttypid),
+							 typeinfo->attrs[i]->atttypmod);
 		}
 		else
 			values[i] = NULL;

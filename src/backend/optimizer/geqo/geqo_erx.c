@@ -3,7 +3,7 @@
 * geqo_erx.c--
 *	 edge recombination crossover [ER]
 *
-* $Id: geqo_erx.c,v 1.7 1998/01/07 21:03:40 momjian Exp $
+* $Id: geqo_erx.c,v 1.8 1998/02/26 04:32:20 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -65,7 +65,7 @@ static Gene edge_failure(Gene *gene, int index, Edge *edge_table, int num_gene);
  *
  */
 
-Edge	   *
+Edge *
 alloc_edge_table(int num_gene)
 {
 	Edge	   *edge_table;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_target.h,v 1.3 1997/11/26 03:43:18 momjian Exp $
+ * $Id: parse_target.h,v 1.4 1998/02/26 04:42:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,10 +20,9 @@
 #include <parser/parse_node.h>
 
 #define EXPR_COLUMN_FIRST	1
-#define EXPR_RELATION_FIRST	2
+#define EXPR_RELATION_FIRST 2
 
 extern List *transformTargetList(ParseState *pstate, List *targetlist);
 extern List *makeTargetNames(ParseState *pstate, List *cols);
 
 #endif							/* PARSE_TARGET_H */
-

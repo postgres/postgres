@@ -13,7 +13,7 @@
  *	  columns. (ie. tuples from the same group are consecutive)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.17 1998/02/18 12:40:43 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.18 1998/02/26 04:31:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,24 +113,25 @@ ExecGroupEveryTuple(Group *node)
 
 		firsttuple = grpstate->grp_firstTuple;
 		/* this should occur on the first call only */
-		if (firsttuple == NULL)	
+		if (firsttuple == NULL)
 		{
-			grpstate->grp_firstTuple = heap_copytuple (outerTuple);
+			grpstate->grp_firstTuple = heap_copytuple(outerTuple);
 		}
 		else
 		{
+
 			/*
-			 *	Compare with first tuple and see if this tuple is of
-			 *	the same group.
+			 * Compare with first tuple and see if this tuple is of the
+			 * same group.
 			 */
 			if (!sameGroup(firsttuple, outerslot->val,
-						node->numCols, node->grpColIdx,
-						ExecGetScanType(&grpstate->csstate)))
+						   node->numCols, node->grpColIdx,
+						   ExecGetScanType(&grpstate->csstate)))
 			{
 				grpstate->grp_useFirstTuple = TRUE;
-				pfree (firsttuple);
-				grpstate->grp_firstTuple = heap_copytuple (outerTuple);
-				
+				pfree(firsttuple);
+				grpstate->grp_firstTuple = heap_copytuple(outerTuple);
+
 				return NULL;	/* signifies the end of the group */
 			}
 		}
@@ -188,7 +189,7 @@ ExecGroupOneTuple(Group *node)
 
 	firsttuple = grpstate->grp_firstTuple;
 	/* this should occur on the first call only */
-	if (firsttuple == NULL)	
+	if (firsttuple == NULL)
 	{
 		outerslot = ExecProcNode(outerPlan(node), (Plan *) node);
 		if (outerslot)
@@ -198,7 +199,7 @@ ExecGroupOneTuple(Group *node)
 			grpstate->grp_done = TRUE;
 			return NULL;
 		}
-		grpstate->grp_firstTuple = firsttuple = heap_copytuple (outerTuple);
+		grpstate->grp_firstTuple = firsttuple = heap_copytuple(outerTuple);
 	}
 
 	/*
@@ -238,12 +239,12 @@ ExecGroupOneTuple(Group *node)
 				   false);
 	econtext->ecxt_scantuple = grpstate->csstate.css_ScanTupleSlot;
 	resultSlot = ExecProject(projInfo, &isDone);
-	
+
 	/* save outerTuple if we are not done yet */
 	if (!grpstate->grp_done)
 	{
-		pfree (firsttuple);
-		grpstate->grp_firstTuple = heap_copytuple (outerTuple);
+		pfree(firsttuple);
+		grpstate->grp_firstTuple = heap_copytuple(outerTuple);
 	}
 
 	return resultSlot;
@@ -340,7 +341,7 @@ ExecEndGroup(Group *node)
 	ExecClearTuple(grpstate->csstate.css_ScanTupleSlot);
 	if (grpstate->grp_firstTuple != NULL)
 	{
-		pfree (grpstate->grp_firstTuple);
+		pfree(grpstate->grp_firstTuple);
 		grpstate->grp_firstTuple = NULL;
 	}
 }
@@ -362,7 +363,7 @@ sameGroup(HeapTuple oldtuple,
 	bool		isNull1,
 				isNull2;
 	Datum		attr1,
-			    attr2;
+				attr2;
 	char	   *val1,
 			   *val2;
 	int			i;
@@ -391,10 +392,10 @@ sameGroup(HeapTuple oldtuple,
 
 			val1 = fmgr(typoutput, attr1,
 						gettypelem(tupdesc->attrs[att - 1]->atttypid),
-						      	   tupdesc->attrs[att - 1]->atttypmod);
+						tupdesc->attrs[att - 1]->atttypmod);
 			val2 = fmgr(typoutput, attr2,
 						gettypelem(tupdesc->attrs[att - 1]->atttypid),
-								   tupdesc->attrs[att - 1]->atttypmod);
+						tupdesc->attrs[att - 1]->atttypmod);
 
 			/*
 			 * now, val1 and val2 are ascii representations so we can use
@@ -402,12 +403,12 @@ sameGroup(HeapTuple oldtuple,
 			 */
 			if (strcmp(val1, val2) != 0)
 			{
-				pfree (val1);
-				pfree (val2);
+				pfree(val1);
+				pfree(val2);
 				return FALSE;
 			}
-			pfree (val1);
-			pfree (val2);
+			pfree(val1);
+			pfree(val2);
 		}
 		else
 		{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.4 1997/09/08 02:31:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.5 1998/02/26 04:37:22 momjian Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -67,7 +67,7 @@ tidin(char *str)
  *		tidout
  * ----------------------------------------------------------------
  */
-char	   *
+char *
 tidout(ItemPointer itemPtr)
 {
 	BlockNumber blockNumber;

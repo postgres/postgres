@@ -6,22 +6,22 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *	  notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *	  notice, this list of conditions and the following disclaimer in the
+ *	  documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *	  must display the following acknowledgement:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *	  may be used to endorse or promote products derived from this software
+ *	  without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.	IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -33,7 +33,8 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)strtoul.c	8.1 (Berkeley) 6/4/93";
-#endif /* LIBC_SCCS and not lint */
+
+#endif							/* LIBC_SCCS and not lint */
 
 #include <limits.h>
 #include <ctype.h>
@@ -48,38 +49,45 @@ static char sccsid[] = "@(#)strtoul.c	8.1 (Berkeley) 6/4/93";
  */
 unsigned long
 strtoul(nptr, endptr, base)
-	const char *nptr;
-	char **endptr;
-	register int base;
+const char *nptr;
+char	  **endptr;
+register int base;
 {
 	register const char *s = nptr;
 	register unsigned long acc;
 	register unsigned char c;
 	register unsigned long cutoff;
-	register int neg = 0, any, cutlim;
+	register int neg = 0,
+				any,
+				cutlim;
 
 	/*
 	 * See strtol for comments as to the logic used.
 	 */
-	do {
+	do
+	{
 		c = *s++;
 	} while (isspace(c));
-	if (c == '-') {
+	if (c == '-')
+	{
 		neg = 1;
 		c = *s++;
-	} else if (c == '+')
+	}
+	else if (c == '+')
 		c = *s++;
 	if ((base == 0 || base == 16) &&
-	    c == '0' && (*s == 'x' || *s == 'X')) {
+		c == '0' && (*s == 'x' || *s == 'X'))
+	{
 		c = s[1];
 		s += 2;
 		base = 16;
 	}
 	if (base == 0)
 		base = c == '0' ? 8 : 10;
-	cutoff = (unsigned long)ULONG_MAX / (unsigned long)base;
-	cutlim = (unsigned long)ULONG_MAX % (unsigned long)base;
-	for (acc = 0, any = 0;; c = *s++) {
+	cutoff = (unsigned long) ULONG_MAX / (unsigned long) base;
+	cutlim = (unsigned long) ULONG_MAX % (unsigned long) base;
+	for (acc = 0, any = 0;; c = *s++)
+	{
 		if (!isascii(c))
 			break;
 		if (isdigit(c))
@@ -92,18 +100,21 @@ strtoul(nptr, endptr, base)
 			break;
 		if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim))
 			any = -1;
-		else {
+		else
+		{
 			any = 1;
 			acc *= base;
 			acc += c;
 		}
 	}
-	if (any < 0) {
+	if (any < 0)
+	{
 		acc = ULONG_MAX;
 		errno = ERANGE;
-	} else if (neg)
+	}
+	else if (neg)
 		acc = -acc;
 	if (endptr != 0)
-		*endptr = (char *)(any ? s - 1 : nptr);
+		*endptr = (char *) (any ? s - 1 : nptr);
 	return (acc);
 }

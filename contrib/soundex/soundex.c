@@ -13,7 +13,7 @@
 /* prototype for soundex function */
 char	   *soundex(char *instr, char *outstr);
 
-text	   *
+text *
 text_soundex(text *t)
 {
 	/* ABCDEFGHIJKLMNOPQRSTUVWXYZ */
@@ -47,7 +47,7 @@ text_soundex(text *t)
 	return (new_t);
 }
 
-char	   *
+char *
 soundex(char *instr, char *outstr)
 {								/* ABCDEFGHIJKLMNOPQRSTUVWXYZ */
 	char	   *table = "01230120022455012623010202";

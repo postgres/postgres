@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.14 1997/12/21 05:18:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.15 1998/02/26 04:32:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ static List *find_join_paths(Query *root, List *outer_rels, int levels_needed);
  *
  * 'rels' is the list of single relation entries appearing in the query
  */
-List	   *
+List *
 find_paths(Query *root, List *rels)
 {
 	int			levels_needed;
@@ -189,66 +189,69 @@ find_join_paths(Query *root, List *outer_rels, int levels_needed)
 	 * rest will be deprecated in case of GEQO *
 	 *******************************************/
 
-	 while (--levels_needed)
-	 {
+	while (--levels_needed)
+	{
+
 		/*
 		 * Determine all possible pairs of relations to be joined at this
-		 * level. Determine paths for joining these relation pairs and modify
-		 * 'new-rels' accordingly, then eliminate redundant join relations.
+		 * level. Determine paths for joining these relation pairs and
+		 * modify 'new-rels' accordingly, then eliminate redundant join
+		 * relations.
 		 */
 		new_rels = find_join_rels(root, outer_rels);
-	
+
 		find_all_join_paths(root, new_rels);
-	
+
 		prune_joinrels(new_rels);
-	
+
 #if 0
-	
+
 		/*
-		 * * for each expensive predicate in each path in each distinct rel, *
-		 * consider doing pullup  -- JMH
+		 * * for each expensive predicate in each path in each distinct
+		 * rel, * consider doing pullup  -- JMH
 		 */
 		if (XfuncMode != XFUNC_NOPULL && XfuncMode != XFUNC_OFF)
 			foreach(x, new_rels)
 				xfunc_trypullup((Rel *) lfirst(x));
 #endif
-	
+
 		prune_rel_paths(new_rels);
-	
+
 		if (BushyPlanFlag)
 		{
-	
+
 			/*
-			 * In case of bushy trees if there is still a join between a join
-			 * relation and another relation, add a new joininfo that involves
-			 * the join relation to the joininfo list of the other relation
+			 * In case of bushy trees if there is still a join between a
+			 * join relation and another relation, add a new joininfo that
+			 * involves the join relation to the joininfo list of the
+			 * other relation
 			 */
 			add_new_joininfos(root, new_rels, outer_rels);
 		}
-	
+
 		foreach(x, new_rels)
 		{
 			rel = (Rel *) lfirst(x);
 			if (rel->size <= 0)
 				rel->size = compute_rel_size(rel);
 			rel->width = compute_rel_width(rel);
-	
-	/*#define OPTIMIZER_DEBUG*/
+
+			/* #define OPTIMIZER_DEBUG */
 #ifdef OPTIMIZER_DEBUG
 			printf("levels left: %d\n", levels_left);
 			debug_print_rel(root, rel);
 #endif
 		}
-	
+
 		if (BushyPlanFlag)
 		{
-	
+
 			/*
-			 * prune rels that have been completely incorporated into new join
-			 * rels
+			 * prune rels that have been completely incorporated into new
+			 * join rels
 			 */
 			outer_rels = prune_oldrels(outer_rels);
-	
+
 			/*
 			 * merge join rels if then contain the same list of base rels
 			 */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.6 1997/09/08 21:44:25 momjian Exp $
+ * $Id: geqo_main.c,v 1.7 1998/02/26 04:32:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@
  *	  similar to a constrained Traveling Salesman Problem (TSP)
  */
 
-Rel		   *
+Rel *
 geqo(Query *root)
 {
 	int			generation;

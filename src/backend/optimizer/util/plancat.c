@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.15 1998/02/11 19:10:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.16 1998/02/26 04:33:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -403,7 +403,7 @@ join_selectivity(Oid functionObjectId,
  * Returns a LISP list containing the OIDs of all relations which
  * inherits from the relation with OID 'inhparent'.
  */
-List	   *
+List *
 find_inheritance_children(Oid inhparent)
 {
 	static ScanKeyData key[1] = {
@@ -440,7 +440,7 @@ find_inheritance_children(Oid inhparent)
  * Returns a LISP list containing the OIDs of all relations which are
  * base relations of the relation with OID 'verrelid'.
  */
-List	   *
+List *
 VersionGetParents(Oid verrelid)
 {
 	static ScanKeyData key[1] = {

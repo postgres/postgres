@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.6 1997/09/08 21:44:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.7 1998/02/26 04:32:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,7 @@ var_is_rel(Var *var)
  *		Returns the modified oper node.
  *
  */
-Oper	   *
+Oper *
 replace_opid(Oper *oper)
 {
 	oper->opid = get_opcode(oper->opno);

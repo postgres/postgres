@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lselect.h,v 1.9 1998/01/24 22:50:46 momjian Exp $
+ * $Id: lselect.h,v 1.10 1998/02/26 04:44:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,11 +39,14 @@ typedef struct
 } LeftistContextData;
 typedef LeftistContextData *LeftistContext;
 
-extern struct leftist * lmerge(struct leftist * pt, struct leftist * qt,
+extern struct leftist *
+lmerge(struct leftist * pt, struct leftist * qt,
 	   LeftistContext context);
-extern HeapTuple gettuple(struct leftist ** treep, short *devnum,
+extern HeapTuple
+gettuple(struct leftist ** treep, short *devnum,
 		 LeftistContext context);
-extern void puttuple(struct leftist ** treep, HeapTuple newtuple, short devnum,
+extern void
+puttuple(struct leftist ** treep, HeapTuple newtuple, short devnum,
 		 LeftistContext context);
 extern int	tuplecmp(HeapTuple ltup, HeapTuple rtup, LeftistContext context);
 

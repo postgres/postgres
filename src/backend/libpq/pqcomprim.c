@@ -63,12 +63,12 @@
 int
 pqPutShort(int integer, FILE *f)
 {
-	uint16 n;
+	uint16		n;
 
 #ifdef FRONTEND
-	n = htons((uint16)integer);
+	n = htons((uint16) integer);
 #else
-	n = ((PG_PROTOCOL_MAJOR(FrontendProtocol) == 0) ? hton_s(integer) : htons((uint16)integer));
+	n = ((PG_PROTOCOL_MAJOR(FrontendProtocol) == 0) ? hton_s(integer) : htons((uint16) integer));
 #endif
 
 	if (fwrite(&n, 2, 1, f) != 1)
@@ -81,12 +81,12 @@ pqPutShort(int integer, FILE *f)
 int
 pqPutLong(int integer, FILE *f)
 {
-	uint32 n;
+	uint32		n;
 
 #ifdef FRONTEND
-	n = htonl((uint32)integer);
+	n = htonl((uint32) integer);
 #else
-	n = ((PG_PROTOCOL_MAJOR(FrontendProtocol) == 0) ? hton_l(integer) : htonl((uint32)integer));
+	n = ((PG_PROTOCOL_MAJOR(FrontendProtocol) == 0) ? hton_l(integer) : htonl((uint32) integer));
 #endif
 
 	if (fwrite(&n, 4, 1, f) != 1)
@@ -99,15 +99,15 @@ pqPutLong(int integer, FILE *f)
 int
 pqGetShort(int *result, FILE *f)
 {
-	uint16 n;
+	uint16		n;
 
 	if (fread(&n, 2, 1, f) != 1)
 		return EOF;
 
 #ifdef FRONTEND
-	*result = (int)ntohs(n);
+	*result = (int) ntohs(n);
 #else
-	*result = (int)((PG_PROTOCOL_MAJOR(FrontendProtocol) == 0) ? ntoh_s(n) : ntohs(n));
+	*result = (int) ((PG_PROTOCOL_MAJOR(FrontendProtocol) == 0) ? ntoh_s(n) : ntohs(n));
 #endif
 
 	return 0;
@@ -117,15 +117,15 @@ pqGetShort(int *result, FILE *f)
 int
 pqGetLong(int *result, FILE *f)
 {
-	uint32 n;
+	uint32		n;
 
 	if (fread(&n, 4, 1, f) != 1)
 		return EOF;
 
 #ifdef FRONTEND
-	*result = (int)ntohl(n);
+	*result = (int) ntohl(n);
 #else
-	*result = (int)((PG_PROTOCOL_MAJOR(FrontendProtocol) == 0) ? ntoh_l(n) : ntohl(n));
+	*result = (int) ((PG_PROTOCOL_MAJOR(FrontendProtocol) == 0) ? ntoh_l(n) : ntohl(n));
 #endif
 
 	return 0;
@@ -139,7 +139,7 @@ pqGetLong(int *result, FILE *f)
 int
 pqGetNBytes(char *s, size_t len, FILE *f)
 {
-	int cnt;
+	int			cnt;
 
 	if (f == NULL)
 		return EOF;
@@ -167,7 +167,7 @@ pqPutNBytes(const char *s, size_t len, FILE *f)
 int
 pqGetString(char *s, size_t len, FILE *f)
 {
-	int c;
+	int			c;
 
 	if (f == NULL)
 		return EOF;

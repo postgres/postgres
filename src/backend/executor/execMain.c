@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.43 1998/02/21 06:31:37 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.44 1998/02/26 04:31:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,22 +57,28 @@
 
 
 /* decls for local routines only used within this module */
-static void ExecCheckPerms(CmdType operation, int resultRelation, List *rangeTable,
+static void
+ExecCheckPerms(CmdType operation, int resultRelation, List *rangeTable,
 			   Query *parseTree);
-static TupleDesc InitPlan(CmdType operation, Query *parseTree,
+static TupleDesc
+InitPlan(CmdType operation, Query *parseTree,
 		 Plan *plan, EState *estate);
 static void EndPlan(Plan *plan, EState *estate);
-static TupleTableSlot * ExecutePlan(EState *estate, Plan *plan,
+static TupleTableSlot *
+ExecutePlan(EState *estate, Plan *plan,
 			Query *parseTree, CmdType operation,
 			int numberTuples, ScanDirection direction,
 			void (*printfunc) ());
 static void ExecRetrieve(TupleTableSlot *slot, void (*printfunc) (),
 									 EState *estate);
-static void ExecAppend(TupleTableSlot *slot, ItemPointer tupleid,
+static void
+ExecAppend(TupleTableSlot *slot, ItemPointer tupleid,
 		   EState *estate);
-static void ExecDelete(TupleTableSlot *slot, ItemPointer tupleid,
+static void
+ExecDelete(TupleTableSlot *slot, ItemPointer tupleid,
 		   EState *estate);
-static void ExecReplace(TupleTableSlot *slot, ItemPointer tupleid,
+static void
+ExecReplace(TupleTableSlot *slot, ItemPointer tupleid,
 			EState *estate, Query *parseTree);
 
 /* end of local decls */
@@ -83,13 +89,14 @@ static int	queryLimit = ALL_TUPLES;
 #undef ALL_TUPLES
 #define ALL_TUPLES queryLimit
 
-int ExecutorLimit(int limit);
+int			ExecutorLimit(int limit);
 
 int
 ExecutorLimit(int limit)
 {
 	return queryLimit = limit;
 }
+
 #endif
 
 /* ----------------------------------------------------------------
@@ -110,14 +117,14 @@ ExecutorStart(QueryDesc *queryDesc, EState *estate)
 
 	/* sanity checks */
 	Assert(queryDesc != NULL);
-	
+
 	if (queryDesc->plantree->nParamExec > 0)
 	{
-		estate->es_param_exec_vals = (ParamExecData*) 
-			palloc (queryDesc->plantree->nParamExec * sizeof (ParamExecData));
-		memset (estate->es_param_exec_vals, 0 , queryDesc->plantree->nParamExec * sizeof (ParamExecData));
+		estate->es_param_exec_vals = (ParamExecData *)
+			palloc(queryDesc->plantree->nParamExec * sizeof(ParamExecData));
+		memset(estate->es_param_exec_vals, 0, queryDesc->plantree->nParamExec * sizeof(ParamExecData));
 	}
-	
+
 	result = InitPlan(queryDesc->operation,
 					  queryDesc->parsetree,
 					  queryDesc->plantree,
@@ -301,11 +308,12 @@ ExecCheckPerms(CmdType operation,
 
 		if (rte->skipAcl)
 		{
+
 			/*
-			 * This happens if the access to this table is due
-			 * to a view query rewriting - the rewrite handler
-			 * checked the permissions against the view owner,
-			 * so we just skip this entry.
+			 * This happens if the access to this table is due to a view
+			 * query rewriting - the rewrite handler checked the
+			 * permissions against the view owner, so we just skip this
+			 * entry.
 			 */
 			continue;
 		}
@@ -1239,8 +1247,8 @@ ExecAttrDefault(Relation rel, HeapTuple tuple)
 	econtext->ecxt_outertuple = NULL;	/* outer tuple slot */
 	econtext->ecxt_relation = NULL;		/* relation */
 	econtext->ecxt_relid = 0;	/* relid */
-	econtext->ecxt_param_list_info = NULL;	/* param list info */
-	econtext->ecxt_param_exec_vals = NULL;	/* exec param values */
+	econtext->ecxt_param_list_info = NULL;		/* param list info */
+	econtext->ecxt_param_exec_vals = NULL;		/* exec param values */
 	econtext->ecxt_range_table = NULL;	/* range table */
 	for (i = 0; i < ndef; i++)
 	{
@@ -1283,6 +1291,7 @@ ExecAttrDefault(Relation rel, HeapTuple tuple)
 	return (newtuple);
 
 }
+
 #endif
 
 static char *

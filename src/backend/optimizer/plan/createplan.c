@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.26 1998/02/13 03:36:54 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.27 1998/02/26 04:32:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,33 +46,44 @@
 static List *switch_outer(List *clauses);
 static Scan *create_scan_node(Path *best_path, List *tlist);
 static Join *create_join_node(JoinPath *best_path, List *tlist);
-static SeqScan *create_seqscan_node(Path *best_path, List *tlist,
+static SeqScan *
+create_seqscan_node(Path *best_path, List *tlist,
 					List *scan_clauses);
-static IndexScan *create_indexscan_node(IndexPath *best_path, List *tlist,
+static IndexScan *
+create_indexscan_node(IndexPath *best_path, List *tlist,
 					  List *scan_clauses);
-static NestLoop *create_nestloop_node(JoinPath *best_path, List *tlist,
+static NestLoop *
+create_nestloop_node(JoinPath *best_path, List *tlist,
 					 List *clauses, Plan *outer_node, List *outer_tlist,
 					 Plan *inner_node, List *inner_tlist);
-static MergeJoin *create_mergejoin_node(MergePath *best_path, List *tlist,
+static MergeJoin *
+create_mergejoin_node(MergePath *best_path, List *tlist,
 					  List *clauses, Plan *outer_node, List *outer_tlist,
 					  Plan *inner_node, List *inner_tlist);
-static HashJoin *create_hashjoin_node(HashPath *best_path, List *tlist,
+static HashJoin *
+create_hashjoin_node(HashPath *best_path, List *tlist,
 					 List *clauses, Plan *outer_node, List *outer_tlist,
 					 Plan *inner_node, List *inner_tlist);
 static Node *fix_indxqual_references(Node *clause, Path *index_path);
-static Temp *make_temp(List *tlist, List *keys, Oid *operators,
+static Temp *
+make_temp(List *tlist, List *keys, Oid *operators,
 		  Plan *plan_node, int temptype);
-static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
+static IndexScan *
+make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   List *indxid, List *indxqual, Cost cost);
-static NestLoop *make_nestloop(List *qptlist, List *qpqual, Plan *lefttree,
+static NestLoop *
+make_nestloop(List *qptlist, List *qpqual, Plan *lefttree,
 			  Plan *righttree);
-static HashJoin *make_hashjoin(List *tlist, List *qpqual,
+static HashJoin *
+make_hashjoin(List *tlist, List *qpqual,
 			  List *hashclauses, Plan *lefttree, Plan *righttree);
 static Hash *make_hash(List *tlist, Var *hashkey, Plan *lefttree);
-static MergeJoin *make_mergesort(List *tlist, List *qpqual,
+static MergeJoin *
+make_mergesort(List *tlist, List *qpqual,
 			   List *mergeclauses, Oid opcode, Oid *rightorder,
 			   Oid *leftorder, Plan *righttree, Plan *lefttree);
-static Material *make_material(List *tlist, Oid tempid, Plan *lefttree,
+static Material *
+make_material(List *tlist, Oid tempid, Plan *lefttree,
 			  int keycount);
 
 /*
@@ -90,7 +101,7 @@ static Material *make_material(List *tlist, Oid tempid, Plan *lefttree,
  *
  *	  Returns the optimal(?) access plan.
  */
-Plan	   *
+Plan *
 create_plan(Path *best_path)
 {
 	List	   *tlist;
@@ -931,7 +942,7 @@ make_seqscan(List *qptlist,
 	SeqScan    *node = makeNode(SeqScan);
 	Plan	   *plan = &node->plan;
 
-    plan->cost = (lefttree ? lefttree->cost : 0);
+	plan->cost = (lefttree ? lefttree->cost : 0);
 	plan->state = (EState *) NULL;
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
@@ -949,7 +960,7 @@ make_indexscan(List *qptlist,
 			   Index scanrelid,
 			   List *indxid,
 			   List *indxqual,
-			   Cost  cost)
+			   Cost cost)
 {
 	IndexScan  *node = makeNode(IndexScan);
 	Plan	   *plan = &node->scan.plan;
@@ -978,8 +989,8 @@ make_nestloop(List *qptlist,
 	NestLoop   *node = makeNode(NestLoop);
 	Plan	   *plan = &node->join;
 
-    plan->cost = (lefttree ? lefttree->cost : 0) +
-		 (righttree ? righttree->cost : 0);
+	plan->cost = (lefttree ? lefttree->cost : 0) +
+		(righttree ? righttree->cost : 0);
 	plan->state = (EState *) NULL;
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
@@ -1000,8 +1011,8 @@ make_hashjoin(List *tlist,
 	HashJoin   *node = makeNode(HashJoin);
 	Plan	   *plan = &node->join;
 
-    plan->cost = (lefttree ? lefttree->cost : 0) +
-		 (righttree ? righttree->cost : 0);
+	plan->cost = (lefttree ? lefttree->cost : 0) +
+		(righttree ? righttree->cost : 0);
 	plan->cost = 0.0;
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
@@ -1023,7 +1034,7 @@ make_hash(List *tlist, Var *hashkey, Plan *lefttree)
 	Hash	   *node = makeNode(Hash);
 	Plan	   *plan = &node->plan;
 
-    plan->cost = (lefttree ? lefttree->cost : 0);
+	plan->cost = (lefttree ? lefttree->cost : 0);
 	plan->cost = 0.0;
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
@@ -1051,8 +1062,8 @@ make_mergesort(List *tlist,
 	MergeJoin  *node = makeNode(MergeJoin);
 	Plan	   *plan = &node->join;
 
-    plan->cost = (lefttree ? lefttree->cost : 0) +
-		 (righttree ? righttree->cost : 0);
+	plan->cost = (lefttree ? lefttree->cost : 0) +
+		(righttree ? righttree->cost : 0);
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = qpqual;
@@ -1066,13 +1077,13 @@ make_mergesort(List *tlist,
 	return (node);
 }
 
-Sort	   *
+Sort *
 make_sort(List *tlist, Oid tempid, Plan *lefttree, int keycount)
 {
 	Sort	   *node = makeNode(Sort);
 	Plan	   *plan = &node->plan;
 
-    plan->cost = (lefttree ? lefttree->cost : 0);
+	plan->cost = (lefttree ? lefttree->cost : 0);
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;
@@ -1093,7 +1104,7 @@ make_material(List *tlist,
 	Material   *node = makeNode(Material);
 	Plan	   *plan = &node->plan;
 
-    plan->cost = (lefttree ? lefttree->cost : 0);
+	plan->cost = (lefttree ? lefttree->cost : 0);
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;
@@ -1105,12 +1116,12 @@ make_material(List *tlist,
 	return (node);
 }
 
-Agg		   *
+Agg *
 make_agg(List *tlist, Plan *lefttree)
 {
 	Agg		   *node = makeNode(Agg);
 
-    node->plan.cost = (lefttree ? lefttree->cost : 0);
+	node->plan.cost = (lefttree ? lefttree->cost : 0);
 	node->plan.state = (EState *) NULL;
 	node->plan.qual = NULL;
 	node->plan.targetlist = tlist;
@@ -1121,7 +1132,7 @@ make_agg(List *tlist, Plan *lefttree)
 	return (node);
 }
 
-Group	   *
+Group *
 make_group(List *tlist,
 		   bool tuplePerGroup,
 		   int ngrp,
@@ -1130,7 +1141,7 @@ make_group(List *tlist,
 {
 	Group	   *node = makeNode(Group);
 
-    node->plan.cost = (lefttree ? lefttree->plan.cost : 0);
+	node->plan.cost = (lefttree ? lefttree->plan.cost : 0);
 	node->plan.state = (EState *) NULL;
 	node->plan.qual = NULL;
 	node->plan.targetlist = tlist;
@@ -1151,13 +1162,13 @@ make_group(List *tlist,
  * or "*"
  */
 
-Unique	   *
+Unique *
 make_unique(List *tlist, Plan *lefttree, char *uniqueAttr)
 {
 	Unique	   *node = makeNode(Unique);
 	Plan	   *plan = &node->plan;
 
-    plan->cost = (lefttree ? lefttree->cost : 0);
+	plan->cost = (lefttree ? lefttree->cost : 0);
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;
@@ -1175,7 +1186,7 @@ make_unique(List *tlist, Plan *lefttree, char *uniqueAttr)
 }
 
 #ifdef NOT_USED
-List	   *
+List *
 generate_fjoin(List *tlist)
 {
 	List		tlistP;
@@ -1228,5 +1239,5 @@ generate_fjoin(List *tlist)
 	return newTlist;
 	return tlist;				/* do nothing for now - ay 10/94 */
 }
-#endif
 
+#endif

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_oper.h,v 1.3 1997/11/26 03:43:14 momjian Exp $
+ * $Id: parse_oper.h,v 1.4 1998/02/26 04:42:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,8 +18,8 @@
 
 typedef HeapTuple Operator;
 
-extern Oid any_ordering_op(int restype);
-extern Oid oprid(Operator op);
+extern Oid	any_ordering_op(int restype);
+extern Oid	oprid(Operator op);
 extern Operator oper(char *op, Oid arg1, Oid arg2, bool noWarnings);
 extern Operator right_oper(char *op, Oid arg);
 extern Operator left_oper(char *op, Oid arg);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.11 1998/01/07 21:03:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.12 1998/02/26 04:32:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,8 @@ prune_joinrels(List *rel_list)
 	List	   *i;
 
 	/*
-	 *	rel_list can shorten while running as duplicate relations are deleted
+	 * rel_list can shorten while running as duplicate relations are
+	 * deleted
 	 */
 	foreach(i, rel_list)
 		lnext(i) = prune_joinrel((Rel *) lfirst(i), lnext(i));
@@ -60,13 +61,13 @@ prune_joinrels(List *rel_list)
 static List *
 prune_joinrel(Rel *rel, List *other_rels)
 {
-	List	*cur = NIL;
-	List	*return_list = NIL;
+	List	   *cur = NIL;
+	List	   *return_list = NIL;
 
 	/* find first relation that doesn't match */
 	foreach(cur, other_rels)
 	{
-		Rel	*other_rel = (Rel *) lfirst(cur);
+		Rel		   *other_rel = (Rel *) lfirst(cur);
 
 		if (!same(rel->relids, other_rel->relids))
 			break;
@@ -74,18 +75,21 @@ prune_joinrel(Rel *rel, List *other_rels)
 
 	/* we now know cur doesn't match, or is NIL */
 	return_list = cur;
-	
-	/* remove relations that do match, we use lnext so we can remove easily */
+
+	/*
+	 * remove relations that do match, we use lnext so we can remove
+	 * easily
+	 */
 	while (cur != NIL && lnext(cur) != NIL)
 	{
-		Rel	*other_rel = (Rel *) lfirst(lnext(cur));
+		Rel		   *other_rel = (Rel *) lfirst(lnext(cur));
 
 		if (same(rel->relids, other_rel->relids))
 		{
 			rel->pathlist = add_pathlist(rel,
 										 rel->pathlist,
 										 other_rel->pathlist);
-			lnext(cur) = lnext(lnext(cur)); /* delete it */
+			lnext(cur) = lnext(lnext(cur));		/* delete it */
 		}
 		cur = lnext(cur);
 	}
@@ -145,7 +149,7 @@ prune_rel_paths(List *rel_list)
  * Returns the cheapest path.
  *
  */
-Path	   *
+Path *
 prune_rel_path(Rel *rel, Path *unorderedpath)
 {
 	Path	   *cheapest = set_cheapest(rel, rel->pathlist);
@@ -176,7 +180,7 @@ prune_rel_path(Rel *rel, Path *unorderedpath)
  *
  * Returns one pruned rel node list
  */
-List	   *
+List *
 merge_joinrels(List *rel_list1, List *rel_list2)
 {
 	List	   *xrel = NIL;
@@ -202,7 +206,7 @@ merge_joinrels(List *rel_list1, List *rel_list2)
  *
  * Returns a new list of rel nodes
  */
-List	   *
+List *
 prune_oldrels(List *old_rels)
 {
 	Rel		   *rel;
@@ -223,7 +227,7 @@ prune_oldrels(List *old_rels)
 			foreach(xjoininfo, joininfo_list)
 			{
 				JInfo	   *joininfo = (JInfo *) lfirst(xjoininfo);
-	
+
 				if (!joininfo->inactive)
 				{
 					temp_list = lcons(rel, temp_list);
@@ -232,5 +236,5 @@ prune_oldrels(List *old_rels)
 			}
 		}
 	}
-	return temp_list;		
+	return temp_list;
 }

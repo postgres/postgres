@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.26 1998/02/13 17:11:55 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.27 1998/02/26 04:43:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,15 +49,15 @@
  * NEXTSTEP (mach)
  * slock_t is defined as a struct mutex.
  */
-#define	S_LOCK(lock)	mutex_lock(lock)
+#define S_LOCK(lock)	mutex_lock(lock)
 
-#define	S_UNLOCK(lock)	mutex_unlock(lock)
+#define S_UNLOCK(lock)	mutex_unlock(lock)
 
-#define	S_INIT_LOCK(lock)	mutex_init(lock)
+#define S_INIT_LOCK(lock)	mutex_init(lock)
 
  /* S_LOCK_FREE should return 1 if lock is free; 0 if lock is locked */
 /* For Mach, we have to delve inside the entrails of `struct mutex'.  Ick! */
-#define	S_LOCK_FREE(alock)	((alock)->lock == 0)
+#define S_LOCK_FREE(alock)	((alock)->lock == 0)
 
 #endif							/* next */
 
@@ -73,7 +73,7 @@
  * assembly from his NECEWS SVR4 port, but we probably ought to retain this
  * for the R3000 chips out there.
  */
-#define	S_LOCK(lock)	do \
+#define S_LOCK(lock)	do \
 						{ \
 							while (!acquire_lock(lock)) \
 								; \
@@ -81,11 +81,11 @@
 
 #define S_UNLOCK(lock)	release_lock(lock)
 
-#define	S_INIT_LOCK(lock)	init_lock(lock)
+#define S_INIT_LOCK(lock)	init_lock(lock)
 
 /* S_LOCK_FREE should return 1 if lock is free; 0 if lock is locked */
 
-#define	S_LOCK_FREE(lock)	(stat_lock(lock) == UNLOCKED)
+#define S_LOCK_FREE(lock)	(stat_lock(lock) == UNLOCKED)
 
 #endif							/* __sgi */
 
@@ -99,17 +99,17 @@
 
 #if (defined(__alpha__) || defined(__alpha)) && !defined(linux)
 
-#define	S_LOCK(lock)	do \
+#define S_LOCK(lock)	do \
 						{ \
 							while (msem_lock((lock), MSEM_IF_NOWAIT) < 0) \
 								; \
 						} while (0)
 
-#define	S_UNLOCK(lock)	msem_unlock((lock), 0)
+#define S_UNLOCK(lock)	msem_unlock((lock), 0)
 
-#define	S_INIT_LOCK(lock)	msem_init((lock), MSEM_UNLOCKED)
+#define S_INIT_LOCK(lock)	msem_init((lock), MSEM_UNLOCKED)
 
-#define	S_LOCK_FREE(lock)	(!(lock)->msem_state)
+#define S_LOCK_FREE(lock)	(!(lock)->msem_state)
 
 #endif							/* alpha */
 
@@ -122,15 +122,15 @@
 
 static int	tas(slock_t *lock);
 
-#define	S_LOCK(lock)	do \
+#define S_LOCK(lock)	do \
 						{ \
 							while (tas(lock)) \
 								; \
 						} while (0)
 
-#define	S_UNLOCK(lock)	(*(lock) = 0)
+#define S_UNLOCK(lock)	(*(lock) = 0)
 
-#define	S_INIT_LOCK(lock)	S_UNLOCK(lock)
+#define S_INIT_LOCK(lock)	S_UNLOCK(lock)
 
 #endif							/* i86pc_solaris || sparc_solaris */
 
@@ -143,15 +143,15 @@ static int	tas(slock_t *lock);
 
 #if defined(_AIX)
 
-#define	S_LOCK(lock)	do \
+#define S_LOCK(lock)	do \
 						{ \
 							while (cs((int *) (lock), 0, 1)) \
 								; \
 						} while (0)
 
-#define	S_UNLOCK(lock)	(*(lock) = 0)
+#define S_UNLOCK(lock)	(*(lock) = 0)
 
-#define	S_INIT_LOCK(lock)	S_UNLOCK(lock)
+#define S_INIT_LOCK(lock)	S_UNLOCK(lock)
 
 #endif							/* _AIX */
 
@@ -172,17 +172,17 @@ static slock_t clear_lock = {-1, -1, -1, -1};
 
 static int	tas(slock_t *lock);
 
-#define	S_LOCK(lock)	do \
+#define S_LOCK(lock)	do \
 						{ \
 							while (tas(lock)) \
 								; \
 						} while (0)
 
-#define	S_UNLOCK(lock)	(*(lock) = clear_lock)			/* struct assignment */
+#define S_UNLOCK(lock)	(*(lock) = clear_lock)	/* struct assignment */
 
-#define	S_INIT_LOCK(lock)	S_UNLOCK(lock)
+#define S_INIT_LOCK(lock)	S_UNLOCK(lock)
 
-#define	S_LOCK_FREE(lock)	( *(int *) (((long) (lock) + 15) & ~15) != 0)
+#define S_LOCK_FREE(lock)	( *(int *) (((long) (lock) + 15) & ~15) != 0)
 
 #endif							/* __hpux */
 
@@ -200,9 +200,9 @@ static int	tas(slock_t *lock);
 								; \
 						} while (0)
 
-#define	S_UNLOCK(lock)	(*(lock) = 0)
+#define S_UNLOCK(lock)	(*(lock) = 0)
 
-#define	S_INIT_LOCK(lock)	S_UNLOCK(lock)
+#define S_INIT_LOCK(lock)	S_UNLOCK(lock)
 
 static int
 tas_dummy()
@@ -272,7 +272,7 @@ tas_dummy()
 	asm("nop");
 }
 
-#define	S_LOCK(addr)	do \
+#define S_LOCK(addr)	do \
 						{ \
 							while (tas(addr)) \
 								; \
@@ -281,9 +281,9 @@ tas_dummy()
 /*
  * addr should be as in the above S_LOCK routine
  */
-#define	S_UNLOCK(addr)	(*(addr) = 0)
+#define S_UNLOCK(addr)	(*(addr) = 0)
 
-#define	S_INIT_LOCK(addr)	(*(addr) = 0)
+#define S_INIT_LOCK(addr)	(*(addr) = 0)
 
 #endif							/* NEED_SPARC_TAS_ASM */
 
@@ -306,22 +306,24 @@ tas_dummy()
 #if defined(NEED_I386_TAS_ASM)
 
 #if defined(USE_UNIVEL_CC_ASM)
-asm void S_LOCK(char *lval)
+asm void
+S_LOCK(char *lval)
 {
-% lab again;
+	%lab again;
 /* Upon entry, %eax will contain the pointer to the lock byte */
-	pushl   %ebx
-	xchgl   %eax,%ebx
-	movb    $-1,%al
+	pushl % ebx
+		xchgl % eax, %ebx
+		movb $ - 1, %al
 again:
 	lock
-	xchgb   %al,(%ebx)
-	cmpb    $0,%al
-	jne     again
-	popl    %ebx
+		xchgb % al, (%ebx)
+		cmpb $0, %al
+		jne again
+		popl % ebx
 }
+
 #else
-#define	S_LOCK(lock)	do \
+#define S_LOCK(lock)	do \
 						{ \
 							slock_t		_res; \
 							do \
@@ -331,20 +333,20 @@ again:
 						} while (0)
 #endif
 
-#define	S_UNLOCK(lock)	(*(lock) = 0)
+#define S_UNLOCK(lock)	(*(lock) = 0)
 
-#define	S_INIT_LOCK(lock)	S_UNLOCK(lock)
+#define S_INIT_LOCK(lock)	S_UNLOCK(lock)
 
 #endif							/* NEED_I386_TAS_ASM */
 
 
 #if defined(__alpha__) && defined(linux)
 
-void S_LOCK(slock_t* lock);
+void		S_LOCK(slock_t *lock);
 
 #define S_UNLOCK(lock) { __asm__("mb"); *(lock) = 0; }
 
-#define	S_INIT_LOCK(lock)	S_UNLOCK(lock)
+#define S_INIT_LOCK(lock)	S_UNLOCK(lock)
 
 #endif							/* defined(__alpha__) && defined(linux) */
 
@@ -362,9 +364,9 @@ void S_LOCK(slock_t* lock);
 							} while (_res != 0); \
 						} while (0)
 
-#define	S_UNLOCK(lock)	(*(lock) = 0)
+#define S_UNLOCK(lock)	(*(lock) = 0)
 
-#define	S_INIT_LOCK(lock)	S_UNLOCK(lock)
+#define S_INIT_LOCK(lock)	S_UNLOCK(lock)
 
 #endif							/* defined(linux) && defined(sparc) */
 
@@ -389,22 +391,23 @@ success:		\n\
 	");
 }
 
-#define	S_LOCK(lock)	do \
+#define S_LOCK(lock)	do \
 						{ \
 							while (tas(lock)) \
 								; \
 						} while (0)
 
-#define	S_UNLOCK(lock)	(*(lock) = 0)
+#define S_UNLOCK(lock)	(*(lock) = 0)
 
-#define	S_INIT_LOCK(lock)	S_UNLOCK(lock)
+#define S_INIT_LOCK(lock)	S_UNLOCK(lock)
 
 #endif							/* defined(linux) && defined(PPC) */
 
-#ifndef S_LOCK_FREE		/* for those who have not already defined it */
+#ifndef S_LOCK_FREE				/* for those who have not already defined
+								 * it */
 #define S_LOCK_FREE(lock)		((*lock) == 0)
 #endif
 
 #endif							/* HAS_TEST_AND_SET */
 
-#endif							/* S_LOCK_H */ 
+#endif							/* S_LOCK_H */

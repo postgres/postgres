@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.22 1998/02/13 03:36:59 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.23 1998/02/26 04:32:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,8 @@
 #include "executor/executor.h"
 
 static Plan *make_sortplan(List *tlist, List *sortcls, Plan *plannode);
-extern Plan *make_groupPlan(List **tlist, bool tuplePerGroup,
+extern Plan *
+make_groupPlan(List **tlist, bool tuplePerGroup,
 			   List *groupClause, Plan *subplan);
 
 /*****************************************************************************
@@ -58,27 +59,27 @@ extern Plan *make_groupPlan(List **tlist, bool tuplePerGroup,
  *
  *****************************************************************************/
 
-Plan*
+Plan *
 planner(Query *parse)
 {
 	Plan	   *result_plan;
-	
+
 	PlannerQueryLevel = 1;
 	PlannerVarParam = NULL;
 	PlannerParamVar = NULL;
 	PlannerInitPlan = NULL;
 	PlannerPlanId = 0;
-	
-	result_plan = union_planner (parse);
-	
-	Assert (PlannerQueryLevel == 1);
-	if ( PlannerPlanId > 0 )
+
+	result_plan = union_planner(parse);
+
+	Assert(PlannerQueryLevel == 1);
+	if (PlannerPlanId > 0)
 	{
 		result_plan->initPlan = PlannerInitPlan;
-		(void) SS_finalize_plan (result_plan);
+		(void) SS_finalize_plan(result_plan);
 	}
-	result_plan->nParamExec = length (PlannerParamVar);
-	
+	result_plan->nParamExec = length(PlannerParamVar);
+
 	return (result_plan);
 }
 
@@ -91,7 +92,7 @@ planner(Query *parse)
  * Returns a query plan.
  *
  */
-Plan	   *
+Plan *
 union_planner(Query *parse)
 {
 	List	   *tlist = parse->targetList;
@@ -100,7 +101,7 @@ union_planner(Query *parse)
 	Plan	   *result_plan = (Plan *) NULL;
 
 	Index		rt_index;
-	
+
 
 	if (parse->unionClause)
 	{
@@ -112,7 +113,7 @@ union_planner(Query *parse)
 									  parse->rtable);
 	}
 	else if ((rt_index =
-				first_inherit_rt_entry(rangetable)) != -1)
+			  first_inherit_rt_entry(rangetable)) != -1)
 	{
 		result_plan = (Plan *) plan_inherit_queries(parse, rt_index);
 		/* XXX do we need to do this? bjm 12/19/97 */
@@ -123,27 +124,27 @@ union_planner(Query *parse)
 	}
 	else
 	{
-		List  **vpm = NULL;
-		
+		List	  **vpm = NULL;
+
 		tlist = preprocess_targetlist(tlist,
 									  parse->commandType,
 									  parse->resultRelation,
 									  parse->rtable);
-		if ( parse->rtable != NULL )
+		if (parse->rtable != NULL)
 		{
-			vpm = (List **) palloc (length (parse->rtable) * sizeof (List*));
-			memset (vpm, 0, length (parse->rtable) * sizeof (List*));
+			vpm = (List **) palloc(length(parse->rtable) * sizeof(List *));
+			memset(vpm, 0, length(parse->rtable) * sizeof(List *));
 		}
-		PlannerVarParam = lcons (vpm, PlannerVarParam);
+		PlannerVarParam = lcons(vpm, PlannerVarParam);
 		result_plan = query_planner(parse,
 									parse->commandType,
 									tlist,
-									(List*) parse->qual);
-		PlannerVarParam = lnext (PlannerVarParam);
-		if ( vpm != NULL )
-			pfree (vpm);
+									(List *) parse->qual);
+		PlannerVarParam = lnext(PlannerVarParam);
+		if (vpm != NULL)
+			pfree(vpm);
 	}
-	
+
 	/*
 	 * If we have a GROUP BY clause, insert a group node (with the
 	 * appropriate sort node.)
@@ -161,10 +162,10 @@ union_planner(Query *parse)
 		tuplePerGroup = parse->hasAggs;
 
 		result_plan =
-			make_groupPlan( &tlist,
-							tuplePerGroup,
-							parse->groupClause,
-							result_plan);
+			make_groupPlan(&tlist,
+						   tuplePerGroup,
+						   parse->groupClause,
+						   result_plan);
 
 	}
 
@@ -173,14 +174,14 @@ union_planner(Query *parse)
 	 */
 	if (parse->hasAggs)
 	{
-		result_plan = (Plan *)make_agg(tlist, result_plan);
+		result_plan = (Plan *) make_agg(tlist, result_plan);
 
 		/*
 		 * set the varno/attno entries to the appropriate references to
 		 * the result tuple of the subplans.
 		 */
-		((Agg *)result_plan)->aggs =
-			set_agg_tlist_references((Agg *)result_plan);
+		((Agg *) result_plan)->aggs =
+			set_agg_tlist_references((Agg *) result_plan);
 	}
 
 	/*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.26 1998/02/25 13:06:49 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.27 1998/02/26 04:31:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,16 +40,16 @@
 #include <libpq/crypt.h>
 
 
-static void sendAuthRequest(Port *port, AuthRequest areq, void (*handler)());
+static void sendAuthRequest(Port *port, AuthRequest areq, void (*handler) ());
 static void handle_done_auth(Port *port);
 static void handle_krb4_auth(Port *port);
 static void handle_krb5_auth(Port *port);
 static void handle_password_auth(Port *port);
 static void readPasswordPacket(char *arg, PacketLen len, char *pkt);
 static void pg_passwordv0_recvauth(char *arg, PacketLen len, char *pkt);
-static int checkPassword(Port *port, char *user, char *password);
-static int old_be_recvauth(Port *port);
-static int map_old_to_new(Port *port, UserAuth old, int status);
+static int	checkPassword(Port *port, char *user, char *password);
+static int	old_be_recvauth(Port *port);
+static int	map_old_to_new(Port *port, UserAuth old, int status);
 
 
 #ifdef KRB4
@@ -327,14 +327,18 @@ pg_krb5_recvauth(Port *port)
  * Handle a v0 password packet.
  */
 
-static void pg_passwordv0_recvauth(char *arg, PacketLen len, char *pkt)
+static void
+pg_passwordv0_recvauth(char *arg, PacketLen len, char *pkt)
 {
-	Port *port;
+	Port	   *port;
 	PasswordPacketV0 *pp;
-	char *user, *password, *cp, *start;
+	char	   *user,
+			   *password,
+			   *cp,
+			   *start;
 
-	port = (Port *)arg;
-	pp = (PasswordPacketV0 *)pkt;
+	port = (Port *) arg;
+	pp = (PasswordPacketV0 *) pkt;
 
 	/*
 	 * The packet is supposed to comprise the user name and the password
@@ -343,7 +347,7 @@ static void pg_passwordv0_recvauth(char *arg, PacketLen len, char *pkt)
 
 	user = password = NULL;
 
-	len -= sizeof (pp->unused);
+	len -= sizeof(pp->unused);
 
 	cp = start = pp->data;
 
@@ -372,8 +376,8 @@ static void pg_passwordv0_recvauth(char *arg, PacketLen len, char *pkt)
 	}
 	else
 	{
-		int status;
-		UserAuth saved;
+		int			status;
+		UserAuth	saved;
 
 		/* Check the password. */
 
@@ -396,7 +400,8 @@ static void pg_passwordv0_recvauth(char *arg, PacketLen len, char *pkt)
  * Tell the user the authentication failed, but not why.
  */
 
-void auth_failed(Port *port)
+void
+auth_failed(Port *port)
 {
 	PacketSendError(&port->pktInfo, "User authentication failed");
 }
@@ -405,15 +410,17 @@ void auth_failed(Port *port)
 /*
  * be_recvauth -- server demux routine for incoming authentication information
  */
-void be_recvauth(Port *port)
+void
+be_recvauth(Port *port)
 {
+
 	/*
 	 * Get the authentication method to use for this frontend/database
 	 * combination.
 	 */
 
 	if (hba_getauthmethod(&port->raddr, port->database, port->auth_arg,
-				&port->auth_method) != STATUS_OK)
+						  &port->auth_method) != STATUS_OK)
 		PacketSendError(&port->pktInfo, "Missing or mis-configured pg_hba.conf file");
 
 	else if (PG_PROTOCOL_MAJOR(port->proto) == 0)
@@ -426,7 +433,7 @@ void be_recvauth(Port *port)
 	else
 	{
 		AuthRequest areq;
-		void (*auth_handler)();
+		void		(*auth_handler) ();
 
 		/* Keep the compiler quiet. */
 
@@ -438,44 +445,44 @@ void be_recvauth(Port *port)
 
 		switch (port->auth_method)
 		{
-		case uaReject:
-			break;
- 
-		case uaKrb4:
-			areq = AUTH_REQ_KRB4;
-			auth_handler = handle_krb4_auth;
-			break;
+			case uaReject:
+				break;
 
-		case uaKrb5:
-			areq = AUTH_REQ_KRB5;
-			auth_handler = handle_krb5_auth;
-			break;
+			case uaKrb4:
+				areq = AUTH_REQ_KRB4;
+				auth_handler = handle_krb4_auth;
+				break;
 
-		case uaTrust:
-			areq = AUTH_REQ_OK;
-			auth_handler = handle_done_auth;
-			break;
+			case uaKrb5:
+				areq = AUTH_REQ_KRB5;
+				auth_handler = handle_krb5_auth;
+				break;
 
-		case uaIdent:
-			if (authident(&port->raddr.in, &port->laddr.in,
-				port->user, port->auth_arg) == STATUS_OK)
-			{
+			case uaTrust:
 				areq = AUTH_REQ_OK;
 				auth_handler = handle_done_auth;
-			}
+				break;
 
-			break;
+			case uaIdent:
+				if (authident(&port->raddr.in, &port->laddr.in,
+							  port->user, port->auth_arg) == STATUS_OK)
+				{
+					areq = AUTH_REQ_OK;
+					auth_handler = handle_done_auth;
+				}
 
-		case uaPassword:
-			areq = AUTH_REQ_PASSWORD;
-			auth_handler = handle_password_auth;
-			break;
+				break;
 
-		case uaCrypt:
-			areq = AUTH_REQ_CRYPT;
-			auth_handler = handle_password_auth;
-			break;
- 		}
+			case uaPassword:
+				areq = AUTH_REQ_PASSWORD;
+				auth_handler = handle_password_auth;
+				break;
+
+			case uaCrypt:
+				areq = AUTH_REQ_CRYPT;
+				auth_handler = handle_password_auth;
+				break;
+		}
 
 		/* Tell the frontend what we want next. */
 
@@ -485,24 +492,26 @@ void be_recvauth(Port *port)
 			auth_failed(port);
 	}
 }
- 
+
 
 /*
  * Send an authentication request packet to the frontend.
  */
 
-static void sendAuthRequest(Port *port, AuthRequest areq, void (*handler)())
+static void
+sendAuthRequest(Port *port, AuthRequest areq, void (*handler) ())
 {
-	char *dp, *sp;
-	int i;
-	uint32 net_areq;
+	char	   *dp,
+			   *sp;
+	int			i;
+	uint32		net_areq;
 
 	/* Convert to a byte stream. */
 
 	net_areq = htonl(areq);
 
 	dp = port->pktInfo.pkt.ar.data;
-	sp = (char *)&net_areq;
+	sp = (char *) &net_areq;
 
 	*dp++ = 'R';
 
@@ -518,7 +527,7 @@ static void sendAuthRequest(Port *port, AuthRequest areq, void (*handler)())
 		i += 2;
 	}
 
-	PacketSendSetup(&port -> pktInfo, i, handler, (char *)port);
+	PacketSendSetup(&port->pktInfo, i, handler, (char *) port);
 }
 
 
@@ -526,8 +535,10 @@ static void sendAuthRequest(Port *port, AuthRequest areq, void (*handler)())
  * Called when we have told the front end that it is authorised.
  */
 
-static void handle_done_auth(Port *port)
+static void
+handle_done_auth(Port *port)
 {
+
 	/*
 	 * Don't generate any more traffic.  This will cause the backend to
 	 * start.
@@ -542,7 +553,8 @@ static void handle_done_auth(Port *port)
  * authentication.
  */
 
-static void handle_krb4_auth(Port *port)
+static void
+handle_krb4_auth(Port *port)
 {
 	if (pg_krb4_recvauth(port) != STATUS_OK)
 		auth_failed(port);
@@ -556,7 +568,8 @@ static void handle_krb4_auth(Port *port)
  * authentication.
  */
 
-static void handle_krb5_auth(Port *port)
+static void
+handle_krb5_auth(Port *port)
 {
 	if (pg_krb5_recvauth(port) != STATUS_OK)
 		auth_failed(port);
@@ -570,11 +583,12 @@ static void handle_krb5_auth(Port *port)
  * authentication.
  */
 
-static void handle_password_auth(Port *port)
+static void
+handle_password_auth(Port *port)
 {
 	/* Set up the read of the password packet. */
 
-	PacketReceiveSetup(&port->pktInfo, readPasswordPacket, (char *)port);
+	PacketReceiveSetup(&port->pktInfo, readPasswordPacket, (char *) port);
 }
 
 
@@ -582,19 +596,20 @@ static void handle_password_auth(Port *port)
  * Called when we have received the password packet.
  */
 
-static void readPasswordPacket(char *arg, PacketLen len, char *pkt)
+static void
+readPasswordPacket(char *arg, PacketLen len, char *pkt)
 {
-	char password[sizeof (PasswordPacket) + 1];
-	Port *port;
+	char		password[sizeof(PasswordPacket) + 1];
+	Port	   *port;
 
-	port = (Port *)arg;
+	port = (Port *) arg;
 
 	/* Silently truncate a password that is too big. */
 
-	if (len > sizeof (PasswordPacket))
-		len = sizeof (PasswordPacket);
-		
-	StrNCpy(password, ((PasswordPacket *)pkt)->passwd, len);
+	if (len > sizeof(PasswordPacket))
+		len = sizeof(PasswordPacket);
+
+	StrNCpy(password, ((PasswordPacket *) pkt)->passwd, len);
 
 	if (checkPassword(port, port->user, password) != STATUS_OK)
 		auth_failed(port);
@@ -609,7 +624,8 @@ static void readPasswordPacket(char *arg, PacketLen len, char *pkt)
  * not.
  */
 
-static int checkPassword(Port *port, char *user, char *password)
+static int
+checkPassword(Port *port, char *user, char *password)
 {
 	if (port->auth_method == uaPassword && port->auth_arg[0] != '\0')
 		return verify_password(port->auth_arg, user, password);
@@ -622,83 +638,85 @@ static int checkPassword(Port *port, char *user, char *password)
  * Server demux routine for incoming authentication information for protocol
  * version 0.
  */
-static int old_be_recvauth(Port *port)
+static int
+old_be_recvauth(Port *port)
 {
-	int status;
-	MsgType msgtype = (MsgType)port->proto;
+	int			status;
+	MsgType		msgtype = (MsgType) port->proto;
 
 	/* Handle the authentication that's offered. */
 
 	switch (msgtype)
- 	{
-	case STARTUP_KRB4_MSG:
-		status = map_old_to_new(port,uaKrb4,pg_krb4_recvauth(port));
-		break;
+	{
+		case STARTUP_KRB4_MSG:
+			status = map_old_to_new(port, uaKrb4, pg_krb4_recvauth(port));
+			break;
 
-	case STARTUP_KRB5_MSG:
-		status = map_old_to_new(port,uaKrb5,pg_krb5_recvauth(port));
-		break;
+		case STARTUP_KRB5_MSG:
+			status = map_old_to_new(port, uaKrb5, pg_krb5_recvauth(port));
+			break;
 
-	case STARTUP_MSG:
-		status = map_old_to_new(port,uaTrust,STATUS_OK);
-		break;
+		case STARTUP_MSG:
+			status = map_old_to_new(port, uaTrust, STATUS_OK);
+			break;
 
-	case STARTUP_PASSWORD_MSG:
-		PacketReceiveSetup(&port->pktInfo, pg_passwordv0_recvauth,
-					(char *)port);
+		case STARTUP_PASSWORD_MSG:
+			PacketReceiveSetup(&port->pktInfo, pg_passwordv0_recvauth,
+							   (char *) port);
 
-		return STATUS_OK;
+			return STATUS_OK;
 
-	default:
-		fprintf(stderr, "Invalid startup message type: %u\n", msgtype);
+		default:
+			fprintf(stderr, "Invalid startup message type: %u\n", msgtype);
 
-		return STATUS_OK;
- 	}
+			return STATUS_OK;
+	}
 
 	return status;
 }
- 
+
 
 /*
- * The old style authentication has been done.  Modify the result of this (eg.
+ * The old style authentication has been done.	Modify the result of this (eg.
  * allow the connection anyway, disallow it anyway, or use the result)
  * depending on what authentication we really want to use.
  */
 
-static int map_old_to_new(Port *port, UserAuth old, int status)
+static int
+map_old_to_new(Port *port, UserAuth old, int status)
 {
 	switch (port->auth_method)
 	{
-	case uaCrypt:
-	case uaReject:
-		status = STATUS_ERROR;
-		break;
-
-	case uaKrb4:
-		if (old != uaKrb4)
+			case uaCrypt:
+			case uaReject:
 			status = STATUS_ERROR;
-		break;
+			break;
 
-	case uaKrb5:
-		if (old != uaKrb5)
-			status = STATUS_ERROR;
-		break;
+		case uaKrb4:
+			if (old != uaKrb4)
+				status = STATUS_ERROR;
+			break;
 
-	case uaTrust:
-		status = STATUS_OK;
-		break;
+		case uaKrb5:
+			if (old != uaKrb5)
+				status = STATUS_ERROR;
+			break;
 
-	case uaIdent:
-		status = authident(&port->raddr.in, &port->laddr.in,
-					port->user, port->auth_arg);
-		break;
+		case uaTrust:
+			status = STATUS_OK;
+			break;
 
-	case uaPassword:
-		if (old != uaPassword)
-			status = STATUS_ERROR;
+		case uaIdent:
+			status = authident(&port->raddr.in, &port->laddr.in,
+							   port->user, port->auth_arg);
+			break;
 
-		break;
+		case uaPassword:
+			if (old != uaPassword)
+				status = STATUS_ERROR;
+
+			break;
 	}
- 
+
 	return status;
 }

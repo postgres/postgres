@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.11 1997/11/02 15:24:47 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.12 1998/02/26 04:30:19 momjian Exp $
  *
  * OLD COMMENTS
  * XXX WARNING
@@ -38,7 +38,7 @@ xidin(char *representation)
 }
 
 /* XXX char16 name for catalogs */
-char	   *
+char *
 xidout(TransactionId transactionId)
 {
 /*	  return(TransactionIdFormString(transactionId)); */

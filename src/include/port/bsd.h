@@ -25,6 +25,6 @@
 #endif
 
 #if defined(__mips__)
-/* #    undef HAS_TEST_AND_SET */
+/* #	undef HAS_TEST_AND_SET */
 #endif
 typedef unsigned char slock_t;

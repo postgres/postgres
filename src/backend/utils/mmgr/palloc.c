@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/palloc.c,v 1.5 1997/09/08 02:32:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/palloc.c,v 1.6 1998/02/26 04:38:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@
  *		NonallocatedPointer if pointer was not returned by palloc or repalloc
  *				or may have been subsequently freed.
  */
-void	   *
+void *
 palloc(Size size)
 {
 #ifdef PALLOC_IS_MALLOC
@@ -94,7 +94,7 @@ pfree(void *pointer)
  *		NonallocatedPointer if pointer was not returned by palloc or repalloc
  *				or may have been freed already.
  */
-void	   *
+void *
 repalloc(void *pointer, Size size)
 {
 #ifdef PALLOC_IS_MALLOC
@@ -107,7 +107,7 @@ repalloc(void *pointer, Size size)
 /* pstrdup
 	allocates space for and copies a string
 	just like strdup except it uses palloc instead of malloc */
-char	   *
+char *
 pstrdup(char *string)
 {
 	char	   *nstr;

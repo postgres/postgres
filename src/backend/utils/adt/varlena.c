@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.30 1998/02/24 15:19:45 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.31 1998/02/26 04:37:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,7 +159,7 @@ textin(char *inputText)
 	memmove(VARDATA(result), inputText, len - VARHDRSZ);
 
 #ifdef CYR_RECODE
-	convertstr(VARDATA(result),len-VARHDRSZ,0);
+	convertstr(VARDATA(result), len - VARHDRSZ, 0);
 #endif
 
 	return (result);
@@ -187,7 +187,7 @@ textout(text *vlena)
 	result[len] = '\0';
 
 #ifdef CYR_RECODE
-	convertstr(result,len,1);
+	convertstr(result, len, 1);
 #endif
 
 	return (result);
@@ -199,16 +199,16 @@ textout(text *vlena)
 /*
  * textlen -
  *	  returns the actual length of a text*
- *     (which is less than the VARSIZE of the text*)
+ *	   (which is less than the VARSIZE of the text*)
  */
 int32
 textlen(text *t)
 {
 	if (!PointerIsValid(t))
-		elog(ERROR,"Null input to textlen");
+		elog(ERROR, "Null input to textlen");
 
 	return (VARSIZE(t) - VARHDRSZ);
-} /* textlen() */
+}	/* textlen() */
 
 /*
  * textcat -
@@ -259,7 +259,7 @@ textcat(text *t1, text *t2)
 	VARSIZE(result) = len;
 
 	return (result);
-} /* textcat() */
+}	/* textcat() */
 
 /*
  * text_substr()
@@ -267,17 +267,17 @@ textcat(text *t1, text *t2)
  * - thomas 1997-12-31
  *
  * Input:
- *  - string
- *  - starting position (is one-based)
- *  - string length
+ *	- string
+ *	- starting position (is one-based)
+ *	- string length
  *
  * If the starting position is zero or less, then return the entire string.
  * XXX Note that this may not be the right behavior:
- *  if we are calculating the starting position we might want it to start at one.
+ *	if we are calculating the starting position we might want it to start at one.
  * If the length is less than zero, return the remaining string.
  *
  * Note that the arguments operate on octet length,
- *  so not aware of multi-byte character sets.
+ *	so not aware of multi-byte character sets.
  */
 text *
 text_substr(text *string, int32 m, int32 n)
@@ -299,17 +299,17 @@ text_substr(text *string, int32 m, int32 n)
 	else
 	{
 		m--;
-		if (((m+n) > len) || (n < 0))
-			n = (len-m);
+		if (((m + n) > len) || (n < 0))
+			n = (len - m);
 	}
 
 	ret = (text *) palloc(VARHDRSZ + n);
 	VARSIZE(ret) = VARHDRSZ + n;
 
-	memcpy(VARDATA(ret), VARDATA(string)+m, n);
+	memcpy(VARDATA(ret), VARDATA(string) + m, n);
 
 	return ret;
-} /* text_substr() */
+}	/* text_substr() */
 
 /*
  * textpos -
@@ -351,7 +351,7 @@ textpos(text *t1, text *t2)
 		p1++;
 	};
 	return (pos);
-} /* textpos() */
+}	/* textpos() */
 
 /*
  *		texteq			- returns 1 iff arguments are equal
@@ -381,7 +381,7 @@ texteq(text *arg1, text *arg2)
 		if (*a1p++ != *a2p++)
 			return ((bool) 0);
 	return ((bool) 1);
-} /* texteq() */
+}	/* texteq() */
 
 bool
 textne(text *arg1, text *arg2)
@@ -443,7 +443,7 @@ text_lt(text *arg1, text *arg2)
 #endif
 
 	return (result);
-} /* text_lt() */
+}	/* text_lt() */
 
 /* text_le()
  * Comparison function for text strings.
@@ -499,7 +499,7 @@ text_le(text *arg1, text *arg2)
 #endif
 
 	return (result);
-} /* text_le() */
+}	/* text_le() */
 
 bool
 text_gt(text *arg1, text *arg2)

@@ -121,7 +121,7 @@ ExecAgg(Agg *node)
 	econtext = aggstate->csstate.cstate.cs_ExprContext;
 	nagg = length(node->aggs);
 
-	aggregates = (Aggreg **)palloc(sizeof(Aggreg *) * nagg);
+	aggregates = (Aggreg **) palloc(sizeof(Aggreg *) * nagg);
 
 	/* take List* and make it an array that can be quickly indexed */
 	alist = node->aggs;
@@ -333,18 +333,18 @@ ExecAgg(Agg *node)
 
 							break;
 						case T_Expr:
-						{
-							FunctionCachePtr fcache_ptr;
-		
-							if (nodeTag(tagnode) == T_Func)
-								fcache_ptr = ((Func *) tagnode)->func_fcache;
-							else
-								fcache_ptr = ((Oper *) tagnode)->op_fcache;
-							attlen = fcache_ptr->typlen;
-							byVal = fcache_ptr->typbyval;
+							{
+								FunctionCachePtr fcache_ptr;
 
-							break;
-						}
+								if (nodeTag(tagnode) == T_Func)
+									fcache_ptr = ((Func *) tagnode)->func_fcache;
+								else
+									fcache_ptr = ((Oper *) tagnode)->op_fcache;
+								attlen = fcache_ptr->typlen;
+								byVal = fcache_ptr->typbyval;
+
+								break;
+							}
 						case T_Const:
 							attlen = ((Const *) aggregates[i]->target)->constlen;
 							byVal = ((Const *) aggregates[i]->target)->constbyval;
@@ -375,8 +375,8 @@ ExecAgg(Agg *node)
 					args[0] = value1[i];
 					args[1] = newVal;
 					value1[i] =
-						(Datum) fmgr_c(&aggfns->xfn1, 
-								 (FmgrValues *) args,
+						(Datum) fmgr_c(&aggfns->xfn1,
+									   (FmgrValues *) args,
 									   &isNull1);
 					Assert(!isNull1);
 				}
@@ -440,7 +440,7 @@ ExecAgg(Agg *node)
 			else
 				elog(NOTICE, "ExecAgg: no valid transition functions??");
 			value1[i] = (Datum) fmgr_c(&aggfns->finalfn,
-						(FmgrValues *) args, &(nulls[i]));
+									   (FmgrValues *) args, &(nulls[i]));
 		}
 		else if (aggfns->xfn1.fn_addr != NULL)
 		{
@@ -545,15 +545,15 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	ExecInitNode(outerPlan, estate, (Plan *) node);
 
 	/*
-	 *	Result runs in its own context, but make it use our aggregates
-	 *	fix for 'select sum(2+2)'
+	 * Result runs in its own context, but make it use our aggregates fix
+	 * for 'select sum(2+2)'
 	 */
 	if (nodeTag(outerPlan) == T_Result)
 	{
-		((Result *)outerPlan)->resstate->cstate.cs_ProjInfo->pi_exprContext->ecxt_values =
-												econtext->ecxt_values;
-		((Result *)outerPlan)->resstate->cstate.cs_ProjInfo->pi_exprContext->ecxt_nulls =
-												econtext->ecxt_nulls;
+		((Result *) outerPlan)->resstate->cstate.cs_ProjInfo->pi_exprContext->ecxt_values =
+			econtext->ecxt_values;
+		((Result *) outerPlan)->resstate->cstate.cs_ProjInfo->pi_exprContext->ecxt_nulls =
+			econtext->ecxt_nulls;
 	}
 
 
@@ -661,7 +661,7 @@ aggGetAttr(TupleTableSlot *slot,
 		return (Datum) tempSlot;
 	}
 
-	result = 
+	result =
 		heap_getattr(heapTuple, /* tuple containing attribute */
 					 attnum,	/* attribute number of desired attribute */
 					 tuple_type,/* tuple descriptor of tuple */
@@ -680,17 +680,18 @@ aggGetAttr(TupleTableSlot *slot,
 void
 ExecReScanAgg(Agg *node, ExprContext *exprCtxt, Plan *parent)
 {
-	AggState	   *aggstate = node->aggstate;
-	ExprContext	   *econtext = aggstate->csstate.cstate.cs_ExprContext;
+	AggState   *aggstate = node->aggstate;
+	ExprContext *econtext = aggstate->csstate.cstate.cs_ExprContext;
 
 	aggstate->agg_done = FALSE;
 	MemSet(econtext->ecxt_values, 0, sizeof(Datum) * length(node->aggs));
 	MemSet(econtext->ecxt_nulls, 0, length(node->aggs));
-	/* 
-	 * if chgParam of subnode is not null then plan
-	 * will be re-scanned by first ExecProcNode.
+
+	/*
+	 * if chgParam of subnode is not null then plan will be re-scanned by
+	 * first ExecProcNode.
 	 */
-	if (((Plan*) node)->lefttree->chgParam == NULL)
-		ExecReScan (((Plan*) node)->lefttree, exprCtxt, (Plan *) node);
-	
+	if (((Plan *) node)->lefttree->chgParam == NULL)
+		ExecReScan(((Plan *) node)->lefttree, exprCtxt, (Plan *) node);
+
 }

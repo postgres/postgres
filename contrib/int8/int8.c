@@ -89,7 +89,7 @@ int64	   *dtoi8(float64 val);
 
 /* int8in()
  */
-int64	   *
+int64 *
 int8in(char *str)
 {
 	int64	   *result = palloc(sizeof(int64));
@@ -107,12 +107,12 @@ int8in(char *str)
 #endif
 
 	return (result);
-}								/* int8in() */
+}	/* int8in() */
 
 
 /* int8out()
  */
-char	   *
+char *
 int8out(int64 * val)
 {
 	char	   *result;
@@ -137,7 +137,7 @@ int8out(int64 * val)
 #endif
 
 	return (result);
-}								/* int8out() */
+}	/* int8out() */
 
 
 /*----------------------------------------------------------
@@ -151,37 +151,37 @@ bool
 int8eq(int64 * val1, int64 * val2)
 {
 	return (*val1 == *val2);
-}								/* int8eq() */
+}	/* int8eq() */
 
 bool
 int8ne(int64 * val1, int64 * val2)
 {
 	return (*val1 != *val2);
-}								/* int8ne() */
+}	/* int8ne() */
 
 bool
 int8lt(int64 * val1, int64 * val2)
 {
 	return (*val1 < *val2);
-}								/* int8lt() */
+}	/* int8lt() */
 
 bool
 int8gt(int64 * val1, int64 * val2)
 {
 	return (*val1 > *val2);
-}								/* int8gt() */
+}	/* int8gt() */
 
 bool
 int8le(int64 * val1, int64 * val2)
 {
 	return (*val1 <= *val2);
-}								/* int8le() */
+}	/* int8le() */
 
 bool
 int8ge(int64 * val1, int64 * val2)
 {
 	return (*val1 >= *val2);
-}								/* int8ge() */
+}	/* int8ge() */
 
 
 /* int84relop()
@@ -191,44 +191,44 @@ bool
 int84eq(int64 * val1, int32 val2)
 {
 	return (*val1 == val2);
-}								/* int84eq() */
+}	/* int84eq() */
 
 bool
 int84ne(int64 * val1, int32 val2)
 {
 	return (*val1 != val2);
-}								/* int84ne() */
+}	/* int84ne() */
 
 bool
 int84lt(int64 * val1, int32 val2)
 {
 	return (*val1 < val2);
-}								/* int84lt() */
+}	/* int84lt() */
 
 bool
 int84gt(int64 * val1, int32 val2)
 {
 	return (*val1 > val2);
-}								/* int84gt() */
+}	/* int84gt() */
 
 bool
 int84le(int64 * val1, int32 val2)
 {
 	return (*val1 <= val2);
-}								/* int84le() */
+}	/* int84le() */
 
 bool
 int84ge(int64 * val1, int32 val2)
 {
 	return (*val1 >= val2);
-}								/* int84ge() */
+}	/* int84ge() */
 
 
 /*----------------------------------------------------------
  *	Arithmetic operators on 64-bit integers.
  *---------------------------------------------------------*/
 
-int64	   *
+int64 *
 int8um(int64 * val)
 {
 	int64	   *result = palloc(sizeof(int64));
@@ -239,9 +239,9 @@ int8um(int64 * val)
 	*result = (-*val);
 
 	return (result);
-}								/* int8um() */
+}	/* int8um() */
 
-int64	   *
+int64 *
 int8pl(int64 * val1, int64 * val2)
 {
 	int64	   *result = palloc(sizeof(int64));
@@ -252,9 +252,9 @@ int8pl(int64 * val1, int64 * val2)
 	*result = *val1 + *val2;
 
 	return (result);
-}								/* int8pl() */
+}	/* int8pl() */
 
-int64	   *
+int64 *
 int8mi(int64 * val1, int64 * val2)
 {
 	int64	   *result = palloc(sizeof(int64));
@@ -265,9 +265,9 @@ int8mi(int64 * val1, int64 * val2)
 	*result = *val1 - *val2;
 
 	return (result);
-}								/* int8mi() */
+}	/* int8mi() */
 
-int64	   *
+int64 *
 int8mul(int64 * val1, int64 * val2)
 {
 	int64	   *result = palloc(sizeof(int64));
@@ -278,9 +278,9 @@ int8mul(int64 * val1, int64 * val2)
 	*result = *val1 * *val2;
 
 	return (result);
-}								/* int8mul() */
+}	/* int8mul() */
 
-int64	   *
+int64 *
 int8div(int64 * val1, int64 * val2)
 {
 	int64	   *result = palloc(sizeof(int64));
@@ -291,14 +291,14 @@ int8div(int64 * val1, int64 * val2)
 	*result = *val1 / *val2;
 
 	return (result);
-}								/* int8div() */
+}	/* int8div() */
 
 
 /*----------------------------------------------------------
  *	Conversion operators.
  *---------------------------------------------------------*/
 
-int64	   *
+int64 *
 int48(int32 val)
 {
 	int64	   *result = palloc(sizeof(int64));
@@ -306,7 +306,7 @@ int48(int32 val)
 	*result = val;
 
 	return (result);
-}								/* int48() */
+}	/* int48() */
 
 int32
 int84(int64 * val)
@@ -322,10 +322,10 @@ int84(int64 * val)
 	result = *val;
 
 	return (result);
-}								/* int84() */
+}	/* int84() */
 
 #if FALSE
-int64	   *
+int64 *
 int28		(int16 val)
 {
 	int64	   *result;
@@ -336,7 +336,7 @@ int28		(int16 val)
 	*result = val;
 
 	return (result);
-}								/* int28() */
+}	/* int28() */
 
 int16
 int82(int64 * val)
@@ -349,7 +349,7 @@ int82(int64 * val)
 	result = *val;
 
 	return (result);
-}								/* int82() */
+}	/* int82() */
 
 #endif
 
@@ -361,9 +361,9 @@ i8tod(int64 * val)
 	*result = *val;
 
 	return (result);
-}								/* i8tod() */
+}	/* i8tod() */
 
-int64	   *
+int64 *
 dtoi8(float64 val)
 {
 	int64	   *result = palloc(sizeof(int64));
@@ -374,4 +374,4 @@ dtoi8(float64 val)
 	*result = *val;
 
 	return (result);
-}								/* dtoi8() */
+}	/* dtoi8() */

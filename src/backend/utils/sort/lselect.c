@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.12 1998/02/11 19:13:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.13 1998/02/26 04:38:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,7 +140,7 @@ gettuple(struct leftist ** treep,
 	else
 		*treep = lmerge(tp->lt_left, tp->lt_right, context);
 
-	pfree (tp);
+	pfree(tp);
 	return (tup);
 }
 
@@ -186,7 +186,7 @@ puttuple(struct leftist ** treep,
 int
 tuplecmp(HeapTuple ltup, HeapTuple rtup, LeftistContext context)
 {
-	Datum lattr,
+	Datum		lattr,
 				rattr;
 	int			nkey = 0;
 	int			result = 0;
@@ -212,12 +212,12 @@ tuplecmp(HeapTuple ltup, HeapTuple rtup, LeftistContext context)
 		if (context->scanKeys[nkey].sk_flags & SK_COMMUTE)
 		{
 			if (!(result =
-			   (long) (*fmgr_faddr(&context->scanKeys[nkey].sk_func)) (rattr, lattr)))
+				  (long) (*fmgr_faddr(&context->scanKeys[nkey].sk_func)) (rattr, lattr)))
 				result =
 					-(long) (*fmgr_faddr(&context->scanKeys[nkey].sk_func)) (lattr, rattr);
 		}
 		else if (!(result =
-			   (long) (*fmgr_faddr(&context->scanKeys[nkey].sk_func)) (lattr, rattr)))
+				   (long) (*fmgr_faddr(&context->scanKeys[nkey].sk_func)) (lattr, rattr)))
 			result =
 				-(long) (*fmgr_faddr(&context->scanKeys[nkey].sk_func)) (rattr, lattr);
 		nkey++;

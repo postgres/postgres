@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.6 1998/01/31 04:39:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.7 1998/02/26 04:38:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,23 +41,23 @@ GetDatabaseInfo(char *name, Oid *owner, char *path)
 {
 	Oid			dbowner,
 				dbid;
-	char		dbpath[MAXPGPATH+1];
+	char		dbpath[MAXPGPATH + 1];
 	text	   *dbtext;
 
 	Relation	dbrel;
-	HeapTuple   dbtup;
-	HeapTuple   tup;
-	Buffer      buf;
+	HeapTuple	dbtup;
+	HeapTuple	tup;
+	Buffer		buf;
 	HeapScanDesc scan;
 	ScanKeyData scanKey;
 
 	dbrel = heap_openr(DatabaseRelationName);
 	if (!RelationIsValid(dbrel))
-		elog(FATAL,"GetDatabaseInfo: cannot open relation \"%-.*s\"",
-			DatabaseRelationName);
+		elog(FATAL, "GetDatabaseInfo: cannot open relation \"%-.*s\"",
+			 DatabaseRelationName);
 
 	ScanKeyEntryInitialize(&scanKey, 0, Anum_pg_database_datname,
-		NameEqualRegProcedure, NameGetDatum(name));
+						   NameEqualRegProcedure, NameGetDatum(name));
 
 	scan = heap_beginscan(dbrel, 0, false, 1, &scanKey);
 	if (!HeapScanIsValid(scan))
@@ -80,61 +80,65 @@ GetDatabaseInfo(char *name, Oid *owner, char *path)
 
 	if (!HeapTupleIsValid(dbtup))
 	{
-		elog(NOTICE,"GetDatabaseInfo: %s entry not found %s",
-			DatabaseRelationName,name);
+		elog(NOTICE, "GetDatabaseInfo: %s entry not found %s",
+			 DatabaseRelationName, name);
 		return TRUE;
 	}
 
 	dbowner = (Oid) heap_getattr(dbtup,
-									Anum_pg_database_datdba,
-									RelationGetTupleDescriptor(dbrel),
-									(char *) NULL);
+								 Anum_pg_database_datdba,
+								 RelationGetTupleDescriptor(dbrel),
+								 (char *) NULL);
 	dbid = dbtup->t_oid;
- 
-	dbtext = (text *) heap_getattr(dbtup,
-									Anum_pg_database_datpath,
-									RelationGetTupleDescriptor(dbrel),
-									(char *) NULL);
 
-	memcpy(dbpath, VARDATA(dbtext), (VARSIZE(dbtext)-VARHDRSZ));
-		*(dbpath+(VARSIZE(dbtext)-VARHDRSZ)) = '\0';
+	dbtext = (text *) heap_getattr(dbtup,
+								   Anum_pg_database_datpath,
+								   RelationGetTupleDescriptor(dbrel),
+								   (char *) NULL);
+
+	memcpy(dbpath, VARDATA(dbtext), (VARSIZE(dbtext) - VARHDRSZ));
+	*(dbpath + (VARSIZE(dbtext) - VARHDRSZ)) = '\0';
 
 	heap_close(dbrel);
 
 	owner = palloc(sizeof(Oid));
 	*owner = dbowner;
-	path = palloc(strlen(dbpath)+1);
+	path = palloc(strlen(dbpath) + 1);
 	strcpy(path, dbpath);
 
 	return FALSE;
-} /* GetDatabaseInfo() */
+}	/* GetDatabaseInfo() */
 
 char *
 ExpandDatabasePath(char *dbpath)
 {
 	char	   *path;
 	char	   *cp;
-	char		buf[MAXPGPATH+1];
+	char		buf[MAXPGPATH + 1];
 
 	/* leading path delimiter? then already absolute path */
 	if (*dbpath == SEP_CHAR)
 	{
 		cp = strrchr(dbpath, SEP_CHAR);
-		strncpy(buf,dbpath,(cp-dbpath));
-		sprintf(&buf[cp-dbpath], "%cbase%c%s", SEP_CHAR, SEP_CHAR, (cp+1));
+		strncpy(buf, dbpath, (cp - dbpath));
+		sprintf(&buf[cp - dbpath], "%cbase%c%s", SEP_CHAR, SEP_CHAR, (cp + 1));
 	}
 	/* path delimiter somewhere? then has leading environment variable */
 	else if (strchr(dbpath, SEP_CHAR) != NULL)
 	{
 		cp = strchr(dbpath, SEP_CHAR);
-		strncpy(buf,dbpath,(cp-dbpath));
-		buf[cp-dbpath] = '\0';
+		strncpy(buf, dbpath, (cp - dbpath));
+		buf[cp - dbpath] = '\0';
 		path = getenv(buf);
-		/* problem getting environment variable? let calling routine handle it */
+
+		/*
+		 * problem getting environment variable? let calling routine
+		 * handle it
+		 */
 		if (path == NULL)
 			return path;
 
-		sprintf(buf, "%s%cbase%c%s", path, SEP_CHAR, SEP_CHAR, (cp+1));
+		sprintf(buf, "%s%cbase%c%s", path, SEP_CHAR, SEP_CHAR, (cp + 1));
 	}
 	/* no path delimiter? then add the default path prefixes */
 	else
@@ -142,11 +146,11 @@ ExpandDatabasePath(char *dbpath)
 		sprintf(buf, "%s%cbase%c%s", DataDir, SEP_CHAR, SEP_CHAR, dbpath);
 	}
 
-	path = palloc(strlen(buf)+1);
-	strcpy(path,buf);
+	path = palloc(strlen(buf) + 1);
+	strcpy(path, buf);
 
 	return path;
-} /* ExpandDatabasePath() */
+}	/* ExpandDatabasePath() */
 
 
 /* --------------------------------
@@ -269,8 +273,8 @@ GetRawDatabaseInfo(char *name, Oid *owner, Oid *db_id, char *path)
 			{
 				*db_id = tup->t_oid;
 				strncpy(path, VARDATA(&(tup_db->datpath)),
-				 (VARSIZE(&(tup_db->datpath))-VARHDRSZ));
-				*(path+VARSIZE(&(tup_db->datpath))-VARHDRSZ) = '\0';
+						(VARSIZE(&(tup_db->datpath)) - VARHDRSZ));
+				*(path + VARSIZE(&(tup_db->datpath)) - VARHDRSZ) = '\0';
 
 				goto done;
 			}
@@ -280,4 +284,4 @@ GetRawDatabaseInfo(char *name, Oid *owner, Oid *db_id, char *path)
 done:
 	close(dbfd);
 	pfree(pg);
-} /* GetRawDatabaseInfo() */
+}	/* GetRawDatabaseInfo() */

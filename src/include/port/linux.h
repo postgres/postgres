@@ -12,18 +12,24 @@
 
 #if defined(PPC)
 typedef unsigned int slock_t;
+
 #elif defined(__alpha__)
 typedef long int slock_t;
+
 #else
 typedef unsigned char slock_t;
+
 #endif
 
 #if (__GLIBC__ >= 2)
-#  ifdef HAVE_INT_TIMEZONE
-#    undef HAVE_INT_TIMEZONE
-#  endif
-   /* currently undefined as I (teunis@computersupportcentre.com) have not
-      checked this yet */
+#ifdef HAVE_INT_TIMEZONE
+#undef HAVE_INT_TIMEZONE
+#endif
+
+ /*
+  * currently undefined as I (teunis@computersupportcentre.com) have not
+  * checked this yet
+  */
 /* #define HAVE_SIGSETJMP 1 */
 #endif
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: params.h,v 1.7 1998/02/13 03:45:24 vadim Exp $
+ * $Id: params.h,v 1.8 1998/02/26 04:41:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@
 #define PARAM_NUM		12
 #define PARAM_NEW		13
 #define PARAM_OLD		14
-#define	PARAM_EXEC		15
+#define PARAM_EXEC		15
 #define PARAM_INVALID	100
 
 
@@ -93,7 +93,8 @@ typedef ParamListInfoData *ParamListInfo;
 
 typedef struct ParamExecData
 {
-	void	   *execPlan;		/* plan must be executed to get param value */
+	void	   *execPlan;		/* plan must be executed to get param
+								 * value */
 	Datum		value;
 	bool		isnull;
 } ParamExecData;

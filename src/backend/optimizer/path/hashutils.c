@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/hashutils.c,v 1.4 1997/09/08 21:44:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/hashutils.c,v 1.5 1998/02/26 04:32:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ static HInfo *match_hashop_hashinfo(Oid hashop, List *hashinfo_list);
  * Returns the new list of hashinfo nodes.
  *
  */
-List	   *
+List *
 group_clauses_by_hashop(List *clauseinfo_list,
 						int inner_relid)
 {

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pquery.h,v 1.8 1998/01/24 22:50:24 momjian Exp $
+ * $Id: pquery.h,v 1.9 1998/02/26 04:43:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,11 +23,13 @@ extern QueryDesc *CreateQueryDesc(Query *parsetree, Plan *plantree,
 extern EState *CreateExecutorState(void);
 
 
-extern void ProcessPortal(char *portalName, Query *parseTree,
+extern void
+ProcessPortal(char *portalName, Query *parseTree,
 			  Plan *plan, EState *state, TupleDesc attinfo,
 			  CommandDest dest);
 
-extern void ProcessQuery(Query *parsetree, Plan *plan, char *argv[],
+extern void
+ProcessQuery(Query *parsetree, Plan *plan, char *argv[],
 			 Oid *typev, int nargs, CommandDest dest);
 
 #endif							/* pqueryIncluded */

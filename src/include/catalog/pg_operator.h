@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.24 1998/02/03 16:01:54 thomas Exp $
+ * $Id: pg_operator.h,v 1.25 1998/02/26 04:40:56 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -387,7 +387,7 @@ DATA(insert OID =  795 (  "<="	   PGUID 0 b t f  602  602	701  794  0 0 0 path_n
 DATA(insert OID =  796 (  ">="	   PGUID 0 b t f  602  602	701  793  0 0 0 path_n_ge intltsel intltjoinsel ));
 DATA(insert OID =  797 (  "#"	   PGUID 0 l t f	0  602	 23    0  0 0 0 path_npoints - - ));
 DATA(insert OID =  798 (  "?#"	   PGUID 0 b t f  602  602	 16    0  0 0 0 path_inter - - ));
-DATA(insert OID =  799 (  "@-@"	   PGUID 0 l t f	0  602	701    0  0 0 0 path_length - - ));
+DATA(insert OID =  799 (  "@-@"    PGUID 0 l t f	0  602	701    0  0 0 0 path_length - - ));
 DATA(insert OID =  800 (  ">^"	   PGUID 0 b t f  603  603	 16    0  0 0 0 box_above intltsel intltjoinsel ));
 DATA(insert OID =  801 (  "<^"	   PGUID 0 b t f  603  603	 16    0  0 0 0 box_below intltsel intltjoinsel ));
 DATA(insert OID =  802 (  "?#"	   PGUID 0 b t f  603  603	 16    0  0 0 0 box_overlap - - ));
@@ -657,12 +657,13 @@ DATA(insert OID = 1588 (  "<="	  PGUID 0 b t f  601  601	16 1589  0 0 0 lseg_le 
 DATA(insert OID = 1589 (  ">"	  PGUID 0 b t f  601  601	16 1588  0 0 0 lseg_gt intltsel - ));
 DATA(insert OID = 1590 (  ">="	  PGUID 0 b t f  601  601	16 1587  0 0 0 lseg_ge intltsel - ));
 
-DATA(insert OID = 1591 (  "@-@"	  PGUID 0 l t f	0  601	701    0  0 0 0 lseg_length - - ));
+DATA(insert OID = 1591 (  "@-@"   PGUID 0 l t f 0  601	701    0  0 0 0 lseg_length - - ));
 
 /*
  * function prototypes
  */
-extern void OperatorCreate(char *operatorName,
+extern void
+OperatorCreate(char *operatorName,
 			   char *leftTypeName,
 			   char *rightTypeName,
 			   char *procedureName,

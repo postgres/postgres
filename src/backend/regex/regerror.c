@@ -161,9 +161,9 @@ char	   *errbuf;
 size_t		errbuf_size;
 {
 	struct rerr *r;
-	size_t len;
-	int target = errcode & ~REG_ITOA;
-	char *s;
+	size_t		len;
+	int			target = errcode & ~REG_ITOA;
+	char	   *s;
 	char		convbuf[50];
 
 	if (errcode == REG_ATOI)

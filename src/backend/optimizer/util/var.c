@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.10 1998/02/13 03:40:23 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.11 1998/02/26 04:33:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
  *		XXX assumes varno's are always integers, which shouldn't be true...
  *		(though it currently is, see primnodes.h)
  */
-List	   *
+List *
 pull_varnos(Node *me)
 {
 	List	   *i,
@@ -107,9 +107,9 @@ contain_var_clause(Node *clause)
 				return TRUE;
 		}
 		/* Ok - check left sides of Oper-s */
-		foreach(temp, ((SubPlan*) ((Expr *) clause)->oper)->sublink->oper)
+		foreach(temp, ((SubPlan *) ((Expr *) clause)->oper)->sublink->oper)
 		{
-			if (contain_var_clause(lfirst(((Expr*) lfirst(temp))->args)))
+			if (contain_var_clause(lfirst(((Expr *) lfirst(temp))->args)))
 				return TRUE;
 		}
 		return FALSE;
@@ -150,7 +150,7 @@ contain_var_clause(Node *clause)
  *
  *	  Returns list of varnodes found.
  */
-List	   *
+List *
 pull_var_clause(Node *clause)
 {
 	List	   *retval = NIL;
@@ -174,12 +174,12 @@ pull_var_clause(Node *clause)
 	{
 		List	   *temp;
 
-		foreach(temp, ((Expr*) clause)->args)
+		foreach(temp, ((Expr *) clause)->args)
 			retval = nconc(retval, pull_var_clause(lfirst(temp)));
 		/* Ok - get Var-s from left sides of Oper-s */
-		foreach(temp, ((SubPlan*) ((Expr*) clause)->oper)->sublink->oper)
-			retval = nconc(retval, 
-				pull_var_clause(lfirst(((Expr*) lfirst(temp))->args)));
+		foreach(temp, ((SubPlan *) ((Expr *) clause)->oper)->sublink->oper)
+			retval = nconc(retval,
+				 pull_var_clause(lfirst(((Expr *) lfirst(temp))->args)));
 	}
 	else if (IsA(clause, Aggreg))
 	{
@@ -224,7 +224,7 @@ var_equal(Var *var1, Var *var2)
 		(((Var *) var1)->varlevelsup == ((Var *) var2)->varlevelsup) &&
 		(((Var *) var1)->varattno == ((Var *) var2)->varattno))
 	{
-		Assert (((Var *) var1)->varlevelsup == 0);
+		Assert(((Var *) var1)->varlevelsup == 0);
 		return (true);
 	}
 	else

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.4 1997/09/08 21:45:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.5 1998/02/26 04:32:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@
  * Returns the new list of mergeinfo nodes.
  *
  */
-List	   *
+List *
 group_clauses_by_order(List *clauseinfo_list,
 					   int inner_relid)
 {
@@ -105,7 +105,7 @@ group_clauses_by_order(List *clauseinfo_list,
  * Returns the node if it exists.
  *
  */
-MInfo	   *
+MInfo *
 match_order_mergeinfo(PathOrder *ordering, List *mergeinfo_list)
 {
 	MergeOrder *xmergeorder;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_description.h,v 1.4 1997/11/16 04:36:41 momjian Exp $
+ * $Id: pg_description.h,v 1.5 1998/02/26 04:40:53 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -28,7 +28,7 @@
  */
 
 /* ----------------
- *		pg_description definition.  cpp turns this into
+ *		pg_description definition.	cpp turns this into
  *		typedef struct FormData_pg_description
  * ----------------
  */
@@ -51,7 +51,7 @@ typedef FormData_pg_description *Form_pg_description;
  */
 #define Natts_pg_description			2
 #define Anum_pg_description_objoid		1
-#define Anum_pg_description_description	2
+#define Anum_pg_description_description 2
 
 /* ----------------
  *		initial contents of pg_description
@@ -59,7 +59,7 @@ typedef FormData_pg_description *Form_pg_description;
  */
 
 /* Because the contents of this table are taken from the other *.h files,
-   there is no initialization.  It is loaded from initdb using a COPY
+   there is no initialization.	It is loaded from initdb using a COPY
    statement.
 */
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: mcxt.h,v 1.9 1998/01/24 22:50:50 momjian Exp $
+ * $Id: mcxt.h,v 1.10 1998/02/26 04:44:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,8 @@ extern MemoryContext TopMemoryContext;
  */
 extern void EnableMemoryContext(bool on);
 extern Pointer MemoryContextAlloc(MemoryContext context, Size size);
-extern Pointer MemoryContextRealloc(MemoryContext context,
+extern Pointer
+MemoryContextRealloc(MemoryContext context,
 					 Pointer pointer,
 					 Size size);
 extern void MemoryContextFree(MemoryContext context, Pointer pointer);

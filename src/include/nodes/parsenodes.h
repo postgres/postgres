@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.48 1998/02/21 06:32:02 scrappy Exp $
+ * $Id: parsenodes.h,v 1.49 1998/02/26 04:41:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ typedef struct Query
 	bool		unionall;		/* union without unique sort */
 	bool		hasAggs;		/* has aggregates in target list */
 	bool		hasSubLinks;	/* has subquery SubLink */
-	
+
 	char	   *uniqueFlag;		/* NULL, '*', or Unique attribute name */
 	List	   *sortClause;		/* a list of SortClause's */
 
@@ -58,7 +58,8 @@ typedef struct Query
 								 * BY */
 	Node	   *havingQual;		/* qualification of each group */
 
-	List	   *unionClause;	/* unions are linked under the previous query */
+	List	   *unionClause;	/* unions are linked under the previous
+								 * query */
 
 	/* internal to planner */
 	List	   *base_relation_list_;	/* base relation list */
@@ -202,26 +203,26 @@ typedef struct DropPLangStmt
 
 
 /* ----------------------
- *              Create/Alter/Drop User Statements
+ *				Create/Alter/Drop User Statements
  * ----------------------
  */
 typedef struct CreateUserStmt
 {
-        NodeTag         type;
-        char*           user;           /* PostgreSQL user login              */
-        char*           password;       /* PostgreSQL user password           */
-        bool*           createdb;       /* Can the user create databases?     */
-        bool*           createuser;     /* Can this user create users?        */
-        List*           groupElts;      /* The groups the user is a member of */
-        char*           validUntil;     /* The time the login is valid until  */
+	NodeTag		type;
+	char	   *user;			/* PostgreSQL user login			  */
+	char	   *password;		/* PostgreSQL user password			  */
+	bool	   *createdb;		/* Can the user create databases?	  */
+	bool	   *createuser;		/* Can this user create users?		  */
+	List	   *groupElts;		/* The groups the user is a member of */
+	char	   *validUntil;		/* The time the login is valid until  */
 } CreateUserStmt;
 
-typedef CreateUserStmt        AlterUserStmt;
+typedef CreateUserStmt AlterUserStmt;
 
 typedef struct DropUserStmt
 {
-        NodeTag         type;
-        char*           user;           /* PostgreSQL user login              */
+	NodeTag		type;
+	char	   *user;			/* PostgreSQL user login			  */
 } DropUserStmt;
 
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.40 1998/02/23 02:54:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.41 1998/02/26 04:32:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
  *	  this copy function only copies the "lcons-cells" of the list but not
  *	  its contents. (good for list of pointers as well as list of integers).
  */
-List	   *
+List *
 listCopy(List *list)
 {
 	List	   *newlist = NIL;
@@ -79,8 +79,8 @@ listCopy(List *list)
 static void
 CopyPlanFields(Plan *from, Plan *newnode)
 {
-	extern List	   *SS_pull_subplan (void *expr);
-	
+	extern List *SS_pull_subplan(void *expr);
+
 	newnode->cost = from->cost;
 	newnode->plan_size = from->plan_size;
 	newnode->plan_width = from->plan_width;
@@ -90,12 +90,12 @@ CopyPlanFields(Plan *from, Plan *newnode)
 	newnode->qual = copyObject(from->qual);
 	newnode->lefttree = copyObject(from->lefttree);
 	newnode->righttree = copyObject(from->righttree);
-	newnode->extParam = listCopy (from->extParam);
-	newnode->locParam = listCopy (from->locParam);
-	newnode->chgParam = listCopy (from->chgParam);
+	newnode->extParam = listCopy(from->extParam);
+	newnode->locParam = listCopy(from->locParam);
+	newnode->chgParam = listCopy(from->chgParam);
 	Node_Copy(from, newnode, initPlan);
-	if ( from->subPlan != NULL )
-		newnode->subPlan = SS_pull_subplan (newnode->qual);
+	if (from->subPlan != NULL)
+		newnode->subPlan = SS_pull_subplan(newnode->qual);
 	else
 		newnode->subPlan = NULL;
 	newnode->nParamExec = from->nParamExec;
@@ -471,7 +471,7 @@ _copySort(Sort *from)
 	Node_Copy(from, newnode, sortstate);
 	Node_Copy(from, newnode, psortstate);
 	newnode->cleaned = from->cleaned;
-	
+
 	return newnode;
 }
 
@@ -484,13 +484,13 @@ static Group *
 _copyGroup(Group *from)
 {
 	Group	   *newnode = makeNode(Group);
-	
+
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 
 	newnode->tuplePerGroup = from->tuplePerGroup;
 	newnode->numCols = from->numCols;
-	newnode->grpColIdx = palloc (from->numCols * sizeof (AttrNumber));
-	memcpy (newnode->grpColIdx, from->grpColIdx, from->numCols * sizeof (AttrNumber));
+	newnode->grpColIdx = palloc(from->numCols * sizeof(AttrNumber));
+	memcpy(newnode->grpColIdx, from->grpColIdx, from->numCols * sizeof(AttrNumber));
 	Node_Copy(from, newnode, grpstate);
 
 	return newnode;
@@ -520,12 +520,12 @@ _copyAgg(Agg *from)
 static GroupClause *
 _copyGroupClause(GroupClause *from)
 {
-		GroupClause		   *newnode = makeNode(GroupClause);
+	GroupClause *newnode = makeNode(GroupClause);
 
-		Node_Copy(from, newnode, entry);
-		newnode->grpOpoid = from->grpOpoid;
+	Node_Copy(from, newnode, entry);
+	newnode->grpOpoid = from->grpOpoid;
 
-		return newnode;
+	return newnode;
 }
 
 
@@ -592,13 +592,13 @@ _copyHash(Hash *from)
 static SubPlan *
 _copySubPlan(SubPlan *from)
 {
-	SubPlan	   *newnode = makeNode(SubPlan);
-	
+	SubPlan    *newnode = makeNode(SubPlan);
+
 	Node_Copy(from, newnode, plan);
 	newnode->plan_id = from->plan_id;
 	Node_Copy(from, newnode, rtable);
-	newnode->setParam = listCopy (from->setParam);
-	newnode->parParam = listCopy (from->parParam);
+	newnode->setParam = listCopy(from->setParam);
+	newnode->parParam = listCopy(from->parParam);
 	Node_Copy(from, newnode, sublink);
 	newnode->shutdown = from->shutdown;
 
@@ -761,7 +761,7 @@ _copyConst(Const *from)
 	 *	XXX super cheesy hack until parser/planner
 	 *	puts in the right values here.
 	 *
-	 *  But I like cheese.
+	 *	But I like cheese.
 	 * ----------------
 	 */
 	if (!from->constisnull && cached_type != from->consttype)
@@ -931,7 +931,7 @@ _copyAggreg(Aggreg *from)
 static SubLink *
 _copySubLink(SubLink *from)
 {
-	SubLink	   *newnode = makeNode(SubLink);
+	SubLink    *newnode = makeNode(SubLink);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1049,7 +1049,7 @@ _copyRel(Rel *from)
 	newnode->relam = from->relam;
 	newnode->indproc = from->indproc;
 	Node_Copy(from, newnode, indpred);
-	
+
 	if (from->ordering)
 	{
 		for (len = 0; from->ordering[len] != 0; len++)
@@ -1389,7 +1389,7 @@ _copyHInfo(HInfo *from)
 	 *	copy remainder of node
 	 * ----------------
 	 */
-	CopyJoinMethodFields((JoinMethod *)from, (JoinMethod *)newnode);
+	CopyJoinMethodFields((JoinMethod *) from, (JoinMethod *) newnode);
 	newnode->hashop = from->hashop;
 
 	return newnode;
@@ -1408,7 +1408,7 @@ _copyMInfo(MInfo *from)
 	 *	copy remainder of node
 	 * ----------------
 	 */
-	CopyJoinMethodFields((JoinMethod *)from, (JoinMethod *)newnode);
+	CopyJoinMethodFields((JoinMethod *) from, (JoinMethod *) newnode);
 	Node_Copy(from, newnode, m_ordering);
 
 	return newnode;
@@ -1498,9 +1498,9 @@ _copyRangeTblEntry(RangeTblEntry *from)
 	newnode->relid = from->relid;
 	newnode->inh = from->inh;
 	newnode->inFromCl = from->inFromCl;
-	newnode->skipAcl  = from->skipAcl;
+	newnode->skipAcl = from->skipAcl;
 
-		
+
 	return newnode;
 }
 
@@ -1545,7 +1545,7 @@ static Query *
 _copyQuery(Query *from)
 {
 	Query	   *newnode = makeNode(Query);
-	
+
 	newnode->commandType = from->commandType;
 	if (from->utilityStmt && nodeTag(from->utilityStmt) == T_NotifyStmt)
 	{
@@ -1576,13 +1576,14 @@ _copyQuery(Query *from)
 
 	if (from->unionClause)
 	{
-		List *ulist, *temp_list = NIL;
+		List	   *ulist,
+				   *temp_list = NIL;
 
 		foreach(ulist, from->unionClause)
-			temp_list = lappend(temp_list,copyObject(lfirst(ulist)));
+			temp_list = lappend(temp_list, copyObject(lfirst(ulist)));
 		newnode->unionClause = temp_list;
 	}
- 				
+
 	return newnode;
 }
 
@@ -1625,7 +1626,7 @@ _copyValue(Value *from)
  *		recursively copies its items.
  * ----------------
  */
-void	   *
+void *
 copyObject(void *from)
 {
 	void	   *retval;

@@ -161,12 +161,12 @@ size_t		nmatch;
 regmatch_t	pmatch[];
 int			eflags;
 {
-	char *endp;
-	int i;
+	char	   *endp;
+	int			i;
 	struct match mv;
 	struct match *m = &mv;
-	char *dp;
-	const sopno gf = g->firststate + 1;		/* +1 for OEND */
+	char	   *dp;
+	const sopno gf = g->firststate + 1; /* +1 for OEND */
 	const sopno gl = g->laststate;
 	char	   *start;
 	char	   *stop;
@@ -344,19 +344,19 @@ char	   *stop;
 sopno		startst;
 sopno		stopst;
 {
-	int i;
-	sopno ss;			/* start sop of current subRE */
-	sopno es;			/* end sop of current subRE */
-	char *sp;			/* start of string matched by it */
-	char *stp;			/* string matched by it cannot pass here */
-	char *rest;		/* start of rest of string */
-	char *tail;		/* string unmatched by rest of RE */
-	sopno ssub;		/* start sop of subsubRE */
-	sopno esub;		/* end sop of subsubRE */
-	char *ssp;			/* start of string matched by subsubRE */
-	char *sep;			/* end of string matched by subsubRE */
-	char *oldssp;		/* previous ssp */
-	char *dp;
+	int			i;
+	sopno		ss;				/* start sop of current subRE */
+	sopno		es;				/* end sop of current subRE */
+	char	   *sp;				/* start of string matched by it */
+	char	   *stp;			/* string matched by it cannot pass here */
+	char	   *rest;			/* start of rest of string */
+	char	   *tail;			/* string unmatched by rest of RE */
+	sopno		ssub;			/* start sop of subsubRE */
+	sopno		esub;			/* end sop of subsubRE */
+	char	   *ssp;			/* start of string matched by subsubRE */
+	char	   *sep;			/* end of string matched by subsubRE */
+	char	   *oldssp;			/* previous ssp */
+	char	   *dp;
 
 	AT("diss", start, stop, startst, stopst);
 	sp = start;
@@ -545,18 +545,18 @@ sopno		startst;
 sopno		stopst;
 sopno		lev;				/* PLUS nesting level */
 {
-	int i;
-	sopno ss;			/* start sop of current subRE */
-	char *sp;			/* start of string matched by it */
-	sopno ssub;		/* start sop of subsubRE */
-	sopno esub;		/* end sop of subsubRE */
-	char *ssp;			/* start of string matched by subsubRE */
-	char *dp;
-	size_t len;
-	int hard;
-	sop s;
-	regoff_t offsave;
-	cset *cs;
+	int			i;
+	sopno		ss;				/* start sop of current subRE */
+	char	   *sp;				/* start of string matched by it */
+	sopno		ssub;			/* start sop of subsubRE */
+	sopno		esub;			/* end sop of subsubRE */
+	char	   *ssp;			/* start of string matched by subsubRE */
+	char	   *dp;
+	size_t		len;
+	int			hard;
+	sop			s;
+	regoff_t	offsave;
+	cset	   *cs;
 
 	AT("back", start, stop, startst, stopst);
 	sp = start;
@@ -758,15 +758,15 @@ char	   *stop;
 sopno		startst;
 sopno		stopst;
 {
-	states st = m->st;
-	states fresh = m->fresh;
-	states tmp = m->tmp;
-	char *p = start;
-	int c = (start == m->beginp) ? OUT : *(start - 1);
-	int lastc;			/* previous c */
-	int flagch;
-	int i;
-	char *coldp;		/* last p after which no match was
+	states		st = m->st;
+	states		fresh = m->fresh;
+	states		tmp = m->tmp;
+	char	   *p = start;
+	int			c = (start == m->beginp) ? OUT : *(start - 1);
+	int			lastc;			/* previous c */
+	int			flagch;
+	int			i;
+	char	   *coldp;			/* last p after which no match was
 								 * underway */
 
 	CLEAR(st);
@@ -857,15 +857,15 @@ char	   *stop;
 sopno		startst;
 sopno		stopst;
 {
-	states st = m->st;
-	states empty = m->empty;
-	states tmp = m->tmp;
-	char *p = start;
-	int c = (start == m->beginp) ? OUT : *(start - 1);
-	int lastc;			/* previous c */
-	int flagch;
-	int i;
-	char *matchp;		/* last p at which a match ended */
+	states		st = m->st;
+	states		empty = m->empty;
+	states		tmp = m->tmp;
+	char	   *p = start;
+	int			c = (start == m->beginp) ? OUT : *(start - 1);
+	int			lastc;			/* previous c */
+	int			flagch;
+	int			i;
+	char	   *matchp;			/* last p at which a match ended */
 
 	AT("slow", start, stop, startst, stopst);
 	CLEAR(st);
@@ -957,16 +957,16 @@ step(g, start, stop, bef, ch, aft)
 struct re_guts *g;
 sopno		start;				/* start state within strip */
 sopno		stop;				/* state after stop state within strip */
-states bef;			/* states reachable before */
+states		bef;				/* states reachable before */
 int			ch;					/* character or NONCHAR code */
-states aft;			/* states already known reachable after */
+states		aft;				/* states already known reachable after */
 {
-	cset *cs;
-	sop s;
-	sopno pc;
-	onestate here;		/* note, macros know this name */
-	sopno look;
-	int i;
+	cset	   *cs;
+	sop			s;
+	sopno		pc;
+	onestate	here;			/* note, macros know this name */
+	sopno		look;
+	int			i;
 
 	for (pc = start, INIT(here, pc); pc != stop; pc++, INC(here))
 	{
@@ -1088,8 +1088,8 @@ int			ch;
 FILE	   *d;
 {
 	struct re_guts *g = m->g;
-	int i;
-	int first = 1;
+	int			i;
+	int			first = 1;
 
 	if (!(m->eflags & REG_TRACE))
 		return;

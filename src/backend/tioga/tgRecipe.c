@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.7 1997/10/25 01:10:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.8 1998/02/26 04:36:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,7 +147,7 @@ findNodeInRecipe()
    XXX Currently, this is done by linear search.  Change to using a hash table.
 -------------------------------------- */
 
-TgNode	   *
+TgNode *
 findNodeInRecipe(TgRecipe * r, char *nodeName)
 {
 	int			i;

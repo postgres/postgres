@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.12 1998/02/24 15:27:04 scrappy Exp $
+ * $Id: postgres.h,v 1.13 1998/02/26 04:39:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,7 +219,8 @@ typedef uint32 CommandId;
  * ---------------
  */
 #ifdef CYR_RECODE
-void SetCharSet();
-#endif /* CYR_RECODE */
+void		SetCharSet();
+
+#endif							/* CYR_RECODE */
 
 #endif							/* POSTGRES_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.8 1998/01/24 22:50:52 momjian Exp $
+ * $Id: portal.h,v 1.9 1998/02/26 04:44:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,8 @@ extern void AtEOXact_portals(void);
 extern void EnablePortalManager(bool on);
 extern Portal GetPortalByName(char *name);
 extern Portal BlankPortalAssignName(char *name);
-extern void PortalSetQuery(Portal portal, QueryDesc *queryDesc,
+extern void
+PortalSetQuery(Portal portal, QueryDesc *queryDesc,
 			   TupleDesc attinfo, EState *state,
 			   void (*cleanup) (Portal portal));
 extern QueryDesc *PortalGetQueryDesc(Portal portal);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.70 1998/02/10 04:01:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.71 1998/02/26 04:33:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static Query *transformCursorStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt);
 
-List   *extras = NIL;
+List	   *extras = NIL;
 
 /*
  * parse_analyze -
@@ -102,10 +102,10 @@ transformStmt(ParseState *pstate, Node *parseTree)
 
 	switch (nodeTag(parseTree))
 	{
-		/*------------------------
-		 *	Non-optimizable statements
-		 *------------------------
-		 */
+			/*------------------------
+			 *	Non-optimizable statements
+			 *------------------------
+			 */
 		case T_CreateStmt:
 			result = transformCreateStmt(pstate, (CreateStmt *) parseTree);
 			break;
@@ -162,10 +162,10 @@ transformStmt(ParseState *pstate, Node *parseTree)
 			}
 			break;
 
-		/*------------------------
-		 *	Optimizable statements
-		 *------------------------
-		 */
+			/*------------------------
+			 *	Optimizable statements
+			 *------------------------
+			 */
 		case T_InsertStmt:
 			result = transformInsertStmt(pstate, (InsertStmt *) parseTree);
 			break;
@@ -179,7 +179,7 @@ transformStmt(ParseState *pstate, Node *parseTree)
 			break;
 
 		case T_SelectStmt:
-			if (!((SelectStmt *)parseTree)->portalname)
+			if (!((SelectStmt *) parseTree)->portalname)
 				result = transformSelectStmt(pstate, (SelectStmt *) parseTree);
 			else
 				result = transformCursorStmt(pstate, (SelectStmt *) parseTree);
@@ -218,7 +218,7 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	/* fix where clause */
 	qry->qual = transformWhereClause(pstate, stmt->whereClause);
 	qry->hasSubLinks = pstate->p_hasSubLinks;
-	
+
 	qry->rtable = pstate->p_rtable;
 	qry->resultRelation = refnameRangeTablePosn(pstate, stmt->relname, NULL);
 
@@ -249,43 +249,43 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 
 	/* fix the target list */
 	icolumns = pstate->p_insert_columns = makeTargetNames(pstate, stmt->cols);
-	
+
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
-	
+
 	/* DEFAULT handling */
 	if (length(qry->targetList) < pstate->p_target_relation->rd_att->natts &&
 		pstate->p_target_relation->rd_att->constr &&
 		pstate->p_target_relation->rd_att->constr->num_defval > 0)
 	{
-		AttributeTupleForm	   *att = pstate->p_target_relation->rd_att->attrs;
-		AttrDefault			   *defval = pstate->p_target_relation->rd_att->constr->defval;
-		int						ndef = pstate->p_target_relation->rd_att->constr->num_defval;
-		
-		/* 
+		AttributeTupleForm *att = pstate->p_target_relation->rd_att->attrs;
+		AttrDefault *defval = pstate->p_target_relation->rd_att->constr->defval;
+		int			ndef = pstate->p_target_relation->rd_att->constr->num_defval;
+
+		/*
 		 * if stmt->cols == NIL then makeTargetNames returns list of all
 		 * attrs: have to shorter icolumns list...
 		 */
 		if (stmt->cols == NIL)
 		{
-			List   *extrl;
-			int		i = length(qry->targetList);
-			
-			foreach (extrl, icolumns)
+			List	   *extrl;
+			int			i = length(qry->targetList);
+
+			foreach(extrl, icolumns)
 			{
 				if (--i <= 0)
 					break;
 			}
-			freeList (lnext(extrl));
+			freeList(lnext(extrl));
 			lnext(extrl) = NIL;
 		}
-		
+
 		while (ndef-- > 0)
 		{
-			List		   *tl;
-			Ident		   *id;
-			TargetEntry	   *te;
-			
-			foreach (tl, icolumns)
+			List	   *tl;
+			Ident	   *id;
+			TargetEntry *te;
+
+			foreach(tl, icolumns)
 			{
 				id = (Ident *) lfirst(tl);
 				if (!namestrcmp(&(att[defval[ndef].adnum - 1]->attname), id->name))
@@ -293,33 +293,34 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 			}
 			if (tl != NIL)		/* something given for this attr */
 				continue;
-			/* 
-			 * Nothing given for this attr with DEFAULT expr, so
-			 * add new TargetEntry to qry->targetList. 
-			 * Note, that we set resno to defval[ndef].adnum:
-			 * it's what transformTargetList()->make_targetlist_expr()
-			 * does for INSERT ... SELECT. But for INSERT ... VALUES
-			 * pstate->p_last_resno is used. It doesn't matter for 
-			 * "normal" using (planner creates proper target list
-			 * in preptlist.c), but may break RULEs in some way.
-			 * It seems better to create proper target list here...
+
+			/*
+			 * Nothing given for this attr with DEFAULT expr, so add new
+			 * TargetEntry to qry->targetList. Note, that we set resno to
+			 * defval[ndef].adnum: it's what
+			 * transformTargetList()->make_targetlist_expr() does for
+			 * INSERT ... SELECT. But for INSERT ... VALUES
+			 * pstate->p_last_resno is used. It doesn't matter for
+			 * "normal" using (planner creates proper target list in
+			 * preptlist.c), but may break RULEs in some way. It seems
+			 * better to create proper target list here...
 			 */
 			te = makeNode(TargetEntry);
 			te->resdom = makeResdom(defval[ndef].adnum,
 									att[defval[ndef].adnum - 1]->atttypid,
-									att[defval[ndef].adnum - 1]->atttypmod,
-									pstrdup(nameout(&(att[defval[ndef].adnum - 1]->attname))),
+								  att[defval[ndef].adnum - 1]->atttypmod,
+			   pstrdup(nameout(&(att[defval[ndef].adnum - 1]->attname))),
 									0, 0, 0);
 			te->fjoin = NULL;
 			te->expr = (Node *) stringToNode(defval[ndef].adbin);
-			qry->targetList = lappend (qry->targetList, te);
+			qry->targetList = lappend(qry->targetList, te);
 		}
 	}
-	
+
 	/* fix where clause */
 	qry->qual = transformWhereClause(pstate, stmt->whereClause);
 	qry->hasSubLinks = pstate->p_hasSubLinks;
-	
+
 	/* now the range table will not change */
 	qry->rtable = pstate->p_rtable;
 	qry->resultRelation = refnameRangeTablePosn(pstate, stmt->relname, NULL);
@@ -340,7 +341,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		parseCheckAggregates(pstate, qry);
 
 	/* The INSERT INTO ... SELECT ... could have a UNION */
-	qry->unionall = stmt->unionall;	/* in child, so unionClause may be false */
+	qry->unionall = stmt->unionall;		/* in child, so unionClause may be
+										 * false */
 	qry->unionClause = transformUnionClause(stmt->unionClause, qry->targetList);
 
 	return (Query *) qry;
@@ -353,33 +355,33 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 static char *
 makeTableName(void *elem,...)
 {
-	va_list	args;
+	va_list		args;
 
-	char   *name;
-	char	buf[NAMEDATALEN+1];
+	char	   *name;
+	char		buf[NAMEDATALEN + 1];
 
 	buf[0] = '\0';
 
-	va_start(args,elem);
+	va_start(args, elem);
 
 	name = elem;
 	while (name != NULL)
 	{
 		/* not enough room for next part? then return nothing */
-		if ((strlen(buf)+strlen(name)) >= (sizeof(buf)-1))
+		if ((strlen(buf) + strlen(name)) >= (sizeof(buf) - 1))
 			return (NULL);
 
 		if (strlen(buf) > 0)
-			strcat(buf,"_");
-		strcat(buf,name);
+			strcat(buf, "_");
+		strcat(buf, name);
 
-		name = va_arg(args,void *);
+		name = va_arg(args, void *);
 	}
 
 	va_end(args);
 
-	name = palloc(strlen(buf)+1);
-	strcpy(name,buf);
+	name = palloc(strlen(buf) + 1);
+	strcpy(name, buf);
 
 	return (name);
 }
@@ -391,10 +393,10 @@ CreateIndexName(char *tname, char *cname, char *label, List *indices)
 	char	   *iname = NULL;
 	List	   *ilist;
 	IndexStmt  *index;
-	char		name2[NAMEDATALEN+1];
+	char		name2[NAMEDATALEN + 1];
 
 	/* use working storage, since we might be trying several possibilities */
-	strcpy(name2,cname);
+	strcpy(name2, cname);
 	while (iname == NULL)
 	{
 		iname = makeTableName(tname, name2, label, NULL);
@@ -406,7 +408,7 @@ CreateIndexName(char *tname, char *cname, char *label, List *indices)
 		while (ilist != NIL)
 		{
 			index = lfirst(ilist);
-			if (strcasecmp(iname,index->idxname) == 0)
+			if (strcasecmp(iname, index->idxname) == 0)
 				break;
 
 			ilist = lnext(ilist);
@@ -419,7 +421,7 @@ CreateIndexName(char *tname, char *cname, char *label, List *indices)
 		pfree(iname);
 		iname = NULL;
 		pass++;
-		sprintf(name2, "%s_%d", cname, (pass+1));
+		sprintf(name2, "%s_%d", cname, (pass + 1));
 	}
 
 	return (iname);
@@ -444,7 +446,8 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 	List	   *columns;
 	List	   *dlist;
 	ColumnDef  *column;
-	List	   *constraints, *clist;
+	List	   *constraints,
+			   *clist;
 	Constraint *constraint;
 	List	   *keys;
 	Ident	   *key;
@@ -467,7 +470,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 		{
 			case T_ColumnDef:
 				column = (ColumnDef *) element;
-				columns = lappend(columns,column);
+				columns = lappend(columns, column);
 				if (column->constraints != NIL)
 				{
 					clist = column->constraints;
@@ -478,15 +481,15 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 						{
 							case CONSTR_NOTNULL:
 								if (column->is_not_null)
-									elog(ERROR,"CREATE TABLE/NOT NULL already specified"
-										" for %s.%s", stmt->relname, column->colname);
+									elog(ERROR, "CREATE TABLE/NOT NULL already specified"
+										 " for %s.%s", stmt->relname, column->colname);
 								column->is_not_null = TRUE;
 								break;
 
 							case CONSTR_DEFAULT:
 								if (column->defval != NULL)
-									elog(ERROR,"CREATE TABLE/DEFAULT multiple values specified"
-										" for %s.%s", stmt->relname, column->colname);
+									elog(ERROR, "CREATE TABLE/DEFAULT multiple values specified"
+										 " for %s.%s", stmt->relname, column->colname);
 								column->defval = constraint->def;
 								break;
 
@@ -513,7 +516,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 								break;
 
 							default:
-								elog(ERROR,"parser: internal error; unrecognized constraint",NULL);
+								elog(ERROR, "parser: internal error; unrecognized constraint", NULL);
 								break;
 						}
 						clist = lnext(clist);
@@ -545,16 +548,16 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 					case CONSTR_NOTNULL:
 					case CONSTR_DEFAULT:
-						elog(ERROR,"parser: internal error; illegal context for constraint",NULL);
+						elog(ERROR, "parser: internal error; illegal context for constraint", NULL);
 						break;
 					default:
-						elog(ERROR,"parser: internal error; unrecognized constraint",NULL);
+						elog(ERROR, "parser: internal error; unrecognized constraint", NULL);
 						break;
 				}
 				break;
 
 			default:
-				elog(ERROR,"parser: internal error; unrecognized node",NULL);
+				elog(ERROR, "parser: internal error; unrecognized node", NULL);
 		}
 
 		elements = lnext(elements);
@@ -568,25 +571,25 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
  * For UNIQUE, create an index as for PRIMARY KEYS, but do not insist on NOT NULL.
  *
  * Note that this code does not currently look for all possible redundant cases
- *  and either ignore or stop with warning. The create might fail later when
- *  names for indices turn out to be redundant, or a user might have specified
- *  extra useless indices which might hurt performance. - thomas 1997-12-08
+ *	and either ignore or stop with warning. The create might fail later when
+ *	names for indices turn out to be redundant, or a user might have specified
+ *	extra useless indices which might hurt performance. - thomas 1997-12-08
  */
 	ilist = NIL;
 	while (dlist != NIL)
 	{
 		constraint = lfirst(dlist);
 		if (nodeTag(constraint) != T_Constraint)
-			elog(ERROR,"parser: internal error; unrecognized deferred node",NULL);
+			elog(ERROR, "parser: internal error; unrecognized deferred node", NULL);
 
 		if (constraint->contype == CONSTR_PRIMARY)
 			if (have_pkey)
-				elog(ERROR,"CREATE TABLE/PRIMARY KEY multiple primary keys"
-					" for table %s are not legal", stmt->relname);
-			else 
+				elog(ERROR, "CREATE TABLE/PRIMARY KEY multiple primary keys"
+					 " for table %s are not legal", stmt->relname);
+			else
 				have_pkey = TRUE;
 		else if (constraint->contype != CONSTR_UNIQUE)
-			elog(ERROR,"parser: internal error; unrecognized deferred constraint",NULL);
+			elog(ERROR, "parser: internal error; unrecognized deferred constraint", NULL);
 
 		index = makeNode(IndexStmt);
 
@@ -596,7 +599,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 		else if (constraint->contype == CONSTR_PRIMARY)
 		{
 			if (have_pkey)
-				elog(ERROR,"CREATE TABLE/PRIMARY KEY multiple keys for table %s are not legal", stmt->relname);
+				elog(ERROR, "CREATE TABLE/PRIMARY KEY multiple keys for table %s are not legal", stmt->relname);
 
 			have_pkey = TRUE;
 			index->idxname = makeTableName(stmt->relname, "pkey", NULL);
@@ -609,7 +612,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 		index->indexParams = NIL;
 		index->withClause = NIL;
 		index->whereClause = NULL;
- 
+
 		keys = constraint->keys;
 		while (keys != NIL)
 		{
@@ -619,17 +622,19 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			while (columns != NIL)
 			{
 				column = lfirst(columns);
-				if (strcasecmp(column->colname,key->name) == 0) break;
-				else column = NULL;
+				if (strcasecmp(column->colname, key->name) == 0)
+					break;
+				else
+					column = NULL;
 				columns = lnext(columns);
 			}
 			if (column == NULL)
-				elog(ERROR,"parser: column '%s' in key does not exist",key->name);
+				elog(ERROR, "parser: column '%s' in key does not exist", key->name);
 
 			if (constraint->contype == CONSTR_PRIMARY)
 				column->is_not_null = TRUE;
 			iparam = makeNode(IndexElem);
-			iparam->name = strcpy(palloc(strlen(column->colname)+1), column->colname);
+			iparam->name = strcpy(palloc(strlen(column->colname) + 1), column->colname);
 			iparam->args = NIL;
 			iparam->class = NULL;
 			iparam->tname = NULL;
@@ -642,12 +647,12 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 		}
 
 		if (index->idxname == NULL)
-			elog(ERROR,"parser: unable to construct implicit index for table %s"
-				"; name too long", stmt->relname);
+			elog(ERROR, "parser: unable to construct implicit index for table %s"
+				 "; name too long", stmt->relname);
 		else
-			elog(NOTICE,"CREATE TABLE/%s will create implicit index %s for table %s",
-				((constraint->contype == CONSTR_PRIMARY)? "PRIMARY KEY": "UNIQUE"),
-				index->idxname, stmt->relname);
+			elog(NOTICE, "CREATE TABLE/%s will create implicit index %s for table %s",
+				 ((constraint->contype == CONSTR_PRIMARY) ? "PRIMARY KEY" : "UNIQUE"),
+				 index->idxname, stmt->relname);
 
 		ilist = lappend(ilist, index);
 		dlist = lnext(dlist);
@@ -674,7 +679,7 @@ transformIndexStmt(ParseState *pstate, IndexStmt *stmt)
 	/* take care of the where clause */
 	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause);
 	qry->hasSubLinks = pstate->p_hasSubLinks;
-	
+
 	stmt->rangetable = pstate->p_rtable;
 
 	qry->utilityStmt = (Node *) stmt;
@@ -793,7 +798,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	if (pstate->p_hasAggs)
 		parseCheckAggregates(pstate, qry);
 
-	qry->unionall = stmt->unionall;	/* in child, so unionClause may be false */
+	qry->unionall = stmt->unionall;		/* in child, so unionClause may be
+										 * false */
 	qry->unionClause = transformUnionClause(stmt->unionClause, qry->targetList);
 
 	return (Query *) qry;

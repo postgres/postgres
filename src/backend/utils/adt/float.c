@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.28 1998/02/02 00:03:54 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.29 1998/02/26 04:37:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,7 +220,7 @@ float4in(char *num)
  *		float4out		- converts a float4 number to a string
  *						  using a standard output format
  */
-char	   *
+char *
 float4out(float32 num)
 {
 	char	   *ascii = (char *) palloc(MAXFLOATWIDTH + 1);
@@ -262,7 +262,7 @@ float8in(char *num)
  *		float8out		- converts float8 number to a string
  *						  using a standard output format
  */
-char	   *
+char *
 float8out(float64 num)
 {
 	char	   *ascii = (char *) palloc(MAXDOUBLEWIDTH + 1);

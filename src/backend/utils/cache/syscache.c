@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.15 1998/02/25 13:07:50 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.16 1998/02/26 04:37:33 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -57,7 +57,7 @@ extern bool AMI_OVERRIDE;		/* XXX style */
 #include "utils/syscache.h"
 #include "catalog/indexing.h"
 
-typedef		HeapTuple(*ScanFunc) ();
+typedef HeapTuple (*ScanFunc) ();
 
 /* ----------------
  *		Warning:  cacheinfo[] below is changed, then be sure and
@@ -179,7 +179,7 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0,
 		0},
-		offsetof(TypeTupleFormData, typalign) + sizeof(char),
+		offsetof(TypeTupleFormData, typalign) +sizeof(char),
 		TypeNameIndex,
 	TypeNameIndexScan},
 	{TypeRelationName,			/* TYPOID */
@@ -254,7 +254,7 @@ static struct cachedesc cacheinfo[] = {
 		sizeof(FormData_pg_listener),
 		NULL,
 	(ScanFunc) NULL},
-	{ShadowRelationName,			/* USENAME */
+	{ShadowRelationName,		/* USENAME */
 		1,
 		{Anum_pg_shadow_usename,
 			0,
@@ -263,7 +263,7 @@ static struct cachedesc cacheinfo[] = {
 		sizeof(FormData_pg_shadow),
 		NULL,
 	(ScanFunc) NULL},
-	{ShadowRelationName,			/* USESYSID */
+	{ShadowRelationName,		/* USESYSID */
 		1,
 		{Anum_pg_shadow_usesysid,
 			0,
@@ -392,13 +392,13 @@ InitCatalogCache()
  * XXX The tuple that is returned is NOT supposed to be pfree'd!
  */
 HeapTuple
-SearchSysCacheTuple(int cacheId,		/* cache selection code */
+SearchSysCacheTuple(int cacheId,/* cache selection code */
 					Datum key1,
 					Datum key2,
 					Datum key3,
 					Datum key4)
 {
-	HeapTuple tp;
+	HeapTuple	tp;
 
 	if (cacheId < 0 || cacheId >= SysCacheSize)
 	{
@@ -489,7 +489,7 @@ SearchSysCacheStruct(int cacheId,		/* cache selection code */
  *
  * [callers all assume this returns a (struct varlena *). -ay 10/94]
  */
-void	   *
+void *
 SearchSysCacheGetAttribute(int cacheId,
 						   AttrNumber attributeNumber,
 						   Datum key1,
@@ -591,7 +591,7 @@ SearchSysCacheGetAttribute(int cacheId,
  * [identical to get_typdefault, expecting a (struct varlena *) as ret val.
  *	some day, either of the functions should be removed		 -ay 10/94]
  */
-void	   *
+void *
 TypeDefaultRetrieve(Oid typId)
 {
 	HeapTuple	typeTuple;

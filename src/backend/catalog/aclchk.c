@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.7 1998/02/25 13:05:57 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.8 1998/02/26 04:30:26 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -74,7 +74,7 @@ char	   *aclcheck_error_strings[] = {
 static
 dumpacl(Acl *acl)
 {
-	unsigned i;
+	unsigned	i;
 	AclItem    *aip;
 
 	elog(DEBUG, "acl size = %d, # acls = %d",
@@ -94,7 +94,7 @@ ChangeAcl(char *relname,
 		  AclItem *mod_aip,
 		  unsigned modechg)
 {
-	unsigned i;
+	unsigned	i;
 	Acl		   *old_acl = (Acl *) NULL,
 			   *new_acl;
 	Relation	relation;
@@ -211,7 +211,7 @@ get_grosysid(char *groname)
 	return (id);
 }
 
-char	   *
+char *
 get_groname(AclId grosysid)
 {
 	HeapTuple	htp;
@@ -283,8 +283,8 @@ in_group(AclId uid, AclId gid)
 static int32
 aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 {
-	unsigned i;
-	AclItem *aip,
+	unsigned	i;
+	AclItem    *aip,
 			   *aidat;
 	unsigned	num,
 				found_group;
@@ -417,7 +417,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 
 	/*
 	 * Deny anyone permission to update a system catalog unless
-	 * pg_shadow.usecatupd is set.  (This is to let superusers protect
+	 * pg_shadow.usecatupd is set.	(This is to let superusers protect
 	 * themselves from themselves.)
 	 */
 	if (((mode & ACL_WR) || (mode & ACL_AP)) &&

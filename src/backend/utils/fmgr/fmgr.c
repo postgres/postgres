@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.14 1998/02/11 19:12:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.15 1998/02/26 04:37:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,21 +33,24 @@
 #include "commands/trigger.h"
 
 
-static char      * 
-fmgr_pl(char *arg0, ...)
+static char *
+fmgr_pl(char *arg0,...)
 {
-	va_list         pvar;
-	FmgrValues      values;
-	bool            isNull = false;
-	int             i;
+	va_list		pvar;
+	FmgrValues	values;
+	bool		isNull = false;
+	int			i;
 
 	memset(&values, 0, sizeof(values));
 
-	if (fmgr_pl_finfo->fn_nargs > 0) {
+	if (fmgr_pl_finfo->fn_nargs > 0)
+	{
 		values.data[0] = arg0;
-		if (fmgr_pl_finfo->fn_nargs > 1) {
+		if (fmgr_pl_finfo->fn_nargs > 1)
+		{
 			va_start(pvar, arg0);
-			for (i = 1; i < fmgr_pl_finfo->fn_nargs; i++) {
+			for (i = 1; i < fmgr_pl_finfo->fn_nargs; i++)
+			{
 				values.data[i] = va_arg(pvar, char *);
 			}
 			va_end(pvar);
@@ -57,21 +60,21 @@ fmgr_pl(char *arg0, ...)
 	/* Call the PL handler */
 	CurrentTriggerData = NULL;
 	return (*(fmgr_pl_finfo->fn_plhandler)) (fmgr_pl_finfo,
-						&values,
-						&isNull);
-}     
+											 &values,
+											 &isNull);
+}
 
 
-char     *
+char *
 fmgr_c(FmgrInfo *finfo,
-	FmgrValues * values,
-	bool * isNull)
-{  
-	char       *returnValue = (char *) NULL;
-	int        n_arguments = finfo->fn_nargs;
-	func_ptr   user_fn = fmgr_faddr(finfo);
-        
-        
+	   FmgrValues *values,
+	   bool *isNull)
+{
+	char	   *returnValue = (char *) NULL;
+	int			n_arguments = finfo->fn_nargs;
+	func_ptr	user_fn = fmgr_faddr(finfo);
+
+
 	if (user_fn == (func_ptr) NULL)
 	{
 
@@ -84,11 +87,12 @@ fmgr_c(FmgrInfo *finfo,
 	}
 
 	/*
-	 * If finfo contains a PL handler for this function,
-	 * call that instead.
+	 * If finfo contains a PL handler for this function, call that
+	 * instead.
 	 */
-	if (finfo->fn_plhandler != NULL) {
-	    return (*(finfo->fn_plhandler))(finfo, values, isNull);
+	if (finfo->fn_plhandler != NULL)
+	{
+		return (*(finfo->fn_plhandler)) (finfo, values, isNull);
 	}
 
 	switch (n_arguments)
@@ -190,11 +194,11 @@ fmgr_info(Oid procedureId, FmgrInfo *finfo)
 		switch (language)
 		{
 			case INTERNALlanguageId:
-				finfo->fn_addr = 
-							fmgr_lookupByName(procedureStruct->proname.data);
+				finfo->fn_addr =
+					fmgr_lookupByName(procedureStruct->proname.data);
 				if (!finfo->fn_addr)
 					elog(ERROR, "fmgr_info: function %s: not in internal table",
-								procedureStruct->proname.data);
+						 procedureStruct->proname.data);
 				break;
 			case ClanguageId:
 				finfo->fn_addr = fmgr_dynamic(procedureId, &(finfo->fn_nargs));
@@ -226,7 +230,7 @@ fmgr_info(Oid procedureId, FmgrInfo *finfo)
 				{
 					FmgrInfo	plfinfo;
 
-					fmgr_info(((Form_pg_language)GETSTRUCT(languageTuple))->lanplcallfoid, &plfinfo);
+					fmgr_info(((Form_pg_language) GETSTRUCT(languageTuple))->lanplcallfoid, &plfinfo);
 					finfo->fn_addr = (func_ptr) fmgr_pl;
 					finfo->fn_plhandler = plfinfo.fn_addr;
 					finfo->fn_nargs = procedureStruct->pronargs;
@@ -257,7 +261,7 @@ fmgr_info(Oid procedureId, FmgrInfo *finfo)
  *		Returns the return value of the invoked function if succesful,
  *		0 if unsuccessful.
  */
-char	   *
+char *
 fmgr(Oid procedureId,...)
 {
 	va_list		pvar;
@@ -295,8 +299,8 @@ fmgr(Oid procedureId,...)
  * funcinfo, n_arguments, args...
  */
 #ifdef NOT_USED
-char	   *
-fmgr_ptr(FmgrInfo *finfo, ...)
+char *
+fmgr_ptr(FmgrInfo *finfo,...)
 {
 	va_list		pvar;
 	int			i;
@@ -305,7 +309,7 @@ fmgr_ptr(FmgrInfo *finfo, ...)
 	FmgrValues	values;
 	bool		isNull = false;
 
-        local_finfo->fn_addr = finfo->fn_addr;
+	local_finfo->fn_addr = finfo->fn_addr;
 	local_finfo->fn_plhandler = finfo->fn_plhandler;
 	local_finfo->fn_oid = finfo->fn_oid;
 
@@ -332,8 +336,8 @@ fmgr_ptr(FmgrInfo *finfo, ...)
  * function pointer field to FuncIndexInfo, it will be replace by calls
  * to fmgr_c().
  */
-char	   *
-fmgr_array_args(Oid procedureId, int nargs, char *args[], bool * isNull)
+char *
+fmgr_array_args(Oid procedureId, int nargs, char *args[], bool *isNull)
 {
 	FmgrInfo	finfo;
 

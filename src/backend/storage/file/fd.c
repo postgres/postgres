@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.29 1998/01/07 21:04:58 momjian Exp $
+ *	  $Id: fd.c,v 1.30 1998/02/26 04:35:29 momjian Exp $
  *
  * NOTES:
  *
@@ -483,7 +483,7 @@ filepath(char *filename)
 	}
 
 #ifdef FILEDEBUG
-printf("filepath: path is %s\n", buf);
+	printf("filepath: path is %s\n", buf);
 #endif
 
 	return (buf);
@@ -852,7 +852,7 @@ FileNameUnlink(char *filename)
  */
 static int	allocatedFiles = 0;
 
-FILE	   *
+FILE *
 AllocateFile(char *name, char *mode)
 {
 	FILE	   *file;

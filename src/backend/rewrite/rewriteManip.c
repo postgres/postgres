@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.12 1998/02/10 04:02:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.13 1998/02/26 04:35:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,8 +28,9 @@
 #include "nodes/plannodes.h"
 #include "optimizer/clauses.h"
 
-static void ResolveNew(RewriteInfo *info, List *targetlist,
-					Node **node, int sublevels_up);
+static void
+ResolveNew(RewriteInfo *info, List *targetlist,
+		   Node **node, int sublevels_up);
 
 
 
@@ -49,7 +50,7 @@ OffsetVarNodes(Node *node, int offset)
 			break;
 		case T_Aggreg:
 			{
-				Aggreg *agg = (Aggreg *) node;
+				Aggreg	   *agg = (Aggreg *) node;
 
 				OffsetVarNodes(agg->target, offset);
 			}
@@ -101,7 +102,7 @@ ChangeVarNodes(Node *node, int old_varno, int new_varno, int sublevels_up)
 			break;
 		case T_Aggreg:
 			{
-				Aggreg *agg = (Aggreg *) node;
+				Aggreg	   *agg = (Aggreg *) node;
 
 				ChangeVarNodes(agg->target, old_varno, new_varno, sublevels_up);
 			}
@@ -135,11 +136,11 @@ ChangeVarNodes(Node *node, int old_varno, int new_varno, int sublevels_up)
 			break;
 		case T_SubLink:
 			{
-				SubLink		   *sublink = (SubLink *) node;
-				Query		   *query = (Query *)sublink->subselect;
+				SubLink    *sublink = (SubLink *) node;
+				Query	   *query = (Query *) sublink->subselect;
 
-				ChangeVarNodes((Node *)query->qual, old_varno, new_varno,
-										sublevels_up + 1);
+				ChangeVarNodes((Node *) query->qual, old_varno, new_varno,
+							   sublevels_up + 1);
 			}
 			break;
 		default:
@@ -247,7 +248,7 @@ FindMatchingTLEntry(List *tlist, char *e_attname)
 
 static void
 ResolveNew(RewriteInfo *info, List *targetlist, Node **nodePtr,
-									int sublevels_up)
+		   int sublevels_up)
 {
 	Node	   *node = *nodePtr;
 
@@ -258,21 +259,21 @@ ResolveNew(RewriteInfo *info, List *targetlist, Node **nodePtr,
 	{
 		case T_TargetEntry:
 			ResolveNew(info, targetlist, &((TargetEntry *) node)->expr,
-													sublevels_up);
+					   sublevels_up);
 			break;
 		case T_Aggreg:
 			ResolveNew(info, targetlist, &((Aggreg *) node)->target,
-													sublevels_up);
+					   sublevels_up);
 			break;
 		case T_Expr:
 			ResolveNew(info, targetlist, (Node **) (&(((Expr *) node)->args)),
-													sublevels_up);
+					   sublevels_up);
 			break;
 		case T_Var:
 			{
-				int		this_varno = (int) ((Var *) node)->varno;
-				int		this_varlevelsup = (int) ((Var *) node)->varlevelsup;
-				Node   *n;
+				int			this_varno = (int) ((Var *) node)->varno;
+				int			this_varlevelsup = (int) ((Var *) node)->varlevelsup;
+				Node	   *n;
 
 				if (this_varno == info->new_varno &&
 					this_varlevelsup == sublevels_up)
@@ -304,15 +305,15 @@ ResolveNew(RewriteInfo *info, List *targetlist, Node **nodePtr,
 
 				foreach(l, (List *) node)
 					ResolveNew(info, targetlist, (Node **) &(lfirst(l)),
-													sublevels_up);
+							   sublevels_up);
 				break;
 			}
 		case T_SubLink:
 			{
-				SubLink		   *sublink = (SubLink *) node;
-				Query		   *query = (Query *)sublink->subselect;
+				SubLink    *sublink = (SubLink *) node;
+				Query	   *query = (Query *) sublink->subselect;
 
-				ResolveNew(info, targetlist, (Node **)&(query->qual), sublevels_up + 1);
+				ResolveNew(info, targetlist, (Node **) &(query->qual), sublevels_up + 1);
 			}
 			break;
 		default:
@@ -350,17 +351,17 @@ nodeHandleRIRAttributeRule(Node **nodePtr,
 				TargetEntry *tle = (TargetEntry *) node;
 
 				nodeHandleRIRAttributeRule(&tle->expr, rtable, targetlist,
-								   rt_index, attr_num, modified, badsql,
-								   sublevels_up);
+									rt_index, attr_num, modified, badsql,
+										   sublevels_up);
 			}
 			break;
 		case T_Aggreg:
 			{
-				Aggreg *agg = (Aggreg *) node;
+				Aggreg	   *agg = (Aggreg *) node;
 
 				nodeHandleRIRAttributeRule(&agg->target, rtable, targetlist,
-								   rt_index, attr_num, modified, badsql,
-								   sublevels_up);
+									rt_index, attr_num, modified, badsql,
+										   sublevels_up);
 			}
 			break;
 		case T_Expr:
@@ -402,7 +403,7 @@ nodeHandleRIRAttributeRule(Node **nodePtr,
 						if (name_to_look_for.data[0])
 						{
 							Node	   *n;
-		
+
 							n = FindMatchingTLEntry(targetlist, (char *) &name_to_look_for);
 							if (n == NULL)
 								*nodePtr = make_null(((Var *) node)->vartype);
@@ -422,18 +423,18 @@ nodeHandleRIRAttributeRule(Node **nodePtr,
 				{
 					nodeHandleRIRAttributeRule((Node **) (&(lfirst(i))), rtable,
 										  targetlist, rt_index, attr_num,
-											   modified, badsql, sublevels_up);
+										 modified, badsql, sublevels_up);
 				}
 			}
 			break;
 		case T_SubLink:
 			{
-				SubLink		   *sublink = (SubLink *) node;
-				Query		   *query = (Query *)sublink->subselect;
+				SubLink    *sublink = (SubLink *) node;
+				Query	   *query = (Query *) sublink->subselect;
 
-				nodeHandleRIRAttributeRule((Node **)&(query->qual), rtable, targetlist,
-								   rt_index, attr_num, modified, badsql,
-								   sublevels_up + 1);
+				nodeHandleRIRAttributeRule((Node **) &(query->qual), rtable, targetlist,
+									rt_index, attr_num, modified, badsql,
+										   sublevels_up + 1);
 			}
 			break;
 		default:
@@ -455,7 +456,7 @@ HandleRIRAttributeRule(Query *parsetree,
 					   int *modified,
 					   int *badsql)
 {
-	
+
 	nodeHandleRIRAttributeRule((Node **) (&(parsetree->targetList)), rtable,
 							   targetlist, rt_index, attr_num,
 							   modified, badsql, 0);
@@ -470,7 +471,7 @@ nodeHandleViewRule(Node **nodePtr,
 				   List *targetlist,
 				   int rt_index,
 				   int *modified,
-					int sublevels_up)
+				   int sublevels_up)
 {
 	Node	   *node = *nodePtr;
 
@@ -489,7 +490,7 @@ nodeHandleViewRule(Node **nodePtr,
 			break;
 		case T_Aggreg:
 			{
-				Aggreg *agg = (Aggreg *) node;
+				Aggreg	   *agg = (Aggreg *) node;
 
 				nodeHandleViewRule(&(agg->target), rtable, targetlist,
 								   rt_index, modified, sublevels_up);
@@ -512,7 +513,7 @@ nodeHandleViewRule(Node **nodePtr,
 				Node	   *n;
 
 				if (this_varno == rt_index &&
-				    this_varlevelsup == sublevels_up)
+					this_varlevelsup == sublevels_up)
 				{
 					n = FindMatchingTLEntry(targetlist,
 										 get_attname(getrelid(this_varno,
@@ -540,10 +541,10 @@ nodeHandleViewRule(Node **nodePtr,
 			break;
 		case T_SubLink:
 			{
-				SubLink		   *sublink = (SubLink *) node;
-				Query		   *query = (Query *)sublink->subselect;
+				SubLink    *sublink = (SubLink *) node;
+				Query	   *query = (Query *) sublink->subselect;
 
-				nodeHandleViewRule((Node **)&(query->qual), rtable, targetlist,
+				nodeHandleViewRule((Node **) &(query->qual), rtable, targetlist,
 								   rt_index, modified, sublevels_up + 1);
 			}
 			break;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.15 1998/02/13 03:40:19 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.16 1998/02/26 04:33:11 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -38,7 +38,7 @@
 static bool agg_clause(Node *clause);
 
 
-Expr	   *
+Expr *
 make_clause(int type, Node *oper, List *args)
 {
 	if (type == AND_EXPR || type == OR_EXPR || type == NOT_EXPR ||
@@ -58,7 +58,7 @@ make_clause(int type, Node *oper, List *args)
 	}
 	else
 	{
-		elog (ERROR, "make_clause: unsupported type %d", type);
+		elog(ERROR, "make_clause: unsupported type %d", type);
 		/* will this ever happen? translated from lispy C code - ay 10/94 */
 		return ((Expr *) args);
 	}
@@ -94,7 +94,7 @@ is_opclause(Node *clause)
  *	  operand (if it is non-null).
  *
  */
-Expr	   *
+Expr *
 make_opclause(Oper *op, Var *leftop, Var *rightop)
 {
 	Expr	   *expr = makeNode(Expr);
@@ -113,7 +113,7 @@ make_opclause(Oper *op, Var *leftop, Var *rightop)
  *		or (op expr)
  * NB: it is assumed (for now) that all expr must be Var nodes
  */
-Var		   *
+Var *
 get_leftop(Expr *clause)
 {
 	if (clause->args != NULL)
@@ -128,7 +128,7 @@ get_leftop(Expr *clause)
  * Returns the right operand in a clause of the form (op expr expr).
  *
  */
-Var		   *
+Var *
 get_rightop(Expr *clause)
 {
 	if (clause->args != NULL && lnext(clause->args) != NULL)
@@ -173,7 +173,7 @@ is_funcclause(Node *clause)
  * arguments.
  *
  */
-Expr	   *
+Expr *
 make_funcclause(Func *func, List *funcargs)
 {
 	Expr	   *expr = makeNode(Expr);
@@ -209,7 +209,7 @@ or_clause(Node *clause)
  * Creates an 'or' clause given a list of its subclauses.
  *
  */
-Expr	   *
+Expr *
 make_orclause(List *orclauses)
 {
 	Expr	   *expr = makeNode(Expr);
@@ -245,7 +245,7 @@ not_clause(Node *clause)
  * Create a 'not' clause given the expression to be negated.
  *
  */
-Expr	   *
+Expr *
 make_notclause(Expr *notclause)
 {
 	Expr	   *expr = makeNode(Expr);
@@ -263,7 +263,7 @@ make_notclause(Expr *notclause)
  * Retrieve the clause within a 'not' clause
  *
  */
-Expr	   *
+Expr *
 get_notclausearg(Expr *notclause)
 {
 	return (lfirst(notclause->args));
@@ -294,7 +294,7 @@ and_clause(Node *clause)
  * Create an 'and' clause given its arguments in a list.
  *
  */
-Expr	   *
+Expr *
 make_andclause(List *andclauses)
 {
 	Expr	   *expr = makeNode(Expr);
@@ -322,7 +322,7 @@ make_andclause(List *andclauses)
  * quals as the return value.
  *
  */
-List	   *
+List *
 pull_constant_clauses(List *quals, List **constantQual)
 {
 	List	   *q;
@@ -377,8 +377,8 @@ clause_relids_vars(Node *clause, List **relids, List **vars)
 		foreach(vi, var_list)
 		{
 			Var		   *in_list = (Var *) lfirst(vi);
-			
-			Assert (var->varlevelsup == 0);
+
+			Assert(var->varlevelsup == 0);
 			if (in_list->varno == var->varno &&
 				in_list->varattno == var->varattno)
 				break;
@@ -553,15 +553,15 @@ fix_opid(Node *clause)
 	{
 		fix_opid(((Aggreg *) clause)->target);
 	}
-	else if (is_subplan(clause) && 
-		((SubPlan*) ((Expr*) clause)->oper)->sublink->subLinkType != EXISTS_SUBLINK)
+	else if (is_subplan(clause) &&
+			 ((SubPlan *) ((Expr *) clause)->oper)->sublink->subLinkType != EXISTS_SUBLINK)
 	{
-		List   *lst;
-		
-		foreach (lst, ((SubPlan*) ((Expr*) clause)->oper)->sublink->oper)
+		List	   *lst;
+
+		foreach(lst, ((SubPlan *) ((Expr *) clause)->oper)->sublink->oper)
 		{
-			replace_opid((Oper*) ((Expr*) lfirst(lst))->oper);
-			fix_opid((Node*) get_leftop((Expr*) lfirst(lst)));
+			replace_opid((Oper *) ((Expr *) lfirst(lst))->oper);
+			fix_opid((Node *) get_leftop((Expr *) lfirst(lst)));
 		}
 	}
 
@@ -574,7 +574,7 @@ fix_opid(Node *clause)
  * Returns its argument.
  *
  */
-List	   *
+List *
 fix_opids(List *clauses)
 {
 	List	   *clause;
@@ -642,7 +642,7 @@ get_relattval(Node *clause,
 
 		}
 	}
-	else if (is_opclause(clause) && IsA(left, Var) && IsA(right, Param))
+	else if (is_opclause(clause) && IsA(left, Var) &&IsA(right, Param))
 	{
 		*relid = left->varno;
 		*attno = left->varattno;
@@ -653,8 +653,8 @@ get_relattval(Node *clause,
 			 is_funcclause((Node *) left) &&
 			 IsA(right, Const))
 	{
-		List	   *vars = pull_var_clause((Node*)left);
-		
+		List	   *vars = pull_var_clause((Node *) left);
+
 		*relid = ((Var *) lfirst(vars))->varno;
 		*attno = InvalidAttrNumber;
 		*constval = ((Const *) right)->constvalue;
@@ -664,8 +664,8 @@ get_relattval(Node *clause,
 			 is_funcclause((Node *) right) &&
 			 IsA(left, Const))
 	{
-		List	   *vars = pull_var_clause((Node*)right);
-		
+		List	   *vars = pull_var_clause((Node *) right);
+
 		*relid = ((Var *) lfirst(vars))->varno;
 		*attno = InvalidAttrNumber;
 		*constval = ((Const *) left)->constvalue;
@@ -692,7 +692,7 @@ get_relattval(Node *clause,
 			*flag = (_SELEC_NOT_CONSTANT_);
 		}
 	}
-	else if (is_opclause(clause) && IsA(right, Var) && IsA(left, Param))
+	else if (is_opclause(clause) && IsA(right, Var) &&IsA(left, Param))
 	{
 		*relid = right->varno;
 		*attno = right->varattno;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.18 1998/02/13 03:37:02 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.19 1998/02/26 04:32:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,9 +36,11 @@
 static void set_join_tlist_references(Join *join);
 static void set_tempscan_tlist_references(SeqScan *tempscan);
 static void set_temp_tlist_references(Temp *temp);
-static List *replace_clause_joinvar_refs(Expr *clause,
+static List *
+replace_clause_joinvar_refs(Expr *clause,
 							List *outer_tlist, List *inner_tlist);
-static List *replace_subclause_joinvar_refs(List *clauses,
+static List *
+replace_subclause_joinvar_refs(List *clauses,
 							   List *outer_tlist, List *inner_tlist);
 static Var *replace_joinvar_refs(Var *var, List *outer_tlist, List *inner_tlist);
 static List *tlist_temp_references(Oid tempid, List *tlist);
@@ -216,7 +218,7 @@ set_temp_tlist_references(Temp *temp)
  * Returns the new join clauses.
  *
  */
-List	   *
+List *
 join_references(List *clauses,
 				List *outer_tlist,
 				List *inner_tlist)
@@ -242,7 +244,7 @@ join_references(List *clauses,
  * Returns the new list of clauses.
  *
  */
-List	   *
+List *
 index_outerjoin_references(List *inner_indxqual,
 						   List *outer_tlist,
 						   Index inner_relid)
@@ -407,19 +409,19 @@ replace_clause_joinvar_refs(Expr *clause,
 	}
 	else if (is_subplan(clause))
 	{
-		((Expr*) clause)->args =
-		replace_subclause_joinvar_refs(((Expr*) clause)->args,
-										outer_tlist,
-										inner_tlist);
-		((SubPlan*) ((Expr*) clause)->oper)->sublink->oper = 
-		replace_subclause_joinvar_refs(((SubPlan*) ((Expr*) clause)->oper)->sublink->oper,
-										outer_tlist,
-										inner_tlist);
-		return ((List*) clause);
+		((Expr *) clause)->args =
+			replace_subclause_joinvar_refs(((Expr *) clause)->args,
+										   outer_tlist,
+										   inner_tlist);
+		((SubPlan *) ((Expr *) clause)->oper)->sublink->oper =
+			replace_subclause_joinvar_refs(((SubPlan *) ((Expr *) clause)->oper)->sublink->oper,
+										   outer_tlist,
+										   inner_tlist);
+		return ((List *) clause);
 	}
 	/* shouldn't reach here */
-	elog (ERROR, "replace_clause_joinvar_refs: unsupported clause %d", 
-			nodeTag (clause));
+	elog(ERROR, "replace_clause_joinvar_refs: unsupported clause %d",
+		 nodeTag(clause));
 	return NULL;
 }
 
@@ -612,7 +614,7 @@ replace_result_clause(Node *clause,
 	}
 	else if (is_funcclause(clause))
 	{
-		List   *subExpr;
+		List	   *subExpr;
 
 		/*
 		 * This is a function. Recursively call this routine for its
@@ -627,7 +629,7 @@ replace_result_clause(Node *clause,
 	else if (IsA(clause, ArrayRef))
 	{
 		ArrayRef   *aref = (ArrayRef *) clause;
-		
+
 		/*
 		 * This is an arrayref. Recursively call this routine for its
 		 * expression and its index expression...
@@ -647,18 +649,18 @@ replace_result_clause(Node *clause,
 	}
 	else if (is_opclause(clause))
 	{
-		Node *subNode;
+		Node	   *subNode;
 
 		/*
 		 * This is an operator. Recursively call this routine for both its
 		 * left and right operands
 		 */
-		subNode = (Node *)get_leftop((Expr *) clause);
+		subNode = (Node *) get_leftop((Expr *) clause);
 		replace_result_clause(subNode, subplanTargetList);
 		subNode = (Node *) get_rightop((Expr *) clause);
 		replace_result_clause(subNode, subplanTargetList);
 	}
-	else if (IsA(clause, Param) || IsA(clause, Const))
+	else if (IsA(clause, Param) ||IsA(clause, Const))
 	{
 		/* do nothing! */
 	}
@@ -730,7 +732,7 @@ set_agg_tlist_references(Agg *aggNode)
 		TargetEntry *tle = lfirst(tl);
 
 		aggreg_list = nconc(
-			replace_agg_clause(tle->expr, subplanTargetList),aggreg_list);
+		  replace_agg_clause(tle->expr, subplanTargetList), aggreg_list);
 	}
 	return aggreg_list;
 }
@@ -739,7 +741,7 @@ static List *
 replace_agg_clause(Node *clause, List *subplanTargetList)
 {
 	List	   *t;
-	List *agg_list = NIL;
+	List	   *agg_list = NIL;
 
 	if (IsA(clause, Var))
 	{
@@ -760,6 +762,7 @@ replace_agg_clause(Node *clause, List *subplanTargetList)
 	}
 	else if (is_funcclause(clause))
 	{
+
 		/*
 		 * This is a function. Recursively call this routine for its
 		 * arguments...
@@ -767,19 +770,19 @@ replace_agg_clause(Node *clause, List *subplanTargetList)
 		foreach(t, ((Expr *) clause)->args)
 		{
 			agg_list = nconc(agg_list,
-				replace_agg_clause(lfirst(t), subplanTargetList));
+					   replace_agg_clause(lfirst(t), subplanTargetList));
 		}
 		return agg_list;
 	}
 	else if (IsA(clause, Aggreg))
 	{
 		return lcons(clause,
-			replace_agg_clause(((Aggreg *) clause)->target, subplanTargetList));
+					 replace_agg_clause(((Aggreg *) clause)->target, subplanTargetList));
 	}
 	else if (IsA(clause, ArrayRef))
 	{
 		ArrayRef   *aref = (ArrayRef *) clause;
-		
+
 		/*
 		 * This is an arrayref. Recursively call this routine for its
 		 * expression and its index expression...
@@ -787,35 +790,36 @@ replace_agg_clause(Node *clause, List *subplanTargetList)
 		foreach(t, aref->refupperindexpr)
 		{
 			agg_list = nconc(agg_list,
-				replace_agg_clause(lfirst(t), subplanTargetList));
+					   replace_agg_clause(lfirst(t), subplanTargetList));
 		}
 		foreach(t, aref->reflowerindexpr)
 		{
 			agg_list = nconc(agg_list,
-				replace_agg_clause(lfirst(t), subplanTargetList));
+					   replace_agg_clause(lfirst(t), subplanTargetList));
 		}
 		agg_list = nconc(agg_list,
-			replace_agg_clause(aref->refexpr, subplanTargetList));
+				   replace_agg_clause(aref->refexpr, subplanTargetList));
 		agg_list = nconc(agg_list,
-			replace_agg_clause(aref->refassgnexpr, subplanTargetList));
+			  replace_agg_clause(aref->refassgnexpr, subplanTargetList));
 
 		return agg_list;
 	}
 	else if (is_opclause(clause))
 	{
+
 		/*
 		 * This is an operator. Recursively call this routine for both its
 		 * left and right operands
 		 */
 		Node	   *left = (Node *) get_leftop((Expr *) clause);
 		Node	   *right = (Node *) get_rightop((Expr *) clause);
-		
+
 		if (left != (Node *) NULL)
 			agg_list = nconc(agg_list,
-				replace_agg_clause(left, subplanTargetList));
+							 replace_agg_clause(left, subplanTargetList));
 		if (right != (Node *) NULL)
 			agg_list = nconc(agg_list,
-				replace_agg_clause(right, subplanTargetList));
+						   replace_agg_clause(right, subplanTargetList));
 
 		return agg_list;
 	}
@@ -840,7 +844,8 @@ replace_agg_clause(Node *clause, List *subplanTargetList)
  *	  Remove the Agg nodes from the target list
  *	  We do this so inheritance only does aggregates in the upper node
  */
-void del_agg_tlist_references(List *tlist)
+void
+del_agg_tlist_references(List *tlist)
 {
 	List	   *tl;
 
@@ -863,6 +868,7 @@ del_agg_clause(Node *clause)
 	}
 	else if (is_funcclause(clause))
 	{
+
 		/*
 		 * This is a function. Recursively call this routine for its
 		 * arguments...

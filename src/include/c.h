@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.35 1998/02/24 06:04:35 scrappy Exp $
+ * $Id: c.h,v 1.36 1998/02/26 04:39:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -710,10 +710,10 @@ typedef struct Exception
 
 /*
  *	This function gets call too often, so we inline it if we can.
- *  Are we aligned for int32?
+ *	Are we aligned for int32?
  *	We have to cast the pointer to int so we can do the AND
  *	We got the 64 number by testing this against the stock memset() on
- *	BSD/OS 3.0.	Larger values were slower.
+ *	BSD/OS 3.0. Larger values were slower.
  */
 #define MemSet(start, val, len) do \
 								{ \
@@ -742,7 +742,8 @@ extern Exception BadArg;
 extern Exception BadState;
 
 /* in utils/error/assert.c */
-extern int ExceptionalCondition(char *conditionName,
+extern int
+ExceptionalCondition(char *conditionName,
 					 Exception *exceptionP, char *details,
 					 char *fileName, int lineNumber);
 

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.15 1998/02/11 19:12:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.16 1998/02/26 04:36:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,7 @@ GetChunkSize(FILE *fd, int ndim, int dim[MAXDIM], int baseSize,
  *	   information about the chunked file
  *-----------------------------------------------------------------------
  */
-char	   *
+char *
 _ChunkArray(int fd,
 			FILE *afd,
 			int ndim,
@@ -191,7 +191,7 @@ _FindBestChunk(int size,
 		 * compute the number of page fetches for a given chunk size (d[])
 		 * and access pattern (A[][])
 		 */
-		int i,
+		int			i,
 					j,
 					nc;
 
@@ -224,7 +224,7 @@ _FindBestChunk(int size,
 static int
 get_next(int d[], int k, int C, int dmax[])
 {
-	int i,
+	int			i,
 				j,
 				temp;
 
@@ -266,7 +266,8 @@ get_next(int d[], int k, int C, int dmax[])
 }
 
 #ifdef LOARRAY
-static char a_chunk[BLCKSZ + VARHDRSZ];/* VARHDRSZ since a_chunk is in varlena format */
+static char a_chunk[BLCKSZ + VARHDRSZ]; /* VARHDRSZ since a_chunk is in
+										 * varlena format */
 
 #endif
 

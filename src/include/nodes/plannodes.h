@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.14 1998/02/13 03:45:25 vadim Exp $
+ * $Id: plannodes.h,v 1.15 1998/02/26 04:42:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,20 +74,22 @@ typedef struct Plan
 	List	   *qual;			/* Node* or List* ?? */
 	struct Plan *lefttree;
 	struct Plan *righttree;
-	List	   *extParam;		/* indices of _all_ _external_ PARAM_EXEC for 
-								 * this plan in global es_param_exec_vals.
-								 * Params from setParam from initPlan-s
-								 * are not included, but their execParam-s 
-								 * are here!!! */
+	List	   *extParam;		/* indices of _all_ _external_ PARAM_EXEC
+								 * for this plan in global
+								 * es_param_exec_vals. Params from
+								 * setParam from initPlan-s are not
+								 * included, but their execParam-s are
+								 * here!!! */
 	List	   *locParam;		/* someones from setParam-s */
 	List	   *chgParam;		/* list of changed ones from the above */
-	List	   *initPlan;		/* Init Plan nodes (un-correlated expr subselects) */
+	List	   *initPlan;		/* Init Plan nodes (un-correlated expr
+								 * subselects) */
 	List	   *subPlan;		/* Other SubPlan nodes */
-	
-	/* 
+
+	/*
 	 * We really need in some TopPlan node to store range table and
-	 * resultRelation from Query there and get rid of Query itself
-	 * from Executor. Some other stuff like below could be put there, too.
+	 * resultRelation from Query there and get rid of Query itself from
+	 * Executor. Some other stuff like below could be put there, too.
 	 */
 	int			nParamExec;		/* Number of them in entire query. This is
 								 * to get Executor know about how many
@@ -232,7 +234,7 @@ typedef struct HashJoin
 typedef struct Agg
 {
 	Plan		plan;
-	List 		*aggs;
+	List	   *aggs;
 	AggState   *aggstate;
 } Agg;
 
@@ -359,18 +361,19 @@ typedef struct Tee
  */
 typedef struct SubPlan
 {
-	NodeTag			type;
-	Plan		   *plan;		/* subselect plan itself */
-	int				plan_id;	/* dummy thing because of we haven't
-								 * equal funcs for plan nodes... actually,
-								 * we could put *plan itself somewhere else
+	NodeTag		type;
+	Plan	   *plan;			/* subselect plan itself */
+	int			plan_id;		/* dummy thing because of we haven't equal
+								 * funcs for plan nodes... actually, we
+								 * could put *plan itself somewhere else
 								 * (TopPlan node ?)... */
-	List		   *rtable;		/* range table */
-	List		   *setParam;	/* non-correlated EXPR & EXISTS subqueries
+	List	   *rtable;			/* range table */
+	List	   *setParam;		/* non-correlated EXPR & EXISTS subqueries
 								 * have to set some Params for paren Plan */
-	List		   *parParam;	/* indices of corr. Vars from parent plan */
-	SubLink		   *sublink;	/* SubLink node for subselects in WHERE and HAVING */
-	bool			shutdown;	/* shutdown plan if TRUE */
+	List	   *parParam;		/* indices of corr. Vars from parent plan */
+	SubLink    *sublink;		/* SubLink node for subselects in WHERE
+								 * and HAVING */
+	bool		shutdown;		/* shutdown plan if TRUE */
 } SubPlan;
 
 #endif							/* PLANNODES_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.9 1997/12/09 03:10:45 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.10 1998/02/26 04:31:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,7 +235,7 @@ pbuf_addTuple(int n)
  *		pbuf_addTupleValueLengths - Allocate a tuple of n lengths (attributes)
  * --------------------------------
  */
-int		   *
+int *
 pbuf_addTupleValueLengths(int n)
 {
 	return (int *)
@@ -246,7 +246,7 @@ pbuf_addTupleValueLengths(int n)
  *		pbuf_addValues - Allocate n bytes for a value
  * --------------------------------
  */
-char	   *
+char *
 pbuf_addValues(int n)
 {
 	return
@@ -510,7 +510,7 @@ pbuf_checkFnumber(GroupBuffer *group,
  *		pbuf_findFname - Find the field name given the field index
  * --------------------------------
  */
-char	   *
+char *
 pbuf_findFname(GroupBuffer *group,
 			   int field_number)
 {

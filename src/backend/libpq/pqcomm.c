@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.38 1998/02/24 04:01:53 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.39 1998/02/26 04:31:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,9 +38,9 @@
 
 #include <stdio.h>
 #if defined(HAVE_STRING_H)
-# include <string.h>
+#include <string.h>
 #else
-# include <strings.h>
+#include <strings.h>
 #endif
 #include <signal.h>
 #include <errno.h>
@@ -558,7 +558,7 @@ pq_async_notify()
  * RETURNS: STATUS_OK or STATUS_ERROR
  */
 
-static char sock_path[MAXPGPATH+1] = "";
+static char sock_path[MAXPGPATH + 1] = "";
 
 /* do_unlink()
  * Shutdown routine for backend connection
@@ -574,7 +574,7 @@ do_unlink()
 int
 StreamServerPort(char *hostName, short portName, int *fdP)
 {
-	SockAddr saddr;
+	SockAddr	saddr;
 	int			fd,
 				err,
 				family;
@@ -613,22 +613,22 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 	{
 		saddr.in.sin_addr.s_addr = htonl(INADDR_ANY);
 		saddr.in.sin_port = htons(portName);
-		len = sizeof (struct sockaddr_in);
+		len = sizeof(struct sockaddr_in);
 	}
 	err = bind(fd, &saddr.sa, len);
 	if (err < 0)
 	{
-	  sprintf(PQerrormsg,
-		  "FATAL: StreamServerPort: bind() failed: errno=%d\n",
-		  errno);
-	  pqdebug("%s", PQerrormsg);
-	  strcat(PQerrormsg, "\tIs another postmaster already running on that port?\n");
-	  if (family == AF_UNIX) 
-	    strcat(PQerrormsg, "\tIf not, remove socket node (/tmp/.s.PGSQL.<portnr>)and retry.\n");
-	  else
-	    strcat(PQerrormsg, "\tIf not, wait a few seconds and retry.\n");
-	  fputs(PQerrormsg, stderr);
-	  return (STATUS_ERROR);
+		sprintf(PQerrormsg,
+				"FATAL: StreamServerPort: bind() failed: errno=%d\n",
+				errno);
+		pqdebug("%s", PQerrormsg);
+		strcat(PQerrormsg, "\tIs another postmaster already running on that port?\n");
+		if (family == AF_UNIX)
+			strcat(PQerrormsg, "\tIf not, remove socket node (/tmp/.s.PGSQL.<portnr>)and retry.\n");
+		else
+			strcat(PQerrormsg, "\tIf not, wait a few seconds and retry.\n");
+		fputs(PQerrormsg, stderr);
+		return (STATUS_ERROR);
 	}
 
 	listen(fd, SOMAXCONN);
@@ -643,10 +643,10 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 
 	*fdP = fd;
 	if (family == AF_UNIX)
-	  {
-	    chmod(sock_path, 0777);
-	    atexit(do_unlink);
-	  }
+	{
+		chmod(sock_path, 0777);
+		atexit(do_unlink);
+	}
 	return (STATUS_OK);
 }
 

@@ -6,15 +6,15 @@
 
 #include <stdio.h>
 #if HAVE_GETOPT_H
-# include <getopt.h>
+#include <getopt.h>
 #else
-# include <unistd.h>
+#include <unistd.h>
 #endif
 #include <stdlib.h>
 #if defined(HAVE_STRING_H)
-# include <string.h>
+#include <string.h>
 #else
-# include <strings.h>
+#include <strings.h>
 #endif
 
 #include "extern.h"
@@ -29,7 +29,8 @@ usage(char *progname)
 int
 main(int argc, char *const argv[])
 {
-	char			c, out_option = 0;
+	char		c,
+				out_option = 0;
 	int			fnr;
 
 	while ((c = getopt(argc, argv, "vdo:")) != EOF)
@@ -52,15 +53,16 @@ main(int argc, char *const argv[])
 		}
 	}
 
-	if (optind >= argc) /* no files specified */
+	if (optind >= argc)			/* no files specified */
 		usage(argv[0]);
 	else
 	{
 		/* after the options there must not be anything but filenames */
 		for (fnr = optind; fnr < argc; fnr++)
 		{
-			char	   *filename, *ptr2ext;
-			int	   ext = 0;
+			char	   *filename,
+					   *ptr2ext;
+			int			ext = 0;
 
 			filename = mm_alloc(strlen(argv[fnr]) + 4);
 
@@ -69,9 +71,9 @@ main(int argc, char *const argv[])
 			ptr2ext = strrchr(filename, '.');
 			/* no extension or extension not equal .pgc */
 			if (ptr2ext == NULL || strcmp(ptr2ext, ".pgc") != 0)
-			{ 
+			{
 				if (ptr2ext == NULL)
-					ext = 1; /* we need this information a while later */
+					ext = 1;	/* we need this information a while later */
 				ptr2ext = filename + strlen(filename);
 				ptr2ext[0] = '.';
 			}
@@ -80,7 +82,7 @@ main(int argc, char *const argv[])
 			ptr2ext[1] = 'c';
 			ptr2ext[2] = '\0';
 
-			if (out_option == 0)	/* calculate the output name */
+			if (out_option == 0)/* calculate the output name */
 			{
 				yyout = fopen(filename, "w");
 				if (yyout == NULL)
@@ -91,7 +93,7 @@ main(int argc, char *const argv[])
 				}
 			}
 
-			if (ext == 1) 
+			if (ext == 1)
 			{
 				/* no extension => add .pgc */
 				ptr2ext = strrchr(filename, '.');

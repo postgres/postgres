@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.16 1998/01/07 21:02:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.17 1998/02/26 04:30:18 momjian Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -47,8 +47,8 @@ Relation	VariableRelation = (Relation) NULL;
  *		global variables holding cached transaction id's and statuses.
  * ----------------
  */
-TransactionId	cachedTestXid;
-XidStatus		cachedTestXidStatus;
+TransactionId cachedTestXid;
+XidStatus	cachedTestXidStatus;
 
 /* ----------------
  *		transaction system constants
@@ -416,14 +416,14 @@ InitializeTransactionLog(void)
 	VariableRelation = heap_openr(VariableRelationName);
 	/* ----------------
 	 *	 XXX TransactionLogUpdate requires that LogRelation
-	 *	 is valid so we temporarily set it so we can initialize 
+	 *	 is valid so we temporarily set it so we can initialize
 	 *	 things properly. This could be done cleaner.
 	 * ----------------
 	 */
 	LogRelation = logRelation;
 
 	/* ----------------
-	 *	 if we have a virgin database, we initialize the log 
+	 *	 if we have a virgin database, we initialize the log
 	 *	 relation by committing the AmiTransactionId (id 512) and we
 	 *	 initialize the variable relation by setting the next available
 	 *	 transaction id to FirstTransactionId (id 514).  OID initialization

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.22 1998/01/15 19:42:19 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.23 1998/02/26 04:30:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -956,7 +956,7 @@ freestack(RTSTACK *s)
 	}
 }
 
-char	   *
+char *
 rtdelete(Relation r, ItemPointer tid)
 {
 	BlockNumber blkno;

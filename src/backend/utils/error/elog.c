@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.26 1998/02/11 19:12:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.27 1998/02/26 04:37:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ elog(int lev, const char *fmt,...)
 	va_list		ap;
 	char		buf[ELOG_MAXLEN],
 				line[ELOG_MAXLEN];
-	char *bp;
+	char	   *bp;
 	const char *cp;
 	extern int	errno,
 				sys_nerr;
@@ -162,10 +162,13 @@ elog(int lev, const char *fmt,...)
 		pq_putstr(line);
 		pq_flush();
 	}
-	if (Pfout == NULL) {
-	/* There is no socket.  One explanation for this is we are running
-	   as the Postmaster.  So we'll write the message to stderr.
-	 */
+	if (Pfout == NULL)
+	{
+
+		/*
+		 * There is no socket.	One explanation for this is we are running
+		 * as the Postmaster.  So we'll write the message to stderr.
+		 */
 		fputs(line, stderr);
 	}
 #endif							/* !PG_STANDALONE */
@@ -177,7 +180,7 @@ elog(int lev, const char *fmt,...)
 		ProcReleaseSpins(NULL); /* get rid of spinlocks we hold */
 		if (!InError)
 		{
-			kill(MyProcPid, 1);	/* abort to traffic cop */
+			kill(MyProcPid, 1); /* abort to traffic cop */
 			pause();
 		}
 

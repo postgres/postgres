@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.14 1998/02/11 19:12:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.15 1998/02/26 04:37:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,7 +90,7 @@ regprocin(char *proname)
 /*
  *		regprocout		- converts proid to "proname"
  */
-char	   *
+char *
 regprocout(RegProcedure proid)
 {
 	Relation	proc;
@@ -152,7 +152,7 @@ regprocout(RegProcedure proid)
 /*
  *		int8typeout			- converts int8 type oids to "typname" list
  */
-text	   *
+text *
 oid8types(Oid (*oidArray)[])
 {
 	Relation	type;
@@ -160,18 +160,18 @@ oid8types(Oid (*oidArray)[])
 	HeapTuple	typetup;
 	text	   *result;
 	ScanKeyData key;
-	int num;
-	Oid *sp;
+	int			num;
+	Oid		   *sp;
 
 	if (oidArray == NULL)
 	{
-	 	result = (text *) palloc(VARHDRSZ);
+		result = (text *) palloc(VARHDRSZ);
 		VARSIZE(result) = 0;
 		return (result);
 	}
 
- 	result = (text *) palloc(NAMEDATALEN * 8 + 8 + VARHDRSZ);
- 	*VARDATA(result) = '\0';
+	result = (text *) palloc(NAMEDATALEN * 8 + 8 + VARHDRSZ);
+	*VARDATA(result) = '\0';
 	type = heap_openr(TypeRelationName);
 	if (!RelationIsValid(type))
 	{
@@ -190,7 +190,7 @@ oid8types(Oid (*oidArray)[])
 								   (AttrNumber) ObjectIdAttributeNumber,
 								   (RegProcedure) F_INT4EQ,
 								   (Datum) *sp);
-		
+
 			typescan = heap_beginscan(type, 0, false, 1, &key);
 			if (!HeapScanIsValid(typescan))
 			{
@@ -204,17 +204,17 @@ oid8types(Oid (*oidArray)[])
 			{
 				char	   *s;
 				bool		isnull;
-	
+
 				s = (char *) heap_getattr(typetup, 1,
-								  RelationGetTupleDescriptor(type), &isnull);
+							  RelationGetTupleDescriptor(type), &isnull);
 				if (!isnull)
 				{
-					StrNCpy(VARDATA(result)+strlen(VARDATA(result)),s,16);
-					strcat(VARDATA(result)," ");
+					StrNCpy(VARDATA(result) + strlen(VARDATA(result)), s, 16);
+					strcat(VARDATA(result), " ");
 				}
 				else
 					elog(FATAL, "int8typeout: null procedure %d", *sp);
-					/* FALLTHROUGH */
+				/* FALLTHROUGH */
 			}
 			heap_endscan(typescan);
 		}

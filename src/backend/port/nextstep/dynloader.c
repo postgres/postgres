@@ -31,7 +31,7 @@ TransferError(NXStream * s)
 	strcpy(lastError, buffer);
 }
 
-void	   *
+void *
 next_dlopen(char *name)
 {
 	int			rld_success;
@@ -60,7 +60,7 @@ next_dlclose(void *handle)
 	return 0;
 }
 
-void	   *
+void *
 next_dlsym(void *handle, char *symbol)
 {
 	NXStream   *errorStream = OpenError();
@@ -74,7 +74,7 @@ next_dlsym(void *handle, char *symbol)
 	return (void *) symref;
 }
 
-char	   *
+char *
 next_dlerror(void)
 {
 	return lastError;

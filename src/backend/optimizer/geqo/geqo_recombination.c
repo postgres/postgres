@@ -3,7 +3,7 @@
 * geqo_recombination.c--
 *	 misc recombination procedures
 *
-* $Id: geqo_recombination.c,v 1.4 1997/09/08 21:44:36 momjian Exp $
+* $Id: geqo_recombination.c,v 1.5 1998/02/26 04:32:25 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -84,7 +84,7 @@ init_tour(Gene *tour, int num_gene)
  *	 allocate memory for city table
  *
  */
-City	   *
+City *
 alloc_city_table(int num_gene)
 {
 	City	   *city_table;

@@ -33,7 +33,7 @@ add_one(int arg)
 	return (arg + 1);
 }
 
-char16	   *
+char16 *
 concat16(char16 *arg1, char16 *arg2)
 {
 	char16	   *new_c16 = (char16 *) palloc(sizeof(char16));
@@ -43,7 +43,7 @@ concat16(char16 *arg1, char16 *arg2)
 	return (char16 *) (strncat((char *) new_c16, (char *) arg2, 16));
 }
 
-text	   *
+text *
 copytext(text *t)
 {
 

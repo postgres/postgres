@@ -12,30 +12,30 @@
 
 #include "set_sequence.h"
 
-extern int setval(struct varlena *seqin, int4 val);
+extern int	setval(struct varlena * seqin, int4 val);
 
 int
-set_currval(struct varlena *sequence, int4 nextval)
+set_currval(struct varlena * sequence, int4 nextval)
 {
-    return setval(sequence, nextval);
+	return setval(sequence, nextval);
 }
 
 int
-next_id(struct varlena *sequence)
+next_id(struct varlena * sequence)
 {
-    return nextval(sequence);
+	return nextval(sequence);
 }
 
 int
-last_id(struct varlena *sequence)
+last_id(struct varlena * sequence)
 {
-    return currval(sequence);
+	return currval(sequence);
 }
 
 int
-set_last_id(struct varlena *sequence, int4 nextval)
+set_last_id(struct varlena * sequence, int4 nextval)
 {
-    return setval(sequence, nextval);
+	return setval(sequence, nextval);
 }
 
 /* end of file */

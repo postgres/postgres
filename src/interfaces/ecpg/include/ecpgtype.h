@@ -29,16 +29,17 @@
  */
 #include <stdio.h>
 
-enum ECPGttype {
-    ECPGt_char = 1, ECPGt_unsigned_char, ECPGt_short, ECPGt_unsigned_short, 
-    ECPGt_int, ECPGt_unsigned_int, ECPGt_long, ECPGt_unsigned_long,
-    ECPGt_bool,
-    ECPGt_float, ECPGt_double,
-    ECPGt_varchar, ECPGt_varchar2,
-    ECPGt_array,
-    ECPGt_record,
-    ECPGt_EOIT,			/* End of insert types. */
-    ECPGt_EORT			/* End of result types. */
+enum ECPGttype
+{
+	ECPGt_char = 1, ECPGt_unsigned_char, ECPGt_short, ECPGt_unsigned_short,
+	ECPGt_int, ECPGt_unsigned_int, ECPGt_long, ECPGt_unsigned_long,
+	ECPGt_bool,
+	ECPGt_float, ECPGt_double,
+	ECPGt_varchar, ECPGt_varchar2,
+	ECPGt_array,
+	ECPGt_record,
+	ECPGt_EOIT,					/* End of insert types. */
+	ECPGt_EORT					/* End of result types. */
 };
 
 #define IS_SIMPLE_TYPE(type) ((type) >= ECPGt_char && (type) <= ECPGt_varchar2)

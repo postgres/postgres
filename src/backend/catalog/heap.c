@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.46 1998/02/11 19:09:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.47 1998/02/26 04:30:35 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
@@ -63,8 +63,9 @@
 #include <string.h>
 #endif
 
-static void AddPgRelationTuple(Relation pg_class_desc,
-	   Relation new_rel_desc, Oid new_rel_oid, unsigned natts);
+static void
+AddPgRelationTuple(Relation pg_class_desc,
+				 Relation new_rel_desc, Oid new_rel_oid, unsigned natts);
 static void AddToTempRelList(Relation r);
 static void DeletePgAttributeTuples(Relation rdesc);
 static void DeletePgRelationTuple(Relation rdesc);
@@ -164,14 +165,14 @@ static TempRelList *tempRels = NULL;
  *
  *
  * if heap_create is called with "" as the name, then heap_create will create
- * a temporary name	"temp_$RELOID" for the relation
+ * a temporary name "temp_$RELOID" for the relation
  * ----------------------------------------------------------------
  */
 Relation
 heap_create(char *name,
 			TupleDesc tupDesc)
 {
-	unsigned i;
+	unsigned	i;
 	Oid			relid;
 	Relation	rdesc;
 	int			len;
@@ -378,7 +379,7 @@ heap_create(char *name,
  *		create new relation
  *		insert new relation into attribute catalog
  *
- *		Should coordinate with heap_create_with_catalogr().	Either
+ *		Should coordinate with heap_create_with_catalogr(). Either
  *		it should not be called or there should be a way to prevent
  *		the relation from being removed at the end of the
  *		transaction if it is successful ('u'/'r' may be enough).
@@ -726,14 +727,14 @@ addNewRelationType(char *typeName, Oid new_rel_oid)
 	 */
 	new_type_oid = TypeCreate(typeName, /* type name */
 							  new_rel_oid,		/* relation oid */
-							  typeLen(typeidType(OIDOID)),	/* internal size */
-							  typeLen(typeidType(OIDOID)),	/* external size */
+							  typeLen(typeidType(OIDOID)),		/* internal size */
+							  typeLen(typeidType(OIDOID)),		/* external size */
 							  'c',		/* type-type (catalog) */
 							  ',',		/* default array delimiter */
 							  "int4in", /* input procedure */
-							  "int4out",/* output procedure */
-							  "int4in",	/* receive procedure */
-							  "int4out",/* send procedure */
+							  "int4out",		/* output procedure */
+							  "int4in", /* receive procedure */
+							  "int4out",		/* send procedure */
 							  NULL,		/* array element type - irrelevent */
 							  "-",		/* default type value */
 							  (bool) 1, /* passed by value */
@@ -748,7 +749,7 @@ addNewRelationType(char *typeName, Oid new_rel_oid)
  */
 Oid
 heap_create_with_catalog(char relname[],
-						TupleDesc tupdesc)
+						 TupleDesc tupdesc)
 {
 	Relation	pg_class_desc;
 	Relation	new_rel_desc;

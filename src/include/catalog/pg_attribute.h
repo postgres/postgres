@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.29 1998/02/25 13:09:24 scrappy Exp $
+ * $Id: pg_attribute.h,v 1.30 1998/02/26 04:40:48 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -77,6 +77,7 @@ CATALOG(pg_attribute) BOOTSTRAP
 	int4		attnelems;
 
 	int4		attcacheoff;
+
 	/*
 	 * fastgetattr() uses attcacheoff to cache byte offsets of attributes
 	 * in heap tuples.	The data actually stored in pg_attribute (-1)
@@ -86,13 +87,15 @@ CATALOG(pg_attribute) BOOTSTRAP
 	 */
 
 	int2		atttypmod;
+
 	/*
 	 * atttypmod records type-specific modifications supplied at table
-     * creation time, and passes it to input and output functions as the
-     * third argument.
+	 * creation time, and passes it to input and output functions as the
+	 * third argument.
 	 */
 
 	bool		attbyval;
+
 	/*
 	 * attbyval is a copy of the typbyval field from pg_type for this
 	 * attribute.  See atttypid above.	See struct TypeTupleFormData for
@@ -176,21 +179,21 @@ typedef FormData_pg_attribute *AttributeTupleForm;
  */
 #define Schema_pg_type \
 { 1247l, {"typname"},	   19l, 0, NAMEDATALEN,  1, 0, -1, -1, '\0', '\0', 'i', '\0', '\0' }, \
-{ 1247l, {"typowner"},	   26l, 0,  4,  2, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1247l, {"typlen"},	   21l, 0,  2,  3, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \
-{ 1247l, {"typprtlen"},    21l, 0,  2,  4, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \
-{ 1247l, {"typbyval"},	   16l, 0,  1,  5, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
-{ 1247l, {"typtype"},	   18l, 0,  1,  6, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
-{ 1247l, {"typisdefined"}, 16l, 0,  1,  7, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
-{ 1247l, {"typdelim"},	   18l, 0,  1,  8, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
-{ 1247l, {"typrelid"},	   26l, 0,  4,  9, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1247l, {"typelem"},	   26l, 0,  4, 10, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1247l, {"typinput"},	   24l, 0,  4, 11, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1247l, {"typoutput"},    24l, 0,  4, 12, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1247l, {"typreceive"},   24l, 0,  4, 13, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1247l, {"typsend"},	   24l, 0,  4, 14, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1247l, {"typalign"},	   18l, 0,  1, 15, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
-{ 1247l, {"typdefault"},   25l, 0, -1, 16, 0, -1, -1, '\0'  , '\0', 'i', '\0', '\0' }
+{ 1247l, {"typowner"},	   26l, 0,	4,	2, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
+{ 1247l, {"typlen"},	   21l, 0,	2,	3, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \
+{ 1247l, {"typprtlen"},    21l, 0,	2,	4, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \
+{ 1247l, {"typbyval"},	   16l, 0,	1,	5, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
+{ 1247l, {"typtype"},	   18l, 0,	1,	6, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
+{ 1247l, {"typisdefined"}, 16l, 0,	1,	7, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
+{ 1247l, {"typdelim"},	   18l, 0,	1,	8, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
+{ 1247l, {"typrelid"},	   26l, 0,	4,	9, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
+{ 1247l, {"typelem"},	   26l, 0,	4, 10, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
+{ 1247l, {"typinput"},	   24l, 0,	4, 11, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
+{ 1247l, {"typoutput"},    24l, 0,	4, 12, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
+{ 1247l, {"typreceive"},   24l, 0,	4, 13, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
+{ 1247l, {"typsend"},	   24l, 0,	4, 14, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
+{ 1247l, {"typalign"},	   18l, 0,	1, 15, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
+{ 1247l, {"typdefault"},   25l, 0, -1, 16, 0, -1, -1, '\0'	, '\0', 'i', '\0', '\0' }
 
 DATA(insert OID = 0 ( 1247 typname			19 0 NAMEDATALEN   1 0 -1 -1 f f i f f));
 DATA(insert OID = 0 ( 1247 typowner			26 0  4   2 0 -1 -1 t f i f f));
@@ -239,7 +242,7 @@ DATA(insert OID = 0 ( 1262 cmax				29 0  4  -6 0 -1 -1 t f i f f));
 { 1255l, {"prolang"},			26l, 0,  4,  3, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
 { 1255l, {"proisinh"},			16l, 0,  1,  4, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
 { 1255l, {"proistrusted"},		16l, 0,  1,  5, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
-{ 1255l, {"proiscachable"},	 	16l, 0,  1,  6, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
+{ 1255l, {"proiscachable"},		16l, 0,  1,  6, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
 { 1255l, {"pronargs"},			21l, 0,  2,  7, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \
 { 1255l, {"proretset"},			16l, 0,  1,  8, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
 { 1255l, {"prorettype"},		26l, 0,  4,  9, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
@@ -278,14 +281,14 @@ DATA(insert OID = 0 ( 1255 cmax				29 0  4  -6 0 -1 -1 t f i f f));
  *		pg_shadow
  * ----------------
  */
-DATA(insert OID = 0 ( 1260 usename		19  0 NAMEDATALEN   1 0 -1 -1 f f i f f));
-DATA(insert OID = 0 ( 1260 usesysid		23  0   4   2 0 -1 -1 t f s f f));
-DATA(insert OID = 0 ( 1260 usecreatedb	16  0   1   3 0 -1 -1 t f c f f));
-DATA(insert OID = 0 ( 1260 usetrace		16  0   1   4 0 -1 -1 t f c f f));
-DATA(insert OID = 0 ( 1260 usesuper		16  0   1   5 0 -1 -1 t f c f f));
-DATA(insert OID = 0 ( 1260 usecatupd	16  0   1   6 0 -1 -1 t f c f f));
-DATA(insert OID = 0 ( 1260 passwd		25  0  -1   7 0 -1 -1 f f i f f));
-DATA(insert OID = 0 ( 1260 valuntil		702 0   4   8 0 -1 -1 t f i f f));
+DATA(insert OID = 0 ( 1260 usename		19	0 NAMEDATALEN	1 0 -1 -1 f f i f f));
+DATA(insert OID = 0 ( 1260 usesysid		23	0	4	2 0 -1 -1 t f s f f));
+DATA(insert OID = 0 ( 1260 usecreatedb	16	0	1	3 0 -1 -1 t f c f f));
+DATA(insert OID = 0 ( 1260 usetrace		16	0	1	4 0 -1 -1 t f c f f));
+DATA(insert OID = 0 ( 1260 usesuper		16	0	1	5 0 -1 -1 t f c f f));
+DATA(insert OID = 0 ( 1260 usecatupd	16	0	1	6 0 -1 -1 t f c f f));
+DATA(insert OID = 0 ( 1260 passwd		25	0  -1	7 0 -1 -1 f f i f f));
+DATA(insert OID = 0 ( 1260 valuntil		702 0	4	8 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1260 ctid			27 0  6  -1 0 -1 -1 f f i f f));
 DATA(insert OID = 0 ( 1260 oid			26 0  4  -2 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1260 xmin			28 0  4  -3 0 -1 -1 f f i f f));
@@ -313,14 +316,14 @@ DATA(insert OID = 0 ( 1261 cmax				29 0  4  -6 0 -1 -1 t f i f f));
  */
 #define Schema_pg_attribute \
 { 1249l, {"attrelid"},	  26l, 0,	4,	1, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1249l, {"attname"},	  19l, 0, NAMEDATALEN,  2, 0, -1, -1, '\0', '\0', 'i', '\0', '\0' }, \
+{ 1249l, {"attname"},	  19l, 0, NAMEDATALEN,	2, 0, -1, -1, '\0', '\0', 'i', '\0', '\0' }, \
 { 1249l, {"atttypid"},	  26l, 0,	4,	3, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1249l, {"attdisbursion"},   700l, 0,  4,  4, 0, -1, -1, '\0', '\0', 'i', '\0', '\0' }, \
+{ 1249l, {"attdisbursion"},   700l, 0,	4,	4, 0, -1, -1, '\0', '\0', 'i', '\0', '\0' }, \
 { 1249l, {"attlen"},	  21l, 0,	2,	5, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \
 { 1249l, {"attnum"},	  21l, 0,	2,	6, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \
 { 1249l, {"attnelems"},   23l, 0,	4,	7, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
 { 1249l, {"attcacheoff"}, 23l, 0,	4,	8, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1249l, {"atttypmod"},	  21l, 0,	2,	9, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \
+{ 1249l, {"atttypmod"},   21l, 0,	2,	9, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \
 { 1249l, {"attbyval"},	  16l, 0,	1, 10, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
 { 1249l, {"attisset"},	  16l, 0,	1, 11, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
 { 1249l, {"attalign"},	  18l, 0,	1, 12, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
@@ -354,19 +357,19 @@ DATA(insert OID = 0 ( 1249 cmax				29 0  4  -6 0 -1 -1 t f i f f));
  */
 #define Schema_pg_class \
 { 1259l, {"relname"},	   19l, 0, NAMEDATALEN,  1, 0, -1, -1, '\0', '\0', 'i', '\0', '\0' }, \
-{ 1259l, {"reltype"},	   26l, 0,  4,  2, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1259l, {"relowner"},	   26l, 0,  4,  3, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1259l, {"relam"},		   26l, 0,  4,  4, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
+{ 1259l, {"reltype"},	   26l, 0,	4,	2, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
+{ 1259l, {"relowner"},	   26l, 0,	4,	3, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
+{ 1259l, {"relam"},		   26l, 0,	4,	4, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
 { 1259l, {"relpages"},	   23,	0l,  4,  5, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
 { 1259l, {"reltuples"},    23,	0l,  4,  6, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
 { 1259l, {"relhasindex"},  16,	0l,  1,  7, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
 { 1259l, {"relisshared"},  16,	0l,  1,  8, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
 { 1259l, {"relkind"},	   18,	0l,  1,  9, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
 { 1259l, {"relnatts"},	   21,	0l,  2, 10, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \
-{ 1259l, {"relchecks"},    21l, 0,  2, 11, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \
-{ 1259l, {"reltriggers"},  21l, 0,  2, 12, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \
+{ 1259l, {"relchecks"},    21l, 0,	2, 11, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \
+{ 1259l, {"reltriggers"},  21l, 0,	2, 12, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \
 { 1259l, {"relhasrules"},  16,	0l,  1, 13, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
-{ 1259l, {"relacl"},	 1034l, 0, -1, 14, 0, -1, -1,   '\0', '\0', 'i', '\0', '\0' }
+{ 1259l, {"relacl"},	 1034l, 0, -1, 14, 0, -1, -1,	'\0', '\0', 'i', '\0', '\0' }
 
 DATA(insert OID = 0 ( 1259 relname			19 0 NAMEDATALEN   1 0 -1 -1 f f i f f));
 DATA(insert OID = 0 ( 1259 reltype			26 0  4   2 0 -1 -1 t f i f f));

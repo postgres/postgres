@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.13 1998/02/05 04:21:56 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.14 1998/02/26 04:31:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,17 +36,19 @@ main(int argc, char *argv[])
 	int			len;
 
 #if defined(alpha)
-#  ifdef NOFIXADE
-	int                     buffer[] = {SSIN_UACPROC, UAC_SIGBUS};
-#  endif                                                  /* NOFIXADE */
-#  ifdef NOPRINTADE
-	int                     buffer[] = {SSIN_UACPROC, UAC_NOPRINT};
-#  endif	/* NOPRINTADE */
+#ifdef NOFIXADE
+	int			buffer[] = {SSIN_UACPROC, UAC_SIGBUS};
+
+#endif							/* NOFIXADE */
+#ifdef NOPRINTADE
+	int			buffer[] = {SSIN_UACPROC, UAC_NOPRINT};
+
+#endif							/* NOPRINTADE */
 #endif
 
 #ifdef USE_LOCALE
 	setlocale(LC_CTYPE, "");	/* take locale information from an
-					 * environment */
+								 * environment */
 	setlocale(LC_COLLATE, "");
 	setlocale(LC_MONETARY, "");
 #endif
@@ -58,18 +60,18 @@ main(int argc, char *argv[])
 	 */
 
 #if defined(ultrix4)
-	 syscall(SYS_sysmips, MIPS_FIXADE, 0, NULL, NULL, NULL);
+	syscall(SYS_sysmips, MIPS_FIXADE, 0, NULL, NULL, NULL);
 #endif
 
 #if defined(alpha)
 	if (setsysinfo(SSI_NVPAIRS, buffer, 1, (caddr_t) NULL,
-			(unsigned long) NULL) < 0)
+				   (unsigned long) NULL) < 0)
 	{
 		elog(NOTICE, "setsysinfo failed: %d\n", errno);
 	}
-#endif 
+#endif
 
-#endif	/* NOFIXADE || NOPRINTADE */
+#endif							/* NOFIXADE || NOPRINTADE */
 
 	/*
 	 * use one executable for both postgres and postmaster, invoke one or

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/oidint2.c,v 1.4 1997/09/08 21:48:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/oidint2.c,v 1.5 1998/02/26 04:37:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ oidint2in(char *o)
 	return (oi);
 }
 
-char	   *
+char *
 oidint2out(OidInt2 o)
 {
 	char	   *r;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.10 1998/02/13 19:45:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.11 1998/02/26 04:33:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,8 @@
 
 static List *expandAllTables(ParseState *pstate);
 static char *figureColname(Node *expr, Node *resval);
-static TargetEntry *make_targetlist_expr(ParseState *pstate,
+static TargetEntry *
+make_targetlist_expr(ParseState *pstate,
 					 char *colname,
 					 Node *expr,
 					 List *arrayRef);
@@ -63,13 +64,14 @@ transformTargetList(ParseState *pstate, List *targetlist)
 					handleTargetColname(pstate, &res->name, NULL, identname);
 
 					/*
-					 * here we want to look for column names only, not relation
-					 * names (even though they can be stored in Ident nodes, too)
+					 * here we want to look for column names only, not
+					 * relation names (even though they can be stored in
+					 * Ident nodes, too)
 					 */
 					expr = transformIdent(pstate, (Node *) res->val, EXPR_COLUMN_FIRST);
 					type_id = exprType(expr);
 					if (nodeTag(expr) == T_Var)
-						type_mod = ((Var *)expr)->vartypmod;
+						type_mod = ((Var *) expr)->vartypmod;
 					else
 						type_mod = -1;
 					resname = (res->name) ? res->name : identname;
@@ -257,9 +259,10 @@ transformTargetList(ParseState *pstate, List *targetlist)
 
 
 					/*
-					 * Target item is fully specified: ie. relation.attribute
+					 * Target item is fully specified: ie.
+					 * relation.attribute
 					 */
-					result = ParseNestedFuncOrColumn(pstate, att, &pstate->p_last_resno,EXPR_COLUMN_FIRST);
+					result = ParseNestedFuncOrColumn(pstate, att, &pstate->p_last_resno, EXPR_COLUMN_FIRST);
 					handleTargetColname(pstate, &res->name, att->relname, attrname);
 					if (att->indirection != NIL)
 					{
@@ -277,7 +280,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 					}
 					type_id = exprType(result);
 					if (nodeTag(result) == T_Var)
-						type_mod = ((Var *)result)->vartypmod;
+						type_mod = ((Var *) result)->vartypmod;
 					else
 						type_mod = -1;
 					/* move to last entry */
@@ -345,7 +348,7 @@ make_targetlist_expr(ParseState *pstate,
 
 	type_id = exprType(expr);
 	if (nodeTag(expr) == T_Var)
-		type_mod = ((Var *)expr)->vartypmod;
+		type_mod = ((Var *) expr)->vartypmod;
 	else
 		type_mod = -1;
 
@@ -395,7 +398,7 @@ make_targetlist_expr(ParseState *pstate,
 					makeConst(attrtype,
 							  attrlen,
 							  (Datum) fmgr(typeidInfunc(attrtype),
-										 val, typeidTypElem(attrtype), -1),
+									   val, typeidTypElem(attrtype), -1),
 							  false,
 							  true /* Maybe correct-- 80% chance */ ,
 							  false,	/* is not a set */
@@ -464,8 +467,8 @@ make_targetlist_expr(ParseState *pstate,
 			att->relname = pstrdup(RelationGetRelationName(rd)->data);
 			att->attrs = lcons(makeString(colname), NIL);
 			target_expr = (Expr *) ParseNestedFuncOrColumn(pstate, att,
-												  &pstate->p_last_resno,
-												  EXPR_COLUMN_FIRST);
+												   &pstate->p_last_resno,
+													  EXPR_COLUMN_FIRST);
 			while (ar != NIL)
 			{
 				A_Indices  *ind = lfirst(ar);
@@ -556,15 +559,15 @@ makeTargetNames(ParseState *pstate, List *cols)
 		{
 			List	   *nxt;
 			char	   *name = ((Ident *) lfirst(tl))->name;
-		
+
 			/* elog on failure */
 			attnameAttNum(pstate->p_target_relation, name);
 			foreach(nxt, lnext(tl))
 				if (!strcmp(name, ((Ident *) lfirst(nxt))->name))
-					elog(ERROR, "Attribute '%s' should be specified only once", name);
+				elog(ERROR, "Attribute '%s' should be specified only once", name);
 		}
 	}
-	
+
 	return cols;
 }
 
@@ -643,8 +646,8 @@ figureColname(Node *expr, Node *resval)
 {
 	switch (nodeTag(expr))
 	{
-		case T_Aggreg:
-			return (char *)	((Aggreg *) expr)->aggname;
+			case T_Aggreg:
+			return (char *) ((Aggreg *) expr)->aggname;
 		case T_Expr:
 			if (((Expr *) expr)->opType == FUNC_EXPR)
 			{

@@ -1,7 +1,7 @@
 /*
  *	Edmund Mergl <E.Mergl@bawue.de>
  *
- *	$Id: oracle_compat.c,v 1.11 1998/01/13 03:49:51 scrappy Exp $
+ *	$Id: oracle_compat.c,v 1.12 1998/02/26 04:37:19 momjian Exp $
  *
  */
 
@@ -36,7 +36,7 @@ text	   *translate(text *string, char from, char to);
  *
  ********************************************************************/
 
-text	   *
+text *
 lower(text *string)
 {
 	text	   *ret;
@@ -76,7 +76,7 @@ lower(text *string)
  *
  ********************************************************************/
 
-text	   *
+text *
 upper(text *string)
 {
 	text	   *ret;
@@ -118,7 +118,7 @@ upper(text *string)
  *
  ********************************************************************/
 
-text	   *
+text *
 initcap(text *string)
 {
 	text	   *ret;
@@ -169,7 +169,7 @@ initcap(text *string)
  *
  ********************************************************************/
 
-text	   *
+text *
 lpad(text *string1, int4 len, text *string2)
 {
 	text	   *ret;
@@ -225,7 +225,7 @@ lpad(text *string1, int4 len, text *string2)
  *
  ********************************************************************/
 
-text	   *
+text *
 rpad(text *string1, int4 len, text *string2)
 {
 	text	   *ret;
@@ -281,7 +281,7 @@ rpad(text *string1, int4 len, text *string2)
  *
  ********************************************************************/
 
-text	   *
+text *
 btrim(text *string, text *set)
 {
 	text	   *ret;
@@ -349,7 +349,7 @@ btrim(text *string, text *set)
 	memcpy(VARDATA(ret), ptr, m);
 
 	return ret;
-}								/* btrim() */
+}	/* btrim() */
 
 
 /********************************************************************
@@ -367,7 +367,7 @@ btrim(text *string, text *set)
  *
  ********************************************************************/
 
-text	   *
+text *
 ltrim(text *string, text *set)
 {
 	text	   *ret;
@@ -430,7 +430,7 @@ ltrim(text *string, text *set)
  *
  ********************************************************************/
 
-text	   *
+text *
 rtrim(text *string, text *set)
 {
 	text	   *ret;
@@ -502,7 +502,7 @@ rtrim(text *string, text *set)
  *
  ********************************************************************/
 
-text	   *
+text *
 substr(text *string, int4 m, int4 n)
 {
 	text	   *ret;
@@ -548,7 +548,7 @@ substr(text *string, int4 m, int4 n)
  *
  ********************************************************************/
 
-text	   *
+text *
 translate(text *string, char from, char to)
 {
 	text	   *ret;

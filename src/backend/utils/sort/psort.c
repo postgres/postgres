@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.38 1998/02/23 06:27:39 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.39 1998/02/26 04:38:29 momjian Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -57,32 +57,32 @@
 #include "utils/psort.h"
 #include "utils/rel.h"
 
-static bool createfirstrun(Sort * node);
-static bool createrun(Sort * node, FILE * file);
-static void destroytape(FILE * file);
-static void dumptuples(FILE * file, Sort * node);
+static bool createfirstrun(Sort *node);
+static bool createrun(Sort *node, FILE *file);
+static void destroytape(FILE *file);
+static void dumptuples(FILE *file, Sort *node);
 static FILE *gettape(void);
-static void initialrun(Sort * node);
-static void inittapes(Sort * node);
-static void merge(Sort * node, struct tape * dest);
-static FILE *mergeruns(Sort * node);
+static void initialrun(Sort *node);
+static void inittapes(Sort *node);
+static void merge(Sort *node, struct tape * dest);
+static FILE *mergeruns(Sort *node);
 static HeapTuple tuplecopy(HeapTuple tup);
-static int _psort_cmp (HeapTuple *ltup, HeapTuple *rtup);
+static int	_psort_cmp(HeapTuple *ltup, HeapTuple *rtup);
 
 
 
 #define TEMPDIR "./"
 
-/* 
+/*
  * tlenzero used to delimit runs; both vars below must have
  * the same size as HeapTuple->t_len
  */
 static unsigned int tlenzero = 0;
 static unsigned int tlendummy;
 
-static TupleDesc	PsortTupDesc;
-static ScanKey		PsortKeys;		/* used by _psort_cmp */
-static int			PsortNkeys;
+static TupleDesc PsortTupDesc;
+static ScanKey PsortKeys;		/* used by _psort_cmp */
+static int	PsortNkeys;
 
 /*
  * old psort global variables
@@ -127,7 +127,7 @@ static int			PsortNkeys;
  *						  Allocates and initializes sort node's psort state.
  */
 bool
-psort_begin(Sort * node, int nkeys, ScanKey key)
+psort_begin(Sort *node, int nkeys, ScanKey key)
 {
 
 	node->psortstate = (struct Psortstate *) palloc(sizeof(struct Psortstate));
@@ -173,9 +173,9 @@ psort_begin(Sort * node, int nkeys, ScanKey key)
  *				number of allocated tapes
  */
 static void
-inittapes(Sort * node)
+inittapes(Sort *node)
 {
-	int i;
+	int			i;
 	struct tape *tp;
 
 	Assert(node != (Sort *) NULL);
@@ -245,7 +245,7 @@ inittapes(Sort * node)
 
 #define USEMEM(NODE,AMT)		PS(node)->treeContext.sortMem -= (AMT)
 #define FREEMEM(NODE,AMT)		PS(node)->treeContext.sortMem += (AMT)
-#define LACKMEM(NODE)			(PS(node)->treeContext.sortMem <= BLCKSZ)	/* not accurate */
+#define LACKMEM(NODE)			(PS(node)->treeContext.sortMem <= BLCKSZ)		/* not accurate */
 #define TRACEMEM(FUNC)
 #define TRACEOUT(FUNC, TUP)
 
@@ -274,7 +274,7 @@ inittapes(Sort * node)
  *				Also, perhaps allocate tapes when needed. Split into 2 funcs.
  */
 static void
-initialrun(Sort * node)
+initialrun(Sort *node)
 {
 	/* struct tuple   *tup; */
 	struct tape *tp;
@@ -288,22 +288,25 @@ initialrun(Sort * node)
 
 	if (createfirstrun(node))
 	{
-		Assert (PS(node)->using_tape_files);
+		Assert(PS(node)->using_tape_files);
 		extrapasses = 0;
 	}
-	else			/* all tuples fetched */
+	else
+/* all tuples fetched */
 	{
-		if ( !PS(node)->using_tape_files )	/* empty or sorted in memory */
+		if (!PS(node)->using_tape_files)		/* empty or sorted in
+												 * memory */
 			return;
-		/* 
+
+		/*
 		 * if PS(node)->Tuples == NULL then we have single (sorted) run
-		 * which can be used as result grab file! So, we may avoid 
+		 * which can be used as result grab file! So, we may avoid
 		 * mergeruns - it will just copy this run to new file.
 		 */
-		if ( PS(node)->Tuples == NULL )
+		if (PS(node)->Tuples == NULL)
 		{
 			PS(node)->psort_grab_file = PS(node)->Tape->tp_file;
-			rewind (PS(node)->psort_grab_file);
+			rewind(PS(node)->psort_grab_file);
 			return;
 		}
 		extrapasses = 2;
@@ -352,7 +355,7 @@ initialrun(Sort * node)
 }
 
 /*
- *		createfirstrun		- tries to sort tuples in memory using qsort 
+ *		createfirstrun		- tries to sort tuples in memory using qsort
  *						until LACKMEM; if not enough memory then switches
  *						to tape method
  *
@@ -363,12 +366,12 @@ initialrun(Sort * node)
 static bool
 createfirstrun(Sort *node)
 {
-    HeapTuple			tup;
-	bool				foundeor = false;
-	HeapTuple		   *memtuples;
-	int					t_last = -1;
-	int					t_free = 1000;
-	TupleTableSlot	   *cr_slot;
+	HeapTuple	tup;
+	bool		foundeor = false;
+	HeapTuple  *memtuples;
+	int			t_last = -1;
+	int			t_free = 1000;
+	TupleTableSlot *cr_slot;
 
 	Assert(node != (Sort *) NULL);
 	Assert(PS(node) != (Psortstate *) NULL);
@@ -376,15 +379,15 @@ createfirstrun(Sort *node)
 	Assert(PS(node)->memtuples == NULL);
 	Assert(PS(node)->tupcount == 0);
 	if (LACKMEM(node))
-		elog (FATAL, "psort: LACKMEM in createfirstrun");
-	
+		elog(FATAL, "psort: LACKMEM in createfirstrun");
+
 	memtuples = palloc(t_free * sizeof(HeapTuple));
-	
+
 	for (;;)
 	{
-		if ( LACKMEM (node) )
+		if (LACKMEM(node))
 			break;
-		
+
 		/*
 		 * About to call ExecProcNode, it can mess up the state if it
 		 * eventually calls another Sort node. So must stow it away here
@@ -399,28 +402,28 @@ createfirstrun(Sort *node)
 			foundeor = true;
 			break;
 		}
-		
+
 		tup = tuplecopy(cr_slot->val);
 		ExecClearTuple(cr_slot);
 
 		IncrProcessed();
 		USEMEM(node, tup->t_len);
 		TRACEMEM(createfirstrun);
-		if ( t_free <= 0 )
+		if (t_free <= 0)
 		{
-		    t_free = 1000;
-			memtuples = repalloc (memtuples, 
-	    				(t_last + t_free + 1) * sizeof (HeapTuple));
+			t_free = 1000;
+			memtuples = repalloc(memtuples,
+							  (t_last + t_free + 1) * sizeof(HeapTuple));
 		}
 		t_last++;
 		t_free--;
 		memtuples[t_last] = tup;
 	}
-	
-	if ( t_last < 0 )			/* empty */
+
+	if (t_last < 0)				/* empty */
 	{
-		Assert (foundeor);
-		pfree (memtuples);
+		Assert(foundeor);
+		pfree(memtuples);
 		return (false);
 	}
 	t_last++;
@@ -428,27 +431,27 @@ createfirstrun(Sort *node)
 	PsortTupDesc = PS(node)->treeContext.tupDesc;
 	PsortKeys = PS(node)->treeContext.scanKeys;
 	PsortNkeys = PS(node)->treeContext.nKeys;
-    qsort (memtuples, t_last, sizeof (HeapTuple), 
-    	(int (*)(const void *,const void *))_psort_cmp);
-	
-	if ( LACKMEM (node) )	/* in-memory sort is impossible */
+	qsort(memtuples, t_last, sizeof(HeapTuple),
+		  (int (*) (const void *, const void *)) _psort_cmp);
+
+	if (LACKMEM(node))			/* in-memory sort is impossible */
 	{
-    	int t;
-		
-		Assert (!foundeor);
+		int			t;
+
+		Assert(!foundeor);
 		inittapes(node);
 		/* put tuples into leftist tree for createrun */
-		for (t = t_last - 1 ; t >= 0; t--)
+		for (t = t_last - 1; t >= 0; t--)
 			puttuple(&PS(node)->Tuples, memtuples[t], 0, &PS(node)->treeContext);
-		pfree (memtuples);
-		foundeor = !createrun (node, PS(node)->Tape->tp_file);
+		pfree(memtuples);
+		foundeor = !createrun(node, PS(node)->Tape->tp_file);
 	}
 	else
 	{
-		Assert (foundeor);
+		Assert(foundeor);
 		PS(node)->memtuples = memtuples;
 	}
-		
+
 	return (!foundeor);
 }
 
@@ -464,24 +467,24 @@ createfirstrun(Sort *node)
  *				Tuples contains the tuples for the following run upon exit
  */
 static bool
-createrun(Sort * node, FILE * file)
+createrun(Sort *node, FILE *file)
 {
 	HeapTuple	lasttuple;
 	HeapTuple	tup;
-	TupleTableSlot	   *cr_slot;
-	HeapTuple		   *memtuples;
-	int					t_last = -1;
-	int					t_free = 1000;
-	bool				foundeor = false;
-	short				junk;
+	TupleTableSlot *cr_slot;
+	HeapTuple  *memtuples;
+	int			t_last = -1;
+	int			t_free = 1000;
+	bool		foundeor = false;
+	short		junk;
 
 	Assert(node != (Sort *) NULL);
 	Assert(PS(node) != (Psortstate *) NULL);
-	Assert (PS(node)->using_tape_files);
+	Assert(PS(node)->using_tape_files);
 
 	lasttuple = NULL;
 	memtuples = palloc(t_free * sizeof(HeapTuple));
-	
+
 	for (;;)
 	{
 		while (LACKMEM(node) && PS(node)->Tuples != NULL)
@@ -493,14 +496,14 @@ createrun(Sort * node, FILE * file)
 				TRACEMEM(createrun);
 			}
 			lasttuple = gettuple(&PS(node)->Tuples, &junk,
-										   &PS(node)->treeContext);
+								 &PS(node)->treeContext);
 			PUTTUP(node, lasttuple, file);
 			TRACEOUT(createrun, lasttuple);
 		}
-		
+
 		if (LACKMEM(node))
 			break;
-		
+
 		/*
 		 * About to call ExecProcNode, it can mess up the state if it
 		 * eventually calls another Sort node. So must stow it away here
@@ -528,11 +531,11 @@ createrun(Sort * node, FILE * file)
 		if (lasttuple != NULL && tuplecmp(tup, lasttuple,
 										  &PS(node)->treeContext))
 		{
-			if ( t_free <= 0 )
+			if (t_free <= 0)
 			{
-			    t_free = 1000;
-				memtuples = repalloc (memtuples, 
-		    				(t_last + t_free + 1) * sizeof (HeapTuple));
+				t_free = 1000;
+				memtuples = repalloc(memtuples,
+							  (t_last + t_free + 1) * sizeof(HeapTuple));
 			}
 			t_last++;
 			t_free--;
@@ -549,23 +552,23 @@ createrun(Sort * node, FILE * file)
 	}
 	dumptuples(file, node);
 	ENDRUN(file);				/* delimit the end of the run */
-	
+
 	t_last++;
 	/* put tuples for the next run into leftist tree */
-	if ( t_last >= 1 )
+	if (t_last >= 1)
 	{
-		int t;
-		
+		int			t;
+
 		PsortTupDesc = PS(node)->treeContext.tupDesc;
 		PsortKeys = PS(node)->treeContext.scanKeys;
 		PsortNkeys = PS(node)->treeContext.nKeys;
-    	qsort (memtuples, t_last, sizeof (HeapTuple), 
-    		(int (*)(const void *,const void *))_psort_cmp);
-		for (t = t_last - 1 ; t >= 0; t--)
+		qsort(memtuples, t_last, sizeof(HeapTuple),
+			  (int (*) (const void *, const void *)) _psort_cmp);
+		for (t = t_last - 1; t >= 0; t--)
 			puttuple(&PS(node)->Tuples, memtuples[t], 0, &PS(node)->treeContext);
 	}
-	
-	pfree (memtuples);
+
+	pfree(memtuples);
 
 	return (!foundeor);
 }
@@ -598,7 +601,7 @@ tuplecopy(HeapTuple tup)
  *				file of tuples in order
  */
 static FILE *
-mergeruns(Sort * node)
+mergeruns(Sort *node)
 {
 	struct tape *tp;
 
@@ -625,17 +628,17 @@ mergeruns(Sort * node)
  *						  (polyphase merge Alg.D(D5)--Knuth, Vol.3, p271)
  */
 static void
-merge(Sort * node, struct tape * dest)
+merge(Sort *node, struct tape * dest)
 {
-	HeapTuple tup;
+	HeapTuple	tup;
 	struct tape *lasttp;		/* (TAPE[P]) */
 	struct tape *tp;
 	struct leftist *tuples;
-	FILE		   *destfile;
-	int				times;			/* runs left to merge */
-	int				outdummy;		/* complete dummy runs */
-	short			fromtape;
-	unsigned int	tuplen;
+	FILE	   *destfile;
+	int			times;			/* runs left to merge */
+	int			outdummy;		/* complete dummy runs */
+	short		fromtape;
+	unsigned int tuplen;
 
 	Assert(node != (Sort *) NULL);
 	Assert(PS(node) != (Psortstate *) NULL);
@@ -732,7 +735,7 @@ merge(Sort * node, struct tape * dest)
  * dumptuples	- stores all the tuples in tree into file
  */
 static void
-dumptuples(FILE * file, Sort * node)
+dumptuples(FILE *file, Sort *node)
 {
 	struct leftist *tp;
 	struct leftist *newp;
@@ -740,7 +743,7 @@ dumptuples(FILE * file, Sort * node)
 	LeftistContext context = &PS(node)->treeContext;
 	HeapTuple	tup;
 
-	Assert (PS(node)->using_tape_files);
+	Assert(PS(node)->using_tape_files);
 
 	tp = *treep;
 	while (tp != NULL)
@@ -767,7 +770,7 @@ dumptuples(FILE * file, Sort * node)
  *						  a NULL indicating the last tuple has been processed.
  */
 HeapTuple
-psort_grabtuple(Sort * node, bool * should_free)
+psort_grabtuple(Sort *node, bool *should_free)
 {
 	HeapTuple	tup;
 
@@ -776,10 +779,10 @@ psort_grabtuple(Sort * node, bool * should_free)
 
 	if (PS(node)->using_tape_files == true)
 	{
-		unsigned int	tuplen;
-		
+		unsigned int tuplen;
+
 		*should_free = true;
-		if (ScanDirectionIsForward (node->plan.state->es_direction))
+		if (ScanDirectionIsForward(node->plan.state->es_direction))
 		{
 			if (PS(node)->all_fetched)
 				return NULL;
@@ -790,7 +793,7 @@ psort_grabtuple(Sort * node, bool * should_free)
 				GETTUP(node, tup, tuplen, PS(node)->psort_grab_file);
 
 				/* Update current merged sort file position */
-				PS(node)->psort_current += tuplen + sizeof (tlendummy);
+				PS(node)->psort_current += tuplen + sizeof(tlendummy);
 				return tup;
 			}
 			else
@@ -800,64 +803,72 @@ psort_grabtuple(Sort * node, bool * should_free)
 			}
 		}
 		/* Backward */
-		if (PS(node)->psort_current <= sizeof (tlendummy))
+		if (PS(node)->psort_current <= sizeof(tlendummy))
 			return NULL;
-		/* 
-		 * if all tuples are fetched already then we return last tuple, 
+
+		/*
+		 * if all tuples are fetched already then we return last tuple,
 		 * else - tuple before last returned.
 		 */
 		if (PS(node)->all_fetched)
 		{
-			/* psort_current is pointing to the zero tuplen at the end of file */
-			fseek(PS(node)->psort_grab_file, 
-					PS(node)->psort_current - sizeof (tlendummy), SEEK_SET);
+
+			/*
+			 * psort_current is pointing to the zero tuplen at the end of
+			 * file
+			 */
+			fseek(PS(node)->psort_grab_file,
+				  PS(node)->psort_current - sizeof(tlendummy), SEEK_SET);
 			GETLEN(tuplen, PS(node)->psort_grab_file);
 			if (PS(node)->psort_current < tuplen)
-				elog (FATAL, "psort_grabtuple: too big last tuple len in backward scan");
+				elog(FATAL, "psort_grabtuple: too big last tuple len in backward scan");
 			PS(node)->all_fetched = false;
 		}
 		else
 		{
 			/* move to position of end tlen of prev tuple */
-			PS(node)->psort_current -= sizeof (tlendummy);
+			PS(node)->psort_current -= sizeof(tlendummy);
 			fseek(PS(node)->psort_grab_file, PS(node)->psort_current, SEEK_SET);
-			GETLEN(tuplen, PS(node)->psort_grab_file);	/* get tlen of prev tuple */
+			GETLEN(tuplen, PS(node)->psort_grab_file);	/* get tlen of prev
+														 * tuple */
 			if (tuplen == 0)
-				elog (FATAL, "psort_grabtuple: tuplen is 0 in backward scan");
-			if (PS(node)->psort_current <= tuplen + sizeof (tlendummy))
-			{	/* prev tuple should be first one */
+				elog(FATAL, "psort_grabtuple: tuplen is 0 in backward scan");
+			if (PS(node)->psort_current <= tuplen + sizeof(tlendummy))
+			{					/* prev tuple should be first one */
 				if (PS(node)->psort_current != tuplen)
-					elog (FATAL, "psort_grabtuple: first tuple expected in backward scan");
+					elog(FATAL, "psort_grabtuple: first tuple expected in backward scan");
 				PS(node)->psort_current = 0;
 				fseek(PS(node)->psort_grab_file, PS(node)->psort_current, SEEK_SET);
 				return NULL;
 			}
-			/* 
-			 * Get position of prev tuple. This tuple becomes current tuple
-			 * now and we have to return previous one.
+
+			/*
+			 * Get position of prev tuple. This tuple becomes current
+			 * tuple now and we have to return previous one.
 			 */
 			PS(node)->psort_current -= tuplen;
 			/* move to position of end tlen of prev tuple */
-			fseek(PS(node)->psort_grab_file, 
-					PS(node)->psort_current - sizeof (tlendummy), SEEK_SET);
+			fseek(PS(node)->psort_grab_file,
+				  PS(node)->psort_current - sizeof(tlendummy), SEEK_SET);
 			GETLEN(tuplen, PS(node)->psort_grab_file);
-			if (PS(node)->psort_current < tuplen + sizeof (tlendummy))
-				elog (FATAL, "psort_grabtuple: too big tuple len in backward scan");
+			if (PS(node)->psort_current < tuplen + sizeof(tlendummy))
+				elog(FATAL, "psort_grabtuple: too big tuple len in backward scan");
 		}
-		/* 
-		 * move to prev (or last) tuple start position + sizeof(t_len) 
+
+		/*
+		 * move to prev (or last) tuple start position + sizeof(t_len)
 		 */
 		fseek(PS(node)->psort_grab_file,
-				PS(node)->psort_current - tuplen, SEEK_SET);
+			  PS(node)->psort_current - tuplen, SEEK_SET);
 		tup = (HeapTuple) palloc((unsigned) tuplen);
 		SETTUPLEN(tup, tuplen);
 		GETTUP(node, tup, tuplen, PS(node)->psort_grab_file);
-		return tup;		/* file position is equal to psort_current */
+		return tup;				/* file position is equal to psort_current */
 	}
 	else
 	{
 		*should_free = false;
-		if (ScanDirectionIsForward (node->plan.state->es_direction))
+		if (ScanDirectionIsForward(node->plan.state->es_direction))
 		{
 			if (PS(node)->psort_current < PS(node)->tupcount)
 				return (PS(node)->memtuples[PS(node)->psort_current++]);
@@ -870,15 +881,16 @@ psort_grabtuple(Sort * node, bool * should_free)
 		/* Backward */
 		if (PS(node)->psort_current <= 0)
 			return NULL;
-		/* 
-		 * if all tuples are fetched already then we return last tuple, 
+
+		/*
+		 * if all tuples are fetched already then we return last tuple,
 		 * else - tuple before last returned.
 		 */
-		if (PS(node)->all_fetched)		
+		if (PS(node)->all_fetched)
 			PS(node)->all_fetched = false;
 		else
 		{
-			PS(node)->psort_current--;			/* last returned tuple */
+			PS(node)->psort_current--;	/* last returned tuple */
 			if (PS(node)->psort_current <= 0)
 				return NULL;
 		}
@@ -890,7 +902,7 @@ psort_grabtuple(Sort * node, bool * should_free)
  *		psort_markpos	- saves current position in the merged sort file
  */
 void
-psort_markpos(Sort * node)
+psort_markpos(Sort *node)
 {
 	Assert(node != (Sort *) NULL);
 	Assert(PS(node) != (Psortstate *) NULL);
@@ -903,7 +915,7 @@ psort_markpos(Sort * node)
  *						  last saved position
  */
 void
-psort_restorepos(Sort * node)
+psort_restorepos(Sort *node)
 {
 	Assert(node != (Sort *) NULL);
 	Assert(PS(node) != (Psortstate *) NULL);
@@ -918,12 +930,13 @@ psort_restorepos(Sort * node)
  *						  called unless psort_grabtuple has returned a NULL.
  */
 void
-psort_end(Sort * node)
+psort_end(Sort *node)
 {
 	struct tape *tp;
 
 	if (!node->cleaned)
 	{
+
 		/*
 		 * I'm changing this because if we are sorting a relation with no
 		 * tuples, psortstate is NULL.
@@ -950,14 +963,15 @@ psort_end(Sort * node)
 }
 
 void
-psort_rescan (Sort *node)
+psort_rescan(Sort *node)
 {
+
 	/*
 	 * If subnode is to be rescanned then free our previous results
 	 */
-	if (((Plan*) node)->lefttree->chgParam != NULL)
+	if (((Plan *) node)->lefttree->chgParam != NULL)
 	{
-		psort_end (node);
+		psort_end(node);
 		node->cleaned = false;
 	}
 	else if (PS(node) != (Psortstate *) NULL)
@@ -966,7 +980,7 @@ psort_rescan (Sort *node)
 		PS(node)->psort_current = 0;
 		PS(node)->psort_saved = 0;
 		if (PS(node)->using_tape_files == true)
-			rewind (PS(node)->psort_grab_file);
+			rewind(PS(node)->psort_grab_file);
 	}
 
 }
@@ -1039,10 +1053,10 @@ gettape()
  */
 #ifdef NOT_USED
 static void
-resettape(FILE * file)
+resettape(FILE *file)
 {
 	struct tapelst *tp;
-	int fd;
+	int			fd;
 
 	Assert(PointerIsValid(file));
 
@@ -1071,11 +1085,11 @@ resettape(FILE * file)
  *				Exits instead of returning status, if given invalid tape.
  */
 static void
-destroytape(FILE * file)
+destroytape(FILE *file)
 {
 	struct tapelst *tp,
 			   *tq;
-	int fd;
+	int			fd;
 
 	if ((tp = Tapes) == NULL)
 		elog(FATAL, "destroytape: tape not found");
@@ -1108,38 +1122,40 @@ destroytape(FILE * file)
 }
 
 static int
-_psort_cmp (HeapTuple *ltup, HeapTuple *rtup)
+_psort_cmp(HeapTuple *ltup, HeapTuple *rtup)
 {
-    Datum	lattr, rattr;
-    int		nkey;
-    int		result = 0;
-    bool	isnull1, isnull2;
-    
-    for (nkey = 0; nkey < PsortNkeys && !result; nkey++ )
-    {
+	Datum		lattr,
+				rattr;
+	int			nkey;
+	int			result = 0;
+	bool		isnull1,
+				isnull2;
+
+	for (nkey = 0; nkey < PsortNkeys && !result; nkey++)
+	{
 		lattr = heap_getattr(*ltup,
-				     PsortKeys[nkey].sk_attno, 
-				     PsortTupDesc,
-			    	 &isnull1);
+							 PsortKeys[nkey].sk_attno,
+							 PsortTupDesc,
+							 &isnull1);
 		rattr = heap_getattr(*rtup,
-				     PsortKeys[nkey].sk_attno, 
-				     PsortTupDesc,
-				     &isnull2);
-		if ( isnull1 )
+							 PsortKeys[nkey].sk_attno,
+							 PsortTupDesc,
+							 &isnull2);
+		if (isnull1)
 		{
-			if ( !isnull2 )
+			if (!isnull2)
 				result = 1;
 		}
-		else if ( isnull2 )
-		    result = -1;
-		
+		else if (isnull2)
+			result = -1;
+
 		else if (PsortKeys[nkey].sk_flags & SK_COMMUTE)
 		{
-	    	if (!(result = -(long) (*fmgr_faddr(&PsortKeys[nkey].sk_func)) (rattr, lattr)))
-			result = (long) (*fmgr_faddr(&PsortKeys[nkey].sk_func)) (lattr, rattr);
+			if (!(result = -(long) (*fmgr_faddr(&PsortKeys[nkey].sk_func)) (rattr, lattr)))
+				result = (long) (*fmgr_faddr(&PsortKeys[nkey].sk_func)) (lattr, rattr);
 		}
 		else if (!(result = -(long) (*fmgr_faddr(&PsortKeys[nkey].sk_func)) (lattr, rattr)))
-		    result = (long) (*fmgr_faddr(&PsortKeys[nkey].sk_func)) (rattr, lattr);
-    }
-    return (result);
+			result = (long) (*fmgr_faddr(&PsortKeys[nkey].sk_func)) (rattr, lattr);
+	}
+	return (result);
 }

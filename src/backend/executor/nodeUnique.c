@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.16 1998/02/23 06:26:58 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.17 1998/02/26 04:31:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,7 +187,7 @@ ExecUnique(Unique *node)
 			char	   *val1,
 					   *val2;
 
-			attr1 = heap_getattr(slot->val, 
+			attr1 = heap_getattr(slot->val,
 								 uniqueAttrNum, tupDesc, &isNull1);
 			attr2 = heap_getattr(resultTupleSlot->val,
 								 uniqueAttrNum, tupDesc, &isNull2);
@@ -197,11 +197,11 @@ ExecUnique(Unique *node)
 				if (isNull1)	/* both are null, they are equal */
 					continue;
 				val1 = fmgr(typoutput, attr1,
-					gettypelem(tupDesc->attrs[uniqueAttrNum - 1]->atttypid),
-							   tupDesc->attrs[uniqueAttrNum - 1]->atttypmod);
+				 gettypelem(tupDesc->attrs[uniqueAttrNum - 1]->atttypid),
+							tupDesc->attrs[uniqueAttrNum - 1]->atttypmod);
 				val2 = fmgr(typoutput, attr2,
-					gettypelem(tupDesc->attrs[uniqueAttrNum - 1]->atttypid),
-							   tupDesc->attrs[uniqueAttrNum - 1]->atttypmod);
+				 gettypelem(tupDesc->attrs[uniqueAttrNum - 1]->atttypid),
+							tupDesc->attrs[uniqueAttrNum - 1]->atttypmod);
 
 				/*
 				 * now, val1 and val2 are ascii representations so we can
@@ -209,12 +209,12 @@ ExecUnique(Unique *node)
 				 */
 				if (strcmp(val1, val2) == 0)	/* they are equal */
 				{
-					pfree (val1);
-					pfree (val2);
+					pfree(val1);
+					pfree(val2);
 					continue;
 				}
-				pfree (val1);
-				pfree (val2);
+				pfree(val1);
+				pfree(val2);
 				break;
 			}
 			else
@@ -361,13 +361,14 @@ void
 ExecReScanUnique(Unique *node, ExprContext *exprCtxt, Plan *parent)
 {
 	UniqueState *uniquestate = node->uniquestate;
-	
+
 	ExecClearTuple(uniquestate->cs_ResultTupleSlot);
-	/* 
-	 * if chgParam of subnode is not null then plan
-	 * will be re-scanned by first ExecProcNode.
+
+	/*
+	 * if chgParam of subnode is not null then plan will be re-scanned by
+	 * first ExecProcNode.
 	 */
-	if (((Plan*) node)->lefttree->chgParam == NULL)
-		ExecReScan (((Plan*) node)->lefttree, exprCtxt, (Plan *) node);
-	
+	if (((Plan *) node)->lefttree->chgParam == NULL)
+		ExecReScan(((Plan *) node)->lefttree, exprCtxt, (Plan *) node);
+
 }

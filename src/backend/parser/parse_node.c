@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.13 1998/02/13 19:45:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.14 1998/02/26 04:33:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,8 @@
 #include "utils/lsyscache.h"
 
 static void disallow_setop(char *op, Type optype, Node *operand);
-static Node *make_operand(char *opname,
+static Node *
+make_operand(char *opname,
 			 Node *tree,
 			 Oid orig_typeId,
 			 Oid true_typeId);
@@ -52,7 +53,7 @@ make_parsestate(ParseState *parentParseState)
 
 	pstate->p_last_resno = 1;
 	pstate->parentParseState = parentParseState;
-	
+
 	return (pstate);
 }
 
@@ -125,7 +126,7 @@ disallow_setop(char *op, Type optype, Node *operand)
 	}
 }
 
-Expr	   *
+Expr *
 make_op(char *opname, Node *ltree, Node *rtree)
 {
 	Oid			ltypeId,
@@ -238,9 +239,9 @@ make_op(char *opname, Node *ltree, Node *rtree)
 	return result;
 }
 
-Var		   *
+Var *
 make_var(ParseState *pstate, Oid relid, char *refname,
-				char *attrname)
+		 char *attrname)
 {
 	Var		   *varnode;
 	int			vnum,
@@ -321,6 +322,7 @@ make_array_ref(Node *expr,
 		A_Indices  *ind = lfirst(indirection);
 
 		if (ind->lidx)
+
 			/*
 			 * XXX assumes all lower indices non null in this case
 			 */
@@ -426,7 +428,7 @@ make_array_set(Expr *target_expr,
  *
  * eventually, produces a "const" lisp-struct as per nodedefs.cl
  */
-Const	   *
+Const *
 make_const(Value *value)
 {
 	Type		tp;
@@ -454,8 +456,8 @@ make_const(Value *value)
 			break;
 
 		case T_String:
-			tp = typeidType(UNKNOWNOID);	/* unknown for now, will be type
-										 * coerced */
+			tp = typeidType(UNKNOWNOID);		/* unknown for now, will
+												 * be type coerced */
 			val = PointerGetDatum(textin(strVal(value)));
 			break;
 
@@ -481,4 +483,3 @@ make_const(Value *value)
 
 	return (con);
 }
-

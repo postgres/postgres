@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.26 1998/02/25 13:07:43 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.27 1998/02/26 04:36:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,7 +182,7 @@ aclparse(char *s, AclItem *aip, unsigned *modechg)
  * RETURNS:
  *		the new Acl
  */
-Acl		   *
+Acl *
 makeacl(int n)
 {
 	Acl		   *new_acl;
@@ -240,10 +240,10 @@ aclitemin(char *s)
  * RETURNS:
  *		the new string
  */
-char	   *
+char *
 aclitemout(AclItem *aip)
 {
-	char *p;
+	char	   *p;
 	char	   *out;
 	HeapTuple	htp;
 	unsigned	i;
@@ -272,12 +272,13 @@ aclitemout(AclItem *aip)
 
 #ifdef NOT_USED
 
-	When this elog(NOTICE) goes to the libpq client, it crashes the
-	client because the NOTICE protocol is coming right in the middle
-	of a request for a field value.  We skip the NOTICE for now.
+				When this	elog(NOTICE) goes to the libpq client,
+							it crashes the
+							client because the NOTICE protocol is coming right in the middle
+							of a request for a field value.We skip the NOTICE for now.
 
-				elog(NOTICE, "aclitemout: usesysid %d not found",
-					 aip->ai_id);
+							elog(NOTICE, "aclitemout: usesysid %d not found",
+											 aip->ai_id);
 
 #endif
 
@@ -342,7 +343,7 @@ aclitemgt(AclItem *a1, AclItem *a2)
 			(a1->ai_idtype == a2->ai_idtype && a1->ai_id > a2->ai_id));
 }
 
-Acl		   *
+Acl *
 aclownerdefault(char *relname, AclId ownerid)
 {
 	Acl		   *acl;
@@ -359,7 +360,7 @@ aclownerdefault(char *relname, AclId ownerid)
 	return (acl);
 }
 
-Acl		   *
+Acl *
 acldefault(char *relname)
 {
 	Acl		   *acl;
@@ -373,7 +374,7 @@ acldefault(char *relname)
 	return (acl);
 }
 
-Acl		   *
+Acl *
 aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
 {
 	Acl		   *new_acl;
@@ -490,13 +491,13 @@ aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
  * aclinsert
  *
  */
-Acl		   *
+Acl *
 aclinsert(Acl *old_acl, AclItem *mod_aip)
 {
 	return (aclinsert3(old_acl, mod_aip, ACL_MODECHG_EQL));
 }
 
-Acl		   *
+Acl *
 aclremove(Acl *old_acl, AclItem *mod_aip)
 {
 	Acl		   *new_acl;
@@ -583,7 +584,7 @@ aclcontains(Acl *acl, AclItem *aip)
  *
  */
 
-char	   *
+char *
 aclmakepriv(char *old_privlist, char new_priv)
 {
 	char	   *priv;
@@ -636,7 +637,7 @@ aclmakepriv(char *old_privlist, char new_priv)
  *
  */
 
-char	   *
+char *
 aclmakeuser(char *user_type, char *user)
 {
 	char	   *user_list;

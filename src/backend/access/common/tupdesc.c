@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.35 1998/02/10 16:02:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.36 1998/02/26 04:29:22 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -306,7 +306,7 @@ TupleDescInitEntry(TupleDesc desc,
 	att->attnum = attributeNumber;
 	att->attnelems = attdim;
 	att->attisset = attisset;
-	
+
 	att->attnotnull = false;
 	att->atthasdef = false;
 
@@ -487,7 +487,7 @@ BuildDescForRelation(List *schema, char *relname)
 		if (arry != NIL)
 		{
 			/* array of XXX is _XXX */
-			sprintf(typename, "_%.*s", NAMEDATALEN-2,entry->typename->name);
+			sprintf(typename, "_%.*s", NAMEDATALEN - 2, entry->typename->name);
 			attdim = length(arry);
 		}
 		else

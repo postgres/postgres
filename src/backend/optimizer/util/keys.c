@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.5 1997/09/08 21:45:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.6 1998/02/26 04:33:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ equal_indexkey_var(int index_key, Var *var)
  *	 lelation.
  *
  */
-Var		   *
+Var *
 extract_subkey(JoinKey *jk, int which_subkey)
 {
 	Var		   *retval;
@@ -178,7 +178,7 @@ matching2_tlvar(int var, List *tlist, bool (*test) ())
 }
 
 
-List	   *
+List *
 collect_index_pathkeys(int *index_keys, List *tlist)
 {
 	List	   *retval = NIL;

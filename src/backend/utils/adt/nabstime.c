@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.41 1998/02/02 01:28:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.42 1998/02/26 04:37:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,7 +103,7 @@ GetCurrentAbsoluteTime(void)
 #endif
 
 	return ((AbsoluteTime) now);
-}								/* GetCurrentAbsoluteTime() */
+}	/* GetCurrentAbsoluteTime() */
 
 
 void
@@ -114,7 +114,7 @@ GetCurrentTime(struct tm * tm)
 	abstime2tm(GetCurrentTransactionStartTime(), &tz, tm, NULL);
 
 	return;
-}								/* GetCurrentTime() */
+}	/* GetCurrentTime() */
 
 
 void
@@ -190,7 +190,7 @@ abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn)
 #endif
 
 	return;
-}								/* abstime2tm() */
+}	/* abstime2tm() */
 
 
 /* tm2abstime()
@@ -231,7 +231,7 @@ tm2abstime(struct tm * tm, int tz)
 		return (INVALID_ABSTIME);
 
 	return (sec);
-}								/* tm2abstime() */
+}	/* tm2abstime() */
 
 
 /* nabstimein()
@@ -300,13 +300,13 @@ nabstimein(char *str)
 	};
 
 	return result;
-}								/* nabstimein() */
+}	/* nabstimein() */
 
 
 /* nabstimeout()
  * Given an AbsoluteTime return the English text version of the date
  */
-char	   *
+char *
 nabstimeout(AbsoluteTime time)
 {
 	char	   *result;
@@ -347,7 +347,7 @@ nabstimeout(AbsoluteTime time)
 	strcpy(result, buf);
 
 	return (result);
-}								/* nabstimeout() */
+}	/* nabstimeout() */
 
 
 /*
@@ -392,7 +392,7 @@ abstime_finite(AbsoluteTime abstime)
 {
 	return ((abstime != INVALID_ABSTIME)
 		  && (abstime != NOSTART_ABSTIME) && (abstime != NOEND_ABSTIME));
-} /* abstime_finite() */
+}	/* abstime_finite() */
 
 
 /*
@@ -534,7 +534,7 @@ datetime_abstime(DateTime *datetime)
 	};
 
 	return (result);
-} /* datetime_abstime() */
+}	/* datetime_abstime() */
 
 /* abstime_datetime()
  * Convert abstime to datetime.
@@ -575,4 +575,4 @@ abstime_datetime(AbsoluteTime abstime)
 	};
 
 	return (result);
-} /* abstime_datetime() */
+}	/* abstime_datetime() */

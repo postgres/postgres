@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hio.h,v 1.6 1998/01/24 22:48:01 momjian Exp $
+ * $Id: hio.h,v 1.7 1998/02/26 04:40:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,8 @@
 #include <utils/rel.h>
 
 
-extern void RelationPutHeapTuple(Relation relation, BlockNumber blockIndex,
+extern void
+RelationPutHeapTuple(Relation relation, BlockNumber blockIndex,
 					 HeapTuple tuple);
 extern void RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple);
 

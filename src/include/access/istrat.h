@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: istrat.h,v 1.9 1998/01/24 22:48:05 momjian Exp $
+ * $Id: istrat.h,v 1.10 1998/02/26 04:40:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,18 +47,23 @@
  */
 #define IndexStrategyIsValid(s) PointerIsValid(s)
 
-extern StrategyMap IndexStrategyGetStrategyMap(IndexStrategy indexStrategy,
+extern StrategyMap
+IndexStrategyGetStrategyMap(IndexStrategy indexStrategy,
 					  StrategyNumber maxStrategyNum, AttrNumber attrNum);
 
-extern Size AttributeNumberGetIndexStrategySize(AttrNumber maxAttributeNumber,
+extern Size
+AttributeNumberGetIndexStrategySize(AttrNumber maxAttributeNumber,
 									StrategyNumber maxStrategyNumber);
-extern StrategyNumber RelationGetStrategy(Relation relation,
+extern StrategyNumber
+RelationGetStrategy(Relation relation,
 			   AttrNumber attributeNumber, StrategyEvaluation evaluation,
 					RegProcedure procedure);
-extern bool RelationInvokeStrategy(Relation relation,
+extern bool
+RelationInvokeStrategy(Relation relation,
 			   StrategyEvaluation evaluation, AttrNumber attributeNumber,
 					   StrategyNumber strategy, Datum left, Datum right);
-extern void IndexSupportInitialize(IndexStrategy indexStrategy,
+extern void
+IndexSupportInitialize(IndexStrategy indexStrategy,
 					   RegProcedure *indexSupport, Oid indexObjectId,
 			  Oid accessMethodObjectId, StrategyNumber maxStrategyNumber,
 		 StrategyNumber maxSupportNumber, AttrNumber maxAttributeNumber);
