@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.30 1998/03/15 08:18:03 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.31 1998/06/13 04:27:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,8 +154,8 @@ read_hba_entry2(FILE *file, UserAuth *userauth_p, char auth_arg[],
 
 
 static void
-process_hba_record(FILE *file, SockAddr *raddr, const char database[],
-				   bool *matches_p, bool *error_p,
+process_hba_record(FILE *file, SockAddr *raddr, const char user[],
+				   const char database[], bool *matches_p, bool *error_p,
 				   UserAuth *userauth_p, char auth_arg[])
 {
 /*---------------------------------------------------------------------------
@@ -210,7 +210,8 @@ process_hba_record(FILE *file, SockAddr *raddr, const char database[],
 		 * sort of connection, ignore it.
 		 */
 
-		if ((strcmp(db, database) != 0 && strcmp(db, "all") != 0) ||
+		if ((strcmp(buf, database) != 0 && strcmp(buf, "all") != 0 &&
+		    (strcmp(buf, "sameuser") != 0 || strcmp(user, database) != 0)) ||
 			raddr->sa.sa_family != AF_UNIX)
 			return;
 	}
@@ -269,7 +270,8 @@ process_hba_record(FILE *file, SockAddr *raddr, const char database[],
 		 * sort of connection, ignore it.
 		 */
 
-		if ((strcmp(db, database) != 0 && strcmp(db, "all") != 0) ||
+		if ((strcmp(buf, database) != 0 && strcmp(buf, "all") != 0 &&
+		    (strcmp(buf, "sameuser") != 0 || strcmp(user, database) != 0)) ||
 			raddr->sa.sa_family != AF_INET ||
 			((file_ip_addr.s_addr ^ raddr->in.sin_addr.s_addr) & mask.s_addr) != 0x0000)
 			return;
@@ -297,9 +299,9 @@ syntax:
 
 
 static void
-process_open_config_file(FILE *file, SockAddr *raddr, const char database[],
-						 bool *host_ok_p, UserAuth *userauth_p,
-						 char auth_arg[])
+process_open_config_file(FILE *file, SockAddr *raddr, const char user[],
+						 const char database[], bool *host_ok_p,
+						 UserAuth *userauth_p, char auth_arg[])
 {
 /*---------------------------------------------------------------------------
   This function does the same thing as find_hba_entry, only with
@@ -333,7 +335,7 @@ process_open_config_file(FILE *file, SockAddr *raddr, const char database[],
 				read_through_eol(file);
 			else
 			{
-				process_hba_record(file, raddr, database,
+				process_hba_record(file, raddr, user, database,
 							 &found_entry, &error, userauth_p, auth_arg);
 			}
 		}
@@ -353,8 +355,8 @@ process_open_config_file(FILE *file, SockAddr *raddr, const char database[],
 
 
 static void
-find_hba_entry(SockAddr *raddr, const char database[], bool *host_ok_p,
-			   UserAuth *userauth_p, char auth_arg[])
+find_hba_entry(SockAddr *raddr, const char user[], const char database[],
+			   bool *host_ok_p, UserAuth *userauth_p, char auth_arg[])
 {
 /*--------------------------------------------------------------------------
   Read the config file and find an entry that allows connection from
@@ -428,7 +430,7 @@ find_hba_entry(SockAddr *raddr, const char database[], bool *host_ok_p,
 		}
 		else
 		{
-			process_open_config_file(file, raddr, database, host_ok_p, userauth_p,
+			process_open_config_file(file, raddr, user, database, host_ok_p, userauth_p,
 									 auth_arg);
 			FreeFile(file);
 		}
@@ -1054,8 +1056,8 @@ GetCharSetByHost(char TableName[], int host, const char DataDir[])
 #endif
 
 extern int
-hba_getauthmethod(SockAddr *raddr, char *database, char *auth_arg,
-				  UserAuth *auth_method)
+hba_getauthmethod(SockAddr *raddr, char *user, char *database,
+				  char *auth_arg, UserAuth *auth_method)
 {
 /*---------------------------------------------------------------------------
   Determine what authentication method should be used when accessing database
@@ -1066,7 +1068,7 @@ hba_getauthmethod(SockAddr *raddr, char *database, char *auth_arg,
 
 	host_ok = false;
 
-	find_hba_entry(raddr, database, &host_ok, auth_method, auth_arg);
+	find_hba_entry(raddr, user, database, &host_ok, auth_method, auth_arg);
 
 	return (host_ok ? STATUS_OK : STATUS_ERROR);
 }

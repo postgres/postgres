@@ -39,8 +39,9 @@
 # 
 #   host DBNAME IP_ADDRESS ADDRESS_MASK USERAUTH [AUTH_ARGUMENT]
 # 
-# DBNAME is the name of a PostgreSQL database, or "all" to indicate all 
-# databases.
+# DBNAME is the name of a PostgreSQL database, "all" to indicate all 
+# databases, or "sameuser" to restrict a user's access to a database
+# with the same user name.
 # 
 # IP_ADDRESS and ADDRESS_MASK are a standard dotted decimal IP address and
 # mask to identify a set of hosts.  These hosts are allowed to connect to 
