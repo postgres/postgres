@@ -16,7 +16,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.8 2001/10/01 05:36:13 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.9 2001/10/01 16:48:37 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -273,9 +273,22 @@ pgstat_start(int real_argc, char *real_argv[])
 	/*
 	 * Then fork off the collector.  Remember its PID for pgstat_ispgstat.
 	 */
+
+	fflush(stdout);
+	fflush(stderr);
+
+#ifdef __BEOS__
+	/* Specific beos actions before backend startup */
+	beos_before_backend_startup();
+#endif
+
 	switch ((pgStatPid = (int)fork()))
 	{
 		case -1:
+#ifdef __BEOS__
+			/* Specific beos actions */
+			beos_backend_startup_failed();
+#endif
 			perror("PGSTAT: fork(2)");
 			pgStatRunning = 0;
 			return -1;
@@ -289,6 +302,18 @@ pgstat_start(int real_argc, char *real_argv[])
 	}
 
 	/* in postmaster child ... */
+
+#ifdef __BEOS__
+	/* Specific beos actions after backend startup */
+	beos_backend_startup();
+#endif
+
+	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
+
+	/* Lose the postmaster's on-exit routines */
+	on_exit_reset();
+
+	/* Close the postmaster's sockets, except for pgstat link */
 	ClosePostmasterPorts(false);
 
 	pgstat_main(real_argc, real_argv);
