@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.30 2001/11/26 18:51:19 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.31 2001/11/26 19:07:11 momjian Exp $
 -->
 
  <chapter id="jdbc">
@@ -584,7 +584,7 @@ st.close();
     need to understand the limitations of each method.  The 
     <type>bytea</type> datatype is not well suited for storing very 
     large amounts of binary data.  While a column of type 
-    <type>bytea</bytea> can hold upto 1Gig of binary data, it would 
+    <type>bytea</type> can hold upto 1Gig of binary data, it would 
     require a huge amount of memory (<acronym>RAM</acronym>) to 
     process such a large value.  The Large Object method for 
     storing binary data is better suited to storing very large values, 
@@ -623,7 +623,7 @@ st.close();
   <para>
     To use the Large Object functionality you can use either the 
     <classname>LargeObject</classname> <acronym>API</acronym>
-    provided by the <application>PostgreSQL</applicaiton> 
+    provided by the <application>PostgreSQL</application> 
     <acronym>JDBC</acronym> Driver, or by using the 
     <function>getBLOB()</function> and <function>setBLOB()</function>
     methods.
@@ -644,7 +644,7 @@ st.close();
       and <function>setBLOB()</function> methods may no longer 
       interact with Large Objects and will instead work on 
       <type>bytea</type> datatypes.  So it is recommended that you 
-      use the <classname>LargeObject</classname> <acronyn>API</acronym> 
+      use the <classname>LargeObject</classname> <acronym>API</acronym> 
       if you intend to use Large Objects.
   </para></note>
 
@@ -2492,7 +2492,7 @@ public void unlink(int oid) throws SQLException
   </para>
 
   <para>
-   The <productname>PostgreSQL</productname> <acronyn>JDBC</acronym> Driver
+   The <productname>PostgreSQL</productname> <acronym>JDBC</acronym> Driver
    is thread safe.
    Consequently, if your application uses multiple threads then you do
    not have to worry about complex algorithms to ensure that only one
