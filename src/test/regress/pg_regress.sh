@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.9 2000/10/23 21:44:12 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.10 2000/10/29 12:49:49 petere Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -291,7 +291,7 @@ then
     if [ ! -d "$LOGDIR" ]; then
         mkdir -p "$LOGDIR" || { (exit 2); exit; }
     fi
-    $GMAKE -C "$top_builddir" DESTDIR="$temp_install" install >"$LOGDIR/install.log" 2>&1
+    $GMAKE -C "$top_builddir" DESTDIR="$temp_install" install with_perl=no with_python=no >"$LOGDIR/install.log" 2>&1
 
     if [ $? -ne 0 ]
     then
