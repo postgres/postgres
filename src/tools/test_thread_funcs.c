@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/tools/Attic/test_thread_funcs.c,v 1.2 2003/09/03 19:36:31 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/tools/Attic/test_thread_funcs.c,v 1.3 2003/09/03 22:34:08 momjian Exp $
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.
@@ -57,8 +57,8 @@ int main(int argc, char *argv[])
 			return 1;
 	}
 
-	pthread_create(&thread1, NULL, (void *) func_call_1, NULL);
-	pthread_create(&thread2, NULL, (void *) func_call_2, NULL);
+	pthread_create(&thread1, NULL, (void * (*)(void *)) func_call_1, NULL);
+	pthread_create(&thread2, NULL, (void * (*)(void *)) func_call_2, NULL);
 	pthread_join(thread1, NULL);
 	pthread_join(thread2, NULL);
 
