@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.270 2004/01/21 14:09:34 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.271 2004/01/28 09:52:14 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -778,6 +778,7 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
 
 			if ((ptr = add_additional_variables($1, true)) != NULL)
 				output_statement(mm_strdup(ptr->command), 0, ptr->connection ? mm_strdup(ptr->connection) : NULL);
+			ptr->opened = true;
 		}
 		| ECPGPrepare
 		{
@@ -2780,6 +2781,7 @@ DeclareCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR SelectStmt
 			this->next = cur;
 			this->name = $2;
 			this->connection = connection;
+			this->opened = false;
 			this->command =  cat_str(7, make_str("declare"), mm_strdup($2), $3, make_str("cursor"), $5, make_str("for"), $7);
 			this->argsinsert = argsinsert;
 			this->argsresult = argsresult;

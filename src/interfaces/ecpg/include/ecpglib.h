@@ -54,7 +54,7 @@ bool		ECPGprepare(int, char *, char *);
 bool		ECPGdeallocate(int, int, char *);
 bool		ECPGdeallocate_one(int, char *);
 bool		ECPGdeallocate_all(int);
-char	   *ECPGprepared_statement(char *);
+char	   *ECPGprepared_statement(const char *);
 
 void		ECPGlog(const char *format,...);
 char	   *ECPGerrmsg(void);

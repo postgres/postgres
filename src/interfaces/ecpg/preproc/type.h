@@ -115,6 +115,7 @@ struct cursor
 	char	   *name;
 	char	   *command;
 	char	   *connection;
+	bool	    opened;
 	struct arguments *argsinsert;
 	struct arguments *argsresult;
 	struct cursor *next;

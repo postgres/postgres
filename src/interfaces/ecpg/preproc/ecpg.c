@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.83 2003/12/18 18:55:09 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.84 2004/01/28 09:52:14 meskes Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -22,6 +22,7 @@ int			ret_value = 0,
 			auto_create_c = false,
 			system_includes = false,
 			force_indicator = true;
+			header_mode = false;
 
 enum COMPAT_MODE compat = ECPG_COMPAT_PGSQL;
 
@@ -47,6 +48,7 @@ help(const char *progname)
 	printf("  -d             generate parser debug output\n");
 #endif
 	printf("  -D SYMBOL      define SYMBOL\n");
+	printf("  -h             parse a header file, this option includes option \"-c\"\n");
 	printf("  -i             parse system include files as well\n");
 	printf("  -I DIRECTORY   search DIRECTORY for include files\n");
 	printf("  -o OUTFILE     write result to OUTFILE\n");
@@ -136,7 +138,7 @@ main(int argc, char *const argv[])
 		}
 	}
 
-	while ((c = getopt(argc, argv, "vcio:I:tD:dC:r:")) != -1)
+	while ((c = getopt(argc, argv, "vcio:I:tD:dC:r:h")) != -1)
 	{
 		switch (c)
 		{
@@ -160,6 +162,10 @@ main(int argc, char *const argv[])
 			case 'v':
 				verbose = true;
 				break;
+			case 'h':
+				header_mode = true;
+				/* this must include "-c" to make sense */
+				/* so do not place a break; here */
 			case 'c':
 				auto_create_c = true;
 				break;
@@ -259,11 +265,11 @@ main(int argc, char *const argv[])
 				{
 					ptr2ext = input_filename + strlen(input_filename);
 
-					/* no extension => add .pgc */
+					/* no extension => add .pgc or .pgh */
 					ptr2ext[0] = '.';
 					ptr2ext[1] = 'p';
 					ptr2ext[2] = 'g';
-					ptr2ext[3] = 'c';
+					ptr2ext[3] = (header_mode == true)? 'h' : 'c';
 					ptr2ext[4] = '\0';
 				}
 
@@ -279,8 +285,8 @@ main(int argc, char *const argv[])
 					output_filename = strdup(input_filename);
 
 					ptr2ext = strrchr(output_filename, '.');
-					/* make extension = .c */
-					ptr2ext[1] = 'c';
+					/* make extension = .c resp. .h */
+					ptr2ext[1] = (header_mode == true)? 'h' : 'c';
 					ptr2ext[2] = '\0';
 
 					yyout = fopen(output_filename, PG_BINARY_W);
@@ -383,17 +389,39 @@ main(int argc, char *const argv[])
 				lex_init();
 
 				/* we need several includes */
-				fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n/* These include files are added by the preprocessor */\n#include <ecpgtype.h>\n#include <ecpglib.h>\n#include <ecpgerrno.h>\n#include <sqlca.h>\n#line 1 \"%s\"\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL, input_filename);
+				/* but not if we are in header mode */
+				fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
+				
+				if (header_mode == false)
+				{
+					fprintf(yyout, "/* These include files are added by the preprocessor */\n#include <ecpgtype.h>\n#include <ecpglib.h>\n#include <ecpgerrno.h>\n#include <sqlca.h>\n");
 
-				/* add some compatibility headers */
-				if (INFORMIX_MODE)
-					fprintf(yyout, "/* Needed for informix compatibility */\n#include <ecpg_informix.h>\n");
+					/* add some compatibility headers */
+					if (INFORMIX_MODE)
+						fprintf(yyout, "/* Needed for informix compatibility */\n#include <ecpg_informix.h>\n");
 
-				fprintf(yyout, "/* End of automatic include section */\n");
+					fprintf(yyout, "/* End of automatic include section */\n");
+				}
 
+				fprintf(yyout, "#line 1 \"%s\"\n", input_filename);
+				
 				/* and parse the source */
 				yyparse();
 
+				/* check if all cursors were indeed opened */
+				for (ptr = cur; ptr != NULL;)
+				{
+					char errortext[128];
+					
+					if (!(ptr->opened))
+					{
+						/* Does not really make sense to declare a cursor but not open it */
+						snprintf(errortext, sizeof(errortext), "cursor `%s´ has been declared but ot opened\n", ptr->name);
+						mmerror(PARSE_ERROR, ET_WARNING, errortext);
+					}
+					ptr = ptr->next;
+				}
+				
 				if (yyin != NULL && yyin != stdin)
 					fclose(yyin);
 				if (out_option == 0 && yyout != stdout)

@@ -1728,3 +1728,11 @@ Wed Dec 17 16:11:16 CET 2003
 	- Set pgtypes library to 1.1.0
 	- Set compat library to 1.1.0
 
+Mon Jan 26 21:57:14 CET 2004
+
+	- Issue a warning if a cursor is declared but not opened.
+	- Fixed prototype for ECPGprepared_statement to not moan about "const
+	  char"
+	- Fixed parsing of nested structures.
+	- Added option to parse header files.
+
