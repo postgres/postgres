@@ -34,10 +34,6 @@
 	src/include/port/win.h: Add configure check for sys_nerr, to end
 	all discussions.
 
-2001-01-09 14:06  momjian
-
-	* doc/TODO: Update TODO list.
-
 2001-01-09 12:07  momjian
 
 	* contrib/pgcrypto/md5.c, contrib/pgcrypto/md5.h,
@@ -59,10 +55,6 @@
 	
 	-- -------- Robert B. Easter
 
-2001-01-09 11:37  momjian
-
-	* doc/TODO: Update TODO list.
-
 2001-01-09 11:26  momjian
 
 	* doc/src/sgml/plsql.sgml: A patch for doc/src/sgml/plsql.sgml to
@@ -81,18 +73,6 @@
 	patch.)
 	
 	Ian Lance Taylor
-
-2001-01-09 10:12  momjian
-
-	* doc/TODO: Update TODO list.
-
-2001-01-09 09:52  momjian
-
-	* doc/TODO: Update TODO list.
-
-2001-01-09 09:48  momjian
-
-	* doc/TODO: Update TODO list.
 
 2001-01-09 09:11  pgsql
 
@@ -121,10 +101,6 @@
 	used to define	    oldest on-line log file.  2. Ability to
 	pre-allocate a few log files at checkpoint time    (wal_files
 	option). Off by default.
-
-2001-01-09 02:16  momjian
-
-	* doc/TODO: Update TODO list.
 
 2001-01-09 00:40  ishii
 
@@ -385,10 +361,6 @@
 	table by a user who does not own the parent table, per pghackers
 	discussion around 22-Dec-00.
 
-2001-01-04 14:51  momjian
-
-	* doc/TODO: Update TODO list.
-
 2001-01-04 13:58  petere
 
 	* configure, configure.in: Allow NetBSD's libedit to be used
@@ -399,14 +371,6 @@
 
 	* src/bin/initdb/initdb.sh: Correct path where to check for
 	password file existance.
-
-2001-01-04 04:24  momjian
-
-	* doc/TODO: Update TODO list.
-
-2001-01-04 04:13  momjian
-
-	* doc/: TODO, TODO: Update TODO list.
 
 2001-01-03 22:38  tgl
 
@@ -454,101 +418,6 @@
 	correct month boundaries so anything near edge	cases was suspect
 	(e.g. April was in Q1 and July, August were lumped into  Q2). 
 	Thanks to Denis Osadchy <osadchy@turbo.nsk.su> for the report.
-
-2001-01-03 02:56  momjian
-
-	* doc/TODO: Update TODO list.
-	
-	Index: TODO
-	===================================================================
-	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
-	revision 1.311 diff -r1.311 TODO 3c3 < Last updated:	     Tue
-	Jan  2 21:23:11 EST 2001 ---
-	> Last updated: 	Wed Jan  3 01:56:41 EST 2001
-	10c10 < A dash(-) marks changes that will appear in the upcoming
-	7.1 release.  ---
-	> A dash (-) marks changes that will appear in the upcoming 7.1
-	release.
-	23c23 < * -Creating index of TIMESTAMP & RELTIME fails, or rename
-	to DATETIME(Thomas) ---
-	> * -Creating index of TIMESTAMP & RELTIME fails, or rename to
-	DATETIME (Thomas)
-	35c35 < * -Views containing aggregates sometimes fail(Jan) ---
-	> * -Views containing aggregates sometimes fail (Jan)
-	37,38c37,38 <	duplicates(inherit) < * -Disallow LOCK on view(Mark
-	Hollomon) ---
-	>   duplicates (inherit)
-	> * -Disallow LOCK on view (Mark Hollomon)
-	58,60c58,60 < * -Add OUTER joins, left and right[outer](Tom,
-	Thomas) < * -Allow long tuples by chaining or auto-storing outside
-	db (TOAST)(Jan) < * Fix memory leak for expressions[memory](Tom?)
-	---
-	> * -Add OUTER joins, left and right[outer] (Tom, Thomas)
-	> * -Allow long tuples by chaining or auto-storing outside db
-	(TOAST) (Jan)
-	> * Fix memory leak for expressions[memory] (Tom?)
-	70c70 < * Allow row re-use without vacuum(Vadim) ---
-	> * Allow row re-use without vacuum (Vadim)
-	74c74 < * More access control over who can create tables and use
-	locks(Karel) ---
-	> * More access control over who can create tables and use locks
-	(Karel)
-	92c92 < 	o -Fix large object mapping scheme, own typeid or
-	reltype(Peter) ---
-	>	o -Fix large object mapping scheme, own typeid or reltype
-	(Peter)
-	97c97 < * Fix improper masking of some inet/cidr types [cidr] ---
-	> * -Fix improper masking of some inet/cidr types [cidr]
-	113c113 < * Get BIT type working ---
-	> * -Get BIT type working
-	119c119 < * Update macaddr manufacturer numbers, or remove the
-	function macaddr_manuf() ---
-	> * -Update macaddr manufacturer numbers, or remove the function
-	macaddr_manuf()
-	147c147 < * -Add ALTER TABLE ALTER COLUMN feature(Peter E) ---
-	> * -Add ALTER TABLE ALTER COLUMN feature (Peter E)
-	157c157 < * Auto-destroy sequence on DROP of table with
-	SERIAL(Ryan) ---
-	> * Auto-destroy sequence on DROP of table with SERIAL (Ryan)
-	166a167
-	> * Allow INSERT INTO tab (col1, ..) VALUES (val1, ..), (val2, ..)
-	172d172 < * Allow INSERT INTO tab (col1, ..) VALUES (val1, ..),
-	(val2, ..) 176c176 < * Make NULL's come out at the beginning or end
-	depending on the ---
-	> * Make NULL's come out at the beginning or end depending on the
-	220c220 < * Certain indexes will not shrink, i.e. oid indexes with
-	many inserts(Vadim) ---
-	> * Certain indexes will not shrink, i.e. oid indexes with many
-	inserts (Vadim)
-	226c226 <   with after-row images(Vadim) [logging](Vadim) ---
-	>   with after-row images (Vadim) [logging]
-	232c232 < * -Redesign the function call interface to handle NULLs
-	better[function](Tom) ---
-	> * -Redesign the function call interface to handle NULLs
-	better[function] (Tom)
-	239c239 < * Encrpyt passwords in pg_shadow table using MD5(Vince)
-	---
-	> * Encrpyt passwords in pg_shadow table using MD5 (Vince)
-	298a299,300
-	> * Create a transaction processor to aid in persistent connections
-	and
-	>   connection pooling
-	307c309 < * Remove SET KSQO option now that OR processing is
-	improved(Tom) ---
-	> * Remove SET KSQO option now that OR processing is improved (Tom)
-
-2001-01-02 22:23  momjian
-
-	* doc/TODO: Update TODO list.
-	
-	Index: TODO
-	===================================================================
-	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
-	revision 1.310 diff -r1.310 TODO 3c3 < Last updated:	     Wed
-	Dec 27 00:44:44 EST 2000 ---
-	> Last updated: 	Tue Jan  2 21:23:11 EST 2001
-	310a311
-	> * Allow libedit to be used in place of libreadline
 
 2001-01-02 18:13  petere
 
@@ -856,44 +725,6 @@
 	tupmacs.h, so that this will be easier if we ever have to do it
 	again.
 
-2000-12-27 01:44  momjian
-
-	* doc/TODO: Update TODO list.
-	
-	Index: TODO
-	===================================================================
-	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
-	revision 1.309 diff -r1.309 TODO 3c3 < Last updated:	     Sat
-	Dec 23 09:48:47 EST 2000 ---
-	> Last updated: 	Wed Dec 27 00:44:44 EST 2000
-	60a61,70
-	> * Add replication of distributed databases [replication]
-	>	o automatic fallover
-	>	o load balancing
-	>	o master/slave replication
-	>	o multi-master replication
-	>	o partition data across servers
-	>	o sample implementation in contrib/rserv
-	>	o queries across databases or servers (two-phase commit)
-	> * Point-in-time data recovery using backup and write-ahead log
-	> * Allow row re-use without vacuum(Vadim)
-	112c122 < * Make file in/out interface to TOAST columns ---
-	> * Make binary/file in/out interface for TOAST columns
-	122a133
-	> * Automatically create rules on views so they are updateable, per
-	SQL92
-	173c184 < * allow psql \d to show temporary table schema ---
-	> * allow psql \d to show temporary table structure
-	195d205 < * Add replication of distributed databases [replication]
-	200a211,212
-	> * Incremental backups
-	> * Allow SQL92 schemas
-	205d216 < * Allow row re-use without vacuum(Vadim) 229a241
-	> * Allow Java server-side programming
-	278a291
-	> * Automatically keep clustering on a table
-	329d341 < ›5~
-
 2000-12-26 16:47  petere
 
 	* doc/Makefile: Only install the integrated HTML documentation set
@@ -943,20 +774,6 @@
 
 	* doc/src/sgml/bki.sgml: Some of the stuff documented here hasn't
 	existed since Postgres95.
-
-2000-12-23 10:48  momjian
-
-	* doc/TODO: Update TODO list.
-	
-	Index: TODO
-	===================================================================
-	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
-	revision 1.308 diff -r1.308 TODO 3c3 < Last updated:	     Thu
-	Dec 21 14:45:00 EST 2000 ---
-	> Last updated: 	Sat Dec 23 09:48:47 EST 2000
-	72a73
-	> * Remove unused files during database vacuum or postmaster
-	startup
 
 2000-12-23 07:10  petere
 
@@ -1131,31 +948,6 @@
 	* src/include/catalog/pg_proc.h: Repair round(numeric) function. 
 	An initdb would be required to get the fixed version, otherwise
 	you'll continue to encounter breakage.
-
-2000-12-21 15:45  momjian
-
-	* doc/TODO: Update TODO list.
-	
-	Index: TODO
-	===================================================================
-	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
-	revision 1.307 diff -r1.307 TODO 3c3 < Last updated:	     Thu
-	Dec 21 14:12:04 EST 2000 ---
-	> Last updated: 	Thu Dec 21 14:45:00 EST 2000
-	32d31 < * Prevent BETWEEN from using duplicate nodes
-
-2000-12-21 15:12  momjian
-
-	* doc/TODO: Update TODO list.
-	
-	Index: TODO
-	===================================================================
-	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
-	revision 1.306 diff -r1.306 TODO 3c3 < Last updated:	     Fri
-	Dec 15 17:44:57 EST 2000 ---
-	> Last updated: 	Thu Dec 21 14:12:04 EST 2000
-	31a32
-	> * Prevent BETWEEN from using duplicate nodes
 
 2000-12-21 15:08  momjian
 
@@ -1500,80 +1292,6 @@
 	* src/: backend/parser/keywords.c,
 	interfaces/ecpg/preproc/keywords.c: Remove current->old mapping.
 
-2000-12-15 18:45  momjian
-
-	* doc/TODO: Update TODO list.
-	
-	Index: TODO
-	===================================================================
-	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
-	revision 1.305 diff -r1.305 TODO 3c3 < Last updated:	     Fri
-	Dec 15 17:40:22 EST 2000 ---
-	> Last updated: 	Fri Dec 15 17:44:57 EST 2000
-	312a313
-	>	* Mark is Mark Hollomon <mhh@mindspring.com>
-	326a328
-	> ›5~
-
-2000-12-15 18:40  momjian
-
-	* doc/TODO: Update TODO list.
-	
-	Index: TODO
-	===================================================================
-	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
-	revision 1.304 diff -r1.304 TODO 3c3 < Last updated:	     Fri
-	Dec 15 17:03:28 EST 2000 ---
-	> Last updated: 	Fri Dec 15 17:40:22 EST 2000
-	318a319
-	>	* Ross is Ross J. Reedstrom <reedstrm@wallace.ece.rice.edu>
-
-2000-12-15 18:03  momjian
-
-	* doc/TODO: Update TODO list.
-	
-	Index: TODO
-	===================================================================
-	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
-	revision 1.303 diff -r1.303 TODO 3c3 < Last updated:	     Fri
-	Dec 15 16:46:43 EST 2000 ---
-	> Last updated: 	Fri Dec 15 17:03:28 EST 2000
-	319a320
-	>	* Stephan is Stephan Szabo <sszabo@megazone23.bigpanda.com>
-
-2000-12-15 17:46  momjian
-
-	* doc/TODO: Update TODO list.
-	
-	Index: TODO
-	===================================================================
-	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
-	revision 1.302 diff -r1.302 TODO 3c3 < Last updated:	     Tue
-	Dec 12 23:01:53 EST 2000 ---
-	> Last updated: 	Fri Dec 15 16:46:43 EST 2000
-
-2000-12-15 17:46  momjian
-
-	* doc/TODO: Update TODO list.
-	
-	Index: TODO
-	===================================================================
-	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
-	revision 1.301 diff -r1.301 TODO 306d305 <   * Bryan is Bryan
-	Henderson<bryanh@giraffe.netgate.net> 308d306 <        * David is
-	David Hartwig <daveh@insightdist.com> 311c309,310 <  * Hiroshi is
-	Hiroshi Inoue<Inoue@tpf.co.jp> ---
-	>	* Hiroshi is Hiroshi Inoue <Inoue@tpf.co.jp>
-	>	* Karel is Karel Zak <zakkr@zf.jcu.cz>
-	314c313 <	* Massimo Dal Zotto <dz@cs.unitn.it> ---
-	>	* Massimo is Massimo Dal Zotto <dz@cs.unitn.it>
-	318c317 <	* Philip Warner <pjw@rhyme.com.au> ---
-	>	* Philip is Philip Warner <pjw@rhyme.com.au>
-	321d319 <	* Stefan Simkovics
-	<ssimkovi@rainbow.studorg.tuwien.ac.at> 326c324 <    * Vadim is
-	"Vadim B. Mikheev" <vadim4o@email.com> ---
-	>	* Vadim is Vadim B. Mikheev <vadim4o@email.com>
-
 2000-12-15 16:01  momjian
 
 	* doc/FAQ_german, doc/src/FAQ/FAQ_german.html,
@@ -1704,31 +1422,6 @@
 	outer join where inner table is empty: should output first outer
 	tuple before advancing...
 
-2000-12-13 00:02  momjian
-
-	* doc/TODO: Update TODO list.
-	
-	Index: TODO
-	===================================================================
-	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
-	revision 1.300 diff -r1.300 TODO 3c3 < Last updated:	     Tue
-	Dec 12 23:01:04 EST 2000 ---
-	> Last updated: 	Tue Dec 12 23:01:53 EST 2000
-	21d20 < * test to show diffs for TODO changes
-
-2000-12-13 00:01  momjian
-
-	* doc/TODO: Update TODO list.
-	
-	Index: TODO
-	===================================================================
-	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
-	revision 1.299 diff -r1.299 TODO 3c3 < Last updated:	     Tue
-	Dec 12 15:27:50 EST 2000 ---
-	> Last updated: 	Tue Dec 12 23:01:04 EST 2000
-	20a21
-	> * test to show diffs for TODO changes
-
 2000-12-12 19:33  tgl
 
 	* src/: backend/nodes/copyfuncs.c, include/nodes/relation.h,
@@ -1741,10 +1434,6 @@
 	fraction of planning time.  No change to external representation of
 	RestrictInfo --- although that node type doesn't appear in stored
 	rules anyway.
-
-2000-12-12 16:28  momjian
-
-	* doc/TODO: Update TODO list.
 
 2000-12-12 12:47  momjian
 
@@ -1848,10 +1537,6 @@
 	* src/backend/utils/adt/like.c: Fix ILIKE bug (only in multi-byte
 	case)
 
-2000-12-10 21:44  momjian
-
-	* doc/TODO: Update TODO list.
-
 2000-12-10 20:49  tgl
 
 	* src/: backend/storage/buffer/s_lock.c, backend/storage/ipc/ipc.c,
@@ -1911,10 +1596,6 @@
 2000-12-10 16:47  momjian
 
 	* doc/src/sgml/backup.sgml: Fix typo
-
-2000-12-09 19:25  momjian
-
-	* doc/TODO: Update TODO list.
 
 2000-12-09 18:59  momjian
 
