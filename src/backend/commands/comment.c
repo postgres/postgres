@@ -157,7 +157,7 @@ void CreateComments(Oid oid, char *comment) {
 
   if (HeapTupleIsValid(searchtuple)) {
         
-    /*** If the comment is blank, call heap_delete, else heap_replace ***/
+    /*** If the comment is blank, call heap_delete, else heap_update ***/
 
     if ((comment == NULL) || (strlen(comment) == 0)) {
       heap_delete(description, &searchtuple->t_self, NULL);
@@ -165,7 +165,7 @@ void CreateComments(Oid oid, char *comment) {
       desctuple = heap_modifytuple(searchtuple, description, values, 
 				   nulls, replaces);      
       setheapoverride(true);
-      heap_replace(description, &searchtuple->t_self, desctuple, NULL);
+      heap_update(description, &searchtuple->t_self, desctuple, NULL);
       setheapoverride(false);
       modified = TRUE;
     }

@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.55 1999/11/22 17:55:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.56 1999/11/24 00:44:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -509,7 +509,7 @@ AtCommit_Notify()
 					{
 						rTuple = heap_modifytuple(lTuple, lRel,
 												  value, nulls, repl);
-						heap_replace(lRel, &lTuple->t_self, rTuple, NULL);
+						heap_update(lRel, &lTuple->t_self, rTuple, NULL);
 						if (RelationGetForm(lRel)->relhasindex)
 						{
 							Relation	idescs[Num_pg_listener_indices];
@@ -775,7 +775,7 @@ ProcessIncomingNotify(void)
 			NotifyMyFrontEnd(relname, sourcePID);
 			/* Rewrite the tuple with 0 in notification column */
 			rTuple = heap_modifytuple(lTuple, lRel, value, nulls, repl);
-			heap_replace(lRel, &lTuple->t_self, rTuple, NULL);
+			heap_update(lRel, &lTuple->t_self, rTuple, NULL);
 			if (RelationGetForm(lRel)->relhasindex)
 			{
 				Relation	idescs[Num_pg_listener_indices];

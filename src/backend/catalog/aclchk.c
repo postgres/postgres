@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.30 1999/11/22 17:55:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.31 1999/11/24 00:44:28 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -102,7 +102,7 @@ ChangeAcl(char *relname,
 	 * Find the pg_class tuple matching 'relname' and extract the ACL. If
 	 * there's no ACL, create a default using the pg_class.relowner field.
 	 *
-	 * We can't use the syscache here, since we need to do a heap_replace on
+	 * We can't use the syscache here, since we need to do a heap_update on
 	 * the tuple we find.
 	 */
 	relation = heap_openr(RelationRelationName, RowExclusiveLock);
@@ -151,7 +151,7 @@ ChangeAcl(char *relname,
 	tuple = heap_modifytuple(tuple, relation, values, nulls, replaces);
 	/* XXX handle index on pg_class? */
 	setheapoverride(true);
-	heap_replace(relation, &tuple->t_self, tuple, NULL);
+	heap_update(relation, &tuple->t_self, tuple, NULL);
 	setheapoverride(false);
 
 	/* keep the catalog indices up to date */

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.100 1999/11/07 23:08:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.101 1999/11/24 00:44:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1350,7 +1350,7 @@ ExecReplace(TupleTableSlot *slot,
 	 * replace the heap tuple
 	 */
 lreplace:;
-	result = heap_replace(resultRelationDesc, tupleid, tuple, &ctid);
+	result = heap_update(resultRelationDesc, tupleid, tuple, &ctid);
 	switch (result)
 	{
 		case HeapTupleSelfUpdated:
@@ -1378,7 +1378,7 @@ lreplace:;
 			return;
 
 		default:
-			elog(ERROR, "Unknown status %u from heap_replace", result);
+			elog(ERROR, "Unknown status %u from heap_update", result);
 			return;
 	}
 
@@ -1396,7 +1396,7 @@ lreplace:;
 	/*
 	 * process indices
 	 *
-	 * heap_replace updates a tuple in the base relation by invalidating it
+	 * heap_update updates a tuple in the base relation by invalidating it
 	 * and then appending a new tuple to the relation.	As a side effect,
 	 * the tupleid of the new tuple is placed in the new tuple's t_ctid
 	 * field.  So we now insert index tuples using the new tupleid stored

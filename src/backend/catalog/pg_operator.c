@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.43 1999/11/22 17:55:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.44 1999/11/24 00:44:29 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -791,7 +791,7 @@ OperatorDef(char *operatorName,
 								   replaces);
 
 			setheapoverride(true);
-			heap_replace(pg_operator_desc, &tup->t_self, tup, NULL);
+			heap_update(pg_operator_desc, &tup->t_self, tup, NULL);
 			setheapoverride(false);
 		}
 		else
@@ -921,7 +921,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 									   replaces);
 
 				setheapoverride(true);
-				heap_replace(pg_operator_desc, &tup->t_self, tup, NULL);
+				heap_update(pg_operator_desc, &tup->t_self, tup, NULL);
 				setheapoverride(false);
 		
 				if (RelationGetForm(pg_operator_desc)->relhasindex)
@@ -955,7 +955,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 							   replaces);
 
 		setheapoverride(true);
-		heap_replace(pg_operator_desc, &tup->t_self, tup, NULL);
+		heap_update(pg_operator_desc, &tup->t_self, tup, NULL);
 		setheapoverride(false);
 
 		if (RelationGetForm(pg_operator_desc)->relhasindex)
@@ -995,7 +995,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 							   replaces);
 
 		setheapoverride(true);
-		heap_replace(pg_operator_desc, &tup->t_self, tup, NULL);
+		heap_update(pg_operator_desc, &tup->t_self, tup, NULL);
 		setheapoverride(false);
 
 		if (RelationGetForm(pg_operator_desc)->relhasindex)

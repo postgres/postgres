@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.97 1999/11/22 17:55:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.98 1999/11/24 00:44:29 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -839,7 +839,7 @@ UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate)
 
 	newtup = heap_modifytuple(tuple, pg_index, values, nulls, replace);
 
-	heap_replace(pg_index, &newtup->t_self, newtup, NULL);
+	heap_update(pg_index, &newtup->t_self, newtup, NULL);
 
 	pfree(newtup);
 	heap_close(pg_index, RowExclusiveLock);
@@ -1429,7 +1429,7 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 		values[Anum_pg_class_relhasindex - 1] = CharGetDatum(hasindex);
 
 		newtup = heap_modifytuple(tuple, pg_class, values, nulls, replace);
-		heap_replace(pg_class, &tuple->t_self, newtup, NULL);
+		heap_update(pg_class, &tuple->t_self, newtup, NULL);
 		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
 		CatalogIndexInsert(idescs, Num_pg_class_indices, pg_class, newtup);
 		CatalogCloseIndices(Num_pg_class_indices, idescs);

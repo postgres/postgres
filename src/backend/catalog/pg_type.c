@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.42 1999/11/22 17:55:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.43 1999/11/24 00:44:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -482,7 +482,7 @@ TypeCreate(char *typeName,
 							   replaces);
 
 		setheapoverride(true);
-		heap_replace(pg_type_desc, &tup->t_self, tup, NULL);
+		heap_update(pg_type_desc, &tup->t_self, tup, NULL);
 		setheapoverride(false);
 
 		typeObjectId = tup->t_data->t_oid;
@@ -559,7 +559,7 @@ TypeRename(char *oldTypeName, char *newTypeName)
 	namestrcpy(&(((Form_pg_type) GETSTRUCT(oldtup))->typname), newTypeName);
 
 	setheapoverride(true);
-	heap_replace(pg_type_desc, &oldtup->t_self, oldtup, NULL);
+	heap_update(pg_type_desc, &oldtup->t_self, oldtup, NULL);
 	setheapoverride(false);
 
 	/* update the system catalog indices */

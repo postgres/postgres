@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.109 1999/11/22 17:55:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.110 1999/11/24 00:44:29 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1763,7 +1763,7 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 	if (! attStruct->atthasdef)
 	{
 		attStruct->atthasdef = true;
-		heap_replace(attrrel, &atttup->t_self, atttup, NULL);
+		heap_update(attrrel, &atttup->t_self, atttup, NULL);
 		/* keep catalog indices current */
 		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices,
 						   attridescs);
@@ -2085,7 +2085,7 @@ AddRelationRawConstraints(Relation rel,
 
 	relStruct->relchecks = numchecks;
 
-	heap_replace(relrel, &reltup->t_self, reltup, NULL);
+	heap_update(relrel, &reltup->t_self, reltup, NULL);
 
 	/* keep catalog indices current */
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices,

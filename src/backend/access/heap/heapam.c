@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.59 1999/11/23 20:06:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.60 1999/11/24 00:44:28 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -22,7 +22,7 @@
  *		heap_fetch		- retrive tuple with tid
  *		heap_insert		- insert tuple into a relation
  *		heap_delete		- delete a tuple from a relation
- *		heap_replace	- replace a tuple in a relation with another tuple
+ *		heap_update	- replace a tuple in a relation with another tuple
  *		heap_markpos	- mark scan position
  *		heap_restrpos	- restore position to marked location
  *
@@ -1339,10 +1339,10 @@ l1:
 }
 
 /*
- *	heap_replace	- replace a tuple
+ *	heap_update	- replace a tuple
  */
 int
-heap_replace(Relation relation, ItemPointer otid, HeapTuple newtup,
+heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 			 ItemPointer ctid)
 {
 	ItemId		lp;
@@ -1376,7 +1376,7 @@ l2:
 	{
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		ReleaseBuffer(buffer);
-		elog(ERROR, "heap_replace: (am)invalid tid");
+		elog(ERROR, "heap_update: (am)invalid tid");
 	}
 	else if (result == HeapTupleBeingUpdated)
 	{
