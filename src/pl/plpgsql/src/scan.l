@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.37 2004/09/13 01:45:32 neilc Exp $
+ *    $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.38 2004/12/17 03:51:36 neilc Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -144,6 +144,7 @@ declare			{ return K_DECLARE;			}
 default			{ return K_DEFAULT;			}
 diagnostics		{ return K_DIAGNOSTICS;		}
 else			{ return K_ELSE;			}
+elseif          { return K_ELSIF;           }
 elsif           { return K_ELSIF;           }
 end				{ return K_END;				}
 exception		{ return K_EXCEPTION;		}

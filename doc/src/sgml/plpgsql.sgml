@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.51 2004/12/13 18:05:08 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.52 2004/12/17 03:51:34 neilc Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1475,7 +1475,7 @@ SELECT * FROM some_func();
 
     <para>
      <literal>IF</> statements let you execute commands based on
-     certain conditions.  <application>PL/pgSQL</> has four forms of
+     certain conditions.  <application>PL/pgSQL</> has five forms of
      <literal>IF</>:
     <itemizedlist>
      <listitem>
@@ -1489,6 +1489,9 @@ SELECT * FROM some_func();
      </listitem>
      <listitem>
       <para><literal>IF ... THEN ... ELSIF ... THEN ... ELSE</></>
+     </listitem>
+     <listitem>
+      <para><literal>IF ... THEN ... ELSEIF ... THEN ... ELSE</></>
      </listitem>
     </itemizedlist>
     </para>
@@ -1633,6 +1636,13 @@ END IF;
 </programlisting>
        </para>
      </sect3>
+
+     <sect3>
+      <title><literal>IF-THEN-ELSEIF-ELSE</></title>
+
+      <para>
+       <literal>ELSEIF</> is an alias for <literal>ELSIF</>.
+     </para>
    </sect2>
 
    <sect2 id="plpgsql-control-structures-loops">
