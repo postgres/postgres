@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.88 2003/09/25 06:58:01 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.89 2003/09/26 15:27:36 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,7 +253,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		if (length(action) == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			errmsg("INSTEAD NOTHING rules on select are not implemented"),
+			errmsg("INSTEAD NOTHING rules on SELECT are not implemented"),
 					 errhint("Use views instead.")));
 
 		/*
@@ -271,7 +271,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		if (!is_instead || query->commandType != CMD_SELECT)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("rules on SELECT rule must have action INSTEAD SELECT")));
+					 errmsg("rules on SELECT must have action INSTEAD SELECT")));
 
 		/*
 		 * ... there can be no rule qual, ...

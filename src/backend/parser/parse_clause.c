@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.123 2003/09/25 06:58:01 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.124 2003/09/26 15:27:35 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -749,7 +749,7 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 				if (l_index < 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("column \"%s\" specified in USING clause not found in left table",
+							 errmsg("column \"%s\" specified in USING clause does not exist in left table",
 									u_colname)));
 
 				/* Find it in right input */
@@ -772,7 +772,7 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 				if (r_index < 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("column \"%s\" specified in USING clause not found in right table",
+							 errmsg("column \"%s\" specified in USING clause does not exist in right table",
 									u_colname)));
 
 				l_colvar = nth(l_index, l_colvars);

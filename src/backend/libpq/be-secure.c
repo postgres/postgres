@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.42 2003/09/25 06:57:59 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.43 2003/09/26 15:27:31 petere Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -293,7 +293,8 @@ rloop:
 			default:
 				ereport(COMMERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("unrecognized SSL error code")));
+						 errmsg("unrecognized SSL error code %d",
+							SSL_get_error(port->ssl, n))));
 				n = -1;
 				break;
 		}
@@ -377,7 +378,8 @@ wloop:
 			default:
 				ereport(COMMERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("unrecognized SSL error code")));
+						 errmsg("unrecognized SSL error code %d",
+							SSL_get_error(port->ssl, n))));
 				n = -1;
 				break;
 		}

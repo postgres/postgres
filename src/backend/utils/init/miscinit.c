@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.115 2003/09/25 06:58:05 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.116 2003/09/26 15:27:37 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -823,7 +823,7 @@ ValidatePgVersion(const char *path)
 		else
 			ereport(FATAL,
 					(errcode_for_file_access(),
-					 errmsg("could not open \"%s\": %m", full_path)));
+					 errmsg("could not open file \"%s\": %m", full_path)));
 	}
 
 	ret = fscanf(file, "%ld.%ld", &file_major, &file_minor);

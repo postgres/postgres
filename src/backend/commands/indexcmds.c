@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.110 2003/09/25 06:57:58 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.111 2003/09/26 15:27:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,7 +168,7 @@ DefineIndex(RangeVar *heapRelation,
 		if (length(rangetable) != 1 || getrelid(1, rangetable) != relationId)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("index expressions and predicates may refer only to the base relation")));
+					 errmsg("index expressions and predicates may refer only to the table being indexed")));
 	}
 
 	/*

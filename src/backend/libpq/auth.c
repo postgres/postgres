@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.111 2003/09/25 06:57:59 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.112 2003/09/26 15:27:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -492,7 +492,7 @@ ClientAuthentication(Port *port)
 				if (setsockopt(port->sock, 0, LOCAL_CREDS, &on, sizeof(on)) < 0)
 					ereport(FATAL,
 							(errcode_for_socket_access(),
-					 errmsg("failed to enable credential receipt: %m")));
+					 errmsg("could not enable credential reception: %m")));
 			}
 #endif
 			if (port->raddr.addr.ss_family == AF_UNIX)

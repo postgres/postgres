@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_sema.c,v 1.9 2003/08/04 02:40:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_sema.c,v 1.10 2003/09/26 15:27:35 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,7 @@ InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey, int numSems)
 		 */
 		ereport(FATAL,
 				(errmsg("could not create semaphores: %m"),
-				 errdetail("Failed syscall was semget(%d, %d, 0%o).",
+				 errdetail("Failed system call was semget(%d, %d, 0%o).",
 						   (int) semKey, numSems,
 						   IPC_CREAT | IPC_EXCL | IPCProtection),
 				 (errno == ENOSPC) ?

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.434 2003/09/25 06:58:00 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.435 2003/09/26 15:27:32 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2190,7 +2190,7 @@ ConstraintAttributeSpec:
 					if ($1 == 0 && $2 != 0)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("INITIALLY DEFERRED constraint must be DEFERRABLE")));
+								 errmsg("constraint declared INITIALLY DEFERRED must be DEFERRABLE")));
 					$$ = $1 | $2;
 				}
 			| ConstraintTimeSpec
@@ -2205,7 +2205,7 @@ ConstraintAttributeSpec:
 					if ($2 == 0 && $1 != 0)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("INITIALLY DEFERRED constraint must be DEFERRABLE")));
+								 errmsg("constraint declared INITIALLY DEFERRED must be DEFERRABLE")));
 					$$ = $1 | $2;
 				}
 			| /*EMPTY*/

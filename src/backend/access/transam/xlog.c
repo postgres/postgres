@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.123 2003/09/25 06:57:57 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.124 2003/09/26 15:27:19 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1962,7 +1962,7 @@ got_record:;
 			{
 				ereport(emode,
 						(errcode_for_file_access(),
-						 errmsg("could not read log file %u, segment %u, offset %u: %m",
+						 errmsg("could not from read log file %u, segment %u, offset %u: %m",
 								readId, readSeg, readOff)));
 				goto next_record_is_invalid;
 			}
@@ -2197,7 +2197,7 @@ WriteControlFile(void)
 	if (pg_fsync(fd) != 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("could not fsync of control file: %m")));
+				 errmsg("could not fsync control file: %m")));
 
 	close(fd);
 }

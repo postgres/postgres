@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.159 2003/09/25 06:58:05 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.160 2003/09/26 15:27:37 petere Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1315,7 +1315,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"log_min_error_statement", PGC_USERLIMIT, LOGGING_WHEN,
-			gettext_noop("log statement generating error at or above this level"),
+			gettext_noop("log statements generating error at or above this level"),
 			gettext_noop("All SQL statements that cause an error of the "
 						 "specified level or a higher level are logged.")
 		},

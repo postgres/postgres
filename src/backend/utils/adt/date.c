@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.92 2003/09/25 06:58:03 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.93 2003/09/26 15:27:36 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2241,7 +2241,7 @@ timetz_izone(PG_FUNCTION_ARGS)
 	if (zone->month != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("\"interval\" time zone \"%s\" not legal",
+				 errmsg("\"interval\" time zone \"%s\" not valid",
 						DatumGetCString(DirectFunctionCall1(interval_out,
 											  PointerGetDatum(zone))))));
 
