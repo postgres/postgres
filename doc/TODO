@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Nov  8 22:41:28 EST 2003
+Last updated:		Sat Nov  8 23:23:47 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -210,6 +210,7 @@ Commands
   by searching for non-conflicting constraint names, and prefix with table name
 * Use more reliable method for CREATE DATABASE to get a consistent copy of db
 * Have psql \dn show only visible schemas using current_schemas()
+* Have psql '\i ~/<tab><tab>' actually load files it displays from home dir
 
 
 * ALTER
@@ -520,7 +521,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1164 2003/11/09 03:41:25 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1164 2003/11/09 03:41:25 momjian Exp $
+* Change CVS $Id: TODO,v 1.1165 2003/11/09 04:23:50 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1165 2003/11/09 04:23:50 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
