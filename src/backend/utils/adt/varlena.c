@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.42 1998/09/01 04:32:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.43 1998/09/02 23:37:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -610,9 +610,11 @@ byteaGetByte(text *v, int32 n)
 		elog(ERROR, "byteaGetByte: index (=%d) out of range [0..%d]",
 			 n, len - 1);
 	}
-
+#ifdef USE_LOCALE
 	byte = (unsigned char) (v->vl_dat[n]);
-
+#else
+	byte = v->vl_dat[n];
+#endif
 	return (int32) byte;
 }
 

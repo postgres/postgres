@@ -15,8 +15,8 @@ INSERT INTO test_having VALUES (7, 4, 'cccc', 'h');
 INSERT INTO test_having VALUES (8, 4, 'CCCC', 'I');
 INSERT INTO test_having VALUES (9, 4, 'CCCC', 'j');
 
-SELECT max(a) FROM test_having
-	GROUP BY lower(c) HAVING count(*) > 2 OR min(b) = 3;
+SELECT b, c FROM test_having
+	GROUP BY b, c HAVING count(*) = 1;
 
 SELECT lower(c), count(c) FROM test_having
 	GROUP BY lower(c) HAVING count(*) > 2 OR min(a) = max(a);
