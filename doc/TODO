@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jun 18 14:35:43 EDT 2004
+Last updated:		Fri Jun 18 21:48:15 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -278,6 +278,7 @@ Clients
 * Move psql backslash database information into the backend, use mnemonic
   commands? [psql]
 * Allow pg_dump to use multiple -t and -n switches
+* Fix oid2name and dbsize for tablespaces
 
 
 * ECPG
