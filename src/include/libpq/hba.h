@@ -4,14 +4,17 @@
  *	  Interface to hba.c
  *
  *
- * $Id: hba.h,v 1.6 1998/01/24 22:49:15 momjian Exp $
+ * $Id: hba.h,v 1.7 1998/01/26 01:42:15 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef HBA_H
 #define HBA_H
 
-#include <libpq/pqcomm.h>
+#include <netinet/in.h>
+
+#include "libpq/libpq-be.h"
+
 
 #define CONF_FILE "pg_hba.conf"
  /* Name of the config file  */
@@ -28,7 +31,7 @@
 #define MAX_TOKEN 80
 /* Maximum size of one token in the configuration file	*/
 
-#define USERMAP_NAME_SIZE 16	/* Max size of a usermap name */
+#define MAX_AUTH_ARG	80	/* Max size of an authentication arg */
 
 #define IDENT_PORT 113
  /* Standard TCP port number for Ident service.  Assigned by IANA */
@@ -36,18 +39,19 @@
 #define IDENT_USERNAME_MAX 512
  /* Max size of username ident server can return */
 
-enum Userauth
-{
-	Trust, Ident,
-				Password
-};
+typedef enum UserAuth {
+	uaReject,
+	uaKrb4,
+	uaKrb5,
+	uaTrust,
+	uaIdent,
+	uaPassword,
+	uaCrypt
+} UserAuth;
 
-extern int hba_recvauth(const Port *port, const char database[], const char user[],
-			 const char DataDir[]);
-void
-find_hba_entry(const char DataDir[], const struct in_addr ip_addr,
-			   const char database[],
-			   bool *host_ok_p, enum Userauth * userauth_p,
-			   char usermap_name[], bool find_password_entries);
+int hba_getauthmethod(SockAddr *raddr, char *database, char *auth_arg,
+						UserAuth *auth_method);
+int authident(struct sockaddr_in *raddr, struct sockaddr_in *laddr,
+				const char postgres_username[], const char auth_arg[]);
 
 #endif

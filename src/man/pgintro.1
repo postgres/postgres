@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/pgintro.1,v 1.2 1998/01/11 22:17:50 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/pgintro.1,v 1.3 1998/01/26 01:42:50 scrappy Exp $
 .TH PGINTRO UNIX 11/05/95 PostgreSQL PostgreSQL
 .SP INFORMATION UNIX 11/05/95
 .BH "SECTION 2 - Unix COMMANDS (Unix)"
@@ -105,26 +105,15 @@ conducted.
 If the Postgres system is built as distributed, access to the Internet
 TCP port of the
 .IR postmaster
-process is available to anyone.  However, Postgres offers optional
-host-based authentication where only access from certain hosts are
-allowed.  Of course, host-based authentication is not fool-proof in
+process is available to anyone.  The DBA configures the pg_hba.conf file
+in the PGDATA directory to specify what authentication system is to be used
+according to the host making the connection and which database it is
+connecting to.  See pg_hba.conf(5) for a description of the authentication
+systems available.  Of course, host-based authentication is not fool-proof in
 Unix, either. It is possible for determined intruders to also
 masquerade the origination host. Those security issues are beyond the
 scope of Postgres.
 .PP
-If greater security is desired, Postgres and its clients may be
-modified to use a network authentication system.  For example, the
-.IR postmaster ,
-.IR psql
-and the
-.IR libpq
-library have already been configured to use either Version 4 or Version 5 of
-the
-.IR Kerberos
-authentication system from the Massachusetts Institute of Technology.
-For more information on using
-.IR Kerberos
-with Postgres, see the appendix below.
 .SH "ACCESS CONTROL"
 Postgres provides mechanisms to allow users to limit the access to
 their data that is provided to other users.

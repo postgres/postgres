@@ -7,9 +7,12 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.4 1998/01/17 23:39:11 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.5 1998/01/26 01:42:24 scrappy Exp $
 #
 #-------------------------------------------------------------------------
+
+SO_MAJOR_VERSION=1
+SO_MINOR_VERSION=1
 
 SRCDIR= ../..
 include $(SRCDIR)/Makefile.global
@@ -19,7 +22,7 @@ INCLUDE_OPT= -I$(SRCDIR)/include -I$(SRCDIR)/backend
 
 PORTNAME=@PORTNAME@
 
-CFLAGS+= $(INCLUDE_OPT) 
+CFLAGS+= $(INCLUDE_OPT) -DFRONTEND
 
 ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
@@ -34,20 +37,20 @@ install-shlib-dep :=
 ifeq ($(PORTNAME), linux)
   ifdef LINUX_ELF
     install-shlib-dep := install-shlib
-    shlib := libpq.so.1
+    shlib := libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
     LDFLAGS_SL = -shared
     CFLAGS += $(CFLAGS_SL)
   endif
 endif
 ifeq ($(PORTNAME), bsd)
   install-shlib-dep := install-shlib
-  shlib := libpq.so.1.0
+  shlib := libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL = -x -Bshareable -Bforcearchive
   CFLAGS += $(CFLAGS_SL)
 endif
 ifeq ($(PORTNAME), i386_solaris)
   install-shlib-dep := install-shlib
-  shlib := libpq.so.1
+  shlib := libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL = -G -z text
   CFLAGS += $(CFLAGS_SL)
 endif

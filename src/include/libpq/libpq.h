@@ -6,20 +6,19 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.9 1998/01/24 22:49:21 momjian Exp $
- *
- * NOTES
- *	  This file contains definitions for structures and
- *	  externs for functions used by both frontend applications
- *	  and the POSTGRES backend.  See the files libpq-fe.h and
- *	  libpq-be.h for frontend/backend specific information
+ * $Id: libpq.h,v 1.10 1998/01/26 01:42:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LIBPQ_H
 #define LIBPQ_H
 
-#include <libpq/pqcomm.h>
+#include <netinet/in.h>
+
+#include "libpq/libpq-be.h"
+#include "access/htup.h"
+#include "access/tupdesc.h"
+
 
 /* ----------------
  * PQArgBlock --
@@ -227,6 +226,27 @@ extern GroupBuffer *pbuf_findGroup(PortalBuffer *portal, int group_index);
 extern int	pbuf_findFnumber(GroupBuffer *group, char *field_name);
 extern void pbuf_checkFnumber(GroupBuffer *group, int field_number);
 extern char *pbuf_findFname(GroupBuffer *group, int field_number);
+
+/* in be-dumpdata.c */
+extern void be_portalinit(void);
+extern void be_portalpush(PortalEntry *entry);
+extern PortalEntry *be_portalpop(void);
+extern PortalEntry *be_currentportal(void);
+extern PortalEntry *be_newportal(void);
+extern void
+be_typeinit(PortalEntry *entry, TupleDesc attrs,
+			int natts);
+extern void be_printtup(HeapTuple tuple, TupleDesc typeinfo);
+
+
+/* in be-pqexec.c */
+extern char *
+PQfn(int fnid, int *result_buf, int result_len, int result_is_int,
+	 PQArgBlock *args, int nargs);
+extern char *PQexec(char *query);
+extern int	pqtest_PQexec(char *q);
+extern int	pqtest_PQfn(char *q);
+extern int32 pqtest(struct varlena * vlena);
 
 /*
  * prototypes for functions in pqcomm.c

@@ -6,12 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fe-auth.h,v 1.6 1997/09/08 21:55:35 momjian Exp $
+ * $Id: fe-auth.h,v 1.7 1998/01/26 01:42:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef FE_AUTH_H
 #define FE_AUTH_H
+
+#include "libpq-fe.h"
+
 
 /*----------------------------------------------------------------
  * Common routines and definitions
@@ -29,9 +32,8 @@
 #endif							/* KRB4 || KRB5 */
 
 extern int
-fe_sendauth(MsgType msgtype, Port *port, const char *hostname,
-			const char *user, const char *password,
-			const char *PQerromsg);
+fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
+			const char *password, const char *PQerromsg);
 extern void fe_setauthsvc(const char *name, char *PQerrormsg);
 
 #define PG_KRB4_VERSION "PGVER4.1"		/* at most KRB_SENDAUTH_VLEN chars */

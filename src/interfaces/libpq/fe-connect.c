@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.58 1998/01/23 02:31:18 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.59 1998/01/26 01:42:28 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,14 +21,14 @@
 #include <ctype.h>
 #include <string.h>
 #include <netdb.h>
+#include <sys/un.h>
+#include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <errno.h>
 #include <signal.h>
 #include <ctype.h>				/* for isspace() */
 
 #include "postgres.h"
-#include "libpq/pqcomm.h"		/* for decls of MsgType, PacketBuf,
-								 * StartupInfo */
 #include "fe-auth.h"
 #include "fe-connect.h"
 #include "libpq-fe.h"
@@ -44,7 +44,6 @@
 /* use a local version instead of the one found in pqpacket.c */
 static ConnStatusType connectDB(PGconn *conn);
 
-static void startup2PacketBuf(StartupInfo *s, PacketBuf *res);
 static void freePGconn(PGconn *conn);
 static void closePGconn(PGconn *conn);
 static int	conninfo_parse(const char *conninfo, char *errorMessage);
@@ -78,6 +77,7 @@ static PQconninfoOption PQconninfoOptions[] = {
 /*	  Option-name		Environment-Var Compiled-in		Current value	*/
 /*						Label							Disp-Char		*/
 /* ----------------- --------------- --------------- --------------- */
+	/* "authtype" is ignored as it is no longer used. */
 	{"authtype", "PGAUTHTYPE", DefaultAuthtype, NULL,
 	"Database-Authtype", "", 20},
 
@@ -183,7 +183,6 @@ PQconnectdb(const char *conninfo)
 	conn->Pfout = NULL;
 	conn->Pfin = NULL;
 	conn->Pfdebug = NULL;
-	conn->port = NULL;
 	conn->notifyList = DLNewList();
 
 	tmp = conninfo_getval("host");
@@ -198,8 +197,6 @@ PQconnectdb(const char *conninfo)
 	conn->pguser = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval("password");
 	conn->pgpass = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval("authtype");
-	conn->pgauth = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval("dbname");
 	conn->dbName = tmp ? strdup(tmp) : NULL;
 
@@ -208,14 +205,6 @@ PQconnectdb(const char *conninfo)
 	 * ----------
 	 */
 	conninfo_free();
-
-	/*
-	 * try to set the auth service if one was specified
-	 */
-	if (conn->pgauth)
-	{
-		fe_setauthsvc(conn->pgauth, conn->errorMessage);
-	}
 
 	/* ----------
 	 * Connect to the database
@@ -326,7 +315,6 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions, cons
 		conn->Pfout = NULL;
 		conn->Pfin = NULL;
 		conn->Pfdebug = NULL;
-		conn->port = NULL;
 		conn->notifyList = DLNewList();
 
 		if ((pghost == NULL) || pghost[0] == '\0')
@@ -467,44 +455,31 @@ connectDB(PGconn *conn)
 {
 	struct hostent *hp;
 
-	StartupInfo startup;
-	PacketBuf	pacBuf;
-	PacketLen	pacLen;
-	int			status;
-	MsgType		msgtype;
-	int			laddrlen = sizeof(struct sockaddr);
-	Port	   *port = conn->port;
+	StartupPacket	sp;
+	AuthRequest	areq;
+	int			laddrlen = sizeof(SockAddr);
 	int			portno,
 				family,
 				len;
-	bool			salted = false;
-	char*			tmp;
 
 	/*
 	 * Initialize the startup packet.
-	 *
-	 * This data structure is used for the seq-packet protocol.  It describes
-	 * the frontend-backend connection.
-	 *
-	 *
 	 */
-	strncpy(startup.user, conn->pguser, sizeof(startup.user));
-	strncpy(startup.database, conn->dbName, sizeof(startup.database));
-	strncpy(startup.tty, conn->pgtty, sizeof(startup.tty));
+
+	MemSet((char *)&sp, 0, sizeof (StartupPacket));
+
+	sp.protoVersion = (ProtocolVersion)htonl(PG_PROTOCOL_LATEST);
+
+	strncpy(sp.user, conn->pguser, SM_USER);
+	strncpy(sp.database, conn->dbName, SM_DATABASE);
+	strncpy(sp.tty, conn->pgtty, SM_TTY);
+
 	if (conn->pgoptions)
-	{
-		strncpy(startup.options, conn->pgoptions, sizeof(startup.options));
-	}
-	else
-		startup.options[0] = '\0';
-	startup.execFile[0] = '\0'; /* not used */
+		strncpy(sp.options, conn->pgoptions, SM_OPTIONS);
 
 	/*
 	 * Open a connection to postmaster/backend.
-	 *
 	 */
-	port = (Port *) malloc(sizeof(Port));
-	MemSet((char *) port, 0, sizeof(Port));
 
 	if (conn->pghost != NULL)
 	{
@@ -524,28 +499,28 @@ connectDB(PGconn *conn)
 #endif
 	portno = atoi(conn->pgport);
 	family = (conn->pghost != NULL) ? AF_INET : AF_UNIX;
-	port->raddr.in.sin_family = family;
+	conn->raddr.sa.sa_family = family;
 	if (family == AF_INET)
 	{
-		memmove((char *) &(port->raddr.in.sin_addr),
+		memmove((char *) &(conn->raddr.in.sin_addr),
 				(char *) hp->h_addr,
 				hp->h_length);
-		port->raddr.in.sin_port = htons((unsigned short) (portno));
+		conn->raddr.in.sin_port = htons((unsigned short) (portno));
 		len = sizeof(struct sockaddr_in);
 	}
 	else
 	{
-		len = UNIXSOCK_PATH(port->raddr.un, portno);
+		len = UNIXSOCK_PATH(conn->raddr.un, portno);
 	}
 	/* connect to the server  */
-	if ((port->sock = socket(family, SOCK_STREAM, 0)) < 0)
+	if ((conn->sock = socket(family, SOCK_STREAM, 0)) < 0)
 	{
 		(void) sprintf(conn->errorMessage,
 					   "connectDB() -- socket() failed: errno=%d\n%s\n",
 					   errno, strerror(errno));
 		goto connect_errReturn;
 	}
-	if (connect(port->sock, (struct sockaddr *) & port->raddr, len) < 0)
+	if (connect(conn->sock, &conn->raddr.sa, len) < 0)
 	{
 		(void) sprintf(conn->errorMessage,
 					   "connectDB() failed: Is the postmaster running and accepting%s connections at '%s' on port '%s'?\n",
@@ -566,7 +541,7 @@ connectDB(PGconn *conn)
 						   "connectDB(): getprotobyname failed\n");
 			goto connect_errReturn;
 		}
-		if (setsockopt(port->sock, pe->p_proto, TCP_NODELAY,
+		if (setsockopt(conn->sock, pe->p_proto, TCP_NODELAY,
 					   &on, sizeof(on)) < 0)
 		{
 			(void) sprintf(conn->errorMessage,
@@ -576,8 +551,7 @@ connectDB(PGconn *conn)
 	}
 
 	/* fill in the client address */
-	if (getsockname(port->sock, (struct sockaddr *) & port->laddr,
-					&laddrlen) < 0)
+	if (getsockname(conn->sock, &conn->laddr.sa, &laddrlen) < 0)
 	{
 		(void) sprintf(conn->errorMessage,
 				   "connectDB() -- getsockname() failed: errno=%d\n%s\n",
@@ -585,91 +559,9 @@ connectDB(PGconn *conn)
 		goto connect_errReturn;
 	}
 
-	/* by this point, connection has been opened */
-
-        /* This section of code is new as of Nov 19, 1997.  It sends just the
-         * user's login to the backend.  This allows the backend to search
-         * pg_user to see if the user has a password defined.  If the user
-         * does have a password in pg_user, then the backend will send a
-         * packet back with a randomly generated salt, so the user's password
-         * can be encrypted.
-         */
-        pacLen = sizeof(pacBuf.len) + sizeof(pacBuf.msgtype) + strlen(startup.user) + 1;
-        pacBuf.len = htonl(pacLen);
-        pacBuf.msgtype = htonl(STARTUP_USER_MSG);
-        strcpy(pacBuf.data, startup.user);
-        status = packetSend(port, &pacBuf, pacLen, BLOCKING);
-        if (status == STATUS_ERROR) {
-          sprintf(conn->errorMessage, "connectDB() --  couldn't send complete packet: errno=%d\n%s\n", errno, strerror(errno));
-          goto connect_errReturn;
-        }
-
-        /* Check to see if the server sent us a salt back to encrypt the
-         * password to send for authentication. --TAB
-         */
-        status = packetReceive(port, &pacBuf, BLOCKING);
-
-        if (status != STATUS_OK) {
-          sprintf(conn->errorMessage, "connectDB() -- couldn't receive un/salt packet: errno=%d\n%s\n", errno, strerror(errno));
-          goto connect_errReturn;
-        }
-        pacBuf.msgtype = ntohl(pacBuf.msgtype);
-        switch (pacBuf.msgtype) {
-          case STARTUP_SALT_MSG:
-            salted = true;
-            if (!conn->pgpass) {
-              sprintf(conn->errorMessage, "connectDB() -- backend requested a password, but none was given\n");
-              goto connect_errReturn;
-            }
-            tmp = crypt(conn->pgpass, pacBuf.data);
-            free((void*)conn->pgpass);
-            conn->pgpass = strdup(tmp);
-            break;
-          case STARTUP_UNSALT_MSG:
-            salted = false;
-            break;
-          default:
-            sprintf(conn->errorMessage, "connectDB() -- backend did not supply a salt packet\n");
-            goto connect_errReturn;
-        }
-
-        if (salted)
-          msgtype = STARTUP_CRYPT_MSG;
-        else
-        msgtype = fe_getauthsvc(conn->errorMessage);
-
-/*	  pacBuf = startup2PacketBuf(&startup);*/
-	startup2PacketBuf(&startup, &pacBuf);
-	pacBuf.msgtype = (MsgType) htonl(msgtype);
-	status = packetSend(port, &pacBuf, sizeof(PacketBuf), BLOCKING);
-
-	if (status == STATUS_ERROR)
-	{
-		sprintf(conn->errorMessage,
-				"connectDB() --  couldn't send complete packet: errno=%d\n%s\n", errno, strerror(errno));
-		goto connect_errReturn;
-	}
-
-	/* authenticate as required */
-	if (fe_sendauth(msgtype, port, conn->pghost,
-					conn->pguser, conn->pgpass,
-					conn->errorMessage) != STATUS_OK)
-	{
-		(void) sprintf(conn->errorMessage,
-					   "connectDB() --  authentication failed with %s\n",
-					   conn->pghost);
-		goto connect_errReturn;
-	}
-
-	/* free the password so it's not hanging out in memory forever */
-	if (conn->pgpass != NULL)
-	{
-		free(conn->pgpass);
-	}
-
 	/* set up the socket file descriptors */
-	conn->Pfout = fdopen(port->sock, "w");
-	conn->Pfin = fdopen(dup(port->sock), "r");
+	conn->Pfout = fdopen(conn->sock, "w");
+	conn->Pfin = fdopen(dup(conn->sock), "r");
 	if ((conn->Pfout == NULL) || (conn->Pfin == NULL))
 	{
 		(void) sprintf(conn->errorMessage,
@@ -678,19 +570,92 @@ connectDB(PGconn *conn)
 		goto connect_errReturn;
 	}
 
-	conn->port = port;
+	/* Send the startup packet. */
+
+	if (packetSend(conn, (char *)&sp, sizeof(StartupPacket)) != STATUS_OK)
+	{
+		sprintf(conn->errorMessage,
+				"connectDB() --  couldn't send complete packet: errno=%d\n%s\n", errno, strerror(errno));
+		goto connect_errReturn;
+	}
+
+	/*
+	 * Get the response from the backend, either an error message or an
+	 * authentication request.
+	 */
+
+	do
+	{
+		int beresp;
+
+		if ((beresp = pqGetc(conn->Pfin, conn->Pfdebug)) == EOF)
+		{
+			(void)sprintf(conn->errorMessage,
+					"connectDB() -- error getting authentication request\n");
+
+			goto connect_errReturn;
+		}
+
+		/* Handle errors. */
+
+		if (beresp == 'E')
+		{
+			pqGets(conn->errorMessage, sizeof (conn->errorMessage),
+				conn->Pfin, conn->Pfdebug);
+
+			goto connect_errReturn;
+		}
+
+		/* Check it was an authentication request. */
+
+		if (beresp != 'R')
+		{
+			(void)sprintf(conn->errorMessage,
+					"connectDB() -- expected authentication request\n");
+
+			goto connect_errReturn;
+		}
+
+		/* Get the type of request. */
+
+		if (pqGetInt((int *)&areq, 4, conn->Pfin, conn->Pfdebug))
+		{
+			(void)sprintf(conn->errorMessage,
+					"connectDB() -- error getting authentication request type\n");
+
+			goto connect_errReturn;
+		}
+
+		/* Get the password salt if there is one. */
+
+		if (areq == AUTH_REQ_CRYPT &&
+			pqGetnchar(conn->salt, sizeof (conn->salt),
+					conn->Pfin, conn->Pfdebug))
+		{
+			(void)sprintf(conn->errorMessage,
+					"connectDB() -- error getting password salt\n");
+
+			goto connect_errReturn;
+		}
+
+
+		/* Respond to the request. */
+
+		if (fe_sendauth(areq, conn, conn->pghost, conn->pgpass,
+					conn->errorMessage) != STATUS_OK)
+			goto connect_errReturn;
+	}
+	while (areq != AUTH_REQ_OK);
+
+	/* free the password so it's not hanging out in memory forever */
+	if (conn->pgpass != NULL)
+	{
+		free(conn->pgpass);
+	}
 
 	return CONNECTION_OK;
 
 connect_errReturn:
-
-	/*
-	 * Igor/6/3/97 - We need to free it here...otherwise the function
-	 * returns without setting conn->port to port. Because of that any way
-	 * of referencing this variable will be lost and it's allocated memory
-	 * will not be freed.
-	 */
-	free(port);					/* PURIFY */
 	return CONNECTION_BAD;
 
 }
@@ -746,8 +711,6 @@ freePGconn(PGconn *conn)
 		free(conn->pguser);
 	if (conn->notifyList)
 		DLFreeList(conn->notifyList);
-	if (conn->port)
-		free(conn->port);
 	free(conn);
 }
 
@@ -845,112 +808,27 @@ PQreset(PGconn *conn)
  *
  * RETURNS: STATUS_ERROR if the write fails, STATUS_OK otherwise.
  * SIDE_EFFECTS: may block.
- * NOTES: Non-blocking writes would significantly complicate
- *		buffer management.	For now, we're not going to do it.
- *
 */
 int
-packetSend(Port *port,
-		   PacketBuf *buf,
-		   PacketLen len,
-		   bool nonBlocking)
+packetSend(PGconn *conn,
+		   char *buf,
+		   size_t len)
 {
-	PacketLen	doneLen = write(port->sock, buf, len);
+	/* Send the total packet size. */
 
-	if (doneLen < len)
-	{
-		return (STATUS_ERROR);
-	}
-	return (STATUS_OK);
+	if (pqPutInt(4 + len, 4, conn->Pfout, conn->Pfdebug))
+		return STATUS_ERROR;
+
+	/* Send the packet itself. */
+
+	if (pqPutnchar(buf, len, conn->Pfout, conn->Pfdebug))
+		return STATUS_ERROR;
+
+	pqFlush(conn->Pfout, conn->Pfdebug);
+
+	return STATUS_OK;
 }
 
-/*
- * packetReceive()
- *
- This is a less stringent PacketReceive(), defined in backend/libpq/pqpacket.c
- We define it here to avoid linking in all of libpq.a
-
- * packetReceive -- receive a packet on a port
- *
- * RETURNS: STATUS_ERROR if the read fails, STATUS_OK otherwise.
- * SIDE_EFFECTS: may block.
- * NOTES: Non-blocking reads would significantly complicate
- *            buffer management.      For now, we're not going to do it.
- *
-*/
-int
-packetReceive(Port *port, PacketBuf *buf, bool nonBlocking) {
-
-  PacketLen     max_size = sizeof(PacketBuf);
-  PacketLen     cc;                           /* character count -- recvd */
-  PacketLen     packetLen;
-  int           addrLen = sizeof(struct sockaddr_in);
-  int         hdrLen;
-  int           msgLen;
-
-  /* Read the packet length into the PacketBuf
-   */
-  hdrLen = sizeof(PacketLen);
-  cc = recvfrom(port->sock, (char*)&packetLen, hdrLen, 0, (struct sockaddr*)&port->raddr, &addrLen);
-  if (cc < 0)
-    return STATUS_ERROR;
-  else if (!cc)
-    return STATUS_INVALID;
-  else if (cc < hdrLen)
-    return STATUS_NOT_DONE;
-
-  /* convert to local form of integer and check for oversized packet
-   */
-  buf->len = packetLen;
-  if ((packetLen = ntohl(packetLen)) > max_size) {
-    port->nBytes = packetLen;
-    return STATUS_INVALID;
-  }
-
-  /* fetch the rest of the message
-   */
-  msgLen = packetLen - cc;
-  cc = recvfrom(port->sock, (char*)&buf->msgtype, msgLen, 0, (struct sockaddr*)&port->raddr, &addrLen);
-  if (cc < 0)
-    return STATUS_ERROR;
-  else if (!cc)
-    return STATUS_INVALID;
-  else if (cc < msgLen)
-    return STATUS_NOT_DONE;
-
-  return STATUS_OK;
-}
-
-/*
- * startup2PacketBuf()
- *
- * this is just like StartupInfo2Packet(), defined in backend/libpq/pqpacket.c
- * but we repeat it here so we don't have to link in libpq.a
- *
- * converts a StartupInfo structure to a PacketBuf
- */
-static void
-startup2PacketBuf(StartupInfo *s, PacketBuf *res)
-{
-	char	   *tmp;
-
-/*	res = (PacketBuf*)malloc(sizeof(PacketBuf)); */
-	res->len = htonl(sizeof(PacketBuf));
-	/* use \n to delimit the strings */
-	res->data[0] = '\0';
-
-	tmp = res->data;
-
-	strncpy(tmp, s->database, sizeof(s->database));
-	tmp += sizeof(s->database);
-	strncpy(tmp, s->user, sizeof(s->user));
-	tmp += sizeof(s->user);
-	strncpy(tmp, s->options, sizeof(s->options));
-	tmp += sizeof(s->options);
-	strncpy(tmp, s->execFile, sizeof(s->execFile));
-	tmp += sizeof(s->execFile);
-	strncpy(tmp, s->tty, sizeof(s->tty));
-}
 
 /* ----------------
  * Conninfo parser routine

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.25 1997/12/09 03:10:38 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.26 1998/01/26 01:41:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,84 +97,56 @@ read_through_eol(FILE *file)
 
 
 static void
-read_hba_entry2(FILE *file, enum Userauth * userauth_p, char usermap_name[],
-			  bool *error_p, bool *matches_p, bool find_password_entries)
+read_hba_entry2(FILE *file, UserAuth * userauth_p, char auth_arg[],
+			  bool *error_p)
 {
 /*--------------------------------------------------------------------------
   Read from file FILE the rest of a host record, after the mask field,
-  and return the interpretation of it as *userauth_p, usermap_name, and
+  and return the interpretation of it as *userauth_p, auth_arg, and
   *error_p.
 ---------------------------------------------------------------------------*/
 	char		buf[MAX_TOKEN];
 
-	bool		userauth_valid;
-
 	/* Get authentication type token. */
 	next_token(file, buf, sizeof(buf));
-	userauth_valid = false;
-	if (buf[0] == '\0')
+
+	if (strcmp(buf, "trust") == 0)
+		*userauth_p = uaTrust;
+	else if (strcmp(buf, "ident") == 0)
+		*userauth_p = uaIdent;
+	else if (strcmp(buf, "password") == 0)
+		*userauth_p = uaPassword;
+	else if (strcmp(buf, "krb4") == 0)
+		*userauth_p = uaKrb4;
+	else if (strcmp(buf, "krb5") == 0)
+		*userauth_p = uaKrb5;
+	else if (strcmp(buf, "reject") == 0)
+		*userauth_p = uaReject;
+	else if (strcmp(buf, "crypt") == 0)
+		*userauth_p = uaCrypt;
+	else
 	{
 		*error_p = true;
-	}
-	else
-	{
-		userauth_valid = true;
-		if (strcmp(buf, "trust") == 0)
-		{
-			*userauth_p = Trust;
-		}
-		else if (strcmp(buf, "ident") == 0)
-		{
-			*userauth_p = Ident;
-		}
-		else if (strcmp(buf, "password") == 0)
-		{
-			*userauth_p = Password;
-		}
-		else
-		{
-			userauth_valid = false;
-		}
 
-		if ((find_password_entries && strcmp(buf, "password") == 0) ||
-			(!find_password_entries && strcmp(buf, "password") != 0))
-		{
-			*matches_p = true;
-		}
-		else
-		{
-			*matches_p = false;
-		}
+		if (buf[0] != '\0')
+			read_through_eol(file);
 	}
 
-	if (!userauth_valid || !*matches_p || *error_p)
+	if (!*error_p)
 	{
-		if (!userauth_valid)
-		{
-			*error_p = true;
-		}
-		read_through_eol(file);
-	}
-	else
-	{
-		/* Get the map name token, if any */
+		/* Get the authentication argument token, if any */
 		next_token(file, buf, sizeof(buf));
 		if (buf[0] == '\0')
-		{
-			*error_p = false;
-			usermap_name[0] = '\0';
-		}
+			auth_arg[0] = '\0';
 		else
 		{
-			strncpy(usermap_name, buf, USERMAP_NAME_SIZE);
+			StrNCpy(auth_arg, buf, MAX_AUTH_ARG - 1);
 			next_token(file, buf, sizeof(buf));
 			if (buf[0] != '\0')
 			{
 				*error_p = true;
 				read_through_eol(file);
 			}
-			else
-				*error_p = false;
 		}
 	}
 }
@@ -182,139 +154,150 @@ read_hba_entry2(FILE *file, enum Userauth * userauth_p, char usermap_name[],
 
 
 static void
-process_hba_record(FILE *file,
-				   const struct in_addr ip_addr, const char database[],
+process_hba_record(FILE *file, SockAddr *raddr, const char database[],
 				   bool *matches_p, bool *error_p,
-				   enum Userauth * userauth_p, char usermap_name[],
-				   bool find_password_entries)
+				   UserAuth * userauth_p, char auth_arg[])
 {
 /*---------------------------------------------------------------------------
   Process the non-comment record in the config file that is next on the file.
-  See if it applies to a connection to a host with IP address "ip_addr"
+  See if it applies to a connection to a host with IP address "*raddr"
   to a database named "database[]".  If so, return *matches_p true
-  and *userauth_p and usermap_name[] as the values from the entry.
-  If not, return matches_p false.  If the record has a syntax error,
+  and *userauth_p and auth_arg[] as the values from the entry.
+  If not, leave *matches_p as it was.  If the record has a syntax error,
   return *error_p true, after issuing a message to stderr.	If no error,
   leave *error_p as it was.
 ---------------------------------------------------------------------------*/
-	char		buf[MAX_TOKEN]; /* A token from the record */
+	char db[MAX_TOKEN], buf[MAX_TOKEN];
 
-	/* Read the record type field */
+	/* Read the record type field. */
+
 	next_token(file, buf, sizeof(buf));
+
 	if (buf[0] == '\0')
-		*matches_p = false;
+		return;
+
+	/* Check the record type. */
+
+	if (strcmp(buf, "local") == 0)
+	{
+		/* Get the database. */
+
+		next_token(file, db, sizeof(db));
+
+		if (db[0] == '\0')
+			goto syntax;
+
+		/* Read the rest of the line. */
+
+		read_hba_entry2(file, userauth_p, auth_arg, error_p);
+
+		/*
+		 * For now, disallow methods that need AF_INET sockets to work.
+		 */
+
+		if (!*error_p &&
+				(*userauth_p == uaIdent ||
+				 *userauth_p == uaKrb4 ||
+				 *userauth_p == uaKrb5))
+			*error_p = true;
+
+		if (*error_p)
+			goto syntax;
+
+		/*
+		 * If this record isn't for our database, or this is the wrong
+		 * sort of connection, ignore it.
+		 */
+
+		if ((strcmp(db, database) != 0 && strcmp(db, "all") != 0) ||
+				raddr->sa.sa_family != AF_UNIX)
+			return;
+	}
+	else if (strcmp(buf, "host") == 0)
+	{
+		struct in_addr file_ip_addr, mask;
+
+		/* Get the database. */
+
+		next_token(file, db, sizeof(db));
+
+		if (db[0] == '\0')
+			goto syntax;
+
+		/* Read the IP address field. */
+
+		next_token(file, buf, sizeof(buf));
+
+		if (buf[0] == '\0')
+			goto syntax;
+
+		/* Remember the IP address field and go get mask field. */
+
+		if (!inet_aton(buf, &file_ip_addr))
+		{
+			read_through_eol(file);
+			goto syntax;
+		}
+
+		/* Read the mask field. */
+
+		next_token(file, buf, sizeof(buf));
+
+		if (buf[0] == '\0')
+			goto syntax;
+
+		if (!inet_aton(buf, &mask))
+		{
+			read_through_eol(file);
+			goto syntax;
+		}
+
+		/*
+		 * This is the record we're looking for.  Read the rest of the
+		 * info from it.
+		 */
+
+		read_hba_entry2(file, userauth_p, auth_arg, error_p);
+
+		if (*error_p)
+			goto syntax;
+
+		/*
+		 * If this record isn't for our database, or this is the wrong
+		 * sort of connection, ignore it.
+		 */
+
+		if ((strcmp(db, database) != 0 && strcmp(db, "all") != 0) ||
+			raddr->sa.sa_family != AF_INET ||
+			((file_ip_addr.s_addr ^ raddr->in.sin_addr.s_addr) & mask.s_addr) != 0x0000)
+			return;
+	}
 	else
 	{
-		/* if this isn't a "host" record, it can't match. */
-		if (strcmp(buf, "host") != 0)
-		{
-			*matches_p = false;
-			read_through_eol(file);
-		}
-		else
-		{
-			/* It's a "host" record.  Read the database name field. */
-			next_token(file, buf, sizeof(buf));
-			if (buf[0] == '\0')
-				*matches_p = false;
-			else
-			{
-				/* If this record isn't for our database, ignore it. */
-				if (strcmp(buf, database) != 0 && strcmp(buf, "all") != 0)
-				{
-					*matches_p = false;
-					read_through_eol(file);
-				}
-				else
-				{
-					/* Read the IP address field */
-					next_token(file, buf, sizeof(buf));
-					if (buf[0] == '\0')
-						*matches_p = false;
-					else
-					{
-						int			valid;		/* Field is valid dotted
-												 * decimal */
-
-						/*
-						 * Remember the IP address field and go get mask
-						 * field
-						 */
-						struct in_addr file_ip_addr;	/* IP address field
-														 * value */
-
-						valid = inet_aton(buf, &file_ip_addr);
-						if (!valid)
-						{
-							*matches_p = false;
-							read_through_eol(file);
-						}
-						else
-						{
-							/* Read the mask field */
-							next_token(file, buf, sizeof(buf));
-							if (buf[0] == '\0')
-								*matches_p = false;
-							else
-							{
-								struct in_addr mask;
-
-								/*
-								 * Got mask.  Now see if this record is
-								 * for our host.
-								 */
-								valid = inet_aton(buf, &mask);
-								if (!valid)
-								{
-									*matches_p = false;
-									read_through_eol(file);
-								}
-								else
-								{
-									if (((file_ip_addr.s_addr ^ ip_addr.s_addr) & mask.s_addr)
-										!= 0x0000)
-									{
-										*matches_p = false;
-										read_through_eol(file);
-									}
-									else
-									{
-
-										/*
-										 * This is the record we're
-										 * looking for.  Read the rest of
-										 * the info from it.
-										 */
-										read_hba_entry2(file, userauth_p, usermap_name,
-														error_p, matches_p, find_password_entries);
-										if (*error_p)
-										{
-											sprintf(PQerrormsg,
-													"process_hba_record: invalid syntax in "
-													"hba config file "
-													"for host record for IP address %s\n",
-												inet_ntoa(file_ip_addr));
-											fputs(PQerrormsg, stderr);
-											pqdebug("%s", PQerrormsg);
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
+		read_through_eol(file);
+		goto syntax;
 	}
+
+	*matches_p = true;
+
+	return;
+
+syntax:
+	sprintf(PQerrormsg,
+		"process_hba_record: invalid syntax in pg_hba.conf file\n");
+
+	fputs(PQerrormsg, stderr);
+	pqdebug("%s", PQerrormsg);
+
+	*error_p = true;
 }
 
 
 
 static void
-process_open_config_file(FILE *file,
-					 const struct in_addr ip_addr, const char database[],
-						 bool *host_ok_p, enum Userauth * userauth_p,
-						 char usermap_name[], bool find_password_entries)
+process_open_config_file(FILE *file, SockAddr *raddr, const char database[],
+				bool *host_ok_p, UserAuth * userauth_p,
+				char auth_arg[])
 {
 /*---------------------------------------------------------------------------
   This function does the same thing as find_hba_entry, only with
@@ -348,36 +331,26 @@ process_open_config_file(FILE *file,
 				read_through_eol(file);
 			else
 			{
-				process_hba_record(file, ip_addr, database,
-						  &found_entry, &error, userauth_p, usermap_name,
-								   find_password_entries);
+				process_hba_record(file, raddr, database,
+						  &found_entry, &error, userauth_p, auth_arg);
 			}
 		}
 	}
-	if (found_entry)
-	{
-		if (error)
-			*host_ok_p = false;
-		else
-			*host_ok_p = true;
-	}
-	else
-		*host_ok_p = false;
+
+	if (found_entry && !error)
+		*host_ok_p = true;
 }
 
 
 
-void
-find_hba_entry(const char DataDir[], const struct in_addr ip_addr,
-			   const char database[],
-			   bool *host_ok_p, enum Userauth * userauth_p,
-			   char usermap_name[], bool find_password_entries)
+static void
+find_hba_entry(SockAddr *raddr, const char database[], bool *host_ok_p,
+		UserAuth * userauth_p, char auth_arg[])
 {
 /*--------------------------------------------------------------------------
   Read the config file and find an entry that allows connection from
-  host "ip_addr" to database "database".  If not found, return
-  *host_ok_p == false.	If found, return *userauth_p and *usermap_name
-  representing the contents of that entry.
+  host "*raddr" to database "database".  If found, return *host_ok_p == true
+  and *userauth_p and *auth_arg representing the contents of that entry.
 
   When a record has invalid syntax, we either ignore it or reject the
   connection (depending on where it's invalid).  No message or anything.
@@ -436,8 +409,6 @@ find_hba_entry(const char DataDir[], const struct in_addr ip_addr,
 		{
 			/* The open of the config file failed.	*/
 
-			*host_ok_p = false;
-
 			sprintf(PQerrormsg,
 				 "find_hba_entry: Host-based authentication config file "
 				"does not exist or permissions are not setup correctly! "
@@ -448,8 +419,8 @@ find_hba_entry(const char DataDir[], const struct in_addr ip_addr,
 		}
 		else
 		{
-			process_open_config_file(file, ip_addr, database, host_ok_p, userauth_p,
-									 usermap_name, find_password_entries);
+			process_open_config_file(file, raddr, database, host_ok_p, userauth_p,
+									 auth_arg);
 			FreeFile(file);
 		}
 		pfree(conf_file);
@@ -754,8 +725,7 @@ verify_against_open_usermap(FILE *file,
 
 
 static void
-verify_against_usermap(const char DataDir[],
-					   const char pguser[],
+verify_against_usermap(const char pguser[],
 					   const char ident_username[],
 					   const char usermap_name[],
 					   bool *checks_out_p)
@@ -834,20 +804,20 @@ verify_against_usermap(const char DataDir[],
 
 
 
-static void
-authident(const char DataDir[],
-		  const Port port, const char postgres_username[],
-		  const char usermap_name[],
-		  bool *authentic_p)
+int
+authident(struct sockaddr_in *raddr, struct sockaddr_in *laddr,
+		  const char postgres_username[],
+		  const char auth_arg[])
 {
 /*---------------------------------------------------------------------------
   Talk to the ident server on the remote host and find out who owns the
   connection described by "port".  Then look in the usermap file under
-  the usermap usermap_name[] and see if that user is equivalent to
+  the usermap auth_arg[] and see if that user is equivalent to
   Postgres user user[].
 
-  Return *authentic_p true iff yes.
+  Return STATUS_OK if yes.
 ---------------------------------------------------------------------------*/
+	bool		checks_out;
 	bool		ident_failed;
 
 	/* We were unable to get ident to give us a username */
@@ -855,120 +825,35 @@ authident(const char DataDir[],
 
 	/* The username returned by ident */
 
-	ident(port.raddr.in.sin_addr, port.laddr.in.sin_addr,
-		  port.raddr.in.sin_port, port.laddr.in.sin_port,
+	ident(raddr->sin_addr, laddr->sin_addr,
+		  raddr->sin_port, laddr->sin_port,
 		  &ident_failed, ident_username);
 
 	if (ident_failed)
-		*authentic_p = false;
-	else
-	{
-		bool		checks_out;
+		return STATUS_ERROR;
 
-		verify_against_usermap(DataDir,
-						 postgres_username, ident_username, usermap_name,
+	verify_against_usermap(postgres_username, ident_username, auth_arg,
 							   &checks_out);
-		if (checks_out)
-			*authentic_p = true;
-		else
-			*authentic_p = false;
-	}
+
+	return (checks_out ? STATUS_OK : STATUS_ERROR);
 }
 
 
 
 extern int
-hba_recvauth(const Port *port, const char database[], const char user[],
-			 const char DataDir[])
+hba_getauthmethod(SockAddr *raddr, char *database, char *auth_arg,
+			UserAuth *auth_method)
 {
 /*---------------------------------------------------------------------------
-  Determine if the TCP connection described by "port" is with someone
-  allowed to act as user "user" and access database "database".  Return
-  STATUS_OK if yes; STATUS_ERROR if not.
+  Determine what authentication method should be used when accessing database
+  "database" from frontend "raddr".  Return the method, an optional argument,
+  and STATUS_OK.
 ----------------------------------------------------------------------------*/
 	bool		host_ok;
 
-	/*
-	 * There's an entry for this database and remote host in the pg_hba
-	 * file
-	 */
-	char		usermap_name[USERMAP_NAME_SIZE + 1];
+	host_ok = false;
 
-	/*
-	 * The name of the map pg_hba specifies for this connection (or
-	 * special value "SAMEUSER")
-	 */
-	enum Userauth userauth;
+	find_hba_entry(raddr, database, &host_ok, auth_method, auth_arg);
 
-	/*
-	 * The type of user authentication pg_hba specifies for this
-	 * connection
-	 */
-	int			retvalue;
-
-	/* UNIX socket always OK, for now */
-	if (port->raddr.in.sin_family == AF_UNIX)
-		return STATUS_OK;
-	/* Our eventual return value */
-
-
-	find_hba_entry(DataDir, port->raddr.in.sin_addr, database,
-				   &host_ok, &userauth, usermap_name,
-				   false		/* don't find password entries of type
-					   'password' */ );
-
-	if (!host_ok)
-		retvalue = STATUS_ERROR;
-	else
-	{
-		switch (userauth)
-		{
-			case Trust:
-				retvalue = STATUS_OK;
-				break;
-				case Ident:
-				{
-
-					/*
-					 * Here's where we need to call up ident and
-					 * authenticate the user
-					 */
-
-					bool		authentic;		/* He is who he says he
-												 * is. */
-
-								authident(DataDir, *port, user, usermap_name, &authentic);
-
-					if			(authentic)
-									retvalue = STATUS_OK;
-					else
-									retvalue = STATUS_ERROR;
-				}
-							break;
-
-			default:
-				retvalue = STATUS_ERROR;
-				Assert(false);
-		}
-	}
-	return (retvalue);
+	return (host_ok ? STATUS_OK : STATUS_ERROR);
 }
-
-
-/*----------------------------------------------------------------
- * This version of hba was written by Bryan Henderson
- * in September 1996 for Release 6.0.  It changed the format of the
- * hba file and added ident function.
- *
- * Here are some notes about the original host based authentication
- * the preceded this one.
- *
- * based on the securelib package originally written by William
- * LeFebvre, EECS Department, Northwestern University
- * (phil@eecs.nwu.edu) - orginal configuration file code handling
- * by Sam Horrocks (sam@ics.uci.edu)
- *
- * modified and adapted for use with Postgres95 by Paul Fisher
- * (pnfisher@unity.ncsu.edu)
- *
- -----------------------------------------------------------------*/

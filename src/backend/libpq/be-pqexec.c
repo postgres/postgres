@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.13 1998/01/07 21:03:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.14 1998/01/26 01:41:06 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 #include <tcop/fastpath.h>
 #include <tcop/tcopprot.h>
 #include <lib/dllist.h>
-#include <libpq/libpq-be.h>
+#include <libpq/libpq.h>
 #include <fmgr.h>
 #include <utils/exc.h>
 #include <utils/builtins.h>

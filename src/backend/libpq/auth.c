@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.20 1997/12/09 03:10:31 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.21 1998/01/26 01:41:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,39 +16,6 @@
  *
  *	   backend (postmaster) routines:
  *		be_recvauth				receive authentication information
- *		be_setauthsvc			do/do not permit an authentication service
- *		be_getauthsvc			is an authentication service permitted?
- *
- *	 NOTES
- *		To add a new authentication system:
- *		0. If you can't do your authentication over an existing socket,
- *		   you lose -- get ready to hack around this framework instead of
- *		   using it.  Otherwise, you can assume you have an initialized
- *		   and empty connection to work with.  (Please don't leave leftover
- *		   gunk in the connection after the authentication transactions, or
- *		   the POSTGRES routines that follow will be very unhappy.)
- *		1. Write a set of routines that:
- *				let a client figure out what user/principal name to use
- *				send authentication information (client side)
- *				receive authentication information (server side)
- *		   You can include both routines in this file, using #ifdef FRONTEND
- *		   to separate them.
- *		2. Edit libpq/pqcomm.h and assign a MsgType for your protocol.
- *		3. Edit the static "struct authsvc" array and the generic
- *		   {be,fe}_{get,set}auth{name,svc} routines in this file to reflect
- *		   the new service.  You may have to change the arguments of these
- *		   routines; they basically just reflect what Kerberos v4 needs.
- *		4. Hack on src/{,bin}/Makefile.global and src/{backend,libpq}/Makefile
- *		   to add library and CFLAGS hooks -- basically, grep the Makefile
- *		   hierarchy for KRBVERS to see where you need to add things.
- *
- *		Send mail to post_hackers@postgres.Berkeley.EDU if you have to make
- *		any changes to arguments, etc.	Context diffs would be nice, too.
- *
- *		Someday, this cruft will go away and magically be replaced by a
- *		nice interface based on the GSS API or something.  For now, though,
- *		there's no (stable) UNIX security API to work with...
- *
  */
 #include <stdio.h>
 #include <string.h>
@@ -68,66 +35,21 @@
 
 #include <libpq/auth.h>
 #include <libpq/libpq.h>
-#include <libpq/libpq-be.h>
 #include <libpq/hba.h>
 #include <libpq/password.h>
 #include <libpq/crypt.h>
 
-static int	be_getauthsvc(MsgType msgtype);
 
-/*----------------------------------------------------------------
- * common definitions for generic fe/be routines
- *----------------------------------------------------------------
- */
+static void sendAuthRequest(Port *port, AuthRequest areq, void (*handler)());
+static void handle_done_auth(Port *port);
+static void handle_krb4_auth(Port *port);
+static void handle_krb5_auth(Port *port);
+static void handle_password_auth(Port *port);
+static void readPasswordPacket(char *arg, PacketLen len, char *pkt);
+static void pg_passwordv0_recvauth(char *arg, PacketLen len, char *pkt);
+static int old_be_recvauth(Port *port);
+static int map_old_to_new(Port *port, UserAuth old, int status);
 
-struct authsvc
-{
-	char		name[16];		/* service nickname (for command line) */
-	MsgType		msgtype;		/* startup packet header type */
-	int			allowed;		/* initially allowed (before command line
-								 * option parsing)? */
-};
-
-/*
- * Command-line parsing routines use this structure to map nicknames
- * onto service types (and the startup packets to use with them).
- *
- * Programs receiving an authentication request use this structure to
- * decide which authentication service types are currently permitted.
- * By default, all authentication systems compiled into the system are
- * allowed.  Unauthenticated connections are disallowed unless there
- * isn't any authentication system.
- */
-
-#if defined(HBA)
-static int	useHostBasedAuth = 1;
-
-#else
-static int	useHostBasedAuth = 0;
-
-#endif
-
-#if defined(KRB4) || defined(KRB5) || defined(HBA)
-#define UNAUTH_ALLOWED 0
-#else
-#define UNAUTH_ALLOWED 1
-#endif
-
-static struct authsvc authsvcs[] = {
-	{"unauth", STARTUP_UNAUTH_MSG, UNAUTH_ALLOWED},
-	{"hba", STARTUP_HBA_MSG, 1},
-	{"krb4", STARTUP_KRB4_MSG, 1},
-	{"krb5", STARTUP_KRB5_MSG, 1},
-#if defined(KRB5)
-	{"kerberos", STARTUP_KRB5_MSG, 1},
-#else
-	{"kerberos", STARTUP_KRB4_MSG, 1},
-#endif
-	{"password", STARTUP_PASSWORD_MSG, 1},
-	{"crypt", STARTUP_CRYPT_MSG, 1}
-};
-
-static n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
 
 #ifdef KRB4
 /* This has to be ifdef'd out because krb.h does exist.  This needs
@@ -140,10 +62,6 @@ static n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
 
 #include <krb.h>
 
-#ifdef FRONTEND
-/* moves to src/libpq/fe-auth.c  */
-#else							/* !FRONTEND */
-
 /*
  * pg_krb4_recvauth -- server routine to receive authentication information
  *					   from the client
@@ -154,10 +72,7 @@ static n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
  * unauthenticated connections.)
  */
 static int
-pg_krb4_recvauth(int sock,
-				 struct sockaddr_in * laddr,
-				 struct sockaddr_in * raddr,
-				 char *username)
+pg_krb4_recvauth(Port *)
 {
 	long		krbopts = 0;	/* one-way authentication */
 	KTEXT_ST	clttkt;
@@ -170,12 +85,12 @@ pg_krb4_recvauth(int sock,
 	strcpy(instance, "*");		/* don't care, but arg gets expanded
 								 * anyway */
 	status = krb_recvauth(krbopts,
-						  sock,
+						  port->sock,
 						  &clttkt,
 						  PG_KRB_SRVNAM,
 						  instance,
-						  raddr,
-						  laddr,
+						  &port->raddr.in,
+						  &port->laddr.in,
 						  &auth_data,
 						  PG_KRB_SRVTAB,
 						  key_sched,
@@ -198,12 +113,11 @@ pg_krb4_recvauth(int sock,
 		pqdebug("%s", PQerrormsg);
 		return (STATUS_ERROR);
 	}
-	if (username && *username &&
-		strncmp(username, auth_data.pname, NAMEDATALEN))
+	if (strncmp(port->user, auth_data.pname, SM_USER))
 	{
 		sprintf(PQerrormsg,
 				"pg_krb4_recvauth: name \"%s\" != \"%s\"\n",
-				username,
+				port->username,
 				auth_data.pname);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
@@ -212,14 +126,9 @@ pg_krb4_recvauth(int sock,
 	return (STATUS_OK);
 }
 
-#endif							/* !FRONTEND */
-
 #else
 static int
-pg_krb4_recvauth(int sock,
-				 struct sockaddr_in * laddr,
-				 struct sockaddr_in * raddr,
-				 char *username)
+pg_krb4_recvauth(Port *port)
 {
 	sprintf(PQerrormsg,
 			"pg_krb4_recvauth: Kerberos not implemented on this "
@@ -267,10 +176,6 @@ pg_an_to_ln(char *aname)
 	return (aname);
 }
 
-#ifdef FRONTEND
-/* moves to src/libpq/fe-auth.c  */
-#else							/* !FRONTEND */
-
 /*
  * pg_krb5_recvauth -- server routine to receive authentication information
  *					   from the client
@@ -294,10 +199,7 @@ pg_an_to_ln(char *aname)
  * but kdb5_edit allows you to select which principals to dump.  Yay!)
  */
 static int
-pg_krb5_recvauth(int sock,
-				 struct sockaddr_in * laddr,
-				 struct sockaddr_in * raddr,
-				 char *username)
+pg_krb5_recvauth(Port *port)
 {
 	char		servbuf[MAXHOSTNAMELEN + 1 +
 									sizeof(PG_KRB_SRVNAM)];
@@ -334,9 +236,9 @@ pg_krb5_recvauth(int sock,
 	 * krb5_sendauth needs this to verify the address in the client
 	 * authenticator.
 	 */
-	sender_addr.addrtype = raddr->sin_family;
-	sender_addr.length = sizeof(raddr->sin_addr);
-	sender_addr.contents = (krb5_octet *) & (raddr->sin_addr);
+	sender_addr.addrtype = port->raddr.in.sin_family;
+	sender_addr.length = sizeof(port->raddr.in.sin_addr);
+	sender_addr.contents = (krb5_octet *) & (port->raddr.in.sin_addr);
 
 	if (strcmp(PG_KRB_SRVTAB, ""))
 	{
@@ -344,7 +246,7 @@ pg_krb5_recvauth(int sock,
 		keyprocarg = PG_KRB_SRVTAB;
 	}
 
-	if (code = krb5_recvauth((krb5_pointer) & sock,
+	if (code = krb5_recvauth((krb5_pointer) & port->sock,
 							 PG_KRB5_VERSION,
 							 server,
 							 &sender_addr,
@@ -390,11 +292,11 @@ pg_krb5_recvauth(int sock,
 		return (STATUS_ERROR);
 	}
 	kusername = pg_an_to_ln(kusername);
-	if (username && strncmp(username, kusername, NAMEDATALEN))
+	if (strncmp(username, kusername, SM_USER))
 	{
 		sprintf(PQerrormsg,
 				"pg_krb5_recvauth: name \"%s\" != \"%s\"\n",
-				username, kusername);
+				port->username, kusername);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		pfree(kusername);
@@ -404,15 +306,9 @@ pg_krb5_recvauth(int sock,
 	return (STATUS_OK);
 }
 
-#endif							/* !FRONTEND */
-
-
 #else
 static int
-pg_krb5_recvauth(int sock,
-				 struct sockaddr_in * laddr,
-				 struct sockaddr_in * raddr,
-				 char *username)
+pg_krb5_recvauth(Port *port)
 {
 	sprintf(PQerrormsg,
 			"pg_krb5_recvauth: Kerberos not implemented on this "
@@ -425,246 +321,360 @@ pg_krb5_recvauth(int sock,
 
 #endif							/* KRB5 */
 
-static int
-pg_password_recvauth(Port *port, char *database, char *DataDir)
-{
-	PacketBuf	buf;
-	char	   *user,
-			   *password;
 
-	if (PacketReceive(port, &buf, BLOCKING) != STATUS_OK)
+/*
+ * Handle a v0 password packet.
+ */
+
+static void pg_passwordv0_recvauth(char *arg, PacketLen len, char *pkt)
+{
+	Port *port;
+	PasswordPacketV0 *pp;
+	char *user, *password, *cp, *start;
+
+	port = (Port *)arg;
+	pp = (PasswordPacketV0 *)pkt;
+
+	/*
+	 * The packet is supposed to comprise the user name and the password
+	 * as C strings.  Be careful the check that this is the case.
+	 */
+
+	user = password = NULL;
+
+	len -= sizeof (pp->unused);
+
+	cp = start = pp->data;
+
+	while (len > 0)
+	if (*cp++ == '\0')
 	{
-		sprintf(PQerrormsg,
-				"pg_password_recvauth: failed to receive authentication packet.\n");
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
-		return STATUS_ERROR;
+		if (user == NULL)
+			user = start;
+		else
+		{
+			password = start;
+			break;
+		}
+
+		start = cp;
 	}
 
-	user = buf.data;
-	password = buf.data + strlen(user) + 1;
+	if (user == NULL || password == NULL)
+	{
+		sprintf(PQerrormsg,
+				"pg_password_recvauth: badly formed password packet.\n");
+		fputs(PQerrormsg, stderr);
+		pqdebug("%s", PQerrormsg);
 
-	return verify_password(user, password, port, database, DataDir);
+		auth_failed(port);
+	}
+	else if (map_old_to_new(port, uaPassword,
+				verify_password(port->auth_arg, user, password)) != STATUS_OK)
+		auth_failed(port);
 }
 
-static int
-crypt_recvauth(Port *port)
+
+/*
+ * Tell the user the authentication failed, but not why.
+ */
+
+void auth_failed(Port *port)
 {
-      PacketBuf       buf;
-      char       *user,
-                         *password;
-
-      if (PacketReceive(port, &buf, BLOCKING) != STATUS_OK)
-      {
-              sprintf(PQerrormsg,
-                              "crypt_recvauth: failed to receive authentication packet.\n");
-              fputs(PQerrormsg, stderr);
-              pqdebug("%s", PQerrormsg);
-              return STATUS_ERROR;
-      }
-
-      user = buf.data;
-      password = buf.data + strlen(user) + 1;
-
-      return crypt_verify(port, user, password);
+	PacketSendError(&port->pktInfo, "User authentication failed");
 }
+
 
 /*
  * be_recvauth -- server demux routine for incoming authentication information
  */
-int
-be_recvauth(MsgType msgtype_arg, Port *port, char *username, StartupInfo *sp)
+void be_recvauth(Port *port)
 {
-	MsgType		msgtype;
+	AuthRequest areq;
+	void (*auth_handler)();
 
 	/*
-	 * A message type of STARTUP_MSG (which once upon a time was the only
-	 * startup message type) means user wants us to choose.  "unauth" is
-	 * what used to be the only choice, but installation may choose "hba"
-	 * instead.
+	 * Get the authentication method to use for this frontend/database
+	 * combination.
 	 */
-	if (msgtype_arg == STARTUP_MSG)
-	{
-		if (useHostBasedAuth)
-			msgtype = STARTUP_HBA_MSG;
-		else
-			msgtype = STARTUP_UNAUTH_MSG;
-	}
-	else
-		msgtype = msgtype_arg;
 
-
-	if (!username)
+	if (hba_getauthmethod(&port->raddr, port->database, port->auth_arg,
+				&port->auth_method) != STATUS_OK)
 	{
-		sprintf(PQerrormsg,
-				"be_recvauth: no user name passed\n");
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
-		return (STATUS_ERROR);
-	}
-	if (!port)
-	{
-		sprintf(PQerrormsg,
-				"be_recvauth: no port structure passed\n");
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
-		return (STATUS_ERROR);
+		PacketSendError(&port->pktInfo, "Error getting authentication method");
+		return;
 	}
 
-	switch (msgtype)
-	{
-		case STARTUP_KRB4_MSG:
-			if (!be_getauthsvc(msgtype))
-			{
-				sprintf(PQerrormsg,
-						"be_recvauth: krb4 authentication disallowed\n");
-				fputs(PQerrormsg, stderr);
-				pqdebug("%s", PQerrormsg);
-				return (STATUS_ERROR);
-			}
-			if (pg_krb4_recvauth(port->sock, (struct sockaddr_in *) &port->laddr,
-								 (struct sockaddr_in *) &port->raddr,
-								 username) != STATUS_OK)
-			{
-				sprintf(PQerrormsg,
-						"be_recvauth: krb4 authentication failed\n");
-				fputs(PQerrormsg, stderr);
-				pqdebug("%s", PQerrormsg);
-				return (STATUS_ERROR);
-			}
-			break;
-		case STARTUP_KRB5_MSG:
-			if (!be_getauthsvc(msgtype))
-			{
-				sprintf(PQerrormsg,
-						"be_recvauth: krb5 authentication disallowed\n");
-				fputs(PQerrormsg, stderr);
-				pqdebug("%s", PQerrormsg);
-				return (STATUS_ERROR);
-			}
-			if (pg_krb5_recvauth(port->sock, (struct sockaddr_in *) &port->laddr,
-								 (struct sockaddr_in *) &port->raddr,
-								 username) != STATUS_OK)
-			{
-				sprintf(PQerrormsg,
-						"be_recvauth: krb5 authentication failed\n");
-				fputs(PQerrormsg, stderr);
-				pqdebug("%s", PQerrormsg);
-				return (STATUS_ERROR);
-			}
-			break;
-		case STARTUP_UNAUTH_MSG:
-			if (!be_getauthsvc(msgtype))
-			{
-				sprintf(PQerrormsg,
-						"be_recvauth: "
-						"unauthenticated connections disallowed\n");
-				fputs(PQerrormsg, stderr);
-				pqdebug("%s", PQerrormsg);
-				return (STATUS_ERROR);
-			}
-			break;
-		case STARTUP_HBA_MSG:
-			if (hba_recvauth(port, sp->database, sp->user, DataDir) != STATUS_OK)
-			{
-				sprintf(PQerrormsg,
-					  "be_recvauth: host-based authentication failed\n");
-				fputs(PQerrormsg, stderr);
-				pqdebug("%s", PQerrormsg);
-				return (STATUS_ERROR);
-			}
-			break;
-		case STARTUP_PASSWORD_MSG:
-			if (!be_getauthsvc(msgtype))
-			{
-				sprintf(PQerrormsg,
-						"be_recvauth: "
-						"plaintext password authentication disallowed\n");
-				fputs(PQerrormsg, stderr);
-				pqdebug("%s", PQerrormsg);
-				return (STATUS_ERROR);
-			}
-			if (pg_password_recvauth(port, sp->database, DataDir) != STATUS_OK)
-			{
+	/* Handle old style authentication. */
 
-				/*
-				 * pg_password_recvauth or lower-level routines have
-				 * already set
-				 */
-				/* the error message											 */
-				return (STATUS_ERROR);
-			}
-			break;
-		case STARTUP_CRYPT_MSG:
-			if (crypt_recvauth(port) != STATUS_OK)
-                          return STATUS_ERROR;
-                        break;
-		default:
-			sprintf(PQerrormsg,
-					"be_recvauth: unrecognized message type: %d\n",
-					msgtype);
-			fputs(PQerrormsg, stderr);
-			pqdebug("%s", PQerrormsg);
-			return (STATUS_ERROR);
+	if (PG_PROTOCOL_MAJOR(port->proto) == 0)
+	{
+		if (old_be_recvauth(port) != STATUS_OK)
+			auth_failed(port);
+
+		return;
 	}
-	return (STATUS_OK);
+
+	/* Handle new style authentication. */
+
+	switch (port->auth_method)
+	{
+	case uaReject:
+		auth_failed(port);
+		return;
+ 
+	case uaKrb4:
+		areq = AUTH_REQ_KRB4;
+		auth_handler = handle_krb4_auth;
+		break;
+
+	case uaKrb5:
+		areq = AUTH_REQ_KRB5;
+		auth_handler = handle_krb5_auth;
+		break;
+
+	case uaTrust:
+		areq = AUTH_REQ_OK;
+		auth_handler = handle_done_auth;
+		break;
+
+	case uaIdent:
+		if (authident(&port->raddr.in, &port->laddr.in, port->user,
+				port->auth_arg) != STATUS_OK)
+		{
+			auth_failed(port);
+			return;
+		}
+
+		areq = AUTH_REQ_OK;
+		auth_handler = handle_done_auth;
+		break;
+
+	case uaPassword:
+		areq = AUTH_REQ_PASSWORD;
+		auth_handler = handle_password_auth;
+		break;
+
+	case uaCrypt:
+		areq = AUTH_REQ_CRYPT;
+		auth_handler = handle_password_auth;
+		break;
+ 	}
+
+	/* Tell the frontend what we want next. */
+
+	sendAuthRequest(port, areq, auth_handler);
 }
+ 
 
 /*
- * be_setauthsvc -- enable/disable the authentication services currently
- *					selected for use by the backend
- * be_getauthsvc -- returns whether a particular authentication system
- *					(indicated by its message type) is permitted by the
- *					current selections
- *
- * be_setauthsvc encodes the command-line syntax that
- *		-a "<service-name>"
- * enables a service, whereas
- *		-a "no<service-name>"
- * disables it.
+ * Send an authentication request packet to the frontend.
  */
-void
-be_setauthsvc(char *name)
-{
-	int			i,
-				j;
-	int			turnon = 1;
 
-	if (!name)
-		return;
-	if (!strncmp("no", name, 2))
+static void sendAuthRequest(Port *port, AuthRequest areq, void (*handler)())
+{
+	char *dp, *sp;
+	int i;
+	uint32 net_areq;
+
+	/* Convert to a byte stream. */
+
+	net_areq = htonl(areq);
+
+	dp = port->pktInfo.pkt.ar.data;
+	sp = (char *)&net_areq;
+
+	*dp++ = 'R';
+
+	for (i = 1; i <= 4; ++i)
+		*dp++ = *sp++;
+
+	/* Add the salt for encrypted passwords. */
+
+	if (areq == AUTH_REQ_CRYPT)
 	{
-		turnon = 0;
-		name += 2;
+		*dp++ = port->salt[0];
+		*dp++ = port->salt[1];
+		i += 2;
 	}
-	if (name[0] == '\0')
-		return;
-	for (i = 0; i < n_authsvcs; ++i)
-		if (!strcmp(name, authsvcs[i].name))
-		{
-			for (j = 0; j < n_authsvcs; ++j)
-				if (authsvcs[j].msgtype == authsvcs[i].msgtype)
-					authsvcs[j].allowed = turnon;
-			break;
-		}
-	if (i == n_authsvcs)
-	{
-		sprintf(PQerrormsg,
-				"be_setauthsvc: invalid name %s, ignoring...\n",
-				name);
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
-	}
+
+	PacketSendSetup(&port -> pktInfo, i, handler, (char *)port);
+}
+
+
+/*
+ * Called when we have told the front end that it is authorised.
+ */
+
+static void handle_done_auth(Port *port)
+{
+	/*
+	 * Don't generate any more traffic.  This will cause the backend to
+	 * start.
+	 */
+
 	return;
 }
 
-static int
-be_getauthsvc(MsgType msgtype)
-{
-	int			i;
 
-	for (i = 0; i < n_authsvcs; ++i)
-		if (msgtype == authsvcs[i].msgtype)
-			return (authsvcs[i].allowed);
-	return (0);
+/*
+ * Called when we have told the front end that it should use Kerberos V4
+ * authentication.
+ */
+
+static void handle_krb4_auth(Port *port)
+{
+	if (pg_krb4_recvauth(port) != STATUS_OK)
+		auth_failed(port);
+	else
+		sendAuthRequest(port, AUTH_REQ_OK, handle_done_auth);
+}
+
+
+/*
+ * Called when we have told the front end that it should use Kerberos V5
+ * authentication.
+ */
+
+static void handle_krb5_auth(Port *port)
+{
+	if (pg_krb5_recvauth(port) != STATUS_OK)
+		auth_failed(port);
+	else
+		sendAuthRequest(port, AUTH_REQ_OK, handle_done_auth);
+}
+
+
+/*
+ * Called when we have told the front end that it should use password
+ * authentication.
+ */
+
+static void handle_password_auth(Port *port)
+{
+	/* Set up the read of the password packet. */
+
+	PacketReceiveSetup(&port->pktInfo, readPasswordPacket, (char *)port);
+}
+
+
+/*
+ * Called when we have received the password packet.
+ */
+
+static void readPasswordPacket(char *arg, PacketLen len, char *pkt)
+{
+	char password[sizeof (PasswordPacket) + 1];
+	Port *port;
+
+	port = (Port *)arg;
+
+	/* Silently truncate a password that is too big. */
+
+	if (len > sizeof (PasswordPacket))
+		len = sizeof (PasswordPacket);
+		
+	StrNCpy(password, ((PasswordPacket *)pkt)->passwd, len);
+
+	/*
+	 * Use the local flat password file if clear passwords are used and the
+	 * file is specified.  Otherwise use the password in the pg_user table,
+	 * encrypted or not.
+	 */
+
+	if (port->auth_method == uaPassword && port->auth_arg[0] != '\0')
+	{
+		if (verify_password(port->auth_arg, port->user, password) != STATUS_OK)
+			auth_failed(port);
+	}
+	else if (crypt_verify(port, port->user, password) != STATUS_OK)
+		auth_failed(port);
+	else
+		sendAuthRequest(port, AUTH_REQ_OK, handle_done_auth);
+}
+
+
+/*
+ * Server demux routine for incoming authentication information for protocol
+ * version 0.
+ */
+static int old_be_recvauth(Port *port)
+{
+	int status;
+	MsgType msgtype = (MsgType)port->proto;
+
+	/* Handle the authentication that's offered. */
+
+	switch (msgtype)
+ 	{
+	case STARTUP_KRB4_MSG:
+		status = map_old_to_new(port,uaKrb4,pg_krb4_recvauth(port));
+		break;
+
+	case STARTUP_KRB5_MSG:
+		status = map_old_to_new(port,uaKrb5,pg_krb5_recvauth(port));
+		break;
+
+	case STARTUP_MSG:
+		status = map_old_to_new(port,uaTrust,STATUS_OK);
+		break;
+
+	case STARTUP_PASSWORD_MSG:
+		PacketReceiveSetup(&port->pktInfo, pg_passwordv0_recvauth,
+					(char *)port);
+
+		return STATUS_OK;
+
+	default:
+		fprintf(stderr, "Invalid startup message type: %u\n", msgtype);
+
+		return STATUS_OK;
+ 	}
+
+	return status;
+}
+ 
+
+/*
+ * The old style authentication has been done.  Modify the result of this (eg.
+ * allow the connection anyway, disallow it anyway, or use the result)
+ * depending on what authentication we really want to use.
+ */
+
+static int map_old_to_new(Port *port, UserAuth old, int status)
+{
+	switch (port->auth_method)
+	{
+	case uaCrypt:
+	case uaReject:
+		status = STATUS_ERROR;
+		break;
+
+	case uaKrb4:
+		if (old != uaKrb4)
+			status = STATUS_ERROR;
+		break;
+
+	case uaKrb5:
+		if (old != uaKrb5)
+			status = STATUS_ERROR;
+		break;
+
+	case uaTrust:
+		status = STATUS_OK;
+		break;
+
+	case uaIdent:
+		status = authident(&port->raddr.in, &port->laddr.in,
+					port->user, port->auth_arg);
+		break;
+
+	case uaPassword:
+		if (old != uaPassword)
+			status = STATUS_ERROR;
+
+		break;
+	}
+ 
+	return status;
 }

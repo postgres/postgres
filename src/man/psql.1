@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/psql.1,v 1.22 1998/01/25 06:12:52 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/psql.1,v 1.23 1998/01/26 01:42:53 scrappy Exp $
 .TH PSQL UNIX 1/20/96 PostgreSQL PostgreSQL
 .SH NAME
 psql - run the interactive query front-end
@@ -125,7 +125,7 @@ Specifies an authentication system
 .IR pgintro (1))
 to use in connecting to the
 .IR postmaster
-process.  The default is site-specific.
+process.  This option no longer has any effect.
 .TP
 .BR "-A"
 Turn off fill justification when printing out table elements.
@@ -221,7 +221,11 @@ tabular output. For example
 will give you tables with borders.
 .TP
 .BR "-u"
-Turns on username/password authentication.
+Asks the user for the user name and password before connecting to the database.
+If the database does not require password authentication then these are
+ignored.  If the option i snot used (and the PGPASSWORD environment variable
+is not set) and the database requires password authentication, then the
+connection will fail.  The user name is ignored anyway.
 .TP
 .BR "-x"
 Turns on extended row format mode. When enabled each row will have its column

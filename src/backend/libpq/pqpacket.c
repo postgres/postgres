@@ -8,36 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.12 1997/12/09 03:10:51 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.13 1998/01/26 01:41:12 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-/* NOTES
- *	  This is the module that understands the lowest-level part
- *	  of the communication protocol.  All of the trickiness in
- *	  this module is for making sure that non-blocking I/O in
- *	  the Postmaster works correctly.	Check the notes in PacketRecv
- *	  on non-blocking I/O.
- *
- * Data Structures:
- *		Port has two important functions. (1) It records the
- *		sock/addr used in communication. (2) It holds partially
- *		read in messages.  This is especially important when
- *		we haven't seen enough to construct a complete packet
- *		header.
- *
- * PacketBuf -- None of the clients of this module should know
- *		what goes into a packet hdr (although they know how big
- *		it is).  This routine is in charge of host to net order
- *		conversion for headers.  Data conversion is someone elses
- *		responsibility.
- *
- * IMPORTANT: these routines are called by backends, clients, and
- *		the Postmaster.
- *
- */
+
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -50,260 +28,158 @@
 #include <storage/ipc.h>
 #include <libpq/libpq.h>
 
+
 /*
- * PacketReceive -- receive a packet on a port.
- *
- * RETURNS: connection id of the packet sender, if one
- * is available.
- *
+ * Set up a packet read for the postmaster event loop.
  */
-int
-PacketReceive(Port *port,		/* receive port */
-			  PacketBuf *buf,	/* MAX_PACKET_SIZE-worth of buffer space */
-			  bool nonBlocking) /* NON_BLOCKING or BLOCKING i/o */
+
+void PacketReceiveSetup(Packet *pkt, void (*iodone)(), char *arg)
 {
-	PacketLen	max_size = sizeof(PacketBuf);
-	PacketLen	cc;				/* character count -- bytes recvd */
-	PacketLen	packetLen;		/* remaining packet chars to read */
-	Addr		tmp;			/* curr recv buf pointer */
-	int			hdrLen;
-	int			flag;
-	int			decr;
+	pkt->nrtodo = sizeof (pkt->len);
+	pkt->ptr = (char *)&pkt->len;
+	pkt->iodone = iodone;
+	pkt->arg = arg;
+	pkt->state = ReadingPacketLength;
+}
 
-	hdrLen = sizeof(buf->len);
 
-	if (nonBlocking == NON_BLOCKING)
+/*
+ * Read a packet fragment.  Return STATUS_OK if the connection should stay
+ * open.
+ */
+
+int PacketReceiveFragment(Packet *pkt, int sock)
+{
+	int got;
+
+	if ((got = read(sock,pkt->ptr,pkt->nrtodo)) > 0)
 	{
-		flag = MSG_PEEK;
-		decr = 0;
+		pkt->nrtodo -= got;
+		pkt->ptr += got;
+
+		/* See if we have got what we need for the packet length. */
+
+		if (pkt->nrtodo == 0 && pkt->state == ReadingPacketLength)
+		{
+			pkt->len = ntohl(pkt->len);
+
+			if (pkt->len < sizeof (pkt->len) ||
+			    pkt->len > sizeof (pkt->len) + sizeof (pkt->pkt))
+			{
+				PacketSendError(pkt,"Invalid packet length");
+
+				return STATUS_OK;
+			}
+
+			/* Set up for the rest of the packet. */
+
+			pkt->nrtodo = pkt->len - sizeof (pkt->len);
+			pkt->ptr = (char *)&pkt->pkt;
+			pkt->state = ReadingPacket;
+		}
+
+		/* See if we have got what we need for the packet. */
+
+		if (pkt->nrtodo == 0 && pkt->state == ReadingPacket)
+		{
+			pkt->state = Idle;
+
+			/* Special case to close the connection. */
+
+			if (pkt->iodone == NULL)
+				return STATUS_ERROR;
+
+			(*pkt->iodone)(pkt->arg, pkt->len - sizeof (pkt->len), 
+					(char *)&pkt->pkt);
+		}
+
+		return STATUS_OK;
 	}
-	else
+
+	if (got == 0)
+		return STATUS_ERROR;
+
+	if (errno == EINTR)
+		return STATUS_OK;
+
+	fprintf(stderr, "read() system call failed\n");
+
+	return STATUS_ERROR;
+}
+
+
+/*
+ * Set up a packet write for the postmaster event loop.
+ */
+
+void PacketSendSetup(Packet *pkt, int nbytes, void (*iodone)(), char *arg)
+{
+	pkt->nrtodo = nbytes;
+	pkt->ptr = (char *)&pkt->pkt;
+	pkt->iodone = iodone;
+	pkt->arg = arg;
+	pkt->state = WritingPacket;
+}
+
+
+/*
+ * Write a packet fragment.  Return STATUS_OK if the connection should stay
+ * open.
+ */
+
+int PacketSendFragment(Packet *pkt, int sock)
+{
+	int done;
+
+	if ((done = write(sock,pkt->ptr,pkt->nrtodo)) > 0)
 	{
-		flag = 0;
-		decr = hdrLen;
+		pkt->nrtodo -= done;
+		pkt->ptr += done;
+
+		/* See if we have written the whole packet. */
+
+		if (pkt->nrtodo == 0)
+		{
+			pkt->state = Idle;
+
+			/* Special case to close the connection. */
+
+			if (pkt->iodone == NULL)
+				return STATUS_ERROR;
+
+			(*pkt->iodone)(pkt->arg);
+		}
+
+		return STATUS_OK;
 	}
+
+	if (done == 0)
+		return STATUS_ERROR;
+
+	if (errno == EINTR)
+		return STATUS_OK;
+
+	fprintf(stderr, "write() system call failed\n");
+
+	return STATUS_ERROR;
+}
+
+
+/*
+ * Send an error message from the postmaster to the frontend.
+ */
+
+void PacketSendError(Packet *pkt, char *errormsg)
+{
+	fprintf(stderr, "%s\n", errormsg);
+
+	pkt->pkt.em.data[0] = 'E';
+	StrNCpy(&pkt->pkt.em.data[1], errormsg, sizeof (pkt->pkt.em.data) - 2);
 
 	/*
-	 * Assume port->nBytes is zero unless we were interrupted during
-	 * non-blocking I/O.  This first recv() is to get the hdr information
-	 * so we know how many bytes to read.  Life would be very complicated
-	 * if we read too much data (buffering).
+	 * The NULL i/o callback will cause the connection to be broken when
+	 * the error message has been sent.
 	 */
-	tmp = ((Addr) buf) + port->nBytes;
 
-	if (port->nBytes >= hdrLen)
-	{
-		packetLen = ntohl(buf->len) - port->nBytes;
-	}
-	else
-	{
-		/* peeking into the incoming message */
-		cc = recv(port->sock, (char *) &(buf->len), hdrLen, flag);
-		if (cc < hdrLen)
-		{
-			/* if cc is negative, the system call failed */
-			if (cc < 0)
-			{
-				return (STATUS_ERROR);
-			}
-
-			/*
-			 * cc == 0 means the connection was broken at the other end.
-			 */
-			else if (!cc)
-			{
-				return (STATUS_INVALID);
-
-			}
-			else
-			{
-
-				/*
-				 * Worst case.	We didn't even read in enough data to get
-				 * the header length. since we are using a data stream,
-				 * this happens only if the client is mallicious.
-				 *
-				 * Don't save the number of bytes we've read so far. Since we
-				 * only peeked at the incoming message, the kernel is
-				 * going to keep it for us.
-				 */
-				return (STATUS_NOT_DONE);
-			}
-		}
-		else
-		{
-
-			/*
-			 * This is an attempt to shield the Postmaster from mallicious
-			 * attacks by placing tighter restrictions on the reported
-			 * packet length.
-			 *
-			 * Check for negative packet length
-			 */
-			if ((buf->len) <= 0)
-			{
-				return (STATUS_INVALID);
-			}
-
-			/*
-			 * Check for oversize packet
-			 */
-			if ((ntohl(buf->len)) > max_size)
-			{
-				return (STATUS_INVALID);
-			}
-
-			/*
-			 * great. got the header. now get the true length (including
-			 * header size).
-			 */
-			packetLen = ntohl(buf->len);
-
-			/*
-			 * if someone is sending us junk, close the connection
-			 */
-			if (packetLen > max_size)
-			{
-				port->nBytes = packetLen;
-				return (STATUS_BAD_PACKET);
-			}
-			packetLen -= decr;
-			tmp += decr - port->nBytes;
-		}
-	}
-
-	/*
-	 * Now that we know how big it is, read the packet.  We read the
-	 * entire packet, since the last call was just a peek.
-	 */
-	while (packetLen)
-	{
-		cc = read(port->sock, tmp, packetLen);
-		if (cc < 0)
-			return (STATUS_ERROR);
-
-		/*
-		 * cc == 0 means the connection was broken at the other end.
-		 */
-		else if (!cc)
-			return (STATUS_INVALID);
-
-/*
-   fprintf(stderr,"expected packet of %d bytes, got %d bytes\n",
-		   packetLen, cc);
-*/
-		tmp += cc;
-		packetLen -= cc;
-
-		/* if non-blocking, we're done. */
-		if (nonBlocking && packetLen)
-		{
-			port->nBytes += cc;
-			return (STATUS_NOT_DONE);
-		}
-	}
-
-	port->nBytes = 0;
-	return (STATUS_OK);
+	PacketSendSetup(pkt, strlen(pkt->pkt.em.data) + 1, NULL, NULL);
 }
-
-/*
- * PacketSend -- send a single-packet message.
- *
- * RETURNS: STATUS_ERROR if the write fails, STATUS_OK otherwise.
- * SIDE_EFFECTS: may block.
- * NOTES: Non-blocking writes would significantly complicate
- *		buffer management.	For now, we're not going to do it.
- *
- */
-int
-PacketSend(Port *port,
-		   PacketBuf *buf,
-		   PacketLen len,
-		   bool nonBlocking)
-{
-	PacketLen	doneLen;
-
-	Assert(!nonBlocking);
-	Assert(buf);
-
-	doneLen = write(port->sock, buf, len);
-	if (doneLen < len)
-	{
-		sprintf(PQerrormsg,
-		  "FATAL: PacketSend: couldn't send complete packet: errno=%d\n",
-				errno);
-		fputs(PQerrormsg, stderr);
-		return (STATUS_ERROR);
-	}
-
-	return (STATUS_OK);
-}
-
-/*
- * StartupInfo2PacketBuf -
- *	 convert the fields of the StartupInfo to a PacketBuf
- *
- */
-/* moved to src/libpq/fe-connect.c */
-/*
-PacketBuf*
-StartupInfo2PacketBuf(StartupInfo* s)
-{
-  PacketBuf* res;
-  char* tmp;
-
-  res = (PacketBuf*)palloc(sizeof(PacketBuf));
-  res->len = htonl(sizeof(PacketBuf));
-  res->data[0] = '\0';
-
-  tmp= res->data;
-
-  strncpy(tmp, s->database, sizeof(s->database));
-  tmp += sizeof(s->database);
-  strncpy(tmp, s->user, sizeof(s->user));
-  tmp += sizeof(s->user);
-  strncpy(tmp, s->options, sizeof(s->options));
-  tmp += sizeof(s->options);
-  strncpy(tmp, s->execFile, sizeof(s->execFile));
-  tmp += sizeof(s->execFile);
-  strncpy(tmp, s->tty, sizeof(s->execFile));
-
-  return res;
-}
-*/
-
-/*
- * PacketBuf2StartupInfo -
- *	 convert the fields of the StartupInfo to a PacketBuf
- *
- */
-/* moved to postmaster.c
-StartupInfo*
-PacketBuf2StartupInfo(PacketBuf* p)
-{
-  StartupInfo* res;
-  char* tmp;
-
-  res = (StartupInfo*)palloc(sizeof(StartupInfo));
-
-  res->database[0]='\0';
-  res->user[0]='\0';
-  res->options[0]='\0';
-  res->execFile[0]='\0';
-  res->tty[0]='\0';
-
-  tmp= p->data;
-  strncpy(res->database,tmp,sizeof(res->database));
-  tmp += sizeof(res->database);
-  strncpy(res->user,tmp, sizeof(res->user));
-  tmp += sizeof(res->user);
-  strncpy(res->options,tmp, sizeof(res->options));
-  tmp += sizeof(res->options);
-  strncpy(res->execFile,tmp, sizeof(res->execFile));
-  tmp += sizeof(res->execFile);
-  strncpy(res->tty,tmp, sizeof(res->tty));
-
-  return res;
-}
-*/

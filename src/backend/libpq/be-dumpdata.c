@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.9 1997/09/12 04:07:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.10 1998/01/26 01:41:05 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
 #include <postgres.h>
 
 #include <lib/dllist.h>
-#include <libpq/libpq-be.h>
+#include <libpq/libpq.h>
 #include <access/heapam.h>
 #include <access/htup.h>
 #include <storage/buf.h>

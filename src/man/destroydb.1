@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/destroydb.1,v 1.6 1998/01/11 22:17:25 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/destroydb.1,v 1.7 1998/01/26 01:42:45 scrappy Exp $
 .TH DESTROYDB UNIX 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 destroydb - destroy an existing database
@@ -65,7 +65,7 @@ Specifies an authentication system
 .IR pgintro (1))
 to use in connecting to the 
 .IR postmaster
-process.  The default is site-specific.
+process.  This option no longer has any effect.
 .TP
 .BR "-h" " host"
 Specifies the hostname of the machine on which the 
@@ -85,9 +85,8 @@ environment variable (if set).
 destroydb demo
 .fi
 .nf
-# destroy 5432 demo database using the postmaster on host eden,
-# port using the Kerberos authentication system.
-destroydb -a kerberos -p 5432 -h eden demo
+# destroy the demo database using the postmaster on host eden, port 5000.
+destroydb -p 5000 -h eden demo
 .fi
 .SH FILES
 .TP 5n

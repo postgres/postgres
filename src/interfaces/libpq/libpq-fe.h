@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.24 1997/12/04 00:28:15 scrappy Exp $
+ * $Id: libpq-fe.h,v 1.25 1998/01/26 01:42:37 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,13 +138,15 @@ extern		"C"
 		FILE	   *Pfin;
 		FILE	   *Pfout;
 		FILE	   *Pfdebug;
-		void	   *port;		/* really a Port* */
+		int			sock;	/* The socket */
+		SockAddr		laddr;	/* Local address */
+		SockAddr		raddr;	/* Remote address */
+		char			salt[2];
 		int			asyncNotifyWaiting;
 		Dllist	   *notifyList;
 		char	   *pguser;		/* Postgres username of user who is
 								 * connected */
 		char	   *pgpass;
-		char	   *pgauth;
 		PGlobjfuncs *lobjfuncs; /* Backend function OID's for large object
 								 * access */
 	} PGconn;

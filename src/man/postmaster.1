@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/postmaster.1,v 1.10 1998/01/11 22:17:53 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/postmaster.1,v 1.11 1998/01/26 01:42:52 scrappy Exp $
 .TH POSTMASTER UNIX 11/05/95 PostgreSQL PostgreSQL
 .SH "NAME"
 postmaster - run the Postgres postmaster
@@ -105,7 +105,7 @@ authentication, use
 to deny any unauthenticated
 connections, use
 .BR "-a nounauth .
-The default is site-specific.
+This option no longer has any effect.
 .TP
 .BR "-b" " backend_pathname"
 .IR "backend_pathname"

@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/postgres.1,v 1.9 1998/01/11 22:17:51 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/postgres.1,v 1.10 1998/01/26 01:42:51 scrappy Exp $
 .TH POSTGRESQL UNIX 12/08/96 PostgreSQL PostgreSQL
 .SH NAME
 postgres - the Postgres backend server
@@ -30,6 +30,9 @@ filedes]
 ]
 [\c
 .BR "-e"
+]
+[\c
+.BR "-v protocol"
 ]
 .br
 [\c
@@ -145,6 +148,10 @@ but debugging output is sent to the controlling tty of the
 Print time information and other statistics at the end of each query.
 This is useful for benchmarking or for use in tuning the number of
 buffers.
+.TP
+.BR "-v" " protocol"
+Specifies the number of the frontend/backend protocol to be used for this
+particular session.
 .SH "DEPRECATED COMMAND OPTIONS"
 There are several other options that may be specified, used mainly
 for debugging purposes.  These are listed here only for the use by

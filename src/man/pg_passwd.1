@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/pg_passwd.1,v 1.2 1998/01/11 22:17:48 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/pg_passwd.1,v 1.3 1998/01/26 01:42:49 scrappy Exp $
 .TH PG_PASSWD UNIX 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 pg_passwd - manipulate the flat password file
@@ -80,7 +80,7 @@ The following lines show the sample usage of the option:
 uses the new style of the Pg.pm like this:
 .nf
 
-	$conn = Pg::connectdb("host=hyalos authtype=password dbname=unv
+	$conn = Pg::connectdb("host=hyalos dbname=unv
 	                       user=pg_guest password=xxxxxxx");
 
 .fi
@@ -96,7 +96,7 @@ option thus:
 .nf
 
 	% set conn [pg_connect -conninfo \\
-	        "host=hyalos authtype=password dbname=unv \\
+	        "host=hyalos dbname=unv \\
 	         user=pg_guest password=xxxxxxx "]
 
 .fi

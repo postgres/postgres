@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.18 1998/01/25 05:14:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.19 1998/01/26 01:41:42 scrappy Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -32,9 +32,10 @@
 #include "storage/sinvaladt.h"
 #include "storage/lmgr.h"
 #include "utils/elog.h"
-
+#include "libpq/pqcomm.h"
 #include "catalog/catname.h"
 
+ProtocolVersion		FrontendProtocol = PG_PROTOCOL_LATEST;
 int			Portfd = -1;
 int			Noversion = 0;
 int			Quiet = 1;

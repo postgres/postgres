@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.8 1997/09/08 21:55:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.9 1998/01/26 01:42:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,38 +51,28 @@ pqGetc(FILE *fin, FILE *debug)
 int
 pqPutnchar(const char *s, int len, FILE *f, FILE *debug)
 {
-	if (f == NULL)
-		return 1;
-
 	if (debug)
 		fprintf(debug, "To backend> %s\n", s);
 
-	if (fwrite(s, 1, len, f) != len)
-		return 1;
-
-	return 0;
+	return (pqPutNBytes(s, len, f) == EOF ? 1 : 0);
 }
 
 /* --------------------------------------------------------------------- */
 /* pqGetnchar:
-   get a string of exactly len length from stream f
+   get a string of exactly len bytes in buffer s (which must be 1 byte
+   longer) from stream f and terminate it with a '\0'.
 */
 int
 pqGetnchar(char *s, int len, FILE *f, FILE *debug)
 {
-	int			cnt;
+	int status;
 
-	if (f == NULL)
-		return 1;
-
-	cnt = fread(s, 1, len, f);
-	s[cnt] = '\0';
-	/* mjl: actually needs up to len+1 bytes, is this okay? XXX */
+	status = pqGetNBytes(s, len, f);
 
 	if (debug)
 		fprintf(debug, "From backend (%d)> %s\n", len, s);
 
-	return 0;
+	return (status == EOF ? 1 : 0);
 }
 
 /* --------------------------------------------------------------------- */
@@ -92,21 +82,14 @@ pqGetnchar(char *s, int len, FILE *f, FILE *debug)
 int
 pqGets(char *s, int len, FILE *f, FILE *debug)
 {
-	int			c;
-	const char *str = s;
+	int status;
 
-	if (f == NULL)
-		return 1;
-
-	while (len-- && (c = getc(f)) != EOF && c)
-		*s++ = c;
-	*s = '\0';
-	/* mjl: actually needs up to len+1 bytes, is this okay? XXX */
+	status = pqGetString(s, len, f);
 
 	if (debug)
-		fprintf(debug, "From backend> \"%s\"\n", str);
+		fprintf(debug, "From backend> \"%s\"\n", s);
 
-	return 0;
+	return (status == EOF ? 1 : 0);
 }
 
 /* --------------------------------------------------------------------- */
@@ -173,20 +156,13 @@ pqGetInt(int *result, int bytes, FILE *f, FILE *debug)
 int
 pqPuts(const char *s, FILE *f, FILE *debug)
 {
-	if (f == NULL)
+	if (pqPutString(s, f) == EOF)
 		return 1;
 
-	if (fputs(s, f) == EOF)
-		return 1;
-
-	fputc('\0', f);				/* important to send an ending \0 since
-								 * backend expects it */
 	fflush(f);
 
 	if (debug)
-	{
 		fprintf(debug, "To backend> %s\n", s);
-	}
 
 	return 0;
 }

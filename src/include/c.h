@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.28 1998/01/24 22:47:43 momjian Exp $
+ * $Id: c.h,v 1.29 1998/01/26 01:41:49 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,21 +204,23 @@ typedef char *Pointer;
 
 /*
  * intN --
- *		Signed integer, AT LEAST N BITS IN SIZE,
- *		used for numerical computations.
+ *		Signed integer, EXACTLY N BITS IN SIZE,
+ *		used for numerical computations and the
+ *		frontend/backend protocol.
  */
-typedef signed char int8;		/* >= 8 bits */
-typedef signed short int16;		/* >= 16 bits */
-typedef signed int int32;		/* >= 32 bits */
+typedef signed char int8;		/* == 8 bits */
+typedef signed short int16;		/* == 16 bits */
+typedef signed int int32;		/* == 32 bits */
 
 /*
  * uintN --
- *		Unsigned integer, AT LEAST N BITS IN SIZE,
- *		used for numerical computations.
+ *		Unsigned integer, EXACTLY N BITS IN SIZE,
+ *		used for numerical computations and the
+ *		frontend/backend protocol.
  */
-typedef unsigned char uint8;	/* >= 8 bits */
-typedef unsigned short uint16;	/* >= 16 bits */
-typedef unsigned int uint32;	/* >= 32 bits */
+typedef unsigned char uint8;	/* == 8 bits */
+typedef unsigned short uint16;	/* == 16 bits */
+typedef unsigned int uint32;	/* == 32 bits */
 
 /*
  * floatN --

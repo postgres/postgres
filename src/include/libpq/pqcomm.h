@@ -1,15 +1,12 @@
 /*-------------------------------------------------------------------------
  *
  * pqcomm.h--
- *	  Parameters for the communication module
+ *      Definitions common to frontends and backends.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.18 1998/01/24 22:49:23 momjian Exp $
- *
- * NOTES
- *	  Some of this should move to libpq.h
+ * $Id: pqcomm.h,v 1.19 1998/01/26 01:42:21 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,134 +15,105 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#include <netinet/in.h>
+#include <sys/socket.h>
 #include <sys/un.h>
+#include <netinet/in.h>
+
+#include "c.h"
+
+
+/* Define a generic socket address type. */
+
+typedef union SockAddr {
+	struct sockaddr		sa;
+	struct sockaddr_in	in;
+	struct sockaddr_un	un;
+} SockAddr;
+
+
+/* Configure the UNIX socket address for the well known port. */
+
+#define	UNIXSOCK_PATH(sun,port) \
+	(sprintf((sun).sun_path, "/tmp/.s.PGSQL.%d", (port)) + \
+		sizeof ((sun).sun_family))
 
 
 /*
- * startup msg parameters: path length, argument string length
+ * These manipulate the frontend/backend protocol version number.
+ *
+ * The major number should be incremented for incompatible changes.  The minor
+ * number should be incremented for compatible changes (eg. additional
+ * functionality).
+ *
+ * If a backend supports version m.n of the protocol it must actually support
+ * versions m.0..n].  Backend support for version m-1 can be dropped after a
+ * `reasonable' length of time.
+ *
+ * A frontend isn't required to support anything other than the current
+ * version.
  */
-#define PATH_SIZE		64
-#define ARGV_SIZE		64
 
-#define UNIXSOCK_PATH(sun,port) \
-  sprintf(sun.sun_path,"/tmp/.s.PGSQL.%d",port) + sizeof(sun.sun_family) + 1;
+#define	PG_PROTOCOL_MAJOR(v)	((v) >> 16)
+#define	PG_PROTOCOL_MINOR(v)	((v) & 0x0000ffff)
+#define	PG_PROTOCOL(m,n)	(((m) << 16) | (n))
 
+/* The earliest and latest frontend/backend protocol version supported. */
 
-/* The various kinds of startup messages are for the various kinds of
-   user authentication systems.  In the beginning, there was only
-   STARTUP_MSG and all connections were unauthenticated.  Now, there are
-   several choices of authentication method (the client picks one, but
-   the server needn't necessarily accept it).  So now, the STARTUP_MSG
-   message means to start either an unauthenticated or a host-based
-   authenticated connection, depending on what the server prefers.	This
-   is possible because the protocol between server and client is the same
-   in both cases (basically, no negotiation is required at all).
-   */
-
-typedef enum _MsgType
-{
-	ACK_MSG = 0,				/* acknowledge a message */
-	ERROR_MSG = 1,				/* error response to client from server */
-	RESET_MSG = 2,				/* client must reset connection */
-	PRINT_MSG = 3,				/* tuples for client from server */
-	NET_ERROR = 4,				/* error in net system call */
-	FUNCTION_MSG = 5,			/* fastpath call (unused) */
-	QUERY_MSG = 6,				/* client query to server */
-	STARTUP_MSG = 7,			/* initialize a connection with a backend */
-	DUPLICATE_MSG = 8,			/* duplicate msg arrived (errors msg only) */
-	INVALID_MSG = 9,			/* for some control functions */
-	STARTUP_KRB4_MSG = 10,		/* krb4 session follows startup packet */
-	STARTUP_KRB5_MSG = 11,		/* krb5 session follows startup packet */
-	STARTUP_HBA_MSG = 12,		/* use host-based authentication */
-	STARTUP_UNAUTH_MSG = 13,	/* use unauthenticated connection */
-	STARTUP_PASSWORD_MSG = 14,	/* use plaintext password authentication */
-        /* The following three are not really a named authentication method
-           * since the front end has no choice in choosing the method.  The
-           * backend sends the SALT/UNSALT messages back to the frontend after
-           * the USER login has been given to the backend.
-           */
-	STARTUP_CRYPT_MSG = 15,               /* use crypt()'ed password authentication */
-	STARTUP_USER_MSG = 16,          /* send user name to check pg_user for password */
-	STARTUP_SALT_MSG = 17,          /* frontend should crypt the password it sends */
-	STARTUP_UNSALT_MSG = 18         /* frontend should NOT crypt the password it sends */
-	/* insert new values here -- DO NOT REORDER OR DELETE ENTRIES */
-	/* also change LAST_AUTHENTICATION_TYPE below and add to the */
-	/* authentication_type_name[] array in pqcomm.c */
-} MsgType;
-
-#define LAST_AUTHENTICATION_TYPE 14
-
-typedef char *Addr;
-typedef int PacketLen;			/* packet length */
-
-
-typedef struct StartupInfo
-{
-/*	   PacketHdr		hdr; */
-	char		database[PATH_SIZE];	/* database name */
-	char		user[NAMEDATALEN];		/* user name */
-	char		options[ARGV_SIZE];		/* possible additional args */
-	char		execFile[ARGV_SIZE];	/* possible backend to use */
-	char		tty[PATH_SIZE]; /* possible tty for debug output */
-} StartupInfo;
-
-/* amount of available data in a packet buffer */
-#define MESSAGE_SIZE	sizeof(StartupInfo)
-
-/* I/O can be blocking or non-blocking */
-#define BLOCKING		(FALSE)
-#define NON_BLOCKING	(TRUE)
-
-/* a PacketBuf gets shipped from client to server so be careful
-   of differences in representation.
-   Be sure to use htonl() and ntohl() on the len and msgtype fields! */
-typedef struct PacketBuf
-{
-	int			len;
-	MsgType		msgtype;
-	char		data[MESSAGE_SIZE];
-} PacketBuf;
-
-/* update the conversion routines
-  StartupInfo2PacketBuf() and PacketBuf2StartupInfo() (decl. below)
-  if StartupInfo or PacketBuf structs ever change */
+#define	PG_PROTOCOL_EARLIEST	PG_PROTOCOL(0,0)
+#define	PG_PROTOCOL_LATEST	PG_PROTOCOL(1,0)
 
 /*
- * socket descriptor port
- *		we need addresses of both sides to do authentication calls
+ * All packets sent to the postmaster start with the length.  This is omitted
+ * from the different packet definitions specified below.
  */
-typedef struct Port
-{
-	int			sock;			/* file descriptor */
-	int			mask;			/* select mask */
-	int			nBytes;			/* nBytes read in so far */
-	/* local addr (us) */
-        union {  struct sockaddr_in in; struct sockaddr_un un; } laddr;
-        /* remote addr (them) */
-        union {  struct sockaddr_in in; struct sockaddr_un un; }  raddr;
-	/*
-	 * PacketBufId				id;
-*//* id of packet buf currently in use */
-	PacketBuf	buf;			/* stream implementation (curr pack buf) */
-	char		salt[2];
-} Port;
 
-/* invalid socket descriptor */
-#define INVALID_SOCK	(-1)
+typedef uint32 PacketLen;
 
-#define INVALID_ID (-1)
-#define MAX_CONNECTIONS 10
-#define N_PACK_BUFS		20
+ 
+/*
+ * Startup message parameters sizes.  These must not be changed without changing
+ * the protcol version.  These are all strings that are '\0' terminated only if
+ * there is room.
+ */
 
-/* no multi-packet messages yet */
-#define MAX_PACKET_BACKLOG		1
+#define	SM_DATABASE		64
+#define	SM_USER			32
+#define	SM_OPTIONS		64
+#define	SM_UNUSED		64
+#define	SM_TTY			64
 
-#define DEFAULT_STRING			""
+typedef uint32 ProtocolVersion;			/* Fe/Be protocol version nr. */
 
-extern FILE *Pfout,
-		   *Pfin;
-extern int	PQAsyncNotifyWaiting;
+typedef struct StartupPacket {
+	ProtocolVersion	protoVersion;		/* Protocol version */
+	char		database[SM_DATABASE];	/* Database name */
+	char		user[SM_USER];		/* User name */
+	char		options[SM_OPTIONS];	/* Optional additional args */
+	char		unused[SM_UNUSED];	/* Unused */
+	char		tty[SM_TTY];		/* Tty for debug output */
+} StartupPacket;
+
+
+/* These are the authentication requests sent by the backend. */
+
+#define	AUTH_REQ_OK		0		/* User is authenticated  */
+#define	AUTH_REQ_KRB4		1		/* Kerberos V4 */
+#define	AUTH_REQ_KRB5		2		/* Kerberos V5 */
+#define	AUTH_REQ_PASSWORD	3		/* Password */
+#define	AUTH_REQ_CRYPT		4		/* Encrypted password */
+
+typedef uint32 AuthRequest;
+
+
+/* This next section is to maintain compatibility with protocol v0.0. */
+
+#define	STARTUP_MSG		7	/* Initialise a connection */
+#define	STARTUP_KRB4_MSG	10	/* krb4 session follows */
+#define	STARTUP_KRB5_MSG	11	/* krb5 session follows */
+#define	STARTUP_PASSWORD_MSG	14	/* Password follows */
+
+typedef ProtocolVersion MsgType;
+
 
 /* in pqcompriv.c */
 int			pqGetShort(int *, FILE *);
@@ -159,16 +127,5 @@ int			pqPutLong(int, FILE *);
 int			pqPutNBytes(const char *, size_t, FILE *);
 int			pqPutString(const char *, FILE *);
 int			pqPutByte(int, FILE *);
-
-/*
- * prototypes for functions in pqpacket.c
- */
-extern int	PacketReceive(Port *port, PacketBuf *buf, char nonBlocking);
-extern int PacketSend(Port *port, PacketBuf *buf,
-		   PacketLen len, char nonBlocking);
-
-/* extern PacketBuf* StartupInfo2PacketBuf(StartupInfo*); */
-/* extern StartupInfo* PacketBuf2StartupInfo(PacketBuf*); */
-extern char *name_of_authentication_type(int type);
 
 #endif							/* PQCOMM_H */

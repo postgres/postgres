@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.12 1997/12/04 00:28:08 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.13 1998/01/26 01:42:25 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,11 @@
 #include "libpq-fe.h"
 #include "fe-auth.h"
 #include "fe-connect.h"
+
+#ifdef HAVE_CRYPT_H
+#include <crypt.h>
+#endif
+
 
 /*----------------------------------------------------------------
  * common definitions for generic fe/be routines
@@ -457,49 +462,49 @@ pg_krb5_sendauth(const char *PQerrormsg, int sock,
 #endif							/* KRB5 */
 
 static int
-pg_password_sendauth(Port *port, const char *user, const char *password)
+pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 {
-	PacketBuf	buf;
-	char	   *tmp;
+	/* Encrypt the password if needed. */
 
-	buf.len = htonl(sizeof(PacketBuf));
-	buf.msgtype = STARTUP_PASSWORD_MSG;
-	buf.data[0] = '\0';
+	if (areq == AUTH_REQ_CRYPT)
+		password = crypt(password, conn->salt);
 
-	tmp = buf.data;
-	strncpy(tmp, user, strlen(user) + 1);
-	tmp += strlen(user) + 1;
-	strncpy(tmp, password, strlen(password) + 1);
-
-	return packetSend(port, &buf, sizeof(PacketBuf), BLOCKING);
+	return packetSend(conn, password, strlen(password) + 1);
 }
 
 /*
  * fe_sendauth -- client demux routine for outgoing authentication information
  */
 int
-fe_sendauth(MsgType msgtype, Port *port, const char *hostname,
-		  const char *user, const char *password, const char *PQerrormsg)
+fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
+		  const char *password, const char *PQerrormsg)
 {
-	switch (msgtype)
+	switch (areq)
 	{
+	case AUTH_REQ_OK:
+		break;
+
+	case AUTH_REQ_KRB4:
 #ifdef KRB4
-			case STARTUP_KRB4_MSG:
-			if (pg_krb4_sendauth(PQerrormsg, port->sock, &port->laddr,
-								 &port->raddr,
+			if (pg_krb4_sendauth(PQerrormsg, conn->sock, &conn->laddr.in,
+								 &conn->raddr.in,
 								 hostname) != STATUS_OK)
 			{
 				(void) sprintf(PQerrormsg,
 							"fe_sendauth: krb4 authentication failed\n");
-/*			fputs(PQerrormsg, stderr); */
 				return (STATUS_ERROR);
 			}
 			break;
+#else
+		(void)sprintf(PQerrormsg,
+				"fe_sendauth: krb4 authentication not supported\n");
+		return (STATUS_ERROR);
 #endif
+
+	case AUTH_REQ_KRB5:
 #ifdef KRB5
-		case STARTUP_KRB5_MSG:
-			if (pg_krb5_sendauth(PQerrormsg, port->sock, &port->laddr,
-								 &port->raddr,
+			if (pg_krb5_sendauth(PQerrormsg, conn->sock, &conn->laddr.in,
+								 &conn->raddr.in,
 								 hostname) != STATUS_OK)
 			{
 				(void) sprintf(PQerrormsg,
@@ -507,15 +512,29 @@ fe_sendauth(MsgType msgtype, Port *port, const char *hostname,
 				return (STATUS_ERROR);
 			}
 			break;
+#else
+		(void)sprintf(PQerrormsg,
+				"fe_sendauth: krb5 authentication not supported\n");
+		return (STATUS_ERROR);
 #endif
-		case STARTUP_MSG:
-			break;
-		case STARTUP_PASSWORD_MSG:
-		case STARTUP_CRYPT_MSG:
-			pg_password_sendauth(port, user, password);
-		default:
-			break;
-	}
+
+	case AUTH_REQ_PASSWORD:
+	case AUTH_REQ_CRYPT:
+		if (pg_password_sendauth(conn, password, areq) != STATUS_OK)
+		{
+			(void)sprintf(PQerrormsg,
+					"fe_sendauth: error sending password authentication\n");
+			return (STATUS_ERROR);
+		}
+
+		break;
+
+	default:
+		(void)sprintf(PQerrormsg,
+				"fe_sendauth: authentication type %u not supported\n",areq);
+		return (STATUS_ERROR);
+ 	}
+
 	return (STATUS_OK);
 }
 

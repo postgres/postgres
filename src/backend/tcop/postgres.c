@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.62 1998/01/25 05:14:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.63 1998/01/26 01:41:35 scrappy Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -47,8 +47,8 @@
 #include "commands/async.h"
 #include "executor/execdebug.h"
 #include "executor/executor.h"
-#include "lib/dllist.h"
 #include "libpq/libpq.h"
+#include "libpq/libpq-be.h"
 #include "libpq/pqsignal.h"
 #include "nodes/pg_list.h"
 #include "nodes/print.h"
@@ -131,18 +131,6 @@ static int	ShowPlannerStats;
 int			ShowExecutorStats;
 FILE	   *StatFp;
 
-typedef struct frontend
-{
-	bool		fn_connected;
-	Port		fn_port;
-	FILE	   *fn_Pfin;		/* the input fd */
-	FILE	   *fn_Pfout;		/* the output fd */
-	bool		fn_done;		/* set after the frontend closes its
-								 * connection */
-} FrontEnd;
-
-static Dllist *frontendList;
-
 /* ----------------
  *		people who want to use EOF should #define DONTUSENEWLINE in
  *		tcop/tcopdebug.h
@@ -188,8 +176,8 @@ int			_exec_repeat_ = 1;
  * ----------------------------------------------------------------
  */
 static char InteractiveBackend(char *inBuf);
-static char SocketBackend(char *inBuf, bool multiplexedBackend);
-static char ReadCommand(char *inBuf, bool multiplexedBackend);
+static char SocketBackend(char *inBuf);
+static char ReadCommand(char *inBuf);
 
 
 /* ----------------------------------------------------------------
@@ -305,7 +293,7 @@ InteractiveBackend(char *inBuf)
  */
 
 static char
-SocketBackend(char *inBuf, bool multiplexedBackend)
+SocketBackend(char *inBuf)
 {
 	char		qtype[2];
 	char		result = '\0';
@@ -321,12 +309,7 @@ SocketBackend(char *inBuf, bool multiplexedBackend)
 		 *	when front-end applications quits/dies
 		 * ------------
 		 */
-		if (multiplexedBackend)
-		{
-			return 'X';
-		}
-		else
-			exitpg(0);
+		exitpg(0);
 	}
 
 	switch (*qtype)
@@ -380,10 +363,10 @@ SocketBackend(char *inBuf, bool multiplexedBackend)
  * ----------------
  */
 static char
-ReadCommand(char *inBuf, bool multiplexedBackend)
+ReadCommand(char *inBuf)
 {
-	if (IsUnderPostmaster || multiplexedBackend)
-		return SocketBackend(inBuf, multiplexedBackend);
+	if (IsUnderPostmaster)
+		return SocketBackend(inBuf);
 	else
 		return InteractiveBackend(inBuf);
 }
@@ -793,7 +776,7 @@ static void
 usage(char *progname)
 {
 	fprintf(stderr,
-			"Usage: %s [-B nbufs] [-d lvl] ] [-f plantype] \t[-m portno] [\t -o filename]\n",
+			"Usage: %s [-B nbufs] [-d lvl] ] [-f plantype] \t[-v protocol] [\t -o filename]\n",
 			progname);
 	fprintf(stderr, "\t[-P portno] [-t tracetype] [-x opttype] [-bCEiLFNopQSs] [dbname]\n");
 	fprintf(stderr, "    b: consider bushy plan trees during optimization\n");
@@ -809,7 +792,6 @@ usage(char *progname)
 	fprintf(stderr, "    K: set locking debug level [0|1|2]\n");
 #endif
 	fprintf(stderr, "    L: turn off locking\n");
-	fprintf(stderr, "    m: set up a listening backend at portno to support multiple front-ends\n");
 	fprintf(stderr, "    M: start as postmaster\n");
 	fprintf(stderr, "    N: don't use newline as query delimiter\n");
 	fprintf(stderr, "    o: send stdout and stderr to given filename \n");
@@ -820,6 +802,7 @@ usage(char *progname)
 	fprintf(stderr, "    s: show stats after each query\n");
 	fprintf(stderr, "    t: trace component execution times\n");
 	fprintf(stderr, "    T: execute all possible plans for each query\n");
+	fprintf(stderr, "    v: set protocol version being used by frontend\n");
 	fprintf(stderr, "    x: control expensive function optimization\n");
 }
 
@@ -844,24 +827,6 @@ PostgresMain(int argc, char *argv[])
 	char		firstchar;
 	char		parser_input[MAX_PARSE_BUFFER];
 	char	   *userName;
-
-	bool		multiplexedBackend;
-	char	   *hostName;		/* the host name of the backend server */
-	int			serverSock;
-	int			serverPortnum = 0;
-	int			nSelected;		/* number of descriptors ready from
-								 * select(); */
-	int			maxFd = 0;		/* max file descriptor + 1 */
-	fd_set		rmask,
-				basemask;
-	FrontEnd   *newFE,
-			   *currentFE = NULL;
-	int			numFE = 0;		/* keep track of number of active
-								 * frontends */
-	Port	   *newPort;
-	int			newFd;
-	Dlelem	   *curr;
-	int			status;
 
 	char	   *DBDate = NULL;
 	extern int	optind;
@@ -906,7 +871,6 @@ PostgresMain(int argc, char *argv[])
 	 * get hostname is either the environment variable PGHOST or NULL
 	 * NULL means Unix-socket only
 	 */
-	hostName = getenv("PGHOST");
 	DataDir = getenv("PGDATA");
 	/*
 	 * Try to get initial values for date styles and formats.
@@ -933,9 +897,8 @@ PostgresMain(int argc, char *argv[])
 		else if (strcasecmp(DBDate, "EURO") == 0)
 			EuroDates = TRUE;
 	}
-	multiplexedBackend = false;
 
-	while ((flag = getopt(argc, argv, "B:bCD:d:Eef:iK:Lm:MNo:P:pQS:st:x:F"))
+	while ((flag = getopt(argc, argv, "B:bCD:d:Eef:iK:Lm:MNo:P:pQS:st:v:x:F"))
 		   != EOF)
 		switch (flag)
 		{
@@ -1051,16 +1014,7 @@ PostgresMain(int argc, char *argv[])
 				break;
 
 			case 'm':
-
-				/*
-				 * start up a listening backend that can respond to
-				 * multiple front-ends.  (Note:  all the front-end
-				 * connections are still connected to a single-threaded
-				 * backend.  Requests are FCFS.  Everything is in one
-				 * transaction
-				 */
-				multiplexedBackend = true;
-				serverPortnum = atoi(optarg);
+				/* Multiplexed backends are no longer supported. */
 				break;
 			case 'M':
 				exit(PostmasterMain(argc, argv));
@@ -1160,6 +1114,10 @@ PostgresMain(int argc, char *argv[])
 						errs++;
 						break;
 				}
+				break;
+
+			case 'v':
+				FrontendProtocol = (ProtocolVersion)atoi(optarg);
 				break;
 
 			case 'x':
@@ -1267,7 +1225,6 @@ PostgresMain(int argc, char *argv[])
 		printf("\tsortmem   =    %d\n", SortMem);
 
 		printf("\tquery echo =   %c\n", EchoQuery ? 't' : 'f');
-		printf("\tmultiplexed backend? =  %c\n", multiplexedBackend ? 't' : 'f');
 		printf("\tDatabaseName = [%s]\n", DBName);
 		puts("\t----------------\n");
 	}
@@ -1285,53 +1242,8 @@ PostgresMain(int argc, char *argv[])
 			Portfd = open(NULL_DEV, O_RDWR, 0666);
 		}
 		pq_init(Portfd);
-	}
-
-	if (multiplexedBackend)
-	{
-		if (serverPortnum == 0 ||
-		    StreamServerPort(hostName, serverPortnum, &serverSock) != STATUS_OK)
-		{
-			fprintf(stderr, "Postgres: cannot create stream port %d\n", serverPortnum);
-			exit(1);
-		}
-/*
-{
-	char buf[100];
-	sprintf(buf, "stream port %d created, socket = %d\n", serverPortnum, serverSock);
-	puts(buf);
-}
-*/
-		FD_ZERO(&rmask);
-		FD_ZERO(&basemask);
-		FD_SET(serverSock, &basemask);
-
-		frontendList = DLNewList();
-		/* add the original FrontEnd to the list */
-		if (IsUnderPostmaster == true)
-		{
-			FrontEnd   *fe = malloc(sizeof(FrontEnd));
-
-			FD_SET(Portfd, &basemask);
-			maxFd = Max(serverSock, Portfd) + 1;
-
-			fe->fn_connected = true;
-			fe->fn_Pfin = Pfin;
-			fe->fn_Pfout = Pfout;
-			fe->fn_done = false;
-			(fe->fn_port).sock = Portfd;
-			DLAddHead(frontendList, DLNewElem(fe));
-			numFE++;
-		}
-		else
-		{
-			numFE = 1;
-			maxFd = serverSock + 1;
-		}
-	}
-
-	if (IsUnderPostmaster || multiplexedBackend)
 		whereToSendOutput = Remote;
+	}
 	else
 		whereToSendOutput = Debug;
 
@@ -1381,7 +1293,7 @@ PostgresMain(int argc, char *argv[])
 	if (IsUnderPostmaster == false)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.62 $ $Date: 1998/01/25 05:14:18 $");
+		puts("$Revision: 1.63 $ $Date: 1998/01/26 01:41:35 $");
 	}
 
 	/* ----------------
@@ -1395,106 +1307,13 @@ PostgresMain(int argc, char *argv[])
 
 	for (;;)
 	{
-
-		if (multiplexedBackend)
-		{
-			if (numFE == 0)
-				break;
-
-			memmove((char *) &rmask, (char *) &basemask, sizeof(fd_set));
-			nSelected = select(maxFd, &rmask, 0, 0, 0);
-
-			if (nSelected < 0)
-			{
-
-				if (errno == EINTR)
-					continue;
-				fprintf(stderr, "postgres: multiplexed backend select failed\n");
-				exitpg(1);
-			}
-			if (FD_ISSET(serverSock, &rmask))
-			{
-				/* new connection pending on our well-known port's socket */
-				newFE = (FrontEnd *) malloc(sizeof(FrontEnd));
-				MemSet(newFE, 0, sizeof(FrontEnd));
-				newFE->fn_connected = false;
-				newFE->fn_done = false;
-				newPort = &(newFE->fn_port);
-				if (StreamConnection(serverSock, newPort) != STATUS_OK)
-				{
-					StreamClose(newPort->sock);
-					newFd = -1;
-				}
-				else
-				{
-					DLAddHead(frontendList, DLNewElem(newFE));
-					numFE++;
-					newFd = newPort->sock;
-					if (newFd >= maxFd)
-						maxFd = newFd + 1;
-					FD_SET(newFd, &rmask);
-					FD_SET(newFd, &basemask);
-					--nSelected;
-					FD_CLR(serverSock, &rmask);
-				}
-				continue;
-			}					/* if FD_ISSET(serverSock) */
-
-			/*
-			 * if we get here, it means that the serverSocket was not the
-			 * one selected.  Instead, one of the front ends was selected.
-			 * find which one
-			 */
-			curr = DLGetHead(frontendList);
-			while (curr)
-			{
-				FrontEnd   *fe = (FrontEnd *) DLE_VAL(curr);
-				Port	   *port = &(fe->fn_port);
-
-				/* this is lifted from postmaster.c */
-				if (FD_ISSET(port->sock, &rmask))
-				{
-					if (fe->fn_connected == false)
-					{
-						/* we have a message from a new frontEnd */
-						status = PacketReceive(port, &port->buf, NON_BLOCKING);
-						if (status == STATUS_OK)
-						{
-							fe->fn_connected = true;
-							pq_init(port->sock);
-							fe->fn_Pfin = Pfin;
-							fe->fn_Pfout = Pfout;
-						}
-						else
-							fprintf(stderr, "Multiplexed backend: error in reading packets from %d\n", port->sock);
-					}
-					else
-/* we have a query from an existing,  active FrontEnd */
-					{
-						Pfin = fe->fn_Pfin;
-						Pfout = fe->fn_Pfout;
-						currentFE = fe;
-					}
-					if (fe->fn_done)
-					{
-						Dlelem	   *c = curr;
-
-						curr = DLGetSucc(curr);
-						DLRemove(c);
-					}
-					break;
-				}
-				else
-					curr = DLGetSucc(curr);
-			}
-		}
 		/* ----------------
 		 *	 (1) read a command.
 		 * ----------------
 		 */
 		MemSet(parser_input, 0, MAX_PARSE_BUFFER);
 
-		firstchar = ReadCommand(parser_input, multiplexedBackend);
+		firstchar = ReadCommand(parser_input);
 		/* process the command */
 		switch (firstchar)
 		{
@@ -1564,12 +1383,6 @@ PostgresMain(int argc, char *argv[])
 				 */
 			case 'X':
 				IsEmptyQuery = true;
-				if (multiplexedBackend)
-				{
-					FD_CLR(currentFE->fn_port.sock, &basemask);
-					currentFE->fn_done = true;
-					numFE--;
-				}
 				pq_close();
 				break;
 
@@ -1596,7 +1409,7 @@ PostgresMain(int argc, char *argv[])
 		}
 		else
 		{
-			if (IsUnderPostmaster || multiplexedBackend)
+			if (IsUnderPostmaster)
 				NullCommand(Remote);
 		}
 

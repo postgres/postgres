@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.34 1998/01/25 05:13:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.35 1998/01/26 01:41:11 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -269,28 +270,6 @@ int
 pq_getnchar(char *s, int off, int maxlen)
 {
 	return pqGetNBytes(s + off, maxlen, Pfin);
-
-#if 0
-	int			c = '\0';
-
-	if (Pfin == (FILE *) NULL)
-	{
-/*		elog(DEBUG, "Input descriptor is null"); */
-		return (EOF);
-	}
-
-	s += off;
-	while (maxlen-- && (c = pq_getc(Pfin)) != EOF)
-		*s++ = c;
-
-	/* -----------------
-	 *	   If EOF reached let caller know
-	 * -----------------
-	 */
-	if (c == EOF)
-		return (EOF);
-	return (!EOF);
-#endif
 }
 
 /* --------------------------------
@@ -591,11 +570,7 @@ do_unlink()
 int
 StreamServerPort(char *hostName, short portName, int *fdP)
 {
-	union
-	{
-		struct sockaddr_in in;
-		struct sockaddr_un un;
-	}			saddr;
+	SockAddr saddr;
 	int			fd,
 				err,
 				family;
@@ -624,20 +599,19 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 		return (STATUS_ERROR);
 	}
 	bzero(&saddr, sizeof(saddr));
+	saddr.sa.sa_family = family;
 	if (family == AF_UNIX)
 	{
-		saddr.un.sun_family = family;
 		len = UNIXSOCK_PATH(saddr.un, portName);
 		strcpy(sock_path, saddr.un.sun_path);
 	}
 	else
 	{
-		saddr.in.sin_family = family;
 		saddr.in.sin_addr.s_addr = htonl(INADDR_ANY);
 		saddr.in.sin_port = htons(portName);
-		len = sizeof saddr.in;
+		len = sizeof (struct sockaddr_in);
 	}
-	err = bind(fd, (struct sockaddr *) & saddr, len);
+	err = bind(fd, &saddr.sa, len);
 	if (err < 0)
 	{
 	  sprintf(PQerrormsg,
@@ -685,7 +659,7 @@ StreamConnection(int server_fd, Port *port)
 {
 	int			len,
 				addrlen;
-	int			family = port->raddr.in.sin_family;
+	int			family = port->raddr.sa.sa_family;
 
 	/* accept connection (and fill in the client (remote) address) */
 	len = family == AF_INET ?
@@ -725,8 +699,6 @@ StreamConnection(int server_fd, Port *port)
 			return (STATUS_ERROR);
 		}
 	}
-
-	port->mask = 1 << port->sock;
 
 	/* reset to non-blocking */
 	fcntl(port->sock, F_SETFL, 1);
@@ -788,7 +760,7 @@ StreamOpen(char *hostName, short portName, Port *port)
 		len = UNIXSOCK_PATH(port->raddr.un, portName);
 	}
 	/* connect to the server */
-	if ((port->sock = socket(port->raddr.in.sin_family, SOCK_STREAM, 0)) < 0)
+	if ((port->sock = socket(port->raddr.sa.sa_family, SOCK_STREAM, 0)) < 0)
 	{
 		sprintf(PQerrormsg,
 				"FATAL: StreamOpen: socket() failed: errno=%d\n",
@@ -797,7 +769,7 @@ StreamOpen(char *hostName, short portName, Port *port)
 		pqdebug("%s", PQerrormsg);
 		return (STATUS_ERROR);
 	}
-	err = connect(port->sock, (struct sockaddr *) & port->raddr, len);
+	err = connect(port->sock, &port->raddr.sa, len);
 	if (err < 0)
 	{
 		sprintf(PQerrormsg,
@@ -809,8 +781,7 @@ StreamOpen(char *hostName, short portName, Port *port)
 	}
 
 	/* fill in the client address */
-	if (getsockname(port->sock, (struct sockaddr *) & port->laddr,
-					&len) < 0)
+	if (getsockname(port->sock, &port->laddr.sa, &len) < 0)
 	{
 		sprintf(PQerrormsg,
 				"FATAL: StreamOpen: getsockname() failed: errno=%d\n",
@@ -821,33 +792,4 @@ StreamOpen(char *hostName, short portName, Port *port)
 	}
 
 	return (STATUS_OK);
-}
-
-static char *authentication_type_name[] = {
-	0, 0, 0, 0, 0, 0, 0,
-	"the default authentication type",
-	0, 0,
-	"Kerberos v4",
-	"Kerberos v5",
-	"host-based authentication",
-	"unauthenication",
-	"plaintext password authentication"
-};
-
-char	   *
-name_of_authentication_type(int type)
-{
-	char	   *result = 0;
-
-	if (type >= 1 && type <= LAST_AUTHENTICATION_TYPE)
-	{
-		result = authentication_type_name[type];
-	}
-
-	if (result == 0)
-	{
-		result = "<unknown authentication type>";
-	}
-
-	return result;
 }

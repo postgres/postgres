@@ -4,6 +4,7 @@
 # 
 # This file controls what hosts are allowed to connect to what databases
 # and specifies some options on how users on a particular host are identified.
+# It is read each time a host tries to make a connection to a database.
 # 
 # Each line (terminated by a newline character) is a record.  A record cannot
 # be continued across two lines.
@@ -29,13 +30,14 @@
 # Record type "host"
 # ------------------
 # 
-# This record identifies a set of hosts that are permitted to connect to
-# databases.  No hosts are permitted to connect except as specified by a
-# "host" record.
+# This record identifies a set of network hosts that are permitted to connect
+# to databases.  No network hosts are permitted to connect except as specified
+# by a "host" record.  See the record type "local" to specify permitted
+# connections using UNIX sockets.
 #
 # Format:
 # 
-#   host DBNAME IP_ADDRESS ADDRESS_MASK USERAUTH [MAP]
+#   host DBNAME IP_ADDRESS ADDRESS_MASK USERAUTH [AUTH_ARGUMENT]
 # 
 # DBNAME is the name of a Postgres database, or "all" to indicate all 
 # databases.
@@ -49,33 +51,54 @@
 # under the Postgres username he supplies in his connection parameters.
 #
 #   ident:  Authentication is done by the ident server on the remote
-#           host, via the ident (RFC 1413) protocol.
+#           host, via the ident (RFC 1413) protocol.  AUTH_ARGUMENT, if
+#           specified, is a map name to be found in the pg_ident.conf file.
+#           That table maps from ident usernames to Postgres usernames.  The
+#           special map name "sameuser" indicates an implied map (not found
+#           in pg_ident.conf) that maps every ident username to the identical
+#           Postgres username.
 #
 #   trust:  No authentication is done.  Trust that the user has the 
 #           authority to user whatever username he says he does.
 #           Before Postgres Version 6, all authentication was this way.
 #
-# MAP is the name of a map that matches an authenticated principal with
-# a Postgres username.  If USERNAME is "trust", this value is ignored and
-# may be absent.
+#   reject: Reject the connection.
 #
-# In the case of USERAUTH=ident, this is a map name to be found in the 
-# pg_ident.conf file.  That table maps from ident usernames to Postgres 
-# usernames.  The special map name "sameuser" indicates an implied map
-# (not found in pg_ident.conf) that maps every ident username to the identical
-# Postgres username.
+#   password:  Authentication is done by matching a password supplied in clear
+#	       by the host.  If AUTH_ARGUMENT is specified then the password is
+#	       compared with the user's entry in that file (in the $PGDATA
+#	       directory).  See pg_passwd(1).  If it is omitted then the
+#	       password is compared with the user's entry in the pg_user table.
+#
+#   crypt:  Authentication is done by matching an encrypted password supplied
+#	    by the host with that held for the user in the pg_user table.
+#
+#   krb4:   Kerberos V4 authentication is used.
+#
+#   krb5:   Kerberos V5 authentication is used.
 
+# Record type "local"
+# ------------------
 # 
+# This record identifies the authentication to use when connecting to a
+# particular database via a local UNIX socket.
+#
+# Format:
+# 
+#   local DBNAME USERAUTH [AUTH_ARGUMENT]
+#
+# The format is the same as that of the "host" record type except that the
+# IP_ADDRESS and ADDRESS_MASK are omitted and the "ident", "krb4" and "krb5"
+# values of USERAUTH are no allowed.
+
 # For backwards compatibility, PostgreSQL also accepts pre-Version 6 records,
 # which look like:
 # 
 #   all         127.0.0.1    0.0.0.0
-# 
-#
 
 # TYPE       DATABASE    IP_ADDRESS    MASK              USERAUTH  MAP
  
-host         all         127.0.0.1     255.255.255.255   trust     
+#host         all         127.0.0.1     255.255.255.255   trust     
  
 # The above allows any user on the local system to connect to any database
 # under any username.
@@ -86,10 +109,11 @@ host         all         127.0.0.1     255.255.255.255   trust
 # connect to database template1 as the same username that ident on that host
 # identifies him as (typically his Unix username).  
 
+#host         all        192.168.0.1   255.255.255.255   reject
 #host         all        0.0.0.0       0.0.0.0           trust
 
-# The above would allow anyone anywhere to connect to any database under
-# any username.
+# The above would allow anyone anywhere except from 192.168.0.1 to connect to
+# any database under any username.
 
 #host         all        192.168.0.0  255.255.255.0      ident     omicron
 #

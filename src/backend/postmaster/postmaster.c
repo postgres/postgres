@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.69 1998/01/25 05:13:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.70 1998/01/26 01:41:15 scrappy Exp $
  *
  * NOTES
  *
@@ -102,7 +102,8 @@
 #endif
 #endif
 
-#define LINGER_TIME 3
+#define	INVALID_SOCK	(-1)
+#define	ARGV_SIZE	64
 
  /*
   * Max time in seconds for socket to linger (close() to block) waiting
@@ -182,28 +183,24 @@ static int	SendStop = 0;
 
 static int	NetServer = 0;		/* if not zero, postmaster listen for
 								 * non-local connections */
-static int	MultiplexedBackends = 0;
-static int	MultiplexedBackendPort;
 
 /*
  * postmaster.c - function prototypes
  */
 static void pmdaemonize(void);
-static void
-ConnStartup(Port *port, int *status,
-			char *errormsg, const int errormsg_len);
-static int	ConnCreate(int serverFd, int *newFdP);
+static Port *ConnCreate(int serverFd);
 static void reset_shared(short port);
 static void pmdie(SIGNAL_ARGS);
 static void reaper(SIGNAL_ARGS);
 static void dumpstatus(SIGNAL_ARGS);
 static void CleanupProc(int pid, int exitstatus);
-static int	DoExec(StartupInfo *packet, int portFd);
+static int	DoExec(Port *port);
 static void ExitPostmaster(int status);
 static void usage(const char *);
 static int	ServerLoop(void);
-static int	BackendStartup(StartupInfo *packet, Port *port, int *pidPtr);
-static void send_error_reply(Port *port, const char *errormsg);
+static int	BackendStartup(Port *port);
+static void readStartupPacket(char *arg, PacketLen len, char *pkt);
+static int initMasks(fd_set *rmask, fd_set *wmask);
 static void RandomSalt(char* salt);
 
 extern char *optarg;
@@ -307,8 +304,7 @@ PostmasterMain(int argc, char *argv[])
 		switch (opt)
 		{
 			case 'a':
-				/* Set the authentication system. */
-				be_setauthsvc(optarg);
+				/* Can no longer set authentication method. */
 				break;
 			case 'B':
 
@@ -354,8 +350,7 @@ PostmasterMain(int argc, char *argv[])
 				NetServer = 1;
 				break;
 			case 'm':
-				MultiplexedBackends = 1;
-				MultiplexedBackendPort = atoi(optarg);
+				/* Multiplexed backends no longer supported. */
 				break;
 			case 'M':
 
@@ -501,13 +496,11 @@ static void
 usage(const char *progname)
 {
 	fprintf(stderr, "usage: %s [options..]\n", progname);
-	fprintf(stderr, "\t-a authsys\tdo/do not permit use of an authentication system\n");
 	fprintf(stderr, "\t-B nbufs\tset number of shared buffers\n");
 	fprintf(stderr, "\t-b backend\tuse a specific backend server executable\n");
 	fprintf(stderr, "\t-d [1|2|3]\tset debugging level\n");
 	fprintf(stderr, "\t-D datadir\tset data directory\n");
 	fprintf(stderr, "\t-i \tlisten on TCP/IP sockets as well as Unix domain socket\n");
-	fprintf(stderr, "\t-m \tstart up multiplexing backends\n");
 	fprintf(stderr, "\t-n\t\tdon't reinitialize shared memory after abnormal exit\n");
 	fprintf(stderr, "\t-o option\tpass 'option' to each backend servers\n");
 	fprintf(stderr, "\t-p port\t\tspecify port for postmaster to listen on\n");
@@ -519,15 +512,9 @@ usage(const char *progname)
 static int
 ServerLoop(void)
 {
-	fd_set		rmask,
-				basemask;
-	int			nSockets,
-				nSelected,
-				status,
-				oldFd,
-				newFd;
-	Dlelem	   *next,
-			   *curr;
+	fd_set readmask, writemask;
+	int nSockets;
+	Dlelem *curr;
 
 	/*
 	 * GH: For !HAVE_SIGPROCMASK (NEXTSTEP), TRH implemented an
@@ -541,16 +528,8 @@ ServerLoop(void)
 	int			orgsigmask = sigblock(0);
 
 #endif
-	FD_ZERO(&basemask);
-	FD_SET(ServerSock_UNIX, &basemask);
-	nSockets = ServerSock_UNIX;
-	if (ServerSock_INET != INVALID_SOCK)
-	{
-		FD_SET(ServerSock_INET, &basemask);
-		if (ServerSock_INET > ServerSock_UNIX)
-			nSockets = ServerSock_INET;
-	}
-	nSockets++;
+
+	nSockets = initMasks(&readmask, &writemask);
 
 #ifdef HAVE_SIGPROCMASK
 	sigprocmask(0, 0, &oldsigmask);
@@ -559,17 +538,19 @@ ServerLoop(void)
 #endif
 	for (;;)
 	{
+		Port *port;
+		fd_set rmask, wmask;
+
 #ifdef HAVE_SIGPROCMASK
 		sigprocmask(SIG_SETMASK, &oldsigmask, 0);
 #else
 		sigsetmask(orgsigmask);
 #endif
-		newFd = -1;
-		memmove((char *) &rmask, (char *) &basemask, sizeof(fd_set));
-		if ((nSelected = select(nSockets, &rmask,
-								(fd_set *) NULL,
-								(fd_set *) NULL,
-								(struct timeval *) NULL)) < 0)
+
+		memmove((char *) &rmask, (char *) &readmask, sizeof(fd_set));
+		memmove((char *) &wmask, (char *) &writemask, sizeof(fd_set));
+		if (select(nSockets, &rmask, &wmask, (fd_set *) NULL,
+				(struct timeval *) NULL) < 0)
 		{
 			if (errno == EINTR)
 				continue;
@@ -589,344 +570,209 @@ ServerLoop(void)
 #else
 		sigblock(sigmask(SIGCHLD));		/* XXX[TRH] portability */
 #endif
-		if (DebugLvl > 1)
-		{
-			fprintf(stderr, "%s: ServerLoop: %d sockets pending\n",
-					progname, nSelected);
-		}
 
 		/* new connection pending on our well-known port's socket */
-		oldFd = -1;
-		if (FD_ISSET(ServerSock_UNIX, &rmask))
-			oldFd = ServerSock_UNIX;
-		else if (ServerSock_INET != INVALID_SOCK &&
-				 FD_ISSET(ServerSock_INET, &rmask))
-			oldFd = ServerSock_INET;
-		if (oldFd >= 0)
-		{
 
-			/*
-			 * connect and make an addition to PortList.  If the
-			 * connection dies and we notice it, just forget about the
-			 * whole thing.
-			 */
-			if (ConnCreate(oldFd, &newFd) == STATUS_OK)
-			{
-				if (newFd >= nSockets)
-					nSockets = newFd + 1;
-				FD_SET(newFd, &rmask);
-				FD_SET(newFd, &basemask);
-				if (DebugLvl)
-					fprintf(stderr, "%s: ServerLoop: connect on %d\n",
-							progname, newFd);
-			}
-			else if (DebugLvl)
-				fprintf(stderr,
-						"%s: ServerLoop: connect failed: (%d) %s\n",
-						progname, errno, strerror(errno));
-			--nSelected;
-			FD_CLR(oldFd, &rmask);
-		}
+		if (ServerSock_UNIX != INVALID_SOCK &&
+				FD_ISSET(ServerSock_UNIX, &rmask) &&
+				(port = ConnCreate(ServerSock_UNIX)) != NULL)
+			PacketReceiveSetup(&port->pktInfo,
+						readStartupPacket,
+						(char *)port);
 
-		if (DebugLvl > 1)
-		{
-			fprintf(stderr, "%s: ServerLoop:\tnSelected=%d\n",
-					progname, nSelected);
-			curr = DLGetHead(PortList);
-			while (curr)
-			{
-				Port	   *port = DLE_VAL(curr);
+		if (ServerSock_INET != INVALID_SOCK &&
+				FD_ISSET(ServerSock_INET, &rmask) &&
+				(port = ConnCreate(ServerSock_INET)) != NULL)
+			PacketReceiveSetup(&port->pktInfo,
+						readStartupPacket,
+						(char *)port);
 
-				fprintf(stderr, "%s: ServerLoop:\t\tport %d%s pending\n",
-						progname, port->sock,
-						FD_ISSET(port->sock, &rmask)
-						? "" :
-						" not");
-				curr = DLGetSucc(curr);
-			}
-		}
+		/* Build up new masks for select(). */
+
+		nSockets = initMasks(&readmask, &writemask);
 
 		curr = DLGetHead(PortList);
 
 		while (curr)
 		{
 			Port	   *port = (Port *) DLE_VAL(curr);
-			int			lastbytes = port->nBytes;
+			int status = STATUS_OK;
+			Dlelem *next;
 
-			if (FD_ISSET(port->sock, &rmask) && port->sock != newFd)
+			if (FD_ISSET(port->sock, &rmask))
 			{
 				if (DebugLvl > 1)
-					fprintf(stderr, "%s: ServerLoop:\t\thandling %d\n",
+					fprintf(stderr, "%s: ServerLoop:\t\thandling reading %d\n",
 							progname, port->sock);
-				--nSelected;
 
+				if (PacketReceiveFragment(&port->pktInfo, port->sock) != STATUS_OK)
+					status = STATUS_ERROR;
+			}
+
+			if (FD_ISSET(port->sock, &wmask))
+			{
+				if (DebugLvl > 1)
+					fprintf(stderr, "%s: ServerLoop:\t\thandling writing %d\n",
+							progname, port->sock);
+
+				if (PacketSendFragment(&port->pktInfo, port->sock) != STATUS_OK)
+					status = STATUS_ERROR;
+			}
+
+			/* Get this before the connection might be closed. */
+
+			next = DLGetSucc(curr);
+
+			/*
+			 * If there is no error and no outstanding data transfer
+			 * going on, then the authentication handshake must be
+			 * complete to the postmaster's satisfaction.  So,
+			 * start the backend.
+			 */
+
+			if (status == STATUS_OK && port->pktInfo.state == Idle)
+			{
 				/*
-				 * Read the incoming packet into its packet buffer. Read
-				 * the connection id out of the packet so we know who the
-				 * packet is from.
+				 * If the backend start fails then keep the
+				 * connection open to report it.  Otherwise,
+				 * pretend there is an error to close the
+				 * connection which will now be managed by the
+				 * backend.
 				 */
-receive_again:
-				status = PacketReceive(port, &port->buf, NON_BLOCKING);
-				switch (status)
-				{
-					case STATUS_OK:
-						/* Here is where we check for a USER login packet.  If there is one, then
-						 * we must deterine whether the login has a password in pg_user.  If so, send
-						 * back a salt to crypt() the password with.  Otherwise, send an unsalt packet
-						 * back and read the real startup packet.
-						 */
-						if (ntohl(port->buf.msgtype) == STARTUP_USER_MSG) {
-						  PacketLen     plen;
 
-						  port->buf.msgtype = htonl(crypt_salt(port->buf.data));
-						  plen = sizeof(port->buf.len) + sizeof(port->buf.msgtype) + 2;
-						  port->buf.len = htonl(plen);
-						  RandomSalt(port->salt);
-						  memcpy((void*)port->buf.data, (void*)port->salt, 2);
+				if (BackendStartup(port) != STATUS_OK)
+					PacketSendError(&port->pktInfo,
+						"Backend startup failed");
+				else
+					status = STATUS_ERROR;
+			}
 
-						  status = PacketSend(port, &port->buf, plen, BLOCKING);
-						  if (status != STATUS_OK)
-						    break;
+			/* Close the connection if required. */
 
-						  /* port->nBytes = 0; */
-						  	goto receive_again;
-						} else {
-							int			CSstatus;		/* Completion status of
-														 * ConnStartup */
-							char		errormsg[200];	/* error msg from
-														 * ConnStartup */
-
-							ConnStartup(port, &CSstatus, errormsg, sizeof(errormsg));
-
-							if (CSstatus == STATUS_ERROR)
-								send_error_reply(port, errormsg);
-							ActiveBackends = TRUE;
-						}
-						/* FALLTHROUGH */
-					case STATUS_INVALID:
-						if (DebugLvl)
-							fprintf(stderr, "%s: ServerLoop:\t\tdone with %d\n",
-									progname, port->sock);
-						break;
-					case STATUS_BAD_PACKET:
-
-						/*
-						 * This is a bogus client, kill the connection and
-						 * forget the whole thing.
-						 */
-						if (DebugLvl)
-							fprintf(stderr, "%s: ServerLoop:\t\tbad packet format (reported packet size of %d read on port %d\n", progname, port->nBytes, port->sock);
-						break;
-					case STATUS_NOT_DONE:
-						if (DebugLvl)
-							fprintf(stderr, "%s: ServerLoop:\t\tpartial packet (%d bytes actually read) on %d\n",
-									progname, port->nBytes, port->sock);
-
-						/*
-						 * If we've received at least a PacketHdr's worth
-						 * of data and we're still receiving data each
-						 * time we read, we're ok.  If the client gives us
-						 * less than a PacketHdr at the beginning, just
-						 * kill the connection and forget about the whole
-						 * thing.
-						 */
-						if (lastbytes < port->nBytes)
-						{
-							if (DebugLvl)
-								fprintf(stderr, "%s: ServerLoop:\t\tpartial packet on %d ok\n",
-										progname, port->sock);
-							curr = DLGetSucc(curr);
-							continue;
-						}
-						break;
-					case STATUS_ERROR:	/* system call error - die */
-						fprintf(stderr, "%s: ServerLoop:\t\terror receiving packet\n",
-								progname);
-						return (STATUS_ERROR);
-				}
-				FD_CLR(port->sock, &basemask);
+			if (status != STATUS_OK)
+			{
 				StreamClose(port->sock);
-				next = DLGetSucc(curr);
 				DLRemove(curr);
 				free(port);
 				DLFreeElem(curr);
-				curr = next;
-				continue;
-			}
-			curr = DLGetSucc(curr);
-		}
-		Assert(nSelected == 0);
-	}
-}
-
-
-
-/*
-	ConnStartup: get the startup packet from the front end (client),
-	authenticate the user, and start up a backend.
-
-	If all goes well, return *status == STATUS_OK.
-	Otherwise, return *status == STATUS_ERROR and return a text string
-	explaining why in the "errormsg_len" bytes at "errormsg",
-*/
-
-static void
-ConnStartup(Port *port, int *status,
-			char *errormsg, const int errormsg_len)
-{
-	MsgType		msgType;
-	char		namebuf[NAMEDATALEN];
-	int			pid;
-	PacketBuf  *p;
-	StartupInfo sp;
-	char	   *tmp;
-
-	p = &port->buf;
-
-	sp.database[0] = '\0';
-	sp.user[0] = '\0';
-	sp.options[0] = '\0';
-	sp.execFile[0] = '\0';
-	sp.tty[0] = '\0';
-
-	tmp = p->data;
-	strncpy(sp.database, tmp, sizeof(sp.database));
-	tmp += sizeof(sp.database);
-	strncpy(sp.user, tmp, sizeof(sp.user));
-	tmp += sizeof(sp.user);
-	strncpy(sp.options, tmp, sizeof(sp.options));
-	tmp += sizeof(sp.options);
-	strncpy(sp.execFile, tmp, sizeof(sp.execFile));
-	tmp += sizeof(sp.execFile);
-	strncpy(sp.tty, tmp, sizeof(sp.tty));
-
-	msgType = (MsgType) ntohl(port->buf.msgtype);
-
-	StrNCpy(namebuf, sp.user, NAMEDATALEN);
-	if (!namebuf[0])
-	{
-		strncpy(errormsg,
-				"No Postgres username specified in startup packet.",
-				errormsg_len);
-		*status = STATUS_ERROR;
-	}
-	else
-	{
-		if (be_recvauth(msgType, port, namebuf, &sp) != STATUS_OK)
-		{
-			char		buffer[200 + sizeof(namebuf)];
-
-			sprintf(buffer,
-					"Failed to authenticate client as Postgres user '%s' "
-					"using %s: %s",
-			  namebuf, name_of_authentication_type(msgType), PQerrormsg);
-			strncpy(errormsg, buffer, errormsg_len);
-			*status = STATUS_ERROR;
-		}
-		else
-		{
-			if (BackendStartup(&sp, port, &pid) != STATUS_OK)
-			{
-				strncpy(errormsg, "Startup (fork) of backend failed.",
-						errormsg_len);
-				*status = STATUS_ERROR;
 			}
 			else
 			{
-				errormsg[0] = '\0';		/* just for robustness */
-				*status = STATUS_OK;
+				/* Set the masks for this connection. */
+
+				if (nSockets <= port->sock)
+					nSockets = port->sock + 1;
+
+				if (port->pktInfo.state == WritingPacket)
+					FD_SET(port->sock, &writemask);
+				else
+					FD_SET(port->sock, &readmask);
 			}
+
+			curr = next;
 		}
 	}
-	if (*status == STATUS_ERROR)
-		fprintf(stderr, "%s: ConnStartup: %s\n", progname, errormsg);
 }
 
 
 /*
-	 send_error_reply: send a reply to the front end telling it that
-	 the connection was a bust, and why.
+ * Initialise the read and write masks for select() for the well-known ports
+ * we are listening on.  Return the number of sockets to listen on.
+ */
 
-	 "port" tells to whom and how to send the reply.  "errormsg" is
-	 the string of text telling what the problem was.
-
-	 It should be noted that we're executing a pretty messy protocol
-	 here.	The postmaster does not reply when the connection is
-	 successful, but rather just hands the connection off to the
-	 backend and the backend waits for a query from the frontend.
-	 Thus, the frontend is not expecting any reply in regards to the
-	 connect request.
-
-	 But when the connection fails, we send this reply that starts
-	 with "E".	The frontend only gets this reply when it sends its
-	 first query and waits for the reply.  Nobody receives that query,
-	 but this reply is already in the pipe, so that's what the
-	 frontend sees.
-
-	 Note that the backend closes the socket immediately after sending
-	 the reply, so to give the frontend a fighting chance to see the
-	 error info, we set the socket to linger up to 3 seconds waiting
-	 for the frontend to retrieve the message.	That's all the delay
-	 we can afford, since we have other clients to serve and the
-	 postmaster will be blocked the whole time.  Also, if there is no
-	 message space in the socket for the reply (shouldn't be a
-	 problem) the postmaster will block until the frontend reads the
-	 reply.
-
-*/
-
-static void
-send_error_reply(Port *port, const char *errormsg)
+static int initMasks(fd_set *rmask, fd_set *wmask)
 {
-	int			rc;				/* return code from write */
-	char	   *reply;
+	int nsocks = -1;
 
-	/*
-	 * The literal reply string we put into the socket.  This is a pointer
-	 * to storage we malloc.
-	 */
-	const struct linger linger_parm = {true, LINGER_TIME};
+	FD_ZERO(rmask);
+	FD_ZERO(wmask);
 
-	/*
-	 * A parameter for setsockopt() that tells it to have close() block
-	 * for a while waiting for the frontend to read its outstanding
-	 * messages.
-	 */
+	if (ServerSock_UNIX != INVALID_SOCK)
+	{
+		FD_SET(ServerSock_UNIX, rmask);
 
-	reply = malloc(strlen(errormsg) + 10);
+		if (ServerSock_UNIX > nsocks)
+			nsocks = ServerSock_UNIX;
+	}
 
-	sprintf(reply, "E%s", errormsg);
+	if (ServerSock_INET != INVALID_SOCK)
+	{
+		FD_SET(ServerSock_INET, rmask);
 
-	rc = write(port->sock, (Addr) reply, strlen(reply) + 1);
-	if (rc < 0)
-		fprintf(stderr,
-				"%s: ServerLoop:\t\t"
-				"Failed to send error reply to front end\n",
-				progname);
-	else if (rc < strlen(reply) + 1)
-		fprintf(stderr,
-				"%s: ServerLoop:\t\t"
-				"Only partial error reply sent to front end.\n",
-				progname);
+		if (ServerSock_INET > nsocks)
+			nsocks = ServerSock_INET;
+	}
 
-	free(reply);
+	return (nsocks + 1);
+}
 
-	/*
-	 * Now we have to make sure frontend has a chance to see what we just
-	 * wrote.
-	 */
-	rc = setsockopt(port->sock, SOL_SOCKET, SO_LINGER,
-					&linger_parm, sizeof(linger_parm));
+
+/*
+ * Called when the startup packet has been read.
+ */
+
+static void readStartupPacket(char *arg, PacketLen len, char *pkt)
+{
+	Port *port;
+	StartupPacket *si;
+
+	port = (Port *)arg;
+	si = (StartupPacket *)pkt;
+
+	/* At the moment the startup packet must be a fixed length. */
+
+	if (len != sizeof (StartupPacket))
+	{
+		PacketSendError(&port->pktInfo, "Invalid startup packet.");
+		return;
+	}
+
+	/* Get the parameters from the startup packet as C strings. */
+
+	StrNCpy(port->database, si->database, sizeof (port->database) - 1);
+	StrNCpy(port->user, si->user, sizeof (port->user) - 1);
+	StrNCpy(port->options, si->options, sizeof (port->options) - 1);
+	StrNCpy(port->tty, si->tty, sizeof (port->tty) - 1);
+
+	/* The database defaults to the user name. */
+
+	if (port->database[0] == '\0')
+		StrNCpy(port->database, si->user, sizeof (port->database) - 1);
+
+	/* Check we can handle the protocol the frontend is using. */
+
+	port->proto = ntohl(si->protoVersion);
+
+	if (PG_PROTOCOL_MAJOR(port->proto) < PG_PROTOCOL_MAJOR(PG_PROTOCOL_EARLIEST) ||
+	    PG_PROTOCOL_MAJOR(port->proto) > PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST) ||
+	    (PG_PROTOCOL_MAJOR(port->proto) == PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST) &&
+	     PG_PROTOCOL_MINOR(port->proto) > PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST)))
+	{
+		PacketSendError(&port->pktInfo, "Unsupported frontend protocol.");
+		return;
+	}
+
+	/* Check a user name was given. */
+
+	if (port->user[0] == '\0')
+	{
+		PacketSendError(&port->pktInfo,
+				"No Postgres username specified in startup packet.");
+		return;
+	}
+
+	/* Start the authentication itself. */
+
+	be_recvauth(port);
 }
 
 
 /*
  * ConnCreate -- create a local connection data structure
  */
-static int
-ConnCreate(int serverFd, int *newFdP)
+static Port *
+ConnCreate(int serverFd)
 {
-	int			status;
 	Port	   *port;
 
 
@@ -937,18 +783,20 @@ ConnCreate(int serverFd, int *newFdP)
 		ExitPostmaster(1);
 	}
 
-	if ((status = StreamConnection(serverFd, port)) != STATUS_OK)
+	if (StreamConnection(serverFd, port) != STATUS_OK)
 	{
 		StreamClose(port->sock);
 		free(port);
+		port = NULL;
 	}
 	else
 	{
 		DLAddHead(PortList, DLNewElem(port));
-		*newFdP = port->sock;
+		RandomSalt(port->salt);
+		port->pktInfo.state = Idle;
 	}
 
-	return (status);
+	return port;
 }
 
 /*
@@ -1125,9 +973,7 @@ CleanupProc(int pid,
  *
  */
 static int
-BackendStartup(StartupInfo *packet,		/* client's startup packet */
-			   Port *port,
-			   int *pidPtr)
+BackendStartup(Port *port)
 {
 	Backend    *bn;				/* for backend cleanup */
 	int			pid,
@@ -1148,7 +994,7 @@ BackendStartup(StartupInfo *packet,		/* client's startup packet */
 	putenv(envEntry[0]);
 	sprintf(envEntry[1], "POSTID=%d", NextBackendId);
 	putenv(envEntry[1]);
-	sprintf(envEntry[2], "PG_USER=%s", packet->user);
+	sprintf(envEntry[2], "PG_USER=%s", port->user);
 	putenv(envEntry[2]);
 	if (!getenv("PGDATA"))
 	{
@@ -1173,7 +1019,7 @@ BackendStartup(StartupInfo *packet,		/* client's startup packet */
 
 	if ((pid = FORK()) == 0)
 	{							/* child */
-		if (DoExec(packet, port->sock))
+		if (DoExec(port))
 			fprintf(stderr, "%s child[%d]: BackendStartup: execv failed\n",
 					progname, pid);
 		/* use _exit to keep from double-flushing stdio */
@@ -1190,8 +1036,7 @@ BackendStartup(StartupInfo *packet,		/* client's startup packet */
 
 	if (DebugLvl)
 		fprintf(stderr, "%s: BackendStartup: pid %d user %s db %s socket %d\n",
-				progname, pid, packet->user,
-		 (packet->database[0] == '\0' ? packet->user : packet->database),
+				progname, pid, port->user, port->database,
 				port->sock);
 
 	/* adjust backend counter */
@@ -1212,10 +1057,7 @@ BackendStartup(StartupInfo *packet,		/* client's startup packet */
 	bn->pid = pid;
 	DLAddHead(BackendList, DLNewElem(bn));
 
-	if (MultiplexedBackends)
-		MultiplexedBackendPort++;
-
-	*pidPtr = pid;
+	ActiveBackends = TRUE;
 
 	return (STATUS_OK);
 }
@@ -1262,19 +1104,19 @@ split_opts(char **argv, int *argcp, char *s)
  *		If execv() fails, return status.
  */
 static int
-DoExec(StartupInfo *packet, int portFd)
+DoExec(Port *port)
 {
 	char		execbuf[MAXPATHLEN];
 	char		portbuf[ARGV_SIZE];
-	char		mbbuf[ARGV_SIZE];
 	char		debugbuf[ARGV_SIZE];
 	char		ttybuf[ARGV_SIZE + 1];
+	char		protobuf[ARGV_SIZE + 1];
 	char		argbuf[(2 * ARGV_SIZE) + 1];
 
 	/*
 	 * each argument takes at least three chars, so we can't have more
 	 * than ARGV_SIZE arguments in (2 * ARGV_SIZE) chars (i.e.,
-	 * packet->options plus ExtraOptions)...
+	 * port->options plus ExtraOptions)...
 	 */
 	char	   *av[ARGV_SIZE];
 	char		dbbuf[ARGV_SIZE + 1];
@@ -1304,33 +1146,29 @@ DoExec(StartupInfo *packet, int portFd)
 		av[ac++] = "-Q";
 
 	/* Pass the requested debugging output file */
-	if (packet->tty[0])
+	if (port->tty[0])
 	{
-		strncpy(ttybuf, packet->tty, ARGV_SIZE);
+		strncpy(ttybuf, port->tty, ARGV_SIZE);
 		av[ac++] = "-o";
 		av[ac++] = ttybuf;
 	}
 
-	/* tell the multiplexed backend to start on a certain port */
-	if (MultiplexedBackends)
-	{
-		sprintf(mbbuf, "-m %d", MultiplexedBackendPort);
-		av[ac++] = mbbuf;
-	}
 	/* Tell the backend the descriptor of the fe/be socket */
-	sprintf(portbuf, "-P%d", portFd);
+	sprintf(portbuf, "-P%d", port->sock);
 	av[ac++] = portbuf;
 
-	StrNCpy(argbuf, packet->options, ARGV_SIZE);
+	StrNCpy(argbuf, port->options, ARGV_SIZE);
 	strncat(argbuf, ExtraOptions, ARGV_SIZE);
 	argbuf[(2 * ARGV_SIZE)] = '\0';
 	split_opts(av, &ac, argbuf);
 
-	if (packet->database[0])
-		StrNCpy(dbbuf, packet->database, ARGV_SIZE);
-	else
-		StrNCpy(dbbuf, packet->user, NAMEDATALEN);
+	StrNCpy(dbbuf, port->database, ARGV_SIZE);
 	av[ac++] = dbbuf;
+
+	/* Tell the backend what protocol the frontend is using. */
+
+	sprintf(protobuf, "-v %u", port->proto);
+	av[ac++] = protobuf;
 
 	av[ac] = (char *) NULL;
 
@@ -1375,10 +1213,7 @@ dumpstatus(SIGNAL_ARGS)
 		Port	   *port = DLE_VAL(curr);
 
 		fprintf(stderr, "%s: dumpstatus:\n", progname);
-		fprintf(stderr, "\tsock %d: nBytes=%d, laddr=0x%lx, raddr=0x%lx\n",
-				port->sock, port->nBytes,
-				(long int) port->laddr.in.sin_addr.s_addr,
-				(long int) port->raddr.in.sin_addr.s_addr);
+		fprintf(stderr, "\tsock %d\n", port->sock);
 		curr = DLGetSucc(curr);
 	}
 }

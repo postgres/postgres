@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.15 1997/12/06 22:57:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.16 1998/01/26 01:41:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
 #include "postgres.h"
 
 #include "access/htup.h"
-#include "libpq/libpq-be.h"
+#include "libpq/libpq.h"
 #include "access/printtup.h"
 #include "utils/portal.h"
 #include "utils/palloc.h"

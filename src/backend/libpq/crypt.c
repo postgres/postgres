@@ -17,15 +17,16 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#ifdef HAVE_CRYPT_H
-#include <crypt.h>
-#endif
 
 #include "postgres.h"
 #include "miscadmin.h"
 #include "utils/nabstime.h"
 #include "storage/fd.h"
 #include "libpq/crypt.h"
+
+#ifdef HAVE_CRYPT_H
+#include <crypt.h>
+#endif
 
 char**     pwd_cache = NULL;
 int        pwd_cache_count = 0;
@@ -219,6 +220,7 @@ int crypt_getloginfo(const char* user, char** passwd, char** valuntil) {
 
 /*-------------------------------------------------------------------------*/
 
+#ifdef 0
 MsgType crypt_salt(const char* user) {
 
   char*     passwd;
@@ -237,6 +239,7 @@ MsgType crypt_salt(const char* user) {
   if (valuntil) free((void*)valuntil);
   return STARTUP_SALT_MSG;
 }
+#endif
 
 /*-------------------------------------------------------------------------*/
 
@@ -258,7 +261,13 @@ int crypt_verify(Port* port, const char* user, const char* pgpass) {
     return STATUS_ERROR;
   }
 
-  crypt_pwd = crypt(passwd, port->salt);
+  /*
+   * Compare with the encrypted or plain password depending on the
+   * authentication method being used for this connection.
+   */
+
+  crypt_pwd = (port->auth_method == uaCrypt ? crypt(passwd, port->salt) : passwd);
+
   if (!strcmp(pgpass, crypt_pwd)) {
     /* check here to be sure we are not past valuntil
      */
