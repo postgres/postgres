@@ -4,15 +4,13 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/Makefile,v 1.14 2001/12/23 12:17:41 meskes Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/Makefile,v 1.15 2002/01/08 20:41:26 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/interfaces/ecpg/lib
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
-
-CFLAGS=-g
 
 NAME= ecpg
 SO_MAJOR_VERSION= 3
