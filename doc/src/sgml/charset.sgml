@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.10 2001/09/13 15:55:22 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.11 2001/10/04 22:26:27 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -621,8 +621,8 @@ RESET CLIENT_ENCODING;
      <itemizedlist>
       <listitem>
        <para>
-	<ulink url="ftp://ftp.ora.com/pub/examples/nutshell/ujip/doc/cjk.inf">
-	 ftp://ftp.ora.com/pub/examples/nutshell/ujip/doc/cjk.inf</ulink>
+	<ulink url="ftp://ftp.ora.com/pub/examples/nutshell/ujip/doc/cjk.inf"
+        >ftp://ftp.ora.com/pub/examples/nutshell/ujip/doc/cjk.inf</ulink>
 	Detailed explanations of <literal>EUC_JP</literal>, <literal>EUC_CN</literal>, <literal>EUC_KR</literal>, <literal>EUC_TW</literal>
 	appear in section 3.2.
        </para>
