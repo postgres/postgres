@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.101 2000/12/29 21:31:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.102 2001/01/08 18:31:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1977,7 +1977,10 @@ LockBuffer(Buffer buffer, int mode)
 			*buflock &= ~BL_W_LOCK;
 		}
 		else
+		{
+			S_UNLOCK(&(buf->cntx_lock));
 			elog(ERROR, "UNLockBuffer: buffer %lu is not locked", buffer);
+		}
 	}
 	else if (mode == BUFFER_LOCK_SHARE)
 	{
@@ -2033,7 +2036,10 @@ LockBuffer(Buffer buffer, int mode)
 		}
 	}
 	else
+	{
+		S_UNLOCK(&(buf->cntx_lock));
 		elog(ERROR, "LockBuffer: unknown lock mode %d", mode);
+	}
 
 	S_UNLOCK(&(buf->cntx_lock));
 }
@@ -2122,11 +2128,11 @@ InitBufferIO(void)
 #endif
 
 /*
+ *	Clean up any active buffer I/O after an error.
  *	This function is called from ProcReleaseSpins().
  *	BufMgrLock isn't held when this function is called.
- *	BM_IO_ERROR is always set. If BM_IO_ERROR was already
- *	set in case of output,this routine would kill all
- *	backends and reset postmaster.
+ *
+ *	If I/O was in progress, BM_IO_ERROR is always set.
  */
 void
 AbortBufferIO(void)
@@ -2142,6 +2148,7 @@ AbortBufferIO(void)
 		else
 		{
 			Assert(buf->flags & BM_DIRTY || buf->cntxDirty);
+			/* Issue notice if this is not the first failure... */
 			if (buf->flags & BM_IO_ERROR)
 			{
 				elog(NOTICE, "write error may be permanent: cannot write block %u for %s/%s",
