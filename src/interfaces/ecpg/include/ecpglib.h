@@ -7,6 +7,7 @@
 #define _ECPGLIB_H
 
 #include "libpq-fe.h"
+#include "ecpgtype.h"
 
 #ifndef __BEOS__
 #ifndef __cplusplus
