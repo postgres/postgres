@@ -108,7 +108,8 @@ init_table_info(PGresult *res, int row, db_info * dbi)
 
 	new_tbl->CountAtLastAnalyze =
 		(atol(PQgetvalue(res, row, PQfnumber(res, "n_tup_ins"))) +
-		 atol(PQgetvalue(res, row, PQfnumber(res, "n_tup_upd"))));
+		 atol(PQgetvalue(res, row, PQfnumber(res, "n_tup_upd"))) +
+		 atol(PQgetvalue(res, row, PQfnumber(res, "n_tup_del"))));
 	new_tbl->curr_analyze_count = new_tbl->CountAtLastAnalyze;
 
 	new_tbl->CountAtLastVacuum =
@@ -120,7 +121,6 @@ init_table_info(PGresult *res, int row, db_info * dbi)
 	new_tbl->reltuples = atoi(PQgetvalue(res, row, PQfnumber(res, "reltuples")));
 	new_tbl->relpages = atoi(PQgetvalue(res, row, PQfnumber(res, "relpages")));
 
-	log_entry(PQgetvalue(res, row, PQfnumber(res, "relisshared")));
 	if (strcmp("t", PQgetvalue(res, row, PQfnumber(res, "relisshared"))))
 		new_tbl->relisshared = 0;
 	else
