@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.43 2003/08/12 16:21:18 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.44 2003/09/07 14:44:40 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1591,8 +1591,6 @@ pgstat_recvbuffer(void)
 	int			msg_send = 0;	/* next send index in buffer */
 	int			msg_recv = 0;	/* next receive index */
 	int			msg_have = 0;	/* number of bytes stored */
-	struct sockaddr_storage fromaddr;
-	int			fromlen;
 	bool		overflow = false;
 
 	/*
@@ -1702,10 +1700,8 @@ pgstat_recvbuffer(void)
 		 */
 		if (FD_ISSET(pgStatSock, &rfds))
 		{
-			fromlen = sizeof(fromaddr);
-			len = recvfrom(pgStatSock, (char *) &input_buffer,
-						   sizeof(PgStat_Msg), 0,
-						   (struct sockaddr *) &fromaddr, &fromlen);
+			len = recv(pgStatSock, (char *) &input_buffer,
+					   sizeof(PgStat_Msg), 0);
 			if (len < 0)
 			{
 				ereport(LOG,
@@ -1724,16 +1720,6 @@ pgstat_recvbuffer(void)
 			 * The received length must match the length in the header
 			 */
 			if (input_buffer.msg_hdr.m_size != len)
-				continue;
-
-			/*
-			 * The source address of the packet must be our own socket.
-			 * This ensures that only real hackers or our own backends
-			 * tell us something.  (This should be redundant with a
-			 * kernel-level check due to having used connect(), but let's
-			 * do it anyway.)
-			 */
-			if (memcmp(&fromaddr, &pgStatAddr, fromlen))
 				continue;
 
 			/*
