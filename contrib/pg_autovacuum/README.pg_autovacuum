@@ -147,10 +147,10 @@ delete):
 - If the number of (deletes + updates) > VacuumThreshold, then a
   vacuum analyze is performed.
 
-deleteThreshold is equal to: 
+VacuumThreshold is equal to:
     vacuum_base_value + (vacuum_scaling_factor * "number of tuples in the table")
 
-insertThreshold is equal to: 
+AnalyzeThreshold is equal to:
     analyze_base_value + (analyze_scaling_factor * "number of tuples in the table")
 
 The AnalyzeThreshold defaults to half of the VacuumThreshold since it
