@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.26 1999/02/13 23:16:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.27 1999/02/15 05:56:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ tlistentry_member(Var *var, List *targetlist)
 }
 
 /*
- * matching_tlvar
+ * matching_tlist_var
  *
  * RETURNS:  var node in a target list which is var_equal to 'var',
  *			 if one exists.
@@ -69,7 +69,7 @@ tlistentry_member(Var *var, List *targetlist)
  *
  */
 Expr *
-matching_tlvar(Var *var, List *targetlist)
+matching_tlist_var(Var *var, List *targetlist)
 {
 	TargetEntry *tlentry;
 
@@ -97,7 +97,7 @@ add_var_to_tlist(RelOptInfo *rel, Var *var)
 {
 	Expr	   *oldvar = (Expr *) NULL;
 
-	oldvar = matching_tlvar(var, rel->targetlist);
+	oldvar = matching_tlist_var(var, rel->targetlist);
 
 	/*
 	 * If 'var' is not already in 'rel's target list, add a new node.
