@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.44 1997/09/12 22:14:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.45 1997/09/13 03:15:46 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -35,6 +35,7 @@
 
 #include "postgres.h"
 #include "nodes/parsenodes.h"
+#include "nodes/print.h"
 #include "parser/gramparse.h"
 #include "parser/catalog_utils.h"
 #include "parser/parse_query.h"
@@ -49,11 +50,6 @@ static bool QueryIsRule = FALSE;
 static Node *saved_In_Expr;
 extern List *parsetree;
 
-extern int CurScanPosition(void);
-extern int DefaultStartPosition;
-extern int CheckStartPosition;
-extern char *parseString;
-
 /*
  * If you need access to certain yacc-generated variables and find that
  * they're static by default, uncomment the next line.  (this is not a
@@ -63,6 +59,8 @@ extern char *parseString;
 
 static char *xlateSqlType(char *);
 static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
+static List *makeConstantList( A_Const *node);
+static char *FlattenStringList(List *list);
 
 /* old versions of flex define this as a macro */
 #if defined(yywrap)
@@ -117,17 +115,17 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 		ReplaceStmt, AppendStmt, NotifyStmt, DeleteStmt, ClusterStmt,
 		ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt
 
-%type <str>		txname
+%type <str>		txname, char_type
 %type <node>	SubSelect
-%type <str>		join_clause, join_type, join_outer, join_spec
-%type <boolean> join_qual, TriggerActionTime, TriggerForSpec
+%type <str>		join_expr, join_outer, join_spec
+%type <boolean> TriggerActionTime, TriggerForSpec
 
-%type <str>		datetime, TriggerEvents, TriggerFuncArg
+%type <str>		DateTime, TriggerEvents, TriggerFuncArg
 
 %type <str>		relation_name, copy_file_name, copy_delimiter, def_name,
 		database_name, access_method_clause, access_method, attr_name,
 		class, index_name, name, file_name, recipe_name,
-		var_name, aggr_argtype, OptDefault
+		var_name, aggr_argtype
 
 %type <constrdef>		ConstraintElem, ConstraintDef
 
@@ -147,13 +145,14 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 		opt_column_list, columnList, opt_va_list, va_list,
 		sort_clause, sortby_list, index_params, index_list, name_list,
 		from_clause, from_list, opt_array_bounds, nest_array_bounds,
-		expr_list, default_expr_list, attrs, res_target_list, res_target_list2,
+		expr_list, attrs, res_target_list, res_target_list2,
 		def_list, opt_indirection, group_clause, groupby_list, TriggerFuncArgs
 
 %type <list>	union_clause, select_list
 %type <list>	join_list
 %type <sortgroupby>		join_using
 
+%type <node>	position_expr
 %type <list>	extract_list, position_list
 %type <list>	substr_list, substr_from, substr_for, trim_list
 %type <list>	interval_opts
@@ -178,7 +177,6 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 %type <defelt>	def_elem
 %type <node>	def_arg, columnElem, where_clause,
 				a_expr, a_expr_or_null, AexprConst,
-				default_expr, default_expr_or_null,
 				in_expr_nodes, not_in_expr_nodes,
 				having_clause
 %type <value>	NumConst
@@ -197,6 +195,9 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 %type <str>		Id, date, var_value, zone_value
 %type <str>		ColId
 
+%type <list>	default_expr
+%type <str>		opt_default
+%type <list>	constraint_elem
 
 /*
  * If you make any token changes, remember to:
@@ -208,30 +209,34 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 %token	ABORT_TRANS, ACL, ADD, AFTER, AGGREGATE, ALL, ALTER, ANALYZE,
 		AND, APPEND, ARCHIVE, ARCH_STORE, AS, ASC,
 		BACKWARD, BEFORE, BEGIN_TRANS, BETWEEN, BINARY, BOTH, BY,
-		CAST, CHANGE, CHECK, CLOSE, CLUSTER, COLUMN, COMMIT, CONSTRAINT, COPY, CREATE, CROSS,
-		CURRENT, CURSOR, DATABASE, DAYINTERVAL, DECLARE, DEFAULT, DELETE, DELIMITERS, DESC,
-		DISTINCT, DO, DROP, END_TRANS, EXISTS, EXTEND, EXTRACT,
-		FETCH, FOR, FORWARD, FROM, FULL, FUNCTION, GRANT, GROUP,
-		HAVING, HEAVY, HOURINTERVAL,
-		IN, INDEX, INHERITS, INNERJOIN, INSERT, INSTEAD, INTERVAL, INTO, IS, ISNULL,
-		JOIN, LANGUAGE, LEADING, LEFT, LIGHT, LISTEN, LOAD, LOCAL,
-		MERGE, MINUTEINTERVAL, MONTHINTERVAL, MOVE,
+		CAST, CHANGE, CHECK, CLOSE, CLUSTER, COLUMN,
+		COMMIT, CONSTRAINT, COPY, CREATE, CROSS, CURRENT, CURSOR,
+		DATABASE, DAYINTERVAL, DECLARE, DEFAULT, DELETE, DELIMITERS, DESC,
+		DISTINCT, DO, DROP, END_TRANS, EXISTS, EXTEND,
+		FETCH, FOR, FORWARD, FROM, FULL, FUNCTION, GRANT, GROUP, HAVING, HEAVY, HOURINTERVAL,
+		IN, INDEX, INHERITS, INNERJOIN, INSERT, INTERVAL, INSTEAD, INTO, IS, ISNULL,
+		JOIN, LANGUAGE, LEADING, LEFT, LIGHT, LISTEN, LOAD, LOCAL, MERGE, MINUTEINTERVAL, MONTHINTERVAL, MOVE,
 		NATURAL, NEW, NONE, NOT, NOTHING, NOTIFY, NOTNULL,
 		OIDS, ON, OPERATOR, OPTION, OR, ORDER, OUTERJOIN,
-		PNULL, POSITION, PRIVILEGES, PROCEDURE, PUBLIC, PURGE, P_TYPE,
+		PNULL, PRIVILEGES, PROCEDURE, PUBLIC, PURGE, P_TYPE,
 		RENAME, REPLACE, RESET, RETRIEVE, RETURNS, REVOKE, RIGHT, ROLLBACK, RULE,
-		SECONDINTERVAL, SELECT, SET, SETOF, SHOW, STDIN, STDOUT, STORE, SUBSTRING,
-		TABLE, TIME, TO, TRAILING, TRANSACTION, TRIGGER, TRIM,
+		SECONDINTERVAL, SELECT, SET, SETOF, SHOW, STDIN, STDOUT, STORE,
+		TABLE, TIME, TO, TRAILING, TRANSACTION, TRIGGER,
 		UNION, UNIQUE, UPDATE, USING, VACUUM, VALUES,
 		VERBOSE, VERSION, VIEW, WHERE, WITH, WORK, YEARINTERVAL, ZONE
 %token	EXECUTE, RECIPE, EXPLAIN, LIKE, SEQUENCE
+
+/* SQL-92 support */
+%token	EXTRACT, POSITION, SUBSTRING, TRIM
+%token	DOUBLE, PRECISION
+%token	CHARACTER, VARYING
 
 /* Special keywords, not in the query language - see the "lex" file */
 %token <str>	IDENT, SCONST, Op
 %token <ival>	ICONST, PARAM
 %token <dval>	FCONST
 
-/* these are not real. they are here so that they gets generated as #define's*/
+/* these are not real. they are here so that they get generated as #define's*/
 %token			OP
 
 /* precedence */
@@ -384,10 +389,10 @@ AddAttrStmt:  ALTER TABLE relation_name opt_inh_star ADD COLUMN columnDef
 		;
 
 /* Column definition might include WITH TIME ZONE, but only for the data types
- *	called out in SQL92 date/time definitions. So, check explicitly for "timestamp"
+ *  called out in SQL92 date/time definitions. So, check explicitly for "timestamp"
  * and "time". - thomas 1997-07-14
  */
-columnDef:	Id Typename opt_with_col OptDefault opt_null
+columnDef:  Id Typename opt_with_col opt_default opt_null
 				{
 					$$ = makeNode(ColumnDef);
 					$$->colname = $1;
@@ -396,118 +401,80 @@ columnDef:	Id Typename opt_with_col OptDefault opt_null
 					$$->defval = $4;
 					$$->is_not_null = $5;
 					if ($$->typename->timezone
-					 && (strcasecmp($$->typename->name, "timestamp")
-					  && strcasecmp($$->typename->name, "time")))
-						elog(NOTICE,"%s does not use WITH TIME ZONE",$$->typename->name);
+					&& (strcasecmp($$->typename->name, "timestamp")
+					&& strcasecmp($$->typename->name, "time")))
+					elog(NOTICE,"%s does not use WITH TIME ZONE",$$->typename->name);
 				}
 		;
 
-OptDefault:  DEFAULT default_expr
+opt_default:  DEFAULT default_expr
 				{
-					int deflen = CurScanPosition() - DefaultStartPosition;
-					char *defval;
-
-					defval = (char*) palloc (deflen + 1);
-					memcpy (defval,	parseString + DefaultStartPosition,
-							deflen);
-					defval[deflen] = 0;
-					$$ = defval;
+					$$ = FlattenStringList($2);
 				}
-		|  /*EMPTY*/			{ $$ = NULL; }
+			|  /*EMPTY*/		{ $$ = NULL; }
+	;
+
+default_expr:  AexprConst
+				{	$$ = makeConstantList((A_Const *) $1); }
+			| Pnull
+				{	$$ = lcons( makeString("NULL"), NIL); }
+			| '-' default_expr %prec UMINUS
+				{   $$ = lcons( makeString( "-"), $2); }
+			| default_expr '+' default_expr
+				{   $$ = nconc( $1, lcons( makeString( "+"), $3)); }
+			| default_expr '-' default_expr
+				{   $$ = nconc( $1, lcons( makeString( "-"), $3)); }
+			| default_expr '/' default_expr
+				{   $$ = nconc( $1, lcons( makeString( "/"), $3)); }
+			| default_expr '*' default_expr
+				{   $$ = nconc( $1, lcons( makeString( "*"), $3)); }
+			| default_expr '=' default_expr
+				{   elog(WARN,"boolean expressions not supported in DEFAULT",NULL); }
+			| default_expr '<' default_expr
+				{   elog(WARN,"boolean expressions not supported in DEFAULT",NULL); }
+			| default_expr '>' default_expr
+				{   elog(WARN,"boolean expressions not supported in DEFAULT",NULL); }
+			| ':' default_expr
+				{   $$ = lcons( makeString( ":"), $2); }
+			| ';' default_expr
+				{   $$ = lcons( makeString( ";"), $2); }
+			| '|' default_expr
+				{   $$ = lcons( makeString( "|"), $2); }
+			| default_expr TYPECAST Typename
+				{
+		   		 $$ = nconc( lcons( makeString( "CAST"), $1), makeList( makeString("AS"), $3, -1));
+				}
+			| CAST default_expr AS Typename
+				{
+		   		 $$ = nconc( lcons( makeString( "CAST"), $2), makeList( makeString("AS"), $4, -1));
+				}
+			| '(' default_expr ')'
+				{   $$ = lappend( lcons( makeString( "("), $2), makeString( ")")); }
+			| name '(' default_expr ')'
+				{
+					$$ = makeList( makeString($1), makeString("("), -1);
+					$$ = nconc( $$, $3);
+					$$ = lappend( $$, makeString(")"));
+				}
+			| default_expr Op default_expr
+				{
+					if (!strcmp("<=", $2) || !strcmp(">=", $2))
+						elog(WARN,"boolean expressions not supported in DEFAULT",NULL);
+					$$ = nconc( $1, lcons( $2, $3));
+				}
+			| Op default_expr
+				{   $$ = lcons( $1, $2); }
+			| default_expr Op
+				{   $$ = lcons( $2, $1); }
 		;
 
-default_expr_or_null: default_expr
-				{ $$ = $1;}
-		| Pnull
-				{
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_Null;
-					$$ = (Node *)n;
-				}
-
-default_expr:	AexprConst
-				{
-					if (nodeTag($1) != T_A_Const)
-						elog (WARN, "Cannot handle parameter in DEFAULT");
-					$$ = $1;
-				}
-		| '-' default_expr %prec UMINUS
-				{	$$ = makeA_Expr(OP, "-", NULL, $2); }
-		| default_expr '+' default_expr
-				{	$$ = makeA_Expr(OP, "+", $1, $3); }
-		| default_expr '-' default_expr
-				{	$$ = makeA_Expr(OP, "-", $1, $3); }
-		| default_expr '/' default_expr
-				{	$$ = makeA_Expr(OP, "/", $1, $3); }
-		| default_expr '*' default_expr
-				{	$$ = makeA_Expr(OP, "*", $1, $3); }
-		| default_expr '<' default_expr
-				{	$$ = makeA_Expr(OP, "<", $1, $3); }
-		| default_expr '>' default_expr
-				{	$$ = makeA_Expr(OP, ">", $1, $3); }
-		| default_expr '=' default_expr
-				{	$$ = makeA_Expr(OP, "=", $1, $3); }
-		| ':' default_expr
-				{	$$ = makeA_Expr(OP, ":", NULL, $2); }
-		| ';' default_expr
-				{	$$ = makeA_Expr(OP, ";", NULL, $2); }
-		| '|' default_expr
-				{	$$ = makeA_Expr(OP, "|", NULL, $2); }
-		| AexprConst TYPECAST Typename
-				{
-					/* AexprConst can be either A_Const or ParamNo */
-					if (nodeTag($1) == T_A_Const)
-						((A_Const *)$1)->typename = $3;
-					else
-						elog (WARN, "Cannot handle parameter in DEFAULT");
-					$$ = (Node *)$1;
-				}
-		| CAST AexprConst AS Typename
-				{
-					/* AexprConst can be either A_Const or ParamNo */
-					if (nodeTag($2) == T_A_Const)
-						((A_Const *)$2)->typename = $4;
-					else
-						elog (WARN, "Cannot handle parameter in DEFAULT");
-					$$ = (Node *)$2;
-				}
-		| '(' default_expr ')'
-				{	$$ = $2; }
-		| default_expr Op default_expr
-				{	$$ = makeA_Expr(OP, $2, $1, $3); }
-		| Op default_expr
-				{	$$ = makeA_Expr(OP, $1, NULL, $2); }
-		| default_expr Op
-				{	$$ = makeA_Expr(OP, $2, $1, NULL); }
-		| name '(' ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = $1;
-					n->args = NIL;
-					$$ = (Node *)n;
-				}
-		| name '(' default_expr_list ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = $1;
-					n->args = $3;
-					$$ = (Node *)n;
-				}
-		;
-
-default_expr_list: default_expr_or_null
-				{ $$ = lcons($1, NIL); }
-		|  default_expr_list ',' default_expr_or_null
-				{ $$ = lappend($1, $3); }
-		;
-
-opt_null: NOT PNULL				{ $$ = true; }
-		| NOTNULL				{ $$ = true; }
-		| /* EMPTY */			{ $$ = false; }
+opt_null: NOT PNULL								{ $$ = TRUE; }
+			| NOTNULL							{ $$ = TRUE; }
+			| /* EMPTY */						{ $$ = FALSE; }
 		;
 
 opt_with_col:  WITH TIME ZONE					{ $$ = TRUE; }
-		|  /* EMPTY */							{ $$ = FALSE; }
+			|  /* EMPTY */						{ $$ = FALSE; }
 		;
 
 /*****************************************************************************
@@ -639,11 +606,11 @@ OptInherit:  INHERITS '(' relation_name_list ')'		{ $$ = $3; }
 		|  /*EMPTY*/									{ $$ = NIL; }
 		;
 
-OptConstraint:	ConstraintList			{ $$ = $1; }
-		|				{ $$ = NULL; }
+OptConstraint:	ConstraintList							{ $$ = $1; }
+		| /*EMPTY*/										{ $$ = NULL; }
 		;
 
-ConstraintList :
+ConstraintList:
 		  ConstraintList ',' ConstraintElem
 				{ $$ = lappend($1, $3); }
 		| ConstraintElem
@@ -659,23 +626,80 @@ ConstraintElem:
 		| ConstraintDef			{ $$ = $1; }
 		;
 
-ConstraintDef:	CHECK a_expr
+ConstraintDef:	CHECK constraint_elem
 				{
 					ConstraintDef *constr = palloc (sizeof(ConstraintDef));
-					int chklen = CurScanPosition() - CheckStartPosition;
-					char *check;
-
-					check = (char*) palloc (chklen + 1);
-					memcpy (check,
-								parseString + CheckStartPosition,
-								chklen);
-					check[chklen] = 0;
+#ifdef PARSEDEBUG
+printf("in ConstraintDef\n");
+#endif
 					constr->type = CONSTR_CHECK;
 					constr->name = NULL;
-					constr->def = (void*) check;
+					constr->def = FlattenStringList($2);
 					$$ = constr;
 				}
 		;
+
+constraint_elem:  AexprConst
+				{	$$ = makeConstantList((A_Const *) $1); }
+			| Pnull
+				{	$$ = lcons( makeString("NULL"), NIL); }
+			| Id
+				{
+#ifdef PARSEDEBUG
+printf( "Id is %s\n", $1);
+#endif
+					$$ = lcons( makeString($1), NIL);
+				}
+			| '-' constraint_elem %prec UMINUS
+				{   $$ = lcons( makeString( "-"), $2); }
+			| constraint_elem '+' constraint_elem
+				{   $$ = nconc( $1, lcons( makeString( "+"), $3)); }
+			| constraint_elem '-' constraint_elem
+				{   $$ = nconc( $1, lcons( makeString( "-"), $3)); }
+			| constraint_elem '/' constraint_elem
+				{   $$ = nconc( $1, lcons( makeString( "/"), $3)); }
+			| constraint_elem '*' constraint_elem
+				{   $$ = nconc( $1, lcons( makeString( "*"), $3)); }
+			| constraint_elem '=' constraint_elem
+				{   $$ = nconc( $1, lcons( makeString( "="), $3)); }
+			| constraint_elem '<' constraint_elem
+				{   $$ = nconc( $1, lcons( makeString( "<"), $3)); }
+			| constraint_elem '>' constraint_elem
+				{   $$ = nconc( $1, lcons( makeString( ">"), $3)); }
+			| ':' constraint_elem
+				{   $$ = lcons( makeString( ":"), $2); }
+			| ';' constraint_elem
+				{   $$ = lcons( makeString( ";"), $2); }
+			| '|' constraint_elem
+				{   $$ = lcons( makeString( "|"), $2); }
+			| constraint_elem TYPECAST Typename
+				{
+		   		 $$ = nconc( lcons( makeString( "CAST"), $1), makeList( makeString("AS"), $3, -1));
+				}
+			| CAST constraint_elem AS Typename
+				{
+		   		 $$ = nconc( lcons( makeString( "CAST"), $2), makeList( makeString("AS"), $4, -1));
+				}
+			| '(' constraint_elem ')'
+				{   $$ = lappend( lcons( makeString( "("), $2), makeString( ")")); }
+			| name '(' constraint_elem ')'
+				{
+					$$ = makeList( makeString($1), makeString("("), -1);
+					$$ = nconc( $$, $3);
+					$$ = lappend( $$, makeString(")"));
+				}
+			| constraint_elem Op constraint_elem
+				{	$$ = nconc( $1, lcons( $2, $3)); }
+			| constraint_elem AND constraint_elem
+				{   $$ = nconc( $1, lcons( makeString( "AND"), $3)); }
+			| constraint_elem OR constraint_elem
+				{   $$ = nconc( $1, lcons( makeString( "OR"), $3)); }
+			| Op constraint_elem
+				{   $$ = lcons( $1, $2); }
+			| constraint_elem Op
+				{   $$ = lcons( $2, $1); }
+		;
+
 
 /*****************************************************************************
  *
@@ -738,8 +762,8 @@ CreateTrigStmt: CREATE TRIGGER name TriggerActionTime TriggerEvents ON
 				}
 		;
 
-TriggerActionTime:		BEFORE	{ $$ = true; }
-				|		AFTER	{ $$ = false; }
+TriggerActionTime:		BEFORE	{ $$ = TRUE; }
+				|		AFTER	{ $$ = FALSE; }
 		;
 
 TriggerEvents:	TriggerOneEvent
@@ -768,13 +792,13 @@ TriggerOneEvent:		INSERT	{ $$ = 'i'; }
 TriggerForSpec: FOR name name
 				{
 						if ( strcmp ($2, "each") != 0 )
-								elog (WARN, "parser: syntax error near %s", $2);
+								elog(WARN,"parser: syntax error near %s",$2);
 						if ( strcmp ($3, "row") == 0 )
-								$$ = true;
+								$$ = TRUE;
 						else if ( strcmp ($3, "statement") == 0 )
-								$$ = false;
+								$$ = FALSE;
 						else
-								elog (WARN, "parser: syntax error near %s", $3);
+								elog(WARN,"parser: syntax error near %s",$3);
 				}
 		;
 
@@ -821,61 +845,81 @@ def_rest:  def_name definition
 				{
 					$$ = makeNode(DefineStmt);
 					$$->defname = $1;
+#ifdef PARSEDEBUG
+printf("def_rest: defname is %s\n", $1);
+#endif
 					$$->definition = $2;
 				}
 		;
 
-def_type:  OPERATOR								{ $$ = OPERATOR; }
-		|  Type									{ $$ = P_TYPE; }
-		|  AGGREGATE							{ $$ = AGGREGATE; }
+def_type:  OPERATOR							{ $$ = OPERATOR; }
+			|  Type
+				{
+#ifdef PARSEDEBUG
+printf("def_type: decoding P_TYPE\n");
+#endif
+					$$ = P_TYPE;
+				}
+			|  AGGREGATE					{ $$ = AGGREGATE; }
 		;
 
-def_name:  Id	|  MathOp |  Op
+def_name:  PROCEDURE						{ $$ = "procedure"; }
+			|  Id							{ $$ = $1; }
+			|  MathOp						{ $$ = $1; }
+			|  Op							{ $$ = $1; }
 		;
 
-
-definition:  '(' def_list ')'					{ $$ = $2; }
+definition:  '(' def_list ')'				{ $$ = $2; }
 		;
 
-
-def_list:  def_elem
-				{ $$ = lcons($1, NIL); }
-		|  def_list ',' def_elem
-				{ $$ = lappend($1, $3); }
+def_list:  def_elem							{ $$ = lcons($1, NIL); }
+			|  def_list ',' def_elem		{ $$ = lappend($1, $3); }
 		;
 
 def_elem:  def_name '=' def_arg
 				{
+#ifdef PARSEDEBUG
+printf("def_elem: decoding %s =\n", $1);
+pprint($3);
+#endif
 					$$ = makeNode(DefElem);
 					$$->defname = $1;
 					$$->arg = (Node *)$3;
 				}
-		|  def_name
+			|  def_name
 				{
+#ifdef PARSEDEBUG
+printf("def_elem: decoding %s\n", $1);
+#endif
 					$$ = makeNode(DefElem);
 					$$->defname = $1;
 					$$->arg = (Node *)NULL;
 				}
-		|  DEFAULT '=' def_arg
+			|  DEFAULT '=' def_arg
 				{
+#ifdef PARSEDEBUG
+printf("def_elem: decoding DEFAULT =\n");
+pprint($3);
+#endif
 					$$ = makeNode(DefElem);
-					$$->defname = (char*) palloc (8);
-					strcpy ($$->defname, "default");
+					$$->defname = "default";
 					$$->arg = (Node *)$3;
 				}
 		;
 
-def_arg:  Id					{  $$ = (Node *)makeString($1); }
-		| all_Op				{  $$ = (Node *)makeString($1); }
-		| NumConst				{  $$ = (Node *)$1; /* already a Value */ }
-		| Sconst				{  $$ = (Node *)makeString($1); }
-		| SETOF Id				{
-								   TypeName *n = makeNode(TypeName);
-								   n->name = $2;
-								   n->setof = TRUE;
-								   n->arrayBounds = NULL;
-								   $$ = (Node *)n;
-								}
+def_arg:  Id							{  $$ = (Node *)makeString($1); }
+			| all_Op					{  $$ = (Node *)makeString($1); }
+			| NumConst					{  $$ = (Node *)$1; /* already a Value */ }
+			| Sconst					{  $$ = (Node *)makeString($1); }
+			| SETOF Id
+				{
+					TypeName *n = makeNode(TypeName);
+					n->name = $2;
+					n->setof = TRUE;
+					n->arrayBounds = NULL;
+					$$ = (Node *)n;
+				}
+			| DOUBLE					{  $$ = (Node *)makeString("double"); }
 		;
 
 
@@ -890,14 +934,14 @@ DestroyStmt:	DROP TABLE relation_name_list
 				{
 					DestroyStmt *n = makeNode(DestroyStmt);
 					n->relNames = $3;
-					n->sequence = false;
+					n->sequence = FALSE;
 					$$ = (Node *)n;
 				}
 		|		DROP SEQUENCE relation_name_list
 				{
 					DestroyStmt *n = makeNode(DestroyStmt);
 					n->relNames = $3;
-					n->sequence = true;
+					n->sequence = TRUE;
 					$$ = (Node *)n;
 				}
 		;
@@ -927,7 +971,7 @@ opt_direction:	FORWARD							{ $$ = FORWARD; }
 
 fetch_how_many:  Iconst
 			   { $$ = $1;
-				 if ($1 <= 0) elog(WARN,"Please specify nonnegative count for fetch"); }
+				 if ($1 <= 0) elog(WARN,"Please specify nonnegative count for fetch",NULL); }
 		|  ALL							{ $$ = 0; /* 0 means fetch all tuples*/}
 		|  /*EMPTY*/					{ $$ = 1; /*default*/ }
 		;
@@ -1129,7 +1173,7 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
 				{
 					RecipeStmt *n;
 					if (!IsTransactionBlock())
-						elog(WARN, "EXECUTE RECIPE may only be used in begin/end transaction blocks.");
+						elog(WARN,"EXECUTE RECIPE may only be used in begin/end transaction blocks",NULL);
 
 					n = makeNode(RecipeStmt);
 					n->recipeName = $3;
@@ -1299,7 +1343,7 @@ RemoveOperStmt:  DROP OPERATOR all_Op '(' oper_argtypes ')'
 
 all_Op: Op | MathOp;
 
-MathOp:    '+'			{ $$ = "+"; }
+MathOp:	'+'				{ $$ = "+"; }
 		|  '-'			{ $$ = "-"; }
 		|  '*'			{ $$ = "*"; }
 		|  '/'			{ $$ = "/"; }
@@ -1310,7 +1354,7 @@ MathOp:    '+'			{ $$ = "+"; }
 
 oper_argtypes:	name
 				{
-				   elog(WARN, "parser: argument type missing (use NONE for unary operators)");
+				   elog(WARN,"parser: argument type missing (use NONE for unary operators)",NULL);
 				}
 		| name ',' name
 				{ $$ = makeList(makeString($1), makeString($3), -1); }
@@ -1637,7 +1681,7 @@ VacuumStmt:  VACUUM opt_verbose opt_analyze
 					n->vacrel = $3;
 					n->va_spec = $5;
 					if ( $5 != NIL && !$4 )
-						elog (WARN, "parser: syntax error at or near \"(\"");
+						elog(WARN,"parser: syntax error at or near \"(\"",NULL);
 					$$ = (Node *)n;
 				}
 		;
@@ -1811,7 +1855,7 @@ CursorStmt:  DECLARE name opt_binary CURSOR FOR
 					 *							-- mao
 					 */
 					if (!IsTransactionBlock())
-						elog(WARN, "Named portals may only be used in begin/end transaction blocks.");
+						elog(WARN,"Named portals may only be used in begin/end transaction blocks",NULL);
 
 					n->portalname = $2;
 					n->binary = $3;
@@ -2077,7 +2121,7 @@ having_clause: HAVING a_expr					{ $$ = $2; }
  *
  *****************************************************************************/
 
-from_clause:  FROM '(' relation_expr join_clause relation_expr join_spec ')'
+from_clause:  FROM '(' relation_expr join_expr JOIN relation_expr join_spec ')'
 				{
 					$$ = NIL;
 					elog(WARN,"JOIN not yet implemented",NULL);
@@ -2114,29 +2158,21 @@ from_val:  relation_expr AS var_name
 				}
 		;
 
-join_clause:  join_qual join_type JOIN
-				{
-					$$ = NULL;
-				}
-		;
-
-join_qual:	NATURAL						{ $$ = TRUE; }
-		| /*EMPTY*/						{ $$ = FALSE; }
-		;
-
-join_type:	FULL join_outer
+join_expr:  NATURAL join_expr						{ $$ = NULL; }
+		| FULL join_outer
 				{ elog(WARN,"FULL OUTER JOIN not yet implemented",NULL); }
 		| LEFT join_outer
 				{ elog(WARN,"LEFT OUTER JOIN not yet implemented",NULL); }
 		| RIGHT join_outer
 				{ elog(WARN,"RIGHT OUTER JOIN not yet implemented",NULL); }
-		| join_outer
+		| OUTERJOIN
 				{ elog(WARN,"OUTER JOIN not yet implemented",NULL); }
 		| INNERJOIN
 				{ elog(WARN,"INNER JOIN not yet implemented",NULL); }
 		| UNION
 				{ elog(WARN,"UNION JOIN not yet implemented",NULL); }
-		| /*EMPTY*/						{ $$ = NULL;  /* no qualifiers */ }
+		| /*EMPTY*/
+				{ elog(WARN,"INNER JOIN not yet implemented",NULL); }
 		;
 
 join_outer:  OUTERJOIN					{ $$ = NULL; }
@@ -2280,8 +2316,14 @@ typname:  txname
 		;
 
 txname:  Id								{ $$ = $1; }
-		| TIME							{ $$ = "time"; }
-		| INTERVAL interval_opts		{ $$ = "interval"; }
+		| TIME							{ $$ = xlateSqlType("time"); }
+		| INTERVAL interval_opts		{ $$ = xlateSqlType("interval"); }
+		| CHARACTER char_type			{ $$ = $2; }
+		| DOUBLE PRECISION				{ $$ = xlateSqlType("float8"); }
+		;
+
+char_type:  VARYING						{ $$ = xlateSqlType("varchar"); }
+		| /*EMPTY*/						{ $$ = xlateSqlType("char"); }
 		;
 
 interval_opts:	YEARINTERVAL					{ $$ = lcons("year", NIL); }
@@ -2303,6 +2345,10 @@ Typename:  typname opt_array_bounds
 				{
 					$$ = $1;
 					$$->arrayBounds = $2;
+					if (!strcasecmp($1->name, "varchar"))
+					{
+						$$->typlen = 4 + 1;
+					}
 				}
 		| txname '(' Iconst ')'
 				{
@@ -2331,14 +2377,14 @@ Typename:  typname opt_array_bounds
 						else
 							yyerror("parse error");
 						if ($3 < 1)
-							elog(WARN, "length for '%s' type must be at least 1",$1);
+							elog(WARN,"length for '%s' type must be at least 1",$1);
 						else if ($3 > 4096)
 							/* we can store a char() of length up to the size
 							 * of a page (8KB) - page headers and friends but
 							 * just to be safe here...	- ay 6/95
 							 * XXX note this hardcoded limit - thomas 1997-07-13
 							 */
-							elog(WARN, "length for '%s' type cannot exceed 4096",$1);
+							elog(WARN,"length for '%s' type cannot exceed 4096",$1);
 
 						/* we actually implement this sort of like a varlen, so
 						 * the first 4 bytes is the length. (the difference
@@ -2577,22 +2623,136 @@ expr_list: a_expr_or_null
 				{ $$ = lappend($1, $3); }
 		;
 
-extract_list: datetime FROM a_expr
+extract_list: DateTime FROM a_expr
 				{
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
 					n->val.val.str = $1;
+#ifdef PARSEDEBUG
 printf( "string is %s\n", $1);
+#endif
 					$$ = lappend(lcons((Node *)n,NIL), $3);
 				}
 		| /* EMPTY */
 				{	$$ = NIL; }
 		;
 
-position_list: a_expr IN expr_list
-				{	$$ = lappend($3, $1); }
+position_list: position_expr IN position_expr
+				{	$$ = makeList($3, $1, -1); }
 		| /* EMPTY */
 				{	$$ = NIL; }
+		;
+
+position_expr:  attr opt_indirection
+				{
+					$1->indirection = $2;
+					$$ = (Node *)$1;
+				}
+		| AexprConst
+				{	$$ = $1;  }
+		| '-' position_expr %prec UMINUS
+				{	$$ = makeA_Expr(OP, "-", NULL, $2); }
+		| position_expr '+' position_expr
+				{	$$ = makeA_Expr(OP, "+", $1, $3); }
+		| position_expr '-' position_expr
+				{	$$ = makeA_Expr(OP, "-", $1, $3); }
+		| position_expr '/' position_expr
+				{	$$ = makeA_Expr(OP, "/", $1, $3); }
+		| position_expr '*' position_expr
+				{	$$ = makeA_Expr(OP, "*", $1, $3); }
+		| '|' position_expr
+				{	$$ = makeA_Expr(OP, "|", NULL, $2); }
+		| AexprConst TYPECAST Typename
+				{
+					/* AexprConst can be either A_Const or ParamNo */
+					if (nodeTag($1) == T_A_Const)
+						((A_Const *)$1)->typename = $3;
+					else
+						((ParamNo *)$1)->typename = $3;
+					$$ = (Node *)$1;
+				}
+		| CAST AexprConst AS Typename
+				{
+					/* AexprConst can be either A_Const or ParamNo */
+					if (nodeTag($2) == T_A_Const)
+						((A_Const *)$2)->typename = $4;
+					else
+						((ParamNo *)$2)->typename = $4;
+					$$ = (Node *)$2;
+				}
+		| '(' position_expr ')'
+				{	$$ = $2; }
+		| position_expr Op position_expr
+				{	$$ = makeA_Expr(OP, $2, $1, $3); }
+		| Op position_expr
+				{	$$ = makeA_Expr(OP, $1, NULL, $2); }
+		| position_expr Op
+				{	$$ = makeA_Expr(OP, $2, $1, NULL); }
+		| Id
+				{
+					/* could be a column name or a relation_name */
+					Ident *n = makeNode(Ident);
+					n->name = $1;
+					n->indirection = NULL;
+					$$ = (Node *)n;
+				}
+		| name '(' ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = $1;
+					n->args = NIL;
+					$$ = (Node *)n;
+				}
+		| POSITION '(' position_list ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "strpos";
+					n->args = $3;
+					$$ = (Node *)n;
+				}
+		| SUBSTRING '(' substr_list ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "substr";
+					n->args = $3;
+					$$ = (Node *)n;
+				}
+		/* various trim expressions are defined in SQL92 - thomas 1997-07-19 */
+		| TRIM '(' BOTH trim_list ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "btrim";
+					n->args = $4;
+					$$ = (Node *)n;
+				}
+		| TRIM '(' LEADING trim_list ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "ltrim";
+					n->args = $4;
+					$$ = (Node *)n;
+				}
+		| TRIM '(' TRAILING trim_list ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "rtrim";
+					n->args = $4;
+					$$ = (Node *)n;
+				}
+		| TRIM '(' trim_list ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "btrim";
+					n->args = $3;
+					$$ = (Node *)n;
+				}
+		| name '(' expr_list ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = $1;
+					n->args = $3;
+					$$ = (Node *)n;
+				}
 		;
 
 substr_list: expr_list substr_from substr_for
@@ -2667,7 +2827,7 @@ attrs:	  attr_name
 				{ $$ = lappend($1, makeString("*")); }
 		;
 
-datetime:  YEARINTERVAL							{ $$ = "year"; }
+DateTime:  YEARINTERVAL							{ $$ = "year"; }
 		| MONTHINTERVAL							{ $$ = "month"; }
 		| DAYINTERVAL							{ $$ = "day"; }
 		| HOURINTERVAL							{ $$ = "hour"; }
@@ -2796,7 +2956,7 @@ relation_name:	SpecialRuleRelation
 					   || strcmp(VariableRelationName, $1) == 0
 					   || strcmp(TimeRelationName, $1) == 0
 					   || strcmp(MagicRelationName, $1) == 0)
-						elog(WARN, "%s cannot be accessed by users", $1);
+						elog(WARN,"%s cannot be accessed by users",$1);
 					else
 						$$ = $1;
 					strNcpy(saved_relname, $1, NAMEDATALEN-1);
@@ -2857,7 +3017,7 @@ Sconst:  SCONST							{ $$ = $1; };
 Id:  IDENT								{ $$ = $1; };
 
 ColId:	Id								{ $$ = $1; }
-		| datetime						{ $$ = $1; }
+		| DateTime						{ $$ = $1; }
 		;
 
 SpecialRuleRelation:  CURRENT
@@ -2865,14 +3025,14 @@ SpecialRuleRelation:  CURRENT
 					if (QueryIsRule)
 						$$ = "*CURRENT*";
 					else
-						elog(WARN,"CURRENT used in non-rule query");
+						elog(WARN,"CURRENT used in non-rule query",NULL);
 				}
 		| NEW
 				{
 					if (QueryIsRule)
 						$$ = "*NEW*";
 					else
-						elog(WARN,"NEW used in non-rule query");
+						elog(WARN,"NEW used in non-rule query",NULL);
 				}
 		;
 
@@ -2892,6 +3052,9 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr)
 	return (Node *)a;
 }
 
+/* xlateSqlType()
+ * Convert alternate type names to internal Postgres types.
+ */
 static char *
 xlateSqlType(char *name)
 {
@@ -2911,9 +3074,108 @@ xlateSqlType(char *name)
 
 void parser_init(Oid *typev, int nargs)
 {
-	QueryIsRule = false;
+	QueryIsRule = FALSE;
 	saved_relname[0]= '\0';
 	saved_In_Expr = NULL;
 
 	param_type_init(typev, nargs);
 }
+
+/* FlattenStringList()
+ * Traverse list of string nodes and convert to a single string.
+ * Used for reconstructing string form of complex expressions.
+ */
+static char *
+FlattenStringList(List *list)
+{
+	List *l, *lp;
+	char *s;
+	char *sp;
+	int nlist, len = 1;
+
+	nlist = length(list);
+#ifdef PARSEDEBUG
+printf( "list has %d elements\n", nlist);
+#endif
+	l = list;
+	while(l != NIL) {
+		lp = lfirst(l);
+		sp = (char *)(lp->elem.ptr_value);
+		l = lnext(l);
+#ifdef PARSEDEBUG
+printf( "length of %s is %d\n", sp, strlen(sp));
+#endif
+		len += strlen(sp)+1;
+	};
+
+	s = (char*) palloc(len);
+	*s = '\0';
+
+	l = list;
+	while(l != NIL) {
+		lp = lfirst(l);
+		sp = (char *)(lp->elem.ptr_value);
+		l = lnext(l);
+#ifdef PARSEDEBUG
+printf( "length of %s is %d\n", sp, strlen(sp));
+#endif
+		strcat(s,sp);
+		strcat(s," ");
+	};
+	*(s+len-2) = '\0';
+
+#ifdef PARSEDEBUG
+printf( "flattened string is \"%s\"\n", s);
+#endif
+
+	return(s);
+} /* FlattenStringList() */
+
+/* makeConstantList()
+ * Convert constant value node into string node.
+ */
+static List *
+makeConstantList( A_Const *n)
+{
+	char *defval = NULL;
+#ifdef PARSEDEBUG
+printf( "in AexprConst\n");
+#endif
+	if (nodeTag(n) != T_A_Const) {
+		elog(WARN,"Cannot handle non-constant parameter",NULL);
+
+	} else if (n->val.type == T_Float) {
+#ifdef PARSEDEBUG
+printf( "AexprConst float is %f\n", n->val.val.dval);
+#endif
+		defval = (char*) palloc(20+1);
+		sprintf( defval, "%g", n->val.val.dval);
+
+	} else if (n->val.type == T_Integer) {
+#ifdef PARSEDEBUG
+printf( "AexprConst integer is %ld\n", n->val.val.ival);
+#endif
+		defval = (char*) palloc(20+1);
+		sprintf( defval, "%ld", n->val.val.ival);
+
+	} else if (n->val.type == T_String) {
+
+#ifdef PARSEDEBUG
+printf( "AexprConst string is \"%s\"\n", n->val.val.str);
+#endif
+
+		defval = (char*) palloc(strlen( ((A_Const *) n)->val.val.str) + 3);
+		strcpy( defval, "'");
+		strcat( defval, ((A_Const *) n)->val.val.str);
+		strcat( defval, "'");
+
+	} else {
+		elog(WARN,"Internal error: cannot encode node",NULL);
+	};
+
+#ifdef PARSEDEBUG
+printf( "AexprConst argument is \"%s\"\n", defval);
+#endif
+
+	return( lcons( makeString(defval), NIL));
+} /* makeConstantList() */
