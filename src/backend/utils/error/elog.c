@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.73 2000/12/06 17:25:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.74 2000/12/18 00:44:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,7 +159,7 @@ elog(int lev, const char *fmt, ...)
 		/* this is probably redundant... */
 		if (IsInitProcessingMode())
 			lev = FATAL;
-		if (StopIfError)
+		if (CritSectionCount > 0)
 			lev = STOP;
 	}
 
@@ -445,21 +445,26 @@ elog(int lev, const char *fmt, ...)
 	{
 
 		/*
+		 * For a FATAL error, we let proc_exit clean up and exit.
+		 *
 		 * If we have not yet entered the main backend loop (ie, we are in
-		 * the postmaster or in backend startup), then go directly to
+		 * the postmaster or in backend startup), we also go directly to
 		 * proc_exit.  The same is true if anyone tries to report an error
 		 * after proc_exit has begun to run.  (It's proc_exit's
 		 * responsibility to see that this doesn't turn into infinite
 		 * recursion!)	But in the latter case, we exit with nonzero exit
 		 * code to indicate that something's pretty wrong.
 		 */
-		if (proc_exit_inprogress || !Warn_restart_ready)
+		if (lev == FATAL || !Warn_restart_ready || proc_exit_inprogress)
 		{
+			/*
+			 * fflush here is just to improve the odds that we get to see
+			 * the error message, in case things are so hosed that proc_exit
+			 * crashes.  Any other code you might be tempted to add here
+			 * should probably be in an on_proc_exit callback instead.
+			 */
 			fflush(stdout);
 			fflush(stderr);
-			ProcReleaseSpins(NULL);		/* get rid of spinlocks we hold */
-			ProcReleaseLocks(); /* get rid of real locks we hold */
-			/* XXX shouldn't proc_exit be doing the above?? */
 			proc_exit((int) proc_exit_inprogress);
 		}
 
@@ -471,13 +476,8 @@ elog(int lev, const char *fmt, ...)
 		InError = true;
 
 		/*
-		 * Otherwise we can return to the main loop in postgres.c. In the
-		 * FATAL case, postgres.c will call proc_exit, but not till after
-		 * completing a standard transaction-abort sequence.
+		 * Otherwise we can return to the main loop in postgres.c.
 		 */
-		ProcReleaseSpins(NULL); /* get rid of spinlocks we hold */
-		if (lev == FATAL)
-			ExitAfterAbort = true;
 		siglongjmp(Warn_restart, 1);
 	}
 

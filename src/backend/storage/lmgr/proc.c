@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.86 2000/12/11 16:35:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.87 2000/12/18 00:44:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,8 @@
  *
  * Interface (b):
  *
- * ProcReleaseLocks -- frees the locks associated with this process,
+ * ProcReleaseLocks -- frees the locks associated with current transaction
+ *
  * ProcKill -- destroys the shared memory state (and locks)
  *		associated with the process.
  *
@@ -47,7 +48,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.86 2000/12/11 16:35:59 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.87 2000/12/18 00:44:47 tgl Exp $
  */
 #include "postgres.h"
 
@@ -332,7 +333,7 @@ GetOffWaitqueue(PROC *proc)
 }
 
 /*
- * ProcReleaseLocks() -- release all locks associated with this process
+ * ProcReleaseLocks() -- release all locks associated with current transaction
  *
  */
 void
@@ -340,7 +341,7 @@ ProcReleaseLocks()
 {
 	if (!MyProc)
 		return;
-	LockReleaseAll(1, &MyProc->lockQueue);
+	LockReleaseAll(DEFAULT_LOCKMETHOD, &MyProc->lockQueue);
 	GetOffWaitqueue(MyProc);
 }
 
@@ -423,8 +424,6 @@ ProcKill(int exitStatus, Datum pid)
 	 * ----------------
 	 */
 	GetOffWaitqueue(proc);
-
-	return;
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.75 2000/12/14 23:51:35 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.76 2000/12/18 00:44:48 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -28,6 +28,7 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/pg_database.h"
+#include "commands/trigger.h"
 #include "miscadmin.h"
 #include "storage/backendid.h"
 #include "storage/proc.h"
@@ -37,6 +38,7 @@
 #include "utils/portal.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
+#include "utils/temprel.h"
 
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
@@ -44,6 +46,9 @@
 
 static void ReverifyMyDatabase(const char *name);
 static void InitCommunication(void);
+static void ShutdownPostgres(void);
+
+int			lockingOff = 0;		/* backend -L switch */
 
 
 /*** InitPostgres support ***/
@@ -115,12 +120,8 @@ ReverifyMyDatabase(const char *name)
 	 */
 	dbform = (Form_pg_database) GETSTRUCT(tup);
 	if (! dbform->datallowconn)
-	{
-		heap_endscan(pgdbscan);
-		heap_close(pgdbrel, AccessShareLock);
 		elog(FATAL, "Database \"%s\" is not currently accepting connections",
 			 name);
-	}
 
 	/*
 	 * OK, we're golden.  Only other to-do item is to save the MULTIBYTE
@@ -163,6 +164,28 @@ InitCommunication(void)
 }
 
 
+/*
+ * Early initialization of a backend (either standalone or under postmaster).
+ * This happens even before InitPostgres.
+ */
+void
+BaseInit(void)
+{
+	/*
+	 * Attach to shared memory and semaphores, and initialize our
+	 * input/output/debugging file descriptors.
+	 */
+	InitCommunication();
+	DebugFileOpen();
+
+	/* Do local initialization of storage and buffer managers */
+	smgrinit();
+	InitBufferPoolAccess();
+	InitLocalBuffer();
+
+	EnablePortalManager();		/* memory for portal/transaction stuff */
+}
+
 
 /* --------------------------------
  * InitPostgres
@@ -172,16 +195,13 @@ InitCommunication(void)
  *		Be very careful with the order of calls in the InitPostgres function.
  * --------------------------------
  */
-int			lockingOff = 0;		/* backend -L switch */
-
-/*
- */
 void
 InitPostgres(const char *dbname, const char *username)
 {
 	bool		bootstrap = IsBootstrapProcessingMode();
 
 	SetDatabaseName(dbname);
+
 	/* ----------------
 	 *	initialize the database id used for system caches and lock tables
 	 * ----------------
@@ -299,6 +319,12 @@ InitPostgres(const char *dbname, const char *username)
 	 */
 	InitCatalogCache();
 
+	/*
+	 * Initialize the deferred trigger manager --- must happen before
+	 * first transaction start.
+	 */
+	DeferredTriggerInit();
+
 	/* start a new transaction here before access to db */
 	if (!bootstrap)
 		StartTransactionCommand();
@@ -322,27 +348,62 @@ InitPostgres(const char *dbname, const char *username)
 
 	/*
 	 * Unless we are bootstrapping, double-check that InitMyDatabaseInfo()
-	 * got a correct result.  We can't do this until essentially all the
-	 * infrastructure is up, so just do it at the end.
+	 * got a correct result.  We can't do this until all the database-access
+	 * infrastructure is up.
 	 */
 	if (!bootstrap)
 		ReverifyMyDatabase(dbname);
+
+#ifdef MULTIBYTE
+	/* set default client encoding --- uses info from ReverifyMyDatabase */
+	set_default_client_encoding();
+#endif
+
+	/*
+	 * Set up process-exit callbacks to remove temp relations and then
+	 * do pre-shutdown cleanup.  This should be last because we want
+	 * shmem_exit to call these routines before the exit callbacks that
+	 * are registered by buffer manager, lock manager, etc.  We need
+	 * to run this code before we close down database access!
+	 */
+	on_shmem_exit(ShutdownPostgres, 0);
+	/* because callbacks are called in reverse order, this gets done first: */
+	on_shmem_exit(remove_all_temp_relations, 0);
+
+	/* close the transaction we started above */
+	if (!bootstrap)
+		CommitTransactionCommand();
 }
 
-void
-BaseInit(void)
+/*
+ * Backend-shutdown callback.  Do cleanup that we want to be sure happens
+ * before all the supporting modules begin to nail their doors shut via
+ * their own callbacks.  Note that because this has to be registered very
+ * late in startup, it will not get called if we suffer a failure *during*
+ * startup.
+ *
+ * User-level cleanup, such as temp-relation removal and UNLISTEN, happens
+ * via separate callbacks that execute before this one.  We don't combine the
+ * callbacks because we still want this one to happen if the user-level
+ * cleanup fails.
+ */
+static void
+ShutdownPostgres(void)
 {
 	/*
-	 * Attach to shared memory and semaphores, and initialize our
-	 * input/output/debugging file descriptors.
+	 * These operations are really just a minimal subset of AbortTransaction().
+	 * We don't want to do any inessential cleanup, since that just raises
+	 * the odds of failure --- but there's some stuff we need to do.
+	 *
+	 * Release any spinlocks that we may hold.  This is a kluge to improve
+	 * the odds that we won't get into a self-made stuck spinlock scenario
+	 * while trying to shut down.
 	 */
-	InitCommunication();
-	DebugFileOpen();
-
-	smgrinit();
-
-	EnablePortalManager();		/* memory for portal/transaction stuff */
-
-	/* initialize the local buffer manager */
-	InitLocalBuffer();
+	ProcReleaseSpins(NULL);
+	/*
+	 * In case a transaction is open, delete any files it created.  This
+	 * has to happen before bufmgr shutdown, so having smgr register a
+	 * callback for it wouldn't work.
+	 */
+	smgrDoPendingDeletes(false); /* delete as though aborting xact */
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.194 2000/12/03 10:27:27 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.195 2000/12/18 00:44:47 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -61,7 +61,6 @@
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
-#include "utils/temprel.h"
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
@@ -95,7 +94,7 @@ DLLIMPORT sigjmp_buf Warn_restart;
 
 bool		Warn_restart_ready = false;
 bool		InError = false;
-bool		ExitAfterAbort = false;
+bool		ProcDiePending = false;
 
 static bool EchoQuery = false;	/* default don't echo */
 char		pg_pathname[MAXPGPATH];
@@ -921,7 +920,8 @@ finish_xact_command(void)
 void
 handle_warn(SIGNAL_ARGS)
 {
-	if (StopIfError)
+	/* Don't joggle the elbow of a critical section */
+	if (CritSectionCount > 0)
 	{
 		QueryCancel = true;
 		return;
@@ -958,13 +958,15 @@ die(SIGNAL_ARGS)
 {
 	PG_SETMASK(&BlockSig);
 
-	ExitAfterAbort = true;
-	if (StopIfError)
+	/* Don't joggle the elbow of a critical section */
+	if (CritSectionCount > 0)
 	{
 		QueryCancel = true;
+		ProcDiePending = true;
 		return;
 	}
-	if (InError)	/* If ERROR/FATAL is in progress... */
+	/* Don't joggle the elbow of proc_exit, either */
+	if (proc_exit_inprogress)
 		return;
 	elog(FATAL, "The system is shutting down");
 }
@@ -1096,6 +1098,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		MemoryContextInit();
 	}
 
+	SetProcessingMode(InitProcessing);
+
 	/*
 	 * Set default values for command-line options.
 	 */
@@ -1108,8 +1112,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		potential_DataDir = getenv("PGDATA");
 	}
 	StatFp = stderr;
-
-	SetProcessingMode(InitProcessing);
 
 	/* Check for PGDATESTYLE environment variable */
 	set_default_datestyle();
@@ -1428,11 +1430,16 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				break;
 		}
 
-
+	/*
+	 * Post-processing for command line options.
+	 *
+	 * XXX It'd be nice if libpq were already running here, so we could do
+	 * elog(NOTICE) instead of just writing on stderr...
+	 */
 	if (Show_query_stats &&
 		(Show_parser_stats || Show_planner_stats || Show_executor_stats))
 	{
-		elog(NOTICE, "Query statistics are disabled because parser, planner, or executor statistics are on.");
+		fprintf(stderr, "Query statistics are disabled because parser, planner, or executor statistics are on.\n");
 		Show_query_stats = false;
 	}
 
@@ -1528,7 +1535,13 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 
 		XLOGPathInit();
 		BaseInit();
+
+		/*
+		 * Start up xlog for standalone backend, and register to have it
+		 * closed down at exit.
+		 */
 		StartupXLOG();
+		on_shmem_exit(ShutdownXLOG, 0);
 	}
 
 	/*
@@ -1602,20 +1615,17 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 			 remote_host, username, DBName);
 
 	/*
-	 * general initialization
+	 * General initialization.
+	 *
+	 * NOTE: if you are tempted to add code in this vicinity, consider
+	 * putting it inside InitPostgres() instead.  In particular, anything
+	 * that involves database access should be there, not here.
 	 */
 	if (DebugLvl > 1)
 		elog(DEBUG, "InitPostgres");
 	InitPostgres(DBName, username);
 
-#ifdef MULTIBYTE
-	/* set default client encoding */
-	if (DebugLvl > 1)
-		elog(DEBUG, "set_default_client_encoding");
-	set_default_client_encoding();
-#endif
-
-	on_shmem_exit(remove_all_temp_relations, 0);
+	SetProcessingMode(NormalProcessing);
 
 	/*
 	 * Send this backend's cancellation info to the frontend.
@@ -1636,16 +1646,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.194 $ $Date: 2000/12/03 10:27:27 $\n");
+		puts("$Revision: 1.195 $ $Date: 2000/12/18 00:44:47 $\n");
 	}
-
-	/*
-	 * Initialize the deferred trigger manager
-	 */
-	if (DeferredTriggerInit() != 0)
-		goto normalexit;
-
-	SetProcessingMode(NormalProcessing);
 
 	/*
 	 * Create the memory context we will use in the main loop.
@@ -1671,6 +1673,10 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (sigsetjmp(Warn_restart, 1) != 0)
 	{
 		/*
+		 * NOTE: if you are tempted to add more code in this if-block,
+		 * consider the probability that it should be in AbortTransaction()
+		 * instead.
+		 *
 		 * Make sure we are in a valid memory context during recovery.
 		 *
 		 * We use ErrorContext in hopes that it will have some free space
@@ -1678,19 +1684,22 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		 */
 		MemoryContextSwitchTo(ErrorContext);
 
+		/* Do the recovery */
 		if (DebugLvl >= 1)
 			elog(DEBUG, "AbortCurrentTransaction");
 		AbortCurrentTransaction();
 
-		if (ExitAfterAbort)
-			goto errorexit;
-
 		/*
-		 * If we recovered successfully, return to normal top-level context
-		 * and clear ErrorContext for next time.
+		 * Now return to normal top-level context and clear ErrorContext
+		 * for next time.
 		 */
 		MemoryContextSwitchTo(TopMemoryContext);
 		MemoryContextResetAndDeleteChildren(ErrorContext);
+
+		/*
+		 * Clear flag to indicate that we got out of error recovery mode
+		 * successfully.  (Flag was set in elog.c before longjmp().)
+		 */
 		InError = false;
 	}
 
@@ -1775,7 +1784,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				if (HandleFunctionRequest() == EOF)
 				{
 					/* lost frontend connection during F message input */
-					goto normalexit;
+					proc_exit(0);
 				}
 
 				/* commit the function-invocation transaction */
@@ -1830,7 +1839,14 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				 */
 			case 'X':
 			case EOF:
-				goto normalexit;
+				/*
+				 * NOTE: if you are tempted to add more code here, DON'T!
+				 * Whatever you had in mind to do should be set up as
+				 * an on_proc_exit or on_shmem_exit callback, instead.
+				 * Otherwise it will fail to be called during other
+				 * backend-shutdown scenarios.
+				 */
+				proc_exit(0);
 
 			default:
 				elog(ERROR, "unknown frontend message was received");
@@ -1845,16 +1861,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 #endif
 	}							/* end of input-reading loop */
 
-normalexit:
-	ExitAfterAbort = true;		/* ensure we will exit if elog during abort */
-	AbortOutOfAnyTransaction();
-	if (!IsUnderPostmaster)
-		ShutdownXLOG();
-
-errorexit:
-	pq_close();
-	ProcReleaseLocks();			/* Just to be sure... */
-	proc_exit(0);
+	/* can't get here because the above loop never exits */
+	Assert(false);
 
 	return 1;					/* keep compiler quiet */
 }

@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.114 2000/11/29 20:59:51 tgl Exp $
+ *	$Id: pqcomm.c,v 1.115 2000/12/18 00:44:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,6 +85,9 @@
 #endif
 
 
+static void pq_close(void);
+
+
 /*
  * Configuration options
  */
@@ -122,6 +125,7 @@ pq_init(void)
 {
 	PqSendPointer = PqRecvPointer = PqRecvLength = 0;
 	DoingCopyOut = false;
+	on_proc_exit(pq_close, 0);
 }
 
 
@@ -132,7 +136,7 @@ pq_init(void)
  * don't crash during exit...
  * --------------------------------
  */
-void
+static void
 pq_close(void)
 {
 	if (MyProcPort != NULL)

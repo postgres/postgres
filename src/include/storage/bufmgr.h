@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.46 2000/11/30 08:46:26 vadim Exp $
+ * $Id: bufmgr.h,v 1.47 2000/12/18 00:44:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,6 +168,7 @@ extern Buffer ReleaseAndReadBuffer(Buffer buffer, Relation relation,
 extern int	FlushBuffer(Buffer buffer, bool sync, bool release);
 
 extern void InitBufferPool(void);
+extern void InitBufferPoolAccess(void);
 extern void PrintBufferUsage(FILE *statfp);
 extern void ResetBufferUsage(void);
 extern void ResetBufferPool(bool isCommit);

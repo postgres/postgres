@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.39 2000/11/30 01:39:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.40 2000/12/18 00:44:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,9 @@
 #include "utils/builtins.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
+
+
+static void ShutdownBufferPoolAccess(void);
 
 /*
  *	if BMTRACE is defined, we trace the last 200 buffer allocations and
@@ -73,7 +76,7 @@ bool		   *BufferDirtiedByMe;	/* T if buf has been dirtied in cur xact */
  *		Two important notes.  First, the buffer has to be
  *		available for lookup BEFORE an IO begins.  Otherwise
  *		a second process trying to read the buffer will
- *		allocate its own copy and the buffeer pool will
+ *		allocate its own copy and the buffer pool will
  *		become inconsistent.
  *
  * Buffer Replacement:
@@ -126,10 +129,10 @@ long int	LocalBufferFlushCount;
 
 
 /*
- * Initialize module: called once during shared-memory initialization
+ * Initialize shared buffer pool
  *
- * should calculate size of pool dynamically based on the
- * amount of available memory.
+ * This is called once during shared-memory initialization (either in the
+ * postmaster, or in a standalone backend).
  */
 void
 InitBufferPool(void)
@@ -144,6 +147,10 @@ InitBufferPool(void)
 	Lookup_List_Descriptor = Data_Descriptors + 1;
 	Num_Descriptors = Data_Descriptors + 1;
 
+	/*
+	 * It's probably not really necessary to grab the lock --- if there's
+	 * anyone else attached to the shmem at this point, we've got problems.
+	 */
 	SpinAcquire(BufMgrLock);
 
 #ifdef BMTRACE
@@ -203,12 +210,28 @@ InitBufferPool(void)
 		BufferDescriptors[Data_Descriptors - 1].freeNext = 0;
 	}
 
-	/* Init the rest of the module */
+	/* Init other shared buffer-management stuff */
 	InitBufTable();
 	InitFreeList(!foundDescs);
 
 	SpinRelease(BufMgrLock);
+}
 
+/*
+ * Initialize access to shared buffer pool
+ *
+ * This is called during backend startup (whether standalone or under the
+ * postmaster).  It sets up for this backend's access to the already-existing
+ * buffer pool.
+ */
+void
+InitBufferPoolAccess(void)
+{
+	int			i;
+
+	/*
+	 * Allocate and zero local arrays of per-buffer info.
+	 */
 	BufferBlockPointers = (Block *) calloc(NBuffers, sizeof(Block));
 	PrivateRefCount = (long *) calloc(NBuffers, sizeof(long));
 	BufferLocks = (bits8 *) calloc(NBuffers, sizeof(bits8));
@@ -224,6 +247,27 @@ InitBufferPool(void)
 	{
 		BufferBlockPointers[i] = (Block) MAKE_PTR(BufferDescriptors[i].data);
 	}
+
+	/*
+	 * Now that buffer access is initialized, set up a callback to shut it
+	 * down again at backend exit.
+	 */
+	on_shmem_exit(ShutdownBufferPoolAccess, 0);
+}
+
+/*
+ * Shut down buffer manager at backend exit.
+ *
+ * This is needed mainly to ensure that we don't leave any buffer reference
+ * counts set during an error exit.
+ */
+static void
+ShutdownBufferPoolAccess(void)
+{
+	/* Release any buffer context locks we are holding */
+	UnlockBuffers();
+	/* Release any buffer reference counts we are holding */
+	ResetBufferPool(false);
 }
 
 /* -----------------------------------------------------

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: trigger.h,v 1.21 2000/06/08 22:37:42 momjian Exp $
+ * $Id: trigger.h,v 1.22 2000/12/18 00:44:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ typedef struct DeferredTriggerEventData
 typedef struct DeferredTriggerEventData *DeferredTriggerEvent;
 
 
-extern int	DeferredTriggerInit(void);
+extern void DeferredTriggerInit(void);
 extern void DeferredTriggerBeginXact(void);
 extern void DeferredTriggerEndQuery(void);
 extern void DeferredTriggerEndXact(void);

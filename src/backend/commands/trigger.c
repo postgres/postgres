@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.81 2000/11/20 20:36:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.82 2000/12/18 00:44:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1432,7 +1432,7 @@ deferredTriggerInvokeEvents(bool immediate_only)
  *	transactions.
  * ----------
  */
-int
+void
 DeferredTriggerInit(void)
 {
 	deftrig_gcxt = AllocSetContextCreate(TopMemoryContext,
@@ -1440,8 +1440,6 @@ DeferredTriggerInit(void)
 										 ALLOCSET_DEFAULT_MINSIZE,
 										 ALLOCSET_DEFAULT_INITSIZE,
 										 ALLOCSET_DEFAULT_MAXSIZE);
-
-	return 0;
 }
 
 
