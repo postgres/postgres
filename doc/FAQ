@@ -811,19 +811,17 @@ Type            Internal Name   Notes
 "char"          char            1 character
 CHAR(#)         bpchar          blank padded to the specified fixed length
 VARCHAR(#)      varchar         size specifies maximum length, no padding
-TEXT            text            length limited only by maximum row length
-BYTEA           bytea           variable-length array of bytes
+TEXT            text            no specific upper limit on length
+BYTEA           bytea           variable-length byte array (null-safe)
 
    You will see the internal name when examining system catalogs and in
    some error messages.
    
    The last four types above are "varlena" types (i.e., the first four
-   bytes are the length, followed by the data). char(#) allocates the
-   maximum number of bytes no matter how much data is stored in the
-   field. text, varchar(#), and bytea all have variable length on the
-   disk, and because of this, there is a small performance penalty for
-   using them. Specifically, the penalty is for access to all columns
-   after the first column of this type.
+   bytes on disk are the length, followed by the data).  Thus the actual
+   space used is slightly greater than the declared size.  However, these
+   data types are also subject to compression or being stored out-of-line
+   by TOAST, so the space on disk might also be less than expected.
    
     4.16.1) How do I create a serial/auto-incrementing field?
     
