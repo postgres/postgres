@@ -22,9 +22,9 @@ Overview
 
    Table Functions
 
-           Functions can now return entire tables, with multiple rows
-           and multiple columns.  You can specify these functions in
-           the SELECT FROM clause.
+           Functions can now return sets, with multiple rows
+           and multiple columns.  You specify these functions in
+           the SELECT FROM clause, similar to a table or view.
 
    Privileges
 
@@ -274,6 +274,9 @@ Add OVERLAY(), which allows substitution of a substring in a string (Thomas)
 Add SIMILAR TO as a synonym for our existing operator "~" (Thomas)
 Add regular expression SUBSTRING(string FROM pat FOR escape) (Thomas)
 Add LOCALTIME and LOCALTIMESTAMP functions (Thomas)
+Add named composite types using CREATE TYPE typename AS (column) (Joe)
+Allow composite type definition in the table alias clause (Joe)
+Add new API to simplify creation of C language table functions (Joe)
 Remove ODBC-compatible empty parentheses from calls to SQL99 functions
  for which these parentheses do not match the standar (Thomas)
 Add appendix in the User's Guide which lists SQL92 features (Thomas)
