@@ -7,6 +7,7 @@ extern		"C"
 
 	void		ECPGdebug(int, FILE *);
 	bool		ECPGstatus(int, const char *);
+	bool		ECPGsetcommit(int, const char *, const char *);
 	bool		ECPGsetconn(int, const char *);
 	bool		ECPGconnect(int, const char *, const char *, const char *, const char *, int);
 	bool		ECPGdo(int, const char *, char *,...);

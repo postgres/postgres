@@ -544,5 +544,17 @@ Mon Mar 22 19:22:38 CET 1999
 
 	- Fixed incorrect password entry in parser.
 	- Made no_auto_trans available for each connection seperately.
+
+Sat Apr 10 20:10:50 CEST 1999
+
+	- Allow ecpg handle a floating point constants.
+	- Fix ecpg runtime library memory leak (patch by Masaaki Sakaida).
+
+Mon Apr 12 17:56:14 CEST 1999
+
+	- Fixed ECPG variable handling.
+	- Make no_auto_trans be accessible via SET command.
+	- Do not eat comments so line numbering should be correct.
 	- Set library version to 3.0.0
 	- Set ecpg version to 2.6.0
+

@@ -178,17 +178,18 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 %%
 <SQL>{comment}		{ /* ignore */ }
 
-{xcline}		{ /* ignore */ }
+{xcline}		{ ECHO; }
 
-<xc>{xcstar}		{ /* ignore */ }
+<xc>{xcstar}		{ ECHO; }
 {xcstart}		{
 				before_comment = YYSTATE;
+				ECHO;
 	 			BEGIN(xc);
 			}
 
-<xc>{xcstop}	{ BEGIN(before_comment); }
+<xc>{xcstop}	{ ECHO; BEGIN(before_comment); }
 
-<xc>{xcinside}	{ /* ignore */ }
+<xc>{xcinside}	{ ECHO; }
 
 <SQL>{xbstart}		{
 					BEGIN(xb);
@@ -376,7 +377,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 						}
 					}
 				}
-<SQL>{integer}/{space}*-{number}	{
+<C,SQL>{integer}/{space}*-{number}	{
 					char* endptr;
 
 					BEGIN(xm);
@@ -393,7 +394,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					}
 					return ICONST;
 				}
-<SQL>{real}/{space}*-{number} {
+<C,SQL>{real}/{space}*-{number} {
 					char* endptr;
 
 					BEGIN(xm);
@@ -403,7 +404,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 						yyerror("ERROR: Bad float8 input");
 					return FCONST;
 				}
-<SQL>{integer}		{
+<C,SQL>{integer}		{
 					char* endptr;
 
 					errno = 0;
@@ -419,7 +420,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					}
 					return ICONST;
 				}
-<SQL>{real}			{
+<C,SQL>{real}			{
 					char* endptr;
 
 					errno = 0;
@@ -427,39 +428,6 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					if (*endptr != '\0' || errno == ERANGE)
 						yyerror("ERROR: Bad float input");
 					return FCONST;
-				}
-<C>{integer}/{space}*-{number}	{
-					char* endptr;
-
-					BEGIN(xm);
-					errno = 0;
-					yylval.ival = strtol((char *)yytext,&endptr,10);
-					if (*endptr != '\0' || errno == ERANGE)
-					{
-						errno = 0;
-						yylval.dval = strtod(((char *)yytext),&endptr);
-						if (*endptr != '\0' || errno == ERANGE)
-							yyerror("ERROR: Bad integer input");
-						yyerror("WARNING: Integer input is out of range; promoted to float");
-						return FCONST;
-					}
-					return ICONST;
-				}
-<C>{integer}		{
-					char* endptr;
-
-					errno = 0;
-					yylval.ival = strtol((char *)yytext,&endptr,10);
-					if (*endptr != '\0' || errno == ERANGE)
-					{
-						errno = 0;
-						yylval.dval = strtod(((char *)yytext),&endptr);
-						if (*endptr != '\0' || errno == ERANGE)
-							yyerror("ERROR: Bad integer input");
-						yyerror("WARNING: Integer input is out of range; promoted to float");
-						return FCONST;
-					}
-					return ICONST;
 				}
 <SQL>:{identifier}(("->"|\.){identifier})*	{
 					yylval.str = mm_strdup((char*)yytext+1);

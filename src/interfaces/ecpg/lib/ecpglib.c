@@ -370,6 +370,34 @@ create_statement(int lineno, struct connection *connection, struct statement ** 
 	return (true);
 }
 
+static void
+free_variable(struct variable *var)
+{
+	struct variable	*var_next;
+
+	if( var == (struct variable *)NULL ) 
+		return; 
+	var_next = var->next;
+	free(var);
+
+	while(var_next)
+	{
+		var = var_next;
+		var_next = var->next;
+		free(var);
+	}
+}
+
+static void
+free_statement(struct statement *stmt)
+{
+	if( stmt == (struct statement *)NULL ) 
+		return;
+	free_variable(stmt->inlist);
+	free_variable(stmt->outlist);
+	free(stmt);
+}
+
 static char *
 next_insert(char *text)
 {
@@ -981,7 +1009,6 @@ ECPGexecute(struct statement * stmt)
 					status = false;
 				}
 
-				PQclear(results);
 				break;
 			case PGRES_EMPTY_QUERY:
 				/* do nothing */
@@ -1017,6 +1044,7 @@ ECPGexecute(struct statement * stmt)
 				status = false;
 				break;
 		}
+		PQclear(results);
 	}
 
 	/* check for asynchronous returns */
@@ -1037,10 +1065,11 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 	va_list		args;
 	struct statement *stmt;
 	struct connection *con = get_connection(connection_name);
+	bool		status;
 
 	if (con == NULL)
 	{
-		register_error(ECPG_NO_CONN, "No such connection %s in line %d.", connection_name, lineno);
+		register_error(ECPG_NO_CONN, "No such connection %s in line %d.", connection_name ? connection_name : "NULL", lineno);
 		return (false);
 	}
 		
@@ -1057,7 +1086,9 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 		return false;
 	}
 
-	return (ECPGexecute(stmt));
+	status = ECPGexecute(stmt);
+	free_statement(stmt);
+	return (status);
 }
 
 bool
@@ -1067,7 +1098,7 @@ ECPGstatus(int lineno, const char *connection_name)
 
 	if (con == NULL)
 	{
-		register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name, lineno);
+		register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name ? connection_name : "NULL", lineno);
 		return (false);
 	}
 		
@@ -1090,7 +1121,7 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 	
 	if (con == NULL)
 	{
-		register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name, lineno);
+		register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name ? connection_name : "NULL", lineno);
 		return (false);
 	}
 
@@ -1126,6 +1157,52 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 }
 
 bool
+ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
+{
+	struct connection *con = get_connection(connection_name);
+	PGresult   *results;
+
+	if (con)
+	{
+		if (con->no_auto_trans == true && strncmp(mode, "ON", strlen("ON")) == 0)
+		{
+			if (con->committed)
+			{
+				if ((results = PQexec(con->connection, "begin transaction")) == NULL)
+				{
+					register_error(ECPG_TRANS, "Error in transaction processing line %d.", lineno);
+					return false;
+				}
+				PQclear(results);
+				con->committed = false;
+			}
+			con->no_auto_trans = false;
+		}
+		else if (con->no_auto_trans == false && strncmp(mode, "OFF", strlen("OFF")) == 0)
+		{
+			if (!con->committed)
+			{
+				if ((results = PQexec(con->connection, "commit")) == NULL)
+				{
+					register_error(ECPG_TRANS, "Error in transaction processing line %d.", lineno);
+					return false;
+				}
+				PQclear(results);
+				con->committed = true;
+			}
+			con->no_auto_trans = true;
+		}
+	}
+	else
+	{
+		register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name ? connection_name : "NULL", lineno);
+		return false;
+	}
+	
+	return true;
+}
+
+bool
 ECPGsetconn(int lineno, const char *connection_name)
 {
 	struct connection *con = get_connection(connection_name);
@@ -1137,7 +1214,7 @@ ECPGsetconn(int lineno, const char *connection_name)
 	}
 	else
 	{
-		register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name, lineno);
+		register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name ? connection_name : "NULL", lineno);
 		return false;
 	}
 }
@@ -1207,8 +1284,8 @@ ECPGdisconnect(int lineno, const char *connection_name)
 		
 		if (con == NULL)
 		{
-			ECPGlog("disconnect: not connected to connection %s\n", connection_name);
-			register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name, lineno);
+			ECPGlog("disconnect: not connected to connection %s\n", connection_name ? connection_name : "NULL");
+			register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name ? connection_name : "NULL", lineno);
 			return false;
 		}
 		else
