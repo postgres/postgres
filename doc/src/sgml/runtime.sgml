@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.239 2004/02/17 05:45:17 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.240 2004/02/17 06:28:05 neilc Exp $
 -->
 
 <Chapter Id="runtime">
@@ -992,83 +992,107 @@ SET ENABLE_SEQSCAN TO OFF;
     </sect3>
 
     <sect3 id="runtime-config-resource-vacuum-cost">
-     <title>Cost Based Vacuum Delay</title>
+     <title>Cost-Based Vacuum Delay</title>
+
+     <para>
+      During the execution of <command>VACUUM</command>,
+      <command>VACUUM FULL</command> and <command>ANALYZE</command>,
+      the system mantains an internal counter that keeps track of the
+      cost of the various I/O operations that are performed. When the
+      accumulated cost reaches a limit
+      (specified by <varname>vacuum_cost_limit</varname>), the backend performing
+      the operation will sleep for a while (specified by
+      <varname>vacuum_cost_naptime</varname>). Then it will reset the
+      counter and continue execution.
+     </para>
+
+     <para>
+      The intent of this feature is to allow administrators the reduce
+      the I/O impact of these commands on concurrent database
+      activity. There are some situations in which it is not very
+      important that maintainence commands like
+      <command>VACUUM</command> and <command>ANALYZE</command> finish
+      quickly; however, it is usually very important these these
+      commands do not significantly interfere with the ability of the
+      system to perform other database operations. Cost-based vacuum
+      delay provides a way for administrators to achieve this.
+     </para>
+
+     <para>
+      This feature is disabled by default. To enable it, set the
+      <varname>vacuum_cost_naptime</varname> variable to a reasonable
+      value.
+     </para>
 
      <variablelist>
-     <varlistentry>
-      <term><varname>vacuum_cost_page_hit</varname> (<type>integer</type>)</term>
-      <listitem>
-       <para>
-		During a default <command>VACUUM</command> (not
-		<command>FULL</command>) the system maintains and internal counter
-		accumulating the cost of various operations performed. When the
-		accumulated cost reaches a limit, the backend performing the
-		<command>VACUUM</command> will sleep for a while, reset the
-		accumulator and continue. The intention is to lower the IO impact
-		of <command>VACUUM</command>.
-	   </para>
+      <varlistentry>
+       <term><varname>vacuum_cost_page_hit</varname> (<type>integer</type>)</term>
+       <listitem>
+        <para>
+         The cost for vacuuming a buffer found in the shared buffer
+         cache. It represents the cost to lock the buffer pool, lookup
+         the shared hash table and scan the content of the page. The
+         default value is 1.
+        </para>
+       </listitem>
+      </varlistentry>
 
-	   <para>
-		The variable <varname>vacuum_cost_page_hit</varname> is the cost
-		for vacuuming a buffer found inside the shared buffer cache. 
-		It represents the cost to lock the buffer pool, lookup the 
-		shared hash table and to actually scan the block content.
-       </para>
-      </listitem>
-     </varlistentry>
+      <varlistentry>
+       <term><varname>vacuum_cost_page_miss</varname> (<type>integer</type>)</term>
+       <listitem>
+        <para>
+         The cost for vacuuming a buffer that has to be read from
+         disk.  This represents the effort to lock the buffer pool,
+         lookup the shared hash table, read the desired block in from
+         the disk and scan its content. The default value is 10.
+        </para>
+       </listitem>
+      </varlistentry>
 
-     <varlistentry>
-      <term><varname>vacuum_cost_page_miss</varname> (<type>integer</type>)</term>
-      <listitem>
-       <para>
-		The cost for vacuuming a buffer that has to be read from disk.
-		This represents the effort to lock the buffer pool, lookup the
-		cache directory, reading the block from disk and scanning the
-		content.
-       </para>
-      </listitem>
-     </varlistentry>
+      <varlistentry>
+       <term><varname>vacuum_cost_page_dirty</varname> (<type>integer</type>)</term>
+       <listitem>
+        <para>
+         The extra cost added when vacuum modifies a block that was
+         previously clean. It represents the extra I/O required to
+         flush the dirty block out to disk again. The default value is
+         20.
+        </para>
+       </listitem>
+      </varlistentry>
 
-     <varlistentry>
-      <term><varname>vacuum_cost_page_dirty</varname> (<type>integer</type>)</term>
-      <listitem>
-       <para>
-		This extra cost is added when vacuum modifies a block that was
-		clean before. It represents the extra IO required to flush the
-		dirty block out to disk again.
-       </para>
-      </listitem>
-     </varlistentry>
+      <varlistentry>
+       <term><varname>vacuum_cost_limit</varname> (<type>integer</type>)</term>
+       <listitem>
+        <para>
+         The accumulated cost that will cause the backend to briefly
+         nap. The default value is 200.
+        </para>
+       </listitem>
+      </varlistentry>
 
-     <varlistentry>
-      <term><varname>vacuum_cost_limit</varname> (<type>integer</type>)</term>
-      <listitem>
-       <para>
-	    This is the cost limit that must be reached or exceeded before
-		the <command>VACUUM</command> will nap.
-       </para>
-      </listitem>
-     </varlistentry>
+      <varlistentry>
+       <term><varname>vacuum_cost_naptime</varname> (<type>integer</type>)</term>
+       <listitem>
+        <para>
+         The length of time in milliseconds that a backend will nap
+         when the cost limit has been exceeded. There are certain bulk
+         operations that hold critical locks and should therefore
+         complete as quickly as possible. Because of that it is
+         possible that the cost actually accumulates far higher than
+         this limit. To compensate for this, the final naptime is
+         calculated as <varname>vacuum_cost_naptime</varname> *
+         <varname>accumulated_balance</varname> /
+         <varname>vacuum_cost_limit</varname> with a maximum of
+         <varname>vacuum_cost_naptime</varname> * 4.
+        </para>
 
-     <varlistentry>
-      <term><varname>vacuum_cost_naptime</varname> (<type>integer</type>)</term>
-      <listitem>
-       <para>
-		The time im milliseconds the <command>VACUUM</command> will
-		nap when the cost limit has been reached or exceeded.
-		There are certain bulk operations that hold critical
-		locks and should therefore perform
-		as quickly as possible. Because of that it is possible that the
-		cost actually accumulates far higher than this limit. To compensate
-		for this, the final naptime is calculated as
-		<varname>vacuum_cost_naptime</varname> * 
-		<varname>accumulated_balance</varname> /
-		<varname>vacuum_cost_limit</varname> with a maximum of
-		<varname>vacuum_cost_naptime</varname> * 4.
-       </para>
-      </listitem>
-     </varlistentry>
-
+        <para>
+         The default value is 0, which disables the cost-based vacuum
+         delay feature.
+        </para>
+       </listitem>
+      </varlistentry>
      </variablelist>
     </sect3>
    </sect2>
