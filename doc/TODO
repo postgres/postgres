@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue May 22 15:38:00 EDT 2001
+Last updated:		Tue May 22 20:42:09 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -16,12 +16,7 @@ http://www.postgresql.org/docs/todo.html.
 RELIABILITY
 -----------
 
-PARSER
-
 * -SELECT pg_class FROM pg_class generates strange error
-
-MISC
-
 * PL/PgSQL does not handle quoted mixed-case identifiers
 
 ENHANCEMENTS
