@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  *
- *	  $Id: guc_tables.h,v 1.2 2003/07/27 04:35:54 momjian Exp $
+ *	  $Id: guc_tables.h,v 1.3 2003/07/28 16:22:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,8 @@ enum config_group
 
 /*
  * GUC supports these types of variables:
+ *
+ * Keep in sync with config_type_name in guc.c
  */
 enum config_type
 {

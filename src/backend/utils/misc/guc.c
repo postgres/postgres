@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.141 2003/07/28 00:09:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.142 2003/07/28 16:22:02 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -156,7 +156,7 @@ static char *XactIsoLevel_string;
 
 
 /*
- * Used for pg_settings. Keep in sync with config_type enum above
+ * Used for pg_settings. Keep in sync with config_type enum in guc_tables.h
  */
 static char *config_type_name[] = 
 {
@@ -176,6 +176,7 @@ static char *GucContextName[] =
 	"sighup",
 	"backend",
 	"super-user",
+	"userlimit",
 	"user"
 };
 
@@ -188,6 +189,7 @@ static char *GucSourceName[] =
 	"environment variable",
 	"configuration file",
 	"command line",
+	"userstart",
 	"database",
 	"user",
 	"client",
