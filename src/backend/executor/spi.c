@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.107 2003/10/01 21:30:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.107.2.1 2005/02/10 20:37:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -841,7 +841,7 @@ SPI_cursor_open(const char *name, void *plan, Datum *Values, const char *Nulls)
 	 * Set up options for portal.
 	 */
 	portal->cursorOptions &= ~(CURSOR_OPT_SCROLL | CURSOR_OPT_NO_SCROLL);
-	if (ExecSupportsBackwardScan(plan))
+	if (ExecSupportsBackwardScan(planTree))
 		portal->cursorOptions |= CURSOR_OPT_SCROLL;
 	else
 		portal->cursorOptions |= CURSOR_OPT_NO_SCROLL;
