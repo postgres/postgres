@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue May 28 20:36:36 EDT 2002
+Last updated:		Sat Jun  1 15:52:53 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -161,8 +161,8 @@ Indexes
 * Improve handling of index scans for NULL
 * Allow SELECT * FROM tab WHERE int2col = 4 to use int2col index, int8,
   float4, numeric/decimal too [optimizer]
+* Add FILLFACTOR to btree index creation
 * Improve concurrency in GIST
-* Add FILLFACTOR to index creation
 * Improve concurrency of hash indexes (Neil Conway)
 * Test hash index performance and recommend or discourage usage
 
