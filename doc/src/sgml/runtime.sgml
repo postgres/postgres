@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.183 2003/06/11 18:01:13 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.184 2003/06/11 22:13:21 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1299,6 +1299,22 @@ SET ENABLE_SEQSCAN TO OFF;
     <title>General Operation</title>
 
     <variablelist>
+     <varlistentry>
+      <term><varname>ADD_MISSING_FROM</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        This parameter controls whether a relation referenced in a query but
+        missing from the FROM clause should be automatically added to
+        the FROM clause. If enabled (the default), the notice
+        <literal>Adding missing FROM-clause entry for table "tablename"</literal>
+        is generated if a relation is automatically added. If not enabled,
+        an error is raised when an additional extra relation is required.
+        For SQL standards compliance, this value should be set to 
+        <literal>false</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry>
       <term><varname>AUSTRALIAN_TIMEZONES</varname> (<type>boolean</type>)</term>
       <indexterm><primary>Australian time zones</></>

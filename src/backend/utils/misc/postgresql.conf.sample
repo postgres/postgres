@@ -208,3 +208,4 @@
 #statement_timeout = 0		# 0 is disabled, in milliseconds
 #db_user_namespace = false
 #preload_libraries = ''
+#add_missing_from = true

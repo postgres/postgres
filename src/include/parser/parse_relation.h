@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_relation.h,v 1.39 2002/09/04 20:31:45 momjian Exp $
+ * $Id: parse_relation.h,v 1.40 2003/06/11 22:13:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,8 @@
 #define PARSE_RELATION_H
 
 #include "parser/parse_node.h"
+
+extern bool add_missing_from;
 
 extern RangeTblEntry *refnameRangeTblEntry(ParseState *pstate,
 					 const char *schemaname,

@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.78 2003/06/11 18:01:14 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.79 2003/06/11 22:13:22 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -492,6 +492,7 @@ psql_completion(char *text, int start, int end)
 		 * the rest should match USERSET and possibly SUSET entries in
 		 * backend/utils/misc/guc.c.
 		 */
+		"add_missing_from",
 		"australian_timezones",
 		"client_encoding",
 		"client_min_messages",

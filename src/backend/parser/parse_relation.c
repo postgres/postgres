@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.81 2003/04/29 22:13:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.82 2003/06/11 22:13:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,8 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
+/* GUC parameter */
+bool add_missing_from;
 
 static Node *scanNameSpaceForRefname(ParseState *pstate, Node *nsnode,
 						const char *refname);
@@ -1861,7 +1863,14 @@ warnAutoRange(ParseState *pstate, RangeVar *relation)
 		}
 	}
 	if (foundInFromCl)
-		elog(NOTICE, "Adding missing FROM-clause entry%s for table \"%s\"",
-			 pstate->parentParseState != NULL ? " in subquery" : "",
-			 relation->relname);
+	{
+		if (add_missing_from)
+			elog(NOTICE, "Adding missing FROM-clause entry%s for table \"%s\"",
+				 pstate->parentParseState != NULL ? " in subquery" : "",
+				 relation->relname);
+		else
+			elog(ERROR, "Missing FROM-clause entry%s for table \"%s\"",
+				 pstate->parentParseState != NULL ? " in subquery" : "",
+				 relation->relname);
+	}
 }
