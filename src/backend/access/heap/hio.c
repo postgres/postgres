@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Id: hio.c,v 1.5 1996/10/21 05:59:46 scrappy Exp $
+ *    $Id: hio.c,v 1.6 1996/10/31 08:28:52 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "catalog/pg_attribute.h"
 #include "access/attnum.h"
+#include "nodes/nodes.h"
 #include "nodes/pg_list.h"
 #include "access/tupdesc.h"
 #include "storage/fd.h"
@@ -39,6 +40,7 @@
 #include "storage/itemid.h"
 #include "storage/item.h"
 #include "storage/off.h"
+#include "storage/page.h"
 #include "storage/bufpage.h"
 
 #include "utils/tqual.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.5 1996/10/21 05:59:44 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.6 1996/10/31 08:28:51 scrappy Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -77,6 +77,7 @@
 
 #include "catalog/pg_attribute.h"
 #include "access/attnum.h"
+#include "nodes/nodes.h"
 #include "nodes/pg_list.h"
 #include "access/tupdesc.h"
 #include "storage/fd.h"
@@ -102,6 +103,7 @@
 #include "storage/itemid.h"
 
 #include "storage/item.h"
+#include "storage/page.h"
 #include "storage/bufpage.h"
 
 #include "access/heapam.h"
