@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.150 2004/07/21 22:31:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.151 2004/07/22 20:18:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -432,7 +432,7 @@ static bool InstallXLogFileSegment(uint32 log, uint32 seg, char *tmppath,
 static int	XLogFileOpen(uint32 log, uint32 seg);
 static int	XLogFileRead(uint32 log, uint32 seg, int emode);
 static bool RestoreArchivedFile(char *path, const char *xlogfname,
-								const char *recovername);
+								const char *recovername, off_t expectedSize);
 static void PreallocXlogFiles(XLogRecPtr endptr);
 static void MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr);
 static XLogRecord *ReadRecord(XLogRecPtr *RecPtr, int emode, char *buffer);
@@ -1838,7 +1838,8 @@ XLogFileRead(uint32 log, uint32 seg, int emode)
 		{
 			XLogFileName(xlogfname, tli, log, seg);
 			restoredFromArchive = RestoreArchivedFile(path, xlogfname,
-													  "RECOVERYXLOG");
+													  "RECOVERYXLOG",
+													  XLogSegSize);
 		}
 		else
 			XLogFilePath(path, tli, log, seg);
@@ -1876,10 +1877,14 @@ XLogFileRead(uint32 log, uint32 seg, int emode)
  * If not successful, fill "path" with the name of the normal on-line file
  * (which may or may not actually exist, but we'll try to use it), and return
  * FALSE.
+ *
+ * For fixed-size files, the caller may pass the expected size as an
+ * additional crosscheck on successful recovery.  If the file size is not
+ * known, set expectedSize = 0.
  */
 static bool
 RestoreArchivedFile(char *path, const char *xlogfname,
-					const char *recovername)
+					const char *recovername, off_t expectedSize)
 {
 	char xlogpath[MAXPGPATH];
 	char xlogRestoreCmd[MAXPGPATH];
@@ -1991,19 +1996,42 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	rc = system(xlogRestoreCmd);
 	if (rc == 0)
 	{
-		/* restore success ... assuming file is really there now ... */
-		if (stat(xlogpath, &stat_buf) == 0) {
-			ereport(LOG,
-					(errmsg("restored log file \"%s\" from archive",
-							xlogfname)));
-			strcpy(path, xlogpath);
-			return true;
+		/*
+		 * command apparently succeeded, but let's make sure the file is
+		 * really there now and has the correct size.
+		 *
+		 * XXX I made wrong-size a fatal error to ensure the DBA would
+		 * notice it, but is that too strong?  We could try to plow ahead
+		 * with a local copy of the file ... but the problem is that there
+		 * probably isn't one, and we'd incorrectly conclude we've reached
+		 * the end of WAL and we're done recovering ...
+		 */
+		if (stat(xlogpath, &stat_buf) == 0)
+		{
+			if (expectedSize > 0 && stat_buf.st_size != expectedSize)
+				ereport(FATAL,
+						(errmsg("archive file \"%s\" has wrong size: %lu instead of %lu",
+								xlogfname,
+								(unsigned long) stat_buf.st_size,
+								(unsigned long) expectedSize)));
+			else
+			{
+				ereport(LOG,
+						(errmsg("restored log file \"%s\" from archive",
+								xlogfname)));
+				strcpy(path, xlogpath);
+				return true;
+			}
 		}
-		if (errno != ENOENT)
-			ereport(FATAL,
-					(errcode_for_file_access(),
-					 errmsg("could not stat \"%s\": %m",
-							xlogpath)));
+		else
+		{
+			/* stat failed */
+			if (errno != ENOENT)
+				ereport(FATAL,
+						(errcode_for_file_access(),
+						 errmsg("could not stat \"%s\": %m",
+								xlogpath)));
+		}
 	}
 
 	/*
@@ -2664,7 +2692,7 @@ readTimeLineHistory(TimeLineID targetTLI)
 	if (InArchiveRecovery)
 	{
 		TLHistoryFileName(histfname, targetTLI);
-		RestoreArchivedFile(path, histfname, "RECOVERYHISTORY");
+		RestoreArchivedFile(path, histfname, "RECOVERYHISTORY", 0);
 	}
 	else
 		TLHistoryFilePath(path, targetTLI);
@@ -2749,7 +2777,7 @@ existsTimeLineHistory(TimeLineID probeTLI)
 	if (InArchiveRecovery)
 	{
 		TLHistoryFileName(histfname, probeTLI);
-		RestoreArchivedFile(path, histfname, "RECOVERYHISTORY");
+		RestoreArchivedFile(path, histfname, "RECOVERYHISTORY", 0);
 	}
 	else
 		TLHistoryFilePath(path, probeTLI);
@@ -2853,7 +2881,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 	if (InArchiveRecovery)
 	{
 		TLHistoryFileName(histfname, parentTLI);
-		RestoreArchivedFile(path, histfname, "RECOVERYHISTORY");
+		RestoreArchivedFile(path, histfname, "RECOVERYHISTORY", 0);
 	}
 	else
 		TLHistoryFilePath(path, parentTLI);
@@ -4042,6 +4070,11 @@ StartupXLOG(void)
 	if (checkPoint.undo.xrecoff == 0)
 		checkPoint.undo = RecPtr;
 
+	/*
+	 * Check whether we need to force recovery from WAL.  If it appears
+	 * to have been a clean shutdown and we did not have a recovery.conf
+	 * file, then assume no recovery needed.
+	 */
 	if (XLByteLT(checkPoint.undo, RecPtr) ||
 		XLByteLT(checkPoint.redo, RecPtr))
 	{
@@ -4054,13 +4087,23 @@ StartupXLOG(void)
 		InRecovery = true;
 
 	/* REDO */
-	if (InRecovery)
+	if (InRecovery || InArchiveRecovery)
 	{
 		int			rmid;
 
-		ereport(LOG,
-				(errmsg("database system was not properly shut down; "
-						"automatic recovery in progress")));
+		if (InRecovery)
+		{
+			ereport(LOG,
+					(errmsg("database system was not properly shut down; "
+							"automatic recovery in progress")));
+		}
+		else
+		{
+			/* force recovery due to presence of recovery.conf */
+			InRecovery = true;
+			ereport(LOG,
+					(errmsg("automatic recovery in progress")));
+		}
 		ControlFile->state = DB_IN_RECOVERY;
 		ControlFile->time = time(NULL);
 		UpdateControlFile();
@@ -4158,8 +4201,11 @@ StartupXLOG(void)
 			InRedo = false;
 		}
 		else
+		{
+			/* there are no WAL records following the checkpoint */
 			ereport(LOG,
 					(errmsg("redo is not required")));
+		}
 	}
 
 	/*
