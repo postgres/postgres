@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.83 2004/10/13 09:51:47 momjian Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.84 2004/10/13 10:20:04 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -216,6 +216,8 @@ endif
 
 ifeq ($(PORTNAME), cygwin)
   shlib			= $(NAME)$(DLSUFFIX)
+  # needed for /contrib modules, not sure why
+  SHLIB_LINK		+= -lpgport
 endif
 
 ifeq ($(PORTNAME), win32)
