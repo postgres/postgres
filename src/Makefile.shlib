@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.71 2003/09/27 19:35:32 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.72 2003/10/20 01:34:33 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -128,6 +128,9 @@ endif
 ifeq ($(PORTNAME), hpux)
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
   LINK.shared		= $(LD) +h $(soname) -b +b $(libdir)
+  ifeq ($(GCC), yes)
+    SHLIB_LINK		+= `$(CC) -print-libgcc-file-name`
+  endif
 endif
 
 ifeq ($(PORTNAME), irix5)
