@@ -4,7 +4,7 @@
  *
  * Copyright 2003, PostgreSQL Global Development Group
  *
- * $Id: information_schema.sql,v 1.15.2.2 2003/12/07 10:18:50 petere Exp $
+ * $Id: information_schema.sql,v 1.15.2.3 2003/12/07 19:43:13 tgl Exp $
  */
 
 /*
@@ -112,8 +112,7 @@ CREATE VIEW check_constraints AS
     WHERE rs.oid = con.connamespace
           AND u.usesysid = coalesce(c.relowner, t.typowner)
           AND u.usename = current_user
-          AND con.contype = 'c'
-          AND c.relkind = 'r';
+          AND con.contype = 'c';
 
 GRANT SELECT ON check_constraints TO PUBLIC;
 
