@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.11 1998/09/01 04:36:51 momjian Exp $
+ * $Id: relation.h,v 1.12 1999/02/03 20:15:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ typedef List *Relid;
  *	 * The presence of the remaining fields depends on the restrictions
  *		and joins which the relation participates in:
  *
- *		clauseinfo - List of ClauseInfo nodes, containing info about each
+ *		restrictinfo - List of RestrictInfo nodes, containing info about each
  *					 qualification clause in which this relation participates
  *		joininfo  - List of JoinInfo nodes, containing info about each join
  *					clause in which this relation participates
@@ -102,7 +102,7 @@ typedef struct RelOptInfo
 
 	/* used by various scans and joins: */
 	Oid		   *ordering;		/* OID of operators in sort order */
-	List	   *clauseinfo;		/* restriction clauses */
+	List	   *restrictinfo;		/* restriction clauses */
 	List	   *joininfo;		/* join clauses */
 	List	   *innerjoin;
 	List	   *superrels;
@@ -149,7 +149,7 @@ typedef struct Path
 	List	   *keys;
 	Cost		outerjoincost;
 	Relid		joinid;
-	List	   *locclauseinfo;
+	List	   *loc_restrictinfo;
 } Path;
 
 typedef struct IndexPath
@@ -164,7 +164,7 @@ typedef struct IndexPath
 typedef struct JoinPath
 {
 	Path		path;
-	List	   *pathclauseinfo;
+	List	   *pathinfo;
 	Path	   *outerjoinpath;
 	Path	   *innerjoinpath;
 } JoinPath;
@@ -207,7 +207,7 @@ typedef struct JoinKey
  * clause info
  *******/
 
-typedef struct ClauseInfo
+typedef struct RestrictInfo
 {
 	NodeTag		type;
 	Expr	   *clause;			/* should be an OP clause */
@@ -221,7 +221,7 @@ typedef struct ClauseInfo
 	/* hashjoin only */
 	Oid			hashjoinoperator;
 	Relid		cinfojoinid;
-}			ClauseInfo;
+} RestrictInfo;
 
 typedef struct JoinMethod
 {
@@ -246,7 +246,7 @@ typedef struct JoinInfo
 {
 	NodeTag		type;
 	List	   *otherrels;
-	List	   *jinfoclauseinfo;
+	List	   *jinfo_restrictinfo;
 	bool		mergejoinable;
 	bool		hashjoinable;
 	bool		inactive;
@@ -271,7 +271,7 @@ typedef struct Iter
 **	   pathptr -- pointer to the current path node
 **		 cinfo -- if NULL, this stream node referes to the path node.
 **				  Otherwise this is a pointer to the current clause.
-**	clausetype -- whether cinfo is in locclauseinfo or pathclauseinfo in the
+**	clausetype -- whether cinfo is in loc_restrictinfo or pathinfo in the
 **				  path node
 **	  upstream -- linked list pointer upwards
 **	downstream -- ditto, downwards
@@ -285,7 +285,7 @@ typedef struct Stream
 {
 	NodeTag		type;
 	Path	   *pathptr;
-	ClauseInfo *cinfo;
+	RestrictInfo *cinfo;
 	int		   *clausetype;
 	struct Stream *upstream;
 	struct Stream *downstream;

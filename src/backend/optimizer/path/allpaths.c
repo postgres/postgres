@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.24 1999/02/02 20:30:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.25 1999/02/03 20:15:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,10 +122,10 @@ find_rel_paths(Query *root, List *rels)
 		rel_index_scan_list = find_index_paths(root,
 											   rel,
 											   find_relation_indices(root, rel),
-											   rel->clauseinfo,
+											   rel->restrictinfo,
 											   rel->joininfo);
 
-		or_index_scan_list = create_or_index_paths(root, rel, rel->clauseinfo);
+		or_index_scan_list = create_or_index_paths(root, rel, rel->restrictinfo);
 
 		rel->pathlist = add_pathlist(rel,
 									 sequential_scan_list,
@@ -145,7 +145,7 @@ find_rel_paths(Query *root, List *rels)
 		 * if there is a qualification of sequential scan the selec. value
 		 * is not set -- so set it explicitly -- Sunita
 		 */
-		set_rest_selec(root, rel->clauseinfo);
+		set_rest_selec(root, rel->restrictinfo);
 		rel->size = compute_rel_size(rel);
 		rel->width = compute_rel_width(rel);
 	}
@@ -290,7 +290,7 @@ print_joinclauses(Query *root, List *clauses)
 
 	foreach(l, clauses)
 	{
-		ClauseInfo *c = lfirst(l);
+		RestrictInfo *c = lfirst(l);
 
 		print_expr((Node *) c->clause, root->rtable);
 		if (lnext(l))
@@ -347,8 +347,7 @@ print_path(Query *root, Path *path, int indent)
 				for (i = 0; i < indent + 1; i++)
 					printf("\t");
 				printf("   clauses=(");
-				print_joinclauses(root,
-								  ((JoinPath *) path)->pathclauseinfo);
+				print_joinclauses(root, ((JoinPath *) path)->pathinfo);
 				printf(")\n");
 
 				if (nodeTag(path) == T_MergePath)

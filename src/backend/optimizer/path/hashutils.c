@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/hashutils.c,v 1.7 1998/09/01 04:29:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/hashutils.c,v 1.8 1999/02/03 20:15:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,29 +24,29 @@ static HInfo *match_hashop_hashinfo(Oid hashop, List *hashinfo_list);
 
 /*
  * group-clauses-by-hashop--
- *	  If a join clause node in 'clauseinfo-list' is hashjoinable, store
+ *	  If a join clause node in 'restrictinfo-list' is hashjoinable, store
  *	  it within a hashinfo node containing other clause nodes with the same
  *	  hash operator.
  *
- * 'clauseinfo-list' is the list of clauseinfo nodes
+ * 'restrictinfo-list' is the list of restrictinfo nodes
  * 'inner-relid' is the relid of the inner join relation
  *
  * Returns the new list of hashinfo nodes.
  *
  */
 List *
-group_clauses_by_hashop(List *clauseinfo_list,
+group_clauses_by_hashop(List *restrictinfo_list,
 						int inner_relid)
 {
 	List	   *hashinfo_list = NIL;
-	ClauseInfo *clauseinfo = (ClauseInfo *) NULL;
+	RestrictInfo *restrictinfo = (RestrictInfo *) NULL;
 	List	   *i = NIL;
 	Oid			hashjoinop = 0;
 
-	foreach(i, clauseinfo_list)
+	foreach(i, restrictinfo_list)
 	{
-		clauseinfo = (ClauseInfo *) lfirst(i);
-		hashjoinop = clauseinfo->hashjoinoperator;
+		restrictinfo = (RestrictInfo *) lfirst(i);
+		hashjoinop = restrictinfo->hashjoinoperator;
 
 		/*
 		 * Create a new hashinfo node and add it to 'hashinfo-list' if one
@@ -55,7 +55,7 @@ group_clauses_by_hashop(List *clauseinfo_list,
 		if (hashjoinop)
 		{
 			HInfo	   *xhashinfo = (HInfo *) NULL;
-			Expr	   *clause = clauseinfo->clause;
+			Expr	   *clause = restrictinfo->clause;
 			Var		   *leftop = get_leftop(clause);
 			Var		   *rightop = get_rightop(clause);
 			JoinKey    *keys = (JoinKey *) NULL;

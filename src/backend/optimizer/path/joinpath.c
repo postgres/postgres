@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.10 1998/09/01 04:29:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.11 1999/02/03 20:15:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,14 +97,14 @@ find_all_join_paths(Query *root, List *joinrels)
 		if (_enable_mergejoin_)
 		{
 			mergeinfo_list =
-				group_clauses_by_order(joinrel->clauseinfo,
+				group_clauses_by_order(joinrel->restrictinfo,
 									   lfirsti(innerrel->relids));
 		}
 
 		if (_enable_hashjoin_)
 		{
 			hashinfo_list =
-				group_clauses_by_hashop(joinrel->clauseinfo,
+				group_clauses_by_hashop(joinrel->restrictinfo,
 										lfirsti(innerrel->relids));
 		}
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.44 1999/02/02 03:44:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.45 1999/02/03 20:15:22 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1348,8 +1348,8 @@ _readRelOptInfo()
 	sscanf(token, "%x", (unsigned int *) &local_node->cheapestpath);
 
 
-	token = lsptok(NULL, &length);		/* get :clauseinfo */
-	local_node->clauseinfo = nodeRead(true);	/* now read it */
+	token = lsptok(NULL, &length);		/* get :restrictinfo */
+	local_node->restrictinfo = nodeRead(true);	/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :joininfo */
 	local_node->joininfo = nodeRead(true);		/* now read it */
@@ -1560,8 +1560,8 @@ _readJoinPath()
 	token = lsptok(NULL, &length);		/* get :keys */
 	local_node->path.keys = nodeRead(true);		/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :pathclauseinfo */
-	local_node->pathclauseinfo = nodeRead(true);		/* now read it */
+	token = lsptok(NULL, &length);		/* get :pathinfo */
+	local_node->pathinfo = nodeRead(true);		/* now read it */
 
 	/*
 	 * Not sure if these are nodes; they're declared as "struct path *".
@@ -1628,8 +1628,8 @@ _readMergePath()
 	token = lsptok(NULL, &length);		/* get :keys */
 	local_node->jpath.path.keys = nodeRead(true);		/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :pathclauseinfo */
-	local_node->jpath.pathclauseinfo = nodeRead(true);	/* now read it */
+	token = lsptok(NULL, &length);		/* get :pathinfo */
+	local_node->jpath.pathinfo = nodeRead(true);	/* now read it */
 
 	/*
 	 * Not sure if these are nodes; they're declared as "struct path *".
@@ -1705,8 +1705,8 @@ _readHashPath()
 	token = lsptok(NULL, &length);		/* get :keys */
 	local_node->jpath.path.keys = nodeRead(true);		/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :pathclauseinfo */
-	local_node->jpath.pathclauseinfo = nodeRead(true);	/* now read it */
+	token = lsptok(NULL, &length);		/* get :pathinfo */
+	local_node->jpath.pathinfo = nodeRead(true);	/* now read it */
 
 	/*
 	 * Not sure if these are nodes; they're declared as "struct path *".
@@ -1844,19 +1844,19 @@ _readMergeOrder()
 }
 
 /* ----------------
- *		_readClauseInfo
+ *		_readRestrictInfo
  *
- *	ClauseInfo is a subclass of Node.
+ *	RestrictInfo is a subclass of Node.
  * ----------------
  */
-static ClauseInfo *
-_readClauseInfo()
+static RestrictInfo *
+_readRestrictInfo()
 {
-	ClauseInfo *local_node;
+	RestrictInfo *local_node;
 	char	   *token;
 	int			length;
 
-	local_node = makeNode(ClauseInfo);
+	local_node = makeNode(RestrictInfo);
 
 	token = lsptok(NULL, &length);		/* get :clause */
 	local_node->clause = nodeRead(true);		/* now read it */
@@ -1960,8 +1960,8 @@ _readJoinInfo()
 	local_node->otherrels =
 		toIntList(nodeRead(true));		/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :jinfoclauseinfo */
-	local_node->jinfoclauseinfo = nodeRead(true);		/* now read it */
+	token = lsptok(NULL, &length);		/* get :jinfo_restrictinfo */
+	local_node->jinfo_restrictinfo = nodeRead(true);		/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :mergejoinable */
 
@@ -2096,7 +2096,7 @@ parsePlanString(void)
 	else if (!strncmp(token, "MERGEORDER", length))
 		return_value = _readMergeOrder();
 	else if (!strncmp(token, "CLAUSEINFO", length))
-		return_value = _readClauseInfo();
+		return_value = _readRestrictInfo();
 	else if (!strncmp(token, "JOINMETHOD", length))
 		return_value = _readJoinMethod();
 	else if (!strncmp(token, "JOININFO", length))

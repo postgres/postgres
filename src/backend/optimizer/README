@@ -1,4 +1,4 @@
-Thse directories take the Query structure returned by the parser, and
+These directories take the Query structure returned by the parser, and
 generate a plan used by the executor.  The /plan directory generates the
 plan, the /path generates all possible ways to join the tables, and
 /prep handles special cases like inheritance.  /utils is utility stuff.
@@ -81,10 +81,20 @@ planner()
         remove from the join list the relation we just added to each join
        prune_rel_paths()
         set cheapest and perhaps remove unordered path, recompute table sizes
-       if we have not done all the tables, go to "again"
+       if we have not done all the tables, go to again:
    do group(GROUP)
    do aggregate
    put back constants
    re-flatten target list
  make unique(DISTINCT)
  make sort(ORDER BY)
+
+
+
+Optimizer Structures
+--------------------
+Path		- info about every way to access a relation(sequential, index)
+  PathOrder - info about every ordering (sort, merge of relations)
+RelOptInfo	- info about every relation 
+  JoinInfo	- info about join combinations
+RestrictInfo	- info about restrictions

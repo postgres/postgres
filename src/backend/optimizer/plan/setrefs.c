@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.35 1999/02/02 17:46:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.36 1999/02/03 20:15:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
 
 #include "optimizer/internal.h"
 #include "optimizer/clauses.h"
-#include "optimizer/clauseinfo.h"
+#include "optimizer/restrictinfo.h"
 #include "optimizer/keys.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.40 1999/02/03 19:31:24 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.41 1999/02/03 20:15:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@
 
 /* DATA STRUCTURE CREATION/MANIPULATION ROUTINES */
 #include "nodes/relation.h"
-#include "optimizer/clauseinfo.h"
+#include "optimizer/restrictinfo.h"
 #include "optimizer/joininfo.h"
 #include "optimizer/keys.h"
 #include "optimizer/ordering.h"

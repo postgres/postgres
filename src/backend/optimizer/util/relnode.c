@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.9 1998/09/01 04:30:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.10 1999/02/03 20:15:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ get_base_rel(Query *root, int relid)
 		rel->classlist = NULL;
 		rel->ordering = NULL;
 		rel->relam = InvalidOid;
-		rel->clauseinfo = NIL;
+		rel->restrictinfo = NIL;
 		rel->joininfo = NIL;
 		rel->innerjoin = NIL;
 		rel->superrels = NIL;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.13 1998/09/01 04:29:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.14 1999/02/03 20:15:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ static void xfunc_form_groups(Stream root, Stream bottom);
 static void xfunc_free_stream(Stream root);
 static Stream xfunc_add_clauses(Stream current);
 static void xfunc_setup_group(Stream node, Stream bottom);
-static Stream xfunc_streaminsert(ClauseInfo clauseinfo, Stream current,
+static Stream xfunc_streaminsert(RestrictInfo restrictinfo, Stream current,
 				   int clausetype);
 static int	xfunc_num_relids(Stream node);
 static StreamPtr xfunc_get_downjoin(Stream node);
@@ -142,7 +142,7 @@ xfunc_predmig(JoinPath pathnode,/* root of the join tree */
 		set_downstream(laststream, (StreamPtr) newstream);
 	set_downstream(newstream, (StreamPtr) NULL);
 	set_pathptr(newstream, (pathPtr) pathnode);
-	set_cinfo(newstream, (ClauseInfo) NULL);
+	set_cinfo(newstream, (RestrictInfo) NULL);
 	set_clausetype(newstream, XFUNC_UNKNOWN);
 
 	/* base case: we're at a leaf, call xfunc_series_llel */
@@ -315,7 +315,7 @@ xfunc_complete_stream(Stream stream)
 static bool
 xfunc_prdmig_pullup(Stream origstream, Stream pullme, JoinPath joinpath)
 {
-	ClauseInfo	clauseinfo = get_cinfo(pullme);
+	RestrictInfo	restrictinfo = get_cinfo(pullme);
 	bool		progress = false;
 	Stream		upjoin,
 				orignode,
@@ -325,7 +325,7 @@ xfunc_prdmig_pullup(Stream origstream, Stream pullme, JoinPath joinpath)
 	/* find node in origstream that contains clause */
 	for (orignode = origstream;
 		 orignode != (Stream) NULL
-		 && get_cinfo(orignode) != clauseinfo;
+		 && get_cinfo(orignode) != restrictinfo;
 		 orignode = (Stream) get_downstream(orignode))
 		 /* empty body in for loop */ ;
 	if (!orignode)
@@ -348,13 +348,13 @@ xfunc_prdmig_pullup(Stream origstream, Stream pullme, JoinPath joinpath)
 			whichchild = OUTER;
 		else
 			whichchild = INNER;
-		clauseinfo = xfunc_pullup((Path) get_pathptr((Stream) get_downstream(upjoin)),
+		restrictinfo = xfunc_pullup((Path) get_pathptr((Stream) get_downstream(upjoin)),
 								  (JoinPath) get_pathptr(upjoin),
-								  clauseinfo,
+								  restrictinfo,
 								  whichchild,
 								  get_clausetype(orignode));
 		set_pathptr(pullme, get_pathptr(upjoin));
-		/* pullme has been moved into locclauseinfo */
+		/* pullme has been moved into locrestrictinfo */
 		set_clausetype(pullme, XFUNC_LOCPRD);
 
 		/*
@@ -524,10 +524,10 @@ xfunc_add_clauses(Stream current)
 	LispValue	primjoin;
 
 	/* first add in the local clauses */
-	foreach(temp, get_locclauseinfo((Path) get_pathptr(current)))
+	foreach(temp, get_loc_restrictinfo((Path) get_pathptr(current)))
 	{
 		topnode =
-			xfunc_streaminsert((ClauseInfo) lfirst(temp), topnode,
+			xfunc_streaminsert((RestrictInfo) lfirst(temp), topnode,
 							   XFUNC_LOCPRD);
 	}
 
@@ -535,11 +535,11 @@ xfunc_add_clauses(Stream current)
 	if (IsA(get_pathptr(current), JoinPath))
 	{
 		primjoin = xfunc_primary_join((JoinPath) get_pathptr(current));
-		foreach(temp, get_pathclauseinfo((JoinPath) get_pathptr(current)))
+		foreach(temp, get_pathrestrictinfo((JoinPath) get_pathptr(current)))
 		{
-			if (!equal(get_clause((ClauseInfo) lfirst(temp)), primjoin))
+			if (!equal(get_clause((RestrictInfo) lfirst(temp)), primjoin))
 				topnode =
-					xfunc_streaminsert((ClauseInfo) lfirst(temp), topnode,
+					xfunc_streaminsert((RestrictInfo) lfirst(temp), topnode,
 									   XFUNC_JOINPRD);
 		}
 	}
@@ -593,7 +593,7 @@ xfunc_setup_group(Stream node, Stream bottom)
  ** Return new node.
  */
 static Stream
-xfunc_streaminsert(ClauseInfo clauseinfo,
+xfunc_streaminsert(RestrictInfo restrictinfo,
 				   Stream current,
 				   int clausetype)		/* XFUNC_LOCPRD or XFUNC_JOINPRD */
 {
@@ -605,7 +605,7 @@ xfunc_streaminsert(ClauseInfo clauseinfo,
 	set_upstream(current, (StreamPtr) newstream);
 	set_downstream(newstream, (StreamPtr) current);
 	set_pathptr(newstream, get_pathptr(current));
-	set_cinfo(newstream, clauseinfo);
+	set_cinfo(newstream, restrictinfo);
 	set_clausetype(newstream, clausetype);
 	return newstream;
 }

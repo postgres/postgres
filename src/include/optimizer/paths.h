@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.10 1998/09/01 04:37:14 momjian Exp $
+ * $Id: paths.h,v 1.11 1999/02/03 20:15:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@ extern List *find_paths(Query *root, List *rels);
  *	  routines to generate index paths
  */
 extern List *find_index_paths(Query *root, RelOptInfo * rel, List *indices,
-				 List *clauseinfo_list,
+				 List *restrictinfo_list,
 				 List *joininfo_list);
 
 /*
@@ -47,7 +47,7 @@ extern List *create_or_index_paths(Query *root, RelOptInfo * rel, List *clauses)
  * hashutils.h
  *	  routines to deal with hash keys and clauses
  */
-extern List *group_clauses_by_hashop(List *clauseinfo_list,
+extern List *group_clauses_by_hashop(List *restrictinfo_list,
 						int inner_relid);
 
 /*
@@ -68,7 +68,7 @@ extern List *new_join_pathkeys(List *outer_pathkeys,
  * mergeutils.h
  *	  routines to deal with merge keys and clauses
  */
-extern List *group_clauses_by_order(List *clauseinfo_list,
+extern List *group_clauses_by_order(List *restrictinfo_list,
 					   int inner_relid);
 extern MInfo *match_order_mergeinfo(PathOrder *ordering,
 					  List *mergeinfo_list);

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.62 1999/02/02 03:44:26 momjian Exp $
+ *  $Id: outfuncs.c,v 1.63 1999/02/03 20:15:22 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -879,11 +879,11 @@ _outRelOptInfo(StringInfo str, RelOptInfo * node)
 	 */
 
 	appendStringInfo(str, 
-			" :unorderedpath @ 0x%x :cheapestpath @ 0x%x :pruneable %s :clauseinfo ",
+			" :unorderedpath @ 0x%x :cheapestpath @ 0x%x :pruneable %s :restrictinfo ",
 			(int) node->unorderedpath,
 			(int) node->cheapestpath,
 			node->pruneable ? "true" : "false");
-	_outNode(str, node->clauseinfo);
+	_outNode(str, node->restrictinfo);
 
 	appendStringInfo(str, " :joininfo ");
 	_outNode(str, node->joininfo);
@@ -967,8 +967,8 @@ _outJoinPath(StringInfo str, JoinPath *node)
 			node->path.path_cost);
 	_outNode(str, node->path.keys);
 
-	appendStringInfo(str, " :pathclauseinfo ");
-	_outNode(str, node->pathclauseinfo);
+	appendStringInfo(str, " :pathinfo ");
+	_outNode(str, node->pathinfo);
 
 	/*
 	 * Not sure if these are nodes; they're declared as "struct path *".
@@ -995,8 +995,8 @@ _outMergePath(StringInfo str, MergePath *node)
 			node->jpath.path.path_cost);
 	_outNode(str, node->jpath.path.keys);
 
-	appendStringInfo(str, " :pathclauseinfo ");
-	_outNode(str, node->jpath.pathclauseinfo);
+	appendStringInfo(str, " :pathinfo ");
+	_outNode(str, node->jpath.pathinfo);
 
 	/*
 	 * Not sure if these are nodes; they're declared as "struct path *".
@@ -1032,8 +1032,8 @@ _outHashPath(StringInfo str, HashPath *node)
 			node->jpath.path.path_cost);
 	_outNode(str, node->jpath.path.keys);
 
-	appendStringInfo(str, " :pathclauseinfo ");
-	_outNode(str, node->jpath.pathclauseinfo);
+	appendStringInfo(str, " :pathinfo ");
+	_outNode(str, node->jpath.pathinfo);
 
 	/*
 	 * Not sure if these are nodes; they're declared as "struct path *".
@@ -1102,10 +1102,10 @@ _outMergeOrder(StringInfo str, MergeOrder *node)
 }
 
 /*
- *	ClauseInfo is a subclass of Node.
+ *	RestrictInfo is a subclass of Node.
  */
 static void
-_outClauseInfo(StringInfo str, ClauseInfo * node)
+_outRestrictInfo(StringInfo str, RestrictInfo * node)
 {
 	appendStringInfo(str, " CINFO :clause ");
 	_outNode(str, node->clause);
@@ -1158,8 +1158,8 @@ _outJoinInfo(StringInfo str, JoinInfo * node)
 	appendStringInfo(str, " JINFO :otherrels ");
 	_outIntList(str, node->otherrels);
 
-	appendStringInfo(str, " :jinfoclauseinfo ");
-	_outNode(str, node->jinfoclauseinfo);
+	appendStringInfo(str, " :jinfo_restrictinfo ");
+	_outNode(str, node->jinfo_restrictinfo);
 
 	appendStringInfo(str, " :mergejoinable %s :hashjoinable %s ",
 			node->mergejoinable ? "true" : "false",
@@ -1572,8 +1572,8 @@ _outNode(StringInfo str, void *obj)
 			case T_MergeOrder:
 				_outMergeOrder(str, obj);
 				break;
-			case T_ClauseInfo:
-				_outClauseInfo(str, obj);
+			case T_RestrictInfo:
+				_outRestrictInfo(str, obj);
 				break;
 			case T_JoinMethod:
 				_outJoinMethod(str, obj);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.34 1998/12/04 15:34:05 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.35 1999/02/03 20:15:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 #include "utils/palloc.h"
 #include "utils/builtins.h"
 
-#include "optimizer/clauseinfo.h"
+#include "optimizer/restrictinfo.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
@@ -170,7 +170,7 @@ create_scan_node(Path *best_path, List *tlist)
 	 * xfunc_trypullup(), we get the relevant clauses from the path
 	 * itself, not its parent relation.   --- JMH, 6/15/92
 	 */
-	scan_clauses = fix_opids(get_actual_clauses(best_path->locclauseinfo));
+	scan_clauses = fix_opids(get_actual_clauses(best_path->loc_restrictinfo));
 
 	switch (best_path->pathtype)
 	{
@@ -219,7 +219,7 @@ create_join_node(JoinPath *best_path, List *tlist)
 	inner_node = create_plan((Path *) best_path->innerjoinpath);
 	inner_tlist = inner_node->targetlist;
 
-	clauses = get_actual_clauses(best_path->pathclauseinfo);
+	clauses = get_actual_clauses(best_path->pathinfo);
 
 	switch (best_path->path.pathtype)
 	{
@@ -263,11 +263,11 @@ create_join_node(JoinPath *best_path, List *tlist)
 	 * into this path node.  Put them in the qpqual of the plan node. * --
 	 * JMH, 6/15/92
 	 */
-	if (get_locclauseinfo(best_path) != NIL)
+	if (get_loc_restrictinfo(best_path) != NIL)
 		set_qpqual((Plan) retval,
 				   nconc(get_qpqual((Plan) retval),
 						 fix_opids(get_actual_clauses
-								   (get_locclauseinfo(best_path)))));
+								   (get_loc_restrictinfo(best_path)))));
 #endif
 
 	return retval;
@@ -730,7 +730,7 @@ fix_indxqual_references(Node *clause, Path *index_path)
 		if (new_subclauses)
 		{
 			return (Node *)
-				make_clause(expr->opType, expr->oper, new_subclauses);
+					make_clause(expr->opType, expr->oper, new_subclauses);
 		}
 		else
 			return clause;

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.11 1998/09/01 04:29:19 momjian Exp $
+ * $Id: geqo_misc.c,v 1.12 1999/02/03 20:15:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,7 +146,7 @@ geqo_print_joinclauses(Query *root, List *clauses)
 
 	foreach(l, clauses)
 	{
-		ClauseInfo *c = lfirst(l);
+		RestrictInfo *c = lfirst(l);
 
 		print_expr((Node *) c->clause, root->rtable);
 		if (lnext(l))
@@ -204,7 +204,7 @@ geqo_print_path(Query *root, Path *path, int indent)
 					printf("\t");
 				printf("   clauses=(");
 				geqo_print_joinclauses(root,
-									((JoinPath *) path)->pathclauseinfo);
+									((JoinPath *) path)->pathinfo);
 				printf(")\n");
 
 				if (nodeTag(path) == T_MergePath)

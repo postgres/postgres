@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.9 1998/09/01 04:29:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.10 1999/02/03 20:15:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,27 +23,27 @@
 
 /*
  * group-clauses-by-order--
- *	  If a join clause node in 'clauseinfo-list' is mergejoinable, store
+ *	  If a join clause node in 'restrictinfo-list' is mergejoinable, store
  *	  it within a mergeinfo node containing other clause nodes with the same
  *	  mergejoin ordering.
  *
- * 'clauseinfo-list' is the list of clauseinfo nodes
+ * 'restrictinfo-list' is the list of restrictinfo nodes
  * 'inner-relid' is the relid of the inner join relation
  *
  * Returns the new list of mergeinfo nodes.
  *
  */
 List *
-group_clauses_by_order(List *clauseinfo_list,
+group_clauses_by_order(List *restrictinfo_list,
 					   int inner_relid)
 {
 	List	   *mergeinfo_list = NIL;
-	List	   *xclauseinfo = NIL;
+	List	   *xrestrictinfo = NIL;
 
-	foreach(xclauseinfo, clauseinfo_list)
+	foreach(xrestrictinfo, restrictinfo_list)
 	{
-		ClauseInfo *clauseinfo = (ClauseInfo *) lfirst(xclauseinfo);
-		MergeOrder *merge_ordering = clauseinfo->mergejoinorder;
+		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(xrestrictinfo);
+		MergeOrder *merge_ordering = restrictinfo->mergejoinorder;
 
 		if (merge_ordering)
 		{
@@ -54,7 +54,7 @@ group_clauses_by_order(List *clauseinfo_list,
 			 */
 			PathOrder	p_ordering;
 			MInfo	   *xmergeinfo;
-			Expr	   *clause = clauseinfo->clause;
+			Expr	   *clause = restrictinfo->clause;
 			Var		   *leftop = get_leftop(clause);
 			Var		   *rightop = get_rightop(clause);
 			JoinKey    *keys;

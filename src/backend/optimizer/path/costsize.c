@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.25 1998/09/01 04:29:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.26 1999/02/03 20:15:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -365,7 +365,7 @@ compute_rel_size(RelOptInfo * rel)
 	Cost		temp;
 	int			temp1;
 
-	temp = rel->tuples * product_selec(rel->clauseinfo);
+	temp = rel->tuples * product_selec(rel->restrictinfo);
 	Assert(temp >= 0);
 	if (temp >= (MAXINT - 1))
 		temp1 = MAXINT;
@@ -443,7 +443,7 @@ compute_joinrel_size(JoinPath *joinpath)
 	temp *= ((Path *) joinpath->outerjoinpath)->parent->size;
 	temp *= ((Path *) joinpath->innerjoinpath)->parent->size;
 
-	temp = temp * product_selec(joinpath->pathclauseinfo);
+	temp = temp * product_selec(joinpath->pathinfo);
 	if (temp >= (MAXINT - 1))
 		temp1 = MAXINT;
 	else

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.14 1999/02/02 23:53:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.15 1999/02/03 20:15:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 
 #include "optimizer/internal.h"
 #include "optimizer/pathnode.h"
-#include "optimizer/clauseinfo.h"
+#include "optimizer/restrictinfo.h"
 #include "optimizer/plancat.h"
 #include "optimizer/cost.h"
 #include "optimizer/keys.h"
@@ -209,11 +209,11 @@ create_seqscan_path(RelOptInfo * rel)
 	pathnode->keys = NIL;
 
 	/*
-	 * copy clauseinfo list into path for expensive function processing --
+	 * copy restrictinfo list into path for expensive function processing --
 	 * JMH, 7/7/92
 	 */
-	pathnode->locclauseinfo =
-		(List *) copyObject((Node *) rel->clauseinfo);
+	pathnode->loc_restrictinfo =
+		(List *) copyObject((Node *) rel->restrictinfo);
 
 	if (rel->relids != NULL)
 		relid = lfirsti(rel->relids);
@@ -263,11 +263,11 @@ create_index_path(Query *root,
 	pathnode->indexqual = NIL;
 
 	/*
-	 * copy clauseinfo list into path for expensive function processing --
+	 * copy restrictinfo list into path for expensive function processing --
 	 * JMH, 7/7/92
 	 */
-	pathnode->path.locclauseinfo =
-		set_difference((List *) copyObject((Node *) rel->clauseinfo),
+	pathnode->path.loc_restrictinfo =
+		set_difference((List *) copyObject((Node *) rel->restrictinfo),
 					   (List *) restriction_clauses);
 
 	/*
@@ -410,11 +410,11 @@ create_nestloop_path(RelOptInfo * joinrel,
 	pathnode->path.parent = joinrel;
 	pathnode->outerjoinpath = outer_path;
 	pathnode->innerjoinpath = inner_path;
-	pathnode->pathclauseinfo = joinrel->clauseinfo;
+	pathnode->pathinfo = joinrel->restrictinfo;
 	pathnode->path.keys = keys;
 	pathnode->path.joinid = NIL;
 	pathnode->path.outerjoincost = (Cost) 0.0;
-	pathnode->path.locclauseinfo = NIL;
+	pathnode->path.loc_restrictinfo = NIL;
 
 	if (keys)
 	{
@@ -492,12 +492,12 @@ create_mergejoin_path(RelOptInfo * joinrel,
 	pathnode->jpath.path.parent = joinrel;
 	pathnode->jpath.outerjoinpath = outer_path;
 	pathnode->jpath.innerjoinpath = inner_path;
-	pathnode->jpath.pathclauseinfo = joinrel->clauseinfo;
+	pathnode->jpath.pathinfo = joinrel->restrictinfo;
 	pathnode->jpath.path.keys = keys;
 	pathnode->jpath.path.p_ordering.ordtype = MERGE_ORDER;
 	pathnode->jpath.path.p_ordering.ord.merge = order;
 	pathnode->path_mergeclauses = mergeclauses;
-	pathnode->jpath.path.locclauseinfo = NIL;
+	pathnode->jpath.path.loc_restrictinfo = NIL;
 	pathnode->outersortkeys = outersortkeys;
 	pathnode->innersortkeys = innersortkeys;
 	pathnode->jpath.path.path_cost =
@@ -558,8 +558,8 @@ create_hashjoin_path(RelOptInfo * joinrel,
 	pathnode->jpath.path.parent = joinrel;
 	pathnode->jpath.outerjoinpath = outer_path;
 	pathnode->jpath.innerjoinpath = inner_path;
-	pathnode->jpath.pathclauseinfo = joinrel->clauseinfo;
-	pathnode->jpath.path.locclauseinfo = NIL;
+	pathnode->jpath.pathinfo = joinrel->restrictinfo;
+	pathnode->jpath.path.loc_restrictinfo = NIL;
 	pathnode->jpath.path.keys = keys;
 	pathnode->jpath.path.p_ordering.ordtype = SORTOP_ORDER;
 	pathnode->jpath.path.p_ordering.ord.sortop = NULL;

@@ -1,4 +1,4 @@
- /*-------------------------------------------------------------------------
+/*-------------------------------------------------------------------------
  *
  * copyfuncs.c--
  *	  Copy functions for Postgres tree nodes.
@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.57 1999/02/02 03:44:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.58 1999/02/03 20:15:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1064,7 +1064,7 @@ _copyRelOptInfo(RelOptInfo * from)
 		newnode->ordering[len] = 0;
 	}
 
-	Node_Copy(from, newnode, clauseinfo);
+	Node_Copy(from, newnode, restrictinfo);
 	Node_Copy(from, newnode, joininfo);
 	Node_Copy(from, newnode, innerjoin);
 	Node_Copy(from, newnode, superrels);
@@ -1119,7 +1119,7 @@ CopyPathFields(Path *from, Path *newnode)
 	newnode->outerjoincost = from->outerjoincost;
 
 	newnode->joinid = listCopy(from->joinid);
-	Node_Copy(from, newnode, locclauseinfo);
+	Node_Copy(from, newnode, loc_restrictinfo);
 }
 
 /* ----------------
@@ -1184,7 +1184,7 @@ _copyIndexPath(IndexPath *from)
 static void
 CopyJoinPathFields(JoinPath *from, JoinPath *newnode)
 {
-	Node_Copy(from, newnode, pathclauseinfo);
+	Node_Copy(from, newnode, pathinfo);
 	Node_Copy(from, newnode, outerjoinpath);
 	Node_Copy(from, newnode, innerjoinpath);
 }
@@ -1324,13 +1324,13 @@ _copyMergeOrder(MergeOrder *from)
 }
 
 /* ----------------
- *		_copyClauseInfo
+ *		_copyRestrictInfo
  * ----------------
  */
-static ClauseInfo *
-_copyClauseInfo(ClauseInfo * from)
+static RestrictInfo *
+_copyRestrictInfo(RestrictInfo * from)
 {
-	ClauseInfo *newnode = makeNode(ClauseInfo);
+	RestrictInfo *newnode = makeNode(RestrictInfo);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1430,7 +1430,7 @@ _copyJoinInfo(JoinInfo * from)
 	 * ----------------
 	 */
 	newnode->otherrels = listCopy(from->otherrels);
-	Node_Copy(from, newnode, jinfoclauseinfo);
+	Node_Copy(from, newnode, jinfo_restrictinfo);
 
 	newnode->mergejoinable = from->mergejoinable;
 	newnode->hashjoinable = from->hashjoinable;
@@ -1792,8 +1792,8 @@ copyObject(void *from)
 		case T_MergeOrder:
 			retval = _copyMergeOrder(from);
 			break;
-		case T_ClauseInfo:
-			retval = _copyClauseInfo(from);
+		case T_RestrictInfo:
+			retval = _copyRestrictInfo(from);
 			break;
 		case T_JoinMethod:
 			retval = _copyJoinMethod(from);

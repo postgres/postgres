@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.22 1998/09/01 04:29:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.23 1999/02/03 20:15:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ void
 xfunc_trypullup(RelOptInfo rel)
 {
 	LispValue	y;				/* list ptr */
-	ClauseInfo	maxcinfo;		/* The ClauseInfo to pull up, as
+	RestrictInfo	maxcinfo;		/* The RestrictInfo to pull up, as
 								 * calculated by xfunc_shouldpull() */
 	JoinPath	curpath;		/* current path in list */
 	int			progress;		/* has progress been made this time
@@ -132,7 +132,7 @@ xfunc_trypullup(RelOptInfo rel)
  ** xfunc_shouldpull --
  **    find clause with highest rank, and decide whether to pull it up
  ** from child to parent.  Currently we only pullup secondary join clauses
- ** that are in the pathclauseinfo.  Secondary hash and sort clauses are
+ ** that are in the pathrestrictinfo.  Secondary hash and sort clauses are
  ** left where they are.
  **    If we find an expensive function but decide *not* to pull it up,
  ** we'd better set the unpruneable flag.  -- JMH, 11/11/92
@@ -146,12 +146,12 @@ xfunc_shouldpull(Query *queryInfo,
 				 Path childpath,
 				 JoinPath parentpath,
 				 int whichchild,
-				 ClauseInfo * maxcinfopt)		/* Out: pointer to clause
+				 RestrictInfo * maxcinfopt)		/* Out: pointer to clause
 												 * to pullup */
 {
 	LispValue	clauselist,
 				tmplist;		/* lists of clauses */
-	ClauseInfo	maxcinfo;		/* clause to pullup */
+	RestrictInfo	maxcinfo;		/* clause to pullup */
 	LispValue	primjoinclause	/* primary join clause */
 	= xfunc_primary_join(parentpath);
 	Cost		tmprank,
@@ -160,22 +160,22 @@ xfunc_shouldpull(Query *queryInfo,
 	Cost		joincost = 0;	/* join cost + primjoinclause cost */
 	int			retval = XFUNC_LOCPRD;
 
-	clauselist = get_locclauseinfo(childpath);
+	clauselist = get_loc_restrictinfo(childpath);
 
 	if (clauselist != LispNil)
 	{
 		/* find local predicate with maximum rank */
 		for (tmplist = clauselist,
-			 maxcinfo = (ClauseInfo) lfirst(tmplist),
+			 maxcinfo = (RestrictInfo) lfirst(tmplist),
 			 maxrank = xfunc_rank(get_clause(maxcinfo));
 			 tmplist != LispNil;
 			 tmplist = lnext(tmplist))
 		{
 
-			if ((tmprank = xfunc_rank(get_clause((ClauseInfo) lfirst(tmplist))))
+			if ((tmprank = xfunc_rank(get_clause((RestrictInfo) lfirst(tmplist))))
 				> maxrank)
 			{
-				maxcinfo = (ClauseInfo) lfirst(tmplist);
+				maxcinfo = (RestrictInfo) lfirst(tmplist);
 				maxrank = tmprank;
 			}
 		}
@@ -187,16 +187,16 @@ xfunc_shouldpull(Query *queryInfo,
 	 * local predicate
 	 */
 	if (is_join(childpath) && xfunc_num_join_clauses((JoinPath) childpath) > 1)
-		for (tmplist = get_pathclauseinfo((JoinPath) childpath);
+		for (tmplist = get_pathrestrictinfo((JoinPath) childpath);
 			 tmplist != LispNil;
 			 tmplist = lnext(tmplist))
 		{
 
 			if (tmplist != LispNil &&
-				(tmprank = xfunc_rank(get_clause((ClauseInfo) lfirst(tmplist))))
+				(tmprank = xfunc_rank(get_clause((RestrictInfo) lfirst(tmplist))))
 				> maxrank)
 			{
-				maxcinfo = (ClauseInfo) lfirst(tmplist);
+				maxcinfo = (RestrictInfo) lfirst(tmplist);
 				maxrank = tmprank;
 				retval = XFUNC_JOINPRD;
 			}
@@ -260,13 +260,13 @@ xfunc_shouldpull(Query *queryInfo,
  ** in the query; it's merely a parent for the new childpath.
  **    We also have to fix up the path costs of the child and parent.
  **
- ** Now returns a pointer to the new pulled-up ClauseInfo. -- JMH, 11/18/92
+ ** Now returns a pointer to the new pulled-up RestrictInfo. -- JMH, 11/18/92
  */
-ClauseInfo
+RestrictInfo
 xfunc_pullup(Query *queryInfo,
 			 Path childpath,
 			 JoinPath parentpath,
-			 ClauseInfo cinfo,	/* clause to pull up */
+			 RestrictInfo cinfo,	/* clause to pull up */
 			 int whichchild,	/* whether child is INNER or OUTER of join */
 			 int clausetype)	/* whether clause to pull is join or local */
 {
@@ -274,22 +274,22 @@ xfunc_pullup(Query *queryInfo,
 	RelOptInfo	newrel;
 	Cost		pulled_selec;
 	Cost		cost;
-	ClauseInfo	newinfo;
+	RestrictInfo	newinfo;
 
 	/* remove clause from childpath */
 	newkid = (Path) copyObject((Node) childpath);
 	if (clausetype == XFUNC_LOCPRD)
 	{
-		set_locclauseinfo(newkid,
+		set_locrestrictinfo(newkid,
 						  xfunc_LispRemove((LispValue) cinfo,
-									  (List) get_locclauseinfo(newkid)));
+									  (List) get_loc_restrictinfo(newkid)));
 	}
 	else
 	{
-		set_pathclauseinfo
+		set_pathrestrictinfo
 			((JoinPath) newkid,
 			 xfunc_LispRemove((LispValue) cinfo,
-						  (List) get_pathclauseinfo((JoinPath) newkid)));
+						  (List) get_pathrestrictinfo((JoinPath) newkid)));
 	}
 
 	/*
@@ -320,7 +320,7 @@ xfunc_pullup(Query *queryInfo,
 	 * * We copy the cinfo, since it may appear in other plans, and we're
 	 * going * to munge it.  -- JMH, 7/22/92
 	 */
-	newinfo = (ClauseInfo) copyObject((Node) cinfo);
+	newinfo = (RestrictInfo) copyObject((Node) cinfo);
 
 	/*
 	 * * Fix all vars in the clause * to point to the right varno and
@@ -329,9 +329,9 @@ xfunc_pullup(Query *queryInfo,
 	xfunc_fixvars(get_clause(newinfo), newrel, whichchild);
 
 	/* add clause to parentpath, and fix up its cost. */
-	set_locclauseinfo(parentpath,
+	set_locrestrictinfo(parentpath,
 					  lispCons((LispValue) newinfo,
-							 (LispValue) get_locclauseinfo(parentpath)));
+							 (LispValue) get_loc_restrictinfo(parentpath)));
 	/* put new childpath into the path tree */
 	if (whichchild == INNER)
 		set_innerjoinpath(parentpath, (pathPtr) newkid);
@@ -771,12 +771,12 @@ xfunc_card_product(Query *queryInfo, Relid relids)
 		if (tuples)
 		{						/* not of cardinality 0 */
 			/* factor in the selectivity of all zero-cost clauses */
-			foreach(cinfonode, get_clauseinfo(currel))
+			foreach(cinfonode, get_restrictinfo(currel))
 			{
-				if (!xfunc_expense(queryInfo, get_clause((ClauseInfo) lfirst(cinfonode))))
+				if (!xfunc_expense(queryInfo, get_clause((RestrictInfo) lfirst(cinfonode))))
 					tuples *=
 						compute_clause_selec(queryInfo,
-							  get_clause((ClauseInfo) lfirst(cinfonode)),
+							  get_clause((RestrictInfo) lfirst(cinfonode)),
 											 LispNil);
 			}
 
@@ -861,8 +861,8 @@ xfunc_find_references(LispValue clause)
 LispValue
 xfunc_primary_join(JoinPath pathnode)
 {
-	LispValue	joinclauselist = get_pathclauseinfo(pathnode);
-	ClauseInfo	mincinfo;
+	LispValue	joinclauselist = get_pathrestrictinfo(pathnode);
+	RestrictInfo	mincinfo;
 	LispValue	tmplist;
 	LispValue	minclause = LispNil;
 	Cost		minrank,
@@ -903,15 +903,15 @@ xfunc_primary_join(JoinPath pathnode)
 	if (joinclauselist == LispNil)
 		return LispNil;
 
-	for (tmplist = joinclauselist, mincinfo = (ClauseInfo) lfirst(joinclauselist),
-		 minrank = xfunc_rank(get_clause((ClauseInfo) lfirst(tmplist)));
+	for (tmplist = joinclauselist, mincinfo = (RestrictInfo) lfirst(joinclauselist),
+		 minrank = xfunc_rank(get_clause((RestrictInfo) lfirst(tmplist)));
 		 tmplist != LispNil;
 		 tmplist = lnext(tmplist))
-		if ((tmprank = xfunc_rank(get_clause((ClauseInfo) lfirst(tmplist))))
+		if ((tmprank = xfunc_rank(get_clause((RestrictInfo) lfirst(tmplist))))
 			< minrank)
 		{
 			minrank = tmprank;
-			mincinfo = (ClauseInfo) lfirst(tmplist);
+			mincinfo = (RestrictInfo) lfirst(tmplist);
 		}
 	return (LispValue) get_clause(mincinfo);
 }
@@ -935,16 +935,16 @@ xfunc_get_path_cost(Query *queryInfo, Path pathnode)
 	 * functions, we don't sort.
 	 */
 	if (XfuncMode != XFUNC_OFF)
-		set_locclauseinfo(pathnode, lisp_qsort(get_locclauseinfo(pathnode),
+		set_locrestrictinfo(pathnode, lisp_qsort(get_loc_restrictinfo(pathnode),
 											   xfunc_cinfo_compare));
-	for (tmplist = get_locclauseinfo(pathnode), selec = 1.0;
+	for (tmplist = get_loc_restrictinfo(pathnode), selec = 1.0;
 		 tmplist != LispNil;
 		 tmplist = lnext(tmplist))
 	{
-		cost += (Cost) (xfunc_local_expense(get_clause((ClauseInfo) lfirst(tmplist)))
+		cost += (Cost) (xfunc_local_expense(get_clause((RestrictInfo) lfirst(tmplist)))
 					  * (Cost) get_tuples(get_parent(pathnode)) * selec);
 		selec *= compute_clause_selec(queryInfo,
-								get_clause((ClauseInfo) lfirst(tmplist)),
+								get_clause((RestrictInfo) lfirst(tmplist)),
 									  LispNil);
 	}
 
@@ -955,17 +955,17 @@ xfunc_get_path_cost(Query *queryInfo, Path pathnode)
 	if (IsA(pathnode, JoinPath))
 	{
 		if (XfuncMode != XFUNC_OFF)
-			set_pathclauseinfo((JoinPath) pathnode, lisp_qsort
-							   (get_pathclauseinfo((JoinPath) pathnode),
+			set_pathrestrictinfo((JoinPath) pathnode, lisp_qsort
+							   (get_pathrestrictinfo((JoinPath) pathnode),
 								xfunc_cinfo_compare));
-		for (tmplist = get_pathclauseinfo((JoinPath) pathnode), selec = 1.0;
+		for (tmplist = get_pathrestrictinfo((JoinPath) pathnode), selec = 1.0;
 			 tmplist != LispNil;
 			 tmplist = lnext(tmplist))
 		{
-			cost += (Cost) (xfunc_local_expense(get_clause((ClauseInfo) lfirst(tmplist)))
+			cost += (Cost) (xfunc_local_expense(get_clause((RestrictInfo) lfirst(tmplist)))
 					  * (Cost) get_tuples(get_parent(pathnode)) * selec);
 			selec *= compute_clause_selec(queryInfo,
-								get_clause((ClauseInfo) lfirst(tmplist)),
+								get_clause((RestrictInfo) lfirst(tmplist)),
 										  LispNil);
 		}
 	}
@@ -1188,14 +1188,14 @@ xfunc_fixvars(LispValue clause, /* clause being pulled up */
 
 
 /*
- ** Comparison function for lisp_qsort() on a list of ClauseInfo's.
- ** arg1 and arg2 should really be of type (ClauseInfo *).
+ ** Comparison function for lisp_qsort() on a list of RestrictInfo's.
+ ** arg1 and arg2 should really be of type (RestrictInfo *).
  */
 int
 xfunc_cinfo_compare(void *arg1, void *arg2)
 {
-	ClauseInfo	info1 = *(ClauseInfo *) arg1;
-	ClauseInfo	info2 = *(ClauseInfo *) arg2;
+	RestrictInfo	info1 = *(RestrictInfo *) arg1;
+	RestrictInfo	info2 = *(RestrictInfo *) arg2;
 
 	LispValue	clause1 = (LispValue) get_clause(info1),
 				clause2 = (LispValue) get_clause(info2);
@@ -1383,7 +1383,7 @@ xfunc_tuple_width(Relation rd)
 int
 xfunc_num_join_clauses(JoinPath path)
 {
-	int			num = length(get_pathclauseinfo(path));
+	int			num = length(get_pathrestrictinfo(path));
 
 	if (IsA(path, MergePath))
 		return num + length(get_path_mergeclauses((MergePath) path));
@@ -1481,7 +1481,7 @@ xfunc_copyrel(RelOptInfo from, RelOptInfo * to)
 	Node_Copy(from, newnode, alloc, indexkeys);
 	Node_Copy(from, newnode, alloc, ordering);
 #endif
-	Node_Copy(from, newnode, alloc, clauseinfo);
+	Node_Copy(from, newnode, alloc, restrictinfo);
 	Node_Copy(from, newnode, alloc, joininfo);
 	Node_Copy(from, newnode, alloc, innerjoin);
 	Node_Copy(from, newnode, alloc, superrels);

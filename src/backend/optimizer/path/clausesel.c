@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.14 1998/11/09 02:49:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.15 1999/02/03 20:15:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #include "nodes/primnodes.h"
 #include "nodes/relation.h"
 #include "optimizer/clauses.h"
-#include "optimizer/clauseinfo.h"
+#include "optimizer/restrictinfo.h"
 #include "optimizer/cost.h"
 #include "optimizer/internal.h"
 #include "optimizer/plancat.h"
@@ -35,7 +35,7 @@ static Cost compute_selec(Query *root, List *clauses, List *or_selectivities);
 
 /*
  * set_clause_selectivities -
- *	  Sets the selectivity field for each of clause in 'clauseinfo-list'
+ *	  Sets the selectivity field for each of clause in 'restrictinfo-list'
  *	  to 'new-selectivity'.  If the selectivity has already been set, reset
  *	  it only if the new one is better.
  *
@@ -43,15 +43,15 @@ static Cost compute_selec(Query *root, List *clauses, List *or_selectivities);
  *
  */
 void
-set_clause_selectivities(List *clauseinfo_list, Cost new_selectivity)
+set_clause_selectivities(List *restrictinfo_list, Cost new_selectivity)
 {
 	List	   *temp;
-	ClauseInfo *clausenode;
+	RestrictInfo *clausenode;
 	Cost		cost_clause;
 
-	foreach(temp, clauseinfo_list)
+	foreach(temp, restrictinfo_list)
 	{
-		clausenode = (ClauseInfo *) lfirst(temp);
+		clausenode = (RestrictInfo *) lfirst(temp);
 		cost_clause = clausenode->selectivity;
 		if (FLOAT_IS_ZERO(cost_clause) || new_selectivity < cost_clause)
 			clausenode->selectivity = new_selectivity;
@@ -60,23 +60,23 @@ set_clause_selectivities(List *clauseinfo_list, Cost new_selectivity)
 
 /*
  * product_selec -
- *	  Multiplies the selectivities of each clause in 'clauseinfo-list'.
+ *	  Multiplies the selectivities of each clause in 'restrictinfo-list'.
  *
- * Returns a flonum corresponding to the selectivity of 'clauseinfo-list'.
+ * Returns a flonum corresponding to the selectivity of 'restrictinfo-list'.
  */
 Cost
-product_selec(List *clauseinfo_list)
+product_selec(List *restrictinfo_list)
 {
 	Cost		result = 1.0;
 
-	if (clauseinfo_list != NIL)
+	if (restrictinfo_list != NIL)
 	{
 		List	   *xclausenode = NIL;
 		Cost		temp;
 
-		foreach(xclausenode, clauseinfo_list)
+		foreach(xclausenode, restrictinfo_list)
 		{
-			temp = ((ClauseInfo *) lfirst(xclausenode))->selectivity;
+			temp = ((RestrictInfo *) lfirst(xclausenode))->selectivity;
 			result = result * temp;
 		}
 	}
@@ -89,7 +89,7 @@ product_selec(List *clauseinfo_list)
  *	  those clauses that haven't been assigned a selectivity by an index.
  *
  * Returns nothing of interest.
- * MODIFIES: selectivities of the various rel's clauseinfo
+ * MODIFIES: selectivities of the various rel's restrictinfo
  *		  slots.
  */
 void
@@ -101,28 +101,28 @@ set_rest_relselec(Query *root, List *rel_list)
 	foreach(x, rel_list)
 	{
 		rel = (RelOptInfo *) lfirst(x);
-		set_rest_selec(root, rel->clauseinfo);
+		set_rest_selec(root, rel->restrictinfo);
 	}
 }
 
 /*
  * set_rest_selec -
  *	  Sets the selectivity fields for those clauses within a single
- *	  relation's 'clauseinfo-list' that haven't already been set.
+ *	  relation's 'restrictinfo-list' that haven't already been set.
  *
  * Returns nothing of interest.
  *
  */
 void
-set_rest_selec(Query *root, List *clauseinfo_list)
+set_rest_selec(Query *root, List *restrictinfo_list)
 {
 	List	   *temp = NIL;
-	ClauseInfo *clausenode = (ClauseInfo *) NULL;
+	RestrictInfo *clausenode = (RestrictInfo *) NULL;
 	Cost		cost_clause;
 
-	foreach(temp, clauseinfo_list)
+	foreach(temp, restrictinfo_list)
 	{
-		clausenode = (ClauseInfo *) lfirst(temp);
+		clausenode = (RestrictInfo *) lfirst(temp);
 		cost_clause = clausenode->selectivity;
 
 		/*

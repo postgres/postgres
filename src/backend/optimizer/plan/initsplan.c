@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.20 1998/09/01 04:29:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.21 1999/02/03 20:15:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@
 extern int	Quiet;
 
 static void add_clause_to_rels(Query *root, List *clause);
-static void add_join_info_to_rels(Query *root, ClauseInfo * clauseinfo,
+static void add_join_info_to_rels(Query *root, RestrictInfo * restrictinfo,
 					  List *join_relids);
 static void add_vars_to_targetlist(Query *root, List *vars, List *join_relids);
 
@@ -140,7 +140,7 @@ add_missing_vars_to_tlist(Query *root, List *tlist)
 
 /*
  * init-base-rels-qual--
- *	  Initializes ClauseInfo and JoinInfo fields of relation entries for all
+ *	  Initializes RestrictInfo and JoinInfo fields of relation entries for all
  *	  relations appearing within clauses.  Creates new relation entries if
  *	  necessary, adding them to *query-relation-list*.
  *
@@ -158,9 +158,9 @@ init_base_rels_qual(Query *root, List *clauses)
 
 /*
  * add-clause-to-rels--
- *	  Add clause information to either the 'ClauseInfo' or 'JoinInfo' field
+ *	  Add clause information to either the 'RestrictInfo' or 'JoinInfo' field
  *	  of a relation entry(depending on whether or not the clause is a join)
- *	  by creating a new ClauseInfo node and setting appropriate fields
+ *	  by creating a new RestrictInfo node and setting appropriate fields
  *	  within the nodes.
  *
  *	  Returns nothing of interest.
@@ -170,19 +170,19 @@ add_clause_to_rels(Query *root, List *clause)
 {
 	List	   *relids;
 	List	   *vars;
-	ClauseInfo *clauseinfo = makeNode(ClauseInfo);
+	RestrictInfo *restrictinfo = makeNode(RestrictInfo);
 
 	/*
 	 * Retrieve all relids and vars contained within the clause.
 	 */
 	clause_get_relids_vars((Node *) clause, &relids, &vars);
 
-	clauseinfo->clause = (Expr *) clause;
-	clauseinfo->notclause = contains_not((Node *) clause);
-	clauseinfo->selectivity = 0;
-	clauseinfo->indexids = NIL;
-	clauseinfo->mergejoinorder = (MergeOrder *) NULL;
-	clauseinfo->hashjoinoperator = (Oid) 0;
+	restrictinfo->clause = (Expr *) clause;
+	restrictinfo->notclause = contains_not((Node *) clause);
+	restrictinfo->selectivity = 0;
+	restrictinfo->indexids = NIL;
+	restrictinfo->mergejoinorder = (MergeOrder *) NULL;
+	restrictinfo->hashjoinoperator = (Oid) 0;
 
 	if (length(relids) == 1)
 	{
@@ -204,14 +204,14 @@ add_clause_to_rels(Query *root, List *clause)
 			 * XXX If we have a func clause set selectivity to 1/3, really
 			 * need a true selectivity function.
 			 */
-			clauseinfo->selectivity = (Cost) 0.3333333;
+			restrictinfo->selectivity = (Cost) 0.3333333;
 		}
 		else
 		{
-			clauseinfo->selectivity =
+			restrictinfo->selectivity =
 				compute_clause_selec(root, (Node *) clause, NIL);
 		}
-		rel->clauseinfo = lcons(clauseinfo, rel->clauseinfo);
+		rel->restrictinfo = lcons(restrictinfo, rel->restrictinfo);
 	}
 	else
 	{
@@ -228,14 +228,14 @@ add_clause_to_rels(Query *root, List *clause)
 			 * XXX If we have a func clause set selectivity to 1/3, really
 			 * need a true selectivity function.
 			 */
-			clauseinfo->selectivity = (Cost) 0.3333333;
+			restrictinfo->selectivity = (Cost) 0.3333333;
 		}
 		else
 		{
-			clauseinfo->selectivity =
+			restrictinfo->selectivity =
 				compute_clause_selec(root, (Node *) clause, NIL);
 		}
-		add_join_info_to_rels(root, clauseinfo, relids);
+		add_join_info_to_rels(root, restrictinfo, relids);
 		/* we are going to be doing a join, so add var to targetlist */
 		add_vars_to_targetlist(root, vars, relids);
 	}
@@ -243,18 +243,18 @@ add_clause_to_rels(Query *root, List *clause)
 
 /*
  * add-join-info-to-rels--
- *	  For every relation participating in a join clause, add 'clauseinfo' to
+ *	  For every relation participating in a join clause, add 'restrictinfo' to
  *	  the appropriate joininfo node(creating a new one and adding it to the
  *	  appropriate rel node if necessary).
  *
- * 'clauseinfo' describes the join clause
+ * 'restrictinfo' describes the join clause
  * 'join-relids' is the list of relations participating in the join clause
  *
  * Returns nothing.
  *
  */
 static void
-add_join_info_to_rels(Query *root, ClauseInfo * clauseinfo, List *join_relids)
+add_join_info_to_rels(Query *root, RestrictInfo * restrictinfo, List *join_relids)
 {
 	List	   *join_relid;
 
@@ -272,8 +272,8 @@ add_join_info_to_rels(Query *root, ClauseInfo * clauseinfo, List *join_relids)
 
 		joininfo = find_joininfo_node(get_base_rel(root, lfirsti(join_relid)),
 									  other_rels);
-		joininfo->jinfoclauseinfo =
-			lcons(copyObject((void *) clauseinfo), joininfo->jinfoclauseinfo);
+		joininfo->jinfo_restrictinfo =
+			lcons(copyObject((void *) restrictinfo), joininfo->jinfo_restrictinfo);
 
 	}
 }
@@ -322,7 +322,7 @@ add_vars_to_targetlist(Query *root, List *vars, List *join_relids)
  * init-join-info--
  *	  Set the MergeJoinable or HashJoinable field for every joininfo node
  *	  (within a rel node) and the MergeJoinOrder or HashJoinOp field for
- *	  each clauseinfo node(within a joininfo node) for all relations in a
+ *	  each restrictinfo node(within a joininfo node) for all relations in a
  *	  query.
  *
  *	  Returns nothing.
@@ -335,7 +335,7 @@ init_join_info(List *rel_list)
 			   *z;
 	RelOptInfo *rel;
 	JoinInfo   *joininfo;
-	ClauseInfo *clauseinfo;
+	RestrictInfo *restrictinfo;
 	Expr	   *clause;
 
 	foreach(x, rel_list)
@@ -344,10 +344,10 @@ init_join_info(List *rel_list)
 		foreach(y, rel->joininfo)
 		{
 			joininfo = (JoinInfo *) lfirst(y);
-			foreach(z, joininfo->jinfoclauseinfo)
+			foreach(z, joininfo->jinfo_restrictinfo)
 			{
-				clauseinfo = (ClauseInfo *) lfirst(z);
-				clause = clauseinfo->clause;
+				restrictinfo = (RestrictInfo *) lfirst(z);
+				clause = restrictinfo->clause;
 				if (is_joinable((Node *) clause))
 				{
 					MergeOrder *sortop = (MergeOrder *) NULL;
@@ -360,12 +360,12 @@ init_join_info(List *rel_list)
 
 					if (sortop)
 					{
-						clauseinfo->mergejoinorder = sortop;
+						restrictinfo->mergejoinorder = sortop;
 						joininfo->mergejoinable = true;
 					}
 					if (hashop)
 					{
-						clauseinfo->hashjoinoperator = hashop;
+						restrictinfo->hashjoinoperator = hashop;
 						joininfo->hashjoinable = true;
 					}
 				}

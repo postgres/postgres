@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.35 1998/09/21 15:41:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.36 1999/02/03 20:15:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
 #include "nodes/pg_list.h"
 #include "nodes/relation.h"
 #include "optimizer/clauses.h"
-#include "optimizer/clauseinfo.h"
+#include "optimizer/restrictinfo.h"
 #include "optimizer/cost.h"
 #include "optimizer/internal.h"
 #include "optimizer/keys.h"
@@ -46,25 +46,25 @@
 
 
 static void match_index_orclauses(RelOptInfo * rel, RelOptInfo * index, int indexkey,
-					  int xclass, List *clauseinfo_list);
+					  int xclass, List *restrictinfo_list);
 static bool match_index_to_operand(int indexkey, Expr *operand,
 					   RelOptInfo * rel, RelOptInfo * index);
 static List *match_index_orclause(RelOptInfo * rel, RelOptInfo * index, int indexkey,
 			 int xclass, List *or_clauses, List *other_matching_indices);
 static List *group_clauses_by_indexkey(RelOptInfo * rel, RelOptInfo * index,
-					int *indexkeys, Oid *classes, List *clauseinfo_list);
+					int *indexkeys, Oid *classes, List *restrictinfo_list);
 static List *group_clauses_by_ikey_for_joins(RelOptInfo * rel, RelOptInfo * index,
 								int *indexkeys, Oid *classes, List *join_cinfo_list, List *restr_cinfo_list);
-static ClauseInfo *match_clause_to_indexkey(RelOptInfo * rel, RelOptInfo * index, int indexkey,
-						 int xclass, ClauseInfo * clauseInfo, bool join);
-static bool pred_test(List *predicate_list, List *clauseinfo_list,
+static RestrictInfo *match_clause_to_indexkey(RelOptInfo * rel, RelOptInfo * index, int indexkey,
+						 int xclass, RestrictInfo * clauseInfo, bool join);
+static bool pred_test(List *predicate_list, List *restrictinfo_list,
 		  List *joininfo_list);
-static bool one_pred_test(Expr *predicate, List *clauseinfo_list);
+static bool one_pred_test(Expr *predicate, List *restrictinfo_list);
 static bool one_pred_clause_expr_test(Expr *predicate, Node *clause);
 static bool one_pred_clause_test(Expr *predicate, Node *clause);
 static bool clause_pred_clause_test(Expr *predicate, Node *clause);
 static List *indexable_joinclauses(RelOptInfo * rel, RelOptInfo * index,
-					  List *joininfo_list, List *clauseinfo_list);
+					  List *joininfo_list, List *restrictinfo_list);
 static List *index_innerjoin(Query *root, RelOptInfo * rel,
 				List *clausegroup_list, RelOptInfo * index);
 static List *create_index_paths(Query *root, RelOptInfo * rel, RelOptInfo * index,
@@ -90,7 +90,7 @@ static bool function_index_operand(Expr *funcOpnd, RelOptInfo * rel, RelOptInfo 
  *
  * 'rel' is the relation entry to which these index paths correspond
  * 'indices' is a list of possible index paths
- * 'clauseinfo-list' is a list of restriction clauseinfo nodes for 'rel'
+ * 'restrictinfo-list' is a list of restriction restrictinfo nodes for 'rel'
  * 'joininfo-list' is a list of joininfo nodes for 'rel'
  * 'sortkeys' is a node describing the result sort order (from
  *		(find_sortkeys))
@@ -102,7 +102,7 @@ List *
 find_index_paths(Query *root,
 				 RelOptInfo * rel,
 				 List *indices,
-				 List *clauseinfo_list,
+				 List *restrictinfo_list,
 				 List *joininfo_list)
 {
 	List	   *scanclausegroups = NIL;
@@ -122,12 +122,12 @@ find_index_paths(Query *root,
 		 * test
 		 */
 		if (index->indpred != NIL)
-			if (!pred_test(index->indpred, clauseinfo_list, joininfo_list))
+			if (!pred_test(index->indpred, restrictinfo_list, joininfo_list))
 				continue;
 
 		/*
 		 * 1. Try matching the index against subclauses of an 'or' clause.
-		 * The fields of the clauseinfo nodes are marked with lists of the
+		 * The fields of the restrictinfo nodes are marked with lists of the
 		 * matching indices.  No path are actually created.  We currently
 		 * only look to match the first key.  We don't find multi-key
 		 * index cases where an AND matches the first key, and the OR
@@ -137,7 +137,7 @@ find_index_paths(Query *root,
 							  index,
 							  index->indexkeys[0],
 							  index->classlist[0],
-							  clauseinfo_list);
+							  restrictinfo_list);
 
 		/*
 		 * 2. If the keys of this index match any of the available
@@ -148,7 +148,7 @@ find_index_paths(Query *root,
 													 index,
 													 index->indexkeys,
 													 index->classlist,
-													 clauseinfo_list);
+													 restrictinfo_list);
 
 		scanpaths = NIL;
 		if (scanclausegroups != NIL)
@@ -165,7 +165,7 @@ find_index_paths(Query *root,
 		 * mergejoin, or if the index can possibly be used for scanning
 		 * the inner relation of a nestloop join.
 		 */
-		joinclausegroups = indexable_joinclauses(rel, index, joininfo_list, clauseinfo_list);
+		joinclausegroups = indexable_joinclauses(rel, index, joininfo_list, restrictinfo_list);
 		joinpaths = NIL;
 
 		if (joinclausegroups != NIL)
@@ -206,13 +206,13 @@ find_index_paths(Query *root,
  *	  about the index.
  *
  *	  Essentially, this adds 'index' to the list of indices in the
- *	  ClauseInfo field of each of the clauses which it matches.
+ *	  RestrictInfo field of each of the clauses which it matches.
  *
  * 'rel' is the node of the relation on which the index is defined.
  * 'index' is the index node.
  * 'indexkey' is the (single) key of the index
  * 'class' is the class of the operator corresponding to 'indexkey'.
- * 'clauseinfo-list' is the list of available restriction clauses.
+ * 'restrictinfo-list' is the list of available restriction clauses.
  *
  * Returns nothing.
  *
@@ -222,15 +222,15 @@ match_index_orclauses(RelOptInfo * rel,
 					  RelOptInfo * index,
 					  int indexkey,
 					  int xclass,
-					  List *clauseinfo_list)
+					  List *restrictinfo_list)
 {
-	ClauseInfo *clauseinfo = (ClauseInfo *) NULL;
+	RestrictInfo *restrictinfo = (RestrictInfo *) NULL;
 	List	   *i = NIL;
 
-	foreach(i, clauseinfo_list)
+	foreach(i, restrictinfo_list)
 	{
-		clauseinfo = (ClauseInfo *) lfirst(i);
-		if (valid_or_clause(clauseinfo))
+		restrictinfo = (RestrictInfo *) lfirst(i);
+		if (valid_or_clause(restrictinfo))
 		{
 
 			/*
@@ -238,11 +238,11 @@ match_index_orclauses(RelOptInfo * rel,
 			 * each of its subclauses.	The list is generated by adding
 			 * 'index' to the existing list where appropriate.
 			 */
-			clauseinfo->indexids =
+			restrictinfo->indexids =
 				match_index_orclause(rel, index, indexkey,
 									 xclass,
-									 clauseinfo->clause->args,
-									 clauseinfo->indexids);
+									 restrictinfo->clause->args,
+									 restrictinfo->indexids);
 		}
 	}
 }
@@ -392,15 +392,15 @@ group_clauses_by_indexkey(RelOptInfo * rel,
 						  RelOptInfo * index,
 						  int *indexkeys,
 						  Oid *classes,
-						  List *clauseinfo_list)
+						  List *restrictinfo_list)
 {
 	List	   *curCinfo = NIL;
-	ClauseInfo *matched_clause = (ClauseInfo *) NULL;
+	RestrictInfo *matched_clause = (RestrictInfo *) NULL;
 	List	   *clausegroup = NIL;
 	int			curIndxKey;
 	Oid			curClass;
 
-	if (clauseinfo_list == NIL || indexkeys[0] == 0)
+	if (restrictinfo_list == NIL || indexkeys[0] == 0)
 		return NIL;
 
 	do
@@ -410,9 +410,9 @@ group_clauses_by_indexkey(RelOptInfo * rel,
 		curIndxKey = indexkeys[0];
 		curClass = classes[0];
 
-		foreach(curCinfo, clauseinfo_list)
+		foreach(curCinfo, restrictinfo_list)
 		{
-			ClauseInfo *temp = (ClauseInfo *) lfirst(curCinfo);
+			RestrictInfo *temp = (RestrictInfo *) lfirst(curCinfo);
 
 			matched_clause = match_clause_to_indexkey(rel,
 													  index,
@@ -458,7 +458,7 @@ group_clauses_by_ikey_for_joins(RelOptInfo * rel,
 								List *restr_cinfo_list)
 {
 	List	   *curCinfo = NIL;
-	ClauseInfo *matched_clause = (ClauseInfo *) NULL;
+	RestrictInfo *matched_clause = (RestrictInfo *) NULL;
 	List	   *clausegroup = NIL;
 	int			curIndxKey;
 	Oid			curClass;
@@ -476,7 +476,7 @@ group_clauses_by_ikey_for_joins(RelOptInfo * rel,
 
 		foreach(curCinfo, join_cinfo_list)
 		{
-			ClauseInfo *temp = (ClauseInfo *) lfirst(curCinfo);
+			RestrictInfo *temp = (RestrictInfo *) lfirst(curCinfo);
 
 			matched_clause = match_clause_to_indexkey(rel,
 													  index,
@@ -492,7 +492,7 @@ group_clauses_by_ikey_for_joins(RelOptInfo * rel,
 		}
 		foreach(curCinfo, restr_cinfo_list)
 		{
-			ClauseInfo *temp = (ClauseInfo *) lfirst(curCinfo);
+			RestrictInfo *temp = (RestrictInfo *) lfirst(curCinfo);
 
 			matched_clause = match_clause_to_indexkey(rel,
 													  index,
@@ -565,18 +565,18 @@ group_clauses_by_ikey_for_joins(RelOptInfo * rel,
  *
  *	  If the clause being matched is a join clause, then 'join' is t.
  *
- * Returns a single clauseinfo node corresponding to the matching
+ * Returns a single restrictinfo node corresponding to the matching
  * clause.
  *
  * NOTE:  returns nil if clause is an or_clause.
  *
  */
-static ClauseInfo *
+static RestrictInfo *
 match_clause_to_indexkey(RelOptInfo * rel,
 						 RelOptInfo * index,
 						 int indexkey,
 						 int xclass,
-						 ClauseInfo * clauseInfo,
+						 RestrictInfo * clauseInfo,
 						 bool join)
 {
 	Expr	   *clause = clauseInfo->clause;
@@ -588,7 +588,7 @@ match_clause_to_indexkey(RelOptInfo * rel,
 
 	if (or_clause((Node *) clause) ||
 		not_clause((Node *) clause) || single_node((Node *) clause))
-		return (ClauseInfo *) NULL;
+		return (RestrictInfo *) NULL;
 
 	leftop = get_leftop(clause);
 	rightop = get_rightop(clause);
@@ -778,7 +778,7 @@ match_clause_to_indexkey(RelOptInfo * rel,
  * pred_test--
  *	  Does the "predicate inclusion test" for partial indexes.
  *
- *	  Recursively checks whether the clauses in clauseinfo_list imply
+ *	  Recursively checks whether the clauses in restrictinfo_list imply
  *	  that the given predicate is true.
  *
  *	  This routine (together with the routines it calls) iterates over
@@ -789,7 +789,7 @@ match_clause_to_indexkey(RelOptInfo * rel,
  *	  successfully cnfify()-ed). --Nels, Jan '93
  */
 static bool
-pred_test(List *predicate_list, List *clauseinfo_list, List *joininfo_list)
+pred_test(List *predicate_list, List *restrictinfo_list, List *joininfo_list)
 {
 	List	   *pred,
 			   *items,
@@ -802,12 +802,12 @@ pred_test(List *predicate_list, List *clauseinfo_list, List *joininfo_list)
 	 * an index on c.d), then we could use that equivalence class info
 	 * here with joininfo_list to do more complete tests for the usability
 	 * of a partial index.	For now, the test only uses restriction
-	 * clauses (those in clauseinfo_list). --Nels, Dec '92
+	 * clauses (those in restrictinfo_list). --Nels, Dec '92
 	 */
 
 	if (predicate_list == NULL)
 		return true;			/* no predicate: the index is usable */
-	if (clauseinfo_list == NULL)
+	if (restrictinfo_list == NULL)
 		return false;			/* no restriction clauses: the test must
 								 * fail */
 
@@ -823,11 +823,11 @@ pred_test(List *predicate_list, List *clauseinfo_list, List *joininfo_list)
 			items = ((Expr *) lfirst(pred))->args;
 			foreach(item, items)
 			{
-				if (!one_pred_test(lfirst(item), clauseinfo_list))
+				if (!one_pred_test(lfirst(item), restrictinfo_list))
 					return false;
 			}
 		}
-		else if (!one_pred_test(lfirst(pred), clauseinfo_list))
+		else if (!one_pred_test(lfirst(pred), restrictinfo_list))
 			return false;
 	}
 	return true;
@@ -840,17 +840,17 @@ pred_test(List *predicate_list, List *clauseinfo_list, List *joininfo_list)
  *	  expression.
  */
 static bool
-one_pred_test(Expr *predicate, List *clauseinfo_list)
+one_pred_test(Expr *predicate, List *restrictinfo_list)
 {
-	ClauseInfo *clauseinfo;
+	RestrictInfo *restrictinfo;
 	List	   *item;
 
 	Assert(predicate != NULL);
-	foreach(item, clauseinfo_list)
+	foreach(item, restrictinfo_list)
 	{
-		clauseinfo = (ClauseInfo *) lfirst(item);
+		restrictinfo = (RestrictInfo *) lfirst(item);
 		/* if any clause implies the predicate, return true */
-		if (one_pred_clause_expr_test(predicate, (Node *) clauseinfo->clause))
+		if (one_pred_clause_expr_test(predicate, (Node *) restrictinfo->clause))
 			return true;
 	}
 	return false;
@@ -1181,14 +1181,14 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
  *
  * Returns a list of these clause groups.
  *
- *	  Added: clauseinfo_list - list of restriction ClauseInfos. It's to
+ *	  Added: restrictinfo_list - list of restriction RestrictInfos. It's to
  *		support multi-column indices in joins and for cases
  *		when a key is in both join & restriction clauses. - vadim 03/18/97
  *
  */
 static List *
 indexable_joinclauses(RelOptInfo * rel, RelOptInfo * index,
-					  List *joininfo_list, List *clauseinfo_list)
+					  List *joininfo_list, List *restrictinfo_list)
 {
 	JoinInfo   *joininfo = (JoinInfo *) NULL;
 	List	   *cg_list = NIL;
@@ -1199,21 +1199,21 @@ indexable_joinclauses(RelOptInfo * rel, RelOptInfo * index,
 	{
 		joininfo = (JoinInfo *) lfirst(i);
 
-		if (joininfo->jinfoclauseinfo == NIL)
+		if (joininfo->jinfo_restrictinfo == NIL)
 			continue;
 		clausegroups =
 			group_clauses_by_ikey_for_joins(rel,
 											index,
 											index->indexkeys,
 											index->classlist,
-											joininfo->jinfoclauseinfo,
-											clauseinfo_list);
+											joininfo->jinfo_restrictinfo,
+											restrictinfo_list);
 
 		if (clausegroups != NIL)
 		{
 			List	   *clauses = lfirst(clausegroups);
 
-			((ClauseInfo *) lfirst(clauses))->cinfojoinid =
+			((RestrictInfo *) lfirst(clauses))->cinfojoinid =
 				joininfo->otherrels;
 		}
 		cg_list = nconc(cg_list, clausegroups);
@@ -1239,7 +1239,7 @@ extract_restrict_clauses(List *clausegroup)
 
 	foreach(l, clausegroup)
 	{
-		ClauseInfo *cinfo = lfirst(l);
+		RestrictInfo *cinfo = lfirst(l);
 
 		if (!is_joinable((Node *) cinfo->clause))
 			restrict_cls = lappend(restrict_cls, cinfo);
@@ -1254,7 +1254,7 @@ extract_restrict_clauses(List *clausegroup)
  *	  Creates index path nodes corresponding to paths to be used as inner
  *	  relations in nestloop joins.
  *
- * 'clausegroup-list' is a list of list of clauseinfo nodes which can use
+ * 'clausegroup-list' is a list of list of restrictinfo nodes which can use
  * 'index' on their inner relation.
  *
  * Returns a list of index pathnodes.
@@ -1304,7 +1304,7 @@ index_innerjoin(Query *root, RelOptInfo * rel, List *clausegroup_list,
 		pathnode->indexkeys = index->indexkeys;
 		pathnode->indexqual = clausegroup;
 
-		pathnode->path.joinid = ((ClauseInfo *) lfirst(clausegroup))->cinfojoinid;
+		pathnode->path.joinid = ((RestrictInfo *) lfirst(clausegroup))->cinfojoinid;
 
 		pathnode->path.path_cost =
 			cost_index((Oid) lfirsti(index->relids),
@@ -1317,11 +1317,11 @@ index_innerjoin(Query *root, RelOptInfo * rel, List *clausegroup_list,
 					   true);
 
 		/*
-		 * copy clauseinfo list into path for expensive function
+		 * copy restrictinfo list into path for expensive function
 		 * processing -- JMH, 7/7/92
 		 */
-		pathnode->path.locclauseinfo =
-			set_difference(copyObject((Node *) rel->clauseinfo),
+		pathnode->path.loc_restrictinfo =
+			set_difference(copyObject((Node *) rel->restrictinfo),
 						   clausegroup);
 
 #if 0							/* fix xfunc */
@@ -1343,7 +1343,7 @@ index_innerjoin(Query *root, RelOptInfo * rel, List *clausegroup_list,
  *	  (restriction or join) that can be used in conjunction with an index.
  *
  * 'rel' is the relation for which 'index' is defined
- * 'clausegroup-list' is the list of clause groups (lists of clauseinfo
+ * 'clausegroup-list' is the list of clause groups (lists of restrictinfo
  *				nodes) grouped by mergejoinorder
  * 'join' is a flag indicating whether or not the clauses are join
  *				clauses
@@ -1366,7 +1366,7 @@ create_index_paths(Query *root,
 
 	foreach(i, clausegroup_list)
 	{
-		ClauseInfo *clauseinfo;
+		RestrictInfo *restrictinfo;
 		List	   *temp_node = NIL;
 		bool		temp = true;
 
@@ -1374,10 +1374,10 @@ create_index_paths(Query *root,
 
 		foreach(j, clausegroup)
 		{
-			clauseinfo = (ClauseInfo *) lfirst(j);
-			if (!(is_joinable((Node *) clauseinfo->clause) &&
+			restrictinfo = (RestrictInfo *) lfirst(j);
+			if (!(is_joinable((Node *) restrictinfo->clause) &&
 				  equal_path_merge_ordering(index->ordering,
-											clauseinfo->mergejoinorder)))
+											restrictinfo->mergejoinorder)))
 				temp = false;
 		}
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.31 1999/02/02 03:44:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.32 1999/02/03 20:15:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include <access/heapam.h>
 #include <utils/builtins.h>
 #include <utils/syscache.h>
+#include <catalog/heap.h>
 #include <catalog/index.h>
 #include <catalog/pg_index.h>
 #include <catalog/pg_proc.h>

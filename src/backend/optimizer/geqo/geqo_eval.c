@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.24 1998/09/01 04:29:16 momjian Exp $
+ * $Id: geqo_eval.c,v 1.25 1999/02/03 20:15:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -290,7 +290,7 @@ init_join_rel(RelOptInfo * outer_rel, RelOptInfo * inner_rel, JoinInfo * joininf
 	joinrel->classlist = NULL;
 	joinrel->relam = InvalidOid;
 	joinrel->ordering = NULL;
-	joinrel->clauseinfo = NIL;
+	joinrel->restrictinfo = NIL;
 	joinrel->joininfo = NULL;
 	joinrel->innerjoin = NIL;
 	joinrel->superrels = NIL;
@@ -302,7 +302,7 @@ init_join_rel(RelOptInfo * outer_rel, RelOptInfo * inner_rel, JoinInfo * joininf
 
 	if (joininfo)
 	{
-		joinrel->clauseinfo = joininfo->jinfoclauseinfo;
+		joinrel->restrictinfo = joininfo->jinfo_restrictinfo;
 		if (BushyPlanFlag)
 			joininfo->inactive = true;
 	}
@@ -410,22 +410,18 @@ new_joininfo_list(List *joininfo_list, List *join_relids)
 											 current_joininfo_list);
 			if (other_joininfo)
 			{
-				other_joininfo->jinfoclauseinfo =
-					(List *) LispUnion(joininfo->jinfoclauseinfo,
-									   other_joininfo->jinfoclauseinfo);
+				other_joininfo->jinfo_restrictinfo =
+					(List *) LispUnion(joininfo->jinfo_restrictinfo,
+									   other_joininfo->jinfo_restrictinfo);
 			}
 			else
 			{
 				other_joininfo = makeNode(JoinInfo);
 
-				other_joininfo->otherrels =
-					joininfo->otherrels;
-				other_joininfo->jinfoclauseinfo =
-					joininfo->jinfoclauseinfo;
-				other_joininfo->mergejoinable =
-					joininfo->mergejoinable;
-				other_joininfo->hashjoinable =
-					joininfo->hashjoinable;
+				other_joininfo->otherrels = joininfo->otherrels;
+				other_joininfo->jinfo_restrictinfo = joininfo->jinfo_restrictinfo;
+				other_joininfo->mergejoinable = joininfo->mergejoinable;
+				other_joininfo->hashjoinable = joininfo->hashjoinable;
 				other_joininfo->inactive = false;
 
 				current_joininfo_list = lcons(other_joininfo,
@@ -508,7 +504,7 @@ geqo_add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 		{
 			JoinInfo   *joininfo = (JoinInfo *) lfirst(xjoininfo);
 			List	   *other_rels = joininfo->otherrels;
-			List	   *clause_info = joininfo->jinfoclauseinfo;
+			List	   *restrict_info = joininfo->jinfo_restrictinfo;
 			bool		mergejoinable = joininfo->mergejoinable;
 			bool		hashjoinable = joininfo->hashjoinable;
 
@@ -540,7 +536,7 @@ geqo_add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 				new_joininfo = makeNode(JoinInfo);
 
 				new_joininfo->otherrels = joinrel->relids;
-				new_joininfo->jinfoclauseinfo = clause_info;
+				new_joininfo->jinfo_restrictinfo = restrict_info;
 				new_joininfo->mergejoinable = mergejoinable;
 				new_joininfo->hashjoinable = hashjoinable;
 				new_joininfo->inactive = false;
@@ -560,16 +556,16 @@ geqo_add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 
 						if (other_joininfo)
 						{
-							other_joininfo->jinfoclauseinfo =
-								(List *) LispUnion(clause_info,
-										other_joininfo->jinfoclauseinfo);
+							other_joininfo->jinfo_restrictinfo =
+								(List *) LispUnion(restrict_info,
+										other_joininfo->jinfo_restrictinfo);
 						}
 						else
 						{
 							JoinInfo   *new_joininfo = makeNode(JoinInfo);
 
 							new_joininfo->otherrels = new_relids;
-							new_joininfo->jinfoclauseinfo = clause_info;
+							new_joininfo->jinfo_restrictinfo = restrict_info;
 							new_joininfo->mergejoinable = mergejoinable;
 							new_joininfo->hashjoinable = hashjoinable;
 							new_joininfo->inactive = false;
@@ -695,8 +691,8 @@ geqo_joinrel_size(RelOptInfo * joinrel, RelOptInfo * outer_rel, RelOptInfo * inn
 
 	temp = (Cost) inner_rel->tuples * (Cost) outer_rel->tuples; /* cartesian product */
 
-	if (joinrel->clauseinfo)
-		temp = temp * product_selec(joinrel->clauseinfo);
+	if (joinrel->restrictinfo)
+		temp = temp * product_selec(joinrel->restrictinfo);
 
 	if (temp >= (MAXINT - 1))
 		ntuples = ceil(geqo_log((double) temp, (double) GEQO_LOG_BASE));

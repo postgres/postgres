@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.21 1999/02/02 23:53:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.22 1999/02/03 20:15:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,13 +278,13 @@ _equalFunc(Func *a, Func *b)
 }
 
 /*
- * ClauseInfo is a subclass of Node.
+ * RestrictInfo is a subclass of Node.
  */
 static bool
-_equalClauseInfo(ClauseInfo * a, ClauseInfo * b)
+_equalRestrictInfo(RestrictInfo * a, RestrictInfo * b)
 {
-	Assert(IsA(a, ClauseInfo));
-	Assert(IsA(b, ClauseInfo));
+	Assert(IsA(a, RestrictInfo));
+	Assert(IsA(b, RestrictInfo));
 
 	if (!equal(a->clause, b->clause))
 		return false;
@@ -298,8 +298,7 @@ _equalClauseInfo(ClauseInfo * a, ClauseInfo * b)
 #endif
 	if (a->hashjoinoperator != b->hashjoinoperator)
 		return false;
-	return (equal((a->indexids),
-				  (b->indexids)));
+	return equal(a->indexids, b->indexids);
 }
 
 /*
@@ -311,8 +310,7 @@ _equalRelOptInfo(RelOptInfo * a, RelOptInfo * b)
 	Assert(IsA(a, RelOptInfo));
 	Assert(IsA(b, RelOptInfo));
 
-	return (equal((a->relids),
-				  (b->relids)));
+	return equal(a->relids, b->relids);
 }
 
 static bool
@@ -321,11 +319,9 @@ _equalJoinMethod(JoinMethod *a, JoinMethod *b)
 	Assert(IsA(a, JoinMethod));
 	Assert(IsA(b, JoinMethod));
 
-	if (!equal((a->jmkeys),
-			   (b->jmkeys)))
+	if (!equal(a->jmkeys, b->jmkeys))
 		return false;
-	if (!equal((a->clauses),
-			   (b->clauses)))
+	if (!equal(a->clauses, b->clauses))
 		return false;
 	return true;
 }
@@ -368,19 +364,16 @@ _equalPath(Path *a, Path *b)
 	}
 	else
 	{
-		if (!equal((a->p_ordering.ord.merge),
-				   (b->p_ordering.ord.merge)))
+		if (!equal(a->p_ordering.ord.merge, b->p_ordering.ord.merge))
 			return false;
 	}
-	if (!equal((a->keys),
-			   (b->keys)))
+	if (!equal(a->keys, b->keys))
 		return false;
 
 	/*
 	 * if (a->outerjoincost != b->outerjoincost) return(false);
 	 */
-	if (!equali((a->joinid),
-				(b->joinid)))
+	if (!equali(a->joinid, b->joinid))
 		return false;
 	return true;
 }
@@ -390,9 +383,9 @@ _equalIndexPath(IndexPath *a, IndexPath *b)
 {
 	if (!_equalPath((Path *) a, (Path *) b))
 		return false;
-	if (!equali((a->indexid), (b->indexid)))
+	if (!equali(a->indexid, b->indexid))
 		return false;
-	if (!equal((a->indexqual), (b->indexqual)))
+	if (!equal(a->indexqual, b->indexqual))
 		return false;
 	return true;
 }
@@ -405,11 +398,11 @@ _equalJoinPath(JoinPath *a, JoinPath *b)
 
 	if (!_equalPath((Path *) a, (Path *) b))
 		return false;
-	if (!equal((a->pathclauseinfo), (b->pathclauseinfo)))
+	if (!equal(a->pathinfo, b->pathinfo))
 		return false;
-	if (!equal((a->outerjoinpath), (b->outerjoinpath)))
+	if (!equal(a->outerjoinpath, b->outerjoinpath))
 		return false;
-	if (!equal((a->innerjoinpath), (b->innerjoinpath)))
+	if (!equal(a->innerjoinpath, b->innerjoinpath))
 		return false;
 	return true;
 }
@@ -454,9 +447,9 @@ _equalJoinKey(JoinKey *a, JoinKey *b)
 	Assert(IsA(a, JoinKey));
 	Assert(IsA(b, JoinKey));
 
-	if (!equal((a->outer), (b->outer)))
+	if (!equal(a->outer, b->outer))
 		return false;
-	if (!equal((a->inner), (b->inner)))
+	if (!equal(a->inner, b->inner))
 		return false;
 	return true;
 }
@@ -506,13 +499,13 @@ _equalIndexScan(IndexScan *a, IndexScan *b)
 	 * if(a->scan.plan.cost != b->scan.plan.cost) return(false);
 	 */
 
-	if (!equal((a->indxqual), (b->indxqual)))
+	if (!equal(a->indxqual, b->indxqual))
 		return false;
 
 	if (a->scan.scanrelid != b->scan.scanrelid)
 		return false;
 
-	if (!equali((a->indxid), (b->indxid)))
+	if (!equali(a->indxid, b->indxid))
 		return false;
 	return true;
 }
@@ -523,7 +516,7 @@ _equalSubPlan(SubPlan *a, SubPlan *b)
 	if (a->plan_id != b->plan_id)
 		return false;
 
-	if (!equal((a->sublink->oper), (b->sublink->oper)))
+	if (!equal(a->sublink->oper, b->sublink->oper))
 		return false;
 
 	return true;
@@ -534,9 +527,9 @@ _equalJoinInfo(JoinInfo * a, JoinInfo * b)
 {
 	Assert(IsA(a, JoinInfo));
 	Assert(IsA(b, JoinInfo));
-	if (!equal((a->otherrels), (b->otherrels)))
+	if (!equal(a->otherrels, b->otherrels))
 		return false;
-	if (!equal((a->jinfoclauseinfo), (b->jinfoclauseinfo)))
+	if (!equal(a->jinfo_restrictinfo, b->jinfo_restrictinfo))
 		return false;
 	if (a->mergejoinable != b->mergejoinable)
 		return false;
@@ -673,8 +666,8 @@ equal(void *a, void *b)
 		case T_Func:
 			retval = _equalFunc(a, b);
 			break;
-		case T_ClauseInfo:
-			retval = _equalClauseInfo(a, b);
+		case T_RestrictInfo:
+			retval = _equalRestrictInfo(a, b);
 			break;
 		case T_RelOptInfo:
 			retval = _equalRelOptInfo(a, b);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.12 1998/09/01 04:30:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.13 1999/02/03 20:15:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,7 @@ find_joininfo_node(RelOptInfo * this_rel, List *join_relids)
 	{
 		joininfo = makeNode(JoinInfo);
 		joininfo->otherrels = join_relids;
-		joininfo->jinfoclauseinfo = NIL;
+		joininfo->jinfo_restrictinfo = NIL;
 		joininfo->mergejoinable = false;
 		joininfo->hashjoinable = false;
 		joininfo->inactive = false;

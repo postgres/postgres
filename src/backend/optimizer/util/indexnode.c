@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/indexnode.c,v 1.10 1998/09/01 04:30:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/indexnode.c,v 1.11 1999/02/03 20:15:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ find_secondary_index(Query *root, Oid relid)
 		indexnode->unorderedpath = NULL;
 		indexnode->cheapestpath = NULL;
 		indexnode->pruneable = true;
-		indexnode->clauseinfo = NIL;
+		indexnode->restrictinfo = NIL;
 		indexnode->joininfo = NIL;
 		indexnode->innerjoin = NIL;
 

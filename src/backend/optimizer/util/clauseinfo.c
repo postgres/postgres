@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * clauseinfo.c--
- *	  ClauseInfo node manipulation routines.
+ * restrictinfo.c--
+ *	  RestrictInfo node manipulation routines.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/clauseinfo.c,v 1.9 1998/09/01 04:30:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/clauseinfo.c,v 1.10 1999/02/03 20:15:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,21 +18,21 @@
 
 #include "optimizer/internal.h"
 #include "optimizer/clauses.h"
-#include "optimizer/clauseinfo.h"
+#include "optimizer/restrictinfo.h"
 
 /*
  * valid-or-clause--
  *
- * Returns t iff the clauseinfo node contains a 'normal' 'or' clause.
+ * Returns t iff the restrictinfo node contains a 'normal' 'or' clause.
  *
  */
 bool
-valid_or_clause(ClauseInfo * clauseinfo)
+valid_or_clause(RestrictInfo * restrictinfo)
 {
-	if (clauseinfo != NULL &&
-		!single_node((Node *) clauseinfo->clause) &&
-		!clauseinfo->notclause &&
-		or_clause((Node *) clauseinfo->clause))
+	if (restrictinfo != NULL &&
+		!single_node((Node *) restrictinfo->clause) &&
+		!restrictinfo->notclause &&
+		or_clause((Node *) restrictinfo->clause))
 		return true;
 	else
 		return false;
@@ -41,19 +41,19 @@ valid_or_clause(ClauseInfo * clauseinfo)
 /*
  * get-actual-clauses--
  *
- * Returns a list containing the clauses from 'clauseinfo-list'.
+ * Returns a list containing the clauses from 'restrictinfo-list'.
  *
  */
 List *
-get_actual_clauses(List *clauseinfo_list)
+get_actual_clauses(List *restrictinfo_list)
 {
 	List	   *temp = NIL;
 	List	   *result = NIL;
-	ClauseInfo *clause = (ClauseInfo *) NULL;
+	RestrictInfo *clause = (RestrictInfo *) NULL;
 
-	foreach(temp, clauseinfo_list)
+	foreach(temp, restrictinfo_list)
 	{
-		clause = (ClauseInfo *) lfirst(temp);
+		clause = (RestrictInfo *) lfirst(temp);
 		result = lappend(result, clause->clause);
 	}
 	return result;
@@ -69,7 +69,7 @@ get_actual_clauses(List *clauseinfo_list)
 
 /*
  * get_relattvals--
- *	  For each member of  a list of clauseinfo nodes to be used with an
+ *	  For each member of  a list of restrictinfo nodes to be used with an
  *	  index, create a vectori-long specifying:
  *				the attnos,
  *				the values of the clause constants, and
@@ -79,13 +79,13 @@ get_actual_clauses(List *clauseinfo_list)
  *	  flag indicating whether the constant is on the left or right should
  *	  always be *SELEC-CONSTANT-RIGHT*.
  *
- * 'clauseinfo-list' is a list of clauseinfo nodes
+ * 'restrictinfo-list' is a list of restrictinfo nodes
  *
  * Returns a list of vectori-longs.
  *
  */
 void
-get_relattvals(List *clauseinfo_list,
+get_relattvals(List *restrictinfo_list,
 			   List **attnos,
 			   List **values,
 			   List **flags)
@@ -93,17 +93,17 @@ get_relattvals(List *clauseinfo_list,
 	List	   *result1 = NIL;
 	List	   *result2 = NIL;
 	List	   *result3 = NIL;
-	ClauseInfo *temp = (ClauseInfo *) NULL;
+	RestrictInfo *temp = (RestrictInfo *) NULL;
 	List	   *i = NIL;
 
-	foreach(i, clauseinfo_list)
+	foreach(i, restrictinfo_list)
 	{
 		int			dummy;
 		AttrNumber	attno;
 		Datum		constval;
 		int			flag;
 
-		temp = (ClauseInfo *) lfirst(i);
+		temp = (RestrictInfo *) lfirst(i);
 		get_relattval((Node *) temp->clause, &dummy, &attno, &constval, &flag);
 		result1 = lappendi(result1, (int) attno);
 		result2 = lappendi(result2, constval);
@@ -118,7 +118,7 @@ get_relattvals(List *clauseinfo_list,
 
 /*
  * get_joinvars --
- *	  Given a list of join clauseinfo nodes to be used with the index
+ *	  Given a list of join restrictinfo nodes to be used with the index
  *	  of an inner join relation, return three lists consisting of:
  *				the attributes corresponding to the inner join relation
  *				the value of the inner var clause (always "")
@@ -126,13 +126,13 @@ get_relattvals(List *clauseinfo_list,
  *						the operator.
  *
  * 'relid' is the inner join relation
- * 'clauseinfo-list' is a list of qualification clauses to be used with
+ * 'restrictinfo-list' is a list of qualification clauses to be used with
  *		'rel'
  *
  */
 void
 get_joinvars(Oid relid,
-			 List *clauseinfo_list,
+			 List *restrictinfo_list,
 			 List **attnos,
 			 List **values,
 			 List **flags)
@@ -142,10 +142,10 @@ get_joinvars(Oid relid,
 	List	   *result3 = NIL;
 	List	   *temp;
 
-	foreach(temp, clauseinfo_list)
+	foreach(temp, restrictinfo_list)
 	{
-		ClauseInfo *clauseinfo = lfirst(temp);
-		Expr	   *clause = clauseinfo->clause;
+		RestrictInfo *restrictinfo = lfirst(temp);
+		Expr	   *clause = restrictinfo->clause;
 
 		if (IsA(get_leftop(clause), Var) &&
 			(relid == (get_leftop(clause))->varno))
@@ -170,19 +170,19 @@ get_joinvars(Oid relid,
 /*
  * get_opnos--
  *	  Create and return a list containing the clause operators of each member
- *	  of a list of clauseinfo nodes to be used with an index.
+ *	  of a list of restrictinfo nodes to be used with an index.
  *
  */
 List *
-get_opnos(List *clauseinfo_list)
+get_opnos(List *restrictinfo_list)
 {
-	ClauseInfo *temp = (ClauseInfo *) NULL;
+	RestrictInfo *temp = (RestrictInfo *) NULL;
 	List	   *result = NIL;
 	List	   *i = NIL;
 
-	foreach(i, clauseinfo_list)
+	foreach(i, restrictinfo_list)
 	{
-		temp = (ClauseInfo *) lfirst(i);
+		temp = (RestrictInfo *) lfirst(i);
 		result =
 			lappendi(result,
 					 (((Oper *) temp->clause->oper)->opno));
