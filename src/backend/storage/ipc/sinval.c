@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.67 2004/08/01 17:32:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.68 2004/08/15 17:03:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -673,7 +673,7 @@ GetOldestXmin(bool allDbs)
 	TransactionId result;
 	int			index;
 
-	result = GetCurrentTransactionId();
+	result = GetTopTransactionId();
 
 	LWLockAcquire(SInvalLock, LW_SHARED);
 
@@ -763,7 +763,7 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 					 errmsg("out of memory")));
 	}
 
-	globalxmin = xmin = GetCurrentTransactionId();
+	globalxmin = xmin = GetTopTransactionId();
 
 	/*
 	 * If we are going to set MyProc->xmin then we'd better get exclusive
