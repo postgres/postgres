@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/doc/man/Attic/vacuum.l,v 1.2 1996/10/03 04:21:31 momjian Exp $
+.\" $Header: /cvsroot/pgsql/doc/man/Attic/vacuum.l,v 1.3 1996/10/04 14:50:18 momjian Exp $
 .TH VACUUM SQL 11/05/95 Postgres95 Postgres95
 .SH NAME
 vacuum \(em vacuum a database
@@ -30,5 +30,8 @@ records, it may be a good idea to issue a
 query.  This will update the system catalogs with the results of all
 recent changes, and allow the Postgres query optimizer to make better
 choices in planning user queries.
+.PP
+The purge(l) command can be used to control the archive retention
+characteristics of a given table.
 .SH "SEE ALSO"
-vacuum(1).
+purge(l).
