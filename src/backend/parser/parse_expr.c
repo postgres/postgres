@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.60 1999/12/10 07:37:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.61 1999/12/16 20:07:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -531,6 +531,30 @@ static Node *
 transformAttr(ParseState *pstate, Attr *att, int precedence)
 {
 	Node	   *basenode;
+	char *  attribute;
+
+	/* Get the name of the first attribute */
+	if ((att != NULL) && (lfirst(att->attrs) != NULL))
+	{
+		/*
+		 * Special case for name.nextval and name.currval, assume it's a
+		 * sequence and transform to function call to nextval('name') and
+		 * currval('name')
+		 */
+		attribute = pstrdup(((Value *) lfirst(att->attrs))->val.str);
+		if ((strcasecmp(attribute, "nextval") == 0) ||
+			(strcasecmp(attribute, "currval") == 0))
+		{
+			Value *s = makeNode(Value);
+
+			s->type = T_String;
+			s->val.str = att->relname;
+
+			return ParseFuncOrColumn(pstate, attribute,
+				lcons(make_const(s), NIL), false, false,
+				&pstate->p_last_resno, precedence);
+		}
+	}
 
 	basenode = ParseNestedFuncOrColumn(pstate, att, &pstate->p_last_resno,
 									   precedence);
