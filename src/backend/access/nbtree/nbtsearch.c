@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.20 1997/05/30 18:35:37 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.21 1997/06/10 07:28:50 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,6 +159,7 @@ _bt_moveright(Relation rel,
     BTPageOpaque opaque;
     ItemId hikey;
     BlockNumber rblkno;
+    int natts = rel->rd_rel->relnatts;
         
     page = BufferGetPage(buf);
     opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -195,26 +196,9 @@ _bt_moveright(Relation rel,
 	     *  on this page to do not lose "good" tuples if number
 	     *  of attrs > keysize. Example: (2,0) - last items on 
 	     *  this page, (2,1) - first item on next page (hikey), 
-	     *  our scankey is x = 2. Scankey >= (2,1) because of 
+	     *  our scankey is x = 2. Scankey == (2,1) because of 
 	     *  we compare first attrs only, but we shouldn't to move
 	     *  right of here.		- vadim 04/15/97
-	     *
-	     *  XXX
-	     *  This code changed again! Actually, we break our
-	     *  duplicates handling in single case: if we insert 
-	     *  new minimum key into leftmost page with duplicates
-	     *  and splitting doesn't occure then _bt_insertonpg doesn't 
-	     *  worry about duplicates-rule. Fix _bt_insertonpg ?
-	     *  But I don't see why don't compare scankey with _last_
-	     *  item on the page instead of first one, in any cases.
-	     *  So - we do it in that way now.	- vadim 05/26/97
-	     *
-	     *  Also, if we are on an "pseudo-empty" leaf page (i.e. there is
-	     *  only hikey here) and scankey == hikey then we don't move
-	     *  right! It's fix for bug described in _bt_insertonpg(). It's 
-	     *  right - at least till index cleanups are perfomed by vacuum 
-	     *  in exclusive mode: so, though this page may be just splitted, 
-	     *  it may not be "emptied" before we got here. - vadim 05/27/97
 	     */
 	    
 	    if ( _bt_skeycmp (rel, keysz, scankey, page, hikey, 
@@ -227,14 +211,27 @@ _bt_moveright(Relation rel,
 	    	}
 	    	if ( offmax > P_HIKEY )
 	    	{
-		    if ( _bt_skeycmp (rel, keysz, scankey, page, 
+	    	    if ( natts == keysz )	/* sanity checks */
+	    	    {
+		    	if ( _bt_skeycmp (rel, keysz, scankey, page, 
+		    			PageGetItemId (page, P_FIRSTKEY),
+					BTEqualStrategyNumber) )
+			    elog (FATAL, "btree: BTP_CHAIN flag was expected");
+		    	if ( _bt_skeycmp (rel, keysz, scankey, page, 
+		    			PageGetItemId (page, offmax),
+					BTEqualStrategyNumber) )
+			    elog (FATAL, "btree: unexpected equal last item");
+		    	if ( _bt_skeycmp (rel, keysz, scankey, page, 
+		    			PageGetItemId (page, offmax),
+					BTLessStrategyNumber) )
+			    elog (FATAL, "btree: unexpected greater last item");
+			/* move right */
+		    }
+		    else if ( _bt_skeycmp (rel, keysz, scankey, page, 
 		    		PageGetItemId (page, offmax),
 				BTLessEqualStrategyNumber) )
 		    	break;
 	    	}
-	    	else if ( offmax == P_HIKEY && 
-	    		( opaque->btpo_flags & BTP_LEAF ) )
-	    	    break;
 	    }
 	    
 	    /* step right one page */
