@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Jan 15 17:50:53 EST 2005
+   Last updated: Sun Jan 16 21:40:18 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -244,7 +244,7 @@
    
     1.7) What is the latest release?
     
-   The latest release of PostgreSQL is version 7.4.6.
+   The latest release of PostgreSQL is version 8.0.0.
    
    We plan to have major releases every six to eight months.
    
