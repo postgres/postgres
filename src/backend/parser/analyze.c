@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.135 2000/02/04 18:49:32 wieck Exp $
+ *	$Id: analyze.c,v 1.136 2000/02/05 00:20:38 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -967,11 +967,36 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 			/*
 			 * If the attribute list for the referenced table was
-			 * omitted, lookup for the definition of the primary key
+			 * omitted, lookup for the definition of the primary key.
+			 * If the referenced table is this table, use the definition
+			 * we found above, rather than looking to the system
+			 * tables.
 			 *
 			 */
 			if (fkconstraint->fk_attrs != NIL && fkconstraint->pk_attrs == NIL)
-				transformFkeyGetPrimaryKey(fkconstraint);
+				if (strcmp(fkconstraint->pktable_name, stmt->relname) != 0)
+					transformFkeyGetPrimaryKey(fkconstraint);
+				else if (pkey != NULL) 
+				{
+					List *pkey_attr = pkey->indexParams;
+					List *attr;
+					IndexElem *ielem;
+					Ident *pkattr;
+
+					foreach (attr, pkey_attr) 
+					{
+						ielem = lfirst(attr);
+						pkattr = (Ident *)makeNode(Ident);
+						pkattr->name = pstrdup(ielem->name);
+						pkattr->indirection = NIL;
+						pkattr->isRel = false;
+						fkconstraint->pk_attrs = lappend(fkconstraint->pk_attrs, pkattr);
+					}										
+				}
+				else {
+					elog(ERROR, "PRIMARY KEY for referenced table \"%s\" not found",
+						fkconstraint->pktable_name);
+				}
 
 			/*
 			 * Build a CREATE CONSTRAINT TRIGGER statement for the CHECK
