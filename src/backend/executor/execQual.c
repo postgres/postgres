@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.45 1999/02/22 19:40:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.46 1999/02/23 07:33:44 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1454,7 +1454,7 @@ ExecTargetList(List *targetlist,
 	EV_printf("\n");
 
 	/*
-	 * Return a dummy tuple if the targetlist is empty .
+	 * Return a dummy tuple if the targetlist is empty.
 	 * the dummy tuple is necessary to differentiate
 	 * between passing and failing the qualification.
 	 */
@@ -1462,7 +1462,7 @@ ExecTargetList(List *targetlist,
 	{
 		/*
 		 *		I now think that the only time this makes
-		 *		any sence is when we run a delete query.  Then
+		 *		any sense is when we run a delete query.  Then
 		 *		we need to return something other than nil
 		 *		so we know to delete the tuple associated
 		 *		with the saved tupleid.. see what ExecutePlan

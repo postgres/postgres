@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tuptable.h,v 1.10 1999/02/13 23:21:29 momjian Exp $
+ * $Id: tuptable.h,v 1.11 1999/02/23 07:36:31 thomas Exp $
  *
  * NOTES
  *	  The tuple table interface is getting pretty ugly.
@@ -22,8 +22,8 @@
 #include <access/htup.h>
 
 /* ----------------
- *		Note:  the executor tuple table is managed and manipulated by special
- *		code and macros in executor/execTuples.c and tupTable.h
+ *		The executor tuple table is managed and manipulated by special
+ *		code in executor/execTuples.c and tupTable.h
  *
  *		TupleTableSlot information
  *
@@ -42,6 +42,11 @@
  *		"retrieve (EMP.hobbies.all)", a single scan may return tuples
  *		of many types, so now we return pointers to tuple descriptors
  *		along with tuples returned via the tuple table.  -cim 1/18/90
+ *
+ *		Tuple table macros are all excised from the system now.
+ *		See executor.h for decls of functions defined in execTuples.c
+ *		-jolly
+ *
  * ----------------
  */
 typedef struct TupleTableSlot
@@ -67,12 +72,5 @@ typedef struct TupleTableData
 } TupleTableData;
 
 typedef TupleTableData *TupleTable;
-
-/*
-  tuple table macros are all excised from the system now
-  see executor.h for decls of functions defined in execTuples.c
-
-  - jolly
-*/
 
 #endif	 /* TUPTABLE_H */
