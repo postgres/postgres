@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Id: fd.c,v 1.5 1996/09/22 01:30:52 scrappy Exp $
+ *    $Id: fd.c,v 1.6 1996/10/31 10:19:59 scrappy Exp $
  *
  * NOTES:
  *
@@ -49,7 +49,7 @@
 #include "miscadmin.h"	/* for DataDir */
 #include "utils/palloc.h"
 
-#ifdef PORTNAME_sparc
+#ifdef sparc
 /*
  * the SunOS 4 NOFILE is a lie, because the default limit is *not* the
  * maximum number of file descriptors you can have open.
@@ -60,13 +60,13 @@
 #include <sys/user.h>
 #undef NOFILE
 #define NOFILE NOFILE_IN_U
-#endif /* PORTNAME_sparc */
+#endif /* sparc */
 
-#if defined(PORTNAME_sparc_solaris) || defined(PORTNAME_i386_solaris)
+#if defined(sparc_solaris) || defined(i386_solaris)
 #include <sys/user.h>
 #undef NOFILE
 #define NOFILE 64
-#endif /* PORTNAME_sparc_solaris || PORTNAME_i386_solaris */
+#endif /* sparc_solaris || i386_solaris */
 
 /*
  * Problem: Postgres does a system(ld...) to do dynamic loading.  This

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.4 1996/08/14 05:01:53 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.5 1996/10/31 10:20:06 scrappy Exp $
  *
  * NOTES
  *
@@ -41,7 +41,7 @@
 #include "utils/memutils.h"
 #include "utils/elog.h"
 
-#if defined(PORTNAME_bsd44)
+#if defined(bsd44)
 int UsePrivateMemory = 1;
 #else
 int UsePrivateMemory = 0;

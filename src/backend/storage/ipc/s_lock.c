@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.4 1996/07/22 23:00:03 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.5 1996/10/31 10:20:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@
 
 #if defined(HAS_TEST_AND_SET)
 
-#if defined (PORTNAME_next)
+#if defined (next)
 /*
  * NEXTSTEP (mach)
  * slock_t is defined as a struct mutex.
@@ -74,11 +74,11 @@ int
  	return (lock->lock == 0);
 }
 
-#endif /* PORTNAME_next */
+#endif /* next */
 
 
 
-#if defined(PORTNAME_irix5)
+#if defined(irix5)
 /*
  * SGI IRIX 5
  * slock_t is defined as a struct abilock_t, which has a single unsigned long 
@@ -115,7 +115,7 @@ S_LOCK_FREE(slock_t *lock)
 	return(stat_lock(lock)==UNLOCKED); 
 }
 
-#endif /* PORTNAME_irix5 */
+#endif /* irix5 */
 
 
 /*
@@ -125,7 +125,7 @@ S_LOCK_FREE(slock_t *lock)
  * (see storage/ipc.h).
  */
 
-#if defined(PORTNAME_alpha)
+#if defined(alpha)
 
 void
 S_LOCK(slock_t *lock)
@@ -152,14 +152,14 @@ S_LOCK_FREE(slock_t *lock)
     return(lock->msem_state ? 0 : 1);
 }
 
-#endif /* PORTNAME_alpha */
+#endif /* alpha */
 
 /*
  * Solaris 2
  */
 
-#if defined(PORTNAME_i386_solaris) || \
-    defined(PORTNAME_sparc_solaris)
+#if defined(i386_solaris) || \
+    defined(sparc_solaris)
 
 /* for xxxxx_solaris, this is defined in port/.../tas.s */
 extern int tas(slock_t *lock);
@@ -183,7 +183,7 @@ S_INIT_LOCK(slock_t *lock)
     S_UNLOCK(lock);
 }
 
-#endif /* PORTNAME_i86pc_solaris || PORTNAME_sparc_solaris */
+#endif /* i86pc_solaris || sparc_solaris */
 
 /*
  * AIX (POWER)
@@ -192,7 +192,7 @@ S_INIT_LOCK(slock_t *lock)
  * (see storage/ipc.h).
  */
 
-#if defined(PORTNAME_aix)
+#if defined(aix)
 
 void
 S_LOCK(slock_t *lock)
@@ -213,7 +213,7 @@ S_INIT_LOCK(slock_t *lock)
     S_UNLOCK(lock);
 }
 
-#endif /* PORTNAME_aix */
+#endif /* aix */
 
 /*
  * HP-UX (PA-RISC)
@@ -222,7 +222,7 @@ S_INIT_LOCK(slock_t *lock)
  * (see storage/ipc.h).
  */
 
-#if defined(PORTNAME_hpux)
+#if defined(hpux)
 
 /* defined in port/.../tas.s */
 extern int tas(slock_t *lock);
@@ -260,7 +260,7 @@ S_LOCK_FREE(slock_t *lock)
     return(*lock_word != 0);
 }
 
-#endif /* PORTNAME_hpux */
+#endif /* hpux */
 
 /*
  * sun3
@@ -313,7 +313,7 @@ tas_dummy()
  * SPARC (SunOS 4)
  */
 
-#if defined(PORTNAME_sparc)
+#if defined(sparc)
 
 /* if we're using -ansi w/ gcc, use __asm__ instead of asm */
 #if defined(__STRICT_ANSI__)
@@ -375,16 +375,16 @@ S_INIT_LOCK(unsigned char *addr)
     *addr = 0;
 }
 
-#endif /* PORTNAME_sparc */
+#endif /* sparc */
 
 /*
  * Linux and friends
  */
 
-#if defined(PORTNAME_BSD44_derived) || \
-    defined(PORTNAME_bsdi) || \
-    defined(PORTNAME_bsdi_2_1) || \
-    defined(PORTNAME_linux)
+#if defined(BSD44_derived) || \
+    defined(bsdi) || \
+    defined(bsdi_2_1) || \
+    defined(linux)
 
 int
 tas(slock_t *m)
