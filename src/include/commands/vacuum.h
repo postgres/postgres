@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.3 1996/11/27 07:35:06 vadim Exp $
+ * $Id: vacuum.h,v 1.4 1996/11/29 10:29:45 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,8 @@ typedef struct VRelListData {
     VAttList		vrl_attlist;
     int			vrl_ntups;
     int			vrl_npages;
+    Size		vrl_min_tlen;
+    Size		vrl_max_tlen;
     bool		vrl_hasindex;
     struct VRelListData	*vrl_next;
 } VRelListData;
