@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.33 1999/02/13 23:14:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.34 1999/04/11 02:30:59 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -36,23 +36,26 @@
 #endif
 
 static Oid OperatorGetWithOpenRelation(Relation pg_operator_desc,
-							const char *operatorName,
-							Oid leftObjectId,
-							Oid rightObjectId);
+									   const char *operatorName,
+									   Oid leftObjectId,
+									   Oid rightObjectId,
+									   bool *defined);
+
 static Oid OperatorGet(char *operatorName,
-			char *leftTypeName,
-			char *rightTypeName);
+					   char *leftTypeName,
+					   char *rightTypeName,
+					   bool *defined);
 
 static Oid OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 								  char *operatorName,
 								  Oid leftObjectId,
 								  Oid rightObjectId);
+
 static Oid OperatorShellMake(char *operatorName,
 				  char *leftTypeName,
 				  char *rightTypeName);
 
 static void OperatorDef(char *operatorName,
-			int definedOK,
 			char *leftTypeName,
 			char *rightTypeName,
 			char *procedureName,
@@ -65,6 +68,7 @@ static void OperatorDef(char *operatorName,
 			bool canHash,
 			char *leftSortName,
 			char *rightSortName);
+
 static void OperatorUpd(Oid baseId, Oid commId, Oid negId);
 
 /* ----------------------------------------------------------------
@@ -75,14 +79,16 @@ static void OperatorUpd(Oid baseId, Oid commId, Oid negId);
  * ----------------------------------------------------------------
  *	  pg_operator_desc	-- reldesc for pg_operator
  *	  operatorName		-- name of operator to fetch
- *	  leftObjectId		-- left oid of operator to fetch
- *	  rightObjectId		-- right oid of operator to fetch
+ *	  leftObjectId		-- left data type oid of operator to fetch
+ *	  rightObjectId		-- right data type oid of operator to fetch
+ *	  defined			-- set TRUE if defined (not a shell)
  */
 static Oid
 OperatorGetWithOpenRelation(Relation pg_operator_desc,
 							const char *operatorName,
 							Oid leftObjectId,
-							Oid rightObjectId)
+							Oid rightObjectId,
+							bool *defined)
 {
 	HeapScanDesc pg_operator_scan;
 	Oid			operatorObjectId;
@@ -125,7 +131,18 @@ OperatorGetWithOpenRelation(Relation pg_operator_desc,
 	 * ----------------
 	 */
 	tup = heap_getnext(pg_operator_scan, 0);
-	operatorObjectId = HeapTupleIsValid(tup) ? tup->t_data->t_oid : InvalidOid;
+
+	if (HeapTupleIsValid(tup))
+	{
+		regproc		oprcode = ((Form_pg_operator) GETSTRUCT(tup))->oprcode;
+		operatorObjectId = tup->t_data->t_oid;
+		*defined = RegProcedureIsValid(oprcode);
+	}
+	else
+	{
+		operatorObjectId = InvalidOid;
+		*defined = false;
+	}
 
 	/* ----------------
 	 *	close the scan and return the oid.
@@ -146,7 +163,8 @@ OperatorGetWithOpenRelation(Relation pg_operator_desc,
 static Oid
 OperatorGet(char *operatorName,
 			char *leftTypeName,
-			char *rightTypeName)
+			char *rightTypeName,
+			bool *defined)
 {
 	Relation	pg_operator_desc;
 
@@ -157,7 +175,7 @@ OperatorGet(char *operatorName,
 	bool		rightDefined = false;
 
 	/* ----------------
-	 *	look up the operator types.
+	 *	look up the operator data types.
 	 *
 	 *	Note: types must be defined before operators
 	 * ----------------
@@ -167,7 +185,8 @@ OperatorGet(char *operatorName,
 		leftObjectId = TypeGet(leftTypeName, &leftDefined);
 
 		if (!OidIsValid(leftObjectId) || !leftDefined)
-			elog(ERROR, "OperatorGet: left type '%s' nonexistent", leftTypeName);
+			elog(ERROR, "OperatorGet: left type '%s' nonexistent",
+				 leftTypeName);
 	}
 
 	if (rightTypeName)
@@ -181,7 +200,7 @@ OperatorGet(char *operatorName,
 
 	if (!((OidIsValid(leftObjectId) && leftDefined) ||
 		  (OidIsValid(rightObjectId) && rightDefined)))
-		elog(ERROR, "OperatorGet: no argument types??");
+		elog(ERROR, "OperatorGet: must have at least one argument type");
 
 	/* ----------------
 	 *	open the pg_operator relation
@@ -197,7 +216,8 @@ OperatorGet(char *operatorName,
 	operatorObjectId = OperatorGetWithOpenRelation(pg_operator_desc,
 												   operatorName,
 												   leftObjectId,
-												   rightObjectId);
+												   rightObjectId,
+												   defined);
 
 	/* ----------------
 	 *	close the relation and return the operator oid.
@@ -238,7 +258,8 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 	}
 
 	/* ----------------
-	 *	initialize *values with the type name and
+	 *	initialize *values with the operator name and input data types.
+	 *  Note that oprcode is set to InvalidOid, indicating it's a shell.
 	 * ----------------
 	 */
 	i = 0;
@@ -246,9 +267,7 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 	values[i++] = NameGetDatum(&oname);
 	values[i++] = Int32GetDatum(GetUserId());
 	values[i++] = (Datum) (uint16) 0;
-
-	values[i++] = (Datum) 'b';	/* fill oprkind with a bogus value */
-
+	values[i++] = (Datum) 'b';	/* assume it's binary */
 	values[i++] = (Datum) (bool) 0;
 	values[i++] = (Datum) (bool) 0;
 	values[i++] = ObjectIdGetDatum(leftObjectId);		/* <-- left oid */
@@ -369,8 +388,8 @@ OperatorShellMake(char *operatorName,
  * Algorithm:
  *
  * check if operator already defined
- *	  if so issue error if not definedOk, this is a duplicate
- *	  but if definedOk, save the Oid -- filling in a shell
+ *	  if so, but oprcode is null, save the Oid -- we are filling in a shell
+ *	  otherwise error
  * get the attribute types from relation descriptor for pg_operator
  * assign values to the fields of the operator:
  *	 operatorName
@@ -389,12 +408,9 @@ OperatorShellMake(char *operatorName,
  *						the same as the main operatorName, then create
  *						a shell and enter the new ObjectId
  *					  else if this does not exist but IS the same
- *						name as the main operator, set the ObjectId=0.
- *						Later OperatorCreate will make another call
- *						to OperatorDef which will cause this field
- *						to be filled in (because even though the names
- *						will be switched, they are the same name and
- *						at this point this ObjectId will then be defined)
+ *						name & types as the main operator, set the ObjectId=0.
+ *						(We are creating a self-commutating operator.)
+ *						The link will be fixed later by OperatorUpd.
  *	 negatorObjectId   -- same as for commutatorObjectId
  *	 leftSortObjectId  -- same as for commutatorObjectId
  *	 rightSortObjectId -- same as for commutatorObjectId
@@ -416,23 +432,21 @@ OperatorShellMake(char *operatorName,
  * --------------------------------
  *		"X" indicates an optional argument (i.e. one that can be NULL)
  *		operatorName;			-- operator name
- *		definedOK;				-- operator can already have an oid?
  *		leftTypeName;			-- X left type name
  *		rightTypeName;			-- X right type name
- *		procedureName;			-- procedure oid for operator code
+ *		procedureName;			-- procedure name for operator code
  *		precedence;				-- operator precedence
  *		isLeftAssociative;		-- operator is left associative?
  *		commutatorName;			-- X commutator operator name
  *		negatorName;			-- X negator operator name
  *		restrictionName;		-- X restriction sel. procedure name
  *		joinName;				-- X join sel. procedure name
- *		canHash;				-- possible hash operator?
- *		leftSortName;			-- X left sort operator
- *		rightSortName;			-- X right sort operator
+ *		canHash;				-- can hash join be used with operator?
+ *		leftSortName;			-- X left sort operator (for merge join)
+ *		rightSortName;			-- X right sort operator (for merge join)
  */
 static void
 OperatorDef(char *operatorName,
-			int definedOK,
 			char *leftTypeName,
 			char *rightTypeName,
 			char *procedureName,
@@ -455,14 +469,15 @@ OperatorDef(char *operatorName,
 	char		nulls[Natts_pg_operator];
 	char		replaces[Natts_pg_operator];
 	Datum		values[Natts_pg_operator];
-	Oid			other_oid = 0;
 	Oid			operatorObjectId;
+	bool		operatorAlreadyDefined;
 	Oid			leftTypeId = InvalidOid;
 	Oid			rightTypeId = InvalidOid;
 	Oid			commutatorId = InvalidOid;
 	Oid			negatorId = InvalidOid;
 	bool		leftDefined = false;
 	bool		rightDefined = false;
+	bool		selfCommutator = false;
 	char	   *name[4];
 	Oid			typeId[8];
 	int			nargs;
@@ -484,21 +499,44 @@ OperatorDef(char *operatorName,
 
 	operatorObjectId = OperatorGet(operatorName,
 								   leftTypeName,
-								   rightTypeName);
+								   rightTypeName,
+								   &operatorAlreadyDefined);
 
-	if (OidIsValid(operatorObjectId) && !definedOK)
+	if (operatorAlreadyDefined)
 		elog(ERROR, "OperatorDef: operator \"%s\" already defined",
 			 operatorName);
 
+	/* At this point, if operatorObjectId is not InvalidOid then
+	 * we are filling in a previously-created shell.
+	 */
+
+	/* ----------------
+	 *	look up the operator data types.
+	 *
+	 *	Note: types must be defined before operators
+	 * ----------------
+	 */
 	if (leftTypeName)
+	{
 		leftTypeId = TypeGet(leftTypeName, &leftDefined);
 
+		if (!OidIsValid(leftTypeId) || !leftDefined)
+			elog(ERROR, "OperatorDef: left type '%s' nonexistent",
+				 leftTypeName);
+	}
+
 	if (rightTypeName)
+	{
 		rightTypeId = TypeGet(rightTypeName, &rightDefined);
 
-	if (!((OidIsValid(leftTypeId && leftDefined)) ||
-		  (OidIsValid(rightTypeId && rightDefined))))
-		elog(ERROR, "OperatorGet: no argument types??");
+		if (!OidIsValid(rightTypeId) || !rightDefined)
+			elog(ERROR, "OperatorDef: right type '%s' nonexistent",
+				 rightTypeName);
+	}
+
+	if (!((OidIsValid(leftTypeId) && leftDefined) ||
+		  (OidIsValid(rightTypeId) && rightDefined)))
+		elog(ERROR, "OperatorDef: must have at least one argument type");
 
 	for (i = 0; i < Natts_pg_operator; ++i)
 	{
@@ -610,12 +648,11 @@ OperatorDef(char *operatorName,
 	values[i++] = ObjectIdGetDatum(leftTypeId);
 	values[i++] = ObjectIdGetDatum(rightTypeId);
 
-	++i;						/* Skip "prorettype", this was done above */
+	++i;						/* Skip "oprresult", it was filled in above */
 
 	/*
-	 * Set up the other operators.	If they do not currently exist, set up
-	 * shells in order to get ObjectId's and call OperatorDef again later
-	 * to fill in the shells.
+	 * Set up the other operators.	If they do not currently exist, create
+	 * shells in order to get ObjectId's.
 	 */
 	name[0] = commutatorName;
 	name[1] = negatorName;
@@ -626,58 +663,98 @@ OperatorDef(char *operatorName,
 	{
 		if (name[j])
 		{
+			char   *otherLeftTypeName = NULL;
+			char   *otherRightTypeName = NULL;
+			Oid		otherLeftTypeId = InvalidOid;
+			Oid		otherRightTypeId = InvalidOid;
+			Oid		other_oid = InvalidOid;
+			bool	otherDefined = false;
 
-			/* for the commutator, switch order of arguments */
-			if (j == 0)
+			switch (j)
 			{
-				other_oid = OperatorGet(name[j], rightTypeName, leftTypeName);
-				commutatorId = other_oid;
-			}
-			else
-			{
-				other_oid = OperatorGet(name[j], leftTypeName, rightTypeName);
-				if (j == 1)
+				case 0:			/* commutator has reversed arg types */
+					otherLeftTypeName = rightTypeName;
+					otherRightTypeName = leftTypeName;
+					otherLeftTypeId = rightTypeId;
+					otherRightTypeId = leftTypeId;
+					other_oid = OperatorGet(name[j],
+											otherLeftTypeName,
+											otherRightTypeName,
+											&otherDefined);
+					commutatorId = other_oid;
+					break;
+				case 1:			/* negator has same arg types */
+					otherLeftTypeName = leftTypeName;
+					otherRightTypeName = rightTypeName;
+					otherLeftTypeId = leftTypeId;
+					otherRightTypeId = rightTypeId;
+					other_oid = OperatorGet(name[j],
+											otherLeftTypeName,
+											otherRightTypeName,
+											&otherDefined);
 					negatorId = other_oid;
+					break;
+				case 2:			/* left sort op takes left-side data type */
+					otherLeftTypeName = leftTypeName;
+					otherRightTypeName = leftTypeName;
+					otherLeftTypeId = leftTypeId;
+					otherRightTypeId = leftTypeId;
+					other_oid = OperatorGet(name[j],
+											otherLeftTypeName,
+											otherRightTypeName,
+											&otherDefined);
+					break;
+				case 3:			/* right sort op takes right-side data type */
+					otherLeftTypeName = rightTypeName;
+					otherRightTypeName = rightTypeName;
+					otherLeftTypeId = rightTypeId;
+					otherRightTypeId = rightTypeId;
+					other_oid = OperatorGet(name[j],
+											otherLeftTypeName,
+											otherRightTypeName,
+											&otherDefined);
+					break;
 			}
 
-			if (OidIsValid(other_oid))	/* already in catalogs */
+			if (OidIsValid(other_oid))
+			{
+				/* other op already in catalogs */
 				values[i++] = ObjectIdGetDatum(other_oid);
-			else if (strcmp(operatorName, name[j]) != 0)
+			}
+			else if (strcmp(operatorName, name[j]) != 0 ||
+					 otherLeftTypeId != leftTypeId ||
+					 otherRightTypeId != rightTypeId)
 			{
 				/* not in catalogs, different from operator */
-
-				/* for the commutator, switch order of arguments */
-				if (j == 0)
-				{
-					other_oid = OperatorShellMake(name[j],
-												  rightTypeName,
-												  leftTypeName);
-				}
-				else
-				{
-					other_oid = OperatorShellMake(name[j],
-												  leftTypeName,
-												  rightTypeName);
-				}
-
+				other_oid = OperatorShellMake(name[j],
+											  otherLeftTypeName,
+											  otherRightTypeName);
 				if (!OidIsValid(other_oid))
 					elog(ERROR,
-						 "OperatorDef: can't create operator '%s'",
+						 "OperatorDef: can't create operator shell '%s'",
 						 name[j]);
 				values[i++] = ObjectIdGetDatum(other_oid);
-
 			}
 			else
-/* not in catalogs, same as operator ??? */
+			{
+				/* self-linkage to this operator; will fix below.
+				 * Note that only self-linkage for commutation makes sense.
+				 */
+				if (j != 0)
+					elog(ERROR,
+						 "OperatorDef: operator can't be its own negator or sort op");
+				selfCommutator = true;
 				values[i++] = ObjectIdGetDatum(InvalidOid);
-
+			}
 		}
 		else
-/* new operator is optional */
+		{
+			/* other operator is omitted */
 			values[i++] = ObjectIdGetDatum(InvalidOid);
+		}
 	}
 
-	/* last three fields were filled in first */
+	/* last three fields were filled in above */
 
 	/*
 	 * If we are adding to an operator shell, get its t_self
@@ -710,7 +787,7 @@ OperatorDef(char *operatorName,
 			setheapoverride(false);
 		}
 		else
-			elog(ERROR, "OperatorDef: no operator %d", other_oid);
+			elog(ERROR, "OperatorDef: no operator %d", operatorObjectId);
 
 		heap_endscan(pg_operator_scan);
 	}
@@ -726,21 +803,21 @@ OperatorDef(char *operatorName,
 	heap_close(pg_operator_desc);
 
 	/*
-	 * It's possible that we're creating a skeleton operator here for the
-	 * commute or negate attributes of a real operator.  If we are, then
-	 * we're done.  If not, we may need to update the negator and
-	 * commutator for this attribute.  The reason for this is that the
-	 * user may want to create two operators (say < and >=).  When he
-	 * defines <, if he uses >= as the negator or commutator, he won't be
-	 * able to insert it later, since (for some reason) define operator
-	 * defines it for him.	So what he does is to define > without a
-	 * negator or commutator.  Then he defines >= with < as the negator
-	 * and commutator.	As a side effect, this will update the > tuple if
-	 * it has no commutator or negator defined.
-	 *
-	 * Alstublieft, Tom Vijlbrief.
+	 * If a commutator and/or negator link is provided, update the other
+	 * operator(s) to point at this one, if they don't already have a link.
+	 * This supports an alternate style of operator definition wherein the
+	 * user first defines one operator without giving negator or
+	 * commutator, then defines the other operator of the pair with the
+	 * proper commutator or negator attribute.  That style doesn't require
+	 * creation of a shell, and it's the only style that worked right before
+	 * Postgres version 6.5.
+	 * This code also takes care of the situation where the new operator
+	 * is its own commutator.
 	 */
-	if (!definedOK)
+	if (selfCommutator)
+		commutatorId = operatorObjectId;
+
+	if (OidIsValid(commutatorId) || OidIsValid(negatorId))
 		OperatorUpd(operatorObjectId, commutatorId, negatorId);
 }
 
@@ -748,8 +825,8 @@ OperatorDef(char *operatorName,
  * OperatorUpd
  *
  *	For a given operator, look up its negator and commutator operators.
- *	If they are defined, but their negator and commutator operators
- *	(respectively) are not, then use the new operator for neg and comm.
+ *	If they are defined, but their negator and commutator fields
+ *	(respectively) are empty, then use the new operator for neg or comm.
  *	This solves a problem for users who need to insert two new operators
  *	which are the negator or commutator of each other.
  * ----------------------------------------------------------------
@@ -792,7 +869,10 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 
 	tup = heap_getnext(pg_operator_scan, 0);
 
-	/* if the commutator and negator are the same operator, do one update */
+	/* if the commutator and negator are the same operator, do one update.
+	 * XXX this is probably useless code --- I doubt it ever makes sense
+	 * for commutator and negator to be the same thing...
+	 */
 	if (commId == negId)
 	{
 		if (HeapTupleIsValid(tup))
@@ -890,36 +970,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 /* ----------------------------------------------------------------
  * OperatorCreate
  *
- * Algorithm:
- *
- *	Since the commutator, negator, leftsortoperator, and rightsortoperator
- *	can be defined implicitly through OperatorCreate, must check before
- *	the main operator is added to see if they already exist.  If they
- *	do not already exist, OperatorDef makes a "shell" for each undefined
- *	one, and then OperatorCreate must call OperatorDef again to fill in
- *	each shell.  All this is necessary in order to get the right ObjectId's
- *	filled into the right fields.
- *
- *	The "definedOk" flag indicates that OperatorDef can be called on
- *	the operator even though it already has an entry in the PG_OPERATOR
- *	relation.  This allows shells to be filled in.	The user cannot
- *	forward declare operators, this is strictly an internal capability.
- *
- *	When the shells are filled in by subsequent calls to OperatorDef,
- *	all the fields are the same as the definition of the original operator
- *	except that the target operator name and the original operatorName
- *	are switched.  In the case of commutator and negator, special flags
- *	are set to indicate their status, telling the executor(?) that
- *	the operands are to be switched, or the outcome of the procedure
- *	negated.
- *
- * ************************* NOTE NOTE NOTE ******************************
- *
- *	If the execution of this utility is interrupted, the pg_operator
- *	catalog may be left in an inconsistent state.  Similarly, if
- *	something is removed from the pg_operator, pg_type, or pg_procedure
- *	catalog while this is executing, the results may be inconsistent.
- * ----------------------------------------------------------------
+ * This is now just an interface procedure for OperatorDef ...
  *
  * "X" indicates an optional argument (i.e. one that can be NULL)
  *		operatorName;			-- operator name
@@ -931,11 +982,10 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
  *		commutatorName;			-- X commutator operator name
  *		negatorName;			-- X negator operator name
  *		restrictionName;		-- X restriction sel. procedure
- *		joinName;				-- X join sel. procedure name
- *		canHash;				-- operator hashes
- *		leftSortName;			-- X left sort operator
- *		rightSortName;			-- X right sort operator
- *
+ *		joinName;				-- X join sel. procedure
+ *		canHash;				-- hash join can be used with this operator
+ *		leftSortName;			-- X left sort operator (for merge join)
+ *		rightSortName;			-- X right sort operator (for merge join)
  */
 void
 OperatorCreate(char *operatorName,
@@ -952,59 +1002,31 @@ OperatorCreate(char *operatorName,
 			   char *leftSortName,
 			   char *rightSortName)
 {
-	Oid			commObjectId,
-				negObjectId;
-	Oid			leftSortObjectId,
-				rightSortObjectId;
-	int			definedOK;
-
 	if (!leftTypeName && !rightTypeName)
-		elog(ERROR, "OperatorCreate : at least one of leftarg or rightarg must be defined");
+		elog(ERROR, "OperatorCreate: at least one of leftarg or rightarg must be defined");
 
-	/* ----------------
-	 *	get the oid's of the operator's associated operators, if possible.
-	 * ----------------
-	 */
-	if (commutatorName)
-		commObjectId = OperatorGet(commutatorName,		/* commute type order */
-								   rightTypeName,
-								   leftTypeName);
-	else
-		commObjectId = 0;
-
-	if (negatorName)
-		negObjectId = OperatorGet(negatorName,
-								  leftTypeName,
-								  rightTypeName);
-	else
-		negObjectId = 0;
-
-	if (leftSortName)
-		leftSortObjectId = OperatorGet(leftSortName,
-									   leftTypeName,
-									   rightTypeName);
-	else
-		leftSortObjectId = 0;
-
-	if (rightSortName)
-		rightSortObjectId = OperatorGet(rightSortName,
-										rightTypeName,
-										leftTypeName);
-	else
-		rightSortObjectId = 0;
+	if (! (leftTypeName && rightTypeName))
+	{
+		/* If it's not a binary op, these things mustn't be set: */
+		if (commutatorName)
+			elog(ERROR, "OperatorCreate: only binary operators can have commutators");
+		if (negatorName)
+			elog(ERROR, "OperatorCreate: only binary operators can have negators");
+		if (restrictionName || joinName)
+			elog(ERROR, "OperatorCreate: only binary operators can have selectivity");
+		if (canHash)
+			elog(ERROR, "OperatorCreate: only binary operators can hash");
+		if (leftSortName || rightSortName)
+			elog(ERROR, "OperatorCreate: only binary operators can have sort links");
+	}
 
 	/* ----------------
 	 *	Use OperatorDef() to define the specified operator and
 	 *	also create shells for the operator's associated operators
 	 *	if they don't already exist.
-	 *
-	 *	This operator should not be defined yet.
 	 * ----------------
 	 */
-	definedOK = 0;
-
 	OperatorDef(operatorName,
-				definedOK,
 				leftTypeName,
 				rightTypeName,
 				procedureName,
@@ -1017,77 +1039,4 @@ OperatorCreate(char *operatorName,
 				canHash,
 				leftSortName,
 				rightSortName);
-
-	/* ----------------
-	 *	Now fill in information in the operator's associated
-	 *	operators.
-	 *
-	 *	These operators should be defined or have shells defined.
-	 * ----------------
-	 */
-	definedOK = 1;
-
-	if (!OidIsValid(commObjectId) && commutatorName)
-		OperatorDef(commutatorName,
-					definedOK,
-					leftTypeName,		/* should eventually */
-					rightTypeName,		/* commute order */
-					procedureName,
-					precedence,
-					isLeftAssociative,
-					operatorName,		/* commutator */
-					negatorName,
-					restrictionName,
-					joinName,
-					canHash,
-					rightSortName,
-					leftSortName);
-
-	if (negatorName && !OidIsValid(negObjectId))
-		OperatorDef(negatorName,
-					definedOK,
-					leftTypeName,
-					rightTypeName,
-					procedureName,
-					precedence,
-					isLeftAssociative,
-					commutatorName,
-					operatorName,		/* negator */
-					restrictionName,
-					joinName,
-					canHash,
-					leftSortName,
-					rightSortName);
-
-	if (leftSortName && !OidIsValid(leftSortObjectId))
-		OperatorDef(leftSortName,
-					definedOK,
-					leftTypeName,
-					rightTypeName,
-					procedureName,
-					precedence,
-					isLeftAssociative,
-					commutatorName,
-					negatorName,
-					restrictionName,
-					joinName,
-					canHash,
-					operatorName,		/* left sort */
-					rightSortName);
-
-	if (rightSortName && !OidIsValid(rightSortObjectId))
-		OperatorDef(rightSortName,
-					definedOK,
-					leftTypeName,
-					rightTypeName,
-					procedureName,
-					precedence,
-					isLeftAssociative,
-					commutatorName,
-					negatorName,
-					restrictionName,
-					joinName,
-					canHash,
-					leftSortName,
-					operatorName);		/* right sort */
 }
