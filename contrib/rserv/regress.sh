@@ -21,12 +21,12 @@ psql -c "insert into t1 values (1, 'one');" master
 psql -c "insert into t1 values (2, 'two');" master
 
 Replicate master slave
-SyncSyncID master `GetSyncID --noverbose slave`
+MasterSync master `GetSyncID --noverbose slave`
 
 psql -c "insert into t1 values (3, 'three');" master
 psql -c "insert into t1 values (4, 'four');" master
 
 Replicate master slave
-SyncSyncID master `GetSyncID --noverbose slave`
+MasterSync master `GetSyncID --noverbose slave`
 
 exit
