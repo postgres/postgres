@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.294 2003/10/09 03:20:33 momjian Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.295 2003/10/14 00:48:09 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -238,12 +238,13 @@ AC_PROG_CC([$pgac_cc_list])
 if test "$ac_env_CFLAGS_set" = set; then
   CFLAGS=$ac_env_CFLAGS_value
 fi
-# configure sets CFLAGS to -O2 for gcc, so this is only for non-gcc
-if test x"$CFLAGS" = x""; then	
-	CFLAGS="-O"
-fi
 if test "$enable_debug" = yes && test "$ac_cv_prog_cc_g" = yes; then
   CFLAGS="$CFLAGS -g"
+else
+  # configure sets CFLAGS to -O2 for gcc, so this is only for non-gcc
+  if test x"$CFLAGS" = x""; then	
+    CFLAGS="-O"
+  fi
 fi
 AC_MSG_NOTICE([using CFLAGS=$CFLAGS])
 

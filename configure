@@ -2393,12 +2393,13 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 if test "$ac_env_CFLAGS_set" = set; then
   CFLAGS=$ac_env_CFLAGS_value
 fi
-# configure sets CFLAGS to -O2 for gcc, so this is only for non-gcc
-if test x"$CFLAGS" = x""; then
-	CFLAGS="-O"
-fi
 if test "$enable_debug" = yes && test "$ac_cv_prog_cc_g" = yes; then
   CFLAGS="$CFLAGS -g"
+else
+  # configure sets CFLAGS to -O2 for gcc, so this is only for non-gcc
+  if test x"$CFLAGS" = x""; then
+    CFLAGS="-O"
+  fi
 fi
 { echo "$as_me:$LINENO: using CFLAGS=$CFLAGS" >&5
 echo "$as_me: using CFLAGS=$CFLAGS" >&6;}
