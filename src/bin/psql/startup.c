@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.111 2005/01/15 05:43:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.112 2005/01/17 10:00:05 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -670,7 +670,7 @@ checkWin32Codepage(void)
 	concp = GetConsoleCP();
 	if (wincp != concp)
 	{
-		printf(gettext("Warning: Console code page (%u) differs from Windows code page (%u)\n"
+			printf(gettext("Warning: Console code page (%u) differs from Windows code page (%u)\n"
 					   "         8-bit characters may not work correctly. See psql reference\n"
 					   "         page \"Notes for Windows users\" for details.\n\n"),
 			   concp, wincp);

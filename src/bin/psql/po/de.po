@@ -1,7 +1,7 @@
 # German message translation file for psql
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/de.po,v 1.14 2005/01/06 00:11:55 tgl Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/de.po,v 1.15 2005/01/17 10:00:06 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-12-12 18:41+0100\n"
-"PO-Revision-Date: 2004-12-12 18:42+0100\n"
+"POT-Creation-Date: 2005-01-17 10:41+0100\n"
+"PO-Revision-Date: 2005-01-17 10:47+0100\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -31,227 +31,227 @@ msgstr "Ungültige Anweisung \\%s.  Versuchen Sie \\? für Hilfe.\n"
 msgid "invalid command \\%s\n"
 msgstr "ungültige Anweisung \\%s\n"
 
-#: command.c:135
+#: command.c:137
 #, c-format
 msgid "\\%s: extra argument \"%s\" ignored\n"
 msgstr "\\%s: überflüssiges Argument »%s« ignoriert\n"
 
-#: command.c:244
+#: command.c:254
 #, c-format
 msgid "could not get home directory: %s\n"
 msgstr "konnte Home-Verzeichnis nicht ermitteln: %s\n"
 
-#: command.c:260
+#: command.c:270
 #, c-format
 msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s: konnte nicht in das Verzeichnis »%s« wechseln: %s\n"
 
-#: command.c:374 command.c:766
+#: command.c:384 command.c:776
 msgid "no query buffer\n"
 msgstr "kein Anfragepuffer\n"
 
-#: command.c:437
+#: command.c:447
 #, c-format
 msgid "%s: invalid encoding name or conversion procedure not found\n"
 msgstr ""
 "%s: ungültiger Kodierungsname oder Umwandlungsprozedur nicht gefunden\n"
 
-#: command.c:505 command.c:539 command.c:553 command.c:570 command.c:616
-#: command.c:746 command.c:777
+#: command.c:515 command.c:549 command.c:563 command.c:580 command.c:626
+#: command.c:756 command.c:787
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s: notwendiges Argument fehlt\n"
 
-#: command.c:602
+#: command.c:612
 msgid "Query buffer is empty."
 msgstr "Anfragepuffer ist leer."
 
-#: command.c:636
+#: command.c:646
 msgid "Query buffer reset (cleared)."
 msgstr "Anfragepuffer wurde gelöscht."
 
-#: command.c:650
+#: command.c:660
 #, c-format
 msgid "Wrote history to file \"%s\".\n"
 msgstr "Befehlsgeschichte in Datei »%s« geschrieben.\n"
 
-#: command.c:687 common.c:85 common.c:99 mainloop.c:71 print.c:230 print.c:237
+#: command.c:697 common.c:85 common.c:99 mainloop.c:71 print.c:230 print.c:237
 #: print.c:256 print.c:440 print.c:464 print.c:488 print.c:517 print.c:535
 #: print.c:1156 print.c:1168 print.c:1189 print.c:1196 print.c:1211
 #, c-format
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
 
-#: command.c:702 command.c:751
+#: command.c:712 command.c:761
 #, c-format
 msgid "\\%s: error\n"
 msgstr "\\%s: Fehler\n"
 
-#: command.c:732
+#: command.c:742
 msgid "Timing is on."
 msgstr "Zeitmessung ist an."
 
-#: command.c:734
+#: command.c:744
 msgid "Timing is off."
 msgstr "Zeitmessung ist aus."
 
-#: command.c:794 command.c:814 command.c:1199 command.c:1206 command.c:1216
-#: command.c:1228 command.c:1241 command.c:1255 command.c:1277 command.c:1308
+#: command.c:804 command.c:824 command.c:1209 command.c:1216 command.c:1226
+#: command.c:1238 command.c:1251 command.c:1265 command.c:1287 command.c:1318
 #: common.c:170 copy.c:530 copy.c:575
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
-#: command.c:921 command.c:945 startup.c:188 startup.c:206
+#: command.c:931 command.c:955 startup.c:188 startup.c:206
 msgid "Password: "
 msgstr "Passwort: "
 
-#: command.c:959 common.c:216 common.c:685 common.c:740 common.c:983
+#: command.c:969 common.c:216 common.c:685 common.c:740 common.c:983
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: command.c:963
+#: command.c:973
 msgid "Previous connection kept\n"
 msgstr "Vorherige Verbindung wurde behalten\n"
 
-#: command.c:975
+#: command.c:985
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:987
+#: command.c:997
 #, c-format
 msgid "You are now connected to database \"%s\".\n"
 msgstr "Sie sind jetzt mit der Datenbank »%s« verbunden.\n"
 
-#: command.c:989
+#: command.c:999
 #, c-format
 msgid "You are now connected as new user \"%s\".\n"
 msgstr "Sie sind jetzt als neuer Benutzer »%s« verbunden.\n"
 
-#: command.c:992
+#: command.c:1002
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr "Sie sind jetzt mit der Datenbank »%s« als Benutzer »%s« verbunden.\n"
 
-#: command.c:1117
+#: command.c:1127
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "konnte Editor »%s« nicht starten\n"
 
-#: command.c:1119
+#: command.c:1129
 msgid "could not start /bin/sh\n"
 msgstr "konnte /bin/sh nicht starten\n"
 
-#: command.c:1158
+#: command.c:1168
 #, c-format
 msgid "cannot locate temporary directory: %s"
 msgstr "konnte temporäres Verzeichnis nicht finden: %s"
 
-#: command.c:1184
+#: command.c:1194
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "konnte temporäre Datei »%s« nicht öffnen: %s\n"
 
-#: command.c:1376
+#: command.c:1386
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex\n"
 msgstr "\\pset: zulässige Formate sind unaligned, aligned, html, latex\n"
 
-#: command.c:1381
+#: command.c:1391
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Ausgabeformat ist »%s«.\n"
 
-#: command.c:1391
+#: command.c:1401
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Rahmenstil ist %d.\n"
 
-#: command.c:1400
+#: command.c:1410
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Erweiterte Anzeige ist an.\n"
 
-#: command.c:1401
+#: command.c:1411
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Erweiterte Anzeige ist aus.\n"
 
-#: command.c:1413
+#: command.c:1423
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Null-Anzeige ist »%s«.\n"
 
-#: command.c:1425
+#: command.c:1435
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Feldtrennzeichen ist »%s«.\n"
 
-#: command.c:1439
+#: command.c:1449
 #, c-format
 msgid "Record separator is <newline>."
 msgstr "Satztrennzeichen ist <newline>."
 
-#: command.c:1441
+#: command.c:1451
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Satztrennzeichen ist »%s«.\n"
 
-#: command.c:1452
+#: command.c:1462
 msgid "Showing only tuples."
 msgstr "Zeige nur Datenzeilen."
 
-#: command.c:1454
+#: command.c:1464
 msgid "Tuples only is off."
 msgstr "Nur Datenzeilen ist aus."
 
-#: command.c:1470
+#: command.c:1480
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Titel ist »%s«.\n"
 
-#: command.c:1472
+#: command.c:1482
 #, c-format
 msgid "Title is unset.\n"
 msgstr "Titel ist nicht gesetzt.\n"
 
-#: command.c:1488
+#: command.c:1498
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "Tabellenattribut ist »%s«.\n"
 
-#: command.c:1490
+#: command.c:1500
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Tabellenattribute sind nicht gesetzt.\n"
 
-#: command.c:1506
+#: command.c:1516
 msgid "Pager is used for long output."
 msgstr "Pager wird für lange Ausgaben verwendet."
 
-#: command.c:1508
+#: command.c:1518
 msgid "Pager is always used."
 msgstr "Pager wird immer verwendet."
 
-#: command.c:1510
+#: command.c:1520
 msgid "Pager usage is off."
 msgstr "Pager-Verwendung ist aus."
 
-#: command.c:1521
+#: command.c:1531
 msgid "Default footer is on."
 msgstr "Standardfußzeile ist an."
 
-#: command.c:1523
+#: command.c:1533
 msgid "Default footer is off."
 msgstr "Standardfußzeile ist aus."
 
-#: command.c:1529
+#: command.c:1539
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: unbekannte Option: %s\n"
 
-#: command.c:1582
+#: command.c:1592
 msgid "\\!: failed\n"
 msgstr "\\!: fehlgeschlagen\n"
 
@@ -929,12 +929,12 @@ msgstr ""
 "Keine Hilfe verfügbar für »%-.*s«.\n"
 "Versuchen Sie \\h ohne Argumente, um die verfügbare Hilfe zu sehen.\n"
 
-#: input.c:210
+#: input.c:211
 #, c-format
 msgid "could not save history to file \"%s\": %s\n"
 msgstr "konnte Befehlsgeschichte nicht in »%s« speichern: %s\n"
 
-#: input.c:213
+#: input.c:214
 msgid "history is not supported by this installation\n"
 msgstr "Befehlsgeschichte wird von dieser Installation nicht unterstützt\n"
 
@@ -982,7 +982,7 @@ msgstr "(1 Zeile)"
 msgid "(%d rows)"
 msgstr "(%d Zeilen)"
 
-#: startup.c:133
+#: startup.c:138
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: Speicher aufgebraucht\n"
@@ -1042,17 +1042,31 @@ msgstr "%s: Warnung: überflüssiges Kommandozeilenargument »%s« ignoriert\n"
 msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
 msgstr "%s: Warnung: The Option -u is veraltet. Verwenden Sie -U.\n"
 
-#: startup.c:630
+#: startup.c:627
 msgid "contains support for command-line editing"
 msgstr "enthält Unterstützung für Kommandozeilenbearbeitung"
 
-#: startup.c:653
+#: startup.c:650
 #, c-format
 msgid ""
 "SSL connection (cipher: %s, bits: %i)\n"
 "\n"
 msgstr ""
 "SSL-Verbindung (Verschlüsslungsmethode: %s, Bits: %i)\n"
+"\n"
+
+#: startup.c:673
+#, c-format
+msgid ""
+"Warning: Console code page (%u) differs from Windows code page (%u)\n"
+"         8-bit characters may not work correctly. See psql reference\n"
+"         page \"Notes for Windows users\" for details.\n"
+"\n"
+msgstr ""
+"Warnung: Konsolencodeseite (%u) unterscheidet sich von der Windows-\n"
+"         Codeseite (%u). 8-Bit-Zeichen funktionieren möglicherweise nicht\n"
+"         richtig. Einzelheiten finden Sie auf der psql-Handbuchseite unter\n"
+"         »Notes for Windows users«.\n"
 "\n"
 
 #: describe.c:82 describe.c:177 describe.c:247 describe.c:320 describe.c:415
@@ -3173,34 +3187,50 @@ msgid ""
 "VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column [, ...] ) ] ]"
 msgstr ""
 "VACUUM [ FULL | FREEZE ] [ VERBOSE ] [ tabelle ]\n"
-"VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ tabelle [ (spalte [, ...] ) ] ]"
+"VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ tabelle [ (spalte "
+"[, ...] ) ] ]"
 
-#: ../../port/exec.c:193 ../../port/exec.c:307 ../../port/exec.c:350
+#: ../../port/exec.c:194 ../../port/exec.c:308 ../../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "konnte aktuelles Verzeichnis nicht ermitteln: %s"
 
-#: ../../port/exec.c:323 ../../port/exec.c:359
+#: ../../port/exec.c:213
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "ungültige Programmdatei »%s«"
+
+#: ../../port/exec.c:262
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "konnte Programmdatei »%s« nicht lesen"
+
+#: ../../port/exec.c:269
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "konnte kein »%s« zum Ausführen finden"
+
+#: ../../port/exec.c:324 ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "konnte nicht in Verzeichnis »%s« wechseln"
 
-#: ../../port/exec.c:338
+#: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "konnte symbolischen Link »%s« nicht lesen"
 
-#: ../../port/exec.c:569
+#: ../../port/exec.c:587
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "Kindprozess hat mit Code %d beendet"
 
-#: ../../port/exec.c:572
+#: ../../port/exec.c:590
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "Kindprozess wurde von Signal %d beendet"
 
-#: ../../port/exec.c:575
+#: ../../port/exec.c:593
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "Kindprozess hat mit unbekanntem Status %d beendet"
