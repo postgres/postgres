@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.17 2002/01/08 18:03:26 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.18 2002/01/10 18:22:44 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -253,6 +253,14 @@
 ;; doesn't know about PDF.
 (define preferred-mediaobject-extensions
   (list "eps" "ps" "jpg" "jpeg" "pdf" "png"))
+
+
+;; Don't show links when citing a bibliography entry.  This fouls up
+;; the footnumber counting.  To get the link, one can still look into
+;; the bibliography itself.
+(mode xref-title-mode
+  (element ulink
+    (process-children)))
 
 
 ;; Format legalnotice justified and with space between paragraphs.
