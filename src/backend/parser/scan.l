@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.80 2000/10/31 10:22:11 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.81 2000/10/31 13:59:53 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -282,10 +282,11 @@ other			.
 {xbitstart}		{
 					BEGIN(xbit);
 					startlit();
+					addlit("b", 1);
 				}
 <xbit>{xbitstop}	{
 					BEGIN(INITIAL);
-					if (literalbuf[strspn(literalbuf, "01")] != '\0')
+					if (literalbuf[strspn(literalbuf + 1, "01") + 1] != '\0')
 						elog(ERROR, "invalid bit string input: '%s'",
 							 literalbuf);
 					yylval.str = literalbuf;

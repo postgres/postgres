@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.24 2000/10/31 10:22:10 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.25 2000/10/31 13:59:52 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -236,7 +236,7 @@ nodeTokenType(char *token, int length)
 		retval = AT_SYMBOL;
 	else if (*token == '\"' && length > 1 && token[length - 1] == '\"')
 		retval = T_String;
-	else if (*token == 'B')
+	else if (*token == 'b')
 		retval = T_BitString;
 	else
 		retval = ATOM_TOKEN;
@@ -351,7 +351,7 @@ nodeRead(bool read_car_only)
 		case T_BitString:
 		{
 			char * val = palloc(tok_len);
-			/* skip leading 'B'*/
+			/* skip leading 'b'*/
 			strncpy(val, token + 1, tok_len - 1);
 			val[tok_len - 1] = '\0';
 			this_value = (Node *) makeBitString(val);

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.130 2000/10/31 10:22:10 petere Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.131 2000/10/31 13:59:52 petere Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1353,7 +1353,8 @@ _outValue(StringInfo str, Value *value)
 			appendStringInfo(str, "\" ");
 			break;
 		case T_BitString:
-			appendStringInfo(str, " B%s ", value->val.str);
+			/* internal representation already has leading 'b' */
+			appendStringInfo(str, " %s ", value->val.str);
 			break;
 		default:
 			elog(NOTICE, "_outValue: don't know how to print type %d ",
