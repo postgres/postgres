@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.6 1996/12/28 02:13:05 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.7 1997/05/06 07:19:04 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -474,8 +474,8 @@ static int lo_initialize(PGconn *conn)
 		   or proname = 'lo_unlink'	\
 		   or proname = 'lo_lseek'	\
 		   or proname = 'lo_tell'	\
-		   or proname = 'LOread'	\
-		   or proname = 'LOwrite'");
+		   or proname = 'loread'	\
+		   or proname = 'lowrite'");
     if (res == (PGresult *)NULL) {
 	free(lobjfuncs);
         return -1;
@@ -514,10 +514,10 @@ static int lo_initialize(PGconn *conn)
 	if(!strcmp(fname, "lo_tell")) {
 	    lobjfuncs->fn_lo_tell = foid;
 	} else
-	if(!strcmp(fname, "LOread")) {
+	if(!strcmp(fname, "loread")) {
 	    lobjfuncs->fn_lo_read = foid;
 	} else
-	if(!strcmp(fname, "LOwrite")) {
+	if(!strcmp(fname, "lowrite")) {
 	    lobjfuncs->fn_lo_write = foid;
 	}
     }
@@ -567,13 +567,13 @@ static int lo_initialize(PGconn *conn)
     }
     if(lobjfuncs->fn_lo_read == 0) {
         strcpy(conn->errorMessage,
-	    "ERROR: Cannot determine OID for function LOread\n");
+	    "ERROR: Cannot determine OID for function loread\n");
 	free(lobjfuncs);
 	return -1;
     }
     if(lobjfuncs->fn_lo_write == 0) {
         strcpy(conn->errorMessage,
-	    "ERROR: Cannot determine OID for function LOwrite\n");
+	    "ERROR: Cannot determine OID for function lowrite\n");
 	free(lobjfuncs);
 	return -1;
     }
