@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.67 1998/09/04 05:03:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.68 1998/09/10 15:18:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -541,6 +541,16 @@ getRowDescriptions(PGconn *conn)
 			PQclear(result);
 			return EOF;
 		}
+		/*
+		 * Since pqGetInt treats 2-byte integers as unsigned, we need to
+		 * coerce the special value "-1" to signed form.  (-1 is sent for
+		 * variable-length fields.)  Formerly, libpq effectively did a
+		 * sign-extension on the 2-byte value by storing it in a signed short.
+		 * Now we only coerce the single value 65535 == -1; values
+		 * 32768..65534 are taken as valid field lengths.
+		 */
+		if (typlen == 0xFFFF)
+			typlen = -1;
 		result->attDescs[i].name = strdup(typName);
 		result->attDescs[i].typid = typid;
 		result->attDescs[i].typlen = typlen;
@@ -1488,7 +1498,7 @@ PQoidStatus(PGresult *res)
 	if (strncmp(res->cmdStatus, "INSERT ", 7) != 0)
 		return "";
 
-	/*
+	/*----------
 	 * The cmdStatus string looks like
 	 *     INSERT oid count\0
 	 * In order to be able to return an ordinary C string without
@@ -1498,6 +1508,7 @@ PQoidStatus(PGresult *res)
 	 *     INSERT oid count\0oid\0
 	 *                       ^ our return value points here
 	 * Pretty klugy eh?  This routine should've just returned an Oid value.
+	 *----------
 	 */
 
 	slen = strlen(res->cmdStatus);
