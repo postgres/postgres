@@ -2285,7 +2285,7 @@ mkinstalldirs="\$(SHELL) \$(top_srcdir)/config/mkinstalldirs"
 
 
 
-for ac_prog in gawk mawk nawk awk
+for ac_prog in mawk gawk nawk awk
 do
 # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -4018,7 +4018,7 @@ fi
 ##
 ## Header files
 ##
-for ac_hdr in crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h pwd.h sys/pstat.h sys/select.h sys/socket.h sys/types.h termios.h values.h
+for ac_hdr in crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h pwd.h sys/pstat.h sys/select.h sys/socket.h sys/types.h termios.h
 do
 ac_safe=`echo "$ac_hdr" | sed 'y%./+-%__p_%'`
 echo $ac_n "checking for $ac_hdr""... $ac_c" 1>&6

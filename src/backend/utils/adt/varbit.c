@@ -4,7 +4,7 @@
  *	  Functions for the built-in type bit() and varying bit().
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.5 2000/07/12 22:59:09 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.6 2000/07/28 02:13:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,10 +20,6 @@
 #include <float.h>				/* faked on sunos4 */
 #include <math.h>
 #include <limits.h>
-
-#ifdef HAVE_VALUES_H
-#include <values.h>
-#endif
 
 #include "fmgr.h"
 #include "utils/builtins.h"

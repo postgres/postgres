@@ -3,19 +3,9 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <errno.h>
-
 #include <float.h>				/* faked on sunos4 */
-
 #include <math.h>
-
 #include <limits.h>
-#ifndef MAXINT
-#define MAXINT		  INT_MAX
-#endif
-
-#ifdef HAVE_VALUES_H
-#include <values.h>
-#endif
 
 #include "fmgr.h"
 #include "utils/timestamp.h"

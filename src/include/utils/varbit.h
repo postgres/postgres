@@ -5,16 +5,13 @@
 
 #include <math.h>
 #include <limits.h>
-#ifdef HAVE_VALUES_H
-#include <values.h>
-#endif
 
 #include "utils/builtins.h"
 
 
-#define HEXDIG(z)	 (z)<10 ? ((z)+'0') : ((z)-10+'A')
+#define HEXDIG(z)	 ((z)<10 ? ((z)+'0') : ((z)-10+'A'))
 
-/* Modeled on struct varlena from postgres.h, bu data type is bits8 */
+/* Modeled on struct varlena from postgres.h, but data type is bits8 */
 struct varbita
 {
 	int32		vl_len;

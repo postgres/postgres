@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.65 2000/07/17 03:05:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.66 2000/07/28 02:13:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,9 +54,6 @@
 #include "postgres.h"
 
 #include <limits.h>
-#ifdef HAVE_VALUES_H
-#include <values.h>
-#endif
 
 /* for finite() on Solaris */
 #ifdef HAVE_IEEEFP_H

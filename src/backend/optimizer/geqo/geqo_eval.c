@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.52 2000/07/12 22:59:01 petere Exp $
+ * $Id: geqo_eval.c,v 1.53 2000/07/28 02:13:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,9 +23,6 @@
 
 #include <math.h>
 #include <limits.h>
-#ifdef HAVE_VALUES_H
-#include <values.h>
-#endif
 
 #include "optimizer/geqo.h"
 #include "optimizer/pathnode.h"

@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.127 2000/07/14 16:39:35 petere Exp $
+ * $Id: config.h.in,v 1.128 2000/07/28 02:13:40 tgl Exp $
  */
 
 #ifndef CONFIG_H
@@ -326,9 +326,6 @@
 
 /* Set to 1 if you have <termios.h> */
 #undef HAVE_TERMIOS_H
-
-/* Set to 1 if  you have <values.h> */
-#undef HAVE_VALUES_H
 
 /* Set to 1 if you have <sys/pstat.h> */
 #undef HAVE_SYS_PSTAT_H

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.157 2000/07/17 03:05:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.158 2000/07/28 02:13:26 tgl Exp $
  *
  * NOTES
  *
@@ -48,14 +48,9 @@
 #include <fcntl.h>
 #include <time.h>
 #include <sys/param.h>
-
- /* moved here to prevent double define */
+/* moved here to prevent double define */
 #include <netdb.h>
-
 #include <limits.h>
-#ifdef HAVE_VALUES_H
-#include <values.h>
-#endif
 
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
