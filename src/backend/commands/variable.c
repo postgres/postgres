@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *	'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.16 1998/10/14 05:09:58 momjian Exp $
+ * $Id: variable.c,v 1.17 1998/10/26 00:59:22 tgl Exp $
  *
  */
 
@@ -307,7 +307,7 @@ parse_cost_heap(const char *value)
 	return TRUE;
 }
 
-bool
+static bool
 show_cost_heap()
 {
 
@@ -344,7 +344,7 @@ parse_cost_index(const char *value)
 	return TRUE;
 }
 
-bool
+static bool
 show_cost_index()
 {
 
@@ -464,7 +464,7 @@ show_date()
 	return TRUE;
 }
 
-bool
+static bool
 reset_date()
 {
 	DateStyle = USE_POSTGRES_DATES;
@@ -550,7 +550,7 @@ show_timezone()
  * in a core dump (under Linux anyway).
  * - thomas 1998-01-26
  */
-bool
+static bool
 reset_timezone()
 {
 	/* no time zone has been set in this session? */
@@ -598,7 +598,8 @@ parse_query_limit(const char *value)
     reset_query_limit();
     return(TRUE);
   }
-  limit = pg_atoi(value, sizeof(int32), '\0');
+  /* why is pg_atoi's arg not declared "const char *" ? */
+  limit = pg_atoi((char *) value, sizeof(int32), '\0');
   if (limit <= -1) {
     elog(ERROR, "Bad value for # of query limit (%s)", value);
   }
@@ -766,7 +767,7 @@ show_ksqo()
 	return TRUE;
 }
 
-bool
+static bool
 reset_ksqo()
 {
 	_use_keyset_query_optimizer = false;

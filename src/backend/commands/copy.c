@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.62 1998/09/23 04:22:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.63 1998/10/26 00:59:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -961,7 +961,7 @@ inString(char c, char *s)
  * Reads input from fp until an end of line is seen.
  */
 
-void
+static void
 CopyReadNewline(FILE *fp, int *newline)
 {
 	if (!*newline)

@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.34 1998/09/01 04:31:45 momjian Exp $
+ *	  $Id: fd.c,v 1.35 1998/10/26 01:00:13 tgl Exp $
  *
  * NOTES:
  *
@@ -175,7 +175,7 @@ pg_fsync(int fd)
 
 #define fsync pg_fsync
 
-long
+static long
 pg_nofile(void)
 {
 	static long no_files = 0;
