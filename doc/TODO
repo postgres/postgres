@@ -58,9 +58,6 @@ ENHANCEMENTS
 
 URGENT
 
-* Add MATCH PARTIAL referential integrity
-* Foreign key does not check that columns referenced form a primary key
-  or constrained by UNIQUE 
 * Add OUTER joins, left and right[outer](Thomas, Bruce)
 * Allow long tuples by chaining or auto-storing outside db (TOAST)(Jan)
 * Fix memory leak for expressions[memory](Tom?) 
@@ -72,7 +69,7 @@ ADMIN
 * Allow elog() to return error codes, not just messages
 * Allow international error message support and add error codes
 * Add ability to specifiy location of lock/socket files [flock]
-* Unify configuration into one configuration file
+* Unify configuration into one configuration file (Peter E)
 
 TYPES
 
@@ -139,13 +136,24 @@ CLIENTS
 * allow psql \d to show primary and foreign keys
 * allow psql \d to show temporary table schema
 
+REFERENTIAL INTEGRITY
+
+* Add MATCH PARTIAL referential integrity
+* Foreign key does not check that columns referenced form a primary key
+  or constrained by UNIQUE 
+* Check that primary key exists at foreign key definition time
+* Prevent column dropping if column is used by foreign key
+* Propagate column or table renaming to foreign key constraints
+* Emit a warning at foreign key creation time if no UNIQUE index
+  exists on referenced primary key attributes
+
 EXOTIC FEATURES
 
 * Add sql3 recursive unions
 * Add the concept of dataspaces
 * Add replication of distributed databases
 * Allow queries across multiple databases
-* Allow nested transactions
+* Allow nested transactions (Vadim)
 
 MISC
 
@@ -169,15 +177,9 @@ MISC
 * Redesign the function call interface to handle NULLs better[function](Tom)
 * Missing optimizer selectivities for date, r-tree, etc. [optimizer]
 * Overhaul bufmgr/lockmgr/transaction manager
-* Add configure test to check for C++ need for *.h and namespaces
 * Allow BLCKSZ <= 64k, not <= 32k
 * redesign UNION structures to have separarate target lists
 * Allow multi-level query trees for INSERT INTO ... SELECT
-* Check that primary key exists at foreign key definition time
-* Prevent column dropping if column is used by foreign key
-* Propagate column or table renaming to foreign key constraints
-* Emit a warning at foreign key creation time if no UNIQUE index
-  exists on referenced primary key attributes
 
 
 PERFORMANCE
@@ -192,8 +194,6 @@ INDEXES
 * Use indexes in ORDER BY for min(), max()
 * Use index to restrict rows returned by multi-key index when used with
   non-consecutive keys or OR clauses, so fewer heap accesses
-* Improve LIMIT processing by using index to limit rows processed [limit]
-* Have optimizer take LIMIT into account when considering index scans [limit]
 * Allow SELECT * FROM tab WHERE int2col = 4 use int2col index, int8,
   float4, numeric/decimal too [optimizer]
 * Include heap CTID in btree index keys, remove equal-key cruft from btree
@@ -207,7 +207,6 @@ MISC
 
 * Allow compression of log and meta data
 * Allow char() not to use variable-sized header to reduce disk size
-* Allow char1 data type that takes one byte of storage
 * Do async I/O to do better read-ahead of data
 * Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
   when it is available
@@ -222,7 +221,6 @@ MISC
   allocation [memory]
 * In WHERE tab1.x=3 AND tab1.x=tab2.y, add tab2.y=3
 * Allow persistent backends [persistent]
-* others [performance]
 * prevent labels from being output for stored rules (Tom)
 * allow configuration of maximum number of open files
 
@@ -232,7 +230,7 @@ SOURCE CODE
 * Add use of 'const' for variables in source tree
 * Fix C optimizer problem where fmgr_ptr calls return different types [alpha]
 * Does Mariposa source contain any other bug fixes?
-* Remove SET KSQO option if OR processing is improved(Tom)
+* Remove SET KSQO option now that OR processing is improved(Tom)
 * Use macros to define NT open() file parameters, remove NT-specific defines
 * Change CURRENT to OLD internally for rules
 
