@@ -1,103 +1,216 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.25 2003/02/19 03:59:02 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.26 2003/04/15 22:51:18 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
 
- <note>
-  <para>
-   Written by Phil Thompson (<email>phil@river-bank.demon.co.uk</email>).
-   Updates for protocol 2.0 by Tom Lane (<email>tgl@sss.pgh.pa.us</email>).
-  </para>
- </note>
-
  <para>
   <application>PostgreSQL</application> uses a message-based protocol
-  for communication between frontends and backends.  The protocol is
-  implemented over <acronym>TCP/IP</acronym> and also on Unix domain
-  sockets.  <productname>PostgreSQL</productname> 6.3 introduced
-  version numbers into the protocol.  This was done in such a way as
-  to still allow connections from earlier versions of frontends, but
-  this document does not cover the protocol used by those earlier
-  versions.
+  for communication between frontends and backends (clients and servers).
+  The protocol is supported over <acronym>TCP/IP</acronym> and also over
+  Unix-domain sockets.  Port number 5432 has been registered with IANA as
+  the customary TCP port number for servers supporting this protocol, but
+  in practice any non-privileged port number may be used.
  </para>
 
  <para>
-  This document describes version 2.0 of the protocol, implemented in
-  <application>PostgreSQL</application> 6.4 and later.
+  This document describes version 3.0 of the protocol, implemented in
+  <application>PostgreSQL</application> 7.4 and later.  For descriptions
+  of the earlier protocol versions, see previous releases of the
+  <productname>PostgreSQL</productname> documentation.  A single server
+  can support multiple protocol versions.  The initial
+  startup-request message tells the server which protocol version the
+  client is attempting to use, and then the server follows that protocol
+  if it is able.
  </para>
 
  <para>
   Higher level features built on this protocol (for example, how
   <application>libpq</application> passes certain environment
-  variables after the connection is established) are covered
-  elsewhere.
+  variables when the connection is established) are covered elsewhere.
  </para>
+
+  <para>
+   In order to serve multiple clients efficiently, the server launches
+   a new <quote>backend</> process for each client.
+   In the current implementation, a new child
+   process is created immediately after an incoming connection is detected.
+   This is transparent to the protocol, however.  For purposes of the
+   protocol, the terms <quote>backend</> and <quote>server</> are
+   interchangeable; likewise <quote>frontend</> and <quote>client</>
+   are interchangeable.
+  </para>
 
  <sect1 id="protocol-overview">
   <title>Overview</title>
 
   <para>
-   A frontend opens a connection to the server and sends a start-up
-   packet.  This includes the names of the user and of the database the
-   user wants to connect to.  The server then uses this, and the
-   information in the <filename>pg_hba.conf</filename> file to
-   determine what further authentication information it requires the
-   frontend to send (if any) and responds to the frontend accordingly.
+   The protocol has separate phases for startup and normal operation.
+   In the startup phase, the frontend opens a connection to the server
+   and authenticates itself to the satisfaction of the server.  (This might
+   involve a single message, or multiple messages depending on the
+   authentication method being used.)  If all goes well, the server then sends
+   status information to the frontend, and finally enters normal operation.
+   Except for the initial startup-request message, this part of the
+   protocol is driven by the server.
   </para>
 
   <para>
-   The frontend then sends any required authentication information.
-   Once the server validates this it responds to the frontend that it
-   is authenticated and sends a message indicating successful start-up
-   (normal case) or failure (for example, an invalid database name).
+   During normal operation, the frontend sends queries and
+   other commands to the backend, and the backend sends back query results
+   and other responses.  There are a few cases (such as <command>NOTIFY</>)
+   wherein the
+   backend will send unsolicited messages, but for the most part this portion
+   of a session is driven by frontend requests.
   </para>
 
   <para>
-   In order to serve multiple clients efficiently, the server launches
-   a new <quote>backend</> process for each client.  This is transparent
-   to the protocol, however.  In the current implementation, a new child
-   process is created immediately after an incoming connection is detected.
+   Termination of the session is normally by frontend choice, but can be
+   forced by the backend in certain cases.  In any case, when the backend
+   closes the connection, it will roll back any open (incomplete) transaction
+   before exiting.
   </para>
 
   <para>
-   When the frontend wishes to disconnect it sends an appropriate packet and
-   closes the connection without waiting for a response from the backend.
+   Within normal operation, SQL commands can be executed through either of
+   two sub-protocols.  In the <quote>simple query</> protocol, the frontend
+   just sends a textual query string, which is parsed and immediately
+   executed by the backend.  In the <quote>extended query</> protocol,
+   processing of queries is separated into multiple steps: parsing,
+   binding of parameter values, and execution.  This offers flexibility
+   and performance benefits, at the cost of extra complexity.
   </para>
 
   <para>
-   Packets are sent as a data stream.  The first byte determines what
-   should be expected in the rest of the packet.  The exceptions are
-   packets sent as part of the start-up and authentication exchange,
-   which comprise a packet length followed by the packet itself.  The
-   difference is historical.
+   Normal operation has additional sub-protocols for special operations
+   such as <command>COPY</>.
   </para>
+
+ <sect2 id="protocol-message-concepts">
+  <title>Messaging Overview</title>
+
+  <para>
+   All communication is through a stream of messages.  The first byte of a
+   message identifies the message type, and the next four bytes specify the
+   length of the rest of the message (this length count includes itself, but
+   not the message-type byte).  The remaining contents of the message are
+   determined by the message type.  For historical reasons, the very first
+   message sent by the client (the startup message) has no initial
+   message-type byte.
+  </para>
+
+  <para>
+   To avoid losing synchronization with the message stream, both servers and
+   clients typically read an entire message into a buffer (using the byte
+   count) before attempting to process its contents.  This allows easy
+   recovery if an error is detected while processing the contents.  In
+   extreme situations (such as not having enough memory to buffer the
+   message), the receiver may use the byte count to determine how much
+   input to skip before it resumes reading messages.
+  </para>
+
+  <para>
+   Conversely, both servers and clients must take care never to send an
+   incomplete message.  This is commonly done by marshaling the entire message
+   in a buffer before beginning to send it.  If a communications failure
+   occurs partway through sending or receiving a message, the only sensible
+   response is to abandon the connection, since there is little hope of
+   recovering message-boundary synchronization.
+  </para>
+ </sect2>
+
+  <sect2 id="protocol-query-concepts">
+   <title>Extended Query Overview</title>
+
+   <para>
+    In the extended-query protocol, execution of SQL commands is divided
+    into multiple steps.  The state retained between steps is represented
+    by two types of objects: <firstterm>prepared statements</> and
+    <firstterm>portals</>.  A prepared statement represents the result of
+    parsing, semantic analysis, and planning of a textual query string.  A
+    prepared statement is not necessarily ready to execute, because it may
+    lack specific values for <firstterm>parameters</>.  A portal represents
+    a ready-to-execute or already-partially-executed statement, with any
+    missing parameter values filled in.  (For <command>SELECT</> statements,
+    a portal is equivalent to an open cursor, but we use a different term
+    since cursors don't handle non-<command>SELECT</> statements.)
+   </para>
+
+   <para>
+    The overall execution cycle consists of a <firstterm>parse</> step,
+    which creates a prepared statement from a textual query string; a
+    <firstterm>bind</> step, which creates a portal given a prepared
+    statement and values for any needed parameters; and an
+    <firstterm>execute</> step that runs a portal's query.  In the case of
+    a <command>SELECT</> query, the execute step can be told to fetch only
+    a limited number of rows, so that multiple execute steps may be needed
+    to complete the operation.
+   </para>
+
+   <para>
+    The backend can keep track of multiple prepared statements and portals
+    (but note that these exist only within a session, and are never shared
+    across sessions).  Existing prepared statements and portals are
+    referenced by names assigned when they were created.  In addition,
+    an <quote>unnamed</> prepared statement and portal exist, for use with
+    queries that are to be executed and forgotten.  This is slightly
+    more efficient than using named objects, since the backend knows that
+    it need not save the object's state for re-use.
+   </para>
+  </sect2>
  </sect1>
 
- <sect1 id="protocol-protocol">
-  <title>Protocol</title>
+ <sect1 id="protocol-flow">
+  <title>Message Flow</title>
 
   <para>
-   This section describes the message flow.  There are four different
-   types of flows depending on the state of the connection: start-up,
-   query, function call, and termination.  There are also special
-   provisions for notification responses and command cancellation,
+   This section describes the message flow and the semantics of each
+   message type.  There are several different sub-protocols
+   depending on the state of the connection: start-up,
+   query, function call, COPY, and termination.  There are also special
+   provisions for asynchronous operations (including
+   notification responses and command cancellation),
    which can occur at any time after the start-up phase.
   </para>
 
   <sect2>
-   <title>Start-up</Title>
+   <title>Start-Up</Title>
 
    <para>
-    Initially, the frontend sends a StartupPacket.  The server uses
-    this info and the contents of the <filename>pg_hba.conf</filename>
-    file to determine what authentication method the frontend must
-    use.  The server then responds with one of the following messages:
+    To begin a session, a frontend opens a connection to the server and sends
+    a startup message.  This message includes the names of the user and of the
+    database the user wants to connect to; it also identifies the particular
+    protocol version to be used.  The server then uses this information and
+    the contents of its configuration files (such as
+    <filename>pg_hba.conf</filename>) to determine
+    whether the connection is provisionally acceptable, and what additional
+    authentication is required (if any).
+   </para>
+
+   <para>
+    The server then sends an appropriate authentication request message,
+    to which the frontend must reply with an appropriate authentication
+    response message (such as a password).
+    In principle the authentication request/response cycle could require
+    multiple iterations, but none of the present authentication methods
+    use more than one request and response.  In some methods, no response
+    at all is needed from the frontend, and so no authentication request
+    occurs.
+   </para>
+
+   <para>
+    The authentication cycle ends with the server either rejecting the
+    connection attempt (ErrorResponse), or sending AuthenticationOK.
+   </para>
+
+   <para>
+    The possible messages from the server in this phase are:
 
     <variablelist>
      <varlistentry>
       <term>ErrorResponse</term>
       <listitem>
        <para>
+        The connection attempt has been rejected.
         The server then immediately closes the connection.
        </para>
       </listitem>
@@ -107,7 +220,7 @@
       <term>AuthenticationOk</term>
       <listitem>
        <para>
-        The authentication exchange is completed.
+        The authentication exchange is successfully completed.
        </para>
       </listitem>
      </varlistentry>
@@ -116,7 +229,7 @@
       <term>AuthenticationKerberosV4</Term>
       <listitem>
        <para>
-        The frontend must then take part in a Kerberos V4
+        The frontend must now take part in a Kerberos V4
         authentication dialog (not described here, part of the
         Kerberos specification) with the server.  If this is
         successful, the server responds with an AuthenticationOk,
@@ -129,7 +242,7 @@
       <Term>AuthenticationKerberosV5</Term>
       <ListItem>
        <Para>
-        The frontend must then take part in a Kerberos V5
+        The frontend must now take part in a Kerberos V5
         authentication dialog (not described here, part of the
         Kerberos specification) with the server.  If this is
         successful, the server responds with an AuthenticationOk,
@@ -142,7 +255,7 @@
       <Term>AuthenticationCleartextPassword</Term>
       <ListItem>
        <Para>
-        The frontend must then send a PasswordPacket containing the
+        The frontend must now send a PasswordMessage containing the
 	password in clear-text form.  If
         this is the correct password, the server responds with an
         AuthenticationOk, otherwise it responds with an ErrorResponse.
@@ -154,9 +267,9 @@
       <Term>AuthenticationCryptPassword</Term>
       <ListItem>
        <Para>
-        The frontend must then send a PasswordPacket containing the
+        The frontend must now send a PasswordMessage containing the
 	password encrypted via crypt(3), using the 2-character salt
-	specified in the AuthenticationCryptPassword packet.  If
+	specified in the AuthenticationCryptPassword message.  If
         this is the correct password, the server responds with an
         AuthenticationOk, otherwise it responds with an ErrorResponse.
        </Para>
@@ -167,9 +280,9 @@
       <Term>AuthenticationMD5Password</Term>
       <ListItem>
        <Para>
-        The frontend must then send a PasswordPacket containing the
+        The frontend must now send a PasswordMessage containing the
 	password encrypted via MD5, using the 4-character salt
-	specified in the AuthenticationMD5Password packet.  If
+	specified in the AuthenticationMD5Password message.  If
         this is the correct password, the server responds with an
         AuthenticationOk, otherwise it responds with an ErrorResponse.
        </Para>
@@ -180,7 +293,7 @@
       <Term>AuthenticationSCMCredential</Term>
       <ListItem>
        <Para>
-        This method is only possible for local Unix-domain connections
+        This response is only possible for local Unix-domain connections
 	on platforms that support SCM credential messages.  The frontend
 	must issue an SCM credential message and then send a single data
 	byte.  (The contents of the data byte are uninteresting; it's
@@ -202,9 +315,16 @@
    </para>
 
    <para>
-    After having received AuthenticationOk, the frontend should wait
-    for further messages from the server.  The possible messages from
-    the backend in this phase are:
+    After having received AuthenticationOk, the frontend must wait
+    for further messages from the server.  In this phase a backend process
+    is being started, and the frontend is just an interested bystander.
+    It is still possible for the startup attempt
+    to fail (ErrorResponse), but in the normal case the backend will send
+    BackendKeyData, some ParameterStatus messages, and finally ReadyForQuery.
+   </para>
+
+   <para>
+    The possible messages from the backend in this phase are:
 
     <VariableList>
      <VarListEntry>
@@ -220,11 +340,25 @@
      </VarListEntry>
 
      <VarListEntry>
+      <Term>ParameterStatus</Term>
+      <ListItem>
+       <Para>
+        This message informs the frontend about the current (initial)
+	setting of backend parameters, such as <varname>client_encoding</>
+	or <varname>DateStyle</>.  The frontend may ignore this message,
+	or record the settings for its future use; see
+	<xref linkend="protocol-async"> for more detail.
+        The frontend should not respond to this message, but should
+        continue listening for a ReadyForQuery message.
+       </Para>
+      </ListItem>
+     </VarListEntry>
+
+     <VarListEntry>
       <Term>ReadyForQuery</Term>
       <ListItem>
        <Para>
-        Start-up is completed.  The frontend may now issue query or
-        function call messages.
+        Start-up is completed.  The frontend may now issue commands.
        </Para>
       </ListItem>
      </VarListEntry>
@@ -254,25 +388,26 @@
 
    <para>
     The ReadyForQuery message is the same one that the backend will
-    issue after each query cycle.  Depending on the coding needs of
+    issue after each command cycle.  Depending on the coding needs of
     the frontend, it is reasonable to consider ReadyForQuery as
-    starting a query cycle (and then BackendKeyData indicates
-    successful conclusion of the start-up phase), or to consider
-    ReadyForQuery as ending the start-up phase and each subsequent
-    query cycle.
+    starting a command cycle, or to consider ReadyForQuery as ending the
+    start-up phase and each subsequent command cycle.
    </para>
   </sect2>
 
   <Sect2>
-   <Title>Query</Title>
+   <Title>Simple Query</Title>
 
    <Para>
-    A Query cycle is initiated by the frontend sending a Query message
+    A simple query cycle is initiated by the frontend sending a Query message
     to the backend.  The backend then sends one or more response
     messages depending on the contents of the query command string,
     and finally a ReadyForQuery response message.  ReadyForQuery
-    informs the frontend that it may safely send a new query or
-    function call.
+    informs the frontend that it may safely send a new command.
+    (It is not actually necessary for the frontend to wait for
+    ReadyForQuery before issuing another command, but the frontend must
+    then take responsibility for figuring out what happens if the earlier
+    command fails and already-issued later commands succeed.)
    </para>
 
    <Para>
@@ -280,7 +415,7 @@
 
     <VariableList>
      <VarListEntry>
-      <Term>CompletedResponse</Term>
+      <Term>CommandComplete</Term>
       <ListItem>
        <Para>
         An SQL command completed normally.
@@ -293,9 +428,7 @@
       <ListItem>
        <Para>
         The backend is ready to copy data from the frontend to a
-        table.  The frontend should then send a CopyDataRows message.
-        The backend will then respond with a CompletedResponse message
-        with a tag of <literal>COPY</literal>.
+        table; see <xref linkend="protocol-copy">.
        </Para>
       </ListItem>
      </VarListEntry>
@@ -305,22 +438,7 @@
       <ListItem>
        <Para>
         The backend is ready to copy data from a table to the
-        frontend.  It then sends a CopyDataRows message, and then a
-        CompletedResponse message with a tag of <literal>COPY</literal>.
-       </Para>
-      </ListItem>
-     </VarListEntry>
-
-     <VarListEntry>
-      <Term>CursorResponse</Term>
-      <ListItem>
-       <Para>
-        Beginning of the response to a <command>SELECT</command>,
-        <command>FETCH</command>, <command>INSERT</command>,
-        <command>UPDATE</command>, or <command>DELETE</command>
-        query.  In the <command>FETCH</command> case the name of the
-	cursor being fetched from is included in the message.  Otherwise
-	the message always mentions the <quote>blank</> cursor.
+        frontend; see <xref linkend="protocol-copy">.
        </Para>
       </ListItem>
      </VarListEntry>
@@ -332,7 +450,7 @@
         Indicates that rows are about to be returned in response to
 	a <command>SELECT</command> or <command>FETCH</command> query.
 	The message contents describe the layout of the rows.  This
-	will be followed by an AsciiRow or BinaryRow message (depending on
+	will be followed by a DataRow or BinaryRow message (depending on
 	whether a binary cursor was specified) for each row being returned
         to the frontend.
        </Para>
@@ -363,7 +481,7 @@
        <Para>
         Processing of the query string is complete.  A separate
         message is sent to indicate this because the query string may
-        contain multiple SQL commands.  (CompletedResponse marks the
+        contain multiple SQL commands.  (CommandComplete marks the
         end of processing one SQL command, not the whole string.)
         ReadyForQuery will always be sent, whether processing
         terminates successfully or with an error.
@@ -387,15 +505,12 @@
 
    <Para>
     The response to a <command>SELECT</> or <command>FETCH</> query
-    normally consists of CursorResponse, RowDescription, zero or more
-    AsciiRow or BinaryRow messages, and finally CompletedResponse.
-    <command>INSERT</command>, <command>UPDATE</command>, and
-    <command>DELETE</command> queries produce CursorResponse followed by
-    CompletedResponse.
+    normally consists of RowDescription, zero or more
+    DataRow or BinaryRow messages, and then CommandComplete.
     <command>COPY</> to or from the frontend invokes special protocol
-    as mentioned above.
+    as described below.
     All other query types normally produce only
-    a CompletedResponse message.
+    a CommandComplete message.
    </Para>
 
    <Para>
@@ -423,23 +538,8 @@
    <para>
     A frontend must be prepared to accept ErrorResponse and
     NoticeResponse messages whenever it is expecting any other type of
-    message.
-   </para>
-
-   <Para>
-    Actually, it is possible for NoticeResponse to arrive even when
-    the frontend is not expecting any kind of message, that is, the
-    backend is nominally idle.  (In particular, the backend can be
-    commanded to terminate by its parent process.  In that case it will
-    send a NoticeResponse before closing the connection.)  It is
-    recommended that the frontend check for such asynchronous notices
-    just before issuing any new command.
-   </para>
-
-   <Para>
-    Also, if the frontend issues any <command>LISTEN</command>
-    commands then it must be prepared to accept NotificationResponse
-    messages at any time; see below.
+    message.  See also <xref linkend="protocol-async"> concerning messages
+    that the backend may generate due to outside events.
    </para>
 
    <para>
@@ -447,6 +547,169 @@
     that will accept any message type at any time that it could make sense,
     rather than wiring in assumptions about the exact sequence of messages.
    </para>
+  </sect2>
+
+  <Sect2>
+   <Title>Extended Query</Title>
+
+   <para>
+    The extended query protocol breaks down the above-described simple
+    query protocol into multiple steps.  The results of preparatory
+    steps can be re-used multiple times for improved efficiency.
+    Furthermore, additional features are available, such as the possibility
+    of supplying data values as separate parameters instead of having to
+    insert them directly into a query string.
+   </para>
+
+   <para>
+    In the extended protocol, the frontend first sends a Parse message,
+    which contains a textual query string, optionally some information
+    about datatypes of parameter placeholders, and the
+    name of a destination prepared-statement object (an empty string
+    selects the unnamed prepared statement).  The response is
+    either ParseComplete or ErrorResponse.  Parameter datatypes may be
+    specified by OID; if not given, the parser attempts to infer the
+    datatypes in the same way as it would do for untyped literal string
+    constants.
+   </para>
+
+   <note>
+    <para>
+     The query string contained in a Parse message cannot include more
+     than one SQL statement; else a syntax error is reported.  This
+     restriction does not exist in the simple-query protocol, but it
+     does exist in the extended protocol, because allowing prepared
+     statements or portals to contain multiple commands would complicate
+     the protocol unduly.
+    </para>
+   </note>
+
+   <para>
+    If successfully created, a named prepared-statement object lasts till
+    the end of the current session, unless explicitly destroyed.  An unnamed
+    prepared statement lasts only until the next Parse message is issued.
+    Named prepared statements can also be created and accessed at the SQL
+    command level, using <command>PREPARE</> and <command>EXECUTE</>.
+   </para>
+
+   <para>
+    Once a prepared statement exists, it can be readied for execution using a
+    Bind message.  The Bind message gives the name of the source prepared
+    statement (empty string denotes the unnamed prepared statement), the name
+    of the destination portal (empty string denotes the unnamed portal), and
+    the values to use for any parameter placeholders present in the prepared
+    statement.  The response is either BindComplete or ErrorResponse.  The
+    supplied parameter set must match those needed by the prepared statement.
+   </para>
+
+   <para>
+    If successfully created, a named portal object lasts till
+    the end of the current transaction, unless explicitly destroyed.  An
+    unnamed portal is destroyed at the end of the transaction, or as soon
+    as the next Parse or Bind message is executed.
+    Named portals can also be created and accessed at the SQL
+    command level, using <command>DECLARE CURSOR</> and <command>FETCH</>.
+   </para>
+
+   <para>
+    Once a portal exists, it can be executed using an Execute message.
+    The Execute message specifies the portal name (empty string denotes the
+    unnamed portal), the desired output format (text or binary), and
+    a maximum result-row count (zero meaning <quote>fetch all rows</>).
+    The output format and result-row count are only meaningful for portals
+    containing SELECT commands; they are ignored for other types of commands.
+    The possible
+    responses to Execute are the same as those described above for queries
+    issued via simple query protocol, except that Execute doesn't cause
+    ReadyForQuery to be issued.
+   </para>
+
+   <para>
+    If Execute terminates before completing the execution of a portal
+    (due to reaching a nonzero result-row count), it will send a
+    PortalSuspended message; the appearance of this message tells the frontend
+    that another Execute should be issued against the same portal to
+    complete the operation.  The CommandComplete message indicating
+    completion of the source SELECT or FETCH command is not sent until
+    the command is completed.
+   </para>
+
+   <para>
+    At completion of each series of extended-query messages, the frontend
+    should issue a Sync message.  This parameterless message causes the
+    backend to close the current transaction if it's not inside a
+    <command>BEGIN</>/<command>COMMIT</> transaction block (<quote>close</>
+    meaning to commit if no error, or roll back if error).  Then a
+    ReadyForQuery response is issued.  The purpose of Sync is to provide
+    a resychronization point for error recovery.  When an error is detected
+    while processing any extended-query message, the backend issues
+    ErrorResponse, then reads and discards messages until a Sync is reached,
+    then issues ReadyForQuery and returns to normal message processing.
+    (But note that no skipping occurs if an error is detected
+    <emphasis>while</> processing Sync --- this ensures that there is one
+    and only one ReadyForQuery sent for each Sync.)
+   </para>
+
+   <note>
+    <para>
+     Sync does not cause a transaction block opened with <command>BEGIN</>
+     to be closed.  It is possible to detect this situation since the
+     ReadyForQuery message includes transaction status information.
+    </para>
+   </note>
+
+   <para>
+    In addition to these fundamental, required operations, there are several
+    optional operations that can be used with extended-query protocol.
+   </para>
+
+   <para>
+    The Describe message (portal variant) specifies the name of an existing
+    portal (or an empty string for the unnamed portal).  The response is a
+    RowDescription message describing the rows that will be returned by
+    executing the portal; or a NoData message if the portal does not contain a
+    SELECT-type query; or ErrorResponse if there is no such portal.  In most
+    situations the frontend will want to issue this message before issuing
+    Execute, to obtain a description of the results it will get back.
+   </para>
+
+   <para>
+    The Describe message (statement variant) specifies the name of an existing
+    prepared statement (or an empty string for the unnamed prepared
+    statement).  The response is a ParameterDescription message describing the
+    parameters needed by the statement (if any), followed by a RowDescription
+    message describing the rows that will be returned when the statement is
+    eventually executed (or NoData if there is no SELECT-type query in the
+    prepared statement).  ErrorResponse is issued if there is no such prepared
+    statement.  This message may be useful if the client library is
+    uncertain about the parameters needed by a prepared statement.
+   </para>
+
+   <para>
+    The Close message closes an existing prepared statement or portal
+    and releases resources.
+   </para>
+
+   <para>
+    The Flush message does not cause any specific output to be generated,
+    but forces the backend to deliver any data pending in its output
+    buffers.  A Flush must be sent after any extended-query command except
+    Sync, if the frontend wishes to examine the results of that command before
+    issuing more commands.  Without Flush, returning data will be combined
+    into the minimum possible number of packets to minimize network overhead.
+   </para>
+
+   <note>
+    <para>
+     The simple Query message is approximately equivalent to the series Parse,
+     Bind, portal Describe, Execute, Sync, using the unnamed prepared statement
+     and portal objects and no parameters.  One difference is that it
+     will accept multiple SQL statements in the query string, automatically
+     performing the bind/describe/execute sequence for each one in succession.
+     Another is that it will not return ParseComplete, BindComplete, or
+     NoData messages.
+    </para>
+   </note>
   </sect2>
 
   <Sect2>
@@ -515,20 +778,115 @@
      </VarListEntry>
     </VariableList>
    </Para>
+  </sect2>
+
+  <sect2 id="protocol-copy">
+   <title>COPY Operations</title>
 
    <para>
-    A frontend must be prepared to accept ErrorResponse and
-    NoticeResponse messages whenever it is expecting any other type of
-    message.  Also, if it issues any <command>LISTEN</command>
-    commands then it must be prepared to accept NotificationResponse
-    messages at any time; see below.
+    The <command>COPY</> command allows high-speed bulk data transfer
+    to or from the server.  Copy-in and copy-out operations each switch
+    the connection into a distinct sub-protocol, which lasts until the
+    operation is completed.
+   </para>
+
+   <para>
+    Copy-in mode (data transfer to the server) is initiated when the
+    backend executes a <command>COPY FROM STDIN</> SQL statement.  The backend
+    sends a CopyInResponse message to the frontend.  The frontend should
+    then send zero or more CopyDataRow messages, one per row to be loaded.
+    (For <command>COPY BINARY</>, send CopyBinaryRow messages instead.)
+    The frontend can terminate the copy-in mode by sending either a CopyDone
+    message (allowing successful termination) or a CopyFail message (which
+    will cause the <command>COPY</> SQL statement to fail with an
+    error).  The backend then reverts to the command-processing mode it was
+    in before the <command>COPY</> started (which will be either simple or
+    extended query protocol).
+   </para>
+
+   <para>
+    In the event of a backend-detected error during copy-in mode (including
+    receipt of a CopyFail message, or indeed any frontend message other than
+    CopyDataRow, CopyBinaryRow, or CopyDone), the backend will issue an
+    ErrorResponse 
+    message.  If the <command>COPY</> command was issued via an extended-query
+    message, the backend will now discard frontend messages until a Sync
+    message is received, then it will issue ReadyForQuery and return to normal
+    processing.  If the <command>COPY</> command was issued in a simple
+    Query message, the rest of that message is discarded and ReadyForQuery
+    is issued.  In either case, any subsequent CopyDataRow, CopyBinaryRow,
+    CopyDone, or CopyFail messages issued by the frontend will simply be
+    dropped.
+   </para>
+
+   <para>
+    Copy-out mode (data transfer from the server) is initiated when the
+    backend executes a <command>COPY TO STDOUT</> SQL statement.  The backend
+    sends a CopyOutResponse message to the frontend, followed by
+    zero or more CopyDataRow messages, one per row, followed by CopyDone.
+    (For <command>COPY BINARY</>, CopyBinaryRow messages are sent instead.)
+    The backend then reverts to the command-processing mode it was
+    in before the <command>COPY</> started.  The frontend cannot abort
+    the transfer (short of closing the connection), but it can discard
+    unwanted CopyDataRow, CopyBinaryRow, and CopyDone messages.
+   </para>
+
+   <para>
+    In the event of a backend-detected error during copy-out mode,
+    the backend will issue an ErrorResponse message and revert to normal
+    processing.  The frontend should treat receipt of ErrorResponse (or
+    indeed any message type other than CopyDataRow, CopyBinaryRow, or
+    CopyDone) as terminating the copy-out mode.
    </para>
   </sect2>
 
-  <sect2>
-   <title>Notification Responses</title>
+  <sect2 id="protocol-async">
+   <title>Asynchronous Operations</title>
 
-   <Para>
+   <para>
+    There are several cases in which the backend will send messages that
+    are not specifically prompted by the frontend's command stream.
+    Frontends must be prepared to deal with these messages at any time,
+    even when not engaged in a query.
+    At minimum, one should check for these cases before beginning to
+    read a query response.
+   </para>
+
+   <para>
+    It is possible for NoticeResponse messages to be generated due to
+    outside activity; for example, if the database administrator commands
+    a <quote>fast</> database shutdown, the backend will send a NoticeResponse
+    indicating this fact before closing the connection.  Accordingly,
+    frontends should always be prepared to accept and display NoticeResponse
+    messages, even when the connection is nominally idle.
+   </para>
+
+   <para>
+    ParameterStatus messages will be generated whenever the active value
+    changes for any of the parameters the backend believes the frontend
+    should know about.  Most commonly this occurs in response to a
+    <command>SET</> SQL command executed by the frontend, and this case
+    is effectively synchronous --- but it is also possible for parameter
+    status changes to occur because the administrator changed a configuration
+    file and then SIGHUP'd the postmaster.  Also, if a SET command is
+    rolled back, an appropriate ParameterStatus message will be generated
+    to report the current effective value.
+   </para>
+
+   <para>
+    At present there is a hard-wired set of parameters for which
+    ParameterStatus will be generated: they are
+    <literal>version</> (backend version,
+    a pseudo-parameter that cannot change after startup); 
+    <literal>database_encoding</> (also not presently changeable after start);
+    <literal>client_encoding</>, and
+    <literal>DateStyle</>.
+    This set might change in the future, or even become configurable.
+    Accordingly, a frontend should simply ignore ParameterStatus for
+    parameters that it does not understand or care about.
+   </para>
+
+   <para>
     If a frontend issues a <command>LISTEN</command> command, then the
     backend will send a NotificationResponse message (not to be
     confused with NoticeResponse!)  whenever a
@@ -536,34 +894,16 @@
     notification name.
    </para>
 
-   <para>
-    Notification responses are permitted at any point in the protocol
-    (after start-up), except within another backend message.  Thus,
-    the frontend must be prepared to recognize a NotificationResponse
-    message whenever it is expecting any message.  Indeed, it should
-    be able to handle NotificationResponse messages even when it is
-    not engaged in a query.
-
-    <VariableList>
-     <VarListEntry>
-      <Term>NotificationResponse</Term>
-      <ListItem>
-       <Para>
-        A <command>NOTIFY</command> command has been executed for a
-        name for which a previous <command>LISTEN</command> command
-        was executed.  Notifications may be sent at any time.
-       </Para>
-      </ListItem>
-     </VarListEntry>
-    </VariableList>
-   </Para>
-
-   <para>
-    It may be worth pointing out that the names used in listen and
-    notify commands need not have anything to do with names of
-    relations (tables) in the SQL database.  Notification names are
-    simply arbitrarily chosen condition names.
-   </para>
+   <note>
+    <para>
+     At present, NotificationResponse can only be sent outside a
+     transaction, and thus it will not occur in the middle of a
+     command-response series, though it may occur just before ReadyForQuery.
+     It is unwise to design frontend logic that assumes that, however.
+     Good practice is to be able to accept NotificationResponse at any
+     point in the protocol.
+    </para>
+   </note>
   </sect2>
 
   <Sect2>
@@ -583,7 +923,7 @@
    <Para>
     To issue a cancel request, the frontend opens a new connection to
     the server and sends a CancelRequest message, rather than the
-    StartupPacket message that would ordinarily be sent across a new
+    StartupMessage message that would ordinarily be sent across a new
     connection.  The server will process this request and then close
     the connection.  For security reasons, no direct reply is made to
     the cancel request message.
@@ -633,27 +973,37 @@
   <Sect2>
    <Title>Termination</Title>
 
-   <Para>
+   <para>
     The normal, graceful termination procedure is that the frontend
     sends a Terminate message and immediately closes the connection.
-    On receipt of the message, the backend immediately closes the
-    connection and terminates.
+    On receipt of this message, the backend closes the connection and
+    terminates.
    </para>
 
-   <Para>
-    An ungraceful termination may occur due to software failure (i.e.,
-    core dump) at either end.  If either frontend or backend sees an
-    unexpected closure of the connection, it should clean up and
-    terminate.  The frontend has the option of launching a new backend
-    by recontacting the server if it doesn't want to terminate
-    itself.
+   <para>
+    In rare cases (such as an administrator-commanded database shutdown)
+    the backend may disconnect without any frontend request to do so.
+    In such cases the backend will attempt to send an error or notice message
+    giving the reason for the disconnection before it closes the connection.
+   </para>
+
+   <para>
+    Other termination scenarios arise from various failure cases, such as core
+    dump at one end or the other, loss of the communications link, loss of
+    message-boundary synchronization, etc.  If either frontend or backend sees
+    an unexpected closure of the connection, it should clean
+    up and terminate.  The frontend has the option of launching a new backend
+    by recontacting the server if it doesn't want to terminate itself.
+    Closing the connection is also advisable if an unrecognizable message type
+    is received, since this probably indicates loss of message-boundary sync.
    </para>
 
    <para>
     For either normal or abnormal termination, any open transaction is
     rolled back, not committed.  One should note however that if a
-    frontend disconnects while a query is being processed, the backend
-    will probably finish the query before noticing the disconnection.
+    frontend disconnects while a non-SELECT query is being processed,
+    the backend will probably finish the query before noticing the
+    disconnection.
     If the query is outside any transaction block (<command>BEGIN</>
     ... <command>COMMIT</> sequence) then its results may be committed
     before the disconnection is recognized.
@@ -664,24 +1014,24 @@
    <Title>SSL Session Encryption</Title>
 
    <Para>
-    Recent releases of <productname>PostgreSQL</> allow frontend/backend
-    communication to be encrypted using SSL.  This provides communication
+    If <productname>PostgreSQL</> was built with SSL support, frontend/backend
+    communications can be encrypted using SSL.  This provides communication
     security in environments where attackers might be able to capture the
     session traffic.
    </para>
 
    <para>
     To initiate an SSL-encrypted connection, the frontend initially sends
-    an SSLRequest message rather than a StartupPacket.  The server then
+    an SSLRequest message rather than a StartupMessage.  The server then
     responds with a single byte containing <literal>Y</> or <literal>N</>,
     indicating that it is willing or unwilling to perform SSL, respectively.
     The frontend may close the connection at this point if it is dissatisfied
     with the response.  To continue after <literal>Y</>, perform an SSL
     startup handshake (not described here, part of the SSL specification)
     with the server.  If this is successful, continue with
-    sending the usual StartupPacket.  In this case the StartupPacket and
+    sending the usual StartupMessage.  In this case the StartupMessage and
     all subsequent data will be SSL-encrypted.  To continue after
-    <literal>N</>, send the usual StartupPacket and proceed without
+    <literal>N</>, send the usual StartupMessage and proceed without
     encryption.
    </para>
 
@@ -713,40 +1063,32 @@
 This section describes the base data types used in messages.
 
 <VariableList>
+
 <VarListEntry>
 <Term>
         Int<Replaceable>n</Replaceable>(<Replaceable>i</Replaceable>)
 </Term>
 <ListItem>
 <Para>
-                An <Replaceable>n</Replaceable> bit integer in network byte order.
+                An <Replaceable>n</Replaceable> bit integer in network byte
+		order.
                 If <Replaceable>i</Replaceable> is specified it
-                is the literal value.  Eg. Int16, Int32(42).
+                is the exact value that will appear, otherwise the value
+		is variable.  Eg. Int16, Int32(42).
 </Para>
 </ListItem>
 </VarListEntry>
-<VarListEntry>
-<Term>
-        LimString<Replaceable>n</Replaceable>(<Replaceable>s</Replaceable>)
-</Term>
-<ListItem>
-<Para>
-                A character array of exactly <Replaceable>n</Replaceable> bytes interpreted as a
-                null-terminated string.  The zero-byte is omitted if there is
-                insufficient room.  If <Replaceable>s</Replaceable> is specified it is the literal value.
-                Eg. LimString32, LimString64("user").
-</Para>
-</ListItem>
-</VarListEntry>
+
 <VarListEntry>
 <Term>
         String(<Replaceable>s</Replaceable>)
 </Term>
 <ListItem>
 <Para>
-                A conventional C null-terminated string with no length
-                limitation.
-                If <Replaceable>s</Replaceable> is specified it is the literal value.
+                A null-terminated string (C-style string).  There is no
+		specific length limitation on strings.
+                If <Replaceable>s</Replaceable> is specified it is the exact
+		value that will appear, otherwise the value is variable.
                 Eg. String, String("user").
 </Para>
                 
@@ -761,17 +1103,20 @@ characters that don't fit into your fixed-size buffer.
 </Note>
 </ListItem>
 </VarListEntry>
+
 <VarListEntry>
 <Term>
         Byte<Replaceable>n</Replaceable>(<Replaceable>c</Replaceable>)
 </Term>
 <ListItem>
 <Para>
-                Exactly <Replaceable>n</Replaceable> bytes.  If <Replaceable>c</Replaceable> is specified it is the literal
-                value.  Eg. Byte, Byte1('\n').
+                Exactly <Replaceable>n</Replaceable> bytes.  If
+                <Replaceable>c</Replaceable> is specified it is the exact
+                value.  Eg. Byte2, Byte1('\n').
 </Para>
 </ListItem>
 </VarListEntry>
+
 </VariableList>
 </Para>
 </sect1>
@@ -780,83 +1125,17 @@ characters that don't fit into your fixed-size buffer.
 <Title>Message Formats</Title>
 
 <Para>
-This section describes the detailed format of each message.  Each can be sent
-by either a frontend (F), a backend (B), or both (F & B).
+This section describes the detailed format of each message.  Each is marked to
+indicate that it may be sent by a frontend (F), a backend (B), or both
+(F &amp; B).
+Notice that although each message includes a byte count at the beginning,
+the message format is defined so that the message end can be found without
+reference to the byte count.  This aids validity checking.
 </para>
 
 <VariableList>
-<VarListEntry>
-<Term>
-AsciiRow (B)
-</Term>
-<ListItem>
-<Para>
-<VariableList>
-<VarListEntry>
-<Term>
-        Byte1('D')
-</Term>
-<ListItem>
-<Para>
-                Identifies the message as an <Acronym>ASCII</Acronym> data row.
-                (A prior RowDescription message defines the number of
-                fields in the row and their data types.)
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-        Byte<Replaceable>n</Replaceable>
-</Term>
-<ListItem>
-<Para>
-                A bit map with one bit for each field in the row.  The 1st
-                field corresponds to bit 7 (MSB) of the 1st byte, the 2nd
-                field corresponds to bit 6 of the 1st byte, the 8th field
-                corresponds to bit 0 (LSB) of the 1st byte, the 9th field
-                corresponds to bit 7 of the 2nd byte, and so on.  Each bit
-                is set if the value of the corresponding field is not NULL.
-                If the number of fields is not a multiple of 8, the remainder
-                of the last byte in the bit map is wasted.
-</Para>
-<Para>
-        Then, for each field with a non-NULL value, there is the following:
-<VariableList>
-<VarListEntry>
-<Term>
-                Int32
-</Term>
-<ListItem>
-<Para>
-                        Specifies the size of the value of the field, including
-                        this size.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-                Byte<Replaceable>n</Replaceable>
-</Term>
-<ListItem>
-<Para>
-                        Specifies the value of the field itself in <Acronym>ASCII</Acronym>
-                        characters.  <Replaceable>n</Replaceable> is the above
-                        size minus 4.
-                        There is no trailing zero-byte in the field data; the front
-                        end must add one if it wants one.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
 
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
 
-</Para>
-</ListItem>
-</VarListEntry>
 <VarListEntry>
 <Term>
 AuthenticationOk (B)
@@ -877,6 +1156,16 @@ AuthenticationOk (B)
 </VarListEntry>
 <VarListEntry>
 <Term>
+        Int32(8)
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
         Int32(0)
 </Term>
 <ListItem>
@@ -890,6 +1179,8 @@ AuthenticationOk (B)
 </Para>
 </ListItem>
 </VarListEntry>
+
+
 <VarListEntry>
 <Term>
 AuthenticationKerberosV4 (B)
@@ -910,6 +1201,16 @@ AuthenticationKerberosV4 (B)
 </VarListEntry>
 <VarListEntry>
 <Term>
+        Int32(8)
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
         Int32(1)
 </Term>
 <ListItem>
@@ -919,11 +1220,11 @@ AuthenticationKerberosV4 (B)
 </ListItem>
 </VarListEntry>
 </VariableList>
-
-
 </Para>
 </ListItem>
 </VarListEntry>
+
+
 <VarListEntry>
 <Term>
 AuthenticationKerberosV5 (B)
@@ -944,6 +1245,16 @@ AuthenticationKerberosV5 (B)
 </VarListEntry>
 <VarListEntry>
 <Term>
+        Int32(8)
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
         Int32(2)
 </Term>
 <ListItem>
@@ -953,11 +1264,11 @@ AuthenticationKerberosV5 (B)
 </ListItem>
 </VarListEntry>
 </VariableList>
-
-
 </Para>
 </ListItem>
 </VarListEntry>
+
+
 <VarListEntry>
 <Term>
 AuthenticationCleartextPassword (B)
@@ -978,6 +1289,16 @@ AuthenticationCleartextPassword (B)
 </VarListEntry>
 <VarListEntry>
 <Term>
+        Int32(8)
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
         Int32(3)
 </Term>
 <ListItem>
@@ -990,6 +1311,7 @@ AuthenticationCleartextPassword (B)
 </Para>
 </ListItem>
 </VarListEntry>
+
 
 <VarListEntry>
 <Term>
@@ -1006,6 +1328,16 @@ AuthenticationCryptPassword (B)
 <ListItem>
 <Para>
                 Identifies the message as an authentication request.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32(10)
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1035,6 +1367,7 @@ AuthenticationCryptPassword (B)
 </ListItem>
 </VarListEntry>
 
+
 <VarListEntry>
 <Term>
 AuthenticationMD5Password (B)
@@ -1050,6 +1383,16 @@ AuthenticationMD5Password (B)
 <ListItem>
 <Para>
                 Identifies the message as an authentication request.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32(12)
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1079,6 +1422,7 @@ AuthenticationMD5Password (B)
 </ListItem>
 </VarListEntry>
 
+
 <VarListEntry>
 <Term>
 AuthenticationSCMCredential (B)
@@ -1099,6 +1443,16 @@ AuthenticationSCMCredential (B)
 </VarListEntry>
 <VarListEntry>
 <Term>
+        Int32(8)
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
         Int32(6)
 </Term>
 <ListItem>
@@ -1112,6 +1466,7 @@ AuthenticationSCMCredential (B)
 </Para>
 </ListItem>
 </VarListEntry>
+
 
 <VarListEntry>
 <Term>
@@ -1130,6 +1485,16 @@ BackendKeyData (B)
                 Identifies the message as cancellation key data.
                 The frontend must save these values if it wishes to be
                 able to issue CancelRequest messages later.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32(12)
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1155,17 +1520,17 @@ BackendKeyData (B)
 </VarListEntry>
 </VariableList>
 
-
 </Para>
 </ListItem>
 </VarListEntry>
+
+
 <VarListEntry>
 <Term>
 BinaryRow (B)
 </Term>
 <ListItem>
 <Para>
-
 <VariableList>
 <VarListEntry>
 <Term>
@@ -1174,8 +1539,20 @@ BinaryRow (B)
 <ListItem>
 <Para>
                 Identifies the message as a binary data row.
-                (A prior RowDescription message defines the number of
-                fields in the row and their data types.)
+                (Normally, a prior RowDescription message defines the number
+		of fields in the row and their data types.  Note that the
+		receiver <emphasis>must</> know the number of fields to be
+		able to decode the message contents.)
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1194,28 +1571,30 @@ BinaryRow (B)
                 If the number of fields is not a multiple of 8, the remainder
                 of the last byte in the bit map is wasted.
 </Para>
-<Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
         Then, for each field with a non-NULL value, there is the following:
 <VariableList>
 <VarListEntry>
 <Term>
-                Int32
+        Int32
 </Term>
 <ListItem>
 <Para>
-                        Specifies the size of the value of the field, excluding
-                        this size.
+                Specifies the size of the value of the field, excluding
+                this size.
 </Para>
 </ListItem>
 </VarListEntry>
 <VarListEntry>
 <Term>
-                Byte<Replaceable>n</Replaceable>
+        Byte<Replaceable>n</Replaceable>
 </Term>
 <ListItem>
 <Para>
-                        Specifies the value of the field itself in binary
-                        format.  <Replaceable>n</Replaceable> is the above size.
+                Specifies the value of the field itself in binary
+                format.  <Replaceable>n</Replaceable> is the above size.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1224,11 +1603,179 @@ BinaryRow (B)
 </Para>
 </ListItem>
 </VarListEntry>
+
+
+<VarListEntry>
+<Term>
+Bind (F)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+        Byte1('B')
+</Term>
+<ListItem>
+<Para>
+                Identifies the message as a Bind command.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        String
+</Term>
+<ListItem>
+<Para>
+                The name of the destination portal
+		(an empty string selects the unnamed portal).
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        String
+</Term>
+<ListItem>
+<Para>
+                The name of the source prepared statement
+		(an empty string selects the unnamed prepared statement).
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int8
+</Term>
+<ListItem>
+<Para>
+		0 if parameter values are specified in textual form.
+                1 if parameter values are specified in binary form.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int16
+</Term>
+<ListItem>
+<Para>
+                The number of parameter values specified
+		(may be zero).  This must match the number of parameters
+		needed by the query.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+        If parameter values are specified in textual form, the following
+	appears for each parameter:
+<VariableList>
+<VarListEntry>
+<Term>
+        Int8
+</Term>
+<ListItem>
+<Para>
+                1 if the parameter is non-null.  0 if it is null.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        String
+</Term>
+<ListItem>
+<Para>
+                The parameter value in textual form (that is, suitable
+		input for the parameter's datatype's input converter).
+		If the preceding byte specified a null parameter, then
+		the string is omitted.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+        If parameter values are specified in binary form, the following
+	appears for each parameter:
+<VariableList>
+<VarListEntry>
+<Term>
+        Int16
+</Term>
+<ListItem>
+<Para>
+                Zero if the field is null, otherwise the <varname>typlen</>
+		for the field datatype.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Byte<Replaceable>n</Replaceable>
+</Term>
+<ListItem>
+<Para>
+                The value of the field itself in binary format.
+		Omitted if the field is null.
+		<Replaceable>n</Replaceable> is the <varname>typlen</>
+		value if <varname>typlen</> is positive.  If
+		<varname>typlen</> is -1 then the field value begins with
+		its own length as an Int32 (the length includes itself).
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+</Para>
+</ListItem>
+</VarListEntry>
+
+
+<VarListEntry>
+<Term>
+BindComplete (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+        Byte1('2')
+</Term>
+<ListItem>
+<Para>
+                Identifies the message as a Bind-complete indicator.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32(4)
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
 </VariableList>
 
 </Para>
 </ListItem>
 </VarListEntry>
+
+
 <VarListEntry>
 <Term>
 CancelRequest (F)
@@ -1243,7 +1790,7 @@ CancelRequest (F)
 </Term>
 <ListItem>
 <Para>
-                The size of the packet in bytes.
+                Length of message contents in bytes, including self.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1282,13 +1829,14 @@ CancelRequest (F)
 </VarListEntry>
 </VariableList>
 
-
 </Para>
 </ListItem>
 </VarListEntry>
+
+
 <VarListEntry>
 <Term>
-CompletedResponse (B)
+Close (F)
 </Term>
 <ListItem>
 <Para>
@@ -1300,7 +1848,74 @@ CompletedResponse (B)
 </Term>
 <ListItem>
 <Para>
-                Identifies the message as a completed response.
+                Identifies the message as a Close command.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Byte1
+</Term>
+<ListItem>
+<Para>
+                '<literal>S</>' to close a prepared statement; or
+                '<literal>P</>' to close a portal.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        String
+</Term>
+<ListItem>
+<Para>
+                The name of the prepared statement or portal to close
+		(an empty string selects the unnamed prepared statement
+		or portal).
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+</Para>
+</ListItem>
+</VarListEntry>
+
+
+<VarListEntry>
+<Term>
+CommandComplete (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+        Byte1('C')
+</Term>
+<ListItem>
+<Para>
+                Identifies the message as a command-completed response.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1334,7 +1949,7 @@ CompletedResponse (B)
         For an <command>UPDATE</command> command, the tag is
 	<literal>UPDATE <Replaceable>rows</Replaceable></literal> where
         <Replaceable>rows</Replaceable> is the number of rows updated.
-</Para>
+       </Para>
 
        <para>
         For a <command>MOVE</command> command, the tag is
@@ -1348,27 +1963,216 @@ CompletedResponse (B)
         <literal>FETCH <replaceable>rows</replaceable></literal> where
         <replaceable>rows</replaceable> is the number of rows that
         have been retrieved from the cursor.
-       </para>
+</Para>
 </ListItem>
 </VarListEntry>
 </VariableList>
 
+</Para>
+</ListItem>
+</VarListEntry>
 
+
+<VarListEntry>
+<Term>
+CopyBinaryRow (F &amp; B)
+</Term>
+<ListItem>
+<Para>
+<VariableList>
+<VarListEntry>
+<Term>
+        Byte1('b')
+</Term>
+<ListItem>
+<Para>
+                Identifies the message as binary COPY data.
+		Note that the message body format is identical to the
+		<command>COPY BINARY</> file-format representation for
+		a single row of data.
 </Para>
 </ListItem>
 </VarListEntry>
 <VarListEntry>
 <Term>
-CopyDataRows (B & F)
+        Int32
 </Term>
 <ListItem>
 <Para>
-        This is a stream of rows where each row is terminated by a Byte1('\n').
-        This is then followed by the sequence Byte1('\\'), Byte1('.'),
-        Byte1('\n').
+                Length of message contents in bytes, including self.
 </Para>
 </ListItem>
 </VarListEntry>
+<VarListEntry>
+<Term>
+        Int16
+</Term>
+<ListItem>
+<Para>
+                Specifies the number of fields in the row (can be zero).
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+        Then, for each field, there is the following:
+<VariableList>
+<VarListEntry>
+<Term>
+        Int16
+</Term>
+<ListItem>
+<Para>
+                Zero if the field is null, otherwise the <varname>typlen</>
+		for the field datatype.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Byte<Replaceable>n</Replaceable>
+</Term>
+<ListItem>
+<Para>
+                The value of the field itself in binary format.
+		Omitted if the field is null.
+		<Replaceable>n</Replaceable> is the <varname>typlen</>
+		value if <varname>typlen</> is positive.  If
+		<varname>typlen</> is -1 then the field value begins with
+		its own length as an Int32 (the length includes itself).
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+</Para>
+</ListItem>
+</VarListEntry>
+
+
+<VarListEntry>
+<Term>
+CopyDataRow (F &amp; B)
+</Term>
+<ListItem>
+<Para>
+<VariableList>
+<VarListEntry>
+<Term>
+        Byte1('d')
+</Term>
+<ListItem>
+<Para>
+                Identifies the message as textual COPY data.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        String
+</Term>
+<ListItem>
+<Para>
+                The textual representation of a single row of table data.
+		It should end with a newline.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+</Para>
+</ListItem>
+</VarListEntry>
+
+
+<VarListEntry>
+<Term>
+CopyDone (F &amp; B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+        Byte1('c')
+</Term>
+<ListItem>
+<Para>
+                Identifies the message as a COPY-complete indicator.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32(4)
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+</Para>
+</ListItem>
+</VarListEntry>
+
+
+<VarListEntry>
+<Term>
+CopyFail (F)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+        Byte1('f')
+</Term>
+<ListItem>
+<Para>
+                Identifies the message as a COPY-failure indicator.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        String
+</Term>
+<ListItem>
+<Para>
+                An error message to report as the cause of failure.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+</Para>
+</ListItem>
+</VarListEntry>
+
+
 <VarListEntry>
 <Term>
 CopyInResponse (B)
@@ -1384,16 +2188,28 @@ CopyInResponse (B)
 <ListItem>
 <Para>
                 Identifies the message as a Start Copy In response.
-                The frontend must now send a CopyDataRows message.
+                The frontend must now send copy-in data (if not
+		prepared to do so, send a CopyFail message).
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32(4)
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
 </Para>
 </ListItem>
 </VarListEntry>
 </VariableList>
 
-
 </Para>
 </ListItem>
 </VarListEntry>
+
+
 <VarListEntry>
 <Term>
 CopyOutResponse (B)
@@ -1409,19 +2225,114 @@ CopyOutResponse (B)
 <ListItem>
 <Para>
                 Identifies the message as a Start Copy Out response.
-                This message will be followed by a CopyDataRows message.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
-
-
+                This message will be followed by copy-out data.
 </Para>
 </ListItem>
 </VarListEntry>
 <VarListEntry>
 <Term>
-CursorResponse (B)
+        Int32(4)
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+</Para>
+</ListItem>
+</VarListEntry>
+
+
+<VarListEntry>
+<Term>
+DataRow (B)
+</Term>
+<ListItem>
+<Para>
+<VariableList>
+<VarListEntry>
+<Term>
+        Byte1('D')
+</Term>
+<ListItem>
+<Para>
+                Identifies the message as a text-format data row.
+                (Normally, a prior RowDescription message defines the number
+		of fields in the row and their data types.  Note that the
+		receiver <emphasis>must</> know the number of fields to be
+		able to decode the message contents.)
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Byte<Replaceable>n</Replaceable>
+</Term>
+<ListItem>
+<Para>
+                A bit map with one bit for each field in the row.  The 1st
+                field corresponds to bit 7 (MSB) of the 1st byte, the 2nd
+                field corresponds to bit 6 of the 1st byte, the 8th field
+                corresponds to bit 0 (LSB) of the 1st byte, the 9th field
+                corresponds to bit 7 of the 2nd byte, and so on.  Each bit
+                is set if the value of the corresponding field is not NULL.
+                If the number of fields is not a multiple of 8, the remainder
+                of the last byte in the bit map is wasted.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+        Then, for each field with a non-NULL value, there is the following:
+<VariableList>
+<VarListEntry>
+<Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                Specifies the size of the value of the field, in
+		bytes; the count includes itself.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Byte<Replaceable>n</Replaceable>
+</Term>
+<ListItem>
+<Para>
+                Specifies the value of the field itself in textual
+		form (that is, the result of the output-conversion
+		routine for the field's datatype).
+		<Replaceable>n</Replaceable> is the above size minus 4.
+                There is no trailing zero-byte in the field data; the
+		frontend must add one if it wants one.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+</Para>
+</ListItem>
+</VarListEntry>
+
+
+<VarListEntry>
+<Term>
+Describe (F)
 </Term>
 <ListItem>
 <Para>
@@ -1429,11 +2340,32 @@ CursorResponse (B)
 <VariableList>
 <VarListEntry>
 <Term>
-        Byte1('P')
+        Byte1('D')
 </Term>
 <ListItem>
 <Para>
-                Identifies the message as a cursor response.
+                Identifies the message as a Describe command.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Byte1
+</Term>
+<ListItem>
+<Para>
+                '<literal>S</>' to describe a prepared statement; or
+                '<literal>P</>' to describe a portal.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1443,17 +2375,18 @@ CursorResponse (B)
 </Term>
 <ListItem>
 <Para>
-                The name of the cursor.  This will be <quote>blank</> if the cursor is
-                implicit.
+                The name of the prepared statement or portal to describe
+		(an empty string selects the unnamed prepared statement
+		or portal).
 </Para>
 </ListItem>
 </VarListEntry>
 </VariableList>
-
-
 </Para>
 </ListItem>
 </VarListEntry>
+
+
 <VarListEntry>
 <Term>
 EmptyQueryResponse (B)
@@ -1474,6 +2407,16 @@ EmptyQueryResponse (B)
 </VarListEntry>
 <VarListEntry>
 <Term>
+        Int32(5)
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
         String("")
 </Term>
 <ListItem>
@@ -1484,10 +2427,10 @@ EmptyQueryResponse (B)
 </VarListEntry>
 </VariableList>
 
-
 </Para>
 </ListItem>
 </VarListEntry>
+
 
 <VarListEntry>
 <Term>
@@ -1509,20 +2452,155 @@ ErrorResponse (B)
 </VarListEntry>
 <VarListEntry>
 <Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+        The message body consists of one or more identified fields,
+	followed by a zero-byte terminator.  Fields may appear in
+	any order.  For each field there is the following:
+<VariableList>
+<VarListEntry>
+<Term>
+        Byte1
+</Term>
+<ListItem>
+<Para>
+                A code identifying the field type; if zero, this is
+		the message terminator and no string follows.
+		The presently defined field types are listed in
+		<xref linkend="protocol-error-fields">.
+		Since more field types may be added in future,
+		frontends should silently ignore fields of unrecognized
+		type.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
         String
 </Term>
 <ListItem>
 <Para>
-                The error message itself.
+                The field value.
 </Para>
 </ListItem>
 </VarListEntry>
 </VariableList>
 
+</Para>
+</ListItem>
+</VarListEntry>
+
+
+<VarListEntry>
+<Term>
+Execute (F)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+        Byte1('E')
+</Term>
+<ListItem>
+<Para>
+                Identifies the message as an Execute command.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        String
+</Term>
+<ListItem>
+<Para>
+                The name of the portal to execute
+		(an empty string selects the unnamed portal).
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int8
+</Term>
+<ListItem>
+<Para>
+		0 to return results in textual form (DataRow messages).
+                1 to return results in binary form (BinaryRow messages).
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                Maximum number of rows to return, if portal contains
+		a SELECT or FETCH query (ignored otherwise).  Zero
+		denotes <quote>no limit</>.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+</Para>
+</ListItem>
+</VarListEntry>
+
+
+<VarListEntry>
+<Term>
+Flush (F)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+        Byte1('H')
+</Term>
+<ListItem>
+<Para>
+                Identifies the message as a Flush command.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32(4)
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
 
 </Para>
 </ListItem>
 </VarListEntry>
+
+
 <VarListEntry>
 <Term>
 FunctionCall (F)
@@ -1538,6 +2616,16 @@ FunctionCall (F)
 <ListItem>
 <Para>
                 Identifies the message as a function call.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1570,28 +2658,30 @@ FunctionCall (F)
                 Specifies the number of arguments being supplied to the
                 function.
 </Para>
-<Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
         Then, for each argument, there is the following:
 <VariableList>
 <VarListEntry>
 <Term>
-                Int32
+        Int32
 </Term>
 <ListItem>
 <Para>
-                        Specifies the size of the value of the argument,
-                        excluding this size.
+                Specifies the size of the value of the argument,
+                excluding this size.
 </Para>
 </ListItem>
 </VarListEntry>
 <VarListEntry>
 <Term>
-                Byte<Replaceable>n</Replaceable>
+        Byte<Replaceable>n</Replaceable>
 </Term>
 <ListItem>
 <Para>
-                        Specifies the value of the field itself in binary
-                        format.  <Replaceable>n</Replaceable> is the above size.
+                Specifies the value of the field itself in binary
+                format.  <Replaceable>n</Replaceable> is the above size.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1600,12 +2690,8 @@ FunctionCall (F)
 </Para>
 </ListItem>
 </VarListEntry>
-</VariableList>
 
-</Para>
 
-</ListItem>
-</VarListEntry>
 <VarListEntry>
 <Term>
 FunctionResultResponse (B)
@@ -1626,11 +2712,21 @@ FunctionResultResponse (B)
 </VarListEntry>
 <VarListEntry>
 <Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
         Byte1('G')
 </Term>
 <ListItem>
 <Para>
-                Specifies that a nonempty result was returned.
+                Specifies that a non-null result was returned.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1670,10 +2766,11 @@ FunctionResultResponse (B)
 </VarListEntry>
 </VariableList>
 
-
 </Para>
 </ListItem>
 </VarListEntry>
+
+
 <VarListEntry>
 <Term>
 FunctionVoidResponse (B)
@@ -1694,20 +2791,66 @@ FunctionVoidResponse (B)
 </VarListEntry>
 <VarListEntry>
 <Term>
+        Int32(5)
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
         Byte1('0')
 </Term>
 <ListItem>
 <Para>
-                Specifies that an empty result was returned.
+                Specifies that a null result was returned.
 </Para>
 </ListItem>
 </VarListEntry>
 </VariableList>
 
+</Para>
+</ListItem>
+</VarListEntry>
+
+
+<VarListEntry>
+<Term>
+NoData (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+        Byte1('n')
+</Term>
+<ListItem>
+<Para>
+                Identifies the message as a no-data indicator.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32(4)
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
 
 </Para>
 </ListItem>
 </VarListEntry>
+
+
 <VarListEntry>
 <Term>
 NoticeResponse (B)
@@ -1728,20 +2871,52 @@ NoticeResponse (B)
 </VarListEntry>
 <VarListEntry>
 <Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+        The message body consists of one or more identified fields,
+	followed by a zero-byte terminator.  Fields may appear in
+	any order.  For each field there is the following:
+<VariableList>
+<VarListEntry>
+<Term>
+        Byte1
+</Term>
+<ListItem>
+<Para>
+                A code identifying the field type; if zero, this is
+		the message terminator and no string follows.
+		The presently defined field types are listed in
+		<xref linkend="protocol-error-fields">.
+		Since more field types may be added in future,
+		frontends should silently ignore fields of unrecognized
+		type.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
         String
 </Term>
 <ListItem>
 <Para>
-                The notice message itself.
+                The field value.
 </Para>
 </ListItem>
 </VarListEntry>
 </VariableList>
 
-
 </Para>
 </ListItem>
 </VarListEntry>
+
+
 <VarListEntry>
 <Term>
 NotificationResponse (B)
@@ -1766,6 +2941,16 @@ NotificationResponse (B)
 </Term>
 <ListItem>
 <Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
                 The process ID of the notifying backend process.
 </Para>
 </ListItem>
@@ -1780,16 +2965,28 @@ NotificationResponse (B)
 </Para>
 </ListItem>
 </VarListEntry>
+<VarListEntry>
+<Term>
+        String
+</Term>
+<ListItem>
+<Para>
+                Additional information passed from the notifying process.
+		(Currently, this feature is unimplemented so the field
+		is always an empty string.)
+</Para>
+</ListItem>
+</VarListEntry>
 </VariableList>
-
 
 </Para>
 </ListItem>
 </VarListEntry>
 
+
 <VarListEntry>
 <Term>
-PasswordPacket (F)
+ParameterDescription (B)
 </Term>
 <ListItem>
 <Para>
@@ -1797,11 +2994,252 @@ PasswordPacket (F)
 <VariableList>
 <VarListEntry>
 <Term>
+        Byte1('t')
+</Term>
+<ListItem>
+<Para>
+                Identifies the message as a parameter description.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
         Int32
 </Term>
 <ListItem>
 <Para>
-                The size of the packet in bytes.
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int16
+</Term>
+<ListItem>
+<Para>
+                The number of parameters used by the statement
+		(may be zero).
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+        Then, for each parameter, there is the following:
+<VariableList>
+<VarListEntry>
+<Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                Specifies the object ID of the parameter datatype.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+</Para>
+</ListItem>
+</VarListEntry>
+
+
+<VarListEntry>
+<Term>
+ParameterStatus (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+        Byte1('S')
+</Term>
+<ListItem>
+<Para>
+                Identifies the message as a run-time parameter status report.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        String
+</Term>
+<ListItem>
+<Para>
+                The name of the run-time parameter being reported.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        String
+</Term>
+<ListItem>
+<Para>
+                The current value of the parameter.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+</Para>
+</ListItem>
+</VarListEntry>
+
+
+<VarListEntry>
+<Term>
+Parse (F)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+        Byte1('P')
+</Term>
+<ListItem>
+<Para>
+                Identifies the message as a Parse command.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        String
+</Term>
+<ListItem>
+<Para>
+                The name of the destination prepared statement
+		(an empty string selects the unnamed prepared statement).
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        String
+</Term>
+<ListItem>
+<Para>
+                The query string to be parsed.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int16
+</Term>
+<ListItem>
+<Para>
+                The number of parameter datatypes specified
+		(may be zero).  Note that this is not an indication of
+		the number of parameters that might appear in the
+		query string, only the number that the frontend wants to
+		prespecify types for.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+        Then, for each parameter, there is the following:
+<VariableList>
+<VarListEntry>
+<Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                Specifies the object ID of the parameter datatype.
+		Placing a zero here is equivalent to leaving the type
+		unspecified.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+</Para>
+</ListItem>
+</VarListEntry>
+
+
+<VarListEntry>
+<Term>
+ParseComplete (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+        Byte1('1')
+</Term>
+<ListItem>
+<Para>
+                Identifies the message as a Parse-complete indicator.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32(4)
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+</Para>
+</ListItem>
+</VarListEntry>
+
+
+<VarListEntry>
+<Term>
+PasswordMessage (F)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+        Byte1('p')
+</Term>
+<ListItem>
+<Para>
+                Identifies the message as a password response.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1820,6 +3258,44 @@ PasswordPacket (F)
 </ListItem>
 </VarListEntry>
 
+
+<VarListEntry>
+<Term>
+PortalSuspended (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+        Byte1('s')
+</Term>
+<ListItem>
+<Para>
+                Identifies the message as a portal-suspended indicator.
+		Note this only appears if an Execute row-count limit
+		was reached.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32(4)
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+</Para>
+</ListItem>
+</VarListEntry>
+
+
 <VarListEntry>
 <Term>
 Query (F)
@@ -1834,7 +3310,17 @@ Query (F)
 </Term>
 <ListItem>
 <Para>
-                Identifies the message as a query.
+                Identifies the message as a simple query.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1850,10 +3336,11 @@ Query (F)
 </VarListEntry>
 </VariableList>
 
-
 </Para>
 </ListItem>
 </VarListEntry>
+
+
 <VarListEntry>
 <Term>
 ReadyForQuery (B)
@@ -1873,12 +3360,37 @@ ReadyForQuery (B)
 </Para>
 </ListItem>
 </VarListEntry>
+<VarListEntry>
+<Term>
+        Int32(5)
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Byte1
+</Term>
+<ListItem>
+<Para>
+                Current backend transaction status indicator.
+		Possible values are '<literal>I</>' if idle (not in
+		a transaction block); '<literal>T</>' if in a transaction
+		block; or '<literal>E</>' if in a failed transaction
+		block (queries will be rejected until block is ended).
+</Para>
+</ListItem>
+</VarListEntry>
 </VariableList>
-
 
 </Para>
 </ListItem>
 </VarListEntry>
+
+
 <VarListEntry>
 <Term>
 RowDescription (B)
@@ -1899,52 +3411,88 @@ RowDescription (B)
 </VarListEntry>
 <VarListEntry>
 <Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
         Int16
 </Term>
 <ListItem>
 <Para>
                 Specifies the number of fields in a row (may be zero).
 </Para>
-<Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
         Then, for each field, there is the following:
 <VariableList>
 <VarListEntry>
 <Term>
-                String
+        String
 </Term>
 <ListItem>
 <Para>
-                        Specifies the field name.
+                The field name.
 </Para>
 </ListItem>
 </VarListEntry>
 <VarListEntry>
 <Term>
-                Int32
+        Int32
 </Term>
 <ListItem>
 <Para>
-                        Specifies the object ID of the field type.
+                If the field can be identified as a column of a specific
+		table, the object ID of the table; otherwise zero.
 </Para>
 </ListItem>
 </VarListEntry>
 <VarListEntry>
 <Term>
-                Int16
+        Int16
 </Term>
 <ListItem>
 <Para>
-                        Specifies the type size.
+                If the field can be identified as a column of a specific
+		table, the attribute number of the column; otherwise zero.
 </Para>
 </ListItem>
 </VarListEntry>
 <VarListEntry>
 <Term>
-                Int32
+        Int32
 </Term>
 <ListItem>
 <Para>
-                        Specifies the type modifier.
+                The object ID of the field's datatype.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int16
+</Term>
+<ListItem>
+<Para>
+                The datatype size (see <varname>pg_type.typlen</>).
+		Note that negative values denote variable-width types.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                The type modifier (see <varname>pg_attribute.atttypmod</>).
+		The meaning of the modifier is type-specific.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1953,12 +3501,7 @@ RowDescription (B)
 </Para>
 </ListItem>
 </VarListEntry>
-</VariableList>
 
-
-</Para>
-</ListItem>
-</VarListEntry>
 
 <VarListEntry>
 <Term>
@@ -1974,7 +3517,7 @@ SSLRequest (F)
 </Term>
 <ListItem>
 <Para>
-                The size of the packet in bytes.
+                Length of message contents in bytes, including self.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1997,9 +3540,10 @@ SSLRequest (F)
 </ListItem>
 </VarListEntry>
 
+
 <VarListEntry>
 <Term>
-StartupPacket (F)
+StartupMessage (F)
 </Term>
 <ListItem>
 <Para>
@@ -2007,11 +3551,11 @@ StartupPacket (F)
 <VariableList>
 <VarListEntry>
 <Term>
-        Int32(296)
+        Int32
 </Term>
 <ListItem>
 <Para>
-                The size of the packet in bytes.
+                Length of message contents in bytes, including self.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -2022,69 +3566,120 @@ StartupPacket (F)
 <ListItem>
 <Para>
                 The protocol version number.  The most significant 16 bits are
-                the major version number.  The least 16 significant bits are
-                the minor version number.
+                the major version number (3 for the format described here).
+		The least 16 significant bits are the minor version number.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+        The protocol version number is followed by one or more pairs of
+	parameter name and value strings.  Parameters can appear in any
+	order.  <literal>user</> is required, others are optional.
+	Each parameter is specified as:
+<VariableList>
+<VarListEntry>
+<Term>
+        String
+</Term>
+<ListItem>
+<Para>
+                The parameter name.  Currently recognized names are:
+
+<VariableList>
+<VarListEntry>
+<Term>
+                <literal>user</>
+</Term>
+<ListItem>
+<Para>
+                        The database user name to connect as.  Required;
+			there is no default.
 </Para>
 </ListItem>
 </VarListEntry>
 <VarListEntry>
 <Term>
-        LimString64
+                <literal>database</>
 </Term>
 <ListItem>
 <Para>
-                The database name, defaults to the user name if empty.
+                        The database to connect to.  Defaults to the user name.
 </Para>
 </ListItem>
 </VarListEntry>
 <VarListEntry>
 <Term>
-        LimString32
+                <literal>options</>
 </Term>
 <ListItem>
 <Para>
-                The user name.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-        LimString64
-</Term>
-<ListItem>
-<Para>
-                Any additional command line arguments to be passed to the
-                backend child process by the server.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-        LimString64
-</Term>
-<ListItem>
-<Para>
-                Unused.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-        LimString64
-</Term>
-<ListItem>
-<Para>
-                The optional tty the backend should use for debugging messages.
-		(Currently, this field is unsupported and ignored.)
+                        Command-line arguments for the backend.  (This is
+			deprecated in favor of setting individual GUC
+			parameters.)
 </Para>
 </ListItem>
 </VarListEntry>
 </VariableList>
 
+                In addition to the above, any GUC parameter that can be
+		set at backend start time may be listed.  Such settings
+		will be applied during backend start (after parsing the
+		command-line options if any).
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        String
+</Term>
+<ListItem>
+<Para>
+                The parameter value.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
 
 </Para>
 </ListItem>
 </VarListEntry>
+
+
+<VarListEntry>
+<Term>
+Sync (F)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+        Byte1('S')
+</Term>
+<ListItem>
+<Para>
+                Identifies the message as a Sync command.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32(4)
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+</Para>
+</ListItem>
+</VarListEntry>
+
+
 <VarListEntry>
 <Term>
 Terminate (F)
@@ -2103,14 +3698,179 @@ Terminate (F)
 </Para>
 </ListItem>
 </VarListEntry>
+<VarListEntry>
+<Term>
+        Int32(4)
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
 </VariableList>
 
+</Para>
+</ListItem>
+</VarListEntry>
 
+
+</VariableList>
+
+</sect1>
+
+
+<Sect1 id="protocol-error-fields">
+<Title>Error and Notice Message Fields</Title>
+
+<para>
+This section describes the fields that may appear in ErrorResponse and
+NoticeResponse messages.  Each field type has a single-byte identification
+token.
+</para>
+
+<VariableList>
+
+<VarListEntry>
+<Term>
+<literal>S</>
+</Term>
+<ListItem>
+<Para>
+        Severity: the field contents are
+        <literal>ERROR</>, <literal>FATAL</>, or
+        <literal>PANIC</> (in an error message), or
+	<literal>WARNING</>, <literal>NOTICE</>, <literal>DEBUG</>,
+	<literal>INFO</>, or <literal>LOG</> (in a notice message),
+	or a localized translation of one of these.  Always present.
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>
+<literal>C</>
+</Term>
+<ListItem>
+<Para>
+        Code: the SQLSTATE code for the error (a 5-character
+        string following SQL spec conventions).  Not localizable.
+        Always present.
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>
+<literal>M</>
+</Term>
+<ListItem>
+<Para>
+        Message: the primary human-readable error message.
+        This should be accurate but terse (typically one line).
+        Always present.
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>
+<literal>D</>
+</Term>
+<ListItem>
+<Para>
+        Detail: an optional secondary error message carrying more
+        detail about the problem.  May run to multiple lines.
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>
+<literal>H</>
+</Term>
+<ListItem>
+<Para>
+        Hint: an optional suggestion what to do about the problem.
+	This is intended to differ from Detail in that it offers advice
+	(potentially inappropriate) rather than hard facts.
+	May run to multiple lines.
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>
+<literal>P</>
+</Term>
+<ListItem>
+<Para>
+        Position: the field value is a decimal ASCII integer, indicating
+	an error cursor position as an index into the original query string.
+	The first character has index 1, and positions are measured in
+	characters not bytes.
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>
+<literal>W</>
+</Term>
+<ListItem>
+<Para>
+        Where: an indication of the context in which the error occurred.
+	Presently this includes a call stack traceback of active PL functions.
+	The trace is one entry per line, most recent first.
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>
+<literal>F</>
+</Term>
+<ListItem>
+<Para>
+        File: the file name of the source-code location where the error
+	was reported.
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>
+<literal>L</>
+</Term>
+<ListItem>
+<Para>
+        Line: the line number of the source-code location where the error
+	was reported.
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>
+<literal>R</>
+</Term>
+<ListItem>
+<Para>
+        Routine: the name of the source-code routine reporting the error.
 </Para>
 </ListItem>
 </VarListEntry>
 
 </VariableList>
 
+<para>
+The client is responsible for formatting displayed information to meet its
+needs; in particular it should break long lines as needed.  Newline characters
+appearing in the error message fields should be treated as paragraph breaks,
+not line breaks.
+</para>
+
 </sect1>
+
+
 </Chapter>
