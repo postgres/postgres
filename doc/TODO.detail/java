@@ -2073,3 +2073,76 @@ TIP 3: if posting/reading through Usenet, please send an appropriate
 subscribe-nomail command to majordomo@postgresql.org so that your
 message can get through to the mailing list cleanly
 
+From pgsql-hackers-owner+M17140@postgresql.org Thu Jan  3 09:13:32 2002
+Return-path: <pgsql-hackers-owner+M17140@postgresql.org>
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g03EDVc00444
+	for <pgman@candle.pha.pa.us>; Thu, 3 Jan 2002 09:13:31 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id g03E41N54463;
+	Thu, 3 Jan 2002 08:04:01 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M17140@postgresql.org)
+Received: from tiger.tigrasoft (fw.tigrasoft.hu [195.70.42.161])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g01Csdm40742
+	for <pgsql-hackers@postgresql.org>; Tue, 1 Jan 2002 07:54:39 -0500 (EST)
+	(envelope-from hornyakl@freemail.hu)
+Received: from freemail.hu ([192.168.0.200])
+	by tiger.tigrasoft (8.9.3/8.9.3/Debian 8.9.3-21) with ESMTP id NAA14425;
+	Tue, 1 Jan 2002 13:54:35 +0100
+X-Authentication-Warning: tiger.tigrasoft: Host [192.168.0.200] claimed to be freemail.hu
+Message-ID: <3C31B3B7.6030703@freemail.hu>
+Date: Tue, 01 Jan 2002 14:03:51 +0100
+From: Laszlo Hornyak <hornyakl@freemail.hu>
+Reply-To: hornyakl@users.sourceforge.net
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:0.9.4) Gecko/20010913
+X-Accept-Language: hu, en-us
+MIME-Version: 1.0
+To: pgsql-hackers@postgresql.org, ssutjiono@wc-group.com
+Subject: [HACKERS] PL/(pg)J
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Happy new year for all!
+
+I would like to tell you about the results of my work on pl/j.
+memo: Java and postgres must run in a separate address space. First I 
+wanted to use the sys v ipc, which was a bad idea becouse of some 
+problems with java VM-s. Many hackers told me about its bad sides, and 
+the good sides of the sockets, so I droped the whole code and started a 
+new one.
+
+I started to write the java side first, which is maybe almost 10% ready :))
+-we have is a communication protocol between the two process. I know 
+noone will like it, so there is an API for protocols, so it is plugable. 
+The current implementation is receiveing calls,sends exceptions, but 
+sending the results is not implemented yet.
+
+-the Postgres side is not yet done. It sends function calls without 
+arguments, it doesn`t receive sql queries, exceptions or results at all, 
+and there is no API for it, it is an uggly hardcoded thing.
+
+-there is no JDBC implementation, and I have never written JDBC driver, 
+so it may take for a while...
+
+But it says "hello world" :))
+
+Todo for me:
+
+-learn more about postgres, jdbc drivers, etc, etc
+-develop api for the postgres side of the communication.
+
+This will take for a good while becouse of other todos but I hope next 
+time I can tell you good news.
+
+thx,
+Laszlo Hornyak
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
