@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.52 1997/11/07 20:51:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.53 1997/11/09 04:47:09 scrappy Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -744,11 +744,13 @@ handle_warn(SIGNAL_ARGS)
 static void
 quickdie(SIGNAL_ARGS)
 {
-	elog(NOTICE, "I have been signalled by the postmaster.");
-	elog(NOTICE, "Some backend process has died unexpectedly and possibly");
-	elog(NOTICE, "corrupted shared memory.  The current transaction was");
-	elog(NOTICE, "aborted, and I am going to exit.  Please resend the");
-	elog(NOTICE, "last query. -- The postgres backend");
+	elog(NOTICE, "Message from PostgreSQL backend:  The Postmaster has ");
+	elog(NOTICE, "informed me that some other backend died abnormally and ");
+	elog(NOTICE, "possibly corrupted shared memory.  I have rolled back ");
+	elog(NOTICE, "the current transaction and am going to terminate your ");
+	elog(NOTICE, "database system connection and exit.  Please reconnect to");
+	elog(NOTICE, "the database system and repeat your query.");
+
 
 	/*
 	 * DO NOT ExitPostgres(0) -- we're here because shared memory may be
@@ -1337,7 +1339,7 @@ PostgresMain(int argc, char *argv[])
 	if (IsUnderPostmaster == false)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.52 $ $Date: 1997/11/07 20:51:54 $");
+		puts("$Revision: 1.53 $ $Date: 1997/11/09 04:47:09 $");
 	}
 
 	/* ----------------
