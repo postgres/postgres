@@ -1,11 +1,16 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.9 1999/01/07 02:59:45 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.10 1999/01/19 16:06:25 thomas Exp $
 
 Postgres Administrator's Guide.
 Derived from postgres.sgml.
 - thomas 1998-10-27
 
 $Log: admin.sgml,v $
+Revision 1.10  1999/01/19 16:06:25  thomas
+Merge current.sgml into release.sgml so all release notes are in the same
+ file. Per Bruce's preference. Go to it Bruce!
+No info yet for v6.4.2 or upcoming releases.
+
 Revision 1.9  1999/01/07 02:59:45  thomas
 Include installation instructions for WIN32 client-side libraries.
 From Magnus Hagander <mha@sollentuna.net>.
@@ -32,7 +37,6 @@ Bigger updates to the installation instructions (install and config).
 <!entity y2k      SYSTEM "y2k.sgml">
 
 <!entity config   SYSTEM "config.sgml">
-<!entity current  SYSTEM "current.sgml">
 <!entity intro-ag SYSTEM "intro-ag.sgml">
 <!entity install  SYSTEM "install.sgml">
 <!entity installw SYSTEM "install-win32.sgml">
