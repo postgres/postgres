@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.111 2003/08/04 02:39:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.112 2003/09/05 03:57:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1292,7 +1292,7 @@ ident_inet(const SockAddr remote_addr,
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not connect to IDENT server at address \"%s\", port %s): %m",
+				 errmsg("could not connect to IDENT server at address \"%s\", port %s: %m",
 						remote_addr_s, ident_port)));
 		ident_return = false;
 		goto ident_inet_done;
@@ -1312,7 +1312,7 @@ ident_inet(const SockAddr remote_addr,
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not send query to IDENT server at address \"%s\", port %s): %m",
+				 errmsg("could not send query to IDENT server at address \"%s\", port %s: %m",
 						remote_addr_s, ident_port)));
 		ident_return = false;
 		goto ident_inet_done;
@@ -1327,7 +1327,7 @@ ident_inet(const SockAddr remote_addr,
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not receive response from IDENT server at address \"%s\", port %s): %m",
+				 errmsg("could not receive response from IDENT server at address \"%s\", port %s: %m",
 						remote_addr_s, ident_port)));
 		ident_return = false;
 		goto ident_inet_done;
