@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.236 2001/10/19 17:03:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.237 2001/10/19 18:19:41 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1192,8 +1192,6 @@ PostgresMain(int argc, char *argv[],
 	secure = true;
 	ctx = PGC_POSTMASTER;
 
-	optind = 1;					/* reset after postmaster's usage */
-
 	while ((flag = getopt(argc, argv, "A:B:c:CD:d:Eef:FiNOPo:p:S:st:v:W:x:-:")) != EOF)
 		switch (flag)
 		{
@@ -1651,7 +1649,7 @@ PostgresMain(int argc, char *argv[],
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.236 $ $Date: 2001/10/19 17:03:08 $\n");
+		puts("$Revision: 1.237 $ $Date: 2001/10/19 18:19:41 $\n");
 	}
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.79 2001/10/19 17:03:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.80 2001/10/19 18:19:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,7 +120,6 @@ void
 SetDataDir(const char *dir)
 {
 	char	   *new;
-	struct stat stat_buf;
 
 	AssertArg(dir);
 
@@ -163,17 +162,6 @@ SetDataDir(const char *dir)
 		if (!new)
 			elog(FATAL, "out of memory");
 	}
-	
-	/*
-	 * Check if the directory has group or world access.  If so, reject.
-	 */
-	if (stat(new, &stat_buf) == -1)
-		elog(FATAL, "could not read permissions of directory %s: %s",
-			 new, strerror(errno));
-
-	if (stat_buf.st_mode & (S_IRWXG | S_IRWXO))
-		elog(FATAL, "data directory %s has group or world access; permissions should be u=rwx (0700)",
-			 new);
 
 	if (DataDir)
 		free(DataDir);

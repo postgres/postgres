@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.247 2001/10/19 17:03:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.248 2001/10/19 18:19:41 tgl Exp $
  *
  * NOTES
  *
@@ -275,6 +275,7 @@ checkDataDir(const char *checkdir)
 {
 	char		path[MAXPGPATH];
 	FILE	   *fp;
+	struct stat stat_buf;
 
 	if (checkdir == NULL)
 	{
@@ -286,6 +287,22 @@ checkDataDir(const char *checkdir)
 				progname);
 		ExitPostmaster(2);
 	}
+	
+	/*
+	 * Check if the directory has group or world access.  If so, reject.
+	 */
+	if (stat(checkdir, &stat_buf) == -1)
+	{
+		if (errno == ENOENT)
+			elog(FATAL, "data directory %s was not found", checkdir);
+		else
+			elog(FATAL, "could not read permissions of directory %s: %m",
+				 checkdir);
+	}
+
+	if (stat_buf.st_mode & (S_IRWXG | S_IRWXO))
+		elog(FATAL, "data directory %s has group or world access; permissions should be u=rwx (0700)",
+			 checkdir);
 
 	/* Look for PG_VERSION before looking for pg_control */
 	ValidatePgVersion(checkdir);
@@ -421,7 +438,7 @@ PostmasterMain(int argc, char *argv[])
 
 	IgnoreSystemIndexes(false);
 
-	optind = 1;					/* start over */
+	optind = 1;					/* start over (should be redundant here) */
 #ifdef HAVE_INT_OPTRESET
 	optreset = 1;
 #endif
@@ -2162,6 +2179,11 @@ DoBackend(Port *port)
 
 	av[ac] = (char *) NULL;
 
+	optind = 1;					/* reset getopt(3) for subprocess */
+#ifdef HAVE_INT_OPTRESET
+	optreset = 1;
+#endif
+
 	/*
 	 * Release postmaster's working memory context so that backend can
 	 * recycle the space.  Note this does not trash *MyProcPort, because
@@ -2451,7 +2473,10 @@ SSDataBase(int xlop)
 
 		av[ac] = (char *) NULL;
 
-		optind = 1;
+		optind = 1;				/* reset getopt(3) for subprocess */
+#ifdef HAVE_INT_OPTRESET
+		optreset = 1;
+#endif
 
 		BootstrapMain(ac, av);
 		ExitPostmaster(0);
