@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.28 2002/08/06 05:40:44 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.29 2002/08/08 01:44:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1080,7 +1080,7 @@ DeconstructQualifiedName(List *names,
  * Returns the namespace OID.  Raises elog if any problem.
  */
 Oid
-LookupExplicitNamespace(char *nspname)
+LookupExplicitNamespace(const char *nspname)
 {
 	Oid			namespaceId;
 	AclResult	aclresult;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.86 2002/08/02 18:15:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.87 2002/08/08 01:44:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,11 +155,11 @@ transformTargetList(ParseState *pstate, List *targetlist)
 						break;
 				}
 
-				/* XXX do something with schema name */
-				rte = refnameRangeTblEntry(pstate, relname,
+				rte = refnameRangeTblEntry(pstate, schemaname, relname,
 										   &sublevels_up);
 				if (rte == NULL)
-					rte = addImplicitRTE(pstate, makeRangeVar(NULL, relname));
+					rte = addImplicitRTE(pstate, makeRangeVar(schemaname,
+															  relname));
 
 				p_target = nconc(p_target,
 								 expandRelAttrs(pstate, rte));

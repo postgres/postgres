@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.124 2002/08/04 06:46:12 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.125 2002/08/08 01:44:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -709,6 +709,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 
 			/* Try to identify as an unqualified column */
 			node = colnameToVar(pstate, name);
+
 			if (node == NULL)
 			{
 				/*
@@ -716,11 +717,15 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				 * try to find the name as a relation ... but not if
 				 * subscripts appear.  Note also that only relations
 				 * already entered into the rangetable will be recognized.
+				 *
+				 * This is a hack for backwards compatibility with PostQUEL-
+				 * inspired syntax.  The preferred form now is "rel.*".
 				 */
 				int		levels_up;
 
 				if (cref->indirection == NIL &&
-					refnameRangeTblEntry(pstate, name, &levels_up) != NULL)
+					refnameRangeTblEntry(pstate, NULL, name,
+										 &levels_up) != NULL)
 				{
 					rv = makeNode(RangeVar);
 					rv->relname = name;
@@ -748,7 +753,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 			}
 
 			/* Try to identify as a once-qualified column */
-			node = qualifiedNameToVar(pstate, name1, name2, true);
+			node = qualifiedNameToVar(pstate, NULL, name1, name2, true);
 			if (node == NULL)
 			{
 				/*
@@ -784,8 +789,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 			}
 
 			/* Try to identify as a twice-qualified column */
-			/* XXX do something with schema name here */
-			node = qualifiedNameToVar(pstate, name2, name3, true);
+			node = qualifiedNameToVar(pstate, name1, name2, name3, true);
 			if (node == NULL)
 			{
 				/* Try it as a function call */
@@ -825,8 +829,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 			}
 
 			/* Try to identify as a twice-qualified column */
-			/* XXX do something with schema name here */
-			node = qualifiedNameToVar(pstate, name3, name4, true);
+			node = qualifiedNameToVar(pstate, name2, name3, name4, true);
 			if (node == NULL)
 			{
 				/* Try it as a function call */

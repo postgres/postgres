@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.112 2002/07/18 23:11:28 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.113 2002/08/08 01:44:31 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -131,7 +131,9 @@ static Node *get_rule_sortgroupclause(SortClause *srt, List *tlist,
 						 bool force_colno,
 						 deparse_context *context);
 static void get_names_for_var(Var *var, deparse_context *context,
-				  char **refname, char **attname);
+				  char **schemaname, char **refname, char **attname);
+static RangeTblEntry *find_rte_by_refname(const char *refname,
+										  deparse_context *context);
 static void get_rule_expr(Node *node, deparse_context *context);
 static void get_oper_expr(Expr *expr, deparse_context *context);
 static void get_func_expr(Expr *expr, deparse_context *context);
@@ -1204,10 +1206,11 @@ get_basic_select_query(Query *query, deparse_context *context)
 		else
 		{
 			Var		   *var = (Var *) (tle->expr);
+			char	   *schemaname;
 			char	   *refname;
 			char	   *attname;
 
-			get_names_for_var(var, context, &refname, &attname);
+			get_names_for_var(var, context, &schemaname, &refname, &attname);
 			tell_as = (attname == NULL ||
 					   strcmp(attname, tle->resdom->resname) != 0);
 		}
@@ -1513,17 +1516,22 @@ get_utility_query_def(Query *query, deparse_context *context)
 
 
 /*
- * Get the relation refname and attname for a (possibly nonlocal) Var.
+ * Get the schemaname, refname and attname for a (possibly nonlocal) Var.
+ *
+ * schemaname is usually returned as NULL.  It will be non-null only if
+ * use of the unqualified refname would find the wrong RTE.
  *
  * refname will be returned as NULL if the Var references an unnamed join.
  * In this case the Var *must* be displayed without any qualification.
  *
  * attname will be returned as NULL if the Var represents a whole tuple
- * of the relation.
+ * of the relation.  (Typically we'd want to display the Var as "foo.*",
+ * but it's convenient to return NULL to make it easier for callers to
+ * distinguish this case.)
  */
 static void
 get_names_for_var(Var *var, deparse_context *context,
-				  char **refname, char **attname)
+				  char **schemaname, char **refname, char **attname)
 {
 	List	   *nslist = context->namespaces;
 	int			sup = var->varlevelsup;
@@ -1552,16 +1560,90 @@ get_names_for_var(Var *var, deparse_context *context,
 			 var->varno);
 
 	/* Emit results */
-	if (rte->rtekind == RTE_JOIN && rte->alias == NULL)
-		*refname = NULL;
-	else
-		*refname = rte->eref->aliasname;
+	*schemaname = NULL;			/* default assumptions */
+	*refname = rte->eref->aliasname;
+
+	/* Exceptions occur only if the RTE is alias-less */
+	if (rte->alias == NULL)
+	{
+		if (rte->rtekind == RTE_RELATION)
+		{
+			/*
+			 * It's possible that use of the bare refname would find another
+			 * more-closely-nested RTE, or be ambiguous, in which case
+			 * we need to specify the schemaname to avoid these errors.
+			 */
+			if (find_rte_by_refname(rte->eref->aliasname, context) != rte)
+				*schemaname =
+					get_namespace_name(get_rel_namespace(rte->relid));
+		}
+		else if (rte->rtekind == RTE_JOIN)
+		{
+			/* Unnamed join has neither schemaname nor refname */
+			*refname = NULL;
+		}
+	}
 
 	if (var->varattno == InvalidAttrNumber)
 		*attname = NULL;
 	else
 		*attname = get_rte_attribute_name(rte, var->varattno);
 }
+
+/*
+ * find_rte_by_refname		- look up an RTE by refname in a deparse context
+ *
+ * Returns NULL if there is no matching RTE or the refname is ambiguous.
+ *
+ * NOTE: this code is not really correct since it does not take account of
+ * the fact that not all the RTEs in a rangetable may be visible from the
+ * point where a Var reference appears.  For the purposes we need, however,
+ * the only consequence of a false match is that we might stick a schema
+ * qualifier on a Var that doesn't really need it.  So it seems close
+ * enough.
+ */
+static RangeTblEntry *
+find_rte_by_refname(const char *refname, deparse_context *context)
+{
+	RangeTblEntry *result = NULL;
+	List	   *nslist;
+
+	foreach(nslist, context->namespaces)
+	{
+		deparse_namespace *dpns = (deparse_namespace *) lfirst(nslist);
+		List	   *rtlist;
+
+		foreach(rtlist, dpns->rtable)
+		{
+			RangeTblEntry *rte = (RangeTblEntry *) lfirst(rtlist);
+
+			if (strcmp(rte->eref->aliasname, refname) == 0)
+			{
+				if (result)
+					return NULL; /* it's ambiguous */
+				result = rte;
+			}
+		}
+		if (dpns->outer_rte &&
+			strcmp(dpns->outer_rte->eref->aliasname, refname) == 0)
+		{
+			if (result)
+				return NULL;	/* it's ambiguous */
+			result = dpns->outer_rte;
+		}
+		if (dpns->inner_rte &&
+			strcmp(dpns->inner_rte->eref->aliasname, refname) == 0)
+		{
+			if (result)
+				return NULL;	/* it's ambiguous */
+			result = dpns->inner_rte;
+		}
+		if (result)
+			break;
+	}
+	return result;
+}
+
 
 /* ----------
  * get_rule_expr			- Parse back an expression
@@ -1592,24 +1674,30 @@ get_rule_expr(Node *node, deparse_context *context)
 		case T_Var:
 			{
 				Var		   *var = (Var *) node;
+				char	   *schemaname;
 				char	   *refname;
 				char	   *attname;
 
-				get_names_for_var(var, context, &refname, &attname);
+				get_names_for_var(var, context,
+								  &schemaname, &refname, &attname);
 				if (refname && (context->varprefix || attname == NULL))
 				{
+					if (schemaname)
+						appendStringInfo(buf, "%s.",
+										 quote_identifier(schemaname));
+
 					if (strcmp(refname, "*NEW*") == 0)
-						appendStringInfo(buf, "new");
+						appendStringInfo(buf, "new.");
 					else if (strcmp(refname, "*OLD*") == 0)
-						appendStringInfo(buf, "old");
+						appendStringInfo(buf, "old.");
 					else
-						appendStringInfo(buf, "%s",
+						appendStringInfo(buf, "%s.",
 										 quote_identifier(refname));
-					if (attname)
-						appendStringInfoChar(buf, '.');
 				}
 				if (attname)
 					appendStringInfo(buf, "%s", quote_identifier(attname));
+				else
+					appendStringInfo(buf, "*");
 			}
 			break;
 

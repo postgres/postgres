@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_relation.h,v 1.37 2002/08/05 02:30:50 tgl Exp $
+ * $Id: parse_relation.h,v 1.38 2002/08/08 01:44:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,8 @@
 #include "parser/parse_node.h"
 
 extern RangeTblEntry *refnameRangeTblEntry(ParseState *pstate,
-						char *refname,
+						const char *schemaname,
+						const char *refname,
 						int *sublevels_up);
 extern void checkNameSpaceConflicts(ParseState *pstate, Node *namespace1,
 						Node *namespace2);
@@ -25,8 +26,11 @@ extern int RTERangeTablePosn(ParseState *pstate,
 				  RangeTblEntry *rte,
 				  int *sublevels_up);
 extern Node *colnameToVar(ParseState *pstate, char *colname);
-extern Node *qualifiedNameToVar(ParseState *pstate, char *refname,
-				   char *colname, bool implicitRTEOK);
+extern Node *qualifiedNameToVar(ParseState *pstate,
+								char *schemaname,
+								char *refname,
+								char *colname,
+								bool implicitRTEOK);
 extern RangeTblEntry *addRangeTableEntry(ParseState *pstate,
 				   RangeVar *relation,
 				   Alias *alias,

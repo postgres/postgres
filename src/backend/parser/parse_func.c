@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.133 2002/08/02 18:15:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.134 2002/08/08 01:44:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,8 @@ static int match_argtypes(int nargs,
 static FieldSelect *setup_field_select(Node *input, char *attname, Oid relid);
 static FuncCandidateList func_select_candidate(int nargs, Oid *input_typeids,
 								  FuncCandidateList candidates);
+static void unknown_attribute(const char *schemaname, const char *relname,
+							  const char *attname);
 
 
 /*
@@ -80,7 +82,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	Oid			funcid;
 	List	   *i;
 	Node	   *first_arg = NULL;
-	char	   *refname;
 	int			nargs = length(fargs);
 	int			argn;
 	Oid			oid_array[FUNC_MAX_ARGS];
@@ -121,10 +122,11 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		if (IsA(first_arg, RangeVar))
 		{
 			/* First arg is a relation. This could be a projection. */
-			refname = ((RangeVar *) first_arg)->relname;
-
-			/* XXX WRONG: ignores possible qualification of argument */
-			retval = qualifiedNameToVar(pstate, refname, cname, true);
+			retval = qualifiedNameToVar(pstate,
+										((RangeVar *) first_arg)->schemaname,
+										((RangeVar *) first_arg)->relname,
+										cname,
+										true);
 			if (retval)
 				return retval;
 		}
@@ -156,16 +158,19 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 		if (IsA(arg, RangeVar))
 		{
+			char	   *schemaname;
+			char	   *relname;
 			RangeTblEntry *rte;
 			int			vnum;
 			int			sublevels_up;
 
 			/*
-			 * a relation
+			 * a relation: look it up in the range table, or add if needed
 			 */
-			refname = ((RangeVar *) arg)->relname;
+			schemaname = ((RangeVar *) arg)->schemaname;
+			relname = ((RangeVar *) arg)->relname;
 
-			rte = refnameRangeTblEntry(pstate, refname,
+			rte = refnameRangeTblEntry(pstate, schemaname, relname,
 									   &sublevels_up);
 
 			if (rte == NULL)
@@ -199,11 +204,11 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 * named tuple type
 					 */
 					if (is_column)
-						elog(ERROR, "No such attribute %s.%s",
-							 refname, strVal(lfirst(funcname)));
+						unknown_attribute(schemaname, relname,
+										  strVal(lfirst(funcname)));
 					else
 						elog(ERROR, "Cannot pass result of sub-select or join %s to a function",
-							 refname);
+							 relname);
 					toid = InvalidOid; /* keep compiler quiet */
 					break;
 			}
@@ -268,8 +273,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 			Assert(nargs == 1);
 			if (IsA(first_arg, RangeVar))
-				elog(ERROR, "No such attribute %s.%s",
-					 ((RangeVar *) first_arg)->relname, colname);
+				unknown_attribute(((RangeVar *) first_arg)->schemaname,
+								  ((RangeVar *) first_arg)->relname,
+								  colname);
 			relTypeId = exprType(first_arg);
 			if (!ISCOMPLEX(relTypeId))
 				elog(ERROR, "Attribute notation .%s applied to type %s, which is not a complex type",
@@ -1223,6 +1229,21 @@ ParseComplexProjection(ParseState *pstate,
 	/* Else generate a FieldSelect expression */
 	fselect = setup_field_select(first_arg, funcname, argrelid);
 	return (Node *) fselect;
+}
+
+/*
+ * Simple helper routine for delivering "No such attribute" error message
+ */
+static void
+unknown_attribute(const char *schemaname, const char *relname,
+				  const char *attname)
+{
+	if (schemaname)
+		elog(ERROR, "No such attribute %s.%s.%s",
+			 schemaname, relname, attname);
+	else
+		elog(ERROR, "No such attribute %s.%s",
+			 relname, attname);
 }
 
 /*
