@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.133 2002/12/14 00:17:59 tgl Exp $
+ * $Id: nodes.h,v 1.134 2002/12/16 16:22:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -293,9 +293,16 @@ typedef struct Node
 #define nodeTag(nodeptr)		(((Node*)(nodeptr))->type)
 
 /*
+ * newNode -
+ *	  create a new node of the specified size and tag the node with the
+ *	  specified tag.
+ *
+ * !WARNING!: Avoid using newNode directly. You should be using the
+ *	  macro makeNode.  eg. to create a Query node, use makeNode(Query)
+ *
  *	There is no way to dereference the palloc'ed pointer to assign the
- *	tag, and return the pointer itself, so we need a holder variable.
- *	Fortunately, this function isn't recursive so we just define
+ *	tag, and also return the pointer itself, so we need a holder variable.
+ *	Fortunately, this macro isn't recursive so we just define
  *	a global variable for this purpose.
  */
 extern Node *newNodeMacroHolder;
@@ -303,8 +310,7 @@ extern Node *newNodeMacroHolder;
 #define newNode(size, tag) \
 ( \
 	AssertMacro((size) >= sizeof(Node)),		/* need the tag, at least */ \
-\
-	newNodeMacroHolder = (Node *) palloc0(size), \
+	newNodeMacroHolder = (Node *) palloc0fast(size), \
 	newNodeMacroHolder->type = (tag), \
 	newNodeMacroHolder \
 )

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodes.c,v 1.18 2002/11/10 02:17:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodes.c,v 1.19 2002/12/16 16:22:46 tgl Exp $
  *
  * HISTORY
  *	  Andrew Yu			Oct 20, 1994	file creation
@@ -17,16 +17,11 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+
 #include "nodes/nodes.h"
 
 /*
- * newNode -
- *	  create a new node of the specified size and tag the node with the
- *	  specified tag.
- *
- * !WARNING!: Avoid using newNode directly. You should be using the
- *	  macro makeNode. eg. to create a Resdom node, use makeNode(Resdom)
- *
+ * Support for newNode() macro
  */
-Node *newNodeMacroHolder;
 
+Node *newNodeMacroHolder;

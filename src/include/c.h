@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.133 2002/12/05 04:04:48 momjian Exp $
+ * $Id: c.h,v 1.134 2002/12/16 16:22:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -579,12 +579,63 @@ typedef NameData *Name;
  *	memset() functions.  More research needs to be done, perhaps with
  *	platform-specific MEMSET_LOOP_LIMIT values or tests in configure.
  *
- *	MemSet has been split into two parts so MemSetTest can be optimized
- *	away for constant 'val' and 'len'.  This is used by palloc0().
- *
- *	Note, arguments are evaluated more than once.
- *
  *	bjm 2002-10-08
+ */
+#define MemSet(start, val, len) \
+	do \
+	{ \
+		int32 * _start = (int32 *) (start); \
+		int		_val = (val); \
+		Size	_len = (len); \
+\
+		if ((((long) _start) & INT_ALIGN_MASK) == 0 && \
+			(_len & INT_ALIGN_MASK) == 0 && \
+			_val == 0 && \
+			_len <= MEMSET_LOOP_LIMIT) \
+		{ \
+			int32 * _stop = (int32 *) ((char *) _start + _len); \
+			while (_start < _stop) \
+				*_start++ = 0; \
+		} \
+		else \
+			memset((char *) _start, _val, _len); \
+	} while (0)
+
+#define MEMSET_LOOP_LIMIT  1024
+
+/*
+ * MemSetAligned is the same as MemSet except it omits the test to see if
+ * "start" is word-aligned.  This is okay to use if the caller knows a-priori
+ * that the pointer is suitably aligned (typically, because he just got it
+ * from palloc(), which always delivers a max-aligned pointer).
+ */
+#define MemSetAligned(start, val, len) \
+	do \
+	{ \
+		int32 * _start = (int32 *) (start); \
+		int		_val = (val); \
+		Size	_len = (len); \
+\
+		if ((_len & INT_ALIGN_MASK) == 0 && \
+			_val == 0 && \
+			_len <= MEMSET_LOOP_LIMIT) \
+		{ \
+			int32 * _stop = (int32 *) ((char *) _start + _len); \
+			while (_start < _stop) \
+				*_start++ = 0; \
+		} \
+		else \
+			memset((char *) _start, _val, _len); \
+	} while (0)
+
+
+/*
+ * MemSetTest/MemSetLoop are a variant version that allow all the tests in
+ * MemSet to be done at compile time in cases where "val" and "len" are
+ * constants *and* we know the "start" pointer must be word-aligned.
+ * If MemSetTest succeeds, then it is okay to use MemSetLoop, otherwise use
+ * MemSetAligned.  Beware of multiple evaluations of the arguments when using
+ * this approach.
  */
 #define MemSetTest(val, len) \
 	( ((len) & INT_ALIGN_MASK) == 0 && \
@@ -592,25 +643,14 @@ typedef NameData *Name;
 	(val) == 0 )
 
 #define MemSetLoop(start, val, len) \
-do \
-{ \
-	int32 * _start = (int32 *) (start); \
-	int32 * _stop = (int32 *) ((char *) _start + (len)); \
-\
-	while (_start < _stop) \
-		*_start++ = 0; \
-} while (0)
-
-#define MemSet(start, val, len) \
-do \
-{ \
-	if (MemSetTest(val, len) && ((long)(start) & INT_ALIGN_MASK) == 0 ) \
-		MemSetLoop(start, val, len); \
-	else \
-		memset((char *)(start), (val), (len)); \
-} while (0)
-
-#define MEMSET_LOOP_LIMIT  1024
+	do \
+	{ \
+		int32 * _start = (int32 *) (start); \
+		int32 * _stop = (int32 *) ((char *) _start + (Size) (len)); \
+	\
+		while (_start < _stop) \
+			*_start++ = 0; \
+	} while (0)
 
 
 /* ----------------------------------------------------------------

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.37 2002/12/15 21:01:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.38 2002/12/16 16:22:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,6 +258,35 @@ GetMemoryChunkSpace(void *pointer)
 }
 
 /*
+ * GetMemoryChunkContext
+ *		Given a currently-allocated chunk, determine the context
+ *		it belongs to.
+ */
+MemoryContext
+GetMemoryChunkContext(void *pointer)
+{
+	StandardChunkHeader *header;
+
+	/*
+	 * Try to detect bogus pointers handed to us, poorly though we can.
+	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at an
+	 * allocated chunk.
+	 */
+	Assert(pointer != NULL);
+	Assert(pointer == (void *) MAXALIGN(pointer));
+
+	/*
+	 * OK, it's probably safe to look at the chunk header.
+	 */
+	header = (StandardChunkHeader *)
+		((char *) pointer - STANDARDCHUNKHEADERSIZE);
+
+	AssertArg(MemoryContextIsValid(header->context));
+
+	return header->context;
+}
+
+/*
  * MemoryContextStats
  *		Print statistics about the named context and all its descendants.
  *
@@ -453,25 +482,52 @@ MemoryContextAlloc(MemoryContext context, Size size)
 }
 
 /*
- * MemoryContextAllocPalloc0
+ * MemoryContextAllocZero
  *		Like MemoryContextAlloc, but clears allocated memory
  *
  *	We could just call MemoryContextAlloc then clear the memory, but this
- *	function is called too many times, so we have a separate version.
+ *	is a very common combination, so we provide the combined operation.
  */
 void *
-MemoryContextAllocPalloc0(MemoryContext context, Size size)
+MemoryContextAllocZero(MemoryContext context, Size size)
 {
 	void *ret;
 
 	AssertArg(MemoryContextIsValid(context));
 
 	if (!AllocSizeIsValid(size))
-		elog(ERROR, "MemoryContextAllocZero: invalid request size %lu",
+		elog(ERROR, "MemoryContextAlloc: invalid request size %lu",
 			 (unsigned long) size);
 
 	ret = (*context->methods->alloc) (context, size);
+
+	MemSetAligned(ret, 0, size);
+
+	return ret;
+}
+
+/*
+ * MemoryContextAllocZeroAligned
+ *		MemoryContextAllocZero where length is suitable for MemSetLoop
+ *
+ *	This might seem overly specialized, but it's not because newNode()
+ *	is so often called with compile-time-constant sizes.
+ */
+void *
+MemoryContextAllocZeroAligned(MemoryContext context, Size size)
+{
+	void *ret;
+
+	AssertArg(MemoryContextIsValid(context));
+
+	if (!AllocSizeIsValid(size))
+		elog(ERROR, "MemoryContextAlloc: invalid request size %lu",
+			 (unsigned long) size);
+
+	ret = (*context->methods->alloc) (context, size);
+
 	MemSetLoop(ret, 0, size);
+
 	return ret;
 }
 

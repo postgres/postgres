@@ -21,7 +21,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: palloc.h,v 1.23 2002/11/13 00:37:06 momjian Exp $
+ * $Id: palloc.h,v 1.24 2002/12/16 16:22:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,15 +46,25 @@ extern DLLIMPORT MemoryContext CurrentMemoryContext;
  * Fundamental memory-allocation operations (more are in utils/memutils.h)
  */
 extern void *MemoryContextAlloc(MemoryContext context, Size size);
-extern void *MemoryContextAllocPalloc0(MemoryContext context, Size size);
+extern void *MemoryContextAllocZero(MemoryContext context, Size size);
+extern void *MemoryContextAllocZeroAligned(MemoryContext context, Size size);
 
 #define palloc(sz)	MemoryContextAlloc(CurrentMemoryContext, (sz))
 
-/* We assume palloc() is already int-aligned */
-#define palloc0(sz)	\
-	( MemSetTest(0, (sz)) ? \
-		MemoryContextAllocPalloc0(CurrentMemoryContext, (sz)) : \
-		memset(palloc(sz), 0, (sz)))
+#define palloc0(sz)	MemoryContextAllocZero(CurrentMemoryContext, (sz))
+
+/*
+ * The result of palloc() is always word-aligned, so we can skip testing
+ * alignment of the pointer when deciding which MemSet variant to use.
+ * Note that this variant does not offer any advantage, and should not be
+ * used, unless its "sz" argument is a compile-time constant; therefore, the
+ * issue that it evaluates the argument multiple times isn't a problem in
+ * practice.
+ */
+#define palloc0fast(sz)	\
+	( MemSetTest(0, sz) ? \
+		MemoryContextAllocZeroAligned(CurrentMemoryContext, sz) : \
+		MemoryContextAllocZero(CurrentMemoryContext, sz) )
 
 extern void pfree(void *pointer);
 

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.49 2002/12/15 21:01:34 tgl Exp $
+ * $Id: memutils.h,v 1.50 2002/12/16 16:22:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,6 +83,7 @@ extern void MemoryContextResetChildren(MemoryContext context);
 extern void MemoryContextDeleteChildren(MemoryContext context);
 extern void MemoryContextResetAndDeleteChildren(MemoryContext context);
 extern Size GetMemoryChunkSpace(void *pointer);
+extern MemoryContext GetMemoryChunkContext(void *pointer);
 extern void MemoryContextStats(MemoryContext context);
 
 #ifdef MEMORY_CONTEXT_CHECKING
