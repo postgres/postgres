@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jun 10 00:33:46 EDT 2004
+Last updated:		Thu Jun 10 07:56:22 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -147,7 +147,7 @@ Indexes
 * Add FILLFACTOR to btree index creation
 * Add concurrency to GIST
 * Allow a single index to index multiple tables (for inheritance and subtables)
-* Allow hash buckets to fill disk pages, rather than being sparse
+* Pack hash index buckets onto disk pages more efficiently
 
 
 Commands
