@@ -1531,6 +1531,19 @@ do
 			if (NR >= 1 && skips <= 2)
 				print line2;
 		}' |
+# remove trailing blank lines, helps with adding blank before trailing #endif
+	awk '	BEGIN	{blank_lines = 0;}
+		{
+			line1 = $0;
+	 		if (line1 ~ /^$/)
+				blank_lines++;
+			else
+			{
+				for (; blank_lines > 0; blank_lines--)
+					printf "\n";
+				print line1;
+			}
+		}' |
 # remove blank line before #endif
 	awk '	BEGIN	{line1 = ""; line2 = ""; skips = 0}
 		{
