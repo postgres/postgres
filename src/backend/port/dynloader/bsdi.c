@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <dld.h>
 #include "postgres.h"
-#include "port-protos.h"
+#include "dynloader.h"
 #include "utils/elog.h"
 #include "fmgr.h"
 

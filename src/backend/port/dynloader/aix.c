@@ -12,7 +12,7 @@
 #include <sys/ldr.h>
 #include <a.out.h>
 #include <ldfcn.h>
-#include "dlfcn.h"
+#include "dynloader.h"
 #include "c.h"
 
 /*
