@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.79 2002/08/12 00:36:11 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.80 2002/08/14 22:07:56 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -94,7 +94,7 @@ bool		SQL_inheritance = true;
 
 bool		Australian_timezones = false;
 
-bool		Password_encryption = false;
+bool		Password_encryption = true;
 
 #ifndef PG_KRB_SRVTAB
 #define PG_KRB_SRVTAB ""
