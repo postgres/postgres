@@ -8,22 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.30 2003/08/04 02:39:57 momjian Exp $
- *
- * NOTES
- *	  Because we can be doing an index scan on a relation while we
- *	  update it, we need to avoid missing data that moves around in
- *	  the index.  The routines and global variables in this file
- *	  guarantee that all scans in the local address space stay
- *	  correctly positioned.  This is all we need to worry about, since
- *	  write locking guarantees that no one else will be on the same
- *	  page at the same time as we are.
- *
- *	  The scheme is to manage a list of active scans in the current
- *	  backend.	Whenever we add or remove records from an index, we
- *	  check the list of active scans to see if any has been affected.
- *	  A scan is affected only if it is on the same relation, and the
- *	  same page, as the update.
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.31 2003/09/04 22:06:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,10 +27,6 @@ typedef struct HashScanListData
 typedef HashScanListData *HashScanList;
 
 static HashScanList HashScans = (HashScanList) NULL;
-
-
-static void _hash_scandel(IndexScanDesc scan,
-			  BlockNumber blkno, OffsetNumber offno);
 
 
 /*
@@ -67,9 +48,6 @@ AtEOXact_hash(void)
 	 * at end of transaction anyway.
 	 */
 	HashScans = NULL;
-
-	/* If we were building a hash, we ain't anymore. */
-	BuildingHash = false;
 }
 
 /*
@@ -112,70 +90,26 @@ _hash_dropscan(IndexScanDesc scan)
 	pfree(chk);
 }
 
-void
-_hash_adjscans(Relation rel, ItemPointer tid)
+/*
+ * Is there an active scan in this bucket?
+ */
+bool
+_hash_has_active_scan(Relation rel, Bucket bucket)
 {
+	Oid			relid = RelationGetRelid(rel);
 	HashScanList l;
-	Oid			relid;
 
-	relid = RelationGetRelid(rel);
-	for (l = HashScans; l != (HashScanList) NULL; l = l->hashsl_next)
+	for (l = HashScans; l != NULL; l = l->hashsl_next)
 	{
 		if (relid == l->hashsl_scan->indexRelation->rd_id)
-			_hash_scandel(l->hashsl_scan, ItemPointerGetBlockNumber(tid),
-						  ItemPointerGetOffsetNumber(tid));
-	}
-}
+		{
+			HashScanOpaque so = (HashScanOpaque) l->hashsl_scan->opaque;
 
-static void
-_hash_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
-{
-	ItemPointer current;
-	ItemPointer mark;
-	Buffer		buf;
-	Buffer		metabuf;
-	HashScanOpaque so;
-
-	so = (HashScanOpaque) scan->opaque;
-	current = &(scan->currentItemData);
-	mark = &(scan->currentMarkData);
-
-	if (ItemPointerIsValid(current)
-		&& ItemPointerGetBlockNumber(current) == blkno
-		&& ItemPointerGetOffsetNumber(current) >= offno)
-	{
-		metabuf = _hash_getbuf(scan->indexRelation, HASH_METAPAGE, HASH_READ);
-		buf = so->hashso_curbuf;
-		_hash_step(scan, &buf, BackwardScanDirection, metabuf);
+			if (so->hashso_bucket_valid &&
+				so->hashso_bucket == bucket)
+				return true;
+		}
 	}
 
-	if (ItemPointerIsValid(mark)
-		&& ItemPointerGetBlockNumber(mark) == blkno
-		&& ItemPointerGetOffsetNumber(mark) >= offno)
-	{
-		/*
-		 * The idea here is to exchange the current and mark positions,
-		 * then step backwards (affecting current), then exchange again.
-		 */
-		ItemPointerData tmpitem;
-		Buffer		tmpbuf;
-
-		tmpitem = *mark;
-		*mark = *current;
-		*current = tmpitem;
-		tmpbuf = so->hashso_mrkbuf;
-		so->hashso_mrkbuf = so->hashso_curbuf;
-		so->hashso_curbuf = tmpbuf;
-
-		metabuf = _hash_getbuf(scan->indexRelation, HASH_METAPAGE, HASH_READ);
-		buf = so->hashso_curbuf;
-		_hash_step(scan, &buf, BackwardScanDirection, metabuf);
-
-		tmpitem = *mark;
-		*mark = *current;
-		*current = tmpitem;
-		tmpbuf = so->hashso_mrkbuf;
-		so->hashso_mrkbuf = so->hashso_curbuf;
-		so->hashso_curbuf = tmpbuf;
-	}
+	return false;
 }

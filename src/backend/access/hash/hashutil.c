@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.35 2003/09/02 18:13:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.36 2003/09/04 22:06:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,46 +18,6 @@
 #include "access/hash.h"
 #include "access/iqual.h"
 
-
-/*
- * _hash_mkscankey -- build a scan key matching the given indextuple
- *
- * Note: this is prepared for multiple index columns, but very little
- * else in access/hash is ...
- */
-ScanKey
-_hash_mkscankey(Relation rel, IndexTuple itup)
-{
-	ScanKey		skey;
-	TupleDesc	itupdesc = RelationGetDescr(rel);
-	int			natts = rel->rd_rel->relnatts;
-	AttrNumber	i;
-	Datum		arg;
-	FmgrInfo   *procinfo;
-	bool		isnull;
-
-	skey = (ScanKey) palloc(natts * sizeof(ScanKeyData));
-
-	for (i = 0; i < natts; i++)
-	{
-		arg = index_getattr(itup, i + 1, itupdesc, &isnull);
-		procinfo = index_getprocinfo(rel, i + 1, HASHPROC);
-		ScanKeyEntryInitializeWithInfo(&skey[i],
-									   isnull ? SK_ISNULL : 0x0,
-									   (AttrNumber) (i + 1),
-									   procinfo,
-									   CurrentMemoryContext,
-									   arg);
-	}
-
-	return skey;
-}
-
-void
-_hash_freeskey(ScanKey skey)
-{
-	pfree(skey);
-}
 
 /*
  * _hash_checkqual -- does the index tuple satisfy the scan conditions?
@@ -102,24 +62,31 @@ _hash_formitem(IndexTuple itup)
 }
 
 /*
- * _hash_call -- given a Datum, call the index's hash procedure
- *
- * Returns the bucket number that the hash key maps to.
+ * _hash_datum2hashkey -- given a Datum, call the index's hash procedure
  */
-Bucket
-_hash_call(Relation rel, HashMetaPage metap, Datum key)
+uint32
+_hash_datum2hashkey(Relation rel, Datum key)
 {
 	FmgrInfo   *procinfo;
-	uint32		n;
-	Bucket		bucket;
 
 	/* XXX assumes index has only one attribute */
 	procinfo = index_getprocinfo(rel, 1, HASHPROC);
-	n = DatumGetUInt32(FunctionCall1(procinfo, key));
 
-	bucket = n & metap->hashm_highmask;
-	if (bucket > metap->hashm_maxbucket)
-		bucket = bucket & metap->hashm_lowmask;
+	return DatumGetUInt32(FunctionCall1(procinfo, key));
+}
+
+/*
+ * _hash_hashkey2bucket -- determine which bucket the hashkey maps to.
+ */
+Bucket
+_hash_hashkey2bucket(uint32 hashkey, uint32 maxbucket,
+					 uint32 highmask, uint32 lowmask)
+{
+	Bucket		bucket;
+
+	bucket = hashkey & highmask;
+	if (bucket > maxbucket)
+		bucket = bucket & lowmask;
 
 	return bucket;
 }

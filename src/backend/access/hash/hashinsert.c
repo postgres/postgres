@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.29 2003/09/02 18:13:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.30 2003/09/04 22:06:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,136 +16,124 @@
 #include "postgres.h"
 
 #include "access/hash.h"
+#include "storage/lmgr.h"
 
-static InsertIndexResult _hash_insertonpg(Relation rel, Buffer buf, int keysz, ScanKey scankey, HashItem hitem, Buffer metabuf);
-static OffsetNumber _hash_pgaddtup(Relation rel, Buffer buf, int keysz, ScanKey itup_scankey, Size itemsize, HashItem hitem);
+
+static OffsetNumber _hash_pgaddtup(Relation rel, Buffer buf,
+								   Size itemsize, HashItem hitem);
+
 
 /*
  *	_hash_doinsert() -- Handle insertion of a single HashItem in the table.
  *
  *		This routine is called by the public interface routines, hashbuild
- *		and hashinsert.  By here, hashitem is filled in, and has a unique
- *		(xid, seqno) pair. The datum to be used as a "key" is in the
- *		hashitem.
+ *		and hashinsert.  By here, hashitem is completely filled in.
+ *		The datum to be used as a "key" is in the hashitem.
  */
 InsertIndexResult
 _hash_doinsert(Relation rel, HashItem hitem)
 {
 	Buffer		buf;
 	Buffer		metabuf;
-	BlockNumber blkno;
 	HashMetaPage metap;
 	IndexTuple	itup;
+	BlockNumber itup_blkno;
+	OffsetNumber itup_off;
 	InsertIndexResult res;
-	ScanKey		itup_scankey;
-	int			natts;
+	BlockNumber blkno;
 	Page		page;
+	HashPageOpaque pageopaque;
+	Size		itemsz;
+	bool		do_expand;
+	uint32		hashkey;
+	Bucket		bucket;
+	Datum		datum;
+	bool		isnull;
 
+	/*
+	 * Compute the hash key for the item.  We do this first so as not to
+	 * need to hold any locks while running the hash function.
+	 */
+	itup = &(hitem->hash_itup);
+	if (rel->rd_rel->relnatts != 1)
+		elog(ERROR, "hash indexes support only one index key");
+	datum = index_getattr(itup, 1, RelationGetDescr(rel), &isnull);
+	Assert(!isnull);
+	hashkey = _hash_datum2hashkey(rel, datum);
+
+	/* compute item size too */
+	itemsz = IndexTupleDSize(hitem->hash_itup)
+		+ (sizeof(HashItemData) - sizeof(IndexTupleData));
+
+	itemsz = MAXALIGN(itemsz);	/* be safe, PageAddItem will do this but
+								 * we need to be consistent */
+
+	/*
+	 * Acquire shared split lock so we can compute the target bucket
+	 * safely (see README).
+	 */
+	_hash_getlock(rel, 0, HASH_SHARE);
+
+	/* Read the metapage */
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ);
 	metap = (HashMetaPage) BufferGetPage(metabuf);
 	_hash_checkpage(rel, (Page) metap, LH_META_PAGE);
 
-	/* we need a scan key to do our search, so build one */
-	itup = &(hitem->hash_itup);
-	if ((natts = rel->rd_rel->relnatts) != 1)
-		elog(ERROR, "Hash indexes support only one index key");
-	itup_scankey = _hash_mkscankey(rel, itup);
+	/*
+	 * Check whether the item can fit on a hash page at all. (Eventually,
+	 * we ought to try to apply TOAST methods if not.)  Note that at this
+	 * point, itemsz doesn't include the ItemId.
+	 */
+	if (itemsz > HashMaxItemSize((Page) metap))
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("index tuple size %lu exceeds hash maximum, %lu",
+						(unsigned long) itemsz,
+						(unsigned long) HashMaxItemSize((Page) metap))));
 
 	/*
-	 * find the first page in the bucket chain containing this key and
-	 * place it in buf.  _hash_search obtains a read lock for us.
+	 * Compute the target bucket number, and convert to block number.
 	 */
-	_hash_search(rel, natts, itup_scankey, &buf, metap);
+	bucket = _hash_hashkey2bucket(hashkey,
+								  metap->hashm_maxbucket,
+								  metap->hashm_highmask,
+								  metap->hashm_lowmask);
+
+	blkno = BUCKET_TO_BLKNO(metap, bucket);
+
+	/* release lock on metapage, but keep pin since we'll need it again */
+	_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_NOLOCK);
+
+	/*
+	 * Acquire share lock on target bucket; then we can release split lock.
+	 */
+	_hash_getlock(rel, blkno, HASH_SHARE);
+
+	_hash_droplock(rel, 0, HASH_SHARE);
+
+	/* Fetch the primary bucket page for the bucket */
+	buf = _hash_getbuf(rel, blkno, HASH_WRITE);
 	page = BufferGetPage(buf);
 	_hash_checkpage(rel, page, LH_BUCKET_PAGE);
-
-	/*
-	 * trade in our read lock for a write lock so that we can do the
-	 * insertion.
-	 */
-	blkno = BufferGetBlockNumber(buf);
-	_hash_relbuf(rel, buf, HASH_READ);
-	buf = _hash_getbuf(rel, blkno, HASH_WRITE);
-
-
-	/*
-	 * XXX btree comment (haven't decided what to do in hash): don't think
-	 * the bucket can be split while we're reading the metapage.
-	 *
-	 * If the page was split between the time that we surrendered our read
-	 * lock and acquired our write lock, then this page may no longer be
-	 * the right place for the key we want to insert.
-	 */
-
-	/* do the insertion */
-	res = _hash_insertonpg(rel, buf, natts, itup_scankey,
-						   hitem, metabuf);
-
-	/* be tidy */
-	_hash_freeskey(itup_scankey);
-
-	return res;
-}
-
-/*
- *	_hash_insertonpg() -- Insert a tuple on a particular page in the table.
- *
- *		This recursive procedure does the following things:
- *
- *			+  if necessary, splits the target page.
- *			+  inserts the tuple.
- *
- *		On entry, we must have the right buffer on which to do the
- *		insertion, and the buffer must be pinned and locked.  On return,
- *		we will have dropped both the pin and the write lock on the buffer.
- *
- */
-static InsertIndexResult
-_hash_insertonpg(Relation rel,
-				 Buffer buf,
-				 int keysz,
-				 ScanKey scankey,
-				 HashItem hitem,
-				 Buffer metabuf)
-{
-	InsertIndexResult res;
-	Page		page;
-	BlockNumber itup_blkno;
-	OffsetNumber itup_off;
-	Size		itemsz;
-	HashPageOpaque pageopaque;
-	bool		do_expand = false;
-	Buffer		ovflbuf;
-	HashMetaPage metap;
-	Bucket		bucket;
-
-	metap = (HashMetaPage) BufferGetPage(metabuf);
-	_hash_checkpage(rel, (Page) metap, LH_META_PAGE);
-
-	page = BufferGetPage(buf);
-	_hash_checkpage(rel, page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 	pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
-	bucket = pageopaque->hasho_bucket;
+	Assert(pageopaque->hasho_bucket == bucket);
 
-	itemsz = IndexTupleDSize(hitem->hash_itup)
-		+ (sizeof(HashItemData) - sizeof(IndexTupleData));
-	itemsz = MAXALIGN(itemsz);
-
+	/* Do the insertion */
 	while (PageGetFreeSpace(page) < itemsz)
 	{
 		/*
 		 * no space on this page; check for an overflow page
 		 */
-		if (BlockNumberIsValid(pageopaque->hasho_nextblkno))
+		BlockNumber	nextblkno = pageopaque->hasho_nextblkno;
+
+		if (BlockNumberIsValid(nextblkno))
 		{
 			/*
 			 * ovfl page exists; go get it.  if it doesn't have room,
 			 * we'll find out next pass through the loop test above.
 			 */
-			ovflbuf = _hash_getbuf(rel, pageopaque->hasho_nextblkno,
-								   HASH_WRITE);
-			_hash_relbuf(rel, buf, HASH_WRITE);
-			buf = ovflbuf;
+			_hash_relbuf(rel, buf);
+			buf = _hash_getbuf(rel, nextblkno, HASH_WRITE);
 			page = BufferGetPage(buf);
 		}
 		else
@@ -154,65 +142,72 @@ _hash_insertonpg(Relation rel,
 			 * we're at the end of the bucket chain and we haven't found a
 			 * page with enough room.  allocate a new overflow page.
 			 */
-			do_expand = true;
-			ovflbuf = _hash_addovflpage(rel, metabuf, buf);
-			_hash_relbuf(rel, buf, HASH_WRITE);
-			buf = ovflbuf;
+
+			/* release our write lock without modifying buffer */
+			_hash_chgbufaccess(rel, buf, HASH_READ, HASH_NOLOCK);
+
+			/* chain to a new overflow page */
+			buf = _hash_addovflpage(rel, metabuf, buf);
 			page = BufferGetPage(buf);
 
-			if (PageGetFreeSpace(page) < itemsz)
-			{
-				/* it doesn't fit on an empty page -- give up */
-				elog(ERROR, "hash item too large");
-			}
+			/* should fit now, given test above */
+			Assert(PageGetFreeSpace(page) >= itemsz);
 		}
 		_hash_checkpage(rel, page, LH_OVERFLOW_PAGE);
 		pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
 		Assert(pageopaque->hasho_bucket == bucket);
 	}
 
-	itup_off = _hash_pgaddtup(rel, buf, keysz, scankey, itemsz, hitem);
+	/* found page with enough space, so add the item here */
+	itup_off = _hash_pgaddtup(rel, buf, itemsz, hitem);
 	itup_blkno = BufferGetBlockNumber(buf);
 
-	/* by here, the new tuple is inserted */
+	/* write and release the modified page */
+	_hash_wrtbuf(rel, buf);
+
+	/* We can drop the bucket lock now */
+	_hash_droplock(rel, blkno, HASH_SHARE);
+
+	/*
+	 * Write-lock the metapage so we can increment the tuple count.
+	 * After incrementing it, check to see if it's time for a split.
+	 */
+	_hash_chgbufaccess(rel, metabuf, HASH_NOLOCK, HASH_WRITE);
+
+	metap->hashm_ntuples += 1;
+
+	/* Make sure this stays in sync with _hash_expandtable() */
+	do_expand = metap->hashm_ntuples >
+		(double) metap->hashm_ffactor * (metap->hashm_maxbucket + 1);
+
+	/* Write out the metapage and drop lock, but keep pin */
+	_hash_chgbufaccess(rel, metabuf, HASH_WRITE, HASH_NOLOCK);
+
+	/* Attempt to split if a split is needed */
+	if (do_expand)
+		_hash_expandtable(rel, metabuf);
+
+	/* Finally drop our pin on the metapage */
+	_hash_dropbuf(rel, metabuf);
+
+	/* Create the return data structure */
 	res = (InsertIndexResult) palloc(sizeof(InsertIndexResultData));
 
 	ItemPointerSet(&(res->pointerData), itup_blkno, itup_off);
 
-	if (res != NULL)
-	{
-		/*
-		 * Increment the number of keys in the table. We switch lock
-		 * access type just for a moment to allow greater accessibility to
-		 * the metapage.
-		 */
-		_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_WRITE);
-		metap->hashm_ntuples += 1;
-		_hash_chgbufaccess(rel, metabuf, HASH_WRITE, HASH_READ);
-	}
-
-	_hash_wrtbuf(rel, buf);
-
-	if (do_expand ||
-		(metap->hashm_ntuples / (metap->hashm_maxbucket + 1))
-		> (double) metap->hashm_ffactor)
-		_hash_expandtable(rel, metabuf);
-	_hash_relbuf(rel, metabuf, HASH_READ);
 	return res;
 }
 
 /*
  *	_hash_pgaddtup() -- add a tuple to a particular page in the index.
  *
- *		This routine adds the tuple to the page as requested, and keeps the
- *		write lock and reference associated with the page's buffer.  It is
- *		an error to call pgaddtup() without a write lock and reference.
+ *		This routine adds the tuple to the page as requested; it does
+ *		not write out the page.  It is an error to call pgaddtup() without
+ *		a write lock and pin.
  */
 static OffsetNumber
 _hash_pgaddtup(Relation rel,
 			   Buffer buf,
-			   int keysz,
-			   ScanKey itup_scankey,
 			   Size itemsize,
 			   HashItem hitem)
 {
@@ -227,9 +222,6 @@ _hash_pgaddtup(Relation rel,
 		== InvalidOffsetNumber)
 		elog(ERROR, "failed to add index item to \"%s\"",
 			 RelationGetRelationName(rel));
-
-	/* write the buffer, but hold our lock */
-	_hash_wrtnorelbuf(buf);
 
 	return itup_off;
 }

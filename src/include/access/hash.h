@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.52 2003/09/02 18:13:32 tgl Exp $
+ * $Id: hash.h,v 1.53 2003/09/04 22:06:27 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -70,13 +70,27 @@ typedef HashPageOpaqueData *HashPageOpaque;
 #define HASHO_FILL		0x1234
 
 /*
- *	ScanOpaqueData is used to remember which buffers we're currently
- *	examining in the scan.	We keep these buffers locked and pinned and
- *	recorded in the opaque entry of the scan in order to avoid doing a
- *	ReadBuffer() for every tuple in the index.
+ *	HashScanOpaqueData is private state for a hash index scan.
  */
 typedef struct HashScanOpaqueData
 {
+	/*
+	 * By definition, a hash scan should be examining only one bucket.
+	 * We record the bucket number here as soon as it is known.
+	 */
+	Bucket		hashso_bucket;
+	bool		hashso_bucket_valid;
+	/*
+	 * If we have a share lock on the bucket, we record it here.  When
+	 * hashso_bucket_blkno is zero, we have no such lock.
+	 */
+	BlockNumber	hashso_bucket_blkno;
+	/*
+	 * We also want to remember which buffers we're currently examining in the
+	 * scan. We keep these buffers pinned (but not locked) across hashgettuple
+	 * calls, in order to avoid doing a ReadBuffer() for every tuple in the
+	 * index.
+	 */
 	Buffer		hashso_curbuf;
 	Buffer		hashso_mrkbuf;
 } HashScanOpaqueData;
@@ -149,9 +163,17 @@ typedef struct HashItemData
 typedef HashItemData *HashItem;
 
 /*
+ * Maximum size of a hash index item (it's okay to have only one per page)
+ */
+#define HashMaxItemSize(page) \
+	(PageGetPageSize(page) - \
+	 sizeof(PageHeaderData) - \
+	 MAXALIGN(sizeof(HashPageOpaqueData)) - \
+	 sizeof(ItemIdData))
+
+/*
  * Constants
  */
-#define DEFAULT_FFACTOR			300
 #define BYTE_TO_BIT				3		/* 2^3 bits/byte */
 #define ALL_SET					((uint32) ~0)
 
@@ -180,10 +202,14 @@ typedef HashItemData *HashItem;
 #define ISSET(A, N)		((A)[(N)/BITS_PER_MAP] & (1<<((N)%BITS_PER_MAP)))
 
 /*
- * page locking modes
+ * page-level and high-level locking modes (see README)
  */
-#define HASH_READ		0
-#define HASH_WRITE		1
+#define HASH_READ		BUFFER_LOCK_SHARE
+#define HASH_WRITE		BUFFER_LOCK_EXCLUSIVE
+#define HASH_NOLOCK		(-1)
+
+#define HASH_SHARE		ShareLock
+#define HASH_EXCLUSIVE	ExclusiveLock
 
 /*
  *	Strategy number. There's only one valid strategy for hashing: equality.
@@ -198,8 +224,6 @@ typedef HashItemData *HashItem;
  */
 #define HASHPROC		1
 
-
-extern bool BuildingHash;
 
 /* public routines */
 
@@ -250,36 +274,37 @@ extern void _hash_squeezebucket(Relation rel,
 								Bucket bucket, BlockNumber bucket_blkno);
 
 /* hashpage.c */
-extern void _hash_metapinit(Relation rel);
+extern void _hash_getlock(Relation rel, BlockNumber whichlock, int access);
+extern bool _hash_try_getlock(Relation rel, BlockNumber whichlock, int access);
+extern void _hash_droplock(Relation rel, BlockNumber whichlock, int access);
 extern Buffer _hash_getbuf(Relation rel, BlockNumber blkno, int access);
-extern void _hash_relbuf(Relation rel, Buffer buf, int access);
+extern void _hash_relbuf(Relation rel, Buffer buf);
+extern void _hash_dropbuf(Relation rel, Buffer buf);
 extern void _hash_wrtbuf(Relation rel, Buffer buf);
-extern void _hash_wrtnorelbuf(Buffer buf);
+extern void _hash_wrtnorelbuf(Relation rel, Buffer buf);
 extern void _hash_chgbufaccess(Relation rel, Buffer buf, int from_access,
 				   int to_access);
+extern void _hash_metapinit(Relation rel);
 extern void _hash_pageinit(Page page, Size size);
 extern void _hash_expandtable(Relation rel, Buffer metabuf);
 
 /* hashscan.c */
 extern void _hash_regscan(IndexScanDesc scan);
 extern void _hash_dropscan(IndexScanDesc scan);
-extern void _hash_adjscans(Relation rel, ItemPointer tid);
+extern bool _hash_has_active_scan(Relation rel, Bucket bucket);
 extern void AtEOXact_hash(void);
 
 /* hashsearch.c */
-extern void _hash_search(Relation rel, int keysz, ScanKey scankey,
-			 Buffer *bufP, HashMetaPage metap);
 extern bool _hash_next(IndexScanDesc scan, ScanDirection dir);
 extern bool _hash_first(IndexScanDesc scan, ScanDirection dir);
-extern bool _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir,
-		   Buffer metabuf);
+extern bool _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir);
 
 /* hashutil.c */
-extern ScanKey _hash_mkscankey(Relation rel, IndexTuple itup);
-extern void _hash_freeskey(ScanKey skey);
 extern bool _hash_checkqual(IndexScanDesc scan, IndexTuple itup);
 extern HashItem _hash_formitem(IndexTuple itup);
-extern Bucket _hash_call(Relation rel, HashMetaPage metap, Datum key);
+extern uint32 _hash_datum2hashkey(Relation rel, Datum key);
+extern Bucket _hash_hashkey2bucket(uint32 hashkey, uint32 maxbucket,
+								   uint32 highmask, uint32 lowmask);
 extern uint32 _hash_log2(uint32 num);
 extern void _hash_checkpage(Relation rel, Page page, int flags);
 
