@@ -388,7 +388,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	 */
 	public Time getTime(int columnIndex) throws SQLException
 	{
-		return toTime( getString(columnIndex) );
+		return toTime( getString(columnIndex), this, fields[columnIndex-1].getPGType() );
 	}
 
 	/*
@@ -1626,15 +1626,32 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 		}
 	}
 
-	public static Time toTime(String s) throws SQLException
+	public static Time toTime(String s, ResultSet resultSet, String pgDataType) throws SQLException
 	{
 		if (s == null)
 			return null; // SQL NULL
-		// length == 8: SQL Time
-		// length >  8: SQL Timestamp
 		try
 		{
-			return java.sql.Time.valueOf((s.length() == 8) ? s : s.substring(11, 19));
+                   if (s.length() == 8) {
+                     //value is a time value
+                     return java.sql.Time.valueOf(s);
+                   } else if (s.indexOf(".") == 8) {
+                     //value is a time value with fractional seconds
+                     java.sql.Time l_time = java.sql.Time.valueOf(s.substring(0,8));
+                     String l_strMillis = s.substring(9);
+                     if (l_strMillis.length() > 3)
+                       l_strMillis = l_strMillis.substring(0,3);
+                     int l_millis = Integer.parseInt(l_strMillis);
+                     if (l_millis < 10) {
+                       l_millis = l_millis * 100;
+                     } else if (l_millis < 100) {
+                       l_millis = l_millis * 10;
+                     }
+                     return new java.sql.Time(l_time.getTime() + l_millis);
+                   } else {
+                     //value is a timestamp
+                     return new java.sql.Time(toTimestamp(s, resultSet, pgDataType).getTime());
+                   }
 		}
 		catch (NumberFormatException e)
 		{

@@ -108,7 +108,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	{
  	    if (rows == null)
  		throw new PSQLException("postgresql.con.closed");
- 
+
 		if (++current_row >= rows.size())
 			return false;
 		this_row = (byte [][])rows.elementAt(current_row);
@@ -468,30 +468,42 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	{
 		String s = getString(columnIndex);
 
-		if (s != null)
+		if (s == null)
+			return null; // SQL NULL
+		try
 		{
-			try
-			{
-				if (s.length() != 5 && s.length() != 8)
-					throw new NumberFormatException("Wrong Length!");
-				int hr = Integer.parseInt(s.substring(0, 2));
-				int min = Integer.parseInt(s.substring(3, 5));
-				int sec = (s.length() == 5) ? 0 : Integer.parseInt(s.substring(6));
-				return new Time(hr, min, sec);
-			}
-			catch (NumberFormatException e)
-			{
-				throw new PSQLException ("postgresql.res.badtime", s);
-			}
+                   if (s.length() == 8) {
+                     //value is a time value
+                     return java.sql.Time.valueOf(s);
+                   } else if (s.indexOf(".") == 8) {
+                     //value is a time value with fractional seconds
+                     java.sql.Time l_time = java.sql.Time.valueOf(s.substring(0,8));
+                     String l_strMillis = s.substring(9);
+                     if (l_strMillis.length() > 3)
+                       l_strMillis = l_strMillis.substring(0,3);
+                     int l_millis = Integer.parseInt(l_strMillis);
+                     if (l_millis < 10) {
+                       l_millis = l_millis * 100;
+                     } else if (l_millis < 100) {
+                       l_millis = l_millis * 10;
+                     }
+                     return new java.sql.Time(l_time.getTime() + l_millis);
+                   } else {
+                     //value is a timestamp
+                     return new java.sql.Time(getTimestamp(columnIndex).getTime());
+                   }
 		}
-		return null;		// SQL NULL
+		catch (NumberFormatException e)
+		{
+			throw new PSQLException("postgresql.res.badtime", s);
+		}
 	}
 
 	/*
 	 * Get the value of a column in the current row as a
 	 * java.sql.Timestamp object
 	 *
-	 * The driver is set to return ISO date formated strings. We modify this 
+	 * The driver is set to return ISO date formated strings. We modify this
     * string from the ISO format to a format that Java can understand. Java
     * expects timezone info as 'GMT+09:00' where as ISO gives '+09'.
     * Java also expects fractional seconds to 3 places where postgres
@@ -577,7 +589,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 		}
 		else if (slen == 19)
 		{
-			// No tz or fractional second info. 
+			// No tz or fractional second info.
 			// if type is timestamptz then data is in GMT, else it is in local timezone
 		    if (fields[columnIndex - 1].getPGType().equals("timestamptz")) {
 			sbuf.append(" GMT");

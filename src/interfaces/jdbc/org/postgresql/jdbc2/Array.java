@@ -74,12 +74,12 @@ public class Array implements java.sql.Array
 		Object retVal = null;
 
 		ArrayList array = new ArrayList();
- 		
+
 		/* Check if the String is also not an empty array
                  * otherwise there will be an exception thrown below
                  * in the ResultSet.toX with an empty string.
                  * -- Doug Fields <dfields-pg-jdbc@pexicom.com> Feb 20, 2002 */
-                
+
 		if ( rawString != null && !rawString.equals("{}") )
 		{
 			char[] chars = rawString.toCharArray();
@@ -166,7 +166,7 @@ public class Array implements java.sql.Array
 			case Types.TIME:
 				retVal = new java.sql.Time[ count ];
 				for ( ; count > 0; count-- )
-					((java.sql.Time[])retVal)[i++] = ResultSet.toTime( arrayContents[(int)index++] );
+					((java.sql.Time[])retVal)[i++] = ResultSet.toTime( arrayContents[(int)index++], rs, getBaseTypeName() );
 				break;
 			case Types.TIMESTAMP:
 				retVal = new Timestamp[ count ];
