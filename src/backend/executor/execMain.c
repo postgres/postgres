@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.197 2003/01/10 22:03:27 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.198 2003/01/12 18:19:37 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -419,7 +419,7 @@ ExecCheckXactReadOnly(Query *parsetree, CmdType operation)
 			if (!rte->checkForWrite)
 				continue;
 
-			if (isTempNamespace(RelidGetNamespaceId(rte->relid)))
+			if (isTempNamespace(get_rel_namespace(rte->relid)))
 				continue;
 
 			goto fail;

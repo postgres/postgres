@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.44 2003/01/10 22:03:27 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.45 2003/01/12 18:19:37 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,29 +276,6 @@ RelnameGetRelid(const char *relname)
 
 	/* Not found in path */
 	return InvalidOid;
-}
-
-/*
- * RelidGetNamespaceId
- *		Given a relation OID, return the namespace OID.
- */
-Oid
-RelidGetNamespaceId(Oid relid)
-{
-	HeapTuple	tuple;
-	Form_pg_class pg_class_form;
-	Oid			result;
-
-	tuple = SearchSysCache(RELOID,
-						   ObjectIdGetDatum(relid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup failed for relation %u", relid);
-	pg_class_form = (Form_pg_class) GETSTRUCT(tuple);
-
-	result = pg_class_form->relnamespace;
-	ReleaseSysCache(tuple);
-	return result;
 }
 
 
