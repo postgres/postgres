@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.318 2005/01/06 18:29:07 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.319 2005/01/15 05:59:44 momjian Exp $
 -->
 
 <appendix id="release">
@@ -10,7 +10,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.318 2005/01/06 18:29:07 tgl Exp
 
   <note>
    <title>Release date</title>
-   <simpara>2005-??-??, current as of 2004-11-21</simpara>
+   <simpara>2005-01-19</simpara>
   </note>
 
   <sect2>
@@ -643,6 +643,19 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.318 2005/01/06 18:29:07 tgl Exp
      <para>
       This buys back some of the performance loss observed in 7.4, while still
       keeping <command>TRUNCATE</command> transaction-safe.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve optimizer row estimates for non-<command>VACUUM</command>ed
+      tables (Tom)
+     </para>
+     <para>
+      The system now uses the number of blocks in the table to estimate the 
+      number of rows in the table if it has never been 
+      <command>VACUUM</command>ed or <command>ANALYZE</command>d.  
+      Previously a fixed value was used in such cases.
      </para>
     </listitem>
 
@@ -1726,6 +1739,15 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.318 2005/01/06 18:29:07 tgl Exp
       occurs, the subtransaction is cleaned up and the error is reported
       as an ordinary Tcl error, which can be trapped with <literal>catch</>.
       Formerly, it was not possible to catch such errors.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow PL/pgSQL to understand <command>ELSEIF</> (Neil)
+     </para>
+     <para>
+      Previously PL/pgSQL only understood <command>ELSIF</>.
      </para>
     </listitem>
 
