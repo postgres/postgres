@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.8 2001/10/06 23:21:45 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.9 2001/10/22 19:32:27 tgl Exp $
  *
  *********************************************************************
  */
@@ -73,9 +73,8 @@ typedef PyObject *(*PLyDatumToObFunc) (const char *);
 typedef struct PLyDatumToOb {
   PLyDatumToObFunc func;
   FmgrInfo typfunc;
-  Oid typoutput;
   Oid typelem;
-  int2 typlen;
+  bool typbyval;
 } PLyDatumToOb;
 
 typedef struct PLyTupleToOb {
@@ -94,7 +93,7 @@ typedef union PLyTypeInput {
 typedef struct PLyObToDatum {
   FmgrInfo typfunc;
   Oid typelem;
-  int2 typlen;
+  bool typbyval;
 } PLyObToDatum;
 
 typedef struct PLyObToTuple {
@@ -121,6 +120,8 @@ typedef struct PLyTypeInfo {
  */
 typedef struct PLyProcedure {
   char *proname;
+  TransactionId fn_xmin;
+  CommandId fn_cmin;
   PLyTypeInfo result; /* also used to store info for trigger tuple type */
   PLyTypeInfo args[FUNC_MAX_ARGS];
   int nargs;
@@ -192,11 +193,11 @@ static void PLy_free(void *);
 
 /* sub handlers for functions and triggers
  */
-static Datum PLy_function_handler(PG_FUNCTION_ARGS, PLyProcedure *);
-static HeapTuple PLy_trigger_handler(PG_FUNCTION_ARGS, PLyProcedure *);
+static Datum PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure *);
+static HeapTuple PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure *);
 
-static PyObject *PLy_function_build_args(PG_FUNCTION_ARGS, PLyProcedure *);
-static PyObject *PLy_trigger_build_args(PG_FUNCTION_ARGS, PLyProcedure *,
+static PyObject *PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure *);
+static PyObject *PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure *,
 					HeapTuple *);
 static HeapTuple PLy_modify_tuple(PLyProcedure *, PyObject *,
 				  TriggerData *, HeapTuple);
@@ -206,12 +207,14 @@ static PyObject *PLy_procedure_call(PLyProcedure *, char *, PyObject *);
 /* returns a cached PLyProcedure, or creates, stores and returns
  * a new PLyProcedure.
  */
-static PLyProcedure *PLy_procedure_get(PG_FUNCTION_ARGS, bool);
+static PLyProcedure *PLy_procedure_get(FunctionCallInfo fcinfo, bool);
 
-static PLyProcedure *PLy_procedure_create(PG_FUNCTION_ARGS, bool, char *);
+static PLyProcedure *PLy_procedure_create(FunctionCallInfo fcinfo,
+										  bool is_trigger,
+										  HeapTuple procTup, char *key);
+
 static void PLy_procedure_compile(PLyProcedure *, const char *);
 static char *PLy_procedure_munge_source(const char *, const char *);
-static PLyProcedure *PLy_procedure_new(const char *name);
 static void PLy_procedure_delete(PLyProcedure *);
 
 static void PLy_typeinfo_init(PLyTypeInfo *);
@@ -249,7 +252,6 @@ static PyObject *PLy_interp_safe = NULL;
 static PyObject *PLy_interp_safe_globals = NULL;
 static PyObject *PLy_importable_modules = NULL;
 static PyObject *PLy_procedure_cache = NULL;
-static char *PLy_procedure_fmt = "__plpython_procedure_%s_%u";
 
 char *PLy_importable_modules_list[] = {
   "array",
@@ -387,12 +389,12 @@ plpython_call_handler(PG_FUNCTION_ARGS)
  * to take no arguments and return an argument of type opaque.
  */
 HeapTuple
-PLy_trigger_handler(PG_FUNCTION_ARGS, PLyProcedure *proc)
+PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure *proc)
 {
   DECLARE_EXC();
   HeapTuple rv = NULL;
-  PyObject *plargs = NULL;
-  PyObject *plrv = NULL;
+  PyObject * volatile plargs = NULL;
+  PyObject * volatile plrv = NULL;
 
   enter();
 
@@ -468,12 +470,16 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 		 HeapTuple otup)
 {
   DECLARE_EXC();
-  PyObject *plntup, *plkeys, *platt, *plval, *plstr;
+  PyObject * volatile plntup;
+  PyObject * volatile plkeys;
+  PyObject * volatile platt;
+  PyObject * volatile plval;
+  PyObject * volatile plstr;
   HeapTuple rtup;
   int natts, i, j, attn, atti;
-  int *modattrs;
-  Datum *modvalues;
-  char *modnulls;
+  int * volatile modattrs;
+  Datum * volatile modvalues;
+  char *volatile modnulls;
   TupleDesc tupdesc;
 
   plntup = plkeys = platt = plval = plstr = NULL;
@@ -556,8 +562,8 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 
 	  modvalues[j] = FunctionCall3(&proc->result.out.r.atts[atti].typfunc,
 				       CStringGetDatum(src),
-				       proc->result.out.r.atts[atti].typelem,
-				       proc->result.out.r.atts[atti].typlen);
+				       ObjectIdGetDatum(proc->result.out.r.atts[atti].typelem),
+								   Int32GetDatum(tupdesc->attrs[j]->atttypmod));
 	  modnulls[j] = ' ';
 	  
 	  Py_DECREF(plstr);
@@ -588,13 +594,13 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 }
 
 PyObject *
-PLy_trigger_build_args(PG_FUNCTION_ARGS, PLyProcedure *proc, HeapTuple *rv)
+PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc, HeapTuple *rv)
 {
   DECLARE_EXC();
   TriggerData *tdata;
   PyObject *pltname, *pltevent, *pltwhen, *pltlevel, *pltrelid;
   PyObject *pltargs, *pytnew, *pytold;
-  PyObject *pltdata = NULL;  
+  PyObject * volatile pltdata = NULL;  
   char *stroid;
 
   enter();
@@ -723,13 +729,13 @@ PLy_trigger_build_args(PG_FUNCTION_ARGS, PLyProcedure *proc, HeapTuple *rv)
 /* function handler and friends
  */
 Datum
-PLy_function_handler(PG_FUNCTION_ARGS, PLyProcedure *proc)
+PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure *proc)
 {
   DECLARE_EXC();
   Datum rv;
-  PyObject *plargs = NULL;
-  PyObject *plrv = NULL;
-  PyObject *plrv_so = NULL;
+  PyObject * volatile plargs = NULL;
+  PyObject * volatile plrv = NULL;
+  PyObject * volatile plrv_so = NULL;
   char *plrv_sc;
 
   enter();
@@ -792,9 +798,9 @@ PLy_function_handler(PG_FUNCTION_ARGS, PLyProcedure *proc)
       plrv_so = PyObject_Str(plrv);
       plrv_sc = PyString_AsString(plrv_so);
       rv = FunctionCall3(&proc->result.out.d.typfunc,
-			 PointerGetDatum(plrv_sc),
-			 proc->result.out.d.typelem,
-			 proc->result.out.d.typlen);
+						 PointerGetDatum(plrv_sc),
+						 ObjectIdGetDatum(proc->result.out.d.typelem),
+						 Int32GetDatum(-1));
     }
 
   RESTORE_EXC();
@@ -828,11 +834,11 @@ PLy_procedure_call(PLyProcedure *proc, char *kargs, PyObject *vargs)
 }
 
 PyObject *
-PLy_function_build_args(PG_FUNCTION_ARGS, PLyProcedure *proc)
+PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc)
 {
   DECLARE_EXC();
-  PyObject *arg = NULL;
-  PyObject *args = NULL;
+  PyObject * volatile arg = NULL;
+  PyObject * volatile args = NULL;
   int i;
 
   enter();
@@ -868,9 +874,9 @@ PLy_function_build_args(PG_FUNCTION_ARGS, PLyProcedure *proc)
 	      Datum dt;
 
 	      dt = FunctionCall3(&(proc->args[i].in.d.typfunc),
-				 fcinfo->arg[i],
-				 proc->args[i].in.d.typelem,
-				 proc->args[i].in.d.typlen);
+							 fcinfo->arg[i],
+							 ObjectIdGetDatum(proc->args[i].in.d.typelem),
+							 Int32GetDatum(-1));
 	      ct = DatumGetCString(dt);
 	      arg = (proc->args[i].in.d.func)(ct);
 	      pfree(ct);
@@ -898,45 +904,68 @@ PLy_function_build_args(PG_FUNCTION_ARGS, PLyProcedure *proc)
 
 /* PLyProcedure functions
  */
-PLyProcedure *
-PLy_procedure_get(PG_FUNCTION_ARGS, bool is_trigger)
+static PLyProcedure *
+PLy_procedure_get(FunctionCallInfo fcinfo, bool is_trigger)
 {
+  Oid fn_oid;
+  HeapTuple procTup;
   char key[128];
   PyObject *plproc;
-  PLyProcedure *proc;
+  PLyProcedure *proc = NULL;
   int rv;
 
   enter();
 
-  rv = snprintf(key, sizeof(key), "%u", fcinfo->flinfo->fn_oid);
+  fn_oid = fcinfo->flinfo->fn_oid;
+  procTup = SearchSysCache(PROCOID,
+						   ObjectIdGetDatum(fn_oid),
+						   0, 0, 0);
+  if (!HeapTupleIsValid(procTup))
+	  elog(ERROR, "plpython: cache lookup for procedure %u failed", fn_oid);
+
+  rv = snprintf(key, sizeof(key), "%u%s",
+				fn_oid,
+				is_trigger ? "_trigger" : "");
   if ((rv >= sizeof(key)) || (rv < 0))
     elog(FATAL, "plpython: Buffer overrun in %s:%d", __FILE__, __LINE__);
   
   plproc = PyDict_GetItemString(PLy_procedure_cache, key);
-  if (plproc == NULL)
-    return PLy_procedure_create(fcinfo, is_trigger, key);
 
-  Py_INCREF(plproc);
-  if (!PyCObject_Check(plproc))
-    elog(FATAL, "plpython: Expected a PyCObject, didn't get one");
+  if (plproc != NULL)
+  {
+	  Py_INCREF(plproc);
+	  if (!PyCObject_Check(plproc))
+		  elog(FATAL, "plpython: Expected a PyCObject, didn't get one");
 
-  mark();
+	  mark();
 
-  proc = PyCObject_AsVoidPtr(plproc);
-  if (proc->me != plproc)
-    elog(FATAL, "plpython: Aiieee, proc->me != plproc");
+	  proc = PyCObject_AsVoidPtr(plproc);
+	  if (proc->me != plproc)
+		  elog(FATAL, "plpython: Aiieee, proc->me != plproc");
+	  /* did we find an up-to-date cache entry? */
+	  if (proc->fn_xmin != procTup->t_data->t_xmin ||
+		  proc->fn_cmin != procTup->t_data->t_cmin)
+	  {
+		  Py_DECREF(plproc);
+		  proc = NULL;
+	  }
+  }
+
+  if (proc == NULL)
+	  proc = PLy_procedure_create(fcinfo, is_trigger, procTup, key);
+
+  ReleaseSysCache(procTup);
 
   return proc;
 }
 
-PLyProcedure *
-PLy_procedure_create(PG_FUNCTION_ARGS, bool is_trigger, char *key)
+static PLyProcedure *
+PLy_procedure_create(FunctionCallInfo fcinfo, bool is_trigger,
+					 HeapTuple procTup, char *key)
 {
   char procName[256];
   DECLARE_EXC();
-  HeapTuple procTup;
   Form_pg_proc procStruct;
-  Oid fn_oid;
   PLyProcedure *volatile proc;
   char *volatile procSource = NULL;
   Datum procDatum;
@@ -944,19 +973,28 @@ PLy_procedure_create(PG_FUNCTION_ARGS, bool is_trigger, char *key)
 
   enter();
 
-  fn_oid = fcinfo->flinfo->fn_oid;
-  procTup = SearchSysCache(PROCOID, ObjectIdGetDatum(fn_oid), 0, 0, 0);
-  if (!HeapTupleIsValid(procTup))
-    elog(ERROR, "plpython: cache lookup for procedure \"%u\" failed", fn_oid);
   procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 
-  rv = snprintf(procName, sizeof(procName), PLy_procedure_fmt,
-		NameStr(procStruct->proname), fn_oid);
+  rv = snprintf(procName, sizeof(procName),
+				"__plpython_procedure_%s_%u%s",
+				NameStr(procStruct->proname),
+				fcinfo->flinfo->fn_oid,
+				is_trigger ? "_trigger" : "");
   if ((rv >= sizeof(procName)) || (rv < 0))
     elog(FATAL, "plpython: Procedure name would overrun buffer");
 
-  proc = PLy_procedure_new(procName);
-  
+  proc = PLy_malloc(sizeof(PLyProcedure));
+  proc->proname = PLy_malloc(strlen(procName) + 1);
+  strcpy(proc->proname, procName);
+  proc->fn_xmin = procTup->t_data->t_xmin;
+  proc->fn_cmin = procTup->t_data->t_cmin;
+  PLy_typeinfo_init(&proc->result);
+  for (i = 0; i < FUNC_MAX_ARGS; i++)
+    PLy_typeinfo_init(&proc->args[i]);
+  proc->nargs = 0;
+  proc->code = proc->interp = proc->reval = proc->statics = NULL;
+  proc->globals = proc->me = NULL;
+
   SAVE_EXC();
   if (TRAP_EXC())
     {
@@ -1036,8 +1074,6 @@ PLy_procedure_create(PG_FUNCTION_ARGS, bool is_trigger, char *key)
   procDatum = DirectFunctionCall1(textout,
 				  PointerGetDatum(&procStruct->prosrc));
   procSource = DatumGetCString(procDatum);
-
-  ReleaseSysCache(procTup);
 
   PLy_procedure_compile(proc, procSource);
 
@@ -1170,29 +1206,6 @@ PLy_procedure_munge_source(const char *name, const char *src)
   return mrc;
 }
 
-PLyProcedure *
-PLy_procedure_new(const char *name)
-{
-  int i;
-  PLyProcedure *proc;
-
-  enter();
-  
-  proc = PLy_malloc(sizeof(PLyProcedure));
-  proc->proname = PLy_malloc(strlen(name) + 1);
-  strcpy(proc->proname, name);
-  PLy_typeinfo_init(&proc->result);
-  for (i = 0; i < FUNC_MAX_ARGS; i++)
-    PLy_typeinfo_init(&proc->args[i]);
-  proc->nargs = 0;
-  proc->code = proc->interp = proc->reval = proc->statics = NULL;
-  proc->globals = proc->me = NULL;
-
-  leave();
-
-  return proc;
-}
-
 void
 PLy_procedure_delete(PLyProcedure *proc)
 {
@@ -1314,8 +1327,8 @@ PLy_output_datum_func2(PLyObToDatum *arg, Form_pg_type typeStruct)
   enter();
 
   perm_fmgr_info(typeStruct->typinput, &arg->typfunc);
-  arg->typelem = (Oid) typeStruct->typelem;
-  arg->typlen = typeStruct->typlen;
+  arg->typelem = typeStruct->typelem;
+  arg->typbyval = typeStruct->typbyval;
 }
 
 void
@@ -1334,10 +1347,9 @@ PLy_input_datum_func2(PLyDatumToOb *arg, Form_pg_type typeStruct)
 {
   char *type;
 
-  arg->typoutput = typeStruct->typoutput;
   perm_fmgr_info(typeStruct->typoutput, &arg->typfunc);
-  arg->typlen = typeStruct->typlen;
   arg->typelem = typeStruct->typelem;
+  arg->typbyval = typeStruct->typbyval;
 
   /* hmmm, wierd.  means this arg will always be converted
    * to a python None
@@ -1516,9 +1528,10 @@ PLyDict_FromTuple(PLyTypeInfo *info, HeapTuple tuple, TupleDesc desc)
 	PyDict_SetItemString(dict, key, Py_None);
       else
 	{
-	  vdat = OidFunctionCall3(info->in.r.atts[i].typoutput, vattr,
-				  ObjectIdGetDatum(info->in.r.atts[i].typelem),
-				  Int32GetDatum(info->in.r.atts[i].typlen));
+	  vdat = FunctionCall3(&info->in.r.atts[i].typfunc,
+						   vattr,
+						   ObjectIdGetDatum(info->in.r.atts[i].typelem),
+						   Int32GetDatum(desc->attrs[i]->atttypmod));
 	  vsrc = DatumGetCString(vdat);
 
 	  /* no exceptions allowed
@@ -1873,7 +1886,7 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
   DECLARE_EXC();
   PLyPlanObject *plan;
   PyObject *list = NULL;
-  PyObject *optr = NULL;
+  PyObject * volatile optr = NULL;
   char *query;
 
   enter();
@@ -2037,7 +2050,8 @@ PyObject *
 PLy_spi_execute_plan(PyObject *ob, PyObject *list, int limit)
 {
   DECLARE_EXC();
-  int nargs, i, rv;
+  volatile int nargs;
+  int i, rv;
   PLyPlanObject *plan;
 
   enter();
@@ -2080,12 +2094,10 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, int limit)
        */
       for (i = 0; i < nargs; i++)
 	{
-	  /* FIXME -- typbyval the proper check?
-	   */
-	  if ((plan->values[i] != (Datum) NULL) &&
-	      (plan->args[i].out.d.typlen < 0))
-	    {
-	      pfree((void *) plan->values[i]);
+	  if (!plan->args[i].out.d.typbyval &&
+		  (plan->values[i] != (Datum) NULL))
+	  {
+	      pfree(DatumGetPointer(plan->values[i]));
 	      plan->values[i] = (Datum) NULL;
 	    }
 	}
@@ -2100,21 +2112,19 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, int limit)
     {
       for (i = 0; i < nargs; i++)
 	{
-	  Datum typelem, typlen, dv;
 	  PyObject *elem, *so;
 	  char *sv;
 
-	  typelem = ObjectIdGetDatum(plan->args[i].out.d.typelem);
-	  typlen = Int32GetDatum(plan->args[i].out.d.typlen);
 	  elem = PySequence_GetItem(list, i);
 	  so = PyObject_Str(elem);
 	  sv = PyString_AsString(so);
-	  dv = CStringGetDatum(sv);
 
 	  /* FIXME -- if this can elog, we have leak
 	   */
 	  plan->values[i] = FunctionCall3(&(plan->args[i].out.d.typfunc),
-					  dv, typelem, typlen);
+									  CStringGetDatum(sv),
+									  ObjectIdGetDatum(plan->args[i].out.d.typelem),
+									  Int32GetDatum(-1));
 
 	  Py_DECREF(so);
 	  Py_DECREF(elem);
@@ -2126,12 +2136,10 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, int limit)
 
   for (i = 0; i < nargs; i++)
     {
-      /* FIXME -- typbyval the proper check?
-       */
-      if ((plan->values[i] != (Datum) NULL) &&
-	  (plan->args[i].out.d.typlen < 0))
+      if (!plan->args[i].out.d.typbyval &&
+		  (plan->values[i] != (Datum) NULL))
 	{
-	  pfree((void *) plan->values[i]);
+	  pfree(DatumGetPointer(plan->values[i]));
 	  plan->values[i] = (Datum) NULL;
 	}
     }
@@ -2413,11 +2421,11 @@ PLy_notice(PyObject *self, PyObject *args)
 
 
 PyObject *
-PLy_log(int level, PyObject *self, PyObject *args)
+PLy_log(volatile int level, PyObject *self, PyObject *args)
 {
   DECLARE_EXC();
   PyObject *so;
-  char *sv;
+  char * volatile sv;
 
   enter();
 
