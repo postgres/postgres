@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_rule.l,v 1.2 1996/12/11 00:27:18 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_rule.l,v 1.3 1998/01/11 22:17:16 momjian Exp $
 .TH "CREATE RULE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
-create rule \(em define a new rule
+create rule - define a new rule
 .SH SYNOPSIS
 .nf
 \fBcreate\fR \fBrule\fR rule_name

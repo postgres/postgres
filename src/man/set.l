@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.7 1997/10/01 18:53:28 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.8 1998/01/11 22:17:58 momjian Exp $
 .TH SET SQL 05/14/97 PostgreSQL PostgreSQL
 .SH NAME
-set \(em set run-time parameters for session
+set - set run-time parameters for session
 .SH SYNOPSIS
 .nf
 \fBset\fR variable \fBto\fR 'value1[,value2 ...]'

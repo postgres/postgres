@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/large_objects.3,v 1.4 1997/10/28 03:20:30 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/large_objects.3,v 1.5 1998/01/11 22:17:41 momjian Exp $
 .TH "LARGE OBJECTS" INTRO 03/18/94 PostgreSQL PostgreSQL
 .SH DESCRIPTION
 .PP
@@ -91,9 +91,9 @@ ing together the bits
 .SM INV_READ
 and
 .SM INV_WRITE .
-If the large object should be archived \(em that is, if
+If the large object should be archived - that is, if
 historical versions of it should be moved periodically to a special
-archive relation \(em then the
+archive relation - then the
 .SM INV_ARCHIVE
 bit should be set.  The low-order sixteen bits of
 .I mask
@@ -259,7 +259,7 @@ library.
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/man/Attic/large_objects.3,v 1.4 1997/10/28 03:20:30 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/man/Attic/large_objects.3,v 1.5 1998/01/11 22:17:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

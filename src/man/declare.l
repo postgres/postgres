@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/declare.l,v 1.1 1997/09/08 17:49:41 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/declare.l,v 1.2 1998/01/11 22:17:24 momjian Exp $
 .TH FETCH SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
-declere \(em declare a cursor
+declere - declare a cursor
 .SH SYNOPSIS
 .nf
 \fBdeclare\fR [ \fBbinary\fR ] \fBcursor for\fR select statement

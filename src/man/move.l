@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/move.l,v 1.1 1997/10/02 03:15:11 vadim Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/move.l,v 1.2 1998/01/11 22:17:44 momjian Exp $
 .TH MOVE SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
-move \(em move cursor position
+move - move cursor position
 .SH SYNOPSIS
 .nf
 \fBmove\fR [ (\fBforward\fR | \fBbackward\fR) ] [ ( number | \fBall\fR) ] [\fBin\fR cursor_name]

@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_type.l,v 1.4 1997/08/26 17:39:30 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_type.l,v 1.5 1998/01/11 22:17:33 momjian Exp $
 .TH "DROP TYPE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
-drop type \(em remove a user-defined type from the system catalogs
+drop type - remove a user-defined type from the system catalogs
 .SH SYNOPSIS
 .nf
 \fBdrop type\fR typename

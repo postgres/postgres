@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/alter_table.l,v 1.3 1997/09/26 15:21:26 thomas Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/alter_table.l,v 1.4 1998/01/11 22:17:04 momjian Exp $
 .TH "ALTER TABLE" SQL 09/25/97 PostgreSQL
 .SH NAME
-alter table \(em add attributes to a class
+alter table - add attributes to a class
 .SH SYNOPSIS
 .nf
 \fBalter table\fR classname [ * ]

@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_language.l,v 1.1 1997/10/30 05:38:19 vadim Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_language.l,v 1.2 1998/01/11 22:17:14 momjian Exp $
 .TH "CREATE LANGUAGE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH "NAME"
-create language \(em define a new language for functions
+create language - define a new language for functions
 .SH "SYNOPSIS"
 .nf
 \fBcreate\fP [\fBtrusted\fP] \fBprocedural language\fP 'lanname'

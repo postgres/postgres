@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/select.l,v 1.3 1997/12/29 01:13:37 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/select.l,v 1.4 1998/01/11 22:17:58 momjian Exp $
 .TH SELECT SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
-select \(em retrieve instances from a class
+select - retrieve instances from a class
 .SH SYNOPSIS
 .nf
 \fBselect\fR [distinct]

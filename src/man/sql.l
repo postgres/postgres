@@ -1,8 +1,8 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/sql.l,v 1.7 1997/11/03 04:47:08 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/sql.l,v 1.8 1998/01/11 22:18:00 momjian Exp $
 .TH INTRODUCTION SQL 11/5/95 PostgreSQL PostgreSQL
-.SH "Section 4 \(em SQL Commands (COMMANDS)"
+.SH "Section 4 - SQL Commands (COMMANDS)"
 .SH "General Information"
 .SH DESCRIPTION
 The following is a description of the general syntax of SQL.

@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_table.l,v 1.13 1997/11/21 18:12:54 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_table.l,v 1.14 1998/01/11 22:17:18 momjian Exp $
 .TH "CREATE TABLE" SQL 09/25/97 PostgreSQL
 .SH NAME
-create table \(em create a new class
+create table - create a new class
 .SH SYNOPSIS
 .nf
 \fBcreate table\fR classname \fB(\fPattname type [\fBdefault\fP value] [\fBnot null\fP]

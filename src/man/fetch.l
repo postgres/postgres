@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/fetch.l,v 1.4 1997/09/08 17:49:41 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/fetch.l,v 1.5 1998/01/11 22:17:35 momjian Exp $
 .TH FETCH SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
-fetch \(em fetch instance(s) from a cursor
+fetch - fetch instance(s) from a cursor
 .SH SYNOPSIS
 .nf
 \fBfetch\fR [ (\fBforward\fR | \fBbackward\fR) ] [ ( number | \fBall\fR) ] [\fBin\fR cursor_name]

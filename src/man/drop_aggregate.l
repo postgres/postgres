@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_aggregate.l,v 1.3 1997/05/22 00:16:56 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_aggregate.l,v 1.4 1998/01/11 22:17:27 momjian Exp $
 .TH "DROP AGGREGATE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
-drop aggregate \(em remove the definition of an aggregate
+drop aggregate - remove the definition of an aggregate
 .SH SYNOPSIS
 .nf
 \fBdrop aggregate\fR aggname aggtype

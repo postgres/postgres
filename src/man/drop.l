@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/drop.l,v 1.4 1997/09/27 04:36:01 thomas Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop.l,v 1.5 1998/01/11 22:17:26 momjian Exp $
 .TH "DROP ATTRIBUTE" SQL 09/26/97 PostgreSQL
 .SH NAME
-drop \(em destroy existing attributes
+drop - destroy existing attributes
 .SH SYNOPSIS
 .nf
 \fBdrop {aggregate|database|function|index|operator

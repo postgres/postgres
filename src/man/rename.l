@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/rename.l,v 1.2 1996/12/11 00:28:06 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/rename.l,v 1.3 1998/01/11 22:17:55 momjian Exp $
 .TH RENAME SQL 02/08/94 PostgreSQL PostgreSQL
 .SH NAME
-rename \(em rename a class or an attribute in a class
+rename - rename a class or an attribute in a class
 .SH SYNOPSIS
 .nf
 \fBalter table\fR classname1

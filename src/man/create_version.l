@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_version.l,v 1.2 1996/12/11 00:27:21 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_version.l,v 1.3 1998/01/11 22:17:21 momjian Exp $
 .TH "CREATE VERSION" SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
-create version \(em construct a version class 
+create version - construct a version class 
 .SH SYNOPSIS
 .nf
 \fBcreate version\fP classname1 \fBfrom\fP classname2 [\fB[\fPabstime\fB]\fP]

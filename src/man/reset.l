@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/reset.l,v 1.2 1997/08/26 17:00:16 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/reset.l,v 1.3 1998/01/11 22:17:55 momjian Exp $
 .TH RESET SQL 05/14/97 PostgreSQL PostgreSQL
 .SH NAME
-reset \(em restore run-time parameters for session to default values
+reset - restore run-time parameters for session to default values
 .SH SYNOPSIS
 .nf
 \fBreset\fR variable

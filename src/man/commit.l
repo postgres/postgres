@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/commit.l,v 1.2 1996/12/11 00:27:08 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/commit.l,v 1.3 1998/01/11 22:17:10 momjian Exp $
 .TH COMMIT SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
-commit \(em commit the current transaction 
+commit - commit the current transaction 
 .SH SYNOPSIS
 .nf
 \fBcommit [transaction|work]\fR

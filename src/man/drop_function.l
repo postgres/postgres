@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_function.l,v 1.2 1996/12/11 00:27:39 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_function.l,v 1.3 1998/01/11 22:17:28 momjian Exp $
 .TH "DROP FUNCTION" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
-drop function \(em remove a user-defined C function 
+drop function - remove a user-defined C function 
 .SH SYNOPSIS
 .nf
 \fBdrop function \fRfunction_name ( \fP[ type-1  { \fB,\fP type-n } ] \fB) 

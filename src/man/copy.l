@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/copy.l,v 1.3 1997/07/29 21:43:40 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/copy.l,v 1.4 1998/01/11 22:17:11 momjian Exp $
 .TH COPY SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
-copy \(em copy data to or from a class from or to a Unix file.
+copy - copy data to or from a class from or to a Unix file.
 .SH SYNOPSIS
 .nf
 \fBcopy\fP [\fBbinary\fP] classname [\fBwith oids\fP]

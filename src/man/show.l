@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/show.l,v 1.2 1997/08/26 17:00:23 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/show.l,v 1.3 1998/01/11 22:17:59 momjian Exp $
 .TH SHOW SQL 05/14/97 PostgreSQL PostgreSQL
 .SH NAME
-show \(em show run-time parameters for session
+show - show run-time parameters for session
 .SH SYNOPSIS
 .nf
 \fBshow\fR variable

@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_database.l,v 1.1 1997/04/26 18:43:33 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_database.l,v 1.2 1998/01/11 22:17:27 momjian Exp $
 .TH "DROP DATABASE" SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
-drop database \(em destroy an existing database
+drop database - destroy an existing database
 .SH SYNOPSIS
 .nf
 \fBdrop database\fR dbname

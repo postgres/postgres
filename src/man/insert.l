@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/insert.l,v 1.8 1998/01/11 20:02:32 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/insert.l,v 1.9 1998/01/11 22:17:39 momjian Exp $
 .TH INSERT SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
-insert \(em insert tuples to a relation
+insert - insert tuples to a relation
 .SH SYNOPSIS
 .nf
 \fBinsert\fR into classname

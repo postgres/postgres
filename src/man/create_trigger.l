@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_trigger.l,v 1.2 1997/09/30 09:50:27 vadim Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_trigger.l,v 1.3 1998/01/11 22:17:20 momjian Exp $
 .TH "CREATE TRIGGER" SQL 09/25/97 PostgreSQL
 .SH NAME
-create trigger \(em create a new trigger
+create trigger - create a new trigger
 .SH SYNOPSIS
 .nf
 \fBcreate trigger\fR trigname \fB{before|after}\fP 

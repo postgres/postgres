@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_database.l,v 1.4 1997/11/07 06:33:55 thomas Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_database.l,v 1.5 1998/01/11 22:17:13 momjian Exp $
 .TH "CREATE DATABASE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
-create database \(em create a new database
+create database - create a new database
 .SH SYNOPSIS
 .nf
 \fBcreate database\fP dbname [\fBwith location = '\fPdbpath\fB'\fP]

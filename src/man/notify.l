@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/notify.l,v 1.2 1996/12/11 00:27:57 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/notify.l,v 1.3 1998/01/11 22:17:45 momjian Exp $
 .TH "NOTIFY" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
-notify \(em signal all frontends and backends listening on a class
+notify - signal all frontends and backends listening on a class
 .SH SYNOPSIS
 .nf
 \fBnotify\fR class_name

@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/update.l,v 1.3 1997/09/27 03:14:20 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/update.l,v 1.4 1998/01/11 22:18:00 momjian Exp $
 .TH UPDATE SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
-update \(em replace values of attributes in a class
+update - replace values of attributes in a class
 .SH SYNOPSIS
 .nf
 \fBupdate\fR classname \fBset\fR attname-1 = expression-1

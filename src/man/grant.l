@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/grant.l,v 1.2 1996/12/11 00:27:46 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/grant.l,v 1.3 1998/01/11 22:17:36 momjian Exp $
 .TH GRANT SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
-grant \(em grant access control to a user or group
+grant - grant access control to a user or group
 .SH SYNOPSIS
 .nf
 \fBgrant\fR <privilege[,privilege,...]>

@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_aggregate.l,v 1.4 1996/12/11 00:27:11 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_aggregate.l,v 1.5 1998/01/11 22:17:11 momjian Exp $
 .TH "CREATE AGGREGATE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
-create aggregate \(em define a new aggregate
+create aggregate - define a new aggregate
 .SH SYNOPSIS
 .nf
 \fBcreate aggregate\fR agg-name [\fBas\fR]

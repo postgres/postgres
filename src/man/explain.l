@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/explain.l,v 1.7 1998/01/07 15:40:17 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/explain.l,v 1.8 1998/01/11 22:17:35 momjian Exp $
 .TH EXPLAIN SQL 06/12/97 PostgreSQL PostgreSQL
 .SH NAME
-explain \(em explains statement execution details
+explain - explains statement execution details
 .SH SYNOPSIS
 .nf
 \fBexplain [verbose]\fR query

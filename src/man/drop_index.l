@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_index.l,v 1.2 1996/12/11 00:27:40 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_index.l,v 1.3 1998/01/11 22:17:29 momjian Exp $
 .TH "DROP INDEX" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
-drop index \(em removes an index from Postgres
+drop index - removes an index from Postgres
 .SH SYNOPSIS
 .nf
 \fBdrop index\fR index_name

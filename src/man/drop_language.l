@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_language.l,v 1.1 1997/10/30 05:38:20 vadim Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_language.l,v 1.2 1998/01/11 22:17:29 momjian Exp $
 .TH "DROP LANGUAGE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
-drop language \(em remove a user-defined procedural language
+drop language - remove a user-defined procedural language
 .SH SYNOPSIS
 .nf
 \fBdrop procedural language\fR 'lanname'

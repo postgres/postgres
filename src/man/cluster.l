@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/cluster.l,v 1.3 1998/01/10 05:19:14 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/cluster.l,v 1.4 1998/01/11 22:17:10 momjian Exp $
 .TH CLUSTER SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
-cluster \(em give storage clustering advice to Postgres
+cluster - give storage clustering advice to Postgres
 .SH SYNOPSIS
 .nf
 \fBcluster\fR indexname \fBon\fR attname

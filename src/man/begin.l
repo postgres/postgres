@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/begin.l,v 1.2 1996/12/11 00:26:59 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/begin.l,v 1.3 1998/01/11 22:17:05 momjian Exp $
 .TH BEGIN SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
-begin \(em begins a transaction
+begin - begins a transaction
 .SH SYNOPSIS
 .nf
 \fBbegin\fP \fB[transaction|work]\fR
