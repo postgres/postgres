@@ -33,19 +33,15 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.33 2002/09/04 20:31:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.34 2002/09/04 22:49:37 tgl Exp $
  *
  **********************************************************************/
 
 #include "postgres.h"
 
 /* system stuff */
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <string.h>
 #include <setjmp.h>
 
 /* postgreSQL stuff */
@@ -54,7 +50,6 @@
 #include "utils/elog.h"
 #include "fmgr.h"
 #include "access/heapam.h"
-
 #include "tcop/tcopprot.h"
 #include "utils/syscache.h"
 #include "catalog/pg_language.h"
