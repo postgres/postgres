@@ -29,8 +29,11 @@ EndOfMakefile
 	exit(0);
 }
 
+my $ldopts=ldopts();
+$ldopts=~s/$Config{ccdlflags}//;
+
 WriteMakefile( 'NAME' => 'plperl', 
-	dynamic_lib => { 'OTHERLDFLAGS' =>  ldopts() } ,
+        dynamic_lib => { 'OTHERLDFLAGS' =>  $ldopts } ,
 	INC => "$ENV{EXTRA_INCLUDES}",
 	XS => { 'SPI.xs' => 'SPI.c' },
 	OBJECT => 'plperl.o eloglvl.o SPI.o',
