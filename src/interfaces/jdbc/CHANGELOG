@@ -1,3 +1,7 @@
+Web May 19 00:20:00 BST 1999
+	- Internationalisation now done. Surprising that there's 68 error messages
+	  in the driver ;-)
+
 Tue May 18 07:00:00 BST 1999
 	- Set the ImageViewer application to use transactions
 
