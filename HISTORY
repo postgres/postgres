@@ -4,7 +4,76 @@
                            7.4 Development Branch
                                       
 
-Valid as of 2003-09-29.  Update release.sgml later.
+Valid as of 2003-09-28.  Update release.sgml later.
+
+   
+     Release date: 2003-??-??
+     _________________________________________________________________
+   
+                                  Overview
+                                      
+   Major changes in this release:
+   
+   IPv6
+         Full support for IPv6 connections and IPv6 data types.
+
+   SSL
+         Major SSL improvements in performance and security.
+
+   Index Growth Prevention
+         Allow free space map to efficiently reused empty index pages,
+         and other free space improvements.
+
+   New Client/Server Communication Protocol
+          New protocol improves connection speed/reliability, and adds 
+          error codes, status information, a binary protocol, error
+          reporting verbosity, and cleaner startup packets.
+
+   Performance
+          IN/NOT IN subqueries now perform as efficiently as joins
+          Improved GROUP BY procesing by using hack buckets
+          Hash indexes now have better concurrency/reliability/performance
+          New multi-key hash join capability
+          ANSI joins are now fully optimized
+          Faster regular expression code
+          
+   Cursors
+          Allow cursors to exist outside transactions
+
+   Threads
+          libpq and ecpg are now fully thread-safe with --enable-thread-safety
+
+   Contrib
+          New version of full text indexing (tsearch2)
+          New autovacuum tool
+          Array handling has been improved and moved into the main server
+
+     _________________________________________________________________
+   
+                          Migration to version 7.4
+                                      
+   A dump/restore using pg_dump is required for those wishing to migrate
+   data from any previous release.
+   
+   Observe the following incompatibilities:
+     * The server-side autocommit setting was removed an reimplemented
+       in client applications and languages.
+     * Error message wording has changed dramtically in this release,
+       and error codes have been added.
+     * ANSI joins may behave differently because they are now fully optimized
+     * A number of server variables have been renamed for clarity
+     * MOVE/FETCH 0 now does nothing; return value of MOVE/FETCH 1/0
+       varies based on the current offset in the cursor
+     * COPY now can process carriage-return/line-feed and carraige-return
+       terminated files.  Literal carriage-returns and line-feeds are no
+       longer accepted as data values;  use \r and \n instead.
+     * Auto-trim spaces when converting from CHAR() to VARCHAR()/TEXT
+     * FLOAT(p) now measures 'p' in bits, not digits
+     * Date values now must match the ordering specified by DateStyle
+
+     _________________________________________________________________
+   
+                                  Changes
                                       
 Server Operation
 
@@ -52,7 +121,7 @@ Allow hash/merge joins on complex joins (Tom)
 Allow hash joins for more data types (Tom)
 Allow join optimization of ANSI joins, disable with join_collapse_limit (Tom)
 Add from_collapse_limit to control conversion of subqueries to joins (Tom)
-Use faster regex code from TCL (Henry Spencer, Tom)
+Use faster regular expression code from TCL (Henry Spencer, Tom)
 Use bit-mapped relation sets in the optimizer (Tom)
 Improve backend startup time (Tom)
 Improve trigger/constraint performance (Stephan)
@@ -143,7 +212,7 @@ Allow CLUSTER to cluster all tables (Alvaro Herrera)
 Prevent CLUSTER on partial indexes (Tom)
 Allow \r and \r\n termination for COPY files (Bruce)
 Disallow literal carriage return as a data value, backslash-carriage-return
-  and \r still allowed (Bruce)
+  and \r are still allowed (Bruce)
 COPY changes (binary, \.)? (Tom)
 Recover from COPY IN/OUT failure cleanly (Tom)
 Prevent possible memory leaks in COPY (Tom)
@@ -296,7 +365,6 @@ Prevent possible memory leak or core dump during libpgtcl shutdown (Tom)
 Add ecpg Informix compatibility (Michael)
 Add ecpg DECIMAL type that is fixed length, for Informix (Michael)
 Allow thread-safe ecpg with --enable-thread-safety (Lee Kindness, Bruce)
-Allow client interfaces to compile under MinGW/win32 (Bruce)
 Move python client interface to http://www.pygresql.org (Marc)
 
      _________________________________________________________________
@@ -317,12 +385,13 @@ Convert administration scripts to C (Peter)
 Bison >=1.85 is now required for grammar changes
 Merge documentation into one book (Peter)
 Add Win32 compatibility functions (Bruce)
+Allow client interfaces to compile under MinGW/Win32 (Bruce)
 New ereport() function for error reporting (Tom)
 Support Intel Linux compiler (Peter)
 Improve Linux startup scripts (Slawomir Sudnik, Darko Prenosil)
 Add support for AMD Opteron and Itanium (Jeffrey W. Baker, Bruce)
 Remove configure --enable-recode
-Generate a compile error if spinlock code isn't found (Bruce)
+Generate a compile error if spinlock code is not found (Bruce)
 
      _________________________________________________________________
 
