@@ -1680,3 +1680,56 @@ select * from test_ret_set_scalar(1,10);
                   11
 (10 rows)
 
+create function test_ret_set_rec_dyn(int) returns setof record as '
+DECLARE
+	retval RECORD;
+BEGIN
+	IF $1 > 10 THEN
+		SELECT INTO retval 5, 10, 15;
+		RETURN NEXT retval;
+		RETURN NEXT retval;
+	ELSE
+		SELECT INTO retval 50, 5::numeric, ''xxx''::text;
+		RETURN NEXT retval;
+		RETURN NEXT retval;
+	END IF;
+	RETURN;
+END;' language 'plpgsql';
+SELECT * FROM test_ret_set_rec_dyn(1500) AS (a int, b int, c int);
+ a | b  | c  
+---+----+----
+ 5 | 10 | 15
+ 5 | 10 | 15
+(2 rows)
+
+SELECT * FROM test_ret_set_rec_dyn(5) AS (a int, b numeric, c text);
+ a  | b |  c  
+----+---+-----
+ 50 | 5 | xxx
+ 50 | 5 | xxx
+(2 rows)
+
+create function test_ret_rec_dyn(int) returns record as '
+DECLARE
+	retval RECORD;
+BEGIN
+	IF $1 > 10 THEN
+		SELECT INTO retval 5, 10, 15;
+		RETURN retval;
+	ELSE
+		SELECT INTO retval 50, 5::numeric, ''xxx''::text;
+		RETURN retval;
+	END IF;
+END;' language 'plpgsql';
+SELECT * FROM test_ret_rec_dyn(1500) AS (a int, b int, c int);
+ a | b  | c  
+---+----+----
+ 5 | 10 | 15
+(1 row)
+
+SELECT * FROM test_ret_rec_dyn(5) AS (a int, b numeric, c text);
+ a  | b |  c  
+----+---+-----
+ 50 | 5 | xxx
+(1 row)
+

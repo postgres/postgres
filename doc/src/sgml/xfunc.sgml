@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.59 2002/08/30 00:28:40 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.60 2002/09/01 16:28:05 tgl Exp $
 -->
 
  <chapter id="xfunc">
@@ -2119,6 +2119,27 @@ SELECT * FROM vw_getfoo;
 </programlisting>
     are all valid statements.
    </para>
+
+   <para>
+    In some cases it is useful to define table functions that can return
+    different column sets depending on how they are invoked.  To support this,
+    the table function can be declared as returning the pseudo-type
+    <type>record</>.  When such a function is used in a query, the expected
+    row structure must be specified in the query itself, so that the system
+    can know how to parse and plan the query.  Consider this example:
+<programlisting>
+SELECT *
+FROM dblink('dbname=template1', 'select proname, prosrc from pg_proc')
+  AS t1(proname name, prosrc text)
+WHERE proname LIKE 'bytea%';
+</programlisting>
+    The <literal>dblink</> function executes a remote query (see
+    <literal>contrib/dblink</>).  It is declared to return <type>record</>
+    since it might be used for any kind of query.  The actual column set
+    must be specified in the calling query so that the parser knows, for
+    example, what <literal>*</> should expand to.
+   </para>
+
   </sect1>
 
   <sect1 id="xfunc-plhandler">

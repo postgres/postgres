@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.5 2002/08/30 00:28:40 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.6 2002/09/01 16:28:05 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -538,8 +538,6 @@ END;
 
    <para>
     Note that <literal>RECORD</> is not a true data type, only a placeholder.
-    Thus, for example, one cannot declare a function returning
-    <literal>RECORD</>.
    </para>
   </sect2>
 

@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.36 2002/08/30 00:28:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.37 2002/09/01 16:28:06 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1159,7 +1159,6 @@ stmt_return		: K_RETURN lno
 					}
 				;
 
-/* FIXME: this syntax needs work, RETURN NEXT breaks stmt_return */
 stmt_return_next: K_RETURN_NEXT lno
 					{
 						PLpgSQL_stmt_return_next *new;

@@ -1524,3 +1524,38 @@ BEGIN
 END;' language 'plpgsql';
 
 select * from test_ret_set_scalar(1,10);
+
+create function test_ret_set_rec_dyn(int) returns setof record as '
+DECLARE
+	retval RECORD;
+BEGIN
+	IF $1 > 10 THEN
+		SELECT INTO retval 5, 10, 15;
+		RETURN NEXT retval;
+		RETURN NEXT retval;
+	ELSE
+		SELECT INTO retval 50, 5::numeric, ''xxx''::text;
+		RETURN NEXT retval;
+		RETURN NEXT retval;
+	END IF;
+	RETURN;
+END;' language 'plpgsql';
+
+SELECT * FROM test_ret_set_rec_dyn(1500) AS (a int, b int, c int);
+SELECT * FROM test_ret_set_rec_dyn(5) AS (a int, b numeric, c text);
+
+create function test_ret_rec_dyn(int) returns record as '
+DECLARE
+	retval RECORD;
+BEGIN
+	IF $1 > 10 THEN
+		SELECT INTO retval 5, 10, 15;
+		RETURN retval;
+	ELSE
+		SELECT INTO retval 50, 5::numeric, ''xxx''::text;
+		RETURN retval;
+	END IF;
+END;' language 'plpgsql';
+
+SELECT * FROM test_ret_rec_dyn(1500) AS (a int, b int, c int);
+SELECT * FROM test_ret_rec_dyn(5) AS (a int, b numeric, c text);

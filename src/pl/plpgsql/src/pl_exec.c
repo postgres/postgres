@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.61 2002/08/30 23:59:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.62 2002/09/01 16:28:06 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1588,9 +1588,9 @@ static int
 exec_stmt_return_next(PLpgSQL_execstate *estate,
 					  PLpgSQL_stmt_return_next *stmt)
 {
-	TupleDesc tupdesc;
-	int		 natts;
-	HeapTuple tuple;
+	TupleDesc	tupdesc;
+	int			natts;
+	HeapTuple	tuple;
 	bool		free_tuple = false;
 
 	if (!estate->retisset)
