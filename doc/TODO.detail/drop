@@ -2,7 +2,7 @@ From pgsql-hackers-owner+M3040@hub.org Thu Jun  8 00:31:01 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA13157
 	for <pgman@candle.pha.pa.us>; Thu, 8 Jun 2000 00:31:00 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id AAA01089 for <pgman@candle.pha.pa.us>; Thu, 8 Jun 2000 00:17:19 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id AAA01089 for <pgman@candle.pha.pa.us>; Thu, 8 Jun 2000 00:17:19 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5846ib99782;
 	Thu, 8 Jun 2000 00:06:44 -0400 (EDT)
@@ -280,7 +280,7 @@ From Inoue@tpf.co.jp Sat Jun 10 01:01:01 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA10355
 	for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:01:00 -0400 (EDT)
-Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id AAA25467 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 00:41:32 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id AAA25467 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 00:41:32 -0400 (EDT)
 Received: from mcadnote1 (ppm110.noc.fukui.nsk.ne.jp [210.161.188.29] (may be forged))
           by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
    id NAA03125; Sat, 10 Jun 2000 13:40:40 +0900
@@ -411,7 +411,7 @@ From tgl@sss.pgh.pa.us Sat Jun 10 01:31:04 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA10922
 	for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:31:03 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id BAA27265 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:16:07 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id BAA27265 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:16:07 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id BAA06206;
 	Sat, 10 Jun 2000 01:14:37 -0400 (EDT)
@@ -457,7 +457,7 @@ From dhogaza@pacifier.com Sat Jun 10 09:30:59 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA25987
 	for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 09:30:58 -0400 (EDT)
-Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id JAA18716 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 09:15:08 -0400 (EDT)
+Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id JAA18716 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 09:15:08 -0400 (EDT)
 Received: from desktop (dsl-dhogaza.pacifier.net [207.202.226.68])
 	by smtp.pacifier.com (8.9.3/8.9.3pop) with SMTP id GAA15799;
 	Sat, 10 Jun 2000 06:14:28 -0700 (PDT)
@@ -509,7 +509,7 @@ From tgl@sss.pgh.pa.us Sun Jun 11 12:31:03 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA05771
 	for <pgman@candle.pha.pa.us>; Sun, 11 Jun 2000 12:31:01 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id MAA19315 for <pgman@candle.pha.pa.us>; Sun, 11 Jun 2000 12:24:06 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id MAA19315 for <pgman@candle.pha.pa.us>; Sun, 11 Jun 2000 12:24:06 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id MAA09503;
 	Sun, 11 Jun 2000 12:22:42 -0400 (EDT)
@@ -719,4 +719,62 @@ Regards.
 
 Hiroshi Inoue
 Inoue@tpf.co.jp
+
+From pgsql-hackers-owner+M3050@postgresql.org Thu Jan 11 21:49:43 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA20277
+	for <pgman@candle.pha.pa.us>; Thu, 11 Jan 2001 21:49:42 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f0C2lhp74989;
+	Thu, 11 Jan 2001 21:47:43 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M3050@postgresql.org)
+Received: from dynworks.com (adsl-63-206-168-198.dsl.sktn01.pacbell.net [63.206.168.198])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f0C2lNp74855
+	for <pgsql-hackers@postgresql.org>; Thu, 11 Jan 2001 21:47:23 -0500 (EST)
+	(envelope-from jdavis@dynworks.com)
+Received: from localhost.localdomain (localhost.localdomain [127.0.0.1])
+	by dynworks.com (Postfix) with ESMTP id CC44F31FAB
+	for <pgsql-hackers@postgresql.org>; Thu, 11 Jan 2001 18:48:36 -0800 (PST)
+Date: Thu, 11 Jan 2001 18:48:36 PST
+From: Jeff Davis <jdavis@dynworks.com>
+To: pgsql-hackers@postgresql.org
+Subject: [HACKERS] alter table drop column
+Reply-To: jdavis@dynworks.com
+X-Mailer: Spruce 0.6.5 for X11 w/smtpio 0.7.9
+MIME-Version: 1.0
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: 8bit
+Message-Id: <20010112024836.CC44F31FAB@dynworks.com>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+I read the transcript of the alter table drop column discussion (old
+discussion) at http://www.postgresql.org/docs/pgsql/doc/TODO.detail/drop,
+and I have something to add:
+
+People mentioned such ideas as a hidden column and a really deleted column,
+and it occurred to me that perhaps "vacuum" would be a good option to use.
+When a delete was issued, the column would be hidden (by a negative/invalid
+logical column number, it appears was the consensus). Upon issuing a
+vacuum, it could perform a complete deletion. This method would allow users
+to know that the process may take a while (I think the agreed method for a
+complete delete was to "select into..." the right columns and leave out the
+deleted ones, then delete the old table).
+
+Furthermore, I liked the idea of some kind of "undelete", as long as it was
+just hidden. This could apply to anything that is cleaned out with a vacuum
+(before it is cleaned out), although I am not sure how feasible this is,
+and it isn't particularly important to me.
+
+Regards,
+	Jeff
+
+-- 
+Jeff Davis
+Dynamic Works
+jdavis@dynworks.com
+http://dynworks.com
+
 
