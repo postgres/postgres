@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.73 2002/08/05 02:30:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.74 2002/08/06 05:33:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -728,6 +728,27 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	 * and check/add column aliases.
 	 */
 	functyptype = get_typtype(funcrettype);
+
+	if (coldeflist != NIL)
+	{
+		/*
+		 * we *only* allow a coldeflist for functions returning a
+		 * RECORD pseudo-type
+		 */
+		if (functyptype != 'p' || (functyptype == 'p' && funcrettype != RECORDOID))
+			elog(ERROR, "A column definition list is only allowed for"
+						" functions returning RECORD");
+	}
+	else
+	{
+		/*
+		 * ... and a coldeflist is *required* for functions returning a
+		 * RECORD pseudo-type
+		 */
+		if (functyptype == 'p' && funcrettype == RECORDOID)
+			elog(ERROR, "A column definition list is required for functions"
+						" returning RECORD");
+	}
 
 	if (functyptype == 'c')
 	{
