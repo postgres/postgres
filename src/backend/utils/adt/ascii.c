@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * ascii.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.12.2.1 2003/04/02 21:08:14 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.12.2.2 2003/07/14 16:41:56 tgl Exp $
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
  *
@@ -134,7 +134,7 @@ encode_to_ascii(text *data, int enc)
 {
 	pg_to_ascii(
 				(unsigned char *) VARDATA(data),		/* src */
-				VARDATA(data) + VARSIZE(data),	/* src end */
+				(unsigned char *) (data) + VARSIZE(data),	/* src end */
 				(unsigned char *) VARDATA(data),		/* desc */
 				enc);			/* encoding */
 
