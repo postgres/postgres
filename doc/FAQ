@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Jan 4 09:25:00 EST 2005
+   Last updated: Fri Jan 7 22:58:29 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -113,9 +113,7 @@
                                       
     1.1) What is PostgreSQL? How is it pronounced?
     
-   PostgreSQL is pronounced Post-Gres-Q-L. An audio file is available at
-   http://www.postgresql.org/postgresql.mp3 for those would like to hear
-   the pronunciation.
+   PostgreSQL is pronounced Post-Gres-Q-L.
    
    PostgreSQL is an enhancement of the POSTGRES database management
    system (and is still sometimes reffered to as simply "Postgres"), a
