@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.46 2002/08/17 03:38:43 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.47 2002/08/27 03:38:27 momjian Exp $
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -120,6 +120,7 @@ Complete list of usable sgml source files in this directory.
 <!entity vacuum             system "vacuum.sgml">
 
 <!-- applications and utilities -->
+<!entity clusterdb          system "clusterdb.sgml">
 <!entity createdb           system "createdb.sgml">
 <!entity createlang         system "createlang.sgml">
 <!entity createuser         system "createuser.sgml">

@@ -274,3 +274,14 @@ FROM pg_class c WHERE relname LIKE 'clstr_tst%' ORDER BY relname;
  clstr_tst_s_rf_a_seq | S       | f
 (11 rows)
 
+-- Verify that indisclustered is correctly set
+SELECT pg_class.relname FROM pg_index, pg_class, pg_class AS pg_class_2
+WHERE pg_class.oid=indexrelid
+	AND indrelid=pg_class_2.oid
+	AND pg_class_2.relname = 'clstr_tst'
+	AND indisclustered;
+   relname   
+-------------
+ clstr_tst_c
+(1 row)
+

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.86 2002/08/11 21:17:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.87 2002/08/27 03:38:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,11 +45,12 @@ typedef struct
 	IndexInfo  *indexInfo;
 	Oid			accessMethodOID;
 	Oid		   *classOID;
+	bool		isclustered;
 } IndexAttrs;
 
 static Oid	make_new_heap(Oid OIDOldHeap, const char *NewName);
 static void copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
-static List *get_indexattr_list(Relation OldHeap);
+static List *get_indexattr_list(Relation OldHeap, Oid OldIndex);
 static void recreate_indexattr(Oid OIDOldHeap, List *indexes);
 static void swap_relfilenodes(Oid r1, Oid r2);
 
@@ -121,7 +122,7 @@ cluster(RangeVar *oldrelation, char *oldindexname)
 			 RelationGetRelationName(OldHeap));
 
 	/* Save the information of all indexes on the relation. */
-	indexes = get_indexattr_list(OldHeap);
+	indexes = get_indexattr_list(OldHeap, OIDOldIndex);
 
 	/* Drop relcache refcnts, but do NOT give up the locks */
 	index_close(OldIndex);
@@ -274,7 +275,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
  * return a list of IndexAttrs structures.
  */
 static List *
-get_indexattr_list(Relation OldHeap)
+get_indexattr_list(Relation OldHeap, Oid OldIndex)
 {
 	List *indexes = NIL;
 	List	   *indlist;
@@ -304,6 +305,12 @@ get_indexattr_list(Relation OldHeap)
 			palloc(sizeof(Oid) * attrs->indexInfo->ii_NumIndexAttrs);
 		memcpy(attrs->classOID, indexForm->indclass,
 			   sizeof(Oid) * attrs->indexInfo->ii_NumIndexAttrs);
+
+		/* We'll set indisclustered at index creation time on the
+		 * index we are currently clustering, and reset it on other
+		 * indexes.
+		 */
+		attrs->isclustered = (OldIndex == indexOID ? true : false);
 
 		/* Name and access method of each index come from pg_class */
 		classTuple = SearchSysCache(RELOID,
@@ -343,6 +350,9 @@ recreate_indexattr(Oid OIDOldHeap, List *indexes)
 		Oid			newIndexOID;
 		char		newIndexName[NAMEDATALEN];
 		ObjectAddress object;
+		Form_pg_index index;
+		HeapTuple	tuple;
+		Relation	pg_index;
 
 		/* Create the new index under a temporary name */
 		snprintf(newIndexName, NAMEDATALEN, "pg_temp_%u", attrs->indexOID);
@@ -363,6 +373,20 @@ recreate_indexattr(Oid OIDOldHeap, List *indexes)
 		swap_relfilenodes(attrs->indexOID, newIndexOID);
 
 		CommandCounterIncrement();
+
+		/* Set indisclustered to the correct value.  Only one index is
+		 * allowed to be clustered.
+		 */
+		pg_index = heap_openr(IndexRelationName, RowExclusiveLock);
+		tuple = SearchSysCacheCopy(INDEXRELID,
+							   ObjectIdGetDatum(attrs->indexOID),
+							   0, 0, 0);
+		index = (Form_pg_index) GETSTRUCT(tuple);
+		index->indisclustered = attrs->isclustered;
+		simple_heap_update(pg_index, &tuple->t_self, tuple);
+		CatalogUpdateIndexes(pg_index, tuple);
+		heap_freetuple(tuple);
+		heap_close(pg_index, NoLock);
 
 		/* Destroy new index with old filenode */
 		object.classId = RelOid_pg_class;

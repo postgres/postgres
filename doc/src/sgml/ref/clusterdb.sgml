@@ -1,0 +1,280 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.1 2002/08/27 03:38:27 momjian Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="APP-CLUSTERDB">
+ <refmeta>
+  <refentrytitle id="APP-CLUSTERDB-TITLE"><application>clusterdb</application></refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname id="clusterdb">clusterdb</refname>
+  <refpurpose>cluster a <productname>PostgreSQL</productname> database</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>clusterdb</command>
+   <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
+   <arg>--table | -t '<replaceable>table</replaceable> </arg>
+   <arg><replaceable>dbname</replaceable></arg>
+   <sbr>
+   <command>clusterdb</command>
+   <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
+   <group><arg>--all</arg><arg>-a</arg></group>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+ 
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <application>clusterdb</application> is a utility for clustering tables inside a
+   <productname>PostgreSQL</productname> database.
+  </para>
+
+  <para>
+   <application>clusterdb</application> is a shell script wrapper around the
+   backend command
+   <xref linkend="SQL-CLUSTER" endterm="SQL-CLUSTER-title"> via
+   the <productname>PostgreSQL</productname> interactive terminal
+   <xref linkend="APP-PSQL">. There is no effective
+   difference between clustering databases via this or other methods.
+   <application>psql</application> must be found by the script and
+   a database server must be running at the targeted host. Also, any default
+   settings and environment variables available to <application>psql</application>
+   and the <application>libpq</application> front-end library do apply.
+  </para>
+
+  <para>
+  <application>clusterdb</application> will need to connect several times to the
+  <productname>PostgreSQL</productname> server, asking for the password each
+  time. It will probably be very convenient to have a PGPASSWORDFILE in that case.
+  </para>
+
+ </refsect1>
+
+
+ <refsect1>
+  <title>Options</title>
+
+   <para>
+    <application>clusterdb</application> accepts the following command line arguments:
+    
+    <variablelist>
+     <varlistentry>
+      <term>-d <replaceable class="parameter">dbname</replaceable></term>
+      <term>--dbname <replaceable class="parameter">dbname</replaceable></term>
+      <listitem>
+       <para>
+	Specifies the name of the database to be clustered.
+	If this is not specified and <option>-a</option> (or
+	<option>--all</option>) is not used, the database name is read
+	from the environment variable <envar>PGDATABASE</envar>.  If
+	that is not set, the user name specified for the connection is
+	used.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-a</term>
+      <term>--all</term>
+      <listitem>
+       <para>
+	Cluster all databases.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-t <replaceable class="parameter">table</replaceable></term>
+      <term>--table <replaceable class="parameter">table</replaceable></term>
+      <listitem>
+       <para>
+	Clusters <replaceable class="parameter">table</replaceable> only.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+   </para>
+
+   <para>
+    <application>clusterdb</application> also accepts 
+    the following command line arguments for connection parameters:
+    
+    <variablelist>
+     <varlistentry>
+      <term>-h <replaceable class="parameter">host</replaceable></term>
+      <term>--host <replaceable class="parameter">host</replaceable></term>
+      <listitem>
+       <para>
+	Specifies the host name of the machine on which the 
+	server
+	is running.  If host begins with a slash, it is used 
+	as the directory for the Unix domain socket.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-p <replaceable class="parameter">port</replaceable></term>
+      <term>--port <replaceable class="parameter">port</replaceable></term>
+      <listitem>
+       <para>
+	Specifies the Internet TCP/IP port or local Unix domain socket file 
+	extension on which the server
+	is listening for connections.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-U <replaceable class="parameter">username</replaceable></term>
+      <term>--username <replaceable class="parameter">username</replaceable></term>
+      <listitem>
+       <para>
+        User name to connect as
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-W</term>
+      <term>--password</term>
+      <listitem>
+       <para>
+        Force password prompt.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-e</term>
+      <term>--echo</term>
+      <listitem>
+       <para>
+        Echo the commands that <application>clusterdb</application> generates
+	and sends to the server.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-q</term>
+      <term>--quiet</term>
+      <listitem>
+       <para>
+        Do not display a response.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+ </refsect1>
+
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>CLUSTER</computeroutput></term>
+      <listitem>
+       <para>
+        Everything went well.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><computeroutput>clusterdb: Cluster failed.</computeroutput></term>
+      <listitem>
+       <para>
+        Something went wrong. <application>clusterdb</application> is only a wrapper
+        script. See <xref linkend="SQL-CLUSTER" endterm="SQL-CLUSTER-title">
+        and <xref linkend="APP-PSQL"> for a detailed
+        discussion of error messages and potential problems.  Note that this message
+		may appear once per table to be clustered.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+   </para>
+ </refsect1>
+
+
+ <refsect1>
+  <title>Environment</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><envar>PGDATABASE</envar></term>
+    <term><envar>PGHOST</envar></term>
+    <term><envar>PGPORT</envar></term>
+    <term><envar>PGUSER</envar></term>
+
+    <listitem>
+     <para>
+      Default connection parameters.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+
+ <refsect1>
+  <title>Examples</title>
+
+   <para>
+    To cluster the database <literal>test</literal>:
+<screen>
+<prompt>$ </prompt><userinput>clusterdb test</userinput>
+</screen>
+   </para>
+
+   <para>
+    To cluster a single table
+    <literal>foo</literal> in a database named
+    <literal>xyzzy</literal>:
+<screen>
+<prompt>$ </prompt><userinput>clusterdb --verbose --table foo xyzzy</userinput>
+</screen>
+   </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-cluster" endterm="sql-cluster-title"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->

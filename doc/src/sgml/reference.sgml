@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.35 2002/08/17 03:38:43 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.36 2002/08/27 03:38:27 momjian Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -165,6 +165,7 @@ Disable this chapter until we have more functions documented.
    </para>
   </partintro>
 
+   &clusterdb;
    &createdb;
    &createlang;
    &createuser;
