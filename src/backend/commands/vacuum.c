@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.82 1998/09/23 04:22:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.83 1998/10/07 17:12:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -576,8 +576,8 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 	heap_close(rel);
 
 	/* update statistics in pg_class */
-	vc_updstats(vacrelstats->relid, vacrelstats->num_pages, vacrelstats->num_tuples,
-				vacrelstats->hasindex, vacrelstats);
+	vc_updstats(vacrelstats->relid, vacrelstats->num_pages,
+				vacrelstats->num_tuples, vacrelstats->hasindex, vacrelstats);
 
 	/* next command frees attribute stats */
 
