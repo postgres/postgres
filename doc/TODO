@@ -114,7 +114,7 @@ COMMANDS
 * Add ALTER TABLE DROP/ALTER COLUMN feature(Peter E)
 * Add ALTER TABLE command to change table ownership
 * Allow CLUSTER on all tables at once, and improve CLUSTER, loses NOT
-	NULL specification, indexes, permissions, etc on table[cluster]
+	NULL specification, indexes, permissions, etc on table
 * Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
 * Auto-destroy sequence on DROP of table with SERIAL(Ryan)
 * Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison
