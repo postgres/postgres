@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.74 1999/04/25 03:19:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.75 1999/05/03 19:09:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1061,7 +1061,7 @@ GetIndexRelations(Oid main_relation_oid,
 	}
 }
 
-#define EXT_ATTLEN 5*8192
+#define EXT_ATTLEN 5*BLCKSZ
 
 /*
    returns 1 is c is in s

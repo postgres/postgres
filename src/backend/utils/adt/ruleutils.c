@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.9 1999/04/29 15:52:01 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.10 1999/05/03 19:10:01 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -57,6 +57,7 @@
 #include "catalog/pg_opclass.h"
 #include "fmgr.h"
 
+#define BUFSIZE	8192
 
 /* ----------
  * Local data types
@@ -331,8 +332,8 @@ pg_get_indexdef(Oid indexrelid)
 	int		spirc;
 	int		len;
 	int		keyno;
-	char		buf[8192];
-	char		keybuf[8192];
+	char		buf[BUFSIZE];
+	char		keybuf[BUFSIZE];
 	char		*sep;
 
 	/* ----------
@@ -603,7 +604,7 @@ make_ruledef(HeapTuple ruletup, TupleDesc rulettc)
 	 * Allocate space for the returned rule definition text
 	 * ----------
 	 */
-	buf = palloc(8192);
+	buf = palloc(BUFSIZE);
 
 	/* ----------
 	 * Get the attribute values from the rules tuple
@@ -746,7 +747,7 @@ make_ruledef(HeapTuple ruletup, TupleDesc rulettc)
 static char *
 make_viewdef(HeapTuple ruletup, TupleDesc rulettc)
 {
-	char		buf[8192];
+	char		buf[BUFSIZE];
 	Query	   *query;
 	char		ev_type;
 	Oid			ev_class;
@@ -854,7 +855,7 @@ get_query_def(Query *query, QryHier *parentqh)
 static char *
 get_select_query_def(Query *query, QryHier *qh)
 {
-	char		buf[8192];
+	char		buf[BUFSIZE];
 	char	   *sep;
 	TargetEntry *tle;
 	RangeTblEntry *rte;
@@ -1024,7 +1025,7 @@ get_select_query_def(Query *query, QryHier *qh)
 static char *
 get_insert_query_def(Query *query, QryHier *qh)
 {
-	char		buf[8192];
+	char		buf[BUFSIZE];
 	char	   *sep;
 	TargetEntry *tle;
 	RangeTblEntry *rte;
@@ -1134,7 +1135,7 @@ get_insert_query_def(Query *query, QryHier *qh)
 static char *
 get_update_query_def(Query *query, QryHier *qh)
 {
-	char		buf[8192];
+	char		buf[BUFSIZE];
 	char	   *sep;
 	TargetEntry *tle;
 	RangeTblEntry *rte;
@@ -1187,7 +1188,7 @@ get_update_query_def(Query *query, QryHier *qh)
 static char *
 get_delete_query_def(Query *query, QryHier *qh)
 {
-	char		buf[8192];
+	char		buf[BUFSIZE];
 	RangeTblEntry *rte;
 
 	/* ----------
@@ -1221,7 +1222,7 @@ get_delete_query_def(Query *query, QryHier *qh)
 static char *
 get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 {
-	char		buf[8192];
+	char		buf[BUFSIZE];
 
 	if (node == NULL)
 		return pstrdup("");
@@ -1408,7 +1409,7 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 static char *
 get_func_expr(QryHier *qh, int rt_index, Expr *expr, bool varprefix)
 {
-	char		buf[8192];
+	char		buf[BUFSIZE];
 	HeapTuple	proctup;
 	Form_pg_proc procStruct;
 	List	   *l;
@@ -1564,7 +1565,7 @@ get_const_expr(Const *constval)
 	FmgrInfo	finfo_output;
 	char	   *extval;
 	bool		isnull = FALSE;
-	char		buf[8192];
+	char		buf[BUFSIZE];
 	char		namebuf[64];
 
 	if (constval->constisnull)
@@ -1601,7 +1602,7 @@ get_sublink_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 	Expr       *expr;
 	List	   *l;
 	char	   *sep;
-	char       buf[8192];
+	char       buf[BUFSIZE];
 
 	buf[0] = '\0';
 

@@ -28,6 +28,11 @@
 #include "preproc.h"
 #include "utils/builtins.h"
 
+#ifdef  YY_READ_BUF_SIZE
+#undef  YY_READ_BUF_SIZE
+#endif
+#define YY_READ_BUF_SIZE	MAX_PARSE_BUFFER
+
 /* some versions of lex define this as a macro */
 #if defined(yywrap)
 #undef yywrap

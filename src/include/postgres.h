@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.21 1999/03/25 03:49:28 tgl Exp $
+ * $Id: postgres.h,v 1.22 1999/05/03 19:10:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,6 +151,7 @@ typedef uint32 CommandId;
  * ----------------
  */
 #define MAXPGPATH		128
+#define MAX_QUERY_SIZE	(BLCKSZ*2)
 
 #define STATUS_OK				(0)
 #define STATUS_ERROR			(-1)

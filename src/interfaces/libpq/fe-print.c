@@ -9,7 +9,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.21 1999/04/25 18:16:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.22 1999/05/03 19:10:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,7 +105,7 @@ PQprint(FILE *fout,
 		int			usePipe = 0;
 		pqsigfunc	oldsigpipehandler = NULL;
 		char	   *pagerenv;
-		char		buf[8192 * 2 + 1];
+		char		buf[MAX_QUERY_SIZE + 1];
 
 		nTups = PQntuples(res);
 		if (!(fieldNames = (char **) calloc(nFields, sizeof(char *))))

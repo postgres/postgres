@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.47 1999/03/17 20:17:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.48 1999/05/03 19:09:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,11 @@
 #include "parser/scansup.h"
 #include "parse.h"
 #include "utils/builtins.h"
+
+#ifdef  YY_READ_BUF_SIZE
+#undef  YY_READ_BUF_SIZE
+#endif
+#define YY_READ_BUF_SIZE	MAX_PARSE_BUFFER
 
 extern char *parseString;
 static char *parseCh;

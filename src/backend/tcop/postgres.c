@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.109 1999/05/01 17:16:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.110 1999/05/03 19:09:54 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -452,14 +452,14 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 			else
 			{
 				/* Print condensed query string to fit in one log line */
-				char		buff[8192 + 1];
+				char		buff[MAX_QUERY_SIZE + 1];
 				char		c,
 						   *s,
 						   *d;
 				int			n,
 							is_space = 1;
 
-				for (s = query_string, d = buff, n = 0; (c = *s) && (n < 8192); s++)
+				for (s = query_string, d = buff, n = 0; (c = *s) && (n < MAX_QUERY_SIZE); s++)
 				{
 					switch (c)
 					{
@@ -1539,7 +1539,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.109 $ $Date: 1999/05/01 17:16:25 $\n");
+		puts("$Revision: 1.110 $ $Date: 1999/05/03 19:09:54 $\n");
 	}
 
 	/* ----------------

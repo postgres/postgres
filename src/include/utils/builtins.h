@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.77 1999/03/15 03:24:31 tgl Exp $
+ * $Id: builtins.h,v 1.78 1999/05/03 19:10:31 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -23,6 +23,7 @@
 #define BUILTINS_H
 
 #include <storage/itemptr.h>
+#include <utils/array.h>
 #include <utils/geo_decls.h>
 #include <utils/datetime.h>
 #include <utils/nabstime.h>
@@ -411,6 +412,7 @@ time_t		datetime_timestamp(DateTime *datetime);
 extern char *bpcharin(char *s, int dummy, int32 atttypmod);
 extern char *bpcharout(char *s);
 extern char *bpchar(char *s, int32 slen);
+extern ArrayType *_bpchar(ArrayType *v, int32 slen);
 extern char *char_bpchar(int32 c);
 extern int32 bpchar_char(char *s);
 extern char *name_bpchar(NameData *s);
@@ -429,6 +431,7 @@ extern uint32 hashbpchar(struct varlena * key);
 extern char *varcharin(char *s, int dummy, int32 atttypmod);
 extern char *varcharout(char *s);
 extern char *varchar(char *s, int32 slen);
+extern ArrayType *_varchar(ArrayType *v, int32 slen);
 extern bool varchareq(char *arg1, char *arg2);
 extern bool varcharne(char *arg1, char *arg2);
 extern bool varcharlt(char *arg1, char *arg2);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.176 1999/04/25 23:10:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.177 1999/05/03 19:10:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,7 @@ static	char	   *has_client_encoding = 0;
 #define CMD_TERMINATE	2
 #define CMD_NEWEDIT		3
 
-#define MAX_QUERY_BUFFER 20000
+#define MAX_QUERY_BUFFER MAX_QUERY_SIZE
 
 #define COPYBUFSIZ	8192
 

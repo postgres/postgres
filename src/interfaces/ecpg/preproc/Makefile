@@ -38,7 +38,9 @@ ecpg: $(OBJ)
 
 pgc.c: pgc.l
 	$(LEX) $<
-	mv lex.yy.c pgc.c
+	sed -e 's/#define YY_BUF_SIZE .*/#define YY_BUF_SIZE 65536/' \
+		<lex.yy.c >pgc.c
+	rm -f lex.yy.c
 
 preproc.o : preproc.h ../include/ecpgtype.h keywords.c c_keywords.c ecpg_keywords.c
 type.o : ../include/ecpgtype.h

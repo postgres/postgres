@@ -10,7 +10,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.15 1999/02/13 23:22:15 momjian Exp $
+ * $Id: array.h,v 1.16 1999/05/03 19:10:25 momjian Exp $
  *
  * NOTES
  *	  XXX the data array should be LONGALIGN'd -- notice that the array
@@ -103,7 +103,7 @@ typedef struct
 #define RETURN_NULL {*isNull = true; return(0); }
  /* #endif *//* irix5 */
 #define NAME_LEN	30
-#define MAX_BUFF_SIZE (1 << 13)
+#define MAX_BUFF_SIZE BLCKSZ
 
 typedef struct
 {
@@ -126,6 +126,8 @@ extern char *array_set(ArrayType *array, int n, int *indx, char *dataPtr,
 extern char *array_assgn(ArrayType *array, int n, int *upperIndx,
 			int *lowerIndx, ArrayType *newArr, int reftype,
 			int len, bool *isNull);
+extern ArrayType *array_map(ArrayType *v, Oid type, char *(fn)(char *p, ...),
+							Oid retType, int nargs, ...);
 extern int	array_eq(ArrayType *array1, ArrayType *array2);
 extern int _LOtransfer(char **destfd, int size, int nitems, char **srcfd,
 			int isSrcLO, int isDestLO);

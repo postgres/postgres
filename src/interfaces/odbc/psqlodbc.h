@@ -49,7 +49,8 @@ typedef UInt4 Oid;
 #endif
 
 /* Limits */
-#define MAX_MESSAGE_LEN				8192
+#define MAX_QUERY_SIZE				(BLCKSZ*2)
+#define MAX_MESSAGE_LEN				MAX_QUERY_SIZE
 #define MAX_CONNECT_STRING			4096
 #define ERROR_MSG_LENGTH			4096
 #define FETCH_MAX					100		/* default number of rows to cache for declare/fetch */

@@ -4,7 +4,7 @@
 #    Makefile for parser
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.19 1998/07/26 04:30:30 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.20 1999/05/03 19:09:40 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -37,7 +37,9 @@ gram.c parse.h: gram.y
 
 scan.c:	scan.l
 	$(LEX) $<
-	mv lex.yy.c scan.c
+	sed -e 's/#define YY_BUF_SIZE .*/#define YY_BUF_SIZE 65536/' \
+		<lex.yy.c >scan.c
+	rm -f lex.yy.c
 
 # The following dependencies on parse.h are computed by
 # make depend, but we state them here explicitly anyway because 

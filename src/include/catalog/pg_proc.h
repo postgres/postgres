@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.96 1999/04/20 03:51:13 tgl Exp $
+ * $Id: pg_proc.h,v 1.97 1999/05/03 19:10:18 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1552,6 +1552,11 @@ DATA(insert OID = 1288 (  int8_text		   PGUID 11 f t f 1 f 25 "20" 100 0 0 100  
 DESCR("convert int8 to text");
 DATA(insert OID = 1289 (  text_int8		   PGUID 11 f t f 1 f 20 "25" 100 0 0 100  text_int8 - ));
 DESCR("convert text to int8");
+
+DATA(insert OID = 1290 (  _bpchar		   PGUID 11 f t f 2 f 1014 "1014 23" 100 0 0 100  _bpchar - ));
+DESCR("truncate _char()");
+DATA(insert OID = 1291 (  _varchar		   PGUID 11 f t f 2 f 1015 "1015 23" 100 0 0 100  _varchar - ));
+DESCR("truncate _varchar()");
 
 DATA(insert OID = 1297 (  timestamp_in	   PGUID 11 f t f 1 f 1296 "0" 100 0 0 100	timestamp_in - ));
 DESCR("(internal)");

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fixade.h,v 1.5 1999/02/13 23:17:33 momjian Exp $
+ * $Id: fixade.h,v 1.6 1999/05/03 19:09:44 momjian Exp $
  *
  *	 NOTES
  *		This must be included in EVERY source file.
@@ -47,11 +47,11 @@
  */
 struct HP_WAY_BOGUS
 {
-	char		hpwb_bogus[8192];
+	char		hpwb_bogus[8191+1];
 };
 struct HP_TOO_BOGUS
 {
-	int			hptb_bogus[8192];
+	int			hptb_bogus[8191+1];
 };
 
 #endif	 /* BROKEN_STRUCT_INIT */

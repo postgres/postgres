@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.38 1999/02/13 23:19:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.39 1999/05/03 19:09:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "postgres.h"
 
@@ -26,6 +27,7 @@
 #include "storage/fd.h"
 #include "fmgr.h"
 #include "utils/array.h"
+#include "utils/elog.h"
 
 #include "libpq/libpq-fs.h"
 #include "libpq/be-fsstubs.h"
@@ -614,7 +616,9 @@ array_out(ArrayType *v, Oid element_type)
 				i,
 				j,
 				k,
+#ifndef TCL_ARRAYS
 				l,
+#endif
 				indx[MAXDIM];
 	bool		dummy_bool;
 	int			ndim,
@@ -1272,6 +1276,156 @@ array_assgn(ArrayType *array,
 	}
 	_ArrayRange(lowerIndx, upperIndx, len, ARR_DATA_PTR(newArr), array, 0);
 	return (char *) array;
+}
+
+/*
+ * array_map()
+ *
+ * Map an arbitrary function to an array and return a new array with
+ * same dimensions and the source elements transformed by fn().
+ */
+ArrayType *
+array_map(ArrayType *v,
+		  Oid type,
+		  char *(fn)(char *p, ...),
+		  Oid retType,
+		  int nargs,
+		  ...)
+{
+	ArrayType   *result;
+	void		*args[4];
+	char		**values;
+	char		*elt;
+	int			*dim;
+	int			ndim;
+	int			nitems;
+	int			i;
+	int			nbytes = 0;
+	int			inp_typlen;
+	bool		inp_typbyval;
+	int			typlen;
+	bool		typbyval;
+	char		typdelim;
+	Oid			typelem;
+	Oid			proc;
+	char	 	typalign;
+	char		*s;
+	char		*p;
+	va_list		ap;
+
+	/* Large objects not yet supported */
+	if (ARR_IS_LO(v) == true) {
+		elog(ERROR, "array_map: large objects not supported");
+	}
+
+	/* Check nargs */
+	if ((nargs < 0) || (nargs > 4)) {
+		elog(ERROR, "array_map: invalid nargs: %d", nargs);
+	}
+
+	/* Copy extra args to local variable */
+	va_start(ap, nargs);
+	for (i=0; i<nargs; i++) {
+		args[i] = (void *) va_arg(ap, char *);
+	}
+	va_end(ap);
+
+	/* Lookup source and result types. Unneeded variables are reused. */
+	system_cache_lookup(type, false, &inp_typlen, &inp_typbyval,
+						&typdelim, &typelem, &proc, &typalign);
+	system_cache_lookup(retType, false, &typlen, &typbyval,
+						&typdelim, &typelem, &proc, &typalign);
+
+	/* Allocate temporary array for new values */
+	ndim   = ARR_NDIM(v);
+	dim    = ARR_DIMS(v);
+	nitems = getNitems(ndim, dim);
+	values = (char **) palloc(nitems * sizeof(char *));
+	MemSet(values, 0, nitems * sizeof(char *));
+
+	/* Loop over source data */
+	s = (char *) ARR_DATA_PTR(v);
+	for (i=0; i<nitems; i++) {
+		/* Get source element */
+		if (inp_typbyval) {
+			switch (inp_typlen) {
+			case 1:
+				elt = (char *) ((int) (*(char *) s));
+				break;
+			case 2:
+				elt = (char *) ((int) (*(int16 *) s));
+				break;
+			case 3:
+			case 4:
+			default:
+				elt = (char *) (*(int32 *) s);
+				break;
+			}
+			s += inp_typlen;
+		} else {
+			elt = s;
+			if (inp_typlen > 0) {
+				s += inp_typlen;
+			} else {
+				s += INTALIGN(*(int32 *) s);
+			}
+		}
+
+		/*
+		 * Apply the given function to source elt and extra args.
+		 * nargs is the number of extra args taken by fn().
+		 */
+		switch (nargs) {
+		case 0:
+			p = (char *) (*fn) (elt);
+			break;
+		case 1:
+			p = (char *) (*fn) (elt, args[0]);
+			break;
+		case 2:
+			p = (char *) (*fn) (elt, args[0], args[1]);
+			break;
+		case 3:
+			p = (char *) (*fn) (elt, args[0], args[1], args[2]);
+			break;
+		case 4:
+		default:
+			p = (char *) (*fn) (elt, args[0], args[1], args[2], args[3]);
+			break;
+		}
+
+		/* Update values and total result size */
+		if (typbyval) {
+			values[i] = (char *) p;
+			nbytes += typlen;
+		} else {
+			int len;
+			len = ((typlen > 0) ? typlen : INTALIGN(*(int32 *) p));
+			/* Needed because _CopyArrayEls tries to pfree items */
+			if (p == elt) {
+				p = (char *) palloc(len);
+				memcpy(p, elt, len);
+			}
+			values[i] = (char *) p;
+			nbytes += len;
+		}
+	}
+
+	/* Allocate and initialize the result array */
+	nbytes += ARR_OVERHEAD(ndim);
+	result = (ArrayType *) palloc(nbytes);
+	MemSet(result, 0, nbytes);
+
+	memcpy((char *) result, (char *) &nbytes, sizeof(int));
+	memcpy((char *) ARR_NDIM_PTR(result), (char *) &ndim, sizeof(int));
+	memcpy((char *) ARR_DIMS(result), ARR_DIMS(v), 2 * ndim * sizeof(int));
+
+	/* Copy new values into the result array. values is pfreed. */
+	_CopyArrayEls((char **) values,
+				  ARR_DATA_PTR(result), nitems,
+				  typlen, typalign, typbyval);
+
+	return result;
 }
 
 /*-----------------------------------------------------------------------------

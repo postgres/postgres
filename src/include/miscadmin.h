@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.36 1999/03/17 22:53:30 momjian Exp $
+ * $Id: miscadmin.h,v 1.37 1999/05/03 19:10:09 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -100,7 +100,8 @@ extern int	SortMem;
 
 extern Oid	LastOidProcessed;	/* for query rewrite */
 
-#define MAX_PARSE_BUFFER 8192
+/* #define MAX_QUERY_SIZE	 (BLCKSZ*2) */
+#define MAX_PARSE_BUFFER MAX_QUERY_SIZE
 
 /*
  *		default number of buffers in buffer pool

@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.30 1999/02/21 03:49:55 scrappy Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.31 1999/05/03 19:10:48 momjian Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -319,7 +319,7 @@ funny_dup17()
 	Relation	rel;
 	TupleDesc	tupdesc;
 	HeapTuple	tuple;
-	char		sql[8192];
+	char		sql[MAX_QUERY_SIZE];
 	char	   *when;
 	int			inserted;
 	int			selected = 0;
@@ -563,7 +563,7 @@ ttdummy()
 	{
 		void	   *pplan;
 		Oid		   *ctypes;
-		char		sql[8192];
+		char		sql[MAX_QUERY_SIZE];
 
 		/* allocate ctypes for preparation */
 		ctypes = (Oid *) palloc(natts * sizeof(Oid));

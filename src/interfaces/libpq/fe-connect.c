@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.95 1999/03/29 08:19:36 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.96 1999/05/03 19:10:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -876,9 +876,9 @@ makeEmptyPGconn(void)
 	conn->asyncStatus = PGASYNC_IDLE;
 	conn->notifyList = DLNewList();
 	conn->sock = -1;
-	conn->inBufSize = 8192;
+	conn->inBufSize = PQ_BUFFER_SIZE;
 	conn->inBuffer = (char *) malloc(conn->inBufSize);
-	conn->outBufSize = 8192;
+	conn->outBufSize = PQ_BUFFER_SIZE;
 	conn->outBuffer = (char *) malloc(conn->outBufSize);
 	if (conn->inBuffer == NULL || conn->outBuffer == NULL)
 	{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.28 1999/02/13 23:15:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.29 1999/05/03 19:09:39 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -44,7 +44,9 @@
 /* [PA] is Pascal André <andre@via.ecp.fr> */
 
 /*#define FSDB 1*/
-#define MAX_LOBJ_FDS 256
+#define MAX_LOBJ_FDS	256
+#define BUFSIZE			1024
+#define FNAME_BUFSIZE	8192
 
 static LargeObjectDesc *cookies[MAX_LOBJ_FDS];
 
@@ -257,9 +259,8 @@ lo_import(text *filename)
 	int			nbytes,
 				tmp;
 
-#define BUFSIZE		   1024
 	char		buf[BUFSIZE];
-	char		fnamebuf[8192];
+	char		fnamebuf[FNAME_BUFSIZE];
 	LargeObjectDesc *lobj;
 	Oid			lobjOid;
 
@@ -324,9 +325,8 @@ lo_export(Oid lobjId, text *filename)
 	int			nbytes,
 				tmp;
 
-#define BUFSIZE		   1024
 	char		buf[BUFSIZE];
-	char		fnamebuf[8192];
+	char		fnamebuf[FNAME_BUFSIZE];
 	LargeObjectDesc *lobj;
 	mode_t		oumask;
 

@@ -51,7 +51,7 @@ static char		*PyPgVersion = "2.2";
 #define CHECK_OPEN        1
 #define CHECK_CLOSE       2
 
-#define MAX_BUFFER_SIZE   8192	/* maximum transaction size */
+#define MAX_BUFFER_SIZE   MAX_QUERY_SIZE	/* maximum transaction size */
 
 #ifndef NO_DIRECT
 #define DIRECT_ACCESS     1		/* enables direct access functions */

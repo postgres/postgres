@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.6 1999/02/13 23:22:42 momjian Exp $
+ * $Id: libpq-int.h,v 1.7 1999/05/03 19:10:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -255,7 +255,7 @@ extern int	pqFlush(PGconn *conn);
 extern int	pqWait(int forRead, int forWrite, PGconn *conn);
 
 /* max length of message to send  */
-#define MAX_MESSAGE_LEN 8193
+#define MAX_MESSAGE_LEN MAX_QUERY_SIZE
 
 /* maximum number of fields in a tuple */
 #define MAX_FIELDS 512

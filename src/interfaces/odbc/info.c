@@ -337,7 +337,7 @@ RETCODE result;
 
     case SQL_MAX_ROW_SIZE: /* ODBC 2.0 */
 		len = 4;
-        value = 8192;
+        value = BLCKSZ;
         break;
 
     case SQL_MAX_ROW_SIZE_INCLUDES_LONG: /* ODBC 2.0 */
@@ -348,9 +348,9 @@ RETCODE result;
         break;
 
     case SQL_MAX_STATEMENT_LEN: /* ODBC 2.0 */
-        /* maybe this should be 8192? */
+        /* maybe this should be 0? */
 		len = 4;
-        value = 0;
+        value = MAX_QUERY_SIZE;
         break;
 
     case SQL_MAX_TABLE_NAME_LEN: /* ODBC 1.0 */
