@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.14 1999/07/16 22:56:01 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.15 1999/09/27 20:54:56 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -120,7 +120,7 @@ endif
 ifeq ($(PORTNAME), irix5)
   install-shlib-dep := install-shlib
   shlib := lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL := -shared
+  LDFLAGS_SL := -shared -rpath $(LIBDIR)
   CFLAGS += $(CFLAGS_SL)
 endif
 
