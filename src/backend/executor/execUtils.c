@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.43 1999/02/13 23:15:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.44 1999/03/20 01:13:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,6 +272,7 @@ ExecAssignResultTypeFromTL(Plan *node, CommonState *commonstate)
 #endif
 		i++;
 	}
+
 	if (len > 0)
 	{
 		ExecAssignResultType(commonstate,
@@ -366,6 +367,53 @@ ExecFreeProjectionInfo(CommonState *commonstate)
 
 	pfree(projInfo);
 	commonstate->cs_ProjInfo = NULL;
+}
+
+/* ----------------
+ *		ExecFreeExprContext
+ * ----------------
+ */
+void
+ExecFreeExprContext(CommonState *commonstate)
+{
+	ExprContext *econtext;
+
+	/* ----------------
+	 *	get expression context.  if NULL then this node has
+	 *	none so we just return.
+	 * ----------------
+	 */
+	econtext = commonstate->cs_ExprContext;
+	if (econtext == NULL)
+		return;
+
+	/* ----------------
+	 *	clean up memory used.
+	 * ----------------
+	 */
+	pfree(econtext);
+	commonstate->cs_ExprContext = NULL;
+}
+
+/* ----------------
+ *		ExecFreeTypeInfo
+ * ----------------
+ */
+void
+ExecFreeTypeInfo(CommonState *commonstate)
+{
+	TupleDesc tupDesc;
+
+	tupDesc = commonstate->cs_ResultTupleSlot->ttc_tupleDescriptor;
+	if (tupDesc == NULL)
+		return;
+
+	/* ----------------
+	 *	clean up memory used.
+	 * ----------------
+	 */
+	FreeTupleDesc(tupDesc);
+	commonstate->cs_ResultTupleSlot->ttc_tupleDescriptor = NULL;
 }
 
 /* ----------------------------------------------------------------

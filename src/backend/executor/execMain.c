@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.80 1999/03/19 18:56:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.81 1999/03/20 01:13:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -394,8 +394,26 @@ ExecutorEnd(QueryDesc *queryDesc, EState *estate)
 
 	EndPlan(queryDesc->plantree, estate);
 
+	/* XXX - clean up some more from ExecutorStart() - er1p */
+	if (NULL == estate->es_snapshot) {
+	  /* nothing to free */
+	} else {
+	  if (estate->es_snapshot->xcnt > 0) { 
+	    pfree(estate->es_snapshot->xip);
+	  }
+	  pfree(estate->es_snapshot);
+	}
+
+	if (NULL == estate->es_param_exec_vals) {
+	  /* nothing to free */
+	} else {
+	  pfree(estate->es_param_exec_vals);
+	  estate->es_param_exec_vals = NULL;
+	}
+
 	/* restore saved refcounts. */
 	BufferRefCountRestore(estate->es_refcount);
+
 }
 
 void
@@ -580,7 +598,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	/*
 	 *	initialize result relation stuff
 	 */
-
+	
 	if (resultRelation != 0 && operation != CMD_SELECT)
 	{
 		/*

@@ -110,6 +110,7 @@ ExecAgg(Agg *node)
 				isNull2 = FALSE;
 	bool		qual_result;
 
+	Datum  oldVal = (Datum) NULL;  /* XXX - so that we can save and free on each iteration - er1p */
 
 	/* ---------------------
 	 *	get state info from node
@@ -372,8 +373,10 @@ ExecAgg(Agg *node)
 						 */
 						args[0] = value1[aggno];
 						args[1] = newVal;
+						oldVal = value1[aggno]; /* XXX - save so we can free later - er1p */
 						value1[aggno] =	(Datum) fmgr_c(&aggfns->xfn1,
 										   (FmgrValues *) args, &isNull1);
+						pfree(oldVal); /* XXX - new, let's free the old datum - er1p */
 						Assert(!isNull1);
 					}
 				}
