@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.108 2003/02/13 05:37:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.109 2003/02/14 01:32:31 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -220,7 +220,8 @@ PGconn *PQconnectdb(const char *conninfo)
       Service name to use for additional parameters.  It specifies a service
       name in pg_service.conf that holds additional connection parameters.
       This allows applications to specify only a service name so connection parameters 
-      can be centrally maintained.  See <literal>pg_service.conf.sample</> for
+      can be centrally maintained.  See 
+      <filename><replaceable>PREFIX</>/share/</>pg_service.conf.sample</> for
       information on how to set up the file.
      </para>
      </listitem>
