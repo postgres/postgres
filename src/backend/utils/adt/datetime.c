@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.96.2.3 2003/01/29 01:09:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.96.2.4 2003/02/20 05:25:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1242,9 +1242,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							case DTK_NOW:
 								tmask = (DTK_DATE_M | DTK_TIME_M | DTK_M(TZ));
 								*dtype = DTK_DATE;
-								GetCurrentTimeUsec(tm, fsec);
-								if (tzp != NULL)
-									*tzp = CTimeZone;
+								GetCurrentTimeUsec(tm, fsec, tzp);
 								break;
 
 							case DTK_YESTERDAY:
@@ -1958,7 +1956,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 							case DTK_NOW:
 								tmask = DTK_TIME_M;
 								*dtype = DTK_TIME;
-								GetCurrentTimeUsec(tm, fsec);
+								GetCurrentTimeUsec(tm, fsec, NULL);
 								break;
 
 							case DTK_ZULU:
