@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.287 2004/10/29 17:53:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.288 2004/10/29 19:30:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2252,7 +2252,6 @@ PQrequestCancel(PGconn *conn)
 	{
 		strcpy(conn->errorMessage.data,
 			   "PQrequestCancel() -- socket() failed: ");
-		conn->errorMessage.len = strlen(conn->errorMessage.data);
 		goto cancel_errReturn;
 	}
 retry3:
@@ -2264,7 +2263,6 @@ retry3:
 			goto retry3;
 		strcpy(conn->errorMessage.data,
 			   "PQrequestCancel() -- connect() failed: ");
-		conn->errorMessage.len = strlen(conn->errorMessage.data);
 		goto cancel_errReturn;
 	}
 
@@ -2287,7 +2285,6 @@ retry4:
 			goto retry4;
 		strcpy(conn->errorMessage.data,
 			   "PQrequestCancel() -- send() failed: ");
-		conn->errorMessage.len = strlen(conn->errorMessage.data);
 		goto cancel_errReturn;
 	}
 
