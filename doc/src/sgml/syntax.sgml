@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.27 2000/12/16 18:22:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.28 2000/12/17 05:47:57 tgl Exp $
 -->
 
  <chapter id="syntax">
@@ -62,7 +62,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.27 2000/12/16 18:22:53 tgl 
 
     <tip>
      <para>
-      Any string can be specified as an identifier if surrounded by
+      Any string can be used as an identifier if surrounded by
       double quotes (<quote>like this!</quote>). Some care is required since
       such an identifier will be case sensitive
       and will retain embedded whitespace and most other special characters.
@@ -361,7 +361,7 @@ UNCOMMITTED UNNAMED
     </programlisting>
 
     where the comment begins with "<literal>/*</literal>" and extends
-    to the first occurrence of "<literal>*/</literal>". These block
+    to the matching occurrence of "<literal>*/</literal>". These block
     comments nest, as specified in SQL99, so that one can comment out
     larger blocks of code which may contain existing block comments.
    </para>
@@ -381,7 +381,7 @@ UNCOMMITTED UNNAMED
     truncated.
     By default, NAMEDATALEN is 32 so the maximum name length is 31 (but
     at the time the system is built, NAMEDATALEN can be changed in
-    src/include/postgres_ext.h).
+    <filename>src/include/postgres_ext.h</filename>).
    </para>
 
    <para>
@@ -408,8 +408,8 @@ UNCOMMITTED UNNAMED
    <title>Constants</title>
 
    <para>
-    There are three <firstterm>implicitly typed constants</firstterm>
-    for use in <productname>Postgres</productname>: strings, integers, 
+    There are three kinds of <firstterm>implicitly typed constants</firstterm>
+    in <productname>Postgres</productname>: strings, integers, 
     and floating point numbers.  Constants can
     also be specified with explicit types, which can enable more
     accurate representation and more efficient handling by the
@@ -442,20 +442,10 @@ UNCOMMITTED UNNAMED
 
     <para>
      <firstterm>Integer constants</firstterm>
-     in SQL are collection of ASCII digits with no decimal point.  Legal
-     values range from -2147483648 to +2147483647.  This will vary
-     depending on the operating system and host machine.
-    </para>
-
-    <para>
-     Note that larger integers can be specified for <type>int8</type>
-     by using <acronym>SQL92</acronym> string notation or
-     <productname>Postgres</productname> type notation:
-
-     <programlisting>
-int8 '4000000000'  -- string style
-'4000000000'::int8 -- Postgres (historical) style
-     </programlisting>
+     in SQL are sequences of ASCII digits with no decimal point.
+     The range of legal values depends on which integer datatype is
+     used, but the plain <literal>integer</literal> type accepts values
+     ranging from -2147483648 to +2147483647.
     </para>
    </sect2>
 
@@ -512,6 +502,28 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      if there is no ambiguity as to the type the constant must be, in which
      case it is automatically coerced.
     </para>
+
+    <para>
+     It is also possible to specify a type coercion using a function-like
+     syntax:
+
+     <synopsis>
+<replaceable>typename</replaceable> ( <replaceable>value</replaceable> )
+     </synopsis>
+
+     although this only works for types whose names are also valid as
+     function names.  (For example, <literal>double precision</literal>
+     can't be used this way --- but the equivalent <literal>float8</literal>
+     can.)
+    </para>
+
+    <para>
+     The <literal>::</literal>, <literal>CAST()</literal>, and function-call
+     syntaxes can also be used to specify run-time type conversions.  But
+     the form <replaceable>type</replaceable>
+     '<replaceable>string</replaceable>' can only be used to specify the
+     type of a literal constant.
+    </para>
    </sect2>
 
    <sect2>
@@ -519,18 +531,20 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 
     <para>
      <firstterm>Array constants</firstterm>
-     are arrays of any Postgres type, including other arrays, string
-     constants, etc.  The general format of an array constant is the
-     following:
+     are n-dimensional arrays of any Postgres datatype.
+     The general format of an array constant is the following:
 
      <synopsis>
-{<replaceable>val1</replaceable><replaceable>delim</replaceable><replaceable>val2</replaceable><replaceable>delim</replaceable>}
+{ <replaceable>val1</replaceable> <replaceable>delim</replaceable> <replaceable>val2</replaceable> <replaceable>delim</replaceable> ... }
      </synopsis>
 
      where <replaceable>delim</replaceable>
-     is the delimiter for the type stored in the <literal>pg_type</literal> class.
-     (For built-in types, this is the comma character (",").  An
-     example of an array constant is
+     is the delimiter character for the type, as recorded in its
+     <literal>pg_type</literal> class entry.
+     (For all built-in types, this is the comma character ",".)
+     Each <replaceable>val</replaceable> is either a constant
+     of the array element type, or a sub-array.
+     An example of an array constant is
 
      <programlisting>
 {{1,2,3},{4,5,6},{7,8,9}}
@@ -541,9 +555,12 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     </para>
 
     <para>
-     Individual array elements can and should be placed between quotation
-     marks whenever possible to avoid ambiguity problems with respect to
-     leading white space.
+     Individual array elements can be placed between single-quote
+     marks to avoid ambiguity problems with respect to leading white space.
+     Without quote marks, the array-value parser will skip white space.
+     Note that to write a quote mark inside a string literal that is to
+     become an array value, you must double the quote mark as described
+     previously.
     </para>
    </sect2>
   </sect1>
@@ -556,7 +573,8 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 
     <para>
      A <firstterm>field</firstterm>
-     is either an attribute of a given class or one of the following:
+     is either a user-defined attribute of a given class or one of the
+     following system-defined attributes:
 
      <variablelist>
       <varlistentry>
@@ -564,8 +582,8 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
        <listitem>
 	<para>
 	 stands for the unique identifier of an instance which is added by
-	 Postgres to all instances automatically. Oids are not reused and are 32
-	 bit quantities.
+	 Postgres to all instances automatically. OIDs are not reused and are
+	 32-bit quantities.
 	</para>
        </listitem>
       </varlistentry>
@@ -592,7 +610,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
       <term>cmin</term>
        <listitem>
 	<para>
-	 The command identifier within the transaction.
+	 The command identifier within the inserting transaction.
 	</para>
        </listitem>
       </varlistentry>
@@ -601,7 +619,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
       <term>cmax</term>
        <listitem>
 	<para>
-	 The identity of the deleting command.
+	 The command identifier within the deleting transaction.
 	</para>
        </listitem>
       </varlistentry>
@@ -609,12 +627,9 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     </para>
 
     <para>
-     For further information on these fields consult
+     For further information on the system attributes consult
      <xref linkend="STON87a" endterm="STON87a">.
-     Times are represented internally as instances of the
-     <literal>abstime</literal>
-     data type.  Transaction and command identifiers are 32 bit quantities.
-     Transactions are assigned sequentially starting at 512.
+     Transaction and command identifiers are 32 bit quantities.
     </para>
    </sect2>
 
@@ -625,27 +640,29 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      A <firstterm>column</firstterm> is a construct of the form:
 
      <synopsis>
-<replaceable>instance</replaceable>{.<replaceable>composite_field</replaceable>}.<replaceable>field</replaceable> `['<replaceable>number</replaceable>`]'
+<replaceable>instance</replaceable>{.<replaceable>composite_field</replaceable>}.<replaceable>field</replaceable> `['<replaceable>subscript</replaceable>`]'
      </synopsis>
 
      <replaceable>instance</replaceable>
      identifies a particular class and can be thought of as standing for
      the instances of that class.  An instance variable is either a class
-     name, a surrogate for a class defined by means of a FROM clause,
-     or the keyword NEW or CURRENT.
-     NEW and CURRENT can only appear in the action portion of a rule, while
-     other instance variables can be used in any SQL statement.
+     name, an alias for a class defined by means of a FROM clause,
+     or the keyword NEW or OLD.
+     (NEW and OLD can only appear in the action portion of a rule, while
+     other instance variables can be used in any SQL statement.)  The
+     instance name can be omitted if the first field name is unique
+     across all the classes being used in the current query.
      <replaceable>composite_field</replaceable>
      is a field of of one of the Postgres composite types,
-     while successive composite fields address attributes in the
+     while successive composite fields select attributes in the
      class(s) to which the composite field evaluates.  Lastly,
      <replaceable>field</replaceable>
      is a normal (base type) field in the class(s) last addressed.  If
      <replaceable>field</replaceable>
-     is of type <literal>array</literal>,
-     then the optional <replaceable>number</replaceable>
-     designator indicates a specific element in the array.  If no number is
-     indicated, then all array elements are returned.
+     is of an array type,
+     then the optional <replaceable>subscript</replaceable>
+     selects a specific element in the array.  If no subscript is
+     provided, then the whole array is selected.
     </para>
    </sect2>
   </sect1>
@@ -654,9 +671,8 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
    <title>Operators</title>
 
    <para>
-    Any built-in system, or user-defined operator may be used in SQL.
-    For the list of built-in and system operators consult
-    <xref linkend="functions">.
+    Any built-in or user-defined operator may be used in SQL.
+    For the list of built-in operators consult <xref linkend="functions">.
     For a list of user-defined operators consult your system administrator
     or run a query on the <literal>pg_operator</literal> class.
     Parentheses may be used for arbitrary grouping of operators in expressions.
@@ -676,12 +692,12 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     An expression is one of the following:
 
     <simplelist>
-     <member>( a_expr )</member>
      <member>constant</member>
-     <member>attribute</member>
-     <member><replaceable>a_expr</replaceable> <replaceable>binary_operator</replaceable> <replaceable>a_expr</replaceable></member>
-     <member><replaceable>a_expr</replaceable> <replaceable>right_unary_operator</replaceable></member>
-     <member><replaceable>left_unary_operator</replaceable> <replaceable>a_expr</replaceable></member>
+     <member>column</member>
+     <member><replaceable>expression</replaceable> <replaceable>binary_operator</replaceable> <replaceable>expression</replaceable></member>
+     <member><replaceable>expression</replaceable> <replaceable>right_unary_operator</replaceable></member>
+     <member><replaceable>left_unary_operator</replaceable> <replaceable>expression</replaceable></member>
+     <member>( <replaceable>expression</replaceable> )</member>
      <member>parameter</member>
      <member>functional expression</member>
      <member>aggregate expression</member>
@@ -689,7 +705,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
    </para>
 
    <para>
-    We have already discussed constants and attributes.  The three kinds of
+    We have already discussed constants and columns.  The three kinds of
     operator expressions indicate respectively binary (infix), right-unary
     (suffix) and left-unary (prefix) operators.  The following sections
     discuss the remaining options.
@@ -701,7 +717,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     <para>
      A <firstterm>parameter</firstterm>
      is used to indicate a parameter in a SQL function.  Typically this
-     is used in SQL function definition statement.  The form of a
+     is used in SQL function definition statements.  The form of a
      parameter is:
 
      <synopsis>
@@ -716,8 +732,7 @@ $<replaceable class="parameter">number</replaceable>
      <programlisting>
 CREATE FUNCTION dept (name)
 	RETURNS dept
-	AS 'select * from 
-	    dept where name=$1'
+	AS 'select * from dept where name = $1'
 	LANGUAGE 'sql';
      </programlisting>
     </para>
@@ -732,7 +747,7 @@ CREATE FUNCTION dept (name)
      enclosed in parentheses:
 
      <synopsis>
-<replaceable>function</replaceable> (<replaceable>a_expr</replaceable> [, <replaceable>a_expr</replaceable> ... ] )
+<replaceable>function</replaceable> (<replaceable>expression</replaceable> [, <replaceable>expression</replaceable> ... ] )
      </synopsis>
     </para>
 
@@ -795,15 +810,15 @@ sqrt(emp.salary)
      of which must be of the form:
 
      <synopsis>
-<replaceable>a_expr</replaceable> [ AS <replaceable>result_attname</replaceable> ]
+<replaceable>expression</replaceable> [ AS <replaceable>result_attname</replaceable> ]
      </synopsis>
 
      where <replaceable>result_attname</replaceable>
      is the name to be assigned to the created column.  If 
      <replaceable>result_attname</replaceable>
      is not present, then <productname>Postgres</productname> selects a
-     default name based on the contents of <replaceable>a_expr</replaceable>.
-     If <replaceable>a_expr</replaceable> is a simple attribute reference
+     default name based on the contents of <replaceable>expression</replaceable>.
+     If <replaceable>expression</replaceable> is a simple attribute reference
      then the default name will be the same as that attribute's name, but
      otherwise the implementation is free to assign any default name.
     </para>
@@ -822,7 +837,7 @@ sqrt(emp.salary)
       <member>OR</member>
      </simplelist>
 
-     A clause is an <replaceable>a_expr</replaceable>
+     A clause is an <replaceable>expression</replaceable>
      that evaluates to a <literal>boolean</literal> over a set of instances.
     </para>
    </sect2>
@@ -832,29 +847,54 @@ sqrt(emp.salary)
 
     <para>
      The <firstterm>from list</firstterm>
-     is a comma-separated list of <firstterm>from expressions</firstterm>.
-     Each "from expression" is of the form:
+     is a comma-separated list of <firstterm>from-expressions</firstterm>.
+     The simplest possibility for a from-expression is:
 
      <synopsis>
-[ <replaceable>class_reference</replaceable> ] <replaceable>instance_variable</replaceable>
-	{, [ <replaceable>class_ref</replaceable> ] <replaceable>instance_variable</replaceable>... }
+<replaceable>class_reference</replaceable> [ [ AS ] <replaceable class="PARAMETER">alias</replaceable> ]
      </synopsis>
 
-     where <replaceable>class_reference</replaceable>
-     is of the form
+     where <replaceable>class_reference</replaceable> is of the form
 
      <synopsis>
-<replaceable>class_name</replaceable> [ * ]
+[ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ]
      </synopsis>
 
-     The "from expression"
-     defines one or more instance variables to range over the class
-     indicated in <replaceable>class_reference</replaceable>.
-     One can also request 
-     the instance variable to range over only the specific class
-     and not those that are beneath the
-     indicated class in the inheritance hierarchy by specifying ONLY before 
-     before the classname.
+     The from-expression defines an instance variable that ranges over the
+     rows of the specified table.  The instance variable's name is either
+     the table name, or the <replaceable>alias</replaceable> if one is given.
+     Ordinarily, if the table has child tables then the instance variable
+     will range over all rows in the inheritance hierarchy starting with
+     the specified table.  If <literal>ONLY</literal> is specified then
+     child tables are not included.  A trailing asterisk <literal>*</literal>
+     can be written to specifically indicate that child tables are included
+     (<literal>ONLY</literal> and <literal>*</literal> are mutually
+     exclusive).
+    </para>
+
+    <para>
+     A from-expression can also be a sub-query:
+
+     <synopsis>
+( <replaceable class="PARAMETER">select-statement</replaceable> ) [ AS ] <replaceable class="PARAMETER">alias</replaceable>
+     </synopsis>
+
+     Here, the effect is as though the SELECT were executed and its results
+     stored in a temporary table, which then becomes available as an instance
+     variable under the given <replaceable>alias</replaceable>.
+    </para>
+
+    <para>
+     Finally, a from-expression can be built up from simpler from-expressions
+     using JOIN clauses:
+
+     <synopsis>
+<replaceable class="PARAMETER">from_expression</replaceable> [ NATURAL ] <replaceable class="PARAMETER">join_type</replaceable> <replaceable class="PARAMETER">from_expression</replaceable>
+    [ ON <replaceable class="PARAMETER">join_condition</replaceable> | USING ( <replaceable class="PARAMETER">join_column_list</replaceable> ) ]
+     </synopsis>
+
+     This syntax allows specification of <firstterm>outer joins</firstterm>.
+     For details see the reference page for SELECT.
     </para>
    </sect2>
 
@@ -868,7 +908,7 @@ sqrt(emp.salary)
     left-associative.  This may lead to non-intuitive behavior; for
     example the boolean operators "&lt;" and "&gt;" have a different
     precedence than the boolean operators "&lt;=" and "&gt;=".  Also,
-    you will sometimes need to add parenthesis when using combinations
+    you will sometimes need to add parentheses when using combinations
     of binary and unary operators.  For instance
 <programlisting>
 SELECT 5 &amp; ~ 6;
@@ -1020,8 +1060,8 @@ SELECT (5 &amp;) ~ 6;
 
    <para>
     Note that the operator precedence rules also apply to user-defined
-    operators that <quote>look like</quote> the built-in operators
-    with special treatment.  For example, if you define a
+    operators that have the same names as the built-in operators
+    mentioned above.  For example, if you define a
     <quote>+</quote> operator for some custom data type it will have
     the same precedence as the built-in <quote>+</quote> operator, no
     matter what yours does.
