@@ -311,12 +311,12 @@ bm   |pluto
 (3 rows)
 
 QUERY: update rtest_person set pname = 'jwieck' where pdesc = 'Jan Wieck';
-QUERY: select * from rtest_admin;
+QUERY: select * from rtest_admin order by pname, sysname;
 pname |sysname
 ------+-------
 bm    |pluto  
-jwieck|orion  
 jwieck|notjw  
+jwieck|orion  
 (3 rows)
 
 QUERY: delete from rtest_system where sysname = 'orion';

@@ -251,7 +251,11 @@ select * from rtest_admin;
 
 update rtest_person set pname = 'jwieck' where pdesc = 'Jan Wieck';
 
-select * from rtest_admin;
+-- Note: use ORDER BY here to ensure consistent output across all systems.
+-- The above UPDATE affects two rows with equal keys, so they could be
+-- updated in either order depending on the whim of the local qsort().
+
+select * from rtest_admin order by pname, sysname;
 
 delete from rtest_system where sysname = 'orion';
 
