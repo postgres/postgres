@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.91 2002/10/27 23:50:05 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.92 2002/10/29 02:36:55 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1707,9 +1707,9 @@ gunzip -c user.ps.gz \
 	<entry><systemitem class="osname">Solaris</></entry>
 	<entry><systemitem>Sparc</></entry>
 	<entry>7.2</entry>
-	<entry>2001-11-12,
-	 Andrew Sullivan (<email>andrew@libertyrms.com</email>)</entry>
-	<entry>2.6-8; see also <filename>doc/FAQ_Solaris</filename></entry>
+	<entry>2002-10-28,
+	 Andrew Sullivan (<email>andrew@libertyrms.info</email>)</entry>
+	<entry>Solaris 7; see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Solaris</></entry>
