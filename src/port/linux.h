@@ -6,6 +6,7 @@
 */
 #  define JMP_BUF
 #  define USE_POSIX_TIME
+#  define USE_POSIX_SIGNAL
 #  if !defined(PPC)
 #    define NEED_I386_TAS_ASM
 #    define HAS_TEST_AND_SET
