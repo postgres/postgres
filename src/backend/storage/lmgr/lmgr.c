@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.25 1999/05/25 22:42:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.26 1999/05/31 01:48:13 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -322,6 +322,7 @@ XactLockTableWait(TransactionId xid)
 	tag.objId.xid = xid;
 
 	LockAcquire(LockTableId, &tag, ShareLock);
+	LockRelease(LockTableId, &tag, ShareLock);
 
 	TransactionIdFlushCache();
 
