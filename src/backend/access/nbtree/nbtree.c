@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.77 2001/01/29 00:39:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.78 2001/02/07 23:35:33 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ bool		FastBuild = true;	/* use sort/build instead */
  * TEMPORARY FLAG FOR TESTING NEW FIX TREE
  * CODE WITHOUT AFFECTING ANYONE ELSE
  */
-bool		FixBTree = false;
+bool		FixBTree = true;
 
 static void _bt_restscan(IndexScanDesc scan);
 

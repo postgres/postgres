@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.80 2001/02/02 19:49:15 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.81 2001/02/07 23:35:33 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -494,12 +494,13 @@ _bt_insertonpg(Relation rel,
 				 * then old root' btpo_parent still points to metapage.
 				 * We have to fix root page in this case.
 				 */
-				if (lpageop->btpo_parent == BTREE_METAPAGE)
+				if (BTreeInvalidParent(lpageop))
 				{
 					if (!FixBTree)
-						elog(ERROR, "bt_insertonpg: no root page found");
+						elog(ERROR, "bt_insertonpg[%s]: no root page found", RelationGetRelationName(rel));
 					_bt_wrtbuf(rel, rbuf);
 					_bt_wrtnorelbuf(rel, buf);
+					elog(NOTICE, "bt_insertonpg[%s]: root page unfound - fixing upper levels", RelationGetRelationName(rel));
 					_bt_fixup(rel, buf);
 					goto formres;
 				}
@@ -549,10 +550,10 @@ _bt_insertonpg(Relation rel,
 					elog(ERROR, "_bt_getstackbuf: my bits moved right off the end of the world!"
 						 "\n\tRecreate index %s.", RelationGetRelationName(rel));
 				pfree(new_item);
+				elog(NOTICE, "bt_insertonpg[%s]: parent page unfound - fixing branch", RelationGetRelationName(rel));
 				_bt_fixbranch(rel, bknum, rbknum, stack);
 				goto formres;
 			}
-
 			/* Recursively update the parent */
 			newres = _bt_insertonpg(rel, pbuf, stack->bts_parent,
 									0, NULL, new_item, stack->bts_offset);
@@ -1313,6 +1314,11 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 		PageSetLSN(metapg, recptr);
 		PageSetSUI(metapg, ThisStartUpID);
 
+		/* we changed their btpo_parent */
+		PageSetLSN(lpage, recptr);
+		PageSetSUI(lpage, ThisStartUpID);
+		PageSetLSN(rpage, recptr);
+		PageSetSUI(rpage, ThisStartUpID);
 	}
 	END_CRIT_SECTION();
 
@@ -1359,22 +1365,6 @@ _bt_fixroot(Relation rel, Buffer oldrootbuf, bool release)
 	rootLSN = PageGetLSN(rootpage);
 	rootblk = BufferGetBlockNumber(rootbuf);
 
-	/*
-	 * Update LSN & StartUpID of old root buffer and its neighbor to
-	 * ensure that they will be written on disk after logging new
-	 * root creation. Unfortunately, for the moment (?) we do not
-	 * log this operation and so possibly break our rule to log entire
-	 * page content of first after checkpoint modification.
-	 */
-	HOLD_INTERRUPTS();
-	oldrootopaque->btpo_parent = rootblk;
-	leftopaque->btpo_parent = rootblk;
-	PageSetLSN(oldrootpage, rootLSN);
-	PageSetSUI(oldrootpage, ThisStartUpID);
-	PageSetLSN(leftpage, rootLSN);
-	PageSetSUI(leftpage, ThisStartUpID);
-	RESUME_INTERRUPTS();
-
 	/* parent page where to insert pointers */
 	buf = rootbuf;
 	page = BufferGetPage(buf);
@@ -1401,7 +1391,13 @@ _bt_fixroot(Relation rel, Buffer oldrootbuf, bool release)
 		rightpage = BufferGetPage(rightbuf);
 		rightopaque = (BTPageOpaque) PageGetSpecialPointer(rightpage);
 
-		/* Update LSN & StartUpID (see comments above) */
+		/*
+		 * Update LSN & StartUpID of child page buffer to ensure that
+		 * it will be written on disk after flushing log record for new
+		 * root creation. Unfortunately, for the moment (?) we do not
+		 * log this operation and so possibly break our rule to log entire
+		 * page content on first after checkpoint modification.
+		 */
 		HOLD_INTERRUPTS();
 		rightopaque->btpo_parent = rootblk;
 		if (XLByteLT(PageGetLSN(rightpage), rootLSN))
@@ -1442,7 +1438,7 @@ _bt_fixroot(Relation rel, Buffer oldrootbuf, bool release)
 			_bt_insertuple(rel, buf, itemsz, btitem, newitemoff);
 
 		/* give up left buffer */
-		_bt_relbuf(rel, leftbuf, BT_WRITE);
+		_bt_wrtbuf(rel, leftbuf);
 		pfree(btitem);
 		leftbuf = rightbuf;
 		leftpage = rightpage;
@@ -1450,7 +1446,7 @@ _bt_fixroot(Relation rel, Buffer oldrootbuf, bool release)
 	}
 
 	/* give up rightmost page buffer */
-	_bt_relbuf(rel, leftbuf, BT_WRITE);
+	_bt_wrtbuf(rel, leftbuf);
 
 	/*
 	 * Here we hold locks on old root buffer, new root buffer we've
@@ -1460,11 +1456,11 @@ _bt_fixroot(Relation rel, Buffer oldrootbuf, bool release)
 	 * then we give up oldrootbuf.
 	 */
 	if (release)
-		_bt_relbuf(rel, oldrootbuf, BT_WRITE);
+		_bt_wrtbuf(rel, oldrootbuf);
 
 	if (rootbuf != buf)
 	{
-		_bt_relbuf(rel, buf, BT_WRITE);
+		_bt_wrtbuf(rel, buf);
 		return(_bt_fixroot(rel, rootbuf, true));
 	}
 
@@ -1483,15 +1479,13 @@ _bt_fixtree(Relation rel, BlockNumber blkno)
 	BTPageOpaque	opaque;
 	BlockNumber		pblkno;
 
-	elog(ERROR, "bt_fixtree: unimplemented , yet (need to recreate index)");
-
 	for ( ; ; )
 	{
 		buf = _bt_getbuf(rel, blkno, BT_READ);
 		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 		if (! P_LEFTMOST(opaque) || P_ISLEAF(opaque))
-			elog(ERROR, "bt_fixtree: invalid start page (need to recreate index)");
+			elog(ERROR, "bt_fixtree[%s]: invalid start page (need to recreate index)", RelationGetRelationName(rel));
 		pblkno = opaque->btpo_parent;
 
 		/* check/fix entire level */
@@ -1500,8 +1494,10 @@ _bt_fixtree(Relation rel, BlockNumber blkno)
 		/*
 		 * No pins/locks are held here. Re-read start page if its
 		 * btpo_parent pointed to meta page else go up one level.
+		 *
+		 * XXX have to catch InvalidBlockNumber at the moment -:(
 		 */
-		if (pblkno == BTREE_METAPAGE)
+		if (pblkno == BTREE_METAPAGE || pblkno == InvalidBlockNumber)
 		{
 			buf = _bt_getbuf(rel, blkno, BT_WRITE);
 			page = BufferGetPage(buf);
@@ -1512,18 +1508,19 @@ _bt_fixtree(Relation rel, BlockNumber blkno)
 				_bt_relbuf(rel, buf, BT_WRITE);
 				return;
 			}
-			pblkno = opaque->btpo_parent;
 			/* Call _bt_fixroot() if there is no upper level */
-			if (pblkno == BTREE_METAPAGE)
+			if (BTreeInvalidParent(opaque))
 			{
+				elog(NOTICE, "bt_fixtree[%s]: fixing root page", RelationGetRelationName(rel));
 				buf = _bt_fixroot(rel, buf, true);
 				_bt_relbuf(rel, buf, BT_WRITE);
 				return;
 			}
 			/* Have to go up one level */
+			pblkno = opaque->btpo_parent;
 			_bt_relbuf(rel, buf, BT_WRITE);
-			blkno = pblkno;
 		}
+		blkno = pblkno;
 	}
 
 }
@@ -1561,17 +1558,17 @@ _bt_fixlevel(Relation rel, Buffer buf, BlockNumber limit)
 	/* Initialize first child data */
 	coff[0] = P_FIRSTDATAKEY(opaque);
 	if (coff[0] > PageGetMaxOffsetNumber(page))
-		elog(ERROR, "bt_fixlevel: invalid maxoff on start page (need to recreate index)");
+		elog(ERROR, "bt_fixlevel[%s]: invalid maxoff on start page (need to recreate index)", RelationGetRelationName(rel));
 	btitem = (BTItem) PageGetItem(page, PageGetItemId(page, coff[0]));
 	cblkno[0] = ItemPointerGetBlockNumber(&(btitem->bti_itup.t_tid));
 	cbuf[0] = _bt_getbuf(rel, cblkno[0], BT_READ);
 	cpage[0] = BufferGetPage(cbuf[0]);
 	copaque[0] = (BTPageOpaque) PageGetSpecialPointer(cpage[0]);
 	if (P_LEFTMOST(opaque) && ! P_LEFTMOST(copaque[0]))
-		elog(ERROR, "bt_fixtlevel: non-leftmost child page of leftmost parent (need to recreate index)");
+		elog(ERROR, "bt_fixtlevel[%s]: non-leftmost child page of leftmost parent (need to recreate index)", RelationGetRelationName(rel));
 	/* caller should take care and avoid this */
 	if (P_RIGHTMOST(copaque[0]))
-		elog(ERROR, "bt_fixtlevel: invalid start child (need to recreate index)");
+		elog(ERROR, "bt_fixtlevel[%s]: invalid start child (need to recreate index)", RelationGetRelationName(rel));
 
 	for ( ; ; )
 	{
@@ -1597,7 +1594,7 @@ _bt_fixlevel(Relation rel, Buffer buf, BlockNumber limit)
 					if (coff[i] == InvalidOffsetNumber)
 						continue;
 					if (coff[cidx] != coff[i] + 1)
-						elog(ERROR, "bt_fixlevel: invalid item order(1) (need to recreate index)");
+						elog(ERROR, "bt_fixlevel[%s]: invalid item order(1) (need to recreate index)", RelationGetRelationName(rel));
 					break;
 				}
 			}
@@ -1629,7 +1626,7 @@ _bt_fixlevel(Relation rel, Buffer buf, BlockNumber limit)
 
 			buf = _bt_getstackbuf(rel, &stack, BT_WRITE);
 			if (buf == InvalidBuffer)
-				elog(ERROR, "bt_fixlevel: pointer disappeared (need to recreate index)");
+				elog(ERROR, "bt_fixlevel[%s]: pointer disappeared (need to recreate index)", RelationGetRelationName(rel));
 
 			page = BufferGetPage(buf);
 			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -1648,7 +1645,7 @@ _bt_fixlevel(Relation rel, Buffer buf, BlockNumber limit)
 				{
 					if (parblk[i] == parblk[i - 1] &&
 								coff[i] != coff[i - 1] + 1)
-						elog(ERROR, "bt_fixlevel: invalid item order(2) (need to recreate index)");
+						elog(ERROR, "bt_fixlevel[%s]: invalid item order(2) (need to recreate index)", RelationGetRelationName(rel));
 					continue;
 				}
 				/* Have to check next page ? */
@@ -1662,7 +1659,7 @@ _bt_fixlevel(Relation rel, Buffer buf, BlockNumber limit)
 					if (coff[i] != InvalidOffsetNumber)	/* found ! */
 					{
 						if (coff[i] != P_FIRSTDATAKEY(newopaque))
-							elog(ERROR, "bt_fixlevel: invalid item order(3) (need to recreate index)");
+							elog(ERROR, "bt_fixlevel[%s]: invalid item order(3) (need to recreate index)", RelationGetRelationName(rel));
 						_bt_relbuf(rel, buf, BT_WRITE);
 						buf = newbuf;
 						page = newpage;
@@ -1791,28 +1788,31 @@ _bt_fixbranch(Relation rel, BlockNumber lblkno,
 		ItemPointerSet(&(stack.bts_btitem.bti_itup.t_tid), lblkno, P_HIKEY);
 		buf = _bt_getstackbuf(rel, &stack, BT_READ);
 		if (buf == InvalidBuffer)
-			elog(ERROR, "bt_fixbranch: left pointer unfound (need to recreate index)");
+			elog(ERROR, "bt_fixbranch[%s]: left pointer unfound (need to recreate index)", RelationGetRelationName(rel));
 		page = BufferGetPage(buf);
 		offnum = _bt_getoff(page, rblkno);
 
 		if (offnum != InvalidOffsetNumber)	/* right pointer found */
 		{
 			if (offnum <= stack.bts_offset)
-				elog(ERROR, "bt_fixbranch: invalid item order (need to recreate index)");
+				elog(ERROR, "bt_fixbranch[%s]: invalid item order (need to recreate index)", RelationGetRelationName(rel));
 			_bt_relbuf(rel, buf, BT_READ);
 			return;
 		}
 
 		/* Pointers are on different parent pages - find right one */
 		lblkno = BufferGetBlockNumber(buf);
+		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+		if (P_RIGHTMOST(opaque))
+			elog(ERROR, "bt_fixbranch[%s]: right pointer unfound(1) (need to recreate index)", RelationGetRelationName(rel));
 
 		stack.bts_parent = NULL;
-		stack.bts_blkno = lblkno;
+		stack.bts_blkno = opaque->btpo_next;
 		stack.bts_offset = InvalidOffsetNumber;
 		ItemPointerSet(&(stack.bts_btitem.bti_itup.t_tid), rblkno, P_HIKEY);
 		rbuf = _bt_getstackbuf(rel, &stack, BT_READ);
 		if (rbuf == InvalidBuffer)
-			elog(ERROR, "bt_fixbranch: right pointer unfound (need to recreate index)");
+			elog(ERROR, "bt_fixbranch[%s]: right pointer unfound(2) (need to recreate index)", RelationGetRelationName(rel));
 		rblkno = BufferGetBlockNumber(rbuf);
 		_bt_relbuf(rel, rbuf, BT_READ);
 
@@ -1834,8 +1834,7 @@ _bt_fixbranch(Relation rel, BlockNumber lblkno,
 		 * then we'll use it to continue, else we'll fix/restore upper
 		 * levels entirely.
 		 */
-		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-		if (opaque->btpo_parent != BTREE_METAPAGE)
+		if (!BTreeInvalidParent(opaque))
 		{
 			blkno = opaque->btpo_parent;
 			_bt_relbuf(rel, buf, BT_READ);
@@ -1847,7 +1846,7 @@ _bt_fixbranch(Relation rel, BlockNumber lblkno,
 		buf = _bt_getbuf(rel, blkno, BT_WRITE);
 		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-		if (opaque->btpo_parent != BTREE_METAPAGE)
+		if (!BTreeInvalidParent(opaque))
 		{
 			blkno = opaque->btpo_parent;
 			_bt_relbuf(rel, buf, BT_WRITE);
@@ -1861,6 +1860,7 @@ _bt_fixbranch(Relation rel, BlockNumber lblkno,
 		break;
 	}
 
+	elog(NOTICE, "bt_fixbranch[%s]: fixing upper levels", RelationGetRelationName(rel));
 	_bt_fixup(rel, buf);
 
 	return;
@@ -1887,10 +1887,11 @@ _bt_fixup(Relation rel, Buffer buf)
 		 * then it's time for _bt_fixtree() to check upper
 		 * levels and fix them, if required.
 		 */
-		if (opaque->btpo_parent != BTREE_METAPAGE)
+		if (!BTreeInvalidParent(opaque))
 		{
 			blkno = opaque->btpo_parent;
 			_bt_relbuf(rel, buf, BT_WRITE);
+			elog(NOTICE, "bt_fixup[%s]: checking/fixing upper levels", RelationGetRelationName(rel));
 			_bt_fixtree(rel, blkno);
 			return;
 		}
@@ -1907,6 +1908,7 @@ _bt_fixup(Relation rel, Buffer buf)
 	 * by us and its btpo_parent points to meta page - time
 	 * for _bt_fixroot().
 	 */
+	elog(NOTICE, "bt_fixup[%s]: fixing root page", RelationGetRelationName(rel));
 	 buf = _bt_fixroot(rel, buf, true);
 	 _bt_relbuf(rel, buf, BT_WRITE);
 
