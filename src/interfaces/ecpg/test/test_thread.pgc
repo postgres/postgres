@@ -16,7 +16,7 @@ int	    iterations = 10;
 EXEC SQL END DECLARE SECTION;
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
 	pthread_t	thread1,
 			thread2;
