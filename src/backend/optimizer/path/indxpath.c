@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.112 2001/10/25 05:49:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.112.2.1 2002/08/22 16:20:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
+#include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
@@ -78,7 +79,7 @@ static bool match_clause_to_indexkey(RelOptInfo *rel, IndexOptInfo *index,
 						 int indexkey, Oid opclass,
 						 Expr *clause, bool join);
 static bool pred_test(List *predicate_list, List *restrictinfo_list,
-		  List *joininfo_list);
+		  List *joininfo_list, int relvarno);
 static bool pred_test_restrict_list(Expr *predicate, List *restrictinfo_list);
 static bool pred_test_recurse_clause(Expr *predicate, Node *clause);
 static bool pred_test_recurse_pred(Expr *predicate, Node *clause);
@@ -152,7 +153,8 @@ create_index_paths(Query *root, RelOptInfo *rel)
 		 * predicate test.
 		 */
 		if (index->indpred != NIL)
-			if (!pred_test(index->indpred, restrictinfo_list, joininfo_list))
+			if (!pred_test(index->indpred, restrictinfo_list, joininfo_list,
+						   lfirsti(rel->relids)))
 				continue;
 
 		/*
@@ -955,7 +957,8 @@ indexable_operator(Expr *clause, Oid opclass, bool indexkey_on_left)
  *	  to CNF format). --Nels, Jan '93
  */
 static bool
-pred_test(List *predicate_list, List *restrictinfo_list, List *joininfo_list)
+pred_test(List *predicate_list, List *restrictinfo_list, List *joininfo_list,
+		  int relvarno)
 {
 	List	   *pred;
 
@@ -977,6 +980,18 @@ pred_test(List *predicate_list, List *restrictinfo_list, List *joininfo_list)
 	if (restrictinfo_list == NIL)
 		return false;			/* no restriction clauses: the test must
 								 * fail */
+
+	/*
+	 * The predicate as stored in the index definition will use varno 1
+	 * for its Vars referencing the indexed relation.  If the indexed
+	 * relation isn't varno 1 in the query, we must adjust the predicate
+	 * to make the Vars match, else equal() won't work.
+	 */
+	if (relvarno != 1)
+	{
+		predicate_list = copyObject(predicate_list);
+		ChangeVarNodes((Node *) predicate_list, 1, relvarno, 0);
+	}
 
 	foreach(pred, predicate_list)
 	{
