@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.31 2000/03/17 02:36:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.32 2000/03/23 00:58:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -194,9 +194,11 @@ clauselist_selectivity(Query *root,
 			else
 			{
 				/* One or both is probably a default estimate,
-				 * so punt and just merge them in generically.
+				 * so supply a default estimate for the selectivity
+				 * of the range query.  We rather optimistically assume
+				 * that the range is tight...
 				 */
-				s1 *= rqlist->hibound * rqlist->lobound;
+				s1 *= 0.01;
 			}
 		}
 		else
