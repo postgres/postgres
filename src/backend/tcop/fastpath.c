@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.39 2000/05/28 17:56:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.40 2000/05/30 07:09:23 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -215,6 +215,8 @@ update_fp_info(Oid func_id, struct fp_info * fip)
 	rettype = pp->prorettype;
 	argtypes = pp->proargtypes;
 
+	fmgr_info(func_id, &fip->flinfo);
+
 	for (i = 0; i < fip->flinfo.fn_nargs; ++i)
 	{
 		if (OidIsValid(argtypes[i]))
@@ -250,8 +252,6 @@ update_fp_info(Oid func_id, struct fp_info * fip)
 
 	fip->xid = GetCurrentTransactionId();
 	fip->cid = GetCurrentCommandId();
-
-	fmgr_info(func_id, &fip->flinfo);
 
 	/*
 	 * This must be last!
