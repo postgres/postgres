@@ -591,12 +591,12 @@ static void initValue(long lng_val) {
 	int i, div, dig;
 	char tmp[2] = " ";
 
-	// set some obvious things
+	/* set some obvious things */
 	value.val = lng_val >= 0 ? lng_val : lng_val * (-1);
 	value.sign = lng_val >= 0 ? '+' : '-';
 	value.maxdigits = log10(2)*(8*sizeof(long)-1);
 
-	// determine the number of digits
+	/* determine the number of digits */
 	for(i=1; i <= value.maxdigits; i++) {
 		if ((int)(value.val / pow(10, i)) != 0) {
 			value.digits = i+1;
@@ -604,7 +604,7 @@ static void initValue(long lng_val) {
 	}
 	value.remaining = value.digits;
 
-	// convert the long to string
+	/* convert the long to string */
 	value.val_string = (char *)malloc(value.digits + 1);
 	for(i=value.digits; i > 0; i--) {
 		div = pow(10,i);
@@ -612,9 +612,9 @@ static void initValue(long lng_val) {
 		tmp[0] = (char)(dig + 48);
 		strcat(value.val_string, tmp);
     }
-	// safety-net
+	/* safety-net */
 	value.val_string[value.digits] = '\0';
-	// clean up
+	/* clean up */
 	free(tmp);
 }
 
@@ -641,34 +641,38 @@ rfmtlong(long lng_val, char *fmt, char *outbuf)
 	int i, j, k, dotpos;
 	int leftalign = 0, blank = 0, sign = 0, entity = 0,
 	    entitydone = 0, signdone = 0, brackets_ok = 0;
-	char temp[fmt_len+1], tmp[2] = " ", lastfmt = ' ', fmtchar = ' ';
+	char *temp;
+	char tmp[2] = " ";
+	char lastfmt = ' ', fmtchar = ' ';
 
-	// put all info about the long in a struct
+	temp = (char *) malloc(fmt_len+1);
+
+	/* put all info about the long in a struct */
 	initValue(lng_val);
 
-	// '<' is the only format, where we have to align left
+	/* '<' is the only format, where we have to align left */
 	if (strchr(fmt, (int)'<')) {
 		leftalign = 1;
 	}
 
-	// '(' requires ')'
+	/* '(' requires ')' */
 	if (strchr(fmt, (int)'(') && strchr(fmt, (int)')')) {
 		brackets_ok = 1;
 	}
 
-	// get position of the right-most dot in the format-string
-	// and fill the temp-string wit '0's up to there.
+	/* get position of the right-most dot in the format-string */
+	/* and fill the temp-string wit '0's up to there. */
 	dotpos = getRightMostDot(fmt);
 
-	// start to parse the formatstring
+	/* start to parse the formatstring */
 	temp[0] = '\0';
-	j = 0;                  // position in temp
-	k = value.digits - 1;   // position in the value_string
+	j = 0;                  /* position in temp */
+	k = value.digits - 1;   /* position in the value_string */
 	for(i=fmt_len-1, j=0; i>=0; i--, j++) {
-		// qualify, where we are in the value_string
+		/* qualify, where we are in the value_string */
 		if (k < 0) {
 			if (leftalign) {
-				// can't use strncat(,,0) here, Solaris would freek out
+				/* can't use strncat(,,0) here, Solaris would freek out */
 				temp[j] = '\0';
 				break;
 			}
@@ -680,7 +684,7 @@ rfmtlong(long lng_val, char *fmt, char *outbuf)
 				sign = 1;
 			}
 		}
-		// if we're right side of the right-most dot, print '0'
+		/* if we're right side of the right-most dot, print '0' */
 		if (dotpos >= 0 && dotpos <= i) {
 			if (dotpos < i) {
 				if (fmt[i] == ')') tmp[0] = value.sign == '-' ? ')' : ' ';
@@ -692,10 +696,10 @@ rfmtlong(long lng_val, char *fmt, char *outbuf)
 			strcat(temp, tmp);
 			continue;
 		}
-		// the ',' needs special attention, if it is in the blank area
+		/* the ',' needs special attention, if it is in the blank area */
 		if (blank && fmt[i] == ',') fmtchar = lastfmt;
 		else fmtchar = fmt[i];
-		// analyse this format-char
+		/* analyse this format-char */
 		switch(fmtchar) {
 			case ',':
 				tmp[0] = ',';
@@ -755,10 +759,10 @@ rfmtlong(long lng_val, char *fmt, char *outbuf)
 		lastfmt = fmt[i];
 		k--;
 	}
-	// safety-net
+	/* safety-net */
 	temp[fmt_len] = '\0';
 
-	// reverse the temp-string and put it into the outbuf
+	/* reverse the temp-string and put it into the outbuf */
 	temp_len = strlen(temp);
 	outbuf[0] = '\0';
 	for(i=temp_len-1; i>=0; i--) {
@@ -767,8 +771,8 @@ rfmtlong(long lng_val, char *fmt, char *outbuf)
 	}
 	outbuf[temp_len] = '\0';
 
-	// cleaning up
-	free(tmp);
+	/* cleaning up */
+	free(temp);
 	free(value.val_string);
 
 	return 0;
