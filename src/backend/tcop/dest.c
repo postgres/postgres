@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.27 1999/04/25 19:27:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.28 1999/04/25 21:50:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,7 +138,7 @@ BeginCommand(char *pname,
 			 *		send fe info on tuples we're about to send
 			 * ----------------
 			 */
-			pq_putmessage('P', pname, strlen(pname)+1);
+			pq_puttextmessage('P', pname);
 
 			/* ----------------
 			 *		if this is a retrieve, then we send back the tuple
@@ -272,7 +272,7 @@ EndCommand(char *commandTag, CommandDest dest)
 			 * ----------------
 			 */
 			sprintf(buf, "%s%s", commandTag, CommandInfo);
-			pq_putmessage('C', buf, strlen(buf)+1);
+			pq_puttextmessage('C', buf);
 			CommandInfo[0] = '\0';
 			break;
 

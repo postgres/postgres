@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.42 1999/04/25 03:19:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.43 1999/04/25 21:50:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "postgres.h"
 #include "miscadmin.h"
 #include "libpq/libpq.h"
+#include "libpq/pqformat.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/trace.h"
@@ -201,8 +202,7 @@ elog(int lev, const char *fmt,...)
 			msgtype = 'E';
 		}
 		/* exclude the timestamp from msg sent to frontend */
-		pq_putmessage(msgtype, line + TIMESTAMP_SIZE,
-					  strlen(line + TIMESTAMP_SIZE) + 1);
+		pq_puttextmessage(msgtype, line + TIMESTAMP_SIZE);
 		/*
 		 * This flush is normally not necessary, since postgres.c will
 		 * flush out waiting data when control returns to the main loop.

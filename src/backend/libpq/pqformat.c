@@ -15,13 +15,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: pqformat.c,v 1.2 1999/04/25 19:27:44 tgl Exp $
+ *  $Id: pqformat.c,v 1.3 1999/04/25 21:50:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * INTERFACE ROUTINES
- * Message output:
+ * Message assembly and output:
  *		pq_beginmessage	- initialize StringInfo buffer
  *		pq_sendbyte		- append a raw byte to a StringInfo buffer
  *		pq_sendint		- append a binary integer to a StringInfo buffer
@@ -32,6 +32,9 @@
  * Note: it is also possible to append data to the StringInfo buffer using
  * the regular StringInfo routines, but this is discouraged since required
  * MULTIBYTE conversion may not occur.
+ *
+ * Special-case message output:
+ *		pq_puttextmessage - generate a MULTIBYTE-converted message in one step
  *
  * Message input:
  *		pq_getint		- get an integer from connection
@@ -207,6 +210,32 @@ pq_endmessage(StringInfo buf)
 	}
 	pfree(buf->data);
 	buf->data = NULL;
+}
+
+/* --------------------------------
+ *		pq_puttextmessage - generate a MULTIBYTE-converted message in one step
+ *
+ *		This is the same as the pqcomm.c routine pq_putmessage, except that
+ *		the message body is a null-terminated string to which MULTIBYTE
+ *		conversion applies.
+ *
+ *		returns 0 if OK, EOF if trouble
+ * --------------------------------
+ */
+int
+pq_puttextmessage(char msgtype, const char *str)
+{
+	int slen = strlen(str);
+#ifdef MULTIBYTE
+	const char *p;
+	p = (const char *) pg_server_to_client((unsigned char *) str, slen);
+	if (p != str)				/* actual conversion has been done? */
+	{
+		str = p;
+		slen = strlen(str);
+	}
+#endif
+	return pq_putmessage(msgtype, str, slen+1);
 }
 
 /* --------------------------------
