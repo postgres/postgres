@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.88 2002/12/18 00:14:47 tgl Exp $
+ * $Id: execnodes.h,v 1.89 2003/01/10 21:08:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -445,15 +445,21 @@ typedef struct BoolExprState
  *		SubPlanState node
  * ----------------
  */
+/* this struct is private in nodeSubplan.c: */
+typedef struct SubPlanHashTableData *SubPlanHashTable;
+
 typedef struct SubPlanState
 {
 	ExprState	xprstate;
 	EState	   *sub_estate;		/* subselect plan has its own EState */
 	struct PlanState *planstate; /* subselect plan's state tree */
+	List	   *exprs;			/* states of combining expression(s) */
+	List	   *args;			/* states of argument expression(s) */
 	bool		needShutdown;	/* TRUE = need to shutdown subplan */
 	HeapTuple	curTuple;		/* copy of most recent tuple from subplan */
-	List	   *oper;			/* states for executable combining exprs */
-	List	   *args;			/* states of argument expression(s) */
+	/* these are used when hashing the subselect's output: */
+	SubPlanHashTable hashtable;	/* hash table for no-nulls subselect rows */
+	SubPlanHashTable hashnulls;	/* hash table for rows with null(s) */
 } SubPlanState;
 
 /* ----------------

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.18 2002/12/12 15:49:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.19 2003/01/10 21:08:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -836,6 +836,18 @@ find_expr_references_walker(Node *node,
 
 		add_object_address(OCLASS_PROC, aggref->aggfnoid, 0,
 						   &context->addrs);
+		/* fall through to examine arguments */
+	}
+	if (IsA(node, SubLink))
+	{
+		SubLink	   *sublink = (SubLink *) node;
+		List	   *opid;
+
+		foreach(opid, sublink->operOids)
+		{
+			add_object_address(OCLASS_OPERATOR, (Oid) lfirsti(opid), 0,
+							   &context->addrs);
+		}
 		/* fall through to examine arguments */
 	}
 	if (is_subplan(node))

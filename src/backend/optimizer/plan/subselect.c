@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.62 2003/01/09 20:50:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.63 2003/01/10 21:08:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/params.h"
 #include "optimizer/clauses.h"
@@ -25,6 +26,7 @@
 #include "parser/parsetree.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -59,8 +61,9 @@ typedef struct finalize_primnode_results
 } finalize_primnode_results;
 
 
-static List *convert_sublink_opers(List *operlist, List *lefthand,
-								   List *targetlist, List **setParams);
+static List *convert_sublink_opers(List *lefthand, List *operOids,
+								   List *targetlist, List **paramIds);
+static bool subplan_is_hashable(SubLink *slink, SubPlan *node);
 static Node *replace_correlation_vars_mutator(Node *node, void *context);
 static Node *process_sublinks_mutator(Node *node, void *context);
 static bool finalize_primnode(Node *node, finalize_primnode_results *results);
@@ -222,11 +225,14 @@ make_subplan(SubLink *slink, List *lefthand)
 	node->rtable = subquery->rtable;
 
 	/*
-	 * Fill in other fields of the SubPlan node.
+	 * Initialize other fields of the SubPlan node.
 	 */
 	node->subLinkType = slink->subLinkType;
 	node->useOr = slink->useOr;
-	node->oper = NIL;
+	node->exprs = NIL;
+	node->paramIds = NIL;
+	node->useHashTable = false;
+	node->unknownEqFalse = false;
 	node->setParam = NIL;
 	node->parParam = NIL;
 	node->args = NIL;
@@ -267,6 +273,7 @@ make_subplan(SubLink *slink, List *lefthand)
 		TargetEntry *te = lfirst(plan->targetlist);
 		Param	   *prm;
 
+		Assert(!te->resdom->resjunk);
 		prm = generate_new_param(te->resdom->restype, te->resdom->restypmod);
 		node->setParam = lappendi(node->setParam, prm->paramid);
 		PlannerInitPlan = lappend(PlannerInitPlan, node);
@@ -274,19 +281,25 @@ make_subplan(SubLink *slink, List *lefthand)
 	}
 	else if (node->parParam == NIL && slink->subLinkType == MULTIEXPR_SUBLINK)
 	{
-		List   *oper;
+		List   *exprs;
 
-		/* Convert the oper list, but don't put it into the SubPlan node */
-		oper = convert_sublink_opers(slink->oper,
-									 lefthand,
-									 plan->targetlist,
-									 &node->setParam);
+		/* Convert the lefthand exprs and oper OIDs into executable exprs */
+		exprs = convert_sublink_opers(lefthand,
+									  slink->operOids,
+									  plan->targetlist,
+									  &node->paramIds);
+		node->setParam = nconc(node->setParam, listCopy(node->paramIds));
 		PlannerInitPlan = lappend(PlannerInitPlan, node);
-		if (length(oper) > 1)
-			result = (Node *) (node->useOr ? make_orclause(oper) :
-							   make_andclause(oper));
+		/*
+		 * The executable expressions are returned to become part of the
+		 * outer plan's expression tree; they are not kept in the initplan
+		 * node.
+		 */
+		if (length(exprs) > 1)
+			result = (Node *) (node->useOr ? make_orclause(exprs) :
+							   make_andclause(exprs));
 		else
-			result = (Node *) lfirst(oper);
+			result = (Node *) lfirst(exprs);
 	}
 	else
 	{
@@ -296,13 +309,20 @@ make_subplan(SubLink *slink, List *lefthand)
 		 * We can't convert subplans of ALL_SUBLINK or ANY_SUBLINK types
 		 * to initPlans, even when they are uncorrelated or undirect
 		 * correlated, because we need to scan the output of the subplan
-		 * for each outer tuple.  However, we have the option to tack a
-		 * MATERIAL node onto the top of an uncorrelated/undirect
-		 * correlated subplan, which lets us do the work of evaluating the
-		 * subplan only once.  We do this if the subplan's top plan node
-		 * is anything more complicated than a plain sequential scan, and
-		 * we do it even for seqscan if the qual appears selective enough
-		 * to eliminate many tuples.
+		 * for each outer tuple.  But if it's an IN (= ANY) test, we might
+		 * be able to use a hashtable to avoid comparing all the tuples.
+		 */
+		if (subplan_is_hashable(slink, node))
+			node->useHashTable = true;
+		/*
+		 * Otherwise, we have the option to tack a MATERIAL node onto the top
+		 * of the subplan, to reduce the cost of reading it repeatedly.  This
+		 * is pointless for a direct-correlated subplan, since we'd have to
+		 * recompute its results each time anyway.  For uncorrelated/undirect
+		 * correlated subplans, we add MATERIAL if the subplan's top plan node
+		 * is anything more complicated than a plain sequential scan, and we
+		 * do it even for seqscan if the qual appears selective enough to
+		 * eliminate many tuples.
 		 *
 		 * XXX It's pretty ugly to be inserting a MATERIAL node at this
 		 * point.  Since subquery_planner has already run SS_finalize_plan
@@ -310,7 +330,7 @@ make_subplan(SubLink *slink, List *lefthand)
 		 * the MATERIAL node.  Possibly this could be fixed by postponing
 		 * SS_finalize_plan processing until setrefs.c is run.
 		 */
-		if (node->parParam == NIL)
+		else if (node->parParam == NIL)
 		{
 			bool		use_material;
 
@@ -365,11 +385,11 @@ make_subplan(SubLink *slink, List *lefthand)
 			}
 		}
 
-		/* Convert the SubLink's oper list into executable form */
-		node->oper = convert_sublink_opers(slink->oper,
-										   lefthand,
-										   plan->targetlist,
-										   NULL);
+		/* Convert the lefthand exprs and oper OIDs into executable exprs */
+		node->exprs = convert_sublink_opers(lefthand,
+											slink->operOids,
+											plan->targetlist,
+											&node->paramIds);
 
 		/*
 		 * Make node->args from parParam.
@@ -398,29 +418,26 @@ make_subplan(SubLink *slink, List *lefthand)
 }
 
 /*
- * convert_sublink_opers: convert a SubLink's oper list from the
- * parser/rewriter format into the executor's format.
+ * convert_sublink_opers: given a lefthand-expressions list and a list of
+ * operator OIDs, build a list of actually executable expressions.  The
+ * righthand sides of the expressions are Params representing the results
+ * of the sub-select.
  *
- * The oper list is initially a list of OpExpr nodes with NIL args.  We
- * convert it to a list of actually executable expressions, in which the
- * specified operators are applied to corresponding elements of the
- * lefthand list and Params representing the results of the subplan.
- *
- * If setParams is not NULL, the paramids of the Params created are added
- * to the *setParams list.
+ * The paramids of the Params created are returned in the *paramIds list.
  */
 static List *
-convert_sublink_opers(List *operlist, List *lefthand,
-					  List *targetlist, List **setParams)
+convert_sublink_opers(List *lefthand, List *operOids,
+					  List *targetlist, List **paramIds)
 {
-	List	   *newoper = NIL;
-	List	   *leftlist = lefthand;
+	List	   *result = NIL;
 	List	   *lst;
 
-	foreach(lst, operlist)
+	*paramIds = NIL;
+
+	foreach(lst, operOids)
 	{
-		OpExpr	   *oper = (OpExpr *) lfirst(lst);
-		Node	   *leftop = lfirst(leftlist);
+		Oid			opid = (Oid) lfirsti(lst);
+		Node	   *leftop = lfirst(lefthand);
 		TargetEntry *te = lfirst(targetlist);
 		Param	   *prm;
 		Operator	tup;
@@ -428,21 +445,21 @@ convert_sublink_opers(List *operlist, List *lefthand,
 		Node	   *left,
 				   *right;
 
+		Assert(!te->resdom->resjunk);
+
 		/* Make the Param node representing the subplan's result */
 		prm = generate_new_param(te->resdom->restype,
 								 te->resdom->restypmod);
 
-		/* Record its ID if needed */
-		if (setParams)
-			*setParams = lappendi(*setParams, prm->paramid);
+		/* Record its ID */
+		*paramIds = lappendi(*paramIds, prm->paramid);
 
-		/* Look up the operator to check its declared input types */
-		Assert(IsA(oper, OpExpr));
+		/* Look up the operator to get its declared input types */
 		tup = SearchSysCache(OPEROID,
-							 ObjectIdGetDatum(oper->opno),
+							 ObjectIdGetDatum(opid),
 							 0, 0, 0);
 		if (!HeapTupleIsValid(tup))
-			elog(ERROR, "cache lookup failed for operator %u", oper->opno);
+			elog(ERROR, "cache lookup failed for operator %u", opid);
 		opform = (Form_pg_operator) GETSTRUCT(tup);
 
 		/*
@@ -453,20 +470,86 @@ convert_sublink_opers(List *operlist, List *lefthand,
 		 */
 		left = make_operand(leftop, exprType(leftop), opform->oprleft);
 		right = make_operand((Node *) prm, prm->paramtype, opform->oprright);
-		newoper = lappend(newoper,
-						  make_opclause(oper->opno,
-										oper->opresulttype,
-										oper->opretset,
-										(Expr *) left,
-										(Expr *) right));
+		result = lappend(result,
+						 make_opclause(opid,
+									   opform->oprresult,
+									   false, /* set-result not allowed */
+									   (Expr *) left,
+									   (Expr *) right));
 
 		ReleaseSysCache(tup);
 
-		leftlist = lnext(leftlist);
+		lefthand = lnext(lefthand);
 		targetlist = lnext(targetlist);
 	}
 
-	return newoper;
+	return result;
+}
+
+/*
+ * subplan_is_hashable: decide whether we can implement a subplan by hashing
+ *
+ * Caution: the SubPlan node is not completely filled in yet.  We can rely
+ * on its plan and parParam fields, however.
+ */
+static bool
+subplan_is_hashable(SubLink *slink, SubPlan *node)
+{
+	double		subquery_size;
+	List	   *opids;
+
+	/*
+	 * The sublink type must be "= ANY" --- that is, an IN operator.
+	 * (We require the operator name to be unqualified, which may be
+	 * overly paranoid, or may not be.)  XXX since we also check that the
+	 * operators are hashable, the test on operator name may be redundant?
+	 */
+	if (slink->subLinkType != ANY_SUBLINK)
+		return false;
+	if (length(slink->operName) != 1 ||
+		strcmp(strVal(lfirst(slink->operName)), "=") != 0)
+		return false;
+	/*
+	 * The subplan must not have any direct correlation vars --- else we'd
+	 * have to recompute its output each time, so that the hashtable wouldn't
+	 * gain anything.
+	 */
+	if (node->parParam != NIL)
+		return false;
+	/*
+	 * The estimated size of the subquery result must fit in SortMem.
+	 * (XXX what about hashtable overhead?)
+	 */
+	subquery_size = node->plan->plan_rows *
+		(MAXALIGN(node->plan->plan_width) + MAXALIGN(sizeof(HeapTupleData)));
+	if (subquery_size > SortMem * 1024L)
+		return false;
+	/*
+	 * The combining operators must be hashable and strict.  (Without
+	 * strictness, behavior in the presence of nulls is too unpredictable.
+	 * We actually must assume even more than plain strictness, see
+	 * nodeSubplan.c for details.)
+	 */
+	foreach(opids, slink->operOids)
+	{
+		Oid			opid = (Oid) lfirsti(opids);
+		HeapTuple	tup;
+		Form_pg_operator optup;
+
+		tup = SearchSysCache(OPEROID,
+							 ObjectIdGetDatum(opid),
+							 0, 0, 0);
+		if (!HeapTupleIsValid(tup))
+			elog(ERROR, "cache lookup failed for operator %u", opid);
+		optup = (Form_pg_operator) GETSTRUCT(tup);
+		if (!optup->oprcanhash || !func_strict(optup->oprcode))
+		{
+			ReleaseSysCache(tup);
+			return false;
+		}
+		ReleaseSysCache(tup);
+	}
+	return true;
 }
 
 /*

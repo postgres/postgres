@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.41 2003/01/09 20:50:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.42 2003/01/10 21:08:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,6 +110,7 @@ ExecSubPlan(SubPlanState *node,
 		Datum		rowresult = BoolGetDatum(!useOr);
 		bool		rownull = false;
 		int			col = 1;
+		List	   *plst;
 
 		if (subLinkType == EXISTS_SUBLINK)
 		{
@@ -155,45 +156,19 @@ ExecSubPlan(SubPlanState *node,
 		 * For ALL, ANY, and MULTIEXPR sublinks, iterate over combining
 		 * operators for columns of tuple.
 		 */
-		foreach(lst, node->oper)
+		plst = subplan->paramIds;
+		foreach(lst, node->exprs)
 		{
 			ExprState  *exprstate = (ExprState *) lfirst(lst);
-			OpExpr	   *expr = (OpExpr *) exprstate->expr;
-			Param	   *prm = lsecond(expr->args);
+			int			paramid = lfirsti(plst);
 			ParamExecData *prmdata;
 			Datum		expresult;
 			bool		expnull;
 
 			/*
-			 * The righthand side of the expression should be either a
-			 * Param or a function call or RelabelType node taking a Param
-			 * as arg (these nodes represent run-time type coercions
-			 * inserted by the parser to get to the input type needed by
-			 * the operator). Find the Param node and insert the actual
-			 * righthand-side value into the param's econtext slot.
-			 *
-			 * XXX possible improvement: could make a list of the ParamIDs
-			 * at startup time, instead of repeating this check at each row.
+			 * Load up the Param representing this column of the sub-select.
 			 */
-			if (!IsA(prm, Param))
-			{
-				switch (nodeTag(prm))
-				{
-					case T_FuncExpr:
-						prm = lfirst(((FuncExpr *) prm)->args);
-						break;
-					case T_RelabelType:
-						prm = (Param *) (((RelabelType *) prm)->arg);
-						break;
-					default:
-						/* will fail below */
-						break;
-				}
-				if (!IsA(prm, Param))
-					elog(ERROR, "ExecSubPlan: failed to find placeholder for subplan result");
-			}
-			Assert(prm->paramkind == PARAM_EXEC);
-			prmdata = &(econtext->ecxt_param_exec_vals[prm->paramid]);
+			prmdata = &(econtext->ecxt_param_exec_vals[paramid]);
 			Assert(prmdata->execPlan == NULL);
 			prmdata->value = heap_getattr(tup, col, tdesc,
 										  &(prmdata->isnull));
@@ -236,6 +211,8 @@ ExecSubPlan(SubPlanState *node,
 					break;		/* needn't look at any more columns */
 				}
 			}
+
+			plst = lnext(plst);
 			col++;
 		}
 
@@ -312,6 +289,8 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 	 */
 	node->needShutdown = false;
 	node->curTuple = NULL;
+	node->hashtable = NULL;
+	node->hashnulls = NULL;
 
 	/*
 	 * create an EState for the subplan

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.139 2003/01/09 20:50:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.140 2003/01/10 21:08:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -366,8 +366,8 @@ transformExpr(ParseState *pstate, Node *expr)
 					 * These fields should be NIL already, but make sure.
 					 */
 					sublink->lefthand = NIL;
-					sublink->oper = NIL;
-					sublink->operIsEquals = FALSE;
+					sublink->operName = NIL;
+					sublink->operOids = NIL;
 					sublink->useOr = FALSE;
 				}
 				else if (sublink->subLinkType == EXPR_SUBLINK)
@@ -392,8 +392,8 @@ transformExpr(ParseState *pstate, Node *expr)
 					 * fields should be NIL already, but make sure.
 					 */
 					sublink->lefthand = NIL;
-					sublink->oper = NIL;
-					sublink->operIsEquals = FALSE;
+					sublink->operName = NIL;
+					sublink->operOids = NIL;
 					sublink->useOr = FALSE;
 				}
 				else
@@ -403,19 +403,13 @@ transformExpr(ParseState *pstate, Node *expr)
 					List	   *right_list = qtree->targetList;
 					int			row_length = length(left_list);
 					bool		needNot = false;
-					List	   *op;
-					char	   *opname;
+					List	   *op = sublink->operName;
+					char	   *opname = strVal(llast(op));
 					List	   *elist;
 
 					/* transform lefthand expressions */
 					foreach(elist, left_list)
 						lfirst(elist) = transformExpr(pstate, lfirst(elist));
-
-					/* get the combining-operator name */
-					Assert(IsA(sublink->oper, A_Expr));
-					op = ((A_Expr *) sublink->oper)->name;
-					opname = strVal(llast(op));
-					sublink->oper = NIL;
 
 					/*
 					 * If the expression is "<> ALL" (with unqualified opname)
@@ -428,14 +422,9 @@ transformExpr(ParseState *pstate, Node *expr)
 						sublink->subLinkType = ANY_SUBLINK;
 						opname = pstrdup("=");
 						op = makeList1(makeString(opname));
+						sublink->operName = op;
 						needNot = true;
 					}
-
-					/* Set operIsEquals if op is unqualified "=" */
-					if (length(op) == 1 && strcmp(opname, "=") == 0)
-						sublink->operIsEquals = TRUE;
-					else
-						sublink->operIsEquals = FALSE;
 
 					/* Set useOr if op is "<>" (possibly qualified) */
 					if (strcmp(opname, "<>") == 0)
@@ -451,19 +440,21 @@ transformExpr(ParseState *pstate, Node *expr)
 							 opname);
 
 					/*
-					 * Scan subquery's targetlist to find values that will
+					 * To build the list of combining operator OIDs, we must
+					 * scan subquery's targetlist to find values that will
 					 * be matched against lefthand values.	We need to
 					 * ignore resjunk targets, so doing the outer
 					 * iteration over right_list is easier than doing it
 					 * over left_list.
 					 */
+					sublink->operOids = NIL;
+
 					while (right_list != NIL)
 					{
 						TargetEntry *tent = (TargetEntry *) lfirst(right_list);
 						Node	   *lexpr;
 						Operator	optup;
 						Form_pg_operator opform;
-						OpExpr	   *newop;
 
 						right_list = lnext(right_list);
 						if (tent->resdom->resjunk)
@@ -496,14 +487,8 @@ transformExpr(ParseState *pstate, Node *expr)
 								 " to be used with quantified predicate subquery",
 								 opname);
 
-						newop = makeNode(OpExpr);
-						newop->opno = oprid(optup);
-						newop->opfuncid = InvalidOid;
-						newop->opresulttype = opform->oprresult;
-						newop->opretset = false;
-						newop->args = NIL; /* for now */
-
-						sublink->oper = lappend(sublink->oper, newop);
+						sublink->operOids = lappendi(sublink->operOids,
+													 oprid(optup));
 
 						ReleaseSysCache(optup);
 					}

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.76 2003/01/09 20:50:53 tgl Exp $
+ * $Id: primnodes.h,v 1.77 2003/01/10 21:08:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -381,25 +381,18 @@ typedef struct BoolExpr
  * it must be replaced in the expression tree by a SubPlan node during
  * planning.
  *
- * NOTE: in the raw output of gram.y, lefthand contains a list of (raw)
- * expressions, and oper contains a single A_Expr (not a list!) containing
- * the string name of the operator, but no arguments.  Also, subselect is
- * a raw parsetree.  During parse analysis, the parser transforms the
+ * NOTE: in the raw output of gram.y, lefthand contains a list of raw
+ * expressions; useOr and operOids are not filled in yet.  Also, subselect
+ * is a raw parsetree.  During parse analysis, the parser transforms the
  * lefthand expression list using normal expression transformation rules.
- * It replaces oper with a list of OpExpr nodes, one per lefthand expression.
- * These nodes represent the parser's resolution of exactly which operator
- * to apply to each pair of lefthand and targetlist expressions.  However,
- * we have not constructed complete Expr trees for these operations yet:
- * the args fields of the OpExpr nodes are NIL.  And subselect is transformed
- * to a Query.  This is the representation seen in saved rules and in the
- * rewriter.
+ * It fills operOids with the OIDs representing the specific operator(s)
+ * to apply to each pair of lefthand and targetlist expressions.
+ * And subselect is transformed to a Query.  This is the representation
+ * seen in saved rules and in the rewriter.
  *
- * In EXISTS and EXPR SubLinks, both lefthand and oper are unused and are
- * always NIL.	useOr is not significant either for these sublink types.
- *
- * The operIsEquals field is TRUE when the combining operator was written as
- * "=" --- if the subLinkType is ANY_SUBLINK, this means the operation is
- * equivalent to "IN".  This case allows special optimizations to be used.
+ * In EXISTS and EXPR SubLinks, lefthand, operName, and operOids are unused
+ * and are always NIL.  useOr is not significant either for these sublink
+ * types.
  * ----------------
  */
 typedef enum SubLinkType
@@ -412,13 +405,12 @@ typedef struct SubLink
 {
 	Expr		xpr;
 	SubLinkType subLinkType;	/* EXISTS, ALL, ANY, MULTIEXPR, EXPR */
-	bool		operIsEquals;	/* TRUE if combining operator is "=" */
 	bool		useOr;			/* TRUE to combine column results with
 								 * "OR" not "AND" */
 	List	   *lefthand;		/* list of outer-query expressions on the
 								 * left */
-	List	   *oper;			/* list of arg-less OpExpr nodes for
-								 * combining operators */
+	List	   *operName;		/* originally specified operator name */
+	List	   *operOids;		/* OIDs of actual combining operators */
 	Node	   *subselect;		/* subselect as Query* or parsetree */
 } SubLink;
 
@@ -427,15 +419,16 @@ typedef struct SubLink
  *
  * The planner replaces SubLink nodes in expression trees with SubPlan
  * nodes after it has finished planning the subquery.  SubPlan contains
- * a sub-plantree and rtable instead of a sub-Query.  Its "oper" field
- * corresponds to the original SubLink's oper list, but has been expanded
- * into valid executable expressions representing the application of the
- * combining operator(s) to the lefthand expressions and values from the
- * inner targetlist.  The original lefthand expressions now appear as
- * left-hand arguments of the OpExpr nodes, while the inner targetlist items
- * are represented by PARAM_EXEC Param nodes.  (Note: if the sub-select
- * becomes an InitPlan rather than a SubPlan, the rebuilt oper list is
- * part of the outer plan tree and so is not stored in the oper field.)
+ * a sub-plantree and rtable instead of a sub-Query.
+ *
+ * In an ordinary subplan, "exprs" points to a list of executable expressions
+ * (OpExpr trees) for the combining operators; their left-hand arguments are
+ * the original lefthand expressions, and their right-hand arguments are
+ * PARAM_EXEC Param nodes representing the outputs of the sub-select.
+ * (NOTE: runtime coercion functions may be inserted as well.)  But if the
+ * sub-select becomes an initplan rather than a subplan, these executable
+ * expressions are part of the outer plan's expression tree (and the SubPlan
+ * node itself is not).  In this case "exprs" is NIL to avoid duplication.
  *
  * The planner also derives lists of the values that need to be passed into
  * and out of the subplan.  Input values are represented as a list "args" of
@@ -444,7 +437,7 @@ typedef struct SubLink
  * The values are assigned to the global PARAM_EXEC params indexed by parParam
  * (the parParam and args lists must have the same length).  setParam is a
  * list of the PARAM_EXEC params that are computed by the sub-select, if it
- * is an initPlan.
+ * is an initplan.
  */
 typedef struct SubPlan
 {
@@ -453,8 +446,9 @@ typedef struct SubPlan
 	SubLinkType subLinkType;	/* EXISTS, ALL, ANY, MULTIEXPR, EXPR */
 	bool		useOr;			/* TRUE to combine column results with
 								 * "OR" not "AND" */
-	List	   *oper;			/* list of executable expressions for
-								 * combining operators (with arguments) */
+	/* The combining operators, transformed to executable expressions: */
+	List	   *exprs;			/* list of OpExpr expression trees */
+	List	   *paramIds;		/* IDs of Params embedded in the above */
 	/* The subselect, transformed to a Plan: */
 	struct Plan *plan;			/* subselect plan itself */
 	int			plan_id;		/* dummy thing because of we haven't equal
@@ -462,10 +456,16 @@ typedef struct SubPlan
 								 * could put *plan itself somewhere else
 								 * (TopPlan node ?)... */
 	List	   *rtable;			/* range table for subselect */
+	/* Information about execution strategy: */
+	bool		useHashTable;	/* TRUE to store subselect output in a hash
+								 * table (implies we are doing "IN") */
+	bool		unknownEqFalse;	/* TRUE if it's okay to return FALSE when
+								 * the spec result is UNKNOWN; this allows
+								 * much simpler handling of null values */
 	/* Information for passing params into and out of the subselect: */
 	/* setParam and parParam are lists of integers (param IDs) */
-	List	   *setParam;		/* non-correlated EXPR & EXISTS subqueries
-								 * have to set some Params for paren Plan */
+	List	   *setParam;		/* initplan subqueries have to set these
+								 * Params for parent plan */
 	List	   *parParam;		/* indices of input Params from parent plan */
 	List	   *args;			/* exprs to pass as parParam values */
 } SubPlan;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.121 2002/12/15 16:17:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.122 2003/01/10 21:08:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2023,8 +2023,8 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				sstate->sub_estate = NULL;
 				sstate->planstate = NULL;
 
-				sstate->oper = (List *)
-					ExecInitExpr((Expr *) subplan->oper, parent);
+				sstate->exprs = (List *)
+					ExecInitExpr((Expr *) subplan->exprs, parent);
 				sstate->args = (List *)
 					ExecInitExpr((Expr *) subplan->args, parent);
 
@@ -2156,7 +2156,7 @@ ExecInitExprInitPlan(SubPlan *node, PlanState *parent)
 	sstate->sub_estate = NULL;
 	sstate->planstate = NULL;
 
-	sstate->oper = (List *) ExecInitExpr((Expr *) node->oper, parent);
+	sstate->exprs = (List *) ExecInitExpr((Expr *) node->exprs, parent);
 	sstate->args = (List *) ExecInitExpr((Expr *) node->args, parent);
 
 	sstate->xprstate.expr = (Expr *) node;

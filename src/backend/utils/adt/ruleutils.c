@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.131 2003/01/09 20:50:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.132 2003/01/10 21:08:15 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -167,6 +167,7 @@ static bool tleIsArrayAssign(TargetEntry *tle);
 static char *generate_relation_name(Oid relid);
 static char *generate_function_name(Oid funcid, int nargs, Oid *argtypes);
 static char *generate_operator_name(Oid operid, Oid arg1, Oid arg2);
+static void print_operator_name(StringInfo buf, List *opname);
 static char *get_relid_attribute_name(Oid relid, AttrNumber attnum);
 
 #define only_marker(rte)  ((rte)->inh ? "" : "ONLY ")
@@ -2111,7 +2112,10 @@ get_rule_expr(Node *node, deparse_context *context,
 				 * rule deparsing, only while EXPLAINing a query
 				 * plan. For now, just punt.
 				 */
-				appendStringInfo(buf, "(subplan)");
+				if (((SubPlan *) node)->useHashTable)
+					appendStringInfo(buf, "(hashed subplan)");
+				else
+					appendStringInfo(buf, "(subplan)");
 			}
 			break;
 
@@ -2619,7 +2623,6 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 	Query	   *query = (Query *) (sublink->subselect);
 	List	   *l;
 	char	   *sep;
-	OpExpr	   *oper;
 	bool		need_paren;
 
 	appendStringInfoChar(buf, '(');
@@ -2647,11 +2650,10 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 	need_paren = true;
 
 	/*
-	 * XXX we assume here that we can get away without qualifying the
-	 * operator name.  Since the name may imply multiple physical
-	 * operators it's rather difficult to do otherwise --- in fact, if the
-	 * operators are in different namespaces any attempt to qualify would
-	 * surely fail.
+	 * XXX we regurgitate the originally given operator name, with or without
+	 * schema qualification.  This is not necessarily 100% right but it's
+	 * the best we can do, since the operators actually used might not all
+	 * be in the same schema.
 	 */
 	switch (sublink->subLinkType)
 	{
@@ -2660,26 +2662,27 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 			break;
 
 		case ANY_SUBLINK:
-			if (sublink->operIsEquals)
+			if (length(sublink->operName) == 1 &&
+				strcmp(strVal(lfirst(sublink->operName)), "=") == 0)
 			{
-				/* Represent it as IN */
+				/* Represent = ANY as IN */
 				appendStringInfo(buf, "IN ");
 			}
 			else
 			{
-				oper = (OpExpr *) lfirst(sublink->oper);
-				appendStringInfo(buf, "%s ANY ", get_opname(oper->opno));
+				print_operator_name(buf, sublink->operName);
+				appendStringInfo(buf, " ANY ");
 			}
 			break;
 
 		case ALL_SUBLINK:
-			oper = (OpExpr *) lfirst(sublink->oper);
-			appendStringInfo(buf, "%s ALL ", get_opname(oper->opno));
+			print_operator_name(buf, sublink->operName);
+			appendStringInfo(buf, " ALL ");
 			break;
 
 		case MULTIEXPR_SUBLINK:
-			oper = (OpExpr *) lfirst(sublink->oper);
-			appendStringInfo(buf, "%s ", get_opname(oper->opno));
+			print_operator_name(buf, sublink->operName);
+			appendStringInfoChar(buf, ' ');
 			break;
 
 		case EXPR_SUBLINK:
@@ -3272,6 +3275,29 @@ generate_operator_name(Oid operid, Oid arg1, Oid arg2)
 	ReleaseSysCache(opertup);
 
 	return buf.data;
+}
+
+/*
+ * Print out a possibly-qualified operator name
+ */
+static void
+print_operator_name(StringInfo buf, List *opname)
+{
+	int		nnames = length(opname);
+
+	if (nnames == 1)
+		appendStringInfo(buf, "%s", strVal(lfirst(opname)));
+	else
+	{
+		appendStringInfo(buf, "OPERATOR(");
+		while (nnames-- > 1)
+		{
+			appendStringInfo(buf, "%s.",
+							 quote_identifier(strVal(lfirst(opname))));
+			opname = lnext(opname);
+		}
+		appendStringInfo(buf, "%s)", strVal(lfirst(opname)));
+	}
 }
 
 /*

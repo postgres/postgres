@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.178 2003/01/09 20:50:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.179 2003/01/10 21:08:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,10 +287,10 @@ static bool
 _equalSubLink(SubLink *a, SubLink *b)
 {
 	COMPARE_SCALAR_FIELD(subLinkType);
-	COMPARE_SCALAR_FIELD(operIsEquals);
 	COMPARE_SCALAR_FIELD(useOr);
 	COMPARE_NODE_FIELD(lefthand);
-	COMPARE_NODE_FIELD(oper);
+	COMPARE_NODE_FIELD(operName);
+	COMPARE_INTLIST_FIELD(operOids);
 	COMPARE_NODE_FIELD(subselect);
 
 	return true;
@@ -301,10 +301,13 @@ _equalSubPlan(SubPlan *a, SubPlan *b)
 {
 	COMPARE_SCALAR_FIELD(subLinkType);
 	COMPARE_SCALAR_FIELD(useOr);
-	COMPARE_NODE_FIELD(oper);
+	COMPARE_NODE_FIELD(exprs);
+	COMPARE_INTLIST_FIELD(paramIds);
 	/* should compare plans, but have to settle for comparing plan IDs */
 	COMPARE_SCALAR_FIELD(plan_id);
 	COMPARE_NODE_FIELD(rtable);
+	COMPARE_SCALAR_FIELD(useHashTable);
+	COMPARE_SCALAR_FIELD(unknownEqFalse);
 	COMPARE_INTLIST_FIELD(setParam);
 	COMPARE_INTLIST_FIELD(parParam);
 	COMPARE_NODE_FIELD(args);

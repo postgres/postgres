@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.120 2002/12/15 16:17:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.121 2003/01/10 21:08:13 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -721,7 +721,7 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
  * mistakenly think that something like "WHERE random() < 0.5" can be treated
  * as a constant qualification.
  *
- * XXX we do not examine sublinks/subplans to see if they contain uses of
+ * XXX we do not examine sub-selects to see if they contain uses of
  * mutable functions.  It's not real clear if that is correct or not...
  */
 bool
@@ -759,6 +759,18 @@ contain_mutable_functions_walker(Node *node, void *context)
 			return true;
 		/* else fall through to check args */
 	}
+	if (IsA(node, SubLink))
+	{
+		SubLink	   *sublink = (SubLink *) node;
+		List	   *opid;
+
+		foreach(opid, sublink->operOids)
+		{
+			if (op_volatile((Oid) lfirsti(opid)) != PROVOLATILE_IMMUTABLE)
+				return true;
+		}
+		/* else fall through to check args */
+	}
 	return expression_tree_walker(node, contain_mutable_functions_walker,
 								  context);
 }
@@ -776,7 +788,7 @@ contain_mutable_functions_walker(Node *node, void *context)
  * volatile function) is found. This test prevents invalid conversions
  * of volatile expressions into indexscan quals.
  *
- * XXX we do not examine sublinks/subplans to see if they contain uses of
+ * XXX we do not examine sub-selects to see if they contain uses of
  * volatile functions.	It's not real clear if that is correct or not...
  */
 bool
@@ -814,6 +826,18 @@ contain_volatile_functions_walker(Node *node, void *context)
 			return true;
 		/* else fall through to check args */
 	}
+	if (IsA(node, SubLink))
+	{
+		SubLink	   *sublink = (SubLink *) node;
+		List	   *opid;
+
+		foreach(opid, sublink->operOids)
+		{
+			if (op_volatile((Oid) lfirsti(opid)) == PROVOLATILE_VOLATILE)
+				return true;
+		}
+		/* else fall through to check args */
+	}
 	return expression_tree_walker(node, contain_volatile_functions_walker,
 								  context);
 }
@@ -830,7 +854,7 @@ contain_volatile_functions_walker(Node *node, void *context)
  * Returns true if any nonstrict construct is found --- ie, anything that
  * could produce non-NULL output with a NULL input.
  *
- * XXX we do not examine sublinks/subplans to see if they contain uses of
+ * XXX we do not examine sub-selects to see if they contain uses of
  * nonstrict functions.	It's not real clear if that is correct or not...
  * for the current usage it does not matter, since inline_function()
  * rejects cases with sublinks.
@@ -887,6 +911,18 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 		return true;
 	if (IsA(node, BooleanTest))
 		return true;
+	if (IsA(node, SubLink))
+	{
+		SubLink	   *sublink = (SubLink *) node;
+		List	   *opid;
+
+		foreach(opid, sublink->operOids)
+		{
+			if (!op_strict((Oid) lfirsti(opid)))
+				return true;
+		}
+		/* else fall through to check args */
+	}
 	return expression_tree_walker(node, contain_nonstrict_functions_walker,
 								  context);
 }
@@ -2130,8 +2166,8 @@ substitute_actual_parameters_mutator(Node *node,
  * walker on all the expression subtrees of the given Query node.
  *
  * expression_tree_walker will handle SubPlan nodes by recursing normally
- * into the "oper" and "args" lists (which are expressions belonging to the
- * outer plan).  It will not touch the completed subplan, however.  Since
+ * into the "exprs" and "args" lists (which are expressions belonging to
+ * the outer plan).  It will not touch the completed subplan, however.  Since
  * there is no link to the original Query, it is not possible to recurse into
  * subselects of an already-planned expression tree.  This is OK for current
  * uses, but may need to be revisited in future.
@@ -2224,11 +2260,6 @@ expression_tree_walker(Node *node,
 			{
 				SubLink    *sublink = (SubLink *) node;
 
-				/*
-				 * We only recurse into the lefthand list (the incomplete
-				 * OpExpr nodes in the oper list are deemed uninteresting,
-				 * perhaps even confusing).
-				 */
 				if (expression_tree_walker((Node *) sublink->lefthand,
 										   walker, context))
 					return true;
@@ -2243,8 +2274,8 @@ expression_tree_walker(Node *node,
 			{
 				SubPlan *subplan = (SubPlan *) node;
 
-				/* recurse into the oper list, but not into the Plan */
-				if (expression_tree_walker((Node *) subplan->oper,
+				/* recurse into the exprs list, but not into the Plan */
+				if (expression_tree_walker((Node *) subplan->exprs,
 										   walker, context))
 					return true;
 				/* also examine args list */
@@ -2451,7 +2482,7 @@ query_tree_walker(Query *query,
  * and qualifier clauses during the planning stage.
  *
  * expression_tree_mutator will handle a SubPlan node by recursing into
- * the "oper" and "args" lists (which belong to the outer plan), but it
+ * the "exprs" and "args" lists (which belong to the outer plan), but it
  * will simply copy the link to the inner plan, since that's typically what
  * expression tree mutators want.  A mutator that wants to modify the subplan
  * can force appropriate behavior by recognizing SubPlan expression nodes
@@ -2567,8 +2598,7 @@ expression_tree_mutator(Node *node,
 		case T_SubLink:
 			{
 				/*
-				 * We transform the lefthand side, but not the oper list nor
-				 * the subquery.
+				 * We transform the lefthand side, but not the subquery.
 				 */
 				SubLink    *sublink = (SubLink *) node;
 				SubLink    *newnode;
@@ -2584,10 +2614,10 @@ expression_tree_mutator(Node *node,
 				SubPlan	   *newnode;
 
 				FLATCOPY(newnode, subplan, SubPlan);
+				/* transform exprs list */
+				MUTATE(newnode->exprs, subplan->exprs, List *);
 				/* transform args list (params to be passed to subplan) */
 				MUTATE(newnode->args, subplan->args, List *);
-				/* transform oper list as well */
-				MUTATE(newnode->oper, subplan->oper, List *);
 				/* but not the sub-Plan itself, which is referenced as-is */
 				return (Node *) newnode;
 			}
