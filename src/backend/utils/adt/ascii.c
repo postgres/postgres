@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * ascii.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.13 2002/08/29 07:22:26 ishii Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.13.2.1 2003/04/02 21:08:07 tgl Exp $
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
  *
@@ -27,9 +27,9 @@ static text *encode_to_ascii(text *data, int enc);
 char *
 pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *desc, int enc)
 {
-	unsigned char *x = NULL;
-	unsigned char *ascii = NULL;
-	int			range = 0;
+	unsigned char *x;
+	unsigned char *ascii;
+	int			range;
 
 	/*
 	 * relevant start for an encoding
@@ -66,12 +66,13 @@ pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *desc, int
 	{
 		elog(ERROR, "pg_to_ascii(): unsupported encoding from %s",
 			 pg_encoding_to_char(enc));
+		return NULL;			/* keep compiler quiet */
 	}
 
 	/*
 	 * Encode
 	 */
-	for (x = src; x <= src_end; x++)
+	for (x = src; x < src_end; x++)
 	{
 		if (*x < 128)
 			*desc++ = *x;
