@@ -3,16 +3,12 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.16 2000/02/07 23:10:06 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.17 2000/02/16 13:15:26 momjian Exp $
  */
-#include <c.h>
+#include "postgres.h"
 #include "describe.h"
 
-#include <string.h>
-
-#include <postgres.h>			/* for VARHDRSZ, int4 type */
-#include <postgres_ext.h>
-#include <libpq-fe.h>
+#include "libpq-fe.h"
 
 #include "common.h"
 #include "settings.h"

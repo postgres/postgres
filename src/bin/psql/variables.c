@@ -3,12 +3,11 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/variables.c,v 1.6 2000/02/13 21:45:14 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/variables.c,v 1.7 2000/02/16 13:15:26 momjian Exp $
  */
-#include <c.h>
+#include "postgres.h"
 #include "variables.h"
 
-#include <stdlib.h>
 #include <assert.h>
 
 

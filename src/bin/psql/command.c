@@ -3,16 +3,13 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.18 2000/02/07 23:10:04 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.19 2000/02/16 13:15:26 momjian Exp $
  */
-#include <c.h>
+#include "postgres.h"
 #include "command.h"
 
 #include <errno.h>
 #include <assert.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <ctype.h>
 #ifndef WIN32
 #include <sys/types.h>			/* for umask() */
@@ -22,8 +19,8 @@
 #include <win32.h>
 #endif
 
-#include <libpq-fe.h>
-#include <pqexpbuffer.h>
+#include "libpq-fe.h"
+#include "pqexpbuffer.h"
 
 #include "common.h"
 #include "copy.h"

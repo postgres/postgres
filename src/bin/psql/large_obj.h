@@ -3,12 +3,10 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.h,v 1.7 2000/01/29 16:58:49 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.h,v 1.8 2000/02/16 13:15:26 momjian Exp $
  */
 #ifndef LARGE_OBJ_H
 #define LARGE_OBJ_H
-
-#include <c.h>
 
 bool		do_lo_export(const char *loid_arg, const char *filename_arg);
 bool		do_lo_import(const char *filename_arg, const char *comment_arg);

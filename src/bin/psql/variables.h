@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/variables.h,v 1.6 2000/02/13 21:45:14 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/variables.h,v 1.7 2000/02/16 13:15:26 momjian Exp $
  */
 
 /*
@@ -14,7 +14,6 @@
 
 #ifndef VARIABLES_H
 #define VARIABLES_H
-#include <c.h>
 
 #define VALID_VARIABLE_CHARS "abcdefghijklmnopqrstuvwxyz"\
                              "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "0123456789_"

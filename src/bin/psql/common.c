@@ -3,15 +3,12 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.13 2000/02/13 21:45:14 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.14 2000/02/16 13:15:26 momjian Exp $
  */
-#include <c.h>
+#include "postgres.h"
 #include "common.h"
 
 #include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <stdarg.h>
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
@@ -27,10 +24,10 @@
 #include <win32.h>
 #endif
 
-#include <libpq-fe.h>
-#include <postgres_ext.h>
-#include <pqsignal.h>
-#include <version.h>
+#include "libpq-fe.h"
+#include "postgres_ext.h"
+#include "pqsignal.h"
+#include "version.h"
 
 #include "settings.h"
 #include "variables.h"

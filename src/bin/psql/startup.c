@@ -3,14 +3,11 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.23 2000/02/13 21:45:14 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.24 2000/02/16 13:15:26 momjian Exp $
  */
-#include <c.h>
+#include "postgres.h"
 
 #include <sys/types.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
 
 #ifndef WIN32
 #include <unistd.h>

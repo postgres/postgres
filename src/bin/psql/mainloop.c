@@ -3,16 +3,12 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.19 2000/02/13 21:45:14 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.20 2000/02/16 13:15:26 momjian Exp $
  */
-#include <c.h>
+#include "postgres.h"
 #include "mainloop.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include <pqexpbuffer.h>
+#include "pqexpbuffer.h"
 
 #include "settings.h"
 #include "prompt.h"

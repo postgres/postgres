@@ -3,14 +3,11 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.9 2000/01/29 16:58:48 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.10 2000/02/16 13:15:26 momjian Exp $
  */
-#include <c.h>
+#include "postgres.h"
 #include "copy.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <errno.h>
 #include <assert.h>
 #ifndef WIN32
@@ -19,7 +16,7 @@
 #include <io.h>					/* I think */
 #endif
 
-#include <libpq-fe.h>
+#include "libpq-fe.h"
 
 #include "settings.h"
 #include "common.h"

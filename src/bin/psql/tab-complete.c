@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.11 2000/02/15 20:49:22 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.12 2000/02/16 13:15:26 momjian Exp $
  */
 
 /*-----------
@@ -32,7 +32,7 @@
     gracefully.
 -------------*/
 
-#include <c.h>
+#include "postgres.h"
 #include "tab-complete.h"
 
 #include "input.h"
@@ -40,15 +40,12 @@
 /* If we don't have this, we might as well forget about the whole thing: */
 #ifdef USE_READLINE
 
-#include <stdio.h>
-#include <string.h>
 #include <ctype.h> /* toupper */
-#include <stdlib.h> /* malloc, free */
 #ifdef USE_ASSERT_CHECKING
 #include <assert.h>
 #endif
 
-#include <libpq-fe.h>
+#include "libpq-fe.h"
 
 #include "common.h"
 #include "settings.h"

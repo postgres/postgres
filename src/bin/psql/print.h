@@ -3,16 +3,12 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.h,v 1.6 2000/01/29 16:58:49 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.h,v 1.7 2000/02/16 13:15:26 momjian Exp $
  */
 #ifndef PRINT_H
 #define PRINT_H
 
-#include <config.h>
-#include <c.h>
-
-#include <stdio.h>
-#include <libpq-fe.h>
+#include "libpq-fe.h"
 
 enum printFormat
 {

@@ -3,18 +3,15 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.24 2000/02/07 23:10:06 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.25 2000/02/16 13:15:26 momjian Exp $
  */
-#include <c.h>
+#include "postgres.h"
 #include "stringutils.h"
 
 #include <ctype.h>
-#include <stdlib.h>
-#include <string.h>
 #include <assert.h>
-#include <stdio.h>
 
-#include <libpq-fe.h>
+#include "libpq-fe.h"
 
 
 

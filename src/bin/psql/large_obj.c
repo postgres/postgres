@@ -3,16 +3,12 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.8 2000/02/07 23:10:06 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.9 2000/02/16 13:15:26 momjian Exp $
  */
-#include <c.h>
+#include "postgres.h"
 #include "large_obj.h"
 
-#include <stdio.h>
-#include <string.h>
-
-#include <libpq-fe.h>
-#include <postgres.h>
+#include "libpq-fe.h"
 
 #include "settings.h"
 #include "variables.h"

@@ -3,13 +3,11 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.11 2000/02/09 16:23:43 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.12 2000/02/16 13:15:26 momjian Exp $
  */
-#include <c.h>
+#include "postgres.h"
 #include "print.h"
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
 #include <signal.h>
 #ifndef WIN32
@@ -20,9 +18,8 @@
 #define pclose(x) _pclose(x)
 #endif
 
-#include <pqsignal.h>
-#include <libpq-fe.h>
-#include <postgres_ext.h>		/* for Oid type */
+#include "pqsignal.h"
+#include "libpq-fe.h"
 
 #ifndef __CYGWIN__
 #define DEFAULT_PAGER "more"

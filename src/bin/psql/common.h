@@ -3,13 +3,12 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.h,v 1.5 2000/01/29 16:58:48 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.h,v 1.6 2000/02/16 13:15:26 momjian Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H
 
-#include <c.h>
-#include <libpq-fe.h>
+#include "libpq-fe.h"
 
 char *		xstrdup(const char *string);
 
