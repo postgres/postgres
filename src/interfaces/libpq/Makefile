@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.1.1.1 1996/07/09 06:22:16 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.2 1996/07/29 20:52:24 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -91,6 +91,7 @@ install-headers: beforeinstall-headers
 	@echo "#define OIDNAMELEN $(OIDNAMELEN)" >> $(TEMPDIR)/postgres.h
 	@cat $(srcdir)/backend/include/postgres.h >> $(TEMPDIR)/postgres.h
 	$(INSTALL) $(INSTLOPTS) $(TEMPDIR)/postgres.h $(HEADERDIR)/postgres.h
+	@rm -f $(TEMPDIR)/c.h $(TEMPDIR)/postgres.h
 
 install:: install-headers
 
