@@ -1,11 +1,11 @@
 # "pgscripts" translation to Brazilian Portuguese Language.
-# Euler Taveira de Oliveira <euler@ufgnet.ufg.br>, 2003.
+# Euler Taveira de Oliveira <euler@ufgnet.ufg.br>, 2003, 2004.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-09-28 14:01-0300\n"
-"PO-Revision-Date: 2004-09-28 14:10-0300\n"
+"POT-Creation-Date: 2004-10-27 13:07-0300\n"
+"PO-Revision-Date: 2004-10-27 18:36-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@ufgnet.ufg.br>\n"
 "Language-Team: Brazilian Portuguese <pgsqlbr-dev@lists.querencialivre.rs.gov."
 "br>\n"
@@ -73,7 +73,7 @@ msgstr ""
 #: createdb.c:221
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
 msgstr ""
-"  -D, --tablespace=TABLESPACE     tablespace padrão para o banco de dados\n"
+"  -D, --tablespace=TABLESPACE  tablespace padrão para o banco de dados\n"
 
 #: createdb.c:222
 msgid "  -E, --encoding=ENCODING      encoding for the database\n"
@@ -82,31 +82,31 @@ msgstr "  -E, --encoding=CODIFICAÇÃO   codificação para o banco de dados\n"
 #: createdb.c:223
 msgid "  -O, --owner=OWNER            database user to own the new database\n"
 msgstr ""
-"  -O, --owner=DONO          usuário do banco que será dono do banco de "
+"  -O, --owner=DONO             usuário do banco que será dono do banco de "
 "dados\n"
 
 #: createdb.c:224
 msgid "  -T, --template=TEMPLATE      template database to copy\n"
-msgstr "  -T, --template=MODELO     modelo de banco de dados para copiar\n"
+msgstr "  -T, --template=MODELO        modelo de banco de dados para copiar\n"
 
 #: createdb.c:225
 msgid ""
 "  -e, --echo                   show the commands being sent to the server\n"
 msgstr ""
-"  -e, --echo                      mostra os comandos enviados ao servidor\n"
+"  -e, --echo                   mostra os comandos enviados ao servidor\n"
 
 #: createdb.c:226
 msgid "  -q, --quiet                  don't write any messages\n"
-msgstr "  -q, --quiet                     não mostra nenhuma mensagem\n"
+msgstr "  -q, --quiet                  não mostra nenhuma mensagem\n"
 
 #: createdb.c:227
 msgid "  --help                       show this help, then exit\n"
-msgstr "  --help                          mostra esta ajuda e sai\n"
+msgstr "  --help                       mostra esta ajuda e sai\n"
 
 #: createdb.c:228
 msgid "  --version                    output version information, then exit\n"
 msgstr ""
-"  --version                       mostra informação sobre a versão e sai\n"
+"  --version                    mostra informação sobre a versão e sai\n"
 
 #: createdb.c:229 createuser.c:255 clusterdb.c:244 vacuumdb.c:273
 msgid ""
@@ -357,7 +357,7 @@ msgstr "  -q, --quiet               não exibe nenhuma mensagem\n"
 msgid ""
 "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
 msgstr ""
-"  -U, --username=USUÁRIO   nome do usuário para se conectar (não é o usuário "
+"  -U, --username=USUÁRIO    nome do usuário para se conectar (não é o usuário "
 "a ser criado)\n"
 
 #: createuser.c:259 dropuser.c:156
@@ -625,36 +625,36 @@ msgstr ""
 "\n"
 "Leia a descrição do comando SQL VACUUM para obter mais detalhes.\n"
 
-#: common.c:86 common.c:112
+#: common.c:87 common.c:113
 msgid "Password: "
 msgstr "Senha: "
 
-#: common.c:99
+#: common.c:100
 #, c-format
 msgid "%s: could not connect to database %s\n"
 msgstr "%s: não pôde conectar ao banco de dados %s\n"
 
-#: common.c:122
+#: common.c:123
 #, c-format
 msgid "%s: could not connect to database %s: %s"
 msgstr "%s: não pôde conectar ao banco de dados %s: %s"
 
-#: common.c:146
+#: common.c:147
 #, c-format
 msgid "%s: query failed: %s"
 msgstr "%s: consulta falhou: %s"
 
-#: common.c:147
+#: common.c:148
 #, c-format
 msgid "%s: query was: %s\n"
 msgstr "%s: consulta foi: %s\n"
 
 #. translator: Make sure the (y/n) prompts match the translation of this.
-#: common.c:161
+#: common.c:162
 msgid "y"
 msgstr "s"
 
 #. translator: Make sure the (y/n) prompts match the translation of this.
-#: common.c:163
+#: common.c:164
 msgid "n"
 msgstr "n"

@@ -1,13 +1,13 @@
 # "pg_resetxlog" translation to Brazilian Portuguese Language.
-# Cesar Suga <sartre@linuxbr.com>, 2002. - Fair & Simple Networks Ltda.
-# Roberto Mello <rmello@fslc.usu.edu>
-# Euler Taveira de Oliveira <euler@ufgnet.ufg.br>, 2003.
+# Cesar Suga <sartre@linuxbr.com>, 2002.
+# Roberto Mello <rmello@fslc.usu.edu>, 2002.
+# Euler Taveira de Oliveira <euler@ufgnet.ufg.br>, 2003, 2004.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-09-28 13:54-0300\n"
-"PO-Revision-Date: 2004-09-28 14:10-0300\n"
+"POT-Creation-Date: 2004-10-27 13:07-0300\n"
+"PO-Revision-Date: 2004-10-27 18:36-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@ufgnet.ufg.br>\n"
 "Language-Team: Brazilian Portuguese <pgsql-dev@lists.querencialivre.rs.gov."
 "br>\n"

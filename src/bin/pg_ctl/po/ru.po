@@ -1,25 +1,30 @@
 # ru.po
 # PG_CTL Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_ctl/po/ru.po,v 1.5 2004/10/27 11:22:08 petere Exp $
+# Copyright (c) 2001-2004 Serguei A. Mokhov, mokhov@cs.concordia.ca
+# Distributed under the same licensing terms as PostgreSQL itself.
+#
+# $Header: /cvsroot/pgsql/src/bin/pg_ctl/po/ru.po,v 1.6 2004/11/02 09:20:13 petere Exp $
 #
 # ChangeLog:
-#   - May 29 - October 21, 2004: Initial translation for 8.0; Serguei A. Mokhov <mokhov@cs.concordia.ca>
+#   - May 29 - November 1, 2004: Initial translation for 8.0; Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-10-17 01:09+0100\n"
-"PO-Revision-Date: 2004-10-21 03:16-0500\n"
+"POT-Creation-Date: 2004-11-01 19:13+0000\n"
+"PO-Revision-Date: 2004-11-01 15:56-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=koi8-r\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Russian\n"
+"X-Poedit-Country: RUSSIAN FEDERATION\n"
 
 #: pg_ctl.c:200
 #: pg_ctl.c:215
-#: pg_ctl.c:1309
+#: pg_ctl.c:1331
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: не хватает памяти\n"
@@ -455,32 +460,43 @@ msgstr "%s: неверный режим остановки \"%s\"\n"
 msgid "%s: unrecognized signal name \"%s\"\n"
 msgstr "%s: нераспознанное имя сигнала \"%s\"\n"
 
-#: pg_ctl.c:1325
+#: pg_ctl.c:1255
+#, c-format
+msgid ""
+"%s: cannot be run as root\n"
+"Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
+"own the server process.\n"
+msgstr ""
+"%s: нельзя выполнять как root\n"
+"Пожалуйста зайдите как непривелигированный пользователь  (например используя \"su\"),\n"
+"который будет владеть серверным процессом.\n"
+
+#: pg_ctl.c:1347
 #, c-format
 msgid "%s: invalid option %s\n"
 msgstr "%s: неверная опция %s\n"
 
-#: pg_ctl.c:1336
+#: pg_ctl.c:1358
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: слишком много аргументов командной строки (первый: \"%s\")\n"
 
-#: pg_ctl.c:1355
+#: pg_ctl.c:1377
 #, c-format
 msgid "%s: missing arguments for kill mode\n"
 msgstr "%s: отсутствуют аргументы для режима kill\n"
 
-#: pg_ctl.c:1373
+#: pg_ctl.c:1395
 #, c-format
 msgid "%s: unrecognized operation mode \"%s\"\n"
 msgstr "%s: нераспознанный оперативный режим \"%s\"\n"
 
-#: pg_ctl.c:1383
+#: pg_ctl.c:1405
 #, c-format
 msgid "%s: no operation specified\n"
 msgstr "%s: команда не указана\n"
 
-#: pg_ctl.c:1399
+#: pg_ctl.c:1421
 #, c-format
 msgid "%s: no database directory specified and environment variable PGDATA unset\n"
 msgstr "%s: директория баз данных не указана и переменная окружения PGDATA не установлена\n"

@@ -1,12 +1,12 @@
 # "pg_dump" translation to Brazilian Portuguese Language.
-# Roberto Mello <rmello@fslc.usu.edu>, 2002
-# Euler Taveira de Oliveira <euler@ufgnet.ufg.br>, 2003.
+# Roberto Mello <rmello@fslc.usu.edu>, 2002.
+# Euler Taveira de Oliveira <euler@ufgnet.ufg.br>, 2003, 2004.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-10-18 14:00-0300\n"
-"PO-Revision-Date: 2004-10-18 14:46-0300\n"
+"POT-Creation-Date: 2004-10-27 13:07-0300\n"
+"PO-Revision-Date: 2004-10-27 18:36-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@ufgnet.ufg.br>\n"
 "Language-Team: Brazilian Portuguese <pgsql-dev@lists.querencialivre.rs.gov."
 "br>\n"
@@ -556,12 +556,13 @@ msgstr "número de colunas (%d) é inválido para tabela \"%s\"\n"
 
 #: pg_dump.c:6933
 #, c-format
-msgid "missing index for constraint %s\n"
-msgstr "faltando índice para restrição %s\n"
+msgid "missing index for constraint \"%s\"\n"
+msgstr "faltando índice para restrição \"%s\"\n"
 
 #: pg_dump.c:7103
-msgid "unexpected constraint type\n"
-msgstr "tipo de restrição inesperado\n"
+#, c-format
+msgid "unrecognized constraint type: %c\n"
+msgstr "tipo de restrição inesperado: %c\n"
 
 #: pg_dump.c:7145
 msgid "inserted invalid OID\n"
@@ -615,8 +616,8 @@ msgstr ""
 "de registros foi retornado"
 
 #: pg_dump.c:7702
-msgid "fetching dependency data\n"
-msgstr "buscando dados sobre dependência\n"
+msgid "reading dependency data\n"
+msgstr "lendo dados sobre dependência\n"
 
 #: pg_dump.c:7879
 #, c-format
@@ -798,8 +799,8 @@ msgstr "executando %s %s\n"
 
 #: pg_backup_archiver.c:398
 #, c-format
-msgid "setting owner and acl for %s %s\n"
-msgstr "definindo dono e permissões para %s %s\n"
+msgid "setting owner and privileges for %s %s\n"
+msgstr "definindo dono e privilégios para %s %s\n"
 
 #: pg_backup_archiver.c:516
 msgid "disabling triggers\n"
@@ -923,8 +924,8 @@ msgstr "Erro ao FINALIZAR:\n"
 
 #: pg_backup_archiver.c:1272
 #, c-format
-msgid "Error from TOC Entry %d; %u %u %s %s %s\n"
-msgstr "Erro da Entrada TOC %d; %u %u %s %s %s\n"
+msgid "Error from TOC entry %d; %u %u %s %s %s\n"
+msgstr "Erro da entrada TOC %d; %u %u %s %s %s\n"
 
 #: pg_backup_archiver.c:1405
 #, c-format
@@ -1587,7 +1588,7 @@ msgid "  -a, --data-only          restore only the data, no schema\n"
 msgstr "  -a, --data-only          restaura somente os dados, não o esquema\n"
 
 #: pg_restore.c:375
-msgid "  -C, --create             process commands to create the database\n"
+msgid "  -C, --create             issue commands to create the database\n"
 msgstr ""
 "  -C, --create             executa comandos para criar o banco de dados\n"
 
@@ -1702,20 +1703,19 @@ msgid ""
 "  -i, --ignore-version     proceed even when server version mismatches\n"
 "                           pg_dumpall version\n"
 msgstr ""
-"  -i, --ignore-version    prossegue mesmo se a versão do servidor e do "
-"pg_dumpall não correspondem\n"
-"                          com a versão do pg_dumpall\n"
+"  -i, --ignore-version     prossegue mesmo se a versão do servidor e do "
+"                                   pg_dumpall não correspondem\n"
 
 #: pg_dumpall.c:347
 msgid "  -c, --clean              clean (drop) databases prior to create\n"
 msgstr ""
-"  -c, --clean             limpa (exclui) bancos de dados anteriormente "
+"  -c, --clean              limpa (exclui) bancos de dados anteriormente "
 "criados\n"
 
 #: pg_dumpall.c:350
 msgid "  -g, --globals-only       dump only global objects, no databases\n"
 msgstr ""
-"  -g, --globals-only      copia somente objetos globais, e não bancos de "
+"  -g, --globals-only       copia somente objetos globais, e não bancos de "
 "dados\n"
 
 #: pg_dumpall.c:352

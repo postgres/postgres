@@ -1,11 +1,10 @@
-# Traditional Chinese translation for pg_dump.
-# 2004-07-30 Zhenbang Wei <forth@zbwei.net>
+# 2004-11-01 Zhenbang Wei <forth@zbwei.net>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-10-19 01:09+0100\n"
-"PO-Revision-Date: 2004-10-19 10:12+0800\n"
+"POT-Creation-Date: 2004-11-01 01:44+0000\n"
+"PO-Revision-Date: 2004-11-01 13:58+0800\n"
 "Last-Translator: Zhenbang Wei <forth@zbwei.net>\n"
 "Language-Team: Zhenbang Wei <forth@zbwei.net>\n"
 "MIME-Version: 1.0\n"
@@ -74,7 +73,7 @@ msgstr "(INSERT命令不能設定OID。)\n"
 
 #: pg_dump.c:471
 msgid "large-object output is not supported for plain-text dump files\n"
-msgstr "不支援對?文字?案備份large-object\n"
+msgstr "不支援對?文??????arge-object\n"
 
 #: pg_dump.c:472
 msgid "(Use a different output format.)\n"
@@ -228,7 +227,7 @@ msgstr "  -s, --schema-only        只備份schema，不備份資料\n"
 msgid ""
 "  -S, --superuser=NAME     specify the superuser user name to use in\n"
 "                           plain text format\n"
-msgstr "  -S, --superuser=NAME     指定純文字格式使用的管理者名稱\n"
+msgstr "  -S, --superuser=NAME     指定純文字格?使用?管理者名?\n"
 
 #: pg_dump.c:693
 msgid "  -t, --table=TABLE        dump the named table only\n"
@@ -547,16 +546,17 @@ msgstr "view \"%s\"的定義似乎是空的(長度為0)\n"
 #: pg_dump.c:6832
 #, c-format
 msgid "invalid column number %d for table \"%s\"\n"
-msgstr "無效的欄位編號 %d 於資料表\"%s\"\n"
+msgstr "無效的欄位?號 %d 於資料表\"%s\"\n"
 
 #: pg_dump.c:6933
 #, c-format
-msgid "missing index for constraint %s\n"
-msgstr "找不到constraint %s 的索引\n"
+msgid "missing index for constraint \"%s\"\n"
+msgstr "找不到constraint \"%s\"的索引\n"
 
 #: pg_dump.c:7103
-msgid "unexpected constraint type\n"
-msgstr "預期外的constraint型別\n"
+#, c-format
+msgid "unrecognized constraint type: %c\n"
+msgstr "無法識別的constraint型別：%c\n"
 
 #: pg_dump.c:7145
 msgid "inserted invalid OID\n"
@@ -604,7 +604,7 @@ msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows re
 msgstr "取得rule \"%s\"於資料表\"%s\"的查詢失敗：傳回錯誤的筆數"
 
 #: pg_dump.c:7702
-msgid "fetching dependency data\n"
+msgid "reading dependency data\n"
 msgstr "讀取依存資料\n"
 
 #: pg_dump.c:7879
@@ -794,8 +794,8 @@ msgstr "執行 %s %s\n"
 
 #: pg_backup_archiver.c:398
 #, c-format
-msgid "setting owner and acl for %s %s\n"
-msgstr "為 %s %s 設定擁有者和acl\n"
+msgid "setting owner and privileges for %s %s\n"
+msgstr "為 %s %s 設定擁有者和權限\n"
 
 #: pg_backup_archiver.c:516
 msgid "disabling triggers\n"
@@ -919,8 +919,8 @@ msgstr "FINALIZING時發生錯誤：\n"
 
 #: pg_backup_archiver.c:1272
 #, c-format
-msgid "Error from TOC Entry %d; %u %u %s %s %s\n"
-msgstr "TOC記錄有錯誤 %d; %u %u %s %s %s\n"
+msgid "Error from TOC entry %d; %u %u %s %s %s\n"
+msgstr "TOC記錄%d有錯誤；%u %u %s %s %s\n"
 
 #: pg_backup_archiver.c:1405
 #, c-format
@@ -1297,8 +1297,8 @@ msgid ""
 "  normal use. Files will be written in the current working directory.\n"
 msgstr ""
 "警告：\n"
-"  這種格式僅用於示範，不是用來做一般備份，檔案會被\n"
-"  寫至目前的工作目錄\n"
+"  這種格式僅用於示範，不是用來做一?備份，檔案會被\n"
+"  寫至目前的工祜目錄\n"
 
 #: pg_backup_files.c:246
 msgid "could not open data file for output\n"
@@ -1388,7 +1388,7 @@ msgstr "無法產生暫存檔名稱：%s\n"
 
 #: pg_backup_tar.c:376
 msgid "could not open temporary file\n"
-msgstr "無法開啟暫存檔\n"
+msgstr "無法開啟暫存?\n"
 
 #: pg_backup_tar.c:406
 msgid "could not close tar member\n"
@@ -1553,7 +1553,7 @@ msgid "  -a, --data-only          restore only the data, no schema\n"
 msgstr "  -a, --data-only          只還原資料，不還原schema\n"
 
 #: pg_restore.c:375
-msgid "  -C, --create             process commands to create the database\n"
+msgid "  -C, --create             issue commands to create the database\n"
 msgstr "  -C, --create             執行建立資料庫的命令\n"
 
 #: pg_restore.c:376
@@ -1739,4 +1739,3 @@ msgstr "%s：查詢失敗：%s"
 #, c-format
 msgid "%s: query was: %s\n"
 msgstr "%s：查詢是：%s\n"
-
