@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.9 1996/11/15 18:37:10 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.10 1997/05/20 10:29:30 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,6 +120,10 @@ rtrescan(IndexScanDesc s, bool fromEnd, ScanKey key)
 	freestack(p->s_markstk);
 	p->s_stack = p->s_markstk = (RTSTACK *) NULL;
 	p->s_flags = 0x0;
+	for (i = 0; i < s->numberOfKeys; i++)
+	{
+		p->s_internalKey[i].sk_argument = s->keyData[i].sk_argument;
+	}
     } else {
 	/* initialize opaque data */
 	p = (RTreeScanOpaque) palloc(sizeof(RTreeScanOpaqueData));
