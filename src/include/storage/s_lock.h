@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.6 1997/09/24 23:37:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.7 1997/09/25 01:48:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,8 +54,6 @@
 #define	S_UNLOCK(lock)	mutex_unlock(lock)
 
 #define	S_INIT_LOCK(lock)	mutex_init(lock)
-
-#define S_LOCK_FREE(lock)		((*lock) == 0)
 
  /* S_LOCK_FREE should return 1 if lock is free; 0 if lock is locked */
 /* For Mach, we have to delve inside the entrails of `struct mutex'.  Ick! */
@@ -135,8 +133,6 @@ static int	tas(slock_t *lock);
 
 #define	S_INIT_LOCK(lock)	S_UNLOCK(lock)
 
-#define S_LOCK_FREE(lock)		((*lock) == 0)
-
 #endif							/* i86pc_solaris || sparc_solaris */
 
 /*
@@ -157,8 +153,6 @@ static int	tas(slock_t *lock);
 #define	S_UNLOCK(lock)	(*(lock) = 0)
 
 #define	S_INIT_LOCK(lock)	S_UNLOCK(lock)
-
-#define S_LOCK_FREE(lock)		((*lock) == 0)
 
 #endif							/* aix */
 
@@ -210,8 +204,6 @@ static int	tas(slock_t *lock);
 #define	S_UNLOCK(lock)	(*(lock) = 0)
 
 #define	S_INIT_LOCK(lock)	S_UNLOCK(lock)
-
-#define S_LOCK_FREE(lock)		((*lock) == 0)
 
 static int
 tas_dummy()
@@ -295,8 +287,6 @@ tas_dummy()
 
 #define	S_INIT_LOCK(addr)	(*(addr) = 0)
 
-#define S_LOCK_FREE(lock)		((*lock) == 0)
-
 #endif							/* NEED_SPARC_TAS_ASM */
 
 /*
@@ -317,8 +307,6 @@ tas_dummy()
 #define	S_UNLOCK(lock)	(*(lock) = 0)
 
 #define	S_INIT_LOCK(lock)	S_UNLOCK(lock)
-
-#define S_LOCK_FREE(lock)		((*lock) == 0)
 
 #endif							/* NEED_I386_TAS_ASM */
 
@@ -351,8 +339,6 @@ tas_dummy()
 
 #define	S_INIT_LOCK(lock)	S_UNLOCK(lock)
 
-#define S_LOCK_FREE(lock)		((*lock) == 0)
-
 #endif							/* defined(__alpha__) && defined(linux) */
 
 #if defined(linux) && defined(sparc)
@@ -371,8 +357,6 @@ tas_dummy()
 #define	S_UNLOCK(lock)	(*(lock) = 0)
 
 #define	S_INIT_LOCK(lock)	S_UNLOCK(lock)
-
-#define S_LOCK_FREE(lock)		((*lock) == 0)
 
 #endif							/* defined(linux) && defined(sparc) */
 
@@ -407,9 +391,11 @@ success:		\n\
 
 #define	S_INIT_LOCK(lock)	S_UNLOCK(lock)
 
-#define S_LOCK_FREE(lock)		((*lock) == 0)
-
 #endif							/* defined(linux) && defined(PPC) */
+
+#ifndef S_LOCK_FREE		/* for those who have not already defined it */
+#define S_LOCK_FREE(lock)		((*lock) == 0)
+#endif
 
 #endif							/* HAS_TEST_AND_SET */
 
