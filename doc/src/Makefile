@@ -63,7 +63,7 @@ programmer.tar:
 tutorial.tar:
 	$(MAKE) -C sgml clean
 	$(MAKE) -C sgml tutorial.html
-	(cd sgml; $(TAR) -cf ../$@ $(TAREXCLUDE) -C sgml . -C .. -C graphics clientserver.gif)
+	(cd sgml; $(TAR) -cf ../$@ $(TAREXCLUDE) *.html *.htm -C ../graphics clientserver.gif)
 
 user.tar:
 	$(MAKE) -C sgml clean
