@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.9 1998/06/15 19:29:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.10 1998/07/27 19:38:18 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,8 +72,8 @@ int4notin(int16 not_in_arg, char *relation_and_attr)
 	/* the last argument should be a ScanKey, not an integer! - jolly */
 	/* it looks like the arguments are out of order, too */
 	/* but skeyData is never initialized! does this work?? - ay 2/95 */
-	scan_descriptor = heap_beginscan(relation_to_scan, false, false, 0,
-									 &skeyData);
+	scan_descriptor = heap_beginscan(relation_to_scan, false, SnapshotNow, 
+									 0, &skeyData);
 
 	retval = true;
 

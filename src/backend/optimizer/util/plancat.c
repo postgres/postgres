@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.17 1998/06/15 19:28:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.18 1998/07/27 19:38:00 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,7 +148,7 @@ index_info(Query *root, bool first, int relid, IdxInfoRetval *info)
 							   ObjectIdGetDatum(indrelid));
 
 		relation = heap_openr(IndexRelationName);
-		scan = heap_beginscan(relation, 0, false,
+		scan = heap_beginscan(relation, 0, SnapshotNow,
 							  1, &indexKey);
 	}
 	if (!HeapScanIsValid(scan))
@@ -413,7 +413,7 @@ find_inheritance_children(Oid inhparent)
 
 	key[0].sk_argument = ObjectIdGetDatum((Oid) inhparent);
 	relation = heap_openr(InheritsRelationName);
-	scan = heap_beginscan(relation, 0, false, 1, key);
+	scan = heap_beginscan(relation, 0, SnapshotNow, 1, key);
 	while (HeapTupleIsValid(inheritsTuple =
 							heap_getnext(scan, 0,
 										 (Buffer *) NULL)))
@@ -449,7 +449,7 @@ VersionGetParents(Oid verrelid)
 	key[0].sk_nargs = key[0].sk_func.fn_nargs;
 	relation = heap_openr(VersionRelationName);
 	key[0].sk_argument = ObjectIdGetDatum(verrelid);
-	scan = heap_beginscan(relation, 0, false, 1, key);
+	scan = heap_beginscan(relation, 0, SnapshotNow, 1, key);
 	for (;;)
 	{
 		versionTuple = heap_getnext(scan, 0,

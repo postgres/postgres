@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.28 1998/06/15 19:28:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.29 1998/07/27 19:37:51 vadim Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -438,7 +438,7 @@ PerformAddAttribute(char *relationName,
 		 * XXX use syscache here as an optimization
 		 */
 		key[1].sk_argument = (Datum) colDef->colname;
-		attsdesc = heap_beginscan(attrdesc, 0, false, 2, key);
+		attsdesc = heap_beginscan(attrdesc, 0, SnapshotNow, 2, key);
 
 
 		tup = heap_getnext(attsdesc, 0, (Buffer *) NULL);

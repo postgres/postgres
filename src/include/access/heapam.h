@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.33 1998/06/15 18:39:53 momjian Exp $
+ * $Id: heapam.h,v 1.34 1998/07/27 19:38:29 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include <access/relscan.h>
 #include <storage/block.h>
 #include <utils/rel.h>
+#include <utils/tqual.h>
 
 /* ----------------------------------------------------------------
  *				heap access method statistics
@@ -247,11 +248,11 @@ extern Relation heap_openr(char *relationName);
 extern void heap_close(Relation relation);
 extern HeapScanDesc
 heap_beginscan(Relation relation, int atend,
-			   bool seeself, unsigned nkeys, ScanKey key);
+			   Snapshot snapshot, unsigned nkeys, ScanKey key);
 extern void heap_rescan(HeapScanDesc sdesc, bool scanFromEnd, ScanKey key);
 extern void heap_endscan(HeapScanDesc sdesc);
 extern HeapTuple heap_getnext(HeapScanDesc scandesc, int backw, Buffer *b);
-extern HeapTuple heap_fetch(Relation relation, bool seeself, ItemPointer tid, Buffer *b);
+extern HeapTuple heap_fetch(Relation relation, Snapshot snapshot, ItemPointer tid, Buffer *b);
 extern Oid	heap_insert(Relation relation, HeapTuple tup);
 extern int	heap_delete(Relation relation, ItemPointer tid);
 extern int

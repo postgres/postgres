@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.10 1998/06/15 19:28:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.11 1998/07/27 19:37:57 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,6 +181,7 @@ InitScanRelation(SeqScan *node, EState *estate,
 					  NULL,		/* scan key */
 					  0,		/* is index */
 					  direction,/* scan direction */
+					  estate->es_snapshot,
 					  &currentRelation, /* return: rel desc */
 					  (Pointer *) &currentScanDesc);	/* return: scan desc */
 

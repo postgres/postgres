@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.39 1998/06/30 02:33:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.40 1998/07/27 19:38:15 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.39 1998/06/30 02:33:32 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.40 1998/07/27 19:38:15 vadim Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -252,6 +252,9 @@ InitProcess(IPCKey key)
 	MyProc->pid = MyProcPid;
 #endif
 	MyProc->xid = InvalidTransactionId;
+#ifdef LowLevelLocking
+	MyProc->xmin = InvalidTransactionId;
+#endif
 
 	/* ----------------
 	 * Start keeping spin lock stats from here on.	Any botch before
@@ -479,11 +482,13 @@ ProcSleep(PROC_QUEUE *waitQueue,
 	MyProc->token = token;
 	MyProc->waitLock = lock;
 
+#ifndef LowLevelLocking
 	/* -------------------
 	 * currently, we only need this for the ProcWakeup routines
 	 * -------------------
 	 */
 	TransactionIdStore((TransactionId) GetCurrentTransactionId(), &MyProc->xid);
+#endif
 
 	/* -------------------
 	 * assume that these two operations are atomic (because

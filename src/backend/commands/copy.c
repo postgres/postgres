@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.51 1998/07/26 04:30:23 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.52 1998/07/27 19:37:51 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,10 +37,6 @@
 #include "commands/trigger.h"
 #include <storage/fd.h>
 
-#ifdef MULTIBYTE
-#include "mb/pg_wchar.h"
-#endif
-
 #define ISOCTAL(c) (((c) >= '0') && ((c) <= '7'))
 #define VALUE(c) ((c) - '0')
 
@@ -65,7 +61,7 @@ static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline
 static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim);
 
 #endif
-static void CopyAttributeOut(FILE *fp, unsigned char *string, char *delim, int is_array);
+static void CopyAttributeOut(FILE *fp, char *string, char *delim, int is_array);
 static int	CountTuples(Relation relation);
 
 extern FILE *Pfout,
@@ -225,7 +221,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	int32		ntuples;
 	TupleDesc	tupDesc;
 
-	scandesc = heap_beginscan(rel, 0, false, 0, NULL);
+	scandesc = heap_beginscan(rel, 0, SnapshotNow, 0, NULL);
 
 	attr_count = rel->rd_att->natts;
 	attr = rel->rd_att->attrs;
@@ -281,7 +277,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 				{
 					string = (char *) (*fmgr_faddr(&out_functions[i]))
 						(value, elements[i], typmod[i]);
-					CopyAttributeOut(fp, (unsigned char*)string, delim, attr[i]->attnelems);
+					CopyAttributeOut(fp, string, delim, attr[i]->attnelems);
 					pfree(string);
 				}
 				else
@@ -908,7 +904,7 @@ GetIndexRelations(Oid main_relation_oid,
 	bool		isnull;
 
 	pg_index_rel = heap_openr(IndexRelationName);
-	scandesc = heap_beginscan(pg_index_rel, 0, false, 0, NULL);
+	scandesc = heap_beginscan(pg_index_rel, 0, SnapshotNow, 0, NULL);
 	tupDesc = RelationGetTupleDescriptor(pg_index_rel);
 
 	*n_indices = 0;
@@ -1016,17 +1012,6 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 	char		c;
 	int			done = 0;
 	int			i = 0;
-#ifdef MULTIBYTE
-	int	mblen;
-	int	encoding;
-	unsigned char	s[2];
-	int	j;
-#endif
-
-#ifdef MULTIBYTE
-	encoding = pg_get_client_encoding();
-	s[1] = 0;
-#endif
 
 #ifdef COPY_PATCH
 	/* if last delimiter was a newline return a NULL attribute */
@@ -1044,9 +1029,9 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 	while (!done)
 	{
 		c = getc(fp);
+
 		if (feof(fp))
 			return (NULL);
-
 		else if (c == '\\')
 		{
 			c = getc(fp);
@@ -1127,55 +1112,21 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 #endif
 			done = 1;
 		}
-		if (!done) {
+		if (!done)
 			attribute[i++] = c;
-#ifdef MULTIBYTE
-			s[0] = c;
-			mblen = pg_encoding_mblen(encoding, s);
-			mblen--;
-			for(j=0;j<mblen;j++) {
-			  c = getc(fp);
-			  if (feof(fp))
-			    return (NULL);
-			  attribute[i++] = c;
-			}
-#endif
-		}
 		if (i == EXT_ATTLEN - 1)
 			elog(ERROR, "CopyReadAttribute - attribute length too long. line: %d", lineno);
 	}
 	attribute[i] = '\0';
-#ifdef MULTIBYTE
-	return(pg_client_to_server((unsigned char*)attribute, strlen(attribute)));
-#else
 	return (&attribute[0]);
-#endif
 }
 
 static void
-CopyAttributeOut(FILE *fp, unsigned char *server_string, char *delim, int is_array)
+CopyAttributeOut(FILE *fp, char *string, char *delim, int is_array)
 {
-        unsigned char           *string;
-	unsigned char		c;
-#ifdef MULTIBYTE
-	int	mblen;
-	int	encoding;
-	int	i;
-#endif
+	char		c;
 
-#ifdef MULTIBYTE
-	string = pg_server_to_client(server_string, strlen(server_string));
-	encoding = pg_get_client_encoding();
-#else
-	string = server_string;
-#endif
-
-#ifdef MULTIBYTE
-	for (; (mblen = pg_encoding_mblen(encoding, string)) &&
-	       ((c = *string) != '\0'); string += mblen)
-#else
 	for (; (c = *string) != '\0'; string++)
-#endif
 	{
 		if (c == delim[0] || c == '\n' ||
 			(c == '\\' && !is_array))
@@ -1197,13 +1148,7 @@ CopyAttributeOut(FILE *fp, unsigned char *server_string, char *delim, int is_arr
 				fputc('\\', fp);
 			}
 		}
-#ifdef MULTIBYTE
-		for (i=0;i<mblen;i++) {
-			fputc(*(string+i), fp);
-		}
-#else
 		fputc(*string, fp);
-#endif
 	}
 }
 
@@ -1221,7 +1166,7 @@ CountTuples(Relation relation)
 
 	int			i;
 
-	scandesc = heap_beginscan(relation, 0, false, 0, NULL);
+	scandesc = heap_beginscan(relation, 0, SnapshotNow, 0, NULL);
 
 	for (tuple = heap_getnext(scandesc, 0, NULL), i = 0;
 		 tuple != NULL;

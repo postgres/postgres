@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.25 1998/07/26 04:30:22 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.26 1998/07/27 19:37:50 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,11 +43,7 @@
 #include <utils/excid.h>
 #include <utils/mcxt.h>
 #include <catalog/pg_proc.h>
-#ifdef MULTIBYTE
-#include <catalog/pg_class_mb.h>
-#else
 #include <catalog/pg_class.h>
-#endif
 #include <optimizer/internal.h>
 #ifndef NO_SECURITY
 #include <utils/acl.h>
@@ -358,7 +354,7 @@ rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	{
 
 		HeapTid = &ScanResult->heap_iptr;
-		LocalHeapTuple = heap_fetch(LocalOldHeap, false, HeapTid, &LocalBuffer);
+		LocalHeapTuple = heap_fetch(LocalOldHeap, SnapshotNow, HeapTid, &LocalBuffer);
 		OIDNewHeapInsert =
 			heap_insert(LocalNewHeap, LocalHeapTuple);
 		pfree(ScanResult);

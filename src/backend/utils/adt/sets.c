@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.14 1998/07/20 16:57:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.15 1998/07/27 19:38:21 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,7 +123,7 @@ SetDefine(char *querystr, char *typename)
 		oidKey[0].sk_argument = ObjectIdGetDatum(setoid);
 		pg_proc_scan = heap_beginscan(procrel,
 									  0,
-									  true,
+									  SnapshotSelf,
 									  1,
 									  oidKey);
 		tup = heap_getnext(pg_proc_scan, 0, &buffer);

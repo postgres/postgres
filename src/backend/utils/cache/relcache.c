@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.43 1998/07/26 04:30:57 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.44 1998/07/27 19:38:23 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,11 +53,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_attrdef.h"
-#ifdef MULTIBYTE
-#include "catalog/pg_attribute_mb.h"
-#else
 #include "catalog/pg_attribute.h"
-#endif
 #include "catalog/pg_index.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_class.h"
@@ -376,7 +372,7 @@ scan_pg_rel_seq(RelationBuildDescInfo buildinfo)
 	if (!IsInitProcessingMode())
 		RelationSetLockForRead(pg_class_desc);
 	pg_class_scan =
-		heap_beginscan(pg_class_desc, 0, false, 1, &key);
+		heap_beginscan(pg_class_desc, 0, SnapshotNow, 1, &key);
 	pg_class_tuple = heap_getnext(pg_class_scan, 0, &buf);
 
 	/* ----------------
@@ -546,7 +542,7 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 	 */
 	pg_attribute_desc = heap_openr(AttributeRelationName);
 	pg_attribute_scan =
-		heap_beginscan(pg_attribute_desc, 0, false, 1, &key);
+		heap_beginscan(pg_attribute_desc, 0, SnapshotNow, 1, &key);
 
 	/* ----------------
 	 *	add attribute data to relation->rd_att
@@ -717,7 +713,7 @@ RelationBuildRuleLock(Relation relation)
 	 */
 	pg_rewrite_desc = heap_openr(RewriteRelationName);
 	pg_rewrite_scan =
-		heap_beginscan(pg_rewrite_desc, 0, false, 1, &key);
+		heap_beginscan(pg_rewrite_desc, 0, SnapshotNow, 1, &key);
 	pg_rewrite_tupdesc =
 		RelationGetTupleDescriptor(pg_rewrite_desc);
 
@@ -1705,7 +1701,7 @@ AttrDefaultFetch(Relation relation)
 			break;
 
 		iptr = &indexRes->heap_iptr;
-		tuple = heap_fetch(adrel, false, iptr, &buffer);
+		tuple = heap_fetch(adrel, SnapshotNow, iptr, &buffer);
 		pfree(indexRes);
 		if (!HeapTupleIsValid(tuple))
 			continue;
@@ -1793,7 +1789,7 @@ RelCheckFetch(Relation relation)
 			break;
 
 		iptr = &indexRes->heap_iptr;
-		tuple = heap_fetch(rcrel, false, iptr, &buffer);
+		tuple = heap_fetch(rcrel, SnapshotNow, iptr, &buffer);
 		pfree(indexRes);
 		if (!HeapTupleIsValid(tuple))
 			continue;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.20 1998/07/20 16:57:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.21 1998/07/27 19:38:19 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ regprocin(char *proname)
 						   (RegProcedure) F_NAMEEQ,
 						   (Datum) proname);
 
-	procscan = heap_beginscan(proc, 0, false, 1, &key);
+	procscan = heap_beginscan(proc, 0, SnapshotNow, 1, &key);
 	if (!HeapScanIsValid(procscan))
 	{
 		heap_close(proc);
@@ -111,7 +111,7 @@ regprocout(RegProcedure proid)
 						   (RegProcedure) F_INT4EQ,
 						   (Datum) proid);
 
-	procscan = heap_beginscan(proc, 0, false, 1, &key);
+	procscan = heap_beginscan(proc, 0, SnapshotNow, 1, &key);
 	if (!HeapScanIsValid(procscan))
 	{
 		heap_close(proc);
@@ -189,7 +189,7 @@ oid8types(Oid (*oidArray)[])
 								   (RegProcedure) F_INT4EQ,
 								   (Datum) *sp);
 
-			typescan = heap_beginscan(type, 0, false, 1, &key);
+			typescan = heap_beginscan(type, 0, SnapshotNow, 1, &key);
 			if (!HeapScanIsValid(typescan))
 			{
 				heap_close(type);

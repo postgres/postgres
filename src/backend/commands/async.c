@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.35 1998/07/09 03:28:44 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.36 1998/07/27 19:37:50 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,7 +203,7 @@ Async_Notify(char *relname)
 	lRel = heap_openr(ListenerRelationName);
 	tdesc = RelationGetTupleDescriptor(lRel);
 	RelationSetLockForWrite(lRel);
-	sRel = heap_beginscan(lRel, 0, false, 1, &key);
+	sRel = heap_beginscan(lRel, 0, SnapshotNow, 1, &key);
 
 	nulls[0] = nulls[1] = nulls[2] = ' ';
 	repl[0] = repl[1] = repl[2] = ' ';
@@ -283,7 +283,7 @@ Async_NotifyAtCommit()
 								   Int32GetDatum(1));
 			lRel = heap_openr(ListenerRelationName);
 			RelationSetLockForWrite(lRel);
-			sRel = heap_beginscan(lRel, 0, false, 1, &key);
+			sRel = heap_beginscan(lRel, 0, SnapshotNow, 1, &key);
 			tdesc = RelationGetTupleDescriptor(lRel);
 
 			while (HeapTupleIsValid(lTuple = heap_getnext(sRel, 0, &b)))
@@ -431,7 +431,7 @@ Async_Listen(char *relname, int pid)
 
 	/* is someone already listening.  One listener per relation */
 	tdesc = RelationGetTupleDescriptor(lDesc);
-	s = heap_beginscan(lDesc, 0, false, 0, (ScanKey) NULL);
+	s = heap_beginscan(lDesc, 0, SnapshotNow, 0, (ScanKey) NULL);
 	while (HeapTupleIsValid(htup = heap_getnext(s, 0, &b)))
 	{
 		d = heap_getattr(htup, Anum_pg_listener_relname, tdesc,
@@ -577,7 +577,7 @@ Async_NotifyFrontEnd()
 	lRel = heap_openr(ListenerRelationName);
 	RelationSetLockForWrite(lRel);
 	tdesc = RelationGetTupleDescriptor(lRel);
-	sRel = heap_beginscan(lRel, 0, false, 2, key);
+	sRel = heap_beginscan(lRel, 0, SnapshotNow, 2, key);
 
 	nulls[0] = nulls[1] = nulls[2] = ' ';
 	repl[0] = repl[1] = repl[2] = ' ';

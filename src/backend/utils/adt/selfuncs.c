@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.19 1998/06/15 19:29:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.20 1998/07/27 19:38:20 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -349,7 +349,7 @@ gethilokey(Oid relid,
 	key[0].sk_argument = ObjectIdGetDatum(relid);
 	key[1].sk_argument = Int16GetDatum((int16) attnum);
 	key[2].sk_argument = ObjectIdGetDatum(opid);
-	sdesc = heap_beginscan(rdesc, 0, false, 3, key);
+	sdesc = heap_beginscan(rdesc, 0, SnapshotNow, 3, key);
 	tuple = heap_getnext(sdesc, 0, (Buffer *) NULL);
 	if (!HeapTupleIsValid(tuple))
 	{

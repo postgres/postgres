@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.13 1998/02/26 04:31:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.14 1998/07/27 19:37:57 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,8 +139,7 @@ ExecMaterial(Material *node)
 		 */
 		currentScanDesc = heap_beginscan(currentRelation,		/* relation */
 										 ScanDirectionIsBackward(dir),
-		/* bkwd flag */
-										 false, /* seeself */
+										 SnapshotSelf,	/* seeself */
 										 0,		/* num scan keys */
 										 NULL); /* scan keys */
 		matstate->csstate.css_currentRelation = currentRelation;

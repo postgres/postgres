@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.20 1998/06/15 19:27:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.21 1998/07/27 19:37:37 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -501,7 +501,7 @@ OperatorRelationFillScanKeyEntry(Relation operatorRelation,
 						   F_OIDEQ,
 						   ObjectIdGetDatum(operatorObjectId));
 
-	scan = heap_beginscan(operatorRelation, false, false,
+	scan = heap_beginscan(operatorRelation, false, SnapshotNow,
 						  1, &scanKeyData);
 
 	tuple = heap_getnext(scan, false, (Buffer *) NULL);
@@ -558,7 +558,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 						   ObjectIdGetDatum(indexObjectId));
 
 	relation = heap_openr(IndexRelationName);
-	scan = heap_beginscan(relation, false, false, 1, entry);
+	scan = heap_beginscan(relation, false, SnapshotNow, 1, entry);
 	tuple = heap_getnext(scan, 0, (Buffer *) NULL);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "IndexSupportInitialize: corrupted catalogs");
@@ -618,7 +618,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 			entry[1].sk_argument =
 				ObjectIdGetDatum(operatorClassObjectId[attributeNumber - 1]);
 
-			scan = heap_beginscan(relation, false, false, 2, entry);
+			scan = heap_beginscan(relation, false, SnapshotNow, 2, entry);
 
 			while (tuple = heap_getnext(scan, 0, (Buffer *) NULL),
 				   HeapTupleIsValid(tuple))
@@ -661,7 +661,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 		for (strategy = 1; strategy <= maxStrategyNumber; strategy++)
 			ScanKeyEntrySetIllegal(StrategyMapGetScanKeyEntry(map, strategy));
 
-		scan = heap_beginscan(relation, false, false, 2, entry);
+		scan = heap_beginscan(relation, false, SnapshotNow, 2, entry);
 
 		while (tuple = heap_getnext(scan, 0, (Buffer *) NULL),
 			   HeapTupleIsValid(tuple))

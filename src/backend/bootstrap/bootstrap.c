@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.46 1998/07/26 04:30:19 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.47 1998/07/27 19:37:43 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,13 +41,8 @@
 #include "catalog/catname.h"
 #include "catalog/index.h"
 #include "catalog/pg_am.h"
-#ifdef MULTIBYTE
-#include "catalog/pg_attribute_mb.h"
-#include "catalog/pg_class_mb.h"
-#else
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_class.h"
-#endif
 #include "catalog/pg_type.h"
 #include "executor/execdesc.h"
 #include "executor/hashjoin.h"
@@ -464,14 +459,14 @@ boot_openrel(char *relname)
 	{
 		StartPortalAllocMode(DefaultAllocMode, 0);
 		rdesc = heap_openr(TypeRelationName);
-		sdesc = heap_beginscan(rdesc, 0, false, 0, (ScanKey) NULL);
+		sdesc = heap_beginscan(rdesc, 0, SnapshotNow, 0, (ScanKey) NULL);
 		for (i = 0; PointerIsValid(tup = heap_getnext(sdesc, 0, (Buffer *) NULL)); ++i);
 		heap_endscan(sdesc);
 		app = Typ = ALLOC(struct typmap *, i + 1);
 		while (i-- > 0)
 			*app++ = ALLOC(struct typmap, 1);
 		*app = (struct typmap *) NULL;
-		sdesc = heap_beginscan(rdesc, 0, false, 0, (ScanKey) NULL);
+		sdesc = heap_beginscan(rdesc, 0, SnapshotNow, 0, (ScanKey) NULL);
 		app = Typ;
 		while (PointerIsValid(tup = heap_getnext(sdesc, 0, (Buffer *) NULL)))
 		{
@@ -817,7 +812,7 @@ gettype(char *type)
 		if (DebugMode)
 			printf("bootstrap.c: External Type: %s\n", type);
 		rdesc = heap_openr(TypeRelationName);
-		sdesc = heap_beginscan(rdesc, 0, false, 0, (ScanKey) NULL);
+		sdesc = heap_beginscan(rdesc, 0, SnapshotNow, 0, (ScanKey) NULL);
 		i = 0;
 		while (PointerIsValid(tup = heap_getnext(sdesc, 0, (Buffer *) NULL)))
 			++i;
@@ -826,7 +821,7 @@ gettype(char *type)
 		while (i-- > 0)
 			*app++ = ALLOC(struct typmap, 1);
 		*app = (struct typmap *) NULL;
-		sdesc = heap_beginscan(rdesc, 0, false, 0, (ScanKey) NULL);
+		sdesc = heap_beginscan(rdesc, 0, SnapshotNow, 0, (ScanKey) NULL);
 		app = Typ;
 		while (PointerIsValid(tup = heap_getnext(sdesc, 0, (Buffer *) NULL)))
 		{

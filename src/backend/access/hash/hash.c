@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.18 1998/02/26 04:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.19 1998/07/27 19:37:35 vadim Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -121,7 +121,7 @@ hashbuild(Relation heap,
 #endif							/* OMIT_PARTIAL_INDEX */
 
 	/* start a heap scan */
-	hscan = heap_beginscan(heap, 0, false, 0, (ScanKey) NULL);
+	hscan = heap_beginscan(heap, 0, SnapshotNow, 0, (ScanKey) NULL);
 	htup = heap_getnext(hscan, 0, &buffer);
 
 	/* build the index */

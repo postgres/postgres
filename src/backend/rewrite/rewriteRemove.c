@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.14 1998/04/26 04:07:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.15 1998/07/27 19:38:08 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,7 @@ RemoveRewriteRule(char *ruleName)
 	ScanKeyEntryInitialize(&scanKeyData, 0, Anum_pg_rewrite_rulename,
 						   F_NAMEEQ, NameGetDatum(ruleName));
 	scanDesc = heap_beginscan(RewriteRelation,
-							  0, false, 1, &scanKeyData);
+							  0, SnapshotNow, 1, &scanKeyData);
 
 	tuple = heap_getnext(scanDesc, 0, (Buffer *) NULL);
 
@@ -161,7 +161,7 @@ RelationRemoveRules(Oid relid)
 						   F_OIDEQ,
 						   ObjectIdGetDatum(relid));
 	scanDesc = heap_beginscan(RewriteRelation,
-							  0, false, 1, &scanKeyData);
+							  0, SnapshotNow, 1, &scanKeyData);
 
 	for (;;)
 	{

@@ -15,7 +15,7 @@
  *		ExecEndTee
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.18 1998/06/15 19:28:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.19 1998/07/27 19:37:57 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,10 +226,11 @@ ExecCountSlotsTee(Tee *node)
 static void
 initTeeScanDescs(Tee *node)
 {
-	TeeState   *teeState;
-	Relation	bufferRel;
-	ScanDirection dir;
-	MemoryContext orig;
+	TeeState	   *teeState;
+	Relation		bufferRel;
+	ScanDirection	dir;
+	Snapshot		snapshot;
+	MemoryContext	orig;
 
 	teeState = node->teestate;
 	if (teeState->tee_leftScanDesc && teeState->tee_rightScanDesc)
@@ -241,23 +242,24 @@ initTeeScanDescs(Tee *node)
 	bufferRel = teeState->tee_bufferRel;
 	dir = ((Plan *) node)->state->es_direction; /* backwards not handled
 												 * yet XXX */
+	snapshot = ((Plan *) node)->state->es_snapshot;
 
 	if (teeState->tee_leftScanDesc == NULL)
 	{
 		teeState->tee_leftScanDesc = heap_beginscan(bufferRel,
 											ScanDirectionIsBackward(dir),
-													false,		/* seeself */
-													0,	/* num scan keys */
-													NULL		/* scan keys */
+											snapshot,
+											0,	/* num scan keys */
+											NULL		/* scan keys */
 			);
 	}
 	if (teeState->tee_rightScanDesc == NULL)
 	{
 		teeState->tee_rightScanDesc = heap_beginscan(bufferRel,
 											ScanDirectionIsBackward(dir),
-													 false,		/* seeself */
-													 0, /* num scan keys */
-													 NULL		/* scan keys */
+											snapshot,
+											0, /* num scan keys */
+											NULL		/* scan keys */
 			);
 	}
 

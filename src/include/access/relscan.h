@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relscan.h,v 1.10 1997/11/24 05:09:39 momjian Exp $
+ * $Id: relscan.h,v 1.11 1998/07/27 19:38:29 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include <storage/buf.h>
 #include <utils/rel.h>
 #include <access/htup.h>
+#include <utils/tqual.h>
 
 typedef ItemPointerData MarkData;
 
@@ -32,8 +33,8 @@ typedef struct HeapScanDescData
 	ItemPointerData rs_mctid;	/* marked current tid */
 	ItemPointerData rs_mntid;	/* marked next tid */
 	ItemPointerData rs_mcd;		/* marked current delta XXX ??? */
+	Snapshot	rs_snapshot;	/* snapshot to see */
 	bool		rs_atend;		/* restart scan at end? */
-	bool		rs_seeself;		/* see self or not */
 	uint16		rs_cdelta;		/* current delta in chain */
 	uint16		rs_nkeys;		/* number of attributes in keys */
 	ScanKey		rs_key;			/* key descriptors */

@@ -20,11 +20,7 @@
 
 #include <miscadmin.h>
 #include <catalog/catname.h>
-#ifdef MULTIBYTE
-#include <catalog/pg_database_mb.h>
-#else
 #include <catalog/pg_database.h>
-#endif
 #include <catalog/pg_shadow.h>
 #include <libpq/crypt.h>
 #include <access/heapam.h>
@@ -138,7 +134,7 @@ DefineUser(CreateUserStmt *stmt)
 	 */
 	RelationSetLockForWrite(pg_shadow_rel);
 
-	scan = heap_beginscan(pg_shadow_rel, false, false, 0, NULL);
+	scan = heap_beginscan(pg_shadow_rel, false, SnapshotNow, 0, NULL);
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0, &buffer)))
 	{
 		datum = heap_getattr(tuple, Anum_pg_shadow_usename, pg_shadow_dsc, &n);
@@ -268,7 +264,7 @@ AlterUser(AlterUserStmt *stmt)
 	 */
 	RelationSetLockForWrite(pg_shadow_rel);
 
-	scan = heap_beginscan(pg_shadow_rel, false, false, 0, NULL);
+	scan = heap_beginscan(pg_shadow_rel, false, SnapshotNow, 0, NULL);
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0, &buffer)))
 	{
 		datum = heap_getattr(tuple, Anum_pg_shadow_usename, pg_shadow_dsc, &n);
@@ -397,7 +393,7 @@ RemoveUser(char *user)
 	 */
 	RelationSetLockForWrite(pg_shadow_rel);
 
-	scan = heap_beginscan(pg_shadow_rel, false, false, 0, NULL);
+	scan = heap_beginscan(pg_shadow_rel, false, SnapshotNow, 0, NULL);
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0, &buffer)))
 	{
 		datum = heap_getattr(tuple, Anum_pg_shadow_usename, pg_dsc, &n);
@@ -428,7 +424,7 @@ RemoveUser(char *user)
 	pg_rel = heap_openr(DatabaseRelationName);
 	pg_dsc = RelationGetTupleDescriptor(pg_rel);
 
-	scan = heap_beginscan(pg_rel, false, false, 0, NULL);
+	scan = heap_beginscan(pg_rel, false, SnapshotNow, 0, NULL);
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0, &buffer)))
 	{
 		datum = heap_getattr(tuple, Anum_pg_database_datdba, pg_dsc, &n);

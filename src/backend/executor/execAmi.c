@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.23 1998/07/16 01:49:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.24 1998/07/27 19:37:54 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@
 
 static Pointer
 ExecBeginScan(Relation relation, int nkeys, ScanKey skeys,
-			  bool isindex, ScanDirection dir);
+			  bool isindex, ScanDirection dir, Snapshot snapshot);
 static Relation ExecOpenR(Oid relationOid, bool isindex);
 
 /* ----------------------------------------------------------------
@@ -81,6 +81,7 @@ ExecOpenScanR(Oid relOid,
 			  ScanKey skeys,
 			  bool isindex,
 			  ScanDirection dir,
+			  Snapshot snapshot,
 			  Relation *returnRelation, /* return */
 			  Pointer *returnScanDesc)	/* return */
 {
@@ -99,7 +100,8 @@ ExecOpenScanR(Oid relOid,
 							 nkeys,
 							 skeys,
 							 isindex,
-							 dir);
+							 dir,
+							 snapshot);
 
 	if (returnRelation != NULL)
 		*returnRelation = relation;
@@ -153,7 +155,8 @@ ExecBeginScan(Relation relation,
 			  int nkeys,
 			  ScanKey skeys,
 			  bool isindex,
-			  ScanDirection dir)
+			  ScanDirection dir,
+			  Snapshot snapshot)
 {
 	Pointer		scanDesc;
 
@@ -178,7 +181,7 @@ ExecBeginScan(Relation relation,
 	{
 		scanDesc = (Pointer) heap_beginscan(relation,
 											ScanDirectionIsBackward(dir),
-											false,
+											snapshot,
 											nkeys,
 											skeys);
 	}

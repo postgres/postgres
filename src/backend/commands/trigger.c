@@ -119,7 +119,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	RelationSetLockForWrite(tgrel);
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
 						   F_OIDEQ, rel->rd_id);
-	tgscan = heap_beginscan(tgrel, 0, false, 1, &key);
+	tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &key);
 	while (tuple = heap_getnext(tgscan, 0, (Buffer *) NULL), PointerIsValid(tuple))
 	{
 		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
@@ -275,7 +275,7 @@ DropTrigger(DropTrigStmt *stmt)
 	RelationSetLockForWrite(tgrel);
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
 						   F_OIDEQ, rel->rd_id);
-	tgscan = heap_beginscan(tgrel, 0, false, 1, &key);
+	tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &key);
 	while (tuple = heap_getnext(tgscan, 0, (Buffer *) NULL), PointerIsValid(tuple))
 	{
 		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
@@ -340,7 +340,7 @@ RelationRemoveTriggers(Relation rel)
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
 						   F_OIDEQ, rel->rd_id);
 
-	tgscan = heap_beginscan(tgrel, 0, false, 1, &key);
+	tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &key);
 
 	while (tup = heap_getnext(tgscan, 0, (Buffer *) NULL), PointerIsValid(tup))
 		heap_delete(tgrel, &tup->t_ctid);
@@ -391,7 +391,7 @@ RelationBuildTriggers(Relation relation)
 			break;
 
 		iptr = &indexRes->heap_iptr;
-		tuple = heap_fetch(tgrel, false, iptr, &buffer);
+		tuple = heap_fetch(tgrel, SnapshotNow, iptr, &buffer);
 		pfree(indexRes);
 		if (!HeapTupleIsValid(tuple))
 			continue;

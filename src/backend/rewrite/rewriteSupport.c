@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.23 1998/07/26 04:30:38 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.24 1998/07/27 19:38:09 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,11 +16,7 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
-#ifdef MULTIBYTE
-#include "catalog/pg_class_mb.h"
-#else
 #include "catalog/pg_class.h"
-#endif
 #include "catalog/pg_rewrite.h"
 #include "fmgr.h"
 #include "nodes/parsenodes.h"
@@ -109,7 +105,7 @@ IsDefinedRewriteRule(char *ruleName)
 	ScanKeyEntryInitialize(&scanKey, 0, Anum_pg_rewrite_rulename,
 					   F_NAMEEQ, PointerGetDatum(ruleName));
 	scanDesc = heap_beginscan(RewriteRelation,
-							  0, false, 1, &scanKey);
+							  0, SnapshotNow, 1, &scanKey);
 
 	tuple = heap_getnext(scanDesc, 0, (Buffer *) NULL);
 

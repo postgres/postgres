@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.28 1998/07/21 06:17:35 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.29 1998/07/27 19:38:10 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -585,7 +585,6 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 	return (structPtr);
 }
 
-
 /*
  * TransactionIdIsInProgress -- is given transaction running by some backend
  *
@@ -625,3 +624,75 @@ TransactionIdIsInProgress(TransactionId xid)
 	elog(ERROR, "TransactionIdIsInProgress: ShmemIndex corrupted");
 	return (false);
 }
+
+#ifdef LowLevelLocking
+/*
+ * GetSnapshotData -- returns information about running transactions.
+ *
+ * InvalidTransactionId is used as terminator in snapshot->xip array.
+ * If serialized is true then XID >= current xact ID will not be
+ * placed in array. Current xact ID are never placed there (just
+ * to reduce its length, xmin/xmax may be equal to cid).
+ * MyProc->xmin will be setted if equal to InvalidTransactionId.
+ * 
+ * Yet another strange func for this place...	- vadim 07/21/98
+ */
+Snapshot
+GetSnapshotData(bool serialized)
+{
+	Snapshot		snapshot = (Snapshot) malloc(sizeof(SnapshotData));
+	TransactionId	snapshot->xip = (TransactionId*) 
+									malloc(32 * sizeof(TransactionId));
+	ShmemIndexEnt  *result;
+	PROC		   *proc;
+	TransactionId	cid = GetCurrentTransactionId();
+	uint			count = 0;
+	unit			free = 31;
+
+	Assert(ShmemIndex);
+	
+	snapshot->xmax = cid;
+	snapshot->xmin = cid;
+
+	SpinAcquire(ShmemIndexLock);
+
+	hash_seq((HTAB *) NULL);
+	while ((result = (ShmemIndexEnt *) hash_seq(ShmemIndex)) != NULL)
+	{
+		if (result == (ShmemIndexEnt *) TRUE)
+		{
+			if (MyProc->xmin == InvalidTransactionId)
+				MyProc->xmin = snapshot->xmin;
+			SpinRelease(ShmemIndexLock);
+			snapshot->xip[count] = InvalidTransactionId;
+			return (snapshot);
+		}
+		if (result->location == INVALID_OFFSET ||
+			strncmp(result->key, "PID ", 4) != 0)
+			continue;
+		proc = (PROC *) MAKE_PTR(result->location);
+		if (proc == MyProc || proc->xid < FirstTransactionId ||
+				serialized && proc->xid >= cid)
+			continue;
+		if (proc->xid < snapshot->xmin)
+			snapshot->xmin = proc->xid;
+		else if (proc->xid > snapshot->xmax)
+			snapshot->xmax = proc->xid;
+		if (free == 0)
+		{
+			snapshot->xip = (TransactionId*) realloc(snapshot->xip, 
+								(count + 33) * sizeof(TransactionId));
+			free = 32;
+		}
+		snapshot->xip[count] = proc->xid;
+		free--;
+		count++;
+	}
+
+	SpinRelease(ShmemIndexLock);
+	free(snapshot->xip);
+	free(snapshot);
+	elog(ERROR, "GetSnapshotData: ShmemIndex corrupted");
+	return (NULL);
+}
+#endif

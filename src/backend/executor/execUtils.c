@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.33 1998/07/20 16:14:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.34 1998/07/27 19:37:56 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -750,7 +750,7 @@ ExecOpenIndices(Oid resultRelationOid,
 	 */
 	indexSd = heap_beginscan(indexRd,	/* scan desc */
 							 false,		/* scan backward flag */
-							 false,		/* see self */
+							 SnapshotNow,	/* NOW snapshot */
 							 1, /* number scan keys */
 							 &key);		/* scan keys */
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.13 1998/06/15 19:28:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.14 1998/07/27 19:38:04 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,7 @@ binary_oper_get_candidates(char *opname,
 	pg_operator_desc = heap_openr(OperatorRelationName);
 	pg_operator_scan = heap_beginscan(pg_operator_desc,
 									  0,
-									  TRUE,
+									  SnapshotSelf,	/* ??? */
 									  nkeys,
 									  opKey);
 
@@ -655,7 +655,7 @@ printf("unary_oper_get_candidates: start scan for '%s'\n", op);
 	pg_operator_desc = heap_openr(OperatorRelationName);
 	pg_operator_scan = heap_beginscan(pg_operator_desc,
 									  0,
-									  TRUE,
+									  SnapshotSelf,	/* ??? */
 									  2,
 									  opKey);
 

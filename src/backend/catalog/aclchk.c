@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.11 1998/06/15 19:28:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.12 1998/07/27 19:37:45 vadim Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -126,7 +126,7 @@ ChangeAcl(char *relname,
 	relkey[0].sk_argument = NameGetDatum(relname);
 	hsdp = heap_beginscan(relation,
 						  0,
-						  false,
+						  SnapshotNow,
 						  (unsigned) 1,
 						  relkey);
 	htp = heap_getnext(hsdp, 0, &buffer);
@@ -482,7 +482,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 				  &relkey[0].sk_func,
 				  &relkey[0].sk_nargs);
 		relkey[0].sk_argument = NameGetDatum(relname);
-		hsdp = heap_beginscan(relation, 0, false, 1, relkey);
+		hsdp = heap_beginscan(relation, 0, SnapshotNow, 1, relkey);
 		htp = heap_getnext(hsdp, 0, (Buffer *) 0);
 		if (HeapTupleIsValid(htp) &&
 			!heap_attisnull(htp, Anum_pg_class_relacl))

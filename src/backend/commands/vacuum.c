@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.68 1998/07/26 04:30:25 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.69 1998/07/27 19:37:53 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,11 +27,7 @@
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/index.h"
-#ifdef MULTIBYTE
-#include "catalog/pg_class_mb.h"
-#else
 #include "catalog/pg_class.h"
-#endif
 #include "catalog/pg_index.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"
@@ -297,7 +293,7 @@ vc_getrels(NameData *VacRelP)
 	pgclass = heap_openr(RelationRelationName);
 	pgcdesc = RelationGetTupleDescriptor(pgclass);
 
-	pgcscan = heap_beginscan(pgclass, false, false, 1, &pgckey);
+	pgcscan = heap_beginscan(pgclass, false, SnapshotNow, 1, &pgckey);
 
 	while (HeapTupleIsValid(pgctup = heap_getnext(pgcscan, 0, &buf)))
 	{
@@ -404,7 +400,7 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 
 	pgclass = heap_openr(RelationRelationName);
 	pgcdesc = RelationGetTupleDescriptor(pgclass);
-	pgcscan = heap_beginscan(pgclass, false, false, 1, &pgckey);
+	pgcscan = heap_beginscan(pgclass, false, SnapshotNow, 1, &pgckey);
 
 	/*
 	 * Race condition -- if the pg_class tuple has gone away since the
@@ -1776,7 +1772,7 @@ vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats *vacrelst
 						   ObjectIdGetDatum(relid));
 
 	rd = heap_openr(RelationRelationName);
-	rsdesc = heap_beginscan(rd, false, false, 1, &rskey);
+	rsdesc = heap_beginscan(rd, false, SnapshotNow, 1, &rskey);
 
 	if (!HeapTupleIsValid(rtup = heap_getnext(rsdesc, 0, &rbuf)))
 		elog(ERROR, "pg_class entry for relid %d vanished during vacuuming",
@@ -1799,7 +1795,7 @@ vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats *vacrelst
 		ScanKeyEntryInitialize(&askey, 0, Anum_pg_attribute_attrelid,
 							   F_INT4EQ, relid);
 
-		asdesc = heap_beginscan(ad, false, false, 1, &askey);
+		asdesc = heap_beginscan(ad, false, SnapshotNow, 1, &askey);
 
 		while (HeapTupleIsValid(atup = heap_getnext(asdesc, 0, &abuf)))
 		{
@@ -1946,10 +1942,10 @@ vc_delhilowstats(Oid relid, int attcnt, int *attnums)
 		ScanKeyEntryInitialize(&pgskey, 0x0, Anum_pg_statistic_starelid,
 							   F_OIDEQ,
 							   ObjectIdGetDatum(relid));
-		pgsscan = heap_beginscan(pgstatistic, false, false, 1, &pgskey);
+		pgsscan = heap_beginscan(pgstatistic, false, SnapshotNow, 1, &pgskey);
 	}
 	else
-		pgsscan = heap_beginscan(pgstatistic, false, false, 0, NULL);
+		pgsscan = heap_beginscan(pgstatistic, false, SnapshotNow, 0, NULL);
 
 	while (HeapTupleIsValid(pgstup = heap_getnext(pgsscan, 0, NULL)))
 	{
@@ -2158,7 +2154,7 @@ vc_getindices(Oid relid, int *nindices, Relation **Irel)
 						   F_OIDEQ,
 						   ObjectIdGetDatum(relid));
 
-	pgiscan = heap_beginscan(pgindex, false, false, 1, &pgikey);
+	pgiscan = heap_beginscan(pgindex, false, SnapshotNow, 1, &pgikey);
 
 	while (HeapTupleIsValid(pgitup = heap_getnext(pgiscan, 0, NULL)))
 	{

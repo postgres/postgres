@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.17 1998/07/26 04:30:24 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.18 1998/07/27 19:37:52 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,11 +22,7 @@
 #include "access/htup.h"
 #include "access/relscan.h"
 #include "catalog/catname.h"
-#ifdef MULTIBYTE
-#include "catalog/pg_database_mb.h"
-#else
 #include "catalog/pg_database.h"
-#endif
 #include "catalog/pg_shadow.h"
 #include "commands/dbcommands.h"
 #include "fmgr.h"
@@ -47,11 +43,7 @@ static HeapTuple get_pg_dbtup(char *command, char *dbname, Relation dbrel);
 static void stop_vacuum(char *dbpath, char *dbname);
 
 void
-#ifdef MULTIBYTE
-createdb(char *dbname, char *dbpath, int encoding)
-#else
 createdb(char *dbname, char *dbpath)
-#endif
 {
 	Oid			db_id,
 				user_id;
@@ -98,13 +90,8 @@ createdb(char *dbname, char *dbpath)
 			dbname, user_id, dbname);
 #endif
 
-#ifdef MULTIBYTE
-	sprintf(buf, "insert into pg_database (datname, datdba, encoding, datpath)"
-			" values (\'%s\', \'%d\', \'%d\', \'%s\');", dbname, user_id, encoding, loc);
-#else
 	sprintf(buf, "insert into pg_database (datname, datdba, datpath)"
 			" values (\'%s\', \'%d\', \'%s\');", dbname, user_id, loc);
-#endif
 
 	pg_exec_query(buf);
 }
@@ -168,7 +155,7 @@ get_pg_dbtup(char *command, char *dbname, Relation dbrel)
 	ScanKeyEntryInitialize(&scanKey, 0, Anum_pg_database_datname,
 						   F_NAMEEQ, NameGetDatum(dbname));
 
-	scan = heap_beginscan(dbrel, 0, false, 1, &scanKey);
+	scan = heap_beginscan(dbrel, 0, SnapshotNow, 1, &scanKey);
 	if (!HeapScanIsValid(scan))
 		elog(ERROR, "%s: cannot begin scan of pg_database.", command);
 

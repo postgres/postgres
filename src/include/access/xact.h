@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.13 1998/04/24 14:42:55 momjian Exp $
+ * $Id: xact.h,v 1.14 1998/07/27 19:38:30 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,13 +22,21 @@
  */
 typedef struct TransactionStateData
 {
-	TransactionId transactionIdData;
-	CommandId	commandId;
-	CommandId	scanCommandId;
-	AbsoluteTime startTime;
-	int			state;
-	int			blockState;
+	TransactionId		transactionIdData;
+	CommandId			commandId;
+	CommandId			scanCommandId;
+	AbsoluteTime		startTime;
+	int					state;
+	int					blockState;
 } TransactionStateData;
+
+/*
+ * Xact isolation levels
+ */
+#define	XACT_DIRTY_READ			0		/* not implemented */
+#define	XACT_READ_COMMITTED		1
+#define	XACT_REPEATABLE_READ	2		/* not implemented */
+#define	XACT_SERIALIZED			3
 
 /* ----------------
  *		transaction states

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.31 1998/07/21 04:17:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.32 1998/07/27 19:38:11 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -656,9 +656,13 @@ inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *bufP)
 			 * For time travel, we need to use the actual time qual here,
 			 * rather that NowTimeQual.  We currently have no way to pass
 			 * a time qual in.
+			 *
+			 * This is now valid for snapshot !!!
+			 * And should be fixed in some way...	- vadim 07/28/98
+			 * 
 			 */
 
-			htup = heap_fetch(obj_desc->heap_r, false,
+			htup = heap_fetch(obj_desc->heap_r, SnapshotNow,
 							  &(res->heap_iptr), bufP);
 
 		} while (htup == (HeapTuple) NULL);
@@ -669,7 +673,7 @@ inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *bufP)
 	}
 	else
 	{
-		htup = heap_fetch(obj_desc->heap_r, false,
+		htup = heap_fetch(obj_desc->heap_r, SnapshotNow,
 						  &(obj_desc->htid), bufP);
 	}
 
@@ -1235,7 +1239,7 @@ _inv_getsize(Relation hreln, TupleDesc hdesc, Relation ireln)
 		if (buf != InvalidBuffer)
 			ReleaseBuffer(buf);
 
-		htup = heap_fetch(hreln, false, &(res->heap_iptr), &buf);
+		htup = heap_fetch(hreln, SnapshotNow, &(res->heap_iptr), &buf);
 		pfree(res);
 
 	} while (!HeapTupleIsValid(htup));

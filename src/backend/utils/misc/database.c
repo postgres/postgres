@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.13 1998/07/26 04:31:07 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.14 1998/07/27 19:38:26 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,12 +22,7 @@
 #include "access/heapam.h"
 #include "access/xact.h"
 #include "catalog/catname.h"
-#ifdef MULTIBYTE
-#include "catalog/pg_database_mb.h"
-#include "mb/pg_wchar.h"
-#else
 #include "catalog/pg_database.h"
-#endif
 #include "fmgr.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
@@ -62,7 +57,7 @@ GetDatabaseInfo(char *name, Oid *owner, char *path)
 	ScanKeyEntryInitialize(&scanKey, 0, Anum_pg_database_datname,
 						   F_NAMEEQ, NameGetDatum(name));
 
-	scan = heap_beginscan(dbrel, 0, false, 1, &scanKey);
+	scan = heap_beginscan(dbrel, 0, SnapshotNow, 1, &scanKey);
 	if (!HeapScanIsValid(scan))
 		elog(ERROR, "GetDatabaseInfo: cannot begin scan of %s", DatabaseRelationName);
 
@@ -184,11 +179,7 @@ ExpandDatabasePath(char *dbpath)
  * --------------------------------
  */
 void
-#ifdef MULTIBYTE
-GetRawDatabaseInfo(char *name, Oid *owner, Oid *db_id, char *path, int *encoding)
-#else
 GetRawDatabaseInfo(char *name, Oid *owner, Oid *db_id, char *path)
-#endif
 {
 	int			dbfd;
 	int			fileflags;
@@ -275,25 +266,14 @@ GetRawDatabaseInfo(char *name, Oid *owner, Oid *db_id, char *path)
 			 * means of getting at sys cat attrs.
 			 */
 			tup_db = (Form_pg_database) GETSTRUCT(tup);
-#ifdef MULTIBYTE
-			/* get encoding from template database.
-			   This is the "default for default" for
-			   create database command.
-			   */
-			if (strcmp("template1",tup_db->datname.data) == 0)
-			{
-				SetTemplateEncoding(tup_db->encoding);
-			}
-#endif
+
 			if (strcmp(name, tup_db->datname.data) == 0)
 			{
 				*db_id = tup->t_oid;
 				strncpy(path, VARDATA(&(tup_db->datpath)),
 						(VARSIZE(&(tup_db->datpath)) - VARHDRSZ));
 				*(path + VARSIZE(&(tup_db->datpath)) - VARHDRSZ) = '\0';
-#ifdef MULTIBYTE
-				*encoding = tup_db->encoding;
-#endif
+
 				goto done;
 			}
 		}

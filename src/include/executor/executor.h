@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.22 1998/04/24 14:43:07 momjian Exp $
+ * $Id: executor.h,v 1.23 1998/07/27 19:38:32 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,8 +61,8 @@
  */
 extern void
 ExecOpenScanR(Oid relOid, int nkeys, ScanKey skeys, bool isindex,
-			  ScanDirection dir, Relation *returnRelation,
-			  Pointer *returnScanDesc);
+			  ScanDirection dir, Snapshot snapshot, 
+			  Relation *returnRelation, Pointer *returnScanDesc);
 extern void ExecCloseR(Plan *node);
 extern void ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent);
 extern HeapScanDesc

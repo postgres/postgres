@@ -3,10 +3,11 @@
  * tqual.h--
  *	  POSTGRES "time" qualification definitions.
  *
+ *	  Should be moved/renamed...	- vadim 07/28/98
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.12 1998/04/24 14:43:33 momjian Exp $
+ * $Id: tqual.h,v 1.13 1998/07/27 19:38:40 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +15,20 @@
 #define TQUAL_H
 
 #include <access/htup.h>
+
+typedef struct SnapshotData
+{
+	TransactionId		xmin;				/* XID < xmin are visible to me */
+	TransactionId		xmax;				/* XID > xmax are invisible to me */
+	TransactionId	   *xip;				/* array of xacts in progress */
+} SnapshotData;
+
+typedef SnapshotData	*Snapshot;
+
+#define	IsSnapshotNow(snapshot)		((Snapshot) snapshot == (Snapshot) 0x0)
+#define	IsSnapshotSelf(snapshot)	((Snapshot) snapshot == (Snapshot) 0x1)
+#define	SnapshotNow					((Snapshot) 0x0)
+#define	SnapshotSelf				((Snapshot) 0x1)
 
 extern TransactionId HeapSpecialTransactionId;
 extern CommandId HeapSpecialCommandId;
@@ -25,13 +40,13 @@ extern CommandId HeapSpecialCommandId;
  * Note:
  *		Assumes heap tuple is valid.
  */
-#define HeapTupleSatisfiesVisibility(tuple, seeself) \
+#define HeapTupleSatisfiesVisibility(tuple, snapshot) \
 ( \
 	TransactionIdEquals((tuple)->t_xmax, AmiTransactionId) ? \
 		false \
 	: \
 	( \
-		((seeself) == true || heapisoverride()) ? \
+		(IsSnapshotSelf(snapshot) || heapisoverride()) ? \
 			HeapTupleSatisfiesItself(tuple) \
 		: \
 			HeapTupleSatisfiesNow(tuple) \
