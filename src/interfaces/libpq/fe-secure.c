@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.15 2002/09/26 05:37:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.16 2002/11/07 18:45:51 tgl Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -117,7 +117,7 @@
 
 #ifdef USE_SSL
 #include <openssl/ssl.h>
-#include <openssl/e_os.h>
+#include <openssl/dh.h>
 #endif   /* USE_SSL */
 
 
@@ -270,7 +270,6 @@ pqsecure_read(PGconn *conn, void *ptr, size_t len)
 			case SSL_ERROR_WANT_READ:
 				break;
 			case SSL_ERROR_SYSCALL:
-				SOCK_ERRNO = get_last_socket_error();
 				printfPQExpBuffer(&conn->errorMessage,
 								libpq_gettext("SSL SYSCALL error: %s\n"),
 								  SOCK_STRERROR(SOCK_ERRNO));
@@ -316,7 +315,6 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 			case SSL_ERROR_WANT_WRITE:
 				break;
 			case SSL_ERROR_SYSCALL:
-				SOCK_ERRNO = get_last_socket_error();
 				printfPQExpBuffer(&conn->errorMessage,
 								libpq_gettext("SSL SYSCALL error: %s\n"),
 								  SOCK_STRERROR(SOCK_ERRNO));

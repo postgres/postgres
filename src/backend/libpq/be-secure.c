@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.15 2002/09/26 04:41:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.16 2002/11/07 18:45:51 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -105,7 +105,6 @@
 
 #ifdef USE_SSL
 #include <openssl/ssl.h>
-#include <openssl/e_os.h>
 #include <openssl/dh.h>
 #endif
 
@@ -289,7 +288,6 @@ secure_read(Port *port, void *ptr, size_t len)
 			case SSL_ERROR_WANT_READ:
 				break;
 			case SSL_ERROR_SYSCALL:
-				errno = get_last_socket_error();
 				elog(ERROR, "SSL SYSCALL error: %s", strerror(errno));
 				break;
 			case SSL_ERROR_SSL:
@@ -339,7 +337,6 @@ secure_write(Port *port, const void *ptr, size_t len)
 			case SSL_ERROR_WANT_WRITE:
 				break;
 			case SSL_ERROR_SYSCALL:
-				errno = get_last_socket_error();
 				elog(ERROR, "SSL SYSCALL error: %s", strerror(errno));
 				break;
 			case SSL_ERROR_SSL:
