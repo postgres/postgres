@@ -1,5 +1,8 @@
 BEGIN;
 
+-- Adjust this setting to control where the objects get created.
+SET search_path = public;
+
 CREATE FUNCTION ltree_in(opaque)
 RETURNS opaque
 AS 'MODULE_PATHNAME'
@@ -177,70 +180,16 @@ CREATE OPERATOR || (
 
 
 -- B-tree support
-INSERT INTO pg_opclass (opcamid, opcname, opcnamespace, opcowner, opcintype, opcdefault, opckeytype)
-    VALUES (
-        (SELECT oid FROM pg_am WHERE amname = 'btree'),
-        'ltree_ops',
-	(SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog'),
-	1,      -- UID of superuser is hardwired to 1 as of PG 7.3
-        (SELECT oid FROM pg_type WHERE typname = 'ltree'),
-        true,
-        0);
 
-SELECT o.oid AS opoid, o.oprname
-    INTO TEMP TABLE ltree_ops_tmp
-    FROM pg_operator o, pg_type t
-    WHERE o.oprleft = t.oid and o.oprright = t.oid
-      and t.typname = 'ltree';
+CREATE OPERATOR CLASS ltree_ops
+    DEFAULT FOR TYPE ltree USING btree AS
+        OPERATOR        1       < ,
+        OPERATOR        2       <= ,
+        OPERATOR        3       = ,
+        OPERATOR        4       >= ,
+        OPERATOR        5       > ,
+        FUNCTION        1       ltree_cmp(ltree, ltree);
 
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-    SELECT opcl.oid, 1, false, c.opoid
-        FROM pg_opclass opcl, ltree_ops_tmp c
-        WHERE
-            opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree') AND
-            opcname = 'ltree_ops' AND
-            c.oprname = '<';
-
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-    SELECT opcl.oid, 2, false, c.opoid
-        FROM pg_opclass opcl, ltree_ops_tmp c
-        WHERE
-            opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree') AND
-            opcname = 'ltree_ops' AND
-            c.oprname = '<=';
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-    SELECT opcl.oid, 3, false, c.opoid
-        FROM pg_opclass opcl, ltree_ops_tmp c
-        WHERE
-            opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree') AND
-            opcname = 'ltree_ops' AND
-            c.oprname = '=';
-
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-    SELECT opcl.oid, 4, false, c.opoid
-        FROM pg_opclass opcl, ltree_ops_tmp c
-        WHERE
-            opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree') AND
-            opcname = 'ltree_ops' AND
-            c.oprname = '>=';
-
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-    SELECT opcl.oid, 5, false, c.opoid
-        FROM pg_opclass opcl, ltree_ops_tmp c
-        WHERE
-            opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree') AND
-            opcname = 'ltree_ops' AND
-            c.oprname = '>';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-    SELECT opcl.oid, 1, p.oid
-        FROM pg_opclass opcl, pg_proc p
-        WHERE
-            opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree') AND
-            opcname = 'ltree_ops' AND
-            p.proname = 'ltree_cmp';
-
-drop table ltree_ops_tmp;
 
 --lquery type
 CREATE FUNCTION lquery_in(opaque)
@@ -376,164 +325,28 @@ create function ltree_picksplit(opaque, opaque) returns opaque as 'MODULE_PATHNA
 create function ltree_union(bytea, opaque) returns int4 as 'MODULE_PATHNAME' language 'C';
 create function ltree_same(opaque, opaque, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
 
-INSERT INTO pg_opclass (opcamid, opcname, opcnamespace, opcowner, opcintype, opckeytype, opcdefault)
-   SELECT pg_am.oid, 'gist_ltree_ops', 
-	(SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog'),
-	1,      -- UID of superuser is hardwired to 1 as of PG 7.3
-	pg_type.oid, pg_key.oid, true
-   FROM pg_type, pg_am, pg_type pg_key
-   WHERE pg_type.typname = 'ltree' and
-   pg_am.amname='gist' and
-   pg_key.typname = 'ltree_gist';
+CREATE OPERATOR CLASS gist_ltree_ops
+    DEFAULT FOR TYPE ltree USING gist AS
+	OPERATOR	1	< ,
+	OPERATOR	2	<= ,
+	OPERATOR	3	= ,
+	OPERATOR	4	>= ,
+	OPERATOR	5	> ,
+	OPERATOR	10	@> ,
+	OPERATOR	11	<@ ,
+	OPERATOR	12	~ (ltree, lquery) ,
+	OPERATOR	13	~ (lquery, ltree) ,
+	OPERATOR	14	@ (ltree, ltxtquery) ,
+	OPERATOR	15	@ (ltxtquery, ltree) ,
+	FUNCTION	1	ltree_consistent (opaque, opaque, int2),
+	FUNCTION	2	ltree_union (bytea, opaque),
+	FUNCTION	3	ltree_compress (opaque),
+	FUNCTION	4	ltree_decompress (opaque),
+	FUNCTION	5	ltree_penalty (opaque, opaque, opaque),
+	FUNCTION	6	ltree_picksplit (opaque, opaque),
+	FUNCTION	7	ltree_same (opaque, opaque, opaque),
+	STORAGE		ltree_gist;
 
-SELECT o.oid AS opoid, o.oprname
-INTO TABLE ltree_ops_tmp
-FROM pg_operator o, pg_type t
-WHERE o.oprleft = t.oid and o.oprright = t.oid
-   and t.typname = 'ltree';
-
-INSERT INTO pg_amop (amopclaid, amopopr, amopstrategy, amopreqcheck)
-   SELECT opcl.oid, c.opoid, 1, 'f'
-   FROM pg_opclass opcl, ltree_ops_tmp c
-   WHERE opcname = 'gist_ltree_ops'
-      and c.oprname = '<';
-
-INSERT INTO pg_amop (amopclaid, amopopr, amopstrategy, amopreqcheck)
-   SELECT opcl.oid, c.opoid, 2, 'f'
-   FROM pg_opclass opcl, ltree_ops_tmp c
-   WHERE opcname = 'gist_ltree_ops'
-      and c.oprname = '<=';
-
-INSERT INTO pg_amop (amopclaid, amopopr, amopstrategy, amopreqcheck)
-   SELECT opcl.oid, c.opoid, 3, 'f'
-   FROM pg_opclass opcl, ltree_ops_tmp c
-   WHERE opcname = 'gist_ltree_ops'
-      and c.oprname = '=';
-
-INSERT INTO pg_amop (amopclaid, amopopr, amopstrategy, amopreqcheck)
-   SELECT opcl.oid, c.opoid, 4, 'f'
-   FROM pg_opclass opcl, ltree_ops_tmp c
-   WHERE opcname = 'gist_ltree_ops'
-      and c.oprname = '>=';
-
-INSERT INTO pg_amop (amopclaid, amopopr, amopstrategy, amopreqcheck)
-   SELECT opcl.oid, c.opoid, 5, 'f'
-   FROM pg_opclass opcl, ltree_ops_tmp c
-   WHERE opcname = 'gist_ltree_ops'
-      and c.oprname = '>';
-
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 10, false, c.opoid
-   FROM pg_opclass opcl, ltree_ops_tmp c
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist_ltree_ops'
-      and c.oprname = '@>';
-
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 11, false, c.opoid
-   FROM pg_opclass opcl, ltree_ops_tmp c
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist_ltree_ops'
-      and c.oprname = '<@';
-
-DROP TABLE ltree_ops_tmp;
-
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 12, false, o.oid
-   FROM pg_opclass opcl, pg_operator o, pg_type t, pg_type tq
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist_ltree_ops'
-      and t.typname = 'ltree' and tq.typname = 'lquery'
-      and o.oprleft = t.oid and o.oprright = tq.oid 
-      and o.oprname = '~';
-
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 13, false, o.oid
-   FROM pg_opclass opcl, pg_operator o, pg_type t, pg_type tq
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist_ltree_ops'
-      and t.typname = 'lquery' and tq.typname = 'ltree'
-      and o.oprleft = t.oid and o.oprright = tq.oid 
-      and o.oprname = '~';
-
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 14, false, o.oid
-   FROM pg_opclass opcl, pg_operator o, pg_type t, pg_type tq
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist_ltree_ops'
-      and t.typname = 'ltree' and tq.typname = 'ltxtquery'
-      and o.oprleft = t.oid and o.oprright = tq.oid 
-      and o.oprname = '@';
-
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 15, false, o.oid
-   FROM pg_opclass opcl, pg_operator o, pg_type t, pg_type tq
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist_ltree_ops'
-      and t.typname = 'ltxtquery' and tq.typname = 'ltree'
-      and o.oprleft = t.oid and o.oprright = tq.oid 
-      and o.oprname = '@';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 1, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist_ltree_ops'
-      and proname = 'ltree_consistent';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 2, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist_ltree_ops'
-      and proname = 'ltree_union';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 3, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist_ltree_ops'
-      and proname = 'ltree_compress';
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 4, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist_ltree_ops'
-      and proname = 'ltree_decompress';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 5, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist_ltree_ops'
-      and proname = 'ltree_penalty';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 6, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist_ltree_ops'
-      and proname = 'ltree_picksplit';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 7, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist_ltree_ops'
-      and proname = 'ltree_same';
 
 -- arrays of ltree
 
@@ -720,130 +533,22 @@ create function _ltree_picksplit(opaque, opaque) returns opaque as 'MODULE_PATHN
 create function _ltree_union(bytea, opaque) returns int4 as 'MODULE_PATHNAME' language 'C';
 create function _ltree_same(opaque, opaque, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
 
-INSERT INTO pg_opclass (opcamid, opcname, opcnamespace, opcowner, opcintype, opckeytype, opcdefault)
-   SELECT pg_am.oid, 'gist__ltree_ops', 
-	(SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog'),
-	1,      -- UID of superuser is hardwired to 1 as of PG 7.3
-	pg_type.oid, pg_key.oid, true
-   FROM pg_type, pg_am, pg_type pg_key
-   WHERE pg_type.typname = '_ltree' and
-   pg_am.amname='gist' and
-   pg_key.typname = 'ltree_gist';
+CREATE OPERATOR CLASS gist__ltree_ops
+    DEFAULT FOR TYPE _ltree USING gist AS
+	OPERATOR	10	<@ (_ltree, ltree)	RECHECK ,
+	OPERATOR	11	@> (ltree, _ltree)	RECHECK ,
+	OPERATOR	12	~ (_ltree, lquery)	RECHECK ,
+	OPERATOR	13	~ (lquery, _ltree)	RECHECK ,
+	OPERATOR	14	@ (_ltree, ltxtquery)	RECHECK ,
+	OPERATOR	15	@ (ltxtquery, _ltree)	RECHECK ,
+	FUNCTION	1	_ltree_consistent (opaque, opaque, int2),
+	FUNCTION	2	_ltree_union (bytea, opaque),
+	FUNCTION	3	_ltree_compress (opaque),
+	FUNCTION	4	ltree_decompress (opaque),
+	FUNCTION	5	_ltree_penalty (opaque, opaque, opaque),
+	FUNCTION	6	_ltree_picksplit (opaque, opaque),
+	FUNCTION	7	_ltree_same (opaque, opaque, opaque),
+	STORAGE		ltree_gist;
 
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 12, true, o.oid
-   FROM pg_opclass opcl, pg_operator o, pg_type t, pg_type tq
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__ltree_ops'
-      and t.typname = '_ltree' and tq.typname = 'lquery'
-      and o.oprleft = t.oid and o.oprright = tq.oid 
-      and o.oprname = '~';
-
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 13, true, o.oid
-   FROM pg_opclass opcl, pg_operator o, pg_type t, pg_type tq
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__ltree_ops'
-      and t.typname = 'lquery' and tq.typname = '_ltree'
-      and o.oprleft = t.oid and o.oprright = tq.oid 
-      and o.oprname = '~';
-
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 14, true, o.oid
-   FROM pg_opclass opcl, pg_operator o, pg_type t, pg_type tq
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__ltree_ops'
-      and t.typname = '_ltree' and tq.typname = 'ltxtquery'
-      and o.oprleft = t.oid and o.oprright = tq.oid 
-      and o.oprname = '@';
-
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 15, true, o.oid
-   FROM pg_opclass opcl, pg_operator o, pg_type t, pg_type tq
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__ltree_ops'
-      and t.typname = 'ltxtquery' and tq.typname = '_ltree'
-      and o.oprleft = t.oid and o.oprright = tq.oid 
-      and o.oprname = '@';
-
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 10, true, o.oid
-   FROM pg_opclass opcl, pg_operator o, pg_type t, pg_type tq
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__ltree_ops'
-      and t.typname = '_ltree' and tq.typname = 'ltree'
-      and o.oprleft = t.oid and o.oprright = tq.oid 
-      and o.oprname = '<@';
-
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 11, true, o.oid
-   FROM pg_opclass opcl, pg_operator o, pg_type t, pg_type tq
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__ltree_ops'
-      and t.typname = 'ltree' and tq.typname = '_ltree'
-      and o.oprleft = t.oid and o.oprright = tq.oid 
-      and o.oprname = '@>';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 1, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__ltree_ops'
-      and proname = '_ltree_consistent';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 2, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__ltree_ops'
-      and proname = '_ltree_union';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 3, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__ltree_ops'
-      and proname = '_ltree_compress';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 4, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__ltree_ops'
-      and proname = 'ltree_decompress';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 5, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__ltree_ops'
-      and proname = '_ltree_penalty';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 6, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__ltree_ops'
-      and proname = '_ltree_picksplit';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 7, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__ltree_ops'
-      and proname = '_ltree_same';
 
 END;
