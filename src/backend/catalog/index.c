@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.182 2002/07/12 18:43:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.183 2002/07/14 21:08:08 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -789,10 +789,7 @@ index_drop(Oid indexId)
 	Relation	userHeapRelation;
 	Relation	userIndexRelation;
 	Relation	indexRelation;
-	Relation	relationRelation;
-	Relation	attributeRelation;
 	HeapTuple	tuple;
-	int16		attnum;
 	int			i;
 
 	Assert(OidIsValid(indexId));
@@ -818,53 +815,27 @@ index_drop(Oid indexId)
 	/*
 	 * fix RELATION relation
 	 */
-	relationRelation = heap_openr(RelationRelationName, RowExclusiveLock);
-
-	/* Remove the pg_class tuple for the index itself */
-	tuple = SearchSysCacheCopy(RELOID,
-							   ObjectIdGetDatum(indexId),
-							   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "index_drop: cache lookup failed for index %u",
-			 indexId);
-
-	simple_heap_delete(relationRelation, &tuple->t_self);
-	heap_freetuple(tuple);
-
-	heap_close(relationRelation, RowExclusiveLock);
-
+	DeleteRelationTuple(indexId);
 	/*
 	 * fix ATTRIBUTE relation
 	 */
-	attributeRelation = heap_openr(AttributeRelationName, RowExclusiveLock);
-
-	attnum = 1;					/* indexes start at 1 */
-
-	while (HeapTupleIsValid(tuple = SearchSysCacheCopy(ATTNUM,
-											   ObjectIdGetDatum(indexId),
-												   Int16GetDatum(attnum),
-													   0, 0)))
-	{
-		simple_heap_delete(attributeRelation, &tuple->t_self);
-		heap_freetuple(tuple);
-		attnum++;
-	}
-	heap_close(attributeRelation, RowExclusiveLock);
+	DeleteAttributeTuples(indexId);
 
 	/*
 	 * fix INDEX relation
 	 */
 	indexRelation = heap_openr(IndexRelationName, RowExclusiveLock);
 
-	tuple = SearchSysCacheCopy(INDEXRELID,
-							   ObjectIdGetDatum(indexId),
-							   0, 0, 0);
+	tuple = SearchSysCache(INDEXRELID,
+						   ObjectIdGetDatum(indexId),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "index_drop: cache lookup failed for index %u",
 			 indexId);
 
 	simple_heap_delete(indexRelation, &tuple->t_self);
-	heap_freetuple(tuple);
+
+	ReleaseSysCache(tuple);
 	heap_close(indexRelation, RowExclusiveLock);
 
 	/*

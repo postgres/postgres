@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.205 2002/07/12 18:43:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.206 2002/07/14 21:08:08 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -66,13 +66,11 @@ static void AddNewRelationTuple(Relation pg_class_desc,
 					Relation new_rel_desc,
 					Oid new_rel_oid, Oid new_type_oid,
 					char relkind, bool relhasoids);
-static void DeleteAttributeTuples(Relation rel);
-static void DeleteRelationTuple(Relation rel);
-static void RelationRemoveInheritance(Relation relation);
 static void AddNewRelationType(const char *typeName,
 							   Oid typeNamespace,
 							   Oid new_rel_oid,
 							   Oid new_type_oid);
+static void RelationRemoveInheritance(Relation relation);
 static void StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin);
 static void StoreRelCheck(Relation rel, char *ccname, char *ccbin);
 static void StoreConstraints(Relation rel, TupleDesc tupdesc);
@@ -793,193 +791,72 @@ RelationRemoveInheritance(Relation relation)
 
 /*
  *		DeleteRelationTuple
+ *
+ * Remove pg_class row for the given relid.
+ *
+ * Note: this is shared by relation deletion and index deletion.  It's
+ * not intended for use anyplace else.
  */
-static void
-DeleteRelationTuple(Relation rel)
+void
+DeleteRelationTuple(Oid relid)
 {
 	Relation	pg_class_desc;
 	HeapTuple	tup;
 
-	/*
-	 * open pg_class
-	 */
+	/* Grab an appropriate lock on the pg_class relation */
 	pg_class_desc = heap_openr(RelationRelationName, RowExclusiveLock);
 
-	tup = SearchSysCacheCopy(RELOID,
-							 ObjectIdGetDatum(rel->rd_id),
-							 0, 0, 0);
+	tup = SearchSysCache(RELOID,
+						 ObjectIdGetDatum(relid),
+						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "Relation \"%s\" does not exist",
-			 RelationGetRelationName(rel));
+		elog(ERROR, "DeleteRelationTuple: cache lookup failed for relation %u",
+			 relid);
 
-	/*
-	 * delete the relation tuple from pg_class, and finish up.
-	 */
+	/* delete the relation tuple from pg_class, and finish up */
 	simple_heap_delete(pg_class_desc, &tup->t_self);
-	heap_freetuple(tup);
+
+	ReleaseSysCache(tup);
 
 	heap_close(pg_class_desc, RowExclusiveLock);
 }
 
-/* --------------------------------
- * RelationTruncateIndexes - This routine is used to truncate all
- * indices associated with the heap relation to zero tuples.
- * The routine will truncate and then reconstruct the indices on
- * the relation specified by the heapId parameter.
- * --------------------------------
- */
-static void
-RelationTruncateIndexes(Oid heapId)
-{
-	Relation	indexRelation;
-	ScanKeyData entry;
-	SysScanDesc	scan;
-	HeapTuple	indexTuple;
-
-	/* Scan pg_index to find indexes on specified heap */
-	indexRelation = heap_openr(IndexRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&entry, 0,
-						   Anum_pg_index_indrelid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(heapId));
-	scan = systable_beginscan(indexRelation, IndexIndrelidIndex, true,
-							  SnapshotNow, 1, &entry);
-
-	while (HeapTupleIsValid(indexTuple = systable_getnext(scan)))
-	{
-		Form_pg_index indexform = (Form_pg_index) GETSTRUCT(indexTuple);
-		Oid			indexId;
-		IndexInfo  *indexInfo;
-		Relation	heapRelation,
-					currentIndex;
-
-		/*
-		 * For each index, fetch info needed for index_build
-		 */
-		indexId = indexform->indexrelid;
-		indexInfo = BuildIndexInfo(indexform);
-
-		/*
-		 * We have to re-open the heap rel each time through this loop
-		 * because index_build will close it again.  We need grab no lock,
-		 * however, because we assume heap_truncate is holding an
-		 * exclusive lock on the heap rel.
-		 */
-		heapRelation = heap_open(heapId, NoLock);
-
-		/* Open the index relation */
-		currentIndex = index_open(indexId);
-
-		/* Obtain exclusive lock on it, just to be sure */
-		LockRelation(currentIndex, AccessExclusiveLock);
-
-		/*
-		 * Drop any buffers associated with this index. If they're dirty,
-		 * they're just dropped without bothering to flush to disk.
-		 */
-		DropRelationBuffers(currentIndex);
-
-		/* Now truncate the actual data and set blocks to zero */
-		smgrtruncate(DEFAULT_SMGR, currentIndex, 0);
-		currentIndex->rd_nblocks = 0;
-		currentIndex->rd_targblock = InvalidBlockNumber;
-
-		/* Initialize the index and rebuild */
-		index_build(heapRelation, currentIndex, indexInfo);
-
-		/*
-		 * index_build will close both the heap and index relations (but
-		 * not give up the locks we hold on them).
-		 */
-	}
-
-	/* Complete the scan and close pg_index */
-	systable_endscan(scan);
-	heap_close(indexRelation, AccessShareLock);
-}
-
-/* ----------------------------
- *	 heap_truncate
- *
- *	 This routine is used to truncate the data from the
- *	 storage manager of any data within the relation handed
- *	 to this routine.
- * ----------------------------
- */
-
-void
-heap_truncate(Oid rid)
-{
-	Relation	rel;
-
-	/* Open relation for processing, and grab exclusive access on it. */
-
-	rel = heap_open(rid, AccessExclusiveLock);
-
-	/*
-	 * TRUNCATE TABLE within a transaction block is dangerous, because if
-	 * the transaction is later rolled back we have no way to undo
-	 * truncation of the relation's physical file.  Disallow it except for
-	 * a rel created in the current xact (which would be deleted on abort,
-	 * anyway).
-	 */
-	if (IsTransactionBlock() && !rel->rd_myxactonly)
-		elog(ERROR, "TRUNCATE TABLE cannot run inside a transaction block");
-
-	/*
-	 * Release any buffers associated with this relation.  If they're
-	 * dirty, they're just dropped without bothering to flush to disk.
-	 */
-	DropRelationBuffers(rel);
-
-	/* Now truncate the actual data and set blocks to zero */
-	smgrtruncate(DEFAULT_SMGR, rel, 0);
-	rel->rd_nblocks = 0;
-	rel->rd_targblock = InvalidBlockNumber;
-
-	/* If this relation has indexes, truncate the indexes too */
-	RelationTruncateIndexes(rid);
-
-	/*
-	 * Close the relation, but keep exclusive lock on it until commit.
-	 */
-	heap_close(rel, NoLock);
-}
-
-
-/* --------------------------------
+/*
  *		DeleteAttributeTuples
  *
- * --------------------------------
+ * Remove pg_attribute rows for the given relid.
+ *
+ * Note: this is shared by relation deletion and index deletion.  It's
+ * not intended for use anyplace else.
  */
-static void
-DeleteAttributeTuples(Relation rel)
+void
+DeleteAttributeTuples(Oid relid)
 {
-	Relation	pg_attribute_desc;
-	HeapTuple	tup;
-	int2		attnum;
+	Relation	attrel;
+	SysScanDesc	scan;
+	ScanKeyData key[1];
+	HeapTuple	atttup;
 
-	/*
-	 * open pg_attribute
-	 */
-	pg_attribute_desc = heap_openr(AttributeRelationName, RowExclusiveLock);
+	/* Grab an appropriate lock on the pg_attribute relation */
+	attrel = heap_openr(AttributeRelationName, RowExclusiveLock);
 
-	for (attnum = FirstLowInvalidHeapAttributeNumber + 1;
-		 attnum <= rel->rd_att->natts;
-		 attnum++)
+	/* Use the index to scan only attributes of the target relation */
+	ScanKeyEntryInitialize(&key[0], 0x0,
+						   Anum_pg_attribute_attrelid, F_OIDEQ,
+						   ObjectIdGetDatum(relid));
+
+	scan = systable_beginscan(attrel, AttributeRelidNumIndex, true,
+							  SnapshotNow, 1, key);
+
+	/* Delete all the matching tuples */
+	while ((atttup = systable_getnext(scan)) != NULL)
 	{
-		tup = SearchSysCacheCopy(ATTNUM,
-								 ObjectIdGetDatum(RelationGetRelid(rel)),
-								 Int16GetDatum(attnum),
-								 0, 0);
-		if (HeapTupleIsValid(tup))
-		{
-			simple_heap_delete(pg_attribute_desc, &tup->t_self);
-			heap_freetuple(tup);
-		}
+		simple_heap_delete(attrel, &atttup->t_self);
 	}
 
-	heap_close(pg_attribute_desc, RowExclusiveLock);
+	/* Clean up after the scan */
+	systable_endscan(scan);
+	heap_close(attrel, RowExclusiveLock);
 }
 
 /* ----------------------------------------------------------------
@@ -1033,14 +910,14 @@ heap_drop_with_catalog(Oid rid)
 	/*
 	 * delete attribute tuples and associated defaults
 	 */
-	DeleteAttributeTuples(rel);
+	DeleteAttributeTuples(RelationGetRelid(rel));
 
 	RemoveDefaults(rel);
 
 	/*
 	 * delete relation tuple
 	 */
-	DeleteRelationTuple(rel);
+	DeleteRelationTuple(RelationGetRelid(rel));
 
 	/*
 	 * unlink the relation's physical file and finish up.
@@ -1733,4 +1610,128 @@ RemoveStatistics(Relation rel)
 
 	heap_endscan(scan);
 	heap_close(pgstatistic, RowExclusiveLock);
+}
+
+
+/*
+ * RelationTruncateIndexes - truncate all
+ * indices associated with the heap relation to zero tuples.
+ *
+ * The routine will truncate and then reconstruct the indices on
+ * the relation specified by the heapId parameter.
+ */
+static void
+RelationTruncateIndexes(Oid heapId)
+{
+	Relation	indexRelation;
+	ScanKeyData entry;
+	SysScanDesc	scan;
+	HeapTuple	indexTuple;
+
+	/* Scan pg_index to find indexes on specified heap */
+	indexRelation = heap_openr(IndexRelationName, AccessShareLock);
+	ScanKeyEntryInitialize(&entry, 0,
+						   Anum_pg_index_indrelid,
+						   F_OIDEQ,
+						   ObjectIdGetDatum(heapId));
+	scan = systable_beginscan(indexRelation, IndexIndrelidIndex, true,
+							  SnapshotNow, 1, &entry);
+
+	while (HeapTupleIsValid(indexTuple = systable_getnext(scan)))
+	{
+		Form_pg_index indexform = (Form_pg_index) GETSTRUCT(indexTuple);
+		Oid			indexId;
+		IndexInfo  *indexInfo;
+		Relation	heapRelation,
+					currentIndex;
+
+		/*
+		 * For each index, fetch info needed for index_build
+		 */
+		indexId = indexform->indexrelid;
+		indexInfo = BuildIndexInfo(indexform);
+
+		/*
+		 * We have to re-open the heap rel each time through this loop
+		 * because index_build will close it again.  We need grab no lock,
+		 * however, because we assume heap_truncate is holding an
+		 * exclusive lock on the heap rel.
+		 */
+		heapRelation = heap_open(heapId, NoLock);
+
+		/* Open the index relation */
+		currentIndex = index_open(indexId);
+
+		/* Obtain exclusive lock on it, just to be sure */
+		LockRelation(currentIndex, AccessExclusiveLock);
+
+		/*
+		 * Drop any buffers associated with this index. If they're dirty,
+		 * they're just dropped without bothering to flush to disk.
+		 */
+		DropRelationBuffers(currentIndex);
+
+		/* Now truncate the actual data and set blocks to zero */
+		smgrtruncate(DEFAULT_SMGR, currentIndex, 0);
+		currentIndex->rd_nblocks = 0;
+		currentIndex->rd_targblock = InvalidBlockNumber;
+
+		/* Initialize the index and rebuild */
+		index_build(heapRelation, currentIndex, indexInfo);
+
+		/*
+		 * index_build will close both the heap and index relations (but
+		 * not give up the locks we hold on them).
+		 */
+	}
+
+	/* Complete the scan and close pg_index */
+	systable_endscan(scan);
+	heap_close(indexRelation, AccessShareLock);
+}
+
+/*
+ *	 heap_truncate
+ *
+ *	 This routine is used to truncate the data from the
+ *	 storage manager of any data within the relation handed
+ *	 to this routine.
+ */
+void
+heap_truncate(Oid rid)
+{
+	Relation	rel;
+
+	/* Open relation for processing, and grab exclusive access on it. */
+
+	rel = heap_open(rid, AccessExclusiveLock);
+
+	/*
+	 * TRUNCATE TABLE within a transaction block is dangerous, because if
+	 * the transaction is later rolled back we have no way to undo
+	 * truncation of the relation's physical file.  Disallow it except for
+	 * a rel created in the current xact (which would be deleted on abort,
+	 * anyway).
+	 */
+	if (IsTransactionBlock() && !rel->rd_myxactonly)
+		elog(ERROR, "TRUNCATE TABLE cannot run inside a transaction block");
+
+	/*
+	 * Release any buffers associated with this relation.  If they're
+	 * dirty, they're just dropped without bothering to flush to disk.
+	 */
+	DropRelationBuffers(rel);
+
+	/* Now truncate the actual data and set blocks to zero */
+	smgrtruncate(DEFAULT_SMGR, rel, 0);
+	rel->rd_nblocks = 0;
+	rel->rd_targblock = InvalidBlockNumber;
+
+	/* If this relation has indexes, truncate the indexes too */
+	RelationTruncateIndexes(rid);
+
+	/*
+	 * Close the relation, but keep exclusive lock on it until commit.
+	 */
+	heap_close(rel, NoLock);
 }
