@@ -7,14 +7,14 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/parser/Attic/Makefile.inc,v 1.4 1996/09/21 06:29:09 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/parser/Attic/Makefile.inc,v 1.5 1996/09/26 15:40:45 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 VPATH:= $(VPATH):$(CURDIR)/parser
 
-#PARSEYACCS= gram.c parse.h
-PARSEYACCS= gram.c
+PARSEYACCS= gram.c parse.h
+#PARSEYACCS= gram.c
 
 $(PARSEYACCS): gram.y
 	$(YACC) $(YFLAGS) $<

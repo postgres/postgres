@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Attic/Makefile.inc,v 1.1.1.1 1996/07/09 06:21:14 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Attic/Makefile.inc,v 1.2 1996/09/26 15:40:37 momjian Exp $
 #
 #
 # Another kinda weird Makefile.inc cause we need two
@@ -21,8 +21,8 @@
 bootdir= $(CURDIR)/bootstrap
 VPATH:= $(VPATH):$(bootdir)
 
-#BOOTYACCS= bootstrap_tokens.h bootparse.c
-BOOTYACCS= bootparse.c
+BOOTYACCS= bootstrap_tokens.h bootparse.c
+#BOOTYACCS= bootparse.c
 
 SRCS_BOOTSTRAP= bootparse.c bootscanner.c bootstrap.c 
 

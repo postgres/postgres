@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.7 1996/09/23 08:21:52 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.8 1996/09/26 15:40:24 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -228,7 +228,7 @@ IDLDFLAGS+= -Aa -D_HPUX_SOURCE
 endif
 endif
 
-CLEANFILES+= postgres
+CLEANFILES+= postgres pg_id fmgr.h
 
 
 #############################################################################
