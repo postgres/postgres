@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSetOp.c,v 1.3 2001/03/22 03:59:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSetOp.c,v 1.4 2001/03/22 06:16:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,19 +51,17 @@ ExecSetOp(SetOp *node)
 	Plan	   *outerPlan;
 	TupleDesc	tupDesc;
 
-	/* ----------------
-	 *	get information from the node
-	 * ----------------
+	/*
+	 * get information from the node
 	 */
 	setopstate = node->setopstate;
 	outerPlan = outerPlan((Plan *) node);
 	resultTupleSlot = setopstate->cstate.cs_ResultTupleSlot;
 	tupDesc = ExecGetResultType(&setopstate->cstate);
 
-	/* ----------------
-	 *	If the previously-returned tuple needs to be returned more than
-	 *	once, keep returning it.
-	 * ----------------
+	/*
+	 * If the previously-returned tuple needs to be returned more than
+	 * once, keep returning it.
 	 */
 	if (setopstate->numOutput > 0)
 	{
@@ -74,23 +72,21 @@ ExecSetOp(SetOp *node)
 	/* Flag that we have no current tuple */
 	ExecClearTuple(resultTupleSlot);
 
-	/* ----------------
-	 *	Absorb groups of duplicate tuples, counting them, and
-	 *	saving the first of each group as a possible return value.
-	 *	At the end of each group, decide whether to return anything.
+	/*
+	 * Absorb groups of duplicate tuples, counting them, and saving the
+	 * first of each group as a possible return value. At the end of each
+	 * group, decide whether to return anything.
 	 *
-	 *	We assume that the tuples arrive in sorted order
-	 *	so we can detect duplicates easily.
-	 * ----------------
+	 * We assume that the tuples arrive in sorted order so we can detect
+	 * duplicates easily.
 	 */
 	for (;;)
 	{
 		TupleTableSlot *inputTupleSlot;
 		bool		endOfGroup;
 
-		/* ----------------
-		 *	 fetch a tuple from the outer subplan, unless we already did.
-		 * ----------------
+		/*
+		 * fetch a tuple from the outer subplan, unless we already did.
 		 */
 		if (setopstate->cstate.cs_OuterTupleSlot == NULL &&
 			!setopstate->subplan_done)
@@ -235,15 +231,13 @@ ExecInitSetOp(SetOp *node, EState *estate, Plan *parent)
 	SetOpState *setopstate;
 	Plan	   *outerPlan;
 
-	/* ----------------
-	 *	assign execution state to node
-	 * ----------------
+	/*
+	 * assign execution state to node
 	 */
 	node->plan.state = estate;
 
-	/* ----------------
-	 *	create new SetOpState for node
-	 * ----------------
+	/*
+	 * create new SetOpState for node
 	 */
 	setopstate = makeNode(SetOpState);
 	node->setopstate = setopstate;
@@ -251,13 +245,12 @@ ExecInitSetOp(SetOp *node, EState *estate, Plan *parent)
 	setopstate->subplan_done = false;
 	setopstate->numOutput = 0;
 
-	/* ----------------
-	 *	Miscellaneous initialization
+	/*
+	 * Miscellaneous initialization
 	 *
-	 *	SetOp nodes have no ExprContext initialization because
-	 *	they never call ExecQual or ExecProject.  But they do need a
-	 *	per-tuple memory context anyway for calling execTuplesMatch.
-	 * ----------------
+	 * SetOp nodes have no ExprContext initialization because they never call
+	 * ExecQual or ExecProject.  But they do need a per-tuple memory
+	 * context anyway for calling execTuplesMatch.
 	 */
 	setopstate->tempContext =
 		AllocSetContextCreate(CurrentMemoryContext,
@@ -267,23 +260,21 @@ ExecInitSetOp(SetOp *node, EState *estate, Plan *parent)
 							  ALLOCSET_DEFAULT_MAXSIZE);
 
 #define SETOP_NSLOTS 1
-	/* ------------
+
+	/*
 	 * Tuple table initialization
-	 * ------------
 	 */
 	ExecInitResultTupleSlot(estate, &setopstate->cstate);
 
-	/* ----------------
-	 *	then initialize outer plan
-	 * ----------------
+	/*
+	 * then initialize outer plan
 	 */
 	outerPlan = outerPlan((Plan *) node);
 	ExecInitNode(outerPlan, estate, (Plan *) node);
 
-	/* ----------------
-	 *	setop nodes do no projections, so initialize
-	 *	projection info for this node appropriately
-	 * ----------------
+	/*
+	 * setop nodes do no projections, so initialize projection info for
+	 * this node appropriately
 	 */
 	ExecAssignResultTypeFromOuterPlan((Plan *) node, &setopstate->cstate);
 	setopstate->cstate.cs_ProjInfo = NULL;

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.39 2001/03/22 04:01:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.40 2001/03/22 06:16:21 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -157,9 +157,8 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 	PLpgSQL_stmt *save_estmt;
 	char	   *save_etext;
 
-	/* ----------
+	/*
 	 * Setup debug error info and catch elog()
-	 * ----------
 	 */
 	save_efunc = error_info_func;
 	save_estmt = error_info_stmt;
@@ -174,10 +173,9 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 	{
 		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 
-		/* ----------
-		 * If we are the first of cascaded error catchings,
-		 * print where this happened
-		 * ----------
+		/*
+		 * If we are the first of cascaded error catchings, print where
+		 * this happened
 		 */
 		if (error_info_func != NULL)
 		{
@@ -258,9 +256,8 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 	}
 
 
-	/* ----------
+	/*
 	 * Setup the execution state
-	 * ----------
 	 */
 	estate.retval = 0;
 	estate.retisnull = false;
@@ -273,9 +270,8 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 	estate.ndatums = func->ndatums;
 	estate.datums = palloc(sizeof(PLpgSQL_datum *) * estate.ndatums);
 
-	/* ----------
+	/*
 	 * Make local execution copies of all the datums
-	 * ----------
 	 */
 	for (i = 0; i < func->ndatums; i++)
 	{
@@ -302,9 +298,8 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 		}
 	}
 
-	/* ----------
+	/*
 	 * Put the actual call argument values into the variables
-	 * ----------
 	 */
 	error_info_text = "while putting call arguments to local variables";
 	for (i = 0; i < func->fn_nargs; i++)
@@ -343,10 +338,9 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 		}
 	}
 
-	/* ----------
-	 * Initialize the other variables to NULL values for now.
-	 * The default values are set when the blocks are entered.
-	 * ----------
+	/*
+	 * Initialize the other variables to NULL values for now. The default
+	 * values are set when the blocks are entered.
 	 */
 	error_info_text = "while initializing local variables to NULL";
 	for (i = estate.found_varno; i < estate.ndatums; i++)
@@ -374,15 +368,13 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 		}
 	}
 
-	/* ----------
+	/*
 	 * Set the magic variable FOUND to false
-	 * ----------
 	 */
 	exec_set_found(&estate, false);
 
-	/* ----------
+	/*
 	 * Now call the toplevel block of statements
-	 * ----------
 	 */
 	error_info_text = NULL;
 	error_info_stmt = (PLpgSQL_stmt *) (func->action);
@@ -393,9 +385,8 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 		elog(ERROR, "control reaches end of function without RETURN");
 	}
 
-	/* ----------
+	/*
 	 * We got a return value - process it
-	 * ----------
 	 */
 	error_info_stmt = NULL;
 	error_info_text = "while casting return value to functions return type";
@@ -411,10 +402,9 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 										-1,
 										&fcinfo->isnull);
 
-		/* ----------
-		 * If the functions return type isn't by value,
-		 * copy the value into upper executor memory context.
-		 * ----------
+		/*
+		 * If the functions return type isn't by value, copy the value
+		 * into upper executor memory context.
 		 */
 		if (!fcinfo->isnull && !func->fn_retbyval)
 		{
@@ -432,18 +422,16 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 		}
 	}
 
-	/* ----------
+	/*
 	 * Restore the previous error info and elog() jump target
-	 * ----------
 	 */
 	error_info_func = save_efunc;
 	error_info_stmt = save_estmt;
 	error_info_text = save_etext;
 	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 
-	/* ----------
+	/*
 	 * Return the functions result
-	 * ----------
 	 */
 	return estate.retval;
 }
@@ -469,9 +457,8 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	PLpgSQL_var *var;
 	HeapTuple	rettup;
 
-	/* ----------
+	/*
 	 * Setup debug error info and catch elog()
-	 * ----------
 	 */
 	save_efunc = error_info_func;
 	save_estmt = error_info_stmt;
@@ -486,10 +473,9 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	{
 		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 
-		/* ----------
-		 * If we are the first of cascaded error catchings,
-		 * print where this happened
-		 * ----------
+		/*
+		 * If we are the first of cascaded error catchings, print where
+		 * this happened
 		 */
 		if (error_info_func != NULL)
 		{
@@ -570,9 +556,8 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	}
 
 
-	/* ----------
+	/*
 	 * Setup the execution state
-	 * ----------
 	 */
 	estate.retval = 0;
 	estate.retisnull = false;
@@ -585,9 +570,8 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	estate.ndatums = func->ndatums;
 	estate.datums = palloc(sizeof(PLpgSQL_datum *) * estate.ndatums);
 
-	/* ----------
+	/*
 	 * Make local execution copies of all the datums
-	 * ----------
 	 */
 	for (i = 0; i < func->ndatums; i++)
 	{
@@ -615,10 +599,9 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 		}
 	}
 
-	/* ----------
-	 * Put the trig and new tuples into the records
-	 * and set the tg_op variable
-	 * ----------
+	/*
+	 * Put the trig and new tuples into the records and set the tg_op
+	 * variable
 	 */
 	rec_new = (PLpgSQL_rec *) (estate.datums[func->new_varno]);
 	rec_old = (PLpgSQL_rec *) (estate.datums[func->old_varno]);
@@ -656,9 +639,8 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 		var->value = DirectFunctionCall1(textin, CStringGetDatum("UNKNOWN"));
 	}
 
-	/* ----------
+	/*
 	 * Fill all the other special tg_ variables
-	 * ----------
 	 */
 	var = (PLpgSQL_var *) (estate.datums[func->tg_name_varno]);
 	var->isnull = false;
@@ -696,10 +678,9 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	var->isnull = false;
 	var->value = (Datum) (trigdata->tg_trigger->tgnargs);
 
-	/* ----------
-	 * Put the actual call argument values into the special
-	 * execution state variables
-	 * ----------
+	/*
+	 * Put the actual call argument values into the special execution
+	 * state variables
 	 */
 	error_info_text = "while putting call arguments to local variables";
 	estate.trig_nargs = trigdata->tg_trigger->tgnargs;
@@ -713,10 +694,9 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 					   CStringGetDatum(trigdata->tg_trigger->tgargs[i]));
 	}
 
-	/* ----------
-	 * Initialize the other variables to NULL values for now.
-	 * The default values are set when the blocks are entered.
-	 * ----------
+	/*
+	 * Initialize the other variables to NULL values for now. The default
+	 * values are set when the blocks are entered.
 	 */
 	error_info_text = "while initializing local variables to NULL";
 	for (i = estate.found_varno; i < estate.ndatums; i++)
@@ -745,15 +725,13 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 		}
 	}
 
-	/* ----------
+	/*
 	 * Set the magic variable FOUND to false
-	 * ----------
 	 */
 	exec_set_found(&estate, false);
 
-	/* ----------
+	/*
 	 * Now call the toplevel block of statements
-	 * ----------
 	 */
 	error_info_text = NULL;
 	error_info_stmt = (PLpgSQL_stmt *) (func->action);
@@ -764,15 +742,13 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 		elog(ERROR, "control reaches end of trigger procedure without RETURN");
 	}
 
-	/* ----------
+	/*
 	 * Check that the returned tuple structure has the same attributes,
 	 * the relation that fired the trigger has.
 	 *
-	 * XXX This way it is possible, that the trigger returns a tuple
-	 *	   where attributes don't have the correct atttypmod's length.
-	 *	   It's up to the trigger's programmer to ensure that this
-	 *	   doesn't happen. Jan
-	 * ----------
+	 * XXX This way it is possible, that the trigger returns a tuple where
+	 * attributes don't have the correct atttypmod's length. It's up to
+	 * the trigger's programmer to ensure that this doesn't happen. Jan
 	 */
 	if (estate.retisnull)
 		rettup = NULL;
@@ -793,18 +769,16 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 		rettup = SPI_copytuple((HeapTuple) (estate.retval));
 	}
 
-	/* ----------
+	/*
 	 * Restore the previous error info and elog() jump target
-	 * ----------
 	 */
 	error_info_func = save_efunc;
 	error_info_stmt = save_estmt;
 	error_info_text = save_etext;
 	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 
-	/* ----------
+	/*
 	 * Return the triggers result
-	 * ----------
 	 */
 	return rettup;
 }
@@ -847,9 +821,8 @@ exec_stmt_block(PLpgSQL_execstate * estate, PLpgSQL_stmt_block * block)
 	int			i;
 	int			n;
 
-	/* ----------
+	/*
 	 * First initialize all variables declared in this block
-	 * ----------
 	 */
 	for (i = 0; i < block->n_initvars; i++)
 	{
@@ -897,15 +870,13 @@ exec_stmt_block(PLpgSQL_execstate * estate, PLpgSQL_stmt_block * block)
 
 	}
 
-	/* ----------
+	/*
 	 * Execute the statements in the block's body
-	 * ----------
 	 */
 	rc = exec_stmts(estate, block->body);
 
-	/* ----------
+	/*
 	 * Handle the return code.
-	 * ----------
 	 */
 	switch (rc)
 	{
@@ -1242,9 +1213,8 @@ exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
 	bool		isnull = false;
 	int			rc;
 
-	/* ----------
+	/*
 	 * Get the value of the lower bound into the loop var
-	 * ----------
 	 */
 	value = exec_eval_expr(estate, stmt->lower, &isnull, &valtype);
 	var = (PLpgSQL_var *) (estate->datums[stmt->var->varno]);
@@ -1258,9 +1228,8 @@ exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
 	var->value = value;
 	var->isnull = false;
 
-	/* ----------
+	/*
 	 * Get the value of the upper bound
-	 * ----------
 	 */
 	value = exec_eval_expr(estate, stmt->upper, &isnull, &valtype);
 	value = exec_cast_value(value, valtype, var->datatype->typoid,
@@ -1270,16 +1239,15 @@ exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
 	if (isnull)
 		elog(ERROR, "upper bound of FOR loop cannot be NULL");
 
-	/* ----------
+	/*
 	 * Now do the loop
-	 * ----------
 	 */
 	exec_set_found(estate, false);
 	for (;;)
 	{
-		/* ----------
+
+		/*
 		 * Check bounds
-		 * ----------
 		 */
 		if (stmt->reverse)
 		{
@@ -1293,15 +1261,13 @@ exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
 		}
 		exec_set_found(estate, true);
 
-		/* ----------
+		/*
 		 * Execute the statements
-		 * ----------
 		 */
 		rc = exec_stmts(estate, stmt->body);
 
-		/* ----------
+		/*
 		 * Check returncode
-		 * ----------
 		 */
 		switch (rc)
 		{
@@ -1325,9 +1291,8 @@ exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
 				elog(ERROR, "unknown rc %d from exec_stmts()", rc);
 		}
 
-		/* ----------
+		/*
 		 * Increase/decrease loop var
-		 * ----------
 		 */
 		if (stmt->reverse)
 			var->value--;
@@ -1356,15 +1321,13 @@ exec_stmt_fors(PLpgSQL_execstate * estate, PLpgSQL_stmt_fors * stmt)
 	int			i;
 	int			n;
 
-	/* ----------
+	/*
 	 * Initialize the global found variable to false
-	 * ----------
 	 */
 	exec_set_found(estate, false);
 
-	/* ----------
+	/*
 	 * Determine if we assign to a record or a row
-	 * ----------
 	 */
 	if (stmt->rec != NULL)
 		rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
@@ -1376,17 +1339,15 @@ exec_stmt_fors(PLpgSQL_execstate * estate, PLpgSQL_stmt_fors * stmt)
 			elog(ERROR, "unsupported target in exec_stmt_fors()");
 	}
 
-	/* ----------
+	/*
 	 * Run the query
-	 * ----------
 	 */
 	exec_run_select(estate, stmt->query, 0);
 	n = SPI_processed;
 
-	/* ----------
-	 * If the query didn't return any row, set the target
-	 * to NULL and return.
-	 * ----------
+	/*
+	 * If the query didn't return any row, set the target to NULL and
+	 * return.
 	 */
 	if (n == 0)
 	{
@@ -1394,36 +1355,32 @@ exec_stmt_fors(PLpgSQL_execstate * estate, PLpgSQL_stmt_fors * stmt)
 		return PLPGSQL_RC_OK;
 	}
 
-	/* ----------
+	/*
 	 * There are tuples, so set found to true
-	 * ----------
 	 */
 	exec_set_found(estate, true);
 
-	/* ----------
+	/*
 	 * Now do the loop
-	 * ----------
 	 */
 	tuptab = SPI_tuptable;
 	SPI_tuptable = NULL;
 
 	for (i = 0; i < n; i++)
 	{
-		/* ----------
+
+		/*
 		 * Assign the tuple to the target
-		 * ----------
 		 */
 		exec_move_row(estate, rec, row, tuptab->vals[i], tuptab->tupdesc);
 
-		/* ----------
+		/*
 		 * Execute the statements
-		 * ----------
 		 */
 		rc = exec_stmts(estate, stmt->body);
 
-		/* ----------
+		/*
 		 * Check returncode
-		 * ----------
 		 */
 		switch (rc)
 		{
@@ -1465,15 +1422,13 @@ exec_stmt_select(PLpgSQL_execstate * estate, PLpgSQL_stmt_select * stmt)
 	SPITupleTable *tuptab;
 	int			n;
 
-	/* ----------
+	/*
 	 * Initialize the global found variable to false
-	 * ----------
 	 */
 	exec_set_found(estate, false);
 
-	/* ----------
+	/*
 	 * Determine if we assign to a record or a row
-	 * ----------
 	 */
 	if (stmt->rec != NULL)
 		rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
@@ -1485,17 +1440,15 @@ exec_stmt_select(PLpgSQL_execstate * estate, PLpgSQL_stmt_select * stmt)
 			elog(ERROR, "unsupported target in exec_stmt_select()");
 	}
 
-	/* ----------
+	/*
 	 * Run the query
-	 * ----------
 	 */
 	exec_run_select(estate, stmt->query, 1);
 	n = SPI_processed;
 
-	/* ----------
-	 * If the query didn't return any row, set the target
-	 * to NULL and return.
-	 * ----------
+	/*
+	 * If the query didn't return any row, set the target to NULL and
+	 * return.
 	 */
 	if (n == 0)
 	{
@@ -1503,9 +1456,8 @@ exec_stmt_select(PLpgSQL_execstate * estate, PLpgSQL_stmt_select * stmt)
 		return PLPGSQL_RC_OK;
 	}
 
-	/* ----------
+	/*
 	 * Put the result into the target and set found to true
-	 * ----------
 	 */
 	tuptab = SPI_tuptable;
 	SPI_tuptable = NULL;
@@ -1529,9 +1481,8 @@ exec_stmt_exit(PLpgSQL_execstate * estate, PLpgSQL_stmt_exit * stmt)
 	Oid			valtype;
 	bool		isnull = false;
 
-	/* ----------
+	/*
 	 * If the exit has a condition, check that it's true
-	 * ----------
 	 */
 	if (stmt->cond != NULL)
 	{
@@ -1615,11 +1566,11 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 
 	for (cp = stmt->message; *cp; cp++)
 	{
-		/* ----------
-		 * Occurences of a single % are replaced by the next
-		 * arguments external representation. Double %'s are
-		 * left as is so elog() will also don't touch them.
-		 * ----------
+
+		/*
+		 * Occurences of a single % are replaced by the next arguments
+		 * external representation. Double %'s are left as is so elog()
+		 * will also don't touch them.
 		 */
 		if ((c[0] = *cp) == '%')
 		{
@@ -1717,10 +1668,9 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 			continue;
 		}
 
-		/* ----------
-		 * Occurences of single ' are removed. double ' are reduced
-		 * to single ones.
-		 * ----------
+		/*
+		 * Occurences of single ' are removed. double ' are reduced to
+		 * single ones.
 		 */
 		if (*cp == '\'')
 		{
@@ -1734,9 +1684,8 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 		plpgsql_dstring_append(&ds, c);
 	}
 
-	/* ----------
+	/*
 	 * Now suppress debug info and throw the elog()
-	 * ----------
 	 */
 	if (stmt->elog_level == ERROR)
 	{
@@ -1767,9 +1716,8 @@ exec_prepare_plan(PLpgSQL_execstate * estate,
 	void	   *plan;
 	Oid		   *argtypes;
 
-	/* ----------
+	/*
 	 * Setup the argtypes array
-	 * ----------
 	 */
 	argtypes = malloc(sizeof(Oid *) * (expr->nparams + 1));
 
@@ -1804,9 +1752,8 @@ exec_prepare_plan(PLpgSQL_execstate * estate,
 		}
 	}
 
-	/* ----------
+	/*
 	 * Generate and save the plan
-	 * ----------
 	 */
 	plan = SPI_prepare(expr->query, expr->nparams, argtypes);
 	if (plan == NULL)
@@ -1841,16 +1788,14 @@ exec_stmt_execsql(PLpgSQL_execstate * estate,
 	PLpgSQL_expr *expr = stmt->sqlstmt;
 	bool		isnull;
 
-	/* ----------
+	/*
 	 * On the first call for this expression generate the plan
-	 * ----------
 	 */
 	if (expr->plan == NULL)
 		exec_prepare_plan(estate, expr);
 
-	/* ----------
+	/*
 	 * Now build up the values and nulls arguments for SPI_execp()
-	 * ----------
 	 */
 	values = palloc(sizeof(Datum) * (expr->nparams + 1));
 	nulls = palloc(expr->nparams + 1);
@@ -1910,9 +1855,8 @@ exec_stmt_execsql(PLpgSQL_execstate * estate,
 	}
 	nulls[i] = '\0';
 
-	/* ----------
+	/*
 	 * Execute the plan
-	 * ----------
 	 */
 	rc = SPI_execp(expr->plan, values, nulls, 0);
 	switch (rc)
@@ -1956,19 +1900,16 @@ exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 	FmgrInfo	finfo_output;
 	int			exec_res;
 
-	/* ----------
-	 * First we evaluate the string expression after the
-	 * EXECUTE keyword. It's result is the querystring we have
-	 * to execute.
-	 * ----------
+	/*
+	 * First we evaluate the string expression after the EXECUTE keyword.
+	 * It's result is the querystring we have to execute.
 	 */
 	query = exec_eval_expr(estate, stmt->query, &isnull, &restype);
 	if (isnull)
 		elog(ERROR, "cannot EXECUTE NULL query");
 
-	/* ----------
+	/*
 	 * Get the C-String representation.
-	 * ----------
 	 */
 	typetup = SearchSysCache(TYPEOID,
 							 ObjectIdGetDatum(restype),
@@ -1988,11 +1929,10 @@ exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 
 	ReleaseSysCache(typetup);
 
-	/* ----------
-	 * Call SPI_exec() without preparing a saved plan.
-	 * The returncode can be any standard OK.  Note that
-	 * while a SELECT is allowed, its results will be discarded.
-	 * ----------
+	/*
+	 * Call SPI_exec() without preparing a saved plan. The returncode can
+	 * be any standard OK.	Note that while a SELECT is allowed, its
+	 * results will be discarded.
 	 */
 	exec_res = SPI_exec(querystr, 0);
 	switch (exec_res)
@@ -2016,8 +1956,8 @@ exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 
 			/*
 			 * Disallow this for now, because its behavior is not
-			 * consistent with SELECT INTO in a normal plpgsql context.
-			 * We need to reimplement EXECUTE to parse the string as a
+			 * consistent with SELECT INTO in a normal plpgsql context. We
+			 * need to reimplement EXECUTE to parse the string as a
 			 * plpgsql command, not just feed it to SPI_exec.
 			 */
 			elog(ERROR, "EXECUTE of SELECT ... INTO is not implemented yet");
@@ -2058,15 +1998,13 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 	Form_pg_type typeStruct;
 	FmgrInfo	finfo_output;
 
-	/* ----------
+	/*
 	 * Initialize the global found variable to false
-	 * ----------
 	 */
 	exec_set_found(estate, false);
 
-	/* ----------
+	/*
 	 * Determine if we assign to a record or a row
-	 * ----------
 	 */
 	if (stmt->rec != NULL)
 		rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
@@ -2078,19 +2016,16 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 			elog(ERROR, "unsupported target in exec_stmt_fors()");
 	}
 
-	/* ----------
-	 * Evaluate the string expression after the
-	 * EXECUTE keyword. It's result is the querystring we have
-	 * to execute.
-	 * ----------
+	/*
+	 * Evaluate the string expression after the EXECUTE keyword. It's
+	 * result is the querystring we have to execute.
 	 */
 	query = exec_eval_expr(estate, stmt->query, &isnull, &restype);
 	if (isnull)
 		elog(ERROR, "cannot EXECUTE NULL-query");
 
-	/* ----------
+	/*
 	 * Get the C-String representation.
-	 * ----------
 	 */
 	typetup = SearchSysCache(TYPEOID,
 							 ObjectIdGetDatum(restype),
@@ -2110,9 +2045,8 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 
 	ReleaseSysCache(typetup);
 
-	/* ----------
+	/*
 	 * Run the query
-	 * ----------
 	 */
 	if (SPI_exec(querystr, 0) != SPI_OK_SELECT)
 		elog(ERROR, "FOR ... EXECUTE query '%s' was not SELECT", querystr);
@@ -2120,10 +2054,9 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 
 	n = SPI_processed;
 
-	/* ----------
-	 * If the query didn't return any row, set the target
-	 * to NULL and return.
-	 * ----------
+	/*
+	 * If the query didn't return any row, set the target to NULL and
+	 * return.
 	 */
 	if (n == 0)
 	{
@@ -2131,36 +2064,32 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 		return PLPGSQL_RC_OK;
 	}
 
-	/* ----------
+	/*
 	 * There are tuples, so set found to true
-	 * ----------
 	 */
 	exec_set_found(estate, true);
 
-	/* ----------
+	/*
 	 * Now do the loop
-	 * ----------
 	 */
 	tuptab = SPI_tuptable;
 	SPI_tuptable = NULL;
 
 	for (i = 0; i < n; i++)
 	{
-		/* ----------
+
+		/*
 		 * Assign the tuple to the target
-		 * ----------
 		 */
 		exec_move_row(estate, rec, row, tuptab->vals[i], tuptab->tupdesc);
 
-		/* ----------
+		/*
 		 * Execute the statements
-		 * ----------
 		 */
 		rc = exec_stmts(estate, stmt->body);
 
-		/* ----------
+		/*
 		 * Check returncode
-		 * ----------
 		 */
 		switch (rc)
 		{
@@ -2236,9 +2165,9 @@ exec_assign_value(PLpgSQL_execstate * estate,
 	switch (target->dtype)
 	{
 		case PLPGSQL_DTYPE_VAR:
-			/* ----------
+
+			/*
 			 * Target field is a variable - that's easy
-			 * ----------
 			 */
 			var = (PLpgSQL_var *) target;
 			newvalue = exec_cast_value(value, valtype, var->datatype->typoid,
@@ -2255,26 +2184,24 @@ exec_assign_value(PLpgSQL_execstate * estate,
 			break;
 
 		case PLPGSQL_DTYPE_RECFIELD:
-			/* ----------
+
+			/*
 			 * Target field is a record
-			 * ----------
 			 */
 			recfield = (PLpgSQL_recfield *) target;
 			rec = (PLpgSQL_rec *) (estate->datums[recfield->recno]);
 
-			/* ----------
-			 * Check that there is already a tuple in the record.
-			 * We need that because records don't have any predefined
-			 * field structure.
-			 * ----------
+			/*
+			 * Check that there is already a tuple in the record. We need
+			 * that because records don't have any predefined field
+			 * structure.
 			 */
 			if (!HeapTupleIsValid(rec->tup))
 				elog(ERROR, "record %s is unassigned yet - don't know its tuple structure", rec->refname);
 
-			/* ----------
+			/*
 			 * Get the number of the records field to change and the
 			 * number of attributes in the tuple.
-			 * ----------
 			 */
 			fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
 			if (fno == SPI_ERROR_NOATTRIBUTE)
@@ -2282,21 +2209,20 @@ exec_assign_value(PLpgSQL_execstate * estate,
 			fno--;
 			natts = rec->tupdesc->natts;
 
-			/* ----------
-			 * We loop over the attributes of the rec's current tuple
-			 * and collect the values in a Datum array along with the
-			 * nulls information.
-			 * ----------
+			/*
+			 * We loop over the attributes of the rec's current tuple and
+			 * collect the values in a Datum array along with the nulls
+			 * information.
 			 */
 			values = palloc(sizeof(Datum) * natts);
 			nulls = palloc(natts + 1);
 
 			for (i = 0; i < natts; i++)
 			{
-				/* ----------
+
+				/*
 				 * If this isn't the field we assign to, just use the
 				 * value that's already in the tuple.
-				 * ----------
 				 */
 				if (i != fno)
 				{
@@ -2309,10 +2235,9 @@ exec_assign_value(PLpgSQL_execstate * estate,
 					continue;
 				}
 
-				/* ----------
-				 * This is the field to change. Get its type
-				 * and cast the value we insert to that type.
-				 * ----------
+				/*
+				 * This is the field to change. Get its type and cast the
+				 * value we insert to that type.
 				 */
 				atttype = SPI_gettypeid(rec->tupdesc, i + 1);
 				atttypmod = rec->tupdesc->attrs[i]->atttypmod;
@@ -2336,10 +2261,9 @@ exec_assign_value(PLpgSQL_execstate * estate,
 				ReleaseSysCache(typetup);
 			}
 
-			/* ----------
-			 * Now call heap_formtuple() to create a new tuple
-			 * that replaces the old one in the record.
-			 * ----------
+			/*
+			 * Now call heap_formtuple() to create a new tuple that
+			 * replaces the old one in the record.
 			 */
 			nulls[i] = '\0';
 			rec->tup = heap_formtuple(rec->tupdesc, values, nulls);
@@ -2368,17 +2292,15 @@ exec_eval_expr(PLpgSQL_execstate * estate,
 {
 	int			rc;
 
-	/* ----------
+	/*
 	 * If not already done create a plan for this expression
-	 * ----------
 	 */
 	if (expr->plan == NULL)
 		exec_prepare_plan(estate, expr);
 
-	/* ----------
-	 * If this is a simple expression, bypass SPI and use the
-	 * executor directly
-	 * ----------
+	/*
+	 * If this is a simple expression, bypass SPI and use the executor
+	 * directly
 	 */
 	if (expr->plan_simple_expr != NULL)
 		return exec_eval_simple_expr(estate, expr, isNull, rettype);
@@ -2387,9 +2309,8 @@ exec_eval_expr(PLpgSQL_execstate * estate,
 	if (rc != SPI_OK_SELECT)
 		elog(ERROR, "query \"%s\" didn't return data", expr->query);
 
-	/* ----------
+	/*
 	 * If there are no rows selected, the result is NULL.
-	 * ----------
 	 */
 	if (SPI_processed == 0)
 	{
@@ -2397,18 +2318,16 @@ exec_eval_expr(PLpgSQL_execstate * estate,
 		return (Datum) 0;
 	}
 
-	/* ----------
+	/*
 	 * Check that the expression returned one single Datum
-	 * ----------
 	 */
 	if (SPI_processed > 1)
 		elog(ERROR, "query \"%s\" didn't return a single value", expr->query);
 	if (SPI_tuptable->tupdesc->natts != 1)
 		elog(ERROR, "query \"%s\" didn't return a single value", expr->query);
 
-	/* ----------
+	/*
 	 * Return the result and its type
-	 * ----------
 	 */
 	*rettype = SPI_gettypeid(SPI_tuptable->tupdesc, 1);
 	return SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1, isNull);
@@ -2436,16 +2355,14 @@ exec_run_select(PLpgSQL_execstate * estate,
 	int			fno;
 	bool		isnull;
 
-	/* ----------
+	/*
 	 * On the first call for this expression generate the plan
-	 * ----------
 	 */
 	if (expr->plan == NULL)
 		exec_prepare_plan(estate, expr);
 
-	/* ----------
+	/*
 	 * Now build up the values and nulls arguments for SPI_execp()
-	 * ----------
 	 */
 	values = palloc(sizeof(Datum) * (expr->nparams + 1));
 	nulls = palloc(expr->nparams + 1);
@@ -2506,9 +2423,8 @@ exec_run_select(PLpgSQL_execstate * estate,
 	}
 	nulls[i] = '\0';
 
-	/* ----------
+	/*
 	 * Execute the query
-	 * ----------
 	 */
 	rc = SPI_execp(expr->plan, values, nulls, maxtuples);
 	if (rc != SPI_OK_SELECT)
@@ -2544,7 +2460,7 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	ExprContext *econtext;
 	ParamListInfo paramLI;
 
-	/* ----------
+	/*
 	 * Create a simple expression context to hold the arguments.
 	 *
 	 * NOTE: we pass TopMemoryContext as the query-lifetime context for
@@ -2553,17 +2469,15 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	 * freed in this backend, and the function cache nodes must live as
 	 * long as it does).  The memory allocation for plpgsql's plan trees
 	 * really needs to be redesigned...
-	 * ----------
 	 */
 	econtext = MakeExprContext(NULL, TopMemoryContext);
 	paramLI = (ParamListInfo) palloc((expr->nparams + 1) *
 									 sizeof(ParamListInfoData));
 	econtext->ecxt_param_list_info = paramLI;
 
-	/* ----------
-	 * Put the parameter values into the parameter list info of
-	 * the expression context.
-	 * ----------
+	/*
+	 * Put the parameter values into the parameter list info of the
+	 * expression context.
 	 */
 	for (i = 0; i < expr->nparams; i++, paramLI++)
 	{
@@ -2617,15 +2531,13 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	}
 	paramLI->kind = PARAM_INVALID;
 
-	/* ----------
+	/*
 	 * Initialize things
-	 * ----------
 	 */
 	*rettype = expr->plan_simple_type;
 
-	/* ----------
+	/*
 	 * Now call the executor to evaluate the expression
-	 * ----------
 	 */
 	SPI_push();
 	retval = ExecEvalExprSwitchContext(expr->plan_simple_expr,
@@ -2649,9 +2561,8 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 
 	FreeExprContext(econtext);
 
-	/* ----------
+	/*
 	 * That's it.
-	 * ----------
 	 */
 	return retval;
 }
@@ -2674,10 +2585,9 @@ exec_move_row(PLpgSQL_execstate * estate,
 	Oid			valtype;
 	bool		isnull;
 
-	/* ----------
-	 * Record is simple - just put the tuple and its descriptor
-	 * into the record
-	 * ----------
+	/*
+	 * Record is simple - just put the tuple and its descriptor into the
+	 * record
 	 */
 	if (rec != NULL)
 	{
@@ -2696,10 +2606,9 @@ exec_move_row(PLpgSQL_execstate * estate,
 	}
 
 
-	/* ----------
+	/*
 	 * Row is a bit more complicated in that we assign the single
 	 * attributes of the query to the variables the row points to.
-	 * ----------
 	 */
 	if (row != NULL)
 	{
@@ -2754,10 +2663,10 @@ exec_cast_value(Datum value, Oid valtype,
 {
 	if (!*isnull)
 	{
-		/* ----------
-		 * If the type of the queries return value isn't
-		 * that of the variable, convert it.
-		 * ----------
+
+		/*
+		 * If the type of the queries return value isn't that of the
+		 * variable, convert it.
 		 */
 		if (valtype != reqtype || reqtypmod != -1)
 		{
@@ -2860,19 +2769,17 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 
 	expr->plan_simple_expr = NULL;
 
-	/* ----------
+	/*
 	 * 1. We can only evaluate queries that resulted in one single
-	 *	  execution plan
-	 * ----------
+	 * execution plan
 	 */
 	if (length(spi_plan->ptlist) != 1)
 		return;
 
 	plan = (Plan *) lfirst(spi_plan->ptlist);
 
-	/* ----------
+	/*
 	 * 2. It must be a RESULT plan --> no scan's required
-	 * ----------
 	 */
 	if (plan == NULL)			/* utility statement produces this */
 		return;
@@ -2880,9 +2787,8 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 	if (!IsA(plan, Result))
 		return;
 
-	/* ----------
+	/*
 	 * 3. Can't have any subplan or qual clause, either
-	 * ----------
 	 */
 	if (plan->lefttree != NULL ||
 		plan->righttree != NULL ||
@@ -2892,27 +2798,24 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 		((Result *) plan)->resconstantqual != NULL)
 		return;
 
-	/* ----------
+	/*
 	 * 4. The plan must have a single attribute as result
-	 * ----------
 	 */
 	if (length(plan->targetlist) != 1)
 		return;
 
 	tle = (TargetEntry *) lfirst(plan->targetlist);
 
-	/* ----------
-	 * 5. Check that all the nodes in the expression are one of
-	 *	  Expr, Param or Const.
-	 * ----------
+	/*
+	 * 5. Check that all the nodes in the expression are one of Expr,
+	 * Param or Const.
 	 */
 	if (!exec_simple_check_node(tle->expr))
 		return;
 
-	/* ----------
-	 * Yes - this is a simple expression. Remember the expression
-	 * and the return type
-	 * ----------
+	/*
+	 * Yes - this is a simple expression. Remember the expression and the
+	 * return type
 	 */
 	expr->plan_simple_expr = tle->expr;
 	expr->plan_simple_type = exprType(tle->expr);

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.108 2001/03/22 03:59:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.109 2001/03/22 06:16:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -384,21 +384,21 @@ ProcessUtility(Node *parsetree,
 				 */
 				if (stmt->column == NULL)
 				{
-					/* ----------------
-					 *		rename relation
+
+					/*
+					 * rename relation
 					 *
-					 *		Note: we also rename the "type" tuple
-					 *		corresponding to the relation.
-					 * ----------------
+					 * Note: we also rename the "type" tuple corresponding to
+					 * the relation.
 					 */
 					renamerel(relname,	/* old name */
 							  stmt->newname);	/* new name */
 				}
 				else
 				{
-					/* ----------------
-					 *		rename attribute
-					 * ----------------
+
+					/*
+					 * rename attribute
 					 */
 					renameatt(relname,	/* relname */
 							  stmt->column,		/* old att name */
@@ -923,9 +923,8 @@ ProcessUtility(Node *parsetree,
 			break;
 	}
 
-	/* ----------------
-	 *	tell fe/be or whatever that we're done.
-	 * ----------------
+	/*
+	 * tell fe/be or whatever that we're done.
 	 */
 	EndCommand(commandTag, dest);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.60 2001/03/22 03:59:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.61 2001/03/22 06:16:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,9 +48,8 @@ TypeGetWithOpenRelation(Relation pg_type_desc,
 	Oid			typoid;
 	ScanKeyData typeKey[1];
 
-	/* ----------------
-	 *	initialize the scan key and begin a scan of pg_type
-	 * ----------------
+	/*
+	 * initialize the scan key and begin a scan of pg_type
 	 */
 	ScanKeyEntryInitialize(typeKey,
 						   0,
@@ -64,16 +63,14 @@ TypeGetWithOpenRelation(Relation pg_type_desc,
 						  1,
 						  typeKey);
 
-	/* ----------------
-	 *	get the type tuple, if it exists.
-	 * ----------------
+	/*
+	 * get the type tuple, if it exists.
 	 */
 	tup = heap_getnext(scan, 0);
 
-	/* ----------------
-	 *	if no type tuple exists for the given type name, then
-	 *	end the scan and return appropriate information.
-	 * ----------------
+	/*
+	 * if no type tuple exists for the given type name, then end the scan
+	 * and return appropriate information.
 	 */
 	if (!HeapTupleIsValid(tup))
 	{
@@ -82,11 +79,10 @@ TypeGetWithOpenRelation(Relation pg_type_desc,
 		return InvalidOid;
 	}
 
-	/* ----------------
-	 *	here, the type tuple does exist so we pull information from
-	 *	the typisdefined field of the tuple and return the tuple's
-	 *	oid, which is the oid of the type.
-	 * ----------------
+	/*
+	 * here, the type tuple does exist so we pull information from the
+	 * typisdefined field of the tuple and return the tuple's oid, which
+	 * is the oid of the type.
 	 */
 	*defined = (bool) ((Form_pg_type) GETSTRUCT(tup))->typisdefined;
 	typoid = tup->t_data->t_oid;
@@ -116,23 +112,20 @@ TypeGet(char *typeName,			/* name of type to be fetched */
 	Relation	pg_type_desc;
 	Oid			typeoid;
 
-	/* ----------------
-	 *	open the pg_type relation
-	 * ----------------
+	/*
+	 * open the pg_type relation
 	 */
 	pg_type_desc = heap_openr(TypeRelationName, AccessShareLock);
 
-	/* ----------------
-	 *	scan the type relation for the information we want
-	 * ----------------
+	/*
+	 * scan the type relation for the information we want
 	 */
 	typeoid = TypeGetWithOpenRelation(pg_type_desc,
 									  typeName,
 									  defined);
 
-	/* ----------------
-	 *	close the type relation and return the type oid.
-	 * ----------------
+	/*
+	 * close the type relation and return the type oid.
 	 */
 	heap_close(pg_type_desc, AccessShareLock);
 
@@ -155,9 +148,8 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 	NameData	name;
 	TupleDesc	tupDesc;
 
-	/* ----------------
-	 *	initialize our *nulls and *values arrays
-	 * ----------------
+	/*
+	 * initialize our *nulls and *values arrays
 	 */
 	for (i = 0; i < Natts_pg_type; ++i)
 	{
@@ -165,9 +157,8 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 		values[i] = (Datum) NULL;		/* redundant, but safe */
 	}
 
-	/* ----------------
-	 *	initialize *values with the type name and dummy values
-	 * ----------------
+	/*
+	 * initialize *values with the type name and dummy values
 	 */
 	i = 0;
 	namestrcpy(&name, typeName);
@@ -190,17 +181,15 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 	values[i++] = DirectFunctionCall1(textin,
 									  CStringGetDatum(typeName));		/* 17 */
 
-	/* ----------------
-	 *	create a new type tuple with FormHeapTuple
-	 * ----------------
+	/*
+	 * create a new type tuple with FormHeapTuple
 	 */
 	tupDesc = pg_type_desc->rd_att;
 
 	tup = heap_formtuple(tupDesc, values, nulls);
 
-	/* ----------------
-	 *	insert the tuple in the relation and get the tuple's oid.
-	 * ----------------
+	/*
+	 * insert the tuple in the relation and get the tuple's oid.
 	 */
 	heap_insert(pg_type_desc, tup);
 	typoid = tup->t_data->t_oid;
@@ -213,9 +202,9 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 		CatalogIndexInsert(idescs, Num_pg_type_indices, pg_type_desc, tup);
 		CatalogCloseIndices(Num_pg_type_indices, idescs);
 	}
-	/* ----------------
-	 *	free the tuple and return the type-oid
-	 * ----------------
+
+	/*
+	 * free the tuple and return the type-oid
 	 */
 	heap_freetuple(tup);
 
@@ -243,21 +232,18 @@ TypeShellMake(char *typeName)
 
 	Assert(PointerIsValid(typeName));
 
-	/* ----------------
-	 *	open pg_type
-	 * ----------------
+	/*
+	 * open pg_type
 	 */
 	pg_type_desc = heap_openr(TypeRelationName, RowExclusiveLock);
 
-	/* ----------------
-	 *	insert the shell tuple
-	 * ----------------
+	/*
+	 * insert the shell tuple
 	 */
 	typoid = TypeShellMakeWithOpenRelation(pg_type_desc, typeName);
 
-	/* ----------------
-	 *	close pg_type and return the tuple's oid.
-	 * ----------------
+	/*
+	 * close pg_type and return the tuple's oid.
 	 */
 	heap_close(pg_type_desc, RowExclusiveLock);
 
@@ -311,20 +297,18 @@ TypeCreate(char *typeName,
 	Oid			argList[FUNC_MAX_ARGS];
 	ScanKeyData typeKey[1];
 
-	/* ----------------
-	 *	check that the type is not already defined.  It might exist as
-	 *	a shell type, however (but only if assignedTypeOid is not given).
-	 * ----------------
+	/*
+	 * check that the type is not already defined.	It might exist as a
+	 * shell type, however (but only if assignedTypeOid is not given).
 	 */
 	typeObjectId = TypeGet(typeName, &defined);
 	if (OidIsValid(typeObjectId) &&
 		(defined || assignedTypeOid != InvalidOid))
 		elog(ERROR, "TypeCreate: type %s already defined", typeName);
 
-	/* ----------------
-	 *	if this type has an associated elementType, then we check that
-	 *	it is defined.
-	 * ----------------
+	/*
+	 * if this type has an associated elementType, then we check that it
+	 * is defined.
 	 */
 	if (elementTypeName)
 	{
@@ -333,16 +317,14 @@ TypeCreate(char *typeName,
 			elog(ERROR, "TypeCreate: type %s is not defined", elementTypeName);
 	}
 
-	/* ----------------
-	 *	XXX comment me
-	 * ----------------
+	/*
+	 * XXX comment me
 	 */
 	if (externalSize == 0)
 		externalSize = -1;		/* variable length */
 
-	/* ----------------
-	 *	initialize arrays needed by FormHeapTuple
-	 * ----------------
+	/*
+	 * initialize arrays needed by FormHeapTuple
 	 */
 	for (i = 0; i < Natts_pg_type; ++i)
 	{
@@ -362,9 +344,8 @@ TypeCreate(char *typeName,
 	if (internalSize == 0)
 		internalSize = -1;
 
-	/* ----------------
-	 *	initialize the *values information
-	 * ----------------
+	/*
+	 * initialize the *values information
 	 */
 	i = 0;
 	namestrcpy(&name, typeName);
@@ -441,28 +422,24 @@ TypeCreate(char *typeName,
 		values[i++] = ObjectIdGetDatum(procOid);		/* 11 - 14 */
 	}
 
-	/* ----------------
+	/*
 	 * set default alignment
-	 * ----------------
 	 */
 	values[i++] = CharGetDatum(alignment);		/* 15 */
 
-	/* ----------------
-	 *	set default storage for TOAST
-	 * ----------------
+	/*
+	 * set default storage for TOAST
 	 */
 	values[i++] = CharGetDatum(storage);		/* 16 */
 
-	/* ----------------
-	 *	initialize the default value for this type.
-	 * ----------------
+	/*
+	 * initialize the default value for this type.
 	 */
 	values[i] = DirectFunctionCall1(textin,		/* 17 */
 			 CStringGetDatum(defaultTypeValue ? defaultTypeValue : "-"));
 
-	/* ----------------
-	 *	open pg_type and begin a scan for the type name.
-	 * ----------------
+	/*
+	 * open pg_type and begin a scan for the type name.
 	 */
 	pg_type_desc = heap_openr(TypeRelationName, RowExclusiveLock);
 
@@ -478,11 +455,9 @@ TypeCreate(char *typeName,
 								  1,
 								  typeKey);
 
-	/* ----------------
-	 *	define the type either by adding a tuple to the type
-	 *	relation, or by updating the fields of the "shell" tuple
-	 *	already there.
-	 * ----------------
+	/*
+	 * define the type either by adding a tuple to the type relation, or
+	 * by updating the fields of the "shell" tuple already there.
 	 */
 	tup = heap_getnext(pg_type_scan, 0);
 	if (HeapTupleIsValid(tup))
@@ -517,9 +492,8 @@ TypeCreate(char *typeName,
 		typeObjectId = tup->t_data->t_oid;
 	}
 
-	/* ----------------
-	 *	finish up
-	 * ----------------
+	/*
+	 * finish up
 	 */
 	heap_endscan(pg_type_scan);
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.182 2001/03/22 03:59:40 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.183 2001/03/22 06:16:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,9 +129,9 @@ transformStmt(ParseState *pstate, Node *parseTree)
 
 	switch (nodeTag(parseTree))
 	{
-			/*------------------------
-			 *	Non-optimizable statements
-			 *------------------------
+
+			/*
+			 * Non-optimizable statements
 			 */
 		case T_CreateStmt:
 			result = transformCreateStmt(pstate, (CreateStmt *) parseTree);
@@ -206,9 +206,8 @@ transformStmt(ParseState *pstate, Node *parseTree)
 			result = transformAlterTableStmt(pstate, (AlterTableStmt *) parseTree);
 			break;
 
-			/*------------------------
-			 *	Optimizable statements
-			 *------------------------
+			/*
+			 * Optimizable statements
 			 */
 		case T_InsertStmt:
 			result = transformInsertStmt(pstate, (InsertStmt *) parseTree);
@@ -779,12 +778,11 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 				{
 					constraint = lfirst(clist);
 
-					/* ----------
+					/*
 					 * If this column constraint is a FOREIGN KEY
 					 * constraint, then we fill in the current attributes
 					 * name and throw it into the list of FK constraints
 					 * to be processed later.
-					 * ----------
 					 */
 					if (IsA(constraint, FkConstraint))
 					{
@@ -906,10 +904,10 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 				break;
 
 			case T_FkConstraint:
-				/* ----------
-				 * Table level FOREIGN KEY constraints are already complete.
-				 * Just remember for later.
-				 * ----------
+
+				/*
+				 * Table level FOREIGN KEY constraints are already
+				 * complete. Just remember for later.
 				 */
 				fkconstraints = lappend(fkconstraints, element);
 				break;
@@ -1806,9 +1804,9 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 		/*
 		 * 15 august 1991 -- since 3.0 postgres does locking right, we
-		 * discovered that portals were violating locking protocol.
-		 * portal locks cannot span xacts. as a short-term fix, we
-		 * installed the check here. -- mao
+		 * discovered that portals were violating locking protocol. portal
+		 * locks cannot span xacts. as a short-term fix, we installed the
+		 * check here. -- mao
 		 */
 		if (!IsTransactionBlock())
 			elog(ERROR, "DECLARE CURSOR may only be used in begin/end transaction blocks");
@@ -2019,9 +2017,9 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 
 		/*
 		 * 15 august 1991 -- since 3.0 postgres does locking right, we
-		 * discovered that portals were violating locking protocol.
-		 * portal locks cannot span xacts. as a short-term fix, we
-		 * installed the check here. -- mao
+		 * discovered that portals were violating locking protocol. portal
+		 * locks cannot span xacts. as a short-term fix, we installed the
+		 * check here. -- mao
 		 */
 		if (!IsTransactionBlock())
 			elog(ERROR, "DECLARE CURSOR may only be used in begin/end transaction blocks");
@@ -2713,9 +2711,8 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint)
 	int			i;
 	bool		found = false;
 
-	/* ----------
+	/*
 	 * Open the referenced table and get the attributes list
-	 * ----------
 	 */
 	pkrel = heap_openr(fkconstraint->pktable_name, AccessShareLock);
 	if (pkrel == NULL)
@@ -2723,12 +2720,10 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint)
 			 fkconstraint->pktable_name);
 	pkrel_attrs = pkrel->rd_att->attrs;
 
-	/* ----------
-	 * Get the list of index OIDs for the table from the relcache,
-	 * and look up each one in the pg_index syscache for each unique
-	 * one, and then compare the attributes we were given to those
-	 * defined.
-	 * ----------
+	/*
+	 * Get the list of index OIDs for the table from the relcache, and
+	 * look up each one in the pg_index syscache for each unique one, and
+	 * then compare the attributes we were given to those defined.
 	 */
 	indexoidlist = RelationGetIndexList(pkrel);
 
@@ -2812,9 +2807,8 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint)
 	Form_pg_index indexStruct = NULL;
 	int			i;
 
-	/* ----------
+	/*
 	 * Open the referenced table and get the attributes list
-	 * ----------
 	 */
 	pkrel = heap_openr(fkconstraint->pktable_name, AccessShareLock);
 	if (pkrel == NULL)
@@ -2822,11 +2816,10 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint)
 			 fkconstraint->pktable_name);
 	pkrel_attrs = pkrel->rd_att->attrs;
 
-	/* ----------
-	 * Get the list of index OIDs for the table from the relcache,
-	 * and look up each one in the pg_index syscache until we find one
-	 * marked primary key (hopefully there isn't more than one such).
-	 * ----------
+	/*
+	 * Get the list of index OIDs for the table from the relcache, and
+	 * look up each one in the pg_index syscache until we find one marked
+	 * primary key (hopefully there isn't more than one such).
 	 */
 	indexoidlist = RelationGetIndexList(pkrel);
 
@@ -2849,18 +2842,16 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint)
 
 	freeList(indexoidlist);
 
-	/* ----------
+	/*
 	 * Check that we found it
-	 * ----------
 	 */
 	if (indexStruct == NULL)
 		elog(ERROR, "PRIMARY KEY for referenced table \"%s\" not found",
 			 fkconstraint->pktable_name);
 
-	/* ----------
+	/*
 	 * Now build the list of PK attributes from the indkey definition
 	 * using the attribute names of the PK relation descriptor
-	 * ----------
 	 */
 	for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
 	{

@@ -200,11 +200,12 @@ pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
-			case PG_TYPE_CHAR:
-			case PG_TYPE_CHAR2:
-			case PG_TYPE_CHAR4:
-			case PG_TYPE_CHAR8:
-			case PG_TYPE_NAME:return SQL_CHAR;
+		case PG_TYPE_CHAR:
+		case PG_TYPE_CHAR2:
+		case PG_TYPE_CHAR4:
+		case PG_TYPE_CHAR8:
+		case PG_TYPE_NAME:
+			return SQL_CHAR;
 
 		case PG_TYPE_BPCHAR:
 			return SQL_CHAR;
@@ -272,7 +273,8 @@ pgtype_to_ctype(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
-			case PG_TYPE_INT8:return SQL_C_CHAR;
+		case PG_TYPE_INT8:
+			return SQL_C_CHAR;
 		case PG_TYPE_NUMERIC:
 			return SQL_C_CHAR;
 		case PG_TYPE_INT2:
@@ -536,7 +538,8 @@ pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 	switch (type)
 	{
 
-			case PG_TYPE_CHAR:return 1;
+		case PG_TYPE_CHAR:
+			return 1;
 		case PG_TYPE_CHAR2:
 			return 2;
 		case PG_TYPE_CHAR4:
@@ -601,7 +604,8 @@ pgtype_display_size(StatementClass *stmt, Int4 type, int col, int handle_unknown
 
 	switch (type)
 	{
-			case PG_TYPE_INT2:return 6;
+		case PG_TYPE_INT2:
+			return 6;
 
 		case PG_TYPE_OID:
 		case PG_TYPE_XID:
@@ -641,7 +645,8 @@ pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_
 	switch (type)
 	{
 
-			case PG_TYPE_INT2:return 2;
+		case PG_TYPE_INT2:
+			return 2;
 
 		case PG_TYPE_OID:
 		case PG_TYPE_XID:
@@ -683,23 +688,24 @@ pgtype_scale(StatementClass *stmt, Int4 type, int col)
 	switch (type)
 	{
 
-			case PG_TYPE_INT2:
-			case PG_TYPE_OID:
-			case PG_TYPE_XID:
-			case PG_TYPE_INT4:
-			case PG_TYPE_INT8:
-			case PG_TYPE_FLOAT4:
-			case PG_TYPE_FLOAT8:
-			case PG_TYPE_MONEY:
-			case PG_TYPE_BOOL:
+		case PG_TYPE_INT2:
+		case PG_TYPE_OID:
+		case PG_TYPE_XID:
+		case PG_TYPE_INT4:
+		case PG_TYPE_INT8:
+		case PG_TYPE_FLOAT4:
+		case PG_TYPE_FLOAT8:
+		case PG_TYPE_MONEY:
+		case PG_TYPE_BOOL:
 
 			/*
 			 * Number of digits to the right of the decimal point in
 			 * "yyyy-mm=dd hh:mm:ss[.f...]"
 			 */
-			case PG_TYPE_ABSTIME:
-			case PG_TYPE_DATETIME:
-			case PG_TYPE_TIMESTAMP:return 0;
+		case PG_TYPE_ABSTIME:
+		case PG_TYPE_DATETIME:
+		case PG_TYPE_TIMESTAMP:
+			return 0;
 
 		case PG_TYPE_NUMERIC:
 			return getNumericScale(stmt, type, col);
@@ -715,14 +721,15 @@ pgtype_radix(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
-			case PG_TYPE_INT2:
-			case PG_TYPE_OID:
-			case PG_TYPE_INT4:
-			case PG_TYPE_INT8:
-			case PG_TYPE_NUMERIC:
-			case PG_TYPE_FLOAT4:
-			case PG_TYPE_MONEY:
-			case PG_TYPE_FLOAT8:return 10;
+		case PG_TYPE_INT2:
+		case PG_TYPE_OID:
+		case PG_TYPE_INT4:
+		case PG_TYPE_INT8:
+		case PG_TYPE_NUMERIC:
+		case PG_TYPE_FLOAT4:
+		case PG_TYPE_MONEY:
+		case PG_TYPE_FLOAT8:
+			return 10;
 
 		default:
 			return -1;
@@ -741,22 +748,23 @@ pgtype_auto_increment(StatementClass *stmt, Int4 type)
 	switch (type)
 	{
 
-			case PG_TYPE_INT2:
-			case PG_TYPE_OID:
-			case PG_TYPE_XID:
-			case PG_TYPE_INT4:
-			case PG_TYPE_FLOAT4:
-			case PG_TYPE_MONEY:
-			case PG_TYPE_BOOL:
-			case PG_TYPE_FLOAT8:
-			case PG_TYPE_INT8:
-			case PG_TYPE_NUMERIC:
+		case PG_TYPE_INT2:
+		case PG_TYPE_OID:
+		case PG_TYPE_XID:
+		case PG_TYPE_INT4:
+		case PG_TYPE_FLOAT4:
+		case PG_TYPE_MONEY:
+		case PG_TYPE_BOOL:
+		case PG_TYPE_FLOAT8:
+		case PG_TYPE_INT8:
+		case PG_TYPE_NUMERIC:
 
-			case PG_TYPE_DATE:
-			case PG_TYPE_TIME:
-			case PG_TYPE_ABSTIME:
-			case PG_TYPE_DATETIME:
-			case PG_TYPE_TIMESTAMP:return FALSE;
+		case PG_TYPE_DATE:
+		case PG_TYPE_TIME:
+		case PG_TYPE_ABSTIME:
+		case PG_TYPE_DATETIME:
+		case PG_TYPE_TIMESTAMP:
+			return FALSE;
 
 		default:
 			return -1;
@@ -768,16 +776,17 @@ pgtype_case_sensitive(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
-			case PG_TYPE_CHAR:
+		case PG_TYPE_CHAR:
 
-			case PG_TYPE_CHAR2:
-			case PG_TYPE_CHAR4:
-			case PG_TYPE_CHAR8:
+		case PG_TYPE_CHAR2:
+		case PG_TYPE_CHAR4:
+		case PG_TYPE_CHAR8:
 
-			case PG_TYPE_VARCHAR:
-			case PG_TYPE_BPCHAR:
-			case PG_TYPE_TEXT:
-			case PG_TYPE_NAME:return TRUE;
+		case PG_TYPE_VARCHAR:
+		case PG_TYPE_BPCHAR:
+		case PG_TYPE_TEXT:
+		case PG_TYPE_NAME:
+			return TRUE;
 
 		default:
 			return FALSE;
@@ -789,7 +798,8 @@ pgtype_money(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
-			case PG_TYPE_MONEY:return TRUE;
+		case PG_TYPE_MONEY:
+			return TRUE;
 		default:
 			return FALSE;
 	}
@@ -800,15 +810,16 @@ pgtype_searchable(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
-			case PG_TYPE_CHAR:
-			case PG_TYPE_CHAR2:
-			case PG_TYPE_CHAR4:
-			case PG_TYPE_CHAR8:
+		case PG_TYPE_CHAR:
+		case PG_TYPE_CHAR2:
+		case PG_TYPE_CHAR4:
+		case PG_TYPE_CHAR8:
 
-			case PG_TYPE_VARCHAR:
-			case PG_TYPE_BPCHAR:
-			case PG_TYPE_TEXT:
-			case PG_TYPE_NAME:return SQL_SEARCHABLE;
+		case PG_TYPE_VARCHAR:
+		case PG_TYPE_BPCHAR:
+		case PG_TYPE_TEXT:
+		case PG_TYPE_NAME:
+			return SQL_SEARCHABLE;
 
 		default:
 			return SQL_ALL_EXCEPT_LIKE;
@@ -820,8 +831,9 @@ pgtype_unsigned(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
-			case PG_TYPE_OID:
-			case PG_TYPE_XID:return TRUE;
+		case PG_TYPE_OID:
+		case PG_TYPE_XID:
+			return TRUE;
 
 		case PG_TYPE_INT2:
 		case PG_TYPE_INT4:
@@ -899,12 +911,12 @@ sqltype_to_default_ctype(Int2 sqltype)
 	/* (Appendix D) */
 	switch (sqltype)
 	{
-			case SQL_CHAR:
-			case SQL_VARCHAR:
-			case SQL_LONGVARCHAR:
-			case SQL_DECIMAL:
-			case SQL_NUMERIC:
-			case SQL_BIGINT:
+		case SQL_CHAR:
+		case SQL_VARCHAR:
+		case SQL_LONGVARCHAR:
+		case SQL_DECIMAL:
+		case SQL_NUMERIC:
+		case SQL_BIGINT:
 			return SQL_C_CHAR;
 
 		case SQL_BIT:

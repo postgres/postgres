@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.9 2001/02/10 02:31:30 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.10 2001/03/22 06:16:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,11 +173,11 @@ printfPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 
 	for (;;)
 	{
-		/*----------
-		 * Try to format the given string into the available space;
-		 * but if there's hardly any space, don't bother trying,
-		 * just fall through to enlarge the buffer first.
-		 *----------
+
+		/*
+		 * Try to format the given string into the available space; but if
+		 * there's hardly any space, don't bother trying, just fall
+		 * through to enlarge the buffer first.
 		 */
 		if (str->maxlen > str->len + 16)
 		{
@@ -222,11 +222,11 @@ appendPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 
 	for (;;)
 	{
-		/*----------
-		 * Try to format the given string into the available space;
-		 * but if there's hardly any space, don't bother trying,
-		 * just fall through to enlarge the buffer first.
-		 *----------
+
+		/*
+		 * Try to format the given string into the available space; but if
+		 * there's hardly any space, don't bother trying, just fall
+		 * through to enlarge the buffer first.
 		 */
 		if (str->maxlen > str->len + 16)
 		{

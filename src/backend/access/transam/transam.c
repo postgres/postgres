@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.42 2001/03/22 03:59:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.43 2001/03/22 06:16:10 momjian Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -124,30 +124,25 @@ TransactionLogTest(TransactionId transactionId, /* transaction id to test */
 	XidStatus	xidstatus;		/* recorded status of xid */
 	bool		fail = false;	/* success/failure */
 
-	/* ----------------
-	 *	during initialization consider all transactions
-	 *	as having been committed
-	 * ----------------
+	/*
+	 * during initialization consider all transactions as having been
+	 * committed
 	 */
 	if (!RelationIsValid(LogRelation))
 		return (bool) (status == XID_COMMIT);
 
-	/* ----------------
-	 *	 before going to the buffer manager, check our single
-	 *	 item cache to see if we didn't just check the transaction
-	 *	 status a moment ago.
-	 * ----------------
+	/*
+	 * before going to the buffer manager, check our single item cache to
+	 * see if we didn't just check the transaction status a moment ago.
 	 */
 	if (TransactionIdEquals(transactionId, cachedTestXid))
 		return (bool)
 			(status == cachedTestXidStatus);
 
-	/* ----------------
-	 *	compute the item pointer corresponding to the
-	 *	page containing our transaction id.  We save the item in
-	 *	our cache to speed up things if we happen to ask for the
-	 *	same xid's status more than once.
-	 * ----------------
+	/*
+	 * compute the item pointer corresponding to the page containing our
+	 * transaction id.	We save the item in our cache to speed up things
+	 * if we happen to ask for the same xid's status more than once.
 	 */
 	TransComputeBlockNumber(LogRelation, transactionId, &blockNumber);
 	xidstatus = TransBlockNumberGetXidStatus(LogRelation,
@@ -169,9 +164,8 @@ TransactionLogTest(TransactionId transactionId, /* transaction id to test */
 		return (bool) (status == xidstatus);
 	}
 
-	/* ----------------
-	 *	  here the block didn't contain the information we wanted
-	 * ----------------
+	/*
+	 * here the block didn't contain the information we wanted
 	 */
 	elog(ERROR, "TransactionLogTest: failed to get xidstatus");
 
@@ -192,16 +186,14 @@ TransactionLogUpdate(TransactionId transactionId,		/* trans id to update */
 	BlockNumber blockNumber;
 	bool		fail = false;	/* success/failure */
 
-	/* ----------------
-	 *	during initialization we don't record any updates.
-	 * ----------------
+	/*
+	 * during initialization we don't record any updates.
 	 */
 	if (!RelationIsValid(LogRelation))
 		return;
 
-	/* ----------------
-	 *	update the log relation
-	 * ----------------
+	/*
+	 * update the log relation
 	 */
 	TransComputeBlockNumber(LogRelation, transactionId, &blockNumber);
 	TransBlockNumberSetXidStatus(LogRelation,
@@ -292,43 +284,38 @@ static void
 TransRecover(Relation logRelation)
 {
 #ifdef NOT_USED
-	/* ----------------
-	 *	  first get the last recorded transaction in the log.
-	 * ----------------
+
+	/*
+	 * first get the last recorded transaction in the log.
 	 */
 	TransGetLastRecordedTransaction(logRelation, logLastXid, &fail);
 	if (fail == true)
 		elog(ERROR, "TransRecover: failed TransGetLastRecordedTransaction");
 
-	/* ----------------
-	 *	  next get the "last" and "next" variables
-	 * ----------------
+	/*
+	 * next get the "last" and "next" variables
 	 */
 	VariableRelationGetLastXid(&varLastXid);
 	VariableRelationGetNextXid(&varNextXid);
 
-	/* ----------------
-	 *	  intregity test (1)
-	 * ----------------
+	/*
+	 * intregity test (1)
 	 */
 	if (TransactionIdIsLessThan(varNextXid, logLastXid))
 		elog(ERROR, "TransRecover: varNextXid < logLastXid");
 
-	/* ----------------
-	 *	  intregity test (2)
-	 * ----------------
+	/*
+	 * intregity test (2)
 	 */
 
-	/* ----------------
-	 *	  intregity test (3)
-	 * ----------------
+	/*
+	 * intregity test (3)
 	 */
 
-	/* ----------------
-	 *	here we have a valid "
+	/*
+	 * here we have a valid "
 	 *
-	 *			**** RESUME HERE ****
-	 * ----------------
+	**** RESUME HERE ****
 	 */
 	varNextXid = TransactionIdDup(varLastXid);
 	TransactionIdIncrement(&varNextXid);
@@ -375,51 +362,45 @@ InitializeTransactionLog(void)
 	Relation	logRelation;
 	MemoryContext oldContext;
 
-	/* ----------------
-	 *	  don't do anything during bootstrapping
-	 * ----------------
+	/*
+	 * don't do anything during bootstrapping
 	 */
 	if (AMI_OVERRIDE)
 		return;
 
-	/* ----------------
-	 *	 disable the transaction system so the access methods
-	 *	 don't interfere during initialization.
-	 * ----------------
+	/*
+	 * disable the transaction system so the access methods don't
+	 * interfere during initialization.
 	 */
 	OverrideTransactionSystem(true);
 
-	/* ----------------
-	 *	make sure allocations occur within the top memory context
-	 *	so that our log management structures are protected from
-	 *	garbage collection at the end of every transaction.
-	 * ----------------
+	/*
+	 * make sure allocations occur within the top memory context so that
+	 * our log management structures are protected from garbage collection
+	 * at the end of every transaction.
 	 */
 	oldContext = MemoryContextSwitchTo(TopMemoryContext);
 
-	/* ----------------
-	 *	 first open the log and time relations
-	 *	 (these are created by amiint so they are guaranteed to exist)
-	 * ----------------
+	/*
+	 * first open the log and time relations (these are created by amiint
+	 * so they are guaranteed to exist)
 	 */
 	logRelation = heap_openr(LogRelationName, NoLock);
 	VariableRelation = heap_openr(VariableRelationName, NoLock);
 
-	/* ----------------
-	 *	 XXX TransactionLogUpdate requires that LogRelation
-	 *	 is valid so we temporarily set it so we can initialize
-	 *	 things properly. This could be done cleaner.
-	 * ----------------
+	/*
+	 * XXX TransactionLogUpdate requires that LogRelation is valid so we
+	 * temporarily set it so we can initialize things properly. This could
+	 * be done cleaner.
 	 */
 	LogRelation = logRelation;
 
-	/* ----------------
-	 *	 if we have a virgin database, we initialize the log
-	 *	 relation by committing the AmiTransactionId (id 512) and we
-	 *	 initialize the variable relation by setting the next available
-	 *	 transaction id to FirstTransactionId (id 514).  OID initialization
-	 *	 happens as a side effect of bootstrapping in varsup.c.
-	 * ----------------
+	/*
+	 * if we have a virgin database, we initialize the log relation by
+	 * committing the AmiTransactionId (id 512) and we initialize the
+	 * variable relation by setting the next available transaction id to
+	 * FirstTransactionId (id 514).  OID initialization happens as a side
+	 * effect of bootstrapping in varsup.c.
 	 */
 	SpinAcquire(OidGenLockId);
 	if (!TransactionIdDidCommit(AmiTransactionId))
@@ -433,33 +414,30 @@ InitializeTransactionLog(void)
 	}
 	else if (RecoveryCheckingEnabled())
 	{
-		/* ----------------
-		 *		if we have a pre-initialized database and if the
-		 *		perform recovery checking flag was passed then we
-		 *		do our database integrity checking.
-		 * ----------------
+
+		/*
+		 * if we have a pre-initialized database and if the perform
+		 * recovery checking flag was passed then we do our database
+		 * integrity checking.
 		 */
 		TransRecover(logRelation);
 	}
 	LogRelation = (Relation) NULL;
 	SpinRelease(OidGenLockId);
 
-	/* ----------------
-	 *	now re-enable the transaction system
-	 * ----------------
+	/*
+	 * now re-enable the transaction system
 	 */
 	OverrideTransactionSystem(false);
 
-	/* ----------------
-	 *	instantiate the global variables
-	 * ----------------
+	/*
+	 * instantiate the global variables
 	 */
 	LogRelation = logRelation;
 
-	/* ----------------
-	 *	restore the memory context to the previous context
-	 *	before we return from initialization.
-	 * ----------------
+	/*
+	 * restore the memory context to the previous context before we return
+	 * from initialization.
 	 */
 	MemoryContextSwitchTo(oldContext);
 }

@@ -46,7 +46,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.76 2001/03/22 03:59:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.77 2001/03/22 06:16:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,13 +202,12 @@ initialize_aggregate(AggStatePerAgg peraggstate)
 	peraggstate->transValue = peraggstate->initValue;
 	peraggstate->transValueIsNull = peraggstate->initValueIsNull;
 
-	/* ------------------------------------------
+	/*
 	 * If the initial value for the transition state doesn't exist in the
-	 * pg_aggregate table then we will let the first non-NULL value returned
-	 * from the outer procNode become the initial value. (This is useful for
-	 * aggregates like max() and min().)  The noTransValue flag signals that
-	 * we still need to do this.
-	 * ------------------------------------------
+	 * pg_aggregate table then we will let the first non-NULL value
+	 * returned from the outer procNode become the initial value. (This is
+	 * useful for aggregates like max() and min().)  The noTransValue flag
+	 * signals that we still need to do this.
 	 */
 	peraggstate->noTransValue = peraggstate->initValueIsNull;
 }
@@ -477,9 +476,8 @@ ExecAgg(Agg *node)
 	int			aggno;
 	bool		isNull;
 
-	/* ---------------------
-	 *	get state info from node
-	 * ---------------------
+	/*
+	 * get state info from node
 	 */
 	aggstate = node->aggstate;
 	estate = node->plan.state;
@@ -516,9 +514,8 @@ ExecAgg(Agg *node)
 
 		inputTuple = NULL;		/* no saved input tuple yet */
 
-		/* ----------------
-		 *	 for each tuple from the outer plan, update all the aggregates
-		 * ----------------
+		/*
+		 * for each tuple from the outer plan, update all the aggregates
 		 */
 		for (;;)
 		{
@@ -829,9 +826,8 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	outerPlan = outerPlan(node);
 	ExecInitNode(outerPlan, estate, (Plan *) node);
 
-	/* ----------------
-	 *	initialize source tuple type.
-	 * ----------------
+	/*
+	 * initialize source tuple type.
 	 */
 	ExecAssignScanTypeFromOuterPlan((Plan *) node, &aggstate->csstate);
 

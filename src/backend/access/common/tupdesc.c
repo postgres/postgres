@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.72 2001/03/22 03:59:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.73 2001/03/22 06:16:06 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -37,17 +37,15 @@ CreateTemplateTupleDesc(int natts)
 	uint32		size;
 	TupleDesc	desc;
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
+	/*
+	 * sanity checks
 	 */
 	AssertArg(natts >= 1);
 
-	/* ----------------
-	 *	allocate enough memory for the tuple descriptor and
-	 *	zero it as TupleDescInitEntry assumes that the descriptor
-	 *	is filled with NULL pointers.
-	 * ----------------
+	/*
+	 * allocate enough memory for the tuple descriptor and zero it as
+	 * TupleDescInitEntry assumes that the descriptor is filled with NULL
+	 * pointers.
 	 */
 	size = natts * sizeof(Form_pg_attribute);
 	desc = (TupleDesc) palloc(sizeof(struct tupleDesc));
@@ -71,9 +69,8 @@ CreateTupleDesc(int natts, Form_pg_attribute *attrs)
 {
 	TupleDesc	desc;
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
+	/*
+	 * sanity checks
 	 */
 	AssertArg(natts >= 1);
 
@@ -337,9 +334,8 @@ TupleDescInitEntry(TupleDesc desc,
 	Form_pg_type typeForm;
 	Form_pg_attribute att;
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
+	/*
+	 * sanity checks
 	 */
 	AssertArg(PointerIsValid(desc));
 	AssertArg(attributeNumber >= 1);
@@ -352,17 +348,15 @@ TupleDescInitEntry(TupleDesc desc,
 
 	AssertArg(!PointerIsValid(desc->attrs[attributeNumber - 1]));
 
-	/* ----------------
-	 *	allocate storage for this attribute
-	 * ----------------
+	/*
+	 * allocate storage for this attribute
 	 */
 
 	att = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 	desc->attrs[attributeNumber - 1] = att;
 
-	/* ----------------
-	 *	initialize the attribute fields
-	 * ----------------
+	/*
+	 * initialize the attribute fields
 	 */
 	att->attrelid = 0;			/* dummy value */
 
@@ -404,10 +398,10 @@ TupleDescInitEntry(TupleDesc desc,
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
-		/* ----------------
-		 *	 here type info does not exist yet so we just fill
-		 *	 the attribute with dummy information and return false.
-		 * ----------------
+
+		/*
+		 * here type info does not exist yet so we just fill the attribute
+		 * with dummy information and return false.
 		 */
 		att->atttypid = InvalidOid;
 		att->attlen = (int16) 0;
@@ -417,32 +411,30 @@ TupleDescInitEntry(TupleDesc desc,
 		return false;
 	}
 
-	/* ----------------
-	 *	type info exists so we initialize our attribute
-	 *	information from the type tuple we found..
-	 * ----------------
+	/*
+	 * type info exists so we initialize our attribute information from
+	 * the type tuple we found..
 	 */
 	typeForm = (Form_pg_type) GETSTRUCT(tuple);
 
 	att->atttypid = tuple->t_data->t_oid;
 
-	/*------------------------
+	/*
 	 * There are a couple of cases where we must override the information
 	 * stored in pg_type.
 	 *
 	 * First: if this attribute is a set, what is really stored in the
-	 * attribute is the OID of a tuple in the pg_proc catalog.
-	 * The pg_proc tuple contains the query string which defines
-	 * this set - i.e., the query to run to get the set.
-	 * So the atttypid (just assigned above) refers to the type returned
-	 * by this query, but the actual length of this attribute is the
-	 * length (size) of an OID.
+	 * attribute is the OID of a tuple in the pg_proc catalog. The pg_proc
+	 * tuple contains the query string which defines this set - i.e., the
+	 * query to run to get the set. So the atttypid (just assigned above)
+	 * refers to the type returned by this query, but the actual length of
+	 * this attribute is the length (size) of an OID.
 	 *
-	 * (Why not just make the atttypid point to the OID type, instead
-	 * of the type the query returns?  Because the executor uses the atttypid
-	 * to tell the front end what type will be returned (in BeginCommand),
-	 * and in the end the type returned will be the result of the query, not
-	 * an OID.)
+	 * (Why not just make the atttypid point to the OID type, instead of the
+	 * type the query returns?	Because the executor uses the atttypid to
+	 * tell the front end what type will be returned (in BeginCommand),
+	 * and in the end the type returned will be the result of the query,
+	 * not an OID.)
 	 *
 	 * (Why not wait until the return type of the set is known (i.e., the
 	 * recursive call to the executor to execute the set has returned)
@@ -460,7 +452,6 @@ TupleDescInitEntry(TupleDesc desc,
 	 *
 	 * A set of complex type is first and foremost a set, so its
 	 * representation is Oid not pointer.  So, test that case first.
-	 *-----------------------------------------
 	 */
 	if (attisset)
 	{
@@ -550,9 +541,8 @@ BuildDescForRelation(List *schema, char *relname)
 	int			ndef = 0;
 	bool		attisset;
 
-	/* ----------------
-	 *	allocate a new tuple descriptor
-	 * ----------------
+	/*
+	 * allocate a new tuple descriptor
 	 */
 	natts = length(schema);
 	desc = CreateTemplateTupleDesc(natts);
@@ -565,11 +555,10 @@ BuildDescForRelation(List *schema, char *relname)
 		ColumnDef  *entry = lfirst(p);
 		List	   *arry;
 
-		/* ----------------
-		 *		for each entry in the list, get the name and type
-		 *		information from the list and have TupleDescInitEntry
-		 *		fill in the attribute information we need.
-		 * ----------------
+		/*
+		 * for each entry in the list, get the name and type information
+		 * from the list and have TupleDescInitEntry fill in the attribute
+		 * information we need.
 		 */
 		attnum++;
 
@@ -595,12 +584,12 @@ BuildDescForRelation(List *schema, char *relname)
 								typenameTypeId(typename),
 								atttypmod, attdim, attisset))
 		{
-			/* ----------------
-			 *	if TupleDescInitEntry() fails, it means there is
-			 *	no type in the system catalogs.  So now we check if
-			 *	the type name equals the relation name.  If so we
-			 *	have a self reference, otherwise it's an error.
-			 * ----------------
+
+			/*
+			 * if TupleDescInitEntry() fails, it means there is no type in
+			 * the system catalogs.  So now we check if the type name
+			 * equals the relation name.  If so we have a self reference,
+			 * otherwise it's an error.
 			 */
 			if (strcmp(typename, relname) == 0)
 				TupleDescMakeSelfReference(desc, attnum, relname);

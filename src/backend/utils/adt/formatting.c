@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.34 2001/03/22 03:59:50 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.35 2001/03/22 06:16:17 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
@@ -1132,9 +1132,8 @@ parse_format(FormatNode *node, char *str, KeyWord *kw,
 	{
 		suffix = 0;
 
-		/* ----------
+		/*
 		 * Prefix
-		 * ----------
 		 */
 		if (ver == DCH_TYPE && (s = suff_search(str, suf, SUFFTYPE_PREFIX)) != NULL)
 		{
@@ -1143,9 +1142,8 @@ parse_format(FormatNode *node, char *str, KeyWord *kw,
 				str += s->len;
 		}
 
-		/* ----------
+		/*
 		 * Keyword
-		 * ----------
 		 */
 		if (*str && (n->key = index_seq_search(str, kw, index)) != NULL)
 		{
@@ -1156,16 +1154,14 @@ parse_format(FormatNode *node, char *str, KeyWord *kw,
 			if (n->key->len)
 				str += n->key->len;
 
-			/* ----------
+			/*
 			 * NUM version: Prepare global NUMDesc struct
-			 * ----------
 			 */
 			if (ver == NUM_TYPE)
 				NUMDesc_prepare(Num, n);
 
-			/* ----------
+			/*
 			 * Postfix
-			 * ----------
 			 */
 			if (ver == DCH_TYPE && *str && (s = suff_search(str, suf, SUFFTYPE_POSTFIX)) != NULL)
 			{
@@ -1178,9 +1174,8 @@ parse_format(FormatNode *node, char *str, KeyWord *kw,
 		else if (*str)
 		{
 
-			/* ----------
+			/*
 			 * Special characters '\' and '"'
-			 * ----------
 			 */
 			if (*str == '"' && last != '\\')
 			{
@@ -1258,9 +1253,8 @@ DCH_processor(FormatNode *node, char *inout, int flag)
 	char	   *s;
 
 
-	/* ----------
+	/*
 	 * Zeroing global flags
-	 * ----------
 	 */
 	DCH_global_flag = 0;
 
@@ -1270,9 +1264,8 @@ DCH_processor(FormatNode *node, char *inout, int flag)
 		{
 			int			len;
 
-			/* ----------
+			/*
 			 * Call node action function
-			 * ----------
 			 */
 			len = n->key->action(n->key->id, s, n->suffix, flag, n);
 			if (len > 0)
@@ -1284,18 +1277,17 @@ DCH_processor(FormatNode *node, char *inout, int flag)
 		else
 		{
 
-			/* ----------
+			/*
 			 * Remove to output char from input in TO_CHAR
-			 * ----------
 			 */
 			if (flag == TO_CHAR)
 				*s = n->character;
 
 			else
 			{
-				/* ----------
+
+				/*
 				 * Skip blank space in FROM_CHAR's input
-				 * ----------
 				 */
 				if (isspace((unsigned char) n->character) && IS_FX == 0)
 				{
@@ -1893,11 +1885,10 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 
 	p_inout = inout;
 
-	/* ----------
+	/*
 	 * In the FROM-char is not difference between "January" or "JANUARY"
-	 * or "january", all is before search convert to "first-upper".
-	 * This convention is used for MONTH, MON, DAY, DY
-	 * ----------
+	 * or "january", all is before search convert to "first-upper". This
+	 * convention is used for MONTH, MON, DAY, DY
 	 */
 	if (flag == FROM_CHAR)
 	{
@@ -2459,9 +2450,8 @@ DCH_cache_getnew(char *str)
 			ent->age = (++DCHCounter);
 	}
 
-	/* ----------
+	/*
 	 * Cache is full - needs remove any older entry
-	 * ----------
 	 */
 	if (n_DCHCache > DCH_CACHE_FIELDS)
 	{
@@ -2583,24 +2573,21 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 	tm->tm_wday = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + 1) % 7;
 	tm->tm_yday = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(tm->tm_year, 1, 1) + 1;
 
-	/* ----------
+	/*
 	 * Convert fmt to C string
-	 * ----------
 	 */
 	str = (char *) palloc(len + 1);
 	memcpy(str, VARDATA(fmt), len);
 	*(str + len) = '\0';
 
-	/* ----------
+	/*
 	 * Allocate result
-	 * ----------
 	 */
 	result = (text *) palloc((len * DCH_MAX_ITEM_SIZ) + 1 + VARHDRSZ);
 
-	/* ----------
+	/*
 	 * Allocate new memory if format picture is bigger than static cache
 	 * and not use cache (call parser always) - flag=1 show this variant
-	 * ----------
 	 */
 	if (len > DCH_CACHE_SIZE)
 	{
@@ -2616,9 +2603,8 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 	else
 	{
 
-		/* ----------
+		/*
 		 * Use cache buffers
-		 * ----------
 		 */
 		DCHCacheEntry *ent;
 
@@ -2629,10 +2615,9 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 
 			ent = DCH_cache_getnew(str);
 
-			/* ----------
+			/*
 			 * Not in the cache, must run parser and save a new
 			 * format-picture to the cache.
-			 * ----------
 			 */
 			parse_format(ent->format, str, DCH_keywords,
 						 DCH_suff, DCH_index, DCH_TYPE, NULL);
@@ -2654,10 +2639,9 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 
 	pfree(str);
 
-	/* ----------
+	/*
 	 * for result is allocated max memory, which current format-picture
 	 * needs, now it must be re-allocate to result real size
-	 * ----------
 	 */
 	if (!(len = strlen(VARDATA(result))))
 	{
@@ -2706,18 +2690,17 @@ to_timestamp(PG_FUNCTION_ARGS)
 	if (len)
 	{
 
-		/* ----------
+		/*
 		 * Convert fmt to C string
-		 * ----------
 		 */
 		str = (char *) palloc(len + 1);
 		memcpy(str, VARDATA(fmt), len);
 		*(str + len) = '\0';
 
-		/* ----------
-		 * Allocate new memory if format picture is bigger than static cache
-		 * and not use cache (call parser always) - flag=1 show this variant
-		 * ----------
+		/*
+		 * Allocate new memory if format picture is bigger than static
+		 * cache and not use cache (call parser always) - flag=1 show this
+		 * variant
 		 */
 		if (len > DCH_CACHE_SIZE)
 		{
@@ -2732,9 +2715,8 @@ to_timestamp(PG_FUNCTION_ARGS)
 		else
 		{
 
-			/* ----------
+			/*
 			 * Use cache buffers
-			 * ----------
 			 */
 			DCHCacheEntry *ent;
 
@@ -2745,11 +2727,10 @@ to_timestamp(PG_FUNCTION_ARGS)
 
 				ent = DCH_cache_getnew(str);
 
-				/* ----------
+				/*
 				 * Not in the cache, must run parser and save a new
 				 * format-picture to the cache.
-				 * ----------
-					 */
+				 */
 				parse_format(ent->format, str, DCH_keywords,
 							 DCH_suff, DCH_index, DCH_TYPE, NULL);
 
@@ -2762,17 +2743,15 @@ to_timestamp(PG_FUNCTION_ARGS)
 			format = ent->format;
 		}
 
-		/* ----------
+		/*
 		 * Call action for each node in FormatNode tree
-		 * ----------
 		 */
 #ifdef DEBUG_TO_FROM_CHAR
 		/* dump_node(format, len); */
 #endif
 
-		/* ----------
+		/*
 		 * Convert date to C string
-		 * ----------
 		 */
 		date_len = VARSIZE(date_txt) - VARHDRSZ;
 		date_str = (char *) palloc(date_len + 1);
@@ -2787,10 +2766,9 @@ to_timestamp(PG_FUNCTION_ARGS)
 			pfree(format);
 	}
 
-	/* --------------------------------------------------------------
-	 * Convert values that user define for FROM_CHAR (to_date/to_timestamp)
-	 * to standard 'tm'
-	 * ----------
+	/*
+	 * Convert values that user define for FROM_CHAR
+	 * (to_date/to_timestamp) to standard 'tm'
 	 */
 #ifdef DEBUG_TO_FROM_CHAR
 	NOTICE_TMFC;
@@ -3050,9 +3028,8 @@ NUM_cache_getnew(char *str)
 			ent->age = (++NUMCounter);
 	}
 
-	/* ----------
+	/*
 	 * Cache is full - needs remove any older entry
-	 * ----------
 	 */
 	if (n_NUMCache > NUM_CACHE_FIELDS)
 	{
@@ -3156,18 +3133,16 @@ NUM_cache(int len, NUMDesc *Num, char *pars_str, int *flag)
 	FormatNode *format = NULL;
 	char	   *str;
 
-	/* ----------
+	/*
 	 * Convert VARDATA() to string
-	 * ----------
 	 */
 	str = (char *) palloc(len + 1);
 	memcpy(str, pars_str, len);
 	*(str + len) = '\0';
 
-	/* ----------
+	/*
 	 * Allocate new memory if format picture is bigger than static cache
 	 * and not use cache (call parser always) - flag=1 show this variant
-	 * ----------
 	 */
 	if (len > NUM_CACHE_SIZE)
 	{
@@ -3186,9 +3161,8 @@ NUM_cache(int len, NUMDesc *Num, char *pars_str, int *flag)
 	else
 	{
 
-		/* ----------
+		/*
 		 * Use cache buffers
-		 * ----------
 		 */
 		NUMCacheEntry *ent;
 
@@ -3199,11 +3173,10 @@ NUM_cache(int len, NUMDesc *Num, char *pars_str, int *flag)
 
 			ent = NUM_cache_getnew(str);
 
-			/* ----------
+			/*
 			 * Not in the cache, must run parser and save a new
 			 * format-picture to the cache.
-			 * ----------
-				 */
+			 */
 			parse_format(ent->format, str, NUM_keywords,
 						 NULL, NUM_index, NUM_TYPE, &ent->Num);
 
@@ -3213,9 +3186,8 @@ NUM_cache(int len, NUMDesc *Num, char *pars_str, int *flag)
 
 		format = ent->format;
 
-		/* ----------
+		/*
 		 * Copy cache to used struct
-		 * ----------
 		 */
 		Num->flag = ent->Num.flag;
 		Num->lsign = ent->Num.lsign;
@@ -3302,15 +3274,13 @@ NUM_prepare_locale(NUMProc *Np)
 
 		struct lconv *lconv;
 
-		/* ----------
+		/*
 		 * Get locales
-		 * ----------
 		 */
 		lconv = PGLC_localeconv();
 
-		/* ----------
+		/*
 		 * Positive / Negative number sign
-		 * ----------
 		 */
 		if (lconv->negative_sign && *lconv->negative_sign)
 			Np->L_negative_sign = lconv->negative_sign;
@@ -3322,27 +3292,24 @@ NUM_prepare_locale(NUMProc *Np)
 		else
 			Np->L_positive_sign = "+";
 
-		/* ----------
+		/*
 		 * Number thousands separator
-		 * ----------
 		 */
 		if (lconv->thousands_sep && *lconv->thousands_sep)
 			Np->L_thousands_sep = lconv->thousands_sep;
 		else
 			Np->L_thousands_sep = ",";
 
-		/* ----------
+		/*
 		 * Number decimal point
-		 * ----------
 		 */
 		if (lconv->decimal_point && *lconv->decimal_point)
 			Np->decimal = lconv->decimal_point;
 		else
 			Np->decimal = ".";
 
-		/* ----------
+		/*
 		 * Currency symbol
-		 * ----------
 		 */
 		if (lconv->currency_symbol && *lconv->currency_symbol)
 			Np->L_currency_symbol = lconv->currency_symbol;
@@ -3357,9 +3324,9 @@ NUM_prepare_locale(NUMProc *Np)
 	{
 
 #endif
-		/* ----------
+
+		/*
 		 * Default values
-		 * ----------
 		 */
 		Np->L_negative_sign = "-";
 		Np->L_positive_sign = "+";
@@ -3423,9 +3390,8 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 	if (OVERLOAD_TEST)
 		return;
 
-	/* ----------
+	/*
 	 * read sign
-	 * ----------
 	 */
 	if (*Np->number == ' ' && (id == NUM_0 || id == NUM_9 || NUM_S))
 	{
@@ -3433,9 +3399,9 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 #ifdef DEBUG_TO_FROM_CHAR
 		elog(DEBUG_elog_output, "Try read sign (%c).", *Np->inout_p);
 #endif
-		/* ----------
+
+		/*
 		 * locale sign
-		 * ----------
 		 */
 		if (IS_LSIGN(Np->Num))
 		{
@@ -3464,9 +3430,9 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 #ifdef DEBUG_TO_FROM_CHAR
 		elog(DEBUG_elog_output, "Try read sipmle sign (%c).", *Np->inout_p);
 #endif
-		/* ----------
+
+		/*
 		 * simple + - < >
-		 * ----------
 		 */
 		if (*Np->inout_p == '-' || (IS_BRACKET(Np->Num) &&
 									*Np->inout_p == '<'))
@@ -3487,9 +3453,8 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 	if (OVERLOAD_TEST)
 		return;
 
-	/* ----------
+	/*
 	 * read digit
-	 * ----------
 	 */
 	if (isdigit((unsigned char) *Np->inout_p))
 	{
@@ -3507,9 +3472,8 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 		elog(DEBUG_elog_output, "Read digit (%c).", *Np->inout_p);
 #endif
 
-		/* ----------
+		/*
 		 * read decimal point
-		 * ----------
 		 */
 	}
 	else if (IS_DECIMAL(Np->Num))
@@ -3572,9 +3536,8 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 #endif
 	Np->num_in = FALSE;
 
-	/* ----------
+	/*
 	 * Write sign
-	 * ----------
 	 */
 	if (Np->num_curr == Np->sign_pos && Np->sign_wrote == FALSE)
 	{
@@ -3585,9 +3548,8 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 		if (IS_LSIGN(Np->Num))
 		{
 
-			/* ----------
+			/*
 			 * Write locale SIGN
-			 * ----------
 			 */
 			if (Np->sign == '-')
 				strcpy(Np->inout_p, Np->L_negative_sign);
@@ -3620,9 +3582,9 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 			 (Np->num_curr == Np->num_count + (Np->num_pre ? 1 : 0)
 			  + (IS_DECIMAL(Np->Num) ? 1 : 0)))
 	{
-		/* ----------
+
+		/*
 		 * Write close BRACKET
-		 * ----------
 		 */
 #ifdef DEBUG_TO_FROM_CHAR
 		elog(DEBUG_elog_output, "Writing bracket to position %d", Np->num_curr);
@@ -3631,9 +3593,8 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 		++Np->inout_p;
 	}
 
-	/* ----------
+	/*
 	 * digits / FM / Zero / Dec. point
-	 * ----------
 	 */
 	if (id == NUM_9 || id == NUM_0 || id == NUM_D || id == NUM_DEC ||
 		(id == NUM_S && Np->num_curr < Np->num_pre))
@@ -3643,9 +3604,8 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 			(Np->Num->zero_start > Np->num_curr || !IS_ZERO(Np->Num)))
 		{
 
-			/* ----------
+			/*
 			 * Write blank space
-			 * ----------
 			 */
 			if (!IS_FILLMODE(Np->Num))
 			{
@@ -3662,9 +3622,8 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 				 Np->Num->zero_start <= Np->num_curr)
 		{
 
-			/* ----------
+			/*
 			 * Write ZERO
-			 * ----------
 			 */
 #ifdef DEBUG_TO_FROM_CHAR
 			elog(DEBUG_elog_output, "Writing zero to position %d", Np->num_curr);
@@ -3677,10 +3636,9 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 		else
 		{
 
-			/* ----------
-			* Write Decinal point
-			* ----------
-			*/
+			/*
+			 * Write Decinal point
+			 */
 			if (*Np->number_p == '.')
 			{
 
@@ -3708,9 +3666,8 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 			else
 			{
 
-				/* ----------
+				/*
 				 * Write Digits
-				 * ----------
 				 */
 				if (Np->last_relevant && Np->number_p > Np->last_relevant &&
 					id != NUM_0)
@@ -3775,9 +3732,8 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 	if (Np->Num->zero_start)
 		--Np->Num->zero_start;
 
-	/* ----------
+	/*
 	 * Roman correction
-	 * ----------
 	 */
 	if (IS_ROMAN(Np->Num))
 	{
@@ -3797,9 +3753,8 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 		Np->Num->flag |= NUM_F_ROMAN;
 	}
 
-	/* ----------
+	/*
 	 * Sign
-	 * ----------
 	 */
 	if (type == FROM_CHAR)
 	{
@@ -3833,9 +3788,8 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 			Np->sign_wrote = TRUE;		/* needn't sign */
 	}
 
-	/* ----------
+	/*
 	 * Count
-	 * ----------
 	 */
 	Np->num_count = Np->Num->post + Np->Num->pre - 1;
 
@@ -3858,9 +3812,8 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 		if (!Np->sign_wrote)
 		{
 
-			/* ----------
+			/*
 			 * Set SING position
-			 * ----------
 			 */
 			if (Np->Num->lsign == NUM_LSIGN_POST)
 			{
@@ -3875,9 +3828,8 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 			else
 				Np->sign_pos = Np->num_pre && !IS_FILLMODE(Np->Num) ? Np->num_pre : 0;
 
-			/* ----------
+			/*
 			 * terrible Ora format
-			 * ----------
 			 */
 			if (!IS_ZERO(Np->Num) && *Np->number == '0' &&
 				!IS_FILLMODE(Np->Num) && Np->Num->post != 0)
@@ -3924,15 +3876,13 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 		);
 #endif
 
-	/* ----------
+	/*
 	 * Locale
-	 * ----------
 	 */
 	NUM_prepare_locale(Np);
 
-	/* ----------
+	/*
 	 * Processor direct cycle
-	 * ----------
 	 */
 	if (Np->type == FROM_CHAR)
 		Np->number_p = Np->number + 1;	/* first char is space for sign */
@@ -3944,24 +3894,22 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 
 		if (Np->type == FROM_CHAR)
 		{
-			/* ----------
+
+			/*
 			 * Check non-string inout end
-			 * ----------
 			 */
 			if (Np->inout_p >= Np->inout + plen)
 				break;
 		}
 
-		/* ----------
+		/*
 		 * Format pictures actions
-		 * ----------
 		 */
 		if (n->type == NODE_TYPE_ACTION)
 		{
 
-			/* ----------
+			/*
 			 * Create/reading digit/zero/blank/sing
-			 * ----------
 			 */
 			switch (n->key->id)
 			{
@@ -4145,9 +4093,9 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 		}
 		else
 		{
-			/* ----------
+
+			/*
 			 * Remove to output char from input in TO_CHAR
-			 * ----------
 			 */
 			if (Np->type == TO_CHAR)
 				*Np->inout_p = n->character;
@@ -4169,9 +4117,8 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 		else
 			*Np->number_p = '\0';
 
-		/* ----------
+		/*
 		 * Correction - precision of dec. number
-		 * ----------
 		 */
 		Np->Num->post = Np->read_post;
 
@@ -4213,10 +4160,9 @@ do { \
 	if (flag)							\
 		pfree(format);						\
 									\
-	/* ----------						  \
+	/*
 	 * for result is allocated max memory, which current format-picture\
 	 * needs, now it must be re-allocate to result real size	\
-	 * ----------							\
 	 */								\
 	if (!(len = strlen(VARDATA(result))))				\
 	{								\
@@ -4300,9 +4246,8 @@ numeric_to_char(PG_FUNCTION_ARGS)
 
 	NUM_TOCHAR_prepare;
 
-	/* ----------
+	/*
 	 * On DateType depend part (numeric)
-	 * ----------
 	 */
 	if (IS_ROMAN(&Num))
 	{
@@ -4399,9 +4344,8 @@ int4_to_char(PG_FUNCTION_ARGS)
 
 	NUM_TOCHAR_prepare;
 
-	/* ----------
+	/*
 	 * On DateType depend part (int32)
-	 * ----------
 	 */
 	if (IS_ROMAN(&Num))
 		numstr = orgnum = int_to_roman(value);
@@ -4481,9 +4425,8 @@ int8_to_char(PG_FUNCTION_ARGS)
 
 	NUM_TOCHAR_prepare;
 
-	/* ----------
+	/*
 	 * On DateType depend part (int32)
-	 * ----------
 	 */
 	if (IS_ROMAN(&Num))
 	{

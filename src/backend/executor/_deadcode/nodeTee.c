@@ -15,7 +15,7 @@
  *		ExecInitTee
  *		ExecEndTee
  *
- *	$Id: nodeTee.c,v 1.9 2001/01/24 19:42:55 momjian Exp $
+ *	$Id: nodeTee.c,v 1.10 2001/03/22 06:16:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,9 +60,8 @@ ExecInitTee(Tee * node, EState *currentEstate, Plan *parent)
 	if (node->plan.state)
 		return TRUE;
 
-	/* ----------------
-	 *	assign the node's execution state
-	 * ----------------
+	/*
+	 * assign the node's execution state
 	 */
 
 	/*
@@ -93,9 +92,8 @@ ExecInitTee(Tee * node, EState *currentEstate, Plan *parent)
 	node->plan.state = estate;
 
 
-	/* ----------------
+	/*
 	 * create teeState structure
-	 * ----------------
 	 */
 	teeState = makeNode(TeeState);
 	teeState->tee_leftPlace = 0;
@@ -120,9 +118,9 @@ ExecInitTee(Tee * node, EState *currentEstate, Plan *parent)
 	ExecAssignExprContext(estate, &(teeState->cstate));
 
 #define TEE_NSLOTS 2
-	/* ----------------
-	 *	initialize tuple slots
-	 * ----------------
+
+	/*
+	 * initialize tuple slots
 	 */
 	ExecInitResultTupleSlot(estate, &(teeState->cstate));
 
@@ -130,16 +128,16 @@ ExecInitTee(Tee * node, EState *currentEstate, Plan *parent)
 	outerPlan = outerPlan((Plan *) node);
 	ExecInitNode(outerPlan, estate, (Plan *) node);
 
-	/* ----------------
-	 *	the tuple type info is from the outer plan of this node
-	 *	the result type is also the same as the outerplan
+	/*
+	 * the tuple type info is from the outer plan of this node the result
+	 * type is also the same as the outerplan
 	 */
 	ExecAssignResultTypeFromOuterPlan((Plan *) node, &(teeState->cstate));
 	ExecAssignProjectionInfo((Plan *) node, &teeState->cstate);
 
-	/* ---------------------------------------
-	   initialize temporary relation to buffer tuples
-	*/
+	/*
+	 * initialize temporary relation to buffer tuples
+	 */
 	tupType = ExecGetResultType(&(teeState->cstate));
 	len = ExecTargetListLength(((Plan *) node)->targetlist);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.28 2001/03/22 03:59:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.29 2001/03/22 06:16:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,9 +54,8 @@ SeqNext(SeqScan *node)
 	ScanDirection direction;
 	TupleTableSlot *slot;
 
-	/* ----------------
-	 *	get information from the estate and scan state
-	 * ----------------
+	/*
+	 * get information from the estate and scan state
 	 */
 	estate = node->plan.state;
 	scanstate = node->scanstate;
@@ -91,21 +90,19 @@ SeqNext(SeqScan *node)
 		return (slot);
 	}
 
-	/* ----------------
-	 *	get the next tuple from the access methods
-	 * ----------------
+	/*
+	 * get the next tuple from the access methods
 	 */
 	tuple = heap_getnext(scandesc, ScanDirectionIsBackward(direction));
 
-	/* ----------------
-	 *	save the tuple and the buffer returned to us by the access methods
-	 *	in our scan tuple slot and return the slot.  Note: we pass 'false'
-	 *	because tuples returned by heap_getnext() are pointers onto
-	 *	disk pages and were not created with palloc() and so should not
-	 *	be pfree()'d.  Note also that ExecStoreTuple will increment the
-	 *	refcount of the buffer; the refcount will not be dropped until
-	 *	the tuple table slot is cleared.
-	 * ----------------
+	/*
+	 * save the tuple and the buffer returned to us by the access methods
+	 * in our scan tuple slot and return the slot.	Note: we pass 'false'
+	 * because tuples returned by heap_getnext() are pointers onto disk
+	 * pages and were not created with palloc() and so should not be
+	 * pfree()'d.  Note also that ExecStoreTuple will increment the
+	 * refcount of the buffer; the refcount will not be dropped until the
+	 * tuple table slot is cleared.
 	 */
 
 	slot = ExecStoreTuple(tuple,/* tuple to store */
@@ -130,9 +127,9 @@ SeqNext(SeqScan *node)
 TupleTableSlot *
 ExecSeqScan(SeqScan *node)
 {
-	/* ----------------
-	 *	use SeqNext as access method
-	 * ----------------
+
+	/*
+	 * use SeqNext as access method
 	 */
 	return ExecScan(node, (ExecScanAccessMtd) SeqNext);
 }
@@ -156,11 +153,9 @@ InitScanRelation(SeqScan *node, EState *estate,
 	Relation	currentRelation;
 	HeapScanDesc currentScanDesc;
 
-	/* ----------------
-	 * get the relation object id from the relid'th entry
-	 * in the range table, open that relation and initialize
-	 * the scan state...
-	 * ----------------
+	/*
+	 * get the relation object id from the relid'th entry in the range
+	 * table, open that relation and initialize the scan state...
 	 */
 	relid = node->scanrelid;
 	rangeTable = estate->es_range_table;
@@ -197,55 +192,49 @@ ExecInitSeqScan(SeqScan *node, EState *estate, Plan *parent)
 	Oid			reloid;
 	HeapScanDesc scandesc;
 
-	/* ----------------
-	 *	Once upon a time it was possible to have an outerPlan of a SeqScan,
-	 *	but not any more.
-	 * ----------------
+	/*
+	 * Once upon a time it was possible to have an outerPlan of a SeqScan,
+	 * but not any more.
 	 */
 	Assert(outerPlan((Plan *) node) == NULL);
 	Assert(innerPlan((Plan *) node) == NULL);
 
-	/* ----------------
-	 *	assign the node's execution state
-	 * ----------------
+	/*
+	 * assign the node's execution state
 	 */
 	node->plan.state = estate;
 
-	/* ----------------
-	 *	 create new CommonScanState for node
-	 * ----------------
+	/*
+	 * create new CommonScanState for node
 	 */
 	scanstate = makeNode(CommonScanState);
 	node->scanstate = scanstate;
 
-	/* ----------------
-	 *	Miscellaneous initialization
+	/*
+	 * Miscellaneous initialization
 	 *
-	 *		 +	create expression context for node
-	 * ----------------
+	 * create expression context for node
 	 */
 	ExecAssignExprContext(estate, &scanstate->cstate);
 
 #define SEQSCAN_NSLOTS 3
-	/* ----------------
-	 *	tuple table initialization
-	 * ----------------
+
+	/*
+	 * tuple table initialization
 	 */
 	ExecInitResultTupleSlot(estate, &scanstate->cstate);
 	ExecInitScanTupleSlot(estate, scanstate);
 
-	/* ----------------
-	 *	initialize scan relation
-	 * ----------------
+	/*
+	 * initialize scan relation
 	 */
 	reloid = InitScanRelation(node, estate, scanstate);
 
 	scandesc = scanstate->css_currentScanDesc;
 	scanstate->cstate.cs_TupFromTlist = false;
 
-	/* ----------------
-	 *	initialize tuple type
-	 * ----------------
+	/*
+	 * initialize tuple type
 	 */
 	ExecAssignResultTypeFromTL((Plan *) node, &scanstate->cstate);
 	ExecAssignProjectionInfo((Plan *) node, &scanstate->cstate);
@@ -272,33 +261,28 @@ ExecEndSeqScan(SeqScan *node)
 {
 	CommonScanState *scanstate;
 
-	/* ----------------
-	 *	get information from node
-	 * ----------------
+	/*
+	 * get information from node
 	 */
 	scanstate = node->scanstate;
 
-	/* ----------------
-	 *	Free the projection info and the scan attribute info
+	/*
+	 * Free the projection info and the scan attribute info
 	 *
-	 *	Note: we don't ExecFreeResultType(scanstate)
-	 *		  because the rule manager depends on the tupType
-	 *		  returned by ExecMain().  So for now, this
-	 *		  is freed at end-transaction time.  -cim 6/2/91
-	 * ----------------
+	 * Note: we don't ExecFreeResultType(scanstate) because the rule manager
+	 * depends on the tupType returned by ExecMain().  So for now, this is
+	 * freed at end-transaction time.  -cim 6/2/91
 	 */
 	ExecFreeProjectionInfo(&scanstate->cstate);
 	ExecFreeExprContext(&scanstate->cstate);
 
-	/* ----------------
+	/*
 	 * close scan relation
-	 * ----------------
 	 */
 	ExecCloseR((Plan *) node);
 
-	/* ----------------
-	 *	clean out the tuple table
-	 * ----------------
+	/*
+	 * clean out the tuple table
 	 */
 	ExecClearTuple(scanstate->cstate.cs_ResultTupleSlot);
 	ExecClearTuple(scanstate->css_ScanTupleSlot);

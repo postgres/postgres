@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.123 2001/03/22 03:59:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.124 2001/03/22 06:16:11 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -69,28 +69,24 @@ PortalCleanup(Portal portal)
 {
 	MemoryContext oldcontext;
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
+	/*
+	 * sanity checks
 	 */
 	AssertArg(PortalIsValid(portal));
 	AssertArg(portal->cleanup == PortalCleanup);
 
-	/* ----------------
-	 *	set proper portal-executor context before calling ExecMain.
-	 * ----------------
+	/*
+	 * set proper portal-executor context before calling ExecMain.
 	 */
 	oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
-	/* ----------------
-	 *	tell the executor to shutdown the query
-	 * ----------------
+	/*
+	 * tell the executor to shutdown the query
 	 */
 	ExecutorEnd(PortalGetQueryDesc(portal), PortalGetState(portal));
 
-	/* ----------------
-	 *	switch back to previous context
-	 * ----------------
+	/*
+	 * switch back to previous context
 	 */
 	MemoryContextSwitchTo(oldcontext);
 }
@@ -111,9 +107,8 @@ PerformPortalFetch(char *name,
 	EState	   *estate;
 	MemoryContext oldcontext;
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
+	/*
+	 * sanity checks
 	 */
 	if (name == NULL)
 	{
@@ -121,9 +116,8 @@ PerformPortalFetch(char *name,
 		return;
 	}
 
-	/* ----------------
-	 *	get the portal from the portal name
-	 * ----------------
+	/*
+	 * get the portal from the portal name
 	 */
 	portal = GetPortalByName(name);
 	if (!PortalIsValid(portal))
@@ -133,18 +127,16 @@ PerformPortalFetch(char *name,
 		return;
 	}
 
-	/* ----------------
-	 *	switch into the portal context
-	 * ----------------
+	/*
+	 * switch into the portal context
 	 */
 	oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
-	/* ----------------
-	 *	tell the destination to prepare to receive some tuples.
+	/*
+	 * tell the destination to prepare to receive some tuples.
 	 *
-	 *	If we've been asked for a MOVE, make a temporary QueryDesc
-	 *	with the appropriate dummy destination.
-	 * ----------------
+	 * If we've been asked for a MOVE, make a temporary QueryDesc with the
+	 * appropriate dummy destination.
 	 */
 	queryDesc = PortalGetQueryDesc(portal);
 	estate = PortalGetState(portal);
@@ -168,15 +160,14 @@ PerformPortalFetch(char *name,
 				 tag,
 				 dest);
 
-	/* ----------------
-	 *	Determine which direction to go in, and check to see if we're already
-	 *	at the end of the available tuples in that direction.  If so, do
-	 *	nothing.  (This check exists because not all plan node types are
-	 *	robust about being called again if they've already returned NULL
-	 *	once.)	If it's OK to do the fetch, call the executor.  Then,
-	 *	update the atStart/atEnd state depending on the number of tuples
-	 *	that were retrieved.
-	 * ----------------
+	/*
+	 * Determine which direction to go in, and check to see if we're
+	 * already at the end of the available tuples in that direction.  If
+	 * so, do nothing.	(This check exists because not all plan node types
+	 * are robust about being called again if they've already returned
+	 * NULL once.)	If it's OK to do the fetch, call the executor.  Then,
+	 * update the atStart/atEnd state depending on the number of tuples
+	 * that were retrieved.
 	 */
 	if (forward)
 	{
@@ -201,19 +192,17 @@ PerformPortalFetch(char *name,
 		}
 	}
 
-	/* ----------------
-	 *	Clean up and switch back to old context.
-	 * ----------------
+	/*
+	 * Clean up and switch back to old context.
 	 */
 	if (dest == None)			/* MOVE */
 		pfree(queryDesc);
 
 	MemoryContextSwitchTo(oldcontext);
 
-	/* ----------------
-	 * Note: the "end-of-command" tag is returned by higher-level
-	 *		 utility code
-	 * ----------------
+	/*
+	 * Note: the "end-of-command" tag is returned by higher-level utility
+	 * code
 	 */
 }
 
@@ -226,9 +215,8 @@ PerformPortalClose(char *name, CommandDest dest)
 {
 	Portal		portal;
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
+	/*
+	 * sanity checks
 	 */
 	if (name == NULL)
 	{
@@ -236,9 +224,8 @@ PerformPortalClose(char *name, CommandDest dest)
 		return;
 	}
 
-	/* ----------------
-	 *	get the portal from the portal name
-	 * ----------------
+	/*
+	 * get the portal from the portal name
 	 */
 	portal = GetPortalByName(name);
 	if (!PortalIsValid(portal))
@@ -248,9 +235,8 @@ PerformPortalClose(char *name, CommandDest dest)
 		return;
 	}
 
-	/* ----------------
-	 *	Note: PortalCleanup is called as a side-effect
-	 * ----------------
+	/*
+	 * Note: PortalCleanup is called as a side-effect
 	 */
 	PortalDrop(&portal);
 }

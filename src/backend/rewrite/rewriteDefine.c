@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.59 2001/03/22 03:59:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.60 2001/03/22 06:16:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,9 +61,8 @@ InsertRule(char *rulname,
 		elog(ERROR, "Attempt to insert rule \"%s\" failed: already exists",
 			 rulname);
 
-	/* ----------------
-	 *	Set up *nulls and *values arrays
-	 * ----------------
+	/*
+	 * Set up *nulls and *values arrays
 	 */
 	MemSet(nulls, ' ', sizeof(nulls));
 
@@ -77,9 +76,8 @@ InsertRule(char *rulname,
 	values[i++] = DirectFunctionCall1(textin, CStringGetDatum(evqual));
 	values[i++] = DirectFunctionCall1(textin, CStringGetDatum(actiontree));
 
-	/* ----------------
-	 *	create a new pg_rewrite tuple
-	 * ----------------
+	/*
+	 * create a new pg_rewrite tuple
 	 */
 	pg_rewrite_desc = heap_openr(RewriteRelationName, RowExclusiveLock);
 
@@ -183,14 +181,13 @@ DefineQueryRewrite(RuleStmt *stmt)
 	event_relation = heap_openr(event_obj->relname, AccessExclusiveLock);
 	ev_relid = RelationGetRelid(event_relation);
 
-	/* ----------
+	/*
 	 * The current rewrite handler is known to work on relation level
 	 * rules only. And for SELECT events, it expects one non-nothing
-	 * action that is instead and returns exactly a tuple of the
-	 * rewritten relation. This restricts SELECT rules to views.
+	 * action that is instead and returns exactly a tuple of the rewritten
+	 * relation. This restricts SELECT rules to views.
 	 *
-	 *	   Jan
-	 * ----------
+	 * Jan
 	 */
 	if (event_obj->attrs)
 		elog(ERROR, "attribute level rules currently not supported");

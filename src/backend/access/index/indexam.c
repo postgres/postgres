@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.47 2001/01/24 19:42:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.48 2001/03/22 06:16:07 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -190,9 +190,8 @@ index_insert(Relation relation,
 	RELATION_CHECKS;
 	GET_REL_PROCEDURE(insert, aminsert);
 
-	/* ----------------
-	 *	have the am's insert proc do all the work.
-	 * ----------------
+	/*
+	 * have the am's insert proc do all the work.
 	 */
 	specificResult = (InsertIndexResult)
 		DatumGetPointer(OidFunctionCall5(procedure,
@@ -241,13 +240,12 @@ index_beginscan(Relation relation,
 
 	RelationIncrementReferenceCount(relation);
 
-	/* ----------------
-	 *	Acquire AccessShareLock for the duration of the scan
+	/*
+	 * Acquire AccessShareLock for the duration of the scan
 	 *
-	 *	Note: we could get an SI inval message here and consequently have
-	 *	to rebuild the relcache entry.	The refcount increment above
-	 *	ensures that we will rebuild it and not just flush it...
-	 * ----------------
+	 * Note: we could get an SI inval message here and consequently have to
+	 * rebuild the relcache entry.	The refcount increment above ensures
+	 * that we will rebuild it and not just flush it...
 	 */
 	LockRelation(relation, AccessShareLock);
 
@@ -347,9 +345,8 @@ index_getnext(IndexScanDesc scan,
 
 	SCAN_CHECKS;
 
-	/* ----------------
-	 *	Look up the access procedure only once per scan.
-	 * ----------------
+	/*
+	 * Look up the access procedure only once per scan.
 	 */
 	if (scan->fn_getnext.fn_oid == InvalidOid)
 	{
@@ -359,9 +356,8 @@ index_getnext(IndexScanDesc scan,
 		fmgr_info(procedure, &scan->fn_getnext);
 	}
 
-	/* ----------------
-	 *	have the am's gettuple proc do all the work.
-	 * ----------------
+	/*
+	 * have the am's gettuple proc do all the work.
 	 */
 	result = (RetrieveIndexResult)
 		DatumGetPointer(FunctionCall2(&scan->fn_getnext,

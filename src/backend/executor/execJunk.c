@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.26 2001/03/22 03:59:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.27 2001/03/22 06:16:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,12 +90,10 @@ ExecInitJunkFilter(List *targetList, TupleDesc tupType)
 										ALLOCSET_DEFAULT_MAXSIZE);
 	oldContext = MemoryContextSwitchTo(junkContext);
 
-	/* ---------------------
-	 * First find the "clean" target list, i.e. all the entries
-	 * in the original target list which have a false 'resjunk'
-	 * NOTE: make copy of the Resdom nodes, because we have
-	 * to change the 'resno's...
-	 * ---------------------
+	/*
+	 * First find the "clean" target list, i.e. all the entries in the
+	 * original target list which have a false 'resjunk' NOTE: make copy
+	 * of the Resdom nodes, because we have to change the 'resno's...
 	 */
 	cleanTargetList = NIL;
 	cleanResno = 1;
@@ -167,25 +165,23 @@ ExecInitJunkFilter(List *targetList, TupleDesc tupType)
 		}
 	}
 
-	/* ---------------------
+	/*
 	 * Now calculate the tuple type for the cleaned tuple (we were already
 	 * given the type for the original targetlist).
-	 * ---------------------
 	 */
 	cleanTupType = ExecTypeFromTL(cleanTargetList);
 
 	len = ExecTargetListLength(targetList);
 	cleanLength = ExecTargetListLength(cleanTargetList);
 
-	/* ---------------------
-	 * Now calculate the "map" between the original tuple's attributes
-	 * and the "clean" tuple's attributes.
+	/*
+	 * Now calculate the "map" between the original tuple's attributes and
+	 * the "clean" tuple's attributes.
 	 *
-	 * The "map" is an array of "cleanLength" attribute numbers, i.e.
-	 * one entry for every attribute of the "clean" tuple.
-	 * The value of this entry is the attribute number of the corresponding
-	 * attribute of the "original" tuple.
-	 * ---------------------
+	 * The "map" is an array of "cleanLength" attribute numbers, i.e. one
+	 * entry for every attribute of the "clean" tuple. The value of this
+	 * entry is the attribute number of the corresponding attribute of the
+	 * "original" tuple.
 	 */
 	if (cleanLength > 0)
 	{
@@ -236,9 +232,8 @@ ExecInitJunkFilter(List *targetList, TupleDesc tupType)
 	else
 		cleanMap = NULL;
 
-	/* ---------------------
+	/*
 	 * Finally create and initialize the JunkFilter struct.
-	 * ---------------------
 	 */
 	junkfilter = makeNode(JunkFilter);
 
@@ -298,10 +293,9 @@ ExecGetJunkAttribute(JunkFilter *junkfilter,
 	TupleDesc	tupType;
 	HeapTuple	tuple;
 
-	/* ---------------------
-	 * first look in the junkfilter's target list for
-	 * an attribute with the given name
-	 * ---------------------
+	/*
+	 * first look in the junkfilter's target list for an attribute with
+	 * the given name
 	 */
 	resno = InvalidAttrNumber;
 	targetList = junkfilter->jf_targetList;
@@ -327,9 +321,8 @@ ExecGetJunkAttribute(JunkFilter *junkfilter,
 		return false;
 	}
 
-	/* ---------------------
+	/*
 	 * Now extract the attribute value from the tuple.
-	 * ---------------------
 	 */
 	tuple = slot->val;
 	tupType = junkfilter->jf_tupType;
@@ -361,9 +354,8 @@ ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot)
 	Datum		values_array[64];
 	char		nulls_array[64];
 
-	/* ----------------
-	 *	get info from the slot and the junk filter
-	 * ----------------
+	/*
+	 * get info from the slot and the junk filter
 	 */
 	tuple = slot->val;
 
@@ -372,21 +364,19 @@ ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot)
 	cleanLength = junkfilter->jf_cleanLength;
 	cleanMap = junkfilter->jf_cleanMap;
 
-	/* ---------------------
-	 *	Handle the trivial case first.
-	 * ---------------------
+	/*
+	 * Handle the trivial case first.
 	 */
 	if (cleanLength == 0)
 		return (HeapTuple) NULL;
 
-	/* ---------------------
-	 * Create the arrays that will hold the attribute values
-	 * and the null information for the new "clean" tuple.
+	/*
+	 * Create the arrays that will hold the attribute values and the null
+	 * information for the new "clean" tuple.
 	 *
-	 * Note: we use memory on the stack to optimize things when
-	 *		 we are dealing with a small number of tuples.
-	 *		 for large tuples we just use palloc.
-	 * ---------------------
+	 * Note: we use memory on the stack to optimize things when we are
+	 * dealing with a small number of tuples. for large tuples we just use
+	 * palloc.
 	 */
 	if (cleanLength > 64)
 	{
@@ -399,9 +389,8 @@ ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot)
 		nulls = nulls_array;
 	}
 
-	/* ---------------------
+	/*
 	 * Exctract one by one all the values of the "clean" tuple.
-	 * ---------------------
 	 */
 	for (i = 0; i < cleanLength; i++)
 	{
@@ -413,18 +402,16 @@ ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot)
 			nulls[i] = ' ';
 	}
 
-	/* ---------------------
+	/*
 	 * Now form the new tuple.
-	 * ---------------------
 	 */
 	cleanTuple = heap_formtuple(cleanTupType,
 								values,
 								nulls);
 
-	/* ---------------------
-	 * We are done.  Free any space allocated for 'values' and 'nulls'
-	 * and return the new tuple.
-	 * ---------------------
+	/*
+	 * We are done.  Free any space allocated for 'values' and 'nulls' and
+	 * return the new tuple.
 	 */
 	if (cleanLength > 64)
 	{

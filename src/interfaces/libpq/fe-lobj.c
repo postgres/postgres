@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.33 2001/02/10 02:31:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.34 2001/03/22 06:16:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -518,9 +518,8 @@ lo_initialize(PGconn *conn)
 	const char *fname;
 	Oid			foid;
 
-	/* ----------------
+	/*
 	 * Allocate the structure to hold the functions OID's
-	 * ----------------
 	 */
 	lobjfuncs = (PGlobjfuncs *) malloc(sizeof(PGlobjfuncs));
 	if (lobjfuncs == (PGlobjfuncs *) NULL)
@@ -531,9 +530,8 @@ lo_initialize(PGconn *conn)
 	}
 	MemSet((char *) lobjfuncs, 0, sizeof(PGlobjfuncs));
 
-	/* ----------------
+	/*
 	 * Execute the query to get all the functions at once
-	 * ----------------
 	 */
 	res = PQexec(conn, "select proname, oid from pg_proc	\
 			where proname = 'lo_open'	\
@@ -559,9 +557,8 @@ lo_initialize(PGconn *conn)
 		return -1;
 	}
 
-	/* ----------------
+	/*
 	 * Examine the result and put the OID's into the struct
-	 * ----------------
 	 */
 	for (n = 0; n < PQntuples(res); n++)
 	{
@@ -587,10 +584,9 @@ lo_initialize(PGconn *conn)
 
 	PQclear(res);
 
-	/* ----------------
-	 * Finally check that we really got all large object
-	 * interface functions.
-	 * ----------------
+	/*
+	 * Finally check that we really got all large object interface
+	 * functions.
 	 */
 	if (lobjfuncs->fn_lo_open == 0)
 	{
@@ -649,9 +645,8 @@ lo_initialize(PGconn *conn)
 		return -1;
 	}
 
-	/* ----------------
+	/*
 	 * Put the structure into the connection control
-	 * ----------------
 	 */
 	conn->lobjfuncs = lobjfuncs;
 	return 0;

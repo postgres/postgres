@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.23 2001/03/22 03:59:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.24 2001/03/22 06:16:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,9 +68,8 @@ ExecNestLoop(NestLoop *node)
 	List	   *otherqual;
 	ExprContext *econtext;
 
-	/* ----------------
-	 *	get information from the node
-	 * ----------------
+	/*
+	 * get information from the node
 	 */
 	ENL1_printf("getting info from node");
 
@@ -81,18 +80,16 @@ ExecNestLoop(NestLoop *node)
 	innerPlan = innerPlan((Plan *) node);
 	econtext = nlstate->jstate.cs_ExprContext;
 
-	/* ----------------
+	/*
 	 * get the current outer tuple
-	 * ----------------
 	 */
 	outerTupleSlot = nlstate->jstate.cs_OuterTupleSlot;
 	econtext->ecxt_outertuple = outerTupleSlot;
 
-	/* ----------------
-	 *	Check to see if we're still projecting out tuples from a previous
-	 *	join tuple (because there is a function-returning-set in the
-	 *	projection expressions).  If so, try to project another one.
-	 * ----------------
+	/*
+	 * Check to see if we're still projecting out tuples from a previous
+	 * join tuple (because there is a function-returning-set in the
+	 * projection expressions).  If so, try to project another one.
 	 */
 	if (nlstate->jstate.cs_TupFromTlist)
 	{
@@ -106,37 +103,34 @@ ExecNestLoop(NestLoop *node)
 		nlstate->jstate.cs_TupFromTlist = false;
 	}
 
-	/* ----------------
-	 *	Reset per-tuple memory context to free any expression evaluation
-	 *	storage allocated in the previous tuple cycle.	Note this can't
-	 *	happen until we're done projecting out tuples from a join tuple.
-	 * ----------------
+	/*
+	 * Reset per-tuple memory context to free any expression evaluation
+	 * storage allocated in the previous tuple cycle.  Note this can't
+	 * happen until we're done projecting out tuples from a join tuple.
 	 */
 	ResetExprContext(econtext);
 
-	/* ----------------
-	 *	Ok, everything is setup for the join so now loop until
-	 *	we return a qualifying join tuple.
-	 * ----------------
+	/*
+	 * Ok, everything is setup for the join so now loop until we return a
+	 * qualifying join tuple.
 	 */
 	ENL1_printf("entering main loop");
 
 	for (;;)
 	{
-		/* ----------------
-		 *	If we don't have an outer tuple, get the next one and
-		 *	reset the inner scan.
-		 * ----------------
+
+		/*
+		 * If we don't have an outer tuple, get the next one and reset the
+		 * inner scan.
 		 */
 		if (nlstate->nl_NeedNewOuter)
 		{
 			ENL1_printf("getting new outer tuple");
 			outerTupleSlot = ExecProcNode(outerPlan, (Plan *) node);
 
-			/* ----------------
-			 *	if there are no more outer tuples, then the join
-			 *	is complete..
-			 * ----------------
+			/*
+			 * if there are no more outer tuples, then the join is
+			 * complete..
 			 */
 			if (TupIsNull(outerTupleSlot))
 			{
@@ -150,9 +144,8 @@ ExecNestLoop(NestLoop *node)
 			nlstate->nl_NeedNewOuter = false;
 			nlstate->nl_MatchedOuter = false;
 
-			/* ----------------
-			 *	now rescan the inner plan
-			 * ----------------
+			/*
+			 * now rescan the inner plan
 			 */
 			ENL1_printf("rescanning inner plan");
 
@@ -164,9 +157,8 @@ ExecNestLoop(NestLoop *node)
 			ExecReScan(innerPlan, econtext, (Plan *) node);
 		}
 
-		/* ----------------
-		 *	we have an outerTuple, try to get the next inner tuple.
-		 * ----------------
+		/*
+		 * we have an outerTuple, try to get the next inner tuple.
 		 */
 		ENL1_printf("getting new inner tuple");
 
@@ -195,11 +187,11 @@ ExecNestLoop(NestLoop *node)
 
 				if (ExecQual(otherqual, econtext, false))
 				{
-					/* ----------------
-					 *	qualification was satisfied so we project and
-					 *	return the slot containing the result tuple
-					 *	using ExecProject().
-					 * ----------------
+
+					/*
+					 * qualification was satisfied so we project and
+					 * return the slot containing the result tuple using
+					 * ExecProject().
 					 */
 					TupleTableSlot *result;
 					ExprDoneCond isDone;
@@ -223,14 +215,13 @@ ExecNestLoop(NestLoop *node)
 			continue;
 		}
 
-		/* ----------------
-		 *	 at this point we have a new pair of inner and outer
-		 *	 tuples so we test the inner and outer tuples to see
-		 *	 if they satisfy the node's qualification.
+		/*
+		 * at this point we have a new pair of inner and outer tuples so
+		 * we test the inner and outer tuples to see if they satisfy the
+		 * node's qualification.
 		 *
-		 *	 Only the joinquals determine MatchedOuter status,
-		 *	 but all quals must pass to actually return the tuple.
-		 * ----------------
+		 * Only the joinquals determine MatchedOuter status, but all quals
+		 * must pass to actually return the tuple.
 		 */
 		ENL1_printf("testing qualification");
 
@@ -240,11 +231,11 @@ ExecNestLoop(NestLoop *node)
 
 			if (otherqual == NIL || ExecQual(otherqual, econtext, false))
 			{
-				/* ----------------
-				 *	qualification was satisfied so we project and
-				 *	return the slot containing the result tuple
-				 *	using ExecProject().
-				 * ----------------
+
+				/*
+				 * qualification was satisfied so we project and return
+				 * the slot containing the result tuple using
+				 * ExecProject().
 				 */
 				TupleTableSlot *result;
 				ExprDoneCond isDone;
@@ -262,9 +253,8 @@ ExecNestLoop(NestLoop *node)
 			}
 		}
 
-		/* ----------------
-		 *	Tuple fails qual, so free per-tuple memory and try again.
-		 * ----------------
+		/*
+		 * Tuple fails qual, so free per-tuple memory and try again.
 		 */
 		ResetExprContext(econtext);
 
@@ -288,38 +278,34 @@ ExecInitNestLoop(NestLoop *node, EState *estate, Plan *parent)
 	NL1_printf("ExecInitNestLoop: %s\n",
 			   "initializing node");
 
-	/* ----------------
-	 *	assign execution state to node
-	 * ----------------
+	/*
+	 * assign execution state to node
 	 */
 	node->join.plan.state = estate;
 
-	/* ----------------
-	 *	  create new nest loop state
-	 * ----------------
+	/*
+	 * create new nest loop state
 	 */
 	nlstate = makeNode(NestLoopState);
 	node->nlstate = nlstate;
 
-	/* ----------------
-	 *	Miscellaneous initialization
+	/*
+	 * Miscellaneous initialization
 	 *
-	 *		 +	create expression context for node
-	 * ----------------
+	 * create expression context for node
 	 */
 	ExecAssignExprContext(estate, &nlstate->jstate);
 
-	/* ----------------
-	 *	  now initialize children
-	 * ----------------
+	/*
+	 * now initialize children
 	 */
 	ExecInitNode(outerPlan((Plan *) node), estate, (Plan *) node);
 	ExecInitNode(innerPlan((Plan *) node), estate, (Plan *) node);
 
 #define NESTLOOP_NSLOTS 2
-	/* ----------------
-	 *	tuple table initialization
-	 * ----------------
+
+	/*
+	 * tuple table initialization
 	 */
 	ExecInitResultTupleSlot(estate, &nlstate->jstate);
 
@@ -337,16 +323,14 @@ ExecInitNestLoop(NestLoop *node, EState *estate, Plan *parent)
 				 (int) node->join.jointype);
 	}
 
-	/* ----------------
-	 *	initialize tuple type and projection info
-	 * ----------------
+	/*
+	 * initialize tuple type and projection info
 	 */
 	ExecAssignResultTypeFromTL((Plan *) node, &nlstate->jstate);
 	ExecAssignProjectionInfo((Plan *) node, &nlstate->jstate);
 
-	/* ----------------
-	 *	finally, wipe the current outer tuple clean.
-	 * ----------------
+	/*
+	 * finally, wipe the current outer tuple clean.
 	 */
 	nlstate->jstate.cs_OuterTupleSlot = NULL;
 	nlstate->jstate.cs_TupFromTlist = false;
@@ -380,34 +364,29 @@ ExecEndNestLoop(NestLoop *node)
 	NL1_printf("ExecEndNestLoop: %s\n",
 			   "ending node processing");
 
-	/* ----------------
-	 *	get info from the node
-	 * ----------------
+	/*
+	 * get info from the node
 	 */
 	nlstate = node->nlstate;
 
-	/* ----------------
-	 *	Free the projection info
+	/*
+	 * Free the projection info
 	 *
-	 *	Note: we don't ExecFreeResultType(nlstate)
-	 *		  because the rule manager depends on the tupType
-	 *		  returned by ExecMain().  So for now, this
-	 *		  is freed at end-transaction time.  -cim 6/2/91
-	 * ----------------
+	 * Note: we don't ExecFreeResultType(nlstate) because the rule manager
+	 * depends on the tupType returned by ExecMain().  So for now, this is
+	 * freed at end-transaction time.  -cim 6/2/91
 	 */
 	ExecFreeProjectionInfo(&nlstate->jstate);
 	ExecFreeExprContext(&nlstate->jstate);
 
-	/* ----------------
-	 *	close down subplans
-	 * ----------------
+	/*
+	 * close down subplans
 	 */
 	ExecEndNode(outerPlan((Plan *) node), (Plan *) node);
 	ExecEndNode(innerPlan((Plan *) node), (Plan *) node);
 
-	/* ----------------
-	 *	clean out the tuple table
-	 * ----------------
+	/*
+	 * clean out the tuple table
 	 */
 	ExecClearTuple(nlstate->jstate.cs_ResultTupleSlot);
 

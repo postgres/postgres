@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.53 2001/03/22 03:59:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.54 2001/03/22 06:16:11 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -442,9 +442,8 @@ DefineOperator(char *oprName,
 	if (functionName == NULL)
 		elog(ERROR, "Define: \"procedure\" unspecified");
 
-	/* ----------------
-	 *	now have OperatorCreate do all the work..
-	 * ----------------
+	/*
+	 * now have OperatorCreate do all the work..
 	 */
 	OperatorCreate(oprName,		/* operator name */
 				   typeName1,	/* first type name */
@@ -640,9 +639,8 @@ DefineType(char *typeName, List *parameters)
 	if (internalLength != -1 && storage != 'p')
 		elog(ERROR, "Define: fixed size types must have storage PLAIN");
 
-	/* ----------------
-	 *	now have TypeCreate do all the real work.
-	 * ----------------
+	/*
+	 * now have TypeCreate do all the real work.
 	 */
 	TypeCreate(typeName,		/* type name */
 			   InvalidOid,		/* preassigned type oid (not done here) */
@@ -661,10 +659,9 @@ DefineType(char *typeName, List *parameters)
 			   alignment,		/* required alignment */
 			   storage);		/* TOAST strategy */
 
-	/* ----------------
-	 *	When we create a base type (as opposed to a complex type)
-	 *	we need to have an array entry for it in pg_type as well.
-	 * ----------------
+	/*
+	 * When we create a base type (as opposed to a complex type) we need
+	 * to have an array entry for it in pg_type as well.
 	 */
 	shadow_type = makeArrayTypeName(typeName);
 

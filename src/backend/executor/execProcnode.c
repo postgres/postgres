@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.25 2001/01/29 00:39:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.26 2001/03/22 06:16:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,10 +117,8 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 	bool		result;
 	List	   *subp;
 
-	/* ----------------
-	 *	do nothing when we get to the end
-	 *	of a leaf on tree.
-	 * ----------------
+	/*
+	 * do nothing when we get to the end of a leaf on tree.
 	 */
 	if (node == NULL)
 		return FALSE;
@@ -134,9 +132,9 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 
 	switch (nodeTag(node))
 	{
-			/* ----------------
-			 *		control nodes
-			 * ----------------
+
+			/*
+			 * control nodes
 			 */
 		case T_Result:
 			result = ExecInitResult((Result *) node, estate, parent);
@@ -146,9 +144,8 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 			result = ExecInitAppend((Append *) node, estate, parent);
 			break;
 
-			/* ----------------
-			 *		scan nodes
-			 * ----------------
+			/*
+			 * scan nodes
 			 */
 		case T_SeqScan:
 			result = ExecInitSeqScan((SeqScan *) node, estate, parent);
@@ -167,9 +164,8 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 										  parent);
 			break;
 
-			/* ----------------
-			 *		join nodes
-			 * ----------------
+			/*
+			 * join nodes
 			 */
 		case T_NestLoop:
 			result = ExecInitNestLoop((NestLoop *) node, estate, parent);
@@ -187,9 +183,8 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 			result = ExecInitHashJoin((HashJoin *) node, estate, parent);
 			break;
 
-			/* ----------------
-			 *		materialization nodes
-			 * ----------------
+			/*
+			 * materialization nodes
 			 */
 		case T_Material:
 			result = ExecInitMaterial((Material *) node, estate, parent);
@@ -253,9 +248,8 @@ ExecProcNode(Plan *node, Plan *parent)
 
 	CHECK_FOR_INTERRUPTS();
 
-	/* ----------------
-	 *	deal with NULL nodes..
-	 * ----------------
+	/*
+	 * deal with NULL nodes..
 	 */
 	if (node == NULL)
 		return NULL;
@@ -265,9 +259,9 @@ ExecProcNode(Plan *node, Plan *parent)
 
 	switch (nodeTag(node))
 	{
-			/* ----------------
-			 *	control nodes
-			 * ----------------
+
+			/*
+			 * control nodes
 			 */
 		case T_Result:
 			result = ExecResult((Result *) node);
@@ -277,9 +271,8 @@ ExecProcNode(Plan *node, Plan *parent)
 			result = ExecProcAppend((Append *) node);
 			break;
 
-			/* ----------------
-			 *		scan nodes
-			 * ----------------
+			/*
+			 * scan nodes
 			 */
 		case T_SeqScan:
 			result = ExecSeqScan((SeqScan *) node);
@@ -297,9 +290,8 @@ ExecProcNode(Plan *node, Plan *parent)
 			result = ExecSubqueryScan((SubqueryScan *) node);
 			break;
 
-			/* ----------------
-			 *		join nodes
-			 * ----------------
+			/*
+			 * join nodes
 			 */
 		case T_NestLoop:
 			result = ExecNestLoop((NestLoop *) node);
@@ -317,9 +309,8 @@ ExecProcNode(Plan *node, Plan *parent)
 			result = ExecHashJoin((HashJoin *) node);
 			break;
 
-			/* ----------------
-			 *		materialization nodes
-			 * ----------------
+			/*
+			 * materialization nodes
 			 */
 		case T_Material:
 			result = ExecMaterial((Material *) node);
@@ -366,9 +357,9 @@ ExecCountSlotsNode(Plan *node)
 
 	switch (nodeTag(node))
 	{
-			/* ----------------
-			 *		control nodes
-			 * ----------------
+
+			/*
+			 * control nodes
 			 */
 		case T_Result:
 			return ExecCountSlotsResult((Result *) node);
@@ -376,9 +367,8 @@ ExecCountSlotsNode(Plan *node)
 		case T_Append:
 			return ExecCountSlotsAppend((Append *) node);
 
-			/* ----------------
-			 *		scan nodes
-			 * ----------------
+			/*
+			 * scan nodes
 			 */
 		case T_SeqScan:
 			return ExecCountSlotsSeqScan((SeqScan *) node);
@@ -392,9 +382,8 @@ ExecCountSlotsNode(Plan *node)
 		case T_SubqueryScan:
 			return ExecCountSlotsSubqueryScan((SubqueryScan *) node);
 
-			/* ----------------
-			 *		join nodes
-			 * ----------------
+			/*
+			 * join nodes
 			 */
 		case T_NestLoop:
 			return ExecCountSlotsNestLoop((NestLoop *) node);
@@ -408,9 +397,8 @@ ExecCountSlotsNode(Plan *node)
 		case T_HashJoin:
 			return ExecCountSlotsHashJoin((HashJoin *) node);
 
-			/* ----------------
-			 *		materialization nodes
-			 * ----------------
+			/*
+			 * materialization nodes
 			 */
 		case T_Material:
 			return ExecCountSlotsMaterial((Material *) node);
@@ -457,10 +445,8 @@ ExecEndNode(Plan *node, Plan *parent)
 {
 	List	   *subp;
 
-	/* ----------------
-	 *	do nothing when we get to the end
-	 *	of a leaf on tree.
-	 * ----------------
+	/*
+	 * do nothing when we get to the end of a leaf on tree.
 	 */
 	if (node == NULL)
 		return;
@@ -477,9 +463,9 @@ ExecEndNode(Plan *node, Plan *parent)
 
 	switch (nodeTag(node))
 	{
-			/* ----------------
-			 *	control nodes
-			 * ----------------
+
+			/*
+			 * control nodes
 			 */
 		case T_Result:
 			ExecEndResult((Result *) node);
@@ -489,9 +475,8 @@ ExecEndNode(Plan *node, Plan *parent)
 			ExecEndAppend((Append *) node);
 			break;
 
-			/* ----------------
-			 *		scan nodes
-			 * ----------------
+			/*
+			 * scan nodes
 			 */
 		case T_SeqScan:
 			ExecEndSeqScan((SeqScan *) node);
@@ -509,9 +494,8 @@ ExecEndNode(Plan *node, Plan *parent)
 			ExecEndSubqueryScan((SubqueryScan *) node);
 			break;
 
-			/* ----------------
-			 *		join nodes
-			 * ----------------
+			/*
+			 * join nodes
 			 */
 		case T_NestLoop:
 			ExecEndNestLoop((NestLoop *) node);
@@ -529,9 +513,8 @@ ExecEndNode(Plan *node, Plan *parent)
 			ExecEndHashJoin((HashJoin *) node);
 			break;
 
-			/* ----------------
-			 *		materialization nodes
-			 * ----------------
+			/*
+			 * materialization nodes
 			 */
 		case T_Material:
 			ExecEndMaterial((Material *) node);
@@ -726,9 +709,9 @@ ExecGetTupType(Plan *node)
 			break;
 
 		default:
-			/* ----------------
-			 *	  should never get here
-			 * ----------------
+
+			/*
+			 * should never get here
 			 */
 			elog(ERROR, "ExecGetTupType: node type %d unsupported",
 				 (int) nodeTag(node));

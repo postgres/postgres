@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.5 2001/03/22 03:59:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.6 2001/03/22 06:16:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,9 +55,8 @@ SubqueryNext(SubqueryScan *node)
 	ScanDirection direction;
 	TupleTableSlot *slot;
 
-	/* ----------------
-	 *	get information from the estate and scan state
-	 * ----------------
+	/*
+	 * get information from the estate and scan state
 	 */
 	estate = node->scan.plan.state;
 	subquerystate = (SubqueryScanState *) node->scan.scanstate;
@@ -85,9 +84,8 @@ SubqueryNext(SubqueryScan *node)
 		return (slot);
 	}
 
-	/* ----------------
-	 *	get the next tuple from the sub-query
-	 * ----------------
+	/*
+	 * get the next tuple from the sub-query
 	 */
 	subquerystate->sss_SubEState->es_direction = direction;
 
@@ -111,9 +109,9 @@ SubqueryNext(SubqueryScan *node)
 TupleTableSlot *
 ExecSubqueryScan(SubqueryScan *node)
 {
-	/* ----------------
-	 *	use SubqueryNext as access method
-	 * ----------------
+
+	/*
+	 * use SubqueryNext as access method
 	 */
 	return ExecScan(&node->scan, (ExecScanAccessMtd) SubqueryNext);
 }
@@ -129,46 +127,41 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, Plan *parent)
 	RangeTblEntry *rte;
 	EState	   *sp_estate;
 
-	/* ----------------
-	 *	SubqueryScan should not have any "normal" children.
-	 * ----------------
+	/*
+	 * SubqueryScan should not have any "normal" children.
 	 */
 	Assert(outerPlan((Plan *) node) == NULL);
 	Assert(innerPlan((Plan *) node) == NULL);
 
-	/* ----------------
-	 *	assign the node's execution state
-	 * ----------------
+	/*
+	 * assign the node's execution state
 	 */
 	node->scan.plan.state = estate;
 
-	/* ----------------
-	 *	 create new SubqueryScanState for node
-	 * ----------------
+	/*
+	 * create new SubqueryScanState for node
 	 */
 	subquerystate = makeNode(SubqueryScanState);
 	node->scan.scanstate = (CommonScanState *) subquerystate;
 
-	/* ----------------
-	 *	Miscellaneous initialization
+	/*
+	 * Miscellaneous initialization
 	 *
-	 *		 +	create expression context for node
-	 * ----------------
+	 * create expression context for node
 	 */
 	ExecAssignExprContext(estate, &subquerystate->csstate.cstate);
 
 #define SUBQUERYSCAN_NSLOTS 2
-	/* ----------------
-	 *	tuple table initialization
-	 * ----------------
+
+	/*
+	 * tuple table initialization
 	 */
 	ExecInitResultTupleSlot(estate, &subquerystate->csstate.cstate);
 
-	/* ----------------
-	 *	initialize subquery
+	/*
+	 * initialize subquery
 	 *
-	 *	This should agree with ExecInitSubPlan
-	 * ----------------
+	 * This should agree with ExecInitSubPlan
 	 */
 	rte = rt_fetch(node->scan.scanrelid, estate->es_range_table);
 	Assert(rte->subquery != NULL);
@@ -189,9 +182,8 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, Plan *parent)
 	subquerystate->csstate.css_ScanTupleSlot = NULL;
 	subquerystate->csstate.cstate.cs_TupFromTlist = false;
 
-	/* ----------------
-	 *	initialize tuple type
-	 * ----------------
+	/*
+	 * initialize tuple type
 	 */
 	ExecAssignResultTypeFromTL((Plan *) node, &subquerystate->csstate.cstate);
 	ExecAssignProjectionInfo((Plan *) node, &subquerystate->csstate.cstate);
@@ -222,27 +214,23 @@ ExecEndSubqueryScan(SubqueryScan *node)
 {
 	SubqueryScanState *subquerystate;
 
-	/* ----------------
-	 *	get information from node
-	 * ----------------
+	/*
+	 * get information from node
 	 */
 	subquerystate = (SubqueryScanState *) node->scan.scanstate;
 
-	/* ----------------
-	 *	Free the projection info and the scan attribute info
+	/*
+	 * Free the projection info and the scan attribute info
 	 *
-	 *	Note: we don't ExecFreeResultType(subquerystate)
-	 *		  because the rule manager depends on the tupType
-	 *		  returned by ExecMain().  So for now, this
-	 *		  is freed at end-transaction time.  -cim 6/2/91
-	 * ----------------
+	 * Note: we don't ExecFreeResultType(subquerystate) because the rule
+	 * manager depends on the tupType returned by ExecMain().  So for now,
+	 * this is freed at end-transaction time.  -cim 6/2/91
 	 */
 	ExecFreeProjectionInfo(&subquerystate->csstate.cstate);
 	ExecFreeExprContext(&subquerystate->csstate.cstate);
 
-	/* ----------------
+	/*
 	 * close down subquery
-	 * ----------------
 	 */
 	ExecEndNode(node->subplan, node->subplan);
 
@@ -250,9 +238,8 @@ ExecEndSubqueryScan(SubqueryScan *node)
 
 	subquerystate->csstate.css_ScanTupleSlot = NULL;
 
-	/* ----------------
-	 *	clean out the tuple table
-	 * ----------------
+	/*
+	 * clean out the tuple table
 	 */
 	ExecClearTuple(subquerystate->csstate.cstate.cs_ResultTupleSlot);
 }

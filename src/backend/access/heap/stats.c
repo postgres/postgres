@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.23 2001/01/24 19:42:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.24 2001/03/22 06:16:07 momjian Exp $
  *
  * NOTES
  *	  initam should be moved someplace else.
@@ -37,25 +37,22 @@ InitHeapAccessStatistics()
 	MemoryContext oldContext;
 	HeapAccessStatistics stats;
 
-	/* ----------------
-	 *	make sure we don't initialize things twice
-	 * ----------------
+	/*
+	 * make sure we don't initialize things twice
 	 */
 	if (heap_access_stats != NULL)
 		return;
 
-	/* ----------------
-	 *	allocate statistics structure from the top memory context
-	 * ----------------
+	/*
+	 * allocate statistics structure from the top memory context
 	 */
 	oldContext = MemoryContextSwitchTo(TopMemoryContext);
 
 	stats = (HeapAccessStatistics)
 		palloc(sizeof(HeapAccessStatisticsData));
 
-	/* ----------------
-	 *	initialize fields to default values
-	 * ----------------
+	/*
+	 * initialize fields to default values
 	 */
 	stats->global_open = 0;
 	stats->global_openr = 0;
@@ -103,17 +100,15 @@ InitHeapAccessStatistics()
 	stats->local_RelationNameGetRelation = 0;
 	stats->global_RelationNameGetRelation = 0;
 
-	/* ----------------
-	 *	record init times
-	 * ----------------
+	/*
+	 * record init times
 	 */
 	time(&stats->init_global_timestamp);
 	time(&stats->local_reset_timestamp);
 	time(&stats->last_request_timestamp);
 
-	/* ----------------
-	 *	return to old memory context
-	 * ----------------
+	/*
+	 * return to old memory context
 	 */
 	MemoryContextSwitchTo(oldContext);
 
@@ -130,18 +125,16 @@ ResetHeapAccessStatistics()
 {
 	HeapAccessStatistics stats;
 
-	/* ----------------
-	 *	do nothing if stats aren't initialized
-	 * ----------------
+	/*
+	 * do nothing if stats aren't initialized
 	 */
 	if (heap_access_stats == NULL)
 		return;
 
 	stats = heap_access_stats;
 
-	/* ----------------
-	 *	reset local counts
-	 * ----------------
+	/*
+	 * reset local counts
 	 */
 	stats->local_open = 0;
 	stats->local_openr = 0;
@@ -165,9 +158,8 @@ ResetHeapAccessStatistics()
 	stats->local_RelationPutHeapTuple = 0;
 	stats->local_RelationPutLongHeapTuple = 0;
 
-	/* ----------------
-	 *	reset local timestamps
-	 * ----------------
+	/*
+	 * reset local timestamps
 	 */
 	time(&stats->local_reset_timestamp);
 	time(&stats->last_request_timestamp);
@@ -185,22 +177,19 @@ GetHeapAccessStatistics()
 {
 	HeapAccessStatistics stats;
 
-	/* ----------------
-	 *	return nothing if stats aren't initialized
-	 * ----------------
+	/*
+	 * return nothing if stats aren't initialized
 	 */
 	if (heap_access_stats == NULL)
 		return NULL;
 
-	/* ----------------
-	 *	record the current request time
-	 * ----------------
+	/*
+	 * record the current request time
 	 */
 	time(&heap_access_stats->last_request_timestamp);
 
-	/* ----------------
-	 *	allocate a copy of the stats and return it to the caller.
-	 * ----------------
+	/*
+	 * allocate a copy of the stats and return it to the caller.
 	 */
 	stats = (HeapAccessStatistics)
 		palloc(sizeof(HeapAccessStatisticsData));
@@ -222,9 +211,9 @@ GetHeapAccessStatistics()
 void
 PrintHeapAccessStatistics(HeapAccessStatistics stats)
 {
-	/* ----------------
-	 *	return nothing if stats aren't valid
-	 * ----------------
+
+	/*
+	 * return nothing if stats aren't valid
 	 */
 	if (stats == NULL)
 		return;
@@ -342,9 +331,9 @@ PrintAndFreeHeapAccessStatistics(HeapAccessStatistics stats)
 void
 initam(void)
 {
-	/* ----------------
-	 *	initialize heap statistics.
-	 * ----------------
+
+	/*
+	 * initialize heap statistics.
 	 */
 	InitHeapAccessStatistics();
 }

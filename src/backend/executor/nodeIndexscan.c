@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.58 2001/03/22 03:59:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.59 2001/03/22 06:16:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,9 +84,8 @@ IndexNext(IndexScan *node)
 	bool		bBackward;
 	int			indexNumber;
 
-	/* ----------------
-	 *	extract necessary information from index scan node
-	 * ----------------
+	/*
+	 * extract necessary information from index scan node
 	 */
 	estate = node->scan.plan.state;
 	direction = estate->es_direction;
@@ -145,11 +144,10 @@ IndexNext(IndexScan *node)
 
 	tuple = &(indexstate->iss_htup);
 
-	/* ----------------
-	 *	ok, now that we have what we need, fetch an index tuple.
-	 *	if scanning this index succeeded then return the
-	 *	appropriate heap tuple.. else return NULL.
-	 * ----------------
+	/*
+	 * ok, now that we have what we need, fetch an index tuple. if
+	 * scanning this index succeeded then return the appropriate heap
+	 * tuple.. else return NULL.
 	 */
 	bBackward = ScanDirectionIsBackward(direction);
 	if (bBackward)
@@ -238,10 +236,10 @@ IndexNext(IndexScan *node)
 				indexstate->iss_IndexPtr++;
 		}
 	}
-	/* ----------------
-	 *	if we get here it means the index scan failed so we
-	 *	are at the end of the scan..
-	 * ----------------
+
+	/*
+	 * if we get here it means the index scan failed so we are at the end
+	 * of the scan..
 	 */
 	return ExecClearTuple(slot);
 }
@@ -272,17 +270,15 @@ ExecIndexScan(IndexScan *node)
 {
 	IndexScanState *indexstate = node->indxstate;
 
-	/* ----------------
-	 *	If we have runtime keys and they've not already been set up,
-	 *	do it now.
-	 * ----------------
+	/*
+	 * If we have runtime keys and they've not already been set up, do it
+	 * now.
 	 */
 	if (indexstate->iss_RuntimeKeyInfo && !indexstate->iss_RuntimeKeysReady)
 		ExecReScan((Plan *) node, NULL, NULL);
 
-	/* ----------------
-	 *	use IndexNext as access method
-	 * ----------------
+	/*
+	 * use IndexNext as access method
 	 */
 	return ExecScan(&node->scan, (ExecScanAccessMtd) IndexNext);
 }
@@ -448,37 +444,32 @@ ExecEndIndexScan(IndexScan *node)
 	indxqual = node->indxqual;
 	runtimeKeyInfo = indexstate->iss_RuntimeKeyInfo;
 
-	/* ----------------
-	 *	extract information from the node
-	 * ----------------
+	/*
+	 * extract information from the node
 	 */
 	numIndices = indexstate->iss_NumIndices;
 	scanKeys = indexstate->iss_ScanKeys;
 	numScanKeys = indexstate->iss_NumScanKeys;
 
-	/* ----------------
-	 *	Free the projection info and the scan attribute info
+	/*
+	 * Free the projection info and the scan attribute info
 	 *
-	 *	Note: we don't ExecFreeResultType(scanstate)
-	 *		  because the rule manager depends on the tupType
-	 *		  returned by ExecMain().  So for now, this
-	 *		  is freed at end-transaction time.  -cim 6/2/91
-	 * ----------------
+	 * Note: we don't ExecFreeResultType(scanstate) because the rule manager
+	 * depends on the tupType returned by ExecMain().  So for now, this is
+	 * freed at end-transaction time.  -cim 6/2/91
 	 */
 	ExecFreeProjectionInfo(&scanstate->cstate);
 	ExecFreeExprContext(&scanstate->cstate);
 	if (indexstate->iss_RuntimeContext)
 		FreeExprContext(indexstate->iss_RuntimeContext);
 
-	/* ----------------
-	 *	close the heap and index relations
-	 * ----------------
+	/*
+	 * close the heap and index relations
 	 */
 	ExecCloseR((Plan *) node);
 
-	/* ----------------
-	 *	free the scan keys used in scanning the indices
-	 * ----------------
+	/*
+	 * free the scan keys used in scanning the indices
 	 */
 	for (i = 0; i < numIndices; i++)
 	{
@@ -498,9 +489,8 @@ ExecEndIndexScan(IndexScan *node)
 		pfree(runtimeKeyInfo);
 	}
 
-	/* ----------------
-	 *	clear out tuple table slots
-	 * ----------------
+	/*
+	 * clear out tuple table slots
 	 */
 	ExecClearTuple(scanstate->cstate.cs_ResultTupleSlot);
 	ExecClearTuple(scanstate->css_ScanTupleSlot);
@@ -605,50 +595,45 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	HeapScanDesc currentScanDesc;
 	ScanDirection direction;
 
-	/* ----------------
-	 *	assign execution state to node
-	 * ----------------
+	/*
+	 * assign execution state to node
 	 */
 	node->scan.plan.state = estate;
 
-	/* --------------------------------
-	 *	Part 1)  initialize scan state
+	/*
+	 * Part 1)	initialize scan state
 	 *
-	 *	create new CommonScanState for node
-	 * --------------------------------
+	 * create new CommonScanState for node
 	 */
 	scanstate = makeNode(CommonScanState);
 	node->scan.scanstate = scanstate;
 
-	/* ----------------
-	 *	Miscellaneous initialization
+	/*
+	 * Miscellaneous initialization
 	 *
-	 *		 +	create expression context for node
-	 * ----------------
+	 * create expression context for node
 	 */
 	ExecAssignExprContext(estate, &scanstate->cstate);
 
 #define INDEXSCAN_NSLOTS 3
-	/* ----------------
-	 *	tuple table initialization
-	 * ----------------
+
+	/*
+	 * tuple table initialization
 	 */
 	ExecInitResultTupleSlot(estate, &scanstate->cstate);
 	ExecInitScanTupleSlot(estate, scanstate);
 
-	/* ----------------
-	 *	initialize projection info.  result type comes from scan desc
-	 *	below..
-	 * ----------------
+	/*
+	 * initialize projection info.	result type comes from scan desc
+	 * below..
 	 */
 	ExecAssignProjectionInfo((Plan *) node, &scanstate->cstate);
 
-	/* --------------------------------
-	  *  Part 2)  initialize index scan state
-	  *
-	  *  create new IndexScanState for node
-	  * --------------------------------
-	  */
+	/*
+	 * Part 2)	initialize index scan state
+	 *
+	 * create new IndexScanState for node
+	 */
 	indexstate = makeNode(IndexScanState);
 	indexstate->iss_NumIndices = 0;
 	indexstate->iss_IndexPtr = -1;
@@ -662,9 +647,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 
 	node->indxstate = indexstate;
 
-	/* ----------------
-	 *	get the index node information
-	 * ----------------
+	/*
+	 * get the index node information
 	 */
 	indxid = node->indxid;
 	numIndices = length(indxid);
@@ -672,27 +656,24 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 
 	CXT1_printf("ExecInitIndexScan: context is %d\n", CurrentMemoryContext);
 
-	/* ----------------
-	 *	scanKeys is used to keep track of the ScanKey's. This is needed
-	 *	because a single scan may use several indices and each index has
-	 *	its own ScanKey.
-	 * ----------------
+	/*
+	 * scanKeys is used to keep track of the ScanKey's. This is needed
+	 * because a single scan may use several indices and each index has
+	 * its own ScanKey.
 	 */
 	numScanKeys = (int *) palloc(numIndices * sizeof(int));
 	scanKeys = (ScanKey *) palloc(numIndices * sizeof(ScanKey));
 	relationDescs = (RelationPtr) palloc(numIndices * sizeof(Relation));
 	scanDescs = (IndexScanDescPtr) palloc(numIndices * sizeof(IndexScanDesc));
 
-	/* ----------------
-	 *	initialize space for runtime key info (may not be needed)
-	 * ----------------
+	/*
+	 * initialize space for runtime key info (may not be needed)
 	 */
 	have_runtime_keys = false;
 	runtimeKeyInfo = (int **) palloc(numIndices * sizeof(int *));
 
-	/* ----------------
-	 *	build the index scan keys from the index qualification
-	 * ----------------
+	/*
+	 * build the index scan keys from the index qualification
 	 */
 	indxqual = node->indxqual;
 	for (i = 0; i < numIndices; i++)
@@ -713,10 +694,9 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 
 		CXT1_printf("ExecInitIndexScan: context is %d\n", CurrentMemoryContext);
 
-		/* ----------------
-		 *	for each opclause in the given qual,
-		 *	convert each qual's opclause into a single scan key
-		 * ----------------
+		/*
+		 * for each opclause in the given qual, convert each qual's
+		 * opclause into a single scan key
 		 */
 		for (j = 0; j < n_keys; j++)
 		{
@@ -731,9 +711,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 			Oid			opid;	/* operator id used in scan */
 			Datum		scanvalue = 0;	/* value used in scan (if const) */
 
-			/* ----------------
-			 *	extract clause information from the qualification
-			 * ----------------
+			/*
+			 * extract clause information from the qualification
 			 */
 			clause = nth(j, qual);
 
@@ -743,48 +722,46 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 
 			opid = op->opid;
 
-			/* ----------------
-			 *	Here we figure out the contents of the index qual.
-			 *	The usual case is (var op const) or (const op var)
-			 *	which means we form a scan key for the attribute
-			 *	listed in the var node and use the value of the const.
+			/*
+			 * Here we figure out the contents of the index qual. The
+			 * usual case is (var op const) or (const op var) which means
+			 * we form a scan key for the attribute listed in the var node
+			 * and use the value of the const.
 			 *
-			 *	If we don't have a const node, then it means that
-			 *	one of the var nodes refers to the "scan" tuple and
-			 *	is used to determine which attribute to scan, and the
-			 *	other expression is used to calculate the value used in
-			 *	scanning the index.
+			 * If we don't have a const node, then it means that one of the
+			 * var nodes refers to the "scan" tuple and is used to
+			 * determine which attribute to scan, and the other expression
+			 * is used to calculate the value used in scanning the index.
 			 *
-			 *	This means our index scan's scan key is a function of
-			 *	information obtained during the execution of the plan
-			 *	in which case we need to recalculate the index scan key
-			 *	at run time.
+			 * This means our index scan's scan key is a function of
+			 * information obtained during the execution of the plan in
+			 * which case we need to recalculate the index scan key at run
+			 * time.
 			 *
-			 *	Hence, we set have_runtime_keys to true and then set
-			 *	the appropriate flag in run_keys to LEFT_OP or RIGHT_OP.
-			 *	The corresponding scan keys are recomputed at run time.
+			 * Hence, we set have_runtime_keys to true and then set the
+			 * appropriate flag in run_keys to LEFT_OP or RIGHT_OP. The
+			 * corresponding scan keys are recomputed at run time.
 			 *
-			 *	XXX Although this code *thinks* it can handle an indexqual
-			 *	with the indexkey on either side, in fact it cannot.
-			 *	Indexscans only work with quals that have the indexkey on
-			 *	the left (the planner/optimizer makes sure it never passes
-			 *	anything else).  The reason: the scankey machinery has no
-			 *	provision for distinguishing which side of the operator is
-			 *	the indexed attribute and which is the compared-to constant.
-			 *	It just assumes that the attribute is on the left :-(
+			 * XXX Although this code *thinks* it can handle an indexqual
+			 * with the indexkey on either side, in fact it cannot.
+			 * Indexscans only work with quals that have the indexkey on
+			 * the left (the planner/optimizer makes sure it never passes
+			 * anything else).	The reason: the scankey machinery has no
+			 * provision for distinguishing which side of the operator is
+			 * the indexed attribute and which is the compared-to
+			 * constant. It just assumes that the attribute is on the left
+			 * :-(
 			 *
-			 *	I am leaving this code able to support both ways, even though
-			 *	half of it is dead code, on the off chance that someone will
-			 *	fix the scankey machinery someday --- tgl 8/11/99.
-			 * ----------------
+			 * I am leaving this code able to support both ways, even though
+			 * half of it is dead code, on the off chance that someone
+			 * will fix the scankey machinery someday --- tgl 8/11/99.
 			 */
 
 			scanvar = NO_OP;
 			run_keys[j] = NO_OP;
 
-			/* ----------------
-			 *	determine information in leftop
-			 * ----------------
+			/*
+			 * determine information in leftop
 			 */
 			leftop = (Node *) get_leftop(clause);
 
@@ -795,21 +772,21 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 
 			if (IsA(leftop, Var) &&var_is_rel((Var *) leftop))
 			{
-				/* ----------------
-				 *	if the leftop is a "rel-var", then it means
-				 *	that it is a var node which tells us which
-				 *	attribute to use for our scan key.
-				 * ----------------
+
+				/*
+				 * if the leftop is a "rel-var", then it means that it is
+				 * a var node which tells us which attribute to use for
+				 * our scan key.
 				 */
 				varattno = ((Var *) leftop)->varattno;
 				scanvar = LEFT_OP;
 			}
 			else if (IsA(leftop, Const))
 			{
-				/* ----------------
-				 *	if the leftop is a const node then it means
-				 *	it identifies the value to place in our scan key.
-				 * ----------------
+
+				/*
+				 * if the leftop is a const node then it means it
+				 * identifies the value to place in our scan key.
 				 */
 				scanvalue = ((Const *) leftop)->constvalue;
 				if (((Const *) leftop)->constisnull)
@@ -819,10 +796,9 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 			{
 				bool		isnull;
 
-				/* ----------------
-				 *	if the leftop is a Param node then it means
-				 *	it identifies the value to place in our scan key.
-				 * ----------------
+				/*
+				 * if the leftop is a Param node then it means it
+				 * identifies the value to place in our scan key.
 				 */
 
 				/* Life was so easy before ... subselects */
@@ -844,19 +820,18 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 			}
 			else
 			{
-				/* ----------------
-				 *	otherwise, the leftop contains an expression evaluable
-				 *	at runtime to figure out the value to place in our
-				 *	scan key.
-				 * ----------------
+
+				/*
+				 * otherwise, the leftop contains an expression evaluable
+				 * at runtime to figure out the value to place in our scan
+				 * key.
 				 */
 				have_runtime_keys = true;
 				run_keys[j] = LEFT_OP;
 			}
 
-			/* ----------------
-			 *	now determine information in rightop
-			 * ----------------
+			/*
+			 * now determine information in rightop
 			 */
 			rightop = (Node *) get_rightop(clause);
 
@@ -867,30 +842,29 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 
 			if (IsA(rightop, Var) &&var_is_rel((Var *) rightop))
 			{
-				/* ----------------
-				 *	here we make sure only one op identifies the
-				 *	scan-attribute...
-				 * ----------------
+
+				/*
+				 * here we make sure only one op identifies the
+				 * scan-attribute...
 				 */
 				if (scanvar == LEFT_OP)
 					elog(ERROR, "ExecInitIndexScan: %s",
 						 "both left and right op's are rel-vars");
 
-				/* ----------------
-				 *	if the rightop is a "rel-var", then it means
-				 *	that it is a var node which tells us which
-				 *	attribute to use for our scan key.
-				 * ----------------
+				/*
+				 * if the rightop is a "rel-var", then it means that it is
+				 * a var node which tells us which attribute to use for
+				 * our scan key.
 				 */
 				varattno = ((Var *) rightop)->varattno;
 				scanvar = RIGHT_OP;
 			}
 			else if (IsA(rightop, Const))
 			{
-				/* ----------------
-				 *	if the rightop is a const node then it means
-				 *	it identifies the value to place in our scan key.
-				 * ----------------
+
+				/*
+				 * if the rightop is a const node then it means it
+				 * identifies the value to place in our scan key.
 				 */
 				scanvalue = ((Const *) rightop)->constvalue;
 				if (((Const *) rightop)->constisnull)
@@ -900,10 +874,9 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 			{
 				bool		isnull;
 
-				/* ----------------
-				 *	if the rightop is a Param node then it means
-				 *	it identifies the value to place in our scan key.
-				 * ----------------
+				/*
+				 * if the rightop is a Param node then it means it
+				 * identifies the value to place in our scan key.
 				 */
 
 				/* Life was so easy before ... subselects */
@@ -925,28 +898,26 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 			}
 			else
 			{
-				/* ----------------
-				 *	otherwise, the rightop contains an expression evaluable
-				 *	at runtime to figure out the value to place in our
-				 *	scan key.
-				 * ----------------
+
+				/*
+				 * otherwise, the rightop contains an expression evaluable
+				 * at runtime to figure out the value to place in our scan
+				 * key.
 				 */
 				have_runtime_keys = true;
 				run_keys[j] = RIGHT_OP;
 			}
 
-			/* ----------------
-			 *	now check that at least one op tells us the scan
-			 *	attribute...
-			 * ----------------
+			/*
+			 * now check that at least one op tells us the scan
+			 * attribute...
 			 */
 			if (scanvar == NO_OP)
 				elog(ERROR, "ExecInitIndexScan: %s",
 					 "neither leftop nor rightop refer to scan relation");
 
-			/* ----------------
-			 *	initialize the scan key's fields appropriately
-			 * ----------------
+			/*
+			 * initialize the scan key's fields appropriately
 			 */
 			ScanKeyEntryInitialize(&scan_keys[j],
 								   flags,
@@ -956,9 +927,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 								   scanvalue);	/* constant */
 		}
 
-		/* ----------------
-		 *	store the key information into our arrays.
-		 * ----------------
+		/*
+		 * store the key information into our arrays.
 		 */
 		numScanKeys[i] = n_keys;
 		scanKeys[i] = scan_keys;
@@ -972,20 +942,17 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	indexstate->iss_ScanKeys = scanKeys;
 	indexstate->iss_NumScanKeys = numScanKeys;
 
-	/* ----------------
-	 *	If all of our keys have the form (op var const) , then we have no
-	 *	runtime keys so we store NULL in the runtime key info.
-	 *	Otherwise runtime key info contains an array of pointers
-	 *	(one for each index) to arrays of flags (one for each key)
-	 *	which indicate that the qual needs to be evaluated at runtime.
-	 *	-cim 10/24/89
+	/*
+	 * If all of our keys have the form (op var const) , then we have no
+	 * runtime keys so we store NULL in the runtime key info. Otherwise
+	 * runtime key info contains an array of pointers (one for each index)
+	 * to arrays of flags (one for each key) which indicate that the qual
+	 * needs to be evaluated at runtime. -cim 10/24/89
 	 *
-	 *	If we do have runtime keys, we need an ExprContext to evaluate them;
-	 *	the node's standard context won't do because we want to reset that
-	 *	context for every tuple.  So, build another context just like the
-	 *	other one...
-	 *	-tgl 7/11/00
-	 * ----------------
+	 * If we do have runtime keys, we need an ExprContext to evaluate them;
+	 * the node's standard context won't do because we want to reset that
+	 * context for every tuple.  So, build another context just like the
+	 * other one... -tgl 7/11/00
 	 */
 	if (have_runtime_keys)
 	{
@@ -1009,18 +976,15 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 		pfree(runtimeKeyInfo);
 	}
 
-	/* ----------------
-	 *	get the range table and direction information
-	 *	from the execution state (these are needed to
-	 *	open the relations).
-	 * ----------------
+	/*
+	 * get the range table and direction information from the execution
+	 * state (these are needed to open the relations).
 	 */
 	rangeTable = estate->es_range_table;
 	direction = estate->es_direction;
 
-	/* ----------------
-	 *	open the base relation
-	 * ----------------
+	/*
+	 * open the base relation
 	 */
 	relid = node->scan.scanrelid;
 	rtentry = rt_fetch(relid, rangeTable);
@@ -1040,17 +1004,15 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	scanstate->css_currentRelation = currentRelation;
 	scanstate->css_currentScanDesc = currentScanDesc;
 
-	/* ----------------
-	 *	get the scan type from the relation descriptor.
-	 * ----------------
+	/*
+	 * get the scan type from the relation descriptor.
 	 */
 	ExecAssignScanType(scanstate, RelationGetDescr(currentRelation), false);
 	ExecAssignResultTypeFromTL((Plan *) node, &scanstate->cstate);
 
-	/* ----------------
-	 *	open the index relations and initialize
-	 *	relation and scan descriptors.
-	 * ----------------
+	/*
+	 * open the index relations and initialize relation and scan
+	 * descriptors.
 	 */
 	for (i = 0; i < numIndices; i++)
 	{
@@ -1073,9 +1035,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	indexstate->iss_RelationDescs = relationDescs;
 	indexstate->iss_ScanDescs = scanDescs;
 
-	/* ----------------
-	 *	all done.
-	 * ----------------
+	/*
+	 * all done.
 	 */
 	return TRUE;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.213 2001/03/22 03:59:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.214 2001/03/22 06:16:17 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -157,9 +157,8 @@ InteractiveBackend(StringInfo inBuf)
 	bool		end = false;	/* end-of-input flag */
 	bool		backslashSeen = false;	/* have we seen a \ ? */
 
-	/* ----------------
-	 *	display a prompt and obtain input from the user
-	 * ----------------
+	/*
+	 * display a prompt and obtain input from the user
 	 */
 	printf("backend> ");
 	fflush(stdout);
@@ -172,10 +171,10 @@ InteractiveBackend(StringInfo inBuf)
 	{
 		if (UseNewLine)
 		{
-			/* ----------------
-			 *	if we are using \n as a delimiter, then read
-			 *	characters until the \n.
-			 * ----------------
+
+			/*
+			 * if we are using \n as a delimiter, then read characters
+			 * until the \n.
 			 */
 			while ((c = getc(stdin)) != EOF)
 			{
@@ -208,9 +207,9 @@ InteractiveBackend(StringInfo inBuf)
 		}
 		else
 		{
-			/* ----------------
-			 *	otherwise read characters until EOF.
-			 * ----------------
+
+			/*
+			 * otherwise read characters until EOF.
 			 */
 			while ((c = getc(stdin)) != EOF)
 				appendStringInfoChar(inBuf, (char) c);
@@ -222,16 +221,14 @@ InteractiveBackend(StringInfo inBuf)
 		if (end)
 			return EOF;
 
-		/* ----------------
-		 *	otherwise we have a user query so process it.
-		 * ----------------
+		/*
+		 * otherwise we have a user query so process it.
 		 */
 		break;
 	}
 
-	/* ----------------
-	 *	if the query echo flag was given, print the query..
-	 * ----------------
+	/*
+	 * if the query echo flag was given, print the query..
 	 */
 	if (EchoQuery)
 		printf("query: %s\n", inBuf->data);
@@ -260,9 +257,8 @@ SocketBackend(StringInfo inBuf)
 	char		qtype;
 	char		result = '\0';
 
-	/* ----------------
-	 *	get input from the frontend
-	 * ----------------
+	/*
+	 * get input from the frontend
 	 */
 	qtype = '?';
 	if (pq_getbytes(&qtype, 1) == EOF)
@@ -270,9 +266,9 @@ SocketBackend(StringInfo inBuf)
 
 	switch (qtype)
 	{
-			/* ----------------
-			 *	'Q': user entered a query
-			 * ----------------
+
+			/*
+			 * 'Q': user entered a query
 			 */
 		case 'Q':
 			if (pq_getstr(inBuf))
@@ -280,9 +276,8 @@ SocketBackend(StringInfo inBuf)
 			result = 'Q';
 			break;
 
-			/* ----------------
-			 *	'F':  calling user/system functions
-			 * ----------------
+			/*
+			 * 'F':  calling user/system functions
 			 */
 		case 'F':
 			if (pq_getstr(inBuf))
@@ -290,20 +285,18 @@ SocketBackend(StringInfo inBuf)
 			result = 'F';
 			break;
 
-			/* ----------------
-			 *	'X':  frontend is exiting
-			 * ----------------
+			/*
+			 * 'X':  frontend is exiting
 			 */
 		case 'X':
 			result = 'X';
 			break;
 
-			/* ----------------
-			 *	otherwise we got garbage from the frontend.
+			/*
+			 * otherwise we got garbage from the frontend.
 			 *
-			 *	XXX are we certain that we want to do an elog(FATAL) here?
-			 *		-cim 1/24/90
-			 * ----------------
+			 * XXX are we certain that we want to do an elog(FATAL) here?
+			 * -cim 1/24/90
 			 */
 		default:
 			elog(FATAL, "Socket command type %c unknown", qtype);
@@ -350,15 +343,13 @@ pg_parse_and_rewrite(char *query_string,		/* string to execute */
 	List	   *querytree_list;
 	List	   *list_item;
 
-	/* ----------------
-	 *	(1) parse the request string into a list of raw parse trees.
-	 * ----------------
+	/*
+	 * (1) parse the request string into a list of raw parse trees.
 	 */
 	raw_parsetree_list = pg_parse_query(query_string, typev, nargs);
 
-	/* ----------------
-	 *	(2) Do parse analysis and rule rewrite.
-	 * ----------------
+	/*
+	 * (2) Do parse analysis and rule rewrite.
 	 */
 	querytree_list = NIL;
 	foreach(list_item, raw_parsetree_list)
@@ -424,9 +415,8 @@ pg_analyze_and_rewrite(Node *parsetree)
 	Query	   *querytree;
 	List	   *new_list;
 
-	/* ----------------
-	 *	(1) Perform parse analysis.
-	 * ----------------
+	/*
+	 * (1) Perform parse analysis.
 	 */
 	if (Show_parser_stats)
 		ResetUsage();
@@ -440,12 +430,11 @@ pg_analyze_and_rewrite(Node *parsetree)
 		ResetUsage();
 	}
 
-	/* ----------------
-	 *	(2) Rewrite the queries, as necessary
+	/*
+	 * (2) Rewrite the queries, as necessary
 	 *
-	 *	rewritten queries are collected in new_list.  Note there may be
-	 *	more or fewer than in the original list.
-	 * ----------------
+	 * rewritten queries are collected in new_list.  Note there may be more
+	 * or fewer than in the original list.
 	 */
 	new_list = NIL;
 	foreach(list_item, querytree_list)
@@ -567,9 +556,8 @@ pg_plan_query(Query *querytree)
 	}
 #endif
 
-	/* ----------------
-	 *	Print plan if debugging.
-	 * ----------------
+	/*
+	 * Print plan if debugging.
 	 */
 	if (Debug_print_plan)
 	{
@@ -704,10 +692,10 @@ pg_exec_query_string(char *query_string,		/* string to execute */
 
 			if (!allowit)
 			{
-				/* ----------------
-				 *	 the EndCommand() stuff is to tell the frontend
-				 *	 that the command ended. -cim 6/1/90
-				 * ----------------
+
+				/*
+				 * the EndCommand() stuff is to tell the frontend that the
+				 * command ended. -cim 6/1/90
 				 */
 				char	   *tag = "*ABORT STATE*";
 
@@ -773,9 +761,9 @@ pg_exec_query_string(char *query_string,		/* string to execute */
 
 			if (querytree->commandType == CMD_UTILITY)
 			{
-				/* ----------------
-				 *	 process utility functions (create, destroy, etc..)
-				 * ----------------
+
+				/*
+				 * process utility functions (create, destroy, etc..)
 				 */
 				if (Debug_print_query)
 					elog(DEBUG, "ProcessUtility: %s", query_string);
@@ -786,9 +774,9 @@ pg_exec_query_string(char *query_string,		/* string to execute */
 			}
 			else
 			{
-				/* ----------------
-				 *	 process a plannable query.
-				 * ----------------
+
+				/*
+				 * process a plannable query.
 				 */
 				Plan	   *plan;
 
@@ -1201,18 +1189,18 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				break;
 
 			case 'B':
-				/* ----------------
-				 *	specify the size of buffer pool
-				 * ----------------
+
+				/*
+				 * specify the size of buffer pool
 				 */
 				if (secure)
 					NBuffers = atoi(optarg);
 				break;
 
 			case 'C':
-				/* ----------------
-				 *	don't print version string
-				 * ----------------
+
+				/*
+				 * don't print version string
 				 */
 				Noversion = true;
 				break;
@@ -1237,34 +1225,34 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				break;
 
 			case 'E':
-				/* ----------------
-				 *	E - echo the query the user entered
-				 * ----------------
+
+				/*
+				 * E - echo the query the user entered
 				 */
 				EchoQuery = true;
 				break;
 
 			case 'e':
-				/* --------------------------
+
+				/*
 				 * Use european date formats.
-				 * --------------------------
 				 */
 				EuroDates = true;
 				break;
 
 			case 'F':
-				/* --------------------
-				 *	turn off fsync
-				 * --------------------
+
+				/*
+				 * turn off fsync
 				 */
 				if (secure)
 					enableFsync = false;
 				break;
 
 			case 'f':
-				/* -----------------
-				 *	  f - forbid generation of certain plans
-				 * -----------------
+
+				/*
+				 * f - forbid generation of certain plans
 				 */
 				switch (optarg[0])
 				{
@@ -1296,54 +1284,54 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				break;
 
 			case 'L':
-				/* --------------------
-				 *	turn off locking
-				 * --------------------
+
+				/*
+				 * turn off locking
 				 */
 				if (secure)
 					lockingOff = 1;
 				break;
 
 			case 'N':
-				/* ----------------
-				 *	N - Don't use newline as a query delimiter
-				 * ----------------
+
+				/*
+				 * N - Don't use newline as a query delimiter
 				 */
 				UseNewLine = 0;
 				break;
 
 			case 'O':
-				/* --------------------
-				 *	allow system table structure modifications
-				 * --------------------
+
+				/*
+				 * allow system table structure modifications
 				 */
 				if (secure)		/* XXX safe to allow from client??? */
 					allowSystemTableMods = true;
 				break;
 
 			case 'P':
-				/* --------------------
-				 *	ignore system indexes
-				 * --------------------
+
+				/*
+				 * ignore system indexes
 				 */
 				if (secure)		/* XXX safe to allow from client??? */
 					IgnoreSystemIndexes(true);
 				break;
 
 			case 'o':
-				/* ----------------
-				 *	o - send output (stdout and stderr) to the given file
-				 * ----------------
+
+				/*
+				 * o - send output (stdout and stderr) to the given file
 				 */
 				if (secure)
 					StrNCpy(OutputFileName, optarg, MAXPGPATH);
 				break;
 
 			case 'p':
-				/* ----------------
-				 *	p - special flag passed if backend was forked
-				 *		by a postmaster.
-				 * ----------------
+
+				/*
+				 * p - special flag passed if backend was forked by a
+				 * postmaster.
 				 */
 				if (secure)
 				{
@@ -1354,9 +1342,9 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				break;
 
 			case 'S':
-				/* ----------------
-				 *	S - amount of sort memory to use in 1k bytes
-				 * ----------------
+
+				/*
+				 * S - amount of sort memory to use in 1k bytes
 				 */
 				{
 					int			S;
@@ -1368,15 +1356,15 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				break;
 
 			case 's':
-				/* ----------------
-				 *	  s - report usage statistics (timings) after each query
-				 * ----------------
+
+				/*
+				 * s - report usage statistics (timings) after each query
 				 */
 				Show_query_stats = 1;
 				break;
 
 			case 't':
-				/* ----------------
+				/* ---------------
 				 *	tell postgres to report usage statistics (timings) for
 				 *	each query
 				 *
@@ -1411,9 +1399,9 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				break;
 
 			case 'W':
-				/* ----------------
-				 *	wait N seconds to allow attach from a debugger
-				 * ----------------
+
+				/*
+				 * wait N seconds to allow attach from a debugger
 				 */
 				sleep(atoi(optarg));
 				break;
@@ -1715,7 +1703,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.213 $ $Date: 2001/03/22 03:59:47 $\n");
+		puts("$Revision: 1.214 $ $Date: 2001/03/22 06:16:17 $\n");
 	}
 
 	/*
@@ -1810,11 +1798,10 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 
 		parser_input = makeStringInfo();
 
-		/* ----------------
-		 *	 (1) tell the frontend we're ready for a new query.
+		/*
+		 * (1) tell the frontend we're ready for a new query.
 		 *
-		 *	 Note: this includes fflush()'ing the last of the prior output.
-		 * ----------------
+		 * Note: this includes fflush()'ing the last of the prior output.
 		 */
 		ReadyForQuery(whereToSendOutput);
 
@@ -1823,11 +1810,10 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		else
 			set_ps_display("idle");
 
-		/* ----------------
-		 *	 (2) deal with pending asynchronous NOTIFY from other backends,
-		 *	 and enable async.c's signal handler to execute NOTIFY directly.
-		 *	 Then set up other stuff needed before blocking for input.
-		 * ----------------
+		/*
+		 * (2) deal with pending asynchronous NOTIFY from other backends,
+		 * and enable async.c's signal handler to execute NOTIFY directly.
+		 * Then set up other stuff needed before blocking for input.
 		 */
 		QueryCancelPending = false;		/* forget any earlier CANCEL
 										 * signal */
@@ -1840,25 +1826,22 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		QueryCancelPending = false;
 		CHECK_FOR_INTERRUPTS();
 
-		/* ----------------
-		 *	 (3) read a command (loop blocks here)
-		 * ----------------
+		/*
+		 * (3) read a command (loop blocks here)
 		 */
 		firstchar = ReadCommand(parser_input);
 
-		/* ----------------
-		 *	 (4) disable async signal conditions again.
-		 * ----------------
+		/*
+		 * (4) disable async signal conditions again.
 		 */
 		ImmediateInterruptOK = false;
 		QueryCancelPending = false;		/* forget any CANCEL signal */
 
 		DisableNotifyInterrupt();
 
-		/* ----------------
-		 *	 (5) check for any other interesting events that happened
-		 *		 while we slept.
-		 * ----------------
+		/*
+		 * (5) check for any other interesting events that happened while
+		 * we slept.
 		 */
 		if (got_SIGHUP)
 		{
@@ -1866,15 +1849,14 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 			ProcessConfigFile(PGC_SIGHUP);
 		}
 
-		/* ----------------
-		 *	 (6) process the command.
-		 * ----------------
+		/*
+		 * (6) process the command.
 		 */
 		switch (firstchar)
 		{
-				/* ----------------
-				 *	'F' indicates a fastpath call.
-				 * ----------------
+
+				/*
+				 * 'F' indicates a fastpath call.
 				 */
 			case 'F':
 				/* start an xact for this function invocation */
@@ -1890,30 +1872,29 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				finish_xact_command();
 				break;
 
-				/* ----------------
-				 *	'Q' indicates a user query
-				 * ----------------
+				/*
+				 * 'Q' indicates a user query
 				 */
 			case 'Q':
 				if (strspn(parser_input->data, " \t\r\n") == parser_input->len)
 				{
-					/* ----------------
-					 *	if there is nothing in the input buffer, don't bother
-					 *	trying to parse and execute anything; just send
-					 *	back a quick NullCommand response.
-					 * ----------------
+
+					/*
+					 * if there is nothing in the input buffer, don't
+					 * bother trying to parse and execute anything; just
+					 * send back a quick NullCommand response.
 					 */
 					if (IsUnderPostmaster)
 						NullCommand(Remote);
 				}
 				else
 				{
-					/* ----------------
-					 *	otherwise, process the input string.
+
+					/*
+					 * otherwise, process the input string.
 					 *
-					 * Note: transaction command start/end is now done
-					 * within pg_exec_query_string(), not here.
-					 * ----------------
+					 * Note: transaction command start/end is now done within
+					 * pg_exec_query_string(), not here.
 					 */
 					if (Show_query_stats)
 						ResetUsage();

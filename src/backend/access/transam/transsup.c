@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.29 2001/03/22 03:59:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.30 2001/03/22 06:16:10 momjian Exp $
  *
  * NOTES
  *	  This file contains support functions for the high
@@ -56,11 +56,9 @@ TransComputeBlockNumber(Relation relation,		/* relation to test */
 {
 	long		itemsPerBlock = 0;
 
-	/* ----------------
-	 *	we calculate the block number of our transaction
-	 *	by dividing the transaction id by the number of
-	 *	transaction things per block.
-	 * ----------------
+	/*
+	 * we calculate the block number of our transaction by dividing the
+	 * transaction id by the number of transaction things per block.
 	 */
 	if (relation == LogRelation)
 		itemsPerBlock = TP_NumXidStatusPerBlock;
@@ -109,18 +107,16 @@ TransBlockGetLastTransactionIdStatus(Block tblock,
 	BitIndex	offset;
 	XidStatus	xstatus;
 
-	/* ----------------
-	 *	sanity check
-	 * ----------------
+	/*
+	 * sanity check
 	 */
 	Assert((tblock != NULL));
 
-	/* ----------------
-	 *	search downward from the top of the block data, looking
-	 *	for the first Non-in progress transaction status.  Since we
-	 *	are scanning backward, this will be last recorded transaction
-	 *	status on the block.
-	 * ----------------
+	/*
+	 * search downward from the top of the block data, looking for the
+	 * first Non-in progress transaction status.  Since we are scanning
+	 * backward, this will be last recorded transaction status on the
+	 * block.
 	 */
 	maxIndex = TP_NumXidStatusPerBlock;
 	for (index = maxIndex; index > 0; index--)
@@ -131,11 +127,10 @@ TransBlockGetLastTransactionIdStatus(Block tblock,
 
 		xstatus = (bit1 | bit2);
 
-		/* ----------------
-		 *	here we have the status of some transaction, so test
-		 *	if the status is recorded as "in progress".  If so, then
-		 *	we save the transaction id in the place specified by the caller.
-		 * ----------------
+		/*
+		 * here we have the status of some transaction, so test if the
+		 * status is recorded as "in progress".  If so, then we save the
+		 * transaction id in the place specified by the caller.
 		 */
 		if (xstatus != XID_INPROGRESS)
 		{
@@ -148,12 +143,11 @@ TransBlockGetLastTransactionIdStatus(Block tblock,
 		}
 	}
 
-	/* ----------------
-	 *	if we get here and index is 0 it means we couldn't find
-	 *	a non-inprogress transaction on the block.	For now we just
-	 *	return this info to the user.  They can check if the return
-	 *	status is "in progress" to know this condition has arisen.
-	 * ----------------
+	/*
+	 * if we get here and index is 0 it means we couldn't find a
+	 * non-inprogress transaction on the block.  For now we just return
+	 * this info to the user.  They can check if the return status is "in
+	 * progress" to know this condition has arisen.
 	 */
 	if (index == 0)
 	{
@@ -161,9 +155,8 @@ TransBlockGetLastTransactionIdStatus(Block tblock,
 			TransactionIdStore(baseXid, returnXidP);
 	}
 
-	/* ----------------
-	 *	return the status to the user
-	 * ----------------
+	/*
+	 * return the status to the user
 	 */
 	return xstatus;
 }
@@ -200,17 +193,15 @@ TransBlockGetXidStatus(Block tblock,
 	 */
 	index = transactionId % TP_NumXidStatusPerBlock;
 
-	/* ----------------
-	 *	get the data at the specified index
-	 * ----------------
+	/*
+	 * get the data at the specified index
 	 */
 	offset = BitIndexOf(index);
 	bit1 = ((bits8) BitArrayBitIsSet((BitArray) tblock, offset++)) << 1;
 	bit2 = (bits8) BitArrayBitIsSet((BitArray) tblock, offset);
 
-	/* ----------------
-	 *	return the transaction status to the caller
-	 * ----------------
+	/*
+	 * return the transaction status to the caller
 	 */
 	return (XidStatus) (bit1 | bit2);
 }
@@ -245,9 +236,8 @@ TransBlockSetXidStatus(Block tblock,
 
 	offset = BitIndexOf(index);
 
-	/* ----------------
-	 *	store the transaction value at the specified offset
-	 * ----------------
+	/*
+	 * store the transaction value at the specified offset
 	 */
 	switch (xstatus)
 	{
@@ -291,18 +281,16 @@ TransBlockNumberGetXidStatus(Relation relation,
 	XidStatus	xstatus;		/* recorded status of xid */
 	bool		localfail;		/* bool used if failP = NULL */
 
-	/* ----------------
-	 *	get the page containing the transaction information
-	 * ----------------
+	/*
+	 * get the page containing the transaction information
 	 */
 	buffer = ReadBuffer(relation, blockNumber);
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 	block = BufferGetBlock(buffer);
 
-	/* ----------------
-	 *	get the status from the block.	note, for now we always
-	 *	return false in failP.
-	 * ----------------
+	/*
+	 * get the status from the block.  note, for now we always return
+	 * false in failP.
 	 */
 	if (failP == NULL)
 		failP = &localfail;
@@ -310,9 +298,8 @@ TransBlockNumberGetXidStatus(Relation relation,
 
 	xstatus = TransBlockGetXidStatus(block, xid);
 
-	/* ----------------
-	 *	release the buffer and return the status
-	 * ----------------
+	/*
+	 * release the buffer and return the status
 	 */
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	ReleaseBuffer(buffer);
@@ -335,19 +322,17 @@ TransBlockNumberSetXidStatus(Relation relation,
 	Block		block;			/* block containing xstatus */
 	bool		localfail;		/* bool used if failP = NULL */
 
-	/* ----------------
-	 *	get the block containing the transaction status
-	 * ----------------
+	/*
+	 * get the block containing the transaction status
 	 */
 	buffer = ReadBuffer(relation, blockNumber);
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 	block = BufferGetBlock(buffer);
 
-	/* ----------------
-	 *	attempt to update the status of the transaction on the block.
-	 *	if we are successful, write the block. otherwise release the buffer.
-	 *	note, for now we always return false in failP.
-	 * ----------------
+	/*
+	 * attempt to update the status of the transaction on the block. if we
+	 * are successful, write the block. otherwise release the buffer.
+	 * note, for now we always return false in failP.
 	 */
 	if (failP == NULL)
 		failP = &localfail;
@@ -381,22 +366,20 @@ TransGetLastRecordedTransaction(Relation relation,
 
 	(*failP) = false;
 
-	/* ----------------
-	 *	SOMEDAY gain exclusive access to the log relation
+	/*
+	 * SOMEDAY gain exclusive access to the log relation
 	 *
-	 *	That someday is today 5 Aug. 1991 -mer
-	 *	It looks to me like we only need to set a read lock here, despite
-	 *	the above comment about exclusive access.  The block is never
-	 *	actually written into, we only check status bits.
-	 * ----------------
+	 * That someday is today 5 Aug. 1991 -mer It looks to me like we only
+	 * need to set a read lock here, despite the above comment about
+	 * exclusive access.  The block is never actually written into, we
+	 * only check status bits.
 	 */
 	RelationSetLockForRead(relation);
 
-	/* ----------------
-	 *	we assume the last block of the log contains the last
-	 *	recorded transaction.  If the relation is empty we return
-	 *	failure to the user.
-	 * ----------------
+	/*
+	 * we assume the last block of the log contains the last recorded
+	 * transaction.  If the relation is empty we return failure to the
+	 * user.
 	 */
 	n = RelationGetNumberOfBlocks(relation);
 	if (n == 0)
@@ -405,17 +388,15 @@ TransGetLastRecordedTransaction(Relation relation,
 		return;
 	}
 
-	/* ----------------
-	 *	get the block containing the transaction information
-	 * ----------------
+	/*
+	 * get the block containing the transaction information
 	 */
 	blockNumber = n - 1;
 	buffer = ReadBuffer(relation, blockNumber);
 	block = BufferGetBlock(buffer);
 
-	/* ----------------
-	 *	get the last xid on the block
-	 * ----------------
+	/*
+	 * get the last xid on the block
 	 */
 	baseXid = blockNumber * TP_NumXidStatusPerBlock;
 
@@ -424,9 +405,8 @@ TransGetLastRecordedTransaction(Relation relation,
 
 	ReleaseBuffer(buffer);
 
-	/* ----------------
-	 *	SOMEDAY release our lock on the log relation
-	 * ----------------
+	/*
+	 * SOMEDAY release our lock on the log relation
 	 */
 	RelationUnsetLockForRead(relation);
 }

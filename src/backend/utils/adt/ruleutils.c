@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.74 2001/03/22 03:59:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.75 2001/03/22 06:16:18 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -163,24 +163,21 @@ pg_get_ruledef(PG_FUNCTION_ARGS)
 	StringInfoData buf;
 	int			len;
 
-	/* ----------
+	/*
 	 * We need the rules name somewhere deep down: rulename is global
-	 * ----------
 	 */
 	rulename = pstrdup(NameStr(*rname));
 
-	/* ----------
+	/*
 	 * Connect to SPI manager
-	 * ----------
 	 */
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "get_ruledef: cannot connect to SPI manager");
 
-	/* ----------
-	 * On the first call prepare the plan to lookup pg_proc.
-	 * We read pg_proc over the SPI manager instead of using
-	 * the syscache to be checked for read access on pg_proc.
-	 * ----------
+	/*
+	 * On the first call prepare the plan to lookup pg_proc. We read
+	 * pg_proc over the SPI manager instead of using the syscache to be
+	 * checked for read access on pg_proc.
 	 */
 	if (plan_getrule == NULL)
 	{
@@ -194,9 +191,8 @@ pg_get_ruledef(PG_FUNCTION_ARGS)
 		plan_getrule = SPI_saveplan(plan);
 	}
 
-	/* ----------
+	/*
 	 * Get the pg_rewrite tuple for this rule
-	 * ----------
 	 */
 	args[0] = PointerGetDatum(rulename);
 	nulls[0] = (rulename == NULL) ? 'n' : ' ';
@@ -217,9 +213,8 @@ pg_get_ruledef(PG_FUNCTION_ARGS)
 	ruletup = SPI_tuptable->vals[0];
 	rulettc = SPI_tuptable->tupdesc;
 
-	/* ----------
+	/*
 	 * Get the rules definition and put it into executors memory
-	 * ----------
 	 */
 	initStringInfo(&buf);
 	make_ruledef(&buf, ruletup, rulettc);
@@ -229,16 +224,14 @@ pg_get_ruledef(PG_FUNCTION_ARGS)
 	memcpy(VARDATA(ruledef), buf.data, buf.len);
 	pfree(buf.data);
 
-	/* ----------
+	/*
 	 * Disconnect from SPI manager
-	 * ----------
 	 */
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "get_ruledef: SPI_finish() failed");
 
-	/* ----------
+	/*
 	 * Easy - isn't it?
-	 * ----------
 	 */
 	PG_RETURN_TEXT_P(ruledef);
 }
@@ -263,24 +256,21 @@ pg_get_viewdef(PG_FUNCTION_ARGS)
 	int			len;
 	char	   *name;
 
-	/* ----------
+	/*
 	 * We need the view name somewhere deep down
-	 * ----------
 	 */
 	rulename = pstrdup(NameStr(*vname));
 
-	/* ----------
+	/*
 	 * Connect to SPI manager
-	 * ----------
 	 */
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "get_viewdef: cannot connect to SPI manager");
 
-	/* ----------
-	 * On the first call prepare the plan to lookup pg_proc.
-	 * We read pg_proc over the SPI manager instead of using
-	 * the syscache to be checked for read access on pg_proc.
-	 * ----------
+	/*
+	 * On the first call prepare the plan to lookup pg_proc. We read
+	 * pg_proc over the SPI manager instead of using the syscache to be
+	 * checked for read access on pg_proc.
 	 */
 	if (plan_getview == NULL)
 	{
@@ -294,9 +284,9 @@ pg_get_viewdef(PG_FUNCTION_ARGS)
 		plan_getview = SPI_saveplan(plan);
 	}
 
-	/* ----------
-	 * Get the pg_rewrite tuple for this rule: rulename is actually viewname here
-	 * ----------
+	/*
+	 * Get the pg_rewrite tuple for this rule: rulename is actually
+	 * viewname here
 	 */
 	name = MakeRetrieveViewRuleName(rulename);
 	args[0] = PointerGetDatum(name);
@@ -309,9 +299,9 @@ pg_get_viewdef(PG_FUNCTION_ARGS)
 		appendStringInfo(&buf, "Not a view");
 	else
 	{
-		/* ----------
+
+		/*
 		 * Get the rules definition and put it into executors memory
-		 * ----------
 		 */
 		ruletup = SPI_tuptable->vals[0];
 		rulettc = SPI_tuptable->tupdesc;
@@ -324,16 +314,14 @@ pg_get_viewdef(PG_FUNCTION_ARGS)
 	pfree(buf.data);
 	pfree(name);
 
-	/* ----------
+	/*
 	 * Disconnect from SPI manager
-	 * ----------
 	 */
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "get_viewdef: SPI_finish() failed");
 
-	/* ----------
+	/*
 	 * Easy - isn't it?
-	 * ----------
 	 */
 	PG_RETURN_TEXT_P(ruledef);
 }
@@ -366,17 +354,14 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	StringInfoData keybuf;
 	char	   *sep;
 
-	/* ----------
+	/*
 	 * Connect to SPI manager
-	 * ----------
 	 */
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "get_indexdef: cannot connect to SPI manager");
 
-	/* ----------
-	 * On the first call prepare the plans to lookup pg_am
-	 * and pg_opclass.
-	 * ----------
+	/*
+	 * On the first call prepare the plans to lookup pg_am and pg_opclass.
 	 */
 	if (plan_getam == NULL)
 	{
@@ -396,9 +381,8 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 		plan_getopclass = SPI_saveplan(plan);
 	}
 
-	/* ----------
+	/*
 	 * Fetch the pg_index tuple by the Oid of the index
-	 * ----------
 	 */
 	ht_idx = SearchSysCache(INDEXRELID,
 							ObjectIdGetDatum(indexrelid),
@@ -407,9 +391,8 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 		elog(ERROR, "syscache lookup for index %u failed", indexrelid);
 	idxrec = (Form_pg_index) GETSTRUCT(ht_idx);
 
-	/* ----------
+	/*
 	 * Fetch the pg_class tuple of the index relation
-	 * ----------
 	 */
 	ht_idxrel = SearchSysCache(RELOID,
 							   ObjectIdGetDatum(idxrec->indexrelid),
@@ -418,9 +401,8 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 		elog(ERROR, "syscache lookup for relid %u failed", idxrec->indexrelid);
 	idxrelrec = (Form_pg_class) GETSTRUCT(ht_idxrel);
 
-	/* ----------
+	/*
 	 * Fetch the pg_class tuple of the indexed relation
-	 * ----------
 	 */
 	ht_indrel = SearchSysCache(RELOID,
 							   ObjectIdGetDatum(idxrec->indrelid),
@@ -429,9 +411,8 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 		elog(ERROR, "syscache lookup for relid %u failed", idxrec->indrelid);
 	indrelrec = (Form_pg_class) GETSTRUCT(ht_indrel);
 
-	/* ----------
+	/*
 	 * Get the am name for the index relation
-	 * ----------
 	 */
 	spi_args[0] = ObjectIdGetDatum(idxrelrec->relam);
 	spi_nulls[0] = ' ';
@@ -447,9 +428,8 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	spi_ttc = SPI_tuptable->tupdesc;
 	spi_fno = SPI_fnumber(spi_ttc, "amname");
 
-	/* ----------
+	/*
 	 * Start the index definition
-	 * ----------
 	 */
 	initStringInfo(&buf);
 	appendStringInfo(&buf, "CREATE %sINDEX %s ON %s USING %s (",
@@ -459,9 +439,8 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 					 quote_identifier(SPI_getvalue(spi_tup, spi_ttc,
 												   spi_fno)));
 
-	/* ----------
+	/*
 	 * Collect the indexed attributes
-	 * ----------
 	 */
 	initStringInfo(&keybuf);
 	sep = "";
@@ -473,17 +452,15 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 		appendStringInfo(&keybuf, sep);
 		sep = ", ";
 
-		/* ----------
+		/*
 		 * Add the indexed field name
-		 * ----------
 		 */
 		appendStringInfo(&keybuf, "%s",
 			  quote_identifier(get_relid_attribute_name(idxrec->indrelid,
 												idxrec->indkey[keyno])));
 
-		/* ----------
+		/*
 		 * If not a functional index, add the operator class name
-		 * ----------
 		 */
 		if (idxrec->indproc == InvalidOid)
 		{
@@ -504,9 +481,8 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 		}
 	}
 
-	/* ----------
+	/*
 	 * For functional index say 'func (attrs) opclass'
-	 * ----------
 	 */
 	if (idxrec->indproc != InvalidOid)
 	{
@@ -541,21 +517,19 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 		ReleaseSysCache(proctup);
 	}
 	else
-		/* ----------
+
+		/*
 		 * For the others say 'attr opclass [, ...]'
-		 * ----------
 		 */
 		appendStringInfo(&buf, "%s", keybuf.data);
 
-	/* ----------
+	/*
 	 * Finish
-	 * ----------
 	 */
 	appendStringInfo(&buf, ")");
 
-	/* ----------
+	/*
 	 * Create the result in upper executor memory, and free objects
-	 * ----------
 	 */
 	len = buf.len + VARHDRSZ;
 	indexdef = SPI_palloc(len);
@@ -568,9 +542,8 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	ReleaseSysCache(ht_idxrel);
 	ReleaseSysCache(ht_indrel);
 
-	/* ----------
+	/*
 	 * Disconnect from SPI manager
-	 * ----------
 	 */
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "get_viewdef: SPI_finish() failed");
@@ -592,16 +565,14 @@ pg_get_userbyid(PG_FUNCTION_ARGS)
 	HeapTuple	usertup;
 	Form_pg_shadow user_rec;
 
-	/* ----------
+	/*
 	 * Allocate space for the result
-	 * ----------
 	 */
 	result = (Name) palloc(NAMEDATALEN);
 	memset(NameStr(*result), 0, NAMEDATALEN);
 
-	/* ----------
+	/*
 	 * Get the pg_shadow entry and print the result
-	 * ----------
 	 */
 	usertup = SearchSysCache(SHADOWSYSID,
 							 ObjectIdGetDatum(uid),
@@ -705,9 +676,8 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 	int			fno;
 	bool		isnull;
 
-	/* ----------
+	/*
 	 * Get the attribute values from the rules tuple
-	 * ----------
 	 */
 	fno = SPI_fnumber(rulettc, "ev_type");
 	ev_type = (char) SPI_getbinval(ruletup, rulettc, fno, &isnull);
@@ -730,9 +700,8 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 		actions = (List *) stringToNode(ev_action);
 
 
-	/* ----------
+	/*
 	 * Build the rules definition text
-	 * ----------
 	 */
 	appendStringInfo(buf, "CREATE RULE %s AS ON ",
 					 quote_identifier(rulename));
@@ -852,9 +821,8 @@ make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 	int			fno;
 	bool		isnull;
 
-	/* ----------
+	/*
 	 * Get the attribute values from the rules tuple
-	 * ----------
 	 */
 	fno = SPI_fnumber(rulettc, "ev_type");
 	ev_type = (char) SPI_getbinval(ruletup, rulettc, fno, &isnull);
@@ -961,11 +929,10 @@ get_select_query_def(Query *query, deparse_context *context)
 	char	   *sep;
 	List	   *l;
 
-	/* ----------
-	 * If the Query node has a setOperations tree, then it's the top
-	 * level of a UNION/INTERSECT/EXCEPT query; only the ORDER BY and
-	 * LIMIT fields are interesting in the top query itself.
-	 * ----------
+	/*
+	 * If the Query node has a setOperations tree, then it's the top level
+	 * of a UNION/INTERSECT/EXCEPT query; only the ORDER BY and LIMIT
+	 * fields are interesting in the top query itself.
 	 */
 	if (query->setOperations)
 	{
@@ -1033,9 +1000,8 @@ get_basic_select_query(Query *query, deparse_context *context)
 	char	   *sep;
 	List	   *l;
 
-	/* ----------
+	/*
 	 * Build up the query string - first we say SELECT
-	 * ----------
 	 */
 	appendStringInfo(buf, "SELECT");
 
@@ -1230,10 +1196,9 @@ get_insert_query_def(Query *query, deparse_context *context)
 	char	   *sep;
 	List	   *l;
 
-	/* ----------
+	/*
 	 * If it's an INSERT ... SELECT there will be a single subquery RTE
 	 * for the SELECT.
-	 * ----------
 	 */
 	foreach(l, query->rtable)
 	{
@@ -1245,9 +1210,8 @@ get_insert_query_def(Query *query, deparse_context *context)
 		select_rte = rte;
 	}
 
-	/* ----------
+	/*
 	 * Start the query with INSERT INTO relname
-	 * ----------
 	 */
 	rte = rt_fetch(query->resultRelation, query->rtable);
 	appendStringInfo(buf, "INSERT INTO %s",
@@ -1303,9 +1267,8 @@ get_update_query_def(Query *query, deparse_context *context)
 	RangeTblEntry *rte;
 	List	   *l;
 
-	/* ----------
+	/*
 	 * Start the query with UPDATE relname SET
-	 * ----------
 	 */
 	rte = rt_fetch(query->resultRelation, query->rtable);
 	appendStringInfo(buf, "UPDATE %s%s SET ",
@@ -1357,9 +1320,8 @@ get_delete_query_def(Query *query, deparse_context *context)
 	StringInfo	buf = context->buf;
 	RangeTblEntry *rte;
 
-	/* ----------
+	/*
 	 * Start the query with DELETE FROM relname
-	 * ----------
 	 */
 	rte = rt_fetch(query->resultRelation, query->rtable);
 	appendStringInfo(buf, "DELETE FROM %s%s",
@@ -1681,14 +1643,13 @@ get_rule_expr(Node *node, deparse_context *context)
 	if (node == NULL)
 		return;
 
-	/* ----------
+	/*
 	 * Each level of get_rule_expr must emit an indivisible term
-	 * (parenthesized if necessary) to ensure result is reparsed into
-	 * the same expression tree.
+	 * (parenthesized if necessary) to ensure result is reparsed into the
+	 * same expression tree.
 	 *
 	 * There might be some work left here to support additional node types.
 	 * Can we ever see Param nodes here?
-	 * ----------
 	 */
 	switch (nodeTag(node))
 	{
@@ -1722,9 +1683,8 @@ get_rule_expr(Node *node, deparse_context *context)
 				Expr	   *expr = (Expr *) node;
 				List	   *args = expr->args;
 
-				/* ----------
+				/*
 				 * Expr nodes have to be handled a bit detailed
-				 * ----------
 				 */
 				switch (expr->opType)
 				{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.64 2001/03/22 03:59:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.65 2001/03/22 06:16:16 momjian Exp $
  *
  * NOTES
  *
@@ -146,15 +146,14 @@ proc_exit(int code)
 	/* do our shared memory exits first */
 	shmem_exit(code);
 
-	/* ----------------
-	 *	call all the callbacks registered before calling exit().
+	/*
+	 * call all the callbacks registered before calling exit().
 	 *
-	 *	Note that since we decrement on_proc_exit_index each time,
-	 *	if a callback calls elog(ERROR) or elog(FATAL) then it won't
-	 *	be invoked again when control comes back here (nor will the
-	 *	previously-completed callbacks).  So, an infinite loop
-	 *	should not be possible.
-	 * ----------------
+	 * Note that since we decrement on_proc_exit_index each time, if a
+	 * callback calls elog(ERROR) or elog(FATAL) then it won't be invoked
+	 * again when control comes back here (nor will the
+	 * previously-completed callbacks).  So, an infinite loop should not
+	 * be possible.
 	 */
 	while (--on_proc_exit_index >= 0)
 		(*on_proc_exit_list[on_proc_exit_index].function) (code,
@@ -177,12 +176,11 @@ shmem_exit(int code)
 	if (DebugLvl > 1)
 		elog(DEBUG, "shmem_exit(%d)", code);
 
-	/* ----------------
-	 *	call all the registered callbacks.
+	/*
+	 * call all the registered callbacks.
 	 *
-	 *	As with proc_exit(), we remove each callback from the list
-	 *	before calling it, to avoid infinite loop in case of error.
-	 * ----------------
+	 * As with proc_exit(), we remove each callback from the list before
+	 * calling it, to avoid infinite loop in case of error.
 	 */
 	while (--on_shmem_exit_index >= 0)
 		(*on_shmem_exit_list[on_shmem_exit_index].function) (code,
@@ -387,40 +385,39 @@ IpcSemaphoreLock(IpcSemaphoreId semId, int sem, bool interruptOK)
 	sops.sem_flg = 0;
 	sops.sem_num = sem;
 
-	/* ----------------
-	 *	Note: if errStatus is -1 and errno == EINTR then it means we
-	 *		  returned from the operation prematurely because we were
-	 *		  sent a signal.  So we try and lock the semaphore again.
+	/*
+	 * Note: if errStatus is -1 and errno == EINTR then it means we
+	 * returned from the operation prematurely because we were sent a
+	 * signal.	So we try and lock the semaphore again.
 	 *
-	 *	Each time around the loop, we check for a cancel/die interrupt.
-	 *	We assume that if such an interrupt comes in while we are waiting,
-	 *	it will cause the semop() call to exit with errno == EINTR, so that
-	 *	we will be able to service the interrupt (if not in a critical
-	 *	section already).
+	 * Each time around the loop, we check for a cancel/die interrupt. We
+	 * assume that if such an interrupt comes in while we are waiting, it
+	 * will cause the semop() call to exit with errno == EINTR, so that we
+	 * will be able to service the interrupt (if not in a critical section
+	 * already).
 	 *
-	 *	Once we acquire the lock, we do NOT check for an interrupt before
-	 *	returning.	The caller needs to be able to record ownership of
-	 *	the lock before any interrupt can be accepted.
+	 * Once we acquire the lock, we do NOT check for an interrupt before
+	 * returning.  The caller needs to be able to record ownership of the
+	 * lock before any interrupt can be accepted.
 	 *
-	 *	There is a window of a few instructions between CHECK_FOR_INTERRUPTS
-	 *	and entering the semop() call.	If a cancel/die interrupt occurs in
-	 *	that window, we would fail to notice it until after we acquire the
-	 *	lock (or get another interrupt to escape the semop()).	We can avoid
-	 *	this problem by temporarily setting ImmediateInterruptOK = true
-	 *	before we do CHECK_FOR_INTERRUPTS; then, a die() interrupt in this
-	 *	interval will execute directly.  However, there is a huge pitfall:
-	 *	there is another window of a few instructions after the semop()
-	 *	before we are able to reset ImmediateInterruptOK.  If an interrupt
-	 *	occurs then, we'll lose control, which means that the lock has been
-	 *	acquired but our caller did not get a chance to record the fact.
-	 *	Therefore, we only set ImmediateInterruptOK if the caller tells us
-	 *	it's OK to do so, ie, the caller does not need to record acquiring
-	 *	the lock.  (This is currently true for lockmanager locks, since the
-	 *	process that granted us the lock did all the necessary state updates.
-	 *	It's not true for SysV semaphores used to emulate spinlocks --- but
-	 *	our performance on such platforms is so horrible anyway that I'm
-	 *	not going to worry too much about it.)
-	 *	----------------
+	 * There is a window of a few instructions between CHECK_FOR_INTERRUPTS
+	 * and entering the semop() call.  If a cancel/die interrupt occurs in
+	 * that window, we would fail to notice it until after we acquire the
+	 * lock (or get another interrupt to escape the semop()).  We can
+	 * avoid this problem by temporarily setting ImmediateInterruptOK =
+	 * true before we do CHECK_FOR_INTERRUPTS; then, a die() interrupt in
+	 * this interval will execute directly.  However, there is a huge
+	 * pitfall: there is another window of a few instructions after the
+	 * semop() before we are able to reset ImmediateInterruptOK.  If an
+	 * interrupt occurs then, we'll lose control, which means that the
+	 * lock has been acquired but our caller did not get a chance to
+	 * record the fact. Therefore, we only set ImmediateInterruptOK if the
+	 * caller tells us it's OK to do so, ie, the caller does not need to
+	 * record acquiring the lock.  (This is currently true for lockmanager
+	 * locks, since the process that granted us the lock did all the
+	 * necessary state updates. It's not true for SysV semaphores used to
+	 * emulate spinlocks --- but our performance on such platforms is so
+	 * horrible anyway that I'm not going to worry too much about it.)
 	 */
 	do
 	{
@@ -452,12 +449,11 @@ IpcSemaphoreUnlock(IpcSemaphoreId semId, int sem)
 	sops.sem_num = sem;
 
 
-	/* ----------------
-	 *	Note: if errStatus is -1 and errno == EINTR then it means we
-	 *		  returned from the operation prematurely because we were
-	 *		  sent a signal.  So we try and unlock the semaphore again.
-	 *		  Not clear this can really happen, but might as well cope.
-	 * ----------------
+	/*
+	 * Note: if errStatus is -1 and errno == EINTR then it means we
+	 * returned from the operation prematurely because we were sent a
+	 * signal.	So we try and unlock the semaphore again. Not clear this
+	 * can really happen, but might as well cope.
 	 */
 	do
 	{
@@ -486,11 +482,10 @@ IpcSemaphoreTryLock(IpcSemaphoreId semId, int sem)
 	sops.sem_flg = IPC_NOWAIT;	/* but don't block */
 	sops.sem_num = sem;
 
-	/* ----------------
-	 *	Note: if errStatus is -1 and errno == EINTR then it means we
-	 *		  returned from the operation prematurely because we were
-	 *		  sent a signal.  So we try and lock the semaphore again.
-	 * ----------------
+	/*
+	 * Note: if errStatus is -1 and errno == EINTR then it means we
+	 * returned from the operation prematurely because we were sent a
+	 * signal.	So we try and lock the semaphore again.
 	 */
 	do
 	{

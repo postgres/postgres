@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: stringinfo.c,v 1.27 2001/01/24 19:42:55 momjian Exp $
+ *	  $Id: stringinfo.c,v 1.28 2001/03/22 06:16:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,11 +106,11 @@ appendStringInfo(StringInfo str, const char *fmt,...)
 
 	for (;;)
 	{
-		/*----------
-		 * Try to format the given string into the available space;
-		 * but if there's hardly any space, don't bother trying,
-		 * just fall through to enlarge the buffer first.
-		 *----------
+
+		/*
+		 * Try to format the given string into the available space; but if
+		 * there's hardly any space, don't bother trying, just fall
+		 * through to enlarge the buffer first.
 		 */
 		avail = str->maxlen - str->len - 1;
 		if (avail > 16)

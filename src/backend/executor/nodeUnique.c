@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.31 2001/01/24 19:42:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.32 2001/03/22 06:16:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,43 +47,38 @@ ExecUnique(Unique *node)
 	Plan	   *outerPlan;
 	TupleDesc	tupDesc;
 
-	/* ----------------
-	 *	get information from the node
-	 * ----------------
+	/*
+	 * get information from the node
 	 */
 	uniquestate = node->uniquestate;
 	outerPlan = outerPlan((Plan *) node);
 	resultTupleSlot = uniquestate->cstate.cs_ResultTupleSlot;
 	tupDesc = ExecGetResultType(&uniquestate->cstate);
 
-	/* ----------------
-	 *	now loop, returning only non-duplicate tuples.
-	 *	We assume that the tuples arrive in sorted order
-	 *	so we can detect duplicates easily.
-	 * ----------------
+	/*
+	 * now loop, returning only non-duplicate tuples. We assume that the
+	 * tuples arrive in sorted order so we can detect duplicates easily.
 	 */
 	for (;;)
 	{
-		/* ----------------
-		 *	 fetch a tuple from the outer subplan
-		 * ----------------
+
+		/*
+		 * fetch a tuple from the outer subplan
 		 */
 		slot = ExecProcNode(outerPlan, (Plan *) node);
 		if (TupIsNull(slot))
 			return NULL;
 
-		/* ----------------
-		 *	 Always return the first tuple from the subplan.
-		 * ----------------
+		/*
+		 * Always return the first tuple from the subplan.
 		 */
 		if (uniquestate->priorTuple == NULL)
 			break;
 
-		/* ----------------
-		 *	 Else test if the new tuple and the previously returned
-		 *	 tuple match.  If so then we loop back and fetch
-		 *	 another new tuple from the subplan.
-		 * ----------------
+		/*
+		 * Else test if the new tuple and the previously returned tuple
+		 * match.  If so then we loop back and fetch another new tuple
+		 * from the subplan.
 		 */
 		if (!execTuplesMatch(slot->val, uniquestate->priorTuple,
 							 tupDesc,
@@ -93,18 +88,17 @@ ExecUnique(Unique *node)
 			break;
 	}
 
-	/* ----------------
-	 *	We have a new tuple different from the previous saved tuple (if any).
-	 *	Save it and return it.	We must copy it because the source subplan
-	 *	won't guarantee that this source tuple is still accessible after
-	 *	fetching the next source tuple.
+	/*
+	 * We have a new tuple different from the previous saved tuple (if
+	 * any). Save it and return it.  We must copy it because the source
+	 * subplan won't guarantee that this source tuple is still accessible
+	 * after fetching the next source tuple.
 	 *
-	 *	Note that we manage the copy ourselves.  We can't rely on the result
-	 *	tuple slot to maintain the tuple reference because our caller may
-	 *	replace the slot contents with a different tuple (see junk filter
-	 *	handling in execMain.c).  We assume that the caller will no longer
-	 *	be interested in the current tuple after he next calls us.
-	 * ----------------
+	 * Note that we manage the copy ourselves.	We can't rely on the result
+	 * tuple slot to maintain the tuple reference because our caller may
+	 * replace the slot contents with a different tuple (see junk filter
+	 * handling in execMain.c).  We assume that the caller will no longer
+	 * be interested in the current tuple after he next calls us.
 	 */
 	if (uniquestate->priorTuple != NULL)
 		heap_freetuple(uniquestate->priorTuple);
@@ -131,27 +125,24 @@ ExecInitUnique(Unique *node, EState *estate, Plan *parent)
 	UniqueState *uniquestate;
 	Plan	   *outerPlan;
 
-	/* ----------------
-	 *	assign execution state to node
-	 * ----------------
+	/*
+	 * assign execution state to node
 	 */
 	node->plan.state = estate;
 
-	/* ----------------
-	 *	create new UniqueState for node
-	 * ----------------
+	/*
+	 * create new UniqueState for node
 	 */
 	uniquestate = makeNode(UniqueState);
 	node->uniquestate = uniquestate;
 	uniquestate->priorTuple = NULL;
 
-	/* ----------------
-	 *	Miscellaneous initialization
+	/*
+	 * Miscellaneous initialization
 	 *
-	 *	Unique nodes have no ExprContext initialization because
-	 *	they never call ExecQual or ExecProject.  But they do need a
-	 *	per-tuple memory context anyway for calling execTuplesMatch.
-	 * ----------------
+	 * Unique nodes have no ExprContext initialization because they never
+	 * call ExecQual or ExecProject.  But they do need a per-tuple memory
+	 * context anyway for calling execTuplesMatch.
 	 */
 	uniquestate->tempContext =
 		AllocSetContextCreate(CurrentMemoryContext,
@@ -161,23 +152,21 @@ ExecInitUnique(Unique *node, EState *estate, Plan *parent)
 							  ALLOCSET_DEFAULT_MAXSIZE);
 
 #define UNIQUE_NSLOTS 1
-	/* ------------
+
+	/*
 	 * Tuple table initialization
-	 * ------------
 	 */
 	ExecInitResultTupleSlot(estate, &uniquestate->cstate);
 
-	/* ----------------
-	 *	then initialize outer plan
-	 * ----------------
+	/*
+	 * then initialize outer plan
 	 */
 	outerPlan = outerPlan((Plan *) node);
 	ExecInitNode(outerPlan, estate, (Plan *) node);
 
-	/* ----------------
-	 *	unique nodes do no projections, so initialize
-	 *	projection info for this node appropriately
-	 * ----------------
+	/*
+	 * unique nodes do no projections, so initialize projection info for
+	 * this node appropriately
 	 */
 	ExecAssignResultTypeFromOuterPlan((Plan *) node, &uniquestate->cstate);
 	uniquestate->cstate.cs_ProjInfo = NULL;

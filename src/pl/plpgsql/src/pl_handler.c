@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.7 2001/03/22 04:01:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.8 2001/03/22 06:16:21 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -75,24 +75,22 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 	PLpgSQL_function *func;
 	Datum		retval;
 
-	/* ----------
+	/*
 	 * Connect to SPI manager
-	 * ----------
 	 */
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "plpgsql: cannot connect to SPI manager");
 
-	/* ----------
+	/*
 	 * Check if we already compiled this function and saved the pointer
 	 * (ie, current FmgrInfo has been used before)
-	 * ----------
 	 */
 	func = (PLpgSQL_function *) fcinfo->flinfo->fn_extra;
 	if (func == NULL)
 	{
-		/* ----------
+
+		/*
 		 * Check if we already compiled this function
-		 * ----------
 		 */
 		Oid			funcOid = fcinfo->flinfo->fn_oid;
 
@@ -102,9 +100,8 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 				break;
 		}
 
-		/* ----------
+		/*
 		 * If not, do so and add it to the compiled ones
-		 * ----------
 		 */
 		if (func == NULL)
 		{
@@ -114,17 +111,15 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 			compiled_functions = func;
 		}
 
-		/* ----------
+		/*
 		 * Save pointer in FmgrInfo to avoid search on subsequent calls
-		 * ----------
 		 */
 		fcinfo->flinfo->fn_extra = (void *) func;
 	}
 
-	/* ----------
-	 * Determine if called as function or trigger and
-	 * call appropriate subhandler
-	 * ----------
+	/*
+	 * Determine if called as function or trigger and call appropriate
+	 * subhandler
 	 */
 	if (isTrigger)
 		retval = PointerGetDatum(plpgsql_exec_trigger(func,
@@ -132,9 +127,8 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 	else
 		retval = plpgsql_exec_function(func, fcinfo);
 
-	/* ----------
+	/*
 	 * Disconnect from SPI manager
-	 * ----------
 	 */
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "plpgsql: SPI_finish() failed");

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeLimit.c,v 1.4 2001/03/22 03:59:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeLimit.c,v 1.5 2001/03/22 06:16:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,46 +44,43 @@ ExecLimit(Limit *node)
 	Plan	   *outerPlan;
 	long		netlimit;
 
-	/* ----------------
-	 *	get information from the node
-	 * ----------------
+	/*
+	 * get information from the node
 	 */
 	limitstate = node->limitstate;
 	direction = node->plan.state->es_direction;
 	outerPlan = outerPlan((Plan *) node);
 	resultTupleSlot = limitstate->cstate.cs_ResultTupleSlot;
 
-	/* ----------------
-	 *	If first call for this scan, compute limit/offset.
-	 *	(We can't do this any earlier, because parameters from upper nodes
-	 *	may not be set until now.)
-	 * ----------------
+	/*
+	 * If first call for this scan, compute limit/offset. (We can't do
+	 * this any earlier, because parameters from upper nodes may not be
+	 * set until now.)
 	 */
 	if (!limitstate->parmsSet)
 		recompute_limits(node);
 	netlimit = limitstate->offset + limitstate->count;
 
-	/* ----------------
-	 *	now loop, returning only desired tuples.
-	 * ----------------
+	/*
+	 * now loop, returning only desired tuples.
 	 */
 	for (;;)
 	{
-		/*----------------
-		 *	 If we have reached the subplan EOF or the limit, just quit.
+
+		/*
+		 * If we have reached the subplan EOF or the limit, just quit.
 		 *
 		 * NOTE: when scanning forwards, we must fetch one tuple beyond the
-		 * COUNT limit before we can return NULL, else the subplan won't be
-		 * properly positioned to start going backwards.  Hence test here
-		 * is for position > netlimit not position >= netlimit.
+		 * COUNT limit before we can return NULL, else the subplan won't
+		 * be properly positioned to start going backwards.  Hence test
+		 * here is for position > netlimit not position >= netlimit.
 		 *
 		 * Similarly, when scanning backwards, we must re-fetch the last
-		 * tuple in the offset region before we can return NULL.  Otherwise
-		 * we won't be correctly aligned to start going forward again.  So,
-		 * although you might think we can quit when position = offset + 1,
-		 * we have to fetch a subplan tuple first, and then exit when
-		 * position = offset.
-		 *----------------
+		 * tuple in the offset region before we can return NULL.
+		 * Otherwise we won't be correctly aligned to start going forward
+		 * again.  So, although you might think we can quit when position
+		 * = offset + 1, we have to fetch a subplan tuple first, and then
+		 * exit when position = offset.
 		 */
 		if (ScanDirectionIsForward(direction))
 		{
@@ -97,9 +94,9 @@ ExecLimit(Limit *node)
 			if (limitstate->position <= limitstate->offset)
 				return NULL;
 		}
-		/* ----------------
-		 *	 fetch a tuple from the outer subplan
-		 * ----------------
+
+		/*
+		 * fetch a tuple from the outer subplan
 		 */
 		slot = ExecProcNode(outerPlan, (Plan *) node);
 		if (TupIsNull(slot))
@@ -136,10 +133,9 @@ ExecLimit(Limit *node)
 		}
 		limitstate->atEnd = false;
 
-		/* ----------------
-		 *	 Now, is this a tuple we want?	If not, loop around to fetch
-		 *	 another tuple from the subplan.
-		 * ----------------
+		/*
+		 * Now, is this a tuple we want?  If not, loop around to fetch
+		 * another tuple from the subplan.
 		 */
 		if (limitstate->position > limitstate->offset &&
 			(limitstate->noCount || limitstate->position <= netlimit))
@@ -224,47 +220,42 @@ ExecInitLimit(Limit *node, EState *estate, Plan *parent)
 	LimitState *limitstate;
 	Plan	   *outerPlan;
 
-	/* ----------------
-	 *	assign execution state to node
-	 * ----------------
+	/*
+	 * assign execution state to node
 	 */
 	node->plan.state = estate;
 
-	/* ----------------
-	 *	create new LimitState for node
-	 * ----------------
+	/*
+	 * create new LimitState for node
 	 */
 	limitstate = makeNode(LimitState);
 	node->limitstate = limitstate;
 	limitstate->parmsSet = false;
 
-	/* ----------------
-	 *	Miscellaneous initialization
+	/*
+	 * Miscellaneous initialization
 	 *
-	 *	Limit nodes never call ExecQual or ExecProject, but they need
-	 *	an exprcontext anyway to evaluate the limit/offset parameters in.
-	 * ----------------
+	 * Limit nodes never call ExecQual or ExecProject, but they need an
+	 * exprcontext anyway to evaluate the limit/offset parameters in.
 	 */
 	ExecAssignExprContext(estate, &limitstate->cstate);
 
 #define LIMIT_NSLOTS 1
-	/* ------------
+
+	/*
 	 * Tuple table initialization
-	 * ------------
 	 */
 	ExecInitResultTupleSlot(estate, &limitstate->cstate);
 
-	/* ----------------
-	 *	then initialize outer plan
-	 * ----------------
+	/*
+	 * then initialize outer plan
 	 */
 	outerPlan = outerPlan((Plan *) node);
 	ExecInitNode(outerPlan, estate, (Plan *) node);
 
-	/* ----------------
-	 *	limit nodes do no projections, so initialize
-	 *	projection info for this node appropriately
-	 * ----------------
+	/*
+	 * limit nodes do no projections, so initialize projection info for
+	 * this node appropriately
 	 */
 	ExecAssignResultTypeFromOuterPlan((Plan *) node, &limitstate->cstate);
 	limitstate->cstate.cs_ProjInfo = NULL;

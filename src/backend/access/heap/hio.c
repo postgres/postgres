@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.36 2001/03/22 03:59:13 momjian Exp $
+ *	  $Id: hio.c,v 1.37 2001/03/22 06:16:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,9 +37,8 @@ RelationPutHeapTuple(Relation relation,
 	ItemId		itemId;
 	Item		item;
 
-	/* ----------------
-	 *	increment access statistics
-	 * ----------------
+	/*
+	 * increment access statistics
 	 */
 	IncrHeapAccessStat(local_RelationPutHeapTuple);
 	IncrHeapAccessStat(global_RelationPutHeapTuple);

@@ -423,7 +423,7 @@ SQLColAttributes(
 	icol--;
 
 	unknown_sizes = globals.unknown_sizes;		/* atoi(ci->unknown_sizes);
-												 *	*/
+												 * */
 	if (unknown_sizes == UNKNOWNS_AS_DONTKNOW)	/* not appropriate for
 												 * SQLColAttributes() */
 		unknown_sizes = UNKNOWNS_AS_MAX;

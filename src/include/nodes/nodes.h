@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.87 2001/03/22 04:00:51 momjian Exp $
+ * $Id: nodes.h,v 1.88 2001/03/22 06:16:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,9 +25,8 @@ typedef enum NodeTag
 {
 	T_Invalid = 0,
 
-	/*---------------------
+	/*
 	 * TAGS FOR PLAN NODES (plannodes.h)
-	 *---------------------
 	 */
 	T_Plan = 10,
 	T_Result,
@@ -51,9 +50,8 @@ typedef enum NodeTag
 	T_TidScan,
 	T_SubqueryScan,
 
-	/*---------------------
+	/*
 	 * TAGS FOR PRIMITIVE NODES (primnodes.h)
-	 *---------------------
 	 */
 	T_Resdom = 100,
 	T_Fjoin,
@@ -73,9 +71,8 @@ typedef enum NodeTag
 	T_FromExpr,
 	T_JoinExpr,
 
-	/*---------------------
+	/*
 	 * TAGS FOR PLANNER NODES (relation.h)
-	 *---------------------
 	 */
 	T_RelOptInfo = 200,
 	T_Path,
@@ -91,9 +88,8 @@ typedef enum NodeTag
 	T_Stream,
 	T_IndexOptInfo,
 
-	/*---------------------
+	/*
 	 * TAGS FOR EXECUTOR NODES (execnodes.h)
-	 *---------------------
 	 */
 	T_IndexInfo = 300,
 	T_ResultRelInfo,
@@ -125,16 +121,14 @@ typedef enum NodeTag
 	T_SetOpState,
 	T_LimitState,
 
-	/*---------------------
+	/*
 	 * TAGS FOR MEMORY NODES (memnodes.h)
-	 *---------------------
 	 */
 	T_MemoryContext = 400,
 	T_AllocSetContext,
 
-	/*---------------------
+	/*
 	 * TAGS FOR VALUE NODES (pg_list.h)
-	 *---------------------
 	 */
 	T_Value = 500,
 	T_List,
@@ -144,9 +138,8 @@ typedef enum NodeTag
 	T_BitString,
 	T_Null,
 
-	/*---------------------
+	/*
 	 * TAGS FOR PARSE TREE NODES (parsenodes.h)
-	 *---------------------
 	 */
 	T_Query = 600,
 	T_InsertStmt,
@@ -236,9 +229,8 @@ typedef enum NodeTag
 								 * available */
 	T_FkConstraint,
 
-	/*---------------------
+	/*
 	 * TAGS FOR FUNCTION-CALL CONTEXT AND RESULTINFO NODES (see fmgr.h)
-	 *---------------------
 	 */
 	T_TriggerData = 800,		/* in commands/trigger.h */
 	T_ReturnSetInfo				/* in nodes/execnodes.h */

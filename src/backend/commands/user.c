@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.74 2001/03/22 03:59:24 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.75 2001/03/22 06:16:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -538,14 +538,14 @@ DropUser(DropUserStmt *stmt)
 
 		usesysid = DatumGetInt32(heap_getattr(tuple, Anum_pg_shadow_usesysid, pg_shadow_dsc, &null));
 
-		/*-------------------
+		/*
 		 * Check if user still owns a database. If so, error out.
 		 *
-		 * (It used to be that this function would drop the database automatically.
-		 *	This is not only very dangerous for people that don't read the manual,
-		 *	it doesn't seem to be the behaviour one would expect either.)
-		 *													 -- petere 2000/01/14)
-		 *-------------------*/
+		 * (It used to be that this function would drop the database
+		 * automatically. This is not only very dangerous for people that
+		 * don't read the manual, it doesn't seem to be the behaviour one
+		 * would expect either.) -- petere 2000/01/14)
+		 */
 		pg_rel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
 		pg_dsc = RelationGetDescr(pg_rel);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.90 2001/03/22 03:59:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.91 2001/03/22 06:16:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -672,17 +672,15 @@ fireRules(Query *parsetree,
 		{
 			Query	   *qual_product;
 
-			/* ----------
-			 * If there are instead rules with qualifications,
-			 * the original query is still performed. But all
-			 * the negated rule qualifications of the instead
-			 * rules are added so it does its actions only
-			 * in cases where the rule quals of all instead
-			 * rules are false. Think of it as the default
-			 * action in a case. We save this in *qual_products
-			 * so deepRewriteQuery() can add it to the query
-			 * list after we mangled it up enough.
-			 * ----------
+			/*
+			 * If there are instead rules with qualifications, the
+			 * original query is still performed. But all the negated rule
+			 * qualifications of the instead rules are added so it does
+			 * its actions only in cases where the rule quals of all
+			 * instead rules are false. Think of it as the default action
+			 * in a case. We save this in *qual_products so
+			 * deepRewriteQuery() can add it to the query list after we
+			 * mangled it up enough.
 			 */
 			if (*qual_products == NIL)
 				qual_product = parsetree;
@@ -722,10 +720,9 @@ fireRules(Query *parsetree,
 			pfree(info);
 		}
 
-		/* ----------
-		 * If this was an unqualified instead rule,
-		 * throw away an eventually saved 'default' parsetree
-		 * ----------
+		/*
+		 * If this was an unqualified instead rule, throw away an
+		 * eventually saved 'default' parsetree
 		 */
 		if (event_qual == NULL && *instead_flag)
 			*qual_products = NIL;
@@ -842,23 +839,20 @@ deepRewriteQuery(Query *parsetree)
 			rewritten = nconc(rewritten, newstuff);
 	}
 
-	/* ----------
-	 * qual_products are the original query with the negated
-	 * rule qualification of an instead rule
-	 * ----------
+	/*
+	 * qual_products are the original query with the negated rule
+	 * qualification of an instead rule
 	 */
 	if (qual_products != NIL)
 		rewritten = nconc(rewritten, qual_products);
 
-	/* ----------
-	 * The original query is appended last (if no "instead" rule)
-	 * because update and delete rule actions might not do
-	 * anything if they are invoked after the update or
-	 * delete is performed. The command counter increment
-	 * between the query execution makes the deleted (and
-	 * maybe the updated) tuples disappear so the scans
-	 * for them in the rule actions cannot find them.
-	 * ----------
+	/*
+	 * The original query is appended last (if no "instead" rule) because
+	 * update and delete rule actions might not do anything if they are
+	 * invoked after the update or delete is performed. The command
+	 * counter increment between the query execution makes the deleted
+	 * (and maybe the updated) tuples disappear so the scans for them in
+	 * the rule actions cannot find them.
 	 */
 	if (!instead)
 		rewritten = lappend(rewritten, parsetree);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.43 2001/03/22 03:59:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.44 2001/03/22 06:16:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,15 +55,13 @@ CreateExecutorState(void)
 {
 	EState	   *state;
 
-	/* ----------------
-	 *	create a new executor state
-	 * ----------------
+	/*
+	 * create a new executor state
 	 */
 	state = makeNode(EState);
 
-	/* ----------------
-	 *	initialize the Executor State structure
-	 * ----------------
+	/*
+	 * initialize the Executor State structure
 	 */
 	state->es_direction = ForwardScanDirection;
 	state->es_range_table = NIL;
@@ -85,9 +83,8 @@ CreateExecutorState(void)
 
 	state->es_per_tuple_exprcontext = NULL;
 
-	/* ----------------
-	 *	return the executor state structure
-	 * ----------------
+	/*
+	 * return the executor state structure
 	 */
 	return state;
 }
@@ -137,9 +134,8 @@ PreparePortal(char *portalName)
 {
 	Portal		portal;
 
-	/* ----------------
-	 *	 Check for already-in-use portal name.
-	 * ----------------
+	/*
+	 * Check for already-in-use portal name.
 	 */
 	portal = GetPortalByName(portalName);
 	if (PortalIsValid(portal))
@@ -154,9 +150,8 @@ PreparePortal(char *portalName)
 		PortalDrop(&portal);
 	}
 
-	/* ----------------
-	 *	 Create the new portal.
-	 * ----------------
+	/*
+	 * Create the new portal.
 	 */
 	portal = CreatePortal(portalName);
 
@@ -188,9 +183,8 @@ ProcessQuery(Query *parsetree,
 
 	set_ps_display(tag = CreateOperationTag(operation));
 
-	/* ----------------
-	 *	initialize portal/into relation status
-	 * ----------------
+	/*
+	 * initialize portal/into relation status
 	 */
 	isRetrieveIntoPortal = false;
 	isRetrieveIntoRelation = false;
@@ -219,10 +213,9 @@ ProcessQuery(Query *parsetree,
 		}
 	}
 
-	/* ----------------
-	 *	If retrieving into a portal, set up the portal and copy
-	 *	the parsetree and plan into its memory context.
-	 * ----------------
+	/*
+	 * If retrieving into a portal, set up the portal and copy the
+	 * parsetree and plan into its memory context.
 	 */
 	if (isRetrieveIntoPortal)
 	{
@@ -238,40 +231,34 @@ ProcessQuery(Query *parsetree,
 		 */
 	}
 
-	/* ----------------
-	 *	Now we can create the QueryDesc object.
-	 * ----------------
+	/*
+	 * Now we can create the QueryDesc object.
 	 */
 	queryDesc = CreateQueryDesc(parsetree, plan, dest);
 
-	/* ----------------
-	 *	When performing a retrieve into, we override the normal
-	 *	communication destination during the processing of the
-	 *	the query.	This only affects the tuple-output function
-	 *	- the correct destination will still see BeginCommand()
-	 *	and EndCommand() messages.
-	 * ----------------
+	/*
+	 * When performing a retrieve into, we override the normal
+	 * communication destination during the processing of the the query.
+	 * This only affects the tuple-output function - the correct
+	 * destination will still see BeginCommand() and EndCommand()
+	 * messages.
 	 */
 	if (isRetrieveIntoRelation)
 		queryDesc->dest = None;
 
-	/* ----------------
-	 *	create a default executor state.
-	 * ----------------
+	/*
+	 * create a default executor state.
 	 */
 	state = CreateExecutorState();
 
-	/* ----------------
-	 *	call ExecStart to prepare the plan for execution
-	 * ----------------
+	/*
+	 * call ExecStart to prepare the plan for execution
 	 */
 	attinfo = ExecutorStart(queryDesc, state);
 
-	/* ----------------
-	 *	 report the query's result type information
-	 *	 back to the front end or to whatever destination
-	 *	 we're dealing with.
-	 * ----------------
+	/*
+	 * report the query's result type information back to the front end or
+	 * to whatever destination we're dealing with.
 	 */
 	BeginCommand(NULL,
 				 operation,
@@ -281,10 +268,9 @@ ProcessQuery(Query *parsetree,
 				 tag,
 				 dest);
 
-	/* ----------------
-	 *	If retrieve into portal, stop now; we do not run the plan
-	 *	until a FETCH command is received.
-	 * ----------------
+	/*
+	 * If retrieve into portal, stop now; we do not run the plan until a
+	 * FETCH command is received.
 	 */
 	if (isRetrieveIntoPortal)
 	{
@@ -302,25 +288,22 @@ ProcessQuery(Query *parsetree,
 		return;
 	}
 
-	/* ----------------
-	 *	 Now we get to the important call to ExecutorRun() where we
-	 *	 actually run the plan..
-	 * ----------------
+	/*
+	 * Now we get to the important call to ExecutorRun() where we actually
+	 * run the plan..
 	 */
 	ExecutorRun(queryDesc, state, EXEC_RUN, 0L);
 
 	/* save infos for EndCommand */
 	UpdateCommandInfo(operation, state->es_lastoid, state->es_processed);
 
-	/* ----------------
-	 *	 Now, we close down all the scans and free allocated resources.
-	 * ----------------
+	/*
+	 * Now, we close down all the scans and free allocated resources.
 	 */
 	ExecutorEnd(queryDesc, state);
 
-	/* ----------------
-	 *	Notify the destination of end of processing.
-	 * ----------------
+	/*
+	 * Notify the destination of end of processing.
 	 */
 	EndCommand(tag, dest);
 }

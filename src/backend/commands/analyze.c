@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.15 2001/03/22 03:59:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.16 2001/03/22 06:16:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -582,9 +582,8 @@ update_attstats(Oid relid, int natts, VacAttrStats *vacattrstats)
 				for (i = 0; i < Natts_pg_statistic; ++i)
 					nulls[i] = ' ';
 
-				/* ----------------
-				 *	initialize values[]
-				 * ----------------
+				/*
+				 * initialize values[]
 				 */
 				i = 0;
 				values[i++] = ObjectIdGetDatum(relid);	/* starelid */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.55 2001/03/22 03:59:27 momjian Exp $
+ *	$Id: nodeHash.c,v 1.56 2001/03/22 06:16:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,9 +55,8 @@ ExecHash(Hash *node)
 	int			nbatch;
 	int			i;
 
-	/* ----------------
-	 *	get state info from node
-	 * ----------------
+	/*
+	 * get state info from node
 	 */
 
 	hashstate = node->hashstate;
@@ -72,25 +71,23 @@ ExecHash(Hash *node)
 
 	if (nbatch > 0)
 	{
-		/* ----------------
-		 * Open temp files for inner batches, if needed.
-		 * Note that file buffers are palloc'd in regular executor context.
-		 * ----------------
+
+		/*
+		 * Open temp files for inner batches, if needed. Note that file
+		 * buffers are palloc'd in regular executor context.
 		 */
 		for (i = 0; i < nbatch; i++)
 			hashtable->innerBatchFile[i] = BufFileCreateTemp();
 	}
 
-	/* ----------------
-	 *	set expression context
-	 * ----------------
+	/*
+	 * set expression context
 	 */
 	hashkey = node->hashkey;
 	econtext = hashstate->cstate.cs_ExprContext;
 
-	/* ----------------
-	 *	get all inner tuples and insert into the hash table (or temp files)
-	 * ----------------
+	/*
+	 * get all inner tuples and insert into the hash table (or temp files)
 	 */
 	for (;;)
 	{
@@ -102,10 +99,9 @@ ExecHash(Hash *node)
 		ExecClearTuple(slot);
 	}
 
-	/* ---------------------
-	 *	Return the slot so that we have the tuple descriptor
-	 *	when we need to save/restore them.	-Jeff 11 July 1991
-	 * ---------------------
+	/*
+	 * Return the slot so that we have the tuple descriptor when we need
+	 * to save/restore them.  -Jeff 11 July 1991
 	 */
 	return slot;
 }
@@ -125,45 +121,39 @@ ExecInitHash(Hash *node, EState *estate, Plan *parent)
 	SO1_printf("ExecInitHash: %s\n",
 			   "initializing hash node");
 
-	/* ----------------
-	 *	assign the node's execution state
-	 * ----------------
+	/*
+	 * assign the node's execution state
 	 */
 	node->plan.state = estate;
 
-	/* ----------------
+	/*
 	 * create state structure
-	 * ----------------
 	 */
 	hashstate = makeNode(HashState);
 	node->hashstate = hashstate;
 	hashstate->hashtable = NULL;
 
-	/* ----------------
-	 *	Miscellaneous initialization
+	/*
+	 * Miscellaneous initialization
 	 *
-	 *		 +	create expression context for node
-	 * ----------------
+	 * create expression context for node
 	 */
 	ExecAssignExprContext(estate, &hashstate->cstate);
 
-	/* ----------------
+	/*
 	 * initialize our result slot
-	 * ----------------
 	 */
 	ExecInitResultTupleSlot(estate, &hashstate->cstate);
 
-	/* ----------------
+	/*
 	 * initializes child nodes
-	 * ----------------
 	 */
 	outerPlan = outerPlan(node);
 	ExecInitNode(outerPlan, estate, (Plan *) node);
 
-	/* ----------------
-	 *	initialize tuple type. no need to initialize projection
-	 *	info because this node doesn't do projections
-	 * ----------------
+	/*
+	 * initialize tuple type. no need to initialize projection info
+	 * because this node doesn't do projections
 	 */
 	ExecAssignResultTypeFromOuterPlan((Plan *) node, &hashstate->cstate);
 	hashstate->cstate.cs_ProjInfo = NULL;
@@ -192,23 +182,20 @@ ExecEndHash(Hash *node)
 	HashState  *hashstate;
 	Plan	   *outerPlan;
 
-	/* ----------------
-	 *	get info from the hash state
-	 * ----------------
+	/*
+	 * get info from the hash state
 	 */
 	hashstate = node->hashstate;
 
-	/* ----------------
-	 *	free projection info.  no need to free result type info
-	 *	because that came from the outer plan...
-	 * ----------------
+	/*
+	 * free projection info.  no need to free result type info because
+	 * that came from the outer plan...
 	 */
 	ExecFreeProjectionInfo(&hashstate->cstate);
 	ExecFreeExprContext(&hashstate->cstate);
 
-	/* ----------------
-	 *	shut down the subplan
-	 * ----------------
+	/*
+	 * shut down the subplan
 	 */
 	outerPlan = outerPlan(node);
 	ExecEndNode(outerPlan, (Plan *) node);
@@ -239,13 +226,13 @@ ExecHashTableCreate(Hash *node)
 	int			i;
 	MemoryContext oldcxt;
 
-	/* ----------------
-	 *	Get information about the size of the relation to be hashed
-	 *	(it's the "outer" subtree of this node, but the inner relation of
-	 *	the hashjoin).
-	 *	Caution: this is only the planner's estimates, and so
-	 *	can't be trusted too far.  Apply a healthy fudge factor.
-	 * ----------------
+	/*
+	 * Get information about the size of the relation to be hashed (it's
+	 * the "outer" subtree of this node, but the inner relation of the
+	 * hashjoin).
+	 *
+	 * Caution: this is only the planner's estimates, and so can't be trusted
+	 * too far.  Apply a healthy fudge factor.
 	 */
 	outerNode = outerPlan(node);
 	ntuples = outerNode->plan_rows;
@@ -331,11 +318,11 @@ ExecHashTableCreate(Hash *node)
 		   nbatch, totalbuckets, nbuckets);
 #endif
 
-	/* ----------------
-	 *	Initialize the hash table control block.
-	 *	The hashtable control block is just palloc'd from the executor's
-	 *	per-query memory context.
-	 * ----------------
+	/*
+	 * Initialize the hash table control block.
+	 *
+	 * The hashtable control block is just palloc'd from the executor's
+	 * per-query memory context.
 	 */
 	hashtable = (HashJoinTable) palloc(sizeof(HashTableData));
 	hashtable->nbuckets = nbuckets;
@@ -348,18 +335,16 @@ ExecHashTableCreate(Hash *node)
 	hashtable->innerBatchSize = NULL;
 	hashtable->outerBatchSize = NULL;
 
-	/* ----------------
-	 *	Get info about the datatype of the hash key.
-	 * ----------------
+	/*
+	 * Get info about the datatype of the hash key.
 	 */
 	get_typlenbyval(exprType(node->hashkey),
 					&hashtable->typLen,
 					&hashtable->typByVal);
 
-	/* ----------------
-	 *	Create temporary memory contexts in which to keep the hashtable
-	 *	working storage.  See notes in executor/hashjoin.h.
-	 * ----------------
+	/*
+	 * Create temporary memory contexts in which to keep the hashtable
+	 * working storage.  See notes in executor/hashjoin.h.
 	 */
 	hashtable->hashCxt = AllocSetContextCreate(CurrentMemoryContext,
 											   "HashTableContext",
@@ -379,9 +364,9 @@ ExecHashTableCreate(Hash *node)
 
 	if (nbatch > 0)
 	{
-		/* ---------------
-		 *	allocate and initialize the file arrays in hashCxt
-		 * ---------------
+
+		/*
+		 * allocate and initialize the file arrays in hashCxt
 		 */
 		hashtable->innerBatchFile = (BufFile **)
 			palloc(nbatch * sizeof(BufFile *));
@@ -464,15 +449,14 @@ ExecHashTableInsert(HashJoinTable hashtable,
 	TupleTableSlot *slot = econtext->ecxt_innertuple;
 	HeapTuple	heapTuple = slot->val;
 
-	/* ----------------
-	 *	decide whether to put the tuple in the hash table or a tmp file
-	 * ----------------
+	/*
+	 * decide whether to put the tuple in the hash table or a tmp file
 	 */
 	if (bucketno < hashtable->nbuckets)
 	{
-		/* ---------------
-		 *	put the tuple in hash table
-		 * ---------------
+
+		/*
+		 * put the tuple in hash table
 		 */
 		HashJoinTuple hashTuple;
 		int			hashTupleSize;
@@ -496,9 +480,9 @@ ExecHashTableInsert(HashJoinTable hashtable,
 	}
 	else
 	{
-		/* -----------------
+
+		/*
 		 * put the tuple into a tmp file for other batches
-		 * -----------------
 		 */
 		int			batchno = (hashtable->nbatch * (bucketno - hashtable->nbuckets)) /
 		(hashtable->totalbuckets - hashtable->nbuckets);
@@ -524,20 +508,18 @@ ExecHashGetBucket(HashJoinTable hashtable,
 	Datum		keyval;
 	bool		isNull;
 
-	/* ----------------
-	 *	Get the join attribute value of the tuple
+	/*
+	 * Get the join attribute value of the tuple
 	 *
-	 *	We reset the eval context each time to avoid any possibility
-	 *	of memory leaks in the hash function.
-	 * ----------------
+	 * We reset the eval context each time to avoid any possibility of memory
+	 * leaks in the hash function.
 	 */
 	ResetExprContext(econtext);
 
 	keyval = ExecEvalExprSwitchContext(hashkey, econtext, &isNull, NULL);
 
-	/* ------------------
-	 *	compute the hash function
-	 * ------------------
+	/*
+	 * compute the hash function
 	 */
 	if (isNull)
 		bucketno = 0;
@@ -606,9 +588,8 @@ ExecScanHashBucket(HashJoinState *hjstate,
 		hashTuple = hashTuple->next;
 	}
 
-	/* ----------------
-	 *	no match
-	 * ----------------
+	/*
+	 * no match
 	 */
 	return NULL;
 }

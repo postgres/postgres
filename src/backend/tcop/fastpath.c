@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.47 2001/03/22 03:59:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.48 2001/03/22 06:16:17 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -298,9 +298,9 @@ HandleFunctionRequest(void)
 	 * (including lookup of the given function ID) and elog if
 	 * appropriate.  Unfortunately, because we cannot even read the
 	 * message properly without knowing whether the data types are
-	 * pass-by-ref or pass-by-value, it's not all that easy to do :-(.
-	 * The protocol should require the client to supply what it thinks is
-	 * the typbyval and typlen value for each arg, so that we can read the
+	 * pass-by-ref or pass-by-value, it's not all that easy to do :-(. The
+	 * protocol should require the client to supply what it thinks is the
+	 * typbyval and typlen value for each arg, so that we can read the
 	 * data without having to do any lookups.  Then after we've read the
 	 * message, we should do the lookups, verify agreement of the actual
 	 * function arg types with what we received, and finally call the

@@ -39,7 +39,7 @@ RETCODE SQL_API SQLDummyOrdinal(void);
 HINSTANCE NEAR s_hModule;		/* Saved module handle. */
 
 /*	This is where the Driver Manager attaches to this Driver */
-BOOL WINAPI
+BOOL		WINAPI
 DllMain(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lpReserved)
 {
 	WORD		wVersionRequested;

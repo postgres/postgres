@@ -59,9 +59,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 
 	int			i;
 
-	/* ----------------
+	/*
 	 * Check permission
-	 * ----------------
 	 */
 	if (!superuser())
 	{
@@ -69,10 +68,9 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 			 "permitted to create procedural languages");
 	}
 
-	/* ----------------
-	 * Translate the language name and check that
-	 * this language doesn't already exist
-	 * ----------------
+	/*
+	 * Translate the language name and check that this language doesn't
+	 * already exist
 	 */
 	case_translate_language_name(stmt->plname, languageName);
 
@@ -81,10 +79,9 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 							 0, 0, 0))
 		elog(ERROR, "Language %s already exists", languageName);
 
-	/* ----------------
-	 * Lookup the PL handler function and check that it is
-	 * of return type Opaque
-	 * ----------------
+	/*
+	 * Lookup the PL handler function and check that it is of return type
+	 * Opaque
 	 */
 	memset(typev, 0, sizeof(typev));
 	procTup = SearchSysCache(PROCNAME,
@@ -99,9 +96,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 		elog(ERROR, "PL handler function %s() isn't of return type Opaque",
 			 stmt->plhandler);
 
-	/* ----------------
+	/*
 	 * Insert the new language into pg_language
-	 * ----------------
 	 */
 	for (i = 0; i < Natts_pg_language; i++)
 	{
@@ -150,9 +146,8 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 	HeapTuple	langTup;
 	Relation	rel;
 
-	/* ----------------
+	/*
 	 * Check permission
-	 * ----------------
 	 */
 	if (!superuser())
 	{
@@ -160,10 +155,9 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 			 "permitted to drop procedural languages");
 	}
 
-	/* ----------------
-	 * Translate the language name, check that
-	 * this language exist and is a PL
-	 * ----------------
+	/*
+	 * Translate the language name, check that this language exist and is
+	 * a PL
 	 */
 	case_translate_language_name(stmt->plname, languageName);
 

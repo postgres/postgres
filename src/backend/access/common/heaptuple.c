@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.70 2001/03/22 03:59:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.71 2001/03/22 06:16:06 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -246,9 +246,8 @@ nocachegetattr(HeapTuple tuple,
 		 * there's a null somewhere in the tuple
 		 */
 
-		/* ----------------
-		 *		check to see if desired att is null
-		 * ----------------
+		/*
+		 * check to see if desired att is null
 		 */
 
 #ifdef IN_MACRO
@@ -261,9 +260,8 @@ nocachegetattr(HeapTuple tuple,
 		}
 #endif
 
-		/* ----------------
-		 *		Now check to see if any preceding bits are null...
-		 * ----------------
+		/*
+		 * Now check to see if any preceding bits are null...
 		 */
 		{
 			int			byte = attnum >> 3;
@@ -658,9 +656,8 @@ heap_modifytuple(HeapTuple tuple,
 	HeapTuple	newTuple;
 	uint8		infomask;
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
+	/*
+	 * sanity checks
 	 */
 	Assert(HeapTupleIsValid(tuple));
 	Assert(RelationIsValid(relation));
@@ -670,10 +667,9 @@ heap_modifytuple(HeapTuple tuple,
 
 	numberOfAttributes = RelationGetForm(relation)->relnatts;
 
-	/* ----------------
-	 *	allocate and fill *value and *nulls arrays from either
-	 *	the tuple or the repl information, as appropriate.
-	 * ----------------
+	/*
+	 * allocate and fill *value and *nulls arrays from either the tuple or
+	 * the repl information, as appropriate.
 	 */
 	value = (Datum *) palloc(numberOfAttributes * sizeof *value);
 	nulls = (char *) palloc(numberOfAttributes * sizeof *nulls);
@@ -701,17 +697,16 @@ heap_modifytuple(HeapTuple tuple,
 		}
 	}
 
-	/* ----------------
-	 *	create a new tuple from the *values and *nulls arrays
-	 * ----------------
+	/*
+	 * create a new tuple from the *values and *nulls arrays
 	 */
 	newTuple = heap_formtuple(RelationGetDescr(relation),
 							  value,
 							  nulls);
 
-	/* ----------------
-	 *	copy the header except for t_len, t_natts, t_hoff, t_bits, t_infomask
-	 * ----------------
+	/*
+	 * copy the header except for t_len, t_natts, t_hoff, t_bits,
+	 * t_infomask
 	 */
 	infomask = newTuple->t_data->t_infomask;
 	memmove((char *) &newTuple->t_data->t_oid,	/* XXX */

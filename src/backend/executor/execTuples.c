@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.47 2001/03/22 03:59:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.48 2001/03/22 06:16:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,29 +134,26 @@ ExecCreateTupleTable(int initialSize)	/* initial number of slots in
 	TupleTable	newtable;		/* newly allocated table */
 	TupleTableSlot *array;		/* newly allocated slot array */
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
+	/*
+	 * sanity checks
 	 */
 	Assert(initialSize >= 1);
 
-	/* ----------------
-	 *	Now allocate our new table along with space for the pointers
-	 *	to the tuples.
+	/*
+	 * Now allocate our new table along with space for the pointers to the
+	 * tuples.
 	 */
 
 	newtable = (TupleTable) palloc(sizeof(TupleTableData));
 	array = (TupleTableSlot *) palloc(initialSize * sizeof(TupleTableSlot));
 
-	/* ----------------
-	 *	clean out the slots we just allocated
-	 * ----------------
+	/*
+	 * clean out the slots we just allocated
 	 */
 	MemSet(array, 0, initialSize * sizeof(TupleTableSlot));
 
-	/* ----------------
-	 *	initialize the new table and return it to the caller.
-	 * ----------------
+	/*
+	 * initialize the new table and return it to the caller.
 	 */
 	newtable->size = initialSize;
 	newtable->next = 0;
@@ -182,25 +179,22 @@ ExecDropTupleTable(TupleTable table,	/* tuple table */
 	TupleTableSlot *array;		/* start of table array */
 	int			i;				/* counter */
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
+	/*
+	 * sanity checks
 	 */
 	Assert(table != NULL);
 
-	/* ----------------
-	 *	get information from the table
-	 * ----------------
+	/*
+	 * get information from the table
 	 */
 	array = table->array;
 	next = table->next;
 
-	/* ----------------
-	 *	first free all the valid pointers in the tuple array
-	 *	and drop refcounts of any referenced buffers,
-	 *	if that's what the caller wants.  (There is probably
-	 *	no good reason for the caller ever not to want it!)
-	 * ----------------
+	/*
+	 * first free all the valid pointers in the tuple array and drop
+	 * refcounts of any referenced buffers, if that's what the caller
+	 * wants.  (There is probably no good reason for the caller ever not
+	 * to want it!)
 	 */
 	if (shouldFree)
 	{
@@ -213,9 +207,8 @@ ExecDropTupleTable(TupleTable table,	/* tuple table */
 		}
 	}
 
-	/* ----------------
-	 *	finally free the tuple array and the table itself.
-	 * ----------------
+	/*
+	 * finally free the tuple array and the table itself.
 	 */
 	pfree(array);
 	pfree(table);
@@ -242,36 +235,32 @@ ExecAllocTableSlot(TupleTable table)
 	int			slotnum;		/* new slot number */
 	TupleTableSlot *slot;
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
+	/*
+	 * sanity checks
 	 */
 	Assert(table != NULL);
 
-	/* ----------------
-	 *	if our table is full we have to allocate a larger
-	 *	size table.  Since ExecAllocTableSlot() is only called
-	 *	before the table is ever used to store tuples, we don't
-	 *	have to worry about the contents of the old table.
-	 *	If this changes, then we will have to preserve the contents.
-	 *	-cim 6/23/90
+	/*
+	 * if our table is full we have to allocate a larger size table.
+	 * Since ExecAllocTableSlot() is only called before the table is ever
+	 * used to store tuples, we don't have to worry about the contents of
+	 * the old table. If this changes, then we will have to preserve the
+	 * contents. -cim 6/23/90
 	 *
-	 *	Unfortunately, we *cannot* do this.  All of the nodes in
-	 *	the plan that have already initialized their slots will have
-	 *	pointers into _freed_ memory.  This leads to bad ends.	We
-	 *	now count the number of slots we will need and create all the
-	 *	slots we will need ahead of time.  The if below should never
-	 *	happen now.  Fail if it does.  -mer 4 Aug 1992
-	 * ----------------
+	 * Unfortunately, we *cannot* do this.	All of the nodes in the plan that
+	 * have already initialized their slots will have pointers into
+	 * _freed_ memory.	This leads to bad ends.  We now count the number
+	 * of slots we will need and create all the slots we will need ahead
+	 * of time.  The if below should never happen now.	Fail if it does.
+	 * -mer 4 Aug 1992
 	 */
 	if (table->next >= table->size)
 		elog(ERROR, "Plan requires more slots than are available"
 			 "\n\tsend mail to your local executor guru to fix this");
 
-	/* ----------------
-	 *	at this point, space in the table is guaranteed so we
-	 *	reserve the next slot, initialize and return it.
-	 * ----------------
+	/*
+	 * at this point, space in the table is guaranteed so we reserve the
+	 * next slot, initialize and return it.
 	 */
 	slotnum = table->next;
 	table->next++;
@@ -358,9 +347,9 @@ ExecStoreTuple(HeapTuple tuple,
 			   Buffer buffer,
 			   bool shouldFree)
 {
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
+
+	/*
+	 * sanity checks
 	 */
 	Assert(slot != NULL);
 	/* passing shouldFree=true for a tuple on a disk page is not sane */
@@ -369,10 +358,9 @@ ExecStoreTuple(HeapTuple tuple,
 	/* clear out any old contents of the slot */
 	ExecClearTuple(slot);
 
-	/* ----------------
-	 *	store the new tuple into the specified slot and
-	 *	return the slot into which we stored the tuple.
-	 * ----------------
+	/*
+	 * store the new tuple into the specified slot and return the slot
+	 * into which we stored the tuple.
 	 */
 	slot->val = tuple;
 	slot->ttc_buffer = buffer;
@@ -401,21 +389,18 @@ ExecClearTuple(TupleTableSlot *slot)	/* slot in which to store tuple */
 {
 	HeapTuple	oldtuple;		/* prior contents of slot */
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
+	/*
+	 * sanity checks
 	 */
 	Assert(slot != NULL);
 
-	/* ----------------
-	 *	get information from the tuple table
-	 * ----------------
+	/*
+	 * get information from the tuple table
 	 */
 	oldtuple = slot->val;
 
-	/* ----------------
-	 *	free the old contents of the specified slot if necessary.
-	 * ----------------
+	/*
+	 * free the old contents of the specified slot if necessary.
 	 */
 	if (slot->ttc_shouldFree && oldtuple != NULL)
 		heap_freetuple(oldtuple);
@@ -424,9 +409,8 @@ ExecClearTuple(TupleTableSlot *slot)	/* slot in which to store tuple */
 
 	slot->ttc_shouldFree = true;/* probably useless code... */
 
-	/* ----------------
-	 *	Drop the pin on the referenced buffer, if there is one.
-	 * ----------------
+	/*
+	 * Drop the pin on the referenced buffer, if there is one.
 	 */
 	if (BufferIsValid(slot->ttc_buffer))
 		ReleaseBuffer(slot->ttc_buffer);
@@ -582,24 +566,21 @@ ExecTypeFromTL(List *targetList)
 	Oid			restype;
 	int			len;
 
-	/* ----------------
-	 *	examine targetlist - if empty then return NULL
-	 * ----------------
+	/*
+	 * examine targetlist - if empty then return NULL
 	 */
 	len = ExecTargetListLength(targetList);
 
 	if (len == 0)
 		return NULL;
 
-	/* ----------------
-	 *	allocate a new typeInfo
-	 * ----------------
+	/*
+	 * allocate a new typeInfo
 	 */
 	typeInfo = CreateTemplateTupleDesc(len);
 
-	/* ----------------
+	/*
 	 * scan list, generate type info for each entry
-	 * ----------------
 	 */
 	foreach(tlitem, targetList)
 	{

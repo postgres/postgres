@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.161 2001/03/22 04:01:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.162 2001/03/22 06:16:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -275,18 +275,16 @@ PQconnectStart(const char *conninfo)
 	PQconninfoOption *connOptions;
 	char	   *tmp;
 
-	/* ----------
+	/*
 	 * Allocate memory for the conn structure
-	 * ----------
 	 */
 
 	conn = makeEmptyPGconn();
 	if (conn == NULL)
 		return (PGconn *) NULL;
 
-	/* ----------
+	/*
 	 * Parse the conninfo string
-	 * ----------
 	 */
 	connOptions = conninfo_parse(conninfo, &conn->errorMessage);
 	if (connOptions == NULL)
@@ -320,15 +318,13 @@ PQconnectStart(const char *conninfo)
 	conn->require_ssl = tmp ? (tmp[0] == '1' ? true : false) : false;
 #endif
 
-	/* ----------
+	/*
 	 * Free the option info - all is in conn now
-	 * ----------
 	 */
 	PQconninfoFree(connOptions);
 
-	/* ----------
+	/*
 	 * Allow unix socket specification in the host name
-	 * ----------
 	 */
 	if (conn->pghost && conn->pghost[0] == '/')
 	{
@@ -338,9 +334,8 @@ PQconnectStart(const char *conninfo)
 		conn->pghost = NULL;
 	}
 
-	/* ----------
+	/*
 	 * Connect to the database
-	 * ----------
 	 */
 	if (!connectDBStart(conn))
 	{
@@ -448,10 +443,9 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	else
 		conn->pgport = strdup(pgport);
 
-	/* ----------
-	 * We don't allow unix socket path as a function parameter.
-	 * This allows unix socket specification in the host name.
-	 * ----------
+	/*
+	 * We don't allow unix socket path as a function parameter. This
+	 * allows unix socket specification in the host name.
 	 */
 	if (conn->pghost && conn->pghost[0] == '/')
 	{
@@ -899,11 +893,11 @@ connectDBStart(PGconn *conn)
 		goto connect_errReturn;
 	}
 
-	/* ----------
-	 * Set the right options. Normally, we need nonblocking I/O, and we don't
-	 * want delay of outgoing data for AF_INET sockets.  If we are using SSL,
-	 * then we need the blocking I/O (XXX Can this be fixed?).
-	 * ---------- */
+	/*
+	 * Set the right options. Normally, we need nonblocking I/O, and we
+	 * don't want delay of outgoing data for AF_INET sockets.  If we are
+	 * using SSL, then we need the blocking I/O (XXX Can this be fixed?).
+	 */
 
 	if (family == AF_INET)
 	{
@@ -911,16 +905,16 @@ connectDBStart(PGconn *conn)
 			goto connect_errReturn;
 	}
 
-	/* ----------
-	 * Since I have no idea whether this is a valid thing to do under Windows
-	 * before a connection is made, and since I have no way of testing it, I
-	 * leave the code looking as below.  When someone decides that they want
-	 * non-blocking connections under Windows, they can define
-	 * WIN32_NON_BLOCKING_CONNECTIONS before compilation.  If it works, then
-	 * this code can be cleaned up.
+	/*
+	 * Since I have no idea whether this is a valid thing to do under
+	 * Windows before a connection is made, and since I have no way of
+	 * testing it, I leave the code looking as below.  When someone
+	 * decides that they want non-blocking connections under Windows, they
+	 * can define WIN32_NON_BLOCKING_CONNECTIONS before compilation.  If
+	 * it works, then this code can be cleaned up.
 	 *
-	 *	 Ewan Mellor <eem21@cam.ac.uk>.
-	 * ---------- */
+	 * Ewan Mellor <eem21@cam.ac.uk>.
+	 */
 #if (!defined(WIN32) || defined(WIN32_NON_BLOCKING_CONNECTIONS)) && !defined(USE_SSL)
 	if (connectMakeNonblocking(conn) == 0)
 		goto connect_errReturn;
@@ -1430,16 +1424,17 @@ keep_going:						/* We will come back to here until there
 
 		case CONNECTION_AUTH_OK:
 			{
-				/* ----------
+
+				/*
 				 * Now we expect to hear from the backend. A ReadyForQuery
-				 * message indicates that startup is successful, but we might
-				 * also get an Error message indicating failure. (Notice
-				 * messages indicating nonfatal warnings are also allowed by
-				 * the protocol, as is a BackendKeyData message.) Easiest way
-				 * to handle this is to let PQgetResult() read the messages. We
-				 * just have to fake it out about the state of the connection,
-				 * by setting asyncStatus = PGASYNC_BUSY (done above).
-				 *----------
+				 * message indicates that startup is successful, but we
+				 * might also get an Error message indicating failure.
+				 * (Notice messages indicating nonfatal warnings are also
+				 * allowed by the protocol, as is a BackendKeyData
+				 * message.) Easiest way to handle this is to let
+				 * PQgetResult() read the messages. We just have to fake
+				 * it out about the state of the connection, by setting
+				 * asyncStatus = PGASYNC_BUSY (done above).
 				 */
 
 				if (PQisBusy(conn))
@@ -1522,13 +1517,13 @@ keep_going:						/* We will come back to here until there
 	/* Unreachable */
 
 error_return:
-	/* ----------
-	 * We used to close the socket at this point, but that makes it awkward
-	 * for those above us if they wish to remove this socket from their
-	 * own records (an fd_set for example).  We'll just have this socket
-	 * closed when PQfinish is called (which is compulsory even after an
-	 * error, since the connection structure must be freed).
-	 * ----------
+
+	/*
+	 * We used to close the socket at this point, but that makes it
+	 * awkward for those above us if they wish to remove this socket from
+	 * their own records (an fd_set for example).  We'll just have this
+	 * socket closed when PQfinish is called (which is compulsory even
+	 * after an error, since the connection structure must be freed).
 	 */
 	return PGRES_POLLING_FAILED;
 }
@@ -2507,10 +2502,9 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 			}
 		}
 
-		/* ----------
-		 * Now we have the name and the value. Search
-		 * for the param record.
-		 * ----------
+		/*
+		 * Now we have the name and the value. Search for the param
+		 * record.
 		 */
 		for (option = options; option->keyword != NULL; option++)
 		{
@@ -2527,9 +2521,8 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 			return NULL;
 		}
 
-		/* ----------
+		/*
 		 * Store the value
-		 * ----------
 		 */
 		if (option->val)
 			free(option->val);
@@ -2548,19 +2541,17 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 	/* Done with the modifiable input string */
 	free(buf);
 
-	/* ----------
-	 * Get the fallback resources for parameters not specified
-	 * in the conninfo string.
-	 * ----------
+	/*
+	 * Get the fallback resources for parameters not specified in the
+	 * conninfo string.
 	 */
 	for (option = options; option->keyword != NULL; option++)
 	{
 		if (option->val != NULL)
 			continue;			/* Value was in conninfo */
 
-		/* ----------
+		/*
 		 * Try to get the environment variable fallback
-		 * ----------
 		 */
 		if (option->envvar != NULL)
 		{
@@ -2571,10 +2562,9 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 			}
 		}
 
-		/* ----------
-		 * No environment variable specified or this one isn't set -
-		 * try compiled in
-		 * ----------
+		/*
+		 * No environment variable specified or this one isn't set - try
+		 * compiled in
 		 */
 		if (option->compiled != NULL)
 		{
@@ -2582,9 +2572,8 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 			continue;
 		}
 
-		/* ----------
+		/*
 		 * Special handling for user
-		 * ----------
 		 */
 		if (strcmp(option->keyword, "user") == 0)
 		{
@@ -2593,9 +2582,8 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 			continue;
 		}
 
-		/* ----------
+		/*
 		 * Special handling for dbname
-		 * ----------
 		 */
 		if (strcmp(option->keyword, "dbname") == 0)
 		{

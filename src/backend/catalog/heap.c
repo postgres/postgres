@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.161 2001/03/22 03:59:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.162 2001/03/22 06:16:10 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -186,9 +186,8 @@ heap_create(char *relname,
 	MemoryContext oldcxt;
 	Oid			tblNode = MyDatabaseId;
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
+	/*
+	 * sanity checks
 	 */
 	AssertArg(natts > 0);
 
@@ -200,10 +199,9 @@ heap_create(char *relname,
 			 relname);
 	}
 
-	/* ----------------
-	 *	real ugly stuff to assign the proper relid in the relation
-	 *	descriptor follows.
-	 * ----------------
+	/*
+	 * real ugly stuff to assign the proper relid in the relation
+	 * descriptor follows.
 	 */
 	if (relname && IsSystemRelationName(relname))
 	{
@@ -279,18 +277,16 @@ heap_create(char *relname,
 				 (int) MyProcPid, uniqueId++);
 	}
 
-	/* ----------------
-	 *	switch to the cache context to create the relcache entry.
-	 * ----------------
+	/*
+	 * switch to the cache context to create the relcache entry.
 	 */
 	if (!CacheMemoryContext)
 		CreateCacheMemoryContext();
 
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
-	/* ----------------
-	 *	allocate a new relation descriptor.
-	 * ----------------
+	/*
+	 * allocate a new relation descriptor.
 	 */
 	rel = (Relation) palloc(sizeof(RelationData));
 	MemSet((char *) rel, 0, sizeof(RelationData));
@@ -303,18 +299,16 @@ heap_create(char *relname,
 	 */
 	rel->rd_att = CreateTupleDescCopyConstr(tupDesc);
 
-	/* ----------------
-	 *	nail the reldesc if this is a bootstrap create reln and
-	 *	we may need it in the cache later on in the bootstrap
-	 *	process so we don't ever want it kicked out.  e.g. pg_attribute!!!
-	 * ----------------
+	/*
+	 * nail the reldesc if this is a bootstrap create reln and we may need
+	 * it in the cache later on in the bootstrap process so we don't ever
+	 * want it kicked out.	e.g. pg_attribute!!!
 	 */
 	if (nailme)
 		rel->rd_isnailed = true;
 
-	/* ----------------
-	 *	initialize the fields of our new relation descriptor
-	 * ----------------
+	/*
+	 * initialize the fields of our new relation descriptor
 	 */
 	rel->rd_rel = (Form_pg_class) palloc(sizeof *rel->rd_rel);
 	MemSet((char *) rel->rd_rel, 0, sizeof *rel->rd_rel);
@@ -334,15 +328,13 @@ heap_create(char *relname,
 	rel->rd_node.relNode = relid;
 	rel->rd_rel->relfilenode = relid;
 
-	/* ----------------
-	 *	done building relcache entry.
-	 * ----------------
+	/*
+	 * done building relcache entry.
 	 */
 	MemoryContextSwitchTo(oldcxt);
 
-	/* ----------------
-	 *	have the storage manager create the relation.
-	 * ----------------
+	/*
+	 * have the storage manager create the relation.
 	 */
 	if (storage_create)
 		heap_storage_create(rel);
@@ -432,13 +424,11 @@ CheckAttributeNames(TupleDesc tupdesc)
 	int			j;
 	int			natts = tupdesc->natts;
 
-	/* ----------------
-	 *	first check for collision with system attribute names
-	 * ----------------
+	/*
+	 * first check for collision with system attribute names
 	 *
-	 *	 also, warn user if attribute to be created has
-	 *	 an unknown typid  (usually as a result of a 'retrieve into'
-	 *	  - jolly
+	 * also, warn user if attribute to be created has an unknown typid
+	 * (usually as a result of a 'retrieve into' - jolly
 	 */
 	for (i = 0; i < natts; i++)
 	{
@@ -460,9 +450,8 @@ CheckAttributeNames(TupleDesc tupdesc)
 		}
 	}
 
-	/* ----------------
-	 *	next check for repeated attribute names
-	 * ----------------
+	/*
+	 * next check for repeated attribute names
 	 */
 	for (i = 1; i < natts; i++)
 	{
@@ -508,10 +497,9 @@ RelnameFindRelid(const char *relname)
 
 		pg_class_desc = heap_openr(RelationRelationName, AccessShareLock);
 
-		/* ----------------
-		 *	At bootstrap time, we have to do this the hard way.  Form the
-		 *	scan key.
-		 * ----------------
+		/*
+		 * At bootstrap time, we have to do this the hard way.	Form the
+		 * scan key.
 		 */
 		ScanKeyEntryInitialize(&key,
 							   0,
@@ -519,9 +507,8 @@ RelnameFindRelid(const char *relname)
 							   (RegProcedure) F_NAMEEQ,
 							   (Datum) relname);
 
-		/* ----------------
-		 *	begin the scan
-		 * ----------------
+		/*
+		 * begin the scan
 		 */
 		pg_class_scan = heap_beginscan(pg_class_desc,
 									   0,
@@ -529,10 +516,9 @@ RelnameFindRelid(const char *relname)
 									   1,
 									   &key);
 
-		/* ----------------
-		 *	get a tuple.  if the tuple is NULL then it means we
-		 *	didn't find an existing relation.
-		 * ----------------
+		/*
+		 * get a tuple.  if the tuple is NULL then it means we didn't find
+		 * an existing relation.
 		 */
 		tuple = heap_getnext(pg_class_scan, 0);
 
@@ -567,23 +553,20 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	Relation	idescs[Num_pg_attr_indices];
 	int			natts = tupdesc->natts;
 
-	/* ----------------
-	 *	open pg_attribute
-	 * ----------------
+	/*
+	 * open pg_attribute
 	 */
 	rel = heap_openr(AttributeRelationName, RowExclusiveLock);
 
-	/* -----------------
+	/*
 	 * Check if we have any indices defined on pg_attribute.
-	 * -----------------
 	 */
 	hasindex = RelationGetForm(rel)->relhasindex;
 	if (hasindex)
 		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
 
-	/* ----------------
-	 *	first we add the user attributes..
-	 * ----------------
+	/*
+	 * first we add the user attributes..
 	 */
 	dpp = tupdesc->attrs;
 	for (i = 0; i < natts; i++)
@@ -607,9 +590,8 @@ AddNewAttributeTuples(Oid new_rel_oid,
 		dpp++;
 	}
 
-	/* ----------------
-	 *	next we add the system attributes..
-	 * ----------------
+	/*
+	 * next we add the system attributes..
 	 */
 	dpp = HeapAtt;
 	for (i = 0; i < -1 - FirstLowInvalidHeapAttributeNumber; i++)
@@ -663,31 +645,29 @@ AddNewRelationTuple(Relation pg_class_desc,
 	HeapTuple	tup;
 	Relation	idescs[Num_pg_class_indices];
 
-	/* ----------------
-	 *	first we update some of the information in our
-	 *	uncataloged relation's relation descriptor.
-	 * ----------------
+	/*
+	 * first we update some of the information in our uncataloged
+	 * relation's relation descriptor.
 	 */
 	new_rel_reltup = new_rel_desc->rd_rel;
 
-	/* ----------------
-	 * Here we insert bogus estimates of the size of the new relation.
-	 * In reality, of course, the new relation has 0 tuples and pages,
-	 * and if we were tracking these statistics accurately then we'd
-	 * set the fields that way.  But at present the stats will be updated
-	 * only by VACUUM or CREATE INDEX, and the user might insert a lot of
-	 * tuples before he gets around to doing either of those.  So, instead
-	 * of saying the relation is empty, we insert guesstimates.  The point
-	 * is to keep the optimizer from making really stupid choices on
+	/*
+	 * Here we insert bogus estimates of the size of the new relation. In
+	 * reality, of course, the new relation has 0 tuples and pages, and if
+	 * we were tracking these statistics accurately then we'd set the
+	 * fields that way.  But at present the stats will be updated only by
+	 * VACUUM or CREATE INDEX, and the user might insert a lot of tuples
+	 * before he gets around to doing either of those.	So, instead of
+	 * saying the relation is empty, we insert guesstimates.  The point is
+	 * to keep the optimizer from making really stupid choices on
 	 * never-yet-vacuumed tables; so the estimates need only be large
 	 * enough to discourage the optimizer from using nested-loop plans.
-	 * With this hack, nested-loop plans will be preferred only after
-	 * the table has been proven to be small by VACUUM or CREATE INDEX.
-	 * Maintaining the stats on-the-fly would solve the problem more cleanly,
-	 * but the overhead of that would likely cost more than it'd save.
-	 * (NOTE: CREATE INDEX inserts the same bogus estimates if it finds the
-	 * relation has 0 rows and pages. See index.c.)
-	 * ----------------
+	 * With this hack, nested-loop plans will be preferred only after the
+	 * table has been proven to be small by VACUUM or CREATE INDEX.
+	 * Maintaining the stats on-the-fly would solve the problem more
+	 * cleanly, but the overhead of that would likely cost more than it'd
+	 * save. (NOTE: CREATE INDEX inserts the same bogus estimates if it
+	 * finds the relation has 0 rows and pages. See index.c.)
 	 */
 	new_rel_reltup->relpages = 10;		/* bogus estimates */
 	new_rel_reltup->reltuples = 1000;
@@ -792,9 +772,8 @@ heap_create_with_catalog(char *relname,
 	int			natts = tupdesc->natts;
 	char	   *temp_relname = NULL;
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
+	/*
+	 * sanity checks
 	 */
 	Assert(IsNormalProcessingMode() || IsBootstrapProcessingMode());
 	if (natts <= 0 || natts > MaxHeapAttributeNumber)
@@ -817,17 +796,16 @@ heap_create_with_catalog(char *relname,
 		strcpy(relname, temp_relname);	/* heap_create will change this */
 	}
 
-	/* ----------------
-	 *	Tell heap_create not to create a physical file; we'll do that
-	 *	below after all our catalog updates are done.  (This isn't really
-	 *	necessary anymore, but we may as well avoid the cycles of creating
-	 *	and deleting the file in case we fail.)
+	/*
+	 * Tell heap_create not to create a physical file; we'll do that below
+	 * after all our catalog updates are done.	(This isn't really
+	 * necessary anymore, but we may as well avoid the cycles of creating
+	 * and deleting the file in case we fail.)
 	 *
-	 *	Note: The call to heap_create() changes relname for
-	 *	temp tables; it becomes the true physical relname.
-	 *	The call to heap_storage_create() does all the "real"
-	 *	work of creating the disk file for the relation.
-	 * ----------------
+	 * Note: The call to heap_create() changes relname for temp tables; it
+	 * becomes the true physical relname. The call to
+	 * heap_storage_create() does all the "real" work of creating the disk
+	 * file for the relation.
 	 */
 	new_rel_desc = heap_create(relname, tupdesc, istemp, false,
 							   allow_system_table_mods);
@@ -838,13 +816,12 @@ heap_create_with_catalog(char *relname,
 	/* Assign an OID for the relation's tuple type */
 	new_type_oid = newoid();
 
-	/* ----------------
-	 *	now create an entry in pg_class for the relation.
+	/*
+	 * now create an entry in pg_class for the relation.
 	 *
-	 *	NOTE: we could get a unique-index failure here, in case someone else
-	 *	is creating the same relation name in parallel but hadn't committed
-	 *	yet when we checked for a duplicate name above.
-	 * ----------------
+	 * NOTE: we could get a unique-index failure here, in case someone else
+	 * is creating the same relation name in parallel but hadn't committed
+	 * yet when we checked for a duplicate name above.
 	 */
 	pg_class_desc = heap_openr(RelationRelationName, RowExclusiveLock);
 
@@ -856,20 +833,18 @@ heap_create_with_catalog(char *relname,
 						relkind,
 						temp_relname);
 
-	/* ----------------
-	 *	since defining a relation also defines a complex type,
-	 *	we add a new system type corresponding to the new relation.
+	/*
+	 * since defining a relation also defines a complex type, we add a new
+	 * system type corresponding to the new relation.
 	 *
-	 *	NOTE: we could get a unique-index failure here, in case the same name
-	 *	has already been used for a type.
-	 * ----------------
+	 * NOTE: we could get a unique-index failure here, in case the same name
+	 * has already been used for a type.
 	 */
 	AddNewRelationType(relname, new_rel_oid, new_type_oid);
 
-	/* ----------------
-	 *	now add tuples to pg_attribute for the attributes in
-	 *	our new relation.
-	 * ----------------
+	/*
+	 * now add tuples to pg_attribute for the attributes in our new
+	 * relation.
 	 */
 	AddNewAttributeTuples(new_rel_oid, tupdesc);
 
@@ -887,12 +862,11 @@ heap_create_with_catalog(char *relname,
 	if (relkind != RELKIND_VIEW)
 		heap_storage_create(new_rel_desc);
 
-	/* ----------------
-	 *	ok, the relation has been cataloged, so close our relations
-	 *	and return the oid of the newly created relation.
+	/*
+	 * ok, the relation has been cataloged, so close our relations and
+	 * return the oid of the newly created relation.
 	 *
-	 *	SOMEDAY: fill the STATISTIC relation properly.
-	 * ----------------
+	 * SOMEDAY: fill the STATISTIC relation properly.
 	 */
 	heap_close(new_rel_desc, NoLock);	/* do not unlock till end of xact */
 	heap_close(pg_class_desc, RowExclusiveLock);
@@ -950,16 +924,13 @@ RelationRemoveInheritance(Relation relation)
 	ScanKeyData entry;
 	bool		found = false;
 
-	/* ----------------
-	 *	open pg_inherits
-	 * ----------------
+	/*
+	 * open pg_inherits
 	 */
 	catalogRelation = heap_openr(InheritsRelationName, RowExclusiveLock);
 
-	/* ----------------
-	 *	form a scan key for the subclasses of this class
-	 *	and begin scanning
-	 * ----------------
+	/*
+	 * form a scan key for the subclasses of this class and begin scanning
 	 */
 	ScanKeyEntryInitialize(&entry, 0x0, Anum_pg_inherits_inhparent,
 						   F_OIDEQ,
@@ -971,9 +942,8 @@ RelationRemoveInheritance(Relation relation)
 						  1,
 						  &entry);
 
-	/* ----------------
-	 *	if any subclasses exist, then we disallow the deletion.
-	 * ----------------
+	/*
+	 * if any subclasses exist, then we disallow the deletion.
 	 */
 	tuple = heap_getnext(scan, 0);
 	if (HeapTupleIsValid(tuple))
@@ -992,10 +962,9 @@ RelationRemoveInheritance(Relation relation)
 	}
 	heap_endscan(scan);
 
-	/* ----------------
-	 *	If we get here, it means the relation has no subclasses
-	 *	so we can trash it.  First we remove dead INHERITS tuples.
-	 * ----------------
+	/*
+	 * If we get here, it means the relation has no subclasses so we can
+	 * trash it.  First we remove dead INHERITS tuples.
 	 */
 	entry.sk_attno = Anum_pg_inherits_inhrelid;
 
@@ -1014,9 +983,8 @@ RelationRemoveInheritance(Relation relation)
 	heap_endscan(scan);
 	heap_close(catalogRelation, RowExclusiveLock);
 
-	/* ----------------
-	 *	now remove dead IPL tuples
-	 * ----------------
+	/*
+	 * now remove dead IPL tuples
 	 */
 	catalogRelation = heap_openr(InheritancePrecidenceListRelationName,
 								 RowExclusiveLock);
@@ -1083,9 +1051,8 @@ DeleteRelationTuple(Relation rel)
 	Relation	pg_class_desc;
 	HeapTuple	tup;
 
-	/* ----------------
-	 *	open pg_class
-	 * ----------------
+	/*
+	 * open pg_class
 	 */
 	pg_class_desc = heap_openr(RelationRelationName, RowExclusiveLock);
 
@@ -1096,9 +1063,8 @@ DeleteRelationTuple(Relation rel)
 		elog(ERROR, "Relation \"%s\" does not exist",
 			 RelationGetRelationName(rel));
 
-	/* ----------------
-	 *	delete the relation tuple from pg_class, and finish up.
-	 * ----------------
+	/*
+	 * delete the relation tuple from pg_class, and finish up.
 	 */
 	simple_heap_delete(pg_class_desc, &tup->t_self);
 	heap_freetuple(tup);
@@ -1212,13 +1178,12 @@ heap_truncate(char *relname)
 	rel = heap_openr(relname, AccessExclusiveLock);
 	rid = RelationGetRelid(rel);
 
-	/* ----------------
-	 *	TRUNCATE TABLE within a transaction block is dangerous, because
-	 *	if the transaction is later rolled back we have no way to
-	 *	undo truncation of the relation's physical file.  Disallow it
-	 *	except for a rel created in the current xact (which would be deleted
-	 *	on abort, anyway).
-	 * ----------------
+	/*
+	 * TRUNCATE TABLE within a transaction block is dangerous, because if
+	 * the transaction is later rolled back we have no way to undo
+	 * truncation of the relation's physical file.  Disallow it except for
+	 * a rel created in the current xact (which would be deleted on abort,
+	 * anyway).
 	 */
 	if (IsTransactionBlock() && !rel->rd_myxactonly)
 		elog(ERROR, "TRUNCATE TABLE cannot run inside a BEGIN/END block");
@@ -1256,9 +1221,8 @@ DeleteAttributeTuples(Relation rel)
 	HeapTuple	tup;
 	int2		attnum;
 
-	/* ----------------
-	 *	open pg_attribute
-	 * ----------------
+	/*
+	 * open pg_attribute
 	 */
 	pg_attribute_desc = heap_openr(AttributeRelationName, RowExclusiveLock);
 
@@ -1305,16 +1269,14 @@ DeleteTypeTuple(Relation rel)
 	HeapTuple	atttup;
 	Oid			typoid;
 
-	/* ----------------
-	 *	open pg_type
-	 * ----------------
+	/*
+	 * open pg_type
 	 */
 	pg_type_desc = heap_openr(TypeRelationName, RowExclusiveLock);
 
-	/* ----------------
-	 *	create a scan key to locate the type tuple corresponding
-	 *	to this relation.
-	 * ----------------
+	/*
+	 * create a scan key to locate the type tuple corresponding to this
+	 * relation.
 	 */
 	ScanKeyEntryInitialize(&key, 0,
 						   Anum_pg_type_typrelid,
@@ -1327,10 +1289,9 @@ DeleteTypeTuple(Relation rel)
 								  1,
 								  &key);
 
-	/* ----------------
-	 *	use heap_getnext() to fetch the pg_type tuple.	If this
-	 *	tuple is not valid then something's wrong.
-	 * ----------------
+	/*
+	 * use heap_getnext() to fetch the pg_type tuple.  If this tuple is
+	 * not valid then something's wrong.
 	 */
 	tup = heap_getnext(pg_type_scan, 0);
 
@@ -1342,12 +1303,10 @@ DeleteTypeTuple(Relation rel)
 			 RelationGetRelationName(rel));
 	}
 
-	/* ----------------
-	 *	now scan pg_attribute.	if any other relations have
-	 *	attributes of the type of the relation we are deleteing
-	 *	then we have to disallow the deletion.	should talk to
-	 *	stonebraker about this.  -cim 6/19/90
-	 * ----------------
+	/*
+	 * now scan pg_attribute.  if any other relations have attributes of
+	 * the type of the relation we are deleteing then we have to disallow
+	 * the deletion.  should talk to stonebraker about this.  -cim 6/19/90
 	 */
 	typoid = tup->t_data->t_oid;
 
@@ -1365,11 +1324,9 @@ DeleteTypeTuple(Relation rel)
 									   1,
 									   &attkey);
 
-	/* ----------------
-	 *	try and get a pg_attribute tuple.  if we succeed it means
-	 *	we can't delete the relation because something depends on
-	 *	the schema.
-	 * ----------------
+	/*
+	 * try and get a pg_attribute tuple.  if we succeed it means we can't
+	 * delete the relation because something depends on the schema.
 	 */
 	atttup = heap_getnext(pg_attribute_scan, 0);
 
@@ -1388,10 +1345,9 @@ DeleteTypeTuple(Relation rel)
 	heap_endscan(pg_attribute_scan);
 	heap_close(pg_attribute_desc, RowExclusiveLock);
 
-	/* ----------------
-	 *	Ok, it's safe so we delete the relation tuple
-	 *	from pg_type and finish up.
-	 * ----------------
+	/*
+	 * Ok, it's safe so we delete the relation tuple from pg_type and
+	 * finish up.
 	 */
 	simple_heap_delete(pg_type_desc, &tup->t_self);
 
@@ -1414,17 +1370,15 @@ heap_drop_with_catalog(const char *relname,
 	bool		istemp = is_temp_rel_name(relname);
 	int			i;
 
-	/* ----------------
-	 *	Open and lock the relation.
-	 * ----------------
+	/*
+	 * Open and lock the relation.
 	 */
 	rel = heap_openr(relname, AccessExclusiveLock);
 	rid = RelationGetRelid(rel);
 	has_toasttable = rel->rd_rel->reltoastrelid != InvalidOid;
 
-	/* ----------------
-	 *	prevent deletion of system relations
-	 * ----------------
+	/*
+	 * prevent deletion of system relations
 	 */
 	/* allow temp of pg_class? Guess so. */
 	if (!istemp && !allow_system_table_mods &&
@@ -1432,19 +1386,17 @@ heap_drop_with_catalog(const char *relname,
 		elog(ERROR, "System relation \"%s\" may not be dropped",
 			 RelationGetRelationName(rel));
 
-	/* ----------------
-	 * Release all buffers that belong to this relation, after writing
-	 * any that are dirty
-	 * ----------------
+	/*
+	 * Release all buffers that belong to this relation, after writing any
+	 * that are dirty
 	 */
 	i = FlushRelationBuffers(rel, (BlockNumber) 0);
 	if (i < 0)
 		elog(ERROR, "heap_drop_with_catalog: FlushRelationBuffers returned %d",
 			 i);
 
-	/* ----------------
-	 *	remove rules if necessary
-	 * ----------------
+	/*
+	 * remove rules if necessary
 	 */
 	if (rel->rd_rules != NULL)
 		RelationRemoveRules(rid);
@@ -1452,27 +1404,23 @@ heap_drop_with_catalog(const char *relname,
 	/* triggers */
 	RelationRemoveTriggers(rel);
 
-	/* ----------------
-	 *	remove inheritance information
-	 * ----------------
+	/*
+	 * remove inheritance information
 	 */
 	RelationRemoveInheritance(rel);
 
-	/* ----------------
-	 *	remove indexes if necessary
-	 * ----------------
+	/*
+	 * remove indexes if necessary
 	 */
 	RelationRemoveIndexes(rel);
 
-	/* ----------------
-	 *	delete attribute tuples
-	 * ----------------
+	/*
+	 * delete attribute tuples
 	 */
 	DeleteAttributeTuples(rel);
 
-	/* ----------------
-	 *	delete comments, statistics, and constraints
-	 * ----------------
+	/*
+	 * delete comments, statistics, and constraints
 	 */
 	DeleteComments(RelationGetRelid(rel));
 
@@ -1480,21 +1428,18 @@ heap_drop_with_catalog(const char *relname,
 
 	RemoveConstraints(rel);
 
-	/* ----------------
-	 *	delete type tuple
-	 * ----------------
+	/*
+	 * delete type tuple
 	 */
 	DeleteTypeTuple(rel);
 
-	/* ----------------
-	 *	delete relation tuple
-	 * ----------------
+	/*
+	 * delete relation tuple
 	 */
 	DeleteRelationTuple(rel);
 
-	/* ----------------
-	 *	unlink the relation's physical file and finish up.
-	 * ----------------
+	/*
+	 * unlink the relation's physical file and finish up.
 	 */
 	if (rel->rd_rel->relkind != RELKIND_VIEW)
 		smgrunlink(DEFAULT_SMGR, rel);
@@ -1506,9 +1451,8 @@ heap_drop_with_catalog(const char *relname,
 	 */
 	heap_close(rel, NoLock);
 
-	/* ----------------
-	 *	flush the relation from the relcache
-	 * ----------------
+	/*
+	 * flush the relation from the relcache
 	 */
 	RelationForgetRelation(rid);
 

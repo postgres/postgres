@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.44 2001/03/22 04:00:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.45 2001/03/22 06:16:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,22 +162,20 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 
 	pfree(dbfname);
 
-	/* ----------------
-	 *	read and examine every page in pg_database
+	/*
+	 * read and examine every page in pg_database
 	 *
-	 *	Raw I/O! Read those tuples the hard way! Yow!
+	 * Raw I/O! Read those tuples the hard way! Yow!
 	 *
-	 *	Why don't we use the access methods or move this code
-	 *	someplace else?  This is really pg_database schema dependent
-	 *	code.  Perhaps it should go in lib/catalog/pg_database?
-	 *	-cim 10/3/90
+	 * Why don't we use the access methods or move this code someplace else?
+	 * This is really pg_database schema dependent code.  Perhaps it
+	 * should go in lib/catalog/pg_database? -cim 10/3/90
 	 *
-	 *	mao replies 4 apr 91:  yeah, maybe this should be moved to
-	 *	lib/catalog.  however, we CANNOT use the access methods since
-	 *	those use the buffer cache, which uses the relation cache, which
-	 *	requires that the dbid be set, which is what we're trying to do
-	 *	here.
-	 * ----------------
+	 * mao replies 4 apr 91:  yeah, maybe this should be moved to
+	 * lib/catalog.  however, we CANNOT use the access methods since those
+	 * use the buffer cache, which uses the relation cache, which requires
+	 * that the dbid be set, which is what we're trying to do here.
+	 *
 	 */
 	pg = (Page) palloc(BLCKSZ);
 
@@ -199,16 +197,17 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 			tup.t_datamcxt = NULL;
 			tup.t_data = (HeapTupleHeader) PageGetItem(pg, lpp);
 
-			/*--------------------
+			/*
 			 * Check to see if tuple is valid (committed).
 			 *
 			 * XXX warning, will robinson: violation of transaction semantics
-			 * happens right here.	We cannot really determine if the tuple
-			 * is valid without checking transaction commit status, and the
-			 * only way to do that at init time is to paw over pg_log by hand,
-			 * too.  Instead of checking, we assume that the inserting
-			 * transaction committed, and that any deleting transaction did
-			 * also, unless shown otherwise by on-row commit status bits.
+			 * happens right here.	We cannot really determine if the
+			 * tuple is valid without checking transaction commit status,
+			 * and the only way to do that at init time is to paw over
+			 * pg_log by hand, too.  Instead of checking, we assume that
+			 * the inserting transaction committed, and that any deleting
+			 * transaction did also, unless shown otherwise by on-row
+			 * commit status bits.
 			 *
 			 * All in all, this code is pretty shaky.  We will cross-check
 			 * our result in ReverifyMyDatabase() in postinit.c.
@@ -221,7 +220,6 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 			 * XXX wouldn't it be better to let new backends read the
 			 * database OID from a flat file, handled the same way we
 			 * handle the password relation?
-			 *--------------------
 			 */
 			if (!PhonyHeapTupleSatisfiesNow(tup.t_data))
 				continue;

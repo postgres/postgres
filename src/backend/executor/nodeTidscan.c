@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.15 2001/03/22 03:59:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.16 2001/03/22 06:16:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,9 +83,8 @@ TidNext(TidScan *node)
 	ItemPointer *tidList,
 				itemptr;
 
-	/* ----------------
-	 *	extract necessary information from tid scan node
-	 * ----------------
+	/*
+	 * extract necessary information from tid scan node
 	 */
 	estate = node->scan.plan.state;
 	direction = estate->es_direction;
@@ -120,11 +119,10 @@ TidNext(TidScan *node)
 
 	tuple = &(tidstate->tss_htup);
 
-	/* ----------------
-	 *	ok, now that we have what we need, fetch an tid tuple.
-	 *	if scanning this tid succeeded then return the
-	 *	appropriate heap tuple.. else return NULL.
-	 * ----------------
+	/*
+	 * ok, now that we have what we need, fetch an tid tuple. if scanning
+	 * this tid succeeded then return the appropriate heap tuple.. else
+	 * return NULL.
 	 */
 	bBackward = ScanDirectionIsBackward(direction);
 	if (bBackward)
@@ -161,13 +159,12 @@ TidNext(TidScan *node)
 			bool		prev_matches = false;
 			int			prev_tid;
 
-			/* ----------------
-			 *	store the scanned tuple in the scan tuple slot of
-			 *	the scan state.  Eventually we will only do this and not
-			 *	return a tuple.  Note: we pass 'false' because tuples
-			 *	returned by amgetnext are pointers onto disk pages and
-			 *	were not created with palloc() and so should not be pfree()'d.
-			 * ----------------
+			/*
+			 * store the scanned tuple in the scan tuple slot of the scan
+			 * state.  Eventually we will only do this and not return a
+			 * tuple.  Note: we pass 'false' because tuples returned by
+			 * amgetnext are pointers onto disk pages and were not created
+			 * with palloc() and so should not be pfree()'d.
 			 */
 			ExecStoreTuple(tuple,		/* tuple to store */
 						   slot,/* slot to store in */
@@ -211,10 +208,10 @@ TidNext(TidScan *node)
 		if (slot_is_valid)
 			return slot;
 	}
-	/* ----------------
-	 *	if we get here it means the tid scan failed so we
-	 *	are at the end of the scan..
-	 * ----------------
+
+	/*
+	 * if we get here it means the tid scan failed so we are at the end of
+	 * the scan..
 	 */
 	return ExecClearTuple(slot);
 }
@@ -241,9 +238,9 @@ TidNext(TidScan *node)
 TupleTableSlot *
 ExecTidScan(TidScan *node)
 {
-	/* ----------------
-	 *	use TidNext as access method
-	 * ----------------
+
+	/*
+	 * use TidNext as access method
 	 */
 	return ExecScan(&node->scan, (ExecScanAccessMtd) TidNext);
 }
@@ -281,9 +278,8 @@ ExecTidReScan(TidScan *node, ExprContext *exprCtxt, Plan *parent)
 							 node->scan.scanstate->cstate.cs_ExprContext,
 										  tidList);
 
-	/* ----------------
-	 *	perhaps return something meaningful
-	 * ----------------
+	/*
+	 * perhaps return something meaningful
 	 */
 	return;
 }
@@ -306,32 +302,27 @@ ExecEndTidScan(TidScan *node)
 	if (tidstate && tidstate->tss_TidList)
 		pfree(tidstate->tss_TidList);
 
-	/* ----------------
-	 *	extract information from the node
-	 * ----------------
+	/*
+	 * extract information from the node
 	 */
 
-	/* ----------------
-	 *	Free the projection info and the scan attribute info
+	/*
+	 * Free the projection info and the scan attribute info
 	 *
-	 *	Note: we don't ExecFreeResultType(scanstate)
-	 *		  because the rule manager depends on the tupType
-	 *		  returned by ExecMain().  So for now, this
-	 *		  is freed at end-transaction time.  -cim 6/2/91
-	 * ----------------
+	 * Note: we don't ExecFreeResultType(scanstate) because the rule manager
+	 * depends on the tupType returned by ExecMain().  So for now, this is
+	 * freed at end-transaction time.  -cim 6/2/91
 	 */
 	ExecFreeProjectionInfo(&scanstate->cstate);
 	ExecFreeExprContext(&scanstate->cstate);
 
-	/* ----------------
-	 *	close the heap and tid relations
-	 * ----------------
+	/*
+	 * close the heap and tid relations
 	 */
 	ExecCloseR((Plan *) node);
 
-	/* ----------------
-	 *	clear out tuple table slots
-	 * ----------------
+	/*
+	 * clear out tuple table slots
 	 */
 	ExecClearTuple(scanstate->cstate.cs_ResultTupleSlot);
 	ExecClearTuple(scanstate->css_ScanTupleSlot);
@@ -400,56 +391,50 @@ ExecInitTidScan(TidScan *node, EState *estate, Plan *parent)
 	Relation	currentRelation;
 	List	   *execParam = NIL;
 
-	/* ----------------
-	 *	assign execution state to node
-	 * ----------------
+	/*
+	 * assign execution state to node
 	 */
 	node->scan.plan.state = estate;
 
-	/* --------------------------------
-	 *	Part 1)  initialize scan state
+	/*
+	 * Part 1)	initialize scan state
 	 *
-	 *	create new CommonScanState for node
-	 * --------------------------------
+	 * create new CommonScanState for node
 	 */
 	scanstate = makeNode(CommonScanState);
 	node->scan.scanstate = scanstate;
 
-	/* ----------------
-	 *	Miscellaneous initialization
+	/*
+	 * Miscellaneous initialization
 	 *
-	 *		 +	create expression context for node
-	 * ----------------
+	 * create expression context for node
 	 */
 	ExecAssignExprContext(estate, &scanstate->cstate);
 
 #define TIDSCAN_NSLOTS 3
-	/* ----------------
-	 *	tuple table initialization
-	 * ----------------
+
+	/*
+	 * tuple table initialization
 	 */
 	ExecInitResultTupleSlot(estate, &scanstate->cstate);
 	ExecInitScanTupleSlot(estate, scanstate);
 
-	/* ----------------
-	 *	initialize projection info.  result type comes from scan desc
-	 *	below..
-	 * ----------------
+	/*
+	 * initialize projection info.	result type comes from scan desc
+	 * below..
 	 */
 	ExecAssignProjectionInfo((Plan *) node, &scanstate->cstate);
 
-	/* --------------------------------
-	  *  Part 2)  initialize tid scan state
-	  *
-	  *  create new TidScanState for node
-	  * --------------------------------
-	  */
+	/*
+	 * Part 2)	initialize tid scan state
+	 *
+	 * create new TidScanState for node
+	 */
 	tidstate = makeNode(TidScanState);
 	node->tidstate = tidstate;
 
-	/* ----------------
-	 *	get the tid node information
-	 * ----------------
+	/*
+	 * get the tid node information
 	 */
 	tidList = (ItemPointer *) palloc(length(node->tideval) * sizeof(ItemPointer));
 	numTids = 0;
@@ -463,17 +448,14 @@ ExecInitTidScan(TidScan *node, EState *estate, Plan *parent)
 	tidstate->tss_TidPtr = tidPtr;
 	tidstate->tss_TidList = tidList;
 
-	/* ----------------
-	 *	get the range table and direction information
-	 *	from the execution state (these are needed to
-	 *	open the relations).
-	 * ----------------
+	/*
+	 * get the range table and direction information from the execution
+	 * state (these are needed to open the relations).
 	 */
 	rangeTable = estate->es_range_table;
 
-	/* ----------------
-	 *	open the base relation
-	 * ----------------
+	/*
+	 * open the base relation
 	 */
 	relid = node->scan.scanrelid;
 	rtentry = rt_fetch(relid, rangeTable);
@@ -483,9 +465,8 @@ ExecInitTidScan(TidScan *node, EState *estate, Plan *parent)
 	scanstate->css_currentRelation = currentRelation;
 	scanstate->css_currentScanDesc = 0;
 
-	/* ----------------
-	 *	get the scan type from the relation descriptor.
-	 * ----------------
+	/*
+	 * get the scan type from the relation descriptor.
 	 */
 	ExecAssignScanType(scanstate, RelationGetDescr(currentRelation), false);
 	ExecAssignResultTypeFromTL((Plan *) node, &scanstate->cstate);
@@ -496,9 +477,8 @@ ExecInitTidScan(TidScan *node, EState *estate, Plan *parent)
 	 */
 	((Plan *) node)->chgParam = execParam;
 
-	/* ----------------
-	 *	all done.
-	 * ----------------
+	/*
+	 * all done.
 	 */
 	return TRUE;
 }

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.139 2001/03/22 03:59:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.140 2001/03/22 06:16:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,9 +114,8 @@ _copyPlan(Plan *from)
 {
 	Plan	   *newnode = makeNode(Plan);
 
-	/* ----------------
-	 *	copy the node superclass fields
-	 * ----------------
+	/*
+	 * copy the node superclass fields
 	 */
 	CopyPlanFields(from, newnode);
 
@@ -133,15 +132,13 @@ _copyResult(Result *from)
 {
 	Result	   *newnode = makeNode(Result);
 
-	/* ----------------
-	 *	copy node superclass fields
-	 * ----------------
+	/*
+	 * copy node superclass fields
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	Node_Copy(from, newnode, resconstantqual);
 
@@ -165,15 +162,13 @@ _copyAppend(Append *from)
 {
 	Append	   *newnode = makeNode(Append);
 
-	/* ----------------
-	 *	copy node superclass fields
-	 * ----------------
+	/*
+	 * copy node superclass fields
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	Node_Copy(from, newnode, appendplans);
 	newnode->isTarget = from->isTarget;
@@ -205,9 +200,8 @@ _copyScan(Scan *from)
 {
 	Scan	   *newnode = makeNode(Scan);
 
-	/* ----------------
-	 *	copy node superclass fields
-	 * ----------------
+	/*
+	 * copy node superclass fields
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 	CopyScanFields((Scan *) from, (Scan *) newnode);
@@ -224,9 +218,8 @@ _copySeqScan(SeqScan *from)
 {
 	SeqScan    *newnode = makeNode(SeqScan);
 
-	/* ----------------
-	 *	copy node superclass fields
-	 * ----------------
+	/*
+	 * copy node superclass fields
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 	CopyScanFields((Scan *) from, (Scan *) newnode);
@@ -243,16 +236,14 @@ _copyIndexScan(IndexScan *from)
 {
 	IndexScan  *newnode = makeNode(IndexScan);
 
-	/* ----------------
-	 *	copy node superclass fields
-	 * ----------------
+	/*
+	 * copy node superclass fields
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 	CopyScanFields((Scan *) from, (Scan *) newnode);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	newnode->indxid = listCopy(from->indxid);
 	Node_Copy(from, newnode, indxqual);
@@ -282,15 +273,14 @@ _copyTidScan(TidScan *from)
 {
 	TidScan    *newnode = makeNode(TidScan);
 
-	/* ----------------
-	 *	copy node superclass fields
-	 * ----------------
+	/*
+	 * copy node superclass fields
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 	CopyScanFields((Scan *) from, (Scan *) newnode);
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+
+	/*
+	 * copy remainder of node
 	 */
 	newnode->needRescan = from->needRescan;
 	Node_Copy(from, newnode, tideval);
@@ -307,16 +297,14 @@ _copySubqueryScan(SubqueryScan *from)
 {
 	SubqueryScan *newnode = makeNode(SubqueryScan);
 
-	/* ----------------
-	 *	copy node superclass fields
-	 * ----------------
+	/*
+	 * copy node superclass fields
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 	CopyScanFields((Scan *) from, (Scan *) newnode);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	Node_Copy(from, newnode, subplan);
 
@@ -352,9 +340,8 @@ _copyJoin(Join *from)
 {
 	Join	   *newnode = makeNode(Join);
 
-	/* ----------------
-	 *	copy node superclass fields
-	 * ----------------
+	/*
+	 * copy node superclass fields
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 	CopyJoinFields(from, newnode);
@@ -372,9 +359,8 @@ _copyNestLoop(NestLoop *from)
 {
 	NestLoop   *newnode = makeNode(NestLoop);
 
-	/* ----------------
-	 *	copy node superclass fields
-	 * ----------------
+	/*
+	 * copy node superclass fields
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 	CopyJoinFields((Join *) from, (Join *) newnode);
@@ -392,16 +378,14 @@ _copyMergeJoin(MergeJoin *from)
 {
 	MergeJoin  *newnode = makeNode(MergeJoin);
 
-	/* ----------------
-	 *	copy node superclass fields
-	 * ----------------
+	/*
+	 * copy node superclass fields
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 	CopyJoinFields((Join *) from, (Join *) newnode);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	Node_Copy(from, newnode, mergeclauses);
 
@@ -424,16 +408,14 @@ _copyHashJoin(HashJoin *from)
 {
 	HashJoin   *newnode = makeNode(HashJoin);
 
-	/* ----------------
-	 *	copy node superclass fields
-	 * ----------------
+	/*
+	 * copy node superclass fields
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 	CopyJoinFields((Join *) from, (Join *) newnode);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	Node_Copy(from, newnode, hashclauses);
 	newnode->hashjoinop = from->hashjoinop;
@@ -458,9 +440,8 @@ _copyMaterial(Material *from)
 {
 	Material   *newnode = makeNode(Material);
 
-	/* ----------------
-	 *	copy node superclass fields
-	 * ----------------
+	/*
+	 * copy node superclass fields
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 
@@ -477,9 +458,8 @@ _copySort(Sort *from)
 {
 	Sort	   *newnode = makeNode(Sort);
 
-	/* ----------------
-	 *	copy node superclass fields
-	 * ----------------
+	/*
+	 * copy node superclass fields
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 
@@ -546,15 +526,13 @@ _copyUnique(Unique *from)
 {
 	Unique	   *newnode = makeNode(Unique);
 
-	/* ----------------
-	 *	copy node superclass fields
-	 * ----------------
+	/*
+	 * copy node superclass fields
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	newnode->numCols = from->numCols;
 	newnode->uniqColIdx = palloc(from->numCols * sizeof(AttrNumber));
@@ -572,15 +550,13 @@ _copySetOp(SetOp *from)
 {
 	SetOp	   *newnode = makeNode(SetOp);
 
-	/* ----------------
-	 *	copy node superclass fields
-	 * ----------------
+	/*
+	 * copy node superclass fields
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	newnode->cmd = from->cmd;
 	newnode->numCols = from->numCols;
@@ -600,15 +576,13 @@ _copyLimit(Limit *from)
 {
 	Limit	   *newnode = makeNode(Limit);
 
-	/* ----------------
-	 *	copy node superclass fields
-	 * ----------------
+	/*
+	 * copy node superclass fields
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	Node_Copy(from, newnode, limitOffset);
 	Node_Copy(from, newnode, limitCount);
@@ -625,15 +599,13 @@ _copyHash(Hash *from)
 {
 	Hash	   *newnode = makeNode(Hash);
 
-	/* ----------------
-	 *	copy node superclass fields
-	 * ----------------
+	/*
+	 * copy node superclass fields
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	Node_Copy(from, newnode, hashkey);
 
@@ -691,9 +663,8 @@ _copyFjoin(Fjoin *from)
 {
 	Fjoin	   *newnode = makeNode(Fjoin);
 
-	/* ----------------
-	 *	copy node superclass fields
-	 * ----------------
+	/*
+	 * copy node superclass fields
 	 */
 
 	newnode->fj_initialized = from->fj_initialized;
@@ -726,9 +697,8 @@ _copyExpr(Expr *from)
 {
 	Expr	   *newnode = makeNode(Expr);
 
-	/* ----------------
-	 *	copy node superclass fields
-	 * ----------------
+	/*
+	 * copy node superclass fields
 	 */
 	newnode->typeOid = from->typeOid;
 	newnode->opType = from->opType;
@@ -748,9 +718,8 @@ _copyVar(Var *from)
 {
 	Var		   *newnode = makeNode(Var);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	newnode->varno = from->varno;
 	newnode->varattno = from->varattno;
@@ -785,9 +754,8 @@ _copyOper(Oper *from)
 {
 	Oper	   *newnode = makeNode(Oper);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	newnode->opno = from->opno;
 	newnode->opid = from->opid;
@@ -807,27 +775,27 @@ _copyConst(Const *from)
 {
 	Const	   *newnode = makeNode(Const);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	newnode->consttype = from->consttype;
 	newnode->constlen = from->constlen;
 
 	if (from->constbyval || from->constisnull)
 	{
-		/* ----------------
-		 *	passed by value so just copy the datum.
-		 *	Also, don't try to copy struct when value is null!
-		 * ----------------
+
+		/*
+		 * passed by value so just copy the datum. Also, don't try to copy
+		 * struct when value is null!
+		 *
 		 */
 		newnode->constvalue = from->constvalue;
 	}
 	else
 	{
-		/* ----------------
-		 *	not passed by value. datum contains a pointer.
-		 * ----------------
+
+		/*
+		 * not passed by value. datum contains a pointer.
 		 */
 		int			length = from->constlen;
 
@@ -856,9 +824,8 @@ _copyParam(Param *from)
 {
 	Param	   *newnode = makeNode(Param);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	newnode->paramkind = from->paramkind;
 	newnode->paramid = from->paramid;
@@ -879,9 +846,8 @@ _copyFunc(Func *from)
 {
 	Func	   *newnode = makeNode(Func);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	newnode->funcid = from->funcid;
 	newnode->functype = from->functype;
@@ -900,9 +866,8 @@ _copyAggref(Aggref *from)
 {
 	Aggref	   *newnode = makeNode(Aggref);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	newnode->aggname = pstrdup(from->aggname);
 	newnode->basetype = from->basetype;
@@ -924,9 +889,8 @@ _copySubLink(SubLink *from)
 {
 	SubLink    *newnode = makeNode(SubLink);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	newnode->subLinkType = from->subLinkType;
 	newnode->useor = from->useor;
@@ -946,9 +910,8 @@ _copyFieldSelect(FieldSelect *from)
 {
 	FieldSelect *newnode = makeNode(FieldSelect);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	Node_Copy(from, newnode, arg);
 	newnode->fieldnum = from->fieldnum;
@@ -967,9 +930,8 @@ _copyRelabelType(RelabelType *from)
 {
 	RelabelType *newnode = makeNode(RelabelType);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	Node_Copy(from, newnode, arg);
 	newnode->resulttype = from->resulttype;
@@ -1026,9 +988,8 @@ _copyCaseExpr(CaseExpr *from)
 {
 	CaseExpr   *newnode = makeNode(CaseExpr);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	newnode->casetype = from->casetype;
 
@@ -1048,9 +1009,8 @@ _copyCaseWhen(CaseWhen *from)
 {
 	CaseWhen   *newnode = makeNode(CaseWhen);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	Node_Copy(from, newnode, expr);
 	Node_Copy(from, newnode, result);
@@ -1063,9 +1023,8 @@ _copyArrayRef(ArrayRef *from)
 {
 	ArrayRef   *newnode = makeNode(ArrayRef);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	newnode->refattrlength = from->refattrlength;
 	newnode->refelemlength = from->refelemlength;
@@ -1229,15 +1188,13 @@ _copyIndexPath(IndexPath *from)
 {
 	IndexPath  *newnode = makeNode(IndexPath);
 
-	/* ----------------
-	 *	copy the node superclass fields
-	 * ----------------
+	/*
+	 * copy the node superclass fields
 	 */
 	CopyPathFields((Path *) from, (Path *) newnode);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	newnode->indexid = listCopy(from->indexid);
 	Node_Copy(from, newnode, indexqual);
@@ -1258,15 +1215,13 @@ _copyTidPath(TidPath *from)
 {
 	TidPath    *newnode = makeNode(TidPath);
 
-	/* ----------------
-	 *	copy the node superclass fields
-	 * ----------------
+	/*
+	 * copy the node superclass fields
 	 */
 	CopyPathFields((Path *) from, (Path *) newnode);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	Node_Copy(from, newnode, tideval);
 	newnode->unjoined_relids = listCopy(from->unjoined_relids);
@@ -1283,15 +1238,13 @@ _copyAppendPath(AppendPath *from)
 {
 	AppendPath *newnode = makeNode(AppendPath);
 
-	/* ----------------
-	 *	copy the node superclass fields
-	 * ----------------
+	/*
+	 * copy the node superclass fields
 	 */
 	CopyPathFields((Path *) from, (Path *) newnode);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	Node_Copy(from, newnode, subpaths);
 
@@ -1323,9 +1276,8 @@ _copyNestPath(NestPath *from)
 {
 	NestPath   *newnode = makeNode(NestPath);
 
-	/* ----------------
-	 *	copy the node superclass fields
-	 * ----------------
+	/*
+	 * copy the node superclass fields
 	 */
 	CopyPathFields((Path *) from, (Path *) newnode);
 	CopyJoinPathFields((JoinPath *) from, (JoinPath *) newnode);
@@ -1342,16 +1294,14 @@ _copyMergePath(MergePath *from)
 {
 	MergePath  *newnode = makeNode(MergePath);
 
-	/* ----------------
-	 *	copy the node superclass fields
-	 * ----------------
+	/*
+	 * copy the node superclass fields
 	 */
 	CopyPathFields((Path *) from, (Path *) newnode);
 	CopyJoinPathFields((JoinPath *) from, (JoinPath *) newnode);
 
-	/* ----------------
-	 *	copy the remainder of the node
-	 * ----------------
+	/*
+	 * copy the remainder of the node
 	 */
 	Node_Copy(from, newnode, path_mergeclauses);
 	Node_Copy(from, newnode, outersortkeys);
@@ -1369,16 +1319,14 @@ _copyHashPath(HashPath *from)
 {
 	HashPath   *newnode = makeNode(HashPath);
 
-	/* ----------------
-	 *	copy the node superclass fields
-	 * ----------------
+	/*
+	 * copy the node superclass fields
 	 */
 	CopyPathFields((Path *) from, (Path *) newnode);
 	CopyJoinPathFields((JoinPath *) from, (JoinPath *) newnode);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	Node_Copy(from, newnode, path_hashclauses);
 
@@ -1394,9 +1342,8 @@ _copyPathKeyItem(PathKeyItem *from)
 {
 	PathKeyItem *newnode = makeNode(PathKeyItem);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	Node_Copy(from, newnode, key);
 	newnode->sortop = from->sortop;
@@ -1413,9 +1360,8 @@ _copyRestrictInfo(RestrictInfo *from)
 {
 	RestrictInfo *newnode = makeNode(RestrictInfo);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	Node_Copy(from, newnode, clause);
 	newnode->eval_cost = from->eval_cost;
@@ -1447,9 +1393,8 @@ _copyJoinInfo(JoinInfo *from)
 {
 	JoinInfo   *newnode = makeNode(JoinInfo);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	newnode->unjoined_relids = listCopy(from->unjoined_relids);
 	Node_Copy(from, newnode, jinfo_restrictinfo);

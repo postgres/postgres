@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.64 2001/03/22 03:59:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.65 2001/03/22 06:16:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -238,21 +238,19 @@ _bt_binsrch(Relation rel,
 			high = mid;
 	}
 
-	/*--------------------
+	/*
 	 * At this point we have high == low, but be careful: they could point
 	 * past the last slot on the page.
 	 *
-	 * On a leaf page, we always return the first key >= scan key
-	 * (which could be the last slot + 1).
-	 *--------------------
+	 * On a leaf page, we always return the first key >= scan key (which
+	 * could be the last slot + 1).
 	 */
 	if (P_ISLEAF(opaque))
 		return low;
 
-	/*--------------------
-	 * On a non-leaf page, return the last key < scan key.
-	 * There must be one if _bt_compare() is playing by the rules.
-	 *--------------------
+	/*
+	 * On a non-leaf page, return the last key < scan key. There must be
+	 * one if _bt_compare() is playing by the rules.
 	 */
 	Assert(low > P_FIRSTDATAKEY(opaque));
 
@@ -584,21 +582,20 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 	ItemPointerSet(current, blkno, offnum);
 
-	/*----------
-	 * At this point we are positioned at the first item >= scan key,
-	 * or possibly at the end of a page on which all the existing items
-	 * are < scan key and we know that everything on later pages is
-	 * >= scan key.  We could step forward in the latter case, but that'd
-	 * be a waste of time if we want to scan backwards.  So, it's now time to
-	 * examine the scan strategy to find the exact place to start the scan.
+	/*
+	 * At this point we are positioned at the first item >= scan key, or
+	 * possibly at the end of a page on which all the existing items are <
+	 * scan key and we know that everything on later pages is >= scan key.
+	 * We could step forward in the latter case, but that'd be a waste of
+	 * time if we want to scan backwards.  So, it's now time to examine
+	 * the scan strategy to find the exact place to start the scan.
 	 *
-	 * Note: if _bt_step fails (meaning we fell off the end of the index
-	 * in one direction or the other), we either return NULL (no matches) or
-	 * call _bt_endpoint() to set up a scan starting at that index endpoint,
-	 * as appropriate for the desired scan type.
+	 * Note: if _bt_step fails (meaning we fell off the end of the index in
+	 * one direction or the other), we either return NULL (no matches) or
+	 * call _bt_endpoint() to set up a scan starting at that index
+	 * endpoint, as appropriate for the desired scan type.
 	 *
 	 * it's yet other place to add some code later for is(not)null ...
-	 *----------
 	 */
 
 	switch (strat_total)

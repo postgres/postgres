@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.143 2001/03/22 03:59:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.144 2001/03/22 06:16:10 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -235,9 +235,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 	heapTupDesc = RelationGetDescr(heapRelation);
 	natts = RelationGetForm(heapRelation)->relnatts;
 
-	/* ----------------
-	 *	allocate the new tuple descriptor
-	 * ----------------
+	/*
+	 * allocate the new tuple descriptor
 	 */
 
 	indexTupDesc = CreateTemplateTupleDesc(numatts);
@@ -255,21 +254,20 @@ ConstructTupleDescriptor(Relation heapRelation,
 		Form_pg_attribute from;
 		Form_pg_attribute to;
 
-		/* ----------------
-		 *	 get the attribute number and make sure it's valid;
-		 *	 determine which attribute descriptor to copy
-		 * ----------------
+		/*
+		 * get the attribute number and make sure it's valid; determine
+		 * which attribute descriptor to copy
 		 */
 		atnum = attNums[i];
 
 		if (!AttrNumberIsForUserDefinedAttr(atnum))
 		{
-			/* ----------------
-			 *	  here we are indexing on a system attribute (-1...-n)
-			 *	  so we convert atnum into a usable index 0...n-1 so we can
-			 *	  use it to dereference the array sysatts[] which stores
-			 *	  tuple descriptor information for system attributes.
-			 * ----------------
+
+			/*
+			 * here we are indexing on a system attribute (-1...-n) so we
+			 * convert atnum into a usable index 0...n-1 so we can use it
+			 * to dereference the array sysatts[] which stores tuple
+			 * descriptor information for system attributes.
 			 */
 			if (atnum <= FirstLowInvalidHeapAttributeNumber || atnum >= 0)
 				elog(ERROR, "Cannot create index on system attribute: attribute number out of range (%d)", atnum);
@@ -279,9 +277,9 @@ ConstructTupleDescriptor(Relation heapRelation,
 		}
 		else
 		{
-			/* ----------------
-			 *	  here we are indexing on a normal attribute (1...n)
-			 * ----------------
+
+			/*
+			 * here we are indexing on a normal attribute (1...n)
 			 */
 			if (atnum > natts)
 				elog(ERROR, "Cannot create index: attribute %d does not exist",
@@ -291,10 +289,9 @@ ConstructTupleDescriptor(Relation heapRelation,
 			from = heapTupDesc->attrs[atind];
 		}
 
-		/* ----------------
-		 *	 now that we've determined the "from", let's copy
-		 *	 the tuple desc data...
-		 * ----------------
+		/*
+		 * now that we've determined the "from", let's copy the tuple desc
+		 * data...
 		 */
 		indexTupDesc->attrs[i] = to =
 			(Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
@@ -346,26 +343,23 @@ AccessMethodObjectIdGetForm(Oid accessMethodObjectId,
 	ScanKeyData key;
 	Form_pg_am	aform;
 
-	/* ----------------
-	 *	form a scan key for the pg_am relation
-	 * ----------------
+	/*
+	 * form a scan key for the pg_am relation
 	 */
 	ScanKeyEntryInitialize(&key, 0, ObjectIdAttributeNumber,
 						   F_OIDEQ,
 						   ObjectIdGetDatum(accessMethodObjectId));
 
-	/* ----------------
-	 *	fetch the desired access method tuple
-	 * ----------------
+	/*
+	 * fetch the desired access method tuple
 	 */
 	pg_am_desc = heap_openr(AccessMethodRelationName, AccessShareLock);
 	pg_am_scan = heap_beginscan(pg_am_desc, 0, SnapshotNow, 1, &key);
 
 	pg_am_tuple = heap_getnext(pg_am_scan, 0);
 
-	/* ----------------
-	 *	return NULL if not found
-	 * ----------------
+	/*
+	 * return NULL if not found
 	 */
 	if (!HeapTupleIsValid(pg_am_tuple))
 	{
@@ -374,9 +368,8 @@ AccessMethodObjectIdGetForm(Oid accessMethodObjectId,
 		return NULL;
 	}
 
-	/* ----------------
-	 *	if found AM tuple, then copy it into resultCxt and return the copy
-	 * ----------------
+	/*
+	 * if found AM tuple, then copy it into resultCxt and return the copy
 	 */
 	aform = (Form_pg_am) MemoryContextAlloc(resultCxt, sizeof *aform);
 	memcpy(aform, GETSTRUCT(pg_am_tuple), sizeof *aform);
@@ -397,9 +390,8 @@ ConstructIndexReldesc(Relation indexRelation, Oid amoid)
 	indexRelation->rd_am = AccessMethodObjectIdGetForm(amoid,
 													 CacheMemoryContext);
 
-	/* ----------------
-	 *	 XXX missing the initialization of some other fields
-	 * ----------------
+	/*
+	 * XXX missing the initialization of some other fields
 	 */
 
 	indexRelation->rd_rel->relowner = GetUserId();
@@ -428,11 +420,10 @@ UpdateRelationRelation(Relation indexRelation, char *temp_relname)
 						   CLASS_TUPLE_SIZE,
 						   (char *) indexRelation->rd_rel);
 
-	/* ----------------
-	 *	the new tuple must have the same oid as the relcache entry for the
-	 *	index.	sure would be embarrassing to do this sort of thing in
-	 *	polite company.
-	 * ----------------
+	/*
+	 * the new tuple must have the same oid as the relcache entry for the
+	 * index.  sure would be embarrassing to do this sort of thing in
+	 * polite company.
 	 */
 	tuple->t_data->t_oid = RelationGetRelid(indexRelation);
 	heap_insert(pg_class, tuple);
@@ -500,23 +491,21 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 	TupleDesc	indexTupDesc;
 	int			i;
 
-	/* ----------------
-	 *	open the attribute relation
-	 * ----------------
+	/*
+	 * open the attribute relation
 	 */
 	pg_attribute = heap_openr(AttributeRelationName, RowExclusiveLock);
 
-	/* ----------------
-	 *	initialize *null, *replace and *value
-	 * ----------------
+	/*
+	 * initialize *null, *replace and *value
 	 */
 	MemSet(nullv, ' ', Natts_pg_attribute);
 	MemSet(replace, ' ', Natts_pg_attribute);
 
-	/* ----------------
+	/* ----------
 	 *	create the first attribute tuple.
 	 *	XXX For now, only change the ATTNUM attribute value
-	 * ----------------
+	 * ----------
 	 */
 	replace[Anum_pg_attribute_attnum - 1] = 'r';
 	replace[Anum_pg_attribute_attcacheoff - 1] = 'r';
@@ -535,9 +524,8 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
 	}
 
-	/* ----------------
-	 *	insert the first attribute tuple.
-	 * ----------------
+	/*
+	 * insert the first attribute tuple.
 	 */
 	cur_tuple = heap_modifytuple(init_tuple,
 								 pg_attribute,
@@ -550,18 +538,17 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 	if (hasind)
 		CatalogIndexInsert(idescs, Num_pg_attr_indices, pg_attribute, cur_tuple);
 
-	/* ----------------
-	 *	now we use the information in the index cur_tuple
-	 *	descriptor to form the remaining attribute tuples.
-	 * ----------------
+	/*
+	 * now we use the information in the index cur_tuple descriptor to
+	 * form the remaining attribute tuples.
 	 */
 	indexTupDesc = RelationGetDescr(indexRelation);
 
 	for (i = 1; i < numatts; i += 1)
 	{
-		/* ----------------
-		 *	process the remaining attributes...
-		 * ----------------
+
+		/*
+		 * process the remaining attributes...
 		 */
 		memmove(GETSTRUCT(cur_tuple),
 				(char *) indexTupDesc->attrs[i],
@@ -580,10 +567,9 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 		if (hasind)
 			CatalogIndexInsert(idescs, Num_pg_attr_indices, pg_attribute, new_tuple);
 
-		/* ----------------
-		 *	ModifyHeapTuple returns a new copy of a cur_tuple
-		 *	so we free the original and use the copy..
-		 * ----------------
+		/*
+		 * ModifyHeapTuple returns a new copy of a cur_tuple so we free
+		 * the original and use the copy..
 		 */
 		cur_tuple = new_tuple;
 	}
@@ -617,10 +603,9 @@ UpdateIndexRelation(Oid indexoid,
 	int			i;
 	Relation	idescs[Num_pg_index_indices];
 
-	/* ----------------
-	 *	allocate a Form_pg_index big enough to hold the
-	 *	index-predicate (if any) in string form
-	 * ----------------
+	/*
+	 * allocate a Form_pg_index big enough to hold the index-predicate (if
+	 * any) in string form
 	 */
 	if (indexInfo->ii_Predicate != NULL)
 	{
@@ -638,9 +623,8 @@ UpdateIndexRelation(Oid indexoid,
 	indexForm = (Form_pg_index) palloc(itupLen);
 	MemSet(indexForm, 0, sizeof(FormData_pg_index));
 
-	/* ----------------
-	 *	store information into the index tuple form
-	 * ----------------
+	/*
+	 * store information into the index tuple form
 	 */
 	indexForm->indexrelid = indexoid;
 	indexForm->indrelid = heapoid;
@@ -652,11 +636,10 @@ UpdateIndexRelation(Oid indexoid,
 	indexForm->indisprimary = primary;
 	memcpy((char *) &indexForm->indpred, (char *) predText, predLen);
 
-	/* ----------------
-	 *	copy index key and op class information
+	/*
+	 * copy index key and op class information
 	 *
-	 *	We zeroed the extra slots (if any) above --- that's essential.
-	 * ----------------
+	 * We zeroed the extra slots (if any) above --- that's essential.
 	 */
 	for (i = 0; i < indexInfo->ii_NumKeyAttrs; i++)
 		indexForm->indkey[i] = indexInfo->ii_KeyAttrNumbers[i];
@@ -664,29 +647,25 @@ UpdateIndexRelation(Oid indexoid,
 	for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 		indexForm->indclass[i] = classOids[i];
 
-	/* ----------------
-	 *	open the system catalog index relation
-	 * ----------------
+	/*
+	 * open the system catalog index relation
 	 */
 	pg_index = heap_openr(IndexRelationName, RowExclusiveLock);
 
-	/* ----------------
-	 *	form a tuple to insert into pg_index
-	 * ----------------
+	/*
+	 * form a tuple to insert into pg_index
 	 */
 	tuple = heap_addheader(Natts_pg_index,
 						   itupLen,
 						   (char *) indexForm);
 
-	/* ----------------
-	 *	insert the tuple into the pg_index
-	 * ----------------
+	/*
+	 * insert the tuple into the pg_index
 	 */
 	heap_insert(pg_index, tuple);
 
-	/* ----------------
-	 *	add index tuples for it
-	 * ----------------
+	/*
+	 * add index tuples for it
 	 */
 	if (!IsIgnoringSystemIndexes())
 	{
@@ -695,9 +674,8 @@ UpdateIndexRelation(Oid indexoid,
 		CatalogCloseIndices(Num_pg_index_indices, idescs);
 	}
 
-	/* ----------------
-	 *	close the relation and free the tuple
-	 * ----------------
+	/*
+	 * close the relation and free the tuple
 	 */
 	heap_close(pg_index, RowExclusiveLock);
 	pfree(predText);
@@ -802,27 +780,24 @@ InitIndexStrategy(int numatts,
 	Oid			attrelid;
 	Size		strsize;
 
-	/* ----------------
-	 *	get information from the index relation descriptor
-	 * ----------------
+	/*
+	 * get information from the index relation descriptor
 	 */
 	attrelid = indexRelation->rd_att->attrs[0]->attrelid;
 	amstrategies = indexRelation->rd_am->amstrategies;
 	amsupport = indexRelation->rd_am->amsupport;
 
-	/* ----------------
-	 *	get the size of the strategy
-	 * ----------------
+	/*
+	 * get the size of the strategy
 	 */
 	strsize = AttributeNumberGetIndexStrategySize(numatts, amstrategies);
 
-	/* ----------------
-	 *	allocate the new index strategy structure
+	/*
+	 * allocate the new index strategy structure
 	 *
-	 *	the index strategy has to be allocated in the same
-	 *	context as the relation descriptor cache or else
-	 *	it will be lost at the end of the transaction.
-	 * ----------------
+	 * the index strategy has to be allocated in the same context as the
+	 * relation descriptor cache or else it will be lost at the end of the
+	 * transaction.
 	 */
 	if (!CacheMemoryContext)
 		CreateCacheMemoryContext();
@@ -839,11 +814,10 @@ InitIndexStrategy(int numatts,
 	else
 		support = (RegProcedure *) NULL;
 
-	/* ----------------
-	 *	fill in the index strategy structure with information
-	 *	from the catalogs.	First we must advance the command counter
-	 *	so that we will see the newly-entered index catalog tuples.
-	 * ----------------
+	/*
+	 * fill in the index strategy structure with information from the
+	 * catalogs.  First we must advance the command counter so that we
+	 * will see the newly-entered index catalog tuples.
 	 */
 	CommandCounterIncrement();
 
@@ -852,9 +826,8 @@ InitIndexStrategy(int numatts,
 						   attrelid, accessMethodObjectId,
 						   amstrategies, amsupport, numatts);
 
-	/* ----------------
-	 *	store the strategy information in the index reldesc
-	 * ----------------
+	/*
+	 * store the strategy information in the index reldesc
 	 */
 	RelationSetIndexSupport(indexRelation, strategy, support);
 }
@@ -884,17 +857,15 @@ index_create(char *heapRelationName,
 
 	SetReindexProcessing(false);
 
-	/* ----------------
-	 *	check parameters
-	 * ----------------
+	/*
+	 * check parameters
 	 */
 	if (indexInfo->ii_NumIndexAttrs < 1 ||
 		indexInfo->ii_NumKeyAttrs < 1)
 		elog(ERROR, "must index at least one attribute");
 
-	/* ----------------
-	 *	  get heap relation oid and open the heap relation
-	 * ----------------
+	/*
+	 * get heap relation oid and open the heap relation
 	 */
 	heapoid = GetHeapRelationOid(heapRelationName, indexRelationName, istemp);
 
@@ -903,9 +874,8 @@ index_create(char *heapRelationName,
 	 */
 	heapRelation = heap_open(heapoid, ShareLock);
 
-	/* ----------------
-	 *	  construct new tuple descriptor
-	 * ----------------
+	/*
+	 * construct new tuple descriptor
 	 */
 	if (OidIsValid(indexInfo->ii_FuncOid))
 		indexTupDesc = BuildFuncTupleDesc(indexInfo->ii_FuncOid);
@@ -923,9 +893,8 @@ index_create(char *heapRelationName,
 														 * change this */
 	}
 
-	/* ----------------
-	 *	create the index relation
-	 * ----------------
+	/*
+	 * create the index relation
 	 */
 	indexRelation = heap_create(indexRelationName, indexTupDesc,
 								istemp, false, allow_system_table_mods);
@@ -937,11 +906,10 @@ index_create(char *heapRelationName,
 	 */
 	LockRelation(indexRelation, AccessExclusiveLock);
 
-	/* ----------------
-	 *	  construct the index relation descriptor
+	/*
+	 * construct the index relation descriptor
 	 *
-	 *	  XXX should have a proper way to create cataloged relations
-	 * ----------------
+	 * XXX should have a proper way to create cataloged relations
 	 */
 	ConstructIndexReldesc(indexRelation, accessMethodObjectId);
 
@@ -957,18 +925,16 @@ index_create(char *heapRelationName,
 	 */
 	heap_storage_create(indexRelation);
 
-	/* ----------------
-	 *	now update the object id's of all the attribute
-	 *	tuple forms in the index relation's tuple descriptor
-	 * ----------------
+	/*
+	 * now update the object id's of all the attribute tuple forms in the
+	 * index relation's tuple descriptor
 	 */
 	InitializeAttributeOids(indexRelation,
 							indexInfo->ii_NumIndexAttrs,
 							indexoid);
 
-	/* ----------------
-	 *	  append ATTRIBUTE tuples for the index
-	 * ----------------
+	/*
+	 * append ATTRIBUTE tuples for the index
 	 */
 	AppendAttributeTuples(indexRelation, indexInfo->ii_NumIndexAttrs);
 
@@ -983,9 +949,8 @@ index_create(char *heapRelationName,
 	UpdateIndexRelation(indexoid, heapoid, indexInfo,
 						classObjectId, islossy, primary);
 
-	/* ----------------
-	 *	  initialize the index strategy
-	 * ----------------
+	/*
+	 * initialize the index strategy
 	 */
 	InitIndexStrategy(indexInfo->ii_NumIndexAttrs,
 					  indexRelation,
@@ -1033,15 +998,15 @@ index_drop(Oid indexId)
 
 	Assert(OidIsValid(indexId));
 
-	/* ----------------
-	 *	To drop an index safely, we must grab exclusive lock on its parent
-	 *	table; otherwise there could be other backends using the index!
-	 *	Exclusive lock on the index alone is insufficient because the index
-	 *	access routines are a little slipshod about obtaining adequate locking
-	 *	(see ExecOpenIndices()).  We do grab exclusive lock on the index too,
-	 *	just to be safe.  Both locks must be held till end of transaction,
-	 *	else other backends will still see this index in pg_index.
-	 * ----------------
+	/*
+	 * To drop an index safely, we must grab exclusive lock on its parent
+	 * table; otherwise there could be other backends using the index!
+	 * Exclusive lock on the index alone is insufficient because the index
+	 * access routines are a little slipshod about obtaining adequate
+	 * locking (see ExecOpenIndices()).  We do grab exclusive lock on the
+	 * index too, just to be safe.	Both locks must be held till end of
+	 * transaction, else other backends will still see this index in
+	 * pg_index.
 	 */
 	heapId = IndexGetRelation(indexId);
 	userHeapRelation = heap_open(heapId, AccessExclusiveLock);
@@ -1049,22 +1014,19 @@ index_drop(Oid indexId)
 	userIndexRelation = index_open(indexId);
 	LockRelation(userIndexRelation, AccessExclusiveLock);
 
-	/* ----------------
-	 *	Note: unlike heap_drop_with_catalog, we do not need to prevent
-	 *	deletion of system indexes here; that's checked for upstream.
-	 *	If we did check it here, deletion of TOAST tables would fail...
-	 * ----------------
+	/*
+	 * Note: unlike heap_drop_with_catalog, we do not need to prevent
+	 * deletion of system indexes here; that's checked for upstream. If we
+	 * did check it here, deletion of TOAST tables would fail...
 	 */
 
-	/* ----------------
+	/*
 	 * fix DESCRIPTION relation
-	 * ----------------
 	 */
 	DeleteComments(indexId);
 
-	/* ----------------
+	/*
 	 * fix RELATION relation
-	 * ----------------
 	 */
 	relationRelation = heap_openr(RelationRelationName, RowExclusiveLock);
 
@@ -1091,9 +1053,8 @@ index_drop(Oid indexId)
 
 	heap_close(relationRelation, RowExclusiveLock);
 
-	/* ----------------
+	/*
 	 * fix ATTRIBUTE relation
-	 * ----------------
 	 */
 	attributeRelation = heap_openr(AttributeRelationName, RowExclusiveLock);
 
@@ -1110,9 +1071,8 @@ index_drop(Oid indexId)
 	}
 	heap_close(attributeRelation, RowExclusiveLock);
 
-	/* ----------------
+	/*
 	 * fix INDEX relation
-	 * ----------------
 	 */
 	indexRelation = heap_openr(IndexRelationName, RowExclusiveLock);
 
@@ -1171,9 +1131,8 @@ BuildIndexInfo(HeapTuple indexTuple)
 	int			i;
 	int			numKeys;
 
-	/* ----------------
-	 *	count the number of keys, and copy them into the IndexInfo
-	 * ----------------
+	/*
+	 * count the number of keys, and copy them into the IndexInfo
 	 */
 	numKeys = 0;
 	for (i = 0; i < INDEX_MAX_KEYS &&
@@ -1184,13 +1143,12 @@ BuildIndexInfo(HeapTuple indexTuple)
 	}
 	ii->ii_NumKeyAttrs = numKeys;
 
-	/* ----------------
-	 *	Handle functional index.
+	/*
+	 * Handle functional index.
 	 *
-	 *	If we have a functional index then the number of
-	 *	attributes defined in the index must be 1 (the function's
-	 *	single return value).  Otherwise it's same as number of keys.
-	 * ----------------
+	 * If we have a functional index then the number of attributes defined in
+	 * the index must be 1 (the function's single return value).
+	 * Otherwise it's same as number of keys.
 	 */
 	ii->ii_FuncOid = indexStruct->indproc;
 
@@ -1203,9 +1161,8 @@ BuildIndexInfo(HeapTuple indexTuple)
 	else
 		ii->ii_NumIndexAttrs = numKeys;
 
-	/* ----------------
-	 *	If partial index, convert predicate into expression nodetree
-	 * ----------------
+	/*
+	 * If partial index, convert predicate into expression nodetree
 	 */
 	if (VARSIZE(&indexStruct->indpred) != 0)
 	{
@@ -1257,9 +1214,9 @@ FormIndexDatum(IndexInfo *indexInfo,
 
 	if (OidIsValid(indexInfo->ii_FuncOid))
 	{
-		/* ----------------
-		 *	Functional index --- compute the single index attribute
-		 * ----------------
+
+		/*
+		 * Functional index --- compute the single index attribute
 		 */
 		FunctionCallInfoData fcinfo;
 		bool		anynull = false;
@@ -1292,10 +1249,10 @@ FormIndexDatum(IndexInfo *indexInfo,
 	}
 	else
 	{
-		/* ----------------
-		 *	Plain index --- for each attribute we need from the heap tuple,
-		 *	get the attribute and stick it into the datum and nullv arrays.
-		 * ----------------
+
+		/*
+		 * Plain index --- for each attribute we need from the heap tuple,
+		 * get the attribute and stick it into the datum and nullv arrays.
 		 */
 		for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 		{
@@ -1465,9 +1422,8 @@ setRelhasindex(Oid relid, bool hasindex)
 			 relid);
 	}
 
-	/* ----------------
-	 *	Update hasindex in pg_class.
-	 * ----------------
+	/*
+	 * Update hasindex in pg_class.
 	 */
 	if (pg_class_scan)
 		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_EXCLUSIVE);
@@ -1601,22 +1557,20 @@ UpdateStats(Oid relid, long reltuples)
 	HeapScanDesc pg_class_scan = NULL;
 	bool		in_place_upd;
 
-	/* ----------------
+	/*
 	 * This routine handles updates for both the heap and index relation
-	 * statistics.	In order to guarantee that we're able to *see* the index
-	 * relation tuple, we bump the command counter id here.  The index
-	 * relation tuple was created in the current transaction.
-	 * ----------------
+	 * statistics.	In order to guarantee that we're able to *see* the
+	 * index relation tuple, we bump the command counter id here.  The
+	 * index relation tuple was created in the current transaction.
 	 */
 	CommandCounterIncrement();
 
-	/* ----------------
+	/*
 	 * CommandCounterIncrement() flushes invalid cache entries, including
 	 * those for the heap and index relations for which we're updating
 	 * statistics.	Now that the cache is flushed, it's safe to open the
 	 * relation again.	We need the relation open in order to figure out
 	 * how many blocks it contains.
-	 * ----------------
 	 */
 
 	/*
@@ -1630,9 +1584,8 @@ UpdateStats(Oid relid, long reltuples)
 	/* Grab lock to be held till end of xact (probably redundant...) */
 	LockRelation(whichRel, ShareLock);
 
-	/* ----------------
+	/*
 	 * Find the RELATION relation tuple for the given relation.
-	 * ----------------
 	 */
 	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
 
@@ -1670,16 +1623,15 @@ UpdateStats(Oid relid, long reltuples)
 			 relid);
 	}
 
-	/* ----------------
+	/*
 	 * Figure values to insert.
 	 *
-	 * If we found zero tuples in the scan, do NOT believe it; instead put
-	 * a bogus estimate into the statistics fields.  Otherwise, the common
+	 * If we found zero tuples in the scan, do NOT believe it; instead put a
+	 * bogus estimate into the statistics fields.  Otherwise, the common
 	 * pattern "CREATE TABLE; CREATE INDEX; insert data" leaves the table
-	 * with zero size statistics until a VACUUM is done.  The optimizer will
-	 * generate very bad plans if the stats claim the table is empty when
-	 * it is actually sizable.	See also CREATE TABLE in heap.c.
-	 * ----------------
+	 * with zero size statistics until a VACUUM is done.  The optimizer
+	 * will generate very bad plans if the stats claim the table is empty
+	 * when it is actually sizable.  See also CREATE TABLE in heap.c.
 	 */
 	relpages = RelationGetNumberOfBlocks(whichRel);
 
@@ -1708,9 +1660,8 @@ UpdateStats(Oid relid, long reltuples)
 	whichRel->rd_rel->relpages = relpages;
 	whichRel->rd_rel->reltuples = reltuples;
 
-	/* ----------------
-	 *	Update statistics in pg_class.
-	 * ----------------
+	/*
+	 * Update statistics in pg_class.
 	 */
 	if (in_place_upd)
 	{
@@ -1798,9 +1749,8 @@ DefaultBuild(Relation heapRelation,
 	ExprContext *econtext;
 	InsertIndexResult insertResult;
 
-	/* ----------------
-	 *	more & better checking is needed
-	 * ----------------
+	/*
+	 * more & better checking is needed
 	 */
 	Assert(OidIsValid(indexRelation->rd_rel->relam));	/* XXX */
 
@@ -1833,9 +1783,8 @@ DefaultBuild(Relation heapRelation,
 	econtext = MakeExprContext(NULL, TransactionCommandContext);
 #endif	 /* OMIT_PARTIAL_INDEX */
 
-	/* ----------------
-	 *	Ok, begin our scan of the base relation.
-	 * ----------------
+	/*
+	 * Ok, begin our scan of the base relation.
 	 */
 	scan = heap_beginscan(heapRelation, /* relation */
 						  0,	/* start at end */
@@ -1845,12 +1794,11 @@ DefaultBuild(Relation heapRelation,
 
 	reltuples = indtuples = 0;
 
-	/* ----------------
-	 *	for each tuple in the base relation, we create an index
-	 *	tuple and add it to the index relation.  We keep a running
-	 *	count of the number of tuples so that we can update pg_class
-	 *	with correct statistics when we're done building the index.
-	 * ----------------
+	/*
+	 * for each tuple in the base relation, we create an index tuple and
+	 * add it to the index relation.  We keep a running count of the
+	 * number of tuples so that we can update pg_class with correct
+	 * statistics when we're done building the index.
 	 */
 	while (HeapTupleIsValid(heapTuple = heap_getnext(scan, 0)))
 	{
@@ -1888,10 +1836,9 @@ DefaultBuild(Relation heapRelation,
 
 		indtuples++;
 
-		/* ----------------
-		 *	FormIndexDatum fills in its datum and null parameters
-		 *	with attribute information taken from the given heap tuple.
-		 * ----------------
+		/*
+		 * FormIndexDatum fills in its datum and null parameters with
+		 * attribute information taken from the given heap tuple.
 		 */
 		FormIndexDatum(indexInfo,
 					   heapTuple,
@@ -1956,18 +1903,16 @@ index_build(Relation heapRelation,
 {
 	RegProcedure procedure;
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
+	/*
+	 * sanity checks
 	 */
 	Assert(RelationIsValid(indexRelation));
 	Assert(PointerIsValid(indexRelation->rd_am));
 
 	procedure = indexRelation->rd_am->ambuild;
 
-	/* ----------------
-	 *	use the access method build procedure if supplied, else default.
-	 * ----------------
+	/*
+	 * use the access method build procedure if supplied, else default.
 	 */
 	if (RegProcedureIsValid(procedure))
 		OidFunctionCall5(procedure,
@@ -2042,11 +1987,10 @@ reindex_index(Oid indexId, bool force, bool inplace)
 				accessMethodId;
 	bool		old;
 
-	/* ----------------
-	 *	REINDEX within a transaction block is dangerous, because
-	 *	if the transaction is later rolled back we have no way to
-	 *	undo truncation of the index's physical file.  Disallow it.
-	 * ----------------
+	/*
+	 * REINDEX within a transaction block is dangerous, because if the
+	 * transaction is later rolled back we have no way to undo truncation
+	 * of the index's physical file.  Disallow it.
 	 */
 	if (IsTransactionBlock())
 		elog(ERROR, "REINDEX cannot run inside a BEGIN/END block");

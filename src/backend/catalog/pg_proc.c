@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.54 2001/03/22 03:59:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.55 2001/03/22 06:16:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,9 +73,8 @@ ProcedureCreate(char *procedureName,
 	TupleDesc	tupDesc;
 	Oid			retval;
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
+	/*
+	 * sanity checks
 	 */
 	Assert(PointerIsValid(prosrc));
 	Assert(PointerIsValid(probin));
@@ -142,16 +141,16 @@ ProcedureCreate(char *procedureName,
 		if (strcmp(procedureName, GENERICSETNAME) == 0)
 		{
 #ifdef SETS_FIXED
-			/* ----------
-			 * The code below doesn't work any more because the
-			 * PROSRC system cache and the pg_proc_prosrc_index
-			 * have been removed. Instead a sequential heap scan
-			 * or something better must get implemented. The reason
-			 * for removing is that nbtree index crashes if sources
-			 * exceed 2K --- what's likely for procedural languages.
+
+			/*
+			 * The code below doesn't work any more because the PROSRC
+			 * system cache and the pg_proc_prosrc_index have been
+			 * removed. Instead a sequential heap scan or something better
+			 * must get implemented. The reason for removing is that
+			 * nbtree index crashes if sources exceed 2K --- what's likely
+			 * for procedural languages.
 			 *
 			 * 1999/09/30 Jan
-			 * ----------
 			 */
 			text	   *prosrctext;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.135 2001/03/22 03:59:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.136 2001/03/22 06:16:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -888,16 +888,14 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 		{
 			ExecStoreTuple(tuple, slot, InvalidBuffer, false);
 
-			/* ----------------
+			/*
 			 * Check the constraints of the tuple
-			 * ----------------
 			 */
 			if (rel->rd_att->constr)
 				ExecConstraints("CopyFrom", resultRelInfo, slot, estate);
 
-			/* ----------------
+			/*
 			 * OK, store the tuple and create index entries for it
-			 * ----------------
 			 */
 			heap_insert(rel, tuple);
 

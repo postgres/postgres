@@ -48,7 +48,7 @@ multibyte_strchr(unsigned char *s, unsigned char c)
 				}
 				break;
 			default:
-					mb_st = 0;
+				mb_st = 0;
 		}
 		i++;
 	}
@@ -117,7 +117,7 @@ multibyte_char_check(unsigned char s)
 			}
 			break;
 		default:
-				multibyte_status = 0;
+			multibyte_status = 0;
 	}
 #ifdef _DEBUG
 	qlog("multibyte_client_encoding = %d   s = 0x%02X   multibyte_stat = %d\n", multibyte_client_encoding, s, multibyte_status);

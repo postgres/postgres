@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.73 2001/03/22 03:59:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.74 2001/03/22 06:16:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,10 +68,9 @@ DefineRelation(CreateStmt *stmt, char relkind)
 			 stmt->relname, NAMEDATALEN);
 	StrNCpy(relname, stmt->relname, NAMEDATALEN);
 
-	/* ----------------
-	 *	Look up inheritance ancestors and generate relation schema,
-	 *	including inherited attributes.
-	 * ----------------
+	/*
+	 * Look up inheritance ancestors and generate relation schema,
+	 * including inherited attributes.
 	 */
 	schema = MergeAttributes(schema, stmt->inhRelnames, stmt->istemp,
 							 &inheritOids, &old_constraints);
@@ -80,14 +79,12 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	if (numberOfAttributes <= 0)
 		elog(ERROR, "DefineRelation: please inherit from a relation or define an attribute");
 
-	/* ----------------
-	 *	create a relation descriptor from the relation schema
-	 *	and create the relation.  Note that in this stage only
-	 *	inherited (pre-cooked) defaults and constraints will be
-	 *	included into the new relation.  (BuildDescForRelation
-	 *	takes care of the inherited defaults, but we have to copy
-	 *	inherited constraints here.)
-	 * ----------------
+	/*
+	 * create a relation descriptor from the relation schema and create
+	 * the relation.  Note that in this stage only inherited (pre-cooked)
+	 * defaults and constraints will be included into the new relation.
+	 * (BuildDescForRelation takes care of the inherited defaults, but we
+	 * have to copy inherited constraints here.)
 	 */
 	descriptor = BuildDescForRelation(schema, relname);
 
@@ -559,18 +556,16 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 	List	   *entry;
 	HeapTuple	tuple;
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
+	/*
+	 * sanity checks
 	 */
 	AssertArg(OidIsValid(relationId));
 
 	if (supers == NIL)
 		return;
 
-	/* ----------------
+	/*
 	 * Catalog INHERITS information using direct ancestors only.
-	 * ----------------
 	 */
 	relation = heap_openr(InheritsRelationName, RowExclusiveLock);
 	desc = RelationGetDescr(relation);
@@ -620,9 +615,8 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 	 * ----------------
 	 */
 
-	/* ----------------
-	 *	1. append after each relationId, its superclasses, recursively.
-	 * ----------------
+	/*
+	 * 1. append after each relationId, its superclasses, recursively.
 	 */
 	foreach(entry, supers)
 	{
@@ -656,9 +650,8 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 		lnext(current) = next;
 	}
 
-	/* ----------------
-	 *	2. remove all but last of duplicates.
-	 * ----------------
+	/*
+	 * 2. remove all but last of duplicates.
 	 */
 	foreach(entry, supers)
 	{
@@ -690,9 +683,8 @@ again:
 		}
 	}
 
-	/* ----------------
+	/*
 	 * Catalog IPL information using expanded list.
-	 * ----------------
 	 */
 	relation = heap_openr(InheritancePrecidenceListRelationName, RowExclusiveLock);
 	desc = RelationGetDescr(relation);

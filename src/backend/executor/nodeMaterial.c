@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.34 2001/03/22 03:59:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.35 2001/03/22 06:16:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,46 +53,41 @@ ExecMaterial(Material *node)
 	TupleTableSlot *slot;
 	bool		should_free;
 
-	/* ----------------
-	 *	get state info from node
-	 * ----------------
+	/*
+	 * get state info from node
 	 */
 	matstate = node->matstate;
 	estate = node->plan.state;
 	dir = estate->es_direction;
 	tuplestorestate = (Tuplestorestate *) matstate->tuplestorestate;
 
-	/* ----------------
-	 *	If first time through, read all tuples from outer plan and
-	 *	pass them to tuplestore.c.
-	 *	Subsequent calls just fetch tuples from tuplestore.
-	 * ----------------
+	/*
+	 * If first time through, read all tuples from outer plan and pass
+	 * them to tuplestore.c. Subsequent calls just fetch tuples from
+	 * tuplestore.
 	 */
 
 	if (tuplestorestate == NULL)
 	{
 		Plan	   *outerNode;
 
-		/* ----------------
-		 *	Want to scan subplan in the forward direction while creating
-		 *	the stored data.  (Does setting my direction actually affect
-		 *	the subplan?  I bet this is useless code...)
-		 * ----------------
+		/*
+		 * Want to scan subplan in the forward direction while creating
+		 * the stored data.  (Does setting my direction actually affect
+		 * the subplan?  I bet this is useless code...)
 		 */
 		estate->es_direction = ForwardScanDirection;
 
-		/* ----------------
-		 *	 Initialize tuplestore module.
-		 * ----------------
+		/*
+		 * Initialize tuplestore module.
 		 */
 		tuplestorestate = tuplestore_begin_heap(true,	/* randomAccess */
 												SortMem);
 
 		matstate->tuplestorestate = (void *) tuplestorestate;
 
-		/* ----------------
-		 *	 Scan the subplan and feed all the tuples to tuplestore.
-		 * ----------------
+		/*
+		 * Scan the subplan and feed all the tuples to tuplestore.
 		 */
 		outerNode = outerPlan((Plan *) node);
 
@@ -107,23 +102,20 @@ ExecMaterial(Material *node)
 			ExecClearTuple(slot);
 		}
 
-		/* ----------------
-		 *	 Complete the store.
-		 * ----------------
+		/*
+		 * Complete the store.
 		 */
 		tuplestore_donestoring(tuplestorestate);
 
-		/* ----------------
-		 *	 restore to user specified direction
-		 * ----------------
+		/*
+		 * restore to user specified direction
 		 */
 		estate->es_direction = dir;
 	}
 
-	/* ----------------
-	 *	Get the first or next tuple from tuplestore.
-	 *	Returns NULL if no more tuples.
-	 * ----------------
+	/*
+	 * Get the first or next tuple from tuplestore. Returns NULL if no
+	 * more tuples.
 	 */
 	slot = (TupleTableSlot *) matstate->csstate.cstate.cs_ResultTupleSlot;
 	heapTuple = tuplestore_getheaptuple(tuplestorestate,
@@ -143,50 +135,44 @@ ExecInitMaterial(Material *node, EState *estate, Plan *parent)
 	MaterialState *matstate;
 	Plan	   *outerPlan;
 
-	/* ----------------
-	 *	assign the node's execution state
-	 * ----------------
+	/*
+	 * assign the node's execution state
 	 */
 	node->plan.state = estate;
 
-	/* ----------------
+	/*
 	 * create state structure
-	 * ----------------
 	 */
 	matstate = makeNode(MaterialState);
 	matstate->tuplestorestate = NULL;
 	node->matstate = matstate;
 
-	/* ----------------
-	 *	Miscellaneous initialization
+	/*
+	 * Miscellaneous initialization
 	 *
-	 *	Materialization nodes don't need ExprContexts because
-	 *	they never call ExecQual or ExecProject.
-	 * ----------------
+	 * Materialization nodes don't need ExprContexts because they never call
+	 * ExecQual or ExecProject.
 	 */
 
 #define MATERIAL_NSLOTS 1
-	/* ----------------
+
+	/*
 	 * tuple table initialization
 	 *
-	 *	material nodes only return tuples from their materialized
-	 *	relation.
-	 * ----------------
+	 * material nodes only return tuples from their materialized relation.
 	 */
 	ExecInitResultTupleSlot(estate, &matstate->csstate.cstate);
 	ExecInitScanTupleSlot(estate, &matstate->csstate);
 
-	/* ----------------
+	/*
 	 * initializes child nodes
-	 * ----------------
 	 */
 	outerPlan = outerPlan((Plan *) node);
 	ExecInitNode(outerPlan, estate, (Plan *) node);
 
-	/* ----------------
-	 *	initialize tuple type.	no need to initialize projection
-	 *	info because this node doesn't do projections.
-	 * ----------------
+	/*
+	 * initialize tuple type.  no need to initialize projection info
+	 * because this node doesn't do projections.
 	 */
 	ExecAssignResultTypeFromOuterPlan((Plan *) node, &matstate->csstate.cstate);
 	ExecAssignScanTypeFromOuterPlan((Plan *) node, &matstate->csstate);
@@ -213,28 +199,24 @@ ExecEndMaterial(Material *node)
 	MaterialState *matstate;
 	Plan	   *outerPlan;
 
-	/* ----------------
-	 *	get info from the material state
-	 * ----------------
+	/*
+	 * get info from the material state
 	 */
 	matstate = node->matstate;
 
-	/* ----------------
-	 *	shut down the subplan
-	 * ----------------
+	/*
+	 * shut down the subplan
 	 */
 	outerPlan = outerPlan((Plan *) node);
 	ExecEndNode(outerPlan, (Plan *) node);
 
-	/* ----------------
-	 *	clean out the tuple table
-	 * ----------------
+	/*
+	 * clean out the tuple table
 	 */
 	ExecClearTuple(matstate->csstate.css_ScanTupleSlot);
 
-	/* ----------------
-	 *	Release tuplestore resources
-	 * ----------------
+	/*
+	 * Release tuplestore resources
 	 */
 	if (matstate->tuplestorestate != NULL)
 		tuplestore_end((Tuplestorestate *) matstate->tuplestorestate);
@@ -252,9 +234,8 @@ ExecMaterialMarkPos(Material *node)
 {
 	MaterialState *matstate = node->matstate;
 
-	/* ----------------
-	 *	if we haven't materialized yet, just return.
-	 * ----------------
+	/*
+	 * if we haven't materialized yet, just return.
 	 */
 	if (!matstate->tuplestorestate)
 		return;
@@ -273,16 +254,14 @@ ExecMaterialRestrPos(Material *node)
 {
 	MaterialState *matstate = node->matstate;
 
-	/* ----------------
-	 *	if we haven't materialized yet, just return.
-	 * ----------------
+	/*
+	 * if we haven't materialized yet, just return.
 	 */
 	if (!matstate->tuplestorestate)
 		return;
 
-	/* ----------------
-	 *	restore the scan to the previously marked position
-	 * ----------------
+	/*
+	 * restore the scan to the previously marked position
 	 */
 	tuplestore_restorepos((Tuplestorestate *) matstate->tuplestorestate);
 }

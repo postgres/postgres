@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.74 2001/03/22 03:59:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.75 2001/03/22 06:16:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -336,18 +336,16 @@ ExecFreeProjectionInfo(CommonState *commonstate)
 {
 	ProjectionInfo *projInfo;
 
-	/* ----------------
-	 *	get projection info.  if NULL then this node has
-	 *	none so we just return.
-	 * ----------------
+	/*
+	 * get projection info.  if NULL then this node has none so we just
+	 * return.
 	 */
 	projInfo = commonstate->cs_ProjInfo;
 	if (projInfo == NULL)
 		return;
 
-	/* ----------------
-	 *	clean up memory used.
-	 * ----------------
+	/*
+	 * clean up memory used.
 	 */
 	if (projInfo->pi_tupValue != NULL)
 		pfree(projInfo->pi_tupValue);
@@ -365,18 +363,16 @@ ExecFreeExprContext(CommonState *commonstate)
 {
 	ExprContext *econtext;
 
-	/* ----------------
-	 *	get expression context.  if NULL then this node has
-	 *	none so we just return.
-	 * ----------------
+	/*
+	 * get expression context.	if NULL then this node has none so we just
+	 * return.
 	 */
 	econtext = commonstate->cs_ExprContext;
 	if (econtext == NULL)
 		return;
 
-	/* ----------------
-	 *	clean up memory used.
-	 * ----------------
+	/*
+	 * clean up memory used.
 	 */
 	MemoryContextDelete(econtext->ecxt_per_tuple_memory);
 	pfree(econtext);
@@ -476,18 +472,16 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo)
 		IsSystemRelationName(RelationGetRelationName(resultRelation)))
 		return;
 
-	/* ----------------
-	 *	 Get cached list of index OIDs
-	 * ----------------
+	/*
+	 * Get cached list of index OIDs
 	 */
 	indexoidlist = RelationGetIndexList(resultRelation);
 	len = length(indexoidlist);
 	if (len == 0)
 		return;
 
-	/* ----------------
-	 *	 allocate space for result arrays
-	 * ----------------
+	/*
+	 * allocate space for result arrays
 	 */
 	relationDescs = (RelationPtr) palloc(len * sizeof(Relation));
 	indexInfoArray = (IndexInfo **) palloc(len * sizeof(IndexInfo *));
@@ -496,9 +490,8 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo)
 	resultRelInfo->ri_IndexRelationDescs = relationDescs;
 	resultRelInfo->ri_IndexRelationInfo = indexInfoArray;
 
-	/* ----------------
-	 *	 For each index, open the index relation and save pg_index info.
-	 * ----------------
+	/*
+	 * For each index, open the index relation and save pg_index info.
 	 */
 	i = 0;
 	foreach(indexoidscan, indexoidlist)
@@ -508,24 +501,23 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo)
 		HeapTuple	indexTuple;
 		IndexInfo  *ii;
 
-		/* ----------------
+		/*
 		 * Open (and lock, if necessary) the index relation
 		 *
 		 * Hack for not btree and hash indices: they use relation level
-		 * exclusive locking on update (i.e. - they are not ready for MVCC)
-		 * and so we have to exclusively lock indices here to prevent
-		 * deadlocks if we will scan them - index_beginscan places
+		 * exclusive locking on update (i.e. - they are not ready for
+		 * MVCC) and so we have to exclusively lock indices here to
+		 * prevent deadlocks if we will scan them - index_beginscan places
 		 * AccessShareLock, indices update methods don't use locks at all.
 		 * We release this lock in ExecCloseIndices. Note, that hashes use
 		 * page level locking - i.e. are not deadlock-free - let's them be
 		 * on their way -:)) vadim 03-12-1998
 		 *
 		 * If there are multiple not-btree-or-hash indices, all backends must
-		 * lock the indices in the same order or we will get deadlocks here
-		 * during concurrent updates.  This is now guaranteed by
+		 * lock the indices in the same order or we will get deadlocks
+		 * here during concurrent updates.	This is now guaranteed by
 		 * RelationGetIndexList(), which promises to return the index list
 		 * in OID order.  tgl 06-19-2000
-		 * ----------------
 		 */
 		indexDesc = index_open(indexOid);
 
@@ -533,9 +525,8 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo)
 			indexDesc->rd_rel->relam != HASH_AM_OID)
 			LockRelation(indexDesc, AccessExclusiveLock);
 
-		/* ----------------
-		 *	Get the pg_index tuple for the index
-		 * ----------------
+		/*
+		 * Get the pg_index tuple for the index
 		 */
 		indexTuple = SearchSysCache(INDEXRELID,
 									ObjectIdGetDatum(indexOid),
@@ -543,9 +534,8 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo)
 		if (!HeapTupleIsValid(indexTuple))
 			elog(ERROR, "ExecOpenIndices: index %u not found", indexOid);
 
-		/* ----------------
-		 *	extract the index key information from the tuple
-		 * ----------------
+		/*
+		 * extract the index key information from the tuple
 		 */
 		ii = BuildIndexInfo(indexTuple);
 
@@ -647,9 +637,8 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 	/* Arrange for econtext's scan tuple to be the tuple under test */
 	econtext->ecxt_scantuple = slot;
 
-	/* ----------------
-	 *	for each index, form and insert the index tuple
-	 * ----------------
+	/*
+	 * for each index, form and insert the index tuple
 	 */
 	for (i = 0; i < numIndices; i++)
 	{
@@ -669,10 +658,9 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 				continue;
 		}
 
-		/* ----------------
-		 *	FormIndexDatum fills in its datum and null parameters
-		 *	with attribute information taken from the given heap tuple.
-		 * ----------------
+		/*
+		 * FormIndexDatum fills in its datum and null parameters with
+		 * attribute information taken from the given heap tuple.
 		 */
 		FormIndexDatum(indexInfo,
 					   heapTuple,
@@ -687,9 +675,8 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 							  &(heapTuple->t_self),		/* tid of heap tuple */
 							  heapRelation);
 
-		/* ----------------
-		 *		keep track of index inserts for debugging
-		 * ----------------
+		/*
+		 * keep track of index inserts for debugging
 		 */
 		IncrIndexInserted();
 

@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.38 2001/03/22 03:59:52 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.39 2001/03/22 06:16:17 momjian Exp $
  *
  * ----------
  */
@@ -201,17 +201,15 @@ numeric_in(PG_FUNCTION_ARGS)
 	NumericVar	value;
 	Numeric		res;
 
-	/* ----------
+	/*
 	 * Check for NaN
-	 * ----------
 	 */
 	if (strcmp(str, "NaN") == 0)
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	/* ----------
-	 * Use set_var_from_str() to parse the input string
-	 * and return it in the packed DB storage format
-	 * ----------
+	/*
+	 * Use set_var_from_str() to parse the input string and return it in
+	 * the packed DB storage format
 	 */
 	init_var(&value);
 	set_var_from_str(str, &value);
@@ -238,21 +236,19 @@ numeric_out(PG_FUNCTION_ARGS)
 	NumericVar	x;
 	char	   *str;
 
-	/* ----------
+	/*
 	 * Handle NaN
-	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
 		PG_RETURN_CSTRING(pstrdup("NaN"));
 
-	/* ----------
+	/*
 	 * Get the number in the variable format.
 	 *
-	 * Even if we didn't need to change format, we'd still need to copy
-	 * the value to have a modifiable copy for rounding.  set_var_from_num()
+	 * Even if we didn't need to change format, we'd still need to copy the
+	 * value to have a modifiable copy for rounding.  set_var_from_num()
 	 * also guarantees there is extra digit space in case we produce a
 	 * carry out from rounding.
-	 * ----------
 	 */
 	init_var(&x);
 	set_var_from_num(num, &x);
@@ -285,17 +281,15 @@ numeric(PG_FUNCTION_ARGS)
 	int			maxweight;
 	NumericVar	var;
 
-	/* ----------
+	/*
 	 * Handle NaN
-	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	/* ----------
-	 * If the value isn't a valid type modifier, simply return a
-	 * copy of the input value
-	 * ----------
+	/*
+	 * If the value isn't a valid type modifier, simply return a copy of
+	 * the input value
 	 */
 	if (typmod < (int32) (VARHDRSZ))
 	{
@@ -304,20 +298,18 @@ numeric(PG_FUNCTION_ARGS)
 		PG_RETURN_NUMERIC(new);
 	}
 
-	/* ----------
+	/*
 	 * Get the precision and scale out of the typmod value
-	 * ----------
 	 */
 	tmp_typmod = typmod - VARHDRSZ;
 	precision = (tmp_typmod >> 16) & 0xffff;
 	scale = tmp_typmod & 0xffff;
 	maxweight = precision - scale;
 
-	/* ----------
-	 * If the number is in bounds and due to the present result scale
-	 * no rounding could be necessary, just make a copy of the input
-	 * and modify its scale fields.
-	 * ----------
+	/*
+	 * If the number is in bounds and due to the present result scale no
+	 * rounding could be necessary, just make a copy of the input and
+	 * modify its scale fields.
 	 */
 	if (num->n_weight < maxweight && scale >= num->n_rscale)
 	{
@@ -329,10 +321,9 @@ numeric(PG_FUNCTION_ARGS)
 		PG_RETURN_NUMERIC(new);
 	}
 
-	/* ----------
-	 * We really need to fiddle with things - unpack the number into
-	 * a variable and let apply_typmod() do it.
-	 * ----------
+	/*
+	 * We really need to fiddle with things - unpack the number into a
+	 * variable and let apply_typmod() do it.
 	 */
 	init_var(&var);
 
@@ -359,16 +350,14 @@ numeric_abs(PG_FUNCTION_ARGS)
 	Numeric		num = PG_GETARG_NUMERIC(0);
 	Numeric		res;
 
-	/* ----------
+	/*
 	 * Handle NaN
-	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	/* ----------
+	/*
 	 * Do it the easy way directly on the packed format
-	 * ----------
 	 */
 	res = (Numeric) palloc(num->varlen);
 	memcpy(res, num, num->varlen);
@@ -385,25 +374,22 @@ numeric_uminus(PG_FUNCTION_ARGS)
 	Numeric		num = PG_GETARG_NUMERIC(0);
 	Numeric		res;
 
-	/* ----------
+	/*
 	 * Handle NaN
-	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	/* ----------
+	/*
 	 * Do it the easy way directly on the packed format
-	 * ----------
 	 */
 	res = (Numeric) palloc(num->varlen);
 	memcpy(res, num, num->varlen);
 
-	/* ----------
-	 * The packed format is known to be totally zero digit trimmed
-	 * always. So we can identify a ZERO by the fact that there
-	 * are no digits at all.  Do nothing to a zero.
-	 * ----------
+	/*
+	 * The packed format is known to be totally zero digit trimmed always.
+	 * So we can identify a ZERO by the fact that there are no digits at
+	 * all.  Do nothing to a zero.
 	 */
 	if (num->varlen != NUMERIC_HDRSZ)
 	{
@@ -425,29 +411,27 @@ numeric_sign(PG_FUNCTION_ARGS)
 	Numeric		res;
 	NumericVar	result;
 
-	/* ----------
+	/*
 	 * Handle NaN
-	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	init_var(&result);
 
-	/* ----------
-	 * The packed format is known to be totally zero digit trimmed
-	 * always. So we can identify a ZERO by the fact that there
-	 * are no digits at all.
-	 * ----------
+	/*
+	 * The packed format is known to be totally zero digit trimmed always.
+	 * So we can identify a ZERO by the fact that there are no digits at
+	 * all.
 	 */
 	if (num->varlen == NUMERIC_HDRSZ)
 		set_var_from_var(&const_zero, &result);
 	else
 	{
-		/* ----------
-		 * And if there are some, we return a copy of ONE
-		 * with the sign of our argument
-		 * ----------
+
+		/*
+		 * And if there are some, we return a copy of ONE with the sign of
+		 * our argument
 		 */
 		set_var_from_var(&const_one, &result);
 		result.sign = NUMERIC_SIGN(num);
@@ -477,23 +461,21 @@ numeric_round(PG_FUNCTION_ARGS)
 	NumericVar	arg;
 	int			i;
 
-	/* ----------
+	/*
 	 * Handle NaN
-	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	/* ----------
-	 * Limit the scale value to avoid possible overflow in calculations below.
-	 * ----------
+	/*
+	 * Limit the scale value to avoid possible overflow in calculations
+	 * below.
 	 */
 	scale = MIN(NUMERIC_MAX_RESULT_SCALE,
 				MAX(-NUMERIC_MAX_RESULT_SCALE, scale));
 
-	/* ----------
+	/*
 	 * Unpack the argument and round it at the proper digit position
-	 * ----------
 	 */
 	init_var(&arg);
 	set_var_from_num(num, &arg);
@@ -533,17 +515,15 @@ numeric_round(PG_FUNCTION_ARGS)
 		}
 	}
 
-	/* ----------
+	/*
 	 * Set result's scale to something reasonable.
-	 * ----------
 	 */
 	scale = MIN(NUMERIC_MAX_DISPLAY_SCALE, MAX(0, scale));
 	arg.rscale = scale;
 	arg.dscale = scale;
 
-	/* ----------
+	/*
 	 * Return the rounded result
-	 * ----------
 	 */
 	res = make_result(&arg);
 
@@ -568,40 +548,36 @@ numeric_trunc(PG_FUNCTION_ARGS)
 	Numeric		res;
 	NumericVar	arg;
 
-	/* ----------
+	/*
 	 * Handle NaN
-	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	/* ----------
-	 * Limit the scale value to avoid possible overflow in calculations below.
-	 * ----------
+	/*
+	 * Limit the scale value to avoid possible overflow in calculations
+	 * below.
 	 */
 	scale = MIN(NUMERIC_MAX_RESULT_SCALE,
 				MAX(-NUMERIC_MAX_RESULT_SCALE, scale));
 
-	/* ----------
+	/*
 	 * Unpack the argument and truncate it at the proper digit position
-	 * ----------
 	 */
 	init_var(&arg);
 	set_var_from_num(num, &arg);
 
 	arg.ndigits = MIN(arg.ndigits, MAX(0, arg.weight + scale + 1));
 
-	/* ----------
+	/*
 	 * Set result's scale to something reasonable.
-	 * ----------
 	 */
 	scale = MIN(NUMERIC_MAX_DISPLAY_SCALE, MAX(0, scale));
 	arg.rscale = scale;
 	arg.dscale = scale;
 
-	/* ----------
+	/*
 	 * Return the truncated result
-	 * ----------
 	 */
 	res = make_result(&arg);
 
@@ -931,18 +907,16 @@ numeric_add(PG_FUNCTION_ARGS)
 	NumericVar	result;
 	Numeric		res;
 
-	/* ----------
+	/*
 	 * Handle NaN
-	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	/* ----------
-	 * Unpack the values, let add_var() compute the result
-	 * and return it. The internals of add_var() will automatically
-	 * set the correct result and display scales in the result.
-	 * ----------
+	/*
+	 * Unpack the values, let add_var() compute the result and return it.
+	 * The internals of add_var() will automatically set the correct
+	 * result and display scales in the result.
 	 */
 	init_var(&arg1);
 	init_var(&arg2);
@@ -978,17 +952,15 @@ numeric_sub(PG_FUNCTION_ARGS)
 	NumericVar	result;
 	Numeric		res;
 
-	/* ----------
+	/*
 	 * Handle NaN
-	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	/* ----------
-	 * Unpack the two arguments, let sub_var() compute the
-	 * result and return it.
-	 * ----------
+	/*
+	 * Unpack the two arguments, let sub_var() compute the result and
+	 * return it.
 	 */
 	init_var(&arg1);
 	init_var(&arg2);
@@ -1024,22 +996,19 @@ numeric_mul(PG_FUNCTION_ARGS)
 	NumericVar	result;
 	Numeric		res;
 
-	/* ----------
+	/*
 	 * Handle NaN
-	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	/* ----------
-	 * Unpack the arguments, let mul_var() compute the result
-	 * and return it. Unlike add_var() and sub_var(), mul_var()
-	 * will round the result to the scale stored in global_rscale.
-	 * In the case of numeric_mul(), which is invoked for the *
-	 * operator on numerics, we set it to the exact representation
-	 * for the product (rscale = sum(rscale of arg1, rscale of arg2)
-	 * and the same for the dscale).
-	 * ----------
+	/*
+	 * Unpack the arguments, let mul_var() compute the result and return
+	 * it. Unlike add_var() and sub_var(), mul_var() will round the result
+	 * to the scale stored in global_rscale. In the case of numeric_mul(),
+	 * which is invoked for the * operator on numerics, we set it to the
+	 * exact representation for the product (rscale = sum(rscale of arg1,
+	 * rscale of arg2) and the same for the dscale).
 	 */
 	init_var(&arg1);
 	init_var(&arg2);
@@ -1081,16 +1050,14 @@ numeric_div(PG_FUNCTION_ARGS)
 	Numeric		res;
 	int			res_dscale;
 
-	/* ----------
+	/*
 	 * Handle NaN
-	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	/* ----------
+	/*
 	 * Unpack the arguments
-	 * ----------
 	 */
 	init_var(&arg1);
 	init_var(&arg2);
@@ -1122,9 +1089,8 @@ numeric_div(PG_FUNCTION_ARGS)
 	global_rscale = MAX(global_rscale, res_dscale + 4);
 	global_rscale = MIN(global_rscale, NUMERIC_MAX_RESULT_SCALE);
 
-	/* ----------
+	/*
 	 * Do the divide, set the display scale and return the result
-	 * ----------
 	 */
 	div_var(&arg1, &arg2, &result);
 
@@ -1192,16 +1158,14 @@ numeric_inc(PG_FUNCTION_ARGS)
 	NumericVar	arg;
 	Numeric		res;
 
-	/* ----------
+	/*
 	 * Handle NaN
-	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	/* ----------
+	/*
 	 * Compute the result and return it
-	 * ----------
 	 */
 	init_var(&arg);
 
@@ -1231,16 +1195,14 @@ numeric_smaller(PG_FUNCTION_ARGS)
 	NumericVar	arg2;
 	Numeric		res;
 
-	/* ----------
+	/*
 	 * Handle NaN
-	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	/* ----------
+	/*
 	 * Unpack the values, and decide which is the smaller one
-	 * ----------
 	 */
 	init_var(&arg1);
 	init_var(&arg2);
@@ -1275,16 +1237,14 @@ numeric_larger(PG_FUNCTION_ARGS)
 	NumericVar	arg2;
 	Numeric		res;
 
-	/* ----------
+	/*
 	 * Handle NaN
-	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	/* ----------
+	/*
 	 * Unpack the values, and decide which is the larger one
-	 * ----------
 	 */
 	init_var(&arg1);
 	init_var(&arg2);
@@ -1327,17 +1287,15 @@ numeric_sqrt(PG_FUNCTION_ARGS)
 	NumericVar	result;
 	int			res_dscale;
 
-	/* ----------
+	/*
 	 * Handle NaN
-	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	/* ----------
-	 * Unpack the argument, determine the scales like for divide,
-	 * let sqrt_var() do the calculation and return the result.
-	 * ----------
+	/*
+	 * Unpack the argument, determine the scales like for divide, let
+	 * sqrt_var() do the calculation and return the result.
 	 */
 	init_var(&arg);
 	init_var(&result);
@@ -1378,16 +1336,14 @@ numeric_exp(PG_FUNCTION_ARGS)
 	NumericVar	result;
 	int			res_dscale;
 
-	/* ----------
+	/*
 	 * Handle NaN
-	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	/* ----------
+	/*
 	 * Same procedure like for sqrt().
-	 * ----------
 	 */
 	init_var(&arg);
 	init_var(&result);
@@ -1427,16 +1383,14 @@ numeric_ln(PG_FUNCTION_ARGS)
 	NumericVar	result;
 	int			res_dscale;
 
-	/* ----------
+	/*
 	 * Handle NaN
-	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	/* ----------
+	/*
 	 * Same procedure like for sqrt()
-	 * ----------
 	 */
 	init_var(&arg);
 	init_var(&result);
@@ -1478,16 +1432,14 @@ numeric_log(PG_FUNCTION_ARGS)
 	NumericVar	result;
 	int			res_dscale;
 
-	/* ----------
+	/*
 	 * Handle NaN
-	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	/* ----------
+	/*
 	 * Initialize things and calculate scales
-	 * ----------
 	 */
 	init_var(&arg1);
 	init_var(&arg2);
@@ -1501,9 +1453,8 @@ numeric_log(PG_FUNCTION_ARGS)
 	global_rscale = MAX(global_rscale, res_dscale + 4);
 	global_rscale = MIN(global_rscale, NUMERIC_MAX_RESULT_SCALE);
 
-	/* ----------
+	/*
 	 * Call log_var() to compute and return the result
-	 * ----------
 	 */
 	log_var(&arg1, &arg2, &result);
 
@@ -1536,16 +1487,14 @@ numeric_power(PG_FUNCTION_ARGS)
 	NumericVar	result;
 	int			res_dscale;
 
-	/* ----------
+	/*
 	 * Handle NaN
-	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	/* ----------
+	/*
 	 * Initialize things and calculate scales
-	 * ----------
 	 */
 	init_var(&arg1);
 	init_var(&arg2);
@@ -1559,9 +1508,8 @@ numeric_power(PG_FUNCTION_ARGS)
 	global_rscale = MAX(global_rscale, res_dscale + 4);
 	global_rscale = MIN(global_rscale, NUMERIC_MAX_RESULT_SCALE);
 
-	/* ----------
+	/*
 	 * Call log_var() to compute and return the result
-	 * ----------
 	 */
 	power_var(&arg1, &arg2, &result);
 
@@ -1619,9 +1567,8 @@ numeric_int4(PG_FUNCTION_ARGS)
 	if (NUMERIC_IS_NAN(num))
 		elog(ERROR, "Cannot convert NaN to int4");
 
-	/* ----------
+	/*
 	 * Get the number in the variable format so we can round to integer.
-	 * ----------
 	 */
 	init_var(&x);
 	set_var_from_num(num, &x);
@@ -1670,9 +1617,8 @@ numeric_int8(PG_FUNCTION_ARGS)
 	if (NUMERIC_IS_NAN(num))
 		elog(ERROR, "Cannot convert NaN to int8");
 
-	/* ----------
+	/*
 	 * Get the number in the variable format so we can round to integer.
-	 * ----------
 	 */
 	init_var(&x);
 	set_var_from_num(num, &x);
@@ -1721,9 +1667,8 @@ numeric_int2(PG_FUNCTION_ARGS)
 	if (NUMERIC_IS_NAN(num))
 		elog(ERROR, "Cannot convert NaN to int2");
 
-	/* ----------
+	/*
 	 * Get the number in the variable format so we can round to integer.
-	 * ----------
 	 */
 	init_var(&x);
 	set_var_from_num(num, &x);
@@ -2512,10 +2457,8 @@ get_str_from_var(NumericVar *var, int dscale)
 	int			i;
 	int			d;
 
-	/* ----------
-	 * Check if we must round up before printing the value and
-	 * do so.
-	 * ----------
+	/*
+	 * Check if we must round up before printing the value and do so.
 	 */
 	i = dscale + var->weight + 1;
 	if (i >= 0 && var->ndigits > i)
@@ -2543,23 +2486,20 @@ get_str_from_var(NumericVar *var, int dscale)
 	else
 		var->ndigits = MAX(0, MIN(i, var->ndigits));
 
-	/* ----------
+	/*
 	 * Allocate space for the result
-	 * ----------
 	 */
 	str = palloc(MAX(0, dscale) + MAX(0, var->weight) + 4);
 	cp = str;
 
-	/* ----------
+	/*
 	 * Output a dash for negative values
-	 * ----------
 	 */
 	if (var->sign == NUMERIC_NEG)
 		*cp++ = '-';
 
-	/* ----------
+	/*
 	 * Output all digits before the decimal point
-	 * ----------
 	 */
 	i = MAX(var->weight, 0);
 	d = 0;
@@ -2573,10 +2513,9 @@ get_str_from_var(NumericVar *var, int dscale)
 		i--;
 	}
 
-	/* ----------
-	 * If requested, output a decimal point and all the digits
-	 * that follow it.
-	 * ----------
+	/*
+	 * If requested, output a decimal point and all the digits that follow
+	 * it.
 	 */
 	if (dscale > 0)
 	{
@@ -2591,9 +2530,8 @@ get_str_from_var(NumericVar *var, int dscale)
 		}
 	}
 
-	/* ----------
+	/*
 	 * terminate the string and return it
-	 * ----------
 	 */
 	*cp = '\0';
 	return str;
@@ -2725,14 +2663,12 @@ apply_typmod(NumericVar *var, int32 typmod)
 	else
 		var->ndigits = MAX(0, MIN(i, var->ndigits));
 
-	/* ----------
-	 * Check for overflow - note we can't do this before rounding,
-	 * because rounding could raise the weight.  Also note that the
-	 * var's weight could be inflated by leading zeroes, which will
-	 * be stripped before storage but perhaps might not have been yet.
-	 * In any case, we must recognize a true zero, whose weight doesn't
-	 * mean anything.
-	 * ----------
+	/*
+	 * Check for overflow - note we can't do this before rounding, because
+	 * rounding could raise the weight.  Also note that the var's weight
+	 * could be inflated by leading zeroes, which will be stripped before
+	 * storage but perhaps might not have been yet. In any case, we must
+	 * recognize a true zero, whose weight doesn't mean anything.
 	 */
 	if (var->weight >= maxweight)
 	{
@@ -2805,28 +2741,27 @@ cmp_var(NumericVar *var1, NumericVar *var2)
 static void
 add_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 {
-	/* ----------
+
+	/*
 	 * Decide on the signs of the two variables what to do
-	 * ----------
 	 */
 	if (var1->sign == NUMERIC_POS)
 	{
 		if (var2->sign == NUMERIC_POS)
 		{
-			/* ----------
-			 * Both are positive
-			 * result = +(ABS(var1) + ABS(var2))
-			 * ----------
+
+			/*
+			 * Both are positive result = +(ABS(var1) + ABS(var2))
 			 */
 			add_abs(var1, var2, result);
 			result->sign = NUMERIC_POS;
 		}
 		else
 		{
-			/* ----------
-			 * var1 is positive, var2 is negative
-			 * Must compare absolute values
-			 * ----------
+
+			/*
+			 * var1 is positive, var2 is negative Must compare absolute
+			 * values
 			 */
 			switch (cmp_abs(var1, var2))
 			{
@@ -2930,9 +2865,9 @@ add_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 static void
 sub_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 {
-	/* ----------
+
+	/*
 	 * Decide on the signs of the two variables what to do
-	 * ----------
 	 */
 	if (var1->sign == NUMERIC_POS)
 	{
@@ -3157,17 +3092,15 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	int			first_nextdigit;
 	int			stat = 0;
 
-	/* ----------
+	/*
 	 * First of all division by zero check
-	 * ----------
 	 */
 	ndigits_tmp = var2->ndigits + 1;
 	if (ndigits_tmp == 1)
 		elog(ERROR, "division by zero on numeric");
 
-	/* ----------
+	/*
 	 * Determine the result sign, weight and number of digits to calculate
-	 * ----------
 	 */
 	if (var1->sign == var2->sign)
 		res_sign = NUMERIC_POS;
@@ -3178,9 +3111,8 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	if (res_ndigits <= 0)
 		res_ndigits = 1;
 
-	/* ----------
+	/*
 	 * Now result zero check
-	 * ----------
 	 */
 	if (var1->ndigits == 0)
 	{
@@ -3189,17 +3121,15 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 		return;
 	}
 
-	/* ----------
+	/*
 	 * Initialize local variables
-	 * ----------
 	 */
 	init_var(&dividend);
 	for (i = 1; i < 10; i++)
 		init_var(&divisor[i]);
 
-	/* ----------
+	/*
 	 * Make a copy of the divisor which has one leading zero digit
-	 * ----------
 	 */
 	divisor[1].ndigits = ndigits_tmp;
 	divisor[1].rscale = var2->ndigits;
@@ -3209,9 +3139,8 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	divisor[1].digits[0] = 0;
 	memcpy(&(divisor[1].digits[1]), var2->digits, ndigits_tmp - 1);
 
-	/* ----------
+	/*
 	 * Make a copy of the dividend
-	 * ----------
 	 */
 	dividend.ndigits = var1->ndigits;
 	dividend.weight = 0;
@@ -3221,9 +3150,8 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	dividend.digits = dividend.buf;
 	memcpy(dividend.digits, var1->digits, var1->ndigits);
 
-	/* ----------
+	/*
 	 * Setup the result
-	 * ----------
 	 */
 	digitbuf_free(result->buf);
 	result->buf = digitbuf_alloc(res_ndigits + 2);
@@ -3356,7 +3284,7 @@ mod_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 
 	init_var(&tmp);
 
-	/* ----------
+	/* ---------
 	 * We do this using the equation
 	 *		mod(x,y) = x - trunc(x/y)*y
 	 * We fiddle a bit with global_rscale to control result precision.
@@ -3470,9 +3398,8 @@ sqrt_var(NumericVar *arg, NumericVar *result)
 	set_var_from_var(arg, &tmp_arg);
 	set_var_from_var(result, &last_val);
 
-	/* ----------
+	/*
 	 * Initialize the result to the first guess
-	 * ----------
 	 */
 	digitbuf_free(result->buf);
 	result->buf = digitbuf_alloc(1);

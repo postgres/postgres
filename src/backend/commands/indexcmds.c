@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.46 2001/03/22 03:59:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.47 2001/03/22 06:16:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -405,16 +405,15 @@ FuncIndexArgs(IndexInfo *indexInfo,
 		nargs++;
 	}
 
-	/* ----------------
+	/*
 	 * Lookup the function procedure to get its OID and result type.
 	 *
-	 * We rely on parse_func.c to find the correct function in the
-	 * possible presence of binary-compatible types.  However, parse_func
-	 * may do too much: it will accept a function that requires run-time
-	 * coercion of input types, and the executor is not currently set up
-	 * to support that.  So, check to make sure that the selected function
-	 * has exact-match or binary-compatible input types.
-	 * ----------------
+	 * We rely on parse_func.c to find the correct function in the possible
+	 * presence of binary-compatible types.  However, parse_func may do
+	 * too much: it will accept a function that requires run-time coercion
+	 * of input types, and the executor is not currently set up to support
+	 * that.  So, check to make sure that the selected function has
+	 * exact-match or binary-compatible input types.
 	 */
 	if (!func_get_detail(funcIndex->name, nargs, argTypes,
 						 &funcid, &rettype, &retset, &true_typeids))
@@ -637,11 +636,10 @@ ReindexIndex(const char *name, bool force /* currently unused */ )
 	HeapTuple	tuple;
 	bool		overwrite = false;
 
-	/* ----------------
-	 *	REINDEX within a transaction block is dangerous, because
-	 *	if the transaction is later rolled back we have no way to
-	 *	undo truncation of the index's physical file.  Disallow it.
-	 * ----------------
+	/*
+	 * REINDEX within a transaction block is dangerous, because if the
+	 * transaction is later rolled back we have no way to undo truncation
+	 * of the index's physical file.  Disallow it.
 	 */
 	if (IsTransactionBlock())
 		elog(ERROR, "REINDEX cannot run inside a BEGIN/END block");
@@ -681,11 +679,10 @@ ReindexTable(const char *name, bool force)
 {
 	HeapTuple	tuple;
 
-	/* ----------------
-	 *	REINDEX within a transaction block is dangerous, because
-	 *	if the transaction is later rolled back we have no way to
-	 *	undo truncation of the index's physical file.  Disallow it.
-	 * ----------------
+	/*
+	 * REINDEX within a transaction block is dangerous, because if the
+	 * transaction is later rolled back we have no way to undo truncation
+	 * of the index's physical file.  Disallow it.
 	 */
 	if (IsTransactionBlock())
 		elog(ERROR, "REINDEX cannot run inside a BEGIN/END block");

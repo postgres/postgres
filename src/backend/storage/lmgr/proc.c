@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.99 2001/03/22 03:59:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.100 2001/03/22 06:16:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -265,18 +265,15 @@ InitProcess(void)
 	MyProc->waitHolder = NULL;
 	SHMQueueInit(&(MyProc->procHolders));
 
-	/* ----------------------
+	/*
 	 * Release the lock.
-	 * ----------------------
 	 */
 	SpinRelease(ProcStructLock);
 
-	/* -------------------------
-	 * Install ourselves in the shmem index table.	The name to
-	 * use is determined by the OS-assigned process id.  That
-	 * allows the cleanup process to find us after any untimely
-	 * exit.
-	 * -------------------------
+	/*
+	 * Install ourselves in the shmem index table.	The name to use is
+	 * determined by the OS-assigned process id.  That allows the cleanup
+	 * process to find us after any untimely exit.
 	 */
 	location = MAKE_OFFSET(MyProc);
 	if ((!ShmemPIDLookup(MyProcPid, &location)) ||
@@ -531,23 +528,24 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 
 #endif
 
-	/* ----------------------
+	/*
 	 * Determine where to add myself in the wait queue.
 	 *
 	 * Normally I should go at the end of the queue.  However, if I already
 	 * hold locks that conflict with the request of any previous waiter,
 	 * put myself in the queue just in front of the first such waiter.
 	 * This is not a necessary step, since deadlock detection would move
-	 * me to before that waiter anyway; but it's relatively cheap to detect
-	 * such a conflict immediately, and avoid delaying till deadlock timeout.
+	 * me to before that waiter anyway; but it's relatively cheap to
+	 * detect such a conflict immediately, and avoid delaying till
+	 * deadlock timeout.
 	 *
-	 * Special case: if I find I should go in front of some waiter, check
-	 * to see if I conflict with already-held locks or the requests before
+	 * Special case: if I find I should go in front of some waiter, check to
+	 * see if I conflict with already-held locks or the requests before
 	 * that waiter.  If not, then just grant myself the requested lock
 	 * immediately.  This is the same as the test for immediate grant in
-	 * LockAcquire, except we are only considering the part of the wait queue
-	 * before my insertion point.
-	 * ----------------------
+	 * LockAcquire, except we are only considering the part of the wait
+	 * queue before my insertion point.
+	 *
 	 */
 	if (myHeldLocks != 0)
 	{
@@ -598,9 +596,9 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 		proc = (PROC *) &(waitQueue->links);
 	}
 
-	/* -------------------
-	 * Insert self into queue, ahead of the given proc (or at tail of queue).
-	 * -------------------
+	/*
+	 * Insert self into queue, ahead of the given proc (or at tail of
+	 * queue).
 	 */
 	SHMQueueInsertBefore(&(proc->links), &(MyProc->links));
 	waitQueue->size++;
@@ -617,18 +615,17 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	/* mark that we are waiting for a lock */
 	waitingForLock = true;
 
-	/* -------------------
+	/*
 	 * Release the locktable's spin lock.
 	 *
-	 * NOTE: this may also cause us to exit critical-section state,
-	 * possibly allowing a cancel/die interrupt to be accepted.
-	 * This is OK because we have recorded the fact that we are waiting for
-	 * a lock, and so LockWaitCancel will clean up if cancel/die happens.
-	 * -------------------
+	 * NOTE: this may also cause us to exit critical-section state, possibly
+	 * allowing a cancel/die interrupt to be accepted. This is OK because
+	 * we have recorded the fact that we are waiting for a lock, and so
+	 * LockWaitCancel will clean up if cancel/die happens.
 	 */
 	SpinRelease(spinlock);
 
-	/* --------------
+	/*
 	 * Set timer so we can wake up after awhile and check for a deadlock.
 	 * If a deadlock is detected, the handler releases the process's
 	 * semaphore and sets MyProc->errType = STATUS_ERROR, allowing us to
@@ -637,9 +634,8 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	 * By delaying the check until we've waited for a bit, we can avoid
 	 * running the rather expensive deadlock-check code in most cases.
 	 *
-	 * Need to zero out struct to set the interval and the microseconds fields
-	 * to 0.
-	 * --------------
+	 * Need to zero out struct to set the interval and the microseconds
+	 * fields to 0.
 	 */
 #ifndef __BEOS__
 	MemSet(&timeval, 0, sizeof(struct itimerval));
@@ -653,26 +649,24 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 		elog(FATAL, "ProcSleep: Unable to set timer for process wakeup");
 #endif
 
-	/* --------------
+	/*
 	 * If someone wakes us between SpinRelease and IpcSemaphoreLock,
-	 * IpcSemaphoreLock will not block.  The wakeup is "saved" by
-	 * the semaphore implementation.  Note also that if HandleDeadLock
-	 * is invoked but does not detect a deadlock, IpcSemaphoreLock()
-	 * will continue to wait.  There used to be a loop here, but it
-	 * was useless code...
+	 * IpcSemaphoreLock will not block.  The wakeup is "saved" by the
+	 * semaphore implementation.  Note also that if HandleDeadLock is
+	 * invoked but does not detect a deadlock, IpcSemaphoreLock() will
+	 * continue to wait.  There used to be a loop here, but it was useless
+	 * code...
 	 *
 	 * We pass interruptOK = true, which eliminates a window in which
 	 * cancel/die interrupts would be held off undesirably.  This is a
 	 * promise that we don't mind losing control to a cancel/die interrupt
 	 * here.  We don't, because we have no state-change work to do after
 	 * being granted the lock (the grantor did it all).
-	 * --------------
 	 */
 	IpcSemaphoreLock(MyProc->sem.semId, MyProc->sem.semNum, true);
 
-	/* ---------------
+	/*
 	 * Disable the timer, if it's still running
-	 * ---------------
 	 */
 #ifndef __BEOS__
 	MemSet(&timeval, 0, sizeof(struct itimerval));
@@ -688,12 +682,11 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	 */
 	waitingForLock = false;
 
-	/* ----------------
+	/*
 	 * Re-acquire the locktable's spin lock.
 	 *
-	 * We could accept a cancel/die interrupt here.  That's OK because
-	 * the lock is now registered as being held by this process.
-	 * ----------------
+	 * We could accept a cancel/die interrupt here.  That's OK because the
+	 * lock is now registered as being held by this process.
 	 */
 	SpinAcquire(spinlock);
 
@@ -825,17 +818,18 @@ HandleDeadLock(SIGNAL_ARGS)
 	 */
 	LockLockTable();
 
-	/* ---------------------
+	/*
 	 * Check to see if we've been awoken by anyone in the interim.
 	 *
 	 * If we have we can return and resume our transaction -- happy day.
-	 * Before we are awoken the process releasing the lock grants it to
-	 * us so we know that we don't have to wait anymore.
+	 * Before we are awoken the process releasing the lock grants it to us
+	 * so we know that we don't have to wait anymore.
 	 *
 	 * We check by looking to see if we've been unlinked from the wait queue.
-	 * This is quicker than checking our semaphore's state, since no kernel
-	 * call is needed, and it is safe because we hold the locktable lock.
-	 * ---------------------
+	 * This is quicker than checking our semaphore's state, since no
+	 * kernel call is needed, and it is safe because we hold the locktable
+	 * lock.
+	 *
 	 */
 	if (MyProc->links.prev == INVALID_OFFSET ||
 		MyProc->links.next == INVALID_OFFSET)
@@ -858,37 +852,34 @@ HandleDeadLock(SIGNAL_ARGS)
 		return;
 	}
 
-	/* ------------------------
+	/*
 	 * Oops.  We have a deadlock.
 	 *
 	 * Get this process out of wait state.
-	 * ------------------------
 	 */
 	RemoveFromWaitQueue(MyProc);
 
-	/* -------------
-	 * Set MyProc->errType to STATUS_ERROR so that ProcSleep will
-	 * report an error after we return from this signal handler.
-	 * -------------
+	/*
+	 * Set MyProc->errType to STATUS_ERROR so that ProcSleep will report
+	 * an error after we return from this signal handler.
 	 */
 	MyProc->errType = STATUS_ERROR;
 
-	/* ------------------
-	 * Unlock my semaphore so that the interrupted ProcSleep() call can finish.
-	 * ------------------
+	/*
+	 * Unlock my semaphore so that the interrupted ProcSleep() call can
+	 * finish.
 	 */
 	IpcSemaphoreUnlock(MyProc->sem.semId, MyProc->sem.semNum);
 
-	/* ------------------
-	 * We're done here.  Transaction abort caused by the error that ProcSleep
-	 * will raise will cause any other locks we hold to be released, thus
-	 * allowing other processes to wake up; we don't need to do that here.
-	 * NOTE: an exception is that releasing locks we hold doesn't consider
-	 * the possibility of waiters that were blocked behind us on the lock
-	 * we just failed to get, and might now be wakable because we're not
-	 * in front of them anymore.  However, RemoveFromWaitQueue took care of
-	 * waking up any such processes.
-	 * ------------------
+	/*
+	 * We're done here.  Transaction abort caused by the error that
+	 * ProcSleep will raise will cause any other locks we hold to be
+	 * released, thus allowing other processes to wake up; we don't need
+	 * to do that here. NOTE: an exception is that releasing locks we hold
+	 * doesn't consider the possibility of waiters that were blocked
+	 * behind us on the lock we just failed to get, and might now be
+	 * wakable because we're not in front of them anymore.  However,
+	 * RemoveFromWaitQueue took care of waking up any such processes.
 	 */
 	UnlockLockTable();
 	errno = save_errno;

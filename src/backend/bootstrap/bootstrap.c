@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.105 2001/03/13 01:17:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.106 2001/03/22 06:16:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,7 +141,7 @@ int			numattr;			/* number of attributes for cur. rel */
 
 int			DebugMode;
 
-static MemoryContext nogc = NULL; /* special no-gc mem context */
+static MemoryContext nogc = NULL;		/* special no-gc mem context */
 
 extern int	optind;
 extern char *optarg;
@@ -216,11 +216,10 @@ BootstrapMain(int argc, char *argv[])
 	char	   *dbName;
 	int			flag;
 	int			xlogop = BS_XLOG_NOP;
-	char       *potential_DataDir = NULL;
+	char	   *potential_DataDir = NULL;
 
-	/* --------------------
-	 *	initialize globals
-	 * -------------------
+	/*
+	 * initialize globals
 	 */
 
 	MyProcPid = getpid();
@@ -236,9 +235,8 @@ BootstrapMain(int argc, char *argv[])
 		MemoryContextInit();
 	}
 
-	/* ----------------
-	 *	process command arguments
-	 * ----------------
+	/*
+	 * process command arguments
 	 */
 
 	/* Set defaults, to be overriden by explicit options below */
@@ -248,7 +246,8 @@ BootstrapMain(int argc, char *argv[])
 	if (!IsUnderPostmaster)
 	{
 		ResetAllOptions();
-		potential_DataDir = getenv("PGDATA"); /* Null if no PGDATA variable */
+		potential_DataDir = getenv("PGDATA");	/* Null if no PGDATA
+												 * variable */
 	}
 
 	while ((flag = getopt(argc, argv, "D:dCQx:pB:F")) != EOF)
@@ -307,9 +306,9 @@ BootstrapMain(int argc, char *argv[])
 		if (!potential_DataDir)
 		{
 			fprintf(stderr, "%s does not know where to find the database system "
-					"data.  You must specify the directory that contains the "
-					"database system either by specifying the -D invocation "
-					"option or by setting the PGDATA environment variable.\n\n",
+			   "data.  You must specify the directory that contains the "
+				"database system either by specifying the -D invocation "
+			 "option or by setting the PGDATA environment variable.\n\n",
 					argv[0]);
 			proc_exit(1);
 		}
@@ -319,15 +318,17 @@ BootstrapMain(int argc, char *argv[])
 
 	if (IsUnderPostmaster)
 	{
+
 		/*
 		 * Properly accept or ignore signals the postmaster might send us
 		 */
 		pqsignal(SIGHUP, SIG_IGN);
-		pqsignal(SIGINT, SIG_IGN); /* ignore query-cancel */
+		pqsignal(SIGINT, SIG_IGN);		/* ignore query-cancel */
 		pqsignal(SIGTERM, die);
 		pqsignal(SIGQUIT, quickdie);
 		pqsignal(SIGUSR1, SIG_IGN);
 		pqsignal(SIGUSR2, SIG_IGN);
+
 		/*
 		 * Reset some signals that are accepted by postmaster but not here
 		 */
@@ -336,8 +337,10 @@ BootstrapMain(int argc, char *argv[])
 		pqsignal(SIGTTOU, SIG_DFL);
 		pqsignal(SIGCONT, SIG_DFL);
 		pqsignal(SIGWINCH, SIG_DFL);
+
 		/*
-		 * Unblock signals (they were blocked when the postmaster forked us)
+		 * Unblock signals (they were blocked when the postmaster forked
+		 * us)
 		 */
 		PG_SETMASK(&UnBlockSig);
 	}
@@ -352,7 +355,7 @@ BootstrapMain(int argc, char *argv[])
 		/*
 		 * Create lockfile for data directory.
 		 */
-		if (! CreateDataDirLockFile(DataDir, false))
+		if (!CreateDataDirLockFile(DataDir, false))
 			proc_exit(1);
 	}
 
@@ -408,9 +411,8 @@ BootstrapMain(int argc, char *argv[])
 	for (i = 0; i < HASHTABLESIZE; ++i)
 		hashtable[i] = NULL;
 
-	/* ----------------
-	 *	abort processing resumes here
-	 * ----------------
+	/*
+	 * abort processing resumes here
 	 */
 	if (sigsetjmp(Warn_restart, 1) != 0)
 	{
@@ -418,9 +420,8 @@ BootstrapMain(int argc, char *argv[])
 		AbortCurrentTransaction();
 	}
 
-	/* ----------------
-	 *	process input.
-	 * ----------------
+	/*
+	 * process input.
 	 */
 
 	/*
@@ -720,9 +721,9 @@ InsertOneValue(Oid objectid, char *value, int i)
 									 ObjectIdGetDatum(ap->am_typ.typelem),
 									 Int32GetDatum(-1));
 		prt = DatumGetCString(OidFunctionCall3(ap->am_typ.typoutput,
-							  values[i],
-							  ObjectIdGetDatum(ap->am_typ.typelem),
-							  Int32GetDatum(-1)));
+											   values[i],
+									ObjectIdGetDatum(ap->am_typ.typelem),
+											   Int32GetDatum(-1)));
 		if (!Quiet)
 			printf("%s ", prt);
 		pfree(prt);
@@ -740,12 +741,12 @@ InsertOneValue(Oid objectid, char *value, int i)
 			printf("Typ == NULL, typeindex = %u idx = %d\n", typeindex, i);
 		values[i] = OidFunctionCall3(Procid[typeindex].inproc,
 									 CStringGetDatum(value),
-									 ObjectIdGetDatum(Procid[typeindex].elem),
+								ObjectIdGetDatum(Procid[typeindex].elem),
 									 Int32GetDatum(-1));
 		prt = DatumGetCString(OidFunctionCall3(Procid[typeindex].outproc,
-							  values[i],
-							  ObjectIdGetDatum(Procid[typeindex].elem),
-							  Int32GetDatum(-1)));
+											   values[i],
+								ObjectIdGetDatum(Procid[typeindex].elem),
+											   Int32GetDatum(-1)));
 		if (!Quiet)
 			printf("%s ", prt);
 		pfree(prt);

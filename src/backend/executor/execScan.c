@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.16 2001/03/22 03:59:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.17 2001/03/22 06:16:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,20 +55,18 @@ ExecScan(Scan *node,
 	ExprDoneCond isDone;
 	TupleTableSlot *resultSlot;
 
-	/* ----------------
-	 *	Fetch data from node
-	 * ----------------
+	/*
+	 * Fetch data from node
 	 */
 	estate = node->plan.state;
 	scanstate = node->scanstate;
 	econtext = scanstate->cstate.cs_ExprContext;
 	qual = node->plan.qual;
 
-	/* ----------------
-	 *	Check to see if we're still projecting out tuples from a previous
-	 *	scan tuple (because there is a function-returning-set in the
-	 *	projection expressions).  If so, try to project another one.
-	 * ----------------
+	/*
+	 * Check to see if we're still projecting out tuples from a previous
+	 * scan tuple (because there is a function-returning-set in the
+	 * projection expressions).  If so, try to project another one.
 	 */
 	if (scanstate->cstate.cs_TupFromTlist)
 	{
@@ -79,11 +77,10 @@ ExecScan(Scan *node,
 		scanstate->cstate.cs_TupFromTlist = false;
 	}
 
-	/* ----------------
-	 *	Reset per-tuple memory context to free any expression evaluation
-	 *	storage allocated in the previous tuple cycle.	Note this can't
-	 *	happen until we're done projecting out tuples from a scan tuple.
-	 * ----------------
+	/*
+	 * Reset per-tuple memory context to free any expression evaluation
+	 * storage allocated in the previous tuple cycle.  Note this can't
+	 * happen until we're done projecting out tuples from a scan tuple.
 	 */
 	ResetExprContext(econtext);
 
@@ -97,12 +94,11 @@ ExecScan(Scan *node,
 
 		slot = (*accessMtd) (node);
 
-		/* ----------------
-		 *	if the slot returned by the accessMtd contains
-		 *	NULL, then it means there is nothing more to scan
-		 *	so we just return an empty slot, being careful to use
-		 *	the projection result slot so it has correct tupleDesc.
-		 * ----------------
+		/*
+		 * if the slot returned by the accessMtd contains NULL, then it
+		 * means there is nothing more to scan so we just return an empty
+		 * slot, being careful to use the projection result slot so it has
+		 * correct tupleDesc.
 		 */
 		if (TupIsNull(slot))
 		{
@@ -112,29 +108,27 @@ ExecScan(Scan *node,
 								  true);
 		}
 
-		/* ----------------
-		 *	 place the current tuple into the expr context
-		 * ----------------
+		/*
+		 * place the current tuple into the expr context
 		 */
 		econtext->ecxt_scantuple = slot;
 
-		/* ----------------
-		 *	check that the current tuple satisfies the qual-clause
+		/*
+		 * check that the current tuple satisfies the qual-clause
 		 *
-		 * check for non-nil qual here to avoid a function call to
-		 * ExecQual() when the qual is nil ... saves only a few cycles,
-		 * but they add up ...
-		 * ----------------
+		 * check for non-nil qual here to avoid a function call to ExecQual()
+		 * when the qual is nil ... saves only a few cycles, but they add
+		 * up ...
 		 */
 		if (!qual || ExecQual(qual, econtext, false))
 		{
-			/* ----------------
-			 *	Found a satisfactory scan tuple.
+
+			/*
+			 * Found a satisfactory scan tuple.
 			 *
-			 *	Form a projection tuple, store it in the result tuple
-			 *	slot and return it --- unless we find we can project no
-			 *	tuples from this scan tuple, in which case continue scan.
-			 * ----------------
+			 * Form a projection tuple, store it in the result tuple slot and
+			 * return it --- unless we find we can project no tuples from
+			 * this scan tuple, in which case continue scan.
 			 */
 			resultSlot = ExecProject(scanstate->cstate.cs_ProjInfo, &isDone);
 			if (isDone != ExprEndResult)
@@ -144,9 +138,8 @@ ExecScan(Scan *node,
 			}
 		}
 
-		/* ----------------
-		 *	Tuple fails qual, so free per-tuple memory and try again.
-		 * ----------------
+		/*
+		 * Tuple fails qual, so free per-tuple memory and try again.
 		 */
 		ResetExprContext(econtext);
 	}

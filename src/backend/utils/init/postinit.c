@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.82 2001/03/22 04:00:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.83 2001/03/22 06:16:18 momjian Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -151,17 +151,17 @@ ReverifyMyDatabase(const char *name)
 static void
 InitCommunication(void)
 {
-	/* ----------------
-	 *	initialize shared memory and semaphores appropriately.
-	 * ----------------
+
+	/*
+	 * initialize shared memory and semaphores appropriately.
 	 */
 	if (!IsUnderPostmaster)		/* postmaster already did this */
 	{
-		/* ----------------
-		 *	we're running a postgres backend by itself with
-		 *	no front end or postmaster.  Create private "shmem"
-		 *	and semaphores.  Setting MaxBackends = 16 is arbitrary.
-		 * ----------------
+
+		/*
+		 * we're running a postgres backend by itself with no front end or
+		 * postmaster.	Create private "shmem" and semaphores.	Setting
+		 * MaxBackends = 16 is arbitrary.
 		 */
 		CreateSharedMemoryAndSemaphores(true, 16);
 	}
@@ -207,9 +207,8 @@ InitPostgres(const char *dbname, const char *username)
 
 	SetDatabaseName(dbname);
 
-	/* ----------------
-	 *	initialize the database id used for system caches and lock tables
-	 * ----------------
+	/*
+	 * initialize the database id used for system caches and lock tables
 	 */
 	if (bootstrap)
 	{

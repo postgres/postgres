@@ -34,7 +34,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.18 2001/03/22 03:59:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.19 2001/03/22 06:16:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,16 +69,14 @@ ExecResult(Result *node)
 	ExprContext *econtext;
 	ExprDoneCond isDone;
 
-	/* ----------------
-	 *	initialize the result node's state
-	 * ----------------
+	/*
+	 * initialize the result node's state
 	 */
 	resstate = node->resstate;
 	econtext = resstate->cstate.cs_ExprContext;
 
-	/* ----------------
-	 *	 check constant qualifications like (2 > 1), if not already done
-	 * ----------------
+	/*
+	 * check constant qualifications like (2 > 1), if not already done
 	 */
 	if (resstate->rs_checkqual)
 	{
@@ -94,11 +92,10 @@ ExecResult(Result *node)
 		}
 	}
 
-	/* ----------------
-	 *	Check to see if we're still projecting out tuples from a previous
-	 *	scan tuple (because there is a function-returning-set in the
-	 *	projection expressions).  If so, try to project another one.
-	 * ----------------
+	/*
+	 * Check to see if we're still projecting out tuples from a previous
+	 * scan tuple (because there is a function-returning-set in the
+	 * projection expressions).  If so, try to project another one.
 	 */
 	if (resstate->cstate.cs_TupFromTlist)
 	{
@@ -109,20 +106,18 @@ ExecResult(Result *node)
 		resstate->cstate.cs_TupFromTlist = false;
 	}
 
-	/* ----------------
-	 *	Reset per-tuple memory context to free any expression evaluation
-	 *	storage allocated in the previous tuple cycle.	Note this can't
-	 *	happen until we're done projecting out tuples from a scan tuple.
-	 * ----------------
+	/*
+	 * Reset per-tuple memory context to free any expression evaluation
+	 * storage allocated in the previous tuple cycle.  Note this can't
+	 * happen until we're done projecting out tuples from a scan tuple.
 	 */
 	ResetExprContext(econtext);
 
-	/* ----------------
-	 *	if rs_done is true then it means that we were asked to return
-	 *	a constant tuple and we already did the last time ExecResult()
-	 *	was called, OR that we failed the constant qual check.
-	 *	Either way, now we are through.
-	 * ----------------
+	/*
+	 * if rs_done is true then it means that we were asked to return a
+	 * constant tuple and we already did the last time ExecResult() was
+	 * called, OR that we failed the constant qual check. Either way, now
+	 * we are through.
 	 */
 	while (!resstate->rs_done)
 	{
@@ -130,9 +125,10 @@ ExecResult(Result *node)
 
 		if (outerPlan != NULL)
 		{
-			/* ----------------
-			 *	retrieve tuples from the outer plan until there are no more.
-			 * ----------------
+
+			/*
+			 * retrieve tuples from the outer plan until there are no
+			 * more.
 			 */
 			outerTupleSlot = ExecProcNode(outerPlan, (Plan *) node);
 
@@ -141,28 +137,27 @@ ExecResult(Result *node)
 
 			resstate->cstate.cs_OuterTupleSlot = outerTupleSlot;
 
-			/* ----------------
-			 *	 XXX gross hack. use outer tuple as scan tuple for projection
-			 * ----------------
+			/*
+			 * XXX gross hack. use outer tuple as scan tuple for
+			 * projection
 			 */
 			econtext->ecxt_outertuple = outerTupleSlot;
 			econtext->ecxt_scantuple = outerTupleSlot;
 		}
 		else
 		{
-			/* ----------------
-			 *	if we don't have an outer plan, then we are just generating
-			 *	the results from a constant target list.  Do it only once.
-			 * ----------------
+
+			/*
+			 * if we don't have an outer plan, then we are just generating
+			 * the results from a constant target list.  Do it only once.
 			 */
 			resstate->rs_done = true;
 		}
 
-		/* ----------------
-		 *	 form the result tuple using ExecProject(), and return it
-		 *	 --- unless the projection produces an empty set, in which case
-		 *	 we must loop back to see if there are more outerPlan tuples.
-		 * ----------------
+		/*
+		 * form the result tuple using ExecProject(), and return it ---
+		 * unless the projection produces an empty set, in which case we
+		 * must loop back to see if there are more outerPlan tuples.
 		 */
 		resultSlot = ExecProject(resstate->cstate.cs_ProjInfo, &isDone);
 
@@ -189,39 +184,35 @@ ExecInitResult(Result *node, EState *estate, Plan *parent)
 {
 	ResultState *resstate;
 
-	/* ----------------
-	 *	assign execution state to node
-	 * ----------------
+	/*
+	 * assign execution state to node
 	 */
 	node->plan.state = estate;
 
-	/* ----------------
-	 *	create new ResultState for node
-	 * ----------------
+	/*
+	 * create new ResultState for node
 	 */
 	resstate = makeNode(ResultState);
 	resstate->rs_done = false;
 	resstate->rs_checkqual = (node->resconstantqual == NULL) ? false : true;
 	node->resstate = resstate;
 
-	/* ----------------
-	 *	Miscellaneous initialization
+	/*
+	 * Miscellaneous initialization
 	 *
-	 *		 +	create expression context for node
-	 * ----------------
+	 * create expression context for node
 	 */
 	ExecAssignExprContext(estate, &resstate->cstate);
 
 #define RESULT_NSLOTS 1
-	/* ----------------
-	 *	tuple table initialization
-	 * ----------------
+
+	/*
+	 * tuple table initialization
 	 */
 	ExecInitResultTupleSlot(estate, &resstate->cstate);
 
-	/* ----------------
-	 *	then initialize children
-	 * ----------------
+	/*
+	 * then initialize children
 	 */
 	ExecInitNode(outerPlan(node), estate, (Plan *) node);
 
@@ -230,9 +221,8 @@ ExecInitResult(Result *node, EState *estate, Plan *parent)
 	 */
 	Assert(innerPlan(node) == NULL);
 
-	/* ----------------
-	 *	initialize tuple type and projection info
-	 * ----------------
+	/*
+	 * initialize tuple type and projection info
 	 */
 	ExecAssignResultTypeFromTL((Plan *) node, &resstate->cstate);
 	ExecAssignProjectionInfo((Plan *) node, &resstate->cstate);
@@ -259,27 +249,23 @@ ExecEndResult(Result *node)
 
 	resstate = node->resstate;
 
-	/* ----------------
-	 *	Free the projection info
+	/*
+	 * Free the projection info
 	 *
-	 *	Note: we don't ExecFreeResultType(resstate)
-	 *		  because the rule manager depends on the tupType
-	 *		  returned by ExecMain().  So for now, this
-	 *		  is freed at end-transaction time.  -cim 6/2/91
-	 * ----------------
+	 * Note: we don't ExecFreeResultType(resstate) because the rule manager
+	 * depends on the tupType returned by ExecMain().  So for now, this is
+	 * freed at end-transaction time.  -cim 6/2/91
 	 */
 	ExecFreeProjectionInfo(&resstate->cstate);
 	ExecFreeExprContext(&resstate->cstate);
 
-	/* ----------------
-	 *	shut down subplans
-	 * ----------------
+	/*
+	 * shut down subplans
 	 */
 	ExecEndNode(outerPlan(node), (Plan *) node);
 
-	/* ----------------
-	 *	clean out the tuple table
-	 * ----------------
+	/*
+	 * clean out the tuple table
 	 */
 	ExecClearTuple(resstate->cstate.cs_ResultTupleSlot);
 	pfree(resstate);

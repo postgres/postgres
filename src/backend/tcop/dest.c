@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.43 2001/03/22 03:59:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.44 2001/03/22 06:16:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,34 +97,31 @@ BeginCommand(char *pname,
 	{
 		case Remote:
 		case RemoteInternal:
-			/* ----------------
-			 *		if this is a "retrieve into portal" query, done
-			 *		because nothing needs to be sent to the fe.
-			 * ----------------
+
+			/*
+			 * if this is a "retrieve into portal" query, done because
+			 * nothing needs to be sent to the fe.
 			 */
 			CommandInfo[0] = '\0';
 			if (isIntoPortal)
 				break;
 
-			/* ----------------
-			 *		if portal name not specified for remote query,
-			 *		use the "blank" portal.
-			 * ----------------
+			/*
+			 * if portal name not specified for remote query, use the
+			 * "blank" portal.
 			 */
 			if (pname == NULL)
 				pname = "blank";
 
-			/* ----------------
-			 *		send fe info on tuples we're about to send
-			 * ----------------
+			/*
+			 * send fe info on tuples we're about to send
 			 */
 			pq_puttextmessage('P', pname);
 
-			/* ----------------
-			 *		if this is a retrieve, then we send back the tuple
-			 *		descriptor of the tuples.  "retrieve into" is an
-			 *		exception because no tuples are returned in that case.
-			 * ----------------
+			/*
+			 * if this is a retrieve, then we send back the tuple
+			 * descriptor of the tuples.  "retrieve into" is an exception
+			 * because no tuples are returned in that case.
 			 */
 			if (operation == CMD_SELECT && !isIntoRel)
 			{
@@ -151,9 +148,9 @@ BeginCommand(char *pname,
 			break;
 
 		case Debug:
-			/* ----------------
-			 *		show the return type of the tuples
-			 * ----------------
+
+			/*
+			 * show the return type of the tuples
 			 */
 			if (pname == NULL)
 				pname = "blank";
@@ -213,9 +210,9 @@ EndCommand(char *commandTag, CommandDest dest)
 	{
 		case Remote:
 		case RemoteInternal:
-			/* ----------------
-			 *		tell the fe that the query is over
-			 * ----------------
+
+			/*
+			 * tell the fe that the query is over
 			 */
 			sprintf(buf, "%s%s", commandTag, CommandInfo);
 			pq_puttextmessage('C', buf);
@@ -277,9 +274,9 @@ NullCommand(CommandDest dest)
 	{
 			case RemoteInternal:
 			case Remote:
-			/* ----------------
-			 *		tell the fe that we saw an empty query string
-			 * ----------------
+
+			/*
+			 * tell the fe that we saw an empty query string
 			 */
 			pq_putbytes("I", 2);/* note we send I and \0 */
 			break;

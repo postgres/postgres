@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.27 2001/03/22 04:01:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.28 2001/03/22 06:16:21 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -106,9 +106,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 	int			i;
 	int			arg_varnos[FUNC_MAX_ARGS];
 
-	/* ----------
+	/*
 	 * Initialize the compiler
-	 * ----------
 	 */
 	plpgsql_ns_init();
 	plpgsql_ns_push(NULL);
@@ -119,9 +118,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 	plpgsql_Datums = palloc(sizeof(PLpgSQL_datum *) * datums_alloc);
 	datums_last = 0;
 
-	/* ----------
+	/*
 	 * Lookup the pg_proc tuple by Oid
-	 * ----------
 	 */
 	procTup = SearchSysCache(PROCOID,
 							 ObjectIdGetDatum(fn_oid),
@@ -129,9 +127,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 	if (!HeapTupleIsValid(procTup))
 		elog(ERROR, "plpgsql: cache lookup for proc %u failed", fn_oid);
 
-	/* ----------
+	/*
 	 * Setup the scanner input and error info
-	 * ----------
 	 */
 	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 	proc_source = DatumGetCString(DirectFunctionCall1(textout,
@@ -141,9 +138,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 								  NameGetDatum(&(procStruct->proname))));
 	plpgsql_error_lineno = 0;
 
-	/* ----------
+	/*
 	 * Create the new function node
-	 * ----------
 	 */
 	function = malloc(sizeof(PLpgSQL_function));
 	memset(function, 0, sizeof(PLpgSQL_function));
@@ -157,16 +153,15 @@ plpgsql_compile(Oid fn_oid, int functype)
 	switch (functype)
 	{
 		case T_FUNCTION:
-			/* ----------
+
+			/*
 			 * Normal function has a defined returntype
-			 * ----------
 			 */
 			function->fn_rettype = procStruct->prorettype;
 			function->fn_retset = procStruct->proretset;
 
-			/* ----------
+			/*
 			 * Lookup the functions return type
-			 * ----------
 			 */
 			typeTup = SearchSysCache(TYPEOID,
 								ObjectIdGetDatum(procStruct->prorettype),
@@ -193,17 +188,15 @@ plpgsql_compile(Oid fn_oid, int functype)
 			}
 			ReleaseSysCache(typeTup);
 
-			/* ----------
+			/*
 			 * Create the variables for the procedures parameters
-			 * ----------
 			 */
 			for (i = 0; i < procStruct->pronargs; i++)
 			{
 				char		buf[256];
 
-				/* ----------
+				/*
 				 * Get the parameters type
-				 * ----------
 				 */
 				typeTup = SearchSysCache(TYPEOID,
 							ObjectIdGetDatum(procStruct->proargtypes[i]),
@@ -221,10 +214,10 @@ plpgsql_compile(Oid fn_oid, int functype)
 
 				if (typeStruct->typrelid != InvalidOid)
 				{
-					/* ----------
-					 * For tuple type parameters, we set up a record
-					 * of that type
-					 * ----------
+
+					/*
+					 * For tuple type parameters, we set up a record of
+					 * that type
 					 */
 					sprintf(buf, "%s%%rowtype",
 							DatumGetCString(DirectFunctionCall1(nameout,
@@ -248,9 +241,9 @@ plpgsql_compile(Oid fn_oid, int functype)
 				}
 				else
 				{
-					/* ----------
+
+					/*
 					 * Normal parameters get a var node
-					 * ----------
 					 */
 					var = malloc(sizeof(PLpgSQL_var));
 					memset(var, 0, sizeof(PLpgSQL_var));
@@ -282,18 +275,17 @@ plpgsql_compile(Oid fn_oid, int functype)
 			break;
 
 		case T_TRIGGER:
-			/* ----------
+
+			/*
 			 * Trigger procedures return type is unknown yet
-			 * ----------
 			 */
 			function->fn_rettype = InvalidOid;
 			function->fn_retbyval = false;
 			function->fn_retistuple = true;
 			function->fn_retset = false;
 
-			/* ----------
+			/*
 			 * Add the record for referencing NEW
-			 * ----------
 			 */
 			rec = malloc(sizeof(PLpgSQL_rec));
 			memset(rec, 0, sizeof(PLpgSQL_rec));
@@ -303,9 +295,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 			plpgsql_ns_additem(PLPGSQL_NSTYPE_REC, rec->recno, rec->refname);
 			function->new_varno = rec->recno;
 
-			/* ----------
+			/*
 			 * Add the record for referencing OLD
-			 * ----------
 			 */
 			rec = malloc(sizeof(PLpgSQL_rec));
 			memset(rec, 0, sizeof(PLpgSQL_rec));
@@ -315,9 +306,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 			plpgsql_ns_additem(PLPGSQL_NSTYPE_REC, rec->recno, rec->refname);
 			function->old_varno = rec->recno;
 
-			/* ----------
+			/*
 			 * Add the variable tg_name
-			 * ----------
 			 */
 			var = malloc(sizeof(PLpgSQL_var));
 			memset(var, 0, sizeof(PLpgSQL_var));
@@ -335,9 +325,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 			plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, var->varno, var->refname);
 			function->tg_name_varno = var->varno;
 
-			/* ----------
+			/*
 			 * Add the variable tg_when
-			 * ----------
 			 */
 			var = malloc(sizeof(PLpgSQL_var));
 			memset(var, 0, sizeof(PLpgSQL_var));
@@ -355,9 +344,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 			plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, var->varno, var->refname);
 			function->tg_when_varno = var->varno;
 
-			/* ----------
+			/*
 			 * Add the variable tg_level
-			 * ----------
 			 */
 			var = malloc(sizeof(PLpgSQL_var));
 			memset(var, 0, sizeof(PLpgSQL_var));
@@ -375,9 +363,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 			plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, var->varno, var->refname);
 			function->tg_level_varno = var->varno;
 
-			/* ----------
+			/*
 			 * Add the variable tg_op
-			 * ----------
 			 */
 			var = malloc(sizeof(PLpgSQL_var));
 			memset(var, 0, sizeof(PLpgSQL_var));
@@ -395,9 +382,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 			plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, var->varno, var->refname);
 			function->tg_op_varno = var->varno;
 
-			/* ----------
+			/*
 			 * Add the variable tg_relid
-			 * ----------
 			 */
 			var = malloc(sizeof(PLpgSQL_var));
 			memset(var, 0, sizeof(PLpgSQL_var));
@@ -415,9 +401,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 			plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, var->varno, var->refname);
 			function->tg_relid_varno = var->varno;
 
-			/* ----------
+			/*
 			 * Add the variable tg_relname
-			 * ----------
 			 */
 			var = malloc(sizeof(PLpgSQL_var));
 			memset(var, 0, sizeof(PLpgSQL_var));
@@ -435,9 +420,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 			plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, var->varno, var->refname);
 			function->tg_relname_varno = var->varno;
 
-			/* ----------
+			/*
 			 * Add the variable tg_nargs
-			 * ----------
 			 */
 			var = malloc(sizeof(PLpgSQL_var));
 			memset(var, 0, sizeof(PLpgSQL_var));
@@ -463,10 +447,9 @@ plpgsql_compile(Oid fn_oid, int functype)
 			break;
 	}
 
-	/* ----------
-	 * Create the magic found variable indicating if the
-	 * last FOR or SELECT statement returned data
-	 * ----------
+	/*
+	 * Create the magic found variable indicating if the last FOR or
+	 * SELECT statement returned data
 	 */
 	var = malloc(sizeof(PLpgSQL_var));
 	memset(var, 0, sizeof(PLpgSQL_var));
@@ -484,15 +467,13 @@ plpgsql_compile(Oid fn_oid, int functype)
 	plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, var->varno, strdup("found"));
 	function->found_varno = var->varno;
 
-	/* ----------
+	/*
 	 * Forget about the above created variables
-	 * ----------
 	 */
 	plpgsql_add_initdatums(NULL);
 
-	/* ----------
+	/*
 	 * Now parse the functions text
-	 * ----------
 	 */
 	parse_rc = plpgsql_yyparse();
 	if (parse_rc != 0)
@@ -501,9 +482,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 		elog(ERROR, "plpgsql: parser returned %d ???", parse_rc);
 	}
 
-	/* ----------
+	/*
 	 * If that was successful, complete the functions info.
-	 * ----------
 	 */
 	function->fn_nargs = procStruct->pronargs;
 	for (i = 0; i < function->fn_nargs; i++)
@@ -516,9 +496,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 
 	ReleaseSysCache(procTup);
 
-	/* ----------
+	/*
 	 * Finally return the compiled function
-	 * ----------
 	 */
 	if (plpgsql_DumpExecTree)
 		plpgsql_dumptree(function);
@@ -541,15 +520,13 @@ plpgsql_parse_word(char *word)
 	Form_pg_type typeStruct;
 	char	   *typeXlated;
 
-	/* ----------
+	/*
 	 * We do our lookups case insensitive
-	 * ----------
 	 */
 	cp = plpgsql_tolower(word);
 
-	/* ----------
+	/*
 	 * Special handling when compiling triggers
-	 * ----------
 	 */
 	if (plpgsql_curr_compile->fn_functype == T_TRIGGER)
 	{
@@ -575,9 +552,8 @@ plpgsql_parse_word(char *word)
 		}
 	}
 
-	/* ----------
+	/*
 	 * Do a lookup on the compilers namestack
-	 * ----------
 	 */
 	nse = plpgsql_ns_lookup(cp, NULL);
 	if (nse != NULL)
@@ -605,10 +581,9 @@ plpgsql_parse_word(char *word)
 		}
 	}
 
-	/* ----------
-	 * Try to find a data type with that name, but ignore
-	 * pg_type entries that are in fact class types.
-	 * ----------
+	/*
+	 * Try to find a data type with that name, but ignore pg_type entries
+	 * that are in fact class types.
 	 */
 	typeXlated = xlateSqlType(cp);
 	typeTup = SearchSysCache(TYPENAME,
@@ -644,10 +619,9 @@ plpgsql_parse_word(char *word)
 		return T_DTYPE;
 	}
 
-	/* ----------
-	 * Nothing found - up to now it's a word without any
-	 * special meaning for us.
-	 * ----------
+	/*
+	 * Nothing found - up to now it's a word without any special meaning
+	 * for us.
 	 */
 	pfree(cp);
 	return T_WORD;
@@ -666,17 +640,15 @@ plpgsql_parse_dblword(char *string)
 	char	   *word2;
 	PLpgSQL_nsitem *ns;
 
-	/* ----------
+	/*
 	 * Convert to lower case and separate the words
-	 * ----------
 	 */
 	word1 = plpgsql_tolower(string);
 	word2 = strchr(word1, '.');
 	*word2++ = '\0';
 
-	/* ----------
+	/*
 	 * Lookup the first word
-	 * ----------
 	 */
 	ns = plpgsql_ns_lookup(word1, NULL);
 	if (ns == NULL)
@@ -688,13 +660,12 @@ plpgsql_parse_dblword(char *string)
 	switch (ns->itemtype)
 	{
 		case PLPGSQL_NSTYPE_LABEL:
-			/* ----------
-			 * First word is a label, so second word could be
-			 * a variable, record or row in that bodies namestack.
-			 * Anything else could only be something in a query
-			 * given to the SPI manager and T_ERROR will get eaten
-			 * up by the collector routines.
-			 * ----------
+
+			/*
+			 * First word is a label, so second word could be a variable,
+			 * record or row in that bodies namestack. Anything else could
+			 * only be something in a query given to the SPI manager and
+			 * T_ERROR will get eaten up by the collector routines.
 			 */
 			ns = plpgsql_ns_lookup(word2, word1);
 			if (ns == NULL)
@@ -726,10 +697,10 @@ plpgsql_parse_dblword(char *string)
 
 		case PLPGSQL_NSTYPE_REC:
 			{
-				/* ----------
-				 * First word is a record name, so second word
-				 * must be a field in this record.
-				 * ----------
+
+				/*
+				 * First word is a record name, so second word must be a
+				 * field in this record.
 				 */
 				PLpgSQL_recfield *new;
 
@@ -747,10 +718,10 @@ plpgsql_parse_dblword(char *string)
 
 		case PLPGSQL_NSTYPE_ROW:
 			{
-				/* ----------
-				 * First word is a row name, so second word must
-				 * be a field in this row.
-				 * ----------
+
+				/*
+				 * First word is a row name, so second word must be a
+				 * field in this row.
 				 */
 				PLpgSQL_row *row;
 				int			i;
@@ -792,9 +763,8 @@ plpgsql_parse_tripword(char *string)
 	char	   *word3;
 	PLpgSQL_nsitem *ns;
 
-	/* ----------
+	/*
 	 * Convert to lower case and separate the words
-	 * ----------
 	 */
 	word1 = plpgsql_tolower(string);
 	word2 = strchr(word1, '.');
@@ -802,9 +772,8 @@ plpgsql_parse_tripword(char *string)
 	word3 = strchr(word2, '.');
 	*word3++ = '\0';
 
-	/* ----------
+	/*
 	 * Lookup the first word - it must be a label
-	 * ----------
 	 */
 	ns = plpgsql_ns_lookup(word1, NULL);
 	if (ns == NULL)
@@ -818,10 +787,8 @@ plpgsql_parse_tripword(char *string)
 		return T_ERROR;
 	}
 
-	/* ----------
-	 * First word is a label, so second word could be
-	 * a record or row
-	 * ----------
+	/*
+	 * First word is a label, so second word could be a record or row
 	 */
 	ns = plpgsql_ns_lookup(word2, word1);
 	if (ns == NULL)
@@ -834,10 +801,10 @@ plpgsql_parse_tripword(char *string)
 	{
 		case PLPGSQL_NSTYPE_REC:
 			{
-				/* ----------
-				 * This word is a record name, so third word
-				 * must be a field in this record.
-				 * ----------
+
+				/*
+				 * This word is a record name, so third word must be a
+				 * field in this record.
 				 */
 				PLpgSQL_recfield *new;
 
@@ -855,10 +822,10 @@ plpgsql_parse_tripword(char *string)
 
 		case PLPGSQL_NSTYPE_ROW:
 			{
-				/* ----------
-				 * This word is a row name, so third word must
-				 * be a field in this row.
-				 * ----------
+
+				/*
+				 * This word is a row name, so third word must be a field
+				 * in this row.
 				 */
 				PLpgSQL_row *row;
 				int			i;
@@ -902,17 +869,15 @@ plpgsql_parse_wordtype(char *word)
 	char	   *typeXlated;
 	bool		old_nsstate;
 
-	/* ----------
+	/*
 	 * We do our lookups case insensitive
-	 * ----------
 	 */
 	cp = plpgsql_tolower(word);
 	*(strchr(cp, '%')) = '\0';
 
-	/* ----------
-	 * Do a lookup on the compilers namestack.
-	 * But ensure it moves up to the toplevel.
-	 * ----------
+	/*
+	 * Do a lookup on the compilers namestack. But ensure it moves up to
+	 * the toplevel.
 	 */
 	old_nsstate = plpgsql_ns_setlocal(false);
 	nse = plpgsql_ns_lookup(cp, NULL);
@@ -932,11 +897,9 @@ plpgsql_parse_wordtype(char *word)
 		}
 	}
 
-	/* ----------
-	 * Word wasn't found on the namestack.
-	 * Try to find a data type with that name, but ignore
-	 * pg_type entries that are in fact class types.
-	 * ----------
+	/*
+	 * Word wasn't found on the namestack. Try to find a data type with
+	 * that name, but ignore pg_type entries that are in fact class types.
 	 */
 	typeXlated = xlateSqlType(cp);
 	typeTup = SearchSysCache(TYPENAME,
@@ -972,10 +935,9 @@ plpgsql_parse_wordtype(char *word)
 		return T_DTYPE;
 	}
 
-	/* ----------
-	 * Nothing found - up to now it's a word without any
-	 * special meaning for us.
-	 * ----------
+	/*
+	 * Nothing found - up to now it's a word without any special meaning
+	 * for us.
 	 */
 	pfree(cp);
 	return T_ERROR;
@@ -1002,25 +964,22 @@ plpgsql_parse_dblwordtype(char *string)
 	PLpgSQL_type *typ;
 
 
-	/* ----------
+	/*
 	 * Convert to lower case and separate the words
-	 * ----------
 	 */
 	word1 = plpgsql_tolower(string);
 	word2 = strchr(word1, '.');
 	*word2++ = '\0';
 	*(strchr(word2, '%')) = '\0';
 
-	/* ----------
+	/*
 	 * Lookup the first word
-	 * ----------
 	 */
 	nse = plpgsql_ns_lookup(word1, NULL);
 
-	/* ----------
-	 * If this is a label lookup the second word in that
-	 * labels namestack level
-	 * ----------
+	/*
+	 * If this is a label lookup the second word in that labels namestack
+	 * level
 	 */
 	if (nse != NULL)
 	{
@@ -1050,9 +1009,8 @@ plpgsql_parse_dblwordtype(char *string)
 		return T_ERROR;
 	}
 
-	/* ----------
+	/*
 	 * First word could also be a table name
-	 * ----------
 	 */
 	classtup = SearchSysCache(RELNAME,
 							  PointerGetDatum(word1),
@@ -1063,9 +1021,8 @@ plpgsql_parse_dblwordtype(char *string)
 		return T_ERROR;
 	}
 
-	/* ----------
+	/*
 	 * It must be a (shared) relation class
-	 * ----------
 	 */
 	classStruct = (Form_pg_class) GETSTRUCT(classtup);
 	if (classStruct->relkind != 'r' && classStruct->relkind != 's')
@@ -1075,9 +1032,8 @@ plpgsql_parse_dblwordtype(char *string)
 		return T_ERROR;
 	}
 
-	/* ----------
+	/*
 	 * Fetch the named table field and it's type
-	 * ----------
 	 */
 	attrtup = SearchSysCache(ATTNAME,
 							 ObjectIdGetDatum(classtup->t_data->t_oid),
@@ -1102,9 +1058,8 @@ plpgsql_parse_dblwordtype(char *string)
 	}
 	typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
-	/* ----------
+	/*
 	 * Found that - build a compiler type struct and return it
-	 * ----------
 	 */
 	typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
 
@@ -1146,9 +1101,8 @@ plpgsql_parse_wordrowtype(char *string)
 	PLpgSQL_row *row;
 	PLpgSQL_var *var;
 
-	/* ----------
+	/*
 	 * Get the word in lower case and fetch the pg_class tuple.
-	 * ----------
 	 */
 	word1 = plpgsql_tolower(string);
 	cp = strchr(word1, '%');
@@ -1169,9 +1123,8 @@ plpgsql_parse_wordrowtype(char *string)
 		elog(ERROR, "%s isn't a table", word1);
 	}
 
-	/* ----------
+	/*
 	 * Fetch the tables pg_type tuple too
-	 * ----------
 	 */
 	typetup = SearchSysCache(TYPENAME,
 							 PointerGetDatum(word1),
@@ -1182,10 +1135,9 @@ plpgsql_parse_wordrowtype(char *string)
 		elog(ERROR, "cache lookup for %s in pg_type failed", word1);
 	}
 
-	/* ----------
-	 * Create a row datum entry and all the required variables
-	 * that it will point to.
-	 * ----------
+	/*
+	 * Create a row datum entry and all the required variables that it
+	 * will point to.
 	 */
 	row = malloc(sizeof(PLpgSQL_row));
 	memset(row, 0, sizeof(PLpgSQL_row));
@@ -1200,9 +1152,9 @@ plpgsql_parse_wordrowtype(char *string)
 
 	for (i = 0; i < row->nfields; i++)
 	{
-		/* ----------
+
+		/*
 		 * Get the attribute and it's type
-		 * ----------
 		 */
 		attrtup = SearchSysCache(ATTNUM,
 							   ObjectIdGetDatum(classtup->t_data->t_oid),
@@ -1230,15 +1182,14 @@ plpgsql_parse_wordrowtype(char *string)
 		}
 		typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
-		/* ----------
-		 * Create the internal variable
-		 * We know if the table definitions contain a default value
-		 * or if the field is declared in the table as NOT NULL. But
-		 * it's possible to create a table field as NOT NULL without
-		 * a default value and that would lead to problems later when
-		 * initializing the variables due to entering a block at
-		 * execution time. Thus we ignore this information for now.
-		 * ----------
+		/*
+		 * Create the internal variable We know if the table definitions
+		 * contain a default value or if the field is declared in the
+		 * table as NOT NULL. But it's possible to create a table field as
+		 * NOT NULL without a default value and that would lead to
+		 * problems later when initializing the variables due to entering
+		 * a block at execution time. Thus we ignore this information for
+		 * now.
 		 */
 		var = malloc(sizeof(PLpgSQL_var));
 		var->dtype = PLPGSQL_DTYPE_VAR;
@@ -1265,9 +1216,8 @@ plpgsql_parse_wordrowtype(char *string)
 
 		plpgsql_adddatum((PLpgSQL_datum *) var);
 
-		/* ----------
+		/*
 		 * Add the variable to the row.
-		 * ----------
 		 */
 		row->fieldnames[i] = cp;
 		row->varnos[i] = var->varno;
@@ -1275,9 +1225,8 @@ plpgsql_parse_wordrowtype(char *string)
 
 	ReleaseSysCache(classtup);
 
-	/* ----------
+	/*
 	 * Return the complete row definition
-	 * ----------
 	 */
 	plpgsql_yylval.row = row;
 

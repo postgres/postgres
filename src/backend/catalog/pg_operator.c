@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.56 2001/03/22 03:59:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.57 2001/03/22 06:16:10 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -102,17 +102,15 @@ OperatorGetWithOpenRelation(Relation pg_operator_desc,
 	opKey[1].sk_nargs = opKey[1].sk_func.fn_nargs;
 	opKey[2].sk_nargs = opKey[2].sk_func.fn_nargs;
 
-	/* ----------------
-	 *	form scan key
-	 * ----------------
+	/*
+	 * form scan key
 	 */
 	opKey[0].sk_argument = PointerGetDatum(operatorName);
 	opKey[1].sk_argument = ObjectIdGetDatum(leftObjectId);
 	opKey[2].sk_argument = ObjectIdGetDatum(rightObjectId);
 
-	/* ----------------
-	 *	begin the scan
-	 * ----------------
+	/*
+	 * begin the scan
 	 */
 	pg_operator_scan = heap_beginscan(pg_operator_desc,
 									  0,
@@ -120,10 +118,9 @@ OperatorGetWithOpenRelation(Relation pg_operator_desc,
 									  3,
 									  opKey);
 
-	/* ----------------
-	 *	fetch the operator tuple, if it exists, and determine
-	 *	the proper return oid value.
-	 * ----------------
+	/*
+	 * fetch the operator tuple, if it exists, and determine the proper
+	 * return oid value.
 	 */
 	tup = heap_getnext(pg_operator_scan, 0);
 
@@ -140,9 +137,8 @@ OperatorGetWithOpenRelation(Relation pg_operator_desc,
 		*defined = false;
 	}
 
-	/* ----------------
-	 *	close the scan and return the oid.
-	 * ----------------
+	/*
+	 * close the scan and return the oid.
 	 */
 	heap_endscan(pg_operator_scan);
 
@@ -170,11 +166,10 @@ OperatorGet(char *operatorName,
 	bool		leftDefined = false;
 	bool		rightDefined = false;
 
-	/* ----------------
-	 *	look up the operator data types.
+	/*
+	 * look up the operator data types.
 	 *
-	 *	Note: types must be defined before operators
-	 * ----------------
+	 * Note: types must be defined before operators
 	 */
 	if (leftTypeName)
 	{
@@ -198,16 +193,14 @@ OperatorGet(char *operatorName,
 		  (OidIsValid(rightObjectId) && rightDefined)))
 		elog(ERROR, "OperatorGet: must have at least one argument type");
 
-	/* ----------------
-	 *	open the pg_operator relation
-	 * ----------------
+	/*
+	 * open the pg_operator relation
 	 */
 	pg_operator_desc = heap_openr(OperatorRelationName, AccessShareLock);
 
-	/* ----------------
-	 *	get the oid for the operator with the appropriate name
-	 *	and left/right types.
-	 * ----------------
+	/*
+	 * get the oid for the operator with the appropriate name and
+	 * left/right types.
 	 */
 	operatorObjectId = OperatorGetWithOpenRelation(pg_operator_desc,
 												   operatorName,
@@ -215,9 +208,8 @@ OperatorGet(char *operatorName,
 												   rightObjectId,
 												   defined);
 
-	/* ----------------
-	 *	close the relation and return the operator oid.
-	 * ----------------
+	/*
+	 * close the relation and return the operator oid.
 	 */
 	heap_close(pg_operator_desc, AccessShareLock);
 
@@ -243,9 +235,8 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 	NameData	oname;
 	TupleDesc	tupDesc;
 
-	/* ----------------
-	 *	initialize our *nulls and *values arrays
-	 * ----------------
+	/*
+	 * initialize our *nulls and *values arrays
 	 */
 	for (i = 0; i < Natts_pg_operator; ++i)
 	{
@@ -253,10 +244,9 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 		values[i] = (Datum) NULL;		/* redundant, but safe */
 	}
 
-	/* ----------------
-	 *	initialize *values with the operator name and input data types.
-	 *	Note that oprcode is set to InvalidOid, indicating it's a shell.
-	 * ----------------
+	/*
+	 * initialize *values with the operator name and input data types.
+	 * Note that oprcode is set to InvalidOid, indicating it's a shell.
 	 */
 	i = 0;
 	namestrcpy(&oname, operatorName);
@@ -277,9 +267,8 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 	values[i++] = ObjectIdGetDatum(InvalidOid);
 	values[i++] = ObjectIdGetDatum(InvalidOid);
 
-	/* ----------------
-	 *	create a new operator tuple
-	 * ----------------
+	/*
+	 * create a new operator tuple
 	 */
 	tupDesc = pg_operator_desc->rd_att;
 
@@ -287,10 +276,8 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 						 values,
 						 nulls);
 
-	/* ----------------
-	 *	insert our "shell" operator tuple and
-	 *	close the relation
-	 * ----------------
+	/*
+	 * insert our "shell" operator tuple and close the relation
 	 */
 	heap_insert(pg_operator_desc, tup);
 	operatorObjectId = tup->t_data->t_oid;
@@ -304,9 +291,8 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 		CatalogCloseIndices(Num_pg_operator_indices, idescs);
 	}
 
-	/* ----------------
-	 *	free the tuple and return the operator oid
-	 * ----------------
+	/*
+	 * free the tuple and return the operator oid
 	 */
 	heap_freetuple(tup);
 
@@ -335,9 +321,8 @@ OperatorShellMake(char *operatorName,
 	bool		leftDefined = false;
 	bool		rightDefined = false;
 
-	/* ----------------
-	 *	get the left and right type oid's for this operator
-	 * ----------------
+	/*
+	 * get the left and right type oid's for this operator
 	 */
 	if (leftTypeName)
 		leftObjectId = TypeGet(leftTypeName, &leftDefined);
@@ -349,24 +334,22 @@ OperatorShellMake(char *operatorName,
 		  (OidIsValid(rightObjectId) && rightDefined)))
 		elog(ERROR, "OperatorShellMake: no valid argument types??");
 
-	/* ----------------
-	 *	open pg_operator
-	 * ----------------
+	/*
+	 * open pg_operator
 	 */
 	pg_operator_desc = heap_openr(OperatorRelationName, RowExclusiveLock);
 
-	/* ----------------
-	 *	add a "shell" operator tuple to the operator relation
-	 *	and recover the shell tuple's oid.
-	 * ----------------
+	/*
+	 * add a "shell" operator tuple to the operator relation and recover
+	 * the shell tuple's oid.
 	 */
 	operatorObjectId = OperatorShellMakeWithOpenRelation(pg_operator_desc,
 														 operatorName,
 														 leftObjectId,
 														 rightObjectId);
-	/* ----------------
-	 *	close the operator relation and return the oid.
-	 * ----------------
+
+	/*
+	 * close the operator relation and return the oid.
 	 */
 	heap_close(pg_operator_desc, RowExclusiveLock);
 
@@ -516,11 +499,10 @@ OperatorDef(char *operatorName,
 	 * filling in a previously-created shell.
 	 */
 
-	/* ----------------
-	 *	look up the operator data types.
+	/*
+	 * look up the operator data types.
 	 *
-	 *	Note: types must be defined before operators
-	 * ----------------
+	 * Note: types must be defined before operators
 	 */
 	if (leftTypeName)
 	{
@@ -551,12 +533,10 @@ OperatorDef(char *operatorName,
 		nulls[i] = ' ';
 	}
 
-	/* ----------------
-	 * Look up registered procedures -- find the return type
-	 * of procedureName to place in "result" field.
-	 * Do this before shells are created so we don't
-	 * have to worry about deleting them later.
-	 * ----------------
+	/*
+	 * Look up registered procedures -- find the return type of
+	 * procedureName to place in "result" field. Do this before shells are
+	 * created so we don't have to worry about deleting them later.
 	 */
 	MemSet(typeId, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	if (!leftTypeName)
@@ -589,9 +569,8 @@ OperatorDef(char *operatorName,
 
 	ReleaseSysCache(tup);
 
-	/* ----------------
-	 *	find restriction
-	 * ----------------
+	/*
+	 * find restriction
 	 */
 	if (restrictionName)
 	{							/* optional */
@@ -617,9 +596,8 @@ OperatorDef(char *operatorName,
 	else
 		values[Anum_pg_operator_oprrest - 1] = ObjectIdGetDatum(InvalidOid);
 
-	/* ----------------
-	 *	find join - only valid for binary operators
-	 * ----------------
+	/*
+	 * find join - only valid for binary operators
 	 */
 	if (joinName)
 	{							/* optional */
@@ -645,9 +623,8 @@ OperatorDef(char *operatorName,
 	else
 		values[Anum_pg_operator_oprjoin - 1] = ObjectIdGetDatum(InvalidOid);
 
-	/* ----------------
+	/*
 	 * set up values in the operator tuple
-	 * ----------------
 	 */
 	i = 0;
 	namestrcpy(&oname, operatorName);
@@ -1077,11 +1054,10 @@ OperatorCreate(char *operatorName,
 			elog(ERROR, "OperatorCreate: only binary operators can have sort links");
 	}
 
-	/* ----------------
-	 *	Use OperatorDef() to define the specified operator and
-	 *	also create shells for the operator's associated operators
-	 *	if they don't already exist.
-	 * ----------------
+	/*
+	 * Use OperatorDef() to define the specified operator and also create
+	 * shells for the operator's associated operators if they don't
+	 * already exist.
 	 */
 	OperatorDef(operatorName,
 				leftTypeName,

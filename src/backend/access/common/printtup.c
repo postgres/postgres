@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.58 2001/03/22 03:59:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.59 2001/03/22 06:16:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,16 +155,14 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 	if (myState->attrinfo != typeinfo || myState->nattrs != natts)
 		printtup_prepare_info(myState, typeinfo, natts);
 
-	/* ----------------
-	 *	tell the frontend to expect new tuple data (in ASCII style)
-	 * ----------------
+	/*
+	 * tell the frontend to expect new tuple data (in ASCII style)
 	 */
 	pq_beginmessage(&buf);
 	pq_sendbyte(&buf, 'D');
 
-	/* ----------------
-	 *	send a bitmap of which attributes are not null
-	 * ----------------
+	/*
+	 * send a bitmap of which attributes are not null
 	 */
 	j = 0;
 	k = 1 << 7;
@@ -183,9 +181,8 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 	if (k != (1 << 7))			/* flush last partial byte */
 		pq_sendint(&buf, j, 1);
 
-	/* ----------------
-	 *	send the attributes of this tuple
-	 * ----------------
+	/*
+	 * send the attributes of this tuple
 	 */
 	for (i = 0; i < natts; ++i)
 	{
@@ -357,16 +354,14 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 	if (myState->attrinfo != typeinfo || myState->nattrs != natts)
 		printtup_prepare_info(myState, typeinfo, natts);
 
-	/* ----------------
-	 *	tell the frontend to expect new tuple data (in binary style)
-	 * ----------------
+	/*
+	 * tell the frontend to expect new tuple data (in binary style)
 	 */
 	pq_beginmessage(&buf);
 	pq_sendbyte(&buf, 'B');
 
-	/* ----------------
-	 *	send a bitmap of which attributes are not null
-	 * ----------------
+	/*
+	 * send a bitmap of which attributes are not null
 	 */
 	j = 0;
 	k = 1 << 7;
@@ -385,9 +380,8 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 	if (k != (1 << 7))			/* flush last partial byte */
 		pq_sendint(&buf, j, 1);
 
-	/* ----------------
-	 *	send the attributes of this tuple
-	 * ----------------
+	/*
+	 * send the attributes of this tuple
 	 */
 #ifdef IPORTAL_DEBUG
 	fprintf(stderr, "sending tuple with %d atts\n", natts);

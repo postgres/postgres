@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.37 2001/03/22 03:59:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.38 2001/03/22 06:16:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,9 +64,8 @@ ExecHashJoin(HashJoin *node)
 	int			i;
 	bool		hashPhaseDone;
 
-	/* ----------------
-	 *	get information from HashJoin node
-	 * ----------------
+	/*
+	 * get information from HashJoin node
 	 */
 	hjstate = node->hashjoinstate;
 	hjclauses = node->hashclauses;
@@ -79,18 +78,16 @@ ExecHashJoin(HashJoin *node)
 	hashPhaseDone = hjstate->hj_hashdone;
 	dir = estate->es_direction;
 
-	/* -----------------
+	/*
 	 * get information from HashJoin state
-	 * -----------------
 	 */
 	hashtable = hjstate->hj_HashTable;
 	econtext = hjstate->jstate.cs_ExprContext;
 
-	/* ----------------
-	 *	Check to see if we're still projecting out tuples from a previous
-	 *	join tuple (because there is a function-returning-set in the
-	 *	projection expressions).  If so, try to project another one.
-	 * ----------------
+	/*
+	 * Check to see if we're still projecting out tuples from a previous
+	 * join tuple (because there is a function-returning-set in the
+	 * projection expressions).  If so, try to project another one.
 	 */
 	if (hjstate->jstate.cs_TupFromTlist)
 	{
@@ -103,42 +100,39 @@ ExecHashJoin(HashJoin *node)
 		hjstate->jstate.cs_TupFromTlist = false;
 	}
 
-	/* ----------------
-	 *	Reset per-tuple memory context to free any expression evaluation
-	 *	storage allocated in the previous tuple cycle.	Note this can't
-	 *	happen until we're done projecting out tuples from a join tuple.
-	 * ----------------
+	/*
+	 * Reset per-tuple memory context to free any expression evaluation
+	 * storage allocated in the previous tuple cycle.  Note this can't
+	 * happen until we're done projecting out tuples from a join tuple.
 	 */
 	ResetExprContext(econtext);
 
-	/* ----------------
-	 *	if this is the first call, build the hash table for inner relation
-	 * ----------------
+	/*
+	 * if this is the first call, build the hash table for inner relation
 	 */
 	if (!hashPhaseDone)
 	{							/* if the hash phase not completed */
 		if (hashtable == NULL)
 		{						/* if the hash table has not been created */
-			/* ----------------
+
+			/*
 			 * create the hash table
-			 * ----------------
 			 */
 			hashtable = ExecHashTableCreate(hashNode);
 			hjstate->hj_HashTable = hashtable;
 			hjstate->hj_InnerHashKey = hashNode->hashkey;
 
-			/* ----------------
+			/*
 			 * execute the Hash node, to build the hash table
-			 * ----------------
 			 */
 			hashNode->hashstate->hashtable = hashtable;
 			innerTupleSlot = ExecProcNode((Plan *) hashNode, (Plan *) node);
 		}
 		hjstate->hj_hashdone = true;
-		/* ----------------
-		 * Open temp files for outer batches, if needed.
-		 * Note that file buffers are palloc'd in regular executor context.
-		 * ----------------
+
+		/*
+		 * Open temp files for outer batches, if needed. Note that file
+		 * buffers are palloc'd in regular executor context.
 		 */
 		for (i = 0; i < hashtable->nbatch; i++)
 			hashtable->outerBatchFile[i] = BufFileCreateTemp();
@@ -146,9 +140,8 @@ ExecHashJoin(HashJoin *node)
 	else if (hashtable == NULL)
 		return NULL;
 
-	/* ----------------
-	 *	Now get an outer tuple and probe into the hash table for matches
-	 * ----------------
+	/*
+	 * Now get an outer tuple and probe into the hash table for matches
 	 */
 	outerTupleSlot = hjstate->jstate.cs_OuterTupleSlot;
 	outerVar = (Node *) get_leftop(clause);
@@ -188,11 +181,10 @@ ExecHashJoin(HashJoin *node)
 														outerVar);
 			hjstate->hj_CurTuple = NULL;
 
-			/* ----------------
-			 *	Now we've got an outer tuple and the corresponding hash bucket,
-			 *	but this tuple may not belong to the current batch.
-			 *	This need only be checked in the first pass.
-			 * ----------------
+			/*
+			 * Now we've got an outer tuple and the corresponding hash
+			 * bucket, but this tuple may not belong to the current batch.
+			 * This need only be checked in the first pass.
 			 */
 			if (hashtable->curbatch == 0)
 			{
@@ -240,14 +232,13 @@ ExecHashJoin(HashJoin *node)
 			/* reset temp memory each time to avoid leaks from qual expr */
 			ResetExprContext(econtext);
 
-			/* ----------------
-			 * if we pass the qual, then save state for next call and
-			 * have ExecProject form the projection, store it
-			 * in the tuple table, and return the slot.
+			/*
+			 * if we pass the qual, then save state for next call and have
+			 * ExecProject form the projection, store it in the tuple
+			 * table, and return the slot.
 			 *
-			 * Only the joinquals determine MatchedOuter status,
-			 * but all quals must pass to actually return the tuple.
-			 * ----------------
+			 * Only the joinquals determine MatchedOuter status, but all
+			 * quals must pass to actually return the tuple.
 			 */
 			if (ExecQual(joinqual, econtext, false))
 			{
@@ -269,11 +260,10 @@ ExecHashJoin(HashJoin *node)
 			}
 		}
 
-		/* ----------------
-		 *	 Now the current outer tuple has run out of matches,
-		 *	 so check whether to emit a dummy outer-join tuple.
-		 *	 If not, loop around to get a new outer tuple.
-		 * ----------------
+		/*
+		 * Now the current outer tuple has run out of matches, so check
+		 * whether to emit a dummy outer-join tuple. If not, loop around
+		 * to get a new outer tuple.
 		 */
 		hjstate->hj_NeedNewOuter = true;
 
@@ -291,11 +281,11 @@ ExecHashJoin(HashJoin *node)
 
 			if (ExecQual(otherqual, econtext, false))
 			{
-				/* ----------------
-				 *	qualification was satisfied so we project and
-				 *	return the slot containing the result tuple
-				 *	using ExecProject().
-				 * ----------------
+
+				/*
+				 * qualification was satisfied so we project and return
+				 * the slot containing the result tuple using
+				 * ExecProject().
 				 */
 				TupleTableSlot *result;
 
@@ -325,30 +315,26 @@ ExecInitHashJoin(HashJoin *node, EState *estate, Plan *parent)
 	Plan	   *outerNode;
 	Hash	   *hashNode;
 
-	/* ----------------
-	 *	assign the node's execution state
-	 * ----------------
+	/*
+	 * assign the node's execution state
 	 */
 	node->join.plan.state = estate;
 
-	/* ----------------
+	/*
 	 * create state structure
-	 * ----------------
 	 */
 	hjstate = makeNode(HashJoinState);
 	node->hashjoinstate = hjstate;
 
-	/* ----------------
-	 *	Miscellaneous initialization
+	/*
+	 * Miscellaneous initialization
 	 *
-	 *		 +	create expression context for node
-	 * ----------------
+	 * create expression context for node
 	 */
 	ExecAssignExprContext(estate, &hjstate->jstate);
 
-	/* ----------------
+	/*
 	 * initializes child nodes
-	 * ----------------
 	 */
 	outerNode = outerPlan((Plan *) node);
 	hashNode = (Hash *) innerPlan((Plan *) node);
@@ -357,9 +343,9 @@ ExecInitHashJoin(HashJoin *node, EState *estate, Plan *parent)
 	ExecInitNode((Plan *) hashNode, estate, (Plan *) node);
 
 #define HASHJOIN_NSLOTS 3
-	/* ----------------
-	 *	tuple table initialization
-	 * ----------------
+
+	/*
+	 * tuple table initialization
 	 */
 	ExecInitResultTupleSlot(estate, &hjstate->jstate);
 	hjstate->hj_OuterTupleSlot = ExecInitExtraTupleSlot(estate);
@@ -378,14 +364,12 @@ ExecInitHashJoin(HashJoin *node, EState *estate, Plan *parent)
 				 (int) node->join.jointype);
 	}
 
-	/* ----------------
-	 *	now for some voodoo.  our temporary tuple slot
-	 *	is actually the result tuple slot of the Hash node
-	 *	(which is our inner plan).	we do this because Hash
-	 *	nodes don't return tuples via ExecProcNode() -- instead
-	 *	the hash join node uses ExecScanHashBucket() to get
-	 *	at the contents of the hash table.	-cim 6/9/91
-	 * ----------------
+	/*
+	 * now for some voodoo.  our temporary tuple slot is actually the
+	 * result tuple slot of the Hash node (which is our inner plan).  we
+	 * do this because Hash nodes don't return tuples via ExecProcNode()
+	 * -- instead the hash join node uses ExecScanHashBucket() to get at
+	 * the contents of the hash table.	-cim 6/9/91
 	 */
 	{
 		HashState  *hashstate = hashNode->hashstate;
@@ -394,9 +378,8 @@ ExecInitHashJoin(HashJoin *node, EState *estate, Plan *parent)
 		hjstate->hj_HashTupleSlot = slot;
 	}
 
-	/* ----------------
-	 *	initialize tuple type and projection info
-	 * ----------------
+	/*
+	 * initialize tuple type and projection info
 	 */
 	ExecAssignResultTypeFromTL((Plan *) node, &hjstate->jstate);
 	ExecAssignProjectionInfo((Plan *) node, &hjstate->jstate);
@@ -405,9 +388,8 @@ ExecInitHashJoin(HashJoin *node, EState *estate, Plan *parent)
 						  ExecGetTupType(outerNode),
 						  false);
 
-	/* ----------------
-	 *	initialize hash-specific info
-	 * ----------------
+	/*
+	 * initialize hash-specific info
 	 */
 
 	hjstate->hj_hashdone = false;
@@ -444,15 +426,13 @@ ExecEndHashJoin(HashJoin *node)
 {
 	HashJoinState *hjstate;
 
-	/* ----------------
-	 *	get info from the HashJoin state
-	 * ----------------
+	/*
+	 * get info from the HashJoin state
 	 */
 	hjstate = node->hashjoinstate;
 
-	/* ----------------
+	/*
 	 * free hash table in case we end plan before all tuples are retrieved
-	 * ---------------
 	 */
 	if (hjstate->hj_HashTable)
 	{
@@ -460,28 +440,24 @@ ExecEndHashJoin(HashJoin *node)
 		hjstate->hj_HashTable = NULL;
 	}
 
-	/* ----------------
-	 *	Free the projection info and the scan attribute info
+	/*
+	 * Free the projection info and the scan attribute info
 	 *
-	 *	Note: we don't ExecFreeResultType(hjstate)
-	 *		  because the rule manager depends on the tupType
-	 *		  returned by ExecMain().  So for now, this
-	 *		  is freed at end-transaction time.  -cim 6/2/91
-	 * ----------------
+	 * Note: we don't ExecFreeResultType(hjstate) because the rule manager
+	 * depends on the tupType returned by ExecMain().  So for now, this is
+	 * freed at end-transaction time.  -cim 6/2/91
 	 */
 	ExecFreeProjectionInfo(&hjstate->jstate);
 	ExecFreeExprContext(&hjstate->jstate);
 
-	/* ----------------
+	/*
 	 * clean up subtrees
-	 * ----------------
 	 */
 	ExecEndNode(outerPlan((Plan *) node), (Plan *) node);
 	ExecEndNode(innerPlan((Plan *) node), (Plan *) node);
 
-	/* ----------------
-	 *	clean out the tuple table
-	 * ----------------
+	/*
+	 * clean out the tuple table
 	 */
 	ExecClearTuple(hjstate->jstate.cs_ResultTupleSlot);
 	ExecClearTuple(hjstate->hj_OuterTupleSlot);
@@ -598,10 +574,9 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
 		hashtable->outerBatchFile[newbatch - 2] = NULL;
 	}
 
-	/* --------------
-	 *	We can skip over any batches that are empty on either side.
-	 *	Release associated temp files right away.
-	 * --------------
+	/*
+	 * We can skip over any batches that are empty on either side. Release
+	 * associated temp files right away.
 	 */
 	while (newbatch <= nbatch &&
 		   (innerBatchSize[newbatch - 1] == 0L ||

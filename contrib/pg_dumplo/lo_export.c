@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/lo_export.c,v 1.6 2001/03/22 03:59:10 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/lo_export.c,v 1.7 2001/03/22 06:16:06 momjian Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
@@ -32,7 +32,7 @@ load_lolist(LODumpMaster * pgLO)
 	int			i;
 	int			n;
 
-	/* ----------
+	/* 
 	 * Now find any candidate tables who have columns of type oid.
 	 *
 	 * NOTE: System tables including pg_largeobject will be ignored.
@@ -40,7 +40,6 @@ load_lolist(LODumpMaster * pgLO)
 	 *
 	 * NOTE: the system oid column is ignored, as it has attnum < 1.
 	 * This shouldn't matter for correctness, but it saves time.
-	 * ----------
 	 */
 	pgLO->res = PQexec(pgLO->conn,
 					   "SELECT c.relname, a.attname "
@@ -109,9 +108,8 @@ pglo_export(LODumpMaster * pgLO)
 	for (ll = pgLO->lolist; ll->lo_table != NULL; ll++)
 	{
 
-		/* ----------
+		/* 
 		 * Query: find the LOs referenced by this column
-		 * ----------
 		 */
 		sprintf(Qbuff, "SELECT DISTINCT l.loid FROM \"%s\" x, pg_largeobject l WHERE x.\"%s\" = l.loid",
 				ll->lo_table, ll->lo_attr);
@@ -137,9 +135,8 @@ pglo_export(LODumpMaster * pgLO)
 			int			t;
 			char	   *val;
 
-			/* ----------
+			/*
 			 * Create DIR/FILE
-			 * ----------
 			 */
 			if (pgLO->action != ACTION_SHOW)
 			{

@@ -35,9 +35,8 @@ extern		"C"
 		/* stored into a host variable.				*/
 
 		/*
-		 * 2: if 'W' a (hopefully) non-fatal notice occured		*//* 3:
-		 * empty
-		 */
+		 * 2: if 'W' a (hopefully) non-fatal notice occured
+		 *//* 3: empty */
 		/* 4: empty						*/
 		/* 5: empty						*/
 		/* 6: empty						*/

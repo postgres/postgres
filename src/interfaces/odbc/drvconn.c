@@ -270,7 +270,7 @@ dconn_DoDialog(HWND hwnd, ConnInfo *ci)
 }
 
 
-BOOL FAR PASCAL
+BOOL FAR	PASCAL
 dconn_FDriverConnectProc(
 						 HWND hdlg,
 						 UINT wMsg,

@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.42 2001/03/22 03:59:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.43 2001/03/22 06:16:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,9 +76,8 @@ ExecGroupEveryTuple(Group *node)
 	ProjectionInfo *projInfo;
 	TupleTableSlot *resultSlot;
 
-	/* ---------------------
-	 *	get state info from node
-	 * ---------------------
+	/*
+	 * get state info from node
 	 */
 	grpstate = node->grpstate;
 	if (grpstate->grp_done)
@@ -156,10 +155,9 @@ ExecGroupEveryTuple(Group *node)
 					   InvalidBuffer, false);
 	}
 
-	/* ----------------
-	 *	form a projection tuple, store it in the result tuple
-	 *	slot and return it.
-	 * ----------------
+	/*
+	 * form a projection tuple, store it in the result tuple slot and
+	 * return it.
 	 */
 	projInfo = grpstate->csstate.cstate.cs_ProjInfo;
 
@@ -187,9 +185,8 @@ ExecGroupOneTuple(Group *node)
 	ProjectionInfo *projInfo;
 	TupleTableSlot *resultSlot;
 
-	/* ---------------------
-	 *	get state info from node
-	 * ---------------------
+	/*
+	 * get state info from node
 	 */
 	grpstate = node->grpstate;
 	if (grpstate->grp_done)
@@ -243,10 +240,9 @@ ExecGroupOneTuple(Group *node)
 			break;
 	}
 
-	/* ----------------
-	 *	form a projection tuple, store it in the result tuple
-	 *	slot and return it.
-	 * ----------------
+	/*
+	 * form a projection tuple, store it in the result tuple slot and
+	 * return it.
 	 */
 	projInfo = grpstate->csstate.cstate.cs_ProjInfo;
 
@@ -316,9 +312,8 @@ ExecInitGroup(Group *node, EState *estate, Plan *parent)
 	outerPlan = outerPlan(node);
 	ExecInitNode(outerPlan, estate, (Plan *) node);
 
-	/* ----------------
-	 *	initialize tuple type.
-	 * ----------------
+	/*
+	 * initialize tuple type.
 	 */
 	ExecAssignScanTypeFromOuterPlan((Plan *) node, &grpstate->csstate);
 

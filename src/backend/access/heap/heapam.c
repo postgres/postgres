@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.111 2001/03/22 03:59:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.112 2001/03/22 06:16:07 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -116,20 +116,20 @@ initscan(HeapScanDesc scan,
 		 unsigned nkeys,
 		 ScanKey key)
 {
-	/* ----------------
-	 *	Make sure we have up-to-date idea of number of blocks in relation.
-	 *	It is sufficient to do this once at scan start, since any tuples
-	 *	added while the scan is in progress will be invisible to my
-	 *	transaction anyway...
-	 * ----------------
+
+	/*
+	 * Make sure we have up-to-date idea of number of blocks in relation.
+	 * It is sufficient to do this once at scan start, since any tuples
+	 * added while the scan is in progress will be invisible to my
+	 * transaction anyway...
 	 */
 	relation->rd_nblocks = RelationGetNumberOfBlocks(relation);
 
 	if (relation->rd_nblocks == 0)
 	{
-		/* ----------------
-		 *	relation is empty
-		 * ----------------
+
+		/*
+		 * relation is empty
 		 */
 		scan->rs_ntup.t_datamcxt = scan->rs_ctup.t_datamcxt =
 			scan->rs_ptup.t_datamcxt = NULL;
@@ -139,9 +139,9 @@ initscan(HeapScanDesc scan,
 	}
 	else if (atend)
 	{
-		/* ----------------
-		 *	reverse scan
-		 * ----------------
+
+		/*
+		 * reverse scan
 		 */
 		scan->rs_ntup.t_datamcxt = scan->rs_ctup.t_datamcxt = NULL;
 		scan->rs_ntup.t_data = scan->rs_ctup.t_data = NULL;
@@ -152,9 +152,9 @@ initscan(HeapScanDesc scan,
 	}
 	else
 	{
-		/* ----------------
-		 *	forward scan
-		 * ----------------
+
+		/*
+		 * forward scan
 		 */
 		scan->rs_ctup.t_datamcxt = scan->rs_ptup.t_datamcxt = NULL;
 		scan->rs_ctup.t_data = scan->rs_ptup.t_data = NULL;
@@ -170,9 +170,8 @@ initscan(HeapScanDesc scan,
 	ItemPointerSetInvalid(&(scan->rs_mntid));
 	ItemPointerSetInvalid(&(scan->rs_mcd));
 
-	/* ----------------
-	 *	copy the scan key, if appropriate
-	 * ----------------
+	/*
+	 * copy the scan key, if appropriate
 	 */
 	if (key != NULL)
 		memmove(scan->rs_key, key, nkeys * sizeof(ScanKeyData));
@@ -188,11 +187,9 @@ unpinscan(HeapScanDesc scan)
 	if (BufferIsValid(scan->rs_pbuf))
 		ReleaseBuffer(scan->rs_pbuf);
 
-	/* ------------------------------------
-	 *	Scan will pin buffer once for each non-NULL tuple pointer
-	 *	(ptup, ctup, ntup), so they have to be unpinned multiple
-	 *	times.
-	 * ------------------------------------
+	/*
+	 * Scan will pin buffer once for each non-NULL tuple pointer (ptup,
+	 * ctup, ntup), so they have to be unpinned multiple times.
 	 */
 	if (BufferIsValid(scan->rs_cbuf))
 		ReleaseBuffer(scan->rs_cbuf);
@@ -251,19 +248,17 @@ heapgettup(Relation relation,
 	ItemPointer tid = (tuple->t_data == NULL) ?
 	(ItemPointer) NULL : &(tuple->t_self);
 
-	/* ----------------
-	 *	increment access statistics
-	 * ----------------
+	/*
+	 * increment access statistics
 	 */
 	IncrHeapAccessStat(local_heapgettup);
 	IncrHeapAccessStat(global_heapgettup);
 
-	/* ----------------
-	 *	debugging stuff
+	/*
+	 * debugging stuff
 	 *
-	 * check validity of arguments, here and for other functions too
-	 * Note: no locking manipulations needed--this is a local function
-	 * ----------------
+	 * check validity of arguments, here and for other functions too Note: no
+	 * locking manipulations needed--this is a local function
 	 */
 #ifdef	HEAPDEBUGALL
 	if (ItemPointerIsValid(tid))
@@ -289,9 +284,8 @@ heapgettup(Relation relation,
 
 	tuple->t_tableOid = relation->rd_id;
 
-	/* ----------------
-	 *	return null immediately if relation is empty
-	 * ----------------
+	/*
+	 * return null immediately if relation is empty
 	 */
 	if (!(pages = relation->rd_nblocks))
 	{
@@ -300,15 +294,14 @@ heapgettup(Relation relation,
 		return;
 	}
 
-	/* ----------------
-	 *	calculate next starting lineoff, given scan direction
-	 * ----------------
+	/*
+	 * calculate next starting lineoff, given scan direction
 	 */
 	if (!dir)
 	{
-		/* ----------------
+
+		/*
 		 * ``no movement'' scan direction
-		 * ----------------
 		 */
 		/* assume it is a valid TID XXX */
 		if (ItemPointerIsValid(tid) == false)
@@ -340,9 +333,9 @@ heapgettup(Relation relation,
 	}
 	else if (dir < 0)
 	{
-		/* ----------------
-		 *	reverse scan direction
-		 * ----------------
+
+		/*
+		 * reverse scan direction
 		 */
 		if (ItemPointerIsValid(tid) == false)
 			tid = NULL;
@@ -383,9 +376,9 @@ heapgettup(Relation relation,
 	}
 	else
 	{
-		/* ----------------
-		 *	forward scan direction
-		 * ----------------
+
+		/*
+		 * forward scan direction
 		 */
 		if (ItemPointerIsValid(tid) == false)
 		{
@@ -420,10 +413,9 @@ heapgettup(Relation relation,
 
 	/* 'dir' is now non-zero */
 
-	/* ----------------
-	 *	calculate line pointer and number of remaining items
-	 *	to check on this page.
-	 * ----------------
+	/*
+	 * calculate line pointer and number of remaining items to check on
+	 * this page.
 	 */
 	lpp = PageGetItemId(dp, lineoff);
 	if (dir < 0)
@@ -431,10 +423,9 @@ heapgettup(Relation relation,
 	else
 		linesleft = lines - lineoff;
 
-	/* ----------------
-	 *	advance the scan until we find a qualifying tuple or
-	 *	run out of stuff to scan
-	 * ----------------
+	/*
+	 * advance the scan until we find a qualifying tuple or run out of
+	 * stuff to scan
 	 */
 	for (;;)
 	{
@@ -446,9 +437,9 @@ heapgettup(Relation relation,
 				tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
 				tuple->t_len = ItemIdGetLength(lpp);
 				ItemPointerSet(&(tuple->t_self), page, lineoff);
-				/* ----------------
-				 *	if current tuple qualifies, return it.
-				 * ----------------
+
+				/*
+				 * if current tuple qualifies, return it.
 				 */
 				HeapTupleSatisfies(tuple, relation, *buffer, (PageHeader) dp,
 								   snapshot, nkeys, key);
@@ -459,9 +450,8 @@ heapgettup(Relation relation,
 				}
 			}
 
-			/* ----------------
-			 *	otherwise move to the next item on the page
-			 * ----------------
+			/*
+			 * otherwise move to the next item on the page
 			 */
 			--linesleft;
 			if (dir < 0)
@@ -477,17 +467,15 @@ heapgettup(Relation relation,
 			}
 		}
 
-		/* ----------------
-		 *	if we get here, it means we've exhausted the items on
-		 *	this page and it's time to move to the next..
-		 * ----------------
+		/*
+		 * if we get here, it means we've exhausted the items on this page
+		 * and it's time to move to the next..
 		 */
 		LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
 		page = nextpage(page, dir);
 
-		/* ----------------
-		 *	return NULL if we've exhausted all the pages..
-		 * ----------------
+		/*
+		 * return NULL if we've exhausted all the pages..
 		 */
 		if (page < 0 || page >= pages)
 		{
@@ -588,9 +576,8 @@ heap_open(Oid relationId, LOCKMODE lockmode)
 
 	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
 
-	/* ----------------
-	 *	increment access statistics
-	 * ----------------
+	/*
+	 * increment access statistics
 	 */
 	IncrHeapAccessStat(local_open);
 	IncrHeapAccessStat(global_open);
@@ -626,9 +613,8 @@ heap_openr(const char *relationName, LOCKMODE lockmode)
 
 	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
 
-	/* ----------------
-	 *	increment access statistics
-	 * ----------------
+	/*
+	 * increment access statistics
 	 */
 	IncrHeapAccessStat(local_openr);
 	IncrHeapAccessStat(global_openr);
@@ -663,9 +649,8 @@ heap_open_nofail(Oid relationId)
 {
 	Relation	r;
 
-	/* ----------------
-	 *	increment access statistics
-	 * ----------------
+	/*
+	 * increment access statistics
 	 */
 	IncrHeapAccessStat(local_open);
 	IncrHeapAccessStat(global_open);
@@ -694,9 +679,8 @@ heap_openr_nofail(const char *relationName)
 {
 	Relation	r;
 
-	/* ----------------
-	 *	increment access statistics
-	 * ----------------
+	/*
+	 * increment access statistics
 	 */
 	IncrHeapAccessStat(local_openr);
 	IncrHeapAccessStat(global_openr);
@@ -724,9 +708,8 @@ heap_close(Relation relation, LOCKMODE lockmode)
 {
 	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
 
-	/* ----------------
-	 *	increment access statistics
-	 * ----------------
+	/*
+	 * increment access statistics
 	 */
 	IncrHeapAccessStat(local_close);
 	IncrHeapAccessStat(global_close);
@@ -752,27 +735,24 @@ heap_beginscan(Relation relation,
 {
 	HeapScanDesc scan;
 
-	/* ----------------
-	 *	increment access statistics
-	 * ----------------
+	/*
+	 * increment access statistics
 	 */
 	IncrHeapAccessStat(local_beginscan);
 	IncrHeapAccessStat(global_beginscan);
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
+	/*
+	 * sanity checks
 	 */
 	if (!RelationIsValid(relation))
 		elog(ERROR, "heap_beginscan: !RelationIsValid(relation)");
 
-	/* ----------------
-	 *	increment relation ref count while scanning relation
+	/*
+	 * increment relation ref count while scanning relation
 	 *
-	 *	This is just to make really sure the relcache entry won't go away
-	 *	while the scan has a pointer to it.  Caller should be holding the
-	 *	rel open anyway, so this is redundant in all normal scenarios...
-	 * ----------------
+	 * This is just to make really sure the relcache entry won't go away
+	 * while the scan has a pointer to it.	Caller should be holding the
+	 * rel open anyway, so this is redundant in all normal scenarios...
 	 */
 	RelationIncrementReferenceCount(relation);
 
@@ -780,9 +760,8 @@ heap_beginscan(Relation relation,
 	if (relation->rd_rel->relkind == RELKIND_UNCATALOGED)
 		snapshot = SnapshotSelf;
 
-	/* ----------------
-	 *	allocate and initialize scan descriptor
-	 * ----------------
+	/*
+	 * allocate and initialize scan descriptor
 	 */
 	scan = (HeapScanDesc) palloc(sizeof(HeapScanDescData));
 
@@ -814,22 +793,20 @@ heap_rescan(HeapScanDesc scan,
 			bool scanFromEnd,
 			ScanKey key)
 {
-	/* ----------------
-	 *	increment access statistics
-	 * ----------------
+
+	/*
+	 * increment access statistics
 	 */
 	IncrHeapAccessStat(local_rescan);
 	IncrHeapAccessStat(global_rescan);
 
-	/* ----------------
-	 *	unpin scan buffers
-	 * ----------------
+	/*
+	 * unpin scan buffers
 	 */
 	unpinscan(scan);
 
-	/* ----------------
-	 *	reinitialize scan descriptor
-	 * ----------------
+	/*
+	 * reinitialize scan descriptor
 	 */
 	scan->rs_atend = scanFromEnd;
 	initscan(scan, scan->rs_rd, scanFromEnd, scan->rs_nkeys, key);
@@ -845,24 +822,22 @@ heap_rescan(HeapScanDesc scan,
 void
 heap_endscan(HeapScanDesc scan)
 {
-	/* ----------------
-	 *	increment access statistics
-	 * ----------------
+
+	/*
+	 * increment access statistics
 	 */
 	IncrHeapAccessStat(local_endscan);
 	IncrHeapAccessStat(global_endscan);
 
 	/* Note: no locking manipulations needed */
 
-	/* ----------------
-	 *	unpin scan buffers
-	 * ----------------
+	/*
+	 * unpin scan buffers
 	 */
 	unpinscan(scan);
 
-	/* ----------------
-	 *	decrement relation reference count and free scan descriptor storage
-	 * ----------------
+	/*
+	 * decrement relation reference count and free scan descriptor storage
 	 */
 	RelationDecrementReferenceCount(scan->rs_rd);
 
@@ -919,34 +894,31 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 {
 	HeapScanDesc scan = scandesc;
 
-	/* ----------------
-	 *	increment access statistics
-	 * ----------------
+	/*
+	 * increment access statistics
 	 */
 	IncrHeapAccessStat(local_getnext);
 	IncrHeapAccessStat(global_getnext);
 
 	/* Note: no locking manipulations needed */
 
-	/* ----------------
-	 *	argument checks
-	 * ----------------
+	/*
+	 * argument checks
 	 */
 	if (scan == NULL)
 		elog(ERROR, "heap_getnext: NULL relscan");
 
-	/* ----------------
-	 *	initialize return buffer to InvalidBuffer
-	 * ----------------
+	/*
+	 * initialize return buffer to InvalidBuffer
 	 */
 
 	HEAPDEBUG_1;				/* heap_getnext( info ) */
 
 	if (backw)
 	{
-		/* ----------------
-		 *	handle reverse scan
-		 * ----------------
+
+		/*
+		 * handle reverse scan
 		 */
 		HEAPDEBUG_2;			/* heap_getnext called with backw */
 
@@ -1020,9 +992,9 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 	}
 	else
 	{
-		/* ----------------
-		 *	handle forward scan
-		 * ----------------
+
+		/*
+		 * handle forward scan
 		 */
 		if (scan->rs_ctup.t_data == scan->rs_ntup.t_data &&
 			BufferIsInvalid(scan->rs_nbuf))
@@ -1097,10 +1069,9 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 		scan->rs_nbuf = UnknownBuffer;
 	}
 
-	/* ----------------
-	 *	if we get here it means we have a new current scan tuple, so
-	 *	point to the proper return buffer and return the tuple.
-	 * ----------------
+	/*
+	 * if we get here it means we have a new current scan tuple, so point
+	 * to the proper return buffer and return the tuple.
 	 */
 
 	HEAPDEBUG_7;				/* heap_getnext returning tuple */
@@ -1133,17 +1104,15 @@ heap_fetch(Relation relation,
 	ItemPointer tid = &(tuple->t_self);
 	OffsetNumber offnum;
 
-	/* ----------------
-	 *	increment access statistics
-	 * ----------------
+	/*
+	 * increment access statistics
 	 */
 	IncrHeapAccessStat(local_fetch);
 	IncrHeapAccessStat(global_fetch);
 
-	/* ----------------
-	 *	get the buffer from the relation descriptor
-	 *	Note that this does a buffer pin.
-	 * ----------------
+	/*
+	 * get the buffer from the relation descriptor Note that this does a
+	 * buffer pin.
 	 */
 
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
@@ -1154,17 +1123,15 @@ heap_fetch(Relation relation,
 
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
-	/* ----------------
-	 *	get the item line pointer corresponding to the requested tid
-	 * ----------------
+	/*
+	 * get the item line pointer corresponding to the requested tid
 	 */
 	dp = (PageHeader) BufferGetPage(buffer);
 	offnum = ItemPointerGetOffsetNumber(tid);
 	lp = PageGetItemId(dp, offnum);
 
-	/* ----------------
-	 *	more sanity checks
-	 * ----------------
+	/*
+	 * more sanity checks
 	 */
 
 	if (!ItemIdIsUsed(lp))
@@ -1182,9 +1149,8 @@ heap_fetch(Relation relation,
 	tuple->t_len = ItemIdGetLength(lp);
 	tuple->t_tableOid = relation->rd_id;
 
-	/* ----------------
-	 *	check time qualification of tid
-	 * ----------------
+	/*
+	 * check time qualification of tid
 	 */
 
 	HeapTupleSatisfies(tuple, relation, buffer, dp,
@@ -1229,10 +1195,9 @@ heap_get_latest_tid(Relation relation,
 	bool		invalidBlock,
 				linkend;
 
-	/* ----------------
-	 *	get the buffer from the relation descriptor
-	 *	Note that this does a buffer pin.
-	 * ----------------
+	/*
+	 * get the buffer from the relation descriptor Note that this does a
+	 * buffer pin.
 	 */
 
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
@@ -1243,9 +1208,8 @@ heap_get_latest_tid(Relation relation,
 
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
-	/* ----------------
-	 *	get the item line pointer corresponding to the requested tid
-	 * ----------------
+	/*
+	 * get the item line pointer corresponding to the requested tid
 	 */
 	dp = (PageHeader) BufferGetPage(buffer);
 	offnum = ItemPointerGetOffsetNumber(tid);
@@ -1263,9 +1227,8 @@ heap_get_latest_tid(Relation relation,
 		return NULL;
 	}
 
-	/* ----------------
-	 *	more sanity checks
-	 * ----------------
+	/*
+	 * more sanity checks
 	 */
 
 	tp.t_datamcxt = NULL;
@@ -1274,9 +1237,8 @@ heap_get_latest_tid(Relation relation,
 	tp.t_self = *tid;
 	ctid = tp.t_data->t_ctid;
 
-	/* ----------------
-	 *	check time qualification of tid
-	 * ----------------
+	/*
+	 * check time qualification of tid
 	 */
 
 	HeapTupleSatisfies(&tp, relation, buffer, dp,
@@ -1323,15 +1285,13 @@ heap_insert(Relation relation, HeapTuple tup)
 	IncrHeapAccessStat(local_insert);
 	IncrHeapAccessStat(global_insert);
 
-	/* ----------------
-	 *	If the object id of this tuple has already been assigned, trust
-	 *	the caller.  There are a couple of ways this can happen.  At initial
-	 *	db creation, the backend program sets oids for tuples.	When we
-	 *	define an index, we set the oid.  Finally, in the future, we may
-	 *	allow users to set their own object ids in order to support a
-	 *	persistent object store (objects need to contain pointers to one
-	 *	another).
-	 * ----------------
+	/*
+	 * If the object id of this tuple has already been assigned, trust the
+	 * caller.	There are a couple of ways this can happen.  At initial db
+	 * creation, the backend program sets oids for tuples.	When we define
+	 * an index, we set the oid.  Finally, in the future, we may allow
+	 * users to set their own object ids in order to support a persistent
+	 * object store (objects need to contain pointers to one another).
 	 */
 	if (!OidIsValid(tup->t_data->t_oid))
 		tup->t_data->t_oid = newoid();
@@ -1346,10 +1306,10 @@ heap_insert(Relation relation, HeapTuple tup)
 	tup->t_tableOid = relation->rd_id;
 
 #ifdef TUPLE_TOASTER_ACTIVE
-	/* ----------
-	 * If the new tuple is too big for storage or contains already
-	 * toasted attributes from some other relation, invoke the toaster.
-	 * ----------
+
+	/*
+	 * If the new tuple is too big for storage or contains already toasted
+	 * attributes from some other relation, invoke the toaster.
 	 */
 	if (HeapTupleHasExtended(tup) ||
 		(MAXALIGN(tup->t_len) > TOAST_TUPLE_THRESHOLD))
@@ -1540,12 +1500,12 @@ l1:
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
 #ifdef TUPLE_TOASTER_ACTIVE
-	/* ----------
-	 * If the relation has toastable attributes, we need to delete
-	 * no longer needed items there too.  We have to do this before
+
+	/*
+	 * If the relation has toastable attributes, we need to delete no
+	 * longer needed items there too.  We have to do this before
 	 * WriteBuffer because we need to look at the contents of the tuple,
 	 * but it's OK to release the context lock on the buffer first.
-	 * ----------
 	 */
 	if (HeapTupleHasExtended(&tp))
 		heap_tuple_toast_attrs(relation, NULL, &(tp));
@@ -1977,9 +1937,8 @@ void
 heap_markpos(HeapScanDesc scan)
 {
 
-	/* ----------------
-	 *	increment access statistics
-	 * ----------------
+	/*
+	 * increment access statistics
 	 */
 	IncrHeapAccessStat(local_markpos);
 	IncrHeapAccessStat(global_markpos);
@@ -2012,9 +1971,8 @@ heap_markpos(HeapScanDesc scan)
 				   scan->rs_key);
 	}
 
-	/* ----------------
+	/*
 	 * Should not unpin the buffer pages.  They may still be in use.
-	 * ----------------
 	 */
 	if (scan->rs_ptup.t_data != NULL)
 		scan->rs_mptid = scan->rs_ptup.t_self;
@@ -2054,9 +2012,9 @@ heap_markpos(HeapScanDesc scan)
 void
 heap_restrpos(HeapScanDesc scan)
 {
-	/* ----------------
-	 *	increment access statistics
-	 * ----------------
+
+	/*
+	 * increment access statistics
 	 */
 	IncrHeapAccessStat(local_restrpos);
 	IncrHeapAccessStat(global_restrpos);

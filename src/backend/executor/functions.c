@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.44 2001/03/22 03:59:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.45 2001/03/22 06:16:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,9 +162,8 @@ init_sql_fcache(FmgrInfo *finfo)
 	Datum		tmp;
 	bool		isNull;
 
-	/* ----------------
-	 *	 get the procedure tuple corresponding to the given function Oid
-	 * ----------------
+	/*
+	 * get the procedure tuple corresponding to the given function Oid
 	 */
 	procedureTuple = SearchSysCache(PROCOID,
 									ObjectIdGetDatum(foid),
@@ -175,9 +174,8 @@ init_sql_fcache(FmgrInfo *finfo)
 
 	procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
 
-	/* ----------------
-	 *	 get the return type from the procedure tuple
-	 * ----------------
+	/*
+	 * get the return type from the procedure tuple
 	 */
 	typeTuple = SearchSysCache(TYPEOID,
 						   ObjectIdGetDatum(procedureStruct->prorettype),
@@ -191,9 +189,8 @@ init_sql_fcache(FmgrInfo *finfo)
 	fcache = (SQLFunctionCachePtr) palloc(sizeof(SQLFunctionCache));
 	MemSet(fcache, 0, sizeof(SQLFunctionCache));
 
-	/* ----------------
-	 *	 get the type length and by-value flag from the type tuple
-	 * ----------------
+	/*
+	 * get the type length and by-value flag from the type tuple
 	 */
 	fcache->typlen = typeStruct->typlen;
 	if (typeStruct->typrelid == InvalidOid)

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.89 2001/03/22 03:59:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.90 2001/03/22 06:16:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,10 +72,9 @@ CreateTrigger(CreateTrigStmt *stmt)
 	if (!pg_ownercheck(GetUserId(), stmt->relname, RELNAME))
 		elog(ERROR, "%s: %s", stmt->relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
 
-	/* ----------
-	 * If trigger is a constraint, user trigger name as constraint
-	 * name and build a unique trigger name instead.
-	 * ----------
+	/*
+	 * If trigger is a constraint, user trigger name as constraint name
+	 * and build a unique trigger name instead.
 	 */
 	if (stmt->isconstraint)
 	{
@@ -413,15 +412,14 @@ RelationRemoveTriggers(Relation rel)
 
 	heap_endscan(tgscan);
 
-	/* ----------
-	 * If we deleted any triggers, must update pg_class entry and
-	 * advance command counter to make the updated entry visible.
-	 * This is fairly annoying, since we'e just going to drop the
-	 * durn thing later, but it's necessary to have a consistent
-	 * state in case we do CommandCounterIncrement() below ---
-	 * if RelationBuildTriggers() runs, it will complain otherwise.
-	 * Perhaps RelationBuildTriggers() shouldn't be so picky...
-	 * ----------
+	/*
+	 * If we deleted any triggers, must update pg_class entry and advance
+	 * command counter to make the updated entry visible. This is fairly
+	 * annoying, since we'e just going to drop the durn thing later, but
+	 * it's necessary to have a consistent state in case we do
+	 * CommandCounterIncrement() below --- if RelationBuildTriggers()
+	 * runs, it will complain otherwise. Perhaps RelationBuildTriggers()
+	 * shouldn't be so picky...
 	 */
 	if (found)
 	{
@@ -446,9 +444,8 @@ RelationRemoveTriggers(Relation rel)
 		CommandCounterIncrement();
 	}
 
-	/* ----------
+	/*
 	 * Also drop all constraint triggers referencing this relation
-	 * ----------
 	 */
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgconstrrelid,
 						   F_OIDEQ, RelationGetRelid(rel));
@@ -473,12 +470,11 @@ RelationRemoveTriggers(Relation rel)
 
 		DropTrigger(&stmt);
 
-		/* ----------
-		 * Need to do a command counter increment here to show up
-		 * new pg_class.reltriggers in the next loop iteration
-		 * (in case there are multiple referential integrity action
-		 * triggers for the same FK table defined on the PK table).
-		 * ----------
+		/*
+		 * Need to do a command counter increment here to show up new
+		 * pg_class.reltriggers in the next loop iteration (in case there
+		 * are multiple referential integrity action triggers for the same
+		 * FK table defined on the PK table).
 		 */
 		CommandCounterIncrement();
 
@@ -1182,18 +1178,15 @@ deferredTriggerCheckState(Oid tgoid, int32 itemstate)
 	List	   *sl;
 	DeferredTriggerStatus trigstate;
 
-	/* ----------
-	 * Not deferrable triggers (i.e. normal AFTER ROW triggers
-	 * and constraints declared NOT DEFERRABLE, the state is
-	 * allways false.
-	 * ----------
+	/*
+	 * Not deferrable triggers (i.e. normal AFTER ROW triggers and
+	 * constraints declared NOT DEFERRABLE, the state is allways false.
 	 */
 	if ((itemstate & TRIGGER_DEFERRED_DEFERRABLE) == 0)
 		return false;
 
-	/* ----------
+	/*
 	 * Lookup if we know an individual state for this trigger
-	 * ----------
 	 */
 	foreach(sl, deftrig_trigstates)
 	{
@@ -1202,19 +1195,16 @@ deferredTriggerCheckState(Oid tgoid, int32 itemstate)
 			return trigstate->dts_tgisdeferred;
 	}
 
-	/* ----------
-	 * No individual state known - so if the user issued a
-	 * SET CONSTRAINT ALL ..., we return that instead of the
-	 * triggers default state.
-	 * ----------
+	/*
+	 * No individual state known - so if the user issued a SET CONSTRAINT
+	 * ALL ..., we return that instead of the triggers default state.
 	 */
 	if (deftrig_all_isset)
 		return deftrig_all_isdeferred;
 
-	/* ----------
-	 * No ALL state known either, remember the default state
-	 * as the current and return that.
-	 * ----------
+	/*
+	 * No ALL state known either, remember the default state as the
+	 * current and return that.
 	 */
 	oldcxt = MemoryContextSwitchTo(deftrig_cxt);
 
@@ -1319,9 +1309,8 @@ deferredTriggerExecute(DeferredTriggerEvent event, int itemno,
 	Buffer		oldbuffer;
 	Buffer		newbuffer;
 
-	/* ----------
+	/*
 	 * Open the heap and fetch the required OLD and NEW tuples.
-	 * ----------
 	 */
 	rel = heap_open(event->dte_relid, NoLock);
 
@@ -1341,9 +1330,8 @@ deferredTriggerExecute(DeferredTriggerEvent event, int itemno,
 			elog(ERROR, "deferredTriggerExecute: failed to fetch new tuple");
 	}
 
-	/* ----------
+	/*
 	 * Setup the trigger information
-	 * ----------
 	 */
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = (event->dte_event & TRIGGER_EVENT_OPMASK) |
@@ -1374,10 +1362,9 @@ deferredTriggerExecute(DeferredTriggerEvent event, int itemno,
 			break;
 	}
 
-	/* ----------
-	 * Call the trigger and throw away an eventually returned
-	 * updated tuple.
-	 * ----------
+	/*
+	 * Call the trigger and throw away an eventually returned updated
+	 * tuple.
 	 */
 	rettuple = ExecCallTriggerFunc(LocTriggerData.tg_trigger,
 								   &LocTriggerData,
@@ -1385,16 +1372,14 @@ deferredTriggerExecute(DeferredTriggerEvent event, int itemno,
 	if (rettuple != NULL && rettuple != &oldtuple && rettuple != &newtuple)
 		heap_freetuple(rettuple);
 
-	/* ----------
-	 * Might have been a referential integrity constraint trigger.
-	 * Reset the snapshot overriding flag.
-	 * ----------
+	/*
+	 * Might have been a referential integrity constraint trigger. Reset
+	 * the snapshot overriding flag.
 	 */
 	ReferentialIntegritySnapshotOverride = false;
 
-	/* ----------
+	/*
 	 * Release buffers and close the relation
-	 * ----------
 	 */
 	if (ItemPointerIsValid(&(event->dte_oldctid)))
 		ReleaseBuffer(oldbuffer);
@@ -1420,14 +1405,13 @@ deferredTriggerInvokeEvents(bool immediate_only)
 	int			i;
 	MemoryContext per_tuple_context;
 
-	/* ----------
-	 * For now we process all events - to speedup transaction blocks
-	 * we need to remember the actual end of the queue at EndQuery
-	 * and process only events that are newer. On state changes we
-	 * simply reset the position to the beginning of the queue and
-	 * process all events once with the new states when the
-	 * SET CONSTRAINTS ... command finishes and calls EndQuery.
-	 * ----------
+	/*
+	 * For now we process all events - to speedup transaction blocks we
+	 * need to remember the actual end of the queue at EndQuery and
+	 * process only events that are newer. On state changes we simply
+	 * reset the position to the beginning of the queue and process all
+	 * events once with the new states when the SET CONSTRAINTS ...
+	 * command finishes and calls EndQuery.
 	 */
 
 	/* Make a per-tuple memory context for trigger function calls */
@@ -1440,9 +1424,9 @@ deferredTriggerInvokeEvents(bool immediate_only)
 
 	for (event = deftrig_events; event != NULL; event = event->dte_next)
 	{
-		/* ----------
+
+		/*
 		 * Check if event is completely done.
-		 * ----------
 		 */
 		if (event->dte_event & (TRIGGER_DEFERRED_DONE |
 								TRIGGER_DEFERRED_CANCELED))
@@ -1450,9 +1434,8 @@ deferredTriggerInvokeEvents(bool immediate_only)
 
 		MemoryContextReset(per_tuple_context);
 
-		/* ----------
+		/*
 		 * Check each trigger item in the event.
-		 * ----------
 		 */
 		still_deferred_ones = false;
 		for (i = 0; i < event->dte_n_items; i++)
@@ -1460,10 +1443,9 @@ deferredTriggerInvokeEvents(bool immediate_only)
 			if (event->dte_item[i].dti_state & TRIGGER_DEFERRED_DONE)
 				continue;
 
-			/* ----------
-			 * This trigger item hasn't been called yet. Check if
-			 * we should call it now.
-			 * ----------
+			/*
+			 * This trigger item hasn't been called yet. Check if we
+			 * should call it now.
 			 */
 			if (immediate_only && deferredTriggerCheckState(
 											event->dte_item[i].dti_tgoid,
@@ -1473,18 +1455,15 @@ deferredTriggerInvokeEvents(bool immediate_only)
 				continue;
 			}
 
-			/* ----------
+			/*
 			 * So let's fire it...
-			 * ----------
 			 */
 			deferredTriggerExecute(event, i, per_tuple_context);
 			event->dte_item[i].dti_state |= TRIGGER_DEFERRED_DONE;
 		}
 
-		/* ----------
-		 * Remember in the event itself if all trigger items are
-		 * done.
-		 * ----------
+		/*
+		 * Remember in the event itself if all trigger items are done.
 		 */
 		if (!still_deferred_ones)
 			event->dte_event |= TRIGGER_DEFERRED_DONE;
@@ -1532,10 +1511,9 @@ DeferredTriggerBeginXact(void)
 		elog(ERROR,
 		   "DeferredTriggerBeginXact() called while inside transaction");
 
-	/* ----------
-	 * Create the per transaction memory context and copy all states
-	 * from the per session context to here.
-	 * ----------
+	/*
+	 * Create the per transaction memory context and copy all states from
+	 * the per session context to here.
 	 */
 	deftrig_cxt = AllocSetContextCreate(TopTransactionContext,
 										"DeferredTriggerXact",
@@ -1578,9 +1556,9 @@ DeferredTriggerBeginXact(void)
 void
 DeferredTriggerEndQuery(void)
 {
-	/* ----------
+
+	/*
 	 * Ignore call if we aren't in a transaction.
-	 * ----------
 	 */
 	if (deftrig_cxt == NULL)
 		return;
@@ -1599,9 +1577,9 @@ DeferredTriggerEndQuery(void)
 void
 DeferredTriggerEndXact(void)
 {
-	/* ----------
+
+	/*
 	 * Ignore call if we aren't in a transaction.
-	 * ----------
 	 */
 	if (deftrig_cxt == NULL)
 		return;
@@ -1624,9 +1602,9 @@ DeferredTriggerEndXact(void)
 void
 DeferredTriggerAbortXact(void)
 {
-	/* ----------
+
+	/*
 	 * Ignore call if we aren't in a transaction.
-	 * ----------
 	 */
 	if (deftrig_cxt == NULL)
 		return;
@@ -1655,20 +1633,19 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 	DeferredTriggerStatus state;
 	bool		hasindex;
 
-	/* ----------
+	/*
 	 * Handle SET CONSTRAINTS ALL ...
-	 * ----------
 	 */
 	if (stmt->constraints == NIL)
 	{
 		if (!IsTransactionBlock())
 		{
-			/* ----------
+
+			/*
 			 * ... outside of a transaction block
 			 *
 			 * Drop all information about individual trigger states per
 			 * session.
-			 * ----------
 			 */
 			l = deftrig_dfl_trigstates;
 			while (l != NIL)
@@ -1681,9 +1658,8 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			}
 			deftrig_dfl_trigstates = NIL;
 
-			/* ----------
+			/*
 			 * Set the session ALL state to known.
-			 * ----------
 			 */
 			deftrig_dfl_all_isset = true;
 			deftrig_dfl_all_isdeferred = stmt->deferred;
@@ -1692,12 +1668,12 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 		}
 		else
 		{
-			/* ----------
+
+			/*
 			 * ... inside of a transaction block
 			 *
 			 * Drop all information about individual trigger states per
 			 * transaction.
-			 * ----------
 			 */
 			l = deftrig_trigstates;
 			while (l != NIL)
@@ -1710,9 +1686,8 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			}
 			deftrig_trigstates = NIL;
 
-			/* ----------
+			/*
 			 * Set the per transaction ALL state to known.
-			 * ----------
 			 */
 			deftrig_all_isset = true;
 			deftrig_all_isdeferred = stmt->deferred;
@@ -1743,16 +1718,14 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 		Form_pg_trigger pg_trigger;
 		Oid			constr_oid;
 
-		/* ----------
+		/*
 		 * Check that only named constraints are set explicitly
-		 * ----------
 		 */
 		if (strcmp((char *) lfirst(l), "") == 0)
 			elog(ERROR, "unnamed constraints cannot be set explicitly");
 
-		/* ----------
+		/*
 		 * Setup to scan pg_trigger by tgconstrname ...
-		 * ----------
 		 */
 		ScanKeyEntryInitialize(&skey,
 							   (bits16) 0x0,
@@ -1765,9 +1738,8 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 		else
 			tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &skey);
 
-		/* ----------
+		/*
 		 * ... and search for the constraint trigger row
-		 * ----------
 		 */
 		found = false;
 		for (;;)
@@ -1792,11 +1764,10 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 					break;
 			}
 
-			/* ----------
-			 * If we found some, check that they fit the deferrability
-			 * but skip ON <event> RESTRICT ones, since they are silently
+			/*
+			 * If we found some, check that they fit the deferrability but
+			 * skip ON <event> RESTRICT ones, since they are silently
 			 * never deferrable.
-			 * ----------
 			 */
 			pg_trigger = (Form_pg_trigger) GETSTRUCT(htup);
 			if (stmt->deferred && !pg_trigger->tgdeferrable &&
@@ -1813,9 +1784,8 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 				ReleaseBuffer(buffer);
 		}
 
-		/* ----------
+		/*
 		 * Not found ?
-		 * ----------
 		 */
 		if (!found)
 			elog(ERROR, "Constraint '%s' does not exist", (char *) lfirst(l));
@@ -1831,10 +1801,10 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 
 	if (!IsTransactionBlock())
 	{
-		/* ----------
-		 * Outside of a transaction block set the trigger
-		 * states of individual triggers on session level.
-		 * ----------
+
+		/*
+		 * Outside of a transaction block set the trigger states of
+		 * individual triggers on session level.
 		 */
 		oldcxt = MemoryContextSwitchTo(deftrig_gcxt);
 
@@ -1869,10 +1839,10 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 	}
 	else
 	{
-		/* ----------
-		 * Inside of a transaction block set the trigger
-		 * states of individual triggers on transaction level.
-		 * ----------
+
+		/*
+		 * Inside of a transaction block set the trigger states of
+		 * individual triggers on transaction level.
 		 */
 		oldcxt = MemoryContextSwitchTo(deftrig_cxt);
 
@@ -1938,9 +1908,8 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 		elog(ERROR,
 			 "DeferredTriggerSaveEvent() called outside of transaction");
 
-	/* ----------
+	/*
 	 * Get the CTID's of OLD and NEW
-	 * ----------
 	 */
 	if (oldtup != NULL)
 		ItemPointerCopy(&(oldtup->t_self), &(oldctid));
@@ -1951,9 +1920,8 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 	else
 		ItemPointerSetInvalid(&(newctid));
 
-	/* ----------
+	/*
 	 * Create a new event
-	 * ----------
 	 */
 	oldcxt = MemoryContextSwitchTo(deftrig_cxt);
 
@@ -1991,11 +1959,11 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 			break;
 
 		case TRIGGER_EVENT_UPDATE:
-			/* ----------
-			 * On UPDATE check if the tuple updated has been inserted
-			 * or a foreign referenced key value that's changing now
-			 * has been updated once before in this transaction.
-			 * ----------
+
+			/*
+			 * On UPDATE check if the tuple updated has been inserted or a
+			 * foreign referenced key value that's changing now has been
+			 * updated once before in this transaction.
 			 */
 			if (oldtup->t_data->t_xmin != GetCurrentTransactionId())
 				prev_event = NULL;
@@ -2003,18 +1971,16 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 				prev_event =
 					deferredTriggerGetPreviousEvent(rel->rd_id, &oldctid);
 
-			/* ----------
+			/*
 			 * Now check if one of the referenced keys is changed.
-			 * ----------
 			 */
 			for (i = 0; i < ntriggers; i++)
 			{
 				bool		is_ri_trigger;
 				bool		key_unchanged;
 
-				/* ----------
+				/*
 				 * We are interested in RI_FKEY triggers only.
-				 * ----------
 				 */
 				switch (triggers[i]->tgfoid)
 				{
@@ -2044,11 +2010,11 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 
 				if (key_unchanged)
 				{
-					/* ----------
+
+					/*
 					 * The key hasn't changed, so no need later to invoke
 					 * the trigger at all. But remember other states from
 					 * the possible earlier event.
-					 * ----------
 					 */
 					new_event->dte_item[i].dti_state |= TRIGGER_DEFERRED_DONE;
 
@@ -2057,10 +2023,11 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 						if (prev_event->dte_event &
 							TRIGGER_DEFERRED_ROW_INSERTED)
 						{
-							/* ----------
-							 * This is a row inserted during our transaction.
-							 * So any key value is considered changed.
-							 * ----------
+
+							/*
+							 * This is a row inserted during our
+							 * transaction. So any key value is considered
+							 * changed.
 							 */
 							new_event->dte_event |=
 								TRIGGER_DEFERRED_ROW_INSERTED;
@@ -2071,11 +2038,11 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 						}
 						else
 						{
-							/* ----------
-							 * This is a row, previously updated. So
-							 * if this key has been changed before, we
-							 * still remember that it happened.
-							 * ----------
+
+							/*
+							 * This is a row, previously updated. So if
+							 * this key has been changed before, we still
+							 * remember that it happened.
 							 */
 							if (prev_event->dte_item[i].dti_state &
 								TRIGGER_DEFERRED_KEY_CHANGED)
@@ -2090,10 +2057,10 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 				}
 				else
 				{
-					/* ----------
+
+					/*
 					 * Bomb out if this key has been changed before.
 					 * Otherwise remember that we do so.
-					 * ----------
 					 */
 					if (prev_event)
 					{
@@ -2112,10 +2079,9 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 								NameGetDatum(&(rel->rd_rel->relname)))));
 					}
 
-					/* ----------
-					 * This is the first change to this key, so let
-					 * it happen.
-					 * ----------
+					/*
+					 * This is the first change to this key, so let it
+					 * happen.
 					 */
 					new_event->dte_item[i].dti_state |=
 						TRIGGER_DEFERRED_KEY_CHANGED;
@@ -2126,18 +2092,17 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 			break;
 
 		case TRIGGER_EVENT_DELETE:
-			/* ----------
-			 * On DELETE check if the tuple deleted has been inserted
-			 * or a possibly referenced key value has changed in this
+
+			/*
+			 * On DELETE check if the tuple deleted has been inserted or a
+			 * possibly referenced key value has changed in this
 			 * transaction.
-			 * ----------
 			 */
 			if (oldtup->t_data->t_xmin != GetCurrentTransactionId())
 				break;
 
-			/* ----------
+			/*
 			 * Look at the previous event to the same tuple.
-			 * ----------
 			 */
 			prev_event = deferredTriggerGetPreviousEvent(rel->rd_id, &oldctid);
 			if (prev_event->dte_event & TRIGGER_DEFERRED_KEY_CHANGED)
@@ -2149,9 +2114,8 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 			break;
 	}
 
-	/* ----------
+	/*
 	 * Anything's fine up to here. Add the new event to the queue.
-	 * ----------
 	 */
 	oldcxt = MemoryContextSwitchTo(deftrig_cxt);
 	deferredTriggerAddEvent(new_event);

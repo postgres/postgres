@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/recipe.c,v 1.12 2001/01/24 19:42:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/recipe.c,v 1.13 2001/03/22 06:16:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,10 +203,10 @@ beginRecipe(RecipeStmt *stmt)
 		 * skip the rule rewrite and time qual stuff
 		 */
 
-		/* ----------------------------------------------------------
-		 * 1) plan the main query, everything from an eye node back to
-			 a Tee
-		 * ---------------------------------------------------------- */
+		/*
+		 * 1) plan the main query, everything from an eye node back to a
+		 * Tee
+		 */
 		parsetree = qList->qtrees[0];
 
 		/*
@@ -218,11 +218,11 @@ beginRecipe(RecipeStmt *stmt)
 
 		plan = planner(parsetree);
 
-		/* ----------------------------------------------------------
-		 * 2) plan the tee queries, (subgraphs rooted from a Tee)
-			 by the time the eye is processed, all tees that contribute
-			 to that eye will have been included in the teeInfo list
-		 * ---------------------------------------------------------- */
+		/*
+		 * 2) plan the tee queries, (subgraphs rooted from a Tee) by the
+		 * time the eye is processed, all tees that contribute to that eye
+		 * will have been included in the teeInfo list
+		 */
 		if (teeInfo)
 		{
 			int			t;
@@ -258,10 +258,10 @@ beginRecipe(RecipeStmt *stmt)
 				}
 			}
 
-			/* ----------------------------------------------------------
-			 * 3) replace the tee table scans in the main plan with
-				  actual tee plannodes
-			 * ---------------------------------------------------------- */
+			/*
+			 * 3) replace the tee table scans in the main plan with actual
+			 * tee plannodes
+			 */
 
 			plan = replaceTeeScans(plan, parsetree, teeInfo);
 
@@ -274,9 +274,9 @@ beginRecipe(RecipeStmt *stmt)
 		queryDesc = CreateQueryDesc(parsetree,
 									plan,
 									whereToSendOutput);
-		/* ----------------
-		 *		  call ExecStart to prepare the plan for execution
-		 * ----------------
+
+		/*
+		 * call ExecStart to prepare the plan for execution
 		 */
 		attinfo = ExecutorStart(queryDesc, NULL);
 
@@ -323,16 +323,15 @@ tg_rewriteQuery(TgRecipe * r,
 	orig = q->qtrees[0];
 
 
-	/*-------------------------------------------------------------------
-	   step 1:
-
-	   form a combined range table from all the range tables in the original
-	   query as well as the input nodes
-
-	   form a combined qualification from the qual in the original plus
-	   the quals of the input nodes
-	  -------------------------------------------------------------------
-	*/
+	/*
+	 * step 1:
+	 *
+	 * form a combined range table from all the range tables in the original
+	 * query as well as the input nodes
+	 *
+	 * form a combined qualification from the qual in the original plus the
+	 * quals of the input nodes
+	 */
 
 	/* start with the original range table */
 	rtable = orig->rtable;

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.15 2001/01/24 19:42:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.16 2001/03/22 06:16:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1447,15 +1447,13 @@ xfunc_copyrel(RelOptInfo from, RelOptInfo *to)
 	if (newnode == NULL)
 		return false;
 
-	/* ----------------
-	 *	copy node superclass fields
-	 * ----------------
+	/*
+	 * copy node superclass fields
 	 */
 	CopyNodeFields((Node) from, (Node) newnode, alloc);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
+	/*
+	 * copy remainder of node
 	 */
 	Node_Copy(from, newnode, alloc, relids);
 

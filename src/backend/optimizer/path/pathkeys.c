@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.31 2001/03/22 03:59:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.32 2001/03/22 06:16:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -860,13 +860,13 @@ make_pathkeys_for_mergeclauses(Query *root,
 
 		/*
 		 * When we are given multiple merge clauses, it's possible that
-		 * some clauses refer to the same vars as earlier clauses.
-		 * There's no reason for us to specify sort keys like (A,B,A) when
-		 * (A,B) will do --- and adding redundant sort keys makes add_path
-		 * think that this sort order is different from ones that are
-		 * really the same, so don't do it.  Since we now have a
-		 * canonicalized pathkey, a simple ptrMember test is sufficient to
-		 * detect redundant keys.
+		 * some clauses refer to the same vars as earlier clauses. There's
+		 * no reason for us to specify sort keys like (A,B,A) when (A,B)
+		 * will do --- and adding redundant sort keys makes add_path think
+		 * that this sort order is different from ones that are really the
+		 * same, so don't do it.  Since we now have a canonicalized
+		 * pathkey, a simple ptrMember test is sufficient to detect
+		 * redundant keys.
 		 */
 		if (!ptrMember(pathkey, pathkeys))
 			pathkeys = lappend(pathkeys, pathkey);

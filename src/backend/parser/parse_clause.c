@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.78 2001/03/22 03:59:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.79 2001/03/22 06:16:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -519,9 +519,9 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		*containedRels = nconc(l_containedRels, r_containedRels);
 
 		/*
-		 * Check for conflicting refnames in left and right subtrees.
-		 * Must do this because higher levels will assume I hand back a
-		 * self- consistent namespace subtree.
+		 * Check for conflicting refnames in left and right subtrees. Must
+		 * do this because higher levels will assume I hand back a self-
+		 * consistent namespace subtree.
 		 */
 		checkNameSpaceConflicts(pstate, j->larg, j->rarg);
 

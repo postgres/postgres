@@ -87,7 +87,7 @@ GetDlgStuff(HWND hdlg, ConnInfo *ci)
 
 
 
-int CALLBACK
+int			CALLBACK
 driver_optionsProc(HWND hdlg,
 				   WORD wMsg,
 				   WPARAM wParam,
@@ -235,7 +235,7 @@ driver_optionsProc(HWND hdlg,
 	return FALSE;
 }
 
-int CALLBACK
+int			CALLBACK
 ds_optionsProc(HWND hdlg,
 			   WORD wMsg,
 			   WPARAM wParam,
