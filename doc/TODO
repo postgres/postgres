@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Apr 14 16:07:41 EDT 2000
+Last updated:		Mon Apr 17 12:34:31 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -192,6 +192,7 @@ CLIENTS
 * -Allow psql to print nulls as distinct from "" [null](Peter E)
 * fix array handling for ECPG
 * add pg_dump option to dump type names as standard ANSI types
+* allow psql \d to show primary and foreign keys
 
 EXOTIC FEATURES
 
