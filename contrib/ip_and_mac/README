@@ -1,56 +1,43 @@
-PostgreSQL type extensions for IP and MAC addresses.
----------------------------------------------------
 
-$Id: README,v 1.2 1998/02/14 17:58:03 scrappy Exp $
+This directory contain 2 new classes - macaddr to store mac addresses
+written by (Bergen, Norway, 1998-01-31, Tom Ivar Helbekkmo
+(tih@Hamartun.Priv.NO)), and ipaddr type and ipaddr_ops operator class,
+rewritten by me (alex@relcom.EU.net, Aleksei Roudnev, Moscow, Russia,
+25.05.98) and written first by Bergen.
 
-I needed to record IP and MAC level ethernet addresses in a data
-base, and I really didn't want to store them as plain strings, with
-no enforced error checking, so I put together the accompanying code
-as my first experiment with adding a data type to PostgreSQL.  I
-then thought that this might be useful to others, both directly and
-as a very simple example of how to do this sort of thing, so here
-it is, in the hope that it will be useful.
+To see the description of macaddr type, read README.ORIG file.
+To see the description of ipaddr type, read ipaddr.html file.
+					    ^^^^^^^^^^^
 
-IP addresses are implemented as a 6 byte struct (this may be 1 byte
-more than is useful, but I figured that since it has to be at least 5,
-it might as well be an even number of bytes) that contains the four
-byte address and a mask width.  The external representation of an IP
-address looks like '158.37.96.15/32' (or just '158.37.96.15', which is
-understood to mean the same thing).  This address happens to be part
-of a subnet where I work; '158.37.96.0/24', which itself is a part of
-the larger subnet allocated to our site, which is '158.37.96.0/21',
-which again, if you go by the old book, is part of the class "B" net
-called '158.37.0.0/16'.
+This ipaddr type differ slightly from the original one. First, if you
+input '193.124.23.0' it sets /24 prefix instead of /32 (this is in
+accordance to CISCO's notification and our internal data bases and
+records); if you input '0.0.0.0' it's '0.0.0.0/0' (default) but not NULL
+or NOADDR value.
 
-Input and output functions are supplied, along with the "normal" <,
-<=, =, >=, > and <> operators, which all do what you expect.  In
-addition, there is a function to check whether a given address is a
-member of a given subnet: ipaddr_in_net(addr, net), and functions to
-return the netmask and the broadcast address of a given network:
-ipaddr_mask(net) and ipaddr_bcast(net).
+Then, you can store ADDRESS/PREFIX pair, even if ADDRESS is not the
+subnet address (for example, you can store interface address and mask at
+the single attribute). This allow us to determine, for example, which
+interfaces/routers are accessible by connected network for our interface
+(select * from database where '193.124.23.4' @ interface_address);
 
-MAC level ethernet addresses are implemented as a 6 byte struct that
-contains the address as unsigned chars.  Several input forms are
-accepted; the following are all the same address: '08002b:010203',
-'08002b-010203', '0800.2b01.0203', '08-00-2b-01-02-03' and
-'08:00:2b:01:02:03'.  Upper and lower case is accepted for the digits
-'a' through 'f'.  Output is always in the latter of the given forms.
+Then, it have been written a few new functions and a few operators
+(addr1 @ addr - TRUE if addr1 is the part of subnet addr2);
+'ipaddr_print' function allow you to convert address to any form you
+want; and so on.
 
-As with IP addresses, input and output functions are supplied as well
-as the "normal" operators, which do what you expect.  As an extra
-feature, a function macaddr_manuf() is defined, which returns the name
-of the manufacturer as a string.  This is currently held in a
-hard-coded struct internal to the C module -- it might be smarter to
-put this information into an actual data base table, and look up the
-manufacturer there.  (Another TODO, for both new data types, is to
-interface them to indices.  If anyone can explain this to me in a way
-that is easier to understand than the current documentation, I would
-be most grateful!)
+And then, I add ipi.sql setup script and test1.sql + test2.sql test
+scripts to allow and test indexing by this new class.
 
-I don't know what changes are needed to the Makefile for other systems
-than the one I'm running (NetBSD 1.3), but anyway: to install on a BSD
-system: fix the path names in the SQL files and the Makefile if you
-need to, then make, make install, slurp the SQL files into psql or
-whatever, and you're off.  Enjoy!
+This ipaddr type/opclass are used for our internal IP ROUTING and
+ACCOUNTING data base, and I hope it shpuld be usefull for more people.
 
-Bergen, Norway, 1998-01-31, Tom Ivar Helbekkmo (tih@Hamartun.Priv.NO).
+For those who like crazy tasks, I propose to realise 'RTREE' indexing
+method to allow effectively use '@' operation for the binding statistic
+records to the customers etc networks. Note 'ipaddr' type can be written
+as 'start,end' coordination pair and it's possible to define all '<<,
+&<, @@, etc graphical operators over this type.
+
+
+25.05.1998, Aleksei Roudnev, alex@relcom.EU.net, Relcom, Moscow, Russia. /+7-095-194-1995.
+==========================================================================================

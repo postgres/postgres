@@ -1,0 +1,56 @@
+PostgreSQL type extensions for IP and MAC addresses.
+---------------------------------------------------
+
+$Id: README.ORIG,v 1.1 1998/06/16 04:34:29 momjian Exp $
+
+I needed to record IP and MAC level ethernet addresses in a data
+base, and I really didn't want to store them as plain strings, with
+no enforced error checking, so I put together the accompanying code
+as my first experiment with adding a data type to PostgreSQL.  I
+then thought that this might be useful to others, both directly and
+as a very simple example of how to do this sort of thing, so here
+it is, in the hope that it will be useful.
+
+IP addresses are implemented as a 6 byte struct (this may be 1 byte
+more than is useful, but I figured that since it has to be at least 5,
+it might as well be an even number of bytes) that contains the four
+byte address and a mask width.  The external representation of an IP
+address looks like '158.37.96.15/32' (or just '158.37.96.15', which is
+understood to mean the same thing).  This address happens to be part
+of a subnet where I work; '158.37.96.0/24', which itself is a part of
+the larger subnet allocated to our site, which is '158.37.96.0/21',
+which again, if you go by the old book, is part of the class "B" net
+called '158.37.0.0/16'.
+
+Input and output functions are supplied, along with the "normal" <,
+<=, =, >=, > and <> operators, which all do what you expect.  In
+addition, there is a function to check whether a given address is a
+member of a given subnet: ipaddr_in_net(addr, net), and functions to
+return the netmask and the broadcast address of a given network:
+ipaddr_mask(net) and ipaddr_bcast(net).
+
+MAC level ethernet addresses are implemented as a 6 byte struct that
+contains the address as unsigned chars.  Several input forms are
+accepted; the following are all the same address: '08002b:010203',
+'08002b-010203', '0800.2b01.0203', '08-00-2b-01-02-03' and
+'08:00:2b:01:02:03'.  Upper and lower case is accepted for the digits
+'a' through 'f'.  Output is always in the latter of the given forms.
+
+As with IP addresses, input and output functions are supplied as well
+as the "normal" operators, which do what you expect.  As an extra
+feature, a function macaddr_manuf() is defined, which returns the name
+of the manufacturer as a string.  This is currently held in a
+hard-coded struct internal to the C module -- it might be smarter to
+put this information into an actual data base table, and look up the
+manufacturer there.  (Another TODO, for both new data types, is to
+interface them to indices.  If anyone can explain this to me in a way
+that is easier to understand than the current documentation, I would
+be most grateful!)
+
+I don't know what changes are needed to the Makefile for other systems
+than the one I'm running (NetBSD 1.3), but anyway: to install on a BSD
+system: fix the path names in the SQL files and the Makefile if you
+need to, then make, make install, slurp the SQL files into psql or
+whatever, and you're off.  Enjoy!
+
+Bergen, Norway, 1998-01-31, Tom Ivar Helbekkmo (tih@Hamartun.Priv.NO).
