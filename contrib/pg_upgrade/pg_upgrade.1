@@ -1,3 +1,4 @@
+.\"
 .TH PG_UPGRADE 1 "PG_UPGRADE(1)" "14 Jan 2002" "PostgreSQL Client Applications" ""
 .SH NAME
 pg_upgrade \- upgrading from a previous release without reloading
@@ -75,5 +76,8 @@ are satisfied.
 .LP
 The upgraded databases will be in an un-vacuumed state.  You will
 probably want to run a \fIVACUUM ANALYZE\fP before beginning production work.
+.SH NOTES
+While \fBpg_upgrade\fP is primarly an upgrade tool, it can also be used
+as a data recovery tool.
 .SH SEE ALSO
 initdb(1), postmaster(1), pg_dump(1), pg_dumpall(1), vacuumdb(1)
