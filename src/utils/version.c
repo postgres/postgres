@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.1 1996/11/11 13:51:57 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.2 1996/11/11 14:44:04 scrappy Exp $
  *
  * NOTES
  *	XXX eventually, should be able to handle version identifiers
@@ -24,6 +24,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "postgres.h"
 
