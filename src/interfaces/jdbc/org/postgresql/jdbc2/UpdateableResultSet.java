@@ -76,7 +76,10 @@ public class UpdateableResultSet extends org.postgresql.jdbc2.ResultSet
 	protected java.sql.PreparedStatement deleteStatement = null;
 
 
-  private java.sql.Statement currentStatement = null;
+  /**
+   * PreparedStatement used to refresh data
+   */
+  private java.sql.PreparedStatement selectStatement = null;
 
 
 	/**
@@ -617,6 +620,78 @@ public class UpdateableResultSet extends org.postgresql.jdbc2.ResultSet
 
 	}
 
+
+  public void refreshRow() throws SQLException
+  {
+		if ( !isUpdateable() )
+    {
+			throw new PSQLException( "postgresql.updateable.notupdateable" );
+		}
+
+    try
+    {
+      StringBuffer selectSQL = new StringBuffer( "select ");
+
+      final int numColumns = java.lang.reflect.Array.getLength(fields);
+
+      for (int i=0; i < numColumns ; i++ )
+      {
+
+        selectSQL.append( fields[i].getName() );
+
+        if ( i < numColumns - 1 )
+        {
+
+          selectSQL.append(", ");
+        }
+
+      }
+      selectSQL.append(" from " ).append(tableName).append(" where ");
+
+      int numKeys = primaryKeys.size();
+
+      for ( int i = 0; i < numKeys; i++ )
+      {
+
+        PrimaryKey primaryKey = ((PrimaryKey)primaryKeys.get(i));
+        selectSQL.append(primaryKey.name).append("= ?");
+
+        if ( i < numKeys -1 )
+        {
+          selectSQL.append(" and ");
+        }
+      }
+      if ( Driver.logDebug ) Driver.debug("selecting "+ selectSQL.toString());
+      selectStatement = ((java.sql.Connection)connection).prepareStatement(selectSQL.toString());
+
+
+      for( int j=0, i=1; j < numKeys; j++, i++)
+      {
+        selectStatement.setObject( i, ((PrimaryKey)primaryKeys.get(j)).getValue() );
+      }
+
+      org.postgresql.jdbc2.ResultSet rs = (org.postgresql.jdbc2.ResultSet) selectStatement.executeQuery();
+
+      if( rs.first() )
+      {
+        rowBuffer = rs.rowBuffer;
+      }
+
+      rows.setElementAt( rowBuffer, current_row );
+      if ( Driver.logDebug ) Driver.debug("done updates");
+
+      rs.close();
+      selectStatement.close();
+      selectStatement = null;
+
+    }
+    catch (Exception e)
+    {
+      if ( Driver.logDebug ) Driver.debug(e.getClass().getName()+e);
+      throw new SQLException( e.getMessage() );
+    }
+
+  }
   /**
    *
    * @throws SQLException

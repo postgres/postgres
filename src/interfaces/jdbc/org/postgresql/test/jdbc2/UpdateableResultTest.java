@@ -57,7 +57,7 @@ public class UpdateableResultTest extends TestCase
         rs.updateString("name", "paul");
 
         rs.insertRow();
-
+        rs.refreshRow();
         assertTrue( rs.getInt("id") == 3 );
         assertTrue( rs.getString("name").equals("paul"));
         assertTrue( rs.getString("notselected") == null );
