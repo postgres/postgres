@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.97 2002/09/21 18:32:53 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.98 2002/11/03 01:30:46 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -2047,7 +2047,8 @@ sets the user name used to connect to the database and for authentication.
 <envar>PGPASSWORD</envar>
 sets the password used if the backend demands password
 authentication.  This functionality is deprecated for security
-reasons; consider migrating to use the <filename>$HOME/.pgpass</>
+reasons; consider migrating to use the <link linkend='pgpassfile'>
+<filename>$HOME/.pgpass</></link>
 file.
 </para>
 </listitem>
@@ -2133,6 +2134,11 @@ for information on correct values for these environment variables.
  <primary>files</primary>
 </indexterm>
 <para>
+<anchor id="pgpassfile"/>
+<indexterm>
+ <primary>password</primary>
+ <secondary>.pgpass</secondary>
+</indexterm>
 <filename>$HOME/.pgpass</filename> is a file that can contain passwords
 to be used if the connection requires a password. This file should have the
 format:
@@ -2144,6 +2150,11 @@ anything.  The first match will be used so put more specific entries first.
 Entries with <literal>:</literal> or <literal>\</literal> should be escaped
 with <literal>\</literal>.
 </para>
+<para>
+The permissions on <filename>$HOME/.pgpass</filename> must disallow any
+access to world or group; achieve this by the command
+<command>chmod 0600 $HOME/.pgaccess</command>.
+If the permissions are less strict than this, the file will be ignored.
 </sect1>
 
 <sect1 id="libpq-threading">
