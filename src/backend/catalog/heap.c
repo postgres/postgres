@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.128 2000/05/25 21:25:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.128.2.1 2000/09/30 18:47:07 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1091,44 +1091,42 @@ DeleteRelationTuple(Relation rel)
  * RelationTruncateIndexes - This routine is used to truncate all
  * indices associated with the heap relation to zero tuples.
  * The routine will truncate and then reconstruct the indices on
- * the relation specified by the heapRelation parameter.
+ * the relation specified by the heapId parameter.
  * --------------------------------
  */
 static void
-RelationTruncateIndexes(Relation heapRelation)
+RelationTruncateIndexes(Oid heapId)
 {
-	Relation	indexRelation,
-				currentIndex;
+	Relation	indexRelation;
 	ScanKeyData entry;
 	HeapScanDesc scan;
-	HeapTuple	indexTuple,
-				procTuple,
-				classTuple;
-	Form_pg_index index;
-	Oid			heapId,
-				indexId,
-				procId,
-				accessMethodId;
-	Node	   *oldPred = NULL;
-	PredInfo   *predInfo;
-	List	   *cnfPred = NULL;
-	AttrNumber *attributeNumberA;
-	FuncIndexInfo fInfo,
-			   *funcInfo = NULL;
-	int			i,
-				numberOfAttributes;
-	char	   *predString;
+	HeapTuple	indexTuple;
 
-	heapId = RelationGetRelid(heapRelation);
-
-	/* Scan pg_index to find indexes on heapRelation */
-
+	/* Scan pg_index to find indexes on specified heap */
 	indexRelation = heap_openr(IndexRelationName, AccessShareLock);
 	ScanKeyEntryInitialize(&entry, 0, Anum_pg_index_indrelid, F_OIDEQ,
 						   ObjectIdGetDatum(heapId));
 	scan = heap_beginscan(indexRelation, false, SnapshotNow, 1, &entry);
+
 	while (HeapTupleIsValid(indexTuple = heap_getnext(scan, 0)))
 	{
+		Relation	heapRelation,
+					currentIndex;
+		HeapTuple	procTuple,
+					classTuple;
+		Form_pg_index index;
+		Oid			indexId,
+					procId,
+					accessMethodId;
+		Node	   *oldPred = NULL;
+		PredInfo   *predInfo;
+		List	   *cnfPred = NULL;
+		AttrNumber *attributeNumberA;
+		FuncIndexInfo fInfo,
+				   *funcInfo = NULL;
+		int			i,
+					numberOfAttributes;
+		char	   *predString;
 
 		/*
 		 * For each index, fetch index attributes so we can apply
@@ -1183,10 +1181,17 @@ RelationTruncateIndexes(Relation heapRelation)
 			elog(ERROR, "RelationTruncateIndexes: index access method not found");
 		accessMethodId = ((Form_pg_class) GETSTRUCT(classTuple))->relam;
 
+		/*
+		 * We have to re-open the heap rel each time through this loop
+		 * because index_build will close it again.  We need grab no lock,
+		 * however, because we assume heap_truncate is holding an exclusive
+		 * lock on the heap rel.
+		 */
+		heapRelation = heap_open(heapId, NoLock);
+		Assert(heapRelation != NULL);
+
 		/* Open our index relation */
 		currentIndex = index_open(indexId);
-		if (currentIndex == NULL)
-			elog(ERROR, "RelationTruncateIndexes: can't open index relation");
 
 		/* Obtain exclusive lock on it, just to be sure */
 		LockRelation(currentIndex, AccessExclusiveLock);
@@ -1205,16 +1210,10 @@ RelationTruncateIndexes(Relation heapRelation)
 		InitIndexStrategy(numberOfAttributes, currentIndex, accessMethodId);
 		index_build(heapRelation, currentIndex, numberOfAttributes,
 					attributeNumberA, 0, NULL, funcInfo, predInfo);
-
 		/*
 		 * index_build will close both the heap and index relations (but
-		 * not give up the locks we hold on them).	That's fine for the
-		 * index, but we need to open the heap again.  We need no new
-		 * lock, since this backend still has the exclusive lock grabbed
-		 * by heap_truncate.
+		 * not give up the locks we hold on them).
 		 */
-		heapRelation = heap_open(heapId, NoLock);
-		Assert(heapRelation != NULL);
 	}
 
 	/* Complete the scan and close pg_index */
@@ -1270,17 +1269,12 @@ heap_truncate(char *relname)
 	rel->rd_nblocks = 0;
 
 	/* If this relation has indexes, truncate the indexes too */
-	RelationTruncateIndexes(rel);
+	RelationTruncateIndexes(rid);
 
 	/*
 	 * Close the relation, but keep exclusive lock on it until commit.
 	 */
 	heap_close(rel, NoLock);
-
-	/*
-	 * Is this really necessary?
-	 */
-	RelationForgetRelation(rid);
 }
 
 
