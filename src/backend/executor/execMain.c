@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.85 1999/05/25 22:40:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.86 1999/06/06 15:14:40 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1824,11 +1824,10 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 			estate->es_evalPlanQual = (Pointer) epq;
 		}
 		else
-		{						/* this is the first (oldest) PQ epq->rti
-								 * = 0;					   * - mark as
-								 * free and estate->es_useEvalPlan =
-								 * false;  * continue Query execution
-								 * return (NULL);					*/
+		{									
+			epq->rti = 0;					/* this is the first (oldest) */
+			estate->es_useEvalPlan = false;	/* PQ - mark as free and      */
+			return (NULL);					/* continue Query execution   */
 		}
 	}
 
@@ -1872,11 +1871,10 @@ lpqnext:;
 		/* pop old PQ from the stack */
 		oldepq = (evalPlanQual *) epqstate->es_evalPlanQual;
 		if (oldepq == (evalPlanQual *) NULL)
-		{						/* this is the first (oldest) */
-			epq->rti = 0;		/* PQ - mark as free and	  */
-			estate->es_useEvalPlan = false;		/* continue Query
-												 * execution   */
-			return (NULL);
+		{
+			epq->rti = 0;					/* this is the first (oldest) */
+			estate->es_useEvalPlan = false;	/* PQ - mark as free and	  */
+			return (NULL);					/* continue Query execution   */
 		}
 		Assert(oldepq->rti != 0);
 		/* push current PQ to freePQ stack */
