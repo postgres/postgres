@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.22 2001/09/10 14:49:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.23 2001/09/17 00:42:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,8 @@ Pgtcl_Init(Tcl_Interp *interp)
 	 * Therefore PGCLIENTENCODING must be set to UNICODE for these versions.
 	 */
 	Tcl_GetDouble(interp, Tcl_GetVar(interp, "tcl_version", TCL_GLOBAL_ONLY), &tclversion);
-	if (tclversion >= 8.1) setenv("PGCLIENTENCODING", "UNICODE", 1);
+	if (tclversion >= 8.1)
+		putenv("PGCLIENTENCODING=UNICODE");
 
 	/* register all pgtcl commands */
 	Tcl_CreateCommand(interp,
