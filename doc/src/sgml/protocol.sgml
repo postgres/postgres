@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.37 2003/05/07 21:46:15 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.38 2003/05/08 14:35:24 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -2556,7 +2556,7 @@ ErrorResponse (B)
 </VarListEntry>
 </VariableList>
         The message body consists of one or more identified fields,
-	followed by a zero-byte terminator.  Fields may appear in
+	followed by a zero byte as a terminator.  Fields may appear in
 	any order.  For each field there is the following:
 <VariableList>
 <VarListEntry>
@@ -2934,7 +2934,7 @@ NoticeResponse (B)
 </VarListEntry>
 </VariableList>
         The message body consists of one or more identified fields,
-	followed by a zero-byte terminator.  Fields may appear in
+	followed by a zero byte as a terminator.  Fields may appear in
 	any order.  For each field there is the following:
 <VariableList>
 <VarListEntry>
@@ -3640,7 +3640,9 @@ StartupMessage (F)
 </VarListEntry>
 </VariableList>
         The protocol version number is followed by one or more pairs of
-	parameter name and value strings.  Parameters can appear in any
+	parameter name and value strings.  A zero byte is required as a
+	terminator after the last name/value pair.
+	Parameters can appear in any
 	order.  <literal>user</> is required, others are optional.
 	Each parameter is specified as:
 <VariableList>
