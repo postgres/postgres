@@ -13,11 +13,10 @@ Ofcourse we can write this as:
 
 But this does not use any indices, and therefore, if your database
 gets very large, it will not have very high performance (the above query
-requires at least one sequential scan, it probably takes 2 due to the
-self-join).
+requires a sequential scan of the table).
 
 The approach used by this add-on is to define a trigger on the table and
-columns you want to do this queries on. On every insert in the table, it
+columns you want to do these queries on. On every insert to the table, it
 takes the value in the specified columns, breaks the text in these columns
 up into pieces, and stores all sub-strings into another table, together
 with a reference to the row in the original table that contained this
@@ -27,7 +26,7 @@ By now creating an index over the 'fti-table', we can search for
 substrings that occur in the original table. By making a join between
 the fti-table and the orig-table, we can get the actual rows we want
 (this can also be done by using subselects - but subselects are currently
-inefficient in Postgres, and maybe there're other ways too).
+inefficient in PostgreSQL, and maybe there're other ways too).
 
 The trigger code also allows an array called StopWords, that prevents
 certain words from being indexed.
