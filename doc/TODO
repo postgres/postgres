@@ -1,6 +1,6 @@
 ODO list for PostgreSQL
 ========================
-Last updated:		Sun Oct 15 17:44:54 EDT 2000
+Last updated:		Sun Oct 15 17:50:15 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -147,6 +147,7 @@ COMMANDS
 * Overhaul ACL (access control) code
 * Allow ORDER BY...LIMIT in INSERT INTO ... SELECT
 * Add SHOW command to display locks
+* Allow INSERT INTO tab (col1, ..) VALUES (val1, ..), (val2, ..)
 
 CLIENTS
 
