@@ -37,7 +37,7 @@
 #unix_socket_directory = ''
 #unix_socket_group = ''
 #unix_socket_permissions = 0777	# octal
-#virtual_host = ''
+#virtual_host = ''		# what interface to listen on; defaults to any
 #rendezvous_name = ''		# defaults to the computer name
 
 # - Security & Authentication -
@@ -137,7 +137,7 @@
 
 # - Syslog -
 
-#syslog = 0			# range 0-2
+#syslog = 0			# range 0-2; 0=stdout; 1=both; 2=syslog
 #syslog_facility = 'LOCAL0'
 #syslog_ident = 'postgres'
 
