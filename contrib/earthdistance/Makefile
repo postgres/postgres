@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/earthdistance/Makefile,v 1.8 2001/02/20 19:20:27 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/earthdistance/Makefile,v 1.9 2001/05/30 12:58:45 momjian Exp $
 #
 
 subdir = contrib/earthdistance
@@ -15,7 +15,7 @@ override CFLAGS += $(CFLAGS_SL)
 all: $(SONAME) $(NAME).sql
 
 $(NAME).sql: $(NAME).sql.in
-	sed -e 's:MODULE_PATHNAME:$(datadir)/contrib/$(SONAME):g' < $< > $@
+	sed -e 's:MODULE_PATHNAME:$(libdir)/contrib/$(SONAME):g' < $< > $@
 
 install: all installdirs
 	$(INSTALL_SHLIB) $(SONAME)	$(libdir)/contrib
