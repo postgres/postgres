@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.70 1997/11/21 18:10:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.71 1997/11/24 16:55:22 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -196,7 +196,7 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr);
 
 %type <ival>	Iconst
 %type <str>		Sconst
-%type <str>		Id, date, var_value, zone_value
+%type <str>		Id, var_value, zone_value
 %type <str>		ColId, ColLabel
 
 %type <constrdef>	ConstraintElem, ConstraintDef
@@ -224,7 +224,7 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr);
  */
 
 /* Keywords (in SQL92 reserved words) */
-%token	ACTION, ADD, ALL, ALTER, AND, AS, ASC,
+%token	ACTION, ADD, ALL, ALTER, AND, ARCHIVE, AS, ASC,
 		BEGIN_TRANS, BETWEEN, BOTH, BY,
 		CASCADE, CAST, CHAR, CHARACTER, CHECK, CLOSE, COLLATE, COLUMN, COMMIT, 
 		CONSTRAINT, CREATE, CROSS, CURRENT, CURRENT_DATE, CURRENT_TIME, 
@@ -3278,7 +3278,6 @@ index_name:				ColId			{ $$ = $1; };
  */
 name:					ColId			{ $$ = $1; };
 
-date:					Sconst			{ $$ = $1; };
 file_name:				Sconst			{ $$ = $1; };
 recipe_name:			Id				{ $$ = $1; };
 
