@@ -405,9 +405,12 @@ AC_SUBST(with_python)
 # Optionally build the Java/JDBC tools
 #
 AC_MSG_CHECKING([whether to build Java/JDBC tools])
-PGAC_ARG_BOOL(with, java, no, [  --with-java             build JDBC interface & Java tools],
+PGAC_ARG_BOOL(with, java, no, [  --with-java             build JDBC interface and Java tools],
 [AC_MSG_RESULT(yes)
-PGAC_PROG_ANT],
+PGAC_PATH_ANT
+if test -z "$ANT"; then
+  AC_MSG_ERROR([Ant is required to build Java components])
+fi],
 [AC_MSG_RESULT(no)])
 AC_SUBST(with_java)
 
