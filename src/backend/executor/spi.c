@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.101 2003/08/04 02:39:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.102 2003/08/08 19:18:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1263,6 +1263,8 @@ static void
 _SPI_cursor_operation(Portal portal, bool forward, int count,
 					  DestReceiver *dest)
 {
+	long	nfetched;
+
 	/* Check that the portal is valid */
 	if (!PortalIsValid(portal))
 		elog(ERROR, "invalid portal in SPI cursor operation");
@@ -1277,11 +1279,20 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 	_SPI_current->tuptable = NULL;
 
 	/* Run the cursor */
-	_SPI_current->processed =
-		PortalRunFetch(portal,
-					   forward ? FETCH_FORWARD : FETCH_BACKWARD,
-					   (long) count,
-					   dest);
+	nfetched = PortalRunFetch(portal,
+							  forward ? FETCH_FORWARD : FETCH_BACKWARD,
+							  (long) count,
+							  dest);
+
+	/*
+	 * Think not to combine this store with the preceding function call.
+	 * If the portal contains calls to functions that use SPI, then
+	 * SPI_stack is likely to move around while the portal runs.  When
+	 * control returns, _SPI_current will point to the correct stack entry...
+	 * but the pointer may be different than it was beforehand.  So we must
+	 * be sure to re-fetch the pointer after the function call completes.
+	 */
+	_SPI_current->processed = nfetched;
 
 	if (dest->mydest == SPI && _SPI_checktuples())
 		elog(ERROR, "consistency check on SPI tuple count failed");
