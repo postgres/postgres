@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.58 2001/08/21 00:33:27 momjian Exp $
+ * $Id: pqcomm.h,v 1.59 2001/09/06 03:18:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,11 @@
 #include <sys/types.h>
 #ifdef WIN32
 #include <winsock.h>
+/* workaround for clashing defines of "ERROR" */
+#ifdef ELOG_H
+#undef ERROR
+#define ERROR	(-1)
+#endif
 #else							/* not WIN32 */
 #include <sys/socket.h>
 #ifdef HAVE_SYS_UN_H
