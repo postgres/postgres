@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.3 1996/10/03 20:11:41 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.4 1996/10/18 08:13:36 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,13 @@
 
 #include "commands/vacuum.h"
 
+#ifdef NEED_RUSAGE
+#include "rusagestub.h"
+#else /* NEED_RUSAGE */
+#include <sys/time.h>
+#include <sys/resource.h>
+#endif /* NEED_RUSAGE */
+
 bool VacuumRunning =	false;
 
 /* non-export function prototypes */
@@ -54,13 +61,15 @@ static void _vc_vacindices(VRelList curvrl, Relation onerel);
 static void _vc_vaconeind(VRelList curvrl, Relation indrel);
 static void _vc_updstats(Oid relid, int npages, int ntuples, bool hasindex);
 static void _vc_setpagelock(Relation rel, BlockNumber blkno);
-static bool _vc_ontidlist(ItemPointer itemptr, VTidList tidlist);
-static void _vc_reaptid(Portal p, VRelList curvrl, BlockNumber blkno,
-			OffsetNumber offnum);
+static bool _vc_tidreapped(ItemPointer itemptr, VRelList curvrl, Relation indrel);
+static void _vc_reappage(Portal p, VRelList curvrl, VPageDescr vpc);
 static void _vc_free(Portal p, VRelList vrl);
 static Relation _vc_getarchrel(Relation heaprel);
 static void _vc_archive(Relation archrel, HeapTuple htup);
 static bool _vc_isarchrel(char *rname);
+static char * _vc_find_eq (char *bot, int nelem, int size, char *elm, int (*compar)(char *, char *));
+static int _vc_cmp_blk (char *left, char *right);
+static int _vc_cmp_offno (char *left, char *right);
 
 void
 vacuum(char *vacrel)
@@ -280,7 +289,8 @@ _vc_getrels(Portal p, NameData *VacRelP)
 
 	cur->vrl_relid = pgctup->t_oid;
 	cur->vrl_attlist = (VAttList) NULL;
-	cur->vrl_tidlist = (VTidList) NULL;
+	cur->vrl_pgdsc = (VPageDescr*) NULL;
+	cur->vrl_nrepg = 0;
 	cur->vrl_npages = cur->vrl_ntups = 0;
 	cur->vrl_hasindex = false;
 	cur->vrl_next = (VRelList) NULL;
@@ -355,7 +365,7 @@ _vc_vacone(Portal p, VRelList curvrl)
     _vc_vacheap(p, curvrl, onerel);
 
     /* if we vacuumed any heap tuples, vacuum the indices too */
-    if (curvrl->vrl_tidlist != (VTidList) NULL)
+    if (curvrl->vrl_nrepg > 0)
 	_vc_vacindices(curvrl, onerel);
     else
 	curvrl->vrl_hasindex = onerel->rd_rel->relhasindex;
@@ -371,6 +381,9 @@ _vc_vacone(Portal p, VRelList curvrl)
 
     CommitTransactionCommand();
 }
+
+# define	ADJUST_FREE_SPACE(S)\
+	((DOUBLEALIGN(S) == (S)) ? (S) : (DOUBLEALIGN(S) - sizeof(double)))
 
 /*
  *  _vc_vacheap() -- vacuum an open heap relation
@@ -398,23 +411,23 @@ _vc_vacheap(Portal p, VRelList curvrl, Relation onerel)
     bool pgchanged, tupgone;
     AbsoluteTime purgetime, expiretime;
     RelativeTime preservetime;
+    char *relname;
+    VPageDescr	vpc;
+    uint32 nunused, nempg, nnepg, nchpg;
+    Size frsize;
+    struct rusage ru0, ru1;
+
+    getrusage(RUSAGE_SELF, &ru0);
+
+    relname = (RelationGetRelationName(onerel))->data;
 
     nvac = 0;
     ntups = 0;
+    nunused = nempg = nnepg = nchpg = 0;
+    frsize = 0;
+    curvrl->vrl_nrepg = 0;
+    
     nblocks = RelationGetNumberOfBlocks(onerel);
-
-    {
-	char *relname;
-	relname = (RelationGetRelationName(onerel))->data;
-
-	if ( (strlen(relname) > 4) && 
-	    relname[0] == 'X' &&
-	    relname[1] == 'i' &&
-	    relname[2] == 'n' &&
-	    (relname[3] == 'v' || relname[3] == 'x'))
-	    return;
-    }
-
 
     /* if the relation has an archive, open it */
     if (onerel->rd_rel->relarch != 'n') {
@@ -425,17 +438,12 @@ _vc_vacheap(Portal p, VRelList curvrl, Relation onerel)
 
     /* don't vacuum large objects for now.
        something breaks when we do*/
-    {
-	char *relname;
-	relname = (RelationGetRelationName(onerel))->data;
-
-	if ( (strlen(relname) > 4) && 
-	    relname[0] == 'X' &&
-	    relname[1] == 'i' &&
-	    relname[2] == 'n' &&
-	    (relname[3] == 'v' || relname[3] == 'x'))
+    if ( (strlen(relname) > 4) && 
+	relname[0] == 'X' &&
+	relname[1] == 'i' &&
+	relname[2] == 'n' &&
+	(relname[3] == 'v' || relname[3] == 'x'))
 	    return;
-    }
 
     /* calculate the purge time: tuples that expired before this time
        will be archived or deleted */
@@ -452,12 +460,34 @@ _vc_vacheap(Portal p, VRelList curvrl, Relation onerel)
 
     else if (AbsoluteTimeIsBackwardCompatiblyValid(expiretime))
 	purgetime = expiretime;
+
+    vpc = (VPageDescr) palloc (sizeof(VPageDescrData) + MaxOffsetNumber*sizeof(OffsetNumber));
 	    
     for (blkno = 0; blkno < nblocks; blkno++) {
 	buf = ReadBuffer(onerel, blkno);
 	page = BufferGetPage(buf);
+	vpc->vpd_blkno = blkno;
+	vpc->vpd_noff = 0;
+
+	if (PageIsNew(page)) {
+	    elog (NOTICE, "Rel %.*s: Uninitialized page %u - fixing",
+		NAMEDATALEN, relname, blkno);
+	    PageInit (page, BufferGetPageSize (buf), 0);
+	    vpc->vpd_free = PageGetFreeSpace (page);
+	    vpc->vpd_free = ADJUST_FREE_SPACE (vpc->vpd_free);
+	    frsize += vpc->vpd_free;
+	    nnepg++;
+	    _vc_reappage(p, curvrl, vpc);	/* No one index should point here */
+	    WriteBuffer(buf);
+	    continue;
+	}
 
 	if (PageIsEmpty(page)) {
+	    vpc->vpd_free = PageGetFreeSpace (page);
+	    vpc->vpd_free = ADJUST_FREE_SPACE (vpc->vpd_free);
+	    frsize += vpc->vpd_free;
+	    nempg++;
+	    _vc_reappage(p, curvrl, vpc);	/* No one index should point here */
 	    ReleaseBuffer(buf);
 	    continue;
 	}
@@ -469,8 +499,11 @@ _vc_vacheap(Portal p, VRelList curvrl, Relation onerel)
 	     offnum = OffsetNumberNext(offnum)) {
 	    itemid = PageGetItemId(page, offnum);
 
-	    if (!ItemIdIsUsed(itemid))
+	    if (!ItemIdIsUsed(itemid)) {
+	    	vpc->vpd_voff[vpc->vpd_noff++] = offnum;
+		nunused++;
 		continue;
+	    }
 
 	    htup = (HeapTuple) PageGetItem(page, itemid);
 	    tupgone = false;
@@ -479,7 +512,6 @@ _vc_vacheap(Portal p, VRelList curvrl, Relation onerel)
 		TransactionIdIsValid((TransactionId)htup->t_xmin)) {
 
 		if (TransactionIdDidAbort(htup->t_xmin)) {
-		    _vc_reaptid(p, curvrl, blkno, offnum);
 		    pgchanged = true;
 		    tupgone = true;
 		} else if (TransactionIdDidCommit(htup->t_xmin)) {
@@ -504,8 +536,7 @@ _vc_vacheap(Portal p, VRelList curvrl, Relation onerel)
 		     *  before purgetime.
 		     */
 
-		    if (!tupgone && htup->t_tmax < purgetime) {
-			_vc_reaptid(p, curvrl, blkno, offnum);
+		    if (htup->t_tmax < purgetime) {
 			tupgone = true;
 			pgchanged = true;
 		    }
@@ -522,6 +553,8 @@ _vc_vacheap(Portal p, VRelList curvrl, Relation onerel)
 		/* mark it unused */
 		lpp->lp_flags &= ~LP_USED;
 
+	    	vpc->vpd_voff[vpc->vpd_noff++] = offnum;
+
 		++nvac;
 	    } else {
 		ntups++;
@@ -530,8 +563,21 @@ _vc_vacheap(Portal p, VRelList curvrl, Relation onerel)
 
 	if (pgchanged) {
 	    PageRepairFragmentation(page);
+	    if ( vpc->vpd_noff > 0 ) {	/* there are some new unused tids here */
+		vpc->vpd_free = PageGetFreeSpace (page);
+		vpc->vpd_free = ADJUST_FREE_SPACE (vpc->vpd_free);
+		frsize += vpc->vpd_free;
+		_vc_reappage(p, curvrl, vpc);
+	    }
 	    WriteBuffer(buf);
+	    nchpg++;
 	} else {
+	    if ( vpc->vpd_noff > 0 ) {	/* there are only old unused tids here */
+		vpc->vpd_free = PageGetFreeSpace (page);
+		vpc->vpd_free = ADJUST_FREE_SPACE (vpc->vpd_free);
+		frsize += vpc->vpd_free;
+		_vc_reappage(p, curvrl, vpc);
+	    }
 	    ReleaseBuffer(buf);
 	}
     }
@@ -542,6 +588,18 @@ _vc_vacheap(Portal p, VRelList curvrl, Relation onerel)
     /* save stats in the rel list for use later */
     curvrl->vrl_ntups = ntups;
     curvrl->vrl_npages = nblocks;
+
+    getrusage(RUSAGE_SELF, &ru1);
+    
+    elog (NOTICE, "Rel %.*s: Pages %u: Changed %u, Reapped %u, Empty %u, New %u; \
+Tuples %u: Vac %u, UnUsed %u; FreeSpace %u. Elapsed %u/%u sec.",
+	NAMEDATALEN, relname, 
+	nblocks, nchpg, curvrl->vrl_nrepg, nempg, nnepg, 
+	ntups, nvac, nunused, frsize, 
+	ru1.ru_stime.tv_sec - ru0.ru_stime.tv_sec, 
+	ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
+
+    pfree (vpc);
 }
 
 /*
@@ -613,11 +671,10 @@ _vc_vacindices(VRelList curvrl, Relation onerel)
  *  _vc_vaconeind() -- vacuum one index relation.
  *
  *	Curvrl is the VRelList entry for the heap we're currently vacuuming.
- *	It's locked.  The vrl_tidlist entry in curvrl is the list of deleted
- *	heap tids, sorted in reverse (page, offset) order.  Onerel is an
- *	index relation on the vacuumed heap.  We don't set locks on the index
- *	relation here, since the indexed access methods support locking at
- *	different granularities.  We let them handle it.
+ *	It's locked. Onerel is an index relation on the vacuumed heap. 
+ *	We don't set locks on the index	relation here, since the indexed 
+ *	access methods support locking at different granularities. 
+ *	We let them handle it.
  *
  *	Finally, we arrange to update the index relation's statistics in
  *	pg_class.
@@ -631,6 +688,9 @@ _vc_vaconeind(VRelList curvrl, Relation indrel)
     int nvac;
     int nitups;
     int nipages;
+    struct rusage ru0, ru1;
+
+    getrusage(RUSAGE_SELF, &ru0);
 
     /* walk through the entire index */
     iscan = index_beginscan(indrel, false, 0, (ScanKey) NULL);
@@ -641,7 +701,7 @@ _vc_vaconeind(VRelList curvrl, Relation indrel)
 	   != (RetrieveIndexResult) NULL) {
 	heapptr = &res->heap_iptr;
 
-	if (_vc_ontidlist(heapptr, curvrl->vrl_tidlist)) {
+	if (_vc_tidreapped(heapptr, curvrl, indrel)) {
 #if 0
 	    elog(DEBUG, "<%x,%x> -> <%x,%x>",
 		 ItemPointerGetBlockNumber(&(res->index_iptr)),
@@ -664,6 +724,14 @@ _vc_vaconeind(VRelList curvrl, Relation indrel)
     /* now update statistics in pg_class */
     nipages = RelationGetNumberOfBlocks(indrel);
     _vc_updstats(indrel->rd_id, nipages, nitups, false);
+
+    getrusage(RUSAGE_SELF, &ru1);
+
+    elog (NOTICE, "Ind %.*s: Pages %u; Tuples %u: Deleted %u. Elapsed %u/%u sec.",
+	NAMEDATALEN, indrel->rd_rel->relname.data, nipages, nitups, nvac,
+	ru1.ru_stime.tv_sec - ru0.ru_stime.tv_sec, 
+	ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
+
 }
 
 /*
@@ -727,74 +795,87 @@ static void _vc_setpagelock(Relation rel, BlockNumber blkno)
 }
 
 /*
- *  _vc_ontidlist() -- is a particular tid on the supplied tid list?
+ *  _vc_tidreapped() -- is a particular tid reapped?
  *
- *	Tidlist is sorted in reverse (page, offset) order.
+ *	VPageDescr array is sorted in right order.
  */
 static bool
-_vc_ontidlist(ItemPointer itemptr, VTidList tidlist)
+_vc_tidreapped(ItemPointer itemptr, VRelList curvrl, Relation indrel)
 {
-    BlockNumber ibkno;
     OffsetNumber ioffno;
-    ItemPointer check;
-    BlockNumber ckbkno;
-    OffsetNumber ckoffno;
+    OffsetNumber *voff;
+    VPageDescr vp, *vpp;
+    VPageDescrData vpd;
 
-    ibkno = ItemPointerGetBlockNumber(itemptr);
+    vpd.vpd_blkno = ItemPointerGetBlockNumber(itemptr);
     ioffno = ItemPointerGetOffsetNumber(itemptr);
+	
+    vp = &vpd;
+    vpp = (VPageDescr*) _vc_find_eq ((char*)(curvrl->vrl_pgdsc), 
+		curvrl->vrl_nrepg, sizeof (VPageDescr), (char*)&vp, 
+		_vc_cmp_blk);
 
-    while (tidlist != (VTidList) NULL) {
-	check = &(tidlist->vtl_tid);
-	ckbkno = ItemPointerGetBlockNumber(check);
-	ckoffno = ItemPointerGetOffsetNumber(check);
+    if ( vpp == (VPageDescr*) NULL )
+	return (false);
+    vp = *vpp;
 
-	/* see if we've looked far enough down the list */
-	if ((ckbkno < ibkno) || (ckbkno == ibkno && ckoffno < ioffno))
-	    return (false);
+    /* ok - we are on true page */
 
-	/* see if we have a match */
-	if (ckbkno == ibkno && ckoffno == ioffno)
-	    return (true);
-
-	/* check next */
-	tidlist = tidlist->vtl_next;
+    if ( vp->vpd_noff == 0 ) {		/* this is EmptyPage !!! */
+	elog (NOTICE, "Ind %.*s: pointer to EmptyPage (blk %u off %u) - fixing",
+		NAMEDATALEN, indrel->rd_rel->relname.data,
+	    	vpd.vpd_blkno, ioffno);
+	return (true);
     }
+    
+    voff = (OffsetNumber*) _vc_find_eq ((char*)(vp->vpd_voff), 
+		vp->vpd_noff, sizeof (OffsetNumber), (char*)&ioffno, 
+		_vc_cmp_offno);
 
-    /* ran off the end of the list without finding a match */
-    return (false);
-}
+    if ( voff == (OffsetNumber*) NULL )
+	return (false);
+
+    return (true);
+
+} /* _vc_tidreapped */
+
 
 /*
- *  _vc_reaptid() -- save a tid on the list of reaped tids for the current
+ *  _vc_reappage() -- save a page on the array of reaped pages for the current
  *		     entry on the vacuum relation list.
  *
  *	As a side effect of the way that the vacuuming loop for a given
- *	relation works, the tids of vacuumed tuples wind up in reverse
- *	order in the list -- highest tid on a page is first, and higher
- *	pages come before lower pages.  This is important later when we
- *	vacuum the indices, as it gives us a way of stopping the search
- *	for a tid if we notice we've passed the page it would be on.
+ *	relation works, higher pages come after lower pages in the array
+ *	(and highest tid on a page is last).
  */
 static void
-_vc_reaptid(Portal p,
+_vc_reappage(Portal p,
 	    VRelList curvrl,
-	    BlockNumber blkno,
-	    OffsetNumber offnum)
+	    VPageDescr vpc)
 {
     PortalVariableMemory pmem;
     MemoryContext old;
-    VTidList newvtl;
+    VPageDescr newvpd;
 
-    /* allocate a VTidListData entry in the portal memory context */
+    /* allocate a VPageDescrData entry in the portal memory context */
     pmem = PortalGetVariableMemory(p);
     old = MemoryContextSwitchTo((MemoryContext) pmem);
-    newvtl = (VTidList) palloc(sizeof(VTidListData));
+    if ( curvrl->vrl_nrepg == 0 )
+    	curvrl->vrl_pgdsc = (VPageDescr*) palloc(100*sizeof(VPageDescr));
+    else if ( curvrl->vrl_nrepg % 100 == 0 )
+    	curvrl->vrl_pgdsc = (VPageDescr*) repalloc(curvrl->vrl_pgdsc, (curvrl->vrl_nrepg+100)*sizeof(VPageDescr));
+    newvpd = (VPageDescr) palloc(sizeof(VPageDescrData) + vpc->vpd_noff*sizeof(OffsetNumber));
     MemoryContextSwitchTo(old);
 
     /* fill it in */
-    ItemPointerSet(&(newvtl->vtl_tid), blkno, offnum);
-    newvtl->vtl_next = curvrl->vrl_tidlist;
-    curvrl->vrl_tidlist = newvtl;
+    if ( vpc->vpd_noff > 0 )
+    	memmove (newvpd->vpd_voff, vpc->vpd_voff, vpc->vpd_noff*sizeof(OffsetNumber));
+    newvpd->vpd_blkno = vpc->vpd_blkno;
+    newvpd->vpd_free = vpc->vpd_free;
+    newvpd->vpd_noff = vpc->vpd_noff;
+
+    curvrl->vrl_pgdsc[curvrl->vrl_nrepg] = newvpd;
+    (curvrl->vrl_nrepg)++;
 }
 
 static void
@@ -802,7 +883,8 @@ _vc_free(Portal p, VRelList vrl)
 {
     VRelList p_vrl;
     VAttList p_val, val;
-    VTidList p_vtl, vtl;
+    VPageDescr p_vpd, *vpd;
+    int i;
     MemoryContext old;
     PortalVariableMemory pmem;
 
@@ -819,12 +901,13 @@ _vc_free(Portal p, VRelList vrl)
 	    pfree(p_val);
 	}
 
-	/* free tid list */
-	vtl = vrl->vrl_tidlist;
-	while (vtl != (VTidList) NULL) {
-	    p_vtl = vtl;
-	    vtl = vtl->vtl_next;
-	    pfree(p_vtl);
+	/* free page' descriptions */
+	if ( vrl->vrl_nrepg > 0 ) {
+	    vpd = vrl->vrl_pgdsc;
+	    for (i = 0; i < vrl->vrl_nrepg; i++) {
+		pfree(vpd[i]);
+	    }
+	    pfree (vpd);
 	}
 
 	/* free rel list entry */
@@ -880,3 +963,84 @@ _vc_isarchrel(char *rname)
 
     return (false);
 }
+
+static char *
+_vc_find_eq (char *bot, int nelem, int size, char *elm, int (*compar)(char *, char *))
+{
+    int res;
+    int last = nelem - 1;
+    int celm = nelem / 2;
+    bool last_move, first_move;
+    
+    last_move = first_move = true;
+    for ( ; ; )
+    {
+	if ( first_move == true )
+	{
+	    res = compar (bot, elm);
+	    if ( res > 0 )
+		return (NULL);
+	    if ( res == 0 )
+		return (bot);
+	    first_move = false;
+	}
+	if ( last_move == true )
+	{
+	    res = compar (elm, bot + last*size);
+	    if ( res > 0 )
+		return (NULL);
+	    if ( res == 0 )
+		return (bot + last*size);
+	    last_move = false;
+	}
+    	res = compar (elm, bot + celm*size);
+    	if ( res == 0 )
+	    return (bot + celm*size);
+	if ( res < 0 )
+	{
+	    if ( celm == 0 )
+		return (NULL);
+	    last = celm - 1;
+	    celm = celm / 2;
+	    last_move = true;
+	    continue;
+	}
+	
+	if ( celm == last )
+	    return (NULL);
+	    
+	last = last - celm - 1;
+	bot = bot + (celm+1)*size;
+	celm = (last + 1) / 2;
+	first_move = true;
+    }
+
+} /* _vc_find_eq */
+
+static int 
+_vc_cmp_blk (char *left, char *right)
+{
+    BlockNumber lblk, rblk;
+
+    lblk = (*((VPageDescr*)left))->vpd_blkno;
+    rblk = (*((VPageDescr*)right))->vpd_blkno;
+
+    if ( lblk < rblk )
+    	return (-1);
+    if ( lblk == rblk )
+    	return (0);
+    return (1);
+
+} /* _vc_cmp_blk */
+
+static int 
+_vc_cmp_offno (char *left, char *right)
+{
+
+    if ( *(OffsetNumber*)left < *(OffsetNumber*)right )
+    	return (-1);
+    if ( *(OffsetNumber*)left == *(OffsetNumber*)right )
+    	return (0);
+    return (1);
+
+} /* _vc_cmp_offno */
