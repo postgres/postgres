@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jan  1 14:04:00 EST 2003
+Last updated:		Wed Jan  8 01:14:39 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -418,6 +418,7 @@ Miscellaneous
 	o Remove hard-coded limits on user/db/password names
 	o Remove unused elements of startup packet (unused, tty, passlength)
 	o Fix COPY/fastpath protocol?
+	o Allow fastpast to pass values in portable format
 	o Replication support?
 	o Error codes
 	o Dynamic character set handling
