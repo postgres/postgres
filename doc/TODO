@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Apr 18 13:52:02 EDT 2001
+Last updated:		Thu Apr 19 11:21:49 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -137,7 +137,7 @@ COMMANDS
 * Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
 * Allow DELETE WHERE CURRENT OF cursor
 * Add BETWEEN ASYMMETRIC/SYMMETRIC
-* Add parameter to timeout if waiting for lock too long
+* Add SET or BEGIN timeout parameter to cancel query if waiting too long
 
 CLIENTS
 
