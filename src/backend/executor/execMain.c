@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.20 1997/08/27 09:02:24 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.21 1997/09/01 08:01:46 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,7 @@
 #include "optimizer/var.h"
 #include "access/heapam.h"
 #include "catalog/heap.h"
+#include "commands/trigger.h"
 
 
 
@@ -917,7 +918,26 @@ ExecAppend(TupleTableSlot *slot,
      *  cim -12/1/89
      * ----------------
      */
-
+    
+    /* BEFORE ROW INSERT Triggers */
+    if ( resultRelationDesc->trigdesc && 
+    		resultRelationDesc->trigdesc->n_before_row[TRIGGER_ACTION_INSERT] > 0 )
+    {
+    	HeapTuple newtuple;
+    	
+    	newtuple = ExecBRInsertTriggers (resultRelationDesc, tuple);
+    	
+    	if ( newtuple == NULL )		/* "do nothing" */
+    	    return;
+    	    
+    	if ( newtuple != tuple )	/* modified by Trigger(s) */
+    	{
+    	    Assert ( slot->ttc_shouldFree );
+    	    pfree (tuple);
+    	    slot->val = tuple = newtuple;
+    	}
+    }
+    
     /* ----------------
      * Check the constraints of a tuple
      * ----------------
@@ -959,6 +979,11 @@ ExecAppend(TupleTableSlot *slot,
     }
     (estate->es_processed)++;
     estate->es_lastoid = newId;
+    
+    /* AFTER ROW INSERT Triggers */
+    if ( resultRelationDesc->trigdesc && 
+    		resultRelationDesc->trigdesc->n_after_row[TRIGGER_ACTION_INSERT] > 0 )
+    	ExecARInsertTriggers (resultRelationDesc, tuple);
 }
 
 /* ----------------------------------------------------------------
@@ -982,7 +1007,19 @@ ExecDelete(TupleTableSlot *slot,
      */
     resultRelationInfo = estate->es_result_relation_info;
     resultRelationDesc = resultRelationInfo->ri_RelationDesc;
-
+    
+    /* BEFORE ROW DELETE Triggers */
+    if ( resultRelationDesc->trigdesc && 
+    		resultRelationDesc->trigdesc->n_before_row[TRIGGER_ACTION_DELETE] > 0 )
+    {
+    	bool dodelete;
+    	
+    	dodelete = ExecBRDeleteTriggers (resultRelationDesc, tupleid);
+    	
+    	if ( !dodelete )		/* "do nothing" */
+    	    return;
+    }
+    
     /* ----------------
      *	delete the tuple
      * ----------------
@@ -1005,6 +1042,11 @@ ExecDelete(TupleTableSlot *slot,
      *	      when it finds deleted heap tuples. -cim 9/27/89
      * ----------------
      */
+    
+    /* AFTER ROW DELETE Triggers */
+    if ( resultRelationDesc->trigdesc && 
+    		resultRelationDesc->trigdesc->n_after_row[TRIGGER_ACTION_DELETE] > 0 )
+    	ExecARDeleteTriggers (resultRelationDesc, tupleid);
 
 }
 
@@ -1059,6 +1101,25 @@ ExecReplace(TupleTableSlot *slot,
      *  cim -12/1/89
      * ----------------
      */
+    
+    /* BEFORE ROW UPDATE Triggers */
+    if ( resultRelationDesc->trigdesc && 
+    		resultRelationDesc->trigdesc->n_before_row[TRIGGER_ACTION_UPDATE] > 0 )
+    {
+    	HeapTuple newtuple;
+    	
+    	newtuple = ExecBRUpdateTriggers (resultRelationDesc, tupleid, tuple);
+    	
+    	if ( newtuple == NULL )		/* "do nothing" */
+    	    return;
+    	    
+    	if ( newtuple != tuple )	/* modified by Trigger(s) */
+    	{
+    	    Assert ( slot->ttc_shouldFree );
+    	    pfree (tuple);
+    	    slot->val = tuple = newtuple;
+    	}
+    }
 
     /* ----------------
      * Check the constraints of a tuple
@@ -1122,6 +1183,11 @@ ExecReplace(TupleTableSlot *slot,
     if (numIndices > 0) {
 	ExecInsertIndexTuples(slot, &(tuple->t_ctid), estate, true);
     }
+    
+    /* AFTER ROW UPDATE Triggers */
+    if ( resultRelationDesc->trigdesc && 
+    		resultRelationDesc->trigdesc->n_after_row[TRIGGER_ACTION_UPDATE] > 0 )
+    	ExecARUpdateTriggers (resultRelationDesc, tupleid, tuple);
 }
 
 static HeapTuple
