@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Id: thread.c,v 1.7 2003/09/13 14:49:51 momjian Exp $
+ * $Id: thread.c,v 1.8 2003/09/15 02:30:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include <pthread.h>
 #include <sys/types.h>
 #include <pwd.h>
+#include <errno.h>
 
 /*
  *	Threading sometimes requires specially-named versions of functions
@@ -47,6 +48,12 @@
  *			(NEED_REENTRANT_FUNCS=no)
  *		use *_r functions if they exist (configure test)
  *		do our own locking and copying of non-threadsafe functions
+ *
+ *	The disadvantage of the last option is not the thread overhead but
+ *	the fact that all function calls are serialized, and with gethostbyname()
+ *	requiring a DNS lookup, that could be slow.
+ *
+ *	One thread-safe solution for gethostbyname() might be to use getaddrinfo().
  *
  *	Compile and run src/tools/test_thread_funcs.c to see if your operating
  *	system has thread-safe non-*_r functions.
@@ -143,7 +150,10 @@ pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
 		*result = resultbuf;
 	}
 	else
+	{
 		*result = NULL;
+		errno = ERANGE;
+	}
 
 	pthread_mutex_unlock(&getpwuid_lock);
 #endif
@@ -239,7 +249,10 @@ pqGethostbyname(const char *name,
 			*result = resultbuf;
 		}
 		else
+		{
 			*result = NULL;
+			errno = ERANGE;
+		}
 	}
 #endif
 
