@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Oct 12 23:53:35 EDT 2001
+   Last updated: Sat Oct 13 01:26:55 EDT 2001
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -791,10 +791,10 @@ BYTEA           bytea           variable-length byte array (null-safe)
    by TOAST, so the space on disk might also be less than expected.
    
    CHAR() is best when storing strings that are usually the same length.
-   VARCHAR() is best when storing variable-length strings, but you want
-   to limit how long a string can be. TEXT is for strings of unlimited
-   length, maximum 1 gigabyte. BYTEA is for storing binary data,
-   particularly values that include NULL bytes.
+   VARCHAR() is best when storing variable-length strings but it limits
+   how long a string can be. TEXT is for strings of unlimited length,
+   maximum 1 gigabyte. BYTEA is for storing binary data, particularly
+   values that include NULL bytes.
    
     4.16.1) How do I create a serial/auto-incrementing field?
     
