@@ -1,18 +1,19 @@
 #include "postgres.h"
-#include "fmgr.h"
 
-#include "access/heapam.h"
-#include "catalog/catalog.h"
-#include "catalog/catname.h"
-#include "catalog/pg_database.h"
-#include "utils/fmgroids.h"
-
-#include <stdlib.h>
 #include <sys/types.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
+
+#include "access/heapam.h"
+#include "catalog/catalog.h"
+#include "catalog/catname.h"
+#include "catalog/namespace.h"
+#include "catalog/pg_database.h"
+#include "fmgr.h"
+#include "utils/builtins.h"
+#include "utils/fmgroids.h"
 
 
 static char *
@@ -37,6 +38,8 @@ psnprintf(size_t len, const char *fmt,...)
  */
 
 PG_FUNCTION_INFO_V1(database_size);
+
+Datum database_size(PG_FUNCTION_ARGS);
 
 Datum
 database_size(PG_FUNCTION_ARGS)
@@ -107,39 +110,29 @@ database_size(PG_FUNCTION_ARGS)
 
 
 /*
- * SQL function: relation_size(name) returns bigint
+ * SQL function: relation_size(text) returns bigint
  */
 
 PG_FUNCTION_INFO_V1(relation_size);
 
+Datum relation_size(PG_FUNCTION_ARGS);
+
 Datum
 relation_size(PG_FUNCTION_ARGS)
 {
-	Name		relname = PG_GETARG_NAME(0);
+	text	   *relname = PG_GETARG_TEXT_P(0);
 
-	HeapTuple	tuple;
+	RangeVar   *relrv;
 	Relation	relation;
-	ScanKeyData	scanKey;
-	HeapScanDesc scan;
 	Oid			relnode;
 	int64		totalsize;
 	unsigned int segcount;
 
-	relation = heap_openr(RelationRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&scanKey, 0, Anum_pg_class_relname,
-						   F_NAMEEQ, NameGetDatum(relname));
-	scan = heap_beginscan(relation, 0, SnapshotNow, 1, &scanKey);
-	tuple = heap_getnext(scan, 0);
+	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname,
+															 "relation_size"));
+	relation = relation_openrv(relrv, AccessShareLock);
 
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "relation %s does not exist", NameStr(*relname));
-
-	relnode = ((Form_pg_class) GETSTRUCT(tuple))->relfilenode;
-	if (relnode == InvalidOid)
-		elog(ERROR, "invalid relation node id");
-
-	heap_endscan(scan);
-	heap_close(relation, NoLock);
+	relnode = relation->rd_rel->relfilenode;
 
 	totalsize = 0;
 	segcount = 0;
@@ -158,12 +151,14 @@ relation_size(PG_FUNCTION_ARGS)
 			if (errno == ENOENT)
 				break;
 			else
-				elog(ERROR, "could not stat %s: %s", fullname, strerror(errno));
+				elog(ERROR, "could not stat %s: %m", fullname);
 		}
 		totalsize += statbuf.st_size;
 		pfree(fullname);
 		segcount++;
 	}
+
+	relation_close(relation, AccessShareLock);
 
 	PG_RETURN_INT64(totalsize);
 }
