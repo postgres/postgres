@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.3 1997/11/26 03:42:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.4 1998/01/04 04:31:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -344,34 +344,6 @@ int
 attnumAttNelems(Relation rd, int attid)
 {
 	return (rd->rd_att->attrs[attid - 1]->attnelems);
-}
-
-Oid
-attnameTypeId(Oid relid, char *attrname)
-{
-	int			attid;
-	Oid			vartype;
-	Relation	rd;
-
-	rd = heap_open(relid);
-	if (!RelationIsValid(rd))
-	{
-		rd = heap_openr(typeidTypeName(relid));
-		if (!RelationIsValid(rd))
-			elog(WARN, "cannot compute type of att %s for relid %d",
-				 attrname, relid);
-	}
-
-	attid = attnameAttNum(rd, attrname); /* could elog(WARN) and never return */
-
-	vartype = attnumTypeId(rd, attid);
-
-	/*
-	 * close relation we're done with it now
-	 */
-	heap_close(rd);
-
-	return (vartype);
 }
 
 /* given attribute id, return type of that attribute */

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.8 1997/09/18 20:21:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.9 1998/01/04 04:31:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,13 @@ OffsetVarNodes(Node *node, int offset)
 				TargetEntry *tle = (TargetEntry *) node;
 
 				OffsetVarNodes(tle->expr, offset);
+			}
+			break;
+		case T_Aggreg:
+			{
+				Aggreg *agg = (Aggreg *) node;
+
+				OffsetVarNodes(agg->target, offset);
 			}
 			break;
 		case T_Expr:
@@ -89,6 +96,13 @@ ChangeVarNodes(Node *node, int old_varno, int new_varno)
 				TargetEntry *tle = (TargetEntry *) node;
 
 				ChangeVarNodes(tle->expr, old_varno, new_varno);
+			}
+			break;
+		case T_Aggreg:
+			{
+				Aggreg *agg = (Aggreg *) node;
+
+				ChangeVarNodes(agg->target, old_varno, new_varno);
 			}
 			break;
 		case T_Expr:
@@ -235,6 +249,9 @@ ResolveNew(RewriteInfo *info, List *targetlist, Node **nodePtr)
 		case T_TargetEntry:
 			ResolveNew(info, targetlist, &((TargetEntry *) node)->expr);
 			break;
+		case T_Aggreg:
+			ResolveNew(info, targetlist, &((Aggreg *) node)->target);
+			break;
 		case T_Expr:
 			ResolveNew(info, targetlist, (Node **) (&(((Expr *) node)->args)));
 			break;
@@ -325,6 +342,14 @@ nodeHandleRIRAttributeRule(Node **nodePtr,
 								   rt_index, attr_num, modified, badsql);
 			}
 			break;
+		case T_Aggreg:
+			{
+				Aggreg *agg = (Aggreg *) node;
+
+				nodeHandleRIRAttributeRule(&agg->target, rtable, targetlist,
+								   rt_index, attr_num, modified, badsql);
+			}
+			break;
 		case T_Expr:
 			{
 				Expr	   *expr = (Expr *) node;
@@ -395,11 +420,16 @@ HandleRIRAttributeRule(Query *parsetree,
 					   int *modified,
 					   int *badsql)
 {
+	int i;
+	
 	nodeHandleRIRAttributeRule((Node **) (&(parsetree->targetList)), rtable,
 							   targetlist, rt_index, attr_num,
 							   modified, badsql);
 	nodeHandleRIRAttributeRule(&parsetree->qual, rtable, targetlist,
 							   rt_index, attr_num, modified, badsql);
+	for(i=0; i < parsetree->qry_numAgg; i++)
+		nodeHandleRIRAttributeRule(&parsetree->qry_aggs[i]->target, rtable,
+					targetlist, rt_index, attr_num, modified, badsql);
 }
 
 
@@ -434,6 +464,14 @@ nodeHandleViewRule(Node **nodePtr,
 				TargetEntry *tle = (TargetEntry *) node;
 
 				nodeHandleViewRule(&(tle->expr), rtable, targetlist,
+								   rt_index, modified);
+			}
+			break;
+		case T_Aggreg:
+			{
+				Aggreg *agg = (Aggreg *) node;
+
+				nodeHandleViewRule(&(agg->target), rtable, targetlist,
 								   rt_index, modified);
 			}
 			break;
@@ -483,8 +521,13 @@ HandleViewRule(Query *parsetree,
 			   int rt_index,
 			   int *modified)
 {
+	int i;
+	
 	nodeHandleViewRule(&parsetree->qual, rtable, targetlist, rt_index,
 					   modified);
 	nodeHandleViewRule((Node **) (&(parsetree->targetList)), rtable, targetlist,
 					   rt_index, modified);
+	for(i=0; i < parsetree->qry_numAgg; i++)
+		nodeHandleViewRule(&parsetree->qry_aggs[i]->target, rtable, targetlist, rt_index,
+					   modified);
 }

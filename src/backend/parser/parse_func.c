@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.3 1997/11/26 03:42:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.4 1998/01/04 04:31:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,8 @@ typedef struct _SuperQE
  */
 
 Node *
-ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
+ParseFunc(ParseState *pstate, char *funcname, List *fargs,
+		int *curr_resno, int precedence)
 {
 	Oid			rettype = (Oid) 0;
 	Oid			argrelid = (Oid) 0;
@@ -194,9 +195,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
 				 */
 				if ((get_attnum(argrelid, funcname) == InvalidAttrNumber)
 					&& strcmp(funcname, "*"))
-				{
 					elog(WARN, "Functions on sets are not yet supported");
-				}
 			}
 
 			if (retval)
@@ -223,7 +222,8 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
 									ObjectIdGetDatum(basetype),
 									0, 0))
 			{
-				Aggreg	   *aggreg = ParseAgg(funcname, basetype, lfirst(fargs));
+				Aggreg	   *aggreg = ParseAgg(pstate, funcname, basetype,
+										fargs, precedence);
 
 				AddAggToParseState(pstate, aggreg);
 				return (Node *) aggreg;
@@ -368,7 +368,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
 		else
 		{
 			funcnode->func_tlist = setup_tlist(funcname, argrelid);
-			rettype = attnameTypeId(argrelid, funcname);
+			rettype = get_atttype(argrelid, get_attnum(argrelid, funcname));
 		}
 	}
 
@@ -1031,7 +1031,7 @@ setup_tlist(char *attname, Oid relid)
 	if (attno < 0)
 		elog(WARN, "cannot reference attribute '%s' of tuple params/return values for functions", attname);
 
-	typeid = attnameTypeId(relid, attname);
+	typeid = get_atttype(relid, attno);
 	resnode = makeResdom(1,
 						 typeid,
 						 typeLen(typeidType(typeid)),

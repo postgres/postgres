@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.4 1997/12/22 05:42:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.5 1998/01/04 04:31:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,14 +18,17 @@
 #include "postgres.h"
 #include "access/heapam.h"
 #include "catalog/pg_aggregate.h"
+#include "catalog/pg_type.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/primnodes.h"
 #include "nodes/relation.h"
 #include "optimizer/clauses.h"
 #include "parser/parse_agg.h"
+#include "parser/parse_expr.h"
 #include "parser/parse_node.h"
 #include "parser/parse_target.h"
 #include "utils/syscache.h"
+#include "utils/lsyscache.h"
 
 static bool contain_agg_clause(Node *clause);
 static bool exprIsAggOrGroupCol(Node *expr, List *groupClause);
@@ -276,7 +279,8 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 
 
 Aggreg	   *
-ParseAgg(char *aggname, Oid basetype, Node *target)
+ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
+			List *target, int precedence)
 {
 	Oid			fintype;
 	Oid			vartype;
@@ -284,7 +288,8 @@ ParseAgg(char *aggname, Oid basetype, Node *target)
 	Form_pg_aggregate aggform;
 	Aggreg	   *aggreg;
 	HeapTuple	theAggTuple;
-
+	bool		usenulls = false;
+	
 	theAggTuple = SearchSysCacheTuple(AGGNAME, PointerGetDatum(aggname),
 									  ObjectIdGetDatum(basetype),
 									  0, 0);
@@ -293,21 +298,78 @@ ParseAgg(char *aggname, Oid basetype, Node *target)
 		elog(WARN, "aggregate %s does not exist", aggname);
 	}
 
+	/*
+	 *	We do a major hack for count(*) here.
+	 *
+	 *	Count(*) poses several problems.  First, we need a field that is
+	 *	guaranteed to be in the range table, and unique.  Using a constant
+	 *	causes the optimizer to properly remove the aggragate from any
+	 *	elements of the query.
+	 *	Using just 'oid', which can not be null, in the parser fails on:
+	 *
+	 *		select count(*) from tab1, tab2	    -- oid is not unique
+	 *		select count(*) from viewtable		-- views don't have real oids
+	 *
+	 *	So, for an aggregate with parameter '*', we use the first valid
+	 *	range table entry, and pick the first column from the table.
+	 *	We set a flag to count nulls, because we could have nulls in
+	 *	that column.
+	*/
+		
+	if (nodeTag(lfirst(target)) == T_Const)
+	{
+		Const *con = (Const *)lfirst(target);
+		
+		if (con->consttype == UNKNOWNOID && VARSIZE(con->constvalue) == VARHDRSZ)
+		{
+			Attr *attr = makeNode(Attr);
+			List	   *rtable, *rlist;
+			RangeTblEntry *first_valid_rte;
+
+			Assert(lnext(target) == NULL);
+
+			if (pstate->p_is_rule)
+				rtable = lnext(lnext(pstate->p_rtable));
+			else
+				rtable = pstate->p_rtable;
+		
+			first_valid_rte = NULL;
+			foreach(rlist, rtable)
+			{
+				RangeTblEntry *rte = lfirst(rlist);
+		
+				/* only entries on outer(non-function?) scope */
+				if (!rte->inFromCl && rte != pstate->p_target_rangetblentry)
+					continue;
+
+				first_valid_rte =rte;
+				break;
+			}
+			if (first_valid_rte == NULL)
+				elog(WARN, "Can't find column to do aggregate(*) on.");
+				
+			attr->relname = first_valid_rte->refname;
+			attr->attrs = lcons(makeString(
+							get_attname(first_valid_rte->relid,1)),NIL);
+
+			lfirst(target) = transformExpr(pstate, (Node *) attr, precedence);
+			usenulls = true;
+		}
+	}
+	
 	aggform = (Form_pg_aggregate) GETSTRUCT(theAggTuple);
 	fintype = aggform->aggfinaltype;
 	xfn1 = aggform->aggtransfn1;
 
-	if (nodeTag(target) != T_Var && nodeTag(target) != T_Expr)
-		elog(WARN, "parser: aggregate can only be applied on an attribute or expression");
-
+	
 	/* only aggregates with transfn1 need a base type */
 	if (OidIsValid(xfn1))
 	{
 		basetype = aggform->aggbasetype;
-		if (nodeTag(target) == T_Var)
-			vartype = ((Var *) target)->vartype;
+		if (nodeTag(lfirst(target)) == T_Var)
+			vartype = ((Var *) lfirst(target))->vartype;
 		else
-			vartype = ((Expr *) target)->typeOid;
+			vartype = ((Expr *) lfirst(target))->typeOid;
 
 		if (basetype != vartype)
 		{
@@ -327,7 +389,9 @@ ParseAgg(char *aggname, Oid basetype, Node *target)
 	aggreg->basetype = aggform->aggbasetype;
 	aggreg->aggtype = fintype;
 
-	aggreg->target = target;
+	aggreg->target = lfirst(target);
+	if (usenulls)
+		aggreg->usenulls = true;
 
 	return aggreg;
 }

@@ -278,7 +278,7 @@ ExecAgg(Agg *node)
 		for (i = 0; i < nagg; i++)
 		{
 			AttrNumber	attnum;
-			int2		attlen;
+			int2		attlen = 0;
 			Datum		newVal = (Datum) NULL;
 			AggFuncInfo *aggfns = &aggFuncInfo[i];
 			Datum		args[2];
@@ -298,18 +298,24 @@ ExecAgg(Agg *node)
 					newVal = ExecEvalExpr(aggregates[i]->target, econtext,
 										  &isNull, &isDone);
 					break;
+				case T_Const:
+					tagnode = NULL;
+					econtext->ecxt_scantuple = outerslot;
+					newVal = ExecEvalExpr(aggregates[i]->target, econtext,
+										  &isNull, &isDone);
+					break;
 				default:
 					elog(WARN, "ExecAgg: Bad Agg->Target for Agg %d", i);
 			}
 
-			if (isNull)
+			if (isNull && !aggregates[i]->usenulls)
 				continue;		/* ignore this tuple for this agg */
 
 			if (aggfns->xfn1)
 			{
 				if (noInitValue[i])
 				{
-					int			byVal;
+					int			byVal = 0;
 
 					/*
 					 * value1 and value2 has not been initialized. This is
@@ -322,22 +328,34 @@ ExecAgg(Agg *node)
 					 * a copy of it since the tuple from which it came
 					 * will be freed on the next iteration of the scan
 					 */
-					if (tagnode != NULL)
+					switch (nodeTag(aggregates[i]->target))
 					{
-						FunctionCachePtr fcache_ptr;
+						case T_Var:
+							attnum = ((Var *) aggregates[i]->target)->varattno;
+							attlen = outerslot->ttc_tupleDescriptor->attrs[attnum - 1]->attlen;
+							byVal = outerslot->ttc_tupleDescriptor->attrs[attnum - 1]->attbyval;
 
-						if (nodeTag(tagnode) == T_Func)
-							fcache_ptr = ((Func *) tagnode)->func_fcache;
-						else
-							fcache_ptr = ((Oper *) tagnode)->op_fcache;
-						attlen = fcache_ptr->typlen;
-						byVal = fcache_ptr->typbyval;
-					}
-					else
-					{
-						attnum = ((Var *) aggregates[i]->target)->varattno;
-						attlen = outerslot->ttc_tupleDescriptor->attrs[attnum - 1]->attlen;
-						byVal = outerslot->ttc_tupleDescriptor->attrs[attnum - 1]->attbyval;
+							break;
+						case T_Expr:
+						{
+							FunctionCachePtr fcache_ptr;
+		
+							if (nodeTag(tagnode) == T_Func)
+								fcache_ptr = ((Func *) tagnode)->func_fcache;
+							else
+								fcache_ptr = ((Oper *) tagnode)->op_fcache;
+							attlen = fcache_ptr->typlen;
+							byVal = fcache_ptr->typbyval;
+
+							break;
+						}
+						case T_Const:
+							attlen = ((Const *) aggregates[i]->target)->constlen;
+							byVal = ((Const *) aggregates[i]->target)->constbyval;
+
+							break;
+						default:
+							elog(WARN, "ExecAgg: Bad Agg->Target for Agg %d", i);
 					}
 					if (attlen == -1)
 					{
@@ -349,7 +367,6 @@ ExecAgg(Agg *node)
 						value1[i] = newVal;
 					else
 						memmove((char *) (value1[i]), (char *) newVal, attlen);
-					/* value1[i] = newVal; */
 					noInitValue[i] = 0;
 					nulls[i] = 0;
 				}

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.6 1997/09/08 21:46:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.7 1998/01/04 04:31:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,6 +225,7 @@ FireRetrieveRulesAtQuery(Query *parsetree,
 			{
 				*instead_flag = TRUE;
 				FixResdomTypes(parsetree->targetList);
+
 				return lcons(parsetree, NIL);
 			}
 		}

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.3 1997/11/26 03:43:12 momjian Exp $
+ * $Id: parse_func.h,v 1.4 1998/01/04 04:31:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ typedef struct _CandidateList
 }		   *CandidateList;
 
 extern Node *ParseFunc(ParseState *pstate, char *funcname, List *fargs,
-	int *curr_resno);
+	int *curr_resno, int precedence);
 
 extern void func_error(char *caller, char *funcname, int nargs, Oid *argtypes);
 

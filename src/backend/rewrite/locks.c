@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.5 1997/09/08 21:46:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.6 1998/01/04 04:31:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,14 @@ nodeThisLockWasTriggered(Node *node, int varno, AttrNumber attnum)
 					nodeThisLockWasTriggered(tle->expr, varno, attnum);
 			}
 			break;
+		case T_Aggreg:
+			{
+				Aggreg *agg = (Aggreg *) node;
+
+				return
+					nodeThisLockWasTriggered(agg->target, varno, attnum);
+			}
+			break;
 		case T_List:
 			{
 				List	   *l;
@@ -87,10 +95,20 @@ thisLockWasTriggered(int varno,
 					 AttrNumber attnum,
 					 Query *parsetree)
 {
-	return
-	(nodeThisLockWasTriggered(parsetree->qual, varno, attnum) ||
-	 nodeThisLockWasTriggered((Node *) parsetree->targetList,
-							  varno, attnum));
+	int i;
+	
+	if (nodeThisLockWasTriggered(parsetree->qual, varno, attnum))
+		return true;
+
+	if (nodeThisLockWasTriggered((Node *) parsetree->targetList, varno, attnum))
+		return true;
+
+	for(i=0; i < parsetree->qry_numAgg; i++)
+		if (nodeThisLockWasTriggered(parsetree->qry_aggs[i]->target,
+					varno, attnum))
+			return true;
+	return false;
+		
 }
 
 /*

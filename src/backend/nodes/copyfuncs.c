@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.26 1997/12/24 06:05:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.27 1998/01/04 04:31:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -899,6 +899,7 @@ _copyAggreg(Aggreg *from)
 	newnode->aggname = pstrdup(from->aggname);
 	newnode->basetype = from->basetype;
 	newnode->aggtype = from->aggtype;
+	newnode->usenulls = from->usenulls;
 
 	Node_Copy(from, newnode, target);
 
