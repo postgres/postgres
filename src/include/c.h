@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.90 2001/02/10 02:31:28 tgl Exp $
+ * $Id: c.h,v 1.91 2001/02/20 00:28:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -584,7 +584,6 @@ typedef NameData *Name;
 
 #if defined(sun) && defined(__sparc__) && !defined(__SVR4)
 #include <unistd.h>
-#include <varargs.h>
 #endif
 
 /* These are for things that are one way on Unix and another on NT */
