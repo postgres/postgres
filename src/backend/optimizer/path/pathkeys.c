@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.47 2003/02/15 20:12:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.48 2003/05/02 19:48:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "parser/parsetree.h"
 #include "parser/parse_func.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 
 
 static PathKeyItem *makePathKeyItem(Node *key, Oid sortop);
@@ -942,26 +943,35 @@ make_pathkeys_for_sortclauses(List *sortclauses,
  * same, but not if the mergeclause appears above an OUTER JOIN.)
  * This is a worthwhile savings because these routines will be invoked
  * many times when dealing with a many-relation query.
+ *
+ * We have to be careful that the cached values are palloc'd in the same
+ * context the RestrictInfo node itself is in.  This is not currently a
+ * problem for normal planning, but it is an issue for GEQO planning.
  */
 void
 cache_mergeclause_pathkeys(Query *root, RestrictInfo *restrictinfo)
 {
 	Node	   *key;
 	PathKeyItem *item;
+	MemoryContext oldcontext;
 
 	Assert(restrictinfo->mergejoinoperator != InvalidOid);
 
 	if (restrictinfo->left_pathkey == NIL)
 	{
+		oldcontext = MemoryContextSwitchTo(GetMemoryChunkContext(restrictinfo));
 		key = get_leftop(restrictinfo->clause);
 		item = makePathKeyItem(key, restrictinfo->left_sortop);
 		restrictinfo->left_pathkey = make_canonical_pathkey(root, item);
+		MemoryContextSwitchTo(oldcontext);
 	}
 	if (restrictinfo->right_pathkey == NIL)
 	{
+		oldcontext = MemoryContextSwitchTo(GetMemoryChunkContext(restrictinfo));
 		key = get_rightop(restrictinfo->clause);
 		item = makePathKeyItem(key, restrictinfo->right_sortop);
 		restrictinfo->right_pathkey = make_canonical_pathkey(root, item);
+		MemoryContextSwitchTo(oldcontext);
 	}
 }
 
