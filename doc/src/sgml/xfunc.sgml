@@ -7,19 +7,20 @@
      Consequently,  while  it  is  possible  to define a new
      function without defining a new type,  the  reverse  is
      not  true.   We therefore describe how to add new functions 
-     to <ProductName>Postgres</ProductName> before  describing  how  to  add  new
-     types.
-     <ProductName>Postgres</ProductName>  <Acronym>SQL</Acronym>  provides  two  types of functions: query
-     language functions (functions written in <Acronym>SQL</Acronym>  and  
-     programming  language  functions  (functions  written in a
-     compiled programming language such as <Acronym>C</Acronym>.)  Either  kind
+     to <ProductName>Postgres</ProductName> before  describing  
+     how  to  add  new types.
+     <ProductName>Postgres</ProductName>  <Acronym>SQL</Acronym>  
+     provides  two  types of functions: query language functions 
+     (functions written in <Acronym>SQL</Acronym>  and  programming  
+     language  functions  (functions  written in a compiled 
+     programming language such as <Acronym>C</Acronym>.)  Either  kind
      of  function  can take a base type, a composite type or
      some combination as arguments (parameters).   In  addition, 
      both kinds of functions can return a base type or
-     a composite type.  It's easier to define <Acronym>SQL</Acronym> functions,
-     so we'll start with those.
-     Examples in this section can also be found in <FileName>funcs.sql</FileName>
-     and <FileName>C-code/funcs.c</FileName>.
+     a composite type.  It's easier to define <Acronym>SQL</Acronym> 
+     functions, so we'll start with those.  Examples in this section 
+     can also be found in <FileName>funcs.sql</FileName> 
+     and <FileName>funcs.c</FileName>.
 </Para>
 
 <Sect1>
@@ -54,8 +55,8 @@
      instead of one.
 </Para>
 <Para>
-     It's almost as easy to define <Acronym>SQL</Acronym> functions  that  take
-     base  types as arguments.  In the example below, notice
+     It's almost as easy to define <Acronym>SQL</Acronym> functions  
+     that take base types as arguments.  In the example below, notice
      how we refer to the arguments within the function as $1
      and $2.
      
@@ -91,7 +92,8 @@
 
     SELECT name, double_salary(EMP) AS dream
      FROM EMP
-     WHERE EMP.dept = 'toy';
+     WHERE EMP.cubicle ~= '(2,1)'::point;
+     
 
          +-----+-------+
          |name | dream |
@@ -137,7 +139,7 @@
      AS 'SELECT \'None\'::text AS name,
       1000 AS salary,
       25 AS age,
-      \'none\'::text AS dept;'
+       \'(2,2)\'::point AS cubicle'
       LANGUAGE 'sql';
 </ProgramListing>
 
@@ -153,18 +155,18 @@
 <ItemizedList>
 <ListItem>
 <Para>
-The  target  list  order must be exactly the same as
-        that in which the attributes appear  in  the  CREATE
-        TABLE statement (or when you execute a .*  query).
+     The  target  list  order must be exactly the same as
+     that in which the attributes appear  in  the  CREATE
+     TABLE statement (or when you execute a .*  query).
 </Para>
       </ListItem>
       <ListItem>
 <Para>
-You  must  typecast the expressions
-        (using ::) very carefully or you will see  the  following error:
+You must typecast the expressions (using ::) very carefully 
+or you will see  the  following error:
         
 <ProgramListing>
-            WARN::function declared to return type EMP does not retrieve (EMP.*)
+   WARN::function declared to return type EMP does not retrieve (EMP.*)
 </ProgramListing>
 </Para>
       </ListItem>
@@ -202,11 +204,12 @@ The reason why, in general, we must use the function
 </ItemizedList>
 </para>     
 <Para>
-     Any collection of commands in the  <Acronym>SQL</Acronym>  query  language
-     can  be  packaged  together  and defined as a function.
-     The commands can include updates (i.e., <Acronym>insert</Acronym>,  <Acronym>update</Acronym>
-     and  <Acronym>delete</Acronym>)  as  well as <Acronym>select</Acronym> queries.  However, the
-     final command must be a <Acronym>select</Acronym> that returns whatever is
+     Any collection of commands in the  <Acronym>SQL</Acronym>  query  
+     language can be packaged together and defined as a function.
+     The commands can include updates (i.e., <Acronym>insert</Acronym>,  
+     <Acronym>update</Acronym> and <Acronym>delete</Acronym>) as well 
+     as <Acronym>select</Acronym> queries.  However, the final command 
+     must be a <Acronym>select</Acronym> that returns whatever is
      specified as the function's returntype.
      
 <ProgramListing>
@@ -222,6 +225,7 @@ The reason why, in general, we must use the function
          +--+
          |1 |
          +--+
+         
 </ProgramListing>
 </Para>
 </sect2>
@@ -234,12 +238,13 @@ The reason why, in general, we must use the function
 <Title>Programming Language Functions on Base Types</Title>
 
 <Para>
-     Internally, <ProductName>Postgres</ProductName> regards a base type as a "blob  of
-     memory."   The  user-defined  functions that you define
-     over a type in turn define the way  that  <ProductName>Postgres</ProductName>  can
-     operate  on  it.  That is, <ProductName>Postgres</ProductName> will only store and
-     retrieve the data from disk and use  your  user-defined
-     functions to input, process, and output the data.
+     Internally, <ProductName>Postgres</ProductName> regards a
+     base type as a "blob  of memory."   The  user-defined  
+     functions that you define over a type in turn define the 
+     way  that  <ProductName>Postgres</ProductName> can operate  
+     on  it.  That is, <ProductName>Postgres</ProductName> will 
+     only store and retrieve the data from disk and use  your  
+     user-defined functions to input, process, and output the data.
      Base types can have one of three internal formats:
 <ItemizedList>
 <ListItem><Para>pass by value, fixed-length</Para>
@@ -254,14 +259,16 @@ The reason why, in general, we must use the function
 <Para>
      By-value  types  can  only be 1, 2 or 4 bytes in length
      (even if your computer supports by-value types of other
-     sizes).   <ProductName>Postgres</ProductName>  itself only passes integer types by
-     value.  You should be careful to define your types such
-     that  they  will  be  the  same  size (in bytes) on all
-     architectures.  For example, the <Acronym>long</Acronym> type is dangerous
-     because  it  is 4 bytes on some machines and 8 bytes on
-     others, whereas <Acronym>int</Acronym>  type  is  4  bytes  on  most  <Acronym>UNIX</Acronym>
-     machines  (though  not  on most personal computers).  A
-     reasonable implementation of  the  <Acronym>int4</Acronym>  type  on  <Acronym>UNIX</Acronym>
+     sizes).   <ProductName>Postgres</ProductName>  itself 
+     only passes integer types by value.  You should be careful 
+     to define your types such that  they  will  be  the  same  
+     size (in bytes) on all architectures.  For example, the 
+     <Acronym>long</Acronym> type is dangerous because  it  
+     is 4 bytes on some machines and 8 bytes on others, whereas 
+     <Acronym>int</Acronym>  type  is  4  bytes  on  most  
+     <Acronym>UNIX</Acronym> machines  (though  not  on most 
+     personal computers).  A reasonable implementation of  
+     the  <Acronym>int4</Acronym>  type  on  <Acronym>UNIX</Acronym>
      machines might be:
      
 <ProgramListing>
@@ -277,9 +284,10 @@ The reason why, in general, we must use the function
      
 <ProgramListing>
          /* 16-byte structure, passed by reference */
-         typedef struct {
-             char data[16];
-         } char16;
+    typedef struct
+    {
+        double  x, y;
+    } Point;
 </ProgramListing>
 </Para>
 
@@ -308,10 +316,10 @@ The reason why, in general, we must use the function
 <Para>
      Obviously,  the  data  field is not long enough to hold
      all possible strings -- it's impossible to declare such
-     a  structure  in  <Acronym>C</Acronym>.  When manipulating variable-length
-     types, we must  be  careful  to  allocate  the  correct
-     amount  of memory and initialize the length field.  For
-     example, if we wanted to  store  40  bytes  in  a  text
+     a  structure  in  <Acronym>C</Acronym>.  When manipulating 
+     variable-length types, we must  be  careful  to  allocate  
+     the  correct amount  of memory and initialize the length field.  
+     For example, if we wanted to  store  40  bytes  in  a  text
      structure, we might use a code fragment like this:
 <ProgramListing>
          #include "postgres.h"
@@ -332,23 +340,30 @@ The reason why, in general, we must use the function
 <ProgramListing>
          #include &lt;string.h&gt;
          #include "postgres.h"
+
+         /* By Value */
+         
          int
          add_one(int arg)
          {
              return(arg + 1);
          }
-         text *
-         concat_text(text *arg1, text *arg2)
+         
+         /* By Reference, Fixed Length */
+         
+         Point *
+         makepoint(Point *pointx, Point *pointy )
          {
-             int32 new_text_size = VARSIZE(arg1) + VARSIZE(arg2) - VARHDRSZ;
-             text *new_text = (text *) palloc(new_text_size);
-
-             memset((void *) new_text, 0, new_text_size);
-             VARSIZE(new_text) = new_text_size;
-             strncpy(VARDATA(new_text), VARDATA(arg1), VARSIZE(arg1)-VARHDRSZ);
-             strncat(VARDATA(new_text), VARDATA(arg2), VARSIZE(arg2)-VARHDRSZ);
-             return (new_text);
+             Point     *new_point = (Point *) palloc(sizeof(Point));
+        
+             new_point->x = pointx->x;
+             new_point->y = pointy->y;
+                
+             return new_point;
          }
+        
+         /* By Reference, Variable Length */
+         
          text *
          copytext(text *t)
          {
@@ -366,6 +381,19 @@ The reason why, in general, we must use the function
                     VARSIZE(t)-VARHDRSZ);        /* how many bytes */
              return(new_t);
          }
+         
+         text *
+         concat_text(text *arg1, text *arg2)
+         {
+             int32 new_text_size = VARSIZE(arg1) + VARSIZE(arg2) - VARHDRSZ;
+             text *new_text = (text *) palloc(new_text_size);
+
+             memset((void *) new_text, 0, new_text_size);
+             VARSIZE(new_text) = new_text_size;
+             strncpy(VARDATA(new_text), VARDATA(arg1), VARSIZE(arg1)-VARHDRSZ);
+             strncat(VARDATA(new_text), VARDATA(arg2), VARSIZE(arg2)-VARHDRSZ);
+             return (new_text);
+         }
 </ProgramListing>
 </Para>
 
@@ -374,13 +402,16 @@ The reason why, in general, we must use the function
      
 <ProgramListing>
          CREATE FUNCTION add_one(int4) RETURNS int4
-              AS 'PGROOT/tutorial/obj/funcs.so' LANGUAGE 'c';
+              AS 'PGROOT/tutorial/funcs.so' LANGUAGE 'c';
 
+         CREATE FUNCTION makepoint(point, point) RETURNS point
+              AS 'PGROOT/tutorial/funcs.so' LANGUAGE 'c';
+    
          CREATE FUNCTION concat_text(text, text) RETURNS text
-              AS 'PGROOT/tutorial/obj/funcs.so' LANGUAGE 'c';
-
+              AS 'PGROOT/tutorial/funcs.so' LANGUAGE 'c';
+                                  
          CREATE FUNCTION copytext(text) RETURNS text
-              AS 'PGROOT/tutorial/obj/funcs.so' LANGUAGE 'c';
+              AS 'PGROOT/tutorial/funcs.so' LANGUAGE 'c';
 </ProgramListing>
 </Para>
 
@@ -399,11 +430,11 @@ The reason why, in general, we must use the function
      null fields.  In addition,  composite  types  that  are
      part  of  an  inheritance  hierarchy may have different
      fields than other members of the same inheritance hierarchy.    
-     Therefore,  <ProductName>Postgres</ProductName>  provides  a  procedural
-     interface for accessing fields of composite types  from
-     C.
-     As <ProductName>Postgres</ProductName> processes a set of instances, each instance
-     will be passed into your function as an  opaque  structure of type <Acronym>TUPLE</Acronym>.
+     Therefore,  <ProductName>Postgres</ProductName>  provides  
+     a  procedural interface for accessing fields of composite types  
+     from C.  As <ProductName>Postgres</ProductName> processes 
+     a set of instances, each instance will be passed into your 
+     function as an  opaque  structure of type <Acronym>TUPLE</Acronym>.
      Suppose we want to write a function to answer the query
 <ProgramListing>
          * SELECT name, c_overpaid(EMP, 1500) AS overpaid
@@ -414,9 +445,10 @@ The reason why, in general, we must use the function
      
 <ProgramListing>
          #include "postgres.h"
-         #include "libpq-fe.h" /* for TUPLE */
+         #include "executor/executor.h"  /* for GetAttributeByName() */
+         
          bool
-         c_overpaid(TUPLE t,/* the current instance of EMP */
+         c_overpaid(TupleTableSlot *t, /* the current instance of EMP */
                     int4 limit)
          {
              bool isnull = false;
@@ -430,16 +462,17 @@ The reason why, in general, we must use the function
 </Para>
 
 <Para>
-     <Acronym>GetAttributeByName</Acronym> is the <ProductName>Postgres</ProductName> system function that
+     <Acronym>GetAttributeByName</Acronym> is the 
+     <ProductName>Postgres</ProductName> system function that
      returns attributes out of the current instance.  It has
      three arguments: the argument of type TUPLE passed into
      the  function, the name of the desired attribute, and a
      return parameter that describes whether  the  attribute
-     is  null.   <Acronym>GetAttributeByName</Acronym> will align data properly
-     so you can cast its return value to the  desired  type.
-     For  example, if you have an attribute name which is of
-     the type name, the <Acronym>GetAttributeByName</Acronym> call would look
-     like:
+     is  null.   <Acronym>GetAttributeByName</Acronym> will 
+     align data properly so you can cast its return value to 
+     the  desired  type. For  example, if you have an attribute 
+     name which is of the type name, the <Acronym>GetAttributeByName</Acronym> 
+     call would look like:
 <ProgramListing>
          char *str;
          ...
@@ -448,8 +481,8 @@ The reason why, in general, we must use the function
 </Para>
 
 <Para>
-     The  following  query  lets  <ProductName>Postgres</ProductName>  know  about  the
-     c_overpaid function:
+     The  following  query  lets  <ProductName>Postgres</ProductName>  
+     know  about  the c_overpaid function:
 <ProgramListing>
          * CREATE FUNCTION c_overpaid(EMP, int4) RETURNS bool
               AS 'PGROOT/tutorial/obj/funcs.so' LANGUAGE 'c';
@@ -470,24 +503,28 @@ The reason why, in general, we must use the function
      We now turn to the more difficult task of writing  
      programming  language  functions.  Be warned: this section
      of the manual will not make you a programmer.  You must
-     have  a  good  understanding of <Acronym>C</Acronym> (including the use of
-     pointers and the malloc memory manager)  before  trying
-     to write <Acronym>C</Acronym> functions for use with <ProductName>Postgres</ProductName>.
-     While  it  may be possible to load functions written in
-     languages other than <Acronym>C</Acronym> into  <ProductName>Postgres</ProductName>,  this  is  often
-     difficult  (when  it  is possible at all) because other
-     languages, such as <Acronym>FORTRAN</Acronym> and <Acronym>Pascal</Acronym> often do not follow 
-     the same "calling convention" as <Acronym>C</Acronym>.  That is, other
+     have  a  good  understanding of <Acronym>C</Acronym> 
+     (including the use of pointers and the malloc memory manager)  
+     before  trying to write <Acronym>C</Acronym> functions for 
+     use with <ProductName>Postgres</ProductName>. While  it may 
+     be possible to load functions written in languages other 
+     than <Acronym>C</Acronym> into  <ProductName>Postgres</ProductName>,  
+     this  is  often difficult  (when  it  is possible at all) 
+     because other languages, such as <Acronym>FORTRAN</Acronym> 
+     and <Acronym>Pascal</Acronym> often do not follow the same 
+     "calling convention" as <Acronym>C</Acronym>.  That is, other
      languages  do  not  pass  argument  and  return  values
      between functions in the same way.  For this reason, we
      will assume that your  programming  language  functions
      are written in <Acronym>C</Acronym>.
-     The  basic  rules  for building <Acronym>C</Acronym> functions are as follows:
+     The  basic  rules  for building <Acronym>C</Acronym> functions 
+     are as follows:
 
 <ItemizedList>
 <ListItem>
 <Para>
-Most of the header (include) files for  <ProductName>Postgres</ProductName>
+            Most of the header (include) files for 
+            <ProductName>Postgres</ProductName>
             should      already      be     installed     in
             <FileName>PGROOT/include</FileName>  (see  Figure  2).
             You should always include
@@ -511,9 +548,11 @@ Most of the header (include) files for  <ProductName>Postgres</ProductName>
 </para>
 </ListItem>
 <ListItem>
-<Para>   When allocating memory, use  the  <ProductName>Postgres</ProductName>  
+<Para>      When allocating memory, use  the
+            <ProductName>Postgres</ProductName>
             routines  palloc  and  pfree  instead of the 
-            corresponding <Acronym>C</Acronym> library  routines  malloc  and  free.
+            corresponding <Acronym>C</Acronym> library  routines  
+            malloc  and  free.
             The  memory  allocated  by  palloc will be freed
             automatically at the end  of  each  transaction,
             preventing memory leaks.
@@ -531,15 +570,16 @@ Most of the header (include) files for  <ProductName>Postgres</ProductName>
 </Para>
       </ListItem>
       <ListItem>
-<Para>   Most of the internal <ProductName>Postgres</ProductName> types are declared
-            in  postgres.h,  so  it's a good idea to always
-            include that file as well.  Including postgres.h
-            will also include elog.h and palloc.h for you.
+<Para>      Most of the internal <ProductName>Postgres</ProductName> 
+            types are declared in  postgres.h,  so  it's a good 
+            idea to always include that file as well.  Including 
+            postgres.h will also include elog.h and palloc.h for you.
 </Para>
       </ListItem>
       <ListItem>
-<Para>   Compiling and loading your object code  so  that
-            it  can  be  dynamically  loaded  into  <ProductName>Postgres</ProductName>
+<Para>      Compiling and loading your object code  so  that
+            it  can  be  dynamically  loaded  into  
+            <ProductName>Postgres</ProductName>
             always requires special flags.  See  Appendix  A
             for  a  detailed explanation of how to do it for
             your particular operating system.
