@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.66 2001/11/05 17:46:34 momjian Exp $
+ * $Id: execnodes.h,v 1.67 2001/11/21 22:57:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,7 +302,7 @@ typedef struct EState
  *|
  *|			  As a result, many classes have extra slots which they
  *|			  don't use.  These slots are denoted (unused) in the
- *|			  comment preceeding the class definition.	If you
+ *|			  comment preceding the class definition.	If you
  *|			  comes up with a better idea of a way of doing things
  *|			  along these lines, then feel free to make your idea
  *|			  known to me.. -cim 10/15/89

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.8 2001/11/21 05:53:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.9 2001/11/21 22:57:01 tgl Exp $
  -->
 
 <chapter id="bki">
@@ -50,7 +50,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.8 2001/11/21 05:53:40 thomas E
    of a number of tokens, depending on the syntax of the command.
    Tokens are usually separated by whitespace, but need not be if
    there is no ambiguity.  There is no special command separator; the
-   next token that syntactically cannot belong to the preceeding
+   next token that syntactically cannot belong to the preceding
    command starts a new one.  (Usually you would put a new command on
    a new line, for clarity.)  Tokens can be certain key words, special
    characters (parentheses, commas, etc.), numbers, or double-quoted

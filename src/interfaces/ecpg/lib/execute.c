@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.32 2001/11/14 11:11:49 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.33 2001/11/21 22:57:01 tgl Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -130,7 +130,7 @@ quote_postgres(char *arg, int lineno)
 
 /*
  * create a list of variables
- * The variables are listed with input variables preceeding outputvariables
+ * The variables are listed with input variables preceding outputvariables
  * The end of each group is marked by an end marker.
  * per variable we list:
  * type - as defined in ecpgtype.h

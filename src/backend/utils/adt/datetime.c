@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.80 2001/11/21 05:58:51 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.81 2001/11/21 22:57:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2070,7 +2070,7 @@ DecodeSpecial(int field, char *lowtoken, int *val)
  *	an unsigned floating point number. - thomas 1997-11-16
  *
  * Allow ISO-style time span, with implicit units on number of days
- *	preceeding an hh:mm:ss field. - thomas 1998-04-30
+ *	preceding an hh:mm:ss field. - thomas 1998-04-30
  */
 int
 DecodeDateDelta(char **field, int *ftype, int nf, int *dtype, struct tm * tm, double *fsec)
