@@ -861,7 +861,7 @@ The row length limit will be removed in 7.1.<P>
 <H4><A NAME="4.7">4.7</A>)How much database disk space is required to
 store data from a typical text file?<BR></H4><P>
 
-A PostgreSQL database may need six and a half times the disk space
+A PostgreSQL database may need six-and-a-half times the disk space
 required to store the data in a flat file.<P>
 
 Consider a file of 300,000 lines with two integers on each line. The
@@ -914,7 +914,7 @@ sequential scan would be faster.<P>
 
 For column-specific optimization statistics, use <SMALL>VACUUM
 ANALYZE.</SMALL>  <SMALL>VACUUM ANALYZE</SMALL> is important for complex
-multi-join queries, so the optimizer can estimate the number of rows
+multijoin queries, so the optimizer can estimate the number of rows
 returned from each table, and choose the proper join order.  The backend
 does not keep track of column statistics on its own, so <SMALL>VACUUM
 ANALYZE</SMALL> must be run to collect them periodically.<P>
@@ -941,20 +941,20 @@ An R-tree index is used for indexing spatial data. A hash index can't
 handle range searches. A B-tree index only handles range searches in a
 single dimension. R-tree's can handle multi-dimensional data.  For
 example, if an R-tree index can be built on an attribute of type <I>point,</I>
-the system can more efficient answer queries like select all points
-within a bounding rectangle.<P>
+the system can more efficiently answer queries such as "select all points
+within a bounding rectangle."<P>
 
-The canonical paper that describes the original R-Tree design is:<P>
+The canonical paper that describes the original R-tree design is:<P>
 
-Guttman, A. "R-Trees: A Dynamic Index Structure for Spatial Searching."
+Guttman, A. "R-trees: A Dynamic Index Structure for Spatial Searching."
 Proc of the 1984 ACM SIGMOD Int'l Conf on Mgmt of Data, 45-57.<P>
 
 You can also find this paper in Stonebraker's "Readings in Database
 Systems"<P>
 
-Builtin R-Trees can handle polygons and boxes.  In theory, R-trees can
+Built-in R-trees can handle polygons and boxes.  In theory, R-trees can
 be extended to handle higher number of dimensions.  In practice,
-extending R-trees require a bit of work and we don't currently have any
+extending R-trees requires a bit of work and we don't currently have any
 documentation on how to do it.<P>
 
 
@@ -964,13 +964,13 @@ Optimization?</H4><P>
 The GEQO module speeds query
 optimization when joining many tables by means of a Genetic
 Algorithm (GA). It allows the handling of large join queries through
-non-exhaustive search.<P>
+nonexhaustive search.<P>
 
 <H4><A NAME="4.13">4.13</A>) How do I do regular expression searches and
 case-insensitive regular expression searches?</H4><P>
 
-The <I>~</I> operator does regular-expression matching, and <I>~*</I>
-does case-insensitive regular-expression matching. There is no
+The <I>~</I> operator does regular expression matching, and <I>~*</I>
+does case-insensitive regular expression matching. There is no
 case-insensitive variant of the LIKE operator, but you can get the
 effect of case-insensitive <SMALL>LIKE</SMALL> with this:
 <PRE>
@@ -999,7 +999,7 @@ BYTEA           bytea           variable-length array of bytes
 You will see the internal name when examining system catalogs
 and in some error messages.<P>
 
-The last four types above are "varlena" types (i.e. the first four bytes
+The last four types above are "varlena" types (i.e., the first four bytes
 are the length, followed by the data). <I>char(#)</I> allocates the
 maximum number of bytes no matter how much data is stored in the field.
 <I>text, varchar(#),</I> and <I>bytea</I> all have variable length on the disk,
@@ -1043,17 +1043,26 @@ One approach is to to retrieve the next SERIAL value from the sequence object wi
 	$newSerialID = nextval('person_id_seq');
 	INSERT INTO person (id, name) VALUES ($newSerialID, 'Blaise Pascal');
 </PRE>
-You would then also have the new value stored in <CODE>$newSerialID</CODE> for use in other queries (e.g., as a foreign key to the <CODE>person</CODE> table).  Note that the name of the automatically-created SEQUENCE object will be named &lt<I>table</I>&gt_&lt<I>serialcolumn</I>&gt_<I>seq</I>, where <I>table</I> and <I>serialcolumn</I> are the names of your table and your SERIAL column, respectively.  
+
+You would then also have the new value stored in
+<CODE>$newSerialID</CODE> for use in other queries (e.g., as a foreign
+key to the <CODE>person</CODE> table).  Note that the name of the
+automatically created SEQUENCE object will be named
+&lt<I>table</I>&gt_&lt<I>serialcolumn</I>&gt_<I>seq</I>, where
+<I>table</I> and <I>serialcolumn</I> are the names of your table and
+your SERIAL column, respectively.  
+
 <P>
-Alternatively, you could retrieve the just-assigned SERIAL value with the <I>currval</I>() function <I>after</I> it was inserted by default, e.g.,
+Alternatively, you could retrieve the assigned SERIAL value with the <I>currval</I>() function <I>after</I> it was inserted by default, e.g.,
 <PRE>
 	INSERT INTO person (name) VALUES ('Blaise Pascal');
 	$newID = currval('person_id_seq');
 </PRE>
-Finally, you could use the <A HREF="#4.17"><small>OID</small></A> returned from the
-INSERT statement to lookup the default value, though this is probably
-the least portable approach. In Perl, using DBI with Edmund Mergl's
-DBD::Pg module, the oid value is made available via
+
+Finally, you could use the <A HREF="#4.17"><small>OID</small></A>
+returned from the INSERT statement to look up the default value, though
+this is probably the least portable approach. In Perl, using DBI with
+Edmund Mergl's DBD::Pg module, the oid value is made available via
 <I>$sth-&gt;{pg_oid_status} after $sth-&gt;execute().</I>
 
 <H4><A NAME="4.16.3">4.16.3</A>) Don't <I>currval()</I> and <I>nextval()</I> lead to 
@@ -1065,12 +1074,13 @@ No.  This is handled by the backends.
 <H4><A NAME="4.17">4.17</A>) What is an <small>OID</small>? What is a
 <small>TID</small>?</H4><P>
 
-<small>OID</small>s are PostgreSQL's answer to unique row ids.  Every row that is
-created in PostgreSQL gets a unique <small>OID</small>.  All <small>OID</small>s generated during
-<I>initdb</I> are less than 16384 (from <I>backend/access/transam.h</I>).  All
-user-created <small>OID</small>s are equal or greater that this.  By default, all these
-<small>OID</small>s are unique not only within a table, or database, but unique within
-the entire PostgreSQL installation.<P>
+<small>OID</small>s are PostgreSQL's answer to unique row ids.  Every
+row that is created in PostgreSQL gets a unique <small>OID</small>.  All
+<small>OID</small>s generated during <I>initdb</I> are less than 16384
+(from <I>backend/access/transam.h</I>).  All user-created
+<small>OID</small>s are equal to or greater than this.  By default, all
+these <small>OID</small>s are unique not only within a table or
+database, but unique within the entire PostgreSQL installation.<P>
 
 PostgreSQL uses <small>OID</small>s in its internal system tables to link rows between
 tables.  These <small>OID</small>s can be used to identify specific user rows and used
@@ -1175,7 +1185,7 @@ Use <i>now()</i>:
 <P>
 <H4><A NAME="4.23">4.23</A>) Why are my subqueries using
 <CODE><small>IN</small></CODE> so slow?<BR></H4><P>
-Currently, we join subqueries to outer queries by sequential scanning
+Currently, we join subqueries to outer queries by sequentially scanning
 the result of the subquery for each row of the outer query. A workaround
 is to replace <CODE>IN</CODE> with <CODE>EXISTS</CODE>:
 <CODE><PRE>
@@ -1216,12 +1226,12 @@ does an <i>outer</i> join of the two tables:
 I run it in <I>psql,</I> why does it dump core?</H4><P>
 
 The problem could be a number of things.  Try testing your user-defined
-function in a stand alone test program first.
+function in a stand-alone test program first.
 
 <H4><A NAME="5.2">5.2</A>) What does the message
 <I>"NOTICE:PortalHeapMemoryFree: 0x402251d0 not in alloc set!"</I> mean?</H4><P>
 
-You are <I>pfree'ing</I> something that was not <I>palloc'ed.</I>
+You are <I>pfree'</I>ing something that was not <I>palloc'</I>ed.
 Beware of mixing <I>malloc/free</I> and <I>palloc/pfree.</I>
 
 

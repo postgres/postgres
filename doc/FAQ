@@ -691,7 +691,7 @@ Maximum number of indexes on a table?    unlimited
     4.7)How much database disk space is required to store data from a typical
     text file?
     
-   A PostgreSQL database may need six and a half times the disk space
+   A PostgreSQL database may need six-and-a-half times the disk space
    required to store the data in a flat file.
    
    Consider a file of 300,000 lines with two integers on each line. The
@@ -738,7 +738,7 @@ Maximum number of indexes on a table?    unlimited
    faster.
    
    For column-specific optimization statistics, use VACUUM ANALYZE.
-   VACUUM ANALYZE is important for complex multi-join queries, so the
+   VACUUM ANALYZE is important for complex multijoin queries, so the
    optimizer can estimate the number of rows returned from each table,
    and choose the proper join order. The backend does not keep track of
    column statistics on its own, so VACUUM ANALYZE must be run to collect
@@ -763,34 +763,34 @@ Maximum number of indexes on a table?    unlimited
    handle range searches. A B-tree index only handles range searches in a
    single dimension. R-tree's can handle multi-dimensional data. For
    example, if an R-tree index can be built on an attribute of type
-   point, the system can more efficient answer queries like select all
-   points within a bounding rectangle.
+   point, the system can more efficiently answer queries such as "select
+   all points within a bounding rectangle."
    
-   The canonical paper that describes the original R-Tree design is:
+   The canonical paper that describes the original R-tree design is:
    
-   Guttman, A. "R-Trees: A Dynamic Index Structure for Spatial
+   Guttman, A. "R-trees: A Dynamic Index Structure for Spatial
    Searching." Proc of the 1984 ACM SIGMOD Int'l Conf on Mgmt of Data,
    45-57.
    
    You can also find this paper in Stonebraker's "Readings in Database
    Systems"
    
-   Builtin R-Trees can handle polygons and boxes. In theory, R-trees can
+   Built-in R-trees can handle polygons and boxes. In theory, R-trees can
    be extended to handle higher number of dimensions. In practice,
-   extending R-trees require a bit of work and we don't currently have
+   extending R-trees requires a bit of work and we don't currently have
    any documentation on how to do it.
    
     4.12) What is Genetic Query Optimization?
     
    The GEQO module speeds query optimization when joining many tables by
    means of a Genetic Algorithm (GA). It allows the handling of large
-   join queries through non-exhaustive search.
+   join queries through nonexhaustive search.
    
     4.13) How do I do regular expression searches and case-insensitive regular
     expression searches?
     
-   The ~ operator does regular-expression matching, and ~* does
-   case-insensitive regular-expression matching. There is no
+   The ~ operator does regular expression matching, and ~* does
+   case-insensitive regular expression matching. There is no
    case-insensitive variant of the LIKE operator, but you can get the
    effect of case-insensitive LIKE with this:
         WHERE lower(textfield) LIKE lower(pattern)
@@ -812,7 +812,7 @@ BYTEA           bytea           variable-length array of bytes
    You will see the internal name when examining system catalogs and in
    some error messages.
    
-   The last four types above are "varlena" types (i.e. the first four
+   The last four types above are "varlena" types (i.e., the first four
    bytes are the length, followed by the data). char(#) allocates the
    maximum number of bytes no matter how much data is stored in the
    field. text, varchar(#), and bytea all have variable length on the
@@ -855,17 +855,17 @@ BYTEA           bytea           variable-length array of bytes
 
    You would then also have the new value stored in $newSerialID for use
    in other queries (e.g., as a foreign key to the person table). Note
-   that the name of the automatically-created SEQUENCE object will be
+   that the name of the automatically created SEQUENCE object will be
    named <table>_<serialcolumn>_seq, where table and serialcolumn are the
    names of your table and your SERIAL column, respectively.
    
-   Alternatively, you could retrieve the just-assigned SERIAL value with
-   the currval() function after it was inserted by default, e.g.,
+   Alternatively, you could retrieve the assigned SERIAL value with the
+   currval() function after it was inserted by default, e.g.,
         INSERT INTO person (name) VALUES ('Blaise Pascal');
         $newID = currval('person_id_seq');
 
    Finally, you could use the OID returned from the INSERT statement to
-   lookup the default value, though this is probably the least portable
+   look up the default value, though this is probably the least portable
    approach. In Perl, using DBI with Edmund Mergl's DBD::Pg module, the
    oid value is made available via $sth->{pg_oid_status} after
    $sth->execute().
@@ -880,8 +880,8 @@ BYTEA           bytea           variable-length array of bytes
    OIDs are PostgreSQL's answer to unique row ids. Every row that is
    created in PostgreSQL gets a unique OID. All OIDs generated during
    initdb are less than 16384 (from backend/access/transam.h). All
-   user-created OIDs are equal or greater that this. By default, all
-   these OIDs are unique not only within a table, or database, but unique
+   user-created OIDs are equal to or greater than this. By default, all
+   these OIDs are unique not only within a table or database, but unique
    within the entire PostgreSQL installation.
    
    PostgreSQL uses OIDs in its internal system tables to link rows
@@ -965,8 +965,8 @@ BYTEA           bytea           variable-length array of bytes
 
     4.23) Why are my subqueries using IN so slow?
     
-   Currently, we join subqueries to outer queries by sequential scanning
-   the result of the subquery for each row of the outer query. A
+   Currently, we join subqueries to outer queries by sequentially
+   scanning the result of the subquery for each row of the outer query. A
    workaround is to replace IN with EXISTS:
         SELECT *
         FROM tab
@@ -1001,7 +1001,7 @@ BYTEA           bytea           variable-length array of bytes
     dump core?
     
    The problem could be a number of things. Try testing your user-defined
-   function in a stand alone test program first.
+   function in a stand-alone test program first.
    
     5.2) What does the message "NOTICE:PortalHeapMemoryFree: 0x402251d0 not in
     alloc set!" mean?
