@@ -5,9 +5,8 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-#
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.32 1998/10/18 19:40:54 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.33 1998/10/19 00:00:41 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,121 +17,25 @@ SO_MINOR_VERSION= 0
 SRCDIR= @top_srcdir@
 include $(SRCDIR)/Makefile.global
 
-INCLUDE_OPT= \
-             -I$(SRCDIR)/backend \
-             -I$(SRCDIR)/include \
-             -I$(LIBPQDIR)
+CFLAGS+= -I$(SRCDIR)/backend \
+         -I$(SRCDIR)/include \
+         -I$(LIBPQDIR)
 
-PORTNAME=@PORTNAME@
-
-CFLAGS+= $(INCLUDE_OPT)
 ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
 endif
 
-# Shared library stuff
-
-install-shlib-dep :=
-shlib             := 
-
-LIBPQ= -L$(SRCDIR)/interfaces/libpq -lpq
-
-ifeq ($(PORTNAME), linux)
-  install-shlib-dep	:= install-shlib
-  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  CFLAGS			+= $(CFLAGS_SL)
-  LDFLAGS_SL		= -shared
-endif
-
-ifeq ($(PORTNAME), bsd)
-  ifdef BSD_SHLIB
-    install-shlib-dep	:= install-shlib
-    shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-    LDFLAGS_SL			= -x -Bshareable -Bforcearchive
-    CFLAGS				+= $(CFLAGS_SL)
-  endif
-endif
-
-ifeq ($(PORTNAME), bsdi)
-  ifdef BSD_SHLIB
-    ifeq ($(DLSUFFIX), .so)
-      install-shlib-dep	:= install-shlib
-      shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-      LDFLAGS_SL		+= -shared
-      CFLAGS			+= $(CFLAGS_SL)
-    endif
-    ifeq ($(DLSUFFIX), .o)
-      install-shlib-dep	:= install-shlib
-      shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-      LD				:= shlicc
-      LDFLAGS_SL		+= -O -r
-      CFLAGS			+= $(CFLAGS_SL)
-    endif
-  endif
-endif
-
-ifeq ($(PORTNAME), solaris_sparc)
-  install-shlib-dep	:= install-shlib
-  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL		:= -G
-  CFLAGS			+= $(CFLAGS_SL)
-endif
-
-ifeq ($(PORTNAME), solaris_i386)
-  install-shlib-dep	:= install-shlib
-  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL		:= -G
-  CFLAGS			+= $(CFLAGS_SL)
-endif
-
-ifeq ($(PORTNAME), svr4)
-  install-shlib-dep	:= install-shlib
-  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL		:= -G
-  CFLAGS			+= $(CFLAGS_SL)
-endif
-
-ifeq ($(PORTNAME), unixware)
-  install-shlib-dep	:= install-shlib
-  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL		:= -G -z text
-  CFLAGS			+= $(CFLAGS_SL)
-endif
-
-ifeq ($(PORTNAME), univel)
-  install-shlib-dep	:= install-shlib
-  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL		:= -G -z text
-  CFLAGS			+= $(CFLAGS_SL)
-endif
-
-ifeq ($(PORTNAME), hpux)
-  install-shlib-dep	:= install-shlib
-  shlib				:= lib$(NAME)$(DLSUFFIX)
-  LDFLAGS_SL		:= -b
-  CFLAGS			+= $(CFLAGS_SL)
-endif
-
 OBJS= pgtcl.o pgtclCmds.o pgtclId.o
 
+SHLIB_LINK= -L../libpq -lpq
 
-all: lib$(NAME).a $(shlib)
+# Shared library stuff, also default 'all' target
+include $(SRCDIR)/Makefile.shlib
 
-lib$(NAME).a: $(OBJS)
-ifdef MK_NO_LORDER
-	$(AR) $(AROPT) lib$(NAME).a $(OBJS)
-else
-	$(AR) $(AROPT) lib$(NAME).a `lorder $(OBJS) | tsort`
-endif
-	$(RANLIB) lib$(NAME).a
 
-$(shlib): $(OBJS)
-	$(LD) $(LDFLAGS_SL) -o $@ $(OBJS) $(LIBPQ)
+.PHONY: install beforeinstall-headers install-headers
 
-.PHONY: beforeinstall-headers install-headers
-.PHONY: install install-libpgtcl install-shlib
-
-install: install-headers install-libpgtcl $(install-shlib-dep)
+install: install-headers install-lib $(install-shlib-dep)
 
 install-headers: beforeinstall-headers libpgtcl.h
 	$(INSTALL) $(INSTLOPTS) libpgtcl.h $(HEADERDIR)/libpgtcl.h
@@ -140,24 +43,14 @@ install-headers: beforeinstall-headers libpgtcl.h
 beforeinstall-headers:
 	@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
 
-install-libpgtcl: lib$(NAME).a
-	$(INSTALL) $(INSTL_LIB_OPTS) lib$(NAME).a $(LIBDIR)/lib$(NAME).a
-
-install-shlib: $(shlib)
-	$(INSTALL) $(INSTL_SHLIB_OPTS) $(shlib) $(LIBDIR)/$(shlib)
-	if [ "$(shlib)" != "lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)" ]; then \
-		cd $(LIBDIR); \
-		rm -f lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION); \
-		$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION); \
-	fi
-	if [ "$(shlib)" != "lib$(NAME)$(DLSUFFIX)" ]; then \
-		cd $(LIBDIR); \
-		rm -f lib$(NAME)$(DLSUFFIX); \
-		$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX); \
-	fi
 
 .PHONY: clean
 clean: 
 	rm -f $(OBJS) $(shlib) lib$(NAME).a
 
-dep depend:
+depend dep:
+	$(CC) -MM $(CFLAGS) *.c >depend
+
+ifeq (depend,$(wildcard depend))
+include depend
+endif

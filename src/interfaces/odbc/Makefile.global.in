@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/Makefile.global.in,v 1.3 1998/10/18 19:40:56 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/Makefile.global.in,v 1.4 1998/10/19 00:00:49 tgl Exp $
 #
 # NOTES
 #    This is derived from the main Postgres makefile.
@@ -130,6 +130,13 @@ CFLAGS_SL= @SHARED_LIB@
 LDFLAGS= @LDFLAGS@ @LIBS@
 DLSUFFIX= @DLSUFFIX@
 LN_S = @LN_S@
+
+##############################################################################
+#
+# Additional platform-specific settings
+#
+
+PORTNAME= @PORTNAME@
 
 ifneq ($(wildcard $(SRCDIR)/Makefile.port), )
   include $(SRCDIR)/Makefile.port

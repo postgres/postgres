@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.6 1998/10/18 19:40:56 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.7 1998/10/19 00:00:49 tgl Exp $
 #
 #-------------------------------------------------------------------------
 @SET_MAKE@
@@ -18,33 +18,13 @@ ODBCSRCDIR= @srcdir@
 include $(SRCDIR)/Makefile.global
 
 include Version.mk
-PORTNAME= @PORTNAME@
 
 FIND= @find@
 # assuming gnu tar and split here
 TAR= @tar@
 SPLIT= @split@
 
-# Shared library stuff
-shlib := 
-install-shlib-dep :=
-
-ifeq ($(PORTNAME), linux)
-  install-shlib-dep := install-shlib
-  shlib := lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL = -shared -soname lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL += -Bsymbolic $(LDFLAGS) -lc -lm
-  CFLAGS += $(CFLAGS_SL)
-endif
-
-ifeq ($(PORTNAME), bsd)
-  ifdef BSD_SHLIB
-    install-shlib-dep := install-shlib
-    shlib := lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-    LDFLAGS_SL = -x -Bshareable -Bforcearchive $(LDFLAGS)
-    CFLAGS += $(CFLAGS_SL)
-  endif
-endif
+CFLAGS += -I. @DEFS@
 
 SOURCES = *.c *.h *.in Config.mk \
 	TODO.txt Version.mk config.guess config.sub configure \
@@ -52,28 +32,21 @@ SOURCES = *.c *.h *.in Config.mk \
 	psqlodbc.def \
 	psqlodbc.rc readme.txt
 
-OBJECTS = info.o bind.o columninfo.o connection.o convert.o drvconn.o \
+OBJS = info.o bind.o columninfo.o connection.o convert.o drvconn.o \
         environ.o execute.o lobj.o misc.o options.o \
         pgtypes.o psqlodbc.o qresult.o results.o socket.o parse.o statement.o \
         gpps.o tuple.o tuplelist.o dlg_specific.o $(OBJX)
 
-CFLAGS += -I. @DEFS@
+SHLIB_LINK= $(LIBS)
 
-all: libpsqlodbc.a $(shlib)
+# Shared library stuff, also default 'all' target
+include $(SRCDIR)/Makefile.shlib
 
-libpsqlodbc.a: $(OBJECTS)
-	$(AR) $(AROPT) libpsqlodbc.a $(OBJECTS)
-	$(RANLIB) libpsqlodbc.a
 
-$(shlib): $(OBJECTS)
-	$(LD) $(LDFLAGS_SL) $(OBJECTS) \
-	-o $(shlib) $(LIBS)
-
-.PHONY: beforeinstall-headers install-headers
-.PHONY: install install-libpsqlodbc install-ini install-shlib
+.PHONY: install install-ini beforeinstall-headers install-headers
 
 install: $(HEADERDIR) $(LIBDIR) $(ODBCINST) install-headers \
-	install-libpsqlodbc install-ini $(install-shlib-dep)
+	install-ini install-lib $(install-shlib-dep)
 
 $(HEADERDIR) $(LIBDIR) $(ODBCINST):
 	mkdir -p $@
@@ -86,32 +59,13 @@ install-headers: beforeinstall-headers isql.h isqlext.h iodbc.h
 beforeinstall-headers:
 	@if [ ! -d $(HEADERDIR)/iodbc ]; then mkdir -p $(HEADERDIR)/iodbc; fi
 
-install-libpsqlodbc: libpsqlodbc.a
-	$(INSTALL) $(INSTL_LIB_OPTS) libpsqlodbc.a $(LIBDIR)/lib$(NAME).a
-
-install-shlib: $(shlib)
-	$(INSTALL) $(INSTL_SHLIB_OPTS) $(shlib) $(LIBDIR)/$(shlib)
-	if [ "$(shlib)" != "lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)" ]; then \
-		cd $(LIBDIR); \
-		rm -f lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION); \
-		$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION); \
-	fi
-	if [ "$(shlib)" != "lib$(NAME)$(DLSUFFIX)" ]; then \
-		cd $(LIBDIR); \
-		rm -f lib$(NAME)$(DLSUFFIX); \
-		$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX); \
-	fi
-
 install-ini: odbcinst.ini
-	$(INSTALL) $(INSTL_LIB_OPTS) odbcinst.ini $(ODBCINST)
-
-depend dep:
-	$(CC) -MM *.c >depend
+	$(INSTALL) $(INSTL_LIB_OPTS) odbcinst.ini $(ODBCINST)/odbcinst.ini
 
 .PHONY: clean
 
 clean:
-	-rm -f lib$(NAME).a $(shlib) $(OBJECTS) lib$(NAME)$(DLSUFFIX)
+	-rm -f lib$(NAME).a $(shlib) $(OBJS)
 
 .PHONY: distclean
 
@@ -141,3 +95,10 @@ integrated:
 	-rm -f psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION)-int.tar.gz
 	$(TAR) -cf psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION)-int.tar $(SOURCES)
 	gzip psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION)-int.tar
+
+depend dep:
+	$(CC) -MM $(CFLAGS) *.c >depend
+
+ifeq (depend,$(wildcard depend))
+include depend
+endif

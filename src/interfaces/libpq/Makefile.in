@@ -5,9 +5,8 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-#
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.39 1998/10/18 19:40:55 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.40 1998/10/19 00:00:43 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,8 +16,6 @@ SO_MINOR_VERSION= 0
 
 SRCDIR= @top_srcdir@
 include $(SRCDIR)/Makefile.global
-
-PORTNAME= @PORTNAME@
 
 CFLAGS+= -DFRONTEND
 
@@ -37,96 +34,9 @@ ifdef MULTIBYTE
 OBJS+= common.o wchar.o conv.o
 endif
 
-# Shared library stuff
-shlib := 
-install-shlib-dep :=
+# Shared library stuff, also default 'all' target
+include $(SRCDIR)/Makefile.shlib
 
-ifeq ($(PORTNAME), linux)
-  install-shlib-dep	:= install-shlib
-  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL		:= -shared -soname lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  CFLAGS			+= $(CFLAGS_SL)
-endif
-
-ifeq ($(PORTNAME), bsd)
-  ifdef BSD_SHLIB
-    install-shlib-dep	:= install-shlib
-    shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-    LDFLAGS_SL			:= -x -Bshareable -Bforcearchive
-    CFLAGS				+= $(CFLAGS_SL)
-  endif
-endif
-
-ifeq ($(PORTNAME), bsdi)
-  ifdef BSD_SHLIB
-    ifeq ($(DLSUFFIX), .so)
-      install-shlib-dep := install-shlib
-      shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-      LDFLAGS_SL		+= -shared
-      CFLAGS			+= $(CFLAGS_SL)
-    endif
-    ifeq ($(DLSUFFIX), .o)
-      install-shlib-dep	:= install-shlib
-      shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-      LD				:= shlicc
-      LDFLAGS_SL	 	+= -O -r
-      CFLAGS			+= $(CFLAGS_SL)
-    endif
-  endif
-endif
-
-ifeq ($(PORTNAME), solaris_sparc)
-  install-shlib-dep	:= install-shlib
-  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL		:= -G
-  CFLAGS			+= $(CFLAGS_SL)
-endif
-
-ifeq ($(PORTNAME), solaris_i386)
-  install-shlib-dep	:= install-shlib
-  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL		:= -G
-  CFLAGS			+= $(CFLAGS_SL)
-endif
-
-ifeq ($(PORTNAME), svr4)
-  install-shlib-dep	:= install-shlib
-  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL		:= -G
-  CFLAGS			+= $(CFLAGS_SL)
-endif
-
-ifeq ($(PORTNAME), unixware)
-  install-shlib-dep	:= install-shlib
-  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL		:= -G -z text
-  CFLAGS			+= $(CFLAGS_SL)
-endif
-
-ifeq ($(PORTNAME), univel)
-  install-shlib-dep	:= install-shlib
-  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL		:= -G -z text
-  CFLAGS			+= $(CFLAGS_SL)
-endif
-
-ifeq ($(PORTNAME), hpux)
-  install-shlib-dep	:= install-shlib
-  shlib				:= lib$(NAME).sl
-  LDFLAGS_SL		:= -b
-  CFLAGS			+= $(CFLAGS_SL)
-endif
-
-
-all: libpq.a $(shlib)
-
-libpq.a: $(OBJS)
-ifdef MK_NO_LORDER
-	$(AR) $(AROPT) libpq.a $(OBJS) 
-else
-	$(AR) $(AROPT) libpq.a `lorder $(OBJS) | tsort`
-endif
-	$(RANLIB) libpq.a
 
 # We need to compile this with special options for shared libs,
 # so we can't use the object in $(SRCDIR)/backend
@@ -154,14 +64,10 @@ fe-lobj.o: $(SRCDIR)/backend/fmgr.h
 $(SRCDIR)/backend/fmgr.h:
 	$(MAKE) -C $(SRCDIR)/backend fmgr.h
 
-$(shlib): $(OBJS)
-	$(LD) $(LDFLAGS_SL) -o $@ $(OBJS) 
 
+.PHONY: install beforeinstall-headers install-headers
 
-.PHONY: beforeinstall-headers install-headers
-.PHONY: install install-libpq install-shlib
-
-install: install-headers install-libpq $(install-shlib-dep)
+install: install-headers install-lib $(install-shlib-dep)
 
 # Many of the headers we install below have nothing to do with libpq,
 # so should be installed by someone else.
@@ -223,22 +129,6 @@ beforeinstall-headers:
 		then mkdir $(HEADERDIR)/executor; fi
 	@if [ ! -d $(HEADERDIR)/commands ]; \
 		then mkdir $(HEADERDIR)/commands; fi
-
-install-libpq: libpq.a
-	$(INSTALL) $(INSTL_LIB_OPTS) libpq.a $(LIBDIR)/libpq.a
-
-install-shlib: $(shlib)
-	$(INSTALL) $(INSTL_SHLIB_OPTS) $(shlib) $(LIBDIR)/$(shlib)
-	if [ "$(shlib)" != "lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)" ]; then \
-		cd $(LIBDIR); \
-		rm -f lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION); \
-		$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION); \
-	fi
-	if [ "$(shlib)" != "lib$(NAME)$(DLSUFFIX)" ]; then \
-		cd $(LIBDIR); \
-		rm -f lib$(NAME)$(DLSUFFIX); \
-		$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX); \
-	fi
 
 
 .PHONY: clean

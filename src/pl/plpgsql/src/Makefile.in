@@ -4,120 +4,40 @@
 #    Makefile for the plpgsql shared object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.9 1998/10/18 19:40:58 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.10 1998/10/19 00:00:51 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
-#
-# Tell make where the postgresql sources live
-#
-SRCDIR= ../../..
+NAME= plpgsql
+SO_MAJOR_VERSION= 1
+SO_MINOR_VERSION= 0
 
-#
-# Include the global and port specific Makefiles
-#
+SRCDIR= @top_srcdir@
 include $(SRCDIR)/Makefile.global
 
-PORTNAME=@PORTNAME@
-
 CFLAGS+= -I$(LIBPQDIR) -I$(SRCDIR)/include
-LFLAGS+= -i -l
 
 # For fmgr.h
 CFLAGS+= -I$(SRCDIR)/backend
 
-LDADD+= -L$(LIBPQDIR) -lpq
+LFLAGS+= -i -l
 
-ifeq ($(PORTNAME), linux)
-  CFLAGS		+= $(CFLAGS_SL)
-  LDFLAGS_SL		= -shared
-endif
+OBJS=	pl_parse.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o
 
-ifeq ($(PORTNAME), bsd)
-  ifdef BSD_SHLIB
-    LDFLAGS_SL		= -x -Bshareable -Bforcearchive
-    CFLAGS		+= $(CFLAGS_SL)
-  endif
-endif
+SHLIB_LINK= -L$(LIBPQDIR) -lpq
 
-ifeq ($(PORTNAME), bsdi)
-  ifdef BSD_SHLIB
-    ifeq ($(DLSUFFIX), .so)
-      LDFLAGS_SL	+= -shared
-      CFLAGS		+= $(CFLAGS_SL)
-    endif
-    ifeq ($(DLSUFFIX), .o)
-      LD		:= shlicc
-      LDFLAGS_SL	+= -O -r
-      CFLAGS		+= $(CFLAGS_SL)
-    endif
-  endif
-endif
+# Shared library stuff, also default 'all' target
+include $(SRCDIR)/Makefile.shlib
 
-ifeq ($(PORTNAME), solaris_sparc)
-  LDFLAGS_SL		:= -G
-  CFLAGS		+= $(CFLAGS_SL)
-endif
 
-ifeq ($(PORTNAME), solaris_i386)
-  LDFLAGS_SL		:= -G
-  CFLAGS		+= $(CFLAGS_SL)
-endif
+# In order to use Makefile.shlib, we allow it to build a static library
+# libplpgsql.a, which we just ignore, as well as a shared library that
+# it will insist on naming $(shlib).  We don't want to call it that when
+# installed, however, so we ignore the install-shlib rule and do this
+# instead:
 
-ifeq ($(PORTNAME), svr4)
-  LDFLAGS_SL		:= -G
-  CFLAGS		+= $(CFLAGS_SL)
-endif
-
-ifeq ($(PORTNAME), unixware)
-  LDFLAGS_SL		:= -G -z text
-  CFLAGS		+= $(CFLAGS_SL)
-endif
-
-ifeq ($(PORTNAME), univel)
-  LDFLAGS_SL		:= -G -z text
-  CFLAGS		+= $(CFLAGS_SL)
-endif
-
-ifeq ($(PORTNAME), hpux)
-  LDFLAGS_SL		:= -b
-  CFLAGS		+= $(CFLAGS_SL)
-endif
-
-#
-# DLOBJ is the dynamically-loaded object file.
-#
-DLOBJ= plpgsql$(DLSUFFIX)
-
-OBJS=	plpgsql.o
-
-PLOBJS=	pl_parse.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o
-
-ALL=	$(DLOBJ)
-
-#
-# Build the shared object
-#
-all: $(ALL)
-
-$(OBJS):	$(PLOBJS)
-	$(LD) -r -o $(OBJS) $(PLOBJS)
-
-$(DLOBJ):	$(OBJS)
-
-#
-# Clean 
-#
-clean:
-	rm -f $(ALL)
-	rm -f *.o y.tab.h pl.tab.h pl_gram.c gram.c pl_scan.c scan.c
-
-install: all
-	$(INSTALL) $(INSTL_SHLIB_OPTS) $(DLOBJ) $(DESTDIR)$(LIBDIR)/$(DLOBJ)
-
-$(DLOBJ):	$(OBJS)
-	$(LD) $(LDFLAGS_SL) -o $@ $(OBJS)
-
+install: $(shlib)
+	$(INSTALL) $(INSTL_SHLIB_OPTS) $(shlib) $(LIBDIR)/plpgsql$(DLSUFFIX)
 
 
 pl_handler.o:	pl_handler.c plpgsql.h pl.tab.h
@@ -143,3 +63,10 @@ gram.c:		gram.y
 scan.c:		scan.l
 
 pl.tab.h:	pl_gram.c
+
+
+.PHONY: clean
+
+clean:
+	rm -f lib$(NAME).a $(shlib)
+	rm -f *.o y.tab.h pl.tab.h pl_gram.c gram.c pl_scan.c scan.c
