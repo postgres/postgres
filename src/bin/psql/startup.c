@@ -177,15 +177,15 @@ main(int argc, char **argv)
 
 	if (!GetVariable(settings.vars, "quiet") && !settings.notty && !options.action)
 	{
-		puts("Welcome to psql, the PostgreSQL interactive terminal.\n\n");
+		puts("Welcome to psql, the PostgreSQL interactive terminal.\n");
 
 		//showVersion(&settings, false);
 
-		puts("Type \\copyright for distribution terms\n"
-			 "     \\h for help with SQL commands\n"
-			 "     \\? for help on internal slash commands\n"
-			 "     \\g or terminate with semicolon to execute query\n"
-			 "     \\q to quit\n");
+		puts("Type:  \\copyright for distribution terms\n"
+			 "       \\h for help with SQL commands\n"
+			 "       \\? for help on internal slash commands\n"
+			 "       \\g or terminate with semicolon to execute query\n"
+			 "       \\q to quit\n");
 	}
 
 	process_psqlrc(&settings);
