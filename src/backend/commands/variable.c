@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *	'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.22 1999/07/07 09:11:13 momjian Exp $
+ * $Id: variable.c,v 1.23 1999/07/07 09:36:45 momjian Exp $
  *
  */
 
@@ -43,7 +43,7 @@ static bool reset_XactIsoLevel(void);
 static bool parse_XactIsoLevel(const char *);
 
 extern Cost _cpu_page_weight_;
-extern Cost _cpu_index_page_wight_;
+extern Cost _cpu_index_page_weight_;
 extern bool _use_geqo_;
 extern int32 _use_geqo_rels_;
 extern bool _use_keyset_query_optimizer;
@@ -283,7 +283,7 @@ parse_cost_index(const char *value)
 	}
 
 	res = float4in((char *) value);
-	_cpu_index_page_wight_ = *res;
+	_cpu_index_page_weight_ = *res;
 
 	return TRUE;
 }
@@ -292,14 +292,14 @@ static bool
 show_cost_index()
 {
 
-	elog(NOTICE, "COST_INDEX is %f", _cpu_index_page_wight_);
+	elog(NOTICE, "COST_INDEX is %f", _cpu_index_page_weight_);
 	return TRUE;
 }
 
 static bool
 reset_cost_index()
 {
-	_cpu_index_page_wight_ = _CPU_INDEX_PAGE_WEIGHT_;
+	_cpu_index_page_weight_ = _CPU_INDEX_PAGE_WEIGHT_;
 	return TRUE;
 }
 
