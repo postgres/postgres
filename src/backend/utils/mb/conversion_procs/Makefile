@@ -4,7 +4,7 @@
 #    Makefile for utils/mb/conversion_procs
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.10 2003/11/29 19:52:02 pgsql Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.11 2004/01/21 19:22:19 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -147,6 +147,7 @@ all: $(SQLSCRIPT)
 	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit; done
 
 $(SQLSCRIPT): Makefile
+ifeq ($(enable_shared), yes)
 	@set $(CONVERSIONS) ; \
 	while [ "$$#" -gt 0 ] ; \
 	do \
@@ -160,6 +161,9 @@ $(SQLSCRIPT): Makefile
 		echo "DROP CONVERSION pg_catalog.$$name;"; \
 		echo "CREATE DEFAULT CONVERSION pg_catalog.$$name FOR '$$se' TO '$$de' FROM $$func;"; \
 	done > $@
+else
+	echo "-- No conversion support, for lack of shared library support" > $@
+endif
 
 $(REGRESSION_SCRIPT): Makefile
 	@cp regress_prolog $@; \
