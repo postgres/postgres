@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.12 2002/10/31 21:34:16 tgl Exp $
+$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.13 2003/02/18 03:33:50 momjian Exp $
 
 
 LOCKING OVERVIEW
@@ -48,7 +48,7 @@ The rest of this README file discusses the regular lock manager in detail.
 LOCK DATA STRUCTURES
 
 There are two fundamental lock structures: the per-lockable-object LOCK
-struct, and the per-lock-holder PROCLOCK struct.  A LOCK object exists
+struct, and the per-lock PROCLOCK struct.  A LOCK object exists
 for each lockable object that currently has locks held or requested on it.
 A PROCLOCK struct exists for each transaction that is holding or requesting
 lock(s) on each LOCK object.
