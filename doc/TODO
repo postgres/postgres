@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jan 26 15:35:31 EST 2001
+Last updated:		Fri Jan 26 15:58:49 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -49,6 +49,7 @@ MISC
 * -Modification  of  pg_class  can  happen while table in use by
   another backend.  Might  lead  to  MVCC  inside  of  syscache
 * Permission to DELETE table allows UPDATE also
+* SELECT cash_out(1) causes crash
 
 ENHANCEMENTS
 ------------
