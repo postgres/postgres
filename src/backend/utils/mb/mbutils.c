@@ -3,13 +3,14 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.29 2002/07/25 10:07:12 ishii Exp $
+ * $Id: mbutils.c,v 1.30 2002/08/08 06:35:26 ishii Exp $
  */
 #include "postgres.h"
 #include "access/xact.h"
 #include "miscadmin.h"
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
+#include "utils/memutils.h"
 #include "utils/syscache.h"
 #include "catalog/namespace.h"
 
@@ -22,13 +23,30 @@ static pg_enc2name *ClientEncoding = &pg_enc2name_tbl[PG_SQL_ASCII];
 static pg_enc2name *DatabaseEncoding = &pg_enc2name_tbl[PG_SQL_ASCII];
 
 /*
- * set the client encoding. if encoding conversion between
- * client/server encoding is not supported, returns -1
+ * Caches for conversion function info. Note that Fcinfo.flinfo is
+ * allocated in TopMemoryContext so that it survives outside
+ * transactions. See SetClientEncoding() for more details.
  */
+static 	FmgrInfo		*ToServerConvPorc = NULL;
+static 	FmgrInfo		*ToClientConvPorc = NULL;
+
+/* Internal functions */
+static unsigned char *
+perform_default_encoding_conversion(unsigned char *src, int len, bool is_client_to_server);
+
+/*
+ * Set the client encoding and save fmgrinfo for the converion
+ * function if necessary. if encoding conversion between client/server
+ * encoding is not supported, returns -1
+*/
 int
 SetClientEncoding(int encoding, bool doit)
 {
 	int			current_server_encoding;
+	Oid			to_server_proc, to_client_proc;
+	FmgrInfo	*to_server = NULL;
+	FmgrInfo	*to_client = NULL;
+	MemoryContext oldcontext;
 
 	current_server_encoding = GetDatabaseEncoding();
 
@@ -46,18 +64,35 @@ SetClientEncoding(int encoding, bool doit)
 	 * bootstrap or initprocessing mode since namespace functions will
 	 * not work.
 	 */
-	if (IsNormalProcessingMode())
+	if (IsTransactionState())
 	{
-		if (!OidIsValid(FindDefaultConversionProc(encoding, current_server_encoding)) ||
-			!OidIsValid(FindDefaultConversionProc(current_server_encoding, encoding)))
-			return (-1);
+		to_server_proc = FindDefaultConversionProc(encoding, current_server_encoding);
+		to_client_proc = FindDefaultConversionProc(current_server_encoding, encoding);
+
+		if (!OidIsValid(to_server_proc) || !OidIsValid(to_client_proc))
+			return -1;
+
+		/*
+		 * load the fmgr info into TopMemoryContext so that it
+		 * survives outside transaction.
+		 */
+		oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+		to_server = palloc(sizeof(FmgrInfo));
+		to_client = palloc(sizeof(FmgrInfo));
+		fmgr_info(to_server_proc, to_server);
+		fmgr_info(to_client_proc, to_client);
+		MemoryContextSwitchTo(oldcontext);
 	}
 
 	if (!doit)
 		return 0;
 
-	ClientEncoding = &pg_enc2name_tbl[encoding];
-
+	if (IsTransactionState())
+	{
+		ClientEncoding = &pg_enc2name_tbl[encoding];
+		ToServerConvPorc = to_server;
+		ToClientConvPorc = to_client;
+	}
 	return 0;
 }
 
@@ -95,7 +130,6 @@ pg_get_client_encoding_name(void)
  * (SJIS JIS X0201 half width kanna -> UTF-8 is the worst case).
  * So "4" should be enough for the moment.
  */
-
 unsigned char *
 pg_do_encoding_conversion(unsigned char *src, int len,
 						  int src_encoding, int dest_encoding)
@@ -231,8 +265,7 @@ pg_client_to_server(unsigned char *s, int len)
 	if (ClientEncoding->encoding == DatabaseEncoding->encoding)
 		return s;
 
-	return pg_do_encoding_conversion(s, len, ClientEncoding->encoding, 
-									 DatabaseEncoding->encoding);
+	return perform_default_encoding_conversion(s, len, true);
 }
 
 /*
@@ -247,8 +280,54 @@ pg_server_to_client(unsigned char *s, int len)
 	if (ClientEncoding->encoding == DatabaseEncoding->encoding)
 		return s;
 
-	return pg_do_encoding_conversion(s, len, DatabaseEncoding->encoding,
-									 ClientEncoding->encoding);
+	return perform_default_encoding_conversion(s, len, false);
+}
+
+/*
+ *  Perform default encoding conversion using cached FmgrInfo. Since
+ *  this function does not access database at all, it is safe to call
+ *  outside transactions. Explicit setting client encoding required
+ *  before calling this function. Otherwise no conversion is
+ *  performed.
+*/
+static unsigned char *
+perform_default_encoding_conversion(unsigned char *src, int len, bool is_client_to_server)
+{
+	unsigned char *result;
+	int src_encoding, dest_encoding;
+	FmgrInfo *flinfo;
+
+	if (is_client_to_server)
+	{
+		src_encoding = ClientEncoding->encoding;
+		dest_encoding = DatabaseEncoding->encoding;
+		flinfo = ToServerConvPorc;
+	}
+	else
+	{
+		src_encoding = DatabaseEncoding->encoding;
+		dest_encoding = ClientEncoding->encoding;
+		flinfo = ToClientConvPorc;
+	}
+
+	if (flinfo == NULL)
+		return src;
+
+	if (src_encoding == dest_encoding)
+		return src;
+
+	if (src_encoding == PG_SQL_ASCII || dest_encoding == PG_SQL_ASCII)
+		return src;
+
+	result = palloc(len * 4 + 1);
+
+	FunctionCall5(flinfo,
+				  Int32GetDatum(src_encoding),
+				  Int32GetDatum(dest_encoding),
+				  CStringGetDatum(src),
+				  CStringGetDatum(result),
+				  Int32GetDatum(len));
+	return result;
 }
 
 /* convert a multi-byte string to a wchar */
