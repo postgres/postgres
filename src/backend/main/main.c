@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.80 2004/05/19 18:58:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.81 2004/05/24 02:47:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,22 +278,20 @@ main(int argc, char *argv[])
 	}
 
 	/*
-	 * If the first argument is "-statBuf", then invoke pgstat_main. Note
-	 * we remove "-statBuf" from the arguments passed on to pgstat_main.
+	 * If the first argument is "-statBuf", then invoke pgstat_main. 
 	 */
 	if (argc > 1 && strcmp(argv[1], "-statBuf") == 0)
 	{
-		pgstat_main(argc - 2, argv + 2);
+		pgstat_main(argc , argv);
 		exit(0);
 	}
 
 	/*
-	 * If the first argument is "-statCol", then invoke pgstat_mainChild. Note
-	 * we remove "-statCol" from the arguments passed on to pgstat_mainChild.
+	 * If the first argument is "-statCol", then invoke pgstat_mainChild. 
 	 */
 	if (argc > 1 && strcmp(argv[1], "-statCol") == 0)
 	{
-		pgstat_mainChild(argc - 2, argv + 2);
+		pgstat_mainChild(argc, argv);
 		exit(0);
 	}
 #endif
