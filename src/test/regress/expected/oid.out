@@ -10,9 +10,9 @@ INSERT INTO OID_TBL(f1) VALUES ('99999999');
 INSERT INTO OID_TBL(f1) VALUES ('');
 -- bad inputs 
 INSERT INTO OID_TBL(f1) VALUES ('asdfasd');
-ERROR:  invalid input syntax for type "oid": "asdfasd"
+ERROR:  invalid input syntax for type oid: "asdfasd"
 INSERT INTO OID_TBL(f1) VALUES ('99asdfasd');
-ERROR:  invalid input syntax for type "oid": "99asdfasd"
+ERROR:  invalid input syntax for type oid: "99asdfasd"
 SELECT '' AS six, OID_TBL.*;
  six |     f1     
 -----+------------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.53 2003/11/29 19:51:59 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.54 2004/02/18 00:01:34 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,18 +46,18 @@ oidin_subr(const char *funcname, const char *s, char **endloc)
 	if (errno && errno != ERANGE && errno != EINVAL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type \"oid\": \"%s\"",
+				 errmsg("invalid input syntax for type oid: \"%s\"",
 						s)));
 	if (endptr == s && *endptr)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type \"oid\": \"%s\"",
+				 errmsg("invalid input syntax for type oid: \"%s\"",
 						s)));
 
 	if (errno == ERANGE)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("value \"%s\" is out of range for type \"oid\"", s)));
+				 errmsg("value \"%s\" is out of range for type oid", s)));
 
 	if (endloc)
 	{
@@ -72,7 +72,7 @@ oidin_subr(const char *funcname, const char *s, char **endloc)
 		if (*endptr)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for type \"oid\": \"%s\"",
+					 errmsg("invalid input syntax for type oid: \"%s\"",
 							s)));
 	}
 
@@ -95,7 +95,7 @@ oidin_subr(const char *funcname, const char *s, char **endloc)
 		cvt != (unsigned long) ((int) result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("value \"%s\" is out of range for type \"oid\"", s)));
+				 errmsg("value \"%s\" is out of range for type oid", s)));
 #endif
 
 	return result;
