@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.30 2003/04/19 00:02:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.31 2003/04/25 04:37:23 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -115,7 +115,7 @@ static DH  *load_dh_file(int keylength);
 static DH  *load_dh_buffer(const char *, size_t);
 static DH  *tmp_dh_cb(SSL *s, int is_export, int keylength);
 static int	verify_cb(int, X509_STORE_CTX *);
-static void info_cb(SSL *ssl, int type, int args);
+static void info_cb(const SSL *ssl, int type, int args);
 static int	initialize_SSL(void);
 static void destroy_SSL(void);
 static int	open_server_SSL(Port *);
@@ -547,7 +547,7 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
  *	into the PostgreSQL log.
  */
 static void
-info_cb(SSL *ssl, int type, int args)
+info_cb(const SSL *ssl, int type, int args)
 {
 	switch (type)
 	{
