@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.29 2003/03/25 16:15:38 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.30 2003/06/24 23:26:46 momjian Exp $
 -->
 
  <chapter id="tutorial-start">
@@ -254,6 +254,12 @@ createdb: database creation failed
     physically removes all files associated with the database and
     cannot be undone, so this should only be done with a great deal of
     forethought.
+   </para>
+
+   <para>
+    More about <command>createdb</command> and <command>dropdb</command> may
+    be found in <xref linkend="APP-CREATEDB"> and <xref linkend="APP-DROPDB">
+    respectively.
    </para>
   </sect1>
 
