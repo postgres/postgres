@@ -247,13 +247,22 @@ extern int	day_tab[2][13];
  || (((y) == UTIME_MAXYEAR) && (((m) < UTIME_MAXMONTH) \
   || (((m) == UTIME_MAXMONTH) && ((d) <= UTIME_MAXDAY))))))
 
-#ifdef HUGE_VAL
-#define DT_NOBEGIN              (-HUGE_VAL)
-#define DT_NOEND                (HUGE_VAL)
+#ifdef HAVE_INT64_TIMESTAMP
+
+#define DT_NOBEGIN		(-INT64CONST(0x7fffffffffffffff) - 1)
+#define DT_NOEND		(INT64CONST(0x7fffffffffffffff))
+
 #else
-#define DT_NOBEGIN              (-DBL_MAX)
-#define DT_NOEND                (DBL_MAX)
+
+#ifdef HUGE_VAL
+#define DT_NOBEGIN		(-HUGE_VAL)
+#define DT_NOEND		(HUGE_VAL)
+#else
+#define DT_NOBEGIN		(-DBL_MAX)
+#define DT_NOEND		(DBL_MAX)
 #endif
+
+#endif   /* HAVE_INT64_TIMESTAMP */
 
 #define TIMESTAMP_NOBEGIN(j)    do {j = DT_NOBEGIN;} while (0)
 #define TIMESTAMP_NOEND(j)          do {j = DT_NOEND;} while (0)
