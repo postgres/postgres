@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.14 2001/12/08 03:24:36 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.15 2002/01/04 18:58:46 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -57,7 +57,7 @@ PostgreSQL documentation
       <term>-t</term>
       <listitem>
        <para>
-	Turn off auto-transaction mode.
+	Turn on auto-transaction mode.
        </para>
       </listitem>
      </varlistentry>
