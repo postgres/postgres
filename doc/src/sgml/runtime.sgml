@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.87 2001/09/30 20:16:21 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.88 2001/10/01 22:44:31 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -565,7 +565,7 @@ env PGOPTIONS='-c geqo=off' psql
 	the disk cache (that is, the portion of the kernel's disk
 	cache that will be used for
 	<productname>Postgres</productname> data files). This is
-	measured in disk pages, which are normally 8kB apiece.
+	measured in disk pages, which are normally 8 kB apiece.
        </para>
       </listitem>
      </varlistentry>
@@ -1811,7 +1811,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <row>
        <entry><varname>SHMMAX</></>
        <entry>Maximum size of shared memory segment (bytes)</>
-       <entry>250 kB + 8.2kB * <varname>shared_buffers</> + 14.2kB * <varname>max_connections</> or infinity</entry>
+       <entry>250kB + 8.2kB * <varname>shared_buffers</> + 14.2kB * <varname>max_connections</> or infinity</entry>
       </row>
 
       <row>
@@ -1886,7 +1886,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
     (You can therefore, as a temporary solution, lower these settings
     to get rid of the failures.) As a rough approximation you can
     estimate the required segment size as the number of buffers times
-    the block size (8192 kB by default) plus ample overhead (at least
+    the block size (8 kB by default) plus ample overhead (at least
     half a megabyte). Any error message you might get will contain the
     size of the failed allocation request.
    </para>
