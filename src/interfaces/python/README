@@ -86,11 +86,11 @@ version of PyGreSQL works with PostgreSQL 6.5 and Python 1.5.2.
 1.3. Installation
 -----------------
 
-* If you are on NetBSD, look in the packages directory under databases. If
-  it isn't there yet, it should be there shortly.  You can also pick up the
-  package files from ftp://ftp.druid.net/pub/distrib/pygresql.pkg.tgz.
-  There is also a package in the FreeBSD ports collection but as I write
-  this it is at version 2.1.  I will try to get that updated as well.
+* If you are building this from source on most systems you can simply add
+  the flag "--with-python" to the Configure command when building PostgreSQL.
+  This will cause PyGreSQL to be built at the same time.  For this to work
+  you must already have built Python as well as the mxDateTime package
+  from http://starship.python.net/~lemburg/mxDateTime.html.
 
 * For Linux installation look at README.linux.  If you're on an x86 system 
   that uses RPMs, then you can pick up an RPM at 
@@ -208,7 +208,8 @@ The home sites of the different packages are:
 A Linux RPM can be picked up from
 ftp://ftp.druid.net/pub/distrib/pygresql.i386.rpm.  A NetBSD package thould
 be in the distribution soon and is available at
-ftp://ftp.druid.net/pub/distrib/pygresql.pkg.tgz.
+ftp://ftp.druid.net/pub/distrib/pygresql.pkg.tgz.  A WIN32 package is
+available at http://highqualdev.com/.
 
 1.5. Information and support
 ----------------------------
