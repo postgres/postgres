@@ -4,7 +4,7 @@
  * Revisions by Christopher B. Browne, Liberty RMS
  * Win32 Service code added by Dave Page
  *
- * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.29 2005/01/26 22:25:13 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.30 2005/04/03 00:01:51 tgl Exp $
  */
 
 #include "postgres_fe.h"
@@ -18,6 +18,8 @@
 #ifdef WIN32
 #include <windows.h>
 #endif
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "pg_autovacuum.h"
 
@@ -186,13 +188,13 @@ log_entry(const char *logentry, int level)
  * Function used to detach the pg_autovacuum daemon from the tty and go into
  * the background.
  *
- * This code is mostly ripped directly from pm_dameonize in postmaster.c with
- * unneeded code removed.
+ * This code is ripped directly from pmdaemonize in postmaster.c.
  */
 #ifndef WIN32
 static void
 daemonize(void)
 {
+	int			i;
 	pid_t		pid;
 
 	pid = fork();
@@ -209,7 +211,8 @@ daemonize(void)
 	}
 
 /* GH: If there's no setsid(), we hopefully don't need silent mode.
- * Until there's a better solution.  */
+ * Until there's a better solution.
+ */
 #ifdef HAVE_SETSID
 	if (setsid() < 0)
 	{
@@ -218,7 +221,11 @@ daemonize(void)
 		_exit(1);
 	}
 #endif
-
+	i = open(NULL_DEV, O_RDWR);
+	dup2(i, 0);
+	dup2(i, 1);
+	dup2(i, 2);
+	close(i);
 }
 #endif   /* WIN32 */
 
