@@ -10,7 +10,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.1 2000/04/26 05:39:32 peter Exp $
+ * $Id: Connection.java,v 1.2 2000/06/06 07:24:06 peter Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -320,8 +320,10 @@ public abstract class Connection
 		int update_count = 1;
 	    SQLException final_error = null;
 	    
-	    if (sql.length() > 8192)
-		throw new PSQLException("postgresql.con.toolong",sql);
+	    // Commented out as the backend can now handle queries
+	    // larger than 8K. Peter June 6 2000
+	    //if (sql.length() > 8192)
+	    //throw new PSQLException("postgresql.con.toolong",sql);
 	    try
 		{
 		    pg_stream.SendChar('Q');
