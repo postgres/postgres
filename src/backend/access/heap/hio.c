@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.26 1999/07/19 07:07:18 momjian Exp $
+ *	  $Id: hio.c,v 1.27 1999/11/29 04:34:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,10 +107,20 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 	ItemId		itemId;
 	Item		item;
 
+	len = (unsigned) MAXALIGN(tuple->t_len); /* be conservative */
+
 	/*
-	 * Lock relation for extention. We can use LockPage here as long as in
+	 * If we're gonna fail for oversize tuple, do it right away...
+	 * this code should go away eventually.
+	 */
+	if (len > MaxTupleSize)
+		elog(ERROR, "Tuple is too big: size %d, max size %d",
+			 len, MaxTupleSize);
+
+	/*
+	 * Lock relation for extension. We can use LockPage here as long as in
 	 * all other places we use page-level locking for indices only.
-	 * Alternatevely, we could define pseudo-table as we do for
+	 * Alternatively, we could define pseudo-table as we do for
 	 * transactions with XactLockTable.
 	 */
 	if (!relation->rd_myxactonly)
@@ -122,17 +132,17 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 	 * relation.  A good optimization would be to get this to actually
 	 * work properly.
 	 */
-
 	lastblock = RelationGetNumberOfBlocks(relation);
 
+	/*
+	 * Get the last existing page --- may need to create the first one
+	 * if this is a virgin relation.
+	 */
 	if (lastblock == 0)
 	{
+		/* what exactly is this all about??? */
 		buffer = ReadBuffer(relation, lastblock);
 		pageHeader = (Page) BufferGetPage(buffer);
-
-		/*
-		 * There was IF instead of ASSERT here ?!
-		 */
 		Assert(PageIsNew((PageHeader) pageHeader));
 		buffer = ReleaseAndReadBuffer(buffer, relation, P_NEW);
 		pageHeader = (Page) BufferGetPage(buffer);
@@ -143,13 +153,10 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 	pageHeader = (Page) BufferGetPage(buffer);
-	len = (unsigned) MAXALIGN(tuple->t_len); /* be conservative */
 
 	/*
-	 * Note that this is true if the above returned a bogus page, which it
-	 * will do for a completely empty relation.
+	 * Is there room on the last existing page?
 	 */
-
 	if (len > PageGetFreeSpace(pageHeader))
 	{
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
@@ -159,11 +166,17 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 		PageInit(pageHeader, BufferGetPageSize(buffer), 0);
 
 		if (len > PageGetFreeSpace(pageHeader))
+		{
+			/*
+			 * BUG: by elog'ing here, we leave the new buffer locked and not
+			 * marked dirty, which may result in an invalid page header
+			 * being left on disk.  But we should not get here given the
+			 * test at the top of the routine, and the whole deal should
+			 * go away when we implement tuple splitting anyway...
+			 */
 			elog(ERROR, "Tuple is too big: size %d", len);
+		}
 	}
-
-	if (len > MaxTupleSize)
-		elog(ERROR, "Tuple is too big: size %d, max size %d", len, MaxTupleSize);
 
 	if (!relation->rd_myxactonly)
 		UnlockPage(relation, 0, ExclusiveLock);
@@ -178,7 +191,7 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 
 	ItemPointerSet(&((HeapTupleHeader) item)->t_ctid, lastblock, offnum);
 
-	/* return an accurate tuple */
+	/* return an accurate tuple self-pointer */
 	ItemPointerSet(&tuple->t_self, lastblock, offnum);
 
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
