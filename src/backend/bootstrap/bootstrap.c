@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.171 2003/12/20 17:31:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.172 2003/12/25 03:52:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,11 @@
 
 #define ALLOC(t, c)		((t *) calloc((unsigned)(c), sizeof(t)))
 
+#ifdef EXEC_BACKEND
+typedef struct Port Port;
+extern void SSDataBaseInit(int);
+extern void read_backend_variables(pid_t, Port*);
+#endif
 
 extern int	Int_yyparse(void);
 static hashnode *AddStr(char *str, int strlength, int mderef);
@@ -238,7 +243,7 @@ BootstrapMain(int argc, char *argv[])
 	 *
 	 * If we are running under the postmaster, this is done already.
 	 */
-	if (!IsUnderPostmaster /* when exec || ExecBackend */ )
+	if (!IsUnderPostmaster || ExecBackend)
 		MemoryContextInit();
 
 	/*
@@ -247,7 +252,7 @@ BootstrapMain(int argc, char *argv[])
 
 	/* Set defaults, to be overriden by explicit options below */
 	dbname = NULL;
-	if (!IsUnderPostmaster /* when exec || ExecBackend */ )
+	if (!IsUnderPostmaster)
 	{
 		InitializeGUCOptions();
 		potential_DataDir = getenv("PGDATA");	/* Null if no PGDATA
@@ -285,24 +290,11 @@ BootstrapMain(int argc, char *argv[])
 				xlogop = atoi(optarg);
 				break;
 			case 'p':
-				{
-					/* indicates fork from postmaster */
 #ifdef EXEC_BACKEND
-					char	   *p;
-
-					sscanf(optarg, "%lu,%p,",
-						   &UsedShmemSegID,
-						   &UsedShmemSegAddr);
-					p = strchr(optarg, ',');
-					if (p)
-						p = strchr(p + 1, ',');
-					if (p)
-						dbname = strdup(p + 1);
-#else
-					dbname = strdup(optarg);
+				IsUnderPostmaster = true;
 #endif
+				dbname = strdup(optarg);
 					break;
-				}
 			case 'B':
 				SetConfigOption("shared_buffers", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
@@ -347,12 +339,7 @@ BootstrapMain(int argc, char *argv[])
 	if (!dbname || argc != optind)
 		usage();
 
-#ifdef EXEC_BACKEND
-	if (IsUnderPostmaster && MyProc /* ordinary backend */ )
-		AttachSharedMemoryAndSemaphores();
-#endif
-
-	if (!IsUnderPostmaster /* when exec || ExecBackend */ )
+	if (!IsUnderPostmaster || ExecBackend)
 	{
 		if (!potential_DataDir)
 		{
@@ -376,6 +363,9 @@ BootstrapMain(int argc, char *argv[])
 	{
 #ifdef EXEC_BACKEND
 		read_nondefault_variables();
+		read_backend_variables(getpid(),NULL);
+
+		SSDataBaseInit(xlogop);
 #endif
 	}
 	else
@@ -427,6 +417,10 @@ BootstrapMain(int argc, char *argv[])
 	SetProcessingMode(BootstrapProcessing);
 	IgnoreSystemIndexes(true);
 
+#ifdef EXEC_BACKEND
+	if (IsUnderPostmaster)
+		AttachSharedMemoryAndSemaphores();
+#endif
 	XLOGPathInit();
 
 	BaseInit();

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.68 2003/12/23 00:34:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.69 2003/12/25 03:52:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@
 #include "tcop/tcopprot.h"
 #include "utils/help_config.h"
 #include "utils/ps_status.h"
+#include "pgstat.h"
 
 
 
@@ -202,9 +203,9 @@ main(int argc, char *argv[])
 
 	/*
 	 * Now dispatch to one of PostmasterMain, PostgresMain, GucInfoMain,
-	 * or BootstrapMain depending on the program name (and possibly first
-	 * argument) we were called with.  The lack of consistency here is
-	 * historical.
+	 * pgstat_main, pgstat_mainChild or BootstrapMain depending on the
+	 * program name (and possibly first argument) we were called with.
+	 * The lack of consistency here is historical.
 	 */
 	len = strlen(new_argv[0]);
 
@@ -220,6 +221,28 @@ main(int argc, char *argv[])
 	 */
 	if (argc > 1 && strcmp(new_argv[1], "-boot") == 0)
 		exit(BootstrapMain(argc - 1, new_argv + 1));
+
+#ifdef EXEC_BACKEND
+	/*
+	 * If the first argument is "-statBuf", then invoke pgstat_main. Note
+	 * we remove "-statBuf" from the arguments passed on to pgstat_main.
+	 */
+	if (argc > 1 && strcmp(new_argv[1], "-statBuf") == 0)
+	{
+		pgstat_main(argc - 2, new_argv + 2);
+		exit(0);
+	}
+
+	/*
+	 * If the first argument is "-statCol", then invoke pgstat_mainChild. Note
+	 * we remove "-statCol" from the arguments passed on to pgstat_mainChild.
+	 */
+	if (argc > 1 && strcmp(new_argv[1], "-statCol") == 0)
+	{
+		pgstat_mainChild(argc - 2, new_argv + 2);
+		exit(0);
+	}
+#endif
 
 	/*
 	 * If the first argument is "--describe-config", then invoke runtime

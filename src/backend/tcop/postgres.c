@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.380 2003/12/20 17:31:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.381 2003/12/25 03:52:51 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2063,7 +2063,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 *
 	 * If we are running under the postmaster, this is done already.
 	 */
-	if (!IsUnderPostmaster /* when exec || ExecBackend */)
+	if (!IsUnderPostmaster || ExecBackend)
 		MemoryContextInit();
 
 	set_ps_display("startup");
@@ -2076,7 +2076,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	Noversion = false;
 	EchoQuery = false;
 
-	if (!IsUnderPostmaster /* when exec || ExecBackend */ )
+	if (!IsUnderPostmaster)
 	{
 		InitializeGUCOptions();
 		potential_DataDir = getenv("PGDATA");

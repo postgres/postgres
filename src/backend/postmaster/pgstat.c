@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.49 2003/12/20 17:31:21 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.50 2003/12/25 03:52:51 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -106,7 +106,13 @@ static char pgStat_fname[MAXPGPATH];
  * Local function forward declarations
  * ----------
  */
-static void pgstat_main(void);
+#ifdef EXEC_BACKEND
+static void pgstat_exec(STATS_PROCESS_TYPE procType);
+static void pgstat_parseArgs(PGSTAT_FORK_ARGS);
+#endif
+NON_EXEC_STATIC void pgstat_main(PGSTAT_FORK_ARGS);
+NON_EXEC_STATIC void pgstat_mainChild(PGSTAT_FORK_ARGS);
+static void pgstat_mainInit(void);
 static void pgstat_recvbuffer(void);
 static void pgstat_die(SIGNAL_ARGS);
 
@@ -328,6 +334,89 @@ startup_failed:
 }
 
 
+#ifdef EXEC_BACKEND
+
+/* ----------
+ * pgstat_exec() -
+ *
+ * Used to format up the arglist for, and exec, statistics
+ * (buffer and collector) processes
+ *
+ */
+static void
+pgstat_exec(STATS_PROCESS_TYPE procType)
+{
+	char *av[11];
+	int ac = 0, bufc = 0, i;
+	char pgstatBuf[8][MAXPGPATH];
+
+	av[ac++] = "postgres";
+	switch (procType)
+	{
+		case STAT_PROC_BUFFER:
+			av[ac++] = "-statBuf";
+			break;
+
+		case STAT_PROC_COLLECTOR:
+			av[ac++] = "-statCol";
+			break;
+
+		default:
+			Assert(false);
+	}
+
+	/* Sockets + pipes */
+	bufc = 0;
+	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",pgStatSock);
+	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",pgStatPmPipe[0]);
+	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",pgStatPmPipe[1]);
+	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",pgStatPipe[0]);
+	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",pgStatPipe[1]);
+
+	/* + the pstat file names, and postgres pathname */
+	/* FIXME: [fork/exec] whitespaces in directories? */
+	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%s",pgStat_tmpfname);
+	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%s",pgStat_fname);
+	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%s",pg_pathname);
+
+	/* Add to the arg list */
+	Assert(bufc <= lengthof(pgstatBuf));
+	for (i = 0; i < bufc; i++)
+		av[ac++] = pgstatBuf[i];
+
+	av[ac++] = NULL;
+	Assert(ac <= lengthof(av));
+
+	if (execv(pg_pathname,av) == -1)
+		/* FIXME: [fork/exec] suggestions for what to do here? Can't call elog... */
+		Assert(false);
+}
+
+
+/* ----------
+ * pgstat_parseArgs() -
+ *
+ * Used to unformat the arglist for exec'ed statistics
+ * (buffer and collector) processes
+ *
+ */
+static void
+pgstat_parseArgs(PGSTAT_FORK_ARGS)
+{
+	Assert(argc == 8);
+	argc = 0;
+	pgStatSock 		= atoi(argv[argc++]);
+	pgStatPmPipe[0]	= atoi(argv[argc++]);
+	pgStatPmPipe[1]	= atoi(argv[argc++]);
+	pgStatPipe[0]	= atoi(argv[argc++]);
+	pgStatPipe[1]	= atoi(argv[argc++]);
+	strncpy(pgStat_tmpfname,argv[argc++],MAXPGPATH);
+	strncpy(pgStat_fname,	argv[argc++],MAXPGPATH);
+	strncpy(pg_pathname,	argv[argc++],MAXPGPATH);
+}
+
+#endif
+
 /* ----------
  * pgstat_start() -
  *
@@ -416,22 +505,17 @@ pgstat_start(void)
 	beos_backend_startup();
 #endif
 
-	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
-
-	MyProcPid = getpid();		/* reset MyProcPid */
-
-	/* Lose the postmaster's on-exit routines */
-	on_exit_reset();
-
 	/* Close the postmaster's sockets, except for pgstat link */
 	ClosePostmasterPorts(false);
 
 	/* Drop our connection to postmaster's shared memory, as well */
 	PGSharedMemoryDetach();
 
+#ifdef EXEC_BACKEND
+	pgstat_exec(STAT_PROC_BUFFER);
+#else
 	pgstat_main();
-
-	exit(0);
+#endif
 }
 
 
@@ -1228,35 +1312,15 @@ pgstat_send(void *msg, int len)
  *------------------------------------------------------------
  */
 
-
-/* ----------
- * pgstat_main() -
- *
- *	Start up the statistics collector itself.  This is the body of the
- *	postmaster child process.
- * ----------
- */
 static void
-pgstat_main(void)
+pgstat_mainInit(void)
 {
-	PgStat_Msg	msg;
-	fd_set		rfds;
-	int			readPipe;
-	int			pmPipe = pgStatPmPipe[0];
-	int			maxfd;
-	int			nready;
-	int			len = 0;
-	struct timeval timeout;
-	struct timeval next_statwrite;
-	bool		need_statwrite;
-	HASHCTL		hash_ctl;
+	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
-	/*
-	 * Close the writing end of the postmaster pipe, so we'll see it
-	 * closing when the postmaster terminates and can terminate as well.
-	 */
-	closesocket(pgStatPmPipe[1]);
-	pgStatPmPipe[1] = -1;
+	MyProcPid = getpid();		/* reset MyProcPid */
+
+	/* Lose the postmaster's on-exit routines */
+	on_exit_reset();
 
 	/*
 	 * Ignore all signals usually bound to some action in the postmaster,
@@ -1275,6 +1339,31 @@ pgstat_main(void)
 	pqsignal(SIGTTOU, SIG_DFL);
 	pqsignal(SIGCONT, SIG_DFL);
 	pqsignal(SIGWINCH, SIG_DFL);
+}
+
+
+/* ----------
+ * pgstat_main() -
+ *
+ *	Start up the statistics collector itself.  This is the body of the
+ *	postmaster child process.
+ * ----------
+ */
+NON_EXEC_STATIC void
+pgstat_main(PGSTAT_FORK_ARGS)
+{
+	pgstat_mainInit(); /* Note: for *both* EXEC_BACKEND and regular cases */
+
+#ifdef EXEC_BACKEND
+	pgstat_parseArgs(argc,argv);
+#endif
+
+	/*
+	 * Close the writing end of the postmaster pipe, so we'll see it
+	 * closing when the postmaster terminates and can terminate as well.
+	 */
+	closesocket(pgStatPmPipe[1]);
+	pgStatPmPipe[1] = -1;
 
 	/*
 	 * Start a buffering process to read from the socket, so we have a
@@ -1305,9 +1394,12 @@ pgstat_main(void)
 
 		case 0:
 			/* child becomes collector process */
-			closesocket(pgStatPipe[1]);
-			closesocket(pgStatSock);
-			break;
+#ifdef EXEC_BACKEND
+			pgstat_exec(STAT_PROC_COLLECTOR);
+#else
+			pgstat_mainChild();
+#endif
+			exit(0);
 
 		default:
 			/* parent becomes buffer process */
@@ -1315,14 +1407,42 @@ pgstat_main(void)
 			pgstat_recvbuffer();
 			exit(0);
 	}
+}
+
+
+NON_EXEC_STATIC void
+pgstat_mainChild(PGSTAT_FORK_ARGS)
+{
+	PgStat_Msg	msg;
+	fd_set		rfds;
+	int			readPipe;
+	int			pmPipe;
+	int			maxfd;
+	int			nready;
+	int			len = 0;
+	struct timeval timeout;
+	struct timeval next_statwrite;
+	bool		need_statwrite;
+	HASHCTL		hash_ctl;
+
+#ifdef EXEC_BACKEND
+	MemoryContextInit(); /* before any elog'ing can occur */
+
+	pgstat_mainInit();
+	pgstat_parseArgs(argc,argv);
+#else
+	MyProcPid = getpid();		/* reset MyProcPid */
+#endif
+
+	closesocket(pgStatPipe[1]);
+	closesocket(pgStatSock);
+	pmPipe = pgStatPmPipe[0];
 
 	/*
 	 * In the child we can have default SIGCHLD handling (in case we want
 	 * to call system() here...)
 	 */
 	pqsignal(SIGCHLD, SIG_DFL);
-
-	MyProcPid = getpid();		/* reset MyProcPid */
 
 	/*
 	 * Identify myself via ps

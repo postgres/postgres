@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.352 2003/12/20 17:31:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.353 2003/12/25 03:52:51 momjian Exp $
  *
  * NOTES
  *
@@ -289,6 +289,7 @@ static void RandomSalt(char *cryptSalt, char *md5Salt);
 static void SignalChildren(int signal);
 static int	CountChildren(void);
 static bool CreateOptsFile(int argc, char *argv[]);
+NON_EXEC_STATIC void SSDataBaseInit(int xlop);
 static pid_t SSDataBase(int xlop);
 static void
 postmaster_error(const char *fmt,...)
@@ -296,8 +297,8 @@ postmaster_error(const char *fmt,...)
 __attribute__((format(printf, 1, 2)));
 
 #ifdef EXEC_BACKEND
-static void
-write_backend_variables(pid_t pid, Port *port);
+void read_backend_variables(pid_t pid, Port *port);
+static void write_backend_variables(pid_t pid, Port *port);
 #endif
 
 #define StartupDataBase()		SSDataBase(BS_XLOG_STARTUP)
@@ -2848,9 +2849,46 @@ CountChildren(void)
 /*
  * Fire off a subprocess for startup/shutdown/checkpoint.
  *
- * Return value is subprocess' PID, or 0 if failed to start subprocess
+ * Return value of SSDataBase is subprocess' PID, or 0 if failed to start subprocess
  * (0 is returned only for checkpoint case).
  */
+NON_EXEC_STATIC void
+SSDataBaseInit(int xlop)
+{
+	const char *statmsg;
+
+	IsUnderPostmaster = true;		/* we are a postmaster subprocess
+									 * now */
+
+	/* Lose the postmaster's on-exit routines and port connections */
+	on_exit_reset();
+
+	/*
+	 * Identify myself via ps
+	 */
+	switch (xlop)
+	{
+		case BS_XLOG_STARTUP:
+			statmsg = "startup subprocess";
+			break;
+		case BS_XLOG_CHECKPOINT:
+			statmsg = "checkpoint subprocess";
+			break;
+		case BS_XLOG_BGWRITER:
+			statmsg = "bgwriter subprocess";
+			break;
+		case BS_XLOG_SHUTDOWN:
+			statmsg = "shutdown subprocess";
+			break;
+		default:
+			statmsg = "??? subprocess";
+			break;
+	}
+	init_ps_display(statmsg, "", "");
+	set_ps_display("");
+}
+
+
 static pid_t
 SSDataBase(int xlop)
 {
@@ -2876,15 +2914,10 @@ SSDataBase(int xlop)
 
 	if ((pid = fork()) == 0)	/* child */
 	{
-		const char *statmsg;
 		char	   *av[10];
 		int			ac = 0;
 		char		nbbuf[32];
 		char		xlbuf[32];
-
-#ifdef EXEC_BACKEND
-		char		pbuf[NAMEDATALEN + 256];
-#endif
 
 #ifdef LINUX_PROFILE
 		setitimer(ITIMER_PROF, &prof_itimer, NULL);
@@ -2895,41 +2928,19 @@ SSDataBase(int xlop)
 		beos_backend_startup();
 #endif
 
-		IsUnderPostmaster = true;		/* we are a postmaster subprocess
-										 * now */
-
-		/* Lose the postmaster's on-exit routines and port connections */
-		on_exit_reset();
-
 		/* Close the postmaster's sockets */
 		ClosePostmasterPorts(true);
 
-		/*
-		 * Identify myself via ps
-		 */
-		switch (xlop)
-		{
-			case BS_XLOG_STARTUP:
-				statmsg = "startup subprocess";
-				break;
-			case BS_XLOG_CHECKPOINT:
-				statmsg = "checkpoint subprocess";
-				break;
-			case BS_XLOG_BGWRITER:
-				statmsg = "bgwriter subprocess";
-				break;
-			case BS_XLOG_SHUTDOWN:
-				statmsg = "shutdown subprocess";
-				break;
-			default:
-				statmsg = "??? subprocess";
-				break;
-		}
-		init_ps_display(statmsg, "", "");
-		set_ps_display("");
+#ifndef EXEC_BACKEND
+		SSDataBaseInit(xlop);
+#endif
 
 		/* Set up command-line arguments for subprocess */
 		av[ac++] = "postgres";
+
+#ifdef EXEC_BACKEND
+		av[ac++] = "-boot";
+#endif
 
 		snprintf(nbbuf, sizeof(nbbuf), "-B%d", NBuffers);
 		av[ac++] = nbbuf;
@@ -2937,23 +2948,27 @@ SSDataBase(int xlop)
 		snprintf(xlbuf, sizeof(xlbuf), "-x%d", xlop);
 		av[ac++] = xlbuf;
 
-		av[ac++] = "-p";
 #ifdef EXEC_BACKEND
-		Assert(UsedShmemSegID != 0 && UsedShmemSegAddr != NULL);
-		/* database name at the end because it might contain commas */
-		snprintf(pbuf, sizeof(pbuf), "%lu,%p,%s",
-				 UsedShmemSegID, UsedShmemSegAddr, "template1");
-		av[ac++] = pbuf;
-#else
-		av[ac++] = "template1";
+		write_backend_variables(getpid(),NULL);
+
+		/* pass data dir before end of secure switches (-p) */
+		av[ac++] = "-D";
+		av[ac++] = DataDir;
 #endif
+		av[ac++] = "-p";
+		av[ac++] = "template1";
 
 		av[ac] = (char *) NULL;
 
 		Assert(ac < lengthof(av));
 
+#ifdef EXEC_BACKEND
+		if (execv(pg_pathname,av) == -1)
+			elog(FATAL,"unable to execv in SSDataBase: %m");
+#else
 		BootstrapMain(ac, av);
 		ExitPostmaster(0);
+#endif
 	}
 
 	/* in parent */
@@ -3107,17 +3122,17 @@ extern slock_t  *ProcStructLock;
 extern int	pgStatSock;
 
 #define write_var(var,fp) fwrite((void*)&(var),sizeof(var),1,fp)
-#define read_var(var,fp)  fread((void*)&(var),sizeof(var),1,fp);
+#define read_var(var,fp)  fread((void*)&(var),sizeof(var),1,fp)
 #define get_tmp_backend_file_name(buf,id)	\
-		do {								\
-			Assert(DataDir);				\
-			sprintf((buf),					\
-				"%s/%s/%s.backend_var.%d",	\
-				DataDir,					\
-				PG_TEMP_FILES_DIR,			\
-				PG_TEMP_FILE_PREFIX,		\
-				(id));						\
-		} while (0)
+do {								\
+	Assert(DataDir);				\
+	sprintf((buf),					\
+		"%s/%s/%s.backend_var.%d",	\
+		DataDir,					\
+		PG_TEMP_FILES_DIR,			\
+		PG_TEMP_FILE_PREFIX,		\
+		(id));						\
+} while (0)
 
 static void
 write_backend_variables(pid_t pid, Port *port)
@@ -3146,11 +3161,16 @@ write_backend_variables(pid_t pid, Port *port)
 	}
 
 	/* Write vars */
-	write_var(port->sock,fp);
-	write_var(port->proto,fp);
-	write_var(port->laddr,fp);
-	write_var(port->raddr,fp);
-	write_var(port->canAcceptConnections,fp);
+	if (port)
+	{
+		write_var(port->sock,fp);
+		write_var(port->proto,fp);
+		write_var(port->laddr,fp);
+		write_var(port->raddr,fp);
+		write_var(port->canAcceptConnections,fp);
+		write_var(port->cryptSalt,fp);
+		write_var(port->md5Salt,fp);
+	}
 	write_var(MyCancelKey,fp);
 
 	write_var(RedoRecPtr,fp);
@@ -3190,11 +3210,16 @@ read_backend_variables(pid_t pid, Port *port)
 	}
 
 	/* Read vars */
-	read_var(port->sock,fp);
-	read_var(port->proto,fp);
-	read_var(port->laddr,fp);
-	read_var(port->raddr,fp);
-	read_var(port->canAcceptConnections,fp);
+	if (port)
+	{
+		read_var(port->sock,fp);
+		read_var(port->proto,fp);
+		read_var(port->laddr,fp);
+		read_var(port->raddr,fp);
+		read_var(port->canAcceptConnections,fp);
+		read_var(port->cryptSalt,fp);
+		read_var(port->md5Salt,fp);
+	}
 	read_var(MyCancelKey,fp);
 
 	read_var(RedoRecPtr,fp);

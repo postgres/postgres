@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.142 2003/12/21 00:33:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.143 2003/12/25 03:52:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,20 +122,31 @@ ProcGlobalSemas(int maxBackends)
 void
 InitProcGlobal(int maxBackends)
 {
-	bool		found = false;
+	bool		foundProcGlobal, foundDummy;
 
 	/* Create or attach to the ProcGlobal shared structure */
 	ProcGlobal = (PROC_HDR *)
-		ShmemInitStruct("Proc Header", sizeof(PROC_HDR), &found);
+		ShmemInitStruct("Proc Header", sizeof(PROC_HDR), &foundProcGlobal);
 
-	/* --------------------
-	 * We're the first - initialize.
-	 * XXX if found should ever be true, it is a sign of impending doom ...
-	 * ought to complain if so?
-	 * --------------------
+	/*
+	 * Create or attach to the PGPROC structures for dummy (checkpoint)
+	 * processes, too.	This does not get linked into the freeProcs
+	 * list.
 	 */
-	if (!found)
+	DummyProc = (PGPROC *)
+		ShmemInitStruct("DummyProc",sizeof(PGPROC) * NUM_DUMMY_PROCS, &foundDummy);
+
+	if (foundProcGlobal || foundDummy)
 	{
+		/* both should be present or neither */
+		Assert(foundProcGlobal && foundDummy);
+		return;
+	}
+	else
+	{
+		/*
+		 * We're the first - initialize.
+		 */
 		int			i;
 
 		ProcGlobal->freeProcs = INVALID_OFFSET;
@@ -159,16 +170,6 @@ InitProcGlobal(int maxBackends)
 			ProcGlobal->freeProcs = MAKE_OFFSET(proc);
 		}
 
-		/*
-		 * Pre-allocate a PGPROC structure for dummy (checkpoint)
-		 * processes, too.	This does not get linked into the freeProcs
-		 * list.
-		 */
-		DummyProc = (PGPROC *) ShmemAlloc(sizeof(PGPROC) * NUM_DUMMY_PROCS);
-		if (!DummyProc)
-			ereport(FATAL,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of shared memory")));
 		MemSet(DummyProc, 0, sizeof(PGPROC) * NUM_DUMMY_PROCS);
 		for (i = 0; i < NUM_DUMMY_PROCS; i++)
 		{
