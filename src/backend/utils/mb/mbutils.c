@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/mb/mbutils.c,v 1.39 2003/03/10 22:28:18 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/mb/mbutils.c,v 1.40 2003/04/27 17:31:25 tgl Exp $
  */
 #include "postgres.h"
 
@@ -32,108 +32,149 @@ static pg_enc2name *DatabaseEncoding = &pg_enc2name_tbl[PG_SQL_ASCII];
 static FmgrInfo *ToServerConvProc = NULL;
 static FmgrInfo *ToClientConvProc = NULL;
 
+/*
+ * During backend startup we can't set client encoding because we (a)
+ * can't look up the conversion functions, and (b) may not know the database
+ * encoding yet either.  So SetClientEncoding() just accepts anything and
+ * remembers it for InitializeClientEncoding() to apply later.
+ */
+static bool backend_startup_complete = false;
+static int	pending_client_encoding = PG_SQL_ASCII;
+
+
 /* Internal functions */
 static unsigned char *perform_default_encoding_conversion(unsigned char *src,
 									int len, bool is_client_to_server);
 static int cliplen(const unsigned char *str, int len, int limit);
 
-/* Flag to we need to initialize client encoding info */
-static bool need_to_init_client_encoding = -1;
 
 /*
  * Set the client encoding and save fmgrinfo for the conversion
- * function if necessary. if encoding conversion between client/server
- * encoding is not supported, returns -1
-*/
+ * function if necessary.  Returns 0 if okay, -1 if not (bad encoding
+ * or can't support conversion)
+ */
 int
 SetClientEncoding(int encoding, bool doit)
 {
 	int			current_server_encoding;
 	Oid			to_server_proc,
 				to_client_proc;
-	FmgrInfo   *to_server = NULL;
-	FmgrInfo   *to_client = NULL;
+	FmgrInfo   *to_server;
+	FmgrInfo   *to_client;
 	MemoryContext oldcontext;
-
-	current_server_encoding = GetDatabaseEncoding();
 
 	if (!PG_VALID_FE_ENCODING(encoding))
 		return (-1);
 
-	/* If we cannot actually set client encoding info, remember it
-	 * so that we could set it using InitializeClientEncoding()
-	 * in InitPostgres()
-	 */
-	if (current_server_encoding != encoding && !IsTransactionState())
-		need_to_init_client_encoding = encoding;
-
-	if (current_server_encoding == encoding ||
-	(current_server_encoding == PG_SQL_ASCII || encoding == PG_SQL_ASCII))
+	/* Can't do anything during startup, per notes above */
+	if (!backend_startup_complete)
 	{
-		ClientEncoding = &pg_enc2name_tbl[encoding];
+		if (doit)
+			pending_client_encoding = encoding;
+		return 0;
+	}
+
+	current_server_encoding = GetDatabaseEncoding();
+
+	/*
+	 * Check for cases that require no conversion function.
+	 */
+	if (current_server_encoding == encoding ||
+		(current_server_encoding == PG_SQL_ASCII ||
+		 encoding == PG_SQL_ASCII))
+	{
+		if (doit)
+		{
+			ClientEncoding = &pg_enc2name_tbl[encoding];
+
+			if (ToServerConvProc != NULL)
+			{
+				if (ToServerConvProc->fn_extra)
+					pfree(ToServerConvProc->fn_extra);
+				pfree(ToServerConvProc);
+			}
+			ToServerConvProc = NULL;
+
+			if (ToClientConvProc != NULL)
+			{
+				if (ToClientConvProc->fn_extra)
+					pfree(ToClientConvProc->fn_extra);
+				pfree(ToClientConvProc);
+			}
+			ToClientConvProc = NULL;
+		}
 		return 0;
 	}
 
 	/*
-	 * XXX We cannot use FindDefaultConversionProc() while in bootstrap or
-	 * initprocessing mode since namespace functions will not work.
+	 * Look up the conversion functions.
 	 */
-	if (IsTransactionState())
-	{
-		to_server_proc = FindDefaultConversionProc(encoding, current_server_encoding);
-		to_client_proc = FindDefaultConversionProc(current_server_encoding, encoding);
+	to_server_proc = FindDefaultConversionProc(encoding,
+											   current_server_encoding);
+	if (!OidIsValid(to_server_proc))
+		return -1;
+	to_client_proc = FindDefaultConversionProc(current_server_encoding,
+											   encoding);
+	if (!OidIsValid(to_client_proc))
+		return -1;
 
-		if (!OidIsValid(to_server_proc) || !OidIsValid(to_client_proc))
-			return -1;
-
-		/*
-		 * load the fmgr info into TopMemoryContext so that it survives
-		 * outside transaction.
-		 */
-		oldcontext = MemoryContextSwitchTo(TopMemoryContext);
-		to_server = palloc(sizeof(FmgrInfo));
-		to_client = palloc(sizeof(FmgrInfo));
-		fmgr_info(to_server_proc, to_server);
-		fmgr_info(to_client_proc, to_client);
-		MemoryContextSwitchTo(oldcontext);
-	}
-
+	/*
+	 * Done if not wanting to actually apply setting.
+	 */
 	if (!doit)
 		return 0;
 
-	if (IsTransactionState())
+	/*
+	 * load the fmgr info into TopMemoryContext so that it survives
+	 * outside transaction.
+	 */
+	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+	to_server = palloc(sizeof(FmgrInfo));
+	to_client = palloc(sizeof(FmgrInfo));
+	fmgr_info(to_server_proc, to_server);
+	fmgr_info(to_client_proc, to_client);
+	MemoryContextSwitchTo(oldcontext);
+
+	ClientEncoding = &pg_enc2name_tbl[encoding];
+
+	if (ToServerConvProc != NULL)
 	{
-		ClientEncoding = &pg_enc2name_tbl[encoding];
-
-		if (ToServerConvProc != NULL)
-		{
-			if (ToServerConvProc->fn_extra)
-				pfree(ToServerConvProc->fn_extra);
-			pfree(ToServerConvProc);
-		}
-		ToServerConvProc = to_server;
-
-		if (ToClientConvProc != NULL)
-		{
-			if (ToClientConvProc->fn_extra)
-				pfree(ToClientConvProc->fn_extra);
-			pfree(ToClientConvProc);
-		}
-		ToClientConvProc = to_client;
+		if (ToServerConvProc->fn_extra)
+			pfree(ToServerConvProc->fn_extra);
+		pfree(ToServerConvProc);
 	}
+	ToServerConvProc = to_server;
+
+	if (ToClientConvProc != NULL)
+	{
+		if (ToClientConvProc->fn_extra)
+			pfree(ToClientConvProc->fn_extra);
+		pfree(ToClientConvProc);
+	}
+	ToClientConvProc = to_client;
+
 	return 0;
 }
 
-/* Initialize client encoding if necessary.
- * called from InitPostgres() once during backend starting up.
+/*
+ * Initialize client encoding if necessary.
+ *		called from InitPostgres() once during backend starting up.
  */
 void
-InitializeClientEncoding()
+InitializeClientEncoding(void)
 {
-	if (need_to_init_client_encoding > 0)
+	Assert(!backend_startup_complete);
+	backend_startup_complete = true;
+
+	if (SetClientEncoding(pending_client_encoding, true) < 0)
 	{
-		SetClientEncoding(need_to_init_client_encoding, 1);
-		need_to_init_client_encoding = -1;
+		/*
+		 * Oops, the requested conversion is not available.
+		 * We couldn't fail before, but we can now.
+		 */
+		elog(FATAL, "Conversion between %s and %s is not supported",
+			 pg_enc2name_tbl[pending_client_encoding].name,
+			 GetDatabaseEncodingName());
 	}
 }
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.74 2003/04/25 19:45:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.75 2003/04/27 17:31:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -484,10 +484,10 @@ assign_client_encoding(const char *value, bool doit, bool interactive)
 		return NULL;
 
 	/*
-	 * XXX SetClientEncoding depends on namespace functions which are not
-	 * available at startup time. So we accept requested client encoding
-	 * anyway which might not be valid (e.g. no conversion procs
-	 * available).
+	 * Note: if we are in startup phase then SetClientEncoding may not be
+	 * able to really set the encoding.  In this case we will assume that
+	 * the encoding is okay, and InitializeClientEncoding() will fix things
+	 * once initialization is complete.
 	 */
 	if (SetClientEncoding(encoding, doit) < 0)
 	{
