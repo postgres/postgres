@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.49 2003/08/08 21:42:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.49.4.1 2004/02/03 17:56:04 tgl Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -118,7 +118,8 @@ RE_compile_and_execute(text *text_re, unsigned char *dat, int dat_len,
 	 */
 	for (i = 0; i < num_res; i++)
 	{
-		if (memcmp(re_array[i].cre_pat, text_re, text_re_len) == 0 &&
+		if (VARSIZE(re_array[i].cre_pat) == text_re_len &&
+			memcmp(re_array[i].cre_pat, text_re, text_re_len) == 0 &&
 			re_array[i].cre_flags == cflags)
 		{
 			/*
