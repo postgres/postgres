@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.20 1997/11/24 05:08:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.21 1997/12/29 05:13:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -580,7 +580,6 @@ aclcontains(Acl *acl, AclItem *aip)
  *
  * does not add duplicate privileges
  *
- * the CALLER is reponsible for free'ing the string returned
  */
 
 char	   *
@@ -591,7 +590,7 @@ aclmakepriv(char *old_privlist, char new_priv)
 	int			l;
 
 	Assert(strlen(old_privlist) < 5);
-	priv = malloc(5); /* at most "rwaR" */ ;
+	priv = palloc(5); /* at most "rwaR" */ ;
 
 	if (old_privlist == NULL || old_privlist[0] == '\0')
 	{
@@ -634,7 +633,6 @@ aclmakepriv(char *old_privlist, char new_priv)
  *
  * this routine is used in the parser
  *
- * the CALLER is responsible for freeing the memory allocated
  */
 
 char	   *
@@ -642,7 +640,7 @@ aclmakeuser(char *user_type, char *user)
 {
 	char	   *user_list;
 
-	user_list = malloc(strlen(user) + 3);
+	user_list = palloc(strlen(user) + 3);
 	sprintf(user_list, "%s %s", user_type, user);
 	return user_list;
 }

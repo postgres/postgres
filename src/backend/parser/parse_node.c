@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.3 1997/11/26 03:42:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.4 1997/12/29 05:13:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ make_parsestate(void)
 {
 	ParseState *pstate;
 
-	pstate = malloc(sizeof(ParseState));
+	pstate = palloc(sizeof(ParseState));
 	pstate->p_last_resno = 1;
 	pstate->p_rtable = NIL;
 	pstate->p_numAgg = 0;

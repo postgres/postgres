@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.15 1997/11/25 21:58:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.16 1997/12/29 05:13:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ ExplainQuery(Query *query, bool verbose, CommandDest dest)
 	if (plan == NULL)
 		return;
 
-	es = (ExplainState *) malloc(sizeof(ExplainState));
+	es = (ExplainState *) palloc(sizeof(ExplainState));
 	MemSet(es, 0, sizeof(ExplainState));
 
 	es->printCost = true;		/* default */
@@ -103,7 +103,7 @@ ExplainQuery(Query *query, bool verbose, CommandDest dest)
 		elog(NOTICE, "%.*s", ELOG_MAXLEN - 64, s);
 		len -= ELOG_MAXLEN - 64;
 	}
-	free(es);
+	pfree(es);
 }
 
 /*****************************************************************************
