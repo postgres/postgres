@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.3 1996/10/31 09:08:10 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.4 1996/11/02 02:03:13 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,25 +52,25 @@
 
 
 /* ----------------
- *	CHECK_IF_ABORTED() is used to avoid doing unnecessary
- *	processing within an aborted transaction block.
+ *      CHECK_IF_ABORTED() is used to avoid doing unnecessary
+ *      processing within an aborted transaction block.
  * ----------------
  */
 #define CHECK_IF_ABORTED() \
     if (IsAbortedTransactionBlockState()) { \
-	elog(NOTICE, "(transaction aborted): %s", \
-	     "queries ignored until END"); \
-	commandTag = "*ABORT STATE*"; \
-	break; \
+        elog(NOTICE, "(transaction aborted): %s", \
+             "queries ignored until END"); \
+        commandTag = "*ABORT STATE*"; \
+        break; \
     } \
     
 /* ----------------
- *	general utility function invoker
+ *      general utility function invoker
  * ----------------
  */
 void
 ProcessUtility(Node *parsetree,
-	       CommandDest dest)
+               CommandDest dest)
 {
     char *commandTag = NULL;
     char *relname;
@@ -80,163 +80,139 @@ ProcessUtility(Node *parsetree,
     userName = GetPgUserName();
     
     switch (nodeTag(parsetree)) {
-	/* ********************************
-	 *	transactions
-	 * ********************************
-	 */
+        /* ********************************
+         *      transactions
+         * ********************************
+         */
     case T_TransactionStmt:
-	{
-	    TransactionStmt *stmt = (TransactionStmt *)parsetree;
-	    switch (stmt->command) {
-	    case BEGIN_TRANS:
-		commandTag = "BEGIN";
-		CHECK_IF_ABORTED();
-		BeginTransactionBlock();
-		break;
-		
-	    case END_TRANS:
-		commandTag = "END";
-		EndTransactionBlock();
-		break;
-		
-	    case ABORT_TRANS:
-		commandTag = "ABORT";
-		UserAbortTransactionBlock();
-		break;
-	    }
-	}
-	break;
+        {
+            TransactionStmt *stmt = (TransactionStmt *)parsetree;
+            switch (stmt->command) {
+            case BEGIN_TRANS:
+                commandTag = "BEGIN";
+                CHECK_IF_ABORTED();
+                BeginTransactionBlock();
+                break;
+                
+            case END_TRANS:
+                commandTag = "END";
+                EndTransactionBlock();
+                break;
+                
+            case ABORT_TRANS:
+                commandTag = "ABORT";
+                UserAbortTransactionBlock();
+                break;
+            }
+        }
+        break;
       
-	/* ********************************
-	 *	portal manipulation
-	 * ********************************
-	 */
+        /* ********************************
+         *      portal manipulation
+         * ********************************
+         */
     case T_ClosePortalStmt:
-	{
-	    ClosePortalStmt *stmt = (ClosePortalStmt *)parsetree;
+        {
+            ClosePortalStmt *stmt = (ClosePortalStmt *)parsetree;
 
-	    commandTag = "CLOSE";
-	    CHECK_IF_ABORTED();
-	
-	    PerformPortalClose(stmt->portalname, dest);
-	}
-	break;
+            commandTag = "CLOSE";
+            CHECK_IF_ABORTED();
+        
+            PerformPortalClose(stmt->portalname, dest);
+        }
+        break;
       
     case T_FetchStmt:
-	{
-	    FetchStmt *stmt = (FetchStmt *)parsetree;
-	    char *portalName = stmt->portalname;
-	    bool forward;
-	    int	count;
+        {
+            FetchStmt *stmt = (FetchStmt *)parsetree;
+            char *portalName = stmt->portalname;
+            bool forward;
+            int count;
 
-	    commandTag = "FETCH";
-	    CHECK_IF_ABORTED();
+            commandTag = "FETCH";
+            CHECK_IF_ABORTED();
 
-	    forward = (bool)(stmt->direction == FORWARD);
+            forward = (bool)(stmt->direction == FORWARD);
 
-	    /* parser ensures that count is >= 0 and 
-	       'fetch ALL' -> 0 */
-	       
-	    count = stmt->howMany;
-	    PerformPortalFetch(portalName, forward, count, commandTag, dest);
-	}
-	break;
+            /* parser ensures that count is >= 0 and 
+               'fetch ALL' -> 0 */
+               
+            count = stmt->howMany;
+            PerformPortalFetch(portalName, forward, count, commandTag, dest);
+        }
+        break;
       
-	/* ********************************
-	 *	relation and attribute manipulation
-	 * ********************************
-	 */
+        /* ********************************
+         *      relation and attribute manipulation
+         * ********************************
+         */
     case T_CreateStmt:
-	commandTag = "CREATE";
-	CHECK_IF_ABORTED();
+        commandTag = "CREATE";
+        CHECK_IF_ABORTED();
       
-	DefineRelation((CreateStmt *)parsetree);
-	break;
+        DefineRelation((CreateStmt *)parsetree);
+        break;
       
     case T_DestroyStmt:
-	{
-	    DestroyStmt *stmt = (DestroyStmt *)parsetree;
-	    List *arg;
-	    List *args = stmt->relNames;
+        {
+            DestroyStmt *stmt = (DestroyStmt *)parsetree;
+            List *arg;
+            List *args = stmt->relNames;
 
-	    commandTag = "DROP";
-	    CHECK_IF_ABORTED();
+            commandTag = "DROP";
+            CHECK_IF_ABORTED();
 
-	    foreach (arg, args) {
-		relname = strVal(lfirst(arg));
-		if (IsSystemRelationName(relname))
-		    elog(WARN, "class \"%-.*s\" is a system catalog",
-			 NAMEDATALEN, relname);
+            foreach (arg, args) {
+                relname = strVal(lfirst(arg));
+                if (IsSystemRelationName(relname))
+                    elog(WARN, "class \"%-.*s\" is a system catalog",
+                         NAMEDATALEN, relname);
 #ifndef NO_SECURITY
-		if (!pg_ownercheck(userName, relname, RELNAME))
-		    elog(WARN, "you do not own class \"%-.*s\"",
-			 NAMEDATALEN, relname);
+                if (!pg_ownercheck(userName, relname, RELNAME))
+                    elog(WARN, "you do not own class \"%-.*s\"",
+                         NAMEDATALEN, relname);
 #endif
-	    }
-	    foreach (arg, args) {
-		relname = strVal(lfirst(arg));
-		RemoveRelation(relname);
-	    }
-	}
-	break;
+            }
+            foreach (arg, args) {
+                relname = strVal(lfirst(arg));
+                RemoveRelation(relname);
+            }
+        }
+        break;
       
     case T_PurgeStmt:
-	{
-	    PurgeStmt *stmt = (PurgeStmt *)parsetree;
+        {
+            PurgeStmt *stmt = (PurgeStmt *)parsetree;
 
-	    commandTag = "PURGE";
-	    CHECK_IF_ABORTED();
-	    
-	    RelationPurge(stmt->relname,
-			  stmt->beforeDate, /* absolute time string */
-			  stmt->afterDate); /* relative time string */
-	}
-	break;
+            commandTag = "PURGE";
+            CHECK_IF_ABORTED();
+            
+            RelationPurge(stmt->relname,
+                          stmt->beforeDate, /* absolute time string */
+                          stmt->afterDate); /* relative time string */
+        }
+        break;
       
     case T_CopyStmt:
-	{
-	    CopyStmt *stmt = (CopyStmt *)parsetree;
-	    char *filename;
-	    char *delim;
-	    bool	isBinary;
-	    bool	isOids;
-	    bool	isFrom;
-	    bool        pipe = false;
+        {
+            CopyStmt *stmt = (CopyStmt *)parsetree;
 
 	    commandTag = "COPY";
 	    CHECK_IF_ABORTED();
 	    
-	    relname = stmt->relname;
-	    isBinary = stmt->binary;
-	    isOids = stmt->oids;
-	    
-	    isFrom = (bool)(stmt->direction == FROM);
-	    filename = stmt->filename;
-	    delim = stmt->delimiter;
-
-#ifndef NO_SECURITY
-	    if (isFrom) {
-		if (!pg_aclcheck(relname, userName, ACL_RD))
-		    elog(WARN, "%s %s", relname, ACL_NO_PRIV_WARNING);
-	    } else {
-		if (!pg_aclcheck(relname, userName, ACL_WR))
-		    elog(WARN, "%s %s", relname, ACL_NO_PRIV_WARNING);
-	    }
-#endif
-	    
 	    /* Free up file descriptors - going to do a read... */
-	    
 	    closeOneVfd();
 
-	    /*
-	     * use stdin/stdout if filename is null.
-	     */
-	    if (filename == NULL)
-		pipe = true;
-	    
-	    if (pipe && IsUnderPostmaster) dest = CopyEnd;
-	    
-	    DoCopy(relname, isBinary, isOids, isFrom, pipe, filename, delim);
+	    DoCopy(stmt->relname, 
+                   stmt->binary, 
+                   stmt->oids, 
+                   (bool)(stmt->direction == FROM), 
+                   (bool)(stmt->filename == NULL), 
+                      /* null filename means copy to/from stdout/stdin,
+                         rather than to/from a file.
+                         */
+                   stmt->filename, 
+                   stmt->delimiter);
 	}
 	break;
       
