@@ -15,8 +15,8 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef HAVE_DLOPEN
 #include "postgres.h"
+#ifndef HAVE_DLOPEN
 
 extern char pg_pathname[];
 
