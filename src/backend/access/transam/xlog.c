@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.109.2.3 2003/07/17 16:45:25 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.109.2.4 2004/08/11 04:08:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2994,6 +2994,15 @@ CreateCheckPoint(bool shutdown, bool force)
 	checkPoint.ThisStartUpID = ThisStartUpID;
 	checkPoint.time = time(NULL);
 
+	/*
+	 * We must hold CheckpointStartLock while determining the checkpoint
+	 * REDO pointer.  This ensures that any concurrent transaction commits
+	 * will be either not yet logged, or logged and recorded in pg_clog.
+	 * See notes in RecordTransactionCommit().
+	 */
+	LWLockAcquire(CheckpointStartLock, LW_EXCLUSIVE);
+
+	/* And we need WALInsertLock too */
 	LWLockAcquire(WALInsertLock, LW_EXCLUSIVE);
 
 	/*
@@ -3025,6 +3034,7 @@ CreateCheckPoint(bool shutdown, bool force)
 			ControlFile->checkPointCopy.redo.xrecoff)
 		{
 			LWLockRelease(WALInsertLock);
+			LWLockRelease(CheckpointStartLock);
 			LWLockRelease(CheckpointLock);
 			END_CRIT_SECTION();
 			return;
@@ -3091,10 +3101,12 @@ CreateCheckPoint(bool shutdown, bool force)
 #endif
 
 	/*
-	 * Now we can release insert lock, allowing other xacts to proceed
-	 * even while we are flushing disk buffers.
+	 * Now we can release insert lock and checkpoint start lock, allowing
+	 * other xacts to proceed even while we are flushing disk buffers.
 	 */
 	LWLockRelease(WALInsertLock);
+
+	LWLockRelease(CheckpointStartLock);
 
 	/*
 	 * Get the other info we need for the checkpoint record.

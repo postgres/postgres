@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.135.2.1 2002/11/18 01:17:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.135.2.2 2004/08/11 04:08:39 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -523,6 +523,7 @@ RecordTransactionCommit(void)
 	if (MyXactMadeXLogEntry || MyXactMadeTempRelUpdate)
 	{
 		TransactionId xid = GetCurrentTransactionId();
+		bool		madeTCentries;
 		XLogRecPtr	recptr;
 
 		/* Tell bufmgr and smgr to prepare for commit */
@@ -531,12 +532,29 @@ RecordTransactionCommit(void)
 		START_CRIT_SECTION();
 
 		/*
-		 * We only need to log the commit in xlog if the transaction made
-		 * any transaction-controlled XLOG entries.  (Otherwise, its XID
-		 * appears nowhere in permanent storage, so no one else will ever
-		 * care if it committed.)
+		 * If our transaction made any transaction-controlled XLOG entries,
+		 * we need to lock out checkpoint start between writing our XLOG
+		 * record and updating pg_clog.  Otherwise it is possible for the
+		 * checkpoint to set REDO after the XLOG record but fail to flush the
+		 * pg_clog update to disk, leading to loss of the transaction commit
+		 * if we crash a little later.  Slightly klugy fix for problem
+		 * discovered 2004-08-10.
+		 *
+		 * (If it made no transaction-controlled XLOG entries, its XID
+		 * appears nowhere in permanent storage, so no one else will ever care
+		 * if it committed; so it doesn't matter if we lose the commit flag.)
+		 *
+		 * Note we only need a shared lock.
 		 */
-		if (MyLastRecPtr.xrecoff != 0)
+		madeTCentries = (MyLastRecPtr.xrecoff != 0);
+		if (madeTCentries)
+			LWLockAcquire(CheckpointStartLock, LW_SHARED);
+
+		/*
+		 * We only need to log the commit in XLOG if the transaction made
+		 * any transaction-controlled XLOG entries.
+		 */
+		if (madeTCentries)
 		{
 			/* Need to emit a commit record */
 			XLogRecData rdata;
@@ -604,6 +622,10 @@ RecordTransactionCommit(void)
 		 */
 		if (MyLastRecPtr.xrecoff != 0 || MyXactMadeTempRelUpdate)
 			TransactionIdCommit(xid);
+
+		/* Unlock checkpoint lock if we acquired it */
+		if (madeTCentries)
+			LWLockRelease(CheckpointStartLock);
 
 		END_CRIT_SECTION();
 	}
@@ -724,6 +746,8 @@ RecordTransactionAbort(void)
 		 * care if it committed.)  We do not flush XLOG to disk in any
 		 * case, since the default assumption after a crash would be that
 		 * we aborted, anyway.
+		 * For the same reason, we don't need to worry about interlocking
+		 * against checkpoint start.
 		 */
 		if (MyLastRecPtr.xrecoff != 0)
 		{
