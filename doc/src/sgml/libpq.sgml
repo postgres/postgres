@@ -1062,13 +1062,13 @@ struct {
     char    **fieldName; /* null terminated array of replacement field names */
 } PQprintOpt;
 </synopsis>
+
 This function was formerly used by <application>psql</application>
 to print query results, but this is no longer the case and this
 function is no longer supported.
 </para>
 </listitem>
 
-</listitem>
 <listitem>
 <para>
 <function>PQclear</function>
