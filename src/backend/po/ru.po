@@ -1,10 +1,10 @@
 # ru.po
 # POSTGRES Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.23 2004/09/13 20:49:43 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.24 2004/09/20 08:15:29 petere Exp $
 #
 # ChangeLog:
-#   - March 27 - August 28, 2004: Updates for 7.4.x/8.0 branches; <mokhov@cs.concordia.ca>
+#   - March 27 - September 14, 2004: Updates for 7.4.x/8.0 branches; <mokhov@cs.concordia.ca>
 #   - July - August 23, 2003: Updates for 7.4.x; <mokhov@cs.concordia.ca>
 #   - January 2, 2003: Fuzzy fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - October 12, 2002: Post-7.3 beta 2, Fuzzy fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -15,8 +15,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4.x\n"
-"POT-Creation-Date: 2004-08-24 19:09-0300\n"
-"PO-Revision-Date: 2004-08-28 21:16-0500\n"
+"POT-Creation-Date: 2004-09-14 01:18+0100\n"
+"PO-Revision-Date: 2004-09-20 03:22-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -3620,8 +3620,8 @@ msgstr "функции и операторы принимают только один аргумент-множество (set)"
 #: executor/execQual.c:790
 #: executor/execQual.c:985
 #: executor/execQual.c:2996
-#: executor/functions.c:578
-#: executor/functions.c:617
+#: executor/functions.c:583
+#: executor/functions.c:622
 #: utils/adt/pgstatfuncs.c:191
 #: utils/adt/sets.c:207
 #: utils/fmgr/funcapi.c:39
@@ -3697,17 +3697,21 @@ msgstr "не в состоянии определить реальный тип результата для функции задекларир
 msgid "could not determine actual type of argument declared %s"
 msgstr "не получилось определить настоящий тип аргумента задекларированного как %s"
 
-#: executor/functions.c:673
+#: executor/functions.c:310
+msgid "cannot begin/end transactions in SQL functions"
+msgstr ""
+
+#: executor/functions.c:678
 #, c-format
 msgid "SQL function \"%s\" statement %d"
 msgstr "SQL-функция \"%s\" запрос %d"
 
-#: executor/functions.c:686
+#: executor/functions.c:691
 #, c-format
 msgid "SQL function \"%s\""
 msgstr "SQL-функция \"%s\""
 
-#: executor/functions.c:692
+#: executor/functions.c:697
 #, c-format
 msgid "SQL function \"%s\" during startup"
 msgstr "SQL-функция \"%s\" при старте"
@@ -4218,53 +4222,53 @@ msgstr "не получилось установить права доступа для файла \"%s\": %m"
 #: libpq/pqcomm.c:526
 #, c-format
 msgid "could not accept new connection: %m"
-msgstr ""
+msgstr "не получилось принять новое подсоединение: %m"
 
 #: libpq/pqcomm.c:678
 #, c-format
 msgid "could not receive data from client: %m"
-msgstr ""
+msgstr "не удалось получить данные от клиента: %m"
 
 #: libpq/pqcomm.c:841
 msgid "unexpected EOF within message length word"
-msgstr ""
+msgstr "нержиданный конец файла (EOF) в слове длины сообщения"
 
 #: libpq/pqcomm.c:853
 msgid "invalid message length"
-msgstr ""
+msgstr "неверная длина сообщения"
 
 #: libpq/pqcomm.c:867
 msgid "incomplete message from client"
-msgstr ""
+msgstr "неполное сообщение от клиента"
 
 #: libpq/pqcomm.c:946
 #, c-format
 msgid "could not send data to client: %m"
-msgstr ""
+msgstr "не получилось послать данные клиенту: %m"
 
 #: libpq/pqformat.c:443
 msgid "no data left in message"
-msgstr ""
+msgstr "не осталось данных в сообщении"
 
 #: libpq/pqformat.c:591
 #: libpq/pqformat.c:609
 #: libpq/pqformat.c:630
 #: utils/adt/arrayfuncs.c:1023
 msgid "insufficient data left in message"
-msgstr ""
+msgstr "недостаточно данных осталось в сообщении"
 
 #: libpq/pqformat.c:671
 msgid "invalid string in message"
-msgstr ""
+msgstr "неверная строка в сообщении"
 
 #: libpq/pqformat.c:687
 msgid "invalid message format"
-msgstr ""
+msgstr "неверный формат сообщения"
 
 #: main/main.c:84
 #, c-format
 msgid "%s: setsysinfo failed: %s\n"
-msgstr ""
+msgstr "%s: ошибка setsysinfo: %s\n"
 
 #: main/main.c:175
 msgid ""
@@ -4287,7 +4291,7 @@ msgstr ""
 #: main/main.c:253
 #, c-format
 msgid "%s: could not determine user name (GetUserName failed)\n"
-msgstr ""
+msgstr "%s: не удалось определить имя пользователя (ошибка GetUserName)\n"
 
 #: optimizer/path/allpaths.c:214
 msgid "SELECT FOR UPDATE is not supported for inheritance queries"
@@ -4296,7 +4300,7 @@ msgstr ""
 #: optimizer/plan/initsplan.c:282
 #: optimizer/prep/prepjointree.c:365
 msgid "UNION JOIN is not implemented"
-msgstr ""
+msgstr "UNION JOIN не реализован"
 
 #: optimizer/plan/initsplan.c:339
 msgid "SELECT FOR UPDATE cannot be applied to the nullable side of an outer join"
@@ -4321,7 +4325,7 @@ msgstr "нельзя использовать SELECT FOR UPDATE в UNION/INTERSECT/EXCEPT"
 
 #: optimizer/plan/planner.c:660
 msgid "SELECT FOR UPDATE is not allowed in subqueries"
-msgstr ""
+msgstr "SELECT FOR UPDATE не позволен в подзапросах"
 
 #: optimizer/util/clauses.c:2047
 #, c-format
@@ -4874,7 +4878,7 @@ msgstr ""
 #: parser/parse_expr.c:612
 #, c-format
 msgid "operator %s must not return a set"
-msgstr ""
+msgstr "оператор %s не должен возвращать множество"
 
 #: parser/parse_expr.c:624
 msgid "subquery has too few columns"
@@ -5019,15 +5023,15 @@ msgstr ""
 
 #: parser/parse_oper.c:877
 msgid "op ANY/ALL (array) requires array on right side"
-msgstr ""
+msgstr "операторы ANY/ALL (массив) требуют массив справа"
 
 #: parser/parse_oper.c:906
 msgid "op ANY/ALL (array) requires operator to yield boolean"
-msgstr ""
+msgstr "операторы ANY/ALL (массив) требуют оператор производить булевское значение"
 
 #: parser/parse_oper.c:910
 msgid "op ANY/ALL (array) requires operator not to return a set"
-msgstr ""
+msgstr "операторы ANY/ALL (массив) требуют оператор не возвращать множество"
 
 #: scan.l:296
 msgid "unterminated /* comment"
@@ -5082,16 +5086,16 @@ msgstr "нельзя присвоить значение системной колонке \"%s\""
 
 #: parser/parse_target.c:353
 msgid "cannot set an array element to DEFAULT"
-msgstr ""
+msgstr "нельзя установить элемент массива в DEFAULT"
 
 #: parser/parse_target.c:420
 #, c-format
 msgid "column \"%s\" is of type %s but expression is of type %s"
-msgstr ""
+msgstr "колонка \"%s\" имеет тип %s, но тип выражения: %s"
 
 #: parser/parse_target.c:555
 msgid "SELECT * with no tables specified is not valid"
-msgstr ""
+msgstr "SELECT * без указания таблиц является ошибкой"
 
 #: parser/parse_type.c:62
 #, c-format
@@ -5127,7 +5131,7 @@ msgstr ""
 
 #: y.tab.c:9086
 msgid "syntax error: cannot back up"
-msgstr ""
+msgstr "ошибка синтаксиса: нельзя вернуться"
 
 #: gram.y:961
 #: gram.y:987
@@ -5247,13 +5251,13 @@ msgstr "масштаб DECIMAL %d должен быть между 0 и точностью %d"
 #: gram.y:5391
 #, c-format
 msgid "length for type %s must be at least 1"
-msgstr ""
+msgstr "длина типа %s должна быть как минимум 1"
 
 #: gram.y:5318
 #: gram.y:5396
 #, c-format
 msgid "length for type %s cannot exceed %d"
-msgstr ""
+msgstr "длина типа %s не может превышать %d"
 
 #: gram.y:5469
 #, c-format
@@ -5348,7 +5352,7 @@ msgstr "переполнение стэка парсера"
 #: gram.y:7802
 #, c-format
 msgid "operator %s is not supported for row expressions"
-msgstr ""
+msgstr "оператор %s не поддерживает строчные выражения"
 
 #: gram.y:7879
 msgid "wrong number of parameters on left side of OVERLAPS expression"
@@ -5446,12 +5450,12 @@ msgstr "директория данных \"%s\" не существует"
 #: postmaster/postmaster.c:332
 #, c-format
 msgid "could not read permissions of directory \"%s\": %m"
-msgstr ""
+msgstr "не получилось считать права на директорию \"%s\": %m"
 
 #: postmaster/postmaster.c:347
 #, c-format
 msgid "data directory \"%s\" has group or world access"
-msgstr ""
+msgstr "директория данных \"%s\" имеет доступ для группы или всех"
 
 #: postmaster/postmaster.c:349
 msgid "Permissions should be u=rwx (0700)."
@@ -5486,7 +5490,7 @@ msgstr "неверный аргумент: \"%s\""
 
 #: postmaster/postmaster.c:624
 msgid "the number of buffers (-B) must be at least twice the number of allowed connections (-N) and at least 16"
-msgstr ""
+msgstr "число буферов (-B) дожно быть как минимум в два раза больше числа дозволенных подсоединений (-N) и как минимум 16"
 
 #: postmaster/postmaster.c:630
 msgid "superuser_reserved_connections must be less than max_connections"
@@ -5500,7 +5504,7 @@ msgstr ""
 #: tcop/postgres.c:2599
 #, c-format
 msgid "%s: could not locate postgres executable"
-msgstr ""
+msgstr "%s: не найден выполняемый файл postgres"
 
 #: postmaster/postmaster.c:683
 msgid "TCP/IP connections must be enabled for SSL"
@@ -5761,21 +5765,21 @@ msgstr ""
 #: postmaster/postmaster.c:2077
 #, c-format
 msgid "%s (PID %d) exited with exit code %d"
-msgstr ""
+msgstr "%s (PID %d) завершился с кодом выхода %d"
 
 #: postmaster/postmaster.c:2086
 #, c-format
 msgid "%s (PID %d) was terminated by signal %d"
-msgstr ""
+msgstr "%s (PID %d) был завершён сигналом %d"
 
 #: postmaster/postmaster.c:2095
 #, c-format
 msgid "%s (PID %d) exited with unexpected status %d"
-msgstr ""
+msgstr "%s (PID %d) завершился с неожиданным статусом %d"
 
 #: postmaster/postmaster.c:2211
 msgid "connection startup failed"
-msgstr ""
+msgstr "ошибка при инициализации подсоединения"
 
 #: postmaster/postmaster.c:2227
 #, c-format
@@ -5789,21 +5793,21 @@ msgstr ""
 #: postmaster/postmaster.c:2394
 #, c-format
 msgid "connection received: host=%s port=%s"
-msgstr ""
+msgstr "получено подсоединение: хост=%s порт=%s"
 
 #: postmaster/postmaster.c:2456
 #, c-format
 msgid "connection authorized: user=%s database=%s"
-msgstr ""
+msgstr "подсоединение авторизировано: пользователь=%s база=%s"
 
 #: postmaster/postmaster.c:2616
 #, c-format
 msgid "checkpoints are occurring too frequently (%d seconds apart)"
-msgstr ""
+msgstr "контрольные точки происходят слишком часто (секунд от друга: %d)"
 
 #: postmaster/postmaster.c:2618
 msgid "Consider increasing the configuration parameter \"checkpoint_segments\"."
-msgstr ""
+msgstr "Подумайте об увеличении параметра конфигурации \"checkpoint_segments\"."
 
 #: postmaster/postmaster.c:2886
 #, c-format
@@ -5900,7 +5904,7 @@ msgstr ""
 #: postmaster/pgstat.c:2652
 #: postmaster/pgstat.c:2834
 msgid "out of memory in statistics collector --- abort"
-msgstr ""
+msgstr "нехватка памяти в сборщике статистики --- отбой"
 
 #: postmaster/pgstat.c:1439
 #, c-format
@@ -5914,7 +5918,7 @@ msgstr ""
 
 #: postmaster/pgstat.c:1500
 msgid "invalid statistics message length"
-msgstr ""
+msgstr "неверная длина сообщения статистики"
 
 #: postmaster/pgstat.c:1650
 #, c-format
@@ -5991,19 +5995,19 @@ msgstr "правило \"%s\" для связи \"%s\" уже существует"
 
 #: rewrite/rewriteDefine.c:233
 msgid "rule actions on OLD are not implemented"
-msgstr ""
+msgstr "действия правил на OLD не реализованы"
 
 #: rewrite/rewriteDefine.c:234
 msgid "Use views or triggers instead."
-msgstr ""
+msgstr "Вместо этого используйте представления или триггеры."
 
 #: rewrite/rewriteDefine.c:238
 msgid "rule actions on NEW are not implemented"
-msgstr ""
+msgstr "действия правил на NEW не реализованы"
 
 #: rewrite/rewriteDefine.c:239
 msgid "Use triggers instead."
-msgstr ""
+msgstr "Вместо этого используйте триггеры."
 
 #: rewrite/rewriteDefine.c:256
 msgid "INSTEAD NOTHING rules on SELECT are not implemented"
@@ -6011,7 +6015,7 @@ msgstr "правила INSTEAD NOTHING для SELECT не реализованы"
 
 #: rewrite/rewriteDefine.c:257
 msgid "Use views instead."
-msgstr ""
+msgstr "Вместо этого используйте представления."
 
 #: rewrite/rewriteDefine.c:265
 msgid "multiple actions for rules on SELECT are not implemented"
@@ -6856,7 +6860,7 @@ msgstr ""
 #: utils/adt/arrayfuncs.c:1848
 #: utils/adt/arrayfuncs.c:1917
 msgid "source array too small"
-msgstr ""
+msgstr "исходный массив слишком мал"
 
 #: utils/adt/arrayfuncs.c:2141
 #: utils/adt/arrayfuncs.c:3037
@@ -6866,7 +6870,7 @@ msgstr "значения NULL как элементы массива не поддерживается"
 #: utils/adt/arrayfuncs.c:2381
 #: utils/adt/arrayfuncs.c:2536
 msgid "cannot compare arrays of different element types"
-msgstr ""
+msgstr "нельзя сравнивать массивы с разнотипными элементами"
 
 #: utils/adt/arrayfuncs.c:2553
 #, c-format
@@ -6996,7 +7000,7 @@ msgstr "единицы типа \"time\" -- \"%s\" -- не распознаны"
 #: utils/adt/date.c:2018
 #, c-format
 msgid "invalid input syntax for type time with time zone: \"%s\""
-msgstr ""
+msgstr "неверный входной синтаксис для типа time with time zone: \"%s\""
 
 #: utils/adt/date.c:2052
 #: utils/adt/date.c:2136
@@ -7013,7 +7017,7 @@ msgstr "единицы типа \"time with time zone\" -- \"%s\" -- не распознаны"
 #: utils/adt/timestamp.c:3677
 #, c-format
 msgid "time zone \"%s\" not recognized"
-msgstr ""
+msgstr "временная зона \"%s\" не распознана"
 
 #: utils/adt/date.c:2244
 #, c-format
@@ -7031,7 +7035,7 @@ msgstr ""
 #: utils/adt/datetime.c:3296
 #, c-format
 msgid "date/time field value out of range: \"%s\""
-msgstr ""
+msgstr "значение поля типа date/time вне диапазона: \"%s\""
 
 #: utils/adt/datetime.c:3298
 msgid "Perhaps you need a different \"datestyle\" setting."
@@ -7045,7 +7049,7 @@ msgstr "значение интервала вне диапазона: \"%s\""
 #: utils/adt/datetime.c:3309
 #, c-format
 msgid "time zone displacement out of range: \"%s\""
-msgstr ""
+msgstr "смещение временной зоны вне диапазона: \"%s\""
 
 #. translator: first %s is inet or cidr
 #: utils/adt/datetime.c:3316
@@ -7057,13 +7061,13 @@ msgstr "неверный входной синтаксис для типа %s: \"%s\""
 #: utils/adt/datum.c:80
 #: utils/adt/datum.c:92
 msgid "invalid Datum pointer"
-msgstr ""
+msgstr "неверный указатель Datum"
 
 #: utils/adt/encode.c:55
 #: utils/adt/encode.c:91
 #, c-format
 msgid "unrecognized encoding: \"%s\""
-msgstr ""
+msgstr "не распознанная кодировка: \"%s\""
 
 #: utils/adt/encode.c:150
 #, c-format
@@ -7072,7 +7076,7 @@ msgstr "неверная шестнадцатеричная цифра: \"%c\""
 
 #: utils/adt/encode.c:178
 msgid "invalid hexadecimal data: odd number of digits"
-msgstr ""
+msgstr "неверные шестнадцатеричные данные: нечётное число цифр"
 
 #: utils/adt/encode.c:295
 msgid "unexpected \"=\""
@@ -7095,7 +7099,7 @@ msgstr "неверный входной синтаксис для типа bytea"
 
 #: utils/adt/float.c:135
 msgid "type \"real\" value out of range: overflow"
-msgstr ""
+msgstr "значения типа \"real\" вне диапазона: переполнение"
 
 #: utils/adt/float.c:139
 msgid "type \"real\" value out of range: underflow"
@@ -7103,7 +7107,7 @@ msgstr ""
 
 #: utils/adt/float.c:164
 msgid "type \"double precision\" value out of range: overflow"
-msgstr ""
+msgstr "значения типа \"double precision\" вне диапазона: переполнение"
 
 #: utils/adt/float.c:168
 msgid "type \"double precision\" value out of range: underflow"
@@ -7154,7 +7158,7 @@ msgstr "целое вне диапазона"
 #: utils/adt/float.c:1208
 #: utils/adt/numeric.c:4035
 msgid "cannot take square root of a negative number"
-msgstr ""
+msgstr "нельзя брать квадратный корень отрицательного числа"
 
 #: utils/adt/float.c:1254
 #: utils/adt/float.c:1284
@@ -7164,13 +7168,13 @@ msgstr "результат вне диапазона"
 #: utils/adt/float.c:1304
 #: utils/adt/float.c:1330
 msgid "cannot take logarithm of zero"
-msgstr ""
+msgstr "нельзя брать логарифм нуля"
 
 #: utils/adt/float.c:1309
 #: utils/adt/float.c:1335
 #: utils/adt/numeric.c:4252
 msgid "cannot take logarithm of a negative number"
-msgstr ""
+msgstr "нельзя брать логарифм отрицательного числа"
 
 #: utils/adt/float.c:1362
 #: utils/adt/float.c:1387
@@ -7185,11 +7189,11 @@ msgstr "ввод вне диапазона"
 
 #: utils/adt/formatting.c:968
 msgid "\"9\" must be ahead of \"PR\""
-msgstr ""
+msgstr "\"9\" должна быть до \"PR\""
 
 #: utils/adt/formatting.c:987
 msgid "\"0\" must be ahead of \"PR\""
-msgstr ""
+msgstr "\"0\" должен быть до \"PR\""
 
 #: utils/adt/formatting.c:1016
 msgid "multiple decimal points"
@@ -7206,27 +7210,27 @@ msgstr ""
 
 #: utils/adt/formatting.c:1045
 msgid "cannot use \"S\" and \"PL\"/\"MI\"/\"SG\"/\"PR\" together"
-msgstr ""
+msgstr "нельзя использовать \"S\" и \"PL\"/\"MI\"/\"SG\"/\"PR\" вместе"
 
 #: utils/adt/formatting.c:1069
 msgid "cannot use \"S\" and \"MI\" together"
-msgstr ""
+msgstr "нельзя использовать \"S\" и \"MI\" вместе"
 
 #: utils/adt/formatting.c:1082
 msgid "cannot use \"S\" and \"PL\" together"
-msgstr ""
+msgstr "нельзя использовать \"S\" и \"PL\" вместе"
 
 #: utils/adt/formatting.c:1095
 msgid "cannot use \"S\" and \"SG\" together"
-msgstr ""
+msgstr "нельзя использовать \"S\" и \"SG\" вместе"
 
 #: utils/adt/formatting.c:1107
 msgid "cannot use \"PR\" and \"S\"/\"PL\"/\"MI\"/\"SG\" together"
-msgstr ""
+msgstr "нельзя использовать \"S\" и \"S\"/\"PL\"/\"MI\"/\"SG\" вместе"
 
 #: utils/adt/formatting.c:1137
 msgid "\"E\" is not supported"
-msgstr ""
+msgstr "\"E\" не поддерживается"
 
 #: utils/adt/formatting.c:1407
 #, c-format
@@ -7235,11 +7239,11 @@ msgstr "\"%s\" не является числом"
 
 #: utils/adt/formatting.c:1670
 msgid "invalid AM/PM string"
-msgstr ""
+msgstr "неверная AM/PM строка"
 
 #: utils/adt/formatting.c:2016
 msgid "\"TZ\"/\"tz\" not supported"
-msgstr ""
+msgstr "\"TZ\"/\"tz\" не поддерживается"
 
 #: utils/adt/formatting.c:2026
 #, c-format
@@ -7248,7 +7252,7 @@ msgstr "неверное значение для %s"
 
 #: utils/adt/formatting.c:3092
 msgid "AM/PM hour must be between 1 and 12"
-msgstr ""
+msgstr "час в AM/PM должен быть между 1 и 12"
 
 #: utils/adt/formatting.c:3166
 msgid "cannot calculate day of year without year information"
@@ -7256,7 +7260,7 @@ msgstr ""
 
 #: utils/adt/formatting.c:3943
 msgid "\"RN\" not supported"
-msgstr ""
+msgstr "\"RN\" не поддерживается"
 
 #: utils/adt/geo_ops.c:292
 #: utils/adt/geo_ops.c:3930
@@ -7417,7 +7421,7 @@ msgstr ""
 #: utils/adt/nabstime.c:882
 #, c-format
 msgid "invalid input syntax for type tinterval: \"%s\""
-msgstr ""
+msgstr "неверный входной синтаксис для типа tinterval: \"%s\""
 
 #: utils/adt/nabstime.c:945
 msgid "invalid status in external \"tinterval\" value"
@@ -7430,7 +7434,7 @@ msgstr ""
 #: utils/adt/network.c:102
 #, c-format
 msgid "invalid cidr value: \"%s\""
-msgstr ""
+msgstr "неверное значение cidr: \"%s\""
 
 #: utils/adt/network.c:103
 #: utils/adt/network.c:229
@@ -7468,7 +7472,7 @@ msgstr ""
 #: utils/adt/network.c:315
 #, c-format
 msgid "invalid mask length: %d"
-msgstr ""
+msgstr "неверная длина маски: %d"
 
 #: utils/adt/not_in.c:64
 #: utils/adt/regproc.c:1110
@@ -7528,14 +7532,14 @@ msgstr ""
 
 #: utils/adt/numeric.c:4501
 msgid "zero raised to zero is undefined"
-msgstr ""
+msgstr "ноль в степени ноль не определён"
 
 #: utils/adt/numutils.c:72
 #: utils/adt/numutils.c:86
 #: utils/adt/numutils.c:91
 #, c-format
 msgid "invalid input syntax for integer: \"%s\""
-msgstr ""
+msgstr "неверный входной синтаксис для integer: \"%s\""
 
 #: utils/adt/numutils.c:105
 #, c-format
@@ -7567,7 +7571,7 @@ msgstr "значение \"%s\" вне диапазона для типа \"oid\""
 
 #: utils/adt/oid.c:176
 msgid "oidvector has too many elements"
-msgstr ""
+msgstr "oidvector содержит слишком много элементов"
 
 #: utils/adt/pseudotypes.c:38
 #: utils/adt/pseudotypes.c:64
@@ -7647,7 +7651,7 @@ msgstr "две или более функции с именем \"%s\""
 #: utils/adt/regproc.c:491
 #, c-format
 msgid "more than one operator named %s"
-msgstr ""
+msgstr "более одного оператора с именем %s"
 
 #: utils/adt/regproc.c:644
 #: utils/adt/regproc.c:1276
@@ -7768,12 +7772,12 @@ msgstr ""
 #: utils/adt/ri_triggers.c:3256
 #, c-format
 msgid "Key (%s)=(%s) is still referenced from table \"%s\"."
-msgstr ""
+msgstr "Ключ (%s)=(%s) всё ещё ссылается из таблицы \"%s\"."
 
 #: utils/adt/ruleutils.c:1553
 #, c-format
 msgid "rule \"%s\" has unsupported event type %d"
-msgstr ""
+msgstr "правило \"%s\" имеет неподдерживаемый тип событий %d"
 
 #: utils/adt/selfuncs.c:3129
 #: utils/adt/selfuncs.c:3512
@@ -7808,7 +7812,7 @@ msgstr "значение даты/времени \"%s\" больше не поддерживается"
 #: utils/adt/timestamp.c:258
 #, c-format
 msgid "timestamp(%d) precision must be between %d and %d"
-msgstr ""
+msgstr "точность timestamp(%d) должна быть между %d и %d"
 
 #: utils/adt/timestamp.c:499
 #: utils/adt/timestamp.c:2217
@@ -7820,7 +7824,7 @@ msgstr "interval вне диапазона"
 #: utils/adt/timestamp.c:831
 #, c-format
 msgid "interval(%d) precision must be between %d and %d"
-msgstr ""
+msgstr "точность interval(%d) должна быть между %d и %d"
 
 #: utils/adt/timestamp.c:1693
 msgid "cannot subtract infinite timestamps"
@@ -7834,7 +7838,7 @@ msgstr "неверный входной синтаксис для типа timestamp: \"%s\""
 #: utils/adt/timestamp.c:2448
 #, c-format
 msgid "invalid input syntax for type timestamp with time zone: \"%s\""
-msgstr ""
+msgstr "неверный входной синтаксис для типа timestamp with time zone: \"%s\""
 
 #: utils/adt/timestamp.c:2509
 #, c-format
@@ -7905,7 +7909,7 @@ msgstr ""
 #: utils/adt/varbit.c:370
 #, c-format
 msgid "\"%c\" is not a valid binary digit"
-msgstr ""
+msgstr "\"%c\" не является верной двоичной цифрой"
 
 #: utils/adt/varbit.c:156
 #: utils/adt/varbit.c:395
@@ -7938,7 +7942,7 @@ msgstr ""
 #: utils/adt/varbit.c:1257
 #: utils/adt/varbit.c:1290
 msgid "64-bit integers not supported on this platform"
-msgstr ""
+msgstr "64-битные целые не поддерживаются на этой платформе"
 
 #: utils/adt/varchar.c:105
 #: utils/adt/varchar.c:225
@@ -7964,7 +7968,7 @@ msgstr ""
 #: utils/adt/varlena.c:1503
 #, c-format
 msgid "index %d out of valid range, 0..%d"
-msgstr ""
+msgstr "индекс %d вне диапазона, 0..%d"
 
 #: utils/adt/varlena.c:1515
 msgid "new bit must be 0 or 1"
@@ -8106,7 +8110,7 @@ msgstr ""
 #: utils/fmgr/dfmgr.c:135
 #, c-format
 msgid "could not load library \"%s\": %s"
-msgstr ""
+msgstr "не получилось загрузить библиотеку \"%s\": %s"
 
 #: utils/fmgr/dfmgr.c:165
 #, c-format
