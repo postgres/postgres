@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.3 1999/05/26 20:55:06 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.3.4.1 2000/09/15 12:08:56 ishii Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -48,8 +48,8 @@ static void plpgsql_input(char *buf, int *result, int max);
 #define YY_INPUT(buf,res,max)	plpgsql_input(buf, &res, max)
 %}
 
-WS	[[:alpha:]_"]
-WC	[[:alnum:]_"]
+WS    [\200-\377_A-Za-z"]
+WC    [\200-\377_A-Za-z0-9"]
 
 %x	IN_STRING IN_COMMENT
 
