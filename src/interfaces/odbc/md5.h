@@ -46,6 +46,7 @@ typedef unsigned short uint16;	/* == 16 bits */
 typedef unsigned int uint32;	/* == 32 bits */
 #endif   /* SIZEOF_UINT8 == 0 */
 
+extern bool md5_hash(const void *buff, size_t len, char *hexsum);
 extern bool EncryptMD5(const char *passwd, const char *salt,
 		   size_t salt_len, char *buf);
 
