@@ -3,7 +3,7 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.21 2001/09/08 14:30:15 momjian Exp $
+ * $Id: mbutils.c,v 1.22 2001/09/09 01:15:11 ishii Exp $
  */
 #include "postgres.h"
 
@@ -21,7 +21,7 @@
  *
  * Karel Zak (Aug 2001)
  */
-static pg_enc2name	*ClientEncoding = NULL;
+static pg_enc2name	*ClientEncoding = &pg_enc2name_tbl[ PG_SQL_ASCII ];
 static pg_enc2name	*DatabaseEncoding = &pg_enc2name_tbl[ PG_SQL_ASCII ];
 
 static void	(*client_to_mic) ();	/* something to MIC */
@@ -134,12 +134,7 @@ pg_set_client_encoding(int encoding)
 int
 pg_get_client_encoding()
 {
-	Assert(DatabaseEncoding);
-
-	if (ClientEncoding == NULL)
-		/* this is the first time */
-		ClientEncoding = DatabaseEncoding;
-
+	Assert(ClientEncoding);
 	return (ClientEncoding->encoding);
 }
 
@@ -149,12 +144,7 @@ pg_get_client_encoding()
 const char *
 pg_get_client_encoding_name()
 {
-	Assert(DatabaseEncoding);
-
-	if (ClientEncoding == NULL)
-		/* this is the first time */
-		ClientEncoding = DatabaseEncoding;
-
+	Assert(ClientEncoding);
 	return (ClientEncoding->name);
 }
 
@@ -310,10 +300,7 @@ unsigned char *
 pg_client_to_server(unsigned char *s, int len)
 {
 	Assert(DatabaseEncoding);
-
-	if (ClientEncoding == NULL)
-		/* this is the first time */
-		ClientEncoding = DatabaseEncoding;
+	Assert(ClientEncoding);
 
 	if (ClientEncoding->encoding == DatabaseEncoding->encoding)
 	    return s;
@@ -338,10 +325,7 @@ unsigned char *
 pg_server_to_client(unsigned char *s, int len)
 {
 	Assert(DatabaseEncoding);
-
-	if (ClientEncoding == NULL)
-		/* this is the first time */
-		ClientEncoding = DatabaseEncoding;
+	Assert(ClientEncoding);
 
 	if (ClientEncoding->encoding == DatabaseEncoding->encoding)
 		return s;
