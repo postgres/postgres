@@ -10,16 +10,12 @@
  * out, we avoid needing to write copy/compare routines for all the
  * different executor state node types.
  *
- * Another class of nodes not currently handled is nodes that appear
- * only in "raw" parsetrees (gram.y output not yet analyzed by the parser).
- * Perhaps some day that will need to be supported.
- *
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.119 2000/08/08 15:41:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.120 2000/08/11 23:45:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +24,7 @@
 
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
+#include "utils/acl.h"
 
 
 /*
@@ -91,10 +88,10 @@ CopyPlanFields(Plan *from, Plan *newnode)
 	newnode->plan_rows = from->plan_rows;
 	newnode->plan_width = from->plan_width;
 	/* state is NOT copied */
-	newnode->targetlist = copyObject(from->targetlist);
-	newnode->qual = copyObject(from->qual);
-	newnode->lefttree = copyObject(from->lefttree);
-	newnode->righttree = copyObject(from->righttree);
+	Node_Copy(from, newnode, targetlist);
+	Node_Copy(from, newnode, qual);
+	Node_Copy(from, newnode, lefttree);
+	Node_Copy(from, newnode, righttree);
 	newnode->extParam = listCopy(from->extParam);
 	newnode->locParam = listCopy(from->locParam);
 	newnode->chgParam = listCopy(from->chgParam);
@@ -513,6 +510,20 @@ _copyGroupClause(GroupClause *from)
 	return newnode;
 }
 
+static JoinExpr *
+_copyJoinExpr(JoinExpr *from)
+{
+	JoinExpr *newnode = makeNode(JoinExpr);
+
+	newnode->jointype = from->jointype;
+	newnode->isNatural = from->isNatural;
+	Node_Copy(from, newnode, larg);
+	Node_Copy(from, newnode, rarg);
+	Node_Copy(from, newnode, alias);
+	Node_Copy(from, newnode, quals);
+
+	return newnode;
+}
 
 /* ----------------
  *		_copyUnique
@@ -1381,6 +1392,26 @@ _copyRowMark(RowMark *from)
 	return newnode;
 }
 
+static FkConstraint *
+_copyFkConstraint(FkConstraint *from)
+{
+	FkConstraint    *newnode = makeNode(FkConstraint);
+
+	if (from->constr_name)
+		newnode->constr_name = pstrdup(from->constr_name);
+	if (from->pktable_name)
+		newnode->pktable_name = pstrdup(from->pktable_name);
+	Node_Copy(from, newnode, fk_attrs);
+	Node_Copy(from, newnode, pk_attrs);
+	if (from->match_type)
+		newnode->match_type = pstrdup(from->match_type);
+	newnode->actions = from->actions;
+	newnode->deferrable = from->deferrable;
+	newnode->initdeferred = from->initdeferred;
+	
+	return newnode;
+}
+
 static SortClause *
 _copySortClause(SortClause *from)
 {
@@ -1392,6 +1423,20 @@ _copySortClause(SortClause *from)
 	return newnode;
 }
 
+static A_Expr *
+_copyAExpr(A_Expr *from)
+{
+	A_Expr    *newnode = makeNode(A_Expr);
+
+	newnode->oper = from->oper;
+	if (from->opname)
+		newnode->opname = pstrdup(from->opname);
+	Node_Copy(from, newnode, lexpr);
+	Node_Copy(from, newnode, rexpr);
+
+	return newnode;
+}
+
 static A_Const *
 _copyAConst(A_Const *from)
 {
@@ -1399,6 +1444,69 @@ _copyAConst(A_Const *from)
 
 	newnode->val = *((Value *) (copyObject(&(from->val))));
 	Node_Copy(from, newnode, typename);
+
+	return newnode;
+}
+
+static ParamNo *
+_copyParamNo(ParamNo *from)
+{
+	ParamNo    *newnode = makeNode(ParamNo);
+
+	newnode->number = from->number;
+	Node_Copy(from, newnode, typename);
+	Node_Copy(from, newnode, indirection);
+
+	return newnode;
+}
+
+static Ident *
+_copyIdent(Ident *from)
+{
+	Ident    *newnode = makeNode(Ident);
+
+	if (from->name)
+		newnode->name = pstrdup(from->name);
+	Node_Copy(from, newnode, indirection);
+	newnode->isRel = from->isRel;
+
+	return newnode;
+}
+
+static FuncCall *
+_copyFuncCall(FuncCall *from)
+{
+	FuncCall    *newnode = makeNode(FuncCall);
+
+	if (from->funcname)
+		newnode->funcname = pstrdup(from->funcname);
+	Node_Copy(from, newnode, args);
+	newnode->agg_star = from->agg_star;
+	newnode->agg_distinct = from->agg_distinct;
+
+	return newnode;
+}
+
+static A_Indices *
+_copyAIndices(A_Indices *from)
+{
+	A_Indices    *newnode = makeNode(A_Indices);
+
+	Node_Copy(from, newnode, lidx);
+	Node_Copy(from, newnode, uidx);
+
+	return newnode;
+}
+
+static ResTarget *
+_copyResTarget(ResTarget *from)
+{
+	ResTarget    *newnode = makeNode(ResTarget);
+
+	if (from->name)
+		newnode->name = pstrdup(from->name);
+	Node_Copy(from, newnode, indirection);
+	Node_Copy(from, newnode, val);
 
 	return newnode;
 }
@@ -1418,6 +1526,41 @@ _copyTypeName(TypeName *from)
 	return newnode;
 }
 
+static RelExpr *
+_copyRelExpr(RelExpr *from)
+{
+	RelExpr   *newnode = makeNode(RelExpr);
+
+	if (from->relname)
+		newnode->relname = pstrdup(from->relname);
+	newnode->inh = from->inh;
+
+	return newnode;
+}
+
+static SortGroupBy *
+_copySortGroupBy(SortGroupBy *from)
+{
+	SortGroupBy   *newnode = makeNode(SortGroupBy);
+
+	if (from->useOp)
+		newnode->useOp = pstrdup(from->useOp);
+	Node_Copy(from, newnode, node);
+
+	return newnode;
+}
+
+static RangeVar *
+_copyRangeVar(RangeVar *from)
+{
+	RangeVar   *newnode = makeNode(RangeVar);
+
+	Node_Copy(from, newnode, relExpr);
+	Node_Copy(from, newnode, name);
+
+	return newnode;
+}
+
 static TypeCast *
 _copyTypeCast(TypeCast *from)
 {
@@ -1425,6 +1568,66 @@ _copyTypeCast(TypeCast *from)
 
 	Node_Copy(from, newnode, arg);
 	Node_Copy(from, newnode, typename);
+
+	return newnode;
+}
+
+static IndexElem *
+_copyIndexElem(IndexElem *from)
+{
+	IndexElem   *newnode = makeNode(IndexElem);
+
+	if (from->name)
+		newnode->name = pstrdup(from->name);
+	Node_Copy(from, newnode, args);
+	if (from->class)
+		newnode->class = pstrdup(from->class);
+
+	return newnode;
+}
+
+static ColumnDef *
+_copyColumnDef(ColumnDef *from)
+{
+	ColumnDef   *newnode = makeNode(ColumnDef);
+
+	if (from->colname)
+		newnode->colname = pstrdup(from->colname);
+	Node_Copy(from, newnode, typename);
+	newnode->is_not_null = from->is_not_null;
+	newnode->is_sequence = from->is_sequence;
+	Node_Copy(from, newnode, raw_default);
+	if (from->cooked_default)
+		newnode->cooked_default = pstrdup(from->cooked_default);
+	Node_Copy(from, newnode, constraints);
+
+	return newnode;
+}
+
+static Constraint *
+_copyConstraint(Constraint *from)
+{
+	Constraint   *newnode = makeNode(Constraint);
+
+	newnode->contype = from->contype;
+	if (from->name)
+		newnode->name = pstrdup(from->name);
+	Node_Copy(from, newnode, raw_expr);
+	if (from->cooked_expr)
+		newnode->cooked_expr = pstrdup(from->cooked_expr);
+	Node_Copy(from, newnode, keys);
+
+	return newnode;
+}
+
+static DefElem *
+_copyDefElem(DefElem *from)
+{
+	DefElem   *newnode = makeNode(DefElem);
+
+	if (from->defname)
+		newnode->defname = pstrdup(from->defname);
+	Node_Copy(from, newnode, arg);
 
 	return newnode;
 }
@@ -1471,6 +1674,118 @@ _copyQuery(Query *from)
 	return newnode;
 }
 
+static InsertStmt *
+_copyInsertStmt(InsertStmt *from)
+{
+	InsertStmt *newnode = makeNode(InsertStmt);
+	
+	if (from->relname)
+		newnode->relname = pstrdup(from->relname);
+	Node_Copy(from, newnode, distinctClause);
+	Node_Copy(from, newnode, cols);
+	Node_Copy(from, newnode, targetList);
+	Node_Copy(from, newnode, fromClause);
+	Node_Copy(from, newnode, whereClause);
+	Node_Copy(from, newnode, groupClause);
+	Node_Copy(from, newnode, havingClause);
+	Node_Copy(from, newnode, unionClause);
+	newnode->unionall = from->unionall;
+	Node_Copy(from, newnode, intersectClause);
+	Node_Copy(from, newnode, forUpdate);
+
+	return newnode;
+}
+
+static DeleteStmt *
+_copyDeleteStmt(DeleteStmt *from)
+{
+	DeleteStmt *newnode = makeNode(DeleteStmt);
+	
+	if (from->relname)
+		newnode->relname = pstrdup(from->relname);
+	Node_Copy(from, newnode, whereClause);
+	newnode->inh = from->inh;
+
+	return newnode;
+}
+
+static UpdateStmt *
+_copyUpdateStmt(UpdateStmt *from)
+{
+	UpdateStmt *newnode = makeNode(UpdateStmt);
+	
+	if (from->relname)
+		newnode->relname = pstrdup(from->relname);
+	Node_Copy(from, newnode, targetList);
+	Node_Copy(from, newnode, whereClause);
+	Node_Copy(from, newnode, fromClause);
+	newnode->inh = from->inh;
+
+	return newnode;
+}
+
+static SelectStmt *
+_copySelectStmt(SelectStmt *from)
+{
+	SelectStmt *newnode = makeNode(SelectStmt);
+	
+	Node_Copy(from, newnode, distinctClause);
+	if (from->into)
+		newnode->into = pstrdup(from->into);
+	Node_Copy(from, newnode, targetList);
+	Node_Copy(from, newnode, fromClause);
+	Node_Copy(from, newnode, whereClause);
+	Node_Copy(from, newnode, groupClause);
+	Node_Copy(from, newnode, havingClause);
+	Node_Copy(from, newnode, intersectClause);
+	Node_Copy(from, newnode, exceptClause);
+	Node_Copy(from, newnode, unionClause);
+	Node_Copy(from, newnode, sortClause);
+	if (from->portalname)
+		newnode->portalname = pstrdup(from->portalname);
+	newnode->binary = from->binary;
+	newnode->istemp = from->istemp;
+	newnode->unionall = from->unionall;
+	Node_Copy(from, newnode, limitOffset);
+	Node_Copy(from, newnode, limitCount);
+	Node_Copy(from, newnode, forUpdate);
+
+	return newnode;
+}
+
+static AlterTableStmt *
+_copyAlterTableStmt(AlterTableStmt *from)
+{
+	AlterTableStmt *newnode = makeNode(AlterTableStmt);
+	
+	newnode->subtype = from->subtype;
+	if (from->relname)
+		newnode->relname = pstrdup(from->relname);
+	newnode->inh = from->inh;
+	if (from->name)
+		newnode->name = pstrdup(from->name);
+	Node_Copy(from, newnode, def);
+	newnode->behavior = from->behavior;
+
+	return newnode;
+}
+
+static ChangeACLStmt *
+_copyChangeACLStmt(ChangeACLStmt *from)
+{
+	ChangeACLStmt *newnode = makeNode(ChangeACLStmt);
+	
+	if (from->aclitem)
+	{
+		newnode->aclitem = (struct AclItem *) palloc(sizeof(struct AclItem));
+		memcpy(newnode->aclitem, from->aclitem, sizeof(struct AclItem));
+	}
+	newnode->modechg = from->modechg;
+	Node_Copy(from, newnode, relNames);
+
+	return newnode;
+}
+
 static ClosePortalStmt *
 _copyClosePortalStmt(ClosePortalStmt *from)
 {
@@ -1482,12 +1797,241 @@ _copyClosePortalStmt(ClosePortalStmt *from)
 	return newnode;
 }
 
+static ClusterStmt *
+_copyClusterStmt(ClusterStmt *from)
+{
+	ClusterStmt *newnode = makeNode(ClusterStmt);
+	
+	if (from->relname)
+		newnode->relname = pstrdup(from->relname);
+	if (from->indexname)
+		newnode->indexname = pstrdup(from->indexname);
+
+	return newnode;
+}
+
+static CopyStmt *
+_copyCopyStmt(CopyStmt *from)
+{
+	CopyStmt *newnode = makeNode(CopyStmt);
+	
+	newnode->binary = from->binary;
+	if (from->relname)
+		newnode->relname = pstrdup(from->relname);
+	newnode->oids = from->oids;
+	newnode->direction = from->direction;
+	if (from->filename)
+		newnode->filename = pstrdup(from->filename);
+	if (from->delimiter)
+		newnode->delimiter = pstrdup(from->delimiter);
+	if (from->null_print)
+		newnode->null_print = pstrdup(from->null_print);
+
+	return newnode;
+}
+
+static CreateStmt *
+_copyCreateStmt(CreateStmt *from)
+{
+	CreateStmt *newnode = makeNode(CreateStmt);
+	
+	newnode->istemp = from->istemp;
+	newnode->relname = pstrdup(from->relname);
+	Node_Copy(from, newnode, tableElts);
+	Node_Copy(from, newnode, inhRelnames);
+	Node_Copy(from, newnode, constraints);
+
+	return newnode;
+}
+
+static VersionStmt *
+_copyVersionStmt(VersionStmt *from)
+{
+	VersionStmt *newnode = makeNode(VersionStmt);
+	
+	newnode->relname = pstrdup(from->relname);
+	newnode->direction = from->direction;
+	newnode->fromRelname = pstrdup(from->fromRelname);
+	newnode->date = pstrdup(from->date);
+
+	return newnode;
+}
+
+static DefineStmt *
+_copyDefineStmt(DefineStmt *from)
+{
+	DefineStmt *newnode = makeNode(DefineStmt);
+	
+	newnode->defType = from->defType;
+	newnode->defname = pstrdup(from->defname);
+	Node_Copy(from, newnode, definition);
+
+	return newnode;
+}
+
+static DropStmt *
+_copyDropStmt(DropStmt *from)
+{
+	DropStmt *newnode = makeNode(DropStmt);
+	
+	Node_Copy(from, newnode, relNames);
+	newnode->sequence = from->sequence;
+
+	return newnode;
+}
+
 static TruncateStmt *
 _copyTruncateStmt(TruncateStmt *from)
 {
 	TruncateStmt *newnode = makeNode(TruncateStmt);
 
 	newnode->relName = pstrdup(from->relName);
+
+	return newnode;
+}
+
+static CommentStmt *
+_copyCommentStmt(CommentStmt *from)
+{
+	CommentStmt *newnode = makeNode(CommentStmt);
+	
+	newnode->objtype = from->objtype;
+	newnode->objname = pstrdup(from->objname);
+	newnode->objproperty = pstrdup(from->objproperty);
+	Node_Copy(from, newnode, objlist);
+	newnode->comment = pstrdup(from->comment);
+
+	return newnode;
+}
+
+static ExtendStmt *
+_copyExtendStmt(ExtendStmt *from)
+{
+	ExtendStmt *newnode = makeNode(ExtendStmt);
+	
+	newnode->idxname = pstrdup(from->idxname);
+	Node_Copy(from, newnode, whereClause);
+	Node_Copy(from, newnode, rangetable);
+
+	return newnode;
+}
+
+static FetchStmt *
+_copyFetchStmt(FetchStmt *from)
+{
+	FetchStmt *newnode = makeNode(FetchStmt);
+	
+	newnode->direction = from->direction;
+	newnode->howMany = from->howMany;
+	newnode->portalname = pstrdup(from->portalname);
+	newnode->ismove = from->ismove;
+
+	return newnode;
+}
+
+static IndexStmt *
+_copyIndexStmt(IndexStmt *from)
+{
+	IndexStmt *newnode = makeNode(IndexStmt);
+	
+	newnode->idxname = pstrdup(from->idxname);
+	newnode->relname = pstrdup(from->relname);
+	newnode->accessMethod = pstrdup(from->accessMethod);
+	Node_Copy(from, newnode, indexParams);
+	Node_Copy(from, newnode, withClause);
+	Node_Copy(from, newnode, whereClause);
+	Node_Copy(from, newnode, rangetable);
+	newnode->unique = from->unique;
+	newnode->primary = from->primary;
+
+	return newnode;
+}
+
+static ProcedureStmt *
+_copyProcedureStmt(ProcedureStmt *from)
+{
+	ProcedureStmt *newnode = makeNode(ProcedureStmt);
+	
+	newnode->funcname = pstrdup(from->funcname);
+	Node_Copy(from, newnode, defArgs);
+	Node_Copy(from, newnode, returnType);
+	Node_Copy(from, newnode, withClause);
+	Node_Copy(from, newnode, as);
+	newnode->language = pstrdup(from->language);
+
+	return newnode;
+}
+
+static RemoveAggrStmt *
+_copyRemoveAggrStmt(RemoveAggrStmt *from)
+{
+	RemoveAggrStmt *newnode = makeNode(RemoveAggrStmt);
+	
+	newnode->aggname = pstrdup(from->aggname);
+	newnode->aggtype = pstrdup(from->aggtype);
+
+	return newnode;
+}
+
+static RemoveFuncStmt *
+_copyRemoveFuncStmt(RemoveFuncStmt *from)
+{
+	RemoveFuncStmt *newnode = makeNode(RemoveFuncStmt);
+	
+	newnode->funcname = pstrdup(from->funcname);
+	Node_Copy(from, newnode, args);
+
+	return newnode;
+}
+
+static RemoveOperStmt *
+_copyRemoveOperStmt(RemoveOperStmt *from)
+{
+	RemoveOperStmt *newnode = makeNode(RemoveOperStmt);
+	
+	newnode->opname = pstrdup(from->opname);
+	Node_Copy(from, newnode, args);
+
+	return newnode;
+}
+
+static RemoveStmt *
+_copyRemoveStmt(RemoveStmt *from)
+{
+	RemoveStmt *newnode = makeNode(RemoveStmt);
+	
+	newnode->removeType = from->removeType;
+	newnode->name = pstrdup(from->name);
+
+	return newnode;
+}
+
+static RenameStmt *
+_copyRenameStmt(RenameStmt *from)
+{
+	RenameStmt *newnode = makeNode(RenameStmt);
+	
+	newnode->relname = pstrdup(from->relname);
+	newnode->inh = from->inh;
+	if (from->column)
+		newnode->column = pstrdup(from->column);
+	if (from->newname)
+		newnode->newname = pstrdup(from->newname);
+
+	return newnode;
+}
+
+static RuleStmt *
+_copyRuleStmt(RuleStmt *from)
+{
+	RuleStmt *newnode = makeNode(RuleStmt);
+	
+	newnode->rulename = pstrdup(from->rulename);
+	Node_Copy(from, newnode, whereClause);
+	newnode->event = from->event;
+	Node_Copy(from, newnode, object);
+	newnode->instead = from->instead;
+	Node_Copy(from, newnode, actions);
 
 	return newnode;
 }
@@ -1535,6 +2079,19 @@ _copyTransactionStmt(TransactionStmt *from)
 	return newnode;
 }
 
+static ViewStmt *
+_copyViewStmt(ViewStmt *from)
+{
+	ViewStmt   *newnode = makeNode(ViewStmt);
+
+	if (from->viewname)
+		newnode->viewname = pstrdup(from->viewname);
+	Node_Copy(from, newnode, aliases);
+	Node_Copy(from, newnode, query);
+
+	return newnode;
+}
+
 static LoadStmt *
 _copyLoadStmt(LoadStmt *from)
 {
@@ -1542,6 +2099,68 @@ _copyLoadStmt(LoadStmt *from)
 
 	if (from->filename)
 		newnode->filename = pstrdup(from->filename);
+
+	return newnode;
+}
+
+static CreatedbStmt *
+_copyCreatedbStmt(CreatedbStmt *from)
+{
+	CreatedbStmt   *newnode = makeNode(CreatedbStmt);
+
+	if (from->dbname)
+		newnode->dbname = pstrdup(from->dbname);
+	if (from->dbpath)
+		newnode->dbpath = pstrdup(from->dbpath);
+	newnode->encoding = from->encoding;
+
+	return newnode;
+}
+
+static DropdbStmt *
+_copyDropdbStmt(DropdbStmt *from)
+{
+	DropdbStmt   *newnode = makeNode(DropdbStmt);
+
+	if (from->dbname)
+		newnode->dbname = pstrdup(from->dbname);
+
+	return newnode;
+}
+
+static VacuumStmt *
+_copyVacuumStmt(VacuumStmt *from)
+{
+	VacuumStmt   *newnode = makeNode(VacuumStmt);
+
+	newnode->verbose = from->verbose;
+	newnode->analyze = from->analyze;
+	if (from->vacrel)
+		newnode->vacrel = pstrdup(from->vacrel);
+	Node_Copy(from, newnode, va_spec);
+
+	return newnode;
+}
+
+static ExplainStmt *
+_copyExplainStmt(ExplainStmt *from)
+{
+	ExplainStmt   *newnode = makeNode(ExplainStmt);
+
+	Node_Copy(from, newnode, query);
+	newnode->verbose = from->verbose;
+
+	return newnode;
+}
+
+static CreateSeqStmt *
+_copyCreateSeqStmt(CreateSeqStmt *from)
+{
+	CreateSeqStmt   *newnode = makeNode(CreateSeqStmt);
+
+	if (from->seqname)
+		newnode->seqname = pstrdup(from->seqname);
+	Node_Copy(from, newnode, options);
 
 	return newnode;
 }
@@ -1559,6 +2178,17 @@ _copyVariableSetStmt(VariableSetStmt *from)
 	return newnode;
 }
 
+static VariableShowStmt *
+_copyVariableShowStmt(VariableShowStmt *from)
+{
+	VariableShowStmt *newnode = makeNode(VariableShowStmt);
+
+	if (from->name)
+		newnode->name = pstrdup(from->name);
+
+	return newnode;
+}
+
 static VariableResetStmt *
 _copyVariableResetStmt(VariableResetStmt *from)
 {
@@ -1566,6 +2196,123 @@ _copyVariableResetStmt(VariableResetStmt *from)
 
 	if (from->name)
 		newnode->name = pstrdup(from->name);
+
+	return newnode;
+}
+
+static CreateTrigStmt *
+_copyCreateTrigStmt(CreateTrigStmt *from)
+{
+	CreateTrigStmt *newnode = makeNode(CreateTrigStmt);
+
+	if (from->trigname)
+		newnode->trigname = pstrdup(from->trigname);
+	if (from->relname)
+		newnode->relname = pstrdup(from->relname);
+	if (from->funcname)
+		newnode->funcname = pstrdup(from->funcname);
+	Node_Copy(from, newnode, args);
+	newnode->before = from->before;
+	newnode->row = from->row;
+	memcpy(newnode->actions, from->actions, sizeof(from->actions));
+	if (from->lang)
+		newnode->lang = pstrdup(from->lang);
+	if (from->text)
+		newnode->text = pstrdup(from->text);
+	Node_Copy(from, newnode, attr);
+	if (from->when)
+		newnode->when = pstrdup(from->when);
+	newnode->isconstraint = from->isconstraint;
+	newnode->deferrable = from->deferrable;
+	newnode->initdeferred = from->initdeferred;
+	if (from->constrrelname)
+		newnode->constrrelname = pstrdup(from->constrrelname);
+
+	return newnode;
+}
+
+static DropTrigStmt *
+_copyDropTrigStmt(DropTrigStmt *from)
+{
+	DropTrigStmt *newnode = makeNode(DropTrigStmt);
+
+	if (from->trigname)
+		newnode->trigname = pstrdup(from->trigname);
+	if (from->relname)
+		newnode->relname = pstrdup(from->relname);
+
+	return newnode;
+}
+
+static CreatePLangStmt *
+_copyCreatePLangStmt(CreatePLangStmt *from)
+{
+	CreatePLangStmt *newnode = makeNode(CreatePLangStmt);
+
+	if (from->plname)
+		newnode->plname = pstrdup(from->plname);
+	if (from->plhandler)
+		newnode->plhandler = pstrdup(from->plhandler);
+	if (from->plcompiler)
+		newnode->plcompiler = pstrdup(from->plcompiler);
+	newnode->pltrusted = from->pltrusted;
+
+	return newnode;
+}
+
+static DropPLangStmt *
+_copyDropPLangStmt(DropPLangStmt *from)
+{
+	DropPLangStmt *newnode = makeNode(DropPLangStmt);
+
+	if (from->plname)
+		newnode->plname = pstrdup(from->plname);
+
+	return newnode;
+}
+
+static CreateUserStmt *
+_copyCreateUserStmt(CreateUserStmt *from)
+{
+	CreateUserStmt *newnode = makeNode(CreateUserStmt);
+
+	if (from->user)
+		newnode->user = pstrdup(from->user);
+	if (from->password)
+		newnode->password = pstrdup(from->password);
+	newnode->sysid = from->sysid;
+	newnode->createdb = from->createdb;
+	newnode->createuser = from->createuser;
+	Node_Copy(from, newnode, groupElts);
+	if (from->validUntil)
+		newnode->validUntil = pstrdup(from->validUntil);
+
+	return newnode;
+}
+
+static AlterUserStmt *
+_copyAlterUserStmt(AlterUserStmt *from)
+{
+	AlterUserStmt *newnode = makeNode(AlterUserStmt);
+
+	if (from->user)
+		newnode->user = pstrdup(from->user);
+	if (from->password)
+		newnode->password = pstrdup(from->password);
+	newnode->createdb = from->createdb;
+	newnode->createuser = from->createuser;
+	if (from->validUntil)
+		newnode->validUntil = pstrdup(from->validUntil);
+
+	return newnode;
+}
+
+static DropUserStmt *
+_copyDropUserStmt(DropUserStmt *from)
+{
+	DropUserStmt *newnode = makeNode(DropUserStmt);
+
+	Node_Copy(from, newnode, users);
 
 	return newnode;
 }
@@ -1578,6 +2325,79 @@ _copyLockStmt(LockStmt *from)
 	if (from->relname)
 		newnode->relname = pstrdup(from->relname);
 	newnode->mode = from->mode;
+
+	return newnode;
+}
+
+static ConstraintsSetStmt *
+_copyConstraintsSetStmt(ConstraintsSetStmt *from)
+{
+	ConstraintsSetStmt   *newnode = makeNode(ConstraintsSetStmt);
+
+	Node_Copy(from, newnode, constraints);
+	newnode->deferred = from->deferred;
+
+	return newnode;
+}
+
+static CreateGroupStmt *
+_copyCreateGroupStmt(CreateGroupStmt *from)
+{
+	CreateGroupStmt   *newnode = makeNode(CreateGroupStmt);
+
+	if (from->name)
+		newnode->name = pstrdup(from->name);
+	newnode->sysid = from->sysid;
+	Node_Copy(from, newnode, initUsers);
+
+	return newnode;
+}
+
+static AlterGroupStmt *
+_copyAlterGroupStmt(AlterGroupStmt *from)
+{
+	AlterGroupStmt   *newnode = makeNode(AlterGroupStmt);
+
+	if (from->name)
+		newnode->name = pstrdup(from->name);
+	newnode->action = from->action;
+	newnode->sysid = from->sysid;
+	Node_Copy(from, newnode, listUsers);
+
+	return newnode;
+}
+
+static DropGroupStmt *
+_copyDropGroupStmt(DropGroupStmt *from)
+{
+	DropGroupStmt   *newnode = makeNode(DropGroupStmt);
+
+	if (from->name)
+		newnode->name = pstrdup(from->name);
+
+	return newnode;
+}
+
+static ReindexStmt *
+_copyReindexStmt(ReindexStmt *from)
+{
+	ReindexStmt   *newnode = makeNode(ReindexStmt);
+
+	newnode->reindexType = from->reindexType;
+	if (from->name)
+		newnode->name = pstrdup(from->name);
+	newnode->force = from->force;
+	newnode->all = from->all;
+
+	return newnode;
+}
+
+static SetSessionStmt *
+_copySetSessionStmt(SetSessionStmt *from)
+{
+	SetSessionStmt   *newnode = makeNode(SetSessionStmt);
+
+	Node_Copy(from, newnode, args);
 
 	return newnode;
 }
@@ -1621,6 +2441,7 @@ copyObject(void *from)
 
 	if (from == NULL)
 		return NULL;
+
 	switch (nodeTag(from))
 	{
 
@@ -1801,11 +2622,80 @@ copyObject(void *from)
 		case T_Query:
 			retval = _copyQuery(from);
 			break;
+		case T_InsertStmt:
+			retval = _copyInsertStmt(from);
+			break;
+		case T_DeleteStmt:
+			retval = _copyDeleteStmt(from);
+			break;
+		case T_UpdateStmt:
+			retval = _copyUpdateStmt(from);
+			break;
+		case T_SelectStmt:
+			retval = _copySelectStmt(from);
+			break;
+		case T_AlterTableStmt:
+			retval = _copyAlterTableStmt(from);
+			break;
+		case T_ChangeACLStmt:
+			retval = _copyChangeACLStmt(from);
+			break;
 		case T_ClosePortalStmt:
 			retval = _copyClosePortalStmt(from);
 			break;
+		case T_ClusterStmt:
+			retval = _copyClusterStmt(from);
+			break;
+		case T_CopyStmt:
+			retval = _copyCopyStmt(from);
+			break;
+		case T_CreateStmt:
+			retval = _copyCreateStmt(from);
+			break;
+		case T_VersionStmt:
+			retval = _copyVersionStmt(from);
+			break;
+		case T_DefineStmt:
+			retval = _copyDefineStmt(from);
+			break;
+		case T_DropStmt:
+			retval = _copyDropStmt(from);
+			break;
 		case T_TruncateStmt:
 			retval = _copyTruncateStmt(from);
+			break;
+		case T_CommentStmt:
+			retval = _copyCommentStmt(from);
+			break;
+		case T_ExtendStmt:
+			retval = _copyExtendStmt(from);
+			break;
+		case T_FetchStmt:
+			retval = _copyFetchStmt(from);
+			break;
+		case T_IndexStmt:
+			retval = _copyIndexStmt(from);
+			break;
+		case T_ProcedureStmt:
+			retval = _copyProcedureStmt(from);
+			break;
+		case T_RemoveAggrStmt:
+			retval = _copyRemoveAggrStmt(from);
+			break;
+		case T_RemoveFuncStmt:
+			retval = _copyRemoveFuncStmt(from);
+			break;
+		case T_RemoveOperStmt:
+			retval = _copyRemoveOperStmt(from);
+			break;
+		case T_RemoveStmt:
+			retval = _copyRemoveStmt(from);
+			break;
+		case T_RenameStmt:
+			retval = _copyRenameStmt(from);
+			break;
+		case T_RuleStmt:
+			retval = _copyRuleStmt(from);
 			break;
 		case T_NotifyStmt:
 			retval = _copyNotifyStmt(from);
@@ -1819,30 +2709,129 @@ copyObject(void *from)
 		case T_TransactionStmt:
 			retval = _copyTransactionStmt(from);
 			break;
+		case T_ViewStmt:
+			retval = _copyViewStmt(from);
+			break;
 		case T_LoadStmt:
 			retval = _copyLoadStmt(from);
+			break;
+		case T_CreatedbStmt:
+			retval = _copyCreatedbStmt(from);
+			break;
+		case T_DropdbStmt:
+			retval = _copyDropdbStmt(from);
+			break;
+		case T_VacuumStmt:
+			retval = _copyVacuumStmt(from);
+			break;
+		case T_ExplainStmt:
+			retval = _copyExplainStmt(from);
+			break;
+		case T_CreateSeqStmt:
+			retval = _copyCreateSeqStmt(from);
 			break;
 		case T_VariableSetStmt:
 			retval = _copyVariableSetStmt(from);
 			break;
+		case T_VariableShowStmt:
+			retval = _copyVariableShowStmt(from);
+			break;
 		case T_VariableResetStmt:
 			retval = _copyVariableResetStmt(from);
+			break;
+		case T_CreateTrigStmt:
+			retval = _copyCreateTrigStmt(from);
+			break;
+		case T_DropTrigStmt:
+			retval = _copyDropTrigStmt(from);
+			break;
+		case T_CreatePLangStmt:
+			retval = _copyCreatePLangStmt(from);
+			break;
+		case T_DropPLangStmt:
+			retval = _copyDropPLangStmt(from);
+			break;
+		case T_CreateUserStmt:
+			retval = _copyCreateUserStmt(from);
+			break;
+		case T_AlterUserStmt:
+			retval = _copyAlterUserStmt(from);
+			break;
+		case T_DropUserStmt:
+			retval = _copyDropUserStmt(from);
 			break;
 		case T_LockStmt:
 			retval = _copyLockStmt(from);
 			break;
+		case T_ConstraintsSetStmt:
+			retval = _copyConstraintsSetStmt(from);
+			break;
+		case T_CreateGroupStmt:
+			retval = _copyCreateGroupStmt(from);
+			break;
+		case T_AlterGroupStmt:
+			retval = _copyAlterGroupStmt(from);
+			break;
+		case T_DropGroupStmt:
+			retval = _copyDropGroupStmt(from);
+			break;
+		case T_ReindexStmt:
+			retval = _copyReindexStmt(from);
+			break;
+		case T_SetSessionStmt:
+			retval = _copySetSessionStmt(from);
+			break;
 
+		case T_A_Expr:
+			retval = _copyAExpr(from);
+			break;
 		case T_Attr:
 			retval = _copyAttr(from);
 			break;
 		case T_A_Const:
 			retval = _copyAConst(from);
 			break;
+		case T_ParamNo:
+			retval = _copyParamNo(from);
+			break;
+		case T_Ident:
+			retval = _copyIdent(from);
+			break;
+		case T_FuncCall:
+			retval = _copyFuncCall(from);
+			break;
+		case T_A_Indices:
+			retval = _copyAIndices(from);
+			break;
+		case T_ResTarget:
+			retval = _copyResTarget(from);
+			break;
 		case T_TypeCast:
 			retval = _copyTypeCast(from);
 			break;
+		case T_RelExpr:
+			retval = _copyRelExpr(from);
+			break;
+		case T_SortGroupBy:
+			retval = _copySortGroupBy(from);
+			break;
+		case T_RangeVar:
+			retval = _copyRangeVar(from);
+			break;
 		case T_TypeName:
 			retval = _copyTypeName(from);
+			break;
+		case T_IndexElem:
+			retval = _copyIndexElem(from);
+			break;
+		case T_ColumnDef:
+			retval = _copyColumnDef(from);
+			break;
+		case T_Constraint:
+			retval = _copyConstraint(from);
+			break;
+		case T_DefElem:
+			retval = _copyDefElem(from);
 			break;
 		case T_TargetEntry:
 			retval = _copyTargetEntry(from);
@@ -1856,6 +2845,9 @@ copyObject(void *from)
 		case T_GroupClause:
 			retval = _copyGroupClause(from);
 			break;
+		case T_JoinExpr:
+			retval = _copyJoinExpr(from);
+			break;
 		case T_CaseExpr:
 			retval = _copyCaseExpr(from);
 			break;
@@ -1864,6 +2856,9 @@ copyObject(void *from)
 			break;
 		case T_RowMark:
 			retval = _copyRowMark(from);
+			break;
+		case T_FkConstraint:
+			retval = _copyFkConstraint(from);
 			break;
 
 		default:

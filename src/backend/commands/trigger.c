@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.75 2000/08/03 19:19:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.76 2000/08/11 23:45:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,7 +212,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 
 		foreach(le, stmt->args)
 		{
-			char	   *ar = (char *) lfirst(le);
+			char	   *ar = ((Value*) lfirst(le))->val.str;
 
 			len += strlen(ar) + 4;
 			for (; *ar; ar++)
@@ -222,10 +222,10 @@ CreateTrigger(CreateTrigStmt *stmt)
 			}
 		}
 		args = (char *) palloc(len + 1);
-		args[0] = 0;
+		args[0] = '\0';
 		foreach(le, stmt->args)
 		{
-			char	   *s = (char *) lfirst(le);
+			char	   *s = ((Value*) lfirst(le))->val.str;
 			char	   *d = args + strlen(args);
 
 			while (*s)
@@ -234,8 +234,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 					*d++ = '\\';
 				*d++ = *s++;
 			}
-			*d = 0;
-			strcat(args, "\\000");
+			strcpy(d, "\\000");
 		}
 		values[Anum_pg_trigger_tgnargs - 1] = Int16GetDatum(nargs);
 		values[Anum_pg_trigger_tgargs - 1] = DirectFunctionCall1(byteain,

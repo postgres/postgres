@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.170 2000/07/17 03:05:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.171 2000/08/11 23:45:35 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -417,21 +417,13 @@ pg_parse_and_rewrite(char *query_string,	/* string to execute */
 	 * trees.  The present (bizarre) implementation of UNION/INTERSECT/EXCEPT
 	 * doesn't run analysis of the second and later subqueries until rewrite,
 	 * so we'd get false failures on these queries if we did it beforehand.
-	 *
-	 * Currently, copyObject doesn't know about most of the utility query
-	 * types, so suppress the check until that can be fixed... it should
-	 * be fixed, though.
 	 */
-	if (querytree_list &&
-		((Query *) lfirst(querytree_list))->commandType != CMD_UTILITY)
-	{
-		new_list = (List *) copyObject(querytree_list);
-		/* This checks both copyObject() and the equal() routines... */
-		if (! equal(new_list, querytree_list))
-			elog(NOTICE, "pg_parse_and_rewrite: copyObject failed on parse tree");
-		else
-			querytree_list = new_list;
-	}
+	new_list = (List *) copyObject(querytree_list);
+	/* This checks both copyObject() and the equal() routines... */
+	if (! equal(new_list, querytree_list))
+		elog(NOTICE, "pg_parse_and_rewrite: copyObject failed on parse tree");
+	else
+		querytree_list = new_list;
 #endif
 
 	if (Debug_print_rewritten)
@@ -1412,7 +1404,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.170 $ $Date: 2000/07/17 03:05:14 $\n");
+		puts("$Revision: 1.171 $ $Date: 2000/08/11 23:45:35 $\n");
 	}
 
 	/*

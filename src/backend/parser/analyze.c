@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.153 2000/08/08 15:42:04 tgl Exp $
+ *	$Id: analyze.c,v 1.154 2000/08/11 23:45:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1112,13 +1112,13 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 			fk_trigger->args = NIL;
 			fk_trigger->args = lappend(fk_trigger->args,
-									   fkconstraint->constr_name);
+									   makeString(fkconstraint->constr_name));
 			fk_trigger->args = lappend(fk_trigger->args,
-									   stmt->relname);
+									   makeString(stmt->relname));
 			fk_trigger->args = lappend(fk_trigger->args,
-									   fkconstraint->pktable_name);
+									   makeString(fkconstraint->pktable_name));
 			fk_trigger->args = lappend(fk_trigger->args,
-									   fkconstraint->match_type);
+									   makeString(fkconstraint->match_type));
 			fk_attr = fkconstraint->fk_attrs;
 			pk_attr = fkconstraint->pk_attrs;
 			if (length(fk_attr) != length(pk_attr))
@@ -1130,10 +1130,12 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			while (fk_attr != NIL)
 			{
 				id = (Ident *) lfirst(fk_attr);
-				fk_trigger->args = lappend(fk_trigger->args, id->name);
+				fk_trigger->args = lappend(fk_trigger->args,
+										   makeString(id->name));
 
 				id = (Ident *) lfirst(pk_attr);
-				fk_trigger->args = lappend(fk_trigger->args, id->name);
+				fk_trigger->args = lappend(fk_trigger->args,
+										   makeString(id->name));
 
 				fk_attr = lnext(fk_attr);
 				pk_attr = lnext(pk_attr);
@@ -1189,22 +1191,24 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 			fk_trigger->args = NIL;
 			fk_trigger->args = lappend(fk_trigger->args,
-									   fkconstraint->constr_name);
+									   makeString(fkconstraint->constr_name));
 			fk_trigger->args = lappend(fk_trigger->args,
-									   stmt->relname);
+									   makeString(stmt->relname));
 			fk_trigger->args = lappend(fk_trigger->args,
-									   fkconstraint->pktable_name);
+									   makeString(fkconstraint->pktable_name));
 			fk_trigger->args = lappend(fk_trigger->args,
-									   fkconstraint->match_type);
+									   makeString(fkconstraint->match_type));
 			fk_attr = fkconstraint->fk_attrs;
 			pk_attr = fkconstraint->pk_attrs;
 			while (fk_attr != NIL)
 			{
 				id = (Ident *) lfirst(fk_attr);
-				fk_trigger->args = lappend(fk_trigger->args, id->name);
+				fk_trigger->args = lappend(fk_trigger->args,
+										   makeString(id->name));
 
 				id = (Ident *) lfirst(pk_attr);
-				fk_trigger->args = lappend(fk_trigger->args, id->name);
+				fk_trigger->args = lappend(fk_trigger->args,
+										   makeString(id->name));
 
 				fk_attr = lnext(fk_attr);
 				pk_attr = lnext(pk_attr);
@@ -1260,22 +1264,24 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 			fk_trigger->args = NIL;
 			fk_trigger->args = lappend(fk_trigger->args,
-									   fkconstraint->constr_name);
+									   makeString(fkconstraint->constr_name));
 			fk_trigger->args = lappend(fk_trigger->args,
-									   stmt->relname);
+									   makeString(stmt->relname));
 			fk_trigger->args = lappend(fk_trigger->args,
-									   fkconstraint->pktable_name);
+									   makeString(fkconstraint->pktable_name));
 			fk_trigger->args = lappend(fk_trigger->args,
-									   fkconstraint->match_type);
+									   makeString(fkconstraint->match_type));
 			fk_attr = fkconstraint->fk_attrs;
 			pk_attr = fkconstraint->pk_attrs;
 			while (fk_attr != NIL)
 			{
 				id = (Ident *) lfirst(fk_attr);
-				fk_trigger->args = lappend(fk_trigger->args, id->name);
+				fk_trigger->args = lappend(fk_trigger->args,
+										   makeString(id->name));
 
 				id = (Ident *) lfirst(pk_attr);
-				fk_trigger->args = lappend(fk_trigger->args, id->name);
+				fk_trigger->args = lappend(fk_trigger->args,
+										   makeString(id->name));
 
 				fk_attr = lnext(fk_attr);
 				pk_attr = lnext(pk_attr);
@@ -1662,13 +1668,13 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt)
 
 				fk_trigger->args = NIL;
 				fk_trigger->args = lappend(fk_trigger->args,
-										   fkconstraint->constr_name);
+										   makeString(fkconstraint->constr_name));
 				fk_trigger->args = lappend(fk_trigger->args,
-										   stmt->relname);
+										   makeString(stmt->relname));
 				fk_trigger->args = lappend(fk_trigger->args,
-										   fkconstraint->pktable_name);
+										   makeString(fkconstraint->pktable_name));
 				fk_trigger->args = lappend(fk_trigger->args,
-										   fkconstraint->match_type);
+										   makeString(fkconstraint->match_type));
 				fk_attr = fkconstraint->fk_attrs;
 				pk_attr = fkconstraint->pk_attrs;
 				if (length(fk_attr) != length(pk_attr))
@@ -1680,10 +1686,12 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt)
 				while (fk_attr != NIL)
 				{
 					id = (Ident *) lfirst(fk_attr);
-					fk_trigger->args = lappend(fk_trigger->args, id->name);
+					fk_trigger->args = lappend(fk_trigger->args,
+											   makeString(id->name));
 
 					id = (Ident *) lfirst(pk_attr);
-					fk_trigger->args = lappend(fk_trigger->args, id->name);
+					fk_trigger->args = lappend(fk_trigger->args,
+											   makeString(id->name));
 
 					fk_attr = lnext(fk_attr);
 					pk_attr = lnext(pk_attr);
@@ -1737,22 +1745,24 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt)
 
 				fk_trigger->args = NIL;
 				fk_trigger->args = lappend(fk_trigger->args,
-										   fkconstraint->constr_name);
+										   makeString(fkconstraint->constr_name));
 				fk_trigger->args = lappend(fk_trigger->args,
-										   stmt->relname);
+										   makeString(stmt->relname));
 				fk_trigger->args = lappend(fk_trigger->args,
-										   fkconstraint->pktable_name);
+										   makeString(fkconstraint->pktable_name));
 				fk_trigger->args = lappend(fk_trigger->args,
-										   fkconstraint->match_type);
+										   makeString(fkconstraint->match_type));
 				fk_attr = fkconstraint->fk_attrs;
 				pk_attr = fkconstraint->pk_attrs;
 				while (fk_attr != NIL)
 				{
 					id = (Ident *) lfirst(fk_attr);
-					fk_trigger->args = lappend(fk_trigger->args, id->name);
+					fk_trigger->args = lappend(fk_trigger->args,
+											   makeString(id->name));
 
 					id = (Ident *) lfirst(pk_attr);
-					fk_trigger->args = lappend(fk_trigger->args, id->name);
+					fk_trigger->args = lappend(fk_trigger->args,
+											   makeString(id->name));
 
 					fk_attr = lnext(fk_attr);
 					pk_attr = lnext(pk_attr);
@@ -1806,22 +1816,24 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt)
 
 				fk_trigger->args = NIL;
 				fk_trigger->args = lappend(fk_trigger->args,
-										   fkconstraint->constr_name);
+										   makeString(fkconstraint->constr_name));
 				fk_trigger->args = lappend(fk_trigger->args,
-										   stmt->relname);
+										   makeString(stmt->relname));
 				fk_trigger->args = lappend(fk_trigger->args,
-										   fkconstraint->pktable_name);
+										   makeString(fkconstraint->pktable_name));
 				fk_trigger->args = lappend(fk_trigger->args,
-										   fkconstraint->match_type);
+										   makeString(fkconstraint->match_type));
 				fk_attr = fkconstraint->fk_attrs;
 				pk_attr = fkconstraint->pk_attrs;
 				while (fk_attr != NIL)
 				{
 					id = (Ident *) lfirst(fk_attr);
-					fk_trigger->args = lappend(fk_trigger->args, id->name);
+					fk_trigger->args = lappend(fk_trigger->args,
+											   makeString(id->name));
 
 					id = (Ident *) lfirst(pk_attr);
-					fk_trigger->args = lappend(fk_trigger->args, id->name);
+					fk_trigger->args = lappend(fk_trigger->args,
+											   makeString(id->name));
 
 					fk_attr = lnext(fk_attr);
 					pk_attr = lnext(pk_attr);
