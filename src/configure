@@ -1121,7 +1121,7 @@ fi
 
 INSTLOPTS="-m 444"
 INSTL_EXE_OPTS="-m 555"
-INSTL_LIB_OPTS="-m 664"
+INSTL_LIB_OPTS="-m 644"
 
 case "`basename $INSTALL`" in
  install|installbsd|scoinst)
