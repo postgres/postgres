@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.56 2001/09/06 04:57:30 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.57 2001/09/30 16:23:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -892,7 +892,7 @@ winsock_strerror(DWORD eno)
 WSSE_GOODEXIT:
 
   length = strlen(winsock_strerror_buf);
-  sprintf(winsock_strerror_buf + length<WSSE_MAXLEN?length:WSSE_MAXLEN,
+  sprintf(winsock_strerror_buf + (length<WSSE_MAXLEN?length:WSSE_MAXLEN),
 	  "(0x%08X)",eno);
 
   return winsock_strerror_buf;
