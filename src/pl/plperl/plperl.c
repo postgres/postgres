@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.63 2004/11/23 00:21:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.64 2004/11/24 18:47:38 tgl Exp $
  *
  **********************************************************************/
 
@@ -238,13 +238,18 @@ plperl_safe_init(void)
 			   ;
 
 	SV		   *res;
-	float		safe_version;
+	double		safe_version;
 
 	res = eval_pv(safe_module, FALSE);	/* TRUE = croak if failure */
 
 	safe_version = SvNV(res);
 
-	eval_pv((safe_version < 2.09 ? safe_bad : safe_ok), FALSE);
+	/*
+	 * We actually want to reject safe_version < 2.09, but it's risky to
+	 * assume that floating-point comparisons are exact, so use a slightly
+	 * smaller comparison value.
+	 */
+	eval_pv((safe_version < 2.0899 ? safe_bad : safe_ok), FALSE);
 
 	plperl_safe_init_done = true;
 }
