@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.38 1998/09/01 04:31:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.39 1998/09/04 18:05:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -916,7 +916,9 @@ inv_wrold(LargeObjectDesc *obj_desc,
 	 */
 /*
 	ntup = inv_newtuple(obj_desc, newbuf, newpage, (char *) NULL, tupbytes);
-	dptr = ((char *) ntup) + ntup->t_hoff - sizeof(ntup->t_bits) + sizeof(int4)
+	dptr = ((char *) ntup) + ntup->t_hoff -
+				(sizeof(HeapTupleData) - offsetof(HeapTupleData.t_bits)) +
+				sizeof(int4)
 				+ sizeof(fsblock->vl_len);
 
 	if (obj_desc->offset > obj_desc->lowbyte) {
@@ -996,7 +998,7 @@ inv_newtuple(LargeObjectDesc *obj_desc,
 	char	   *attptr;
 
 	/* compute tuple size -- no nulls */
-	hoff = sizeof(HeapTupleData) - sizeof(ntup->t_bits);
+	hoff = offsetof(HeapTuple->t_bits);
 
 	/* add in olastbyte, varlena.vl_len, varlena.vl_dat */
 	tupsize = hoff + (2 * sizeof(int32)) + nwrite;
