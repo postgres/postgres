@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/bench/Attic/Makefile,v 1.3 1996/11/13 10:35:59 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/test/bench/Attic/Makefile,v 1.4 1997/07/28 23:57:20 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -44,8 +44,8 @@ bench.sql:
 runtest: $(OUTFILES)
 
 bench.out: $(CREATEFILES)
-	$(SHELL) ./create.sh && \
-	$(SHELL) ./runwisc.sh >bench.out 2>&1
+	$(SHELL) ./create.sh $$PGDATA && \
+	$(SHELL) ./runwisc.sh $$PGDATA >bench.out 2>&1
 	@echo "RESULTS OF BENCHMARK ARE SAVED IN FILE bench.out";
 
 bench.out.perquery: bench.out
