@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.1 1998/08/24 19:14:47 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.2 1999/01/28 11:48:30 wieck Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -344,7 +344,7 @@ decl_aliasitem	: T_WORD
 			char	*name;
 
 			plpgsql_ns_setlocal(false);
-			name = plpgsql_tolower(pstrdup(yytext));
+			name = plpgsql_tolower(yytext);
 			if (name[0] != '$') {
 			    elog(ERROR, "can only alias positional parameters");
 			}
@@ -374,7 +374,7 @@ decl_varname	: T_WORD
 
 decl_renname	: T_WORD
 		    {
-		        $$ = plpgsql_tolower(pstrdup(yytext));
+		        $$ = plpgsql_tolower(yytext);
 		    }
 		;
 

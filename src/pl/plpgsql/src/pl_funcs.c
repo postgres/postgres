@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.2 1998/09/01 04:40:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.3 1999/01/28 11:48:31 wieck Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -189,6 +189,7 @@ plpgsql_ns_additem(int itemtype, int itemno, char *name)
 
 	if (name == NULL)
 		name = "";
+	name = plpgsql_tolower(name);
 
 	if (ns->items_used == ns->items_alloc)
 	{
@@ -320,22 +321,48 @@ plpgsql_ns_rename(char *oldname, char *newname)
 
 
 /* ----------
- * plpgsql_tolower			Translate a string in place to
- *					lower case
+ * plpgsql_tolower			Translate a string to lower case
+ *					but honor "" escaping.
  * ----------
  */
 char *
 plpgsql_tolower(char *s)
 {
-	char	   *cp;
+	char   *ret;
+	char   *cp;
 
-	for (cp = s; *cp; cp++)
+	ret = palloc(strlen(s) + 1);
+	cp = ret;
+
+	while (*s)
 	{
-		if (isupper(*cp))
-			*cp = tolower(*cp);
+		if (*s == '"')
+		{
+			s++;
+			while (*s)
+			{
+				if (*s == '"')
+					break;
+				*cp++ = *s++;
+			}
+			if (*s != '"')
+			{
+				plpgsql_comperrinfo();
+				elog(ERROR, "unterminated \"");
+			}
+			s++;
+		}
+		else
+		{
+			if (isupper(*s))
+				*cp++ = tolower(*s++);
+			else
+				*cp++ = *s++;
+		}
 	}
+	*cp = '\0';
 
-	return s;
+	return ret;
 }
 
 
