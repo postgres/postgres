@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.55 2003/12/03 17:45:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.56 2004/04/07 17:42:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -757,6 +757,7 @@ build_subquery_pathkeys(Query *root, RelOptInfo *rel, Query *subquery)
 	List	   *retval = NIL;
 	int			retvallen = 0;
 	int			outer_query_keys = length(root->query_pathkeys);
+	List	   *sub_tlist = rel->subplan->targetlist;
 	List	   *l;
 
 	foreach(l, subquery->query_pathkeys)
@@ -789,7 +790,7 @@ build_subquery_pathkeys(Query *root, RelOptInfo *rel, Query *subquery)
 			Node	   *sub_key = sub_item->key;
 			List	   *k;
 
-			foreach(k, subquery->targetList)
+			foreach(k, sub_tlist)
 			{
 				TargetEntry *tle = (TargetEntry *) lfirst(k);
 
