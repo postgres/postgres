@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.125 2003/10/09 19:13:48 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.126 2003/10/16 04:52:21 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -682,7 +682,7 @@ NUMERIC
     <para>
      The data types <type>serial</type> and <type>bigserial</type>
      are not true types, but merely
-     a notational convenience for setting up identifier columns
+     a notational convenience for setting up unique identifier columns
      (similar to the <literal>AUTO_INCREMENT</literal> property
      supported by some other databases). In the current
      implementation, specifying
@@ -722,10 +722,10 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
     </note>
 
     <para>
-     To use a <type>serial</type> column to insert the next value of
-     the sequence into the table, specify that the <type>serial</type>
-     column should be assigned the default value. This can be done
-     either be excluding from the column from the list of columns in
+     To insert the next value of the sequence into the <type>serial</type>
+     column, specify that the <type>serial</type>
+     column should be assigned its default value. This can be done
+     either by excluding the column from the list of columns in
      the <command>INSERT</command> statement, or through the use of
      the <literal>DEFAULT</literal> keyword.
     </para>
@@ -741,8 +741,8 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
     </para>
 
     <para>
-     The sequence created by a <type>serial</type> type is
-     automatically dropped when the owning column is dropped and
+     The sequence created for a <type>serial</type> column is
+     automatically dropped when the owning column is dropped, and
      cannot be dropped otherwise.  (This was not true in
      <productname>PostgreSQL</productname> releases before 7.3.  Note
      that this automatic drop linkage will not occur for a sequence
@@ -751,9 +751,11 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
      dependency link.) Furthermore, this dependency between sequence
      and column is made only for the <type>serial</> column itself; if
      any other columns reference the sequence (perhaps by manually
-     calling the <function>nextval</>) function), they may be broken
-     if the sequence is removed. Using <type>serial</> columns in
-     fashion is considered bad form.
+     calling the <function>nextval</> function), they will be broken
+     if the sequence is removed. Using a <type>serial</> column's sequence
+     in such a fashion is considered bad form; if you wish to feed several
+     columns from the same sequence generator, create the sequence as an
+     independent object.
     </para>
    </sect2>
   </sect1>
