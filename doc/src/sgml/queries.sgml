@@ -1,11 +1,11 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.2 2001/02/01 19:13:47 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.3 2001/02/10 08:30:13 tgl Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
 
  <para>
-  A <firstterm>query</firstterm> is the process of or the command to
-  retrieve data from a database.  In SQL the <command>SELECT</command>
+  A <firstterm>query</firstterm> is the process of retrieving or the command
+  to retrieve data from a database.  In SQL the <command>SELECT</command>
   command is used to specify queries.  The general syntax of the
   <command>SELECT</command> command is
 <synopsis>
@@ -65,11 +65,11 @@ SELECT random();
   </para>
 
   <para>
-   The WHERE, GROUP BY, and HAVING clauses in the table expression
+   The optional WHERE, GROUP BY, and HAVING clauses in the table expression
    specify a pipeline of successive transformations performed on the
-   table derived in the FROM clause.  The final transformed table that
-   is derived provides the input rows used to derive output rows as
-   specified by the select list of derived column value expressions.
+   table derived in the FROM clause.  The derived table that is produced by
+   all these transformations provides the input rows used to compute output
+   rows as specified by the select list of column value expressions.
   </para>
 	
   <sect2 id="queries-from">
@@ -91,10 +91,12 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
    </para>
 
    <para>
-    If a table reference is a simple table name and it is the
-    supertable in a table inheritance hierarchy, rows of the table
-    include rows from all of its subtable successors unless the
-    keyword ONLY precedes the table name.
+    When a table reference names a table that is the
+    supertable of a table inheritance hierarchy, the table reference
+    produces rows of not only that table but all of its subtable successors,
+    unless the keyword ONLY precedes the table name.  However, the reference
+    produces only the columns that appear in the named table --- any columns
+    added in subtables are ignored.
    </para>
 
    <sect3 id="queries-join">
@@ -124,7 +126,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
         row consisting of all columns in <replaceable>T1</replaceable>
         followed by all columns in <replaceable>T2</replaceable>.  If
         the tables have have N and M rows respectively, the joined
-        table will have N * M rows.  A cross join is essentially an
+        table will have N * M rows.  A cross join is equivalent to an
         <literal>INNER JOIN ON TRUE</literal>.
        </para>
 
@@ -189,11 +191,11 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
 
          <listitem>
           <para>
-           First, an INNER JOIN is performed.  Then, for a row in T1
+           First, an INNER JOIN is performed.  Then, for each row in T1
            that does not satisfy the join condition with any row in
            T2, a joined row is returned with NULL values in columns of
-           T2.  Thus, the joined table unconditionally has a row for each
-           row in T1.
+           T2.  Thus, the joined table unconditionally has at least one
+	   row for each row in T1.
           </para>
          </listitem>
         </varlistentry>
@@ -203,7 +205,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
 
          <listitem>
           <para>
-           This is like a left join, only that the result table will
+           This is the converse of a left join: the result table will
            unconditionally have a row for each row in T2.
           </para>
          </listitem>
@@ -237,19 +239,19 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
        <para>
         A natural join creates a joined table where every pair of matching
         column names between the two tables are merged into one column. The
-        join specification is effectively a USING clause containing all the
-        common column names and is otherwise like a Qualified JOIN.
+        result is the same as a qualified join with a USING clause that lists
+	all the common column names of the two tables.
        </para>
       </listitem>
      </varlistentry>
     </variablelist>
 
     <para>
-     Joins of all types can be chained together or nested where either
+     Joins of all types can be chained together or nested: either
      or both of <replaceable>T1</replaceable> and
-     <replaceable>T2</replaceable> may be JOINed tables.  Parenthesis
-     can be used around JOIN clauses to control the join order which
-     are otherwise left to right.
+     <replaceable>T2</replaceable> may be JOINed tables.  Parentheses
+     may be used around JOIN clauses to control the join order.  In the
+     absence of parentheses, JOIN clauses nest left-to-right.
     </para>
    </sect3>
 
@@ -258,7 +260,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
 
     <para>
      Subqueries specifying a derived table must be enclosed in
-     parenthesis and <emphasis>must</emphasis> be named using an AS
+     parentheses and <emphasis>must</emphasis> be named using an AS
      clause.  (See <xref linkend="queries-table-aliases">.)
     </para>
 
@@ -287,17 +289,17 @@ FROM <replaceable>table_reference</replaceable> AS <replaceable>alias</replaceab
      Here, <replaceable>alias</replaceable> can be any regular
      identifier.  The alias becomes the new name of the table
      reference for the current query -- it is no longer possible to
-     refer to the table by the original name (if the table reference
-     was an ordinary base table).  Thus
+     refer to the table by the original name.  Thus
 <programlisting>
 SELECT * FROM my_table AS m WHERE my_table.a > 5;
 </programlisting>
-     is not valid SQL syntax.  What will happen instead, as a
-     <productname>Postgres</productname> extension, is that an implicit
+     is not valid SQL syntax.  What will actually happen (this is a
+     <productname>Postgres</productname> extension to the standard)
+     is that an implicit
      table reference is added to the FROM clause, so the query is
-     processed as if it was written as
+     processed as if it were written as
 <programlisting>
-SELECT * FROM my_table AS m, my_table WHERE my_table.a > 5;
+SELECT * FROM my_table AS m, my_table AS my_table WHERE my_table.a > 5;
 </programlisting>
      Table aliases are mainly for notational convenience, but it is
      necessary to use them when joining a table to itself, e.g.,
@@ -309,7 +311,7 @@ SELECT * FROM my_table AS a CROSS JOIN my_table AS b ...
     </para>
 
     <para>
-     Parenthesis are used to resolve ambiguities.  The following
+     Parentheses are used to resolve ambiguities.  The following
      statement will assign the alias <literal>b</literal> to the
      result of the join, unlike the previous example:
 <programlisting>
@@ -321,7 +323,7 @@ SELECT * FROM (my_table AS a CROSS JOIN my_table) AS b ...
 <synopsis>
 FROM <replaceable>table_reference</replaceable> <replaceable>alias</replaceable>
 </synopsis>
-     This form is equivalent the previously treated one; the
+     This form is equivalent to the previously treated one; the
      <token>AS</token> key word is noise.
     </para>
 
@@ -330,8 +332,9 @@ FROM <replaceable>table_reference</replaceable> <replaceable>alias</replaceable>
 FROM <replaceable>table_reference</replaceable> <optional>AS</optional> <replaceable>alias</replaceable> ( <replaceable>column1</replaceable> <optional>, <replaceable>column2</replaceable> <optional>, ...</optional></optional> )
 </synopsis>
      In addition to renaming the table as described above, the columns
-     of the table are also given temporary names.  If less column
-     aliases are specified than the actual table has columns, the last
+     of the table are also given temporary names for use by the surrounding
+     query.  If fewer column 
+     aliases are specified than the actual table has columns, the remaining
      columns are not renamed.  This syntax is especially useful for
      self-joins or subqueries.
     </para>
@@ -359,7 +362,7 @@ FROM (SELECT * FROM T1) DT1, T2, T3
      Above are some examples of joined tables and complex derived
      tables.  Notice how the AS clause renames or names a derived
      table and how the optional comma-separated list of column names
-     that follows gives names or renames the columns.  The last two
+     that follows renames the columns.  The last two
      FROM clauses produce the same derived table from T1, T2, and T3.
      The AS keyword was omitted in naming the subquery as DT1.  The
      keywords OUTER and INNER are noise that can be omitted also.
@@ -410,7 +413,10 @@ FROM a NATURAL JOIN b WHERE b.val &gt; 5
      Which one of these you use is mainly a matter of style.  The JOIN
      syntax in the FROM clause is probably not as portable to other
      products.  For outer joins there is no choice in any case:  they
-     must be done in the FROM clause.
+     must be done in the FROM clause.  An outer join's ON/USING clause
+     is <emphasis>not</> equivalent to a WHERE condition, because it
+     determines the addition of rows (for unmatched input rows) as well
+     as the removal of rows from the final result.
     </para>
    </note>
 
@@ -439,7 +445,7 @@ FROM FDT WHERE
     subqueries as value expressions (C2 assumed UNIQUE).  Just like
     any other query, the subqueries can employ complex table
     expressions.  Notice how FDT is referenced in the subqueries.
-    Qualifying C1 as FDT.C1 is only necessary if C1 is the name of a
+    Qualifying C1 as FDT.C1 is only necessary if C1 is also the name of a
     column in the derived input table of the subquery.  Qualifying the
     column name adds clarity even when it is not needed.  The column
     naming scope of an outer query extends into its inner queries.
@@ -471,17 +477,17 @@ SELECT <replaceable>select_list</replaceable> FROM ... <optional>WHERE ...</opti
    </para>
 	  
    <para>
-    Once a table is grouped, columns that are not included in the
-    grouping cannot be referenced, except in aggregate expressions,
+    Once a table is grouped, columns that are not used in the
+    grouping cannot be referenced except in aggregate expressions,
     since a specific value in those columns is ambiguous - which row
     in the group should it come from?  The grouped-by columns can be
     referenced in select list column expressions since they have a
     known constant value per group.  Aggregate functions on the
     ungrouped columns provide values that span the rows of a group,
     not of the whole table.  For instance, a
-    <function>sum(sales)</function> on a grouped table by product code
+    <function>sum(sales)</function> on a table grouped by product code
     gives the total sales for each product, not the total sales on all
-    products.  The aggregates of the ungrouped columns are
+    products.  Aggregates computed on the ungrouped columns are
     representative of the group, whereas their individual values may
     not be.
    </para>
@@ -516,12 +522,12 @@ SELECT <replaceable>select_list</replaceable> FROM ... <optional>WHERE ...</opti
     If a table has been grouped using a GROUP BY clause, but then only
     certain groups are of interest, the HAVING clause can be used,
     much like a WHERE clause, to eliminate groups from a grouped
-    table.  For some queries, Postgres allows a HAVING clause to be
-    used without a GROUP BY and then it acts just like another WHERE
-    clause, but the point in using HAVING that way is not clear. Since
-    HAVING operates on groups, only grouped columns can be listed in
-    the HAVING clause.  If selection based on some ungrouped column is
-    desired, it should be expressed in the WHERE clause.
+    table.  Postgres allows a HAVING clause to be
+    used without a GROUP BY, in which case it acts like another WHERE
+    clause, but the point in using HAVING that way is not clear.  A good
+    rule of thumb is that a HAVING condition should refer to the results
+    of aggregate functions.  A restriction that does not involve an
+    aggregate is more efficiently expressed in the WHERE clause.
    </para>
 
    <para>
@@ -533,11 +539,11 @@ SELECT pid    AS "Products",
   FROM products p LEFT JOIN sales s USING ( pid )
   WHERE s.date > CURRENT_DATE - INTERVAL '4 weeks'
   GROUP BY pid, p.name, p.price, p.cost
-    HAVING p.price > 5000;
+    HAVING sum(p.price * s.units) > 5000;
 </programlisting>
     In the example above, the WHERE clause is selecting rows by a
     column that is not grouped, while the HAVING clause
-    is selecting groups with a price greater than 5000.
+    restricts the output to groups with total gross sales over 5000.
    </para>
   </sect2>
  </sect1>
@@ -552,8 +558,8 @@ SELECT pid    AS "Products",
    tables, views, eliminating rows, grouping, etc.  This table is
    finally passed on to processing by the select list.  The select
    list determines which <emphasis>columns</emphasis> of the
-   intermediate table are retained.  The simplest kind of select list
-   is <literal>*</literal> which retains all columns that the table
+   intermediate table are actually output.  The simplest kind of select list
+   is <literal>*</literal> which emits all columns that the table
    expression produces.  Otherwise, a select list is a comma-separated
    list of value expressions (as defined in <xref
    linkend="sql-expressions">).  For instance, it could be a list of
@@ -562,7 +568,7 @@ SELECT pid    AS "Products",
 SELECT a, b, c FROM ...
 </programlisting>
    The columns names a, b, and c are either the actual names of the
-   columns of table referenced in the FROM clause, or the aliases
+   columns of tables referenced in the FROM clause, or the aliases
    given to them as explained in <xref linkend="queries-table-aliases">.
    The name space available in the select list is the same as in the
    WHERE clause (unless grouping is used, in which case it is the same
@@ -578,9 +584,9 @@ SELECT tbl1.a, tbl2.b, tbl1.c FROM ...
    If an arbitrary value expression is used in the select list, it
    conceptually adds a new virtual column to the returned table.  The
    value expression is effectively evaluated once for each retrieved
-   row with real values substituted for any column references.  But
+   row, with the row's values substituted for any column references.  But
    the expressions in the select list do not have to reference any
-   columns in the table expression of the FROM clause; they can be
+   columns in the table expression of the FROM clause; they could be
    constant arithmetic expressions as well, for instance.
   </para>
 
@@ -595,12 +601,12 @@ SELECT tbl1.a, tbl2.b, tbl1.c FROM ...
 <programlisting>
 SELECT a AS value, b + c AS sum FROM ...
 </programlisting>
-    The AS key word can in fact be omitted.
    </para>
 
    <para>
-    If no name is chosen, the system assigns a default.  For simple
-    column references, this is the name of the column.  For function
+    If no output column name is specified via AS, the system assigns a
+    default name.  For simple column references, this is the name of the
+    referenced column.  For function 
     calls, this is the name of the function.  For complex expressions,
     the system will generate a generic name.
    </para>
@@ -634,7 +640,7 @@ SELECT DISTINCT <replaceable>select_list</replaceable> ...
    <para>
     Obviously, two rows are considered distinct if they differ in at
     least one column value.  NULLs are considered equal in this
-    consideration.
+    comparison.
    </para>
 
    <para>
@@ -645,18 +651,21 @@ SELECT DISTINCT ON (<replaceable>expression</replaceable> <optional>, <replaceab
 </synopsis>
     Here <replaceable>expression</replaceable> is an arbitrary value
     expression that is evaluated for all rows.  A set of rows for
-    which all the expressions is equal are considered duplicates and
-    only the first row is kept in the output.  Note that the
+    which all the expressions are equal are considered duplicates, and
+    only the first row of the set is kept in the output.  Note that the
     <quote>first row</quote> of a set is unpredictable unless the
-    query is sorted.
+    query is sorted on enough columns to guarantee a unique ordering
+    of the rows arriving at the DISTINCT filter.  (DISTINCT ON processing
+    occurs after ORDER BY sorting.)
    </para>
 
    <para>
     The DISTINCT ON clause is not part of the SQL standard and is
-    sometimes considered bad style because of the indeterminate nature
+    sometimes considered bad style because of the potentially indeterminate
+    nature 
     of its results.  With judicious use of GROUP BY and subselects in
-    FROM the construct can be avoided, but it is very often the much
-    more convenient alternative.
+    FROM the construct can be avoided, but it is very often the most
+    convenient alternative.
    </para>
   </sect2>
  </sect1>
@@ -689,9 +698,9 @@ SELECT DISTINCT ON (<replaceable>expression</replaceable> <optional>, <replaceab
    <command>UNION</command> effectively appends the result of
    <replaceable>query2</replaceable> to the result of
    <replaceable>query1</replaceable> (although there is no guarantee
-   that this is the order in which the rows are actually returned) and
-   eliminates all duplicate rows, in the sense of DISTINCT, unless ALL
-   is specified.
+   that this is the order in which the rows are actually returned).
+   Furthermore, it eliminates all duplicate rows, in the sense of DISTINCT,
+   unless ALL is specified.
   </para>
 
   <para>
@@ -727,7 +736,7 @@ SELECT DISTINCT ON (<replaceable>expression</replaceable> <optional>, <replaceab
    chosen, the rows will be returned in random order.  The actual
    order in that case will depend on the scan and join plan types and
    the order on disk, but it must not be relied on.  A particular
-   ordering can only be guaranteed if the sort step is explicitly
+   output ordering can only be guaranteed if the sort step is explicitly
    chosen.
   </para>
 
@@ -737,8 +746,7 @@ SELECT DISTINCT ON (<replaceable>expression</replaceable> <optional>, <replaceab
 SELECT <replaceable>select_list</replaceable> FROM <replaceable>table_expression</replaceable> ORDER BY <replaceable>column1</replaceable> <optional>ASC | DESC</optional> <optional>, <replaceable>column2</replaceable> <optional>ASC | DESC</optional> ...</optional>
 </synopsis>
    <replaceable>column1</replaceable>, etc., refer to select list
-   columns:  It can either be the name of a column (either the
-   explicit column label or default name, as explained in <xref
+   columns.  These can be either the output name of a column (see
    linkend="queries-column-labels">) or the number of a column.  Some
    examples:
 <programlisting>
@@ -759,8 +767,8 @@ SELECT a, b FROM table1 ORDER BY a + b;
 <programlisting>
 SELECT a AS b FROM table1 ORDER BY a;
 </programlisting>
-   But this does not work in queries involving UNION, INTERSECT, or
-   EXCEPT, and is not portable.
+   But these extensions do not work in queries involving UNION, INTERSECT,
+   or EXCEPT, and are not portable to other DBMSes.
   </para>
 
   <para>
@@ -773,8 +781,8 @@ SELECT a AS b FROM table1 ORDER BY a;
   </para>
 
   <para>
-   If more than one sort column is specified the later entries are
-   used to sort the rows that are equal under the order imposed by the
+   If more than one sort column is specified, the later entries are
+   used to sort rows that are equal under the order imposed by the
    earlier sort specifications.
   </para>
  </sect1>
