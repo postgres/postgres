@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue May 22 17:50:25 EDT 2001
+   Last updated: Wed May 30 18:57:52 EDT 2001
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -709,9 +709,9 @@ Maximum number of indexes on a table?    unlimited
    column statistics on its own, so VACUUM ANALYZE must be run to collect
    them periodically.
    
-   Indexes are usually not used for ORDER BY operations: a sequential
-   scan followed by an explicit sort is faster than an indexscan of all
-   tuples of a large table, because it takes fewer disk accesses.
+   Indexes are usually not used for ORDER BY or joins: a sequential scan
+   followed by an explicit sort is faster than an indexscan of all tuples
+   of a large table, because it takes fewer disk accesses.
    
    When using wild-card operators such as LIKE or ~, indices can only be
    used if the beginning of the search is anchored to the start of the

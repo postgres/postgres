@@ -12,7 +12,7 @@
   alink="#0000FF">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Tue May 22 17:50:25 EDT 2001</P>
+    <P>Last updated: Wed May 30 18:57:52 EDT 2001</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -908,7 +908,7 @@ Maximum number of indexes on a table?    unlimited
     periodically.</P>
 
     <P>Indexes are usually not used for <SMALL>ORDER BY</SMALL>
-    operations: a sequential scan followed by an explicit sort is
+    or joins: a sequential scan followed by an explicit sort is
     faster than an indexscan of all tuples of a large table, because it
     takes fewer disk accesses.</P>
 
