@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.49 2002/07/02 05:48:44 momjian Exp $
+ * $Id: bufpage.h,v 1.50 2002/07/02 06:18:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,8 +65,7 @@
  * byte-offset position, tuples can be physically shuffled on a page
  * whenever the need arises.
  *
- * AM-generic per-page information is kept in the pd_opaque field of
- * the PageHeaderData.	(Currently, only the page size is kept here.)
+ * AM-generic per-page information is kept in PageHeaderData.
  *
  * AM-specific per-page data (if any) is kept in the area marked "special
  * space"; each AM has an "opaque" structure defined somewhere that is
@@ -92,25 +91,18 @@ typedef uint16 LocationIndex;
 
 
 /*
+ * disk page organization
  * space management information generic to any page
  *
- *		od_pagesize		- size in bytes.
- *						  Minimum possible page size is perhaps 64B to fit
- *						  page header, opaque space and a minimal tuple;
- *						  of course, in reality you want it much bigger.
- *						  On the high end, we can only support pages up
- *						  to 32KB because lp_off/lp_len are 15 bits.
- */
-typedef struct OpaqueData
-{
-	uint16		od_pagesize;
-} OpaqueData;
-
-typedef OpaqueData *Opaque;
-
-
-/*
- * disk page organization
+ *		pd_lower   	- offset to start of free space.
+ *		pd_upper   	- offset to end of free space.
+ *		pd_special 	- offset to start of special space.
+ *		pd_pagesize	- size in bytes.
+ *					  Minimum possible page size is perhaps 64B to fit
+ *					  page header, opaque space and a minimal tuple;
+ *					  of course, in reality you want it much bigger.
+ *					  On the high end, we can only support pages up
+ *					  to 32KB because lp_off/lp_len are 15 bits.
  */
 typedef struct PageHeaderData
 {
@@ -124,7 +116,7 @@ typedef struct PageHeaderData
 	LocationIndex pd_lower;		/* offset to start of free space */
 	LocationIndex pd_upper;		/* offset to end of free space */
 	LocationIndex pd_special;	/* offset to start of special space */
-	OpaqueData	pd_opaque;		/* AM-generic information */
+	uint16		pd_pagesize;
 	ItemIdData	pd_linp[1];		/* beginning of line pointer array */
 } PageHeaderData;
 
@@ -216,14 +208,14 @@ typedef enum
  * however, it can be called on a page for which there is no buffer.
  */
 #define PageGetPageSize(page) \
-	((Size) ((PageHeader) (page))->pd_opaque.od_pagesize)
+	((Size) ((PageHeader) (page))->pd_pagesize)
 
 /*
  * PageSetPageSize
  *		Sets the page size of a page.
  */
 #define PageSetPageSize(page, size) \
-	(((PageHeader) (page))->pd_opaque.od_pagesize = (size))
+	(((PageHeader) (page))->pd_pagesize = (size))
 
 /* ----------------
  *		page special data macros

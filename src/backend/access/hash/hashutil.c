@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.30 2002/06/20 20:29:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.31 2002/07/02 06:18:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,13 +131,13 @@ _hash_checkpage(Page page, int flags)
 	HashPageOpaque opaque;
 
 	Assert(page);
-	Assert(((PageHeader) (page))->pd_lower >= (sizeof(PageHeaderData) - sizeof(ItemIdData)));
+	Assert(((PageHeader) (page))->pd_lower >= SizeOfPageHeaderData);
 #if 1
 	Assert(((PageHeader) (page))->pd_upper <=
 		   (BLCKSZ - MAXALIGN(sizeof(HashPageOpaqueData))));
 	Assert(((PageHeader) (page))->pd_special ==
 		   (BLCKSZ - MAXALIGN(sizeof(HashPageOpaqueData))));
-	Assert(((PageHeader) (page))->pd_opaque.od_pagesize == BLCKSZ);
+	Assert(PageGetPageSize(page) == BLCKSZ);
 #endif
 	if (flags)
 	{
