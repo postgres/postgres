@@ -316,7 +316,7 @@ char *PQoptions(PGconn *conn)
          Returns the status of the connection. 
          The status can be CONNECTION_OK or CONNECTION_BAD.
 <synopsis>
-ConnStatusType *PQstatus(PGconn *conn)
+ConnStatusType PQstatus(PGconn *conn)
 </synopsis>
 </Para>
 

@@ -19,6 +19,7 @@
 #define PGENV_H
 
 #include <string>
+#include <iostream>
 
 #ifdef __sun__
 #ifndef __GNUC__
@@ -79,6 +80,7 @@ public:
                  
 protected:
   string getenv(const char*);
+  friend ostream& operator << (ostream &, const PgEnv&);
 };
 
 #endif	// PGENV_H
