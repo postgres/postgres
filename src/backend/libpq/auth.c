@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.65 2001/09/06 03:23:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.66 2001/09/07 19:52:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,9 +17,9 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/socket.h>			/* for SCM_CREDS */
-#ifdef SCM_CREDS
-#include <sys/uio.h>			/* for struct iovec */
+#include <sys/socket.h>
+#if defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || defined(HAVE_STRUCT_SOCKCRED)
+#include <sys/uio.h>
 #include <sys/ucred.h>
 #include <errno.h>
 #endif
@@ -520,13 +520,16 @@ ClientAuthentication(Port *port)
 			break;
 
 		case uaIdent:
-#if !defined(SO_PEERCRED) && defined(SCM_CREDS)
+#if !defined(SO_PEERCRED) && (defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || defined(HAVE_STRUCT_SOCKCRED))
 			/*
 			 *	If we are doing ident on unix-domain sockets,
 			 *	use SCM_CREDS only if it is defined and SO_PEERCRED isn't.
 			 */
-#ifdef fc_uid
-			/* Receive credentials on next message receipt, BSD/OS */
+#if defined(HAVE_STRUCT_FCRED) || defined(HAVE_STRUCT_SOCKCRED)
+			/*
+			 * Receive credentials on next message receipt, BSD/OS, NetBSD.
+			 * We need to set this before the client sends the next packet.
+			 */
 			{
 				int on = 1;
 				if (setsockopt(port->sock, 0, LOCAL_CREDS, &on, sizeof(on)) < 0)

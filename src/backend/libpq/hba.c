@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.69 2001/09/06 03:23:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.70 2001/09/07 19:52:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,9 +21,9 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/socket.h>			/* for SCM_CREDS */
-#ifdef SCM_CREDS
-#include <sys/uio.h>			/* for struct iovec */
+#include <sys/socket.h>
+#if defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || defined(HAVE_STRUCT_SOCKCRED)
+#include <sys/uio.h>
 #include <sys/ucred.h>
 #endif
 #include <netinet/in.h>
@@ -872,7 +872,7 @@ ident_inet(const struct in_addr remote_ip_addr,
 static bool
 ident_unix(int sock, char *ident_user)
 {
-#ifdef SO_PEERCRED
+#if defined(SO_PEERCRED)
 	/* Linux style: use getsockopt(SO_PEERCRED) */
 	struct ucred	peercred;
 	ACCEPT_TYPE_ARG3 so_len = sizeof(peercred);
@@ -906,16 +906,19 @@ ident_unix(int sock, char *ident_user)
 
 	return true;
 
-#elif defined(SCM_CREDS)
+#elif defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || defined(HAVE_STRUCT_SOCKCRED)
 	struct msghdr msg;
 
 /* Credentials structure */
-#ifndef fc_uid
+#ifdef HAVE_STRUCT_CMSGCRED
 	typedef struct cmsgcred Cred;
 #define cruid cmcred_uid
-#else
+#elif HAVE_STRUCT_FCRED
 	typedef struct fcred Cred;
 #define cruid fc_uid
+#elif HAVE_STRUCT_SOCKCRED
+	typedef struct sockcred Cred;
+#define cruid sc_uid
 #endif
 	Cred *cred;
 

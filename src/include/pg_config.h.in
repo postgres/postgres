@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.4 2001/09/07 00:27:29 tgl Exp $
+ * $Id: pg_config.h.in,v 1.5 2001/09/07 19:52:54 momjian Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -606,6 +606,15 @@ extern int fdatasync(int fildes);
 
 /* Set to 1 if you have union semun */
 #undef HAVE_UNION_SEMUN
+
+/* Set to 1 if you have struct cmsgcred */
+#undef HAVE_STRUCT_CMSGCRED
+
+/* Set to 1 if you have struct fcred */
+#undef HAVE_STRUCT_FCRED
+
+/* Set to 1 if you have struct sockcred */
+#undef HAVE_STRUCT_SOCKCRED
 
 /* Set to 1 if you have struct sockaddr_un */
 #undef HAVE_STRUCT_SOCKADDR_UN

@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.58 2001/08/21 15:49:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.59 2001/09/07 19:52:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,9 +44,9 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
-#include <sys/socket.h>			/* for SCM_CREDS */
-#ifdef SCM_CREDS
-#include <sys/uio.h>			/* for struct iovec */
+#include <sys/socket.h>
+#if defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || defined(HAVE_STRUCT_SOCKCRED)
+#include <sys/uio.h>
 #include <sys/ucred.h>
 #endif
 #ifndef  MAXHOSTNAMELEN
@@ -436,16 +436,22 @@ pg_krb5_sendauth(char *PQerrormsg, int sock,
 
 #endif	 /* KRB5 */
 
-#ifdef SCM_CREDS
+#if defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || defined(HAVE_STRUCT_SOCKCRED)
 static int
 pg_local_sendauth(char *PQerrormsg, PGconn *conn)
 {
 	char buf;
 	struct iovec iov;
 	struct msghdr msg;
-#ifndef fc_uid
+#ifdef HAVE_STRUCT_CMSGCRED
 	/* Prevent padding */
 	char cmsgmem[sizeof(struct cmsghdr) + sizeof(struct cmsgcred)];
+	/* Point to start of first structure */
+	struct cmsghdr *cmsg = (struct cmsghdr *)cmsgmem;
+#endif
+#ifdef HAVE_STRUCT_SOCKCRED
+	/* Prevent padding */
+	char cmsgmem[sizeof(struct cmsghdr) + sizeof(struct sockcred)];
 	/* Point to start of first structure */
 	struct cmsghdr *cmsg = (struct cmsghdr *)cmsgmem;
 #endif
@@ -463,7 +469,7 @@ pg_local_sendauth(char *PQerrormsg, PGconn *conn)
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
 
-#ifndef fc_uid
+#ifdef HAVE_STRUCT_CMSGCRED
 	/* Create control header, FreeBSD */
 	msg.msg_control = cmsg;
 	msg.msg_controllen = sizeof(cmsgmem);
@@ -609,7 +615,7 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			break;
 
 		case AUTH_REQ_SCM_CREDS:
-#ifdef SCM_CREDS
+#if defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || defined(HAVE_STRUCT_SOCKCRED)
 			if (pg_local_sendauth(PQerrormsg, conn) != STATUS_OK)
 				return STATUS_ERROR;
 #else
