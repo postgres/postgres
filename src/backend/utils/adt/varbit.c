@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.11 2000/11/07 11:35:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.12 2000/11/16 21:43:28 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,6 +177,12 @@ zpbit_in(PG_FUNCTION_ARGS)
 Datum
 zpbit_out(PG_FUNCTION_ARGS)
 {
+#if 1
+	/* same as varbit output */
+	return varbit_out(fcinfo);
+#else
+/* This is how one would print a hex string, in case someone wants to
+   write a formatting function. */
 	VarBit	   *s = PG_GETARG_VARBIT_P(0);
 	char	   *result,
 			   *r;
@@ -207,6 +213,7 @@ zpbit_out(PG_FUNCTION_ARGS)
 	*r = '\0';
 
 	PG_RETURN_CSTRING(result);
+#endif
 }
 
 /* zpbit()
