@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.165 2000/03/30 06:02:36 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.166 2000/03/31 02:11:03 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -720,8 +720,8 @@ var_value:  Sconst
 				}
 		| FCONST
 				{
-					/* Floating pumeric argument?
-					 * This recently changed to preserve "stringiness" until here,
+					/* Floating numeric argument.
+					 * This recently changed to preserve "stringiness",
 					 * so we don't have any work to do at all. Nice.
 					 * - thomas 2000-03-29
 					 */
@@ -729,30 +729,21 @@ var_value:  Sconst
 				}
 		| Iconst
 				{
-					char   *result;
 					char	buf[64];
 
-					/* Integer pumeric argument?
+					/* Integer numeric argument.
 					 */
-					if (sprintf(buf, "%d", $1) != 1)
-					{
-						result = pstrdup(buf);
-					}
-					else
-						elog(ERROR, "Unable to convert constant to string (internal error)");
-
-					$$ = result;
+					sprintf(buf, "%d", $1);
+					$$ = pstrdup(buf);
 				}
 		| name_list
 				{
 					List *n;
-					int llen, slen = 0;
+					int slen = 0;
 					char *result;
 
-					llen = length($1);
-
 					/* List of words? Then concatenate together */
-					if (llen < 1)
+					if ($1 == NIL)
 						elog(ERROR, "SET must have at least one argument");
 
 					foreach (n, $1)
@@ -5300,7 +5291,7 @@ UserId:  IDENT							{ $$ = $1; };
  *  some of these keywords will have to be removed from this
  *  list due to shift/reduce conflicts in yacc. If so, move
  *  down to the ColLabel entity. - thomas 1997-11-06
- * These show up as operators, ans will screw up the parsing if
+ * These show up as operators, and will screw up the parsing if
  * allowed as identifiers or labels.
  * Thanks to Tom Lane for pointing this out. - thomas 2000-03-29
 		| BETWEEN						{ $$ = "between"; }
@@ -5442,7 +5433,7 @@ ColId:  IDENT							{ $$ = $1; }
  * Add other keywords to this list. Note that they appear here
  *  rather than in ColId if there was a shift/reduce conflict
  *  when used as a full identifier. - thomas 1997-11-06
- * These show up as operators, ans will screw up the parsing if
+ * These show up as operators, and will screw up the parsing if
  * allowed as identifiers or labels.
  * Thanks to Tom Lane for pointing this out. - thomas 2000-03-29
 		| ALL							{ $$ = "all"; }
@@ -5452,7 +5443,7 @@ ColId:  IDENT							{ $$ = $1; }
 		| LIKE							{ $$ = "like"; }
 		| NOT							{ $$ = "not"; }
 		| NULLIF						{ $$ = "nullif"; }
-		| NULL_P						{ $$ = "null_p"; }
+		| NULL_P						{ $$ = "null"; }
 		| OR							{ $$ = "or"; }
 		| UNION							{ $$ = "union"; }
  */
