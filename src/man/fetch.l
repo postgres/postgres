@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/fetch.l,v 1.2 1996/12/11 00:27:45 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/fetch.l,v 1.3 1997/03/01 15:26:42 momjian Exp $
 .TH FETCH SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
 fetch \(em fetch instance(s) from a cursor
@@ -43,20 +43,20 @@ because the data that they store spans multiple user queries.
 --
 begin 
    declare mycursor cursor for 
-   select * from pg-user
-end 
-.fi
-.nf
+   select * from pg-user;
 --
 --Fetch all the instances available in the cursor FOO
 --
-fetch all in FOO
-.fi
-.nf
+  fetch all in FOO;
 --
 --Fetch 5 instances backward in the cursor FOO
 --
-fetch backward 5 in FOO
+  fetch backward 5 in FOO;
+--
+--close
+--
+  close foo;
+end;
 .fi
 .SH "SEE ALSO"
 begin(l),
