@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Jun 4 23:30:19 EDT 1999
+   Last updated: Sat Jun 5 14:22:43 EDT 1999
    
    Current maintainer: Bruce Momjian (maillist@candle.pha.pa.us)
    
@@ -13,6 +13,9 @@
    
    Irix-specific questions are answered in
    http://postgreSQL.org/docs/faq-irix.html.
+   
+   HPUX-specific questions are answered in
+   http://postgreSQL.org/docs/faq-hpux.shtml.
      _________________________________________________________________
    
                              General questions
@@ -141,13 +144,13 @@ Section 1: General Questions
   1.2) What does PostgreSQL run on?
   
    The authors have compiled and tested PostgreSQL on the following
-   platforms(some of these compiles require gcc 2.7.0):
+   platforms (some of these compiles require gcc):
      * aix - IBM on AIX 3.2.5 or 4.x
      * alpha - DEC Alpha AXP on Digital Unix 2.0, 3.2, 4.0
      * BSD44_derived - OSs derived from 4.4-lite BSD (NetBSD, FreeBSD)
      * bsdi - BSD/OS 2.x, 3.x, 4.x
      * dgux - DG/UX 5.4R4.11
-     * hpux - HP PA-RISC on HP-UX 9.0, 10
+     * hpux - HP PA-RISC on HP-UX 9.*, 10.*
      * i386_solaris - i386 Solaris
      * irix5 - SGI MIPS on IRIX 5.3
      * linux - Intel x86 on Linux 2.0 and Linux ELF SPARC on Linux ELF
@@ -203,9 +206,9 @@ Section 1: General Questions
    California, Berkeley. It is maintained through volunteer effort.
    
    The main mailing list is: pgsql-general@postgreSQL.org. It is
-   available for discussion of matters pertaining to PostgreSQL, For info
-   on how to subscribe, send a mail with the lines in the body (not the
-   subject line)
+   available for discussion of matters pertaining to PostgreSQL. To
+   subscribe, send a mail with the lines in the body (not the subject
+   line)
 
         subscribe
         end
@@ -221,9 +224,13 @@ Section 1: General Questions
    Digests are sent out to members of this list whenever the main list
    has received around 30k of messages.
    
-   The bugs mailing list available. To subscribe to this list, send email
-   to bugs-request@postgreSQL.org with a BODY of:
+   The bugs mailing list is available. To subscribe to this list, send
+   email to bugs-request@postgreSQL.org with a BODY of:
    
+
+        subscribe
+        end
+
    There is also a developers discussion mailing list available. To
    subscribe to this list, send email to hackers-request@postgreSQL.org
    with a BODY of:
@@ -237,7 +244,7 @@ Section 1: General Questions
    
      http://postgreSQL.org
      
-   There also an IRC channel on EFNet, channel #PostgreSQL. I use the
+   There is also an IRC channel on EFNet, channel #PostgreSQL. I use the
    unix command irc -c '#PostgreSQL' "$USER" irc.phoenix.net
    
   1.6) Latest release of PostgreSQL
@@ -368,8 +375,10 @@ Section 2: Installation Questions
    
   2.4) How do I install PostgreSQL somewhere other than /usr/local/pgsql?
   
-   You need to edit Makefile.global and change POSTGRESDIR accordingly,
-   or create a Makefile.custom and define POSTGRESDIR there.
+   The simplest way is to specify the --prefix option when running
+   configure. If you forgot to do that, you can edit Makefile.global and
+   change POSTGRESDIR accordingly, or create a Makefile.custom and define
+   POSTGRESDIR there.
    
   2.5) When I run postmaster, I get a Bad System Call core dumped message.
   
@@ -394,13 +403,13 @@ Section 2: Installation Questions
   2.8) How do I prevent other hosts from accessing my PostgreSQL database?
   
    By default, PostgreSQL only allows connections from the local machine
-   using unix domain sockets. You must add the -i flag to the postmaster,
-   and enable host-based authentication by modifying the file
-   $PGDATA/pg_hba accordingly.
+   using unix domain sockets. Other machines will not be able to connect
+   unless you add the -i flag to the postmaster, and enable host-based
+   authentication by modifying the file $PGDATA/pg_hba.conf accordingly.
    
   2.9) I can't access the database as the root user.
   
-   You should not create database users with user id 0(root). They will
+   You should not create database users with user id 0 (root). They will
    be unable to access the database. This is a security precaution
    because of the ability of any user to dynamically link object modules
    into the database engine.
@@ -430,12 +439,15 @@ Section 2: Installation Questions
    
    You can also use the postmaster -B option to increase the number of
    shared memory buffers used by the backend processes. If you make this
-   parameter too high, the backends will not start or crash unexpectedly.
-   Each buffer is 8K and the default is 64 buffers.
+   parameter too high, the postmaster may not start up because you've
+   exceeded your kernel's limit on shared memory space. Each buffer is 8K
+   and the default is 64 buffers.
    
-   You can also use the postgres -S option to increase the maximum amount
-   of memory used by each backend process for temporary sorts. Each
-   buffer is 1K and the default is 512 buffers.
+   You can also use the backend -S option to increase the maximum amount
+   of memory used by each backend process for temporary sorts. The -S
+   value is measured in kilobytes, and the default is 512 (ie, 512K). It
+   is unwise to make this value too large, or you may run out of memory
+   when a query invokes several concurrent sorts.
    
    You can also use the cluster command to group data in base tables to
    match an index. See the cluster(l) manual page for more details.
@@ -445,7 +457,7 @@ Section 2: Installation Questions
    PostgreSQL has several features that report status information that
    can be valuable for debugging purposes.
    
-   First, by running configure with the -enable-cassert option, many
+   First, by running configure with the --enable-cassert option, many
    assert()'s monitor the progress of the backend and halt the program
    when something unexpected occurs.
    
@@ -461,7 +473,7 @@ Section 2: Installation Questions
    encountered by the server. Postmaster has a -d option that allows even
    more detailed information to be reported. The -d option takes a number
    that specifies the debug level. Be warned that high debug level values
-   generates large log files.
+   generate large log files.
    
    You can actually run the postgres backend from the command line, and
    type your SQL statement directly. This is recommended only for
@@ -473,8 +485,8 @@ Section 2: Installation Questions
    operating system can attach to a running backend directly to diagnose
    problems.
    
-   The postgres program has a -s, -A, -t options that can be very useful
-   for debugging and performance measurements.
+   The postgres program has -s, -A, and -t options that can be very
+   useful for debugging and performance measurements.
    
    You can also compile with profiling to see what functions are taking
    execution time. The backend profile files will be deposited in the
@@ -684,21 +696,24 @@ BYTEA           bytea           variable-length array of bytes
    you need to use pgdump's -o option or copy with oids option to
    preserve the oids.
    
-  3.14) What are the pg_psort.XXX files in my database directory?
+  3.14) What are the pg_tempNNN.NN files in my database directory?
   
-   They are temporary sort files generated by the query executor. For
-   example, if a sort needs to be done to satisfy an order by, some temp
-   files are generated as a result of the sort.
+   They are temporary files generated by the query executor. For example,
+   if a sort needs to be done to satisfy an order by, and the sort
+   requires more space than the backend's -S parameter allows, then temp
+   files are created to hold the extra data.
    
-   If you have no transactions or sorts running at the time, it is safe
-   to delete the pg_psort.XXX files.
+   The temp files should go away automatically, but might not if a
+   backend crashes during a sort. If you have no transactions running at
+   the time, it is safe to delete the pg_tempNNN.NN files.
    
   3.15) Why can't I connect to my database from another machine?
   
    The default configuration allows only unix domain socket connections
-   from the local machine. To enable TCP/IP connections, use the
-   postmaster -i option You need to add a host entry to the file
-   pgsql/data/pg_hba. See the pg_hba.conf manual page.
+   from the local machine. To enable TCP/IP connections, make sure the
+   postmaster has been started with the -i option, and add an appropriate
+   host entry to the file pgsql/data/pg_hba.conf. See the pg_hba.conf
+   manual page.
    
   3.16) How do I find out what indices or operations are defined in the
   database?
@@ -776,7 +791,7 @@ BYTEA           bytea           variable-length array of bytes
   
    See the fetch manual page.
    
-   This only prevents all row results from being transfered to the
+   This only prevents all row results from being transferred to the
    client. The entire query must be evaluated, even if you only want just
    the first few rows. Consider a query that has an order by. There is no
    way to return any rows until the entire query is evaluated and sorted.
@@ -811,8 +826,11 @@ being indexed, so they can be large also.
 
   3.23) How do I get a list of tables, or other things I can see in psql?
   
-   See the file pgsql/src/bin/psql/psql.c. It contains SQL commands that
-   generate the output for psql's backslash commands.
+   You can read the source code for psql, file pgsql/src/bin/psql/psql.c.
+   It contains SQL commands that generate the output for psql's backslash
+   commands. Beginning in Postgres 6.5, you can also start psql with the
+   -E option so that it will print out the queries it uses to execute the
+   commands you give.
    
   3.24) Why do I get the error "FATAL: palloc failure: memory exhausted?"
   
@@ -826,7 +844,7 @@ being indexed, so they can be large also.
    Depending on your shell, only one of these may succeed, but it will
    set your process data segment limit much higher and perhaps allow the
    query to complete. This command applies to the current process, and
-   all subprocesses created after the command is run. If are having a
+   all subprocesses created after the command is run. If you are having a
    problem with the SQL client because the backend is returning too much
    data, try it before starting the client.
    

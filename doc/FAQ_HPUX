@@ -1,40 +1,37 @@
-
+<PRE>
 =======================================================
-Frequently Asked Questions (FAQ) for PostgreSQL  V6.4
+Frequently Asked Questions (FAQ) for PostgreSQL  V6.5
 HP-UX Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-last updated:           Sat Nov 28 16:21:25 EST 1998
+last updated:           Sun May 23 19:48:07 EDT 1999
 
 current maintainer:     Tom Lane (tgl@sss.pgh.pa.us)
 original author:        Tom Lane (tgl@sss.pgh.pa.us)
 
 
 Questions covered here:
-1.1)    What do I need to install PostgreSQL on HP-UX?
-1.2)    Anything special about the build/install procedure?
-1.3)    yacc dies trying to process src/backend/parser/gram.y.
-1.4)    Linking the main postgres executable fails, complaining that
-        there's no "alloca" function.
-1.5)    OK, it seemed to build and install, but the regression test fails.
+1.1)	What do I need to install PostgreSQL on HP-UX?
+1.2)	Anything special about the build/install procedure?
+1.3)	yacc dies trying to process src/backend/parser/gram.y.
+1.4)	Linking the main postgres executable fails, complaining that
+	there's no "alloca" function. 
+1.5)	OK, it seemed to build and install, but the regression test fails.
 
 
 ----------------------------------------------------------------------
 Section 1:      Installing PostgreSQL
 ----------------------------------------------------------------------
 
-1.1)    What do I need to install PostgreSQL on HP-UX?
+1.1)	What do I need to install PostgreSQL on HP-UX?
 
-PostgreSQL 6.4 is known to build and pass regression test on HPUX 9.03,
+PostgreSQL 6.5 is known to build and pass regression test on HPUX 9.03,
 9.05, and 10.20, given appropriate system patch levels and build tools.
 It should work on other HPUX 9.* and 10.* releases for Series 700/800
-machines, too.  (No one has reported trying it with HPUX 11 yet.)
-Since this is a new FAQ, I don't yet have a lot of information about the
-exact prerequisites, but I'd appreciate hearing from anyone who fails to
-build a working copy, so that we can add more info about exactly what is
-needed.
+machines, too.  I have heard nonspecific reports of problems on HPUX 11;
+more info and/or patches would be appreciated!
 
-Aside from PostgreSQL 6.4 or later sources, you will need GNU make
+Aside from the PostgreSQL source distribution, you will need GNU make
 (HP's make will not do), and either GNU gcc or HP's full ANSI C compiler.
 You must also get flex (GNU lex) 2.5.4 or later --- all versions of
 HP's lex fail on the Postgres lexer files.
@@ -43,9 +40,12 @@ I'd also recommend making sure you are fairly up-to-date on HP patches,
 particularly if you are using HPUX 9.  At a minimum, if you are on HPUX 9,
 you *must* have PHSS_4630 (libm update) or a successor patch; otherwise
 Postgres' date/time functions will misbehave.  On general principles you
-should be current on libc and ld/dld patches, as well as compiler
-patches if you are using HP's C compiler (but I don't currently know of
-any specific failures due to not having recent patches for these files).
+should be current on libc and ld/dld patches, as well as compiler patches
+if you are using HP's C compiler.  (The only other presently known failure
+from out-of-date system libraries is that on HPUX 10.10, the backend will
+crash after the second error message in a session unless you have upgraded
+libc to PHCO_16722 or later.)
+
 See HP's support websites, such as http://us-support.external.hp.com/,
 for free copies of their latest patches.
 
@@ -54,22 +54,23 @@ install on HPUX, so I recommend you not bother with anything older
 than 6.4.
 
 
-1.2)    Anything special about the build/install procedure?
+1.2)	Anything special about the build/install procedure?
 
 When you run configure, you will want to explicitly select either the
 hpux_cc or hpux_gcc template depending on which compiler you plan to
 use:
-        ./configure --with-template=hpux_cc
+	./configure --with-template=hpux_cc
 for HP's C compiler, or
-        ./configure --with-template=hpux_gcc
+	./configure --with-template=hpux_gcc
 for GNU gcc.  (If you omit --with-template, configure may either
 default to hpux_cc or give up entirely, depending on which HPUX and
 PostgreSQL releases you have.)
 
 You may want to tweak the CFLAGS setting in template/hpux_[g]cc before
-you configure; the distributed files contain neither -O nor -g switches,
-which is hardly optimal for any situation.  I've seen no problems using
--O with gcc 2.7.2.*.
+you configure.  The distributed copy of hpux_cc contains neither -O nor -g
+switches, which is hardly optimal for any situation.  As of Postgres 6.5,
+hpux_gcc sets CFLAGS to -O2, which is fine unless you want to do debugging;
+in that case you may want -g as well (or instead).
 
 The default install target location is /usr/local/pgsql, which
 (particularly on HPUX 10) you might want to change to something under
@@ -87,7 +88,7 @@ Otherwise the standard build/install procedure described in the
 PostgreSQL documentation works fine.
 
 
-1.3)    yacc dies trying to process src/backend/parser/gram.y.
+1.3)	yacc dies trying to process src/backend/parser/gram.y.
 
 HP's yacc doesn't create its tables large enough to handle the Postgres
 grammar (a lot of other vendors' yaccs have this problem too).  There
@@ -98,33 +99,37 @@ and src/backend/parser/parse.h and repeat the build.  Any PostgreSQL
 distribution file should have up-to-date copies of those files included,
 so you shouldn't need to run yacc on gram.y at all ... but sometimes
 gram.y mistakenly has a newer timestamp in the distribution than the
-derived files do.
+derived files do.  (If you fetched the PostgreSQL sources from the CVS
+server, then you won't have these files anyway; see next choices.)
 
-2. Install "bison" (GNU yacc) and reconfigure.  Bison doesn't have a
-problem with large grammars.  Note this is not the right choice if you
-are using HP's cc on HPUX 9 --- see next item.
-
-3. Increase yacc's table sizes enough to cope.  With a pre-6.4
+2. Increase yacc's table sizes enough to cope.  With a pre-6.4
 PostgreSQL grammar, I was able to get HPUX 9's yacc to work by
 setting YFLAGS to
-        -d -Np2000 -Ns3000 -Nm100000 -Nl2000 -Na30000 -Nc10000
+	-d -Np2000 -Ns3000 -Nm100000 -Nl2000 -Na30000 -Nc10000
 (You can edit YFLAGS either in the template file before running
 configure, or in src/Makefile.global afterwards.)  Future PostgreSQL
 releases might require even larger tables, but this should do for
 a starting point.
 
+3. Install "bison" (GNU yacc) and reconfigure.  Bison doesn't have a
+problem with large grammars.  Note this is not the right choice if you
+are using HP's cc on HPUX 9 --- see next item.
 
-1.4)    Linking the main postgres executable fails, complaining that
-        there's no "alloca" function.
 
-If you're using HP's cc on HPUX 9, it's right: there's no alloca
-function.  The only place in PostgreSQL that uses alloca is the parser
-(gram.c), and that does so only if it was generated with GNU bison.
-Unfortunately the distribution copy of gram.c is made with bison.
-There are several possible answers:
+1.4)	Linking the main postgres executable fails, complaining that
+	there's no "alloca" function. 
 
-  1. Remake gram.c with HP's yacc (see above item for switch settings).
-     You might also need to remake src/backend/bootstrap/bootparse.c.
+If you're using HP's cc on HPUX 9, it's right: there's no alloca function.
+The only places in PostgreSQL that use alloca are the parser files, and
+those do so only if they were generated with GNU bison.  Unfortunately the
+prebuilt copies of gram.c and preproc.c are made with bison.  There are
+several possible answers:
+
+  1. Remake the files with HP's yacc: configure to use yacc with the
+     above-mentioned switch settings, and remove these files before
+     starting the build:
+          src/backend/parser/gram.c
+	  src/interfaces/ecpg/preproc/preproc.c
 
   2. Build with gcc, which treats alloca as a compiled-in-line function.
 
@@ -132,7 +137,7 @@ There are several possible answers:
      before Y2K anyway...
 
 
-1.5)    OK, it seemed to build and install, but the regression test fails.
+1.5)	OK, it seemed to build and install, but the regression test fails.
 
 There are several "expected failures" due to differences between HPUX
 and the regression test reference platform used by the PostgreSQL group.
@@ -140,32 +145,31 @@ A look at the textual differences between the expected and actual
 outputs will usually reveal that the differences are minor.  You should
 expect these differences:
 
-TEST(S)                 COMMENTS
+TEST(S)			COMMENTS
 
-int2, int4:             pg_atoi generates a differently worded error
-                        message for integer overflow.
+int2, int4:		pg_atoi generates a differently worded error
+			message for integer overflow.
 
-float8:                 In 6.4, float8 shows some differences due to
-                        different handling of overflow/underflow errors in
-                        exp() and pow().  This should be fixed in 6.4.1
-                        and later.
+float8, geometry:	Lots of differences in the last digit or two
+			because of different roundoff errors in floating
+			arithmetic.  Also, HPUX does not distinguish
+			-0 from 0 during printout, but the reference
+			platform does.
 
-float8, geometry:       Lots of differences in the last digit or two
-                        because of different roundoff errors in floating
-                        arithmetic.  Also, HPUX does not distinguish
-                        -0 from 0 during printout, but the reference
-                        platform does.
+float8:			In 6.4, float8 shows some differences due to
+			different handling of overflow/underflow errors in
+			exp() and pow().  This is fixed in 6.4.1 and later.
 
-horology:               HPUX time library does not know about daylight
-                        savings time before 1970, so there are some
-                        places in horology where a time will be shown
-                        in PST instead of PDT.
+horology:		HPUX time library does not know about daylight
+			savings time before 1970, so there are some
+			places in horology where a time will be shown
+			in PST instead of PDT.
 
-In addition, the int8 regression test will fail massively on HPUX 9,
-because int8 doesn't actually work on this platform (sprintf/sscanf
-don't cope with long long int).  Either upgrade to HPUX 10, or don't
-use int8 data.
+The int8 regression test will fail massively on HPUX 9 with Postgres 6.4,
+because sprintf/sscanf don't cope with long long int.  This is fixed in
+Postgres 6.5 by not depending on the system versions of those routines.
 
 Any other error is cause for suspicion.  In particular, if you see
 failures in the datetime test on HPUX 9, you probably forgot to
 install the libm patch PHSS_4630 --- see item 1.1 above.
+</PRE>
