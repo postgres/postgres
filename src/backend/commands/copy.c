@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.132 2001/01/24 19:42:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.133 2001/01/29 00:39:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -638,7 +638,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 	/* Set up a dummy tuple table too */
 	tupleTable = ExecCreateTupleTable(1);
 	slot = ExecAllocTableSlot(tupleTable);
-	ExecSetSlotDescriptor(slot, tupDesc);
+	ExecSetSlotDescriptor(slot, tupDesc, false);
 
 	if (!binary)
 	{

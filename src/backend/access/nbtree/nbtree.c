@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.76 2001/01/26 01:24:31 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.77 2001/01/29 00:39:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,7 +128,7 @@ btbuild(PG_FUNCTION_ARGS)
 	{
 		tupleTable = ExecCreateTupleTable(1);
 		slot = ExecAllocTableSlot(tupleTable);
-		ExecSetSlotDescriptor(slot, htupdesc);
+		ExecSetSlotDescriptor(slot, htupdesc, false);
 
 		/*
 		 * we never want to use sort/build if we are extending an existing

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.56 2001/01/24 19:42:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.57 2001/01/29 00:39:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,13 +121,11 @@ IndexNext(IndexScan *node)
 		if (estate->es_evTupleNull[node->scan.scanrelid - 1])
 			return slot;		/* return empty slot */
 
-		/* probably ought to use ExecStoreTuple here... */
-		slot->val = estate->es_evTuple[node->scan.scanrelid - 1];
-		slot->ttc_shouldFree = false;
-
-		econtext->ecxt_scantuple = slot;
+		ExecStoreTuple(estate->es_evTuple[node->scan.scanrelid - 1],
+					   slot, InvalidBuffer, false);
 
 		/* Does the tuple meet any of the OR'd indxqual conditions? */
+		econtext->ecxt_scantuple = slot;
 
 		ResetExprContext(econtext);
 
@@ -1043,7 +1041,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	 *	get the scan type from the relation descriptor.
 	 * ----------------
 	 */
-	ExecAssignScanType(scanstate, RelationGetDescr(currentRelation));
+	ExecAssignScanType(scanstate, RelationGetDescr(currentRelation), false);
 	ExecAssignResultTypeFromTL((Plan *) node, &scanstate->cstate);
 
 	/* ----------------

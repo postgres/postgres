@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.55 2001/01/24 19:43:23 momjian Exp $
+ * $Id: executor.h,v 1.56 2001/01/29 00:39:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@ extern void ExecRestrPos(Plan *node);
  * prototypes from functions in execJunk.c
  */
 extern JunkFilter *ExecInitJunkFilter(List *targetList, TupleDesc tupType);
+extern void ExecFreeJunkFilter(JunkFilter *junkfilter);
 extern bool ExecGetJunkAttribute(JunkFilter *junkfilter, TupleTableSlot *slot,
 					 char *attrName, Datum *value, bool *isNull);
 extern HeapTuple ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot);
@@ -68,6 +69,7 @@ extern bool ExecInitNode(Plan *node, EState *estate, Plan *parent);
 extern TupleTableSlot *ExecProcNode(Plan *node, Plan *parent);
 extern int	ExecCountSlotsNode(Plan *node);
 extern void ExecEndNode(Plan *node, Plan *parent);
+extern TupleDesc ExecGetTupType(Plan *node);
 
 /*
  * prototypes from functions in execQual.c
@@ -106,13 +108,14 @@ extern TupleTableSlot *ExecScan(Scan *node, ExecScanAccessMtd accessMtd);
 extern TupleTable ExecCreateTupleTable(int initialSize);
 extern void ExecDropTupleTable(TupleTable table, bool shouldFree);
 extern TupleTableSlot *ExecAllocTableSlot(TupleTable table);
+extern TupleTableSlot *MakeTupleTableSlot(void);
 extern TupleTableSlot *ExecStoreTuple(HeapTuple tuple,
 			   TupleTableSlot *slot,
 			   Buffer buffer,
 			   bool shouldFree);
 extern TupleTableSlot *ExecClearTuple(TupleTableSlot *slot);
-extern TupleDesc ExecSetSlotDescriptor(TupleTableSlot *slot,
-					  TupleDesc tupdesc);
+extern void ExecSetSlotDescriptor(TupleTableSlot *slot,
+								  TupleDesc tupdesc, bool shouldFree);
 extern void ExecSetSlotDescriptorIsNew(TupleTableSlot *slot, bool isNew);
 extern void ExecInitResultTupleSlot(EState *estate, CommonState *commonstate);
 extern void ExecInitScanTupleSlot(EState *estate,
@@ -120,8 +123,6 @@ extern void ExecInitScanTupleSlot(EState *estate,
 extern TupleTableSlot *ExecInitExtraTupleSlot(EState *estate);
 extern TupleTableSlot *ExecInitNullTupleSlot(EState *estate,
 											 TupleDesc tupType);
-
-extern TupleDesc ExecGetTupType(Plan *node);
 extern TupleDesc ExecTypeFromTL(List *targetList);
 extern void SetChangedParamList(Plan *node, List *newchg);
 
@@ -131,7 +132,7 @@ extern void SetChangedParamList(Plan *node, List *newchg);
 extern void ResetTupleCount(void);
 extern void ExecAssignExprContext(EState *estate, CommonState *commonstate);
 extern void ExecAssignResultType(CommonState *commonstate,
-					 TupleDesc tupDesc);
+								 TupleDesc tupDesc, bool shouldFree);
 extern void ExecAssignResultTypeFromOuterPlan(Plan *node,
 								  CommonState *commonstate);
 extern void ExecAssignResultTypeFromTL(Plan *node, CommonState *commonstate);
@@ -141,7 +142,7 @@ extern void ExecFreeProjectionInfo(CommonState *commonstate);
 extern void ExecFreeExprContext(CommonState *commonstate);
 extern TupleDesc ExecGetScanType(CommonScanState *csstate);
 extern void ExecAssignScanType(CommonScanState *csstate,
-				   TupleDesc tupDesc);
+							   TupleDesc tupDesc, bool shouldFree);
 extern void ExecAssignScanTypeFromOuterPlan(Plan *node,
 								CommonScanState *csstate);
 extern Form_pg_attribute ExecGetTypeInfo(Relation relDesc);

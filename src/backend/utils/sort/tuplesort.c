@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.12 2001/01/24 19:43:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.13 2001/01/29 00:39:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -546,6 +546,7 @@ tuplesort_end(Tuplesortstate *state)
 	}
 	if (state->memtupindex)
 		pfree(state->memtupindex);
+	pfree(state);
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.30 2001/01/24 19:42:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.31 2001/01/29 00:39:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,7 +172,6 @@ ExecSort(Sort *node)
 				break;
 
 			tuplesort_puttuple(tuplesortstate, (void *) slot->val);
-			ExecClearTuple(slot);
 		}
 
 		/* ----------------
@@ -188,11 +187,10 @@ ExecSort(Sort *node)
 		estate->es_direction = dir;
 
 		/* ----------------
-		 *	make sure the tuple descriptor is up to date
+		 *	make sure the tuple descriptor is up to date (is this needed?)
 		 * ----------------
 		 */
-		slot = (TupleTableSlot *) sortstate->csstate.cstate.cs_ResultTupleSlot;
-		slot->ttc_tupleDescriptor = tupDesc;
+		ExecAssignResultType(&sortstate->csstate.cstate, tupDesc, false);
 
 		/* ----------------
 		 *	finally set the sorted flag to true
@@ -201,8 +199,6 @@ ExecSort(Sort *node)
 		sortstate->sort_Done = true;
 		SO1_printf(stderr, "ExecSort: sorting done.\n");
 	}
-	else
-		slot = (TupleTableSlot *) sortstate->csstate.cstate.cs_ResultTupleSlot;
 
 	SO1_printf("ExecSort: %s\n",
 			   "retrieving tuple from tuplesort");
@@ -216,6 +212,7 @@ ExecSort(Sort *node)
 									   ScanDirectionIsForward(dir),
 									   &should_free);
 
+	slot = sortstate->csstate.cstate.cs_ResultTupleSlot;
 	return ExecStoreTuple(heapTuple, slot, InvalidBuffer, should_free);
 }
 
@@ -346,6 +343,12 @@ ExecEndSort(Sort *node)
 	if (sortstate->tuplesortstate != NULL)
 		tuplesort_end((Tuplesortstate *) sortstate->tuplesortstate);
 	sortstate->tuplesortstate = NULL;
+
+	if (sortstate->sort_Keys != NULL)
+		pfree(sortstate->sort_Keys);
+
+	pfree(sortstate);
+	node->sortstate = NULL;
 
 	SO1_printf("ExecEndSort: %s\n",
 			   "sort node shutdown");

@@ -8,12 +8,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.24 2001/01/24 19:42:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.25 2001/01/29 00:39:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
-
 #include "postgres.h"
 
 #include "access/heapam.h"
@@ -37,7 +35,7 @@
  * called 'resjunk'. If the value of this attribute is true then the
  * corresponding attribute is a "junk" attribute.
  *
- * When we initialize a plan  we call 'ExecInitJunkFilter' to create
+ * When we initialize a plan we call 'ExecInitJunkFilter' to create
  * and store the appropriate information in the 'es_junkFilter' attribute of
  * EState.
  *
@@ -63,6 +61,8 @@
 JunkFilter *
 ExecInitJunkFilter(List *targetList, TupleDesc tupType)
 {
+	MemoryContext oldContext;
+	MemoryContext junkContext;
 	JunkFilter *junkfilter;
 	List	   *cleanTargetList;
 	int			len,
@@ -75,8 +75,20 @@ ExecInitJunkFilter(List *targetList, TupleDesc tupType)
 	bool		resjunk;
 	AttrNumber	cleanResno;
 	AttrNumber *cleanMap;
-	Size		size;
 	Node	   *expr;
+
+	/*
+	 * Make a memory context that will hold the JunkFilter as well as all
+	 * the subsidiary structures we are about to create.  We use smaller-
+	 * than-default sizing parameters since we don't expect a very large
+	 * volume of stuff here.
+	 */
+	junkContext = AllocSetContextCreate(CurrentMemoryContext,
+										"JunkFilterContext",
+										1024,
+										1024,
+										ALLOCSET_DEFAULT_MAXSIZE);
+	oldContext = MemoryContextSwitchTo(junkContext);
 
 	/* ---------------------
 	 * First find the "clean" target list, i.e. all the entries
@@ -166,7 +178,7 @@ ExecInitJunkFilter(List *targetList, TupleDesc tupType)
 	cleanLength = ExecTargetListLength(cleanTargetList);
 
 	/* ---------------------
-	 * Now calculate the "map" between the original tuples attributes
+	 * Now calculate the "map" between the original tuple's attributes
 	 * and the "clean" tuple's attributes.
 	 *
 	 * The "map" is an array of "cleanLength" attribute numbers, i.e.
@@ -177,8 +189,7 @@ ExecInitJunkFilter(List *targetList, TupleDesc tupType)
 	 */
 	if (cleanLength > 0)
 	{
-		size = cleanLength * sizeof(AttrNumber);
-		cleanMap = (AttrNumber *) palloc(size);
+		cleanMap = (AttrNumber *) palloc(cleanLength * sizeof(AttrNumber));
 		cleanResno = 1;
 		foreach(t, targetList)
 		{
@@ -226,7 +237,7 @@ ExecInitJunkFilter(List *targetList, TupleDesc tupType)
 		cleanMap = NULL;
 
 	/* ---------------------
-	 * Finally create and initialize the JunkFilter.
+	 * Finally create and initialize the JunkFilter struct.
 	 * ---------------------
 	 */
 	junkfilter = makeNode(JunkFilter);
@@ -238,20 +249,36 @@ ExecInitJunkFilter(List *targetList, TupleDesc tupType)
 	junkfilter->jf_cleanLength = cleanLength;
 	junkfilter->jf_cleanTupType = cleanTupType;
 	junkfilter->jf_cleanMap = cleanMap;
+	junkfilter->jf_junkContext = junkContext;
+
+	MemoryContextSwitchTo(oldContext);
 
 	return junkfilter;
+}
 
+/*-------------------------------------------------------------------------
+ * ExecFreeJunkFilter
+ *
+ * Release the data structures created by ExecInitJunkFilter.
+ *-------------------------------------------------------------------------
+ */
+void
+ExecFreeJunkFilter(JunkFilter *junkfilter)
+{
+	/*
+	 * Since the junkfilter is inside its own context, we just have to
+	 * delete the context and we're set.
+	 */
+	MemoryContextDelete(junkfilter->jf_junkContext);
 }
 
 /*-------------------------------------------------------------------------
  * ExecGetJunkAttribute
  *
  * Given a tuple (slot), the junk filter and a junk attribute's name,
- * extract & return the value of this attribute.
+ * extract & return the value and isNull flag of this attribute.
  *
  * It returns false iff no junk attribute with such name was found.
- *
- * NOTE: isNull might be NULL !
  *-------------------------------------------------------------------------
  */
 bool
@@ -304,7 +331,7 @@ ExecGetJunkAttribute(JunkFilter *junkfilter,
 	 * ---------------------
 	 */
 	tuple = slot->val;
-	tupType = (TupleDesc) junkfilter->jf_tupType;
+	tupType = junkfilter->jf_tupType;
 
 	*value = heap_getattr(tuple, resno, tupType, isNull);
 
@@ -328,7 +355,6 @@ ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot)
 	int			cleanLength;
 	bool		isNull;
 	int			i;
-	Size		size;
 	Datum	   *values;
 	char	   *nulls;
 	Datum		values_array[64];
@@ -340,8 +366,8 @@ ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot)
 	 */
 	tuple = slot->val;
 
-	tupType = (TupleDesc) junkfilter->jf_tupType;
-	cleanTupType = (TupleDesc) junkfilter->jf_cleanTupType;
+	tupType = junkfilter->jf_tupType;
+	cleanTupType = junkfilter->jf_cleanTupType;
 	cleanLength = junkfilter->jf_cleanLength;
 	cleanMap = junkfilter->jf_cleanMap;
 
@@ -363,11 +389,8 @@ ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot)
 	 */
 	if (cleanLength > 64)
 	{
-		size = cleanLength * sizeof(Datum);
-		values = (Datum *) palloc(size);
-
-		size = cleanLength * sizeof(char);
-		nulls = (char *) palloc(size);
+		values = (Datum *) palloc(cleanLength * sizeof(Datum));
+		nulls = (char *) palloc(cleanLength * sizeof(char));
 	}
 	else
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.42 2001/01/24 19:42:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.43 2001/01/29 00:39:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
-#include "utils/datum.h"
 #include "utils/syscache.h"
 
 
@@ -73,7 +72,7 @@ typedef SQLFunctionCache *SQLFunctionCachePtr;
 static execution_state *init_execution_state(char *src,
 											 Oid *argOidVect, int nargs);
 static void init_sql_fcache(FmgrInfo *finfo);
-static TupleDesc postquel_start(execution_state *es);
+static void postquel_start(execution_state *es);
 static TupleTableSlot *postquel_getnext(execution_state *es);
 static void postquel_end(execution_state *es);
 static void postquel_sub_params(execution_state *es, FunctionCallInfo fcinfo);
@@ -81,24 +80,6 @@ static Datum postquel_execute(execution_state *es,
 							  FunctionCallInfo fcinfo,
 							  SQLFunctionCachePtr fcache);
 
-
-static Datum
-ProjectAttribute(HeapTuple tup,
-				 AttrNumber	attrno,
-				 TupleDesc TD,
-				 bool *isnullP)
-{
-	Datum		val;
-
-	val = heap_getattr(tup, attrno, TD, isnullP);
-
-	if (*isnullP)
-		return val;
-
-	return datumCopy(val,
-					 TD->attrs[attrno - 1]->attbyval,
-					 TD->attrs[attrno - 1]->attlen);
-}
 
 static execution_state *
 init_execution_state(char *src, Oid *argOidVect, int nargs)
@@ -240,18 +221,7 @@ init_sql_fcache(FmgrInfo *finfo)
 	 * allocated by the executor (i.e. slots and tuples) is freed.
 	 */
 	if (!finfo->fn_retset && !fcache->typbyval)
-	{
-		TupleTableSlot *slot;
-
-		slot = makeNode(TupleTableSlot);
-		slot->val = (HeapTuple) NULL;
-		slot->ttc_shouldFree = true;
-		slot->ttc_descIsNew = true;
-		slot->ttc_tupleDescriptor = (TupleDesc) NULL;
-		slot->ttc_buffer = InvalidBuffer;
-
-		fcache->funcSlot = slot;
-	}
+		fcache->funcSlot = MakeTupleTableSlot();
 	else
 		fcache->funcSlot = NULL;
 
@@ -289,7 +259,7 @@ init_sql_fcache(FmgrInfo *finfo)
 }
 
 
-static TupleDesc
+static void
 postquel_start(execution_state *es)
 {
 
@@ -298,8 +268,8 @@ postquel_start(execution_state *es)
 	 * 30-8-1996
 	 */
 	if (es->qd->operation == CMD_UTILITY)
-		return (TupleDesc) NULL;
-	return ExecutorStart(es->qd, es->estate);
+		return;
+	ExecutorStart(es->qd, es->estate);
 }
 
 static TupleTableSlot *
@@ -379,11 +349,11 @@ copy_function_result(SQLFunctionCachePtr fcache,
 	 * If first time through, we have to initialize the funcSlot's
 	 * tuple descriptor.
 	 */
-	if (TupIsNull(funcSlot))
+	if (funcSlot->ttc_tupleDescriptor == NULL)
 	{
-		resultTd = resultSlot->ttc_tupleDescriptor;
-		funcSlot->ttc_tupleDescriptor = CreateTupleDescCopy(resultTd);
-		funcSlot->ttc_descIsNew = true;
+		resultTd = CreateTupleDescCopy(resultSlot->ttc_tupleDescriptor);
+		ExecSetSlotDescriptor(funcSlot, resultTd, true);
+		ExecSetSlotDescriptorIsNew(funcSlot, true);
 	}
 
 	newTuple = heap_copytuple(resultTuple);
@@ -460,10 +430,15 @@ postquel_execute(execution_state *es,
 		}
 		else
 		{
-			value = ProjectAttribute(resSlot->val,
-									 1,
-									 resSlot->ttc_tupleDescriptor,
-									 &fcinfo->isnull);
+			value = heap_getattr(resSlot->val,
+								 1,
+								 resSlot->ttc_tupleDescriptor,
+								 &(fcinfo->isnull));
+			/*
+			 * Note: if result type is pass-by-reference then we are
+			 * returning a pointer into the tuple copied by
+			 * copy_function_result.  This is OK.
+			 */
 		}
 
 		/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.139 2001/01/24 19:42:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.140 2001/01/29 00:39:16 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1817,7 +1817,7 @@ DefaultBuild(Relation heapRelation,
 	{
 		tupleTable = ExecCreateTupleTable(1);
 		slot = ExecAllocTableSlot(tupleTable);
-		ExecSetSlotDescriptor(slot, heapDescriptor);
+		ExecSetSlotDescriptor(slot, heapDescriptor, false);
 	}
 	else
 	{

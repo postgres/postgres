@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.82 2001/01/24 19:42:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.83 2001/01/29 00:39:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -328,25 +328,19 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 	/*
 	 * If the attribute number is invalid, then we are supposed to return
 	 * the entire tuple, we give back a whole slot so that callers know
-	 * what the tuple looks like.
+	 * what the tuple looks like.  XXX why copy?  Couldn't we just give
+	 * back the existing slot?
 	 */
 	if (attnum == InvalidAttrNumber)
 	{
-		TupleTableSlot *tempSlot;
+		TupleTableSlot *tempSlot = MakeTupleTableSlot();
 		TupleDesc	td;
 		HeapTuple	tup;
-
-		tempSlot = makeNode(TupleTableSlot);
-		tempSlot->ttc_shouldFree = false;
-		tempSlot->ttc_descIsNew = true;
-		tempSlot->ttc_tupleDescriptor = (TupleDesc) NULL;
-		tempSlot->ttc_buffer = InvalidBuffer;
 
 		tup = heap_copytuple(heapTuple);
 		td = CreateTupleDescCopy(tuple_type);
 
-		ExecSetSlotDescriptor(tempSlot, td);
-
+		ExecSetSlotDescriptor(tempSlot, td, true);
 		ExecStoreTuple(tup, tempSlot, InvalidBuffer, true);
 		return PointerGetDatum(tempSlot);
 	}

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.45 2001/01/24 19:42:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.46 2001/01/29 00:39:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,26 +24,20 @@
  *
  *	 TABLE CREATE/DELETE
  *		ExecCreateTupleTable	- create a new tuple table
- *		ExecDropTupleTable	- destroy a table
+ *		ExecDropTupleTable		- destroy a table
  *
- *	 SLOT RESERVERATION
+ *	 SLOT RESERVATION
  *		ExecAllocTableSlot		- find an available slot in the table
  *
  *	 SLOT ACCESSORS
  *		ExecStoreTuple			- store a tuple in the table
  *		ExecFetchTuple			- fetch a tuple from the table
  *		ExecClearTuple			- clear contents of a table slot
- *		ExecSlotPolicy			- return slot's tuple pfree policy
- *		ExecSetSlotPolicy		- diddle the slot policy
- *		ExecSlotDescriptor		- type of tuple in a slot
  *		ExecSetSlotDescriptor	- set a slot's tuple descriptor
  *		ExecSetSlotDescriptorIsNew - diddle the slot-desc-is-new flag
- *		ExecSetNewSlotDescriptor - set a desc and the is-new-flag all at once
  *
  *	 SLOT STATUS PREDICATES
  *		TupIsNull				- true when slot contains no tuple(Macro)
- *		ExecSlotDescriptorIsNew - true if we're now storing a different
- *								  type of tuple in a slot
  *
  *	 CONVENIENCE INITIALIZATION ROUTINES
  *		ExecInitResultTupleSlot	   \	convenience routines to initialize
@@ -51,8 +45,7 @@
  *		ExecInitExtraTupleSlot		/	which store copies of tuples.
  *		ExecInitNullTupleSlot	   /
  *
- *	 old routines:
- *		ExecGetTupType			- get type of tuple returned by this node
+ *	 Routines that probably belong somewhere else:
  *		ExecTypeFromTL			- form a TupleDesc from a target list
  *
  *	 EXAMPLE OF HOW TABLE ROUTINES WORK
@@ -112,16 +105,11 @@
  *		and the TupleTableSlot node in execnodes.h.
  *
  */
-
 #include "postgres.h"
-#include "executor/executor.h"
 
-#undef ExecStoreTuple
-
-#include "catalog/pg_type.h"
 #include "access/heapam.h"
-
-static TupleTableSlot *NodeGetResultTupleSlot(Plan *node);
+#include "catalog/pg_type.h"
+#include "executor/executor.h"
 
 
 /* ----------------------------------------------------------------
@@ -212,23 +200,17 @@ ExecDropTupleTable(TupleTable table,	/* tuple table */
 	 *	and drop refcounts of any referenced buffers,
 	 *	if that's what the caller wants.  (There is probably
 	 *	no good reason for the caller ever not to want it!)
-	 *
-	 *	Note: we do nothing about the Tuple Descriptor's
-	 *	we store in the slots.	This may have to change (ex: we should
-	 *	probably worry about pfreeing tuple descs too) -cim 3/14/91
-	 *
-	 *	Right now, the handling of tuple pointers and buffer refcounts
-	 *	is clean, but the handling of tuple descriptors is NOT; they
-	 *	are copied around with wild abandon.  It would take some work
-	 *	to make tuple descs pfree'able.  Fortunately, since they're
-	 *	normally only made once per scan, it's probably not worth
-	 *	worrying about...  tgl 9/21/99
 	 * ----------------
 	 */
 	if (shouldFree)
 	{
 		for (i = 0; i < next; i++)
+		{
 			ExecClearTuple(&array[i]);
+			if (array[i].ttc_shouldFreeDesc &&
+				array[i].ttc_tupleDescriptor != NULL)
+				FreeTupleDesc(array[i].ttc_tupleDescriptor);
+		}
 	}
 
 	/* ----------------
@@ -301,6 +283,32 @@ ExecAllocTableSlot(TupleTable table)
 	slot->val = (HeapTuple) NULL;
 	slot->ttc_shouldFree = true;
 	slot->ttc_descIsNew = true;
+	slot->ttc_shouldFreeDesc = true;
+	slot->ttc_tupleDescriptor = (TupleDesc) NULL;
+	slot->ttc_buffer = InvalidBuffer;
+
+	return slot;
+}
+
+/* --------------------------------
+ *		MakeTupleTableSlot
+ *
+ *		This routine makes an empty standalone TupleTableSlot.
+ *		It really shouldn't exist, but there are a few places
+ *		that do this, so we may as well centralize the knowledge
+ *		of what's in one ...
+ * --------------------------------
+ */
+TupleTableSlot *
+MakeTupleTableSlot(void)
+{
+	TupleTableSlot *slot = makeNode(TupleTableSlot);
+
+	/* This should match ExecAllocTableSlot() */
+	slot->val = (HeapTuple) NULL;
+	slot->ttc_shouldFree = true;
+	slot->ttc_descIsNew = true;
+	slot->ttc_shouldFreeDesc = true;
 	slot->ttc_tupleDescriptor = (TupleDesc) NULL;
 	slot->ttc_buffer = InvalidBuffer;
 
@@ -384,6 +392,8 @@ ExecStoreTuple(HeapTuple tuple,
  *		ExecClearTuple
  *
  *		This function is used to clear out a slot in the tuple table.
+ *
+ *		NB: only the tuple is cleared, not the tuple descriptor (if any).
  * --------------------------------
  */
 TupleTableSlot *				/* return: slot passed */
@@ -426,57 +436,6 @@ ExecClearTuple(TupleTableSlot *slot)	/* slot in which to store tuple */
 	return slot;
 }
 
-
-/* --------------------------------
- *		ExecSlotPolicy
- *
- *		This function is used to get the call/don't call pfree
- *		setting of a slot.	Most executor routines don't need this.
- *		It's only when you do tricky things like marking tuples for
- *		merge joins that you need to diddle the slot policy.
- * --------------------------------
- */
-#ifdef NOT_USED
-bool							/* return: slot policy */
-ExecSlotPolicy(TupleTableSlot *slot)	/* slot to inspect */
-{
-	return slot->ttc_shouldFree;
-}
-
-
-/* --------------------------------
- *		ExecSetSlotPolicy
- *
- *		This function is used to change the call/don't call pfree
- *		setting of a slot.	Most executor routines don't need this.
- *		It's only when you do tricky things like marking tuples for
- *		merge joins that you need to diddle the slot policy.
- * --------------------------------
- */
-bool							/* return: old slot policy */
-ExecSetSlotPolicy(TupleTableSlot *slot, /* slot to change */
-				  bool shouldFree)		/* true if we call pfree() when we
-										 * gc. */
-{
-	bool		old_shouldFree = slot->ttc_shouldFree;
-
-	slot->ttc_shouldFree = shouldFree;
-
-	return old_shouldFree;
-}
-
-#endif
-
-/* --------------------------------
- *		ExecSlotDescriptor
- *
- *		This function is used to get the tuple descriptor associated
- *		with the slot's tuple.
- *
- * Now a macro in tuptable.h  -mer 5 March 1992
- * --------------------------------
- */
-
 /* --------------------------------
  *		ExecSetSlotDescriptor
  *
@@ -484,14 +443,17 @@ ExecSetSlotPolicy(TupleTableSlot *slot, /* slot to change */
  *		with the slot's tuple.
  * --------------------------------
  */
-TupleDesc						/* return: old slot tuple descriptor */
+void
 ExecSetSlotDescriptor(TupleTableSlot *slot,		/* slot to change */
-					  TupleDesc tupdesc)		/* tuple descriptor */
+					  TupleDesc tupdesc,		/* new tuple descriptor */
+					  bool shouldFree)			/* is desc owned by slot? */
 {
-	TupleDesc	old_tupdesc = slot->ttc_tupleDescriptor;
+	if (slot->ttc_shouldFreeDesc &&
+		slot->ttc_tupleDescriptor != NULL)
+		FreeTupleDesc(slot->ttc_tupleDescriptor);
 
 	slot->ttc_tupleDescriptor = tupdesc;
-	return old_tupdesc;
+	slot->ttc_shouldFreeDesc = shouldFree;
 }
 
 /* --------------------------------
@@ -507,51 +469,10 @@ ExecSetSlotDescriptorIsNew(TupleTableSlot *slot,		/* slot to change */
 	slot->ttc_descIsNew = isNew;
 }
 
-/* --------------------------------
- *		ExecSetNewSlotDescriptor
- *
- *		This function is used to set the tuple descriptor associated
- *		with the slot's tuple, and set the "isNew" flag at the same time.
- * --------------------------------
- */
-#ifdef NOT_USED
-TupleDesc						/* return: old slot tuple descriptor */
-ExecSetNewSlotDescriptor(TupleTableSlot *slot,	/* slot to change */
-						 TupleDesc tupdesc)		/* tuple descriptor */
-{
-	TupleDesc	old_tupdesc = slot->ttc_tupleDescriptor;
-
-	slot->ttc_tupleDescriptor = tupdesc;
-	slot->ttc_descIsNew = true;
-
-	return old_tupdesc;
-}
-
-#endif
-
 /* ----------------------------------------------------------------
  *				  tuple table slot status predicates
  * ----------------------------------------------------------------
  */
-
-/* --------------------------------
- *		ExecSlotDescriptorIsNew
- *
- *		This function is used to check if the tuple descriptor
- *		associated with this slot has just changed.  ie: we are
- *		now storing a new type of tuple in this slot
- * --------------------------------
- */
-#ifdef NOT_USED
-bool							/* return: descriptor "is new" */
-ExecSlotDescriptorIsNew(TupleTableSlot *slot)	/* slot to inspect */
-{
-/*	  bool isNew = SlotTupleDescriptorIsNew((TupleTableSlot*) slot);
-	return isNew; */
-	return slot->ttc_descIsNew;
-}
-
-#endif
 
 /* ----------------------------------------------------------------
  *				convenience initialization routines
@@ -632,227 +553,12 @@ ExecInitNullTupleSlot(EState *estate, TupleDesc tupType)
 	static struct tupleDesc NullTupleDesc;		/* we assume this inits to
 												 * zeroes */
 
-	ExecSetSlotDescriptor(slot, tupType);
+	ExecSetSlotDescriptor(slot, tupType, false);
 
 	nullTuple = heap_formtuple(&NullTupleDesc, values, nulls);
 
 	return ExecStoreTuple(nullTuple, slot, InvalidBuffer, true);
 }
-
-
-static TupleTableSlot *
-NodeGetResultTupleSlot(Plan *node)
-{
-	TupleTableSlot *slot;
-
-	switch (nodeTag(node))
-	{
-
-		case T_Result:
-			{
-				ResultState *resstate = ((Result *) node)->resstate;
-
-				slot = resstate->cstate.cs_ResultTupleSlot;
-			}
-			break;
-
-		case T_SeqScan:
-			{
-				CommonScanState *scanstate = ((SeqScan *) node)->scanstate;
-
-				slot = scanstate->cstate.cs_ResultTupleSlot;
-			}
-			break;
-
-		case T_NestLoop:
-			{
-				NestLoopState *nlstate = ((NestLoop *) node)->nlstate;
-
-				slot = nlstate->jstate.cs_ResultTupleSlot;
-			}
-			break;
-
-		case T_Append:
-			{
-				AppendState *appendstate = ((Append *) node)->appendstate;
-
-				slot = appendstate->cstate.cs_ResultTupleSlot;
-			}
-			break;
-
-		case T_IndexScan:
-			{
-				CommonScanState *scanstate = ((IndexScan *) node)->scan.scanstate;
-
-				slot = scanstate->cstate.cs_ResultTupleSlot;
-			}
-			break;
-
-		case T_TidScan:
-			{
-				CommonScanState *scanstate = ((TidScan *) node)->scan.scanstate;
-
-				slot = scanstate->cstate.cs_ResultTupleSlot;
-			}
-			break;
-
-		case T_SubqueryScan:
-			{
-				CommonScanState *scanstate = ((SubqueryScan *) node)->scan.scanstate;
-
-				slot = scanstate->cstate.cs_ResultTupleSlot;
-			}
-			break;
-
-		case T_Material:
-			{
-				MaterialState *matstate = ((Material *) node)->matstate;
-
-				slot = matstate->csstate.css_ScanTupleSlot;
-			}
-			break;
-
-		case T_Sort:
-			{
-				SortState  *sortstate = ((Sort *) node)->sortstate;
-
-				slot = sortstate->csstate.css_ScanTupleSlot;
-			}
-			break;
-
-		case T_Agg:
-			{
-				AggState   *aggstate = ((Agg *) node)->aggstate;
-
-				slot = aggstate->csstate.cstate.cs_ResultTupleSlot;
-			}
-			break;
-
-		case T_Group:
-			{
-				GroupState *grpstate = ((Group *) node)->grpstate;
-
-				slot = grpstate->csstate.cstate.cs_ResultTupleSlot;
-			}
-			break;
-
-		case T_Hash:
-			{
-				HashState  *hashstate = ((Hash *) node)->hashstate;
-
-				slot = hashstate->cstate.cs_ResultTupleSlot;
-			}
-			break;
-
-		case T_Unique:
-			{
-				UniqueState *uniquestate = ((Unique *) node)->uniquestate;
-
-				slot = uniquestate->cstate.cs_ResultTupleSlot;
-			}
-			break;
-
-		case T_SetOp:
-			{
-				SetOpState *setopstate = ((SetOp *) node)->setopstate;
-
-				slot = setopstate->cstate.cs_ResultTupleSlot;
-			}
-			break;
-
-		case T_Limit:
-			{
-				LimitState *limitstate = ((Limit *) node)->limitstate;
-
-				slot = limitstate->cstate.cs_ResultTupleSlot;
-			}
-			break;
-
-		case T_MergeJoin:
-			{
-				MergeJoinState *mergestate = ((MergeJoin *) node)->mergestate;
-
-				slot = mergestate->jstate.cs_ResultTupleSlot;
-			}
-			break;
-
-		case T_HashJoin:
-			{
-				HashJoinState *hashjoinstate = ((HashJoin *) node)->hashjoinstate;
-
-				slot = hashjoinstate->jstate.cs_ResultTupleSlot;
-			}
-			break;
-
-		default:
-			/* ----------------
-			 *	  should never get here
-			 * ----------------
-			 */
-			elog(ERROR, "NodeGetResultTupleSlot: node not yet supported: %d",
-				 (int) nodeTag(node));
-
-			return NULL;
-	}
-	return slot;
-}
-
-/* ----------------------------------------------------------------
- *		ExecGetTupType
- *
- *		this gives you the tuple descriptor for tuples returned
- *		by this node.  I really wish I could ditch this routine,
- *		but since not all nodes store their type info in the same
- *		place, we have to do something special for each node type.
- *
- *		Soon, the system will have to adapt to deal with changing
- *		tuple descriptors as we deal with dynamic tuple types
- *		being returned from procedure nodes.  Perhaps then this
- *		routine can be retired.  -cim 6/3/91
- *
- * old comments
- *		This routine just gets the type information out of the
- *		node's state.  If you already have a node's state, you
- *		can get this information directly, but this is a useful
- *		routine if you want to get the type information from
- *		the node's inner or outer subplan easily without having
- *		to inspect the subplan.. -cim 10/16/89
- *
- * ----------------------------------------------------------------
- */
-
-TupleDesc
-ExecGetTupType(Plan *node)
-{
-	TupleTableSlot *slot;
-	TupleDesc	tupType;
-
-	if (node == NULL)
-		return NULL;
-
-	slot = NodeGetResultTupleSlot(node);
-	tupType = slot->ttc_tupleDescriptor;
-	return tupType;
-}
-
-#ifdef NOT_USED
-TupleDesc
-ExecCopyTupType(TupleDesc td, int natts)
-{
-	TupleDesc newTd;
-	int				i;
-
-	newTd = CreateTemplateTupleDesc(natts);
-	i = 0;
-	while (i < natts)
-		{
-			newTd[i] = (Form_pg_attribute)palloc(sizeof(FormData_pg_attribute));
-			memmove(newTd[i], td[i], sizeof(FormData_pg_attribute));
-			i++;
-		}
-	return newTd;
-}
-#endif
 
 /* ----------------------------------------------------------------
  *		ExecTypeFromTL

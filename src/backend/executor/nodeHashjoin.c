@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.35 2001/01/24 19:42:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.36 2001/01/29 00:39:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -400,7 +400,8 @@ ExecInitHashJoin(HashJoin *node, EState *estate, Plan *parent)
 	ExecAssignProjectionInfo((Plan *) node, &hjstate->jstate);
 
 	ExecSetSlotDescriptor(hjstate->hj_OuterTupleSlot,
-						  ExecGetTupType(outerNode));
+						  ExecGetTupType(outerNode),
+						  false);
 
 	/* ----------------
 	 *	initialize hash-specific info

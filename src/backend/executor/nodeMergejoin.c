@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.41 2001/01/24 19:42:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.42 2001/01/29 00:39:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1505,7 +1505,8 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, Plan *parent)
 
 	mergestate->mj_MarkedTupleSlot = ExecInitExtraTupleSlot(estate);
 	ExecSetSlotDescriptor(mergestate->mj_MarkedTupleSlot,
-						  ExecGetTupType(innerPlan((Plan *) node)));
+						  ExecGetTupType(innerPlan((Plan *) node)),
+						  false);
 
 	switch (node->join.jointype)
 	{

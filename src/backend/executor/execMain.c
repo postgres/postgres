@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.137 2001/01/27 05:16:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.138 2001/01/29 00:39:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,12 +252,8 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, long count)
 /* ----------------------------------------------------------------
  *		ExecutorEnd
  *
- *		This routine must be called at the end of any execution of any
+ *		This routine must be called at the end of execution of any
  *		query plan
- *
- *		returns (AttrInfo*) which describes the attributes of the tuples to
- *		be returned by the query.
- *
  * ----------------------------------------------------------------
  */
 void
@@ -268,23 +264,15 @@ ExecutorEnd(QueryDesc *queryDesc, EState *estate)
 
 	EndPlan(queryDesc->plantree, estate);
 
-	/* XXX - clean up some more from ExecutorStart() - er1p */
-	if (NULL == estate->es_snapshot)
-	{
-		/* nothing to free */
-	}
-	else
+	if (estate->es_snapshot != NULL)
 	{
 		if (estate->es_snapshot->xcnt > 0)
 			pfree(estate->es_snapshot->xip);
 		pfree(estate->es_snapshot);
+		estate->es_snapshot = NULL;
 	}
 
-	if (NULL == estate->es_param_exec_vals)
-	{
-		/* nothing to free */
-	}
-	else
+	if (estate->es_param_exec_vals != NULL)
 	{
 		pfree(estate->es_param_exec_vals);
 		estate->es_param_exec_vals = NULL;
@@ -870,7 +858,7 @@ EndPlan(Plan *plan, EState *estate)
 
 	/*
 	 * close the result relation(s) if any, but hold locks
-	 * until xact commit.
+	 * until xact commit.  Also clean up junkfilters if present.
 	 */
 	resultRelInfo = estate->es_result_relations;
 	for (i = estate->es_num_result_relations; i > 0; i--)
@@ -878,6 +866,9 @@ EndPlan(Plan *plan, EState *estate)
 		/* Close indices and then the relation itself */
 		ExecCloseIndices(resultRelInfo);
 		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
+		/* Delete the junkfilter if any */
+		if (resultRelInfo->ri_junkFilter != NULL)
+			ExecFreeJunkFilter(resultRelInfo->ri_junkFilter);
 		resultRelInfo++;
 	}
 
@@ -886,6 +877,16 @@ EndPlan(Plan *plan, EState *estate)
 	 */
 	if (estate->es_into_relation_descriptor != NULL)
 		heap_close(estate->es_into_relation_descriptor, NoLock);
+
+	/*
+	 * There might be a junkfilter without a result relation.
+	 */
+	if (estate->es_num_result_relations == 0 &&
+		estate->es_junkFilter != NULL)
+	{
+		ExecFreeJunkFilter(estate->es_junkFilter);
+		estate->es_junkFilter = NULL;
+	}
 
 	/*
 	 * close any relations selected FOR UPDATE, again keeping locks

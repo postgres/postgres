@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.24 2001/01/24 19:42:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.25 2001/01/29 00:39:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,8 @@
  *		ExecInitNode	-		initialize a plan node and its subplans
  *		ExecProcNode	-		get a tuple by executing the plan node
  *		ExecEndNode		-		shut down a plan node and its subplans
+ *		ExecCountSlotsNode -	count tuple slots needed by plan tree
+ *		ExecGetTupType	-		get result tuple type of a plan node
  *
  *	 NOTES
  *		This used to be three files.  It is now all combined into
@@ -218,7 +220,8 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 			break;
 
 		default:
-			elog(ERROR, "ExecInitNode: node %d unsupported", nodeTag(node));
+			elog(ERROR, "ExecInitNode: node type %d unsupported",
+				 (int) nodeTag(node));
 			result = FALSE;
 	}
 
@@ -347,7 +350,8 @@ ExecProcNode(Plan *node, Plan *parent)
 			break;
 
 		default:
-			elog(ERROR, "ExecProcNode: node %d unsupported", nodeTag(node));
+			elog(ERROR, "ExecProcNode: node type %d unsupported",
+				 (int) nodeTag(node));
 			result = NULL;
 	}
 
@@ -430,8 +434,8 @@ ExecCountSlotsNode(Plan *node)
 			return ExecCountSlotsAgg((Agg *) node);
 
 		default:
-			elog(ERROR, "ExecCountSlotsNode: node not yet supported: %d",
-				 nodeTag(node));
+			elog(ERROR, "ExecCountSlotsNode: node type %d unsupported",
+				 (int) nodeTag(node));
 			break;
 	}
 	return 0;
@@ -558,7 +562,178 @@ ExecEndNode(Plan *node, Plan *parent)
 			break;
 
 		default:
-			elog(ERROR, "ExecEndNode: node %d unsupported", nodeTag(node));
+			elog(ERROR, "ExecEndNode: node type %d unsupported",
+				 (int) nodeTag(node));
 			break;
 	}
+}
+
+
+/* ----------------------------------------------------------------
+ *		ExecGetTupType
+ *
+ *		this gives you the tuple descriptor for tuples returned
+ *		by this node.  I really wish I could ditch this routine,
+ *		but since not all nodes store their type info in the same
+ *		place, we have to do something special for each node type.
+ *
+ * ----------------------------------------------------------------
+ */
+TupleDesc
+ExecGetTupType(Plan *node)
+{
+	TupleTableSlot *slot;
+
+	if (node == NULL)
+		return NULL;
+
+	switch (nodeTag(node))
+	{
+		case T_Result:
+			{
+				ResultState *resstate = ((Result *) node)->resstate;
+
+				slot = resstate->cstate.cs_ResultTupleSlot;
+			}
+			break;
+
+		case T_SeqScan:
+			{
+				CommonScanState *scanstate = ((SeqScan *) node)->scanstate;
+
+				slot = scanstate->cstate.cs_ResultTupleSlot;
+			}
+			break;
+
+		case T_NestLoop:
+			{
+				NestLoopState *nlstate = ((NestLoop *) node)->nlstate;
+
+				slot = nlstate->jstate.cs_ResultTupleSlot;
+			}
+			break;
+
+		case T_Append:
+			{
+				AppendState *appendstate = ((Append *) node)->appendstate;
+
+				slot = appendstate->cstate.cs_ResultTupleSlot;
+			}
+			break;
+
+		case T_IndexScan:
+			{
+				CommonScanState *scanstate = ((IndexScan *) node)->scan.scanstate;
+
+				slot = scanstate->cstate.cs_ResultTupleSlot;
+			}
+			break;
+
+		case T_TidScan:
+			{
+				CommonScanState *scanstate = ((TidScan *) node)->scan.scanstate;
+
+				slot = scanstate->cstate.cs_ResultTupleSlot;
+			}
+			break;
+
+		case T_SubqueryScan:
+			{
+				CommonScanState *scanstate = ((SubqueryScan *) node)->scan.scanstate;
+
+				slot = scanstate->cstate.cs_ResultTupleSlot;
+			}
+			break;
+
+		case T_Material:
+			{
+				MaterialState *matstate = ((Material *) node)->matstate;
+
+				slot = matstate->csstate.css_ScanTupleSlot;
+			}
+			break;
+
+		case T_Sort:
+			{
+				SortState  *sortstate = ((Sort *) node)->sortstate;
+
+				slot = sortstate->csstate.css_ScanTupleSlot;
+			}
+			break;
+
+		case T_Agg:
+			{
+				AggState   *aggstate = ((Agg *) node)->aggstate;
+
+				slot = aggstate->csstate.cstate.cs_ResultTupleSlot;
+			}
+			break;
+
+		case T_Group:
+			{
+				GroupState *grpstate = ((Group *) node)->grpstate;
+
+				slot = grpstate->csstate.cstate.cs_ResultTupleSlot;
+			}
+			break;
+
+		case T_Hash:
+			{
+				HashState  *hashstate = ((Hash *) node)->hashstate;
+
+				slot = hashstate->cstate.cs_ResultTupleSlot;
+			}
+			break;
+
+		case T_Unique:
+			{
+				UniqueState *uniquestate = ((Unique *) node)->uniquestate;
+
+				slot = uniquestate->cstate.cs_ResultTupleSlot;
+			}
+			break;
+
+		case T_SetOp:
+			{
+				SetOpState *setopstate = ((SetOp *) node)->setopstate;
+
+				slot = setopstate->cstate.cs_ResultTupleSlot;
+			}
+			break;
+
+		case T_Limit:
+			{
+				LimitState *limitstate = ((Limit *) node)->limitstate;
+
+				slot = limitstate->cstate.cs_ResultTupleSlot;
+			}
+			break;
+
+		case T_MergeJoin:
+			{
+				MergeJoinState *mergestate = ((MergeJoin *) node)->mergestate;
+
+				slot = mergestate->jstate.cs_ResultTupleSlot;
+			}
+			break;
+
+		case T_HashJoin:
+			{
+				HashJoinState *hashjoinstate = ((HashJoin *) node)->hashjoinstate;
+
+				slot = hashjoinstate->jstate.cs_ResultTupleSlot;
+			}
+			break;
+
+		default:
+			/* ----------------
+			 *	  should never get here
+			 * ----------------
+			 */
+			elog(ERROR, "ExecGetTupType: node type %d unsupported",
+				 (int) nodeTag(node));
+			return NULL;
+	}
+
+	return slot->ttc_tupleDescriptor;
 }

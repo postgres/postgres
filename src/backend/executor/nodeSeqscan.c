@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.26 2001/01/24 19:42:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.27 2001/01/29 00:39:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,9 +77,8 @@ SeqNext(SeqScan *node)
 		if (estate->es_evTupleNull[node->scanrelid - 1])
 			return slot;		/* return empty slot */
 
-		/* probably ought to use ExecStoreTuple here... */
-		slot->val = estate->es_evTuple[node->scanrelid - 1];
-		slot->ttc_shouldFree = false;
+		ExecStoreTuple(estate->es_evTuple[node->scanrelid - 1],
+					   slot, InvalidBuffer, false);
 
 		/*
 		 * Note that unlike IndexScan, SeqScan never use keys in
@@ -181,7 +180,7 @@ InitScanRelation(SeqScan *node, EState *estate,
 	scanstate->css_currentRelation = currentRelation;
 	scanstate->css_currentScanDesc = currentScanDesc;
 
-	ExecAssignScanType(scanstate, RelationGetDescr(currentRelation));
+	ExecAssignScanType(scanstate, RelationGetDescr(currentRelation), false);
 
 	return reloid;
 }

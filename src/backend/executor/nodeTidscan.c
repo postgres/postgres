@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.13 2001/01/24 19:42:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.14 2001/01/29 00:39:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,9 +110,8 @@ TidNext(TidScan *node)
 		if (estate->es_evTupleNull[node->scan.scanrelid - 1])
 			return slot;		/* return empty slot */
 
-		/* probably ought to use ExecStoreTuple here... */
-		slot->val = estate->es_evTuple[node->scan.scanrelid - 1];
-		slot->ttc_shouldFree = false;
+		ExecStoreTuple(estate->es_evTuple[node->scan.scanrelid - 1],
+					   slot, InvalidBuffer, false);
 
 		/* Flag for the next call that no more tuples */
 		estate->es_evTupleNull[node->scan.scanrelid - 1] = true;
@@ -487,7 +486,7 @@ ExecInitTidScan(TidScan *node, EState *estate, Plan *parent)
 	 *	get the scan type from the relation descriptor.
 	 * ----------------
 	 */
-	ExecAssignScanType(scanstate, RelationGetDescr(currentRelation));
+	ExecAssignScanType(scanstate, RelationGetDescr(currentRelation), false);
 	ExecAssignResultTypeFromTL((Plan *) node, &scanstate->cstate);
 
 	/*

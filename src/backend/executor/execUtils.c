@@ -8,24 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.72 2001/01/24 19:42:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.73 2001/01/29 00:39:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * INTERFACE ROUTINES
  *		ExecAssignExprContext	Common code for plan node init routines.
- *
- *		ExecGetTypeInfo			  |  old execCStructs interface
- *		ExecMakeTypeInfo		  |  code from the version 1
- *		ExecOrderTypeInfo		  |  lisp system.  These should
- *		ExecSetTypeInfo			  |  go away or be updated soon.
- *		ExecFreeTypeInfo		  |  -cim 11/1/89
- *		ExecTupleAttributes		/
- *
-
- *		QueryDescGetTypeInfo - moved here from main.c
- *								am not sure what uses it -cim 10/12/89
  *
  *		ExecOpenIndices			\
  *		ExecCloseIndices		 | referenced by InitPlan, EndPlan,
@@ -261,12 +250,11 @@ MakePerTupleExprContext(EState *estate)
  */
 void
 ExecAssignResultType(CommonState *commonstate,
-					 TupleDesc tupDesc)
+					 TupleDesc tupDesc, bool shouldFree)
 {
-	TupleTableSlot *slot;
+	TupleTableSlot *slot = commonstate->cs_ResultTupleSlot;
 
-	slot = commonstate->cs_ResultTupleSlot;
-	slot->ttc_tupleDescriptor = tupDesc;
+	ExecSetSlotDescriptor(slot, tupDesc, shouldFree);
 }
 
 /* ----------------
@@ -282,7 +270,7 @@ ExecAssignResultTypeFromOuterPlan(Plan *node, CommonState *commonstate)
 	outerPlan = outerPlan(node);
 	tupDesc = ExecGetTupType(outerPlan);
 
-	ExecAssignResultType(commonstate, tupDesc);
+	ExecAssignResultType(commonstate, tupDesc, false);
 }
 
 /* ----------------
@@ -292,12 +280,10 @@ ExecAssignResultTypeFromOuterPlan(Plan *node, CommonState *commonstate)
 void
 ExecAssignResultTypeFromTL(Plan *node, CommonState *commonstate)
 {
-	List	   *targetList;
 	TupleDesc	tupDesc;
 
-	targetList = node->targetlist;
-	tupDesc = ExecTypeFromTL(targetList);
-	ExecAssignResultType(commonstate, tupDesc);
+	tupDesc = ExecTypeFromTL(node->targetlist);
+	ExecAssignResultType(commonstate, tupDesc, true);
 }
 
 /* ----------------
@@ -311,25 +297,6 @@ ExecGetResultType(CommonState *commonstate)
 
 	return slot->ttc_tupleDescriptor;
 }
-
-/* ----------------
- *		ExecFreeResultType
- * ----------------
- */
-#ifdef NOT_USED
-void
-ExecFreeResultType(CommonState *commonstate)
-{
-	TupleTableSlot *slot;
-	TupleDesc	tupType;
-
-	slot = commonstate->cs_ResultTupleSlot;
-	tupType = slot->ttc_tupleDescriptor;
-
-	ExecFreeTypeInfo(tupType);
-}
-
-#endif
 
 /* ----------------
  *		ExecAssignProjectionInfo
@@ -413,29 +380,6 @@ ExecFreeExprContext(CommonState *commonstate)
 	commonstate->cs_ExprContext = NULL;
 }
 
-/* ----------------
- *		ExecFreeTypeInfo
- * ----------------
- */
-#ifdef NOT_USED
-void
-ExecFreeTypeInfo(CommonState *commonstate)
-{
-	TupleDesc	tupDesc;
-
-	tupDesc = commonstate->cs_ResultTupleSlot->ttc_tupleDescriptor;
-	if (tupDesc == NULL)
-		return;
-
-	/* ----------------
-	 *	clean up memory used.
-	 * ----------------
-	 */
-	FreeTupleDesc(tupDesc);
-	commonstate->cs_ResultTupleSlot->ttc_tupleDescriptor = NULL;
-}
-#endif
-
 /* ----------------------------------------------------------------
  *		the following scan type support functions are for
  *		those nodes which are stubborn and return tuples in
@@ -459,36 +403,16 @@ ExecGetScanType(CommonScanState *csstate)
 }
 
 /* ----------------
- *		ExecFreeScanType
- * ----------------
- */
-#ifdef NOT_USED
-void
-ExecFreeScanType(CommonScanState *csstate)
-{
-	TupleTableSlot *slot;
-	TupleDesc	tupType;
-
-	slot = csstate->css_ScanTupleSlot;
-	tupType = slot->ttc_tupleDescriptor;
-
-	ExecFreeTypeInfo(tupType);
-}
-
-#endif
-
-/* ----------------
  *		ExecAssignScanType
  * ----------------
  */
 void
 ExecAssignScanType(CommonScanState *csstate,
-				   TupleDesc tupDesc)
+				   TupleDesc tupDesc, bool shouldFree)
 {
-	TupleTableSlot *slot;
+	TupleTableSlot *slot = csstate->css_ScanTupleSlot;
 
-	slot = (TupleTableSlot *) csstate->css_ScanTupleSlot;
-	slot->ttc_tupleDescriptor = tupDesc;
+	ExecSetSlotDescriptor(slot, tupDesc, shouldFree);
 }
 
 /* ----------------
@@ -504,153 +428,9 @@ ExecAssignScanTypeFromOuterPlan(Plan *node, CommonScanState *csstate)
 	outerPlan = outerPlan(node);
 	tupDesc = ExecGetTupType(outerPlan);
 
-	ExecAssignScanType(csstate, tupDesc);
+	ExecAssignScanType(csstate, tupDesc, false);
 }
 
-
-/* ----------------------------------------------------------------
- *		ExecTypeFromTL support routines.
- *
- *		these routines are used mainly from ExecTypeFromTL.
- *		-cim 6/12/90
- *
- * old comments
- *		Routines dealing with the structure 'attribute' which conatains
- *		the type information about attributes in a tuple:
- *
- *		ExecMakeTypeInfo(noType)
- *				returns pointer to array of 'noType' structure 'attribute'.
- *		ExecSetTypeInfo(index, typeInfo, attNum, attLen)
- *				sets the element indexed by 'index' in typeInfo with
- *				the values: attNum, attLen.
- *		ExecFreeTypeInfo(typeInfo)
- *				frees the structure 'typeInfo'.
- * ----------------------------------------------------------------
- */
-
-/* ----------------
- *		ExecSetTypeInfo
- *
- *		This initializes fields of a single attribute in a
- *		tuple descriptor from the specified parameters.
- *
- *		XXX this duplicates much of the functionality of TupleDescInitEntry.
- *			the routines should be moved to the same place and be rewritten
- *			to share common code.
- * ----------------
- */
-#ifdef NOT_USED
-void
-ExecSetTypeInfo(int index,
-				TupleDesc typeInfo,
-				Oid typeID,
-				int attNum,
-				int attLen,
-				char *attName,
-				bool attbyVal,
-				char attalign)
-{
-	Form_pg_attribute att;
-
-	/* ----------------
-	 *	get attribute pointer and preform a sanity check..
-	 * ----------------
-	 */
-	att = typeInfo[index];
-	if (att == NULL)
-		elog(ERROR, "ExecSetTypeInfo: trying to assign through NULL");
-
-	/* ----------------
-	 *	assign values to the tuple descriptor, being careful not
-	 *	to copy a null attName..
-	 *
-	 *	XXX it is unknown exactly what information is needed to
-	 *		initialize the attribute struct correctly so for now
-	 *		we use 0.  this should be fixed -- otherwise we run the
-	 *		risk of using garbage data. -cim 5/5/91
-	 * ----------------
-	 */
-	att->attrelid = 0;			/* dummy value */
-
-	if (attName != (char *) NULL)
-		StrNCpy(NameStr(att->attname), attName, NAMEDATALEN);
-	else
-		MemSet(NameStr(att->attname), 0, NAMEDATALEN);
-
-	att->atttypid = typeID;
-	att->attdefrel = 0;			/* dummy value */
-	att->attdispersion = 0;		/* dummy value */
-	att->atttyparg = 0;			/* dummy value */
-	att->attlen = attLen;
-	att->attnum = attNum;
-	att->attbound = 0;			/* dummy value */
-	att->attbyval = attbyVal;
-	att->attcanindex = 0;		/* dummy value */
-	att->attproc = 0;			/* dummy value */
-	att->attnelems = 0;			/* dummy value */
-	att->attcacheoff = -1;
-	att->atttypmod = -1;
-	att->attisset = false;
-	att->attstorage = 'p';
-	att->attalign = attalign;
-}
-
-/* ----------------
- *		ExecFreeTypeInfo frees the array of attributes
- *		created by ExecMakeTypeInfo and returned by ExecTypeFromTL
- * ----------------
- */
-void
-ExecFreeTypeInfo(TupleDesc typeInfo)
-{
-	/* ----------------
-	 *	do nothing if asked to free a null pointer
-	 * ----------------
-	 */
-	if (typeInfo == NULL)
-		return;
-
-	/* ----------------
-	 *	the entire array of typeinfo pointers created by
-	 *	ExecMakeTypeInfo was allocated with a single palloc()
-	 *	so we can deallocate the whole array with a single pfree().
-	 *	(we should not try and free all the elements in the array)
-	 *	-cim 6/12/90
-	 * ----------------
-	 */
-	pfree(typeInfo);
-}
-
-
-/* ----------------------------------------------------------------
- *		QueryDescGetTypeInfo
- *
- *|		I don't know how this is used, all I know is that it
- *|		appeared one day in main.c so I moved it here. -cim 11/1/89
- * ----------------------------------------------------------------
- */
-TupleDesc
-QueryDescGetTypeInfo(QueryDesc *queryDesc)
-{
-	Plan	   *plan;
-	TupleDesc	tupleType;
-	List	   *targetList;
-	AttrInfo   *attinfo = (AttrInfo *) palloc(sizeof(AttrInfo));
-
-	plan = queryDesc->plantree;
-	tupleType = (TupleDesc) ExecGetTupType(plan);
-/*
-	targetList =  plan->targetlist;
-
-	attinfo->numAttr = ExecTargetListLength(targetList);
-	attinfo->attrs = tupleType;
-*/
-	attinfo->numAttr = tupleType->natts;
-	attinfo->attrs = tupleType->attrs;
-	return attinfo;
-}
-
-#endif
 
 /* ----------------------------------------------------------------
  *				  ExecInsertIndexTuples support

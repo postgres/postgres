@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.47 2001/01/24 19:42:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.48 2001/01/29 00:39:13 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -92,7 +92,7 @@ hashbuild(PG_FUNCTION_ARGS)
 	{
 		tupleTable = ExecCreateTupleTable(1);
 		slot = ExecAllocTableSlot(tupleTable);
-		ExecSetSlotDescriptor(slot, htupdesc);
+		ExecSetSlotDescriptor(slot, htupdesc, false);
 	}
 	else
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.119 2001/01/24 19:42:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.120 2001/01/29 00:39:20 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1102,7 +1102,7 @@ AlterTableAddConstraint(char *relationName,
 					bool successful = true;
 					HeapScanDesc scan;
 					ExprContext *econtext;
-					TupleTableSlot *slot = makeNode(TupleTableSlot);
+					TupleTableSlot *slot;
 					HeapTuple tuple;
 					RangeTblEntry *rte;
 					List       *qual;
@@ -1169,28 +1169,28 @@ AlterTableAddConstraint(char *relationName,
 
 					qual = makeList1(expr);
 
+					/* Make tuple slot to hold tuples */
+					slot = MakeTupleTableSlot();
+					ExecSetSlotDescriptor(slot, RelationGetDescr(rel), false);
+					/* Make an expression context for ExecQual */
+					econtext = MakeExprContext(slot, CurrentMemoryContext);
+
 					/*
-					 * Scan through the rows now, making the necessary things
-					 * for ExecQual, and then call it to evaluate the
-					 * expression.
+					 * Scan through the rows now, checking the expression
+					 * at each row.
 					 */
 					while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 					{
-						slot->val = tuple;
-						slot->ttc_shouldFree = false;
-						slot->ttc_descIsNew = true;
-						slot->ttc_tupleDescriptor = rel->rd_att;
-						slot->ttc_buffer = InvalidBuffer;
-
-						econtext = MakeExprContext(slot, CurrentMemoryContext);
+						ExecStoreTuple(tuple, slot, InvalidBuffer, false);
 						if (!ExecQual(qual, econtext, true))
 						{
 							successful=false;
 							break;
 						}
-						FreeExprContext(econtext);
+						ResetExprContext(econtext);
 					}
 
+					FreeExprContext(econtext);
 					pfree(slot);
 
 					heap_endscan(scan);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.55 2001/01/24 19:43:25 momjian Exp $
+ * $Id: execnodes.h,v 1.56 2001/01/29 00:39:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,11 +164,19 @@ typedef struct ProjectionInfo
  *						(including the junk attributes).
  *	  cleanTargetList:	the "clean" target list (junk attributes removed).
  *	  cleanLength:		the length of 'cleanTargetList'
- *	  cleanTupTyp:		the tuple descriptor of the "clean" tuple (with
+ *	  cleanTupType:		the tuple descriptor of the "clean" tuple (with
  *						junk attributes removed).
- *	  cleanMap:			A map with the correspondance between the non junk
+ *	  cleanMap:			A map with the correspondance between the non-junk
  *						attributes of the "original" tuple and the
  *						attributes of the "clean" tuple.
+ *	  junkContext:		memory context holding the JunkFilter node and all
+ *						its subsidiary data structures.
+ *
+ * NOTE: the original targetList and tupType are passed to ExecInitJunkFilter
+ * and do not belong to the JunkFilter.  All the other subsidiary structures
+ * are created during ExecInitJunkFilter, and all of them can be freed by
+ * deleting the memory context junkContext.  This would not be needed if we
+ * had a cleaner approach to managing query-lifetime data structures...
  * ----------------
  */
 typedef struct JunkFilter
@@ -181,6 +189,7 @@ typedef struct JunkFilter
 	int			jf_cleanLength;
 	TupleDesc	jf_cleanTupType;
 	AttrNumber *jf_cleanMap;
+	MemoryContext jf_junkContext;
 } JunkFilter;
 
 /* ----------------
