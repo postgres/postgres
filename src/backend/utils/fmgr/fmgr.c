@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.23 1999/03/29 01:30:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.24 1999/04/03 22:57:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,23 +33,33 @@
 #include "commands/trigger.h"
 
 
+/*
+ * Interface for PL functions
+ *
+ * XXX: use of global fmgr_pl_finfo variable is really ugly.  FIXME
+ */
+
 static char *
 fmgr_pl(char *arg0,...)
 {
 	va_list		pvar;
 	FmgrValues	values;
+	int			n_arguments = fmgr_pl_finfo->fn_nargs;
 	bool		isNull = false;
 	int			i;
 
 	memset(&values, 0, sizeof(values));
 
-	if (fmgr_pl_finfo->fn_nargs > 0)
+	if (n_arguments > 0)
 	{
 		values.data[0] = arg0;
-		if (fmgr_pl_finfo->fn_nargs > 1)
+		if (n_arguments > 1)
 		{
+			if (n_arguments > MAXFMGRARGS)
+				elog(ERROR, "fmgr_pl: function %d: too many arguments (%d > %d)",
+					 fmgr_pl_finfo->fn_oid, n_arguments, MAXFMGRARGS);
 			va_start(pvar, arg0);
-			for (i = 1; i < fmgr_pl_finfo->fn_nargs; i++)
+			for (i = 1; i < n_arguments; i++)
 				values.data[i] = va_arg(pvar, char *);
 			va_end(pvar);
 		}
@@ -63,6 +73,43 @@ fmgr_pl(char *arg0,...)
 }
 
 
+/*
+ * Interface for untrusted functions
+ */
+
+static char *
+fmgr_untrusted(char *arg0,...)
+{
+	/* Currently these are unsupported.  Someday we might do something like
+	 * forking a subprocess to execute 'em.
+	 */
+	elog(ERROR, "Untrusted functions not supported.");
+	return NULL;				/* keep compiler happy */
+}
+
+
+/*
+ * Interface for SQL-language functions
+ */
+
+static char *
+fmgr_sql(char *arg0,...)
+{
+	/*
+	 * XXX It'd be really nice to support SQL functions anywhere that builtins
+	 * are supported.  What would we have to do?  What pitfalls are there?
+	 */
+	elog(ERROR, "SQL-language function not supported in this context.");
+	return NULL;				/* keep compiler happy */
+}
+
+
+/*
+ * fmgr_c is not really for C functions only; it can be called for functions
+ * in any language.  Many parts of the system use this entry point if they
+ * want to pass the arguments in an array rather than as explicit arguments.
+ */
+
 char *
 fmgr_c(FmgrInfo *finfo,
 	   FmgrValues *values,
@@ -72,24 +119,15 @@ fmgr_c(FmgrInfo *finfo,
 	int			n_arguments = finfo->fn_nargs;
 	func_ptr	user_fn = fmgr_faddr(finfo);
 
-
-	if (user_fn == (func_ptr) NULL)
-	{
-
-		/*
-		 * a NULL func_ptr denotet untrusted function (in postgres 4.2).
-		 * Untrusted functions have very limited use and is clumsy. We
-		 * just get rid of it.
-		 */
-		elog(ERROR, "internal error: untrusted function not supported.");
-	}
-
 	/*
 	 * If finfo contains a PL handler for this function, call that
 	 * instead.
 	 */
 	if (finfo->fn_plhandler != NULL)
 		return (*(finfo->fn_plhandler)) (finfo, values, isNull);
+
+	if (user_fn == (func_ptr) NULL)
+		elog(ERROR, "Internal error: fmgr_c received NULL function pointer.");
 
 	switch (n_arguments)
 	{
@@ -155,6 +193,10 @@ fmgr_c(FmgrInfo *finfo,
 	return returnValue;
 }
 
+/*
+ * Expand a regproc OID into an FmgrInfo cache struct.
+ */
+
 void
 fmgr_info(Oid procedureId, FmgrInfo *finfo)
 {
@@ -188,7 +230,7 @@ fmgr_info(Oid procedureId, FmgrInfo *finfo)
 		procedureStruct = (FormData_pg_proc *) GETSTRUCT(procedureTuple);
 		if (!procedureStruct->proistrusted)
 		{
-			finfo->fn_addr = (func_ptr) NULL;
+			finfo->fn_addr = (func_ptr) fmgr_untrusted;
 			finfo->fn_nargs = procedureStruct->pronargs;
 			return;
 		}
@@ -207,7 +249,7 @@ fmgr_info(Oid procedureId, FmgrInfo *finfo)
 				finfo->fn_addr = fmgr_dynamic(procedureId, &(finfo->fn_nargs));
 				break;
 			case SQLlanguageId:
-				finfo->fn_addr = (func_ptr) NULL;
+				finfo->fn_addr = (func_ptr) fmgr_sql;
 				finfo->fn_nargs = procedureStruct->pronargs;
 				break;
 			default:
@@ -227,13 +269,12 @@ fmgr_info(Oid procedureId, FmgrInfo *finfo)
 						 "Cache lookup for language %d failed",
 						 ObjectIdGetDatum(procedureStruct->prolang));
 				}
-				languageStruct = (Form_pg_language)
-					GETSTRUCT(languageTuple);
+				languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
 				if (languageStruct->lanispl)
 				{
 					FmgrInfo	plfinfo;
 
-					fmgr_info(((Form_pg_language) GETSTRUCT(languageTuple))->lanplcallfoid, &plfinfo);
+					fmgr_info(languageStruct->lanplcallfoid, &plfinfo);
 					finfo->fn_addr = (func_ptr) fmgr_pl;
 					finfo->fn_plhandler = plfinfo.fn_addr;
 					finfo->fn_nargs = procedureStruct->pronargs;
@@ -269,16 +310,14 @@ fmgr(Oid procedureId,...)
 	FmgrInfo	finfo;
 	bool		isNull = false;
 
-	va_start(pvar, procedureId);
-
 	fmgr_info(procedureId, &finfo);
 	pronargs = finfo.fn_nargs;
 
 	if (pronargs > MAXFMGRARGS)
-	{
 		elog(ERROR, "fmgr: function %d: too many arguments (%d > %d)",
 			 procedureId, pronargs, MAXFMGRARGS);
-	}
+
+	va_start(pvar, procedureId);
 	for (i = 0; i < pronargs; ++i)
 		values.data[i] = va_arg(pvar, char *);
 	va_end(pvar);
@@ -296,7 +335,8 @@ fmgr(Oid procedureId,...)
  *
  * funcinfo, n_arguments, args...
  */
-#ifdef NOT_USED
+#ifdef TRACE_FMGR_PTR
+
 char *
 fmgr_ptr(FmgrInfo *finfo,...)
 {
@@ -343,7 +383,7 @@ fmgr_array_args(Oid procedureId, int nargs, char *args[], bool *isNull)
 	finfo.fn_nargs = nargs;
 
 	/* XXX see WAY_COOL_ORTHOGONAL_FUNCTIONS */
-	return (fmgr_c(&finfo,
-				(FmgrValues *) args,
-				isNull));
+	return fmgr_c(&finfo,
+				  (FmgrValues *) args,
+				  isNull);
 }
