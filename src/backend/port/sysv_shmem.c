@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.6 2003/04/24 21:23:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.7 2003/04/24 21:24:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,10 +28,6 @@
 #endif
 #ifdef HAVE_KERNEL_OS_H
 #include <kernel/OS.h>
-#endif
-
-#ifdef WIN32
-#include "win32/shmem.h"
 #endif
 
 #include "miscadmin.h"
