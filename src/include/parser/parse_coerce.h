@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.31 2001/06/24 02:41:21 momjian Exp $
+ * $Id: parse_coerce.h,v 1.32 2001/09/29 23:01:26 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,6 +95,7 @@ typedef enum CATEGORY
 		|| ((a) == INT4OID && (b) == REGPROCOID) \
 		|| ((a) == REGPROCOID && (b) == OIDOID) \
 		|| ((a) == REGPROCOID && (b) == INT4OID) \
+		|| ((a) == XIDOID && (b) == INT4OID) \
 		|| ((a) == ABSTIMEOID && (b) == INT4OID) \
 		|| ((a) == INT4OID && (b) == ABSTIMEOID) \
 		|| ((a) == RELTIMEOID && (b) == INT4OID) \

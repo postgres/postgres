@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.94 2001/09/28 08:09:13 thomas Exp $
+ * $Id: pg_operator.h,v 1.95 2001/09/29 23:01:26 inoue Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -138,6 +138,7 @@ DATA(insert OID = 398 (  "="	   PGUID 0 b t f  1025	1025  16  398 0  0	0 array_e
 DATA(insert OID = 400 (  "="	   PGUID 0 b t f  1027	1027  16  400 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 401 (  "="	   PGUID 0 b t f  1034	1034  16  401 0  0	0 array_eq eqsel eqjoinsel ));
 
+DATA(insert OID = 352 (  "="	   PGUID 0 b t t  28  28  16 352   0   0   0 xideq eqsel eqjoinsel ));
 DATA(insert OID = 387 (  "="	   PGUID 0 b t t  27  27  16 387   0   0   0 tideq eqsel eqjoinsel ));
 #define TIDEqualOperator   387
 DATA(insert OID = 388 (  "!"	   PGUID 0 r t f  20   0  20   0   0   0   0 int8fac - - ));
