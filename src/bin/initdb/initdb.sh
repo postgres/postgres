@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.85 2000/02/09 00:21:49 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.86 2000/02/16 21:25:59 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -605,10 +605,9 @@ echo "VACUUM ANALYZE" \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo
-echo "$CMDNAME completed successfully. You can now start the database server."
-echo "  $PGPATH/postmaster -D $PGDATA"
-echo "or"
-echo "  $PGPATH/pg_ctl -D $PGDATA start"
+echo "Success. You can now start the database server using"
+echo "$PGPATH/postmaster -D $PGDATA or"
+echo "$PGPATH/pg_ctl -D $PGDATA start"
 echo
 
 exit 0
