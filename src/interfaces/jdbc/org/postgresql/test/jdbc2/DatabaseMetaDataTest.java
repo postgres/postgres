@@ -9,12 +9,13 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: DatabaseMetaDataTest.java,v 1.4 2001/11/19 22:33:39 momjian Exp $
+ * $Id: DatabaseMetaDataTest.java,v 1.5 2002/04/16 15:25:17 davec Exp $
  */
 
 public class DatabaseMetaDataTest extends TestCase
 {
 
+	private Connection con;
 	/*
 	 * Constructor
 	 */
@@ -23,6 +24,17 @@ public class DatabaseMetaDataTest extends TestCase
 		super(name);
 	}
 
+	protected void setUp() throws Exception
+	{
+		con = JDBC2Tests.openDB();
+		JDBC2Tests.createTable( con, "testmetadata", "id int4, name text, updated timestamp" );
+	}
+	protected void tearDown() throws Exception
+	{
+		JDBC2Tests.dropTable( con, "testmetadata" );
+		
+		JDBC2Tests.closeDB( con );
+	}
 	/*
 	 * The spec says this may return null, but we always do!
 	 */
@@ -30,12 +42,32 @@ public class DatabaseMetaDataTest extends TestCase
 	{
 		try
 		{
-			Connection con = JDBC2Tests.openDB();
 
 			DatabaseMetaData dbmd = con.getMetaData();
 			assertNotNull(dbmd);
 
-			JDBC2Tests.closeDB(con);
+			ResultSet rs = dbmd.getTables( null, null, "test%", new String[] {"TABLE"});
+			assertTrue( rs.next() );
+			assertTrue( rs.getString("TABLE_NAME").equals("testmetadata") );
+
+			rs.close();
+			
+			rs = dbmd.getColumns("", "", "test%", "%" );
+			assertTrue( rs.next() );
+			assertTrue( rs.getString("TABLE_NAME").equals("testmetadata") );
+			assertTrue( rs.getString("COLUMN_NAME").equals("id") );
+			assertTrue( rs.getInt("DATA_TYPE") == java.sql.Types.INTEGER );
+			
+			assertTrue( rs.next() );
+			assertTrue( rs.getString("TABLE_NAME").equals("testmetadata") );
+			assertTrue( rs.getString("COLUMN_NAME").equals("name") );
+			assertTrue( rs.getInt("DATA_TYPE") == java.sql.Types.VARCHAR );
+				
+			assertTrue( rs.next() );
+			assertTrue( rs.getString("TABLE_NAME").equals("testmetadata") );
+			assertTrue( rs.getString("COLUMN_NAME").equals("updated") );
+			assertTrue( rs.getInt("DATA_TYPE") == java.sql.Types.TIMESTAMP );
+			
 		}
 		catch (SQLException ex)
 		{
@@ -50,7 +82,6 @@ public class DatabaseMetaDataTest extends TestCase
 	{
 		try
 		{
-			Connection con = JDBC2Tests.openDB();
 
 			DatabaseMetaData dbmd = con.getMetaData();
 			assertNotNull(dbmd);
@@ -76,7 +107,6 @@ public class DatabaseMetaDataTest extends TestCase
 
 			assertTrue(!dbmd.supportsIntegrityEnhancementFacility());
 
-			JDBC2Tests.closeDB(con);
 		}
 		catch (SQLException ex)
 		{
@@ -89,7 +119,6 @@ public class DatabaseMetaDataTest extends TestCase
 	{
 		try
 		{
-			Connection con = JDBC2Tests.openDB();
 
 			DatabaseMetaData dbmd = con.getMetaData();
 			assertNotNull(dbmd);
@@ -98,7 +127,6 @@ public class DatabaseMetaDataTest extends TestCase
 			assertTrue(dbmd.supportsFullOuterJoins());
 			assertTrue(dbmd.supportsLimitedOuterJoins());
 
-			JDBC2Tests.closeDB(con);
 		}
 		catch (SQLException ex)
 		{
@@ -110,7 +138,6 @@ public class DatabaseMetaDataTest extends TestCase
 	{
 		try
 		{
-			Connection con = JDBC2Tests.openDB();
 
 			DatabaseMetaData dbmd = con.getMetaData();
 			assertNotNull(dbmd);
@@ -118,7 +145,6 @@ public class DatabaseMetaDataTest extends TestCase
 			assertTrue(!dbmd.supportsPositionedDelete());
 			assertTrue(!dbmd.supportsPositionedUpdate());
 
-			JDBC2Tests.closeDB(con);
 		}
 		catch (SQLException ex)
 		{
@@ -130,7 +156,6 @@ public class DatabaseMetaDataTest extends TestCase
 	{
 		try
 		{
-			Connection con = JDBC2Tests.openDB();
 
 			DatabaseMetaData dbmd = con.getMetaData();
 			assertNotNull(dbmd);
@@ -151,7 +176,6 @@ public class DatabaseMetaDataTest extends TestCase
 
 			assertTrue(dbmd.supportsNonNullableColumns());
 
-			JDBC2Tests.closeDB(con);
 		}
 		catch (SQLException ex)
 		{
@@ -163,7 +187,6 @@ public class DatabaseMetaDataTest extends TestCase
 	{
 		try
 		{
-			Connection con = JDBC2Tests.openDB();
 
 			DatabaseMetaData dbmd = con.getMetaData();
 			assertNotNull(dbmd);
@@ -171,7 +194,6 @@ public class DatabaseMetaDataTest extends TestCase
 			assertTrue(!dbmd.usesLocalFilePerTable());
 			assertTrue(!dbmd.usesLocalFiles());
 
-			JDBC2Tests.closeDB(con);
 		}
 		catch (SQLException ex)
 		{
@@ -183,7 +205,6 @@ public class DatabaseMetaDataTest extends TestCase
 	{
 		try
 		{
-			Connection con = JDBC2Tests.openDB();
 
 			DatabaseMetaData dbmd = con.getMetaData();
 			assertNotNull(dbmd);
@@ -200,7 +221,6 @@ public class DatabaseMetaDataTest extends TestCase
 			assertTrue(dbmd.getIdentifierQuoteString().equals("\""));
 
 
-			JDBC2Tests.closeDB(con);
 		}
 		catch (SQLException ex)
 		{
@@ -212,7 +232,6 @@ public class DatabaseMetaDataTest extends TestCase
 	{
 		try
 		{
-			Connection con = JDBC2Tests.openDB();
 
 			DatabaseMetaData dbmd = con.getMetaData();
 			assertNotNull(dbmd);
@@ -223,7 +242,6 @@ public class DatabaseMetaDataTest extends TestCase
 			// we can't drop columns (yet)
 			assertTrue(!dbmd.supportsAlterTableWithDropColumn());
 
-			JDBC2Tests.closeDB(con);
 		}
 		catch (SQLException ex)
 		{
@@ -235,7 +253,6 @@ public class DatabaseMetaDataTest extends TestCase
 	{
 		try
 		{
-			Connection con = JDBC2Tests.openDB();
 
 			DatabaseMetaData dbmd = con.getMetaData();
 			assertNotNull(dbmd);
@@ -254,7 +271,6 @@ public class DatabaseMetaDataTest extends TestCase
 			assertTrue(dbmd.supportsGroupByUnrelated());
 			assertTrue(dbmd.supportsGroupByBeyondSelect()); // needs checking
 
-			JDBC2Tests.closeDB(con);
 		}
 		catch (SQLException ex)
 		{
@@ -266,7 +282,6 @@ public class DatabaseMetaDataTest extends TestCase
 	{
 		try
 		{
-			Connection con = JDBC2Tests.openDB();
 
 			DatabaseMetaData dbmd = con.getMetaData();
 			assertNotNull(dbmd);
@@ -274,7 +289,6 @@ public class DatabaseMetaDataTest extends TestCase
 			assertTrue(dbmd.getURL().equals(JDBC2Tests.getURL()));
 			assertTrue(dbmd.getUserName().equals(JDBC2Tests.getUser()));
 
-			JDBC2Tests.closeDB(con);
 		}
 		catch (SQLException ex)
 		{
@@ -286,7 +300,6 @@ public class DatabaseMetaDataTest extends TestCase
 	{
 		try
 		{
-			Connection con = JDBC2Tests.openDB();
 			assertTrue(con instanceof org.postgresql.Connection);
 			org.postgresql.Connection pc = (org.postgresql.Connection) con;
 
@@ -297,7 +310,6 @@ public class DatabaseMetaDataTest extends TestCase
 			assertTrue(dbmd.getDatabaseProductVersion().startsWith(Integer.toString(pc.this_driver.getMajorVersion()) + "." + Integer.toString(pc.this_driver.getMinorVersion())));
 			assertTrue(dbmd.getDriverName().equals("PostgreSQL Native Driver"));
 
-			JDBC2Tests.closeDB(con);
 		}
 		catch (SQLException ex)
 		{
@@ -309,7 +321,6 @@ public class DatabaseMetaDataTest extends TestCase
 	{
 		try
 		{
-			Connection con = JDBC2Tests.openDB();
 			assertTrue(con instanceof org.postgresql.Connection);
 			org.postgresql.Connection pc = (org.postgresql.Connection) con;
 
@@ -321,7 +332,6 @@ public class DatabaseMetaDataTest extends TestCase
 			assertTrue(dbmd.getDriverMinorVersion() == pc.this_driver.getMinorVersion());
 
 
-			JDBC2Tests.closeDB(con);
 		}
 		catch (SQLException ex)
 		{
