@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Id: thread.c,v 1.9 2003/09/27 15:32:48 momjian Exp $
+ * $Id: thread.c,v 1.10 2003/09/29 03:32:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,8 +55,8 @@
  *
  *	One thread-safe solution for gethostbyname() might be to use getaddrinfo().
  *
- *	Compile and run src/tools/test_thread_funcs.c to see if your operating
- *	system has thread-safe non-*_r functions.
+ *	See src/tools/thread to see if your operating system has thread-safe
+ *	non-*_r functions.
  */
  
 
