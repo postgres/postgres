@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/listen.sgml,v 1.19 2003/09/12 23:04:46 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/listen.sgml,v 1.20 2003/09/15 03:21:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -32,8 +32,7 @@ LISTEN <replaceable class="PARAMETER">name</replaceable>
    listener on the notification condition <replaceable
    class="PARAMETER">name</replaceable>.
    If the current session is already registered as a listener for
-   this notification condition, a warning message appears and nothing
-   is done.
+   this notification condition, nothing is done.
   </para>
 
   <para>
@@ -110,6 +109,15 @@ Asynchronous notification "virtual" received from server process with PID 8448.
    There is no <command>LISTEN</command> statement in the SQL
    standard.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-notify" endterm="sql-notify-title"></member>
+   <member><xref linkend="sql-unlisten" endterm="sql-unlisten-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 

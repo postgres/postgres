@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.23 2003/09/12 23:04:46 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.24 2003/09/15 03:21:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -155,6 +155,15 @@ Asynchronous notification "virtual" received from server process with PID 8448.
    There is no <command>NOTIFY</command> statement in the SQL
    standard.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-listen" endterm="sql-listen-title"></member>
+   <member><xref linkend="sql-unlisten" endterm="sql-unlisten-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 

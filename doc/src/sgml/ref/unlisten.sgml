@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.24 2003/09/12 23:04:46 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.25 2003/09/15 03:21:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -115,6 +115,15 @@ NOTIFY virtual;
   <para>
    There is no <command>UNLISTEN</command> command in the SQL standard.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-listen" endterm="sql-listen-title"></member>
+   <member><xref linkend="sql-notify" endterm="sql-notify-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 
