@@ -337,7 +337,7 @@ it with the fact that the data is not present></comment>
    <title>Restrictions</title>
    <para>
     Type  names  cannot  begin  with  the underscore character
-    ("_") and can only be 15 characters long.  This is because
+    ("_") and can only be 31 characters long.  This is because
     Postgres silently creates an array type for each base type
     with a name consisting of the base type's  name  prepended
     with an underscore.
