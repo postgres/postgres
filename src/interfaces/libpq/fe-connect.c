@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.71 1998/07/03 04:29:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.72 1998/07/07 18:00:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -394,6 +394,101 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions, cons
 
 
 /*
+ * update_db_info -
+ * get all additional infos out of dbName
+ *
+ */
+static int
+update_db_info(PGconn *conn)
+{
+	char *tmp, *old = conn->dbName;
+	
+	if (strchr(conn->dbName, '@') != NULL)
+	{
+		/* old style: dbname[@server][:port] */
+		tmp = strrchr(conn->dbName, ':');
+		if (tmp != NULL) /* port number given */
+		{
+		 	conn->pgport = strdup(tmp + 1);
+			*tmp = '\0';
+		}
+		
+		tmp = strrchr(conn->dbName, '@');
+		if (tmp != NULL) /* host name given */
+		{
+		 	conn->pghost = strdup(tmp + 1);
+			*tmp = '\0';
+		}
+	
+		conn->dbName = strdup(old);
+		free(old);
+	}
+	else
+	{
+		int offset;
+		
+		/*
+	       * only allow protocols tcp and unix
+	       */
+		if (strncmp(conn->dbName, "tcp:", 4) == 0)
+			offset = 4;
+		else if (strncmp(conn->dbName, "unix:", 5) == 0)
+			offset = 5;
+		else return 0;
+			
+		if (strncmp(conn->dbName + offset, "postgresql://", strlen("postgresql://")) == 0)
+		{
+        	        /* new style: <tcp|unix>:postgresql://server[:port][/dbname][?options] */
+			offset += strlen("postgresql://");
+			
+			tmp = strrchr(conn->dbName + offset, '?');
+			if (tmp != NULL) /* options given */
+			{
+			 	conn->pgoptions = strdup(tmp + 1);
+				*tmp = '\0';
+			}
+		
+			tmp = strrchr(conn->dbName + offset, '/');
+			if (tmp != NULL) /* database name given */
+			{
+			 	conn->dbName = strdup(tmp + 1);
+				*tmp = '\0';
+			}
+			else
+			{
+				if ((tmp = getenv("PGDATABASE")) != NULL)
+					conn->dbName = strdup(tmp);
+				else if (conn->pguser)
+					conn->dbName = strdup(conn->pguser);
+			}
+		
+			tmp = strrchr(old + offset, ':');
+			if (tmp != NULL) /* port number given */
+			{
+			 	conn->pgport = strdup(tmp + 1);
+				*tmp = '\0';
+			}
+		
+			if (strncmp(old, "unix:", 5) == 0)
+			{
+				conn->pghost = NULL;
+				if (strcmp(old + offset, "localhost") != 0)
+				{
+					(void) sprintf(conn->errorMessage,
+					   "connectDB() -- non-tcp access only possible on localhost\n");
+					 return 1;
+				}
+			}
+			else conn->pghost = strdup(old + offset);
+	
+			free(old);
+		}
+	}
+	
+	return 0;
+}
+
+/*
  * connectDB -
  * make a connection to the backend so it is ready to receive queries.
  * return CONNECTION_OK if successful, CONNECTION_BAD if not.
@@ -414,6 +509,12 @@ connectDB(PGconn *conn)
 	char		beresp;
 	int			on = 1;
 
+	/* 
+	* parse dbName to get all additional info in it, if any
+	*/
+	if (update_db_info(conn) != 0)
+		goto connect_errReturn;
+		
 	/*
 	 * Initialize the startup packet.
 	 */
