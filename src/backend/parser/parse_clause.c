@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.17 1998/05/29 14:00:19 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.18 1998/06/05 03:49:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -194,17 +194,32 @@ find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
 	 *    it will not be projected into the final tuple.
 	 *          daveh@insightdist.com    5/20/98
 	 */  
-	if ( ! target_result)  {  
+	if ( ! target_result && sortgroupby->name)   {
 		List   *p_target = tlist;
-		Ident *missingTargetId = (Ident *)makeNode(Ident);
 		TargetEntry *tent = makeNode(TargetEntry);
 		
-		/*   Fill in the constructed Ident node   */
-		missingTargetId->type = T_Ident;
-		missingTargetId->name = palloc(strlen(sortgroupby->name) + 1);
-		strcpy(missingTargetId->name, sortgroupby->name);
 
-		transformTargetId(pstate, missingTargetId, tent, missingTargetId->name, TRUE);
+		if (sortgroupby->range)  {
+			Attr *missingTarget = (Attr *)makeNode(Attr);
+			missingTarget->type = T_Attr;
+
+			missingTarget->relname = palloc(strlen(sortgroupby->range) + 1);
+			strcpy(missingTarget->relname, sortgroupby->range);
+
+			missingTarget->attrs = lcons(makeString(sortgroupby->name), NIL);
+
+			transformTargetId(pstate, (Node*)missingTarget, tent, sortgroupby->name, TRUE);
+		}
+		else  {
+			Ident *missingTarget = (Ident *)makeNode(Ident);
+			missingTarget->type = T_Ident;
+
+			missingTarget->name = palloc(strlen(sortgroupby->name) + 1);
+			strcpy(missingTarget->name, sortgroupby->name);
+
+			transformTargetId(pstate, (Node*)missingTarget, tent, sortgroupby->name, TRUE);
+		}
+
 
 		/* Add to the end of the target list */
 		while (lnext(p_target) != NIL)  {

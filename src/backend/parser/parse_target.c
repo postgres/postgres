@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.14 1998/05/29 14:00:23 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.15 1998/06/05 03:49:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ size_target_expr(ParseState *pstate,
  */
 void
 transformTargetId(ParseState *pstate,
-				Ident *ident,
+				Node *node,
 				TargetEntry *tent,
 				char *resname,
 				int16 resjunk)
@@ -68,7 +68,7 @@ transformTargetId(ParseState *pstate,
 	 * relation names (even though they can be stored in
 	 * Ident nodes, too)
 	 */
-	expr = transformIdent(pstate, (Node *) ident, EXPR_COLUMN_FIRST);
+	expr = transformExpr(pstate, node, EXPR_COLUMN_FIRST);
 	type_id = exprType(expr);
 	if (nodeTag(expr) == T_Var)
 		type_mod = ((Var *) expr)->vartypmod;
@@ -113,7 +113,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 					identname = ((Ident *) res->val)->name;
 					handleTargetColname(pstate, &res->name, NULL, identname);
 					resname = (res->name) ? res->name : identname;
-					transformTargetId(pstate, (Ident*)res->val, tent, resname, FALSE);
+					transformTargetId(pstate, (Node*)res->val, tent, resname, FALSE);
 					break;
 				}
 			case T_ParamNo:
