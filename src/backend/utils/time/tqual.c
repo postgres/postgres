@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.48 2002/01/16 23:09:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.49 2002/01/16 23:51:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,10 +38,10 @@ bool		ReferentialIntegritySnapshotOverride = false;
 
 /*
  * HeapTupleSatisfiesItself
+ *		True iff heap tuple is valid "for itself".
  *
- *	Visible tuples are those of:
- *
- *		transactions committed before our _command_ started (READ COMMITTED)
+ *	Here, we consider the effects of:
+ *		all committed transactions (as of the current instant)
  *		previous commands of this transaction
  *		changes made by the current command
  *
@@ -156,13 +156,15 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
 
 /*
  * HeapTupleSatisfiesNow
+ *		True iff heap tuple is valid "now".
  *
- *	Visible tuples are those of:
- *
- *		transactions committed before our _command_ started (READ COMMITTED)
+ *	Here, we consider the effects of:
+ *		all committed transactions (as of the current instant)
  *		previous commands of this transaction
  *
- *	Does _not_ include changes made by the current command
+ * Note we do _not_ include changes made by the current command.  This
+ * solves the "Halloween problem" wherein an UPDATE might try to re-update
+ * its own output tuples.
  *
  * Note:
  *		Assumes heap tuple is valid.
@@ -302,8 +304,7 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 
 /*
  * HeapTupleSatisfiesToast
- *
- *	Valid if the heap tuple is valid for TOAST usage.
+ *		True iff heap tuple is valid as a TOAST row.
  *
  * This is a simplified version that only checks for VACUUM moving conditions.
  * It's appropriate for TOAST usage because TOAST really doesn't want to do
@@ -361,12 +362,8 @@ HeapTupleSatisfiesToast(HeapTupleHeader tuple)
 /*
  * HeapTupleSatisfiesUpdate
  *
- *	Same as HeapTupleSatisfiesNow, but returns more information needed
- *	by UPDATE.
- *
- * This applies the same checks as HeapTupleSatisfiesNow,
- * but returns a more detailed result code, since UPDATE needs to know
- * more than "is it visible?".
+ *	Same logic as HeapTupleSatisfiesNow, but returns a more detailed result
+ *	code, since UPDATE needs to know more than "is it visible?".
  */
 int
 HeapTupleSatisfiesUpdate(HeapTuple htuple)
@@ -484,13 +481,14 @@ HeapTupleSatisfiesUpdate(HeapTuple htuple)
 	return HeapTupleUpdated;	/* updated by other */
 }
 
-/* HeapTupleSatisfiesDirty
+/*
+ * HeapTupleSatisfiesDirty
+ *		True iff heap tuple is valid including effects of open transactions.
  *
- *	Visible tuples are those of:
- *
- *		_any_ in-progress transaction
+ *	Here, we consider the effects of:
+ *		all committed and in-progress transactions (as of the current instant)
  *		previous commands of this transaction
- *		changes by the current command
+ *		changes made by the current command
  *
  * This is essentially like HeapTupleSatisfiesItself as far as effects of
  * the current transaction and committed/aborted xacts are concerned.
@@ -614,15 +612,15 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 
 /*
  * HeapTupleSatisfiesSnapshot
+ *		True iff heap tuple is valid for the given snapshot.
  *
- *	Visible tuples are those of:
- *
- *		transactions committed before our transaction started (SERIALIZABLE)
+ *	Here, we consider the effects of:
+ *		all transactions committed as of the time of the given snapshot
  *		previous commands of this transaction
  *
  *	Does _not_ include:
- *		transactions in-progress when our transaction started
- *		transactions committed after our transaction started
+ *		transactions shown as in-progress by the snapshot
+ *		transactions started after the snapshot was taken
  *		changes made by the current command
  *
  * This is the same as HeapTupleSatisfiesNow, except that transactions that
@@ -770,11 +768,9 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 /*
  * HeapTupleSatisfiesVacuum
  *
- *	Visible tuples are those of:
- *
- *		tuples visible by any running transaction
- *
- *	Used by VACUUM and related operations.
+ *	Determine the status of tuples for VACUUM purposes.  Here, what
+ *	we mainly want to know is if a tuple is potentially visible to *any*
+ *	running transaction.  If so, it can't be removed yet by VACUUM.
  *
  * OldestXmin is a cutoff XID (obtained from GetOldestXmin()).	Tuples
  * deleted by XIDs >= OldestXmin are deemed "recently dead"; they might
