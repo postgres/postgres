@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.57 2003/11/29 19:51:57 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.58 2004/06/08 14:00:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,8 +151,8 @@ PageAddItem(Page page,
 			if (offsetNumber < limit)
 			{
 				itemId = PageGetItemId(phdr, offsetNumber);
-				if (((*itemId).lp_flags & LP_USED) ||
-					((*itemId).lp_len != 0))
+				if ((itemId->lp_flags & LP_USED) ||
+					(itemId->lp_len != 0))
 				{
 					elog(WARNING, "will not overwrite a used ItemId");
 					return InvalidOffsetNumber;
@@ -172,8 +172,8 @@ PageAddItem(Page page,
 		for (offsetNumber = 1; offsetNumber < limit; offsetNumber++)
 		{
 			itemId = PageGetItemId(phdr, offsetNumber);
-			if ((((*itemId).lp_flags & LP_USED) == 0) &&
-				((*itemId).lp_len == 0))
+			if (((itemId->lp_flags & LP_USED) == 0) &&
+				(itemId->lp_len == 0))
 				break;
 		}
 		/* if no free slot, we'll put it at limit (1st open slot) */
@@ -214,9 +214,9 @@ PageAddItem(Page page,
 				(limit - offsetNumber) * sizeof(ItemIdData));
 
 	/* set the item pointer */
-	(*itemId).lp_off = upper;
-	(*itemId).lp_len = size;
-	(*itemId).lp_flags = flags;
+	itemId->lp_off = upper;
+	itemId->lp_len = size;
+	itemId->lp_flags = flags;
 
 	/* copy the item's data onto the page */
 	memcpy((char *) page + upper, item, size);
@@ -278,19 +278,20 @@ PageRestoreTempPage(Page tempPage, Page oldPage)
 /*
  * sorting support for PageRepairFragmentation
  */
-struct itemIdSortData
+typedef struct itemIdSortData
 {
 	int			offsetindex;	/* linp array index */
 	int			itemoff;		/* page offset of item data */
 	Size		alignedlen;		/* MAXALIGN(item data len) */
-};
+} itemIdSortData;
+typedef itemIdSortData *itemIdSort;
 
 static int
 itemoffcompare(const void *itemidp1, const void *itemidp2)
 {
 	/* Sort in decreasing itemoff order */
-	return ((struct itemIdSortData *) itemidp2)->itemoff -
-		((struct itemIdSortData *) itemidp1)->itemoff;
+	return ((itemIdSort) itemidp2)->itemoff -
+		   ((itemIdSort) itemidp1)->itemoff;
 }
 
 /*
@@ -309,8 +310,8 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 	Offset		pd_lower = ((PageHeader) page)->pd_lower;
 	Offset		pd_upper = ((PageHeader) page)->pd_upper;
 	Offset		pd_special = ((PageHeader) page)->pd_special;
-	struct itemIdSortData *itemidbase,
-			   *itemidptr;
+	itemIdSort	itemidbase,
+				itemidptr;
 	ItemId		lp;
 	int			nline,
 				nused;
@@ -340,9 +341,9 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 	for (i = 0; i < nline; i++)
 	{
 		lp = PageGetItemId(page, i + 1);
-		if ((*lp).lp_flags & LP_DELETE) /* marked for deletion */
-			(*lp).lp_flags &= ~(LP_USED | LP_DELETE);
-		if ((*lp).lp_flags & LP_USED)
+		if (lp->lp_flags & LP_DELETE) /* marked for deletion */
+			lp->lp_flags &= ~(LP_USED | LP_DELETE);
+		if (lp->lp_flags & LP_USED)
 			nused++;
 		else if (unused)
 			unused[i - nused] = (OffsetNumber) i;
@@ -354,37 +355,36 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 		for (i = 0; i < nline; i++)
 		{
 			lp = PageGetItemId(page, i + 1);
-			(*lp).lp_len = 0;	/* indicate unused & deallocated */
+			lp->lp_len = 0;	/* indicate unused & deallocated */
 		}
 		((PageHeader) page)->pd_upper = pd_special;
 	}
 	else
 	{							/* nused != 0 */
 		/* Need to compact the page the hard way */
-		itemidbase = (struct itemIdSortData *)
-			palloc(sizeof(struct itemIdSortData) * nused);
+		itemidbase = (itemIdSort) palloc(sizeof(itemIdSortData) * nused);
 		itemidptr = itemidbase;
 		totallen = 0;
 		for (i = 0; i < nline; i++)
 		{
 			lp = PageGetItemId(page, i + 1);
-			if ((*lp).lp_flags & LP_USED)
+			if (lp->lp_flags & LP_USED)
 			{
 				itemidptr->offsetindex = i;
-				itemidptr->itemoff = (*lp).lp_off;
+				itemidptr->itemoff = lp->lp_off;
 				if (itemidptr->itemoff < (int) pd_upper ||
 					itemidptr->itemoff >= (int) pd_special)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATA_CORRUPTED),
 							 errmsg("corrupted item pointer: %u",
 									itemidptr->itemoff)));
-				itemidptr->alignedlen = MAXALIGN((*lp).lp_len);
+				itemidptr->alignedlen = MAXALIGN(lp->lp_len);
 				totallen += itemidptr->alignedlen;
 				itemidptr++;
 			}
 			else
 			{
-				(*lp).lp_len = 0;		/* indicate unused & deallocated */
+				lp->lp_len = 0;		/* indicate unused & deallocated */
 			}
 		}
 
@@ -395,7 +395,7 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 				   (unsigned int) totallen, pd_special - pd_lower)));
 
 		/* sort itemIdSortData array into decreasing itemoff order */
-		qsort((char *) itemidbase, nused, sizeof(struct itemIdSortData),
+		qsort((char *) itemidbase, nused, sizeof(itemIdSortData),
 			  itemoffcompare);
 
 		/* compactify page */
@@ -408,7 +408,7 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 			memmove((char *) page + upper,
 					(char *) page + itemidptr->itemoff,
 					itemidptr->alignedlen);
-			(*lp).lp_off = upper;
+			lp->lp_off = upper;
 		}
 
 		((PageHeader) page)->pd_upper = upper;
@@ -538,8 +538,9 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 		nline--;				/* there's one less than when we started */
 		for (i = 1; i <= nline; i++)
 		{
-			if (PageGetItemId(phdr, i)->lp_off <= offset)
-				PageGetItemId(phdr, i)->lp_off += size;
+			ItemId ii = PageGetItemId(phdr, i);
+			if (ii->lp_off <= offset)
+				ii->lp_off += size;
 		}
 	}
 }
