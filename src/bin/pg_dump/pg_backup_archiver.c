@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.62.2.3 2003/03/09 19:38:59 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.62.2.4 2003/05/03 22:19:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1915,7 +1915,7 @@ ReadToc(ArchiveHandle *AH)
 			depIdx = 0;
 			do
 			{
-				if (depIdx > depSize)
+				if (depIdx >= depSize)
 				{
 					depSize *= 2;
 					deps = realloc(deps, sizeof(char *) * depSize);
@@ -1931,7 +1931,10 @@ ReadToc(ArchiveHandle *AH)
 			if (depIdx > 1)		/* We have a non-null entry */
 				te->depOid = realloc(deps, sizeof(char *) * depIdx);	/* trim it */
 			else
+			{
+				free(deps);
 				te->depOid = NULL;		/* no deps */
+			}
 		}
 		else
 			te->depOid = NULL;

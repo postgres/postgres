@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.305.2.4 2003/04/25 22:14:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.305.2.5 2003/05/03 22:19:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3489,7 +3489,7 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 		resetPQExpBuffer(delqry);
 
 		/* Make a dependency to ensure function is dumped first */
-		deps = malloc(sizeof(char *) * (2 + (strcmp(lanvalidator, "0") != 0) ? 1 : 0));
+		deps = malloc(sizeof(char *) * 10);
 		depIdx = 0;
 
 		(*deps)[depIdx++] = strdup(lanplcallfoid);
