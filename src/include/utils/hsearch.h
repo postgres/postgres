@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/hsearch.h,v 1.32 2004/08/29 05:06:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/hsearch.h,v 1.33 2004/09/28 20:46:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,7 +135,7 @@ typedef struct HASHCTL
 #define HASH_FFACTOR	0x008	/* Set fill factor */
 #define HASH_FUNCTION	0x010	/* Set user defined hash function */
 #define HASH_ELEM		0x020	/* Set key/entry size */
-#define HASH_SHARED_MEM 0x040	/* Set shared mem const */
+#define HASH_SHARED_MEM 0x040	/* Hashtable is in shared memory */
 #define HASH_ATTACH		0x080	/* Do not initialize hctl */
 #define HASH_ALLOC		0x100	/* Set memory allocator */
 #define HASH_CONTEXT	0x200	/* Set explicit memory context */

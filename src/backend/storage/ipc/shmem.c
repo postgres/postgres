@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.80 2004/08/29 05:06:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.81 2004/09/28 20:46:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,8 +262,17 @@ InitShmemIndex(void)
  *		shared memory hash table.
  *
  * We assume caller is doing some kind of synchronization
- * so that two people dont try to create/initialize the
+ * so that two people don't try to create/initialize the
  * table at once.
+ *
+ * max_size is the estimated maximum number of hashtable entries.  This is
+ * not a hard limit, but the access efficiency will degrade if it is
+ * exceeded substantially (since it's used to compute directory size and
+ * the hash table buckets will get overfull).
+ *
+ * init_size is the number of hashtable entries to preallocate.  For a table
+ * whose maximum size is certain, this should be equal to max_size; that
+ * ensures that no run-time out-of-shared-memory failures can occur.
  */
 HTAB *
 ShmemInitHash(const char *name, /* table string name for shmem index */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.140 2004/09/12 18:30:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.141 2004/09/28 20:46:32 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -241,7 +241,7 @@ LockMethodTableInit(const char *tabName,
 
 	/* Compute init/max size to request for lock hashtables */
 	max_table_size = NLOCKENTS(maxBackends);
-	init_table_size = max_table_size / 10;
+	init_table_size = max_table_size / 2;
 
 	/* Allocate a string for the shmem index table lookups. */
 	/* This is just temp space in this routine, so palloc is OK. */

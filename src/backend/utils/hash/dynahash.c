@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.53 2004/08/29 05:06:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.54 2004/09/28 20:46:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@
  */
 static void *DynaHashAlloc(Size size);
 static HASHSEGMENT seg_alloc(HTAB *hashp);
-static bool element_alloc(HTAB *hashp);
+static bool element_alloc(HTAB *hashp, int nelem);
 static bool dir_realloc(HTAB *hashp);
 static bool expand_table(HTAB *hashp);
 static bool hdefault(HTAB *hashp);
@@ -228,11 +228,26 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 		CurrentDynaHashCxt = hashp->hcxt;
 	}
 
+	/* Build the hash directory structure */
 	if (!init_htab(hashp, nelem))
 	{
 		hash_destroy(hashp);
 		return NULL;
 	}
+
+	/*
+	 * For a shared hash table, preallocate the requested number of elements.
+	 * This reduces problems with run-time out-of-shared-memory conditions.
+	 */
+	if (flags & HASH_SHARED_MEM)
+	{
+		if (!element_alloc(hashp, (int) nelem))
+		{
+			hash_destroy(hashp);
+			return NULL;
+		}
+	}
+
 	return hashp;
 }
 
@@ -631,7 +646,7 @@ hash_search(HTAB *hashp,
 			if (currBucket == NULL)
 			{
 				/* no free elements.  allocate another chunk of buckets */
-				if (!element_alloc(hashp))
+				if (!element_alloc(hashp, HASHELEMENT_ALLOC_INCR))
 					return NULL;	/* out of memory */
 				currBucket = hctl->freeList;
 				Assert(currBucket != NULL);
@@ -898,7 +913,7 @@ seg_alloc(HTAB *hashp)
  * allocate some new elements and link them into the free list
  */
 static bool
-element_alloc(HTAB *hashp)
+element_alloc(HTAB *hashp, int nelem)
 {
 	HASHHDR    *hctl = hashp->hctl;
 	Size		elementSize;
@@ -910,13 +925,13 @@ element_alloc(HTAB *hashp)
 
 	CurrentDynaHashCxt = hashp->hcxt;
 	tmpElement = (HASHELEMENT *)
-		hashp->alloc(HASHELEMENT_ALLOC_INCR * elementSize);
+		hashp->alloc(nelem * elementSize);
 
 	if (!tmpElement)
 		return false;
 
 	/* link all the new entries into the freelist */
-	for (i = 0; i < HASHELEMENT_ALLOC_INCR; i++)
+	for (i = 0; i < nelem; i++)
 	{
 		tmpElement->link = hctl->freeList;
 		hctl->freeList = tmpElement;

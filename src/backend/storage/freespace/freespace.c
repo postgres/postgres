@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.34 2004/08/29 05:06:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.35 2004/09/28 20:46:27 tgl Exp $
  *
  *
  * NOTES:
@@ -283,8 +283,8 @@ InitFreeSpaceMap(void)
 	info.hash = tag_hash;
 
 	FreeSpaceMapRelHash = ShmemInitHash("Free Space Map Hash",
-										MaxFSMRelations / 10,
-										MaxFSMRelations,
+										MaxFSMRelations + 1,
+										MaxFSMRelations + 1,
 										&info,
 										(HASH_ELEM | HASH_FUNCTION));
 
