@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.164 2003/08/07 19:37:13 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.165 2003/08/12 22:42:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,7 +209,9 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	int			maxconn;
 	int			one = 1;
 	int			ret;
-	char		portNumberStr[64];
+	char		portNumberStr[32];
+	const char *familyDesc;
+	char		familyDescBuf[64];
 	char	   *service;
 	struct addrinfo *addrs = NULL,
 			   *addr;
@@ -276,11 +278,37 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 			break;
 		}
 
+		/* set up family name for possible error messages */
+		switch (addr->ai_family)
+		{
+			case AF_INET:
+				familyDesc = gettext("IPv4");
+				break;
+#ifdef HAVE_IPV6
+			case AF_INET6:
+				familyDesc = gettext("IPv6");
+				break;
+#endif
+#ifdef HAVE_UNIX_SOCKETS
+			case AF_UNIX:
+				familyDesc = gettext("Unix");
+				break;
+#endif
+			default:
+				snprintf(familyDescBuf, sizeof(familyDescBuf),
+						 gettext("unrecognized address family %d"),
+						 addr->ai_family);
+				familyDesc = familyDescBuf;
+				break;
+		}
+
 		if ((fd = socket(addr->ai_family, SOCK_STREAM, 0)) < 0)
 		{
 			ereport(LOG,
 					(errcode_for_socket_access(),
-					 errmsg("failed to create socket: %m")));
+					 /* translator: %s is IPv4, IPv6, or Unix */
+					 errmsg("could not create %s socket: %m",
+							familyDesc)));
 			continue;
 		}
 
@@ -323,7 +351,9 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		{
 			ereport(LOG,
 					(errcode_for_socket_access(),
-					 errmsg("failed to bind server socket: %m"),
+					 /* translator: %s is IPv4, IPv6, or Unix */
+					 errmsg("could not bind %s socket: %m",
+							familyDesc),
 					 (IS_AF_UNIX(addr->ai_family)) ?
 			  errhint("Is another postmaster already running on port %d?"
 					  " If not, remove socket node \"%s\" and retry.",
@@ -361,7 +391,9 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		{
 			ereport(LOG,
 					(errcode_for_socket_access(),
-					 errmsg("failed to listen on server socket: %m")));
+					 /* translator: %s is IPv4, IPv6, or Unix */
+					 errmsg("could not listen on %s socket: %m",
+							familyDesc)));
 			closesocket(fd);
 			continue;
 		}
