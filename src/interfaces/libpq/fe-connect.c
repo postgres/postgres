@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.114 2000/01/23 01:27:39 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.115 2000/01/24 02:12:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -391,7 +391,6 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	PGconn	   *conn;
 	char	   *tmp;	/* An error message from some service we call. */
 	bool		error = FALSE;	/* We encountered an error. */
-	int			i;
 
 	conn = makeEmptyPGconn();
 	if (conn == NULL)
@@ -586,6 +585,30 @@ update_db_info(PGconn *conn)
 }
 
 /* ----------
+ * connectMakeNonblocking -
+ * Make a connection non-blocking.
+ * Returns 1 if successful, 0 if not.
+ * ----------
+ */
+static int
+connectMakeNonblocking(PGconn *conn)
+{
+#ifndef WIN32
+	if (fcntl(conn->sock, F_SETFL, O_NONBLOCK) < 0)
+#else
+	if (ioctlsocket(conn->sock, FIONBIO, &on) != 0)
+#endif
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  "connectMakeNonblocking -- fcntl() failed: errno=%d\n%s\n",
+						  errno, strerror(errno));
+		return 0;
+	}
+
+	return 1;
+}
+
+/* ----------
  * connectNoDelay -
  * Sets the TCP_NODELAY socket option.
  * Returns 1 if successful, 0 if not.
@@ -755,7 +778,7 @@ connectDBStart(PGconn *conn)
 	 *   Ewan Mellor <eem21@cam.ac.uk>.
 	 * ---------- */
 #if (!defined(WIN32) || defined(WIN32_NON_BLOCKING_CONNECTIONS)) && !defined(USE_SSL)
-	if (PQsetnonblocking(conn, TRUE) != 0)
+	if (connectMakeNonblocking(conn) == 0)
 		goto connect_errReturn;
 #endif	
 
@@ -868,7 +891,7 @@ connectDBStart(PGconn *conn)
 	/* This makes the connection non-blocking, for all those cases which forced us
 	   not to do it above. */
 #if (defined(WIN32) && !defined(WIN32_NON_BLOCKING_CONNECTIONS)) || defined(USE_SSL)
-	if (PQsetnonblocking(conn, TRUE) != 0)
+	if (connectMakeNonblocking(conn) == 0)
 		goto connect_errReturn;
 #endif	
 
@@ -1785,6 +1808,13 @@ closePGconn(PGconn *conn)
 		(void) pqPuts("X", conn);
 		(void) pqFlush(conn);
 	}
+
+	/* 
+	 * must reset the blocking status so a possible reconnect will work
+	 * don't call PQsetnonblocking() because it will fail if it's unable
+	 * to flush the connection.
+	 */
+	conn->nonblocking = FALSE;
 
 	/*
 	 * Close the connection, reset all transient state, flush I/O buffers.

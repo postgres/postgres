@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.87 2000/01/18 06:09:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.88 2000/01/24 02:12:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2116,7 +2116,6 @@ PQgetisnull(const PGresult *res, int tup_num, int field_num)
 int
 PQsetnonblocking(PGconn *conn, int arg)
 {
-	int	fcntlarg;
 
 	arg = (arg == TRUE) ? 1 : 0;
 	/* early out if the socket is already in the state requested */
@@ -2131,44 +2130,10 @@ PQsetnonblocking(PGconn *conn, int arg)
 	 *  _from_ or _to_ blocking mode, either way we can block them.
 	 */
 	/* if we are going from blocking to non-blocking flush here */
-	if (!pqIsnonblocking(conn) && pqFlush(conn))
+	if (pqFlush(conn))
 		return (-1);
-
-
-#ifdef USE_SSL
-	if (conn->ssl)
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-			"PQsetnonblocking() -- not supported when using SSL\n");
-		return (-1);
-	}
-#endif /* USE_SSL */
-
-#ifndef WIN32
-	fcntlarg = fcntl(conn->sock, F_GETFL, 0);
-	if (fcntlarg == -1)
-		return (-1);
-
-	if ((arg == TRUE && 
-		fcntl(conn->sock, F_SETFL, fcntlarg | O_NONBLOCK) == -1) ||
-		(arg == FALSE &&
-		fcntl(conn->sock, F_SETFL, fcntlarg & ~O_NONBLOCK) == -1)) 
-#else
-	fcntlarg = arg;
-	if (ioctlsocket(conn->sock, FIONBIO, &fcntlarg) != 0)
-#endif
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-			"PQsetblocking() -- unable to set nonblocking status to %s\n",
-			arg == TRUE ? "TRUE" : "FALSE");
-		return (-1);
-	}
 
 	conn->nonblocking = arg;
-
-	/* if we are going from non-blocking to blocking flush here */
-	if (pqIsnonblocking(conn) && pqFlush(conn))
-		return (-1);
 
 	return (0);
 }

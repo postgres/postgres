@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.56 2000/01/10 16:13:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.57 2000/01/24 02:12:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ char	   *Name_pg_rewrite_indices[Num_pg_rewrite_indices] =
 char	   *Name_pg_shadow_indices[Num_pg_shadow_indices] =
 		 	{ShadowNameIndex, ShadowSysidIndex};
 char	   *Name_pg_statistic_indices[Num_pg_statistic_indices] =
-		 	{StatisticRelidAttnumOpIndex};
+		 	{StatisticRelidAttnumIndex};
 char	   *Name_pg_trigger_indices[Num_pg_trigger_indices] =
 		 	{TriggerRelidIndex,	TriggerConstrNameIndex, TriggerConstrRelidIndex};
 char	   *Name_pg_type_indices[Num_pg_type_indices] =
@@ -926,13 +926,12 @@ ShadowSysidIndexScan(Relation heapRelation, int4 sysId)
 
 
 HeapTuple
-StatisticRelidAttnumOpIndexScan(Relation heapRelation,
+StatisticRelidAttnumIndexScan(Relation heapRelation,
 					   Oid relId,
-					   AttrNumber attNum,
-					   Oid op)
+					   AttrNumber attNum)
 {
 	Relation	idesc;
-	ScanKeyData skey[3];
+	ScanKeyData skey[2];
 	HeapTuple	tuple;
 
 	ScanKeyEntryInitialize(&skey[0],
@@ -947,14 +946,8 @@ StatisticRelidAttnumOpIndexScan(Relation heapRelation,
 						   (RegProcedure) F_INT2EQ,
 						   Int16GetDatum(attNum));
 
-	ScanKeyEntryInitialize(&skey[2],
-						   (bits16) 0x0,
-						   (AttrNumber) 3,
-						   (RegProcedure) F_OIDEQ,
-						   ObjectIdGetDatum(op));
-
-	idesc = index_openr(StatisticRelidAttnumOpIndex);
-	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 3);
+	idesc = index_openr(StatisticRelidAttnumIndex);
+	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 2);
 
 	index_close(idesc);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.45 2000/01/23 03:43:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.46 2000/01/24 02:12:56 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -54,7 +54,7 @@ typedef HeapTuple (*ScanFunc) ();
 	Add your new cache to the list in include/utils/syscache.h.  Keep
 	the list sorted alphabetically and adjust the cache numbers
 	accordingly.
-	
+
 	Add your entry to the cacheinfo[] array below.  All cache lists are
 	alphabetical, so add it in the proper place.  Specify the relation
     name, number of arguments, argument names, size of tuple, index lookup
@@ -75,7 +75,7 @@ typedef HeapTuple (*ScanFunc) ();
     Finally, any place your relation gets heap_insert() or
 	heap_update calls, include code to do a CatalogIndexInsert() to update
 	the system indexes.  The heap_* calls do not update indexes.
-	
+
     bjm 1999/11/22
 
   ---------------------------------------------------------------------------
@@ -360,16 +360,16 @@ NULL,NULL
 /*		ShadowSysidIndex,
 	ShadowSysidIndexScan*/},
 	{StatisticRelationName,		/* STATRELID */
-		3,
+		2,
 		{
 			Anum_pg_statistic_starelid,
 			Anum_pg_statistic_staattnum,
-			Anum_pg_statistic_staop,
+			0,
 			0
 		},
 		offsetof(FormData_pg_statistic, stacommonval),
-		StatisticRelidAttnumOpIndex,
-	(ScanFunc) StatisticRelidAttnumOpIndexScan},
+		StatisticRelidAttnumIndex,
+	(ScanFunc) StatisticRelidAttnumIndexScan},
 	{TypeRelationName,			/* TYPENAME */
 		1,
 		{
@@ -520,7 +520,7 @@ SearchSysCacheTuple(int cacheId,/* cache selection code */
 			 get_temp_rel_by_username(DatumGetPointer(key1))) != NULL)
 			key1 = PointerGetDatum(nontemp_relname);
 	}
-	
+
 	tp = SearchSysCache(SysCache[cacheId], key1, key2, key3, key4);
 	if (!HeapTupleIsValid(tp))
 	{

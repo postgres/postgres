@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.51 2000/01/23 03:43:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.52 2000/01/24 02:12:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -609,7 +609,7 @@ getattstatistics(Oid relid, AttrNumber attnum, Oid opid, Oid typid,
 	tuple = SearchSysCacheTuple(STATRELID,
 								ObjectIdGetDatum(relid),
 								Int16GetDatum((int16) attnum),
-								opid,
+								0,
 								0);
 	if (!HeapTupleIsValid(tuple))
 	{

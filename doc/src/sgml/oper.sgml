@@ -411,7 +411,7 @@ logical union
        <ROW>
 	<ENTRY> !~* </ENTRY>
 	<ENTRY>Does not match (regex), case insensitive</ENTRY>
-	<ENTRY>'thomas' !~ '.*vadim.*'</ENTRY>
+	<ENTRY>'thomas' !~* '.*vadim.*'</ENTRY>
        </ROW>
       </TBODY>
      </TGROUP>
