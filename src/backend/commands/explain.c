@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.114 2003/08/08 21:41:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.115 2003/08/11 20:46:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -947,7 +947,6 @@ show_sort_keys(List *tlist, int nkeys, AttrNumber *keycols,
 	List	   *context;
 	bool		useprefix;
 	int			keyno;
-	List	   *tl;
 	char	   *exprstr;
 	Relids		varnos;
 	int			i;
@@ -993,25 +992,17 @@ show_sort_keys(List *tlist, int nkeys, AttrNumber *keycols,
 	{
 		/* find key expression in tlist */
 		AttrNumber	keyresno = keycols[keyno];
+		TargetEntry *target = get_tle_by_resno(tlist, keyresno);
 
-		foreach(tl, tlist)
-		{
-			TargetEntry *target = (TargetEntry *) lfirst(tl);
-
-			if (target->resdom->resno == keyresno)
-			{
-				/* Deparse the expression, showing any top-level cast */
-				exprstr = deparse_expression((Node *) target->expr, context,
-											 useprefix, true);
-				/* And add to str */
-				if (keyno > 0)
-					appendStringInfo(str, ", ");
-				appendStringInfo(str, "%s", exprstr);
-				break;
-			}
-		}
-		if (tl == NIL)
+		if (!target)
 			elog(ERROR, "no tlist entry for key %d", keyresno);
+		/* Deparse the expression, showing any top-level cast */
+		exprstr = deparse_expression((Node *) target->expr, context,
+									 useprefix, true);
+		/* And add to str */
+		if (keyno > 0)
+			appendStringInfo(str, ", ");
+		appendStringInfo(str, "%s", exprstr);
 	}
 
 	appendStringInfo(str, "\n");

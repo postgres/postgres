@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.87 2003/08/04 02:40:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.88 2003/08/11 20:46:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1599,21 +1599,14 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 		case RTE_SUBQUERY:
 			{
 				/* Subselect RTE --- get type info from subselect's tlist */
-				List	   *tlistitem;
+				TargetEntry *te = get_tle_by_resno(rte->subquery->targetList,
+												   attnum);
 
-				foreach(tlistitem, rte->subquery->targetList)
-				{
-					TargetEntry *te = (TargetEntry *) lfirst(tlistitem);
-
-					if (te->resdom->resjunk || te->resdom->resno != attnum)
-						continue;
-					*vartype = te->resdom->restype;
-					*vartypmod = te->resdom->restypmod;
-					return;
-				}
-				/* falling off end of list shouldn't happen... */
-				elog(ERROR, "subquery %s does not have attribute %d",
-					 rte->eref->aliasname, attnum);
+				if (te == NULL || te->resdom->resjunk)
+					elog(ERROR, "subquery %s does not have attribute %d",
+						 rte->eref->aliasname, attnum);
+				*vartype = te->resdom->restype;
+				*vartypmod = te->resdom->restypmod;
 			}
 			break;
 		case RTE_FUNCTION:
@@ -1775,6 +1768,29 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 	}
 
 	return result;
+}
+
+/*
+ * Given a targetlist and a resno, return the matching TargetEntry
+ *
+ * Returns NULL if resno is not present in list.
+ *
+ * Note: we need to search, rather than just indexing with nth(), because
+ * not all tlists are sorted by resno.
+ */
+TargetEntry *
+get_tle_by_resno(List *tlist, AttrNumber resno)
+{
+	List	   *i;
+
+	foreach(i, tlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(i);
+
+		if (tle->resdom->resno == resno)
+			return tle;
+	}
+	return NULL;
 }
 
 /*

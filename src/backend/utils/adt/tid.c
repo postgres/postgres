@@ -8,14 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.39 2003/08/04 02:40:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.40 2003/08/11 20:46:46 tgl Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
 #include <errno.h>
@@ -26,6 +25,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "libpq/pqformat.h"
+#include "parser/parsetree.h"
 #include "utils/builtins.h"
 
 
@@ -223,6 +223,7 @@ currtid_for_view(Relation viewrel, ItemPointer tid)
 			if (att->attrs[i]->atttypid != TIDOID)
 				elog(ERROR, "ctid isn't of type TID");
 			tididx = i;
+			break;
 		}
 	}
 	if (tididx < 0)
@@ -241,7 +242,7 @@ currtid_for_view(Relation viewrel, ItemPointer tid)
 			if (length(rewrite->actions) != 1)
 				elog(ERROR, "only one select rule is allowed in views");
 			query = (Query *) lfirst(rewrite->actions);
-			tle = (TargetEntry *) nth(tididx, query->targetList);
+			tle = get_tle_by_resno(query->targetList, tididx+1);
 			if (tle && tle->expr && IsA(tle->expr, Var))
 			{
 				Var		   *var = (Var *) tle->expr;
@@ -250,7 +251,7 @@ currtid_for_view(Relation viewrel, ItemPointer tid)
 				if (var->varno > 0 && var->varno < INNER &&
 					var->varattno == SelfItemPointerAttributeNumber)
 				{
-					rte = (RangeTblEntry *) nth(var->varno - 1, query->rtable);
+					rte = rt_fetch(var->varno, query->rtable);
 					if (rte)
 					{
 						heap_close(viewrel, AccessShareLock);

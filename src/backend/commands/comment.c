@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.69 2003/08/04 23:59:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.70 2003/08/11 20:46:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -365,7 +365,7 @@ CommentAttribute(List *qualname, char *comment)
 	if (nnames < 2)				/* parser messed up */
 		elog(ERROR, "must specify relation and attribute");
 	relname = ltruncate(nnames - 1, listCopy(qualname));
-	attrname = strVal(nth(nnames - 1, qualname));
+	attrname = strVal(llast(qualname));
 
 	/* Open the containing relation to ensure it won't go away meanwhile */
 	rel = makeRangeVarFromNameList(relname);
@@ -583,7 +583,7 @@ CommentRule(List *qualname, char *comment)
 		/* New-style: rule and relname both provided */
 		Assert(nnames >= 2);
 		relname = ltruncate(nnames - 1, listCopy(qualname));
-		rulename = strVal(nth(nnames - 1, qualname));
+		rulename = strVal(llast(qualname));
 
 		/* Open the owning relation to ensure it won't go away meanwhile */
 		rel = makeRangeVarFromNameList(relname);
@@ -778,7 +778,7 @@ CommentTrigger(List *qualname, char *comment)
 	if (nnames < 2)				/* parser messed up */
 		elog(ERROR, "must specify relation and trigger");
 	relname = ltruncate(nnames - 1, listCopy(qualname));
-	trigname = strVal(nth(nnames - 1, qualname));
+	trigname = strVal(llast(qualname));
 
 	/* Open the owning relation to ensure it won't go away meanwhile */
 	rel = makeRangeVarFromNameList(relname);
@@ -856,7 +856,7 @@ CommentConstraint(List *qualname, char *comment)
 	if (nnames < 2)				/* parser messed up */
 		elog(ERROR, "must specify relation and constraint");
 	relName = ltruncate(nnames - 1, listCopy(qualname));
-	conName = strVal(nth(nnames - 1, qualname));
+	conName = strVal(llast(qualname));
 
 	/* Open the owning relation to ensure it won't go away meanwhile */
 	rel = makeRangeVarFromNameList(relName);

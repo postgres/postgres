@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.110 2003/08/04 02:40:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.111 2003/08/11 20:46:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,49 +100,55 @@ transformTargetEntry(ParseState *pstate,
 List *
 transformTargetList(ParseState *pstate, List *targetlist)
 {
-	List	   *p_target = NIL;
+	FastList	p_target;
+	List	   *o_target;
 
-	while (targetlist != NIL)
+	FastListInit(&p_target);
+
+	foreach(o_target, targetlist)
 	{
-		ResTarget  *res = (ResTarget *) lfirst(targetlist);
+		ResTarget  *res = (ResTarget *) lfirst(o_target);
 
 		if (IsA(res->val, ColumnRef))
 		{
 			ColumnRef  *cref = (ColumnRef *) res->val;
 			List	   *fields = cref->fields;
-			int			numnames = length(fields);
 
-			if (numnames == 1 && strcmp(strVal(lfirst(fields)), "*") == 0)
+			if (strcmp(strVal(llast(fields)), "*") == 0)
 			{
-				/*
-				 * Target item is a single '*', expand all tables (eg.
-				 * SELECT * FROM emp)
-				 */
-				p_target = nconc(p_target,
-								 ExpandAllTables(pstate));
-			}
-			else if (strcmp(strVal(nth(numnames - 1, fields)), "*") == 0)
-			{
-				/*
-				 * Target item is relation.*, expand that table (eg.
-				 * SELECT emp.*, dname FROM emp, dept)
-				 */
-				char	   *schemaname;
-				char	   *relname;
-				RangeTblEntry *rte;
-				int			sublevels_up;
+				int		numnames = length(fields);
 
-				switch (numnames)
+				if (numnames == 1)
 				{
-					case 2:
-						schemaname = NULL;
-						relname = strVal(lfirst(fields));
-						break;
-					case 3:
-						schemaname = strVal(lfirst(fields));
-						relname = strVal(lsecond(fields));
-						break;
-					case 4:
+					/*
+					 * Target item is a single '*', expand all tables
+					 * (e.g., SELECT * FROM emp)
+					 */
+					FastConc(&p_target,
+							 ExpandAllTables(pstate));
+				}
+				else
+				{
+					/*
+					 * Target item is relation.*, expand that table
+					 * (e.g., SELECT emp.*, dname FROM emp, dept)
+					 */
+					char	   *schemaname;
+					char	   *relname;
+					RangeTblEntry *rte;
+					int			sublevels_up;
+
+					switch (numnames)
+					{
+						case 2:
+							schemaname = NULL;
+							relname = strVal(lfirst(fields));
+							break;
+						case 3:
+							schemaname = strVal(lfirst(fields));
+							relname = strVal(lsecond(fields));
+							break;
+						case 4:
 						{
 							char	   *name1 = strVal(lfirst(fields));
 
@@ -152,57 +158,56 @@ transformTargetList(ParseState *pstate, List *targetlist)
 							 */
 							if (strcmp(name1, get_database_name(MyDatabaseId)) != 0)
 								ereport(ERROR,
-								 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								  errmsg("cross-database references are not implemented")));
+										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+										 errmsg("cross-database references are not implemented")));
 							schemaname = strVal(lsecond(fields));
 							relname = strVal(lthird(fields));
 							break;
 						}
-					default:
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("improper qualified name (too many dotted names): %s",
-										NameListToString(fields))));
-						schemaname = NULL;		/* keep compiler quiet */
-						relname = NULL;
-						break;
+						default:
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("improper qualified name (too many dotted names): %s",
+											NameListToString(fields))));
+							schemaname = NULL;		/* keep compiler quiet */
+							relname = NULL;
+							break;
+					}
+
+					rte = refnameRangeTblEntry(pstate, schemaname, relname,
+											   &sublevels_up);
+					if (rte == NULL)
+						rte = addImplicitRTE(pstate, makeRangeVar(schemaname,
+																  relname));
+
+					FastConc(&p_target,
+							 expandRelAttrs(pstate, rte));
 				}
-
-				rte = refnameRangeTblEntry(pstate, schemaname, relname,
-										   &sublevels_up);
-				if (rte == NULL)
-					rte = addImplicitRTE(pstate, makeRangeVar(schemaname,
-															  relname));
-
-				p_target = nconc(p_target,
-								 expandRelAttrs(pstate, rte));
 			}
 			else
 			{
 				/* Plain ColumnRef node, treat it as an expression */
-				p_target = lappend(p_target,
-								   transformTargetEntry(pstate,
-														res->val,
-														NULL,
-														res->name,
-														false));
+				FastAppend(&p_target,
+						   transformTargetEntry(pstate,
+												res->val,
+												NULL,
+												res->name,
+												false));
 			}
 		}
 		else
 		{
 			/* Everything else but ColumnRef */
-			p_target = lappend(p_target,
-							   transformTargetEntry(pstate,
-													res->val,
-													NULL,
-													res->name,
-													false));
+			FastAppend(&p_target,
+					   transformTargetEntry(pstate,
+											res->val,
+											NULL,
+											res->name,
+											false));
 		}
-
-		targetlist = lnext(targetlist);
 	}
 
-	return p_target;
+	return FastListValue(&p_target);
 }
 
 
@@ -264,23 +269,14 @@ markTargetListOrigin(ParseState *pstate, Resdom *res, Var *var)
 		case RTE_SUBQUERY:
 			{
 				/* Subselect-in-FROM: copy up from the subselect */
-				List	   *subtl;
+				TargetEntry *te = get_tle_by_resno(rte->subquery->targetList,
+												   attnum);
 
-				foreach(subtl, rte->subquery->targetList)
-				{
-					TargetEntry *subte = (TargetEntry *) lfirst(subtl);
-
-					if (subte->resdom->resjunk ||
-						subte->resdom->resno != attnum)
-						continue;
-					res->resorigtbl = subte->resdom->resorigtbl;
-					res->resorigcol = subte->resdom->resorigcol;
-					break;
-				}
-				/* falling off end of list shouldn't happen... */
-				if (subtl == NIL)
+				if (te == NULL || te->resdom->resjunk)
 					elog(ERROR, "subquery %s does not have attribute %d",
 						 rte->eref->aliasname, attnum);
+				res->resorigtbl = te->resdom->resorigtbl;
+				res->resorigcol = te->resdom->resorigcol;
 			}
 			break;
 		case RTE_JOIN:

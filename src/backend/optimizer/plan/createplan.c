@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.153 2003/08/08 21:41:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.154 2003/08/11 20:46:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
+#include "parser/parsetree.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
 #include "utils/lsyscache.h"
@@ -626,8 +627,8 @@ create_unique_plan(Query *root, UniquePath *best_path)
 		{
 			TargetEntry *tle;
 
-			tle = nth(groupColIdx[groupColPos] - 1, my_tlist);
-			Assert(tle->resdom->resno == groupColIdx[groupColPos]);
+			tle = get_tle_by_resno(my_tlist, groupColIdx[groupColPos]);
+			Assert(tle != NULL);
 			sortList = addTargetToSortList(NULL, tle, sortList,
 										   my_tlist, NIL, false);
 		}
@@ -1975,7 +1976,7 @@ make_sort_from_groupcols(Query *root,
 	foreach(i, groupcls)
 	{
 		GroupClause *grpcl = (GroupClause *) lfirst(i);
-		TargetEntry *tle = nth(grpColIdx[grpno] - 1, sub_tlist);
+		TargetEntry *tle = get_tle_by_resno(sub_tlist, grpColIdx[grpno]);
 		Resdom	   *resdom = tle->resdom;
 
 		/*

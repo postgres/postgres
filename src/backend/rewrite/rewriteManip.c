@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.77 2003/08/08 21:41:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.78 2003/08/11 20:46:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -838,44 +838,6 @@ AddInvertedQual(Query *parsetree, Node *qual)
 }
 
 
-/* Find a targetlist entry by resno */
-static Node *
-FindMatchingNew(List *tlist, int attno)
-{
-	List	   *i;
-
-	foreach(i, tlist)
-	{
-		TargetEntry *tle = lfirst(i);
-
-		if (tle->resdom->resno == attno)
-			return (Node *) tle->expr;
-	}
-	return NULL;
-}
-
-#ifdef NOT_USED
-
-/* Find a targetlist entry by resname */
-static Node *
-FindMatchingTLEntry(List *tlist, char *e_attname)
-{
-	List	   *i;
-
-	foreach(i, tlist)
-	{
-		TargetEntry *tle = lfirst(i);
-		char	   *resname;
-
-		resname = tle->resdom->resname;
-		if (strcmp(e_attname, resname) == 0)
-			return tle->expr;
-	}
-	return NULL;
-}
-#endif
-
-
 /*
  * ResolveNew - replace Vars with corresponding items from a targetlist
  *
@@ -908,7 +870,7 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 		if (this_varno == context->target_varno &&
 			this_varlevelsup == context->sublevels_up)
 		{
-			Node	   *n;
+			TargetEntry *tle;
 
 			/* band-aid: don't do the wrong thing with a whole-tuple Var */
 			if (var->varattno == InvalidAttrNumber)
@@ -916,9 +878,9 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("cannot handle whole-tuple reference")));
 
-			n = FindMatchingNew(context->targetlist, var->varattno);
+			tle = get_tle_by_resno(context->targetlist, var->varattno);
 
-			if (n == NULL)
+			if (tle == NULL)
 			{
 				if (context->event == CMD_UPDATE)
 				{
@@ -937,7 +899,8 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 			else
 			{
 				/* Make a copy of the tlist item to return */
-				n = copyObject(n);
+				Node	   *n = copyObject(tle->expr);
+
 				/* Adjust varlevelsup if tlist item is from higher query */
 				if (this_varlevelsup > 0)
 					IncrementVarSublevelsUp(n, this_varlevelsup, 0);
@@ -985,124 +948,3 @@ ResolveNew(Node *node, int target_varno, int sublevels_up,
 											(void *) &context,
 											0);
 }
-
-
-#ifdef NOT_USED
-
-/*
- * HandleRIRAttributeRule
- *	Replace Vars matching a given RT index with copies of TL expressions.
- *
- * Handles 'on retrieve to relation.attribute
- *			do instead retrieve (attribute = expression) w/qual'
- */
-
-typedef struct
-{
-	List	   *rtable;
-	List	   *targetlist;
-	int			rt_index;
-	int			attr_num;
-	int		   *modified;
-	int		   *badsql;
-	int			sublevels_up;
-}	HandleRIRAttributeRule_context;
-
-static Node *
-HandleRIRAttributeRule_mutator(Node *node,
-							   HandleRIRAttributeRule_context * context)
-{
-	if (node == NULL)
-		return NULL;
-	if (IsA(node, Var))
-	{
-		Var		   *var = (Var *) node;
-		int			this_varno = var->varno;
-		int			this_varattno = var->varattno;
-		int			this_varlevelsup = var->varlevelsup;
-
-		if (this_varno == context->rt_index &&
-			this_varattno == context->attr_num &&
-			this_varlevelsup == context->sublevels_up)
-		{
-			if (var->vartype == 32)
-			{					/* HACK: disallow SET variables */
-				*context->modified = TRUE;
-				*context->badsql = TRUE;
-				return (Node *) makeNullConst(var->vartype);
-			}
-			else
-			{
-				char	   *name_to_look_for;
-
-				name_to_look_for = get_attname(getrelid(this_varno,
-														context->rtable),
-											   this_varattno);
-				if (name_to_look_for)
-				{
-					Node	   *n;
-
-					*context->modified = TRUE;
-					n = FindMatchingTLEntry(context->targetlist,
-											name_to_look_for);
-					if (n == NULL)
-						return (Node *) makeNullConst(var->vartype);
-					/* Make a copy of the tlist item to return */
-					n = copyObject(n);
-
-					/*
-					 * Adjust varlevelsup if tlist item is from higher
-					 * query
-					 */
-					if (this_varlevelsup > 0)
-						IncrementVarSublevelsUp(n, this_varlevelsup, 0);
-					return n;
-				}
-			}
-		}
-		/* otherwise fall through to copy the var normally */
-	}
-
-	if (IsA(node, Query))
-	{
-		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
-		Query	   *newnode;
-
-		context->sublevels_up++;
-		newnode = query_tree_mutator((Query *) node,
-									 HandleRIRAttributeRule_mutator,
-									 (void *) context,
-									 0);
-		context->sublevels_up--;
-		return (Node *) newnode;
-	}
-	return expression_tree_mutator(node, HandleRIRAttributeRule_mutator,
-								   (void *) context);
-}
-
-void
-HandleRIRAttributeRule(Query *parsetree,
-					   List *rtable,
-					   List *targetlist,
-					   int rt_index,
-					   int attr_num,
-					   int *modified,
-					   int *badsql)
-{
-	HandleRIRAttributeRule_context context;
-
-	context.rtable = rtable;
-	context.targetlist = targetlist;
-	context.rt_index = rt_index;
-	context.attr_num = attr_num;
-	context.modified = modified;
-	context.badsql = badsql;
-	context.sublevels_up = 0;
-
-	query_tree_mutator(parsetree,
-					   HandleRIRAttributeRule_mutator,
-					   (void *) &context,
-					   QTW_DONT_COPY_QUERY);
-}
-
-#endif   /* NOT_USED */

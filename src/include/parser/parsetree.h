@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsetree.h,v 1.21 2003/08/04 02:40:14 momjian Exp $
+ * $Id: parsetree.h,v 1.22 2003/08/11 20:46:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 
 
 /* ----------------
- *		range table macros
+ *		range table operations
  * ----------------
  */
 
@@ -54,5 +54,13 @@ extern char *get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum);
  */
 extern void get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 					   Oid *vartype, int32 *vartypmod);
+
+
+/* ----------------
+ *		target list operations
+ * ----------------
+ */
+
+extern TargetEntry *get_tle_by_resno(List *tlist, AttrNumber resno);
 
 #endif   /* PARSETREE_H */

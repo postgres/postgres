@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.35 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.36 2003/08/11 20:46:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,10 +185,7 @@ ExecGetJunkAttribute(JunkFilter *junkfilter,
 {
 	List	   *targetList;
 	List	   *t;
-	Resdom	   *resdom;
 	AttrNumber	resno;
-	char	   *resname;
-	bool		resjunk;
 	TupleDesc	tupType;
 	HeapTuple	tuple;
 
@@ -202,11 +199,10 @@ ExecGetJunkAttribute(JunkFilter *junkfilter,
 	foreach(t, targetList)
 	{
 		TargetEntry *tle = lfirst(t);
+		Resdom	   *resdom = tle->resdom;
 
-		resdom = tle->resdom;
-		resname = resdom->resname;
-		resjunk = resdom->resjunk;
-		if (resjunk && (strcmp(resname, attrName) == 0))
+		if (resdom->resjunk && resdom->resname &&
+			(strcmp(resdom->resname, attrName) == 0))
 		{
 			/* We found it ! */
 			resno = resdom->resno;
