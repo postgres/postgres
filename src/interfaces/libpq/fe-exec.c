@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.62 1998/08/17 03:50:35 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.63 1998/08/29 02:09:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -612,6 +612,7 @@ getAnotherTuple(PGconn *conn, int binary)
 			if (vlen > 0)
 				if (pqGetnchar((char *) (tup[i].value), vlen, conn))
 					return EOF;
+			/* we have to terminate this ourselves */
 			tup[i].value[vlen] = '\0';
 		}
 		/* advance the bitmap stuff */

@@ -24,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.18 1998/08/17 03:50:38 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.19 1998/08/29 02:09:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,8 +160,7 @@ pqPuts(const char *s, PGconn *conn)
 
 /* --------------------------------------------------------------------- */
 /* pqGetnchar:
-   get a string of exactly len bytes in buffer s (which must be 1 byte
-   longer) and terminate it with a '\0'.
+   get a string of exactly len bytes in buffer s, no null termination
 */
 int
 pqGetnchar(char *s, int len, PGconn *conn)
@@ -170,8 +169,8 @@ pqGetnchar(char *s, int len, PGconn *conn)
 		return EOF;
 
 	memcpy(s, conn->inBuffer + conn->inCursor, len);
-	s[len] = '\0';
-
+	/* no terminating null */
+	
 	conn->inCursor += len;
 
 	if (conn->Pfdebug)
