@@ -2,11 +2,19 @@
   <title id="indices-title">Indices and Keys</title>
 
   <para>
-   Indexes are primarily used to enhance database
+   Indexes are commonly used to enhance database
    performance. They should be defined on table columns (or class
-   attributes) which are used as qualifications in repetative queries.
+   attributes) which are used as qualifications in repetitive queries.
    Inappropriate use will result in slower performance, since update
    and insertion times are increased in the presence of indices.
+  </para>
+
+  <para>
+   Indexes may also be used to enforce uniqueness of a table's primary key.
+   When an index is declared UNIQUE, multiple table rows with identical
+   index entries won't be allowed.
+   For this purpose, the goal is ensuring data consistency, not improving
+   performance, so the above caution about inappropriate use doesn't apply.
   </para>
 
   <para>
@@ -17,25 +25,20 @@
      <para>
       For a <firstterm>value index</firstterm>,
       the key fields for the
-      index are specified as column names; a column may also have
-      an associated operator class. An operator class is used
-      to specify the operators to be used for a particular
-      index. For example, a btree index on four-byte integers
-      would use the <literal>int4_ops</literal> class;
-      this operator class includes
-      comparison functions for four-byte integers. The default
-      operator class is the appropriate operator class for that
-      field type.
+      index are specified as column names; multiple columns
+      can be specified if the index access method supports
+      multi-column indexes.
      </para>
     </listitem>
 
     <listitem>
      <para>
       For a <firstterm>functional index</firstterm>, an index is defined
-      on the result of a user-defined function applied
+      on the result of a function applied
       to one or more attributes of a single class.
-      These functional indices
-      can be used to obtain fast access to data
+      This is a single-column index (namely, the function result)
+      even if the function uses more than one input field.
+      Functional indices can be used to obtain fast access to data
       based on operators that would normally require some
       transformation to apply them to the base data.
      </para>
@@ -45,8 +48,8 @@
 
   <para>
    Postgres provides btree, rtree and hash access methods for
-   secondary indices.  The btree access method is an implementation of
-   the Lehman-Yao high-concurrency btrees.  The rtree access method
+   indices.  The btree access method is an implementation of
+   Lehman-Yao high-concurrency btrees.  The rtree access method
    implements standard rtrees using Guttman's quadratic split algorithm.
    The hash access method is an implementation of Litwin's linear
    hashing.  We mention the algorithms used solely to indicate that all
@@ -56,8 +59,9 @@
   </para>
 
   <para>
-   The Postgres query optimizer will consider using btree indices in a scan
-   whenever an indexed attribute is involved in a comparison using one of:
+   The <productname>Postgres</productname>
+   query optimizer will consider using a btree index whenever
+   an indexed attribute is involved in a comparison using one of:
 
    <simplelist type="inline">
     <member>&lt;</member>
@@ -66,19 +70,6 @@
     <member>&gt;=</member>
     <member>&gt;</member>
    </simplelist>
-  </para>
-
-  <para>
-   Both box classes support indices on the <literal>box</literal> data 
-   type in <productname>Postgres</productname>.
-   The difference between them is that <literal>bigbox_ops</literal>
-   scales box coordinates down, to avoid floating point exceptions from
-   doing multiplication, addition, and subtraction on very large
-   floating-point coordinates.  If the field on which your rectangles lie
-   is about 20,000 units square or larger, you should use
-   <literal>bigbox_ops</literal>.
-   The <literal>poly_ops</literal> operator class supports rtree
-   indices on <literal>polygon</literal> data.
   </para>
 
   <para>
@@ -105,27 +96,54 @@
   </para>
 
   <para>
-   Currently, only the BTREE access method supports multi-column
-   indexes. Up to 7 keys may be specified.
+   Currently, only the btree access method supports multi-column
+   indexes. Up to 16 keys may be specified by default (this limit
+   can be altered when building Postgres).
   </para>
 
   <para>
-   Use <xref endterm="sql-dropindex-title"
-    linkend="sql-dropindex-title">
-   to remove an index.
+   An <firstterm>operator class</firstterm> can be specified for each
+   column of an index.  The operator class identifies the operators to
+   be used by the index for that column.  For example, a btree index on
+   four-byte integers would use the <literal>int4_ops</literal> class;
+   this operator class includes comparison functions for four-byte
+   integers.  In practice the default operator class for the field's
+   datatype is usually sufficient.  The main point of having operator classes
+   is that for some datatypes, there could be more than one meaningful
+   ordering.  For an index on such a datatype, we could select which
+   ordering we wanted by selecting the proper operator class.  There
+   are also some operator classes with special purposes:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      The operator classes <literal>box_ops</literal> and
+      <literal>bigbox_ops</literal> both support rtree indices on the
+      <literal>box</literal> datatype.
+      The difference between them is that <literal>bigbox_ops</literal>
+      scales box coordinates down, to avoid floating point exceptions from
+      doing multiplication, addition, and subtraction on very large
+      floating-point coordinates.  If the field on which your rectangles lie
+      is about 20,000 units square or larger, you should use
+      <literal>bigbox_ops</literal>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The <literal>int24_ops</literal>
+      operator class is useful for constructing indices on int2 data, and
+      doing comparisons against int4 data in query qualifications.
+      Similarly, <literal>int42_ops</literal>
+      support indices on int4 data that is to be compared against int2 data
+      in queries.
+     </para>
+    </listitem>
+   </itemizedlist>
   </para>
 
   <para>
-   The <literal>int24_ops</literal>
-   operator class is useful for constructing indices on int2 data, and
-   doing comparisons against int4 data in query qualifications.
-   Similarly, <literal>int42_ops</literal>
-   support indices on int4 data that is to be compared against int2 data
-   in queries.
-  </para>
-
-  <para>
-   The following select list returns all ops_names:
+   The following query shows all defined operator classes:
 
    <programlisting>
 SELECT am.amname AS acc_name,
@@ -138,6 +156,12 @@ SELECT am.amname AS acc_name,
           amop.amopopr = opr.oid
     ORDER BY acc_name, ops_name, ops_comp
    </programlisting>
+  </para>
+
+  <para>
+   Use <xref endterm="sql-dropindex-title"
+    linkend="sql-dropindex-title">
+   to remove an index.
   </para>
 
   <sect1 id="keys">
@@ -193,7 +217,7 @@ Subject: Re: [QUESTIONS] PRIMARY KEY | UNIQUE
 
    <para>
     So, the user selects the collection by its name. We therefore make sure,
-    withing the database, that names are unique. However, no other table in the
+    within the database, that names are unique. However, no other table in the
     database relates to the collections table by the collection Name. That
     would be very inefficient.
    </para>
