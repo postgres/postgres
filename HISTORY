@@ -37,9 +37,9 @@ several languages.
 Migration to 7.2
 
    A dump/restore using pg_dump is required for those wishing to migrate
-   data from any previous release.  One significant change is that
-   the SELECT ... LIMIT 10,20 syntax is no longer supported.  You must
-   now use LIMIT 10 OFFSET 20 to accomplish the same thing.
+   data from any previous release.  The SELECT ... LIMIT 10,20 syntax will
+   be removed in 7.3.  You should change your queries to use LIMIT 10
+   OFFSET 20.
 
 
 
