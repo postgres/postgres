@@ -6,16 +6,16 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupdesc.h,v 1.3 1996/10/19 03:58:34 scrappy Exp $
+ * $Id: tupdesc.h,v 1.4 1996/11/01 09:22:33 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	TUPDESC_H
 #define TUPDESC_H
 
+#include "nodes/pg_list.h"
 #include "catalog/pg_attribute.h"
 #include "access/attnum.h"
-#include "nodes/pg_list.h"
 
 typedef struct tupleDesc {
 /*------------------------------------------------------------------------ 
