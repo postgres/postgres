@@ -2,7 +2,7 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.20 2004/03/12 12:38:36 dennis Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.21 2004/03/21 09:22:18 dennis Exp $
 #
 # Use these quotes: "%s"
 #
@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-03-12 13:37+0100\n"
-"PO-Revision-Date: 2004-03-12 13:38+0100\n"
+"POT-Creation-Date: 2004-03-21 10:20+0100\n"
+"PO-Revision-Date: 2004-03-21 10:21+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -103,7 +103,7 @@ msgstr "%s: %s\n"
 msgid "Password: "
 msgstr "Lösenord: "
 
-#: command.c:945 common.c:217 common.c:388 common.c:442 common.c:684
+#: command.c:945 common.c:217 common.c:598 common.c:653 common.c:895
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -267,17 +267,32 @@ msgstr "Misslyckades.\n"
 msgid "Succeeded.\n"
 msgstr "Lyckades.\n"
 
-#: common.c:418 common.c:652
+#: common.c:382
+#, c-format
+msgid "INTERNAL ERROR: unexpected statement position \"%s\"\n"
+msgstr "INTERNT FEL: felaktig sats-position \"%s\"\n"
+
+#: common.c:518
+#, c-format
+msgid "LINE %d: "
+msgstr "RAD %d: "
+
+#: common.c:537 common.c:546
+#, c-format
+msgid "%s\n"
+msgstr "%s\n"
+
+#: common.c:629 common.c:863
 msgid "You are currently not connected to a database.\n"
 msgstr "Du är för närvarande inte uppkopplad mot en databas.\n"
 
-#: common.c:473
+#: common.c:684
 #, c-format
 msgid ""
 "Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr "Asynkron notificering \"%s\" mottagen från serverprocess med PID %d.\n"
 
-#: common.c:660
+#: common.c:871
 #, c-format
 msgid ""
 "***(Single step mode: verify command)"
@@ -292,7 +307,7 @@ msgstr ""
 "***(tryck return för att fortsätta eller skriv x och return för att avbryta)"
 "*****\n"
 
-#: common.c:711
+#: common.c:922
 #, c-format
 msgid "Time: %.3f ms\n"
 msgstr "Tid: %.3f ms\n"
