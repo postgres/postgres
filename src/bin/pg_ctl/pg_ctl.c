@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.3 2004/06/01 01:28:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.4 2004/06/01 03:32:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -12,6 +12,7 @@
 #include "postgres_fe.h"
 #include "libpq-fe.h"
 
+#include <locale.h>
 #include <signal.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -402,7 +403,8 @@ do_start(void)
 			if (ret == -1)
 				fprintf(stderr,
 						_("The program \"postmaster\" is needed by %s "
-				   "but was not found in the same directory as \"%s\".\n"
+						  "but was not found in the same directory as "
+						  "\"%s\".\n"
 						  "Check your installation.\n"),
 						progname, progname);
 			else
