@@ -1788,41 +1788,7 @@ pgquery_getresult(pgqueryobject * self, PyObject * args)
 	n = PQnfields(self->last_result);
 	reslist = PyList_New(m);
 
-	if ((typ = malloc(sizeof(int) * n)) == NULL)
-	{
-		PyErr_SetString(PyExc_SyntaxError, "memory error in getresult().");
-		return NULL;
-	}
-
-	for (j = 0; j < n; j++)
-	{
-		switch (PQftype(self->last_result, j))
-		{
-			case INT2OID:
-			case INT4OID:
-			case OIDOID:
-				typ[j] = 1;
-				break;
-
-			case INT8OID:
-				typ[j] = 2;
-				break;
-
-			case FLOAT4OID:
-			case FLOAT8OID:
-			case NUMERICOID:
-				typ[j] = 3;
-				break;
-
-			case CASHOID:
-				typ[j] = 4;
-				break;
-
-			default:
-				typ[j] = 5;
-				break;
-		}
-	}
+	typ = get_type_array(self->last_result, n);
 
 	for (i = 0; i < m; i++)
 	{
@@ -1944,41 +1910,7 @@ pgquery_dictresult(pgqueryobject * self, PyObject * args)
 	n = PQnfields(self->last_result);
 	reslist = PyList_New(m);
 
-	if ((typ = malloc(sizeof(int) * n)) == NULL)
-	{
-		PyErr_SetString(PyExc_SyntaxError, "memory error in dictresult().");
-		return NULL;
-	}
-
-	for (j = 0; j < n; j++)
-	{
-		switch (PQftype(self->last_result, j))
-		{
-			case INT2OID:
-			case INT4OID:
-			case OIDOID:
-				typ[j] = 1;
-				break;
-
-			case INT8OID:
-				typ[j] = 2;
-				break;
-
-			case FLOAT4OID:
-			case FLOAT8OID:
-			case NUMERICOID:
-				typ[j] = 2;
-				break;
-
-			case CASHOID:
-				typ[j] = 3;
-				break;
-
-			default:
-				typ[j] = 4;
-				break;
-		}
-	}
+	typ = get_type_array(self->last_result, n);
 
 	for (i = 0; i < m; i++)
 	{
@@ -2034,9 +1966,13 @@ pgquery_dictresult(pgqueryobject * self, PyObject * args)
 												 * one */
 								s++;
 
-							for (k = 0; *s; s++)
+							for (k = 0; 
+								*s && k < sizeof(cashbuf)/sizeof(cashbuf[0])-1; 
+								s++)
+							{
 								if (*s != ',')
 									cashbuf[k++] = *s;
+							}
 
 							cashbuf[k] = 0;
 							val = PyFloat_FromDouble(strtod(cashbuf, NULL) * mult);
