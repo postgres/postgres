@@ -88,11 +88,7 @@ static char	privatehid[] = "@(#)private.h	7.53";
 #include "errno.h"
 #include "string.h"
 #include "limits.h"	/* for CHAR_BIT */
-#define _timezone timezone
-#undef timezone
 #include "time.h"
-#define timezone _timezone
-#undef _timezone
 #include "stdlib.h"
 
 #if HAVE_GETTEXT - 0

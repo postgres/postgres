@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.26 2004/04/30 04:14:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.27 2004/04/30 17:52:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,7 +201,7 @@ extern int pqGethostbyname(const char *name,
 
 
 extern struct tm *pg_localtime(const time_t *);
-extern struct tm *gg_gmtime(const time_t *);
+extern struct tm *pg_gmtime(const time_t *);
 extern char *pg_asctime(const struct tm *);
 extern char *pg_ctime(const time_t *);
 extern double pg_difftime(const time_t, const time_t);
