@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.138 2000/02/02 20:54:17 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.139 2000/02/04 18:49:33 wieck Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1489,7 +1489,7 @@ CreateTrigStmt:  CREATE TRIGGER name TriggerActionTime TriggerEvents ON
 					n->constrrelname = NULL;
 					$$ = (Node *)n;
 				}
-		| CREATE CONSTRAINT TRIGGER name AFTER TriggerOneEvent ON
+		| CREATE CONSTRAINT TRIGGER name AFTER TriggerEvents ON
 				relation_name OptConstrFromTable 
 				ConstraintAttributeSpec
 				FOR EACH ROW EXECUTE PROCEDURE name '(' TriggerFuncArgs ')'

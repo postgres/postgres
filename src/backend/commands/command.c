@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.67 2000/01/29 16:58:34 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.68 2000/02/04 18:49:31 wieck Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -34,6 +34,7 @@
 #include "commands/rename.h"
 #include "executor/execdefs.h"
 #include "executor/executor.h"
+#include "executor/spi.h"
 #include "catalog/heap.h"
 #include "miscadmin.h"
 #include "optimizer/prep.h"
@@ -41,7 +42,7 @@
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 #include "utils/temprel.h"
-
+#include "commands/trigger.h"
 
 /* ----------------
  *		PortalExecutorHeapMemory stuff
@@ -688,7 +689,95 @@ void
 AlterTableAddConstraint(const char *relationName,
                         bool inh, Node *newConstraint)
 {
-    elog(ERROR, "ALTER TABLE / ADD CONSTRAINT is not implemented");
+	if (newConstraint == NULL) 
+		elog(ERROR, "ALTER TABLE / ADD CONSTRAINT passed invalid constraint.");
+
+	switch (nodeTag(newConstraint)) 
+	{
+		case T_Constraint:
+			elog(ERROR, "ALTER TABLE / ADD CONSTRAINT is not implemented");
+		case T_FkConstraint:
+			{
+				FkConstraint *fkconstraint=(FkConstraint *)newConstraint;
+				Relation rel, classrel;
+				HeapScanDesc scan;
+				HeapTuple tuple;
+				Trigger trig;
+				List *list;
+				int count;
+
+				/* 
+				 * Grab an exclusive lock on the pk table, so that someone
+				 * doesn't delete rows out from under us.  
+				 */
+
+				rel = heap_openr(fkconstraint->pktable_name, AccessExclusiveLock);
+				heap_close(rel, NoLock);
+
+				/* 
+				 * Grab an exclusive lock on the fk table, and then scan through
+				 * each tuple, calling the RI_FKey_Match_Ins (insert trigger)
+				 * as if that tuple had just been inserted.  If any of those
+				 * fail, it should elog(ERROR) and that's that.
+				 */
+				rel = heap_openr(relationName, AccessExclusiveLock);
+				trig.tgoid = 0;
+				trig.tgname = "<unknown>";
+				trig.tgfoid = 0; 
+				trig.tgtype = 0;
+				trig.tgenabled = TRUE;
+				trig.tgisconstraint = TRUE;
+				trig.tginitdeferred = FALSE;
+				trig.tgdeferrable = FALSE;
+
+				trig.tgargs = (char **)palloc(
+						sizeof(char *) * (4 + length(fkconstraint->fk_attrs) 
+						                    + length(fkconstraint->pk_attrs)));
+				
+				trig.tgargs[0] = "<unnamed>";
+				trig.tgargs[1] = (char *)relationName;
+				trig.tgargs[2] = fkconstraint->pktable_name;
+				trig.tgargs[3] = fkconstraint->match_type;
+				count = 4;
+				foreach (list, fkconstraint->fk_attrs) 
+				{
+					Ident *fk_at = lfirst(list);
+					trig.tgargs[count++] = fk_at->name;
+				}
+				foreach (list, fkconstraint->pk_attrs) 
+				{
+					Ident *pk_at = lfirst(list);
+					trig.tgargs[count++] = pk_at->name;
+				}
+				trig.tgnargs = count;
+
+				scan = heap_beginscan(rel, false, SnapshotNow, 0, NULL);
+				AssertState(scan!=NULL);
+
+				while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+				{
+					TriggerData newtrigdata;
+					newtrigdata.tg_event = TRIGGER_EVENT_INSERT | TRIGGER_EVENT_ROW;
+					newtrigdata.tg_relation = rel;
+					newtrigdata.tg_trigtuple = tuple;
+					newtrigdata.tg_newtuple = NULL;
+					newtrigdata.tg_trigger = &trig;
+
+					CurrentTriggerData = &newtrigdata;
+
+					RI_FKey_check_ins(NULL);
+
+					/* Make a call to the check function */
+				}
+				heap_endscan(scan);
+				heap_close(rel, NoLock);	 /* close rel but keep lock! */
+
+				pfree(trig.tgargs);
+			}
+			break;
+		default:
+			elog(ERROR, "ALTER TABLE / ADD CONSTRAINT unable to determine type of constraint passed");
+	}
 }
 
 

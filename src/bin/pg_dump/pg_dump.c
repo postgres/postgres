@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.142 2000/02/02 13:20:15 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.143 2000/02/04 18:49:34 wieck Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1699,7 +1699,11 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 						i_tgfoid,
 						i_tgtype,
 						i_tgnargs,
-						i_tgargs;
+						i_tgargs,
+						i_tgisconstraint,
+						i_tgconstrname,
+						i_tgdeferrable,
+						i_tginitdeferred;
 			int			ntups2;
 			int			i2;
 
@@ -1710,7 +1714,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 						g_comment_end);
 
 			resetPQExpBuffer(query);
-			appendPQExpBuffer(query, "SELECT tgname, tgfoid, tgtype, tgnargs, tgargs, oid "
+			appendPQExpBuffer(query, "SELECT tgname, tgfoid, tgtype, tgnargs, tgargs, tgisconstraint, tgconstrname, tgdeferrable, tginitdeferred, oid "
 					"from pg_trigger "
 					"where tgrelid = '%s'::oid ",
 					tblinfo[i].oid);
@@ -1734,34 +1738,79 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			i_tgnargs = PQfnumber(res2, "tgnargs");
 			i_tgargs = PQfnumber(res2, "tgargs");
 			i_tgoid = PQfnumber(res2, "oid");
+			i_tgisconstraint = PQfnumber(res2, "tgisconstraint");
+			i_tgconstrname = PQfnumber(res2, "tgconstrname");
+			i_tgdeferrable = PQfnumber(res2, "tgdeferrable");
+			i_tginitdeferred = PQfnumber(res2, "tginitdeferred");
+
 			tblinfo[i].triggers = (char **) malloc(ntups2 * sizeof(char *));
 			tblinfo[i].trcomments = (char **) malloc(ntups2 * sizeof(char *));
 			tblinfo[i].troids = (char **) malloc(ntups2 * sizeof(char *));
 			resetPQExpBuffer(query);
 			for (i2 = 0; i2 < ntups2; i2++)
 			{
-				const char *tgfunc = PQgetvalue(res2, i2, i_tgfoid);
+				const char *tgfuncoid = PQgetvalue(res2, i2, i_tgfoid);
+				char *tgfunc = NULL;
 				int2		tgtype = atoi(PQgetvalue(res2, i2, i_tgtype));
 				int			tgnargs = atoi(PQgetvalue(res2, i2, i_tgnargs));
 				const char *tgargs = PQgetvalue(res2, i2, i_tgargs);
+				int tgisconstraint;
+				int tgdeferrable;
+				int tginitdeferred;
 				const char *p;
 				int			findx;
 
+				if (strcmp(PQgetvalue(res2, i2, i_tgisconstraint), "f") == 0)
+					tgisconstraint=0;
+				else
+					tgisconstraint=1;
+
+				if (strcmp(PQgetvalue(res2, i2, i_tgdeferrable), "f") == 0)
+					tgdeferrable=0;
+				else
+					tgdeferrable=1;
+
+				if (strcmp(PQgetvalue(res2, i2, i_tginitdeferred), "f") == 0)
+					tginitdeferred=0;
+				else
+					tginitdeferred=1;
+
 				for (findx = 0; findx < numFuncs; findx++)
 				{
-					if (strcmp(finfo[findx].oid, tgfunc) == 0 &&
+					if (strcmp(finfo[findx].oid, tgfuncoid) == 0 &&
 						finfo[findx].nargs == 0 &&
 						strcmp(finfo[findx].prorettype, "0") == 0)
 						break;
 				}
+				
 				if (findx == numFuncs)
 				{
-					fprintf(stderr, "getTables(): relation '%s': cannot find function with oid %s for trigger %s\n",
-							tblinfo[i].relname, tgfunc, PQgetvalue(res2, i2, i_tgname));
-					exit_nicely(g_conn);
-				}
-				tgfunc = finfo[findx].proname;
+					PGresult *r;
 
+		                        /*
+                		         * the funcname is an oid which we use to find the name of the
+		                         * pg_proc.  We need to do this because getFuncs() only reads
+                		         * in the user-defined funcs not all the funcs.  We might not
+		                         * find what we want by looking in FuncInfo*
+                		         */
+		                        resetPQExpBuffer(query);
+                		        appendPQExpBuffer(query,
+                                	        "SELECT proname from pg_proc "
+                                        	"where pg_proc.oid = '%s'::oid",
+	                                        tgfuncoid);  
+
+	        	                r = PQexec(g_conn, query->data);
+                	        	if (!r || PQresultStatus(r) != PGRES_TUPLES_OK)
+        	                	{
+                		                fprintf(stderr, "getTables(): SELECT (funcname) failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
+                                		exit_nicely(g_conn);
+                        		}
+					tgfunc = strdup(PQgetvalue(r, 0, PQfnumber(r, "proname")));
+                		        PQclear(r);
+				}
+				else {
+					tgfunc = strdup(finfo[findx].proname);
+				}
 #if 0
 				/* XXX - how to emit this DROP TRIGGER? */
 				if (dropSchema)
@@ -1777,8 +1826,15 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 #endif
 
 				resetPQExpBuffer(query);
-				appendPQExpBuffer(query, "CREATE TRIGGER ");
-				appendPQExpBuffer(query, fmtId(PQgetvalue(res2, i2, i_tgname), force_quotes));
+				if (tgisconstraint)
+				{
+					appendPQExpBuffer(query, "CREATE CONSTRAINT TRIGGER ");
+					appendPQExpBuffer(query, fmtId(PQgetvalue(res2, i2, i_tgconstrname), force_quotes));
+				}
+				else { 
+					appendPQExpBuffer(query, "CREATE TRIGGER ");
+					appendPQExpBuffer(query, fmtId(PQgetvalue(res2, i2, i_tgname), force_quotes));
+				}
 				appendPQExpBufferChar(query, ' ');
 				/* Trigger type */
 				findx = 0;
@@ -1806,8 +1862,27 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 					else
 						appendPQExpBuffer(query, " UPDATE");
 				}
-				appendPQExpBuffer(query, " ON %s FOR EACH ROW",
-								  fmtId(tblinfo[i].relname, force_quotes));
+				appendPQExpBuffer(query, " ON %s ", fmtId(tblinfo[i].relname, force_quotes));
+
+				if (tgisconstraint) 
+				{
+					if (!tgdeferrable) 
+					{
+						appendPQExpBuffer(query, " NOT");
+					}
+					appendPQExpBuffer(query, " DEFERRABLE INITIALLY ");
+					if (tginitdeferred)
+					{
+						appendPQExpBuffer(query, "DEFERRED");
+					}
+					else 
+					{
+						appendPQExpBuffer(query, "IMMEDIATE");
+					}
+					
+				}
+
+				appendPQExpBuffer(query, " FOR EACH ROW");
 				appendPQExpBuffer(query, " EXECUTE PROCEDURE %s (",
 								  fmtId(tgfunc, force_quotes));
 				for (findx = 0; findx < tgnargs; findx++)
@@ -1847,6 +1922,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 					tgargs = p + 4;
 				}
 				appendPQExpBuffer(query, ");\n");
+
 				tblinfo[i].triggers[i2] = strdup(query->data);
 
 				/*** Initialize trcomments and troids ***/
@@ -1859,6 +1935,10 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 				tblinfo[i].trcomments[i2] = strdup(query->data);
 				tblinfo[i].troids[i2] = strdup(PQgetvalue(res2, i2, i_tgoid));
 
+				if (tgfunc)
+				{
+					free(tgfunc);
+				}
 			}
 			PQclear(res2);
 		}

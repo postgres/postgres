@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.56 2000/01/31 04:35:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.57 2000/02/04 18:49:31 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -398,6 +398,15 @@ RelationRemoveTriggers(Relation rel)
 		elog(NOTICE, "DROP TABLE implicitly drops referential integrity trigger from table \"%s\"", stmt.relname);
 
 		DropTrigger(&stmt);
+
+		/* ----------
+		 * Need to do a command counter increment here to show up
+		 * new pg_class.reltriggers in the next loop invocation already
+		 * (there are multiple referential integrity action
+		 * triggers for the same FK table defined on the PK table).
+		 * ----------
+		 */
+		CommandCounterIncrement();
 
 		pfree(stmt.relname);
 		pfree(stmt.trigname);

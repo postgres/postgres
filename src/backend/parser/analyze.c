@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.134 2000/01/27 18:11:35 tgl Exp $
+ *	$Id: analyze.c,v 1.135 2000/02/04 18:49:32 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@ static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static Query *transformCursorStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt);
+static Query *transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt);
 
 static void transformForUpdate(Query *qry, List *forUpdate);
 static void transformFkeyGetPrimaryKey(FkConstraint *fkconstraint);
@@ -181,13 +182,7 @@ transformStmt(ParseState *pstate, Node *parseTree)
 
 		case T_AlterTableStmt:
 			{
-				AlterTableStmt *n = (AlterTableStmt *) parseTree;
-
-				result = makeNode(Query);
-				result->commandType = CMD_UTILITY;
-				if (n->subtype == 'A') /* ADD COLUMN */
-					transformColumnType(pstate, (ColumnDef *) n->def);
-				result->utilityStmt = (Node *) parseTree;
+				result = transformAlterTableStmt(pstate, (AlterTableStmt *) parseTree);
 			}
 			break;
 
@@ -1459,6 +1454,254 @@ transformCursorStmt(ParseState *pstate, SelectStmt *stmt)
 	return qry;
 }
 
+/*
+ * tranformAlterTableStmt -
+ * 	transform an Alter Table Statement
+ *
+ */
+static Query *
+transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt) 
+{
+	Query *qry;
+	qry = makeNode(Query);
+	qry->commandType = CMD_UTILITY;
+
+	/* 
+	 * The only subtypes that currently have special handling are
+	 *	'A'dd column and Add 'C'onstraint.  In addition, right now
+	 *	only Foreign Key 'C'onstraints have a special transformation.
+	 *
+	 */
+	switch (stmt->subtype) {
+		case 'A':
+			transformColumnType(pstate, (ColumnDef *) stmt->def);
+			break;
+		case 'C':  
+			if (stmt->def && nodeTag(stmt->def) == T_FkConstraint )
+			{
+				CreateTrigStmt	   *fk_trigger;
+				List			   *fk_attr;
+				List			   *pk_attr;
+				Ident			   *id;
+				FkConstraint	*fkconstraint;
+				extras_after = NIL;
+				elog(NOTICE, "ALTER TABLE ... ADD CONSTRAINT will create implicit trigger(s) for FOREIGN KEY check(s)");
+
+				fkconstraint = (FkConstraint *) stmt->def;
+				/*
+				 * If the constraint has no name, set it to <unnamed>
+				 *
+				 */
+				if (fkconstraint->constr_name == NULL)
+					fkconstraint->constr_name = "<unnamed>";
+
+				/*
+				 * If the attribute list for the referenced table was
+				 * omitted, lookup for the definition of the primary key
+				 *
+				 */
+				if (fkconstraint->fk_attrs != NIL && fkconstraint->pk_attrs == NIL)
+					transformFkeyGetPrimaryKey(fkconstraint);
+
+				/*
+				 * Build a CREATE CONSTRAINT TRIGGER statement for the CHECK
+				 * action.
+				 *
+				 */
+				fk_trigger = (CreateTrigStmt *)makeNode(CreateTrigStmt);
+				fk_trigger->trigname		= fkconstraint->constr_name;
+				fk_trigger->relname			= stmt->relname;
+				fk_trigger->funcname		= "RI_FKey_check_ins";
+				fk_trigger->before			= false;
+				fk_trigger->row				= true;
+				fk_trigger->actions[0]		= 'i';
+				fk_trigger->actions[1]		= 'u';
+				fk_trigger->actions[2]		= '\0';
+				fk_trigger->lang			= NULL;
+				fk_trigger->text			= NULL;
+				fk_trigger->attr			= NIL;
+				fk_trigger->when			= NULL;
+				fk_trigger->isconstraint	= true;
+				fk_trigger->deferrable		= fkconstraint->deferrable;
+				fk_trigger->initdeferred	= fkconstraint->initdeferred;
+				fk_trigger->constrrelname	= fkconstraint->pktable_name;
+
+				fk_trigger->args		= NIL;
+				fk_trigger->args = lappend(fk_trigger->args,
+										fkconstraint->constr_name);
+				fk_trigger->args = lappend(fk_trigger->args,
+										stmt->relname);
+				fk_trigger->args = lappend(fk_trigger->args,
+										fkconstraint->pktable_name);
+				fk_trigger->args = lappend(fk_trigger->args,
+										fkconstraint->match_type);
+				fk_attr = fkconstraint->fk_attrs;
+				pk_attr = fkconstraint->pk_attrs;
+				if (length(fk_attr) != length(pk_attr))
+				{
+					elog(NOTICE, "Illegal FOREIGN KEY definition REFERENCES \"%s\"",
+								fkconstraint->pktable_name);
+					elog(ERROR, "number of key attributes in referenced table must be equal to foreign key");
+				}
+				while (fk_attr != NIL)
+				{
+					id = (Ident *)lfirst(fk_attr);
+					fk_trigger->args = lappend(fk_trigger->args, id->name);
+	
+					id = (Ident *)lfirst(pk_attr);
+					fk_trigger->args = lappend(fk_trigger->args, id->name);
+
+					fk_attr = lnext(fk_attr);
+					pk_attr = lnext(pk_attr);
+				}
+
+				extras_after = lappend(extras_after, (Node *)fk_trigger);
+
+				/*
+				 * Build a CREATE CONSTRAINT TRIGGER statement for the
+				 * ON DELETE action fired on the PK table !!!
+				 *
+				 */
+				fk_trigger = (CreateTrigStmt *)makeNode(CreateTrigStmt);
+				fk_trigger->trigname		= fkconstraint->constr_name;
+				fk_trigger->relname			= fkconstraint->pktable_name;
+				switch ((fkconstraint->actions & FKCONSTR_ON_DELETE_MASK)
+								>> FKCONSTR_ON_DELETE_SHIFT)
+				{
+					case FKCONSTR_ON_KEY_NOACTION:
+						fk_trigger->funcname = "RI_FKey_noaction_del";
+						break;
+					case FKCONSTR_ON_KEY_RESTRICT:
+						fk_trigger->funcname = "RI_FKey_restrict_del";
+						break;
+					case FKCONSTR_ON_KEY_CASCADE:
+						fk_trigger->funcname = "RI_FKey_cascade_del";
+						break;
+					case FKCONSTR_ON_KEY_SETNULL:
+						fk_trigger->funcname = "RI_FKey_setnull_del";
+						break;
+					case FKCONSTR_ON_KEY_SETDEFAULT:
+						fk_trigger->funcname = "RI_FKey_setdefault_del";
+						break;
+					default:
+						elog(ERROR, "Only one ON DELETE action can be specified for FOREIGN KEY constraint");
+						break;
+				}
+				fk_trigger->before			= false;
+				fk_trigger->row				= true;
+				fk_trigger->actions[0]		= 'd';
+				fk_trigger->actions[1]		= '\0';
+				fk_trigger->lang			= NULL;
+				fk_trigger->text			= NULL;
+				fk_trigger->attr			= NIL;
+				fk_trigger->when			= NULL;
+				fk_trigger->isconstraint	= true;
+				fk_trigger->deferrable		= fkconstraint->deferrable;
+				fk_trigger->initdeferred	= fkconstraint->initdeferred;
+				fk_trigger->constrrelname	= stmt->relname;
+
+				fk_trigger->args		= NIL;
+				fk_trigger->args = lappend(fk_trigger->args,
+										fkconstraint->constr_name);
+				fk_trigger->args = lappend(fk_trigger->args,
+										stmt->relname);
+				fk_trigger->args = lappend(fk_trigger->args,
+										fkconstraint->pktable_name);
+				fk_trigger->args = lappend(fk_trigger->args,
+										fkconstraint->match_type);
+				fk_attr = fkconstraint->fk_attrs;
+				pk_attr = fkconstraint->pk_attrs;
+				while (fk_attr != NIL)
+				{
+					id = (Ident *)lfirst(fk_attr);
+					fk_trigger->args = lappend(fk_trigger->args, id->name);
+
+					id = (Ident *)lfirst(pk_attr);
+					fk_trigger->args = lappend(fk_trigger->args, id->name);
+
+					fk_attr = lnext(fk_attr);
+					pk_attr = lnext(pk_attr);
+				}
+
+				extras_after = lappend(extras_after, (Node *)fk_trigger);
+
+				/*
+				 * Build a CREATE CONSTRAINT TRIGGER statement for the
+				 * ON UPDATE action fired on the PK table !!!
+				 *
+				 */
+				fk_trigger = (CreateTrigStmt *)makeNode(CreateTrigStmt);
+				fk_trigger->trigname		= fkconstraint->constr_name;
+				fk_trigger->relname			= fkconstraint->pktable_name;
+				switch ((fkconstraint->actions & FKCONSTR_ON_UPDATE_MASK)
+								>> FKCONSTR_ON_UPDATE_SHIFT)
+				{
+					case FKCONSTR_ON_KEY_NOACTION:
+						fk_trigger->funcname = "RI_FKey_noaction_upd";
+						break;
+					case FKCONSTR_ON_KEY_RESTRICT:
+						fk_trigger->funcname = "RI_FKey_restrict_upd";
+						break;
+					case FKCONSTR_ON_KEY_CASCADE:
+						fk_trigger->funcname = "RI_FKey_cascade_upd";
+						break;
+					case FKCONSTR_ON_KEY_SETNULL:
+						fk_trigger->funcname = "RI_FKey_setnull_upd";
+						break;
+					case FKCONSTR_ON_KEY_SETDEFAULT:
+						fk_trigger->funcname = "RI_FKey_setdefault_upd";
+						break;
+					default:
+						elog(ERROR, "Only one ON UPDATE action can be specified for FOREIGN KEY constraint");
+						break;
+				}
+				fk_trigger->before			= false;
+				fk_trigger->row				= true;
+				fk_trigger->actions[0]		= 'u';
+				fk_trigger->actions[1]		= '\0';
+				fk_trigger->lang			= NULL;
+				fk_trigger->text			= NULL;
+				fk_trigger->attr			= NIL;
+				fk_trigger->when			= NULL;
+				fk_trigger->isconstraint	= true;
+				fk_trigger->deferrable		= fkconstraint->deferrable;
+				fk_trigger->initdeferred	= fkconstraint->initdeferred;
+				fk_trigger->constrrelname	= stmt->relname;
+
+				fk_trigger->args		= NIL;
+				fk_trigger->args = lappend(fk_trigger->args,
+										fkconstraint->constr_name);
+				fk_trigger->args = lappend(fk_trigger->args,
+										stmt->relname);
+				fk_trigger->args = lappend(fk_trigger->args,
+										fkconstraint->pktable_name);
+				fk_trigger->args = lappend(fk_trigger->args,
+										fkconstraint->match_type);
+				fk_attr = fkconstraint->fk_attrs;
+				pk_attr = fkconstraint->pk_attrs;
+				while (fk_attr != NIL)
+				{
+					id = (Ident *)lfirst(fk_attr);
+					fk_trigger->args = lappend(fk_trigger->args, id->name);
+
+					id = (Ident *)lfirst(pk_attr);
+					fk_trigger->args = lappend(fk_trigger->args, id->name);
+
+					fk_attr = lnext(fk_attr);
+					pk_attr = lnext(pk_attr);
+				}
+
+				extras_after = lappend(extras_after, (Node *)fk_trigger);
+			}
+			break;
+		default:
+			break;
+	}
+	qry->utilityStmt = (Node *) stmt;
+	return qry;
+}
+
+
 /* This function steps through the tree
  * built up by the select_w_o_sort rule
  * and builds a list of all SelectStmt Nodes found
@@ -1748,3 +1991,4 @@ transformColumnType(ParseState *pstate, ColumnDef *column)
 		}
 	}
 }
+
