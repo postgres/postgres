@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.17 2001/09/21 21:58:30 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.18 2001/10/23 22:11:22 tgl Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <docinfo>
@@ -62,7 +62,10 @@
    <command>pg_restore</command> is a utility for restoring a
    <productname>Postgres</productname> database from an archive
    created by <xref linkend="app-pgdump"> in one of the non-plain-text
-   formats.
+   formats.  It
+   will issue the commands necessary to re-generate all user-defined
+   types, functions, tables, indexes, aggregates, and operators, as
+   well as the data in the tables.
   </para>
 
   <para>
@@ -70,10 +73,7 @@
    <command>pg_restore</command> to rebuild the database, but also
    allow <command>pg_restore</command> to be selective about what is
    restored, or even to reorder the items prior to being restored. The
-   archive files are designed to be portable across architectures.  It
-   will issue the commands necessary to re-generate all user-defined
-   types, functions, tables, indexes, aggregates, and operators, as
-   well as the data in the tables.
+   archive files are designed to be portable across architectures.
   </para>
 
   <para>
@@ -84,7 +84,7 @@
    or standard output), similar to the ones created by the
    <command>pg_dump</command> plain text format.  Some of the options
    controlling the script output are therefore analogous to
-   <command>pg_dump</command>.
+   <command>pg_dump</command> options.
   </para>
 
   <para>
@@ -94,67 +94,6 @@
    <command>INSERT</command>s</quote> option,
    <command>pg_restore</command> will not be able to load the data
    using <command>COPY</command> statements.
-  </para>
-
-  <para>
-   The most flexible output file format is the <quote>custom</quote>
-   format (<option>-Fc</option>). It allows for selection and
-   reordering of all archived items, and is compressed by default. The
-   <filename>tar</filename> format (<option>-Ft</option>) is not
-   compressed and it is not possible to reorder data when loading, but
-   it is otherwise quite flexible.
-  </para>
-
-  <para>
-   To reorder the items, it is first necessary to dump the table of
-   contents of the archive:
-<screen>
-<prompt>$</prompt> <userinput>pg_restore archive.file -l &gt; archive.list</userinput>
-</screen>
-   This file consists of a header and one line for each item, e.g.,
-<programlisting>
-;
-; Archive created at Fri Jul 28 22:28:36 2000
-;     dbname: birds
-;     TOC Entries: 74
-;     Compression: 0
-;     Dump Version: 1.4-0
-;     Format: CUSTOM
-;
-;
-; Selected TOC Entries:
-;
-2; 145344 TABLE species postgres
-3; 145344 ACL species
-4; 145359 TABLE nt_header postgres
-5; 145359 ACL nt_header
-6; 145402 TABLE species_records postgres
-7; 145402 ACL species_records
-8; 145416 TABLE ss_old postgres
-9; 145416 ACL ss_old
-10; 145433 TABLE map_resolutions postgres
-11; 145433 ACL map_resolutions
-12; 145443 TABLE hs_old postgres
-13; 145443 ACL hs_old
-</programlisting>
-   Semi-colons are comment delimiters, and the numbers at the start of lines refer to the
-   internal archive ID assigned to each item.
-  </para>
-
-  <para>
-   Lines in the file can be commented out, deleted, and reordered. For example,
-<programlisting>
-10; 145433 TABLE map_resolutions postgres
-;2; 145344 TABLE species postgres
-;4; 145359 TABLE nt_header postgres
-6; 145402 TABLE species_records postgres
-;8; 145416 TABLE ss_old postgres
-</programlisting>
-   could be used as input to <command>pg_restore</command> and would only restore
-   items 10 and 6, in that order.
-<screen>
-<prompt>$</prompt> <userinput>pg_restore archive.file -L archive.list</userinput>
-</screen>
   </para>
 
   <refsect2 id="app-pgrestore-options">
@@ -192,7 +131,7 @@
       <term>--clean</term>
       <listitem>
        <para>
-	Clean (drop) schema prior to create.
+	Clean (drop) database objects before recreating them.
        </para>
       </listitem>
      </varlistentry>
@@ -202,7 +141,11 @@
       <term>--create</term>
       <listitem>
        <para>
-	Include SQL to create the schema.
+        Create the database before restoring into it.
+	(When this switch appears, the database named with <option>-d</option>
+	is used only 
+	to issue the initial CREATE DATABASE command.  All data is restored
+	into the database name that appears in the archive.)
        </para>
       </listitem>
      </varlistentry>
@@ -223,8 +166,8 @@
       <term>--file=<replaceable>filename</replaceable></term>
       <listitem>
        <para>
-        Specify output file for generated script. (Use with the
-        <option>-l</option> option.) Default is the standard output.
+        Specify output file for generated script, or for the listing
+	when used with <option>-l</option>. Default is the standard output.
        </para>
       </listitem>
      </varlistentry>
@@ -365,7 +308,7 @@
         While restoring an archive, <command>pg_restore</command>
         typically has to reconnect to the database several times with
         different user names to set the correct ownership of the
-        created objects.  If this is undesriable (e.g., because manual
+        created objects.  If this is undesirable (e.g., because manual
         interaction (passwords) would be necessary for each
         reconnection), this option prevents
         <command>pg_restore</command> from issuing any reconnection
@@ -449,7 +392,7 @@
        <para>
         Normally, if restoring an archive requires altering the
         current database user (e.g., to set correct object
-        ownerships), a new connection to the database must be openend,
+        ownerships), a new connection to the database must be opened,
         which might require manual interaction (e.g., passwords).  If
         you use the <option>-X use-set-session-authorization</option>,
         then <command>pg_restore</command> will instead use the <xref
@@ -634,6 +577,58 @@ connectDBStart() -- connect() failed: No such file or directory
 
 <screen>
 <prompt>$</prompt> <userinput>pg_restore -d newdb db.tar</userinput>
+</screen>
+  </para>
+
+  <para>
+   To reorder database items, it is first necessary to dump the table of
+   contents of the archive:
+<screen>
+<prompt>$</prompt> <userinput>pg_restore archive.file -l &gt; archive.list</userinput>
+</screen>
+   The listing file consists of a header and one line for each item, e.g.,
+<programlisting>
+;
+; Archive created at Fri Jul 28 22:28:36 2000
+;     dbname: birds
+;     TOC Entries: 74
+;     Compression: 0
+;     Dump Version: 1.4-0
+;     Format: CUSTOM
+;
+;
+; Selected TOC Entries:
+;
+2; 145344 TABLE species postgres
+3; 145344 ACL species
+4; 145359 TABLE nt_header postgres
+5; 145359 ACL nt_header
+6; 145402 TABLE species_records postgres
+7; 145402 ACL species_records
+8; 145416 TABLE ss_old postgres
+9; 145416 ACL ss_old
+10; 145433 TABLE map_resolutions postgres
+11; 145433 ACL map_resolutions
+12; 145443 TABLE hs_old postgres
+13; 145443 ACL hs_old
+</programlisting>
+   Semi-colons are comment delimiters, and the numbers at the start of lines refer to the
+   internal archive ID assigned to each item.
+  </para>
+
+  <para>
+   Lines in the file can be commented out, deleted, and reordered. For example,
+<programlisting>
+10; 145433 TABLE map_resolutions postgres
+;2; 145344 TABLE species postgres
+;4; 145359 TABLE nt_header postgres
+6; 145402 TABLE species_records postgres
+;8; 145416 TABLE ss_old postgres
+</programlisting>
+   could be used as input to <command>pg_restore</command> and would only restore
+   items 10 and 6, in that order.
+<screen>
+<prompt>$</prompt> <userinput>pg_restore archive.file -L archive.list</userinput>
 </screen>
   </para>
 

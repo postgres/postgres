@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.37 2001/09/21 21:58:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.38 2001/10/23 22:11:22 tgl Exp $
 Postgres documentation
 -->
 
@@ -64,7 +64,7 @@ Postgres documentation
    <productname>PostgreSQL</productname> database into a script or an
    archive file.  The script files are in plain text format and
    contain the SQL commands required to reconstruct the database to
-   the state it was in at the time is was saved.  They can be used to
+   the state it was in at the time it was saved.  They can be used to
    reconstruct the database even on other machines and other
    architectures, with some modifications even on other RDBMS
    products.  The alternative archive file formats are meant to be
@@ -91,12 +91,19 @@ Postgres documentation
 
   <para>
    When used with one of the archive file formats and combined with
-   <command>pg_restore</command>, it provides a flexible archival and
+   <xref linkend="app-pgrestore">, <command>pg_dump</command> provides a
+   flexible archival and 
    transfer mechanism. <command>pg_dump</command> can be used to
    backup an entire database, then <command>pg_restore</command> can
    be used to examine the archive and/or select which parts of the
-   database are to be restored.  See the <xref
-   linkend="app-pgrestore"> documentation for details.
+   database are to be restored.
+   The most flexible output file format is the <quote>custom</quote>
+   format (<option>-Fc</option>). It allows for selection and
+   reordering of all archived items, and is compressed by default. The
+   <filename>tar</filename> format (<option>-Ft</option>) is not
+   compressed and it is not possible to reorder data when loading, but
+   it is otherwise quite flexible; moreover, it can be manipulated with
+   other tools such as <filename>tar</filename>.
   </para>
 
   <para>
@@ -124,7 +131,7 @@ Postgres documentation
       <term><replaceable class="parameter">dbname</replaceable></term>
       <listitem>
        <para>
-	Specifies the name of the database to be extracted.
+	Specifies the name of the database to be dumped.
        </para>
       </listitem>
      </varlistentry>
@@ -135,6 +142,12 @@ Postgres documentation
       <listitem>
        <para>
 	Dump only the data, not the schema (data definitions).
+       </para>
+
+       <para>
+        This option is only meaningful for the plain text format.  For
+        the other formats, you may specify the option when you
+        call <command>pg_restore</command>.
        </para>
       </listitem>
      </varlistentry>
@@ -154,8 +167,14 @@ Postgres documentation
       <term>--clean</term>
       <listitem>
        <para>
-        Output commands to clean (drop) the schema prior to (the
-        commands for) creating it.
+        Output commands to clean (drop)
+	database objects prior to (the commands for) creating them.
+       </para>
+
+       <para>
+        This option is only meaningful for the plain text format.  For
+        the other formats, you may specify the option when you
+        call <command>pg_restore</command>.
        </para>
       </listitem>
      </varlistentry>
@@ -165,7 +184,16 @@ Postgres documentation
       <term>--create</term>
       <listitem>
        <para>
-	For plain text (script) output, include commands to create the database itself.
+	Begin the output with a command to create the
+	database itself and reconnect to the created database.  (With a
+	script of this form, it doesn't matter which database you connect
+	to before running the script.)
+       </para>
+
+       <para>
+        This option is only meaningful for the plain text format.  For
+        the other formats, you may specify the option when you
+        call <command>pg_restore</command>.
        </para>
       </listitem>
      </varlistentry>
@@ -175,7 +203,7 @@ Postgres documentation
       <term>--inserts</term>
       <listitem>
        <para>
-	Dump data as proper <command>INSERT</command> commands (rather
+	Dump data as <command>INSERT</command> commands (rather
 	than <command>COPY</command>). This will make restoration very
 	slow, but it makes the archives more portable to other RDBMS
 	packages.
@@ -193,7 +221,8 @@ Postgres documentation
 	column names (<literal>INSERT INTO
 	<replaceable>table</replaceable>
 	(<replaceable>column</replaceable>, ...) VALUES
-	...</literal>).  This will make restoration very slow.
+	...</literal>).  This will make restoration very slow,
+	but it is necessary if you desire to rearrange column ordering.
        </para>
       </listitem>
      </varlistentry>
@@ -306,7 +335,7 @@ Postgres documentation
       <listitem>
        <para>
 	Dump object identifiers (<acronym>OID</acronym>s) for every
-	table.  Use this option if your application references the oid
+	table.  Use this option if your application references the OID
 	columns in some way (e.g., in a foreign key constraint).
 	Otherwise, this option should not be used.
        </para>
@@ -318,7 +347,7 @@ Postgres documentation
       <term>--no-owner</term>
       <listitem>
        <para>
-	In plain text output mode, do not output commands to set the
+        Do not output commands to set the
 	object ownership to match the original database.  Typically,
 	<command>pg_dump</command> issues
 	(<command>psql</command>-specific) <command>\connect</command>
@@ -332,7 +361,7 @@ Postgres documentation
 
        <para>
         This option is only meaningful for the plain text format.  For
-        the other formats, you need to specify the option when you
+        the other formats, you may specify the option when you
         call <command>pg_restore</command>.
        </para>
       </listitem>
@@ -343,7 +372,7 @@ Postgres documentation
       <term>--no-reconnect</term>
       <listitem>
        <para>
-	In plain text output mode, prohibit <command>pg_dump</command>
+	Prohibit <command>pg_dump</command>
         from outputting a script that would require reconnections to
         the database while being restored.  An average restoration
         script usually has to reconnect several times as different
@@ -362,7 +391,7 @@ Postgres documentation
 
        <para>
         This option is only meaningful for the plain text format.  For
-        the other formats, you need to specify the option when you
+        the other formats, you may specify the option when you
         call <command>pg_restore</command>.
        </para>
       </listitem>
@@ -451,7 +480,7 @@ Postgres documentation
 
        <para>
         This option is only meaningful for the plain text format.  For
-        the other formats, you need to specify the option when you
+        the other formats, you may specify the option when you
         call <command>pg_restore</command>.
        </para>
       </listitem>

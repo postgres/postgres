@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.24 2001/10/05 15:50:11 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.25 2001/10/23 22:11:22 tgl Exp $
 Postgres documentation
 -->
 
@@ -50,7 +50,12 @@ Postgres documentation
 
   <para>
    Thus, <application>pg_dumpall</application> is an integrated
-   solution for backing up your databases.
+   solution for backing up your databases.  But note a limitation:
+   it cannot dump <quote>large objects</quote>, since
+   <application>pg_dump</application> cannot dump such objects into
+   text files.  If you have databases containing large objects,
+   they should be dumped using one of <application>pg_dump</application>'s
+   non-text output modes.
   </para>
 
   <para>
@@ -78,7 +83,10 @@ Postgres documentation
       <term>-c, --clean</term>
       <listitem>
        <para>
-	Clean (drop) database before creating schema.
+	Include SQL commands to clean (drop) database objects before
+	recreating them.  (This option is fairly useless, since the
+	output script expects to create the databases themselves;
+	they would always be empty upon creation.)
        </para>
       </listitem>
      </varlistentry>
