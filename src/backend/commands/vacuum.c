@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.150 2000/05/29 01:46:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.151 2000/05/29 01:55:07 momjian Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -94,12 +94,12 @@ static void get_indices(Oid relid, int *nindices, Relation **Irel);
 static void close_indices(int nindices, Relation *Irel);
 static void get_index_desc(Relation onerel, int nindices, Relation *Irel, IndDesc **Idesc);
 static void *vac_find_eq(void *bot, int nelem, int size, void *elm,
-		   int (*compar) (const void *, const void *));
+			 int (*compar) (const void *, const void *));
 static int	vac_cmp_blk(const void *left, const void *right);
 static int	vac_cmp_offno(const void *left, const void *right);
 static int	vac_cmp_vtlinks(const void *left, const void *right);
-static bool vac_enough_space(VPageDescr vpd, Size len);
-static char *vac_show_rusage(struct rusage * ru0);
+static bool enough_space(VPageDescr vpd, Size len);
+static char *show_rusage(struct rusage * ru0);
 
 
 /*
@@ -1044,7 +1044,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		for (i = 0; i < nusf; i++)
 		{
 			vp = vacuum_pages->vpl_pagedesc[i];
-			if (vac_enough_space(vp, min_tlen))
+			if (enough_space(vp, min_tlen))
 			{
 				vpage_insert(fraged_pages, vp);
 				usable_free_size += vp->vpd_free;
@@ -1074,7 +1074,7 @@ Re-using: Free/Avail. Space %u/%u; EndEmpty/Avail. Pages %u/%u. %s",
 		 nkeep, vacrelstats->num_vtlinks, ncrash,
 		 nunused, min_tlen, max_tlen, free_size, usable_free_size,
 		 empty_end_pages, fraged_pages->vpl_num_pages,
-		 vac_show_rusage(&ru0));
+		 show_rusage(&ru0));
 
 }
 
@@ -1361,7 +1361,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				for (;;)
 				{
 					if (to_vpd == NULL ||
-						!vac_enough_space(to_vpd, tlen))
+						!enough_space(to_vpd, tlen))
 					{
 
 						/*
@@ -1369,7 +1369,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						 * useful, remove it from fraged_pages list
 						 */
 						if (to_vpd != NULL &&
-						 !vac_enough_space(to_vpd, vacrelstats->min_tlen))
+						 !enough_space(to_vpd, vacrelstats->min_tlen))
 						{
 							Assert(num_fraged_pages > to_item);
 							memmove(fraged_pages->vpl_pagedesc + to_item,
@@ -1379,7 +1379,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						}
 						for (i = 0; i < num_fraged_pages; i++)
 						{
-							if (vac_enough_space(fraged_pages->vpl_pagedesc[i], tlen))
+							if (enough_space(fraged_pages->vpl_pagedesc[i], tlen))
 								break;
 						}
 
@@ -1650,7 +1650,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 			/* try to find new page for this tuple */
 			if (cur_buffer == InvalidBuffer ||
-				!vac_enough_space(cur_page, tuple_len))
+				!enough_space(cur_page, tuple_len))
 			{
 				if (cur_buffer != InvalidBuffer)
 				{
@@ -1661,7 +1661,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					 * If previous target page is now too full to add *any*
 					 * tuple to it, remove it from fraged_pages.
 					 */
-					if (!vac_enough_space(cur_page, vacrelstats->min_tlen))
+					if (!enough_space(cur_page, vacrelstats->min_tlen))
 					{
 						Assert(num_fraged_pages > cur_item);
 						memmove(fraged_pages->vpl_pagedesc + cur_item,
@@ -1672,7 +1672,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				}
 				for (i = 0; i < num_fraged_pages; i++)
 				{
-					if (vac_enough_space(fraged_pages->vpl_pagedesc[i], tuple_len))
+					if (enough_space(fraged_pages->vpl_pagedesc[i], tuple_len))
 						break;
 				}
 				if (i == num_fraged_pages)
@@ -1901,7 +1901,7 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 	elog(MESSAGE_LEVEL, "Rel %s: Pages: %u --> %u; Tuple(s) moved: %u. %s",
 		 RelationGetRelationName(onerel),
 		 nblocks, blkno, num_moved,
-		 vac_show_rusage(&ru0));
+		 show_rusage(&ru0));
 
 	if (Nvpl.vpl_num_pages > 0)
 	{
@@ -2110,7 +2110,7 @@ scan_index(Relation indrel, int num_tuples)
 
 	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %u. %s",
 		 RelationGetRelationName(indrel), nipages, nitups,
-		 vac_show_rusage(&ru0));
+		 show_rusage(&ru0));
 
 	if (nitups != num_tuples)
 		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u).\
@@ -2188,7 +2188,7 @@ vacuum_index(VPageList vpl, Relation indrel, int num_tuples, int keep_tuples)
 	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %u: Deleted %u. %s",
 		 RelationGetRelationName(indrel), num_pages,
 		 num_index_tuples - keep_tuples, tups_vacuumed,
-		 vac_show_rusage(&ru0));
+		 show_rusage(&ru0));
 
 	if (num_index_tuples != num_tuples + keep_tuples)
 		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u).\
@@ -3002,7 +3002,7 @@ get_index_desc(Relation onerel, int nindices, Relation *Irel, IndDesc **Idesc)
 
 
 static bool
-vac_enough_space(VPageDescr vpd, Size len)
+enough_space(VPageDescr vpd, Size len)
 {
 
 	len = MAXALIGN(len);
@@ -3030,7 +3030,7 @@ vac_enough_space(VPageDescr vpd, Size len)
  * threadable...
  */
 static char *
-vac_show_rusage(struct rusage * ru0)
+show_rusage(struct rusage * ru0)
 {
 	static char result[64];
 	struct rusage ru1;
