@@ -103,7 +103,7 @@ $ du * | while read SIZE OID
 
 This can be done in psql with:  (each page is typically 8k)
 
-test=> SELECT relpages, relname FROM pg_class ORDER BY relpages DESC;
+test=> SELECT relpages, relfilenode, relname FROM pg_class ORDER BY relpages DESC;
 
 
 ---------------------------------------------------------------------------
