@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.202 2002/09/05 22:05:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.203 2002/09/05 22:24:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2930,7 +2930,8 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 		pgpassfile = malloc(strlen(home) + strlen(PGPASSFILE) + 1);
 		if (!pgpassfile)
 		{
-			fprintf(stderr, gettext("%s: out of memory\n"), pset.progname);
+						  
+			fprintf(stderr, libpq_gettext("out of memory\n"));
 			exit(EXIT_FAILURE);
 		}
 	}
