@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.8 1999/09/28 15:59:10 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.9 2000/03/27 17:14:43 thomas Exp $
 Postgres documentation
 -->
 
@@ -38,7 +38,7 @@ pg_upgrade [ -f <replaceable class="parameter">filename</replaceable> ] <replace
   <para>
    <application>pg_upgrade</application>
    is a utility for upgrading from a previous
-   PostgreSQL release without reloading all the data.
+   Postgres release without reloading all the data.
    Not all <productname>Postgres</productname> release transitions can be
    handled this way.  Check the release notes for details on your installation.
   </para>

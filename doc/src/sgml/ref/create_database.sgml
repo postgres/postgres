@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.12 2000/03/26 18:32:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.13 2000/03/27 17:14:42 thomas Exp $
 Postgres documentation
 -->
 
@@ -157,7 +157,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable> [ WITH LOCATIO
   </title>
   <para>
    <command>CREATE DATABASE</command> creates a new
-   <productname>PostgreSQL</productname> database.
+   <productname>Postgres</productname> database.
    The creator becomes the owner of the new database.
   </para>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgadmin-ref.sgml,v 1.5 2000/02/02 16:19:54 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgadmin-ref.sgml,v 1.6 2000/03/27 17:14:43 thomas Exp $
 Postgres documentation
 -->
 
@@ -41,7 +41,7 @@ pgadmin [ <replaceable class="parameter">datasourcename</replaceable> [ <replace
       <term><replaceable class="PARAMETER">datasourcename</replaceable></term>
       <listitem>
        <para>
-	The name of an existing PostgreSQL ODBC System or User Data
+	The name of an existing <productname>Postgres</productname> ODBC System or User Data
 	Source.
        </para>
       </listitem>

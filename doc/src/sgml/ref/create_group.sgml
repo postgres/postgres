@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_group.sgml,v 1.1 2000/01/14 22:11:32 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_group.sgml,v 1.2 2000/03/27 17:14:42 thomas Exp $
 Postgres documentation
 -->
 
@@ -53,7 +53,7 @@ CREATE GROUP <replaceable class="PARAMETER">name</replaceable>
       <listitem>
        <para>
         The <literal>SYSID</literal> clause can be used to choose
-        the <productname>PostgreSQL</productname> group id of the new
+        the <productname>Postgres</productname> group id of the new
         group. It is not necessary to do so, however.
        </para>
        <para>

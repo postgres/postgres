@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.11 1999/08/06 13:50:30 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.12 2000/03/27 17:14:42 thomas Exp $
 Postgres documentation
 -->
 
@@ -289,8 +289,8 @@ CREATE
     A "regular" Postgres  type  can  only  be  8192  bytes  in
     length.  If you need a larger type you must create a Large
     Object type.  The interface for these types  is  discussed
-    at  length  in
-    <citetitle>The PostgreSQL Programmer's Guide</citetitle>.
+    at  length  in the
+    <citetitle>PostgreSQL Programmer's Guide</citetitle>.
     The length of all large object types is always VARIABLE.
    </para>
   </refsect2>

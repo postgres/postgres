@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.2 2000/01/19 20:08:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.3 2000/03/27 17:14:43 thomas Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    <application>droplang</application>
   </refname>
   <refpurpose>
-   Remove a programming language from a <productname>PostgreSQL</productname> database
+   Remove a programming language from a <productname>Postgres</productname> database
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
@@ -146,7 +146,7 @@ droplang [ <replaceable class="parameter">connection options</replaceable> ] --l
   <para>
    <application>droplang</application> is a utility for removing an 
    existing programming language from a
-   <productname>PostgreSQL</productname> database.
+   <productname>Postgres</productname> database.
    <application>droplang</application> currently accepts two
    languages, <literal>plsql</literal> and <literal>pltcl</literal>.
   </para>

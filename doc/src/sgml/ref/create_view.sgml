@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.8 2000/03/26 18:32:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.9 2000/03/27 17:14:42 thomas Exp $
 Postgres documentation
 -->
 
@@ -20,15 +20,15 @@ Postgres documentation
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-07-20</date>
+   <date>2000-03-25</date>
   </refsynopsisdivinfo>
   <synopsis>
 CREATE VIEW <replaceable class="PARAMETER">view</replaceable> AS SELECT <replaceable class="PARAMETER">query</replaceable>
   </synopsis>
 
   <refsect2 id="R2-SQL-CREATEVIEW-1">
-   <refsect2info>
-    <date>1998-09-21</date>
+   <refsect2info> 
+    <date>2000-03-25</date>
    </refsect2info>
    <title>
     Inputs
@@ -62,7 +62,7 @@ CREATE VIEW <replaceable class="PARAMETER">view</replaceable> AS SELECT <replace
 
   <refsect2 id="R2-SQL-CREATEVIEW-2">
    <refsect2info>
-    <date>1998-09-21</date>
+    <date>2000-03-25</date>
    </refsect2info>
    <title>
     Outputs
@@ -97,13 +97,15 @@ NOTICE create: attribute named "<replaceable class="parameter">column</replaceab
        <para>
 	The view will be created having a column with an unknown type
 	if you do not specify it. For example, the following command gives
-	an error:
+	a warning:
 	<programlisting>
 CREATE VIEW vista AS SELECT 'Hello World'
 	</programlisting>
+
 	whereas this command does not:
+
 	<programlisting>
-CREATE VIEW vista AS SELECT 'Hello World'::text
+CREATE VIEW vista AS SELECT text 'Hello World'
 	</programlisting>
        </para>
       </listitem>
@@ -115,7 +117,7 @@ CREATE VIEW vista AS SELECT 'Hello World'::text
 
  <refsect1 id="R1-SQL-CREATEVIEW-1">
   <refsect1info>
-   <date>1998-09-21</date>
+   <date>2000-03-25</date>
   </refsect1info>
   <title>
    Description
@@ -129,7 +131,7 @@ CREATE VIEW vista AS SELECT 'Hello World'::text
 
   <refsect2 id="R2-SQL-CREATEVIEW-3">
    <refsect2info>
-    <date>1998-09-21</date>
+    <date>2000-03-25</date>
    </refsect2info>
    <title>
     Notes
@@ -176,7 +178,7 @@ SELECT * FROM kinds;
   
   <refsect2 id="R2-SQL-CREATEVIEW-5">
    <refsect2info>
-    <date>1998-09-21</date>
+    <date>2000-03-25</date>
    </refsect2info>
    <title>
     SQL92

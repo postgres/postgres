@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.6 2000/03/26 18:32:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.7 2000/03/27 17:14:43 thomas Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    <application>initlocation</application>
   </refname>
   <refpurpose>
-   Create a secondary <productname>PostgreSQL</productname> database storage area
+   Create a secondary <productname>Postgres</productname> database storage area
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
@@ -72,7 +72,7 @@ initlocation <replaceable class="parameter">directory</replaceable>
   </title>
   <para>
    <application>initlocation</application> 
-   creates a new <productname>PostgreSQL</productname> secondary database storage area.
+   creates a new <productname>Postgres</productname> secondary database storage area.
    See the discussion under <xref linkend="SQL-CREATEDATABASE" endterm="SQL-CREATEDATABASE-title">
    about how to manage and use secondary storage areas. If the argument does not contain
    a slash and is not valid as a path, it is assumed to be an environment variable,

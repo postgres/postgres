@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.3 2000/01/12 19:36:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.4 2000/03/27 17:14:43 thomas Exp $
 Postgres documentation
 -->
 
@@ -90,7 +90,7 @@ dropuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceable
       <term><replaceable class="parameter">username</replaceable></term>
       <listitem>
        <para>
-	Specifies the name of the <productname>PostgreSQL</productname> user to be removed. 
+	Specifies the name of the <productname>Postgres</productname> user to be removed. 
 	This name must exist in the <productname>Postgres</productname> installation.
 	You will be prompted for a name if none is specified on the command line.
        </para>
@@ -153,18 +153,18 @@ dropuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceable
   </title>
   <para>
    <application>dropuser</application> removes an existing
-   <productname>PostgreSQL</productname> user
+   <productname>Postgres</productname> user
    <emphasis>and</emphasis> the databases which that user owned.
    Only users with <literal>usesuper</literal> set in
    the <literal>pg_shadow</literal> class can destroy 
-   <productname>PostgreSQL</productname> users.
+   <productname>Postgres</productname> users.
   </para>
 
   <para>
    <application>dropuser</application> is a shell script wrapper around the
    <acronym>SQL</acronym> command
    <xref linkend="SQL-DROPUSER" endterm="SQL-DROPUSER-title"> via
-   the <productname>PostgreSQL</productname> interactive terminal
+   the <productname>Postgres</productname> interactive terminal
    <xref linkend="APP-PSQL" endterm="APP-PSQL-title">. Thus, there is nothing
    special about removing users via this or other methods. This means
    that the <application>psql</application> must be found by the script and that

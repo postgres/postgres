@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.29 2000/03/21 01:52:12 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.30 2000/03/27 17:14:43 thomas Exp $
 Postgres documentation
 -->
 
@@ -16,7 +16,7 @@ Postgres documentation
       <application>psql</application>
     </refname>
     <refpurpose>
-      <productname>PostgreSQL</productname> interactive terminal
+      <productname>Postgres</productname> interactive terminal
     </refpurpose>
   </refnamediv>
 
@@ -36,8 +36,8 @@ Postgres documentation
 
     <para>
      <application>psql</application> is a terminal-based front-end to 
-     <productname>PostgreSQL</productname>. It enables you to type in queries
-     interactively, issue them to <productname>PostgreSQL</productname>, and see
+     <productname>Postgres</productname>. It enables you to type in queries
+     interactively, issue them to <productname>Postgres</productname>, and see
      the query results. Alternatively, input can be from a file.
      In addition, it provides a number of meta-commands and
      various shell-like features to facilitate writing scripts and automating a wide
@@ -63,7 +63,7 @@ Postgres documentation
     <title>Connecting To A Database</title>
 
     <para>
-    <application>psql</application> is a regular <productname>PostgreSQL</productname>
+    <application>psql</application> is a regular <productname>Postgres</productname>
     client application. In order to connect to a database you need to know the
     name of your target database, the hostname and port number of the server
     and what user name you want to connect as. <application>psql</application> can be
@@ -316,7 +316,7 @@ testdb=>
         <term><literal>\copyright</literal></term>
         <listitem>
         <para>
-        Shows the copyright and distribution terms of <application>PostgreSQL</application>.
+        Shows the copyright and distribution terms of <application>Postgres</application>.
         </para>
         </listitem>
       </varlistentry>
@@ -387,7 +387,7 @@ testdb=>
 
         <note>
         <para>
-        <productname>PostgreSQL</productname> stores the object descriptions in the
+        <productname>Postgres</productname> stores the object descriptions in the
         pg_description system table.
         </para>
         </note>
@@ -637,7 +637,7 @@ Tue Oct 26 21:40:57 CEST 1999
         <para>
         List all the databases in the server as well as their owners. Append a
         <quote>+</quote> to the command name to see any descriptions
-        for the databases as well. If your <productname>PostgreSQL</productname>
+        for the databases as well. If your <productname>Postgres</productname>
 	installation was
 	compiled with multibyte encoding support, the encoding scheme of each
 	database is shown as well.
@@ -677,7 +677,7 @@ Tue Oct 26 21:40:57 CEST 1999
 
 	<listitem>
 	<para>
-	Stores the file into a <productname>PostgreSQL</productname> <quote>large object</quote>.
+	Stores the file into a <productname>Postgres</productname> <quote>large object</quote>.
 	Optionally, it associates the given comment with the object. Example:
 <programlisting>
 foo=> <userinput>\lo_import '/home/peter/pictures/photo.xcf' 'a picture of me'</userinput>
@@ -709,7 +709,7 @@ lo_import 152801
         <term><literal>\lo_list</literal></term>
 	<listitem>
 	<para>
-	Shows a list of all <productname>PostgreSQL</productname> <quote>large
+	Shows a list of all <productname>Postgres</productname> <quote>large
 	objects</quote> currently stored in the database along with their owners.
 	</para>
 	</listitem>
@@ -1674,7 +1674,7 @@ bar
 	<listitem>
 	<para>
 	When this variable is set and a backslash command queries the database, the query
-	is first shown. This way you can study the <productname>PostgreSQL</productname>
+	is first shown. This way you can study the <productname>Postgres</productname>
 	internals and provide similar functionality in your own programs. If you set the
 	variable to the value <quote>noexec</quote>, the queries are just shown but are
 	not actually sent to the backend and executed.
@@ -1770,7 +1770,7 @@ bar
         <term><envar>LO_TRANSACTION</envar></term>
 	<listitem>
 	<para>
-	If you use the <productname>PostgreSQL</productname> large object
+	If you use the <productname>Postgres</productname> large object
         interface to specially store data that does not fit into one tuple,
         all the operations must be contained in a transaction block. (See the
         documentation of the large object interface for more information.) Since
@@ -1939,7 +1939,7 @@ testdb=> <userinput>\set content `sed -e "s/'/\\\\\\'/g" < my_file.txt`</userinp
     case you can escape a colon with a backslash to protect it from interpretation.
     (The colon syntax for variables is standard <acronym>SQL</acronym> for embedded
     query languages, such as <application>ecpg</application>. The colon syntax for
-    array slices and type casts are <productname>PostgreSQL</productname> extensions,
+    array slices and type casts are <productname>Postgres</productname> extensions,
     hence the conflict.)
     </para>
 
@@ -2111,7 +2111,7 @@ $endif
 
     <para>
     If you have the readline library installed but <application>psql</application>
-    does not seem to use it, you must make sure that <productname>PostgreSQL</productname>'s
+    does not seem to use it, you must make sure that <productname>Postgres</productname>'s
     top-level <filename>configure</filename> script finds it. <filename>configure</filename>
     needs to find both the library <filename>libreadline.a</filename>
     (or a shared library equivalent)
@@ -2145,7 +2145,7 @@ $ ./configure --with-includes=/opt/gnu/include --with-libs=/opt/gnu/lib  ...
   <para>
   This section only shows a few examples specific to <application>psql</application>.
   If you want to learn <acronym>SQL</acronym> or get familiar with
-  <productname>PostgreSQL</productname>, you might wish to read the Tutorial that
+  <productname>Postgres</productname>, you might wish to read the Tutorial that
   is included in the distribution.
   </para>
   </note>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.6 1999/08/06 13:50:31 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.7 2000/03/27 17:14:43 thomas Exp $
 Postgres documentation
 -->
 
@@ -190,7 +190,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
 	Dates are accepted by the backend in a wide variety of formats,
 	and for input dates this switch mostly affects the interpretation
 	for ambiguous cases.
-	See <citetitle>The PostgreSQL User's Guide</citetitle>
+	See the <citetitle>PostgreSQL User's Guide</citetitle>
 	for more information.
        </para>
       </listitem>

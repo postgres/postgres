@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.9 2000/01/20 21:50:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.10 2000/03/27 17:14:43 thomas Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    <application>initdb</application>
   </refname>
   <refpurpose>
-   Create a new <productname>PostgreSQL</productname> database installation
+   Create a new <productname>Postgres</productname> database installation
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
@@ -129,7 +129,7 @@ initdb [ --pgdata|-D <replaceable class="parameter">dbdir</replaceable> ]
 	database in an existing database system, and don't touch anything else.
 	This is useful when you need to upgrade your <literal>template1</literal>
 	database using <application>initdb</application>
-	from a newer release of <productname>PostgreSQL</productname>, 
+	from a newer release of <productname>Postgres</productname>, 
 	or when your <literal>template1</literal>
 	database has become corrupted by some system problem.  Normally the
 	contents of <literal>template1</literal>
@@ -199,7 +199,7 @@ initdb [ --pgdata|-D <replaceable class="parameter">dbdir</replaceable> ]
   </title>
   <para>
    <application>initdb</application> creates a new 
-   <productname>PostgreSQL</productname> database system.
+   <productname>Postgres</productname> database system.
    A database system is a
    collection of databases that are all administered by the same Unix user
    and managed by a single postmaster.

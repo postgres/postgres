@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.4 2000/01/19 20:08:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.5 2000/03/27 17:14:42 thomas Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    <application>createlang</application>
   </refname>
   <refpurpose>
-   Add a new programming language to a <productname>PostgreSQL</productname> database
+   Add a new programming language to a <productname>Postgres</productname> database
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
@@ -145,7 +145,7 @@ createlang [ <replaceable class="parameter">connection options</replaceable> ] -
 
   <para>
    <application>createlang</application> is a utility for adding a new 
-   programming language to a <productname>PostgreSQL</productname> database.
+   programming language to a <productname>Postgres</productname> database.
    <application>createlang</application> currently accepts two
    languages, <literal>plsql</literal> and <literal>pltcl</literal>.
   </para>

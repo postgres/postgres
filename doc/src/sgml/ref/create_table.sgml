@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.17 1999/07/22 15:09:08 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.18 2000/03/27 17:14:42 thomas Exp $
 Postgres documentation
 -->
 
@@ -20,7 +20,7 @@ Postgres documentation
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-07-20</date>
+   <date>2000-03-25</date>
   </refsynopsisdivinfo>
   <synopsis>
 CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table</replaceable> (
@@ -35,9 +35,6 @@ CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table</replacea
   </synopsis>
   
   <refsect2 id="R2-SQL-CREATETABLE-1">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
    <title>
     Inputs
    </title>
@@ -158,9 +155,6 @@ CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table</replacea
   </refsect2>
 
   <refsect2 id="R2-SQL-CREATETABLE-2">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
    <title>
     Outputs
    </title>
@@ -212,9 +206,6 @@ ERROR:  DEFAULT: type mismatched
  </refsynopsisdiv>
 
  <refsect1 id="R1-SQL-CREATETABLE-1">
-  <refsect1info>
-   <date>1998-09-11</date>
-  </refsect1info>
   <title>
    Description
   </title>
@@ -272,9 +263,6 @@ ERROR:  DEFAULT: type mismatched
  </refsect1>
 
  <refsect1 id="R1-SQL-DEFAULTCLAUSE-1">
-  <refsect1info>
-   <date>1998-09-11</date>
-  </refsect1info>
   <title id="R1-SQL-DEFAULTCLAUSE-1-TITLE">
    DEFAULT Clause
   </title>
@@ -284,9 +272,6 @@ DEFAULT <replaceable class="PARAMETER">value</replaceable>
    </synopsis>
   </para>
   <refsect2 id="R2-SQL-DEFAULTCLAUSE-1">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
    <title>
     Inputs
    </title>
@@ -323,9 +308,6 @@ DEFAULT <replaceable class="PARAMETER">value</replaceable>
   </refsect2>
 
   <refsect2 id="R2-SQL-DEFAULTCLAUSE-2">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
    <title>
     Outputs
    </title>
@@ -335,9 +317,6 @@ DEFAULT <replaceable class="PARAMETER">value</replaceable>
   </refsect2>
   
   <refsect2 id="R2-SQL-DEFAULTCLAUSE-3">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
    <title>
     Description
    </title>
@@ -415,7 +394,7 @@ DEFAULT <replaceable class="PARAMETER">value</replaceable>
    </para>
 
    <para>
-    In the current release (v6.5), <productname>Postgres</productname>
+    In the current release (v7.0), <productname>Postgres</productname>
     evaluates all default expressions at the time the table is defined.
     Hence, functions which are "non-cacheable" such as
     <function>CURRENT_TIMESTAMP</function> may not produce the desired
@@ -431,9 +410,6 @@ DEFAULT <replaceable class="PARAMETER">value</replaceable>
    </para>
   </refsect2>
   <refsect2 id="R2-SQL-DEFAULTCLAUSE-4">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
    <title>
     Usage
    </title>
@@ -467,9 +443,6 @@ CREATE TABLE distributors (
  </refsect1>
 
  <refsect1 id="R1-SQL-COLUMNCONSTRAINT-1">
-  <refsect1info>
-   <date>1998-09-11</date>
-  </refsect1info>
   <title id="R1-SQL-COLUMNCONSTRAINT-1-TITLE">
    Column CONSTRAINT Clause
   </title>
@@ -482,9 +455,6 @@ CREATE TABLE distributors (
   </para>
 
   <refsect2 id="R2-SQL-COLUMNCONSTRAINT-1">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
    <title>
     Inputs
    </title>
@@ -561,9 +531,6 @@ CREATE TABLE distributors (
   </refsect2>
 
   <refsect2 id="R2-SQL-COLUMNCONSTRAINT-2">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
    <title>
     Description
    </title>
@@ -601,21 +568,19 @@ CREATE TABLE distributors (
      <member>UNIQUE</member>
      <member>CHECK</member>
      <member>NOT NULL</member>
-    </simplelist></para>
+    </simplelist>
+   </para>
+
    <note>
     <para>
-     <productname>Postgres</productname> does not yet 
-     (at release 6.5) support
-     REFERENCES integrity constraints. The parser
-     accepts the REFERENCES syntax but ignores the clause.
+     <productname>Postgres</productname> now
+     (new for v7.0) supports
+     REFERENCES integrity constraints.
     </para>
    </note>
   </refsect2>
    
   <refsect2 id="R2-SQL-NOTNULL-1">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
    <title>
     NOT NULL Constraint
    </title>
@@ -630,9 +595,6 @@ CREATE TABLE distributors (
    </para>
 
    <refsect3 id="R3-SQL-NOTNULL-1">
-    <refsect3info>
-     <date>1998-09-11</date>
-    </refsect3info>
     <title>
      Outputs
     </title>
@@ -663,9 +625,6 @@ ERROR:  ExecAppend: Fail to add null value in not null attribute "<replaceable c
    </refsect3>
 
    <refsect3 id="R3-SQL-NOTNULL-2">
-    <refsect3info>
-     <date>1998-09-11</date>
-    </refsect3info>
     <title>
      Description
     </title>
@@ -674,9 +633,6 @@ ERROR:  ExecAppend: Fail to add null value in not null attribute "<replaceable c
    </refsect3>
 
    <refsect3 id="R3-SQL-NOTNULL-3">
-    <refsect3info>
-     <date>1998-09-11</date>
-    </refsect3info>
     <title>
      Usage
     </title>
@@ -697,9 +653,6 @@ CREATE TABLE distributors (
   </refsect2>
 
   <refsect2 id="R2-SQL-UNIQUECLAUSE-1">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
    <title>
     UNIQUE Constraint
    </title>
@@ -813,9 +766,6 @@ CREATE TABLE distributors (
   </refsect2>
 
   <refsect2 id="R2-SQL-CHECK-1">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
    <title>
     The CHECK Constraint
    </title>
@@ -849,9 +799,6 @@ CREATE TABLE distributors (
    </refsect3>
 
    <refsect3 id="R3-SQL-CHECK-2">
-    <refsect3info>
-     <date>1998-09-11</date>
-    </refsect3info>
     <title>
      Outputs
     </title>
@@ -900,9 +847,6 @@ ERROR:  ExecAppend: rejected due to CHECK constraint "<replaceable class="parame
   </refsect2>
   
   <refsect2 id="R2-SQL-PRIMARYKEY-1">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
    <title>
     PRIMARY KEY Constraint
    </title>
@@ -958,9 +902,6 @@ ERROR: Cannot insert a duplicate key into a unique index.
    </refsect3>
    
    <refsect3 id="R3-SQL-PRIMARYKEY-3">
-    <refsect3info>
-     <date>1998-09-11</date>
-    </refsect3info>
     <title>
      Notes
     </title>
@@ -982,9 +923,6 @@ ERROR: Cannot insert a duplicate key into a unique index.
  </refsect1>
  
  <refsect1 id="R1-SQL-TABLECONSTRAINT-1">
-  <refsect1info>
-   <date>1998-09-11</date>
-  </refsect1info>
   <title>
    Table CONSTRAINT Clause
   </title>
@@ -995,9 +933,6 @@ ERROR: Cannot insert a duplicate key into a unique index.
    </synopsis>
   </para>
   <refsect2 id="R2-SQL-TABLECONSTRAINT-1">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
    <title>
     Inputs
    </title>
@@ -1035,9 +970,6 @@ ERROR: Cannot insert a duplicate key into a unique index.
   </refsect2>
     
   <refsect2 id="R2-SQL-TABLECONSTRAINT-2">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
    <title>
     Outputs
    </title>
@@ -1049,9 +981,6 @@ ERROR: Cannot insert a duplicate key into a unique index.
   </refsect2>
   
   <refsect2 id="R2-SQL-TABLECONSTRAINT-3">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
    <title>
     Description
    </title>
@@ -1067,22 +996,17 @@ ERROR: Cannot insert a duplicate key into a unique index.
      <member>FOREIGN KEY</member>
     </simplelist>
    </para>
+
    <note>
     <para>
-     <productname>Postgres</productname> does not yet 
-     (as of version 6.5) support FOREIGN KEY
-     integrity constraints. The parser understands the FOREIGN KEY syntax,
-     but only prints a notice and otherwise ignores the clause.
-     Foreign keys may be partially emulated by triggers (See the CREATE TRIGGER
-     statement).
+     <productname>Postgres</productname> now
+     supports FOREIGN KEY
+     integrity constraints (new for release 7.0).
     </para>
    </note>
   </refsect2>
  
   <refsect2 id="R2-SQL-UNIQUECLAUSE-4">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
    <title>
     UNIQUE Constraint
    </title>
@@ -1174,9 +1098,6 @@ CREATE TABLE distributors (
   </refsect2>
 
   <refsect2 id="R2-SQL-PRIMARYKEY-4">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
    <title>
     PRIMARY KEY Constraint
    </title>
@@ -1375,9 +1296,6 @@ CREATE TABLE distributors (
   </para>
   
   <refsect2 id="R2-SQL-CREATETABLE-3">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
    <title>
     Notes
    </title>
@@ -1395,9 +1313,6 @@ CREATE TABLE distributors (
   </title>
   
   <refsect2 id="R2-SQL-CREATETABLE-4">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
    <title>
     SQL92
    </title>
@@ -1436,9 +1351,6 @@ CREATE TEMPORARY TABLE actors (
    </para>
 
    <refsect3 id="R3-SQL-UNIQUECLAUSE-1">
-    <refsect3info>
-     <date>1998-09-11</date>
-    </refsect3info>
     <title>
      UNIQUE clause
     </title>
@@ -1467,9 +1379,6 @@ CREATE TEMPORARY TABLE actors (
    </refsect3>
    
    <refsect3 id="R3-SQL-NULL-1">
-    <refsect3info>
-     <date>1998-12-24</date>
-    </refsect3info>
     <title>
      NULL clause
     </title>
@@ -1485,9 +1394,6 @@ CREATE TEMPORARY TABLE actors (
    </refsect3>
    
    <refsect3 id="R3-SQL-NOTNULL-4">
-    <refsect3info>
-     <date>1998-09-11</date>
-    </refsect3info>
     <title>
      NOT NULL clause
     </title>
@@ -1510,9 +1416,6 @@ the column. Not our problem...
 - Thomas 1998-08-16
 
    <REFSECT3 ID="R3-SQL-DEFAULTCLAUSE-1">
-    <REFSECT3INFO>
-     <DATE>1998-09-11</DATE>
-    </REFSECT3INFO>
     <TITLE>
      DEFAULT clause
     </TITLE>
@@ -1530,9 +1433,6 @@ the column. Not our problem...
 -->
 
    <refsect3 id="R3-SQL-CONSTRAINT-3">
-    <refsect3info>
-     <date>1998-09-11</date>
-    </refsect3info>
     <title>
      CONSTRAINT clause
     </title>
@@ -1647,9 +1547,6 @@ CREATE ASSERTION name CHECK ( condition )
    
    
    <refsect3 id="R3-SQL-CHECK-4">
-    <refsect3info>
-     <date>1998-09-11</date>
-    </refsect3info>
     <title>
      CHECK clause
     </title>
@@ -1709,9 +1606,6 @@ ALTER DOMAIN cities
    </refsect3>
 
    <refsect3 id="R3-SQL-PRIMARYKEY-1">
-    <refsect3info>
-     <date>1998-09-11</date>
-    </refsect3info>
     <title>
      PRIMARY KEY clause
     </title>

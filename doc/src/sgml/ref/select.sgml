@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.27 2000/03/26 18:32:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.28 2000/03/27 17:14:43 thomas Exp $
 Postgres documentation
 -->
 
@@ -419,13 +419,15 @@ SELECT title, date_prod + 1 AS newlen FROM films ORDER BY newlen;
     </programlisting></para>
     
    <para>
-    From release 6.4 of PostgreSQL, it is also possible to ORDER BY
-    arbitrary expressions, including fields that do not appear in the
+    It is also possible to ORDER BY
+    arbitrary expressions (an extension to SQL92),
+    including fields that do not appear in the
     SELECT result list.
-    Thus the following statement is now legal:
+    Thus the following statement is legal:
     <programlisting>
 SELECT name FROM distributors ORDER BY code;
     </programlisting>
+
     Note that if an ORDER BY item is a simple name that matches both
     a result column name and an input column name, ORDER BY will interpret
     it as the result column name.  This is the opposite of the choice that
@@ -581,7 +583,7 @@ SELECT name FROM distributors ORDER BY code;
    </para>
 
    <para>
-    As of PostgreSQL 7.0, the
+    As of <productname>Postgres</productname> 7.0, the
     query optimizer takes LIMIT into account when generating a query plan,
     so you are very likely to get different plans (yielding different row
     orders) depending on what you give for LIMIT and OFFSET.  Thus, using

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.12 2000/03/18 18:03:12 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.13 2000/03/27 17:14:42 thomas Exp $
 Postgres documentation
 -->
 
@@ -20,7 +20,7 @@ Postgres documentation
   </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-07-20</date>
+   <date>2000-03-25</date>
   </refsynopsisdivinfo>
   <synopsis>
 CREATE OPERATOR <replaceable>name</replaceable> ( PROCEDURE = <replaceable class="parameter">func_name</replaceable>
@@ -32,7 +32,7 @@ CREATE OPERATOR <replaceable>name</replaceable> ( PROCEDURE = <replaceable class
   
   <refsect2 id="R2-SQL-CREATEOPERATOR-1">
    <refsect2info>
-    <date>1999-04-14</date>
+    <date>2000-03-25</date>
    </refsect2info>
    <title>
     Inputs
@@ -138,7 +138,7 @@ CREATE OPERATOR <replaceable>name</replaceable> ( PROCEDURE = <replaceable class
 
   <refsect2 id="R2-SQL-CREATEOPERATOR-2">
    <refsect2info>
-    <date>1999-04-14</date>
+    <date>2000-03-25</date>
    </refsect2info>
    <title>
     Outputs
@@ -162,7 +162,7 @@ CREATE
 
  <refsect1 id="R1-SQL-CREATEOPERATOR-1">
   <refsect1info>
-   <date>1999-04-14</date>
+   <date>2000-03-25</date>
   </refsect1info>
   <title>
    Description
@@ -248,13 +248,13 @@ CREATE
    Hence, the query optimizer could freely  convert:
 
    <programlisting>
-"0,0,1,1"::box  &gt;&gt;&gt; MYBOXES.description
+box '((0,0),(1,1))'  &gt;&gt;&gt; MYBOXES.description
    </programlisting>
 
    to
 
    <programlisting>
-MYBOXES.description &lt;&lt;&lt; "0,0,1,1"::box
+MYBOXES.description &lt;&lt;&lt; box '((0,0),(1,1))'
    </programlisting>
   </para>
   <para>
@@ -269,11 +269,11 @@ MYBOXES.description &lt;&lt;&lt; "0,0,1,1"::box
    equal, !==.
    The negator link allows the query optimizer to simplify
    <programlisting>
-NOT MYBOXES.description === "0,0,1,1"::box
+NOT MYBOXES.description === box '((0,0),(1,1))'
    </programlisting>
    to
    <programlisting>
-MYBOXES.description !== "0,0,1,1"::box
+MYBOXES.description !== box '((0,0),(1,1))'
    </programlisting>
   </para>
   <para>
@@ -331,7 +331,7 @@ MYBOXES.description !== "0,0,1,1"::box
    The RESTRICT and JOIN options assist the query optimizer in estimating
    result sizes.  If a clause of the form:
    <programlisting>
-MYBOXES.description &lt;&lt;&lt; "0,0,1,1"::box
+MYBOXES.description &lt;&lt;&lt; box '((0,0),(1,1))'
    </programlisting>
    is present in the qualification,
    then <productname>Postgres</productname> may have to
@@ -342,7 +342,7 @@ MYBOXES.description &lt;&lt;&lt; "0,0,1,1"::box
    <command>CREATE FUNCTION</command>) which accepts arguments of the correct
    data types and returns a floating point  number.   The
    query  optimizer  simply  calls this function, passing the
-   parameter "0,0,1,1" and multiplies the result by the relation
+   parameter <literal>((0,0),(1,1))</literal> and multiplies the result by the relation
    size to get the expected number of instances.
   </para>
   <para>
@@ -356,11 +356,11 @@ MYBOXES.description &lt;&lt;&lt; "0,0,1,1"::box
   <para>
    The difference between the function
    <programlisting>
-my_procedure_1 (MYBOXES.description, "0,0,1,1"::box)
+my_procedure_1 (MYBOXES.description, box '((0,0),(1,1))')
    </programlisting>
    and the operator
    <programlisting>
-MYBOXES.description === "0,0,1,1"::box
+MYBOXES.description === box '((0,0),(1,1))'
    </programlisting>
    is  that  <productname>Postgres</productname>
    attempts to optimize operators and can
@@ -373,7 +373,7 @@ MYBOXES.description === "0,0,1,1"::box
   
   <refsect2 id="R2-SQL-CREATEOPERATOR-3">
    <refsect2info>
-    <date>1999-04-14</date>
+    <date>2000-03-25</date>
    </refsect2info>
    <title>
     Notes
@@ -418,7 +418,7 @@ CREATE OPERATOR === (
   
   <refsect2 id="R2-SQL-CREATEOPERATOR-4">
    <refsect2info>
-    <date>1999-04-14</date>
+    <date>2000-03-25</date>
    </refsect2info>
    <title>
     SQL92

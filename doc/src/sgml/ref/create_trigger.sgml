@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.8 1999/07/22 15:09:08 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.9 2000/03/27 17:14:42 thomas Exp $
 Postgres documentation
 -->
 
@@ -20,7 +20,7 @@ Postgres documentation
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-07-20</date>
+   <date>2000-03-25</date>
   </refsynopsisdivinfo>
   <synopsis>
 CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTER } { <replaceable class="PARAMETER">event</replaceable> [OR ...] }
@@ -152,7 +152,7 @@ CREATE
     Only the relation owner may create a trigger on this relation.
    </para>
    <para>
-    As of the current release (v6.4), STATEMENT triggers are not implemented.
+    As of the current release (v7.0), STATEMENT triggers are not implemented.
    </para>
    <para>
     Refer to <command>DROP TRIGGER</command> for information on how to 
@@ -216,11 +216,6 @@ CREATE TABLE distributors (
     ON UPDATE CASCADE ON DELETE CASCADE  
 );
     </programlisting>
-   </para>
-
-   <para>
-    However, foreign keys are not yet implemented (as of version 6.5) in
-    <productname>Postgres</productname>.
    </para>
   </refsect2>
  </refsect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.7 1999/12/18 08:34:49 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.8 2000/03/27 17:14:43 thomas Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    <application>vacuumdb</application>
   </refname>
   <refpurpose>
-   Clean and analyze a <productname>PostgreSQL</productname> database
+   Clean and analyze a <productname>Postgres</productname> database
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
@@ -210,7 +210,7 @@ vacuumdb [ <replaceable class="parameter">connection options</replaceable> ] [ -
 
   <para>
    <application>vacuumdb</application> is a utility for cleaning a
-   <productname>PostgreSQL</productname> database.
+   <productname>Postgres</productname> database.
    <application>vacuumdb</application> will also generate internal statistics
    used by the <productname>Postgres</productname> query optimizer.
   </para>
@@ -219,7 +219,7 @@ vacuumdb [ <replaceable class="parameter">connection options</replaceable> ] [ -
    <application>vacuumdb</application> is a shell script wrapper around the
    backend command
    <xref linkend="SQL-VACUUM" endterm="SQL-VACUUM-title"> via
-   the <productname>PostgreSQL</productname> interactive terminal
+   the <productname>Postgres</productname> interactive terminal
    <xref linkend="APP-PSQL" endterm="APP-PSQL-title">. There is no effective
    difference between vacuuming databases via this or other methods.
    <application>psql</application> must be found by the script and

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.8 2000/01/12 19:36:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.9 2000/03/27 17:14:42 thomas Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    <application>createuser</application>
   </refname>
   <refpurpose>
-   Create a new <productname>PostgreSQL</productname> user
+   Create a new <productname>Postgres</productname> user
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
@@ -139,8 +139,8 @@ createuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceab
       <term><replaceable class="parameter">username</replaceable></term>
       <listitem>
        <para>
-	Specifies the name of the <productname>PostgreSQL</productname> user to be created. 
-	This name must be unique among all <productname>PostgreSQL</productname> users.
+	Specifies the name of the <productname>Postgres</productname> user to be created. 
+	This name must be unique among all <productname>Postgres</productname> users.
        </para>
       </listitem>
      </varlistentry>  
@@ -203,7 +203,7 @@ createuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceab
   </title>
   <para>
    <application>createuser</application> creates a 
-   new <productname>PostgreSQL</productname> user.  
+   new <productname>Postgres</productname> user.  
    Only users with <literal>usesuper</literal> set in
    the <literal>pg_shadow</literal> class can create 
    new <productname>Postgres</productname> users.
@@ -213,7 +213,7 @@ createuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceab
    <application>createuser</application> is a shell script wrapper around the
    <acronym>SQL</acronym> command
    <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title"> via
-   the <productname>PostgreSQL</productname> interactive terminal
+   the <productname>Postgres</productname> interactive terminal
    <xref linkend="APP-PSQL" endterm="APP-PSQL-title">. Thus, there is nothing
    special about creating users via this or other methods. This means
    that the <application>psql</application> must be found by the script and that

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/abort.sgml,v 1.6 2000/03/26 18:32:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/abort.sgml,v 1.7 2000/03/27 17:14:42 thomas Exp $
 Postgres documentation
 -->
 
@@ -129,7 +129,7 @@ ABORT WORK;
     SQL92
    </title>
    <para>
-    This command is a <productname>PostgreSQL</productname> extension present
+    This command is a <productname>Postgres</productname> extension present
     for historical reasons. <command>ROLLBACK</command> is the <acronym>SQL92</acronym>
     equivalent command.
    </para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.9 2000/02/10 20:08:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.10 2000/03/27 17:14:42 thomas Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    <application>createdb</application>
   </refname>
   <refpurpose>
-   Create a new <productname>PostgreSQL</productname> database
+   Create a new <productname>Postgres</productname> database
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
@@ -120,7 +120,7 @@ createdb [ <replaceable class="parameter">options</replaceable> ] <replaceable c
       <listitem>
        <para>
 	Specifies the name of the database to be created.  The name must be
-	unique among all <productname>PostgreSQL</productname> databases in this installation.
+	unique among all <productname>Postgres</productname> databases in this installation.
         The default is to create a database with the same name as the
         current system user.
        </para>
@@ -196,7 +196,7 @@ createdb [ <replaceable class="parameter">options</replaceable> ] <replaceable c
    Description
   </title>
   <para>
-   <application>createdb</application> creates a new <productname>PostgreSQL</productname>
+   <application>createdb</application> creates a new <productname>Postgres</productname>
    database. The user who executes this command becomes the database owner.
   </para>
 
@@ -204,7 +204,7 @@ createdb [ <replaceable class="parameter">options</replaceable> ] <replaceable c
    <application>createdb</application> is a shell script wrapper around the
    <acronym>SQL</acronym> command
    <xref linkend="SQL-CREATEDATABASE" endterm="SQL-CREATEDATABASE-title"> via
-   the <productname>PostgreSQL</productname> interactive terminal
+   the <productname>Postgres</productname> interactive terminal
    <xref linkend="APP-PSQL" endterm="APP-PSQL-title">. Thus, there is nothing
    special about creating databases via this or other methods. This means
    that the <application>psql</application> must be found by the script and that

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/begin.sgml,v 1.10 2000/01/29 16:58:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/begin.sgml,v 1.11 2000/03/27 17:14:42 thomas Exp $
 Postgres documentation
 -->
 
@@ -95,7 +95,7 @@ NOTICE:  BEGIN: already a transaction in progress
   </title>
 
   <para>
-   By default, <productname>PostgreSQL</productname> executes transactions
+   By default, <productname>Postgres</productname> executes transactions
    in <firstterm>unchained mode</firstterm>
    (also known as <quote>autocommit</quote> in other database
    systems).
@@ -116,7 +116,7 @@ NOTICE:  BEGIN: already a transaction in progress
 
   <para>
    The default transaction isolation level in
-   <productname>PostgreSQL</productname>
+   <productname>Postgres</productname>
    is READ COMMITTED, where queries inside the transaction see only changes
    committed before query execution. So, you have to use 
    <command>SET TRANSACTION ISOLATION LEVEL SERIALIZABLE</command>
@@ -128,7 +128,7 @@ NOTICE:  BEGIN: already a transaction in progress
   </para>
 
   <para>
-   If the transaction is committed, <productname>PostgreSQL</productname> 
+   If the transaction is committed, <productname>Postgres</productname> 
    will ensure either that all updates are done or else that none of
    them are done. Transactions have the standard <acronym>ACID</acronym>
    (atomic, consistent, isolatable, and durable) property.
@@ -185,7 +185,7 @@ BEGIN WORK;
 
    <para>
     <command>BEGIN</command>
-    is a <productname>PostgreSQL</productname> language extension.
+    is a <productname>Postgres</productname> language extension.
     There is no explicit <command>BEGIN</command>
     command in <acronym>SQL92</acronym>;
     transaction initiation is always implicit and it terminates either 

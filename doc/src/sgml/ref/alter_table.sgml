@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.10 2000/01/29 16:58:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.11 2000/03/27 17:14:42 thomas Exp $
 Postgres documentation
 -->
 
@@ -247,7 +247,7 @@ ALTER TABLE distributors RENAME TO suppliers;
 
     <para>
      SQL92 specifies some additional capabilities for <command>ALTER TABLE</command>
-     statement which are not yet directly supported by <productname>PostgreSQL</productname>:
+     statement which are not yet directly supported by <productname>Postgres</productname>:
 
     <variablelist>
      <varlistentry>
@@ -308,8 +308,8 @@ DROP TABLE temp;
    </para>
 
    <para>
-    The clauses to rename columns and tables are <productname>PostgreSQL</productname>
-    extensions. SQL92 does not provide for them.
+    The clauses to rename columns and tables are <productname>Postgres</productname>
+    extensions from SQL92.
    </para>
  
   </refsect2>

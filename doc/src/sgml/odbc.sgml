@@ -1,592 +1,597 @@
-<Chapter Id="odbc">
-<DocInfo>
-<AuthorGroup>
-<Author>
-<FirstName>Tim</FirstName>
-<Surname>Goeke</Surname>
-</Author>
-<Author>
-<FirstName>Thomas</FirstName>
-<Surname>Lockhart</Surname>
-</Author>
-</AuthorGroup>
-<Date>1998-10-21</Date>
-</DocInfo>
+ <chapter id="odbc">
+  <docinfo>
+   <authorgroup>
+    <author>
+     <firstname>Tim</firstname>
+     <surname>Goeke</surname>
+    </author>
+    <author>
+     <firstname>Thomas</firstname>
+     <surname>Lockhart</surname>
+    </author>
+   </authorgroup>
+   <date>1998-10-21</date>
+  </docinfo>
 
-<Title>ODBC Interface</Title>
+  <title>ODBC Interface</title>
 
-<Note>
-<Para>
-Background information originally by
- <ULink url="mailto:tgoeke@xpressway.com">Tim Goeke</ULink>
-</Para>
-</Note>
+  <note>
+   <para>
+    Background information originally by
+    <ulink url="mailto:tgoeke@xpressway.com">Tim Goeke</ulink>
+   </para>
+  </note>
 
-<Para>
-<acronym>ODBC</acronym> (Open Database Connectivity) is an abstract 
-<acronym>API</acronym> 
-which allows you to write applications which can interoperate
-with various <acronym>RDBMS</acronym> servers.
-<acronym>ODBC</acronym> provides a product-neutral interface 
-between frontend applications and database servers,
-allowing a user or developer to write applications which are 
-transportable between servers from different manufacturers..
-</Para>
+  <para>
+   <acronym>ODBC</acronym> (Open Database Connectivity) is an abstract 
+   <acronym>API</acronym> 
+   which allows you to write applications which can interoperate
+   with various <acronym>RDBMS</acronym> servers.
+   <acronym>ODBC</acronym> provides a product-neutral interface 
+   between frontend applications and database servers,
+   allowing a user or developer to write applications which are 
+   transportable between servers from different manufacturers..
+  </para>
 
-<Sect1>
-<Title>Background</Title>
+  <sect1>
+   <title>Background</title>
 
-<Para>
-The <acronym>ODBC</acronym> <acronym>API</acronym> matches up 
-on the backend to an <acronym>ODBC</acronym>-compatible data source.
-This could be anything from a text file to an Oracle or 
-<productname>Postgres</productname> <acronym>RDBMS</acronym>.
-</Para>
+   <para>
+    The <acronym>ODBC</acronym> <acronym>API</acronym> matches up 
+    on the backend to an <acronym>ODBC</acronym>-compatible data source.
+    This could be anything from a text file to an Oracle or 
+    <productname>Postgres</productname> <acronym>RDBMS</acronym>.
+   </para>
 
-<Para>
-The backend access come from <acronym>ODBC</acronym> drivers, 
-or vendor specifc drivers that
-allow data access.   <productname>psqlODBC</productname> is such a driver,
- along with others that are
-available, such as the OpenLink <acronym>ODBC</acronym> drivers.
-</Para>
+   <para>
+    The backend access come from <acronym>ODBC</acronym> drivers, 
+    or vendor specifc drivers that
+    allow data access.   <productname>psqlODBC</productname> is such a driver,
+    along with others that are
+    available, such as the OpenLink <acronym>ODBC</acronym> drivers.
+   </para>
 
-<Para>
-Once you write an <acronym>ODBC</acronym> application, 
-you <emphasis>should</emphasis> be able to connect to <emphasis>any</emphasis>
-back end database, regardless of the vendor, as long as the database schema
-is the same.
-</Para>
+   <para>
+    Once you write an <acronym>ODBC</acronym> application, 
+    you <emphasis>should</emphasis> be able to connect to <emphasis>any</emphasis>
+    back end database, regardless of the vendor, as long as the database schema
+    is the same.
+   </para>
 
-<Para>
-For example. you could have <productname>MS SQL Server</productname>
- and <productname>Postgres</productname> servers which have
-exactly the same data.  Using <acronym>ODBC</acronym>, 
-your Windows application would make exactly the
-same calls and the back end data source would look the same (to the Windows
-app).
-</Para>
-
-<para>
-<ulink url="http://www.insightdist.com/">Insight Distributors</ulink> 
-provides active and ongoing
-support for the core <productname>psqlODBC</productname> distribution. 
-They provide a
-<ulink url="http://www.insightdist.com/psqlodbc/"><acronym>FAQ</acronym></ulink>,
- ongoing development on the code base, and actively participate on the 
-<ulink url="mailto:interfaces@postgresql.org">interfaces mailing list</ulink>.
-</Para>
-</sect1>
-
-<sect1>
-<title><productname>Windows</productname> Applications</title>
-
-<Para>
-In the real world, differences in drivers and the level of 
-<acronym>ODBC</acronym> support
-lessens the potential of <acronym>ODBC</acronym>:
-
-<ItemizedList Mark="bullet" Spacing="compact">
-<ListItem>
-<Para>
-Access, Delphi, and Visual Basic all support <acronym>ODBC</acronym> directly.
-</Para>
-</listitem>
-<ListItem>
-<Para>
-Under C++, such as Visual C++, 
-you can use the C++ <acronym>ODBC</acronym> <acronym>API</acronym>.
-</Para>
-</listitem>
-
-<ListItem>
-<Para>
-In Visual C++, you can use the CRecordSet class, which wraps the 
-<acronym>ODBC</acronym> <acronym>API</acronym>
-set within an MFC 4.2 class.  This is the easiest route if you are doing
-Windows C++ development under Windows NT.
-</Para>
-</listitem>
-</ItemizedList>
-</Para>
-
-<sect2>
-<title>Writing Applications</title>
-
-<Para>
-<quote>
-If I write an application for <productname>Postgres</productname> 
-can I write it using <acronym>ODBC</acronym> calls
-to the <productname>Postgres</productname> server, 
-or is that only when another database program 
-like MS SQL Server or Access needs to access the data?</quote>
-</para>
-<Para>
-The <acronym>ODBC</acronym> <acronym>API</acronym>
-is the way to go.
-For <productname>Visual C++</productname> coding you can find out more at
-Microsoft's web site or in your <productname>VC++</productname> docs.
-</Para>
-
-<Para>
-Visual Basic and the other RAD tools have Recordset objects 
-that use <acronym>ODBC</acronym>
-directly to access data.  Using the data-aware controls, you can quickly
-link to the <acronym>ODBC</acronym> back end database 
-(<Emphasis>very</Emphasis> quickly).
-</Para>
-
-<Para>
-Playing around with MS Access will help you sort this out.  Try using
-<literal>File->Get External Data</literal>.
-</Para>
-
-<Tip>
-<Para>
-You'll have to set up a DSN first.
-</Para>
-</Tip>
+   <para>
+    For example. you could have <productname>MS SQL Server</productname>
+    and <productname>Postgres</productname> servers which have
+    exactly the same data.  Using <acronym>ODBC</acronym>, 
+    your Windows application would make exactly the
+    same calls and the back end data source would look the same (to the Windows
+    app).
+   </para>
 
 <!--
-<Para>
-<Tip>
-<Para>
-The <productname>Postgres</productname> datetime type will break MS Access.
-</Para>
-</Tip>
+   <para>
+    <ulink url="http://www.insightdist.com/">Insight Distributors</ulink> 
+    provides active and ongoing
+    support for the core <productname>psqlODBC</productname> distribution. 
+    They provide a
+    <ulink url="http://www.insightdist.com/psqlodbc/"><acronym>FAQ</acronym></ulink>,
+    ongoing development on the code base, and actively participate on the 
+    <ulink url="mailto:interfaces@postgresql.org">interfaces mailing list</ulink>.
+   </para>
 -->
-</sect2>
-</sect1>
+  </sect1>
 
-<sect1>
-<title>Unix Installation</title>
+  <sect1>
+   <title><productname>Windows</productname> Applications</title>
 
-<para>
-<productname>ApplixWare</productname> has an 
-<acronym>ODBC</acronym> database interface
-supported on at least some platforms. 
-<productname>ApplixWare</productname> v4.4.1 has been
-demonstrated under Linux with <productname>Postgres</productname> v6.4 
-using the <productname>psqlODBC</productname>
-driver contained in the <productname>Postgres</productname> distribution.
-</Para>
+   <para>
+    In the real world, differences in drivers and the level of 
+    <acronym>ODBC</acronym> support
+    lessens the potential of <acronym>ODBC</acronym>:
 
-<sect2>
-<title>Building the Driver</title>
+    <itemizedlist spacing="compact" mark="bullet">
+     <listitem>
+      <para>
+       Access, Delphi, and Visual Basic all support <acronym>ODBC</acronym> directly.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Under C++, such as Visual C++, 
+       you can use the C++ <acronym>ODBC</acronym> <acronym>API</acronym>.
+      </para>
+     </listitem>
 
-<para>
-The first thing
-to note about the <productname>psqlODBC</productname> driver
- (or any <acronym>ODBC</acronym> driver) is that there must
-exist a driver manager on the system where
- the <acronym>ODBC</acronym> driver is to be
-used. There exists a freeware <acronym>ODBC</acronym> driver for Unix
- called <productname>iodbc</productname> which
-can be obtained from various locations on the Net, including at
-<ulink url="http://www.as220.org/FreeODBC/iodbc-2.12.shar.Z">AS200</ulink>. 
-Instructions for installing <productname>iodbc</productname>
- are beyond the scope of this
-document, but there is a <filename>README</filename>
- that can be found inside the <productname>iodbc</productname> compressed
-.shar file that should explain how to get it up and running.
-</Para>
+     <listitem>
+      <para>
+       In Visual C++, you can use the CRecordSet class, which wraps the 
+       <acronym>ODBC</acronym> <acronym>API</acronym>
+       set within an MFC 4.2 class.  This is the easiest route if you are doing
+       Windows C++ development under Windows NT.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
 
-<para>
-Having said that, any driver manager that you can find for your platform
-should support the <productname>psqlODBC</productname> driver
- or any <acronym>ODBC</acronym> driver.
-</Para>
+   <sect2>
+    <title>Writing Applications</title>
 
-<para>
-The Unix configuration files for <productname>psqlODBC</productname>
- have recently been extensively
-reworked to allow for easy building on supported platforms as
-well as to allow for support of other Unix platforms in the future.
-The new configuration and build files for the driver should make it
-a simple process to build the driver on the supported platforms. Currently
-these include Linux and FreeBSD but we are hoping other users will
-contribute the necessary information to quickly expand the number of
-platforms for which the driver can be built.
-</Para>
+    <para>
+     <quote>
+      If I write an application for <productname>Postgres</productname> 
+      can I write it using <acronym>ODBC</acronym> calls
+      to the <productname>Postgres</productname> server, 
+      or is that only when another database program 
+      like MS SQL Server or Access needs to access the data?</quote>
+    </para>
+    <para>
+     The <acronym>ODBC</acronym> <acronym>API</acronym>
+     is the way to go.
+     For <productname>Visual C++</productname> coding you can find out more at
+     Microsoft's web site or in your <productname>VC++</productname> docs.
+    </para>
 
-<para>
-There are actually two separate methods to build the driver depending on
-how you received it and these differences come down to only where and how to
-run <application>configure</application> and <application>make</application>. 
-The driver can be built in a standalone, client-only installation, or can be 
-built as a part of the main <productname>Postgres</productname> distribution.
-The standalone installation is convenient if you have <acronym>ODBC</acronym>
-client applications on multiple, heterogeneous platforms. The integrated
-installation is convenient when the target client is the same as the
-server, or when the client and server have similar runtime configurations.
-</Para>
+    <para>
+     Visual Basic and the other RAD tools have Recordset objects 
+     that use <acronym>ODBC</acronym>
+     directly to access data.  Using the data-aware controls, you can quickly
+     link to the <acronym>ODBC</acronym> back end database 
+     (<emphasis>very</emphasis> quickly).
+    </para>
 
-<para>
-Specifically if you have received the <productname>psqlODBC</productname>
- driver as part of the <productname>Postgres</productname> distribution
- (from now on referred to as an "integrated" build) then you will
-configure and make the <acronym>ODBC</acronym> driver
- from the top level source directory
-of the <productname>Postgres</productname> distribution
- along with the rest of its libraries.
-If you received the driver as a standalone package than you will run
-configure and make from the directory in which you unpacked the
-driver source.
-</Para>
+    <para>
+     Playing around with MS Access will help you sort this out.  Try using
+     <literal>File->Get External Data</literal>.
+    </para>
 
-<procedure>
-<title>Integrated Installation</title>
+    <tip>
+     <para>
+      You'll have to set up a DSN first.
+     </para>
+    </tip>
 
-<para>
-This installation procedure is appropriate for an integrated installation.
-</Para>
+    <!--
+   <Para>
+   <Tip>
+   <Para>
+    The <productname>Postgres</productname> datetime type will break MS Access.
+   </Para>
+   </Tip>
+    -->
+   </sect2>
+  </sect1>
 
-<step performance="required">
-<para>
-Specify the <option>--with-odbc</option>
-command-line argument for <application>src/configure</application>:
+  <sect1>
+   <title>Unix Installation</title>
 
-<programlisting>
-% ./configure --with-odbc
-% make
-</programlisting>
-</Para>
-</step>
-<step performance="required">
-<para>
-Rebuild the <productname>Postgres</productname> distribution:
+   <para>
+    <productname>ApplixWare</productname> has an 
+    <acronym>ODBC</acronym> database interface
+    supported on at least some platforms. 
+    <productname>ApplixWare</productname> v4.4.1 has been
+    demonstrated under Linux with <productname>Postgres</productname> v6.4 
+    using the <productname>psqlODBC</productname>
+    driver contained in the <productname>Postgres</productname> distribution.
+   </para>
 
-<programlisting>
-% make install
-</programlisting>
-</Para>
-</step>
-</procedure>
+   <sect2>
+    <title>Building the Driver</title>
 
-<para>
-Once configured, the <acronym>ODBC</acronym> driver will be built and installed
-into the areas defined for the other components of the
-<productname>Postgres</productname> system. The installation-wide
-<acronym>ODBC</acronym> configuration file will be placed into
-the top directory of the Postgres target tree (<envar>POSTGRESDIR</envar>).
-This can be overridden from the <application>make</application> command-line
-as
-<programlisting>
-% make ODBCINST=<replaceable>filename</replaceable> install
-</programlisting>
-</Para>
+    <para>
+     The first thing
+     to note about the <productname>psqlODBC</productname> driver
+     (or any <acronym>ODBC</acronym> driver) is that there must
+     exist a driver manager on the system where
+     the <acronym>ODBC</acronym> driver is to be
+     used. There exists a freeware <acronym>ODBC</acronym> driver for Unix
+     called <productname>iodbc</productname> which
+     can be obtained from various locations on the Net, including at
+     <ulink url="http://www.as220.org/FreeODBC/iodbc-2.12.shar.Z">AS200</ulink>. 
+     Instructions for installing <productname>iodbc</productname>
+     are beyond the scope of this
+     document, but there is a <filename>README</filename>
+     that can be found inside the <productname>iodbc</productname> compressed
+     .shar file that should explain how to get it up and running.
+    </para>
 
-<procedure>
-<title>Pre-v6.4 Integrated Installation</title>
+    <para>
+     Having said that, any driver manager that you can find for your platform
+     should support the <productname>psqlODBC</productname> driver
+     or any <acronym>ODBC</acronym> driver.
+    </para>
 
-<para>
-If you have a <productname>Postgres</productname> installation older than
-v6.4, you have the original source tree available, 
-and you want to use the newest version of the <acronym>ODBC</acronym>
-driver, then you may want to try this form of installation.
-</Para>
+    <para>
+     The Unix configuration files for <productname>psqlODBC</productname>
+     have recently been extensively
+     reworked to allow for easy building on supported platforms as
+     well as to allow for support of other Unix platforms in the future.
+     The new configuration and build files for the driver should make it
+     a simple process to build the driver on the supported platforms. Currently
+     these include Linux and FreeBSD but we are hoping other users will
+     contribute the necessary information to quickly expand the number of
+     platforms for which the driver can be built.
+    </para>
 
-<step performance="required">
-<para>
-Copy the output tar file to your target system and unpack it into a 
-clean directory.
-</Para>
-</step>
-<step performance="required">
-<para>
-From the directory containing the
-sources, type:
+    <para>
+     There are actually two separate methods to build the driver depending on
+     how you received it and these differences come down to only where and how to
+     run <application>configure</application> and <application>make</application>. 
+     The driver can be built in a standalone, client-only installation, or can be 
+     built as a part of the main <productname>Postgres</productname> distribution.
+     The standalone installation is convenient if you have <acronym>ODBC</acronym>
+     client applications on multiple, heterogeneous platforms. The integrated
+     installation is convenient when the target client is the same as the
+     server, or when the client and server have similar runtime configurations.
+    </para>
 
-<programlisting>
-% ./configure
-% make
-% make POSTGRESDIR=<replaceable class="parameter">PostgresTopDir</replaceable> install
-</programlisting>
-</Para>
-</step>
+    <para>
+     Specifically if you have received the <productname>psqlODBC</productname>
+     driver as part of the <productname>Postgres</productname> distribution
+     (from now on referred to as an "integrated" build) then you will
+     configure and make the <acronym>ODBC</acronym> driver
+     from the top level source directory
+     of the <productname>Postgres</productname> distribution
+     along with the rest of its libraries.
+     If you received the driver as a standalone package than you will run
+     configure and make from the directory in which you unpacked the
+     driver source.
+    </para>
 
-<step performance="optional">
-<para>
-If you would like to install components into different trees, 
-then you can specify various destinations explicitly:
+    <procedure>
+     <title>Integrated Installation</title>
 
-<programlisting>
-% make BINDIR=bindir  LIBDIR=libdir  HEADERDIR=headerdir ODBCINST=instfile install
-</programlisting>
-</Para>
-</step>
-</procedure>
+     <para>
+      This installation procedure is appropriate for an integrated installation.
+     </para>
 
-<procedure>
-<title>Standalone Installation</title>
+     <step performance="required">
+      <para>
+       Specify the <option>--with-odbc</option>
+       command-line argument for <application>src/configure</application>:
 
-<para>
-A standalone installation is not integrated with or built on the normal
-<productname>Postgres</productname> distribution. It should be best suited
-for building the <acronym>ODBC</acronym> driver for multiple, heterogeneous
-clients who do not have a locally-installed <productname>Postgres</productname>
-source tree.
-</Para>
+       <programlisting>
+	% ./configure --with-odbc
+	% make
+       </programlisting>
+      </para>
+     </step>
+     <step performance="required">
+      <para>
+       Rebuild the <productname>Postgres</productname> distribution:
 
-<para>
-The default location for libraries and headers 
-for the standalone installation is <filename>/usr/local/lib</filename>
- and <filename>/usr/local/include/iodbc</filename>, respectively.
-There is another system wide configuration file that gets installed
-as <filename>/share/odbcinst.ini</filename> (if <filename>/share</filename>
- exists) or as <filename>/etc/odbcinst.ini</filename>
- (if <filename>/share</filename> does not exist).
-</Para>
+       <programlisting>
+	% make install
+       </programlisting>
+      </para>
+     </step>
+    </procedure>
 
-<note>
-<para>
-Installation of files into <filename>/share</filename>
- or <filename>/etc</filename> requires system root privileges.
-Most installation steps for <productname>Postgres</productname> do not
-have this requirement, and you can choose another destination which
-is writable by your non-root <productname>Postgres</productname> superuser
-account instead.
-</Para>
-</note>
+    <para>
+     Once configured, the <acronym>ODBC</acronym> driver will be built and installed
+     into the areas defined for the other components of the
+     <productname>Postgres</productname> system. The installation-wide
+     <acronym>ODBC</acronym> configuration file will be placed into
+     the top directory of the Postgres target tree (<envar>POSTGRESDIR</envar>).
+     This can be overridden from the <application>make</application> command-line
+     as
+     <programlisting>
+      % make ODBCINST=<replaceable>filename</replaceable> install
+     </programlisting>
+    </para>
 
-<step performance="required">
-<para>
-The standalone installation distribution can be built from the
-<productname>Postgres</productname> distribution or may be obtained from 
-<ulink url="http://www.insightdist.com/psqlodbc">Insight Distributors</ulink>,
-the current maintainers of the non-Unix sources.
-</Para>
+    <procedure>
+     <title>Pre-v6.4 Integrated Installation</title>
 
-<para>
-Copy the zip
-or gzipped tarfile to an empty directory. If using the zip package
-unzip it with the command 
-<programlisting>
-% unzip -a <replaceable>packagename</replaceable>
-</programlisting>
+     <para>
+      If you have a <productname>Postgres</productname> installation older than
+      v6.4, you have the original source tree available, 
+      and you want to use the newest version of the <acronym>ODBC</acronym>
+      driver, then you may want to try this form of installation.
+     </para>
 
-The <option>-a</option> option
-is necessary to get rid of <acronym>DOS</acronym> 
-CR/LF pairs in the source files.
-</Para>
+     <step performance="required">
+      <para>
+       Copy the output tar file to your target system and unpack it into a 
+       clean directory.
+      </para>
+     </step>
+     <step performance="required">
+      <para>
+       From the directory containing the
+       sources, type:
 
-<para>
-If you have the gzipped tar package than simply run
+       <programlisting>
+	% ./configure
+	% make
+	% make POSTGRESDIR=<replaceable class="parameter">PostgresTopDir</replaceable> install
+       </programlisting>
+      </para>
+     </step>
 
-<programlisting>
-tar -xzf <replaceable>packagename</replaceable>
-</programlisting>
-</Para>
+     <step performance="optional">
+      <para>
+       If you would like to install components into different trees, 
+       then you can specify various destinations explicitly:
 
-<substeps>
+       <programlisting>
+	% make BINDIR=bindir  LIBDIR=libdir  HEADERDIR=headerdir ODBCINST=instfile install
+       </programlisting>
+      </para>
+     </step>
+    </procedure>
 
-<step performance="optional">
-<para>
-To create a tar file for a complete standalone installation
-from the main <productname>Postgres</productname> source tree:
-</Para>
-</step>
-</substeps>
-</step>
-<step performance="required">
-<para>
-Configure the main <productname>Postgres</productname> distribution.
-</Para>
-</step>
-<step performance="required">
-<para>
-Create the tar file:
+    <procedure>
+     <title>Standalone Installation</title>
 
-<programlisting>
-% cd interfaces/odbc
-% make standalone
-</programlisting>
-</Para>
-</step>
+     <para>
+      A standalone installation is not integrated with or built on the normal
+      <productname>Postgres</productname> distribution. It should be best suited
+      for building the <acronym>ODBC</acronym> driver for multiple, heterogeneous
+      clients who do not have a locally-installed <productname>Postgres</productname>
+      source tree.
+     </para>
 
-<step performance="required">
-<para>
-Copy the output tar file to your target system. Be sure to transfer as
-a binary file if using <application>ftp</application>.
-</Para>
-</step>
+     <para>
+      The default location for libraries and headers 
+      for the standalone installation is <filename>/usr/local/lib</filename>
+      and <filename>/usr/local/include/iodbc</filename>, respectively.
+      There is another system wide configuration file that gets installed
+      as <filename>/share/odbcinst.ini</filename> (if <filename>/share</filename>
+      exists) or as <filename>/etc/odbcinst.ini</filename>
+      (if <filename>/share</filename> does not exist).
+     </para>
 
-<step performance="required">
-<para>
-Unpack the tar file into a clean
-directory.
-</Para>
-</step>
+     <note>
+      <para>
+       Installation of files into <filename>/share</filename>
+       or <filename>/etc</filename> requires system root privileges.
+       Most installation steps for <productname>Postgres</productname> do not
+       have this requirement, and you can choose another destination which
+       is writable by your non-root <productname>Postgres</productname> superuser
+       account instead.
+      </para>
+     </note>
 
-<step performance="required">
-<para>
-Configure the standalone installation:
+     <step performance="required">
+      <para>
+       The standalone installation distribution can be built from the
+       <productname>Postgres</productname> distribution or may be obtained from 
+       <ulink url="http://www.insightdist.com/psqlodbc">Insight Distributors</ulink>,
+       the current maintainers of the non-Unix sources.
+      </para>
 
-<programlisting>
-% ./configure
-</programlisting>
-</Para>
+      <para>
+       Copy the zip
+       or gzipped tarfile to an empty directory. If using the zip package
+       unzip it with the command 
+       <programlisting>
+	% unzip -a <replaceable>packagename</replaceable>
+       </programlisting>
 
-<para>
-The configuration can be done with options:
+       The <option>-a</option> option
+       is necessary to get rid of <acronym>DOS</acronym> 
+       CR/LF pairs in the source files.
+      </para>
 
-<programlisting>
-% ./configure --prefix=<replaceable>rootdir</replaceable> --with-odbc=<replaceable>inidir</replaceable>
-</programlisting>
+      <para>
+       If you have the gzipped tar package than simply run
 
-where <option>--prefix</option> installs the libraries and headers in
-the directories <filename><replaceable>rootdir</replaceable>/lib</filename> and
-<filename><replaceable>rootdir</replaceable>/include/iodbc</filename>, and
-<option>--with-odbc</option> installs <filename>odbcinst.ini</filename> in the
-specified directory.
-</Para>
+       <programlisting>
+	tar -xzf <replaceable>packagename</replaceable>
+       </programlisting>
+      </para>
 
-<para>
-Note that both of these options can also be used from the integrated build
-but be aware that <emphasis>when used in the integrated build</emphasis>
-<option>--prefix</option> will also apply to the rest of
-your <productname>Postgres</productname> installation.
-<option>--with-odbc</option> applies only to the configuration file
- <filename>odbcinst.ini</filename>.
-</Para>
-</step>
+      <substeps>
 
-<step performance="required">
-<para>
-Compile and link the source code:
+       <step performance="optional">
+	<para>
+	 To create a tar file for a complete standalone installation
+	 from the main <productname>Postgres</productname> source tree:
+	</para>
+       </step>
+      </substeps>
+     </step>
+     <step performance="required">
+      <para>
+       Configure the main <productname>Postgres</productname> distribution.
+      </para>
+     </step>
+     <step performance="required">
+      <para>
+       Create the tar file:
 
-<programlisting>
-% make ODBCINST=<replaceable>instdir</replaceable>
-</programlisting>
-</Para>
+       <programlisting>
+	% cd interfaces/odbc
+	% make standalone
+       </programlisting>
+      </para>
+     </step>
 
-<para>
-You can also override the default location for installation on the
-'make' command line. This only applies to the installation of the
-library and header files. Since the driver needs to know the location
-of the odbcinst.ini file attempting to override the enviroment variable
-that specifies its installation directory will probably cause you
-headaches. It is safest simply to allow the driver to install the
-odbcinst.ini file in the default directory or the directory you specified
-on the './configure' command line with --with-odbc.
-</Para>
-</step>
+     <step performance="required">
+      <para>
+       Copy the output tar file to your target system. Be sure to transfer as
+       a binary file if using <application>ftp</application>.
+      </para>
+     </step>
 
-<!--
-This doesn't currently work - thomas 1998-10-19
-<tip>
-<para>
-<envar>ODBCINST</envar> can be specified during configuration or during
-the compilation. It is not necessary to do so in both steps.
-</tip>
--->
+     <step performance="required">
+      <para>
+       Unpack the tar file into a clean
+       directory.
+      </para>
+     </step>
 
-<step performance="required">
-<para>
-Install the source code:
+     <step performance="required">
+      <para>
+       Configure the standalone installation:
 
-<programlisting>
-% make POSTGRESDIR=<replaceable>targettree</replaceable> install
-</programlisting>
-</Para>
+       <programlisting>
+	% ./configure
+       </programlisting>
+      </para>
 
-<para>
-To override the library and header installation directories separately
-you need to pass the correct installation variables on the
-<literal>make install</literal> command line. These variables are
-<envar>LIBDIR</envar>, <envar>HEADERDIR</envar>
- and <envar>ODBCINST</envar>.
-Overriding <envar>POSTGRESDIR</envar> on the make command line will cause
- <envar>LIBDIR</envar> and <envar>HEADERDIR</envar>
- to be rooted at the new directory you specify. 
-<envar>ODBCINST</envar> is independent of <envar>POSTGRESDIR</envar>.
-</Para>
+      <para>
+       The configuration can be done with options:
 
-<para>
-Here is how you would specify the various destinations explicitly:
+       <programlisting>
+	% ./configure --prefix=<replaceable>rootdir</replaceable>
+	--with-odbc=<replaceable>inidir</replaceable>
+       </programlisting>
 
-<programlisting>
-% make BINDIR=<replaceable>bindir</replaceable> LIBDIR=<replaceable>libdir</replaceable> HEADERDIR=<replaceable>headerdir</replaceable> install
-</programlisting>
-</Para>
+       where <option>--prefix</option> installs the libraries and headers in
+       the directories <filename><replaceable>rootdir</replaceable>/lib</filename> and
+       <filename><replaceable>rootdir</replaceable>/include/iodbc</filename>, and
+       <option>--with-odbc</option> installs <filename>odbcinst.ini</filename> in the
+       specified directory.
+      </para>
 
-<para>
-For example, typing
+      <para>
+       Note that both of these options can also be used from the integrated build
+       but be aware that <emphasis>when used in the integrated build</emphasis>
+       <option>--prefix</option> will also apply to the rest of
+       your <productname>Postgres</productname> installation.
+       <option>--with-odbc</option> applies only to the configuration file
+       <filename>odbcinst.ini</filename>.
+      </para>
+     </step>
 
-<programlisting>
-% make POSTGRESDIR=/opt/psqlodbc install
-</programlisting>
+     <step performance="required">
+      <para>
+       Compile and link the source code:
 
-(after you've used
- <application>./configure</application> and <application>make</application>)
-will cause the libraries and headers to be installed in the directories
-<filename>/opt/psqlodbc/lib</filename>
- and <filename>/opt/psqlodbc/include/iodbc</filename> respectively.
-</Para>
+       <programlisting>
+	% make ODBCINST=<replaceable>instdir</replaceable>
+       </programlisting>
+      </para>
 
-<para>
-The command
+      <para>
+       You can also override the default location for installation on the
+       'make' command line. This only applies to the installation of the
+       library and header files. Since the driver needs to know the location
+       of the odbcinst.ini file attempting to override the enviroment variable
+       that specifies its installation directory will probably cause you
+       headaches. It is safest simply to allow the driver to install the
+       odbcinst.ini file in the default directory or the directory you specified
+       on the './configure' command line with --with-odbc.
+      </para>
+     </step>
 
-<programlisting>
-% make POSTGRESDIR=/opt/psqlodbc HEADERDIR=/usr/local install
-</programlisting>
+     <!--
+     This doesn't currently work - thomas 1998-10-19
+    <tip>
+    <para>
+    <envar>ODBCINST</envar> can be specified during configuration or during
+     the compilation. It is not necessary to do so in both steps.
+    </tip>
+     -->
 
-should cause the libraries to be installed in /opt/psqlodbc/lib and
-the headers in /usr/local/include/iodbc. If this doesn't work as
-expected please contact one of the maintainers.
-</Para>
-</step>
-</procedure>
-</sect2>
-</sect1>
+     <step performance="required">
+      <para>
+       Install the source code:
 
-<sect1>
-<title>Configuration Files</title>
+       <programlisting>
+	% make POSTGRESDIR=<replaceable>targettree</replaceable> install
+       </programlisting>
+      </para>
 
-<para>
-<filename>~/.odbc.ini</filename> contains user-specified access information 
-for the <productname>psqlODBC</productname> driver. 
-The file uses conventions typical for <productname>Windows</productname> 
-Registry files, but despite this restriction can be made to work.
-</Para>
+      <para>
+       To override the library and header installation directories separately
+       you need to pass the correct installation variables on the
+       <literal>make install</literal> command line. These variables are
+       <envar>LIBDIR</envar>, <envar>HEADERDIR</envar>
+       and <envar>ODBCINST</envar>.
+       Overriding <envar>POSTGRESDIR</envar> on the make command line will cause
+       <envar>LIBDIR</envar> and <envar>HEADERDIR</envar>
+       to be rooted at the new directory you specify. 
+       <envar>ODBCINST</envar> is independent of <envar>POSTGRESDIR</envar>.
+      </para>
 
-<para>
-The <filename>.odbc.ini</filename> file has three required sections. 
-The first is <literal>[ODBC Data Sources]</literal>
-which is a list of arbitrary names and descriptions for each database 
-you wish to access. The second required section is the 
-Data Source Specification and there will be one of these sections
-for each database. 
-Each section must be labeled with the name given in 
-<literal>[ODBC Data Sources]</literal> and must contain the following entries: 
+      <para>
+       Here is how you would specify the various destinations explicitly:
 
-<programlisting>
-Driver = <replaceable>POSTGRESDIR</replaceable>/lib/libpsqlodbc.so
-Database=<replaceable>DatabaseName</replaceable>
-Servername=localhost
-Port=5432
-</programlisting>
+       <programlisting>
+	% make BINDIR=<replaceable>bindir</replaceable>
+	LIBDIR<replaceable>>libdi</replaceable>>
+	HEADERDIR=<replaceable>headerdir</replaceable> install
+       </programlisting>
+      </para>
 
-<tip>
-<para>
-Remember that the <productname>Postgres</productname> database name is
-usually a single word, without path names of any sort. 
-The <productname>Postgres</productname> server manages the actual access
-to the database, and you need only specify the name from the client.
-</Para>
-</tip>
+      <para>
+       For example, typing
 
-Other entries may be inserted to control the format of the display. 
-The third required section is <literal>[ODBC]</literal> 
-which must contain the <literal>InstallDir</literal> keyword 
-and which may contain other options.
-</Para>
+       <programlisting>
+	% make POSTGRESDIR=/opt/psqlodbc install
+       </programlisting>
 
-<para>
-Here is an example <filename>.odbc.ini</filename> file, 
-showing access information for three databases:
+       (after you've used
+       <application>./configure</application> and <application>make</application>)
+       will cause the libraries and headers to be installed in the directories
+       <filename>/opt/psqlodbc/lib</filename>
+       and <filename>/opt/psqlodbc/include/iodbc</filename> respectively.
+      </para>
 
-<programlisting>
+      <para>
+       The command
+
+       <programlisting>
+	% make POSTGRESDIR=/opt/psqlodbc HEADERDIR=/usr/local install
+       </programlisting>
+
+       should cause the libraries to be installed in /opt/psqlodbc/lib and
+       the headers in /usr/local/include/iodbc. If this doesn't work as
+       expected please contact one of the maintainers.
+      </para>
+     </step>
+    </procedure>
+   </sect2>
+  </sect1>
+
+  <sect1>
+   <title>Configuration Files</title>
+
+   <para>
+    <filename>~/.odbc.ini</filename> contains user-specified access information 
+    for the <productname>psqlODBC</productname> driver. 
+    The file uses conventions typical for <productname>Windows</productname> 
+    Registry files, but despite this restriction can be made to work.
+   </para>
+
+   <para>
+    The <filename>.odbc.ini</filename> file has three required sections. 
+    The first is <literal>[ODBC Data Sources]</literal>
+    which is a list of arbitrary names and descriptions for each database 
+    you wish to access. The second required section is the 
+    Data Source Specification and there will be one of these sections
+    for each database. 
+    Each section must be labeled with the name given in 
+    <literal>[ODBC Data Sources]</literal> and must contain the following entries: 
+
+    <programlisting>
+     Driver = <replaceable>POSTGRESDIR</replaceable>/lib/libpsqlodbc.so
+     Database=<replaceable>DatabaseName</replaceable>
+     Servername=localhost
+     Port=5432
+    </programlisting>
+
+    <tip>
+     <para>
+      Remember that the <productname>Postgres</productname> database name is
+      usually a single word, without path names of any sort. 
+      The <productname>Postgres</productname> server manages the actual access
+      to the database, and you need only specify the name from the client.
+     </para>
+    </tip>
+
+    Other entries may be inserted to control the format of the display. 
+    The third required section is <literal>[ODBC]</literal> 
+    which must contain the <literal>InstallDir</literal> keyword 
+    and which may contain other options.
+   </para>
+
+   <para>
+    Here is an example <filename>.odbc.ini</filename> file, 
+    showing access information for three databases:
+
+    <programlisting>
 [ODBC Data Sources]
 DataEntry = Read/Write Database
 QueryOnly = Read-only Database
@@ -620,465 +625,468 @@ Driver = /opt/postgres/current/lib/libpsqlodbc.so
 
 [ODBC]
 InstallDir = /opt/applix/axdata/axshlib
-</programlisting>
-</Para>
-</sect1>
-<sect1>
-<title>ApplixWare</title>
+    </programlisting>
+   </para>
+  </sect1>
+  <sect1>
+   <title>ApplixWare</title>
 
-<sect2>
-<title>Configuration</title>
+   <sect2>
+    <title>Configuration</title>
 
-<para>
-<productname>ApplixWare</productname> must be configured correctly
- in order for it to
-be able to access the <productname>Postgres</productname>
- <acronym>ODBC</acronym> software drivers.
-</Para>
+    <para>
+     <productname>ApplixWare</productname> must be configured correctly
+     in order for it to
+     be able to access the <productname>Postgres</productname>
+     <acronym>ODBC</acronym> software drivers.
+    </para>
 
-<procedure>
-<title>Enabling ApplixWare Database Access</title>
+    <procedure>
+     <title>Enabling ApplixWare Database Access</title>
 
-<para>
-These instructions are for the 4.4.1 release of
- <productname>ApplixWare</productname> on <productname>Linux</productname>.
-Refer to the <citetitle>Linux Sys Admin</citetitle> on-line book
- for more detailed information.
-</Para>
+     <para>
+      These instructions are for the <literal>4.4.2</literal> release of
+      <productname>ApplixWare</productname> on <productname>Linux</productname>.
+      Refer to the <citetitle>Linux Sys Admin</citetitle> on-line book
+      for more detailed information.
+     </para>
 
-<step performance="required">
-<para>
-You must modify <filename>axnet.cnf</filename> so that
- <filename>elfodbc</filename> can
-find <filename>libodbc.so</filename>
- (the <acronym>ODBC</acronym> driver manager) shared library.
-This library is included with the ApplixWare distribution,
-but <filename>axnet.cnf</filename> needs to be modified to point to the 
-correct location.
-</Para>
+     <step performance="required">
+      <para>
+       You must modify <filename>axnet.cnf</filename> so that
+       <filename>elfodbc</filename> can
+       find <filename>libodbc.so</filename>
+       (the <acronym>ODBC</acronym> driver manager) shared library.
+       This library is included with the ApplixWare distribution,
+       but <filename>axnet.cnf</filename> needs to be modified to point to the 
+       correct location.
+      </para>
 
-<para>
-As root, edit the file
-<filename><replaceable>applixroot</replaceable>/applix/axdata/axnet.cnf</filename>.
-</Para>
+      <para>
+       As root, edit the file
+       <filename><replaceable>applixroot</replaceable>/applix/axdata/axnet.cnf</filename>.
+      </para>
 
-<substeps>
+      <substeps>
 
-<step performance="required">
-<para>
-At the bottom of <filename>axnet.cnf</filename>,
-find the line that starts with
+       <step performance="required">
+	<para>
+	 At the bottom of <filename>axnet.cnf</filename>,
+	 find the line that starts with
 
-<programlisting>
-#libFor elfodbc /ax/<replaceable>...</replaceable>
-</programlisting>
-</Para>
-</step>
-<step performance="required">
-<para>
-Change line to read
+	 <programlisting>
+	  #libFor elfodbc /ax/<replaceable>...</replaceable>
+	 </programlisting>
+	</para>
+       </step>
+       <step performance="required">
+	<para>
+	 Change line to read
 
-<programlisting>
-libFor elfodbc <replaceable>applixroot</replaceable>/applix/axdata/axshlib/lib
-</programlisting>
+	 <programlisting>
+	  libFor elfodbc <replaceable>applixroot</replaceable>/applix/axdata/axshlib/lib
+	 </programlisting>
 
-which will tell elfodbc to look in this directory
-for the <acronym>ODBC</acronym> support library.
-If you have installed applix somewhere else,
-change the path accordingly.
-</Para>
-</step>
-</substeps>
-</step>
+	 which will tell elfodbc to look in this directory
+	 for the <acronym>ODBC</acronym> support library.
+	 Typically <productname>Applix</productname> is installed in
+	 <filename>/opt</filename> so the full path would be
+	 <filename>/opt/applix/axdata/axshlib/lib</filename>,
+	 but if you have installed applix somewhere else then
+	 change the path accordingly.
+	</para>
+       </step>
+      </substeps>
+     </step>
 
-<step performance="required">
-<para>
-Create <filename>.odbc.ini</filename> as 
-described above.  You may also want to add the flag
+     <step performance="required">
+      <para>
+       Create <filename>.odbc.ini</filename> as 
+       described above.  You may also want to add the flag
 
-<programlisting>
-TextAsLongVarchar=0
-</programlisting>
+       <programlisting>
+	TextAsLongVarchar=0
+       </programlisting>
 
-to the database-specific portion of <filename>.odbc.ini</filename>
-so that text fields will not be shown as <literal>**BLOB**</literal>.
-</Para>
-</step>
-</procedure>
+       to the database-specific portion of <filename>.odbc.ini</filename>
+       so that text fields will not be shown as <literal>**BLOB**</literal>.
+      </para>
+     </step>
+    </procedure>
 
-<procedure>
-<title>Testing ApplixWare ODBC Connections</title>
+    <procedure>
+     <title>Testing ApplixWare ODBC Connections</title>
 
-<step performance="required">
-<para>
-    Bring up <application>Applix Data</application>
-</Para>
-</step>
+     <step performance="required">
+      <para>
+       Bring up <application>Applix Data</application>
+      </para>
+     </step>
 
-<step performance="required">
-<para>
-Select the <productname>Postgres</productname> database of interest.
-</Para>
+     <step performance="required">
+      <para>
+       Select the <productname>Postgres</productname> database of interest.
+      </para>
 
-<substeps>
+      <substeps>
 
-<step performance="required">
-<para>
-Select <command>Query->Choose Server</command>.  
-</Para>
-</step>
-<step performance="required">
-<para>
- Select <acronym>ODBC</acronym>, and click <command>Browse</command>.
-The database you configured in <filename>.odbc.ini</filename>
-    should be shown.  Make sure that the <option>Host: field</option>
- is empty (if it is not, axnet will try to contact axnet on another machine
- to look for the database).
-</Para>
-</step>
-<step performance="required">
-<para>
-Select the database in the box that was launched by <command>Browse</command>,
- then click <command>OK</command>.
-</Para>
-</step>
-<step performance="required">
-<para>
-Enter username and password in the login identification dialog,
- and click <command>OK</command>.
-</Para>
-</step>
-</substeps>
+       <step performance="required">
+	<para>
+	 Select <command>Query->Choose Server</command>.  
+	</para>
+       </step>
+       <step performance="required">
+	<para>
+	 Select <acronym>ODBC</acronym>, and click <command>Browse</command>.
+	 The database you configured in <filename>.odbc.ini</filename>
+	 should be shown.  Make sure that the <option>Host: field</option>
+	 is empty (if it is not, axnet will try to contact axnet on another machine
+	 to look for the database).
+	</para>
+       </step>
+       <step performance="required">
+	<para>
+	 Select the database in the box that was launched by <command>Browse</command>,
+	 then click <command>OK</command>.
+	</para>
+       </step>
+       <step performance="required">
+	<para>
+	 Enter username and password in the login identification dialog,
+	 and click <command>OK</command>.
+	</para>
+       </step>
+      </substeps>
 
-<para>
-    You should see <quote>Starting elfodbc server</quote>
- in the lower left corner of the
-    data window.  If you get an error dialog box, see the debugging section
-    below.
-</Para>
-</step>
-<step performance="required">
-<para>
-    The 'Ready' message will appear in the lower left corner of the data
-    window.  This indicates that you can now enter queries.
-</Para>
-</step>
-<step performance="required">
-<para>
-    Select a table from Query->Choose tables, and then select Query->Query
-    to access the database.  The first 50 or so rows from the table should
-    appear.
-</Para>
-</step>
-</procedure>
-</sect2>
+      <para>
+       You should see <quote>Starting elfodbc server</quote>
+       in the lower left corner of the
+       data window.  If you get an error dialog box, see the debugging section
+       below.
+      </para>
+     </step>
+     <step performance="required">
+      <para>
+       The 'Ready' message will appear in the lower left corner of the data
+       window.  This indicates that you can now enter queries.
+      </para>
+     </step>
+     <step performance="required">
+      <para>
+       Select a table from Query->Choose tables, and then select Query->Query
+       to access the database.  The first 50 or so rows from the table should
+       appear.
+      </para>
+     </step>
+    </procedure>
+   </sect2>
 
-<sect2>
-<title>Common Problems</title>
+   <sect2>
+    <title>Common Problems</title>
 
-<para>
-The following messages can appear while trying to make an
-<acronym>ODBC</acronym> connection through 
-<productname>Applix Data</productname>:
+    <para>
+     The following messages can appear while trying to make an
+     <acronym>ODBC</acronym> connection through 
+     <productname>Applix Data</productname>:
 
-<variablelist>
-<varlistentry>
-<term>
-Cannot launch gateway on server
-</term>
-<listitem>
-<para>
-<literal>elfodbc</literal> can't find <filename>libodbc.so</filename>.  
-Check your <filename>axnet.cnf</filename>.
-</Para>
-</listitem>
-</varlistentry>
+     <variablelist>
+      <varlistentry>
+       <term>
+	Cannot launch gateway on server
+       </term>
+       <listitem>
+	<para>
+	 <literal>elfodbc</literal> can't find <filename>libodbc.so</filename>.  
+	 Check your <filename>axnet.cnf</filename>.
+	</para>
+       </listitem>
+      </varlistentry>
 
-<varlistentry>
-<term>
-Error from ODBC Gateway:
-IM003::[iODBC][Driver Manager]Specified driver could not be loaded
-</term>
-<listitem>
-<para>
-<filename>libodbc.so</filename> cannot find the driver listed in
-<filename>.odbc.ini</filename>. Verify the settings.
-</Para>
-</listitem>
-</varlistentry>
+      <varlistentry>
+       <term>
+	Error from ODBC Gateway:
+	IM003::[iODBC][Driver Manager]Specified driver could not be loaded
+       </term>
+       <listitem>
+	<para>
+	 <filename>libodbc.so</filename> cannot find the driver listed in
+	 <filename>.odbc.ini</filename>. Verify the settings.
+	</para>
+       </listitem>
+      </varlistentry>
 
-<varlistentry>
-<term>
-Server: Broken Pipe
-</term>
+      <varlistentry>
+       <term>
+	Server: Broken Pipe
+       </term>
 
-<listitem>
-<para>
+       <listitem>
+	<para>
 	 The driver process has terminated due to some other
 	 problem.  You might not have an up-to-date version
 	 of the <productname>Postgres</productname>
-<acronym>ODBC</acronym> package.
-</Para>
-</listitem>
-</varlistentry>
+	 <acronym>ODBC</acronym> package.
+	</para>
+       </listitem>
+      </varlistentry>
 
-<varlistentry>
-<term>
-setuid to 256: failed to launch gateway
-</term>
+      <varlistentry>
+       <term>
+	setuid to 256: failed to launch gateway
+       </term>
 
-<listitem>
-<para>
-The September release of ApplixWare v4.4.1 (the first release with official
-<acronym>ODBC</acronym> support under Linux) shows problems when usernames
-exceed eight (8) characters in length.
-Problem description ontributed by 
-<ulink url="mailto:scampbell@lear.com">Steve Campbell</ulink>.
-</Para>
-</listitem>
-</varlistentry>
+       <listitem>
+	<para>
+	 The September release of ApplixWare v4.4.1 (the first release with official
+	 <acronym>ODBC</acronym> support under Linux) shows problems when usernames
+	 exceed eight (8) characters in length.
+	 Problem description ontributed by 
+	 <ulink url="mailto:scampbell@lear.com">Steve Campbell</ulink>.
+	</para>
+       </listitem>
+      </varlistentry>
 
-</variablelist>
-</para>
+     </variablelist>
+    </para>
 
-<para>
-<note>
-<title>Author</title>
+    <para>
+     <note>
+      <title>Author</title>
 
-<para>
-Contributed by 
-<ulink url="mailto:scampbell@lear.com">Steve Campbell</ulink> on
-1998-10-20.
-</para>
-</note>
+      <para>
+       Contributed by 
+       <ulink url="mailto:scampbell@lear.com">Steve Campbell</ulink> on
+       1998-10-20.
+      </para>
+     </note>
 
-The <application>axnet</application> program's security system
- seems a little suspect. <application>axnet</application> does things
- on behalf of the user and on a true
- multiple user system it really should be run with root security 
-(so it can read/write in each user's directory).  
-I would hesitate to recommend this, however, since we have no idea what 
-security holes this creates.
-</para>
-</sect2>
+     The <application>axnet</application> program's security system
+     seems a little suspect. <application>axnet</application> does things
+     on behalf of the user and on a true
+     multiple user system it really should be run with root security 
+     (so it can read/write in each user's directory).  
+     I would hesitate to recommend this, however, since we have no idea what 
+     security holes this creates.
+    </para>
+   </sect2>
 
-<sect2>
-<title>Debugging ApplixWare ODBC Connections</title>
+   <sect2>
+    <title>Debugging ApplixWare ODBC Connections</title>
 
-<para>
-One good tool for debugging connection problems uses the Unix system
-utility <application>strace</application>.
-</para>
-<procedure>
-<title>Debugging with strace</title>
+    <para>
+     One good tool for debugging connection problems uses the Unix system
+     utility <application>strace</application>.
+    </para>
+    <procedure>
+     <title>Debugging with strace</title>
 
-<step performance="required">
-<para>
-Start applixware.
-</para>
-</step>
-<step performance="required">
-<para>
-Start an <application>strace</application> on
-the axnet process.  For example, if
+     <step performance="required">
+      <para>
+       Start applixware.
+      </para>
+     </step>
+     <step performance="required">
+      <para>
+       Start an <application>strace</application> on
+       the axnet process.  For example, if
 
-<programlisting>
-ps -aucx | grep ax 
-</programlisting>
+       <programlisting>
+	ps -aucx | grep ax 
+       </programlisting>
 
-shows
+       shows
 
-<programlisting>
-cary   10432  0.0  2.6  1740   392  ?  S  Oct  9  0:00 axnet
-cary   27883  0.9 31.0 12692  4596  ?  S   10:24  0:04 axmain
-</programlisting>
-</para>
+       <programlisting>
+	cary   10432  0.0  2.6  1740   392  ?  S  Oct  9  0:00 axnet
+	cary   27883  0.9 31.0 12692  4596  ?  S   10:24  0:04 axmain
+       </programlisting>
+      </para>
 
-<para>
-Then run
+      <para>
+       Then run
 
-<programlisting>
-   strace -f -s 1024 -p 10432 
-</programlisting>
-</para>
-</step>
+       <programlisting>
+	strace -f -s 1024 -p 10432 
+       </programlisting>
+      </para>
+     </step>
 
-<step performance="required">
-<para>
-Check the strace output.
-</para>
-<note>
-<title>Note from Cary</title>
+     <step performance="required">
+      <para>
+       Check the strace output.
+      </para>
+      <note>
+       <title>Note from Cary</title>
 
-<para>
-Many of the error messages from <productname>ApplixWare</productname>
-go to <filename>stderr</filename>, 
-but I'm not sure where <filename>stderr</filename>
-is sent, so <application>strace</application> is the way to find out.
-</para>
-</note>
-</step>
-</procedure>
+       <para>
+	Many of the error messages from <productname>ApplixWare</productname>
+	go to <filename>stderr</filename>, 
+	but I'm not sure where <filename>stderr</filename>
+	is sent, so <application>strace</application> is the way to find out.
+       </para>
+      </note>
+     </step>
+    </procedure>
 
-<para>
-  For example, after getting
-a <quote>Cannot launch gateway on server</quote>, 
-I ran strace on axnet and got
+    <para>
+     For example, after getting
+     a <quote>Cannot launch gateway on server</quote>, 
+     I ran strace on axnet and got
 
-<programlisting>
-[pid 27947] open("/usr/lib/libodbc.so", O_RDONLY) = -1 ENOENT
-    (No such file or directory)
-[pid 27947] open("/lib/libodbc.so", O_RDONLY) = -1 ENOENT
-    (No such file or directory)
-[pid 27947] write(2, "/usr2/applix/axdata/elfodbc:
-    can't load library 'libodbc.so'\n", 61) = -1 EIO (I/O error)
-</programlisting>  
-So what is happening is that applix elfodbc is searching for libodbc.so, but it
-can't find it.  That is why axnet.cnf needed to be changed.
-</para>
-</sect2>
+     <programlisting>
+      [pid 27947] open("/usr/lib/libodbc.so", O_RDONLY) = -1 ENOENT
+      (No such file or directory)
+      [pid 27947] open("/lib/libodbc.so", O_RDONLY) = -1 ENOENT
+      (No such file or directory)
+      [pid 27947] write(2, "/usr2/applix/axdata/elfodbc:
+      can't load library 'libodbc.so'\n", 61) = -1 EIO (I/O error)
+     </programlisting>  
+     So what is happening is that applix elfodbc is searching for libodbc.so, but it
+     can't find it.  That is why axnet.cnf needed to be changed.
+    </para>
+   </sect2>
 
-<sect2>
-<title>Running the ApplixWare Demo</title>
+   <sect2>
+    <title>Running the ApplixWare Demo</title>
 
-<para>
-In order to go through the 
-<citetitle>ApplixWare Data Tutorial</citetitle>, you need to create
-the sample tables that the Tutorial refers to.  The ELF Macro used to
-create the tables tries to use a NULL condition 
-on many of the database columns,
-and <productname>Postgres</productname> does not currently allow this option.
-</para>
-<para>
-To get around this problem, you can do the following:
-</para>
+    <para>
+     In order to go through the 
+     <citetitle>ApplixWare Data Tutorial</citetitle>, you need to create
+     the sample tables that the Tutorial refers to.  The ELF Macro used to
+     create the tables tries to use a NULL condition 
+     on many of the database columns,
+     and <productname>Postgres</productname> does not currently allow this option.
+    </para>
+    <para>
+     To get around this problem, you can do the following:
+    </para>
 
-<procedure>
-<title>Modifying the ApplixWare Demo</title>
+    <procedure>
+     <title>Modifying the ApplixWare Demo</title>
 
-<step performance="required">
-<para>
-Copy <filename>/opt/applix/axdata/eng/Demos/sqldemo.am</filename>
- to a local directory.
-</para>
-</step>
+     <step performance="required">
+      <para>
+       Copy <filename>/opt/applix/axdata/eng/Demos/sqldemo.am</filename>
+       to a local directory.
+      </para>
+     </step>
 
-<step performance="required">
-<para>
-Edit this local copy of <filename>sqldemo.am</filename>:
-</para>
+     <step performance="required">
+      <para>
+       Edit this local copy of <filename>sqldemo.am</filename>:
+      </para>
 
-<substeps>
+      <substeps>
 
-<step performance="required">
-<para>
-Search for 'null_clause = "NULL"
-</para>
-</step>
+       <step performance="required">
+	<para>
+	 Search for 'null_clause = "NULL"
+	</para>
+       </step>
 
-<step performance="required">
-<para>
-Change this to null_clause = ""
-</para>
-</step>
+       <step performance="required">
+	<para>
+	 Change this to null_clause = ""
+	</para>
+       </step>
 
-</substeps>
-</step>
-<step performance="required">
-<para>
-Start <application>Applix Macro Editor</application>.
-</para>
-</step>
+      </substeps>
+     </step>
+     <step performance="required">
+      <para>
+       Start <application>Applix Macro Editor</application>.
+      </para>
+     </step>
 
-<step performance="required">
-<para>
-Open the sqldemo.am file from the <application>Macro Editor</application>.
-</para>
-</step>
+     <step performance="required">
+      <para>
+       Open the sqldemo.am file from the <application>Macro Editor</application>.
+      </para>
+     </step>
 
-<step performance="required">
-<para>
-Select <command>File->Compile and Save</command>.
-</para>
-</step>
+     <step performance="required">
+      <para>
+       Select <command>File->Compile and Save</command>.
+      </para>
+     </step>
 
-<step performance="required">
-<para>
-Exit <application>Macro Editor</application>.
-</para>
-</step>
+     <step performance="required">
+      <para>
+       Exit <application>Macro Editor</application>.
+      </para>
+     </step>
 
-<step performance="required">
-<para>
-Start <application>Applix Data</application>.
-</para>
-</step>
+     <step performance="required">
+      <para>
+       Start <application>Applix Data</application>.
+      </para>
+     </step>
 
-<step performance="required">
-<para>
-Select <command>*->Run Macro</command>
-</para>
-</step>
+     <step performance="required">
+      <para>
+       Select <command>*->Run Macro</command>
+      </para>
+     </step>
 
-<step performance="required">
-<para>
-Enter the value <quote>sqldemo</quote>, then click <command>OK</command>.
-</para>
+     <step performance="required">
+      <para>
+       Enter the value <quote>sqldemo</quote>, then click <command>OK</command>.
+      </para>
 
-<para>
-You should see the progress in the status line of the data window
- (in the lower left corner).
-</para>
-</step>
+      <para>
+       You should see the progress in the status line of the data window
+       (in the lower left corner).
+      </para>
+     </step>
 
-<step performance="required">
-<para>
-You should now be able to access the demo tables.
-</para>
-</step>
-</procedure>
-</sect2>
-<sect2>
-<title>Useful Macros</title>
+     <step performance="required">
+      <para>
+       You should now be able to access the demo tables.
+      </para>
+     </step>
+    </procedure>
+   </sect2>
+   <sect2>
+    <title>Useful Macros</title>
 
-<para>
-You can add information about your
-database login and password to the standard Applix startup
-macro file. This is an example 
-<filename>~/axhome/macros/login.am</filename> file:
+    <para>
+     You can add information about your
+     database login and password to the standard Applix startup
+     macro file. This is an example 
+     <filename>~/axhome/macros/login.am</filename> file:
 
-<programlisting>
-macro login
-    set_set_system_var@("sql_username@","tgl")
-    set_system_var@("sql_passwd@","no$way")
-endmacro
-</programlisting>
+     <programlisting>
+      macro login
+      set_set_system_var@("sql_username@","tgl")
+      set_system_var@("sql_passwd@","no$way")
+      endmacro
+     </programlisting>
 
-<caution>
-<para>
-You should be careful about the file protections on any file containing
-username and password information.
-</para>
-</caution>
-</para>
-</sect2>
-<sect2>
-<title>Supported Platforms</title>
+     <caution>
+      <para>
+       You should be careful about the file protections on any file containing
+       username and password information.
+      </para>
+     </caution>
+    </para>
+   </sect2>
+   <sect2>
+    <title>Supported Platforms</title>
 
-<para>
-<productname>psqlODBC</productname> has been built and tested
-on <productname>Linux</productname>. There have been reports of success
-with FreeBSD and with Solaris. There are no known restrictions
-on the basic code for other platforms which already support
-<productname>Postgres</productname>.
-</para>
-</sect2>
-</sect1>
-</Chapter>
+    <para>
+     <productname>psqlODBC</productname> has been built and tested
+     on <productname>Linux</productname>. There have been reports of success
+     with FreeBSD and with Solaris. There are no known restrictions
+     on the basic code for other platforms which already support
+     <productname>Postgres</productname>.
+    </para>
+   </sect2>
+  </sect1>
+ </chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:
-mode: sgml
+mode:sgml
 sgml-omittag:t
 sgml-shorttag:t
 sgml-minimize-attributes:nil
@@ -1088,7 +1096,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-catalogs:("/usr/lib/sgml/CATALOG")
 sgml-local-ecat-files:nil
 End:
 -->

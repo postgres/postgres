@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.12 2000/03/26 18:32:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.13 2000/03/27 17:14:42 thomas Exp $
 Postgres documentation
 -->
 
@@ -20,26 +20,24 @@ Postgres documentation
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-10-02</date>
+   <date>2000-03-25</date>
   </refsynopsisdivinfo>
   <synopsis>
 CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">ftype</replaceable> [, ...] ] )
     RETURNS <replaceable class="parameter">rtype</replaceable>
-    [ WITH ( <replaceable class="parameter">attribute</replaceable> [, ...] ) ]
     AS <replaceable class="parameter">definition</replaceable>   
     LANGUAGE '<replaceable class="parameter">langname</replaceable>'
-
-
+    [ WITH ( <replaceable class="parameter">attribute</replaceable> [, ...] ) ]
 CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">ftype</replaceable> [, ...] ] )
     RETURNS <replaceable class="parameter">rtype</replaceable>
-    [ WITH ( <replaceable class="parameter">attribute</replaceable> [, ...] ) ]
     AS <replaceable class="parameter">obj_file</replaceable> , <replaceable class="parameter">link_symbol</replaceable>  
     LANGUAGE 'C'
+    [ WITH ( <replaceable class="parameter">attribute</replaceable> [, ...] ) ]
   </synopsis>
   
   <refsect2 id="R2-SQL-CREATEFUNCTION-1">
    <refsect2info>
-    <date>1998-09-09</date>
+    <date>2000-03-25</date>
    </refsect2info>
    <title>
     Inputs
@@ -143,7 +141,7 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
 
   <refsect2 id="R2-SQL-CREATEFUNCTION-2">
    <refsect2info>
-    <date>1998-09-09</date>
+    <date>2000-03-25</date>
    </refsect2info>
    <title>
     Outputs
@@ -168,7 +166,7 @@ CREATE
 
  <refsect1 id="R1-SQL-CREATEFUNCTION-1">
   <refsect1info>
-   <date>1998-09-09</date>
+   <date>2000-03-25</date>
   </refsect1info>
   <title>
    Description
@@ -177,28 +175,29 @@ CREATE
    <command>CREATE FUNCTION</command> allows a
    <productname>Postgres</productname> user
    to register a function
-   with a database. Subsequently, this user is treated as the
+   with a database. Subsequently, this user is considered the
    owner of the function.
   </para>
   
   <refsect2 id="R2-SQL-CREATEFUNCTION-3">
    <refsect2info>
-    <date>1998-09-09</date>
+    <date>2000-03-25</date>
    </refsect2info>
    <title>
     Notes
    </title>
+
    <para>
-    Refer to the chapter in
-    the <citetitle>PostgreSQL Programmer's Guide</citetitle>
-    on extending
+    Refer to the chapter in the
+    <citetitle>PostgreSQL Programmer's Guide</citetitle>
+    on the topic of extending
     <productname>Postgres</productname> via functions 
     for further information on writing external functions.
    </para>
 
    <para>
     Use <command>DROP FUNCTION</command>
-    to drop user-defined functions.
+    to remove user-defined functions.
    </para>
 
    <para>
@@ -207,7 +206,17 @@ CREATE
     so long as they have distinct argument types.  This facility must
     be used with caution for <literal>internal</literal> and
     C-language functions, however.    
-	</para>
+   </para>
+
+   <para>
+    The full <acronym>SQL92</acronym> type syntax is allowed for
+    input arguments and return value. However, some details of the
+    type specification (e.g. the precision field for
+    <type>numeric</type> types) are the responsibility of the
+    underlying function implementation and are silently swallowed
+    (e.g. not recognized or
+    enforced) by the <command>CREATE FUNCTION</command> command.
+   </para>
 
    <para>
     Two <literal>internal</literal>
@@ -242,18 +251,18 @@ CREATE
   <para>
    To create a simple SQL function:
 
-<programlisting>
+   <programlisting>
 CREATE FUNCTION one() RETURNS int4
     AS 'SELECT 1 AS RESULT'
     LANGUAGE 'sql';
 SELECT one() AS answer;
 
-<computeroutput>
+    <computeroutput>
  answer 
 --------
       1
-</computeroutput>
-</programlisting>
+    </computeroutput>
+   </programlisting>
   </para>
 
   <para>
@@ -317,7 +326,7 @@ Point * complex_to_point (Complex *z)
 
   <refsect2 id="R2-SQL-CREATEFUNCTION-4">
    <refsect2info>
-    <date>1998-04-15</date>
+    <date>2000-03-25</date>
    </refsect2info>
    <title>
     SQL92
@@ -331,7 +340,7 @@ Point * complex_to_point (Complex *z)
 
   <refsect2 id="R2-SQL-CREATEFUNCTION-5">
    <refsect2info>
-    <date>1998-09-09</date>
+    <date>2000-03-25</date>
    </refsect2info>
    <title>
     SQL/PSM
@@ -364,7 +373,7 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable>
 
 <!-- Keep this comment at the end of the file
 Local variables:
-mode: sgml
+mode:sgml
 sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
@@ -374,7 +383,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"../reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->
