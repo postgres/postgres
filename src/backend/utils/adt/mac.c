@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$Id: mac.c,v 1.5 1998/10/08 02:08:45 momjian Exp $
+ *	$Id: mac.c,v 1.6 1998/10/26 01:01:36 tgl Exp $
  */
 
 #include <stdio.h>
@@ -234,40 +234,40 @@ macaddr_lt(macaddr *a1, macaddr *a2)
 {
 	return ((hibits(a1) < hibits(a2)) ||
 			((hibits(a1) == hibits(a2)) && lobits(a1) < lobits(a2)));
-};
+}
 
 bool
 macaddr_le(macaddr *a1, macaddr *a2)
 {
 	return ((hibits(a1) < hibits(a2)) ||
 			((hibits(a1) == hibits(a2)) && lobits(a1) <= lobits(a2)));
-};
+}
 
 bool
 macaddr_eq(macaddr *a1, macaddr *a2)
 {
 	return ((hibits(a1) == hibits(a2)) && (lobits(a1) == lobits(a2)));
-};
+}
 
 bool
 macaddr_ge(macaddr *a1, macaddr *a2)
 {
 	return ((hibits(a1) > hibits(a2)) ||
 			((hibits(a1) == hibits(a2)) && lobits(a1) >= lobits(a2)));
-};
+}
 
 bool
 macaddr_gt(macaddr *a1, macaddr *a2)
 {
 	return ((hibits(a1) > hibits(a2)) ||
 			((hibits(a1) == hibits(a2)) && lobits(a1) > lobits(a2)));
-};
+}
 
 bool
 macaddr_ne(macaddr *a1, macaddr *a2)
 {
 	return ((hibits(a1) != hibits(a2)) || (lobits(a1) != lobits(a2)));
-};
+}
 
 /*
  *	Comparison function for sorting:

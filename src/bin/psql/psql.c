@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.162 1998/10/08 00:10:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.163 1998/10/26 01:04:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -379,7 +379,7 @@ listAllDbs(PsqlSettings *pset)
  * List The Database Tables returns 0 if all went well
  *
  */
-int
+static int
 tableList(PsqlSettings *pset, bool deep_tablelist, char info_type,
 		  bool system_tables)
 {
@@ -535,7 +535,7 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type,
  * List Tables Grant/Revoke Permissions returns 0 if all went well
  *
  */
-int
+static int
 rightsList(PsqlSettings *pset)
 {
 	char		listbuf[512];
@@ -661,7 +661,7 @@ static void emitNtimes (FILE *fout, const char *str, int N)
  *
  *
  */
-int
+static int
 tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 {
 	char		descbuf[512];
@@ -877,7 +877,7 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
  *
  *
  */
-int
+static int
 objectDescription(PsqlSettings *pset, char *object)
 {
 	char		descbuf[512];

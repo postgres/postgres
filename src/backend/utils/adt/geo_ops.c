@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.37 1998/09/01 04:32:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.38 1998/10/26 01:01:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -872,7 +872,7 @@ line_out(LINE *line)
 /* line_construct_pm()
  * point-slope
  */
-LINE *
+static LINE *
 line_construct_pm(Point *pt, double m)
 {
 	LINE	   *result = palloc(sizeof(LINE));
@@ -1294,7 +1294,7 @@ path_open(PATH *path)
 }	/* path_open() */
 
 
-PATH *
+static PATH *
 path_copy(PATH *path)
 {
 	PATH	   *result;

@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.5 1998/10/06 22:14:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.6 1998/10/26 01:01:35 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1556,7 +1556,7 @@ get_tle_expr(QryHier *qh, int rt_index, TargetEntry *tle, bool varprefix)
  *					  with the type cast out of a Const
  * ----------
  */
-char *
+static char *
 get_const_expr(Const *constval)
 {
 	HeapTuple	typetup;

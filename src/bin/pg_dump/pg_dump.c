@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.92 1998/10/12 02:05:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.93 1998/10/26 01:05:07 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -2527,7 +2527,7 @@ ParseACL(const char *acls, int *count)
  *	  Called for sequences and tables
  */
 
-void
+static void
 dumpACL(FILE *fout, TableInfo tbinfo)
 {
 	int			k,
