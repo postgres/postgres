@@ -5,17 +5,19 @@
    
    Deutsche Übersetzung von Ian Barwick (barwick@gmx.net).
    
-   Letzte Aktualisierung der deutschen Übersetzung: Fr., den 17.12.2004,
+   Letzte Aktualisierung der deutschen Übersetzung: So., den 16.1.2005,
    22:30 MEZ
    
    Die aktuellste Version dieses Dokuments liegt auf der
    PostgreSQL-Website:
-     * http://www.postgresql.org/docs/faqs/FAQ.html (engl.)
-     * http://www.postgresql.org/docs/faqs/FAQ_german.html (dt.)
+     * http://www.postgresql.org/files/documentation/faqs/FAQ.html
+       (engl.)
+     * http://www.postgresql.org/files/documentation/faqs/FAQ_german.html
+       (dt.)
        
    Übersetzungen dieses Dokuments in andere Sprachen sowie plattform-
-   spezifische FAQs können unter
-   http://www.postgresql.org/docs/index.html#faqs eingesehen werden.
+   spezifische FAQs können unter http://www.postgresql.org/docs/faq/
+   eingesehen werden.
      _________________________________________________________________
    
                              Allgemeine Fragen
@@ -69,55 +71,52 @@
    Cursors?
    4.2) Wie wähle ich per SELECT-Anweisung nur die ersten paar Zeilen
    bzw. eine beliebige Zeile in einer Abfrage aus?
-   4.3) Wie bekomme ich eine Liste der Tabellen oder anderen Dinge, die
-   ich in psql sehen kann?
+   4.3) Wie finde ich heraus, welche Tabellen, Indizes, Datenbanken oder
+   Benutzer in der Datenbank definiert sind? Wie bekomme ich die von psql
+   verwendeten Abfragen?
    4.4) Wie entferne ich eine Spalte aus einer Tabelle? Wie ändere ich
    den Datentyp einer Spalte?
    4.5) Was ist die Maximalgröße für eine Zeile, eine Tabelle, eine
    Datenbank?
    4.6) Wieviel Plattenplatz wird benötigt, um die Daten aus einer
    typischen Textdatei abzuspeichern?
-   4.7) Wie finde ich heraus, welche Tabellen, Indizes, Datenbanken oder
-   Benutzer in der Datenbank definiert sind?Wie finde ich heraus, welche
-   Indizes oder Operationen in der Datenbank definiert sind?
-   4.8) Meine Abfragen sind langsam oder nutzen die Indizes nicht. Warum?
-   4.9) Auf welche Weise kann ich sehen, wie der Abfrage-Optimierer
+   4.7) Meine Abfragen sind langsam oder nutzen die Indizes nicht. Warum?
+   4.8) Auf welche Weise kann ich sehen, wie der Abfrage-Optimierer
    ("GEQO") meine Abfrage auswertet?
-   4.10) Was ist ein R-Tree Index?
-   4.11) Was ist der "Genetic Query Optimizer"?
-   4.12) Wie verfahre ich bei der Suche mit regulären Ausdrücken und bei
+   4.9) Was ist ein R-Tree Index?
+   4.10) Was ist der "Genetic Query Optimizer"?
+   4.11) Wie verfahre ich bei der Suche mit regulären Ausdrücken und bei
    einer Suche, bei der Groß- und Kleinschreibweisen ignoriert werden?
    Wie verwende ich bei solchen Suchabfragen einen Index?
-   4.13) Wie ermittle ich in einer Abfrage, ob ein Feld NULL ist?
-   4.14) Was ist der Unterschied zwischen den verschiedenen CHAR-Typen?
-   4.15.1) Wie erzeuge ich ein serielles Feld mit automatischer Erhöhung
+   4.12) Wie ermittle ich in einer Abfrage, ob ein Feld NULL ist?
+   4.13) Was ist der Unterschied zwischen den verschiedenen CHAR-Typen?
+   4.14.1) Wie erzeuge ich ein serielles Feld mit automatischer Erhöhung
    des Wertes?
-   4.15.2) Wie bekomme ich den Wert einer SERIAL-Sequenz?
-   4.15.3) Führt currval() zu einer Race-Condition mit anderen Nutzern?
-   4.15.4) Warum werden die Sequenzwerte nach einem Transaktionsabbruch
+   4.14.2) Wie bekomme ich den Wert einer SERIAL-Sequenz?
+   4.14.3) Führt currval() zu einer Race-Condition mit anderen Nutzern?
+   4.14.4) Warum werden die Sequenzwerte nach einem Transaktionsabbruch
    nicht zurückgesetzt? Warum gibt es Lücken in der Nummerierung meiner
    Sequenz-/SERIAL-Spalte?
-   4.16) Was ist ein OID? Was ist ein TID?
-   4.17) Welche Bedeutung haben die verschiedenen Ausdrücke, die in
+   4.15) Was ist ein OID? Was ist ein TID?
+   4.16) Welche Bedeutung haben die verschiedenen Ausdrücke, die in
    PostgreSQL benutzt werden (z.B. attribute, class,...)?
-   4.18) Wieso bekomme ich den Fehler: "FATAL: Memory exhausted in
+   4.17) Wieso bekomme ich den Fehler: "FATAL: Memory exhausted in
    AllocSetAlloc()"?
-   4.19) Wie kann ich feststellen, welche PostgreSQL-Version bei mir
+   4.18) Wie kann ich feststellen, welche PostgreSQL-Version bei mir
    läuft?
-   4.20) Bei "large-object"-Operationen kommt die Fehlermeldung: "invalid
+   4.19) Bei "large-object"-Operationen kommt die Fehlermeldung: "invalid
    large obj descriptor". Warum?
-   4.21) Wie kann ich eine Spalte erstellen, deren Default-Wert immer die
+   4.20) Wie kann ich eine Spalte erstellen, deren Default-Wert immer die
    aktuelle Uhrzeit enthalten soll?
-   4.22) Warum sind meine Unterabfragen (subqueries), die IN verwenden,
+   4.21) Warum sind meine Unterabfragen (subqueries), die IN verwenden,
    so langsam?
-   4.23) Wie führe ich einen OUTER JOIN durch?
-   4.24) Wie kann ich Abfragen über mehrere Datenbanken hinweg ausführen?
-   4.25) Wie kann ich mehrere Zeilen bzw. Spalten von einer Funktion
+   4.22) Wie führe ich einen OUTER JOIN durch?
+   4.23) Wie kann ich Abfragen über mehrere Datenbanken hinweg ausführen?
+   4.24) Wie kann ich mehrere Zeilen bzw. Spalten von einer Funktion
    zurückgeben lassen?
-   4.26) Warum kann ich temporäre Tabellen in PL/PgSQL-Funktionen nicht
+   4.25) Warum kann ich temporäre Tabellen in PL/PgSQL-Funktionen nicht
    zuverlässig erstellen bzw. löschen?
-   4.27) Welche Möglichkeiten zur Datenbank-Replikation gibt es?
-   4.28) Welche Möglichkeiten zur Verschlüsselung gibt es?
+   4.26) Welche Möglichkeiten zur Verschlüsselung gibt es?
    
                             PostgreSQL erweitern
                                       
@@ -135,10 +134,8 @@
                                       
     1.1) Was ist PostgreSQL? Wie wird es ausgesprochen?
     
-   Die (englische) Aussprache ist "Post-Gres-Q-L". Eine MP3-Datei zum
-   Anhören gibt es hier: http://www.postgresql.org/postgresql.mp3. Im
-   allgemeinen Sprachgebrauch hat sich die Kurzform "Postgres" auch
-   durchgesetzt.
+   Die (englische) Aussprache ist "Post-Gres-Q-L". Im allgemeinen
+   Sprachgebrauch hat sich die Kurzform "Postgres" auch durchgesetzt.
    
    PostgreSQL ist eine Weiterentwicklung des POSTGRES-Datenbank-Systems,
    eines zukunftsweisenden DBMS-Forschungsprototyps. Während PostgreSQL
@@ -175,7 +172,7 @@
    
    PostgreSQL Data Base Management System
    
-   Portions copyright (c) 1996-2004, PostgreSQL Global Development Group
+   Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
    Portions Copyright (c) 1994-6 Regents of the University of California
    
    Permission to use, copy, modify, and distribute this software and its
@@ -227,6 +224,10 @@
    
    Eine Portierung für Novell Netware 6 gibt es unter
    http://forge.novell.com.
+   
+   Für OS/2 (eComStation) gibt es eine Version hier:
+   http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=postgre
+   SQL&stype=all&sort=type&dir=%2F
    
     1.5) Woher bekomme ich PostgreSQL?
     
@@ -285,7 +286,7 @@
    
     1.7) Was ist die neueste Version von PostgreSQL?
     
-   Die neueste Version von PostgreSQL ist 7.4.6 .
+   Die neueste Version von PostgreSQL ist 8.0.0 .
    
    Die Freigabe einer neuen Version erfolgt im Schnitt alle 6 bis 8
    Monaten.
@@ -531,8 +532,9 @@
    Serverprozesse ab, die Sie für postmaster konfiguriert haben. Bei den
    voreingestellten Werten für Puffer und Prozesse benötigen Sie bei den
    meisten Systemen ein Minimum von ca. 1 MB. Der "PostgreSQL
-   Administrator's Guide" () enthält weitere Informationen zu Shared
-   Memory und Semaphores.
+   Administrator's Guide"
+   (http://www.postgresql.org/docs/current/static/kernel-resources.html)
+   enthält weitere Informationen zu Shared Memory und Semaphores.
    
     3.4) Wenn ich versuche, den postmaster zu starten, bekomme ich
     "IpcSemaphoreCreate"-Fehlermeldungen. Warum?
@@ -759,8 +761,9 @@ SELECT pg_backend_pid()
         LIMIT 1
 
 
-    4.3) Wie bekomme ich eine Liste der Tabellen oder anderen Dinge, die ich in
-    psql sehen kann?
+    4.3) Wie finde ich heraus, welche Tabellen, Indizes, Datenbanken oder
+    Benutzer in der Datenbank definiert sind? Wie bekomme ich die von psql
+    verwendeten Abfragen?
     
    In psql zeigt der Befehl \dt eine Liste der Datenbanktabellen. Weitere
    psql-Befehle lassen sich mit \? anzeigen. Sie können sich die Datei
@@ -768,8 +771,12 @@ SELECT pg_backend_pid()
    enthält die SQL-Abfragen, die die Backslash-Kommandos (\) ausführen.
    Sie können psql auch mit der -E Option starten. Danach gibt psql die
    Abfragen aus, die es bei der Ausführung der Befehle benutzt. Außerdem
-   biete PostgreSQL ein SQLi-kompatibles INFORMATION SCHEMA, das
+   biete PostgreSQL ein SQL-kompatibles INFORMATION SCHEMA, das
    Metainformation über die Datenbank zur Verfügung stellt.
+   
+   Die Datei pgsql/src/tutorial/syscat.source enthält außerdem viele
+   SELECT- Abfragen, mit deren Hilfe man Information über die
+   Systemtabellen erhalten kann.
    
     4.4) Wie entferne ich eine Spalte aus einer Tabelle? Wie ändere ich den
     Datentyp einer Spalte?
@@ -862,19 +869,7 @@ SELECT pg_backend_pid()
    NULL-Werte werden als Bitmaps gespeichert, wodurch sie sehr wenig
    Platz in Anspruch nehmen.
    
-    4.7) Wie finde ich heraus, welche Tabellen, Indizes, Datenbanken oder
-    Benutzer in der Datenbank definiert sind?
-    
-   psql hat eine Vielzahl von Backslash-Befehlen, mit denen solche
-   Informationen angezeigt werden können. Der Befehl \? zeigt eine
-   Übersicht. Außerdem zeigt der Befehl \l eine Liste von allen
-   verfügbaren Datenbanken an.
-   
-   Die Datei pgsql/src/tutorial/syscat.source enthält außerdem viele
-   SELECT-Anweisungen, mit deren Hilfe man Information über die
-   Systemtabellen erhalten kann.
-   
-    4.8) Meine Abfragen sind langsam oder benutzen die Indizes nicht. Warum?
+    4.7) Meine Abfragen sind langsam oder benutzen die Indizes nicht. Warum?
     
    Indizes werden nicht automatisch bei jeder Abfrage verwendet. Indizes
    werden nur dann verwendet, wenn die abzufragende Tabelle eine
@@ -935,12 +930,12 @@ SELECT pg_backend_pid()
    nicht ermitteln können. Es ist allerdings möglich, einen besonderen
    text_pattern_ops-Index für solche Fälle zu erstellen.
    
-    4.9) Auf welche Weise kann ich sehen, wie der Abfrage-Optimierer meine
+    4.8) Auf welche Weise kann ich sehen, wie der Abfrage-Optimierer meine
     Abfrage auswertet?
     
    Vgl. die EXPLAIN Man-Page.
    
-    4.10) Was ist ein R-Tree Index?
+    4.9) Was ist ein R-Tree Index?
     
    Ein R-Tree Index wird benutzt, um räumliche Daten zu indizieren. Ein
    Hash-Index kann nicht für Bereichssuchen genutzt werden. Ein B-Tree
@@ -967,14 +962,14 @@ SELECT pg_backend_pid()
    allerdings eine Menge Arbeit und wir haben derzeit keinerlei
    Dokumentation darüber, wie das zu machen wäre.
    
-    4.11) Was ist der "Genetic Query Optimizer"?
+    4.10) Was ist der "Genetic Query Optimizer"?
     
    Das GEQO-Modul in PostgreSQL soll dazu dienen, das Optimierungsproblem
    beim JOIN von vielen Tabellen auf der Basis genetischer Algorithmen
    (GA) zu lösen. Es ermöglicht die Behandlung von großen JOIN-Queries
    durch eine nicht-erschöpfende Suche.
    
-    4.12) Wie verfahre ich bei der Suche mit regulären Ausdrücken und bei einer
+    4.11) Wie verfahre ich bei der Suche mit regulären Ausdrücken und bei einer
     Suche, bei der Groß- und Kleinschreibweisen ignoriert werden? Wie verwende
     ich einen Index bei solchen Suchabfragen?
     
@@ -992,11 +987,11 @@ SELECT pg_backend_pid()
    funktionalen Index an, so wird er auf jeden Fall verwendet:
       CREATE INDEX tabelle_index ON tabelle (LOWER(spalte))
 
-    4.13) Wie ermittle ich in einer Abfrage, ob ein Feld NULL ist?
+    4.12) Wie ermittle ich in einer Abfrage, ob ein Feld NULL ist?
     
    Testen Sie die Spalte mit IS NULL bzw. IS NOT NULL.
    
-    4.14) Was ist der Unterschied zwischen den verschiedenen CHAR-Typen?
+    4.13) Was ist der Unterschied zwischen den verschiedenen CHAR-Typen?
     
 Typ           interner Name   Bemerkungen
 -------------------------------------------------
@@ -1034,7 +1029,7 @@ BYTEA         bytea           Bytearray mit variabler Länge (auch für
    Alle der hier erwähnten Typen weisen ähnliche Performanzeigenschaften
    auf.
    
-    4.15.1) Wie erzeuge ich ein serielles Feld mit automatischer Erhöhung des
+    4.14.1) Wie erzeuge ich ein serielles Feld mit automatischer Erhöhung des
     Werts (serial/auto-increment)?
     
    PostgreSQL bietet einen SERIAL-Datentyp. Dieser erzeugt automatisch
@@ -1059,12 +1054,12 @@ BYTEA         bytea           Bytearray mit variabler Länge (auch für
    exportieren und reimportieren wollen, müssen Sie die Option -o von
    pg_dump bzw. COPY WITH OIDS verwenden, um die OIDs beizubehalten.
    
-    4.15.2) Wie bekomme ich den Wert einer SERIAL-Sequenz?
+    4.14.2) Wie bekomme ich den Wert einer SERIAL-Sequenz?
     
    Eine Möglichkeit wäre, mit der nextval()-Funktion den nächsten
    SERIAL-Wert von dem Sequenzobjekt vor der Auszuführung einer
    INSERT-Anweisung anzufordern und ihn dann explizit in die
-   INSERT-Anweisung einzubinden. Anhand der Beispieltabelle in 4.15.1
+   INSERT-Anweisung einzubinden. Anhand der Beispieltabelle in 4.14.1
    könnte dieser Vorgang in einer Pseudosprache so aussehen:
     new_id = output of execute("SELECT nextval('person_id_seq')");
     execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal')");
@@ -1092,13 +1087,13 @@ BYTEA         bytea           Bytearray mit variabler Länge (auch für
    Mit zum Beispiel dem DBD::Pg-Modul von Perl wird der OID-Wert nach
    einem $sth->excute() über $sth->{pg_oid_status} zurückgeliefert.
    
-    4.15.3) Führen currval() und nextval() zu einer Race-Condition mit anderen
+    4.14.3) Führen currval() und nextval() zu einer Race-Condition mit anderen
     Nutzern?
     
    Nein. currval() liefert einen Wert zurück, der von Ihrem Backend
    bestimmt wird, und der anderen Benutzern nicht zur Verfügung steht.
    
-    4.15.4) Warum werden die Sequenzwerte nach einem Transaktionsabbruch nicht
+    4.14.4) Warum werden die Sequenzwerte nach einem Transaktionsabbruch nicht
     zurückgesetzt? Warum gibt es Lücken in der Nummerierung meiner
     Sequenz-/SERIAL-Spalte?
     
@@ -1108,7 +1103,7 @@ BYTEA         bytea           Bytearray mit variabler Länge (auch für
    zugeteilt. Lücken in der Sequenznummerierung werden durch abgebrochene
    Transaktionen verursacht.
    
-    4.16) Was ist ein OID? Was ist ein TID?
+    4.15) Was ist ein OID? Was ist ein TID?
     
    OIDs sind PostgreSQLs Antwort auf eindeutige Zeilen-IDs. Jede Zeile,
    die in PostgreSQL erzeugt wird, bekommt eine eindeutige OID. Alle
@@ -1144,7 +1139,7 @@ BYTEA         bytea           Bytearray mit variabler Länge (auch für
    verändert oder zurückgeladen werden. Sie werden in Indexeinträgen
    benutzt um auf die physikalischen Zeilen zu zeigen.
    
-    4.17) Welche Bedeutung haben die verschiedenen Ausdrücke, die in PostgreSQL
+    4.16) Welche Bedeutung haben die verschiedenen Ausdrücke, die in PostgreSQL
     benutzt werden (z.B. attribute, class,...)?
     
    Einige der Quelltexte und die ältere Dokumentation nutzen allgemeine
@@ -1163,7 +1158,7 @@ BYTEA         bytea           Bytearray mit variabler Länge (auch für
    http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary
    /glossary.html (engl.).
    
-    4.18) Wieso bekomme ich einen Fehler: "ERROR: Memory exhausted in
+    4.17) Wieso bekomme ich einen Fehler: "ERROR: Memory exhausted in
     AllocSetAlloc()"?
     
    Wahrscheinlich gibt es keinen virtuellen Speicher mehr in Ihrem System
@@ -1179,11 +1174,11 @@ BYTEA         bytea           Bytearray mit variabler Länge (auch für
    haben, weil das Backend zu viele Daten zurückliefert, versuchen Sie
    dies vor dem Start des SQL-Clients.
    
-    4.19) Wie kann ich feststellen, welche PostgreSQL-Version bei mir läuft?
+    4.18) Wie kann ich feststellen, welche PostgreSQL-Version bei mir läuft?
     
    Geben Sie in psql SELECT VERSION(); ein.
    
-    4.20) Bei "large-object"-Operationen kommt die Fehlermeldung: "invalid
+    4.19) Bei "large-object"-Operationen kommt die Fehlermeldung: "invalid
     large obj descriptor". Warum?
     
    Sie sollten die Anweisungen BEGIN WORK und COMMIT bei jeden Gebrauch
@@ -1199,13 +1194,13 @@ BYTEA         bytea           Bytearray mit variabler Länge (auch für
    Falls Sie eine Client-Schnittstelle wie ODBC benutzen, kann es sein,
    dass die auto-commit-Option ausgeschaltet werden muss.
    
-    4.21) Wie kann ich eine Spalte erstellen, deren Default-Wert immer die
+    4.20) Wie kann ich eine Spalte erstellen, deren Default-Wert immer die
     aktuelle Uhrzeit enthalten soll?
     
    Dazu verwenden Sie CURRENT_TIMESTAMP:
       CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
 
-    4.22) Warum sind meine Unterabfragen (subqueries), die IN verwenden, so
+    4.21) Warum sind meine Unterabfragen (subqueries), die IN verwenden, so
     langsam?
     
    In Versionen vor 7.4 werden Unterabfragen mit der äusseren Abfrage
@@ -1226,7 +1221,7 @@ BYTEA         bytea           Bytearray mit variabler Länge (auch für
    gleichen Methoden wie die normale Tabellenverknüpfung und ist daher
    soger EXISTS vorzuziehen.
    
-    4.23) Wie führe ich einen OUTER JOIN durch?
+    4.22) Wie führe ich einen OUTER JOIN durch?
     
    PostgreSQL ab der Version 7.1 unterstützt OUTER JOINs nach dem SQL-
    Standardsyntax. Hier zwei Beispiele:
@@ -1261,7 +1256,7 @@ BYTEA         bytea           Bytearray mit variabler Länge (auch für
        WHERE t1.spalte1 NOT IN (SELECT t2.spalte1 FROM tabelle_2 t2)
        ORDER BY spalte1
 
-    4.24) Wie kann ich Abfragen über mehrere Datenbanken hinweg ausführen?
+    4.23) Wie kann ich Abfragen über mehrere Datenbanken hinweg ausführen?
     
    Es gibt keinen Weg, innerhalb einer Abfrage auf mehr als eine
    Datenbank zuzugreifen. Da PostgreSQL datenbank-spezifische
@@ -1280,13 +1275,13 @@ BYTEA         bytea           Bytearray mit variabler Länge (auch für
    Anwendungen könnten diese einen geeigneten Ersatz für den Zugriff auf
    eine andere Datenbank bieten.
    
-    4.25) Wie kann ich mehrere Zeilen bzw. Spalten von einer Funktion
+    4.24) Wie kann ich mehrere Zeilen bzw. Spalten von einer Funktion
     zurückgeben lassen?
     
    Ab 7.3 können Funktionen mehrere Zeilen und Spalten zurückgeben, vgl.:
    http://techdocs.postgresql.org/guides/SetReturningFunctions.
    
-    4.26) Warum kann ich temporäre Tabellen in PL/PgSQL-Funktionen nicht
+    4.25) Warum kann ich temporäre Tabellen in PL/PgSQL-Funktionen nicht
     zuverlässig erstellen bzw. löschen?
     
    PL/PgSQL verarbeitet die Inhalte einer Funktion in eine Cache. Dies
@@ -1300,15 +1295,7 @@ BYTEA         bytea           Bytearray mit variabler Länge (auch für
    mittels EXECUTE auf temporäre Tabellen zuzugreifen. Diese bewirkt,
    dass bei jedem Funktionsruf die betreffende Abfrage neu geparst wird.
    
-    4.27) Welche Möglichkeiten zur Datenbank-Replikation gibt es?
-    
-   Es existieren mehrere Ansätze zur Master/Slave-Replikation in
-   PostgreSQL. In diesen werden Datenänderungen in der Master-Datenbank
-   durchgeführt und an Slave-Datenbanken weitergeleitet. Informationen
-   über diese Lösungen befinden sich auf der folgenden Seite (unten):
-   http://gborg.postgresql.org/genpage?replication_research .
-   
-    4.28) Welche Möglichkeiten zur Verschlüsselung gibt es?
+    4.26) Welche Möglichkeiten zur Verschlüsselung gibt es?
     
      * contrib/pgcrypto enthält diverse Funktionen für die Benützung mit
        SQL-Abfragen.
