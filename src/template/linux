@@ -1,5 +1,2 @@
 # Force _GNU_SOURCE on; plperl is broken with Perl 5.8.0 otherwise
 CPPFLAGS="-D_GNU_SOURCE"
-
-# tools/thread/thread_test must be run
-PTHREAD_CFLAGS="-D_REENTRANT -D_THREAD_SAFE -D_POSIX_PTHREAD_SEMANTICS"

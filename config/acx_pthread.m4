@@ -1,3 +1,6 @@
+dnl PGSGL:  When updating, comment out port-specific part below;
+dnl see the comment below with the word "PostgreSQL".
+dnl
 dnl Available from the GNU Autoconf Macro Archive at:
 dnl http://www.gnu.org/software/ac-archive/htmldoc/acx_pthread.html
 dnl
@@ -165,10 +168,11 @@ if test "x$acx_pthread_ok" = xyes; then
 
         AC_MSG_CHECKING([if more special flags are required for pthreads])
         flag=no
-        case "${host_cpu}-${host_os}" in
-                *-aix* | *-freebsd*)     flag="-D_THREAD_SAFE";;
-                *solaris* | *-osf* | *-hpux*) flag="-D_REENTRANT";;
-        esac
+# We handle this ourselves in PostgreSQL
+#        case "${host_cpu}-${host_os}" in
+#                *-aix* | *-freebsd*)     flag="-D_THREAD_SAFE";;
+#                *solaris* | *-osf* | *-hpux*) flag="-D_REENTRANT";;
+#        esac
         AC_MSG_RESULT(${flag})
         if test "x$flag" != xno; then
                 PTHREAD_CFLAGS="$flag $PTHREAD_CFLAGS"

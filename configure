@@ -13387,10 +13387,11 @@ echo "$as_me: WARNING: we do not know how to create joinable pthreads" >&2;}
         echo "$as_me:$LINENO: checking if more special flags are required for pthreads" >&5
 echo $ECHO_N "checking if more special flags are required for pthreads... $ECHO_C" >&6
         flag=no
-        case "${host_cpu}-${host_os}" in
-                *-aix* | *-freebsd*)     flag="-D_THREAD_SAFE";;
-                *solaris* | *-osf* | *-hpux*) flag="-D_REENTRANT";;
-        esac
+# We handle this ourselves in PostgreSQL
+#        case "${host_cpu}-${host_os}" in
+#                *-aix* | *-freebsd*)     flag="-D_THREAD_SAFE";;
+#                *solaris* | *-osf* | *-hpux*) flag="-D_REENTRANT";;
+#        esac
         echo "$as_me:$LINENO: result: ${flag}" >&5
 echo "${ECHO_T}${flag}" >&6
         if test "x$flag" != xno; then
@@ -13464,6 +13465,11 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 	# set thread flags
+
+# Some platforms use these, so just defineed them.  They can't hurt if they
+# are not supported.
+PTHREAD_CFLAGS="$PTHREAD_CFLAGS -D_REENTRANT -D_THREAD_SAFE -D_POSIX_PTHREAD_SEMANTICS"
+
 
 # At this point, we don't want to muck with the compiler name for threading.
 # Let's see who fails, perhaps AIX.  2004-04-23

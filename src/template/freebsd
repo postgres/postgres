@@ -1,8 +1,3 @@
 case $host_cpu in
   alpha*)   CFLAGS="-O";;  # alpha has problems with -O2
 esac
-
-case $host_os in
-	freebsd2*|freebsd3*|freebsd4*) ;;
-	*) PTHREAD_LIBS="c_r";;	 # do we need this?  2004-04-23
-esac

@@ -24,8 +24,5 @@ __EOF__
   PTHREAD_CFLAGS="-Kpthread"
 fi
 
-# tools/thread/thread_test must be run
-PTHREAD_CFLAGS="$PTHREAD_CFLAGS -D_REENTRANT"
-
 # Disabled because flags are required for all apps using libpq.
 # Waiting to see if other platforms need this too.  2004-03-22

@@ -10,4 +10,3 @@ case $host in
 esac
 
 # -D_POSIX_PTHREAD_SEMANTICS enables 5-arg getpwuid_r, among other things
-PTHREAD_CFLAGS="-D_REENTRANT -D_POSIX_PTHREAD_SEMANTICS"
