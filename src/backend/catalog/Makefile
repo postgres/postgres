@@ -2,7 +2,7 @@
 #
 # Makefile for backend/catalog
 #
-# $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.47 2003/08/01 16:12:32 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.48 2003/11/11 01:58:23 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -48,6 +48,7 @@ postgres.bki: genbki.sh $(POSTGRES_BKI_SRCS) \
 install-data: $(BKIFILES) installdirs
 	$(INSTALL_DATA) postgres.bki         $(DESTDIR)$(datadir)/postgres.bki
 	$(INSTALL_DATA) postgres.description $(DESTDIR)$(datadir)/postgres.description
+	$(INSTALL_DATA) $(srcdir)/system_views.sql $(DESTDIR)$(datadir)/system_views.sql
 	$(INSTALL_DATA) $(srcdir)/information_schema.sql $(DESTDIR)$(datadir)/information_schema.sql
 	$(INSTALL_DATA) $(srcdir)/sql_features.txt $(DESTDIR)$(datadir)/sql_features.txt
 
@@ -56,8 +57,7 @@ installdirs:
 
 .PHONY: uninstall-data
 uninstall-data:
-	rm -f $(addprefix $(DESTDIR)$(datadir)/, $(BKIFILES) information_schema.sql sql_features.txt)
-
+	rm -f $(addprefix $(DESTDIR)$(datadir)/, $(BKIFILES) system_views.sql information_schema.sql sql_features.txt)
 
 clean: 
 	rm -f SUBSYS.o $(OBJS) $(BKIFILES)

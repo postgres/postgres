@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.30 2003/11/10 22:51:16 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.31 2003/11/11 01:58:23 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -30,13 +30,12 @@ dirmod.c sprompt.c: % : $(top_srcdir)/src/port/%
 
 install: all installdirs
 	$(INSTALL_PROGRAM) initdb$(X) $(DESTDIR)$(bindir)/initdb$(X)
-	$(INSTALL_DATA) $(srcdir)/system_views.sql $(DESTDIR)$(datadir)/system_views.sql
 
 installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(bindir)
 
 uninstall:
-	rm -f $(DESTDIR)$(bindir)/initdb$(X) $(DESTDIR)$(datadir)/system_views.sql
+	rm -f $(DESTDIR)$(bindir)/initdb$(X)
 
 clean distclean:
 	rm -f initdb$(X) $(OBJS)
