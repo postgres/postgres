@@ -29,7 +29,8 @@ It can be done by done by typing configure, make and make install.
 1. Download the Cygwin32 IPC Package by Ludovic LANGE 
    http://www.multione.capgemini.fr:80/tools/pack_ipc/current.tar.gz
 2. Untar the package and follow the readme instructions.
-3. Apply the patch from the file.
+3. Apply the patch pgsql/src/win32/ipc.patch to the CygWin32 sources
+   before compiling CygWin32.
 4. I tested 1.03.
 5. I used the \cygwin-b20\h-i568-cygwin32\i586-cygwin32\lib and
 \cygwin-b20\h-i568-cygwin32\i586-cygwin32\include\sys instead of the
