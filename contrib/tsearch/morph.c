@@ -114,12 +114,13 @@ initmorph(void)
 
 #ifdef USE_LOCALE
 	PGLC_current(&lc);
-	for (i = 1; i < lengthof(dicts); i++)
-		if (strcmp(dicts[i].localename, lc.lang) == 0)
-		{
-			bylocaledict = i;
-			break;
-		}
+	if ( lc.lc_ctype )
+		for (i = 1; i < lengthof(dicts); i++)
+			if (strcmp(dicts[i].localename, lc.lc_ctype) == 0)
+			{
+				bylocaledict = i;
+				break;
+			}
 	PGLC_free_categories(&lc);
 #endif
 
