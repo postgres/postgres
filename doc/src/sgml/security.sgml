@@ -1,155 +1,295 @@
-<chapter id="security">
-<Title>Security</Title>
+ <chapter id="security">
+  <Title>Security</Title>
 
-<Para>
+  <Para>
+   Database security is addressed at several levels:
 
-<Sect1>
-<Title>User Authentication</Title>
+   <itemizedlist>
+    <listitem>
+     <para>
+      Data base file protection. All files stored within the database
+      are protected from reading by any account other than the
+      <productname>Postgres</productname> superuser account.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Connections from a client to the database server are, by
+      default, allowed only via a local Unix socket, not via TCP/IP
+      sockets. The backend must be started with the
+      <literal>-i</literal> option to allow non-local clients to connect.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Client connections can be restricted by IP address and/or user
+      name via the <filename>pg_hba.conf</filename> file in <envar>PG_DATA</envar>.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Client connections may be authenticated vi other external packages.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Each user in <productname>Postgres</productname> is assigned a
+      username and (optionally) a password. By default, users do not
+      have write access to databases they did not create.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Users may be assigned to <firstterm>groups</firstterm>, and
+      table access may be restricted based on group privileges.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
 
-<Para>
-<firstterm>Authentication</firstterm>
-is the process by which the backend server and 
-<application>postmaster</application>
-ensure that the user requesting access to data is in fact who he/she
-claims to be.  
-All users who invoke <Productname>Postgres</Productname> are checked against the
-contents of the <literal>pg_user</literal> class to ensure that they are
-authorized to do so.  However, verification of the user's actual
-identity is performed in a variety of ways:
+  <Sect1>
+   <Title>User Authentication</Title>
 
-<variablelist>
-<varlistentry>
-<term>
-From the user shell
-</term>
-<listitem>
-<para>
-A backend server started from a user shell notes the user's (effective)
-user-id before performing a 
-<function>setuid</function>
-to the user-id of user <replaceable>postgres</replaceable>.  
-The effective user-id is used
-as the basis for access control checks.  No other authentication is
-conducted.
+   <Para>
+    <firstterm>Authentication</firstterm>
+    is the process by which the backend server and 
+    <application>postmaster</application>
+    ensure that the user requesting access to data is in fact who he/she
+    claims to be.  
+    All users who invoke <Productname>Postgres</Productname> are checked against the
+    contents of the <literal>pg_user</literal> class to ensure that they are
+    authorized to do so.  However, verification of the user's actual
+    identity is performed in a variety of ways:
 
-<varlistentry>
-<term>
-From the network
-</term>
-<listitem>
-<para>
-If the <Productname>Postgres</Productname> system is built as distributed,
- access to the Internet TCP port of the
-<application>postmaster</application>
-process is available to anyone.  The DBA configures the pg_hba.conf file
-in the PGDATA directory to specify what authentication system is to be used
-according to the host making the connection and which database it is
-connecting to.  See <citetitle>pg_hba.conf(5)</citetitle>
- for a description of the authentication
-systems available.  Of course, host-based authentication is not fool-proof in
-Unix, either. It is possible for determined intruders to also
-masquerade the origination host. Those security issues are beyond the
-scope of <Productname>Postgres</Productname>.
+    <variablelist>
+     <varlistentry>
+      <term>
+       From the user shell
+      </term>
+      <listitem>
+       <para>
+	A backend server started from a user shell notes the user's (effective)
+	user-id before performing a 
+	<function>setuid</function>
+	to the user-id of user <replaceable>postgres</replaceable>.  
+	The effective user-id is used
+	as the basis for access control checks.  No other authentication is
+	conducted.
+       </para>
+      </listitem>
+     </varlistentry>
 
-</variablelist>
+     <varlistentry>
+      <term>
+       From the network
+      </term>
+      <listitem>
+       <para>
+	If the <Productname>Postgres</Productname> system is built as distributed,
+	access to the Internet TCP port of the
+	<application>postmaster</application>
+	process is available to anyone.  The DBA configures the pg_hba.conf file
+	in the PGDATA directory to specify what authentication system is to be used
+	according to the host making the connection and which database it is
+	connecting to.  See <citetitle>pg_hba.conf(5)</citetitle>
+	for a description of the authentication
+	systems available.  Of course, host-based authentication is not fool-proof in
+	Unix, either. It is possible for determined intruders to also
+	masquerade the origination host. Those security issues are beyond the
+	scope of <Productname>Postgres</Productname>.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </sect1>
 
+  <sect1>
+   <title>User Names and Groups</title>
 
-<Sect1>
-<Title>Access Control</Title>
+   <para>
+    To define a new user, run the
+    <application>createuser</application> utility program.
+   </para>
 
-<Para>
-<Productname>Postgres</Productname> provides mechanisms to allow users 
-to limit the access to their data that is provided to other users.
+   <para>
+    To assign a user or set of users to a new group, one must 
+    define the group itself, and assign users to that group. In
+    <application>Postgres</application> these steps are not currently
+    supported with a <command>create group</command> command. Instead, 
+    the groups are defined by inserting appropriate values into the
+    <literal>pg_group</literal> system table, and then using the
+    <command>grant</command> command to assign privileges to the
+    group.
+   </para>
 
-<variablelist>
-<varlistentry>
-<term>
-Database superusers
-</term>
-<listitem>
-<para>
-Database super-users (i.e., users who have <literal>pg_user.usesuper</literal>
-set) silently bypass all of the access controls described below with
-two exceptions: manual system catalog updates are not permitted if the
-user does not have <literal>pg_user.usecatupd</literal> set, and destruction of
-system catalogs (or modification of their schemas) is never allowed.
+   <sect2>
+    <title>Creating Users</title>
 
-<varlistentry>
-<term>
-Access Privilege
-</term>
-<listitem>
-<para>
-The use of access privilege to limit reading, writing and setting
-of rules on classes is covered in
-<citetitle>grant/revoke(l)</citetitle>.
+    <para>
+    </para>
+   </sect2>
 
-<varlistentry>
-<term>
-Class removal and schema modification
-</term>
-<listitem>
-<para>
-Commands that destroy or modify the structure of an existing class,
-such as <command>alter</command>,
-<command>drop table</command>,
-and
-<command>drop index</command>,
-only operate for the owner of the class.  As mentioned above, these
-operations are <emphasis>never</emphasis>
-permitted on system catalogs.
+   <sect2>
+    <title>Creating Groups</title>
 
-</variablelist>
+    <para>
+     Currently, there is no easy interface to set up user groups. You 
+     have to explicitly insert/update the <literal>pg_group table</literal>.
+     For example:
 
-<Sect1>
-<Title>Functions and Rules</Title>
+        jolly=> insert into pg_group (groname, grosysid, grolist)
+        jolly=>     values ('posthackers', '1234', '{5443, 8261}');
+        INSERT 548224
+        jolly=> grant insert on foo to group posthackers;
+        CHANGE
+        jolly=>
 
-<Para>
-Functions and rules allow users to insert code into the backend server
-that other users may execute without knowing it.  Hence, both
-mechanisms permit users to <firstterm>trojan horse</firstterm>
-others with relative impunity.  The only real protection is tight
-control over who can define functions (e.g., write to relations with
-SQL fields) and rules.  Audit trails and alerters on
-<literal>pg_class</literal>, <literal>pg_user</literal>
- and <literal>pg_group</literal> are also recommended.
+   The fields in pg_group are:
+     * groname: the group name. This a name and should be purely
+       alphanumeric. Do not include underscores or other punctuation.
+     * grosysid: the group id. This is an int4. This should be unique for
+       each group.
+     * grolist: the list of pg_user id's that belong in the group. This
+       is an int4[].
+    </para>
+   </sect2>
 
-<Sect2>
-<Title>Functions</Title>
+   <sect2>
+    <title>Assigning Users to Groups</title>
 
-<Para>
-Functions written in any language except SQL 
-run inside the backend server
-process with the permissions of the user <replaceable>postgres</replaceable> (the
-backend server runs with its real and effective user-id set to
-<replaceable>postgres</replaceable>.  It is possible for users to change the server's
-internal data structures from inside of trusted functions.  Hence,
-among many other things, such functions can circumvent any system
-access controls.  This is an inherent problem with user-defined C functions.
+    <para>
+    </para>
+   </sect2>
 
-<Sect2>
-<Title>Rules</Title>
+  </sect1>
 
-<Para>
-Like SQL functions, rules always run with the identity and
-permissions of the user who invoked the backend server.
+  <Sect1>
+   <Title>Access Control</Title>
 
-<sect2>
-<title>
-Caveats
-</title>
+   <Para>
+    <Productname>Postgres</Productname> provides mechanisms to allow users 
+    to limit the access to their data that is provided to other users.
 
-<para>
-There are no plans to explicitly support encrypted data inside of
-<Productname>Postgres</Productname> 
-(though there is nothing to prevent users from encrypting
-data within user-defined functions).  There are no plans to explicitly
-support encrypted network connections, either, pending a total rewrite
-of the frontend/backend protocol.
-<para>
-User names, group names and associated system identifiers (e.g., the
-contents of <literal>pg_user.usesysid</literal>) are assumed to be unique
-throughout a database.  Unpredictable results may occur if they are
-not.
+    <variablelist>
+     <varlistentry>
+      <term>
+       Database superusers
+      </term>
+      <listitem>
+       <para>
+	Database super-users (i.e., users who have <literal>pg_user.usesuper</literal>
+	set) silently bypass all of the access controls described below with
+	two exceptions: manual system catalog updates are not permitted if the
+	user does not have <literal>pg_user.usecatupd</literal> set, and destruction of
+	system catalogs (or modification of their schemas) is never allowed.
 
+     <varlistentry>
+      <term>
+       Access Privilege
+      </term>
+      <listitem>
+       <para>
+	The use of access privilege to limit reading, writing and setting
+	of rules on classes is covered in
+	<citetitle>grant/revoke(l)</citetitle>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       Class removal and schema modification
+      </term>
+      <listitem>
+       <para>
+	Commands that destroy or modify the structure of an existing class,
+	such as <command>alter</command>,
+	<command>drop table</command>,
+	and
+	<command>drop index</command>,
+	only operate for the owner of the class.  As mentioned above, these
+	operations are <emphasis>never</emphasis>
+	permitted on system catalogs.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </sect1>
+
+  <Sect1>
+   <Title>Functions and Rules</Title>
+
+   <Para>
+    Functions and rules allow users to insert code into the backend server
+    that other users may execute without knowing it.  Hence, both
+    mechanisms permit users to <firstterm>trojan horse</firstterm>
+    others with relative impunity.  The only real protection is tight
+    control over who can define functions (e.g., write to relations with
+    SQL fields) and rules.  Audit trails and alerters on
+    <literal>pg_class</literal>, <literal>pg_user</literal>
+    and <literal>pg_group</literal> are also recommended.
+   </para>
+
+   <Sect2>
+    <Title>Functions</Title>
+
+    <Para>
+     Functions written in any language except SQL 
+     run inside the backend server
+     process with the permissions of the user <replaceable>postgres</replaceable> (the
+     backend server runs with its real and effective user-id set to
+     <replaceable>postgres</replaceable>.  It is possible for users to change the server's
+     internal data structures from inside of trusted functions.  Hence,
+     among many other things, such functions can circumvent any system
+     access controls.  This is an inherent problem with user-defined C functions.
+    </para>
+   </sect2>
+
+   <Sect2>
+    <Title>Rules</Title>
+
+    <Para>
+     Like SQL functions, rules always run with the identity and
+     permissions of the user who invoked the backend server.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Caveats</title>
+
+    <para>
+     There are no plans to explicitly support encrypted data inside of
+     <Productname>Postgres</Productname> 
+     (though there is nothing to prevent users from encrypting
+     data within user-defined functions).  There are no plans to explicitly
+     support encrypted network connections, either, pending a total rewrite
+     of the frontend/backend protocol.
+    </para>
+    <para>
+     User names, group names and associated system identifiers (e.g., the
+     contents of <literal>pg_user.usesysid</literal>) are assumed to be unique
+     throughout a database.  Unpredictable results may occur if they are
+     not.
+    </para>
+   </sect2>
+  </sect1>
 </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-ecat-files:nil
+End:
+-->
