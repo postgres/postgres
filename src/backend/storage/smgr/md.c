@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.4 1996/07/22 23:00:18 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.5 1996/08/27 22:20:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 #include "postgres.h"
 #include "miscadmin.h"  /* for DataDir */
 
-#include "machine.h"
 #include "storage/smgr.h"	/* where the declarations go */
 #include "storage/block.h"
 #include "storage/fd.h"

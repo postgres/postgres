@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.1.1.1 1996/07/09 06:21:59 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.2 1996/08/27 22:20:27 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 #ifdef MAIN_MEMORY
 
 #include <math.h>
-#include "machine.h"
 #include "storage/ipc.h"
 #include "storage/smgr.h"	/* where the declarations go */
 #include "storage/block.h"

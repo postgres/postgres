@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.6 1996/08/27 07:42:22 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.7 1996/08/27 22:17:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,6 @@
 #include "utils/memutils.h"
 #include "utils/palloc.h"
 #include "fmgr.h"
-#include "machine.h"
 
 /*
  * New copy code.

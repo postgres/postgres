@@ -10,14 +10,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.1.1.1 1996/07/09 06:21:59 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.2 1996/08/27 22:20:28 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 #include "postgres.h"
 
-#include "machine.h"
 #include "storage/ipc.h"
 #include "storage/smgr.h"
 #include "storage/block.h"
