@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.118 2004/12/31 22:01:25 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.119 2005/03/25 18:30:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -556,8 +556,7 @@ AtEOXact_CatCache(bool isCommit)
 			if (cl->refcount != 0)
 			{
 				if (isCommit)
-					elog(WARNING, "cache reference leak: cache %s (%d), list %p has count %d",
-						 ccp->cc_relname, ccp->id, cl, cl->refcount);
+					PrintCatCacheListLeakWarning(cl);
 				cl->refcount = 0;
 			}
 
@@ -579,10 +578,7 @@ AtEOXact_CatCache(bool isCommit)
 		if (ct->refcount != 0)
 		{
 			if (isCommit)
-				elog(WARNING, "cache reference leak: cache %s (%d), tuple %u has count %d",
-					 ct->my_cache->cc_relname, ct->my_cache->id,
-					 HeapTupleGetOid(&ct->tuple),
-					 ct->refcount);
+				PrintCatCacheLeakWarning(&ct->tuple);
 			ct->refcount = 0;
 		}
 
@@ -1806,4 +1802,33 @@ PrepareToInvalidateCacheTuple(Relation relation,
 					 &tuple->t_self,
 					 ccp->cc_relisshared ? (Oid) 0 : MyDatabaseId);
 	}
+}
+
+
+/*
+ * Subroutines for warning about reference leaks.  These are exported so
+ * that resowner.c can call them.
+ */
+void
+PrintCatCacheLeakWarning(HeapTuple tuple)
+{
+	CatCTup    *ct = (CatCTup *) (((char *) tuple) -
+								  offsetof(CatCTup, tuple));
+
+	/* Safety check to ensure we were handed a cache entry */
+	Assert(ct->ct_magic == CT_MAGIC);
+
+	elog(WARNING, "cache reference leak: cache %s (%d), tuple %u/%u has count %d",
+		 ct->my_cache->cc_relname, ct->my_cache->id,
+		 ItemPointerGetBlockNumber(&(tuple->t_self)),
+		 ItemPointerGetOffsetNumber(&(tuple->t_self)),
+		 ct->refcount);
+}
+
+void
+PrintCatCacheListLeakWarning(CatCList *list)
+{
+	elog(WARNING, "cache reference leak: cache %s (%d), list %p has count %d",
+		 list->my_cache->cc_relname, list->my_cache->id,
+		 list, list->refcount);
 }
