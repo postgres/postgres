@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pgtclCmds.h,v 1.3 1996/10/30 06:18:40 scrappy Exp $
+ * $Id: pgtclCmds.h,v 1.4 1996/11/09 10:39:42 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,8 @@ typedef struct Pg_ResultId_s {
 /* **************************/
 /* registered Tcl functions */
 /* **************************/
+extern int Pg_conndefaults(
+    ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
 extern int Pg_connect(
     ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
 extern int Pg_disconnect(

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.5 1996/10/30 06:18:39 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.6 1996/11/09 10:39:41 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -210,6 +210,44 @@ tcl_value (char *value)
 #endif
 
 /**********************************
+ * pg_conndefaults
+ 
+ syntax:
+ pg_conndefaults
+ 
+ the return result is a list describing the possible options and their
+ current default values for a call to pg_connect with the new -conninfo
+ syntax. Each entry in the list is a sublist of the format:
+
+     {optname label dispchar dispsize value}
+ 
+ **********************************/
+
+int
+Pg_conndefaults(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
+{
+    PQconninfoOption *option;
+    char	buf[8192];
+
+    Tcl_ResetResult(interp);
+    for(option = PQconndefaults(); option->keyword != NULL; option++) {
+        if(option->val == NULL) {
+	    option->val = "";
+	}
+	sprintf(buf, "{%s} {%s} {%s} %d {%s}",
+		option->keyword,
+		option->label,
+		option->dispchar,
+		option->dispsize,
+		option->val);
+        Tcl_AppendElement(interp, buf);
+    }
+
+    return TCL_OK;
+}
+
+
+/**********************************
  * pg_connect
  make a connection to a backend.  
  
@@ -235,55 +273,73 @@ Pg_connect(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
   
     if (argc == 1) {
 	Tcl_AppendResult(interp, "pg_connect: database name missing\n", 0);
-	Tcl_AppendResult(interp, "pg_connect databaseName [-host hostName] [-port portNumber] [-tty pgtty]]", 0);
+	Tcl_AppendResult(interp, "pg_connect databaseName [-host hostName] [-port portNumber] [-tty pgtty]]\n", 0);
+	Tcl_AppendResult(interp, "pg_connect -conninfo <conninfo-string>", 0);
 	return TCL_ERROR;
     
     }
-    if (argc > 2) { 
-	/* parse for pg environment settings */
-	i = 2;
-	while (i+1 < argc) {
-	    if (strcmp(argv[i], "-host") == 0) {
-		pghost = argv[i+1];
-		i += 2;
-	    }
-	    else
-		if (strcmp(argv[i], "-port") == 0) {
-		    pgport = argv[i+1];
+
+    if (!strcmp("-conninfo", argv[1])) {
+	/*
+	 * Establish a connection using the new PQconnectdb() interface
+	 */
+        if (argc != 3) {
+	    Tcl_AppendResult(interp, "pg_connect: syntax error\n", 0);
+	    Tcl_AppendResult(interp, "pg_connect -conninfo <conninfo-string>", 0);
+	    return TCL_ERROR;
+	}
+	conn = PQconnectdb(argv[2]);
+    } else {
+	/*
+	 * Establish a connection using the old PQsetdb() interface
+	 */
+	if (argc > 2) { 
+	    /* parse for pg environment settings */
+	    i = 2;
+	    while (i+1 < argc) {
+		if (strcmp(argv[i], "-host") == 0) {
+		    pghost = argv[i+1];
 		    i += 2;
 		}
 		else
-		    if (strcmp(argv[i], "-tty") == 0) {
-			pgtty = argv[i+1];
+		    if (strcmp(argv[i], "-port") == 0) {
+			pgport = argv[i+1];
 			i += 2;
 		    }
-	            else if (strcmp(argv[i], "-options") == 0) {
-			pgoptions = argv[i+1];
-			i += 2;
-		    }
-		    else {
-			Tcl_AppendResult(interp, "Bad option to pg_connect : \n",
-					 argv[i], 0);
-			Tcl_AppendResult(interp, "pg_connect databaseName [-host hostName] [-port portNumber] [-tty pgtty]]",0);
-			return TCL_ERROR;
-		    }
-	} /* while */
-	if ((i % 2 != 0) || i != argc) {
-	    Tcl_AppendResult(interp, "wrong # of arguments to pg_connect\n", argv[i],0);
-	    Tcl_AppendResult(interp, "pg_connect databaseName [-host hostName] [-port portNumber] [-tty pgtty]]",0);
-	    return TCL_ERROR;
+		    else
+			if (strcmp(argv[i], "-tty") == 0) {
+			    pgtty = argv[i+1];
+			    i += 2;
+			}
+			else if (strcmp(argv[i], "-options") == 0) {
+			    pgoptions = argv[i+1];
+			    i += 2;
+			}
+			else {
+			    Tcl_AppendResult(interp, "Bad option to pg_connect : \n",
+					     argv[i], 0);
+			    Tcl_AppendResult(interp, "pg_connect databaseName [-host hostName] [-port portNumber] [-tty pgtty]]",0);
+			    return TCL_ERROR;
+			}
+	    } /* while */
+	    if ((i % 2 != 0) || i != argc) {
+		Tcl_AppendResult(interp, "wrong # of arguments to pg_connect\n", argv[i],0);
+		Tcl_AppendResult(interp, "pg_connect databaseName [-host hostName] [-port portNumber] [-tty pgtty]]",0);
+		return TCL_ERROR;
+	    }
 	}
+	dbName = argv[1];
+        conn = PQsetdb(pghost, pgport, pgoptions, pgtty, dbName);
     }
-    dbName = argv[1];
 
-    conn = PQsetdb(pghost, pgport, pgoptions, pgtty, dbName);
     if (conn->status == CONNECTION_OK) {
 	PgSetConnectionId(cd, interp->result, conn);
 	return TCL_OK;
     }
     else {
-	Tcl_AppendResult(interp, "Connection to ", dbName, " failed\n", 0);
+	Tcl_AppendResult(interp, "Connection to database failed\n", 0);
 	Tcl_AppendResult(interp, conn->errorMessage, 0);
+	PQfinish(conn);
 	return TCL_ERROR;
     }
 }

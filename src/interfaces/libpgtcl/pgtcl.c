@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.3 1996/10/30 06:18:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.4 1996/11/09 10:39:40 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,6 +75,11 @@ Pgtcl_Init (Tcl_Interp *interp)
   Tcl_CreateExitHandler(Pgtcl_AtExit, (ClientData)cd);
 
   /* register all pgtcl commands */
+  Tcl_CreateCommand(interp,
+		    "pg_conndefaults",
+		    Pg_conndefaults,
+		    (ClientData)cd, (Tcl_CmdDeleteProc*)NULL);
+
   Tcl_CreateCommand(interp,
 		    "pg_connect",
 		    Pg_connect,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.14 1996/11/04 04:00:54 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.15 1996/11/09 10:39:51 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,9 +52,196 @@ static int packetSend(Port *port, PacketBuf *buf, PacketLen len,
 static void startup2PacketBuf(StartupInfo* s, PacketBuf* res);
 static void freePGconn(PGconn *conn);
 static void closePGconn(PGconn *conn);
+static int conninfo_parse(const char *conninfo, char *errorMessage);
+static char *conninfo_getval(char *keyword);
+static void conninfo_free();
 
 #define NOTIFYLIST_INITIAL_SIZE 10
 #define NOTIFYLIST_GROWBY 10
+
+
+/* ----------
+ * Definition of the conninfo parametes and their fallback resources.
+ * If Environment-Var and Compiled-in are specified as NULL, no
+ * fallback is available. If after all no value can be determined
+ * for an option, an error is returned.
+ *
+ * The values for dbname and user are treated special in conninfo_parse.
+ * If the Compiled-in resource is specified as a NULL value, the
+ * user is determined by fe_getauthname() and for dbname the user
+ * name is copied.
+ *
+ * The Label and Disp-Char entries are provided for applications that
+ * want to use PQconndefaults() to create a generic database connection
+ * dialog. Disp-Char is defined as follows:
+ *     ""	Normal input field
+ * ----------
+ */
+static PQconninfoOption PQconninfoOptions[] = {
+/*    ----------------------------------------------------------------- */
+/*    Option-name	Environment-Var	Compiled-in	Current value	*/
+/*			Label				Disp-Char	*/
+/*    ----------------- --------------- --------------- --------------- */
+    { "user",		"PGUSER",	NULL,		NULL,
+    			"Database-User",		"", 20	},
+
+    { "dbname",		"PGDATABASE",	NULL,		NULL,
+    			"Database-Name",		"", 20	},
+
+    { "host",		"PGHOST",	DefaultHost,	NULL,
+    			"Database-Host",		"", 40	},
+
+    { "port",		"PGPORT",	POSTPORT,	NULL,
+    			"Database-Port",		"", 6	},
+
+    { "tty",		"PGTTY",	DefaultTty,	NULL,
+    			"Backend-Debug-TTY",		"D", 40	},
+
+    { "options",	"PGOPTIONS",	DefaultOption,	NULL,
+    			"Backend-Debug-Options",	"D", 40	},
+/*    ----------------- --------------- --------------- --------------- */
+    { NULL,		NULL,		NULL,		NULL,
+    			NULL,				NULL, 0	}
+};
+
+/* ----------------
+ *	PQconnectdb
+ * 
+ * establishes a connectin to a postgres backend through the postmaster
+ * using connection information in a string.
+ *
+ * The conninfo string is a list of
+ *
+ *     option = value
+ *
+ * definitions. Value might be a single value containing no whitespaces
+ * or a single quoted string. If a single quote should appear everywhere
+ * in the value, it must be escaped with a backslash like \'
+ *
+ * Returns a PGconn* which is needed for all subsequent libpq calls
+ * if the status field of the connection returned is CONNECTION_BAD,
+ * then some fields may be null'ed out instead of having valid values 
+ * ----------------
+ */
+PGconn*
+PQconnectdb(const char *conninfo)
+{
+    PGconn *conn;
+    PQconninfoOption *option;
+    char errorMessage[ERROR_MSG_LENGTH];
+
+    /* ----------
+     * Allocate memory for the conn structure
+     * ----------
+     */
+    conn = (PGconn*)malloc(sizeof(PGconn));
+    if (conn == NULL) {
+        fprintf(stderr,
+            "FATAL: PQsetdb() -- unable to allocate memory for a PGconn");
+        return (PGconn*)NULL;
+    }
+    memset((char *)conn, 0, sizeof(PGconn));
+
+    /* ----------
+     * Parse the conninfo string and get the fallback resources
+     * ----------
+     */
+    if(conninfo_parse(conninfo, errorMessage) < 0) {
+	conn->status = CONNECTION_BAD;
+	strcpy(conn->errorMessage, errorMessage);
+	conninfo_free();
+	return conn;
+    }
+
+    /* ----------
+     * Check that we have all connection parameters
+     * ----------
+     */
+    for(option = PQconninfoOptions; option->keyword != NULL; option++) {
+	if(option->val != NULL)  continue;	/* Value was in conninfo */
+
+	/* ----------
+	 * No value was found for this option. Return an error.
+	 * ----------
+	 */
+	conn->status = CONNECTION_BAD;
+	sprintf(conn->errorMessage,
+	   "ERROR: PQconnectdb(): Cannot determine a value for option '%s'.\n",
+	   option->keyword);
+	strcat(conn->errorMessage,
+	    "Option not specified in conninfo string");
+	if(option->environ) {
+	    strcat(conn->errorMessage,
+	        ", environment variable ");
+	    strcat(conn->errorMessage, option->environ);
+	    strcat(conn->errorMessage, "\nnot set");
+	}
+	strcat(conn->errorMessage, " and no compiled in default value.\n");
+	conninfo_free();
+	return conn;
+    }
+
+    /* ----------
+     * Setup the conn structure
+     * ----------
+     */
+    conn->Pfout = NULL;
+    conn->Pfin = NULL;
+    conn->Pfdebug = NULL;
+    conn->port = NULL;
+    conn->notifyList = DLNewList();
+
+    conn->pghost    = strdup(conninfo_getval("host"));
+    conn->pgport    = strdup(conninfo_getval("port"));
+    conn->pgtty     = strdup(conninfo_getval("tty"));
+    conn->pgoptions = strdup(conninfo_getval("options"));
+    conn->pguser    = strdup(conninfo_getval("user"));
+    conn->dbName    = strdup(conninfo_getval("dbname"));
+
+    /* ----------
+     * Free the connection info - all is in conn now
+     * ----------
+     */
+    conninfo_free();
+
+    /* ----------
+     * Connect to the database
+     * ----------
+     */
+    conn->status = connectDB(conn);
+    if (conn->status == CONNECTION_OK) {
+      PGresult *res;
+      /* Send a blank query to make sure everything works; in particular, that
+         the database exists.
+         */ 
+      res = PQexec(conn," ");
+      if (res == NULL || res->resultStatus != PGRES_EMPTY_QUERY) {
+        /* PQexec has put error message in conn->errorMessage */
+        closePGconn(conn);
+      }
+      PQclear(res);
+    } 
+
+    return conn;
+}
+
+/* ----------------
+ *	PQconndefaults
+ * 
+ * Parse an empty string like PQconnectdb() would do and return the
+ * address of the connection options structure. Using this function
+ * an application might determine all possible options and their
+ * current default values.
+ * ----------------
+ */
+PQconninfoOption*
+PQconndefaults()
+{
+    char errorMessage[ERROR_MSG_LENGTH];
+
+    conninfo_parse("", errorMessage);
+    return PQconninfoOptions;
+}
 
 /* ----------------
  *	PQsetdb
@@ -162,7 +349,7 @@ PQsetdb(const char *pghost, const char* pgport, const char* pgoptions, const cha
       if (((tmp = (char *)dbName) && (dbName[0] != '\0')) ||
           ((tmp = getenv("PGDATABASE")))) {
         conn->dbName = strdup(tmp);
-      } else conn->dbName = conn->pguser;
+      } else conn->dbName = strdup(conn->pguser);
     } else conn->dbName = NULL;
 
     if (error) conn->status = CONNECTION_BAD;
@@ -461,6 +648,230 @@ startup2PacketBuf(StartupInfo* s, PacketBuf* res)
   strncpy(tmp, s->tty, sizeof(s->execFile));
 }
 
+/* ----------------
+ * Conninfo parser routine
+ * ----------------
+ */
+static int conninfo_parse(const char *conninfo, char *errorMessage)
+{
+    char *pname;
+    char *pval;
+    char *buf;
+    char *tmp;
+    char *cp;
+    char *cp2;
+    PQconninfoOption *option;
+    char errortmp[ERROR_MSG_LENGTH];
+
+    conninfo_free();
+
+    if((buf = strdup(conninfo)) == NULL) {
+        strcpy(errorMessage, 
+		"FATAL: cannot allocate memory for copy of conninfo string\n");
+        return -1;
+    }
+    cp = buf;
+
+    while(*cp) {
+	/* Skip blanks before the parameter name */
+        if(isspace(*cp)) {
+	    cp++;
+	    continue;
+	}
+
+	/* Get the parameter name */
+	pname = cp;
+	while(*cp) {
+	    if(*cp == '=') {
+	        break;
+	    }
+	    if(isspace(*cp)) {
+	        *cp++ = '\0';
+		while(*cp) {
+		    if(!isspace(*cp)) {
+		        break;
+		    }
+		    cp++;
+		}
+		break;
+	    }
+	    cp++;
+	}
+
+	/* Check that there is a following '=' */
+	if(*cp != '=') {
+	    sprintf(errorMessage,
+	        "ERROR: PQconnectdb() - Missing '=' after '%s' in conninfo\n",
+		pname);
+	    free(buf);
+	    return -1;
+	}
+	*cp++ = '\0';
+
+	/* Skip blanks after the '=' */
+	while(*cp) {
+	    if(!isspace(*cp)) {
+	        break;
+	    }
+	    cp++;
+	}
+
+	pval = cp;
+
+	if(*cp != '\'') {
+	    cp2 = pval;
+	    while(*cp) {
+	        if(isspace(*cp)) {
+		    *cp++ = '\0';
+		    break;
+		}
+		if(*cp == '\\') {
+		    cp++;
+		    if(*cp != '\0') {
+		        *cp2++ = *cp++;
+		    }
+		} else {
+		    *cp2++ = *cp++;
+		}
+	    }
+	    *cp2  = '\0';
+	} else {
+	    cp2 = pval;
+	    cp++;
+	    for(;;) {
+	        if(*cp == '\0') {
+		    sprintf(errorMessage,
+		      "ERROR: PQconnectdb() - unterminated quoted string in conninfo\n");
+		    free(buf);
+		    return -1;
+		}
+		if(*cp == '\\') {
+		    cp++;
+		    if(*cp != '\0') {
+		        *cp2++ = *cp++;
+		    }
+		    continue;
+		}
+		if(*cp == '\'') {
+		    *cp2 = '\0';
+		    cp++;
+		    break;
+		}
+		*cp2++ = *cp++;
+	    }
+	}
+
+        /* ----------
+	 * Now we have the name and the value. Search
+	 * for the param record.
+	 * ----------
+	 */
+        for(option = PQconninfoOptions; option->keyword != NULL; option++) {
+	    if(!strcmp(option->keyword, pname)) {
+	        break;
+	    }
+	}
+	if(option->keyword == NULL) {
+	    sprintf(errorMessage,
+	        "ERROR: PQconnectdb() - unknown option '%s'\n",
+		pname);
+	    free(buf);
+	    return -1;
+	}
+
+	/* ----------
+	 * Store the value
+	 * ----------
+	 */
+	option->val = strdup(pval);
+    }
+
+    free(buf);
+
+    /* ----------
+     * Get the fallback resources for parameters not specified
+     * in the conninfo string.
+     * ----------
+     */
+    for(option = PQconninfoOptions; option->keyword != NULL; option++) {
+	if(option->val != NULL)  continue;	/* Value was in conninfo */
+
+	/* ----------
+	 * Try to get the environment variable fallback
+	 * ----------
+	 */
+	if(option->environ != NULL) {
+	    if((tmp = getenv(option->environ)) != NULL) {
+	        option->val = strdup(tmp);
+		continue;
+	    }
+	}
+
+	/* ----------
+	 * No environment variable specified or this one isn't set -
+	 * try compiled in
+	 * ----------
+	 */
+	if(option->compiled != NULL) {
+	    option->val = strdup(option->compiled);
+	    continue;
+	}
+
+	/* ----------
+	 * Special handling for user
+	 * ----------
+	 */
+	if(!strcmp(option->keyword, "user")) {
+	    tmp = fe_getauthname(errortmp);
+	    if (tmp) {
+	        option->val = strdup(tmp);
+	    }
+	}
+
+	/* ----------
+	 * Special handling for dbname
+	 * ----------
+	 */
+	if(!strcmp(option->keyword, "dbname")) {
+	    tmp = conninfo_getval("user");
+	    if (tmp) {
+	        option->val = strdup(tmp);
+	    }
+	}
+    }
+
+    return 0;
+}
+
+
+static char*
+conninfo_getval(char *keyword)
+{
+    PQconninfoOption *option;
+
+    for(option = PQconninfoOptions; option->keyword != NULL; option++) {
+        if (!strcmp(option->keyword, keyword)) {
+	    return option->val;
+	}
+    }
+
+    return NULL;
+}
+
+
+static void
+conninfo_free()
+{
+    PQconninfoOption *option;
+
+    for(option = PQconninfoOptions; option->keyword != NULL; option++) {
+        if(option->val != NULL) {
+	    free(option->val);
+	    option->val = NULL;
+	}
+    }
+}
+
 /* =========== accessor functions for PGconn ========= */
 char* 
 PQdb(PGconn* conn)
@@ -470,6 +881,16 @@ PQdb(PGconn* conn)
     return (char *)NULL;
   }
   return conn->dbName;
+}
+
+char* 
+PQuser(PGconn* conn)
+{
+  if (!conn) {
+    fprintf(stderr,"PQuser() -- pointer to PGconn is null");
+    return (char *)NULL;
+  }
+  return conn->pguser;
 }
 
 char* 
