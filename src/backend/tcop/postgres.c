@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.263 2002/05/05 00:03:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.264 2002/05/10 20:22:13 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -729,9 +729,7 @@ pg_exec_query_string(StringInfo query_string,		/* string to execute */
 				/*
 				 * process utility functions (create, destroy, etc..)
 				 */
-				if (Debug_print_query)
-					elog(LOG, "ProcessUtility: %s", query_string->data);
-				else elog(DEBUG2, "ProcessUtility");
+				elog(DEBUG2, "ProcessUtility");
 
 				if (querytree->originalQuery)
 				{
@@ -1693,7 +1691,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.263 $ $Date: 2002/05/05 00:03:28 $\n");
+		puts("$Revision: 1.264 $ $Date: 2002/05/10 20:22:13 $\n");
 	}
 
 	/*
