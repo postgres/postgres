@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.51 2002/11/29 21:39:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.52 2003/03/23 05:14:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1694,7 +1694,6 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 	for (attno = 0; attno < natts; attno++)
 	{
 		VacAttrStats *stats = vacattrstats[attno];
-		FmgrInfo	out_function;
 		HeapTuple	stup,
 					oldtup;
 		int			i,
@@ -1707,8 +1706,6 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 		/* Ignore attr if we weren't able to collect stats */
 		if (!stats->stats_valid)
 			continue;
-
-		fmgr_info(stats->attrtype->typoutput, &out_function);
 
 		/*
 		 * Construct a new pg_statistic tuple
@@ -1758,33 +1755,16 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 		}
 		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
 		{
-			int			ntxt = stats->numvalues[k];
-
-			if (ntxt > 0)
+			if (stats->numvalues[k] > 0)
 			{
-				Datum	   *txtdatums = (Datum *) palloc(ntxt * sizeof(Datum));
 				ArrayType  *arry;
 
-				for (n = 0; n < ntxt; n++)
-				{
-					/*
-					 * Convert data values to a text string to be inserted
-					 * into the text array.
-					 */
-					Datum		stringdatum;
-
-					stringdatum =
-						FunctionCall3(&out_function,
-									  stats->stavalues[k][n],
-							  ObjectIdGetDatum(stats->attrtype->typelem),
-								  Int32GetDatum(stats->attr->atttypmod));
-					txtdatums[n] = DirectFunctionCall1(textin, stringdatum);
-					pfree(DatumGetPointer(stringdatum));
-				}
-				/* XXX knows more than it should about type text: */
-				arry = construct_array(txtdatums, ntxt,
-									   TEXTOID,
-									   -1, false, 'i');
+				arry = construct_array(stats->stavalues[k],
+									   stats->numvalues[k],
+									   stats->attr->atttypid,
+									   stats->attrtype->typlen,
+									   stats->attrtype->typbyval,
+									   stats->attrtype->typalign);
 				values[i++] = PointerGetDatum(arry);	/* stavaluesN */
 			}
 			else

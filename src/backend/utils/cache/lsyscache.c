@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.90 2003/02/03 21:15:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.91 2003/03/23 05:14:36 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -28,6 +28,7 @@
 #include "nodes/makefuncs.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -1387,8 +1388,7 @@ get_attstatsslot(HeapTuple statstuple,
 	ArrayType  *statarray;
 	int			narrayelem;
 	HeapTuple	typeTuple;
-	FmgrInfo	inputproc;
-	Oid			typelem;
+	Form_pg_type typeForm;
 
 	for (i = 0; i < STATISTIC_NUM_SLOTS; i++)
 	{
@@ -1408,47 +1408,39 @@ get_attstatsslot(HeapTuple statstuple,
 			elog(ERROR, "get_attstatsslot: stavalues is null");
 		statarray = DatumGetArrayTypeP(val);
 
-		/*
-		 * Do initial examination of the array.  This produces a list of
-		 * text Datums --- ie, pointers into the text array value.
-		 */
-		deconstruct_array(statarray,
-						  TEXTOID, -1, false, 'i',
-						  values, nvalues);
-		narrayelem = *nvalues;
-
-		/*
-		 * We now need to replace each text Datum by its internal
-		 * equivalent.
-		 *
-		 * Get the type input proc and typelem for the column datatype.
-		 */
+		/* Need to get info about the array element type */
 		typeTuple = SearchSysCache(TYPEOID,
 								   ObjectIdGetDatum(atttype),
 								   0, 0, 0);
 		if (!HeapTupleIsValid(typeTuple))
 			elog(ERROR, "get_attstatsslot: Cache lookup failed for type %u",
 				 atttype);
-		fmgr_info(((Form_pg_type) GETSTRUCT(typeTuple))->typinput, &inputproc);
-		typelem = ((Form_pg_type) GETSTRUCT(typeTuple))->typelem;
-		ReleaseSysCache(typeTuple);
+		typeForm = (Form_pg_type) GETSTRUCT(typeTuple);
+
+		/* Deconstruct array into Datum elements */
+		deconstruct_array(statarray,
+						  atttype,
+						  typeForm->typlen,
+						  typeForm->typbyval,
+						  typeForm->typalign,
+						  values, nvalues);
 
 		/*
-		 * Do the conversions.	The palloc'd array of Datums is reused in
-		 * place.
+		 * If the element type is pass-by-reference, we now have a bunch
+		 * of Datums that are pointers into the syscache value.  Copy them
+		 * to avoid problems if syscache decides to drop the entry.
 		 */
-		for (j = 0; j < narrayelem; j++)
+		if (!typeForm->typbyval)
 		{
-			char	   *strval;
-
-			strval = DatumGetCString(DirectFunctionCall1(textout,
-														 (*values)[j]));
-			(*values)[j] = FunctionCall3(&inputproc,
-										 CStringGetDatum(strval),
-										 ObjectIdGetDatum(typelem),
-										 Int32GetDatum(atttypmod));
-			pfree(strval);
+			for (j = 0; j < *nvalues; j++)
+			{
+				(*values)[j] = datumCopy((*values)[j],
+										 typeForm->typbyval,
+										 typeForm->typlen);
+			}
 		}
+
+		ReleaseSysCache(typeTuple);
 
 		/*
 		 * Free statarray if it's a detoasted copy.

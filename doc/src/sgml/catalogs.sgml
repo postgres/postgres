@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.66 2003/02/22 00:45:03 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.67 2003/03/23 05:14:36 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -3050,12 +3050,14 @@
 
      <row>
       <entry>stavaluesN</entry>
-      <entry><type>text[]</type></entry>
+      <entry><type>anyarray</type></entry>
       <entry></entry>
       <entry>Column data values of the appropriate kind for the Nth
-      <quote>slot</quote>, or NULL if the slot kind does not store any data values.
-      For data-type independence, all column data values are converted
-      to external textual form and stored as TEXT datums.
+      <quote>slot</quote>, or NULL if the slot kind does not store any data
+      values.
+      Each array's element values are actually of the specific column's
+      datatype, so there is no way to define these columns' type more
+      specifically than <quote>anyarray</>.
       </entry>
      </row>
     </tbody>
