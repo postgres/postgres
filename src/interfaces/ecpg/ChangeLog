@@ -1714,3 +1714,11 @@ Mon Nov  3 15:43:19 CET 2003
 	- Set pgtypes library to 1.0.0
 	- Set compat library to 1.0.0
 
+Wed Dec  3 09:45:21 CET 2003
+
+	- Added patch for array handling by Dave Cramer
+	- Set ecpg version to 3.1.0
+	- Set ecpg library to 4.1.0
+	- Set pgtypes library to 1.1.0
+	- Set compat library to 1.1.0
+
