@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.3 1996/11/08 05:58:09 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.4 1997/01/16 08:04:30 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,9 +117,6 @@ long	*LastRefCount;  /* refcounts of last ExecMain level */
  */
 
 SPINLOCK BufMgrLock;
-
-/* delayed write: TRUE on, FALSE off */
-int LateWrite = TRUE;
 
 int ReadBufferCount;
 int BufferHitCount;
