@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.76 2004/07/17 03:31:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.77 2004/08/28 20:31:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,17 +110,18 @@ typedef struct RelationData
 	BlockNumber rd_targblock;	/* current insertion target block, or
 								 * InvalidBlockNumber */
 	int			rd_refcnt;		/* reference count */
-	bool		rd_isnew;		/* rel was created in current xact */
-
-	/*
-	 * NOTE: rd_isnew should be relied on only for optimization purposes;
-	 * it is possible for new-ness to be "forgotten" (eg, after CLUSTER).
-	 */
 	bool		rd_istemp;		/* rel uses the local buffer mgr */
-	char		rd_isnailed;	/* rel is nailed in cache: 0 = no, 1 = yes,
-								 * 2 = yes but possibly invalid */
+	bool		rd_isnailed;	/* rel is nailed in cache */
+	bool		rd_isvalid;		/* relcache entry is valid */
 	char		rd_indexvalid;	/* state of rd_indexlist: 0 = not valid,
 								 * 1 = valid, 2 = temporarily forced */
+	TransactionId rd_createxact; /* rel was created in current xact */
+	/*
+	 * rd_createxact is the XID of the highest subtransaction the rel has
+	 * survived into; or zero if the rel was not created in the current
+	 * transaction.  This should be relied on only for optimization purposes;
+	 * it is possible for new-ness to be "forgotten" (eg, after CLUSTER).
+	 */
 	Form_pg_class rd_rel;		/* RELATION tuple */
 	TupleDesc	rd_att;			/* tuple descriptor */
 	Oid			rd_id;			/* relation's object id */
@@ -229,6 +230,16 @@ typedef Relation *RelationPtr;
  */
 #define RelationGetNamespace(relation) \
 	((relation)->rd_rel->relnamespace)
+
+/*
+ * RELATION_IS_LOCAL
+ *		If a rel is either temp or newly created in the current transaction,
+ *		it can be assumed to be visible only to the current backend.
+ *
+ * Beware of multiple eval of argument
+ */
+#define RELATION_IS_LOCAL(relation) \
+	((relation)->rd_istemp || TransactionIdIsValid((relation)->rd_createxact))
 
 /* routines in utils/cache/relcache.c */
 extern void RelationIncrementReferenceCount(Relation rel);

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.179 2004/08/25 18:43:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.180 2004/08/28 20:31:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@
 #include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/portal.h"
+#include "utils/relcache.h"
 #include "utils/resowner.h"
 #include "pgstat.h"
 
@@ -352,7 +353,7 @@ GetCurrentTransactionNestLevel(void)
 bool
 TransactionIdIsCurrentTransactionId(TransactionId xid)
 {
-	TransactionState s = CurrentTransactionState;
+	TransactionState s;
 
 	if (AMI_OVERRIDE)
 	{
@@ -363,12 +364,16 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 	/*
 	 * We will return true for the Xid of the current subtransaction,
 	 * any of its subcommitted children, any of its parents, or any of
-	 * their previously subcommitted children.
+	 * their previously subcommitted children.  However, a transaction
+	 * being aborted is no longer "current", even though it may still
+	 * have an entry on the state stack.
 	 */
-	while (s != NULL)
+	for (s = CurrentTransactionState; s != NULL; s = s->parent)
 	{
 		ListCell *cell;
 
+		if (s->state == TRANS_ABORT)
+			continue;
 		if (TransactionIdEquals(xid, s->transactionIdData))
 			return true;
 		foreach(cell, s->childXids)
@@ -376,8 +381,6 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 			if (TransactionIdEquals(xid, lfirst_xid(cell)))
 				return true;
 		}
-
-		s = s->parent;
 	}
 
 	return false;
@@ -2997,6 +3000,8 @@ CommitSubTransaction(void)
 	ResourceOwnerRelease(s->curTransactionOwner,
 						 RESOURCE_RELEASE_BEFORE_LOCKS,
 						 true, false);
+	AtEOSubXact_RelationCache(true, s->transactionIdData,
+							  s->parent->transactionIdData);
 	AtEOSubXact_Inval(true);
 	ResourceOwnerRelease(s->curTransactionOwner,
 						 RESOURCE_RELEASE_LOCKS,
@@ -3090,6 +3095,8 @@ AbortSubTransaction(void)
 	ResourceOwnerRelease(s->curTransactionOwner,
 						 RESOURCE_RELEASE_BEFORE_LOCKS,
 						 false, false);
+	AtEOSubXact_RelationCache(false, s->transactionIdData,
+							  s->parent->transactionIdData);
 	AtEOSubXact_Inval(false);
 	ResourceOwnerRelease(s->curTransactionOwner,
 						 RESOURCE_RELEASE_LOCKS,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/hio.c,v 1.51 2003/11/29 22:39:39 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/hio.c,v 1.52 2004/08/28 20:31:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -232,7 +232,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	 * page.  We can skip locking for new or temp relations, however,
 	 * since no one else could be accessing them.
 	 */
-	needLock = !(relation->rd_isnew || relation->rd_istemp);
+	needLock = !RELATION_IS_LOCAL(relation);
 
 	if (needLock)
 		LockPage(relation, 0, ExclusiveLock);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.207 2004/07/17 03:29:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.208 2004/08/28 20:31:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@
  */
 #define RELCACHE_INIT_FILENAME	"pg_internal.init"
 
-#define RELCACHE_INIT_FILEMAGIC		0x573261 /* version ID value */
+#define RELCACHE_INIT_FILEMAGIC		0x573262 /* version ID value */
 
 /*
  *		hardcoded tuple descriptors.  see include/catalog/pg_attribute.h
@@ -835,8 +835,8 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	 * flush the entry.)
 	 */
 	relation->rd_refcnt = 0;
-	relation->rd_isnailed = 0;
-	relation->rd_isnew = false;
+	relation->rd_isnailed = false;
+	relation->rd_createxact = InvalidTransactionId;
 	relation->rd_istemp = isTempNamespace(relation->rd_rel->relnamespace);
 
 	/*
@@ -885,6 +885,9 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 	RelationCacheInsert(relation);
 	MemoryContextSwitchTo(oldcxt);
+
+	/* It's fully valid */
+	relation->rd_isvalid = true;
 
 	return relation;
 }
@@ -1283,8 +1286,8 @@ formrdesc(const char *relationName,
 	 * all entries built with this routine are nailed-in-cache; none are
 	 * for new or temp relations.
 	 */
-	relation->rd_isnailed = 1;
-	relation->rd_isnew = false;
+	relation->rd_isnailed = true;
+	relation->rd_createxact = InvalidTransactionId;
 	relation->rd_istemp = false;
 
 	/*
@@ -1385,6 +1388,9 @@ formrdesc(const char *relationName,
 	 * add new reldesc to relcache
 	 */
 	RelationCacheInsert(relation);
+
+	/* It's fully valid */
+	relation->rd_isvalid = true;
 }
 
 
@@ -1416,7 +1422,7 @@ RelationIdCacheGetRelation(Oid relationId)
 	{
 		RelationIncrementReferenceCount(rd);
 		/* revalidate nailed index if necessary */
-		if (rd->rd_isnailed == 2)
+		if (!rd->rd_isvalid)
 			RelationReloadClassinfo(rd);
 	}
 
@@ -1445,7 +1451,7 @@ RelationSysNameCacheGetRelation(const char *relationName)
 	{
 		RelationIncrementReferenceCount(rd);
 		/* revalidate nailed index if necessary */
-		if (rd->rd_isnailed == 2)
+		if (!rd->rd_isvalid)
 			RelationReloadClassinfo(rd);
 	}
 
@@ -1572,7 +1578,7 @@ RelationClose(Relation relation)
 
 #ifdef RELCACHE_FORCE_RELEASE
 	if (RelationHasReferenceCountZero(relation) &&
-		!relation->rd_isnew)
+		!TransactionIdIsValid(relation->rd_createxact))
 		RelationClearRelation(relation, false);
 #endif
 }
@@ -1589,7 +1595,7 @@ RelationClose(Relation relation)
  *	We can't necessarily reread the pg_class row right away; we might be
  *	in a failed transaction when we receive the SI notification.  If so,
  *	RelationClearRelation just marks the entry as invalid by setting
- *	rd_isnailed to 2.  This routine is called to fix the entry when it
+ *	rd_isvalid to false.  This routine is called to fix the entry when it
  *	is next needed.
  */
 static void
@@ -1601,7 +1607,7 @@ RelationReloadClassinfo(Relation relation)
 	Form_pg_class relp;
 
 	/* Should be called only for invalidated nailed indexes */
-	Assert(relation->rd_isnailed == 2 &&
+	Assert(relation->rd_isnailed && !relation->rd_isvalid &&
 		   relation->rd_rel->relkind == RELKIND_INDEX);
 	/* Read the pg_class row */
 	buildinfo.infotype = INFO_RELID;
@@ -1622,7 +1628,7 @@ RelationReloadClassinfo(Relation relation)
 	heap_freetuple(pg_class_tuple);
 	relation->rd_targblock = InvalidBlockNumber;
 	/* Okay, now it's valid again */
-	relation->rd_isnailed = 1;
+	relation->rd_isvalid = true;
 }
 
 /*
@@ -1671,7 +1677,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 		relation->rd_targblock = InvalidBlockNumber;
 		if (relation->rd_rel->relkind == RELKIND_INDEX)
 		{
-			relation->rd_isnailed = 2;	/* needs to be revalidated */
+			relation->rd_isvalid = false;	/* needs to be revalidated */
 			if (relation->rd_refcnt > 1)
 				RelationReloadClassinfo(relation);
 		}
@@ -1729,15 +1735,15 @@ RelationClearRelation(Relation relation, bool rebuild)
 	{
 		/*
 		 * When rebuilding an open relcache entry, must preserve ref count
-		 * and rd_isnew flag.  Also attempt to preserve the tupledesc and
-		 * rewrite-rule substructures in place.
+		 * and rd_createxact state.  Also attempt to preserve the tupledesc
+		 * and rewrite-rule substructures in place.
 		 *
 		 * Note that this process does not touch CurrentResourceOwner;
 		 * which is good because whatever ref counts the entry may have
 		 * do not necessarily belong to that resource owner.
 		 */
 		int			old_refcnt = relation->rd_refcnt;
-		bool		old_isnew = relation->rd_isnew;
+		TransactionId old_createxact = relation->rd_createxact;
 		TupleDesc	old_att = relation->rd_att;
 		RuleLock   *old_rules = relation->rd_rules;
 		MemoryContext old_rulescxt = relation->rd_rulescxt;
@@ -1758,7 +1764,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 				 buildinfo.i.info_id);
 		}
 		relation->rd_refcnt = old_refcnt;
-		relation->rd_isnew = old_isnew;
+		relation->rd_createxact = old_createxact;
 		if (equalTupleDescs(old_att, relation->rd_att))
 		{
 			/* needn't flush typcache here */
@@ -1795,7 +1801,7 @@ RelationFlushRelation(Relation relation)
 {
 	bool		rebuild;
 
-	if (relation->rd_isnew)
+	if (TransactionIdIsValid(relation->rd_createxact))
 	{
 		/*
 		 * New relcache entries are always rebuilt, not flushed; else we'd
@@ -1941,7 +1947,7 @@ RelationCacheInvalidate(void)
 		}
 
 		/* Ignore new relations, since they are never SI targets */
-		if (relation->rd_isnew)
+		if (TransactionIdIsValid(relation->rd_createxact))
 			continue;
 
 		relcacheInvalsReceived++;
@@ -2018,18 +2024,18 @@ AtEOXact_RelationCache(bool isCommit)
 		/*
 		 * Is it a relation created in the current transaction?
 		 *
-		 * During commit, reset the flag to false, since we are now out of
+		 * During commit, reset the flag to zero, since we are now out of
 		 * the creating transaction.  During abort, simply delete the
 		 * relcache entry --- it isn't interesting any longer.  (NOTE: if
-		 * we have forgotten the isnew state of a new relation due to a
+		 * we have forgotten the new-ness of a new relation due to a
 		 * forced cache flush, the entry will get deleted anyway by
 		 * shared-cache-inval processing of the aborted pg_class
 		 * insertion.)
 		 */
-		if (relation->rd_isnew)
+		if (TransactionIdIsValid(relation->rd_createxact))
 		{
 			if (isCommit)
-				relation->rd_isnew = false;
+				relation->rd_createxact = InvalidTransactionId;
 			else
 			{
 				RelationClearRelation(relation, false);
@@ -2069,6 +2075,56 @@ AtEOXact_RelationCache(bool isCommit)
 		{
 			/* abort case, just reset it quietly */
 			relation->rd_refcnt = expected_refcnt;
+		}
+
+		/*
+		 * Flush any temporary index list.
+		 */
+		if (relation->rd_indexvalid == 2)
+		{
+			list_free(relation->rd_indexlist);
+			relation->rd_indexlist = NIL;
+			relation->rd_indexvalid = 0;
+		}
+	}
+}
+
+/*
+ * AtEOSubXact_RelationCache
+ *
+ *	Clean up the relcache at sub-transaction commit or abort.
+ *
+ * Note: this must be called *before* processing invalidation messages.
+ */
+void
+AtEOSubXact_RelationCache(bool isCommit, TransactionId myXid,
+						  TransactionId parentXid)
+{
+	HASH_SEQ_STATUS status;
+	RelIdCacheEnt *idhentry;
+
+	hash_seq_init(&status, RelationIdCache);
+
+	while ((idhentry = (RelIdCacheEnt *) hash_seq_search(&status)) != NULL)
+	{
+		Relation	relation = idhentry->reldesc;
+
+		/*
+		 * Is it a relation created in the current subtransaction?
+		 *
+		 * During subcommit, mark it as belonging to the parent, instead.
+		 * During subabort, simply delete the relcache entry.
+		 */
+		if (TransactionIdEquals(relation->rd_createxact, myXid))
+		{
+			if (isCommit)
+				relation->rd_createxact = parentXid;
+			else
+			{
+				Assert(RelationHasReferenceCountZero(relation));
+				RelationClearRelation(relation, false);
+				continue;
+			}
 		}
 
 		/*
@@ -2126,7 +2182,7 @@ RelationBuildLocalRelation(const char *relname,
 	rel->rd_refcnt = nailit ? 1 : 0;
 
 	/* it's being created in this transaction */
-	rel->rd_isnew = true;
+	rel->rd_createxact = GetCurrentTransactionId();
 
 	/* is it a temporary relation? */
 	rel->rd_istemp = isTempNamespace(relnamespace);
@@ -2137,7 +2193,7 @@ RelationBuildLocalRelation(const char *relname,
 	 * want it kicked out.	e.g. pg_attribute!!!
 	 */
 	if (nailit)
-		rel->rd_isnailed = 1;
+		rel->rd_isnailed = true;
 
 	/*
 	 * create a new tuple descriptor from the one passed in.  We do this
@@ -2204,6 +2260,9 @@ RelationBuildLocalRelation(const char *relname,
 	 * done building relcache entry.
 	 */
 	MemoryContextSwitchTo(oldcxt);
+
+	/* It's fully valid */
+	rel->rd_isvalid = true;
 
 	/*
 	 * Caller expects us to pin the returned entry.
@@ -2326,7 +2385,7 @@ RelationCacheInitializePhase2(void)
 			buildinfo.infotype = INFO_RELNAME; \
 			buildinfo.i.info_name = (indname); \
 			ird = RelationBuildDesc(buildinfo, NULL); \
-			ird->rd_isnailed = 1; \
+			ird->rd_isnailed = true; \
 			ird->rd_refcnt = 1; \
 		} while (0)
 
@@ -2677,7 +2736,7 @@ RelationSetIndexList(Relation relation, List *indexIds)
 {
 	MemoryContext oldcxt;
 
-	Assert(relation->rd_isnailed == 1);
+	Assert(relation->rd_isnailed);
 	/* Copy the list into the cache context (could fail for lack of mem) */
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 	indexIds = list_copy(indexIds);

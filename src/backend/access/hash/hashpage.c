@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.43 2003/11/29 19:51:40 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.44 2004/08/28 20:31:43 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -44,14 +44,12 @@ static void _hash_splitbucket(Relation rel, Buffer metabuf,
 
 /*
  * We use high-concurrency locking on hash indexes (see README for an overview
- * of the locking rules).  There are two cases in which we don't do locking.
- * One is when the index is newly created in the current transaction.  Since
- * the creating transaction has not committed, no one else can see the index,
- * and there's no reason to take locks.  The second case is for temp
- * relations, which no one else can see either.  (We still take buffer-level
- * locks, but not lmgr locks.)
+ * of the locking rules).  However, we can skip taking lmgr locks when the
+ * index is local to the current backend (ie, either temp or new in the
+ * current transaction).  No one else can see it, so there's no reason to
+ * take locks.  We still take buffer-level locks, but not lmgr locks.
  */
-#define USELOCKING(rel)		(!((rel)->rd_isnew || (rel)->rd_istemp))
+#define USELOCKING(rel)		(!RELATION_IS_LOCAL(rel))
 
 
 /*
