@@ -228,9 +228,6 @@ do { \
  * Date/time validation
  * Include check for leap year.
  */
-
-extern int	day_tab[2][13];
-
 #define isleap(y) (((y) % 4) == 0 && (((y) % 100) != 0 || ((y) % 400) == 0))
 
 /* Julian date support for date2j() and j2date()

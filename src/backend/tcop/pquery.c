@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.67 2003/07/22 19:00:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.68 2003/08/01 17:57:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -507,7 +507,7 @@ PortalRun(Portal portal, long count,
  *
  * Returns number of rows processed (suitable for use in result tag)
  */
-long
+static long
 PortalRunSelect(Portal portal,
 				bool forward,
 				long count,

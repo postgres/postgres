@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.16 2003/07/23 23:30:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.17 2003/08/01 17:53:41 tgl Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -376,7 +376,7 @@ static	struct sockaddr_storage	sock;
 	return 0;
 }
 
-int
+static int
 rangeSockAddrAF_INET(const struct sockaddr_in *addr, const struct sockaddr_in *netaddr,
 					 const struct sockaddr_in *netmask)
 {
@@ -389,7 +389,7 @@ rangeSockAddrAF_INET(const struct sockaddr_in *addr, const struct sockaddr_in *n
 
 
 #ifdef HAVE_IPV6
-int
+static int
 rangeSockAddrAF_INET6(const struct sockaddr_in6 *addr,
 		const struct sockaddr_in6 *netaddr,
 		const struct sockaddr_in6 *netmask)
