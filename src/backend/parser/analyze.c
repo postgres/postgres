@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.289 2003/09/26 15:27:32 petere Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.290 2003/10/02 06:32:45 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1564,10 +1564,6 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt,
 {
 	if (cxt->fkconstraints == NIL)
 		return;
-
-	ereport(NOTICE,
-			(errmsg("%s will create implicit triggers for foreign-key checks",
-					cxt->stmtType)));
 
 	/*
 	 * For ALTER TABLE ADD CONSTRAINT, nothing to do.  For CREATE TABLE or

@@ -307,26 +307,21 @@ INSERT INTO tmp3 values (1,20);
 INSERT INTO tmp3 values (5,50);
 -- Try (and fail) to add constraint due to invalid source columns
 ALTER TABLE tmp3 add constraint tmpconstr foreign key(c) references tmp2 match full;
-NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  column "c" referenced in foreign key constraint does not exist
 -- Try (and fail) to add constraint due to invalide destination columns explicitly given
 ALTER TABLE tmp3 add constraint tmpconstr foreign key(a) references tmp2(b) match full;
-NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  column "b" referenced in foreign key constraint does not exist
 -- Try (and fail) to add constraint due to invalid data
 ALTER TABLE tmp3 add constraint tmpconstr foreign key (a) references tmp2 match full;
-NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  insert or update on table "tmp3" violates foreign key constraint "tmpconstr"
 DETAIL:  Key (a)=(5) is not present in table "tmp2".
 -- Delete failing row
 DELETE FROM tmp3 where a=5;
 -- Try (and succeed)
 ALTER TABLE tmp3 add constraint tmpconstr foreign key (a) references tmp2 match full;
-NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 -- Try (and fail) to create constraint from tmp5(a) to tmp4(a) - unique constraint on
 -- tmp4 is a,b
 ALTER TABLE tmp5 add constraint tmpconstr foreign key(a) references tmp4(a) match full;
-NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  there is no unique constraint matching given keys for referenced table "tmp4"
 DROP TABLE tmp5;
 DROP TABLE tmp4;
@@ -340,13 +335,11 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" fo
 CREATE TEMP TABLE FKTABLE (ftest1 inet);
 -- This next should fail, because inet=int does not exist
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable;
-NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: inet = integer
 HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 -- This should also fail for the same reason, but here we
 -- give the column name
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable(ptest1);
-NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: inet = integer
 HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 -- This should succeed, even though they are different types
@@ -354,10 +347,8 @@ HINT:  No operator matches the given name and argument type(s). You may need to 
 DROP TABLE FKTABLE;
 CREATE TEMP TABLE FKTABLE (ftest1 varchar);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable;
-NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 -- As should this
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable(ptest1);
-NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 DROP TABLE pktable cascade;
 NOTICE:  drop cascades to constraint $2 on table fktable
 NOTICE:  drop cascades to constraint $1 on table fktable
@@ -368,7 +359,6 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" fo
 -- This should fail, because we just chose really odd types
 CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 timestamp);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2) references pktable;
-NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: cidr = integer
 HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 DROP TABLE FKTABLE;
@@ -376,7 +366,6 @@ DROP TABLE FKTABLE;
 CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 timestamp);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2)
      references pktable(ptest1, ptest2);
-NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: cidr = integer
 HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 DROP TABLE FKTABLE;
@@ -384,13 +373,11 @@ DROP TABLE FKTABLE;
 CREATE TEMP TABLE FKTABLE (ftest1 int, ftest2 inet);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2)
      references pktable(ptest2, ptest1);
-NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: integer = inet
 HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 -- As does this...
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest2, ftest1)
      references pktable(ptest1, ptest2);
-NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: inet = integer
 HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 -- temp tables should go away by themselves, need not drop them.
@@ -907,16 +894,12 @@ ERROR:  column "........pg.dropped.1........" does not exist
 create table atacc2 (id int4 unique);
 NOTICE:  CREATE TABLE / UNIQUE will create implicit index "atacc2_id_key" for table "atacc2"
 alter table atacc1 add foreign key (a) references atacc2(id);
-NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  column "a" referenced in foreign key constraint does not exist
 alter table atacc1 add foreign key ("........pg.dropped.1........") references atacc2(id);
-NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  column "........pg.dropped.1........" referenced in foreign key constraint does not exist
 alter table atacc2 add foreign key (id) references atacc1(a);
-NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  column "a" referenced in foreign key constraint does not exist
 alter table atacc2 add foreign key (id) references atacc1("........pg.dropped.1........");
-NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  column "........pg.dropped.1........" referenced in foreign key constraint does not exist
 drop table atacc2;
 create index "testing_idx" on atacc1(a);
