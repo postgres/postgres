@@ -1,0 +1,158 @@
+--
+--  Test earth distance functions
+--
+--
+-- first, define the datatype.  Turn off echoing so that expected file
+-- does not depend on contents of earthdistance.sql or cube.sql.
+--
+\set ECHO none
+--
+-- Test getting the distance between two points using geo_distance.
+--
+select geo_distance('(0,0)'::point,'(0,0)'::point)::numeric(20,5);
+ geo_distance 
+--------------
+      0.00000
+(1 row)
+
+select geo_distance('(0,0)'::point,'(180,0)'::point)::numeric(20,5);
+ geo_distance 
+--------------
+  12436.77274
+(1 row)
+
+select geo_distance('(0,0)'::point,'(0,90)'::point)::numeric(20,5);
+ geo_distance 
+--------------
+   6218.38637
+(1 row)
+
+select geo_distance('(0,0)'::point,'(90,0)'::point)::numeric(20,5);
+ geo_distance 
+--------------
+   6218.38637
+(1 row)
+
+select geo_distance('(0,0)'::point,'(1,0)'::point)::numeric(20,5);
+ geo_distance 
+--------------
+     69.09318
+(1 row)
+
+select geo_distance('(0,0)'::point,'(0,1)'::point)::numeric(20,5);
+ geo_distance 
+--------------
+     69.09318
+(1 row)
+
+select geo_distance('(0,30)'::point,'(1,30)'::point)::numeric(20,5);
+ geo_distance 
+--------------
+     59.83626
+(1 row)
+
+select geo_distance('(0,30)'::point,'(0,31)'::point)::numeric(20,5);
+ geo_distance 
+--------------
+     69.09318
+(1 row)
+
+select geo_distance('(0,60)'::point,'(1,60)'::point)::numeric(20,5);
+ geo_distance 
+--------------
+     34.54626
+(1 row)
+
+select geo_distance('(0,60)'::point,'(0,61)'::point)::numeric(20,5);
+ geo_distance 
+--------------
+     69.09318
+(1 row)
+
+select geo_distance('(87.6,41.8)'::point,'(106.7,35.1)'::point)::numeric(20,5);
+ geo_distance 
+--------------
+   1129.18983
+(1 row)
+
+select (geo_distance('(87.6,41.8)'::point,'(106.7,35.1)'::point)*5280.*12.*2.54/100.)::numeric(20,5);
+    numeric    
+---------------
+ 1817254.87730
+(1 row)
+
+--
+-- Test getting the distance between two points using the <@> operator.
+--
+select ('(0,0)'::point <@> '(0,0)'::point)::numeric(20,5);
+ numeric 
+---------
+ 0.00000
+(1 row)
+
+select ('(0,0)'::point <@> '(180,0)'::point)::numeric(20,5);
+   numeric   
+-------------
+ 12436.77274
+(1 row)
+
+select ('(0,0)'::point <@> '(0,90)'::point)::numeric(20,5);
+  numeric   
+------------
+ 6218.38637
+(1 row)
+
+select ('(0,0)'::point <@> '(90,0)'::point)::numeric(20,5);
+  numeric   
+------------
+ 6218.38637
+(1 row)
+
+select ('(0,0)'::point <@> '(1,0)'::point)::numeric(20,5);
+ numeric  
+----------
+ 69.09318
+(1 row)
+
+select ('(0,0)'::point <@> '(0,1)'::point)::numeric(20,5);
+ numeric  
+----------
+ 69.09318
+(1 row)
+
+select ('(0,30)'::point <@> '(1,30)'::point)::numeric(20,5);
+ numeric  
+----------
+ 59.83626
+(1 row)
+
+select ('(0,30)'::point <@> '(0,31)'::point)::numeric(20,5);
+ numeric  
+----------
+ 69.09318
+(1 row)
+
+select ('(0,60)'::point <@> '(1,60)'::point)::numeric(20,5);
+ numeric  
+----------
+ 34.54626
+(1 row)
+
+select ('(0,60)'::point <@> '(0,61)'::point)::numeric(20,5);
+ numeric  
+----------
+ 69.09318
+(1 row)
+
+select ('(87.6,41.8)'::point <@> '(106.7,35.1)'::point)::numeric(20,5);
+  numeric   
+------------
+ 1129.18983
+(1 row)
+
+select (('(87.6,41.8)'::point <@> '(106.7,35.1)'::point)*5280.*12.*2.54/100.)::numeric(20,5);
+    numeric    
+---------------
+ 1817254.87730
+(1 row)
+
