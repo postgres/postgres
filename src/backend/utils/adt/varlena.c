@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.82 2002/04/03 05:39:32 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.83 2002/04/15 07:54:37 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -373,7 +373,10 @@ text_substr(PG_FUNCTION_ARGS)
 	if (eml > 1)
 	{
 		sm = 0;
-		sn = (m + n) * eml + 3; /* +3 to avoid mb characters overhanging slice end */
+		if (n > -1)
+			sn = (m + n) * eml + 3; /* +3 to avoid mb characters overhanging slice end */
+		else
+			sn = n;		/* n < 0 is special-cased by heap_tuple_untoast_attr_slice */
 	}
 #endif 
 
@@ -387,7 +390,10 @@ text_substr(PG_FUNCTION_ARGS)
 	PG_RETURN_NULL();   /* notreached: suppress compiler warning */
 #endif
 #ifdef MULTIBYTE
-	len = pg_mbstrlen_with_len (VARDATA (string), sn - 3);
+	if (n > -1)
+		len = pg_mbstrlen_with_len (VARDATA (string), sn - 3);
+	else	/* n < 0 is special-cased; need full string length */
+		len = pg_mbstrlen_with_len (VARDATA (string), VARSIZE(string)-VARHDRSZ);
 
 	if (m > len)
 	{
