@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.13 1997/03/18 20:14:33 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.14 1997/03/20 18:21:35 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,7 +217,7 @@ int PQgetline(char *s, int maxlen)
    	}
    else
    	{
-   	for( ; *s; *s++)
+   	for( ; *s; s++)
    		{
    		if(*s == '\n')
    			{

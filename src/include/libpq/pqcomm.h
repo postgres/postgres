@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.9 1997/03/16 18:50:47 scrappy Exp $
+ * $Id: pqcomm.h,v 1.10 1997/03/20 18:23:03 scrappy Exp $
  *
  * NOTES
  *    Some of this should move to libpq.h
@@ -126,8 +126,16 @@ extern int PQAsyncNotifyWaiting;
 /* in pqcompriv.c */
 int pqGetShort(int *, FILE *);
 int pqGetLong(int *, FILE *);
+int pqGetNBytes(char *, size_t, FILE *);
+int pqGetString(char *, size_t, FILE *);
+int pqGetByte(FILE *);
+
 int pqPutShort(int, FILE *);
 int pqPutLong(int, FILE *);
+int pqPutNBytes(const char *, size_t, FILE *);
+int pqPutString(const char *, FILE *);
+int pqPutByte(int, FILE *);
+
 /*
  * prototypes for functions in pqpacket.c
  */
