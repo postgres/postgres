@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.20 2002/02/23 21:46:03 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.21 2002/04/24 05:24:00 petere Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -19,6 +19,7 @@
 #endif
 
 #include "libpq-fe.h"
+#include "pqexpbuffer.h"
 #include "pqsignal.h"
 
 #include "settings.h"
@@ -229,12 +230,12 @@ parse_slash_copy(const char *args)
 bool
 do_copy(const char *args)
 {
-	char		query[128 + NAMEDATALEN];
+	PQExpBufferData query;
 	FILE	   *copystream;
 	struct copy_options *options;
 	PGresult   *result;
 	bool		success;
-  struct stat st;
+	struct stat st;
 
 	/* parse options */
 	options = parse_slash_copy(args);
@@ -242,35 +243,27 @@ do_copy(const char *args)
 	if (!options)
 		return false;
 
-	strcpy(query, "COPY ");
-	if (options->binary)
-		strcat(query, "BINARY ");
+	initPQExpBuffer(&query);
 
-	strcat(query, "\"");
-	strncat(query, options->table, NAMEDATALEN);
-	strcat(query, "\" ");
+	printfPQExpBuffer(&query, "COPY ");
+	if (options->binary)
+		appendPQExpBuffer(&query, "BINARY ");
+
+	appendPQExpBuffer(&query, "\"%s\" ", options->table);
 	if (options->oids)
-		strcat(query, "WITH OIDS ");
+		appendPQExpBuffer(&query, "WITH OIDS ");
 
 	if (options->from)
-		strcat(query, "FROM STDIN");
+		appendPQExpBuffer(&query, "FROM STDIN");
 	else
-		strcat(query, "TO STDOUT");
+		appendPQExpBuffer(&query, "TO STDOUT");
 
 
 	if (options->delim)
-	{
-		strcat(query, " USING DELIMITERS '");
-		strcat(query, options->delim);
-		strcat(query, "'");
-	}
+		appendPQExpBuffer(&query, " USING DELIMITERS '%s'", options->delim);
 
 	if (options->null)
-	{
-		strcat(query, " WITH NULL AS '");
-		strcat(query, options->null);
-		strcat(query, "'");
-	}
+		appendPQExpBuffer(&query, " WITH NULL AS '%s'", options->null);
 
 	if (options->from)
 	{
@@ -294,17 +287,20 @@ do_copy(const char *args)
 		free_copy_options(options);
 		return false;
 	}
-  /* make sure the specified file is not a directory */
-  fstat(fileno(copystream),&st);
-  if( S_ISDIR(st.st_mode) ){
-    fclose(copystream);
+
+	/* make sure the specified file is not a directory */
+	fstat(fileno(copystream), &st);
+	if( S_ISDIR(st.st_mode) )
+	{
+		fclose(copystream);
 		psql_error("%s: cannot COPY TO/FROM a directory\n",
 				   options->file);
 		free_copy_options(options);
 		return false;
-  }
+	}
   
-	result = PSQLexec(query);
+	result = PSQLexec(query.data);
+	termPQExpBuffer(&query);
 
 	switch (PQresultStatus(result))
 	{

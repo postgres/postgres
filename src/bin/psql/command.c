@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.71 2002/03/27 19:16:13 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.72 2002/04/24 05:24:00 petere Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1433,14 +1433,16 @@ bool
 test_superuser(const char *username)
 {
 	PGresult   *res;
-	char		buf[64 + NAMEDATALEN];
+	PQExpBufferData buf;
 	bool		answer;
 
 	if (!username)
 		return false;
 
-	sprintf(buf, "SELECT usesuper FROM pg_user WHERE usename = '%.*s'", NAMEDATALEN, username);
-	res = PSQLexec(buf);
+	initPQExpBuffer(&buf);
+	printfPQExpBuffer(&buf, "SELECT usesuper FROM pg_user WHERE usename = '%s'", username);
+	res = PSQLexec(buf.data);
+	termPQExpBuffer(&buf);
 
 	answer =
 		(PQntuples(res) > 0 && PQnfields(res) > 0
