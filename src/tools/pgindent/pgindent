@@ -1162,7 +1162,7 @@ do
 	sed 's;^}[ 	][ 	]*/\*;}   /*;' |
 	sed 's;^#endif[ 	][ 	]*/\*;#endif   /*;' |
 	detab -t8 -qc |
-#	entab -t4 -qc |
+	entab -t4 -qc |
 # move trailing * in function return type
 	sed 's;^\([A-Za-z_][^	]*\)[ 	][ 	]*\*$;\1 *;' |
 # remove un-needed braces around single statements
