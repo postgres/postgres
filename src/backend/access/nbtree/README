@@ -1,68 +1,175 @@
-$Header: /cvsroot/pgsql/src/backend/access/nbtree/README,v 1.1.1.1 1996/07/09 06:21:12 scrappy Exp $
+$Header: /cvsroot/pgsql/src/backend/access/nbtree/README,v 1.2 2000/07/21 06:42:32 tgl Exp $
 
 This directory contains a correct implementation of Lehman and Yao's
-btree management algorithm that supports concurrent access for Postgres.
+high-concurrency B-tree management algorithm (P. Lehman and S. Yao,
+Efficient Locking for Concurrent Operations on B-Trees, ACM Transactions
+on Database Systems, Vol 6, No. 4, December 1981, pp 650-670).
+
 We have made the following changes in order to incorporate their algorithm
 into Postgres:
 
-	+  The requirement that all btree keys be unique is too onerous,
-	   but the algorithm won't work correctly without it.  As a result,
-	   this implementation adds an OID (guaranteed to be unique) to
-	   every key in the index.  This guarantees uniqueness within a set
-	   of duplicates.  Space overhead is four bytes.
++  The requirement that all btree keys be unique is too onerous,
+   but the algorithm won't work correctly without it.  Fortunately, it is
+   only necessary that keys be unique on a single tree level, because L&Y
+   only use the assumption of key uniqueness when re-finding a key in a
+   parent node (to determine where to insert the key for a split page).
+   Therefore, we can use the link field to disambiguate multiple
+   occurrences of the same user key: only one entry in the parent level
+   will be pointing at the page we had split.  (Indeed we need not look at
+   the real "key" at all, just at the link field.)  We can distinguish
+   items at the leaf level in the same way, by examining their links to
+   heap tuples; we'd never have two items for the same heap tuple.
 
-	   For this reason, when we're passed an index tuple to store by the
-	   common access method code, we allocate a larger one and copy the
-	   supplied tuple into it.  No Postgres code outside of the btree
-	   access method knows about this xid or sequence number.
++  Lehman and Yao assume that the key range for a subtree S is described
+   by Ki < v <= Ki+1 where Ki and Ki+1 are the adjacent keys in the parent
+   node.  This does not work for nonunique keys (for example, if we have
+   enough equal keys to spread across several leaf pages, there *must* be
+   some equal bounding keys in the first level up).  Therefore we assume
+   Ki <= v <= Ki+1 instead.  A search that finds exact equality to a
+   bounding key in an upper tree level must descend to the left of that
+   key to ensure it finds any equal keys in the preceding page.  An
+   insertion that sees the high key of its target page is equal to the key
+   to be inserted has a choice whether or not to move right, since the new
+   key could go on either page.  (Currently, we try to find a page where
+   there is room for the new key without a split.)
 
-	+  Lehman and Yao don't require read locks, but assume that in-
-	   memory copies of tree nodes are unshared.  Postgres shares
-	   in-memory buffers among backends.  As a result, we do page-
-	   level read locking on btree nodes in order to guarantee that
-	   no record is modified while we are examining it.  This reduces
-	   concurrency but guaranteees correct behavior.
++  Lehman and Yao don't require read locks, but assume that in-memory
+   copies of tree nodes are unshared.  Postgres shares in-memory buffers
+   among backends.  As a result, we do page-level read locking on btree
+   nodes in order to guarantee that no record is modified while we are
+   examining it.  This reduces concurrency but guaranteees correct
+   behavior.  An advantage is that when trading in a read lock for a
+   write lock, we need not re-read the page after getting the write lock.
+   Since we're also holding a pin on the shared buffer containing the
+   page, we know that buffer still contains the page and is up-to-date.
 
-	+  Read locks on a page are held for as long as a scan has a pointer
-	   to the page.  However, locks are always surrendered before the
-	   sibling page lock is acquired (for readers), so we remain deadlock-
-	   free.  I will do a formal proof if I get bored anytime soon.
++  We support the notion of an ordered "scan" of an index as well as
+   insertions, deletions, and simple lookups.  A scan in the forward
+   direction is no problem, we just use the right-sibling pointers that
+   L&Y require anyway.  (Thus, once we have descended the tree to the
+   correct start point for the scan, the scan looks only at leaf pages
+   and never at higher tree levels.)  To support scans in the backward
+   direction, we also store a "left sibling" link much like the "right
+   sibling".  (This adds an extra step to the L&Y split algorithm: while
+   holding the write lock on the page being split, we also lock its former
+   right sibling to update that page's left-link.  This is safe since no
+   writer of that page can be interested in acquiring a write lock on our
+   page.)  A backwards scan has one additional bit of complexity: after
+   following the left-link we must account for the possibility that the
+   left sibling page got split before we could read it.  So, we have to
+   move right until we find a page whose right-link matches the page we
+   came from.
+
++  Read locks on a page are held for as long as a scan has a pointer
+   to the page.  However, locks are always surrendered before the
+   sibling page lock is acquired (for readers), so we remain deadlock-
+   free.  I will do a formal proof if I get bored anytime soon.
+   NOTE: nbtree.c arranges to drop the read lock, but not the buffer pin,
+   on the current page of a scan before control leaves nbtree.  When we
+   come back to resume the scan, we have to re-grab the read lock and
+   then move right if the current item moved (see _bt_restscan()).
+
++  Lehman and Yao fail to discuss what must happen when the root page
+   becomes full and must be split.  Our implementation is to split the
+   root in the same way that any other page would be split, then construct
+   a new root page holding pointers to both of the resulting pages (which
+   now become siblings on level 2 of the tree).  The new root page is then
+   installed by altering the root pointer in the meta-data page (see
+   below).  This works because the root is not treated specially in any
+   other way --- in particular, searches will move right using its link
+   pointer if the link is set.  Therefore, searches will find the data
+   that's been moved into the right sibling even if they read the metadata
+   page before it got updated.  This is the same reasoning that makes a
+   split of a non-root page safe.  The locking considerations are similar too.
+
++  Lehman and Yao assume fixed-size keys, but we must deal with
+   variable-size keys.  Therefore there is not a fixed maximum number of
+   keys per page; we just stuff in as many as will fit.  When we split a
+   page, we try to equalize the number of bytes, not items, assigned to
+   each of the resulting pages.  Note we must include the incoming item in
+   this calculation, otherwise it is possible to find that the incoming
+   item doesn't fit on the split page where it needs to go!
 
 In addition, the following things are handy to know:
 
-	+  Page zero of every btree is a meta-data page.  This page stores
-	   the location of the root page, a pointer to a list of free
-	   pages, and other stuff that's handy to know.
++  Page zero of every btree is a meta-data page.  This page stores
+   the location of the root page, a pointer to a list of free
+   pages, and other stuff that's handy to know.  (Currently, we
+   never shrink btree indexes so there are never any free pages.)
 
-	+  This algorithm doesn't really work, since it requires ordered
-	   writes, and UNIX doesn't support ordered writes.
++  The algorithm assumes we can fit at least three items per page
+   (a "high key" and two real data items).  Therefore it's unsafe
+   to accept items larger than 1/3rd page size.  Larger items would
+   work sometimes, but could cause failures later on depending on
+   what else gets put on their page.
 
-	+  There's one other case where we may screw up in this
-	   implementation.  When we start a scan, we descend the tree
-	   to the key nearest the one in the qual, and once we get there,
-	   position ourselves correctly for the qual type (eg, <, >=, etc).
-	   If we happen to step off a page, decide we want to get back to
-	   it, and fetch the page again, and if some bad person has split
-	   the page and moved the last tuple we saw off of it, then the
-	   code complains about botched concurrency in an elog(WARN, ...)
-	   and gives up the ghost.  This is the ONLY violation of Lehman
-	   and Yao's guarantee of correct behavior that I am aware of in
-	   this code.
++  This algorithm doesn't guarantee btree consistency after a kernel crash
+   or hardware failure.  To do that, we'd need ordered writes, and UNIX
+   doesn't support ordered writes (short of fsync'ing every update, which
+   is too high a price).  Rebuilding corrupted indexes during restart
+   seems more attractive.
+
++  On deletions, we need to adjust the position of active scans on
+   the index.  The code in nbtscan.c handles this.  We don't need to
+   do this for insertions or splits because _bt_restscan can find the
+   new position of the previously-found item.  NOTE that nbtscan.c
+   only copes with deletions issued by the current backend.  This
+   essentially means that concurrent deletions are not supported, but
+   that's true already in the Lehman and Yao algorithm.  nbtscan.c
+   exists only to support VACUUM and allow it to delete items while
+   it's scanning the index.
+
+Notes about data representation:
+
++  The right-sibling link required by L&Y is kept in the page "opaque
+   data" area, as is the left-sibling link and some flags.
+
++  We also keep a parent link in the opaque data, but this link is not
+   very trustworthy because it is not updated when the parent page splits.
+   Thus, it points to some page on the parent level, but possibly a page
+   well to the left of the page's actual current parent.  In most cases
+   we do not need this link at all.  Normally we return to a parent page
+   using a stack of entries that are made as we descend the tree, as in L&Y.
+   There is exactly one case where the stack will not help: concurrent
+   root splits.  If an inserter process needs to split what had been the
+   root when it started its descent, but finds that that page is no longer
+   the root (because someone else split it meanwhile), then it uses the
+   parent link to move up to the next level.  This is OK because we do fix
+   the parent link in a former root page when splitting it.  This logic
+   will work even if the root is split multiple times (even up to creation
+   of multiple new levels) before an inserter returns to it.  The same
+   could not be said of finding the new root via the metapage, since that
+   would work only for a single level of added root.
+
++  The Postgres disk block data format (an array of items) doesn't fit
+   Lehman and Yao's alternating-keys-and-pointers notion of a disk page,
+   so we have to play some games.
+
++  On a page that is not rightmost in its tree level, the "high key" is
+   kept in the page's first item, and real data items start at item 2.
+   The link portion of the "high key" item goes unused.  A page that is
+   rightmost has no "high key", so data items start with the first item.
+   Putting the high key at the left, rather than the right, may seem odd,
+   but it avoids moving the high key as we add data items.
+
++  On a leaf page, the data items are simply links to (TIDs of) tuples
+   in the relation being indexed, with the associated key values.
+
++  On a non-leaf page, the data items are down-links to child pages with
+   bounding keys.  The key in each data item is the *lower* bound for
+   keys on that child page, so logically the key is to the left of that
+   downlink.  The high key (if present) is the upper bound for the last
+   downlink.  The first data item on each such page has no lower bound
+   --- or lower bound of minus infinity, if you prefer.  The comparison
+   routines must treat it accordingly.  The actual key stored in the
+   item is irrelevant, and need not be stored at all.  This arrangement
+   corresponds to the fact that an L&Y non-leaf page has one more pointer
+   than key.
 
 Notes to operator class implementors:
 
-	With this implementation, we require the user to supply us with
-	a procedure for pg_amproc.  This procedure should take two keys
-	A and B and return < 0, 0, or > 0 if A < B, A = B, or A > B,
-	respectively.  See the contents of that relation for the btree
-	access method for some samples.
-
-Notes to mao for implementation document:
-
-	On deletions, we need to adjust the position of active scans on
-	the index.  The code in nbtscan.c handles this.  We don't need to
-	do this for splits because of the way splits are handled; if they
-	happen behind us, we'll automatically go to the next page, and if
-	they happen in front of us, we're not affected by them.  For
-	insertions, if we inserted a tuple behind the current scan location
-	on the current scan page, we move one space ahead.
++  With this implementation, we require the user to supply us with
+   a procedure for pg_amproc.  This procedure should take two keys
+   A and B and return < 0, 0, or > 0 if A < B, A = B, or A > B,
+   respectively.  See the contents of that relation for the btree
+   access method for some samples.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.37 2000/05/30 04:24:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.38 2000/07/21 06:42:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,16 +20,13 @@
 #include "access/nbtree.h"
 #include "executor/execdebug.h"
 
-extern int	NIndexTupleProcessed;
-
 
 /*
  * _bt_mkscankey
  *		Build a scan key that contains comparison data from itup
  *		as well as comparator routines appropriate to the key datatypes.
  *
- *		The result is intended for use with _bt_skeycmp() or _bt_compare(),
- *		although it could be used with _bt_itemcmp() or _bt_tuplecompare().
+ *		The result is intended for use with _bt_compare().
  */
 ScanKey
 _bt_mkscankey(Relation rel, IndexTuple itup)
@@ -68,8 +65,9 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
  *		Build a scan key that contains comparator routines appropriate to
  *		the key datatypes, but no comparison data.
  *
- *		The result can be used with _bt_itemcmp() or _bt_tuplecompare(),
- *		but not with _bt_skeycmp() or _bt_compare().
+ *		The result cannot be used with _bt_compare().  Currently this
+ *		routine is only called by utils/sort/tuplesort.c, which has its
+ *		own comparison routine.
  */
 ScanKey
 _bt_mkscankey_nodata(Relation rel)
@@ -114,7 +112,6 @@ _bt_freestack(BTStack stack)
 	{
 		ostack = stack;
 		stack = stack->bts_parent;
-		pfree(ostack->bts_btitem);
 		pfree(ostack);
 	}
 }
@@ -331,54 +328,15 @@ _bt_formitem(IndexTuple itup)
 	Size		tuplen;
 	extern Oid	newoid();
 
-	/*
-	 * see comments in btbuild
-	 *
-	 * if (itup->t_info & INDEX_NULL_MASK) elog(ERROR, "btree indices cannot
-	 * include null keys");
-	 */
-
 	/* make a copy of the index tuple with room for the sequence number */
 	tuplen = IndexTupleSize(itup);
 	nbytes_btitem = tuplen + (sizeof(BTItemData) - sizeof(IndexTupleData));
 
 	btitem = (BTItem) palloc(nbytes_btitem);
-	memmove((char *) &(btitem->bti_itup), (char *) itup, tuplen);
+	memcpy((char *) &(btitem->bti_itup), (char *) itup, tuplen);
 
 	return btitem;
 }
-
-#ifdef NOT_USED
-bool
-_bt_checkqual(IndexScanDesc scan, IndexTuple itup)
-{
-	BTScanOpaque so;
-
-	so = (BTScanOpaque) scan->opaque;
-	if (so->numberOfKeys > 0)
-		return (index_keytest(itup, RelationGetDescr(scan->relation),
-							  so->numberOfKeys, so->keyData));
-	else
-		return true;
-}
-
-#endif
-
-#ifdef NOT_USED
-bool
-_bt_checkforkeys(IndexScanDesc scan, IndexTuple itup, Size keysz)
-{
-	BTScanOpaque so;
-
-	so = (BTScanOpaque) scan->opaque;
-	if (keysz > 0 && so->numberOfKeys >= keysz)
-		return (index_keytest(itup, RelationGetDescr(scan->relation),
-							  keysz, so->keyData));
-	else
-		return true;
-}
-
-#endif
 
 bool
 _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, Size *keysok)

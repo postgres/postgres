@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.30 2000/07/03 02:54:16 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.31 2000/07/21 06:42:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,10 +19,10 @@
 
 #include "storage/bufpage.h"
 
+
 static void PageIndexTupleDeleteAdjustLinePointers(PageHeader phdr,
 									   char *location, Size size);
 
-static bool PageManagerShuffle = true;	/* default is shuffle mode */
 
 /* ----------------------------------------------------------------
  *						Page support functions
@@ -53,21 +53,17 @@ PageInit(Page page, Size pageSize, Size specialSize)
 /* ----------------
  *		PageAddItem
  *
- *		add an item to a page.
+ *		Add an item to a page.  Return value is offset at which it was
+ *		inserted, or InvalidOffsetNumber if there's not room to insert.
  *
- *   !!! ELOG(ERROR) IS DISALLOWED HERE !!!
- *
- *	 Notes on interface:
- *		If offsetNumber is valid, shuffle ItemId's down to make room
- *		to use it, if PageManagerShuffle is true.  If PageManagerShuffle is
- *		false, then overwrite the specified ItemId.  (PageManagerShuffle is
- *		true by default, and is modified by calling PageManagerModeSet.)
+ *		If offsetNumber is valid and <= current max offset in the page,
+ *		insert item into the array at that position by shuffling ItemId's
+ *		down to make room.
  *		If offsetNumber is not valid, then assign one by finding the first
  *		one that is both unused and deallocated.
  *
- *	 NOTE: If offsetNumber is valid, and PageManagerShuffle is true, it
- *		is assumed that there is room on the page to shuffle the ItemId's
- *		down by one.
+ *   !!! ELOG(ERROR) IS DISALLOWED HERE !!!
+ *
  * ----------------
  */
 OffsetNumber
@@ -82,11 +78,8 @@ PageAddItem(Page page,
 	Offset		lower;
 	Offset		upper;
 	ItemId		itemId;
-	ItemId		fromitemId,
-				toitemId;
 	OffsetNumber limit;
-
-	bool		shuffled = false;
+	bool		needshuffle = false;
 
 	/*
 	 * Find first unallocated offsetNumber
@@ -96,31 +89,12 @@ PageAddItem(Page page,
 	/* was offsetNumber passed in? */
 	if (OffsetNumberIsValid(offsetNumber))
 	{
-		if (PageManagerShuffle == true)
-		{
-			/* shuffle ItemId's (Do the PageManager Shuffle...) */
-			for (i = (limit - 1); i >= offsetNumber; i--)
-			{
-				fromitemId = &((PageHeader) page)->pd_linp[i - 1];
-				toitemId = &((PageHeader) page)->pd_linp[i];
-				*toitemId = *fromitemId;
-			}
-			shuffled = true;	/* need to increase "lower" */
-		}
-		else
-		{						/* overwrite mode */
-			itemId = &((PageHeader) page)->pd_linp[offsetNumber - 1];
-			if (((*itemId).lp_flags & LP_USED) ||
-				((*itemId).lp_len != 0))
-			{
-				elog(NOTICE, "PageAddItem: tried overwrite of used ItemId");
-				return InvalidOffsetNumber;
-			}
-		}
+		needshuffle = true;		/* need to increase "lower" */
+		/* don't actually do the shuffle till we've checked free space! */
 	}
 	else
-	{							/* offsetNumber was not passed in, so find
-								 * one */
+	{
+		/* offsetNumber was not passed in, so find one */
 		/* look for "recyclable" (unused & deallocated) ItemId */
 		for (offsetNumber = 1; offsetNumber < limit; offsetNumber++)
 		{
@@ -130,9 +104,13 @@ PageAddItem(Page page,
 				break;
 		}
 	}
+
+	/*
+	 * Compute new lower and upper pointers for page, see if it'll fit
+	 */
 	if (offsetNumber > limit)
 		lower = (Offset) (((char *) (&((PageHeader) page)->pd_linp[offsetNumber])) - ((char *) page));
-	else if (offsetNumber == limit || shuffled == true)
+	else if (offsetNumber == limit || needshuffle)
 		lower = ((PageHeader) page)->pd_lower + sizeof(ItemIdData);
 	else
 		lower = ((PageHeader) page)->pd_lower;
@@ -143,6 +121,23 @@ PageAddItem(Page page,
 
 	if (lower > upper)
 		return InvalidOffsetNumber;
+
+	/*
+	 * OK to insert the item.  First, shuffle the existing pointers if needed.
+	 */
+	if (needshuffle)
+	{
+		/* shuffle ItemId's (Do the PageManager Shuffle...) */
+		for (i = (limit - 1); i >= offsetNumber; i--)
+		{
+			ItemId		fromitemId,
+						toitemId;
+
+			fromitemId = &((PageHeader) page)->pd_linp[i - 1];
+			toitemId = &((PageHeader) page)->pd_linp[i];
+			*toitemId = *fromitemId;
+		}
+	}
 
 	itemId = &((PageHeader) page)->pd_linp[offsetNumber - 1];
 	(*itemId).lp_off = upper;
@@ -168,9 +163,7 @@ PageGetTempPage(Page page, Size specialSize)
 	PageHeader	thdr;
 
 	pageSize = PageGetPageSize(page);
-
-	if ((temp = (Page) palloc(pageSize)) == (Page) NULL)
-		elog(FATAL, "Cannot allocate %d bytes for temp page.", pageSize);
+	temp = (Page) palloc(pageSize);
 	thdr = (PageHeader) temp;
 
 	/* copy old page in */
@@ -325,23 +318,6 @@ PageGetFreeSpace(Page page)
 	space -= sizeof(ItemIdData);/* XXX not always true */
 
 	return space;
-}
-
-/*
- * PageManagerModeSet
- *
- *	 Sets mode to either: ShufflePageManagerMode (the default) or
- *	 OverwritePageManagerMode.	For use by access methods code
- *	 for determining semantics of PageAddItem when the offsetNumber
- *	 argument is passed in.
- */
-void
-PageManagerModeSet(PageManagerMode mode)
-{
-	if (mode == ShufflePageManagerMode)
-		PageManagerShuffle = true;
-	else if (mode == OverwritePageManagerMode)
-		PageManagerShuffle = false;
 }
 
 /*

@@ -8,22 +8,25 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.31 2000/04/12 17:14:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.32 2000/07/21 06:42:32 tgl Exp $
  *
  *
  * NOTES
  *	 Because we can be doing an index scan on a relation while we update
  *	 it, we need to avoid missing data that moves around in the index.
- *	 The routines and global variables in this file guarantee that all
- *	 scans in the local address space stay correctly positioned.  This
- *	 is all we need to worry about, since write locking guarantees that
- *	 no one else will be on the same page at the same time as we are.
+ *	 Insertions and page splits are no problem because _bt_restscan()
+ *	 can figure out where the current item moved to, but if a deletion
+ *	 happens at or before the current scan position, we'd better do
+ *	 something to stay in sync.
+ *
+ *	 The routines in this file handle the problem for deletions issued
+ *	 by the current backend.  Currently, that's all we need, since
+ *	 deletions are only done by VACUUM and it gets an exclusive lock.
  *
  *	 The scheme is to manage a list of active scans in the current backend.
- *	 Whenever we add or remove records from an index, or whenever we
- *	 split a leaf page, we check the list of active scans to see if any
- *	 has been affected.  A scan is affected only if it is on the same
- *	 relation, and the same page, as the update.
+ *	 Whenever we remove a record from an index, we check the list of active
+ *	 scans to see if any has been affected.  A scan is affected only if it
+ *	 is on the same relation, and the same page, as the update.
  *
  *-------------------------------------------------------------------------
  */
@@ -111,7 +114,7 @@ _bt_dropscan(IndexScanDesc scan)
 
 /*
  *	_bt_adjscans() -- adjust all scans in the scan list to compensate
- *					  for a given deletion or insertion
+ *					  for a given deletion
  */
 void
 _bt_adjscans(Relation rel, ItemPointer tid)
@@ -153,7 +156,7 @@ _bt_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
 	{
 		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-		start = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
+		start = P_FIRSTDATAKEY(opaque);
 		if (ItemPointerGetOffsetNumber(current) == start)
 			ItemPointerSetInvalid(&(so->curHeapIptr));
 		else
@@ -165,7 +168,6 @@ _bt_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
 			 */
 			LockBuffer(buf, BT_READ);
 			_bt_step(scan, &buf, BackwardScanDirection);
-			so->btso_curbuf = buf;
 			if (ItemPointerIsValid(current))
 			{
 				Page		pg = BufferGetPage(buf);
@@ -183,10 +185,9 @@ _bt_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
 		&& ItemPointerGetBlockNumber(current) == blkno
 		&& ItemPointerGetOffsetNumber(current) >= offno)
 	{
-
 		page = BufferGetPage(so->btso_mrkbuf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-		start = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
+		start = P_FIRSTDATAKEY(opaque);
 
 		if (ItemPointerGetOffsetNumber(current) == start)
 			ItemPointerSetInvalid(&(so->mrkHeapIptr));

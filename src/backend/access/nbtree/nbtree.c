@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.61 2000/07/14 22:17:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.62 2000/07/21 06:42:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "catalog/index.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
+
 
 bool		BuildingBtree = false;		/* see comment in btbuild() */
 bool		FastBuild = true;	/* use sort/build instead of insertion
@@ -206,8 +207,8 @@ btbuild(PG_FUNCTION_ARGS)
 		 * btree pages - NULLs greater NOT_NULLs and NULL = NULL is TRUE.
 		 * Sure, it's just rule for placing/finding items and no more -
 		 * keytest'll return FALSE for a = 5 for items having 'a' isNULL.
-		 * Look at _bt_skeycmp, _bt_compare and _bt_itemcmp for how it
-		 * works.				 - vadim 03/23/97
+		 * Look at _bt_compare for how it works.
+		 *				 - vadim 03/23/97
 		 *
 		 * if (itup->t_info & INDEX_NULL_MASK) { pfree(itup); continue; }
 		 */
@@ -321,14 +322,6 @@ btinsert(PG_FUNCTION_ARGS)
 	/* generate an index tuple */
 	itup = index_formtuple(RelationGetDescr(rel), datum, nulls);
 	itup->t_tid = *ht_ctid;
-
-	/*
-	 * See comments in btbuild.
-	 *
-	 * if (itup->t_info & INDEX_NULL_MASK)
-	 *		PG_RETURN_POINTER((InsertIndexResult) NULL);
-	 */
-
 	btitem = _bt_formitem(itup);
 
 	res = _bt_doinsert(rel, btitem, rel->rd_uniqueindex, heapRel);
@@ -357,10 +350,10 @@ btgettuple(PG_FUNCTION_ARGS)
 
 	if (ItemPointerIsValid(&(scan->currentItemData)))
 	{
-
 		/*
 		 * Restore scan position using heap TID returned by previous call
-		 * to btgettuple(). _bt_restscan() locks buffer.
+		 * to btgettuple(). _bt_restscan() re-grabs the read lock on
+		 * the buffer, too.
 		 */
 		_bt_restscan(scan);
 		res = _bt_next(scan, dir);
@@ -369,8 +362,9 @@ btgettuple(PG_FUNCTION_ARGS)
 		res = _bt_first(scan, dir);
 
 	/*
-	 * Save heap TID to use it in _bt_restscan. Unlock buffer before
-	 * leaving index !
+	 * Save heap TID to use it in _bt_restscan.  Then release the read
+	 * lock on the buffer so that we aren't blocking other backends.
+	 * NOTE: we do keep the pin on the buffer!
 	 */
 	if (res)
 	{
@@ -419,22 +413,6 @@ btrescan(PG_FUNCTION_ARGS)
 
 	so = (BTScanOpaque) scan->opaque;
 
-	/* we don't hold a read lock on the current page in the scan */
-	if (ItemPointerIsValid(iptr = &(scan->currentItemData)))
-	{
-		ReleaseBuffer(so->btso_curbuf);
-		so->btso_curbuf = InvalidBuffer;
-		ItemPointerSetInvalid(iptr);
-	}
-
-	/* and we don't hold a read lock on the last marked item in the scan */
-	if (ItemPointerIsValid(iptr = &(scan->currentMarkData)))
-	{
-		ReleaseBuffer(so->btso_mrkbuf);
-		so->btso_mrkbuf = InvalidBuffer;
-		ItemPointerSetInvalid(iptr);
-	}
-
 	if (so == NULL)				/* if called from btbeginscan */
 	{
 		so = (BTScanOpaque) palloc(sizeof(BTScanOpaqueData));
@@ -444,6 +422,21 @@ btrescan(PG_FUNCTION_ARGS)
 			so->keyData = (ScanKey) palloc(scan->numberOfKeys * sizeof(ScanKeyData));
 		scan->opaque = so;
 		scan->flags = 0x0;
+	}
+
+	/* we aren't holding any read locks, but gotta drop the pins */
+	if (ItemPointerIsValid(iptr = &(scan->currentItemData)))
+	{
+		ReleaseBuffer(so->btso_curbuf);
+		so->btso_curbuf = InvalidBuffer;
+		ItemPointerSetInvalid(iptr);
+	}
+
+	if (ItemPointerIsValid(iptr = &(scan->currentMarkData)))
+	{
+		ReleaseBuffer(so->btso_mrkbuf);
+		so->btso_mrkbuf = InvalidBuffer;
+		ItemPointerSetInvalid(iptr);
 	}
 
 	/*
@@ -472,7 +465,7 @@ btmovescan(IndexScanDesc scan, Datum v)
 
 	so = (BTScanOpaque) scan->opaque;
 
-	/* we don't hold a read lock on the current page in the scan */
+	/* we aren't holding any read locks, but gotta drop the pin */
 	if (ItemPointerIsValid(iptr = &(scan->currentItemData)))
 	{
 		ReleaseBuffer(so->btso_curbuf);
@@ -480,7 +473,6 @@ btmovescan(IndexScanDesc scan, Datum v)
 		ItemPointerSetInvalid(iptr);
 	}
 
-/*	  scan->keyData[0].sk_argument = v; */
 	so->keyData[0].sk_argument = v;
 }
 
@@ -496,7 +488,7 @@ btendscan(PG_FUNCTION_ARGS)
 
 	so = (BTScanOpaque) scan->opaque;
 
-	/* we don't hold any read locks */
+	/* we aren't holding any read locks, but gotta drop the pins */
 	if (ItemPointerIsValid(iptr = &(scan->currentItemData)))
 	{
 		if (BufferIsValid(so->btso_curbuf))
@@ -534,7 +526,7 @@ btmarkpos(PG_FUNCTION_ARGS)
 
 	so = (BTScanOpaque) scan->opaque;
 
-	/* we don't hold any read locks */
+	/* we aren't holding any read locks, but gotta drop the pin */
 	if (ItemPointerIsValid(iptr = &(scan->currentMarkData)))
 	{
 		ReleaseBuffer(so->btso_mrkbuf);
@@ -542,7 +534,7 @@ btmarkpos(PG_FUNCTION_ARGS)
 		ItemPointerSetInvalid(iptr);
 	}
 
-	/* bump pin on current buffer */
+	/* bump pin on current buffer for assignment to mark buffer */
 	if (ItemPointerIsValid(&(scan->currentItemData)))
 	{
 		so->btso_mrkbuf = ReadBuffer(scan->relation,
@@ -566,7 +558,7 @@ btrestrpos(PG_FUNCTION_ARGS)
 
 	so = (BTScanOpaque) scan->opaque;
 
-	/* we don't hold any read locks */
+	/* we aren't holding any read locks, but gotta drop the pin */
 	if (ItemPointerIsValid(iptr = &(scan->currentItemData)))
 	{
 		ReleaseBuffer(so->btso_curbuf);
@@ -579,7 +571,6 @@ btrestrpos(PG_FUNCTION_ARGS)
 	{
 		so->btso_curbuf = ReadBuffer(scan->relation,
 								  BufferGetBlockNumber(so->btso_mrkbuf));
-
 		scan->currentItemData = scan->currentMarkData;
 		so->curHeapIptr = so->mrkHeapIptr;
 	}
@@ -603,6 +594,9 @@ btdelete(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
+/*
+ * Restore scan position when btgettuple is called to continue a scan.
+ */
 static void
 _bt_restscan(IndexScanDesc scan)
 {
@@ -618,7 +612,12 @@ _bt_restscan(IndexScanDesc scan)
 	BTItem		item;
 	BlockNumber blkno;
 
-	LockBuffer(buf, BT_READ);	/* lock buffer first! */
+	/*
+	 * Get back the read lock we were holding on the buffer.
+	 * (We still have a reference-count pin on it, though.)
+	 */
+	LockBuffer(buf, BT_READ);
+
 	page = BufferGetPage(buf);
 	maxoff = PageGetMaxOffsetNumber(page);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -631,43 +630,40 @@ _bt_restscan(IndexScanDesc scan)
 	 */
 	if (!ItemPointerIsValid(&target))
 	{
-		ItemPointerSetOffsetNumber(&(scan->currentItemData),
-		   OffsetNumberPrev(P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY));
+		ItemPointerSetOffsetNumber(current,
+								   OffsetNumberPrev(P_FIRSTDATAKEY(opaque)));
 		return;
 	}
 
-	if (maxoff >= offnum)
+	/*
+	 * The item we were on may have moved right due to insertions.
+	 * Find it again.
+	 */
+	for (;;)
 	{
-
-		/*
-		 * if the item is where we left it or has just moved right on this
-		 * page, we're done
-		 */
+		/* Check for item on this page */
 		for (;
 			 offnum <= maxoff;
 			 offnum = OffsetNumberNext(offnum))
 		{
 			item = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
-			if (item->bti_itup.t_tid.ip_blkid.bi_hi == \
-				target.ip_blkid.bi_hi && \
-				item->bti_itup.t_tid.ip_blkid.bi_lo == \
-				target.ip_blkid.bi_lo && \
+			if (item->bti_itup.t_tid.ip_blkid.bi_hi ==
+				target.ip_blkid.bi_hi &&
+				item->bti_itup.t_tid.ip_blkid.bi_lo ==
+				target.ip_blkid.bi_lo &&
 				item->bti_itup.t_tid.ip_posid == target.ip_posid)
 			{
 				current->ip_posid = offnum;
 				return;
 			}
 		}
-	}
 
-	/*
-	 * By here, the item we're looking for moved right at least one page
-	 */
-	for (;;)
-	{
+		/*
+		 * By here, the item we're looking for moved right at least one page
+		 */
 		if (P_RIGHTMOST(opaque))
-			elog(FATAL, "_bt_restscan: my bits moved right off the end of the world!\
-\n\tRecreate index %s.", RelationGetRelationName(rel));
+			elog(FATAL, "_bt_restscan: my bits moved right off the end of the world!"
+				 "\n\tRecreate index %s.", RelationGetRelationName(rel));
 
 		blkno = opaque->btpo_next;
 		_bt_relbuf(rel, buf, BT_READ);
@@ -675,23 +671,8 @@ _bt_restscan(IndexScanDesc scan)
 		page = BufferGetPage(buf);
 		maxoff = PageGetMaxOffsetNumber(page);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-
-		/* see if it's on this page */
-		for (offnum = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
-			 offnum <= maxoff;
-			 offnum = OffsetNumberNext(offnum))
-		{
-			item = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
-			if (item->bti_itup.t_tid.ip_blkid.bi_hi == \
-				target.ip_blkid.bi_hi && \
-				item->bti_itup.t_tid.ip_blkid.bi_lo == \
-				target.ip_blkid.bi_lo && \
-				item->bti_itup.t_tid.ip_posid == target.ip_posid)
-			{
-				ItemPointerSet(current, blkno, offnum);
-				so->btso_curbuf = buf;
-				return;
-			}
-		}
+		offnum = P_FIRSTDATAKEY(opaque);
+		ItemPointerSet(current, blkno, offnum);
+		so->btso_curbuf = buf;
 	}
 }

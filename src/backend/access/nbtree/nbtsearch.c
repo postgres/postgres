@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
- * btsearch.c
+ * nbtsearch.c
  *	  search code for postgres btrees.
+ *
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.60 2000/05/30 04:24:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.61 2000/07/21 06:42:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,102 +19,96 @@
 #include "access/nbtree.h"
 
 
+static RetrieveIndexResult _bt_endpoint(IndexScanDesc scan, ScanDirection dir);
 
-static BTStack _bt_searchr(Relation rel, int keysz, ScanKey scankey,
-			Buffer *bufP, BTStack stack_in);
-static int32 _bt_compare(Relation rel, TupleDesc itupdesc, Page page,
-						 int keysz, ScanKey scankey, OffsetNumber offnum);
-static bool
-			_bt_twostep(IndexScanDesc scan, Buffer *bufP, ScanDirection dir);
-static RetrieveIndexResult
-			_bt_endpoint(IndexScanDesc scan, ScanDirection dir);
 
 /*
- *	_bt_search() -- Search for a scan key in the index.
+ *	_bt_search() -- Search the tree for a particular scankey,
+ *		or more precisely for the first leaf page it could be on.
  *
- *		This routine is actually just a helper that sets things up and
- *		calls a recursive-descent search routine on the tree.
+ * Return value is a stack of parent-page pointers.  *bufP is set to the
+ * address of the leaf-page buffer, which is read-locked and pinned.
+ * No locks are held on the parent pages, however!
+ *
+ * NOTE that the returned buffer is read-locked regardless of the access
+ * parameter.  However, access = BT_WRITE will allow an empty root page
+ * to be created and returned.  When access = BT_READ, an empty index
+ * will result in *bufP being set to InvalidBuffer.
  */
 BTStack
-_bt_search(Relation rel, int keysz, ScanKey scankey, Buffer *bufP)
+_bt_search(Relation rel, int keysz, ScanKey scankey,
+		   Buffer *bufP, int access)
 {
-	*bufP = _bt_getroot(rel, BT_READ);
-	return _bt_searchr(rel, keysz, scankey, bufP, (BTStack) NULL);
-}
+	BTStack stack_in = NULL;
 
-/*
- *	_bt_searchr() -- Search the tree recursively for a particular scankey.
- */
-static BTStack
-_bt_searchr(Relation rel,
-			int keysz,
-			ScanKey scankey,
-			Buffer *bufP,
-			BTStack stack_in)
-{
-	BTStack		stack;
-	OffsetNumber offnum;
-	Page		page;
-	BTPageOpaque opaque;
-	BlockNumber par_blkno;
-	BlockNumber blkno;
-	ItemId		itemid;
-	BTItem		btitem;
-	BTItem		item_save;
-	int			item_nbytes;
-	IndexTuple	itup;
+	/* Get the root page to start with */
+	*bufP = _bt_getroot(rel, access);
 
-	/* if this is a leaf page, we're done */
-	page = BufferGetPage(*bufP);
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-	if (opaque->btpo_flags & BTP_LEAF)
-		return stack_in;
+	/* If index is empty and access = BT_READ, no root page is created. */
+	if (! BufferIsValid(*bufP))
+		return (BTStack) NULL;
 
-	/*
-	 * Find the appropriate item on the internal page, and get the child
-	 * page that it points to.
-	 */
+	/* Loop iterates once per level descended in the tree */
+	for (;;)
+	{
+		Page		page;
+		BTPageOpaque opaque;
+		OffsetNumber offnum;
+		ItemId		itemid;
+		BTItem		btitem;
+		IndexTuple	itup;
+		BlockNumber blkno;
+		BlockNumber par_blkno;
+		BTStack		new_stack;
 
-	par_blkno = BufferGetBlockNumber(*bufP);
-	offnum = _bt_binsrch(rel, *bufP, keysz, scankey, BT_DESCENT);
-	itemid = PageGetItemId(page, offnum);
-	btitem = (BTItem) PageGetItem(page, itemid);
-	itup = &(btitem->bti_itup);
-	blkno = ItemPointerGetBlockNumber(&(itup->t_tid));
+		/* if this is a leaf page, we're done */
+		page = BufferGetPage(*bufP);
+		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+		if (P_ISLEAF(opaque))
+			break;
 
-	/*
-	 * We need to save the bit image of the index entry we chose in the
-	 * parent page on a stack.	In case we split the tree, we'll use this
-	 * bit image to figure out what our real parent page is, in case the
-	 * parent splits while we're working lower in the tree.  See the paper
-	 * by Lehman and Yao for how this is detected and handled.	(We use
-	 * unique OIDs to disambiguate duplicate keys in the index -- Lehman
-	 * and Yao disallow duplicate keys).
-	 */
+		/*
+		 * Find the appropriate item on the internal page, and get the
+		 * child page that it points to.
+		 */
+		offnum = _bt_binsrch(rel, *bufP, keysz, scankey);
+		itemid = PageGetItemId(page, offnum);
+		btitem = (BTItem) PageGetItem(page, itemid);
+		itup = &(btitem->bti_itup);
+		blkno = ItemPointerGetBlockNumber(&(itup->t_tid));
+		par_blkno = BufferGetBlockNumber(*bufP);
 
-	item_nbytes = ItemIdGetLength(itemid);
-	item_save = (BTItem) palloc(item_nbytes);
-	memmove((char *) item_save, (char *) btitem, item_nbytes);
-	stack = (BTStack) palloc(sizeof(BTStackData));
-	stack->bts_blkno = par_blkno;
-	stack->bts_offset = offnum;
-	stack->bts_btitem = item_save;
-	stack->bts_parent = stack_in;
+		/*
+		 * We need to save the bit image of the index entry we chose in the
+		 * parent page on a stack. In case we split the tree, we'll use this
+		 * bit image to figure out what our real parent page is, in case the
+		 * parent splits while we're working lower in the tree.  See the paper
+		 * by Lehman and Yao for how this is detected and handled. (We use the
+		 * child link to disambiguate duplicate keys in the index -- Lehman
+		 * and Yao disallow duplicate keys.)
+		 */
+		new_stack = (BTStack) palloc(sizeof(BTStackData));
+		new_stack->bts_blkno = par_blkno;
+		new_stack->bts_offset = offnum;
+		memcpy(&new_stack->bts_btitem, btitem, sizeof(BTItemData));
+		new_stack->bts_parent = stack_in;
 
-	/* drop the read lock on the parent page and acquire one on the child */
-	_bt_relbuf(rel, *bufP, BT_READ);
-	*bufP = _bt_getbuf(rel, blkno, BT_READ);
+		/* drop the read lock on the parent page, acquire one on the child */
+		_bt_relbuf(rel, *bufP, BT_READ);
+		*bufP = _bt_getbuf(rel, blkno, BT_READ);
 
-	/*
-	 * Race -- the page we just grabbed may have split since we read its
-	 * pointer in the parent.  If it has, we may need to move right to its
-	 * new sibling.  Do that.
-	 */
+		/*
+		 * Race -- the page we just grabbed may have split since we read its
+		 * pointer in the parent.  If it has, we may need to move right to its
+		 * new sibling.  Do that.
+		 */
+		*bufP = _bt_moveright(rel, *bufP, keysz, scankey, BT_READ);
 
-	*bufP = _bt_moveright(rel, *bufP, keysz, scankey, BT_READ);
+		/* okay, all set to move down a level */
+		stack_in = new_stack;
+	}
 
-	/* okay, all set to move down a level */
-	return _bt_searchr(rel, keysz, scankey, bufP, stack);
+	return stack_in;
 }
 
 /*
@@ -133,7 +127,7 @@ _bt_searchr(Relation rel,
  *
  *		On entry, we have the buffer pinned and a lock of the proper type.
  *		If we move right, we release the buffer and lock and acquire the
- *		same on the right sibling.
+ *		same on the right sibling.  Return value is the buffer we stop at.
  */
 Buffer
 _bt_moveright(Relation rel,
@@ -144,231 +138,81 @@ _bt_moveright(Relation rel,
 {
 	Page		page;
 	BTPageOpaque opaque;
-	ItemId		hikey;
-	BlockNumber rblkno;
-	int			natts = rel->rd_rel->relnatts;
 
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
-	/* if we're on a rightmost page, we don't need to move right */
-	if (P_RIGHTMOST(opaque))
-		return buf;
-
-	/* by convention, item 0 on non-rightmost pages is the high key */
-	hikey = PageGetItemId(page, P_HIKEY);
-
 	/*
-	 * If the scan key that brought us to this page is >= the high key
+	 * If the scan key that brought us to this page is > the high key
 	 * stored on the page, then the page has split and we need to move
-	 * right.
+	 * right.  (If the scan key is equal to the high key, we might or
+	 * might not need to move right; have to scan the page first anyway.)
+	 * It could even have split more than once, so scan as far as needed.
 	 */
-
-	if (_bt_skeycmp(rel, keysz, scankey, page, hikey,
-					BTGreaterEqualStrategyNumber))
+	while (!P_RIGHTMOST(opaque) &&
+		   _bt_compare(rel, keysz, scankey, page, P_HIKEY) > 0)
 	{
-		/* move right as long as we need to */
-		do
-		{
-			OffsetNumber offmax = PageGetMaxOffsetNumber(page);
+		/* step right one page */
+		BlockNumber		rblkno = opaque->btpo_next;
 
-			/*
-			 * If this page consists of all duplicate keys (hikey and
-			 * first key on the page have the same value), then we don't
-			 * need to step right.
-			 *
-			 * NOTE for multi-column indices: we may do scan using keys not
-			 * for all attrs. But we handle duplicates using all attrs in
-			 * _bt_insert/_bt_spool code. And so we've to compare scankey
-			 * with _last_ item on this page to do not lose "good" tuples
-			 * if number of attrs > keysize. Example: (2,0) - last items
-			 * on this page, (2,1) - first item on next page (hikey), our
-			 * scankey is x = 2. Scankey == (2,1) because of we compare
-			 * first attrs only, but we shouldn't to move right of here. -
-			 * vadim 04/15/97
-			 *
-			 * Also, if this page is not LEAF one (and # of attrs > keysize)
-			 * then we can't move too. - vadim 10/22/97
-			 */
-
-			if (_bt_skeycmp(rel, keysz, scankey, page, hikey,
-							BTEqualStrategyNumber))
-			{
-				if (opaque->btpo_flags & BTP_CHAIN)
-				{
-					Assert((opaque->btpo_flags & BTP_LEAF) || offmax > P_HIKEY);
-					break;
-				}
-				if (offmax > P_HIKEY)
-				{
-					if (natts == keysz) /* sanity checks */
-					{
-						if (_bt_skeycmp(rel, keysz, scankey, page,
-										PageGetItemId(page, P_FIRSTKEY),
-										BTEqualStrategyNumber))
-							elog(FATAL, "btree: BTP_CHAIN flag was expected in %s (access = %s)",
-								 RelationGetRelationName(rel), access ? "bt_write" : "bt_read");
-						if (_bt_skeycmp(rel, keysz, scankey, page,
-										PageGetItemId(page, offmax),
-										BTEqualStrategyNumber))
-							elog(FATAL, "btree: unexpected equal last item");
-						if (_bt_skeycmp(rel, keysz, scankey, page,
-										PageGetItemId(page, offmax),
-										BTLessStrategyNumber))
-							elog(FATAL, "btree: unexpected greater last item");
-						/* move right */
-					}
-					else if (!(opaque->btpo_flags & BTP_LEAF))
-						break;
-					else if (_bt_skeycmp(rel, keysz, scankey, page,
-										 PageGetItemId(page, offmax),
-										 BTLessEqualStrategyNumber))
-						break;
-				}
-			}
-
-			/* step right one page */
-			rblkno = opaque->btpo_next;
-			_bt_relbuf(rel, buf, access);
-			buf = _bt_getbuf(rel, rblkno, access);
-			page = BufferGetPage(buf);
-			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-			hikey = PageGetItemId(page, P_HIKEY);
-
-		} while (!P_RIGHTMOST(opaque)
-				 && _bt_skeycmp(rel, keysz, scankey, page, hikey,
-								BTGreaterEqualStrategyNumber));
+		_bt_relbuf(rel, buf, access);
+		buf = _bt_getbuf(rel, rblkno, access);
+		page = BufferGetPage(buf);
+		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	}
+
 	return buf;
-}
-
-/*
- *	_bt_skeycmp() -- compare a scan key to a particular item on a page using
- *					 a requested strategy (<, <=, =, >=, >).
- *
- *		We ignore the unique OIDs stored in the btree item here.  Those
- *		numbers are intended for use internally only, in repositioning a
- *		scan after a page split.  They do not impose any meaningful ordering.
- *
- *		The comparison is A <op> B, where A is the scan key and B is the
- *		tuple pointed at by itemid on page.
- */
-bool
-_bt_skeycmp(Relation rel,
-			Size keysz,
-			ScanKey scankey,
-			Page page,
-			ItemId itemid,
-			StrategyNumber strat)
-{
-	BTItem		item;
-	IndexTuple	indexTuple;
-	TupleDesc	tupDes;
-	int			i;
-	int32		compare = 0;
-
-	item = (BTItem) PageGetItem(page, itemid);
-	indexTuple = &(item->bti_itup);
-
-	tupDes = RelationGetDescr(rel);
-
-	for (i = 1; i <= (int) keysz; i++)
-	{
-		ScanKey		entry = &scankey[i - 1];
-		Datum		attrDatum;
-		bool		isNull;
-
-		Assert(entry->sk_attno == i);
-		attrDatum = index_getattr(indexTuple,
-								  entry->sk_attno,
-								  tupDes,
-								  &isNull);
-
-		/* see comments about NULLs handling in btbuild */
-		if (entry->sk_flags & SK_ISNULL)		/* key is NULL */
-		{
-			if (isNull)
-				compare = 0;	/* NULL key "=" NULL datum */
-			else
-				compare = 1;	/* NULL key ">" not-NULL datum */
-		}
-		else if (isNull)		/* key is NOT_NULL and item is NULL */
-		{
-			compare = -1;		/* not-NULL key "<" NULL datum */
-		}
-		else
-			compare = DatumGetInt32(FunctionCall2(&entry->sk_func,
-												  entry->sk_argument,
-												  attrDatum));
-
-		if (compare != 0)
-			break;				/* done when we find unequal attributes */
-	}
-
-	switch (strat)
-	{
-		case BTLessStrategyNumber:
-			return (bool) (compare < 0);
-		case BTLessEqualStrategyNumber:
-			return (bool) (compare <= 0);
-		case BTEqualStrategyNumber:
-			return (bool) (compare == 0);
-		case BTGreaterEqualStrategyNumber:
-			return (bool) (compare >= 0);
-		case BTGreaterStrategyNumber:
-			return (bool) (compare > 0);
-	}
-
-	elog(ERROR, "_bt_skeycmp: bogus strategy %d", (int) strat);
-	return false;
 }
 
 /*
  *	_bt_binsrch() -- Do a binary search for a key on a particular page.
  *
- *		The scankey we get has the compare function stored in the procedure
- *		entry of each data struct.	We invoke this regproc to do the
- *		comparison for every key in the scankey.  _bt_binsrch() returns
- *		the OffsetNumber of the first matching key on the page, or the
- *		OffsetNumber at which the matching key would appear if it were
- *		on this page.  (NOTE: in particular, this means it is possible to
- *		return a value 1 greater than the number of keys on the page, if
- *		the scankey is > all keys on the page.)
+ * The scankey we get has the compare function stored in the procedure
+ * entry of each data struct.  We invoke this regproc to do the
+ * comparison for every key in the scankey.
  *
- *		By the time this procedure is called, we're sure we're looking
- *		at the right page -- don't need to walk right.  _bt_binsrch() has
- *		no lock or refcount side effects on the buffer.
+ * On a leaf page, _bt_binsrch() returns the OffsetNumber of the first
+ * key >= given scankey.  (NOTE: in particular, this means it is possible
+ * to return a value 1 greater than the number of keys on the page,
+ * if the scankey is > all keys on the page.)
+ *
+ * On an internal (non-leaf) page, _bt_binsrch() returns the OffsetNumber
+ * of the last key < given scankey.  (Since _bt_compare treats the first
+ * data key of such a page as minus infinity, there will be at least one
+ * key < scankey, so the result always points at one of the keys on the
+ * page.)  This key indicates the right place to descend to be sure we
+ * find all leaf keys >= given scankey.
+ *
+ * This procedure is not responsible for walking right, it just examines
+ * the given page.  _bt_binsrch() has no lock or refcount side effects
+ * on the buffer.
  */
 OffsetNumber
 _bt_binsrch(Relation rel,
 			Buffer buf,
 			int keysz,
-			ScanKey scankey,
-			int srchtype)
+			ScanKey scankey)
 {
 	TupleDesc	itupdesc;
 	Page		page;
 	BTPageOpaque opaque;
 	OffsetNumber low,
 				high;
-	bool		haveEq;
-	int			natts = rel->rd_rel->relnatts;
 	int32		result;
 
 	itupdesc = RelationGetDescr(rel);
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
-	/* by convention, item 1 on any non-rightmost page is the high key */
-	low = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
-
+	low = P_FIRSTDATAKEY(opaque);
 	high = PageGetMaxOffsetNumber(page);
 
 	/*
 	 * If there are no keys on the page, return the first available slot.
 	 * Note this covers two cases: the page is really empty (no keys), or
 	 * it contains only a high key.  The latter case is possible after
-	 * vacuuming.
+	 * vacuuming.  This can never happen on an internal page, however,
+	 * since they are never empty (an internal page must have children).
 	 */
 	if (high < low)
 		return low;
@@ -376,11 +220,9 @@ _bt_binsrch(Relation rel,
 	/*
 	 * Binary search to find the first key on the page >= scan key. Loop
 	 * invariant: all slots before 'low' are < scan key, all slots at or
-	 * after 'high' are >= scan key.  Also, haveEq is true if the tuple at
-	 * 'high' is == scan key. We can fall out when high == low.
+	 * after 'high' are >= scan key.  We can fall out when high == low.
 	 */
 	high++;						/* establish the loop invariant for high */
-	haveEq = false;
 
 	while (high > low)
 	{
@@ -388,175 +230,77 @@ _bt_binsrch(Relation rel,
 
 		/* We have low <= mid < high, so mid points at a real slot */
 
-		result = _bt_compare(rel, itupdesc, page, keysz, scankey, mid);
+		result = _bt_compare(rel, keysz, scankey, page, mid);
 
 		if (result > 0)
 			low = mid + 1;
 		else
-		{
 			high = mid;
-			haveEq = (result == 0);
-		}
 	}
 
 	/*--------------------
 	 * At this point we have high == low, but be careful: they could point
-	 * past the last slot on the page.	We also know that haveEq is true
-	 * if and only if there is an equal key (in which case high&low point
-	 * at the first equal key).
+	 * past the last slot on the page.
 	 *
 	 * On a leaf page, we always return the first key >= scan key
 	 * (which could be the last slot + 1).
 	 *--------------------
 	 */
-
-	if (opaque->btpo_flags & BTP_LEAF)
+	if (P_ISLEAF(opaque))
 		return low;
 
 	/*--------------------
-	 * On a non-leaf page, there are special cases:
-	 *
-	 * For an insertion (srchtype != BT_DESCENT and natts == keysz)
-	 * always return first key >= scan key (which could be off the end).
-	 *
-	 * For a standard search (srchtype == BT_DESCENT and natts == keysz)
-	 * return the first equal key if one exists, else the last lesser key
-	 * if one exists, else the first slot on the page.
-	 *
-	 * For a partial-match search (srchtype == BT_DESCENT and natts > keysz)
-	 * return the last lesser key if one exists, else the first slot.
-	 *
-	 * Old comments:
-	 *	For multi-column indices, we may scan using keys
-	 *	not for all attrs. But we handle duplicates using all attrs
-	 *	in _bt_insert/_bt_spool code. And so while searching on
-	 *	internal pages having number of attrs > keysize we want to
-	 *	point at the last item < the scankey, not at the first item
-	 *	= the scankey (!!!), and let _bt_moveright decide later
-	 *	whether to move right or not (see comments and example
-	 *	there). Note also that INSERTions are not affected by this
-	 *	code (since natts == keysz for inserts).		   - vadim 04/15/97
+	 * On a non-leaf page, return the last key < scan key.
+	 * There must be one if _bt_compare() is playing by the rules.
 	 *--------------------
 	 */
-
-	if (haveEq)
-	{
-
-		/*
-		 * There is an equal key.  We return either the first equal key
-		 * (which we just found), or the last lesser key.
-		 *
-		 * We need not check srchtype != BT_DESCENT here, since if that is
-		 * true then natts == keysz by assumption.
-		 */
-		if (natts == keysz)
-			return low;			/* return first equal key */
-	}
-	else
-	{
-
-		/*
-		 * There is no equal key.  We return either the first greater key
-		 * (which we just found), or the last lesser key.
-		 */
-		if (srchtype != BT_DESCENT)
-			return low;			/* return first greater key */
-	}
-
-
-	if (low == (P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY))
-		return low;				/* there is no prior item */
+	Assert(low > P_FIRSTDATAKEY(opaque));
 
 	return OffsetNumberPrev(low);
 }
 
-/*
+/*----------
  *	_bt_compare() -- Compare scankey to a particular tuple on the page.
+ *
+ *	keysz: number of key conditions to be checked (might be less than the
+ *	total length of the scan key!)
+ *	page/offnum: location of btree item to be compared to.
  *
  *		This routine returns:
  *			<0 if scankey < tuple at offnum;
  *			 0 if scankey == tuple at offnum;
  *			>0 if scankey > tuple at offnum.
+ *		NULLs in the keys are treated as sortable values.  Therefore
+ *		"equality" does not necessarily mean that the item should be
+ *		returned to the caller as a matching key!
  *
- *		-- Old comments:
- *		In order to avoid having to propagate changes up the tree any time
- *		a new minimal key is inserted, the leftmost entry on the leftmost
- *		page is less than all possible keys, by definition.
- *
- *		-- New ones:
- *		New insertion code (fix against updating _in_place_ if new minimal
- *		key has bigger size than old one) may delete P_HIKEY entry on the
- *		root page in order to insert new minimal key - and so this definition
- *		does not work properly in this case and breaks key' order on root
- *		page. BTW, this propagation occures only while page' splitting,
- *		but not "any time a new min key is inserted" (see _bt_insertonpg).
- *				- vadim 12/05/96
+ * CRUCIAL NOTE: on a non-leaf page, the first data key is assumed to be
+ * "minus infinity": this routine will always claim it is less than the
+ * scankey.  The actual key value stored (if any, which there probably isn't)
+ * does not matter.  This convention allows us to implement the Lehman and
+ * Yao convention that the first down-link pointer is before the first key.
+ * See backend/access/nbtree/README for details.
+ *----------
  */
-static int32
+int32
 _bt_compare(Relation rel,
-			TupleDesc itupdesc,
-			Page page,
 			int keysz,
 			ScanKey scankey,
+			Page page,
 			OffsetNumber offnum)
 {
-	Datum		datum;
+	TupleDesc	itupdesc = RelationGetDescr(rel);
+	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	BTItem		btitem;
 	IndexTuple	itup;
-	BTPageOpaque opaque;
-	ScanKey		entry;
-	AttrNumber	attno;
-	int32		result;
 	int			i;
-	bool		null;
 
 	/*
-	 * If this is a leftmost internal page, and if our comparison is with
-	 * the first key on the page, then the item at that position is by
-	 * definition less than the scan key.
-	 *
-	 * - see new comments above...
+	 * Force result ">" if target item is first data item on an internal
+	 * page --- see NOTE above.
 	 */
-
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-
-	if (!(opaque->btpo_flags & BTP_LEAF)
-		&& P_LEFTMOST(opaque)
-		&& offnum == P_HIKEY)
-	{
-
-		/*
-		 * we just have to believe that this will only be called with
-		 * offnum == P_HIKEY when P_HIKEY is the OffsetNumber of the first
-		 * actual data key (i.e., this is also a rightmost page).  there
-		 * doesn't seem to be any code that implies that the leftmost page
-		 * is normally missing a high key as well as the rightmost page.
-		 * but that implies that this code path only applies to the root
-		 * -- which seems unlikely..
-		 *
-		 * - see new comments above...
-		 */
-		if (!P_RIGHTMOST(opaque))
-			elog(ERROR, "_bt_compare: invalid comparison to high key");
-
-#ifdef NOT_USED
-
-		/*
-		 * We just have to belive that right answer will not break
-		 * anything. I've checked code and all seems to be ok. See new
-		 * comments above...
-		 *
-		 * -- Old comments If the item on the page is equal to the scankey,
-		 * that's okay to admit.  We just can't claim that the first key
-		 * on the page is greater than anything.
-		 */
-
-		if (_bt_skeycmp(rel, keysz, scankey, page, PageGetItemId(page, offnum),
-						BTEqualStrategyNumber))
-			return 0;
+	if (! P_ISLEAF(opaque) && offnum == P_FIRSTDATAKEY(opaque))
 		return 1;
-#endif
-	}
 
 	btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
 	itup = &(btitem->bti_itup);
@@ -568,37 +312,45 @@ _bt_compare(Relation rel,
 	 * they be in order.  If you think about how multi-key ordering works,
 	 * you'll understand why this is.
 	 *
-	 * We don't test for violation of this condition here.
+	 * We don't test for violation of this condition here, however.  The
+	 * initial setup for the index scan had better have gotten it right
+	 * (see _bt_first).
 	 */
 
-	for (i = 1; i <= keysz; i++)
+	for (i = 0; i < keysz; i++)
 	{
-		entry = &scankey[i - 1];
-		attno = entry->sk_attno;
-		datum = index_getattr(itup, attno, itupdesc, &null);
+		ScanKey		entry = &scankey[i];
+		Datum		datum;
+		bool		isNull;
+		int32		result;
+
+		datum = index_getattr(itup, entry->sk_attno, itupdesc, &isNull);
 
 		/* see comments about NULLs handling in btbuild */
-		if (entry->sk_flags & SK_ISNULL)		/* key is NULL */
+		if (entry->sk_flags & SK_ISNULL)	/* key is NULL */
 		{
-			if (null)
+			if (isNull)
 				result = 0;		/* NULL "=" NULL */
 			else
 				result = 1;		/* NULL ">" NOT_NULL */
 		}
-		else if (null)			/* key is NOT_NULL and item is NULL */
+		else if (isNull)		/* key is NOT_NULL and item is NULL */
 		{
 			result = -1;		/* NOT_NULL "<" NULL */
 		}
 		else
+		{
 			result = DatumGetInt32(FunctionCall2(&entry->sk_func,
-												 entry->sk_argument, datum));
+												 entry->sk_argument,
+												 datum));
+		}
 
 		/* if the keys are unequal, return the difference */
 		if (result != 0)
 			return result;
 	}
 
-	/* by here, the keys are equal */
+	/* if we get here, the keys are equal */
 	return 0;
 }
 
@@ -606,10 +358,10 @@ _bt_compare(Relation rel,
  *	_bt_next() -- Get the next item in a scan.
  *
  *		On entry, we have a valid currentItemData in the scan, and a
- *		read lock on the page that contains that item.	We do not have
- *		the page pinned.  We return the next item in the scan.	On
- *		exit, we have the page containing the next item locked but not
- *		pinned.
+ *		read lock and pin count on the page that contains that item.
+ *		We return the next item in the scan, or NULL if no more.
+ *		On successful exit, the page containing the new item is locked
+ *		and pinned; on NULL exit, no lock or pin is held.
  */
 RetrieveIndexResult
 _bt_next(IndexScanDesc scan, ScanDirection dir)
@@ -618,7 +370,6 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 	Buffer		buf;
 	Page		page;
 	OffsetNumber offnum;
-	RetrieveIndexResult res;
 	ItemPointer current;
 	BTItem		btitem;
 	IndexTuple	itup;
@@ -629,10 +380,9 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 	so = (BTScanOpaque) scan->opaque;
 	current = &(scan->currentItemData);
 
-	Assert(BufferIsValid(so->btso_curbuf));
-
 	/* we still have the buffer pinned and locked */
 	buf = so->btso_curbuf;
+	Assert(BufferIsValid(buf));
 
 	do
 	{
@@ -640,7 +390,7 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 		if (!_bt_step(scan, &buf, dir))
 			return (RetrieveIndexResult) NULL;
 
-		/* by here, current is the tuple we want to return */
+		/* current is the next candidate tuple to return */
 		offnum = ItemPointerGetOffsetNumber(current);
 		page = BufferGetPage(buf);
 		btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
@@ -648,17 +398,16 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 
 		if (_bt_checkkeys(scan, itup, &keysok))
 		{
+			/* tuple passes all scan key conditions, so return it */
 			Assert(keysok == so->numberOfKeys);
-			res = FormRetrieveIndexResult(current, &(itup->t_tid));
-
-			/* remember which buffer we have pinned and locked */
-			so->btso_curbuf = buf;
-			return res;
+			return FormRetrieveIndexResult(current, &(itup->t_tid));
 		}
 
+		/* This tuple doesn't pass, but there might be more that do */
 	} while (keysok >= so->numberOfFirstKeys ||
 			 (keysok == ((Size) -1) && ScanDirectionIsBackward(dir)));
 
+	/* No more items, so close down the current-item info */
 	ItemPointerSetInvalid(current);
 	so->btso_curbuf = InvalidBuffer;
 	_bt_relbuf(rel, buf, BT_READ);
@@ -680,14 +429,10 @@ RetrieveIndexResult
 _bt_first(IndexScanDesc scan, ScanDirection dir)
 {
 	Relation	rel;
-	TupleDesc	itupdesc;
 	Buffer		buf;
 	Page		page;
-	BTPageOpaque pop;
 	BTStack		stack;
-	OffsetNumber offnum,
-				maxoff;
-	bool		offGmax = false;
+	OffsetNumber offnum;
 	BTItem		btitem;
 	IndexTuple	itup;
 	ItemPointer current;
@@ -698,7 +443,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	int32		result;
 	BTScanOpaque so;
 	Size		keysok;
-
 	bool		strategyCheck;
 	ScanKey		scankeys = 0;
 	int			keysCount = 0;
@@ -784,20 +528,17 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		return _bt_endpoint(scan, dir);
 	}
 
-	itupdesc = RelationGetDescr(rel);
-	current = &(scan->currentItemData);
-
 	/*
 	 * Okay, we want something more complicated.  What we'll do is use the
 	 * first item in the scan key passed in (which has been correctly
 	 * ordered to take advantage of index ordering) to position ourselves
 	 * at the right place in the scan.
 	 */
-	/* _bt_orderkeys disallows it, but it's place to add some code latter */
 	scankeys = (ScanKey) palloc(keysCount * sizeof(ScanKeyData));
 	for (i = 0; i < keysCount; i++)
 	{
 		j = nKeyIs[i];
+		/* _bt_orderkeys disallows it, but it's place to add some code latter */
 		if (so->keyData[j].sk_flags & SK_ISNULL)
 		{
 			pfree(nKeyIs);
@@ -812,233 +553,212 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	if (nKeyIs)
 		pfree(nKeyIs);
 
-	stack = _bt_search(rel, keysCount, scankeys, &buf);
-	_bt_freestack(stack);
-
-	blkno = BufferGetBlockNumber(buf);
-	page = BufferGetPage(buf);
+	current = &(scan->currentItemData);
 
 	/*
-	 * This will happen if the tree we're searching is entirely empty, or
-	 * if we're doing a search for a key that would appear on an entirely
-	 * empty internal page.  In either case, there are no matching tuples
-	 * in the index.
+	 * Use the manufactured scan key to descend the tree and position
+	 * ourselves on the target leaf page.
 	 */
+	stack = _bt_search(rel, keysCount, scankeys, &buf, BT_READ);
 
-	if (PageIsEmpty(page))
+	/* don't need to keep the stack around... */
+	_bt_freestack(stack);
+
+	if (! BufferIsValid(buf))
 	{
+		/* Only get here if index is completely empty */
 		ItemPointerSetInvalid(current);
 		so->btso_curbuf = InvalidBuffer;
-		_bt_relbuf(rel, buf, BT_READ);
 		pfree(scankeys);
 		return (RetrieveIndexResult) NULL;
 	}
-	maxoff = PageGetMaxOffsetNumber(page);
-	pop = (BTPageOpaque) PageGetSpecialPointer(page);
 
-	/*
-	 * Now _bt_moveright doesn't move from non-rightmost leaf page if
-	 * scankey == hikey and there is only hikey there. It's good for
-	 * insertion, but we need to do work for scan here. - vadim 05/27/97
-	 */
+	/* remember which buffer we have pinned */
+	so->btso_curbuf = buf;
+	blkno = BufferGetBlockNumber(buf);
+	page = BufferGetPage(buf);
 
-	while (maxoff == P_HIKEY && !P_RIGHTMOST(pop) &&
-		   _bt_skeycmp(rel, keysCount, scankeys, page,
-					   PageGetItemId(page, P_HIKEY),
-					   BTGreaterEqualStrategyNumber))
-	{
-		/* step right one page */
-		blkno = pop->btpo_next;
-		_bt_relbuf(rel, buf, BT_READ);
-		buf = _bt_getbuf(rel, blkno, BT_READ);
-		page = BufferGetPage(buf);
-		if (PageIsEmpty(page))
-		{
-			ItemPointerSetInvalid(current);
-			so->btso_curbuf = InvalidBuffer;
-			_bt_relbuf(rel, buf, BT_READ);
-			pfree(scankeys);
-			return (RetrieveIndexResult) NULL;
-		}
-		maxoff = PageGetMaxOffsetNumber(page);
-		pop = (BTPageOpaque) PageGetSpecialPointer(page);
-	}
-
-
-	/* find the nearest match to the manufactured scan key on the page */
-	offnum = _bt_binsrch(rel, buf, keysCount, scankeys, BT_DESCENT);
-
-	if (offnum > maxoff)
-	{
-		offnum = maxoff;
-		offGmax = true;
-	}
+	offnum = _bt_binsrch(rel, buf, keysCount, scankeys);
 
 	ItemPointerSet(current, blkno, offnum);
 
-	/*
-	 * Now find the right place to start the scan.	Result is the value
-	 * we're looking for minus the value we're looking at in the index.
+	/*----------
+	 * At this point we are positioned at the first item >= scan key,
+	 * or possibly at the end of a page on which all the existing items
+	 * are < scan key and we know that everything on later pages is
+	 * >= scan key.  We could step forward in the latter case, but that'd
+	 * be a waste of time if we want to scan backwards.  So, it's now time to
+	 * examine the scan strategy to find the exact place to start the scan.
+	 *
+	 * Note: if _bt_step fails (meaning we fell off the end of the index
+	 * in one direction or the other), we either return NULL (no matches) or
+	 * call _bt_endpoint() to set up a scan starting at that index endpoint,
+	 * as appropriate for the desired scan type.
+	 *
+	 * it's yet other place to add some code latter for is(not)null ...
+	 *----------
 	 */
 
-	result = _bt_compare(rel, itupdesc, page, keysCount, scankeys, offnum);
-
-	/* it's yet other place to add some code latter for is(not)null */
-
-	strat = strat_total;
-	switch (strat)
+	switch (strat_total)
 	{
 		case BTLessStrategyNumber:
-			if (result <= 0)
+			/*
+			 * Back up one to arrive at last item < scankey
+			 */
+			if (!_bt_step(scan, &buf, BackwardScanDirection))
 			{
-				do
-				{
-					if (!_bt_twostep(scan, &buf, BackwardScanDirection))
-						break;
-
-					offnum = ItemPointerGetOffsetNumber(current);
-					page = BufferGetPage(buf);
-					result = _bt_compare(rel, itupdesc, page, keysCount, scankeys, offnum);
-				} while (result <= 0);
-
+				pfree(scankeys);
+				return (RetrieveIndexResult) NULL;
 			}
 			break;
 
 		case BTLessEqualStrategyNumber:
-			if (result >= 0)
+			/*
+			 * We need to find the last item <= scankey, so step forward
+			 * till we find one > scankey, then step back one.
+			 */
+			if (offnum > PageGetMaxOffsetNumber(page))
 			{
-				do
+				if (!_bt_step(scan, &buf, ForwardScanDirection))
 				{
-					if (!_bt_twostep(scan, &buf, ForwardScanDirection))
-						break;
-
-					offnum = ItemPointerGetOffsetNumber(current);
-					page = BufferGetPage(buf);
-					result = _bt_compare(rel, itupdesc, page, keysCount, scankeys, offnum);
-				} while (result >= 0);
+					pfree(scankeys);
+					return _bt_endpoint(scan, dir);
+				}
 			}
-			if (result < 0)
-				_bt_twostep(scan, &buf, BackwardScanDirection);
-			break;
-
-		case BTEqualStrategyNumber:
-			if (result != 0)
+			for (;;)
 			{
-				_bt_relbuf(scan->relation, buf, BT_READ);
-				so->btso_curbuf = InvalidBuffer;
-				ItemPointerSetInvalid(&(scan->currentItemData));
+				offnum = ItemPointerGetOffsetNumber(current);
+				page = BufferGetPage(buf);
+				result = _bt_compare(rel, keysCount, scankeys, page, offnum);
+				if (result < 0)
+					break;
+				if (!_bt_step(scan, &buf, ForwardScanDirection))
+				{
+					pfree(scankeys);
+					return _bt_endpoint(scan, dir);
+				}
+			}
+			if (!_bt_step(scan, &buf, BackwardScanDirection))
+			{
 				pfree(scankeys);
 				return (RetrieveIndexResult) NULL;
 			}
-			else if (ScanDirectionIsBackward(dir))
+			break;
+
+		case BTEqualStrategyNumber:
+			/*
+			 * Make sure we are on the first equal item; might have to step
+			 * forward if currently at end of page.
+			 */
+			if (offnum > PageGetMaxOffsetNumber(page))
+			{
+				if (!_bt_step(scan, &buf, ForwardScanDirection))
+				{
+					pfree(scankeys);
+					return (RetrieveIndexResult) NULL;
+				}
+				offnum = ItemPointerGetOffsetNumber(current);
+				page = BufferGetPage(buf);
+			}
+			result = _bt_compare(rel, keysCount, scankeys, page, offnum);
+			if (result != 0)
+				goto nomatches;	/* no equal items! */
+			/*
+			 * If a backward scan was specified, need to start with last
+			 * equal item not first one.
+			 */
+			if (ScanDirectionIsBackward(dir))
 			{
 				do
 				{
-					if (!_bt_twostep(scan, &buf, ForwardScanDirection))
-						break;
-
+					if (!_bt_step(scan, &buf, ForwardScanDirection))
+					{
+						pfree(scankeys);
+						return _bt_endpoint(scan, dir);
+					}
 					offnum = ItemPointerGetOffsetNumber(current);
 					page = BufferGetPage(buf);
-					result = _bt_compare(rel, itupdesc, page, keysCount, scankeys, offnum);
+					result = _bt_compare(rel, keysCount, scankeys, page, offnum);
 				} while (result == 0);
-
-				if (result < 0)
-					_bt_twostep(scan, &buf, BackwardScanDirection);
+				if (!_bt_step(scan, &buf, BackwardScanDirection))
+					elog(ERROR, "_bt_first: equal items disappeared?");
 			}
 			break;
 
 		case BTGreaterEqualStrategyNumber:
-			if (offGmax)
+			/*
+			 * We want the first item >= scankey, which is where we are...
+			 * unless we're not anywhere at all...
+			 */
+			if (offnum > PageGetMaxOffsetNumber(page))
 			{
-				if (result < 0)
+				if (!_bt_step(scan, &buf, ForwardScanDirection))
 				{
-					Assert(!P_RIGHTMOST(pop) && maxoff == P_HIKEY);
-					if (!_bt_step(scan, &buf, ForwardScanDirection))
-					{
-						_bt_relbuf(scan->relation, buf, BT_READ);
-						so->btso_curbuf = InvalidBuffer;
-						ItemPointerSetInvalid(&(scan->currentItemData));
-						pfree(scankeys);
-						return (RetrieveIndexResult) NULL;
-					}
+					pfree(scankeys);
+					return (RetrieveIndexResult) NULL;
 				}
-				else if (result > 0)
-				{				/* Just remember:  _bt_binsrch() returns
-								 * the OffsetNumber of the first matching
-								 * key on the page, or the OffsetNumber at
-								 * which the matching key WOULD APPEAR IF
-								 * IT WERE on this page. No key on this
-								 * page, but offnum from _bt_binsrch()
-								 * greater maxoff - have to move right. -
-								 * vadim 12/06/96 */
-					_bt_twostep(scan, &buf, ForwardScanDirection);
-				}
-			}
-			else if (result < 0)
-			{
-				do
-				{
-					if (!_bt_twostep(scan, &buf, BackwardScanDirection))
-						break;
-
-					page = BufferGetPage(buf);
-					offnum = ItemPointerGetOffsetNumber(current);
-					result = _bt_compare(rel, itupdesc, page, keysCount, scankeys, offnum);
-				} while (result < 0);
-
-				if (result > 0)
-					_bt_twostep(scan, &buf, ForwardScanDirection);
 			}
 			break;
 
 		case BTGreaterStrategyNumber:
-			/* offGmax helps as above */
-			if (result >= 0 || offGmax)
+			/*
+			 * We want the first item > scankey, so make sure we are on
+			 * an item and then step over any equal items.
+			 */
+			if (offnum > PageGetMaxOffsetNumber(page))
 			{
-				do
+				if (!_bt_step(scan, &buf, ForwardScanDirection))
 				{
-					if (!_bt_twostep(scan, &buf, ForwardScanDirection))
-						break;
-
-					offnum = ItemPointerGetOffsetNumber(current);
-					page = BufferGetPage(buf);
-					result = _bt_compare(rel, itupdesc, page, keysCount, scankeys, offnum);
-				} while (result >= 0);
+					pfree(scankeys);
+					return (RetrieveIndexResult) NULL;
+				}
+				offnum = ItemPointerGetOffsetNumber(current);
+				page = BufferGetPage(buf);
+			}
+			result = _bt_compare(rel, keysCount, scankeys, page, offnum);
+			while (result == 0)
+			{
+				if (!_bt_step(scan, &buf, ForwardScanDirection))
+				{
+					pfree(scankeys);
+					return (RetrieveIndexResult) NULL;
+				}
+				offnum = ItemPointerGetOffsetNumber(current);
+				page = BufferGetPage(buf);
+				result = _bt_compare(rel, keysCount, scankeys, page, offnum);
 			}
 			break;
 	}
 
-	pfree(scankeys);
 	/* okay, current item pointer for the scan is right */
 	offnum = ItemPointerGetOffsetNumber(current);
 	page = BufferGetPage(buf);
 	btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
 	itup = &btitem->bti_itup;
 
+	/* is the first item actually acceptable? */
 	if (_bt_checkkeys(scan, itup, &keysok))
 	{
+		/* yes, return it */
 		res = FormRetrieveIndexResult(current, &(itup->t_tid));
-
-		/* remember which buffer we have pinned */
-		so->btso_curbuf = buf;
 	}
-	else if (keysok >= so->numberOfFirstKeys)
+	else if (keysok >= so->numberOfFirstKeys ||
+			 (keysok == ((Size) -1) && ScanDirectionIsBackward(dir)))
 	{
-		so->btso_curbuf = buf;
-		return _bt_next(scan, dir);
-	}
-	else if (keysok == ((Size) -1) && ScanDirectionIsBackward(dir))
-	{
-		so->btso_curbuf = buf;
-		return _bt_next(scan, dir);
+		/* no, but there might be another one that is */
+		res = _bt_next(scan, dir);
 	}
 	else
 	{
+		/* no tuples in the index match this scan key */
+nomatches:
 		ItemPointerSetInvalid(current);
 		so->btso_curbuf = InvalidBuffer;
 		_bt_relbuf(rel, buf, BT_READ);
 		res = (RetrieveIndexResult) NULL;
 	}
+
+	pfree(scankeys);
 
 	return res;
 }
@@ -1047,276 +767,128 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
  *	_bt_step() -- Step one item in the requested direction in a scan on
  *				  the tree.
  *
- *		If no adjacent record exists in the requested direction, return
- *		false.	Else, return true and set the currentItemData for the
- *		scan to the right thing.
+ *		*bufP is the current buffer (read-locked and pinned).  If we change
+ *		pages, it's updated appropriately.
+ *
+ *		If successful, update scan's currentItemData and return true.
+ *		If no adjacent record exists in the requested direction,
+ *		release buffer pin/locks and return false.
  */
 bool
 _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 {
+	Relation	rel = scan->relation;
+	ItemPointer current = &(scan->currentItemData);
+	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	Page		page;
 	BTPageOpaque opaque;
 	OffsetNumber offnum,
 				maxoff;
-	OffsetNumber start;
 	BlockNumber blkno;
 	BlockNumber obknum;
-	BTScanOpaque so;
-	ItemPointer current;
-	Relation	rel;
-
-	rel = scan->relation;
-	current = &(scan->currentItemData);
 
 	/*
 	 * Don't use ItemPointerGetOffsetNumber or you risk to get assertion
 	 * due to ability of ip_posid to be equal 0.
 	 */
 	offnum = current->ip_posid;
+
 	page = BufferGetPage(*bufP);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-	so = (BTScanOpaque) scan->opaque;
 	maxoff = PageGetMaxOffsetNumber(page);
 
-	/* get the next tuple */
 	if (ScanDirectionIsForward(dir))
 	{
 		if (!PageIsEmpty(page) && offnum < maxoff)
 			offnum = OffsetNumberNext(offnum);
 		else
 		{
-
-			/* if we're at end of scan, release the buffer and return */
-			blkno = opaque->btpo_next;
-			if (P_RIGHTMOST(opaque))
+			/* walk right to the next page with data */
+			for (;;)
 			{
-				_bt_relbuf(rel, *bufP, BT_READ);
-				ItemPointerSetInvalid(current);
-				*bufP = so->btso_curbuf = InvalidBuffer;
-				return false;
-			}
-			else
-			{
-
-				/* walk right to the next page with data */
-				_bt_relbuf(rel, *bufP, BT_READ);
-				for (;;)
+				/* if we're at end of scan, release the buffer and return */
+				if (P_RIGHTMOST(opaque))
 				{
-					*bufP = _bt_getbuf(rel, blkno, BT_READ);
-					page = BufferGetPage(*bufP);
-					opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-					maxoff = PageGetMaxOffsetNumber(page);
-					start = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
-
-					if (!PageIsEmpty(page) && start <= maxoff)
-						break;
-					else
-					{
-						blkno = opaque->btpo_next;
-						_bt_relbuf(rel, *bufP, BT_READ);
-						if (blkno == P_NONE)
-						{
-							*bufP = so->btso_curbuf = InvalidBuffer;
-							ItemPointerSetInvalid(current);
-							return false;
-						}
-					}
+					_bt_relbuf(rel, *bufP, BT_READ);
+					ItemPointerSetInvalid(current);
+					*bufP = so->btso_curbuf = InvalidBuffer;
+					return false;
 				}
-				offnum = start;
+				/* step right one page */
+				blkno = opaque->btpo_next;
+				_bt_relbuf(rel, *bufP, BT_READ);
+				*bufP = _bt_getbuf(rel, blkno, BT_READ);
+				page = BufferGetPage(*bufP);
+				opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+				maxoff = PageGetMaxOffsetNumber(page);
+				/* done if it's not empty */
+				offnum = P_FIRSTDATAKEY(opaque);
+				if (!PageIsEmpty(page) && offnum <= maxoff)
+					break;
 			}
 		}
 	}
-	else if (ScanDirectionIsBackward(dir))
+	else
 	{
-
-		/* remember that high key is item zero on non-rightmost pages */
-		start = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
-
-		if (offnum > start)
+		if (offnum > P_FIRSTDATAKEY(opaque))
 			offnum = OffsetNumberPrev(offnum);
 		else
 		{
-
-			/* if we're at end of scan, release the buffer and return */
-			blkno = opaque->btpo_prev;
-			if (P_LEFTMOST(opaque))
+			/* walk left to the next page with data */
+			for (;;)
 			{
-				_bt_relbuf(rel, *bufP, BT_READ);
-				*bufP = so->btso_curbuf = InvalidBuffer;
-				ItemPointerSetInvalid(current);
-				return false;
-			}
-			else
-			{
-
-				obknum = BufferGetBlockNumber(*bufP);
-
-				/* walk right to the next page with data */
-				_bt_relbuf(rel, *bufP, BT_READ);
-				for (;;)
+				/* if we're at end of scan, release the buffer and return */
+				if (P_LEFTMOST(opaque))
 				{
+					_bt_relbuf(rel, *bufP, BT_READ);
+					ItemPointerSetInvalid(current);
+					*bufP = so->btso_curbuf = InvalidBuffer;
+					return false;
+				}
+				/* step left */
+				obknum = BufferGetBlockNumber(*bufP);
+				blkno = opaque->btpo_prev;
+				_bt_relbuf(rel, *bufP, BT_READ);
+				*bufP = _bt_getbuf(rel, blkno, BT_READ);
+				page = BufferGetPage(*bufP);
+				opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+				/*
+				 * If the adjacent page just split, then we have to walk
+				 * right to find the block that's now adjacent to where
+				 * we were.  Because pages only split right, we don't have
+				 * to worry about this failing to terminate.
+				 */
+				while (opaque->btpo_next != obknum)
+				{
+					blkno = opaque->btpo_next;
+					_bt_relbuf(rel, *bufP, BT_READ);
 					*bufP = _bt_getbuf(rel, blkno, BT_READ);
 					page = BufferGetPage(*bufP);
 					opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-					maxoff = PageGetMaxOffsetNumber(page);
-
-					/*
-					 * If the adjacent page just split, then we may have
-					 * the wrong block.  Handle this case.	Because pages
-					 * only split right, we don't have to worry about this
-					 * failing to terminate.
-					 */
-
-					while (opaque->btpo_next != obknum)
-					{
-						blkno = opaque->btpo_next;
-						_bt_relbuf(rel, *bufP, BT_READ);
-						*bufP = _bt_getbuf(rel, blkno, BT_READ);
-						page = BufferGetPage(*bufP);
-						opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-						maxoff = PageGetMaxOffsetNumber(page);
-					}
-
-					/* don't consider the high key */
-					start = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
-
-					/* anything to look at here? */
-					if (!PageIsEmpty(page) && maxoff >= start)
-						break;
-					else
-					{
-						blkno = opaque->btpo_prev;
-						obknum = BufferGetBlockNumber(*bufP);
-						_bt_relbuf(rel, *bufP, BT_READ);
-						if (blkno == P_NONE)
-						{
-							*bufP = so->btso_curbuf = InvalidBuffer;
-							ItemPointerSetInvalid(current);
-							return false;
-						}
-					}
 				}
-				offnum = maxoff;/* XXX PageIsEmpty? */
+				/* done if it's not empty */
+				maxoff = PageGetMaxOffsetNumber(page);
+				offnum = maxoff;
+				if (!PageIsEmpty(page) && maxoff >= P_FIRSTDATAKEY(opaque))
+					break;
 			}
 		}
 	}
-	blkno = BufferGetBlockNumber(*bufP);
+
+	/* Update scan state */
 	so->btso_curbuf = *bufP;
+	blkno = BufferGetBlockNumber(*bufP);
 	ItemPointerSet(current, blkno, offnum);
 
 	return true;
 }
 
 /*
- *	_bt_twostep() -- Move to an adjacent record in a scan on the tree,
- *					 if an adjacent record exists.
- *
- *		This is like _bt_step, except that if no adjacent record exists
- *		it restores us to where we were before trying the step.  This is
- *		only hairy when you cross page boundaries, since the page you cross
- *		from could have records inserted or deleted, or could even split.
- *		This is unlikely, but we try to handle it correctly here anyway.
- *
- *		This routine contains the only case in which our changes to Lehman
- *		and Yao's algorithm.
- *
- *		Like step, this routine leaves the scan's currentItemData in the
- *		proper state and acquires a lock and pin on *bufP.	If the twostep
- *		succeeded, we return true; otherwise, we return false.
- */
-static bool
-_bt_twostep(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
-{
-	Page		page;
-	BTPageOpaque opaque;
-	OffsetNumber offnum,
-				maxoff;
-	OffsetNumber start;
-	ItemPointer current;
-	ItemId		itemid;
-	int			itemsz;
-	BTItem		btitem;
-	BTItem		svitem;
-	BlockNumber blkno;
-
-	blkno = BufferGetBlockNumber(*bufP);
-	page = BufferGetPage(*bufP);
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-	maxoff = PageGetMaxOffsetNumber(page);
-	current = &(scan->currentItemData);
-	offnum = ItemPointerGetOffsetNumber(current);
-
-	start = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
-
-	/* if we're safe, just do it */
-	if (ScanDirectionIsForward(dir) && offnum < maxoff)
-	{							/* XXX PageIsEmpty? */
-		ItemPointerSet(current, blkno, OffsetNumberNext(offnum));
-		return true;
-	}
-	else if (ScanDirectionIsBackward(dir) && offnum > start)
-	{
-		ItemPointerSet(current, blkno, OffsetNumberPrev(offnum));
-		return true;
-	}
-
-	/* if we've hit end of scan we don't have to do any work */
-	if (ScanDirectionIsForward(dir) && P_RIGHTMOST(opaque))
-		return false;
-	else if (ScanDirectionIsBackward(dir) && P_LEFTMOST(opaque))
-		return false;
-
-	/*
-	 * Okay, it's off the page; let _bt_step() do the hard work, and we'll
-	 * try to remember where we were.  This is not guaranteed to work;
-	 * this is the only place in the code where concurrency can screw us
-	 * up, and it's because we want to be able to move in two directions
-	 * in the scan.
-	 */
-
-	itemid = PageGetItemId(page, offnum);
-	itemsz = ItemIdGetLength(itemid);
-	btitem = (BTItem) PageGetItem(page, itemid);
-	svitem = (BTItem) palloc(itemsz);
-	memmove((char *) svitem, (char *) btitem, itemsz);
-
-	if (_bt_step(scan, bufP, dir))
-	{
-		pfree(svitem);
-		return true;
-	}
-
-	/* try to find our place again */
-	*bufP = _bt_getbuf(scan->relation, blkno, BT_READ);
-	page = BufferGetPage(*bufP);
-	maxoff = PageGetMaxOffsetNumber(page);
-
-	while (offnum <= maxoff)
-	{
-		itemid = PageGetItemId(page, offnum);
-		btitem = (BTItem) PageGetItem(page, itemid);
-		if (BTItemSame(btitem, svitem))
-		{
-			pfree(svitem);
-			ItemPointerSet(current, blkno, offnum);
-			return false;
-		}
-	}
-
-	/*
-	 * XXX crash and burn -- can't find our place.  We can be a little
-	 * smarter -- walk to the next page to the right, for example, since
-	 * that's the only direction that splits happen in.  Deletions screw
-	 * us up less often since they're only done by the vacuum daemon.
-	 */
-
-	elog(ERROR, "btree synchronization error:  concurrent update botched scan");
-
-	return false;
-}
-
-/*
  *	_bt_endpoint() -- Find the first or last key in the index.
+ *
+ * This is used by _bt_first() to set up a scan when we've determined
+ * that the scan must start at the beginning or end of the index (for
+ * a forward or backward scan respectively).
  */
 static RetrieveIndexResult
 _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
@@ -1328,7 +900,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	ItemPointer current;
 	OffsetNumber offnum,
 				maxoff;
-	OffsetNumber start = 0;
+	OffsetNumber start;
 	BlockNumber blkno;
 	BTItem		btitem;
 	IndexTuple	itup;
@@ -1340,38 +912,50 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	current = &(scan->currentItemData);
 	so = (BTScanOpaque) scan->opaque;
 
+	/*
+	 * Scan down to the leftmost or rightmost leaf page.  This is a
+	 * simplified version of _bt_search().  We don't maintain a stack
+	 * since we know we won't need it.
+	 */
 	buf = _bt_getroot(rel, BT_READ);
+
+	if (! BufferIsValid(buf))
+	{
+		/* empty index... */
+		ItemPointerSetInvalid(current);
+		so->btso_curbuf = InvalidBuffer;
+		return (RetrieveIndexResult) NULL;
+	}
+
 	blkno = BufferGetBlockNumber(buf);
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	for (;;)
 	{
-		if (opaque->btpo_flags & BTP_LEAF)
+		if (P_ISLEAF(opaque))
 			break;
 
 		if (ScanDirectionIsForward(dir))
-			offnum = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
+			offnum = P_FIRSTDATAKEY(opaque);
 		else
 			offnum = PageGetMaxOffsetNumber(page);
 
 		btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
 		itup = &(btitem->bti_itup);
-
 		blkno = ItemPointerGetBlockNumber(&(itup->t_tid));
 
 		_bt_relbuf(rel, buf, BT_READ);
 		buf = _bt_getbuf(rel, blkno, BT_READ);
+
 		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 		/*
-		 * Race condition: If the child page we just stepped onto is in
-		 * the process of being split, we need to make sure we're all the
-		 * way at the right edge of the tree.  See the paper by Lehman and
-		 * Yao.
+		 * Race condition: If the child page we just stepped onto was just
+		 * split, we need to make sure we're all the way at the right edge
+		 * of the tree.  See the paper by Lehman and Yao.
 		 */
-
 		if (ScanDirectionIsBackward(dir) && !P_RIGHTMOST(opaque))
 		{
 			do
@@ -1390,101 +974,39 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 
 	if (ScanDirectionIsForward(dir))
 	{
-		if (!P_LEFTMOST(opaque))/* non-leftmost page ? */
-			elog(ERROR, "_bt_endpoint: leftmost page (%u) has not leftmost flag", blkno);
-		start = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
+		Assert(P_LEFTMOST(opaque));
 
-		/*
-		 * I don't understand this stuff! It doesn't work for
-		 * non-rightmost pages with only one element (P_HIKEY) which we
-		 * have after deletion itups by vacuum (it's case of start >
-		 * maxoff). Scanning in BackwardScanDirection is not
-		 * understandable at all. Well - new stuff. - vadim 12/06/96
-		 */
-#ifdef NOT_USED
-		if (PageIsEmpty(page) || start > maxoff)
-		{
-			ItemPointerSet(current, blkno, maxoff);
-			if (!_bt_step(scan, &buf, BackwardScanDirection))
-				return (RetrieveIndexResult) NULL;
-
-			start = ItemPointerGetOffsetNumber(current);
-			page = BufferGetPage(buf);
-		}
-#endif
-		if (PageIsEmpty(page))
-		{
-			if (start != P_HIKEY)		/* non-rightmost page */
-				elog(ERROR, "_bt_endpoint: non-rightmost page (%u) is empty", blkno);
-
-			/*
-			 * It's left- & right- most page - root page, - and it's
-			 * empty...
-			 */
-			_bt_relbuf(rel, buf, BT_READ);
-			ItemPointerSetInvalid(current);
-			so->btso_curbuf = InvalidBuffer;
-			return (RetrieveIndexResult) NULL;
-		}
-		if (start > maxoff)		/* start == 2 && maxoff == 1 */
-		{
-			ItemPointerSet(current, blkno, maxoff);
-			if (!_bt_step(scan, &buf, ForwardScanDirection))
-				return (RetrieveIndexResult) NULL;
-
-			start = ItemPointerGetOffsetNumber(current);
-			page = BufferGetPage(buf);
-		}
-		/* new stuff ends here */
-		else
-			ItemPointerSet(current, blkno, start);
+		start = P_FIRSTDATAKEY(opaque);
 	}
 	else if (ScanDirectionIsBackward(dir))
 	{
+		Assert(P_RIGHTMOST(opaque));
 
-		/*
-		 * I don't understand this stuff too! If RIGHT-most leaf page is
-		 * empty why do scanning in ForwardScanDirection ??? Well - new
-		 * stuff. - vadim 12/06/96
-		 */
-#ifdef NOT_USED
-		if (PageIsEmpty(page))
-		{
-			ItemPointerSet(current, blkno, FirstOffsetNumber);
-			if (!_bt_step(scan, &buf, ForwardScanDirection))
-				return (RetrieveIndexResult) NULL;
-
-			start = ItemPointerGetOffsetNumber(current);
-			page = BufferGetPage(buf);
-		}
-#endif
-		if (PageIsEmpty(page))
-		{
-			/* If it's leftmost page too - it's empty root page... */
-			if (P_LEFTMOST(opaque))
-			{
-				_bt_relbuf(rel, buf, BT_READ);
-				ItemPointerSetInvalid(current);
-				so->btso_curbuf = InvalidBuffer;
-				return (RetrieveIndexResult) NULL;
-			}
-			/* Go back ! */
-			ItemPointerSet(current, blkno, FirstOffsetNumber);
-			if (!_bt_step(scan, &buf, BackwardScanDirection))
-				return (RetrieveIndexResult) NULL;
-
-			start = ItemPointerGetOffsetNumber(current);
-			page = BufferGetPage(buf);
-		}
-		/* new stuff ends here */
-		else
-		{
-			start = PageGetMaxOffsetNumber(page);
-			ItemPointerSet(current, blkno, start);
-		}
+		start = PageGetMaxOffsetNumber(page);
+		if (start < P_FIRSTDATAKEY(opaque))	/* watch out for empty page */
+			start = P_FIRSTDATAKEY(opaque);
 	}
 	else
+	{
 		elog(ERROR, "Illegal scan direction %d", dir);
+		start = 0;				/* keep compiler quiet */
+	}
+
+	ItemPointerSet(current, blkno, start);
+	/* remember which buffer we have pinned */
+	so->btso_curbuf = buf;
+
+	/*
+	 * Left/rightmost page could be empty due to deletions,
+	 * if so step till we find a nonempty page.
+	 */
+	if (start > maxoff)
+	{
+		if (!_bt_step(scan, &buf, dir))
+			return (RetrieveIndexResult) NULL;
+		start = ItemPointerGetOffsetNumber(current);
+		page = BufferGetPage(buf);
+	}
 
 	btitem = (BTItem) PageGetItem(page, PageGetItemId(page, start));
 	itup = &(btitem->bti_itup);
@@ -1492,23 +1014,18 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	/* see if we picked a winner */
 	if (_bt_checkkeys(scan, itup, &keysok))
 	{
+		/* yes, return it */
 		res = FormRetrieveIndexResult(current, &(itup->t_tid));
-
-		/* remember which buffer we have pinned */
-		so->btso_curbuf = buf;
 	}
-	else if (keysok >= so->numberOfFirstKeys)
+	else if (keysok >= so->numberOfFirstKeys ||
+			 (keysok == ((Size) -1) && ScanDirectionIsBackward(dir)))
 	{
-		so->btso_curbuf = buf;
-		return _bt_next(scan, dir);
-	}
-	else if (keysok == ((Size) -1) && ScanDirectionIsBackward(dir))
-	{
-		so->btso_curbuf = buf;
-		return _bt_next(scan, dir);
+		/* no, but there might be another one that is */
+		res = _bt_next(scan, dir);
 	}
 	else
 	{
+		/* no tuples in the index match this scan key */
 		ItemPointerSetInvalid(current);
 		so->btso_curbuf = InvalidBuffer;
 		_bt_relbuf(rel, buf, BT_READ);
