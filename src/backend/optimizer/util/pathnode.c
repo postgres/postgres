@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.20 1999/02/08 04:29:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.21 1999/02/09 03:51:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,9 +164,31 @@ better_path(Path *new_path, List *unique_paths, bool *noOther)
 	{
 		path = (Path *) lfirst(temp);
 
+#ifdef OPTDUP_DEBUG
+		if (!samekeys(path->keys, new_path->keys))
+		{
+			printf("oldpath\n");
+			pprint(path->keys);
+			printf("newpath\n");
+			pprint(new_path->keys);
+			if (path->keys && new_path->keys &&
+				length(lfirst(path->keys)) >= 2 &&
+				length(lfirst(path->keys)) < length(lfirst(new_path->keys)))
+				sleep(0); /* set breakpoint here */
+		}
+		if (!equal_path_ordering(path->path_order,
+								new_path->path_order))
+		{
+			printf("oldord\n");
+			pprint(path->path_order);
+			printf("neword\n");
+			pprint(new_path->path_order);
+		}
+#endif
+		
 		if (samekeys(path->keys, new_path->keys) &&
-			equal_path_ordering(&path->path_order,
-								&new_path->path_order))
+			equal_path_ordering(path->path_order,
+								new_path->path_order))
 		{
 			old_path = path;
 			break;
@@ -207,8 +229,9 @@ create_seqscan_path(RelOptInfo * rel)
 	pathnode->pathtype = T_SeqScan;
 	pathnode->parent = rel;
 	pathnode->path_cost = 0.0;
-	pathnode->path_order.ordtype = SORTOP_ORDER;
-	pathnode->path_order.ord.sortop = NULL;
+	pathnode->path_order = makeNode(PathOrder);
+	pathnode->path_order->ordtype = SORTOP_ORDER;
+	pathnode->path_order->ord.sortop = NULL;
 	pathnode->keys = NIL;
 
 	/*
@@ -256,8 +279,9 @@ create_index_path(Query *root,
 
 	pathnode->path.pathtype = T_IndexScan;
 	pathnode->path.parent = rel;
-	pathnode->path.path_order.ordtype = SORTOP_ORDER;
-	pathnode->path.path_order.ord.sortop = index->ordering;
+	pathnode->path.path_order = makeNode(PathOrder);
+	pathnode->path.path_order->ordtype = SORTOP_ORDER;
+	pathnode->path.path_order->ord.sortop = index->ordering;
 
 	pathnode->indexid = index->relids;
 	pathnode->indexkeys = index->indexkeys;
@@ -274,7 +298,7 @@ create_index_path(Query *root,
 	 * The index must have an ordering for the path to have (ordering)
 	 * keys, and vice versa.
 	 */
-	if (pathnode->path.path_order.ord.sortop)
+	if (pathnode->path.path_order->ord.sortop)
 	{
 		pathnode->path.keys = collect_index_pathkeys(index->indexkeys,
 													 rel->targetlist);
@@ -286,7 +310,7 @@ create_index_path(Query *root,
 		 * if no index keys were found, we can't order the path).
 		 */
 		if (pathnode->path.keys == NULL)
-			pathnode->path.path_order.ord.sortop = NULL;
+			pathnode->path.path_order->ord.sortop = NULL;
 	}
 	else
 		pathnode->path.keys = NULL;
@@ -412,23 +436,20 @@ create_nestloop_path(RelOptInfo * joinrel,
 	pathnode->path.joinid = NIL;
 	pathnode->path.outerjoincost = (Cost) 0.0;
 	pathnode->path.loc_restrictinfo = NIL;
-
+	pathnode->path.path_order = makeNode(PathOrder);
+	
 	if (keys)
 	{
-		pathnode->path.path_order.ordtype = outer_path->path_order.ordtype;
-		if (outer_path->path_order.ordtype == SORTOP_ORDER)
-		{
-			pathnode->path.path_order.ord.sortop = outer_path->path_order.ord.sortop;
-		}
+		pathnode->path.path_order->ordtype = outer_path->path_order->ordtype;
+		if (outer_path->path_order->ordtype == SORTOP_ORDER)
+			pathnode->path.path_order->ord.sortop = outer_path->path_order->ord.sortop;
 		else
-		{
-			pathnode->path.path_order.ord.merge = outer_path->path_order.ord.merge;
-		}
+			pathnode->path.path_order->ord.merge = outer_path->path_order->ord.merge;
 	}
 	else
 	{
-		pathnode->path.path_order.ordtype = SORTOP_ORDER;
-		pathnode->path.path_order.ord.sortop = NULL;
+		pathnode->path.path_order->ordtype = SORTOP_ORDER;
+		pathnode->path.path_order->ord.sortop = NULL;
 	}
 
 	pathnode->path.path_cost = cost_nestloop(outer_path->path_cost,
@@ -487,8 +508,9 @@ create_mergejoin_path(RelOptInfo * joinrel,
 	pathnode->jpath.innerjoinpath = inner_path;
 	pathnode->jpath.pathinfo = joinrel->restrictinfo;
 	pathnode->jpath.path.keys = keys;
-	pathnode->jpath.path.path_order.ordtype = MERGE_ORDER;
-	pathnode->jpath.path.path_order.ord.merge = order;
+	pathnode->jpath.path.path_order = makeNode(PathOrder);
+	pathnode->jpath.path.path_order->ordtype = MERGE_ORDER;
+	pathnode->jpath.path.path_order->ord.merge = order;
 	pathnode->path_mergeclauses = mergeclauses;
 	pathnode->jpath.path.loc_restrictinfo = NIL;
 	pathnode->outersortkeys = outersortkeys;
@@ -552,8 +574,9 @@ create_hashjoin_path(RelOptInfo * joinrel,
 	pathnode->jpath.pathinfo = joinrel->restrictinfo;
 	pathnode->jpath.path.loc_restrictinfo = NIL;
 	pathnode->jpath.path.keys = keys;
-	pathnode->jpath.path.path_order.ordtype = SORTOP_ORDER;
-	pathnode->jpath.path.path_order.ord.sortop = NULL;
+	pathnode->jpath.path.path_order = makeNode(PathOrder);
+	pathnode->jpath.path.path_order->ordtype = SORTOP_ORDER;
+	pathnode->jpath.path.path_order->ord.sortop = NULL;
 	pathnode->jpath.path.outerjoincost = (Cost) 0.0;
 	pathnode->jpath.path.joinid = (Relid) NULL;
 	/* pathnode->hashjoinoperator = operator;  */

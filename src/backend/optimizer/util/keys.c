@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.10 1999/02/01 04:20:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.11 1999/02/09 03:51:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,7 @@ samekeys(List *keys1, List *keys2)
 
 	for (key1 = keys1, key2 = keys2; key1 != NIL && key2 != NIL;
 		 key1 = lnext(key1), key2 = lnext(key2))
-		if (!member(lfirst(key1), lfirst(key2)))
+		if (!member(lfirst((List *)lfirst(key1)), lfirst(key2)))
 			return false;
 
 	/* Now the result should be true if list keys2 has at least as many

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.26 1999/02/08 04:29:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.27 1999/02/09 03:51:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -337,33 +337,33 @@ _equalPath(Path *a, Path *b)
 	/*
 	 * if (a->path_cost != b->path_cost) return(false);
 	 */
-	if (a->path_order.ordtype == SORTOP_ORDER)
+	if (a->path_order->ordtype == SORTOP_ORDER)
 	{
 		int			i = 0;
 
-		if (a->path_order.ord.sortop == NULL ||
-			b->path_order.ord.sortop == NULL)
+		if (a->path_order->ord.sortop == NULL ||
+			b->path_order->ord.sortop == NULL)
 		{
-			if (a->path_order.ord.sortop != b->path_order.ord.sortop)
+			if (a->path_order->ord.sortop != b->path_order->ord.sortop)
 				return false;
 		}
 		else
 		{
-			while (a->path_order.ord.sortop[i] != 0 &&
-				   b->path_order.ord.sortop[i] != 0)
+			while (a->path_order->ord.sortop[i] != 0 &&
+				   b->path_order->ord.sortop[i] != 0)
 			{
-				if (a->path_order.ord.sortop[i] != b->path_order.ord.sortop[i])
+				if (a->path_order->ord.sortop[i] != b->path_order->ord.sortop[i])
 					return false;
 				i++;
 			}
-			if (a->path_order.ord.sortop[i] != 0 ||
-				b->path_order.ord.sortop[i] != 0)
+			if (a->path_order->ord.sortop[i] != 0 ||
+				b->path_order->ord.sortop[i] != 0)
 				return false;
 		}
 	}
 	else
 	{
-		if (!equal(a->path_order.ord.merge, b->path_order.ord.merge))
+		if (!equal(a->path_order->ord.merge, b->path_order->ord.merge))
 			return false;
 	}
 	if (!equal(a->keys, b->keys))
@@ -433,9 +433,9 @@ _equalHashPath(HashPath *a, HashPath *b)
 		return false;
 	if (!equal((a->path_hashclauses), (b->path_hashclauses)))
 		return false;
-	if (!equal((a->outerhashkeys), (b->outerhashkeys)))
+	if (!equal(a->outerhashkeys, b->outerhashkeys))
 		return false;
-	if (!equal((a->innerhashkeys), (b->innerhashkeys)))
+	if (!equal(a->innerhashkeys, b->innerhashkeys))
 		return false;
 	return true;
 }

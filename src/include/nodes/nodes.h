@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.39 1999/02/06 16:50:31 wieck Exp $
+ * $Id: nodes.h,v 1.40 1999/02/09 03:51:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,7 @@ typedef enum NodeTag
 	 *---------------------
 	 */
 	T_RelOptInfo = 200,
+	T_PathOrder,
 	T_Path,
 	T_IndexPath,
 	T_JoinPath,

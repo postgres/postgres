@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.16 1999/02/08 04:29:25 momjian Exp $
+ * $Id: relation.h,v 1.17 1999/02/09 03:51:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,6 +127,8 @@ typedef enum OrderType
 
 typedef struct PathOrder
 {
+	NodeTag		type;
+
 	OrderType	ordtype;
 	union
 	{
@@ -144,9 +146,9 @@ typedef struct Path
 
 	NodeTag		pathtype;
 
-	PathOrder	path_order;
+	PathOrder	*path_order;
 
-	List	   *keys;
+	List	   *keys;		/* this is a List of List of keys */
 	Cost		outerjoincost;
 	Relid		joinid;
 	List	   *loc_restrictinfo;

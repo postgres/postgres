@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.50 1999/02/08 04:29:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.51 1999/02/09 03:51:13 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -37,6 +37,7 @@
 
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "catalog/pg_index.h"
 #include "catalog/pg_type.h"
 
 #include "nodes/primnodes.h"
@@ -1451,6 +1452,54 @@ _readRowMark()
 }
 
 /* ----------------
+ *		_readPathOrder
+ *
+ *	PathOrder is part of Path and it's subclasses.
+ * ----------------
+ */
+static PathOrder *
+_readPathOrder()
+{
+	PathOrder   *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(PathOrder);
+
+	token = lsptok(NULL, &length);		/* get :ordtype */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->ordtype = atol(token);
+
+	if (local_node->ordtype == SORTOP_ORDER)
+	{
+		token = lsptok(NULL, &length);		/* get :sortop */
+
+		if (length == 0)
+			local_node->ord.sortop = NULL;
+		else
+		{
+			int i = -1;
+	
+			local_node->ord.sortop = palloc(sizeof(Oid) * (INDEX_MAX_KEYS+1));
+	
+			do {
+				i++;
+				Assert(i <= INDEX_MAX_KEYS);
+				token = lsptok(NULL, &length);	/* now read it */
+				local_node->ord.sortop[i] = strtoul(token, NULL, 10);
+			} while (local_node->ord.sortop[i] != 0);
+		}
+	}
+	else
+	{
+		token = lsptok(NULL, &length);		/* get :merge */
+		local_node->ord.merge = nodeRead(true); /* now read it */
+	}
+
+	return local_node;
+}
+
+/* ----------------
  *		_readPath
  *
  *	Path is a subclass of Node.
@@ -1473,10 +1522,8 @@ _readPath()
 	token = lsptok(NULL, &length);		/* now read it */
 	local_node->path_cost = (Cost) atof(token);
 
-#if 0
 	token = lsptok(NULL, &length);		/* get :path_order */
-	local_node->path_order = nodeRead(true);			/* now read it */
-#endif
+	local_node->path_order = nodeRead(true); /* now read it */
 
 	token = lsptok(NULL, &length);		/* get :keys */
 	local_node->keys = nodeRead(true);	/* now read it */
@@ -1507,10 +1554,8 @@ _readIndexPath()
 	token = lsptok(NULL, &length);		/* now read it */
 	local_node->path.path_cost = (Cost) atof(token);
 
-#if 0
 	token = lsptok(NULL, &length);		/* get :path_order */
-	local_node->path.path_order = nodeRead(true);		/* now read it */
-#endif
+ 	local_node->path.path_order = nodeRead(true);		/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :keys */
 	local_node->path.keys = nodeRead(true);		/* now read it */
@@ -1548,10 +1593,8 @@ _readJoinPath()
 	token = lsptok(NULL, &length);		/* now read it */
 	local_node->path.path_cost = (Cost) atof(token);
 
-#if 0
 	token = lsptok(NULL, &length);		/* get :path_order */
 	local_node->path.path_order = nodeRead(true);		/* now read it */
-#endif
 
 	token = lsptok(NULL, &length);		/* get :keys */
 	local_node->path.keys = nodeRead(true);		/* now read it */
@@ -1615,10 +1658,8 @@ _readMergePath()
 
 	local_node->jpath.path.path_cost = (Cost) atof(token);
 
-#if 0
 	token = lsptok(NULL, &length);		/* get :path_order */
 	local_node->jpath.path.path_order = nodeRead(true); /* now read it */
-#endif
 
 	token = lsptok(NULL, &length);		/* get :keys */
 	local_node->jpath.path.keys = nodeRead(true);		/* now read it */
@@ -1691,10 +1732,8 @@ _readHashPath()
 
 	local_node->jpath.path.path_cost = (Cost) atof(token);
 
-#if 0
 	token = lsptok(NULL, &length);		/* get :path_order */
 	local_node->jpath.path.path_order = nodeRead(true); /* now read it */
-#endif
 
 	token = lsptok(NULL, &length);		/* get :keys */
 	local_node->jpath.path.keys = nodeRead(true);		/* now read it */
@@ -2071,6 +2110,8 @@ parsePlanString(void)
 		return_value = _readTargetEntry();
 	else if (!strncmp(token, "RTE", length))
 		return_value = _readRangeTblEntry();
+	else if (!strncmp(token, "PATHORDER", length))
+		return_value = _readPathOrder();
 	else if (!strncmp(token, "PATH", length))
 		return_value = _readPath();
 	else if (!strncmp(token, "INDEXPATH", length))

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.15 1998/09/01 04:29:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.16 1999/02/09 03:51:13 momjian Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -368,8 +368,8 @@ member(void *l1, List *l2)
 	List	   *i;
 
 	foreach(i, l2)
-		if (equal((Node *) (lfirst(i)), (Node *) l1))
-		return true;
+		if (equal((Node *) l1, (Node *) lfirst(i)))
+			return true;
 	return false;
 }
 

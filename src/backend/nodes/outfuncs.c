@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.65 1999/02/05 19:59:25 momjian Exp $
+ *  $Id: outfuncs.c,v 1.66 1999/02/09 03:51:13 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -855,7 +855,7 @@ _outEState(StringInfo str, EState *node)
  *	Stuff from relation.h
  */
 static void
-_outRelOptInfo(StringInfo str, RelOptInfo * node)
+_outRelOptInfo(StringInfo str, RelOptInfo *node)
 {
 	appendStringInfo(str, " RELOPTINFO :relids ");
 	_outIntList(str, node->relids);
@@ -928,12 +928,44 @@ _outRowMark(StringInfo str, RowMark *node)
  *	Path is a subclass of Node.
  */
 static void
+_outPathOrder(StringInfo str, PathOrder *node)
+{
+	appendStringInfo(str, " PATHORDER :ordtype %d ",
+			node->ordtype);
+	if (node->ordtype == SORTOP_ORDER)
+	{
+		int i;
+		
+		appendStringInfo(str, " :sortop ");
+		if (node->ord.sortop == NULL)
+			appendStringInfo(str, "<>");
+		else
+		{
+			for (i=0; node->ord.sortop[i] != 0; i++)
+				appendStringInfo(str, " %d ", node->ord.sortop[i]);
+			appendStringInfo(str, " %d ", 0);
+		}
+	}
+	else
+	{
+		appendStringInfo(str, " :merge ");
+		_outNode(str,node->ord.merge);
+	}
+}
+
+/*
+ *	Path is a subclass of Node.
+ */
+static void
 _outPath(StringInfo str, Path *node)
 {
 	appendStringInfo(str, " PATH :pathtype %d :cost %f :keys ",
 			node->pathtype,
 			node->path_cost);
 	_outNode(str, node->keys);
+
+	appendStringInfo(str, " :path_order ");
+	_outNode(str, node->path_order);
 }
 
 /*
@@ -947,6 +979,9 @@ _outIndexPath(StringInfo str, IndexPath *node)
 			node->path.pathtype,
 			node->path.path_cost);
 	_outNode(str, node->path.keys);
+
+	appendStringInfo(str, " :path_order ");
+	_outNode(str, node->path.path_order);
 
 	appendStringInfo(str, " :indexid ");
 	_outIntList(str, node->indexid);
@@ -967,6 +1002,9 @@ _outJoinPath(StringInfo str, JoinPath *node)
 			node->path.path_cost);
 	_outNode(str, node->path.keys);
 
+	appendStringInfo(str, " :path_order ");
+	_outNode(str, node->path.path_order);
+	
 	appendStringInfo(str, " :pathinfo ");
 	_outNode(str, node->pathinfo);
 
@@ -995,6 +1033,9 @@ _outMergePath(StringInfo str, MergePath *node)
 			node->jpath.path.path_cost);
 	_outNode(str, node->jpath.path.keys);
 
+	appendStringInfo(str, " :path_order ");
+	_outNode(str, node->jpath.path.path_order);
+	
 	appendStringInfo(str, " :pathinfo ");
 	_outNode(str, node->jpath.pathinfo);
 
@@ -1031,6 +1072,9 @@ _outHashPath(StringInfo str, HashPath *node)
 			node->jpath.path.pathtype,
 			node->jpath.path.path_cost);
 	_outNode(str, node->jpath.path.keys);
+
+	appendStringInfo(str, " :path_order ");
+	_outNode(str, node->jpath.path.path_order);
 
 	appendStringInfo(str, " :pathinfo ");
 	_outNode(str, node->jpath.pathinfo);
@@ -1547,6 +1591,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_RowMark:
 				_outRowMark(str, obj);
+				break;
+			case T_PathOrder:
+				_outPathOrder(str, obj);
 				break;
 			case T_Path:
 				_outPath(str, obj);

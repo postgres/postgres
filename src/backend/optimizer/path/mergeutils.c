@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.14 1999/02/08 04:29:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.15 1999/02/09 03:51:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,16 +52,17 @@ group_clauses_by_order(List *restrictinfo_list,
 			 * Create a new mergeinfo node and add it to 'mergeinfo-list'
 			 * if one does not yet exist for this merge ordering.
 			 */
-			PathOrder	path_order;
-			MergeInfo	   *xmergeinfo;
+			PathOrder	*path_order;
+			MergeInfo	*xmergeinfo;
 			Expr	   *clause = restrictinfo->clause;
 			Var		   *leftop = get_leftop(clause);
 			Var		   *rightop = get_rightop(clause);
 			JoinKey    *keys;
 
-			path_order.ordtype = MERGE_ORDER;
-			path_order.ord.merge = merge_ordering;
-			xmergeinfo = match_order_mergeinfo(&path_order, mergeinfo_list);
+			path_order = makeNode(PathOrder);
+			path_order->ordtype = MERGE_ORDER;
+			path_order->ord.merge = merge_ordering;
+			xmergeinfo = match_order_mergeinfo(path_order, mergeinfo_list);
 			if (inner_relid == leftop->varno)
 			{
 				keys = makeNode(JoinKey);
