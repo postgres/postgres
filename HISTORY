@@ -47,8 +47,6 @@ Migration to 7.1
 
 
 
-Last updated from CVS logs:  2001-04-02
-
 Bug Fixes
 ---------
 Many multi-byte/Unicode/locale fixes (Tatsuo and others)
