@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.272 2004/08/05 23:32:10 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.273 2004/08/06 04:15:07 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1074,7 +1074,7 @@ SET ENABLE_SEQSCAN TO OFF;
       cost reaches a limit (specified by
       <varname>vacuum_cost_limit</varname>), the process performing
       the operation will sleep for a while (specified by
-      <varname>vacuum_cost_naptime</varname>). Then it will reset the
+      <varname>vacuum_cost_delay</varname>). Then it will reset the
       counter and continue execution.
      </para>
 
@@ -1092,7 +1092,7 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <para>
       This feature is disabled by default. To enable it, set the
-      <varname>vacuum_cost_naptime</varname> variable to a nonzero
+      <varname>vacuum_cost_delay</varname> variable to a nonzero
       value.
      </para>
 
@@ -1143,8 +1143,8 @@ SET ENABLE_SEQSCAN TO OFF;
        </listitem>
       </varlistentry>
 
-      <varlistentry id="guc-vacuum-cost-naptime" xreflabel="vacuum_cost_naptime">
-       <term><varname>vacuum_cost_naptime</varname> (<type>integer</type>)</term>
+      <varlistentry id="guc-vacuum-cost-delay" xreflabel="vacuum_cost_delay">
+       <term><varname>vacuum_cost_delay</varname> (<type>integer</type>)</term>
        <listitem>
         <para>
          The length of time, in milliseconds, that the process will nap
@@ -1153,7 +1153,7 @@ SET ENABLE_SEQSCAN TO OFF;
          delay feature.  Positive values enable cost-based vacuuming.
          Note however that on many systems, the effective resolution
          of sleep delays is 10 milliseconds; setting
-         <varname>vacuum_cost_naptime</varname> to a value that is
+         <varname>vacuum_cost_delay</varname> to a value that is
          not a multiple of 10 may have the same results as setting it
          to the next higher multiple of 10.
         </para>
@@ -1168,10 +1168,10 @@ SET ENABLE_SEQSCAN TO OFF;
        delays do not occur during such operations.  Therefore it is
        possible that the cost accumulates far higher than the specified
        limit.  To avoid uselessly long delays in such cases, the actual
-       naptime is calculated as <varname>vacuum_cost_naptime</varname> *
+       delay is calculated as <varname>vacuum_cost_delay</varname> *
        <varname>accumulated_balance</varname> /
        <varname>vacuum_cost_limit</varname> with a maximum of
-       <varname>vacuum_cost_naptime</varname> * 4.
+       <varname>vacuum_cost_delay</varname> * 4.
       </para>
      </note>
 

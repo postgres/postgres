@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.285 2004/07/31 00:45:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.286 2004/08/06 04:15:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -377,7 +377,7 @@ vacuum(VacuumStmt *vacstmt)
 	{
 		ListCell   *cur;
 
-		VacuumCostActive = (VacuumCostNaptime > 0);
+		VacuumCostActive = (VacuumCostDelay > 0);
 		VacuumCostBalance = 0;
 
 		/*
@@ -3373,9 +3373,9 @@ vacuum_delay_point(void)
 	{
 		int		msec;
 
-		msec = VacuumCostNaptime * VacuumCostBalance / VacuumCostLimit;
-		if (msec > VacuumCostNaptime * 4)
-			msec = VacuumCostNaptime * 4;
+		msec = VacuumCostDelay * VacuumCostBalance / VacuumCostLimit;
+		if (msec > VacuumCostDelay * 4)
+			msec = VacuumCostDelay * 4;
 
 		pg_usleep(msec * 1000L);
 

@@ -9875,7 +9875,7 @@ msgid "Vacuum cost amount available before napping."
 msgstr ""
 
 #: utils/misc/guc.c:1036
-msgid "Vacuum cost naptime in milliseconds."
+msgid "Vacuum cost delay in milliseconds."
 msgstr ""
 
 #: utils/misc/guc.c:1045

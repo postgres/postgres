@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.164 2004/08/01 17:32:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.165 2004/08/06 04:15:09 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -208,7 +208,7 @@ extern int	VacuumCostPageHit;
 extern int	VacuumCostPageMiss;
 extern int	VacuumCostPageDirty;
 extern int	VacuumCostLimit;
-extern int	VacuumCostNaptime;
+extern int	VacuumCostDelay;
 
 extern int	VacuumCostBalance;
 extern bool	VacuumCostActive;
