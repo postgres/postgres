@@ -19,6 +19,9 @@ is assumed to contain 8 bits.  In addition, the term
 <firstterm>item</firstterm>
 refers to data which is stored in <productname>Postgres</productname> classes.
 
+<sect1>
+<title>Page Structure</title>
+
 <para>
 The following table shows how pages in both normal <productname>Postgres</productname> classes
  and <productname>Postgres</productname> index
