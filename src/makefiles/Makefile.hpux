@@ -11,14 +11,6 @@ ifeq ($(HAVE_POSIX_SIGNALS), no)
    LIBS := -lBSD $(LIBS)
 endif
 
-# On HPUX 9, rint() is provided only in the PA1.1 version of libm.
-# If configure found it necessary to link against /lib/pa1.1 to find rint,
-# add -L command to make that happen.
-# (CAUTION: you need PHSS_4630 to have a working version of rint() on 9!)
-ifneq ($(HPUXMATHLIB),)
-   LDFLAGS:= -L/lib/pa1.1 $(LDFLAGS)
-endif
-
 # Embed 'libdir' as the shared library search path so that the executables
 # don't need SHLIB_PATH to be set.  (We do not observe the --enable-rpath
 # switch here because you'd get rather bizarre behavior if you leave this

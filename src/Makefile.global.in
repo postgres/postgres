@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.161 2003/04/04 20:42:11 momjian Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.162 2003/05/11 20:50:53 tgl Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -262,9 +262,8 @@ host_tuple = @host@
 host_os = @host_os@
 host_cpu = @host_cpu@
 
-# Grungy things needed for HP-UX
+# The HP-UX port makefile, for one, needs access to this symbol
 HAVE_POSIX_SIGNALS= @HAVE_POSIX_SIGNALS@
-HPUXMATHLIB= @HPUXMATHLIB@
 
 # This is mainly for use on FreeBSD, where we have both a.out and elf
 # systems now.  May be applicable to other systems to?
