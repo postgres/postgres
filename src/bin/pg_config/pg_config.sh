@@ -7,7 +7,7 @@
 # Author:  Peter Eisentraut <peter_e@gmx.net> 
 # Public domain
 
-# $Header: /cvsroot/pgsql/src/bin/pg_config/Attic/pg_config.sh,v 1.2 2000/11/11 22:59:47 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_config/Attic/pg_config.sh,v 1.3 2001/05/13 00:12:05 petere Exp $
 
 me=`basename $0`
 
@@ -15,7 +15,7 @@ me=`basename $0`
 val_bindir='@bindir@'
 val_includedir='@includedir@'
 val_libdir='@libdir@'
-val_configure='@configure@'
+val_configure="@configure@"
 val_version='@version@'
 
 help="\
