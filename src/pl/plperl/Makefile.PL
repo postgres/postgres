@@ -15,12 +15,14 @@ if ($Config{'useshrplib'} ne 'true') {
 # Dummy Makefile for use when we can't build plperl
 
 all install:
-	@echo "Cannot build plperl because libperl is not a shared library; skipping it."
+	@echo "*****"; \
+	 echo "* Cannot build PL/Perl because libperl is not a shared library." ; \
+	 echo "* Skipped."; \
+	 echo "*****"
 
-clean distclean:
+
+clean realclean:
 	rm -f Makefile
-
-.DEFAULT dep depend:
 
 EndOfMakefile
 	close(OUT);
@@ -54,19 +56,11 @@ my $perllib = "-L$Config{archlibexp}/CORE -lperl";
 
 WriteMakefile( 'NAME' => 'plperl', 
 	dynamic_lib => { 'OTHERLDFLAGS' => "$opcode $perllib" } ,
-	INC => '-I$(SRCDIR)/include $(PGSQL_INCLUDES)',
+	INC => "$ENV{EXTRA_INCLUDES}",
 	XS => { 'SPI.xs' => 'SPI.c' },
 	OBJECT => 'plperl.o eloglvl.o SPI.o',
 	);
 
-sub MY::post_initialize { 
-
-q[
-SRCDIR=../../../src
-include $(SRCDIR)/Makefile.global
-];
-
-}
 
 sub MY::cflags {
     package MY;			# so that "SUPER" works right
@@ -88,9 +82,9 @@ sub MY::cflags {
 
 sub MY::install {
 
-q[
+qq[
 install :: all
-	cp $(INST_DYNAMIC) $(LIBDIR)
+	cp \$(INST_DYNAMIC) $ENV{plperl_installdir}
 ];
 
 }

@@ -1,0 +1,65 @@
+#-------------------------------------------------------------------------
+#
+# Makefile for src/interfaces
+#
+# Copyright (c) 1994, Regents of the University of California
+#
+# $Header: /cvsroot/pgsql/src/interfaces/Attic/Makefile.in,v 1.1 2000/06/10 18:01:48 petere Exp $
+#
+#-------------------------------------------------------------------------
+
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+top_srcdir = @top_srcdir@
+top_builddir = ../..
+
+USE_TCL = @USE_TCL@
+USE_ODBC = @USE_ODBC@
+WITH_CXX = @HAVECXX@
+with_perl = @with_perl@
+with_python = @with_python@
+
+all install clean dep depend:
+	$(MAKE) -C libpq $@
+	$(MAKE) -C ecpg $@
+ifeq ($(WITH_CXX), true)
+	$(MAKE) -C libpq++ $@
+endif
+	$(MAKE) -C libpgeasy $@
+ifeq ($(USE_TCL), true)
+	$(MAKE) -C libpgtcl $@
+endif
+ifeq ($(with_perl), yes)
+	$(MAKE) -C perl5 $@
+endif
+ifeq ($(with_python), yes)
+	$(MAKE) -C python $@
+endif
+ifeq ($(USE_ODBC), true)
+	$(MAKE) -C odbc $@
+endif
+
+distclean maintainer-clean: clean
+ifeq ($(with_perl), yes)
+	-$(MAKE) -C perl5 $@
+endif
+ifeq ($(with_python), yes)
+	-$(MAKE) -C python $@
+endif
+	rm -f Makefile \
+	  libpq/Makefile \
+	  ecpg/lib/Makefile \
+	  ecpg/preproc/Makefile \
+	  libpq++/Makefile \
+	  libpgeasy/Makefile \
+	  libpgtcl/Makefile \
+	  odbc/GNUmakefile \
+	  odbc/Makefile.global \
+	  odbc/port \
+	  odbc/makefiles \
+	  odbc/template \
+	  odbc/config.h
+
+
+.PHONY: all install dep depend clean distclean maintainer-clean

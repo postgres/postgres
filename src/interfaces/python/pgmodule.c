@@ -680,7 +680,7 @@ static char connect__doc__[] =
 static PyObject *
 pgconnect(pgobject * self, PyObject * args, PyObject * dict)
 {
-	static const char *kwlist[] = {"dbname", "host", "port", "opt",
+	static char *kwlist[] = {"dbname", "host", "port", "opt",
 	"tty", "user", "passwd", NULL};
 	char	   *pghost,
 			   *pgopt,

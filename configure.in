@@ -4,7 +4,10 @@ AC_PREFIX_DEFAULT(/usr/local/pgsql)
 AC_CONFIG_HEADER(src/include/config.h)
 
 AC_PREREQ(2.13)
-AC_CONFIG_AUX_DIR(config)
+AC_CONFIG_AUX_DIR(`pwd`/config)
+
+mkinstalldirs="\$(SHELL) \$(top_srcdir)/config/mkinstalldirs"
+AC_SUBST(mkinstalldirs)
 
 AC_CANONICAL_HOST
 
@@ -370,19 +373,35 @@ AC_ARG_WITH(tkconfig,
     ]
 )
 
-dnl We exclude perl support unless we override it with --with-perl
-AC_MSG_CHECKING(setting USE_PERL)
-AC_ARG_WITH(
-   perl,
-   [  --with-perl             build Perl interface and plperl ],
-   [
-	case "$withval" in
-	y | ye | yes)	USE_PERL=true; AC_MSG_RESULT(enabled) ;;
-	*)		USE_PERL=false; AC_MSG_RESULT(disabled) ;;
-	esac
-   ],
-   [ USE_PERL=false; AC_MSG_RESULT(disabled) ]
-)
+
+dnl
+dnl Optionally build Perl modules (Pg.pm and PL/Perl)
+dnl
+AC_MSG_CHECKING(whether to build Perl modules)
+AC_ARG_WITH(perl, [  --with-perl             build Perl interface and plperl],
+[if test x"${withval}" = x"yes" ; then
+  AC_MSG_RESULT(yes)
+else
+  AC_MSG_RESULT(no)
+fi],
+[AC_MSG_RESULT(no)])
+AC_SUBST(with_perl)
+
+
+dnl
+dnl Optionally build Python interface module
+dnl
+AC_MSG_CHECKING(whether to build Python modules)
+AC_ARG_WITH(python, [  --with-python           build Python interface module],
+[if test x"${withval}" = x"yes" ; then
+  AC_MSG_RESULT(yes)
+  PGAC_PROG_PYTHON
+  PGAC_PATH_PYTHONDIR
+else
+  AC_MSG_RESULT(no)
+fi],
+[AC_MSG_RESULT(no)])
+AC_SUBST(with_python)
 
 dnl We include odbc support unless we disable it with --with-odbc=false
 AC_MSG_CHECKING(setting USE_ODBC)
@@ -543,7 +562,6 @@ AC_SUBST(DL_LIB)
 AC_SUBST(USE_TCL)
 AC_SUBST(USE_TK)
 AC_SUBST(WISH)
-AC_SUBST(USE_PERL)
 AC_SUBST(USE_ODBC)
 AC_SUBST(MULTIBYTE)
 
@@ -646,6 +664,8 @@ AC_SUBST(INSTL_SHLIB_OPTS)
 AC_SUBST(INSTL_EXE_OPTS)
 
 AC_PROG_AWK
+AM_MISSING_PROG(AUTOCONF, autoconf, [\${SHELL} \${top_srcdir}/config])
+AM_MISSING_PROG(ACLOCAL, aclocal, [\${SHELL} \${top_srcdir}/config])
 
 dnl Check the option to echo to inhibit newlines.
 ECHO_N_OUT=`echo -n "" | wc -c`
@@ -680,7 +700,6 @@ broken as well.)
         fi
 fi
 AC_PROG_LN_S
-AC_PROG_MAKE_SET
 AC_PROG_RANLIB
 AC_PATH_PROG(find, find)
 AC_PATH_PROG(tar, tar)
@@ -690,7 +709,6 @@ AC_PATH_PROG(xargs, xargs)
 AC_PATH_PROGS(GZCAT, gzcat zcat, gzcat)
 AC_CHECK_PROGS(PERL, perl,)
 AC_PROG_YACC
-AC_SUBST(YFLAGS)
 
 
 AC_CHECK_LIB(sfio,     main)
@@ -1403,16 +1421,21 @@ AC_OUTPUT(
 	src/bin/pgtclsh/mkMakefile.tkdefs.sh
 	src/bin/psql/Makefile
 	src/include/version.h
+	src/interfaces/Makefile
 	src/interfaces/libpq/Makefile
 	src/interfaces/ecpg/lib/Makefile
 	src/interfaces/ecpg/preproc/Makefile
+	src/interfaces/perl5/GNUmakefile
 	src/interfaces/libpq++/Makefile
 	src/interfaces/libpgeasy/Makefile
 	src/interfaces/libpgtcl/Makefile
 	src/interfaces/odbc/GNUmakefile
 	src/interfaces/odbc/Makefile.global
+	src/interfaces/python/GNUmakefile
+	src/pl/Makefile
 	src/pl/plpgsql/src/Makefile
 	src/pl/plpgsql/src/mklang.sql
 	src/pl/tcl/mkMakefile.tcldefs.sh
+	src/pl/plperl/GNUmakefile
 	src/test/regress/GNUmakefile
 )

@@ -1,0 +1,74 @@
+#-------------------------------------------------------------------
+#
+# Makefile for src/interfaces/python, a.k.a. "PyGreSQL"
+#
+# Written by Peter Eisentraut  <peter_e@gmx.net>
+#
+# $Header: /cvsroot/pgsql/src/interfaces/python/Attic/GNUmakefile.in,v 1.1 2000/06/10 18:02:00 petere Exp $
+#
+#-------------------------------------------------------------------
+
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+top_srcdir = @top_srcdir@
+top_builddir = ../../..
+
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+includedir = @includedir@
+
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+LIBS = @LIBS@
+
+PYTHON = @PYTHON@
+python_extmakefile = @python_extmakefile@
+python_moduledir = @python_moduledir@
+
+
+all: Makefile pgmodule.c libpq-all
+	$(MAKE) -f Makefile
+
+libpq-all:
+	$(MAKE) -C $(top_builddir)/src/interfaces/libpq all
+
+Makefile: Setup.in Makefile.pre.in
+	$(MAKE) -f Makefile.pre.in boot srcdir=$(srcdir) VPATH=$(srcdir)
+
+Makefile.pre.in: $(python_extmakefile)
+	cp $< $@
+
+Setup.in: Setup.in.raw
+	sed -e "s%__LIBPQ__%${top_srcdir}/src/interfaces/libpq%g" \
+	    -e "s%__EXTRA_LIBS__%${LIBS}%g" \
+	    -e "s%__INCLUDES__%${top_srcdir}/src/include%g" \
+	    < $< > $@
+
+install: all
+	@echo "Installing Python module"
+	@if ! ( $(INSTALL_DATA) pg.py $(python_moduledir) && \
+	    $(MAKE) -f Makefile install ); then \
+		echo "*****" ;\
+		echo "* Skipping the installation of the Python interface module for lack"; \
+		echo "* of permissions. To install it, change to the directory"; \
+		echo "* "`pwd`", become the appropriate"; \
+		echo "* user, and do \`$(MAKE) install'."; \
+		echo "*****"; \
+	fi
+
+
+# Python sometimes has a different idea what exactly "clean" is.
+
+clean:
+	-[ -f Makefile ] && $(MAKE) -f Makefile clobber
+	rm -f Makefile.pre.in Makefile Setup Setup.in
+
+distclean maintainer-clean: clean
+	rm -f GNUmakefile
+
+
+.PHONY: all libpq-all install clean distclean maintainer-clean

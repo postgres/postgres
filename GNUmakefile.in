@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.2 2000/06/07 23:09:18 petere Exp $
+# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.3 2000/06/10 18:01:34 petere Exp $
 #
 
 srcdir = @srcdir@
@@ -23,8 +23,24 @@ clean:
 	$(MAKE) -C src clean
 
 distclean:
-	$(MAKE) -C src distclean
+	-$(MAKE) -C src distclean
 	-rm -f config.cache config.log config.status GNUmakefile
 
 
 .PHONY: all install clean distclean
+
+
+AUTOCONF = @AUTOCONF@
+ACLOCAL = @ACLOCAL@
+
+GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
+	CONFIG_FILES=$@ CONFIG_HEADERS= ./config.status
+
+$(top_builddir)/config.status: $(top_srcdir)/configure
+	cd $(top_builddir) && ./config.status --recheck
+
+$(top_srcdir)/configure: $(top_srcdir)/configure.in $(top_srcdir)/aclocal.m4
+	cd $(top_srcdir) && $(AUTOCONF)
+
+$(top_srcdir)/aclocal.m4: $(wildcard $(top_srcdir)/config/*.m4)
+	cd $(top_srcdir) && $(ACLOCAL) -I config

@@ -1,0 +1,71 @@
+# This file is an interface from the Autoconf world to Perl's
+# MakeMaker world, so that the latter behaves (kind of) like the
+# former would prefer. Internally, we call Perl to create another
+# Makefile according to it's own ideas and then invoke the rules from
+# that file.
+#
+# $Header: /cvsroot/pgsql/src/interfaces/perl5/Attic/GNUmakefile.in,v 1.1 2000/06/10 18:01:56 petere Exp $
+
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+top_srcdir = @top_srcdir@
+top_builddir = ../../..
+
+PERL = @PERL@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+includedir = @includedir@
+
+
+all: Makefile libpq-all
+	$(MAKE) -f $< all
+
+Makefile: Makefile.PL
+	$(PERL) $< POLLUTE=1
+
+libpq-all:
+	$(MAKE) -C $(top_builddir)/src/interfaces/libpq all
+
+# The klugery here is to ensure that the perl5 shared library gets
+# built with the correct path to the installed location of libpq
+# during `make install', but is built against the local tree during
+# ordinary building and testing.
+#
+# During install, we must also guard against the likelihood that we
+# don't have permissions to install into the Perl module library. The
+# purer alternative would naturally be the ability to select the
+# installation directory somewhere.
+
+install: Makefile libpq-install
+	$(MAKE) -f Makefile clean
+	POSTGRES_LIB="$(libdir)" \
+	  POSTGRES_INCLUDE="$(includedir)" \
+	  $(PERL) $(srcdir)/Makefile.PL POLLUTE=1
+	$(MAKE) -f Makefile all
+	-@if [ -w "`$(MAKE) --quiet -f Makefile echo-installdir`" ]; then \
+		$(MAKE) -f Makefile install; \
+		rm -f Makefile; \
+	else \
+		echo "*****" ;\
+		echo "* Skipping the installation of the Perl module for lack of permissions."; \
+		echo "* To install it, change to the directory "`pwd`","; \
+		echo "* become the appropriate user, and do \`$(MAKE) install'."; \
+		echo "*****"; \
+	fi
+
+libpq-install:
+	$(MAKE) -C $(top_builddir)/src/interfaces/libpq install
+
+# Note: Perl's idea of "clean" is a little different, so we use "realclean"
+
+clean:
+	-[ -f Makefile ] && $(MAKE) -f Makefile realclean
+
+distclean maintainer-clean: clean
+	rm -f GNUmakefile
+
+
+.PHONY: all install clean distclean maintainer-clean libpq-all libpq-install

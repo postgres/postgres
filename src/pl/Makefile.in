@@ -1,0 +1,42 @@
+#-------------------------------------------------------------------------
+#
+# Makefile for src/pl (procedural languages)
+#
+# Copyright (c) 1994, Regents of the University of California
+#
+# $Header: /cvsroot/pgsql/src/pl/Attic/Makefile.in,v 1.1 2000/06/10 18:02:09 petere Exp $
+#
+#-------------------------------------------------------------------------
+
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+top_srcdir = @top_srcdir@
+top_builddir = ../..
+
+with_perl = @with_perl@
+USE_TCL = @USE_TCL@
+
+all install clean:
+	$(MAKE) -C plpgsql $@
+ifeq ($(USE_TCL), true)
+	$(MAKE) -C tcl $@
+endif
+# Disabled because it doesn't work
+#ifeq ($(with_perl), yes)
+#	$(MAKE) -C plperl $@
+#endif
+
+
+distclean maintainer-clean:
+	-$(MAKE) -C plpgsql clean
+	rm -f plpgsql/src/Makefile plpgsql/src/mklang.sql
+ifeq ($(USE_TCL), true)
+	$(MAKE) -C tcl clean
+endif
+	rm -f tcl/mkMakefile.tcldefs.sh
+	-$(MAKE) -C plperl $@
+	rm -f Makefile
+
+
+.PHONY: all install clean distclean maintainer-clean

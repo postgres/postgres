@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.75 2000/05/29 05:44:32 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.76 2000/06/10 18:01:36 petere Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -77,11 +77,6 @@ LIBDIR= $(POSTGRESDIR)/lib
 # Where the database templates are stored
 #
 TEMPLATEDIR= $(POSTGRESDIR)/lib
-
-# This is the directory where IPC utilities ipcs and ipcrm are located
-#
-IPCS=@ipcs@
-IPCRM=@ipcrm@
 
 # Where the man pages (suitable for use with "man") get installed.
 POSTMANDIR= $(POSTGRESDIR)/man
@@ -155,13 +150,6 @@ USE_TCL= @USE_TCL@
 USE_TK= @USE_TK@
 WISH= @WISH@
 
-USE_PERL= @USE_PERL@
-PERL= @PERL@
-
-#
-# enable native odbc driver support
-USE_ODBC= @USE_ODBC@
-
 X_CFLAGS= @X_CFLAGS@
 X_LIBS= @X_LIBS@
 X11_LIBS= -lX11 @X_EXTRA_LIBS@
@@ -204,7 +192,6 @@ BACKSLASH_C= @BACKSLASH_C@
 #-------------------------------------------------------------
 CC= @CC@
 CPP= @CPP@
-YFLAGS= @YFLAGS@
 YACC= @YACC@
 LEX= @LEX@
 AROPT= @AROPT@

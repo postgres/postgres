@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.24 2000/05/11 17:46:35 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.25 2000/06/10 18:01:45 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,6 +15,7 @@ SRCDIR= ../..
 include $(SRCDIR)/Makefile.global
 
 DOCDIR= $(SRCDIR)/../doc/src/sgml/ref
+PERL = @PERL@
 
 CFLAGS+= -I$(LIBPQDIR)
 

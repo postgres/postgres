@@ -1,6 +1,6 @@
 #-------------------------------------------------------
 #
-# $Id: Makefile.PL,v 1.15 2000/04/23 04:26:32 tgl Exp $
+# $Id: Makefile.PL,v 1.16 2000/06/10 18:01:56 petere Exp $
 #
 # Copyright (c) 1997, 1998  Edmund Mergl
 #
@@ -12,14 +12,14 @@ use strict;
 
 my %opts;
 
-if (! $ENV{POSTGRES_HOME}) {
+if (! $ENV{POSTGRES_LIB} || ! $ENV{POSTGRES_INCLUDE}) {
 
     # Check that we actually are inside the Postgres source tree
     if (! -d "../libpq") {
 	die
-"To install Pg separately from the Postgres distribution,
-you must set environment variable POSTGRES_HOME to point to
-where Postgres is installed (often /usr/local/pgsql).\n";
+"To install Pg separately from the Postgres distribution, you must
+set environment variables POSTGRES_LIB and POSTGRES_INCLUDE to point
+to where Postgres is installed (often /usr/local/pgsql/{lib,include}).\n";
     }
 
     # Setup for build/test inside a Postgres source tree
@@ -44,9 +44,9 @@ where Postgres is installed (often /usr/local/pgsql).\n";
     %opts = (
         NAME         => 'Pg',
         VERSION_FROM => 'Pg.pm',
-        INC          => "-I$ENV{POSTGRES_HOME}/include",
+        INC          => "-I$ENV{POSTGRES_INCLUDE}",
         OBJECT       => "Pg\$(OBJ_EXT)",
-        LIBS         => ["-L$ENV{POSTGRES_HOME}/lib -lpq"],
+        LIBS         => ["-L$ENV{POSTGRES_LIB} -lpq"],
     );
 }
 
@@ -57,7 +57,7 @@ WriteMakefile(%opts);
 sub MY::installbin { 
 
 q[
-# Create a target that interfaces/Makefile can use to
+# Create a target that can be used to
 # determine the Perl install directory.
 echo-installdir:
 	@echo $(INSTALLSITELIB)

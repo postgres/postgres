@@ -1,0 +1,3 @@
+*shared*
+
+_pg  pgmodule.c -I__LIBPQ__ -I__INCLUDES__ -L__LIBPQ__ -lpq __EXTRA_LIBS__

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.51 2000/06/06 22:00:47 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.52 2000/06/10 18:01:36 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -49,46 +49,27 @@ clean:
 	$(MAKE) -C test clean
 	$(MAKE) -C ../contrib/spi clean
 
-# Remove files and symlinks created by configure script
-distclean: clean
-	rm -f \
-		Makefile.port \
-		include/config.h \
-		include/dynloader.h \
-		include/os.h \
-		backend/port/tas.s \
-		backend/port/dynloader.c \
+# Not all subdirectories have a make distclean target yet
+distclean:
+	-$(MAKE) -C utils clean
+	-$(MAKE) -C backend clean
+	rm -f backend/port/Makefile backend/catalog/genbki.sh \
 		backend/utils/Gen_fmgrtab.sh \
-		interfaces/odbc/port \
-		interfaces/odbc/makefiles \
-		interfaces/odbc/template \
-		interfaces/odbc/config.h \
-\
-\
-\
-		GNUmakefile \
+		backend/port/tas.s backend/port/dynloader.c
+	-$(MAKE) -C interfaces distclean
+	-$(MAKE) -C bin clean
+	rm -f bin/pg_dump/Makefile bin/pg_version/Makefile \
+		bin/psql/Makefile bin/pgtclsh/mkMakefile.tcldefs.sh \
+		bin/pgtclsh/mkMakefile.tkdefs.sh
+	-$(MAKE) -C pl distclean
+	-$(MAKE) -C test clean
+	rm -f test/regress/GNUmakefile
+	-$(MAKE) -C ../contrib/spi clean
+	rm -f Makefile.port \
+		include/config.h include/dynloader.h \
+		include/os.h include/version.h \
 		Makefile.global \
-		backend/port/Makefile \
-		backend/catalog/genbki.sh \
-		backend/utils/Gen_fmgrtab.sh \
-		bin/pg_dump/Makefile \
-		bin/pg_version/Makefile \
-		bin/psql/Makefile \
-		bin/pgtclsh/mkMakefile.tcldefs.sh \
-		bin/pgtclsh/mkMakefile.tkdefs.sh \
-		include/version.h \
-		interfaces/libpq/Makefile \
-		interfaces/ecpg/lib/Makefile \
-		interfaces/ecpg/preproc/Makefile \
-		interfaces/libpq++/Makefile \
-		interfaces/libpgeasy/Makefile \
-		interfaces/libpgtcl/Makefile \
-		interfaces/odbc/GNUmakefile \
-		interfaces/odbc/Makefile.global \
-		pl/plpgsql/src/Makefile \
-		pl/plpgsql/src/mklang.sql \
-		pl/tcl/mkMakefile.tcldefs.sh \
-		test/regress/GNUmakefile
+		GNUmakefile
 
 .DEFAULT:
 	$(MAKE) -C utils $@
@@ -113,4 +94,3 @@ BACKUP:
 
 .PHONY: TAGS
 .PHONY: BACKUP
-
