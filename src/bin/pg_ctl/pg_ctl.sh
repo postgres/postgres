@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.35 2003/08/04 23:59:39 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.36 2003/08/14 18:56:41 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -371,10 +371,10 @@ if [ "$op" = "start" -o "$op" = "restart" ];then
 
     # Attempt to use the right port
     # Use PGPORT if set, otherwise look in the configuration file
-    if [ -z $PGPORT ];then
+    if [ -z "$PGPORT" ];then
         PGPORT=`sed -ne 's/^[ 	]*port[^=]*=[ 	]\+\([0-9]\+\).*/\1/p' $CONFFILE 2>/dev/null`
-        if [ -z $PGPORT ];then
-            PGPORT=$DEF_PGPORT
+        if [ -z "$PGPORT" ];then
+            PGPORT="$DEF_PGPORT"
         fi
     fi
 
