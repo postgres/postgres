@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.156 2000/12/22 07:59:32 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.157 2000/12/31 18:15:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -440,7 +440,8 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 
 	if (pgport == NULL || pgport[0] == '\0')
 	{
-		if ((tmp = getenv("PGPORT")) == NULL)
+		tmp = getenv("PGPORT");
+		if (tmp == NULL || tmp[0] == '\0')
 			tmp = DEF_PGPORT_STR;
 		conn->pgport = strdup(tmp);
 	}
