@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.50 2002/12/05 18:39:43 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.51 2002/12/05 18:52:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,15 +29,15 @@
 
 
 int
-md5_crypt_verify(const Port *port, const char *user, char *pgpass)
+md5_crypt_verify(const Port *port, const char *user, char *client_pass)
 {
-	char	   *passwd = NULL,
+	char	   *shadow_pass = NULL,
 			   *valuntil = NULL,
 			   *crypt_pwd;
 	int			retval = STATUS_ERROR;
 	List	  **line;
 	List	   *token;
-	char	   *crypt_pgpass = pgpass;
+	char	   *crypt_client_pass = client_pass;
 
 	if ((line = get_user_line(user)) == NULL)
 		return STATUS_ERROR;
@@ -46,17 +46,17 @@ md5_crypt_verify(const Port *port, const char *user, char *pgpass)
 	token = lnext(lnext(*line));
 	if (token)
 	{
-		passwd = lfirst(token);
+		shadow_pass = lfirst(token);
 		token = lnext(token);
 		if (token)
 			valuntil = lfirst(token);
 	}
 
-	if (passwd == NULL || *passwd == '\0')
+	if (shadow_pass == NULL || *shadow_pass == '\0')
 		return STATUS_ERROR;
 
 	/* We can't do crypt with pg_shadow MD5 passwords */
-	if (isMD5(passwd) && port->auth_method == uaCrypt)
+	if (isMD5(shadow_pass) && port->auth_method == uaCrypt)
 	{
 		elog(LOG, "Password is stored MD5 encrypted.  "
 			 "'crypt' auth method cannot be used.");
@@ -71,10 +71,10 @@ md5_crypt_verify(const Port *port, const char *user, char *pgpass)
 	{
 		case uaMD5:
 			crypt_pwd = palloc(MD5_PASSWD_LEN + 1);
-			if (isMD5(passwd))
+			if (isMD5(shadow_pass))
 			{
 				/* pg_shadow already encrypted, only do salt */
-				if (!EncryptMD5(passwd + strlen("md5"),
+				if (!EncryptMD5(shadow_pass + strlen("md5"),
 								(char *) port->md5Salt,
 								sizeof(port->md5Salt), crypt_pwd))
 				{
@@ -87,7 +87,7 @@ md5_crypt_verify(const Port *port, const char *user, char *pgpass)
 				/* pg_shadow plain, double-encrypt */
 				char	   *crypt_pwd2 = palloc(MD5_PASSWD_LEN + 1);
 
-				if (!EncryptMD5(passwd, port->user, strlen(port->user),
+				if (!EncryptMD5(shadow_pass, port->user, strlen(port->user),
 								crypt_pwd2))
 				{
 					pfree(crypt_pwd);
@@ -109,26 +109,26 @@ md5_crypt_verify(const Port *port, const char *user, char *pgpass)
 				char		salt[3];
 
 				StrNCpy(salt, port->cryptSalt, 3);
-				crypt_pwd = crypt(passwd, salt);
+				crypt_pwd = crypt(shadow_pass, salt);
 				break;
 			}
 		default:
-			if (isMD5(passwd))
+			if (isMD5(shadow_pass))
 			{
 				/* Encrypt user-supplied password to match MD5 in pg_shadow */
-				crypt_pgpass = palloc(MD5_PASSWD_LEN + 1);
-				if (!EncryptMD5(pgpass, port->user, strlen(port->user),
-								crypt_pgpass))
+				crypt_client_pass = palloc(MD5_PASSWD_LEN + 1);
+				if (!EncryptMD5(client_pass, port->user, strlen(port->user),
+								crypt_client_pass))
 				{
-					pfree(crypt_pgpass);
+					pfree(crypt_client_pass);
 					return STATUS_ERROR;
 				}
 			}
-			crypt_pwd = passwd;
+			crypt_pwd = shadow_pass;
 			break;
 	}
 
-	if (strcmp(crypt_pgpass, crypt_pwd) == 0)
+	if (strcmp(crypt_client_pass, crypt_pwd) == 0)
 	{
 		/*
 		 * Password OK, now check to be sure we are not past valuntil
@@ -150,8 +150,8 @@ md5_crypt_verify(const Port *port, const char *user, char *pgpass)
 
 	if (port->auth_method == uaMD5)
 		pfree(crypt_pwd);
-	if (crypt_pgpass != pgpass)
-		pfree(crypt_pgpass);
+	if (crypt_client_pass != client_pass)
+		pfree(crypt_client_pass);
 
 	return retval;
 }
