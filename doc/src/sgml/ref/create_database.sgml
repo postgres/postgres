@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.40 2004/07/12 01:22:53 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.41 2004/07/17 16:33:31 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -171,8 +171,6 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
 CREATE DATABASE lusiadas;
 </programlisting>
   </para>
-
-  <para>
 
   <para>
    To create a database <literal>sales</> owned by user <literal>salesapp</>>
