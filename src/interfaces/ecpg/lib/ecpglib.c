@@ -75,55 +75,10 @@ struct variable
 	struct variable *next;
 };
 
-struct statement
-{
-	int			lineno;
-	char	   *command;
-	struct connection *connection;
-	struct variable *inlist;
-	struct variable *outlist;
-};
-
-static struct prepared_statement
-{
-	char	   *name;
-	struct statement *stmt;
-	struct prepared_statement *next;
-}		   *prep_stmts = NULL;
-
-static struct auto_mem
-{
-	void	   *pointer;
-	struct auto_mem *next;
-}		   *auto_allocs = NULL;
+struct auto_mem *auto_allocs;
 
 static int	simple_debug = 0;
 static FILE *debugstream = NULL;
-
-static void
-register_error(long code, char *fmt,...)
-{
-	va_list		args;
-	struct auto_mem *am;
-
-	sqlca.sqlcode = code;
-	va_start(args, fmt);
-	vsnprintf(sqlca.sqlerrm.sqlerrmc, SQLERRMC_LEN, fmt, args);
-	va_end(args);
-	sqlca.sqlerrm.sqlerrml = strlen(sqlca.sqlerrm.sqlerrmc);
-
-	/* free all memory we have allocated for the user */
-	for (am = auto_allocs; am;)
-	{
-		struct auto_mem *act = am;
-
-		am = am->next;
-		free(act->pointer);
-		free(act);
-	}
-
-	auto_allocs = NULL;
-}
 
 static struct connection *
 get_connection(const char *connection_name)
@@ -146,9 +101,11 @@ ecpg_init(const struct connection *con, const char * connection_name, const int 
 	memcpy((char *) &sqlca, (char *) &sqlca_init, sizeof(sqlca));
 	if (con == NULL)
 	{
-		register_error(ECPG_NO_CONN, "No such connection %s in line %d.", connection_name ? connection_name : "NULL", lineno);
+		ECPGraise(lineno, ECPG_NO_CONN, connection_name ? connection_name : "NULL");
 		return (false);
 	}
+	
+	auto_allocs = NULL;
 	
 	return (true);
 }
@@ -180,37 +137,6 @@ ecpg_finish(struct connection * act)
 	}
 	else
 		ECPGlog("ecpg_finish: called an extra time.\n");
-}
-
-static char *
-ecpg_alloc(long size, int lineno)
-{
-	char	   *new = (char *) calloc(1L, size);
-
-	if (!new)
-	{
-		ECPGlog("out of memory\n");
-		ECPGraise(lineno, ECPG_OUT_OF_MEMORY, NULL);
-		return NULL;
-	}
-
-	memset(new, '\0', size);
-	return (new);
-}
-
-static char *
-ecpg_strdup(const char *string, int lineno)
-{
-	char	   *new = strdup(string);
-
-	if (!new)
-	{
-		ECPGlog("out of memory\n");
-		ECPGraise(lineno, ECPG_OUT_OF_MEMORY, NULL);
-		return NULL;
-	}
-
-	return (new);
 }
 
 static void
@@ -313,7 +239,7 @@ create_statement(int lineno, struct connection * connection, struct statement **
 			if (var->pointer == NULL)
 			{
 				ECPGlog("create_statement: invalid statement name\n");
-				register_error(ECPG_INVALID_STMT, "Invalid statement name in line %d.", lineno);
+				ECPGraise(lineno, ECPG_INVALID_STMT, NULL);
 				free(var);
 				return false;
 			}
@@ -704,7 +630,7 @@ ECPGexecute(struct statement * stmt)
 	{
 		if ((results = PQexec(stmt->connection->connection, "begin transaction")) == NULL)
 		{
-			register_error(ECPG_TRANS, "Error in transaction processing line %d.", stmt->lineno);
+			ECPGraise(stmt->lineno, ECPG_TRANS, NULL);
 			return false;
 		}
 		PQclear(results);
@@ -719,8 +645,7 @@ ECPGexecute(struct statement * stmt)
 	{
 		ECPGlog("ECPGexecute line %d: error: %s", stmt->lineno,
 				PQerrorMessage(stmt->connection->connection));
-		register_error(ECPG_PGSQL, "Postgres error: %s line %d.",
-			 PQerrorMessage(stmt->connection->connection), stmt->lineno);
+		ECPGraise(stmt->lineno, ECPG_PGSQL, PQerrorMessage(stmt->connection->connection));
 	}
 	else
 	{
@@ -749,8 +674,6 @@ ECPGexecute(struct statement * stmt)
 
 				for (act_field = 0; act_field < nfields && status; act_field++)
 				{
-					char	   *pval;
-					char	   *scan_length;
 					char	   *array_query;
 					
 					if (var == NULL)
@@ -820,247 +743,10 @@ ECPGexecute(struct statement * stmt)
 										
 					for (act_tuple = 0; act_tuple < ntuples && status; act_tuple++)
 					{
-						pval = (char *)PQgetvalue(results, act_tuple, act_field);
-
-						ECPGlog("ECPGexecute line %d: RESULT: %s\n", stmt->lineno, pval ? pval : "");
-
-						/* Now the pval is a pointer to the value. */
-						/* We will have to decode the value */
-
-						/*
-						 * check for null value and set indicator
-						 * accordingly
-						 */
-						switch (var->ind_type)
-						{
-							case ECPGt_short:
-							case ECPGt_unsigned_short:
-								((short *) var->ind_value)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);
-								break;
-							case ECPGt_int:
-							case ECPGt_unsigned_int:
-								((int *) var->ind_value)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);
-								break;
-							case ECPGt_long:
-							case ECPGt_unsigned_long:
-								((long *) var->ind_value)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);
-								break;
-							case ECPGt_NO_INDICATOR:
-								if (PQgetisnull(results, act_tuple, act_field))
-								{
-									register_error(ECPG_MISSING_INDICATOR, "NULL value without indicator variable on line %d.", stmt->lineno);
-									status = false;
-								}
-								break;
-							default:
-								ECPGraise(stmt->lineno, ECPG_UNSUPPORTED, ECPGtype_name(var->ind_type));
-								status = false;
-								break;
-						}
-						
-						switch (var->type)
-						{
-								long		res;
-								unsigned long ures;
-								double		dres;
-
-							case ECPGt_short:
-							case ECPGt_int:
-							case ECPGt_long:
-								if (pval)
-								{
-									res = strtol(pval, &scan_length, 10);
-									if (*scan_length != '\0')	/* Garbage left */
-									{
-										register_error(ECPG_INT_FORMAT, "Not correctly formatted int type: %s line %d.",
-													 pval, stmt->lineno);
-										status = false;
-										res = 0L;
-									}
-								}
-								else
-									res = 0L;
-
-								switch (var->type)
-								{
-									case ECPGt_short:
-										((short *) var->value)[act_tuple] = (short) res;
-										break;
-									case ECPGt_int:
-										((int *) var->value)[act_tuple] = (int) res;
-										break;
-									case ECPGt_long:
-										((long *) var->value)[act_tuple] = res;
-										break;
-									default:
-										/* Cannot happen */
-										break;
-								}
-								break;
-
-							case ECPGt_unsigned_short:
-							case ECPGt_unsigned_int:
-							case ECPGt_unsigned_long:
-								if (pval)
-								{
-									ures = strtoul(pval, &scan_length, 10);
-									if (*scan_length != '\0')	/* Garbage left */
-									{
-										register_error(ECPG_UINT_FORMAT, "Not correctly formatted unsigned type: %s line %d.",
-													 pval, stmt->lineno);
-										status = false;
-										ures = 0L;
-									}
-								}
-								else
-									ures = 0L;
-
-								switch (var->type)
-								{
-									case ECPGt_unsigned_short:
-										((unsigned short *) var->value)[act_tuple] = (unsigned short) ures;
-										break;
-									case ECPGt_unsigned_int:
-										((unsigned int *) var->value)[act_tuple] = (unsigned int) ures;
-										break;
-									case ECPGt_unsigned_long:
-										((unsigned long *) var->value)[act_tuple] = ures;
-										break;
-									default:
-										/* Cannot happen */
-										break;
-								}
-								break;
-
-
-							case ECPGt_float:
-							case ECPGt_double:
-								if (pval)
-								{
-									dres = strtod(pval, &scan_length);
-									if (*scan_length != '\0')	/* Garbage left */
-									{
-										register_error(ECPG_FLOAT_FORMAT, "Not correctly formatted floating point type: %s line %d.",
-													 pval, stmt->lineno);
-										status = false;
-										dres = 0.0;
-									}
-								}
-								else
-									dres = 0.0;
-
-								switch (var->type)
-								{
-									case ECPGt_float:
-										((float *) var->value)[act_tuple] = dres;
-										break;
-									case ECPGt_double:
-										((double *) var->value)[act_tuple] = dres;
-										break;
-									default:
-										/* Cannot happen */
-										break;
-								}
-								break;
-
-							case ECPGt_bool:
-								if (pval)
-								{
-									if (pval[0] == 'f' && pval[1] == '\0')
-									{
-										((char *) var->value)[act_tuple] = false;
-										break;
-									}
-									else if (pval[0] == 't' && pval[1] == '\0')
-									{
-										((char *) var->value)[act_tuple] = true;
-										break;
-									}
-									else if (pval[0] == '\0' && PQgetisnull(results, act_tuple, act_field))
-									{
-										// NULL is valid
-										break;
-									}
-								}
-
-								register_error(ECPG_CONVERT_BOOL, "Unable to convert %s to bool on line %d.",
-											   (pval ? pval : "NULL"),
-											   stmt->lineno);
-								status = false;
-								break;
-
-							case ECPGt_char:
-							case ECPGt_unsigned_char:
-								{
-									strncpy((char *) ((long) var->value + var->offset * act_tuple), pval, var->varcharsize);
-									if (var->varcharsize && var->varcharsize < strlen(pval))
-									{
-										/* truncation */
-										switch (var->ind_type)
-										{
-											case ECPGt_short:
-											case ECPGt_unsigned_short:
-												((short *) var->ind_value)[act_tuple] = var->varcharsize;
-												break;
-											case ECPGt_int:
-											case ECPGt_unsigned_int:
-												((int *) var->ind_value)[act_tuple] = var->varcharsize;
-												break;
-											case ECPGt_long:
-											case ECPGt_unsigned_long:
-												((long *) var->ind_value)[act_tuple] = var->varcharsize;
-												break;
-											default:
-												break;
-										}
-										sqlca.sqlwarn[0] = sqlca.sqlwarn[1] = 'W';
-									}
-								}
-								break;
-
-							case ECPGt_varchar:
-								{
-									struct ECPGgeneric_varchar *variable =
-									(struct ECPGgeneric_varchar *) ((long) var->value + var->offset * act_tuple);
-
-									if (var->varcharsize == 0)
-										strncpy(variable->arr, pval, strlen(pval));
-									else
-										strncpy(variable->arr, pval, var->varcharsize);
-
-									variable->len = strlen(pval);
-									if (var->varcharsize > 0 && variable->len > var->varcharsize)
-									{
-										/* truncation */
-										switch (var->ind_type)
-										{
-											case ECPGt_short:
-											case ECPGt_unsigned_short:
-												((short *) var->ind_value)[act_tuple] = var->varcharsize;
-												break;
-											case ECPGt_int:
-											case ECPGt_unsigned_int:
-												((int *) var->ind_value)[act_tuple] = var->varcharsize;
-												break;
-											case ECPGt_long:
-											case ECPGt_unsigned_long:
-												((long *) var->ind_value)[act_tuple] = var->varcharsize;
-												break;
-											default:
-												break;
-										}
-										sqlca.sqlwarn[0] = sqlca.sqlwarn[1] = 'W';
-
-										variable->len = var->varcharsize;
-									}
-								}
-								break;
-
-							default:
-								ECPGraise(stmt->lineno, ECPG_UNSUPPORTED, ECPGtype_name(var->type));
-								status = false;
-								break;
-						}
+						if (!get_data(results, act_tuple, act_field, stmt->lineno,
+						         var->type, var->ind_type, var->value,
+						         var->ind_value, var->varcharsize, var->offset))
+						         status = false;
 					}
 					var = var->next;
 				}
@@ -1074,7 +760,7 @@ ECPGexecute(struct statement * stmt)
 				break;
 			case PGRES_EMPTY_QUERY:
 				/* do nothing */
-				register_error(ECPG_EMPTY, "Empty query line %d.", stmt->lineno);
+				ECPGraise(stmt->lineno, ECPG_EMPTY, NULL);
 				break;
 			case PGRES_COMMAND_OK:
 				status = true;
@@ -1087,8 +773,7 @@ ECPGexecute(struct statement * stmt)
 			case PGRES_BAD_RESPONSE:
 				ECPGlog("ECPGexecute line %d: Error: %s",
 						stmt->lineno, PQerrorMessage(stmt->connection->connection));
-				register_error(ECPG_PGSQL, "Postgres error: %s line %d.",
-							   PQerrorMessage(stmt->connection->connection), stmt->lineno);
+				ECPGraise(stmt->lineno, ECPG_PGSQL, PQerrorMessage(stmt->connection->connection));
 				status = false;
 				break;
 			case PGRES_COPY_OUT:
@@ -1102,8 +787,7 @@ ECPGexecute(struct statement * stmt)
 			default:
 				ECPGlog("ECPGexecute line %d: Got something else, postgres error.\n",
 						stmt->lineno);
-				register_error(ECPG_PGSQL, "Postgres error: %s line %d.",
-							   PQerrorMessage(stmt->connection->connection), stmt->lineno);
+				ECPGraise(stmt->lineno, ECPG_PGSQL, PQerrorMessage(stmt->connection->connection));
 				status = false;
 				break;
 		}
@@ -1154,7 +838,7 @@ ECPGdo(int lineno, const char *connection_name, char *query, ...)
 	{
 		free_statement(stmt);
 		ECPGlog("ECPGdo: not connected to %s\n", con->name);
-		register_error(ECPG_NOT_CONN, "Not connected in line %d.", lineno);
+		ECPGraise(lineno, ECPG_NOT_CONN, NULL);
 		setlocale(LC_NUMERIC, locale);
 		return false;
 	}
@@ -1179,7 +863,7 @@ ECPGstatus(int lineno, const char *connection_name)
 	if (con->connection == NULL)
 	{
 		ECPGlog("ECPGdo: not connected to %s\n", con->name);
-		register_error(ECPG_NOT_CONN, "Not connected in line %d", lineno);
+		ECPGraise(lineno, ECPG_NOT_CONN, NULL);
 		return false;
 	}
 
@@ -1202,7 +886,7 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 	{
 		if ((res = PQexec(con->connection, transaction)) == NULL)
 		{
-			register_error(ECPG_TRANS, "Error in transaction processing line %d.", lineno);
+			ECPGraise(lineno, ECPG_TRANS, NULL);
 			return FALSE;
 		}
 		PQclear(res);
@@ -1213,13 +897,8 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 		con->committed = true;
 
 		/* deallocate all prepared statements */
-		while(prep_stmts != NULL)
-		{
-			bool		b = ECPGdeallocate(lineno, prep_stmts->name);
-
-			if (!b)
+		if (!ECPGdeallocate_all(lineno))
 				return false;
-		}
 	}
 
 	return true;
@@ -1242,7 +921,7 @@ ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
 		{
 			if ((results = PQexec(con->connection, "begin transaction")) == NULL)
 			{
-				register_error(ECPG_TRANS, "Error in transaction processing line %d.", lineno);
+				ECPGraise(lineno, ECPG_TRANS, NULL);
 				return false;
 			}
 			PQclear(results);
@@ -1256,7 +935,7 @@ ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
 		{
 			if ((results = PQexec(con->connection, "commit")) == NULL)
 			{
-				register_error(ECPG_TRANS, "Error in transaction processing line %d.", lineno);
+				ECPGraise(lineno, ECPG_TRANS, NULL);
 				return false;
 			}
 			PQclear(results);
@@ -1315,7 +994,7 @@ ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd
 	{
 		ecpg_finish(this);
 		ECPGlog("connect: could not open database %s %s%s in line %d\n", dbname ? dbname : "<DEFAULT>", user ? "for user " : "", user ? user : "", lineno);
-		register_error(ECPG_CONNECT, "connect: could not open database %s.", dbname ? dbname : "<DEFAULT>");
+		ECPGraise(lineno, ECPG_CONNECT, dbname ? dbname : "<DEFAULT>");
 		return false;
 	}
 
@@ -1384,135 +1063,179 @@ ECPGlog(const char *format,...)
 	}
 }
 
-/* print out an error message */
-void
-sqlprint(void)
+/* dynamic SQL support routines
+ *
+ * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
+ *
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/ecpglib.c,v 1.60 2000/02/23 19:25:43 meskes Exp $
+ */
+
+/* I borrowed the include files from ecpglib.c, maybe we don't need all of them */
+
+#include <sql3types.h>
+
+PGconn *ECPG_internal_get_connection(char *name);
+
+extern struct descriptor
 {
-	sqlca.sqlerrm.sqlerrmc[sqlca.sqlerrm.sqlerrml] = '\0';
-	fprintf(stderr, "sql error %s\n", sqlca.sqlerrm.sqlerrmc);
-}
+   char *name;
+   PGresult *result;
+   struct descriptor *next;
+} *all_descriptors;
 
-static bool
-isvarchar(unsigned char c)
+// like ECPGexecute
+static bool execute_descriptor(int lineno,const char *query
+							,struct connection *con,PGresult **resultptr)
 {
-	if (isalnum(c))
-		return true;
+	bool	status = false;
+	PGresult   *results;
+	PGnotify   *notify;
+	
+	/* Now the request is built. */
 
-	if (c == '_' || c == '>' || c == '-' || c == '.')
-		return true;
-
-	if (c >= 128)
-		return true;
-
-	return (false);
-}
-
-static void
-replace_variables(char *text)
-{
-	char	   *ptr = text;
-	bool		string = false;
-
-	for (; *ptr != '\0'; ptr++)
+	if (con->committed && !con->autocommit)
 	{
-		if (*ptr == '\'')
-			string = string ? false : true;
-
-		if (!string && *ptr == ':')
+		if ((results = PQexec(con->connection, "begin transaction")) == NULL)
 		{
-			*ptr = '?';
-			for (++ptr; *ptr && isvarchar(*ptr); ptr++)
-				*ptr = ' ';
+			ECPGraise(lineno, ECPG_TRANS, NULL);
+			return false;
+		}
+		PQclear(results);
+		con->committed = false;
+	}
+
+	ECPGlog("execute_descriptor line %d: QUERY: %s on connection %s\n", lineno, query, con->name);
+	results = PQexec(con->connection, query);
+
+	if (results == NULL)
+	{
+		ECPGlog("ECPGexecute line %d: error: %s", lineno,
+				PQerrorMessage(con->connection));
+		ECPGraise(lineno, ECPG_PGSQL, PQerrorMessage(con->connection));
+	}
+	else
+	{	*resultptr=results;
+		switch (PQresultStatus(results))
+		{	int ntuples;
+			case PGRES_TUPLES_OK:
+				status = true;
+				sqlca.sqlerrd[2] = ntuples = PQntuples(results);
+				if (ntuples < 1)
+				{
+					ECPGlog("execute_descriptor line %d: Incorrect number of matches: %d\n",
+							lineno, ntuples);
+					ECPGraise(lineno, ECPG_NOT_FOUND, NULL);
+					status = false;
+					break;
+				}
+				break;
+#if 1 /* strictly these are not needed (yet) */
+			case PGRES_EMPTY_QUERY:
+				/* do nothing */
+				ECPGraise(lineno, ECPG_EMPTY, NULL);
+				break;
+			case PGRES_COMMAND_OK:
+				status = true;
+				sqlca.sqlerrd[1] = atol(PQoidStatus(results));
+				sqlca.sqlerrd[2] = atol(PQcmdTuples(results));
+				ECPGlog("ECPGexecute line %d Ok: %s\n", lineno, PQcmdStatus(results));
+				break;
+			case PGRES_COPY_OUT:
+				ECPGlog("ECPGexecute line %d: Got PGRES_COPY_OUT ... tossing.\n", lineno);
+				PQendcopy(con->connection);
+				break;
+			case PGRES_COPY_IN:
+				ECPGlog("ECPGexecute line %d: Got PGRES_COPY_IN ... tossing.\n", lineno);
+				PQendcopy(con->connection);
+				break;
+#else
+			case PGRES_EMPTY_QUERY:
+			case PGRES_COMMAND_OK:
+			case PGRES_COPY_OUT:
+			case PGRES_COPY_IN:
+				break;
+#endif
+			case PGRES_NONFATAL_ERROR:
+			case PGRES_FATAL_ERROR:
+			case PGRES_BAD_RESPONSE:
+				ECPGlog("ECPGexecute line %d: Error: %s",
+						lineno, PQerrorMessage(con->connection));
+				ECPGraise(lineno, ECPG_PGSQL, PQerrorMessage(con->connection));
+				status = false;
+				break;
+			default:
+				ECPGlog("ECPGexecute line %d: Got something else, postgres error.\n",
+						lineno);
+				ECPGraise(lineno, ECPG_PGSQL, PQerrorMessage(con->connection));
+				status = false;
+				break;
 		}
 	}
+
+	/* check for asynchronous returns */
+	notify = PQnotifies(con->connection);
+	if (notify)
+	{
+		ECPGlog("ECPGexecute line %d: ASYNC NOTIFY of '%s' from backend pid '%d' received\n",
+				lineno, notify->relname, notify->be_pid);
+		free(notify);
+	}
+	return status;
 }
 
-/* handle the EXEC SQL PREPARE statement */
-bool
-ECPGprepare(int lineno, char *name, char *variable)
+/* like ECPGdo */
+static bool do_descriptor2(int lineno,const char *connection_name,
+					PGresult **resultptr, const char *query)
 {
-	struct statement *stmt;
-	struct prepared_statement *this;
+	struct connection *con = get_connection(connection_name);
+	bool		status=true;
+	char *locale = setlocale(LC_NUMERIC, NULL);
 
-	/* check if we already have prepared this statement */
-	for (this = prep_stmts; this != NULL && strcmp(this->name, name) != 0; this = this->next);
-	if (this)
-	{
-		bool		b = ECPGdeallocate(lineno, name);
+	/* Make sure we do NOT honor the locale for numeric input/output */
+	/* since the database wants teh standard decimal point */
+	setlocale(LC_NUMERIC, "C");
 
-		if (!b)
-			return false;
+	if (!ecpg_init(con, connection_name, lineno))
+	{	setlocale(LC_NUMERIC, locale);
+		return(false);
 	}
 
-	this = (struct prepared_statement *) ecpg_alloc(sizeof(struct prepared_statement), lineno);
-	if (!this)
-		return false;
-
-	stmt = (struct statement *) ecpg_alloc(sizeof(struct statement), lineno);
-	if (!stmt)
+	/* are we connected? */
+	if (con == NULL || con->connection == NULL)
 	{
-		free(this);
+		ECPGlog("do_descriptor2: not connected to %s\n", con->name);
+		ECPGraise(lineno, ECPG_NOT_CONN, NULL);
+		setlocale(LC_NUMERIC, locale);
 		return false;
 	}
 
-	/* create statement */
-	stmt->lineno = lineno;
-	stmt->connection = NULL;
-	stmt->command = ecpg_strdup(variable, lineno);
-	stmt->inlist = stmt->outlist = NULL;
+	status = execute_descriptor(lineno,query,con,resultptr);
 
-	/* if we have C variables in our statment replace them with '?' */
-	replace_variables(stmt->command);
-
-	/* add prepared statement to our list */
-	this->name = ecpg_strdup(name, lineno);
-	this->stmt = stmt;
-
-	if (prep_stmts == NULL)
-		this->next = NULL;
-	else
-		this->next = prep_stmts;
-
-	prep_stmts = this;
-	return true;
+	/* and reset locale value so our application is not affected */
+	setlocale(LC_NUMERIC, locale);
+	return (status);
 }
 
-/* handle the EXEC SQL DEALLOCATE PREPARE statement */
-bool
-ECPGdeallocate(int lineno, char *name)
+bool ECPGdo_descriptor(int line,const char *connection,
+							const char *descriptor,const char *query)
 {
-	struct prepared_statement *this,
-			   *prev;
+	struct descriptor *i;
+	for (i=all_descriptors;i!=NULL;i=i->next)
+	{	if (!strcmp(descriptor,i->name)) 
+	    {	
+			bool status;
 
-	/* check if we really have prepared this statement */
-	for (this = prep_stmts, prev = NULL; this != NULL && strcmp(this->name, name) != 0; prev = this, this = this->next);
-	if (this)
-	{
-		/* okay, free all the resources */
-		free(this->name);
-		free(this->stmt->command);
-		free(this->stmt);
-		if (prev != NULL)
-			prev->next = this->next;
-		else
-			prep_stmts = this->next;
-		
-		free(this);
-		return true;
+			/* free previous result */
+			if (i->result) PQclear(i->result);
+		    	i->result=NULL;
+	    	
+			status=do_descriptor2(line,connection,&i->result,query);
+			
+			if (!i->result) PQmakeEmptyPGresult(NULL, 0);
+			return (status);
+	    }
 	}
-	ECPGlog("deallocate_prepare: invalid statement name %s\n", name);
-	register_error(ECPG_INVALID_STMT, "Invalid statement name %s in line %d", name, lineno);
+	
+	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, descriptor);
 	return false;
 }
-
-/* return the prepared statement */
-char *
-ECPGprepared_statement(char *name)
-{
-	struct prepared_statement *this;
-
-	for (this = prep_stmts; this != NULL && strcmp(this->name, name) != 0; this = this->next);
-	return (this) ? this->stmt->command : NULL;
-}
-
-#include "dynamic.c"

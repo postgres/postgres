@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/Makefile.in,v 1.59 2000/02/22 19:57:05 meskes Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/Makefile.in,v 1.60 2000/02/23 19:25:42 meskes Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
 endif
 
-OBJS= ecpglib.o typename.o descriptor.o
+OBJS= ecpglib.o typename.o descriptor.o data.o error.o prepare.o memory.o
 
 SHLIB_LINK= -L../../libpq -lpq
 

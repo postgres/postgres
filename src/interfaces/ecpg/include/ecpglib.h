@@ -16,35 +16,28 @@ extern		"C"
 	bool		ECPGdisconnect(int, const char *);
 	bool		ECPGprepare(int, char *, char *);
 	bool		ECPGdeallocate(int, char *);
+	bool		ECPGdeallocate_all(int);
 	char		*ECPGprepared_statement(char *);
 	
 	void		ECPGlog(const char *format,...);
-
+	
+	/* print an error message */
+	void		sqlprint(void);
+	
 #ifdef LIBPQ_FE_H
 	bool		ECPGsetdb(PGconn *);
-
 #endif
 
 /* Here are some methods used by the lib. */
 /* Returns a pointer to a string containing a simple type name. */
 	const char *ECPGtype_name(enum ECPGttype);
+	bool get_data(PGresult *, int, int, int, enum ECPGttype type,
+			enum ECPGttype, void *, void *, long, long);
+	char *ecpg_alloc(long, int);
+	char *ecpg_strdup(const char *, int);
 
-/* A generic varchar type. */
-	struct ECPGgeneric_varchar
-	{
-		int			len;
-		char		arr[1];
-	};
-
-/* print an error message */
-	void		sqlprint(void);
-
-	struct cursor
-	{
-		const char *name;
-		char	   *command;
-		struct cursor *next;
-	};
+/* and some vars */
+	extern struct auto_mem *auto_allocs;
 
 /* define this for simplicity as well as compatibility */
 
@@ -52,9 +45,6 @@ extern		"C"
 
 /* dynamic SQL */
 
-	unsigned int	ECPGDynamicType(Oid type);
-	unsigned int	ECPGDynamicType_DDT(Oid type);
-	PGresult *	ECPGresultByDescriptor(int line,const char *name);
 	bool		ECPGdo_descriptor(int line,const char *connection,
 							const char *descriptor,const char *query);
 	bool		ECPGdeallocate_desc(int line,const char *name);
