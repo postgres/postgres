@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.92 2000/03/11 03:08:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.93 2000/03/14 23:59:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,8 +153,11 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 
 	if (conn)
 	{
+		/* copy connection data we might need for operations on PGresult */
 		result->noticeHook = conn->noticeHook;
 		result->noticeArg = conn->noticeArg;
+		result->client_encoding = conn->client_encoding;
+
 		/* consider copying conn's errorMessage */
 		switch (status)
 		{
@@ -172,8 +175,10 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 	}
 	else
 	{
+		/* defaults... */
 		result->noticeHook = NULL;
 		result->noticeArg = NULL;
+		result->client_encoding = 0; /* should be SQL_ASCII */
 	}
 
 	return result;

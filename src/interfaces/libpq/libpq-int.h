@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.20 2000/03/11 03:08:37 tgl Exp $
+ * $Id: libpq-int.h,v 1.21 2000/03/14 23:59:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,11 +130,14 @@ struct pg_result
 	 */
 	PGconn	   *xconn;			/* connection we did the query on, if any */
 
-	/* Callback procedure for notice/error message processing
-	 * (copied from originating PGconn).
+	/*
+	 * These fields are copied from the originating PGconn, so that
+	 * operations on the PGresult don't have to reference the PGconn.
 	 */
-	PQnoticeProcessor noticeHook;
+	PQnoticeProcessor noticeHook; /* notice/error message processor */
 	void	   *noticeArg;
+	int			client_encoding; /* encoding id */
+
 
 	char	   *errMsg;			/* error message, or NULL if no error */
 
