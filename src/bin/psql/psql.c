@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.9 1996/07/27 02:55:11 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.10 1996/07/27 04:38:22 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1111,10 +1111,10 @@ main(int argc, char** argv)
   extern char* optarg;
   extern int optind;
   
-  char* dbname = (char *)NULL;
-  char* host = (char *)NULL;
-  char* port = (char *)NULL;
-  char* qfilename = (char *)NULL;
+  char* dbname = NULL;
+  char* host = NULL;
+  char* port = NULL;
+  char* qfilename = NULL;
   char errbuf[ERROR_MSG_LENGTH];
 
   PsqlSettings settings;
@@ -1148,19 +1148,19 @@ main(int argc, char** argv)
 	fe_setauthsvc(optarg, errbuf);
 	break;
     case 'c':
-	singleQuery = optarg;
+	singleQuery = dupstr(optarg);
 	if ( singleQuery[0] == '\\' ) {
 	    singleSlashCmd=1;
 	}
 	break;
     case 'd':
-      dbname = optarg;
+      dbname = dupstr(optarg);
       break;
     case 'e':
       settings.echoQuery = 1;
       break;
     case 'f':
-      qfilename = optarg;
+      qfilename = dupstr(optarg);
       break;
     case 'F':
       settings.opt.fieldSep=dupstr(optarg);
@@ -1169,7 +1169,7 @@ main(int argc, char** argv)
       listDatabases = 1;
       break;
     case 'h':
-      host = optarg;
+      host = dupstr(optarg);
       break;
     case 'H':
       settings.opt.html3 = 1;
@@ -1181,7 +1181,7 @@ main(int argc, char** argv)
       setFout(&settings, optarg);
       break;
     case 'p':
-      port = optarg;
+      port = dupstr(optarg);
       break;
     case 'q':
       settings.quiet = 1;
