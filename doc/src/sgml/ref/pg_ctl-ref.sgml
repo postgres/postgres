@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.28 2004/06/04 04:05:36 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.29 2004/11/27 21:56:05 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -139,7 +139,7 @@ PostgreSQL documentation
 
   <para>
    <option>kill</option> mode allows you to send a signal to a specified
-    process.  This is particularly valuable for <productname>MS Windows</>
+    process.  This is particularly valuable for <productname>Microsoft Windows</>
     which does not have a <application>kill</> command.  Use 
     <literal>--help</> to see a list of supported signal names.
   </para>

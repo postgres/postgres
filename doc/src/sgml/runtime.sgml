@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.293 2004/11/16 05:33:14 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.294 2004/11/27 21:56:04 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1626,7 +1626,7 @@ SET ENABLE_SEQSCAN TO OFF;
         it succeeds.  Examples:
 <programlisting>
 archive_command = 'cp "%p" /mnt/server/archivedir/"%f"'
-archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
+archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
 </programlisting>
        </para>
       </listitem>

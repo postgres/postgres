@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.59 2004/11/17 02:50:06 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.60 2004/11/27 21:56:05 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -446,7 +446,7 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
 
    <para>
     <command>COPY TO</command> will terminate each row with a Unix-style 
-    newline (<quote><literal>\n</></>).  Servers running on MS Windows instead
+    newline (<quote><literal>\n</></>).  Servers running on Microsoft Windows instead
     output carriage return/newline (<quote><literal>\r\n</></>), but only for
     <command>COPY</> to a server file; for consistency across platforms,
     <command>COPY TO STDOUT</> always sends <quote><literal>\n</></>

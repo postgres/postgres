@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.313 2004/11/27 21:27:06 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.314 2004/11/27 21:56:04 petere Exp $
 -->
 
 <appendix id="release">
@@ -22,7 +22,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.313 2004/11/27 21:27:06 petere 
     <variablelist>
      <varlistentry>
       <term>
-       Win32 Native Server
+       Microsoft Windows Native Server
       </term>
 
       <listitem>
@@ -31,10 +31,10 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.313 2004/11/27 21:27:06 petere 
         to natively run on <productname>Microsoft Windows</> as a
         server. It can run as a <productname>Windows</> service. This
         release supports NT-based Windows releases like
-        <productname>Win2000</>, <productname>XP</>,
-        <productname>Win2003</>. Older releases like
-        <productname>Windows 95</>, <productname>98</>, and
-        <productname>ME</> are not supported because these operating
+        <productname>Windows 2000</>, <productname>Windows XP</>, and
+        <productname>Windows 2003</>. Older releases like
+        <productname>Windows 95</>, <productname>Windows 98</>, and
+        <productname>Windows ME</> are not supported because these operating
         systems do not have the infrastructure to support
         <productname>PostgreSQL</productname>. A separate installer
         project has been created to ease installation on
@@ -42,6 +42,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.313 2004/11/27 21:27:06 petere 
         url="http://pgfoundry.org/projects/pginstaller">
         http://pgfoundry.org/projects/pginstaller</ulink>.
        </para>
+
        <para>
         Although tested throughout our release cycle, the Windows port
         does not have the benefit of years of use in production
@@ -49,10 +50,12 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.313 2004/11/27 21:27:06 petere 
         Unix platforms and therefore should be treated with the same
         level of caution as you would a new product.
        </para>
-       <para> Previous releases required the Unix emulation toolkit
-       <productname>Cygwin</> for Win32 server support.
-       <productname>PostgreSQL</productname> has always supported
-       clients on Win32.
+
+       <para>
+        Previous releases required the Unix emulation toolkit
+        <productname>Cygwin</> in order to run the server on Windows
+        operating systems.  <productname>PostgreSQL</productname> has
+        always supported clients on Windows.
        </para>
       </listitem>
      </varlistentry>
@@ -740,7 +743,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.313 2004/11/27 21:27:06 petere 
      </para>
      <para>
       Listening on localhost (<literal>127.0.0.1</>) opens no new
-      security holes but allows configurations like Win32 and JDBC,
+      security holes but allows configurations like Windows and JDBC,
       which do not support local sockets, to work without special
       adjustments.
      </para>
@@ -1272,10 +1275,10 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.313 2004/11/27 21:27:06 petere 
 
     <listitem>
      <para>
-      New <application>pg_ctl</> <option>kill</> option for Win32 (Andrew)
+      New <application>pg_ctl</> <option>kill</> option for Windows (Andrew)
      </para>
      <para>
-      Win32 does not have a <literal>kill</> command to send signals to
+      Windows does not have a <literal>kill</> command to send signals to
       backends so this capability was added to <application>pg_ctl</>.
      </para>
     </listitem>
@@ -1303,8 +1306,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.313 2004/11/27 21:27:06 petere 
 
     <listitem>
      <para>
-      Add Win32 service <option>register</> command to
-      <application>pg_ctl</> (Dave Page)
+      Add <option>register</> command to <application>pg_ctl</> to
+      register Windows operating system service (Dave Page)
      </para>
     </listitem>
 
@@ -1976,13 +1979,13 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.313 2004/11/27 21:27:06 petere 
 
     <listitem>
      <para>
-      Allow the database server to run natively on Win32 (Claudio, Magnus, Andrew)
+      Allow the database server to run natively on Windows (Claudio, Magnus, Andrew)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Shell script commands converted to C versions for Win32 support (Andrew)
+      Shell script commands converted to C versions for Windows support (Andrew)
      </para>
     </listitem>
 
@@ -2197,7 +2200,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.313 2004/11/27 21:27:06 petere 
 
     <listitem>
      <para>
-      New <application>pgevent</> for Win32 logging
+      New <application>pgevent</> for Windows logging
      </para>
     </listitem>
 
@@ -2266,7 +2269,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.313 2004/11/27 21:27:06 petere 
 
     <listitem>
      <para>
-      Allow /contrib/pg_autovacuum to run as a Win32 service (Dave Page)
+      Allow /contrib/pg_autovacuum to run as a Windows service (Dave Page)
      </para>
     </listitem>
 
