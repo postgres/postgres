@@ -47,7 +47,7 @@
  * permission to use and distribute the software in accordance with the
  * terms specified in this license.
  *
- * $Header: /cvsroot/pgsql/src/backend/regex/regc_locale.c,v 1.3 2003/08/08 21:41:56 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/regex/regc_locale.c,v 1.4 2003/09/29 00:21:58 tgl Exp $
  */
 
 /* ASCII character-name table */
@@ -389,6 +389,12 @@ pg_isgraph(pg_wchar c)
 }
 
 static int
+pg_isprint(pg_wchar c)
+{
+	return (c >= 0 && c <= UCHAR_MAX && isprint((unsigned char) c));
+}
+
+static int
 pg_ispunct(pg_wchar c)
 {
 	return (c >= 0 && c <= UCHAR_MAX && ispunct((unsigned char) c));
@@ -657,16 +663,25 @@ cclass(struct vars * v,			/* context */
 	switch ((enum classes) index)
 	{
 		case CC_PRINT:
-		case CC_ALNUM:
-			cv = getcvec(v, UCHAR_MAX, 1, 0);
+			cv = getcvec(v, UCHAR_MAX, 0, 0);
 			if (cv)
 			{
 				for (i = 0; i <= UCHAR_MAX; i++)
 				{
-					if (pg_isalpha((chr) i))
+					if (pg_isprint((chr) i))
 						addchr(cv, (chr) i);
 				}
-				addrange(cv, (chr) '0', (chr) '9');
+			}
+			break;
+		case CC_ALNUM:
+			cv = getcvec(v, UCHAR_MAX, 0, 0);
+			if (cv)
+			{
+				for (i = 0; i <= UCHAR_MAX; i++)
+				{
+					if (pg_isalnum((chr) i))
+						addchr(cv, (chr) i);
+				}
 			}
 			break;
 		case CC_ALPHA:

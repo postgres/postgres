@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Header: /cvsroot/pgsql/src/backend/regex/regcomp.c,v 1.38 2003/08/08 21:41:56 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/regex/regcomp.c,v 1.39 2003/09/29 00:21:58 tgl Exp $
  *
  */
 
@@ -184,6 +184,7 @@ static int	pg_isalnum(pg_wchar c);
 static int	pg_isupper(pg_wchar c);
 static int	pg_islower(pg_wchar c);
 static int	pg_isgraph(pg_wchar c);
+static int	pg_isprint(pg_wchar c);
 static int	pg_ispunct(pg_wchar c);
 static int	pg_isspace(pg_wchar c);
 static pg_wchar pg_toupper(pg_wchar c);
