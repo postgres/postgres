@@ -190,7 +190,7 @@ Postgres superuser.  See the postgres man page.
 So, for example, you can login as the Postgres superuser and issue the
 command:
 
-  % postgres -S -D/usr/lib/postgres/postgres_data -p5432
+  % postmaster -S -D/usr/lib/postgres/postgres_data -p5432
 
 This says to run the postmaster against the database system created above,
 to accept connections from users on the conventional TCP port 5432, and
@@ -232,11 +232,14 @@ daemon is running, and the regression tests have passed, you'll want to
 see Postgres95 do something.  That's easy.  Invoke the interactive interface
 to Postgres95, psql, and start typing SQL:
 
-  % psql -d/usr/lib/postgres_data template1
+  % psql -p 5432 template1
 
 (psql has to open a particular database, but at this point the only one
 that exists is the template1 database, which always exists.  We will connect
 to it only long enough to create another one and switch to it).
+
+Note that we have told psql to connect to Port 5432, which is what we told
+the postmaster to listen on when we started it above.
 
 The response from psql is:
 
