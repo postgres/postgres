@@ -96,8 +96,10 @@ init_table_info(PGresult *res, int row, db_info * dbi)
 		return NULL;
 	}
 
-	/* Put both the schema and table name in quotes so that 
-		we can work with mixed case table names */
+	/*
+	 * Put both the schema and table name in quotes so that we can work
+	 * with mixed case table names
+	 */
 	strcpy(new_tbl->table_name, "\"");
 	strcat(new_tbl->table_name, new_tbl->schema_name);
 	strcat(new_tbl->table_name, "\".\"");
@@ -120,9 +122,9 @@ init_table_info(PGresult *res, int row, db_info * dbi)
 
 	log_entry(PQgetvalue(res, row, PQfnumber(res, "relisshared")));
 	if (strcmp("t", PQgetvalue(res, row, PQfnumber(res, "relisshared"))))
-	  new_tbl->relisshared = 0;
+		new_tbl->relisshared = 0;
 	else
-	  new_tbl->relisshared = 1;
+		new_tbl->relisshared = 1;
 
 	new_tbl->analyze_threshold =
 		args->analyze_base_threshold + args->analyze_scaling_factor * new_tbl->reltuples;
@@ -748,7 +750,7 @@ send_query(const char *query, db_info * dbi)
 		return NULL;
 
 	if (args->debug >= 4)
-	  log_entry(query);
+		log_entry(query);
 
 	res = PQexec(dbi->conn, query);
 
@@ -961,7 +963,7 @@ main(int argc, char *argv[])
 	int			j = 0,
 				loops = 0;
 
-  /*	int numInserts, numDeletes, */
+	/* int numInserts, numDeletes, */
 	int			sleep_secs;
 	Dllist	   *db_list;
 	Dlelem	   *db_elem,
@@ -1052,9 +1054,9 @@ main(int argc, char *argv[])
 
 				if (0 == xid_wraparound_check(dbs));
 				{
-		res = send_query(TABLE_STATS_QUERY, dbs);		/* Get an updated
-																		 * snapshot of this dbs
-																		 * table stats */
+					res = send_query(TABLE_STATS_QUERY, dbs);	/* Get an updated
+																 * snapshot of this dbs
+																 * table stats */
 					for (j = 0; j < PQntuples(res); j++)
 					{			/* loop through result set */
 						tbl_elem = DLGetHead(dbs->table_list);	/* Reset tbl_elem to top
@@ -1084,11 +1086,14 @@ main(int argc, char *argv[])
 								 */
 								if ((tbl->curr_vacuum_count - tbl->CountAtLastVacuum) >= tbl->vacuum_threshold)
 								{
-				/* if relisshared = t and database != template1 then only do an analyze */
-				if((tbl->relisshared > 0) && (strcmp("template1",dbs->dbname)))
-				  snprintf(buf, sizeof(buf), "ANALYZE %s", tbl->table_name);
-				else	
-				  snprintf(buf, sizeof(buf), "VACUUM ANALYZE %s", tbl->table_name);
+									/*
+									 * if relisshared = t and database !=
+									 * template1 then only do an analyze
+									 */
+									if ((tbl->relisshared > 0) && (strcmp("template1", dbs->dbname)))
+										snprintf(buf, sizeof(buf), "ANALYZE %s", tbl->table_name);
+									else
+										snprintf(buf, sizeof(buf), "VACUUM ANALYZE %s", tbl->table_name);
 									if (args->debug >= 1)
 									{
 										sprintf(logbuffer, "Performing: %s", buf);
@@ -1102,7 +1107,7 @@ main(int argc, char *argv[])
 								}
 								else if ((tbl->curr_analyze_count - tbl->CountAtLastAnalyze) >= tbl->analyze_threshold)
 								{
-				snprintf(buf, sizeof(buf), "ANALYZE %s", tbl->table_name);
+									snprintf(buf, sizeof(buf), "ANALYZE %s", tbl->table_name);
 									if (args->debug >= 1)
 									{
 										sprintf(logbuffer, "Performing: %s", buf);
