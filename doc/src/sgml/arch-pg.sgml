@@ -43,10 +43,15 @@
 which in turn  starts  a  new backend  server  process 
 (<XRef LinkEnd="PGARCH-CONNECTIONS">(b)) 
      
-<Figure Id="PGARCH-CONNECTIONS">
-<Title>How a connection is established</Title>
-<Graphic Align="center" FileRef="connections.gif" Format="GIF"></Graphic>
-</Figure>
+<figure id="PGARCH-CONNECTIONS">
+ <title>How a connection is established</title>
+
+ <mediaobject>
+  <imageobject>
+   <imagedata align="center" fileref="connections">
+  </imageobject>
+ </mediaobject>
+</figure>
 
      and connects the frontend process to the new server 
 (<XRef LinkEnd="PGARCH-CONNECTIONS">(c)).

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.11 2001/09/18 12:08:27 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.12 2001/09/30 16:05:54 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -48,6 +48,7 @@
 (define %link-mailto-url%       (string-append "mailto:" pgsql-docs-list))
 (define %use-id-as-filename%    #t)
 (define %stylesheet%            "stylesheet.css")
+(define %graphic-default-extension% "gif")
 
 ;; Returns the depth of auto TOC that should be made at the nd-level
 (define (toc-depth nd)
@@ -115,6 +116,10 @@
 (define bop-footnotes           #t)
 (define %hyphenation%
   (if tex-backend #t #f))
+
+(define %graphic-default-extension%
+  (cond (tex-backend "eps")
+        (rtf-backend "ai"))) ;; ApplixWare?
 
 ]]> <!-- %output-print -->
 
