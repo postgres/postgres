@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.74 2002/05/22 17:20:58 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.75 2002/05/22 18:33:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,7 +140,6 @@ ProcedureCreate(const char *procedureName,
 		elog(ERROR, "method %s already an attribute of type %s",
 			 procedureName, format_type_be(typev[0]));
 
-
 	/*
 	 * All seems OK; prepare the data to be inserted into pg_proc.
 	 */
@@ -176,7 +175,6 @@ ProcedureCreate(const char *procedureName,
 	values[i++] = DirectFunctionCall1(textin,	/* probin */
 									  CStringGetDatum(probin));
 	/* proacl will be handled below */
-
 
 	rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
 	tupDesc = rel->rd_att;
@@ -220,7 +218,8 @@ ProcedureCreate(const char *procedureName,
 					 procedureName);
 		}
 
-		/* do not change existing permissions, either */
+		/* do not change existing ownership or permissions, either */
+		replaces[Anum_pg_proc_proowner-1] = ' ';
 		replaces[Anum_pg_proc_proacl-1] = ' ';
 
 		/* Okay, do it... */
@@ -258,9 +257,9 @@ ProcedureCreate(const char *procedureName,
 	/* Verify function body */
 	if (OidIsValid(languageValidator))
 	{
-		/* Advance command counter so recursive functions can be defined */
+		/* Advance command counter so new tuple can be seen by validator */
 		CommandCounterIncrement();
-		OidFunctionCall1(languageValidator, retval);
+		OidFunctionCall1(languageValidator, ObjectIdGetDatum(retval));
 	}
 
 	return retval;
