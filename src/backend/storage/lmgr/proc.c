@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.57 1999/05/25 22:42:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.57.2.1 1999/10/12 14:55:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.57 1999/05/25 22:42:03 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.57.2.1 1999/10/12 14:55:00 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -54,7 +54,7 @@
 #include <signal.h>
 #include <sys/types.h>
 
-#if defined(solaris_sparc)
+#if defined(solaris_sparc) || defined(__CYGWIN__)
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #endif
