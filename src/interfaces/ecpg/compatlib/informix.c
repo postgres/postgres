@@ -135,7 +135,7 @@ deccopy(decimal * src, decimal * target)
 }
 
 static char *
-strndup(const char *str, size_t len)
+ecpg_strndup(const char *str, size_t len)
 {
 	int			real_len = strlen(str);
 	int			use_len = (real_len > len) ? len : real_len;
@@ -156,7 +156,7 @@ strndup(const char *str, size_t len)
 int
 deccvasc(char *cp, int len, decimal * np)
 {
-	char	   *str = strndup(cp, len); /* decimal_in always converts the
+	char	   *str = ecpg_strndup(cp, len); /* decimal_in always converts the
 										 * complete string */
 	int			ret = 0;
 	numeric    *result;
