@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.17 2004/10/08 01:36:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.18 2004/10/22 19:48:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,8 +123,8 @@ struct config_generic
 #define GUC_REPORT				0x0010	/* auto-report changes to client */
 #define GUC_NOT_IN_SAMPLE		0x0020	/* not in postgresql.conf.sample */
 #define GUC_DISALLOW_IN_FILE	0x0040	/* can't set in postgresql.conf */
-#define GUC_CUSTOM_PLACEHOLDER	0x0080	/* placeholder for a custom
-										 * variable */
+#define GUC_CUSTOM_PLACEHOLDER	0x0080	/* placeholder for custom variable */
+#define GUC_SUPERUSER_ONLY		0x0100	/* show only to superusers */
 
 /* bit values in status field */
 #define GUC_HAVE_TENTATIVE	0x0001		/* tentative value is defined */

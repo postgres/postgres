@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.245 2004/10/17 22:01:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.246 2004/10/22 19:48:19 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1522,7 +1522,8 @@ static struct config_string ConfigureNamesString[] =
 			gettext_noop("If a dynamically loadable module needs to be opened and "
 						 "the specified name does not have a directory component (i.e., the "
 						 "name does not contain a slash), the system will search this path for "
-						 "the specified file.")
+						 "the specified file."),
+			GUC_SUPERUSER_ONLY
 		},
 		&Dynamic_library_path,
 		"$libdir", NULL, NULL
@@ -1531,7 +1532,8 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"krb_server_keyfile", PGC_POSTMASTER, CONN_AUTH_SECURITY,
 			gettext_noop("Sets the location of the Kerberos server key file."),
-			NULL
+			NULL,
+			GUC_SUPERUSER_ONLY
 		},
 		&pg_krb_server_keyfile,
 		PG_KRB_SRVTAB, NULL, NULL
@@ -1608,7 +1610,7 @@ static struct config_string ConfigureNamesString[] =
 		{"preload_libraries", PGC_POSTMASTER, RESOURCES_KERNEL,
 			gettext_noop("Lists shared libraries to preload into server."),
 			NULL,
-			GUC_LIST_INPUT | GUC_LIST_QUOTE
+			GUC_LIST_INPUT | GUC_LIST_QUOTE | GUC_SUPERUSER_ONLY
 		},
 		&preload_libraries_string,
 		"", NULL, NULL
@@ -1680,7 +1682,8 @@ static struct config_string ConfigureNamesString[] =
 		{"log_directory", PGC_SIGHUP, LOGGING_WHERE,
 			gettext_noop("Sets the destination directory for log files."),
 			gettext_noop("May be specified as relative to the data directory "
-						 "or as absolute path.")
+						 "or as absolute path."),
+			GUC_SUPERUSER_ONLY
 		},
 		&Log_directory,
 		"pg_log", assign_canonical_path, NULL
@@ -1688,7 +1691,8 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"log_filename", PGC_SIGHUP, LOGGING_WHERE,
 			gettext_noop("Sets the file name pattern for log files."),
-			NULL
+			NULL,
+			GUC_SUPERUSER_ONLY
 		},
 		&Log_filename,
 		"postgresql-%Y-%m-%d_%H%M%S.log", NULL, NULL
@@ -1747,7 +1751,8 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"unix_socket_directory", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
 			gettext_noop("Sets the directory where the Unix-domain socket will be created."),
-			NULL
+			NULL,
+			GUC_SUPERUSER_ONLY
 		},
 		&UnixSocketDir,
 		"", assign_canonical_path, NULL
@@ -1774,7 +1779,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"custom_variable_classes", PGC_POSTMASTER, RESOURCES_KERNEL,
-			gettext_noop("Sets the list of known custom variable classes"),
+			gettext_noop("Sets the list of known custom variable classes."),
 			NULL,
 			GUC_LIST_INPUT | GUC_LIST_QUOTE
 		},
@@ -1785,7 +1790,8 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"data_directory", PGC_POSTMASTER, FILE_LOCATIONS,
 		 gettext_noop("Sets the server's data directory."),
-		 NULL
+		 NULL,
+		 GUC_SUPERUSER_ONLY
 		},
 		&data_directory,
 		NULL, NULL, NULL
@@ -1795,7 +1801,7 @@ static struct config_string ConfigureNamesString[] =
 		{"config_file", PGC_POSTMASTER, FILE_LOCATIONS,
 		 gettext_noop("Sets the server's main configuration file."),
 		 NULL,
-		 GUC_DISALLOW_IN_FILE
+		 GUC_DISALLOW_IN_FILE | GUC_SUPERUSER_ONLY
 		},
 		&ConfigFileName,
 		NULL, NULL, NULL
@@ -1804,7 +1810,8 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"hba_file", PGC_POSTMASTER, FILE_LOCATIONS,
 		 gettext_noop("Sets the server's \"hba\" configuration file"),
-		 NULL
+		 NULL,
+		 GUC_SUPERUSER_ONLY
 		},
 		&HbaFileName,
 		NULL, NULL, NULL
@@ -1813,7 +1820,8 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"ident_file", PGC_POSTMASTER, FILE_LOCATIONS,
 		 gettext_noop("Sets the server's \"ident\" configuration file"),
-		 NULL
+		 NULL,
+		 GUC_SUPERUSER_ONLY
 		},
 		&IdentFileName,
 		NULL, NULL, NULL
@@ -1822,7 +1830,8 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"external_pid_file", PGC_POSTMASTER, FILE_LOCATIONS,
 		 gettext_noop("Writes the postmaster PID to the specified file."),
-		 NULL
+		 NULL,
+		 GUC_SUPERUSER_ONLY
 		},
 		&external_pid_file,
 		NULL, assign_canonical_path, NULL
@@ -1874,6 +1883,8 @@ static int	guc_var_compare(const void *a, const void *b);
 static int	guc_name_compare(const char *namea, const char *nameb);
 static void push_old_value(struct config_generic * gconf);
 static void ReportGUCOption(struct config_generic * record);
+static void ShowGUCConfigOption(const char *name, DestReceiver *dest);
+static void ShowAllGUCConfig(DestReceiver *dest);
 static char *_ShowOption(struct config_generic * record);
 static bool check_userlimit_privilege(struct config_generic *record,
 									  GucSource source, int elevel);
@@ -3966,6 +3977,10 @@ GetConfigOption(const char *name)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 		   errmsg("unrecognized configuration parameter \"%s\"", name)));
+	if ((record->flags & GUC_SUPERUSER_ONLY) && !superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to examine \"%s\"", name)));
 
 	switch (record->vartype)
 	{
@@ -4002,6 +4017,10 @@ GetConfigOptionResetString(const char *name)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 		   errmsg("unrecognized configuration parameter \"%s\"", name)));
+	if ((record->flags & GUC_SUPERUSER_ONLY) && !superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to examine \"%s\"", name)));
 
 	switch (record->vartype)
 	{
@@ -4268,8 +4287,7 @@ define_custom_variable(struct config_generic * variable)
 }
 
 static void
-init_custom_variable(
-					 struct config_generic * gen,
+init_custom_variable(struct config_generic * gen,
 					 const char *name,
 					 const char *short_desc,
 					 const char *long_desc,
@@ -4462,7 +4480,7 @@ ResetPGVariable(const char *name)
 /*
  * SHOW command
  */
-void
+static void
 ShowGUCConfigOption(const char *name, DestReceiver *dest)
 {
 	TupOutputState *tstate;
@@ -4490,9 +4508,10 @@ ShowGUCConfigOption(const char *name, DestReceiver *dest)
 /*
  * SHOW ALL command
  */
-void
+static void
 ShowAllGUCConfig(DestReceiver *dest)
 {
+	bool		am_superuser = superuser();
 	int			i;
 	TupOutputState *tstate;
 	TupleDesc	tupdesc;
@@ -4512,7 +4531,8 @@ ShowAllGUCConfig(DestReceiver *dest)
 	{
 		struct config_generic *conf = guc_variables[i];
 
-		if (conf->flags & GUC_NO_SHOW_ALL)
+		if ((conf->flags & GUC_NO_SHOW_ALL) ||
+			((conf->flags & GUC_SUPERUSER_ONLY) && !am_superuser))
 			continue;
 
 		/* assign to the values array */
@@ -4544,6 +4564,10 @@ GetConfigOptionByName(const char *name, const char **varname)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 		   errmsg("unrecognized configuration parameter \"%s\"", name)));
+	if ((record->flags & GUC_SUPERUSER_ONLY) && !superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to examine \"%s\"", name)));
 
 	if (varname)
 		*varname = record->name;
@@ -4567,7 +4591,13 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 	conf = guc_variables[varnum];
 
 	if (noshow)
-		*noshow = (conf->flags & GUC_NO_SHOW_ALL) ? true : false;
+	{
+		if ((conf->flags & GUC_NO_SHOW_ALL) ||
+			((conf->flags & GUC_SUPERUSER_ONLY) && !superuser()))
+			*noshow = true;
+		else
+			*noshow = false;
+	}
 
 	/* first get the generic attributes */
 
