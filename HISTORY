@@ -258,7 +258,7 @@ Document service capability, and add sample file (Bruce)
 Make PQsetdbLogin() have the same defaults as PQconnectdb() (Tom)
 Allow libpq to cleanly fail when result sets are too large (Tom)
 Improve performance of PGunescapeBytea() (Ben Lamb)
-Allow threaded with --enable-thread-safety (Lee Kindness, Bruce)
+Allow threaded with --enable-thread-safety (Lee Kindness, Philip Yarra)
 Allow pqInternalNotice() to accept a format string and args instead of
   just a preformatted message (Tom, Sean Chittenden)
 Allow control SSL negotiation with sslmode values "disable", "allow", 
