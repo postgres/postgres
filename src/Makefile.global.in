@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.49 1998/10/13 16:30:45 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.50 1998/10/14 16:02:10 thomas Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -191,6 +191,7 @@ BACKSLASH_C= @BACKSLASH_C@
 # See the subdirectory template for default settings for these
 #-------------------------------------------------------------
 CC= @CC@
+CPP= @CPP@
 YFLAGS= @YFLAGS@
 YACC= @YACC@
 LEX= @LEX@

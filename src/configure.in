@@ -363,6 +363,44 @@ AC_CONFIG_HEADER(include/config.h)
 dnl Checks for programs.
 AC_PROG_CPP
 
+dnl Check to see what flags are required to get stdin into cpp
+AC_DEFUN(AC_TRY_CPPSTDIN,
+	[AC_REQUIRE_CPP()dnl
+	cat > conftest.$ac_ext <<EOF
+[#]line __oline__ "configure"
+#include "confdefs.h"
+[$1]
+EOF
+	ac_try="$ac_cpp $CPPSTDIN <conftest.$ac_ext >/dev/null 2>conftest.out"
+	AC_TRY_EVAL(ac_try)
+	ac_err=`grep -v '^ *+' conftest.out`
+	if test -z "$ac_err"; then
+	  ifelse([$2], , :, [rm -rf conftest*
+	  $2])
+	else
+	  echo "$ac_err" >&AC_FD_CC
+	  echo "configure: failed program was:" >&AC_FD_CC
+	  cat conftest.$ac_ext >&AC_FD_CC
+	ifelse([$3], , , [  rm -rf conftest*
+	  $3
+])dnl
+fi
+rm -f conftest*])
+
+AC_MSG_CHECKING(how to use cpp with stdin)
+if test -z "$CPPSTDIN"; then
+AC_CACHE_VAL(ac_cv_cpp_stdin,
+	[  CPPSTDIN=""
+	  AC_TRY_CPPSTDIN([#include <assert.h>
+		Syntax Error], , CPPSTDIN="-")
+	  ac_cv_cpp_stdin="$CPPSTDIN"])
+	  CPPSTDIN="$ac_cv_cpp_stdin"
+else
+  ac_cv_cpp_stdin="$CPPSTDIN"
+fi
+AC_MSG_RESULT($CPP $CPPSTDIN)
+AC_SUBST(CPPSTDIN)
+
 AC_SUBST(PORTNAME)
 AC_SUBST(SRCDIR)
 AC_SUBST(LDFLAGS)
@@ -865,7 +903,8 @@ AC_CONFIG_HEADER(interfaces/odbc/config.h)
 AC_OUTPUT(
 	GNUmakefile
 	Makefile.global
-	backend/port/Makefile 
+	backend/port/Makefile
+	backend/catalog/genbki.sh
 	backend/utils/Gen_fmgrtab.sh
 	bin/pg_dump/Makefile
 	bin/pg_version/Makefile
