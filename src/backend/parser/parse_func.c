@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.41 1999/03/16 04:25:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.42 1999/03/16 20:15:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -587,6 +587,8 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			/* strip off quotes, keep case */
 			seqrel = pstrdup(seqrel+1);
 			seqrel[strlen(seqrel)-1] = '\0';
+			pfree(DatumGetPointer(seq->constvalue));
+			seq->constvalue = (Datum)textin(seqrel);
 		}
 		else
 		{
