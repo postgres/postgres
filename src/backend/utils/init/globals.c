@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.67 2002/09/04 20:31:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.68 2002/10/03 17:07:53 momjian Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -65,10 +65,6 @@ bool		HasCTZSet = false;
 bool		CDayLight = false;
 int			CTimeZone = 0;
 char		CTZName[MAXTZLEN + 1] = "";
-
-char		DateFormat[20] = "%d-%m-%Y";		/* mjl: sizes! or better
-												 * malloc? XXX */
-char		FloatFormat[20] = "%f";
 
 bool		enableFsync = true;
 bool		allowSystemTableMods = false;
