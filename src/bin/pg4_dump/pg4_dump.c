@@ -289,19 +289,19 @@ getTypes(int *numTypes)
     i_typbyval = PQfnumberGroup(pbuf,0,"typbyval");
 
     for (i=0;i<ntups;i++) {
-	tinfo[i].oid = dupstr(PQgetvalue(pbuf,i,i_oid));
-	tinfo[i].typowner = dupstr(PQgetvalue(pbuf,i,i_typowner));
-	tinfo[i].typname = dupstr(PQgetvalue(pbuf,i,i_typname));
-	tinfo[i].typlen = dupstr(PQgetvalue(pbuf,i,i_typlen));
-	tinfo[i].typprtlen = dupstr(PQgetvalue(pbuf,i,i_typprtlen));
-	tinfo[i].typinput = dupstr(PQgetvalue(pbuf,i,i_typinput));
-	tinfo[i].typoutput = dupstr(PQgetvalue(pbuf,i,i_typoutput));
-	tinfo[i].typreceive = dupstr(PQgetvalue(pbuf,i,i_typreceive));
-	tinfo[i].typsend = dupstr(PQgetvalue(pbuf,i,i_typsend));
-	tinfo[i].typelem = dupstr(PQgetvalue(pbuf,i,i_typelem));
-	tinfo[i].typdelim = dupstr(PQgetvalue(pbuf,i,i_typdelim));
-	tinfo[i].typdefault = dupstr(PQgetvalue(pbuf,i,i_typdefault));
-	tinfo[i].typrelid = dupstr(PQgetvalue(pbuf,i,i_typrelid));
+	tinfo[i].oid = strdup(PQgetvalue(pbuf,i,i_oid));
+	tinfo[i].typowner = strdup(PQgetvalue(pbuf,i,i_typowner));
+	tinfo[i].typname = strdup(PQgetvalue(pbuf,i,i_typname));
+	tinfo[i].typlen = strdup(PQgetvalue(pbuf,i,i_typlen));
+	tinfo[i].typprtlen = strdup(PQgetvalue(pbuf,i,i_typprtlen));
+	tinfo[i].typinput = strdup(PQgetvalue(pbuf,i,i_typinput));
+	tinfo[i].typoutput = strdup(PQgetvalue(pbuf,i,i_typoutput));
+	tinfo[i].typreceive = strdup(PQgetvalue(pbuf,i,i_typreceive));
+	tinfo[i].typsend = strdup(PQgetvalue(pbuf,i,i_typsend));
+	tinfo[i].typelem = strdup(PQgetvalue(pbuf,i,i_typelem));
+	tinfo[i].typdelim = strdup(PQgetvalue(pbuf,i,i_typdelim));
+	tinfo[i].typdefault = strdup(PQgetvalue(pbuf,i,i_typdefault));
+	tinfo[i].typrelid = strdup(PQgetvalue(pbuf,i,i_typrelid));
 
 	if (strcmp(PQgetvalue(pbuf,i,i_typbyval), "f") == 0)
 	    tinfo[i].passedbyvalue = 0;
@@ -390,19 +390,19 @@ getOperators(int *numOprs)
     i_oprrsortop = PQfnumberGroup(pbuf,0,"oprrsortop");
 
     for (i=0;i<ntups;i++) {
-	oprinfo[i].oid = dupstr(PQgetvalue(pbuf,i,i_oid));
-	oprinfo[i].oprname = dupstr(PQgetvalue(pbuf,i,i_oprname));
-	oprinfo[i].oprkind = dupstr(PQgetvalue(pbuf,i,i_oprkind));
-	oprinfo[i].oprcode = dupstr(PQgetvalue(pbuf,i,i_oprcode));
-	oprinfo[i].oprleft = dupstr(PQgetvalue(pbuf,i,i_oprleft));
-	oprinfo[i].oprright = dupstr(PQgetvalue(pbuf,i,i_oprright));
-	oprinfo[i].oprcom = dupstr(PQgetvalue(pbuf,i,i_oprcom));
-	oprinfo[i].oprnegate = dupstr(PQgetvalue(pbuf,i,i_oprnegate));
-	oprinfo[i].oprrest = dupstr(PQgetvalue(pbuf,i,i_oprrest));
-	oprinfo[i].oprjoin = dupstr(PQgetvalue(pbuf,i,i_oprjoin));
-	oprinfo[i].oprcanhash = dupstr(PQgetvalue(pbuf,i,i_oprcanhash));
-	oprinfo[i].oprlsortop = dupstr(PQgetvalue(pbuf,i,i_oprlsortop));
-	oprinfo[i].oprrsortop = dupstr(PQgetvalue(pbuf,i,i_oprrsortop));
+	oprinfo[i].oid = strdup(PQgetvalue(pbuf,i,i_oid));
+	oprinfo[i].oprname = strdup(PQgetvalue(pbuf,i,i_oprname));
+	oprinfo[i].oprkind = strdup(PQgetvalue(pbuf,i,i_oprkind));
+	oprinfo[i].oprcode = strdup(PQgetvalue(pbuf,i,i_oprcode));
+	oprinfo[i].oprleft = strdup(PQgetvalue(pbuf,i,i_oprleft));
+	oprinfo[i].oprright = strdup(PQgetvalue(pbuf,i,i_oprright));
+	oprinfo[i].oprcom = strdup(PQgetvalue(pbuf,i,i_oprcom));
+	oprinfo[i].oprnegate = strdup(PQgetvalue(pbuf,i,i_oprnegate));
+	oprinfo[i].oprrest = strdup(PQgetvalue(pbuf,i,i_oprrest));
+	oprinfo[i].oprjoin = strdup(PQgetvalue(pbuf,i,i_oprjoin));
+	oprinfo[i].oprcanhash = strdup(PQgetvalue(pbuf,i,i_oprcanhash));
+	oprinfo[i].oprlsortop = strdup(PQgetvalue(pbuf,i,i_oprlsortop));
+	oprinfo[i].oprrsortop = strdup(PQgetvalue(pbuf,i,i_oprrsortop));
     }
 
     PQclear(res+1);
@@ -471,16 +471,16 @@ getAggregates(int *numAggs)
     i_agginitval2 = PQfnumberGroup(pbuf,0,"agginitval2");
 
     for (i=0;i<ntups;i++) {
-	agginfo[i].oid = dupstr(PQgetvalue(pbuf,i,i_oid));
-	agginfo[i].aggname = dupstr(PQgetvalue(pbuf,i,i_aggname));
-	agginfo[i].aggtransfn1 = dupstr(PQgetvalue(pbuf,i,i_aggtransfn1));
-	agginfo[i].aggtransfn2 = dupstr(PQgetvalue(pbuf,i,i_aggtransfn2));
-	agginfo[i].aggfinalfn = dupstr(PQgetvalue(pbuf,i,i_aggfinalfn));
-	agginfo[i].aggtranstype1 = dupstr(PQgetvalue(pbuf,i,i_aggtranstype1));
-	agginfo[i].aggbasetype = dupstr(PQgetvalue(pbuf,i,i_aggbasetype));
-	agginfo[i].aggtranstype2 = dupstr(PQgetvalue(pbuf,i,i_aggtranstype2));
-	agginfo[i].agginitval1 = dupstr(PQgetvalue(pbuf,i,i_agginitval1));
-	agginfo[i].agginitval2 = dupstr(PQgetvalue(pbuf,i,i_agginitval2));
+	agginfo[i].oid = strdup(PQgetvalue(pbuf,i,i_oid));
+	agginfo[i].aggname = strdup(PQgetvalue(pbuf,i,i_aggname));
+	agginfo[i].aggtransfn1 = strdup(PQgetvalue(pbuf,i,i_aggtransfn1));
+	agginfo[i].aggtransfn2 = strdup(PQgetvalue(pbuf,i,i_aggtransfn2));
+	agginfo[i].aggfinalfn = strdup(PQgetvalue(pbuf,i,i_aggfinalfn));
+	agginfo[i].aggtranstype1 = strdup(PQgetvalue(pbuf,i,i_aggtranstype1));
+	agginfo[i].aggbasetype = strdup(PQgetvalue(pbuf,i,i_aggbasetype));
+	agginfo[i].aggtranstype2 = strdup(PQgetvalue(pbuf,i,i_aggtranstype2));
+	agginfo[i].agginitval1 = strdup(PQgetvalue(pbuf,i,i_agginitval1));
+	agginfo[i].agginitval2 = strdup(PQgetvalue(pbuf,i,i_agginitval2));
     }
 
     PQclear(res+1);
@@ -553,14 +553,14 @@ getFuncs(int *numFuncs)
     i_probin = PQfnumberGroup(pbuf,0,"probin");
     
     for (i=0;i<ntups;i++) {
-	finfo[i].oid = dupstr(PQgetvalue(pbuf,i,i_oid));
-	finfo[i].proname = dupstr(PQgetvalue(pbuf,i,i_proname));
-	finfo[i].proowner = dupstr(PQgetvalue(pbuf,i,i_proowner));
+	finfo[i].oid = strdup(PQgetvalue(pbuf,i,i_oid));
+	finfo[i].proname = strdup(PQgetvalue(pbuf,i,i_proname));
+	finfo[i].proowner = strdup(PQgetvalue(pbuf,i,i_proowner));
 
 	finfo[i].prosrc = checkForQuote(PQgetvalue(pbuf,i,i_prosrc));
-	finfo[i].probin = dupstr(PQgetvalue(pbuf,i,i_probin));
+	finfo[i].probin = strdup(PQgetvalue(pbuf,i,i_probin));
 
-	finfo[i].prorettype = dupstr(PQgetvalue(pbuf,i,i_prorettype));
+	finfo[i].prorettype = strdup(PQgetvalue(pbuf,i,i_prorettype));
 	finfo[i].retset = (strcmp(PQgetvalue(pbuf,i,i_proretset),"t") == 0);
 	finfo[i].nargs = atoi(PQgetvalue(pbuf,i,i_pronargs));
 	finfo[i].lang = (atoi(PQgetvalue(pbuf,i,i_prolang)) == C_PROLANG_OID);
@@ -624,9 +624,9 @@ getTables(int *numTables)
     i_relarch = PQfnumberGroup(pbuf,0,"relarch");
 
     for (i=0;i<ntups;i++) {
-	tblinfo[i].oid = dupstr(PQgetvalue(pbuf,i,i_oid));
-	tblinfo[i].relname = dupstr(PQgetvalue(pbuf,i,i_relname));
-	tblinfo[i].relarch = dupstr(PQgetvalue(pbuf,i,i_relarch));
+	tblinfo[i].oid = strdup(PQgetvalue(pbuf,i,i_oid));
+	tblinfo[i].relname = strdup(PQgetvalue(pbuf,i,i_relname));
+	tblinfo[i].relarch = strdup(PQgetvalue(pbuf,i,i_relarch));
     }
 
     PQclear(res+1);
@@ -677,8 +677,8 @@ getInherits(int *numInherits)
     i_inhparent = PQfnumberGroup(pbuf,0,"inhparent");
 
     for (i=0;i<ntups;i++) {
-	inhinfo[i].inhrel = dupstr(PQgetvalue(pbuf,i,i_inhrel));
-	inhinfo[i].inhparent = dupstr(PQgetvalue(pbuf,i,i_inhparent));
+	inhinfo[i].inhrel = strdup(PQgetvalue(pbuf,i,i_inhrel));
+	inhinfo[i].inhparent = strdup(PQgetvalue(pbuf,i,i_inhparent));
     }
 
     PQclear(res+1);
@@ -740,8 +740,8 @@ if (g_verbose)
 	tblinfo[i].parentRels = NULL;
 	tblinfo[i].numParents = 0;
 	for (j=0;j<ntups;j++) {
-	    tblinfo[i].attnames[j] = dupstr(PQgetvalue(pbuf,j,i_attname));
-	    tblinfo[i].typnames[j] = dupstr(PQgetvalue(pbuf,j,i_typname));
+	    tblinfo[i].attnames[j] = strdup(PQgetvalue(pbuf,j,i_attname));
+	    tblinfo[i].typnames[j] = strdup(PQgetvalue(pbuf,j,i_typname));
 	    tblinfo[i].inhAttrs[j] = 0; /* this flag is set in flagInhAttrs()*/
 	}
 	PQclear(res+1);
@@ -809,12 +809,12 @@ getIndices(int *numIndices)
     i_indclassname = PQfnumberGroup(pbuf,0,"indclassname");
 
     for (i=0;i<ntups;i++) {
-	indinfo[i].indexrelname = dupstr(PQgetvalue(pbuf,i,i_indexrelname));
-	indinfo[i].indrelname = dupstr(PQgetvalue(pbuf,i,i_indrelname));
-	indinfo[i].indamname = dupstr(PQgetvalue(pbuf,i,i_indamname));
-	indinfo[i].indproc = dupstr(PQgetvalue(pbuf,i,i_indproc));
-	indinfo[i].indkey = dupstr(PQgetvalue(pbuf,i,i_indkey));
-	indinfo[i].indclassname = dupstr(PQgetvalue(pbuf,i,i_indclassname));
+	indinfo[i].indexrelname = strdup(PQgetvalue(pbuf,i,i_indexrelname));
+	indinfo[i].indrelname = strdup(PQgetvalue(pbuf,i,i_indrelname));
+	indinfo[i].indamname = strdup(PQgetvalue(pbuf,i,i_indamname));
+	indinfo[i].indproc = strdup(PQgetvalue(pbuf,i,i_indproc));
+	indinfo[i].indkey = strdup(PQgetvalue(pbuf,i,i_indkey));
+	indinfo[i].indclassname = strdup(PQgetvalue(pbuf,i,i_indclassname));
     }
     PQclear(res+1);
     PQexec("end");
@@ -1368,7 +1368,7 @@ dumpIndices(FILE* fout, IndInfo* indinfo, int numIndices,
 		    indinfo[i].indproc);
 	    res = PQexec(q);
 	    pbuf = PQparray(res+1);
-	    funcname = dupstr(PQgetvalue(pbuf,0,
+	    funcname = strdup(PQgetvalue(pbuf,0,
 					 PQfnumberGroup(pbuf,0,"proname")));
 	    PQclear(res+1);
 	}
@@ -1594,7 +1594,7 @@ checkForQuote(char* s)
     }
     r[j] = '\0';
 
-    result = dupstr(r);
+    result = strdup(r);
     free(r);
 
     return result;

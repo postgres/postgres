@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.3 1996/08/06 20:23:14 julian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.4 1996/09/16 06:06:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,22 +57,6 @@ char *doubleTrim(char *s)
   return s;
 }
 
-/* dupstr : copies a string, while allocating space for it. 
-   the CALLER is responsible for freeing the space
-   returns NULL if the argument is NULL */
-char *dupstr(char *s)
-{
-  char *result;
-
-  if (s == NULL)
-    return NULL;
-
-  result = (char*)malloc(strlen(s)+1);
-  strcpy(result, s);
-  return result;
-}
-
-
 #ifdef STRINGUTILS_TEST
 void testStringUtils()
 {
@@ -87,13 +71,13 @@ void testStringUtils()
   while (tests[i]!=NULL_STR)
     {
       char *t;
-      t = dupstr(tests[i]);
+      t = strdup(tests[i]);
       printf("leftTrim(%s) = ",t);
       printf("%sEND\n", leftTrim(t));
-      t = dupstr(tests[i]);
+      t = strdup(tests[i]);
       printf("rightTrim(%s) = ",t);
       printf("%sEND\n", rightTrim(t));
-      t = dupstr(tests[i]);
+      t = strdup(tests[i]);
       printf("doubleTrim(%s) = ",t);
       printf("%sEND\n", doubleTrim(t));
       i++;

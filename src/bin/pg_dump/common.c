@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.4 1996/08/24 20:49:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.5 1996/09/16 06:05:47 scrappy Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -21,6 +21,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/param.h>	/* for MAXHOSTNAMELEN on most */
 #ifdef PORTNAME_sparc_solaris
 #include <netdb.h>	/* for MAXHOSTNAMELEN on some */
@@ -30,22 +31,6 @@
 #include "libpq-fe.h"
 
 #include "pg_dump.h"
-
-/* dupstr : copies a string, while allocating space for it. 
-   the CALLER is responsible for freeing the space
-   returns NULL if the argument is NULL*/
-char* 
-dupstr(char *s)
-{
-  char* result;
-
-  if (s == NULL)
-    return NULL;
-
-  result = (char*)malloc(strlen(s)+1);
-  strcpy(result, s);
-  return result;
-}
 
 /*
  * findTypeByOid 
@@ -160,7 +145,7 @@ parseArgTypes(char **argtypes, char* str)
     while ( (s = *str) != '\0') {
 	if (s == ' ') {
 	    temp[j] = '\0';
-	    argtypes[argNum] = dupstr(temp);
+	    argtypes[argNum] = strdup(temp);
 	    argNum++;
 	    j = 0;
 	} else {
@@ -171,7 +156,7 @@ parseArgTypes(char **argtypes, char* str)
     }
     if (j != 0)  {
 	temp[j] = '\0';
-        argtypes[argNum] = dupstr(temp);
+        argtypes[argNum] = strdup(temp);
     }
     
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.20 1996/08/21 00:22:41 julian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.21 1996/09/16 06:06:11 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -631,7 +631,7 @@ HandleSlashCmds(PsqlSettings *settings,
 	if (!optarg)
 		settings->opt.caption=NULL;
 	else
-		if (!(settings->opt.caption=dupstr(optarg)))
+		if (!(settings->opt.caption=strdup(optarg)))
 		{
 			perror("malloc");
 			exit(1);
@@ -787,7 +787,7 @@ HandleSlashCmds(PsqlSettings *settings,
 		fs=optarg;
         if (settings->opt.fieldSep);
 		free(settings->opt.fieldSep);
-	if (!(settings->opt.fieldSep=dupstr(fs)))
+	if (!(settings->opt.fieldSep=strdup(fs)))
 	{
 		perror("malloc");
 		exit(1);
@@ -903,13 +903,13 @@ HandleSlashCmds(PsqlSettings *settings,
           settings->opt.html3 = settings->opt.expanded = 0;
           settings->opt.align = settings->opt.header = 1;
 	  free(settings->opt.fieldSep);
-	  settings->opt.fieldSep=dupstr("|");
+	  settings->opt.fieldSep=strdup("|");
 	  if (!settings->quiet)
 	      fprintf(stderr, "field separater changed to '%s'\n", settings->opt.fieldSep);
       } else
       {
 	  free(settings->opt.fieldSep);
-	  settings->opt.fieldSep=dupstr(DEFAULT_FIELD_SEP);
+	  settings->opt.fieldSep=strdup(DEFAULT_FIELD_SEP);
 	  if (!settings->quiet)
 	      fprintf(stderr, "field separater changed to '%s'\n", settings->opt.fieldSep);
       }
@@ -923,7 +923,7 @@ HandleSlashCmds(PsqlSettings *settings,
 	if (!optarg)
 		settings->opt.tableOpt=NULL;
 	else
-		if (!(settings->opt.tableOpt=dupstr(optarg)))
+		if (!(settings->opt.tableOpt=strdup(optarg)))
 		{
 			perror("malloc");
 			exit(1);
@@ -1144,7 +1144,7 @@ main(int argc, char **argv)
   settings.opt.align = 1;
   settings.opt.header = 1;
   settings.queryFout = stdout;
-  settings.opt.fieldSep=dupstr(DEFAULT_FIELD_SEP);
+  settings.opt.fieldSep=strdup(DEFAULT_FIELD_SEP);
   settings.opt.pager = 1;
   if (!isatty(0) || !isatty(1))
   	settings.quiet = settings.notty = 1;

@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.7 1996/08/24 20:49:22 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.8 1996/09/16 06:05:54 scrappy Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -305,19 +305,19 @@ getTypes(int *numTypes)
     i_typbyval = PQfnumber(res,"typbyval");
 
     for (i=0;i<ntups;i++) {
-	tinfo[i].oid = dupstr(PQgetvalue(res,i,i_oid));
-	tinfo[i].typowner = dupstr(PQgetvalue(res,i,i_typowner));
-	tinfo[i].typname = dupstr(PQgetvalue(res,i,i_typname));
-	tinfo[i].typlen = dupstr(PQgetvalue(res,i,i_typlen));
-	tinfo[i].typprtlen = dupstr(PQgetvalue(res,i,i_typprtlen));
-	tinfo[i].typinput = dupstr(PQgetvalue(res,i,i_typinput));
-	tinfo[i].typoutput = dupstr(PQgetvalue(res,i,i_typoutput));
-	tinfo[i].typreceive = dupstr(PQgetvalue(res,i,i_typreceive));
-	tinfo[i].typsend = dupstr(PQgetvalue(res,i,i_typsend));
-	tinfo[i].typelem = dupstr(PQgetvalue(res,i,i_typelem));
-	tinfo[i].typdelim = dupstr(PQgetvalue(res,i,i_typdelim));
-	tinfo[i].typdefault = dupstr(PQgetvalue(res,i,i_typdefault));
-	tinfo[i].typrelid = dupstr(PQgetvalue(res,i,i_typrelid));
+	tinfo[i].oid = strdup(PQgetvalue(res,i,i_oid));
+	tinfo[i].typowner = strdup(PQgetvalue(res,i,i_typowner));
+	tinfo[i].typname = strdup(PQgetvalue(res,i,i_typname));
+	tinfo[i].typlen = strdup(PQgetvalue(res,i,i_typlen));
+	tinfo[i].typprtlen = strdup(PQgetvalue(res,i,i_typprtlen));
+	tinfo[i].typinput = strdup(PQgetvalue(res,i,i_typinput));
+	tinfo[i].typoutput = strdup(PQgetvalue(res,i,i_typoutput));
+	tinfo[i].typreceive = strdup(PQgetvalue(res,i,i_typreceive));
+	tinfo[i].typsend = strdup(PQgetvalue(res,i,i_typsend));
+	tinfo[i].typelem = strdup(PQgetvalue(res,i,i_typelem));
+	tinfo[i].typdelim = strdup(PQgetvalue(res,i,i_typdelim));
+	tinfo[i].typdefault = strdup(PQgetvalue(res,i,i_typdefault));
+	tinfo[i].typrelid = strdup(PQgetvalue(res,i,i_typrelid));
 
 	if (strcmp(PQgetvalue(res,i,i_typbyval), "f") == 0)
 	    tinfo[i].passedbyvalue = 0;
@@ -415,19 +415,19 @@ getOperators(int *numOprs)
     i_oprrsortop = PQfnumber(res,"oprrsortop");
 
     for (i=0;i<ntups;i++) {
-	oprinfo[i].oid = dupstr(PQgetvalue(res,i,i_oid));
-	oprinfo[i].oprname = dupstr(PQgetvalue(res,i,i_oprname));
-	oprinfo[i].oprkind = dupstr(PQgetvalue(res,i,i_oprkind));
-	oprinfo[i].oprcode = dupstr(PQgetvalue(res,i,i_oprcode));
-	oprinfo[i].oprleft = dupstr(PQgetvalue(res,i,i_oprleft));
-	oprinfo[i].oprright = dupstr(PQgetvalue(res,i,i_oprright));
-	oprinfo[i].oprcom = dupstr(PQgetvalue(res,i,i_oprcom));
-	oprinfo[i].oprnegate = dupstr(PQgetvalue(res,i,i_oprnegate));
-	oprinfo[i].oprrest = dupstr(PQgetvalue(res,i,i_oprrest));
-	oprinfo[i].oprjoin = dupstr(PQgetvalue(res,i,i_oprjoin));
-	oprinfo[i].oprcanhash = dupstr(PQgetvalue(res,i,i_oprcanhash));
-	oprinfo[i].oprlsortop = dupstr(PQgetvalue(res,i,i_oprlsortop));
-	oprinfo[i].oprrsortop = dupstr(PQgetvalue(res,i,i_oprrsortop));
+	oprinfo[i].oid = strdup(PQgetvalue(res,i,i_oid));
+	oprinfo[i].oprname = strdup(PQgetvalue(res,i,i_oprname));
+	oprinfo[i].oprkind = strdup(PQgetvalue(res,i,i_oprkind));
+	oprinfo[i].oprcode = strdup(PQgetvalue(res,i,i_oprcode));
+	oprinfo[i].oprleft = strdup(PQgetvalue(res,i,i_oprleft));
+	oprinfo[i].oprright = strdup(PQgetvalue(res,i,i_oprright));
+	oprinfo[i].oprcom = strdup(PQgetvalue(res,i,i_oprcom));
+	oprinfo[i].oprnegate = strdup(PQgetvalue(res,i,i_oprnegate));
+	oprinfo[i].oprrest = strdup(PQgetvalue(res,i,i_oprrest));
+	oprinfo[i].oprjoin = strdup(PQgetvalue(res,i,i_oprjoin));
+	oprinfo[i].oprcanhash = strdup(PQgetvalue(res,i,i_oprcanhash));
+	oprinfo[i].oprlsortop = strdup(PQgetvalue(res,i,i_oprlsortop));
+	oprinfo[i].oprrsortop = strdup(PQgetvalue(res,i,i_oprrsortop));
     }
 
     PQclear(res);
@@ -504,16 +504,16 @@ getAggregates(int *numAggs)
     i_agginitval2 = PQfnumber(res,"agginitval2");
 
     for (i=0;i<ntups;i++) {
-	agginfo[i].oid = dupstr(PQgetvalue(res,i,i_oid));
-	agginfo[i].aggname = dupstr(PQgetvalue(res,i,i_aggname));
-	agginfo[i].aggtransfn1 = dupstr(PQgetvalue(res,i,i_aggtransfn1));
-	agginfo[i].aggtransfn2 = dupstr(PQgetvalue(res,i,i_aggtransfn2));
-	agginfo[i].aggfinalfn = dupstr(PQgetvalue(res,i,i_aggfinalfn));
-	agginfo[i].aggtranstype1 = dupstr(PQgetvalue(res,i,i_aggtranstype1));
-	agginfo[i].aggbasetype = dupstr(PQgetvalue(res,i,i_aggbasetype));
-	agginfo[i].aggtranstype2 = dupstr(PQgetvalue(res,i,i_aggtranstype2));
-	agginfo[i].agginitval1 = dupstr(PQgetvalue(res,i,i_agginitval1));
-	agginfo[i].agginitval2 = dupstr(PQgetvalue(res,i,i_agginitval2));
+	agginfo[i].oid = strdup(PQgetvalue(res,i,i_oid));
+	agginfo[i].aggname = strdup(PQgetvalue(res,i,i_aggname));
+	agginfo[i].aggtransfn1 = strdup(PQgetvalue(res,i,i_aggtransfn1));
+	agginfo[i].aggtransfn2 = strdup(PQgetvalue(res,i,i_aggtransfn2));
+	agginfo[i].aggfinalfn = strdup(PQgetvalue(res,i,i_aggfinalfn));
+	agginfo[i].aggtranstype1 = strdup(PQgetvalue(res,i,i_aggtranstype1));
+	agginfo[i].aggbasetype = strdup(PQgetvalue(res,i,i_aggbasetype));
+	agginfo[i].aggtranstype2 = strdup(PQgetvalue(res,i,i_aggtranstype2));
+	agginfo[i].agginitval1 = strdup(PQgetvalue(res,i,i_agginitval1));
+	agginfo[i].agginitval2 = strdup(PQgetvalue(res,i,i_agginitval2));
     }
 
     PQclear(res);
@@ -591,14 +591,14 @@ getFuncs(int *numFuncs)
     i_probin = PQfnumber(res,"probin");
     
     for (i=0;i<ntups;i++) {
-	finfo[i].oid = dupstr(PQgetvalue(res,i,i_oid));
-	finfo[i].proname = dupstr(PQgetvalue(res,i,i_proname));
-	finfo[i].proowner = dupstr(PQgetvalue(res,i,i_proowner));
+	finfo[i].oid = strdup(PQgetvalue(res,i,i_oid));
+	finfo[i].proname = strdup(PQgetvalue(res,i,i_proname));
+	finfo[i].proowner = strdup(PQgetvalue(res,i,i_proowner));
 
 	finfo[i].prosrc = checkForQuote(PQgetvalue(res,i,i_prosrc));
-	finfo[i].probin = dupstr(PQgetvalue(res,i,i_probin));
+	finfo[i].probin = strdup(PQgetvalue(res,i,i_probin));
 
-	finfo[i].prorettype = dupstr(PQgetvalue(res,i,i_prorettype));
+	finfo[i].prorettype = strdup(PQgetvalue(res,i,i_prorettype));
 	finfo[i].retset = (strcmp(PQgetvalue(res,i,i_proretset),"t") == 0);
 	finfo[i].nargs = atoi(PQgetvalue(res,i,i_pronargs));
 	finfo[i].lang = (atoi(PQgetvalue(res,i,i_prolang)) == C_PROLANG_OID);
@@ -673,9 +673,9 @@ getTables(int *numTables)
     i_relarch = PQfnumber(res,"relarch");
 
     for (i=0;i<ntups;i++) {
-	tblinfo[i].oid = dupstr(PQgetvalue(res,i,i_oid));
-	tblinfo[i].relname = dupstr(PQgetvalue(res,i,i_relname));
-	tblinfo[i].relarch = dupstr(PQgetvalue(res,i,i_relarch));
+	tblinfo[i].oid = strdup(PQgetvalue(res,i,i_oid));
+	tblinfo[i].relname = strdup(PQgetvalue(res,i,i_relname));
+	tblinfo[i].relarch = strdup(PQgetvalue(res,i,i_relarch));
     }
 
     PQclear(res);
@@ -735,8 +735,8 @@ getInherits(int *numInherits)
     i_inhparent = PQfnumber(res,"inhparent");
 
     for (i=0;i<ntups;i++) {
-	inhinfo[i].inhrel = dupstr(PQgetvalue(res,i,i_inhrel));
-	inhinfo[i].inhparent = dupstr(PQgetvalue(res,i,i_inhparent));
+	inhinfo[i].inhrel = strdup(PQgetvalue(res,i,i_inhrel));
+	inhinfo[i].inhparent = strdup(PQgetvalue(res,i,i_inhparent));
     }
 
     PQclear(res);
@@ -804,8 +804,8 @@ getTableAttrs(TableInfo* tblinfo, int numTables)
 	tblinfo[i].parentRels = NULL;
 	tblinfo[i].numParents = 0;
 	for (j=0;j<ntups;j++) {
-	    tblinfo[i].attnames[j] = dupstr(PQgetvalue(res,j,i_attname));
-	    tblinfo[i].typnames[j] = dupstr(PQgetvalue(res,j,i_typname));
+	    tblinfo[i].attnames[j] = strdup(PQgetvalue(res,j,i_attname));
+	    tblinfo[i].typnames[j] = strdup(PQgetvalue(res,j,i_typname));
 	    tblinfo[i].attlen[j] = atoi(PQgetvalue(res,j,i_attlen));
 	    if (tblinfo[i].attlen[j] > 0) 
 	      tblinfo[i].attlen[j] = tblinfo[i].attlen[j] - 4;
@@ -883,12 +883,12 @@ getIndices(int *numIndices)
     i_indclassname = PQfnumber(res,"indclassname");
 
     for (i=0;i<ntups;i++) {
-	indinfo[i].indexrelname = dupstr(PQgetvalue(res,i,i_indexrelname));
-	indinfo[i].indrelname = dupstr(PQgetvalue(res,i,i_indrelname));
-	indinfo[i].indamname = dupstr(PQgetvalue(res,i,i_indamname));
-	indinfo[i].indproc = dupstr(PQgetvalue(res,i,i_indproc));
-	indinfo[i].indkey = dupstr(PQgetvalue(res,i,i_indkey));
-	indinfo[i].indclassname = dupstr(PQgetvalue(res,i,i_indclassname));
+	indinfo[i].indexrelname = strdup(PQgetvalue(res,i,i_indexrelname));
+	indinfo[i].indrelname = strdup(PQgetvalue(res,i,i_indrelname));
+	indinfo[i].indamname = strdup(PQgetvalue(res,i,i_indamname));
+	indinfo[i].indproc = strdup(PQgetvalue(res,i,i_indproc));
+	indinfo[i].indkey = strdup(PQgetvalue(res,i,i_indkey));
+	indinfo[i].indclassname = strdup(PQgetvalue(res,i,i_indclassname));
     }
     PQclear(res);
     res = PQexec(g_conn,"end");
@@ -1331,7 +1331,7 @@ dumpIndices(FILE* fout, IndInfo* indinfo, int numIndices,
 		    "SELECT proname from pg_proc where pg_proc.oid = '%s'::oid",
 		    indinfo[i].indproc);
 	    res = PQexec(g_conn, q);
-	    funcname = dupstr(PQgetvalue(res, 0,
+	    funcname = strdup(PQgetvalue(res, 0,
 					 PQfnumber(res,"proname")));
 	    PQclear(res);
 	}
@@ -1654,7 +1654,7 @@ checkForQuote(char* s)
     }
     r[j] = '\0';
 
-    result = dupstr(r);
+    result = strdup(r);
     free(r);
 
     return result;

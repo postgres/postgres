@@ -43,23 +43,6 @@ check_conn_and_db()
 }
 
 
-/* dupstr : copies a string, while allocating space for it. 
-   the CALLER is responsible for freeing the space
-   returns NULL if the argument is NULL*/
-char* 
-dupstr(char *s)
-{
-  char* result;
-
-  if (s == NULL)
-    return NULL;
-
-  result = (char*)malloc(strlen(s)+1);
-  strcpy(result, s);
-  return result;
-}
-
-
 /*
  * findTypeByOid 
  *    given an oid of a type, return its typename
@@ -173,7 +156,7 @@ parseArgTypes(char **argtypes, char* str)
     while ( (s = *str) != '\0') {
 	if (s == ' ') {
 	    temp[j] = '\0';
-	    argtypes[argNum] = dupstr(temp);
+	    argtypes[argNum] = strdup(temp);
 	    argNum++;
 	    j = 0;
 	} else {
@@ -184,7 +167,7 @@ parseArgTypes(char **argtypes, char* str)
     }
     if (j != 0)  {
 	temp[j] = '\0';
-        argtypes[argNum] = dupstr(temp);
+        argtypes[argNum] = strdup(temp);
     }
     
 }
