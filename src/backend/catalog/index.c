@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.73 1999/05/17 00:19:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.74 1999/05/17 00:27:45 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1187,7 +1187,7 @@ index_destroy(Oid indexId)
 	 */
 	ReleaseRelationBuffers(userindexRelation);
 
-	if (smgrunlink(userindexRelation) != SM_SUCCESS)
+	if (smgrunlink(DEFAULT_SMGR, userindexRelation) != SM_SUCCESS)
 		elog(ERROR, "amdestroyr: unlink: %m");
 
 	index_close(userindexRelation);
