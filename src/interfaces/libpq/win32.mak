@@ -11,7 +11,7 @@
 
 !IFDEF DEBUG
 OPT=/Od /Zi /MDd
-LOPT=/debug
+LOPT=/DEBUG
 DEBUGDEF=/D _DEBUG
 OUTFILENAME=libpqd
 !ELSE
@@ -41,15 +41,15 @@ CPP_OBJS=.\Release/
 !ENDIF
 
 
-ALL : "$(OUTDIR)\$(OUTFILENAME).lib" "$(OUTDIR)\$(OUTFILENAME).dll" 
+ALL : config "$(OUTDIR)\$(OUTFILENAME).lib" "$(OUTDIR)\$(OUTFILENAME).dll" 
 
 CLEAN :
 	-@erase "$(INTDIR)\getaddrinfo.obj"
+	-@erase "$(INTDIR)\pgstrcasecmp.obj"
 	-@erase "$(INTDIR)\thread.obj"
 	-@erase "$(INTDIR)\inet_aton.obj"
 	-@erase "$(INTDIR)\crypt.obj"
 	-@erase "$(INTDIR)\noblock.obj"
-	-@erase "$(INTDIR)\path.obj"
 	-@erase "$(INTDIR)\dllist.obj"
 	-@erase "$(INTDIR)\md5.obj"
 	-@erase "$(INTDIR)\ip.obj"
@@ -75,6 +75,14 @@ CLEAN :
 	-@erase "$(INTDIR)\wchar.obj"
 	-@erase "$(INTDIR)\encnames.obj"
 
+
+
+config: ..\..\include\pg_config.h
+
+..\..\include\pg_config.h: ..\..\include\pg_config.h.win32
+	copy ..\..\include\pg_config.h.win32 ..\..\include\pg_config.h
+
+
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
@@ -94,11 +102,11 @@ LIB32_FLAGS=$(LOPT) /nologo /out:"$(OUTDIR)\$(OUTFILENAME).lib"
 LIB32_OBJS= \
 	"$(INTDIR)\win32.obj" \
 	"$(INTDIR)\getaddrinfo.obj" \
+	"$(INTDIR)\pgstrcasecmp.obj" \
 	"$(INTDIR)\thread.obj" \
 	"$(INTDIR)\inet_aton.obj" \
         "$(INTDIR)\crypt.obj" \
 	"$(INTDIR)\noblock.obj" \
-	"$(INTDIR)\path.obj" \
 	"$(INTDIR)\dllist.obj" \
 	"$(INTDIR)\md5.obj" \
 	"$(INTDIR)\ip.obj" \
@@ -148,6 +156,11 @@ LINK32_OBJS= \
     $(CPP_PROJ) ..\..\port\getaddrinfo.c
 <<
 
+"$(INTDIR)\pgstrcasecmp.obj" : ..\..\port\pgstrcasecmp.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\pgstrcasecmp.c
+<<
+
 "$(INTDIR)\thread.obj" : ..\..\port\thread.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\port\thread.c
@@ -166,11 +179,6 @@ LINK32_OBJS= \
 "$(INTDIR)\noblock.obj" : ..\..\port\noblock.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\port\noblock.c
-<<
-
-"$(INTDIR)\path.obj" : ..\..\port\path.c
-    $(CPP) @<<
-    $(CPP_PROJ) ..\..\port\path.c
 <<
 
 "$(INTDIR)\dllist.obj" : ..\..\backend\lib\dllist.c
