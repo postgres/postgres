@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.6 1996/11/03 05:07:55 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.7 1996/11/04 04:53:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -470,11 +470,7 @@ mdblindwrt(char *dbstr,
     status = SM_SUCCESS;
 
     /* write and sync the block */
-#ifdef OPENLINK_PATCHES
     if (write(fd, buffer, BLCKSZ) != BLCKSZ || (pg_fsync(fd) < 0))
-#else
-    if (write(fd, buffer, BLCKSZ) != BLCKSZ || fsync(fd) < 0)
-#endif
 	status = SM_FAIL;
 
     if (close(fd) < 0)

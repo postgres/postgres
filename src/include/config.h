@@ -180,7 +180,6 @@
 
 /* found in src/backend/utils/adt/arrayfuncs.c */
 /* #define LOARRAY */
-#define OPENLINK_PATCHES
 
 /* This is the time, in seconds, at which a given backend server
  * will wait on a lock before deciding to abort the transaction

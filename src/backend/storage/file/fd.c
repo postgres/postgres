@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Id: fd.c,v 1.6 1996/10/31 10:19:59 scrappy Exp $
+ *    $Id: fd.c,v 1.7 1996/11/04 04:53:24 momjian Exp $
  *
  * NOTES:
  *
@@ -197,14 +197,12 @@ static int FileAccess(File file);
 static File fileNameOpenFile(FileName fileName, int fileFlags, int fileMode);
 static char *filepath(char *filename);
 
-#ifdef OPENLINK_PATCHES
 pg_fsync(fd)
 {
     extern int fsyncOff;
     return fsyncOff ? 0 : fsync(fd);
 }
 #define fsync pg_fsync
-#endif
 
 #if defined(FDDEBUG)
 static void
