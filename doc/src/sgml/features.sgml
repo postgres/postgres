@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.10 2002/11/24 03:15:55 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.11 2002/12/06 05:07:12 momjian Exp $
 -->
 
 <appendix id="features">
@@ -1194,6 +1194,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.10 2002/11/24 03:15:55 mo
         <entry></entry>
        </row>
        <row>
+        <entry>F711</entry>
+        <entry></entry>
+        <entry>ALTER domain</entry>
+        <entry></entry>
+       </row>
+       <row>
         <entry>F791</entry>
         <entry></entry>
         <entry>Insensitive cursors</entry>
@@ -1821,12 +1827,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.10 2002/11/24 03:15:55 mo
         <entry>F691</entry>
         <entry></entry>
         <entry>Collation and translation</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F711</entry>
-        <entry></entry>
-        <entry>ALTER domain</entry>
         <entry></entry>
        </row>
        <row>

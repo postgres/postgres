@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.4 2002/12/06 05:00:10 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.5 2002/12/06 05:07:16 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -13,7 +13,7 @@ PostgreSQL documentation
    ALTER DOMAIN
   </refname>
   <refpurpose>
-   change the definition of a table
+   change the definition of a domain
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
