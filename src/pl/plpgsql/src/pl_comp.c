@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.7.2.1 1999/09/20 21:47:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.7.2.2 1999/09/23 19:13:55 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -68,23 +68,23 @@
  * ----------
  */
 PLPGSQL_YYSTYPE plpgsql_yylval;
-int	plpgsql_yylineno;
-char plpgsql_yytext[];
+int		plpgsql_yylineno;
+char 	plpgsql_yytext[];
 
-void		plpgsql_yyerror(const char *s);
+void	plpgsql_yyerror(const char *s);
 
 /* ----------
  * Our own local and global variables
  * ----------
  */
 static int	datums_alloc;
-int			plpgsql_nDatums;
+int		plpgsql_nDatums;
 PLpgSQL_datum **plpgsql_Datums;
 static int	datums_last = 0;
 
-int			plpgsql_error_lineno;
-char	   *plpgsql_error_funcname;
-int			plpgsql_DumpExecTree = 0;
+int		plpgsql_error_lineno;
+char   *plpgsql_error_funcname;
+int		plpgsql_DumpExecTree = 0;
 
 PLpgSQL_function *plpgsql_curr_compile;
 
