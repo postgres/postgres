@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.14 1999/10/01 15:26:29 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.15 2000/03/23 21:38:57 momjian Exp $
 Postgres documentation
 -->
 
@@ -32,6 +32,70 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
    <refsect2info>
     <date>1999-06-09</date>
    </refsect2info>
+
+   <title>
+    Terms
+   </title>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term>EXCLUSIVE</term>
+      <listitem>
+       <para>
+	Exclusive lock that prevents other locks from being granted.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+
+    <variablelist>
+     <varlistentry>
+      <term>SHARE</term>
+      <listitem>
+       <para>
+	Allows others to share lock.  Prevents EXCLUSIVE locks.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+
+    <variablelist>
+     <varlistentry>
+      <term>ACCESS</term>
+      <listitem>
+       <para>
+	Locks table schema.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+
+    <variablelist>
+     <varlistentry>
+      <term>ROW</term>
+      <listitem>
+       <para>
+	Locks individual rows.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+
+    <variablelist>
+     <varlistentry>
+      <term>Notes</term>
+      <listitem>
+       <para>
+	If EXCLUSIVE or SHARE are not speicified, EXCLUSIVE is assumed.
+	If  ROW or ACCESS is not specified, the entire table is locked
+	for the duration of the transaction.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+
+   </para>
+
    <title>
     Inputs
    </title>
@@ -53,17 +117,17 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
        <note>
 	<para>
 	 This lock mode is acquired automatically over tables being queried.
-	 <productname>Postgres</productname> releases automatically acquired
-	 ACCESS SHARE locks after the statement is done.
+	 This lock is released automatically after the statement completes.
+	 It does not remain for the duration of the transaction.
 	</para>
        </note>
 
        <para>
 	This is the least restrictive lock mode which conflicts only with 
 	ACCESS EXCLUSIVE mode. It is intended to protect a table being
-	queried from concurrent <command>ALTER TABLE</command>, 
+	modified by concurrent <command>ALTER TABLE</command>, 
 	<command>DROP TABLE</command> and <command>VACUUM</command> 
-	statements over the same table.
+	commands.
        </para>
       </listitem>
      </varlistentry>
@@ -74,6 +138,8 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
        <note>
        <para>
 	 Automatically acquired by any <command>SELECT FOR UPDATE</command> statement.
+	 While it is a SHARE lock, there is the intention to later upgrade
+	 this to an EXCLUSIVE lock.
 	</para>
        </note>
 
@@ -90,7 +156,7 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
 	<para>
 	 Automatically acquired by any <command>UPDATE</command>, 
 	 <command>DELETE</command>, <command>INSERT</command> statement.
-	</para>
+        </para>
        </note>
 
        <para>
@@ -107,6 +173,7 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
        <note>
        <para>
 	 Automatically acquired by any <command>CREATE INDEX</command> statement.
+	 Share-locks entire table.
        </para>
        </note>
 
@@ -123,10 +190,10 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
       <listitem>
 
        <para>
-	Conflicts with ROW EXCLUSIVE, SHARE, SHARE ROW EXCLUSIVE,
-	EXCLUSIVE and ACCESS EXCLUSIVE modes. This mode is more
-	restrictive than SHARE mode because of only one transaction
-	at time can hold this lock.
+	This is like an EXCLUSIVE lock, but allows SHARE ROW locks
+        by others.
+        Conflicts with ROW EXCLUSIVE, SHARE, SHARE ROW EXCLUSIVE,
+	EXCLUSIVE and ACCESS EXCLUSIVE modes.
        </para>
       </listitem>
      </varlistentry>
@@ -139,7 +206,7 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
 	Conflicts with ROW SHARE, ROW EXCLUSIVE, SHARE, SHARE ROW EXCLUSIVE,
 	EXCLUSIVE and ACCESS EXCLUSIVE modes. This mode is yet more
 	restrictive than that of SHARE ROW EXCLUSIVE; it blocks all concurrent
-	SELECT FOR UPDATE queries.
+	SHARE ROW/SELECT FOR UPDATE queries.
        </para>
       </listitem>
      </varlistentry>
@@ -149,7 +216,7 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
       <listitem>
        <note>
 	<para>
-	 Automatically acquired by <command>ALTER TABLE</command>, 
+	 Automatically acquired by <command>ALTER TABLE</command>,
 	 <command>DROP TABLE</command>, <command>VACUUM</command> statements.
 	</para>
        </note>
