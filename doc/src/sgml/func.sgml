@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.181 2003/12/13 23:59:06 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.182 2003/12/16 15:27:58 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -5005,6 +5005,15 @@ SELECT EXTRACT(EPOCH FROM TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-08');
 
 SELECT EXTRACT(EPOCH FROM INTERVAL '5 days 3 hours');
 <lineannotation>Result: </lineannotation><computeroutput>442800</computeroutput>
+</screen>
+
+       <para>
+        Here is how you can convert an epoch value back to a time
+        stamp:
+       </para>
+
+<screen>
+SELECT TIMESTAMP WITH TIME ZONE 'epoch' + 982384720 * interval '1 second';
 </screen>
       </listitem>
      </varlistentry>
