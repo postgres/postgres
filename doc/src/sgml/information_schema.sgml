@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/information_schema.sgml,v 1.9 2003/09/20 20:12:05 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/information_schema.sgml,v 1.10 2003/10/16 23:46:17 petere Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -2146,7 +2146,7 @@ ORDER BY c.ordinal_position;
       <entry>
        Update rule of the foreign key constraint:
        <literal>CASCADE</literal>, <literal>SET NULL</literal>,
-       <literal>SET DEFAULT</literal>, <literal>RESTRICT</literal>,or
+       <literal>SET DEFAULT</literal>, <literal>RESTRICT</literal>, or
        <literal>NO ACTION</literal>.
       </entry>
      </row>
@@ -2157,7 +2157,7 @@ ORDER BY c.ordinal_position;
       <entry>
        Delete rule of the foreign key constraint:
        <literal>CASCADE</literal>, <literal>SET NULL</literal>,
-       <literal>SET DEFAULT</literal>, <literal>RESTRICT</literal>,or
+       <literal>SET DEFAULT</literal>, <literal>RESTRICT</literal>, or
        <literal>NO ACTION</literal>.
       </entry>
      </row>

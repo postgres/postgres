@@ -4,7 +4,7 @@
  *
  * Copyright 2003, PostgreSQL Global Development Group
  *
- * $Id: information_schema.sql,v 1.12 2003/06/29 15:14:41 petere Exp $
+ * $Id: information_schema.sql,v 1.13 2003/10/16 23:46:17 petere Exp $
  */
 
 /*
@@ -747,11 +747,26 @@ GRANT SELECT ON parameters TO PUBLIC;
  * REFERENTIAL_CONSTRAINTS view
  */
 
+CREATE FUNCTION _pg_keyissubset(smallint[], smallint[]) RETURNS boolean
+    LANGUAGE sql
+    IMMUTABLE
+    RETURNS NULL ON NULL INPUT
+    AS 'select $1[1] is null or ($1[1] = any ($2) and coalesce(_pg_keyissubset($1[2:array_upper($1,1)], $2), true))';
+
+CREATE FUNCTION _pg_keysequal(smallint[], smallint[]) RETURNS boolean
+    LANGUAGE sql
+    IMMUTABLE
+    RETURNS NULL ON NULL INPUT
+    AS 'select _pg_keyissubset($1, $2) and _pg_keyissubset($2, $1)';
+
 CREATE VIEW referential_constraints AS
     SELECT CAST(current_database() AS sql_identifier) AS constraint_catalog,
            CAST(ncon.nspname AS sql_identifier) AS constraint_schema,
            CAST(con.conname AS sql_identifier) AS constraint_name,
-           CAST(current_database() AS sql_identifier) AS unique_constraint_catalog,
+           CAST(
+             CASE WHEN npkc.nspname IS NULL THEN NULL
+                  ELSE current_database() END
+             AS sql_identifier) AS unique_constraint_catalog,
            CAST(npkc.nspname AS sql_identifier) AS unique_constraint_schema,
            CAST(pkc.conname AS sql_identifier) AS unique_constraint_name,
 
@@ -766,7 +781,7 @@ CREATE VIEW referential_constraints AS
                                   WHEN 'n' THEN 'SET NULL'
                                   WHEN 'd' THEN 'SET DEFAULT'
                                   WHEN 'r' THEN 'RESTRICT'
-                                  WHEN 'a' THEN 'NOACTION' END
+                                  WHEN 'a' THEN 'NO ACTION' END
              AS character_data) AS update_rule,
 
            CAST(
@@ -774,22 +789,19 @@ CREATE VIEW referential_constraints AS
                                   WHEN 'n' THEN 'SET NULL'
                                   WHEN 'd' THEN 'SET DEFAULT'
                                   WHEN 'r' THEN 'RESTRICT'
-                                  WHEN 'a' THEN 'NOACTION' END
+                                  WHEN 'a' THEN 'NO ACTION' END
              AS character_data) AS delete_rule
 
-    FROM pg_namespace ncon,
-         pg_constraint con,
-         pg_class c,
-         pg_constraint pkc,
-         pg_namespace npkc,
-         pg_user u
+    FROM (pg_namespace ncon INNER JOIN pg_constraint con ON ncon.oid = con.connamespace
+         INNER JOIN pg_class c ON con.conrelid = c.oid
+         INNER JOIN pg_user u ON c.relowner = u.usesysid)
+         LEFT JOIN
+         (pg_constraint pkc INNER JOIN pg_namespace npkc ON pkc.connamespace = npkc.oid)
+         ON con.confrelid = pkc.conrelid AND _pg_keysequal(con.confkey, pkc.conkey)
 
-    WHERE ncon.oid = con.connamespace
-          AND con.conrelid = c.oid
-          AND con.confkey = pkc.conkey
-          AND pkc.connamespace = npkc.oid
-          AND c.relowner = u.usesysid
-          AND c.relkind = 'r'
+    WHERE c.relkind = 'r'
+          AND con.contype = 'f'
+          AND (pkc.contype IN ('p', 'u') OR pkc.contype IS NULL)
           AND u.usename = current_user;
 
 GRANT SELECT ON referential_constraints TO PUBLIC;
