@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.21 1997/08/31 11:43:09 vadim Exp $
+ * $Id: parsenodes.h,v 1.22 1997/09/01 06:04:59 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -554,9 +554,9 @@ typedef struct CursorStmt {
     List		*targetList;	/* the target list (of ResTarget) */
     List		*fromClause;	/* the from clause */
     Node		*whereClause;	/* qualifications */
-    List              *groupClause;   /* group by clause */
+    List		*groupClause;	/* group by clause */
     List		*sortClause;	/* sort clause (a list of SortGroupBy's) */
-} CursorStmt;    
+} CursorStmt;
 
 /* ----------------------
  *	Select Statement
@@ -564,16 +564,16 @@ typedef struct CursorStmt {
  */
 typedef struct RetrieveStmt {
     NodeTag		type;
-    char                *unique;  /* NULL, '*', or unique attribute name */
-    char		*into;		/* name of table (for select into
-					   table) */
+    char		*unique;	/* NULL, '*', or unique attribute name */
+    char		*into;		/* name of table (for select into table) */
     List		*targetList;	/* the target list (of ResTarget) */
     List		*fromClause;	/* the from clause */
     Node		*whereClause;	/* qualifications */
     List		*groupClause;	/* group by clause */
     Node		*havingClause;	/* having conditional-expression */
+    List		*selectClause;	/* subselect parameters */
     List		*sortClause;	/* sort clause (a list of SortGroupBy's) */
-} RetrieveStmt;    
+} RetrieveStmt;
 
 
 /****************************************************************************
@@ -581,11 +581,25 @@ typedef struct RetrieveStmt {
  ****************************************************************************/
 
 /*
+ * SubSelect - specifies subselect parameters
+ */
+typedef struct SubSelect {
+    NodeTag		type;
+    char		*unique;	/* NULL, '*', or unique attribute name */
+    List		*targetList;	/* the target list (of ResTarget) */
+    List		*fromClause;	/* the from clause */
+    Node		*whereClause;	/* qualifications */
+    List		*groupClause;	/* group by clause */
+    Node		*havingClause;	/* having conditional-expression */
+} SubSelect;
+
+/*
  * TypeName - specifies a type in definitions
  */
 typedef struct TypeName {
     NodeTag		type;
     char		*name;		/* name of the type */
+    bool		timezone;	/* timezone specified? */
     bool		setof;		/* is a set? */
     List		*arrayBounds;	/* array bounds */
     int			typlen;		/* length for char() and varchar() */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.10 1997/08/31 11:43:08 vadim Exp $
+ * $Id: nodes.h,v 1.11 1997/09/01 06:04:57 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,7 +206,8 @@ typedef enum NodeTag {
     T_TargetEntry,
     T_RangeTblEntry,
     T_SortClause,
-    T_GroupClause
+    T_GroupClause,
+    T_SubSelect
 } NodeTag;
 
 /*
