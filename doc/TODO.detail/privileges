@@ -1260,3 +1260,54 @@ TIP 6: Have you searched our list archives?
 
 http://www.postgresql.org/search.mpl
 
+From ZeugswetterA@wien.spardat.at Wed May  9 03:21:37 2001
+Return-path: <ZeugswetterA@wien.spardat.at>
+Received: from fizbanrsm.server.lan.at (zep4.it-austria.net [213.150.1.74])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f497LZu00341
+	for <pgman@candle.pha.pa.us>; Wed, 9 May 2001 03:21:35 -0400 (EDT)
+Received: from gz0153.gc.spardat.at (gz0153.gc.spardat.at [172.20.10.149])
+	by fizbanrsm.server.lan.at (8.11.2/8.11.2) with ESMTP id f497LSl28442
+	for <pgman@candle.pha.pa.us>; Wed, 9 May 2001 09:21:28 +0200
+Received: by sdexcgtw01.f000.d0188.sd.spardat.at with Internet Mail Service (5.5.2650.21)
+	id <KJFDP52V>; Wed, 9 May 2001 09:20:30 +0200
+Message-ID: <11C1E6749A55D411A9670001FA6879633682BB@sdexcsrv1.f000.d0188.sd.spardat.at>
+From: Zeugswetter Andreas SB  <ZeugswetterA@wien.spardat.at>
+To: "'Bruce Momjian'" <pgman@candle.pha.pa.us>, mascarm@mascari.com
+cc: Karel Zak <zakkr@zf.jcu.cz>,
+   pgsql-hackers
+  <pgsql-hackers@postgresql.org>
+Subject: AW: [HACKERS] NOCREATETABLE patch (was: Re: Please, help!(about P
+	ostgres))
+Date: Wed, 9 May 2001 09:20:28 +0200 
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2650.21)
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Status: OR
+
+
+> > The connect group would be granted these System Privileges:
+
+If we keep it like others (e.g. Informix) this System Privilege would be called
+"resource". I like this name better, because it more describes the detailed 
+priviledges.
+
+> > 
+> > CREATE AGGREGATE privilege
+> > CREATE INDEX privilege
+> > CREATE FUNCTION privilege
+> > CREATE OPERATOR privilege
+> > CREATE RULE privilege
+> > CREATE SESSION privilege
+> > CREATE SYNONYM privilege
+> > CREATE TABLE privilege
+> > CREATE TRIGGER privilege
+> > CREATE TYPE privilege
+> > CREATE VIEW privilege
+
+The "connect" group would only have the priviledge to connect to the db [and
+create temp tables ?] and rights they where granted, or that were granted to public.
+They would not be allowed to create anything.
+
+Andreas
+
