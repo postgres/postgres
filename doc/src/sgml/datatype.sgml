@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.141 2004/02/01 06:27:48 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.142 2004/02/01 06:55:07 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -958,7 +958,7 @@ SELECT a, char_length(a) FROM test1; -- <co id="co.datatype-char">
 <computeroutput>
   a   | char_length
 ------+-------------
- ok   |           4
+ ok   |           2
 </computeroutput>
 
 CREATE TABLE test2 (b varchar(5));
