@@ -1,6 +1,6 @@
 --
--- btree index
--- test retrieval of min/max keys for each
+-- BTREE_INDEX
+-- test retrieval of min/max keys for each index
 --
 
 SELECT b.*

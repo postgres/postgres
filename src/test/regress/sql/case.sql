@@ -1,6 +1,5 @@
 --
--- case.sql
---
+-- CASE
 -- Test the case statement
 --
 

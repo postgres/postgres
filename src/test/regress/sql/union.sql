@@ -1,5 +1,5 @@
 --
--- union.sql
+-- UNION
 --
 
 -- Simple UNION constructs

@@ -1,3 +1,7 @@
+--
+-- PORTALS_P2
+--
+
 -- EXTEND INDEX onek2_u1_prtl WHERE onek2.unique1 <= 60;
 
 BEGIN;
@@ -94,3 +98,4 @@ CLOSE foo24;
 CLOSE foo25;
 
 END;
+

@@ -1,7 +1,8 @@
 --
--- hash index
+-- HASH_INDEX
 -- grep 843938989 hash.data
 --
+
 SELECT hash_i4_heap.* 
    WHERE hash_i4_heap.random = 843938989;
 

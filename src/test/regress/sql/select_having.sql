@@ -1,5 +1,5 @@
 --
--- select_having.sql
+-- SELECT_HAVING
 --
 
 -- load test data
@@ -25,3 +25,4 @@ SELECT c, max(a) FROM test_having
 	GROUP BY c HAVING count(*) > 2 OR min(a) = max(a);
 
 DROP TABLE test_having;
+

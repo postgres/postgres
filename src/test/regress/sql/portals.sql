@@ -1,6 +1,7 @@
 --
--- portal manipulation
+-- PORTALS
 --
+
 BEGIN;
 
 DECLARE foo1 CURSOR FOR SELECT * FROM tenk1;
@@ -166,3 +167,4 @@ CLOSE foo11;
 CLOSE foo12;
 
 end;
+

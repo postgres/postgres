@@ -1,5 +1,5 @@
 --
--- rules.sql
+-- RULES
 -- From Jan's original setup_ruletest.sql and run_ruletest.sql
 -- - thomas 1998-09-13
 --

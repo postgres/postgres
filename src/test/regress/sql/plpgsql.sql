@@ -1,10 +1,6 @@
--- ************************************************************
--- * 
--- * Tables for the patchfield test of PL/pgSQL
--- * 
--- * $Header: /cvsroot/pgsql/src/test/regress/sql/plpgsql.sql,v 1.1 1998/10/01 03:38:45 scrappy Exp $
--- * 
--- ************************************************************
+--
+-- PLPGSQL
+--
 
 create table Room (
     roomno	char(8),
@@ -104,7 +100,7 @@ create unique index PHone_name on PHone using btree (slotname bpchar_ops);
 -- * Trigger procedures and functions for the patchfield
 -- * test of PL/pgSQL
 -- * 
--- * $Header: /cvsroot/pgsql/src/test/regress/sql/plpgsql.sql,v 1.1 1998/10/01 03:38:45 scrappy Exp $
+-- * $Header: /cvsroot/pgsql/src/test/regress/sql/plpgsql.sql,v 1.2 2000/01/06 06:41:55 thomas Exp $
 -- * 
 -- ************************************************************
 
@@ -1404,3 +1400,4 @@ insert into HSlot values ('HS', 'base.hub1', 20, '');
 delete from HSlot;
 insert into IFace values ('IF', 'notthere', 'eth0', '');
 insert into IFace values ('IF', 'orion', 'ethernet_interface_name_too_long', '');
+

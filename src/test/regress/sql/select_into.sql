@@ -1,3 +1,7 @@
+--
+-- SELECT_INTO
+--
+
 SELECT *
    INTO TABLE tmp1
    FROM tmp

@@ -1,6 +1,7 @@
 --
--- transaction blocks
+-- TRANSACTIONS
 --
+
 BEGIN;
 
 SELECT * 

@@ -1,4 +1,7 @@
 --
+-- SELECT
+--
+
 -- btree index
 -- awk '{if($1<10){print;}else{next;}}' onek.data | sort +0n -1
 --

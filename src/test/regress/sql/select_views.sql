@@ -1,8 +1,8 @@
 --
--- VIEW queries
+-- SELECT_VIEWS
+-- test the views defined in CREATE_VIEWS
 --
--- test the views defined in create.source
---
+
 SELECT * FROM street;
 
 SELECT name, #thepath FROM iexit ORDER BY 1, 2;

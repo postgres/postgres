@@ -1,4 +1,5 @@
 --
+-- TEMP
 -- Test temp relations and indexes
 --
 
@@ -45,3 +46,4 @@ CREATE TEMP TABLE temptest(col int);
 \c regression
 
 SELECT * FROM temptest;
+

@@ -1,6 +1,5 @@
 --
--- join.sql
---
+-- JOIN
 -- Test join clauses
 --
 

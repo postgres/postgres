@@ -1,6 +1,8 @@
 --
--- test the random function
+-- RANDOM
+-- Test the random function
 --
+
 -- count the number of tuples originally
 SELECT count(*) FROM onek;
 

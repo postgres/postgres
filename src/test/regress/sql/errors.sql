@@ -1,8 +1,6 @@
 --
--- errors.source
+-- ERRORS
 --
--- $Header: /cvsroot/pgsql/src/test/regress/sql/errors.sql,v 1.2 1997/05/22 00:17:24 scrappy Exp $
- 
 
 -- bad in postquel, but ok in postsql
 select 1
