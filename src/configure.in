@@ -1,0 +1,98 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(backend/access/common/heaptuple.c)
+
+dnl Checks for programs.
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_CXX
+
+dnl Check if we should set   Have_Cplusplus
+if test -n "$CXX"; then
+  export HAVECXX
+  HAVECXX='HAVE_Cplusplus=true'
+fi
+AC_SUBST(HAVECXX)
+
+dnl AC_PROG_INSTALL was broken on my machine (NAT), so here's an
+dnl alternative, built from the various portname options
+AC_PATH_PROG(INSTALL, install, /usr/bin:/usr/ucb:/home/tools/bin)
+AC_PATH_PROG(BSDINST, bsdinst, /usr/bin/X11:/usr/X11R6/bin:/sbin)
+  INSTLOPTS="-m 444"
+  INSTL_EXE_OPTS="-m 555"
+  INSTL_LIB_OPTS="-m 664"
+if test -n "$INSTALL"; then
+  INSTLOPTS="-c $INSTLOPTS"
+  INSTL_EXE_OPTS="-c $INSTL_EXE_OPTS"
+  INSTL_LIB_OPTS="-c $INSTL_LIB_OPTS"
+else
+  INSTALL=$BSDINST
+fi
+AC_SUBST(INSTALL)
+AC_SUBST(INSTLOPTS)
+AC_SUBST(INSTL_LIB_OPTS)
+AC_SUBST(INSTL_EXE_OPTS)
+
+dnl Check the option to echo to inhibit newlines.
+ECHO_N_OUT=`echo -n "" | wc -c`
+ECHO_C_OUT=`echo "\c" | wc -c`
+if test "$ECHO_N_OUT" -eq 0; then
+  DASH_N='-n'
+  BACKSLASH_C=
+else
+  if test "ECHO_C_OUT" -eq 0; then
+    DASH_N=
+    BACKSLASH_C= '\\\\c'
+  else
+    AC_MSG_ERROR("echo behaviour undetermined")
+  fi
+fi
+AC_SUBST(DASH_N)
+AC_SUBST(BACKSLASH_C)
+
+AC_PROG_LEX
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+AC_PROG_RANLIB
+AC_PATH_PROG(find, find)
+AC_PATH_PROG(tar, tar)
+AC_PATH_PROG(split, split)
+AC_PATH_PROG(etags, etags)
+AC_PATH_PROG(xargs, xargs)
+AC_PATH_PROG(ipcs, ipcs)
+AC_PATH_PROG(ipcrm, ipcrm)
+
+dnl Checks for libraries.
+dnl readline (used in psql if present)
+dnl   if the library readline is present,
+dnl   set the shell variable USE_READLINE
+dnl   to have the value  USE_READLINE=true
+dnl   and substitute it into the makefiles
+AC_CHECK_LIB(readline, readline, USE_READLINE='USE_READLINE=true')
+AC_SUBST(USE_READLINE)
+AC_CHECK_LIB(history, history)
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS(fcntl.h limits.h sys/file.h sys/ioctl.h sys/time.h unistd.h)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_UID_T
+AC_C_INLINE
+AC_TYPE_MODE_T
+AC_TYPE_OFF_T
+AC_TYPE_SIZE_T
+AC_HEADER_TIME
+AC_STRUCT_TM
+
+dnl Checks for library functions.
+AC_PROG_GCC_TRADITIONAL
+AC_FUNC_MEMCMP
+AC_TYPE_SIGNAL
+AC_FUNC_VPRINTF
+AC_CHECK_FUNCS(ftime getcwd gethostname gettimeofday putenv regcomp select socket strcspn strdup strerror strftime strspn strtod strtol)
+
+#AC_OUTPUT(backend/optimizer/path/Makefile libpq++/man/Makefile backend/port/sparc_solaris/Makefile backend/utils/misc/Makefile backend/port/ultrix4/Makefile bin/psql/Makefile backend/utils/init/Makefile tutorial/C-code/Makefile test/examples/Makefile backend/utils/adt/Makefile bin/destroyuser/Makefile Makefile tutorial/Makefile bin/pg_dump/Makefile bin/cleardbdir/Makefile backend/optimizer/plan/Makefile backend/access/heap/Makefile backend/storage/page/Makefile backend/port/svr4/Makefile backend/optimizer/Makefile backend/utils/hash/Makefile backend/storage/large_object/Makefile backend/access/hash/Makefile test/Makefile backend/optimizer/prep/Makefile bin/initdb/Makefile bin/pg_version/Makefile bin/ipcclean/Makefile bin/pg4_dump/Makefile backend/postmaster/Makefile backend/access/Makefile test/regress/Makefile backend/storage/Makefile backend/port/bsdi/Makefile libpq++/Makefile backend/lib/Makefile backend/libpq/Makefile backend/access/gist/Makefile backend/nodes/Makefile libpgtcl/Makefile libpq/Makefile bin/destroydb/Makefile backend/access/nbtree/Makefile bin/Makefile bin/createuser/Makefile backend/port/Makefile backend/port/irix5/Makefile backend/utils/sort/Makefile backend/utils/error/Makefile backend/utils/time/Makefile backend/Makefile backend/utils/Makefile backend/commands/Makefile bin/pg_id/Makefile backend/tioga/Makefile backend/utils/cache/Makefile backend/port/aix/Makefile backend/storage/lmgr/Makefile test/bench/Makefile bin/monitor/Makefile backend/access/index/Makefile backend/port/hpux/Makefile utils/Makefile backend/port/i386_solaris/Makefile backend/catalog/Makefile backend/storage/smgr/Makefile backend/bootstrap/Makefile backend/storage/buffer/Makefile backend/storage/ipc/Makefile backend/rewrite/Makefile backend/access/rtree/Makefile backend/port/linux/Makefile backend/storage/file/Makefile man/Makefile libpq++/examples/Makefile backend/main/Makefile bin/pgtclsh/Makefile backend/access/common/Makefile bin/createdb/Makefile backend/port/dgux/Makefile backend/utils/fmgr/Makefile backend/parser/Makefile backend/port/sparc/Makefile backend/executor/Makefile backend/optimizer/util/Makefile tools/mkldexport/Makefile backend/utils/mmgr/Makefile backend/tcop/Makefile backend/port/BSD44_derived/Makefile backend/access/transam/Makefile backend/port/alpha/Makefile backend/regex/Makefile)
+
+AC_OUTPUT(Makefile Makefile.global)

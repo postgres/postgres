@@ -1,0 +1,757 @@
+#----------------------------------------------------------------------------
+#
+# Makefile.global--
+#    global configuration for the Makefiles
+#
+# Copyright (c) 1994, Regents of the University of California
+#
+#
+# IDENTIFICATION
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.1 1997/01/23 22:50:10 scrappy Exp $
+#
+# NOTES
+#    Essentially all Postgres make files include this file and use the 
+#    variables it sets.  To 
+#    override the default setting, create a Makefile.custom in this
+#    directory and put your defines there. (Makefile.custom is included
+#    near the end of this file.)
+#
+#    If you change any of these defines you probably have to 
+#       make clean; make
+#    since no dependencies are created for these. (of course you can 
+#    be crafty and check what files really depend on them and just remake
+#    those).
+#        
+#    Before including this file, you must set the SRCDIR variable to the 
+#    path of the top of the Postgres source tree (the directory that 
+#    contains this file).  
+#
+#-------------------------------------------------------------------------
+
+
+##############################################################################
+#
+# CONFIGURATION SECTION
+#
+# Following are settings pertaining to the postgres build and 
+# installation.  The most important one is obviously the name 
+# of the port.
+
+#  The name of the port.  Valid choices are:
+#   alpha          DEC Alpha AXP on OSF/1 2.0
+#   hpux           HP PA-RISC on HP-UX 9.0
+#   i386_solaris   i386 Solaris
+#   sparc_solaris  SUN SPARC on Solaris 2.4
+#   sparc          SUN SPARC on SunOS 4.1.3
+#   ultrix4        DEC MIPS on Ultrix 4.4
+#   linux          Intel x86 on Linux 1.2 and Linux ELF
+#                  (For non-ELF Linux, see LINUX_ELF below).
+#   BSD44_derived  OSs derived from 4.4-lite BSD (NetBSD, FreeBSD)
+#   bsdi           BSD/OS 2.0, 2.01, 2.1
+#   aix            IBM on AIX 3.2.5
+#   irix5          SGI MIPS on IRIX 5.3
+#   dgux           DG/UX 5.4R3.10
+#  Some hooks are provided for
+#   svr4           Intel x86 on Intel SVR4
+#   next           Motorola MC68K or Intel x86 on NeXTSTEP 3.2
+#  but these are guaranteed not to work as of yet.
+#
+#  Note that portname is defined here to be UNDEFINED to remind you
+#  to change it in Makefile.custom.
+#
+#  make sure that you have no whitespaces after the PORTNAME setting
+#  or the makefiles can get confused
+PORTNAME= UNDEFINED
+
+# Ignore LINUX_ELF if you're not using Linux.  But if you are, and you're
+# compiling to a.out (which means you're using the dld dynamic loading 
+# library), set LINUX_ELF to null in Makefile.custom.
+LINUX_ELF= 1
+
+LIBPQDIR:= $(SRCDIR)/libpq
+
+# For convenience, POSTGRESDIR is where DATADIR, BINDIR, and LIBDIR 
+# and other target destinations are rooted.  Of course, each of these is 
+# changable separately.
+POSTGRESDIR= /usr/local/pgsql
+
+# DATADIR specifies where the postmaster expects to find its database.
+# This may be overridden by command line options or the PGDATA environment
+# variable.
+DATADIR= $(POSTGRESDIR)/data
+
+# Where the postgres executables live (changeable by just putting them
+# somewhere else and putting that directory in your shell PATH)
+BINDIR= $(POSTGRESDIR)/bin
+
+# Where libpq.a gets installed.  You must put it where your loader will
+# look for it if you wish to use the -lpq convention.  Otherwise you
+# can just put the absolute pathname to the library at the end of your
+# command line.
+LIBDIR= $(POSTGRESDIR)/lib
+
+# This is the directory where IPC utilities ipcs and ipcrm are located
+#
+IPCS=@ipcs@
+IPCRM=@ipcrm@
+#IPCSDIR= /usr/bin
+
+# Where the man pages (suitable for use with "man") get installed.
+POSTMANDIR= $(POSTGRESDIR)/man
+
+# Where the formatted documents (e.g., the reference manual) get installed.
+POSTDOCDIR= $(POSTGRESDIR)/doc
+
+# Where the header files necessary to build frontend programs get installed.
+HEADERDIR= $(POSTGRESDIR)/include
+
+# The port to run the postmaster on
+POSTPORT= 5432
+
+# NAMEDATALEN is the max length for system identifiers (e.g. table names,
+# attribute names, function names, etc.)
+#
+# These MUST be set here.  DO NOT COMMENT THESE OUT
+# Setting these too high will result in excess space usage for system catalogs
+# Setting them too low will make the system unusable.
+# values between 16 and 64 that are multiples of four are recommended.
+# 
+# NOTE also that databases with different NAMEDATALEN's cannot interoperate!
+#
+# THERE ARE REDUNDANT DEFINITIONS OF THESE VALUES IN config.h.
+# Don't change anything here without changing it there too.
+
+NAMEDATALEN= 32
+# OIDNAMELEN should be set to NAMEDATALEN + sizeof(Oid)
+OIDNAMELEN= 36
+ 
+##############################################################################
+#
+# FEATURES 
+#
+# To disable a feature, comment out the entire definition
+# (that is, prepend '#', don't set it to "0" or "no").
+
+# Compile libpq++
+# NAT: autoconf can check if we have a cplusplus compiler and will
+# NAT: define HAVE_Cplusplus for us
+#HAVE_Cplusplus= true
+@HAVECXX@
+
+# Commenting out CASSERT will make things go a LOT faster, but you will
+# also loose a lot of useful error-checking.
+# NAT: autoconf doesn't deal with CASSERT: this is a user choice.
+CASSERT= true
+
+# Comment out ENFORCE_ALIGNMENT if you do NOT want unaligned access to
+# multi-byte types to generate a bus error.
+# NAT: autoconf doesn't deal with ENFORCE_ALIGNMENT.  Should it test for
+# NAT: it and only set it if it has to?).
+ENFORCE_ALIGNMENT= true
+
+# Comment out PROFILE to generate a profile version of the binaries
+# NAT: autoconf doesn't deal with PROFILE: this is a user choice.
+#PROFILE= -p -non_shared
+
+# About the use of readline in psql:
+#    psql does not require the GNU readline and history libraries. Hence, we
+#    do not compile with them by default. However, there are hooks in the
+#    program which supports the use of GNU readline and history. Should you
+#    decide to use them, change USE_READLINE to true and change READLINE_INCDIR
+#    and READLINE_LIBDIR to reflect the location of the readline and history
+#    headers and libraries.
+#
+# NAT: autoconf will check for libreadline and will define USE_READLINE
+# NAT: appropriately, and hopefully take care of the inc and lib too.
+@USE_READLINE@
+
+# directories for the readline and history libraries.
+# [automagically taken care of by autoconf?]
+#READLINE_INC= -I/home/tools/include
+#READLINE_LIB= -L/home/tools/lib -lreadline
+
+# use the following if your readline has a separate history lib
+#HISTORY_INC= -I/home/tools/include -I/home/tools/include/readline
+#HISTORY_LIB= -L/home/tools/lib -lhistory
+
+# If you plan to use Kerberos for authentication...
+#
+# Comment out KRBVERS if you do not use Kerberos.
+# Set KRBVERS to "4" for Kerberos v4, "5" for Kerberos v5.
+# XXX Edit the default Kerberos variables below!
+#
+# NAT: I don't know how to deal with kerberos in autoconf.
+
+#KRBVERS= 5
+
+# Globally pass Kerberos file locations.
+# these are used in the postmaster and all libpq applications.
+#
+# Adjust KRBINCS and KRBLIBS to reflect where you have Kerberos
+# include files and libraries installed.
+# PG_KRB_SRVNAM is the name under which POSTGRES is registered in
+# the Kerberos database (KDC).
+# PG_KRB_SRVTAB is the location of the server's keytab file.
+#
+ifdef KRBVERS
+KRBINCS= -I/usr/athena/include
+KRBLIBS= -L/usr/athena/lib
+KRBFLAGS+= $(KRBINCS) -DPG_KRB_SRVNAM='"postgres_dbms"'
+   ifeq ($(KRBVERS), 4)
+KRBFLAGS+= -DKRB4
+KRBFLAGS+= -DPG_KRB_SRVTAB='"/etc/srvtab"'
+KRBLIBS+= -lkrb -ldes
+   else
+   ifeq ($(KRBVERS), 5)
+KRBFLAGS+= -DKRB5
+KRBFLAGS+= -DPG_KRB_SRVTAB='"FILE:/krb5/srvtab.postgres"'
+KRBLIBS+= -lkrb5 -lcrypto -lcom_err -lisode
+   endif
+   endif
+endif
+
+#
+# location of Tcl/Tk headers and libraries
+#
+# Uncomment this to build the tcl utilities.
+# USE_TCL= true
+# customize these to your site's needs
+#
+# NAT: I don't know how to deal with TCL in autoconf.
+TCL_INCDIR= /home/tools/include
+TCL_LIBDIR= /home/tools/lib
+TCL_LIB= -ltcl7.5
+TK_INCDIR= /home/tools/include
+TK_LIBDIR= /home/tools/lib
+TK_LIB= -ltk4.1
+
+X11_INCDIR= /usr/include
+X11_LIBDIR= /usr/lib
+X11_LIB= -lX11 -lsocket -lnsl
+
+##############################################################################
+#
+#  YACC
+
+YFLAGS= -d
+
+##############################################################################
+#
+# Installation. 
+#
+# For many ports, INSTALL is overridden below.
+INSTALL= @INSTALL@
+RANLIB= @RANLIB@
+
+INSTLOPTS= @INSTLOPTS@
+INSTL_EXE_OPTS= @INSTL_EXE_OPTS@
+INSTL_LIB_OPTS= @INSTL_LIB_OPTS@
+
+##############################################################################
+#
+# For building shell scripts:
+# 
+# For many ports, these are overridden below.
+
+# DASH_N is what we put before the text on an echo command when we don't
+# want a trailing newline.  BACKSLASH_C is what we put at the end of the
+# string on a echo command when we don't want a trailing newline.  On
+# some systems, you do echo -n "no newline after this", while on others
+# you do echo "no newline after this\c".
+
+DASH_N= @DASH_N@
+BACKSLASH_C= @BACKSLASH_C@
+
+
+##############################################################################
+#
+# Customization.
+#
+# This includes your local customizations if Makefile.custom exists
+# in the source directory.  This file doesn't exist in the original
+# distribution so that it doesn't get overwritten when you upgrade.
+ifneq ($(wildcard $(SRCDIR)/Makefile.custom), )
+include $(SRCDIR)/Makefile.custom
+endif
+
+#############################################################################
+# include port specific rules and variables.
+#
+#
+# HISTORY: Before October 1996, this file included the following line:
+#     -include $(MKDIR)/port/postgres.mk.$(PORTNAME)
+# Now, we instead have all the former contents of those .mk files inline
+# with ifeq ($(PORTNAME) ...).  This makes it easier to read the make
+# files and to make certain updates.  It should also help with the migration
+# to autoconf.  -Bryan
+
+# Since there are no longer separate files for each platform, much of the
+# commonality among the platforms ought to be factored out of the following.
+
+##############################################################################
+#
+#  AR
+
+# NAT: I am unsure how to write a test for AROPT=cq vs AROPT=crs, because
+# NAT: I don't know what it does ;-)
+ifneq (,$(findstring /$(PORTNAME)/, /BSD44_derived/bsdi/sparc/))
+  AROPT = cq
+else
+  AROPT = crs
+endif
+
+##############################################################################
+#
+# Shared libraries.
+# This is overridden for many PORTNAMEs below.
+
+# NAT: autoconf needs to know about DLSUFFIX
+DLSUFFIX= .so
+
+#
+# CC
+#
+# NAT: autoconf tests for CC
+CC= @CC@
+
+#
+# LEX
+#
+# NAT: autoconf tests for LEX and LEXLIB.  I've removed the -L and
+# NAT: am unsure how to get it back with autoconf.
+LEX= @LEX@
+LD_ADD_BE = @LEXLIB@
+
+# SHARED LIBRARIES
+#
+# NAT: I am unsure how to write an autoconf test for shared library
+# NAT: flags and rules.
+CFLAGS_SL= -fpic -DPIC
+
+%.so: %.o
+	$(LD) -x -r -o $<.obj $<
+	@echo building shared object $@
+	@rm -f $@.pic
+	@${AR} cq $@.pic `lorder $<.obj | tsort`
+	${RANLIB} $@.pic
+	@rm -f $@
+	$(LD) -x -Bshareable -Bforcearchive \
+	  -o $@ $@.pic
+endif
+
+#--------------------------------------------------------------------------
+
+ifeq ($(PORTNAME), aix)
+# the -lm is because "pow" is defined in libbsd.a and we want pow(3m)
+# NAT: autoconf should look to see whether libbsd has the functions
+# NAT: we need from it, and if so include it.  Similarly -lm.  -ll is
+# NAT: for lex.  -lld is the shared library stuff that needs attention.
+LDADD_BE= -lm -lbsd -ll -lld
+
+# MAKE_EXPORTS is required for svr4 loaders that want a file of
+# symbol names to tell them what to export/import.
+# NAT: is there any harm in always defining this?  Does it have meaning
+# NAT: in BSD systems?  How do I write an autoconf test for this?
+MAKE_EXPORTS= true
+
+#
+# Random things that must be passed everywhere to enable 
+# everything to compile.  :-/
+#
+# The -qmaxmem is because of optimizer limits.
+# The HAVE_ANSI_CPP flag indicates that cc isn't ANSI but also doesn't
+# have a Reiser (pcc-style) cpp.
+#
+# NAT: autoconf should test for this by building a program that tests
+# NAT: the optimizer limits and the signed chars thing.
+CFLAGS_BE= -qchars=signed -qmaxmem=4000
+
+# NAT: ldexport stuff.  I don't understand this.
+EXPSUFF= .exp
+
+MKLDEXPORT=$(SRCDIR)/backend/port/aix/mkldexport.sh
+
+%$(EXPSUFF):  %.o
+	$(MKLDEXPORT) $< `pwd` > $@
+
+%.so: %.o %$(EXPSUFF)
+	@echo The link stage here:
+	$(LD) -H512 -T512 -o $@ -e _nostart \
+	  -bI:$(LIBDIR)/postgres$(EXPSUFF) -bE:$*$(EXPSUFF) \
+	  $*.o -lm -lc 2>/dev/null
+endif
+
+#---------------------------------------------------------------------------
+
+ifeq ($(PORTNAME), alpha)
+# NOFIXADE disallows unaligned access.
+#   on Ultrix and OSF/1 it invokes an explicit syscall.
+#   on HP-UX it turns off certain compiler options.
+# This is defined here because a bunch of clients include tmp/c.h,
+# which is where the work is done on HP-UX.  It only affects the
+# backend on Ultrix and OSF/1.
+ifdef ENFORCE_ALIGNMENT
+CFLAGS_BE= -DNOFIXADE
+else
+CFLAGS_BE= -DNOPRINTADE
+endif
+# NAT: autoconf should test for this.  What symbol does libln.a give us?
+LDADD_BE= -lln
+
+# use the regex library
+# NAT: autoconf should test for this, but how?
+USE_REGEX= 1
+
+# NAT: autoconf should tell us which of these nasty definitions to use.
+%.so:  %.o
+	$(LD) -shared -expect_unresolved '*' -o $@ $<
+
+endif
+
+#---------------------------------------------------------------------------
+
+ifeq ($(PORTNAME), bsdi)
+
+# NAT: how should autoconf test for pre-2.1. bsdi?  grep for those
+# NAT: strings in the return value from uname?
+PRE_BSDI_2_1= false
+ifeq ($(shell uname -r), 2.0)
+PRE_BSDI_2_1= true
+endif
+ifeq ($(shell uname -r), 2.01)
+PRE_BSDI_2_1= true
+endif
+
+# NAT: autoconf needs tests for -lipc, -lcompat, -ldld, -ltermap
+
+ifeq ($(PRE_BSDI_2_1), false)
+# cc is gcc v1.42
+# gcc is gcc v2.7.2
+  LDADD_BE= -ltermcap -ldl -lipc
+else
+# cc is gcc v1.42
+# gcc is gcc v2.6.3
+# use the regex library
+  USE_REGEX= 1
+  CFLAGS_BE= -DPRE_BSDI_2_1
+  LDADD_BE= -ldld -lcompat -lipc
+endif
+
+DLSUFFIX= .o
+
+endif
+
+#--------------------------------------------------------------------------
+
+# NAT: autoconf needs tests for -fpic
+
+ifeq ($(PORTNAME), dgux)
+CFLAGS_SL= -fpic
+%.so: %.o
+	$(CC) -shared -o $@ $<
+
+LDADD_BE= -ldl -lfl
+
+endif
+
+#----------------------------------------------------------------------------
+
+ifeq ($(PORTNAME), hpux)
+# NAT: autoconf needs to test for -W l,-E export symbols
+# -W l,-E	export symbols for linking with the shared libraries 
+#		dynamic loader
+
+LDADD_BE= -lBSD -ll
+ifeq $(CC), cc)
+  CFLAGS_BE= -W l,-E
+  LDFLAGS_BE= -W l,-E
+  LDADD_BE+= -ldld
+endif
+ifeq ($(CC), gcc)
+  LDADD_BE+= /usr/lib/libdld.sl
+endif
+
+# NAT: autoconf needs to check the HPUX version.  How?
+
+ifdef ENFORCE_ALIGNMENT
+   CFLAGS_BE= -DNOFIXADE
+else
+   HPUX_VERS:= $(shell uname -r)
+   HPUX_MAJOR= ${HPUX_VERS:R:E}
+   HPUX_MINOR= ${HPUX_VERS:E}
+   ifeq ($(HPUX_MAJOR), 08)
+      CFLAGS_BE+= +u -DHP_S500_ALIGN
+      LDFLAGS_BE+= +u
+   else
+   ifeq ($(HPUX_MAJOR), 09)
+      ifeq ($(CC), cc)
+         CFLAGS_BE+= +u4 
+         LDFLAGS_BE+= +u4
+      endif
+   endif
+   endif
+endif
+
+# NAT: autoconf needs to check the (extended) ANSI flag
+# (extended) ANSI flag for cc (-Ae is same as -Aa -D_HPUX_SOURCE)
+ifeq ($(CC), cc)
+CFLAGS_BE+= -Ae
+endif
+
+# NAT: shared library stuff needs to be detected by autoconf
+CFLAGS_SL= +z
+DLSUFFIX= .sl
+
+%.sl: %.o
+	$(LD) -b -o $@ $<
+
+endif
+
+#--------------------------------------------------------------------------
+
+ifeq ($(PORTNAME), i386_solaris)
+#
+# Random things that must be passed everywhere to enable 
+# everything to compile.  :-/
+#
+# The extra -I flag is to scoop up extra BSD-emulating headers.
+# This needs to be fixed.  Things other than the backend should not be
+# accessing headers in the backend directory.
+CFLAGS_BE= -I$(SRCDIR)/backend/port/sparc_solaris
+# NAT: autoconf needs to know about -lsocket, -lnsl
+LDADD_BE= -lsocket -lnsl -ll -ldl
+
+# NAT: autoconf needs to know about -fPIC etc
+ifeq ($(CC), cc)
+CFLAGS_SL= -K PIC
+else
+CFLAGS_SL= -fPIC
+endif
+
+%.so: %.o
+	$(LD) -G -Bdynamic -o $@ $<
+
+endif
+
+#----------------------------------------------------------------------------
+
+ifeq ($(PORTNAME), irix5)
+# NAT: autoconf needs to figure out -ll
+LDADD_BE= -ll
+
+%.so: %.o
+	$(LD) -G -Bdynamic -o $@ $<
+
+endif
+
+#---------------------------------------------------------------------------
+
+ifeq ($(PORTNAME), linux)
+# NAT: how can autoconf work out the ELF stuff?
+ifndef LINUX_ELF
+DLSUFFIX= .o
+LDADD_BE= -ldld
+else
+DLSUFFIX= .so
+LDADD_BE= -ldl
+LDFLAGS_BE= -rdynamic
+endif
+MK_NO_LORDER= true
+
+# use the regex library
+# NAT: what is the regex library and how can autoconf find it?
+USE_REGEX= 1
+
+# NAT: autoconf needs to know about -fpic and other shared library
+# NAT: isms
+CFLAGS_SL= -fpic
+%.so: %.o
+	$(CC) -shared -o $@ $<
+
+# The Linux gnulib #defines the problem away for you and calls 
+# the BSD routines if you give it the right flags.
+# NAT: what problem, and how can autoconf test for -lbsd needed?
+LDADD_BE+= -lbsd
+
+endif
+
+#---------------------------------------------------------------------------
+
+ifeq ($(PORTNAME), sparc)
+
+# NAT: autoconf needs to know about gcc vs cc and -PIC vs -fPIC
+ifeq ($(CC), cc)
+CFLAGS_SL= -PIC
+else
+CFLAGS_SL= -fPIC
+endif
+LDADD_BE= -lln -ldl
+
+# NAT: autoconf also needs to know about -Bdynamic
+%.so: %.o
+	$(LD) -dc -dp -Bdynamic -o $@ $<
+endif
+
+#----------------------------------------------------------------------------
+
+ifeq ($(PORTNAME), sparc_solaris)
+
+# NAT: autoconf needs to know about dynamic loading libraries
+LDADD_BE= -ll -ldl
+
+#
+# Random things that must be passed everywhere to enable 
+# everything to compile.  :-/
+#
+# The extra -I flag is to scoop up extra BSD-emulating headers.
+# NAT: autoconf needs to know about BSD-emulating headers (see
+# NAT: the i386 port), -lsocket and -lnsl
+CFLAGS_BE= -I$(SRCDIR)/backend/port/sparc_solaris
+LDADD_BE+= -lsocket -lnsl
+
+# NAT: autoconf needs to know about -K PIC vs -fPIC
+ifeq ($(CC), cc)
+CFLAGS_SL= -K PIC
+else
+CFLAGS_SL= -fPIC
+endif
+
+# NAT: autoconf needs to know about dynamic loading
+%.so: %.o
+	$(LD) -G -Bdynamic -o $@ $<
+
+endif
+
+#-----------------------------------------------------------------------------
+
+ifeq ($(PORTNAME), svr4)
+# NAT: autoconf needs to know about -W0 and why you need it
+CFLAGS+= -W0
+
+# MAKE_EXPORTS is required for svr4 loaders that want a file of
+# symbol names to tell them what to export/import.
+# NAT: autoconf needs to know about MAKE_EXPORTS
+MAKE_EXPORTS= true
+
+#
+# Random things that must be passed everywhere to enable
+# everything to compile.  :-/
+#
+# The extra -I flag is to scoop up extra BSD-emulating headers.
+# NAT: autoconf needs to know about BSD-emulating headers,
+# NAT: -lsocket, -lnsl -lc libucb -ll and -ldl
+CFLAGS_BE+= -I$(SRCDIR)/backend/port/svr4
+LDADD_BE= -lsocket -lnsl -lc /usr/ucblib/libucb.a -ll -ldl
+# NAT: autoconf needs to know about -LD-Blargedynsym
+LDFLAGS_BE= -LD-Blargedynsym
+
+# NAT: autoconf needs to know about dynamic loading
+%.so: %.o
+	$(LD) -G -Bdynamic -o $@ $<
+
+endif
+
+#---------------------------------------------------------------------------
+
+ifeq ($(PORTNAME), ultrix4)
+# NAT: autoconf needs to know about the different types of alignment
+# NAT: enforcement.
+ifdef ENFORCE_ALIGNMENT
+CFLAGS_BE= -DNOFIXADE
+endif
+# NAT: autoconf needs to know about dynamic loading
+LDADD_BE= -ldl -lln
+
+# NAT: autoconf needs to know about NO_BEFOREINSTL - what is it used
+# NAT: for and how do I test for it?
+# install creates intermediate directories
+NO_BEFOREINSTL= true
+
+# NAT: autoconf needs to know about dynamic loading
+CFLAGS_SL= -G 0
+DLSUFFIX= .o
+
+endif
+
+
+ifneq ($(PORTNAME), next)
+# NAT: autoconf needs to know about -lm
+LDADD_BE+= -lm
+endif
+
+# This goes here so that customization in Makefile.custom is effective
+##############################################################################
+#
+# Flags for CC and LD. 
+
+##############################################################################
+# COPT
+#
+# COPT is for options that the sophisticated builder might want to vary 
+# from one build to the next, like options to build Postgres with debugging
+# information included.  COPT is meant to be set on the make command line, 
+# for example with the command "make COPT=-g".  The value you see set here
+# is the default that gets used if the builder does not give a value for
+# COPT on his make command.
+#
+# There is a nonobvious relationship between -O (optimization) and 
+# -Werror (consider all warnings fatal).  On some systems, if you don't
+# optimize, you will always get some warnings because the system header
+# files will include some unreferenced functions in the code.  These are
+# functions that are supposed to be inline, so there wouldn't ordinarily
+# be an "unreferenced" problem, but if you don't enable optimization, no
+# inlining can happen, and hence the problem.  Therefore, we include 
+# if you override -O, you override -Werror as well.
+#
+# CUSTOM_COPT is something the user may set in Makefile.custom
+
+# Common values for COPT are: -g for debuggable binaries, -m486 if you are
+# using a i486 or better.
+
+ifneq ($(CUSTOM_COPT),)
+COPT= $(CUSTOM_COPT)
+else
+ifeq ($(CC), gcc)
+COPT= -O2 -Werror
+else
+COPT= -O
+endif
+endif
+
+
+ifeq ($(CC), gcc)
+# Some flags only gcc recognizes...
+# PostgreSQL should *always* compile with these enabled
+CFLAGS+= -Wall -Wmissing-prototypes
+endif
+
+# Globally pass debugging/optimization/profiling flags based
+# on the options selected above.
+
+
+ifdef COPT
+   CFLAGS+= $(COPT)
+else
+   ifndef CFLAGS_OPT
+      CFLAGS_OPT= -O
+   endif
+   CFLAGS+= $(CFLAGS_OPT)
+endif
+
+ifndef CASSERT
+   CFLAGS+= -DNO_ASSERT_CHECKING
+endif
+
+ifdef PROFILE
+   CFLAGS+= $(PROFILE)
+   LDFLAGS+= $(PROFILE)
+endif
+
+# Globally pass PORTNAME
+CFLAGS+= -D$(PORTNAME)
+
+# include port-specific flags
+CFLAGS+= $(CFLAGS_BE)
+LDADD+= $(LDADD_BE)
+LDFLAGS+= $(LDFLAGS_BE)
+
