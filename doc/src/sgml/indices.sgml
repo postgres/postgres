@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.18 2001/05/22 16:00:00 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.19 2001/05/30 04:01:11 momjian Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -461,7 +461,7 @@ Subject: Re: [QUESTIONS] PRIMARY KEY | UNIQUE
     However, my application requires that each collection will also have a
     unique name. Why? So that a human being who wants to modify a collection
     will be able to identify it. It's much harder to know, if you have two
-    collections named <quote>Life Science</quote>, the the one tagged 24433 is the one you
+    collections named <quote>Life Science</quote>, the one tagged 24433 is the one you
     need, and the one tagged 29882 is not.
    </para>
 
