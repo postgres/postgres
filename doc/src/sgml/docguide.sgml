@@ -1,3 +1,15 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.7 1998/08/15 06:53:52 thomas Exp $
+Documentation Guide
+Thomas Lockhart
+
+$Log: docguide.sgml,v $
+Revision 1.7  1998/08/15 06:53:52  thomas
+Include working list of all documentation sources, with current status
+ and plans for some of them.
+
+-->
+
 <appendix label="A" Id="docguide">
 <docinfo>
 <authorgroup>
@@ -121,6 +133,7 @@ Description
 <tbody>
 <row><entry>	./COPYRIGHT	</entry><entry>	Copyright notice	</entry></row>
 <row><entry>	./register.txt	</entry><entry>	Registration message during make	</entry></row>
+<row><entry>	./doc/bug.template	</entry><entry>	Not converted	</entry></row>
 <row><entry>	./doc/postgres.tar.gz	</entry><entry>	Integrated docs (<acronym>HTML</acronym>)	</entry></row>
 <row><entry>	./doc/programmer.ps.gz	</entry><entry>	Programmer's Guide (Postscript)	</entry></row>
 <row><entry>	./doc/programmer.tar.gz	</entry><entry>	Programmer's Guide (<acronym>HTML</acronym>)	</entry></row>
@@ -259,9 +272,9 @@ Status
 </thead>
 
 <tbody>
-<row><entry>	./HISTORY	</entry><entry>	Not converted	</entry></row>
+<row><entry>	./HISTORY	</entry><entry>	Obsolete. Converted to release.sgml		</entry></row>
 <row><entry>	./README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./INSTALL	</entry><entry>	Not converted	</entry></row>
+<row><entry>	./INSTALL	</entry><entry>	Obsolete. Converted to install.sgml	</entry></row>
 <row><entry>	./contrib/README	</entry><entry>	Not converted	</entry></row>
 <row><entry>	./contrib/apache_logging/README	</entry><entry>	Not converted	</entry></row>
 <row><entry>	./contrib/array/array_iterator.doc	</entry><entry>	Not converted	</entry></row>
@@ -290,23 +303,22 @@ Status
 <row><entry>	./doc/FAQ_Linux	</entry><entry>	Not converted	</entry></row>
 <row><entry>	./doc/TODO	</entry><entry>	Not converted	</entry></row>
 <row><entry>	./doc/README.GEQO	</entry><entry>	Removed. Superceded by geqo.sgml	</entry></row>
-<row><entry>	./doc/README.fsync	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./doc/README.locale	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./doc/README.mb	</entry><entry>	Not converted	</entry></row>
+<row><entry>	./doc/README.fsync	</entry><entry>	Assimilate into Admin Guide	</entry></row>
+<row><entry>	./doc/README.locale	</entry><entry>	Assimilate into Admin Guide	</entry></row>
+<row><entry>	./doc/README.mb	</entry><entry>	Assimilate into Admin Guide	</entry></row>
 <row><entry>	./doc/README.mb.jp	</entry><entry>	Not converted	</entry></row>
 <row><entry>	./doc/README.support	</entry><entry>	Not converted	</entry></row>
 <row><entry>	./doc/TODO.GEQO	</entry><entry>	Removed. Superceded by geqo.sgml	</entry></row>
-<row><entry>	./doc/bug.template	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./doc/userguide.ps	</entry><entry>	Obsolete. Remove from distribution	</entry></row>
-<row><entry>	./migration/1.02_to_1.02.1	</entry><entry>	Removed (converted to SGML)	</entry></row>
-<row><entry>	./migration/1.09_to_6.0	</entry><entry>	Removed (converted to SGML)	</entry></row>
-<row><entry>	./migration/1.0_to_1.01	</entry><entry>	Removed (converted to SGML)	</entry></row>
-<row><entry>	./migration/6.0_to_6.1	</entry><entry>	Removed (converted to SGML)	</entry></row>
-<row><entry>	./migration/6.1_to_6.1.1	</entry><entry>	Removed (converted to SGML)	</entry></row>
-<row><entry>	./migration/6.1_to_6.2	</entry><entry>	Removed (converted to SGML)	</entry></row>
-<row><entry>	./migration/6.2.1_to_6.3	</entry><entry>	Removed (converted to SGML)	</entry></row>
-<row><entry>	./migration/6.2_to_6.2.1	</entry><entry>	Removed (converted to SGML)	</entry></row>
-<row><entry>	./migration/6.3.1_to_6.3.2	</entry><entry>	Removed (converted to SGML)	</entry></row>
+<row><entry>	./doc/userguide.ps	</entry><entry>	Removed (converted to SGML)	</entry></row>
+<row><entry>	./migration/1.02_to_1.02.1	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
+<row><entry>	./migration/1.09_to_6.0	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
+<row><entry>	./migration/1.0_to_1.01	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
+<row><entry>	./migration/6.0_to_6.1	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
+<row><entry>	./migration/6.1_to_6.1.1	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
+<row><entry>	./migration/6.1_to_6.2	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
+<row><entry>	./migration/6.2.1_to_6.3	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
+<row><entry>	./migration/6.2_to_6.2.1	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
+<row><entry>	./migration/6.3.1_to_6.3.2	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
 <row><entry>	./src/DEVELOPERS	</entry><entry>	Not converted	</entry></row>
 <row><entry>	./src/backend/access/nbtree/README	</entry><entry>	Not converted	</entry></row>
 <row><entry>	./src/backend/catalog/README	</entry><entry>	Not converted	</entry></row>
@@ -383,10 +395,10 @@ Status
 <row><entry>	./src/man/ecpg.1	</entry><entry>	Not converted	</entry></row>
 <row><entry>	./src/man/abort.l	</entry><entry>	Not converted	</entry></row>
 <row><entry>	./src/man/alter_table.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/alter_user.l	</entry><entry>	Not converted	</entry></row>
+<row><entry>	./src/man/alter_user.l	</entry><entry>	Split into Reference and Admin Guide	</entry></row>
 <row><entry>	./src/man/begin.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/bki.5	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/catalogs.3	</entry><entry>	Not converted	</entry></row>
+<row><entry>	./src/man/bki.5	</entry><entry>	Removed. Superceded by bki.sgml	</entry></row>
+<row><entry>	./src/man/catalogs.3	</entry><entry>	Catalog synopsis. Move to Programmer's Guide?	</entry></row>
 <row><entry>	./src/man/cleardbdir.1	</entry><entry>	Not converted	</entry></row>
 <row><entry>	./src/man/close.l	</entry><entry>	Not converted	</entry></row>
 <row><entry>	./src/man/cluster.l	</entry><entry>	Not converted	</entry></row>
@@ -435,22 +447,22 @@ Status
 <row><entry>	./src/man/insert.l	</entry><entry>	Not converted	</entry></row>
 <row><entry>	./src/man/ipcclean.1	</entry><entry>	Not converted	</entry></row>
 <row><entry>	./src/man/large_objects.3	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/libpq.3	</entry><entry>	Not converted	</entry></row>
+<row><entry>	./src/man/libpq.3	</entry><entry>	Obsolete. Superceded by libpq.sgml	</entry></row>
 <row><entry>	./src/man/listen.l	</entry><entry>	Not converted	</entry></row>
 <row><entry>	./src/man/load.l	</entry><entry>	Not converted	</entry></row>
 <row><entry>	./src/man/lock.l	</entry><entry>	Not converted	</entry></row>
 <row><entry>	./src/man/move.l	</entry><entry>	Not converted	</entry></row>
 <row><entry>	./src/man/notify.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/oracle_compat.3	</entry><entry>	Obsolete. Superceded by func.sgml	</entry></row>
-<row><entry>	./src/man/page.5	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/pg_dump.1	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/pg_dumpall.1	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/pg_hba.conf.5	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/pg_passwd.1	</entry><entry>	Not converted	</entry></row>
+<row><entry>	./src/man/oracle_compat.3	</entry><entry>	Removed. Superceded by func.sgml	</entry></row>
+<row><entry>	./src/man/page.5	</entry><entry>	Table storage. Assimilate into Dev Guide	</entry></row>
+<row><entry>	./src/man/pg_dump.1	</entry><entry>	Assimilate into Admin Guide	</entry></row>
+<row><entry>	./src/man/pg_dumpall.1	</entry><entry>	Assimilate into Admin Guide	</entry></row>
+<row><entry>	./src/man/pg_hba.conf.5	</entry><entry>	Assimilate into Admin Guide	</entry></row>
+<row><entry>	./src/man/pg_passwd.1	</entry><entry>	Assimilate into Admin Guide	</entry></row>
 <row><entry>	./src/man/pgbuiltin.3	</entry><entry>	Obsolete. Superceded by datatype.sgml	</entry></row>
-<row><entry>	./src/man/pgintro.1	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/postgres.1	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/postmaster.1	</entry><entry>	Not converted	</entry></row>
+<row><entry>	./src/man/pgintro.1	</entry><entry>	Assimilate into User's Guide?	</entry></row>
+<row><entry>	./src/man/postgres.1	</entry><entry>	Assimilate into User's, Admin Guides	</entry></row>
+<row><entry>	./src/man/postmaster.1	</entry><entry>	Assimilate into User's, Admin Guides	</entry></row>
 <row><entry>	./src/man/psql.1	</entry><entry>	Not converted	</entry></row>
 <row><entry>	./src/man/reset.l	</entry><entry>	Not converted	</entry></row>
 <row><entry>	./src/man/revoke.l	</entry><entry>	Not converted	</entry></row>
@@ -508,7 +520,10 @@ used for the documentation. The primary source files are:
 <term>postgres.sgml</term>
 <listitem>
 <para>
-This is the integrated document, including all other documents as <firstterm>parts</firstterm>.
+This is the integrated document, including all other documents as parts.
+Output is generated in <acronym>HTML</acronym> since the browser interface
+makes it easy to move around all of the documentation by just clicking.
+The other documents are available in both <acronym>HTML</acronym> and hardcopy.
 </para>
 </listitem>
 </varlistentry>
@@ -608,7 +623,7 @@ James Clark's
 <para>
 Currently, hardcopy is produced by importing <firstterm>Rich Text
 Format</firstterm> (<acronym>RTF</acronym>) output from
-<application>jade</application> to
+<application>jade</application> into
 <productname>ApplixWare</productname> for minor formatting fixups then
 exporting as a Postscript file.</para>
 
