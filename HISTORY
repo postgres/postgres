@@ -14,6 +14,15 @@ Major changes in this release:
 access during the VACUUM.  A new VACUUM FULL command does old-style
 vacuum by locking the table and shrinking the on-disk copy of the table.
 
+	Transactions - There is no longer a problem with installations
+that exceed four billion transactions.
+
+	OID's - OID's are now optional.  Users can now create tables
+without OID's for cases where OID usage is excessive.
+
+	Optimizer - The system now computes histogram column statistics
+during ANALYZE, allowing much better optimizer choices.
+
         Security -  A new MD5 encryption option allows much more secure
 storage and transfer of passwords.  A new unix-domain socket
 authentication option is available on Linux and *BSD systems.
