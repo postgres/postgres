@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.65 2003/05/08 18:16:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.66 2003/06/12 17:29:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,17 +262,19 @@ postquel_getnext(execution_state *es)
 
 	if (es->qd->operation == CMD_UTILITY)
 	{
-		/*
-		 * Process a utility command. (create, destroy...)	DZ - 30-8-1996
-		 */
 		ProcessUtility(es->qd->parsetree->utilityStmt, es->qd->dest, NULL);
-		if (!LAST_POSTQUEL_COMMAND(es))
-			CommandCounterIncrement();
 		return (TupleTableSlot *) NULL;
 	}
 
-	/* If it's not the last command, just run it to completion */
-	count = (LAST_POSTQUEL_COMMAND(es)) ? 1L : 0L;
+	/*
+	 * If it's the function's last command, and it's a SELECT, fetch one
+	 * row at a time so we can return the results.  Otherwise just run it
+	 * to completion.
+	 */
+	if (LAST_POSTQUEL_COMMAND(es) && es->qd->operation == CMD_SELECT)
+		count = 1L;
+	else
+		count = 0L;
 
 	return ExecutorRun(es->qd, ForwardScanDirection, count);
 }
