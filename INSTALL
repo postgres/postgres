@@ -34,27 +34,48 @@ release are listed in the section called Supported Platforms below. In the
 doc subdirectory of the distribution there are several platform-specific FAQ
 documents you might wish to consult if you are having trouble.
 
-Compiler. You need a Standard ("ANSI") C compiler. Recent versions of GCC
-are recommendable, but PostgreSQL is known to build with a wide variety of
-compilers from different vendors.
+The following prerequisites exist for building PostgreSQL:
 
-Make. Building PostgreSQL requires GNU make; it will not work with other
-make programs. GNU make is often installed under the name gmake. This
-document will always refer to it by that name. (On GNU/Linux systems GNU
-make is the default tool with the name make.) To test for GNU make enter
+   * GNU make is required; other make programs will not work. GNU make is
+     often installed under the name gmake; this document will always refer
+     to it by that name. (On GNU/Linux systems GNU make is the default tool
+     with the name make.) To test for GNU make enter
 
-gmake --version
+     gmake --version
 
-If at all possible you should try to use version 3.76.1 or later. If you
-need to get GNU make, you can find it at your local GNU mirror site (see
-http://www.gnu.org/order/ftp.html) or at ftp://ftp.gnu.org/gnu/make.
+     If at all possible you should use version 3.76.1 or later.
 
-Resources. Check that you have sufficient disk space. You will need about 30
-MB for the source tree during compilation and about 5 MB for the
-installation directory. An empty database takes about 1 MB, later it takes
-about five times the amount of space that a flat text file with the same
-data would take. If you are going to run the regression tests you will
-temporarily need an extra 20 MB. Use the df command to check for disk space.
+   * You need an ISO/ANSI C compiler. Recent versions of GCC are
+     recommendable, but PostgreSQL is known to build with a wide variety of
+     compilers from different vendors.
+
+   * gzip
+
+   * The GNU Readline library for comfortable line editing and command
+     history retrieval will automatically be used if found. You might wish
+     to install it before proceeding, but it is not required.
+
+   * Flex and Bison are not required when building from a released source
+     package because the output files are pre-generated. You will need these
+     programs only when building from a CVS tree or when the actual scanner
+     and parser definition files were changed. If you need them, be sure to
+     get Flex 2.5.4 or later and Bison 1.28 or later. Other yacc programs
+     can sometimes be used, but doing so requires extra efforts and is not
+     recommended. Other lex programs will definitely not work.
+
+   * To build on Windows NT or Windows 2000 you need the Cygwin and cygipc
+     packages. See the file doc/FAQ_MSWIN for details.
+
+If you need to get a GNU package, you can find it at your local GNU mirror
+site (see http://www.gnu.org/order/ftp.html for a list) or at
+ftp://ftp.gnu.org/gnu/.
+
+Also check that you have sufficient disk space. You will need about 30 MB
+for the source tree during compilation and about 5 MB for the installation
+directory. An empty database takes about 1 MB, later it takes about five
+times the amount of space that a flat text file with the same data would
+take. If you are going to run the regression tests you will temporarily need
+an extra 20 MB. Use the df command to check for disk space.
 
   ------------------------------------------------------------------------
 
@@ -77,11 +98,11 @@ here. These instructions assume that your existing installation is under the
 
      pg_dumpall > outputfile
 
-     If you need to preserve the oids (such as when using them as foreign
+     If you need to preserve the OIDs (such as when using them as foreign
      keys), then use the -o option when running pg_dumpall.
 
      Make sure that you use the pg_dumpall command from the version you are
-     currently running. 7.1's pg_dumpall should not be used on older
+     currently running. 7.1devel's pg_dumpall should not be used on older
      databases.
 
   3. If you are installing the new version at the same location as the old
@@ -96,10 +117,10 @@ here. These instructions assume that your existing installation is under the
      to the kill command.
 
      On systems which have PostgreSQL started at boot time, there is
-     probably a startup file that will accomplish the same thing. For
-     example, on a Redhat Linux system one might find that
+     probably a start-up file that will accomplish the same thing. For
+     example, on a Red Hat Linux system one might find that
 
-     /etc/rc.d/init.d/postgres.init stop
+     /etc/rc.d/init.d/postgresql stop
 
      works.
 
@@ -109,13 +130,13 @@ here. These instructions assume that your existing installation is under the
 
      mv /usr/local/pgsql /usr/local/pgsql.old
 
-After you have installed PostgreSQL 7.1, create a new database directory and
-start the new server. Remember that you must execute these commands while
-logged in to the special database user account (which you already have if
-you are upgrading).
+After you have installed PostgreSQL 7.1devel, create a new database
+directory and start the new server. Remember that you must execute these
+commands while logged in to the special database user account (which you
+already have if you are upgrading).
 
-/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/bin
-/usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/bin
+/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data
+/usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data
 
 Finally, restore your data with
 
@@ -124,9 +145,8 @@ Finally, restore your data with
 using the new psql.
 
 You can also install the new version in parallel with the old one to
-decrease the downtime. These topic are discussed at length in the
-Administrator's Guide, which you are encouraged to read in any case. The
-pg_upgrade utility can also often be used.
+decrease the downtime. These topics are discussed at length in the
+Administrator's Guide, which you are encouraged to read in any case.
 
   ------------------------------------------------------------------------
 
@@ -134,10 +154,10 @@ Installation Procedure
 
   1. Configuration
 
-     The first step of the installation procedure to configure the source
+     The first step of the installation procedure is to configure the source
      tree for your system and choose the options you would like. This is
-     done by running the configure script. For a default installation,
-     simply type
+     done by running the configure script. For a default installation simply
+     enter
 
      ./configure
 
@@ -151,8 +171,8 @@ Installation Procedure
      compiler. All files will be installed under /usr/local/pgsql by
      default.
 
-     You can customize the build and installation process by giving one or
-     more of the following command line options to configure:
+     You can customize the build and installation process by supplying one
+     or more of the following command line options to configure:
 
      --prefix=PREFIX
 
@@ -207,8 +227,18 @@ Installation Procedure
      --mandir=DIRECTORY
 
           The man pages that come with PostgreSQL will be installed under
-          this directory, in their respective manx subdirectories.
-          PREFIX/man.
+          this directory, in their respective manx subdirectories. The
+          default is PREFIX/man.
+
+          Note: To reduce the pollution of shared installation
+          locations (such as /usr/local/include), the string
+          "/postgresql" is automatically appended to datadir,
+          sysconfdir, includedir, and docdir, unless the fully expanded
+          directory name already contains the string "postgres" or
+          "pgsql". For example, if you choose /usr/local as prefix, the
+          C header files will be installed in
+          /usr/local/include/postgresql, but if the prefix is
+          /opt/postgres, then they will be in /opt/postgres/include.
 
      --with-includes=DIRECTORIES
 
@@ -237,14 +267,14 @@ Installation Procedure
 
      --enable-recode
 
-          Enables character set recode support. See doc/README.Charsets for
-          details on this feature.
+          Enables single-byte character set recode support. See the
+          Administrator's Guide about this feature.
 
      --enable-multibyte
 
           Allows the use of multibyte character encodings. This is primarily
-          for languages like Japanese, Korean, and Chinese. Read
-          doc/README.mb for details.
+          for languages like Japanese, Korean, and Chinese. Read the
+          Administrator's Guide for details.
 
      --with-pgport=NUMBER
 
@@ -255,10 +285,7 @@ Installation Procedure
 
      --with-CXX
 
-          Build the C++ interface library. configure will automatically pick
-          the C++ compiler that goes with the C compiler you are using. It
-          is not recommended or supported to use C and C++ compilers of
-          different origin in the same build.
+          Build the C++ interface library.
 
      --with-perl
 
@@ -279,14 +306,14 @@ Installation Procedure
 
      --with-tcl
 
-          Builds components that require Tcl, which are libpgtcl, pgtclsh,
-          and PL/Tcl.
+          Builds components that require Tcl/Tk, which are libpgtcl,
+          pgtclsh, pgtksh, pgaccess, and PL/Tcl. But see below about
+          --without-tk.
 
-     --with-x
+     --without-tk
 
-          Use the X Window System. If you specified --with-tcl then this
-          will enable the build of modules requiring Tcl/Tk, that is, pgtksh
-          and pgaccess.
+          If you specify --with-tcl and this option, then programs that
+          require Tk (i.e., pgtksh and pgaccess) will be excluded.
 
      --with-tclconfig=DIRECTORY, --with-tkconfig=DIRECTORY
 
@@ -306,19 +333,21 @@ Installation Procedure
           Specifies the directory where the ODBC driver will expect its
           odbcinst.ini configuration file. The default is
           /usr/local/pgsql/etc or whatever you specified as --sysconfdir. A
-          default file will be installed there.
+          default file will be installed there. If you intend to share the
+          odbcinst.ini file between several ODBC drivers then you may want
+          to use this option.
 
      --with-krb4=DIRECTORY, --with-krb5=DIRECTORY
 
-          Build with suppport for Kerberos authentication. You can use
-          either Kerberos version 4 or 5, but not both. The DIRECTORY
-          argument specifies the root directory of the Kerberos
-          installation; /usr/athena is assumed as default. If the relevant
-          headers files and libraries are not under a common parent
-          directory, then you must use the --with-includes and
-          --with-libraries options in addition to this option. If, on the
-          other hand, the required files are in a location that is searched
-          by default (e.g., /usr/lib), then you can leave off the argument.
+          Build with support for Kerberos authentication. You can use either
+          Kerberos version 4 or 5, but not both. The DIRECTORY argument
+          specifies the root directory of the Kerberos installation;
+          /usr/athena is assumed as default. If the relevant headers files
+          and libraries are not under a common parent directory, then you
+          must use the --with-includes and --with-libraries options in
+          addition to this option. If, on the other hand, the required files
+          are in a location that is searched by default (e.g., /usr/lib),
+          then you can leave off the argument.
 
           configure will check for the required header files and libraries
           to make sure that your Kerberos installation is sufficient before
@@ -329,20 +358,23 @@ Installation Procedure
           The name of the Kerberos service principal. "postgres" is the
           default. There's probably no reason to change this.
 
-     --with-krb-srvtab=FILE
+     --with-openssl=DIRECTORY
 
-          Specifies the location of the Kerberos server shared key file
-          ("srvtab"). If you are using Kerberos 4, this defaults to
-          /etc/srvtab, with Kerberos 5 to
-          FILE:/usr/local/pgsql/etc/krb5.keytab, or equivalent, depending on
-          what you set --sysconfdir to above.
+          Build with support for SSL (encrypted) connections. This requires
+          the OpenSSL package to be installed. The DIRECTORY argument
+          specifies the root directory of the OpenSSL installation; the
+          default is /usr/local/ssl.
+
+          configure will check for the required header files and libraries
+          to make sure that your OpenSSL installation is sufficient before
+          proceeding.
 
      --enable-syslog
 
           Enables the PostgreSQL server to use the syslog logging facility.
-          (Using this option does not mean that you have to log with syslog
-          or even that it will be done by default, it simply makes it
-          possible to turn this option on at run time.)
+          (Using this option does not mean that you must log with syslog or
+          even that it will be done by default, it simply makes it possible
+          to turn this option on at run time.)
 
      --enable-debug
 
@@ -350,11 +382,13 @@ Installation Procedure
           means that you can run the programs through a debugger to analyze
           problems. This option is not recommended for production use.
 
-     Environment variables. You can set the CC environment variable to
-     choose the C compiler to use. If you don't then configure will look for
-     one. For example:
+     If you prefer a C or C++ compiler different from the one configure
+     picks then you can set the environment variables CC and CXX,
+     respectively, to the program of your choice. Similarly, you can
+     override the default compiler flags with the CFLAGS and CXXFLAGS
+     variables. For example:
 
-     CC=/opt/bin/gcc ./configure
+     env CC=/opt/bin/gcc CFLAGS='-02 -pipe' ./configure
 
   2. Build
 
@@ -374,7 +408,7 @@ Installation Procedure
      test suite to verify that PostgreSQL runs on your machine in the way
      the developers expected it to. Type
 
-     gmake -C src/test/regress all runcheck
+     gmake check
 
      It is possible that some tests fail, due to differences in error
      message wording or floating point results. The file
@@ -426,13 +460,12 @@ Installation Procedure
      will not remove the Perl and Python interfaces and it will not remove
      any directories.
 
-Cleanup. After the installation you can make room by removing the built
-files from the source tree with the gmake clean command. This will preserve
-the choices made by the configure program, so that you can rebuild
-everything with gmake later on. To reset the source tree to the state in
-which it was distributed, use gmake distclean. If you are going to build for
-several platforms from the same source tree you must do this and
-re-configure for each build.
+After the installation you can make room by removing the built files from
+the source tree with the gmake clean command. This will preserve the choices
+made by the configure program, so that you can rebuild everything with gmake
+later on. To reset the source tree to the state in which it was distributed,
+use gmake distclean. If you are going to build for several platforms from
+the same source tree you must do this and re-configure for each build.
 
   ------------------------------------------------------------------------
 
@@ -440,11 +473,14 @@ Post-Installation Setup
 
 Shared Libraries
 
-On most systems that have shared libraries (which most systems do) you need
-to tell your system how to find the newly installed shared libraries. How to
-do this varies between platforms, but the most widely usable method is to
-set the environment variable LD_LIBRARY_PATH like so: In Bourne shells (sh,
-ksh, bash, zsh)
+On some systems that have shared libraries (which most systems do) you need
+to tell your system how to find the newly installed shared libraries. The
+systems on which this is not necessary include FreeBSD, HP/UX, Irix, Linux,
+NetBSD, OpenBSD, OSF/1 (Digital Unix, Tru64 UNIX), and Solaris.
+
+The method to set the shared library search path varies between platforms,
+but the most widely usable method is to set the environment variable
+LD_LIBRARY_PATH like so: In Bourne shells (sh, ksh, bash, zsh)
 
 LD_LIBRARY_PATH=/usr/local/pgsql/lib
 export LD_LIBRARY_PATH
@@ -454,18 +490,16 @@ or in csh or tcsh
 setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
 
 Replace /usr/local/pgsql/lib with whatever you set --libdir to in step 1.
-You should put these commands into a shell startup file such as /etc/profile
-or ~/.bash_profile.
+You should put these commands into a shell start-up file such as
+/etc/profile or ~/.bash_profile. Some good information about the caveats
+associated with the method can be found at
+http://www.visi.com/~barr/ldpath.html.
 
-On Linux systems the following is the preferred method, but you must have
-root access. Edit the file /etc/ld.so.conf to add a line
+On some systems it might be preferable to set the environment variable
+LD_RUN_PATH before building.
 
-/usr/local/pgsql/lib
-
-Then run command /sbin/ldconfig.
-
-If in doubt, refer to the manual pages of your system. If you later on get a
-message like
+If in doubt, refer to the manual pages of your system (perhaps ld.so or
+rld). If you later on get a message like
 
 psql: error in loading shared libraries
 libpq.so.2.1: cannot open shared object file: No such file or directory
@@ -479,7 +513,7 @@ Environment Variables
 If you installed into /usr/local/pgsql or some other location that is not
 searched for programs by default, you need to add /usr/local/pgsql/bin (or
 what you set --bindir to in step 1) into your PATH. To do this, add the
-following to your shell startup file, such as ~/.bash_profile (or
+following to your shell start-up file, such as ~/.bash_profile (or
 /etc/profile, if you want it to affect every user):
 
 PATH=$PATH:/usr/local/pgsql/bin
@@ -489,7 +523,7 @@ If you are using csh or tcsh, then use this command:
 set path = ( /usr/local/pgsql/bin path )
 
 To enable your system to find the man documentation, you need to add a line
-like the following to a shell startup file:
+like the following to a shell start-up file:
 
 MANPATH=$MANPATH:/usr/local/pgsql/man
 
@@ -507,12 +541,12 @@ Getting Started
 The following is a quick summary of how to get PostgreSQL up and running
 once installed. The Administrator's Guide contains more information.
 
-  1. Create the PostgreSQL server account. This is the user the server will
-     run as. For production use you should create a separate, unprivileged
-     account ("postgres" is commonly used). If you do not have root access
-     or just want to play around, your own user account is enough, but
-     running the server as root is a security risk and therefore not
-     allowed.
+  1. Create a user account for the PostgreSQL server. This is the user the
+     server will run as. For production use you should create a separate,
+     unprivileged account ("postgres" is commonly used). If you do not have
+     root access or just want to play around, your own user account is
+     enough, but running the server as root is a security risk and will not
+     work.
 
      adduser postgres
 
@@ -544,7 +578,7 @@ once installed. The Administrator's Guide contains more information.
 
      To stop a server running in the background you can type
 
-     kill `cat /usr/local/psgql/data/postmaster.pid`
+     kill `cat /usr/local/pgsql/data/postmaster.pid`
 
      In order to allow TCP/IP connections (rather than only Unix domain
      socket ones) you need to pass the -i option to postmaster.
@@ -587,10 +621,10 @@ What Now?
 
 Supported Platforms
 
-At the time of release, PostgreSQL 7.1 has been verified by the developer
-community to work on the following platforms. A supported platform generally
-means that PostgreSQL builds and installs according to these instructions
-and that the regression tests pass, except for minor differences.
+PostgreSQL has been verified by the developer community to work on the
+platforms listed below. A supported platform generally means that PostgreSQL
+builds and installs according to these instructions and that the regression
+tests pass.
 
      Note: If you are having problems with the installation on a
      supported platform, please write to <pgsql-bugs@postgresql.org> or
@@ -605,8 +639,8 @@ and that the regression tests pass, except for minor differences.
  5.0                            (<andrew.mcmurry@astro.uio.no>)
  FreeBSD 4.0  x86       7.0     2000-04-04, Marc Fournier
                                 (<scrappy@hub.org>)
- HPUX 9.0x andPA-RISC   7.0     2000-04-12, Tom Lane
- 10.20                          (<tgl@sss.pgh.pa.us>)
+ HPUX 9.0x andPA-RISC   7.0     2000-04-12, Tom Lane                See also
+ 10.20                          (<tgl@sss.pgh.pa.us>)               doc/FAQ_HPUX
  IRIX 6.5.6f  MIPS      6.5.3   2000-02-18, Kevin Wheatley          MIPSPro
                                 (<hxpro@cinesite.co.uk>)            7.3.1.1m N32
                                                                     build
@@ -633,10 +667,10 @@ and that the regression tests pass, except for minor differences.
                                 (<hotz@jpl.nasa.gov>)
  NetBSD       Sparc     7.0     2000-04-13, Tom I. Helbekkmo
                                 (<tih@kpnQwest.no>)
- QNX 4.25     x86       7.0     2000-04-01, Dr. Andreas Kardos
-                                (<kardos@repas-aeg.de>)
- SCO          x86       6.5     1999-05-25, Andrew Merrill
- OpenServer 5                   (<andrew@compclass.com>)
+ QNX 4.25     x86       7.0     2000-04-01, Dr. Andreas Kardos      See also
+                                (<kardos@repas-aeg.de>)             doc/FAQ_QNX4
+ SCO          x86       6.5     1999-05-25, Andrew Merrill          See also
+ OpenServer 5                   (<andrew@compclass.com>)            doc/FAQ_SCO
  SCO UnixWare x86       7.0     2000-04-18, Billy G. Allie          See also
  7                              (<Bill.Allie@mug.org>)              doc/FAQ_SCO
  Solaris      x86       7.0     2000-04-12, Marc Fournier
@@ -656,8 +690,8 @@ and that the regression tests pass, except for minor differences.
 
 Unsupported Platforms. The following platforms have not been verified to
 work. Platforms listed for version 6.3.x and later should also work with
-7.1, but we did not receive explicit confirmation of such at the time this
-list was compiled. We include these here to let you know that these
+7.1devel, but we did not receive explicit confirmation of such at the time
+this list was compiled. We include these here to let you know that these
 platforms could be supported if given some attention.
 
  OS        Processor Version Reported                        Remarks

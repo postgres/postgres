@@ -1,7 +1,7 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.29 2000/11/20 22:01:21 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.30 2000/11/30 21:44:07 petere Exp $ -->
 
 <chapter id="installation">
- <title><![%flattext-install-include[<productname>PostgreSQL</> ]]>Installation Instructions</title>
+ <title><![%flattext-install-include[<productname>PostgreSQL</>]]> Installation Instructions</title>
 
  <sect1 id="install-short">
   <title>Short Version</title>
@@ -176,7 +176,7 @@ su - postgres
 <screen>
 <userinput>pg_dumpall &gt; <replaceable>outputfile</></userinput>
 </screen>
-     If you need to preserve the oids (such as when using them as
+     If you need to preserve the OIDs (such as when using them as
      foreign keys), then use the -o option when running
      <application>pg_dumpall</>.
     </para>
@@ -206,9 +206,9 @@ su - postgres
     <para>
      On systems which have <productname>PostgreSQL</> started at boot time, there is
      probably a start-up file that will accomplish the same thing. For
-     example, on a Redhat Linux system one might find that
+     example, on a Red Hat Linux system one might find that
 <screen>
-<userinput>/etc/rc.d/init.d/postgres.init stop</userinput>
+<userinput>/etc/rc.d/init.d/postgresql stop</userinput>
 </screen>
      works.
     </para>
@@ -248,8 +248,7 @@ su - postgres
    <![%flattext-install-include[the <citetitle>Administrator's Guide</>,]]>
    <![%flattext-install-ignore[<xref linkend="migration">,]]>
    which you are encouraged
-   to read in any case. The <application>pg_upgrade</> utility can
-   also often be used.
+   to read in any case.
   </para>
  </sect1>
 
@@ -609,7 +608,7 @@ su - postgres
        <term>--with-krb5=<replaceable>DIRECTORY</></term>
        <listitem>
         <para>
-         Build with suppport for Kerberos authentication. You can use
+         Build with support for Kerberos authentication. You can use
          either Kerberos version 4 or 5, but not both. The
          <replaceable>DIRECTORY</> argument specifies the root
          directory of the Kerberos installation;
@@ -855,7 +854,7 @@ setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
    </para>
 
    <para>
-    On some systems it might be preferrable to set the environment
+    On some systems it might be preferable to set the environment
     variable <envar>LD_RUN_PATH</envar> <emphasis>before</emphasis>
     building.
    </para>
@@ -1098,11 +1097,11 @@ gunzip -c user.ps.gz \
   <title>Supported Platforms</title>
 
   <para>
-   At the time of release, <productname>PostgreSQL</> &version; has been verified by the
-   developer community to work on the following platforms. A supported
-   platform generally means that <productname>PostgreSQL</> builds and installs according
-   to these instructions and that the regression tests pass, except
-   for minor differences.
+   <productname>PostgreSQL</> has been verified by the developer
+   community to work on the platforms listed below. A supported
+   platform generally means that <productname>PostgreSQL</> builds and
+   installs according to these instructions and that the regression
+   tests pass.
   </para>
 
   <note>
