@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.19 1996/11/26 03:20:33 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.20 1996/11/26 06:33:18 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -50,7 +50,7 @@ else
 endif
 	$(RANLIB) libpq.a
 
-fe-lobj.o:: ../backend/fmgr.h
+fe-lobj.o: ../backend/fmgr.h
 
 # The following rules cause dependencies in the backend directory to 
 # get made if they don't exist, but don't cause them to get remade if they
