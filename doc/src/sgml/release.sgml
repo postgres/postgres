@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.204 2003/07/31 04:48:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.205 2003/08/17 00:41:46 momjian Exp $
 -->
 
 <appendix id="release">
@@ -456,8 +456,8 @@ Properly escape jdbc setObject() strings to improve security (Barry)
     application examines the system catalogs, additional changes will
     be required due to the introduction of schemas in 7.3; for more
     information, see: <ulink
-    url="http://www.ca.postgresql.org/docs/momjian/upgrade_tips_7.3">
-    http://www.ca.postgresql.org/docs/momjian/upgrade_tips_7.3</>.
+    url="http://www.postgresql.org/docs/momjian/upgrade_tips_7.3">
+    http://www.postgresql.org/docs/momjian/upgrade_tips_7.3</>.
    </para>
 
    <para>
