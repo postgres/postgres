@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.49 2003/09/20 20:12:05 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.50 2003/11/01 01:56:29 petere Exp $
 -->
 
  <chapter id="jdbc">
@@ -572,7 +572,7 @@ st.close();
   <sect1 id="jdbc-callproc">
     <title>Calling Stored Functions</title>
 
-    <para><productname>PostgreSQL's</productname> jdbc driver fully
+    <para><productname>PostgreSQL's</productname> JDBC driver fully
       supports calling <productname>PostgreSQL</productname> stored
       functions.</para>
 
@@ -636,7 +636,7 @@ upperProc.close();
 
 	<para>When calling a function that returns
 	  a <type>refcursor</type> you must cast the return type
-	  of getObject to
+	  of <function>getObject</function> to
 	  a <classname>ResultSet</classname></para>
 
 <programlisting>
@@ -953,7 +953,7 @@ ps.close();
 
   <para>
    <productname>PostgreSQL</productname> is an extensible database
-   system.  You can add your own functions to the backend, which can
+   system.  You can add your own functions to the server, which can
    then be called from queries, or even add your own data types.  As
    these are facilities unique to <productname>PostgreSQL</productname>,
    we support them from Java, with a set of extension
@@ -999,7 +999,7 @@ public class PGConnection
 public Fastpath getFastpathAPI() throws SQLException
 </synopsis>
        <para>
-        This returns the Fastpath <acronym>API</acronym> for the
+        This returns the fast-path <acronym>API</acronym> for the
         current connection.  It is primarily used by the Large Object
         <acronym>API</acronym>.
        </para>
@@ -1017,15 +1017,15 @@ Fastpath fp = ((org.postgresql.PGConnection)myconn).getFastpathAPI();
        <formalpara>
         <title>Returns:</title>
         <para>
-         Fastpath object allowing access to functions on the
-         <productname>PostgreSQL</productname> backend.
+         <classname>Fastpath</> object allowing access to functions on the
+         <productname>PostgreSQL</productname> server.
         </para>
        </formalpara>
 
        <formalpara>
         <title>Throws:</title>
         <para>
-         <classname>SQLException</> by Fastpath when initializing for first time
+         <classname>SQLException</> by <classname>Fastpath</> when initializing for first time
         </para>
        </formalpara>
       </listitem>
@@ -1110,7 +1110,7 @@ java.lang.Object
     <para>
      <classname>Fastpath</classname> is an <acronym>API</acronym> that
      exists within the <application>libpq</application> C interface, and allows a client machine
-     to execute a function on the database backend.  Most client code
+     to execute a function on the database server.  Most client code
      will not need to use this method, but it is provided because the
      Large Object <acronym>API</acronym> uses it.
     </para>
@@ -1134,7 +1134,7 @@ Fastpath fp = ((org.postgresql.PGConnection)conn).getFastpathAPI();
      the <function>getFastpathAPI()</function> is an extension method,
      not part of <acronym>JDBC</acronym>.  Once you have a
      <classname>Fastpath</classname> instance, you can use the
-     <function>fastpath()</function> methods to execute a backend
+     <function>fastpath()</function> methods to execute a server
      function.
     </para>
 
@@ -1156,7 +1156,7 @@ public Object fastpath(int fnid,
                        FastpathArg args[]) throws SQLException
 </synopsis>
        <para>
-        Send a function call to the <productname>PostgreSQL</productname> backend.
+        Send a function call to the <productname>PostgreSQL</productname> server.
        </para>
 
        <formalpara>
@@ -1166,7 +1166,7 @@ public Object fastpath(int fnid,
                 <parameter>resulttype</> - True if the result is an integer, false 
 for
                 other results
-                <parameter>args</> - <classname>FastpathArguments</classname> to pass to fastpath
+                <parameter>args</> - <classname>FastpathArguments</classname> to pass to fast-path call
         </para>
        </formalpara>
 
@@ -1186,7 +1186,7 @@ public Object fastpath(String name,
                        FastpathArg args[]) throws SQLException
 </synopsis>
        <para>
-        Send a function call to the <productname>PostgreSQL</productname> backend by name.
+        Send a function call to the <productname>PostgreSQL</productname> server by name.
        </para>
 
        <note>
@@ -1194,7 +1194,7 @@ public Object fastpath(String name,
          The mapping for the procedure name to function id needs to
          exist, usually to an earlier call to <function>addfunction()</function>. This is
          the preferred method to call, as function id's can/may change
-         between versions of the backend. For an example of how this
+         between versions of the server. For an example of how this
          works, refer to org.postgresql.LargeObject
         </para>
        </note>
@@ -1206,7 +1206,7 @@ public Object fastpath(String name,
                 <parameter>resulttype</> - True if the result is an integer, false 
 for
                 other results
-                <parameter>args</> - <classname>FastpathArguments</classname> to pass to fastpath
+                <parameter>args</> - <classname>FastpathArguments</classname> to pass to fast-path call
         </para>
        </formalpara>
 
@@ -1381,7 +1381,7 @@ java.lang.Object
 </synopsis>
 
     <para>
-     Each fastpath call requires an array of arguments, the number and
+     Each fast-path call requires an array of arguments, the number and
      type dependent on the function being called.  This class
      implements methods needed to provide this capability.
     </para>
@@ -1700,7 +1700,7 @@ java.lang.Object
 Cloneable
 
    This implements a line consisting of two points. Currently line is 
-not yet implemented in the backend, but this class ensures that when 
+not yet implemented in the server, but this class ensures that when 
 it's done were ready for it.
 
 Variables

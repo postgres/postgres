@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.127 2003/10/22 18:10:53 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.128 2003/11/01 01:56:29 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -165,9 +165,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.127 2003/10/22 18:10:53 m
 
       <row>
        <entry><type>numeric [ (<replaceable>p</replaceable>,
-	 <replaceable>s</replaceable>) ]</type></entry>
+         <replaceable>s</replaceable>) ]</type></entry>
        <entry><type>decimal [ (<replaceable>p</replaceable>,
-	 <replaceable>s</replaceable>) ]</type></entry>
+         <replaceable>s</replaceable>) ]</type></entry>
        <entry>exact numeric with selectable precision</entry>
       </row>
 
@@ -295,71 +295,71 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.127 2003/10/22 18:10:53 m
      <tgroup cols="4">
       <thead>
        <row>
-	<entry>Name</entry>
-	<entry>Storage Size</entry>
-	<entry>Description</entry>
-	<entry>Range</entry>
+        <entry>Name</entry>
+        <entry>Storage Size</entry>
+        <entry>Description</entry>
+        <entry>Range</entry>
        </row>
       </thead>
 
       <tbody>
        <row>
-	<entry><type>smallint</></entry>
-	<entry>2 bytes</entry>
-	<entry>small-range integer</entry>
-	<entry>-32768 to +32767</entry>
+        <entry><type>smallint</></entry>
+        <entry>2 bytes</entry>
+        <entry>small-range integer</entry>
+        <entry>-32768 to +32767</entry>
        </row>
        <row>
-	<entry><type>integer</></entry>
-	<entry>4 bytes</entry>
-	<entry>usual choice for integer</entry>
-	<entry>-2147483648 to +2147483647</entry>
+        <entry><type>integer</></entry>
+        <entry>4 bytes</entry>
+        <entry>usual choice for integer</entry>
+        <entry>-2147483648 to +2147483647</entry>
        </row>
        <row>
-	<entry><type>bigint</></entry>
-	<entry>8 bytes</entry>
-	<entry>large-range integer</entry>
-	<entry>-9223372036854775808 to 9223372036854775807</entry>
-       </row>
-
-       <row>
-	<entry><type>decimal</></entry>
-	<entry>variable</entry>
-	<entry>user-specified precision, exact</entry>
-	<entry>no limit</entry>
-       </row>
-       <row>
-	<entry><type>numeric</></entry>
-	<entry>variable</entry>
-	<entry>user-specified precision, exact</entry>
-	<entry>no limit</entry>
+        <entry><type>bigint</></entry>
+        <entry>8 bytes</entry>
+        <entry>large-range integer</entry>
+        <entry>-9223372036854775808 to 9223372036854775807</entry>
        </row>
 
        <row>
-	<entry><type>real</></entry>
-	<entry>4 bytes</entry>
-	<entry>variable-precision, inexact</entry>
-	<entry>6 decimal digits precision</entry>
+        <entry><type>decimal</></entry>
+        <entry>variable</entry>
+        <entry>user-specified precision, exact</entry>
+        <entry>no limit</entry>
        </row>
        <row>
-	<entry><type>double precision</></entry>
-	<entry>8 bytes</entry>
-	<entry>variable-precision, inexact</entry>
-	<entry>15 decimal digits precision</entry>
-       </row>
-
-       <row>
-	<entry><type>serial</></entry>
-	<entry>4 bytes</entry>
-	<entry>autoincrementing integer</entry>
-	<entry>1 to 2147483647</entry>
+        <entry><type>numeric</></entry>
+        <entry>variable</entry>
+        <entry>user-specified precision, exact</entry>
+        <entry>no limit</entry>
        </row>
 
        <row>
-	<entry><type>bigserial</type></entry>
-	<entry>8 bytes</entry>
-	<entry>large autoincrementing integer</entry>
-	<entry>1 to 9223372036854775807</entry>
+        <entry><type>real</></entry>
+        <entry>4 bytes</entry>
+        <entry>variable-precision, inexact</entry>
+        <entry>6 decimal digits precision</entry>
+       </row>
+       <row>
+        <entry><type>double precision</></entry>
+        <entry>8 bytes</entry>
+        <entry>variable-precision, inexact</entry>
+        <entry>15 decimal digits precision</entry>
+       </row>
+
+       <row>
+        <entry><type>serial</></entry>
+        <entry>4 bytes</entry>
+        <entry>autoincrementing integer</entry>
+        <entry>1 to 2147483647</entry>
+       </row>
+
+       <row>
+        <entry><type>bigserial</type></entry>
+        <entry>8 bytes</entry>
+        <entry>large autoincrementing integer</entry>
+        <entry>1 to 9223372036854775807</entry>
        </row>
       </tbody>
      </tgroup>
@@ -727,7 +727,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
      column should be assigned its default value. This can be done
      either by excluding the column from the list of columns in
      the <command>INSERT</command> statement, or through the use of
-     the <literal>DEFAULT</literal> keyword.
+     the <literal>DEFAULT</literal> key word.
     </para>
 
     <para>
@@ -786,18 +786,18 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
      <tgroup cols="4">
       <thead>
        <row>
-	<entry>Name</entry>
-	<entry>Storage Size</entry>
-	<entry>Description</entry>
-	<entry>Range</entry>
+        <entry>Name</entry>
+        <entry>Storage Size</entry>
+        <entry>Description</entry>
+        <entry>Range</entry>
        </row>
       </thead>
       <tbody>
        <row>
-	<entry>money</entry>
-	<entry>4 bytes</entry>
-	<entry>currency amount</entry>
-	<entry>-21474836.48 to +21474836.47</entry>
+        <entry>money</entry>
+        <entry>4 bytes</entry>
+        <entry>currency amount</entry>
+        <entry>-21474836.48 to +21474836.47</entry>
        </row>
       </tbody>
      </tgroup>
@@ -843,22 +843,22 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
      <tgroup cols="2">
       <thead>
        <row>
-	<entry>Name</entry>
-	<entry>Description</entry>
+        <entry>Name</entry>
+        <entry>Description</entry>
        </row>
       </thead>
       <tbody>
        <row>
-	<entry><type>character varying(<replaceable>n</>)</type>, <type>varchar(<replaceable>n</>)</type></entry>
-	<entry>variable-length with limit</entry>
+        <entry><type>character varying(<replaceable>n</>)</type>, <type>varchar(<replaceable>n</>)</type></entry>
+        <entry>variable-length with limit</entry>
        </row>
        <row>
-	<entry><type>character(<replaceable>n</>)</type>, <type>char(<replaceable>n</>)</type></entry>
-	<entry>fixed-length, blank padded</entry>
+        <entry><type>character(<replaceable>n</>)</type>, <type>char(<replaceable>n</>)</type></entry>
+        <entry>fixed-length, blank padded</entry>
        </row>
        <row>
-	<entry><type>text</type></entry>
-	<entry>variable unlimited length</entry>
+        <entry><type>text</type></entry>
+        <entry>variable unlimited length</entry>
        </row>
      </tbody>
      </tgroup>
@@ -1013,21 +1013,21 @@ SELECT b, char_length(b) FROM test2;
      <tgroup cols="3">
       <thead>
        <row>
-	<entry>Name</entry>
-	<entry>Storage Size</entry>
-	<entry>Description</entry>
+        <entry>Name</entry>
+        <entry>Storage Size</entry>
+        <entry>Description</entry>
        </row>
       </thead>
       <tbody>
        <row>
-	<entry><type>"char"</type></entry>
-	<entry>1 byte</entry>
-	<entry>single-character internal type</entry>
+        <entry><type>"char"</type></entry>
+        <entry>1 byte</entry>
+        <entry>single-character internal type</entry>
        </row>
        <row>
-	<entry><type>name</type></entry>
-	<entry>64 bytes</entry>
-	<entry>internal type for object names</entry>
+        <entry><type>name</type></entry>
+        <entry>64 bytes</entry>
+        <entry>internal type for object names</entry>
        </row>
       </tbody>
      </tgroup>
@@ -1224,11 +1224,11 @@ SELECT b, char_length(b) FROM test2;
    </para>
 
    <para>
-	The <acronym>SQL</acronym> standard defines a different binary
-	string type, called <type>BLOB</type> or <type>BINARY LARGE
-	 OBJECT</type>.  The input format is different compared to
-	<type>bytea</type>, but the provided functions and operators are
-	mostly the same.
+        The <acronym>SQL</acronym> standard defines a different binary
+        string type, called <type>BLOB</type> or <type>BINARY LARGE
+         OBJECT</type>.  The input format is different compared to
+        <type>bytea</type>, but the provided functions and operators are
+        mostly the same.
    </para>
  </sect1>
 
@@ -1350,10 +1350,10 @@ SELECT b, char_length(b) FROM test2;
    <para>
     When <type>timestamp</> values are stored as double precision floating-point
     numbers (currently the default), the effective limit of precision
-    may be less than 6. Timestamp values are stored as seconds
+    may be less than 6. <type>timestamp</type> values are stored as seconds
     since 2000-01-01, and microsecond precision is achieved for dates within
     a few years of 2000-01-01, but the precision degrades for dates further
-    away.  When timestamps are stored as eight-byte integers (a compile-time
+    away.  When <type>timestamp</type> values are stored as eight-byte integers (a compile-time
     option), microsecond precision is available over the full range of
     values. However eight-byte integer timestamps have a reduced range of
     dates from 4713 BC up to 294276 AD.
@@ -1452,58 +1452,58 @@ SELECT b, char_length(b) FROM test2;
       <title>Date Input</title>
       <tgroup cols="2">
        <thead>
-	<row>
-	 <entry>Example</entry>
-	 <entry>Description</entry>
-	</row>
+        <row>
+         <entry>Example</entry>
+         <entry>Description</entry>
+        </row>
        </thead>
        <tbody>
-	<row>
-	 <entry>January 8, 1999</entry>
-	 <entry>unambiguous in any datestyle input mode</entry>
-	</row>
-	<row>
-	 <entry>1999-01-08</entry>
-	 <entry>ISO-8601, January 8 in any mode
-	 (recommended format)</entry>
-	</row>
-	<row>
-	 <entry>1/8/1999</entry>
-	 <entry>January 8 in <literal>MDY</> mode;
-	  August 1 in <literal>DMY</> mode</entry>
-	</row>
-	<row>
-	 <entry>1/18/1999</entry>
-	 <entry>January 18 in <literal>MDY</> mode;
-	  rejected in other modes</entry>
-	</row>
-	<row>
-	 <entry>01/02/03</entry>
-	 <entry>January 2, 2003 in <literal>MDY</> mode;
-	  February 1, 2003 in <literal>DMY</> mode;
-	  February 3, 2001 in <literal>YMD</> mode
-	 </entry>
-	</row>
-	<row>
-	 <entry>19990108</entry>
-	 <entry>ISO-8601; January 8, 1999 in any mode</entry>
-	</row>
-	<row>
-	 <entry>990108</entry>
-	 <entry>ISO-8601; January 8, 1999 in any mode</entry>
-	</row>
-	<row>
-	 <entry>1999.008</entry>
-	 <entry>year and day of year</entry>
-	</row>
-	<row>
-	 <entry>J2451187</entry>
-	 <entry>Julian day</entry>
-	</row>
-	<row>
-	 <entry>January 8, 99 BC</entry>
-	 <entry>year 99 before the Common Era</entry>
-	</row>
+        <row>
+         <entry>January 8, 1999</entry>
+         <entry>unambiguous in any <varname>datestyle</varname> input mode</entry>
+        </row>
+        <row>
+         <entry>1999-01-08</entry>
+         <entry>ISO-8601, January 8 in any mode
+         (recommended format)</entry>
+        </row>
+        <row>
+         <entry>1/8/1999</entry>
+         <entry>January 8 in <literal>MDY</> mode;
+          August 1 in <literal>DMY</> mode</entry>
+        </row>
+        <row>
+         <entry>1/18/1999</entry>
+         <entry>January 18 in <literal>MDY</> mode;
+          rejected in other modes</entry>
+        </row>
+        <row>
+         <entry>01/02/03</entry>
+         <entry>January 2, 2003 in <literal>MDY</> mode;
+          February 1, 2003 in <literal>DMY</> mode;
+          February 3, 2001 in <literal>YMD</> mode
+         </entry>
+        </row>
+        <row>
+         <entry>19990108</entry>
+         <entry>ISO-8601; January 8, 1999 in any mode</entry>
+        </row>
+        <row>
+         <entry>990108</entry>
+         <entry>ISO-8601; January 8, 1999 in any mode</entry>
+        </row>
+        <row>
+         <entry>1999.008</entry>
+         <entry>year and day of year</entry>
+        </row>
+        <row>
+         <entry>J2451187</entry>
+         <entry>Julian day</entry>
+        </row>
+        <row>
+         <entry>January 8, 99 BC</entry>
+         <entry>year 99 before the Common Era</entry>
+        </row>
        </tbody>
       </tgroup>
      </table>
@@ -1542,96 +1542,96 @@ SELECT b, char_length(b) FROM test2;
       <table id="datatype-datetime-time-table">
        <title>Time Input</title>
        <tgroup cols="2">
-	<thead>
-	 <row>
-	  <entry>Example</entry>
-	  <entry>Description</entry>
-	 </row>
-	</thead>
-	<tbody>
-	 <row>
-	  <entry><literal>04:05:06.789</literal></entry>
-	  <entry>ISO 8601</entry>
-	 </row>
-	 <row>
-	  <entry><literal>04:05:06</literal></entry>
-	  <entry>ISO 8601</entry>
-	 </row>
-	 <row>
-	  <entry><literal>04:05</literal></entry>
-	  <entry>ISO 8601</entry>
-	 </row>
-	 <row>
-	  <entry><literal>040506</literal></entry>
-	  <entry>ISO 8601</entry>
-	 </row>
-	 <row>
-	  <entry><literal>04:05 AM</literal></entry>
-	  <entry>same as 04:05; AM does not affect value</entry>
-	 </row>
-	 <row>
-	  <entry><literal>04:05 PM</literal></entry>
-	  <entry>same as 16:05; input hour must be <= 12</entry>
-	 </row>
-	<row>
-	 <entry>04:05:06.789-8</entry>
-	 <entry>ISO 8601</entry>
-	</row>
-	<row>
-	 <entry>04:05:06-08:00</entry>
-	 <entry>ISO 8601</entry>
-	</row>
-	<row>
-	 <entry>04:05-08:00</entry>
-	 <entry>ISO 8601</entry>
-	</row>
-	<row>
-	 <entry>040506-08</entry>
-	 <entry>ISO 8601</entry>
-	</row>
-	<row>
-	 <entry>04:05:06 PST</entry>
-	 <entry>timezone specified by name</entry>
-	</row>
-       </tbody>
-      </tgroup>
-     </table>
+        <thead>
+         <row>
+          <entry>Example</entry>
+          <entry>Description</entry>
+         </row>
+        </thead>
+        <tbody>
+         <row>
+          <entry><literal>04:05:06.789</literal></entry>
+          <entry>ISO 8601</entry>
+         </row>
+         <row>
+          <entry><literal>04:05:06</literal></entry>
+          <entry>ISO 8601</entry>
+         </row>
+         <row>
+          <entry><literal>04:05</literal></entry>
+          <entry>ISO 8601</entry>
+         </row>
+         <row>
+          <entry><literal>040506</literal></entry>
+          <entry>ISO 8601</entry>
+         </row>
+         <row>
+          <entry><literal>04:05 AM</literal></entry>
+          <entry>same as 04:05; AM does not affect value</entry>
+         </row>
+         <row>
+          <entry><literal>04:05 PM</literal></entry>
+          <entry>same as 16:05; input hour must be <= 12</entry>
+         </row>
+         <row>
+          <entry><literal>04:05:06.789-8</literal></entry>
+          <entry>ISO 8601</entry>
+         </row>
+         <row>
+          <entry><literal>04:05:06-08:00</literal></entry>
+          <entry>ISO 8601</entry>
+         </row>
+         <row>
+          <entry><literal>04:05-08:00</literal></entry>
+          <entry>ISO 8601</entry>
+         </row>
+         <row>
+          <entry><literal>040506-08</literal></entry>
+          <entry>ISO 8601</entry>
+         </row>
+         <row>
+          <entry><literal>04:05:06 PST</literal></entry>
+          <entry>time zone specified by name</entry>
+         </row>
+        </tbody>
+       </tgroup>
+      </table>
 
       <table tocentry="1" id="datatype-timezone-table">
        <title>Time Zone Input</title>
        <tgroup cols="2">
-	<thead>
-	 <row>
-	  <entry>Example</entry>
-	  <entry>Description</entry>
-	 </row>
-	</thead>
-	<tbody>
-	 <row>
-	  <entry>PST</entry>
-	  <entry>Pacific Standard Time</entry>
-	 </row>
-	 <row>
-	  <entry>-8:00</entry>
-	  <entry>ISO-8601 offset for PST</entry>
-	 </row>
-	 <row>
-	  <entry>-800</entry>
-	  <entry>ISO-8601 offset for PST</entry>
-	 </row>
-	 <row>
-	  <entry>-8</entry>
-	  <entry>ISO-8601 offset for PST</entry>
-	 </row>
-	 <row>
-	  <entry>zulu</entry>
-	  <entry>Military abbreviation for GMT</entry>
-	 </row>
-	 <row>
-	  <entry>z</entry>
-	  <entry>Short form of zulu</entry>
-	 </row>
-	</tbody>
+        <thead>
+         <row>
+          <entry>Example</entry>
+          <entry>Description</entry>
+         </row>
+        </thead>
+        <tbody>
+         <row>
+          <entry><literal>PST</literal></entry>
+          <entry>Pacific Standard Time</entry>
+         </row>
+         <row>
+          <entry><literal>-8:00</literal></entry>
+          <entry>ISO-8601 offset for PST</entry>
+         </row>
+         <row>
+          <entry><literal>-800</literal></entry>
+          <entry>ISO-8601 offset for PST</entry>
+         </row>
+         <row>
+          <entry><literal>-8</literal></entry>
+          <entry>ISO-8601 offset for PST</entry>
+         </row>
+         <row>
+          <entry><literal>zulu</literal></entry>
+          <entry>Military abbreviation for GMT</entry>
+         </row>
+         <row>
+          <entry><literal>z</literal></entry>
+          <entry>Short form of <literal>zulu</literal></entry>
+         </row>
+        </tbody>
        </tgroup>
       </table>
     </sect3>
@@ -1788,55 +1788,55 @@ January 8 04:05:06 1999 PST
       <table id="datatype-datetime-special-table">
        <title>Special Date/Time Inputs</title>
        <tgroup cols="2">
-	<thead>
-	 <row>
-	  <entry>Input String</entry>
+        <thead>
+         <row>
+          <entry>Input String</entry>
           <entry>Valid Types</entry>
-	  <entry>Description</entry>
-	 </row>
-	</thead>
-	<tbody>
-	 <row>
-	  <entry><literal>epoch</literal></entry>
+          <entry>Description</entry>
+         </row>
+        </thead>
+        <tbody>
+         <row>
+          <entry><literal>epoch</literal></entry>
           <entry><type>date</type>, <type>timestamp</type></entry>
-	  <entry>1970-01-01 00:00:00+00 (Unix system time zero)</entry>
-	 </row>
-	 <row>
-	  <entry><literal>infinity</literal></entry>
+          <entry>1970-01-01 00:00:00+00 (Unix system time zero)</entry>
+         </row>
+         <row>
+          <entry><literal>infinity</literal></entry>
           <entry><type>timestamp</type></entry>
-	  <entry>later than all other time stamps</entry>
-	 </row>
-	 <row>
-	  <entry><literal>-infinity</literal></entry>
+          <entry>later than all other time stamps</entry>
+         </row>
+         <row>
+          <entry><literal>-infinity</literal></entry>
           <entry><type>timestamp</type></entry>
-	  <entry>earlier than all other time stamps</entry>
-	 </row>
-	 <row>
-	  <entry><literal>now</literal></entry>
+          <entry>earlier than all other time stamps</entry>
+         </row>
+         <row>
+          <entry><literal>now</literal></entry>
           <entry><type>date</type>, <type>time</type>, <type>timestamp</type></entry>
-	  <entry>current transaction's start time</entry>
-	 </row>
-	 <row>
-	  <entry><literal>today</literal></entry>
+          <entry>current transaction's start time</entry>
+         </row>
+         <row>
+          <entry><literal>today</literal></entry>
           <entry><type>date</type>, <type>timestamp</type></entry>
-	  <entry>midnight today</entry>
-	 </row>
-	 <row>
-	  <entry><literal>tomorrow</literal></entry>
+          <entry>midnight today</entry>
+         </row>
+         <row>
+          <entry><literal>tomorrow</literal></entry>
           <entry><type>date</type>, <type>timestamp</type></entry>
-	  <entry>midnight tomorrow</entry>
-	 </row>
-	 <row>
-	  <entry><literal>yesterday</literal></entry>
+          <entry>midnight tomorrow</entry>
+         </row>
+         <row>
+          <entry><literal>yesterday</literal></entry>
           <entry><type>date</type>, <type>timestamp</type></entry>
-	  <entry>midnight yesterday</entry>
-	 </row>
-	 <row>
-	  <entry><literal>allballs</literal></entry>
+          <entry>midnight yesterday</entry>
+         </row>
+         <row>
+          <entry><literal>allballs</literal></entry>
           <entry><type>time</type></entry>
-	  <entry>00:00:00.00 UTC</entry>
-	 </row>
-	</tbody>
+          <entry>00:00:00.00 UTC</entry>
+         </row>
+        </tbody>
        </tgroup>
       </table>
 
@@ -1877,33 +1877,33 @@ January 8 04:05:06 1999 PST
       <title>Date/Time Output Styles</title>
       <tgroup cols="3">
        <thead>
-	<row>
-	 <entry>Style Specification</entry>
-	 <entry>Description</entry>
-	 <entry>Example</entry>
-	</row>
+        <row>
+         <entry>Style Specification</entry>
+         <entry>Description</entry>
+         <entry>Example</entry>
+        </row>
        </thead>
        <tbody>
-	<row>
-	 <entry>ISO</entry>
-	 <entry>ISO 8601/SQL standard</entry>
-	 <entry>1997-12-17 07:37:16-08</entry>
-	</row>
-	<row>
-	 <entry>SQL</entry>
-	 <entry>traditional style</entry>
-	 <entry>12/17/1997 07:37:16.00 PST</entry>
-	</row>
-	<row>
-	 <entry>POSTGRES</entry>
-	 <entry>original style</entry>
-	 <entry>Wed Dec 17 07:37:16 1997 PST</entry>
-	</row>
-	<row>
-	 <entry>German</entry>
-	 <entry>regional style</entry>
-	 <entry>17.12.1997 07:37:16.00 PST</entry>
-	</row>
+        <row>
+         <entry>ISO</entry>
+         <entry>ISO 8601/SQL standard</entry>
+         <entry>1997-12-17 07:37:16-08</entry>
+        </row>
+        <row>
+         <entry>SQL</entry>
+         <entry>traditional style</entry>
+         <entry>12/17/1997 07:37:16.00 PST</entry>
+        </row>
+        <row>
+         <entry>POSTGRES</entry>
+         <entry>original style</entry>
+         <entry>Wed Dec 17 07:37:16 1997 PST</entry>
+        </row>
+        <row>
+         <entry>German</entry>
+         <entry>regional style</entry>
+         <entry>17.12.1997 07:37:16.00 PST</entry>
+        </row>
        </tbody>
       </tgroup>
      </table>
@@ -1922,28 +1922,28 @@ January 8 04:05:06 1999 PST
       <title>Date Order Conventions</title>
       <tgroup cols="3">
        <thead>
-	<row>
-	 <entry>DateStyle setting</entry>
-	 <entry>Input Ordering</entry>
-	 <entry>Example Output</entry>
-	</row>
+        <row>
+         <entry><varname>datestyle</varname> Setting</entry>
+         <entry>Input Ordering</entry>
+         <entry>Example Output</entry>
+        </row>
        </thead>
        <tbody>
-	<row>
-	 <entry><literal>SQL, DMY</></entry>
-	 <entry><replaceable>day</replaceable>/<replaceable>month</replaceable>/<replaceable>year</replaceable></entry>
-	 <entry>17/12/1997 15:37:16.00 CET</entry>
-	</row>
-	<row>
-	 <entry><literal>SQL, MDY</></entry>
-	 <entry><replaceable>month</replaceable>/<replaceable>day</replaceable>/<replaceable>year</replaceable></entry>
-	 <entry>12/17/1997 07:37:16.00 PST</entry>
-	</row>
-	<row>
-	 <entry><literal>Postgres, DMY</></entry>
-	 <entry><replaceable>day</replaceable>/<replaceable>month</replaceable>/<replaceable>year</replaceable></entry>
-	 <entry>Wed 17 Dec 07:37:16 1997 PST</entry>
-	</row>
+        <row>
+         <entry><literal>SQL, DMY</></entry>
+         <entry><replaceable>day</replaceable>/<replaceable>month</replaceable>/<replaceable>year</replaceable></entry>
+         <entry>17/12/1997 15:37:16.00 CET</entry>
+        </row>
+        <row>
+         <entry><literal>SQL, MDY</></entry>
+         <entry><replaceable>month</replaceable>/<replaceable>day</replaceable>/<replaceable>year</replaceable></entry>
+         <entry>12/17/1997 07:37:16.00 PST</entry>
+        </row>
+        <row>
+         <entry><literal>Postgres, DMY</></entry>
+         <entry><replaceable>day</replaceable>/<replaceable>month</replaceable>/<replaceable>year</replaceable></entry>
+         <entry>Wed 17 Dec 07:37:16 1997 PST</entry>
+        </row>
        </tbody>
       </tgroup>
      </table>
@@ -2007,22 +2007,22 @@ January 8 04:05:06 1999 PST
      <itemizedlist>
       <listitem>
        <para>
-	Although the <type>date</type> type 
-	does not have an associated time zone, the
-	<type>time</type> type can.
-	Time zones in the real world can have no meaning unless 
-	associated with a date as well as a time
-	since the offset may vary through the year with daylight-saving
-	time boundaries.
+        Although the <type>date</type> type 
+        does not have an associated time zone, the
+        <type>time</type> type can.
+        Time zones in the real world can have no meaning unless 
+        associated with a date as well as a time
+        since the offset may vary through the year with daylight-saving
+        time boundaries.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	The default time zone is specified as a constant numeric offset 
-	from <acronym>UTC</>. It is not possible to adapt to daylight-saving
-	time when doing date/time arithmetic across
-	<acronym>DST</acronym> boundaries.
+        The default time zone is specified as a constant numeric offset 
+        from <acronym>UTC</>. It is not possible to adapt to daylight-saving
+        time when doing date/time arithmetic across
+        <acronym>DST</acronym> boundaries.
        </para>
       </listitem>
 
@@ -2053,32 +2053,32 @@ January 8 04:05:06 1999 PST
      <itemizedlist>
       <listitem>
        <para>
-	The <envar>TZ</envar> environment variable on the server host
-	is used by the server as the default time zone, if no other is
-	specified.
+        The <envar>TZ</envar> environment variable on the server host
+        is used by the server as the default time zone, if no other is
+        specified.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	The <varname>timezone</varname> configuration parameter can be
-	set in the file <filename>postgresql.conf</>.
+        The <varname>timezone</varname> configuration parameter can be
+        set in the file <filename>postgresql.conf</>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	The <envar>PGTZ</envar> environment variable, if set at the
-	client, is used by <application>libpq</application>
-	applications to send a <command>SET TIME ZONE</command>
-	command to the server upon connection.
+        The <envar>PGTZ</envar> environment variable, if set at the
+        client, is used by <application>libpq</application>
+        applications to send a <command>SET TIME ZONE</command>
+        command to the server upon connection.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	The <acronym>SQL</acronym> command <command>SET TIME ZONE</command>
-	sets the time zone for the session.
+        The <acronym>SQL</acronym> command <command>SET TIME ZONE</command>
+        sets the time zone for the session.
        </para>
       </listitem>
      </itemizedlist>
@@ -2227,60 +2227,60 @@ SELECT * FROM test1 WHERE a;
      <tgroup cols="4">
       <thead>
        <row>
-	<entry>Name</entry>
-	<entry>Storage Size</entry>
-	<entry>Representation</entry>
-	<entry>Description</entry>
+        <entry>Name</entry>
+        <entry>Storage Size</entry>
+        <entry>Representation</entry>
+        <entry>Description</entry>
        </row>
       </thead>
       <tbody>
        <row>
-	<entry><type>point</type></entry>
-	<entry>16 bytes</entry>
-	<entry>Point on the plane</entry>
-	<entry>(x,y)</entry>
+        <entry><type>point</type></entry>
+        <entry>16 bytes</entry>
+        <entry>Point on the plane</entry>
+        <entry>(x,y)</entry>
        </row>
        <row>
-	<entry><type>line</type></entry>
-	<entry>32 bytes</entry>
-	<entry>Infinite line (not fully implemented)</entry>
-	<entry>((x1,y1),(x2,y2))</entry>
+        <entry><type>line</type></entry>
+        <entry>32 bytes</entry>
+        <entry>Infinite line (not fully implemented)</entry>
+        <entry>((x1,y1),(x2,y2))</entry>
        </row>
        <row>
-	<entry><type>lseg</type></entry>
-	<entry>32 bytes</entry>
-	<entry>Finite line segment</entry>
-	<entry>((x1,y1),(x2,y2))</entry>
+        <entry><type>lseg</type></entry>
+        <entry>32 bytes</entry>
+        <entry>Finite line segment</entry>
+        <entry>((x1,y1),(x2,y2))</entry>
        </row>
        <row>
-	<entry><type>box</type></entry>
-	<entry>32 bytes</entry>
-	<entry>Rectangular box</entry>
-	<entry>((x1,y1),(x2,y2))</entry>
+        <entry><type>box</type></entry>
+        <entry>32 bytes</entry>
+        <entry>Rectangular box</entry>
+        <entry>((x1,y1),(x2,y2))</entry>
        </row>
        <row>
-	<entry><type>path</type></entry>
-	<entry>16+16n bytes</entry>
-	<entry>Closed path (similar to polygon)</entry>
-	<entry>((x1,y1),...)</entry>
+        <entry><type>path</type></entry>
+        <entry>16+16n bytes</entry>
+        <entry>Closed path (similar to polygon)</entry>
+        <entry>((x1,y1),...)</entry>
        </row>
        <row>
-	<entry><type>path</type></entry>
-	<entry>16+16n bytes</entry>
-	<entry>Open path</entry>
-	<entry>[(x1,y1),...]</entry>
+        <entry><type>path</type></entry>
+        <entry>16+16n bytes</entry>
+        <entry>Open path</entry>
+        <entry>[(x1,y1),...]</entry>
        </row>
        <row>
-	<entry><type>polygon</type></entry>
-	<entry>40+16n bytes</entry>
-	<entry>Polygon (similar to closed path)</entry>
-	<entry>((x1,y1),...)</entry>
+        <entry><type>polygon</type></entry>
+        <entry>40+16n bytes</entry>
+        <entry>Polygon (similar to closed path)</entry>
+        <entry>((x1,y1),...)</entry>
        </row>
        <row>
-	<entry><type>circle</type></entry>
-	<entry>24 bytes</entry>
-	<entry>Circle</entry>
-	<entry><(x,y),r> (center and radius)</entry>
+        <entry><type>circle</type></entry>
+        <entry>24 bytes</entry>
+        <entry>Circle</entry>
+        <entry><(x,y),r> (center and radius)</entry>
        </row>
       </tbody>
      </tgroup>
@@ -2507,29 +2507,29 @@ SELECT * FROM test1 WHERE a;
      <tgroup cols="3">
       <thead>
        <row>
-	<entry>Name</entry>
-	<entry>Storage Size</entry>
-	<entry>Description</entry>
+        <entry>Name</entry>
+        <entry>Storage Size</entry>
+        <entry>Description</entry>
        </row>
       </thead>
       <tbody>
 
        <row>
-	<entry><type>cidr</type></entry>
-	<entry>12 or 24 bytes</entry>
-	<entry>IPv4 or IPv6 networks</entry>
+        <entry><type>cidr</type></entry>
+        <entry>12 or 24 bytes</entry>
+        <entry>IPv4 or IPv6 networks</entry>
        </row>
 
        <row>
-	<entry><type>inet</type></entry>
-	<entry>12 or 24 bytes</entry>
-	<entry>IPv4 and IPv6 hosts and networks</entry>
+        <entry><type>inet</type></entry>
+        <entry>12 or 24 bytes</entry>
+        <entry>IPv4 and IPv6 hosts and networks</entry>
        </row>
 
        <row>
-	<entry><type>macaddr</type></entry>
-	<entry>6 bytes</entry>
-	<entry>MAC addresses</entry>
+        <entry><type>macaddr</type></entry>
+        <entry>6 bytes</entry>
+        <entry>MAC addresses</entry>
        </row>
 
       </tbody>
@@ -2612,93 +2612,93 @@ SELECT * FROM test1 WHERE a;
       <title><type>cidr</> Type Input Examples</title>
       <tgroup cols="3">
        <thead> 
-	<row> 
-	 <entry><type>cidr</type> Input</entry>
-	 <entry><type>cidr</type> Output</entry>
-	 <entry><literal><function>abbrev</function>(<type>cidr</type>)</literal></entry>
-	</row>
+        <row> 
+         <entry><type>cidr</type> Input</entry>
+         <entry><type>cidr</type> Output</entry>
+         <entry><literal><function>abbrev</function>(<type>cidr</type>)</literal></entry>
+        </row>
        </thead>
        <tbody>
-	<row>
-	 <entry>192.168.100.128/25</entry>
-	 <entry>192.168.100.128/25</entry>
-	 <entry>192.168.100.128/25</entry>
-	</row>
-	<row>
-	 <entry>192.168/24</entry>
-	 <entry>192.168.0.0/24</entry>
-	 <entry>192.168.0/24</entry>
-	</row>
-	<row>
-	 <entry>192.168/25</entry>
-	 <entry>192.168.0.0/25</entry>
-	 <entry>192.168.0.0/25</entry>
-	</row>
-	<row>
-	 <entry>192.168.1</entry>
-	 <entry>192.168.1.0/24</entry>
-	 <entry>192.168.1/24</entry>
-	</row>
-	<row>
-	 <entry>192.168</entry>
-	 <entry>192.168.0.0/24</entry>
-	 <entry>192.168.0/24</entry>
-	</row>
-	<row>
-	 <entry>128.1</entry>
-	 <entry>128.1.0.0/16</entry>
-	 <entry>128.1/16</entry>
-	</row>
-	<row>
-	 <entry>128</entry>
-	 <entry>128.0.0.0/16</entry>
-	 <entry>128.0/16</entry>
-	</row>
-	<row>
-	 <entry>128.1.2</entry>
-	 <entry>128.1.2.0/24</entry>
-	 <entry>128.1.2/24</entry>
-	</row>
-	<row>
-	 <entry>10.1.2</entry>
-	 <entry>10.1.2.0/24</entry>
-	 <entry>10.1.2/24</entry>
-	</row>
-	<row>
-	 <entry>10.1</entry>
-	 <entry>10.1.0.0/16</entry>
-	 <entry>10.1/16</entry>
-	</row>
-	<row>
-	 <entry>10</entry>
-	 <entry>10.0.0.0/8</entry>
-	 <entry>10/8</entry>
-	</row>
-	<row>
-	 <entry>10.1.2.3/32</entry>
-	 <entry>10.1.2.3/32</entry>
+        <row>
+         <entry>192.168.100.128/25</entry>
+         <entry>192.168.100.128/25</entry>
+         <entry>192.168.100.128/25</entry>
+        </row>
+        <row>
+         <entry>192.168/24</entry>
+         <entry>192.168.0.0/24</entry>
+         <entry>192.168.0/24</entry>
+        </row>
+        <row>
+         <entry>192.168/25</entry>
+         <entry>192.168.0.0/25</entry>
+         <entry>192.168.0.0/25</entry>
+        </row>
+        <row>
+         <entry>192.168.1</entry>
+         <entry>192.168.1.0/24</entry>
+         <entry>192.168.1/24</entry>
+        </row>
+        <row>
+         <entry>192.168</entry>
+         <entry>192.168.0.0/24</entry>
+         <entry>192.168.0/24</entry>
+        </row>
+        <row>
+         <entry>128.1</entry>
+         <entry>128.1.0.0/16</entry>
+         <entry>128.1/16</entry>
+        </row>
+        <row>
+         <entry>128</entry>
+         <entry>128.0.0.0/16</entry>
+         <entry>128.0/16</entry>
+        </row>
+        <row>
+         <entry>128.1.2</entry>
+         <entry>128.1.2.0/24</entry>
+         <entry>128.1.2/24</entry>
+        </row>
+        <row>
+         <entry>10.1.2</entry>
+         <entry>10.1.2.0/24</entry>
+         <entry>10.1.2/24</entry>
+        </row>
+        <row>
+         <entry>10.1</entry>
+         <entry>10.1.0.0/16</entry>
+         <entry>10.1/16</entry>
+        </row>
+        <row>
+         <entry>10</entry>
+         <entry>10.0.0.0/8</entry>
+         <entry>10/8</entry>
+        </row>
+        <row>
          <entry>10.1.2.3/32</entry>
-	</row>
+         <entry>10.1.2.3/32</entry>
+         <entry>10.1.2.3/32</entry>
+        </row>
         <row>
-	 <entry>2001:4f8:3:ba::/64</entry>
-	 <entry>2001:4f8:3:ba::/64</entry>
-	 <entry>2001:4f8:3:ba::/64</entry>
-	</row>
+         <entry>2001:4f8:3:ba::/64</entry>
+         <entry>2001:4f8:3:ba::/64</entry>
+         <entry>2001:4f8:3:ba::/64</entry>
+        </row>
         <row>
-	 <entry>2001:4f8:3:ba:2e0:81ff:fe22:d1f1/128</entry>
-	 <entry>2001:4f8:3:ba:2e0:81ff:fe22:d1f1/128</entry>
-	 <entry>2001:4f8:3:ba:2e0:81ff:fe22:d1f1</entry>
-	</row>
-	<row>
-	 <entry>::ffff:1.2.3.0/120</entry>
-	 <entry>::ffff:1.2.3.0/120</entry>
+         <entry>2001:4f8:3:ba:2e0:81ff:fe22:d1f1/128</entry>
+         <entry>2001:4f8:3:ba:2e0:81ff:fe22:d1f1/128</entry>
+         <entry>2001:4f8:3:ba:2e0:81ff:fe22:d1f1</entry>
+        </row>
+        <row>
+         <entry>::ffff:1.2.3.0/120</entry>
+         <entry>::ffff:1.2.3.0/120</entry>
          <entry>::ffff:1.2.3/120</entry>
-	</row>
-	<row>
-	 <entry>::ffff:1.2.3.0/128</entry>
-	 <entry>::ffff:1.2.3.0/128</entry>
+        </row>
+        <row>
          <entry>::ffff:1.2.3.0/128</entry>
-	</row>
+         <entry>::ffff:1.2.3.0/128</entry>
+         <entry>::ffff:1.2.3.0/128</entry>
+        </row>
        </tbody>
       </tgroup>
      </table>
@@ -2715,10 +2715,10 @@ SELECT * FROM test1 WHERE a;
 
       <tip>
         <para>
-	If you do not like the output format for <type>inet</type> or
-	<type>cidr</type> values, try the functions <function>host</>,
-	<function>text</>, and <function>abbrev</>.
-	</para>
+        If you do not like the output format for <type>inet</type> or
+        <type>cidr</type> values, try the functions <function>host</>,
+        <function>text</>, and <function>abbrev</>.
+        </para>
       </tip>
    </sect2>
 
@@ -2939,62 +2939,62 @@ SELECT * FROM test;
      <tgroup cols="4">
       <thead>
        <row>
-	<entry>Name</entry>
-	<entry>References</entry>
-	<entry>Description</entry>
-	<entry>Value Example</entry>
+        <entry>Name</entry>
+        <entry>References</entry>
+        <entry>Description</entry>
+        <entry>Value Example</entry>
        </row>
       </thead>
 
       <tbody>
 
        <row>
-	<entry><type>oid</></entry>
-	<entry>any</entry>
-	<entry>numeric object identifier</entry>
-	<entry><literal>564182</></entry>
+        <entry><type>oid</></entry>
+        <entry>any</entry>
+        <entry>numeric object identifier</entry>
+        <entry><literal>564182</></entry>
        </row>
 
        <row>
-	<entry><type>regproc</></entry>
-	<entry><structname>pg_proc</></entry>
-	<entry>function name</entry>
-	<entry><literal>sum</></entry>
+        <entry><type>regproc</></entry>
+        <entry><structname>pg_proc</></entry>
+        <entry>function name</entry>
+        <entry><literal>sum</></entry>
        </row>
 
        <row>
-	<entry><type>regprocedure</></entry>
-	<entry><structname>pg_proc</></entry>
-	<entry>function with argument types</entry>
-	<entry><literal>sum(int4)</></entry>
+        <entry><type>regprocedure</></entry>
+        <entry><structname>pg_proc</></entry>
+        <entry>function with argument types</entry>
+        <entry><literal>sum(int4)</></entry>
        </row>
 
        <row>
-	<entry><type>regoper</></entry>
-	<entry><structname>pg_operator</></entry>
-	<entry>operator name</entry>
-	<entry><literal>+</></entry>
+        <entry><type>regoper</></entry>
+        <entry><structname>pg_operator</></entry>
+        <entry>operator name</entry>
+        <entry><literal>+</></entry>
        </row>
 
        <row>
-	<entry><type>regoperator</></entry>
-	<entry><structname>pg_operator</></entry>
-	<entry>operator with argument types</entry>
-	<entry><literal>*(integer,integer)</> or <literal>-(NONE,integer)</></entry>
+        <entry><type>regoperator</></entry>
+        <entry><structname>pg_operator</></entry>
+        <entry>operator with argument types</entry>
+        <entry><literal>*(integer,integer)</> or <literal>-(NONE,integer)</></entry>
        </row>
 
        <row>
-	<entry><type>regclass</></entry>
-	<entry><structname>pg_class</></entry>
-	<entry>relation name</entry>
-	<entry><literal>pg_type</></entry>
+        <entry><type>regclass</></entry>
+        <entry><structname>pg_class</></entry>
+        <entry>relation name</entry>
+        <entry><literal>pg_type</></entry>
        </row>
 
        <row>
-	<entry><type>regtype</></entry>
-	<entry><structname>pg_type</></entry>
-	<entry>data type name</entry>
-	<entry><literal>integer</></entry>
+        <entry><type>regtype</></entry>
+        <entry><structname>pg_type</></entry>
+        <entry>data type name</entry>
+        <entry><literal>integer</></entry>
        </row>
       </tbody>
      </tgroup>
@@ -3026,10 +3026,10 @@ SELECT * FROM test;
 
    <para>
     A final identifier type used by the system is <type>tid</>, or tuple
-    identifier.  This is the data type of the system column
+    identifier (row identifier).  This is the data type of the system column
     <structfield>ctid</>.  A tuple ID is a pair
     (block number, tuple index within block) that identifies the
-    physical location of the tuple within its table.
+    physical location of the row within its table.
    </para>
 
    <para>
@@ -3099,63 +3099,63 @@ SELECT * FROM test;
      <tgroup cols="2">
       <thead>
        <row>
-	<entry>Name</entry>
-	<entry>Description</entry>
+        <entry>Name</entry>
+        <entry>Description</entry>
        </row>
       </thead>
 
       <tbody>
        <row>
-	<entry><type>any</></entry>
-	<entry>Indicates that a function accepts any input data type whatever.</entry>
+        <entry><type>any</></entry>
+        <entry>Indicates that a function accepts any input data type whatever.</entry>
        </row>
 
        <row>
-	<entry><type>anyarray</></entry>
-	<entry>Indicates that a function accepts any array data type
-	(see <xref linkend="extend-types-polymorphic">).</entry>
+        <entry><type>anyarray</></entry>
+        <entry>Indicates that a function accepts any array data type
+        (see <xref linkend="extend-types-polymorphic">).</entry>
        </row>
 
        <row>
-	<entry><type>anyelement</></entry>
-	<entry>Indicates that a function accepts any data type
-	(see <xref linkend="extend-types-polymorphic">).</entry>
+        <entry><type>anyelement</></entry>
+        <entry>Indicates that a function accepts any data type
+        (see <xref linkend="extend-types-polymorphic">).</entry>
        </row>
 
        <row>
-	<entry><type>cstring</></entry>
-	<entry>Indicates that a function accepts or returns a null-terminated C string.</entry>
+        <entry><type>cstring</></entry>
+        <entry>Indicates that a function accepts or returns a null-terminated C string.</entry>
        </row>
 
        <row>
-	<entry><type>internal</></entry>
-	<entry>Indicates that a function accepts or returns a server-internal
-	data type.</entry>
+        <entry><type>internal</></entry>
+        <entry>Indicates that a function accepts or returns a server-internal
+        data type.</entry>
        </row>
 
        <row>
-	<entry><type>language_handler</></entry>
-	<entry>A procedural language call handler is declared to return <type>language_handler</>.</entry>
+        <entry><type>language_handler</></entry>
+        <entry>A procedural language call handler is declared to return <type>language_handler</>.</entry>
        </row>
 
        <row>
-	<entry><type>record</></entry>
-	<entry>Identifies a function returning an unspecified row type.</entry>
+        <entry><type>record</></entry>
+        <entry>Identifies a function returning an unspecified row type.</entry>
        </row>
 
        <row>
-	<entry><type>trigger</></entry>
-	<entry>A trigger function is declared to return <type>trigger.</></entry>
+        <entry><type>trigger</></entry>
+        <entry>A trigger function is declared to return <type>trigger.</></entry>
        </row>
 
        <row>
-	<entry><type>void</></entry>
-	<entry>Indicates that a function returns no value.</entry>
+        <entry><type>void</></entry>
+        <entry>Indicates that a function returns no value.</entry>
        </row>
 
        <row>
-	<entry><type>opaque</></entry>
-	<entry>An obsolete type name that formerly served all the above purposes.</entry>
+        <entry><type>opaque</></entry>
+        <entry>An obsolete type name that formerly served all the above purposes.</entry>
        </row>
       </tbody>
      </tgroup>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.24 2003/09/12 22:17:23 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.25 2003/11/01 01:56:29 petere Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -132,7 +132,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
     When a table reference names a table that is the supertable of a
     table inheritance hierarchy, the table reference produces rows of
     not only that table but all of its subtable successors, unless the
-    keyword <literal>ONLY</> precedes the table name.  However, the
+    key word <literal>ONLY</> precedes the table name.  However, the
     reference produces only the columns that appear in the named table
     --- any columns added in subtables are ignored.
    </para>
@@ -1244,12 +1244,12 @@ SELECT a AS b FROM table1 ORDER BY a;
    determined with the <literal>&gt;</literal> operator.
     <footnote>
      <para>
-      Actually, <productname>PostgreSQL</> uses the <firstterm>default btree
-      operator class</> for the column's datatype to determine the sort
+      Actually, <productname>PostgreSQL</> uses the <firstterm>default B-tree
+      operator class</> for the column's data type to determine the sort
       ordering for <literal>ASC</> and <literal>DESC</>.  Conventionally,
-      datatypes will be set up so that the <literal>&lt;</literal> and
+      data types will be set up so that the <literal>&lt;</literal> and
       <literal>&gt;</literal> operators correspond to this sort ordering,
-      but a user-defined datatype's designer could choose to do something
+      but a user-defined data type's designer could choose to do something
       different.
      </para>
     </footnote>

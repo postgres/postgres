@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.70 2003/09/11 21:42:20 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.71 2003/11/01 01:56:29 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -666,7 +666,7 @@ SELECT name FROM distributors ORDER BY code;
     name may be specified in the <literal>USING</> clause.
     <literal>ASC</> is usually equivalent to <literal>USING &lt;</> and
     <literal>DESC</> is usually equivalent to <literal>USING &gt;</>.
-    (But the creator of a user-defined datatype can define exactly what the
+    (But the creator of a user-defined data type can define exactly what the
     default sort ordering is, and it might correspond to operators with other
     names.)
    </para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.27 2003/09/23 19:58:50 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.28 2003/11/01 01:56:29 petere Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -180,11 +180,11 @@ END;
   </sect2>
 
   <sect2 id="plpgsql-args-results">
-   <title>Supported Argument and Result Datatypes</title>
+   <title>Supported Argument and Result Data Types</title>
 
     <para>
      Functions written in <application>PL/pgSQL</application> can accept
-     as arguments any scalar or array datatype supported by the server,
+     as arguments any scalar or array data type supported by the server,
      and they can return a result of any of these types.  They can also
      accept or return any composite type (row type) specified by name.
      It is also possible to declare a <application>PL/pgSQL</application>
@@ -197,14 +197,14 @@ END;
      <application>PL/pgSQL</> functions may also be declared to accept
      and return the <quote>polymorphic</> types
      <type>anyelement</type> and <type>anyarray</type>.  The actual
-     datatypes handled by a polymorphic function can vary from call to
+     data types handled by a polymorphic function can vary from call to
      call, as discussed in <xref linkend="extend-types-polymorphic">.
      An example is shown in <xref linkend="plpgsql-declaration-aliases">.
     </para>
 
     <para>
      <application>PL/pgSQL</> functions can also be declared to return
-     a <quote>set</>, or table, of any datatype they can return a single
+     a <quote>set</>, or table, of any data type they can return a single
      instance of.  Such a function generates its output by executing
      <literal>RETURN NEXT</> for each desired element of the result set.
     </para>
@@ -563,7 +563,7 @@ END;
       When the return type of a <application>PL/pgSQL</application>
       function is declared as a polymorphic type (<type>anyelement</type>
       or <type>anyarray</type>), a special parameter <literal>$0</literal>
-      is created.  Its datatype is the actual return type of the function,
+      is created.  Its data type is the actual return type of the function,
       as deduced from the actual input types (see <xref
       linkend="extend-types-polymorphic">).
       This allows the function to access its actual return type
@@ -571,7 +571,7 @@ END;
       <literal>$0</literal> is initialized to NULL and can be modified by
       the function, so it can be used to hold the return value if desired,
       though that is not required.  <literal>$0</literal> can also be
-      given an alias.  For example, this function works on any datatype
+      given an alias.  For example, this function works on any data type
       that has a <literal>+</> operator:
 <programlisting>
 CREATE FUNCTION add_three_values(anyelement, anyelement, anyelement)

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.140 2003/10/17 18:57:01 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.141 2003/11/01 01:56:29 petere Exp $
 -->
 
  <chapter id="libpq">
@@ -92,7 +92,7 @@ PGconn *PQconnectdb(const char *conninfo);
    </para>
 
    <para>
-   The currently recognized parameter keywords are:
+   The currently recognized parameter key words are:
 
    <variablelist>
     <varlistentry>
@@ -307,7 +307,7 @@ PGconn *PQsetdbLogin(const char *pghost,
 <para>
    This is the predecessor of <function>PQconnectdb</function> with a fixed
    set of parameters.  It has the same functionality except that the
-   missing parameters will always take on default values.  Write NULL or an
+   missing parameters will always take on default values.  Write <symbol>NULL</symbol> or an
    empty string for any one of the fixed parameters that is to be defaulted.
    </para>
   </listitem>
@@ -849,7 +849,7 @@ const char *PQparameterStatus(const PGconn *conn, const char *paramName);
 Certain parameter values are reported by the server automatically at
 connection startup or whenever their values change.
 <function>PQparameterStatus</> can be used to interrogate these settings.
-It returns the current value of a parameter if known, or NULL if the parameter
+It returns the current value of a parameter if known, or <symbol>NULL</symbol> if the parameter
 is not known.
 </para>
 
@@ -890,7 +890,7 @@ or zero (connection bad).  This will not change after connection
 startup is complete, but it could theoretically change during a reset.
 The 3.0 protocol will normally be used when communicating with
 <productname>PostgreSQL</> 7.4 or later servers; pre-7.4 servers support
-only protocol 2.0.  (Protocol 1.0 is obsolete and not supported by libpq.)
+only protocol 2.0.  (Protocol 1.0 is obsolete and not supported by <application>libpq</application>.)
 </para>
 </listitem>
 </varlistentry>
@@ -1071,23 +1071,23 @@ as <literal>$1</>, <literal>$2</>, etc.
 <parameter>nParams</> is the number of parameters supplied; it is the length
 of the arrays <parameter>paramTypes[]</>, <parameter>paramValues[]</>,
 <parameter>paramLengths[]</>, and <parameter>paramFormats[]</>.  (The
-array pointers may be NULL when <parameter>nParams</> is zero.)
-<parameter>paramTypes[]</> specifies, by OID, the datatypes to be assigned to
-the parameter symbols.  If <parameter>paramTypes</> is NULL, or any particular
-element in the array is zero, the backend assigns a datatype to the parameter
+array pointers may be <symbol>NULL</symbol> when <parameter>nParams</> is zero.)
+<parameter>paramTypes[]</> specifies, by OID, the data types to be assigned to
+the parameter symbols.  If <parameter>paramTypes</> is <symbol>NULL</symbol>, or any particular
+element in the array is zero, the server assigns a data type to the parameter
 symbol in the same way it would do for an untyped literal string.
 <parameter>paramValues[]</> specifies the actual values of the parameters.
-A NULL pointer in this array means the corresponding parameter is NULL;
+A null pointer in this array means the corresponding parameter is null;
 otherwise the pointer points to a zero-terminated text string (for text
-format) or binary data in the format expected by the backend (for binary
+format) or binary data in the format expected by the server (for binary
 format).
 <parameter>paramLengths[]</> specifies the actual data lengths of
-binary-format parameters.  It is ignored for NULL parameters and text-format
-parameters.  The array pointer may be NULL when there are no binary
+binary-format parameters.  It is ignored for null parameters and text-format
+parameters.  The array pointer may be null when there are no binary
 parameters.
 <parameter>paramFormats[]</> specifies whether parameters are text (put a zero
 in the array) or binary (put a one in the array).  If the array pointer is
-NULL then all parameters are presumed to be text.
+null then all parameters are presumed to be text.
 <parameter>resultFormat</> is zero to obtain results in text format, or one to
 obtain results in binary format.  (There is not currently a provision to
 obtain different result columns in different formats, although that is
@@ -1544,7 +1544,7 @@ char *PQfname(const PGresult *res,
 </para>
 
 <para>
-NULL is returned if the column number is out of range.
+<symbol>NULL</symbol> is returned if the column number is out of range.
 </para>
 </listitem>
 </varlistentry>
@@ -1761,15 +1761,15 @@ char* PQgetvalue(const PGresult *res,
 For data in text format, the value returned by <function>PQgetvalue</function>
 is a null-terminated character string  representation
 of the field value.  For data in binary format, the value is in the binary
-representation determined by the datatype's <function>typsend</> and
+representation determined by the data type's <function>typsend</> and
 <function>typreceive</> functions.  (The value is actually followed by
 a zero byte in this case too, but that is not ordinarily useful, since
 the value is likely to contain embedded nulls.)
 </para>
 
 <para>
-An empty string is returned if the field value is NULL.  See
-<function>PQgetisnull</> to distinguish NULLs from empty-string values.
+An empty string is returned if the field value is null.  See
+<function>PQgetisnull</> to distinguish null values from empty-string values.
 </para>
 
 <para>
@@ -2123,7 +2123,7 @@ void PQfreemem(void *ptr);
    <function>PQunescapeBytea</function>,
    and <function>PQnotifies</function>.
    It is needed by Win32, which can not free memory across
-   DLL's, unless multithreaded DLL's (/MD in VC6) are used.
+   DLLs, unless multithreaded DLLs (<option>/MD</option> in VC6) are used.
    On other platforms it is the same as <function>free()</>.
   </para>
   </listitem>
@@ -2547,13 +2547,13 @@ typedef struct {
      parameters to be passed to the function; they must match the declared
      function argument list.  When the <parameter>isint</> field of a
      parameter
-     struct is true,
+     structure is true,
      the <parameter>u.integer</> value is sent to the server as an integer
      of the indicated length (this must be 1, 2, or 4 bytes); proper
      byte-swapping occurs.  When <parameter>isint</> is false, the
      indicated number of bytes at <parameter>*u.ptr</> are sent with no
      processing; the data must be in the format expected by the server for
-     binary transmission of the function's argument datatype.
+     binary transmission of the function's argument data type.
      <parameter>result_buf</parameter> is the buffer in which
      to place the return value.  The caller must  have  allocated
      sufficient space to store the return value.  (There is no check!)
@@ -2577,7 +2577,7 @@ caller is responsible for  freeing  the  <structname>PGresult</structname>  with
 </para>
 
 <para>
-Note that it is not possible to handle NULL arguments, NULL results, nor
+Note that it is not possible to handle null arguments, null results, nor
 set-valued results when using this interface.
 </para>
 
@@ -2646,8 +2646,8 @@ do not represent separate allocations.
 <note>
 <para>
  In <productname>PostgreSQL</productname> 6.4 and later,
- the <structfield>be_pid</structfield> is that of the notifying backend process,
- whereas in earlier versions it was always the <acronym>PID</acronym> of your own backend process.
+ the <structfield>be_pid</structfield> is that of the notifying server process,
+ whereas in earlier versions it was always the <acronym>PID</acronym> of your own server process.
 </para>
 </note>
 
@@ -2724,7 +2724,7 @@ if any notifications came in during the processing of the command.
  <function>PQexec</function> in a string that could contain additional
  commands, the application must continue fetching results via
  <function>PQgetResult</> after completing the <command>COPY</command>
- sequence.  Only when <function>PQgetResult</> returns NULL is it certain
+ sequence.  Only when <function>PQgetResult</> returns <symbol>NULL</symbol> is it certain
  that the <function>PQexec</function> command string is done and it is
  safe to issue more commands.
 </para>
@@ -2816,15 +2816,15 @@ int PQputCopyData(PGconn *conn,
 Transmits the COPY data in the specified <parameter>buffer</>, of length
 <parameter>nbytes</>, to the server.  The result is 1 if the data was sent,
 zero if it was not sent because the attempt would block (this case is only
-possible if the connection is in nonblock mode), or -1 if an error occurred.
+possible if the connection is in nonblocking mode), or -1 if an error occurred.
 (Use <function>PQerrorMessage</function> to retrieve details if the return
 value is -1.  If the value is zero, wait for write-ready and try again.)
 </para>
 
 <para>
-The application may divide the COPY datastream into bufferloads of any
-convenient size.  Bufferload boundaries have no semantic significance when
-sending.  The contents of the datastream must match the data format expected
+The application may divide the <command>COPY</command> data stream into buffer loads of any
+convenient size.  Buffer-load boundaries have no semantic significance when
+sending.  The contents of the data stream must match the data format expected
 by the <command>COPY</> command; see
 <xref linkend="sql-copy" endterm="sql-copy-title"> for details.
 </para>
@@ -2844,7 +2844,7 @@ int PQputCopyEnd(PGconn *conn,
 
 <para>
 Ends the <literal>COPY_IN</> operation successfully if <parameter>errormsg</>
-is NULL.  If <parameter>errormsg</> is not NULL then the <command>COPY</>
+is <symbol>NULL</symbol>.  If <parameter>errormsg</> is not <symbol>NULL</symbol> then the <command>COPY</>
 is forced to fail, with the string pointed to by <parameter>errormsg</>
 used as the error message.  (One should not assume that this exact error
 message will come back from the server, however, as the server might have
@@ -2855,7 +2855,7 @@ option to force failure does not work when using pre-3.0-protocol connections.)
 <para>
 The result is 1 if the termination data was sent,
 zero if it was not sent because the attempt would block (this case is only
-possible if the connection is in nonblock mode), or -1 if an error occurred.
+possible if the connection is in nonblocking mode), or -1 if an error occurred.
 (Use <function>PQerrorMessage</function> to retrieve details if the return
 value is -1.  If the value is zero, wait for write-ready and try again.)
 </para>
@@ -2900,9 +2900,9 @@ Attempts to obtain another row of data from the server during a COPY.
 Data is always returned one data row at a time; if only a partial row
 is available, it is not returned.  Successful return of a data row
 involves allocating a chunk of memory to hold the data.  The
-<parameter>buffer</> parameter must be non-NULL.  <parameter>*buffer</>
-is set to point to the allocated memory, or to NULL in cases where no
-buffer is returned.  A non-NULL result buffer must be freed using
+<parameter>buffer</> parameter must be non-<symbol>NULL</symbol>.  <parameter>*buffer</>
+is set to point to the allocated memory, or to <symbol>NULL</symbol> in cases where no
+buffer is returned.  A non-<symbol>NULL</symbol> result buffer must be freed using
 <function>PQfreemem</> when no longer needed.
 </para>
 
@@ -3053,7 +3053,7 @@ int PQputline(PGconn *conn,
 </para>
 
 <para>
-The COPY datastream sent by a series of calls to
+The <command>COPY</command> data stream sent by a series of calls to
 <function>PQputline</function> has the same format as that returned by
 <function>PQgetlineAsync</function>, except that applications are not
 obliged to send exactly one data row per <function>PQputline</function>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.26 2003/09/28 01:19:33 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.27 2003/11/01 01:56:29 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -30,7 +30,7 @@ class="PARAMETER">column_name</replaceable> [, ...] ) ] AS <replaceable class="P
 
   <para>
    <command>CREATE VIEW</command> defines a view of a query.  The view
-   is not physically materialized. Instead, the query is run everytime
+   is not physically materialized. Instead, the query is run every time
    the view is referenced in a query.
   </para>
 
@@ -112,7 +112,7 @@ class="PARAMETER">column_name</replaceable> [, ...] ) ] AS <replaceable class="P
 CREATE VIEW vista AS SELECT 'Hello World';
 </programlisting>
     is bad form in two ways: the column name defaults to <literal>?column?</>,
-    and the column datatype defaults to <type>unknown</>.  If you want a
+    and the column data type defaults to <type>unknown</>.  If you want a
     string literal in a view's result, use something like
 <programlisting>
 CREATE VIEW vista AS SELECT text 'Hello World' AS hello;

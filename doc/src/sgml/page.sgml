@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/page.sgml,v 1.14 2003/09/29 18:18:35 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/page.sgml,v 1.15 2003/11/01 01:56:29 petere Exp $
 -->
 
 <chapter id="page">
@@ -27,7 +27,7 @@ In the following explanation, a
 is assumed to contain 8 bits.  In addition, the term
 <firstterm>item</firstterm>
 refers to an individual data value that is stored on a page.  In a table,
-an item is a tuple (row); in an index, an item is an index entry.
+an item is a row; in an index, an item is an index entry.
 </para>
 
 <para>
@@ -65,7 +65,7 @@ free space pointers.</entry>
 
 <row>
 <entry>Free space</entry>
-<entry>The unallocated space. All new tuples are allocated from here, generally from the end.</entry>
+<entry>The unallocated space. All new rows are allocated from here, generally from the end.</entry>
 </row>
 
 <row>
@@ -162,7 +162,7 @@ data. Empty in ordinary tables.</entry>
   and a version indicator.  Beginning with
   <productname>PostgreSQL</productname> 7.3 the version number is 1; prior
   releases used version number 0.  (The basic page layout and header format
-  has not changed, but the layout of heap tuple headers has.)  The page size
+  has not changed, but the layout of heap row headers has.)  The page size
   is basically only present as a cross-check; there is no support for having
   more than one page size in an installation.
  </para>
@@ -209,12 +209,12 @@ data. Empty in ordinary tables.</entry>
  
  <para>
 
-  All table tuples are structured the same way. There is a fixed-size
+  All table rows are structured the same way. There is a fixed-size
   header (occupying 23 bytes on most machines), followed by an optional null
   bitmap, an optional object ID field, and the user data. The header is
   detailed
   in <xref linkend="heaptupleheaderdata-table">.  The actual user data
-  (fields of the tuple) begins at the offset indicated by
+  (columns of the row) begins at the offset indicated by
   <structfield>t_hoff</>, which must always be a multiple of the MAXALIGN
   distance for the platform.
   The null bitmap is
@@ -274,13 +274,13 @@ data. Empty in ordinary tables.</entry>
    <entry>t_xvac</entry>
    <entry>TransactionId</entry>
    <entry>4 bytes</entry>
-   <entry>XID for VACUUM operation moving tuple</entry>
+   <entry>XID for VACUUM operation moving row version</entry>
   </row>
   <row>
    <entry>t_ctid</entry>
    <entry>ItemPointerData</entry>
    <entry>6 bytes</entry>
-   <entry>current TID of this or newer tuple</entry>
+   <entry>current TID of this or newer row version</entry>
   </row>
   <row>
    <entry>t_natts</entry>

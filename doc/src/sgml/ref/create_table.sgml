@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.72 2003/09/09 18:28:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.73 2003/11/01 01:56:29 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -182,8 +182,8 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     <listitem>
      <para>
       The <literal>LIKE</literal> clause specifies a table from which
-      the new table automatically inherits all column names, their datatypes, and
-      <literal>NOT NULL</literal> constraints.
+      the new table automatically inherits all column names, their data types, and
+      not-null constraints.
      </para>
      <para>
       Unlike <literal>INHERITS</literal>, the new table and inherited table

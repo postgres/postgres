@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.20 2003/10/28 20:18:09 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.21 2003/11/01 01:56:29 petere Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -230,9 +230,9 @@ DROP TABLE products;
 
      <para>
       The identity (transaction ID) of the inserting transaction for
-      this tuple.  (Note: In this context, a tuple is an individual
-      state of a row; each update of a row creates a new tuple for the
-      same logical row.)
+      this row version.  (A row version is an individual state of a
+      row; each update of a row creates a new row version for the same
+      logical row.)
      </para>
     </listitem>
    </varlistentry>
@@ -260,8 +260,8 @@ DROP TABLE products;
 
      <para>
       The identity (transaction ID) of the deleting transaction, or
-      zero for an undeleted tuple.  It is possible for this column to
-      be nonzero in a visible tuple: That usually indicates that the
+      zero for an undeleted row version.  It is possible for this column to
+      be nonzero in a visible row version: That usually indicates that the
       deleting transaction hasn't committed yet, or that an attempted
       deletion was rolled back.
      </para>
@@ -289,9 +289,9 @@ DROP TABLE products;
      </indexterm>
 
      <para>
-      The physical location of the tuple within its table.  Note that
+      The physical location of the row version within its table.  Note that
       although the <structfield>ctid</structfield> can be used to
-      locate the tuple very quickly, a row's
+      locate the row version very quickly, a row's
       <structfield>ctid</structfield> will change each time it is
       updated or moved by <command>VACUUM FULL</>.  Therefore
       <structfield>ctid</structfield> is useless as a long-term row
@@ -332,7 +332,7 @@ DROP TABLE products;
     of 2<superscript>32</> (4 billion) <acronym>SQL</acronym> commands
     within a single transaction.  In practice this limit is not a
     problem --- note that the limit is on number of
-    <acronym>SQL</acronym> commands, not number of tuples processed.
+    <acronym>SQL</acronym> commands, not number of rows processed.
    </para>
  </sect1>
 
@@ -1047,7 +1047,7 @@ SELECT name, altitude
   </para>
 
   <para>
-  In some cases you may wish to know which table a particular tuple
+  In some cases you may wish to know which table a particular row
   originated from. There is a system column called
   <structfield>TABLEOID</structfield> in each table which can tell you the
   originating table:

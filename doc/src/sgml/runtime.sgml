@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.214 2003/10/17 22:38:20 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.215 2003/11/01 01:56:29 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -878,9 +878,9 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Specifies the maximum amount of memory to be used by
         <command>VACUUM</command> to keep track of to-be-reclaimed
-        tuples. The value is specified in kilobytes, and defaults to
-        8192 kilobytes. Larger settings may improve the speed of
-        vacuuming large tables that have many deleted tuples.
+        rows. The value is specified in kilobytes, and defaults to
+        8192 kB. Larger settings may improve the speed of
+        vacuuming large tables that have many deleted rows.
        </para>
       </listitem>
      </varlistentry>
@@ -1333,7 +1333,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Sets the query planner's estimate of the cost of processing
-        each tuple during a query. This is measured as a fraction of
+        each row during a query. This is measured as a fraction of
         the cost of a sequential page fetch. The default is 0.01.
        </para>
       </listitem>
@@ -1344,7 +1344,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Sets the query planner's estimate of the cost of processing
-        each index tuple during an index scan. This is measured as a
+        each index row during an index scan. This is measured as a
         fraction of the cost of a sequential page fetch. The default
         is 0.001.
        </para>

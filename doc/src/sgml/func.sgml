@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.176 2003/09/30 03:22:33 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.177 2003/11/01 01:56:29 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -541,7 +541,7 @@ PostgreSQL documentation
    indicates <type>double precision</type>.  Many of these functions
    are provided in multiple forms with different argument types.
    Except where noted, any given form of a function returns the same
-   datatype as its argument.
+   data type as its argument.
    The functions working with <type>double precision</type> data are mostly
    implemented on top of the host system's C library; accuracy and behavior in
    boundary cases may therefore vary depending on the host system.
@@ -3182,7 +3182,7 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
 
        <row>
        <entry> <literal>\f</> </entry>
-       <entry> formfeed, as in C </entry>
+       <entry> form feed, as in C </entry>
        </row>
 
        <row>
@@ -4869,7 +4869,7 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
     </table>
 
    <para>
-    In addition to these functions, the SQL <literal>OVERLAPS</> keyword is
+    In addition to these functions, the SQL <literal>OVERLAPS</> operator is
     supported:
 <synopsis>
 ( <replaceable>start1</replaceable>, <replaceable>end1</replaceable> ) OVERLAPS ( <replaceable>start2</replaceable>, <replaceable>end2</replaceable> )
@@ -4877,8 +4877,8 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
 </synopsis>
     This expression yields true when two time periods (defined by their
     endpoints) overlap, false when they do not overlap.  The endpoints
-    can be specified as pairs of dates, times, or timestamps; or as
-    a date, time, or timestamp followed by an interval.
+    can be specified as pairs of dates, times, or time stamps; or as
+    a date, time, or time stamp followed by an interval.
    </para>
 
 <screen>
@@ -5471,7 +5471,7 @@ SELECT timeofday();
     the intent is to allow a single transaction to have a consistent
     notion of the <quote>current</quote> time, so that multiple
     modifications within the same transaction bear the same
-    timestamp. <function>timeofday()</function>
+    time stamp. <function>timeofday()</function>
     returns the wall-clock time and does advance during transactions.
    </para>
 
@@ -6043,7 +6043,7 @@ SELECT TIMESTAMP 'now';
        <row>
 	<entry><literal><function>hostmask</function>(<type>inet</type>)</literal></entry>
 	<entry><type>inet</type></entry>
-	<entry>construct hostmask for network</entry>
+	<entry>construct host mask for network</entry>
 	<entry><literal>hostmask('192.168.23.20/30')</literal></entry>
 	<entry><literal>0.0.0.3</literal></entry>
        </row>

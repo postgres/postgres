@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.76 2003/10/17 22:38:20 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.77 2003/11/01 01:56:28 petere Exp $
  -->
 
 <chapter id="catalogs">
@@ -755,9 +755,9 @@
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>
-       Always -1 in storage, but when loaded into a tuple descriptor
+       Always -1 in storage, but when loaded into a row descriptor
        in memory this may be updated to cache the offset of the attribute
-       within the tuple.
+       within the row.
       </entry>
      </row>
 
@@ -800,9 +800,9 @@
       <entry></entry>
       <entry>
        If true, this attribute is a set.  In that case, what is really
-       stored in the attribute is the OID of a tuple in the
+       stored in the attribute is the OID of a row in the
        <structname>pg_proc</structname> catalog.  The
-       <structname>pg_proc</structname> tuple contains the query
+       <structname>pg_proc</structname> row contains the query
        string that defines this set, i.e., the query to run to get
        the set.  So the <structfield>atttypid</structfield> (see
        above) refers to the type returned by this query, but the
@@ -1046,7 +1046,7 @@
       <entry><type>float4</type></entry>
       <entry></entry>
       <entry>
-       Number of tuples in the table.
+       Number of rows in the table.
        This is only an estimate used by the planner.
        It is updated by <command>VACUUM</command>,
        <command>ANALYZE</command>, and <command>CREATE INDEX</command>.
@@ -1553,7 +1553,7 @@
       <entry><type>xid</type></entry>
       <entry></entry>
       <entry>
-       All tuples inserted or deleted by transaction IDs before this one
+       All rows inserted or deleted by transaction IDs before this one
        have been marked as known committed or known aborted in this database.
        This is used to determine when commit-log space can be recycled.
       </entry>
@@ -1564,7 +1564,7 @@
       <entry><type>xid</type></entry>
       <entry></entry>
       <entry>
-       All tuples inserted by transaction IDs before this one have been
+       All rows inserted by transaction IDs before this one have been
        relabeled with a permanent (<quote>frozen</>) transaction ID in this
        database.  This is useful to check whether a database must be vacuumed
        soon to avoid transaction ID wrap-around problems.
@@ -1666,7 +1666,7 @@
      <row>
       <entry><structfield>refobjid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>any oid attribute</entry>
+      <entry>any OID column</entry>
       <entry>The OID of the specific referenced object</entry>
      </row>
 
@@ -1945,7 +1945,7 @@
      <row>
       <entry><structfield>indkey</structfield></entry>
       <entry><type>int2vector</type></entry>
-      <entry><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</entry>
+      <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</literal></entry>
       <entry>
        This is an array of <structfield>indnatts</structfield> (up to
        <symbol>INDEX_MAX_KEYS</symbol>) values that indicate which
@@ -2407,7 +2407,7 @@
       <entry><structfield>opcamid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-am"><structname>pg_am</structname></link>.oid</literal></entry>
-      <entry>Index access method opclass is for</entry>
+      <entry>Index access method operator class is for</entry>
      </row>
 
      <row>
@@ -3233,7 +3233,7 @@
       <entry><structfield>tgtype</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>Bitmask identifying trigger conditions</entry>
+      <entry>Bit mask identifying trigger conditions</entry>
      </row>
 
      <row>
@@ -3534,7 +3534,7 @@
         For types used in system tables, it is critical that the size
         and alignment defined in <structname>pg_type</structname>
         agree with the way that the compiler will lay out the column in
-        a struct representing a table row.
+        a structure representing a table row.
        </para>
       </note></entry>
      </row>
@@ -3611,8 +3611,8 @@
       <entry></entry>
       <entry><para>
        <structfield>typndims</structfield> is the number of array dimensions
-       for a domain that is an array (that is, typbasetype is an array type;
-       the domain's typelem will match the base type's typelem).
+       for a domain that is an array (that is, <structfield>typbasetype</> is an array type;
+       the domain's <structfield>typelem</> will match the base type's <structfield>typelem</structfield>).
        Zero for types other than array domains.
        </para></entry>
      </row>

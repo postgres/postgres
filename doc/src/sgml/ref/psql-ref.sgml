@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.98 2003/10/04 01:04:46 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.99 2003/11/01 01:56:29 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -96,7 +96,7 @@ PostgreSQL documentation
        processed in a single transaction, unless there are explicit
        BEGIN/COMMIT commands included in the string to divide it into
        multiple transactions.  This is different from the behavior when
-       the same string is fed to psql's standard input.
+       the same string is fed to <application>psql</application>'s standard input.
       </para>
       </listitem>
     </varlistentry>

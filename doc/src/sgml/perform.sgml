@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.36 2003/10/17 22:38:20 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.37 2003/11/01 01:56:29 petere Exp $
 -->
 
  <chapter id="performance-tips">
@@ -614,7 +614,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    <varname>from_collapse_limit</> (so that explicit joins and subselects
    act similarly) or set <varname>join_collapse_limit</> to 1 (if you want
    to control join order with explicit joins).  But you might set them
-   differently if you are trying to fine-tune the tradeoff between planning
+   differently if you are trying to fine-tune the trade off between planning
    time and run time.
   </para>
  </sect1>

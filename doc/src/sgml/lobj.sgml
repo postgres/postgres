@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.30 2003/08/31 17:32:19 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.31 2003/11/01 01:56:29 petere Exp $
 -->
 
  <chapter id="largeObjects">
@@ -324,10 +324,10 @@ SELECT lo_export(image.raster, '/tmp/motd') FROM image
 </para>
 
 <para>
-These functions read and write files in the server's filesystem, using the
+These functions read and write files in the server's file system, using the
 permissions of the database's owning user.  Therefore, their use is restricted
 to superusers.  (In contrast, the client-side import and export functions
-read and write files in the client's filesystem, using the permissions of
+read and write files in the client's file system, using the permissions of
 the client program.  Their use is not restricted.)
 </para>
 </sect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.84 2003/08/31 17:32:20 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.85 2003/11/01 01:56:29 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -1050,7 +1050,7 @@ CREATE FUNCTION dept(text) RETURNS dept
     </simplelist>
     where the <replaceable>operator</replaceable> token follows the syntax
     rules of <xref linkend="sql-syntax-operators">, or is one of the
-    keywords <token>AND</token>, <token>OR</token>, and
+    key words <token>AND</token>, <token>OR</token>, and
     <token>NOT</token>, or is a qualified operator name
 <synopsis>
 <literal>OPERATOR(</><replaceable>schema</><literal>.</><replaceable>operatorname</><literal>)</>
@@ -1292,7 +1292,7 @@ SELECT name, (SELECT max(pop) FROM cities WHERE cities.state = states.name)
     An <firstterm>array constructor</> is an expression that builds an
     array value from values for its member elements.  A simple array
     constructor 
-    consists of the keyword <literal>ARRAY</literal>, a left square bracket
+    consists of the key word <literal>ARRAY</literal>, a left square bracket
     <literal>[</>, one or more expressions (separated by commas) for the
     array element values, and finally a right square bracket <literal>]</>.
     For example,
@@ -1311,7 +1311,7 @@ SELECT ARRAY[1,2,3+4];
    <para>
     Multidimensional array values can be built by nesting array
     constructors.
-    In the inner constructors, the keyword <literal>ARRAY</literal> may
+    In the inner constructors, the key word <literal>ARRAY</literal> may
     be omitted.  For example, these produce the same result:
 
 <programlisting>
@@ -1352,7 +1352,7 @@ select ARRAY[f1, f2, '{{9,10},{11,12}}'::int[]] from arr;
   <para>
    It is also possible to construct an array from the results of a
    subquery.  In this form, the array constructor is written with the
-   keyword <literal>ARRAY</literal> followed by a parenthesized (not
+   key word <literal>ARRAY</literal> followed by a parenthesized (not
    bracketed) subquery. For example:
 <programlisting>
 SELECT ARRAY(SELECT oid FROM pg_proc WHERE proname LIKE 'bytea%');
@@ -1361,9 +1361,9 @@ SELECT ARRAY(SELECT oid FROM pg_proc WHERE proname LIKE 'bytea%');
  {2011,1954,1948,1952,1951,1244,1950,2005,1949,1953,2006,31}
 (1 row)
 </programlisting>
-  The sub-select must return a single column. The
+  The subquery must return a single column. The
   resulting one-dimensional array will have an element for each row in the
-  sub-select result, with an element type matching that of the sub-select's
+  subquery result, with an element type matching that of the subquery's
   output column.
   </para>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.234 2003/10/31 22:22:10 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235 2003/11/01 01:56:29 petere Exp $
 -->
 
 <appendix id="release">
@@ -181,7 +181,7 @@ required for those wishing to migrate data from any previous release.</para>
      <listitem><para> MOVE/FETCH now returns the actual number of rows moved/fetched, or zero
         if at the beginning/end of the cursor</para>
            <para>
-	    Prior releases would return the tuple count passed to the
+	    Prior releases would return the row count passed to the
 	    command, not the actual number of rows FETCHed or MOVEd.
            </para>
      </listitem>
@@ -1588,7 +1588,7 @@ of locale?</para></listitem>
 <listitem><para>Disable LIMIT #,# syntax; now only LIMIT # OFFSET # supported (Bruce)</para></listitem>
 <listitem><para>Increase identifier length to 63 (Neil, Bruce)</para></listitem>
 <listitem><para>UNION fixes for merging >= 3 columns of different lengths (Tom)</para></listitem>
-<listitem><para>Add DEFAULT keyword to INSERT, e.g., INSERT ... (..., DEFAULT, ...) (Rod)</para></listitem>
+<listitem><para>Add DEFAULT key word to INSERT, e.g., INSERT ... (..., DEFAULT, ...) (Rod)</para></listitem>
 <listitem><para>Allow views to have default values using ALTER COLUMN ... SET DEFAULT (Neil)</para></listitem>
 <listitem><para>Fail on INSERTs with column lists that don't supply all column values, e.g., INSERT INTO tab (col1, col2) VALUES ('val1');  (Rod)</para></listitem>
 <listitem><para>Fix for join aliases (Tom)</para></listitem>
@@ -2739,7 +2739,7 @@ AIX, MSWIN, VAX, N32K fixes (Tom)
 Multibytes fixes (Tom)
 Unicode fixes (Tatsuo)
 Optimizer improvements (Tom)
-Fix for whole tuples in functions (Tom)
+Fix for whole rows in functions (Tom)
 Fix for pg_ctl and option strings with spaces (Peter E)
 ODBC fixes (Hiroshi)
 EXTRACT can now take string argument (Thomas)
@@ -2890,7 +2890,7 @@ Modify pg_dump to better handle user-defined items in template1 (Philip)
 Allow LIMIT in VIEW (Tom)
 Require cursor FETCH to honor LIMIT (Tom)
 Allow PRIMARY/FOREIGN Key definitions on inherited columns (Stephan)
-Allow ORDER BY, LIMIT in sub-selects (Tom)
+Allow ORDER BY, LIMIT in subqueries (Tom)
 Allow UNION in CREATE RULE (Tom)
 Make ALTER/DROP TABLE rollback-able (Vadim, Tom)
 Store initdb collation in pg_control so collation cannot be changed (Tom)
@@ -2923,7 +2923,7 @@ Improved handling of file descriptor cache (Tom)
 New warning code about auto-created table alias entries (Bruce)
 Overhaul initdb process (Tom, Peter E)
 Overhaul of inherited tables; inherited tables now accessed by default;
-   new ONLY keyword prevents it (Chris Bitmead, Tom)
+   new ONLY key word prevents it (Chris Bitmead, Tom)
 ODBC cleanups/improvements (Nick Gorham, Stephan Szabo, Zoltan Kovacs, 
     Michael Fork)
 Allow renaming of temp tables (Tom)
@@ -2931,7 +2931,7 @@ Overhaul memory manager contexts (Tom)
 pg_dumpall uses CREATE USER or CREATE GROUP rather using COPY (Peter E)
 Overhaul pg_dump (Philip Warner)
 Allow pg_hba.conf secondary password file to specify only username (Peter E)
-Allow TEMPORARY or TEMP keyword when creating temporary tables (Bruce)
+Allow TEMPORARY or TEMP key word when creating temporary tables (Bruce)
 New memory leak checker (Karel)
 New SET SESSION CHARACTERISTICS (Thomas)
 Allow nested block comments (Thomas)
@@ -3104,8 +3104,8 @@ Fix for mergejoin plans (Tom)
 Fix TRUNCATE failure on relations with indexes (Tom)
 Avoid database-wide restart on write error (Hiroshi)
 Fix nodeMaterial to honor chgParam by recomputing its output (Tom)
-Fix VACUUM problem with moving chain of update tuples when source and
-    destination of a tuple lie on the same page (Tom)
+Fix VACUUM problem with moving chain of update row versions when source
+    and destination of a row version lie on the same page (Tom)
 Fix user.c CommandCounterIncrement (Tom)
 Fix for AM/PM boundary problem in to_char() (Karel Zak)
 Fix TIME aggregate handling (Tom)
@@ -3538,7 +3538,7 @@ Add btree indexing of boolean values, &gt;= and &lt;= (Don Baccus)
 Print current line number when COPY FROM fails (Massimo)
 Recognize POSIX time zone e.g. "PST+8" and "GMT-8" (Thomas)
 Add DEC as synonym for DECIMAL (Thomas)
-Add SESSION_USER as SQL92 keyword, same as CURRENT_USER (Thomas)
+Add SESSION_USER as SQL92 key word, same as CURRENT_USER (Thomas)
 Implement SQL92 column aliases (aka correlation names) (Thomas)
 Implement SQL92 join syntax (Thomas)
 Make INTERVAL reserved word allowed as a column identifier (Thomas)
@@ -3822,7 +3822,7 @@ ACL file descriptor leak fix(Atsushi Ogawa)
 New expresssion subtree code(Tom)
 Avoid disk writes for read-only transactions(Vadim)
 Fix for removal of temp tables if last transaction was aborted(Bruce)
-Fix to prevent too large tuple from being created(Bruce)
+Fix to prevent too large row from being created(Bruce)
 plpgsql fixes
 Allow port numbers 32k - 64k(Bruce)
 Add ^ precidence(Bruce)
@@ -4226,7 +4226,7 @@ Port to NetBSD/m68k(Mr. Mutsuki Nakajima)
 Port to NetBSD/sun3(Mr. Mutsuki Nakajima)
 Port to NetBSD/macppc(Toshimi Aoki)
 Fix for tcl/tk configuration(Vince)
-Removed CURRENT keyword for rule queries(Jan)
+Removed CURRENT key word for rule queries(Jan)
 NT dynamic loading now works(Daniel Horak)
 Add ARM32 support(Andrew McMurry)
 Better support for HP-UX 11 and UnixWare
@@ -4589,7 +4589,7 @@ New INSERT INTO TABLE DEFAULT VALUES statement available(Thomas)
 New DECLARE and FETCH feature(Thomas)
 libpq's internal structures now not exported(Tom)
 Allow up to 8 key indexes(Bruce)
-Remove ARCHIVE keyword, that is no longer used(Thomas)
+Remove ARCHIVE key word, that is no longer used(Thomas)
 pg_dump -n flag to supress quotes around indentifiers
 disable system columns for views(Jan)
 new INET and CIDR types for network addresses(TomH, Paul)
@@ -4777,7 +4777,7 @@ Fix for "Datasize = 0" error(Vadim)
 Prevent \do from wrapping(Bruce)
 Remove duplicate Russian character set entries
 Sunos4 cleanup
-Allow optional TABLE keyword in LOCK and SELECT INTO(Thomas)
+Allow optional TABLE key word in LOCK and SELECT INTO(Thomas)
 CREATE SEQUENCE options to allow a negative integer(Thomas)
 Add "PASSWORD" as an allowed column identifier(Thomas)
 Add checks for UNION target fields(Bruce)
@@ -4971,7 +4971,7 @@ Fix for index scans in MergeJion(Vadim)
 
 Enhancements
 ------------
-Subselects with EXISTS, IN, ALL, ANY keywords (Vadim, Bruce, Thomas)
+Subselects with EXISTS, IN, ALL, ANY key words (Vadim, Bruce, Thomas)
 New User Manual(Thomas, others)
 Speedup by inlining some frequently-called functions
 Real deadlock detection, no more timeouts(Bruce)
@@ -5089,7 +5089,7 @@ Bring in the PostODBC source tree as part of our standard distribution(Marc)
 A minor patch for HP/UX 10 vs 9(Stan)
 New pg_attribute.atttypmod for type-specific info like varchar length(Bruce)
 UnixWare patches(Billy)
-New i386 'lock' for spin lock asm(Billy)
+New i386 'lock' for spinlock asm(Billy)
 Support for multiplexed backends is removed
 Start an OpenBSD port
 Start an AUX port
@@ -5234,13 +5234,13 @@ Check for geometric intersections at endpoints to avoid rounding ugliness(Thomas
 Catch non-functional delete attempts(Vadim)
 Change time function names to be more consistent(Michael Reifenberg)
 Check for zero divides(Michael Reifenberg)
-Fix very old bug which made tuples changed/inserted by a commnd
+Fix very old bug which made rows changed/inserted by a command
 	visible to the command itself (so we had multiple update of 
-	updated tuples, etc)(Vadim)
+	updated rows, etc.)(Vadim)
 Fix for SELECT null, 'fail' FROM pg_am (Patrick)
 SELECT NULL as EMPTY_FIELD now allowed(Patrick)
 Remove un-needed signal stuff from contrib/pginterface
-Fix OR (where x != 1 or x isnull didn't return tuples with x NULL) (Vadim)
+Fix OR (where x != 1 or x isnull didn't return rows with x NULL) (Vadim)
 Fix time_cmp function (Vadim)
 Fix handling of functions with non-attribute first argument in 
 	WHERE clauses (Vadim)
@@ -5254,7 +5254,7 @@ Default genetic optimizer GEQO parameter is now 8(Bruce)
 Allow use parameters in target list having aggregates in functions(Vadim)
 Added JDBC driver as an interface(Adrian & Peter)
 pg_password utility
-Return number of tuples inserted/affected by INSERT/UPDATE/DELETE etc.(Vadim)
+Return number of rows inserted/affected by INSERT/UPDATE/DELETE etc.(Vadim)
 Triggers implemented with CREATE TRIGGER (SQL3)(Vadim)
 SPI (Server Programming Interface) allows execution of queries inside 
 	C-functions (Vadim)
@@ -5481,7 +5481,7 @@ fix local buffers leak in transaction aborts (Vadim)
 fix file manager memmory leaks, cleanups (Vadim, Massimo)
 fix storage manager memmory leaks (Vadim)
 fix btree duplicates handling (Vadim)
-fix deleted tuples re-incarnation caused by vacuum (Vadim)
+fix deleted rows reincarnation caused by vacuum (Vadim)
 fix SELECT varchar()/char() INTO TABLE made zero-length fields(Bruce)
 many psql, pg_dump, and libpq memory leaks fixed using Purify (Igor)
 
@@ -6026,7 +6026,7 @@ Enhancements:
  * added PQdisplayTuples() to libpq and changed monitor and psql to use it
  * added NeXT port (requires SysVIPC implementation)
  * added CAST .. AS ... syntax
- * added ASC and DESC keywords
+ * added ASC and DESC key words
  * added 'internal' as a possible language for CREATE FUNCTION
    internal functions are C functions which have been statically linked
    into the postgres backend.
@@ -6075,7 +6075,7 @@ Copyright change:
 Incompatibilities:
  *  date formats have to be MM-DD-YYYY (or DD-MM-YYYY if you're using
    EUROPEAN STYLE).  This follows SQL-92 specs.
- *  "delimiters" is now a keyword
+ *  "delimiters" is now a key word
 
 Enhancements:
  *  sql LIKE syntax has been added
@@ -6160,10 +6160,10 @@ more compliant to the SQL-92 standard):
    (Also, aggregates can now be overloaded, i.e. you can define your
    own MAX aggregate to take in a user-defined type.)
  * CHANGE ACL removed. GRANT/REVOKE syntax added.  
-   - Privileges can be given to a group using the "GROUP" keyword.
+   - Privileges can be given to a group using the "GROUP" key word.
 	For example:
 		GRANT SELECT ON foobar TO GROUP my_group;
-	The keyword 'PUBLIC' is also supported to mean all users.	
+	The key word 'PUBLIC' is also supported to mean all users.	
 
 	Privileges can only be granted or revoked to one user or group
 	at a time.  
@@ -6180,7 +6180,7 @@ Bug fixes:
  * the bug where aggregates of empty tables were not run has been fixed. Now,
    aggregates run on empty tables will return the initial conditions of the
    aggregates. Thus, COUNT of an empty	table will now properly return 0.
-   MAX/MIN of an empty table will return a tuple of value NULL. 
+   MAX/MIN of an empty table will return a row of value NULL. 
  * allow the use of \; inside the monitor
  * the LISTEN/NOTIFY asynchronous notification mechanism now work
  * NOTIFY in rule action bodies now work
@@ -6206,7 +6206,7 @@ Other changes and enhancements:
 
 libpgtcl changes:
  * The -oid option has been added to the "pg_result" tcl command.
-   pg_result -oid returns oid of the last tuple inserted.   If the
+   pg_result -oid returns oid of the last row inserted.   If the
    last command was not an INSERT, then pg_result -oid returns "".
  * the large object interface is available as pg_lo* tcl commands:
    pg_lo_open, pg_lo_close, pg_lo_creat, etc.

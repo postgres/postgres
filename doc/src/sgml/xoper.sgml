@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.28 2003/10/22 03:50:27 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.29 2003/11/01 01:56:29 petere Exp $
 -->
 
  <sect1 id="xoper">
@@ -128,8 +128,8 @@ SELECT (a + b) AS c FROM test_complex;
      a WHERE clause like <literal>tab1.x = tab2.y</>, where <literal>tab1.x</>
      and <literal>tab2.y</> are of a user-defined type, and suppose that
      <literal>tab2.y</> is indexed.  The optimizer cannot generate an
-     indexscan unless it can determine how to flip the clause around to
-     <literal>tab2.y = tab1.x</>, because the indexscan machinery expects
+     index scan unless it can determine how to flip the clause around to
+     <literal>tab2.y = tab1.x</>, because the index-scan machinery expects
      to see the indexed column on the left of the operator it is given.
      <ProductName>PostgreSQL</ProductName> will <emphasis>not</> simply
      assume that this is a valid transformation --- the creator of the
@@ -348,8 +348,8 @@ table1.column1 OP table2.column2
      the operator, since of course the referencing operator class couldn't
      exist yet.  But attempts to use the operator in hash joins will fail
      at runtime if no such operator class exists.  The system needs the
-     operator class to find the datatype-specific hash function for the
-     operator's input datatype.  Of course, you must also supply a suitable
+     operator class to find the data-type-specific hash function for the
+     operator's input data type.  Of course, you must also supply a suitable
      hash function before you can create the operator class.
     </para>
 
@@ -370,7 +370,7 @@ table1.column1 OP table2.column2
 
     <note>
     <para>
-     The function underlying a hashjoinable operator must be marked
+     The function underlying a hash-joinable operator must be marked
      immutable or stable.  If it is volatile, the system will never
      attempt to use the operator for a hash join.
     </para>
@@ -378,14 +378,14 @@ table1.column1 OP table2.column2
 
     <note>
     <para>
-     If a hashjoinable operator has an underlying function that is marked
+     If a hash-joinable operator has an underlying function that is marked
      strict, the
-     function must also be complete: that is, it should return TRUE or
-     FALSE, never NULL, for any two non-NULL inputs.  If this rule is
+     function must also be complete: that is, it should return true or
+     false, never null, for any two nonnull inputs.  If this rule is
      not followed, hash-optimization of <literal>IN</> operations may
      generate wrong results.  (Specifically, <literal>IN</> might return
-     FALSE where the correct answer per spec would be NULL; or it might
-     yield an error complaining that it wasn't prepared for a NULL result.)
+     false where the correct answer according to the standard would be null; or it might
+     yield an error complaining that it wasn't prepared for a null result.)
     </para>
     </note>
 
@@ -488,7 +488,7 @@ table1.column1 OP table2.column2
 
     <note>
     <para>
-     The function underlying a mergejoinable operator must be marked
+     The function underlying a merge-joinable operator must be marked
      immutable or stable.  If it is volatile, the system will never
      attempt to use the operator for a merge join.
     </para>

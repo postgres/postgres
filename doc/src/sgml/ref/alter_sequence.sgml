@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.5 2003/09/22 00:16:57 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.6 2003/11/01 01:56:29 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -49,7 +49,7 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> [ INCREMENT [ B
       <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
-	The name (optionally schema-qualified) of a sequence to be altered.
+        The name (optionally schema-qualified) of a sequence to be altered.
        </para>
       </listitem>
      </varlistentry>
@@ -58,42 +58,43 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> [ INCREMENT [ B
       <term><replaceable class="parameter">increment</replaceable></term>
       <listitem>
        <para>
-	The
-	<option>INCREMENT BY <replaceable class="parameter">increment</replaceable></option>
-	clause is optional. A positive value will make an
-	ascending sequence, a negative one a descending sequence.
-	If unspecified, the old increment value will be maintained.
+        The clause <literal>INCREMENT BY <replaceable
+        class="parameter">increment</replaceable></literal> is
+        optional. A positive value will make an ascending sequence, a
+        negative one a descending sequence.  If unspecified, the old
+        increment value will be maintained.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term><replaceable class="parameter">minvalue</replaceable></term>
-      <term>NO MINVALUE</term>
+      <term><literal>NO MINVALUE</literal></term>
       <listitem>
        <para>
-	The optional clause <option>MINVALUE
-	 <replaceable class="parameter">minvalue</replaceable></option>
-	determines the minimum value
-	a sequence can generate. If <option>NO MINVALUE</option> is specified,
-    the defaults of 1 and -2^63-1 for ascending and descending sequences, respectively, will be used.  If neither option is specified, the current minimum
-    value will be maintained.
+        The optional clause <literal>MINVALUE <replaceable
+        class="parameter">minvalue</replaceable></literal> determines
+        the minimum value a sequence can generate. If <literal>NO
+        MINVALUE</literal> is specified, the defaults of 1 and
+        -2<superscript>63</>-1 for ascending and descending sequences,
+        respectively, will be used.  If neither option is specified,
+        the current minimum value will be maintained.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term><replaceable class="parameter">maxvalue</replaceable></term>
-      <term>NO MAXVALUE</term>
+      <term><literal>NO MAXVALUE</literal></term>
       <listitem>
        <para>
-	The optional clause <option>MAXVALUE
-	 <replaceable class="parameter">maxvalue</replaceable></option>
-	determines the maximum value for the sequence. If 
-    <option>NO MAXVALUE</option> is specified, the defaults are 2^63-1 and -1 for
-	ascending and descending sequences, respectively, will be used.  If
-    neither option is specified, the current maximum value will be
-    maintained.
+        The optional clause <literal>MAXVALUE <replaceable
+        class="parameter">maxvalue</replaceable></literal> determines
+        the maximum value for the sequence. If <literal>NO
+        MAXVALUE</literal> is specified, the defaults are
+        2<superscript>63</>-1 and -1 for ascending and descending
+        sequences, respectively, will be used.  If neither option is
+        specified, the current maximum value will be maintained.
        </para>
       </listitem>
      </varlistentry>
@@ -102,9 +103,9 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> [ INCREMENT [ B
       <term><replaceable class="parameter">start</replaceable></term>
       <listitem>
        <para>
-	The optional <option>RESTART WITH
-	 <replaceable class="parameter">start</replaceable></option>
-	 clause changes the current value of the sequence.
+        The optional clause <literal>RESTART WITH <replaceable
+        class="parameter">start</replaceable></literal> changes the
+        current value of the sequence.
        </para>
       </listitem>
      </varlistentry>
@@ -113,11 +114,12 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> [ INCREMENT [ B
       <term><replaceable class="parameter">cache</replaceable></term>
       <listitem>
        <para>
-	The <option>CACHE <replaceable class="parameter">cache</replaceable></option> option
-	enables sequence numbers to be preallocated
-	and stored in memory for faster access. The  minimum
-	value is 1 (only one value can be generated at a time, i.e., no cache).
-	If unspecified, the old cache value will be maintained.
+        The clause <literal>CACHE <replaceable
+        class="parameter">cache</replaceable></literal> enables
+        sequence numbers to be preallocated and stored in memory for
+        faster access. The minimum value is 1 (only one value can be
+        generated at a time, i.e., no cache).  If unspecified, the old
+        cache value will be maintained.
        </para>
       </listitem>
      </varlistentry>
@@ -126,32 +128,33 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> [ INCREMENT [ B
       <term>CYCLE</term>
       <listitem>
        <para>
-	The optional <option>CYCLE</option> keyword may be used to enable
-	the sequence to wrap around when the
-	<replaceable class="parameter">maxvalue</replaceable> or
-	<replaceable class="parameter">minvalue</replaceable> has been
-	reached by
-	an ascending or descending sequence respectively. If the limit is
-	reached, the next number generated will be the
-	<replaceable class="parameter">minvalue</replaceable> or
-	<replaceable class="parameter">maxvalue</replaceable>,
-	respectively.
+        The optional <literal>CYCLE</literal> key word may be used to enable
+        the sequence to wrap around when the
+        <replaceable class="parameter">maxvalue</replaceable> or
+        <replaceable class="parameter">minvalue</replaceable> has been
+        reached by
+        an ascending or descending sequence respectively. If the limit is
+        reached, the next number generated will be the
+        <replaceable class="parameter">minvalue</replaceable> or
+        <replaceable class="parameter">maxvalue</replaceable>,
+        respectively.
        </para>
       </listitem>
      </varlistentry>
 
-	 <varlistentry>
-	  <term>NO CYCLE</term>
-	  <listitem>
-	   <para>
-	If the optional <option>NO CYCLE</option> keyword is specified, any
-	calls to <function>nextval</function> after the sequence has reached
-	its maximum value will return an error.  If neither
-	<option>CYCLE</option> or <option>NO CYCLE</option> are specified,
-	the old cycle behaviour will be maintained.
-	   </para>
-	  </listitem>
-	</varlistentry>
+     <varlistentry>
+      <term>NO CYCLE</term>
+      <listitem>
+       <para>
+        If the optional <literal>NO CYCLE</literal> key word is
+        specified, any calls to <function>nextval</function> after the
+        sequence has reached its maximum value will return an error.
+        If neither <literal>CYCLE</literal> or <literal>NO
+        CYCLE</literal> are specified, the old cycle behaviour will be
+        maintained.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
   </refsect1>
@@ -161,10 +164,10 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> [ INCREMENT [ B
 
   <para>
    Restart a sequence called <literal>serial</literal>, at 105:
-  </para>
-  <programlisting>
+<programlisting>
 ALTER SEQUENCE serial RESTART WITH 105;
-  </programlisting>
+</programlisting>
+  </para>
  </refsect1>
 
  <refsect1>

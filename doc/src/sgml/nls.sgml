@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/nls.sgml,v 1.6 2003/05/19 21:38:23 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/nls.sgml,v 1.7 2003/11/01 01:56:29 petere Exp $
 -->
 
 <chapter id="nls">
@@ -35,7 +35,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/nls.sgml,v 1.6 2003/05/19 21:38:23 tgl Exp 
     this is only in the unlikely event that you do not want to try out
     your translated messages.  When you configure your source tree, be
     sure to use the <option>--enable-nls</option> option.  This will
-    also check for the libintl library and the
+    also check for the <application>libintl</application> library and the
     <filename>msgfmt</filename> program, which all end users will need
     anyway.  To try out your work, follow the applicable portions of
     the installation instructions.
@@ -49,7 +49,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/nls.sgml,v 1.6 2003/05/19 21:38:23 tgl Exp 
     implementation.  Later, we will try to arrange it so that if you
     use a packaged source distribution, you won't need
     <filename>xgettext</filename>.  (From CVS, you will still need
-    it.)  GNU gettext 0.10.36 or later is currently recommended.
+    it.)  <application>GNU Gettext 0.10.36</application> or later is currently recommended.
    </para>
 
    <para>
@@ -374,7 +374,7 @@ fprintf(stderr, gettext("panic level %d\n"), lvl);
 
      <variablelist>
       <varlistentry>
-       <term>CATALOG_NAME</term>
+       <term><varname>CATALOG_NAME</varname></term>
 
        <listitem>
         <para>
@@ -385,7 +385,7 @@ fprintf(stderr, gettext("panic level %d\n"), lvl);
       </varlistentry>
 
       <varlistentry>
-       <term>AVAIL_LANGUAGES</term>
+       <term><varname>AVAIL_LANGUAGES</varname></term>
 
        <listitem>
         <para>
@@ -395,7 +395,7 @@ fprintf(stderr, gettext("panic level %d\n"), lvl);
       </varlistentry>
 
       <varlistentry>
-       <term>GETTEXT_FILES</term>
+       <term><varname>GETTEXT_FILES</varname></term>
 
        <listitem>
         <para>
@@ -411,7 +411,7 @@ fprintf(stderr, gettext("panic level %d\n"), lvl);
       </varlistentry>
 
       <varlistentry>
-       <term>GETTEXT_TRIGGERS</term>
+       <term><varname>GETTEXT_TRIGGERS</varname></term>
 
        <listitem>
         <para>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.46 2003/10/17 18:57:01 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.47 2003/11/01 01:56:29 petere Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -164,7 +164,7 @@
    <title>Formats and Format Codes</title>
 
    <para>
-    Data of a particular datatype might be transmitted in any of several
+    Data of a particular data type might be transmitted in any of several
     different <firstterm>formats</>.  As of <productname>PostgreSQL</> 7.4
     the only supported formats are <quote>text</> and <quote>binary</>,
     but the protocol makes provision for future extensions.  The desired
@@ -178,7 +178,7 @@
    <para>
     The text representation of values is whatever strings are produced
     and accepted by the input/output conversion functions for the
-    particular datatype.  In the transmitted representation, there is
+    particular data type.  In the transmitted representation, there is
     no trailing null character; the frontend must add one to received
     values if it wants to process them as C strings.
     (The text format does not allow embedded nulls, by the way.)
@@ -186,9 +186,9 @@
 
    <para>
     Binary representations for integers use network byte order (most
-    significant byte first).  For other datatypes consult the documentation
+    significant byte first).  For other data types consult the documentation
     or source code to learn about the binary representation.  Keep in mind
-    that binary representations for complex datatypes may change across
+    that binary representations for complex data types may change across
     server versions; the text format is usually the more portable choice.
    </para>
   </sect2>
@@ -562,7 +562,7 @@
 
    <Para>
     The response to a <command>SELECT</> query (or other queries that
-    return rowsets, such as <command>EXPLAIN</> or <command>SHOW</>)
+    return row sets, such as <command>EXPLAIN</> or <command>SHOW</>)
     normally consists of RowDescription, zero or more
     DataRow messages, and then CommandComplete.
     <command>COPY</> to or from the frontend invokes special protocol
@@ -629,12 +629,12 @@
    <para>
     In the extended protocol, the frontend first sends a Parse message,
     which contains a textual query string, optionally some information
-    about datatypes of parameter placeholders, and the
+    about data types of parameter placeholders, and the
     name of a destination prepared-statement object (an empty string
     selects the unnamed prepared statement).  The response is
-    either ParseComplete or ErrorResponse.  Parameter datatypes may be
+    either ParseComplete or ErrorResponse.  Parameter data types may be
     specified by OID; if not given, the parser attempts to infer the
-    datatypes in the same way as it would do for untyped literal string
+    data types in the same way as it would do for untyped literal string
     constants.
    </para>
 
@@ -701,7 +701,7 @@
     unnamed portal) and
     a maximum result-row count (zero meaning <quote>fetch all rows</>).
     The result-row count is only meaningful for portals
-    containing commands that return rowsets; in other cases the command is
+    containing commands that return row sets; in other cases the command is
     always executed to completion, and the row count is ignored.
     The possible
     responses to Execute are the same as those described above for queries
@@ -995,7 +995,7 @@
     <command>SET</> SQL command executed by the frontend, and this case
     is effectively synchronous --- but it is also possible for parameter
     status changes to occur because the administrator changed a configuration
-    file and then SIGHUP'd the postmaster.  Also, if a SET command is
+    file and then sent the <systemitem>SIGHUP</systemitem> signal to the postmaster.  Also, if a SET command is
     rolled back, an appropriate ParameterStatus message will be generated
     to report the current effective value.
    </para>
@@ -1450,7 +1450,7 @@ AuthenticationCleartextPassword (B)
 </Term>
 <ListItem>
 <Para>
-                Specifies that a cleartext password is required.
+                Specifies that a clear-text password is required.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -2126,9 +2126,9 @@ CopyData (F &amp; B)
 </Term>
 <ListItem>
 <Para>
-                Data that forms part of a COPY datastream.  Messages sent
+                Data that forms part of a <command>COPY</command> data stream.  Messages sent
 		from the backend will always correspond to single data rows,
-		but messages sent by frontends may divide the datastream
+		but messages sent by frontends may divide the data stream
 		arbitrarily.
 </Para>
 </ListItem>
@@ -3094,7 +3094,7 @@ ParameterDescription (B)
 </Term>
 <ListItem>
 <Para>
-                Specifies the object ID of the parameter datatype.
+                Specifies the object ID of the parameter data type.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -3213,7 +3213,7 @@ Parse (F)
 </Term>
 <ListItem>
 <Para>
-                The number of parameter datatypes specified
+                The number of parameter data types specified
 		(may be zero).  Note that this is not an indication of
 		the number of parameters that might appear in the
 		query string, only the number that the frontend wants to
@@ -3230,7 +3230,7 @@ Parse (F)
 </Term>
 <ListItem>
 <Para>
-                Specifies the object ID of the parameter datatype.
+                Specifies the object ID of the parameter data type.
 		Placing a zero here is equivalent to leaving the type
 		unspecified.
 </Para>
@@ -3532,7 +3532,7 @@ RowDescription (B)
 </Term>
 <ListItem>
 <Para>
-                The object ID of the field's datatype.
+                The object ID of the field's data type.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -3542,7 +3542,7 @@ RowDescription (B)
 </Term>
 <ListItem>
 <Para>
-                The datatype size (see <varname>pg_type.typlen</>).
+                The data type size (see <varname>pg_type.typlen</>).
 		Note that negative values denote variable-width types.
 </Para>
 </ListItem>

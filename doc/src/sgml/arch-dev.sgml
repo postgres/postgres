@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.22 2003/09/29 18:18:35 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.23 2003/11/01 01:56:28 petere Exp $
 -->
 
  <chapter id="overview">
@@ -99,11 +99,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.22 2003/09/29 18:18:35 mo
      <para>
       The executor recursively steps through
       the <firstterm>plan tree</firstterm> and
-      retrieves tuples in the way represented by the plan.
+      retrieves rows in the way represented by the plan.
       The executor makes use of the
       <firstterm>storage system</firstterm> while scanning
       relations, performs <firstterm>sorts</firstterm> and <firstterm>joins</firstterm>,
-      evaluates <firstterm>qualifications</firstterm> and finally hands back the tuples derived.
+      evaluates <firstterm>qualifications</firstterm> and finally hands back the rows derived.
      </para>
     </step>
    </procedure>
@@ -150,7 +150,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.22 2003/09/29 18:18:35 mo
     to the <firstterm>backend</firstterm> (server). The query is transmitted using plain text,
     i.e. there is no parsing done in the <firstterm>frontend</firstterm> (client). The
     server parses the query, creates an <firstterm>execution plan</firstterm>,
-    executes the plan and returns the retrieved tuples to the client
+    executes the plan and returns the retrieved rows to the client
     by transmitting them over the established connection.
    </para>
   </sect1>
@@ -195,8 +195,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.22 2003/09/29 18:18:35 mo
      The <firstterm>lexer</firstterm> is defined in the file
      <filename>scan.l</filename> and is responsible
      for recognizing <firstterm>identifiers</firstterm>,
-     the <firstterm>SQL keywords</firstterm> etc. For
-     every keyword or identifier that is found, a <firstterm>token</firstterm>
+     the <firstterm>SQL key words</firstterm> etc. For
+     every key word or identifier that is found, a <firstterm>token</firstterm>
      is generated and handed to the parser.
     </para>
 
@@ -278,7 +278,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.22 2003/09/29 18:18:35 mo
      call.  This may be transformed to either a <structname>FuncExpr</>
      or <structname>Aggref</> node depending on whether the referenced
      name turns out to be an ordinary function or an aggregate function.
-     Also, information about the actual datatypes of columns and expression
+     Also, information about the actual data types of columns and expression
      results is added to the query tree.
     </para>
    </sect2>
@@ -297,9 +297,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.22 2003/09/29 18:18:35 mo
     <itemizedlist>
      <listitem>
       <para>
-       The first one worked using <firstterm>tuple level</firstterm> processing and was
+       The first one worked using <firstterm>row level</firstterm> processing and was
        implemented deep in the <firstterm>executor</firstterm>. The rule system was
-       called whenever an individual tuple had been accessed. This
+       called whenever an individual row had been accessed. This
        implementation was removed in 1995 when the last official release
        of the <productname>Berkeley Postgres</productname> project was
        transformed into <productname>Postgres95</productname>. 
@@ -396,11 +396,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.22 2003/09/29 18:18:35 mo
       <listitem>
        <para>
 	<firstterm>nested loop join</firstterm>: The right relation is scanned
-	once for every tuple found in the left relation. This strategy
+	once for every row found in the left relation. This strategy
 	is easy to implement but can be very time consuming.  (However,
-	if the right relation can be scanned with an indexscan, this can
+	if the right relation can be scanned with an index scan, this can
 	be a good strategy.  It is possible to use values from the current
-	row of the left relation as keys for the indexscan of the right.)
+	row of the left relation as keys for the index scan of the right.)
        </para>
       </listitem>
 
@@ -419,8 +419,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.22 2003/09/29 18:18:35 mo
 	<firstterm>hash join</firstterm>: the right relation is first scanned
 	and loaded into a hash table, using its join attributes as hash keys.
 	Next the left relation is scanned and the
-	appropriate values of every tuple found are used as hash keys to
-	locate the matching tuples in the table.
+	appropriate values of every row found are used as hash keys to
+	locate the matching rows in the table.
        </para>
       </listitem>
      </itemizedlist>
@@ -428,7 +428,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.22 2003/09/29 18:18:35 mo
 
     <para>
      The finished plan tree consists of sequential or index scans of
-     the base relations, plus nestloop, merge, or hash join nodes as
+     the base relations, plus nested-loop, merge, or hash join nodes as
      needed, plus any auxiliary steps needed, such as sort nodes or
      aggregate-function calculation nodes.  Most of these plan node
      types have the additional ability to do <firstterm>selection</>
@@ -451,26 +451,26 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.22 2003/09/29 18:18:35 mo
     The <firstterm>executor</firstterm> takes the plan handed back by the
     planner/optimizer and recursively processes it to extract the required set
     of rows.  This is essentially a demand-pull pipeline mechanism.
-    Each time a plan node is called, it must deliver one more tuple, or
-    report that it is done delivering tuples.
+    Each time a plan node is called, it must deliver one more row, or
+    report that it is done delivering rows.
    </para>
 
    <para>
     To provide a concrete example, assume that the top
     node is a <literal>MergeJoin</literal> node. 
-    Before any merge can be done two tuples have to be fetched (one from
+    Before any merge can be done two rows have to be fetched (one from
     each subplan). So the executor recursively calls itself to
     process the subplans (it starts with the subplan attached to
     <literal>lefttree</literal>). The new top node (the top node of the left
     subplan) is, let's say, a
     <literal>Sort</literal> node and again recursion is needed to obtain
-    an input tuple.  The child node of the <literal>Sort</literal> might
+    an input row.  The child node of the <literal>Sort</literal> might
     be a <literal>SeqScan</> node, representing actual reading of a table.
     Execution of this node causes the executor to fetch a row from the
     table and return it up to the calling node.  The <literal>Sort</literal>
     node will repeatedly call its child to obtain all the rows to be sorted.
     When the input is exhausted (as indicated by the child node returning
-    a NULL instead of a tuple), the <literal>Sort</literal> code performs
+    a NULL instead of a row), the <literal>Sort</literal> code performs
     the sort, and finally is able to return its first output row, namely
     the first one in sorted order.  It keeps the remaining rows stored so
     that it can deliver them in sorted order in response to later demands.
@@ -508,7 +508,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.22 2003/09/29 18:18:35 mo
     result row.  But <command>INSERT ... SELECT</> may demand the full power
     of the executor mechanism.)  For <command>UPDATE</>, the planner arranges
     that each computed row includes all the updated column values, plus
-    the <firstterm>TID</> (tuple ID, or location) of the original target row;
+    the <firstterm>TID</> (tuple ID, or row ID) of the original target row;
     the executor top level uses this information to create a new updated row
     and mark the old row deleted.  For <command>DELETE</>, the only column
     that is actually returned by the plan is the TID, and the executor top

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.23 2003/08/31 17:32:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.24 2003/11/01 01:56:29 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -220,8 +220,8 @@ PostgreSQL documentation
         shutdown is indicated by removal of the <acronym>PID</acronym> 
         file. For starting up, a successful <command>psql -l</command> 
         indicates success. <command>pg_ctl</command> will attempt to 
-        use the proper port for psql. If the environment variable 
-        PGPORT exists, that is used. Otherwise, it will see if a port 
+        use the proper port for <application>psql</>. If the environment variable 
+        <envar>PGPORT</envar> exists, that is used. Otherwise, it will see if a port 
         has been set in the <filename>postgresql.conf</filename> file. 
         If neither of those is used, it will use the default port that 
         <productname>PostgreSQL</productname> was compiled with 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xtypes.sgml,v 1.21 2003/10/21 22:51:14 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xtypes.sgml,v 1.22 2003/11/01 01:56:29 petere Exp $
 -->
 
  <sect1 id="xtypes">
@@ -131,7 +131,7 @@ complex_out(PG_FUNCTION_ARGS)
   Optionally, a user-defined type can provide binary input and output
   routines.  Binary I/O is normally faster but less portable than textual
   I/O.  As with textual I/O, it is up to you to define exactly what the
-  external binary representation is.  Most of the built-in datatypes
+  external binary representation is.  Most of the built-in data types
   try to provide a machine-independent binary representation.  For
   <type>complex</type>, we will piggy-back on the binary I/O converters
   for type <type>float8</>:
@@ -241,7 +241,7 @@ CREATE TYPE complex (
   the total length in bytes of the datum (including itself).  The C
   functions operating on the data type must be careful to unpack any
   toasted values they are handed (this detail can normally be hidden in the
-  GETARG macros).  Then,
+  <function>GETARG</function> macros).  Then,
   when running the <command>CREATE TYPE</command> command, specify the
   internal length as <literal>variable</> and select the appropriate
   storage option.

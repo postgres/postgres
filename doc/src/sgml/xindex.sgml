@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.33 2003/10/21 23:28:42 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.34 2003/11/01 01:56:29 petere Exp $
 -->
 
 <sect1 id="xindex">
@@ -431,7 +431,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.33 2003/10/21 23:28:42 tgl 
 
   <para>
    The least error-prone way to define a related set of comparison operators
-   is to write the btree comparison support function first, and then write the
+   is to write the B-tree comparison support function first, and then write the
    other functions as one-line wrappers around the support function.  This
    reduces the odds of getting inconsistent results for corner cases.
    Following this approach, we first write
@@ -600,15 +600,15 @@ CREATE OPERATOR CLASS complex_abs_ops
    <productname>PostgreSQL</productname> uses operator classes to infer the
    properties of operators in more ways than just whether they can be used
    with indexes.  Therefore, you might want to create operator classes
-   even if you have no intention of indexing any columns of your datatype.
+   even if you have no intention of indexing any columns of your data type.
   </para>
 
   <para>
    In particular, there are SQL features such as <literal>ORDER BY</> and
    <literal>DISTINCT</> that require comparison and sorting of values.
-   To implement these features on a user-defined datatype,
+   To implement these features on a user-defined data type,
    <productname>PostgreSQL</productname> looks for the default B-tree operator
-   class for the datatype.  The <quote>equals</> member of this operator
+   class for the data type.  The <quote>equals</> member of this operator
    class defines the system's notion of equality of values for
    <literal>GROUP BY</> and <literal>DISTINCT</>, and the sort ordering
    imposed by the operator class defines the default <literal>ORDER BY</>
@@ -621,16 +621,16 @@ CREATE OPERATOR CLASS complex_abs_ops
   </para>
 
   <para>
-   If there is no default B-tree operator class for a datatype, the system
+   If there is no default B-tree operator class for a data type, the system
    will look for a default hash operator class.  But since that kind of
    operator class only provides equality, in practice it is only enough
    to support array equality.
   </para>
 
   <para>
-   When there is no default operator class for a datatype, you will get
+   When there is no default operator class for a data type, you will get
    errors like <quote>could not identify an ordering operator</> if you
-   try to use these SQL features with the datatype.
+   try to use these SQL features with the data type.
   </para>
 
    <note>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.30 2003/09/11 21:42:20 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.31 2003/11/01 01:56:29 petere Exp $ -->
 
 <Chapter Id="rules">
 <Title>The Rule System</Title>
@@ -770,7 +770,7 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
     the stage. Old table rows aren't overwritten, and this
     is why <command>ROLLBACK</command> is fast. In an <command>UPDATE</command>,
     the new result row is inserted into the table (after stripping the
-    <acronym>CTID</>) and in the tuple header of the old row, which the
+    <acronym>CTID</>) and in the row header of the old row, which the
     <acronym>CTID</> pointed to, the <literal>cmax</> and
     <literal>xmax</> entries are set to the current command counter
     and current transaction ID. Thus the old row is hidden, and after

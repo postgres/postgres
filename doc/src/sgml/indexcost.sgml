@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/indexcost.sgml,v 2.16 2003/02/08 20:20:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/indexcost.sgml,v 2.17 2003/11/01 01:56:29 petere Exp $
 -->
 
  <chapter id="indexcost">
@@ -39,7 +39,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/indexcost.sgml,v 2.16 2003/02/08 20:2
    The amcostestimate function is given a list of WHERE clauses that have
    been determined to be usable with the index.  It must return estimates
    of the cost of accessing the index and the selectivity of the WHERE
-   clauses (that is, the fraction of main-table tuples that will be
+   clauses (that is, the fraction of main-table rows that will be
    retrieved during the index scan).  For simple cases, nearly all the
    work of the cost estimator can be done by calling standard routines
    in the optimizer; the point of having an amcostestimate function is
@@ -157,7 +157,7 @@ amcostestimate (Query *root,
    The index access costs should be computed in the units used by
    <filename>src/backend/optimizer/path/costsize.c</filename>: a sequential disk block fetch
    has cost 1.0, a nonsequential fetch has cost random_page_cost, and
-   the cost of processing one index tuple should usually be taken as
+   the cost of processing one index row should usually be taken as
    cpu_index_tuple_cost (which is a user-adjustable optimizer parameter).
    In addition, an appropriate multiple of cpu_operator_cost should be charged
    for any comparison operators invoked during index processing (especially
@@ -167,27 +167,27 @@ amcostestimate (Query *root,
   <para>
    The access costs should include all disk and CPU costs associated with
    scanning the index itself, but NOT the costs of retrieving or processing
-   the main-table tuples that are identified by the index.
+   the main-table rows that are identified by the index.
   </para>
 
   <para>
    The <quote>start-up cost</quote> is the part of the total scan cost that must be expended
-   before we can begin to fetch the first tuple.  For most indexes this can
+   before we can begin to fetch the first row.  For most indexes this can
    be taken as zero, but an index type with a high start-up cost might want
    to set it nonzero.
   </para>
 
   <para>
    The indexSelectivity should be set to the estimated fraction of the main
-   table tuples that will be retrieved during the index scan.  In the case
+   table rows that will be retrieved during the index scan.  In the case
    of a lossy index, this will typically be higher than the fraction of
-   tuples that actually pass the given qual conditions.
+   rows that actually pass the given qual conditions.
   </para>
 
   <para>
    The indexCorrelation should be set to the correlation (ranging between
    -1.0 and 1.0) between the index order and the table order.  This is used
-   to adjust the estimate for the cost of fetching tuples from the main
+   to adjust the estimate for the cost of fetching rows from the main
    table.
   </para>
 
@@ -199,7 +199,7 @@ amcostestimate (Query *root,
 
    <step>
     <para>
-     Estimate and return the fraction of main-table tuples that will be visited
+     Estimate and return the fraction of main-table rows that will be visited
      based on the given qual conditions.  In the absence of any index-type-specific
      knowledge, use the standard optimizer function <function>clauselist_selectivity()</function>:
 
@@ -212,10 +212,10 @@ amcostestimate (Query *root,
 
    <step>
     <para>
-     Estimate the number of index tuples that will be visited during the
+     Estimate the number of index rows that will be visited during the
      scan.  For many index types this is the same as indexSelectivity times
-     the number of tuples in the index, but it might be more.  (Note that the
-     index's size in pages and tuples is available from the IndexOptInfo struct.)
+     the number of rows in the index, but it might be more.  (Note that the
+     index's size in pages and rows is available from the IndexOptInfo struct.)
     </para>
    </step>
 
@@ -234,7 +234,7 @@ amcostestimate (Query *root,
     /*
      * Our generic assumption is that the index pages will be read
      * sequentially, so they have cost 1.0 each, not random_page_cost.
-     * Also, we charge for evaluation of the indexquals at each index tuple.
+     * Also, we charge for evaluation of the indexquals at each index row.
      * All the costs are assumed to be paid incrementally during the scan.
      */
     cost_qual_eval(&amp;index_qual_cost, indexQuals);

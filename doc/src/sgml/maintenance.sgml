@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.26 2003/10/09 19:05:09 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.27 2003/11/01 01:56:29 petere Exp $
 -->
 
 <chapter id="maintenance">
@@ -101,13 +101,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.26 2003/10/09 19:05:09
    <para>
     In normal <productname>PostgreSQL</productname> operation, an
     <command>UPDATE</> or <command>DELETE</> of a row does not
-    immediately remove the old <firstterm>tuple</> (version of the row).
+    immediately remove the old version of the row.
     This approach is necessary to gain the benefits of multiversion
-    concurrency control (see <xref linkend="mvcc">): the tuple
+    concurrency control (see <xref linkend="mvcc">): the row version
     must not be deleted while it is still potentially visible to other
-    transactions. But eventually, an outdated or deleted tuple is no
+    transactions. But eventually, an outdated or deleted row version is no
     longer of interest to any transaction. The space it occupies must be
-    reclaimed for reuse by new tuples, to avoid infinite growth of disk
+    reclaimed for reuse by new rows, to avoid infinite growth of disk
     space requirements. This is done by running <command>VACUUM</>.
    </para>
 
@@ -125,7 +125,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.26 2003/10/09 19:05:09
    <para>
     The standard form of <command>VACUUM</> is best used with the goal of
     maintaining a fairly level steady-state usage of disk space.  The standard
-    form finds old tuples and makes their space available for re-use within
+    form finds old row versions and makes their space available for re-use within
     the table, but it does not try very hard to shorten the table file and
     return disk space to the operating system.  If you need to return disk
     space to the operating system you can use <command>VACUUM FULL</> ---
@@ -147,7 +147,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.26 2003/10/09 19:05:09
 
    <para>
     <command>VACUUM FULL</> is recommended for cases where you know you have
-    deleted the majority of tuples in a table, so that the steady-state size
+    deleted the majority of rows in a table, so that the steady-state size
     of the table can be shrunk substantially with <command>VACUUM FULL</>'s
     more aggressive approach.
    </para>
@@ -242,7 +242,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.26 2003/10/09 19:05:09
    <para>
     <productname>PostgreSQL</productname>'s MVCC transaction semantics
     depend on being able to compare transaction ID (<acronym>XID</>)
-    numbers: a tuple with an insertion XID greater than the current
+    numbers: a row version with an insertion XID greater than the current
     transaction's XID is <quote>in the future</> and should not be visible
     to the current transaction.  But since transaction IDs have limited size
     (32 bits at this writing) a cluster that runs for a long time (more
@@ -283,29 +283,29 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.26 2003/10/09 19:05:09
     that for every normal XID, there are two billion XIDs that are
     <quote>older</> and two billion that are <quote>newer</>; another
     way to say it is that the normal XID space is circular with no
-    endpoint. Therefore, once a tuple has been created with a particular
-    normal XID, the tuple will appear to be <quote>in the past</> for
+    endpoint. Therefore, once a row version has been created with a particular
+    normal XID, the row version will appear to be <quote>in the past</> for
     the next two billion transactions, no matter which normal XID we are
-    talking about. If the tuple still exists after more than two billion
+    talking about. If the row version still exists after more than two billion
     transactions, it will suddenly appear to be in the future. To
-    prevent data loss, old tuples must be reassigned the XID
+    prevent data loss, old row versions must be reassigned the XID
     <literal>FrozenXID</> sometime before they reach the
     two-billion-transactions-old mark. Once they are assigned this
     special XID, they will appear to be <quote>in the past</> to all
     normal transactions regardless of wraparound issues, and so such
-    tuples will be good until deleted, no matter how long that is. This
+    row versions will be good until deleted, no matter how long that is. This
     reassignment of XID is handled by <command>VACUUM</>.
    </para>
 
    <para>
     <command>VACUUM</>'s normal policy is to reassign <literal>FrozenXID</>
-    to any tuple with a normal XID more than one billion transactions in the
+    to any row version with a normal XID more than one billion transactions in the
     past.  This policy preserves the original insertion XID until it is not
-    likely to be of interest anymore.  (In fact, most tuples will probably
+    likely to be of interest anymore.  (In fact, most row versions will probably
     live and die without ever being <quote>frozen</>.)  With this policy,
     the maximum safe interval between <command>VACUUM</> runs on any table
     is exactly one billion transactions: if you wait longer, it's possible
-    that a tuple that was not quite old enough to be reassigned last time
+    that a row version that was not quite old enough to be reassigned last time
     is now more than two billion transactions old and has wrapped around
     into the future --- i.e., is lost to you.  (Of course, it'll reappear
     after another two billion transactions, but that's no help.)
@@ -355,10 +355,10 @@ VACUUM
 
    <para>
     <command>VACUUM</> with the <command>FREEZE</> option uses a more
-    aggressive freezing policy: tuples are frozen if they are old enough
+    aggressive freezing policy: row versions are frozen if they are old enough
     to be considered good by all open transactions. In particular, if a
     <command>VACUUM FREEZE</> is performed in an otherwise-idle
-    database, it is guaranteed that <emphasis>all</> tuples in that
+    database, it is guaranteed that <emphasis>all</> row versions in that
     database will be frozen. Hence, as long as the database is not
     modified in any way, it will not need subsequent vacuuming to avoid
     transaction ID wraparound problems. This technique is used by
@@ -422,13 +422,16 @@ VACUUM
 
   <para>
    The simplest production-grade approach to managing log output is to
-   send it all to <application>syslog</> and let <application>syslog</> 
-   deal with file rotation. To do this, set the configurations parameter 
-   <literal>syslog</> to 2 (to log to <application>syslog</> only) in 
-   <filename>postgresql.conf</>. Then you can send a <literal>SIGHUP</literal> 
-   signal to the <application>syslog</> daemon whenever you want to force it 
-   to start writing a new log file.  If you want to automate log rotation, 
-   the logrotate program can be configured to work with log files from syslog.
+   send it all to <application>syslog</> and let
+   <application>syslog</> deal with file rotation. To do this, set the
+   configurations parameter <literal>syslog</> to 2 (to log to
+   <application>syslog</> only) in <filename>postgresql.conf</>. Then
+   you can send a <literal>SIGHUP</literal> signal to the
+   <application>syslog</> daemon whenever you want to force it to
+   start writing a new log file.  If you want to automate log
+   rotation, the <application>logrotate</application> program can be
+   configured to work with log files from
+   <application>syslog</application>.
 
   </para>
 

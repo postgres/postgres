@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.76 2003/10/22 22:28:10 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.77 2003/11/01 01:56:29 petere Exp $
 -->
 
  <sect1 id="xfunc">
@@ -2122,7 +2122,7 @@ CREATE OR REPLACE FUNCTION testpassbyval(integer, integer) RETURNS SETOF __testp
      of its arguments and the type it is expected to return. The routines are
      called <literal>get_fn_expr_rettype(FmgrInfo *flinfo)</> and
      <literal>get_fn_expr_argtype(FmgrInfo *flinfo, int argnum)</>.
-     They return the result or argument type OID, or InvalidOid if the
+     They return the result or argument type OID, or <symbol>InvalidOid</symbol> if the
      information is not available.
      The structure <literal>flinfo</> is normally accessed as
      <literal>fcinfo-&gt;flinfo</>. The parameter <literal>argnum</>

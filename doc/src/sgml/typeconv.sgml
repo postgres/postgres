@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/typeconv.sgml,v 1.35 2003/09/30 03:22:33 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/typeconv.sgml,v 1.36 2003/11/01 01:56:29 petere Exp $
 -->
 
 <chapter Id="typeconv">
@@ -297,7 +297,7 @@ If only one candidate remains, use it; else continue to the next step.
 <step performance="required">
 <para>
 Run through all candidates and keep those that accept preferred types (of the
-input datatype's type category) at the most positions where type conversion
+input data type's type category) at the most positions where type conversion
 will be required.
 Keep all candidates if none accept preferred types.
 If only one candidate remains, use it; else continue to the next step.
@@ -550,7 +550,7 @@ If only one candidate remains, use it; else continue to the next step.
 <step performance="required">
 <para>
 Run through all candidates and keep those that accept preferred types (of the
-input datatype's type category) at the most positions where type conversion
+input data type's type category) at the most positions where type conversion
 will be required.
 Keep all candidates if none accept preferred types.
 If only one candidate remains, use it; else continue to the next step.

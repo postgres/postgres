@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.31 2003/08/31 17:32:18 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.32 2003/11/01 01:56:28 petere Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -348,9 +348,9 @@ SELECT ARRAY[5,6] || ARRAY[[1,2],[3,4]];
  <para>
   When a single element is pushed on to the beginning of a one-dimensional
   array, the result is an array with a lower bound subscript equal to
-  the righthand operand's lower bound subscript, minus one. When a single
+  the right-hand operand's lower bound subscript, minus one. When a single
   element is pushed on to the end of a one-dimensional array, the result is
-  an array retaining the lower bound of the lefthand operand. For example:
+  an array retaining the lower bound of the left-hand operand. For example:
 <programlisting>
 SELECT array_dims(1 || ARRAY[2,3]);
  array_dims
@@ -368,9 +368,9 @@ SELECT array_dims(ARRAY[1,2] || 3);
 
  <para>
   When two arrays with an equal number of dimensions are concatenated, the
-  result retains the lower bound subscript of the lefthand operand's outer
-  dimension. The result is an array comprising every element of the lefthand
-  operand followed by every element of the righthand operand. For example:
+  result retains the lower bound subscript of the left-hand operand's outer
+  dimension. The result is an array comprising every element of the left-hand
+  operand followed by every element of the right-hand operand. For example:
 <programlisting>
 SELECT array_dims(ARRAY[1,2] || ARRAY[3,4,5]);
  array_dims

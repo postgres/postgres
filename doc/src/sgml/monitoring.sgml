@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.22 2003/10/17 22:38:20 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.23 2003/11/01 01:56:29 petere Exp $
 -->
 
 <chapter id="monitoring">
@@ -237,8 +237,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <row>
       <entry><structname>pg_stat_all_tables</></entry>
       <entry>For each table in the current database, total numbers of
-      sequential and index scans, total numbers of tuples returned by
-      each type of scan, and totals of tuple insertions, updates,
+      sequential and index scans, total numbers of rows returned by
+      each type of scan, and totals of row insertions, updates,
       and deletions.</entry>
      </row>
 
@@ -257,9 +257,9 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <row>
       <entry><structname>pg_stat_all_indexes</></entry>
       <entry>For each index in the current database, the total number
-      of index scans that have used that index, the number of index tuples
-      read, and the number of successfully fetched heap tuples. (This may
-      be less when there are index entries pointing to expired heap tuples.)
+      of index scans that have used that index, the number of index rows
+      read, and the number of successfully fetched heap rows. (This may
+      be less when there are index entries pointing to expired heap rows.)
       </entry>
      </row>
 
@@ -441,8 +441,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_tuples_returned</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       Number of tuples read by sequential scans when argument is a table,
-       or number of index tuples read when argument is an index
+       Number of rows read by sequential scans when argument is a table,
+       or number of index rows read when argument is an index
       </entry>
      </row>
 
@@ -450,7 +450,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_tuples_fetched</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       Number of valid (unexpired) table tuples fetched by sequential scans
+       Number of valid (unexpired) table rows fetched by sequential scans
        when argument is a table, or fetched by index scans using this index
        when argument is an index
       </entry>
@@ -460,7 +460,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_tuples_inserted</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       Number of tuples inserted into table
+       Number of rows inserted into table
       </entry>
      </row>
 
@@ -468,7 +468,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_tuples_updated</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       Number of tuples updated in table
+       Number of rows updated in table
       </entry>
      </row>
 
@@ -476,7 +476,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_tuples_deleted</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       Number of tuples deleted from table
+       Number of rows deleted from table
       </entry>
      </row>
 
