@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.23 2000/08/31 13:26:16 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.24 2000/11/16 22:30:50 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -53,7 +53,6 @@
 #include "access/heapam.h"
 
 #include "utils/syscache.h"
-#include "utils/catcache.h"
 #include "catalog/catname.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -131,9 +130,9 @@ plpgsql_compile(Oid fn_oid, int functype)
 	 * Lookup the pg_proc tuple by Oid
 	 * ----------
 	 */
-	procTup = SearchSysCacheTuple(PROCOID,
-								  ObjectIdGetDatum(fn_oid),
-								  0, 0, 0);
+	procTup = SearchSysCache(PROCOID,
+							 ObjectIdGetDatum(fn_oid),
+							 0, 0, 0);
 	if (!HeapTupleIsValid(procTup))
 		elog(ERROR, "plpgsql: cache lookup for proc %u failed", fn_oid);
 
@@ -176,9 +175,9 @@ plpgsql_compile(Oid fn_oid, int functype)
 			 * Lookup the functions return type
 			 * ----------
 			 */
-			typeTup = SearchSysCacheTuple(TYPEOID,
-					  ObjectIdGetDatum(procStruct->prorettype), 0, 0, 0);
-
+			typeTup = SearchSysCache(TYPEOID,
+									 ObjectIdGetDatum(procStruct->prorettype),
+									 0, 0, 0);
 			if (!HeapTupleIsValid(typeTup))
 			{
 				plpgsql_comperrinfo();
@@ -195,6 +194,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 				function->fn_rettypelem = typeStruct->typelem;
 				fmgr_info(typeStruct->typinput, &(function->fn_retinput));
 			}
+			ReleaseSysCache(typeTup);
 
 			/* ----------
 			 * Create the variables for the procedures parameters
@@ -208,9 +208,9 @@ plpgsql_compile(Oid fn_oid, int functype)
 				 * Get the parameters type
 				 * ----------
 				 */
-				typeTup = SearchSysCacheTuple(TYPEOID,
-				  ObjectIdGetDatum(procStruct->proargtypes[i]), 0, 0, 0);
-
+				typeTup = SearchSysCache(TYPEOID,
+										 ObjectIdGetDatum(procStruct->proargtypes[i]),
+										 0, 0, 0);
 				if (!HeapTupleIsValid(typeTup))
 				{
 					plpgsql_comperrinfo();
@@ -276,6 +276,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 
 					arg_varnos[i] = var->varno;
 				}
+				ReleaseSysCache(typeTup);
 			}
 			break;
 
@@ -512,6 +513,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 		function->datums[i] = plpgsql_Datums[i];
 	function->action = plpgsql_yylval.program;
 
+	ReleaseSysCache(procTup);
 
 	/* ----------
 	 * Finally return the compiled function
@@ -608,8 +610,9 @@ plpgsql_parse_word(char *word)
 	 * ----------
 	 */
 	typeXlated = xlateSqlType(cp);
-	typeTup = SearchSysCacheTuple(TYPENAME,
-								  PointerGetDatum(typeXlated), 0, 0, 0);
+	typeTup = SearchSysCache(TYPENAME,
+							 PointerGetDatum(typeXlated),
+							 0, 0, 0);
 	if (HeapTupleIsValid(typeTup))
 	{
 		PLpgSQL_type *typ;
@@ -618,6 +621,7 @@ plpgsql_parse_word(char *word)
 
 		if (typeStruct->typrelid != InvalidOid)
 		{
+			ReleaseSysCache(typeTup);
 			pfree(cp);
 			return T_WORD;
 		}
@@ -634,6 +638,7 @@ plpgsql_parse_word(char *word)
 
 		plpgsql_yylval.dtype = typ;
 
+		ReleaseSysCache(typeTup);
 		pfree(cp);
 		return T_DTYPE;
 	}
@@ -933,8 +938,9 @@ plpgsql_parse_wordtype(char *word)
 	 * ----------
 	 */
 	typeXlated = xlateSqlType(cp);
-	typeTup = SearchSysCacheTuple(TYPENAME,
-								  PointerGetDatum(typeXlated), 0, 0, 0);
+	typeTup = SearchSysCache(TYPENAME,
+							 PointerGetDatum(typeXlated),
+							 0, 0, 0);
 	if (HeapTupleIsValid(typeTup))
 	{
 		PLpgSQL_type *typ;
@@ -943,6 +949,7 @@ plpgsql_parse_wordtype(char *word)
 
 		if (typeStruct->typrelid != InvalidOid)
 		{
+			ReleaseSysCache(typeTup);
 			pfree(cp);
 			return T_ERROR;
 		}
@@ -959,6 +966,7 @@ plpgsql_parse_wordtype(char *word)
 
 		plpgsql_yylval.dtype = typ;
 
+		ReleaseSysCache(typeTup);
 		pfree(cp);
 		return T_DTYPE;
 	}
@@ -1045,8 +1053,9 @@ plpgsql_parse_dblwordtype(char *string)
 	 * First word could also be a table name
 	 * ----------
 	 */
-	classtup = SearchSysCacheTuple(RELNAME,
-								   PointerGetDatum(word1), 0, 0, 0);
+	classtup = SearchSysCache(RELNAME,
+							  PointerGetDatum(word1),
+							  0, 0, 0);
 	if (!HeapTupleIsValid(classtup))
 	{
 		pfree(word1);
@@ -1060,6 +1069,7 @@ plpgsql_parse_dblwordtype(char *string)
 	classStruct = (Form_pg_class) GETSTRUCT(classtup);
 	if (classStruct->relkind != 'r' && classStruct->relkind != 's')
 	{
+		ReleaseSysCache(classtup);
 		pfree(word1);
 		return T_ERROR;
 	}
@@ -1068,31 +1078,33 @@ plpgsql_parse_dblwordtype(char *string)
 	 * Fetch the named table field and it's type
 	 * ----------
 	 */
-	attrtup = SearchSysCacheTuple(ATTNAME,
-							   ObjectIdGetDatum(classtup->t_data->t_oid),
-								  PointerGetDatum(word2), 0, 0);
+	attrtup = SearchSysCache(ATTNAME,
+							 ObjectIdGetDatum(classtup->t_data->t_oid),
+							 PointerGetDatum(word2),
+							 0, 0);
 	if (!HeapTupleIsValid(attrtup))
 	{
+		ReleaseSysCache(classtup);
 		pfree(word1);
 		return T_ERROR;
 	}
 	attrStruct = (Form_pg_attribute) GETSTRUCT(attrtup);
 
-	typetup = SearchSysCacheTuple(TYPEOID,
-						ObjectIdGetDatum(attrStruct->atttypid), 0, 0, 0);
+	typetup = SearchSysCache(TYPEOID,
+							 ObjectIdGetDatum(attrStruct->atttypid),
+							 0, 0, 0);
 	if (!HeapTupleIsValid(typetup))
 	{
 		plpgsql_comperrinfo();
 		elog(ERROR, "cache lookup for type %u of %s.%s failed",
 			 attrStruct->atttypid, word1, word2);
 	}
+	typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
 	/* ----------
 	 * Found that - build a compiler type struct and return it
 	 * ----------
 	 */
-	typeStruct = (Form_pg_type) GETSTRUCT(typetup);
-
 	typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
 
 	typ->typname = DatumGetCString(DirectFunctionCall1(nameout,
@@ -1105,6 +1117,9 @@ plpgsql_parse_dblwordtype(char *string)
 
 	plpgsql_yylval.dtype = typ;
 
+	ReleaseSysCache(classtup);
+	ReleaseSysCache(attrtup);
+	ReleaseSysCache(typetup);
 	pfree(word1);
 	return T_DTYPE;
 }
@@ -1138,8 +1153,9 @@ plpgsql_parse_wordrowtype(char *string)
 	cp = strchr(word1, '%');
 	*cp = '\0';
 
-	classtup = SearchSysCacheTuple(RELNAME,
-								   PointerGetDatum(word1), 0, 0, 0);
+	classtup = SearchSysCache(RELNAME,
+							  PointerGetDatum(word1),
+							  0, 0, 0);
 	if (!HeapTupleIsValid(classtup))
 	{
 		plpgsql_comperrinfo();
@@ -1156,8 +1172,9 @@ plpgsql_parse_wordrowtype(char *string)
 	 * Fetch the tables pg_type tuple too
 	 * ----------
 	 */
-	typetup = SearchSysCacheTuple(TYPENAME,
-								  PointerGetDatum(word1), 0, 0, 0);
+	typetup = SearchSysCache(TYPENAME,
+							 PointerGetDatum(word1),
+							 0, 0, 0);
 	if (!HeapTupleIsValid(typetup))
 	{
 		plpgsql_comperrinfo();
@@ -1178,15 +1195,18 @@ plpgsql_parse_wordrowtype(char *string)
 	row->fieldnames = malloc(sizeof(char *) * row->nfields);
 	row->varnos = malloc(sizeof(int) * row->nfields);
 
+	ReleaseSysCache(typetup);
+
 	for (i = 0; i < row->nfields; i++)
 	{
 		/* ----------
 		 * Get the attribute and it's type
 		 * ----------
 		 */
-		attrtup = SearchSysCacheTuple(ATTNUM,
-							   ObjectIdGetDatum(classtup->t_data->t_oid),
-									  (Datum) (i + 1), 0, 0);
+		attrtup = SearchSysCache(ATTNUM,
+								 ObjectIdGetDatum(classtup->t_data->t_oid),
+								 Int16GetDatum(i + 1),
+								 0, 0);
 		if (!HeapTupleIsValid(attrtup))
 		{
 			plpgsql_comperrinfo();
@@ -1198,8 +1218,9 @@ plpgsql_parse_wordrowtype(char *string)
 		cp = DatumGetCString(DirectFunctionCall1(nameout,
 						NameGetDatum(&(attrStruct->attname))));
 
-		typetup = SearchSysCacheTuple(TYPEOID,
-						ObjectIdGetDatum(attrStruct->atttypid), 0, 0, 0);
+		typetup = SearchSysCache(TYPEOID,
+								 ObjectIdGetDatum(attrStruct->atttypid),
+								 0, 0, 0);
 		if (!HeapTupleIsValid(typetup))
 		{
 			plpgsql_comperrinfo();
@@ -1238,6 +1259,9 @@ plpgsql_parse_wordrowtype(char *string)
 		var->isnull = true;
 		var->shouldfree = false;
 
+		ReleaseSysCache(typetup);
+		ReleaseSysCache(attrtup);
+
 		plpgsql_adddatum((PLpgSQL_datum *) var);
 
 		/* ----------
@@ -1247,6 +1271,8 @@ plpgsql_parse_wordrowtype(char *string)
 		row->fieldnames[i] = cp;
 		row->varnos[i] = var->varno;
 	}
+
+	ReleaseSysCache(classtup);
 
 	/* ----------
 	 * Return the complete row definition

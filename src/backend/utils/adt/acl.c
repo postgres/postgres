@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.52 2000/11/03 19:01:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.53 2000/11/16 22:30:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,12 +174,13 @@ aclparse(char *s, AclItem *aip, unsigned *modechg)
 	switch (aip->ai_idtype)
 	{
 		case ACL_IDTYPE_UID:
-			htup = SearchSysCacheTuple(SHADOWNAME,
-									   PointerGetDatum(name),
-									   0, 0, 0);
+			htup = SearchSysCache(SHADOWNAME,
+								  PointerGetDatum(name),
+								  0, 0, 0);
 			if (!HeapTupleIsValid(htup))
 				elog(ERROR, "aclparse: non-existent user \"%s\"", name);
 			aip->ai_id = ((Form_pg_shadow) GETSTRUCT(htup))->usesysid;
+			ReleaseSysCache(htup);
 			break;
 		case ACL_IDTYPE_GID:
 			aip->ai_id = get_grosysid(name);
@@ -272,9 +273,9 @@ aclitemout(PG_FUNCTION_ARGS)
 	switch (aip->ai_idtype)
 	{
 		case ACL_IDTYPE_UID:
-			htup = SearchSysCacheTuple(SHADOWSYSID,
-									   ObjectIdGetDatum(aip->ai_id),
-									   0, 0, 0);
+			htup = SearchSysCache(SHADOWSYSID,
+								  ObjectIdGetDatum(aip->ai_id),
+								  0, 0, 0);
 			if (!HeapTupleIsValid(htup))
 			{
 				/* Generate numeric UID if we don't find an entry */
@@ -286,9 +287,12 @@ aclitemout(PG_FUNCTION_ARGS)
 				pfree(tmp);
 			}
 			else
+			{
 				strncat(p, (char *) &((Form_pg_shadow)
 									  GETSTRUCT(htup))->usename,
 						sizeof(NameData));
+				ReleaseSysCache(htup);
+			}
 			break;
 		case ACL_IDTYPE_GID:
 			strcat(p, "group ");

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.165 2000/11/08 22:09:58 tgl Exp $
+ *	$Id: analyze.c,v 1.166 2000/11/16 22:30:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2598,9 +2598,8 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint)
 	Form_pg_attribute *pkrel_attrs;
 	List	   *indexoidlist,
 			   *indexoidscan;
-	Form_pg_index indexStruct = NULL;
 	int			i;
-	int found=0;
+	bool		found = false;
 
 	/* ----------
 	 * Open the referenced table and get the attributes list
@@ -2616,7 +2615,7 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint)
 	 * Get the list of index OIDs for the table from the relcache,
 	 * and look up each one in the pg_index syscache for each unique
 	 * one, and then compare the attributes we were given to those
-         * defined.
+	 * defined.
 	 * ----------
 	 */
 	indexoidlist = RelationGetIndexList(pkrel);
@@ -2625,27 +2624,34 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint)
 	{
 		Oid		indexoid = lfirsti(indexoidscan);
 		HeapTuple	indexTuple;
-		List *attrl;
-		indexTuple = SearchSysCacheTuple(INDEXRELID,
-										 ObjectIdGetDatum(indexoid),
-										 0, 0, 0);
+		Form_pg_index indexStruct;
+
+		indexTuple = SearchSysCache(INDEXRELID,
+									ObjectIdGetDatum(indexoid),
+									0, 0, 0);
 		if (!HeapTupleIsValid(indexTuple))
 			elog(ERROR, "transformFkeyGetPrimaryKey: index %u not found",
 				 indexoid);
 		indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
 
-		if (indexStruct->indisunique) {
+		if (indexStruct->indisunique)
+		{
+			List *attrl;
+
 			/* go through the fkconstraint->pk_attrs list */
-			foreach(attrl, fkconstraint->pk_attrs) {
+			foreach(attrl, fkconstraint->pk_attrs)
+			{
 				Ident *attr=lfirst(attrl);
-				found=0;
+				found = false;
 				for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
 				{
 					int		pkattno = indexStruct->indkey[i];
-					if (pkattno>0) {
+					if (pkattno>0)
+					{
 						char *name = NameStr(pkrel_attrs[pkattno - 1]->attname);
-						if (strcmp(name, attr->name)==0) {
-							found=1;
+						if (strcmp(name, attr->name)==0)
+						{
+							found = true;
 							break;
 						}
 					}
@@ -2654,9 +2660,9 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint)
 					break;
 			}
 		}
+		ReleaseSysCache(indexTuple);
 		if (found)
 			break;		
-		indexStruct = NULL;
 	}
 	if (!found)
 		elog(ERROR, "UNIQUE constraint matching given keys for referenced table \"%s\" not found",
@@ -2681,6 +2687,7 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint)
 	Form_pg_attribute *pkrel_attrs;
 	List	   *indexoidlist,
 			   *indexoidscan;
+	HeapTuple	indexTuple = NULL;
 	Form_pg_index indexStruct = NULL;
 	int			i;
 
@@ -2705,17 +2712,17 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint)
 	foreach(indexoidscan, indexoidlist)
 	{
 		Oid		indexoid = lfirsti(indexoidscan);
-		HeapTuple	indexTuple;
 
-		indexTuple = SearchSysCacheTuple(INDEXRELID,
-										 ObjectIdGetDatum(indexoid),
-										 0, 0, 0);
+		indexTuple = SearchSysCache(INDEXRELID,
+									ObjectIdGetDatum(indexoid),
+									0, 0, 0);
 		if (!HeapTupleIsValid(indexTuple))
 			elog(ERROR, "transformFkeyGetPrimaryKey: index %u not found",
 				 indexoid);
 		indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
 		if (indexStruct->indisprimary)
 			break;
+		ReleaseSysCache(indexTuple);
 		indexStruct = NULL;
 	}
 
@@ -2746,6 +2753,8 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint)
 
 		fkconstraint->pk_attrs = lappend(fkconstraint->pk_attrs, pkattr);
 	}
+
+	ReleaseSysCache(indexTuple);
 
 	heap_close(pkrel, AccessShareLock);
 }
@@ -2861,6 +2870,7 @@ static void
 transformColumnType(ParseState *pstate, ColumnDef *column)
 {
 	TypeName   *typename = column->typename;
+	Type		ctype = typenameType(typename->name);
 
 	/*
 	 * If the column doesn't have an explicitly specified typmod, check to
@@ -2871,7 +2881,7 @@ transformColumnType(ParseState *pstate, ColumnDef *column)
 	 */
 	if (typename->typmod == -1)
 	{
-		switch (typeTypeId(typenameType(typename->name)))
+		switch (typeTypeId(ctype))
 		{
 			case BPCHAROID:
 				/* "char" -> "char(1)" */
@@ -2891,11 +2901,13 @@ transformColumnType(ParseState *pstate, ColumnDef *column)
 	 * XXX this is a hangover from ancient Berkeley code that probably
 	 * doesn't work anymore anyway.
 	 */
-	 if (typeTypeRelid(typenameType(typename->name)) != InvalidOid)
+	 if (typeTypeRelid(ctype) != InvalidOid)
 	 {
 		 /* (Eventually add in here that the set can only
 		  * contain one element.)
 		  */
 		 typename->setof = true;
 	 }
+
+	 ReleaseSysCache(ctype);
 }

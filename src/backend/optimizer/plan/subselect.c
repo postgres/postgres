@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.44 2000/10/26 21:36:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.45 2000/11/16 22:30:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 #include "optimizer/subselect.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
-#include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 
 Index		PlannerQueryLevel;	/* level of current query */
@@ -271,8 +271,11 @@ make_subplan(SubLink *slink)
 			pfree(var);			/* var is only needed for new_param */
 
 			Assert(IsA(oper, Oper));
-			tup = get_operator_tuple(oper->opno);
-			Assert(HeapTupleIsValid(tup));
+			tup = SearchSysCache(OPEROID,
+								 ObjectIdGetDatum(oper->opno),
+								 0, 0, 0);
+			if (! HeapTupleIsValid(tup))
+				elog(ERROR, "cache lookup failed for operator %u", oper->opno);
 			opform = (Form_pg_operator) GETSTRUCT(tup);
 
 			/*
@@ -283,6 +286,8 @@ make_subplan(SubLink *slink)
 								exprType(lefthand), opform->oprleft);
 			right = make_operand("", (Node *) prm,
 								 prm->paramtype, opform->oprright);
+			ReleaseSysCache(tup);
+
 			newoper = lappend(newoper,
 							  make_opclause(oper,
 											(Var *) left,
@@ -401,15 +406,14 @@ make_subplan(SubLink *slink)
 			Node	   *left,
 					   *right;
 
-			/*
-			 * XXX really ought to fill in constlen and constbyval
-			 * correctly, but right now ExecEvalExpr won't look at them...
-			 */
-			con = makeConst(te->resdom->restype, 0, 0, true, 0, 0, 0);
+			con = makeNullConst(te->resdom->restype);
 
 			Assert(IsA(oper, Oper));
-			tup = get_operator_tuple(oper->opno);
-			Assert(HeapTupleIsValid(tup));
+			tup = SearchSysCache(OPEROID,
+								 ObjectIdGetDatum(oper->opno),
+								 0, 0, 0);
+			if (! HeapTupleIsValid(tup))
+				elog(ERROR, "cache lookup failed for operator %u", oper->opno);
 			opform = (Form_pg_operator) GETSTRUCT(tup);
 
 			/*
@@ -420,6 +424,8 @@ make_subplan(SubLink *slink)
 								exprType(lefthand), opform->oprleft);
 			right = make_operand("", (Node *) con,
 								 con->consttype, opform->oprright);
+			ReleaseSysCache(tup);
+
 			newoper = lappend(newoper,
 							  make_opclause(oper,
 											(Var *) left,

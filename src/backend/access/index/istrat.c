@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.46 2000/07/14 22:17:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.47 2000/11/16 22:30:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -482,9 +482,9 @@ OperatorRelationFillScanKeyEntry(Relation operatorRelation,
 
 	if (cachesearch)
 	{
-		tuple = SearchSysCacheTuple(OPEROID,
-									ObjectIdGetDatum(operatorObjectId),
-									0, 0, 0);
+		tuple = SearchSysCache(OPEROID,
+							   ObjectIdGetDatum(operatorObjectId),
+							   0, 0, 0);
 	}
 	else
 	{
@@ -505,24 +505,25 @@ OperatorRelationFillScanKeyEntry(Relation operatorRelation,
 	{
 		if (!cachesearch)
 			heap_endscan(scan);
-		elog(ERROR, "OperatorObjectIdFillScanKeyEntry: unknown operator %u",
+		elog(ERROR, "OperatorRelationFillScanKeyEntry: unknown operator %u",
 			 operatorObjectId);
 	}
 
 	entry->sk_flags = 0;
 	entry->sk_procedure = ((Form_pg_operator) GETSTRUCT(tuple))->oprcode;
-	fmgr_info(entry->sk_procedure, &entry->sk_func);
-	entry->sk_nargs = entry->sk_func.fn_nargs;
 
-	if (!cachesearch)
+	if (cachesearch)
+		ReleaseSysCache(tuple);
+	else
 		heap_endscan(scan);
 
 	if (!RegProcedureIsValid(entry->sk_procedure))
-	{
 		elog(ERROR,
-		"OperatorObjectIdFillScanKeyEntry: no procedure for operator %u",
+			 "OperatorRelationFillScanKeyEntry: no procedure for operator %u",
 			 operatorObjectId);
-	}
+
+	fmgr_info(entry->sk_procedure, &entry->sk_func);
+	entry->sk_nargs = entry->sk_func.fn_nargs;
 }
 
 
@@ -547,16 +548,16 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 	HeapTuple	tuple;
 	Form_pg_index iform;
 	StrategyMap map;
-	AttrNumber	attributeNumber;
-	int			attributeIndex;
+	AttrNumber	attNumber;
+	int			attIndex;
 	Oid			operatorClassObjectId[INDEX_MAX_KEYS];
 	bool		cachesearch = (!IsBootstrapProcessingMode()) && IsCacheInitialized();
 
 	if (cachesearch)
 	{
-		tuple = SearchSysCacheTuple(INDEXRELID,
-									ObjectIdGetDatum(indexObjectId),
-									0, 0, 0);
+		tuple = SearchSysCache(INDEXRELID,
+							   ObjectIdGetDatum(indexObjectId),
+							   0, 0, 0);
 	}
 	else
 	{
@@ -583,19 +584,23 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 	 * XXX note that the following assumes the INDEX tuple is well formed
 	 * and that the *key and *class are 0 terminated.
 	 */
-	for (attributeIndex = 0; attributeIndex < maxAttributeNumber; attributeIndex++)
+	for (attIndex = 0; attIndex < maxAttributeNumber; attIndex++)
 	{
-		if (!OidIsValid(iform->indkey[attributeIndex]))
+		if (!OidIsValid(iform->indkey[attIndex]))
 		{
-			if (attributeIndex == InvalidAttrNumber)
+			if (attIndex == InvalidAttrNumber)
 				elog(ERROR, "IndexSupportInitialize: no pg_index tuple");
 			break;
 		}
 
-		operatorClassObjectId[attributeIndex] = iform->indclass[attributeIndex];
+		operatorClassObjectId[attIndex] = iform->indclass[attIndex];
 	}
 
-	if (!cachesearch)
+	if (cachesearch)
+	{
+		ReleaseSysCache(tuple);
+	}
+	else
 	{
 		heap_endscan(scan);
 		heap_close(relation, AccessShareLock);
@@ -614,20 +619,19 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 		relation = heap_openr(AccessMethodProcedureRelationName,
 							  AccessShareLock);
 
-		for (attributeNumber = 1; attributeNumber <= maxAttributeNumber;
-			 attributeNumber++)
+		for (attNumber = 1; attNumber <= maxAttributeNumber; attNumber++)
 		{
 			int16		support;
 			Form_pg_amproc aform;
 			RegProcedure *loc;
 
-			loc = &indexSupport[((attributeNumber - 1) * maxSupportNumber)];
+			loc = &indexSupport[((attNumber - 1) * maxSupportNumber)];
 
 			for (support = 0; support < maxSupportNumber; ++support)
 				loc[support] = InvalidOid;
 
 			entry[1].sk_argument =
-				ObjectIdGetDatum(operatorClassObjectId[attributeNumber - 1]);
+				ObjectIdGetDatum(operatorClassObjectId[attNumber - 1]);
 
 			scan = heap_beginscan(relation, false, SnapshotNow, 2, entry);
 
@@ -654,17 +658,16 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 	relation = heap_openr(AccessMethodOperatorRelationName, AccessShareLock);
 	operatorRelation = heap_openr(OperatorRelationName, AccessShareLock);
 
-	for (attributeNumber = maxAttributeNumber; attributeNumber > 0;
-		 attributeNumber--)
+	for (attNumber = maxAttributeNumber; attNumber > 0; attNumber--)
 	{
 		StrategyNumber strategy;
 
 		entry[1].sk_argument =
-			ObjectIdGetDatum(operatorClassObjectId[attributeNumber - 1]);
+			ObjectIdGetDatum(operatorClassObjectId[attNumber - 1]);
 
 		map = IndexStrategyGetStrategyMap(indexStrategy,
 										  maxStrategyNumber,
-										  attributeNumber);
+										  attNumber);
 
 		for (strategy = 1; strategy <= maxStrategyNumber; strategy++)
 			ScanKeyEntrySetIllegal(StrategyMapGetScanKeyEntry(map, strategy));

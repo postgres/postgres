@@ -2,12 +2,11 @@
  *
  * dllist.h
  *		simple doubly linked list primitives
- *		the elements of the list are void* so the lists can contain
- *		anything
+ *		the elements of the list are void* so the lists can contain anything
  *		Dlelem can only be in one list at a time
  *
  *
- *	 Here's a small example of how to use Dllist's :
+ *	 Here's a small example of how to use Dllists:
  *
  *	 Dllist *lst;
  *	 Dlelem *elt;
@@ -24,17 +23,24 @@
  *	 DLFreeElem(elt);				   -- free the element since we don't
  *										  use it anymore
  *
+ *
+ * It is also possible to use Dllist objects that are embedded in larger
+ * structures instead of being separately malloc'd.  To do this, use
+ * DLInitElem() to initialize a Dllist field within a larger object.
+ * Don't forget to DLRemove() each field from its list (if any) before
+ * freeing the larger object!
+ *
+ *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dllist.h,v 1.13 2000/06/08 22:37:46 momjian Exp $
+ * $Id: dllist.h,v 1.14 2000/11/16 22:30:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #ifndef DLLIST_H
 #define DLLIST_H
-
 
 struct Dllist;
 struct Dlelem;
@@ -53,21 +59,27 @@ typedef struct Dllist
 	Dlelem	   *dll_tail;
 } Dllist;
 
-extern Dllist *DLNewList(void); /* initialize a new list */
-extern void DLFreeList(Dllist *);		/* free up a list and all the
+extern Dllist *DLNewList(void); /* allocate and initialize a list header */
+extern void DLInitList(Dllist *list);	/* init a header alloced by caller */
+extern void DLFreeList(Dllist *list);	/* free up a list and all the
 										 * nodes in it */
 extern Dlelem *DLNewElem(void *val);
-extern void DLFreeElem(Dlelem *);
-extern Dlelem *DLGetHead(Dllist *);
-extern Dlelem *DLGetTail(Dllist *);
-extern Dlelem *DLRemTail(Dllist *l);
-extern Dlelem *DLGetSucc(Dlelem *);		/* get successor */
-extern void DLRemove(Dlelem *); /* removes node from list */
+extern void DLInitElem(Dlelem *e, void *val);
+extern void DLFreeElem(Dlelem *e);
+extern void DLRemove(Dlelem *e);		/* removes node from list */
 extern void DLAddHead(Dllist *list, Dlelem *node);
 extern void DLAddTail(Dllist *list, Dlelem *node);
 extern Dlelem *DLRemHead(Dllist *list); /* remove and return the head */
-extern void DLMoveToFront(Dlelem *);	/* move node to front of its list */
+extern Dlelem *DLRemTail(Dllist *list);
+extern void DLMoveToFront(Dlelem *e);	/* move node to front of its list */
 
-#define DLE_VAL(x)	(x->dle_val)
+/* These are macros for speed */
+#define DLGetHead(list)  ((list)->dll_head)
+#define DLGetTail(list)  ((list)->dll_tail)
+#define DLGetSucc(elem)  ((elem)->dle_next)
+#define DLGetPred(elem)  ((elem)->dle_prev)
+#define DLGetListHdr(elem)  ((elem)->dle_list)
+
+#define DLE_VAL(elem)	((elem)->dle_val)
 
 #endif	 /* DLLIST_H */

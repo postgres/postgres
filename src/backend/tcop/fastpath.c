@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.44 2000/10/24 20:59:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.45 2000/11/16 22:30:30 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -202,14 +202,12 @@ update_fp_info(Oid func_id, struct fp_info * fip)
 	MemSet((char *) fip, 0, (int) sizeof(struct fp_info));
 	fip->funcid = InvalidOid;
 
-	func_htp = SearchSysCacheTuple(PROCOID,
-								   ObjectIdGetDatum(func_id),
-								   0, 0, 0);
+	func_htp = SearchSysCache(PROCOID,
+							  ObjectIdGetDatum(func_id),
+							  0, 0, 0);
 	if (!HeapTupleIsValid(func_htp))
-	{
 		elog(ERROR, "update_fp_info: cache lookup for function %u failed",
 			 func_id);
-	}
 	pp = (Form_pg_proc) GETSTRUCT(func_htp);
 	rettype = pp->prorettype;
 	argtypes = pp->proargtypes;
@@ -220,37 +218,37 @@ update_fp_info(Oid func_id, struct fp_info * fip)
 	{
 		if (OidIsValid(argtypes[i]))
 		{
-			type_htp = SearchSysCacheTuple(TYPEOID,
-										   ObjectIdGetDatum(argtypes[i]),
-										   0, 0, 0);
+			type_htp = SearchSysCache(TYPEOID,
+									  ObjectIdGetDatum(argtypes[i]),
+									  0, 0, 0);
 			if (!HeapTupleIsValid(type_htp))
-			{
 				elog(ERROR, "update_fp_info: bad argument type %u for %u",
 					 argtypes[i], func_id);
-			}
 			tp = (Form_pg_type) GETSTRUCT(type_htp);
 			fip->argbyval[i] = tp->typbyval;
 			fip->arglen[i] = tp->typlen;
+			ReleaseSysCache(type_htp);
 		}						/* else it had better be VAR_LENGTH_ARG */
 	}
 
 	if (OidIsValid(rettype))
 	{
-		type_htp = SearchSysCacheTuple(TYPEOID,
-									   ObjectIdGetDatum(rettype),
-									   0, 0, 0);
+		type_htp = SearchSysCache(TYPEOID,
+								  ObjectIdGetDatum(rettype),
+								  0, 0, 0);
 		if (!HeapTupleIsValid(type_htp))
-		{
 			elog(ERROR, "update_fp_info: bad return type %u for %u",
 				 rettype, func_id);
-		}
 		tp = (Form_pg_type) GETSTRUCT(type_htp);
 		fip->retbyval = tp->typbyval;
 		fip->retlen = tp->typlen;
+		ReleaseSysCache(type_htp);
 	}							/* else it had better by VAR_LENGTH_RESULT */
 
 	fip->xid = GetCurrentTransactionId();
 	fip->cid = GetCurrentCommandId();
+
+	ReleaseSysCache(func_htp);
 
 	/*
 	 * This must be last!

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.54 2000/10/16 17:08:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.55 2000/11/16 22:30:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,11 +73,11 @@ RemoveOperator(char *operatorName,		/* operator name */
 
 	relation = heap_openr(OperatorRelationName, RowExclusiveLock);
 
-	tup = SearchSysCacheTupleCopy(OPERNAME,
-								  PointerGetDatum(operatorName),
-								  ObjectIdGetDatum(typeId1),
-								  ObjectIdGetDatum(typeId2),
-								  CharGetDatum(oprtype));
+	tup = SearchSysCacheCopy(OPERNAME,
+							 PointerGetDatum(operatorName),
+							 ObjectIdGetDatum(typeId1),
+							 ObjectIdGetDatum(typeId2),
+							 CharGetDatum(oprtype));
 
 	if (HeapTupleIsValid(tup))
 	{
@@ -254,14 +254,11 @@ RemoveType(char *typeName)		/* type name to be removed */
 
 	relation = heap_openr(TypeRelationName, RowExclusiveLock);
 
-	tup = SearchSysCacheTuple(TYPENAME,
-							  PointerGetDatum(typeName),
-							  0, 0, 0);
+	tup = SearchSysCache(TYPENAME,
+						 PointerGetDatum(typeName),
+						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-	{
-		heap_close(relation, RowExclusiveLock);
 		elog(ERROR, "RemoveType: type '%s' does not exist", typeName);
-	}
 
 	typeOid = tup->t_data->t_oid;
 
@@ -271,18 +268,19 @@ RemoveType(char *typeName)		/* type name to be removed */
 
 	heap_delete(relation, &tup->t_self, NULL);
 
-	/* Now, Delete the "array of" that type */
+	ReleaseSysCache(tup);
+
+	/* Also, delete the "array of" that type */
 	shadow_type = makeArrayTypeName(typeName);
-	tup = SearchSysCacheTuple(TYPENAME,
-							  PointerGetDatum(shadow_type),
-							  0, 0, 0);
+	tup = SearchSysCache(TYPENAME,
+						 PointerGetDatum(shadow_type),
+						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-	{
-		heap_close(relation, RowExclusiveLock);
 		elog(ERROR, "RemoveType: type '%s' does not exist", shadow_type);
-	}
 
 	heap_delete(relation, &tup->t_self, NULL);
+
+	ReleaseSysCache(tup);
 
 	heap_close(relation, RowExclusiveLock);
 }
@@ -321,12 +319,11 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 			argList[i] = InvalidOid;
 		else
 		{
-			tup = SearchSysCacheTuple(TYPENAME,
-									  PointerGetDatum(typnam),
-									  0, 0, 0);
-			if (!HeapTupleIsValid(tup))
+			argList[i] = GetSysCacheOid(TYPENAME,
+										PointerGetDatum(typnam),
+										0, 0, 0);
+			if (!OidIsValid(argList[i]))
 				elog(ERROR, "RemoveFunction: type '%s' not found", typnam);
-			argList[i] = tup->t_data->t_oid;
 		}
 	}
 
@@ -337,11 +334,12 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 	}
 
 	relation = heap_openr(ProcedureRelationName, RowExclusiveLock);
-	tup = SearchSysCacheTuple(PROCNAME,
-							  PointerGetDatum(functionName),
-							  Int32GetDatum(nargs),
-							  PointerGetDatum(argList),
-							  0);
+
+	tup = SearchSysCache(PROCNAME,
+						 PointerGetDatum(functionName),
+						 Int32GetDatum(nargs),
+						 PointerGetDatum(argList),
+						 0);
 
 	if (!HeapTupleIsValid(tup))
 		func_error("RemoveFunction", functionName, nargs, argList, NULL);
@@ -359,6 +357,8 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 
 	heap_delete(relation, &tup->t_self, NULL);
 
+	ReleaseSysCache(tup);
+
 	heap_close(relation, RowExclusiveLock);
 }
 
@@ -369,7 +369,6 @@ RemoveAggregate(char *aggName, char *aggType)
 	HeapTuple	tup;
 	Oid			basetypeID = InvalidOid;
 	bool		defined;
-
 
 	/*
 	 * if a basetype is passed in, then attempt to find an aggregate for
@@ -405,10 +404,11 @@ RemoveAggregate(char *aggName, char *aggType)
 	}
 
 	relation = heap_openr(AggregateRelationName, RowExclusiveLock);
-	tup = SearchSysCacheTuple(AGGNAME,
-							  PointerGetDatum(aggName),
-							  ObjectIdGetDatum(basetypeID),
-							  0, 0);
+
+	tup = SearchSysCache(AGGNAME,
+						 PointerGetDatum(aggName),
+						 ObjectIdGetDatum(basetypeID),
+						 0, 0);
 
 	if (!HeapTupleIsValid(tup))
 	{
@@ -430,6 +430,8 @@ RemoveAggregate(char *aggName, char *aggType)
 	DeleteComments(tup->t_data->t_oid);
 
 	heap_delete(relation, &tup->t_self, NULL);
+
+	ReleaseSysCache(tup);
 
 	heap_close(relation, RowExclusiveLock);
 }

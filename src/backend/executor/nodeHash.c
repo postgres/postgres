@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.52 2000/08/24 03:29:03 tgl Exp $
+ *	$Id: nodeHash.c,v 1.53 2000/11/16 22:30:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,8 +29,8 @@
 #include "executor/nodeHashjoin.h"
 #include "miscadmin.h"
 #include "parser/parse_expr.h"
-#include "parser/parse_type.h"
 #include "utils/memutils.h"
+#include "utils/lsyscache.h"
 
 
 static int	hashFunc(Datum key, int len, bool byVal);
@@ -237,7 +237,6 @@ ExecHashTableCreate(Hash *node)
 	int			totalbuckets;
 	int			bucketsize;
 	int			i;
-	Type		typeInfo;
 	MemoryContext oldcxt;
 
 	/* ----------------
@@ -353,9 +352,9 @@ ExecHashTableCreate(Hash *node)
 	 *	Get info about the datatype of the hash key.
 	 * ----------------
 	 */
-	typeInfo = typeidType(exprType(node->hashkey));
-	hashtable->typByVal = typeByVal(typeInfo);
-	hashtable->typLen = typeLen(typeInfo);
+	get_typlenbyval(exprType(node->hashkey),
+					&hashtable->typLen,
+					&hashtable->typByVal);
 
 	/* ----------------
 	 *	Create temporary memory contexts in which to keep the hashtable
@@ -546,7 +545,9 @@ ExecHashGetBucket(HashJoinTable hashtable,
 	}
 	else
 	{
-		bucketno = hashFunc(keyval, hashtable->typLen, hashtable->typByVal)
+		bucketno = hashFunc(keyval,
+							(int) hashtable->typLen,
+							hashtable->typByVal)
 			% hashtable->totalbuckets;
 	}
 

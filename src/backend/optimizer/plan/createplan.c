@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.100 2000/11/12 00:36:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.101 2000/11/16 22:30:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -396,17 +396,19 @@ create_indexscan_plan(Query *root,
 		HeapTuple	indexTuple;
 		Form_pg_index index;
 
-		indexTuple = SearchSysCacheTuple(INDEXRELID,
-										 ObjectIdGetDatum(lfirsti(ixid)),
-										 0, 0, 0);
+		indexTuple = SearchSysCache(INDEXRELID,
+									ObjectIdGetDatum(lfirsti(ixid)),
+									0, 0, 0);
 		if (!HeapTupleIsValid(indexTuple))
 			elog(ERROR, "create_plan: index %u not found", lfirsti(ixid));
 		index = (Form_pg_index) GETSTRUCT(indexTuple);
 		if (index->indislossy)
 		{
 			lossy = true;
+			ReleaseSysCache(indexTuple);
 			break;
 		}
+		ReleaseSysCache(indexTuple);
 	}
 
 	/*
@@ -904,18 +906,19 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path)
 		Form_pg_index index;
 
 		/* Get the relam from the index's pg_class entry */
-		indexTuple = SearchSysCacheTuple(RELOID,
-										 ObjectIdGetDatum(indexid),
-										 0, 0, 0);
+		indexTuple = SearchSysCache(RELOID,
+									ObjectIdGetDatum(indexid),
+									0, 0, 0);
 		if (!HeapTupleIsValid(indexTuple))
 			elog(ERROR, "fix_indxqual_references: index %u not found in pg_class",
 				 indexid);
 		relam = ((Form_pg_class) GETSTRUCT(indexTuple))->relam;
+		ReleaseSysCache(indexTuple);
 
 		/* Need the index's pg_index entry for other stuff */
-		indexTuple = SearchSysCacheTuple(INDEXRELID,
-										 ObjectIdGetDatum(indexid),
-										 0, 0, 0);
+		indexTuple = SearchSysCache(INDEXRELID,
+									ObjectIdGetDatum(indexid),
+									0, 0, 0);
 		if (!HeapTupleIsValid(indexTuple))
 			elog(ERROR, "fix_indxqual_references: index %u not found in pg_index",
 				 indexid);
@@ -926,6 +929,8 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path)
 												   baserelid,
 												   relam,
 												   index));
+
+		ReleaseSysCache(indexTuple);
 
 		indexids = lnext(indexids);
 	}

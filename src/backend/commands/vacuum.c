@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.172 2000/11/16 05:50:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.173 2000/11/16 22:30:19 tgl Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -356,7 +356,6 @@ getrels(NameData *VacRelP)
 static void
 vacuum_rel(Oid relid, bool analyze, bool is_toastrel)
 {
-	HeapTuple	tuple;
 	Relation	onerel;
 	VacPageListData vacuum_pages; /* List of pages to vacuum and/or clean
 								 * indices */
@@ -384,10 +383,9 @@ vacuum_rel(Oid relid, bool analyze, bool is_toastrel)
 	 * Race condition -- if the pg_class tuple has gone away since the
 	 * last time we saw it, we don't need to vacuum it.
 	 */
-	tuple = SearchSysCacheTuple(RELOID,
-								ObjectIdGetDatum(relid),
-								0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
+	if (!SearchSysCacheExists(RELOID,
+							  ObjectIdGetDatum(relid),
+							  0, 0, 0))
 	{
 		if (!is_toastrel)
 			CommitTransactionCommand();
@@ -2237,17 +2235,17 @@ update_relstats(Oid relid, int num_pages, int num_tuples, bool hasindex,
 	 */
 	rd = heap_openr(RelationRelationName, RowExclusiveLock);
 
-	ctup = SearchSysCacheTupleCopy(RELOID,
-								   ObjectIdGetDatum(relid),
-								   0, 0, 0);
+	ctup = SearchSysCache(RELOID,
+						  ObjectIdGetDatum(relid),
+						  0, 0, 0);
 	if (!HeapTupleIsValid(ctup))
 		elog(ERROR, "pg_class entry for relid %u vanished during vacuuming",
 			 relid);
 
 	/* get the buffer cache tuple */
 	rtup.t_self = ctup->t_self;
+	ReleaseSysCache(ctup);
 	heap_fetch(rd, SnapshotNow, &rtup, &buffer);
-	heap_freetuple(ctup);
 
 	/* overwrite the existing statistics in the tuple */
 	pgcform = (Form_pg_class) GETSTRUCT(&rtup);
@@ -2481,13 +2479,14 @@ get_index_desc(Relation onerel, int nindices, Relation *Irel)
 
 	for (i = 0; i < nindices; i++)
 	{
-		cachetuple = SearchSysCacheTuple(INDEXRELID,
+		cachetuple = SearchSysCache(INDEXRELID,
 							 ObjectIdGetDatum(RelationGetRelid(Irel[i])),
-										 0, 0, 0);
+									0, 0, 0);
 		if (!HeapTupleIsValid(cachetuple))
 			elog(ERROR, "get_index_desc: index %u not found",
 				 RelationGetRelid(Irel[i]));
 		indexInfo[i] = BuildIndexInfo(cachetuple);
+		ReleaseSysCache(cachetuple);
 	}
 
 	return indexInfo;

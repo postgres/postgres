@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.38 2000/08/24 03:29:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.39 2000/11/16 22:30:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,8 @@
 #include "executor/nodeGroup.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_type.h"
+#include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 static TupleTableSlot *ExecGroupEveryTuple(Group *node);
 static TupleTableSlot *ExecGroupOneTuple(Group *node);
@@ -498,12 +500,11 @@ execTuplesMatchPrepare(TupleDesc tupdesc,
 
 		eq_operator = oper("=", typid, typid, true);
 		if (!HeapTupleIsValid(eq_operator))
-		{
 			elog(ERROR, "Unable to identify an equality operator for type '%s'",
 				 typeidTypeName(typid));
-		}
 		pgopform = (Form_pg_operator) GETSTRUCT(eq_operator);
 		fmgr_info(pgopform->oprcode, &eqfunctions[i]);
+		ReleaseSysCache(eq_operator);
 	}
 
 	return eqfunctions;

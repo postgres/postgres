@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.72 2000/11/12 00:37:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.73 2000/11/16 22:30:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -953,9 +953,7 @@ transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 
 			grpcl->tleSortGroupRef = assignSortGroupRef(tle, targetlist);
 
-			grpcl->sortop = oprid(oper("<",
-									   tle->resdom->restype,
-									   tle->resdom->restype, false));
+			grpcl->sortop = any_ordering_op(tle->resdom->restype);
 
 			glist = lappend(glist, grpcl);
 		}
@@ -1151,9 +1149,10 @@ addTargetToSortList(TargetEntry *tle, List *sortlist, List *targetlist,
 		sortcl->tleSortGroupRef = assignSortGroupRef(tle, targetlist);
 
 		if (opname)
-			sortcl->sortop = oprid(oper(opname,
-										tle->resdom->restype,
-										tle->resdom->restype, false));
+			sortcl->sortop = oper_oid(opname,
+									  tle->resdom->restype,
+									  tle->resdom->restype,
+									  false);
 		else
 			sortcl->sortop = any_ordering_op(tle->resdom->restype);
 

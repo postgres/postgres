@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.129 2000/11/08 22:09:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.130 2000/11/16 22:30:17 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -174,9 +174,9 @@ BuildFuncTupleDesc(Oid funcOid)
 	/*
 	 * Lookup the function to get its name and return type.
 	 */
-	tuple = SearchSysCacheTuple(PROCOID,
-								ObjectIdGetDatum(funcOid),
-								0, 0, 0);
+	tuple = SearchSysCache(PROCOID,
+						   ObjectIdGetDatum(funcOid),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "Function %u does not exist", funcOid);
 	retType = ((Form_pg_proc) GETSTRUCT(tuple))->prorettype;
@@ -187,12 +187,14 @@ BuildFuncTupleDesc(Oid funcOid)
 	namestrcpy(&funcTupDesc->attrs[0]->attname,
 			   NameStr(((Form_pg_proc) GETSTRUCT(tuple))->proname));
 
+	ReleaseSysCache(tuple);
+
 	/*
 	 * Lookup the return type in pg_type for the type length etc.
 	 */
-	tuple = SearchSysCacheTuple(TYPEOID,
-								ObjectIdGetDatum(retType),
-								0, 0, 0);
+	tuple = SearchSysCache(TYPEOID,
+						   ObjectIdGetDatum(retType),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "Type %u does not exist", retType);
 
@@ -207,6 +209,8 @@ BuildFuncTupleDesc(Oid funcOid)
 	funcTupDesc->attrs[0]->atttypmod = -1;
 	funcTupDesc->attrs[0]->attstorage = 'p';
 	funcTupDesc->attrs[0]->attalign = ((Form_pg_type) GETSTRUCT(tuple))->typalign;
+
+	ReleaseSysCache(tuple);
 
 	return funcTupDesc;
 }
@@ -759,10 +763,12 @@ UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate)
 	/* open the index system catalog relation */
 	pg_index = heap_openr(IndexRelationName, RowExclusiveLock);
 
-	tuple = SearchSysCacheTuple(INDEXRELID,
-								ObjectIdGetDatum(indexoid),
-								0, 0, 0);
-	Assert(HeapTupleIsValid(tuple));
+	tuple = SearchSysCache(INDEXRELID,
+						   ObjectIdGetDatum(indexoid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "UpdateIndexPredicate: cache lookup failed for index %u",
+			 indexoid);
 
 	for (i = 0; i < Natts_pg_index; i++)
 	{
@@ -779,6 +785,8 @@ UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate)
 	heap_update(pg_index, &newtup->t_self, newtup, NULL);
 
 	heap_freetuple(newtup);
+	ReleaseSysCache(tuple);
+
 	heap_close(pg_index, RowExclusiveLock);
 	pfree(predText);
 }
@@ -1069,11 +1077,12 @@ index_drop(Oid indexId)
 	relationRelation = heap_openr(RelationRelationName, RowExclusiveLock);
 
 	/* Remove the pg_class tuple for the index itself */
-	tuple = SearchSysCacheTupleCopy(RELOID,
-									ObjectIdGetDatum(indexId),
-									0, 0, 0);
-
-	Assert(HeapTupleIsValid(tuple));
+	tuple = SearchSysCacheCopy(RELOID,
+							   ObjectIdGetDatum(indexId),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "index_drop: cache lookup failed for index %u",
+			 indexId);
 
 	heap_delete(relationRelation, &tuple->t_self, NULL);
 	heap_freetuple(tuple);
@@ -1098,10 +1107,10 @@ index_drop(Oid indexId)
 
 	attnum = 1;					/* indexes start at 1 */
 
-	while (HeapTupleIsValid(tuple = SearchSysCacheTupleCopy(ATTNUM,
+	while (HeapTupleIsValid(tuple = SearchSysCacheCopy(ATTNUM,
 											   ObjectIdGetDatum(indexId),
 												   Int16GetDatum(attnum),
-															0, 0)))
+													   0, 0)))
 	{
 		heap_delete(attributeRelation, &tuple->t_self, NULL);
 		heap_freetuple(tuple);
@@ -1115,10 +1124,12 @@ index_drop(Oid indexId)
 	 */
 	indexRelation = heap_openr(IndexRelationName, RowExclusiveLock);
 
-	tuple = SearchSysCacheTupleCopy(INDEXRELID,
-									ObjectIdGetDatum(indexId),
-									0, 0, 0);
-	Assert(HeapTupleIsValid(tuple));
+	tuple = SearchSysCacheCopy(INDEXRELID,
+							   ObjectIdGetDatum(indexId),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "index_drop: cache lookup failed for index %u",
+			 indexId);
 
 	heap_delete(indexRelation, &tuple->t_self, NULL);
 	heap_freetuple(tuple);
@@ -1318,21 +1329,24 @@ LockClassinfoForUpdate(Oid relid, HeapTuple rtup,
 					   Buffer *buffer, bool confirmCommitted)
 {
 	HeapTuple	classTuple;
-	Form_pg_class pgcform;
 	bool		test;
 	Relation	relationRelation;
 
-	classTuple = SearchSysCacheTuple(RELOID, PointerGetDatum(relid),
-									 0, 0, 0);
-	if (!HeapTupleIsValid(classTuple))
-		return false;
-	rtup->t_self = classTuple->t_self;
-	pgcform = (Form_pg_class) GETSTRUCT(classTuple);
 	/*
 	 * NOTE: get and hold RowExclusiveLock on pg_class, because caller will
 	 * probably modify the rel's pg_class tuple later on.
 	 */
 	relationRelation = heap_openr(RelationRelationName, RowExclusiveLock);
+	classTuple = SearchSysCache(RELOID, PointerGetDatum(relid),
+								0, 0, 0);
+	if (!HeapTupleIsValid(classTuple))
+	{
+		heap_close(relationRelation, NoLock);
+		return false;
+	}
+	rtup->t_self = classTuple->t_self;
+	ReleaseSysCache(classTuple);
+
 	test = heap_mark4update(relationRelation, rtup, buffer);
 	switch (test)
 	{
@@ -1418,9 +1432,9 @@ setRelhasindex(Oid relid, bool hasindex)
 
 	if (!IsIgnoringSystemIndexes())
 	{
-		tuple = SearchSysCacheTupleCopy(RELOID,
-										ObjectIdGetDatum(relid),
-										0, 0, 0);
+		tuple = SearchSysCacheCopy(RELOID,
+								   ObjectIdGetDatum(relid),
+								   0, 0, 0);
 	}
 	else
 	{
@@ -1542,9 +1556,9 @@ UpdateStats(Oid relid, long reltuples)
 
 	if (!in_place_upd)
 	{
-		tuple = SearchSysCacheTupleCopy(RELOID,
-										ObjectIdGetDatum(relid),
-										0, 0, 0);
+		tuple = SearchSysCacheCopy(RELOID,
+								   ObjectIdGetDatum(relid),
+								   0, 0, 0);
 	}
 	else
 	{
@@ -1887,19 +1901,20 @@ IndexGetRelation(Oid indexId)
 {
 	HeapTuple	tuple;
 	Form_pg_index index;
+	Oid			result;
 
-	tuple = SearchSysCacheTuple(INDEXRELID,
-								ObjectIdGetDatum(indexId),
-								0, 0, 0);
+	tuple = SearchSysCache(INDEXRELID,
+						   ObjectIdGetDatum(indexId),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-	{
 		elog(ERROR, "IndexGetRelation: can't find index id %u",
 			 indexId);
-	}
 	index = (Form_pg_index) GETSTRUCT(tuple);
 	Assert(index->indexrelid == indexId);
 
-	return index->indrelid;
+	result = index->indrelid;
+	ReleaseSysCache(tuple);
+	return result;
 }
 
 /* ---------------------------------
@@ -1965,12 +1980,13 @@ reindex_index(Oid indexId, bool force)
 	heap_close(indexRelation, AccessShareLock);
 
 	/* Fetch the classTuple associated with this index */
-	classTuple = SearchSysCacheTuple(RELOID,
-									 ObjectIdGetDatum(indexId),
-									 0, 0, 0);
+	classTuple = SearchSysCache(RELOID,
+								ObjectIdGetDatum(indexId),
+								0, 0, 0);
 	if (!HeapTupleIsValid(classTuple))
 		elog(ERROR, "reindex_index: index %u not found in pg_class", indexId);
 	accessMethodId = ((Form_pg_class) GETSTRUCT(classTuple))->relam;
+	ReleaseSysCache(classTuple);
 
 	/* Open our index relation */
 	heapRelation = heap_open(heapId, ExclusiveLock);

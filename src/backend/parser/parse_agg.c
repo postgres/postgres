@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.42 2000/09/29 18:21:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.43 2000/11/16 22:30:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,18 +190,18 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 		 List *args, bool agg_star, bool agg_distinct,
 		 int precedence)
 {
-	HeapTuple	theAggTuple;
+	HeapTuple	aggtuple;
 	Form_pg_aggregate aggform;
 	Aggref	   *aggref;
 
-	theAggTuple = SearchSysCacheTuple(AGGNAME,
-									  PointerGetDatum(aggname),
-									  ObjectIdGetDatum(basetype),
-									  0, 0);
+	aggtuple = SearchSysCache(AGGNAME,
+							  PointerGetDatum(aggname),
+							  ObjectIdGetDatum(basetype),
+							  0, 0);
 	/* shouldn't happen --- caller should have checked already */
-	if (!HeapTupleIsValid(theAggTuple))
+	if (!HeapTupleIsValid(aggtuple))
 		agg_error("ParseAgg", aggname, basetype);
-	aggform = (Form_pg_aggregate) GETSTRUCT(theAggTuple);
+	aggform = (Form_pg_aggregate) GETSTRUCT(aggtuple);
 
 	/*
 	 * There used to be a really ugly hack for count(*) here.
@@ -224,6 +224,8 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 	aggref->target = lfirst(args);
 	aggref->aggstar = agg_star;
 	aggref->aggdistinct = agg_distinct;
+
+	ReleaseSysCache(aggtuple);
 
 	pstate->p_hasAggs = true;
 

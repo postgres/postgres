@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.36 2000/10/22 05:14:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.37 2000/11/16 22:30:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 #include "catalog/catname.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
-#include "utils/syscache.h"
+#include "utils/lsyscache.h"
 
 #ifdef OLD_FILE_NAMING
 /*
@@ -251,12 +251,10 @@ newoid()
 void
 fillatt(TupleDesc tupleDesc)
 {
-	Form_pg_attribute *attributeP;
-	Form_pg_type typp;
-	HeapTuple	tuple;
-	int			i;
 	int			natts = tupleDesc->natts;
 	Form_pg_attribute *att = tupleDesc->attrs;
+	Form_pg_attribute *attributeP;
+	int			i;
 
 	if (natts < 0 || natts > MaxHeapAttributeNumber)
 		elog(ERROR, "fillatt: %d attributes is too large", natts);
@@ -268,33 +266,23 @@ fillatt(TupleDesc tupleDesc)
 
 	attributeP = &att[0];
 
-	for (i = 0; i < natts;)
+	for (i = 1; i <= natts; i++)
 	{
-		tuple = SearchSysCacheTuple(TYPEOID,
-							   ObjectIdGetDatum((*attributeP)->atttypid),
-									0, 0, 0);
-		if (!HeapTupleIsValid(tuple))
-		{
-			elog(ERROR, "fillatt: unknown atttypid %d",
-				 (*attributeP)->atttypid);
-		}
-		else
-		{
-			(*attributeP)->attnum = (int16) ++i;
+		(*attributeP)->attnum = (int16) i;
 
-			/*
-			 * Check if the attr is a set before messing with the length
-			 * and byval, since those were already set in
-			 * TupleDescInitEntry.	In fact, this seems redundant here,
-			 * but who knows what I'll break if I take it out...
-			 */
-			if (!(*attributeP)->attisset)
-			{
-				typp = (Form_pg_type) GETSTRUCT(tuple); /* XXX */
-				(*attributeP)->attlen = typp->typlen;
-				(*attributeP)->attbyval = typp->typbyval;
-			}
+		/*
+		 * Check if the attr is a set before messing with the length
+		 * and byval, since those were already set in
+		 * TupleDescInitEntry.	In fact, this seems redundant here,
+		 * but who knows what I'll break if I take it out...
+		 */
+		if (!(*attributeP)->attisset)
+		{
+			get_typlenbyval((*attributeP)->atttypid,
+							& (*attributeP)->attlen,
+							& (*attributeP)->attbyval);
 		}
-		attributeP += 1;
+
+		attributeP++;
 	}
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.52 2000/10/22 23:32:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.53 2000/11/16 22:30:17 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -575,12 +575,11 @@ OperatorDef(char *operatorName,
 		typeId[1] = rightTypeId;
 		nargs = 2;
 	}
-	tup = SearchSysCacheTuple(PROCNAME,
-							  PointerGetDatum(procedureName),
-							  Int32GetDatum(nargs),
-							  PointerGetDatum(typeId),
-							  0);
-
+	tup = SearchSysCache(PROCNAME,
+						 PointerGetDatum(procedureName),
+						 Int32GetDatum(nargs),
+						 PointerGetDatum(typeId),
+						 0);
 	if (!HeapTupleIsValid(tup))
 		func_error("OperatorDef", procedureName, nargs, typeId, NULL);
 
@@ -588,27 +587,32 @@ OperatorDef(char *operatorName,
 	values[Anum_pg_operator_oprresult - 1] = ObjectIdGetDatum(((Form_pg_proc)
 											GETSTRUCT(tup))->prorettype);
 
+	ReleaseSysCache(tup);
+
 	/* ----------------
 	 *	find restriction
 	 * ----------------
 	 */
 	if (restrictionName)
 	{							/* optional */
+		Oid		restOid;
+
 		MemSet(typeId, 0, FUNC_MAX_ARGS * sizeof(Oid));
 		typeId[0] = OIDOID;		/* operator OID */
 		typeId[1] = OIDOID;		/* relation OID */
 		typeId[2] = INT2OID;	/* attribute number */
 		typeId[3] = 0;			/* value - can be any type	*/
 		typeId[4] = INT4OID;	/* flags - left or right selectivity */
-		tup = SearchSysCacheTuple(PROCNAME,
-								  PointerGetDatum(restrictionName),
-								  Int32GetDatum(5),
-								  PointerGetDatum(typeId),
-								  0);
-		if (!HeapTupleIsValid(tup))
+
+		restOid = GetSysCacheOid(PROCNAME,
+								 PointerGetDatum(restrictionName),
+								 Int32GetDatum(5),
+								 PointerGetDatum(typeId),
+								 0);
+		if (!OidIsValid(restOid))
 			func_error("OperatorDef", restrictionName, 5, typeId, NULL);
 
-		values[Anum_pg_operator_oprrest - 1] = ObjectIdGetDatum(tup->t_data->t_oid);
+		values[Anum_pg_operator_oprrest - 1] = ObjectIdGetDatum(restOid);
 	}
 	else
 		values[Anum_pg_operator_oprrest - 1] = ObjectIdGetDatum(InvalidOid);
@@ -619,6 +623,8 @@ OperatorDef(char *operatorName,
 	 */
 	if (joinName)
 	{							/* optional */
+		Oid		joinOid;
+
 		MemSet(typeId, 0, FUNC_MAX_ARGS * sizeof(Oid));
 		typeId[0] = OIDOID;		/* operator OID */
 		typeId[1] = OIDOID;		/* relation OID 1 */
@@ -626,15 +632,15 @@ OperatorDef(char *operatorName,
 		typeId[3] = OIDOID;		/* relation OID 2 */
 		typeId[4] = INT2OID;	/* attribute number 2 */
 
-		tup = SearchSysCacheTuple(PROCNAME,
-								  PointerGetDatum(joinName),
-								  Int32GetDatum(5),
-								  PointerGetDatum(typeId),
-								  0);
-		if (!HeapTupleIsValid(tup))
+		joinOid = GetSysCacheOid(PROCNAME,
+								 PointerGetDatum(joinName),
+								 Int32GetDatum(5),
+								 PointerGetDatum(typeId),
+								 0);
+		if (!OidIsValid(joinOid))
 			func_error("OperatorDef", joinName, 5, typeId, NULL);
 
-		values[Anum_pg_operator_oprjoin - 1] = ObjectIdGetDatum(tup->t_data->t_oid);
+		values[Anum_pg_operator_oprjoin - 1] = ObjectIdGetDatum(joinOid);
 	}
 	else
 		values[Anum_pg_operator_oprjoin - 1] = ObjectIdGetDatum(InvalidOid);

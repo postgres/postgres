@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.15 2000/09/06 14:15:22 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.16 2000/11/16 22:30:40 tgl Exp $
  *
  * DESCRIPTION
  *	  See superuser().
@@ -29,10 +29,16 @@ superuser(void)
 	privileges.
 --------------------------------------------------------------------------*/
 	HeapTuple	utup;
+	bool		result;
 
-	utup = SearchSysCacheTuple(SHADOWSYSID,
-							   ObjectIdGetDatum(GetUserId()),
-							   0, 0, 0);
-	Assert(utup != NULL);
-	return ((Form_pg_shadow) GETSTRUCT(utup))->usesuper;
+	utup = SearchSysCache(SHADOWSYSID,
+						  ObjectIdGetDatum(GetUserId()),
+						  0, 0, 0);
+	if (HeapTupleIsValid(utup))
+	{
+		result = ((Form_pg_shadow) GETSTRUCT(utup))->usesuper;
+		ReleaseSysCache(utup);
+		return result;
+	}
+	return false;
 }

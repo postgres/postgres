@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.33 2000/08/24 03:29:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.34 2000/11/16 22:30:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,9 +77,11 @@ SetDefine(char *querystr, char *typename)
 	 */
 	CommandCounterIncrement();
 
-	tup = SearchSysCacheTuple(PROCOID,
-							  ObjectIdGetDatum(setoid),
-							  0, 0, 0);
+	procrel = heap_openr(ProcedureRelationName, RowExclusiveLock);
+
+	tup = SearchSysCache(PROCOID,
+						 ObjectIdGetDatum(setoid),
+						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "SetDefine: unable to define set %s", querystr);
 
@@ -105,25 +107,15 @@ SetDefine(char *querystr, char *typename)
 			replNull[i] = ' ';
 
 		/* change the pg_proc tuple */
-		procrel = heap_openr(ProcedureRelationName, RowExclusiveLock);
+		newtup = heap_modifytuple(tup,
+								  procrel,
+								  replValue,
+								  replNull,
+								  repl);
 
-		tup = SearchSysCacheTuple(PROCOID,
-								  ObjectIdGetDatum(setoid),
-								  0, 0, 0);
-		if (HeapTupleIsValid(tup))
-		{
-			newtup = heap_modifytuple(tup,
-									  procrel,
-									  replValue,
-									  replNull,
-									  repl);
+		heap_update(procrel, &newtup->t_self, newtup, NULL);
 
-			heap_update(procrel, &tup->t_self, newtup, NULL);
-
-			setoid = newtup->t_data->t_oid;
-		}
-		else
-			elog(ERROR, "SetDefine: could not find new set oid tuple");
+		setoid = newtup->t_data->t_oid;
 
 		if (RelationGetForm(procrel)->relhasindex)
 		{
@@ -133,8 +125,12 @@ SetDefine(char *querystr, char *typename)
 			CatalogIndexInsert(idescs, Num_pg_proc_indices, procrel, newtup);
 			CatalogCloseIndices(Num_pg_proc_indices, idescs);
 		}
-		heap_close(procrel, RowExclusiveLock);
+		heap_freetuple(newtup);
 	}
+
+	ReleaseSysCache(tup);
+
+	heap_close(procrel, RowExclusiveLock);
 
 	return setoid;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.56 2000/11/10 00:33:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.57 2000/11/16 22:30:33 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -343,7 +343,7 @@ static struct cachedesc cacheinfo[] = {
 };
 
 static CatCache *SysCache[lengthof(cacheinfo)];
-static int32 SysCacheSize = lengthof(cacheinfo);
+static int SysCacheSize = lengthof(cacheinfo);
 static bool CacheInitialized = false;
 
 
@@ -355,98 +355,67 @@ IsCacheInitialized(void)
 
 
 /*
- * zerocaches
- *
- *	  Make sure the SysCache structure is zero'd.
- */
-void
-zerocaches()
-{
-	MemSet((char *) SysCache, 0, SysCacheSize * sizeof(CatCache *));
-}
-
-
-/*
  * InitCatalogCache - initialize the caches
+ *
+ * Note that no database access is done here; we only allocate memory
+ * and initialize the cache structure.  Interrogation of the database
+ * to complete initialization of a cache happens only upon first use
+ * of that cache.
  */
 void
-InitCatalogCache()
+InitCatalogCache(void)
 {
-	int			cacheId;		/* XXX type */
+	int			cacheId;
 
-	if (!AMI_OVERRIDE)
+	Assert(!CacheInitialized);
+
+	MemSet((char *) SysCache, 0, sizeof(SysCache));
+
+	for (cacheId = 0; cacheId < SysCacheSize; cacheId++)
 	{
-		for (cacheId = 0; cacheId < SysCacheSize; cacheId += 1)
-		{
-			Assert(!PointerIsValid(SysCache[cacheId]));
-
-			SysCache[cacheId] = InitSysCache(cacheId,
-											 cacheinfo[cacheId].name,
-											 cacheinfo[cacheId].indname,
-											 cacheinfo[cacheId].nkeys,
-											 cacheinfo[cacheId].key);
-			if (!PointerIsValid(SysCache[cacheId]))
-			{
-				elog(ERROR,
-					 "InitCatalogCache: Can't init cache %s (%d)",
-					 cacheinfo[cacheId].name,
-					 cacheId);
-			}
-
-		}
+		SysCache[cacheId] = InitCatCache(cacheId,
+										 cacheinfo[cacheId].name,
+										 cacheinfo[cacheId].indname,
+										 cacheinfo[cacheId].nkeys,
+										 cacheinfo[cacheId].key);
+		if (!PointerIsValid(SysCache[cacheId]))
+			elog(ERROR, "InitCatalogCache: Can't init cache %s (%d)",
+				 cacheinfo[cacheId].name, cacheId);
 	}
 	CacheInitialized = true;
 }
 
 
 /*
- * SearchSysCacheTuple
+ * SearchSysCache
  *
- *	A layer on top of SearchSysCache that does the initialization and
+ *	A layer on top of SearchCatCache that does the initialization and
  *	key-setting for you.
  *
  *	Returns the cache copy of the tuple if one is found, NULL if not.
- *	The tuple is the 'cache' copy.
+ *	The tuple is the 'cache' copy and must NOT be modified!
+ *
+ *	When the caller is done using the tuple, call ReleaseSysCache()
+ *	to release the reference count grabbed by SearchSysCache().  If this
+ *	is not done, the tuple will remain locked in cache until end of
+ *	transaction, which is tolerable but not desirable.
  *
  *	CAUTION: The tuple that is returned must NOT be freed by the caller!
- *
- *	CAUTION: The returned tuple may be flushed from the cache during
- *	subsequent cache lookup operations, or by shared cache invalidation.
- *	Callers should not expect the pointer to remain valid for long.
- *
- *  XXX we ought to have some kind of referencecount mechanism for
- *  cache entries, to ensure entries aren't deleted while in use.
  */
 HeapTuple
-SearchSysCacheTuple(int cacheId,/* cache selection code */
-					Datum key1,
-					Datum key2,
-					Datum key3,
-					Datum key4)
+SearchSysCache(int cacheId,
+			   Datum key1,
+			   Datum key2,
+			   Datum key3,
+			   Datum key4)
 {
-	HeapTuple	tp;
-
 	if (cacheId < 0 || cacheId >= SysCacheSize)
 	{
-		elog(ERROR, "SearchSysCacheTuple: Bad cache id %d", cacheId);
+		elog(ERROR, "SearchSysCache: Bad cache id %d", cacheId);
 		return (HeapTuple) NULL;
 	}
 
-	Assert(AMI_OVERRIDE || PointerIsValid(SysCache[cacheId]));
-
-	if (!PointerIsValid(SysCache[cacheId]))
-	{
-		SysCache[cacheId] = InitSysCache(cacheId,
-										 cacheinfo[cacheId].name,
-										 cacheinfo[cacheId].indname,
-										 cacheinfo[cacheId].nkeys,
-										 cacheinfo[cacheId].key);
-		if (!PointerIsValid(SysCache[cacheId]))
-			elog(ERROR,
-				 "InitCatalogCache: Can't init cache %s(%d)",
-				 cacheinfo[cacheId].name,
-				 cacheId);
-	}
+	Assert(PointerIsValid(SysCache[cacheId]));
 
 	/*
 	 * If someone tries to look up a relname, translate temp relation
@@ -464,51 +433,75 @@ SearchSysCacheTuple(int cacheId,/* cache selection code */
 			key1 = CStringGetDatum(nontemp_relname);
 	}
 
-	tp = SearchSysCache(SysCache[cacheId], key1, key2, key3, key4);
-	if (!HeapTupleIsValid(tp))
-	{
-#ifdef CACHEDEBUG
-		elog(DEBUG,
-			 "SearchSysCacheTuple: Search %s(%d) %d %d %d %d failed",
-			 cacheinfo[cacheId].name,
-			 cacheId, key1, key2, key3, key4);
-#endif
-		return (HeapTuple) NULL;
-	}
-	return tp;
+	return SearchCatCache(SysCache[cacheId], key1, key2, key3, key4);
 }
-
 
 /*
- * SearchSysCacheTupleCopy
- *
- *	This is like SearchSysCacheTuple, except it returns a palloc'd copy of
- *	the tuple.  The caller should heap_freetuple() the returned copy when
- *	done with it.  This routine should be used when the caller intends to
- *	continue to access the tuple for more than a very short period of time.
+ * ReleaseSysCache
+ *		Release previously grabbed reference count on a tuple
  */
-HeapTuple
-SearchSysCacheTupleCopy(int cacheId,	/* cache selection code */
-						Datum key1,
-						Datum key2,
-						Datum key3,
-						Datum key4)
+void
+ReleaseSysCache(HeapTuple tuple)
 {
-	HeapTuple	cachetup;
-
-	cachetup = SearchSysCacheTuple(cacheId, key1, key2, key3, key4);
-	if (PointerIsValid(cachetup))
-		return heap_copytuple(cachetup);
-	else
-		return cachetup;		/* NULL */
+	ReleaseCatCache(tuple);
 }
 
+/*
+ * SearchSysCacheCopy
+ *
+ * A convenience routine that does SearchSysCache and (if successful)
+ * returns a modifiable copy of the syscache entry.  The original
+ * syscache entry is released before returning.  The caller should
+ * heap_freetuple() the result when done with it.
+ */
+HeapTuple
+SearchSysCacheCopy(int cacheId,
+				   Datum key1,
+				   Datum key2,
+				   Datum key3,
+				   Datum key4)
+{
+	HeapTuple	tuple,
+				newtuple;
+
+	tuple = SearchSysCache(cacheId, key1, key2, key3, key4);
+	if (!HeapTupleIsValid(tuple))
+		return tuple;
+	newtuple = heap_copytuple(tuple);
+	ReleaseSysCache(tuple);
+	return newtuple;
+}
+
+/*
+ * GetSysCacheOid
+ *
+ * A convenience routine that does SearchSysCache and returns the OID
+ * of the found tuple, or InvalidOid if no tuple could be found.
+ * No lock is retained on the syscache entry.
+ */
+Oid
+GetSysCacheOid(int cacheId,
+			   Datum key1,
+			   Datum key2,
+			   Datum key3,
+			   Datum key4)
+{
+	HeapTuple	tuple;
+	Oid			result;
+
+	tuple = SearchSysCache(cacheId, key1, key2, key3, key4);
+	if (!HeapTupleIsValid(tuple))
+		return InvalidOid;
+	result = tuple->t_data->t_oid;
+	ReleaseSysCache(tuple);
+	return result;
+}
 
 /*
  * SysCacheGetAttr
  *
- *		Given a tuple previously fetched by SearchSysCacheTuple() or
- *		SearchSysCacheTupleCopy(), extract a specific attribute.
+ *		Given a tuple previously fetched by SearchSysCache(),
+ *		extract a specific attribute.
  *
  * This is equivalent to using heap_getattr() on a tuple fetched
  * from a non-cached relation.	Usually, this is only used for attributes

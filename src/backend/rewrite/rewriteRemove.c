@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.40 2000/09/29 18:21:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.41 2000/11/16 22:30:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,21 +35,26 @@ RewriteGetRuleEventRel(char *rulename)
 {
 	HeapTuple	htup;
 	Oid			eventrel;
+	char	   *result;
 
-	htup = SearchSysCacheTuple(RULENAME,
-							   PointerGetDatum(rulename),
-							   0, 0, 0);
+	htup = SearchSysCache(RULENAME,
+						  PointerGetDatum(rulename),
+						  0, 0, 0);
 	if (!HeapTupleIsValid(htup))
 		elog(ERROR, "Rule or view \"%s\" not found",
 		  ((strncmp(rulename, "_RET", 4) == 0) ? (rulename + 4) : rulename));
 	eventrel = ((Form_pg_rewrite) GETSTRUCT(htup))->ev_class;
-	htup = SearchSysCacheTuple(RELOID,
-							   PointerGetDatum(eventrel),
-							   0, 0, 0);
+	ReleaseSysCache(htup);
+
+	htup = SearchSysCache(RELOID,
+						  PointerGetDatum(eventrel),
+						  0, 0, 0);
 	if (!HeapTupleIsValid(htup))
 		elog(ERROR, "Relation %u not found", eventrel);
 
-	return NameStr(((Form_pg_class) GETSTRUCT(htup))->relname);
+	result = pstrdup(NameStr(((Form_pg_class) GETSTRUCT(htup))->relname));
+	ReleaseSysCache(htup);
+	return result;
 }
 
 /*
@@ -75,9 +80,9 @@ RemoveRewriteRule(char *ruleName)
 	/*
 	 * Find the tuple for the target rule.
 	 */
-	tuple = SearchSysCacheTupleCopy(RULENAME,
-									PointerGetDatum(ruleName),
-									0, 0, 0);
+	tuple = SearchSysCacheCopy(RULENAME,
+							   PointerGetDatum(ruleName),
+							   0, 0, 0);
 
 	/*
 	 * complain if no rule with such name existed

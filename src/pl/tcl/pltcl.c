@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.28 2000/07/19 11:53:02 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.29 2000/11/16 22:30:52 tgl Exp $
  *
  **********************************************************************/
 
@@ -437,9 +437,9 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 		/************************************************************
 		 * Lookup the pg_proc tuple by Oid
 		 ************************************************************/
-		procTup = SearchSysCacheTuple(PROCOID,
-									  ObjectIdGetDatum(fcinfo->flinfo->fn_oid),
-									  0, 0, 0);
+		procTup = SearchSysCache(PROCOID,
+								 ObjectIdGetDatum(fcinfo->flinfo->fn_oid),
+								 0, 0, 0);
 		if (!HeapTupleIsValid(procTup))
 		{
 			free(prodesc->proname);
@@ -452,9 +452,9 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 		/************************************************************
 		 * Lookup the pg_language tuple by Oid
 		 ************************************************************/
-		langTup = SearchSysCacheTuple(LANGOID,
-									  ObjectIdGetDatum(procStruct->prolang),
-									  0, 0, 0);
+		langTup = SearchSysCache(LANGOID,
+								 ObjectIdGetDatum(procStruct->prolang),
+								 0, 0, 0);
 		if (!HeapTupleIsValid(langTup))
 		{
 			free(prodesc->proname);
@@ -469,14 +469,15 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 			interp = pltcl_safe_interp;
 		else
 			interp = pltcl_norm_interp;
+		ReleaseSysCache(langTup);
 
 		/************************************************************
 		 * Get the required information for input conversion of the
 		 * return value.
 		 ************************************************************/
-		typeTup = SearchSysCacheTuple(TYPEOID,
-								ObjectIdGetDatum(procStruct->prorettype),
-									  0, 0, 0);
+		typeTup = SearchSysCache(TYPEOID,
+								 ObjectIdGetDatum(procStruct->prorettype),
+								 0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
 		{
 			free(prodesc->proname);
@@ -496,6 +497,8 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 		fmgr_info(typeStruct->typinput, &(prodesc->result_in_func));
 		prodesc->result_in_elem = typeStruct->typelem;
 
+		ReleaseSysCache(typeTup);
+
 		/************************************************************
 		 * Get the required information for output conversion
 		 * of all procedure arguments
@@ -504,9 +507,9 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 		proc_internal_args[0] = '\0';
 		for (i = 0; i < prodesc->nargs; i++)
 		{
-			typeTup = SearchSysCacheTuple(TYPEOID,
+			typeTup = SearchSysCache(TYPEOID,
 							ObjectIdGetDatum(procStruct->proargtypes[i]),
-										  0, 0, 0);
+									 0, 0, 0);
 			if (!HeapTupleIsValid(typeTup))
 			{
 				free(prodesc->proname);
@@ -523,6 +526,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 					strcat(proc_internal_args, " ");
 				sprintf(buf, "__PLTcl_Tup_%d", i + 1);
 				strcat(proc_internal_args, buf);
+				ReleaseSysCache(typeTup);
 				continue;
 			}
 			else
@@ -536,6 +540,8 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 				strcat(proc_internal_args, " ");
 			sprintf(buf, "%d", i + 1);
 			strcat(proc_internal_args, buf);
+
+			ReleaseSysCache(typeTup);
 		}
 
 		/************************************************************
@@ -591,6 +597,8 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 		hashent = Tcl_CreateHashEntry(pltcl_proc_hash,
 									  prodesc->proname, &hashnew);
 		Tcl_SetHashValue(hashent, (ClientData) prodesc);
+
+		ReleaseSysCache(procTup);
 	}
 	else
 	{
@@ -800,9 +808,9 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 		/************************************************************
 		 * Lookup the pg_proc tuple by Oid
 		 ************************************************************/
-		procTup = SearchSysCacheTuple(PROCOID,
-									  ObjectIdGetDatum(fcinfo->flinfo->fn_oid),
-									  0, 0, 0);
+		procTup = SearchSysCache(PROCOID,
+								 ObjectIdGetDatum(fcinfo->flinfo->fn_oid),
+								 0, 0, 0);
 		if (!HeapTupleIsValid(procTup))
 		{
 			free(prodesc->proname);
@@ -815,9 +823,9 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 		/************************************************************
 		 * Lookup the pg_language tuple by Oid
 		 ************************************************************/
-		langTup = SearchSysCacheTuple(LANGOID,
-									  ObjectIdGetDatum(procStruct->prolang),
-									  0, 0, 0);
+		langTup = SearchSysCache(LANGOID,
+								 ObjectIdGetDatum(procStruct->prolang),
+								 0, 0, 0);
 		if (!HeapTupleIsValid(langTup))
 		{
 			free(prodesc->proname);
@@ -832,6 +840,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 			interp = pltcl_safe_interp;
 		else
 			interp = pltcl_norm_interp;
+		ReleaseSysCache(langTup);
 
 		/************************************************************
 		 * Create the tcl command to define the internal
@@ -896,6 +905,8 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 		hashent = Tcl_CreateHashEntry(pltcl_proc_hash,
 									  prodesc->proname, &hashnew);
 		Tcl_SetHashValue(hashent, (ClientData) prodesc);
+
+		ReleaseSysCache(procTup);
 	}
 	else
 	{
@@ -1151,9 +1162,9 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 		 * Lookup the attribute type in the syscache
 		 * for the input function
 		 ************************************************************/
-		typeTup = SearchSysCacheTuple(TYPEOID,
+		typeTup = SearchSysCache(TYPEOID,
 				  ObjectIdGetDatum(tupdesc->attrs[attnum - 1]->atttypid),
-									  0, 0, 0);
+								 0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
 		{
 			elog(ERROR, "pltcl: Cache lookup for attribute '%s' type %u failed",
@@ -1162,6 +1173,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 		}
 		typinput = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typinput);
 		typelem = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typelem);
+		ReleaseSysCache(typeTup);
 
 		/************************************************************
 		 * Set the attribute to NOT NULL and convert the contents
@@ -1706,9 +1718,9 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	 ************************************************************/
 	for (i = 0; i < nargs; i++)
 	{
-		typeTup = SearchSysCacheTuple(TYPENAME,
-									  PointerGetDatum(args[i]),
-									  0, 0, 0);
+		typeTup = SearchSysCache(TYPENAME,
+								 PointerGetDatum(args[i]),
+								 0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
 			elog(ERROR, "pltcl: Cache lookup of type %s failed", args[i]);
 		qdesc->argtypes[i] = typeTup->t_data->t_oid;
@@ -1717,6 +1729,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 		qdesc->argtypelems[i] = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
 		qdesc->argvalues[i] = (Datum) NULL;
 		qdesc->arglen[i] = (int) (((Form_pg_type) GETSTRUCT(typeTup))->typlen);
+		ReleaseSysCache(typeTup);
 	}
 
 	/************************************************************
@@ -2263,9 +2276,9 @@ pltcl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
 		 * Lookup the attribute type in the syscache
 		 * for the output function
 		 ************************************************************/
-		typeTup = SearchSysCacheTuple(TYPEOID,
+		typeTup = SearchSysCache(TYPEOID,
 						   ObjectIdGetDatum(tupdesc->attrs[i]->atttypid),
-									  0, 0, 0);
+								 0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
 		{
 			elog(ERROR, "pltcl: Cache lookup for attribute '%s' type %u failed",
@@ -2274,6 +2287,7 @@ pltcl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
 
 		typoutput = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typoutput);
 		typelem = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typelem);
+		ReleaseSysCache(typeTup);
 
 		/************************************************************
 		 * If there is a value, set the variable
@@ -2332,9 +2346,9 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 		 * Lookup the attribute type in the syscache
 		 * for the output function
 		 ************************************************************/
-		typeTup = SearchSysCacheTuple(TYPEOID,
+		typeTup = SearchSysCache(TYPEOID,
 						   ObjectIdGetDatum(tupdesc->attrs[i]->atttypid),
-									  0, 0, 0);
+								 0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
 		{
 			elog(ERROR, "pltcl: Cache lookup for attribute '%s' type %u failed",
@@ -2343,6 +2357,7 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 
 		typoutput = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typoutput);
 		typelem = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typelem);
+		ReleaseSysCache(typeTup);
 
 		/************************************************************
 		 * If there is a value, append the attribute name and the

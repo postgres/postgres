@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.8 2000/10/16 17:08:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.9 2000/11/16 22:30:19 tgl Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -58,8 +58,7 @@ static void del_stats(Oid relid, int attcnt, int *attnums);
 void
 analyze_rel(Oid relid, List *anal_cols2, int MESSAGE_LEVEL)
 {
-	HeapTuple	tuple,
-				typetuple;
+	HeapTuple	tuple;
 	Relation	onerel;
 	int32		i;
 	int			attr_cnt,
@@ -81,20 +80,26 @@ analyze_rel(Oid relid, List *anal_cols2, int MESSAGE_LEVEL)
 	 * Race condition -- if the pg_class tuple has gone away since the
 	 * last time we saw it, we don't need to vacuum it.
 	 */
-	tuple = SearchSysCacheTuple(RELOID,
-								ObjectIdGetDatum(relid),
-								0, 0, 0);
-	/*
-	 * We can VACUUM ANALYZE any table except pg_statistic.
-	 * see update_relstats
-	 */
-	if (!HeapTupleIsValid(tuple) ||
-		strcmp(NameStr(((Form_pg_class) GETSTRUCT(tuple))->relname),
-				StatisticRelationName) == 0)
+	tuple = SearchSysCache(RELOID,
+						   ObjectIdGetDatum(relid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
 	{
 		CommitTransactionCommand();
 		return;
 	}
+	/*
+	 * We can VACUUM ANALYZE any table except pg_statistic.
+	 * see update_relstats
+	 */
+	if (strcmp(NameStr(((Form_pg_class) GETSTRUCT(tuple))->relname),
+			   StatisticRelationName) == 0)
+	{
+		ReleaseSysCache(tuple);
+		CommitTransactionCommand();
+		return;
+	}
+	ReleaseSysCache(tuple);
 
 	onerel = heap_open(relid, AccessShareLock);
 
@@ -168,6 +173,7 @@ analyze_rel(Oid relid, List *anal_cols2, int MESSAGE_LEVEL)
 		{
 			pgopform = (Form_pg_operator) GETSTRUCT(func_operator);
 			fmgr_info(pgopform->oprcode, &(stats->f_cmpeq));
+			ReleaseSysCache(func_operator);
 		}
 		else
 			stats->f_cmpeq.fn_addr = NULL;
@@ -178,6 +184,7 @@ analyze_rel(Oid relid, List *anal_cols2, int MESSAGE_LEVEL)
 			pgopform = (Form_pg_operator) GETSTRUCT(func_operator);
 			fmgr_info(pgopform->oprcode, &(stats->f_cmplt));
 			stats->op_cmplt = oprid(func_operator);
+			ReleaseSysCache(func_operator);
 		}
 		else
 		{
@@ -190,17 +197,19 @@ analyze_rel(Oid relid, List *anal_cols2, int MESSAGE_LEVEL)
 		{
 			pgopform = (Form_pg_operator) GETSTRUCT(func_operator);
 			fmgr_info(pgopform->oprcode, &(stats->f_cmpgt));
+			ReleaseSysCache(func_operator);
 		}
 		else
 			stats->f_cmpgt.fn_addr = NULL;
 
-		typetuple = SearchSysCacheTuple(TYPEOID,
-							 ObjectIdGetDatum(stats->attr->atttypid),
-										0, 0, 0);
-		if (HeapTupleIsValid(typetuple))
+		tuple = SearchSysCache(TYPEOID,
+							   ObjectIdGetDatum(stats->attr->atttypid),
+							   0, 0, 0);
+		if (HeapTupleIsValid(tuple))
 		{
-			stats->outfunc = ((Form_pg_type) GETSTRUCT(typetuple))->typoutput;
-			stats->typelem = ((Form_pg_type) GETSTRUCT(typetuple))->typelem;
+			stats->outfunc = ((Form_pg_type) GETSTRUCT(tuple))->typoutput;
+			stats->typelem = ((Form_pg_type) GETSTRUCT(tuple))->typelem;
+			ReleaseSysCache(tuple);
 		}
 		else
 		{

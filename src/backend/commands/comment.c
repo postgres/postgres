@@ -276,7 +276,6 @@ DeleteComments(Oid oid)
 static void
 CommentRelation(int reltype, char *relname, char *comment)
 {
-
 	HeapTuple	reltuple;
 	Oid			oid;
 	char		relkind;
@@ -288,16 +287,19 @@ CommentRelation(int reltype, char *relname, char *comment)
 
 	/*** Now, attempt to find the oid in the cached version of pg_class ***/
 
-	reltuple = SearchSysCacheTuple(RELNAME, PointerGetDatum(relname),
-								   0, 0, 0);
+	reltuple = SearchSysCache(RELNAME,
+							  PointerGetDatum(relname),
+							  0, 0, 0);
 	if (!HeapTupleIsValid(reltuple))
 		elog(ERROR, "relation '%s' does not exist", relname);
 
 	oid = reltuple->t_data->t_oid;
 
-	/*** Next, verify that the relation type matches the intent ***/
-
 	relkind = ((Form_pg_class) GETSTRUCT(reltuple))->relkind;
+
+	ReleaseSysCache(reltuple);
+
+	/*** Next, verify that the relation type matches the intent ***/
 
 	switch (reltype)
 	{
@@ -322,7 +324,6 @@ CommentRelation(int reltype, char *relname, char *comment)
 	/*** Create the comments using the tuple's oid ***/
 
 	CreateComments(oid, comment);
-
 }
 
 /*------------------------------------------------------------------
@@ -340,9 +341,7 @@ CommentRelation(int reltype, char *relname, char *comment)
 static void
 CommentAttribute(char *relname, char *attrname, char *comment)
 {
-
 	Relation	relation;
-	HeapTuple	attrtuple;
 	Oid			oid;
 
 	/*** First, check object security ***/
@@ -350,15 +349,19 @@ CommentAttribute(char *relname, char *attrname, char *comment)
 	if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 		elog(ERROR, "you are not permitted to comment on class '%s\'", relname);
 
-	/*** Now, fetch the attribute oid from the system cache ***/
+	/* Open the containing relation to ensure it won't go away meanwhile */
 
 	relation = heap_openr(relname, AccessShareLock);
-	attrtuple = SearchSysCacheTuple(ATTNAME, ObjectIdGetDatum(relation->rd_id),
-									PointerGetDatum(attrname), 0, 0);
-	if (!HeapTupleIsValid(attrtuple))
+
+	/*** Now, fetch the attribute oid from the system cache ***/
+
+	oid = GetSysCacheOid(ATTNAME,
+						 ObjectIdGetDatum(relation->rd_id),
+						 PointerGetDatum(attrname),
+						 0, 0);
+	if (!OidIsValid(oid))
 		elog(ERROR, "'%s' is not an attribute of class '%s'",
 			 attrname, relname);
-	oid = attrtuple->t_data->t_oid;
 
 	/*** Call CreateComments() to create/drop the comments ***/
 
@@ -412,11 +415,13 @@ CommentDatabase(char *database, char *comment)
 	/*** Now, fetch user information ***/
 
 	userid = GetUserId();
-	usertuple = SearchSysCacheTuple(SHADOWSYSID, ObjectIdGetDatum(userid),
-									0, 0, 0);
+	usertuple = SearchSysCache(SHADOWSYSID,
+							   ObjectIdGetDatum(userid),
+							   0, 0, 0);
 	if (!HeapTupleIsValid(usertuple))
 		elog(ERROR, "invalid user id %u", (unsigned) userid);
 	superuser = ((Form_pg_shadow) GETSTRUCT(usertuple))->usesuper;
+	ReleaseSysCache(usertuple);
 
 	/*** Allow if the userid matches the database dba or is a superuser ***/
 
@@ -452,8 +457,6 @@ CommentDatabase(char *database, char *comment)
 static void
 CommentRewrite(char *rule, char *comment)
 {
-
-	HeapTuple	rewritetuple;
 	Oid			oid;
 	char	   *relation;
 	int			aclcheck;
@@ -472,17 +475,15 @@ CommentRewrite(char *rule, char *comment)
 
 	/*** Next, find the rule's oid ***/
 
-	rewritetuple = SearchSysCacheTuple(RULENAME, PointerGetDatum(rule),
-									   0, 0, 0);
-	if (!HeapTupleIsValid(rewritetuple))
+	oid = GetSysCacheOid(RULENAME,
+						 PointerGetDatum(rule),
+						 0, 0, 0);
+	if (!OidIsValid(oid))
 		elog(ERROR, "rule '%s' does not exist", rule);
-
-	oid = rewritetuple->t_data->t_oid;
 
 	/*** Call CreateComments() to create/drop the comments ***/
 
 	CreateComments(oid, comment);
-
 }
 
 /*------------------------------------------------------------------
@@ -499,8 +500,6 @@ CommentRewrite(char *rule, char *comment)
 static void
 CommentType(char *type, char *comment)
 {
-
-	HeapTuple	typetuple;
 	Oid			oid;
 
 	/*** First, validate user ***/
@@ -515,17 +514,15 @@ CommentType(char *type, char *comment)
 
 	/*** Next, find the type's oid ***/
 
-	typetuple = SearchSysCacheTuple(TYPENAME, PointerGetDatum(type),
-									0, 0, 0);
-	if (!HeapTupleIsValid(typetuple))
+	oid = GetSysCacheOid(TYPENAME,
+						 PointerGetDatum(type),
+						 0, 0, 0);
+	if (!OidIsValid(oid))
 		elog(ERROR, "type '%s' does not exist", type);
-
-	oid = typetuple->t_data->t_oid;
 
 	/*** Call CreateComments() to create/drop the comments ***/
 
 	CreateComments(oid, comment);
-
 }
 
 /*------------------------------------------------------------------
@@ -543,7 +540,6 @@ CommentAggregate(char *aggregate, List *arguments, char *comment)
 {
 	TypeName   *aggtype = (TypeName *) lfirst(arguments);
 	char	   *aggtypename = NULL;
-	HeapTuple	aggtuple;
 	Oid			baseoid,
 				oid;
 	bool		defined;
@@ -580,9 +576,11 @@ CommentAggregate(char *aggregate, List *arguments, char *comment)
 
 	/*** Now, attempt to find the actual tuple in pg_aggregate ***/
 
-	aggtuple = SearchSysCacheTuple(AGGNAME, PointerGetDatum(aggregate),
-								   ObjectIdGetDatum(baseoid), 0, 0);
-	if (!HeapTupleIsValid(aggtuple))
+	oid = GetSysCacheOid(AGGNAME,
+						 PointerGetDatum(aggregate),
+						 ObjectIdGetDatum(baseoid),
+						 0, 0);
+	if (!OidIsValid(oid))
 	{
 		if (aggtypename)
 		{
@@ -593,12 +591,9 @@ CommentAggregate(char *aggregate, List *arguments, char *comment)
 			elog(ERROR, "aggregate '%s' does not exist", aggregate);
 	}
 
-	oid = aggtuple->t_data->t_oid;
-
 	/*** Call CreateComments() to create/drop the comments ***/
 
 	CreateComments(oid, comment);
-
 }
 
 /*------------------------------------------------------------------
@@ -615,8 +610,6 @@ CommentAggregate(char *aggregate, List *arguments, char *comment)
 static void
 CommentProc(char *function, List *arguments, char *comment)
 {
-	HeapTuple	argtuple,
-				functuple;
 	Oid			oid,
 				argoids[FUNC_MAX_ARGS];
 	int			i,
@@ -640,12 +633,11 @@ CommentProc(char *function, List *arguments, char *comment)
 			argoids[i] = InvalidOid;
 		else
 		{
-			argtuple = SearchSysCacheTuple(TYPENAME,
-										   PointerGetDatum(typnam),
-										   0, 0, 0);
-			if (!HeapTupleIsValid(argtuple))
+			argoids[i] = GetSysCacheOid(TYPENAME,
+										PointerGetDatum(typnam),
+										0, 0, 0);
+			if (!OidIsValid(argoids[i]))
 				elog(ERROR, "CommentProc: type '%s' not found", typnam);
-			argoids[i] = argtuple->t_data->t_oid;
 		}
 	}
 
@@ -659,13 +651,13 @@ CommentProc(char *function, List *arguments, char *comment)
 
 	/*** Now, find the corresponding oid for this procedure ***/
 
-	functuple = SearchSysCacheTuple(PROCNAME, PointerGetDatum(function),
-									Int32GetDatum(argcount),
-									PointerGetDatum(argoids), 0);
-	if (!HeapTupleIsValid(functuple))
+	oid = GetSysCacheOid(PROCNAME,
+						 PointerGetDatum(function),
+						 Int32GetDatum(argcount),
+						 PointerGetDatum(argoids),
+						 0);
+	if (!OidIsValid(oid))
 		func_error("CommentProc", function, argcount, argoids, NULL);
-
-	oid = functuple->t_data->t_oid;
 
 	/*** Call CreateComments() to create/drop the comments ***/
 
@@ -738,10 +730,11 @@ CommentOperator(char *opername, List *arguments, char *comment)
 
 	/*** Attempt to fetch the operator oid ***/
 
-	optuple = SearchSysCacheTupleCopy(OPERNAME, PointerGetDatum(opername),
-									  ObjectIdGetDatum(leftoid),
-									  ObjectIdGetDatum(rightoid),
-									  CharGetDatum(oprtype));
+	optuple = SearchSysCache(OPERNAME,
+							 PointerGetDatum(opername),
+							 ObjectIdGetDatum(leftoid),
+							 ObjectIdGetDatum(rightoid),
+							 CharGetDatum(oprtype));
 	if (!HeapTupleIsValid(optuple))
 		elog(ERROR, "operator '%s' does not exist", opername);
 
@@ -763,6 +756,8 @@ CommentOperator(char *opername, List *arguments, char *comment)
 	oid = RegprocToOid(data->oprcode);
 	if (oid == InvalidOid)
 		elog(ERROR, "operator '%s' does not have an underlying function", opername);
+
+	ReleaseSysCache(optuple);
 
 	/*** Call CreateComments() to create/drop the comments ***/
 

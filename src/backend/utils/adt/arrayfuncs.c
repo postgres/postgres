@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.65 2000/11/14 23:28:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.66 2000/11/16 22:30:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1590,9 +1590,9 @@ system_cache_lookup(Oid element_type,
 	HeapTuple	typeTuple;
 	Form_pg_type typeStruct;
 
-	typeTuple = SearchSysCacheTuple(TYPEOID,
-									ObjectIdGetDatum(element_type),
-									0, 0, 0);
+	typeTuple = SearchSysCache(TYPEOID,
+							   ObjectIdGetDatum(element_type),
+							   0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
 		elog(ERROR, "array_out: Cache lookup failed for type %u",
 			 element_type);
@@ -1607,6 +1607,7 @@ system_cache_lookup(Oid element_type,
 		*proc = typeStruct->typinput;
 	else
 		*proc = typeStruct->typoutput;
+	ReleaseSysCache(typeTuple);
 }
 
 /*

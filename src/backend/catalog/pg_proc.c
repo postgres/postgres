@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.49 2000/10/07 00:58:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.50 2000/11/16 22:30:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,7 @@ ProcedureCreate(char *procedureName,
 	Oid			toid;
 	NameData	procname;
 	TupleDesc	tupDesc;
-	Oid		retval;
+	Oid			retval;
 
 	/* ----------------
 	 *	sanity checks
@@ -80,14 +80,11 @@ ProcedureCreate(char *procedureName,
 	Assert(PointerIsValid(prosrc));
 	Assert(PointerIsValid(probin));
 
-	tup = SearchSysCacheTuple(LANGNAME,
-							  PointerGetDatum(languageName),
-							  0, 0, 0);
-
-	if (!HeapTupleIsValid(tup))
+	languageObjectId = GetSysCacheOid(LANGNAME,
+									  PointerGetDatum(languageName),
+									  0, 0, 0);
+	if (!OidIsValid(languageObjectId))
 		elog(ERROR, "ProcedureCreate: no such language '%s'", languageName);
-
-	languageObjectId = tup->t_data->t_oid;
 
 	parameterCount = 0;
 	MemSet(typev, 0, FUNC_MAX_ARGS * sizeof(Oid));
@@ -124,13 +121,12 @@ ProcedureCreate(char *procedureName,
 		typev[parameterCount++] = toid;
 	}
 
-	tup = SearchSysCacheTuple(PROCNAME,
-							  PointerGetDatum(procedureName),
-							  UInt16GetDatum(parameterCount),
-							  PointerGetDatum(typev),
-							  0);
-
-	if (HeapTupleIsValid(tup))
+	/* Check for duplicate definition */
+	if (SearchSysCacheExists(PROCNAME,
+							 PointerGetDatum(procedureName),
+							 UInt16GetDatum(parameterCount),
+							 PointerGetDatum(typev),
+							 0))
 		elog(ERROR, "ProcedureCreate: procedure %s already exists with same arguments",
 			 procedureName);
 
@@ -161,12 +157,12 @@ ProcedureCreate(char *procedureName,
 
 			prosrctext = DatumGetTextP(DirectFunctionCall1(textin,
 													CStringGetDatum(prosrc)));
-			tup = SearchSysCacheTuple(PROSRC,
-									  PointerGetDatum(prosrctext),
-									  0, 0, 0);
+			retval = GetSysCacheOid(PROSRC,
+									PointerGetDatum(prosrctext),
+									0, 0, 0);
 			pfree(prosrctext);
-			if (HeapTupleIsValid(tup))
-				return tup->t_data->t_oid;
+			if (OidIsValid(retval))
+				return retval;
 #else
 			elog(ERROR, "lookup for procedure by source needs fix (Jan)");
 #endif	 /* SETS_FIXED */
@@ -351,7 +347,7 @@ checkretval(Oid rettype, List *queryTreeList)
 	List	   *tlist;
 	List	   *tlistitem;
 	int			tlistlen;
-	Type		typ;
+	Oid			typerelid;
 	Resdom	   *resnode;
 	Relation	reln;
 	Oid			relid;
@@ -375,11 +371,9 @@ checkretval(Oid rettype, List *queryTreeList)
 	}
 
 	/* by here, the function is declared to return some type */
-	if ((typ = typeidType(rettype)) == NULL)
-		elog(ERROR, "can't find return type %u for function", rettype);
-
 	if (cmd != CMD_SELECT)
-		elog(ERROR, "function declared to return %s, but final query is not a SELECT", typeTypeName(typ));
+		elog(ERROR, "function declared to return %s, but final query is not a SELECT",
+			 typeidTypeName(rettype));
 
 	/*
 	 * Count the non-junk entries in the result targetlist.
@@ -390,14 +384,17 @@ checkretval(Oid rettype, List *queryTreeList)
 	 * For base-type returns, the target list should have exactly one entry,
 	 * and its type should agree with what the user declared.
 	 */
-	if (typeTypeRelid(typ) == InvalidOid)
+	typerelid = typeidTypeRelid(rettype);
+	if (typerelid == InvalidOid)
 	{
 		if (tlistlen != 1)
-			elog(ERROR, "function declared to return %s returns multiple columns in final SELECT", typeTypeName(typ));
+			elog(ERROR, "function declared to return %s returns multiple columns in final SELECT",
+				 typeidTypeName(rettype));
 
 		resnode = (Resdom *) ((TargetEntry *) lfirst(tlist))->resdom;
 		if (resnode->restype != rettype)
-			elog(ERROR, "return type mismatch in function: declared to return %s, returns %s", typeTypeName(typ), typeidTypeName(resnode->restype));
+			elog(ERROR, "return type mismatch in function: declared to return %s, returns %s",
+				 typeidTypeName(rettype), typeidTypeName(resnode->restype));
 
 		return;
 	}
@@ -422,12 +419,13 @@ checkretval(Oid rettype, List *queryTreeList)
 	 * declared return type, and be sure that attributes 1 .. n in the target
 	 * list match the declared types.
 	 */
-	reln = heap_open(typeTypeRelid(typ), AccessShareLock);
+	reln = heap_open(typerelid, AccessShareLock);
 	relid = reln->rd_id;
 	relnatts = reln->rd_rel->relnatts;
 
 	if (tlistlen != relnatts)
-		elog(ERROR, "function declared to return %s does not SELECT the right number of columns (%d)", typeTypeName(typ), relnatts);
+		elog(ERROR, "function declared to return %s does not SELECT the right number of columns (%d)",
+			 typeidTypeName(rettype), relnatts);
 
 	/* expect attributes 1 .. n in order */
 	i = 0;
@@ -441,7 +439,7 @@ checkretval(Oid rettype, List *queryTreeList)
 		tletype = exprType(tle->expr);
 		if (tletype != reln->rd_att->attrs[i]->atttypid)
 			elog(ERROR, "function declared to return %s returns %s instead of %s at column %d",
-				 typeTypeName(typ),
+				 typeidTypeName(rettype),
 				 typeidTypeName(tletype),
 				 typeidTypeName(reln->rd_att->attrs[i]->atttypid),
 				 i+1);
@@ -450,7 +448,8 @@ checkretval(Oid rettype, List *queryTreeList)
 
 	/* this shouldn't happen, but let's just check... */
 	if (i != relnatts)
-		elog(ERROR, "function declared to return %s does not SELECT the right number of columns (%d)", typeTypeName(typ), relnatts);
+		elog(ERROR, "function declared to return %s does not SELECT the right number of columns (%d)",
+			 typeidTypeName(rettype), relnatts);
 
 	heap_close(reln, AccessShareLock);
 }

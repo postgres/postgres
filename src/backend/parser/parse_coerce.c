@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.48 2000/11/09 04:14:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.49 2000/11/16 22:30:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,6 +84,8 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 			pfree(val);
 		}
 
+		ReleaseSysCache(targetType);
+
 		result = (Node *) newcon;
 	}
 	else if (IS_BINARY_COMPATIBLE(inputTypeId, targetTypeId))
@@ -124,9 +126,8 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		 * conversion function.
 		 */
 		FuncCall   *n = makeNode(FuncCall);
-		Type		targetType = typeidType(targetTypeId);
 
-		n->funcname = typeTypeName(targetType);
+		n->funcname = typeidTypeName(targetTypeId);
 		n->args = lcons(node, NIL);
 		n->agg_star = false;
 		n->agg_distinct = false;
@@ -136,7 +137,7 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		/* safety check that we got the right thing */
 		if (exprType(result) != targetTypeId)
 			elog(ERROR, "coerce_type: conversion function %s produced %s",
-				 typeTypeName(targetType),
+				 typeidTypeName(targetTypeId),
 				 typeidTypeName(exprType(result)));
 
 		/*
@@ -233,17 +234,21 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 		MemSet(oid_array, 0, FUNC_MAX_ARGS * sizeof(Oid));
 		oid_array[0] = inputTypeId;
 
-		ftup = SearchSysCacheTuple(PROCNAME,
-						   PointerGetDatum(typeidTypeName(targetTypeId)),
-								   Int32GetDatum(1),
-								   PointerGetDatum(oid_array),
-								   0);
+		ftup = SearchSysCache(PROCNAME,
+							  PointerGetDatum(typeidTypeName(targetTypeId)),
+							  Int32GetDatum(1),
+							  PointerGetDatum(oid_array),
+							  0);
 		if (!HeapTupleIsValid(ftup))
 			return false;
 		/* Make sure the function's result type is as expected, too */
 		pform = (Form_pg_proc) GETSTRUCT(ftup);
 		if (pform->prorettype != targetTypeId)
+		{
+			ReleaseSysCache(ftup);
 			return false;
+		}
+		ReleaseSysCache(ftup);
 	}
 
 	return true;
@@ -272,7 +277,6 @@ coerce_type_typmod(ParseState *pstate, Node *node,
 {
 	char	   *funcname;
 	Oid			oid_array[FUNC_MAX_ARGS];
-	HeapTuple	ftup;
 
 	/*
 	 * We assume that only typmod values greater than 0 indicate a forced
@@ -288,13 +292,11 @@ coerce_type_typmod(ParseState *pstate, Node *node,
 	oid_array[1] = INT4OID;
 
 	/* attempt to find with arguments exactly as specified... */
-	ftup = SearchSysCacheTuple(PROCNAME,
-							   PointerGetDatum(funcname),
-							   Int32GetDatum(2),
-							   PointerGetDatum(oid_array),
-							   0);
-
-	if (HeapTupleIsValid(ftup))
+	if (SearchSysCacheExists(PROCNAME,
+							 PointerGetDatum(funcname),
+							 Int32GetDatum(2),
+							 PointerGetDatum(oid_array),
+							 0))
 	{
 		A_Const    *cons = makeNode(A_Const);
 		FuncCall   *func = makeNode(FuncCall);

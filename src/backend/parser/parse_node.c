@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.48 2000/10/31 10:22:11 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.49 2000/11/16 22:30:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,6 @@ make_operand(char *opname,
 			 Oid target_typeId)
 {
 	Node	   *result;
-	Type		target_type = typeidType(target_typeId);
 
 	if (tree != NULL)
 	{
@@ -80,15 +79,7 @@ make_operand(char *opname,
 	else
 	{
 		/* otherwise, this is a NULL value */
-		Const	   *con = makeNode(Const);
-
-		con->consttype = target_typeId;
-		con->constlen = typeLen(target_type);
-		con->constvalue = (Datum) NULL;
-		con->constisnull = true;
-		con->constbyval = typeByVal(target_type);
-		con->constisset = false;
-		result = (Node *) con;
+		result = (Node *) makeNullConst(target_typeId);
 	}
 
 	return result;
@@ -137,7 +128,7 @@ make_op(char *opname, Node *ltree, Node *rtree)
 	/* otherwise, binary operator */
 	else
 	{
-		tup = oper(opname, ltypeId, rtypeId, FALSE);
+		tup = oper(opname, ltypeId, rtypeId, false);
 		opform = (Form_pg_operator) GETSTRUCT(tup);
 		left = make_operand(opname, ltree, ltypeId, opform->oprleft);
 		right = make_operand(opname, rtree, rtypeId, opform->oprright);
@@ -158,6 +149,8 @@ make_op(char *opname, Node *ltree, Node *rtree)
 		result->args = makeList1(left);
 	else
 		result->args = makeList2(left, right);
+
+	ReleaseSysCache(tup);
 
 	return result;
 }	/* make_op() */
@@ -183,10 +176,10 @@ make_var(ParseState *pstate, RangeTblEntry *rte, int attrno)
 		HeapTuple	tp;
 		Form_pg_attribute att_tup;
 
-		tp = SearchSysCacheTuple(ATTNUM,
-								 ObjectIdGetDatum(rte->relid),
-								 Int16GetDatum(attrno),
-								 0, 0);
+		tp = SearchSysCache(ATTNUM,
+							ObjectIdGetDatum(rte->relid),
+							Int16GetDatum(attrno),
+							0, 0);
 		/* this shouldn't happen... */
 		if (!HeapTupleIsValid(tp))
 			elog(ERROR, "Relation %s does not have attribute %d",
@@ -194,6 +187,7 @@ make_var(ParseState *pstate, RangeTblEntry *rte, int attrno)
 		att_tup = (Form_pg_attribute) GETSTRUCT(tp);
 		vartypeid = att_tup->atttypid;
 		type_mod = att_tup->atttypmod;
+		ReleaseSysCache(tp);
 	}
 	else
 	{
@@ -249,7 +243,8 @@ transformArraySubscripts(ParseState *pstate,
 	Oid			typearray,
 				typeelement,
 				typeresult;
-	HeapTuple	type_tuple;
+	HeapTuple	type_tuple_array,
+				type_tuple_element;
 	Form_pg_type type_struct_array,
 				type_struct_element;
 	bool		isSlice = forceSlice;
@@ -261,13 +256,13 @@ transformArraySubscripts(ParseState *pstate,
 	/* Get the type tuple for the array */
 	typearray = exprType(arrayBase);
 
-	type_tuple = SearchSysCacheTuple(TYPEOID,
-									 ObjectIdGetDatum(typearray),
-									 0, 0, 0);
-	if (!HeapTupleIsValid(type_tuple))
+	type_tuple_array = SearchSysCache(TYPEOID,
+									  ObjectIdGetDatum(typearray),
+									  0, 0, 0);
+	if (!HeapTupleIsValid(type_tuple_array))
 		elog(ERROR, "transformArraySubscripts: Cache lookup failed for array type %u",
 			 typearray);
-	type_struct_array = (Form_pg_type) GETSTRUCT(type_tuple);
+	type_struct_array = (Form_pg_type) GETSTRUCT(type_tuple_array);
 
 	typeelement = type_struct_array->typelem;
 	if (typeelement == InvalidOid)
@@ -275,13 +270,13 @@ transformArraySubscripts(ParseState *pstate,
 			 NameStr(type_struct_array->typname));
 
 	/* Get the type tuple for the array element type */
-	type_tuple = SearchSysCacheTuple(TYPEOID,
-									 ObjectIdGetDatum(typeelement),
-									 0, 0, 0);
-	if (!HeapTupleIsValid(type_tuple))
+	type_tuple_element = SearchSysCache(TYPEOID,
+										ObjectIdGetDatum(typeelement),
+										0, 0, 0);
+	if (!HeapTupleIsValid(type_tuple_element))
 		elog(ERROR, "transformArraySubscripts: Cache lookup failed for array element type %u",
 			 typeelement);
-	type_struct_element = (Form_pg_type) GETSTRUCT(type_tuple);
+	type_struct_element = (Form_pg_type) GETSTRUCT(type_tuple_element);
 
 	/*
 	 * A list containing only single subscripts refers to a single array
@@ -397,6 +392,9 @@ transformArraySubscripts(ParseState *pstate,
 	aref->reflowerindexpr = lowerIndexpr;
 	aref->refexpr = arrayBase;
 	aref->refassgnexpr = assignFrom;
+
+	ReleaseSysCache(type_tuple_array);
+	ReleaseSysCache(type_tuple_element);
 
 	return aref;
 }

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.133 2000/11/16 05:51:00 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.134 2000/11/16 22:30:23 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1236,8 +1236,8 @@ _outJoinInfo(StringInfo str, JoinInfo *node)
 static void
 _outDatum(StringInfo str, Datum value, Oid type)
 {
+	int16		typeLength;
 	bool		byValue;
-	int			typeLength;
 	Size		length;
 	char	   *s;
 	int			i;
@@ -1246,8 +1246,7 @@ _outDatum(StringInfo str, Datum value, Oid type)
 	 * find some information about the type and the "real" length of the
 	 * datum.
 	 */
-	byValue = get_typbyval(type);
-	typeLength = get_typlen(type);
+	get_typlenbyval(type, &typeLength, &byValue);
 	length = datumGetSize(value, byValue, typeLength);
 
 	if (byValue)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.58 2000/07/09 21:30:12 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.59 2000/11/16 22:30:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,13 +55,12 @@ regprocin(PG_FUNCTION_ARGS)
 		if (pro_name_or_oid[0] >= '0' &&
 			pro_name_or_oid[0] <= '9')
 		{
-			proctup = SearchSysCacheTuple(PROCOID,
-										  DirectFunctionCall1(oidin,
+			result = (RegProcedure)
+				GetSysCacheOid(PROCOID,
+							   DirectFunctionCall1(oidin,
 											CStringGetDatum(pro_name_or_oid)),
-										  0, 0, 0);
-			if (HeapTupleIsValid(proctup))
-				result = (RegProcedure) proctup->t_data->t_oid;
-			else
+							   0, 0, 0);
+			if (!RegProcedureIsValid(result))
 				elog(ERROR, "No procedure with oid %s", pro_name_or_oid);
 		}
 		else
@@ -176,9 +175,9 @@ regprocout(PG_FUNCTION_ARGS)
 
 	if (!IsBootstrapProcessingMode())
 	{
-		proctup = SearchSysCacheTuple(PROCOID,
-									  ObjectIdGetDatum(proid),
-									  0, 0, 0);
+		proctup = SearchSysCache(PROCOID,
+								 ObjectIdGetDatum(proid),
+								 0, 0, 0);
 
 		if (HeapTupleIsValid(proctup))
 		{
@@ -186,6 +185,7 @@ regprocout(PG_FUNCTION_ARGS)
 
 			s = NameStr(((Form_pg_proc) GETSTRUCT(proctup))->proname);
 			StrNCpy(result, s, NAMEDATALEN);
+			ReleaseSysCache(proctup);
 		}
 		else
 		{

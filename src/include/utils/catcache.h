@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.27 2000/11/10 00:33:12 tgl Exp $
+ * $Id: catcache.h,v 1.28 2000/11/16 22:30:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,18 +32,29 @@
 
 typedef struct catctup
 {
-	HeapTuple	ct_tup;			/* A pointer to a tuple */
+	int			ct_magic;		/* for Assert checks */
+#define CT_MAGIC   0x57261502
+
 	/*
-	 * Each tuple in the cache has two catctup items, one in the LRU list
-	 * and one in the hashbucket list for its hash value.  ct_node in each
-	 * one points to the other one.
+	 * Each tuple in a cache is a member of two lists: one lists all the
+	 * elements in that cache in LRU order, and the other lists just the
+	 * elements in one hashbucket, also in LRU order.
+	 *
+	 * A tuple marked "dead" must not be returned by subsequent searches.
+	 * However, it won't be physically deleted from the cache until its
+	 * refcount goes to zero.
 	 */
-	Dlelem	   *ct_node;		/* the other catctup for this tuple */
+	Dlelem		lrulist_elem;	/* list member of global LRU list */
+	Dlelem		cache_elem;		/* list member of per-bucket list */
+	int			refcount;		/* number of active references */
+	bool		dead;			/* dead but not yet removed? */
+	HeapTupleData tuple;		/* tuple management header */
 } CatCTup;
+
 
 /* voodoo constants */
 #define NCCBUCK 500				/* CatCache buckets */
-#define MAXTUP 300				/* Maximum # of tuples stored per cache */
+#define MAXTUP 500				/* Maximum # of tuples stored per cache */
 
 
 typedef struct catcache
@@ -60,8 +71,8 @@ typedef struct catcache
 	short		cc_key[4];		/* AttrNumber of each key */
 	PGFunction	cc_hashfunc[4]; /* hash function to use for each key */
 	ScanKeyData cc_skey[4];		/* precomputed key info for indexscans */
-	Dllist	   *cc_lrulist;		/* LRU list, most recent first */
-	Dllist	   *cc_cache[NCCBUCK + 1];	/* hash buckets */
+	Dllist		cc_lrulist;		/* overall LRU list, most recent first */
+	Dllist		cc_cache[NCCBUCK]; /* hash buckets */
 } CatCache;
 
 #define InvalidCatalogCacheId	(-1)
@@ -70,12 +81,15 @@ typedef struct catcache
 extern MemoryContext CacheMemoryContext;
 
 extern void CreateCacheMemoryContext(void);
+extern void AtEOXact_CatCache(bool isCommit);
 
-extern CatCache *InitSysCache(int id, char *relname, char *indname,
+extern CatCache *InitCatCache(int id, char *relname, char *indname,
 							  int nkeys, int *key);
-extern HeapTuple SearchSysCache(CatCache *cache,
+
+extern HeapTuple SearchCatCache(CatCache *cache,
 								Datum v1, Datum v2,
 								Datum v3, Datum v4);
+extern void ReleaseCatCache(HeapTuple tuple);
 
 extern void ResetSystemCache(void);
 extern void SystemCacheRelationFlushed(Oid relId);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.43 2000/11/11 19:49:26 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.44 2000/11/16 22:30:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,25 +38,21 @@ static void op_error(char *op, Oid arg1, Oid arg2);
 static void unary_op_error(char *op, Oid arg, bool is_left_op);
 
 
+/* Select an ordering operator for the given datatype */
 Oid
 any_ordering_op(Oid restype)
 {
-	Operator	order_op;
 	Oid			order_opid;
 
-	order_op = oper("<", restype, restype, TRUE);
-	if (!HeapTupleIsValid(order_op))
-	{
+	order_opid = oper_oid("<", restype, restype, true);
+	if (!OidIsValid(order_opid))
 		elog(ERROR, "Unable to identify an ordering operator '%s' for type '%s'"
 			 "\n\tUse an explicit ordering operator or modify the query",
 			 "<", typeidTypeName(restype));
-	}
-	order_opid = oprid(order_op);
-
 	return order_opid;
 }
 
-/* given operator, return the operator OID */
+/* given operator tuple, return the operator OID */
 Oid
 oprid(Operator op)
 {
@@ -502,9 +498,10 @@ oper_select_candidate(int nargs,
 
 
 /* oper_exact()
- * Given operator, and arguments, return oper struct or NULL.
- * Inputs:
- * arg1, arg2: Type IDs
+ * Given operator, types of arg1 and arg2, return oper struct or NULL.
+ *
+ * NOTE: on success, the returned object is a syscache entry.  The caller
+ * must ReleaseSysCache() the entry when done with it.
  */
 static Operator
 oper_exact(char *op, Oid arg1, Oid arg2)
@@ -517,20 +514,21 @@ oper_exact(char *op, Oid arg1, Oid arg2)
 	else if ((arg2 == UNKNOWNOID) && (arg1 != InvalidOid))
 		arg2 = arg1;
 
-	tup = SearchSysCacheTuple(OPERNAME,
-							  PointerGetDatum(op),
-							  ObjectIdGetDatum(arg1),
-							  ObjectIdGetDatum(arg2),
-							  CharGetDatum('b'));
+	tup = SearchSysCache(OPERNAME,
+						 PointerGetDatum(op),
+						 ObjectIdGetDatum(arg1),
+						 ObjectIdGetDatum(arg2),
+						 CharGetDatum('b'));
 
 	return (Operator) tup;
-}	/* oper_exact() */
+}
 
 
 /* oper_inexact()
- * Given operator, types of arg1, and arg2, return oper struct or NULL.
- * Inputs:
- * arg1, arg2: Type IDs
+ * Given operator, types of arg1 and arg2, return oper struct or NULL.
+ *
+ * NOTE: on success, the returned object is a syscache entry.  The caller
+ * must ReleaseSysCache() the entry when done with it.
  */
 static Operator
 oper_inexact(char *op, Oid arg1, Oid arg2)
@@ -556,11 +554,11 @@ oper_inexact(char *op, Oid arg1, Oid arg2)
 	/* Or found exactly one? Then proceed... */
 	else if (ncandidates == 1)
 	{
-		tup = SearchSysCacheTuple(OPERNAME,
-								  PointerGetDatum(op),
-								  ObjectIdGetDatum(candidates->args[0]),
-								  ObjectIdGetDatum(candidates->args[1]),
-								  CharGetDatum('b'));
+		tup = SearchSysCache(OPERNAME,
+							 PointerGetDatum(op),
+							 ObjectIdGetDatum(candidates->args[0]),
+							 ObjectIdGetDatum(candidates->args[1]),
+							 CharGetDatum('b'));
 		Assert(HeapTupleIsValid(tup));
 	}
 
@@ -572,43 +570,68 @@ oper_inexact(char *op, Oid arg1, Oid arg2)
 		targetOids = oper_select_candidate(2, inputOids, candidates);
 		if (targetOids != NULL)
 		{
-			tup = SearchSysCacheTuple(OPERNAME,
-									  PointerGetDatum(op),
-									  ObjectIdGetDatum(targetOids[0]),
-									  ObjectIdGetDatum(targetOids[1]),
-									  CharGetDatum('b'));
+			tup = SearchSysCache(OPERNAME,
+								 PointerGetDatum(op),
+								 ObjectIdGetDatum(targetOids[0]),
+								 ObjectIdGetDatum(targetOids[1]),
+								 CharGetDatum('b'));
 		}
 		else
 			tup = NULL;
 	}
 	return (Operator) tup;
-}	/* oper_inexact() */
+}
 
 
-/* oper()
- * Given operator, types of arg1, and arg2, return oper struct.
- * Inputs:
- * arg1, arg2: Type IDs
+/* oper() -- search for a binary operator
+ * Given operator name, types of arg1 and arg2, return oper struct.
+ *
+ * If no matching operator found, return NULL if noError is true,
+ * raise an error if it is false.
+ *
+ * NOTE: on success, the returned object is a syscache entry.  The caller
+ * must ReleaseSysCache() the entry when done with it.
  */
 Operator
-oper(char *opname, Oid ltypeId, Oid rtypeId, bool noWarnings)
+oper(char *opname, Oid ltypeId, Oid rtypeId, bool noError)
 {
 	HeapTuple	tup;
 
 	/* check for exact match on this operator... */
 	if (HeapTupleIsValid(tup = oper_exact(opname, ltypeId, rtypeId)))
-	{
-	}
+		return (Operator) tup;
+
 	/* try to find a match on likely candidates... */
-	else if (HeapTupleIsValid(tup = oper_inexact(opname, ltypeId, rtypeId)))
-	{
-	}
-	else if (!noWarnings)
+	if (HeapTupleIsValid(tup = oper_inexact(opname, ltypeId, rtypeId)))
+		return (Operator) tup;
+
+	if (!noError)
 		op_error(opname, ltypeId, rtypeId);
 
-	return (Operator) tup;
-}	/* oper() */
+	return (Operator) NULL;
+}
 
+/* oper_oid() -- get OID of a binary operator
+ *
+ * This is a convenience routine that extracts only the operator OID
+ * from the result of oper().  InvalidOid is returned if the lookup
+ * fails and noError is true.
+ */
+Oid
+oper_oid(char *op, Oid arg1, Oid arg2, bool noError)
+{
+	Operator	optup;
+	Oid			result;
+
+	optup = oper(op, arg1, arg2, noError);
+	if (optup != NULL)
+	{
+		result = oprid(optup);
+		ReleaseSysCache(optup);
+		return result;
+	}
+	return InvalidOid;
+}
 
 /* unary_oper_get_candidates()
  *	given opname, find all possible types for which
@@ -671,8 +694,13 @@ unary_oper_get_candidates(char *opname,
 }	/* unary_oper_get_candidates() */
 
 
-/* Given unary right-side operator (operator on right), return oper struct */
-/* arg-- type id */
+/* Given unary right operator (operator on right), return oper struct
+ *
+ * Always raises error on failure.
+ *
+ * NOTE: on success, the returned object is a syscache entry.  The caller
+ * must ReleaseSysCache() the entry when done with it.
+ */
 Operator
 right_oper(char *op, Oid arg)
 {
@@ -682,11 +710,11 @@ right_oper(char *op, Oid arg)
 	Oid		   *targetOid;
 
 	/* Try for exact match */
-	tup = SearchSysCacheTuple(OPERNAME,
-							  PointerGetDatum(op),
-							  ObjectIdGetDatum(arg),
-							  ObjectIdGetDatum(InvalidOid),
-							  CharGetDatum('r'));
+	tup = SearchSysCache(OPERNAME,
+						 PointerGetDatum(op),
+						 ObjectIdGetDatum(arg),
+						 ObjectIdGetDatum(InvalidOid),
+						 CharGetDatum('r'));
 
 	if (!HeapTupleIsValid(tup))
 	{
@@ -696,21 +724,21 @@ right_oper(char *op, Oid arg)
 			unary_op_error(op, arg, FALSE);
 		else if (ncandidates == 1)
 		{
-			tup = SearchSysCacheTuple(OPERNAME,
-									  PointerGetDatum(op),
-								   ObjectIdGetDatum(candidates->args[0]),
-									  ObjectIdGetDatum(InvalidOid),
-									  CharGetDatum('r'));
+			tup = SearchSysCache(OPERNAME,
+								 PointerGetDatum(op),
+								 ObjectIdGetDatum(candidates->args[0]),
+								 ObjectIdGetDatum(InvalidOid),
+								 CharGetDatum('r'));
 		}
 		else
 		{
 			targetOid = oper_select_candidate(1, &arg, candidates);
 			if (targetOid != NULL)
-				tup = SearchSysCacheTuple(OPERNAME,
-										  PointerGetDatum(op),
-										  ObjectIdGetDatum(targetOid[0]),
-										  ObjectIdGetDatum(InvalidOid),
-										  CharGetDatum('r'));
+				tup = SearchSysCache(OPERNAME,
+									 PointerGetDatum(op),
+									 ObjectIdGetDatum(targetOid[0]),
+									 ObjectIdGetDatum(InvalidOid),
+									 CharGetDatum('r'));
 		}
 
 		if (!HeapTupleIsValid(tup))
@@ -721,8 +749,13 @@ right_oper(char *op, Oid arg)
 }	/* right_oper() */
 
 
-/* Given unary left-side operator (operator on left), return oper struct */
-/* arg--type id */
+/* Given unary left operator (operator on left), return oper struct
+ *
+ * Always raises error on failure.
+ *
+ * NOTE: on success, the returned object is a syscache entry.  The caller
+ * must ReleaseSysCache() the entry when done with it.
+ */
 Operator
 left_oper(char *op, Oid arg)
 {
@@ -732,11 +765,11 @@ left_oper(char *op, Oid arg)
 	Oid		   *targetOid;
 
 	/* Try for exact match */
-	tup = SearchSysCacheTuple(OPERNAME,
-							  PointerGetDatum(op),
-							  ObjectIdGetDatum(InvalidOid),
-							  ObjectIdGetDatum(arg),
-							  CharGetDatum('l'));
+	tup = SearchSysCache(OPERNAME,
+						 PointerGetDatum(op),
+						 ObjectIdGetDatum(InvalidOid),
+						 ObjectIdGetDatum(arg),
+						 CharGetDatum('l'));
 
 	if (!HeapTupleIsValid(tup))
 	{
@@ -746,21 +779,21 @@ left_oper(char *op, Oid arg)
 			unary_op_error(op, arg, TRUE);
 		else if (ncandidates == 1)
 		{
-			tup = SearchSysCacheTuple(OPERNAME,
-									  PointerGetDatum(op),
-									  ObjectIdGetDatum(InvalidOid),
-								   ObjectIdGetDatum(candidates->args[0]),
-									  CharGetDatum('l'));
+			tup = SearchSysCache(OPERNAME,
+								 PointerGetDatum(op),
+								 ObjectIdGetDatum(InvalidOid),
+								 ObjectIdGetDatum(candidates->args[0]),
+								 CharGetDatum('l'));
 		}
 		else
 		{
 			targetOid = oper_select_candidate(1, &arg, candidates);
 			if (targetOid != NULL)
-				tup = SearchSysCacheTuple(OPERNAME,
-										  PointerGetDatum(op),
-										  ObjectIdGetDatum(InvalidOid),
-										  ObjectIdGetDatum(targetOid[0]),
-										  CharGetDatum('l'));
+				tup = SearchSysCache(OPERNAME,
+									 PointerGetDatum(op),
+									 ObjectIdGetDatum(InvalidOid),
+									 ObjectIdGetDatum(targetOid[0]),
+									 CharGetDatum('l'));
 		}
 
 		if (!HeapTupleIsValid(tup))
@@ -778,24 +811,17 @@ left_oper(char *op, Oid arg)
 static void
 op_error(char *op, Oid arg1, Oid arg2)
 {
-	Type		tp1 = NULL,
-				tp2 = NULL;
-
-	if (typeidIsValid(arg1))
-		tp1 = typeidType(arg1);
-	else
+	if (!typeidIsValid(arg1))
 		elog(ERROR, "Left hand side of operator '%s' has an unknown type"
 			 "\n\tProbably a bad attribute name", op);
 
-	if (typeidIsValid(arg2))
-		tp2 = typeidType(arg2);
-	else
+	if (!typeidIsValid(arg2))
 		elog(ERROR, "Right hand side of operator %s has an unknown type"
 			 "\n\tProbably a bad attribute name", op);
 
 	elog(ERROR, "Unable to identify an operator '%s' for types '%s' and '%s'"
 		 "\n\tYou will have to retype this query using an explicit cast",
-		 op, typeTypeName(tp1), typeTypeName(tp2));
+		 op, typeidTypeName(arg1), typeidTypeName(arg2));
 }
 
 /* unary_op_error()
@@ -805,20 +831,14 @@ op_error(char *op, Oid arg1, Oid arg2)
 static void
 unary_op_error(char *op, Oid arg, bool is_left_op)
 {
-	Type		tp1 = NULL;
-
-	if (typeidIsValid(arg))
-		tp1 = typeidType(arg);
-	else
-	{
+	if (!typeidIsValid(arg))
 		elog(ERROR, "Argument of %s operator '%s' has an unknown type"
 			 "\n\tProbably a bad attribute name",
 			 (is_left_op ? "left" : "right"),
 			 op);
-	}
 
 	elog(ERROR, "Unable to identify a %s operator '%s' for type '%s'"
 		 "\n\tYou may need to add parentheses or an explicit cast",
 		 (is_left_op ? "left" : "right"),
-		 op, typeTypeName(tp1));
+		 op, typeidTypeName(arg));
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.70 2000/10/03 03:11:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.71 2000/11/16 22:30:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,9 +193,7 @@ void
 Async_Listen(char *relname, int pid)
 {
 	Relation	lRel;
-	TupleDesc	tdesc;
-	HeapTuple	tuple,
-				newtup;
+	HeapTuple	tuple;
 	Datum		values[Natts_pg_listener];
 	char		nulls[Natts_pg_listener];
 	int			i;
@@ -205,13 +203,12 @@ Async_Listen(char *relname, int pid)
 		elog(DEBUG, "Async_Listen: %s", relname);
 
 	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
-	tdesc = RelationGetDescr(lRel);
 
 	/* Detect whether we are already listening on this relname */
-	tuple = SearchSysCacheTuple(LISTENREL, Int32GetDatum(pid),
-								PointerGetDatum(relname),
-								0, 0);
-	if (tuple != NULL)
+	if (SearchSysCacheExists(LISTENREL,
+							 Int32GetDatum(pid),
+							 PointerGetDatum(relname),
+							 0, 0))
 	{
 		/* No need to scan the rest of the table */
 		heap_close(lRel, AccessExclusiveLock);
@@ -235,18 +232,18 @@ Async_Listen(char *relname, int pid)
 	values[i++] = (Datum) 0;	/* no notifies pending */
 
 	tupDesc = lRel->rd_att;
-	newtup = heap_formtuple(tupDesc, values, nulls);
-	heap_insert(lRel, newtup);
+	tuple = heap_formtuple(tupDesc, values, nulls);
+	heap_insert(lRel, tuple);
 	if (RelationGetForm(lRel)->relhasindex)
 	{
 		Relation	idescs[Num_pg_listener_indices];
 
 		CatalogOpenIndices(Num_pg_listener_indices, Name_pg_listener_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_listener_indices, lRel, newtup);
+		CatalogIndexInsert(idescs, Num_pg_listener_indices, lRel, tuple);
 		CatalogCloseIndices(Num_pg_listener_indices, idescs);
 	}
 
-	heap_freetuple(newtup);
+	heap_freetuple(tuple);
 
 	heap_close(lRel, AccessExclusiveLock);
 
@@ -296,11 +293,15 @@ Async_Unlisten(char *relname, int pid)
 
 	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
 	/* Note we assume there can be only one matching tuple. */
-	lTuple = SearchSysCacheTuple(LISTENREL, Int32GetDatum(pid),
-								PointerGetDatum(relname),
-								0, 0);
-	if (lTuple != NULL)
+	lTuple = SearchSysCache(LISTENREL,
+							Int32GetDatum(pid),
+							PointerGetDatum(relname),
+							0, 0);
+	if (HeapTupleIsValid(lTuple))
+	{
 		heap_delete(lRel, &lTuple->t_self, NULL);
+		ReleaseSysCache(lTuple);
+	}
 	heap_close(lRel, AccessExclusiveLock);
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.40 2000/11/12 00:36:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.41 2000/11/16 22:30:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,14 +183,11 @@ init_sql_fcache(FmgrInfo *finfo)
 
 	/* ----------------
 	 *	 get the procedure tuple corresponding to the given function Oid
-	 *
-	 *	 NB: use SearchSysCacheTupleCopy to ensure tuple lives long enough
 	 * ----------------
 	 */
-	procedureTuple = SearchSysCacheTupleCopy(PROCOID,
-											 ObjectIdGetDatum(foid),
-											 0, 0, 0);
-
+	procedureTuple = SearchSysCache(PROCOID,
+									ObjectIdGetDatum(foid),
+									0, 0, 0);
 	if (!HeapTupleIsValid(procedureTuple))
 		elog(ERROR, "init_sql_fcache: Cache lookup failed for procedure %u",
 			 foid);
@@ -201,10 +198,9 @@ init_sql_fcache(FmgrInfo *finfo)
 	 *	 get the return type from the procedure tuple
 	 * ----------------
 	 */
-	typeTuple = SearchSysCacheTuple(TYPEOID,
-						   ObjectIdGetDatum(procedureStruct->prorettype),
-									0, 0, 0);
-
+	typeTuple = SearchSysCache(TYPEOID,
+							   ObjectIdGetDatum(procedureStruct->prorettype),
+							   0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
 		elog(ERROR, "init_sql_fcache: Cache lookup failed for type %u",
 			 procedureStruct->prorettype);
@@ -286,7 +282,8 @@ init_sql_fcache(FmgrInfo *finfo)
 
 	pfree(src);
 
-	heap_freetuple(procedureTuple);
+	ReleaseSysCache(typeTuple);
+	ReleaseSysCache(procedureTuple);
 
 	finfo->fn_extra = (void *) fcache;
 }

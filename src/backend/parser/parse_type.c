@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.32 2000/06/08 22:37:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.33 2000/11/16 22:30:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,63 +28,45 @@
 bool
 typeidIsValid(Oid id)
 {
-	return (SearchSysCacheTuple(TYPEOID,
+	return SearchSysCacheExists(TYPEOID,
 								ObjectIdGetDatum(id),
-								0, 0, 0) != NULL);
-}
-
-/* return a type name, given a typeid */
-char *
-typeidTypeName(Oid id)
-{
-	HeapTuple	tup;
-	Form_pg_type typetuple;
-
-	if (!(tup = SearchSysCacheTuple(TYPEOID,
-									ObjectIdGetDatum(id),
-									0, 0, 0)))
-	{
-		elog(ERROR, "Unable to locate type oid %u in catalog", id);
-		return NULL;
-	}
-	typetuple = (Form_pg_type) GETSTRUCT(tup);
-	/* pstrdup here because result may need to outlive the syscache entry */
-	return pstrdup(NameStr(typetuple->typname));
+								0, 0, 0);
 }
 
 /* return a Type structure, given a type id */
+/* NB: caller must ReleaseSysCache the type tuple when done with it */
 Type
 typeidType(Oid id)
 {
 	HeapTuple	tup;
 
-	if (!(tup = SearchSysCacheTuple(TYPEOID,
-									ObjectIdGetDatum(id),
-									0, 0, 0)))
-	{
+	tup = SearchSysCache(TYPEOID,
+						 ObjectIdGetDatum(id),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "Unable to locate type oid %u in catalog", id);
-		return NULL;
-	}
 	return (Type) tup;
 }
 
 /* return a Type structure, given type name */
+/* NB: caller must ReleaseSysCache the type tuple when done with it */
 Type
 typenameType(char *s)
 {
 	HeapTuple	tup;
 
 	if (s == NULL)
-		elog(ERROR, "type(): Null type");
+		elog(ERROR, "typenameType: Null typename");
 
-	if (!(tup = SearchSysCacheTuple(TYPENAME,
-									PointerGetDatum(s),
-									0, 0, 0)))
+	tup = SearchSysCache(TYPENAME,
+						 PointerGetDatum(s),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "Unable to locate type name '%s' in catalog", s);
 	return (Type) tup;
 }
 
-/* given type, return the type OID */
+/* given type (as type struct), return the type OID */
 Oid
 typeTypeId(Type tp)
 {
@@ -134,61 +116,6 @@ typeTypeFlag(Type t)
 	return typ->typtype;
 }
 
-/* Given a type structure and a string, returns the internal form of
-   that string */
-Datum
-stringTypeDatum(Type tp, char *string, int32 atttypmod)
-{
-	Oid			op;
-	Oid			typelem;
-
-	op = ((Form_pg_type) GETSTRUCT(tp))->typinput;
-	typelem = ((Form_pg_type) GETSTRUCT(tp))->typelem;	/* XXX - used for
-														 * array_in */
-	return OidFunctionCall3(op,
-							CStringGetDatum(string),
-							ObjectIdGetDatum(typelem),
-							Int32GetDatum(atttypmod));
-}
-
-/* Given a type id, returns the out-conversion function of the type */
-#ifdef NOT_USED
-Oid
-typeidOutfunc(Oid type_id)
-{
-	HeapTuple	typeTuple;
-	Form_pg_type type;
-	Oid			outfunc;
-
-	typeTuple = SearchSysCacheTuple(TYPEOID,
-									ObjectIdGetDatum(type_id),
-									0, 0, 0);
-	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "typeidOutfunc: Invalid type - oid = %u", type_id);
-
-	type = (Form_pg_type) GETSTRUCT(typeTuple);
-	outfunc = type->typoutput;
-	return outfunc;
-}
-
-#endif
-
-Oid
-typeidTypeRelid(Oid type_id)
-{
-	HeapTuple	typeTuple;
-	Form_pg_type type;
-
-	typeTuple = SearchSysCacheTuple(TYPEOID,
-									ObjectIdGetDatum(type_id),
-									0, 0, 0);
-	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "typeidTypeRelid: Invalid type - oid = %u", type_id);
-
-	type = (Form_pg_type) GETSTRUCT(typeTuple);
-	return type->typrelid;
-}
-
 Oid
 typeTypeRelid(Type typ)
 {
@@ -208,36 +135,6 @@ typeTypElem(Type typ)
 	typtup = (Form_pg_type) GETSTRUCT(typ);
 
 	return typtup->typelem;
-}
-#endif
-
-#ifdef NOT_USED
-/* Given the attribute type of an array return the attribute type of
-   an element of the array */
-Oid
-GetArrayElementType(Oid typearray)
-{
-	HeapTuple	type_tuple;
-	Form_pg_type type_struct_array;
-
-	type_tuple = SearchSysCacheTuple(TYPEOID,
-									 ObjectIdGetDatum(typearray),
-									 0, 0, 0);
-
-	if (!HeapTupleIsValid(type_tuple))
-		elog(ERROR, "GetArrayElementType: Cache lookup failed for type %u",
-			 typearray);
-
-	/* get the array type struct from the type tuple */
-	type_struct_array = (Form_pg_type) GETSTRUCT(type_tuple);
-
-	if (type_struct_array->typelem == InvalidOid)
-	{
-		elog(ERROR, "GetArrayElementType: type %s is not an array",
-			 NameStr(type_struct_array->typname));
-	}
-
-	return type_struct_array->typelem;
 }
 #endif
 
@@ -266,3 +163,99 @@ typeOutfunc(Type typ)
 	return typtup->typoutput;
 }
 #endif
+
+/* Given a type structure and a string, returns the internal form of
+   that string */
+Datum
+stringTypeDatum(Type tp, char *string, int32 atttypmod)
+{
+	Oid			op;
+	Oid			typelem;
+
+	op = ((Form_pg_type) GETSTRUCT(tp))->typinput;
+	typelem = ((Form_pg_type) GETSTRUCT(tp))->typelem;	/* XXX - used for
+														 * array_in */
+	return OidFunctionCall3(op,
+							CStringGetDatum(string),
+							ObjectIdGetDatum(typelem),
+							Int32GetDatum(atttypmod));
+}
+
+/* Given a type id, returns the out-conversion function of the type */
+#ifdef NOT_USED
+Oid
+typeidOutfunc(Oid type_id)
+{
+	HeapTuple	typeTuple;
+	Form_pg_type type;
+	Oid			outfunc;
+
+	typeTuple = SearchSysCache(TYPEOID,
+							   ObjectIdGetDatum(type_id),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(typeTuple))
+		elog(ERROR, "typeidOutfunc: Invalid type - oid = %u", type_id);
+
+	type = (Form_pg_type) GETSTRUCT(typeTuple);
+	outfunc = type->typoutput;
+	ReleaseSysCache(typeTuple);
+	return outfunc;
+}
+
+#endif
+
+/* return a type name, given a typeid */
+char *
+typeidTypeName(Oid id)
+{
+	HeapTuple	tup;
+	Form_pg_type typetuple;
+	char	   *result;
+
+	tup = SearchSysCache(TYPEOID,
+						 ObjectIdGetDatum(id),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "Unable to locate type oid %u in catalog", id);
+	typetuple = (Form_pg_type) GETSTRUCT(tup);
+	/*
+	 * pstrdup here because result may need to outlive the syscache entry
+	 * (eg, it might end up as part of a parse tree that will outlive
+	 * the current transaction...)
+	 */
+	result = pstrdup(NameStr(typetuple->typname));
+	ReleaseSysCache(tup);
+	return result;
+}
+
+/* given a typeid, return the type's typrelid (associated relation, if any) */
+Oid
+typeidTypeRelid(Oid type_id)
+{
+	HeapTuple	typeTuple;
+	Form_pg_type type;
+	Oid			result;
+
+	typeTuple = SearchSysCache(TYPEOID,
+							   ObjectIdGetDatum(type_id),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(typeTuple))
+		elog(ERROR, "typeidTypeRelid: Invalid type - oid = %u", type_id);
+
+	type = (Form_pg_type) GETSTRUCT(typeTuple);
+	result = type->typrelid;
+	ReleaseSysCache(typeTuple);
+	return result;
+}
+
+/* given a type name, return the type's typeid */
+Oid
+typenameTypeId(char *s)
+{
+	Type		typ = typenameType(s);
+	Oid			result;
+
+	result = typ->t_data->t_oid;
+	ReleaseSysCache(typ);
+	return result;
+}

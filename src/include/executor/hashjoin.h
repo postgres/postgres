@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hashjoin.h,v 1.19 2000/08/22 04:06:21 tgl Exp $
+ * $Id: hashjoin.h,v 1.20 2000/11/16 22:30:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,8 +73,8 @@ typedef struct HashTableData
 	 * and outer sides of the hash are the same type, or at least
 	 * binary-compatible types.
 	 */
+	int16		typLen;
 	bool		typByVal;
-	int			typLen;
 
 	/*
 	 * During 1st scan of inner relation, we get tuples from executor. If

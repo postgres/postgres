@@ -34,7 +34,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.71 2000/08/24 03:29:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.72 2000/11/16 22:30:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_type.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/tuplesort.h"
 #include "utils/datum.h"
@@ -105,7 +106,7 @@ typedef struct AggStatePerAggData
 	 * We need the len and byval info for the agg's input, result, and
 	 * transition data types in order to know how to copy/delete values.
 	 */
-	int			inputtypeLen,
+	int16		inputtypeLen,
 				resulttypeLen,
 				transtypeLen;
 	bool		inputtypeByVal,
@@ -827,7 +828,6 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 		char	   *aggname = aggref->aggname;
 		HeapTuple	aggTuple;
 		Form_pg_aggregate aggform;
-		Type		typeInfo;
 		Oid			transfn_oid,
 					finalfn_oid;
 
@@ -837,23 +837,23 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 		/* Fill in the peraggstate data */
 		peraggstate->aggref = aggref;
 
-		aggTuple = SearchSysCacheTupleCopy(AGGNAME,
-										   PointerGetDatum(aggname),
-										   ObjectIdGetDatum(aggref->basetype),
-										   0, 0);
+		aggTuple = SearchSysCache(AGGNAME,
+								  PointerGetDatum(aggname),
+								  ObjectIdGetDatum(aggref->basetype),
+								  0, 0);
 		if (!HeapTupleIsValid(aggTuple))
 			elog(ERROR, "ExecAgg: cache lookup failed for aggregate %s(%s)",
 				 aggname,
-				 typeidTypeName(aggref->basetype));
+				 aggref->basetype ?
+				 typeidTypeName(aggref->basetype) : (char *) "");
 		aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
 
-		typeInfo = typeidType(aggform->aggfinaltype);
-		peraggstate->resulttypeLen = typeLen(typeInfo);
-		peraggstate->resulttypeByVal = typeByVal(typeInfo);
-
-		typeInfo = typeidType(aggform->aggtranstype);
-		peraggstate->transtypeLen = typeLen(typeInfo);
-		peraggstate->transtypeByVal = typeByVal(typeInfo);
+		get_typlenbyval(aggform->aggfinaltype,
+						&peraggstate->resulttypeLen,
+						&peraggstate->resulttypeByVal);
+		get_typlenbyval(aggform->aggtranstype,
+						&peraggstate->transtypeLen,
+						&peraggstate->transtypeByVal);
 
 		peraggstate->initValue =
 			AggNameGetInitVal(aggname,
@@ -901,23 +901,22 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 			Form_pg_operator pgopform;
 
 			peraggstate->inputType = inputType;
-			typeInfo = typeidType(inputType);
-			peraggstate->inputtypeLen = typeLen(typeInfo);
-			peraggstate->inputtypeByVal = typeByVal(typeInfo);
+			get_typlenbyval(inputType,
+							&peraggstate->inputtypeLen,
+							&peraggstate->inputtypeByVal);
 
 			eq_operator = oper("=", inputType, inputType, true);
 			if (!HeapTupleIsValid(eq_operator))
-			{
 				elog(ERROR, "Unable to identify an equality operator for type '%s'",
 					 typeidTypeName(inputType));
-			}
 			pgopform = (Form_pg_operator) GETSTRUCT(eq_operator);
 			fmgr_info(pgopform->oprcode, &(peraggstate->equalfn));
+			ReleaseSysCache(eq_operator);
 			peraggstate->sortOperator = any_ordering_op(inputType);
 			peraggstate->sortstate = NULL;
 		}
 
-		heap_freetuple(aggTuple);
+		ReleaseSysCache(aggTuple);
 	}
 
 	return TRUE;

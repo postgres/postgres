@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.73 2000/11/10 00:33:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.74 2000/11/16 22:30:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,13 +153,14 @@ CatalogIndexInsert(Relation *idescs,
 		IndexInfo  *indexInfo;
 		InsertIndexResult indexRes;
 
-		index_tup = SearchSysCacheTuple(INDEXRELID,
-										ObjectIdGetDatum(idescs[i]->rd_id),
-										0, 0, 0);
+		index_tup = SearchSysCache(INDEXRELID,
+								   ObjectIdGetDatum(idescs[i]->rd_id),
+								   0, 0, 0);
 		if (!HeapTupleIsValid(index_tup))
 			elog(ERROR, "CatalogIndexInsert: index %u not found",
 				 idescs[i]->rd_id);
 		indexInfo = BuildIndexInfo(index_tup);
+		ReleaseSysCache(index_tup);
 
 		FormIndexDatum(indexInfo,
 					   heapTuple,

@@ -14,30 +14,29 @@
  * either version 2, or (at your option) any later version.
  */
 
+#include "postgres.h"
+
 #include <ctype.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <string.h>
 
-#include "postgres.h"
-#include "miscadmin.h"
 #include "access/xact.h"
 #include "fmgr.h"
-#include "catalog/pg_type.h"
+#include "miscadmin.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
-#include "utils/syscache.h"
+#include "utils/lsyscache.h"
 
 #include "array_iterator.h"
+
 
 static int32
 array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 {
-	HeapTuple	typ_tuple;
-	Form_pg_type typ_struct;
+	int16		typlen;
 	bool		typbyval;
-	int			typlen;
 	int			nitems,
 				i;
 	Datum		result;
@@ -66,16 +65,7 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 	}
 
 	/* Lookup element type information */
-	typ_tuple = SearchSysCacheTuple(TYPEOID, ObjectIdGetDatum(elemtype),
-									0, 0, 0);
-	if (!HeapTupleIsValid(typ_tuple))
-	{
-		elog(ERROR, "array_iterator: cache lookup failed for type %u", elemtype);
-		return 0;
-	}
-	typ_struct = (Form_pg_type) GETSTRUCT(typ_tuple);
-	typlen = typ_struct->typlen;
-	typbyval = typ_struct->typbyval;
+	get_typlenbyval(elemtype, &typlen, &typbyval);
 
 	/* Lookup the function entry point */
 	fmgr_info(proc, &finfo);

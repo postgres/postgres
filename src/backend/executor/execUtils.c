@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.68 2000/11/12 00:36:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.69 2000/11/16 22:30:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -740,9 +740,9 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo)
 		 *	Get the pg_index tuple for the index
 		 * ----------------
 		 */
-		indexTuple = SearchSysCacheTuple(INDEXRELID,
-										 ObjectIdGetDatum(indexOid),
-										 0, 0, 0);
+		indexTuple = SearchSysCache(INDEXRELID,
+									ObjectIdGetDatum(indexOid),
+									0, 0, 0);
 		if (!HeapTupleIsValid(indexTuple))
 			elog(ERROR, "ExecOpenIndices: index %u not found", indexOid);
 
@@ -751,6 +751,8 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo)
 		 * ----------------
 		 */
 		ii = BuildIndexInfo(indexTuple);
+
+		ReleaseSysCache(indexTuple);
 
 		relationDescs[i] = indexDesc;
 		indexInfoArray[i] = ii;

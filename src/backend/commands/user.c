@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.69 2000/10/19 03:55:51 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.70 2000/11/16 22:30:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -363,9 +363,9 @@ AlterUser(AlterUserStmt *stmt)
 	pg_shadow_rel = heap_openr(ShadowRelationName, AccessExclusiveLock);
 	pg_shadow_dsc = RelationGetDescr(pg_shadow_rel);
 
-	tuple = SearchSysCacheTuple(SHADOWNAME,
-								PointerGetDatum(stmt->user),
-								0, 0, 0);
+	tuple = SearchSysCache(SHADOWNAME,
+						   PointerGetDatum(stmt->user),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
 		heap_close(pg_shadow_rel, AccessExclusiveLock);
@@ -470,9 +470,12 @@ AlterUser(AlterUserStmt *stmt)
 		CatalogOpenIndices(Num_pg_shadow_indices,
 						   Name_pg_shadow_indices, idescs);
 		CatalogIndexInsert(idescs, Num_pg_shadow_indices, pg_shadow_rel,
-						   tuple);
+						   new_tuple);
 		CatalogCloseIndices(Num_pg_shadow_indices, idescs);
 	}
+
+	ReleaseSysCache(tuple);
+	heap_freetuple(new_tuple);
 
 	/*
 	 * Write the updated pg_shadow data to the flat password file.
@@ -525,9 +528,9 @@ DropUser(DropUserStmt *stmt)
 		int32		usesysid;
 		const char *user = strVal(lfirst(item));
 
-		tuple = SearchSysCacheTuple(SHADOWNAME,
-									PointerGetDatum(user),
-									0, 0, 0);
+		tuple = SearchSysCache(SHADOWNAME,
+							   PointerGetDatum(user),
+							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
 		{
 			heap_close(pg_shadow_rel, AccessExclusiveLock);
@@ -578,6 +581,8 @@ DropUser(DropUserStmt *stmt)
 		 * Remove the user from the pg_shadow table
 		 */
 		heap_delete(pg_shadow_rel, &tuple->t_self, NULL);
+
+		ReleaseSysCache(tuple);
 
 		/*
 		 * Remove user from groups
@@ -633,24 +638,21 @@ CheckPgUserAclNotNull()
 {
 	HeapTuple	htup;
 
-	htup = SearchSysCacheTuple(RELNAME,
-							   PointerGetDatum(ShadowRelationName),
-							   0, 0, 0);
+	htup = SearchSysCache(RELNAME,
+						  PointerGetDatum(ShadowRelationName),
+						  0, 0, 0);
 	if (!HeapTupleIsValid(htup))
-	{
-		/* BIG problem */
-		elog(ERROR, "IsPgUserAclNull: \"%s\" not found",
+		elog(ERROR, "CheckPgUserAclNotNull: \"%s\" not found",
 			 ShadowRelationName);
-	}
 
 	if (heap_attisnull(htup, Anum_pg_class_relacl))
-	{
 		elog(ERROR,
 			 "To use passwords, you have to revoke permissions on %s "
 			 "so normal users cannot read the passwords. "
 			 "Try 'REVOKE ALL ON \"%s\" FROM PUBLIC'.",
 			 ShadowRelationName, ShadowRelationName);
-	}
+
+	ReleaseSysCache(htup);
 }
 
 
@@ -716,24 +718,21 @@ CreateGroup(CreateGroupStmt *stmt)
 	/*
 	 * Translate the given user names to ids
 	 */
-
 	foreach(item, stmt->initUsers)
 	{
 		const char *groupuser = strVal(lfirst(item));
 		Value	   *v;
 
-		tuple = SearchSysCacheTuple(SHADOWNAME,
-									PointerGetDatum(groupuser),
-									0, 0, 0);
+		tuple = SearchSysCache(SHADOWNAME,
+							   PointerGetDatum(groupuser),
+							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
-		{
-			heap_close(pg_group_rel, AccessExclusiveLock);
 			elog(ERROR, "CREATE GROUP: user \"%s\" does not exist", groupuser);
-		}
 
 		v = makeInteger(((Form_pg_shadow) GETSTRUCT(tuple))->usesysid);
 		if (!member(v, newlist))
 			newlist = lcons(v, newlist);
+		ReleaseSysCache(tuple);
 	}
 
 	/* build an array to insert */
@@ -817,20 +816,19 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 	pg_group_dsc = RelationGetDescr(pg_group_rel);
 
 	/*
-	 * Verify that group exists. If we find a tuple, will take that the
-	 * rest of the way and make our modifications on it.
+	 * Fetch existing tuple for group.
 	 */
-	if (!HeapTupleIsValid(group_tuple = SearchSysCacheTupleCopy(GRONAME, PointerGetDatum(stmt->name), 0, 0, 0)))
-	{
-		heap_close(pg_group_rel, AccessExclusiveLock);
+	group_tuple = SearchSysCache(GRONAME,
+								 PointerGetDatum(stmt->name),
+								 0, 0, 0);
+	if (!HeapTupleIsValid(group_tuple))
 		elog(ERROR, "%s: group \"%s\" does not exist", tag, stmt->name);
-	}
-
-	AssertState(stmt->action == +1 || stmt->action == -1);
 
 	/*
 	 * Now decide what to do.
 	 */
+	AssertState(stmt->action == +1 || stmt->action == -1);
+
 	if (stmt->action == +1)		/* add users, might also be invoked by
 								 * create user */
 	{
@@ -876,15 +874,14 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 			if (strcmp(tag, "ALTER GROUP") == 0)
 			{
 				/* Get the uid of the proposed user to add. */
-				tuple = SearchSysCacheTuple(SHADOWNAME,
-								   PointerGetDatum(strVal(lfirst(item))),
-											0, 0, 0);
+				tuple = SearchSysCache(SHADOWNAME,
+									   PointerGetDatum(strVal(lfirst(item))),
+									   0, 0, 0);
 				if (!HeapTupleIsValid(tuple))
-				{
-					heap_close(pg_group_rel, AccessExclusiveLock);
-					elog(ERROR, "%s: user \"%s\" does not exist", tag, strVal(lfirst(item)));
-				}
+					elog(ERROR, "%s: user \"%s\" does not exist",
+						 tag, strVal(lfirst(item)));
 				v = makeInteger(((Form_pg_shadow) GETSTRUCT(tuple))->usesysid);
+				ReleaseSysCache(tuple);
 			}
 			else if (strcmp(tag, "CREATE USER") == 0)
 			{
@@ -999,15 +996,13 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 				if (!is_dropuser)
 				{
 					/* Get the uid of the proposed user to drop. */
-					tuple = SearchSysCacheTuple(SHADOWNAME,
-								   PointerGetDatum(strVal(lfirst(item))),
-												0, 0, 0);
+					tuple = SearchSysCache(SHADOWNAME,
+										   PointerGetDatum(strVal(lfirst(item))),
+										   0, 0, 0);
 					if (!HeapTupleIsValid(tuple))
-					{
-						heap_close(pg_group_rel, AccessExclusiveLock);
 						elog(ERROR, "ALTER GROUP: user \"%s\" does not exist", strVal(lfirst(item)));
-					}
 					v = makeInteger(((Form_pg_shadow) GETSTRUCT(tuple))->usesysid);
+					ReleaseSysCache(tuple);
 				}
 				else
 				{
@@ -1056,9 +1051,9 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 		}						/* endif group not null */
 	}							/* endif alter group drop user */
 
-	heap_close(pg_group_rel, AccessExclusiveLock);
+	ReleaseSysCache(group_tuple);
 
-	pfree(group_tuple);
+	heap_close(pg_group_rel, AccessExclusiveLock);
 }
 
 

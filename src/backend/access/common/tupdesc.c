@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.68 2000/11/08 22:09:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.69 2000/11/16 22:30:15 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -401,9 +401,9 @@ TupleDescInitEntry(TupleDesc desc,
 	 *	-cim 6/14/90
 	 * ----------------
 	 */
-	tuple = SearchSysCacheTuple(TYPEOID,
-								ObjectIdGetDatum(oidtypeid),
-								0, 0, 0);
+	tuple = SearchSysCache(TYPEOID,
+						   ObjectIdGetDatum(oidtypeid),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
 		/* ----------------
@@ -455,25 +455,18 @@ TupleDescInitEntry(TupleDesc desc,
 	   */
 	if (attisset)
 	{
-		Type		t = typeidType(OIDOID);
-
-		att->attlen = typeLen(t);
-		att->attbyval = typeByVal(t);
+		att->attlen = sizeof(Oid);
+		att->attbyval = true;
+		att->attstorage = 'p';
 	}
 	else
 	{
 		att->attlen = typeForm->typlen;
 		att->attbyval = typeForm->typbyval;
-/*
- * Default to the types storage
- */
-#ifdef TUPLE_TOASTER_ACTIVE
 		att->attstorage = typeForm->typstorage;
-#else
-		att->attstorage = 'p';
-#endif
 	}
 
+	ReleaseSysCache(tuple);
 
 	return true;
 }
@@ -496,12 +489,11 @@ TupleDescMakeSelfReference(TupleDesc desc,
 						   char *relname)
 {
 	Form_pg_attribute att;
-	Type		t = typeidType(OIDOID);
 
 	att = desc->attrs[attnum - 1];
 	att->atttypid = TypeShellMake(relname);
-	att->attlen = typeLen(t);
-	att->attbyval = typeByVal(t);
+	att->attlen = sizeof(Oid);
+	att->attbyval = true;
 	att->attstorage = 'p';
 	att->attnelems = 0;
 }
@@ -580,7 +572,7 @@ BuildDescForRelation(List *schema, char *relname)
 		}
 
 		if (!TupleDescInitEntry(desc, attnum, attname,
-								typeTypeId(typenameType(typename)),
+								typenameTypeId(typename),
 								atttypmod, attdim, attisset))
 		{
 			/* ----------------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.151 2000/11/08 22:09:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.152 2000/11/16 22:30:17 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -488,7 +488,6 @@ CheckAttributeNames(TupleDesc tupdesc)
 Oid
 RelnameFindRelid(const char *relname)
 {
-	HeapTuple	tuple;
 	Oid			relid;
 
 	/*
@@ -497,19 +496,16 @@ RelnameFindRelid(const char *relname)
 	 */
 	if (!IsBootstrapProcessingMode())
 	{
-		tuple = SearchSysCacheTuple(RELNAME,
-									PointerGetDatum(relname),
-									0, 0, 0);
-		if (HeapTupleIsValid(tuple))
-			relid = tuple->t_data->t_oid;
-		else
-			relid = InvalidOid;
+		relid = GetSysCacheOid(RELNAME,
+							   PointerGetDatum(relname),
+							   0, 0, 0);
 	}
 	else
 	{
 		Relation	pg_class_desc;
 		ScanKeyData key;
 		HeapScanDesc pg_class_scan;
+		HeapTuple	tuple;
 
 		pg_class_desc = heap_openr(RelationRelationName, AccessShareLock);
 
@@ -756,8 +752,8 @@ AddNewRelationType(char *typeName, Oid new_rel_oid)
 	 */
 	new_type_oid = TypeCreate(typeName, /* type name */
 							  new_rel_oid,		/* relation oid */
-							  typeLen(typeidType(OIDOID)),		/* internal size */
-							  typeLen(typeidType(OIDOID)),		/* external size */
+							  sizeof(Oid),		/* internal size */
+							  sizeof(Oid),		/* external size */
 							  'c',		/* type-type (catalog) */
 							  ',',		/* default array delimiter */
 							  "int4in", /* input procedure */
@@ -1080,15 +1076,12 @@ DeleteRelationTuple(Relation rel)
 	 */
 	pg_class_desc = heap_openr(RelationRelationName, RowExclusiveLock);
 
-	tup = SearchSysCacheTupleCopy(RELOID,
-								  ObjectIdGetDatum(rel->rd_id),
-								  0, 0, 0);
+	tup = SearchSysCacheCopy(RELOID,
+							 ObjectIdGetDatum(rel->rd_id),
+							 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-	{
-		heap_close(pg_class_desc, RowExclusiveLock);
 		elog(ERROR, "Relation \"%s\" does not exist",
 			 RelationGetRelationName(rel));
-	}
 
 	/* ----------------
 	 *	delete the relation tuple from pg_class, and finish up.
@@ -1136,14 +1129,15 @@ RelationTruncateIndexes(Oid heapId)
 		indexId = ((Form_pg_index) GETSTRUCT(indexTuple))->indexrelid;
 		indexInfo = BuildIndexInfo(indexTuple);
 
-		/* Fetch the pg_class tuple associated with this index */
-		classTuple = SearchSysCacheTupleCopy(RELOID,
-											 ObjectIdGetDatum(indexId),
-											 0, 0, 0);
+		/* Fetch access method from pg_class tuple for this index */
+		classTuple = SearchSysCache(RELOID,
+									ObjectIdGetDatum(indexId),
+									0, 0, 0);
 		if (!HeapTupleIsValid(classTuple))
 			elog(ERROR, "RelationTruncateIndexes: index %u not found in pg_class",
 				 indexId);
 		accessMethodId = ((Form_pg_class) GETSTRUCT(classTuple))->relam;
+		ReleaseSysCache(classTuple);
 
 		/*
 		 * We have to re-open the heap rel each time through this loop
@@ -1258,19 +1252,17 @@ DeleteAttributeTuples(Relation rel)
 		 attnum <= rel->rd_att->natts;
 		 attnum++)
 	{
-		if (HeapTupleIsValid(tup = SearchSysCacheTupleCopy(ATTNUM,
+		tup = SearchSysCacheCopy(ATTNUM,
 								 ObjectIdGetDatum(RelationGetRelid(rel)),
-												   Int16GetDatum(attnum),
-														   0, 0)))
+								 Int16GetDatum(attnum),
+								 0, 0);
+		if (HeapTupleIsValid(tup))
 		{
-
 			/*** Delete any comments associated with this attribute ***/
-
 			DeleteComments(tup->t_data->t_oid);
 
 			heap_delete(pg_attribute_desc, &tup->t_self, NULL);
 			heap_freetuple(tup);
-
 		}
 	}
 
@@ -1586,9 +1578,10 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 		return;					/* done if pg_attribute is OK */
 
 	attrrel = heap_openr(AttributeRelationName, RowExclusiveLock);
-	atttup = SearchSysCacheTupleCopy(ATTNUM,
-								 ObjectIdGetDatum(RelationGetRelid(rel)),
-									 (Datum) attnum, 0, 0);
+	atttup = SearchSysCacheCopy(ATTNUM,
+								ObjectIdGetDatum(RelationGetRelid(rel)),
+								Int16GetDatum(attnum),
+								0, 0);
 	if (!HeapTupleIsValid(atttup))
 		elog(ERROR, "cache lookup of attribute %d in relation %u failed",
 			 attnum, RelationGetRelid(rel));
@@ -1953,11 +1946,12 @@ AddRelationRawConstraints(Relation rel,
 	 * message, but for ALTER TABLE ADD ATTRIBUTE this'd be important.)
 	 */
 	relrel = heap_openr(RelationRelationName, RowExclusiveLock);
-	reltup = SearchSysCacheTupleCopy(RELOID,
-								 ObjectIdGetDatum(RelationGetRelid(rel)),
-									 0, 0, 0);
+	reltup = SearchSysCacheCopy(RELOID,
+								ObjectIdGetDatum(RelationGetRelid(rel)),
+								0, 0, 0);
 	if (!HeapTupleIsValid(reltup))
-		elog(ERROR, "cache lookup of relation %u failed", RelationGetRelid(rel));
+		elog(ERROR, "cache lookup of relation %u failed",
+			 RelationGetRelid(rel));
 	relStruct = (Form_pg_class) GETSTRUCT(reltup);
 
 	relStruct->relchecks = numchecks;
@@ -1970,8 +1964,8 @@ AddRelationRawConstraints(Relation rel,
 	CatalogIndexInsert(relidescs, Num_pg_class_indices, relrel, reltup);
 	CatalogCloseIndices(Num_pg_class_indices, relidescs);
 
-	heap_close(relrel, RowExclusiveLock);
 	heap_freetuple(reltup);
+	heap_close(relrel, RowExclusiveLock);
 }
 
 static void

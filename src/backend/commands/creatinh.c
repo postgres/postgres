@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.66 2000/11/13 09:16:55 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.67 2000/11/16 22:30:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -408,11 +408,14 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 			 * form name, type and constraints
 			 */
 			attributeName = NameStr(attribute->attname);
-			tuple = SearchSysCacheTuple(TYPEOID,
+			tuple = SearchSysCache(TYPEOID,
 								   ObjectIdGetDatum(attribute->atttypid),
-										0, 0, 0);
-			Assert(HeapTupleIsValid(tuple));
-			attributeType = NameStr(((Form_pg_type) GETSTRUCT(tuple))->typname);
+								   0, 0, 0);
+			if (!HeapTupleIsValid(tuple))
+				elog(ERROR, "CREATE TABLE: cache lookup failed for type %u",
+					 attribute->atttypid);
+			attributeType = pstrdup(NameStr(((Form_pg_type) GETSTRUCT(tuple))->typname));
+			ReleaseSysCache(tuple);
 
 			/*
 			 * check validity
@@ -554,22 +557,25 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 	idList = NIL;
 	foreach(entry, supers)
 	{
+		Oid			entryOid;
 		Datum		datum[Natts_pg_inherits];
 		char		nullarr[Natts_pg_inherits];
 
-		tuple = SearchSysCacheTuple(RELNAME,
+		entryOid = GetSysCacheOid(RELNAME,
 								  PointerGetDatum(strVal(lfirst(entry))),
-									0, 0, 0);
-		AssertArg(HeapTupleIsValid(tuple));
+								  0, 0, 0);
+		if (!OidIsValid(entryOid))
+			elog(ERROR, "StoreCatalogInheritance: cache lookup failed for relation \"%s\"",
+				 strVal(lfirst(entry)));
 
 		/*
 		 * build idList for use below
 		 */
-		idList = lappendi(idList, tuple->t_data->t_oid);
+		idList = lappendi(idList, entryOid);
 
-		datum[0] = ObjectIdGetDatum(relationId);		/* inhrel */
-		datum[1] = ObjectIdGetDatum(tuple->t_data->t_oid);		/* inhparent */
-		datum[2] = Int16GetDatum(seqNumber);	/* inhseqno */
+		datum[0] = ObjectIdGetDatum(relationId);	/* inhrel */
+		datum[1] = ObjectIdGetDatum(entryOid);		/* inhparent */
+		datum[2] = Int16GetDatum(seqNumber);		/* inhseqno */
 
 		nullarr[0] = ' ';
 		nullarr[1] = ' ';
@@ -624,17 +630,18 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 
 		for (number = 1;; number += 1)
 		{
-			tuple = SearchSysCacheTuple(INHRELID,
-										ObjectIdGetDatum(id),
-										Int16GetDatum(number),
-										0, 0);
-
+			tuple = SearchSysCache(INHRELID,
+								   ObjectIdGetDatum(id),
+								   Int16GetDatum(number),
+								   0, 0);
 			if (!HeapTupleIsValid(tuple))
 				break;
 
 			lnext(current) = lconsi(((Form_pg_inherits)
 									 GETSTRUCT(tuple))->inhparent,
 									NIL);
+
+			ReleaseSysCache(tuple);
 
 			current = lnext(current);
 		}
@@ -746,35 +753,28 @@ checkAttrExists(const char *attributeName, const char *attributeType, List *sche
 static void
 setRelhassubclassInRelation(Oid relationId, bool relhassubclass)
 {
-        Relation        relationRelation;
-        HeapTuple       tuple;
-        Relation        idescs[Num_pg_class_indices];
+	Relation		relationRelation;
+	HeapTuple       tuple;
+	Relation        idescs[Num_pg_class_indices];
 
-        /*
-         * Lock a relation given its Oid. Go to the RelationRelation (i.e.
-         * pg_relation), find the appropriate tuple, and add the specified
-         * lock to it.
-         */
-        relationRelation = heap_openr(RelationRelationName, RowExclusiveLock);
-        tuple = SearchSysCacheTupleCopy(RELOID,
-                                    ObjectIdGetDatum(relationId),
-                                    0, 0, 0)
-;
-        Assert(HeapTupleIsValid(tuple));
+	/*
+	 * Fetch a modifiable copy of the tuple, modify it, update pg_class.
+	 */
+	relationRelation = heap_openr(RelationRelationName, RowExclusiveLock);
+	tuple = SearchSysCacheCopy(RELOID,
+							   ObjectIdGetDatum(relationId),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "setRelhassubclassInRelation: cache lookup failed for relation %u", relationId);
 
-        ((Form_pg_class) GETSTRUCT(tuple))->relhassubclass = relhassubclass;
-        heap_update(relationRelation, &tuple->t_self, tuple, NULL);
+	((Form_pg_class) GETSTRUCT(tuple))->relhassubclass = relhassubclass;
+	heap_update(relationRelation, &tuple->t_self, tuple, NULL);
 
-        /* keep the catalog indices up to date */
-        CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
-        CatalogIndexInsert(idescs, Num_pg_class_indices, relationRelation, tuple
-);
-        CatalogCloseIndices(Num_pg_class_indices, idescs);
+	/* keep the catalog indices up to date */
+	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
+	CatalogIndexInsert(idescs, Num_pg_class_indices, relationRelation, tuple);
+	CatalogCloseIndices(Num_pg_class_indices, idescs);
 
 	heap_freetuple(tuple);
-        heap_close(relationRelation, RowExclusiveLock);
+	heap_close(relationRelation, RowExclusiveLock);
 }
-
-
-
-

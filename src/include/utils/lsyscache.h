@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.26 2000/10/05 19:48:34 momjian Exp $
+ * $Id: lsyscache.h,v 1.27 2000/11/16 22:30:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,6 @@ extern bool op_mergejoinable(Oid opno, Oid ltype, Oid rtype,
 				 Oid *leftOp, Oid *rightOp);
 extern Oid	op_hashjoinable(Oid opno, Oid ltype, Oid rtype);
 extern bool op_iscachable(Oid opno);
-extern HeapTuple get_operator_tuple(Oid opno);
 extern Oid	get_commutator(Oid opno);
 extern Oid	get_negator(Oid opno);
 extern RegProcedure get_oprrest(Oid opno);
@@ -39,6 +38,7 @@ extern bool func_iscachable(Oid funcid);
 extern char *get_rel_name(Oid relid);
 extern int16 get_typlen(Oid typid);
 extern bool get_typbyval(Oid typid);
+extern void get_typlenbyval(Oid typid, int16 *typlen, bool *typbyval);
 extern Datum get_typdefault(Oid typid);
 
 #endif	 /* LSYSCACHE_H */

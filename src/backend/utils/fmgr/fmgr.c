@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.46 2000/08/24 03:29:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.47 2000/11/16 22:30:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,9 +134,9 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 	}
 
 	/* Otherwise we need the pg_proc entry */
-	procedureTuple = SearchSysCacheTuple(PROCOID,
-										 ObjectIdGetDatum(functionId),
-										 0, 0, 0);
+	procedureTuple = SearchSysCache(PROCOID,
+									ObjectIdGetDatum(functionId),
+									0, 0, 0);
 	if (!HeapTupleIsValid(procedureTuple))
 		elog(ERROR, "fmgr_info: function %u: cache lookup failed",
 			 functionId);
@@ -149,6 +149,7 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 	if (!procedureStruct->proistrusted)
 	{
 		finfo->fn_addr = fmgr_untrusted;
+		ReleaseSysCache(procedureTuple);
 		return;
 	}
 
@@ -202,14 +203,12 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 			/*
 			 * Might be a created procedural language; try to look it up.
 			 */
-			languageTuple = SearchSysCacheTuple(LANGOID,
-												ObjectIdGetDatum(language),
-												0, 0, 0);
+			languageTuple = SearchSysCache(LANGOID,
+										   ObjectIdGetDatum(language),
+										   0, 0, 0);
 			if (!HeapTupleIsValid(languageTuple))
-			{
 				elog(ERROR, "fmgr_info: cache lookup for language %u failed",
 					 language);
-			}
 			languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
 			if (languageStruct->lanispl)
 			{
@@ -231,8 +230,11 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 				elog(ERROR, "fmgr_info: function %u: unsupported language %u",
 					 functionId, language);
 			}
+			ReleaseSysCache(languageTuple);
 			break;
 	}
+
+	ReleaseSysCache(procedureTuple);
 }
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.22 2000/08/08 15:41:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.23 2000/11/16 22:30:23 tgl Exp $
  *
  * NOTES
  *	  Creator functions in POSTGRES 4.2 are generated automatically. Most of
@@ -20,7 +20,10 @@
  *	  Andrew Yu			Oct 20, 1994	file creation
  */
 #include "postgres.h"
+
 #include "nodes/makefuncs.h"
+#include "utils/lsyscache.h"
+
 
 /*
  * makeOper -
@@ -141,6 +144,26 @@ makeConst(Oid consttype,
 	cnst->constisset = constisset;
 	cnst->constiscast = constiscast;
 	return cnst;
+}
+
+/*
+ * makeNullConst -
+ *	  creates a Const node representing a NULL of the specified type
+ */
+Const *
+makeNullConst(Oid consttype)
+{
+	int16		typLen;
+	bool		typByVal;
+
+	get_typlenbyval(consttype, &typLen, &typByVal);
+	return makeConst(consttype,
+					 (int) typLen,
+					 (Datum) 0,
+					 true,
+					 typByVal,
+					 false,
+					 false);
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.44 2000/09/29 18:21:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.45 2000/11/16 22:30:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,19 +18,15 @@
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "rewrite/rewriteSupport.h"
-#include "utils/catcache.h"
 #include "utils/syscache.h"
 
 
-int
+bool
 IsDefinedRewriteRule(char *ruleName)
 {
-	HeapTuple	tuple;
-
-	tuple = SearchSysCacheTuple(RULENAME,
+	return SearchSysCacheExists(RULENAME,
 								PointerGetDatum(ruleName),
 								0, 0, 0);
-	return HeapTupleIsValid(tuple);
 }
 
 /*
@@ -59,10 +55,11 @@ SetRelationRuleStatus(Oid relationId, bool relHasRules,
 	 * Find the tuple to update in pg_class, using syscache for the lookup.
 	 */
 	relationRelation = heap_openr(RelationRelationName, RowExclusiveLock);
-	tuple = SearchSysCacheTupleCopy(RELOID,
-									ObjectIdGetDatum(relationId),
-									0, 0, 0);
-	Assert(HeapTupleIsValid(tuple));
+	tuple = SearchSysCacheCopy(RELOID,
+							   ObjectIdGetDatum(relationId),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "SetRelationRuleStatus: cache lookup failed for relation %u", relationId);
 
 	/* Do the update */
 	((Form_pg_class) GETSTRUCT(tuple))->relhasrules = relHasRules;

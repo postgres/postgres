@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.55 2000/08/21 17:22:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.56 2000/11/16 22:30:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -388,6 +388,8 @@ TypeCreate(char *typeName,
 
 	for (j = 0; j < 4; ++j)
 	{
+		Oid		procOid;
+
 		procname = procs[j];
 
 		/*
@@ -396,13 +398,13 @@ TypeCreate(char *typeName,
 		 */
 		MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
-		tup = SearchSysCacheTuple(PROCNAME,
-								  PointerGetDatum(procname),
-								  Int32GetDatum(1),
-								  PointerGetDatum(argList),
-								  0);
+		procOid = GetSysCacheOid(PROCNAME,
+								 PointerGetDatum(procname),
+								 Int32GetDatum(1),
+								 PointerGetDatum(argList),
+								 0);
 
-		if (!HeapTupleIsValid(tup))
+		if (!OidIsValid(procOid))
 		{
 
 			/*
@@ -428,17 +430,17 @@ TypeCreate(char *typeName,
 					argList[1] = OIDOID;
 					argList[2] = INT4OID;
 				}
-				tup = SearchSysCacheTuple(PROCNAME,
-										  PointerGetDatum(procname),
-										  Int32GetDatum(nargs),
-										  PointerGetDatum(argList),
-										  0);
+				procOid = GetSysCacheOid(PROCNAME,
+										 PointerGetDatum(procname),
+										 Int32GetDatum(nargs),
+										 PointerGetDatum(argList),
+										 0);
 			}
-			if (!HeapTupleIsValid(tup))
+			if (!OidIsValid(procOid))
 				func_error("TypeCreate", procname, 1, argList, NULL);
 		}
 
-		values[i++] = ObjectIdGetDatum(tup->t_data->t_oid);	/* 11 - 14 */
+		values[i++] = ObjectIdGetDatum(procOid);	/* 11 - 14 */
 	}
 
 	/* ----------------
@@ -536,41 +538,31 @@ TypeRename(const char *oldTypeName, const char *newTypeName)
 {
 	Relation	pg_type_desc;
 	Relation	idescs[Num_pg_type_indices];
-	HeapTuple	oldtup,
-				newtup;
+	HeapTuple	tuple;
 
 	pg_type_desc = heap_openr(TypeRelationName, RowExclusiveLock);
 
-	oldtup = SearchSysCacheTupleCopy(TYPENAME,
-									 PointerGetDatum(oldTypeName),
-									 0, 0, 0);
+	tuple = SearchSysCacheCopy(TYPENAME,
+							   PointerGetDatum(oldTypeName),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "TypeRename: type \"%s\" not defined", oldTypeName);
 
-	if (!HeapTupleIsValid(oldtup))
-	{
-		heap_close(pg_type_desc, RowExclusiveLock);
-		elog(ERROR, "TypeRename: type %s not defined", oldTypeName);
-	}
+	if (SearchSysCacheExists(TYPENAME,
+							 PointerGetDatum(newTypeName),
+							 0, 0, 0))
+		elog(ERROR, "TypeRename: type \"%s\" already defined", newTypeName);
 
-	newtup = SearchSysCacheTuple(TYPENAME,
-								 PointerGetDatum(newTypeName),
-								 0, 0, 0);
-	if (HeapTupleIsValid(newtup))
-	{
-		heap_freetuple(oldtup);
-		heap_close(pg_type_desc, RowExclusiveLock);
-		elog(ERROR, "TypeRename: type %s already defined", newTypeName);
-	}
+	namestrcpy(&(((Form_pg_type) GETSTRUCT(tuple))->typname), newTypeName);
 
-	namestrcpy(&(((Form_pg_type) GETSTRUCT(oldtup))->typname), newTypeName);
-
-	heap_update(pg_type_desc, &oldtup->t_self, oldtup, NULL);
+	heap_update(pg_type_desc, &tuple->t_self, tuple, NULL);
 
 	/* update the system catalog indices */
 	CatalogOpenIndices(Num_pg_type_indices, Name_pg_type_indices, idescs);
-	CatalogIndexInsert(idescs, Num_pg_type_indices, pg_type_desc, oldtup);
+	CatalogIndexInsert(idescs, Num_pg_type_indices, pg_type_desc, tuple);
 	CatalogCloseIndices(Num_pg_type_indices, idescs);
 
-	heap_freetuple(oldtup);
+	heap_freetuple(tuple);
 	heap_close(pg_type_desc, RowExclusiveLock);
 }
 

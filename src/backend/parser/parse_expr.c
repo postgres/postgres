@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.87 2000/11/16 17:27:10 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.88 2000/11/16 22:30:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -386,7 +386,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 						optup = oper(op,
 									 exprType(lexpr),
 									 exprType(tent->expr),
-									 FALSE);
+									 false);
 						opform = (Form_pg_operator) GETSTRUCT(optup);
 
 						if (opform->oprresult != BOOLOID)
@@ -399,6 +399,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 										 InvalidOid,	/* opid */
 										 opform->oprresult);
 						sublink->oper = lappend(sublink->oper, newop);
+						ReleaseSysCache(optup);
 					}
 					if (left_list != NIL)
 						elog(ERROR, "Subselect has too few fields");
@@ -740,7 +741,8 @@ exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
 {
 	Func	   *func;
 	Const	   *second_arg;
-	HeapTuple	tup;
+	HeapTuple	procTuple;
+	HeapTuple	typeTuple;
 	Form_pg_proc procStruct;
 	Form_pg_type typeStruct;
 
@@ -771,12 +773,12 @@ exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
 	/*
 	 * Lookup the function in pg_proc
 	 */
-	tup = SearchSysCacheTuple(PROCOID,
-							  ObjectIdGetDatum(func->funcid),
-							  0, 0, 0);
-	if (!HeapTupleIsValid(tup))
+	procTuple = SearchSysCache(PROCOID,
+							   ObjectIdGetDatum(func->funcid),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(procTuple))
 		elog(ERROR, "cache lookup for proc %u failed", func->funcid);
-	procStruct = (Form_pg_proc) GETSTRUCT(tup);
+	procStruct = (Form_pg_proc) GETSTRUCT(procTuple);
 
 	/*
 	 * It must be a function with two arguments where the first is of the
@@ -787,29 +789,39 @@ exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
 		procStruct->prorettype != procStruct->proargtypes[0] ||
 		procStruct->proargtypes[1] != INT4OID ||
 		procStruct->prorettype != ((Expr *) expr)->typeOid)
+	{
+		ReleaseSysCache(procTuple);
 		return false;
+	}
 
 	/*
 	 * Furthermore, the name of the function must be the same as the
 	 * argument/result type's name.
 	 */
-	tup = SearchSysCacheTuple(TYPEOID,
-							  ObjectIdGetDatum(procStruct->prorettype),
-							  0, 0, 0);
-	if (!HeapTupleIsValid(tup))
+	typeTuple = SearchSysCache(TYPEOID,
+							   ObjectIdGetDatum(procStruct->prorettype),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(typeTuple))
 		elog(ERROR, "cache lookup for type %u failed",
 			 procStruct->prorettype);
-	typeStruct = (Form_pg_type) GETSTRUCT(tup);
+	typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
 	if (strncmp(NameStr(procStruct->proname),
 				NameStr(typeStruct->typname),
 				NAMEDATALEN) != 0)
+	{
+		ReleaseSysCache(procTuple);
+		ReleaseSysCache(typeTuple);
 		return false;
+	}
 
 	/*
 	 * OK, it is indeed a length-coercion function.
 	 */
 	if (coercedTypmod != NULL)
 		*coercedTypmod = DatumGetInt32(second_arg->constvalue);
+
+	ReleaseSysCache(procTuple);
+	ReleaseSysCache(typeTuple);
 	return true;
 }
 
@@ -865,6 +877,8 @@ parser_typecast_constant(Value *expr, TypeName *typename)
 	if (string_palloced)
 		pfree(const_string);
 
+	ReleaseSysCache(tp);
+
 	return (Node *) con;
 }
 
@@ -881,11 +895,9 @@ parser_typecast_expression(ParseState *pstate,
 						   Node *expr, TypeName *typename)
 {
 	Oid			inputType = exprType(expr);
-	Type		tp;
 	Oid			targetType;
 
-	tp = typenameType(TypeNameToInternalName(typename));
-	targetType = typeTypeId(tp);
+	targetType = typenameTypeId(TypeNameToInternalName(typename));
 
 	if (inputType == InvalidOid)
 		return expr;			/* do nothing if NULL input */

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.97 2000/09/29 18:21:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.98 2000/11/16 22:30:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -808,9 +808,9 @@ indexable_operator(Expr *clause, Oid opclass, Oid relam,
 				   bool indexkey_on_left)
 {
 	Oid			expr_op = ((Oper *) clause->oper)->opno;
-	Oid			commuted_op;
-	Operator	oldop,
-				newop;
+	Oid			commuted_op,
+				new_op;
+	Operator	oldoptup;
 	Form_pg_operator oldopform;
 	char	   *opname;
 	Oid			ltype,
@@ -835,13 +835,16 @@ indexable_operator(Expr *clause, Oid opclass, Oid relam,
 	 * Get the nominal input types of the given operator and the actual
 	 * type (before binary-compatible relabeling) of the index key.
 	 */
-	oldop = get_operator_tuple(expr_op);
-	if (! HeapTupleIsValid(oldop))
+	oldoptup = SearchSysCache(OPEROID,
+							  ObjectIdGetDatum(expr_op),
+							  0, 0, 0);
+	if (! HeapTupleIsValid(oldoptup))
 		return InvalidOid;		/* probably can't happen */
-	oldopform = (Form_pg_operator) GETSTRUCT(oldop);
-	opname = NameStr(oldopform->oprname);
+	oldopform = (Form_pg_operator) GETSTRUCT(oldoptup);
+	opname = pstrdup(NameStr(oldopform->oprname));
 	ltype = oldopform->oprleft;
 	rtype = oldopform->oprright;
+	ReleaseSysCache(oldoptup);
 
 	if (indexkey_on_left)
 	{
@@ -875,13 +878,11 @@ indexable_operator(Expr *clause, Oid opclass, Oid relam,
 	 * (In theory this might find a non-semantically-comparable operator,
 	 * but in practice that seems pretty unlikely for binary-compatible types.)
 	 */
-	newop = oper(opname, indexkeytype, indexkeytype, TRUE);
+	new_op = oper_oid(opname, indexkeytype, indexkeytype, true);
 
-	if (HeapTupleIsValid(newop))
+	if (OidIsValid(new_op))
 	{
-		Oid			new_expr_op = oprid(newop);
-
-		if (new_expr_op != expr_op)
+		if (new_op != expr_op)
 		{
 
 			/*
@@ -889,14 +890,14 @@ indexable_operator(Expr *clause, Oid opclass, Oid relam,
 			 * name; now does it match the index?
 			 */
 			if (indexkey_on_left)
-				commuted_op = new_expr_op;
+				commuted_op = new_op;
 			else
-				commuted_op = get_commutator(new_expr_op);
+				commuted_op = get_commutator(new_op);
 			if (commuted_op == InvalidOid)
 				return InvalidOid;
 
 			if (op_class(commuted_op, opclass, relam))
-				return new_expr_op;
+				return new_op;
 		}
 	}
 
@@ -2079,16 +2080,11 @@ prefix_quals(Var *leftop, Oid expr_op,
 static Oid
 find_operator(const char *opname, Oid datatype)
 {
-	HeapTuple	optup;
-
-	optup = SearchSysCacheTuple(OPERNAME,
-								PointerGetDatum(opname),
-								ObjectIdGetDatum(datatype),
-								ObjectIdGetDatum(datatype),
-								CharGetDatum('b'));
-	if (!HeapTupleIsValid(optup))
-		return InvalidOid;
-	return optup->t_data->t_oid;
+	return GetSysCacheOid(OPERNAME,
+						  PointerGetDatum(opname),
+						  ObjectIdGetDatum(datatype),
+						  ObjectIdGetDatum(datatype),
+						  CharGetDatum('b'));
 }
 
 /*

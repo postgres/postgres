@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.82 2000/11/10 00:33:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.83 2000/11/16 22:30:16 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -1112,6 +1112,7 @@ CommitTransaction(void)
 	AtEOXact_nbtree();
 	AtCommit_Cache();
 	AtCommit_Locks();
+	AtEOXact_CatCache(true);
 	AtCommit_Memory();
 	AtEOXact_Files();
 
@@ -1192,6 +1193,7 @@ AbortTransaction(void)
 	AtEOXact_SPI();
 	AtEOXact_nbtree();
 	AtAbort_Cache();
+	AtEOXact_CatCache(false);
 	AtAbort_Memory();
 	AtEOXact_Files();
 

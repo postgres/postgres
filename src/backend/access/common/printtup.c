@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.53 2000/05/30 04:24:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.54 2000/11/16 22:30:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ static void printtup_cleanup(DestReceiver *self);
  *		getTypeOutAndElem -- get both typoutput and typelem for a type
  *
  * We used to fetch these with two separate function calls,
- * typtoout() and gettypelem(), which each called SearchSysCacheTuple.
+ * typtoout() and gettypelem(), which each called SearchSysCache.
  * This way takes half the time.
  * ----------------
  */
@@ -44,25 +44,19 @@ int
 getTypeOutAndElem(Oid type, Oid *typOutput, Oid *typElem)
 {
 	HeapTuple	typeTuple;
+	Form_pg_type pt;
 
-	typeTuple = SearchSysCacheTuple(TYPEOID,
-									ObjectIdGetDatum(type),
-									0, 0, 0);
+	typeTuple = SearchSysCache(TYPEOID,
+							   ObjectIdGetDatum(type),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(typeTuple))
+		elog(ERROR, "getTypeOutAndElem: Cache lookup of type %u failed", type);
+	pt = (Form_pg_type) GETSTRUCT(typeTuple);
 
-	if (HeapTupleIsValid(typeTuple))
-	{
-		Form_pg_type pt = (Form_pg_type) GETSTRUCT(typeTuple);
-
-		*typOutput = (Oid) pt->typoutput;
-		*typElem = (Oid) pt->typelem;
-		return OidIsValid(*typOutput);
-	}
-
-	elog(ERROR, "getTypeOutAndElem: Cache lookup of type %u failed", type);
-
-	*typOutput = InvalidOid;
-	*typElem = InvalidOid;
-	return 0;
+	*typOutput = pt->typoutput;
+	*typElem = pt->typelem;
+	ReleaseSysCache(typeTuple);
+	return OidIsValid(*typOutput);
 }
 
 /* ----------------

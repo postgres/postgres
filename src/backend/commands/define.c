@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.47 2000/10/07 00:58:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.48 2000/11/16 22:30:18 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -277,10 +277,9 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 		Form_pg_language languageStruct;
 
 		/* Lookup the language in the system cache */
-		languageTuple = SearchSysCacheTuple(LANGNAME,
-											PointerGetDatum(languageName),
-											0, 0, 0);
-
+		languageTuple = SearchSysCache(LANGNAME,
+									   PointerGetDatum(languageName),
+									   0, 0, 0);
 		if (!HeapTupleIsValid(languageTuple))
 			elog(ERROR,
 				 "Unrecognized language specified in a CREATE FUNCTION: "
@@ -299,12 +298,12 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 		 * be defined by postgres superusers only
 		 */
 		if (!languageStruct->lanpltrusted && !superuser())
-		{
 			elog(ERROR, "Only users with Postgres superuser privilege "
 				 "are permitted to create a function in the '%s' "
 				 "language.",
 				 languageName);
-		}
+
+		ReleaseSysCache(languageTuple);
 	}
 
 	/*

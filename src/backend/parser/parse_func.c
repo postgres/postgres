@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.93 2000/11/11 19:49:26 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.94 2000/11/16 22:30:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -354,19 +354,19 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		CandidateList candidates;
 
 		/* try for exact match first... */
-		if (SearchSysCacheTuple(AGGNAME,
-								PointerGetDatum(funcname),
-								ObjectIdGetDatum(basetype),
-								0, 0))
+		if (SearchSysCacheExists(AGGNAME,
+								 PointerGetDatum(funcname),
+								 ObjectIdGetDatum(basetype),
+								 0, 0))
 			return (Node *) ParseAgg(pstate, funcname, basetype,
 									 fargs, agg_star, agg_distinct,
 									 precedence);
 
 		/* check for aggregate-that-accepts-any-type (eg, COUNT) */
-		if (SearchSysCacheTuple(AGGNAME,
-								PointerGetDatum(funcname),
-								ObjectIdGetDatum(0),
-								0, 0))
+		if (SearchSysCacheExists(AGGNAME,
+								 PointerGetDatum(funcname),
+								 ObjectIdGetDatum(0),
+								 0, 0))
 			return (Node *) ParseAgg(pstate, funcname, 0,
 									 fargs, agg_star, agg_distinct,
 									 precedence);
@@ -450,7 +450,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			if (rte->relname == NULL)
 				elog(ERROR,
 					 "function applied to tuple is not supported for subSELECTs");
-			toid = typeTypeId(typenameType(rte->relname));
+			toid = typenameTypeId(rte->relname);
 
 			/* replace it in the arg list */
 			lfirst(i) = makeVar(vnum, 0, toid, -1, sublevels_up);
@@ -531,15 +531,14 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			 */
 			if (nargs == 1)
 			{
-				Type		tp;
+				Oid			targetType;
 
-				tp = SearchSysCacheTuple(TYPENAME,
-										 PointerGetDatum(funcname),
-										 0, 0, 0);
-				if (HeapTupleIsValid(tp))
+				targetType = GetSysCacheOid(TYPENAME,
+											PointerGetDatum(funcname),
+											0, 0, 0);
+				if (OidIsValid(targetType))
 				{
 					Oid			sourceType = oid_array[0];
-					Oid			targetType = typeTypeId(tp);
 					Node	   *arg1 = lfirst(fargs);
 
 					if ((sourceType == UNKNOWNOID && IsA(arg1, Const)) ||
@@ -573,6 +572,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				if (typeTypeFlag(tp) == 'c')
 					elog(ERROR, "No such attribute or function '%s'",
 						 funcname);
+				ReleaseSysCache(tp);
 			}
 
 			/* Else generate a detailed complaint */
@@ -1037,11 +1037,11 @@ func_get_detail(char *funcname,
 	HeapTuple	ftup;
 
 	/* attempt to find with arguments exactly as specified... */
-	ftup = SearchSysCacheTuple(PROCNAME,
-							   PointerGetDatum(funcname),
-							   Int32GetDatum(nargs),
-							   PointerGetDatum(argtypes),
-							   0);
+	ftup = SearchSysCache(PROCNAME,
+						  PointerGetDatum(funcname),
+						  Int32GetDatum(nargs),
+						  PointerGetDatum(argtypes),
+						  0);
 
 	if (HeapTupleIsValid(ftup))
 	{
@@ -1085,11 +1085,11 @@ func_get_detail(char *funcname,
 				if (ncandidates == 1)
 				{
 					*true_typeids = current_function_typeids->args;
-					ftup = SearchSysCacheTuple(PROCNAME,
-											   PointerGetDatum(funcname),
-											   Int32GetDatum(nargs),
+					ftup = SearchSysCache(PROCNAME,
+										  PointerGetDatum(funcname),
+										  Int32GetDatum(nargs),
 										  PointerGetDatum(*true_typeids),
-											   0);
+										  0);
 					Assert(HeapTupleIsValid(ftup));
 					break;
 				}
@@ -1107,12 +1107,13 @@ func_get_detail(char *funcname,
 					if (*true_typeids != NULL)
 					{
 						/* was able to choose a best candidate */
-						ftup = SearchSysCacheTuple(PROCNAME,
-											   PointerGetDatum(funcname),
-												   Int32GetDatum(nargs),
-										  PointerGetDatum(*true_typeids),
-												   0);
+						ftup = SearchSysCache(PROCNAME,
+											  PointerGetDatum(funcname),
+											  Int32GetDatum(nargs),
+											  PointerGetDatum(*true_typeids),
+											  0);
 						Assert(HeapTupleIsValid(ftup));
+						break;
 					}
 
 					/*
@@ -1143,6 +1144,7 @@ func_get_detail(char *funcname,
 		*funcid = ftup->t_data->t_oid;
 		*rettype = pform->prorettype;
 		*retset = pform->proretset;
+		ReleaseSysCache(ftup);
 		return true;
 	}
 	return false;
@@ -1284,7 +1286,7 @@ find_inheritors(Oid relid, Oid **supervec)
 
 			relid = lfirsti(elt);
 			rd = heap_open(relid, NoLock);
-			trelid = typeTypeId(typenameType(RelationGetRelationName(rd)));
+			trelid = typenameTypeId(RelationGetRelationName(rd));
 			heap_close(rd, NoLock);
 			*relidvec++ = trelid;
 		}

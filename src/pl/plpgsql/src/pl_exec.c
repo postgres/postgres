@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.31 2000/09/12 19:41:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.32 2000/11/16 22:30:50 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1641,10 +1641,12 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 						extval = "<NULL>";
 					else
 					{
-						typetup = SearchSysCacheTuple(TYPEOID,
-						ObjectIdGetDatum(var->datatype->typoid), 0, 0, 0);
+						typetup = SearchSysCache(TYPEOID,
+												 ObjectIdGetDatum(var->datatype->typoid),
+												 0, 0, 0);
 						if (!HeapTupleIsValid(typetup))
-							elog(ERROR, "cache lookup for type %u failed (1)", var->datatype->typoid);
+							elog(ERROR, "cache lookup for type %u failed (1)",
+								 var->datatype->typoid);
 						typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
 						fmgr_info(typeStruct->typoutput, &finfo_output);
@@ -1652,6 +1654,7 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 									var->value,
 									ObjectIdGetDatum(typeStruct->typelem),
 									Int32GetDatum(var->datatype->atttypmod)));
+						ReleaseSysCache(typetup);
 					}
 					plpgsql_dstring_append(&ds, extval);
 					break;
@@ -1961,20 +1964,23 @@ exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 	 * Get the C-String representation.
 	 * ----------
 	 */
-	typetup = SearchSysCacheTuple(TYPEOID,
-		ObjectIdGetDatum(restype), 0, 0, 0);
+	typetup = SearchSysCache(TYPEOID,
+							 ObjectIdGetDatum(restype),
+							 0, 0, 0);
 	if (!HeapTupleIsValid(typetup))
 		elog(ERROR, "cache lookup for type %u failed (1)", restype);
 	typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
 	fmgr_info(typeStruct->typoutput, &finfo_output);
 	querystr = DatumGetCString(FunctionCall3(&finfo_output,
-				query,
-				ObjectIdGetDatum(typeStruct->typelem),
-				Int32GetDatum(-1)));
+											 query,
+											 ObjectIdGetDatum(typeStruct->typelem),
+											 Int32GetDatum(-1)));
 
 	if(!typeStruct->typbyval)
 		pfree((void *)query);
+
+	ReleaseSysCache(typetup);
 
 	/* ----------
 	 * Call SPI_exec() without preparing a saved plan. 
@@ -2064,8 +2070,9 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 	 * Get the C-String representation.
 	 * ----------
 	 */
-	typetup = SearchSysCacheTuple(TYPEOID,
-		ObjectIdGetDatum(restype), 0, 0, 0);
+	typetup = SearchSysCache(TYPEOID,
+							 ObjectIdGetDatum(restype),
+							 0, 0, 0);
 	if (!HeapTupleIsValid(typetup))
 		elog(ERROR, "cache lookup for type %u failed (1)", restype);
 	typeStruct = (Form_pg_type) GETSTRUCT(typetup);
@@ -2078,6 +2085,8 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 
 	if(!typeStruct->typbyval)
 		pfree((void *)query);
+
+	ReleaseSysCache(typetup);
 
 	/* ----------
 	 * Run the query
@@ -2283,8 +2292,9 @@ exec_assign_value(PLpgSQL_execstate * estate,
 				 */
 				atttype = SPI_gettypeid(rec->tupdesc, i + 1);
 				atttypmod = rec->tupdesc->attrs[i]->atttypmod;
-				typetup = SearchSysCacheTuple(TYPEOID,
-									 ObjectIdGetDatum(atttype), 0, 0, 0);
+				typetup = SearchSysCache(TYPEOID,
+										 ObjectIdGetDatum(atttype),
+										 0, 0, 0);
 				if (!HeapTupleIsValid(typetup))
 					elog(ERROR, "cache lookup for type %u failed", atttype);
 				typeStruct = (Form_pg_type) GETSTRUCT(typetup);
@@ -2299,6 +2309,7 @@ exec_assign_value(PLpgSQL_execstate * estate,
 					nulls[i] = 'n';
 				else
 					nulls[i] = ' ';
+				ReleaseSysCache(typetup);
 			}
 
 			/* ----------
@@ -2603,9 +2614,13 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	 * so that we can free the expression context.
 	 */
 	if (! *isNull)
-		retval = datumCopy(retval,
-						   get_typbyval(*rettype),
-						   get_typlen(*rettype));
+	{
+		int16		typeLength;
+		bool		byValue;
+
+		get_typlenbyval(*rettype, &typeLength, &byValue);
+		retval = datumCopy(retval, byValue, typeLength);
+	}
 
 	FreeExprContext(econtext);
 
@@ -2726,8 +2741,9 @@ exec_cast_value(Datum value, Oid valtype,
 			FmgrInfo	finfo_output;
 			char	   *extval;
 
-			typetup = SearchSysCacheTuple(TYPEOID,
-									 ObjectIdGetDatum(valtype), 0, 0, 0);
+			typetup = SearchSysCache(TYPEOID,
+									 ObjectIdGetDatum(valtype),
+									 0, 0, 0);
 			if (!HeapTupleIsValid(typetup))
 				elog(ERROR, "cache lookup for type %u failed", valtype);
 			typeStruct = (Form_pg_type) GETSTRUCT(typetup);
@@ -2742,6 +2758,7 @@ exec_cast_value(Datum value, Oid valtype,
 								  ObjectIdGetDatum(reqtypelem),
 								  Int32GetDatum(reqtypmod));
 			pfree(extval);
+			ReleaseSysCache(typetup);
 		}
 	}
 

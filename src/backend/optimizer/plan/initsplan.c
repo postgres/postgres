@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.51 2000/09/29 18:21:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.52 2000/11/16 22:30:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "parser/parse_oper.h"
 #include "parser/parse_type.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 
 static void mark_baserels_for_outer_join(Query *root, Relids rels,
@@ -635,6 +636,8 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 									 InvalidOid, /* opid */
 									 BOOLOID); /* operator result type */
 	clause->args = makeList2(item1, item2);
+
+	ReleaseSysCache(eq_operator);
 
 	/*
 	 * Note: we mark the qual "pushed down" to ensure that it can never be

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.71 2000/11/10 00:33:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.72 2000/11/16 22:30:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,8 @@
 #include "utils/catcache.h"
 #include "utils/syscache.h"
 
-static void CatCacheRemoveCTup(CatCache *cache, Dlelem *e);
+
+static void CatCacheRemoveCTup(CatCache *cache, CatCTup *ct);
 static Index CatalogCacheComputeHashIndex(CatCache *cache,
 										  ScanKey cur_skey);
 static Index CatalogCacheComputeTupleHashIndex(CatCache *cache,
@@ -388,28 +389,17 @@ CatalogCacheComputeTupleHashIndex(CatCache *cache,
  * --------------------------------
  */
 static void
-CatCacheRemoveCTup(CatCache *cache, Dlelem *elt)
+CatCacheRemoveCTup(CatCache *cache, CatCTup *ct)
 {
-	CatCTup    *ct;
-	CatCTup    *other_ct;
-	Dlelem	   *other_elt;
+	Assert(ct->refcount == 0);
 
-	if (!elt)					/* probably-useless safety check */
-		return;
+	/* delink from linked lists */
+	DLRemove(&ct->lrulist_elem);
+	DLRemove(&ct->cache_elem);
 
-	/* We need to zap both linked-list elements as well as the tuple */
-
-	ct = (CatCTup *) DLE_VAL(elt);
-	other_elt = ct->ct_node;
-	other_ct = (CatCTup *) DLE_VAL(other_elt);
-
-	heap_freetuple(ct->ct_tup);
-
-	DLRemove(other_elt);
-	DLFreeElem(other_elt);
-	pfree(other_ct);
-	DLRemove(elt);
-	DLFreeElem(elt);
+	/* free associated tuple data */
+	if (ct->tuple.t_data != NULL)
+		pfree(ct->tuple.t_data);
 	pfree(ct);
 
 	--cache->cc_ntup;
@@ -425,13 +415,11 @@ CatCacheRemoveCTup(CatCache *cache, Dlelem *elt)
  * --------------------------------
  */
 void
-CatalogCacheIdInvalidate(int cacheId,	/* XXX */
+CatalogCacheIdInvalidate(int cacheId,
 						 Index hashIndex,
 						 ItemPointer pointer)
 {
 	CatCache   *ccp;
-	CatCTup    *ct;
-	Dlelem	   *elt;
 
 	/* ----------------
 	 *	sanity checks
@@ -442,54 +430,101 @@ CatalogCacheIdInvalidate(int cacheId,	/* XXX */
 	CACHE1_elog(DEBUG, "CatalogCacheIdInvalidate: called");
 
 	/* ----------------
-	 *	inspect every cache that could contain the tuple
+	 *	inspect caches to find the proper cache
 	 * ----------------
 	 */
 	for (ccp = Caches; ccp; ccp = ccp->cc_next)
 	{
+		Dlelem	   *elt,
+				   *nextelt;
+
 		if (cacheId != ccp->id)
 			continue;
 		/* ----------------
 		 *	inspect the hash bucket until we find a match or exhaust
 		 * ----------------
 		 */
-		for (elt = DLGetHead(ccp->cc_cache[hashIndex]);
-			 elt;
-			 elt = DLGetSucc(elt))
+		for (elt = DLGetHead(&ccp->cc_cache[hashIndex]); elt; elt = nextelt)
 		{
-			ct = (CatCTup *) DLE_VAL(elt);
-			if (ItemPointerEquals(pointer, &ct->ct_tup->t_self))
-				break;
+			CatCTup    *ct = (CatCTup *) DLE_VAL(elt);
+
+			nextelt = DLGetSucc(elt);
+
+			if (ItemPointerEquals(pointer, &ct->tuple.t_self))
+			{
+				if (ct->refcount > 0)
+					ct->dead = true;
+				else
+					CatCacheRemoveCTup(ccp, ct);
+				CACHE1_elog(DEBUG, "CatalogCacheIdInvalidate: invalidated");
+				/* could be multiple matches, so keep looking! */
+			}
 		}
-
-		/* ----------------
-		 *	if we found a matching tuple, invalidate it.
-		 * ----------------
-		 */
-
-		if (elt)
-		{
-			CatCacheRemoveCTup(ccp, elt);
-
-			CACHE1_elog(DEBUG, "CatalogCacheIdInvalidate: invalidated");
-		}
-
-		if (cacheId != InvalidCatalogCacheId)
-			break;
+		break;					/* need only search this one cache */
 	}
 }
 
 /* ----------------------------------------------------------------
  *					   public functions
  *
+ *		AtEOXact_CatCache
  *		ResetSystemCache
- *		InitSysCache
- *		SearchSysCache
+ *		InitCatCache
+ *		SearchCatCache
+ *		ReleaseCatCache
  *		RelationInvalidateCatalogCacheTuple
  * ----------------------------------------------------------------
  */
+
+
+/* --------------------------------
+ *		AtEOXact_CatCache
+ *
+ * Clean up catcaches at end of transaction (either commit or abort)
+ *
+ * We scan the caches to reset refcounts to zero.  This is of course
+ * necessary in the abort case, since elog() may have interrupted routines.
+ * In the commit case, any nonzero counts indicate failure to call
+ * ReleaseSysCache, so we put out a notice for debugging purposes.
+ * --------------------------------
+ */
+void
+AtEOXact_CatCache(bool isCommit)
+{
+	CatCache *cache;
+
+	for (cache = Caches; cache; cache = cache->cc_next)
+	{
+		Dlelem	   *elt,
+				   *nextelt;
+
+		for (elt = DLGetHead(&cache->cc_lrulist); elt; elt = nextelt)
+		{
+			CatCTup    *ct = (CatCTup *) DLE_VAL(elt);
+
+			nextelt = DLGetSucc(elt);
+
+			if (ct->refcount != 0)
+			{
+				if (isCommit)
+					elog(NOTICE, "Cache reference leak: cache %s (%d), tuple %u has count %d",
+						 cache->cc_relname, cache->id,
+						 ct->tuple.t_data->t_oid,
+						 ct->refcount);
+				ct->refcount = 0;
+			}
+
+			/* Clean up any now-deletable dead entries */
+			if (ct->dead)
+				CatCacheRemoveCTup(cache, ct);
+		}
+	}
+}
+
 /* --------------------------------
  *		ResetSystemCache
+ *
+ * Reset caches when a shared cache inval event forces it
  * --------------------------------
  */
 void
@@ -503,34 +538,25 @@ ResetSystemCache(void)
 	 *	here we purge the contents of all the caches
 	 *
 	 *	for each system cache
-	 *	   for each hash bucket
-	 *		   for each tuple in hash bucket
-	 *			   remove the tuple
+	 *		for each tuple
+	 *			remove the tuple, or at least mark it dead
 	 * ----------------
 	 */
-	for (cache = Caches; PointerIsValid(cache); cache = cache->cc_next)
+	for (cache = Caches; cache; cache = cache->cc_next)
 	{
-		int			hash;
+		Dlelem	   *elt,
+				   *nextelt;
 
-		for (hash = 0; hash < NCCBUCK; hash += 1)
+		for (elt = DLGetHead(&cache->cc_lrulist); elt; elt = nextelt)
 		{
-			Dlelem	   *elt,
-					   *nextelt;
+			CatCTup    *ct = (CatCTup *) DLE_VAL(elt);
 
-			for (elt = DLGetHead(cache->cc_cache[hash]); elt; elt = nextelt)
-			{
-				nextelt = DLGetSucc(elt);
-				CatCacheRemoveCTup(cache, elt);
-			}
-		}
+			nextelt = DLGetSucc(elt);
 
-		/* double-check that ntup is now zero */
-		if (cache->cc_ntup != 0)
-		{
-			elog(NOTICE,
-				 "ResetSystemCache: cache %d has cc_ntup = %d, should be 0",
-				 cache->id, cache->cc_ntup);
-			cache->cc_ntup = 0;
+			if (ct->refcount > 0)
+				ct->dead = true;
+			else
+				CatCacheRemoveCTup(cache, ct);
 		}
 	}
 
@@ -572,7 +598,7 @@ SystemCacheRelationFlushed(Oid relId)
 }
 
 /* --------------------------------
- *		InitSysCache
+ *		InitCatCache
  *
  *	This allocates and initializes a cache for a system catalog relation.
  *	Actually, the cache is only partially initialized to avoid opening the
@@ -581,18 +607,18 @@ SystemCacheRelationFlushed(Oid relId)
  * --------------------------------
  */
 #ifdef CACHEDEBUG
-#define InitSysCache_DEBUG1 \
+#define InitCatCache_DEBUG1 \
 do { \
-	elog(DEBUG, "InitSysCache: rel=%s id=%d nkeys=%d size=%d\n", \
+	elog(DEBUG, "InitCatCache: rel=%s id=%d nkeys=%d size=%d\n", \
 		cp->cc_relname, cp->id, cp->cc_nkeys, cp->cc_size); \
 } while(0)
 
 #else
-#define InitSysCache_DEBUG1
+#define InitCatCache_DEBUG1
 #endif
 
 CatCache *
-InitSysCache(int id,
+InitCatCache(int id,
 			 char *relname,
 			 char *indname,
 			 int nkeys,
@@ -624,25 +650,9 @@ InitSysCache(int id,
 	 *	and the LRU tuple list
 	 * ----------------
 	 */
-	{
-
-		/*
-		 * We can only do this optimization because the number of hash
-		 * buckets never changes.  Without it, we call palloc() too much.
-		 * We could move this to dllist.c, but the way we do this is not
-		 * dynamic/portable, so why allow other routines to use it.
-		 */
-		Dllist	   *cache_begin = palloc((NCCBUCK + 1) * sizeof(Dllist));
-
-		for (i = 0; i <= NCCBUCK; ++i)
-		{
-			cp->cc_cache[i] = &cache_begin[i];
-			cp->cc_cache[i]->dll_head = 0;
-			cp->cc_cache[i]->dll_tail = 0;
-		}
-	}
-
-	cp->cc_lrulist = DLNewList();
+	DLInitList(&cp->cc_lrulist);
+	for (i = 0; i < NCCBUCK; ++i)
+		DLInitList(&cp->cc_cache[i]);
 
 	/* ----------------
 	 *	Caches is the pointer to the head of the list of all the
@@ -673,7 +683,7 @@ InitSysCache(int id,
 	 *	information, if appropriate.
 	 * ----------------
 	 */
-	InitSysCache_DEBUG1;
+	InitCatCache_DEBUG1;
 
 	/* ----------------
 	 *	back to the old context before we return...
@@ -742,14 +752,14 @@ IndexScanOK(CatCache *cache, ScanKey cur_skey)
 }
 
 /* --------------------------------
- *		SearchSysCache
+ *		SearchCatCache
  *
  *		This call searches a system cache for a tuple, opening the relation
  *		if necessary (the first access to a particular cache).
  * --------------------------------
  */
 HeapTuple
-SearchSysCache(CatCache *cache,
+SearchCatCache(CatCache *cache,
 			   Datum v1,
 			   Datum v2,
 			   Datum v3,
@@ -757,10 +767,8 @@ SearchSysCache(CatCache *cache,
 {
 	ScanKeyData cur_skey[4];
 	Index		hash;
-	CatCTup    *ct = NULL;
-	CatCTup    *nct;
-	CatCTup    *nct2;
 	Dlelem	   *elt;
+	CatCTup    *ct;
 	HeapTuple	ntp;
 	Relation	relation;
 	MemoryContext oldcxt;
@@ -792,48 +800,50 @@ SearchSysCache(CatCache *cache,
 	 *	scan the hash bucket until we find a match or exhaust our tuples
 	 * ----------------
 	 */
-	for (elt = DLGetHead(cache->cc_cache[hash]);
+	for (elt = DLGetHead(&cache->cc_cache[hash]);
 		 elt;
 		 elt = DLGetSucc(elt))
 	{
 		bool		res;
 
 		ct = (CatCTup *) DLE_VAL(elt);
+
+		if (ct->dead)
+			continue;			/* ignore dead entries */
+
 		/* ----------------
 		 *	see if the cached tuple matches our key.
 		 *	(should we be worried about time ranges? -cim 10/2/90)
 		 * ----------------
 		 */
-		HeapKeyTest(ct->ct_tup,
+		HeapKeyTest(&ct->tuple,
 					cache->cc_tupdesc,
 					cache->cc_nkeys,
 					cur_skey,
 					res);
-		if (res)
-			break;
-	}
+		if (! res)
+			continue;
 
-	/* ----------------
-	 *	if we found a tuple in the cache, move it to the top of the
-	 *	lru list, and return it.  We also move it to the front of the
-	 *	list for its hashbucket, in order to speed subsequent searches.
-	 *	(The most frequently accessed elements in any hashbucket will
-	 *	tend to be near the front of the hashbucket's list.)
-	 * ----------------
-	 */
-	if (elt)
-	{
-		Dlelem	   *old_lru_elt = ((CatCTup *) DLE_VAL(elt))->ct_node;
+		/* ----------------
+		 *	we found a tuple in the cache: bump its refcount, move it to
+		 *	the front of the LRU list, and return it.  We also move it
+		 *	to the front of the list for its hashbucket, in order to speed
+		 *	subsequent searches.  (The most frequently accessed elements
+		 *	in any hashbucket will tend to be near the front of the
+		 *	hashbucket's list.)
+		 * ----------------
+		 */
+		ct->refcount++;
 
-		DLMoveToFront(old_lru_elt);
-		DLMoveToFront(elt);
+		DLMoveToFront(&ct->lrulist_elem);
+		DLMoveToFront(&ct->cache_elem);
 
 #ifdef CACHEDEBUG
-		CACHE3_elog(DEBUG, "SearchSysCache(%s): found in bucket %d",
+		CACHE3_elog(DEBUG, "SearchCatCache(%s): found in bucket %d",
 					cache->cc_relname, hash);
 #endif	 /* CACHEDEBUG */
 
-		return ct->ct_tup;
+		return &ct->tuple;
 	}
 
 	/* ----------------
@@ -864,7 +874,7 @@ SearchSysCache(CatCache *cache,
 	 *	if it's safe to do so, use the index.  Else do a heap scan.
 	 * ----------------
 	 */
-	ntp = NULL;
+	ct = NULL;
 
 	if ((RelationGetForm(relation))->relhasindex &&
 		!IsIgnoringSystemIndexes() &&
@@ -876,7 +886,7 @@ SearchSysCache(CatCache *cache,
 		HeapTupleData tuple;
 		Buffer		buffer;
 
-		CACHE2_elog(DEBUG, "SearchSysCache(%s): performing index scan",
+		CACHE2_elog(DEBUG, "SearchCatCache(%s): performing index scan",
 					cache->cc_relname);
 
 		idesc = index_openr(cache->cc_indname);
@@ -892,7 +902,8 @@ SearchSysCache(CatCache *cache,
 			{
 				/* Copy tuple into our context */
 				oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-				ntp = heap_copytuple(&tuple);
+				ct = (CatCTup *) palloc(sizeof(CatCTup));
+				heap_copytuple_with_tuple(&tuple, &ct->tuple);
 				MemoryContextSwitchTo(oldcxt);
 				ReleaseBuffer(buffer);
 				break;
@@ -906,7 +917,7 @@ SearchSysCache(CatCache *cache,
 		HeapScanDesc sd;
 		int			i;
 
-		CACHE2_elog(DEBUG, "SearchSysCache(%s): performing heap scan",
+		CACHE2_elog(DEBUG, "SearchCatCache(%s): performing heap scan",
 					cache->cc_relname);
 
 		/*
@@ -925,7 +936,8 @@ SearchSysCache(CatCache *cache,
 		{
 			/* Copy tuple into our context */
 			oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-			ntp = heap_copytuple(ntp);
+			ct = (CatCTup *) palloc(sizeof(CatCTup));
+			heap_copytuple_with_tuple(ntp, &ct->tuple);
 			MemoryContextSwitchTo(oldcxt);
 			/* We should not free the result of heap_getnext... */
 		}
@@ -934,77 +946,102 @@ SearchSysCache(CatCache *cache,
 	}
 
 	/* ----------------
-	 *	scan is complete.  if tup is valid, we can add it to the cache.
-	 *	note we have already copied it into the cache memory context.
-	 * ----------------
-	 */
-	if (HeapTupleIsValid(ntp))
-	{
-		/* ----------------
-		 *	allocate a new cache tuple holder, store the pointer
-		 *	to the heap tuple there and initialize the list pointers.
-		 * ----------------
-		 */
-		Dlelem	   *lru_elt;
-
-		CACHE1_elog(DEBUG, "SearchSysCache: found tuple");
-
-		oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-
-		/*
-		 * this is a little cumbersome here because we want the Dlelem's
-		 * in both doubly linked lists to point to one another. That makes
-		 * it easier to remove something from both the cache bucket and
-		 * the lru list at the same time
-		 */
-		nct = (CatCTup *) palloc(sizeof(CatCTup));
-		nct->ct_tup = ntp;
-		elt = DLNewElem(nct);
-		nct2 = (CatCTup *) palloc(sizeof(CatCTup));
-		nct2->ct_tup = ntp;
-		lru_elt = DLNewElem(nct2);
-		nct2->ct_node = elt;
-		nct->ct_node = lru_elt;
-
-		DLAddHead(cache->cc_lrulist, lru_elt);
-		DLAddHead(cache->cc_cache[hash], elt);
-
-		MemoryContextSwitchTo(oldcxt);
-
-		/* ----------------
-		 *	If we've exceeded the desired size of this cache,
-		 *	throw away the least recently used entry.
-		 * ----------------
-		 */
-		if (++cache->cc_ntup > cache->cc_maxtup)
-		{
-			CatCTup    *ct;
-
-			elt = DLGetTail(cache->cc_lrulist);
-			ct = (CatCTup *) DLE_VAL(elt);
-
-			if (ct != nct)		/* shouldn't be possible, but be safe... */
-			{
-				CACHE2_elog(DEBUG, "SearchSysCache(%s): Overflow, LRU removal",
-							cache->cc_relname);
-
-				CatCacheRemoveCTup(cache, elt);
-			}
-		}
-
-		CACHE4_elog(DEBUG, "SearchSysCache(%s): Contains %d/%d tuples",
-					cache->cc_relname, cache->cc_ntup, cache->cc_maxtup);
-		CACHE3_elog(DEBUG, "SearchSysCache(%s): put in bucket %d",
-					cache->cc_relname, hash);
-	}
-
-	/* ----------------
-	 *	close the relation and return the tuple we found (or NULL)
+	 *	close the relation
 	 * ----------------
 	 */
 	heap_close(relation, AccessShareLock);
 
-	return ntp;
+	/* ----------------
+	 *	scan is complete.  if tup was found, we can add it to the cache.
+	 * ----------------
+	 */
+	if (ct == NULL)
+		return NULL;
+
+	/* ----------------
+	 *	Finish initializing the CatCTup header, and add it to the
+	 *	linked lists.
+	 * ----------------
+	 */
+	CACHE1_elog(DEBUG, "SearchCatCache: found tuple");
+
+	ct->ct_magic = CT_MAGIC;
+	DLInitElem(&ct->lrulist_elem, (void *) ct);
+	DLInitElem(&ct->cache_elem, (void *) ct);
+	ct->refcount = 1;			/* count this first reference */
+	ct->dead = false;
+
+	DLAddHead(&cache->cc_lrulist, &ct->lrulist_elem);
+	DLAddHead(&cache->cc_cache[hash], &ct->cache_elem);
+
+	/* ----------------
+	 *	If we've exceeded the desired size of this cache,
+	 *	try to throw away the least recently used entry.
+	 * ----------------
+	 */
+	if (++cache->cc_ntup > cache->cc_maxtup)
+	{
+		for (elt = DLGetTail(&cache->cc_lrulist);
+			 elt;
+			 elt = DLGetPred(elt))
+		{
+			CatCTup    *oldct = (CatCTup *) DLE_VAL(elt);
+
+			if (oldct->refcount == 0)
+			{
+				CACHE2_elog(DEBUG, "SearchCatCache(%s): Overflow, LRU removal",
+							cache->cc_relname);
+				CatCacheRemoveCTup(cache, oldct);
+				break;
+			}
+		}
+	}
+
+	CACHE4_elog(DEBUG, "SearchCatCache(%s): Contains %d/%d tuples",
+				cache->cc_relname, cache->cc_ntup, cache->cc_maxtup);
+	CACHE3_elog(DEBUG, "SearchCatCache(%s): put in bucket %d",
+				cache->cc_relname, hash);
+
+	return &ct->tuple;
+}
+
+/* --------------------------------
+ *	ReleaseCatCache()
+ *
+ *	Decrement the reference count of a catcache entry (releasing the
+ *	hold grabbed by a successful SearchCatCache).
+ *
+ *	NOTE: if compiled with -DCATCACHE_FORCE_RELEASE then catcache entries
+ *	will be freed as soon as their refcount goes to zero.  In combination
+ *	with aset.c's CLOBBER_FREED_MEMORY option, this provides a good test
+ *	to catch references to already-released catcache entries.
+ * --------------------------------
+ */
+void
+ReleaseCatCache(HeapTuple tuple)
+{
+	CatCTup	   *ct = (CatCTup *) (((char *) tuple) -
+								  offsetof(CatCTup, tuple));
+
+	/* Safety checks to ensure we were handed a cache entry */
+	Assert(ct->ct_magic == CT_MAGIC);
+	Assert(ct->refcount > 0);
+
+	ct->refcount--;
+
+	if (ct->refcount == 0
+#ifndef CATCACHE_FORCE_RELEASE
+		&& ct->dead
+#endif
+		)
+	{
+		/* We can find the associated cache using the dllist pointers */
+		Dllist *lru = DLGetListHdr(&ct->lrulist_elem);
+		CatCache *cache = (CatCache *) (((char *) lru) -
+										offsetof(CatCache, cc_lrulist));
+
+		CatCacheRemoveCTup(cache, ct);
+	}
 }
 
 /* --------------------------------

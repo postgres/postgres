@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.61 2000/09/29 18:21:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.62 2000/11/16 22:30:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,9 +48,9 @@ relation_info(Oid relationObjectId,
 	HeapTuple	relationTuple;
 	Form_pg_class relation;
 
-	relationTuple = SearchSysCacheTuple(RELOID,
-										ObjectIdGetDatum(relationObjectId),
-										0, 0, 0);
+	relationTuple = SearchSysCache(RELOID,
+								   ObjectIdGetDatum(relationObjectId),
+								   0, 0, 0);
 	if (!HeapTupleIsValid(relationTuple))
 		elog(ERROR, "relation_info: Relation %u not found",
 			 relationObjectId);
@@ -62,6 +62,7 @@ relation_info(Oid relationObjectId,
 		*hasindex = (relation->relhasindex) ? true : false;
 	*pages = relation->relpages;
 	*tuples = relation->reltuples;
+	ReleaseSysCache(relationTuple);
 }
 
 /*
@@ -100,9 +101,9 @@ find_secondary_indexes(Oid relationObjectId)
 		Oid			relam;
 		uint16		amorderstrategy;
 
-		indexTuple = SearchSysCacheTupleCopy(INDEXRELID,
-											 ObjectIdGetDatum(indexoid),
-											 0, 0, 0);
+		indexTuple = SearchSysCache(INDEXRELID,
+									ObjectIdGetDatum(indexoid),
+									0, 0, 0);
 		if (!HeapTupleIsValid(indexTuple))
 			elog(ERROR, "find_secondary_indexes: index %u not found",
 				 indexoid);
@@ -162,20 +163,22 @@ find_secondary_indexes(Oid relationObjectId)
 				Form_pg_amop amop;
 
 				amopTuple =
-					SearchSysCacheTuple(AMOPSTRATEGY,
-										ObjectIdGetDatum(relam),
-									ObjectIdGetDatum(index->indclass[i]),
-										UInt16GetDatum(amorderstrategy),
-										0);
+					SearchSysCache(AMOPSTRATEGY,
+								   ObjectIdGetDatum(relam),
+								   ObjectIdGetDatum(index->indclass[i]),
+								   UInt16GetDatum(amorderstrategy),
+								   0);
 				if (!HeapTupleIsValid(amopTuple))
 					elog(ERROR, "find_secondary_indexes: no amop %u %u %d",
-					   relam, index->indclass[i], (int) amorderstrategy);
+						 relam, index->indclass[i],
+						 (int) amorderstrategy);
 				amop = (Form_pg_amop) GETSTRUCT(amopTuple);
 				info->ordering[i] = amop->amopopr;
+				ReleaseSysCache(amopTuple);
 			}
 		}
 
-		heap_freetuple(indexTuple);
+		ReleaseSysCache(indexTuple);
 
 		indexinfos = lcons(info, indexinfos);
 	}
@@ -315,13 +318,16 @@ find_inheritance_children(Oid inhparent)
 bool
 has_subclass(Oid relationId)
 {
-	HeapTuple	tuple =
-		SearchSysCacheTuple(RELOID,
-							ObjectIdGetDatum(relationId),
-							0, 0, 0);
+	HeapTuple	tuple;
+	bool		result;
 
+	tuple = SearchSysCache(RELOID,
+						   ObjectIdGetDatum(relationId),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "has_subclass: Relation %u not found",
-			 relationId);
-	return ((Form_pg_class) GETSTRUCT(tuple))->relhassubclass;
+		elog(ERROR, "has_subclass: Relation %u not found", relationId);
+
+	result = ((Form_pg_class) GETSTRUCT(tuple))->relhassubclass;
+	ReleaseSysCache(tuple);
+	return result;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.40 2000/11/08 22:09:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.41 2000/11/16 22:30:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,6 @@ DefineIndex(char *heapRelationName,
 	Oid			relationId;
 	IndexInfo  *indexInfo;
 	int			numberOfAttributes;
-	HeapTuple	tuple;
 	List	   *cnfPred = NIL;
 	bool		lossy = false;
 	List	   *pl;
@@ -111,13 +110,12 @@ DefineIndex(char *heapRelationName,
 	/*
 	 * compute access method id
 	 */
-	tuple = SearchSysCacheTuple(AMNAME,
-								PointerGetDatum(accessMethodName),
-								0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
+	accessMethodId = GetSysCacheOid(AMNAME,
+									PointerGetDatum(accessMethodName),
+									0, 0, 0);
+	if (!OidIsValid(accessMethodId))
 		elog(ERROR, "DefineIndex: access method \"%s\" not found",
 			 accessMethodName);
-	accessMethodId = tuple->t_data->t_oid;
 
 	/*
 	 * XXX Hardwired hacks to check for limitations on supported index types.
@@ -239,21 +237,22 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 	/*
 	 * Get index's relation id and access method id from pg_class
 	 */
-	tuple = SearchSysCacheTuple(RELNAME,
-								PointerGetDatum(indexRelationName),
-								0, 0, 0);
+	tuple = SearchSysCache(RELNAME,
+						   PointerGetDatum(indexRelationName),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "ExtendIndex: index \"%s\" not found",
 			 indexRelationName);
 	indexId = tuple->t_data->t_oid;
 	accessMethodId = ((Form_pg_class) GETSTRUCT(tuple))->relam;
+	ReleaseSysCache(tuple);
 
 	/*
 	 * Extract info from the pg_index tuple for the index
 	 */
-	tuple = SearchSysCacheTuple(INDEXRELID,
-								ObjectIdGetDatum(indexId),
-								0, 0, 0);
+	tuple = SearchSysCache(INDEXRELID,
+						   ObjectIdGetDatum(indexId),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "ExtendIndex: relation \"%s\" is not an index",
 			 indexRelationName);
@@ -262,6 +261,7 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 	relationId = index->indrelid;
 	indexInfo = BuildIndexInfo(tuple);
 	oldPred = indexInfo->ii_Predicate;
+	ReleaseSysCache(tuple);
 
 	if (oldPred == NULL)
 		elog(ERROR, "ExtendIndex: \"%s\" is not a partial index",
@@ -391,16 +391,16 @@ FuncIndexArgs(IndexInfo *indexInfo,
 		HeapTuple	tuple;
 		Form_pg_attribute att;
 
-		tuple = SearchSysCacheTuple(ATTNAME,
-									ObjectIdGetDatum(relId),
-									PointerGetDatum(arg),
-									0, 0);
+		tuple = SearchSysCache(ATTNAME,
+							   ObjectIdGetDatum(relId),
+							   PointerGetDatum(arg),
+							   0, 0);
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "DefineIndex: attribute \"%s\" not found", arg);
 		att = (Form_pg_attribute) GETSTRUCT(tuple);
-
 		indexInfo->ii_KeyAttrNumbers[nargs] = att->attnum;
 		argTypes[nargs] = att->atttypid;
+		ReleaseSysCache(tuple);
 		nargs++;
 	}
 
@@ -465,10 +465,10 @@ NormIndexAttrs(IndexInfo *indexInfo,
 		if (attribute->name == NULL)
 			elog(ERROR, "missing attribute for define index");
 
-		atttuple = SearchSysCacheTupleCopy(ATTNAME,
-										   ObjectIdGetDatum(relId),
-										PointerGetDatum(attribute->name),
-										   0, 0);
+		atttuple = SearchSysCache(ATTNAME,
+								  ObjectIdGetDatum(relId),
+								  PointerGetDatum(attribute->name),
+								  0, 0);
 		if (!HeapTupleIsValid(atttuple))
 			elog(ERROR, "DefineIndex: attribute \"%s\" not found",
 				 attribute->name);
@@ -479,7 +479,7 @@ NormIndexAttrs(IndexInfo *indexInfo,
 		classOidP[attn] = GetAttrOpClass(attribute, attform->atttypid,
 										 accessMethodName, accessMethodId);
 
-		heap_freetuple(atttuple);
+		ReleaseSysCache(atttuple);
 		attn++;
 	}
 }
@@ -507,13 +507,12 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 		doTypeCheck = false;
 	}
 
-	tuple = SearchSysCacheTuple(CLANAME,
-								PointerGetDatum(attribute->class),
-								0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
+	opClassId = GetSysCacheOid(CLANAME,
+							   PointerGetDatum(attribute->class),
+							   0, 0, 0);
+	if (!OidIsValid(opClassId))
 		elog(ERROR, "DefineIndex: opclass \"%s\" not found",
 			 attribute->class);
-	opClassId = tuple->t_data->t_oid;
 
 	/*
 	 * Assume the opclass is supported by this index access method
@@ -532,10 +531,8 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 	scan = heap_beginscan(relation, false, SnapshotNow, 2, entry);
 
 	if (! HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
-	{
 		elog(ERROR, "DefineIndex: opclass \"%s\" not supported by access method \"%s\"",
 			 attribute->class, accessMethodName);
-	}
 
 	oprId = ((Form_pg_amop) GETSTRUCT(tuple))->amopopr;
 
@@ -557,9 +554,9 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 	 */
 	if (doTypeCheck)
 	{
-		tuple = SearchSysCacheTuple(OPEROID,
-									ObjectIdGetDatum(oprId),
-									0, 0, 0);
+		tuple = SearchSysCache(OPEROID,
+							   ObjectIdGetDatum(oprId),
+							   0, 0, 0);
 		if (HeapTupleIsValid(tuple))
 		{
 			Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tuple);
@@ -570,6 +567,7 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 				! IS_BINARY_COMPATIBLE(attrType, opInputType))
 				elog(ERROR, "DefineIndex: opclass \"%s\" does not accept datatype \"%s\"",
 					 attribute->class, typeidTypeName(attrType));
+			ReleaseSysCache(tuple);
 		}
 	}
 
@@ -580,15 +578,18 @@ static char *
 GetDefaultOpClass(Oid atttypid)
 {
 	HeapTuple	tuple;
+	char	   *result;
 
-	tuple = SearchSysCacheTuple(CLADEFTYPE,
-								ObjectIdGetDatum(atttypid),
-								0, 0, 0);
+	tuple = SearchSysCache(CLADEFTYPE,
+						   ObjectIdGetDatum(atttypid),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		return NULL;
 
-	return DatumGetCString(DirectFunctionCall1(nameout,
-			NameGetDatum(&((Form_pg_opclass) GETSTRUCT(tuple))->opcname)));
+	result = pstrdup(NameStr(((Form_pg_opclass) GETSTRUCT(tuple))->opcname));
+
+	ReleaseSysCache(tuple);
+	return result;
 }
 
 /*
@@ -605,21 +606,19 @@ RemoveIndex(char *name)
 {
 	HeapTuple	tuple;
 
-	tuple = SearchSysCacheTuple(RELNAME,
-								PointerGetDatum(name),
-								0, 0, 0);
-
+	tuple = SearchSysCache(RELNAME,
+						   PointerGetDatum(name),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "index \"%s\" does not exist", name);
 
 	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_INDEX)
-	{
 		elog(ERROR, "relation \"%s\" is of type \"%c\"",
-			 name,
-			 ((Form_pg_class) GETSTRUCT(tuple))->relkind);
-	}
+			 name, ((Form_pg_class) GETSTRUCT(tuple))->relkind);
 
 	index_drop(tuple->t_data->t_oid);
+
+	ReleaseSysCache(tuple);
 }
 
 /*
@@ -644,22 +643,20 @@ ReindexIndex(const char *name, bool force /* currently unused */ )
 	if (IsTransactionBlock())
 		elog(ERROR, "REINDEX cannot run inside a BEGIN/END block");
 
-	tuple = SearchSysCacheTuple(RELNAME,
-								PointerGetDatum(name),
-								0, 0, 0);
-
+	tuple = SearchSysCache(RELNAME,
+						   PointerGetDatum(name),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "index \"%s\" does not exist", name);
 
 	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_INDEX)
-	{
 		elog(ERROR, "relation \"%s\" is of type \"%c\"",
-			 name,
-			 ((Form_pg_class) GETSTRUCT(tuple))->relkind);
-	}
+			 name, ((Form_pg_class) GETSTRUCT(tuple))->relkind);
 
 	if (!reindex_index(tuple->t_data->t_oid, force))
 		elog(NOTICE, "index \"%s\" wasn't reindexed", name);
+
+	ReleaseSysCache(tuple);
 }
 
 /*
@@ -684,22 +681,20 @@ ReindexTable(const char *name, bool force)
 	if (IsTransactionBlock())
 		elog(ERROR, "REINDEX cannot run inside a BEGIN/END block");
 
-	tuple = SearchSysCacheTuple(RELNAME,
-								PointerGetDatum(name),
-								0, 0, 0);
-
+	tuple = SearchSysCache(RELNAME,
+						   PointerGetDatum(name),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "table \"%s\" does not exist", name);
 
 	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_RELATION)
-	{
 		elog(ERROR, "relation \"%s\" is of type \"%c\"",
-			 name,
-			 ((Form_pg_class) GETSTRUCT(tuple))->relkind);
-	}
+			 name, ((Form_pg_class) GETSTRUCT(tuple))->relkind);
 
 	if (!reindex_relation(tuple->t_data->t_oid, force))
 		elog(NOTICE, "table \"%s\" wasn't reindexed", name);
+
+	ReleaseSysCache(tuple);
 }
 
 /*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.79 2000/11/08 22:09:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.80 2000/11/16 22:30:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,11 +154,11 @@ CreateTrigger(CreateTrigStmt *stmt)
 	 * Find and validate the trigger function.
 	 */
 	MemSet(fargtypes, 0, FUNC_MAX_ARGS * sizeof(Oid));
-	tuple = SearchSysCacheTuple(PROCNAME,
-								PointerGetDatum(stmt->funcname),
-								Int32GetDatum(0),
-								PointerGetDatum(fargtypes),
-								0);
+	tuple = SearchSysCache(PROCNAME,
+						   PointerGetDatum(stmt->funcname),
+						   Int32GetDatum(0),
+						   PointerGetDatum(fargtypes),
+						   0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "CreateTrigger: function %s() does not exist",
 			 stmt->funcname);
@@ -167,6 +167,8 @@ CreateTrigger(CreateTrigStmt *stmt)
 			 stmt->funcname);
 	funcoid = tuple->t_data->t_oid;
 	funclang = ((Form_pg_proc) GETSTRUCT(tuple))->prolang;
+	ReleaseSysCache(tuple);
+
 	if (funclang != ClanguageId &&
 		funclang != NEWClanguageId &&
 		funclang != INTERNALlanguageId &&
@@ -174,14 +176,15 @@ CreateTrigger(CreateTrigStmt *stmt)
 	{
 		HeapTuple	langTup;
 
-		langTup = SearchSysCacheTuple(LANGOID,
-									  ObjectIdGetDatum(funclang),
-									  0, 0, 0);
+		langTup = SearchSysCache(LANGOID,
+								 ObjectIdGetDatum(funclang),
+								 0, 0, 0);
 		if (!HeapTupleIsValid(langTup))
 			elog(ERROR, "CreateTrigger: cache lookup for PL %u failed",
 				 funclang);
 		if (((Form_pg_language) GETSTRUCT(langTup))->lanispl == false)
 			elog(ERROR, "CreateTrigger: only builtin, C and PL functions are supported");
+		ReleaseSysCache(langTup);
 	}
 
 	/*
@@ -268,9 +271,9 @@ CreateTrigger(CreateTrigStmt *stmt)
 	 * rebuild relcache entries.
 	 */
 	pgrel = heap_openr(RelationRelationName, RowExclusiveLock);
-	tuple = SearchSysCacheTupleCopy(RELNAME,
-									PointerGetDatum(stmt->relname),
-									0, 0, 0);
+	tuple = SearchSysCacheCopy(RELNAME,
+							   PointerGetDatum(stmt->relname),
+							   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "CreateTrigger: relation %s not found in pg_class",
 			 stmt->relname);
@@ -353,9 +356,9 @@ DropTrigger(DropTrigStmt *stmt)
 	 * rebuild relcache entries.
 	 */
 	pgrel = heap_openr(RelationRelationName, RowExclusiveLock);
-	tuple = SearchSysCacheTupleCopy(RELNAME,
-									PointerGetDatum(stmt->relname),
-									0, 0, 0);
+	tuple = SearchSysCacheCopy(RELNAME,
+							   PointerGetDatum(stmt->relname),
+							   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "DropTrigger: relation %s not found in pg_class",
 			 stmt->relname);
@@ -426,9 +429,9 @@ RelationRemoveTriggers(Relation rel)
 		Relation	ridescs[Num_pg_class_indices];
 
 		pgrel = heap_openr(RelationRelationName, RowExclusiveLock);
-		tup = SearchSysCacheTupleCopy(RELOID,
-									  RelationGetRelid(rel),
-									  0, 0, 0);
+		tup = SearchSysCacheCopy(RELOID,
+								 RelationGetRelid(rel),
+								 0, 0, 0);
 		if (!HeapTupleIsValid(tup))
 			elog(ERROR, "RelationRemoveTriggers: relation %u not found in pg_class",
 				 RelationGetRelid(rel));

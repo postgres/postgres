@@ -7,12 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.50 2000/10/05 19:11:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.51 2000/11/16 22:30:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
 #include "parser/parsetree.h"
@@ -555,20 +556,6 @@ AddNotQual(Query *parsetree, Node *qual)
 }
 
 
-/* Build a NULL constant expression of the given type */
-static Node *
-make_null(Oid type)
-{
-	Const	   *c = makeNode(Const);
-
-	c->consttype = type;
-	c->constlen = get_typlen(type);
-	c->constvalue = PointerGetDatum(NULL);
-	c->constisnull = true;
-	c->constbyval = get_typbyval(type);
-	return (Node *) c;
-}
-
 /* Find a targetlist entry by resno */
 static Node *
 FindMatchingNew(List *tlist, int attno)
@@ -656,7 +643,7 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 				else
 				{
 					/* Otherwise replace unmatched var with a null */
-					return make_null(var->vartype);
+					return (Node *) makeNullConst(var->vartype);
 				}
 			}
 			else
@@ -796,7 +783,7 @@ HandleRIRAttributeRule_mutator(Node *node,
 			{					/* HACK: disallow SET variables */
 				*context->modified = TRUE;
 				*context->badsql = TRUE;
-				return make_null(var->vartype);
+				return (Node *) makeNullConst(var->vartype);
 			}
 			else
 			{
@@ -813,7 +800,7 @@ HandleRIRAttributeRule_mutator(Node *node,
 					n = FindMatchingTLEntry(context->targetlist,
 											name_to_look_for);
 					if (n == NULL)
-						return make_null(var->vartype);
+						return (Node *) makeNullConst(var->vartype);
 					/* Make a copy of the tlist item to return */
 					n = copyObject(n);
 

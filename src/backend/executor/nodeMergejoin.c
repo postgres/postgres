@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.38 2000/09/12 21:06:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.39 2000/11/16 22:30:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,26 +147,29 @@ MJFormSkipQual(List *qualList, char *replaceopname)
 		 *	 if we search with the actual operand types.
 		 * ----------------
 		 */
-		optup = get_operator_tuple(op->opno);
+		optup = SearchSysCache(OPEROID,
+							   ObjectIdGetDatum(op->opno),
+							   0, 0, 0);
 		if (!HeapTupleIsValid(optup))	/* shouldn't happen */
 			elog(ERROR, "MJFormSkipQual: operator %u not found", op->opno);
 		opform = (Form_pg_operator) GETSTRUCT(optup);
 		oprleft = opform->oprleft;
 		oprright = opform->oprright;
+		ReleaseSysCache(optup);
 
 		/* ----------------
 		 *	 Now look up the matching "<" or ">" operator.	If there isn't one,
 		 *	 whoever marked the "=" operator mergejoinable was a loser.
 		 * ----------------
 		 */
-		optup = SearchSysCacheTuple(OPERNAME,
-									PointerGetDatum(replaceopname),
-									ObjectIdGetDatum(oprleft),
-									ObjectIdGetDatum(oprright),
-									CharGetDatum('b'));
+		optup = SearchSysCache(OPERNAME,
+							   PointerGetDatum(replaceopname),
+							   ObjectIdGetDatum(oprleft),
+							   ObjectIdGetDatum(oprright),
+							   CharGetDatum('b'));
 		if (!HeapTupleIsValid(optup))
 			elog(ERROR,
-			"MJFormSkipQual: mergejoin operator %u has no matching %s op",
+				 "MJFormSkipQual: mergejoin operator %u has no matching %s op",
 				 op->opno, replaceopname);
 		opform = (Form_pg_operator) GETSTRUCT(optup);
 
@@ -177,6 +180,7 @@ MJFormSkipQual(List *qualList, char *replaceopname)
 		op->opno = optup->t_data->t_oid;
 		op->opid = opform->oprcode;
 		op->op_fcache = NULL;
+		ReleaseSysCache(optup);
 	}
 
 	return qualCopy;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.56 2000/11/04 12:43:24 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.57 2000/11/16 22:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -340,12 +340,15 @@ SetSessionUserIdFromUserName(const char *username)
 	 */
 	AssertState(!IsBootstrapProcessingMode());
 
-	userTup = SearchSysCacheTuple(SHADOWNAME,
-								  PointerGetDatum(username),
-								  0, 0, 0);
+	userTup = SearchSysCache(SHADOWNAME,
+							 PointerGetDatum(username),
+							 0, 0, 0);
 	if (!HeapTupleIsValid(userTup))
 		elog(FATAL, "user \"%s\" does not exist", username);
+
 	SetSessionUserId( ((Form_pg_shadow) GETSTRUCT(userTup))->usesysid );
+
+	ReleaseSysCache(userTup);
 }
 
 
@@ -355,13 +358,19 @@ SetSessionUserIdFromUserName(const char *username)
 char *
 GetUserName(Oid userid)
 {
-	HeapTuple tuple;
+	HeapTuple	tuple;
+	char	   *result;
 
-	tuple = SearchSysCacheTuple(SHADOWSYSID, ObjectIdGetDatum(userid), 0, 0, 0);
+	tuple = SearchSysCache(SHADOWSYSID,
+						   ObjectIdGetDatum(userid),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "invalid user id %u", (unsigned) userid);
 
-	return pstrdup( NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename) );
+	result = pstrdup( NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename) );
+
+	ReleaseSysCache(tuple);
+	return result;
 }
 
 

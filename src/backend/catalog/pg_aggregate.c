@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.35 2000/07/17 03:04:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.36 2000/11/16 22:30:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,15 +82,10 @@ AggregateCreate(char *aggName,
 	 * specified as 'ANY' for a data-independent transition function,
 	 * such as COUNT(*).
 	 */
-	tup = SearchSysCacheTuple(TYPENAME,
+	basetype = GetSysCacheOid(TYPENAME,
 							  PointerGetDatum(aggbasetypeName),
 							  0, 0, 0);
-	if (HeapTupleIsValid(tup))
-	{
-		basetype = tup->t_data->t_oid;
-		Assert(OidIsValid(basetype));
-	}
-	else
+	if (!OidIsValid(basetype))
 	{
 		if (strcasecmp(aggbasetypeName, "ANY") != 0)
 			elog(ERROR, "AggregateCreate: Type '%s' undefined",
@@ -99,24 +94,21 @@ AggregateCreate(char *aggName,
 	}
 
 	/* make sure there is no existing agg of same name and base type */
-	tup = SearchSysCacheTuple(AGGNAME,
-							  PointerGetDatum(aggName),
-							  ObjectIdGetDatum(basetype),
-							  0, 0);
-	if (HeapTupleIsValid(tup))
+	if (SearchSysCacheExists(AGGNAME,
+							 PointerGetDatum(aggName),
+							 ObjectIdGetDatum(basetype),
+							 0, 0))
 		elog(ERROR,
 			 "AggregateCreate: aggregate '%s' with base type '%s' already exists",
 			 aggName, aggbasetypeName);
 
 	/* handle transtype */
-	tup = SearchSysCacheTuple(TYPENAME,
-							  PointerGetDatum(aggtranstypeName),
-							  0, 0, 0);
-	if (!HeapTupleIsValid(tup))
+	transtype = GetSysCacheOid(TYPENAME,
+							   PointerGetDatum(aggtranstypeName),
+							   0, 0, 0);
+	if (!OidIsValid(transtype))
 		elog(ERROR, "AggregateCreate: Type '%s' undefined",
 			 aggtranstypeName);
-	transtype = tup->t_data->t_oid;
-	Assert(OidIsValid(transtype));
 
 	/* handle transfn */
 	fnArgs[0] = transtype;
@@ -129,48 +121,50 @@ AggregateCreate(char *aggName,
 	{
 		nargs = 1;
 	}
-	tup = SearchSysCacheTuple(PROCNAME,
-							  PointerGetDatum(aggtransfnName),
-							  Int32GetDatum(nargs),
-							  PointerGetDatum(fnArgs),
-							  0);
+	tup = SearchSysCache(PROCNAME,
+						 PointerGetDatum(aggtransfnName),
+						 Int32GetDatum(nargs),
+						 PointerGetDatum(fnArgs),
+						 0);
 	if (!HeapTupleIsValid(tup))
 		func_error("AggregateCreate", aggtransfnName, nargs, fnArgs, NULL);
 	transfn = tup->t_data->t_oid;
+	Assert(OidIsValid(transfn));
 	proc = (Form_pg_proc) GETSTRUCT(tup);
 	if (proc->prorettype != transtype)
 		elog(ERROR, "AggregateCreate: return type of '%s' is not '%s'",
 			 aggtransfnName, aggtranstypeName);
-	Assert(OidIsValid(transfn));
 	/*
 	 * If the transfn is strict and the initval is NULL, make sure
 	 * input type and transtype are the same (or at least binary-
 	 * compatible), so that it's OK to use the first input value
 	 * as the initial transValue.
 	 */
-	if (((Form_pg_proc) GETSTRUCT(tup))->proisstrict && agginitval == NULL)
+	if (proc->proisstrict && agginitval == NULL)
 	{
 		if (basetype != transtype &&
 			! IS_BINARY_COMPATIBLE(basetype, transtype))
 			elog(ERROR, "AggregateCreate: must not omit initval when transfn is strict and transtype is not compatible with input type");
 	}
+	ReleaseSysCache(tup);
 
 	/* handle finalfn, if supplied */
 	if (aggfinalfnName)
 	{
 		fnArgs[0] = transtype;
 		fnArgs[1] = 0;
-		tup = SearchSysCacheTuple(PROCNAME,
-								  PointerGetDatum(aggfinalfnName),
-								  Int32GetDatum(1),
-								  PointerGetDatum(fnArgs),
-								  0);
+		tup = SearchSysCache(PROCNAME,
+							 PointerGetDatum(aggfinalfnName),
+							 Int32GetDatum(1),
+							 PointerGetDatum(fnArgs),
+							 0);
 		if (!HeapTupleIsValid(tup))
 			func_error("AggregateCreate", aggfinalfnName, 1, fnArgs, NULL);
 		finalfn = tup->t_data->t_oid;
+		Assert(OidIsValid(finalfn));
 		proc = (Form_pg_proc) GETSTRUCT(tup);
 		finaltype = proc->prorettype;
-		Assert(OidIsValid(finalfn));
+		ReleaseSysCache(tup);
 	}
 	else
 	{
@@ -237,10 +231,10 @@ AggNameGetInitVal(char *aggName, Oid basetype, bool *isNull)
 	Assert(PointerIsValid(aggName));
 	Assert(PointerIsValid(isNull));
 
-	tup = SearchSysCacheTuple(AGGNAME,
-							  PointerGetDatum(aggName),
-							  ObjectIdGetDatum(basetype),
-							  0, 0);
+	tup = SearchSysCache(AGGNAME,
+						 PointerGetDatum(aggName),
+						 ObjectIdGetDatum(basetype),
+						 0, 0);
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "AggNameGetInitVal: cache lookup failed for aggregate '%s'",
 			 aggName);
@@ -254,20 +248,24 @@ AggNameGetInitVal(char *aggName, Oid basetype, bool *isNull)
 								  Anum_pg_aggregate_agginitval,
 								  isNull);
 	if (*isNull)
+	{
+		ReleaseSysCache(tup);
 		return (Datum) 0;
+	}
 
 	strInitVal = DatumGetCString(DirectFunctionCall1(textout, textInitVal));
 
-	tup = SearchSysCacheTuple(TYPEOID,
-							  ObjectIdGetDatum(transtype),
-							  0, 0, 0);
+	ReleaseSysCache(tup);
+
+	tup = SearchSysCache(TYPEOID,
+						 ObjectIdGetDatum(transtype),
+						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-	{
-		pfree(strInitVal);
 		elog(ERROR, "AggNameGetInitVal: cache lookup failed on aggregate transition function return type %u", transtype);
-	}
+
 	typinput = ((Form_pg_type) GETSTRUCT(tup))->typinput;
 	typelem = ((Form_pg_type) GETSTRUCT(tup))->typelem;
+	ReleaseSysCache(tup);
 
 	initVal = OidFunctionCall3(typinput,
 							   CStringGetDatum(strInitVal),

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.77 2000/10/05 19:11:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.78 2000/11/16 22:30:26 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -28,7 +28,6 @@
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
-#include "parser/parse_type.h"
 #include "parser/parsetree.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
@@ -995,7 +994,8 @@ get_rels_atts(Node *clause,
 void
 CommuteClause(Expr *clause)
 {
-	HeapTuple	heapTup;
+	Oid			opoid;
+	HeapTuple	optup;
 	Form_pg_operator commuTup;
 	Oper	   *commu;
 	Node	   *temp;
@@ -1004,18 +1004,21 @@ CommuteClause(Expr *clause)
 		length(clause->args) != 2)
 		elog(ERROR, "CommuteClause: applied to non-binary-operator clause");
 
-	heapTup = (HeapTuple)
-		get_operator_tuple(get_commutator(((Oper *) clause->oper)->opno));
+	opoid = ((Oper *) clause->oper)->opno;
 
-	if (heapTup == (HeapTuple) NULL)
-		elog(ERROR, "CommuteClause: no commutator for operator %u",
-			 ((Oper *) clause->oper)->opno);
+	optup = SearchSysCache(OPEROID,
+						   ObjectIdGetDatum(get_commutator(opoid)),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(optup))
+		elog(ERROR, "CommuteClause: no commutator for operator %u", opoid);
 
-	commuTup = (Form_pg_operator) GETSTRUCT(heapTup);
+	commuTup = (Form_pg_operator) GETSTRUCT(optup);
 
-	commu = makeOper(heapTup->t_data->t_oid,
+	commu = makeOper(optup->t_data->t_oid,
 					 commuTup->oprcode,
 					 commuTup->oprresult);
+
+	ReleaseSysCache(optup);
 
 	/*
 	 * re-form the clause in-place!
@@ -1434,9 +1437,11 @@ simplify_op_or_func(Expr *expr, List *args)
 	Oid			result_typeid;
 	HeapTuple	func_tuple;
 	Form_pg_proc funcform;
-	Type		resultType;
+	bool		proiscachable;
+	bool		proisstrict;
+	bool		proretset;
+	int16		resultTypLen;
 	bool		resultTypByVal;
-	int			resultTypLen;
 	Expr	   *newexpr;
 	ExprContext *econtext;
 	Datum		const_val;
@@ -1491,36 +1496,37 @@ simplify_op_or_func(Expr *expr, List *args)
 	 * we could use func_iscachable() here, but we need several fields
 	 * out of the func tuple, so might as well just look it up once.
 	 */
-	func_tuple = SearchSysCacheTuple(PROCOID,
-									 ObjectIdGetDatum(funcid),
-									 0, 0, 0);
+	func_tuple = SearchSysCache(PROCOID,
+								ObjectIdGetDatum(funcid),
+								0, 0, 0);
 	if (!HeapTupleIsValid(func_tuple))
 		elog(ERROR, "Function OID %u does not exist", funcid);
 	funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
-	if (!funcform->proiscachable)
+	proiscachable = funcform->proiscachable;
+	proisstrict = funcform->proisstrict;
+	proretset = funcform->proretset;
+	ReleaseSysCache(func_tuple);
+
+	if (!proiscachable)
 		return NULL;
 
 	/*
 	 * Also check to make sure it doesn't return a set.
 	 */
-	if (funcform->proretset)
+	if (proretset)
 		return NULL;
 
 	/*
 	 * Now that we know if the function is strict, we can finish the
 	 * checks for simplifiable inputs that we started above.
 	 */
-	if (funcform->proisstrict && has_null_input)
+	if (proisstrict && has_null_input)
 	{
 		/*
 		 * It's strict and has NULL input, so must produce NULL output.
 		 * Return a NULL constant of the right type.
 		 */
-		resultType = typeidType(result_typeid);
-		return (Expr *) makeConst(result_typeid, typeLen(resultType),
-								  (Datum) 0, true,
-								  typeByVal(resultType),
-								  false, false);
+		return (Expr *) makeNullConst(result_typeid);
 	}
 
 	/*
@@ -1548,9 +1554,7 @@ simplify_op_or_func(Expr *expr, List *args)
 	newexpr->args = args;
 
 	/* Get info needed about result datatype */
-	resultType = typeidType(result_typeid);
-	resultTypByVal = typeByVal(resultType);
-	resultTypLen = typeLen(resultType);
+	get_typlenbyval(result_typeid, &resultTypLen, &resultTypByVal);
 
 	/*
 	 * It is OK to pass a dummy econtext because none of the ExecEvalExpr()

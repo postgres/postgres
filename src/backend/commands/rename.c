@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.52 2000/11/08 22:09:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.53 2000/11/16 22:30:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,8 +58,7 @@ renameatt(char *relname,
 	Relation	targetrelation;
 	Relation	attrelation;
 	HeapTuple	reltup,
-				oldatttup,
-				newatttup;
+				atttup;
 	Oid			relid;
 
 	/*
@@ -113,9 +112,9 @@ renameatt(char *relname,
 
 			if (childrelid == relid)
 				continue;
-			reltup = SearchSysCacheTuple(RELOID,
-										 ObjectIdGetDatum(childrelid),
-										 0, 0, 0);
+			reltup = SearchSysCache(RELOID,
+									ObjectIdGetDatum(childrelid),
+									0, 0, 0);
 			if (!HeapTupleIsValid(reltup))
 			{
 				elog(ERROR, "renameatt: can't find catalog entry for inheriting class with oid %u",
@@ -125,6 +124,7 @@ renameatt(char *relname,
 			StrNCpy(childname,
 					NameStr(((Form_pg_class) GETSTRUCT(reltup))->relname),
 					NAMEDATALEN);
+			ReleaseSysCache(reltup);
 			/* note we need not recurse again! */
 			renameatt(childname, oldattname, newattname, 0);
 		}
@@ -132,42 +132,38 @@ renameatt(char *relname,
 
 	attrelation = heap_openr(AttributeRelationName, RowExclusiveLock);
 
-	oldatttup = SearchSysCacheTupleCopy(ATTNAME,
-										ObjectIdGetDatum(relid),
-										PointerGetDatum(oldattname),
-										0, 0);
-	if (!HeapTupleIsValid(oldatttup))
+	atttup = SearchSysCacheCopy(ATTNAME,
+								ObjectIdGetDatum(relid),
+								PointerGetDatum(oldattname),
+								0, 0);
+	if (!HeapTupleIsValid(atttup))
 		elog(ERROR, "renameatt: attribute \"%s\" does not exist", oldattname);
 
-	if (((Form_pg_attribute) GETSTRUCT(oldatttup))->attnum < 0)
+	if (((Form_pg_attribute) GETSTRUCT(atttup))->attnum < 0)
 		elog(ERROR, "renameatt: system attribute \"%s\" not renamed", oldattname);
 
-	newatttup = SearchSysCacheTuple(ATTNAME,
-									ObjectIdGetDatum(relid),
-									PointerGetDatum(newattname),
-									0, 0);
 	/* should not already exist */
-	if (HeapTupleIsValid(newatttup))
-	{
-		heap_freetuple(oldatttup);
+	if (SearchSysCacheExists(ATTNAME,
+							 ObjectIdGetDatum(relid),
+							 PointerGetDatum(newattname),
+							 0, 0))
 		elog(ERROR, "renameatt: attribute \"%s\" exists", newattname);
-	}
 
-	StrNCpy(NameStr(((Form_pg_attribute) GETSTRUCT(oldatttup))->attname),
+	StrNCpy(NameStr(((Form_pg_attribute) GETSTRUCT(atttup))->attname),
 			newattname, NAMEDATALEN);
 
-	heap_update(attrelation, &oldatttup->t_self, oldatttup, NULL);
+	heap_update(attrelation, &atttup->t_self, atttup, NULL);
 
 	/* keep system catalog indices current */
 	{
 		Relation	irelations[Num_pg_attr_indices];
 
 		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, irelations);
-		CatalogIndexInsert(irelations, Num_pg_attr_indices, attrelation, oldatttup);
+		CatalogIndexInsert(irelations, Num_pg_attr_indices, attrelation, atttup);
 		CatalogCloseIndices(Num_pg_attr_indices, irelations);
 	}
 
-	heap_freetuple(oldatttup);
+	heap_freetuple(atttup);
 	heap_close(attrelation, RowExclusiveLock);
 }
 
@@ -179,7 +175,7 @@ renamerel(const char *oldrelname, const char *newrelname)
 {
 	Relation	targetrelation;
 	Relation	relrelation;	/* for RELATION relation */
-	HeapTuple	oldreltup;
+	HeapTuple	reltup;
 	Oid			reloid;
 	char		relkind;
 	Relation	irelations[Num_pg_class_indices];
@@ -238,27 +234,27 @@ renamerel(const char *oldrelname, const char *newrelname)
 	 */
 	relrelation = heap_openr(RelationRelationName, RowExclusiveLock);
 
-	oldreltup = SearchSysCacheTupleCopy(RELNAME,
-										PointerGetDatum(oldrelname),
-										0, 0, 0);
-	if (!HeapTupleIsValid(oldreltup))
+	reltup = SearchSysCacheCopy(RELNAME,
+								PointerGetDatum(oldrelname),
+								0, 0, 0);
+	if (!HeapTupleIsValid(reltup))
 		elog(ERROR, "renamerel: relation \"%s\" does not exist", oldrelname);
 
 	if (RelnameFindRelid(newrelname) != InvalidOid)
 		elog(ERROR, "renamerel: relation \"%s\" exists", newrelname);
 
 	/*
-	 * Update pg_class tuple with new relname.  (Scribbling on oldreltup
+	 * Update pg_class tuple with new relname.  (Scribbling on reltup
 	 * is OK because it's a copy...)
 	 */
-	StrNCpy(NameStr(((Form_pg_class) GETSTRUCT(oldreltup))->relname),
+	StrNCpy(NameStr(((Form_pg_class) GETSTRUCT(reltup))->relname),
 			newrelname, NAMEDATALEN);
 
-	heap_update(relrelation, &oldreltup->t_self, oldreltup, NULL);
+	heap_update(relrelation, &reltup->t_self, reltup, NULL);
 
 	/* keep the system catalog indices current */
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, irelations);
-	CatalogIndexInsert(irelations, Num_pg_class_indices, relrelation, oldreltup);
+	CatalogIndexInsert(irelations, Num_pg_class_indices, relrelation, reltup);
 	CatalogCloseIndices(Num_pg_class_indices, irelations);
 
 	heap_close(relrelation, NoLock);

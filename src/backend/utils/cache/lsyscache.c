@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.46 2000/10/05 19:48:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.47 2000/11/16 22:30:33 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -32,14 +32,11 @@
 bool
 op_class(Oid opno, Oid opclass, Oid amopid)
 {
-	if (HeapTupleIsValid(SearchSysCacheTuple(AMOPOPID,
-											 ObjectIdGetDatum(opclass),
-											 ObjectIdGetDatum(opno),
-											 ObjectIdGetDatum(amopid),
-											 0)))
-		return true;
-	else
-		return false;
+	return SearchSysCacheExists(AMOPOPID,
+								ObjectIdGetDatum(opclass),
+								ObjectIdGetDatum(opno),
+								ObjectIdGetDatum(amopid),
+								0);
 }
 
 /*				---------- ATTRIBUTE CACHES ----------					 */
@@ -49,21 +46,26 @@ op_class(Oid opno, Oid opclass, Oid amopid)
  *
  *		Given the relation id and the attribute number,
  *		return the "attname" field from the attribute relation.
+ *
+ * Note: returns a palloc'd copy of the string, or NULL if no such operator.
  */
 char *
 get_attname(Oid relid, AttrNumber attnum)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(ATTNUM,
-							 ObjectIdGetDatum(relid),
-							 Int16GetDatum(attnum),
-							 0, 0);
+	tp = SearchSysCache(ATTNUM,
+						ObjectIdGetDatum(relid),
+						Int16GetDatum(attnum),
+						0, 0);
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+		char   *result;
 
-		return pstrdup(NameStr(att_tup->attname));
+		result = pstrdup(NameStr(att_tup->attname));
+		ReleaseSysCache(tp);
+		return result;
 	}
 	else
 		return NULL;
@@ -80,15 +82,18 @@ get_attnum(Oid relid, char *attname)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(ATTNAME,
-							 ObjectIdGetDatum(relid),
-							 PointerGetDatum(attname),
-							 0, 0);
+	tp = SearchSysCache(ATTNAME,
+						ObjectIdGetDatum(relid),
+						PointerGetDatum(attname),
+						0, 0);
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+		AttrNumber	result;
 
-		return att_tup->attnum;
+		result = att_tup->attnum;
+		ReleaseSysCache(tp);
+		return result;
 	}
 	else
 		return InvalidAttrNumber;
@@ -105,15 +110,18 @@ get_atttype(Oid relid, AttrNumber attnum)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(ATTNUM,
-							 ObjectIdGetDatum(relid),
-							 Int16GetDatum(attnum),
-							 0, 0);
+	tp = SearchSysCache(ATTNUM,
+						ObjectIdGetDatum(relid),
+						Int16GetDatum(attnum),
+						0, 0);
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+		Oid		result;
 
-		return att_tup->atttypid;
+		result = att_tup->atttypid;
+		ReleaseSysCache(tp);
+		return result;
 	}
 	else
 		return InvalidOid;
@@ -128,15 +136,18 @@ get_attisset(Oid relid, char *attname)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(ATTNAME,
-							 ObjectIdGetDatum(relid),
-							 PointerGetDatum(attname),
-							 0, 0);
+	tp = SearchSysCache(ATTNAME,
+						ObjectIdGetDatum(relid),
+						PointerGetDatum(attname),
+						0, 0);
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+		bool	result;
 
-		return att_tup->attisset;
+		result = att_tup->attisset;
+		ReleaseSysCache(tp);
+		return result;
 	}
 	else
 		return false;
@@ -153,15 +164,18 @@ get_atttypmod(Oid relid, AttrNumber attnum)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(ATTNUM,
-							 ObjectIdGetDatum(relid),
-							 Int16GetDatum(attnum),
-							 0, 0);
+	tp = SearchSysCache(ATTNUM,
+						ObjectIdGetDatum(relid),
+						Int16GetDatum(attnum),
+						0, 0);
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+		int32	result;
 
-		return att_tup->atttypmod;
+		result = att_tup->atttypmod;
+		ReleaseSysCache(tp);
+		return result;
 	}
 	else
 		return -1;
@@ -185,12 +199,13 @@ get_attdispersion(Oid relid, AttrNumber attnum, double min_estimate)
 	HeapTuple	atp;
 	Form_pg_attribute att_tup;
 	double		dispersion;
+	Oid			atttypid;
 	int32		ntuples;
 
-	atp = SearchSysCacheTuple(ATTNUM,
-							  ObjectIdGetDatum(relid),
-							  Int16GetDatum(attnum),
-							  0, 0);
+	atp = SearchSysCache(ATTNUM,
+						 ObjectIdGetDatum(relid),
+						 Int16GetDatum(attnum),
+						 0, 0);
 	if (!HeapTupleIsValid(atp))
 	{
 		/* this should not happen */
@@ -198,9 +213,14 @@ get_attdispersion(Oid relid, AttrNumber attnum, double min_estimate)
 			 relid, attnum);
 		return min_estimate;
 	}
+
 	att_tup = (Form_pg_attribute) GETSTRUCT(atp);
 
 	dispersion = att_tup->attdispersion;
+	atttypid = att_tup->atttypid;
+
+	ReleaseSysCache(atp);
+
 	if (dispersion > 0.0)
 		return dispersion;		/* we have a specific estimate from VACUUM */
 
@@ -211,7 +231,7 @@ get_attdispersion(Oid relid, AttrNumber attnum, double min_estimate)
 	 *
 	 * Are there any other cases we should wire in special estimates for?
 	 */
-	if (att_tup->atttypid == BOOLOID)
+	if (atttypid == BOOLOID)
 		return 0.5;
 
 	/*
@@ -219,9 +239,9 @@ get_attdispersion(Oid relid, AttrNumber attnum, double min_estimate)
 	 * 1/numtuples).  Either way, we need the relation size.
 	 */
 
-	atp = SearchSysCacheTuple(RELOID,
-							  ObjectIdGetDatum(relid),
-							  0, 0, 0);
+	atp = SearchSysCache(RELOID,
+						 ObjectIdGetDatum(relid),
+						 0, 0, 0);
 	if (!HeapTupleIsValid(atp))
 	{
 		/* this should not happen */
@@ -230,6 +250,8 @@ get_attdispersion(Oid relid, AttrNumber attnum, double min_estimate)
 	}
 
 	ntuples = ((Form_pg_class) GETSTRUCT(atp))->reltuples;
+
+	ReleaseSysCache(atp);
 
 	if (ntuples == 0)
 		return min_estimate;	/* no data available */
@@ -277,14 +299,17 @@ get_opcode(Oid opno)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(OPEROID,
-							 ObjectIdGetDatum(opno),
-							 0, 0, 0);
+	tp = SearchSysCache(OPEROID,
+						ObjectIdGetDatum(opno),
+						0, 0, 0);
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
+		RegProcedure	result;
 
-		return optup->oprcode;
+		result = optup->oprcode;
+		ReleaseSysCache(tp);
+		return result;
 	}
 	else
 		return (RegProcedure) InvalidOid;
@@ -301,14 +326,17 @@ get_opname(Oid opno)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(OPEROID,
-							 ObjectIdGetDatum(opno),
-							 0, 0, 0);
+	tp = SearchSysCache(OPEROID,
+						ObjectIdGetDatum(opno),
+						0, 0, 0);
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
+		char   *result;
 
-		return pstrdup(NameStr(optup->oprname));
+		result = pstrdup(NameStr(optup->oprname));
+		ReleaseSysCache(tp);
+		return result;
 	}
 	else
 		return NULL;
@@ -324,10 +352,11 @@ bool
 op_mergejoinable(Oid opno, Oid ltype, Oid rtype, Oid *leftOp, Oid *rightOp)
 {
 	HeapTuple	tp;
+	bool		result = false;
 
-	tp = SearchSysCacheTuple(OPEROID,
-							 ObjectIdGetDatum(opno),
-							 0, 0, 0);
+	tp = SearchSysCache(OPEROID,
+						ObjectIdGetDatum(opno),
+						0, 0, 0);
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
@@ -339,10 +368,11 @@ op_mergejoinable(Oid opno, Oid ltype, Oid rtype, Oid *leftOp, Oid *rightOp)
 		{
 			*leftOp = optup->oprlsortop;
 			*rightOp = optup->oprrsortop;
-			return true;
+			result = true;
 		}
+		ReleaseSysCache(tp);
 	}
-	return false;
+	return result;
 }
 
 /*
@@ -355,10 +385,11 @@ Oid
 op_hashjoinable(Oid opno, Oid ltype, Oid rtype)
 {
 	HeapTuple	tp;
+	Oid			result = InvalidOid;
 
-	tp = SearchSysCacheTuple(OPEROID,
-							 ObjectIdGetDatum(opno),
-							 0, 0, 0);
+	tp = SearchSysCache(OPEROID,
+						ObjectIdGetDatum(opno),
+						0, 0, 0);
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
@@ -366,9 +397,10 @@ op_hashjoinable(Oid opno, Oid ltype, Oid rtype)
 		if (optup->oprcanhash &&
 			optup->oprleft == ltype &&
 			optup->oprright == rtype)
-			return opno;
+			result = opno;
+		ReleaseSysCache(tp);
 	}
-	return InvalidOid;
+	return result;
 }
 
 /*
@@ -387,14 +419,6 @@ op_iscachable(Oid opno)
 	return func_iscachable((Oid) funcid);
 }
 
-HeapTuple
-get_operator_tuple(Oid opno)
-{
-	return SearchSysCacheTuple(OPEROID,
-							   ObjectIdGetDatum(opno),
-							   0, 0, 0);
-}
-
 /*
  * get_commutator
  *
@@ -405,14 +429,17 @@ get_commutator(Oid opno)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(OPEROID,
-							 ObjectIdGetDatum(opno),
-							 0, 0, 0);
+	tp = SearchSysCache(OPEROID,
+						ObjectIdGetDatum(opno),
+						0, 0, 0);
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
+		Oid		result;
 
-		return optup->oprcom;
+		result = optup->oprcom;
+		ReleaseSysCache(tp);
+		return result;
 	}
 	else
 		return InvalidOid;
@@ -428,14 +455,17 @@ get_negator(Oid opno)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(OPEROID,
-							 ObjectIdGetDatum(opno),
-							 0, 0, 0);
+	tp = SearchSysCache(OPEROID,
+						ObjectIdGetDatum(opno),
+						0, 0, 0);
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
+		Oid		result;
 
-		return optup->oprnegate;
+		result = optup->oprnegate;
+		ReleaseSysCache(tp);
+		return result;
 	}
 	else
 		return InvalidOid;
@@ -451,14 +481,17 @@ get_oprrest(Oid opno)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(OPEROID,
-							 ObjectIdGetDatum(opno),
-							 0, 0, 0);
+	tp = SearchSysCache(OPEROID,
+						ObjectIdGetDatum(opno),
+						0, 0, 0);
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
+		RegProcedure	result;
 
-		return optup->oprrest;
+		result = optup->oprrest;
+		ReleaseSysCache(tp);
+		return result;
 	}
 	else
 		return (RegProcedure) InvalidOid;
@@ -474,14 +507,17 @@ get_oprjoin(Oid opno)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(OPEROID,
-							 ObjectIdGetDatum(opno),
-							 0, 0, 0);
+	tp = SearchSysCache(OPEROID,
+						ObjectIdGetDatum(opno),
+						0, 0, 0);
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
+		RegProcedure	result;
 
-		return optup->oprjoin;
+		result = optup->oprjoin;
+		ReleaseSysCache(tp);
+		return result;
 	}
 	else
 		return (RegProcedure) InvalidOid;
@@ -496,15 +532,18 @@ get_oprjoin(Oid opno)
 Oid
 get_func_rettype(Oid funcid)
 {
-	HeapTuple	func_tuple;
+	HeapTuple	tp;
+	Oid			result;
 
-	func_tuple = SearchSysCacheTuple(PROCOID,
-									 ObjectIdGetDatum(funcid),
-									 0, 0, 0);
-	if (!HeapTupleIsValid(func_tuple))
+	tp = SearchSysCache(PROCOID,
+						ObjectIdGetDatum(funcid),
+						0, 0, 0);
+	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "Function OID %u does not exist", funcid);
 
-	return ((Form_pg_proc) GETSTRUCT(func_tuple))->prorettype;
+	result = ((Form_pg_proc) GETSTRUCT(tp))->prorettype;
+	ReleaseSysCache(tp);
+	return result;
 }
 
 /*
@@ -514,15 +553,18 @@ get_func_rettype(Oid funcid)
 bool
 func_iscachable(Oid funcid)
 {
-	HeapTuple	func_tuple;
+	HeapTuple	tp;
+	bool		result;
 
-	func_tuple = SearchSysCacheTuple(PROCOID,
-									 ObjectIdGetDatum(funcid),
-									 0, 0, 0);
-	if (!HeapTupleIsValid(func_tuple))
+	tp = SearchSysCache(PROCOID,
+						ObjectIdGetDatum(funcid),
+						0, 0, 0);
+	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "Function OID %u does not exist", funcid);
 
-	return ((Form_pg_proc) GETSTRUCT(func_tuple))->proiscachable;
+	result = ((Form_pg_proc) GETSTRUCT(tp))->proiscachable;
+	ReleaseSysCache(tp);
+	return result;
 }
 
 /*				---------- RELATION CACHE ----------					 */
@@ -538,14 +580,17 @@ get_relnatts(Oid relid)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(RELOID,
-							 ObjectIdGetDatum(relid),
-							 0, 0, 0);
+	tp = SearchSysCache(RELOID,
+						ObjectIdGetDatum(relid),
+						0, 0, 0);
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_class reltup = (Form_pg_class) GETSTRUCT(tp);
+		int		result;
 
-		return reltup->relnatts;
+		result = reltup->relnatts;
+		ReleaseSysCache(tp);
+		return result;
 	}
 	else
 		return InvalidAttrNumber;
@@ -556,20 +601,25 @@ get_relnatts(Oid relid)
  * get_rel_name
  *
  *		Returns the name of a given relation.
+ *
+ * Note: returns a palloc'd copy of the string, or NULL if no such operator.
  */
 char *
 get_rel_name(Oid relid)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(RELOID,
-							 ObjectIdGetDatum(relid),
-							 0, 0, 0);
+	tp = SearchSysCache(RELOID,
+						ObjectIdGetDatum(relid),
+						0, 0, 0);
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_class reltup = (Form_pg_class) GETSTRUCT(tp);
+		char   *result;
 
-		return pstrdup(NameStr(reltup->relname));
+		result = pstrdup(NameStr(reltup->relname));
+		ReleaseSysCache(tp);
+		return result;
 	}
 	else
 		return NULL;
@@ -587,14 +637,17 @@ get_typlen(Oid typid)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(TYPEOID,
-							 ObjectIdGetDatum(typid),
-							 0, 0, 0);
+	tp = SearchSysCache(TYPEOID,
+						ObjectIdGetDatum(typid),
+						0, 0, 0);
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+		int16	result;
 
-		return typtup->typlen;
+		result = typtup->typlen;
+		ReleaseSysCache(tp);
+		return result;
 	}
 	else
 		return 0;
@@ -611,17 +664,47 @@ get_typbyval(Oid typid)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(TYPEOID,
-							 ObjectIdGetDatum(typid),
-							 0, 0, 0);
+	tp = SearchSysCache(TYPEOID,
+						ObjectIdGetDatum(typid),
+						0, 0, 0);
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+		bool	result;
 
-		return typtup->typbyval;
+		result = typtup->typbyval;
+		ReleaseSysCache(tp);
+		return result;
 	}
 	else
 		return false;
+}
+
+/*
+ * get_typlenbyval
+ *
+ *		A two-fer: given the type OID, return both typlen and typbyval.
+ *
+ *		Since both pieces of info are needed to know how to copy a Datum,
+ *		many places need both.  Might as well get them with one cache lookup
+ *		instead of two.  Also, this routine raises an error instead of
+ *		returning a bogus value when given a bad type OID.
+ */
+void
+get_typlenbyval(Oid typid, int16 *typlen, bool *typbyval)
+{
+	HeapTuple	tp;
+	Form_pg_type typtup;
+
+	tp = SearchSysCache(TYPEOID,
+						ObjectIdGetDatum(typid),
+						0, 0, 0);
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for type %u", typid);
+	typtup = (Form_pg_type) GETSTRUCT(tp);
+	*typlen = typtup->typlen;
+	*typbyval = typtup->typbyval;
+	ReleaseSysCache(tp);
 }
 
 #ifdef NOT_USED
@@ -630,14 +713,17 @@ get_typalign(Oid typid)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(TYPEOID,
-							 ObjectIdGetDatum(typid),
-							 0, 0, 0);
+	tp = SearchSysCache(TYPEOID,
+						ObjectIdGetDatum(typid),
+						0, 0, 0);
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+		char	result;
 
-		return typtup->typalign;
+		result = typtup->typalign;
+		ReleaseSysCache(tp);
+		return result;
 	}
 	else
 		return 'i';
@@ -666,9 +752,9 @@ get_typdefault(Oid typid)
 	bool		typByVal;
 	Datum		returnValue;
 
-	typeTuple = SearchSysCacheTuple(TYPEOID,
-									ObjectIdGetDatum(typid),
-									0, 0, 0);
+	typeTuple = SearchSysCache(TYPEOID,
+							   ObjectIdGetDatum(typid),
+							   0, 0, 0);
 
 	if (!HeapTupleIsValid(typeTuple))
 		elog(ERROR, "get_typdefault: failed to lookup type %u", typid);
@@ -679,13 +765,17 @@ get_typdefault(Oid typid)
 	 * First, see if there is a non-null typdefault field (usually there
 	 * isn't)
 	 */
-	typDefault = (struct varlena *) SysCacheGetAttr(TYPEOID,
-													typeTuple,
-												 Anum_pg_type_typdefault,
-													&isNull);
+	typDefault = (struct varlena *)
+		DatumGetPointer(SysCacheGetAttr(TYPEOID,
+										typeTuple,
+										Anum_pg_type_typdefault,
+										&isNull));
 
 	if (isNull)
+	{
+		ReleaseSysCache(typeTuple);
 		return PointerGetDatum(NULL);
+	}
 
 	/*
 	 * Otherwise, extract/copy the value.
@@ -748,6 +838,8 @@ get_typdefault(Oid typid)
 		}
 	}
 
+	ReleaseSysCache(typeTuple);
+
 	return returnValue;
 }
 
@@ -764,14 +856,17 @@ get_typtype(Oid typid)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(TYPEOID,
-							 ObjectIdGetDatum(typid),
-							 0, 0, 0);
+	tp = SearchSysCache(TYPEOID,
+						ObjectIdGetDatum(typid),
+						0, 0, 0);
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+		char	result;
 
-		return typtup->typtype;
+		result = typtup->typtype;
+		ReleaseSysCache(tp);
+		return result;
 	}
 	else
 		return '\0';

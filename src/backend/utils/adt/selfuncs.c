@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.81 2000/11/10 09:38:21 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.82 2000/11/16 22:30:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -324,12 +324,15 @@ scalarltsel(PG_FUNCTION_ARGS)
 		 * Get left and right datatypes of the operator so we know what
 		 * type the constant is.
 		 */
-		oprtuple = get_operator_tuple(opid);
+		oprtuple = SearchSysCache(OPEROID,
+								  ObjectIdGetDatum(opid),
+								  0, 0, 0);
 		if (!HeapTupleIsValid(oprtuple))
 			elog(ERROR, "scalarltsel: no tuple for operator %u", opid);
 		ltype = ((Form_pg_operator) GETSTRUCT(oprtuple))->oprleft;
 		rtype = ((Form_pg_operator) GETSTRUCT(oprtuple))->oprright;
 		contype = (flag & SEL_RIGHT) ? rtype : ltype;
+		ReleaseSysCache(oprtuple);
 
 		/* Now get info and stats about the attribute */
 		getattproperties(relid, attno,
@@ -482,11 +485,14 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 		 * Get left and right datatypes of the operator so we know what
 		 * type the attribute is.
 		 */
-		oprtuple = get_operator_tuple(opid);
+		oprtuple = SearchSysCache(OPEROID,
+								  ObjectIdGetDatum(opid),
+								  0, 0, 0);
 		if (!HeapTupleIsValid(oprtuple))
 			elog(ERROR, "patternsel: no tuple for operator %u", opid);
 		ltype = ((Form_pg_operator) GETSTRUCT(oprtuple))->oprleft;
 		rtype = ((Form_pg_operator) GETSTRUCT(oprtuple))->oprright;
+		ReleaseSysCache(oprtuple);
 
 		/* the right-hand const is type text for all supported operators */
 		Assert(rtype == TEXTOID);
@@ -1189,10 +1195,10 @@ getattproperties(Oid relid, AttrNumber attnum,
 	HeapTuple	atp;
 	Form_pg_attribute att_tup;
 
-	atp = SearchSysCacheTuple(ATTNUM,
-							  ObjectIdGetDatum(relid),
-							  Int16GetDatum(attnum),
-							  0, 0);
+	atp = SearchSysCache(ATTNUM,
+						 ObjectIdGetDatum(relid),
+						 Int16GetDatum(attnum),
+						 0, 0);
 	if (!HeapTupleIsValid(atp))
 		elog(ERROR, "getattproperties: no attribute tuple %u %d",
 			 relid, (int) attnum);
@@ -1202,6 +1208,8 @@ getattproperties(Oid relid, AttrNumber attnum,
 	*typlen = att_tup->attlen;
 	*typbyval = att_tup->attbyval;
 	*typmod = att_tup->atttypmod;
+
+	ReleaseSysCache(atp);
 }
 
 /*
@@ -1250,11 +1258,10 @@ getattstatistics(Oid relid,
 	 * have at hand!  (For example, we might have a '>' operator rather
 	 * than the '<' operator that will appear in staop.)
 	 */
-	tuple = SearchSysCacheTupleCopy(STATRELID,
-								ObjectIdGetDatum(relid),
-								Int16GetDatum((int16) attnum),
-								0,
-								0);
+	tuple = SearchSysCache(STATRELID,
+						   ObjectIdGetDatum(relid),
+						   Int16GetDatum((int16) attnum),
+						   0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
 		/* no such stats entry */
@@ -1267,14 +1274,15 @@ getattstatistics(Oid relid,
 		*commonfrac = ((Form_pg_statistic) GETSTRUCT(tuple))->stacommonfrac;
 
 	/* Get the type input proc for the column datatype */
-	typeTuple = SearchSysCacheTuple(TYPEOID,
-									ObjectIdGetDatum(typid),
-									0, 0, 0);
+	typeTuple = SearchSysCache(TYPEOID,
+							   ObjectIdGetDatum(typid),
+							   0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
 		elog(ERROR, "getattstatistics: Cache lookup failed for type %u",
 			 typid);
 	fmgr_info(((Form_pg_type) GETSTRUCT(typeTuple))->typinput, &inputproc);
 	typelem = ((Form_pg_type) GETSTRUCT(typeTuple))->typelem;
+	ReleaseSysCache(typeTuple);
 
 	/*
 	 * Values are variable-length fields, so cannot access as struct
@@ -1351,7 +1359,8 @@ getattstatistics(Oid relid,
 			pfree(strval);
 		}
 	}
-	heap_freetuple(tuple);
+
+	ReleaseSysCache(tuple);
 
 	return true;
 }
@@ -1966,16 +1975,11 @@ string_lessthan(const char *str1, const char *str2, Oid datatype)
 static Oid
 find_operator(const char *opname, Oid datatype)
 {
-	HeapTuple	optup;
-
-	optup = SearchSysCacheTuple(OPERNAME,
-								PointerGetDatum(opname),
-								ObjectIdGetDatum(datatype),
-								ObjectIdGetDatum(datatype),
-								CharGetDatum('b'));
-	if (!HeapTupleIsValid(optup))
-		return InvalidOid;
-	return optup->t_data->t_oid;
+	return GetSysCacheOid(OPERNAME,
+						  PointerGetDatum(opname),
+						  ObjectIdGetDatum(datatype),
+						  ObjectIdGetDatum(datatype),
+						  CharGetDatum('b'));
 }
 
 /*

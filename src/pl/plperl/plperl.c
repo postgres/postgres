@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.14 2000/10/24 17:01:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.15 2000/11/16 22:30:49 tgl Exp $
  *
  **********************************************************************/
 
@@ -521,9 +521,9 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		/************************************************************
 		 * Lookup the pg_proc tuple by Oid
 		 ************************************************************/
-		procTup = SearchSysCacheTuple(PROCOID,
-									  ObjectIdGetDatum(fcinfo->flinfo->fn_oid),
-									  0, 0, 0);
+		procTup = SearchSysCache(PROCOID,
+								 ObjectIdGetDatum(fcinfo->flinfo->fn_oid),
+								 0, 0, 0);
 		if (!HeapTupleIsValid(procTup))
 		{
 			free(prodesc->proname);
@@ -537,9 +537,9 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		 * Get the required information for input conversion of the
 		 * return value.
 		 ************************************************************/
-		typeTup = SearchSysCacheTuple(TYPEOID,
-								ObjectIdGetDatum(procStruct->prorettype),
-									  0, 0, 0);
+		typeTup = SearchSysCache(TYPEOID,
+								 ObjectIdGetDatum(procStruct->prorettype),
+								 0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
 		{
 			free(prodesc->proname);
@@ -560,6 +560,8 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		prodesc->result_in_elem = (Oid) (typeStruct->typelem);
 		prodesc->result_in_len = typeStruct->typlen;
 
+		ReleaseSysCache(typeTup);
+
 		/************************************************************
 		 * Get the required information for output conversion
 		 * of all procedure arguments
@@ -567,9 +569,9 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		prodesc->nargs = procStruct->pronargs;
 		for (i = 0; i < prodesc->nargs; i++)
 		{
-			typeTup = SearchSysCacheTuple(TYPEOID,
+			typeTup = SearchSysCache(TYPEOID,
 							ObjectIdGetDatum(procStruct->proargtypes[i]),
-										  0, 0, 0);
+									 0, 0, 0);
 			if (!HeapTupleIsValid(typeTup))
 			{
 				free(prodesc->proname);
@@ -587,7 +589,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			fmgr_info(typeStruct->typoutput, &(prodesc->arg_out_func[i]));
 			prodesc->arg_out_elem[i] = (Oid) (typeStruct->typelem);
 			prodesc->arg_out_len[i] = typeStruct->typlen;
-
+			ReleaseSysCache(typeTup);
 		}
 
 		/************************************************************
@@ -617,6 +619,8 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		 ************************************************************/
 		hv_store(plperl_proc_hash, internal_proname, proname_len,
 				 newSViv((IV) prodesc), 0);
+
+		ReleaseSysCache(procTup);
 	}
 	else
 	{
@@ -744,9 +748,9 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 		/************************************************************
 		 * Lookup the pg_proc tuple by Oid
 		 ************************************************************/
-		procTup = SearchSysCacheTuple(PROCOID,
-									  ObjectIdGetDatum(fcinfo->flinfo->fn_oid),
-									  0, 0, 0);
+		procTup = SearchSysCache(PROCOID,
+								 ObjectIdGetDatum(fcinfo->flinfo->fn_oid),
+								 0, 0, 0);
 		if (!HeapTupleIsValid(procTup))
 		{
 			free(prodesc->proname);
@@ -819,6 +823,8 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 		hashent = Tcl_CreateHashEntry(plperl_proc_hash,
 									  prodesc->proname, &hashnew);
 		Tcl_SetHashValue(hashent, (ClientData) prodesc);
+
+		ReleaseSysCache(procTup);
 	}
 	else
 	{
@@ -1068,9 +1074,9 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 		 * Lookup the attribute type in the syscache
 		 * for the input function
 		 ************************************************************/
-		typeTup = SearchSysCacheTuple(TYPEOID,
+		typeTup = SearchSysCache(TYPEOID,
 				  ObjectIdGetDatum(tupdesc->attrs[attnum - 1]->atttypid),
-									  0, 0, 0);
+								 0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
 		{
 			elog(ERROR, "plperl: Cache lookup for attribute '%s' type %u failed",
@@ -1079,6 +1085,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 		}
 		typinput = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typinput);
 		typelem = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typelem);
+		ReleaseSysCache(typeTup);
 
 		/************************************************************
 		 * Set the attribute to NOT NULL and convert the contents
@@ -1538,9 +1545,9 @@ plperl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	 ************************************************************/
 	for (i = 0; i < nargs; i++)
 	{
-		typeTup = SearchSysCacheTuple(TYPNAME,
-									  PointerGetDatum(args[i]),
-									  0, 0, 0);
+		typeTup = SearchSysCache(TYPNAME,
+								 PointerGetDatum(args[i]),
+								 0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
 			elog(ERROR, "plperl: Cache lookup of type %s failed", args[i]);
 		qdesc->argtypes[i] = typeTup->t_data->t_oid;
@@ -1549,6 +1556,7 @@ plperl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 		qdesc->argtypelems[i] = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
 		qdesc->argvalues[i] = (Datum) NULL;
 		qdesc->arglen[i] = (int) (((Form_pg_type) GETSTRUCT(typeTup))->typlen);
+		ReleaseSysCache(typeTup);
 	}
 
 	/************************************************************
@@ -2084,9 +2092,9 @@ plperl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
 		 * Lookup the attribute type in the syscache
 		 * for the output function
 		 ************************************************************/
-		typeTup = SearchSysCacheTuple(TYPEOID,
+		typeTup = SearchSysCache(TYPEOID,
 						   ObjectIdGetDatum(tupdesc->attrs[i]->atttypid),
-									  0, 0, 0);
+								 0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
 		{
 			elog(ERROR, "plperl: Cache lookup for attribute '%s' type %u failed",
@@ -2095,6 +2103,7 @@ plperl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
 
 		typoutput = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typoutput);
 		typelem = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typelem);
+		ReleaseSysCache(typeTup);
 
 		/************************************************************
 		 * If there is a value, set the variable
@@ -2156,9 +2165,9 @@ plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 		 * Lookup the attribute type in the syscache
 		 * for the output function
 		 ************************************************************/
-		typeTup = SearchSysCacheTuple(TYPEOID,
+		typeTup = SearchSysCache(TYPEOID,
 						   ObjectIdGetDatum(tupdesc->attrs[i]->atttypid),
-									  0, 0, 0);
+								 0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
 		{
 			elog(ERROR, "plperl: Cache lookup for attribute '%s' type %u failed",
@@ -2167,6 +2176,7 @@ plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 
 		typoutput = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typoutput);
 		typelem = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typelem);
+		ReleaseSysCache(typeTup);
 
 		/************************************************************
 		 * If there is a value, append the attribute name and the

@@ -311,7 +311,7 @@ c-mode)
   9) How do I efficiently access information in tables from the backend code?
   
    You first need to find the tuples(rows) you are interested in. There
-   are two ways. First, SearchSysCacheTuple() and related functions allow
+   are two ways. First, SearchSysCache() and related functions allow
    you to query the system catalogs. This is the preferred way to access
    system tables, because the first call to the cache loads the needed
    rows, and future requests can return the results without accessing the
@@ -321,14 +321,13 @@ c-mode)
    src/backend/utils/cache/lsyscache.c contains many column-specific
    cache lookup functions.
    
-   The rows returned are cached-owned versions of the heap rows. They are
-   invalidated when the base table changes. Because the cache is local to
-   each backend, you may use the pointer returned from the cache for
-   short periods without making a copy of the tuple. If you send the
-   pointer into a large function that will be doing its own cache
-   lookups, it is possible the cache entry may be flushed, so you should
-   use SearchSysCacheTupleCopy() in these cases, and pfree() the tuple
-   when you are done.
+   The rows returned are cache-owned versions of the heap rows.  Therefore,
+   you must not modify or delete the tuple returned by SearchSysCache().
+   What you *should* do is release it with ReleaseSysCache() when you are
+   done using it; this informs the cache that it can discard that tuple
+   if necessary.  If you neglect to call ReleaseSysCache(), then the cache
+   entry will remain locked in the cache until end of transaction, which is
+   tolerable but not very desirable.
    
    If you can't use the system cache, you will need to retrieve the data
    directly from the heap table, using the buffer cache that is shared by
@@ -344,7 +343,9 @@ c-mode)
    You can also use heap_fetch() to fetch rows by block number/offset.
    While scans automatically lock/unlock rows from the buffer cache, with
    heap_fetch(), you must pass a Buffer pointer, and ReleaseBuffer() it
-   when completed. Once you have the row, you can get data that is common
+   when completed.
+
+   Once you have the row, you can get data that is common
    to all tuples, like t_self and t_oid, by merely accessing the
    HeapTuple structure entries. If you need a table-specific column, you
    should take the HeapTuple pointer, and use the GETSTRUCT() macro to
@@ -355,15 +356,16 @@ c-mode)
 
         ((Form_pg_class) GETSTRUCT(tuple))->relnatts
 
-   You should not directly change live tuples in this way. The best way
-   is to use heap_tuplemodify() and pass it your palloc'ed tuple, and the
-   values you want changed. It returns another palloc'ed tuple, which you
+   You must not directly change live tuples in this way. The best way
+   is to use heap_modifytuple() and pass it your original tuple, and the
+   values you want changed. It returns a palloc'ed tuple, which you
    pass to heap_replace(). You can delete tuples by passing the tuple's
-   t_self to heap_destroy(). You can use it for heap_update() too.
-   Remember, tuples can be either system cache versions, which may go
-   away soon after you get them, buffer cache versions, which go away
-   when you heap_getnext(), heap_endscan, or ReleaseBuffer(), in the
-   heap_fetch() case. Or it may be a palloc'ed tuple, that you must
+   t_self to heap_destroy(). You use t_self for heap_update() too.
+
+   Remember, tuples can be either system cache copies, which may go away
+   after you call ReleaseSysCache(), or read directly from disk buffers,
+   which go away when you heap_getnext(), heap_endscan, or ReleaseBuffer(),
+   in the heap_fetch() case. Or it may be a palloc'ed tuple, that you must
    pfree() when finished.
    
   10) What is elog()?

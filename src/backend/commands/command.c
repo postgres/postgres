@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.111 2000/11/14 01:57:30 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.112 2000/11/16 22:30:19 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -274,13 +274,13 @@ AlterTableAddColumn(const char *relationName,
 				attrdesc;
 	Oid			myrelid;
 	HeapTuple	reltup;
+	HeapTuple	newreltup;
 	HeapTuple	attributeTuple;
 	Form_pg_attribute attribute;
 	FormData_pg_attribute attributeD;
 	int			i;
 	int			minattnum,
 				maxatts;
-	HeapTuple	tup;
 	Relation	idescs[Num_pg_attr_indices];
 	Relation	ridescs[Num_pg_class_indices];
 	bool		hasindex;
@@ -359,9 +359,9 @@ AlterTableAddColumn(const char *relationName,
 
 	rel = heap_openr(RelationRelationName, RowExclusiveLock);
 
-	reltup = SearchSysCacheTupleCopy(RELNAME,
-									 PointerGetDatum(relationName),
-									 0, 0, 0);
+	reltup = SearchSysCache(RELNAME,
+							PointerGetDatum(relationName),
+							0, 0, 0);
 
 	if (!HeapTupleIsValid(reltup))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
@@ -371,10 +371,8 @@ AlterTableAddColumn(const char *relationName,
 	 * XXX is the following check sufficient?
 	 */
 	if (((Form_pg_class) GETSTRUCT(reltup))->relkind != RELKIND_RELATION)
-	{
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
 			 relationName);
-	}
 
 	minattnum = ((Form_pg_class) GETSTRUCT(reltup))->relnatts;
 	maxatts = minattnum + 1;
@@ -407,12 +405,10 @@ AlterTableAddColumn(const char *relationName,
 		char	   *typename;
 		int			attnelems;
 
-		tup = SearchSysCacheTuple(ATTNAME,
-								  ObjectIdGetDatum(reltup->t_data->t_oid),
-								  PointerGetDatum(colDef->colname),
-								  0, 0);
-
-		if (HeapTupleIsValid(tup))
+		if (SearchSysCacheExists(ATTNAME,
+								 ObjectIdGetDatum(reltup->t_data->t_oid),
+								 PointerGetDatum(colDef->colname),
+								 0, 0))
 			elog(ERROR, "ALTER TABLE: column name \"%s\" already exists in table \"%s\"",
 				 colDef->colname, relationName);
 
@@ -430,13 +426,13 @@ AlterTableAddColumn(const char *relationName,
 		else
 			attnelems = 0;
 
-		typeTuple = SearchSysCacheTuple(TYPENAME,
-										PointerGetDatum(typename),
-										0, 0, 0);
-		tform = (Form_pg_type) GETSTRUCT(typeTuple);
-
+		typeTuple = SearchSysCache(TYPENAME,
+								   PointerGetDatum(typename),
+								   0, 0, 0);
 		if (!HeapTupleIsValid(typeTuple))
 			elog(ERROR, "ALTER TABLE: type \"%s\" does not exist", typename);
+		tform = (Form_pg_type) GETSTRUCT(typeTuple);
+
 		namestrcpy(&(attribute->attname), colDef->colname);
 		attribute->atttypid = typeTuple->t_data->t_oid;
 		attribute->attlen = tform->typlen;
@@ -453,6 +449,8 @@ AlterTableAddColumn(const char *relationName,
 		attribute->atthasdef = (colDef->raw_default != NULL ||
 								colDef->cooked_default != NULL);
 
+		ReleaseSysCache(typeTuple);
+
 		heap_insert(attrdesc, attributeTuple);
 		if (hasindex)
 			CatalogIndexInsert(idescs,
@@ -466,15 +464,21 @@ AlterTableAddColumn(const char *relationName,
 
 	heap_close(attrdesc, RowExclusiveLock);
 
-	((Form_pg_class) GETSTRUCT(reltup))->relnatts = maxatts;
-	heap_update(rel, &reltup->t_self, reltup, NULL);
+	/*
+	 * Update number of attributes in pg_class tuple
+	 */
+	newreltup = heap_copytuple(reltup);
+
+	((Form_pg_class) GETSTRUCT(newreltup))->relnatts = maxatts;
+	heap_update(rel, &newreltup->t_self, newreltup, NULL);
 
 	/* keep catalog indices current */
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
-	CatalogIndexInsert(ridescs, Num_pg_class_indices, rel, reltup);
+	CatalogIndexInsert(ridescs, Num_pg_class_indices, rel, newreltup);
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
 
-	heap_freetuple(reltup);
+	heap_freetuple(newreltup);
+	ReleaseSysCache(reltup);
 
 	heap_close(rel, NoLock);
 
@@ -555,11 +559,10 @@ AlterTableAlterColumn(const char *relationName,
 	/*
 	 * get the number of the attribute
 	 */
-	tuple = SearchSysCacheTuple(ATTNAME,
-								ObjectIdGetDatum(myrelid),
-								PointerGetDatum(colName),
-								0, 0);
-
+	tuple = SearchSysCache(ATTNAME,
+						   ObjectIdGetDatum(myrelid),
+						   PointerGetDatum(colName),
+						   0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
 		heap_close(rel, AccessExclusiveLock);
@@ -568,6 +571,7 @@ AlterTableAlterColumn(const char *relationName,
 	}
 
 	attnum = ((Form_pg_attribute) GETSTRUCT(tuple))->attnum;
+	ReleaseSysCache(tuple);
 
 	if (newDefault)				/* SET DEFAULT */
 	{
@@ -595,7 +599,6 @@ AlterTableAlterColumn(const char *relationName,
 		Relation	attr_rel;
 		ScanKeyData scankeys[3];
 		HeapScanDesc scan;
-		HeapTuple	tuple;
 
 		attr_rel = heap_openr(AttributeRelationName, AccessExclusiveLock);
 		ScanKeyEntryInitialize(&scankeys[0], 0x0,
@@ -867,10 +870,11 @@ RemoveColumnReferences(Oid reloid, int attnum, bool checkonly, HeapTuple reltup)
 				}
 				else
 				{
-					htup = SearchSysCacheTuple(RELOID,
-									 ObjectIdGetDatum(index->indexrelid),
-											   0, 0, 0);
+					htup = SearchSysCache(RELOID,
+										  ObjectIdGetDatum(index->indexrelid),
+										  0, 0, 0);
 					RemoveIndex(NameStr(((Form_pg_class) GETSTRUCT(htup))->relname));
+					ReleaseSysCache(htup);
 				}
 				break;
 			}
@@ -941,18 +945,19 @@ AlterTableDropColumn(const char *relationName,
 	if (length(find_all_inheritors(myrelid)) > 1)
 		elog(ERROR, "ALTER TABLE: cannot drop a column on table that is inherited from");
 
-
 	/*
 	 * lock the pg_class tuple for update
 	 */
-	reltup = SearchSysCacheTuple(RELNAME, PointerGetDatum(relationName),
-								 0, 0, 0);
-
+	rel = heap_openr(RelationRelationName, RowExclusiveLock);
+	reltup = SearchSysCache(RELNAME,
+							PointerGetDatum(relationName),
+							0, 0, 0);
 	if (!HeapTupleIsValid(reltup))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
 			 relationName);
-	rel = heap_openr(RelationRelationName, RowExclusiveLock);
 	classtuple.t_self = reltup->t_self;
+	ReleaseSysCache(reltup);
+
 	switch (heap_mark4update(rel, &classtuple, &buffer))
 	{
 		case HeapTupleSelfUpdated:
@@ -976,19 +981,21 @@ AlterTableDropColumn(const char *relationName,
 	attrdesc = heap_openr(AttributeRelationName, RowExclusiveLock);
 
 	/*
-	 * Get the target pg_attribute tuple
+	 * Get the target pg_attribute tuple and make a modifiable copy
 	 */
-	tup = SearchSysCacheTupleCopy(ATTNAME,
-								  ObjectIdGetDatum(reltup->t_data->t_oid),
-								  PointerGetDatum(colName), 0, 0);
+	tup = SearchSysCacheCopy(ATTNAME,
+							 ObjectIdGetDatum(reltup->t_data->t_oid),
+							 PointerGetDatum(colName),
+							 0, 0);
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "ALTER TABLE: column name \"%s\" doesn't exist in table \"%s\"",
 			 colName, relationName);
 
 	attribute = (Form_pg_attribute) GETSTRUCT(tup);
-	if (attribute->attnum <= 0)
-		elog(ERROR, "ALTER TABLE: column name \"%s\" was already dropped", colName);
 	attnum = attribute->attnum;
+	if (attnum <= 0)
+		elog(ERROR, "ALTER TABLE: column name \"%s\" was already dropped",
+			 colName);
 	attoid = tup->t_data->t_oid;
 
 	/*
@@ -1226,10 +1233,9 @@ AlterTableAddConstraint(char *relationName,
 			int			count;
 			List       *indexoidlist,
 				*indexoidscan;
-			Form_pg_index indexStruct = NULL;
 			Form_pg_attribute *rel_attrs = NULL;
-			int                     i;
-			int found=0;
+			int			i;
+			bool		found = false;
 
 			if (get_temp_rel_by_username(fkconstraint->pktable_name)!=NULL &&
 				get_temp_rel_by_username(relationName)==NULL) {
@@ -1264,42 +1270,50 @@ AlterTableAddConstraint(char *relationName,
 			indexoidlist = RelationGetIndexList(pkrel);
 
 			foreach(indexoidscan, indexoidlist)
-				{
-					Oid             indexoid = lfirsti(indexoidscan);
-					HeapTuple       indexTuple;
-					List *attrl;
-					indexTuple = SearchSysCacheTuple(INDEXRELID,
-													 ObjectIdGetDatum(indexoid),
-													 0, 0, 0);
-					if (!HeapTupleIsValid(indexTuple))
-						elog(ERROR, "transformFkeyGetPrimaryKey: index %u not found",
-							 indexoid);
-					indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
+			{
+				Oid             indexoid = lfirsti(indexoidscan);
+				HeapTuple       indexTuple;
+				Form_pg_index	indexStruct;
 
-					if (indexStruct->indisunique) {
-						/* go through the fkconstraint->pk_attrs list */
-						foreach(attrl, fkconstraint->pk_attrs) {
-							Ident *attr=lfirst(attrl);
-							found=0;
-							for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
+				indexTuple = SearchSysCache(INDEXRELID,
+											ObjectIdGetDatum(indexoid),
+											0, 0, 0);
+				if (!HeapTupleIsValid(indexTuple))
+					elog(ERROR, "transformFkeyGetPrimaryKey: index %u not found",
+						 indexoid);
+				indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
+
+				if (indexStruct->indisunique)
+				{
+					List	   *attrl;
+
+					/* go through the fkconstraint->pk_attrs list */
+					foreach(attrl, fkconstraint->pk_attrs)
+					{
+						Ident *attr=lfirst(attrl);
+						found = false;
+						for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
+						{
+							int pkattno = indexStruct->indkey[i];
+							if (pkattno>0)
 							{
-								int pkattno = indexStruct->indkey[i];
-								if (pkattno>0) {
-									char *name = NameStr(rel_attrs[pkattno-1]->attname);
-									if (strcmp(name, attr->name)==0) {
-										found=1;
-										break;
-									}
+								char *name = NameStr(rel_attrs[pkattno-1]->attname);
+								if (strcmp(name, attr->name)==0)
+								{
+									found = true;
+									break;
 								}
 							}
-							if (!found)
-								break;
 						}
+						if (!found)
+							break;
 					}
-					if (found)
-						break;
-					indexStruct = NULL;
 				}
+				ReleaseSysCache(indexTuple);
+				if (found)
+					break;
+			}
+
 			if (!found)
 				elog(ERROR, "UNIQUE constraint matching given keys for referenced table \"%s\" not found",
 					 fkconstraint->pktable_name);
@@ -1309,17 +1323,18 @@ AlterTableAddConstraint(char *relationName,
 
 			rel_attrs = rel->rd_att->attrs;
 			if (fkconstraint->fk_attrs!=NIL) {
-				int found=0;
 				List *fkattrs;
 				Ident *fkattr;
+
+				found = false;
 				foreach(fkattrs, fkconstraint->fk_attrs) {
-					int count=0;
-					found=0;
+					int count;
+					found = false;
 					fkattr=lfirst(fkattrs);
-					for (; count < rel->rd_att->natts; count++) {
+					for (count = 0; count < rel->rd_att->natts; count++) {
 						char *name = NameStr(rel->rd_att->attrs[count]->attname);
 						if (strcmp(name, fkattr->name)==0) {
-							found=1;
+							found = true;
 							break;
 						}
 					}
@@ -1441,20 +1456,22 @@ AlterTableOwner(const char *relationName, const char *newOwnerName)
 	/*
 	 * look up the new owner in pg_shadow and get the sysid
 	 */
-	tuple = SearchSysCacheTuple(SHADOWNAME, PointerGetDatum(newOwnerName),
-								0, 0, 0);
+	tuple = SearchSysCache(SHADOWNAME,
+						   PointerGetDatum(newOwnerName),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "ALTER TABLE: user \"%s\" not found", newOwnerName);
-
 	newOwnerSysid = ((Form_pg_shadow) GETSTRUCT(tuple))->usesysid;
+	ReleaseSysCache(tuple);
 
 	/*
-	 * find the table's entry in pg_class and lock it for writing
+	 * find the table's entry in pg_class and make a modifiable copy
 	 */
 	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
 
-	tuple = SearchSysCacheTupleCopy(RELNAME, PointerGetDatum(relationName),
-								 0, 0, 0);
+	tuple = SearchSysCacheCopy(RELNAME,
+							   PointerGetDatum(relationName),
+							   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
 			 relationName);
@@ -1525,13 +1542,15 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	 */
 	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
 
-	reltup = SearchSysCacheTuple(RELNAME, PointerGetDatum(relationName),
-								 0, 0, 0);
+	reltup = SearchSysCache(RELNAME,
+							PointerGetDatum(relationName),
+							0, 0, 0);
 	if (!HeapTupleIsValid(reltup))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
 			 relationName);
-
 	classtuple.t_self = reltup->t_self;
+	ReleaseSysCache(reltup);
+
 	switch (heap_mark4update(class_rel, &classtuple, &buffer))
 	{
 		case HeapTupleSelfUpdated:

@@ -6,7 +6,7 @@
  *
  *	1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.17 2000/09/25 22:34:20 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.18 2000/11/16 22:30:31 tgl Exp $
  *
  * ----------
  */
@@ -3300,24 +3300,26 @@ ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 		HeapTuple	opr_tup;
 		Form_pg_operator opr_struct;
 
-		opr_tup = SearchSysCacheTuple(OPERNAME,
-									  PointerGetDatum("="),
-									  ObjectIdGetDatum(typeid),
-									  ObjectIdGetDatum(typeid),
-									  CharGetDatum('b'));
-
+		opr_tup = SearchSysCache(OPERNAME,
+								 PointerGetDatum("="),
+								 ObjectIdGetDatum(typeid),
+								 ObjectIdGetDatum(typeid),
+								 CharGetDatum('b'));
 		if (!HeapTupleIsValid(opr_tup))
 			elog(ERROR, "ri_AttributesEqual(): cannot find '=' operator "
 				 "for type %u", typeid);
 		opr_struct = (Form_pg_operator) GETSTRUCT(opr_tup);
 
 		entry = (RI_OpreqHashEntry *) hash_search(ri_opreq_cache,
-								   (char *) &typeid, HASH_ENTER, &found);
+												  (char *) &typeid,
+												  HASH_ENTER,
+												  &found);
 		if (entry == NULL)
 			elog(FATAL, "can't insert into RI operator cache");
 
 		entry->typeid = typeid;
 		fmgr_info(opr_struct->oprcode, &(entry->oprfmgrinfo));
+		ReleaseSysCache(opr_tup);
 	}
 
 	/* ----------

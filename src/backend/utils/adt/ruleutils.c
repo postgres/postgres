@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.68 2000/11/05 00:15:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.69 2000/11/16 22:30:31 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -374,8 +374,9 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	 * Fetch the pg_index tuple by the Oid of the index
 	 * ----------
 	 */
-	ht_idx = SearchSysCacheTuple(INDEXRELID,
-								 ObjectIdGetDatum(indexrelid), 0, 0, 0);
+	ht_idx = SearchSysCache(INDEXRELID,
+							ObjectIdGetDatum(indexrelid),
+							0, 0, 0);
 	if (!HeapTupleIsValid(ht_idx))
 		elog(ERROR, "syscache lookup for index %u failed", indexrelid);
 	idxrec = (Form_pg_index) GETSTRUCT(ht_idx);
@@ -384,8 +385,9 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	 * Fetch the pg_class tuple of the index relation
 	 * ----------
 	 */
-	ht_idxrel = SearchSysCacheTuple(RELOID,
-						  ObjectIdGetDatum(idxrec->indexrelid), 0, 0, 0);
+	ht_idxrel = SearchSysCache(RELOID,
+							   ObjectIdGetDatum(idxrec->indexrelid),
+							   0, 0, 0);
 	if (!HeapTupleIsValid(ht_idxrel))
 		elog(ERROR, "syscache lookup for relid %u failed", idxrec->indexrelid);
 	idxrelrec = (Form_pg_class) GETSTRUCT(ht_idxrel);
@@ -394,8 +396,9 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	 * Fetch the pg_class tuple of the indexed relation
 	 * ----------
 	 */
-	ht_indrel = SearchSysCacheTuple(RELOID,
-							ObjectIdGetDatum(idxrec->indrelid), 0, 0, 0);
+	ht_indrel = SearchSysCache(RELOID,
+							   ObjectIdGetDatum(idxrec->indrelid),
+							   0, 0, 0);
 	if (!HeapTupleIsValid(ht_indrel))
 		elog(ERROR, "syscache lookup for relid %u failed", idxrec->indrelid);
 	indrelrec = (Form_pg_class) GETSTRUCT(ht_indrel);
@@ -484,12 +487,13 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 		HeapTuple	proctup;
 		Form_pg_proc procStruct;
 
-		proctup = SearchSysCacheTuple(PROCOID,
-							 ObjectIdGetDatum(idxrec->indproc), 0, 0, 0);
+		proctup = SearchSysCache(PROCOID,
+								 ObjectIdGetDatum(idxrec->indproc),
+								 0, 0, 0);
 		if (!HeapTupleIsValid(proctup))
 			elog(ERROR, "cache lookup for proc %u failed", idxrec->indproc);
-
 		procStruct = (Form_pg_proc) GETSTRUCT(proctup);
+
 		appendStringInfo(&buf, "%s(%s) ",
 				 quote_identifier(pstrdup(NameStr(procStruct->proname))),
 						 keybuf.data);
@@ -508,6 +512,7 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 		appendStringInfo(&buf, "%s",
 						 quote_identifier(SPI_getvalue(spi_tup, spi_ttc,
 													   spi_fno)));
+		ReleaseSysCache(proctup);
 	}
 	else
 		/* ----------
@@ -523,15 +528,19 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	appendStringInfo(&buf, ")");
 
 	/* ----------
-	 * Create the result in upper executor memory
+	 * Create the result in upper executor memory, and free objects
 	 * ----------
 	 */
 	len = buf.len + VARHDRSZ;
 	indexdef = SPI_palloc(len);
 	VARATT_SIZEP(indexdef) = len;
 	memcpy(VARDATA(indexdef), buf.data, buf.len);
+
 	pfree(buf.data);
 	pfree(keybuf.data);
+	ReleaseSysCache(ht_idx);
+	ReleaseSysCache(ht_idxrel);
+	ReleaseSysCache(ht_indrel);
 
 	/* ----------
 	 * Disconnect from SPI manager
@@ -568,13 +577,14 @@ pg_get_userbyid(PG_FUNCTION_ARGS)
 	 * Get the pg_shadow entry and print the result
 	 * ----------
 	 */
-	usertup = SearchSysCacheTuple(SHADOWSYSID,
-								  ObjectIdGetDatum(uid),
-								  0, 0, 0);
+	usertup = SearchSysCache(SHADOWSYSID,
+							 ObjectIdGetDatum(uid),
+							 0, 0, 0);
 	if (HeapTupleIsValid(usertup))
 	{
 		user_rec = (Form_pg_shadow) GETSTRUCT(usertup);
 		StrNCpy(NameStr(*result), NameStr(user_rec->usename), NAMEDATALEN);
+		ReleaseSysCache(usertup);
 	}
 	else
 		sprintf(NameStr(*result), "unknown (UID=%d)", uid);
@@ -1392,10 +1402,11 @@ get_rule_expr(Node *node, deparse_context *context)
 							HeapTuple	tp;
 							Form_pg_operator optup;
 
-							tp = SearchSysCacheTuple(OPEROID,
-												  ObjectIdGetDatum(opno),
-													 0, 0, 0);
-							Assert(HeapTupleIsValid(tp));
+							tp = SearchSysCache(OPEROID,
+												ObjectIdGetDatum(opno),
+												0, 0, 0);
+							if (!HeapTupleIsValid(tp))
+								elog(ERROR, "cache lookup for operator %u failed", opno);
 							optup = (Form_pg_operator) GETSTRUCT(tp);
 							switch (optup->oprkind)
 							{
@@ -1414,6 +1425,7 @@ get_rule_expr(Node *node, deparse_context *context)
 								default:
 									elog(ERROR, "get_rule_expr: bogus oprkind");
 							}
+							ReleaseSysCache(tp);
 						}
 						appendStringInfoChar(buf, ')');
 						break;
@@ -1524,9 +1536,9 @@ get_rule_expr(Node *node, deparse_context *context)
 
 				/* we do NOT parenthesize the arg expression, for now */
 				get_rule_expr(fselect->arg, context);
-				typetup = SearchSysCacheTuple(TYPEOID,
-								   ObjectIdGetDatum(exprType(fselect->arg)),
-											  0, 0, 0);
+				typetup = SearchSysCache(TYPEOID,
+										 ObjectIdGetDatum(exprType(fselect->arg)),
+										 0, 0, 0);
 				if (!HeapTupleIsValid(typetup))
 					elog(ERROR, "cache lookup of type %u failed",
 						 exprType(fselect->arg));
@@ -1538,6 +1550,7 @@ get_rule_expr(Node *node, deparse_context *context)
 				fieldname = get_relid_attribute_name(typrelid,
 													 fselect->fieldnum);
 				appendStringInfo(buf, ".%s", quote_identifier(fieldname));
+				ReleaseSysCache(typetup);
 			}
 			break;
 
@@ -1550,9 +1563,9 @@ get_rule_expr(Node *node, deparse_context *context)
 
 				appendStringInfoChar(buf, '(');
 				get_rule_expr(relabel->arg, context);
-				typetup = SearchSysCacheTuple(TYPEOID,
+				typetup = SearchSysCache(TYPEOID,
 								   ObjectIdGetDatum(relabel->resulttype),
-											  0, 0, 0);
+										 0, 0, 0);
 				if (!HeapTupleIsValid(typetup))
 					elog(ERROR, "cache lookup of type %u failed",
 						 relabel->resulttype);
@@ -1560,6 +1573,7 @@ get_rule_expr(Node *node, deparse_context *context)
 				extval = pstrdup(NameStr(typeStruct->typname));
 				appendStringInfo(buf, ")::%s", quote_identifier(extval));
 				pfree(extval);
+				ReleaseSysCache(typetup);
 			}
 			break;
 
@@ -1616,14 +1630,14 @@ get_func_expr(Expr *expr, deparse_context *context)
 	/*
 	 * Get the functions pg_proc tuple
 	 */
-	proctup = SearchSysCacheTuple(PROCOID,
-								  ObjectIdGetDatum(func->funcid),
-								  0, 0, 0);
+	proctup = SearchSysCache(PROCOID,
+							 ObjectIdGetDatum(func->funcid),
+							 0, 0, 0);
 	if (!HeapTupleIsValid(proctup))
 		elog(ERROR, "cache lookup for proc %u failed", func->funcid);
 
 	procStruct = (Form_pg_proc) GETSTRUCT(proctup);
-	proname = pstrdup(NameStr(procStruct->proname));
+	proname = NameStr(procStruct->proname);
 
 	/*
 	 * nullvalue() and nonnullvalue() should get turned into special
@@ -1636,6 +1650,7 @@ get_func_expr(Expr *expr, deparse_context *context)
 			appendStringInfoChar(buf, '(');
 			get_rule_expr((Node *) lfirst(expr->args), context);
 			appendStringInfo(buf, " ISNULL)");
+			ReleaseSysCache(proctup);
 			return;
 		}
 		if (strcmp(proname, "nonnullvalue") == 0)
@@ -1643,6 +1658,7 @@ get_func_expr(Expr *expr, deparse_context *context)
 			appendStringInfoChar(buf, '(');
 			get_rule_expr((Node *) lfirst(expr->args), context);
 			appendStringInfo(buf, " NOTNULL)");
+			ReleaseSysCache(proctup);
 			return;
 		}
 	}
@@ -1657,8 +1673,9 @@ get_func_expr(Expr *expr, deparse_context *context)
 
 		/*
 		 * Strip off any RelabelType on the input, so we don't print
-		 * redundancies like x::bpchar::char(8). XXX Are there any cases
-		 * where this is a bad idea?
+		 * redundancies like x::bpchar::char(8).
+		 *
+		 * XXX Are there any cases where this is a bad idea?
 		 */
 		if (IsA(arg, RelabelType))
 			arg = ((RelabelType *) arg)->arg;
@@ -1696,6 +1713,8 @@ get_func_expr(Expr *expr, deparse_context *context)
 		}
 		else
 			appendStringInfo(buf, "%s", quote_identifier(proname));
+
+		ReleaseSysCache(proctup);
 		return;
 	}
 
@@ -1711,6 +1730,8 @@ get_func_expr(Expr *expr, deparse_context *context)
 		get_rule_expr((Node *) lfirst(l), context);
 	}
 	appendStringInfoChar(buf, ')');
+
+	ReleaseSysCache(proctup);
 }
 
 
@@ -1766,9 +1787,9 @@ get_const_expr(Const *constval, deparse_context *context)
 	char	   *extval;
 	char	   *valptr;
 
-	typetup = SearchSysCacheTuple(TYPEOID,
-								  ObjectIdGetDatum(constval->consttype),
-								  0, 0, 0);
+	typetup = SearchSysCache(TYPEOID,
+							 ObjectIdGetDatum(constval->consttype),
+							 0, 0, 0);
 	if (!HeapTupleIsValid(typetup))
 		elog(ERROR, "cache lookup of type %u failed", constval->consttype);
 
@@ -1785,6 +1806,7 @@ get_const_expr(Const *constval, deparse_context *context)
 		extval = pstrdup(NameStr(typeStruct->typname));
 		appendStringInfo(buf, "NULL::%s", quote_identifier(extval));
 		pfree(extval);
+		ReleaseSysCache(typetup);
 		return;
 	}
 
@@ -1843,6 +1865,8 @@ get_const_expr(Const *constval, deparse_context *context)
 			pfree(extval);
 			break;
 	}
+
+	ReleaseSysCache(typetup);
 }
 
 
@@ -2198,14 +2222,18 @@ get_relation_name(Oid relid)
 {
 	HeapTuple	classtup;
 	Form_pg_class classStruct;
+	char	   *result;
 
-	classtup = SearchSysCacheTuple(RELOID,
-								   ObjectIdGetDatum(relid), 0, 0, 0);
+	classtup = SearchSysCache(RELOID,
+							  ObjectIdGetDatum(relid),
+							  0, 0, 0);
 	if (!HeapTupleIsValid(classtup))
 		elog(ERROR, "cache lookup of relation %u failed", relid);
 
 	classStruct = (Form_pg_class) GETSTRUCT(classtup);
-	return pstrdup(NameStr(classStruct->relname));
+	result = pstrdup(NameStr(classStruct->relname));
+	ReleaseSysCache(classtup);
+	return result;
 }
 
 

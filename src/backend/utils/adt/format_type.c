@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.5 2000/08/26 21:53:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.6 2000/11/16 22:30:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,9 +98,9 @@ format_type_internal(Oid type_oid, int32 typemod)
 	if (type_oid == InvalidOid)
 		return pstrdup("-");
 
-	tuple = SearchSysCacheTuple(TYPEOID, ObjectIdGetDatum(type_oid),
-								0, 0, 0);
-
+	tuple = SearchSysCache(TYPEOID,
+						   ObjectIdGetDatum(type_oid),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		return pstrdup("???");
 
@@ -108,9 +108,11 @@ format_type_internal(Oid type_oid, int32 typemod)
 	typlen = ((Form_pg_type) GETSTRUCT(tuple))->typlen;
 	if (array_base_type != 0 && typlen < 0)
 	{
-		tuple = SearchSysCacheTuple(TYPEOID,
-									ObjectIdGetDatum(array_base_type),
-									0, 0, 0);
+		/* Switch our attention to the array element type */
+		ReleaseSysCache(tuple);
+		tuple = SearchSysCache(TYPEOID,
+							   ObjectIdGetDatum(array_base_type),
+							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
 			return pstrdup("???[]");
 		is_array = true;
@@ -210,6 +212,8 @@ format_type_internal(Oid type_oid, int32 typemod)
 
 	if (is_array)
 		buf = psnprintf(strlen(buf) + 3, "%s[]", buf);
+
+	ReleaseSysCache(tuple);
 
 	return buf;
 }

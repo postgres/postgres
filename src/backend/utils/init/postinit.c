@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.71 2000/11/14 18:37:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.72 2000/11/16 22:30:39 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -320,10 +320,7 @@ InitPostgres(const char *dbname, const char *username)
 
 	/*
 	 * Initialize all the system catalog caches.
-	 */
-	zerocaches();
-
-	/*
+	 *
 	 * Does not touch files since all routines are builtins (?) - thomas
 	 * 1997-11-01
 	 */

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.64 2000/11/08 22:09:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.65 2000/11/16 22:30:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1140,6 +1140,7 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 				equal_proc;
 	HeapTuple	htup;
 	Form_pg_index itupform;
+	Oid			indexrelid;
 
 	consistent_proc = index_getprocid(index, 1, GIST_CONSISTENT_PROC);
 	union_proc = index_getprocid(index, 1, GIST_UNION_PROC);
@@ -1157,32 +1158,32 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 	fmgr_info(equal_proc, &giststate->equalFn);
 
 	/* see if key type is different from type of attribute being indexed */
-	htup = SearchSysCacheTuple(INDEXRELID,
-							   ObjectIdGetDatum(RelationGetRelid(index)),
-							   0, 0, 0);
-	itupform = (Form_pg_index) GETSTRUCT(htup);
+	htup = SearchSysCache(INDEXRELID,
+						  ObjectIdGetDatum(RelationGetRelid(index)),
+						  0, 0, 0);
 	if (!HeapTupleIsValid(htup))
 		elog(ERROR, "initGISTstate: index %u not found",
 			 RelationGetRelid(index));
+	itupform = (Form_pg_index) GETSTRUCT(htup);
 	giststate->haskeytype = itupform->indhaskeytype;
+	indexrelid = itupform->indexrelid;
+	ReleaseSysCache(htup);
+
 	if (giststate->haskeytype)
 	{
 		/* key type is different -- is it byval? */
-		htup = SearchSysCacheTuple(ATTNUM,
-								   ObjectIdGetDatum(itupform->indexrelid),
-								   UInt16GetDatum(FirstOffsetNumber),
-								   0, 0);
+		htup = SearchSysCache(ATTNUM,
+							  ObjectIdGetDatum(indexrelid),
+							  UInt16GetDatum(FirstOffsetNumber),
+							  0, 0);
 		if (!HeapTupleIsValid(htup))
-		{
 			elog(ERROR, "initGISTstate: no attribute tuple %u %d",
-				 itupform->indexrelid, FirstOffsetNumber);
-			return;
-		}
+				 indexrelid, FirstOffsetNumber);
 		giststate->keytypbyval = (((Form_pg_attribute) htup)->attbyval);
+		ReleaseSysCache(htup);
 	}
 	else
 		giststate->keytypbyval = FALSE;
-	return;
 }
 
 

@@ -48,7 +48,6 @@ void
 CreateProceduralLanguage(CreatePLangStmt *stmt)
 {
 	char		languageName[NAMEDATALEN];
-	HeapTuple	langTup;
 	HeapTuple	procTup;
 
 	Oid			typev[FUNC_MAX_ARGS];
@@ -77,10 +76,9 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	 */
 	case_translate_language_name(stmt->plname, languageName);
 
-	langTup = SearchSysCacheTuple(LANGNAME,
-								  PointerGetDatum(languageName),
-								  0, 0, 0);
-	if (HeapTupleIsValid(langTup))
+	if (SearchSysCacheExists(LANGNAME,
+							 PointerGetDatum(languageName),
+							 0, 0, 0))
 		elog(ERROR, "Language %s already exists", languageName);
 
 	/* ----------------
@@ -89,21 +87,17 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	 * ----------------
 	 */
 	memset(typev, 0, sizeof(typev));
-	procTup = SearchSysCacheTuple(PROCNAME,
-								  PointerGetDatum(stmt->plhandler),
-								  Int32GetDatum(0),
-								  PointerGetDatum(typev),
-								  0);
+	procTup = SearchSysCache(PROCNAME,
+							 PointerGetDatum(stmt->plhandler),
+							 Int32GetDatum(0),
+							 PointerGetDatum(typev),
+							 0);
 	if (!HeapTupleIsValid(procTup))
-	{
 		elog(ERROR, "PL handler function %s() doesn't exist",
 			 stmt->plhandler);
-	}
 	if (((Form_pg_proc) GETSTRUCT(procTup))->prorettype != InvalidOid)
-	{
 		elog(ERROR, "PL handler function %s() isn't of return type Opaque",
 			 stmt->plhandler);
-	}
 
 	/* ----------------
 	 * Insert the new language into pg_language
@@ -122,6 +116,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	values[i++] = ObjectIdGetDatum(procTup->t_data->t_oid);
 	values[i++] = DirectFunctionCall1(textin,
 									  CStringGetDatum(stmt->plcompiler));
+
+	ReleaseSysCache(procTup);
 
 	rel = heap_openr(LanguageRelationName, RowExclusiveLock);
 
@@ -173,9 +169,9 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 
 	rel = heap_openr(LanguageRelationName, RowExclusiveLock);
 
-	langTup = SearchSysCacheTupleCopy(LANGNAME,
-									  PointerGetDatum(languageName),
-									  0, 0, 0);
+	langTup = SearchSysCacheCopy(LANGNAME,
+								 PointerGetDatum(languageName),
+								 0, 0, 0);
 	if (!HeapTupleIsValid(langTup))
 		elog(ERROR, "Language %s doesn't exist", languageName);
 

@@ -2,7 +2,6 @@
  *
  * dllist.c
  *	  this is a simple doubly linked list implementation
- *	  replaces the old simplelists stuff
  *	  the elements of the lists are void*
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
@@ -10,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.18 2000/06/08 22:37:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.19 2000/11/16 22:30:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,25 +32,33 @@ DLNewList(void)
 {
 	Dllist	   *l;
 
-	l = malloc(sizeof(Dllist));
+	l = (Dllist *) malloc(sizeof(Dllist));
 	l->dll_head = 0;
 	l->dll_tail = 0;
 
 	return l;
 }
 
-/* free up a list and all the nodes in it --- but *not* whatever the nodes
+void
+DLInitList(Dllist *list)
+{
+	list->dll_head = 0;
+	list->dll_tail = 0;
+}
+
+/*
+ * free up a list and all the nodes in it --- but *not* whatever the nodes
  * might point to!
  */
 void
-DLFreeList(Dllist *l)
+DLFreeList(Dllist *list)
 {
 	Dlelem	   *curr;
 
-	while ((curr = DLRemHead(l)) != 0)
+	while ((curr = DLRemHead(list)) != 0)
 		free(curr);
 
-	free(l);
+	free(list);
 }
 
 Dlelem *
@@ -59,7 +66,7 @@ DLNewElem(void *val)
 {
 	Dlelem	   *e;
 
-	e = malloc(sizeof(Dlelem));
+	e = (Dlelem *) malloc(sizeof(Dlelem));
 	e->dle_next = 0;
 	e->dle_prev = 0;
 	e->dle_val = val;
@@ -68,59 +75,18 @@ DLNewElem(void *val)
 }
 
 void
+DLInitElem(Dlelem *e, void *val)
+{
+	e->dle_next = 0;
+	e->dle_prev = 0;
+	e->dle_val = val;
+	e->dle_list = 0;
+}
+
+void
 DLFreeElem(Dlelem *e)
 {
 	free(e);
-}
-
-Dlelem *
-DLGetHead(Dllist *l)
-{
-	return l ? l->dll_head : 0;
-}
-
-/* get the value stored in the first element */
-#ifdef NOT_USED
-void *
-DLGetHeadVal(Dllist *l)
-{
-	Dlelem	   *e = DLGetHead(l);
-
-	return e ? e->dle_val : 0;
-}
-
-#endif
-
-Dlelem *
-DLGetTail(Dllist *l)
-{
-	return l ? l->dll_tail : 0;
-}
-
-/* get the value stored in the last element */
-#ifdef NOT_USED
-void *
-DLGetTailVal(Dllist *l)
-{
-	Dlelem	   *e = DLGetTail(l);
-
-	return e ? e->dle_val : 0;
-}
-
-#endif
-
-#ifdef NOT_USED
-Dlelem *
-DLGetPred(Dlelem *e)			/* get predecessor */
-{
-	return e ? e->dle_prev : 0;
-}
-#endif
-
-Dlelem *
-DLGetSucc(Dlelem *e)			/* get successor */
-{
-	return e ? e->dle_next : 0;
 }
 
 void
@@ -131,16 +97,16 @@ DLRemove(Dlelem *e)
 	if (e->dle_prev)
 		e->dle_prev->dle_next = e->dle_next;
 	else
-/* must be the head element */
 	{
+		/* must be the head element */
 		Assert(e == l->dll_head);
 		l->dll_head = e->dle_next;
 	}
 	if (e->dle_next)
 		e->dle_next->dle_prev = e->dle_prev;
 	else
-/* must be the tail element */
 	{
+		/* must be the tail element */
 		Assert(e == l->dll_tail);
 		l->dll_tail = e->dle_prev;
 	}
@@ -194,11 +160,11 @@ DLRemHead(Dllist *l)
 
 	l->dll_head = result->dle_next;
 
-	result->dle_next = 0;
-	result->dle_list = 0;
-
 	if (result == l->dll_tail)	/* if the head is also the tail */
 		l->dll_tail = 0;
+
+	result->dle_next = 0;
+	result->dle_list = 0;
 
 	return result;
 }
@@ -217,11 +183,11 @@ DLRemTail(Dllist *l)
 
 	l->dll_tail = result->dle_prev;
 
-	result->dle_prev = 0;
-	result->dle_list = 0;
-
 	if (result == l->dll_head)	/* if the tail is also the head */
 		l->dll_head = 0;
+
+	result->dle_prev = 0;
+	result->dle_list = 0;
 
 	return result;
 }
@@ -241,8 +207,8 @@ DLMoveToFront(Dlelem *e)
 	if (e->dle_next)
 		e->dle_next->dle_prev = e->dle_prev;
 	else
-/* must be the tail element */
 	{
+		/* must be the tail element */
 		Assert(e == l->dll_tail);
 		l->dll_tail = e->dle_prev;
 	}
