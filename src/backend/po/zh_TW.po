@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.5\n"
 "POT-Creation-Date: 2004-08-04 01:34-0300\n"
-"PO-Revision-Date: 2004-08-06 00:56+0800\n"
+"PO-Revision-Date: 2004-08-18 12:15+0800\n"
 "Last-Translator: Zhenbang Wei <forth@zbwei.net>\n"
 "Language-Team: Zhenbang Wei <forth@zbwei.net>\n"
 "MIME-Version: 1.0\n"
@@ -424,7 +424,7 @@ msgstr "刪除交易日誌檔\"%s\""
 #: access/transam/xlog.c:2176
 #, c-format
 msgid "could not read transaction log directory \"%s\": %m"
-msgstr ""
+msgstr "無法讀取交易記錄目錄 \"%s\": %m"
 
 #: access/transam/xlog.c:2251
 #, c-format
@@ -465,12 +465,12 @@ msgstr "記錄長度 %u 於 %X/%X 太長"
 #: access/transam/xlog.c:2471
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
-msgstr ""
+msgstr "無效的資源管理器 ID %u 於 %X/%X"
 
 #: access/transam/xlog.c:2503
 #, c-format
 msgid "could not read from log file %u, segment %u, offset %u: %m"
-msgstr ""
+msgstr "無法讀取日誌檔 %u，區段 %u，偏移位置 %u：%m"
 
 #: access/transam/xlog.c:2512
 #, c-format
@@ -495,12 +495,12 @@ msgstr ""
 #: access/transam/xlog.c:2618
 #: access/transam/xlog.c:2626
 msgid "WAL file is from different system"
-msgstr ""
+msgstr "WAL 檔是來自不同系統"
 
 #: access/transam/xlog.c:2619
 #, c-format
 msgid "WAL file SYSID is %s, pg_control SYSID is %s"
-msgstr ""
+msgstr "WAL 檔 SYSID 為 %s，pg_control SYSID 為 %s"
 
 #: access/transam/xlog.c:2627
 msgid "Incorrect XLOG_SEG_SIZE in page header."
@@ -509,12 +509,12 @@ msgstr "page header中的XLOG_SEG_SIZE不正確"
 #: access/transam/xlog.c:2636
 #, c-format
 msgid "unexpected pageaddr %X/%X in log file %u, segment %u, offset %u"
-msgstr ""
+msgstr "非預期的pageaddr %X/%X於日誌檔 %u，區段 %u，偏移位置 %u"
 
 #: access/transam/xlog.c:2648
 #, c-format
 msgid "unexpected timeline ID %u in log file %u, segment %u, offset %u"
-msgstr ""
+msgstr "非預期的timeline ID %u於日誌檔 %u，區段 %u，偏移位置 %u"
 
 #: access/transam/xlog.c:2666
 #, c-format
@@ -535,7 +535,7 @@ msgstr "歷史記錄檔中有語法錯誤：%s"
 
 #: access/transam/xlog.c:2736
 msgid "Expected a numeric timeline ID."
-msgstr ""
+msgstr "預期一個數字timeline ID。"
 
 #: access/transam/xlog.c:2741
 #, c-format
@@ -580,7 +580,7 @@ msgstr "不合法的LC_CTYPE設定"
 
 #: access/transam/xlog.c:3084
 msgid "sizeof(ControlFileData) is larger than BLCKSZ; fix either one"
-msgstr ""
+msgstr "sizeof(ControlFileData) 大於 BLCKSZ; 修正其中一項"
 
 #: access/transam/xlog.c:3094
 #, c-format
@@ -1018,14 +1018,12 @@ msgstr "無法fdatasync日誌檔 %u，區段 %u：%m"
 
 #: access/transam/xlog.c:5081
 #: access/transam/xlog.c:5178
-#, fuzzy
 msgid "must be superuser to run a backup"
-msgstr "只有管理者能建立使用者"
+msgstr "只有管理者能執行備份"
 
 #: access/transam/xlog.c:5116
-#, fuzzy
 msgid "a backup is already in progress"
-msgstr "已經有交易在執行中"
+msgstr "已有備份動作正在進行"
 
 #: access/transam/xlog.c:5117
 #, c-format
@@ -1034,19 +1032,18 @@ msgstr "如果您確定沒有備份動作正在進行，移除檔案 \"%s\" 並�
 
 #: access/transam/xlog.c:5135
 #: access/transam/xlog.c:5248
-#, fuzzy, c-format
+#, c-format
 msgid "could not write file \"%s\": %m"
-msgstr "無法寫入檔案\"%s\"：%m"
+msgstr "無法寫入檔案 \"%s\": %m"
 
 #: access/transam/xlog.c:5213
-#, fuzzy
 msgid "a backup is not in progress"
-msgstr "沒有執行中的交易"
+msgstr "有一個備份動作不在運行"
 
 #: access/transam/xlog.c:5224
-#, fuzzy, c-format
+#, c-format
 msgid "invalid data in file \"%s\""
-msgstr "歷史記錄檔\"%s\"中有無效資料"
+msgstr "歷史記錄檔 \"%s\" 中有無效資料"
 
 #: bootstrap/bootstrap.c:302
 #: postmaster/postmaster.c:494
@@ -1265,7 +1262,7 @@ msgstr ""
 #: catalog/aclchk.c:245
 #, c-format
 msgid "invalid privilege type %s for table"
-msgstr ""
+msgstr "無效的 table 權限型別 %s"
 
 #: catalog/aclchk.c:333
 #: catalog/aclchk.c:491
@@ -1306,7 +1303,7 @@ msgstr "只能取消部份權限"
 #: catalog/aclchk.c:413
 #, c-format
 msgid "invalid privilege type %s for database"
-msgstr ""
+msgstr "無效的 database 權限型別 %s"
 
 #: catalog/aclchk.c:450
 #: commands/comment.c:458
@@ -1324,12 +1321,12 @@ msgstr "資料庫\"%s\"不存在"
 #: catalog/aclchk.c:571
 #, c-format
 msgid "invalid privilege type %s for function"
-msgstr ""
+msgstr "無效的 function 權限型別 %s"
 
 #: catalog/aclchk.c:725
 #, c-format
 msgid "invalid privilege type %s for language"
-msgstr ""
+msgstr "無效的 language 權限型別 %s"
 
 #: catalog/aclchk.c:757
 #: commands/comment.c:1000
@@ -1349,7 +1346,7 @@ msgstr "語言\"%s\"不受信任"
 #: catalog/aclchk.c:887
 #, c-format
 msgid "invalid privilege type %s for schema"
-msgstr ""
+msgstr "無效的 schema 權限型別 %s"
 
 #: catalog/aclchk.c:919
 #: catalog/namespace.c:255
@@ -1368,7 +1365,7 @@ msgstr "schema \"%s\"不存在"
 #: catalog/aclchk.c:1041
 #, c-format
 msgid "invalid privilege type %s for tablespace"
-msgstr ""
+msgstr "無效的 tablespace 權限型別 %s"
 
 #: catalog/aclchk.c:1078
 #: commands/dbcommands.c:275
@@ -1556,7 +1553,7 @@ msgstr "OID為 %u 的conversion不存在"
 
 #: catalog/pg_aggregate.c:80
 msgid "cannot determine transition data type"
-msgstr ""
+msgstr "無法判斷交易資料型別"
 
 #: catalog/pg_aggregate.c:81
 msgid "An aggregate using \"anyarray\" or \"anyelement\" as transition type must have one of them as its base type."
@@ -1733,7 +1730,7 @@ msgstr "共享的索引 \"%s\" 只能在 stand-alone 模式下重新索引"
 #: catalog/namespace.c:228
 #, c-format
 msgid "cross-database references are not implemented: \"%s.%s.%s\""
-msgstr ""
+msgstr "跨資料庫參照尚未實做：\"%s.%s.%s\""
 
 #: catalog/namespace.c:195
 #, c-format
@@ -1904,15 +1901,15 @@ msgstr ""
 #: catalog/pg_proc.c:394
 #: catalog/pg_proc.c:425
 msgid "Function's final statement must be a SELECT."
-msgstr ""
+msgstr "函式最後的敘述必須是SELECT。"
 
 #: catalog/pg_proc.c:415
 msgid "Function's final statement must not be a SELECT."
-msgstr ""
+msgstr "函式最後的敘述不能是SELECT。"
 
 #: catalog/pg_proc.c:449
 msgid "Final SELECT must return exactly one column."
-msgstr ""
+msgstr "最後的SELECT只能傳回一個欄位。"
 
 #: catalog/pg_proc.c:457
 #, c-format
@@ -1921,16 +1918,16 @@ msgstr "實際傳回型別是%s。"
 
 #: catalog/pg_proc.c:509
 msgid "Final SELECT returns too many columns."
-msgstr ""
+msgstr "最後的SELECT傳回過多欄位。"
 
 #: catalog/pg_proc.c:521
 #, c-format
 msgid "Final SELECT returns %s instead of %s at column %d."
-msgstr ""
+msgstr "最後的SELECT傳回 %s 而非 %s 於欄位 %d。"
 
 #: catalog/pg_proc.c:541
 msgid "Final SELECT returns too few columns."
-msgstr ""
+msgstr "最後的SELECT傳回欄位不足。"
 
 #: catalog/pg_proc.c:581
 #, c-format
@@ -2004,15 +2001,15 @@ msgstr ""
 
 #: commands/aggregatecmds.c:107
 msgid "aggregate basetype must be specified"
-msgstr ""
+msgstr "必須指定aggregate basetype"
 
 #: commands/aggregatecmds.c:111
 msgid "aggregate stype must be specified"
-msgstr ""
+msgstr "必須指定aggregate stype"
 
 #: commands/aggregatecmds.c:115
 msgid "aggregate sfunc must be specified"
-msgstr ""
+msgstr "必須指定aggregate sfunc"
 
 #: commands/aggregatecmds.c:138
 #, c-format
@@ -2046,12 +2043,12 @@ msgstr "只有管理者能修改擁有者"
 #: commands/analyze.c:153
 #, c-format
 msgid "skipping \"%s\" --- only table or database owner can analyze it"
-msgstr ""
+msgstr "忽略\"%s\" -- 只有資料表或資料庫擁有者能進行分析"
 
 #: commands/analyze.c:169
 #, c-format
 msgid "skipping \"%s\" --- cannot analyze indexes, views, or special system tables"
-msgstr ""
+msgstr "忽略\"%s\" -- 無法分析索引、view或特殊系統資料表"
 
 #: commands/analyze.c:199
 #, c-format
@@ -2657,22 +2654,24 @@ msgstr ""
 #: commands/copy.c:2047
 #: commands/copy.c:2065
 msgid "literal carriage return found in data"
-msgstr ""
+msgstr "資料裡含有歸位(carriage return)實量"
 
 #: commands/copy.c:2048
 #: commands/copy.c:2066
 msgid "Use \"\\r\" to represent carriage return."
-msgstr ""
+msgstr "使用 \"\\r\" 表示歸位(carriage return)。"
 
 #: commands/copy.c:2083
 msgid "literal newline found in data"
-msgstr ""
+msgstr "資料裡含有換行(newline)實量"
 
 #: commands/copy.c:2084
 msgid ""
 "Use \"\\n"
 "\" to represent newline."
 msgstr ""
+"使用 \"\\n"
+"\" 表示換行(newline)。"
 
 #: commands/copy.c:2104
 #: commands/copy.c:2120
@@ -3085,7 +3084,7 @@ msgstr "資料表\"%s\"沒有索引"
 
 #: commands/indexcmds.c:981
 msgid "can only reindex the currently open database"
-msgstr ""
+msgstr "只能重新索引目前開啟的資料庫"
 
 #: commands/indexcmds.c:1064
 #, c-format
@@ -3248,27 +3247,27 @@ msgstr "記憶體用盡"
 
 #: commands/sequence.c:937
 msgid "INCREMENT must not be zero"
-msgstr ""
+msgstr "INCREMENT 不可為 0"
 
 #: commands/sequence.c:987
 #, c-format
 msgid "MINVALUE (%s) must be less than MAXVALUE (%s)"
-msgstr ""
+msgstr "MINVALUE (%s) 必須小於 MAXVALUE (%s)"
 
 #: commands/sequence.c:1018
 #, c-format
 msgid "START value (%s) can't be less than MINVALUE (%s)"
-msgstr ""
+msgstr "START 值 (%s) 不可小於 MINVALUE (%s)"
 
 #: commands/sequence.c:1030
 #, c-format
 msgid "START value (%s) can't be greater than MAXVALUE (%s)"
-msgstr ""
+msgstr "START 值 (%s) 不可大於 MAXVALUE (%s)"
 
 #: commands/sequence.c:1045
 #, c-format
 msgid "CACHE (%s) must be greater than zero"
-msgstr ""
+msgstr "CACHE (%s) 必須大於 0"
 
 #: commands/proclang.c:64
 msgid "must be superuser to create procedural language"
@@ -3302,7 +3301,7 @@ msgstr ""
 #: commands/user.c:880
 #: commands/user.c:1015
 msgid "permission denied"
-msgstr ""
+msgstr "權限不足"
 
 #: commands/schemacmds.c:87
 #, c-format
@@ -3341,7 +3340,7 @@ msgstr ""
 #: tcop/utility.c:217
 #, c-format
 msgid "permission denied: \"%s\" is a system catalog"
-msgstr ""
+msgstr "權限不足: \"%s\" 是系統 catalog"
 
 #: commands/tablecmds.c:555
 #, c-format
@@ -3743,7 +3742,7 @@ msgstr ""
 #: commands/typecmds.c:173
 #, c-format
 msgid "array element type cannot be %s"
-msgstr ""
+msgstr "陣列元素型別不可為 %s"
 
 #: commands/typecmds.c:206
 #, c-format
@@ -3897,7 +3896,7 @@ msgstr ""
 #: commands/user.c:400
 #, c-format
 msgid "could not write to temporary file \"%s\": %m"
-msgstr ""
+msgstr "無法寫入暫存檔\"%s\"：%m"
 
 #: commands/user.c:207
 #, c-format
@@ -3913,7 +3912,7 @@ msgstr "不合法的使用者名稱\"%s\""
 #: commands/user.c:376
 #, c-format
 msgid "invalid user password \"%s\""
-msgstr ""
+msgstr "無效的使用者密碼 \"%s\""
 
 #: commands/user.c:635
 msgid "user ID must be positive"
@@ -3960,7 +3959,7 @@ msgstr "不能刪除目前的使用者"
 
 #: commands/user.c:1112
 msgid "session user cannot be dropped"
-msgstr ""
+msgstr "不能刪除session使用者"
 
 #: commands/user.c:1139
 #, c-format
@@ -3974,11 +3973,11 @@ msgstr "使用者擁有資料庫\"%s\"。"
 
 #: commands/user.c:1241
 msgid "session user may not be renamed"
-msgstr ""
+msgstr "不能重新命名session使用者"
 
 #: commands/user.c:1255
 msgid "must be superuser to rename users"
-msgstr ""
+msgstr "只有管理者能重新命名使用者"
 
 #: commands/user.c:1274
 msgid "MD5 password cleared because of user rename"
@@ -4081,18 +4080,18 @@ msgstr ""
 #: commands/vacuum.c:927
 #, c-format
 msgid "skipping \"%s\" --- only table or database owner can vacuum it"
-msgstr ""
+msgstr "忽略\"%s\" --- 只有資料表或資料庫擁有者能進行重整"
 
 #: commands/vacuum.c:943
 #, c-format
 msgid "skipping \"%s\" --- cannot vacuum indexes, views, or special system tables"
-msgstr ""
+msgstr "忽略\"%s\" --- 無法重整索引、view或特殊系統資料表"
 
 #: commands/vacuum.c:1166
 #: commands/vacuumlazy.c:205
 #, c-format
 msgid "vacuuming \"%s.%s\""
-msgstr ""
+msgstr "重整\"%s.%s\""
 
 #: commands/vacuum.c:1208
 #: commands/vacuumlazy.c:263
@@ -4141,7 +4140,7 @@ msgstr ""
 #: tcop/postgres.c:3295
 #, c-format
 msgid "%s"
-msgstr ""
+msgstr "%s"
 
 #: commands/vacuum.c:2779
 #: commands/vacuumlazy.c:767
@@ -4174,7 +4173,7 @@ msgstr ""
 #: commands/vacuum.c:2890
 #: commands/vacuum.c:2959
 msgid "Rebuild the index with REINDEX."
-msgstr ""
+msgstr "以 REINDEX 重建索引。"
 
 #: commands/vacuum.c:2940
 #: commands/vacuumlazy.c:661
@@ -4219,7 +4218,7 @@ msgstr ""
 #: commands/variable.c:398
 #, c-format
 msgid "unrecognized time zone name: \"%s\""
-msgstr ""
+msgstr "無法識別的時區名稱: \"%s\""
 
 #: commands/variable.c:406
 #, c-format
@@ -4246,12 +4245,12 @@ msgstr ""
 
 #: commands/view.c:89
 msgid "view must have at least one column"
-msgstr ""
+msgstr "view至少要有一個欄位"
 
 #: commands/view.c:170
 #: commands/view.c:182
 msgid "cannot change number of columns in view"
-msgstr ""
+msgstr "不能變更view的欄位數"
 
 #: commands/view.c:187
 #, c-format
@@ -4261,7 +4260,7 @@ msgstr "無法修改view欄位\"%s\"的名稱"
 #: commands/view.c:194
 #, c-format
 msgid "cannot change data type of view column \"%s\""
-msgstr ""
+msgstr "不能變更view欄位\"%s\"的資料型別"
 
 #: commands/tablespace.c:142
 #, c-format
@@ -4293,18 +4292,18 @@ msgstr ""
 
 #: commands/tablespace.c:231
 msgid "tablespace location must be an absolute path"
-msgstr ""
+msgstr "tablespace的位置必須是絕對路徑"
 
 #: commands/tablespace.c:241
 #, c-format
 msgid "tablespace location \"%s\" is too long"
-msgstr ""
+msgstr "tablespace位置\"%s\"過長"
 
 #: commands/tablespace.c:251
 #: commands/tablespace.c:722
 #, c-format
 msgid "unacceptable tablespace name \"%s\""
-msgstr ""
+msgstr "無法接受tablespace名稱\"%s\""
 
 #: commands/tablespace.c:253
 #: commands/tablespace.c:723
@@ -4315,7 +4314,7 @@ msgstr ""
 #: commands/tablespace.c:735
 #, c-format
 msgid "tablespace \"%s\" already exists"
-msgstr ""
+msgstr "tablespace \"%s\"已經存在"
 
 #: commands/tablespace.c:302
 #, c-format
@@ -4539,7 +4538,7 @@ msgstr ""
 #: executor/spi.c:1497
 #, c-format
 msgid "SQL query \"%s\""
-msgstr ""
+msgstr "SQL查詢\"%s\""
 
 #: executor/nodeMergejoin.c:1474
 msgid "RIGHT JOIN is only supported with merge-joinable join conditions"
@@ -4567,16 +4566,16 @@ msgstr ""
 
 #: libpq/be-fsstubs.c:378
 msgid "must be superuser to use server-side lo_import()"
-msgstr ""
+msgstr "必須是管理者才能使用伺服端 lo_import()"
 
 #: libpq/be-fsstubs.c:379
 msgid "Anyone can use the client-side lo_import() provided by libpq."
-msgstr ""
+msgstr "任何人都能使用 libpq 提供的客戶端 lo_import()。"
 
 #: libpq/be-fsstubs.c:394
 #, c-format
 msgid "could not open server file \"%s\": %m"
-msgstr ""
+msgstr "無法開啟伺服器檔案 \"%s\": %m"
 
 #: libpq/be-fsstubs.c:415
 #, c-format
@@ -4585,11 +4584,11 @@ msgstr "無法讀取伺服器檔案\"%s\"：%m"
 
 #: libpq/be-fsstubs.c:445
 msgid "must be superuser to use server-side lo_export()"
-msgstr ""
+msgstr "必須是管理者才能使用伺服端 lo_export()"
 
 #: libpq/be-fsstubs.c:446
 msgid "Anyone can use the client-side lo_export() provided by libpq."
-msgstr ""
+msgstr "任何人都能使用 libpq 提供的客戶端 lo_export()。"
 
 #: libpq/be-fsstubs.c:472
 #, c-format
@@ -4604,7 +4603,7 @@ msgstr "無法寫入伺服器檔案\"%s\"：%m"
 #: libpq/auth.c:113
 #, c-format
 msgid "Kerberos error: %s"
-msgstr ""
+msgstr "Kerberos 錯誤: %s"
 
 #: libpq/auth.c:119
 #, c-format
@@ -4619,49 +4618,49 @@ msgstr ""
 
 #: libpq/auth.c:140
 msgid "Kerberos 4 not implemented on this server"
-msgstr ""
+msgstr "這個伺服器並未實作 Kerberos 4"
 
 #: libpq/auth.c:201
 #, c-format
 msgid "Kerberos initialization returned error %d"
-msgstr ""
+msgstr "Kerberos 初始化傳回錯誤 %d"
 
 #: libpq/auth.c:211
 #, c-format
 msgid "Kerberos keytab resolving returned error %d"
-msgstr ""
+msgstr "Kerberos keytab解析傳回錯誤%d"
 
 #: libpq/auth.c:224
 #, c-format
 msgid "Kerberos sname_to_principal(\"%s\") returned error %d"
-msgstr ""
+msgstr "Kerberos sname_to_principal(\"%s\")傳回錯誤%d"
 
 #: libpq/auth.c:269
 #, c-format
 msgid "Kerberos recvauth returned error %d"
-msgstr ""
+msgstr "Kerberos recvauth傳回錯誤%d"
 
 #: libpq/auth.c:294
 #, c-format
 msgid "Kerberos unparse_name returned error %d"
-msgstr ""
+msgstr "Kerberos unparse_name傳回錯誤%d"
 
 #: libpq/auth.c:327
 msgid "Kerberos 5 not implemented on this server"
-msgstr ""
+msgstr "這個伺服器並未實作 Kerberos 5"
 
 #: libpq/auth.c:394
 #, c-format
 msgid "%s authentication failed for user \"%s\""
-msgstr ""
+msgstr "%s驗證失敗，使用者\"%s\""
 
 #: libpq/auth.c:418
 msgid "missing or erroneous pg_hba.conf file"
-msgstr ""
+msgstr "找不到pg_hba.conf或內容不正確"
 
 #: libpq/auth.c:419
 msgid "See server log for details."
-msgstr ""
+msgstr "查看伺服器記錄檔以獲得詳細資料。"
 
 #: libpq/auth.c:445
 #, c-format
@@ -4670,11 +4669,11 @@ msgstr ""
 
 #: libpq/auth.c:447
 msgid "SSL on"
-msgstr ""
+msgstr "SSL 開啟"
 
 #: libpq/auth.c:447
 msgid "SSL off"
-msgstr ""
+msgstr "SSL 關閉"
 
 #: libpq/auth.c:451
 #, c-format
@@ -4683,7 +4682,7 @@ msgstr ""
 
 #: libpq/auth.c:463
 msgid "Kerberos 4 only supports IPv4 connections"
-msgstr ""
+msgstr "Kerberos 4 只支援 IPv4 連線"
 
 #: libpq/auth.c:494
 #, c-format
@@ -4727,7 +4726,7 @@ msgstr "pam_authenticate失敗：%s"
 #: libpq/auth.c:722
 #, c-format
 msgid "pam_acct_mgmt failed: %s"
-msgstr ""
+msgstr "pam_acct_mgmt失敗：%s"
 
 #: libpq/auth.c:733
 #, c-format
@@ -4741,34 +4740,34 @@ msgstr ""
 
 #: libpq/auth.c:799
 msgid "invalid password packet size"
-msgstr ""
+msgstr "無效的密碼封包大小"
 
 #: libpq/auth.c:803
 msgid "received password packet"
-msgstr ""
+msgstr "已接收密碼封包"
 
 #: libpq/be-secure.c:274
 #: libpq/be-secure.c:359
 #, c-format
 msgid "SSL SYSCALL error: %m"
-msgstr ""
+msgstr "SSL SYSCALL 錯誤: %m"
 
 #: libpq/be-secure.c:279
 #: libpq/be-secure.c:364
 msgid "SSL SYSCALL error: EOF detected"
-msgstr ""
+msgstr "SSL SYSCALL 錯誤: 偵測到 EOF"
 
 #: libpq/be-secure.c:287
 #: libpq/be-secure.c:372
 #, c-format
 msgid "SSL error: %s"
-msgstr ""
+msgstr "SSL 錯誤: %s"
 
 #: libpq/be-secure.c:296
 #: libpq/be-secure.c:381
 #, c-format
 msgid "unrecognized SSL error code %d"
-msgstr ""
+msgstr "無法識別的 SSL 錯誤碼 %d"
 
 #: libpq/be-secure.c:327
 #: libpq/be-secure.c:331
@@ -4890,22 +4889,22 @@ msgstr ""
 
 #: libpq/hba.c:1151
 msgid "cannot use Ident authentication without usermap field"
-msgstr ""
+msgstr "無法使用Ident驗證，沒有usermap欄位"
 
 #: libpq/hba.c:1206
 #, c-format
 msgid "could not open Ident usermap file \"%s\": %m"
-msgstr ""
+msgstr "無法開啟Ident usermap檔\"%s\"：%m"
 
 #: libpq/hba.c:1383
 #, c-format
 msgid "could not create socket for Ident connection: %m"
-msgstr ""
+msgstr "無法為Ident連線建立socket：%m"
 
 #: libpq/hba.c:1399
 #, c-format
 msgid "could not bind to local address \"%s\": %m"
-msgstr ""
+msgstr "無法bind至local位址\"%s\"：%m"
 
 #: libpq/hba.c:1411
 #, c-format
@@ -4939,7 +4938,7 @@ msgstr ""
 #: libpq/hba.c:1601
 #, c-format
 msgid "local user with ID %d does not exist"
-msgstr ""
+msgstr "本機使用者 ID %d 的使用者並不存在"
 
 #: libpq/hba.c:1613
 msgid "Ident authentication is not supported on local connections on this platform"
@@ -4962,20 +4961,20 @@ msgstr ""
 
 #: libpq/pqcomm.c:286
 msgid "IPv4"
-msgstr ""
+msgstr "IPv4"
 
 #: libpq/pqcomm.c:290
 msgid "IPv6"
-msgstr ""
+msgstr "IPv6"
 
 #: libpq/pqcomm.c:295
 msgid "Unix"
-msgstr ""
+msgstr "Unix"
 
 #: libpq/pqcomm.c:300
 #, c-format
 msgid "unrecognized address family %d"
-msgstr ""
+msgstr "無法識別的address family %d"
 
 #  translator: %s is IPv4, IPv6, or Unix
 #. translator: %s is IPv4, IPv6, or Unix
@@ -4994,11 +4993,11 @@ msgstr "setsockopt(SO_REUSEADDR)失敗：%m"
 msgid "setsockopt(IPV6_V6ONLY) failed: %m"
 msgstr "setsockopt(IPV6_V6ONLY)失敗：%m"
 
-#. translator: %s is IPv4, IPv6, or Unix
+#  translator: %s is IPv4, IPv6, or Unix
 #: libpq/pqcomm.c:356
 #, c-format
 msgid "could not bind %s socket: %m"
-msgstr ""
+msgstr "無法bind %s socket：%m"
 
 #: libpq/pqcomm.c:359
 #, c-format
@@ -5010,11 +5009,11 @@ msgstr ""
 msgid "Is another postmaster already running on port %d? If not, wait a few seconds and retry."
 msgstr ""
 
-#. translator: %s is IPv4, IPv6, or Unix
+#  translator: %s is IPv4, IPv6, or Unix
 #: libpq/pqcomm.c:396
 #, c-format
 msgid "could not listen on %s socket: %m"
-msgstr ""
+msgstr "無法傾聽%s socket：%m"
 
 #: libpq/pqcomm.c:486
 #, c-format
@@ -5024,17 +5023,17 @@ msgstr ""
 #: libpq/pqcomm.c:497
 #, c-format
 msgid "could not set permissions of file \"%s\": %m"
-msgstr ""
+msgstr "無法設定檔案 \"%s\" 的權限: %m"
 
 #: libpq/pqcomm.c:527
 #, c-format
 msgid "could not accept new connection: %m"
-msgstr ""
+msgstr "無法接受新連線: %m"
 
 #: libpq/pqcomm.c:679
 #, c-format
 msgid "could not receive data from client: %m"
-msgstr ""
+msgstr "無法由客戶端接收資料: %m"
 
 #: libpq/pqcomm.c:842
 msgid "unexpected EOF within message length word"
@@ -5120,17 +5119,17 @@ msgstr "%s：不合法的effective UID：%d\n"
 #: main/main.c:314
 #, c-format
 msgid "%s: could not determine user name (GetUserName failed)\n"
-msgstr ""
+msgstr "%s: 無法判斷使用者名稱 (GetUserName 失敗)\n"
 
 #: nodes/params.c:112
 #, c-format
 msgid "no value found for parameter \"%s\""
-msgstr ""
+msgstr "未發現參數 \"%s\" 的值"
 
 #: nodes/params.c:117
 #, c-format
 msgid "no value found for parameter %d"
-msgstr ""
+msgstr "未發現參數 %d 的值"
 
 #: optimizer/path/allpaths.c:224
 msgid "SELECT FOR UPDATE is not supported for inheritance queries"
@@ -5164,7 +5163,7 @@ msgstr ""
 
 #: optimizer/plan/planner.c:681
 msgid "SELECT FOR UPDATE is not allowed in subqueries"
-msgstr ""
+msgstr "子查詢不能使用SELECT FOR UPDATE"
 
 #: optimizer/util/clauses.c:2250
 #, c-format
@@ -5179,11 +5178,11 @@ msgstr ""
 #: gram.y:5128
 #: parser/parse_clause.c:420
 msgid "subquery in FROM must have an alias"
-msgstr ""
+msgstr "FROM中的子查詢要有別名"
 
 #: parser/parse_clause.c:443
 msgid "subquery in FROM may not have SELECT INTO"
-msgstr ""
+msgstr "FROM中的子查詢不能有SELECT INTO"
 
 #: parser/parse_clause.c:465
 msgid "subquery in FROM may not refer to other relations of same query level"
@@ -5239,19 +5238,19 @@ msgstr ""
 msgid "argument of %s must not contain aggregates"
 msgstr ""
 
-#. translator: %s is name of a SQL construct, eg LIMIT
+#  translator: %s is name of a SQL construct, eg LIMIT
 #: parser/parse_clause.c:1060
 #, c-format
 msgid "argument of %s must not contain subqueries"
 msgstr ""
 
-#. translator: first %s is name of a SQL construct, eg ORDER BY
+#  translator: first %s is name of a SQL construct, eg ORDER BY
 #: parser/parse_clause.c:1168
 #, c-format
 msgid "%s \"%s\" is ambiguous"
 msgstr ""
 
-#. translator: %s is name of a SQL construct, eg ORDER BY
+#  translator: %s is name of a SQL construct, eg ORDER BY
 #: parser/parse_clause.c:1190
 #, c-format
 msgid "non-integer constant in %s"
@@ -5306,12 +5305,12 @@ msgstr ""
 #: parser/analyze.c:1310
 #, c-format
 msgid "column \"%s\" appears twice in primary key constraint"
-msgstr ""
+msgstr "欄位\"%s\"在主鍵constraint出現兩次"
 
 #: parser/analyze.c:1315
 #, c-format
 msgid "column \"%s\" appears twice in unique constraint"
-msgstr ""
+msgstr "欄位\"%s\"在unique constraint出現兩次"
 
 #: parser/analyze.c:1498
 msgid "index expression may not return a set"
@@ -5386,7 +5385,7 @@ msgstr ""
 #: parser/analyze.c:2652
 #, c-format
 msgid "Expected %d parameters but got %d."
-msgstr ""
+msgstr "預期%d個參數，但是收到%d個。"
 
 #: parser/analyze.c:2667
 msgid "cannot use subquery in EXECUTE parameter"
@@ -5474,7 +5473,7 @@ msgstr ""
 #: parser/parse_expr.c:122
 #, c-format
 msgid "there is no parameter $%d"
-msgstr ""
+msgstr "並沒有參數 $%d"
 
 #: parser/analyze.c:3133
 #: tcop/postgres.c:1194
@@ -5936,19 +5935,19 @@ msgstr ""
 
 #: scan.l:312
 msgid "unterminated /* comment"
-msgstr ""
+msgstr "未結束的 /* 註解"
 
 #: scan.l:339
 msgid "unterminated bit string literal"
-msgstr ""
+msgstr "未結束的位元字串實量"
 
 #: scan.l:358
 msgid "unterminated hexadecimal string literal"
-msgstr ""
+msgstr "未結束的十六進位字串實量"
 
 #: scan.l:407
 msgid "unterminated quoted string"
-msgstr ""
+msgstr "未結束的引號字串"
 
 #: scan.l:441
 msgid "unterminated dollar-quoted string"
@@ -6186,7 +6185,7 @@ msgstr ""
 #: gram.y:8199
 #: y.tab.c:18948
 msgid "syntax error"
-msgstr ""
+msgstr "語法錯誤"
 
 #: y.tab.c:19062
 msgid "parser stack overflow"
@@ -6401,7 +6400,7 @@ msgstr ""
 
 #: postmaster/postmaster.c:969
 msgid "Permissions should be u=rwx (0700)."
-msgstr ""
+msgstr "權限必須是 u=rwx (0700)。"
 
 #: postmaster/postmaster.c:980
 #, c-format
@@ -6587,15 +6586,15 @@ msgstr ""
 
 #: postmaster/postmaster.c:1543
 msgid "the database system is starting up"
-msgstr ""
+msgstr "資料庫系統正在啟動"
 
 #: postmaster/postmaster.c:1548
 msgid "the database system is shutting down"
-msgstr ""
+msgstr "資料庫系統正在關閉"
 
 #: postmaster/postmaster.c:1553
 msgid "the database system is in recovery mode"
-msgstr ""
+msgstr "資料庫系統正在復原模式"
 
 #: postmaster/postmaster.c:1558
 #: storage/ipc/sinval.c:106
@@ -6634,7 +6633,7 @@ msgstr ""
 #: postmaster/postmaster.c:2028
 #: postmaster/postmaster.c:2184
 msgid "background writer process"
-msgstr ""
+msgstr "background writer 行程"
 
 #: postmaster/postmaster.c:2043
 msgid "archiver process"
@@ -6646,7 +6645,7 @@ msgstr "統計資料收集器行程"
 
 #: postmaster/postmaster.c:2083
 msgid "all server processes terminated; reinitializing"
-msgstr ""
+msgstr "所有伺服器行程已中止; 重新初始化"
 
 #: postmaster/postmaster.c:2129
 #: postmaster/postmaster.c:2185
@@ -6655,7 +6654,7 @@ msgstr "伺服器行程"
 
 #: postmaster/postmaster.c:2188
 msgid "terminating any other active server processes"
-msgstr ""
+msgstr "中止所有其他運行中的伺服器行程"
 
 #: postmaster/postmaster.c:2283
 #, c-format
@@ -6729,7 +6728,7 @@ msgstr ""
 #: postmaster/pgstat.c:257
 #, c-format
 msgid "could not resolve \"localhost\": %s"
-msgstr ""
+msgstr "無法解析 \"localhost\": %s"
 
 #: postmaster/pgstat.c:284
 #, c-format
@@ -6760,7 +6759,7 @@ msgstr ""
 #: postmaster/pgstat.c:1608
 #, c-format
 msgid "select() failed in statistics collector: %m"
-msgstr ""
+msgstr "在統計資料收集器中 select() 失敗: %m"
 
 #: postmaster/pgstat.c:380
 msgid "test message did not get through on socket for statistics collector"
@@ -6782,7 +6781,7 @@ msgstr ""
 #: postmaster/pgstat.c:431
 #, c-format
 msgid "could not set statistics collector socket to nonblocking mode: %m"
-msgstr ""
+msgstr "無法將統計資料收集器 socket 設為非阻擋模式"
 
 #: postmaster/pgstat.c:569
 msgid "statistics collector startup skipped"
@@ -6791,16 +6790,16 @@ msgstr "跳過統計資料收集器啟動程序"
 #: postmaster/pgstat.c:603
 #, c-format
 msgid "could not fork statistics buffer: %m"
-msgstr ""
+msgstr "無法 fork 統計資料緩衝區: %m"
 
 #: postmaster/pgstat.c:961
 msgid "must be superuser to reset statistics counters"
-msgstr ""
+msgstr "只有管理者能重設統計資料計數器"
 
 #: postmaster/pgstat.c:1409
 #, c-format
 msgid "could not create pipe for statistics buffer: %m"
-msgstr ""
+msgstr "無法為統計資料緩衝區建立管道"
 
 #: postmaster/pgstat.c:1422
 #, c-format
@@ -6820,35 +6819,35 @@ msgstr "無法fork統計資料收集器：%m"
 #: postmaster/pgstat.c:2864
 #: postmaster/pgstat.c:3046
 msgid "out of memory in statistics collector --- abort"
-msgstr ""
+msgstr "統計資料收集器記憶體用盡 --- 中止"
 
 #: postmaster/pgstat.c:1650
 #, c-format
 msgid "could not read from statistics collector pipe: %m"
-msgstr ""
+msgstr "無法由統計資料收集器管道讀取資料: %m"
 
 #: postmaster/pgstat.c:1672
 msgid "invalid statistics message length"
-msgstr ""
+msgstr "無效的統計資料訊息長度"
 
 #: postmaster/pgstat.c:1819
 #, c-format
 msgid "could not set statistics collector pipe to nonblocking mode: %m"
-msgstr ""
+msgstr "無法將統計資料收集器管道設為非阻擋模式: %m"
 
 #: postmaster/pgstat.c:1859
 msgid "statistics buffer is full"
-msgstr ""
+msgstr "統計資料緩衝區已滿"
 
 #: postmaster/pgstat.c:1890
 #, c-format
 msgid "select() failed in statistics buffer: %m"
-msgstr ""
+msgstr "在統計資料緩衝區中 select() 失敗: %m"
 
 #: postmaster/pgstat.c:1906
 #, c-format
 msgid "could not read statistics message: %m"
-msgstr ""
+msgstr "無法讀取統計資料訊息: %m"
 
 #: postmaster/pgstat.c:1971
 #, c-format
@@ -6863,7 +6862,7 @@ msgstr "不合法的伺服器行程ID %d"
 #: postmaster/pgstat.c:2232
 #, c-format
 msgid "could not open temporary statistics file \"%s\": %m"
-msgstr ""
+msgstr "無法開啟統計資料暫存檔 \"%s\": %m"
 
 #: postmaster/pgstat.c:2259
 msgid "database hash table corrupted during cleanup --- abort"
@@ -6877,12 +6876,12 @@ msgstr ""
 #: postmaster/pgstat.c:2345
 #, c-format
 msgid "could not close temporary statistics file \"%s\": %m"
-msgstr ""
+msgstr "無法關閉統計資料暫存檔 \"%s\": %m"
 
 #: postmaster/pgstat.c:2354
 #, c-format
 msgid "could not rename temporary statistics file \"%s\" to \"%s\": %m"
-msgstr ""
+msgstr "無法將統計資料暫存檔由 \"%s\" 更名為 \"%s\": %m"
 
 #: postmaster/pgstat.c:2376
 msgid "dead-server-process hash table corrupted during cleanup --- abort"
@@ -8416,30 +8415,27 @@ msgid "text too long to convert to MAC address"
 msgstr ""
 
 #: utils/adt/misc.c:80
-#, fuzzy
 msgid "must be superuser to signal other server processes"
-msgstr "只有管理者能建立使用者"
+msgstr "只有管理者能傳送信號至其他伺服器行程"
 
 #: utils/adt/misc.c:89
-#, fuzzy, c-format
+#, c-format
 msgid "PID %d is not a PostgreSQL server process"
-msgstr ""
-"%s 是PostgreSQL伺服器。\n"
-"\n"
+msgstr "PID %d 不是 PostgreSQL 伺服器行程"
 
 #: utils/adt/misc.c:97
-#, fuzzy, c-format
+#, c-format
 msgid "could not send signal to process %d: %m"
-msgstr "無法傳送資料給用戶端：%m"
+msgstr "無法傳送信號至行程 %d: %m"
 
 #: utils/adt/misc.c:155
 msgid "global tablespace never has databases"
 msgstr ""
 
 #: utils/adt/misc.c:176
-#, fuzzy, c-format
+#, c-format
 msgid "%u is not a tablespace oid"
-msgstr "\"%s\"不是資料表或索引"
+msgstr "%u 不是 tablespace oid"
 
 #: utils/adt/nabstime.c:244
 #, c-format
@@ -9610,7 +9606,7 @@ msgstr ""
 
 #: utils/misc/guc.c:424
 msgid "Shows whether the current user is a superuser."
-msgstr ""
+msgstr "顯示目前的使用者是否為管理者。"
 
 #: utils/misc/guc.c:433
 msgid "Enables SSL connections."
@@ -9634,15 +9630,15 @@ msgstr ""
 
 #: utils/misc/guc.c:465
 msgid "Runs the server silently."
-msgstr ""
+msgstr "靜默地運行伺服器。"
 
 #: utils/misc/guc.c:466
 msgid "If this parameter is set, the server will automatically run in the background and any controlling terminals are dissociated."
-msgstr ""
+msgstr "如果這個參數被設置，伺服器將自動在背景運行並和任何控制的終端機分離。"
 
 #: utils/misc/guc.c:474
 msgid "Logs each successful connection."
-msgstr ""
+msgstr "記錄每個成功的連線。"
 
 #: utils/misc/guc.c:482
 msgid "Logs end of a session, including duration"
@@ -9666,7 +9662,7 @@ msgstr ""
 #: utils/misc/guc.c:1064
 #: utils/misc/guc.c:1124
 msgid "no description available"
-msgstr ""
+msgstr "沒有敘述可用"
 
 #: utils/misc/guc.c:513
 msgid "Logs the duration each completed SQL statement."
@@ -9738,7 +9734,7 @@ msgstr ""
 
 #: utils/misc/guc.c:697
 msgid "Logs the host name in the connection logs."
-msgstr ""
+msgstr "在連線記錄裡記錄主機名稱。"
 
 #: utils/misc/guc.c:698
 msgid "By default, connection logs only show the IP address of the connecting host. If you want them to show the host name you can turn this on, but depending on your host name resolution setup it might impose a non-negligible performance penalty."
@@ -9758,7 +9754,7 @@ msgstr ""
 
 #: utils/misc/guc.c:725
 msgid "Encrypt passwords."
-msgstr ""
+msgstr "加密密碼。"
 
 #: utils/misc/guc.c:726
 msgid "When a password is specified in CREATE USER or ALTER USER without writing either ENCRYPTED or UNENCRYPTED, this parameter determines whether the password is to be encrypted."
@@ -9778,7 +9774,7 @@ msgstr ""
 
 #: utils/misc/guc.c:756
 msgid "This parameter doesn't do anything."
-msgstr ""
+msgstr "這個參數不做任何事。"
 
 #: utils/misc/guc.c:757
 msgid "It's just here so that we won't choke on SET AUTOCOMMIT TO ON from 7.3-vintage clients."
@@ -9863,7 +9859,7 @@ msgstr ""
 
 #: utils/misc/guc.c:922
 msgid "Sets the maximum number of concurrent connections."
-msgstr ""
+msgstr "設定最大同時連線數。"
 
 #: utils/misc/guc.c:931
 msgid "Sets the number of connection slots reserved for superusers."
@@ -9871,7 +9867,7 @@ msgstr ""
 
 #: utils/misc/guc.c:940
 msgid "Sets the number of shared memory buffers used by the server."
-msgstr ""
+msgstr "設定供伺服器使用的共享記憶體緩衝區數。"
 
 #: utils/misc/guc.c:949
 msgid "Sets the TCP port the server listens on."
@@ -9895,15 +9891,15 @@ msgstr ""
 
 #: utils/misc/guc.c:982
 msgid "Sets the maximum memory to be used for maintenance operations."
-msgstr ""
+msgstr "設定給維護性操作使用的最大記憶體量。"
 
 #: utils/misc/guc.c:983
 msgid "This includes operations such as VACUUM and CREATE INDEX."
-msgstr ""
+msgstr "這包括像 VACUUM 和 CREATE INDEX 的操作。"
 
 #: utils/misc/guc.c:991
 msgid "Sets the maximum stack depth, in kilobytes."
-msgstr ""
+msgstr "設定最大堆疊深度，以 kilobytes 為單位。"
 
 #: utils/misc/guc.c:1000
 msgid "Vacuum cost for a page found in the buffer cache."
@@ -9927,7 +9923,7 @@ msgstr ""
 
 #: utils/misc/guc.c:1045
 msgid "Sets the maximum number of simultaneously open files for each server process."
-msgstr ""
+msgstr "為每個伺服器行程設定可同時開啟的最大檔案數。"
 
 #: utils/misc/guc.c:1075
 msgid "Sets the maximum allowed duration (in milliseconds) of any statement."
@@ -9935,7 +9931,7 @@ msgstr ""
 
 #: utils/misc/guc.c:1076
 msgid "A value of 0 turns off the timeout."
-msgstr ""
+msgstr "0 值關閉逾時機制。"
 
 #: utils/misc/guc.c:1084
 msgid "Sets the maximum number of tables and indexes for which free space is tracked."
@@ -10093,7 +10089,7 @@ msgstr "設定送給用戶端的訊息等級。"
 
 #: utils/misc/guc.c:1399
 msgid "Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, LOG, NOTICE, WARNING, and ERROR. Each level includes all the levels that follow it. The later the level, the fewer messages are sent."
-msgstr ""
+msgstr "有效值為 DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, LOG, NOTICE, WARNING, 和 ERROR。每個等級都包含位於它之後的所有等級。越後面的等級送出越少的訊息。"
 
 #: utils/misc/guc.c:1410
 msgid "Sets the message levels that are logged."
@@ -10101,7 +10097,7 @@ msgstr "設定記茄的訊息等級。"
 
 #: utils/misc/guc.c:1411
 msgid "Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, INFO, NOTICE, WARNING, ERROR, LOG, FATAL, and PANIC. Each level includes all the levels that follow it."
-msgstr ""
+msgstr "有效值為 DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, INFO, NOTICE, WARNING, ERROR, LOG, FATAL, 和 PANIC。每個等級都包含位於它之後的所有等級。"
 
 #: utils/misc/guc.c:1421
 msgid "Sets the verbosity of logged messages."
@@ -10109,7 +10105,7 @@ msgstr "設定記錄訊息的詳細程度。"
 
 #: utils/misc/guc.c:1422
 msgid "Valid values are \"terse\", \"default\", and \"verbose\"."
-msgstr ""
+msgstr "有效值為 \"terse\", \"default\", 和 \"verbose\"。"
 
 #: utils/misc/guc.c:1429
 msgid "Sets the type of statements logged."
@@ -10217,11 +10213,11 @@ msgstr "顯示伺服器版本。"
 
 #: utils/misc/guc.c:1619
 msgid "Sets the session user name."
-msgstr ""
+msgstr "設定 session 使用者名稱。"
 
 #: utils/misc/guc.c:1629
 msgid "Sets the destination for server log output."
-msgstr ""
+msgstr "設定伺服器記錄輸出目的地。"
 
 #: utils/misc/guc.c:1630
 msgid "Valid values are combinations of stderr, syslog and eventlog, depending on platform."
@@ -10229,7 +10225,7 @@ msgstr ""
 
 #: utils/misc/guc.c:1641
 msgid "Sets the syslog \"facility\" to be used when syslog enabled."
-msgstr ""
+msgstr "設定當系統記錄啟用時的被使用的系統記錄 \"facility\"。"
 
 #: utils/misc/guc.c:1642
 msgid "Valid values are LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7."
@@ -10237,7 +10233,7 @@ msgstr "合法的值有LOCAL0、LOCAL1、LOCAL2、LOCAL3、LOCAL4、LOCAL5、LOC
 
 #: utils/misc/guc.c:1650
 msgid "Sets the program name used to identify PostgreSQL messages in syslog."
-msgstr ""
+msgstr "設定用來在系統記錄中識別 PostgreSQL 訊息的程式名稱。"
 
 #: utils/misc/guc.c:1661
 msgid "Sets the time zone for displaying and interpreting time stamps."
@@ -10349,7 +10345,7 @@ msgstr "參數\"%s\"要求整數值"
 #: utils/misc/guc.c:3269
 #, c-format
 msgid "%d is outside the valid range for parameter \"%s\" (%d .. %d)"
-msgstr ""
+msgstr "%d 超出參數 \"%s\" 的有效範圍 (%d .. %d)"
 
 #: utils/misc/guc.c:3287
 #: utils/misc/guc.c:3396
@@ -10364,7 +10360,7 @@ msgstr "參數\"%s\"要求numeric值"
 #: utils/misc/guc.c:3382
 #, c-format
 msgid "%g is outside the valid range for parameter \"%s\" (%g .. %g)"
-msgstr ""
+msgstr "%g 超出參數 \"%s\" 的有效範圍 (%g .. %g)"
 
 #: utils/misc/guc.c:3417
 #, c-format
@@ -10406,7 +10402,7 @@ msgstr ""
 #: utils/misc/guc.c:5094
 #, c-format
 msgid "unrecognised \"log_destination\" key word: \"%s\""
-msgstr ""
+msgstr "無法識別的 \"log_destination\" 關鍵字: \"%s\""
 
 #: utils/misc/guc.c:5327
 msgid "SET AUTOCOMMIT TO OFF is no longer supported"
@@ -10419,7 +10415,7 @@ msgstr ""
 
 #: utils/misc/guc.c:5406
 msgid "cannot enable parameter when \"log_statement_stats\" is true."
-msgstr ""
+msgstr "當 \"log_statement_stats\" 為真時無法啟用參數"
 
 #: utils/misc/guc.c:5426
 msgid ""
@@ -10431,7 +10427,7 @@ msgstr ""
 
 #: utils/misc/guc.c:5445
 msgid "cannot set transaction read-write mode inside a read-only transaction"
-msgstr ""
+msgstr "無法在唯讀交易中設定交易讀寫模式"
 
 #: guc-file.l:269
 #, c-format

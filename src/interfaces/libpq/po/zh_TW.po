@@ -3,9 +3,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-07-29 01:12-0300\n"
-"PO-Revision-Date: 2004-08-01 13:21+0800\n"
+"Project-Id-Version: PostgreSQL 7.5\n"
+"POT-Creation-Date: 2004-08-04 02:53-0300\n"
+"PO-Revision-Date: 2004-08-18 12:15+0800\n"
 "Last-Translator: Zhenbang Wei <forth@zbwei.net>\n"
 "Language-Team: Zhenbang Wei <forth@zbwei.net>\n"
 "MIME-Version: 1.0\n"
@@ -386,7 +386,7 @@ msgstr "無法向伺服器傳送資料: %s\n"
 
 #: fe-misc.c:922
 msgid "timeout expired\n"
-msgstr "發生愈時\n"
+msgstr "發生逾時\n"
 
 #: fe-misc.c:967
 msgid "socket not open\n"

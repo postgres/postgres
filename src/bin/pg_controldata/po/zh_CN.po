@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-07-22 09:35+0000\n"
+"POT-Creation-Date: 2004-08-31 08:57+0000\n"
 "PO-Revision-Date: 2004-01-10 13:45+0800\n"
 "Last-Translator: Bao Wei <weibao@qmail.zhengmai.net.cn>\n"
 "Language-Team: Weiping He <laser@zhengmai.com.cn>\n"
@@ -116,130 +116,130 @@ msgstr ""
 "下面的结果是不可靠的.\n"
 "\n"
 
-#: pg_controldata.c:153
+#: pg_controldata.c:154
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr "pg_control 版本:                      %u\n"
 
-#: pg_controldata.c:154
+#: pg_controldata.c:155
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "Catalog 版本:                         %u\n"
 
-#: pg_controldata.c:155
+#: pg_controldata.c:156
 #, c-format
 msgid "Database system identifier:           %s\n"
 msgstr "数据库系统标识符:                     %s\n"
 
-#: pg_controldata.c:156
+#: pg_controldata.c:157
 #, c-format
 msgid "Database cluster state:               %s\n"
 msgstr "数据库簇状态:                         %s\n"
 
-#: pg_controldata.c:157
+#: pg_controldata.c:158
 #, c-format
 msgid "pg_control last modified:             %s\n"
 msgstr "pg_control 最后修改:                  %s\n"
 
-#: pg_controldata.c:158
+#: pg_controldata.c:159
 #, c-format
 msgid "Current log file ID:                  %u\n"
 msgstr "当前日志文件ID:                       %u\n"
 
-#: pg_controldata.c:159
+#: pg_controldata.c:160
 #, c-format
 msgid "Next log file segment:                %u\n"
 msgstr "下一个日志文件段:                     %u\n"
 
-#: pg_controldata.c:160
+#: pg_controldata.c:161
 #, c-format
 msgid "Latest checkpoint location:           %X/%X\n"
 msgstr "最新检查点位置:                       %X/%X\n"
 
-#: pg_controldata.c:162
+#: pg_controldata.c:163
 #, c-format
 msgid "Prior checkpoint location:            %X/%X\n"
 msgstr "优先检查点位置:                       %X/%X\n"
 
-#: pg_controldata.c:164
+#: pg_controldata.c:165
 #, c-format
 msgid "Latest checkpoint's REDO location:    %X/%X\n"
 msgstr "最新检查点的 REDO 位置:               %X/%X\n"
 
-#: pg_controldata.c:166
+#: pg_controldata.c:167
 #, c-format
 msgid "Latest checkpoint's UNDO location:    %X/%X\n"
 msgstr "最新检查点的 UNDO 位置:               %X/%X\n"
 
-#: pg_controldata.c:168
+#: pg_controldata.c:169
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "最新检查点的 TimeLineID:              %u\n"
 
-#: pg_controldata.c:169
+#: pg_controldata.c:170
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u\n"
 msgstr "最新检查点的 NextXID:                 %u\n"
 
-#: pg_controldata.c:170
+#: pg_controldata.c:171
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "最新检查点的 NextOID:                 %u\n"
 
-#: pg_controldata.c:171
+#: pg_controldata.c:172
 #, c-format
 msgid "Time of latest checkpoint:            %s\n"
 msgstr "最新检查点的时间:                     %s\n"
 
-#: pg_controldata.c:172
+#: pg_controldata.c:173
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "数据库块大小:                         %u\n"
 
-#: pg_controldata.c:173
+#: pg_controldata.c:174
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "大关系的每段块数:                     %u\n"
 
-#: pg_controldata.c:174
+#: pg_controldata.c:175
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "每一个 WAL 段字节数:                  %u\n"
 
-#: pg_controldata.c:175
+#: pg_controldata.c:176
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "标识符的最大长度:                     %u\n"
 
-#: pg_controldata.c:176
+#: pg_controldata.c:177
 #, c-format
 msgid "Maximum number of function arguments: %u\n"
 msgstr "函数参数的最大个数:                   %u\n"
 
-#: pg_controldata.c:177
+#: pg_controldata.c:178
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "日期/时间 类型存储:                   %s\n"
 
-#: pg_controldata.c:178
+#: pg_controldata.c:179
 msgid "64-bit integers"
 msgstr "64位整数"
 
-#: pg_controldata.c:178
+#: pg_controldata.c:179
 msgid "floating-point numbers"
 msgstr "浮点数"
 
-#: pg_controldata.c:179
+#: pg_controldata.c:180
 #, c-format
 msgid "Maximum length of locale name:        %u\n"
 msgstr "本地名字的最大长度:                   %u\n"
 
-#: pg_controldata.c:180
+#: pg_controldata.c:181
 #, c-format
 msgid "LC_COLLATE:                           %s\n"
 msgstr "LC_COLLATE:                           %s\n"
 
-#: pg_controldata.c:181
+#: pg_controldata.c:182
 #, c-format
 msgid "LC_CTYPE:                             %s\n"
 msgstr "LC_CTYPE:                             %s\n"

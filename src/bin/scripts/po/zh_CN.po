@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-06-26 10:44+0000\n"
+"POT-Creation-Date: 2004-08-31 08:56+0000\n"
 "PO-Revision-Date: 2003-09-15 21:03+0000\n"
 "Last-Translator: Bao Wei <weibao@qmail.zhengmai.net.cn>\n"
 "Language-Team: Weiping He <laser@zhengmai.com.cn>\n"
@@ -17,13 +17,13 @@ msgstr ""
 #: createdb.c:102 createdb.c:121 createlang.c:97 createlang.c:118
 #: createlang.c:160 createuser.c:117 createuser.c:132 dropdb.c:84 dropdb.c:93
 #: dropdb.c:101 droplang.c:94 droplang.c:115 droplang.c:157 dropuser.c:84
-#: dropuser.c:99 clusterdb.c:97 clusterdb.c:112 vacuumdb.c:114 vacuumdb.c:129
+#: dropuser.c:99 clusterdb.c:95 clusterdb.c:110 vacuumdb.c:112 vacuumdb.c:127
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "请用 \"%s --help\" 获取更多的信息.\n"
 
 #: createdb.c:119 createlang.c:116 createuser.c:130 dropdb.c:99 droplang.c:113
-#: dropuser.c:97 clusterdb.c:110 vacuumdb.c:127
+#: dropuser.c:97 clusterdb.c:108 vacuumdb.c:125
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: 太多的命令行参数 (第一个是 \"%s\")\n"
@@ -53,7 +53,7 @@ msgstr ""
 "\n"
 
 #: createdb.c:218 createlang.c:299 createuser.c:240 dropdb.c:147
-#: droplang.c:280 dropuser.c:147 clusterdb.c:236 vacuumdb.c:262
+#: droplang.c:280 dropuser.c:147 clusterdb.c:234 vacuumdb.c:260
 #, c-format
 msgid "Usage:\n"
 msgstr "使用方法:\n"
@@ -64,7 +64,7 @@ msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
 msgstr "  %s [选项]... [数据库名称] [描述]\n"
 
 #: createdb.c:220 createlang.c:301 createuser.c:242 dropdb.c:149
-#: droplang.c:282 dropuser.c:149 clusterdb.c:238 vacuumdb.c:264
+#: droplang.c:282 dropuser.c:149 clusterdb.c:236 vacuumdb.c:262
 #, c-format
 msgid ""
 "\n"
@@ -114,7 +114,7 @@ msgstr "  --help                       显示此帮助信息, 然后退出\n"
 msgid "  --version                    output version information, then exit\n"
 msgstr "  --versoin                    输出版本信息, 然后退出\n"
 
-#: createdb.c:229 createuser.c:255 clusterdb.c:246 vacuumdb.c:275
+#: createdb.c:229 createuser.c:255 clusterdb.c:244 vacuumdb.c:273
 #, c-format
 msgid ""
 "\n"
@@ -155,7 +155,7 @@ msgstr ""
 "默认情况下, 以当前用户的用户名创建数据库.\n"
 
 #: createdb.c:235 createlang.c:312 createuser.c:262 dropdb.c:159
-#: droplang.c:292 dropuser.c:159 clusterdb.c:252 vacuumdb.c:281
+#: droplang.c:292 dropuser.c:159 clusterdb.c:250 vacuumdb.c:279
 #, c-format
 msgid ""
 "\n"
@@ -232,7 +232,7 @@ msgid "  -d, --dbname=DBNAME       database to install language in\n"
 msgstr "  -d, --dbname=DBNAME       要安装语言的数据库\n"
 
 #: createlang.c:303 createuser.c:251 dropdb.c:150 droplang.c:284
-#: dropuser.c:150 clusterdb.c:242
+#: dropuser.c:150 clusterdb.c:240
 #, c-format
 msgid ""
 "  -e, --echo                show the commands being sent to the server\n"
@@ -251,35 +251,35 @@ msgid ""
 msgstr "  -L, --pglib=DIRECTORY     在 DIRECTORY 目录中查找语言翻译文件\n"
 
 #: createlang.c:306 createuser.c:256 dropdb.c:153 droplang.c:286
-#: dropuser.c:153 clusterdb.c:247 vacuumdb.c:276
+#: dropuser.c:153 clusterdb.c:245 vacuumdb.c:274
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAM        数据库服务器所在机器的主机名或套接字目录\n"
 
 #: createlang.c:307 createuser.c:257 dropdb.c:154 droplang.c:287
-#: dropuser.c:154 clusterdb.c:248 vacuumdb.c:277
+#: dropuser.c:154 clusterdb.c:246 vacuumdb.c:275
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PORT           数据库服务器端口号\n"
 
-#: createlang.c:308 dropdb.c:155 droplang.c:288 clusterdb.c:249 vacuumdb.c:278
+#: createlang.c:308 dropdb.c:155 droplang.c:288 clusterdb.c:247 vacuumdb.c:276
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=USERNAME   联接的用户名\n"
 
-#: createlang.c:309 dropdb.c:156 droplang.c:289 clusterdb.c:250 vacuumdb.c:279
+#: createlang.c:309 dropdb.c:156 droplang.c:289 clusterdb.c:248 vacuumdb.c:277
 #, c-format
 msgid "  -W, --password            prompt for password\n"
 msgstr "  -W, --password            提示输入口令\n"
 
 #: createlang.c:310 createuser.c:253 dropdb.c:157 droplang.c:290
-#: dropuser.c:157 clusterdb.c:244
+#: dropuser.c:157 clusterdb.c:242
 #, c-format
 msgid "  --help                    show this help, then exit\n"
 msgstr "  --help                    显示此帮助信息, 然后退出\n"
 
 #: createlang.c:311 createuser.c:254 dropdb.c:158 droplang.c:291
-#: dropuser.c:158 clusterdb.c:245
+#: dropuser.c:158 clusterdb.c:243
 #, c-format
 msgid "  --version                 output version information, then exit\n"
 msgstr "  --version                 输出版本信息, 然后退出\n"
@@ -373,7 +373,7 @@ msgstr "  -N, --unencrypted         口令不加密存储\n"
 msgid "  -i, --sysid=SYSID         select sysid for new user\n"
 msgstr "  -i, --sysid=SYSID         选择一个 sysid 给新用户\n"
 
-#: createuser.c:252 dropdb.c:152 dropuser.c:152 clusterdb.c:243
+#: createuser.c:252 dropdb.c:152 dropuser.c:152 clusterdb.c:241
 #, c-format
 msgid "  -q, --quiet               don't write any messages\n"
 msgstr "  -q, --quiet               不写任何信息\n"
@@ -498,32 +498,32 @@ msgid ""
 "  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
 msgstr "  -U, --username=USERNAME   联接用户 (不是要删除的用户名)\n"
 
-#: clusterdb.c:120
+#: clusterdb.c:118
 #, c-format
 msgid "%s: cannot cluster all databases and a specific one at the same time\n"
 msgstr "%s: 无法对所有数据库和一个指定的数据库同时建簇\n"
 
-#: clusterdb.c:126
+#: clusterdb.c:124
 #, c-format
 msgid "%s: cannot cluster a specific table in all databases\n"
 msgstr "%s: 无法在所有数据库中对一个指定的表进行建簇\n"
 
-#: clusterdb.c:182
+#: clusterdb.c:180
 #, c-format
 msgid "%s: clustering of table \"%s\" in database \"%s\" failed: %s"
 msgstr "%1$s: 在数据库 \"%3$s\" 中的表 \"%2$s\" 建簇失败: %4$s"
 
-#: clusterdb.c:185
+#: clusterdb.c:183
 #, c-format
 msgid "%s: clustering of database \"%s\" failed: %s"
 msgstr "%s: 数据库 \"%s\" 建簇失败: %s"
 
-#: clusterdb.c:221
+#: clusterdb.c:219
 #, c-format
 msgid "%s: clustering database \"%s\"\n"
 msgstr "%s: 对数据库 \"%s\" 进行建簇\n"
 
-#: clusterdb.c:235
+#: clusterdb.c:233
 #, c-format
 msgid ""
 "%s clusters all previously clustered tables in a database.\n"
@@ -532,27 +532,27 @@ msgstr ""
 "%s 对一个数据库中先前已经建过簇的表进行建簇.\n"
 "\n"
 
-#: clusterdb.c:237 vacuumdb.c:263
+#: clusterdb.c:235 vacuumdb.c:261
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [选项]... [数据库名]\n"
 
-#: clusterdb.c:239
+#: clusterdb.c:237
 #, c-format
 msgid "  -a, --all                 cluster all databases\n"
 msgstr "  -a, --all                 对所有数据库建簇\n"
 
-#: clusterdb.c:240
+#: clusterdb.c:238
 #, c-format
 msgid "  -d, --dbname=DBNAME       database to cluster\n"
 msgstr "  -d, --dbname=DBNAME       对数据库 DBNAME 建簇\n"
 
-#: clusterdb.c:241
+#: clusterdb.c:239
 #, c-format
 msgid "  -t, --table=TABLE         cluster specific table only\n"
 msgstr "  -t, --table=TABLE         只对指定的表 TABLE 建簇\n"
 
-#: clusterdb.c:251
+#: clusterdb.c:249
 #, c-format
 msgid ""
 "\n"
@@ -561,32 +561,32 @@ msgstr ""
 "\n"
 "阅读 SQL 命令 CLUSTER 的描述信息, 以便获得更详细的信息.\n"
 
-#: vacuumdb.c:137
+#: vacuumdb.c:135
 #, c-format
 msgid "%s: cannot vacuum all databases and a specific one at the same time\n"
 msgstr "%s: 无法对所有数据库和一个指定的数据库同时清理\n"
 
-#: vacuumdb.c:143
+#: vacuumdb.c:141
 #, c-format
 msgid "%s: cannot vacuum a specific table in all databases\n"
 msgstr "%s: 无法在所有数据库中对一个指定的表进行清理\n"
 
-#: vacuumdb.c:207
+#: vacuumdb.c:205
 #, c-format
 msgid "%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"
 msgstr "%1$s: 在数据库 \"%3$s\" 中的表 \"%2$s\" 清理失败: %4$s"
 
-#: vacuumdb.c:210
+#: vacuumdb.c:208
 #, c-format
 msgid "%s: vacuuming of database \"%s\" failed: %s"
 msgstr "%s: 数据库 \"%s\" 清理失败: %s"
 
-#: vacuumdb.c:247
+#: vacuumdb.c:245
 #, c-format
 msgid "%s: vacuuming database \"%s\"\n"
 msgstr "%s: 清理数据库 \"%s\"\n"
 
-#: vacuumdb.c:261
+#: vacuumdb.c:259
 #, c-format
 msgid ""
 "%s cleans and analyzes a PostgreSQL database.\n"
@@ -595,60 +595,60 @@ msgstr ""
 "%s 清理并且优化一个 PostgreSQL 数据库.\n"
 "\n"
 
-#: vacuumdb.c:265
+#: vacuumdb.c:263
 #, c-format
 msgid "  -a, --all                       vacuum all databases\n"
 msgstr "  -a, --all                       清理所有的数据库\n"
 
-#: vacuumdb.c:266
+#: vacuumdb.c:264
 #, c-format
 msgid "  -d, --dbname=DBNAME             database to vacuum\n"
 msgstr "  -d, --dbname=DBNAME             清理数据库 DBNAME\n"
 
-#: vacuumdb.c:267
+#: vacuumdb.c:265
 #, c-format
 msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"
 msgstr "  -t, --table='TABLE[(COLUMNS)]'  只清理指定的表 TABLE\n"
 
-#: vacuumdb.c:268
+#: vacuumdb.c:266
 #, c-format
 msgid "  -f, --full                      do full vacuuming\n"
 msgstr "  -f, --full                      完全清理\n"
 
-#: vacuumdb.c:269
+#: vacuumdb.c:267
 #, c-format
 msgid "  -z, --analyze                   update optimizer hints\n"
 msgstr "  -z, --anaylze                   更新优化器信息\n"
 
-#: vacuumdb.c:270
+#: vacuumdb.c:268
 #, c-format
 msgid ""
 "  -e, --echo                      show the commands being sent to the "
 "server\n"
 msgstr "  -e, --echo                      显示发送到服务端的命令\n"
 
-#: vacuumdb.c:271
+#: vacuumdb.c:269
 #, c-format
 msgid "  -q, --quiet                     don't write any messages\n"
 msgstr "  -q, --quiet                     不写任何信息\n"
 
-#: vacuumdb.c:272
+#: vacuumdb.c:270
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose                   写大量的输出\n"
 
-#: vacuumdb.c:273
+#: vacuumdb.c:271
 #, c-format
 msgid "  --help                          show this help, then exit\n"
 msgstr "  --help                          显示此帮助信息, 然后退出\n"
 
-#: vacuumdb.c:274
+#: vacuumdb.c:272
 #, c-format
 msgid ""
 "  --version                       output version information, then exit\n"
 msgstr "  --versoin                       输出版本信息, 然后退出\n"
 
-#: vacuumdb.c:280
+#: vacuumdb.c:278
 #, c-format
 msgid ""
 "\n"
