@@ -96,30 +96,28 @@ host="`echo $host | tr '[[A-Z]]' '[[a-z]]'`"
 if test -f "template/$host"
 then TEMPLATE="$host"
 else
-    # Next try for an exact match to a .similar entry.
-    # There shouldn't be multiple matches, but take the last if there are.
-    GUESS=`grep "^$host=" template/.similar | sed 's/^.*=//' | tail -1`
+    # Scan template/.similar for a rule that tells us which template to use.
+    # The format of each line of the file is
+    #           hostnamepattern=templatefilename
+    # where the hostnamepattern is evaluated per the rules of expr(1) ---
+    # namely, it is a standard regular expression with an implicit ^ at the
+    # start.  If multiple lines match, we will end up using the last match.
+    GUESS=""
+    exec 4<template/.similar
+    while read LINE <&4
+    do
+	SIMHOST=`expr "$LINE" : '\(.*\)='`
+	MATCH=`expr "$host" : "$SIMHOST"`
+	if test "$MATCH" != 0
+	then GUESS=`echo "$LINE" | sed 's/^.*=//'`
+	fi
+    done
+    exec 4<&-
     if test "$GUESS"
     then TEMPLATE="$GUESS"
     else
-	# Next look for a .similar entry that is a prefix of $host.
-	# If there are multiple matches, take the last one.
-	exec 4<template/.similar
-	while read LINE <&4
-	do
-	    SIMHOST=`expr "$LINE" : '\(.*\)='`
-	    MATCH=`expr "$host" : "$SIMHOST"`
-	    if test "$MATCH" != 0
-	    then GUESS=`echo "$LINE" | sed 's/^.*=//'`
-	    fi
-	done
-	exec 4<&-
-	if test "$GUESS"
-	then TEMPLATE="$GUESS"
-	else
-	    # Last chance ... maybe uname -s will match an entry.
-	    TEMPLATE=`uname -s | tr '[[A-Z]]' '[[a-z]]'` 
-	fi
+	# Last chance ... maybe uname -s will match an entry.
+	TEMPLATE=`uname -s | tr '[[A-Z]]' '[[a-z]]'` 
     fi
 fi
     ])
@@ -130,7 +128,7 @@ if test ! -f "template/$TEMPLATE"; then
 	echo ""
 	echo "$TEMPLATE does not exist"
 	echo ""
-	echo "Available Templates (set using --with-template):"
+	echo "Available Templates (select one using --with-template):"
 	echo ""
 	ls template
 	echo ""
