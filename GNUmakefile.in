@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.18 2001/04/08 17:28:10 petere Exp $
+# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.19 2001/09/17 23:00:27 petere Exp $
 #
 
 subdir =
@@ -55,9 +55,6 @@ distdir	:= postgresql-$(VERSION)
 dummy	:= =install=
 garbage := =*  "#"*  ."#"*  *~*  *.orig  *.rej  core  postgresql-*
 
-GZIP	:= gzip
-BZIP2	:= bzip2
-
 dist: $(distdir).tar.gz
 ifeq ($(split-dist), yes)
 dist: postgresql-base-$(VERSION).tar.gz postgresql-docs-$(VERSION).tar.gz postgresql-opt-$(VERSION).tar.gz postgresql-test-$(VERSION).tar.gz
@@ -89,12 +86,6 @@ postgresql-opt-$(VERSION).tar: distdir
 postgresql-test-$(VERSION).tar: distdir
 	$(TAR) cf $@ $(distdir)/src/test
 
-%.gz: %
-	$(GZIP) -f --best $<
-
-%.bz2: %
-	$(BZIP2) -f $<
-
 distdir:
 	-rm -rf $(distdir)* $(dummy)
 	for x in `cd $(top_srcdir) && find . -name CVS -prune -o -print`; do \
@@ -112,7 +103,7 @@ distdir:
 distcheck: $(distdir).tar.gz
 	-rm -rf $(dummy)
 	mkdir $(dummy)
-	gzip -d -c $< | $(TAR) xf -
+	$(GZIP) -d -c $< | $(TAR) xf -
 	install_prefix=`cd $(dummy) && pwd`; \
 	cd $(distdir) \
 	&& ./configure --prefix="$$install_prefix"

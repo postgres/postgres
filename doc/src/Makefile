@@ -1,12 +1,10 @@
 # Postgres documentation makefile
-# $Header: /cvsroot/pgsql/doc/src/Makefile,v 1.20 2001/09/14 20:37:54 petere Exp $
+# $Header: /cvsroot/pgsql/doc/src/Makefile,v 1.21 2001/09/17 23:00:27 petere Exp $
 
 subdir = doc/src
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-TAR= tar
-ZIP= gzip
 ZIPSUFFIX= gz
 TAREXCLUDE= --exclude=Makefile --exclude='*.sgml' --exclude=ref
 
@@ -65,10 +63,3 @@ postgres.tar:
 man.tar:
 	$(MAKE) -C sgml man
 	$(TAR) -cf $@ -C sgml man1 man$(sqlmansect_dummy)
-
-# Generic production rules
-
-# Compressed file
-
-%.$(ZIPSUFFIX):	%
-	$(ZIP) -f $<
