@@ -1,4 +1,6 @@
-#!/usr/bin/wish
+#!/bin/sh
+# the next line restarts using wish \
+exec wish "$0" "$@"
 
 global widget;
 
@@ -74,6 +76,7 @@ set qlvar(xoffs) 50
 set qlvar(reswidth) 150
 set qlvar(resfields) {}
 set qlvar(ressort) {}
+set qlvar(resreturn) {}
 set qlvar(rescriteria) {}
 set qlvar(restables) {}
 set qlvar(critedit) 0
@@ -288,6 +291,7 @@ set objname [.dw.lb get [.dw.lb curselection]]
 set tablename $objname
 switch $activetab {
 	Queries {open_query design}
+	Views {open_view_design}
 	Scripts {design_script $objname}
 	Forms {fd_load_form $objname design}
 	Reports {
@@ -343,24 +347,20 @@ cursor_normal
 
 proc {cmd_Functions} {} {
 global dbc
-set maxim 0
-set pgid 0
+set maxim 16384
 cursor_clock
 catch {
-	wpg_select $dbc "select proowner,count(*) from pg_proc group by proowner" rec {
-		if {$rec(count)>$maxim} {
-			set maxim $rec(count)
-			set pgid $rec(proowner)
-		}
+	wpg_select $dbc "select oid from pg_database where datname='template1'" rec {
+		set maxim $rec(oid)
 	}
+}
 .dw.lb delete 0 end
 catch {
-	wpg_select $dbc "select proname from pg_proc where prolang=14 and proowner<>$pgid order by proname" rec {
+	wpg_select $dbc "select proname from pg_proc where prolang=14 and oid>$maxim order by proname" rec {
 		.dw.lb insert end $rec(proname)
 	}	
 }
 cursor_normal
-}
 }
 
 proc {cmd_Import_Export} {how} {
@@ -397,7 +397,7 @@ switch $activetab {
 		Window show .qb
 		set queryoid 0
 		set queryname {}
-			set cbv 0
+		set cbv 0
 		.qb.cbv configure -state normal
 	}
 	Users {
@@ -585,12 +585,18 @@ cursor_normal
 
 proc {cmd_Views} {} {
 global dbc
-
 cursor_clock
 .dw.lb delete 0 end
 catch {
+	wpg_select $dbc "select c.relname,count(c.relname) from pg_class C, pg_rewrite R where (relname !~ '^pg_') and (r.ev_class = C.oid) and (r.ev_type = '1') group by relname" rec {
+		if {$rec(count)!=0} {
+			set itsaview($rec(relname)) 1
+		}
+	}
 	wpg_select $dbc "select relname from pg_class where (relname !~ '^pg_') and (relkind='r') and (relhasrules) order by relname" rec {
-		.dw.lb insert end $rec(relname)
+		if {[info exists itsaview($rec(relname))]} {
+			.dw.lb insert end $rec(relname)
+		}
 	}
 }
 cursor_normal
@@ -602,7 +608,7 @@ if {[winfo exists $base.ddf]} {
     return
 }
 frame $base.ddf -borderwidth 1 -height 75 -relief raised -width 55
-listbox $base.ddf.lb -background #fefefe -borderwidth 1  -font $pref(font_normal)  -highlightthickness 0 -selectborderwidth 0 -yscrollcommand [subst {$base.ddf.sb set}]
+listbox $base.ddf.lb -background #fefefe -foreground #000000 -selectbackground #c3c3c3 -borderwidth 1  -font $pref(font_normal)  -highlightthickness 0 -selectborderwidth 0 -yscrollcommand [subst {$base.ddf.sb set}]
 scrollbar $base.ddf.sb -borderwidth 1 -command [subst {$base.ddf.lb yview}] -highlightthickness 0 -orient vert
 place $base.ddf -x $x -y $y -width $w -height 185 -anchor nw -bordermode ignore
 place $base.ddf.lb -x 1 -y 1 -width [expr $w-18] -height 182 -anchor nw -bordermode ignore
@@ -772,6 +778,9 @@ switch $fdobj($i,t) {
 	button {
 		fd_draw_rectangle $x1 $y1 $x2 $y2 raised #a0a0a0 o$i
 		.fd.c create text [expr ($x1+$x2)/2] [expr ($y1+$y2)/2] -text $fdobj($i,l) -font $pref(font_normal) -tags o$i
+	}
+	text {
+		fd_draw_rectangle $x1 $y1 $x2 $y2 sunken #a0a0a0 o$i
 	}
 	entry {
 		fd_draw_rectangle $x1 $y1 $x2 $y2 sunken white o$i
@@ -1141,6 +1150,9 @@ switch $fdobj($item,t) {
 		entry $base.$name -bo 1 -ba white -selectborderwidth 0  -highlightthickness 0 
 		if {$var!=""} {$base.$name configure -textvar $var}
 	}
+	text {
+		text $base.$name -font $pref(font_normal) -borderwidth 1
+	}
 	label {
 		set wh {}
 		label $base.$name -font $pref(font_normal) -anchor nw -padx 0 -pady 0 -text $fdobj($item,l)
@@ -1177,10 +1189,21 @@ return $temp
 proc {get_tables} {} {
 global dbc
 set tbl {}
-catch {
-	wpg_select $dbc "select * from pg_class where (relname !~ '^pg_') and (relkind='r') order by relname" rec {
-		if {![regexp "^pga_" $rec(relname)]} then {lappend tbl $rec(relname)}
+if {[catch {
+	wpg_select $dbc "select c.relname,count(c.relname) from pg_class C, pg_rewrite R where (relname !~ '^pg_') and (r.ev_class = C.oid) and (r.ev_type = '1') group by relname" rec {
+		if {$rec(count)!=0} {
+			set itsaview($rec(relname)) 1
+		}
 	}
+	wpg_select $dbc "select relname from pg_class where (relname !~ '^pg_') and (relkind='r') order by relname" rec {
+		if {![regexp "^pga_" $rec(relname)]} then {
+			if {![info exists itsaview($rec(relname))]} {
+				lappend tbl $rec(relname)
+			}
+		}
+	}
+} gterrmsg]} {
+	show_error $gterrmsg
 }
 return $tbl
 }
@@ -1779,6 +1802,25 @@ set rbvar(justpreview) 1
 rb_preview
 }
 
+proc {open_view_design} {} {
+global dbc cbv queryname
+set viewname [.dw.lb get [.dw.lb curselection]]
+set vd {}
+wpg_select $dbc "select pg_get_viewdef('$viewname')as vd" tup {
+	set vd $tup(vd)
+}
+if {$vd==""} {
+	show_error "Error retrieving view definition for '$viewname'!"
+	return
+}
+Window show .qb
+.qb.text1 delete 0.0 end
+.qb.text1 insert end $vd
+set cbv 1
+.qb.cbv configure -state disabled
+set queryname $viewname
+}
+
 proc {open_query} {how} {
 global dbc queryname mw queryoid
 
@@ -1968,9 +2010,12 @@ focus .ql.entt
 proc {ql_compute_sql} {} {
 global qlvar
 set sqlcmd "select "
+#rjr 8Mar1999 added logical return state for results
 for {set i 0} {$i<[llength $qlvar(resfields)]} {incr i} {
+	if {[lindex $qlvar(resreturn) $i]} {
 	if {$sqlcmd!="select "} {set sqlcmd "$sqlcmd, "}
-	set sqlcmd "$sqlcmd[lindex $qlvar(restables) $i].[lindex $qlvar(resfields) $i]"
+	set sqlcmd "$sqlcmd[lindex $qlvar(restables) $i].\"[lindex $qlvar(resfields) $i]\""
+}
 }
 set tables {}
 for {set i 0} {$i<$qlvar(ntables)} {incr i} {
@@ -1984,7 +2029,7 @@ if {[llength $qlvar(links)]>0} {
 	set sup1 "where "
 	foreach link $qlvar(links) {
 		if {$sup1!="where "} {set sup1 "$sup1 and "}
-		set sup1 "$sup1 ([lindex $link 0].[lindex $link 1]=[lindex $link 2].[lindex $link 3])"
+		set sup1 "$sup1 ([lindex $link 0].\"[lindex $link 1]\"=[lindex $link 2].\"[lindex $link 3]\")"
 	}
 }
 for {set i 0} {$i<[llength $qlvar(resfields)]} {incr i} {
@@ -1992,7 +2037,7 @@ for {set i 0} {$i<[llength $qlvar(resfields)]} {incr i} {
 	if {$crit!=""} {
 		if {$sup1==""} {set sup1 "where "}
 		if {[string length $sup1]>6} {set sup1 "$sup1 and "}
-		set sup1 "$sup1 ([lindex $qlvar(restables) $i].[lindex $qlvar(resfields) $i] $crit) "        
+		set sup1 "$sup1 ([lindex $qlvar(restables) $i].\"[lindex $qlvar(resfields) $i]\" $crit) "        
 	}        
 }
 set sqlcmd "$sqlcmd $sup1"
@@ -2002,7 +2047,7 @@ for {set i 0} {$i<[llength $qlvar(ressort)]} {incr i} {
 	if {$how!="unsorted"} {
 		if {$how=="Ascending"} {set how asc} else {set how desc}
 		if {$sup2==""} {set sup2 " order by "} else {set sup2 "$sup2,"}
-		set sup2 "$sup2 [lindex $qlvar(restables) $i].[lindex $qlvar(resfields) $i] $how "
+		set sup2 "$sup2 [lindex $qlvar(restables) $i].\"[lindex $qlvar(resfields) $i]\" $how "
 	}
 }
 set sqlcmd "$sqlcmd $sup2"
@@ -2031,6 +2076,8 @@ if {[ql_get_tag_info $obj res]=="f"} {
 	if {$col==""} return
 	if {[tk_messageBox -title WARNING -icon question -parent .ql -message "Remove field from result ?" -type yesno -default no]=="no"} return
 	set qlvar(resfields) [lreplace $qlvar(resfields) $col $col]
+	set qlvar(ressort) [lreplace $qlvar(ressort) $col $col]
+	set qlvar(resreturn) [lreplace $qlvar(resreturn) $col $col]
 	set qlvar(restables) [lreplace $qlvar(restables) $col $col]
 	set qlvar(rescriteria) [lreplace $qlvar(rescriteria) $col $col]
 	ql_draw_res_panel
@@ -2044,6 +2091,8 @@ if {[tk_messageBox -title WARNING -icon question -parent .ql -message "Remove ta
 for {set i [expr [llength $qlvar(restables)]-1]} {$i>=0} {incr i -1} {
 	if {"$tablename"==[lindex $qlvar(restables) $i]} {
 	   set qlvar(resfields) [lreplace $qlvar(resfields) $i $i]
+	   set qlvar(ressort) [lreplace $qlvar(ressort) $i $i]
+	   set qlvar(resreturn) [lreplace $qlvar(resreturn) $i $i]
 	   set qlvar(restables) [lreplace $qlvar(restables) $i $i]
 	   set qlvar(rescriteria) [lreplace $qlvar(rescriteria) $i $i]
 	}
@@ -2149,6 +2198,7 @@ if {($y>$qlvar(yoffs)) && ($x>$qlvar(xoffs))} {
 	set qlvar(ressort) [linsert $qlvar(ressort) $col unsorted]
 	set qlvar(rescriteria) [linsert $qlvar(rescriteria) $col {}]
 	set qlvar(restables) [linsert $qlvar(restables) $col $tabtag]
+	set qlvar(resreturn) [linsert $qlvar(resreturn) $col yes]
 	ql_draw_res_panel    
 } else {
 	# Drop position : in the table panel
@@ -2242,6 +2292,7 @@ for {set i $qlvar(xoffs)} {$i<10000} {incr i $qlvar(reswidth)} {
 .ql.c create text 5 [expr 16+$qlvar(yoffs)] -text Table: -anchor nw -font $pref(font_normal) -tags {reshdr}
 .ql.c create text 5 [expr 31+$qlvar(yoffs)] -text Sort: -anchor nw -font $pref(font_normal) -tags {reshdr}
 .ql.c create text 5 [expr 46+$qlvar(yoffs)] -text Criteria: -anchor nw -font $pref(font_normal) -tags {reshdr}
+.ql.c create text 5 [expr 61+$qlvar(yoffs)] -text Return: -anchor nw -font $pref(font_normal) -tags {reshdr}
 .ql.c bind mov <Button-1> {ql_dragstart %W %x %y}
 .ql.c bind mov <B1-Motion> {ql_dragit %W %x %y}
 bind .ql <ButtonRelease-1> {ql_dragstop %x %y}
@@ -2262,10 +2313,12 @@ for {set i 0} {$i<[llength $qlvar(resfields)]} {incr i} {
 	if {[lindex $qlvar(rescriteria) $i]!=""} {
 		.ql.c create text [expr $resoffset+4+$qlvar(xoffs)+$i*$qlvar(reswidth)]  [expr $qlvar(yoffs)+46+15*0] -anchor nw -text [lindex $qlvar(rescriteria) $i]  -font $pref(font_normal) -tags [subst {resp cr-c$i-r0}]
 	}
+	.ql.c create text [expr $resoffset+4+$qlvar(xoffs)+$i*$qlvar(reswidth)] [expr 61+$qlvar(yoffs)] -text [lindex $qlvar(resreturn) $i] -anchor nw -tags {resp retval} -font $pref(font_normal)
 }
 .ql.c raise reshdr
 .ql.c bind resf <Button-1> {ql_resfield_click %x %y}
 .ql.c bind sort <Button-1> {ql_swap_sort %W %x %y}
+.ql.c bind retval <Button-1> {ql_toggle_return %W %x %y}
 }
 
 proc {ql_draw_table} {it} {
@@ -2304,6 +2357,7 @@ set qlvar(yoffs) 360
 set qlvar(xoffs) 50
 set qlvar(reswidth) 150
 set qlvar(resfields) {}
+set qlvar(resreturn) {}
 set qlvar(ressort) {}
 set qlvar(rescriteria) {}
 set qlvar(restables) {}
@@ -2380,6 +2434,23 @@ if {$cum=="unsorted"} {
 }
 set col [expr int(($x-$qlvar(xoffs))/$qlvar(reswidth))]
 set qlvar(ressort) [lreplace $qlvar(ressort) $col $col $cum]
+.ql.c itemconfigure $obj -text $cum
+}
+
+#rjr 8Mar1999 toggle logical return state for result
+proc {ql_toggle_return} {w x y} {
+global qlvar
+set obj [$w find closest $x $y]
+set taglist [.ql.c gettags $obj]
+if {[lsearch $taglist retval]==-1} return
+set cum [.ql.c itemcget $obj -text]
+if {$cum} {
+	set cum no
+} else {
+	set cum yes
+} 
+set col [expr int(($x-$qlvar(xoffs))/$qlvar(reswidth))]
+set qlvar(resreturn) [lreplace $qlvar(resreturn) $col $col $cum]
 .ql.c itemconfigure $obj -text $cum
 }
 
@@ -2771,7 +2842,7 @@ place $w -x 7
 place .dw.lmask -x 80 -y [expr 86+25*[lsearch -exact $tablist $curtab]]
 set activetab $curtab
 # Tabs where button Design is enabled
-if {[lsearch {Scripts Queries Reports Forms Users} $activetab]!=-1} {
+if {[lsearch {Scripts Queries Views Reports Forms Users} $activetab]!=-1} {
 	.dw.btndesign configure -state normal
 }
 .dw.lb delete 0 end
@@ -2916,7 +2987,7 @@ proc vTclWindow.about {base} {
 	label $base.l2  -relief groove  -text {A Tcl/Tk interface to
 PostgreSQL
 by Constantin Teodorescu} 
-	label $base.l3  -borderwidth 0 -relief sunken -text {v 0.93}
+	label $base.l3  -borderwidth 0 -relief sunken -text {v 0.96}
 	label $base.l4  -relief groove  -text {You will always get the latest version at:
 http://www.flex.ro/pgaccess
 
@@ -3042,6 +3113,7 @@ global pref
 		-relief raised 
 	listbox $base.lb \
 		-background #fefefe \
+		-selectbackground #c3c3c3 \
 		-foreground black -highlightthickness 0 -selectborderwidth 0 \
 		-yscrollcommand {.dw.sb set} 
 	bind $base.lb <Double-Button-1> {
@@ -3445,6 +3517,7 @@ global pref
         -text Create 
     listbox $base.lb \
         -background #fefefe -borderwidth 1 \
+	-selectbackground #c3c3c3 \
         -font $pref(font_fix) \
         -selectborderwidth 0 -yscrollcommand {.nt.sb set} 
     bind $base.lb <ButtonRelease-1> {
@@ -3686,6 +3759,16 @@ global pref
 			set qtype A
 		}
 		if {$cbv} {
+			wpg_select $dbc "select pg_get_viewdef('$queryname') as vd" tup {
+				if {$tup(vd)!="Not a view"} {
+					if {[tk_messageBox -title Warning -message "View '$queryname' already exists! Delete ?" -type yesno -default no]=="yes"} {
+						set pg_res [wpg_exec $dbc "drop view \"$queryname\""]
+						if {$pgsql(status)!="PGRES_COMMAND_OK"} {
+							show_error "Error deleting view '$queryname'"
+						}
+					}
+				}
+			}
 			set pgres [wpg_exec $dbc "create view \"$queryname\" as $qcmd"]
 			if {$pgsql(status)!="PGRES_COMMAND_OK"} {
 				show_error "Error defining view\n\n$pgsql(errmsg)"
@@ -3900,6 +3983,7 @@ global pref
 		-relief raised -text {Report fields} 
 	listbox $base.lb \
 		-background #fefefe -borderwidth 1 \
+		-selectbackground #c3c3c3 \
 		-highlightthickness 1 -selectborderwidth 0 \
 		-yscrollcommand {.rb.sb set} 
 	bind $base.lb <ButtonRelease-1> {
@@ -4263,7 +4347,7 @@ global pref
 	label $base.l2  -anchor w -borderwidth 0 -text conturi -textvariable tiw(tablename) 
 	label $base.l3  -borderwidth 0 -text Owner 
 	label $base.l4  -anchor w -borderwidth 1  -textvariable tiw(owner) 
-	listbox $base.lb  -background #fefefe -borderwidth 1  -font $pref(font_fix)  -highlightthickness 1 -selectborderwidth 0  -yscrollcommand {.tiw.sb set} 
+	listbox $base.lb  -background #fefefe -selectbackground #c3c3c3 -borderwidth 1  -font $pref(font_fix)  -highlightthickness 1 -selectborderwidth 0  -yscrollcommand {.tiw.sb set} 
 	scrollbar $base.sb  -activebackground #d9d9d9 -activerelief sunken -borderwidth 1  -command {.tiw.lb yview} -orient vert 
 	button $base.closebtn  -borderwidth 1 -command {Window destroy .tiw}  -pady 3 -text Close
 	button $base.renbtn -borderwidth 1 -command {
@@ -4274,7 +4358,7 @@ global pref
 	label $base.l12  -borderwidth 1  -relief raised -text size
 	label $base.lfi  -borderwidth 0 -text {Field information}
 	label $base.lii  -borderwidth 1  -relief raised -text {Indexes defined}
-	listbox $base.ilb  -background #fefefe -borderwidth 1  -highlightthickness 1 -selectborderwidth 0 
+	listbox $base.ilb  -background #fefefe -borderwidth 1  -highlightthickness 1 -selectborderwidth 0 -selectbackground #c3c3c3
 	bind $base.ilb <ButtonRelease-1> {
 		tiw_show_index
 	}
@@ -4664,7 +4748,7 @@ proc vTclWindow.fdtb {base} {
 	}
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
-	wm geometry $base 90x152+0+0
+	wm geometry $base 90x172+0+0
 	wm maxsize $base 785 570
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
@@ -4699,6 +4783,10 @@ proc vTclWindow.fdtb {base} {
 		-anchor w -borderwidth 1 \
 		-highlightthickness 0 -text {Radio btn} -value radio \
 		-variable fdvar(tool) -width 9 
+	radiobutton $base.rb9 \
+		-anchor w -borderwidth 1 \
+		-highlightthickness 0 -text {Text} -value text \
+		-variable fdvar(tool) -width 9 
 	radiobutton $base.rb8 \
 		-anchor w -borderwidth 1 \
 		-highlightthickness 0 -text Query -value query -variable fdvar(tool) \
@@ -4717,8 +4805,10 @@ proc vTclWindow.fdtb {base} {
 		-in .fdtb -column 0 -row 5 -columnspan 1 -rowspan 1 
 	grid $base.rb7 \
 		-in .fdtb -column 0 -row 6 -columnspan 1 -rowspan 1 
-	grid $base.rb8 \
+	grid $base.rb9 \
 		-in .fdtb -column 0 -row 7 -columnspan 1 -rowspan 1 
+	grid $base.rb8 \
+		-in .fdtb -column 0 -row 8 -columnspan 1 -rowspan 1 
 }
 
 proc vTclWindow.sqlw {base} {
