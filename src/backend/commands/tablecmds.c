@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.103 2004/05/05 04:48:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.104 2004/05/06 16:10:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2099,12 +2099,13 @@ ATRewriteTables(List **wqueue)
 			Oid			OIDNewHeap;
 			char		NewHeapName[NAMEDATALEN];
 			List	   *indexes;
+			Oid			oldClusterIndex;
 			Relation	OldHeap;
 			ObjectAddress	object;
 
 			/* Save the information about all indexes on the relation. */
 			OldHeap = heap_open(tab->relid, NoLock);
-			indexes = get_indexattr_list(OldHeap, InvalidOid);
+			indexes = get_indexattr_list(OldHeap, &oldClusterIndex);
 			heap_close(OldHeap, NoLock);
 
 			/*
@@ -2148,7 +2149,7 @@ ATRewriteTables(List **wqueue)
 			 * Rebuild each index on the relation.  We do not need
 			 * CommandCounterIncrement() because rebuild_indexes does it.
 			 */
-			rebuild_indexes(tab->relid, indexes);
+			rebuild_indexes(tab->relid, indexes, oldClusterIndex);
 		}
 		else
 		{
@@ -5004,6 +5005,9 @@ ATExecClusterOn(Relation rel, const char *indexName)
 				 errmsg("index \"%s\" for table \"%s\" does not exist",
 						indexName, RelationGetRelationName(rel))));
 
+	/* Check index is valid to cluster on */
+	check_index_is_clusterable(rel, indexOid);
+
 	indexTuple = SearchSysCache(INDEXRELID,
 								ObjectIdGetDatum(indexOid),
 								0, 0, 0);
@@ -5050,12 +5054,16 @@ ATExecClusterOn(Relation rel, const char *indexName)
 			idxForm->indisclustered = false;
 			simple_heap_update(pg_index, &idxtuple->t_self, idxtuple);
 			CatalogUpdateIndexes(pg_index, idxtuple);
+			/* Ensure we see the update in the index's relcache entry */
+			CacheInvalidateRelcacheByRelid(indexOid);
 		}
 		else if (idxForm->indexrelid == indexForm->indexrelid)
 		{
 			idxForm->indisclustered = true;
 			simple_heap_update(pg_index, &idxtuple->t_self, idxtuple);
 			CatalogUpdateIndexes(pg_index, idxtuple);
+			/* Ensure we see the update in the index's relcache entry */
+			CacheInvalidateRelcacheByRelid(indexOid);
 		}
 		heap_freetuple(idxtuple);
 	}

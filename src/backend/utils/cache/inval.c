@@ -74,7 +74,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.60 2004/02/10 01:55:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.61 2004/05/06 16:10:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,6 +88,7 @@
 #include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/relcache.h"
+#include "utils/syscache.h"
 
 
 /*
@@ -763,6 +764,26 @@ CacheInvalidateRelcacheByTuple(HeapTuple classTuple)
 	rnode.relNode = classtup->relfilenode;
 
 	RegisterRelcacheInvalidation(databaseId, relationId, rnode);
+}
+
+/*
+ * CacheInvalidateRelcacheByRelid
+ *		As above, but relation is identified by passing its OID.
+ *		This is the least efficient of the three options; use one of
+ *		the above routines if you have a Relation or pg_class tuple.
+ */
+void
+CacheInvalidateRelcacheByRelid(Oid relid)
+{
+	HeapTuple	tup;
+
+	tup = SearchSysCache(RELOID,
+						 ObjectIdGetDatum(relid),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for relation %u", relid);
+	CacheInvalidateRelcacheByTuple(tup);
+	ReleaseSysCache(tup);
 }
 
 /*

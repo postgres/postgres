@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/inval.h,v 1.30 2004/02/10 01:55:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/inval.h,v 1.31 2004/05/06 16:10:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,8 @@ extern void CacheInvalidateHeapTuple(Relation relation, HeapTuple tuple);
 extern void CacheInvalidateRelcache(Relation relation);
 
 extern void CacheInvalidateRelcacheByTuple(HeapTuple classTuple);
+
+extern void CacheInvalidateRelcacheByRelid(Oid relid);
 
 extern void CacheRegisterSyscacheCallback(int cacheid,
 							  CacheCallbackFunction func,
