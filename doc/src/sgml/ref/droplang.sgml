@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.10 2001/05/09 22:08:18 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.11 2001/08/13 15:24:46 momjian Exp $
 Postgres documentation
 -->
 
@@ -16,7 +16,7 @@ Postgres documentation
 
  <refnamediv>
   <refname id="droplang">droplang</refname>
-  <refpurpose>Remove a programming language from a <productname>Postgres</productname> database</refpurpose>
+  <refpurpose>Removes a programming language from a <productname>Postgres</productname> database</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
