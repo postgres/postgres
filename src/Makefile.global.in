@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.11 1997/02/12 11:05:10 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.12 1997/03/06 22:58:48 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -55,11 +55,14 @@
 #   irix5          SGI MIPS on IRIX 5.3 or better
 #   linux          Intel x86 on Linux 1.2 and Linux ELF
 #                  (For non-ELF Linux, see LINUX_ELF below).
-#   nextstep       Motorola MC68K or Intel x86 on NeXTSTEP 3.2 or greater
 #   sparc_solaris  SUN SPARC on Solaris 2.4
 #   sunos4         SUN SPARC on SunOS 4.1.3
 #   svr4           Intel x86 on Intel SVR4
 #   ultrix4        DEC MIPS on Ultrix 4.4
+#
+# PostgresSQL has known problems/bugs on the following platforms:
+#
+#   nextstep       Motorola MC68K or Intel x86 on NeXTSTEP 3.2 or greater
 #
 #  Note that portname is defined here to be UNDEFINED to remind you
 #  to change it in Makefile.custom.
