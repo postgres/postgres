@@ -268,10 +268,18 @@
  */
 #define DEADLOCK_TIMEOUT 60
 
+/*
+ * This flag enables the use of idexes in plans generated for function
+ * executions which normally are always executed with sequential scans.
+ */
 #define INDEXSCAN_PATCH 
 
 /* #define DATEDEBUG */
 
+/*
+ * Define this if you want to use date constants with a short year
+ * like '01/05/96'.
+ */
 /* #define USE_SHORT_YEAR */
 
 /*
@@ -304,6 +312,45 @@
  */
 #define PQ_NOTIFY_PATCH
 
+/*
+ * Define this if you want to retrieve arrays attributes as Tcl lists instead
+ * of postgres C-like arrays, for example {{"a1" "a2"} {"b1" "b2"}} instead 
+ * of {{"a1","a2"},{"b1","b2"}}.
+ */
+#define TCL_ARRAY
+
+/*
+ * The comparison routines for text and char data type give incorrect results
+ * if the input data contains characters greater than 127.  As these routines
+ * perform the comparison using signed char variables all character codes
+ * greater than 127 are interpreted as less than 0.  These codes are used to
+ * encode the iso8859 char sets.  Define this flag to correct the problem.
+ */
+#define UNSIGNED_CHAR_TEXT
+
+/*
+ * The following flag allows limiting the number of rows returned by a query.
+ * You will need the loadable module utils.c to use this feature.
+ */
+#define QUERY_LIMIT
+
+/*
+ * The following flag allows copying tables from files with number of columns
+ * different than the number of attributes setting missing attributes to NULL
+ * and ignoring extra columns.  This also avoids the shift of the attributes
+ * of the rest of the file if one line has a wrong column count.
+ */
+#define COPY_PATCH
+
+/*
+ * User locks are handled totally on the application side as long term
+ * cooperative locks which extend beyond the normal transaction boundaries.
+ * Their purpose is to indicate to an application that someone is `working'
+ * on an item.  Define this flag to enable user locks.  You will need the
+ * loadable module user-locks.c to use this feature.
+ */
+#define USER_LOCKS
+
 /* Debug #defines */
 /* #define IPORTAL_DEBUG  */
 /* #define HEAPDEBUGALL  */
@@ -313,6 +360,10 @@
 #define GISTDEBUG 
 /* #define PURGEDEBUG */
 /* #define DEBUG_RECIPE */
+/* #define ASYNC_DEBUG */
+/* #define COPY_DEBUG */
+/* #define VACUUM_DEBUG */
+/* #define NBTINSERT_PATCH_DEBUG */
 
 
 /* The following don't have any apparent purpose, but are in the
