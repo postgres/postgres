@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Mar 8 08:27:31 EST 2005
+   Last updated: Fri Mar 11 06:42:00 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -658,7 +658,7 @@ typedef struct nameData
    Here are some of the List manipulation commands:
    
    lfirst(i), lfirst_int(i), lfirst_oid(i)
-          return the data (a point, inteter and OID respectively) at list
+          return the data (a point, integer and OID respectively) at list
           element i.
           
    lnext(i)
