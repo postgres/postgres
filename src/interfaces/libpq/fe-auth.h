@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fe-auth.h,v 1.7 1998/01/26 01:42:26 scrappy Exp $
+ * $Id: fe-auth.h,v 1.8 1998/01/29 03:24:21 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@
 
 extern int
 fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
-			const char *password, const char *PQerromsg);
+			const char *password, char *PQerromsg);
 extern void fe_setauthsvc(const char *name, char *PQerrormsg);
 
 #define PG_KRB4_VERSION "PGVER4.1"		/* at most KRB_SENDAUTH_VLEN chars */

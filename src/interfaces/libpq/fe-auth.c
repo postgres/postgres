@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.13 1998/01/26 01:42:25 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.14 1998/01/29 03:24:03 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -477,7 +477,7 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
  */
 int
 fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
-		  const char *password, const char *PQerrormsg)
+		  const char *password, char *PQerrormsg)
 {
 	switch (areq)
 	{

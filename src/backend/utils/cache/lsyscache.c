@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.10 1998/01/20 05:04:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.11 1998/01/29 03:23:09 scrappy Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -173,7 +173,7 @@ get_atttypmod(Oid relid, AttrNumber attnum)
 							 0, 0))
 		return att_tup.atttypmod;
 	else
-		return NULL;
+		return -1;
 }
 
 /*				---------- INDEX CACHE ----------						 */

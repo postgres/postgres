@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.60 1998/01/28 03:42:27 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.61 1998/01/29 03:24:30 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -808,9 +808,7 @@ PQreset(PGconn *conn)
  * SIDE_EFFECTS: may block.
 */
 int
-packetSend(PGconn *conn,
-		   char *buf,
-		   size_t len)
+packetSend(PGconn *conn, const char *buf, size_t len)
 {
 	/* Send the total packet size. */
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.21 1997/12/20 00:10:47 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.22 1998/01/29 03:23:28 scrappy Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -66,7 +66,7 @@
 #include "catalog/catname.h"
 #include "catalog/pg_database.h"
 
-#include "libpq/libpq-be.h"
+#include "libpq/libpq.h"
 
 static void VerifySystemDatabase(void);
 static void VerifyMyDatabase(void);

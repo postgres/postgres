@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.23 1998/01/27 03:24:54 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.24 1998/01/29 03:23:05 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -390,9 +390,6 @@ void auth_failed(Port *port)
  */
 void be_recvauth(Port *port)
 {
-	AuthRequest areq;
-	void (*auth_handler)();
-
 	/*
 	 * Get the authentication method to use for this frontend/database
 	 * combination.
@@ -400,70 +397,76 @@ void be_recvauth(Port *port)
 
 	if (hba_getauthmethod(&port->raddr, port->database, port->auth_arg,
 				&port->auth_method) != STATUS_OK)
-	{
 		PacketSendError(&port->pktInfo, "Missing or mis-configured pg_hba.conf file");
-		return;
-	}
 
-	/* Handle old style authentication. */
-
-	if (PG_PROTOCOL_MAJOR(port->proto) == 0)
+	else if (PG_PROTOCOL_MAJOR(port->proto) == 0)
 	{
+		/* Handle old style authentication. */
+
 		if (old_be_recvauth(port) != STATUS_OK)
 			auth_failed(port);
-
-		return;
 	}
-
-	/* Handle new style authentication. */
-
-	switch (port->auth_method)
+	else
 	{
-	case uaReject:
-		auth_failed(port);
-		return;
- 
-	case uaKrb4:
-		areq = AUTH_REQ_KRB4;
-		auth_handler = handle_krb4_auth;
-		break;
+		AuthRequest areq;
+		void (*auth_handler)();
 
-	case uaKrb5:
-		areq = AUTH_REQ_KRB5;
-		auth_handler = handle_krb5_auth;
-		break;
+		/* Keep the compiler quiet. */
 
-	case uaTrust:
 		areq = AUTH_REQ_OK;
-		auth_handler = handle_done_auth;
-		break;
 
-	case uaIdent:
-		if (authident(&port->raddr.in, &port->laddr.in, port->user,
-				port->auth_arg) != STATUS_OK)
+		/* Handle new style authentication. */
+
+		auth_handler = NULL;
+
+		switch (port->auth_method)
 		{
+		case uaReject:
+			break;
+ 
+		case uaKrb4:
+			areq = AUTH_REQ_KRB4;
+			auth_handler = handle_krb4_auth;
+			break;
+
+		case uaKrb5:
+			areq = AUTH_REQ_KRB5;
+			auth_handler = handle_krb5_auth;
+			break;
+
+		case uaTrust:
+			areq = AUTH_REQ_OK;
+			auth_handler = handle_done_auth;
+			break;
+
+		case uaIdent:
+			if (authident(&port->raddr.in, &port->laddr.in,
+				port->user, port->auth_arg) == STATUS_OK)
+			{
+				areq = AUTH_REQ_OK;
+				auth_handler = handle_done_auth;
+			}
+
+			break;
+
+		case uaPassword:
+			areq = AUTH_REQ_PASSWORD;
+			auth_handler = handle_password_auth;
+			break;
+
+		case uaCrypt:
+			areq = AUTH_REQ_CRYPT;
+			auth_handler = handle_password_auth;
+			break;
+ 		}
+
+		/* Tell the frontend what we want next. */
+
+		if (auth_handler != NULL)
+			sendAuthRequest(port, areq, auth_handler);
+		else
 			auth_failed(port);
-			return;
-		}
-
-		areq = AUTH_REQ_OK;
-		auth_handler = handle_done_auth;
-		break;
-
-	case uaPassword:
-		areq = AUTH_REQ_PASSWORD;
-		auth_handler = handle_password_auth;
-		break;
-
-	case uaCrypt:
-		areq = AUTH_REQ_CRYPT;
-		auth_handler = handle_password_auth;
-		break;
- 	}
-
-	/* Tell the frontend what we want next. */
-
-	sendAuthRequest(port, areq, auth_handler);
+	}
 }
  
 
