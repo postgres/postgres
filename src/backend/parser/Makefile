@@ -2,17 +2,13 @@
 #
 # Makefile for parser
 #
-# $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.33 2001/05/04 22:01:03 tgl Exp $
+# $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.34 2001/08/09 18:13:23 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/backend/parser
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
-
-ifeq ($(GCC), yes)
-override CFLAGS+= -Wno-error
-endif
 
 OBJS= analyze.o gram.o keywords.o parser.o parse_agg.o parse_clause.o \
       parse_expr.o parse_func.o parse_node.o parse_oper.o parse_relation.o \
