@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.35 2003/10/13 21:39:41 petere Exp $
+# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.35.2.1 2004/06/13 21:50:04 petere Exp $
 #
 
 subdir =
@@ -103,6 +103,7 @@ distdir:
 	done
 	$(MAKE) -C $(distdir) distprep
 	$(MAKE) -C $(distdir) distclean
+	rm -f $(distdir)/README.CVS
 
 distcheck: $(distdir).tar.gz
 	-rm -rf $(dummy)
