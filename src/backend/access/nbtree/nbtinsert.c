@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.109 2003/11/29 19:51:40 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.110 2003/12/21 01:23:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,8 +86,8 @@ _bt_doinsert(Relation rel, BTItem btitem,
 	itup_scankey = _bt_mkscankey(rel, itup);
 
 top:
-	/* find the page containing this key */
-	stack = _bt_search(rel, natts, itup_scankey, &buf, BT_WRITE);
+	/* find the first page containing this key */
+	stack = _bt_search(rel, natts, itup_scankey, false, &buf, BT_WRITE);
 
 	/* trade in our read lock for a write lock */
 	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
@@ -100,7 +100,7 @@ top:
 	 * need to move right in the tree.	See Lehman and Yao for an
 	 * excruciatingly precise description.
 	 */
-	buf = _bt_moveright(rel, buf, natts, itup_scankey, BT_WRITE);
+	buf = _bt_moveright(rel, buf, natts, itup_scankey, false, BT_WRITE);
 
 	/*
 	 * If we're not allowing duplicates, make sure the key isn't already
@@ -175,7 +175,7 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 	 * Find first item >= proposed new item.  Note we could also get a
 	 * pointer to end-of-page here.
 	 */
-	offset = _bt_binsrch(rel, buf, natts, itup_scankey);
+	offset = _bt_binsrch(rel, buf, natts, itup_scankey, false);
 
 	/*
 	 * Scan over all equal tuples, looking for live conflicts.
@@ -478,7 +478,7 @@ _bt_insertonpg(Relation rel,
 		if (movedright)
 			newitemoff = P_FIRSTDATAKEY(lpageop);
 		else
-			newitemoff = _bt_binsrch(rel, buf, keysz, scankey);
+			newitemoff = _bt_binsrch(rel, buf, keysz, scankey, false);
 	}
 
 	/*

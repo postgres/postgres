@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.74 2003/11/29 22:40:55 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.75 2003/12/21 01:23:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -459,12 +459,13 @@ extern int	_bt_pagedel(Relation rel, Buffer buf, bool vacuum_full);
 /*
  * prototypes for functions in nbtsearch.c
  */
-extern BTStack _bt_search(Relation rel, int keysz, ScanKey scankey,
-		   Buffer *bufP, int access);
+extern BTStack _bt_search(Relation rel,
+						  int keysz, ScanKey scankey, bool nextkey,
+						  Buffer *bufP, int access);
 extern Buffer _bt_moveright(Relation rel, Buffer buf, int keysz,
-			  ScanKey scankey, int access);
+			  ScanKey scankey, bool nextkey, int access);
 extern OffsetNumber _bt_binsrch(Relation rel, Buffer buf, int keysz,
-			ScanKey scankey);
+			ScanKey scankey, bool nextkey);
 extern int32 _bt_compare(Relation rel, int keysz, ScanKey scankey,
 			Page page, OffsetNumber offnum);
 extern bool _bt_next(IndexScanDesc scan, ScanDirection dir);
