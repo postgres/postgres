@@ -8,21 +8,20 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.11 1996/11/05 05:26:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.12 1996/11/05 07:42:42 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include <postgres.h>
 
-#include "access/heapam.h"
-#include "access/ibit.h"
-#include "access/itup.h"
-#include "access/relscan.h"
-#include "access/tupmacs.h"
+#include <access/heapam.h>
+#include <access/ibit.h>
+#include <access/itup.h>
+#include <access/tupmacs.h>
 
 #ifndef HAVE_MEMMOVE
-# include "regex/utils.h"
+# include <regex/utils.h>
 #else
 # include <string.h>
 #endif

@@ -7,19 +7,19 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/heapvalid.c,v 1.10 1996/11/03 08:16:46 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/heapvalid.c,v 1.11 1996/11/05 07:42:41 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include <postgres.h>
 
-#include "fmgr.h"
-#include "access/heaptuple.h"
-#include "access/xact.h"
-#include "storage/bufpage.h"
-#include "utils/rel.h"
-#include "utils/tqual.h"
+#include <fmgr.h>
+#include <access/heaptuple.h>
+#include <access/xact.h>
+#include <storage/bufpage.h>
+#include <utils/rel.h>
+#include <utils/tqual.h>
 
 /* ----------------
  *	heap_keytest
