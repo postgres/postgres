@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.29 2001/05/08 02:53:24 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.30 2001/05/11 06:10:44 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -396,12 +396,13 @@ user_id CONSTANT INTEGER := 10;
     </sect3>
 
     <sect3 id="plpgsql-description-passed-vars">
-     <title>Variables Passed to Functions</title>
+     <title>Parameters Passed to Functions</title>
 
      <para>
-      Variables passed to functions are named with the identifiers
+      Parameters passed to functions are named with the identifiers
       <literal>$1</literal>, <literal>$2</literal>,
-      etc. (maximum is 16). Some examples:
+      etc.  Optionally, aliases can be declared for the <literal>$n</literal>
+      parameter names for increased readability.  Some examples:
 <programlisting>
 CREATE FUNCTION sales_tax(REAL) RETURNS REAL AS '
 DECLARE
@@ -437,7 +438,7 @@ END;
      <variablelist>
       <varlistentry>
        <term>
-        %TYPE
+        <replaceable>variable</replaceable>%TYPE
        </term>
        <listitem>
         <para>
@@ -447,9 +448,9 @@ END;
          values. For example, let's say you have a column
          named <type>user_id</type> in your
          <type>users</type> table. To declare a variable with
-         the same datatype as users you do:
+         the same datatype as users.user_id you write:
 <programlisting>
-user_id users.user_id%TYPE;
+user_id   users.user_id%TYPE;
 </programlisting>
         </para>
 
@@ -467,30 +468,31 @@ user_id users.user_id%TYPE;
 
       <varlistentry>
        <term>
-        <replaceable>name</replaceable> <replaceable>table</replaceable>%ROWTYPE;
+        <replaceable>table</replaceable>%ROWTYPE
        </term>
        <listitem>
         <para>
-         Declares a row with the structure of the given
-	 table. <replaceable>table</replaceable> must be an existing
+	 <type>%ROWTYPE</type> provides the composite datatype corresponding
+	 to a whole row of the specified table.
+	 <replaceable>table</replaceable> must be an existing
 	 table or view name of the database. The fields of the row are
 	 accessed in the dot notation. Parameters to a function can be
 	 composite types (complete table rows). In that case, the
-	 corresponding identifier $n will be a rowtype, but it must be
-	 aliased using the ALIAS command described above.
+	 corresponding identifier $n will be a rowtype, and fields can
+	 be selected from it, for example <literal>$1.user_id</literal>.
         </para>
 
         <para>
-         Only the user attributes of a table row are accessible in the
-	 row, no OID or other system attributes (because the row could
-	 be from a view).  The fields of the rowtype inherit the
+         Only the user-defined attributes of a table row are accessible in a
+	 rowtype variable, not OID or other system attributes (because the
+	 row could be from a view).  The fields of the rowtype inherit the
 	 table's field sizes or precision for <type>char()</type>
 	 etc. data types.
         </para>
 <programlisting>
 DECLARE
     users_rec users%ROWTYPE;
-  user_id users%TYPE;
+    user_id users.user_id%TYPE;
 BEGIN
     user_id := users_rec.user_id;
     ...
