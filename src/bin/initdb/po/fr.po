@@ -1,7 +1,7 @@
 # translation of initdb-fr.po to FR_fr
 # French message translation file for initdb
 #
-# $PostgreSQL: pgsql/src/bin/initdb/po/fr.po,v 1.4 2004/11/16 22:58:28 petere Exp $
+# $PostgreSQL: pgsql/src/bin/initdb/po/fr.po,v 1.5 2004/12/11 19:55:37 petere Exp $
 #
 # Use these quotes: «%s»
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2004.
@@ -9,21 +9,23 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: initdb-fr\n"
-"POT-Creation-Date: 2004-11-16 07:06+0000\n"
-"PO-Revision-Date: 2004-11-16 09:44+0100\n"
-"Last-Translator: Guillaume Lelarge <gleu@wanadoo.fr>\n"
+"POT-Creation-Date: 2004-11-17 07:07+0000\n"
+"PO-Revision-Date: 2004-11-17 09:55+0100\n"
+"Last-Translator: Christophe Truffier <ctruffier@nah-ko.org>\n"
 "Language-Team: FR_fr <pgsql-fr-generale@postgresql.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: KBabel 1.9.1\n"
 
-#: initdb.c:237 initdb.c:251
+#: initdb.c:237
+#: initdb.c:251
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s : espace mémoire insuffisant\n"
 
-#: initdb.c:361 initdb.c:1342
+#: initdb.c:361
+#: initdb.c:1342
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s : impossible d'ouvrir le fichier «%s» en lecture : %s\n"
@@ -33,7 +35,9 @@ msgstr "%s : impossible d'ouvrir le fichier «%s» en lecture : %s\n"
 msgid "%s: could not open file \"%s\" for writing: %s\n"
 msgstr "%s : impossible d'ouvrir le fichier «%s» en écriture : %s\n"
 
-#: initdb.c:550 initdb.c:559 initdb.c:567
+#: initdb.c:550
+#: initdb.c:559
+#: initdb.c:567
 #, c-format
 msgid "%s: failed\n"
 msgstr "%s : échec\n"
@@ -61,8 +65,7 @@ msgid ""
 "own the server process.\n"
 msgstr ""
 "%s : impossible de se lancer en tant qu'utilisateur root\n"
-"Merci de vous connecter (en utilisant, par exemple, «su») en tant qu'utilisateur non privilégié "
-"et propriétaire du processus serveur.\n"
+"Merci de vous connecter (en utilisant, par exemple, «su») en tant qu'utilisateur non privilégié et propriétaire du processus serveur.\n"
 
 #: initdb.c:650
 #, c-format
@@ -133,7 +136,7 @@ msgstr "initialisation de pg_shadow... "
 
 #: initdb.c:1317
 msgid "Enter new superuser password: "
-msgstr "Saisissez le mot de passe du nouveau superutilisateur : "
+msgstr "Saisissez le nouveau mot de passe du superutilisateur : "
 
 #: initdb.c:1318
 msgid "Enter it again: "
@@ -191,7 +194,7 @@ msgstr "lancement du vacuum sur la base de données template1... "
 
 #: initdb.c:1834
 msgid "copying template1 to template0 ... "
-msgstr "copie de template1 sur template0... "
+msgstr "copie de template1 vers template0... "
 
 #: initdb.c:1891
 msgid "caught signal\n"
@@ -271,10 +274,8 @@ msgid "  --no-locale               equivalent to --locale=C\n"
 msgstr "  --no-locale               équivalent à --locale=C\n"
 
 #: initdb.c:2029
-msgid ""
-"  -A, --auth=METHOD         default authentication method for local "
-"connections\n"
-msgstr "  -A, --auth=méthode        méthode d'authentification par défaut pour les connexions locales\n"
+msgid "  -A, --auth=METHOD         default authentication method for local connections\n"
+msgstr "  -A, --auth=MÉTHODE        méthode d'authentification par défaut pour les connexions locales\n"
 
 #: initdb.c:2030
 msgid "  -U, --username=NAME       database superuser name\n"
@@ -290,7 +291,7 @@ msgstr ""
 msgid "  --pwfile=FILE             read password for the new superuser from file\n"
 msgstr ""
 "  --pwfile=nomfichier       lit le mot de passe du nouveau superutilisateur\n"
-"                            à partir du fichier\n"
+"                            à partir d'un fichier\n"
 
 #: initdb.c:2033
 msgid "  -?, --help                show this help, then exit\n"
@@ -350,7 +351,9 @@ msgstr "Lancé en mode déboguage.\n"
 msgid "Running in noclean mode.  Mistakes will not be cleaned up.\n"
 msgstr "Lancé en mode «sans nettoyage» Les erreurs ne seront pas nettoyées.\n"
 
-#: initdb.c:2173 initdb.c:2190 initdb.c:2408
+#: initdb.c:2173
+#: initdb.c:2190
+#: initdb.c:2408
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Essayez «%s --help» pour plus d'informations.\n"
@@ -384,7 +387,7 @@ msgstr "%s : méthode d'authentification inconnue «%s».\n"
 #: initdb.c:2235
 #, c-format
 msgid "%s: must specify a password for the superuser to enable %s authentication\n"
-msgstr "%s : vous devez spécifier un mot de passe pour que le superutilisateur active l'authentification %s\n"
+msgstr "%s : vous devez spécifier un mot de passe pour que le superutilisateur active l'authentification pour %s\n"
 
 #: initdb.c:2250
 #, c-format
