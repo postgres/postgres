@@ -1009,8 +1009,8 @@ mylog("%s: entering...stmt=%u\n", func, stmt);
 
 	/*	filter out large objects unconditionally (they are not system tables) and match users */
 	strcat(tables_query, " and relname !~ '^xinv[0-9]+'");
-	strcat(tables_query, " and int4out(usesysid) = int4out(relowner)");
-	strcat(tables_query, "order by relname");
+	strcat(tables_query, " and usesysid = relowner");
+	strcat(tables_query, " order by relname");
 
 	/* ********************************************************************** */
 
