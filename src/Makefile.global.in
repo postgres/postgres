@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.21 1997/04/15 18:35:41 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.22 1997/04/15 18:36:45 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -134,10 +134,6 @@ OIDNAMELEN= 36
 
 # Compile libpq++
 @HAVECXX@
-
-# Commenting out CASSERT will make things go a LOT faster, but you will
-# also loose a lot of useful error-checking.
-CASSERT= @CASSERT@
 
 # Comment out ENFORCE_ALIGNMENT if you do NOT want unaligned access to
 # multi-byte types to generate a bus error.
