@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.53 2002/07/18 04:47:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.54 2002/07/30 16:20:03 momjian Exp $
 -->
 
  <chapter id="xfunc">
@@ -1554,6 +1554,14 @@ HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
      (e.g. textin() for data type TEXT). In order to return a NULL value for
      one of the attributes, the corresponding pointer in the "values" array
      should be set to NULL.
+    </para>
+
+    <para>
+     In order to get an attribute "in" function and typelem value given the
+     typeid, use
+<programlisting>
+void get_type_metadata(Oid typeid, Oid *attinfuncid, Oid *attelem)
+</programlisting>
     </para>
 
     <para>

@@ -139,6 +139,8 @@ typedef struct
  * HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values) -
  *		build a HeapTuple given user data in C string form. values is an array
  *		of C strings, one for each attribute of the return tuple.
+ * void get_type_metadata(Oid typeid, Oid *attinfuncid, Oid *attelem) - Get
+ *      an attribute "in" function and typelem value given the typeid.
  *
  * Macro declarations:
  * TupleGetDatum(TupleTableSlot *slot, HeapTuple tuple) - get a Datum

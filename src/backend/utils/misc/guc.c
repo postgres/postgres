@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.75 2002/07/20 15:12:55 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.76 2002/07/30 16:20:03 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -2347,12 +2347,20 @@ GetConfigOptionByName(const char *name, const char **varname)
  * form of name.  Return value is palloc'd.
  */
 char *
-GetConfigOptionByNum(int varnum, const char **varname)
+GetConfigOptionByNum(int varnum, const char **varname, bool *noshow)
 {
-	struct config_generic *conf = guc_variables[varnum];
+	struct config_generic *conf;
+
+	/* check requested variable number valid */
+	Assert((varnum >= 0) && (varnum < num_guc_variables));
+
+	conf = guc_variables[varnum];
 
 	if (varname)
 		*varname = conf->name;
+
+	if (noshow)
+		*noshow = (conf->flags & GUC_NO_SHOW_ALL) ? true : false;
 
 	return _ShowOption(conf);
 }
