@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.1 1998/03/15 07:38:47 scrappy Exp $ */
+/* $Id: pg_wchar.h,v 1.2 1998/04/27 17:09:12 scrappy Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -39,6 +39,9 @@ extern int pg_char_and_wchar_strcmp(const char *, const pg_wchar *);
 extern int pg_wchar_strncmp(const pg_wchar *, const pg_wchar *, size_t);
 extern int pg_char_and_wchar_strncmp(const char *, const pg_wchar *, size_t);
 extern size_t pg_wchar_strlen(const pg_wchar *);
+extern int pg_mblen(const unsigned char *);
+extern int pg_mbstrlen(const unsigned char *);
+extern int pg_mbstrlen_with_len(const unsigned char *, int);
 #endif
 
 #endif

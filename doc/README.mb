@@ -1,4 +1,4 @@
-postgresql 6.3 multi-byte(MB) patch PL2 README	  Mar 10 1998
+postgresql 6.3 multi-byte (MB) support README	  April 21 1998
 
 						Tatsuo Ishii
 						t-ishii@sra.co.jp
@@ -6,13 +6,13 @@ postgresql 6.3 multi-byte(MB) patch PL2 README	  Mar 10 1998
 
 Introduction
 
-MB patch is intended for allowing PostgreSQL to handle multi-byte
-charachter sets such as EUC(Extende Unix Code), Unicode and Mule
-internal code. With the MB patch you can use multi-byte character sets
-in regexp and LIKE. The encoding system chosen is determined at the
-compile time.
+The MB support is intended for allowing PostgreSQL to handle
+multi-byte character sets such as EUC(Extended Unix Code), Unicode and
+Mule internal code. With the MB enabled you can use multi-byte
+character sets in regexp ,LIKE and some functions. The encoding system
+chosen is determined at the compile time.
 
-The patch also fixes some problems concerning with 8-bit single byte
+MB also fixes some problems concerning with 8-bit single byte
 character sets including ISO8859. (I would not say all of problems
 have been fixed. I just confirmed that the regression test ran fine
 and a few French characters could be used with the patch. Please let
@@ -20,26 +20,33 @@ me know if you find any problem while using 8-bit characters)
 
 How to use
 
-After applying the MB patch, create src/Makefile.custom with a line
-including:
+create src/Makefile.custom with a line including:
 
-MB=encoding_system
+	MB=encoding_system
+
+or run configure with the mb option:
+
+	% configure --with-mb=encoding_system
 
 where encoding_system is one of:
 
-EUC_JP			Japanese EUC
-EUC_CN			Chinese EUC
-EUC_KR			Korean EUC
-EUC_TW			Taiwan EUC
-UNICODE			Unicode(UTF-8)
-MULE_INTERNAL		Mule internal
+	EUC_JP			Japanese EUC
+	EUC_CN			Chinese EUC
+	EUC_KR			Korean EUC
+	EUC_TW			Taiwan EUC
+	UNICODE			Unicode(UTF-8)
+	MULE_INTERNAL		Mule internal
 
 Example:
 
-% cat Makefile.custom
-MB=EUC_JP
+	% cat Makefile.custom
+	MB=EUC_JP
 
-If MB is not defined, nothing is changed except better supporting for
+	or
+
+	% configure --with-mb=EUC_JP
+
+If MB is disabled, nothing is changed except better supporting for
 8-bit single byte character sets.
 
 References
@@ -58,6 +65,19 @@ Unicode: http://www.unicode.org/
 	UTF-8 is defined here.
 
 History
+
+April 21, 1998 some enhancements/fixes
+	* character_length(), position(), substring() are now aware of 
+	  multi-byte characters
+	* add octet_length()
+	* add --with-mb option to configure
+	* new regression tests for EUC_KR
+  	  (contributed by "Soonmyung. Hong" <hong@lunaris.hanmesoft.co.kr>)
+	* add some test cases to the EUC_JP regression test
+	* fix problem in regress/regress.sh in case of System V
+	* fix toupper(), tolower() to handle 8bit chars
+
+Mar 25, 1998 MB PL2 is incorporated into PostgreSQL 6.3.1
 
 Mar 10, 1998 PL2 released
 	* add regression test for EUC_JP, EUC_CN and MULE_INTERNAL

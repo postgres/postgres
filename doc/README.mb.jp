@@ -1,14 +1,12 @@
-postgresql 6.3 multi-byte (MB) patch PL2 README	       1998/3/10 作成
+postgresql 6.3.2 multi-byte (MB) support README	       1998/4/21 作成
 
 							石井達夫
 						t-ishii@sra.co.jp
 		  http://www.sra.co.jp/people/t-ishii/PostgreSQL/
 
 はじめに：
-  このパッチは、フリーな RDBMS(Relational Database Management System)の
-  PostgreSQL (http://www.postgresql.org/)の最新版 6.3 で日本語 EUC
-  など、マルチバイト文字を扱うことを可能にするためのものです。このパッ
-  チをあてることにより、以下のことが可能になります。
+
+  PostgreSQL におけるマルチバイトサポートは以下のような特徴を持っています。
 
     1.マルチバイト文字として、日本語、中国語などの各国の EUC、Unicode、
       mule internal code がコンパイル時に選択可能。データベースには
@@ -19,45 +17,24 @@ postgresql 6.3 multi-byte (MB) patch PL2 README	       1998/3/10 作成
     4.データそのものにもマルチバイト文字が使用可能
     5.マルチバイト文字の正規表現検索が使用可能
     6.マルチバイト文字の LIKE 検索が使用可能
+    7.character_length(), position(), substring() でのマルチバイト
+      サポート
 
-    (ただし、2,3,4 についてはパッチをあてなくても可能です。)
+インストール：
+  デフォルトでは PostgreSQL はマルチバイトをサポートしていません。
+  マルチバイトサポートを有効にする方法を説明します。
 
-postgresql-6.3 の入手方法：
-  postgresql-6.3.tar.gz は postgresql の日本での公式ミラーサイトで
-  ある ftp://ftp.jaist.ac.jp/pub/dbms/PostgreSQL/ から入手できます。
-  何らかの理由でここから入手できない場合は、
-  ftp://ftp.sra.co.jp/pub/cmd/postgres/6.3/ も利用できます。
-  なお、postgresql のオリジナル ftp サイトは ftp://ftp.postgresql.org
-  です。
-
-このパッチの入手方法：
-
-  ftp://ftp.sra.co.jp/pub/cmd/postgres/6.3/patches/6.3mbPL2.patch.gz 
-  を入手して下さい。
-
-パッチのあてかた：
-  入手したパッチファイルを展開します。
-
-	% gunzip 6.3mbPL2.patch.gz
-
-  postgresql-6.3 のソースを展開します。
-
-	% gtar xfz postgresql-6.3.tar.gz
-
-  すると、postgresql-6.3 というディレクトリができるので、そこに
-  cd します。
-
-	% cd postgresql-6.3
-
-  パッチを当てます。
-
-	% patch -p1 < 6.3mbPL2.patch 
-
-  としてあててください。次に、src/Makefile.custom というファイルを作り、
+  src/Makefile.custom というファイルを作り、
 	
 	MB=EUC_JP
 
-  の 1 行を追加します。EUC_JP を含め、以下のコードが指定できます。
+  の 1 行を追加します。あるいは、configure 起動時に以下のように指定します。
+
+  % configure --with-mb=EUC_JP
+
+  文字コードとしては EUC_JP を含め、以下のコードが指定できます。
+  (現在の実装では、文字コードはコンパイル時に決定され、実行時に
+   動的に変更することはできません)
 
 	EUC_JP		日本語 EUC
 	EUC_CN		GB をベースにした中文EUC。code set 2 は
@@ -92,6 +69,22 @@ postgresql-6.3 の入手方法：
     のメンバの方からアドバイスを頂きました。ここに感謝します。
 
 改定履歴：
+
+  1998/4/21 機能追加／バグ修正
+	* character_length(), position(), substring() のマルチバイト
+	  対応
+	* octet_length() 追加 → initdb のやり直し必要
+	* configure のオプションに MB サポート追加
+	  (ex. configure --with-mb=EUC_JP)
+	* EUC_KR の regression test 追加
+	  ("Soonmyung. Hong" <hong@lunaris.hanmesoft.co.kr> さん提供)
+	* EUC_JP の regression test に character_length(), position(),
+	  substring(), octet_length() 追加
+	* regress.sh の SystemV における非互換性修正
+	* toupper(), tolower() に 8bit 文字が渡ると落ちることが
+	  あるのを修正
+
+  1998/3/25 PostgreSQL 6.3.1 リリース、MB PL2 が取り込まれる
 
   1998/3/10 PL2 をリリース
 	* EUC_JP, EUC_CN, MULE_INTERNAL の regression test を追加

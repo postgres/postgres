@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.32 1998/03/15 08:07:01 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.33 1998/04/27 17:08:28 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,8 @@
 #include "postgres.h"
 #include "utils/palloc.h"
 #include "utils/builtins.h"		/* where function declarations go */
+
+#include "regex/pg_wchar.h"
 
 /*****************************************************************************
  *	 USER I/O ROUTINES														 *
@@ -198,17 +200,51 @@ textout(text *vlena)
 
 /*
  * textlen -
- *	  returns the actual length of a text*
+ *	  returns the logical length of a text*
  *	   (which is less than the VARSIZE of the text*)
  */
 int32
 textlen(text *t)
 {
+#ifdef MB
+	unsigned char *s;
+	int len, l, wl;
+#endif
+        
 	if (!PointerIsValid(t))
 		elog(ERROR, "Null input to textlen");
 
+#ifdef MB
+	len = 0;
+	s = VARDATA(t);
+	l = VARSIZE(t) - VARHDRSZ;
+	while (l > 0) {
+	  wl = pg_mblen(s);
+	  l -= wl;
+	  s += wl;
+	  len++;
+	}
+	return(len);
+#else
 	return (VARSIZE(t) - VARHDRSZ);
+#endif
+	
 }	/* textlen() */
+
+/*
+ * textoctetlen -
+ *	  returns the physical length of a text*
+ *	   (which is less than the VARSIZE of the text*)
+ */
+int32
+textoctetlen(text *t)
+{
+	if (!PointerIsValid(t))
+		elog(ERROR, "Null input to textoctetlen");
+
+	return (VARSIZE(t) - VARHDRSZ);
+
+}	/* textoctetlen() */
 
 /*
  * textcat -
@@ -278,17 +314,27 @@ textcat(text *t1, text *t2)
  *
  * Note that the arguments operate on octet length,
  *	so not aware of multi-byte character sets.
+ *
+ * Added multi-byte support.
+ * - Tatsuo Ishii 1998-4-21
  */
 text *
 text_substr(text *string, int32 m, int32 n)
 {
 	text	   *ret;
 	int			len;
+#ifdef MB
+	int i;
+	char *p;
+#endif
 
 	if ((string == (text *) NULL) || (m <= 0))
 		return string;
 
 	len = VARSIZE(string) - VARHDRSZ;
+#ifdef MB
+	len = pg_mbstrlen_with_len(VARDATA(string),len);
+#endif
 
 	/* m will now become a zero-based starting position */
 	if (m > len)
@@ -303,6 +349,17 @@ text_substr(text *string, int32 m, int32 n)
 			n = (len - m);
 	}
 
+#ifdef MB
+	p = VARDATA(string);
+	for (i=0;i<m;i++) {
+	  p += pg_mblen(p);
+	}
+	m = p - VARDATA(string);
+	for (i=0;i<n;i++) {
+	  p += pg_mblen(p);
+	}
+	n = p - (VARDATA(string) + m);
+#endif
 	ret = (text *) palloc(VARHDRSZ + n);
 	VARSIZE(ret) = VARHDRSZ + n;
 
@@ -317,6 +374,9 @@ text_substr(text *string, int32 m, int32 n)
  *	  Implements the SQL92 POSITION() function.
  *	  Ref: A Guide To The SQL Standard, Date & Darwen, 1997
  * - thomas 1997-07-27
+ *
+ * Added multi-byte support.
+ * - Tatsuo Ishii 1998-4-21
  */
 int32
 textpos(text *t1, text *t2)
@@ -326,8 +386,11 @@ textpos(text *t1, text *t2)
 				p;
 	int			len1,
 				len2;
-	char	   *p1,
+	pg_wchar	   *p1,
 			   *p2;
+#ifdef MB
+	pg_wchar	*ps1, *ps2;
+#endif
 
 	if (!PointerIsValid(t1) || !PointerIsValid(t2))
 		return (0);
@@ -337,19 +400,36 @@ textpos(text *t1, text *t2)
 
 	len1 = (VARSIZE(t1) - VARHDRSZ);
 	len2 = (VARSIZE(t2) - VARHDRSZ);
+#ifdef MB
+	ps1 = p1 = (pg_wchar *) palloc((len1 + 1)*sizeof(pg_wchar));
+	(void)pg_mb2wchar_with_len((unsigned char *)VARDATA(t1),p1,len1);
+	len1 = pg_wchar_strlen(p1);
+	ps2 = p2 = (pg_wchar *) palloc((len2 + 1)*sizeof(pg_wchar));
+	(void)pg_mb2wchar_with_len((unsigned char *)VARDATA(t2),p2,len2);
+	len2 = pg_wchar_strlen(p2);
+#else
 	p1 = VARDATA(t1);
 	p2 = VARDATA(t2);
+#endif
 	pos = 0;
 	px = (len1 - len2);
 	for (p = 0; p <= px; p++)
 	{
+#ifdef MB
+		if ((*p2 == *p1) && (pg_wchar_strncmp(p1, p2, len2) == 0))
+#else
 		if ((*p2 == *p1) && (strncmp(p1, p2, len2) == 0))
+#endif
 		{
 			pos = p + 1;
 			break;
 		};
 		p1++;
 	};
+#ifdef MB
+	pfree(ps1);
+	pfree(ps2);
+#endif
 	return (pos);
 }	/* textpos() */
 

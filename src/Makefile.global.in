@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.40 1998/04/27 14:54:05 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.41 1998/04/27 17:07:22 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -147,6 +147,11 @@ X_CFLAGS= @X_CFLAGS@
 X_LIBS= @X_LIBS@
 X11_LIBS= -lX11 @X_EXTRA_LIBS@
 
+#
+# enable multi-byte support
+# choose one of:
+# EUC_JP,EHC_CN,EUC_KR,EUC_TW,UNICODE,MULE_INTERNAL
+MB=@MB@
 
 ##############################################################################
 #

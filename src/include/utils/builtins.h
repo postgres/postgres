@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.40 1998/04/26 04:09:25 momjian Exp $
+ * $Id: builtins.h,v 1.41 1998/04/27 17:09:28 scrappy Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -400,6 +400,7 @@ extern bool bpchargt(char *arg1, char *arg2);
 extern bool bpcharge(char *arg1, char *arg2);
 extern int32 bpcharcmp(char *arg1, char *arg2);
 extern int32 bpcharlen(char *arg);
+extern int32 bpcharoctetlen(char *arg);
 extern uint32 hashbpchar(struct varlena * key);
 
 extern char *varcharin(char *s, int dummy, int16 atttypmod);
@@ -412,6 +413,7 @@ extern bool varchargt(char *arg1, char *arg2);
 extern bool varcharge(char *arg1, char *arg2);
 extern int32 varcharcmp(char *arg1, char *arg2);
 extern int32 varcharlen(char *arg);
+extern int32 varcharoctetlen(char *arg);
 extern uint32 hashvarchar(struct varlena * key);
 
 /* varlena.c */
@@ -425,6 +427,7 @@ extern bool text_le(text *arg1, text *arg2);
 extern bool text_gt(text *arg1, text *arg2);
 extern bool text_ge(text *arg1, text *arg2);
 extern int32 textlen(text *arg);
+extern int32 textoctetlen(text *arg);
 extern int32 textpos(text *arg1, text *arg2);
 extern text *text_substr(text *string, int32 m, int32 n);
 

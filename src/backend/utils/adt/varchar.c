@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.29 1998/02/26 04:37:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.30 1998/04/27 17:08:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,8 @@
 char	   *convertstr(char *, int, int);
 
 #endif
+
+#include "regex/pg_wchar.h"
 
 /*
  * CHAR() and VARCHAR() types are part of the ANSI SQL standard. CHAR()
@@ -214,6 +216,31 @@ bcTruelen(char *arg)
 int32
 bpcharlen(char *arg)
 {
+#ifdef MB
+	unsigned char *s;
+	int len, l, wl;
+#endif
+	if (!PointerIsValid(arg))
+		elog(ERROR, "Bad (null) char() external representation", NULL);
+#ifdef MB
+	l = bcTruelen(arg);
+	len = 0;
+	s = VARDATA(arg);
+	while (l > 0) {
+	  wl = pg_mblen(s);
+	  l -= wl;
+	  s += wl;
+	  len++;
+	}
+	return(len);
+#else
+	return (bcTruelen(arg));
+#endif
+}
+
+int32
+bpcharoctetlen(char *arg)
+{
 	if (!PointerIsValid(arg))
 		elog(ERROR, "Bad (null) char() external representation", NULL);
 
@@ -354,9 +381,34 @@ bpcharcmp(char *arg1, char *arg2)
 int32
 varcharlen(char *arg)
 {
+#ifdef MB
+	unsigned char *s;
+	int len, l, wl;
+#endif
 	if (!PointerIsValid(arg))
 		elog(ERROR, "Bad (null) varchar() external representation", NULL);
 
+#ifdef MB
+	len = 0;
+	s = VARDATA(arg);
+	l = VARSIZE(arg) - VARHDRSZ;
+	while (l > 0) {
+	  wl = pg_mblen(s);
+	  l -= wl;
+	  s += wl;
+	  len++;
+	}
+	return(len);
+#else
+	return (VARSIZE(arg) - VARHDRSZ);
+#endif
+}
+
+int32
+varcharoctetlen(char *arg)
+{
+	if (!PointerIsValid(arg))
+		elog(ERROR, "Bad (null) varchar() external representation", NULL);
 	return (VARSIZE(arg) - VARHDRSZ);
 }
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.53 1998/04/27 04:08:07 momjian Exp $
+ * $Id: pg_proc.h,v 1.54 1998/04/27 17:08:41 scrappy Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -201,6 +201,8 @@ DATA(insert OID = 1257 (  textlen		   PGUID 11 f t f 1 f 23 "25" 100 0 1 0  foo 
 DESCR("length");
 DATA(insert OID = 1258 (  textcat		   PGUID 11 f t f 2 f 25 "25 25" 100 0 1 0	foo bar ));
 DESCR("concat");
+DATA(insert OID = 1377 (  textoctetlen		   PGUID 11 f t f 1 f 23 "25" 100 0 1 0  foo bar ));
+DESCR("octet length");
 DATA(insert OID =  84 (  boolne			   PGUID 11 f t f 2 f 16 "16 16" 100 0 0 100  foo bar ));
 DESCR("not equal");
 
@@ -1444,7 +1446,11 @@ DESCR("does not match regex., case-insensitive");
 
 DATA(insert OID = 1251 (  bpcharlen		   PGUID 11 f t f 1 f 23 "1042" 100 0 0 100  foo bar ));
 DESCR("octet length");
+DATA(insert OID = 1378 (  bpcharoctetlen		   PGUID 11 f t f 1 f 23 "1042" 100 0 0 100  foo bar ));
+DESCR("octet length");
 DATA(insert OID = 1253 (  varcharlen	   PGUID 11 f t f 1 f 23 "1043" 100 0 0 100  foo bar ));
+DESCR("character length");
+DATA(insert OID = 1379 (  varcharoctetlen	   PGUID 11 f t f 1 f 23 "1043" 100 0 0 100  foo bar ));
 DESCR("octet length");
 
 DATA(insert OID = 1263 (  text_timespan    PGUID 11 f t f 1 f 1186 "25" 100 0 0 100  foo bar ));
@@ -1550,10 +1556,17 @@ DESCR("convert");
 DATA(insert OID = 1370 (  timestamp			 PGUID 14 f t f 1 f 1296 "1184" 100 0 0 100  "select datetime_stamp($1)" - ));
 DESCR("convert");
 DATA(insert OID = 1371 (  length			 PGUID 14 f t f 1 f   23   "25" 100 0 0 100  "select textlen($1)" - ));
-DESCR("octet length");
+DESCR("character length");
 DATA(insert OID = 1372 (  length			 PGUID 14 f t f 1 f   23   "1042" 100 0 0 100  "select bpcharlen($1)" - ));
-DESCR("octet length");
+DESCR("character length");
 DATA(insert OID = 1373 (  length			 PGUID 14 f t f 1 f   23   "1043" 100 0 0 100  "select varcharlen($1)" - ));
+DESCR("character length");
+
+DATA(insert OID = 1374 (  octet_length			 PGUID 14 f t f 1 f   23   "25" 100 0 0 100  "select textoctetlen($1)" - ));
+DESCR("octet length");
+DATA(insert OID = 1375 (  octet_length			 PGUID 14 f t f 1 f   23   "1042" 100 0 0 100  "select bpcharoctetlen($1)" - ));
+DESCR("octet length");
+DATA(insert OID = 1376 (  octet_length			 PGUID 14 f t f 1 f   23   "1043" 100 0 0 100  "select varcharoctetlen($1)" - ));
 DESCR("octet length");
 
 DATA(insert OID = 1380 (  date_part    PGUID 14 f t f 2 f  701 "25 1184" 100 0 0 100  "select datetime_part($1, $2)" - ));

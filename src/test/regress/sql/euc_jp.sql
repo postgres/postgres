@@ -13,3 +13,7 @@ select * from 計算機用語 where 分類コード like '_Z01_';
 select * from 計算機用語 where 分類コード like '_Z%';
 select * from 計算機用語 where 用語 ~ 'コンピュータ[デグ]';
 select * from 計算機用語 where 用語 ~* 'コンピュータ[デグ]';
+select *,character_length(用語) from 計算機用語;
+select *,octet_length(用語) from 計算機用語;
+select *,position('デ' in 用語) from 計算機用語;
+select *,substring(用語 from 10 for 4) from 計算機用語;

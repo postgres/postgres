@@ -1,7 +1,7 @@
 /*
  * misc conversion functions between pg_wchar and other encodings.
  * Tatsuo Ishii
- * $Id: utils.c,v 1.1 1998/03/15 07:38:39 scrappy Exp $
+ * $Id: utils.c,v 1.2 1998/04/27 17:07:53 scrappy Exp $
  */
 #include <regex/pg_wchar.h>
 /*
@@ -324,25 +324,151 @@ static void pg_mule2wchar_with_len(const unsigned char *from, pg_wchar *to, int 
   *to = 0;
 }
 
+static int pg_euc_mblen(const unsigned char *s)
+{
+  int len;
+
+  if (*s == SS2) {
+    len = 2;
+  } else if (*s == SS3) {
+    len = 3;
+  } else if (*s & 0x80) {
+    len = 2;
+  } else {
+    len = 1;
+  }
+  return(len);
+}
+
+static int pg_eucjp_mblen(const unsigned char *s)
+{
+  return(pg_euc_mblen(s));
+}
+
+static int pg_euckr_mblen(const unsigned char *s)
+{
+  return(pg_euc_mblen(s));
+}
+
+static int pg_eucch_mblen(const unsigned char *s)
+{
+  int len;
+
+  if (*s == SS2) {
+    len = 3;
+  } else if (*s == SS3) {
+    len = 3;
+  } else if (*s & 0x80) {
+    len = 2;
+  } else {
+    len = 1;
+  }
+  return(len);
+}
+
+static int pg_euccn_mblen(const unsigned char *s)
+{
+  int len;
+
+  if (*s == SS2) {
+    len = 4;
+  } else if (*s == SS3) {
+    len = 3;
+  } else if (*s & 0x80) {
+    len = 2;
+  } else {
+    len = 1;
+  }
+  return(len);
+}
+
+static int pg_utf_mblen(const unsigned char *s)
+{
+  int len = 1;
+
+  if ((*s & 0x80) == 0) {
+    len = 1;
+  } else if ((*s & 0xe0) == 0xc0) {
+    len = 2;
+  } else if ((*s & 0xe0) == 0xe0) {
+    len = 3;
+  }
+  return(len);
+}
+
+static int pg_mule_mblen(const unsigned char *s)
+{
+  int len;
+
+  if (IS_LC1(*s)) {
+    len = 2;
+  } else if (IS_LCPRV1(*s)) {
+    len = 3;
+  } else if (IS_LC2(*s)) {
+    len = 3;
+  } else if (IS_LCPRV2(*s)) {
+    len = 4;
+  } else {	/* assume ASCII */
+    len = 1;
+  }
+  return(len);
+}
+
 typedef struct {
-  void	(*mb2wchar)();
-  void	(*mb2wchar_with_len)();
+  void	(*mb2wchar)();		/* convert a multi-byte string to a wchar */
+  void	(*mb2wchar_with_len)();	/* convert a multi-byte string to a wchar 
+				   with a limited length */
+  int	(*mblen)();		/* returns the length of a multi-byte word */
 } pg_wchar_tbl;
 
 static pg_wchar_tbl pg_wchar_table[] = {
-  {pg_eucjp2wchar, pg_eucjp2wchar_with_len},
-  {pg_eucch2wchar, pg_eucch2wchar_with_len},
-  {pg_euckr2wchar, pg_euckr2wchar_with_len},
-  {pg_euccn2wchar, pg_euccn2wchar_with_len},
-  {pg_utf2wchar, pg_utf2wchar_with_len},
-  {pg_mule2wchar, pg_mule2wchar_with_len}};
+  {pg_eucjp2wchar, pg_eucjp2wchar_with_len, pg_eucjp_mblen},
+  {pg_eucch2wchar, pg_eucch2wchar_with_len, pg_eucch_mblen},
+  {pg_euckr2wchar, pg_euckr2wchar_with_len, pg_euckr_mblen},
+  {pg_euccn2wchar, pg_euccn2wchar_with_len, pg_euccn_mblen},
+  {pg_utf2wchar, pg_utf2wchar_with_len, pg_utf_mblen},
+  {pg_mule2wchar, pg_mule2wchar_with_len, pg_mule_mblen}};
 
+/* convert a multi-byte string to a wchar */
 void pg_mb2wchar(const unsigned char *from, pg_wchar *to)
 {
   (*pg_wchar_table[MB].mb2wchar)(from,to);
 }
 
+/* convert a multi-byte string to a wchar with a limited length */
 void pg_mb2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 {
   (*pg_wchar_table[MB].mb2wchar_with_len)(from,to,len);
+}
+
+/* returns the byte length of a multi-byte word */
+int pg_mblen(const unsigned char *mbstr)
+{
+  return((*pg_wchar_table[MB].mblen)(mbstr));
+}
+
+/* returns the length (counted as a wchar) of a multi-byte string */
+int pg_mbstrlen(const unsigned char *mbstr)
+{
+  int len = 0;
+  while (*mbstr) {
+    mbstr += pg_mblen(mbstr);
+    len++;
+  }
+  return(len);
+}
+
+/* returns the length (counted as a wchar) of a multi-byte string 
+   (not necessarily  NULL terminated) */
+int pg_mbstrlen_with_len(const unsigned char *mbstr, int limit)
+{
+  int len = 0;
+  int l;
+  while (*mbstr && limit > 0) {
+    l = pg_mblen(mbstr);
+    limit -= l;
+    mbstr += l;
+    len++;
+  }
+  return(len);
 }
