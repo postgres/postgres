@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.13 1997/09/01 05:53:31 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.14 1997/09/04 13:24:26 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,6 +133,7 @@ static ScanKeyword ScanKeywords[] = {
 	{ "outer",		OUTERJOIN	},
         { "position",		POSITION	},
         { "privileges",		PRIVILEGES	},
+        { "procedure",		PROCEDURE	},
 	{ "public",		PUBLIC		},
 	{ "purge",		PURGE		},
 	{ "recipe",		RECIPE		},
@@ -160,6 +161,7 @@ static ScanKeyword ScanKeywords[] = {
 	{ "to",			TO		},
 	{ "transaction",	TRANSACTION	},
 	{ "trailing",		TRAILING	},
+	{ "trigger",		TRIGGER		},
 	{ "trim",		TRIM		},
 	{ "type",		P_TYPE		},
 	{ "union",		UNION		},

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.41 1997/09/01 06:00:35 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.42 1997/09/04 13:24:25 vadim Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -107,7 +107,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 %type <node>	stmt,
 	AddAttrStmt, ClosePortalStmt,
 	CopyStmt, CreateStmt, CreateSeqStmt, DefineStmt, DestroyStmt,
-	ExtendStmt, FetchStmt,	GrantStmt,
+	ExtendStmt, FetchStmt,	GrantStmt, CreateTrigStmt, DropTrigStmt, 
 	IndexStmt, MoveStmt, ListenStmt, OptimizableStmt,
         ProcedureStmt, PurgeStmt,
 	RecipeStmt, RemoveAggrStmt, RemoveOperStmt, RemoveFuncStmt, RemoveStmt,
@@ -119,9 +119,9 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 %type <str>	txname
 %type <node>	SubSelect
 %type <str>	join_clause, join_type, join_outer, join_spec
-%type <boolean>	join_qual
+%type <boolean>	join_qual, TriggerActionTime, TriggerForSpec
 
-%type <str>	datetime
+%type <str>	datetime, TriggerEvents, TriggerFuncArg
 
 %type <str>	relation_name, copy_file_name, copy_delimiter, def_name,
 	database_name, access_method_clause, access_method, attr_name,
@@ -136,7 +136,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 	SpecialRuleRelation
 
 %type <str>	privileges, operation_commalist, grantee
-%type <chr>	operation
+%type <chr>	operation, TriggerOneEvent
 
 %type <list>	stmtblock, stmtmulti,
 	relation_name_list, OptTableElementList, tableElementList, 
@@ -147,7 +147,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 	sort_clause, sortby_list, index_params, index_list, name_list, 
 	from_clause, from_list, opt_array_bounds, nest_array_bounds,
 	expr_list, default_expr_list, attrs, res_target_list, res_target_list2,
-	def_list, opt_indirection, group_clause, groupby_list
+	def_list, opt_indirection, group_clause, groupby_list, TriggerFuncArgs
 
 %type <list>	union_clause, select_list
 %type <list>	join_list
@@ -217,10 +217,10 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 	MERGE, MINUTEINTERVAL, MONTHINTERVAL, MOVE,
 	NATURAL, NEW, NONE, NOT, NOTHING, NOTIFY, NOTNULL,
 	OIDS, ON, OPERATOR, OPTION, OR, ORDER, OUTERJOIN,
-	PNULL, POSITION, PRIVILEGES, PUBLIC, PURGE, P_TYPE,
+	PNULL, POSITION, PRIVILEGES, PROCEDURE, PUBLIC, PURGE, P_TYPE,
 	RENAME, REPLACE, RESET, RETRIEVE, RETURNS, REVOKE, RIGHT, ROLLBACK, RULE,
 	SECONDINTERVAL, SELECT, SET, SETOF, SHOW, STDIN, STDOUT, STORE, SUBSTRING,
-	TABLE, TIME, TO, TRAILING, TRANSACTION, TRIM,
+	TABLE, TIME, TO, TRAILING, TRANSACTION, TRIGGER, TRIM,
 	UNION, UNIQUE, UPDATE, USING, VACUUM, VALUES,
 	VERBOSE, VERSION, VIEW, WHERE, WITH, WORK, YEARINTERVAL, ZONE
 %token	EXECUTE, RECIPE, EXPLAIN, LIKE, SEQUENCE
@@ -278,9 +278,11 @@ stmt :	  AddAttrStmt
 	| CopyStmt
 	| CreateStmt
 	| CreateSeqStmt
+	| CreateTrigStmt
 	| ClusterStmt
 	| DefineStmt
 	| DestroyStmt
+	| DropTrigStmt
 	| ExtendStmt
 	| ExplainStmt
 	| FetchStmt
@@ -712,6 +714,95 @@ OptSeqElem:	IDENT NumConst
 		}
 	;
 
+
+/*****************************************************************************
+ *
+ *	QUERIES :
+ *		CREATE TRIGGER ...
+ *		DROP TRIGGER ...
+ *
+ *****************************************************************************/
+
+CreateTrigStmt: CREATE TRIGGER name TriggerActionTime TriggerEvents ON
+		relation_name TriggerForSpec EXECUTE PROCEDURE 
+		name '(' TriggerFuncArgs ')'
+		{
+		    CreateTrigStmt *n = makeNode(CreateTrigStmt);
+		    n->trigname = $3;
+		    n->relname = $7;
+		    n->funcname = $11;
+		    n->args = $13;
+		    n->before = $4;
+		    n->row = $8;
+		    memcpy (n->actions, $5, 4);
+		    $$ = (Node *)n;
+		}
+	;
+
+TriggerActionTime:	BEFORE	{ $$ = true; }
+		|	AFTER	{ $$ = false; }
+	;
+
+TriggerEvents:	TriggerOneEvent	
+			{
+				char *e = palloc (4);
+				e[0] = $1; e[1] = 0; $$ = e;
+			}
+		| TriggerOneEvent OR TriggerOneEvent
+			{
+				char *e = palloc (4);
+				e[0] = $1; e[1] = $3; e[2] = 0; $$ = e;
+			}
+		| TriggerOneEvent OR TriggerOneEvent OR TriggerOneEvent
+			{
+				char *e = palloc (4);
+				e[0] = $1; e[1] = $3; e[2] = $5; e[3] = 0; 
+				$$ = e;
+			}
+	;
+
+TriggerOneEvent:	INSERT	{ $$ = 'i'; }
+		|	DELETE	{ $$ = 'd'; }
+		|	UPDATE	{ $$ = 'u'; }
+	;
+
+TriggerForSpec:	FOR name name
+		{
+			if ( strcmp ($2, "each") != 0 )
+				elog (WARN, "parser: syntax error near %s", $2);
+			if ( strcmp ($3, "row") == 0 )
+				$$ = true;
+			else if ( strcmp ($3, "statement") == 0 )
+				$$ = false;
+			else
+				elog (WARN, "parser: syntax error near %s", $3);
+		}
+	;
+
+TriggerFuncArgs: TriggerFuncArg
+		{ $$ = lcons($1, NIL); }
+	|  TriggerFuncArgs ',' TriggerFuncArg
+		{ $$ = lappend($1, $3); }
+	|  /* EMPTY */	{ $$ = NIL; }
+	;
+
+TriggerFuncArg:	ICONST
+			{
+				char *s = (char *) palloc (256);
+				sprintf (s, "%d", $1);
+				$$ = s;
+			}
+		| Sconst	{  $$ = $1; }
+	;
+
+DropTrigStmt:	DROP TRIGGER name ON relation_name
+		{
+		    DropTrigStmt *n = makeNode(DropTrigStmt);
+		    n->trigname = $3;
+		    n->relname = $5;
+		    $$ = (Node *) n;
+		}
+	;
 
 /*****************************************************************************
  *
