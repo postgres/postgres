@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.52 2001/08/10 18:57:39 tgl Exp $
+ * $Id: indexing.h,v 1.53 2001/08/21 16:36:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
 #define Num_pg_inherits_indices		1
 #define Num_pg_language_indices		2
 #define Num_pg_largeobject_indices	1
-#define Num_pg_opclass_indices		3
+#define Num_pg_opclass_indices		2
 #define Num_pg_operator_indices		2
 #define Num_pg_proc_indices			2
 #define Num_pg_relcheck_indices		1
@@ -47,9 +47,9 @@
 /*
  * Names of indices on system catalogs
  */
-#define AccessMethodOpidIndex		"pg_amop_opid_index"
-#define AccessMethodStrategyIndex	"pg_amop_strategy_index"
-#define AccessProcedureIndex		"pg_amproc_am_opcl_procnum_index"
+#define AccessMethodOperatorIndex	"pg_amop_opc_opr_index"
+#define AccessMethodStrategyIndex	"pg_amop_opc_strategy_index"
+#define AccessMethodProcedureIndex	"pg_amproc_opc_procnum_index"
 #define AggregateNameTypeIndex		"pg_aggregate_name_type_index"
 #define AggregateOidIndex			"pg_aggregate_oid_index"
 #define AmNameIndex					"pg_am_name_index"
@@ -70,8 +70,7 @@
 #define LanguageNameIndex			"pg_language_name_index"
 #define LanguageOidIndex			"pg_language_oid_index"
 #define LargeObjectLOidPNIndex		"pg_largeobject_loid_pn_index"
-#define OpclassDeftypeIndex			"pg_opclass_deftype_index"
-#define OpclassNameIndex			"pg_opclass_name_index"
+#define OpclassAmNameIndex			"pg_opclass_am_name_index"
 #define OpclassOidIndex				"pg_opclass_oid_index"
 #define OperatorNameIndex			"pg_operator_oprname_l_r_k_index"
 #define OperatorOidIndex			"pg_operator_oid_index"
@@ -155,9 +154,9 @@ DECLARE_UNIQUE_INDEX(pg_aggregate_name_type_index on pg_aggregate using btree(ag
 DECLARE_UNIQUE_INDEX(pg_aggregate_oid_index on pg_aggregate using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_am_name_index on pg_am using btree(amname name_ops));
 DECLARE_UNIQUE_INDEX(pg_am_oid_index on pg_am using btree(oid oid_ops));
-DECLARE_UNIQUE_INDEX(pg_amop_opid_index on pg_amop using btree(amopclaid oid_ops, amopopr oid_ops, amopid oid_ops));
-DECLARE_UNIQUE_INDEX(pg_amop_strategy_index on pg_amop using btree(amopid oid_ops, amopclaid oid_ops, amopstrategy int2_ops));
-DECLARE_UNIQUE_INDEX(pg_amproc_am_opcl_procnum_index on pg_amproc using btree(amid oid_ops, amopclaid oid_ops, amprocnum int2_ops));
+DECLARE_UNIQUE_INDEX(pg_amop_opc_opr_index on pg_amop using btree(amopclaid oid_ops, amopopr oid_ops));
+DECLARE_UNIQUE_INDEX(pg_amop_opc_strategy_index on pg_amop using btree(amopclaid oid_ops, amopstrategy int2_ops));
+DECLARE_UNIQUE_INDEX(pg_amproc_opc_procnum_index on pg_amproc using btree(amopclaid oid_ops, amprocnum int2_ops));
 DECLARE_UNIQUE_INDEX(pg_attrdef_adrelid_adnum_index on pg_attrdef using btree(adrelid oid_ops, adnum int2_ops));
 DECLARE_UNIQUE_INDEX(pg_attribute_relid_attnam_index on pg_attribute using btree(attrelid oid_ops, attname name_ops));
 DECLARE_UNIQUE_INDEX(pg_attribute_relid_attnum_index on pg_attribute using btree(attrelid oid_ops, attnum int2_ops));
@@ -175,9 +174,7 @@ DECLARE_UNIQUE_INDEX(pg_inherits_relid_seqno_index on pg_inherits using btree(in
 DECLARE_UNIQUE_INDEX(pg_language_name_index on pg_language using btree(lanname name_ops));
 DECLARE_UNIQUE_INDEX(pg_language_oid_index on pg_language using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_largeobject_loid_pn_index on pg_largeobject using btree(loid oid_ops, pageno int4_ops));
-/* This column needs to allow multiple zero entries, but is in the cache */
-DECLARE_INDEX(pg_opclass_deftype_index on pg_opclass using btree(opcdeftype oid_ops));
-DECLARE_UNIQUE_INDEX(pg_opclass_name_index on pg_opclass using btree(opcname name_ops));
+DECLARE_UNIQUE_INDEX(pg_opclass_am_name_index on pg_opclass using btree(opcamid oid_ops, opcname name_ops));
 DECLARE_UNIQUE_INDEX(pg_opclass_oid_index on pg_opclass using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_operator_oid_index on pg_operator using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_operator_oprname_l_r_k_index on pg_operator using btree(oprname name_ops, oprleft oid_ops, oprright oid_ops, oprkind char_ops));

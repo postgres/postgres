@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.81 2001/08/10 18:57:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.82 2001/08/21 16:36:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,9 +36,9 @@ char	   *Name_pg_aggregate_indices[Num_pg_aggregate_indices] =
 char	   *Name_pg_am_indices[Num_pg_am_indices] =
 {AmNameIndex, AmOidIndex};
 char	   *Name_pg_amop_indices[Num_pg_amop_indices] =
-{AccessMethodOpidIndex, AccessMethodStrategyIndex};
+{AccessMethodOperatorIndex, AccessMethodStrategyIndex};
 char	   *Name_pg_amproc_indices[Num_pg_amproc_indices] =
-{AccessProcedureIndex};
+{AccessMethodProcedureIndex};
 char	   *Name_pg_attr_indices[Num_pg_attr_indices] =
 {AttributeRelidNameIndex, AttributeRelidNumIndex};
 char	   *Name_pg_attrdef_indices[Num_pg_attrdef_indices] =
@@ -58,7 +58,7 @@ char	   *Name_pg_language_indices[Num_pg_language_indices] =
 char	   *Name_pg_largeobject_indices[Num_pg_largeobject_indices] =
 {LargeObjectLOidPNIndex};
 char	   *Name_pg_opclass_indices[Num_pg_opclass_indices] =
-{OpclassDeftypeIndex, OpclassNameIndex, OpclassOidIndex};
+{OpclassAmNameIndex, OpclassOidIndex};
 char	   *Name_pg_operator_indices[Num_pg_operator_indices] =
 {OperatorOidIndex, OperatorNameIndex};
 char	   *Name_pg_proc_indices[Num_pg_proc_indices] =

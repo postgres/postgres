@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_index.h,v 1.23 2001/08/10 18:57:40 tgl Exp $
+ * $Id: pg_index.h,v 1.24 2001/08/21 16:36:05 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -28,35 +28,21 @@
 
 /* ----------------
  *		pg_index definition.  cpp turns this into
- *		typedef struct FormData_pg_index.  The oid of the index relation
- *		is stored in indexrelid; the oid of the indexed relation is stored
- *		in indrelid.
+ *		typedef struct FormData_pg_index.
  * ----------------
- */
-
-/*
- * it seems that all variable length fields should go at the _end_,
- * because the system cache routines only copy the fields up to the
- * first variable length field.  so I moved indislossy, indhaskeytype,
- * and indisunique before indpred.	--djm 8/20/96
  */
 CATALOG(pg_index) BKI_WITHOUT_OIDS
 {
 	Oid			indexrelid;		/* OID of the index */
 	Oid			indrelid;		/* OID of the relation it indexes */
-	Oid			indproc;		/* OID of function for functional index */
+	regproc		indproc;		/* OID of function for functional index */
 	int2vector	indkey;			/* column numbers of indexed attributes */
 	oidvector	indclass;		/* opclass identifiers */
-	bool		indisclustered;	/* unused */
-	bool		indislossy;		/* index hit must be reevaluated against heap
-								 * value to make sure it really is match;
-								 * typically used by hash.
-								 */
-	bool		indhaskeytype;	/* not used, originally added by GIST */
+	bool		indisclustered;	/* presently unused */
 	bool		indisunique;	/* is this a unique index? */
-	bool		indisprimary;	/* is this index for primary key */
+	bool		indisprimary;	/* is this index for primary key? */
 	Oid			indreference;	/* oid of index of referenced relation (ie
-								 * - this index for foreign key */
+								 * - this index for foreign key) */
 	/* VARIABLE LENGTH FIELD: */
 	text		indpred;		/* expression tree for predicate,
 								 * if a partial index */
@@ -73,18 +59,16 @@ typedef FormData_pg_index *Form_pg_index;
  *		compiler constants for pg_index
  * ----------------
  */
-#define Natts_pg_index					12
+#define Natts_pg_index					10
 #define Anum_pg_index_indexrelid		1
 #define Anum_pg_index_indrelid			2
 #define Anum_pg_index_indproc			3
 #define Anum_pg_index_indkey			4
 #define Anum_pg_index_indclass			5
 #define Anum_pg_index_indisclustered	6
-#define Anum_pg_index_indislossy		7
-#define Anum_pg_index_indhaskeytype		8
-#define Anum_pg_index_indisunique		9
-#define Anum_pg_index_indisprimary		10
-#define Anum_pg_index_indreference		11
-#define Anum_pg_index_indpred			12
+#define Anum_pg_index_indisunique		7
+#define Anum_pg_index_indisprimary		8
+#define Anum_pg_index_indreference		9
+#define Anum_pg_index_indpred			10
 
 #endif	 /* PG_INDEX_H */

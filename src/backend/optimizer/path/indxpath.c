@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.110 2001/08/06 18:09:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.111 2001/08/21 16:36:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,16 +46,16 @@
  *
  * Determine whether we should continue matching index keys in a clause.
  * Depends on if there are more to match or if this is a functional index.
- * In the latter case we stop after the first match since the there can
- * be only key (i.e. the function's return value) and the attributes in
+ * In the latter case we stop after the first match since there can
+ * be only 1 key (i.e. the function's return value) and the attributes in
  * keys list represent the arguments to the function.  -mer 3 Oct. 1991
  */
 #define DoneMatchingIndexKeys(indexkeys, index) \
 		(indexkeys[0] == 0 || \
 		 (index->indproc != InvalidOid))
 
-#define is_indexable_operator(clause,opclass,relam,indexkey_on_left) \
-	(indexable_operator(clause,opclass,relam,indexkey_on_left) != InvalidOid)
+#define is_indexable_operator(clause,opclass,indexkey_on_left) \
+	(indexable_operator(clause,opclass,indexkey_on_left) != InvalidOid)
 
 
 static void match_index_orclauses(RelOptInfo *rel, IndexOptInfo *index,
@@ -92,7 +92,7 @@ static bool match_index_to_operand(int indexkey, Var *operand,
 					   RelOptInfo *rel, IndexOptInfo *index);
 static bool function_index_operand(Expr *funcOpnd, RelOptInfo *rel,
 					   IndexOptInfo *index);
-static bool match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
+static bool match_special_index_operator(Expr *clause, Oid opclass,
 							 bool indexkey_on_left);
 static List *prefix_quals(Var *leftop, Oid expr_op,
 			 char *prefix, Pattern_Prefix_Status pstatus);
@@ -754,30 +754,28 @@ match_clause_to_indexkey(RelOptInfo *rel,
 		if (match_index_to_operand(indexkey, leftop, rel, index) &&
 			is_pseudo_constant_clause((Node *) rightop))
 		{
-			if (is_indexable_operator(clause, opclass, index->relam, true))
+			if (is_indexable_operator(clause, opclass, true))
 				return true;
 
 			/*
 			 * If we didn't find a member of the index's opclass, see
 			 * whether it is a "special" indexable operator.
 			 */
-			if (match_special_index_operator(clause, opclass, index->relam,
-											 true))
+			if (match_special_index_operator(clause, opclass, true))
 				return true;
 			return false;
 		}
 		if (match_index_to_operand(indexkey, rightop, rel, index) &&
 			is_pseudo_constant_clause((Node *) leftop))
 		{
-			if (is_indexable_operator(clause, opclass, index->relam, false))
+			if (is_indexable_operator(clause, opclass, false))
 				return true;
 
 			/*
 			 * If we didn't find a member of the index's opclass, see
 			 * whether it is a "special" indexable operator.
 			 */
-			if (match_special_index_operator(clause, opclass, index->relam,
-											 false))
+			if (match_special_index_operator(clause, opclass, false))
 				return true;
 			return false;
 		}
@@ -799,7 +797,7 @@ match_clause_to_indexkey(RelOptInfo *rel,
 			isIndexable =
 				!intMember(lfirsti(rel->relids), othervarnos) &&
 				!contain_noncachable_functions((Node *) rightop) &&
-				is_indexable_operator(clause, opclass, index->relam, true);
+				is_indexable_operator(clause, opclass, true);
 			freeList(othervarnos);
 			return isIndexable;
 		}
@@ -811,7 +809,7 @@ match_clause_to_indexkey(RelOptInfo *rel,
 			isIndexable =
 				!intMember(lfirsti(rel->relids), othervarnos) &&
 				!contain_noncachable_functions((Node *) leftop) &&
-				is_indexable_operator(clause, opclass, index->relam, false);
+				is_indexable_operator(clause, opclass, false);
 			freeList(othervarnos);
 			return isIndexable;
 		}
@@ -822,12 +820,11 @@ match_clause_to_indexkey(RelOptInfo *rel,
 
 /*
  * indexable_operator
- *	  Does a binary opclause contain an operator matching the index's
- *	  access method?
+ *	  Does a binary opclause contain an operator matching the index opclass?
  *
  * If the indexkey is on the right, what we actually want to know
  * is whether the operator has a commutator operator that matches
- * the index's access method.
+ * the index's opclass.
  *
  * We try both the straightforward match and matches that rely on
  * recognizing binary-compatible datatypes.  For example, if we have
@@ -844,8 +841,7 @@ match_clause_to_indexkey(RelOptInfo *rel,
  * OID is *not* commuted; it can be plugged directly into the given clause.
  */
 Oid
-indexable_operator(Expr *clause, Oid opclass, Oid relam,
-				   bool indexkey_on_left)
+indexable_operator(Expr *clause, Oid opclass, bool indexkey_on_left)
 {
 	Oid			expr_op = ((Oper *) clause->oper)->opno;
 	Oid			commuted_op,
@@ -865,8 +861,8 @@ indexable_operator(Expr *clause, Oid opclass, Oid relam,
 	if (commuted_op == InvalidOid)
 		return InvalidOid;
 
-	/* Done if the (commuted) operator is a member of the index's AM */
-	if (op_class(commuted_op, opclass, relam))
+	/* Done if the (commuted) operator is a member of the index's opclass */
+	if (op_in_opclass(commuted_op, opclass))
 		return expr_op;
 
 	/*
@@ -937,7 +933,7 @@ indexable_operator(Expr *clause, Oid opclass, Oid relam,
 			if (commuted_op == InvalidOid)
 				return InvalidOid;
 
-			if (op_class(commuted_op, opclass, relam))
+			if (op_in_opclass(commuted_op, opclass))
 				return new_op;
 		}
 	}
@@ -1171,8 +1167,8 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	Oid			pred_op,
 				clause_op,
 				test_op;
-	Oid			opclass_id;
-	StrategyNumber pred_strategy,
+	Oid			opclass_id = InvalidOid;
+	StrategyNumber pred_strategy = 0,
 				clause_strategy,
 				test_strategy;
 	Oper	   *test_oper;
@@ -1182,7 +1178,7 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	Relation	relation;
 	HeapScanDesc scan;
 	HeapTuple	tuple;
-	ScanKeyData entry[3];
+	ScanKeyData entry[1];
 	Form_pg_amop aform;
 	ExprContext *econtext;
 
@@ -1227,23 +1223,6 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	/*
 	 * 1. Find a "btree" strategy number for the pred_op
 	 *
-	 * XXX consider using syscache lookups for these searches.  Right
-	 * now we don't have caches that match all of the search conditions,
-	 * but reconsider it after upcoming restructuring of pg_opclass.
-	 */
-	relation = heap_openr(AccessMethodOperatorRelationName, AccessShareLock);
-
-	ScanKeyEntryInitialize(&entry[0], 0,
-						   Anum_pg_amop_amopid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(BTREE_AM_OID));
-
-	ScanKeyEntryInitialize(&entry[1], 0,
-						   Anum_pg_amop_amopopr,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(pred_op));
-
-	/*
 	 * The following assumes that any given operator will only be in a
 	 * single btree operator class.  This is true at least for all the
 	 * pre-defined operator classes.  If it isn't true, then whichever
@@ -1251,46 +1230,47 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	 * will be used to find the associated strategy numbers for the test.
 	 * --Nels, Jan '93
 	 */
-	scan = heap_beginscan(relation, false, SnapshotNow, 2, entry);
-	tuple = heap_getnext(scan, 0);
-	if (!HeapTupleIsValid(tuple))
+	ScanKeyEntryInitialize(&entry[0], 0x0,
+						   Anum_pg_amop_amopopr,
+						   F_OIDEQ,
+						   ObjectIdGetDatum(pred_op));
+
+	relation = heap_openr(AccessMethodOperatorRelationName, AccessShareLock);
+	scan = heap_beginscan(relation, false, SnapshotNow, 1, entry);
+	
+	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 	{
-		/* predicate operator isn't btree-indexable */
-		heap_endscan(scan);
-		heap_close(relation, AccessShareLock);
-		return false;
+		aform = (Form_pg_amop) GETSTRUCT(tuple);
+		if (opclass_is_btree(aform->amopclaid))
+		{
+			/* Get the predicate operator's btree strategy number (1 to 5) */
+			pred_strategy = (StrategyNumber) aform->amopstrategy;
+			Assert(pred_strategy >= 1 && pred_strategy <= 5);
+			/* Remember which operator class this strategy number came from */
+			opclass_id = aform->amopclaid;
+			break;
+		}
 	}
-	aform = (Form_pg_amop) GETSTRUCT(tuple);
-
-	/* Get the predicate operator's btree strategy number (1 to 5) */
-	pred_strategy = (StrategyNumber) aform->amopstrategy;
-	Assert(pred_strategy >= 1 && pred_strategy <= 5);
-
-	/* Remember which operator class this strategy number came from */
-	opclass_id = aform->amopclaid;
 
 	heap_endscan(scan);
+	heap_close(relation, AccessShareLock);
+
+	if (!OidIsValid(opclass_id))
+	{
+		/* predicate operator isn't btree-indexable */
+		return false;
+	}
 
 	/*
 	 * 2. From the same opclass, find a strategy num for the clause_op
 	 */
-	ScanKeyEntryInitialize(&entry[1], 0,
-						   Anum_pg_amop_amopclaid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(opclass_id));
-
-	ScanKeyEntryInitialize(&entry[2], 0,
-						   Anum_pg_amop_amopopr,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(clause_op));
-
-	scan = heap_beginscan(relation, false, SnapshotNow, 3, entry);
-	tuple = heap_getnext(scan, 0);
+	tuple = SearchSysCache(AMOPOPID,
+						   ObjectIdGetDatum(opclass_id),
+						   ObjectIdGetDatum(clause_op),
+						   0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
 		/* clause operator isn't btree-indexable, or isn't in this opclass */
-		heap_endscan(scan);
-		heap_close(relation, AccessShareLock);
 		return false;
 	}
 	aform = (Form_pg_amop) GETSTRUCT(tuple);
@@ -1299,7 +1279,7 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	clause_strategy = (StrategyNumber) aform->amopstrategy;
 	Assert(clause_strategy >= 1 && clause_strategy <= 5);
 
-	heap_endscan(scan);
+	ReleaseSysCache(tuple);
 
 	/*
 	 * 3. Look up the "test" strategy number in the implication table
@@ -1307,26 +1287,20 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	test_strategy = BT_implic_table[clause_strategy - 1][pred_strategy - 1];
 	if (test_strategy == 0)
 	{
-		heap_close(relation, AccessShareLock);
 		return false;			/* the implication cannot be determined */
 	}
 
 	/*
 	 * 4. From the same opclass, find the operator for the test strategy
 	 */
-	ScanKeyEntryInitialize(&entry[2], 0,
-						   Anum_pg_amop_amopstrategy,
-						   F_INT2EQ,
-						   Int16GetDatum(test_strategy));
-
-	scan = heap_beginscan(relation, false, SnapshotNow, 3, entry);
-	tuple = heap_getnext(scan, 0);
+	tuple = SearchSysCache(AMOPSTRATEGY,
+						   ObjectIdGetDatum(opclass_id),
+						   Int16GetDatum(test_strategy),
+						   0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
 		/* this probably shouldn't fail? */
 		elog(DEBUG, "pred_test_simple_clause: unknown test_op");
-		heap_endscan(scan);
-		heap_close(relation, AccessShareLock);
 		return false;
 	}
 	aform = (Form_pg_amop) GETSTRUCT(tuple);
@@ -1334,9 +1308,7 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	/* Get the test operator */
 	test_op = aform->amopopr;
 
-	heap_endscan(scan);
-
-	heap_close(relation, AccessShareLock);
+	ReleaseSysCache(tuple);
 
 	/*
 	 * 5. Evaluate the test
@@ -1681,7 +1653,7 @@ function_index_operand(Expr *funcOpnd, RelOptInfo *rel, IndexOptInfo *index)
  * Return 'true' if we can do something with it anyway.
  */
 static bool
-match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
+match_special_index_operator(Expr *clause, Oid opclass,
 							 bool indexkey_on_left)
 {
 	bool		isIndexable = false;
@@ -1806,8 +1778,8 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 		case OID_TEXT_ICLIKE_OP:
 		case OID_TEXT_REGEXEQ_OP:
 		case OID_TEXT_ICREGEXEQ_OP:
-			if (!op_class(find_operator(">=", TEXTOID), opclass, relam) ||
-				!op_class(find_operator("<", TEXTOID), opclass, relam))
+			if (!op_in_opclass(find_operator(">=", TEXTOID), opclass) ||
+				!op_in_opclass(find_operator("<", TEXTOID), opclass))
 				isIndexable = false;
 			break;
 
@@ -1815,8 +1787,8 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 		case OID_BPCHAR_ICLIKE_OP:
 		case OID_BPCHAR_REGEXEQ_OP:
 		case OID_BPCHAR_ICREGEXEQ_OP:
-			if (!op_class(find_operator(">=", BPCHAROID), opclass, relam) ||
-				!op_class(find_operator("<", BPCHAROID), opclass, relam))
+			if (!op_in_opclass(find_operator(">=", BPCHAROID), opclass) ||
+				!op_in_opclass(find_operator("<", BPCHAROID), opclass))
 				isIndexable = false;
 			break;
 
@@ -1824,8 +1796,8 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 		case OID_VARCHAR_ICLIKE_OP:
 		case OID_VARCHAR_REGEXEQ_OP:
 		case OID_VARCHAR_ICREGEXEQ_OP:
-			if (!op_class(find_operator(">=", VARCHAROID), opclass, relam) ||
-				!op_class(find_operator("<", VARCHAROID), opclass, relam))
+			if (!op_in_opclass(find_operator(">=", VARCHAROID), opclass) ||
+				!op_in_opclass(find_operator("<", VARCHAROID), opclass))
 				isIndexable = false;
 			break;
 
@@ -1833,24 +1805,24 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 		case OID_NAME_ICLIKE_OP:
 		case OID_NAME_REGEXEQ_OP:
 		case OID_NAME_ICREGEXEQ_OP:
-			if (!op_class(find_operator(">=", NAMEOID), opclass, relam) ||
-				!op_class(find_operator("<", NAMEOID), opclass, relam))
+			if (!op_in_opclass(find_operator(">=", NAMEOID), opclass) ||
+				!op_in_opclass(find_operator("<", NAMEOID), opclass))
 				isIndexable = false;
 			break;
 
 		case OID_INET_SUB_OP:
 		case OID_INET_SUBEQ_OP:
 			/* for SUB we actually need ">" not ">=", but this should do */
-			if (!op_class(find_operator(">=", INETOID), opclass, relam) ||
-				!op_class(find_operator("<=", INETOID), opclass, relam))
+			if (!op_in_opclass(find_operator(">=", INETOID), opclass) ||
+				!op_in_opclass(find_operator("<=", INETOID), opclass))
 				isIndexable = false;
 			break;
 
 		case OID_CIDR_SUB_OP:
 		case OID_CIDR_SUBEQ_OP:
 			/* for SUB we actually need ">" not ">=", but this should do */
-			if (!op_class(find_operator(">=", CIDROID), opclass, relam) ||
-				!op_class(find_operator("<=", CIDROID), opclass, relam))
+			if (!op_in_opclass(find_operator(">=", CIDROID), opclass) ||
+				!op_in_opclass(find_operator("<=", CIDROID), opclass))
 				isIndexable = false;
 			break;
 	}

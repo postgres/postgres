@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.64 2001/08/10 18:57:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.65 2001/08/21 16:36:05 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -27,6 +27,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_amop.h"
+#include "catalog/pg_amproc.h"
 #include "catalog/pg_group.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_inherits.h"
@@ -113,23 +114,33 @@ static struct cachedesc cacheinfo[] = {
 			0
 	}},
 	{AccessMethodOperatorRelationName,	/* AMOPOPID */
-		AccessMethodOpidIndex,
+		AccessMethodOperatorIndex,
 		0,
-		3,
+		2,
 		{
 			Anum_pg_amop_amopclaid,
 			Anum_pg_amop_amopopr,
-			Anum_pg_amop_amopid,
+			0,
 			0
 	}},
 	{AccessMethodOperatorRelationName,	/* AMOPSTRATEGY */
 		AccessMethodStrategyIndex,
 		0,
-		3,
+		2,
 		{
-			Anum_pg_amop_amopid,
 			Anum_pg_amop_amopclaid,
 			Anum_pg_amop_amopstrategy,
+			0,
+			0
+	}},
+	{AccessMethodProcedureRelationName,	/* AMPROCNUM */
+		AccessMethodProcedureIndex,
+		0,
+		2,
+		{
+			Anum_pg_amproc_amopclaid,
+			Anum_pg_amproc_amprocnum,
+			0,
 			0
 	}},
 	{AttributeRelationName,		/* ATTNAME */
@@ -152,22 +163,22 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{OperatorClassRelationName, /* CLADEFTYPE */
-		OpclassDeftypeIndex,
+	{OperatorClassRelationName, /* CLAAMNAME */
+		OpclassAmNameIndex,
 		0,
-		1,
+		2,
 		{
-			Anum_pg_opclass_opcdeftype,
-			0,
+			Anum_pg_opclass_opcamid,
+			Anum_pg_opclass_opcname,
 			0,
 			0
 	}},
-	{OperatorClassRelationName, /* CLANAME */
-		OpclassNameIndex,
+	{OperatorClassRelationName, /* CLAOID */
+		OpclassOidIndex,
 		0,
 		1,
 		{
-			Anum_pg_opclass_opcname,
+			ObjectIdAttributeNumber,
 			0,
 			0,
 			0

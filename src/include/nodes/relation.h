@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.57 2001/06/05 05:26:05 tgl Exp $
+ * $Id: relation.h,v 1.58 2001/08/21 16:36:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,7 +183,7 @@ typedef struct RelOptInfo
  *		tuples    - number of index tuples in index
  *		ncolumns  - number of columns in index
  *		nkeys     - number of keys used by index (input columns)
- *		classlist - List of PG_AMOPCLASS OIDs for the index
+ *		classlist - List of PG_OPCLASS OIDs for the index
  *		indexkeys - List of base-relation attribute numbers that are index keys
  *		ordering  - List of PG_OPERATOR OIDs which order the indexscan result
  *		relam     - the OID of the pg_am of the index
@@ -191,7 +191,6 @@ typedef struct RelOptInfo
  *		indproc   - OID of the function if a functional index, else 0
  *		indpred   - index predicate if a partial index, else NULL
  *		unique	  - true if index is unique
- *		lossy	  - true if index is lossy (may return non-matching tuples)
  *
  *		ncolumns and nkeys are the same except for a functional index,
  *		wherein ncolumns is 1 (the single function output) while nkeys
@@ -227,7 +226,6 @@ typedef struct IndexOptInfo
 	Oid			indproc;		/* if a functional index */
 	List	   *indpred;		/* if a partial index */
 	bool		unique;			/* if a unique index */
-	bool		lossy;			/* if a lossy index */
 } IndexOptInfo;
 
 /*

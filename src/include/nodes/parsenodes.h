@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.141 2001/08/16 20:38:55 tgl Exp $
+ * $Id: parsenodes.h,v 1.142 2001/08/21 16:36:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -500,7 +500,6 @@ typedef struct IndexStmt
 	char	   *relname;		/* name of relation to index on */
 	char	   *accessMethod;	/* name of access method (eg. btree) */
 	List	   *indexParams;	/* a list of IndexElem */
-	List	   *withClause;		/* a list of DefElem */
 	Node	   *whereClause;	/* qualification (partial-index predicate) */
 	List	   *rangetable;		/* range table for qual, filled in by
 								 * transformStmt() */

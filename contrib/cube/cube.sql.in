@@ -212,15 +212,18 @@ CREATE FUNCTION g_cube_same(cube, cube, opaque) RETURNS opaque
 
 
 -- register the default opclass for indexing
-INSERT INTO pg_opclass (opcname, opcdeftype)
-   SELECT 'gist_cube_ops', oid
-   FROM pg_type
-   WHERE typname = 'cube';
+INSERT INTO pg_opclass (opcamid, opcname, opcintype, opcdefault, opckeytype)
+    VALUES (
+        (SELECT oid FROM pg_am WHERE amname = 'gist'),
+        'gist_cube_ops',
+        (SELECT oid FROM pg_type WHERE typname = 'cube'),
+        true,
+        0);
 
 
 -- get the comparators for boxes and store them in a tmp table
 SELECT o.oid AS opoid, o.oprname
-INTO TABLE gist_cube_ops_tmp
+INTO TEMP TABLE gist_cube_ops_tmp
 FROM pg_operator o, pg_type t
 WHERE o.oprleft = t.oid and o.oprright = t.oid
    and t.typname = 'cube';
@@ -231,59 +234,75 @@ WHERE o.oprleft = t.oid and o.oprright = t.oid
 -- using the tmp table, generate the amop entries 
 
 -- cube_left
-INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
-   SELECT am.oid, opcl.oid, c.opoid, 1
-   FROM pg_am am, pg_opclass opcl, gist_cube_ops_tmp c
-   WHERE amname = 'gist' and opcname = 'gist_cube_ops' 
+INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
+   SELECT opcl.oid, 1, false, c.opoid
+   FROM pg_opclass opcl, gist_cube_ops_tmp c
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
+      and opcname = 'gist_cube_ops' 
       and c.oprname = '<<';
 
 -- cube_over_left
-INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
-   SELECT am.oid, opcl.oid, c.opoid, 2
-   FROM pg_am am, pg_opclass opcl, gist_cube_ops_tmp c
-   WHERE amname = 'gist' and opcname = 'gist_cube_ops' 
+INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
+   SELECT opcl.oid, 2, false, c.opoid
+   FROM pg_opclass opcl, gist_cube_ops_tmp c
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
+      and opcname = 'gist_cube_ops' 
       and c.oprname = '&<';
 
 -- cube_overlap
-INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
-   SELECT am.oid, opcl.oid, c.opoid, 3
-   FROM pg_am am, pg_opclass opcl, gist_cube_ops_tmp c
-   WHERE amname = 'gist' and opcname = 'gist_cube_ops' 
+INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
+   SELECT opcl.oid, 3, false, c.opoid
+   FROM pg_opclass opcl, gist_cube_ops_tmp c
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
+      and opcname = 'gist_cube_ops' 
       and c.oprname = '&&';
 
 -- cube_over_right
-INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
-   SELECT am.oid, opcl.oid, c.opoid, 4
-   FROM pg_am am, pg_opclass opcl, gist_cube_ops_tmp c
-   WHERE amname = 'gist' and opcname = 'gist_cube_ops' 
+INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
+   SELECT opcl.oid, 4, false, c.opoid
+   FROM pg_opclass opcl, gist_cube_ops_tmp c
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
+      and opcname = 'gist_cube_ops' 
       and c.oprname = '&>';
 
 -- cube_right
-INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
-   SELECT am.oid, opcl.oid, c.opoid, 5
-   FROM pg_am am, pg_opclass opcl, gist_cube_ops_tmp c
-   WHERE amname = 'gist' and opcname = 'gist_cube_ops' 
+INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
+   SELECT opcl.oid, 5, false, c.opoid
+   FROM pg_opclass opcl, gist_cube_ops_tmp c
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
+      and opcname = 'gist_cube_ops' 
       and c.oprname = '>>';
 
 -- cube_same
-INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
-   SELECT am.oid, opcl.oid, c.opoid, 6
-   FROM pg_am am, pg_opclass opcl, gist_cube_ops_tmp c
-   WHERE amname = 'gist' and opcname = 'gist_cube_ops' 
+INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
+   SELECT opcl.oid, 6, false, c.opoid
+   FROM pg_opclass opcl, gist_cube_ops_tmp c
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
+      and opcname = 'gist_cube_ops' 
       and c.oprname = '=';
 
 -- cube_contains
-INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
-   SELECT am.oid, opcl.oid, c.opoid, 7
-   FROM pg_am am, pg_opclass opcl, gist_cube_ops_tmp c
-   WHERE amname = 'gist' and opcname = 'gist_cube_ops' 
+INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
+   SELECT opcl.oid, 7, false, c.opoid
+   FROM pg_opclass opcl, gist_cube_ops_tmp c
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
+      and opcname = 'gist_cube_ops' 
       and c.oprname = '@';
 
 -- cube_contained
-INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
-   SELECT am.oid, opcl.oid, c.opoid, 8
-   FROM pg_am am, pg_opclass opcl, gist_cube_ops_tmp c
-   WHERE amname = 'gist' and opcname = 'gist_cube_ops' 
+INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
+   SELECT opcl.oid, 8, false, c.opoid
+   FROM pg_opclass opcl, gist_cube_ops_tmp c
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
+      and opcname = 'gist_cube_ops' 
       and c.oprname = '~';
 
 DROP TABLE gist_cube_ops_tmp;
@@ -292,46 +311,60 @@ DROP TABLE gist_cube_ops_tmp;
 -- add the entries to amproc for the support methods
 -- note the amprocnum numbers associated with each are specific!
 
-INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
-   SELECT am.oid, opcl.oid, pro.oid, 1
-   FROM pg_am am, pg_opclass opcl, pg_proc pro
-   WHERE  amname = 'gist' and opcname = 'gist_cube_ops'
+INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
+   SELECT opcl.oid, 1, pro.oid
+   FROM pg_opclass opcl, pg_proc pro
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
+      and opcname = 'gist_cube_ops'
       and proname = 'g_cube_consistent';
 
-INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
-   SELECT am.oid, opcl.oid, pro.oid, 2
-   FROM pg_am am, pg_opclass opcl, pg_proc pro
-   WHERE  amname = 'gist' and opcname = 'gist_cube_ops'
+INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
+   SELECT opcl.oid, 2, pro.oid
+   FROM pg_opclass opcl, pg_proc pro
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
+      and opcname = 'gist_cube_ops'
       and proname = 'g_cube_union';
 
-INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
-   SELECT am.oid, opcl.oid, pro.oid, 3
-   FROM pg_am am, pg_opclass opcl, pg_proc pro
-   WHERE  amname = 'gist' and opcname = 'gist_cube_ops'
+INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
+   SELECT opcl.oid, 3, pro.oid
+   FROM pg_opclass opcl, pg_proc pro
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
+      and opcname = 'gist_cube_ops'
       and proname = 'g_cube_compress';
 
-INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
-   SELECT am.oid, opcl.oid, pro.oid, 4
-   FROM pg_am am, pg_opclass opcl, pg_proc pro
-   WHERE  amname = 'gist' and opcname = 'gist_cube_ops'
+INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
+   SELECT opcl.oid, 4, pro.oid
+   FROM pg_opclass opcl, pg_proc pro
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
+      and opcname = 'gist_cube_ops'
       and proname = 'g_cube_decompress';
 
-INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
-   SELECT am.oid, opcl.oid, pro.oid, 5
-   FROM pg_am am, pg_opclass opcl, pg_proc pro
-   WHERE  amname = 'gist' and opcname = 'gist_cube_ops'
+INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
+   SELECT opcl.oid, 5, pro.oid
+   FROM pg_opclass opcl, pg_proc pro
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
+      and opcname = 'gist_cube_ops'
       and proname = 'g_cube_penalty';
 
-INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
-   SELECT am.oid, opcl.oid, pro.oid, 6
-   FROM pg_am am, pg_opclass opcl, pg_proc pro
-   WHERE  amname = 'gist' and opcname = 'gist_cube_ops'
+INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
+   SELECT opcl.oid, 6, pro.oid
+   FROM pg_opclass opcl, pg_proc pro
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
+      and opcname = 'gist_cube_ops'
       and proname = 'g_cube_picksplit';
 
-INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
-   SELECT am.oid, opcl.oid, pro.oid, 7
-   FROM pg_am am, pg_opclass opcl, pg_proc pro
-   WHERE  amname = 'gist' and opcname = 'gist_cube_ops'
+INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
+   SELECT opcl.oid, 7, pro.oid
+   FROM pg_opclass opcl, pg_proc pro
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
+      and opcname = 'gist_cube_ops'
       and proname = 'g_cube_same';
 
 END TRANSACTION;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.62 2001/06/22 19:16:23 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.63 2001/08/21 16:36:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,11 +19,11 @@
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
+
 
 /*****************************************************************************
  *	 USER I/O ROUTINES														 *
@@ -32,125 +32,102 @@
 /*
  *		regprocin		- converts "proname" or "proid" to proid
  *
+ *		We need to accept an OID for cases where the name is ambiguous.
+ *
  *		proid of '-' signifies unknown, for consistency with regprocout
  */
 Datum
 regprocin(PG_FUNCTION_ARGS)
 {
 	char	   *pro_name_or_oid = PG_GETARG_CSTRING(0);
-	HeapTuple	proctup;
-	HeapTupleData tuple;
 	RegProcedure result = InvalidOid;
+	int			matches = 0;
+	ScanKeyData skey[1];
 
 	if (pro_name_or_oid[0] == '-' && pro_name_or_oid[1] == '\0')
 		PG_RETURN_OID(InvalidOid);
 
-	if (!IsIgnoringSystemIndexes())
+	if (pro_name_or_oid[0] >= '0' &&
+		pro_name_or_oid[0] <= '9')
 	{
+		Oid			searchOid;
 
-		/*
-		 * we need to use the oid because there can be multiple entries
-		 * with the same name.	We accept int4eq_1323 and 1323.
-		 */
-		if (pro_name_or_oid[0] >= '0' &&
-			pro_name_or_oid[0] <= '9')
+		searchOid = DatumGetObjectId(DirectFunctionCall1(oidin,
+									 CStringGetDatum(pro_name_or_oid)));
+		result = (RegProcedure) GetSysCacheOid(PROCOID,
+											   ObjectIdGetDatum(searchOid),
+											   0, 0, 0);
+		if (!RegProcedureIsValid(result))
+			elog(ERROR, "No procedure with oid %s", pro_name_or_oid);
+		matches = 1;
+	}
+	else if (!IsIgnoringSystemIndexes())
+	{
+		Relation	hdesc;
+		Relation	idesc;
+		IndexScanDesc sd;
+		RetrieveIndexResult indexRes;
+		HeapTupleData tuple;
+		Buffer		buffer;
+
+		ScanKeyEntryInitialize(&skey[0], 0x0,
+							   (AttrNumber) 1,
+							   (RegProcedure) F_NAMEEQ,
+							   CStringGetDatum(pro_name_or_oid));
+
+		hdesc = heap_openr(ProcedureRelationName, AccessShareLock);
+		idesc = index_openr(ProcedureNameIndex);
+		sd = index_beginscan(idesc, false, 1, skey);
+
+		while ((indexRes = index_getnext(sd, ForwardScanDirection)))
 		{
-			result = (RegProcedure)
-				GetSysCacheOid(PROCOID,
-							   DirectFunctionCall1(oidin,
-									   CStringGetDatum(pro_name_or_oid)),
-							   0, 0, 0);
-			if (!RegProcedureIsValid(result))
-				elog(ERROR, "No procedure with oid %s", pro_name_or_oid);
-		}
-		else
-		{
-			Relation	hdesc;
-			Relation	idesc;
-			IndexScanDesc sd;
-			ScanKeyData skey[1];
-			RetrieveIndexResult indexRes;
-			Buffer		buffer;
-			int			matches = 0;
-
-			ScanKeyEntryInitialize(&skey[0],
-								   (bits16) 0x0,
-								   (AttrNumber) 1,
-								   (RegProcedure) F_NAMEEQ,
-								   CStringGetDatum(pro_name_or_oid));
-
-			hdesc = heap_openr(ProcedureRelationName, AccessShareLock);
-			idesc = index_openr(ProcedureNameIndex);
-
-			sd = index_beginscan(idesc, false, 1, skey);
-			while ((indexRes = index_getnext(sd, ForwardScanDirection)))
+			tuple.t_datamcxt = NULL;
+			tuple.t_data = NULL;
+			tuple.t_self = indexRes->heap_iptr;
+			heap_fetch(hdesc, SnapshotNow, &tuple, &buffer, sd);
+			pfree(indexRes);
+			if (tuple.t_data != NULL)
 			{
-				tuple.t_datamcxt = NULL;
-				tuple.t_data = NULL;
-				tuple.t_self = indexRes->heap_iptr;
-				heap_fetch(hdesc, SnapshotNow,
-						   &tuple,
-						   &buffer,
-						   sd);
-				pfree(indexRes);
-				if (tuple.t_data != NULL)
-				{
-					result = (RegProcedure) tuple.t_data->t_oid;
-					ReleaseBuffer(buffer);
-
-					if (++matches > 1)
-						break;
-				}
+				result = (RegProcedure) tuple.t_data->t_oid;
+				ReleaseBuffer(buffer);
+				if (++matches > 1)
+					break;
 			}
-
-			index_endscan(sd);
-			index_close(idesc);
-			heap_close(hdesc, AccessShareLock);
-
-			if (matches > 1)
-				elog(ERROR, "There is more than one procedure named %s.\n\tSupply the pg_proc oid inside single quotes.", pro_name_or_oid);
-			else if (matches == 0)
-				elog(ERROR, "No procedure with name %s", pro_name_or_oid);
 		}
+
+		index_endscan(sd);
+		index_close(idesc);
+		heap_close(hdesc, AccessShareLock);
 	}
 	else
 	{
 		Relation	proc;
 		HeapScanDesc procscan;
-		ScanKeyData key;
-		bool		isnull;
+		HeapTuple	proctup;
 
-		proc = heap_openr(ProcedureRelationName, AccessShareLock);
-		ScanKeyEntryInitialize(&key,
-							   (bits16) 0,
-							   (AttrNumber) 1,
+		ScanKeyEntryInitialize(&skey[0], 0x0,
+							   (AttrNumber) Anum_pg_proc_proname,
 							   (RegProcedure) F_NAMEEQ,
 							   CStringGetDatum(pro_name_or_oid));
 
-		procscan = heap_beginscan(proc, 0, SnapshotNow, 1, &key);
-		if (!HeapScanIsValid(procscan))
+		proc = heap_openr(ProcedureRelationName, AccessShareLock);
+		procscan = heap_beginscan(proc, 0, SnapshotNow, 1, skey);
+
+		while (HeapTupleIsValid(proctup = heap_getnext(procscan, 0)))
 		{
-			heap_close(proc, AccessShareLock);
-			elog(ERROR, "regprocin: could not begin scan of %s",
-				 ProcedureRelationName);
-			PG_RETURN_OID(InvalidOid);
+			result = proctup->t_data->t_oid;
+			if (++matches > 1)
+				break;
 		}
-		proctup = heap_getnext(procscan, 0);
-		if (HeapTupleIsValid(proctup))
-		{
-			result = (RegProcedure) heap_getattr(proctup,
-												 ObjectIdAttributeNumber,
-												 RelationGetDescr(proc),
-												 &isnull);
-			if (isnull)
-				elog(ERROR, "regprocin: null procedure %s", pro_name_or_oid);
-		}
-		else
-			elog(ERROR, "No procedure with name %s", pro_name_or_oid);
 
 		heap_endscan(procscan);
 		heap_close(proc, AccessShareLock);
 	}
+
+	if (matches > 1)
+		elog(ERROR, "There is more than one procedure named %s.\n\tSupply the pg_proc oid inside single quotes.", pro_name_or_oid);
+	else if (matches == 0)
+		elog(ERROR, "No procedure with name %s", pro_name_or_oid);
 
 	PG_RETURN_OID(result);
 }
@@ -174,66 +151,22 @@ regprocout(PG_FUNCTION_ARGS)
 		PG_RETURN_CSTRING(result);
 	}
 
-	if (!IsBootstrapProcessingMode())
+	proctup = SearchSysCache(PROCOID,
+							 ObjectIdGetDatum(proid),
+							 0, 0, 0);
+
+	if (HeapTupleIsValid(proctup))
 	{
-		proctup = SearchSysCache(PROCOID,
-								 ObjectIdGetDatum(proid),
-								 0, 0, 0);
+		char	   *s;
 
-		if (HeapTupleIsValid(proctup))
-		{
-			char	   *s;
-
-			s = NameStr(((Form_pg_proc) GETSTRUCT(proctup))->proname);
-			StrNCpy(result, s, NAMEDATALEN);
-			ReleaseSysCache(proctup);
-		}
-		else
-		{
-			result[0] = '-';
-			result[1] = '\0';
-		}
+		s = NameStr(((Form_pg_proc) GETSTRUCT(proctup))->proname);
+		StrNCpy(result, s, NAMEDATALEN);
+		ReleaseSysCache(proctup);
 	}
 	else
 	{
-		Relation	proc;
-		HeapScanDesc procscan;
-		ScanKeyData key;
-
-		proc = heap_openr(ProcedureRelationName, AccessShareLock);
-		ScanKeyEntryInitialize(&key,
-							   (bits16) 0,
-							   (AttrNumber) ObjectIdAttributeNumber,
-							   (RegProcedure) F_INT4EQ,
-							   ObjectIdGetDatum(proid));
-
-		procscan = heap_beginscan(proc, 0, SnapshotNow, 1, &key);
-		if (!HeapScanIsValid(procscan))
-		{
-			heap_close(proc, AccessShareLock);
-			elog(ERROR, "regprocout: could not begin scan of %s",
-				 ProcedureRelationName);
-		}
-		proctup = heap_getnext(procscan, 0);
-		if (HeapTupleIsValid(proctup))
-		{
-			char	   *s;
-			bool		isnull;
-
-			s = (char *) heap_getattr(proctup, 1,
-									  RelationGetDescr(proc), &isnull);
-			if (!isnull)
-				StrNCpy(result, s, NAMEDATALEN);
-			else
-				elog(ERROR, "regprocout: null procedure %u", proid);
-		}
-		else
-		{
-			result[0] = '-';
-			result[1] = '\0';
-		}
-		heap_endscan(procscan);
-		heap_close(proc, AccessShareLock);
+		result[0] = '-';
+		result[1] = '\0';
 	}
 
 	PG_RETURN_CSTRING(result);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: gist.h,v 1.30 2001/08/10 14:34:28 momjian Exp $
+ * $Id: gist.h,v 1.31 2001/08/21 16:36:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,8 +73,8 @@ typedef struct GISTSTATE
 	FmgrInfo	picksplitFn[INDEX_MAX_KEYS];
 	FmgrInfo	equalFn[INDEX_MAX_KEYS];
 	bool		attbyval[INDEX_MAX_KEYS];
-	bool		haskeytype;
-	bool		keytypbyval;
+	bool		haskeytype[INDEX_MAX_KEYS];
+	bool		keytypbyval[INDEX_MAX_KEYS];
 } GISTSTATE;
 
 

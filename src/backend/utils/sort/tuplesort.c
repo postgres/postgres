@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.17 2001/06/02 19:01:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.18 2001/08/21 16:36:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2055,7 +2055,7 @@ SelectSortFunction(Oid sortOperator,
 {
 	Relation	relation;
 	HeapScanDesc scan;
-	ScanKeyData skey[3];
+	ScanKeyData skey[1];
 	HeapTuple	tuple;
 	Form_pg_operator optup;
 	Oid			opclass = InvalidOid;
@@ -2068,25 +2068,20 @@ SelectSortFunction(Oid sortOperator,
 	 * If the operator is registered the same way in multiple opclasses,
 	 * assume we can use the associated comparator function from any one.
 	 */
-	relation = heap_openr(AccessMethodOperatorRelationName,
-						  AccessShareLock);
-
-	ScanKeyEntryInitialize(&skey[0], 0,
-						   Anum_pg_amop_amopid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(BTREE_AM_OID));
-
-	ScanKeyEntryInitialize(&skey[1], 0,
+	ScanKeyEntryInitialize(&skey[0], 0x0,
 						   Anum_pg_amop_amopopr,
 						   F_OIDEQ,
 						   ObjectIdGetDatum(sortOperator));
 
-	scan = heap_beginscan(relation, false, SnapshotNow, 2, skey);
+	relation = heap_openr(AccessMethodOperatorRelationName, AccessShareLock);
+	scan = heap_beginscan(relation, false, SnapshotNow, 1, skey);
 
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 	{
 		Form_pg_amop aform = (Form_pg_amop) GETSTRUCT(tuple);
 
+		if (!opclass_is_btree(aform->amopclaid))
+			continue;
 		if (aform->amopstrategy == BTLessStrategyNumber)
 		{
 			opclass = aform->amopclaid;
@@ -2107,39 +2102,18 @@ SelectSortFunction(Oid sortOperator,
 	if (OidIsValid(opclass))
 	{
 		/* Found a suitable opclass, get its comparator support function */
-		relation = heap_openr(AccessMethodProcedureRelationName,
-							  AccessShareLock);
-
-		ScanKeyEntryInitialize(&skey[0], 0,
-							   Anum_pg_amproc_amid,
-							   F_OIDEQ,
-							   ObjectIdGetDatum(BTREE_AM_OID));
-
-		ScanKeyEntryInitialize(&skey[1], 0,
-							   Anum_pg_amproc_amopclaid,
-							   F_OIDEQ,
-							   ObjectIdGetDatum(opclass));
-
-		ScanKeyEntryInitialize(&skey[2], 0,
-							   Anum_pg_amproc_amprocnum,
-							   F_INT2EQ,
-							   Int16GetDatum(BTORDER_PROC));
-
-		scan = heap_beginscan(relation, false, SnapshotNow, 3, skey);
-
-		*sortFunction = InvalidOid;
-
-		if (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+		tuple = SearchSysCache(AMPROCNUM,
+							   ObjectIdGetDatum(opclass),
+							   Int16GetDatum(BTORDER_PROC),
+							   0, 0);
+		if (HeapTupleIsValid(tuple))
 		{
 			Form_pg_amproc aform = (Form_pg_amproc) GETSTRUCT(tuple);
 			*sortFunction = aform->amproc;
-		}
-
-		heap_endscan(scan);
-		heap_close(relation, AccessShareLock);
-
-		if (RegProcedureIsValid(*sortFunction))
+			ReleaseSysCache(tuple);
+			Assert(RegProcedureIsValid(*sortFunction));
 			return;
+		}
 	}
 
 	/*
@@ -2158,7 +2132,7 @@ SelectSortFunction(Oid sortOperator,
 		*kind = SORTFUNC_REVLT;
 	else
 		*kind = SORTFUNC_LT;
-	*sortFunction =  optup->oprcode;
+	*sortFunction = optup->oprcode;
 	ReleaseSysCache(tuple);
 
 	Assert(RegProcedureIsValid(*sortFunction));

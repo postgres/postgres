@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.140 2001/08/10 18:57:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.141 2001/08/21 16:36:01 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1902,12 +1902,12 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	indexInfo->ii_FuncOid = InvalidOid;
 	indexInfo->ii_Unique = true;
 
-	classObjectId[0] = OID_OPS_OID;
-	classObjectId[1] = INT4_OPS_OID;
+	classObjectId[0] = OID_BTREE_OPS_OID;
+	classObjectId[1] = INT4_BTREE_OPS_OID;
 
 	toast_idxid = index_create(toast_relname, toast_idxname, indexInfo,
 							   BTREE_AM_OID, classObjectId,
-							   false, true, true);
+							   true, true);
 
 	/*
 	 * Update toast rel's pg_class entry to show that it has an index.

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.56 2001/06/14 01:09:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.57 2001/08/21 16:36:05 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -16,6 +16,8 @@
 #include "postgres.h"
 
 #include "access/tupmacs.h"
+#include "catalog/pg_amop.h"
+#include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_shadow.h"
@@ -30,19 +32,48 @@
 /*				---------- AMOP CACHES ----------						 */
 
 /*
- * op_class
+ * op_in_opclass
  *
- *		Return t iff operator 'opno' is in operator class 'opclass' for
- *		access method 'amopid'.
+ *		Return t iff operator 'opno' is in operator class 'opclass'.
  */
 bool
-op_class(Oid opno, Oid opclass, Oid amopid)
+op_in_opclass(Oid opno, Oid opclass)
 {
 	return SearchSysCacheExists(AMOPOPID,
 								ObjectIdGetDatum(opclass),
 								ObjectIdGetDatum(opno),
-								ObjectIdGetDatum(amopid),
-								0);
+								0, 0);
+}
+
+/*
+ * op_requires_recheck
+ *
+ *		Return t if operator 'opno' requires a recheck when used as a
+ *		member of opclass 'opclass' (ie, this opclass is lossy for this
+ *		operator).
+ *
+ * Caller should already have verified that opno is a member of opclass,
+ * therefore we raise an error if the tuple is not found.
+ */
+bool
+op_requires_recheck(Oid opno, Oid opclass)
+{
+	HeapTuple	tp;
+	Form_pg_amop amop_tup;
+	bool		result;
+
+	tp = SearchSysCache(AMOPOPID,
+						ObjectIdGetDatum(opclass),
+						ObjectIdGetDatum(opno),
+						0, 0);
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "op_requires_recheck: op %u is not a member of opclass %u",
+			 opno, opclass);
+	amop_tup = (Form_pg_amop) GETSTRUCT(tp);
+
+	result = amop_tup->amopreqcheck;
+	ReleaseSysCache(tp);
+	return result;
 }
 
 /*				---------- ATTRIBUTE CACHES ----------					 */
@@ -221,6 +252,33 @@ get_atttypetypmod(Oid relid, AttrNumber attnum,
 
 /*		watch this space...
  */
+
+/*				---------- OPCLASS CACHE ----------						 */
+
+/*
+ * opclass_is_btree
+ *
+ *		Returns TRUE iff the specified opclass is associated with the
+ *		btree index access method.
+ */
+bool
+opclass_is_btree(Oid opclass)
+{
+	HeapTuple	tp;
+	Form_pg_opclass cla_tup;
+	bool		result;
+
+	tp = SearchSysCache(CLAOID,
+						ObjectIdGetDatum(opclass),
+						0, 0, 0);
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for opclass %u", opclass);
+	cla_tup = (Form_pg_opclass) GETSTRUCT(tp);
+
+	result = (cla_tup->opcamid == BTREE_AM_OID);
+	ReleaseSysCache(tp);
+	return result;
+}
 
 /*				---------- OPERATOR CACHE ----------					 */
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.195 2001/08/16 20:38:53 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.196 2001/08/21 16:36:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -995,7 +995,6 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 		index->relname = stmt->relname;
 		index->accessMethod = "btree";
 		index->indexParams = NIL;
-		index->withClause = NIL;
 		index->whereClause = NULL;
 
 		foreach(keys, constraint->keys)

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.20 2001/07/16 05:06:57 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.21 2001/08/21 16:35:59 tgl Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -401,15 +401,14 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
   <para>
    The following query shows all defined operator classes:
 <programlisting>
-SELECT am.amname AS acc_name,
+SELECT am.amname AS acc_method,
        opc.opcname AS ops_name,
        opr.oprname AS ops_comp
-    FROM pg_am am, pg_amop amop,
-         pg_opclass opc, pg_operator opr
-    WHERE amop.amopid = am.oid AND
+    FROM pg_am am, pg_opclass opc, pg_amop amop, pg_operator opr
+    WHERE opc.opcamid = am.oid AND
           amop.amopclaid = opc.oid AND
           amop.amopopr = opr.oid
-    ORDER BY acc_name, ops_name, ops_comp;
+    ORDER BY acc_method, ops_name, ops_comp
 </programlisting>
   </para>
  </sect1>

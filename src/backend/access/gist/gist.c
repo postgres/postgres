@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.81 2001/08/10 14:34:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.82 2001/08/21 16:35:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +20,10 @@
 #include "access/heapam.h"
 #include "catalog/index.h"
 #include "catalog/pg_index.h"
+#include "catalog/pg_opclass.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "access/xlogutils.h"
 
@@ -1377,10 +1379,9 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 
 	for (i = FirstOffsetNumber; i <= maxoff && sum_grow; i = OffsetNumberNext(i))
 	{
+		IndexTuple itup = (IndexTuple) PageGetItem(p, PageGetItemId(p, i));
 		sum_grow=0;
 		for (j=0; j<r->rd_att->natts; j++) {
-			IndexTuple itup = (IndexTuple) PageGetItem(p, PageGetItemId(p, i));
-
 			datum = index_getattr(itup, j+1, r->rd_att, &IsNull);
 			gistdentryinit(giststate, j, &entry, datum, r, p, i, ATTSIZE( datum, r, j+1, IsNull ), FALSE, IsNull);
 			gistpenalty( giststate, j, &entry, IsNull, &identry[j], isnull[j], &usize); 
@@ -1548,20 +1549,32 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 	RegProcedure consistent_proc,
 				union_proc,
 				compress_proc,
-				decompress_proc;
-	RegProcedure penalty_proc,
+				decompress_proc,
+				penalty_proc,
 				picksplit_proc,
 				equal_proc;
-	HeapTuple	htup;
+	HeapTuple	itup;
+	HeapTuple	ctup;
 	Form_pg_index itupform;
-	Oid			indexrelid;
+	Form_pg_opclass opclassform;
+	Oid			inputtype;
+	Oid			keytype;
 	int i;
 
-        if (index->rd_att->natts >= INDEX_MAX_KEYS)
-                elog(ERROR, "initGISTstate: numberOfAttributes %d > %d",
-                         index->rd_att->natts, INDEX_MAX_KEYS);
+	if (index->rd_att->natts > INDEX_MAX_KEYS)
+		elog(ERROR, "initGISTstate: numberOfAttributes %d > %d",
+			 index->rd_att->natts, INDEX_MAX_KEYS);
 
-	for(i=0; i<index->rd_att->natts; i++) {
+	itup = SearchSysCache(INDEXRELID,
+						  ObjectIdGetDatum(RelationGetRelid(index)),
+						  0, 0, 0);
+	if (!HeapTupleIsValid(itup))
+		elog(ERROR, "initGISTstate: index %u not found",
+			 RelationGetRelid(index));
+	itupform = (Form_pg_index) GETSTRUCT(itup);
+
+	for (i = 0; i < index->rd_att->natts; i++)
+	{
 		consistent_proc = index_getprocid(index, i+1, GIST_CONSISTENT_PROC	);
 		union_proc 	= index_getprocid(index, i+1, GIST_UNION_PROC		);
 		compress_proc 	= index_getprocid(index, i+1, GIST_COMPRESS_PROC	);
@@ -1577,37 +1590,35 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 		fmgr_info(picksplit_proc, 	&((giststate->picksplitFn)[i]) 		);
 		fmgr_info(equal_proc, 		&((giststate->equalFn)[i]) 		);
 
-		giststate->attbyval[i] = 
-			index->rd_att->attrs[i]->attbyval;
+		/* Check opclass entry to see if there is a keytype */
+		ctup = SearchSysCache(CLAOID,
+							  ObjectIdGetDatum(itupform->indclass[i]),
+							  0, 0, 0);
+		if (!HeapTupleIsValid(ctup))
+			elog(ERROR, "cache lookup failed for opclass %u",
+				 itupform->indclass[i]);
+		opclassform = (Form_pg_opclass) GETSTRUCT(ctup);
+		inputtype = opclassform->opcintype;
+		keytype = opclassform->opckeytype;
+		ReleaseSysCache(ctup);
+
+		if (OidIsValid(keytype))
+		{
+			/* index column type is (possibly) different from input data */
+			giststate->haskeytype[i] = true;
+			giststate->attbyval[i] = get_typbyval(inputtype);
+			giststate->keytypbyval[i] = index->rd_att->attrs[i]->attbyval;
+		}
+		else
+		{
+			/* Normal case where index column type is same as input data */
+			giststate->haskeytype[i] = false;
+			giststate->attbyval[i] = index->rd_att->attrs[i]->attbyval;
+			giststate->keytypbyval[i] = false;	/* not actually used */
+		}
 	}
 
-	/* see if key type is different from type of attribute being indexed */
-	htup = SearchSysCache(INDEXRELID,
-						  ObjectIdGetDatum(RelationGetRelid(index)),
-						  0, 0, 0);
-	if (!HeapTupleIsValid(htup))
-		elog(ERROR, "initGISTstate: index %u not found",
-			 RelationGetRelid(index));
-	itupform = (Form_pg_index) GETSTRUCT(htup);
-	giststate->haskeytype = itupform->indhaskeytype;
-	indexrelid = itupform->indexrelid;
-	ReleaseSysCache(htup);
-
-	if (giststate->haskeytype)
-	{
-		/* key type is different -- is it byval? */
-		htup = SearchSysCache(ATTNUM,
-							  ObjectIdGetDatum(indexrelid),
-							  UInt16GetDatum(FirstOffsetNumber),
-							  0, 0);
-		if (!HeapTupleIsValid(htup))
-			elog(ERROR, "initGISTstate: no attribute tuple %u %d",
-				 indexrelid, FirstOffsetNumber);
-		giststate->keytypbyval = (((Form_pg_attribute) htup)->attbyval);
-		ReleaseSysCache(htup);
-	}
-	else
-		giststate->keytypbyval = FALSE;
+	ReleaseSysCache(itup);
 }
 
 #ifdef GIST_PAGEADDITEM
@@ -1670,7 +1681,7 @@ gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 	GISTENTRY  *dep;
 
 	gistentryinit(*e, k, r, pg, o, b, l);
-	if (giststate->haskeytype)
+	if (giststate->haskeytype[nkey])
 	{
 		if ( b && ! isNull ) {
 			dep = (GISTENTRY *)
@@ -1698,7 +1709,7 @@ gistcentryinit(GISTSTATE *giststate, int nkey,
 	GISTENTRY  *cep;
 
 	gistentryinit(*e, k, r, pg, o, b, l);
-	if (giststate->haskeytype)
+	if (giststate->haskeytype[nkey])
 	{
 		if ( ! isNull ) {
 			cep = (GISTENTRY *)
@@ -1792,7 +1803,7 @@ gistpenalty( GISTSTATE *giststate, int attno,
 		FunctionCall3(&giststate->penaltyFn[attno],
 				  PointerGetDatum(key1),
 				  PointerGetDatum(key2),
-				  PointerGetDatum(&penalty));
+				  PointerGetDatum(penalty));
 }
  
 #ifdef GISTDEBUG

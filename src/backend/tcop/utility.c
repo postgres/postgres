@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.115 2001/07/16 05:06:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.116 2001/08/21 16:36:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -538,7 +538,6 @@ ProcessUtility(Node *parsetree,
 							stmt->idxname,		/* index name */
 							stmt->accessMethod, /* am name */
 							stmt->indexParams,	/* parameters */
-							stmt->withClause,
 							stmt->unique,
 							stmt->primary,
 							(Expr *) stmt->whereClause,

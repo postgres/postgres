@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.37 2001/08/10 18:57:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.38 2001/08/21 16:36:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,7 +246,7 @@ Boot_DeclareIndexStmt:
 					DefineIndex(LexIDStr($5),
 								LexIDStr($3),
 								LexIDStr($7),
-								$9, NIL, 0, 0, 0, NIL);
+								$9, false, false, NULL, NIL);
 					do_end();
 				}
 		;
@@ -259,7 +259,7 @@ Boot_DeclareUniqueIndexStmt:
 					DefineIndex(LexIDStr($6),
 								LexIDStr($4),
 								LexIDStr($8),
-								$10, NIL, 1, 0, 0, NIL);
+								$10, true, false, NULL, NIL);
 					do_end();
 				}
 		;

@@ -13,13 +13,13 @@ CREATE TABLE test__int( a int[] );
 SELECT count(*) from test__int WHERE a && '{23,50}';
 SELECT count(*) from test__int WHERE a @ '{23,50}';
 
-CREATE INDEX text_idx on test__int using gist ( a gist__int_ops ) with ( islossy );
+CREATE INDEX text_idx on test__int using gist ( a gist__int_ops );
 
 SELECT count(*) from test__int WHERE a && '{23,50}';
 SELECT count(*) from test__int WHERE a @ '{23,50}';
 
 drop index text_idx;
-CREATE INDEX text_idx on test__int using gist ( a gist__intbig_ops ) with ( islossy );
+CREATE INDEX text_idx on test__int using gist ( a gist__intbig_ops );
 
 SELECT count(*) from test__int WHERE a && '{23,50}';
 SELECT count(*) from test__int WHERE a @ '{23,50}';

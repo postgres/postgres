@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.144 2001/08/16 20:38:53 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.145 2001/08/21 16:36:02 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -133,16 +133,10 @@ _outIndexStmt(StringInfo str, IndexStmt *node)
 	_outToken(str, node->accessMethod);
 	appendStringInfo(str, " :indexParams ");
 	_outNode(str, node->indexParams);
-
-	appendStringInfo(str, " :withClause ");
-	_outNode(str, node->withClause);
-
 	appendStringInfo(str, " :whereClause ");
 	_outNode(str, node->whereClause);
-
 	appendStringInfo(str, " :rangetable ");
 	_outNode(str, node->rangetable);
-
 	appendStringInfo(str, " :unique %s :primary %s ",
 					 booltostr(node->unique),
 					 booltostr(node->primary));

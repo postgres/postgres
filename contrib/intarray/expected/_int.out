@@ -17,7 +17,7 @@ SELECT count(*) from test__int WHERE a @ '{23,50}';
     12
 (1 row)
 
-CREATE INDEX text_idx on test__int using gist ( a gist__int_ops ) with ( islossy );
+CREATE INDEX text_idx on test__int using gist ( a gist__int_ops );
 SELECT count(*) from test__int WHERE a && '{23,50}';
  count 
 -------
@@ -31,7 +31,7 @@ SELECT count(*) from test__int WHERE a @ '{23,50}';
 (1 row)
 
 drop index text_idx;
-CREATE INDEX text_idx on test__int using gist ( a gist__intbig_ops ) with ( islossy );
+CREATE INDEX text_idx on test__int using gist ( a gist__intbig_ops );
 SELECT count(*) from test__int WHERE a && '{23,50}';
  count 
 -------

@@ -61,10 +61,6 @@ SELECT	ctid, pg_am.amcostestimate
 FROM	pg_am 
 WHERE	pg_am.amcostestimate != 0 AND 
 	NOT EXISTS(SELECT * FROM pg_proc AS t1 WHERE t1.oid = pg_am.amcostestimate);
-SELECT	ctid, pg_amop.amopid 
-FROM	pg_amop 
-WHERE	pg_amop.amopid != 0 AND 
-	NOT EXISTS(SELECT * FROM pg_am AS t1 WHERE t1.oid = pg_amop.amopid);
 SELECT	ctid, pg_amop.amopclaid 
 FROM	pg_amop 
 WHERE	pg_amop.amopclaid != 0 AND 
@@ -73,10 +69,6 @@ SELECT	ctid, pg_amop.amopopr
 FROM	pg_amop 
 WHERE	pg_amop.amopopr != 0 AND 
 	NOT EXISTS(SELECT * FROM pg_operator AS t1 WHERE t1.oid = pg_amop.amopopr);
-SELECT	ctid, pg_amproc.amid 
-FROM	pg_amproc 
-WHERE	pg_amproc.amid != 0 AND 
-	NOT EXISTS(SELECT * FROM pg_am AS t1 WHERE t1.oid = pg_amproc.amid);
 SELECT	ctid, pg_amproc.amopclaid 
 FROM	pg_amproc 
 WHERE	pg_amproc.amopclaid != 0 AND 
@@ -121,10 +113,14 @@ SELECT	ctid, pg_index.indrelid
 FROM	pg_index 
 WHERE	pg_index.indrelid != 0 AND 
 	NOT EXISTS(SELECT * FROM pg_class AS t1 WHERE t1.oid = pg_index.indrelid);
-SELECT	ctid, pg_opclass.opcdeftype 
+SELECT	ctid, pg_opclass.opcamid 
 FROM	pg_opclass 
-WHERE	pg_opclass.opcdeftype != 0 AND 
-	NOT EXISTS(SELECT * FROM pg_type AS t1 WHERE t1.oid = pg_opclass.opcdeftype);
+WHERE	pg_opclass.opcamid != 0 AND 
+	NOT EXISTS(SELECT * FROM pg_am AS t1 WHERE t1.oid = pg_opclass.opcamid);
+SELECT	ctid, pg_opclass.opcintype 
+FROM	pg_opclass 
+WHERE	pg_opclass.opcintype != 0 AND 
+	NOT EXISTS(SELECT * FROM pg_type AS t1 WHERE t1.oid = pg_opclass.opcintype);
 SELECT	ctid, pg_operator.oprleft 
 FROM	pg_operator 
 WHERE	pg_operator.oprleft != 0 AND 

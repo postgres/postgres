@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.68 2001/08/10 18:57:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.69 2001/08/21 16:36:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,7 +225,6 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName)
 				 indexInfo,
 				 Old_pg_index_relation_Form->relam,
 				 Old_pg_index_Form->indclass,
-				 Old_pg_index_Form->indislossy,
 				 Old_pg_index_Form->indisprimary,
 				 allowSystemTableMods);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.81 2001/06/22 19:16:23 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.82 2001/08/21 16:36:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "access/hash.h"
 #include "access/heapam.h"
 #include "access/valid.h"
+#include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "catalog/catname.h"
@@ -812,7 +813,7 @@ IndexScanOK(CatCache *cache, ScanKey cur_skey)
 			sd = heap_beginscan(rel, false, SnapshotNow, 1, &key);
 			ntp = heap_getnext(sd, 0);
 			if (!HeapTupleIsValid(ntp))
-				elog(ERROR, "SearchSelfReferences: %s not found in %s",
+				elog(ERROR, "IndexScanOK: %s not found in %s",
 					 IndexRelidIndex, RelationRelationName);
 			indexSelfOid = ntp->t_data->t_oid;
 			heap_endscan(sd);
@@ -821,6 +822,16 @@ IndexScanOK(CatCache *cache, ScanKey cur_skey)
 
 		/* Looking for pg_index_indexrelid_index? */
 		if (DatumGetObjectId(cur_skey[0].sk_argument) == indexSelfOid)
+			return false;
+	}
+	else if (cache->id == AMOPSTRATEGY ||
+			 cache->id == AMPROCNUM)
+	{
+		/* Looking for an OID or INT2 btree operator or function? */
+		Oid			lookup_oid = DatumGetObjectId(cur_skey[0].sk_argument);
+
+		if (lookup_oid == OID_BTREE_OPS_OID ||
+			lookup_oid == INT2_BTREE_OPS_OID)
 			return false;
 	}
 	else if (cache->id == OPEROID)
@@ -858,7 +869,7 @@ SearchCatCache(CatCache *cache,
 	MemoryContext oldcxt;
 
 	/*
-	 * one-time startup overhead
+	 * one-time startup overhead for each cache
 	 */
 	if (cache->cc_tupdesc == NULL)
 		CatalogCacheInitializeCache(cache);

@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.20 2001/08/10 18:57:32 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.21 2001/08/21 16:35:58 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -1048,13 +1048,6 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>unused</entry>
-     </row>
-
-     <row>
-      <entry>indislossy</entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>???</entry>
      </row>
 
      <row>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.160 2001/08/17 23:50:00 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.161 2001/08/21 16:36:00 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -71,9 +71,9 @@ static void InitializeAttributeOids(Relation indexRelation,
 						int numatts, Oid indexoid);
 static void AppendAttributeTuples(Relation indexRelation, int numatts);
 static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
-					IndexInfo *indexInfo,
-					Oid *classOids,
-					bool islossy, bool primary);
+								IndexInfo *indexInfo,
+								Oid *classOids,
+								bool primary);
 static Oid	IndexGetRelation(Oid indexId);
 static bool activate_index(Oid indexId, bool activate, bool inplace);
 
@@ -495,7 +495,6 @@ UpdateIndexRelation(Oid indexoid,
 					Oid heapoid,
 					IndexInfo *indexInfo,
 					Oid *classOids,
-					bool islossy,
 					bool primary)
 {
 	Form_pg_index indexForm;
@@ -535,8 +534,6 @@ UpdateIndexRelation(Oid indexoid,
 	indexForm->indrelid = heapoid;
 	indexForm->indproc = indexInfo->ii_FuncOid;
 	indexForm->indisclustered = false;			/* not used */
-	indexForm->indislossy = islossy;
-	indexForm->indhaskeytype = true;			/* used by GIST */
 	indexForm->indisunique = indexInfo->ii_Unique;
 	indexForm->indisprimary = primary;
 	memcpy((char *) &indexForm->indpred, (char *) predText, predLen);
@@ -671,7 +668,6 @@ index_create(char *heapRelationName,
 			 IndexInfo *indexInfo,
 			 Oid accessMethodObjectId,
 			 Oid *classObjectId,
-			 bool islossy,
 			 bool primary,
 			 bool allow_system_table_mods)
 {
@@ -779,7 +775,7 @@ index_create(char *heapRelationName,
 	 * ----------------
 	 */
 	UpdateIndexRelation(indexoid, heapoid, indexInfo,
-						classObjectId, islossy, primary);
+						classObjectId, primary);
 
 	/*
 	 * initialize the index strategy

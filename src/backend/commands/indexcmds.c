@@ -8,26 +8,19 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.56 2001/08/10 18:57:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.57 2001/08/21 16:36:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
-#include "catalog/pg_am.h"
-#include "catalog/pg_amop.h"
-#include "catalog/pg_database.h"
-#include "catalog/pg_index.h"
 #include "catalog/pg_opclass.h"
-#include "catalog/pg_operator.h"
-#include "catalog/pg_proc.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
@@ -36,7 +29,6 @@
 #include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
-#include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
@@ -57,7 +49,7 @@ static void NormIndexAttrs(IndexInfo *indexInfo, Oid *classOidP,
 			   char *accessMethodName, Oid accessMethodId);
 static Oid GetAttrOpClass(IndexElem *attribute, Oid attrType,
 			   char *accessMethodName, Oid accessMethodId);
-static char *GetDefaultOpClass(Oid atttypid);
+static Oid GetDefaultOpClass(Oid attrType, Oid accessMethodId);
 
 /*
  * DefineIndex
@@ -65,16 +57,14 @@ static char *GetDefaultOpClass(Oid atttypid);
  *
  * 'attributeList' is a list of IndexElem specifying either a functional
  *		index or a list of attributes to index on.
- * 'parameterList' is a list of DefElem specified in the with clause.
  * 'predicate' is the qual specified in the where clause.
- * 'rangetable' is needed to interpret the predicate
+ * 'rangetable' is needed to interpret the predicate.
  */
 void
 DefineIndex(char *heapRelationName,
 			char *indexRelationName,
 			char *accessMethodName,
 			List *attributeList,
-			List *parameterList,
 			bool unique,
 			bool primary,
 			Expr *predicate,
@@ -88,8 +78,6 @@ DefineIndex(char *heapRelationName,
 	IndexInfo  *indexInfo;
 	int			numberOfAttributes;
 	List	   *cnfPred = NIL;
-	bool		lossy = false;
-	List	   *pl;
 
 	/*
 	 * count attributes in index
@@ -128,20 +116,6 @@ DefineIndex(char *heapRelationName,
 			 accessMethodName);
 
 	ReleaseSysCache(tuple);
-
-	/*
-	 * WITH clause reinstated to handle lossy indices. -- JMH, 7/22/96
-	 */
-	foreach(pl, parameterList)
-	{
-		DefElem    *param = (DefElem *) lfirst(pl);
-
-		if (!strcasecmp(param->defname, "islossy"))
-			lossy = true;
-		else
-			elog(NOTICE, "Unrecognized index attribute \"%s\" ignored",
-				 param->defname);
-	}
 
 	/*
 	 * Convert the partial-index predicate from parsetree form to
@@ -203,7 +177,7 @@ DefineIndex(char *heapRelationName,
 
 	index_create(heapRelationName, indexRelationName,
 				 indexInfo, accessMethodId, classObjectId,
-				 lossy, primary, allowSystemTableMods);
+				 primary, allowSystemTableMods);
 
 	/*
 	 * We update the relation's pg_class tuple even if it already has
@@ -390,111 +364,109 @@ static Oid
 GetAttrOpClass(IndexElem *attribute, Oid attrType,
 			   char *accessMethodName, Oid accessMethodId)
 {
-	Relation	relation;
-	HeapScanDesc scan;
-	ScanKeyData entry[2];
 	HeapTuple	tuple;
 	Oid			opClassId,
-				oprId;
-	bool		doTypeCheck = true;
+				opInputType;
 
 	if (attribute->class == NULL)
 	{
 		/* no operator class specified, so find the default */
-		attribute->class = GetDefaultOpClass(attrType);
-		if (attribute->class == NULL)
-			elog(ERROR, "data type %s has no default operator class"
+		opClassId = GetDefaultOpClass(attrType, accessMethodId);
+		if (!OidIsValid(opClassId))
+			elog(ERROR, "data type %s has no default operator class for access method \"%s\""
 				 "\n\tYou must specify an operator class for the index or define a"
 				 "\n\tdefault operator class for the data type",
-				 format_type_be(attrType));
-		/* assume we need not check type compatibility */
-		doTypeCheck = false;
+				 format_type_be(attrType), accessMethodName);
+		return opClassId;
 	}
 
-	opClassId = GetSysCacheOid(CLANAME,
-							   PointerGetDatum(attribute->class),
-							   0, 0, 0);
-	if (!OidIsValid(opClassId))
-		elog(ERROR, "DefineIndex: opclass \"%s\" not found",
-			 attribute->class);
-
 	/*
-	 * Assume the opclass is supported by this index access method if we
-	 * can find at least one relevant entry in pg_amop.
+	 * Find the index operator class and verify that it accepts this
+	 * datatype.  Note we will accept binary compatibility.
 	 */
-	ScanKeyEntryInitialize(&entry[0], 0,
-						   Anum_pg_amop_amopid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(accessMethodId));
-	ScanKeyEntryInitialize(&entry[1], 0,
-						   Anum_pg_amop_amopclaid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(opClassId));
-
-	relation = heap_openr(AccessMethodOperatorRelationName, AccessShareLock);
-	scan = heap_beginscan(relation, false, SnapshotNow, 2, entry);
-
-	if (!HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
-		elog(ERROR, "DefineIndex: opclass \"%s\" not supported by access method \"%s\"",
+	tuple = SearchSysCache(CLAAMNAME,
+						   ObjectIdGetDatum(accessMethodId),
+						   PointerGetDatum(attribute->class),
+						   0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "DefineIndex: operator class \"%s\" not supported by access method \"%s\"",
 			 attribute->class, accessMethodName);
+	opClassId = tuple->t_data->t_oid;
+	opInputType = ((Form_pg_opclass) GETSTRUCT(tuple))->opcintype;
+	ReleaseSysCache(tuple);
 
-	oprId = ((Form_pg_amop) GETSTRUCT(tuple))->amopopr;
-
-	heap_endscan(scan);
-	heap_close(relation, AccessShareLock);
-
-	/*
-	 * Make sure the operators associated with this opclass actually
-	 * accept the column data type.  This prevents possible coredumps
-	 * caused by user errors like applying text_ops to an int4 column.	We
-	 * will accept an opclass as OK if the operator's input datatype is
-	 * binary-compatible with the actual column datatype.  Note we assume
-	 * that all the operators associated with an opclass accept the same
-	 * datatypes, so checking the first one we happened to find in the
-	 * table is sufficient.
-	 *
-	 * If the opclass was the default for the datatype, assume we can skip
-	 * this check --- that saves a few cycles in the most common case. If
-	 * pg_opclass is wrong then we're probably screwed anyway...
-	 */
-	if (doTypeCheck)
-	{
-		tuple = SearchSysCache(OPEROID,
-							   ObjectIdGetDatum(oprId),
-							   0, 0, 0);
-		if (HeapTupleIsValid(tuple))
-		{
-			Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tuple);
-			Oid			opInputType = (optup->oprkind == 'l') ?
-			optup->oprright : optup->oprleft;
-
-			if (attrType != opInputType &&
-				!IS_BINARY_COMPATIBLE(attrType, opInputType))
-				elog(ERROR, "operator class \"%s\" does not accept data type %s",
-					 attribute->class, format_type_be(attrType));
-			ReleaseSysCache(tuple);
-		}
-	}
+	if (attrType != opInputType &&
+		!IS_BINARY_COMPATIBLE(attrType, opInputType))
+		elog(ERROR, "operator class \"%s\" does not accept data type %s",
+			 attribute->class, format_type_be(attrType));
 
 	return opClassId;
 }
 
-static char *
-GetDefaultOpClass(Oid atttypid)
+static Oid
+GetDefaultOpClass(Oid attrType, Oid accessMethodId)
 {
+	Relation	relation;
+	ScanKeyData entry[1];
+	HeapScanDesc scan;
 	HeapTuple	tuple;
-	char	   *result;
+	int			nexact = 0;
+	int			ncompatible = 0;
+	Oid			exactOid = InvalidOid;
+	Oid			compatibleOid = InvalidOid;
 
-	tuple = SearchSysCache(CLADEFTYPE,
-						   ObjectIdGetDatum(atttypid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		return NULL;
+	/*
+	 * We scan through all the opclasses available for the access method,
+	 * looking for one that is marked default and matches the target type
+	 * (either exactly or binary-compatibly, but prefer an exact match).
+	 *
+	 * We could find more than one binary-compatible match, in which case we
+	 * require the user to specify which one he wants.  If we find more than
+	 * one exact match, then someone put bogus entries in pg_opclass.
+	 *
+	 * We could use an indexscan here, but since pg_opclass is small
+	 * and a scan on opcamid won't be very selective, the indexscan would
+	 * probably actually be slower than heapscan.
+	 */
+	ScanKeyEntryInitialize(&entry[0], 0x0,
+						   Anum_pg_opclass_opcamid,
+						   F_OIDEQ,
+						   ObjectIdGetDatum(accessMethodId));
 
-	result = pstrdup(NameStr(((Form_pg_opclass) GETSTRUCT(tuple))->opcname));
+	relation = heap_openr(OperatorClassRelationName, AccessShareLock);
+	scan = heap_beginscan(relation, false, SnapshotNow, 1, entry);
 
-	ReleaseSysCache(tuple);
-	return result;
+	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	{
+		Form_pg_opclass opclass = (Form_pg_opclass) GETSTRUCT(tuple);
+
+		if (opclass->opcdefault)
+		{
+			if (opclass->opcintype == attrType)
+			{
+				nexact++;
+				exactOid = tuple->t_data->t_oid;
+			}
+			else if (IS_BINARY_COMPATIBLE(opclass->opcintype, attrType))
+			{
+				ncompatible++;
+				compatibleOid = tuple->t_data->t_oid;
+			}
+		}
+	}
+
+	heap_endscan(scan);
+	heap_close(relation, AccessShareLock);
+
+	if (nexact == 1)
+		return exactOid;
+	if (nexact != 0)
+		elog(ERROR, "pg_opclass contains multiple default opclasses for data tyype %s",
+			 format_type_be(attrType));
+	if (ncompatible == 1)
+		return compatibleOid;
+
+	return InvalidOid;
 }
 
 /*

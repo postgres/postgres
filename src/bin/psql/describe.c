@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.38 2001/08/10 18:57:39 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.39 2001/08/21 16:36:05 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -653,7 +653,7 @@ describeTableDetails(const char *name, bool desc)
 		/* Footer information about an index */
 		PGresult   *result;
 
-		sprintf(buf, "SELECT i.indisunique, i.indisprimary, i.indislossy, a.amname,\n"
+		sprintf(buf, "SELECT i.indisunique, i.indisprimary, a.amname,\n"
 				"       pg_get_expr(i.indpred, i.indrelid) as indpred\n"
 				"FROM pg_index i, pg_class c, pg_am a\n"
 				"WHERE i.indexrelid = c.oid AND c.relname = '%s' AND c.relam = a.oid",
@@ -666,9 +666,8 @@ describeTableDetails(const char *name, bool desc)
 		{
 			char   *indisunique = PQgetvalue(result, 0, 0);
 			char   *indisprimary = PQgetvalue(result, 0, 1);
-			char   *indislossy = PQgetvalue(result, 0, 2);
-			char   *indamname = PQgetvalue(result, 0, 3);
-			char   *indpred = PQgetvalue(result, 0, 4);
+			char   *indamname = PQgetvalue(result, 0, 2);
+			char   *indpred = PQgetvalue(result, 0, 3);
 
 			footers = xmalloc(3 * sizeof(*footers));
 			/* XXX This construction is poorly internationalized. */
@@ -680,10 +679,6 @@ describeTableDetails(const char *name, bool desc)
 				snprintf(footers[0] + strlen(footers[0]),
 						 NAMEDATALEN + 128 - strlen(footers[0]),
 						 _(" (primary key)"));
-			if (strcmp(indislossy, "t") == 0)
-				snprintf(footers[0] + strlen(footers[0]),
-						 NAMEDATALEN + 128 - strlen(footers[0]),
-						 _(" (lossy)"));
 			if (strlen(indpred) > 0)
 			{
 				footers[1] = xmalloc(64 + strlen(indpred));
@@ -694,6 +689,8 @@ describeTableDetails(const char *name, bool desc)
 			else
 				footers[1] = NULL;
 		}
+
+		PQclear(result);
 	}
 	else if (view_def)
 	{

@@ -68,15 +68,17 @@ main(int argc, char **argv)
 			if (strcmp(typname, "oid") == 0)
 				sprintf(query, "\
 					DECLARE c_matches BINARY CURSOR FOR \
-					SELECT	count(*) \
+					SELECT	count(*)::int4 \
 						FROM \"%s\" t1, \"%s\" t2 \
-					WHERE t1.\"%s\" = t2.oid ", relname, relname2, attname);
+					WHERE t1.\"%s\" = t2.oid ",
+						relname, relname2, attname);
 			else
 				sprintf(query, "\
 					DECLARE c_matches BINARY CURSOR FOR \
-					SELECT	count(*) \
-								FROM \"%s\" t1, \"%s\" t2 \
-								WHERE RegprocToOid(t1.\"%s\") = t2.oid ", relname, relname2, attname);
+					SELECT	count(*)::int4 \
+						FROM \"%s\" t1, \"%s\" t2 \
+					WHERE RegprocToOid(t1.\"%s\") = t2.oid ",
+						relname, relname2, attname);
 
 			doquery(query);
 			doquery("FETCH ALL IN c_matches");

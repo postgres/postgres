@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.23 2001/07/16 05:07:00 tgl Exp $
+ * $Id: defrem.h,v 1.24 2001/08/21 16:36:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@ extern void DefineIndex(char *heapRelationName,
 			char *indexRelationName,
 			char *accessMethodName,
 			List *attributeList,
-			List *parameterList,
 			bool unique,
 			bool primary,
 			Expr *predicate,

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.101 2001/08/16 20:38:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.102 2001/08/21 16:36:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -925,8 +925,6 @@ _equalIndexStmt(IndexStmt *a, IndexStmt *b)
 	if (!equalstr(a->accessMethod, b->accessMethod))
 		return false;
 	if (!equal(a->indexParams, b->indexParams))
-		return false;
-	if (!equal(a->withClause, b->withClause))
 		return false;
 	if (!equal(a->whereClause, b->whereClause))
 		return false;

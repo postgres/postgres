@@ -32,7 +32,7 @@ select count(*) from polytmp where p && '(1000,1000),(0,0)'::polygon;
 
 drop index pix;
 
-create index pix on polytmp using gist (p gist_poly_ops) with(islossy);
+create index pix on polytmp using gist (p gist_poly_ops);
 
 select count(*) from polytmp where p && '(1000,1000),(0,0)'::polygon;
 

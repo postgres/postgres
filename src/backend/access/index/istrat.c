@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.51 2001/06/01 02:41:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.52 2001/08/21 16:36:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -457,61 +457,32 @@ RelationInvokeStrategy(Relation relation,
 #endif
 
 /* ----------------
- *		OperatorRelationFillScanKeyEntry
+ *		FillScanKeyEntry
  *
- * Initialize a ScanKey entry given already-opened pg_operator relation.
+ * Initialize a ScanKey entry for the given operator OID.
  * ----------------
  */
 static void
-OperatorRelationFillScanKeyEntry(Relation operatorRelation,
-								 Oid operatorObjectId,
-								 ScanKey entry)
+FillScanKeyEntry(Oid operatorObjectId, ScanKey entry)
 {
 	HeapTuple	tuple;
-	HeapScanDesc scan = NULL;
-	bool		cachesearch = (!IsBootstrapProcessingMode()) && IsCacheInitialized();
 
-	if (cachesearch)
-	{
-		tuple = SearchSysCache(OPEROID,
-							   ObjectIdGetDatum(operatorObjectId),
-							   0, 0, 0);
-	}
-	else
-	{
-		ScanKeyData scanKeyData;
-
-		ScanKeyEntryInitialize(&scanKeyData, 0,
-							   ObjectIdAttributeNumber,
-							   F_OIDEQ,
-							   ObjectIdGetDatum(operatorObjectId));
-
-		scan = heap_beginscan(operatorRelation, false, SnapshotNow,
-							  1, &scanKeyData);
-
-		tuple = heap_getnext(scan, 0);
-	}
+	tuple = SearchSysCache(OPEROID,
+						   ObjectIdGetDatum(operatorObjectId),
+						   0, 0, 0);
 
 	if (!HeapTupleIsValid(tuple))
-	{
-		if (!cachesearch)
-			heap_endscan(scan);
-		elog(ERROR, "OperatorRelationFillScanKeyEntry: unknown operator %u",
+		elog(ERROR, "FillScanKeyEntry: unknown operator %u",
 			 operatorObjectId);
-	}
 
 	MemSet(entry, 0, sizeof(*entry));
 	entry->sk_flags = 0;
 	entry->sk_procedure = ((Form_pg_operator) GETSTRUCT(tuple))->oprcode;
 
-	if (cachesearch)
-		ReleaseSysCache(tuple);
-	else
-		heap_endscan(scan);
+	ReleaseSysCache(tuple);
 
 	if (!RegProcedureIsValid(entry->sk_procedure))
-		elog(ERROR,
-		"OperatorRelationFillScanKeyEntry: no procedure for operator %u",
+		elog(ERROR, "FillScanKeyEntry: no procedure for operator %u",
 			 operatorObjectId);
 
 	/*
@@ -548,44 +519,22 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 					   StrategyNumber maxSupportNumber,
 					   AttrNumber maxAttributeNumber)
 {
-	Relation	relation = NULL;
-	HeapScanDesc scan = NULL;
-	ScanKeyData entry[2];
-	Relation	operatorRelation;
 	HeapTuple	tuple;
 	Form_pg_index iform;
-	StrategyMap map;
-	AttrNumber	attNumber;
 	int			attIndex;
 	Oid			operatorClassObjectId[INDEX_MAX_KEYS];
-	bool		cachesearch = (!IsBootstrapProcessingMode()) && IsCacheInitialized();
 
-	if (cachesearch)
-	{
-		tuple = SearchSysCache(INDEXRELID,
-							   ObjectIdGetDatum(indexObjectId),
-							   0, 0, 0);
-	}
-	else
-	{
-		ScanKeyEntryInitialize(&entry[0], 0, Anum_pg_index_indexrelid,
-							   F_OIDEQ,
-							   ObjectIdGetDatum(indexObjectId));
+	maxStrategyNumber = AMStrategies(maxStrategyNumber);
 
-		relation = heap_openr(IndexRelationName, AccessShareLock);
-		scan = heap_beginscan(relation, false, SnapshotNow, 1, entry);
-		tuple = heap_getnext(scan, 0);
-	}
-
+	tuple = SearchSysCache(INDEXRELID,
+						   ObjectIdGetDatum(indexObjectId),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "IndexSupportInitialize: no pg_index entry for index %u",
 			 indexObjectId);
-
 	iform = (Form_pg_index) GETSTRUCT(tuple);
 
 	*isUnique = iform->indisunique;
-
-	maxStrategyNumber = AMStrategies(maxStrategyNumber);
 
 	/*
 	 * XXX note that the following assumes the INDEX tuple is well formed
@@ -593,115 +542,76 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 	 */
 	for (attIndex = 0; attIndex < maxAttributeNumber; attIndex++)
 	{
-		if (!OidIsValid(iform->indkey[attIndex]))
-		{
-			if (attIndex == InvalidAttrNumber)
-				elog(ERROR, "IndexSupportInitialize: bogus pg_index tuple");
-			break;
-		}
-
+		if (iform->indkey[attIndex] == InvalidAttrNumber ||
+			!OidIsValid(iform->indclass[attIndex]))
+			elog(ERROR, "IndexSupportInitialize: bogus pg_index tuple");
 		operatorClassObjectId[attIndex] = iform->indclass[attIndex];
 	}
 
-	if (cachesearch)
-		ReleaseSysCache(tuple);
-	else
-	{
-		heap_endscan(scan);
-		heap_close(relation, AccessShareLock);
-	}
+	ReleaseSysCache(tuple);
 
 	/* if support routines exist for this access method, load them */
 	if (maxSupportNumber > 0)
 	{
-		ScanKeyEntryInitialize(&entry[0], 0, Anum_pg_amproc_amid,
-							   F_OIDEQ,
-							   ObjectIdGetDatum(accessMethodObjectId));
-
-		ScanKeyEntryInitialize(&entry[1], 0, Anum_pg_amproc_amopclaid,
-							   F_OIDEQ,
-							   InvalidOid);	/* will set below */
-
-		relation = heap_openr(AccessMethodProcedureRelationName,
-							  AccessShareLock);
-
-		for (attNumber = 1; attNumber <= maxAttributeNumber; attNumber++)
+		for (attIndex = 0; attIndex < maxAttributeNumber; attIndex++)
 		{
+			Oid		opclass = operatorClassObjectId[attIndex];
 			RegProcedure *loc;
 			StrategyNumber support;
 
-			loc = &indexSupport[((attNumber - 1) * maxSupportNumber)];
+			loc = &indexSupport[attIndex * maxSupportNumber];
 
 			for (support = 0; support < maxSupportNumber; ++support)
-				loc[support] = InvalidOid;
-
-			entry[1].sk_argument =
-				ObjectIdGetDatum(operatorClassObjectId[attNumber - 1]);
-
-			scan = heap_beginscan(relation, false, SnapshotNow, 2, entry);
-
-			while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 			{
-				Form_pg_amproc aform;
+				tuple = SearchSysCache(AMPROCNUM,
+									   ObjectIdGetDatum(opclass),
+									   Int16GetDatum(support+1),
+									   0, 0);
+				if (HeapTupleIsValid(tuple))
+				{
+					Form_pg_amproc amprocform;
 
-				aform = (Form_pg_amproc) GETSTRUCT(tuple);
-				support = aform->amprocnum;
-				Assert(support > 0 && support <= maxSupportNumber);
-				loc[support - 1] = aform->amproc;
+					amprocform = (Form_pg_amproc) GETSTRUCT(tuple);
+					loc[support] = amprocform->amproc;
+					ReleaseSysCache(tuple);
+				}
+				else
+					loc[support] = InvalidOid;
 			}
-
-			heap_endscan(scan);
 		}
-		heap_close(relation, AccessShareLock);
 	}
 
 	/* Now load the strategy information for the index operators */
-	ScanKeyEntryInitialize(&entry[0], 0,
-						   Anum_pg_amop_amopid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(accessMethodObjectId));
-
-	ScanKeyEntryInitialize(&entry[1], 0,
-						   Anum_pg_amop_amopclaid,
-						   F_OIDEQ,
-						   0);	/* will fill below */
-
-	relation = heap_openr(AccessMethodOperatorRelationName, AccessShareLock);
-	operatorRelation = heap_openr(OperatorRelationName, AccessShareLock);
-
-	for (attNumber = maxAttributeNumber; attNumber > 0; attNumber--)
+	for (attIndex = 0; attIndex < maxAttributeNumber; attIndex++)
 	{
+		Oid		opclass = operatorClassObjectId[attIndex];
+		StrategyMap map;
 		StrategyNumber strategy;
-
-		entry[1].sk_argument =
-			ObjectIdGetDatum(operatorClassObjectId[attNumber - 1]);
 
 		map = IndexStrategyGetStrategyMap(indexStrategy,
 										  maxStrategyNumber,
-										  attNumber);
+										  attIndex + 1);
 
 		for (strategy = 1; strategy <= maxStrategyNumber; strategy++)
-			ScanKeyEntrySetIllegal(StrategyMapGetScanKeyEntry(map, strategy));
-
-		scan = heap_beginscan(relation, false, SnapshotNow, 2, entry);
-
-		while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 		{
-			Form_pg_amop aform;
+			ScanKey mapentry = StrategyMapGetScanKeyEntry(map, strategy);
 
-			aform = (Form_pg_amop) GETSTRUCT(tuple);
-			strategy = aform->amopstrategy;
-			Assert(strategy > 0 && strategy <= maxStrategyNumber);
-			OperatorRelationFillScanKeyEntry(operatorRelation,
-											 aform->amopopr,
-				   StrategyMapGetScanKeyEntry(map, strategy));
+			tuple = SearchSysCache(AMOPSTRATEGY,
+								   ObjectIdGetDatum(opclass),
+								   Int16GetDatum(strategy),
+								   0, 0);
+			if (HeapTupleIsValid(tuple))
+			{
+				Form_pg_amop amopform;
+
+				amopform = (Form_pg_amop) GETSTRUCT(tuple);
+				FillScanKeyEntry(amopform->amopopr, mapentry);
+				ReleaseSysCache(tuple);
+			}
+			else
+				ScanKeyEntrySetIllegal(mapentry);
 		}
-
-		heap_endscan(scan);
 	}
-
-	heap_close(operatorRelation, AccessShareLock);
-	heap_close(relation, AccessShareLock);
 }
 
 /* ----------------

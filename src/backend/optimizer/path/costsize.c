@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.77 2001/06/11 00:17:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.78 2001/08/21 16:36:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -339,16 +339,16 @@ cost_index(Path *path, Query *root,
 	 *
 	 * Normally the indexquals will be removed from the list of
 	 * restriction clauses that we have to evaluate as qpquals, so we
-	 * should subtract their costs from baserestrictcost.  For a lossy
-	 * index, however, we will have to recheck all the quals and so
-	 * mustn't subtract anything. Also, if we are doing a join then some
-	 * of the indexquals are join clauses and shouldn't be subtracted.
-	 * Rather than work out exactly how much to subtract, we don't
-	 * subtract anything in that case either.
+	 * should subtract their costs from baserestrictcost.  XXX For a lossy
+	 * index, not all the quals will be removed and so we really shouldn't
+	 * subtract their costs; but detecting that seems more expensive than
+	 * it's worth.  Also, if we are doing a join then some of the indexquals
+	 * are join clauses and shouldn't be subtracted.  Rather than work out
+	 * exactly how much to subtract, we don't subtract anything.
 	 */
 	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost;
 
-	if (!index->lossy && !is_injoin)
+	if (!is_injoin)
 		cpu_per_tuple -= cost_qual_eval(indexQuals);
 
 	run_cost += cpu_per_tuple * tuples_fetched;

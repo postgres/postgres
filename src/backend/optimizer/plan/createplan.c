@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.107 2001/06/05 05:26:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.108 2001/08/21 16:36:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,9 +56,12 @@ static HashJoin *create_hashjoin_plan(HashPath *best_path, List *tlist,
 					 List *joinclauses, List *otherclauses,
 					 Plan *outer_plan, List *outer_tlist,
 					 Plan *inner_plan, List *inner_tlist);
-static List *fix_indxqual_references(List *indexquals, IndexPath *index_path);
-static List *fix_indxqual_sublist(List *indexqual, int baserelid,
-								  IndexOptInfo *index);
+static void fix_indxqual_references(List *indexquals, IndexPath *index_path,
+									List **fixed_indexquals,
+									List **recheck_indexquals);
+static void fix_indxqual_sublist(List *indexqual, int baserelid,
+								 IndexOptInfo *index,
+								 List **fixed_quals, List **recheck_quals);
 static Node *fix_indxqual_operand(Node *node, int baserelid,
 								  IndexOptInfo *index,
 								  Oid *opclass);
@@ -381,11 +384,12 @@ create_indexscan_plan(Query *root,
 	List	   *indxqual = best_path->indexqual;
 	Index		baserelid;
 	List	   *qpqual;
+	Expr	   *indxqual_or_expr = NULL;
 	List	   *fixed_indxqual;
+	List	   *recheck_indxqual;
 	List	   *indexids;
 	List	   *ixinfo;
 	IndexScan  *scan_plan;
-	bool		lossy;
 
 	/* there should be exactly one base rel involved... */
 	Assert(length(best_path->path.parent->relids) == 1);
@@ -394,25 +398,23 @@ create_indexscan_plan(Query *root,
 	baserelid = lfirsti(best_path->path.parent->relids);
 
 	/*
-	 * Build list of index OIDs, and check to see if any of the indices
-	 * are lossy.
+	 * Build list of index OIDs.
 	 */
 	indexids = NIL;
-	lossy = false;
 	foreach(ixinfo, best_path->indexinfo)
 	{
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(ixinfo);
 
 		indexids = lappendi(indexids, index->indexoid);
-		lossy |= index->lossy;
 	}
 
 	/*
 	 * The qpqual list must contain all restrictions not automatically
-	 * handled by the index.  Note that for non-lossy indices, the
-	 * predicates in the indxqual are checked fully by the index, while
-	 * for lossy indices the indxqual predicates need to be double-checked
-	 * after the index fetches the best-guess tuples.
+	 * handled by the index.  Normally the predicates in the indxqual
+	 * are checked fully by the index, but if the index is "lossy" for
+	 * a particular operator (as signaled by the amopreqcheck flag in
+	 * pg_amop), then we need to double-check that predicate in qpqual,
+	 * because the index may return more tuples than match the predicate.
 	 *
 	 * Since the indexquals were generated from the restriction clauses given
 	 * by scan_clauses, there will normally be some duplications between
@@ -420,7 +422,6 @@ create_indexscan_plan(Query *root,
 	 */
 	if (length(indxqual) > 1)
 	{
-
 		/*
 		 * Build an expression representation of the indexqual, expanding
 		 * the implicit OR and AND semantics of the first- and
@@ -428,32 +429,24 @@ create_indexscan_plan(Query *root,
 		 */
 		List	   *orclauses = NIL;
 		List	   *orclause;
-		Expr	   *indxqual_expr;
 
 		foreach(orclause, indxqual)
+		{
 			orclauses = lappend(orclauses,
 								make_ands_explicit(lfirst(orclause)));
-		indxqual_expr = make_orclause(orclauses);
+		}
+		indxqual_or_expr = make_orclause(orclauses);
 
-		qpqual = set_difference(scan_clauses, makeList1(indxqual_expr));
-
-		if (lossy)
-			qpqual = lappend(qpqual, copyObject(indxqual_expr));
+		qpqual = set_difference(scan_clauses, makeList1(indxqual_or_expr));
 	}
 	else if (indxqual != NIL)
 	{
-
 		/*
 		 * Here, we can simply treat the first sublist as an independent
 		 * set of qual expressions, since there is no top-level OR
 		 * behavior.
 		 */
-		List	   *indxqual_list = lfirst(indxqual);
-
-		qpqual = set_difference(scan_clauses, indxqual_list);
-
-		if (lossy)
-			qpqual = nconc(qpqual, (List *) copyObject(indxqual_list));
+		qpqual = set_difference(scan_clauses, lfirst(indxqual));
 	}
 	else
 		qpqual = scan_clauses;
@@ -461,9 +454,35 @@ create_indexscan_plan(Query *root,
 	/*
 	 * The executor needs a copy with the indexkey on the left of each
 	 * clause and with index attr numbers substituted for table ones.
+	 * This pass also looks for "lossy" operators.
 	 */
-	fixed_indxqual = fix_indxqual_references(indxqual, best_path);
+	fix_indxqual_references(indxqual, best_path,
+							&fixed_indxqual, &recheck_indxqual);
 
+	/*
+	 * If there were any "lossy" operators, need to add back the appropriate
+	 * qual clauses to the qpqual.  When there is just one indexscan being
+	 * performed (ie, we have simple AND semantics), we can just add the
+	 * lossy clauses themselves to qpqual.  If we have OR-of-ANDs, we'd
+	 * better add the entire original indexqual to make sure that the
+	 * semantics are correct.
+	 */
+	if (recheck_indxqual != NIL)
+	{
+		if (indxqual_or_expr)
+		{
+			/* Better do a deep copy of the original scanclauses */
+			qpqual = lappend(qpqual, copyObject(indxqual_or_expr));
+		}
+		else
+		{
+			/* Subroutine already copied quals, so just append to list */
+			Assert(length(recheck_indxqual) == 1);
+			qpqual = nconc(qpqual, (List *) lfirst(recheck_indxqual));
+		}
+	}
+
+	/* Finally ready to build the plan node */
 	scan_plan = make_indexscan(tlist,
 							   qpqual,
 							   baserelid,
@@ -868,9 +887,9 @@ create_hashjoin_plan(HashPath *best_path,
 /*
  * fix_indxqual_references
  *	  Adjust indexqual clauses to the form the executor's indexqual
- *	  machinery needs.
+ *	  machinery needs, and check for recheckable (lossy) index conditions.
  *
- * We have three tasks here:
+ * We have four tasks here:
  *	* Index keys must be represented by Var nodes with varattno set to the
  *	  index's attribute number, not the attribute number in the original rel.
  *	* indxpath.c may have selected an index that is binary-compatible with
@@ -879,20 +898,34 @@ create_hashjoin_plan(HashPath *best_path,
  *	  equivalent operator that the index will recognize.
  *	* If the index key is on the right, commute the clause to put it on the
  *	  left.  (Someday the executor might not need this, but for now it does.)
+ *	* If the indexable operator is marked 'amopreqcheck' in pg_amop, then
+ *	  the index is "lossy" for this operator: it may return more tuples than
+ *	  actually satisfy the operator condition.  For each such operator, we
+ *	  must add (the original form of) the indexqual clause to the "qpquals"
+ *	  of the indexscan node, where the operator will be re-evaluated to
+ *	  ensure it passes.
  *
  * This code used to be entirely bogus for multi-index scans.  Now it keeps
  * track of which index applies to each subgroup of index qual clauses...
  *
- * Returns a modified copy of the indexqual list --- the original is not
- * changed.  Note also that the copy shares no substructure with the
- * original; this is needed in case there is a subplan in it (we need
+ * Both the input list and the output lists have the form of lists of sublists
+ * of qual clauses --- the top-level list has one entry for each indexscan
+ * to be performed.  The semantics are OR-of-ANDs.
+ *
+ * fixed_indexquals receives a modified copy of the indexqual list --- the
+ * original is not changed.  Note also that the copy shares no substructure
+ * with the original; this is needed in case there is a subplan in it (we need
  * two separate copies of the subplan tree, or things will go awry).
+ *
+ * recheck_indexquals similarly receives a full copy of whichever clauses
+ * need rechecking.
  */
-
-static List *
-fix_indxqual_references(List *indexquals, IndexPath *index_path)
+static void
+fix_indxqual_references(List *indexquals, IndexPath *index_path,
+						List **fixed_indexquals, List **recheck_indexquals)
 {
 	List	   *fixed_quals = NIL;
+	List	   *recheck_quals = NIL;
 	int			baserelid = lfirsti(index_path->path.parent->relids);
 	List	   *ixinfo = index_path->indexinfo;
 	List	   *i;
@@ -901,14 +934,20 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path)
 	{
 		List	   *indexqual = lfirst(i);
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(ixinfo);
+		List	   *fixed_qual;
+		List	   *recheck_qual;
 
-		fixed_quals = lappend(fixed_quals,
-							  fix_indxqual_sublist(indexqual,
-												   baserelid,
-												   index));
+		fix_indxqual_sublist(indexqual, baserelid, index,
+							 &fixed_qual, &recheck_qual);
+		fixed_quals = lappend(fixed_quals, fixed_qual);
+		if (recheck_qual != NIL)
+			recheck_quals = lappend(recheck_quals, recheck_qual);
+
 		ixinfo = lnext(ixinfo);
 	}
-	return fixed_quals;
+
+	*fixed_indexquals = fixed_quals;
+	*recheck_indexquals = recheck_quals;
 }
 
 /*
@@ -916,12 +955,19 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path)
  *
  * For each qual clause, commute if needed to put the indexkey operand on the
  * left, and then fix its varattno.  (We do not need to change the other side
- * of the clause.)	Also change the operator if necessary.
+ * of the clause.)	Also change the operator if necessary, and check for
+ * lossy index behavior.
+ *
+ * Returns two lists: the list of fixed indexquals, and the list (usually
+ * empty) of original clauses that must be rechecked as qpquals because
+ * the index is lossy for this operator type.
  */
-static List *
-fix_indxqual_sublist(List *indexqual, int baserelid, IndexOptInfo *index)
+static void
+fix_indxqual_sublist(List *indexqual, int baserelid, IndexOptInfo *index,
+					 List **fixed_quals, List **recheck_quals)
 {
 	List	   *fixed_qual = NIL;
+	List	   *recheck_qual = NIL;
 	List	   *i;
 
 	foreach(i, indexqual)
@@ -968,14 +1014,24 @@ fix_indxqual_sublist(List *indexqual, int baserelid, IndexOptInfo *index)
 		 * is merely binary-compatible with the index.	This shouldn't
 		 * fail, since indxpath.c found it before...
 		 */
-		newopno = indexable_operator(newclause, opclass, index->relam, true);
+		newopno = indexable_operator(newclause, opclass, true);
 		if (newopno == InvalidOid)
 			elog(ERROR, "fix_indxqual_sublist: failed to find substitute op");
 		((Oper *) newclause->oper)->opno = newopno;
 
 		fixed_qual = lappend(fixed_qual, newclause);
+
+		/*
+		 * Finally, check to see if index is lossy for this operator.
+		 * If so, add (a copy of) original form of clause to recheck list.
+		 */
+		if (op_requires_recheck(newopno, opclass))
+			recheck_qual = lappend(recheck_qual,
+								   copyObject((Node *) clause));
 	}
-	return fixed_qual;
+
+	*fixed_quals = fixed_qual;
+	*recheck_quals = recheck_qual;
 }
 
 static Node *

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.246 2001/08/16 20:38:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.247 2001/08/21 16:36:03 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2399,13 +2399,12 @@ RevokeStmt:  REVOKE privileges ON opt_table relation_name_list FROM grantee_list
  *		QUERY:
  *				create index <indexname> on <relname>
  *				  [ using <access> ] "(" (<col> with <op>)+ ")"
- *				  [ with <parameters> ]
  *				  [ where <predicate> ]
  *
  *****************************************************************************/
 
 IndexStmt:	CREATE index_opt_unique INDEX index_name ON relation_name
-			access_method_clause '(' index_params ')' opt_with where_clause
+			access_method_clause '(' index_params ')' where_clause
 				{
 					IndexStmt *n = makeNode(IndexStmt);
 					n->unique = $2;
@@ -2413,8 +2412,7 @@ IndexStmt:	CREATE index_opt_unique INDEX index_name ON relation_name
 					n->relname = $6;
 					n->accessMethod = $7;
 					n->indexParams = $9;
-					n->withClause = $11;
-					n->whereClause = $12;
+					n->whereClause = $11;
 					$$ = (Node *)n;
 				}
 		;

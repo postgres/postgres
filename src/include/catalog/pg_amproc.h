@@ -2,15 +2,19 @@
  *
  * pg_amproc.h
  *	  definition of the system "amproc" relation (pg_amproc)
- *	  along with the relation's initial contents.  The amproc
- *	  catalog is used to store procedures used by index access
- *	  methods that aren't associated with operators.
+ *	  along with the relation's initial contents.
+ *
+ * The amproc table identifies support procedures associated with index
+ * opclasses.  These procedures can't be listed in pg_amop since they are
+ * not associated with indexable operators for the opclass.
+ *
+ * Note: the primary key for this table is <amopclaid, amprocnum>.
  *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amproc.h,v 1.29 2001/08/13 18:45:36 tgl Exp $
+ * $Id: pg_amproc.h,v 1.30 2001/08/21 16:36:05 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -35,10 +39,9 @@
  */
 CATALOG(pg_amproc) BKI_WITHOUT_OIDS
 {
-	Oid			amid;			/* the access method this proc is for */
-	Oid			amopclaid;		/* the opclass this proc is for */
-	Oid			amproc;			/* OID of the proc */
+	Oid			amopclaid;		/* the index opclass this entry is for */
 	int2		amprocnum;		/* support procedure index */
+	regproc		amproc;			/* OID of the proc */
 } FormData_pg_amproc;
 
 /* ----------------
@@ -52,11 +55,10 @@ typedef FormData_pg_amproc *Form_pg_amproc;
  *		compiler constants for pg_amproc
  * ----------------
  */
-#define Natts_pg_amproc					4
-#define Anum_pg_amproc_amid				1
-#define Anum_pg_amproc_amopclaid		2
+#define Natts_pg_amproc					3
+#define Anum_pg_amproc_amopclaid		1
+#define Anum_pg_amproc_amprocnum		2
 #define Anum_pg_amproc_amproc			3
-#define Anum_pg_amproc_amprocnum		4
 
 /* ----------------
  *		initial contents of pg_amproc
@@ -64,66 +66,66 @@ typedef FormData_pg_amproc *Form_pg_amproc;
  */
 
 /* rtree */
-DATA(insert (402  422  193 1));
-DATA(insert (402  422  194 2));
-DATA(insert (402  422  195 3));
-DATA(insert (402  433  193 1));
-DATA(insert (402  433  194 2));
-DATA(insert (402  433  196 3));
-DATA(insert (402  434  197 1));
-DATA(insert (402  434  198 2));
-DATA(insert (402  434  199 3));
+DATA(insert (	 422 1  193 ));
+DATA(insert (	 422 2  194 ));
+DATA(insert (	 422 3  196 ));
+DATA(insert (	 425 1  193 ));
+DATA(insert (	 425 2  194 ));
+DATA(insert (	 425 3  195 ));
+DATA(insert (	1993 1  197 ));
+DATA(insert (	1993 2  198 ));
+DATA(insert (	1993 3  199 ));
 
 
 /* btree */
-DATA(insert (403  421  350 1));
-DATA(insert (403  423  355 1));
-DATA(insert (403  426  351 1));
-DATA(insert (403  427  356 1));
-DATA(insert (403  428  354 1));
-DATA(insert (403  429  358 1));
-DATA(insert (403  431  360 1));
-DATA(insert (403  432  357 1));
-DATA(insert (403  435  404 1));
-DATA(insert (403  754  842 1));
-DATA(insert (403 1076 1078 1));
-DATA(insert (403 1077 1079 1));
-DATA(insert (403 1114 1092 1));
-DATA(insert (403 1115 1107 1));
-DATA(insert (403 1181  359 1));
-DATA(insert (403 1312 1314 1));
-DATA(insert (403 1313 1315 1));
-DATA(insert (403  810  836 1));
-DATA(insert (403  935  926 1));
-DATA(insert (403  652  926 1));
-DATA(insert (403 1768 1769 1));
-DATA(insert (403 1690 1693 1));
-DATA(insert (403 1399 1358 1));
-DATA(insert (403  424 1596 1));
-DATA(insert (403  425 1672 1));
-DATA(insert (403 1961 1954 1));
+DATA(insert (	 421 1  357 ));
+DATA(insert (	 423 1 1596 ));
+DATA(insert (	 424 1 1693 ));
+DATA(insert (	 426 1 1078 ));
+DATA(insert (	 428 1 1954 ));
+DATA(insert (	 429 1  358 ));
+DATA(insert (	 432 1  926 ));
+DATA(insert (	 434 1 1092 ));
+DATA(insert (	1970 1  354 ));
+DATA(insert (	1972 1  355 ));
+DATA(insert (	1974 1  926 ));
+DATA(insert (	1976 1  350 ));
+DATA(insert (	1978 1  351 ));
+DATA(insert (	1980 1  842 ));
+DATA(insert (	1982 1 1315 ));
+DATA(insert (	1984 1  836 ));
+DATA(insert (	1986 1  359 ));
+DATA(insert (	1988 1 1769 ));
+DATA(insert (	1989 1  356 ));
+DATA(insert (	1991 1  404 ));
+DATA(insert (	1994 1  360 ));
+DATA(insert (	1996 1 1107 ));
+DATA(insert (	1998 1 1314 ));
+DATA(insert (	2000 1 1358 ));
+DATA(insert (	2002 1 1672 ));
+DATA(insert (	2003 1 1079 ));
 
 
 /* hash */
-DATA(insert (405  421  449 1));
-DATA(insert (405  423  452 1));
-DATA(insert (405  426  450 1));
-DATA(insert (405  427  453 1));
-DATA(insert (405  428  451 1));
-DATA(insert (405  429  454 1));
-DATA(insert (405  431  456 1));
-DATA(insert (405  435  457 1));
-DATA(insert (405  652  456 1));
-DATA(insert (405  754  949 1));
-DATA(insert (405  810  399 1));
-DATA(insert (405  935  456 1));
-DATA(insert (405 1076 1080 1));
-DATA(insert (405 1077  456 1));
-DATA(insert (405 1114  450 1));
-DATA(insert (405 1115  452 1));
-DATA(insert (405 1181  455 1));
-DATA(insert (405 1312  452 1));
-DATA(insert (405 1313 1697 1));
-DATA(insert (405 1399 1696 1));
+DATA(insert (	 427 1 1080 ));
+DATA(insert (	 431 1  454 ));
+DATA(insert (	 433 1  456 ));
+DATA(insert (	 435 1  450 ));
+DATA(insert (	1971 1  451 ));
+DATA(insert (	1973 1  452 ));
+DATA(insert (	1975 1  456 ));
+DATA(insert (	1977 1  449 ));
+DATA(insert (	1979 1  450 ));
+DATA(insert (	1981 1  949 ));
+DATA(insert (	1983 1 1697 ));
+DATA(insert (	1985 1  399 ));
+DATA(insert (	1987 1  455 ));
+DATA(insert (	1990 1  453 ));
+DATA(insert (	1992 1  457 ));
+DATA(insert (	1995 1  456 ));
+DATA(insert (	1997 1  452 ));
+DATA(insert (	1999 1  452 ));
+DATA(insert (	2001 1 1696 ));
+DATA(insert (	2004 1  456 ));
 
 #endif	 /* PG_AMPROC_H */

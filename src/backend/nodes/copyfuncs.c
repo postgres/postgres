@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.153 2001/08/16 20:38:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.154 2001/08/21 16:36:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1166,7 +1166,6 @@ _copyIndexOptInfo(IndexOptInfo *from)
 	newnode->indproc = from->indproc;
 	Node_Copy(from, newnode, indpred);
 	newnode->unique = from->unique;
-	newnode->lossy = from->lossy;
 
 	return newnode;
 }
@@ -2059,7 +2058,6 @@ _copyIndexStmt(IndexStmt *from)
 	newnode->relname = pstrdup(from->relname);
 	newnode->accessMethod = pstrdup(from->accessMethod);
 	Node_Copy(from, newnode, indexParams);
-	Node_Copy(from, newnode, withClause);
 	Node_Copy(from, newnode, whereClause);
 	Node_Copy(from, newnode, rangetable);
 	newnode->unique = from->unique;

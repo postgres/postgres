@@ -7,7 +7,7 @@
 --
 -- Copyright (c) 1994, Regents of the University of California
 --
--- $Id: complex.source,v 1.8 2000/07/17 03:05:41 tgl Exp $
+-- $Id: complex.source,v 1.9 2001/08/21 16:36:06 tgl Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -169,14 +169,19 @@ CREATE OPERATOR > (
    restrict = scalargtsel, join = scalargtjoinsel
 );
 
-INSERT INTO pg_opclass (opcname, opcdeftype)
-    SELECT 'complex_abs_ops', oid FROM pg_type WHERE typname = 'complex';
+INSERT INTO pg_opclass (opcamid, opcname, opcintype, opcdefault, opckeytype)
+    VALUES (
+        (SELECT oid FROM pg_am WHERE amname = 'btree'),
+        'complex_abs_ops',
+        (SELECT oid FROM pg_type WHERE typname = 'complex'),
+        true,
+        0);
 
-SELECT oid, opcname, opcdeftype
+SELECT oid, *
     FROM pg_opclass WHERE opcname = 'complex_abs_ops';
 
 SELECT o.oid AS opoid, o.oprname
-INTO TABLE complex_ops_tmp
+INTO TEMP TABLE complex_ops_tmp
 FROM pg_operator o, pg_type t
 WHERE o.oprleft = t.oid and o.oprright = t.oid
    and t.typname = 'complex';
@@ -184,34 +189,44 @@ WHERE o.oprleft = t.oid and o.oprright = t.oid
 -- make sure we have the right operators
 SELECT * from complex_ops_tmp;
 
-INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
-   SELECT am.oid, opcl.oid, c.opoid, 1
-   FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
-   WHERE amname = 'btree' and opcname = 'complex_abs_ops' 
+INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
+   SELECT opcl.oid, 1, false, c.opoid
+   FROM pg_opclass opcl, complex_ops_tmp c
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
+      and opcname = 'complex_abs_ops' 
       and c.oprname = '<';
 
-INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
-   SELECT am.oid, opcl.oid, c.opoid, 2
-   FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
-   WHERE amname = 'btree' and opcname = 'complex_abs_ops' 
+INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
+   SELECT opcl.oid, 2, false, c.opoid
+   FROM pg_opclass opcl, complex_ops_tmp c
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
+      and opcname = 'complex_abs_ops' 
       and c.oprname = '<=';
 
-INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
-   SELECT am.oid, opcl.oid, c.opoid, 3
-   FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
-   WHERE amname = 'btree' and opcname = 'complex_abs_ops' 
+INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
+   SELECT opcl.oid, 3, false, c.opoid
+   FROM pg_opclass opcl, complex_ops_tmp c
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
+      and opcname = 'complex_abs_ops' 
       and c.oprname = '=';
 
-INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
-   SELECT am.oid, opcl.oid, c.opoid, 4
-   FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
-   WHERE amname = 'btree' and opcname = 'complex_abs_ops' 
+INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
+   SELECT opcl.oid, 4, false, c.opoid
+   FROM pg_opclass opcl, complex_ops_tmp c
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
+      and opcname = 'complex_abs_ops' 
       and c.oprname = '>=';
 
-INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
-   SELECT am.oid, opcl.oid, c.opoid, 5
-   FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
-   WHERE amname = 'btree' and opcname = 'complex_abs_ops' 
+INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
+   SELECT opcl.oid, 5, false, c.opoid
+   FROM pg_opclass opcl, complex_ops_tmp c
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
+      and opcname = 'complex_abs_ops' 
       and c.oprname = '>';
 
 --
@@ -220,10 +235,12 @@ CREATE FUNCTION complex_abs_cmp(complex, complex) RETURNS int4
 
 SELECT oid, proname FROM pg_proc WHERE proname = 'complex_abs_cmp';
 
-INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
-   SELECT am.oid, opcl.oid, pro.oid, 1
-   FROM pg_am am, pg_opclass opcl, pg_proc pro
-   WHERE  amname = 'btree' and opcname = 'complex_abs_ops'
+INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
+   SELECT opcl.oid, 1, pro.oid
+   FROM pg_opclass opcl, pg_proc pro
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
+      and opcname = 'complex_abs_ops'
       and proname = 'complex_abs_cmp';
 
 -- now, we can define a btree index on complex types. First, let's populate
@@ -239,49 +256,19 @@ SELECT * from test_complex where a = '(56.0,-22.5)';
 SELECT * from test_complex where a < '(56.0,-22.5)';
 SELECT * from test_complex where a > '(56.0,-22.5)';
 
-DELETE FROM pg_amop where (amopid, amopclaid, amopopr, amopstrategy)
-   = (
-   SELECT am.oid, opcl.oid, c.opoid, 1
-   FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
-   WHERE amname = 'btree' and opcname = 'complex_abs_ops' 
-      and c.oprname = '<');
+DELETE FROM pg_amop WHERE
+   amopclaid = (SELECT oid FROM pg_opclass WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
+      and opcname = 'complex_abs_ops');
 
-DELETE FROM pg_amop where (amopid, amopclaid, amopopr, amopstrategy)
-   = (
-   SELECT am.oid, opcl.oid, c.opoid, 2
-   FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
-   WHERE amname = 'btree' and opcname = 'complex_abs_ops' 
-      and c.oprname = '<=');
+DELETE FROM pg_amproc WHERE
+   amopclaid = (SELECT oid FROM pg_opclass WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
+      and opcname = 'complex_abs_ops');
 
-DELETE FROM pg_amop where (amopid, amopclaid, amopopr, amopstrategy)
-   = (
-   SELECT am.oid, opcl.oid, c.opoid, 3
-   FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
-   WHERE amname = 'btree' and opcname = 'complex_abs_ops' 
-      and c.oprname = '=');
-
-DELETE FROM pg_amop where (amopid, amopclaid, amopopr, amopstrategy)
-   = (
-   SELECT am.oid, opcl.oid, c.opoid, 4
-   FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
-   WHERE amname = 'btree' and opcname = 'complex_abs_ops' 
-      and c.oprname = '>=');
-
-DELETE FROM pg_amop where (amopid, amopclaid, amopopr, amopstrategy)
-   = (
-   SELECT am.oid, opcl.oid, c.opoid, 5
-   FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
-   WHERE amname = 'btree' and opcname = 'complex_abs_ops' 
-      and c.oprname = '>');
-
-DELETE FROM pg_amproc where (amid, amopclaid, amproc, amprocnum)
-   = (
-   SELECT am.oid, opcl.oid, pro.oid, 1
-   FROM pg_am am, pg_opclass opcl, pg_proc pro
-   WHERE  amname = 'btree' and opcname = 'complex_abs_ops'
-      and proname = 'complex_abs_cmp');
-
-DELETE FROM pg_opclass WHERE opcname = 'complex_abs_ops';
+DELETE FROM pg_opclass WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
+      and opcname = 'complex_abs_ops';
 
 DROP FUNCTION complex_in(opaque);
 DROP FUNCTION complex_out(opaque);

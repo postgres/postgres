@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.34 2001/06/14 01:09:22 tgl Exp $
+ * $Id: lsyscache.h,v 1.35 2001/08/21 16:36:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,8 @@
 
 #include "access/htup.h"
 
-extern bool op_class(Oid opno, Oid opclass, Oid amopid);
+extern bool op_in_opclass(Oid opno, Oid opclass);
+extern bool op_requires_recheck(Oid opno, Oid opclass);
 extern char *get_attname(Oid relid, AttrNumber attnum);
 extern AttrNumber get_attnum(Oid relid, char *attname);
 extern Oid	get_atttype(Oid relid, AttrNumber attnum);
@@ -23,6 +24,7 @@ extern bool get_attisset(Oid relid, char *attname);
 extern int32 get_atttypmod(Oid relid, AttrNumber attnum);
 extern void get_atttypetypmod(Oid relid, AttrNumber attnum,
 							  Oid *typid, int32 *typmod);
+extern bool opclass_is_btree(Oid opclass);
 extern RegProcedure get_opcode(Oid opno);
 extern char *get_opname(Oid opno);
 extern bool op_mergejoinable(Oid opno, Oid ltype, Oid rtype,

@@ -7,7 +7,7 @@
 -- Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 -- Portions Copyright (c) 1994, Regents of the University of California
 --
--- $Id: syscat.source,v 1.4 2001/06/13 19:31:56 tgl Exp $
+-- $Id: syscat.source,v 1.5 2001/08/21 16:36:06 tgl Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -141,8 +141,8 @@ SELECT a.aggname, t.typname
 -- classes
 --
 SELECT am.amname, opc.opcname, opr.oprname
-  FROM pg_am am, pg_amop amop, pg_opclass opc, pg_operator opr
-  WHERE amop.amopid = am.oid
+  FROM pg_am am, pg_opclass opc, pg_amop amop, pg_operator opr
+  WHERE opc.opcamid = am.oid
     and amop.amopclaid = opc.oid
     and amop.amopopr = opr.oid
   ORDER BY amname, opcname, oprname;

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.67 2001/07/15 22:48:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.68 2001/08/21 16:36:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,8 +103,7 @@ find_secondary_indexes(Oid relationObjectId)
 		IndexOptInfo *info;
 		int			i;
 		Relation	indexRelation;
-		Oid			relam;
-		uint16		amorderstrategy;
+		int16		amorderstrategy;
 
 		indexTuple = SearchSysCache(INDEXRELID,
 									ObjectIdGetDatum(indexoid),
@@ -138,7 +137,6 @@ find_secondary_indexes(Oid relationObjectId)
 		else
 			info->indpred = NIL;
 		info->unique = index->indisunique;
-		info->lossy = index->indislossy;
 
 		for (i = 0; i < INDEX_MAX_KEYS; i++)
 		{
@@ -160,8 +158,7 @@ find_secondary_indexes(Oid relationObjectId)
 
 		/* Extract info from the relation descriptor for the index */
 		indexRelation = index_open(index->indexrelid);
-		relam = indexRelation->rd_rel->relam;
-		info->relam = relam;
+		info->relam = indexRelation->rd_rel->relam;
 		info->pages = indexRelation->rd_rel->relpages;
 		info->tuples = indexRelation->rd_rel->reltuples;
 		info->amcostestimate = index_cost_estimator(indexRelation);
@@ -181,14 +178,12 @@ find_secondary_indexes(Oid relationObjectId)
 
 				amopTuple =
 					SearchSysCache(AMOPSTRATEGY,
-								   ObjectIdGetDatum(relam),
 								   ObjectIdGetDatum(index->indclass[i]),
-								   UInt16GetDatum(amorderstrategy),
-								   0);
+								   Int16GetDatum(amorderstrategy),
+								   0, 0);
 				if (!HeapTupleIsValid(amopTuple))
-					elog(ERROR, "find_secondary_indexes: no amop %u %u %d",
-						 relam, index->indclass[i],
-						 (int) amorderstrategy);
+					elog(ERROR, "find_secondary_indexes: no amop %u %d",
+						 index->indclass[i], (int) amorderstrategy);
 				amop = (Form_pg_amop) GETSTRUCT(amopTuple);
 				info->ordering[i] = amop->amopopr;
 				ReleaseSysCache(amopTuple);
@@ -370,7 +365,7 @@ has_unique_index(RelOptInfo *rel, AttrNumber attno)
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(ilist);
 
 		/*
-		 * Note: ignore functional, partial, or lossy indexes, since they
+		 * Note: ignore functional and partial indexes, since they
 		 * don't allow us to conclude that all attr values are distinct.
 		 * Also, a multicolumn unique index doesn't allow us to conclude
 		 * that just the specified attr is unique.
@@ -379,8 +374,7 @@ has_unique_index(RelOptInfo *rel, AttrNumber attno)
 			index->nkeys == 1 &&
 			index->indexkeys[0] == attno &&
 			index->indproc == InvalidOid &&
-			index->indpred == NIL &&
-			!index->lossy)
+			index->indpred == NIL)
 			return true;
 	}
 	return false;
