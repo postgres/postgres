@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.245.2.2 2002/02/27 23:17:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.245.2.3 2002/09/30 20:47:22 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1103,12 +1103,14 @@ ProcessInterrupts(void)
 		ProcDiePending = false;
 		QueryCancelPending = false;		/* ProcDie trumps QueryCancel */
 		ImmediateInterruptOK = false;	/* not idle anymore */
+		DisableNotifyInterrupt();
 		elog(FATAL, "This connection has been terminated by the administrator.");
 	}
 	if (QueryCancelPending)
 	{
 		QueryCancelPending = false;
 		ImmediateInterruptOK = false;	/* not idle anymore */
+		DisableNotifyInterrupt();
 		elog(ERROR, "Query was cancelled.");
 	}
 	/* If we get here, do nothing (probably, QueryCancelPending was reset) */
@@ -1704,7 +1706,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.245.2.2 $ $Date: 2002/02/27 23:17:01 $\n");
+		puts("$Revision: 1.245.2.3 $ $Date: 2002/09/30 20:47:22 $\n");
 	}
 
 	/*
@@ -1751,6 +1753,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		QueryCancelPending = false;
 		InterruptHoldoffCount = 1;
 		CritSectionCount = 0;	/* should be unnecessary, but... */
+		DisableNotifyInterrupt();
 		debug_query_string = NULL;		/* used by pgmonitor */
 
 		/*
