@@ -33,7 +33,7 @@ CLEAN :
 	-@erase "$(OUTDIR)\libpq.lib"
 	-@erase "$(OUTDIR)\libpq.dll"
 	-@erase "$(OUTDIR)\libpq.res"
-	-@erase "$(OUTDIR)\vc*.*"
+	-@erase "vc50.pch"
 	-@erase "$(OUTDIR)\libpq.pch"
 	-@erase "$(OUTDIR)\libpqdll.exp"
 	-@erase "$(OUTDIR)\libpqdll.lib"
@@ -44,6 +44,14 @@ CLEAN :
 CPP_PROJ=/nologo /ML /W3 /GX /O2 /I "..\..\include" /D "NDEBUG" /D\
  "WIN32" /D "_WINDOWS" /Fp"$(INTDIR)\libpq.pch" /YX\
  /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+
+!IFDEF MULTIBYTE
+!IFNDEF	MBFLAGS
+MBFLAGS="-DMULTIBYTE=$(MULTIBYTE)"
+!ENDIF
+CPP_PROJ = $(CPP_PROJ) $(MBFLAGS)
+!ENDIF
+
 CPP_OBJS=.\Release/
 CPP_SBRS=.
 	
@@ -57,6 +65,10 @@ LIB32_OBJS= \
 	"$(INTDIR)\fe-lobj.obj" \
 	"$(INTDIR)\fe-misc.obj" \
 	"$(INTDIR)\fe-print.obj"
+
+!IFDEF MULTIBYTE
+LIB32_OBJS = $(LIB32_OBJS) $(INTDIR)\common.obj $(INTDIR)\wchar.obj $(INTDIR)\conv.obj
+!ENDIF
 
 RSC_PROJ=/l 0x409 /fo"$(INTDIR)\libpq.res"
 

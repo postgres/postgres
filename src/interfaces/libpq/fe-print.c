@@ -9,7 +9,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.13 1998/10/04 20:46:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.14 1998/10/06 03:02:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -513,7 +513,17 @@ PQmblen(unsigned char *s)
 	return (pg_encoding_mblen(encoding, s));
 }
 
-#endif
+#else
+
+#ifdef WIN32
+int
+PQmblen(unsigned char *s)
+{
+}
+#endif	/* WIN32 */
+
+
+#endif	/* MULTIBYTE */
 
 static void
 do_field(PQprintOpt *po, PGresult *res,

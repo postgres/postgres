@@ -63,4 +63,5 @@ EXPORTS
 	lo_unlink		@ 60
 	lo_import		@ 61
 	lo_export		@ 62
-	PQresultErrorMessage	@ 63
+	pgresStatus		@ 63
+	PQmblen			@ 64

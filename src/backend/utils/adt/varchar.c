@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.41 1998/09/25 15:51:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.42 1998/10/06 03:02:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,7 +163,11 @@ bpchar(char *s, int32 len)
 #ifdef MULTIBYTE
 	/* truncate multi-byte string in a way not to break
 	   multi-byte boundary */
-	slen = pg_mbcliplen(VARDATA(s), rlen, rlen);
+	if (VARSIZE(s) > len) {
+		slen = pg_mbcliplen(VARDATA(s), VARSIZE(s)-VARHDRSZ, rlen);
+        } else {
+		slen = VARSIZE(s) - VARHDRSZ;
+        }
 #else
 	slen = VARSIZE(s) - VARHDRSZ;
 #endif

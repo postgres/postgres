@@ -29,6 +29,14 @@ CLEAN :
 CPP_PROJ=/nologo /ML /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D\
  "_MBCS" /Fp"$(INTDIR)\psql.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c \
  /I ..\..\include /I ..\..\interfaces\libpq
+
+!IFDEF        MULTIBYTE
+!IFNDEF MBFLAGS
+MBFLAGS="-DMULTIBYTE=$(MULTIBYTE)"
+!ENDIF
+CPP_PROJ=$(MBFLAGS) $(CPP_PROJ)
+!ENDIF
+
 CPP_OBJS=.\Release/
 CPP_SBRS=.
 

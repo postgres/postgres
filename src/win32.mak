@@ -10,10 +10,14 @@ NULL=
 NULL=nul
 !ENDIF 
 
+!IFDEF	MULTIBYTE
+MAKEMACRO = "MULTIBYTE=$(MULTIBYTE)"
+!ENDIF
+
 ALL: 
    cd interfaces\libpq
-   nmake /f win32.mak
+   nmake /f win32.mak $(MAKEMACRO)
    cd ..\..\bin\psql
-   nmake /f win32.mak
+   nmake /f win32.mak $(MAKEMACRO)
    cd ..\..
    echo All Win32 parts have been built!
