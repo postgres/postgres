@@ -42,14 +42,37 @@ fi
 
 USE_LOCALE=no
 echo "Define USE_LOCALE to get Postgres work (sort, search)"
-$ECHO_N "with national alphabet. [no]: $ECHO_C"
+$ECHO_N "with national alphabet. [$USE_LOCALE]: $ECHO_C"
 read a
 if [ "$a." != "." ]
 then
 	USE_LOCALE=${a}
 fi
 
-export BUILDRUN USE_LOCALE
+DEF_PGPORT=5432
+echo ""
+echo "DEF_PGPORT is the TCP port number on which the Postmaster listens by"
+echo "default.  This can be overriden by command options, environment "
+echo "variables, and the postconfig hook."
+echo ""
+
+$ECHO_N "Define DEF_PGPORT to [$DEF_PGPORT]: $ECHO_C"
+read a
+if [ "$a." != "." ]
+then
+        DEF_PGPORT=${a}
+fi
+
+NOHBA=no
+echo ""
+$ECHO_N "Do you wish to disable Host Based Authentication(HBA) [no]: $ECHO_C"
+read a
+if [ "$a." != "." ]
+then
+        NOHBA=${a}
+fi
+
+export BUILDRUN USE_LOCALE DEF_PGPORT NOHBA
 
 ./configure --prefix=${IDIR}
 
