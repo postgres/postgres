@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.38 2000/04/11 03:49:04 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.39 2000/04/11 17:23:35 momjian Exp $
 Postgres documentation
 -->
 
@@ -379,7 +379,7 @@ SELECT setseed(<replaceable>value</replaceable>);
     
     <variablelist>
      <varlistentry>
-      <term>pg_options</term>
+      <term>PG_OPTIONS</term>
       <listitem>
        <para>
         Sets various backend parameters.
