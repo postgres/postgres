@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.30 2000/11/21 09:39:56 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.31 2000/11/21 10:17:57 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1293,6 +1293,7 @@ BootStrapXLOG()
 	checkPoint.nextXid = FirstTransactionId;
 	checkPoint.nextOid = BootstrapObjectIdData;
 	checkPoint.ThisStartUpID = 0;
+	checkPoint.Shutdown = true;
 
 	ShmemVariableCache->nextXid = checkPoint.nextXid;
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
@@ -1425,7 +1426,7 @@ StartupXLOG()
 			 ControlFile->catalog_version_no, CATALOG_VERSION_NO);
 
 	if (ControlFile->state == DB_SHUTDOWNED)
-		elog(LOG, "Data Base System was shut down at %s",
+		elog(LOG, "Data Base System was shutted down at %s",
 			 str_time(ControlFile->time));
 	else if (ControlFile->state == DB_SHUTDOWNING)
 		elog(LOG, "Data Base System was interrupted when shutting down at %s",
