@@ -259,6 +259,7 @@ gen_tabs(void)
 #define star_x(x) (((x) & 0x7f7f7f7f) << 1) ^ ((((x) & 0x80808080) >> 7) * 0x1b)
 
 #define imix_col(y,x)		\
+do { \
 	u	= star_x(x);		\
 	v	= star_x(u);		\
 	w	= star_x(v);		\
@@ -266,7 +267,8 @@ gen_tabs(void)
    (y)	= u ^ v ^ w;		\
    (y) ^= rotr(u ^ t,  8) ^ \
 		  rotr(v ^ t, 16) ^ \
-		  rotr(t,24)
+		  rotr(t,24);		\
+} while (0)
 
 /* initialise the key schedule from the user supplied key	*/
 
@@ -367,17 +369,21 @@ rijndael_set_key(rijndael_ctx * ctx, const u4byte * in_key, const u4byte key_len
 /* encrypt a block of text	*/
 
 #define f_nround(bo, bi, k) \
+do { \
 	f_rn(bo, bi, 0, k);		\
 	f_rn(bo, bi, 1, k);		\
 	f_rn(bo, bi, 2, k);		\
 	f_rn(bo, bi, 3, k);		\
-	k += 4
+	k += 4;					\
+} while (0)
 
 #define f_lround(bo, bi, k) \
+do { \
 	f_rl(bo, bi, 0, k);		\
 	f_rl(bo, bi, 1, k);		\
 	f_rl(bo, bi, 2, k);		\
-	f_rl(bo, bi, 3, k)
+	f_rl(bo, bi, 3, k);		\
+} while (0)
 
 void
 rijndael_encrypt(rijndael_ctx * ctx, const u4byte * in_blk, u4byte * out_blk)
@@ -427,17 +433,21 @@ rijndael_encrypt(rijndael_ctx * ctx, const u4byte * in_blk, u4byte * out_blk)
 /* decrypt a block of text	*/
 
 #define i_nround(bo, bi, k) \
+do { \
 	i_rn(bo, bi, 0, k);		\
 	i_rn(bo, bi, 1, k);		\
 	i_rn(bo, bi, 2, k);		\
 	i_rn(bo, bi, 3, k);		\
-	k -= 4
+	k -= 4;					\
+} while (0)
 
 #define i_lround(bo, bi, k) \
+do { \
 	i_rl(bo, bi, 0, k);		\
 	i_rl(bo, bi, 1, k);		\
 	i_rl(bo, bi, 2, k);		\
-	i_rl(bo, bi, 3, k)
+	i_rl(bo, bi, 3, k);		\
+} while (0)
 
 void
 rijndael_decrypt(rijndael_ctx * ctx, const u4byte * in_blk, u4byte * out_blk)
