@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.11 1998/04/17 04:12:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.12 1998/05/09 23:22:15 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -200,6 +200,8 @@ Oid	param_type(int t); /* used in parse_expr.c */
 				having_clause
 %type <list>	row_descriptor, row_list
 %type <node>	row_expr
+%type <str>		row_op
+%type <ival>	sub_type
 %type <list>	OptCreateAs, CreateAsList
 %type <node>	CreateAsElement
 %type <value>	NumConst
@@ -267,8 +269,9 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		PARTIAL, POSITION, PRECISION, PRIMARY, PRIVILEGES, PROCEDURE, PUBLIC,
 		REFERENCES, REVOKE, RIGHT, ROLLBACK,
 		SECOND_P, SELECT, SET, SUBSTRING,
-		TABLE, TIME, TIMESTAMP, TO, TRAILING, TRANSACTION, TRIM,
-		UNION, UNIQUE, UPDATE, USING,
+		TABLE, TIME, TIMESTAMP, TIMEZONE_HOUR, TIMEZONE_MINUTE,
+		TO, TRAILING, TRANSACTION, TRIM,
+		UNION, UNIQUE, UPDATE, USER, USING,
 		VALUES, VARCHAR, VARYING, VIEW,
 		WHERE, WITH, WORK, YEAR_P, ZONE
 
@@ -299,7 +302,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
  *
  *                                    Todd A. Brandys
  */
-%token	USER, PASSWORD, CREATEDB, NOCREATEDB, CREATEUSER, NOCREATEUSER, VALID, UNTIL
+%token	PASSWORD, CREATEDB, NOCREATEDB, CREATEUSER, NOCREATEUSER, VALID, UNTIL
 
 /* Special keywords, not in the query language - see the "lex" file */
 %token <str>	IDENT, SCONST, Op
@@ -738,8 +741,20 @@ ColQualifier:  ColQualList						{ $$ = $1; }
 			| /*EMPTY*/							{ $$ = NULL; }
 		;
 
-ColQualList:  ColQualList ColConstraint			{ $$ = lappend($1,$2); }
-			| ColConstraint						{ $$ = lcons($1, NIL); }
+ColQualList:  ColQualList ColConstraint
+				{
+					if ($2 != NULL)
+						$$ = lappend($1, $2);
+					else
+						$$ = $1;
+				}
+			| ColConstraint
+				{
+					if ($1 != NULL)
+						$$ = lcons($1, NIL);
+					else
+						$$ = NULL;
+				}
 		;
 
 ColConstraint:
@@ -896,6 +911,8 @@ default_expr:  AexprConst
 				}
 			| CURRENT_USER
 				{	$$ = lcons( makeString( "CURRENT_USER"), NIL); }
+			| USER
+				{	$$ = lcons( makeString( "USER"), NIL); }
 		;
 
 /* ConstraintElem specifies constraint syntax which is not embedded into
@@ -2542,8 +2559,10 @@ groupby:  ColId
 
 having_clause:  HAVING a_expr
 				{
+#if FALSE
 					elog(ERROR,"HAVING clause not yet implemented");
-/*					$$ = $2; use this line instead to enable HAVING */
+#endif
+					$$ = $2;
 				}
 		| /*EMPTY*/								{ $$ = NULL; }
 		;
@@ -2849,12 +2868,13 @@ opt_decimal:  '(' Iconst ',' Iconst ')'
 Character:  character '(' Iconst ')'
 				{
 					$$ = makeNode(TypeName);
-					if (!strcasecmp($1, "char"))
+					if (strcasecmp($1, "char") == 0)
 						$$->name = xlateSqlType("bpchar");
-					else if (!strcasecmp($1, "varchar"))
+					else if (strcasecmp($1, "varchar") == 0)
 						$$->name = xlateSqlType("varchar");
 					else
-						yyerror("parse error");
+						yyerror("internal parsing error; unrecognized character type");
+
 					if ($3 < 1)
 						elog(ERROR,"length for '%s' type must be at least 1",$1);
 					else if ($3 > 4096)
@@ -2875,8 +2895,19 @@ Character:  character '(' Iconst ')'
 		| character
 				{
 					$$ = makeNode(TypeName);
-					$$->name = xlateSqlType($1);
-					$$->typmod = -1;
+					/* Let's try to make all single-character types into bpchar(1)
+					 * - thomas 1998-05-07
+					 */
+					if (strcasecmp($1, "char") == 0)
+					{
+						$$->name = xlateSqlType("bpchar");
+						$$->typmod = VARHDRSZ + 1;
+					}
+					else
+					{
+						$$->name = xlateSqlType($1);
+						$$->typmod = -1;
+					}
 				}
 		;
 
@@ -2897,7 +2928,7 @@ character:  CHARACTER opt_varying opt_charset opt_collate
 						}
 					};
 					if ($4 != NULL)
-					elog(ERROR,"COLLATE %s not yet implemented",$4);
+						elog(NOTICE,"COLLATE %s not yet implemented; clause ignored",$4);
 					$$ = type;
 				}
 		| CHAR opt_varying						{ $$ = xlateSqlType($2? "varchar": "char"); }
@@ -2964,6 +2995,7 @@ opt_interval:  datetime							{ $$ = lcons($1, NIL); }
 		| DAY_P TO SECOND_P						{ $$ = NIL; }
 		| HOUR_P TO MINUTE_P					{ $$ = NIL; }
 		| HOUR_P TO SECOND_P					{ $$ = NIL; }
+		| MINUTE_P TO SECOND_P					{ $$ = NIL; }
 		| /*EMPTY*/								{ $$ = NIL; }
 		;
 
@@ -2987,6 +3019,11 @@ a_expr_or_null:  a_expr
 /* Expressions using row descriptors
  * Define row_descriptor to allow yacc to break the reduce/reduce conflict
  *  with singleton expressions.
+ * Eliminated lots of code by defining row_op and sub_type clauses.
+ * However, can not consolidate EXPR_LINK case with others subselects
+ *  due to shift/reduce conflict with the non-subselect clause (the parser
+ *  would have to look ahead more than one token to resolve the conflict).
+ * - thomas 1998-05-09
  */
 row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 				{
@@ -3008,7 +3045,20 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 					n->subselect = $7;
 					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' Op '(' SubSelect ')'
+		| '(' row_descriptor ')' row_op sub_type '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons($4, NIL);
+					if (strcmp($4,"<>") == 0)
+						n->useor = true;
+					else
+						n->useor = false;
+					n->subLinkType = $5;
+					n->subselect = $7;
+					$$ = (Node *)n;
+				}
+		| '(' row_descriptor ')' row_op '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
@@ -3021,273 +3071,9 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 					n->subselect = $6;
 					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' '+' '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons("+", NIL);
-					n->useor = false;
-					n->subLinkType = EXPR_SUBLINK;
-					n->subselect = $6;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' '-' '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons("-", NIL);
-					n->useor = false;
-					n->subLinkType = EXPR_SUBLINK;
-					n->subselect = $6;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' '/' '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons("/", NIL);
-					n->useor = false;
-					n->subLinkType = EXPR_SUBLINK;
-					n->subselect = $6;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' '*' '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons("*", NIL);
-					n->useor = false;
-					n->subLinkType = EXPR_SUBLINK;
-					n->subselect = $6;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' '<' '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons("<", NIL);
-					n->useor = false;
-					n->subLinkType = EXPR_SUBLINK;
-					n->subselect = $6;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' '>' '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons(">", NIL);
-					n->useor = false;
-					n->subLinkType = EXPR_SUBLINK;
-					n->subselect = $6;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' '=' '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons("=", NIL);
-					n->useor = false;
-					n->subLinkType = EXPR_SUBLINK;
-					n->subselect = $6;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' Op ANY '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons($4,NIL);
-					if (strcmp($4,"<>") == 0)
-						n->useor = true;
-					else
-						n->useor = false;
-					n->subLinkType = ANY_SUBLINK;
-					n->subselect = $7;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' '+' ANY '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons("+",NIL);
-					n->useor = false;
-					n->subLinkType = ANY_SUBLINK;
-					n->subselect = $7;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' '-' ANY '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons("-",NIL);
-					n->useor = false;
-					n->subLinkType = ANY_SUBLINK;
-					n->subselect = $7;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' '/' ANY '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons("/",NIL);
-					n->useor = false;
-					n->subLinkType = ANY_SUBLINK;
-					n->subselect = $7;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' '*' ANY '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons("*",NIL);
-					n->useor = false;
-					n->subLinkType = ANY_SUBLINK;
-					n->subselect = $7;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' '<' ANY '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons("<",NIL);
-					n->useor = false;
-					n->subLinkType = ANY_SUBLINK;
-					n->subselect = $7;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' '>' ANY '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons(">",NIL);
-					n->useor = false;
-					n->subLinkType = ANY_SUBLINK;
-					n->subselect = $7;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' '=' ANY '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons("=",NIL);
-					n->useor = false;
-					n->subLinkType = ANY_SUBLINK;
-					n->subselect = $7;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' Op ALL '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons($4,NIL);
-					if (strcmp($4,"<>") == 0)
-						n->useor = true;
-					else
-						n->useor = false;
-					n->subLinkType = ALL_SUBLINK;
-					n->subselect = $7;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' '+' ALL '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons("+",NIL);
-					n->useor = false;
-					n->subLinkType = ALL_SUBLINK;
-					n->subselect = $7;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' '-' ALL '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons("-",NIL);
-					n->useor = false;
-					n->subLinkType = ALL_SUBLINK;
-					n->subselect = $7;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' '/' ALL '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons("/",NIL);
-					n->useor = false;
-					n->subLinkType = ALL_SUBLINK;
-					n->subselect = $7;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' '*' ALL '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons("*",NIL);
-					n->useor = false;
-					n->subLinkType = ALL_SUBLINK;
-					n->subselect = $7;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' '<' ALL '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons("<",NIL);
-					n->useor = false;
-					n->subLinkType = ALL_SUBLINK;
-					n->subselect = $7;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' '>' ALL '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons(">",NIL);
-					n->useor = false;
-					n->subLinkType = ALL_SUBLINK;
-					n->subselect = $7;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' '=' ALL '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = lcons("=",NIL);
-					n->useor = false;
-					n->subLinkType = ALL_SUBLINK;
-					n->subselect = $7;
-					$$ = (Node *)n;
-				}
-		| '(' row_descriptor ')' Op '(' row_descriptor ')'
+		| '(' row_descriptor ')' row_op '(' row_descriptor ')'
 				{
 					$$ = makeRowExpr($4, $2, $6);
-				}
-		| '(' row_descriptor ')' '+' '(' row_descriptor ')'
-				{
-					$$ = makeRowExpr("+", $2, $6);
-				}
-		| '(' row_descriptor ')' '-' '(' row_descriptor ')'
-				{
-					$$ = makeRowExpr("-", $2, $6);
-				}
-		| '(' row_descriptor ')' '/' '(' row_descriptor ')'
-				{
-					$$ = makeRowExpr("/", $2, $6);
-				}
-		| '(' row_descriptor ')' '*' '(' row_descriptor ')'
-				{
-					$$ = makeRowExpr("*", $2, $6);
-				}
-		| '(' row_descriptor ')' '<' '(' row_descriptor ')'
-				{
-					$$ = makeRowExpr("<", $2, $6);
-				}
-		| '(' row_descriptor ')' '>' '(' row_descriptor ')'
-				{
-					$$ = makeRowExpr(">", $2, $6);
-				}
-		| '(' row_descriptor ')' '=' '(' row_descriptor ')'
-				{
-					$$ = makeRowExpr("=", $2, $6);
 				}
 		;
 
@@ -3305,6 +3091,20 @@ row_list:  row_list ',' a_expr
 				{
 					$$ = lcons($1, NIL);
 				}
+		;
+
+row_op:  Op									{ $$ = $1; }
+		| '<'								{ $$ = "<"; }
+		| '='								{ $$ = "="; }
+		| '>'								{ $$ = ">"; }
+		| '+'								{ $$ = "+"; }
+		| '-'								{ $$ = "-"; }
+		| '*'								{ $$ = "*"; }
+		| '/'								{ $$ = "/"; }
+		;
+
+sub_type:  ANY								{ $$ = ANY_SUBLINK; }
+		| ALL								{ $$ = ALL_SUBLINK; }
 		;
 
 /*
@@ -3514,6 +3314,13 @@ a_expr:  attr opt_indirection
 					$$ = (Node *)n;
 				}
 		| CURRENT_USER
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "getpgusername";
+					n->args = NIL;
+					$$ = (Node *)n;
+				}
+		| USER
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "getpgusername";
@@ -4108,6 +3915,13 @@ b_expr:  attr opt_indirection
 					n->args = NIL;
 					$$ = (Node *)n;
 				}
+		| USER
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "getpgusername";
+					n->args = NIL;
+					$$ = (Node *)n;
+				}
 		| POSITION '(' position_list ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
@@ -4190,12 +4004,9 @@ extract_list:  extract_arg FROM a_expr
 				{	$$ = NIL; }
 		;
 
-/* Add in TIMEZONE_HOUR and TIMEZONE_MINUTE for SQL92 compliance
- *  for next release. Just set up extract_arg for now...
- * - thomas 1998-04-08
- */
-extract_arg:  datetime
-				{	$$ = $1; }
+extract_arg:  datetime						{ $$ = $1; }
+		| TIMEZONE_HOUR						{ $$ = "tz_hour"; }
+		| TIMEZONE_MINUTE					{ $$ = "tz_minute"; }
 		;
 
 position_list:  position_expr IN position_expr
@@ -4686,9 +4497,10 @@ ColId:  IDENT							{ $$ = $1; }
 		| START							{ $$ = "start"; }
 		| STATEMENT						{ $$ = "statement"; }
 		| TIME							{ $$ = "time"; }
+		| TIMEZONE_HOUR					{ $$ = "timezone_hour"; }
+		| TIMEZONE_MINUTE				{ $$ = "timezone_minute"; }
 		| TRIGGER						{ $$ = "trigger"; }
 		| TYPE_P						{ $$ = "type"; }
-		| USER							{ $$ = "user"; }
 		| VALID							{ $$ = "valid"; }
 		| VERSION						{ $$ = "version"; }
 		| ZONE							{ $$ = "zone"; }
@@ -5030,10 +4842,10 @@ FlattenStringList(List *list)
 	*(s+len) = '\0';
 
 #ifdef PARSEDEBUG
-printf( "flattened string is \"%s\"\n", s);
+	elog(DEBUG, "flattened string is \"%s\"\n", s);
 #endif
 
-	return(s);
+	return (s);
 } /* FlattenStringList() */
 
 
@@ -5043,33 +4855,48 @@ printf( "flattened string is \"%s\"\n", s);
 static List *
 makeConstantList( A_Const *n)
 {
+	List *result = NIL;
+	char *typval = NULL;
 	char *defval = NULL;
+
 	if (nodeTag(n) != T_A_Const) {
 		elog(ERROR,"Cannot handle non-constant parameter");
 
 	} else if (n->val.type == T_Float) {
 		defval = (char*) palloc(20+1);
 		sprintf( defval, "%g", n->val.val.dval);
+		result = lcons( makeString(defval), NIL);
 
 	} else if (n->val.type == T_Integer) {
 		defval = (char*) palloc(20+1);
 		sprintf( defval, "%ld", n->val.val.ival);
+		result = lcons( makeString(defval), NIL);
 
 	} else if (n->val.type == T_String) {
 		defval = (char*) palloc(strlen( ((A_Const *) n)->val.val.str) + 3);
 		strcpy( defval, "'");
 		strcat( defval, ((A_Const *) n)->val.val.str);
 		strcat( defval, "'");
+		if (n->typename != NULL)
+		{
+			typval = (char*) palloc(strlen( n->typename->name) + 1);
+			strcpy(typval, n->typename->name);
+			result = lappend( lcons( makeString(typval), NIL), makeString(defval));
+		}
+		else
+		{
+			result = lcons( makeString(defval), NIL);
+		}
 
 	} else {
 		elog(ERROR,"Internal error in makeConstantList(): cannot encode node");
 	};
 
 #ifdef PARSEDEBUG
-printf( "AexprConst argument is \"%s\"\n", defval);
+	elog(DEBUG, "AexprConst argument is \"%s\"\n", defval);
 #endif
 
-	return( lcons( makeString(defval), NIL));
+	return (result);
 } /* makeConstantList() */
 
 
@@ -5095,10 +4922,11 @@ fmtId(char *rawid)
 	};
 
 #ifdef PARSEDEBUG
-printf("fmtId- %sconvert %s to %s\n", ((cp == rawid)? "do not ": ""), rawid, cp);
+	elog(DEBUG, "fmtId- %sconvert %s to %s\n",
+	 ((cp == rawid)? "do not ": ""), rawid, cp);
 #endif
 
-	return(cp);
+	return (cp);
 }
 
 /*
