@@ -27,4 +27,4 @@ stp.so: stp.c
 
 
 clean:
-	-/bin/rm test1 test2 test3 test4 test5 perftest *.c log stp.o stp.so
+	-/bin/rm test1 test2 test3 test4 test5 perftest *.c log stp.o stp.so dyntest

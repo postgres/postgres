@@ -2,26 +2,11 @@
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/dynamic.c,v 1.1 2000/02/16 16:18:12 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/dynamic.c,v 1.2 2000/02/17 19:48:41 meskes Exp $
  */
 
 /* I borrowed the include files from ecpglib.c, maybe we don't need all of them */
 
-#if 0
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <stdarg.h>
-#include <string.h>
-#include <ctype.h>
-#include <locale.h>
-
-#include <libpq-fe.h>
-#include <libpq/pqcomm.h>
-#include <ecpgtype.h>
-#include <ecpglib.h>
-#include <sqlca.h>
-#endif
 #include <sql3types.h>
 
 static struct descriptor

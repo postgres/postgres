@@ -241,6 +241,10 @@ main(int argc, char *const argv[])
 				
 				/* and structure member lists */
 				memset(struct_member_list, 0, sizeof(struct_member_list));
+				
+				/* finally the actual connection */
+				connection = NULL;
+				
 				/* initialize lex */
 				lex_init();
 

@@ -18,6 +18,9 @@ extern int	yylineno,
 			yyleng;
 extern FILE *yyin,
 		   *yyout;
+extern char *descriptor_index;
+extern char *descriptor_name;
+extern char *connection;
 
 extern struct _include_path *include_paths;
 extern struct cursor *cur;
@@ -42,9 +45,26 @@ extern void yyerror(char *);
 extern void *mm_alloc(size_t), *mm_realloc(void *, size_t);
 extern char *mm_strdup(const char *);
 extern void mmerror(enum errortype, char * );
-ScanKeyword *ScanECPGKeywordLookup(char *);
-ScanKeyword *ScanCKeywordLookup(char *);
-
+extern ScanKeyword *ScanECPGKeywordLookup(char *);
+extern ScanKeyword *ScanCKeywordLookup(char *);
+extern void output_get_descr_header(char *);
+extern void output_get_descr(char *);
+extern void push_assignment(char *, char *);
+extern struct variable * find_variable(char *);
+extern void whenever_action(int);
+extern void add_descriptor(char *,char *);
+extern void drop_descriptor(char *,char *);
+extern struct descriptor *lookup_descriptor(char *,char *);
+extern void output_statement_desc(char *, int);
+extern void add_variable(struct arguments ** , struct variable * , struct variable *);
+extern void dump_variables(struct arguments *, int);
+extern struct typedefs *get_typedef(char *);
+extern void adjust_array(enum ECPGttype, int *, int *, int, int, bool);
+extern void reset_variables(void);
+extern void check_indicator(struct ECPGtype *);
+extern void remove_variables(int);
+extern struct variable *new_variable(const char *, struct ECPGtype *);
+ 
 /* return codes */
 
 #define OK			 0

@@ -10,8 +10,7 @@ CFLAGS+=-I../include -DMAJOR_VERSION=$(MAJOR_VERSION) \
 	-DINCLUDE_PATH=\"$(HEADERDIR)\" -g
 
 OBJ=preproc.o pgc.o type.o ecpg.o ecpg_keywords.o \
-    keywords.o c_keywords.o ../lib/typename.o
-#../../../backend/parser/scansup.o
+    keywords.o c_keywords.o ../lib/typename.o descriptor.o variable.o
 
 all:: ecpg
 

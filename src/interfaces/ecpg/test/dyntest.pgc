@@ -2,7 +2,7 @@
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/test/Attic/dyntest.pgc,v 1.1 2000/02/16 16:18:29 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/test/Attic/dyntest.pgc,v 1.2 2000/02/17 19:48:58 meskes Exp $
  */
 
 #include <stdio.h>
@@ -37,7 +37,7 @@ int main(int argc,char **argv)
   
   exec sql allocate descriptor MYDESC;
   
-  exec sql connect to test;
+  exec sql connect to mm;
   
   exec sql prepare MYQUERY from :QUERY;
   exec sql declare MYCURS cursor for MYQUERY;

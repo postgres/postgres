@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "postgres.h"
 #include "extern.h"
 
 /* malloc + error check */

@@ -23,8 +23,9 @@ indicator-error?
 
 Add a semantic check level, e.g. check if a table really exists.
 
+It would be nice if there was a alternative library using SPI functions
+instead of libpq so we can write backend functions using ecpg.
+
 Missing statements:
  - exec sql ifdef
- - exec sql allocate
- - exec sql deallocate
  - SQLSTATE
