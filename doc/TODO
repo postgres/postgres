@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri May  4 16:47:54 EDT 2001
+Last updated:		Fri May  4 18:08:44 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -139,6 +139,8 @@ COMMANDS
 * Allow DELETE WHERE CURRENT OF cursor
 * Add BETWEEN ASYMMETRIC/SYMMETRIC
 * Add SET or BEGIN timeout parameter to cancel query if waiting too long
+* Change LIMIT val,val to offset,limit to match MySQL
+
 
 CLIENTS
 
