@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.91 2003/10/30 21:37:38 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.91.2.1 2003/11/08 20:54:37 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -645,7 +645,7 @@ psql_completion(char *text, int start, int end)
 			 strcasecmp(prev2_wd, "DATABASE") == 0)
 	{
 		static const char *const list_ALTERDATABASE[] =
-		{"RESET", "SET", NULL};
+		{"RESET", "SET", "RENAME TO", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTERDATABASE);
 	}
