@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.20 1998/10/08 18:29:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.21 1998/10/20 17:21:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -418,14 +418,15 @@ ResolveNew(RewriteInfo *info, List *targetlist, Node **nodePtr,
 					{
 						if (info->event == CMD_UPDATE)
 						{
-							((Var *) node)->varno = info->current_varno;
-							((Var *) node)->varnoold = info->current_varno;
+							*nodePtr = n = copyObject(node);
+							((Var *) n)->varno = info->current_varno;
+							((Var *) n)->varnoold = info->current_varno;
 						}
 						else
 							*nodePtr = make_null(((Var *) node)->vartype);
 					}
 					else
-						*nodePtr = n;
+						*nodePtr = copyObject(n);
 				}
 				break;
 			}
