@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.29 1998/02/26 04:31:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.30 1998/03/15 08:18:03 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -662,20 +662,24 @@ parse_map_record(FILE *file,
 	file_iuser[0] = '\0';
 
 	next_token(file, buf, sizeof(buf));
-	if (buf != '\0')
+	if (buf[0] != '\0')
 	{
 		strcpy(file_map, buf);
 		next_token(file, buf, sizeof(buf));
-		if (buf != '\0')
+		if (buf[0] != '\0')
 		{
 			strcpy(file_iuser, buf);
 			next_token(file, buf, sizeof(buf));
-			if (buf != '\0')
+			if (buf[0] != '\0')
 			{
 				strcpy(file_pguser, buf);
 				read_through_eol(file);
+				return;
 			}
 		}
+		sprintf(PQerrormsg,"Incomplete line in pg_ident: %s",file_map);
+		fputs(PQerrormsg, stderr);
+		pqdebug("%s", PQerrormsg);
 	}
 }
 
