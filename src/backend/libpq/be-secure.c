@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.2 2002/06/14 04:31:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.3 2002/06/14 04:33:53 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -39,6 +39,12 @@
  *	  session.  In this case you'll need to temporarily disable
  *	  EDH by commenting out the callback.
  *
+ *	  ...
+ *
+ *	  Because the risk of cryptanalysis increases as large 
+ *	  amounts of data are sent with the same session key, the
+ *	  session keys are periodically renegotiated.
+ *
  * PATCH LEVEL
  *	  milestone 1: fix basic coding errors
  *	  [*] existing SSL code pulled out of existing files.
@@ -52,7 +58,7 @@
  *	  milestone 3: improve confidentially, support perfect forward secrecy
  *	  [ ] use 'random' file, read from '/dev/urandom?'
  *	  [*] emphermal DH keys, default values
- *	  [ ] periodic renegotiation
+ *	  [*] periodic renegotiation
  *	  [ ] private key permissions
  *
  *	  milestone 4: provide endpoint authentication (client)
@@ -126,6 +132,12 @@ static const char *SSLerrmessage(void);
 #endif
 
 #ifdef USE_SSL
+/*
+ *	How much data can be sent across a secure connection
+ *	(total in both directions) before we require renegotiation.
+ */
+#define RENEGOTIATION_LIMIT	(64 * 1024)
+
 static SSL_CTX *SSL_context = NULL;
 #endif
 
@@ -261,10 +273,17 @@ secure_read (Port *port, void *ptr, size_t len)
 #ifdef USE_SSL
 	if (port->ssl)
 	{
+		if (port->count > RENEGOTIATION_LIMIT)
+		{
+			SSL_renegotiate(port->ssl);
+			port->count = 0;
+		}
+
 		n = SSL_read(port->ssl, ptr, len);
 		switch (SSL_get_error(port->ssl, n))
 		{
 		case SSL_ERROR_NONE:
+			port->count += n;
 			break;
 		case SSL_ERROR_WANT_READ:
 			break;
@@ -304,10 +323,17 @@ secure_write (Port *port, const void *ptr, size_t len)
 #ifdef USE_SSL
 	if (port->ssl)
 	{
+		if (port->count > RENEGOTIATION_LIMIT)
+		{
+			SSL_renegotiate(port->ssl);
+			port->count = 0;
+		}
+
 		n = SSL_write(port->ssl, ptr, len);
 		switch (SSL_get_error(port->ssl, n))
 		{
 		case SSL_ERROR_NONE:
+			port->count += n;
 			break;
 		case SSL_ERROR_WANT_WRITE:
 			break;
@@ -574,6 +600,7 @@ open_server_SSL (Port *port)
 		close_SSL(port);
 		return -1;
 	}
+	port->count = 0;
 
 	return 0;
 }
