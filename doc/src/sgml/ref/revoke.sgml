@@ -1,11 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.16 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.17 2001/11/18 20:35:02 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="SQL-REVOKE">
  <refmeta>
-  <refentrytitle>REVOKE</refentrytitle>
+  <refentrytitle id="sql-revoke-title">REVOKE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 
@@ -33,7 +33,7 @@ REVOKE { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER } [,.
   </para>
 
   <para>
-   See the description of the <xref linkend="sql-grant"> command for
+   See the description of the <xref linkend="sql-grant" endterm="sql-grant-title"> command for
    the meaning of the privilege types.
   </para>
  </refsect1>
@@ -76,7 +76,7 @@ REVOKE ALL PRIVILEGES ON kinds FROM manuel;
    <title>SQL92</title>
 
    <para>
-    The compatibility notes of the <xref linkend="sql-grant"> command
+    The compatibility notes of the <xref linkend="sql-grant" endterm="sql-grant-title"> command
     apply analogously to <command>REVOKE</command>.  The syntax summary is:
 
 <synopsis>

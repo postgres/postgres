@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.38 2001/10/23 22:11:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.39 2001/11/18 20:35:02 petere Exp $
 Postgres documentation
 -->
 
@@ -462,9 +462,9 @@ Postgres documentation
         <xref linkend="app-psql"> <command>\connect</command> command.
         This command actually opens a new connection, which might
         require manual interaction (e.g., passwords).  If you use the
-        <option>-X use-set-session-authorization</option>, then
+        <option>-X use-set-session-authorization</option> option, then
         <command>pg_dump</command> will instead output <xref
-        linkend="sql-set-session-authorization"> commands.  This has
+        linkend="sql-set-session-authorization" endterm="sql-set-session-authorization-title"> commands.  This has
         the same effect, but it requires that the user restoring the
         database from the generated script be a database superuser.
         This option effectively overrides the <option>-R</option>
@@ -472,7 +472,7 @@ Postgres documentation
        </para>
 
        <para>
-        Since <xref linkend="sql-set-session-authorization"> is a
+        Since <xref linkend="sql-set-session-authorization" endterm="sql-set-session-authorization-title"> is a
         standard SQL command, whereas <command>\connect</command> only
         works in <xref linkend="app-psql">, this option also enhances
         the theoretical portability of the output script.

@@ -1,10 +1,10 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/load.sgml,v 1.10 2001/10/26 19:58:12 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/load.sgml,v 1.11 2001/11/18 20:35:02 petere Exp $
 -->
 
 <refentry id="SQL-LOAD">
  <refmeta>
-  <refentrytitle>LOAD</refentrytitle>
+  <refentrytitle id="SQL-LOAD-TITLE">LOAD</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 
@@ -29,12 +29,12 @@ LOAD '<replaceable class="PARAMETER">filename</replaceable>'
    shared library file that has been changed since the backend first
    loaded it.  To make use of the
    shared library, function(s) in it need to be declared using the <xref
-   linkend="sql-createfunction"> command.
+   linkend="sql-createfunction" endterm="sql-createfunction-title"> command.
   </para>
 
   <para>
    The filename is specified in the same way as for shared library
-   names in <xref linkend="sql-createfunction">; in particular, one
+   names in <xref linkend="sql-createfunction" endterm="sql-createfunction-title">; in particular, one
    may rely on a search path and automatic addition of the system's standard
    shared library filename extension.  See the
    <citetitle>Programmer's Guide</citetitle> for more detail.

@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.44 2001/11/16 16:29:56 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.45 2001/11/18 20:35:02 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -67,10 +67,10 @@ DEFAULTSECTION := $(sqlmansect_dummy)
 
 man: $(ALLSGML)
 	$(NSGMLS) $(NSGMLS_FLAGS) $(srcdir)/book-decl.sgml $(srcdir)/reference.sgml \
-	  | $(SGMLSPL) $(D2MSCRIPT) --lowercase --section $(DEFAULTSECTION)
+	  | $(SGMLSPL) $(D2MSCRIPT) --lowercase --section $(DEFAULTSECTION) --date "`date '+%Y-%m-%d'`"
 # One more time, to resolve cross-references
 	$(NSGMLS) $(NSGMLS_FLAGS) $(srcdir)/book-decl.sgml $(srcdir)/reference.sgml \
-	  | $(SGMLSPL) $(D2MSCRIPT) --lowercase --section $(DEFAULTSECTION)
+	  | $(SGMLSPL) $(D2MSCRIPT) --lowercase --section $(DEFAULTSECTION) --date "`date '+%Y-%m-%d'`"
 	$(mkinstalldirs) man1 man$(DEFAULTSECTION)
 	mv *.1 man1/
 	mv *.$(DEFAULTSECTION) man$(DEFAULTSECTION)/

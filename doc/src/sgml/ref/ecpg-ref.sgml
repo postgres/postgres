@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.11 2001/09/14 10:24:35 ishii Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.12 2001/11/18 20:35:02 petere Exp $
 Postgres documentation
 -->
 
@@ -23,9 +23,14 @@ Postgres documentation
   <refsynopsisdivinfo>
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
-  <synopsis>
-ecpg [ -v ] [ -t ] [ -I include-path ] [ -o outfile ]  file1 [ file2 ] [ ... ]
-  </synopsis>
+  <cmdsynopsis>
+   <command>ecpg</command>
+   <arg choice="opt">-v</arg>
+   <arg choice="opt">-t</arg>
+   <arg choice="opt">-I <replaceable>include-path</replaceable></arg>
+   <arg choice="opt">-o <replaceable>outfile</replaceable></arg>
+   <arg choice="plain" rep="repeat"><replaceable>file</replaceable></arg>
+  </cmdsynopsis>
 
   <refsect2 id="R2-APP-ECPG-1">
    <refsect2info>
@@ -58,7 +63,7 @@ ecpg [ -v ] [ -t ] [ -I include-path ] [ -o outfile ]  file1 [ file2 ] [ ... ]
      </varlistentry>
 
      <varlistentry>
-      <term>-I <replaceable class="parameter">path</replaceable></term>
+      <term>-I <replaceable class="parameter">include-path</replaceable></term>
       <listitem>
        <para>
 	Specify an additional include path.
@@ -73,7 +78,7 @@ ecpg [ -v ] [ -t ] [ -I include-path ] [ -o outfile ]  file1 [ file2 ] [ ... ]
      </varlistentry>
 
      <varlistentry>
-      <term>-o</term>
+      <term>-o <replaceable>outfile</replaceable></term>
       <listitem>
        <para>
 	Specifies that <application>ecpg</application> should write all its output to outfile.

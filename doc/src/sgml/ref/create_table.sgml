@@ -1,11 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.48 2001/10/22 18:14:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.49 2001/11/18 20:35:02 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="SQL-CREATETABLE">
  <refmeta>
-  <refentrytitle>CREATE TABLE</refentrytitle>
+  <refentrytitle id="sql-createtable-title">CREATE TABLE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 
@@ -448,7 +448,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       constraint that is not deferrable will be checked immediately
       after every command.  Checking of constraints that are
       deferrable may be postponed until the end of the transaction
-      (using the <xref linkend="sql-set-constraints"> command).
+      (using the <xref linkend="sql-set-constraints" endterm="sql-set-constraints-title"> command).
       <literal>NOT DEFERRABLE</literal> is the default.  Only foreign
       key constraints currently accept this clause.  All other
       constraint types are not deferrable.
@@ -466,7 +466,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       statement. This is the default.  If the constraint is
       <literal>INITIALLY DEFERRED</literal>, it is checked only at the
       end of the transaction.  The constraint check time can be
-      altered with the <xref linkend="sql-set-constraints"> command.
+      altered with the <xref linkend="sql-set-constraints" endterm="sql-set-constraints-title"> command.
      </para>
     </listitem>
    </varlistentry>
@@ -554,7 +554,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      index for each unique constraint and primary key constraint to
      enforce the uniqueness.  Thus, it is not necessary to create an
      explicit index for primary key columns.  (See <xref
-     linkend="sql-createindex"> for more information.)
+     linkend="sql-createindex" endterm="sql-createindex-title"> for more information.)
     </para>
    </listitem>
 
