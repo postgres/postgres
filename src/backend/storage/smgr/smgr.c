@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.15 1998/05/29 17:00:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.16 1998/06/23 15:35:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,13 +56,13 @@ static f_smgr smgrsw[] = {
 		mdread, mdwrite, mdflush, mdblindwrt, mdnblocks, mdtruncate,
 	mdcommit, mdabort},
 
-#ifdef MAIN_MEMORY
+#ifdef STABLE_MEMORY_STORAGE
 	/* main memory */
 	{mminit, mmshutdown, mmcreate, mmunlink, mmextend, mmopen, mmclose,
 		mmread, mmwrite, mmflush, mmblindwrt, mmnblocks, NULL,
 	mmcommit, mmabort},
 
-#endif							/* MAIN_MEMORY */
+#endif
 };
 
 /*
@@ -74,9 +74,9 @@ static f_smgr smgrsw[] = {
 
 static bool smgrwo[] = {
 	false,						/* magnetic disk */
-#ifdef MAIN_MEMORY
+#ifdef STABLE_MEMORY_STORAGE
 	false,						/* main memory */
-#endif							/* MAIN_MEMORY */
+#endif
 };
 static int	NSmgr = lengthof(smgrsw);
 

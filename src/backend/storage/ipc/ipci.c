@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.8 1998/05/29 17:00:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.9 1998/06/23 15:35:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,9 +73,9 @@ CreateSharedMemoryAndSemaphores(IPCKey key)
 	CreateSpinlocks(IPCKeyGetSpinLockSemaphoreKey(key));
 	size = BufferShmemSize() + LockShmemSize();
 
-#ifdef MAIN_MEMORY
+#ifdef STABLE_MEMORY_STORAGE
 	size += MMShmemSize();
-#endif							/* MAIN_MEMORY */
+#endif
 
 	if (DebugLvl > 1)
 	{

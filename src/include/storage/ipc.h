@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.25 1998/05/29 17:00:26 momjian Exp $
+ * $Id: ipc.h,v 1.26 1998/06/23 15:35:48 momjian Exp $
  *
  * NOTES
  *	  This file is very architecture-specific.	This stuff should actually
@@ -112,9 +112,9 @@ typedef enum _LockId_
 	LOCKMGRLOCKID,
 	SINVALLOCKID,
 
-#ifdef MAIN_MEMORY
+#ifdef STABLE_MEMORY_STORAGE
 	MMCACHELOCKID,
-#endif							/* MAIN_MEMORY */
+#endif
 
 	PROCSTRUCTLOCKID,
 	FIRSTFREELOCKID
@@ -143,9 +143,9 @@ typedef enum _LockId_
 	LOCKMGRLOCKID,
 	SINVALLOCKID,
 
-#ifdef MAIN_MEMORY
+#ifdef STABLE_MEMORY_STORAGE
 	MMCACHELOCKID,
-#endif							/* MAIN_MEMORY */
+#endif
 
 	PROCSTRUCTLOCKID,
 	OIDGENLOCKID,

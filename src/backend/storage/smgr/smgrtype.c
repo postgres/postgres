@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgrtype.c,v 1.8 1998/02/26 04:36:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgrtype.c,v 1.9 1998/06/23 15:35:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,9 +32,9 @@ typedef struct smgrid
 
 static smgrid StorageManager[] = {
 	{"magnetic disk"},
-#ifdef MAIN_MEMORY
+#ifdef STABLE_MEMORY_STORAGE
 	{"main memory"}
-#endif							/* MAIN_MEMORY */
+#endif
 };
 
 static int	NStorageManagers = lengthof(StorageManager);

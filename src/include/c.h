@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.41 1998/06/20 04:34:31 momjian Exp $
+ * $Id: c.h,v 1.42 1998/06/23 15:35:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -779,8 +779,8 @@ extern char *form(const char *fmt,...);
  *		we distribute to other sites.
  * ----------------
  */
-#ifdef SEQUOIA
-#define MAIN_MEMORY
+#ifdef NOT_USED
+#define STABLE_MEMORY_STORAGE
 #endif
 
 

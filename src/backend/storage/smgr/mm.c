@@ -10,13 +10,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.8 1998/05/29 17:00:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.9 1998/06/23 15:35:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#ifdef MAIN_MEMORY
+#ifdef STABLE_MEMORY_STORAGE
 
 #include <math.h>
 #include "storage/ipc.h"
@@ -608,4 +608,4 @@ MMShmemSize()
 	return (size);
 }
 
-#endif							/* MAIN_MEMORY */
+#endif							/* STABLE_MEMORY_STORAGE */
