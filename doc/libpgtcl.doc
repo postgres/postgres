@@ -17,6 +17,7 @@ The pgtcl package provides the following commands.
 	pg_connect 	- opens a connection to the backend server
 	pg_disconnect   - closes a connection
 	pg_exec 	- send a query to the backend
+	pg_select	- loop over the result of a select statement
 	pg_result 	- manipulate the results of a query
 
 	pg_lo_creat	- create a large object
@@ -54,7 +55,25 @@ The pgtcl package provides the following commands.
    the return result is either an error message or a handle for a query
    result.  Handles start with the prefix "pgp"
 
-4)  pg_result:		get information about a query result
+4)	pg_select:		loop over the result of a select statement
+
+   syntax:
+	pg_select connection query var proc
+
+   The query must be a select statement.  Anything else returns an error.
+   The var variable is an array name used in the loop.  It is filled
+   out with the result of the query for each tuple using the field
+   names as the associative indeces.  Proc is the procedure that is
+   run for each tuple found.
+
+   example: (DB is set to database name)
+	set conn [pg_connect $DB]
+	pg_select $conn "SELECT * from table" array {
+		puts [format "%5d %s" array(control) array(name)]
+	}
+	pg_disconnect $conn
+
+5)  pg_result:		get information about a query result
 
    syntax:
         pg_result result ?option? 
