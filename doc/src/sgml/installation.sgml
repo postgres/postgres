@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.203 2004/06/20 01:32:46 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.204 2004/09/23 00:30:13 neilc Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -144,9 +144,9 @@ su - postgres
       <indexterm><primary>libperl</primary></indexterm>
       <filename>libperl</filename> library must be a shared library
       also on most platforms.  This appears to be the default in
-      recent Perl versions, but it was not in earlier versions, and in
-      general it is the choice of whomever installed Perl at your
-      site.
+      recent <productname>Perl</productname> versions, but it was not
+      in earlier versions, and in general it is the choice of whomever
+      installed Perl at your site.
      </para>
 
      <para>
@@ -170,16 +170,20 @@ su - postgres
     <listitem>
      <para>
       To build the PL/Python server programming language, you need a
-      Python installation, including the header files.  Since
-      PL/Python will be a shared library, the
-      <indexterm><primary>libpython</primary></indexterm>
-      <filename>libpython</filename> library must be a shared library
-      also on most platforms.  This is not the case in a default
-      Python installation.
+      <productname>Python</productname> installation with the header
+      files and the distutils module.  The distutils module is
+      included by default with <productname>Python</productname> 1.6
+      and later; users of earlier versions of
+      <productname>Python</productname> will need to install it.
      </para>
 
      <para>
-      If after building and installing you have a file called
+      Since PL/Python will be a shared library, the
+      <indexterm><primary>libpython</primary></indexterm>
+      <filename>libpython</filename> library must be a shared library
+      also on most platforms.  This is not the case in a default
+      <productname>Python</productname> installation.  If after
+      building and installing you have a file called
       <filename>plpython.so</filename> (possibly a different
       extension), then everything went well.  Otherwise you should
       have seen a notice like this flying by:
@@ -188,17 +192,18 @@ su - postgres
 *** You might have to rebuild your Python installation.  Refer to
 *** the documentation for details.
 </screen>
-      That means you have to rebuild (part of) your Python
-      installation to supply this shared library.
+      That means you have to rebuild (part of) your
+      <productname>Python</productname> installation to supply this
+      shared library.
      </para>
 
      <para>
-      If you have problems, run Python 2.3 or later's configure using the 
-      <literal>--enable-shared</> flag.  On some operating systems you 
-      don't have to build a shared library, but you will have 
-      to convince the <productname>PostgreSQL</> build system of this.
-      Consult the <filename>Makefile</filename> in the
-      <filename>src/pl/plpython</filename> directory for details.
+      If you have problems, run <productname>Python</> 2.3 or later's
+      configure using the <literal>--enable-shared</> flag.  On some
+      operating systems you don't have to build a shared library, but
+      you will have to convince the <productname>PostgreSQL</> build
+      system of this.  Consult the <filename>Makefile</filename> in
+      the <filename>src/pl/plpython</filename> directory for details.
      </para>
     </listitem>
 
