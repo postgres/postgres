@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.155 2000/08/01 18:29:30 tgl Exp $
+ * $Id: pg_proc.h,v 1.156 2000/08/03 16:34:31 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -109,9 +109,9 @@ DATA(insert OID = 1245 (  charin		   PGUID 12 f t t t 1 f 18 "0" 100 0 0 100  ch
 DESCR("(internal)");
 DATA(insert OID =  33 (  charout		   PGUID 12 f t t t 1 f 23 "0" 100 0 0 100  charout - ));
 DESCR("(internal)");
-DATA(insert OID =  34 (  namein			   PGUID 11 f t t t 1 f 19 "0" 100 0 0 100  namein - ));
+DATA(insert OID =  34 (  namein			   PGUID 12 f t t t 1 f 19 "0" 100 0 0 100  namein - ));
 DESCR("(internal)");
-DATA(insert OID =  35 (  nameout		   PGUID 11 f t t t 1 f 23 "0" 100 0 0 100  nameout - ));
+DATA(insert OID =  35 (  nameout		   PGUID 12 f t t t 1 f 23 "0" 100 0 0 100  nameout - ));
 DESCR("(internal)");
 DATA(insert OID =  38 (  int2in			   PGUID 12 f t t t 1 f 21 "0" 100 0 0 100  int2in - ));
 DESCR("(internal)");
@@ -133,9 +133,9 @@ DATA(insert OID =  46 (  textin			   PGUID 12 f t t t 1 f 25 "0" 100 0 0 100  te
 DESCR("(internal)");
 DATA(insert OID =  47 (  textout		   PGUID 12 f t t t 1 f 23 "0" 100 0 0 100  textout - ));
 DESCR("(internal)");
-DATA(insert OID =  48 (  tidin			   PGUID 11 f t t t 1 f 27 "0" 100 0 0 100  tidin - ));
+DATA(insert OID =  48 (  tidin			   PGUID 12 f t t t 1 f 27 "0" 100 0 0 100  tidin - ));
 DESCR("(internal)");
-DATA(insert OID =  49 (  tidout			   PGUID 11 f t t t 1 f 23 "0" 100 0 0 100  tidout - ));
+DATA(insert OID =  49 (  tidout			   PGUID 12 f t t t 1 f 23 "0" 100 0 0 100  tidout - ));
 DESCR("(internal)");
 DATA(insert OID =  50 (  xidin			   PGUID 12 f t t t 1 f 28 "0" 100 0 0 100  xidin - ));
 DESCR("(internal)");
@@ -157,7 +157,7 @@ DATA(insert OID =  60 (  booleq			   PGUID 12 f t t t 2 f 16 "16 16" 100 0 0 100
 DESCR("equal");
 DATA(insert OID =  61 (  chareq			   PGUID 12 f t t t 2 f 16 "18 18" 100 0 0 100  chareq - ));
 DESCR("equal");
-DATA(insert OID =  62 (  nameeq			   PGUID 11 f t t t 2 f 16 "19 19" 100 0 0 100  nameeq - ));
+DATA(insert OID =  62 (  nameeq			   PGUID 12 f t t t 2 f 16 "19 19" 100 0 0 100  nameeq - ));
 DESCR("equal");
 DATA(insert OID =  63 (  int2eq			   PGUID 12 f t t t 2 f 16 "21 21" 100 0 0 100  int2eq - ));
 DESCR("equal");
@@ -896,15 +896,15 @@ DATA(insert OID = 1287 (  int44in		   PGUID 12 f t t t 1 f 22 "0" 100 0 0 100  i
 DESCR("(internal)");
 DATA(insert OID = 653 (  int44out		   PGUID 12 f t t t 1 f 23 "0" 100 0 0 100  int44out - ));
 DESCR("(internal)");
-DATA(insert OID = 655 (  namelt			   PGUID 11 f t t t 2 f 16 "19 19" 100 0 0 100  namelt - ));
+DATA(insert OID = 655 (  namelt			   PGUID 12 f t t t 2 f 16 "19 19" 100 0 0 100  namelt - ));
 DESCR("less-than");
-DATA(insert OID = 656 (  namele			   PGUID 11 f t t t 2 f 16 "19 19" 100 0 0 100  namele - ));
+DATA(insert OID = 656 (  namele			   PGUID 12 f t t t 2 f 16 "19 19" 100 0 0 100  namele - ));
 DESCR("less-than-or-equal");
-DATA(insert OID = 657 (  namegt			   PGUID 11 f t t t 2 f 16 "19 19" 100 0 0 100  namegt - ));
+DATA(insert OID = 657 (  namegt			   PGUID 12 f t t t 2 f 16 "19 19" 100 0 0 100  namegt - ));
 DESCR("greater-than");
-DATA(insert OID = 658 (  namege			   PGUID 11 f t t t 2 f 16 "19 19" 100 0 0 100  namege - ));
+DATA(insert OID = 658 (  namege			   PGUID 12 f t t t 2 f 16 "19 19" 100 0 0 100  namege - ));
 DESCR("greater-than-or-equal");
-DATA(insert OID = 659 (  namene			   PGUID 11 f t t t 2 f 16 "19 19" 100 0 0 100  namene - ));
+DATA(insert OID = 659 (  namene			   PGUID 12 f t t t 2 f 16 "19 19" 100 0 0 100  namene - ));
 DESCR("not equal");
 
 DATA(insert OID = 668 (  bpchar			   PGUID 12 f t t t 2 f 1042 "1042 23" 100 0 0 100  bpchar - ));
@@ -928,7 +928,7 @@ DATA(insert OID = 681 (  oidvectorgt	   PGUID 12 f t t t 2 f 16 "30 30" 100 0 0 
 DESCR("greater-than");
 
 /* OIDS 700 - 799 */
-DATA(insert OID = 710 (  getpgusername	   PGUID 11 f t f t 0 f 19 "0" 100 0 0 100  getpgusername - ));
+DATA(insert OID = 710 (  getpgusername	   PGUID 12 f t f t 0 f 19 "0" 100 0 0 100  getpgusername - ));
 DESCR("Return username");
 DATA(insert OID = 711 (  userfntest		   PGUID 12 f t t t 1 f 23 "23" 100 0 0 100  userfntest - ));
 DESCR("");
@@ -1108,35 +1108,35 @@ DESCR("multiply");
 DATA(insert OID =  867 (  cash_div_int2		   PGUID 12 f t t t 2 f 790 "790 21" 100 0 0 100	cash_div_int2 - ));
 DESCR("divide");
 
-DATA(insert OID =  886 (  cash_in		   PGUID 11 f t t t 1 f 790 "0" 100 0 0 100  cash_in - ));
+DATA(insert OID =  886 (  cash_in		   PGUID 12 f t t t 1 f 790 "0" 100 0 0 100  cash_in - ));
 DESCR("(internal)");
-DATA(insert OID =  887 (  cash_out		   PGUID 11 f t t t 1 f  23 "0" 100 0 0 100  cash_out - ));
+DATA(insert OID =  887 (  cash_out		   PGUID 12 f t t t 1 f  23 "0" 100 0 0 100  cash_out - ));
 DESCR("(internal)");
 DATA(insert OID =  1273 (  cash_words  PGUID 12 f t t t 1 f  25 "790" 100 0 0 100  cash_words - ));
 DESCR("output amount as words");
-DATA(insert OID =  888 (  cash_eq		   PGUID 11 f t t t 2 f  16 "790 790" 100 0 0 100  cash_eq - ));
+DATA(insert OID =  888 (  cash_eq		   PGUID 12 f t t t 2 f  16 "790 790" 100 0 0 100  cash_eq - ));
 DESCR("equal");
-DATA(insert OID =  889 (  cash_ne		   PGUID 11 f t t t 2 f  16 "790 790" 100 0 0 100  cash_ne - ));
+DATA(insert OID =  889 (  cash_ne		   PGUID 12 f t t t 2 f  16 "790 790" 100 0 0 100  cash_ne - ));
 DESCR("not equal");
-DATA(insert OID =  890 (  cash_lt		   PGUID 11 f t t t 2 f  16 "790 790" 100 0 0 100  cash_lt - ));
+DATA(insert OID =  890 (  cash_lt		   PGUID 12 f t t t 2 f  16 "790 790" 100 0 0 100  cash_lt - ));
 DESCR("less-than");
-DATA(insert OID =  891 (  cash_le		   PGUID 11 f t t t 2 f  16 "790 790" 100 0 0 100  cash_le - ));
+DATA(insert OID =  891 (  cash_le		   PGUID 12 f t t t 2 f  16 "790 790" 100 0 0 100  cash_le - ));
 DESCR("less-than-or-equal");
-DATA(insert OID =  892 (  cash_gt		   PGUID 11 f t t t 2 f  16 "790 790" 100 0 0 100  cash_gt - ));
+DATA(insert OID =  892 (  cash_gt		   PGUID 12 f t t t 2 f  16 "790 790" 100 0 0 100  cash_gt - ));
 DESCR("greater-than");
-DATA(insert OID =  893 (  cash_ge		   PGUID 11 f t t t 2 f  16 "790 790" 100 0 0 100  cash_ge - ));
+DATA(insert OID =  893 (  cash_ge		   PGUID 12 f t t t 2 f  16 "790 790" 100 0 0 100  cash_ge - ));
 DESCR("greater-than-or-equal");
-DATA(insert OID =  894 (  cash_pl		   PGUID 11 f t t t 2 f 790 "790 790" 100 0 0 100  cash_pl - ));
+DATA(insert OID =  894 (  cash_pl		   PGUID 12 f t t t 2 f 790 "790 790" 100 0 0 100  cash_pl - ));
 DESCR("add");
-DATA(insert OID =  895 (  cash_mi		   PGUID 11 f t t t 2 f 790 "790 790" 100 0 0 100  cash_mi - ));
+DATA(insert OID =  895 (  cash_mi		   PGUID 12 f t t t 2 f 790 "790 790" 100 0 0 100  cash_mi - ));
 DESCR("subtract");
 DATA(insert OID =  896 (  cash_mul_flt8		   PGUID 12 f t t t 2 f 790 "790 701" 100 0 0 100  cash_mul_flt8 - ));
 DESCR("multiply");
 DATA(insert OID =  897 (  cash_div_flt8		   PGUID 12 f t t t 2 f 790 "790 701" 100 0 0 100  cash_div_flt8 - ));
 DESCR("divide");
-DATA(insert OID =  898 (  cashlarger	   PGUID 11 f t t t 2 f 790 "790 790" 100 0 0 100  cashlarger - ));
+DATA(insert OID =  898 (  cashlarger	   PGUID 12 f t t t 2 f 790 "790 790" 100 0 0 100  cashlarger - ));
 DESCR("larger of two");
-DATA(insert OID =  899 (  cashsmaller	   PGUID 11 f t t t 2 f 790 "790 790" 100 0 0 100  cashsmaller - ));
+DATA(insert OID =  899 (  cashsmaller	   PGUID 12 f t t t 2 f 790 "790 790" 100 0 0 100  cashsmaller - ));
 DESCR("smaller of two");
 
 DATA(insert OID =  919 (  flt8_mul_cash	   PGUID 12 f t t t 2 f 790 "701 790" 100 0 0 100  flt8_mul_cash - ));
@@ -1520,7 +1520,7 @@ DESCR("adjust char()[] to typmod length");
 DATA(insert OID = 1291 (  _varchar		   PGUID 12 f t t t 2 f 1015 "1015 23" 100 0 0 100  _varchar - ));
 DESCR("adjust varchar()[] to typmod length");
 
-DATA(insert OID = 1292 ( tideq			   PGUID 11 f t f t 2 f 16 "27 27" 100 0 0 100  tideq - ));
+DATA(insert OID = 1292 ( tideq			   PGUID 12 f t f t 2 f 16 "27 27" 100 0 0 100  tideq - ));
 DESCR("equal");
 DATA(insert OID = 1293 ( currtid		   PGUID 12 f t f t 2 f 27 "26 27" 100 0 0 100  currtid_byreloid - ));
 DESCR("latest tid of a tuple");

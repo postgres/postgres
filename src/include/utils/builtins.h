@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.128 2000/08/01 18:29:31 tgl Exp $
+ * $Id: builtins.h,v 1.129 2000/08/03 16:34:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,14 +128,15 @@ extern Datum int4larger(PG_FUNCTION_ARGS);
 extern Datum int4smaller(PG_FUNCTION_ARGS);
 
 /* name.c */
-extern NameData *namein(const char *s);
-extern char *nameout(const NameData *s);
-extern bool nameeq(const NameData *arg1, const NameData *arg2);
-extern bool namene(const NameData *arg1, const NameData *arg2);
-extern bool namelt(const NameData *arg1, const NameData *arg2);
-extern bool namele(const NameData *arg1, const NameData *arg2);
-extern bool namegt(const NameData *arg1, const NameData *arg2);
-extern bool namege(const NameData *arg1, const NameData *arg2);
+extern Datum namein(PG_FUNCTION_ARGS);
+extern Datum nameout(PG_FUNCTION_ARGS);
+extern Datum nameeq(PG_FUNCTION_ARGS);
+extern Datum namene(PG_FUNCTION_ARGS);
+extern Datum namelt(PG_FUNCTION_ARGS);
+extern Datum namele(PG_FUNCTION_ARGS);
+extern Datum namegt(PG_FUNCTION_ARGS);
+extern Datum namege(PG_FUNCTION_ARGS);
+extern Datum getpgusername(PG_FUNCTION_ARGS);
 extern int	namecpy(Name n1, Name n2);
 extern int	namestrcpy(Name name, const char *str);
 extern int	namestrcmp(Name name, const char *str);
@@ -357,9 +358,9 @@ extern Pattern_Prefix_Status pattern_fixed_prefix(char *patt,
 extern char *make_greater_string(const char *str, Oid datatype);
 
 /* tid.c */
-extern ItemPointer tidin(const char *str);
-extern char *tidout(ItemPointer itemPtr);
-extern bool tideq(ItemPointer, ItemPointer);
+extern Datum tidin(PG_FUNCTION_ARGS);
+extern Datum tidout(PG_FUNCTION_ARGS);
+extern Datum tideq(PG_FUNCTION_ARGS);
 extern Datum currtid_byreloid(PG_FUNCTION_ARGS);
 extern Datum currtid_byrelname(PG_FUNCTION_ARGS);
 

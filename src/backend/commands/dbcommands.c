@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.58 2000/07/05 23:11:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.59 2000/08/03 16:34:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,8 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 	pg_database_dsc = RelationGetDescr(pg_database_rel);
 
 	/* Form tuple */
-	new_record[Anum_pg_database_datname - 1] = NameGetDatum(namein(dbname));
+	new_record[Anum_pg_database_datname - 1] = DirectFunctionCall1(namein,
+													CStringGetDatum(dbname));
 	new_record[Anum_pg_database_datdba - 1] = Int32GetDatum(user_id);
 	new_record[Anum_pg_database_encoding - 1] = Int32GetDatum(encoding);
 	new_record[Anum_pg_database_datpath - 1] = DirectFunctionCall1(textin,

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.63 2000/07/09 13:14:13 petere Exp $
+ * $Id: miscadmin.h,v 1.64 2000/08/03 16:34:43 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -129,15 +129,12 @@ extern char *ExpandDatabasePath(const char *path);
 extern void SetDatabaseName(const char *name);
 extern void SetDatabasePath(const char *path);
 
-extern char *getpgusername(void);
+extern char *GetPgUserName(void);
 extern void SetPgUserName(void);
 extern int	GetUserId(void);
 extern void SetUserId(void);
 extern int	FindExec(char *full_path, const char *argv0, const char *binary_name);
 extern int	CheckPathAccess(char *path, char *name, int open_mode);
-
-/* lower case version for case-insensitive SQL referenced in pg_proc.h */
-#define GetPgUserName() getpgusername()
 
 /*****************************************************************************
  *	  pmod.h --																 *

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.91 2000/07/18 03:57:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.92 2000/08/03 16:34:01 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -565,7 +565,7 @@ AlterTableAlterColumn(const char *relationName,
 	 */
 	tuple = SearchSysCacheTuple(ATTNAME,
 								ObjectIdGetDatum(myrelid),
-								NameGetDatum(namein((char *) colName)),
+								PointerGetDatum(colName),
 								0, 0);
 
 	if (!HeapTupleIsValid(tuple))

@@ -201,7 +201,7 @@ nextval(PG_FUNCTION_ARGS)
 				rescnt = 0;
 
 #ifndef NO_SECURITY
-	if (pg_aclcheck(seqname, getpgusername(), ACL_WR) != ACLCHECK_OK)
+	if (pg_aclcheck(seqname, GetPgUserName(), ACL_WR) != ACLCHECK_OK)
 		elog(ERROR, "%s.nextval: you don't have permissions to set sequence %s",
 			 seqname, seqname);
 #endif
@@ -298,7 +298,7 @@ currval(PG_FUNCTION_ARGS)
 	int32		result;
 
 #ifndef NO_SECURITY
-	if (pg_aclcheck(seqname, getpgusername(), ACL_RD) != ACLCHECK_OK)
+	if (pg_aclcheck(seqname, GetPgUserName(), ACL_RD) != ACLCHECK_OK)
 		elog(ERROR, "%s.currval: you don't have permissions to read sequence %s",
 			 seqname, seqname);
 #endif
@@ -328,7 +328,7 @@ setval(PG_FUNCTION_ARGS)
 	Form_pg_sequence seq;
 
 #ifndef NO_SECURITY
-	if (pg_aclcheck(seqname, getpgusername(), ACL_WR) != ACLCHECK_OK)
+	if (pg_aclcheck(seqname, GetPgUserName(), ACL_WR) != ACLCHECK_OK)
 		elog(ERROR, "%s.setval: you don't have permissions to set sequence %s",
 			 seqname, seqname);
 #endif

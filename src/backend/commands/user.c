@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.65 2000/07/22 04:16:13 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.66 2000/08/03 16:34:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,8 @@ write_password_file(Relation rel)
 				"%s"
 				CRYPT_PWD_FILE_SEPSTR
 				"%s\n",
-				nameout(DatumGetName(datum_n)),
+				DatumGetCString(DirectFunctionCall1(nameout,
+								NameGetDatum(DatumGetName(datum_n)))),
 				null_p ? "" :
 				DatumGetCString(DirectFunctionCall1(textout, datum_p)),
 				null_v ? "\\N" :
@@ -246,8 +247,8 @@ CreateUser(CreateUserStmt *stmt)
 	/*
 	 * Build a tuple to insert
 	 */
-	new_record[Anum_pg_shadow_usename - 1] = PointerGetDatum(namein(stmt->user));		/* this truncated
-																						 * properly */
+	new_record[Anum_pg_shadow_usename - 1] = DirectFunctionCall1(namein,
+												CStringGetDatum(stmt->user));
 	new_record[Anum_pg_shadow_usesysid - 1] = Int32GetDatum(havesysid ? stmt->sysid : max_id + 1);
 
 	AssertState(BoolIsValid(stmt->createdb));
@@ -374,7 +375,8 @@ AlterUser(AlterUserStmt *stmt)
 	/*
 	 * Build a tuple to update, perusing the information just obtained
 	 */
-	new_record[Anum_pg_shadow_usename - 1] = PointerGetDatum(namein(stmt->user));
+	new_record[Anum_pg_shadow_usename - 1] = DirectFunctionCall1(namein,
+												CStringGetDatum(stmt->user));
 	new_record_nulls[Anum_pg_shadow_usename - 1] = ' ';
 
 	/* sysid - leave as is */
@@ -556,7 +558,9 @@ DropUser(DropUserStmt *stmt)
 			datum = heap_getattr(tmp_tuple, Anum_pg_database_datname, pg_dsc, &null);
 			heap_close(pg_shadow_rel, AccessExclusiveLock);
 			elog(ERROR, "DROP USER: user \"%s\" owns database \"%s\", cannot be removed%s",
-				 user, nameout(DatumGetName(datum)),
+				 user,
+				 DatumGetCString(DirectFunctionCall1(nameout,
+									NameGetDatum(DatumGetName(datum)))),
 				 (length(stmt->users) > 1) ? " (no users removed)" : ""
 				);
 		}
@@ -587,11 +591,9 @@ DropUser(DropUserStmt *stmt)
 		{
 			AlterGroupStmt ags;
 
+			/* the group name from which to try to drop the user: */
 			datum = heap_getattr(tmp_tuple, Anum_pg_group_groname, pg_dsc, &null);
-
-			ags.name = nameout(DatumGetName(datum));	/* the group name from
-														 * which to try to drop
-														 * the user */
+			ags.name = DatumGetCString(DirectFunctionCall1(nameout, datum));
 			ags.action = -1;
 			ags.listUsers = lcons((void *) makeInteger(usesysid), NIL);
 			AlterGroup(&ags, "DROP USER");

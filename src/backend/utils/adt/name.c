@@ -12,11 +12,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.28 2000/04/12 17:15:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.29 2000/08/03 16:34:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+
+#include "miscadmin.h"
 #include "utils/builtins.h"
 
 /*****************************************************************************
@@ -31,14 +33,13 @@
  *				[Old] Currently if strlen(s) < NAMEDATALEN, the extra chars are nulls
  *				Now, always NULL terminated
  */
-NameData   *
-namein(const char *s)
+Datum
+namein(PG_FUNCTION_ARGS)
 {
+	char	   *s = PG_GETARG_CSTRING(0);
 	NameData   *result;
 	int			len;
 
-	if (s == NULL)
-		return NULL;
 	result = (NameData *) palloc(NAMEDATALEN);
 	/* always keep it null-padded */
 	StrNCpy(NameStr(*result), s, NAMEDATALEN);
@@ -48,19 +49,18 @@ namein(const char *s)
 		*(NameStr(*result) + len) = '\0';
 		len++;
 	}
-	return result;
+	PG_RETURN_NAME(result);
 }
 
 /*
- *		nameout - converts internal reprsentation to "..."
+ *		nameout - converts internal representation to "..."
  */
-char *
-nameout(const NameData *s)
+Datum
+nameout(PG_FUNCTION_ARGS)
 {
-	if (s == NULL)
-		return "-";
-	else
-		return pstrdup(NameStr(*s));
+	Name		s = PG_GETARG_NAME(0);
+
+	PG_RETURN_CSTRING(pstrdup(NameStr(*s)));
 }
 
 
@@ -82,57 +82,67 @@ nameout(const NameData *s)
  *		namege	- returns 1 iff a <= b
  *
  */
-bool
-nameeq(const NameData *arg1, const NameData *arg2)
+Datum
+nameeq(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
-	else
-		return (bool) (strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) == 0);
+	Name		arg1 = PG_GETARG_NAME(0);
+	Name		arg2 = PG_GETARG_NAME(1);
+
+	PG_RETURN_BOOL(strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) == 0);
 }
 
-bool
-namene(const NameData *arg1, const NameData *arg2)
+Datum
+namene(PG_FUNCTION_ARGS)
 {
-	if (arg1 == NULL || arg2 == NULL)
-		return (bool) 0;
-	return (bool) (strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) != 0);
+	Name		arg1 = PG_GETARG_NAME(0);
+	Name		arg2 = PG_GETARG_NAME(1);
+
+	PG_RETURN_BOOL(strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) != 0);
 }
 
-bool
-namelt(const NameData *arg1, const NameData *arg2)
+Datum
+namelt(PG_FUNCTION_ARGS)
 {
-	if (arg1 == NULL || arg2 == NULL)
-		return (bool) 0;
-	return (bool) (strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) < 0);
+	Name		arg1 = PG_GETARG_NAME(0);
+	Name		arg2 = PG_GETARG_NAME(1);
+
+	PG_RETURN_BOOL(strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) < 0);
 }
 
-bool
-namele(const NameData *arg1, const NameData *arg2)
+Datum
+namele(PG_FUNCTION_ARGS)
 {
-	if (arg1 == NULL || arg2 == NULL)
-		return (bool) 0;
-	return (bool) (strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) <= 0);
+	Name		arg1 = PG_GETARG_NAME(0);
+	Name		arg2 = PG_GETARG_NAME(1);
+
+	PG_RETURN_BOOL(strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) <= 0);
 }
 
-bool
-namegt(const NameData *arg1, const NameData *arg2)
+Datum
+namegt(PG_FUNCTION_ARGS)
 {
-	if (arg1 == NULL || arg2 == NULL)
-		return (bool) 0;
+	Name		arg1 = PG_GETARG_NAME(0);
+	Name		arg2 = PG_GETARG_NAME(1);
 
-	return (bool) (strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) > 0);
+	PG_RETURN_BOOL(strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) > 0);
 }
 
-bool
-namege(const NameData *arg1, const NameData *arg2)
+Datum
+namege(PG_FUNCTION_ARGS)
 {
-	if (arg1 == NULL || arg2 == NULL)
-		return (bool) 0;
+	Name		arg1 = PG_GETARG_NAME(0);
+	Name		arg2 = PG_GETARG_NAME(1);
 
-	return (bool) (strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) >= 0);
+	PG_RETURN_BOOL(strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) >= 0);
 }
 
+/* SQL-function interface to GetPgUserName() */
+Datum
+getpgusername(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_DATUM(DirectFunctionCall1(namein,
+										CStringGetDatum(GetPgUserName())));
+}
 
 /* (see char.c for comparison/operation routines) */
 

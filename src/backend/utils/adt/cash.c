@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.44 2000/08/01 18:29:35 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.45 2000/08/03 16:34:22 tgl Exp $
  */
 
 #include <limits.h>
@@ -66,11 +66,11 @@ CashGetDatum(Cash value)
  * XXX UNHACK Allow the currency symbol to be multi-byte.
  *	- thomas 1998-03-01
  */
-Cash *
-cash_in(const char *str)
+Datum
+cash_in(PG_FUNCTION_ARGS)
 {
-	Cash	   *result;
-
+	char	   *str = PG_GETARG_CSTRING(0);
+	Cash		result;
 	Cash		value = 0;
 	Cash		dec = 0;
 	Cash		sgn = 1;
@@ -200,17 +200,14 @@ cash_in(const char *str)
 	if (*s != '\0')
 		elog(ERROR, "Bad money external representation %s", str);
 
-	if (!PointerIsValid(result = palloc(sizeof(Cash))))
-		elog(ERROR, "Memory allocation failed, can't input cash '%s'", str);
-
-	*result = (value * sgn);
+	result = (value * sgn);
 
 #ifdef CASHDEBUG
-	printf("cashin- result is %d\n", *result);
+	printf("cashin- result is %d\n", result);
 #endif
 
-	return result;
-}	/* cash_in() */
+	PG_RETURN_CASH(result);
+}
 
 
 /* cash_out()
@@ -218,10 +215,10 @@ cash_in(const char *str)
  * XXX HACK This code appears to assume US conventions for
  *	positive-valued amounts. - tgl 97/04/14
  */
-const char *
-cash_out(Cash *in_value)
+Datum
+cash_out(PG_FUNCTION_ARGS)
 {
-	Cash		value = *in_value;
+	Cash		value = PG_GETARG_CASH(0);
 	char	   *result;
 	char		buf[CASH_BUFSZ];
 	int			minus = 0;
@@ -323,103 +320,95 @@ cash_out(Cash *in_value)
 		strcpy(result, buf + count);
 	}
 
-	return result;
-}	/* cash_out() */
+	PG_RETURN_CSTRING(result);
+}
 
 
-bool
-cash_eq(Cash *c1, Cash *c2)
+Datum
+cash_eq(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(c1) || !PointerIsValid(c2))
-		return FALSE;
+	Cash		c1 = PG_GETARG_CASH(0);
+	Cash		c2 = PG_GETARG_CASH(1);
 
-	return *c1 == *c2;
-}	/* cash_eq() */
+	PG_RETURN_BOOL(c1 == c2);
+}
 
-bool
-cash_ne(Cash *c1, Cash *c2)
+Datum
+cash_ne(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(c1) || !PointerIsValid(c2))
-		return FALSE;
+	Cash		c1 = PG_GETARG_CASH(0);
+	Cash		c2 = PG_GETARG_CASH(1);
 
-	return *c1 != *c2;
-}	/* cash_ne() */
+	PG_RETURN_BOOL(c1 != c2);
+}
 
-bool
-cash_lt(Cash *c1, Cash *c2)
+Datum
+cash_lt(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(c1) || !PointerIsValid(c2))
-		return FALSE;
+	Cash		c1 = PG_GETARG_CASH(0);
+	Cash		c2 = PG_GETARG_CASH(1);
 
-	return *c1 < *c2;
-}	/* cash_lt() */
+	PG_RETURN_BOOL(c1 < c2);
+}
 
-bool
-cash_le(Cash *c1, Cash *c2)
+Datum
+cash_le(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(c1) || !PointerIsValid(c2))
-		return FALSE;
+	Cash		c1 = PG_GETARG_CASH(0);
+	Cash		c2 = PG_GETARG_CASH(1);
 
-	return *c1 <= *c2;
-}	/* cash_le() */
+	PG_RETURN_BOOL(c1 <= c2);
+}
 
-bool
-cash_gt(Cash *c1, Cash *c2)
+Datum
+cash_gt(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(c1) || !PointerIsValid(c2))
-		return FALSE;
+	Cash		c1 = PG_GETARG_CASH(0);
+	Cash		c2 = PG_GETARG_CASH(1);
 
-	return *c1 > *c2;
-}	/* cash_gt() */
+	PG_RETURN_BOOL(c1 > c2);
+}
 
-bool
-cash_ge(Cash *c1, Cash *c2)
+Datum
+cash_ge(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(c1) || !PointerIsValid(c2))
-		return FALSE;
+	Cash		c1 = PG_GETARG_CASH(0);
+	Cash		c2 = PG_GETARG_CASH(1);
 
-	return *c1 >= *c2;
-}	/* cash_ge() */
+	PG_RETURN_BOOL(c1 >= c2);
+}
 
 
 /* cash_pl()
  * Add two cash values.
  */
-Cash *
-cash_pl(Cash *c1, Cash *c2)
+Datum
+cash_pl(PG_FUNCTION_ARGS)
 {
-	Cash	   *result;
+	Cash		c1 = PG_GETARG_CASH(0);
+	Cash		c2 = PG_GETARG_CASH(1);
+	Cash		result;
 
-	if (!PointerIsValid(c1) || !PointerIsValid(c2))
-		return NULL;
+	result = c1 + c2;
 
-	if (!PointerIsValid(result = palloc(sizeof(Cash))))
-		elog(ERROR, "Memory allocation failed, can't add cash");
-
-	*result = (*c1 + *c2);
-
-	return result;
-}	/* cash_pl() */
+	PG_RETURN_CASH(result);
+}
 
 
 /* cash_mi()
  * Subtract two cash values.
  */
-Cash *
-cash_mi(Cash *c1, Cash *c2)
+Datum
+cash_mi(PG_FUNCTION_ARGS)
 {
-	Cash	   *result;
+	Cash		c1 = PG_GETARG_CASH(0);
+	Cash		c2 = PG_GETARG_CASH(1);
+	Cash		result;
 
-	if (!PointerIsValid(c1) || !PointerIsValid(c2))
-		return NULL;
+	result = c1 - c2;
 
-	if (!PointerIsValid(result = palloc(sizeof(Cash))))
-		elog(ERROR, "Memory allocation failed, can't subtract cash");
-
-	*result = (*c1 - *c2);
-
-	return result;
-}	/* cash_mi() */
+	PG_RETURN_CASH(result);
+}
 
 
 /* cash_mul_flt8()
@@ -626,41 +615,32 @@ cash_div_int2(PG_FUNCTION_ARGS)
 /* cashlarger()
  * Return larger of two cash values.
  */
-Cash *
-cashlarger(Cash *c1, Cash *c2)
+Datum
+cashlarger(PG_FUNCTION_ARGS)
 {
-	Cash	   *result;
+	Cash		c1 = PG_GETARG_CASH(0);
+	Cash		c2 = PG_GETARG_CASH(1);
+	Cash		result;
 
-	if (!PointerIsValid(c1) || !PointerIsValid(c2))
-		return NULL;
+	result = (c1 > c2) ? c1 : c2;
 
-	if (!PointerIsValid(result = palloc(sizeof(Cash))))
-		elog(ERROR, "Memory allocation failed, can't return larger cash");
-
-	*result = ((*c1 > *c2) ? *c1 : *c2);
-
-	return result;
-}	/* cashlarger() */
-
+	PG_RETURN_CASH(result);
+}
 
 /* cashsmaller()
  * Return smaller of two cash values.
  */
-Cash *
-cashsmaller(Cash *c1, Cash *c2)
+Datum
+cashsmaller(PG_FUNCTION_ARGS)
 {
-	Cash	   *result;
+	Cash		c1 = PG_GETARG_CASH(0);
+	Cash		c2 = PG_GETARG_CASH(1);
+	Cash		result;
 
-	if (!PointerIsValid(c1) || !PointerIsValid(c2))
-		return NULL;
+	result = (c1 < c2) ? c1 : c2;
 
-	if (!PointerIsValid(result = palloc(sizeof(Cash))))
-		elog(ERROR, "Memory allocation failed, can't return smaller cash");
-
-	*result = ((*c1 < *c2) ? *c1 : *c2);
-
-	return result;
-}	/* cashsmaller() */
+	PG_RETURN_CASH(result);
+}
 
 
 /* cash_words()

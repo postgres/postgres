@@ -12,18 +12,18 @@
 /* if we store this as 4 bytes, we better make it int, not long, bjm */
 typedef signed int Cash;
 
-extern const char *cash_out(Cash *value);
-extern Cash *cash_in(const char *str);
+extern Datum cash_in(PG_FUNCTION_ARGS);
+extern Datum cash_out(PG_FUNCTION_ARGS);
 
-extern bool cash_eq(Cash *c1, Cash *c2);
-extern bool cash_ne(Cash *c1, Cash *c2);
-extern bool cash_lt(Cash *c1, Cash *c2);
-extern bool cash_le(Cash *c1, Cash *c2);
-extern bool cash_gt(Cash *c1, Cash *c2);
-extern bool cash_ge(Cash *c1, Cash *c2);
+extern Datum cash_eq(PG_FUNCTION_ARGS);
+extern Datum cash_ne(PG_FUNCTION_ARGS);
+extern Datum cash_lt(PG_FUNCTION_ARGS);
+extern Datum cash_le(PG_FUNCTION_ARGS);
+extern Datum cash_gt(PG_FUNCTION_ARGS);
+extern Datum cash_ge(PG_FUNCTION_ARGS);
 
-extern Cash *cash_pl(Cash *c1, Cash *c2);
-extern Cash *cash_mi(Cash *c1, Cash *c2);
+extern Datum cash_pl(PG_FUNCTION_ARGS);
+extern Datum cash_mi(PG_FUNCTION_ARGS);
 
 extern Datum cash_mul_flt8(PG_FUNCTION_ARGS);
 extern Datum cash_div_flt8(PG_FUNCTION_ARGS);
@@ -41,8 +41,8 @@ extern Datum cash_mul_int2(PG_FUNCTION_ARGS);
 extern Datum int2_mul_cash(PG_FUNCTION_ARGS);
 extern Datum cash_div_int2(PG_FUNCTION_ARGS);
 
-extern Cash *cashlarger(Cash *c1, Cash *c2);
-extern Cash *cashsmaller(Cash *c1, Cash *c2);
+extern Datum cashlarger(PG_FUNCTION_ARGS);
+extern Datum cashsmaller(PG_FUNCTION_ARGS);
 
 extern Datum cash_words(PG_FUNCTION_ARGS);
 

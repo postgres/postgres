@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.35 2000/07/14 22:17:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.36 2000/08/03 16:34:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -576,7 +576,8 @@ GetDefaultOpClass(Oid atttypid)
 	if (!HeapTupleIsValid(tuple))
 		return NULL;
 
-	return nameout(&((Form_pg_opclass) GETSTRUCT(tuple))->opcname);
+	return DatumGetCString(DirectFunctionCall1(nameout,
+			NameGetDatum(&((Form_pg_opclass) GETSTRUCT(tuple))->opcname)));
 }
 
 /*

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.77 2000/08/03 00:58:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.78 2000/08/03 16:34:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1889,7 +1889,8 @@ string_lessthan(const char *str1, const char *str2, Oid datatype)
 			break;
 
 		case NAMEOID:
-			result = namelt((NameData *) datum1, (NameData *) datum2);
+			result = DatumGetBool(DirectFunctionCall2(namelt,
+													  datum1, datum2));
 			break;
 
 		default:
@@ -1933,7 +1934,7 @@ string_to_datum(const char *str, Oid datatype)
 	 * varchar constants too...
 	 */
 	if (datatype == NAMEOID)
-		return PointerGetDatum(namein((char *) str));
+		return DirectFunctionCall1(namein, CStringGetDatum(str));
 	else
 		return DirectFunctionCall1(textin, CStringGetDatum(str));
 }

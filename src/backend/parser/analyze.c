@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.151 2000/07/15 00:01:41 tgl Exp $
+ *	$Id: analyze.c,v 1.152 2000/08/03 16:35:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2078,7 +2078,8 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint)
 		int			pkattno = indexStruct->indkey[i];
 		Ident	   *pkattr = makeNode(Ident);
 
-		pkattr->name = nameout(&(pkrel_attrs[pkattno - 1]->attname));
+		pkattr->name = DatumGetCString(DirectFunctionCall1(nameout,
+						NameGetDatum(&(pkrel_attrs[pkattno - 1]->attname))));
 		pkattr->indirection = NIL;
 		pkattr->isRel = false;
 

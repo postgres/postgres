@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.21 2000/07/05 23:11:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.22 2000/08/03 16:34:57 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -145,7 +145,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 	proc_source = DatumGetCString(DirectFunctionCall1(textout,
 									PointerGetDatum(&procStruct->prosrc)));
 	plpgsql_setinput(proc_source, functype);
-	plpgsql_error_funcname = nameout(&(procStruct->proname));
+	plpgsql_error_funcname = DatumGetCString(DirectFunctionCall1(nameout,
+						NameGetDatum(&(procStruct->proname))));
 	plpgsql_error_lineno = 0;
 
 	/* ----------
@@ -158,7 +159,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 
 	function->fn_functype = functype;
 	function->fn_oid = fn_oid;
-	function->fn_name = strdup(nameout(&(procStruct->proname)));
+	function->fn_name = DatumGetCString(DirectFunctionCall1(nameout,
+						NameGetDatum(&(procStruct->proname))));
 
 	switch (functype)
 	{
@@ -224,7 +226,9 @@ plpgsql_compile(Oid fn_oid, int functype)
 					 * of that type
 					 * ----------
 					 */
-					sprintf(buf, "%s%%rowtype", nameout(&(typeStruct->typname)));
+					sprintf(buf, "%s%%rowtype",
+							DatumGetCString(DirectFunctionCall1(nameout,
+							NameGetDatum(&(typeStruct->typname)))));
 					if (plpgsql_parse_wordrowtype(buf) != T_ROW)
 					{
 						plpgsql_comperrinfo();
@@ -256,7 +260,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 					var->dtype = PLPGSQL_DTYPE_VAR;
 					var->refname = strdup(buf);
 					var->lineno = 0;
-					var->datatype->typname = strdup(nameout(&(typeStruct->typname)));
+					var->datatype->typname = DatumGetCString(DirectFunctionCall1(nameout,
+									NameGetDatum(&(typeStruct->typname))));
 					var->datatype->typoid = procStruct->proargtypes[i];
 					fmgr_info(typeStruct->typinput, &(var->datatype->typinput));
 					var->datatype->typelem = typeStruct->typelem;
@@ -619,7 +624,8 @@ plpgsql_parse_word(char *word)
 
 		typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
 
-		typ->typname = strdup(nameout(&(typeStruct->typname)));
+		typ->typname = DatumGetCString(DirectFunctionCall1(nameout,
+						NameGetDatum(&(typeStruct->typname))));
 		typ->typoid = typeTup->t_data->t_oid;
 		fmgr_info(typeStruct->typinput, &(typ->typinput));
 		typ->typelem = typeStruct->typelem;
@@ -943,7 +949,8 @@ plpgsql_parse_wordtype(char *word)
 
 		typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
 
-		typ->typname = strdup(nameout(&(typeStruct->typname)));
+		typ->typname = DatumGetCString(DirectFunctionCall1(nameout,
+						NameGetDatum(&(typeStruct->typname))));
 		typ->typoid = typeTup->t_data->t_oid;
 		fmgr_info(typeStruct->typinput, &(typ->typinput));
 		typ->typelem = typeStruct->typelem;
@@ -1088,7 +1095,8 @@ plpgsql_parse_dblwordtype(char *string)
 
 	typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
 
-	typ->typname = strdup(nameout(&(typeStruct->typname)));
+	typ->typname = DatumGetCString(DirectFunctionCall1(nameout,
+						NameGetDatum(&(typeStruct->typname))));
 	typ->typoid = typetup->t_data->t_oid;
 	fmgr_info(typeStruct->typinput, &(typ->typinput));
 	typ->typelem = typeStruct->typelem;
@@ -1187,18 +1195,18 @@ plpgsql_parse_wordrowtype(char *string)
 		}
 		attrStruct = (Form_pg_attribute) GETSTRUCT(attrtup);
 
+		cp = DatumGetCString(DirectFunctionCall1(nameout,
+						NameGetDatum(&(attrStruct->attname))));
+
 		typetup = SearchSysCacheTuple(TYPEOID,
 						ObjectIdGetDatum(attrStruct->atttypid), 0, 0, 0);
 		if (!HeapTupleIsValid(typetup))
 		{
 			plpgsql_comperrinfo();
 			elog(ERROR, "cache lookup for type %u of %s.%s failed",
-				 attrStruct->atttypid, word1,
-				 nameout(&(attrStruct->attname)));
+				 attrStruct->atttypid, word1, cp);
 		}
 		typeStruct = (Form_pg_type) GETSTRUCT(typetup);
-
-		cp = strdup(nameout(&(attrStruct->attname)));
 
 		/* ----------
 		 * Create the internal variable

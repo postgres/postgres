@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.73 2000/07/29 03:26:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.74 2000/08/03 16:34:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,7 +195,8 @@ CreateTrigger(CreateTrigStmt *stmt)
 	MemSet(nulls, ' ', Natts_pg_trigger * sizeof(char));
 
 	values[Anum_pg_trigger_tgrelid - 1] = ObjectIdGetDatum(RelationGetRelid(rel));
-	values[Anum_pg_trigger_tgname - 1] = NameGetDatum(namein(stmt->trigname));
+	values[Anum_pg_trigger_tgname - 1] = DirectFunctionCall1(namein,
+											CStringGetDatum(stmt->trigname));
 	values[Anum_pg_trigger_tgfoid - 1] = ObjectIdGetDatum(funcoid);
 	values[Anum_pg_trigger_tgtype - 1] = Int16GetDatum(tgtype);
 	values[Anum_pg_trigger_tgenabled - 1] = BoolGetDatum(true);
@@ -441,7 +442,8 @@ RelationRemoveTriggers(Relation rel)
 		refrel = heap_open(pg_trigger->tgrelid, NoLock);
 
 		stmt.relname = pstrdup(RelationGetRelationName(refrel));
-		stmt.trigname = nameout(&pg_trigger->tgname);
+		stmt.trigname = DatumGetCString(DirectFunctionCall1(nameout,
+						NameGetDatum(&pg_trigger->tgname)));
 
 		heap_close(refrel, NoLock);
 
@@ -552,7 +554,8 @@ RelationBuildTriggers(Relation relation)
 
 		build->tgoid = htup->t_data->t_oid;
 		build->tgname = MemoryContextStrdup(CacheMemoryContext,
-											nameout(&pg_trigger->tgname));
+						DatumGetCString(DirectFunctionCall1(nameout,
+						NameGetDatum(&pg_trigger->tgname))));
 		build->tgfoid = pg_trigger->tgfoid;
 		build->tgfunc.fn_oid = InvalidOid; /* mark FmgrInfo as uninitialized */
 		build->tgtype = pg_trigger->tgtype;
@@ -1217,8 +1220,8 @@ deferredTriggerGetPreviousEvent(Oid relid, ItemPointer ctid)
 	}
 
 	elog(ERROR,
-	   "deferredTriggerGetPreviousEvent(): event for tuple %s not found",
-		 tidout(ctid));
+		 "deferredTriggerGetPreviousEvent(): event for tuple %s not found",
+		 DatumGetCString(DirectFunctionCall1(tidout, PointerGetDatum(ctid))));
 	return NULL;
 }
 
@@ -2020,13 +2023,15 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 							TRIGGER_DEFERRED_ROW_INSERTED)
 							elog(ERROR, "triggered data change violation "
 								 "on relation \"%s\"",
-								 nameout(&(rel->rd_rel->relname)));
+								 DatumGetCString(DirectFunctionCall1(nameout,
+								 NameGetDatum(&(rel->rd_rel->relname)))));
 
 						if (prev_event->dte_item[i].dti_state &
 							TRIGGER_DEFERRED_KEY_CHANGED)
 							elog(ERROR, "triggered data change violation "
 								 "on relation \"%s\"",
-								 nameout(&(rel->rd_rel->relname)));
+								 DatumGetCString(DirectFunctionCall1(nameout,
+								 NameGetDatum(&(rel->rd_rel->relname)))));
 					}
 
 					/* ----------
@@ -2060,7 +2065,8 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 			if (prev_event->dte_event & TRIGGER_DEFERRED_KEY_CHANGED)
 				elog(ERROR, "triggered data change violation "
 					 "on relation \"%s\"",
-					 nameout(&(rel->rd_rel->relname)));
+					 DatumGetCString(DirectFunctionCall1(nameout,
+					 NameGetDatum(&(rel->rd_rel->relname)))));
 
 			break;
 	}

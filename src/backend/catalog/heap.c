@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.140 2000/07/14 22:17:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.141 2000/08/03 16:33:52 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -409,8 +409,8 @@ CheckAttributeNames(TupleDesc tupdesc)
 	{
 		for (j = 0; j < (int) (sizeof(HeapAtt) / sizeof(HeapAtt[0])); j++)
 		{
-			if (nameeq(&(HeapAtt[j]->attname),
-					   &(tupdesc->attrs[i]->attname)))
+			if (strcmp(NameStr(HeapAtt[j]->attname),
+					   NameStr(tupdesc->attrs[i]->attname)) == 0)
 			{
 				elog(ERROR, "Attribute '%s' has a name conflict"
 					 "\n\tName matches an existing system attribute",
@@ -433,8 +433,8 @@ CheckAttributeNames(TupleDesc tupdesc)
 	{
 		for (j = 0; j < i; j++)
 		{
-			if (nameeq(&(tupdesc->attrs[j]->attname),
-					   &(tupdesc->attrs[i]->attname)))
+			if (strcmp(NameStr(tupdesc->attrs[j]->attname),
+					   NameStr(tupdesc->attrs[i]->attname)) == 0)
 			{
 				elog(ERROR, "Attribute '%s' is repeated",
 					 NameStr(tupdesc->attrs[j]->attname));
@@ -1633,7 +1633,8 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 	ccsrc = deparse_expression(expr, lcons(lcons(rte, NIL), NIL), false);
 
 	values[Anum_pg_relcheck_rcrelid - 1] = RelationGetRelid(rel);
-	values[Anum_pg_relcheck_rcname - 1] = PointerGetDatum(namein(ccname));
+	values[Anum_pg_relcheck_rcname - 1] = DirectFunctionCall1(namein,
+													CStringGetDatum(ccname));
 	values[Anum_pg_relcheck_rcbin - 1] = DirectFunctionCall1(textin,
 													CStringGetDatum(ccbin));
 	values[Anum_pg_relcheck_rcsrc - 1] = DirectFunctionCall1(textin,

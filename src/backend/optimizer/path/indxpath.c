@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.90 2000/07/27 23:15:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.91 2000/08/03 16:34:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2006,7 +2006,7 @@ string_to_datum(const char *str, Oid datatype)
 	 * varchar constants too...
 	 */
 	if (datatype == NAMEOID)
-		return PointerGetDatum(namein((char *) str));
+		return DirectFunctionCall1(namein, CStringGetDatum(str));
 	else
 		return DirectFunctionCall1(textin, CStringGetDatum(str));
 }

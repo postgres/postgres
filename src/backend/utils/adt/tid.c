@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.21 2000/07/05 23:11:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.22 2000/08/03 16:34:23 tgl Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -21,6 +21,11 @@
 #include "access/heapam.h"
 #include "utils/builtins.h"
 
+#define DatumGetItemPointer(X)   ((ItemPointer) DatumGetPointer(X))
+#define ItemPointerGetDatum(X)   PointerGetDatum(X)
+#define PG_GETARG_ITEMPOINTER(n) DatumGetItemPointer(PG_GETARG_DATUM(n))
+#define PG_RETURN_ITEMPOINTER(x) return ItemPointerGetDatum(x)
+
 #define LDELIM			'('
 #define RDELIM			')'
 #define DELIM			','
@@ -30,30 +35,23 @@
  *		tidin
  * ----------------------------------------------------------------
  */
-ItemPointer
-tidin(const char *str)
+Datum
+tidin(PG_FUNCTION_ARGS)
 {
-	const char *p,
+	char	   *str = PG_GETARG_CSTRING(0);
+	char	   *p,
 			   *coord[NTIDARGS];
 	int			i;
 	ItemPointer result;
-
 	BlockNumber blockNumber;
 	OffsetNumber offsetNumber;
-
-	if (str == NULL)
-		return NULL;
 
 	for (i = 0, p = str; *p && i < NTIDARGS && *p != RDELIM; p++)
 		if (*p == DELIM || (*p == LDELIM && !i))
 			coord[i++] = p + 1;
 
-	/* if (i < NTIDARGS - 1) */
 	if (i < NTIDARGS)
-	{
-		elog(ERROR, "%s invalid tid format", str);
-		return NULL;
-	}
+		elog(ERROR, "invalid tid format: '%s'", str);
 
 	blockNumber = (BlockNumber) atoi(coord[0]);
 	offsetNumber = (OffsetNumber) atoi(coord[1]);
@@ -62,67 +60,61 @@ tidin(const char *str)
 
 	ItemPointerSet(result, blockNumber, offsetNumber);
 
-	return result;
+	PG_RETURN_ITEMPOINTER(result);
 }
 
 /* ----------------------------------------------------------------
  *		tidout
  * ----------------------------------------------------------------
  */
-char *
-tidout(ItemPointer itemPtr)
+Datum
+tidout(PG_FUNCTION_ARGS)
 {
+	ItemPointer	itemPtr = PG_GETARG_ITEMPOINTER(0);
+	BlockId		blockId;
 	BlockNumber blockNumber;
 	OffsetNumber offsetNumber;
-	BlockId		blockId;
 	char		buf[32];
-	char	   *str;
 	static char *invalidTid = "()";
 
-	if (!itemPtr || !ItemPointerIsValid(itemPtr))
-	{
-		str = palloc(strlen(invalidTid));
-		strcpy(str, invalidTid);
-		return str;
-	}
+	if (!ItemPointerIsValid(itemPtr))
+		PG_RETURN_CSTRING(pstrdup(invalidTid));
 
 	blockId = &(itemPtr->ip_blkid);
 
 	blockNumber = BlockIdGetBlockNumber(blockId);
 	offsetNumber = itemPtr->ip_posid;
 
-	sprintf(buf, "(%d,%d)", blockNumber, offsetNumber);
+	sprintf(buf, "(%d,%d)", (int) blockNumber, (int) offsetNumber);
 
-	str = (char *) palloc(strlen(buf) + 1);
-	strcpy(str, buf);
-
-	return str;
+	PG_RETURN_CSTRING(pstrdup(buf));
 }
 
 /*****************************************************************************
  *	 PUBLIC ROUTINES														 *
  *****************************************************************************/
 
-bool
-tideq(ItemPointer arg1, ItemPointer arg2)
+Datum
+tideq(PG_FUNCTION_ARGS)
 {
-	if ((!arg1) || (!arg2))
-		return false;
+	ItemPointer		arg1 = PG_GETARG_ITEMPOINTER(0);
+	ItemPointer		arg2 = PG_GETARG_ITEMPOINTER(1);
 
-	return (BlockIdGetBlockNumber(&(arg1->ip_blkid)) ==
-			BlockIdGetBlockNumber(&(arg2->ip_blkid)) &&
-			arg1->ip_posid == arg2->ip_posid);
+	PG_RETURN_BOOL(BlockIdGetBlockNumber(&(arg1->ip_blkid)) ==
+				   BlockIdGetBlockNumber(&(arg2->ip_blkid)) &&
+				   arg1->ip_posid == arg2->ip_posid);
 }
 
 #ifdef NOT_USED
-bool
-tidne(ItemPointer arg1, ItemPointer arg2)
+Datum
+tidne(PG_FUNCTION_ARGS)
 {
-	if ((!arg1) || (!arg2))
-		return false;
-	return (BlockIdGetBlockNumber(&(arg1->ip_blkid)) !=
-			BlockIdGetBlockNumber(&(arg2->ip_blkid)) ||
-			arg1->ip_posid != arg2->ip_posid);
+	ItemPointer		arg1 = PG_GETARG_ITEMPOINTER(0);
+	ItemPointer		arg2 = PG_GETARG_ITEMPOINTER(1);
+
+	PG_RETURN_BOOL(BlockIdGetBlockNumber(&(arg1->ip_blkid)) !=
+				   BlockIdGetBlockNumber(&(arg2->ip_blkid)) ||
+				   arg1->ip_posid != arg2->ip_posid);
 }
 #endif
 
@@ -135,7 +127,7 @@ Datum
 currtid_byreloid(PG_FUNCTION_ARGS)
 {
 	Oid				reloid = PG_GETARG_OID(0);
-	ItemPointer		tid = (ItemPointer) PG_GETARG_POINTER(1);
+	ItemPointer		tid = PG_GETARG_ITEMPOINTER(1);
 	ItemPointer		result,
 					ret;
 	Relation		rel;
@@ -152,14 +144,14 @@ currtid_byreloid(PG_FUNCTION_ARGS)
 	else
 		elog(ERROR, "Relation %u not found", reloid);
 
-	PG_RETURN_POINTER(result);
+	PG_RETURN_ITEMPOINTER(result);
 }
 
 Datum
 currtid_byrelname(PG_FUNCTION_ARGS)
 {
 	text		   *relname = PG_GETARG_TEXT_P(0);
-	ItemPointer		tid = (ItemPointer) PG_GETARG_POINTER(1);
+	ItemPointer		tid = PG_GETARG_ITEMPOINTER(1);
 	ItemPointer		result,
 					ret;
 	char		   *str;
@@ -182,5 +174,5 @@ currtid_byrelname(PG_FUNCTION_ARGS)
 
 	pfree(str);
 
-	PG_RETURN_POINTER(result);
+	PG_RETURN_ITEMPOINTER(result);
 }
