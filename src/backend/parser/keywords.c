@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.34 1998/02/04 06:11:48 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.35 1998/02/11 04:09:54 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,6 +83,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"do", DO},
 	{"double", DOUBLE},
 	{"drop", DROP},
+	{"each", EACH},
 	{"end", END_TRANS},
 	{"execute", EXECUTE},
 	{"exists", EXISTS},
@@ -167,6 +168,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"revoke", REVOKE},
 	{"right", RIGHT},
 	{"rollback", ROLLBACK},
+	{"row", ROW},
 	{"rule", RULE},
 	{"second", SECOND_P},
 	{"select", SELECT},
@@ -174,6 +176,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"set", SET},
 	{"setof", SETOF},
 	{"show", SHOW},
+	{"statement", STATEMENT},
 	{"stdin", STDIN},
 	{"stdout", STDOUT},
 	{"substring", SUBSTRING},

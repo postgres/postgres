@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.105 1998/02/10 04:01:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.106 1998/02/11 04:09:52 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -61,6 +61,7 @@ extern List *parsetree;
  */
 /*#define __YYSCLASS*/
 
+static char *xlateSqlFunc(char *);
 static char *xlateSqlType(char *);
 static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 static Node *makeRowExpr(char *opr, List *largs, List *rargs);
@@ -139,7 +140,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 
 %type <str>		relation_name, copy_file_name, copy_delimiter, def_name,
 		database_name, access_method_clause, access_method, attr_name,
-		class, index_name, name, file_name, recipe_name, aggr_argtype
+		class, index_name, name, func_name, file_name, recipe_name, aggr_argtype
 
 %type <str>		opt_id, opt_portal_name,
 		all_Op, MathOp, opt_name, opt_unique,
@@ -151,13 +152,18 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <list>	stmtblock, stmtmulti,
 		relation_name_list, OptTableElementList,
 		OptInherit, definition,
-		opt_with, def_args, def_name_list, func_argtypes,
+		opt_with, func_args, func_args_list,
 		oper_argtypes, OptStmtList, OptStmtBlock, OptStmtMulti,
 		opt_column_list, columnList, opt_va_list, va_list,
 		sort_clause, sortby_list, index_params, index_list, name_list,
 		from_clause, from_list, opt_array_bounds, nest_array_bounds,
 		expr_list, attrs, res_target_list, res_target_list2,
 		def_list, opt_indirection, group_clause, groupby_list, TriggerFuncArgs
+
+%type <node>	func_return
+%type <boolean>	set_opt
+
+%type <boolean>	TriggerForOpt, TriggerForType
 
 %type <list>	union_clause, select_list
 %type <list>	join_list
@@ -206,15 +212,16 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <paramno> ParamNo
 
 %type <typnam>	Typename, opt_type, Array, Generic, Character, Datetime, Numeric
-%type <str>		generic, character, datetime
+%type <str>		generic, numeric, character, datetime
 %type <str>		opt_charset, opt_collate
 %type <str>		opt_float, opt_numeric, opt_decimal
 %type <boolean>	opt_varying, opt_timezone
 
 %type <ival>	Iconst
 %type <str>		Sconst
-%type <str>		Id, var_value, zone_value
+%type <str>		UserId, var_value, zone_value
 %type <str>		ColId, ColLabel
+%type <str>		TypeId
 
 %type <node>	TableConstraint
 %type <list>	constraint_list, constraint_expr
@@ -271,13 +278,13 @@ Oid	param_type(int t); /* used in parse_expr.c */
 /* Keywords for Postgres support (not in SQL92 reserved words) */
 %token	ABORT_TRANS, AFTER, AGGREGATE, ANALYZE,
 		BACKWARD, BEFORE, BINARY, CLUSTER, COPY,
-		DATABASE, DELIMITERS, DO, EXPLAIN, EXTEND,
+		DATABASE, DELIMITERS, DO, EACH, EXPLAIN, EXTEND,
 		FORWARD, FUNCTION, HANDLER,
 		INDEX, INHERITS, INSTEAD, ISNULL,
 		LANCOMPILER, LISTEN, LOAD, LOCK_P, LOCATION, MOVE,
 		NEW, NONE, NOTHING, NOTNULL, OIDS, OPERATOR, PROCEDURAL,
-		RECIPE, RENAME, RESET, RETURNS, RULE,
-		SEQUENCE, SETOF, SHOW, STDIN, STDOUT, TRUSTED, 
+		RECIPE, RENAME, RESET, RETURNS, ROW, RULE,
+		SEQUENCE, SETOF, SHOW, STATEMENT, STDIN, STDOUT, TRUSTED, 
 		VACUUM, VERBOSE, VERSION
 
 /* Keywords (obsolete; retain through next version for parser - thomas 1997-12-04) */
@@ -391,7 +398,7 @@ stmt :	  AddAttrStmt
  *
  *****************************************************************************/
 
-CreateUserStmt:  CREATE USER Id user_passwd_clause user_createdb_clause
+CreateUserStmt:  CREATE USER UserId user_passwd_clause user_createdb_clause
 			user_createuser_clause user_group_clause user_valid_clause
 				{
 					CreateUserStmt *n = makeNode(CreateUserStmt);
@@ -412,7 +419,7 @@ CreateUserStmt:  CREATE USER Id user_passwd_clause user_createdb_clause
  *
  *****************************************************************************/
 
-AlterUserStmt:  ALTER USER Id user_passwd_clause user_createdb_clause
+AlterUserStmt:  ALTER USER UserId user_passwd_clause user_createdb_clause
 			user_createuser_clause user_group_clause user_valid_clause
 				{
 					AlterUserStmt *n = makeNode(AlterUserStmt);
@@ -433,7 +440,7 @@ AlterUserStmt:  ALTER USER Id user_passwd_clause user_createdb_clause
  *
  *****************************************************************************/
 
-DropUserStmt:  DROP USER Id
+DropUserStmt:  DROP USER UserId
 				{
 					DropUserStmt *n = makeNode(DropUserStmt);
 					n->user = $3;
@@ -441,7 +448,7 @@ DropUserStmt:  DROP USER Id
 				}
 		;
 
-user_passwd_clause:  WITH PASSWORD Id			{ $$ = $3; }
+user_passwd_clause:  WITH PASSWORD UserId		{ $$ = $3; }
 			| /*EMPTY*/							{ $$ = NULL; }
 		;
 
@@ -475,11 +482,11 @@ user_createuser_clause:  CREATEUSER
 			| /*EMPTY*/							{ $$ = NULL; }
 		;
 
-user_group_list:  user_group_list ',' Id
+user_group_list:  user_group_list ',' UserId
 				{
 					$$ = lcons((void*)makeString($3), $1);
 				}
-			| Id
+			| UserId
 				{
 					$$ = lcons((void*)makeString($1), NIL);
 				}
@@ -826,19 +833,19 @@ default_expr:  AexprConst
 					$3->name = fmtId($3->name);
 					$$ = nconc( lcons( makeString( "CAST"), $1), makeList( makeString("AS"), $3, -1));
 				}
-			| CAST default_expr AS Typename
+			| CAST '(' default_expr AS Typename ')'
 				{
-					$4->name = fmtId($4->name);
-					$$ = nconc( lcons( makeString( "CAST"), $2), makeList( makeString("AS"), $4, -1));
+					$5->name = fmtId($5->name);
+					$$ = nconc( lcons( makeString( "CAST"), $3), makeList( makeString("AS"), $5, -1));
 				}
 			| '(' default_expr ')'
 				{	$$ = lappend( lcons( makeString( "("), $2), makeString( ")")); }
-			| name '(' ')'
+			| func_name '(' ')'
 				{
 					$$ = makeList( makeString($1), makeString("("), -1);
 					$$ = lappend( $$, makeString(")"));
 				}
-			| name '(' default_list ')'
+			| func_name '(' default_list ')'
 				{
 					$$ = makeList( makeString($1), makeString("("), -1);
 					$$ = nconc( $$, $3);
@@ -967,19 +974,19 @@ constraint_expr:  AexprConst
 					$3->name = fmtId($3->name);
 					$$ = nconc( lcons( makeString( "CAST"), $1), makeList( makeString("AS"), $3, -1));
 				}
-			| CAST constraint_expr AS Typename
+			| CAST '(' constraint_expr AS Typename ')'
 				{
-					$4->name = fmtId($4->name);
-					$$ = nconc( lcons( makeString( "CAST"), $2), makeList( makeString("AS"), $4, -1));
+					$5->name = fmtId($5->name);
+					$$ = nconc( lcons( makeString( "CAST"), $3), makeList( makeString("AS"), $5, -1));
 				}
 			| '(' constraint_expr ')'
 				{	$$ = lappend( lcons( makeString( "("), $2), makeString( ")")); }
-			| name '(' ')'
+			| func_name '(' ')'
 				{
 					$$ = makeList( makeString($1), makeString("("), -1);
 					$$ = lappend( $$, makeString(")"));
 				}
-			| name '(' constraint_list ')'
+			| func_name '(' constraint_list ')'
 				{
 					$$ = makeList( makeString($1), makeString("("), -1);
 					$$ = nconc( $$, $3);
@@ -1169,71 +1176,72 @@ CreateTrigStmt:  CREATE TRIGGER name TriggerActionTime TriggerEvents ON
 				}
 		;
 
-TriggerActionTime:		BEFORE	{ $$ = TRUE; }
-				|		AFTER	{ $$ = FALSE; }
+TriggerActionTime:  BEFORE						{ $$ = TRUE; }
+			| AFTER								{ $$ = FALSE; }
 		;
 
 TriggerEvents:	TriggerOneEvent
-					{
-							char *e = palloc (4);
-							e[0] = $1; e[1] = 0; $$ = e;
-					}
-				| TriggerOneEvent OR TriggerOneEvent
-					{
-							char *e = palloc (4);
-							e[0] = $1; e[1] = $3; e[2] = 0; $$ = e;
-					}
-				| TriggerOneEvent OR TriggerOneEvent OR TriggerOneEvent
-					{
-							char *e = palloc (4);
-							e[0] = $1; e[1] = $3; e[2] = $5; e[3] = 0;
-							$$ = e;
-					}
-		;
-
-TriggerOneEvent:		INSERT	{ $$ = 'i'; }
-				|		DELETE	{ $$ = 'd'; }
-				|		UPDATE	{ $$ = 'u'; }
-		;
-
-TriggerForSpec:  FOR name name
 				{
-						if ( strcmp ($2, "each") != 0 )
-								elog(ERROR,"parser: syntax error near %s",$2);
-						if ( strcmp ($3, "row") == 0 )
-								$$ = TRUE;
-						else if ( strcmp ($3, "statement") == 0 )
-								$$ = FALSE;
-						else
-								elog(ERROR,"parser: syntax error near %s",$3);
+					char *e = palloc (4);
+					e[0] = $1; e[1] = 0; $$ = e;
 				}
+			| TriggerOneEvent OR TriggerOneEvent
+				{
+					char *e = palloc (4);
+					e[0] = $1; e[1] = $3; e[2] = 0; $$ = e;
+				}
+			| TriggerOneEvent OR TriggerOneEvent OR TriggerOneEvent
+				{
+					char *e = palloc (4);
+					e[0] = $1; e[1] = $3; e[2] = $5; e[3] = 0;
+					$$ = e;
+				}
+		;
+
+TriggerOneEvent:  INSERT					{ $$ = 'i'; }
+			| DELETE						{ $$ = 'd'; }
+			| UPDATE						{ $$ = 'u'; }
+		;
+
+TriggerForSpec:  FOR TriggerForOpt TriggerForType
+				{
+					$$ = $3;
+				}
+		;
+
+TriggerForOpt:  EACH						{ $$ = TRUE; }
+			| /*EMPTY*/						{ $$ = FALSE; }
+		;
+
+TriggerForType:  ROW						{ $$ = TRUE; }
+			| STATEMENT						{ $$ = FALSE; }
 		;
 
 TriggerFuncArgs:  TriggerFuncArg
 				{ $$ = lcons($1, NIL); }
-		| TriggerFuncArgs ',' TriggerFuncArg
+			| TriggerFuncArgs ',' TriggerFuncArg
 				{ $$ = lappend($1, $3); }
-		| /*EMPTY*/
+			| /*EMPTY*/
 				{ $$ = NIL; }
 		;
 
 TriggerFuncArg:  ICONST
-					{
-						char *s = (char *) palloc (256);
-						sprintf (s, "%d", $1);
-						$$ = s;
-					}
-				| FCONST
-					{
-						char *s = (char *) palloc (256);
-						sprintf (s, "%g", $1);
-						$$ = s;
-					}
-				| Sconst		{  $$ = $1; }
-				| IDENT			{  $$ = $1; }
+				{
+					char *s = (char *) palloc (256);
+					sprintf (s, "%d", $1);
+					$$ = s;
+				}
+			| FCONST
+				{
+					char *s = (char *) palloc (256);
+					sprintf (s, "%g", $1);
+					$$ = s;
+				}
+			| Sconst						{  $$ = $1; }
+			| IDENT							{  $$ = $1; }
 		;
 
-DropTrigStmt:	DROP TRIGGER name ON relation_name
+DropTrigStmt:  DROP TRIGGER name ON relation_name
 				{
 					DropTrigStmt *n = makeNode(DropTrigStmt);
 					n->trigname = $3;
@@ -1317,7 +1325,6 @@ def_arg:  ColId							{  $$ = (Node *)makeString($1); }
 					n->typmod = -1;
 					$$ = (Node *)n;
 				}
-		| DOUBLE						{  $$ = (Node *)makeString("double"); }
 		;
 
 
@@ -1527,7 +1534,7 @@ index_list:  index_list ',' index_elem			{ $$ = lappend($1, $3); }
 		| index_elem							{ $$ = lcons($1, NIL); }
 		;
 
-func_index:  name '(' name_list ')' opt_type opt_class
+func_index:  func_name '(' name_list ')' opt_type opt_class
 				{
 					$$ = makeNode(IndexElem);
 					$$->name = $1;
@@ -1617,13 +1624,13 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
  *
  *****************************************************************************/
 
-ProcedureStmt:	CREATE FUNCTION def_name def_args
-			 RETURNS def_arg opt_with AS Sconst LANGUAGE Sconst
+ProcedureStmt:	CREATE FUNCTION func_name func_args
+			 RETURNS func_return opt_with AS Sconst LANGUAGE Sconst
 				{
 					ProcedureStmt *n = makeNode(ProcedureStmt);
 					n->funcname = $3;
 					n->defArgs = $4;
-					n->returnType = (Node *)$6;
+					n->returnType = $6;
 					n->withClause = $7;
 					n->as = $9;
 					n->language = $11;
@@ -1631,14 +1638,32 @@ ProcedureStmt:	CREATE FUNCTION def_name def_args
 				};
 
 opt_with:  WITH definition						{ $$ = $2; }
-		| /*EMPTY*/							{ $$ = NIL; }
+		| /*EMPTY*/								{ $$ = NIL; }
 		;
 
-def_args:  '(' def_name_list ')'				{ $$ = $2; }
+func_args:  '(' func_args_list ')'				{ $$ = $2; }
 		| '(' ')'								{ $$ = NIL; }
 		;
 
-def_name_list:	name_list;
+func_args_list:  TypeId
+				{	$$ = lcons(makeString($1),NIL); }
+		| func_args_list ',' TypeId
+				{	$$ = lappend($1,makeString($3)); }
+		;
+
+func_return:  set_opt TypeId
+				{
+					TypeName *n = makeNode(TypeName);
+					n->name = $2;
+					n->setof = $1;
+					n->arrayBounds = NULL;
+					$$ = (Node *)n;
+				}
+		;
+
+set_opt:  SETOF									{ $$ = TRUE; }
+		| /*EMPTY*/								{ $$ = FALSE; }
+		;
 
 /*****************************************************************************
  *
@@ -1672,6 +1697,7 @@ remove_type:  TYPE_P							{  $$ = TYPE_P; }
 		| VIEW									{  $$ = VIEW; }
 		;
 
+
 RemoveAggrStmt:  DROP AGGREGATE name aggr_argtype
 				{
 						RemoveAggrStmt *n = makeNode(RemoveAggrStmt);
@@ -1685,18 +1711,16 @@ aggr_argtype:  name								{ $$ = $1; }
 		| '*'									{ $$ = NULL; }
 		;
 
-RemoveFuncStmt:  DROP FUNCTION name '(' func_argtypes ')'
+
+RemoveFuncStmt:  DROP FUNCTION func_name func_args
 				{
 					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
 					n->funcname = $3;
-					n->args = $5;
+					n->args = $4;
 					$$ = (Node *)n;
 				}
 		;
 
-func_argtypes:	name_list						{ $$ = $1; }
-		| /*EMPTY*/								{ $$ = NIL; }
-		;
 
 RemoveOperStmt:  DROP OPERATOR all_Op '(' oper_argtypes ')'
 				{
@@ -2662,9 +2686,8 @@ Generic:  generic
 				}
 		;
 
-generic:  Id									{ $$ = $1; }
+generic:  IDENT									{ $$ = $1; }
 		| TYPE_P								{ $$ = xlateSqlType("type"); }
-		| DOUBLE PRECISION						{ $$ = xlateSqlType("float8"); }
 		;
 
 /* SQL92 numeric data types
@@ -2679,6 +2702,11 @@ Numeric:  FLOAT opt_float
 					$$->name = xlateSqlType($2);
 					$$->typmod = -1;
 				}
+		| DOUBLE PRECISION
+				{
+					$$ = makeNode(TypeName);
+					$$->name = xlateSqlType("float");
+				}
 		| DECIMAL opt_decimal
 				{
 					$$ = makeNode(TypeName);
@@ -2691,6 +2719,16 @@ Numeric:  FLOAT opt_float
 					$$->name = xlateSqlType("integer");
 					$$->typmod = -1;
 				}
+		;
+
+numeric:  FLOAT
+				{	$$ = xlateSqlType("float8"); }
+		| DOUBLE PRECISION
+				{	$$ = xlateSqlType("float8"); }
+		| DECIMAL
+				{	$$ = xlateSqlType("decimal"); }
+		| NUMERIC
+				{	$$ = xlateSqlType("numeric"); }
 		;
 
 opt_float:  '(' Iconst ')'
@@ -3273,19 +3311,19 @@ a_expr:  attr opt_indirection
 						$$ = (Node *)n;
 					}
 				}
-		| CAST a_expr AS Typename
+		| CAST '(' a_expr AS Typename ')'
 				{
-					$$ = (Node *)$2;
+					$$ = (Node *)$3;
 					/* AexprConst can be either A_Const or ParamNo */
-					if (nodeTag($2) == T_A_Const) {
-						((A_Const *)$2)->typename = $4;
-					} else if (nodeTag($2) == T_Param) {
-						((ParamNo *)$2)->typename = $4;
+					if (nodeTag($3) == T_A_Const) {
+						((A_Const *)$3)->typename = $5;
+					} else if (nodeTag($5) == T_Param) {
+						((ParamNo *)$3)->typename = $5;
 					/* otherwise, try to transform to a function call */
 					} else {
 						FuncCall *n = makeNode(FuncCall);
-						n->funcname = $4->name;
-						n->args = lcons($2,NIL);
+						n->funcname = $5->name;
+						n->args = lcons($3,NIL);
 						$$ = (Node *)n;
 					}
 				}
@@ -3301,7 +3339,7 @@ a_expr:  attr opt_indirection
 				{	$$ = makeA_Expr(OP, $1, NULL, $2); }
 		| a_expr Op
 				{	$$ = makeA_Expr(OP, $2, $1, NULL); }
-		| name '(' '*' ')'
+		| func_name '(' '*' ')'
 				{
 					/* cheap hack for aggregate (eg. count) */
 					FuncCall *n = makeNode(FuncCall);
@@ -3313,14 +3351,14 @@ a_expr:  attr opt_indirection
 					n->args = lcons(star, NIL);
 					$$ = (Node *)n;
 				}
-		| name '(' ')'
+		| func_name '(' ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
 					n->args = NIL;
 					$$ = (Node *)n;
 				}
-		| name '(' expr_list ')'
+		| func_name '(' expr_list ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -3877,19 +3915,19 @@ b_expr:  attr opt_indirection
 						$$ = (Node *)n;
 					}
 				}
-		| CAST b_expr AS Typename
+		| CAST '(' b_expr AS Typename ')'
 				{
-					$$ = (Node *)$2;
+					$$ = (Node *)$3;
 					/* AexprConst can be either A_Const or ParamNo */
-					if (nodeTag($2) == T_A_Const) {
-						((A_Const *)$2)->typename = $4;
-					} else if (nodeTag($2) == T_Param) {
-						((ParamNo *)$2)->typename = $4;
+					if (nodeTag($3) == T_A_Const) {
+						((A_Const *)$3)->typename = $5;
+					} else if (nodeTag($3) == T_Param) {
+						((ParamNo *)$3)->typename = $5;
 					/* otherwise, try to transform to a function call */
 					} else {
 						FuncCall *n = makeNode(FuncCall);
-						n->funcname = $4->name;
-						n->args = lcons($2,NIL);
+						n->funcname = $5->name;
+						n->args = lcons($3,NIL);
 						$$ = (Node *)n;
 					}
 				}
@@ -3901,14 +3939,14 @@ b_expr:  attr opt_indirection
 				{	$$ = makeA_Expr(OP, $1, NULL, $2); }
 		| b_expr Op
 				{	$$ = makeA_Expr(OP, $2, $1, NULL); }
-		| name '(' ')'
+		| func_name '(' ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
 					n->args = NIL;
 					$$ = (Node *)n;
 				}
-		| name '(' expr_list ')'
+		| func_name '(' expr_list ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -4134,19 +4172,19 @@ position_expr:  attr opt_indirection
 						$$ = (Node *)n;
 					}
 				}
-		| CAST position_expr AS Typename
+		| CAST '(' position_expr AS Typename ')'
 				{
-					$$ = (Node *)$2;
+					$$ = (Node *)$3;
 					/* AexprConst can be either A_Const or ParamNo */
-					if (nodeTag($2) == T_A_Const) {
-						((A_Const *)$2)->typename = $4;
-					} else if (nodeTag($2) == T_Param) {
-						((ParamNo *)$2)->typename = $4;
+					if (nodeTag($3) == T_A_Const) {
+						((A_Const *)$3)->typename = $5;
+					} else if (nodeTag($3) == T_Param) {
+						((ParamNo *)$3)->typename = $5;
 					/* otherwise, try to transform to a function call */
 					} else {
 						FuncCall *n = makeNode(FuncCall);
-						n->funcname = $4->name;
-						n->args = lcons($2,NIL);
+						n->funcname = $5->name;
+						n->args = lcons($3,NIL);
 						$$ = (Node *)n;
 					}
 				}
@@ -4166,14 +4204,14 @@ position_expr:  attr opt_indirection
 					n->indirection = NULL;
 					$$ = (Node *)n;
 				}
-		| name '(' ')'
+		| func_name '(' ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
 					n->args = NIL;
 					$$ = (Node *)n;
 				}
-		| name '(' expr_list ')'
+		| func_name '(' expr_list ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -4448,9 +4486,9 @@ relation_name:	SpecialRuleRelation
 		;
 
 database_name:			ColId			{ $$ = $1; };
-access_method:			Id				{ $$ = $1; };
+access_method:			IDENT			{ $$ = $1; };
 attr_name:				ColId			{ $$ = $1; };
-class:					Id				{ $$ = $1; };
+class:					IDENT			{ $$ = $1; };
 index_name:				ColId			{ $$ = $1; };
 
 /* Functions
@@ -4458,9 +4496,10 @@ index_name:				ColId			{ $$ = $1; };
  * Include TYPE as a SQL92 unreserved keyword. - thomas 1997-10-05
  */
 name:					ColId			{ $$ = $1; };
+func_name:				ColId			{ $$ = xlateSqlFunc($1); };
 
 file_name:				Sconst			{ $$ = $1; };
-recipe_name:			Id				{ $$ = $1; };
+recipe_name:			IDENT			{ $$ = $1; };
 
 /* Constants
  * Include TRUE/FALSE for SQL3 support. - thomas 1997-10-24
@@ -4531,14 +4570,20 @@ NumConst:  Iconst						{ $$ = makeInteger($1); }
 
 Iconst:  ICONST							{ $$ = $1; };
 Sconst:  SCONST							{ $$ = $1; };
+UserId:  IDENT							{ $$ = $1; };
 
 /* Column and type identifier
  * Does not include explicit datetime types
  *  since these must be decoupled in Typename syntax.
  * Use ColId for most identifiers. - thomas 1997-10-21
  */
-Id:  IDENT								{ $$ = $1; };
-
+TypeId:  ColId
+			{	$$ = xlateSqlType($1); }
+		| numeric
+			{	$$ = xlateSqlType($1); }
+		| character
+			{	$$ = xlateSqlType($1); }
+		;
 /* Column identifier
  * Include date/time keywords as SQL92 extension.
  * Include TYPE as a SQL92 unreserved keyword. - thomas 1997-10-05
@@ -4547,11 +4592,13 @@ Id:  IDENT								{ $$ = $1; };
  *  list due to shift/reduce conflicts in yacc. If so, move
  *  down to the ColLabel entity. - thomas 1997-11-06
  */
-ColId:  Id								{ $$ = $1; }
+ColId:  IDENT							{ $$ = $1; }
 		| datetime						{ $$ = $1; }
 		| ACTION						{ $$ = "action"; }
 		| DATABASE						{ $$ = "database"; }
 		| DELIMITERS					{ $$ = "delimiters"; }
+		| DOUBLE						{ $$ = "double"; }
+		| EACH							{ $$ = "each"; }
 		| FUNCTION						{ $$ = "function"; }
 		| INDEX							{ $$ = "index"; }
 		| KEY							{ $$ = "key"; }
@@ -4562,6 +4609,8 @@ ColId:  Id								{ $$ = $1; }
 		| OPTION						{ $$ = "option"; }
 		| PRIVILEGES					{ $$ = "privileges"; }
 		| RECIPE						{ $$ = "recipe"; }
+		| ROW							{ $$ = "row"; }
+		| STATEMENT						{ $$ = "statement"; }
 		| TIME							{ $$ = "time"; }
 		| TRIGGER						{ $$ = "trigger"; }
 		| TYPE_P						{ $$ = "type"; }
@@ -4817,10 +4866,23 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
 } /* makeIndexable() */
 
 
-/* xlateSqlType()
+/* xlateSqlFunc()
  * Convert alternate type names to internal Postgres types.
  * Do not convert "float", since that is handled elsewhere
  *  for FLOAT(p) syntax.
+ */
+static char *
+xlateSqlFunc(char *name)
+{
+	if (!strcasecmp(name,"character_length")
+	 || !strcasecmp(name,"char_length"))
+		return "length";
+	else
+		return name;
+} /* xlateSqlFunc() */
+
+/* xlateSqlType()
+ * Convert alternate type names to internal Postgres types.
  */
 static char *
 xlateSqlType(char *name)
@@ -4830,7 +4892,8 @@ xlateSqlType(char *name)
 		return "int4";
 	else if (!strcasecmp(name, "smallint"))
 		return "int2";
-	else if (!strcasecmp(name, "real"))
+	else if (!strcasecmp(name, "real")
+	 || !strcasecmp(name, "float"))
 		return "float8";
 	else if (!strcasecmp(name, "interval"))
 		return "timespan";
@@ -4838,7 +4901,7 @@ xlateSqlType(char *name)
 		return "bool";
 	else
 		return name;
-} /* xlateSqlName() */
+} /* xlateSqlType() */
 
 
 void parser_init(Oid *typev, int nargs)
