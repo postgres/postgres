@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.4 2002/09/04 20:31:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.4.2.1 2003/11/30 21:56:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,9 @@ typedef int IpcMemoryId;		/* shared memory ID returned by shmget(2) */
 
 #define IPCProtection	(0600)	/* access/modify by user only */
 
+
+static IpcMemoryKey UsedShmemSegID = 0;
+static void	   *UsedShmemSegAddr = NULL;
 
 static void *InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size);
 static void IpcMemoryDetach(int status, Datum shmaddr);
@@ -395,5 +398,29 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 	hdr->totalsize = size;
 	hdr->freeoffset = MAXALIGN(sizeof(PGShmemHeader));
 
+	/* Save info for possible future use */
+	UsedShmemSegAddr = memAddress;
+	UsedShmemSegID = NextShmemSegID;
+
 	return hdr;
+}
+
+/*
+ * PGSharedMemoryDetach
+ *
+ * Detach from the shared memory segment, if still attached.  This is not
+ * intended for use by the process that originally created the segment
+ * (it will have an on_shmem_exit callback registered to do that).  Rather,
+ * this is for subprocesses that have inherited an attachment and want to
+ * get rid of it.
+ */
+void
+PGSharedMemoryDetach(void)
+{
+	if (UsedShmemSegAddr != NULL)
+	{
+		if (shmdt(UsedShmemSegAddr) < 0)
+			elog(LOG, "shmdt(%p) failed: %m", UsedShmemSegAddr);
+		UsedShmemSegAddr = NULL;
+	}
 }
