@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.13 2002/06/13 04:36:50 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.14 2002/06/13 05:15:22 momjian Exp $
 -->
 
 <chapter id="maintenance">
@@ -364,91 +364,6 @@ VACUUM
    </para>
 
   </sect2>
- </sect1>
-
- <sect1 id="diskspace-maintenance">
-  <title>Disk Space Maintenance</title>
-
-  <indexterm zone="diskspace-maintenance">
-   <primary>disk space</primary>
-  </indexterm>
-
-  <para>
-   Each table has a primary heap disk file where most of the data is
-   stored. To store long column values, there is also a
-   <acronym>TOAST</> file associated with the table, named based on the
-   table's oid (actually pg_class.relfilenode), and an index on the
-   <acronym>TOAST</> table. There also may be indexes associated with
-   the base table.
-  </para>
-
-  <para>
-   You can monitor disk space from two places; from inside
-   <application>psql</> and from the command line using
-   <application>contrib/oid2name</>. Using <application>psql</> you can
-   issue queries to see the disk usage for any table:
-<programlisting>
-play=# SELECT relfilenode, relpages
-play-# FROM pg_class
-play-# WHERE relname = 'customer';
- relfilenode | relpages 
--------------+----------
-       16806 |       60
-(1 row)
-</programlisting>
-  </para>
-
-  <para>   
-   Each page is typically 8 kilobytes. <literal>relpages</> is only
-   updated by <command>VACUUM</> and <command>ANALYZE</>. To show the
-   space used by <acronym>TOAST</> tables, use a query based on the heap
-   relfilenode:
-<programlisting>
-play=# SELECT relname, relpages
-play-# FROM pg_class
-play-# WHERE relname = 'pg_toast_16806' or
-play-#       relname = 'pg_toast_16806_index'
-play-# ORDER BY relname;
-       relname        | relpages 
-----------------------+----------
- pg_toast_16806       |        0
- pg_toast_16806_index |        1
-</programlisting>
-  </para>
-
-  <para>
-   You can easily display index usage too:
-<programlisting>
-play=# SELECT c2.relname, c2.relpages
-play-# FROM pg_class c, pg_class c2, pg_index i
-play-# WHERE c.relname = 'customer' AND
-play-#       c.oid = i.indrelid AND
-play-#       c2.oid = i.indexrelid
-play-# ORDER BY c2.relname;
-       relname        | relpages 
-----------------------+----------
- customer_id_indexdex |       26
-</programlisting>
-  </para>
-
-  <para>
-   It is easy to find your largest files using <application>psql</>:
-<programlisting>
-play=# SELECT relname, relpages
-play-# FROM pg_class
-play-# ORDER BY relpages DESC;
-       relname        | relpages 
-----------------------+----------
- bigtable             |     3290
- customer             |     3144
-</programlisting>
-  </para>
-
-  <para>
-   You can also use <application>oid2name</> to show disk usage. See
-   <filename>README.oid2name</> for examples. It includes a script
-   shows disk usage for each database.
-  </para>
  </sect1>
 
 
