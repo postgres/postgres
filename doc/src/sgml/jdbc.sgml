@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.45 2003/06/30 16:39:42 barry Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.46 2003/08/06 23:50:19 barry Exp $
 -->
 
  <chapter id="jdbc">
@@ -323,8 +323,9 @@ db.close();
     a <classname>Statement</classname> or 
     <classname>PreparedStatement</classname>, you can use issue a
     query. This will return a <classname>ResultSet</classname>
-    instance, which contains the entire result.  <xref
-    linkend="jdbc-query-example"> illustrates this process.
+    instance, which contains the entire result (see <xref linkend="jdbc-query-with-cursor">
+    here for how to alter this behaviour).
+    <xref linkend="jdbc-query-example"> illustrates this process.
    </para>
 
    <example id="jdbc-query-example">
@@ -363,6 +364,50 @@ st.close();
 </programlisting>
     </para>
    </example>
+
+   <sect2 id="query-with-cursor">
+     <title>Getting results based on a cursor</title>
+
+     <para>By default the driver collects all the results for the
+       query at once. This can be inconvieniant for large data sets so
+       the JDBC driver provides a means of basing
+       a <classname>ResultSet</classname> on a database cursor and
+       only fetching a small number of rows.</para>
+
+     <para>A small number of rows are cached on the
+       client side of the connection and when exhausted the next
+       block of rows is retrieved by repositioning the cursor.
+     </para>
+
+     <example>
+       <title>Setting fetch size to turn cursors on and off.</title>
+
+     <para>Changing code to cursor mode is as simple as setting the
+       fetch size of the <classname>Statement</classname> to the
+       appropriate size. Setting the fetch size back to 0 will cause
+       all rows to be cached (the default behaviour).
+
+<programlisting>
+Statement st = db.createStatement();
+// Turn use of the cursor on.
+st.setFetchSize(50);
+ResultSet rs = st.executeQuery("SELECT * FROM mytable");
+while (rs.next()) {
+   System.out.print("a row was returned.");
+}
+rs.close();
+// Turn the cursor off.
+st.setFetchSize(0);
+ResultSet rs = st.executeQuery("SELECT * FROM mytable");
+while (rs.next()) {
+   System.out.print("many rows were returned.");
+}
+rs.close();
+// Close the statement.
+st.close();
+</programlisting>
+     </para>
+
 
    <sect2>
     <title>Using the <classname>Statement</classname> or <classname>PreparedStatement</classname> Interface</title>
@@ -493,6 +538,120 @@ st.close();
    </para>
   </example>
   </sect1>
+
+
+  <sect1 id="jdbc-callproc">
+    <title>Calling Stored Functions</title>
+
+    <para><productname>PostgreSQL's</productname> jdbc driver fully
+      supports calling <productname>PostgreSQL</productname> stored
+      functions.</para>
+
+    <example id="jdbc-call-function">
+      <title>Calling a built in stored function</title>
+
+      <para>This example shows how to call
+	a <productname>PostgreSQL</productname> built in
+	function, <command>upper</command>, which simply converts the
+	supplied string argument to uppercase.
+
+<programlisting>
+// Turn transactions off.
+con.setAutoCommit(false);
+// Procedure call.
+CallableStatement upperProc = con.prepareCall("{ ? = call upper( ? ) }");
+upperProc.registerOutParameter(1, Types.VARCHAR);
+upperProc.setString(2, "lowercase to uppercase");
+upperProc.execute();
+String upperCased = upperProc.getString(1);
+upperProc.close();
+</programlisting>
+      </para>
+    </example>
+
+    <sect2>
+      <title>Using the <classname>CallableStatement</classname> Interface</title>
+
+      <para>
+	All the considerations that apply
+	for <classname>Statement</classname>
+	and <classname>PreparedStatement</classname> apply
+	for <classname>CallableStatement</classname> but in addition
+	you must also consider one extra restriction:
+      </para>
+
+      <itemizedlist>
+	<listitem>
+	  <para>You can only call a stored function from within a
+	    transaction.</para>
+	</listitem>
+      </itemizedlist>
+
+    </sect2>
+
+    <sect2>
+      <title>Obtaining <classname>ResultSet</classname> from a stored function</title>
+     
+      <para><productname>PostgreSQL's</productname> stored function
+	can return results by means of a <type>refcursor</type>
+	value. A <type>refcursor</type>.</para>
+
+      <para>As an extension to JDBC,
+	the <productname>PostgreSQL</productname> JDBC driver can
+	return <type>refcursor</type> values
+	as <classname>ResultSet</classname> values.</para>
+
+      <example id="get-refcursor-from-function-call">
+	<title>Gettig <type>refcursor</type> values from a
+	function</title>
+
+	<para>When calling a function that returns
+	  a <type>refcursor</type> you must cast the return type
+	  of <methodname>getObject</methodname> to
+	  a <classname>ResultSet</classname></para>
+
+<programlisting>
+// Turn transactions off.
+con.setAutoCommit(false);
+// Procedure call.
+CallableStatement proc = con.prepareCall("{ ? = call doquery ( ? ) }");
+proc.registerOutParameter(1, Types.Other);
+proc.setInt(2, -1);
+proc.execute();
+ResultSet results = (ResultSet) proc.getObject(1);
+while (results.next()) {
+  // do something with the results...
+}
+results.close();
+proc.close();
+</programlisting>
+      </example>
+
+      <para>It is also possible to treat the <type>refcursor</type>
+      return value as a distinct type in itself. The JDBC driver
+	provides
+      the <classname>org.postgresql.PGRefCursorResultSet</classname>
+	class for this purpose.</para>
+
+      <example>
+	<title>Treating <type>refcursor</type> as a distinct
+	type</title>
+
+<programlisting>
+con.setAutoCommit(false);
+CallableStatement proc = con.prepareCall("{ ? = call doquery ( ? ) }");
+proc.registerOutParameter(1, Types.Other);
+proc.setInt(2, 0);
+org.postgresql.PGRefCursorResultSet refcurs 
+    = (PGRefCursorResultSet) con.getObject(1);
+String cursorName = refcurs.getRefCursor();
+proc.close();
+</programlisting>
+      </example>
+    </sect2>
+
+  </sect1>
+
 
   <sect1 id="jdbc-ddl">
    <title>Creating and Modifying Database Objects</title>
