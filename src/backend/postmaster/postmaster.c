@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.284 2002/08/17 15:12:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.285 2002/08/18 03:03:25 momjian Exp $
  *
  * NOTES
  *
@@ -116,7 +116,6 @@
 sigset_t	UnBlockSig,
 			BlockSig,
 			AuthBlockSig;
-
 #else
 int			UnBlockSig,
 			BlockSig,
@@ -191,6 +190,8 @@ int			CheckPointTimeout = 300;
 bool		HostnameLookup;		/* for ps display */
 bool		ShowPortNumber;
 bool		Log_connections = false;
+bool		Db_user_namespace = false;
+
 
 /* Startup/shutdown state */
 static pid_t StartupPID = 0,
@@ -1154,6 +1155,26 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	/* Check a user name was given. */
 	if (port->user[0] == '\0')
 		elog(FATAL, "no PostgreSQL user name specified in startup packet");
+
+	if (Db_user_namespace)
+    {
+		/*
+		 *	If user@, it is a global user, remove '@'.
+		 *	We only want to do this if there is an '@' at the end and no
+		 *	earlier in the user string or they may fake as a local user
+		 *	of another database attaching to this database.
+		 */
+		if (strchr(port->user, '@') == port->user + strlen(port->user)-1)
+			*strchr(port->user, '@') = '\0';
+		else
+		{
+			/* Append '@' and dbname */
+			char hold_user[SM_DATABASE_USER+1];
+			snprintf(hold_user, SM_DATABASE_USER+1, "%s@%s", port->user,
+					 port->database);
+			strcpy(port->user, hold_user);
+		}
+	}
 
 	/*
 	 * If we're going to reject the connection due to database state, say
@@ -2581,11 +2602,10 @@ CreateOptsFile(int argc, char *argv[])
 	if (FindExec(fullprogname, argv[0], "postmaster") < 0)
 		return false;
 
-	filename = palloc(strlen(DataDir) + 20);
+	filename = palloc(strlen(DataDir) + 17);
 	sprintf(filename, "%s/postmaster.opts", DataDir);
 
-	fp = fopen(filename, "w");
-	if (fp == NULL)
+	if ((fp = fopen(filename, "w")) == NULL)
 	{
 		postmaster_error("cannot create file %s: %s",
 						 filename, strerror(errno));

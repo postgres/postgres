@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.82 2002/06/20 20:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.83 2002/08/18 03:03:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,7 +117,7 @@ pg_krb4_recvauth(Port *port)
 			 version, PG_KRB4_VERSION);
 		return STATUS_ERROR;
 	}
-	if (strncmp(port->user, auth_data.pname, SM_USER) != 0)
+	if (strncmp(port->user, auth_data.pname, SM_DATABASE_USER) != 0)
 	{
 		elog(LOG, "pg_krb4_recvauth: name \"%s\" != \"%s\"",
 			 port->user, auth_data.pname);
@@ -290,7 +290,7 @@ pg_krb5_recvauth(Port *port)
 	}
 
 	kusername = pg_an_to_ln(kusername);
-	if (strncmp(port->user, kusername, SM_USER))
+	if (strncmp(port->user, kusername, SM_DATABASE_USER))
 	{
 		elog(LOG, "pg_krb5_recvauth: user name \"%s\" != krb5 name \"%s\"",
 			 port->user, kusername);

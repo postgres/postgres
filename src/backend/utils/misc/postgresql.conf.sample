@@ -113,7 +113,6 @@
 #
 #	Message display
 #
-
 #server_min_messages = notice	# Values, in order of decreasing detail:
 				#   debug5, debug4, debug3, debug2, debug1,
 				#   info, notice, warning, error, log, fatal,
@@ -201,3 +200,4 @@
 #sql_inheritance = true
 #transform_null_equals = false
 #statement_timeout = 0				# 0 is disabled
+#db_user_namespace = false

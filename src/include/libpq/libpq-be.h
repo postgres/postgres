@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-be.h,v 1.32 2002/06/20 20:29:49 momjian Exp $
+ * $Id: libpq-be.h,v 1.33 2002/08/18 03:03:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ typedef struct Port
 
 	ProtocolVersion proto;
 	char		database[SM_DATABASE + 1];
-	char		user[SM_USER + 1];
+	char		user[SM_DATABASE_USER + 1];
 	char		options[SM_OPTIONS + 1];
 	char		tty[SM_TTY + 1];
 	char		auth_arg[MAX_AUTH_ARG];

@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.82 2002/08/15 02:51:26 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.83 2002/08/18 03:03:25 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -481,6 +481,10 @@ static struct config_bool
 	},
 	{
 		{ "transform_null_equals", PGC_USERSET }, &Transform_null_equals,
+		false, NULL, NULL
+	},
+	{
+		{ "db_user_namespace", PGC_SIGHUP }, &Db_user_namespace,
 		false, NULL, NULL
 	},
 

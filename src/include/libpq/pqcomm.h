@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.65 2002/08/12 14:35:26 tgl Exp $
+ * $Id: pqcomm.h,v 1.66 2002/08/18 03:03:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,6 +114,8 @@ typedef uint32 PacketLen;
 #define SM_DATABASE		64
 /* SM_USER should be the same size as the others.  bjm 2002-06-02 */
 #define SM_USER			32
+/* We append database name if db_user_namespace true. */
+#define SM_DATABASE_USER (SM_DATABASE+SM_USER+1) /* +1 for @ */
 #define SM_OPTIONS		64
 #define SM_UNUSED		64
 #define SM_TTY			64
@@ -124,12 +126,14 @@ typedef struct StartupPacket
 {
 	ProtocolVersion protoVersion;		/* Protocol version */
 	char		database[SM_DATABASE];	/* Database name */
+				/* Db_user_namespace appends dbname */
 	char		user[SM_USER];	/* User name */
 	char		options[SM_OPTIONS];	/* Optional additional args */
 	char		unused[SM_UNUSED];		/* Unused */
 	char		tty[SM_TTY];	/* Tty for debug output */
 } StartupPacket;
 
+extern bool Db_user_namespace;
 
 /* These are the authentication requests sent by the backend. */
 

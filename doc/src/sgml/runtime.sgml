@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.125 2002/08/15 14:26:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.126 2002/08/18 03:03:25 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1186,6 +1186,26 @@ env PGOPTIONS='-c geqo=off' psql
         Sets the display format for dates, as well as the rules for
 	interpreting ambiguous input dates.
         The default is <literal>ISO, US</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>DB_USER_NAMESPACE</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        This allows per-database user names.  You can create users as <literal>
+        username@dbname</>.  When <literal>username</> is passed by the client,
+        <literal>@</> and the database name is appended to the user name and
+        that database-specific user name is looked up by the server. 
+        When creating user names containing <literal>@</>, you will need
+        to quote the user name.
+       </para>
+       <para>
+        With this option enabled, you can still create ordinary global 
+        users.  Simply append <literal>@</> when specifying the user name
+        in the client.  The <literal>@</> will be stripped off and looked up
+        by the server. 
        </para>
       </listitem>
      </varlistentry>
