@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.60 2003/12/12 18:45:08 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.61 2003/12/29 21:33:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -659,6 +659,8 @@ FuncCandidateList
 OpernameGetCandidates(List *names, char oprkind)
 {
 	FuncCandidateList resultList = NULL;
+	char	   *resultSpace = NULL;
+	int			nextResult = 0;
 	char	   *schemaname;
 	char	   *opername;
 	Oid			namespaceId;
@@ -684,6 +686,20 @@ OpernameGetCandidates(List *names, char oprkind)
 	catlist = SearchSysCacheList(OPERNAMENSP, 1,
 								 CStringGetDatum(opername),
 								 0, 0, 0);
+
+	/*
+	 * In typical scenarios, most if not all of the operators found by the
+	 * catcache search will end up getting returned; and there can be quite
+	 * a few, for common operator names such as '=' or '+'.  To reduce the
+	 * time spent in palloc, we allocate the result space as an array large
+	 * enough to hold all the operators.  The original coding of this routine
+	 * did a separate palloc for each operator, but profiling revealed that
+	 * the pallocs used an unreasonably large fraction of parsing time.
+	 */
+#define SPACE_PER_OP MAXALIGN(sizeof(struct _FuncCandidateList) + sizeof(Oid))
+
+	if (catlist->n_members > 0)
+		resultSpace = palloc(catlist->n_members * SPACE_PER_OP);
 
 	for (i = 0; i < catlist->n_members; i++)
 	{
@@ -768,8 +784,9 @@ OpernameGetCandidates(List *names, char oprkind)
 		/*
 		 * Okay to add it to result list
 		 */
-		newResult = (FuncCandidateList)
-			palloc(sizeof(struct _FuncCandidateList) + sizeof(Oid));
+		newResult = (FuncCandidateList) (resultSpace + nextResult);
+		nextResult += SPACE_PER_OP;
+
 		newResult->pathpos = pathpos;
 		newResult->oid = HeapTupleGetOid(opertup);
 		newResult->nargs = 2;
