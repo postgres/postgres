@@ -4,6 +4,9 @@
    eventual use of autoconf to build the server 
 */
 
+#ifndef CONFIG_H
+#define CONFIG_H
+
 #define BLCKSZ	8192
 
 
@@ -60,4 +63,5 @@
 /*------------------------------------------------------*/
 /* #define UNSAFE_FLOATS */
 
+#endif /* CONFIG_H */
 
