@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.239 2002/01/25 18:49:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.240 2002/02/06 17:27:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4765,7 +4765,8 @@ dumpSequence(Archive *fout, TableInfo tbinfo, const bool schemaOnly, const bool 
 						  last, (called ? "true" : "false"));
 
 		ArchiveEntry(fout, tbinfo.oid, tbinfo.relname, "SEQUENCE SET", NULL,
-					 query->data, "" /* Del */ , "", "", NULL, NULL);
+					 query->data, "" /* Del */ , "", tbinfo.usename,
+					 NULL, NULL);
 	}
 
 	if (!dataOnly)

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.40 2002/01/18 19:17:04 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.41 2002/02/06 17:27:50 tgl Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -311,9 +311,6 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 
 		if ((reqs & REQ_SCHEMA) != 0)	/* We want the schema */
 		{
-			/* Reconnect if necessary */
-			_reconnectAsOwner(AH, NULL, te);
-
 			ahlog(AH, 1, "creating %s %s\n", te->desc, te->name);
 			_printTocEntry(AH, te, ropt, false);
 			defnDumped = true;
@@ -2032,6 +2029,9 @@ static int
 _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData)
 {
 	char	   *pfx;
+
+	/* Reconnect if necessary */
+	_reconnectAsOwner(AH, NULL, te);
 
 	if (isData)
 		pfx = "Data for ";
