@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.82 1998/09/18 16:46:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.83 1998/09/20 04:51:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1316,9 +1316,8 @@ conninfo_parse(const char *conninfo, char *errorMessage)
 		 */
 		if (!strcmp(option->keyword, "user"))
 		{
-			tmp = fe_getauthname(errortmp);
-			if (tmp)
-				option->val = strdup(tmp);
+			option->val = fe_getauthname(errortmp);
+			continue;
 		}
 
 		/* ----------
@@ -1330,6 +1329,7 @@ conninfo_parse(const char *conninfo, char *errorMessage)
 			tmp = conninfo_getval("user");
 			if (tmp)
 				option->val = strdup(tmp);
+			continue;
 		}
 	}
 

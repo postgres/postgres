@@ -24,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.21 1998/09/03 02:10:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.22 1998/09/20 04:51:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,6 +367,11 @@ tryAgain:
 		if (errno == EWOULDBLOCK)
 			return 0;
 #endif
+		/* We might get ECONNRESET here if using TCP and backend died */
+#ifdef ECONNRESET
+		if (errno == ECONNRESET)
+			goto definitelyFailed;
+#endif
 		sprintf(conn->errorMessage,
 				"pqReadData() --  read() failed: errno=%d\n%s\n",
 				errno, strerror(errno));
@@ -410,6 +415,11 @@ tryAgain2:
 		if (errno == EWOULDBLOCK)
 			return 0;
 #endif
+		/* We might get ECONNRESET here if using TCP and backend died */
+#ifdef ECONNRESET
+		if (errno == ECONNRESET)
+			goto definitelyFailed;
+#endif
 		sprintf(conn->errorMessage,
 				"pqReadData() --  read() failed: errno=%d\n%s\n",
 				errno, strerror(errno));
@@ -425,6 +435,7 @@ tryAgain2:
 	 * OK, we are getting a zero read even though select() says ready.
 	 * This means the connection has been closed.  Cope.
 	 */
+definitelyFailed:
 	sprintf(conn->errorMessage,
 			"pqReadData() -- backend closed the channel unexpectedly.\n"
 			"\tThis probably means the backend terminated abnormally"
@@ -460,7 +471,6 @@ pqFlush(PGconn *conn)
 		/* Prevent being SIGPIPEd if backend has closed the connection. */
 #ifndef WIN32
 		pqsigfunc	oldsighandler = pqsignal(SIGPIPE, SIG_IGN);
-
 #endif
 
 		int			sent = send(conn->sock, ptr, len, 0);
@@ -471,7 +481,11 @@ pqFlush(PGconn *conn)
 
 		if (sent < 0)
 		{
-			/* Anything except EAGAIN or EWOULDBLOCK is trouble */
+			/*
+			 * Anything except EAGAIN or EWOULDBLOCK is trouble.
+			 * If it's EPIPE or ECONNRESET, assume we've lost the
+			 * backend connection permanently.
+			 */
 			switch (errno)
 			{
 #ifdef EAGAIN
@@ -482,10 +496,27 @@ pqFlush(PGconn *conn)
 				case EWOULDBLOCK:
 					break;
 #endif
+				case EPIPE:
+#ifdef ECONNRESET
+				case ECONNRESET:
+#endif
+					sprintf(conn->errorMessage,
+							"pqFlush() -- backend closed the channel unexpectedly.\n"
+							"\tThis probably means the backend terminated abnormally"
+							" before or while processing the request.\n");
+					conn->status = CONNECTION_BAD; /* No more connection */
+#ifdef WIN32
+					closesocket(conn->sock);
+#else
+					close(conn->sock);
+#endif
+					conn->sock = -1;
+					return EOF;
 				default:
 					sprintf(conn->errorMessage,
-					  "pqFlush() --  couldn't send data: errno=%d\n%s\n",
+							"pqFlush() --  couldn't send data: errno=%d\n%s\n",
 							errno, strerror(errno));
+					/* We don't assume it's a fatal error... */
 					return EOF;
 			}
 		}
