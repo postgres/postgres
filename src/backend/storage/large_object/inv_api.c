@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.49 1999/02/13 23:18:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.50 1999/02/22 16:46:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -998,10 +998,11 @@ inv_newtuple(LargeObjectDesc *obj_desc,
 
 	/* compute tuple size -- no nulls */
 	hoff = offsetof(HeapTupleHeaderData, t_bits);
+	hoff = DOUBLEALIGN(hoff);
 
 	/* add in olastbyte, varlena.vl_len, varlena.vl_dat */
 	tupsize = hoff + (2 * sizeof(int32)) + nwrite;
-	tupsize = LONGALIGN(tupsize);
+	tupsize = DOUBLEALIGN(tupsize);
 
 	/*
 	 * Allocate the tuple on the page, violating the page abstraction.
