@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Aug 16 16:51:46 EDT 2003
+Last updated:		Sat Aug 16 23:56:14 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -88,6 +88,7 @@ Data Types
   from making invalid dates valid
 * -Prevent month/day swapping of ISO dates to make invalid dates valid
 * Have initdb set DateStyle based on locale?
+* Add pg_get_acldef(), pg_get_typedefault(), and pg_get_attrdef()
 
 * ARRAYS
 	o Allow nulls in arrays
@@ -479,7 +480,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1116 2003/08/16 23:33:49 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1116 2003/08/16 23:33:49 momjian Exp $
+* Change CVS $Id: TODO,v 1.1117 2003/08/17 03:56:16 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1117 2003/08/17 03:56:16 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
