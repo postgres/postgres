@@ -5,11 +5,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Postgresql 7.2\n"
 "POT-Creation-Date: 2002-08-26 04:52+0200\n"
-"PO-Revision-Date: 2002-08-27 20:30+0200\n"
+"PO-Revision-Date: 2002-08-29 00:39+0200\n"
 "Last-Translator: \n"
 "Language-Team:  <karim@mribti.com>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: KBabel 0.9.6\n"
 
@@ -44,7 +44,7 @@ msgstr "index_formtuple: numberOfAttributes %d > %d"
 #: ../access/common/indextuple.c:162
 #, c-format
 msgid "index_formtuple: data takes %lu bytes, max is %d"
-msgstr "index_formtuple: data takes %lu bytes, max is %d"
+msgstr ""
 
 #: ../access/common/printtup.c:49
 #, c-format
@@ -65,7 +65,7 @@ msgstr "%s ya contiene datos"
 #: ../access/gist/gist.c:400 ../access/gist/gist.c:607
 #, c-format
 msgid "gist: failed to add index item to %s"
-msgstr "gist: no se ha podido a帽adir indice al elemento %s"
+msgstr "gist: no se ha podido a馻dir indice al elemento %s"
 
 #: ../access/gist/gist.c:1673
 #, c-format
@@ -84,7 +84,7 @@ msgstr ""
 
 #: ../access/gist/gist.c:1960
 msgid "gist_redo: unimplemented"
-msgstr "gist_redo: no inmplementado"
+msgstr "gist_redo: no implementado"
 
 #: ../access/gist/gist.c:1966
 msgid "gist_undo: unimplemented"
@@ -93,12 +93,12 @@ msgstr "gist_undo: no implementado"
 #: ../access/gist/gistscan.c:273
 #, c-format
 msgid "GiST scan list corrupted -- cannot find 0x%p"
-msgstr "GiST scan lista corrupta -- no se encuentra 0x%p"
+msgstr "GiST: la lista busqueda esta corrupta -- no se encuentra 0x%p"
 
 #: ../access/gist/gistscan.c:409
 #, c-format
 msgid "Bad operation in GiST scan adjust: %d"
-msgstr "operaci贸n no valida en la busqueda GiST: %d"
+msgstr "operaci髇 no valida en la busqueda GiST: %d"
 
 #: ../access/hash/hash.c:471
 msgid "hash_redo: unimplemented"
@@ -114,12 +114,12 @@ msgstr "Los indices Hash solo son validos para una sola clave."
 
 #: ../access/hash/hashinsert.c:166
 msgid "hash item too large"
-msgstr "Elemento hash desamiado largo"
+msgstr "Elemento hash demasiado largo"
 
 #: ../access/hash/hashinsert.c:231
 #, c-format
 msgid "_hash_pgaddtup: failed to add index item to %s"
-msgstr "_hash_pgaddtup: no se ha podido a帽adir indice a %s"
+msgstr "_hash_pgaddtup: no se ha podido a馻dir indice a %s"
 
 #: ../access/hash/hashovfl.c:61
 msgid "_hash_addovflpage: problem with _hash_getovfladdr."
@@ -132,12 +132,12 @@ msgstr "overflow_page: ocurio un problema con _hash_initbitmap."
 #: ../access/hash/hashovfl.c:568
 #, c-format
 msgid "_hash_squeezebucket: failed to add index item to %s"
-msgstr "_hash_squeezebucket: no se ha podido a帽adir un indice a %s"
+msgstr "_hash_squeezebucket: no se ha podido a馻dir un indice a %s"
 
 #: ../access/hash/hashpage.c:93
 #, c-format
 msgid "Cannot initialize non-empty hash table %s"
-msgstr "No se puede inicializar una tabla hash no vac铆a %s"
+msgstr "No se puede inicializar una tabla hash no vac韆 %s"
 
 #: ../access/hash/hashpage.c:151
 msgid "Problem with _hash_initbitmap."
@@ -175,17 +175,17 @@ msgstr "_hash_unsetpagelock: acceso no valido (%d) en blk %x: %s"
 #: ../access/hash/hashpage.c:537 ../access/hash/hashpage.c:674
 #, c-format
 msgid "_hash_splitpage: empty overflow page %d"
-msgstr "_hash_splitpage: pagina overflow vacia %d"
+msgstr "_hash_splitpage: pagina overflow vac韆 %d"
 
 #: ../access/hash/hashpage.c:576
 #, c-format
 msgid "_hash_splitpage: empty ovfl page %d!"
-msgstr "_hash_splitpage: pagina ovfl vacia %d!"
+msgstr "_hash_splitpage: pagina ovfl vac韆 %d!"
 
 #: ../access/hash/hashpage.c:629
 #, c-format
 msgid "_hash_splitpage: failed to add index item to %s"
-msgstr "_hash_splitpage: no se ha podido a帽adir indice a %s"
+msgstr "_hash_splitpage: no se ha podido a馻dir indice a %s"
 
 #: ../access/hash/hashscan.c:103
 #, c-format
@@ -224,26 +224,26 @@ msgstr "heapgettup: ReadBuffer fallida"
 #: ../access/heap/heapam.c:475
 #, c-format
 msgid "Relation %u does not exist"
-msgstr "La relaci贸n %u no existe"
+msgstr "La relaci髇 %u no existe"
 
 #: ../access/heap/heapam.c:521 ../catalog/heap.c:963
 #, c-format
 msgid "Relation \"%s\" does not exist"
-msgstr "La relaci贸n \"%s\" no existe."
+msgstr "La relaci髇 \"%s\" no existe."
 
 #: ../access/heap/heapam.c:573 ../access/heap/heapam.c:598
 #, c-format
 msgid "%s is an index relation"
-msgstr "%s es una relaci贸n indice"
+msgstr "%s es una relaci髇 indice"
 
 #: ../access/heap/heapam.c:576 ../access/heap/heapam.c:601
 #, c-format
 msgid "%s is a special relation"
-msgstr "%s is una relaci贸n especial"
+msgstr "%s is una relaci髇 especial"
 
 #: ../access/heap/heapam.c:633
 msgid "heap_beginscan: !RelationIsValid(relation)"
-msgstr "heap_beginscan: !RelationIsValid(relation)"
+msgstr ""
 
 #: ../access/heap/heapam.c:748
 #, c-format
@@ -9297,7 +9297,7 @@ msgstr "float84div: devision por cero."
 #: ../utils/adt/format_type.c:141 ../utils/adt/format_type.c:159
 #, c-format
 msgid "could not locate data type with oid %u in catalog"
-msgstr "No se encuentra un tipo con el oid %u en el catalogo."
+msgstr "No se encuentra ningun tipo con el oid %u en el catalogo."
 
 #: ../utils/adt/format_type.c:297
 #, c-format
@@ -9422,7 +9422,7 @@ msgstr "to_char/to_number(): 'E' no esta soportada."
 
 #: ../utils/adt/formatting.c:1145
 msgid "to_char/number(): run parser."
-msgstr "to_char/number(): ejecutando en analizador."
+msgstr "to_char/number(): ejecutando el analizador."
 
 #: ../utils/adt/formatting.c:1341
 msgid "to_from-char(): DUMP FORMAT"
@@ -9645,12 +9645,12 @@ msgstr "No seha podido dar formato a path"
 #: ../utils/adt/geo_ops.c:366
 #, c-format
 msgid "Bad box external representation '%s'"
-msgstr "Representaci贸n externa de box incorrecta '%s'"
+msgstr "Representaci髇 externa de box incorrecta '%s'"
 
 #: ../utils/adt/geo_ops.c:824
 #, c-format
 msgid "Bad line external representation '%s'"
-msgstr "Representacion externa de line incorrecta '%s'"
+msgstr "Representaci髇 externa de line incorrecta '%s'"
 
 #: ../utils/adt/geo_ops.c:829 ../utils/adt/geo_ops.c:892
 msgid "line not yet implemented"
@@ -9659,17 +9659,17 @@ msgstr "line todavia no esta implementada."
 #: ../utils/adt/geo_ops.c:1218 ../utils/adt/geo_ops.c:1239
 #, c-format
 msgid "Bad path external representation '%s'"
-msgstr "Representaci贸n externa de path incorrecta '%s'"
+msgstr "Representaci髇 externa de path incorrecta '%s'"
 
 #: ../utils/adt/geo_ops.c:1555
 #, c-format
 msgid "Bad point external representation '%s'"
-msgstr "Representacion externa de point incorrecta '%s'."
+msgstr "Representaci髇 externa de point incorrecta '%s'."
 
 #: ../utils/adt/geo_ops.c:1751
 #, c-format
 msgid "Bad lseg external representation '%s'"
-msgstr "Representacion externa de lseg incorrecta '%s'"
+msgstr "Representaci髇 externa de lseg incorrecta '%s'"
 
 #: ../utils/adt/geo_ops.c:2301
 msgid "dist_lb not implemented"
@@ -9686,7 +9686,7 @@ msgstr ""
 #: ../utils/adt/geo_ops.c:3113 ../utils/adt/geo_ops.c:3124
 #, c-format
 msgid "Bad polygon external representation '%s'"
-msgstr "Representaci贸n de polygon incorrecta '%s'"
+msgstr "Representaci髇 de polygon incorrecta '%s'"
 
 #: ../utils/adt/geo_ops.c:3412
 msgid "poly_distance not implemented"
@@ -9708,7 +9708,7 @@ msgstr ""
 #: ../utils/adt/geo_ops.c:3911 ../utils/adt/geo_ops.c:3915
 #, c-format
 msgid "Bad circle external representation '%s'"
-msgstr "Representaci贸n externa de circle incorrecta '%s'"
+msgstr "Representaci髇 externa de circle incorrecta '%s'"
 
 #: ../utils/adt/geo_ops.c:3935 ../utils/adt/geo_ops.c:3941
 msgid "Unable to format circle"
@@ -9739,7 +9739,7 @@ msgstr "i4toi2: '%d' ha causado desbordamiento."
 #: ../utils/adt/int8.c:98 ../utils/adt/int8.c:108
 #, c-format
 msgid "Bad int8 external representation \"%s\""
-msgstr "Representaci贸n externa del int8 incorrecta \"%s\""
+msgstr "Representaci髇 externa del int8 incorrecta \"%s\""
 
 #: ../utils/adt/int8.c:104
 #, c-format
@@ -9764,7 +9764,7 @@ msgstr "conversion del puntoflotante a int8 este fuera de rango."
 
 #: ../utils/adt/like.c:493 ../utils/adt/like_match.c:288
 msgid "ESCAPE string must be empty or one character"
-msgstr "La cadena de ESCAPE tiene que ser vacia o con un solo carater."
+msgstr "La cadena de ESCAPE tiene que estar vac韆 o con un solo carater."
 
 #: ../utils/adt/mac.c:51
 #, c-format
@@ -9774,11 +9774,11 @@ msgstr "macaddr_in: error analizando \"%s\""
 #: ../utils/adt/mac.c:56
 #, c-format
 msgid "macaddr_in: illegal address \"%s\""
-msgstr "macaddr_in: direcci贸n no permitida \"%s\""
+msgstr "macaddr_in: direcci髇 no permitida \"%s\""
 
 #: ../utils/adt/mac.c:129
 msgid "Text is too long to convert to MAC address"
-msgstr "Texto demasiado largo para convertir a una direcci贸n MAC"
+msgstr "Texto demasiado largo para convertir a una direcci髇 MAC"
 
 #: ../utils/adt/nabstime.c:370 ../utils/adt/nabstime.c:403
 #, c-format
@@ -9788,12 +9788,12 @@ msgstr "timezone incorrecto '%s'"
 #: ../utils/adt/nabstime.c:507
 #, c-format
 msgid "Bad abstime external representation '%s' (too long)"
-msgstr "representaci贸n externa de abstime incorrecta '%s' (demasiado larga)"
+msgstr "representaci髇 externa de abstime incorrecta '%s' (demasiado larga)"
 
 #: ../utils/adt/nabstime.c:511
 #, c-format
 msgid "Bad abstime external representation '%s'"
-msgstr "representaci贸n externa de abstime incorrecta '%s'"
+msgstr "representaci髇 externa de abstime incorrecta '%s'"
 
 #: ../utils/adt/nabstime.c:541
 #, c-format
@@ -9849,7 +9849,7 @@ msgstr ""
 #: ../utils/adt/network.c:129 ../utils/adt/network.c:470
 #, c-format
 msgid "unable to print address (%s)"
-msgstr "No se ha podido imprimir la direcci贸n (%s)"
+msgstr "No se ha podido imprimir la direcci髇 (%s)"
 
 #: ../utils/adt/network.c:139 ../utils/adt/network.c:403
 #: ../utils/adt/network.c:440 ../utils/adt/network.c:474
@@ -9888,7 +9888,7 @@ msgstr "int4notin: tiene que especificar el relationname.attributename"
 #: ../utils/adt/not_in.c:76
 #, c-format
 msgid "int4notin: unknown attribute %s for relation %s"
-msgstr "int4notin: atributo desconocido %s para la relaci贸n %s"
+msgstr "int4notin: atributo desconocido %s para la relaci髇 %s"
 
 #: ../utils/adt/numeric.c:1480
 msgid "Cannot convert NaN to int4"
@@ -9940,11 +9940,11 @@ msgstr "Formato numerico incorrecto '%s'"
 #: ../utils/adt/numeric.c:2742
 #, c-format
 msgid "overflow on numeric ABS(value) >= 10^%d for field with precision %d scale %d"
-msgstr "desbordamiento en ABS(value) >= 10^%d para el campo con precisi贸n %d escala %d"
+msgstr "desbordamiento en ABS(value) >= 10^%d para el campo con precisi髇 %d escala %d"
 
 #: ../utils/adt/numeric.c:3152
 msgid "division by zero on numeric"
-msgstr "divisi贸n por cero"
+msgstr "divisi髇 por cero"
 
 #: ../utils/adt/numeric.c:3496
 msgid "math error on numeric - cannot compute SQRT of negative value"
@@ -9978,7 +9978,7 @@ msgstr "pg_atoi: error en \"%s\": no se puede analizar \"%s\""
 #: ../utils/adt/numutils.c:119
 #, c-format
 msgid "pg_atoi: invalid result size: %d"
-msgstr "pg_atoi: el tama帽o del resultado incorrecto: %d"
+msgstr "pg_atoi: el tama駉 del resultado incorrecto: %d"
 
 #: ../utils/adt/oid.c:46
 #, c-format
@@ -10001,7 +10001,7 @@ msgstr "El valor de oidvector tiene demasiados valores."
 
 #: ../utils/adt/oracle_compat.c:205 ../utils/adt/oracle_compat.c:321
 msgid "Requested length too large"
-msgstr "El buffer solicitado es demasiado largo."
+msgstr "El tama駉 solicitado es demasiado largo."
 
 #: ../utils/adt/oracle_compat.c:1017
 msgid "Requested buffer is too large."
@@ -10819,12 +10819,12 @@ msgstr "No se ha encontrado la relaci贸n %s."
 #: ../utils/adt/timestamp.c:67
 #, c-format
 msgid "Bad timestamp external representation (too long) '%s'"
-msgstr "representaci贸n externa del timestamp incorrecta (demasiado larga) '%s'"
+msgstr "representaci髇 externa del timestamp incorrecta (demasiado larga) '%s'"
 
 #: ../utils/adt/timestamp.c:71 ../utils/adt/timestamp.c:199
 #, c-format
 msgid "Bad timestamp external representation '%s'"
-msgstr "representaci贸n externa del timestamp incorrecta '%s'"
+msgstr "representaci髇 externa del timestamp incorrecta '%s'"
 
 #: ../utils/adt/timestamp.c:77
 #, c-format
@@ -10872,12 +10872,12 @@ msgstr ""
 #: ../utils/adt/timestamp.c:306
 #, c-format
 msgid "Bad interval external representation (too long) '%s'"
-msgstr "representaci贸n externa del intervalo incorrecta (demasiado larga) '%s'"
+msgstr "representaci髇 externa del intervalo incorrecta (demasiado larga) '%s'"
 
 #: ../utils/adt/timestamp.c:318 ../utils/adt/timestamp.c:326
 #, c-format
 msgid "Bad interval external representation '%s'"
-msgstr "representaci贸n externa del intervalo incorrecta '%s'"
+msgstr "representaci髇 externa del intervalo incorrecta '%s'"
 
 #: ../utils/adt/timestamp.c:331
 #, c-format
@@ -10959,15 +10959,15 @@ msgstr "No se ha podido descodificar el TIMESTAMP"
 
 #: ../utils/adt/timestamp.c:1905
 msgid "TIMESTAMP bad external representation (too long)"
-msgstr "representaci贸n externa de incorrecta (demasiado larga)"
+msgstr "representaci髇 externa de incorrecta (demasiado larga)"
 
 #: ../utils/adt/timestamp.c:1961
 msgid "TIMESTAMP WITH TIME ZONE bad external representation (too long)"
-msgstr "representaci贸n externa de TIMESTAMP WITH TIME ZONE incorrecta (demasiado larga)"
+msgstr "representaci髇 externa de TIMESTAMP WITH TIME ZONE incorrecta (demasiado larga)"
 
 #: ../utils/adt/timestamp.c:2018
 msgid "INTERVAL bad external representation (too long)"
-msgstr "representaci贸n externa de INTERVAL incorrecta (demasiado larga)"
+msgstr "representaci髇 externa de INTERVAL incorrecta (demasiado larga)"
 
 #: ../utils/adt/timestamp.c:2051 ../utils/adt/timestamp.c:2109
 #: ../utils/adt/timestamp.c:2398 ../utils/adt/timestamp.c:2518
@@ -11091,15 +11091,15 @@ msgstr "cadena de bits demasiado larga para el tipo bit varying(%d)"
 
 #: ../utils/adt/varbit.c:815
 msgid "cannot AND bit strings of different sizes"
-msgstr "no se puede hacer un AND entre cadenas de bits de distintos tama帽os."
+msgstr "no se puede hacer un AND entre cadenas de bits de distintos tama駉s."
 
 #: ../utils/adt/varbit.c:853
 msgid "cannot OR bit strings of different sizes"
-msgstr "no se puede hacer un OR entre cadenas de bits de distintos tama帽os."
+msgstr "no se puede hacer un OR entre cadenas de bits de distintos tama駉s."
 
 #: ../utils/adt/varbit.c:897
 msgid "cannot XOR bit strings of different sizes"
-msgstr "no se puede hacer un XOR entre cadenas de bits de distintos tama帽os."
+msgstr "no se puede hacer un XOR entre cadenas de bits de distintos tama駉s."
 
 #: ../utils/adt/varbit.c:1112
 msgid "bit string is too large to fit in type integer"
@@ -11201,7 +11201,7 @@ msgstr "IndexScanOK: %s no encontrado en %s"
 
 #: ../utils/cache/fcache.c:30
 msgid "init_fcache: too many arguments"
-msgstr "init_fcache: demasidos argumentos"
+msgstr "init_fcache: demasiados argumentos"
 
 #: ../utils/cache/inval.c:396
 #, c-format
@@ -11307,7 +11307,7 @@ msgstr ""
 #: ../utils/cache/relcache.c:1762
 #, c-format
 msgid "RelationForgetRelation: relation %u is still open"
-msgstr "RelationForgetRelation: la relaci贸n %u esta aun abierta"
+msgstr "RelationForgetRelation: la relaci髇 %u esta aun abierta"
 
 #: ../utils/cache/relcache.c:1780
 #, c-format
@@ -11484,7 +11484,7 @@ msgstr ""
 
 #: ../utils/error/elog.c:500
 msgid "DebugFileOpen: could not open debugging file"
-msgstr "DebugFileOpen: no se ha podido abrir el archivo de depuraci贸n"
+msgstr "DebugFileOpen: no se ha podido abrir el archivo de depuraci髇"
 
 #: ../utils/error/elog.c:704
 msgid "Numerical result out of range"
@@ -11532,7 +11532,7 @@ msgstr "Carga del archivo %s fallida: %s"
 #: ../utils/fmgr/dfmgr.c:155
 #, c-format
 msgid "Can't find function %s in file %s"
-msgstr "No se encuentra la funci贸n %s en el archivo %s"
+msgstr "No se encuentra la funci髇 %s en el archivo %s"
 
 #: ../utils/fmgr/dfmgr.c:185
 #, c-format
@@ -11550,11 +11550,11 @@ msgstr ""
 
 #: ../utils/fmgr/dfmgr.c:385
 msgid "zero length dynamic_library_path component"
-msgstr "dynamic_library_path tiene tama帽o cero"
+msgstr "dynamic_library_path tiene tama駉 cero"
 
 #: ../utils/fmgr/dfmgr.c:396
 msgid "dynamic_library_path component is not absolute"
-msgstr "dynamic_library_path no es absoluto"
+msgstr "el componente dynamic_library_path no es absoluto"
 
 #: ../utils/fmgr/dfmgr.c:403
 #, c-format
@@ -11589,7 +11589,7 @@ msgstr ""
 #: ../utils/fmgr/fmgr.c:318
 #, c-format
 msgid "fmgr_info: cache lookup for language %u failed"
-msgstr "fmgr_info: la busqueda en el cache del lenguaje %u ha fallado"
+msgstr "fmgr_info: fallo la busqueda en el cache del lenguaje %u"
 
 #: ../utils/fmgr/fmgr.c:334
 #, c-format
@@ -11618,7 +11618,7 @@ msgstr "Internal error: fmgr_oldstyle ha recibido un puntero nulo"
 #: ../utils/fmgr/fmgr.c:612
 #, c-format
 msgid "fmgr_oldstyle: function %u: too many arguments (%d > %d)"
-msgstr "fmgr_oldstyle: funci贸n %u: demasidos argumentos (%d > %d)"
+msgstr "fmgr_oldstyle: funci髇 %u: demasiados argumentos (%d > %d)"
 
 #: ../utils/fmgr/fmgr.c:632
 msgid "Untrusted functions not supported"
@@ -11627,147 +11627,147 @@ msgstr ""
 #: ../utils/fmgr/fmgr.c:661
 #, c-format
 msgid "DirectFunctionCall1: function %p returned NULL"
-msgstr "DirectFunctionCall1: la funci贸n %p ha devuelto un nulo"
+msgstr "DirectFunctionCall1: la funci髇 %p ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:682
 #, c-format
 msgid "DirectFunctionCall2: function %p returned NULL"
-msgstr "DirectFunctionCall2: la funci贸n %p ha devuelto un nulo"
+msgstr "DirectFunctionCall2: la funci髇 %p ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:705
 #, c-format
 msgid "DirectFunctionCall3: function %p returned NULL"
-msgstr "DirectFunctionCall3: la funci贸n %p ha devuelto un nulo"
+msgstr "DirectFunctionCall3: la funci髇 %p ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:729
 #, c-format
 msgid "DirectFunctionCall4: function %p returned NULL"
-msgstr "DirectFunctionCall4: la funci贸n %p ha devuelto un nulo"
+msgstr "DirectFunctionCall4: la funci髇 %p ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:754
 #, c-format
 msgid "DirectFunctionCall5: function %p returned NULL"
-msgstr "DirectFunctionCall5: la funci贸n %p ha devuelto un nulo"
+msgstr "DirectFunctionCall5: la funci髇 %p ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:781
 #, c-format
 msgid "DirectFunctionCall6: function %p returned NULL"
-msgstr "DirectFunctionCall6: la funci贸n %p ha devuelto un nulo"
+msgstr "DirectFunctionCall6: la funci髇 %p ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:809
 #, c-format
 msgid "DirectFunctionCall7: function %p returned NULL"
-msgstr "DirectFunctionCall7: la funci贸n %p ha devuelto un nulo"
+msgstr "DirectFunctionCall7: la funci髇 %p ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:838
 #, c-format
 msgid "DirectFunctionCall8: function %p returned NULL"
-msgstr "DirectFunctionCall8: la funci贸n %p ha devuelto un nulo"
+msgstr "DirectFunctionCall8: la funci髇 %p ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:869
 #, c-format
 msgid "DirectFunctionCall9: function %p returned NULL"
-msgstr "DirectFunctionCall9: la funci贸n %p ha devuelto un nulo"
+msgstr "DirectFunctionCall9: la funci髇 %p ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:895
 #, c-format
 msgid "FunctionCall1: function %u returned NULL"
-msgstr "FunctionCall1: la funci贸n %u ha devuelto un nulo"
+msgstr "FunctionCall1: la funci髇 %u ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:917
 #, c-format
 msgid "FunctionCall2: function %u returned NULL"
-msgstr "FunctionCall2: la funci贸n %u ha devuelto un nulo"
+msgstr "FunctionCall2: la funci髇 %u ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:941
 #, c-format
 msgid "FunctionCall3: function %u returned NULL"
-msgstr "FunctionCall3: la funci贸n %u ha devuelto un nulo"
+msgstr "FunctionCall3: la funci髇 %u ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:966
 #, c-format
 msgid "FunctionCall4: function %u returned NULL"
-msgstr "FunctionCall4: la funci贸n %u ha devuelto un nulo"
+msgstr "FunctionCall4: la funci髇 %u ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:992
 #, c-format
 msgid "FunctionCall5: function %u returned NULL"
-msgstr "FunctionCall5: la funci贸n %u ha devuelto un nulo"
+msgstr "FunctionCall5: la funci髇 %u ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:1020
 #, c-format
 msgid "FunctionCall6: function %u returned NULL"
-msgstr "FunctionCall6: la funci贸n %u ha devuelto un nulo"
+msgstr "FunctionCall6: la funci髇 %u ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:1049
 #, c-format
 msgid "FunctionCall7: function %u returned NULL"
-msgstr "FunctionCall7: la funci贸n %u ha devuelto un nulo"
+msgstr "FunctionCall7: la funci髇 %u ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:1079
 #, c-format
 msgid "FunctionCall8: function %u returned NULL"
-msgstr "FunctionCall8: la funci贸n %u ha devuelto un nulo"
+msgstr "FunctionCall8: la funci髇 %u ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:1111
 #, c-format
 msgid "FunctionCall9: function %u returned NULL"
-msgstr "FunctionCall9: la funci贸n %u ha devuelto un nulo"
+msgstr "FunctionCall9: la funci髇 %u ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:1142
 #, c-format
 msgid "OidFunctionCall1: function %u returned NULL"
-msgstr "OidFunctionCall1: la funci贸n %u ha devuelto un nulo"
+msgstr "OidFunctionCall1: la funci髇 %u ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:1167
 #, c-format
 msgid "OidFunctionCall2: function %u returned NULL"
-msgstr "OidFunctionCall2: la funci贸n %u ha devuelto un nulo"
+msgstr "OidFunctionCall2: la funci髇 %u ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:1194
 #, c-format
 msgid "OidFunctionCall3: function %u returned NULL"
-msgstr "OidFunctionCall3: la funci贸n %u ha devuelto un nulo"
+msgstr "OidFunctionCall3: la funci髇 %u ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:1222
 #, c-format
 msgid "OidFunctionCall4: function %u returned NULL"
-msgstr "OidFunctionCall4: la funci贸n %u ha devuelto un nulo"
+msgstr "OidFunctionCall4: la funci髇 %u ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:1251
 #, c-format
 msgid "OidFunctionCall5: function %u returned NULL"
-msgstr "OidFunctionCall5: la funci贸n %u ha devuelto un nulo"
+msgstr "OidFunctionCall5: la funci髇 %u ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:1282
 #, c-format
 msgid "OidFunctionCall6: function %u returned NULL"
-msgstr "OidFunctionCall6: la funci贸n %u ha devuelto un nulo"
+msgstr "OidFunctionCall6: la funci髇 %u ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:1314
 #, c-format
 msgid "OidFunctionCall7: function %u returned NULL"
-msgstr "OidFunctionCall7: la funci贸n %u ha devuelto un nulo"
+msgstr "OidFunctionCall7: la funci髇 %u ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:1347
 #, c-format
 msgid "OidFunctionCall8: function %u returned NULL"
-msgstr "OidFunctionCall8: funci贸n %u ha devuelto un nulo"
+msgstr "OidFunctionCall8: funci髇 %u ha devuelto un nulo"
 
 #: ../utils/fmgr/fmgr.c:1382
 #, c-format
 msgid "OidFunctionCall9: function %u returned NULL"
-msgstr "OidFunctionCall9: funci贸n %u ha devuelto un nulo."
+msgstr "OidFunctionCall9: funci髇 %u ha devuelto un nulo."
 
 #: ../utils/fmgr/fmgr.c:1421
 #, c-format
 msgid "fmgr: function %u: too many arguments (%d > %d)"
-msgstr "fmgr: funci贸n %u: demasiados argumentos (%d > %d)"
+msgstr "fmgr: funci髇 %u: demasiados argumentos (%d > %d)"
 
 #: ../utils/fmgr/fmgr.c:1433
 #, c-format
 msgid "fmgr: function %u returned NULL"
-msgstr "fmgr: la funci贸n %u ha devuelto un nulo."
+msgstr "fmgr: la funci髇 %u ha devuelto un nulo."
 
 #: ../utils/hash/dynahash.c:663
 #, c-format
@@ -11899,7 +11899,7 @@ msgid ""
 "\tThe database subdirectory '%s' is missing."
 msgstr ""
 "Base de datos \"%s\" no existe.\n"
-"\tNo se encuntra el subdirectorio '%s' ."
+"\tNo se enceuntra el subdirectorio '%s' ."
 
 #: ../utils/init/postinit.c:253
 #, c-format
@@ -11969,12 +11969,12 @@ msgstr ""
 #: ../utils/misc/guc.c:884
 #, c-format
 msgid "'%s' is not a valid option name"
-msgstr "'%s' no es una opci贸n valida"
+msgstr "'%s' no es una opci髇 valida"
 
 #: ../utils/misc/guc.c:899
 #, c-format
 msgid "'%s' cannot be changed after server start"
-msgstr "'%s' no se puede cambiar despues de la ejecuci贸n del servidor"
+msgstr "'%s' no se puede modificar despues del inicio del servidor"
 
 #: ../utils/misc/guc.c:903
 #, c-format
@@ -11984,52 +11984,52 @@ msgstr "'%s' no se puede cambiar"
 #: ../utils/misc/guc.c:927
 #, c-format
 msgid "'%s' cannot be set after connection start"
-msgstr "'%s'  no se puede establecer despues de efectuar la conexi贸n"
+msgstr "'%s'  no se puede establecer despues de efectuar la conexi髇"
 
 #: ../utils/misc/guc.c:953
 #, c-format
 msgid "option '%s' requires a boolean value"
-msgstr "opci贸n '%s'  requiere un valor logico (boleano)"
+msgstr "opci髇 '%s'  requiere un valor logico (boleano)"
 
 #: ../utils/misc/guc.c:985
 #, c-format
 msgid "option '%s' expects an integer value"
-msgstr "opci贸n '%s'  se esperaba un valor numerico"
+msgstr "opci髇 '%s'  se esperaba un valor numerico"
 
 #: ../utils/misc/guc.c:990
 #, c-format
 msgid "option '%s' value %d is outside of permissible range [%d .. %d]"
-msgstr "opci贸n '%s' valor %d esta fuera del rango [%d .. %d]"
+msgstr "opci髇 '%s' valor %d esta fuera del rango [%d .. %d]"
 
 #: ../utils/misc/guc.c:997
 #, c-format
 msgid "invalid value for option '%s': %d"
-msgstr "valor incorrecto para la opci贸n '%s': %d"
+msgstr "valor incorrecto para la opci髇 '%s': %d"
 
 #: ../utils/misc/guc.c:1029
 #, c-format
 msgid "option '%s' expects a real number"
-msgstr "opci贸n '%s' se esperaba un numero real"
+msgstr "opci髇 '%s' se esperaba un numero real"
 
 #: ../utils/misc/guc.c:1034
 #, c-format
 msgid "option '%s' value %g is outside of permissible range [%g .. %g]"
-msgstr "opci贸n '%s' valor %g esta fuera de rango [%g .. %g]"
+msgstr "opci髇 '%s' valor %g esta fuera de rango [%g .. %g]"
 
 #: ../utils/misc/guc.c:1041
 #, c-format
 msgid "invalid value for option '%s': %g"
-msgstr "valor incorrecto para la opci贸n '%s': %g"
+msgstr "valor incorrecto para la opci髇 '%s': %g"
 
 #: ../utils/misc/guc.c:1071
 #, c-format
 msgid "invalid value for option '%s': '%s'"
-msgstr "valor incorrecto para la opci贸n '%s': '%s'"
+msgstr "valor incorrecto para la opci髇 '%s': '%s'"
 
 #: ../utils/misc/guc.c:1170
 #, c-format
 msgid "Option '%s' is not recognized"
-msgstr "Opci贸n no reconocida '%s' "
+msgstr "Opci髇 desconocida '%s' "
 
 #: ../utils/misc/guc.c:1344
 msgid "bogus transaction isolation level"
@@ -12037,7 +12037,7 @@ msgstr ""
 
 #: guc-file.l:159
 msgid "could not read configuration file `"
-msgstr "No se ha podido leer el archivo de configuraci贸n `"
+msgstr "No se ha podido leer el archivo de configuraci髇 `"
 
 #: guc-file.l:159
 #, c-format
@@ -12087,7 +12087,7 @@ msgstr "Memoria agotada en AllocSetReAlloc(%lu)"
 #: ../utils/mmgr/aset.c:1024
 #, c-format
 msgid "AllocSetCheck: %s: empty block %p"
-msgstr "AllocSetCheck: %s: bloque vac铆o %p"
+msgstr "AllocSetCheck: %s: bloque vac韔 %p"
 
 #: ../utils/mmgr/aset.c:1046
 #, c-format
@@ -12122,12 +12122,12 @@ msgstr "AllocSetCheck: %s: se ha encontrado un bloque de memoria inconsistente %
 #: ../utils/mmgr/mcxt.c:417
 #, c-format
 msgid "MemoryContextAlloc: invalid request size %lu"
-msgstr "MemoryContextAlloc: tama帽o de petici贸n no valido %lu"
+msgstr "MemoryContextAlloc: tama駉 de petici髇 no valido %lu"
 
 #: ../utils/mmgr/mcxt.c:477
 #, c-format
 msgid "repalloc: invalid request size %lu"
-msgstr "repalloc: tama帽o de petici贸n no valido %lu"
+msgstr "repalloc: tama駉 de petici髇 no valido %lu"
 
 #: ../utils/mmgr/portalmem.c:78
 msgid "out of memory in PortalHashTable"
