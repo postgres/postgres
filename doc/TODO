@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jul 15 09:45:53 EDT 1999
+Last updated:		Fri Jul 16 23:06:38 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -27,7 +27,7 @@ PARSER
 * Alter TABLE ADD COLUMN does not honor DEFAULT, add CONSTRAINT
 * Do not allow bpchar column creation without length
 * Select a[1] FROM test fails, it needs test.a[1]
-* Array index references without table name cause problems
+* -Array index references without table name cause problems
 * Update table SET table.value = 3 fails
 * Creating index of TIMESTAMP & RELTIME fails, or rename to DATETIME(Thomas)
 * SELECT foo UNION SELECT foo is incorrectly simplified to SELECT foo
