@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.82 2003/09/25 06:58:00 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.82.2.1 2004/04/06 18:46:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -489,9 +489,27 @@ match_unsorted_outer(Query *root,
 													  outerpath->pathkeys,
 													  mergeclause_list);
 
-		/* Done with this outer path if no chance for a mergejoin */
+		/*
+		 * Done with this outer path if no chance for a mergejoin.
+		 *
+		 * Special corner case: for "x FULL JOIN y ON true", there will be
+		 * no join clauses at all.  Ordinarily we'd generate a clauseless
+		 * nestloop path, but since mergejoin is our only join type that
+		 * supports FULL JOIN, it's necessary to generate a clauseless
+		 * mergejoin path instead.
+		 *
+		 * Unfortunately this can't easily be extended to handle the case
+		 * where there are joinclauses but none of them use mergejoinable
+		 * operators; nodeMergejoin.c can only do a full join correctly if
+		 * all the joinclauses are mergeclauses.
+		 */
 		if (mergeclauses == NIL)
-			continue;
+		{
+			if (jointype == JOIN_FULL && restrictlist == NIL)
+				/* okay to try for mergejoin */ ;
+			else
+				continue;
+		}
 		if (useallclauses && length(mergeclauses) != length(mergeclause_list))
 			continue;
 
