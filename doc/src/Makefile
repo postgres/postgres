@@ -5,6 +5,7 @@ PGDOCS= ..
 SRCDIR= ../../src
 
 TAR= tar
+ZIP= gzip
 TAREXCLUDE= --exclude=Makefile --exclude='*.sgml'
 
 # Pick up Makefile.global from the source area
@@ -34,37 +35,40 @@ distclean::
 all:: $(TARGETS)
 
 sources::
-	($(TAR) zcf sources.tar.gz sgml graphics)
+	$(MAKE) sources.tar.gz
 
-admin.tar.gz:
+sources.tar:
+	($(TAR) -cf $@ sgml graphics)
+
+admin.tar:
 	$(MAKE) -C sgml clean
 	$(MAKE) -C sgml admin.html
-	($(TAR) zcf $@ $(TAREXCLUDE) -C sgml . -C .. -C graphics layout.gif)
+	($(TAR) -cf $@ $(TAREXCLUDE) -C sgml . -C .. -C graphics layout.gif)
 
-postgres.tar.gz:
+postgres.tar:
 	$(MAKE) -C sgml clean
 	$(MAKE) -C sgml postgres.html
-	($(TAR) zcf $@ $(TAREXCLUDE) -C sgml . -C .. -C graphics catalogs.gif connections.gif layout.gif)
+	($(TAR) -cf $@ $(TAREXCLUDE) -C sgml . -C .. -C graphics catalogs.gif connections.gif layout.gif)
 
-programmer.tar.gz:
+programmer.tar:
 	$(MAKE) -C sgml clean
 	$(MAKE) -C sgml programmer.html
-	($(TAR) zcf $@ $(TAREXCLUDE) -C sgml . -C .. -C graphics catalogs.gif connections.gif)
+	($(TAR) -cf $@ $(TAREXCLUDE) -C sgml . -C .. -C graphics catalogs.gif connections.gif)
 
-tutorial.tar.gz:
+tutorial.tar:
 	$(MAKE) -C sgml clean
 	$(MAKE) -C sgml tutorial.html
-	($(TAR) zcf $@ $(TAREXCLUDE) -C sgml . -C .. -C graphics clientserver.gif)
+	($(TAR) -cf $@ $(TAREXCLUDE) -C sgml . -C .. -C graphics clientserver.gif)
 
-user.tar.gz:
+user.tar:
 	$(MAKE) -C sgml clean
 	$(MAKE) -C sgml user.html
-	($(TAR) zcf $@ $(TAREXCLUDE) -C sgml .)
+	($(TAR) -cf $@ $(TAREXCLUDE) -C sgml .)
 
 # Generic production rules
 
 # Compressed file
 
 %.gz:	%
-	(gzip -f $<)
+	($(ZIP) -f $<)
 
