@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.38 2000/07/21 06:42:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.39 2000/07/21 19:21:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,6 +103,9 @@ _bt_freeskey(ScanKey skey)
 	pfree(skey);
 }
 
+/*
+ * free a retracement stack made by _bt_search.
+ */
 void
 _bt_freestack(BTStack stack)
 {
@@ -117,11 +120,37 @@ _bt_freestack(BTStack stack)
 }
 
 /*
+ * Construct a BTItem from a plain IndexTuple.
+ *
+ * This is now useless code, since a BTItem *is* an index tuple with
+ * no extra stuff.  We hang onto it for the moment to preserve the
+ * notational distinction, in case we want to add some extra stuff
+ * again someday.
+ */
+BTItem
+_bt_formitem(IndexTuple itup)
+{
+	int			nbytes_btitem;
+	BTItem		btitem;
+	Size		tuplen;
+	extern Oid	newoid();
+
+	/* make a copy of the index tuple with room for extra stuff */
+	tuplen = IndexTupleSize(itup);
+	nbytes_btitem = tuplen + (sizeof(BTItemData) - sizeof(IndexTupleData));
+
+	btitem = (BTItem) palloc(nbytes_btitem);
+	memcpy((char *) &(btitem->bti_itup), (char *) itup, tuplen);
+
+	return btitem;
+}
+
+/*
  *	_bt_orderkeys() -- Put keys in a sensible order for conjunctive quals.
  *
  *		The order of the keys in the qual match the ordering imposed by
- *		the index.	This routine only needs to be called if there are
- *		more than one qual clauses using this index.
+ *		the index.	This routine only needs to be called if there is
+ *		more than one qual clause using this index.
  */
 void
 _bt_orderkeys(Relation relation, BTScanOpaque so)
@@ -189,7 +218,8 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 		if (i == numberOfKeys || cur->sk_attno != attno)
 		{
 			if (cur->sk_attno != attno + 1 && i < numberOfKeys)
-				elog(ERROR, "_bt_orderkeys: key(s) for attribute %d missed", attno + 1);
+				elog(ERROR, "_bt_orderkeys: key(s) for attribute %d missed",
+					 attno + 1);
 
 			underEqualStrategy = (!equalStrategyEnd);
 
@@ -320,24 +350,18 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 	pfree(xform);
 }
 
-BTItem
-_bt_formitem(IndexTuple itup)
-{
-	int			nbytes_btitem;
-	BTItem		btitem;
-	Size		tuplen;
-	extern Oid	newoid();
-
-	/* make a copy of the index tuple with room for the sequence number */
-	tuplen = IndexTupleSize(itup);
-	nbytes_btitem = tuplen + (sizeof(BTItemData) - sizeof(IndexTupleData));
-
-	btitem = (BTItem) palloc(nbytes_btitem);
-	memcpy((char *) &(btitem->bti_itup), (char *) itup, tuplen);
-
-	return btitem;
-}
-
+/*
+ * Test whether an indextuple satisfies all the scankey conditions
+ *
+ * If not ("false" return), the number of conditions satisfied is
+ * returned in *keysok.  Given proper ordering of the scankey conditions,
+ * we can use this to determine whether it's worth continuing the scan.
+ * See _bt_orderkeys().
+ *
+ * HACK: *keysok == (Size) -1 means we stopped evaluating because we found
+ * a NULL value in the index tuple.  It's not quite clear to me why this
+ * case has to be treated specially --- tgl 7/00.
+ */
 bool
 _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, Size *keysok)
 {
@@ -389,9 +413,9 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, Size *keysok)
 		if (DatumGetBool(test) == !!(key[0].sk_flags & SK_NEGATE))
 			return false;
 
-		keysz -= 1;
-		key++;
 		(*keysok)++;
+		key++;
+		keysz--;
 	}
 
 	return true;

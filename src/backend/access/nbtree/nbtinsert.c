@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.60 2000/07/21 06:42:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.61 2000/07/21 19:21:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -377,6 +377,10 @@ _bt_insertonpg(Relation rel,
 
 	/*
 	 * Do we need to split the page to fit the item on it?
+	 *
+	 * Note: PageGetFreeSpace() subtracts sizeof(ItemIdData) from its
+	 * result, so this comparison is correct even though we appear to
+	 * be accounting only for the item and not for its line pointer.
 	 */
 	if (PageGetFreeSpace(page) < itemsz)
 	{
@@ -743,11 +747,14 @@ _bt_findsplitloc(Relation rel,
 	FindSplitData state;
 	int			leftspace,
 				rightspace,
+				goodenough,
 				dataitemtotal,
 				dataitemstoleft;
 
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
+	/* Passed-in newitemsz is MAXALIGNED but does not include line pointer */
+	newitemsz += sizeof(ItemIdData);
 	state.newitemsz = newitemsz;
 	state.non_leaf = ! P_ISLEAF(opaque);
 	state.have_split = false;
@@ -758,11 +765,23 @@ _bt_findsplitloc(Relation rel,
 		MAXALIGN(sizeof(BTPageOpaqueData))
 		+ sizeof(ItemIdData);
 
+	/*
+	 * Finding the best possible split would require checking all the possible
+	 * split points, because of the high-key and left-key special cases.
+	 * That's probably more work than it's worth; instead, stop as soon as
+	 * we find a "good-enough" split, where good-enough is defined as an
+	 * imbalance in free space of no more than pagesize/16 (arbitrary...)
+	 * This should let us stop near the middle on most pages, instead of
+	 * plowing to the end.
+	 */
+	goodenough = leftspace / 16;
+
 	/* The right page will have the same high key as the old page */
 	if (!P_RIGHTMOST(opaque))
 	{
 		itemid = PageGetItemId(page, P_HIKEY);
-		rightspace -= (int) (ItemIdGetLength(itemid) + sizeof(ItemIdData));
+		rightspace -= (int) (MAXALIGN(ItemIdGetLength(itemid)) +
+							 sizeof(ItemIdData));
 	}
 
 	/* Count up total space in data items without actually scanning 'em */
@@ -770,8 +789,7 @@ _bt_findsplitloc(Relation rel,
 
 	/*
 	 * Scan through the data items and calculate space usage for a split
-	 * at each possible position.  XXX we could probably stop somewhere
-	 * near the middle...
+	 * at each possible position.
 	 */
 	dataitemstoleft = 0;
 	maxoff = PageGetMaxOffsetNumber(page);
@@ -785,44 +803,65 @@ _bt_findsplitloc(Relation rel,
 					rightfree;
 
 		itemid = PageGetItemId(page, offnum);
-		itemsz = ItemIdGetLength(itemid) + sizeof(ItemIdData);
+		itemsz = MAXALIGN(ItemIdGetLength(itemid)) + sizeof(ItemIdData);
 
 		/*
 		 * We have to allow for the current item becoming the high key of
-		 * the left page; therefore it counts against left space.
+		 * the left page; therefore it counts against left space as well
+		 * as right space.
 		 */
 		leftfree = leftspace - dataitemstoleft - (int) itemsz;
 		rightfree = rightspace - (dataitemtotal - dataitemstoleft);
-		if (offnum < newitemoff)
+		/*
+		 * Will the new item go to left or right of split?
+		 */
+		if (offnum > newitemoff)
+			_bt_checksplitloc(&state, offnum, leftfree, rightfree,
+							  true, itemsz);
+		else if (offnum < newitemoff)
 			_bt_checksplitloc(&state, offnum, leftfree, rightfree,
 							  false, itemsz);
-		else if (offnum > newitemoff)
-			_bt_checksplitloc(&state, offnum, leftfree, rightfree,
-							  true, itemsz);
 		else
 		{
-			/* need to try it both ways!! */
-			_bt_checksplitloc(&state, offnum, leftfree, rightfree,
-							  false, newitemsz);
+			/* need to try it both ways! */
 			_bt_checksplitloc(&state, offnum, leftfree, rightfree,
 							  true, itemsz);
+			/* here we are contemplating newitem as first on right */
+			_bt_checksplitloc(&state, offnum, leftfree, rightfree,
+							  false, newitemsz);
 		}
+
+		/* Abort scan once we find a good-enough choice */
+		if (state.have_split && state.best_delta <= goodenough)
+			break;
 
 		dataitemstoleft += itemsz;
 	}
 
+	/*
+	 * I believe it is not possible to fail to find a feasible split,
+	 * but just in case ...
+	 */
 	if (! state.have_split)
 		elog(FATAL, "_bt_findsplitloc: can't find a feasible split point for %s",
 			 RelationGetRelationName(rel));
+
 	*newitemonleft = state.newitemonleft;
 	return state.firstright;
 }
 
+/*
+ * Subroutine to analyze a particular possible split choice (ie, firstright
+ * and newitemonleft settings), and record the best split so far in *state.
+ */
 static void
 _bt_checksplitloc(FindSplitData *state, OffsetNumber firstright,
 				  int leftfree, int rightfree,
 				  bool newitemonleft, Size firstrightitemsz)
 {
+	/*
+	 * Account for the new item on whichever side it is to be put.
+	 */
 	if (newitemonleft)
 		leftfree -= (int) state->newitemsz;
 	else
@@ -833,7 +872,7 @@ _bt_checksplitloc(FindSplitData *state, OffsetNumber firstright,
 	 */
 	if (state->non_leaf)
 		rightfree += (int) firstrightitemsz -
-			(int) (sizeof(BTItemData) + sizeof(ItemIdData));
+			(int) (MAXALIGN(sizeof(BTItemData)) + sizeof(ItemIdData));
 	/*
 	 * If feasible split point, remember best delta.
 	 */
