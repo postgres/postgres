@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.35 1998/02/11 04:09:54 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.36 1998/03/18 16:50:21 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"binary", BINARY},
 	{"both", BOTH},
 	{"by", BY},
+	{"cache", CACHE},
 	{"cascade", CASCADE},
 	{"cast", CAST},
 	{"char", CHAR},
@@ -71,6 +72,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"current_timestamp", CURRENT_TIMESTAMP},
 	{"current_user", CURRENT_USER},
 	{"cursor", CURSOR},
+	{"cycle", CYCLE},
 	{"database", DATABASE},
 	{"day", DAY_P},
 	{"decimal", DECIMAL},
@@ -105,6 +107,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"having", HAVING},
 	{"hour", HOUR_P},
 	{"in", IN},
+	{"increment", INCREMENT},
 	{"index", INDEX},
 	{"inherits", INHERITS},
 	{"inner", INNER_P},
@@ -127,7 +130,9 @@ static ScanKeyword ScanKeywords[] = {
 	{"location", LOCATION},
 	{"lock", LOCK_P},
 	{"match", MATCH},
+	{"maxvalue", MAXVALUE},
 	{"minute", MINUTE_P},
+	{"minvalue", MINVALUE},
 	{"month", MONTH_P},
 	{"move", MOVE},
 	{"national", NATIONAL},
@@ -176,6 +181,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"set", SET},
 	{"setof", SETOF},
 	{"show", SHOW},
+	{"start", START},
 	{"statement", STATEMENT},
 	{"stdin", STDIN},
 	{"stdout", STDOUT},

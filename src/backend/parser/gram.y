@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.6 1998/03/07 06:04:59 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.7 1998/03/18 16:50:19 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -170,6 +170,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <sortgroupby>
 				join_using
 %type <boolean>	opt_union
+%type <boolean>	opt_table
 
 %type <node>	position_expr
 %type <list>	extract_list, position_list
@@ -202,6 +203,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <list>	OptCreateAs, CreateAsList
 %type <node>	CreateAsElement
 %type <value>	NumConst
+%type <value>	IntegerOnly
 %type <attr>	event_object, attr
 %type <sortgroupby>		groupby
 %type <sortgroupby>		sortby
@@ -277,14 +279,14 @@ Oid	param_type(int t); /* used in parse_expr.c */
 
 /* Keywords for Postgres support (not in SQL92 reserved words) */
 %token	ABORT_TRANS, AFTER, AGGREGATE, ANALYZE,
-		BACKWARD, BEFORE, BINARY, CLUSTER, COPY,
+		BACKWARD, BEFORE, BINARY, CACHE, CLUSTER, COPY, CYCLE,
 		DATABASE, DELIMITERS, DO, EACH, EXPLAIN, EXTEND,
 		FORWARD, FUNCTION, HANDLER,
-		INDEX, INHERITS, INSTEAD, ISNULL,
-		LANCOMPILER, LISTEN, LOAD, LOCK_P, LOCATION, MOVE,
+		INCREMENT, INDEX, INHERITS, INSTEAD, ISNULL,
+		LANCOMPILER, LISTEN, LOAD, LOCK_P, LOCATION, MAXVALUE, MINVALUE, MOVE,
 		NEW, NONE, NOTHING, NOTNULL, OIDS, OPERATOR, PROCEDURAL,
 		RECIPE, RENAME, RESET, RETURNS, ROW, RULE,
-		SEQUENCE, SETOF, SHOW, STATEMENT, STDIN, STDOUT, TRUSTED, 
+		SEQUENCE, SETOF, SHOW, START, STATEMENT, STDIN, STDOUT, TRUSTED, 
 		VACUUM, VERBOSE, VERSION
 
 /* Keywords (obsolete; retain through next version for parser - thomas 1997-12-04) */
@@ -1094,7 +1096,7 @@ CreateAsElement:  ColId
  *
  *****************************************************************************/
 
-CreateSeqStmt:	CREATE SEQUENCE relation_name OptSeqList
+CreateSeqStmt:  CREATE SEQUENCE relation_name OptSeqList
 				{
 					CreateSeqStmt *n = makeNode(CreateSeqStmt);
 					n->seqname = $3;
@@ -1103,23 +1105,57 @@ CreateSeqStmt:	CREATE SEQUENCE relation_name OptSeqList
 				}
 		;
 
-OptSeqList:
-				OptSeqList OptSeqElem
+OptSeqList:  OptSeqList OptSeqElem
 				{ $$ = lappend($1, $2); }
-		|		{ $$ = NIL; }
+			|	{ $$ = NIL; }
 		;
 
-OptSeqElem:		IDENT NumConst
+OptSeqElem:  CACHE IntegerOnly
 				{
 					$$ = makeNode(DefElem);
-					$$->defname = $1;
+					$$->defname = "cache";
 					$$->arg = (Node *)$2;
 				}
-		|		IDENT
+			| CYCLE
 				{
 					$$ = makeNode(DefElem);
-					$$->defname = $1;
+					$$->defname = "cycle";
 					$$->arg = (Node *)NULL;
+				}
+			| INCREMENT IntegerOnly
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "increment";
+					$$->arg = (Node *)$2;
+				}
+			| MAXVALUE IntegerOnly
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "maxvalue";
+					$$->arg = (Node *)$2;
+				}
+			| MINVALUE IntegerOnly
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "minvalue";
+					$$->arg = (Node *)$2;
+				}
+			| START IntegerOnly
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "start";
+					$$->arg = (Node *)$2;
+				}
+		;
+
+IntegerOnly:  Iconst
+				{
+					$$ = makeInteger($1);
+				}
+			| '-' Iconst
+				{
+					$$ = makeInteger($2);
+					$$->val.ival = - $$->val.ival;
 				}
 		;
 
@@ -1856,7 +1892,7 @@ event:	SELECT							{ $$ = CMD_SELECT; }
 		 ;
 
 opt_instead:  INSTEAD					{ $$ = TRUE; }
-		| /*EMPTY*/					{ $$ = FALSE; }
+		| /*EMPTY*/						{ $$ = FALSE; }
 		;
 
 
@@ -2101,10 +2137,8 @@ opt_analyze:  ANALYZE							{ $$ = TRUE; }
 		| /*EMPTY*/								{ $$ = FALSE; }
 		;
 
-opt_va_list:  '(' va_list ')'
-				{ $$ = $2; }
-		| /* EMPTY */
-				{ $$ = NIL; }
+opt_va_list:  '(' va_list ')'					{ $$ = $2; }
+		| /*EMPTY*/								{ $$ = NIL; }
 		;
 
 va_list:  name
@@ -2236,7 +2270,7 @@ DeleteStmt:  DELETE FROM relation_name
  *	Is it worth making this a separate command, with
  *	its own node type and file.  I don't think so. bjm 1998/1/22
  */
-LockStmt:  LOCK_P relation_name
+LockStmt:  LOCK_P opt_table relation_name
 				{
 					DeleteStmt *n = makeNode(DeleteStmt);
 					A_Const *c = makeNode(A_Const);
@@ -2247,7 +2281,7 @@ LockStmt:  LOCK_P relation_name
 					c->typename->name = xlateSqlType("bool");
 					c->typename->typmod = -1;
 
-					n->relname = $2;
+					n->relname = $3;
 					n->whereClause = (Node *)c;
 					$$ = (Node *)n;
 				}
@@ -2378,10 +2412,12 @@ SubSelect:	SELECT opt_unique res_target_list2
 				}
 		;
 
-result:  INTO TABLE relation_name
-				{	$$= $3; }
-		| /*EMPTY*/
-				{	$$ = NULL; }
+result:  INTO opt_table relation_name			{ $$= $3; }
+		| /*EMPTY*/								{ $$ = NULL; }
+		;
+
+opt_table:  TABLE								{ $$ = TRUE; }
+		| /*EMPTY*/								{ $$ = FALSE; }
 		;
 
 opt_union:  ALL									{ $$ = TRUE; }
@@ -4603,18 +4639,24 @@ TypeId:  ColId
 ColId:  IDENT							{ $$ = $1; }
 		| datetime						{ $$ = $1; }
 		| ACTION						{ $$ = "action"; }
+		| CACHE							{ $$ = "cache"; }
+		| CYCLE							{ $$ = "cycle"; }
 		| DATABASE						{ $$ = "database"; }
 		| DELIMITERS					{ $$ = "delimiters"; }
 		| DOUBLE						{ $$ = "double"; }
 		| EACH							{ $$ = "each"; }
 		| FUNCTION						{ $$ = "function"; }
+		| INCREMENT						{ $$ = "increment"; }
 		| INDEX							{ $$ = "index"; }
 		| KEY							{ $$ = "key"; }
 		| LANGUAGE						{ $$ = "language"; }
 		| LOCATION						{ $$ = "location"; }
 		| MATCH							{ $$ = "match"; }
+		| MAXVALUE						{ $$ = "maxvalue"; }
+		| MINVALUE						{ $$ = "minvalue"; }
 		| OPERATOR						{ $$ = "operator"; }
 		| OPTION						{ $$ = "option"; }
+		| PASSWORD						{ $$ = "password"; }
 		| PRIVILEGES					{ $$ = "privileges"; }
 		| RECIPE						{ $$ = "recipe"; }
 		| ROW							{ $$ = "row"; }
