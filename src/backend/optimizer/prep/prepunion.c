@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.20 1998/02/26 04:33:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.21 1998/03/30 19:04:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,8 @@ plan_union_queries(Query *parse)
 				union_found = false,
 				last_unionall_flag = false;
 
-	/*
+	/*------------------------------------------------------------------
+	 *
 	 * Do we need to split up our unions because we have UNION and UNION
 	 * ALL?
 	 *
@@ -87,10 +88,25 @@ plan_union_queries(Query *parse)
 	 *
 	 * So the above query becomes:
 	 *
-	 * Append Node { Sort and Unique { Append Node { SELECT 1
-	 * This is really a sub-UNION, unionClause			   We run a
-	 * DISTINCT on these. { SELECT 2 SELECT 3 } } } SELECT 4 SELECT 5 }
+	 * 	Append Node
+	 *	{
+	 *		Sort and Unique
+	 *		{
+	 *			Append Node
+	 *			{
+	 *				SELECT 1		This is really a sub-UNION.
+	 *				unionClause		We run a DISTINCT on these.
+	 *				{
+	 *					SELECT 2
+	 *					SELECT 3
+	 *				}
+	 *			}
+	 *		}
+	 *		SELECT 4
+	 *		SELECT 5
+	 *	}
 	 *
+	 *---------------------------------------------------------------------
 	 */
 
 	foreach(ulist, parse->unionClause)
