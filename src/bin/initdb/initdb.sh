@@ -26,12 +26,12 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.51 1998/08/21 23:22:36 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.52 1998/08/22 05:19:23 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 # ----------------
-#       The _fUnKy_..._sTuFf_ gets set when the script is built (with make)
+#       The OPT_..._PARAM gets set when the script is built (with make)
 #       from parameters set in the make file.
 #
 # ----------------

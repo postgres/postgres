@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/createuser.1,v 1.11 1998/07/24 16:44:03 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/createuser.1,v 1.12 1998/08/22 05:19:35 momjian Exp $
 .TH CREATEUSER UNIX 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 createuser - create a Postgres user
@@ -10,11 +10,26 @@ createuser - create a Postgres user
 .BR -a
 system]
 [\c
+.BR -d
+]
+[\c
+.BR -D
+]
+[\c
 .BR -h
 host]
 [\c
+.BR -i
+id]
+[\c
 .BR -p
 port]
+[\c
+.BR -u
+]
+[\c
+.BR -U
+]
 [username]
 .SH DESCRIPTION
 .IR Createuser
@@ -57,10 +72,21 @@ to use in connecting to the
 .IR postmaster
 process.  This option no longer has any effect.
 .TP
+.BR "-d"
+Allows the user to create databases.
+.TP
+.BR "-D"
+Does not allow the user to create databases.
+.TP
 .BR "-h" " host"
 Specifies the hostname of the machine on which the 
 .IR postmaster
 is running.  Defaults to using local Unix domain sockets.
+.TP
+.BR "-i" " id"
+Use
+.IR id
+as the user id.
 .TP
 .BR "-p" " port"
 Specifies the TCP/IP port or local Unix domain socket file
@@ -69,6 +95,12 @@ extension on which the
 is listening for connections.  Defaults to 5432, or the value of the
 .SM PGPORT
 environment variable (if set).
+.TP
+.BR "-u"
+Allows the user to create other users.
+.TP
+.BR "-U"
+Does not allow the user to create other users.
 .SH "INTERACTIVE QUESTIONS"
 Once invoked with the above options,
 .IR createuser
@@ -119,7 +151,3 @@ properly installed Postgres and initialized the site with
 .SH NOTE
 The command internally runs \fIcreate user\fP from \fIpsql\fP
 connected to the \fItemplate1\fP database to perform the operation. 
-.SH BUGS
-Postgres user-ids and user names should not have anything to do
-with the constraints of Unix.
-

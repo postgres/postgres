@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/Makefile,v 1.8 1998/04/06 16:49:37 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/Makefile,v 1.9 1998/08/22 05:19:16 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,8 +15,8 @@ SRCDIR= ../..
 include ../../Makefile.global
 
 SEDSCRIPT= \
-    -e "s^_fUnKy_DASH_N_sTuFf_^$(DASH_N)^g" \
-    -e "s^_fUnKy_BACKSLASH_C_sTuFf_^$(BACKSLASH_C)^g"
+    -e "s^PG_OPT_DASH_N_PARAM^$(DASH_N)^g" \
+    -e "s^PG_OPT_BACKSLASH_C_PARAM^$(BACKSLASH_C)^g"
 
 all: createuser
 

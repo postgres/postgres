@@ -8,13 +8,16 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/createuser.sh,v 1.9 1998/02/25 13:08:37 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/createuser.sh,v 1.10 1998/08/22 05:19:17 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
 #-------------------------------------------------------------------------
 
 CMDNAME=`basename $0`
+SYSID=
+CANADDUSER=
+CANCREATE=
 
 if [ -z "$USER" ]; then
     if [ -z "$LOGNAME" ]; then
@@ -34,6 +37,11 @@ do
 	-a) AUTHSYS=$2; shift;;
         -h) PGHOST=$2; shift;;
         -p) PGPORT=$2; shift;;
+        -d) CANCREATE=t;;
+        -D) CANCREATE=f;;
+        -u) CANADDUSER=t;;
+        -U) CANADDUSER=f;;
+        -i) SYSID=$2; shift;;
          *) NEWUSER=$1;;
     esac
     shift;
@@ -96,7 +104,7 @@ fi
 
 if [ -z "$NEWUSER" ]
 then
-    echo _fUnKy_DASH_N_sTuFf_ "Enter name of user to add ---> _fUnKy_BACKSLASH_C_sTuFf_"
+    echo PG_OPT_DASH_N_PARAM "Enter name of user to add ---> PG_OPT_BACKSLASH_C_PARAM"
     read NEWUSER
 fi
 
@@ -124,7 +132,6 @@ done=0
 
 while [ $done -ne 1 ]
 do
-    SYSID=
     DEFSYSID=`pg_id $NEWUSER 2>/dev/null`
     if [ $? -eq 0 ]; then
 	DEFMSG=" or RETURN to use unix user ID: $DEFSYSID"
@@ -134,31 +141,31 @@ do
     fi
     while  [ -z "$SYSID" ]
     do
-	echo _fUnKy_DASH_N_sTuFf_ "Enter user's postgres ID$DEFMSG -> _fUnKy_BACKSLASH_C_sTuFf_"
+	echo PG_OPT_DASH_N_PARAM "Enter user's postgres ID$DEFMSG -> PG_OPT_BACKSLASH_C_PARAM"
 	read SYSID
 	[ -z "$SYSID" ] && SYSID=$DEFSYSID;
 	SYSIDISNUM=`echo $SYSID | egrep '^[0-9]+$'`
 	if [ -z "$SYSIDISNUM" ]
 	then
 		echo "$CMDNAME: the postgres ID must be a number"
-		exit 1
-	fi
-	QUERY="select usename from pg_user where usesysid = '$SYSID'::int4"
-	RES=`$PSQL -c "$QUERY" template1`	
-	if [ $? -ne 0 ]
-	then
-		echo "$CMDNAME: database access failed."
-		exit 1
-	fi
-	if [ -n "$RES" ]
-	then
-		echo 
-		echo "$CMDNAME: $SYSID already belongs to $RES, pick another"
-		DEFMSG= DEFSYSID= SYSID=
-	else
-		done=1
+		SYSID=	
 	fi
     done
+    QUERY="select usename from pg_user where usesysid = '$SYSID'::int4"
+    RES=`$PSQL -c "$QUERY" template1`	
+    if [ $? -ne 0 ]
+    then
+	echo "$CMDNAME: database access failed."
+	exit 1
+    fi
+    if [ -n "$RES" ]
+    then
+	echo 
+	echo "$CMDNAME: $SYSID already belongs to $RES, pick another"
+	DEFMSG= DEFSYSID= SYSID=
+    else
+	done=1
+    fi
 done
 
 #
@@ -168,39 +175,44 @@ done
 #
 # can the user create databases?
 #
-
-yn=f
-
-while [ "$yn" != y -a "$yn" != n ]
-do
-    echo _fUnKy_DASH_N_sTuFf_ "Is user \"$NEWUSER\" allowed to create databases (y/n) _fUnKy_BACKSLASH_C_sTuFf_"
-    read yn
-done
-
-if [ "$yn" = y ]
+if [ -z "$CANCREATE" ]
 then
-    CANCREATE=t
-else
-    CANCREATE=f
+	yn=f
+
+	while [ "$yn" != y -a "$yn" != n ]
+	do
+		echo PG_OPT_DASH_N_PARAM "Is user \"$NEWUSER\" allowed to create databases (y/n) PG_OPT_BACKSLASH_C_PARAM"
+		read yn
+	done
+
+	if [ "$yn" = y ]
+	then
+		CANCREATE=t
+	else
+		CANCREATE=f
+	fi
 fi
 
 #
 # can the user add users?
 #
 
-yn=f
-
-while [ "$yn" != y -a "$yn" != n ]
-do
-    echo _fUnKy_DASH_N_sTuFf_ "Is user \"$NEWUSER\" allowed to add users? (y/n) _fUnKy_BACKSLASH_C_sTuFf_"
-    read yn
-done
-
-if (test "$yn" = y)
+if [ -z "$CANADDUSER" ]
 then
-    CANADDUSER=t
-else
-    CANADDUSER=f
+	yn=f
+
+	while [ "$yn" != y -a "$yn" != n ]
+	do
+		echo PG_OPT_DASH_N_PARAM "Is user \"$NEWUSER\" allowed to add users? (y/n) PG_OPT_BACKSLASH_C_PARAM"
+		read yn
+	done
+
+	if (test "$yn" = y)
+	then
+		CANADDUSER=t
+	else
+		CANADDUSER=f
+	fi
 fi
 
 QUERY="insert into pg_shadow \

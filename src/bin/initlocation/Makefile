@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/Makefile,v 1.5 1998/04/06 16:50:30 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/Makefile,v 1.6 1998/08/22 05:19:25 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,8 +15,8 @@ SRCDIR= ../..
 include ../../Makefile.global
 
 SEDSCRIPT= \
-    -e "s^_fUnKy_NAMEDATALEN_sTuFf_^$(NAMEDATALEN)^g" \
-    -e "s^_fUnKy_OIDNAMELEN_sTuFf_^$(OIDNAMELEN)^g" 
+    -e "s^PG_OPT_NAMEDATALEN_PARAM^$(NAMEDATALEN)^g" \
+    -e "s^PG_OPT_OIDNAMELEN_PARAM^$(OIDNAMELEN)^g" 
 
 all: initlocation
 

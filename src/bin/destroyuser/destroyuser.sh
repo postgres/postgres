@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/destroyuser/Attic/destroyuser.sh,v 1.8 1998/02/25 13:08:55 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/destroyuser/Attic/destroyuser.sh,v 1.9 1998/08/22 05:19:21 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -90,7 +90,7 @@ fi
 
 if [ -z "$DELUSER" ]
 then
-    echo _fUnKy_DASH_N_sTuFf_ "Enter name of user to delete ---> _fUnKy_BACKSLASH_C_sTuFf_"
+    echo OPT_DASH_N_PARAM "Enter name of user to delete ---> OPT_BACKSLASH_C_PARAM"
     read DELUSER
 fi
 
@@ -154,7 +154,7 @@ then
     yn=f
     while [ $yn != y -a $yn != n ]
     do
-        echo _fUnKy_DASH_N_sTuFf_ "Deleting user $DELUSER will destroy them. Continue (y/n)? _fUnKy_BACKSLASH_C_sTuFf_"
+        echo OPT_DASH_N_PARAM "Deleting user $DELUSER will destroy them. Continue (y/n)? OPT_BACKSLASH_C_PARAM"
         read yn
     done
 

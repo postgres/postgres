@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/Makefile,v 1.7 1998/04/06 16:50:36 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/Makefile,v 1.8 1998/08/22 05:19:29 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ SRCDIR= ../..
 include ../../Makefile.global
 
 SEDSCRIPT= \
-    -e "s^_fUnKy_IPCCLEANPATH_sTuFf_^$(IPCSDIR)^g" 
+    -e "s^PG_OPT_IPCCLEANPATH_PARAM^$(IPCSDIR)^g" 
 
 all: ipcclean
 
