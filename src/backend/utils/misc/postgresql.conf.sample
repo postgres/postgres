@@ -47,12 +47,15 @@
 #
 #	Shared Memory Size
 #
-#shared_buffers = 64		# min max_connections*2 or 16, 8KB each
-#max_locks_per_transaction = 64	# min 10
-#wal_buffers = 8		# min 4, typically 8KB each
+#shared_buffers = 64		# min 16, at least max_connections*2, 8KB each
+#max_locks_per_transaction = 64	# min 10, ~260*max_connections bytes each
+#wal_buffers = 8		# min 4, 8KB each
 # fsm = free space map
 #max_fsm_relations = 1000	# min 100, ~50 bytes each
 #max_fsm_pages = 20000		# min max_fsm_relations*16, 6 bytes each
+# note: increasing max_connections also costs about 500 bytes each,
+# in addition to costs from shared_buffers and max_locks_per_transaction.
+
 
 #
 #	Non-shared Memory Sizes
