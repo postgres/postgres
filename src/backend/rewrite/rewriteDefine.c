@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.51 2000/09/12 04:49:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.52 2000/09/12 20:38:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,40 +200,16 @@ DefineQueryRewrite(RuleStmt *stmt)
 	foreach(l, action)
 	{
 		query = (Query *) lfirst(l);
-		if (query->resultRelation == 1)
+		if (query->resultRelation == PRS2_OLD_VARNO)
 		{
 			elog(ERROR, "rule actions on OLD currently not supported"
 				 "\n\tuse views or triggers instead");
 		}
-		if (query->resultRelation == 2)
+		if (query->resultRelation == PRS2_NEW_VARNO)
 		{
 			elog(ERROR, "rule actions on NEW currently not supported"
 				 "\n\tuse triggers instead");
 		}
-
-		if (event_relation->rd_rel->relkind != RELKIND_VIEW)
-		{
-			HeapScanDesc  scanDesc;
-			HeapTuple	  tuple;
-			/*
-			 * A relation is about to become a view.
-			 * check that the relation is empty because
-			 * the storage for the relation is going to
-			 * be deleted.
-			 */
-
-			scanDesc = heap_beginscan(event_relation, 0, SnapshotNow, 0, NULL);
-			tuple = heap_getnext(scanDesc, 0);
-			if (HeapTupleIsValid(tuple))
-				elog(ERROR, "relation %s is not empty. Cannot convert to view", event_obj->relname);
-
-			/* don't need heap_freetuple because we never got a valid tuple */
-			heap_endscan(scanDesc);
-
-
-			RelisBecomingView = true;
-		}
-
 	}
 
 	/*
@@ -333,7 +309,6 @@ DefineQueryRewrite(RuleStmt *stmt)
 		/*
 		 * ... and finally the rule must be named _RETviewname.
 		 */
-
 		expected_name = MakeRetrieveViewRuleName(event_obj->relname);
 		if (strcmp(expected_name, stmt->rulename) != 0)
 		{
@@ -341,6 +316,29 @@ DefineQueryRewrite(RuleStmt *stmt)
 				 event_obj->relname, expected_name);
 		}
 		pfree(expected_name);
+
+		/*
+		 * Are we converting a relation to a view?
+		 *
+		 * If so, check that the relation is empty because the storage
+		 * for the relation is going to be deleted.
+		 */
+		if (event_relation->rd_rel->relkind != RELKIND_VIEW)
+		{
+			HeapScanDesc  scanDesc;
+			HeapTuple	  tuple;
+
+			scanDesc = heap_beginscan(event_relation, 0, SnapshotNow, 0, NULL);
+			tuple = heap_getnext(scanDesc, 0);
+			if (HeapTupleIsValid(tuple))
+				elog(ERROR, "Relation \"%s\" is not empty. Cannot convert it to view",
+					 event_obj->relname);
+
+			/* don't need heap_freetuple because we never got a valid tuple */
+			heap_endscan(scanDesc);
+
+			RelisBecomingView = true;
+		}
 	}
 
 	/*
@@ -363,7 +361,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 				 is_instead, event_attype);
 
 	/* discard rule if it's null action and not INSTEAD; it's a no-op */
-	if (action != NULL || is_instead)
+	if (action != NIL || is_instead)
 	{
 		Relation	relationRelation;
 		HeapTuple	tuple;
@@ -382,8 +380,8 @@ DefineQueryRewrite(RuleStmt *stmt)
 
 		/*
 		 * Set pg_class 'relhasrules' field TRUE for event relation.
-		 * Also modify the 'relkind' field to show that the relation is
-		 * now a view.
+		 * If appropriate, also modify the 'relkind' field to show that
+		 * the relation is now a view.
 		 *
 		 * Important side effect: an SI notice is broadcast to force all
 		 * backends (including me!) to update relcache entries with the new
@@ -398,8 +396,8 @@ DefineQueryRewrite(RuleStmt *stmt)
 		 */
 		relationRelation = heap_openr(RelationRelationName, RowExclusiveLock);
 		tuple = SearchSysCacheTupleCopy(RELOID,
-									ObjectIdGetDatum(ev_relid),
-									0, 0, 0);
+										ObjectIdGetDatum(ev_relid),
+										0, 0, 0);
 		Assert(HeapTupleIsValid(tuple));
 
 		/* Do the update */
@@ -420,11 +418,11 @@ DefineQueryRewrite(RuleStmt *stmt)
 
 	/*
 	 * IF the relation is becoming a view, delete the storage
-	 * files associated with it.
+	 * files associated with it.  NB: we had better have AccessExclusiveLock
+	 * to do this ...
 	 */
 	if (RelisBecomingView)
 		smgrunlink(DEFAULT_SMGR, event_relation);
-
 
 	/* Close rel, but keep lock till commit... */
 	heap_close(event_relation, NoLock);
