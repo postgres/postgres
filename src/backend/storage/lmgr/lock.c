@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.24 1998/01/28 02:29:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.25 1998/01/28 06:52:58 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -1456,13 +1456,14 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 		item.tag.pid = pid;
 #endif
 	
-		if ((result = (XIDLookupEnt *)
-			  hash_search(xidTable, (Pointer) &item, HASH_FIND, &found)) && found)
-			MyNHolding = result->nHolding;
-		else
-			MyNHolding = 0;
-	}
-	
+		if (!(result = (XIDLookupEnt *)
+				  hash_search(xidTable, (Pointer) &item, HASH_FIND, &found)) || !found)
+		{
+			elog(NOTICE, "LockAcquire: xid table corrupted");
+			return true;
+		}
+		MyNHolding = result->nHolding;
+	}	
 	if (SHMQueueEmpty(lockQueue))
 		return false;
 
@@ -1533,12 +1534,14 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 					item.tag.pid = pid;
 #endif
 				
-					if ((result = (XIDLookupEnt *)
-						  hash_search(xidTable, (Pointer) &item, HASH_FIND, &found)) && found)
+					if (!(result = (XIDLookupEnt *)
+							  hash_search(xidTable, (Pointer) &item, HASH_FIND, &found)) || !found)
 					{
-						if (result->nHolding)
-								return true;
+						elog(NOTICE, "LockAcquire: xid table corrupted");
+						return true;
 					}
+					if (result->nHolding)
+						return true;
 				}
 				/*
 				 *	No sense in looking at the wait queue of the lock we are
