@@ -1,7 +1,7 @@
 --
 --	PostgreSQL code for LargeObjects
 --
---	$Id: lo.sql.in,v 1.6 2000/11/21 21:51:58 tgl Exp $
+--	$Id: lo.sql.in,v 1.6.4.1 2005/01/29 22:36:03 tgl Exp $
 --
 --
 --	Create the data type
@@ -11,13 +11,13 @@
 create function lo_in(opaque)
 	returns opaque
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);
 
 -- used by the lo type, it returns the oid of the object
 create function lo_out(opaque)
 	returns opaque
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);
 
 -- finally the type itself
 create type lo (
@@ -31,7 +31,7 @@ create type lo (
 create function lo_oid(lo)
 	returns oid
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);
 
 -- same function, named to allow it to be used as a type coercion, eg:
 --    create table a (image lo);
@@ -40,17 +40,17 @@ create function lo_oid(lo)
 create function oid(lo)
 	returns oid
 	as 'MODULE_PATHNAME', 'lo_oid'
-	language 'c';
+	language 'c' with (isStrict);
 
 -- this allows us to convert an oid to a managed lo object
 -- ie: insert into test values (lo_import('/fullpath/file')::lo);
 create function lo(oid)
 	returns lo
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);
 
 -- This is used in triggers
 create function lo_manage()
 	returns opaque
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);

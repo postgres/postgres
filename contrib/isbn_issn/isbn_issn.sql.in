@@ -1,7 +1,7 @@
 --
 --	PostgreSQL code for ISSNs.
 --
---	$Id: isbn_issn.sql.in,v 1.2 2000/06/19 13:53:39 momjian Exp $
+--	$Id: isbn_issn.sql.in,v 1.2.4.1 2005/01/29 22:36:03 tgl Exp $
 --
 
 
@@ -12,12 +12,12 @@
 create function issn_in(opaque)
 	returns opaque
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);
 
 create function issn_out(opaque)
 	returns opaque
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);
 
 create type issn (
 	internallength = 16,
@@ -33,32 +33,32 @@ create type issn (
 create function issn_lt(issn, issn)
 	returns bool
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);
 
 create function issn_le(issn, issn)
 	returns bool
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);
 
 create function issn_eq(issn, issn)
 	returns bool
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);
 
 create function issn_ge(issn, issn)
 	returns bool
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);
 
 create function issn_gt(issn, issn)
 	returns bool
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);
 
 create function issn_ne(issn, issn)
 	returns bool
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);
 
 --
 --	Now the operators.  Note how some of the parameters to some
@@ -116,7 +116,7 @@ create operator <> (
 --
 --	PostgreSQL code for ISBNs.
 --
---	$Id: isbn_issn.sql.in,v 1.2 2000/06/19 13:53:39 momjian Exp $
+--	$Id: isbn_issn.sql.in,v 1.2.4.1 2005/01/29 22:36:03 tgl Exp $
 --
 --
 --	Input and output functions and the type itself:
@@ -125,12 +125,12 @@ create operator <> (
 create function isbn_in(opaque)
 	returns opaque
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);
 
 create function isbn_out(opaque)
 	returns opaque
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);
 
 create type isbn (
 	internallength = 16,
@@ -146,32 +146,32 @@ create type isbn (
 create function isbn_lt(isbn, isbn)
 	returns bool
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);
 
 create function isbn_le(isbn, isbn)
 	returns bool
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);
 
 create function isbn_eq(isbn, isbn)
 	returns bool
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);
 
 create function isbn_ge(isbn, isbn)
 	returns bool
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);
 
 create function isbn_gt(isbn, isbn)
 	returns bool
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);
 
 create function isbn_ne(isbn, isbn)
 	returns bool
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);
 
 --
 --	Now the operators.  Note how some of the parameters to some

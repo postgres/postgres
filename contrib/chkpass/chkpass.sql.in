@@ -4,7 +4,7 @@
 --  darcy@druid.net
 --  http://www.druid.net/darcy/
 -- 
---  $Header: /cvsroot/pgsql/contrib/chkpass/chkpass.sql.in,v 1.1 2001/08/23 16:50:33 tgl Exp $
+--  $Header: /cvsroot/pgsql/contrib/chkpass/chkpass.sql.in,v 1.1.2.1 2005/01/29 22:36:03 tgl Exp $
 --
 --  best viewed with tabs set to 4
 --
@@ -16,12 +16,12 @@
 create function chkpass_in(opaque)
 	returns opaque
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);
 
 create function chkpass_out(opaque)
 	returns opaque
 	as 'MODULE_PATHNAME'
-	language 'c';
+	language 'c' with (isStrict);
 
 create type chkpass (
 	internallength = 16,
@@ -33,7 +33,7 @@ create type chkpass (
 create function raw(chkpass)
 	returns text
 	as 'MODULE_PATHNAME', 'chkpass_rout'
-	language 'c';
+	language 'c' with (isStrict);
 
 --
 --	The various boolean tests:
@@ -42,12 +42,12 @@ create function raw(chkpass)
 create function eq(chkpass, text)
 	returns bool
 	as 'MODULE_PATHNAME', 'chkpass_eq'
-	language 'c';
+	language 'c' with (isStrict);
 
 create function ne(chkpass, text)
 	returns bool
 	as 'MODULE_PATHNAME', 'chkpass_ne'
-	language 'c';
+	language 'c' with (isStrict);
 
 --
 --	Now the operators.  Note how some of the parameters to some
