@@ -1,9 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.41 2001/11/01 04:07:29 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.42 2001/11/12 19:19:39 petere Exp $
 -->
 
  <chapter id="xfunc">
   <title id="xfunc-title">Extending <acronym>SQL</acronym>: Functions</title>
+
+  <indexterm zone="xfunc"><primary>function</></>
 
   <sect1 id="xfunc-intro">
    <title>Introduction</title>
@@ -70,6 +72,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.41 2001/11/01 04:07:29 tgl E
   <sect1 id="xfunc-sql">
    <title>Query Language (<acronym>SQL</acronym>) Functions</title>
 
+   <indexterm zone="xfunc-sql"><primary>function</><secondary>SQL</></>
+
    <para>
     SQL functions execute an arbitrary list of SQL statements, returning
     the result of the last query in the list, which must be a
@@ -83,6 +87,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.41 2001/11/01 04:07:29 tgl E
    </para>
 
    <para>
+    <indexterm><primary>SETOF</><seealso>function</></>
     Alternatively, an SQL function may be declared to return a set,
     by specifying the function's return type
     as <literal>SETOF</literal> <replaceable>sometype</>.  In this case
@@ -475,6 +480,8 @@ SELECT name, listchildren(name) FROM nodes;
   <sect1 id="xfunc-internal">
    <title>Internal Functions</title>
 
+   <indexterm zone="xfunc-internal"><primary>function</><secondary>internal</></>
+
    <para>
     Internal functions are functions written in C that have been statically
     linked into the <productname>PostgreSQL</productname> server.
@@ -569,7 +576,7 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
       <para>
        If the name starts with the string <literal>$libdir</literal>,
        that part is replaced by the PostgreSQL package library directory
-       name, which is determined at build time.
+       name, which is determined at build time.<indexterm><primary>$libdir</></>
       </para>
      </listitem>
 
@@ -577,7 +584,7 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
       <para>
        If the name does not contain a directory part, the file is
        searched for in the path specified by the configuration variable
-       <varname>dynamic_library_path</varname>.
+       <varname>dynamic_library_path</varname>.<indexterm><primary>dynamic_library_path</></>
       </para>
      </listitem>
 
@@ -1406,7 +1413,7 @@ LANGUAGE C;
      <itemizedlist>
       <listitem>
        <para>
-	Use <literal>pg_config --includedir-server</literal> to find
+	Use <literal>pg_config --includedir-server</literal><indexterm><primary>pg_config</></> to find
 	out where the PostgreSQL server header files are installed on
 	your system (or the system that your users will be running
 	on).  This option is new with PostgreSQL 7.2.  For PostgreSQL
@@ -1491,6 +1498,8 @@ LANGUAGE C;
 
   <sect1 id="xfunc-overload">
    <title>Function Overloading</title>
+
+   <indexterm zone="xfunc-overload"><primary>overloading</></>
 
    <para>
     More than one function may be defined with the same SQL name, so long

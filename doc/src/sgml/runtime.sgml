@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.93 2001/11/08 23:39:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.94 2001/11/12 19:19:39 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -119,6 +119,7 @@ postgres&gt; <userinput>initdb -D /usr/local/pgsql/data</userinput>
   </para>
 
   <para>
+   <indexterm><primary>LC_COLLATE</></>
    One surprise you might encounter while running <command>initdb</command> is
    a notice similar to this one:
 <screen>
@@ -238,6 +239,7 @@ su -c 'pg_ctl start -D /usr/local/pgsql/data -l serverlog' postgres
       For <productname>FreeBSD</productname>, take a look at the file
       <filename>contrib/start-scripts/freebsd</filename> in the
       <productname>PostgreSQL</productname> source distribution.
+      <indexterm><primary>FreeBSD</></>
      </para>
     </listitem>
 
@@ -245,6 +247,7 @@ su -c 'pg_ctl start -D /usr/local/pgsql/data -l serverlog' postgres
      <para>
       On <productname>OpenBSD</productname>, add the following lines
       to the file <filename>/etc/rc.local</filename>:
+      <indexterm><primary>OpenBSD</></>
 <programlisting>
 if [ -x /usr/local/pgsql/bin/pg_ctl -a -x /usr/local/pgsql/bin/postmaster ]; then
     su - -c '/usr/local/pgsql/bin/pg_ctl start -l /var/postgresql/log -s' postgres
@@ -257,6 +260,7 @@ fi
     <listitem>
      <para>
       On <productname>Linux</productname> systems either add
+      <indexterm><primary>Linux</></>
 <programlisting>
 /usr/local/pgsql/bin/pg_ctl start -l logfile -D /usr/local/pgsql/data
 </programlisting>
@@ -274,6 +278,7 @@ fi
       <productname>Linux</productname> start scripts, depending on
       preference, as an example and place the file at
       <filename>/usr/local/etc/rc.d/postgresql</filename>.
+      <indexterm><primary>NetBSD</></>
      </para>
     </listitem>
 
@@ -282,6 +287,7 @@ fi
       On <productname>Solaris</productname>, create a file called
       <filename>/etc/init.d/postgresql</filename> to contain the following 
       single line:
+      <indexterm><primary>Solaris</></>
 <programlisting>
 su - postgres -c "/usr/local/pgsql/bin/pg_ctl start -l logfile -D /usr/local/pgsql/data"
 </programlisting>
@@ -1013,6 +1019,7 @@ env PGOPTIONS='-c geqo=off' psql
     <variablelist>
      <varlistentry>
       <term><varname>AUSTRALIAN_TIMEZONES</varname> (<type>bool</type>)</term>
+      <indexterm><primary>Australian time zones</></>
       <listitem>
        <para>
         If set to true, <literal>CST</literal>, <literal>EST</literal>,
@@ -1025,6 +1032,7 @@ env PGOPTIONS='-c geqo=off' psql
 
      <varlistentry>
       <term><varname>AUTHENTICATION_TIMEOUT</varname> (<type>integer</type>)</term>
+      <indexterm><primary>timeout</><secondary>authentication</></indexterm>
       <listitem>
        <para>
         Maximum time to complete client authentication, in seconds.
@@ -1041,6 +1049,10 @@ env PGOPTIONS='-c geqo=off' psql
       <indexterm>
        <primary>deadlock</primary>
        <secondary>timeout</secondary>
+      </indexterm>
+      <indexterm>
+       <primary>timeout</primary>
+       <secondary>deadlock</secondary>
       </indexterm>
 
       <term><varname>DEADLOCK_TIMEOUT</varname> (<type>integer</type>)</term>
@@ -1091,6 +1103,8 @@ env PGOPTIONS='-c geqo=off' psql
 
      <varlistentry>
       <term><varname>DYNAMIC_LIBRARY_PATH</varname> (<type>string</type>)</term>
+      <indexterm><primary>dynamic_library_path</></>
+      <indexterm><primary>dynamic loading</></>
       <listitem>
        <para>
         If a dynamically loadable module needs to be opened and the
@@ -1298,6 +1312,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 
      <varlistentry>
       <term><varname>PORT</varname> (<type>integer</type>)</term>
+      <indexterm><primary>port</></>
       <listitem>
        <para>
         The TCP port the server listens on; 5432 by default. This
@@ -1351,6 +1366,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 
      <varlistentry>
       <term><varname>SQL_INHERITANCE</varname> (<type>bool</type>)</term>
+      <indexterm><primary>inheritance</></>
       <listitem>
        <para>
         This controls the inheritance semantics, in particular whether
@@ -1395,6 +1411,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 
      <varlistentry>
       <term><varname>TRANSFORM_NULL_EQUALS</varname> (<type>boolean</type>)</term>
+      <indexterm><primary>IS NULL</></>
       <listitem>
        <para>
         When turned on, expressions of the form
@@ -1955,6 +1972,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 
      <varlistentry>
       <term><systemitem class="osname">BSD/OS</></term>
+      <indexterm><primary>BSD/OS</></>
       <listitem>
        <formalpara>
         <title>Shared Memory</>
@@ -2020,6 +2038,9 @@ options "SEMMNU=120"
       <term><systemitem class="osname">FreeBSD</></term>
       <term><systemitem class="osname">NetBSD</></term>
       <term><systemitem class="osname">OpenBSD</></term>
+      <indexterm><primary>FreeBSD</></>
+      <indexterm><primary>NetBSD</></>
+      <indexterm><primary>OpenBSD</></>
       <listitem>
        <para>
         The options <varname>SYSVSHM</> and <varname>SYSVSEM</> need
@@ -2048,6 +2069,7 @@ options         SEMMAP=256
 
      <varlistentry>
       <term><systemitem class="osname">HP-UX</></term>
+      <indexterm><primary>HP-UX</></>
       <listitem>
        <para>
         The default settings tend to suffice for normal installations.
@@ -2068,6 +2090,7 @@ options         SEMMAP=256
 
      <varlistentry>
       <term><systemitem class="osname">Linux</></term>
+      <indexterm><primary>Linux</></>
       <listitem>
        <para>
         The default shared memory limit (both
@@ -2110,6 +2133,7 @@ kernel.shmmax = 134217728
 
      <varlistentry>
       <term><systemitem class="osname">SCO OpenServer</></term>
+      <indexterm><primary>SCO OpenServer</></>
       <listitem>
        <para>
         In the default configuration, only 512 kB of shared memory per
@@ -2137,6 +2161,7 @@ kernel.shmmax = 134217728
 
      <varlistentry>
       <term><systemitem class="osname">Solaris</></term>
+      <indexterm><primary>Solaris</></>
       <listitem>
        <para>
         At least in version 2.6, the maximum size of a shared memory
@@ -2169,6 +2194,7 @@ set semsys:seminfo_semmsl=32
 
      <varlistentry>
       <term><systemitem class="osname">UnixWare</></term>
+      <indexterm><primary>Unixware</></>
       <listitem>
        <para>
         On <productname>UnixWare</> 7, the maximum size for shared

@@ -1,7 +1,7 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.17 2001/09/13 15:55:23 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.18 2001/11/12 19:19:39 petere Exp $ -->
 
 <Chapter Id="rules">
-<Title>The <ProductName>Postgres</ProductName> Rule System</Title>
+<Title>The Rule System</Title>
 
  <indexterm zone="rules">
   <primary>rules</primary>
@@ -20,7 +20,7 @@
      them. Some of these points and
      the theoretical foundations of the <ProductName>Postgres</ProductName>
      rule system can be found in
-[<XRef LinkEnd="STON90b" EndTerm="STON90b">].
+<XRef LinkEnd="STON90b">.
 </Para>
 
 <Para>
@@ -38,9 +38,9 @@
      is  very powerful, and can be used for many things such
      as query language procedures, views, and versions.  The
      power  of  this  rule system is discussed in 
-[<XRef LinkEnd="ONG90" EndTerm="ONG90">]
+<XRef LinkEnd="ONG90">
  as well as
-[<XRef LinkEnd="STON90b" EndTerm="STON90b">].
+<XRef LinkEnd="STON90b">.
 </para>
 <Sect1 id="querytree">
 <Title>What is a Query Tree?</Title>
@@ -110,6 +110,7 @@
     <Term>
         the range table
     </Term>
+      <indexterm><primary>range table</></>
     <ListItem>
     <Para>
         The range table is a list of relations that are used in the query.
@@ -264,6 +265,7 @@
 
 <Sect1 id="rules-views">
 <Title>Views and the Rule System</Title>
+<indexterm zone="rules-views"><primary>rules</><secondary>and views</></>
 
 <Sect2>
 <Title>Implementation of Views in <ProductName>Postgres</ProductName></Title>
@@ -831,8 +833,9 @@
 </Sect3>
 </Sect2>
 
-<Sect2>
+<Sect2 id="rules-views-update">
 <Title>What about updating a view?</Title>
+<indexterm zone="rules-views-update"><primary>views</><secondary>updating</></>
 
 <Para>
     What happens if a view is named as the target relation for an INSERT,
@@ -1688,15 +1691,15 @@ Merge Join
     I think there are only a few situations out in the real
     world, where such a construct is necessary. But
     it makes me feel comfortable that it works.
+</Para>
 
-    <Note>
-    <Title>The truth is</Title>
+    <formalpara>
+    <Title>The truth is:</Title>
     <Para>
     Doing this I found one more bug while writing this document.
     But after fixing that I was a little amazed that it works at all.
     </Para>
-    </Note>
-</Para>
+    </formalpara>
 </Sect2>
 
 </Sect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.26 2001/10/31 20:39:30 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.27 2001/11/12 19:19:39 petere Exp $
 -->
 
  <chapter id="odbc">
@@ -146,6 +146,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.26 2001/10/31 20:39:30 
    </para>
 
    <para>
+    <indexterm><primary>odbc.sql</></>
     Additionally, you should install the ODBC catalog extensions.  That will
     provide a number of functions mandated by the ODBC standard that are not
     supplied by <productname>PostgreSQL</> by default. The file
@@ -165,6 +166,8 @@ psql -d template1 -f <replaceable>LOCATION</>/odbc.sql
 
   <sect1 id="odbc-config">
    <title>Configuration Files</title>
+
+   <indexterm zone="odbc-config"><primary>.odbc.ini</></>
 
    <para>
     <filename>~/.odbc.ini</filename> contains user-specified access information 
@@ -308,7 +311,7 @@ InstallDir = /opt/applix/axdata/axshlib
 
     <para>
      Playing around with MS Access will help you sort this out.  Try using
-     <literal>File->Get External Data</literal>.
+     <menuchoice><guimenu>File</><guimenuitem>Get External Data</></menuchoice>.
     </para>
 
     <tip>

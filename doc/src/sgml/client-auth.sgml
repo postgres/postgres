@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.25 2001/11/12 02:35:16 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.26 2001/11/12 19:19:39 petere Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -423,11 +423,14 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
    The following describes the authentication methods in detail.
   </para>
 
-  <sect2>
+  <sect2 id="auth-password">
    <title>Password authentication</title>
 
    <indexterm>
     <primary>password</primary>
+   </indexterm>
+   <indexterm>
+    <primary>MD5</>
    </indexterm>
 
    <para>

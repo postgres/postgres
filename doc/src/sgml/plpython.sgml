@@ -1,7 +1,10 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.4 2001/09/13 15:55:23 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.5 2001/11/12 19:19:39 petere Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
+
+ <indexterm zone="plpython"><primary>PL/Python</></>
+ <indexterm zone="plpython"><primary>Python</></>
 
  <note>
   <para>

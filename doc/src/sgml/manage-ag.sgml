@@ -1,9 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.16 2001/10/09 18:46:00 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.17 2001/11/12 19:19:39 petere Exp $
 -->
 
 <chapter id="managing-databases">
  <title>Managing Databases</title>
+
+ <indexterm zone="managing-databases"><primary>database</></>
 
  <para>
   A database is a named collection of SQL objects (<quote>database
@@ -53,7 +55,7 @@ CREATE DATABASE <replaceable>name</>
   </para>
 
   <formalpara>
-   <title>Bootstrapping</title>
+   <title>Bootstrapping:</title>
    <para>
     Since you need to be connected to the database server in order to
     execute the <command>CREATE DATABASE</command> command, the
@@ -140,6 +142,7 @@ setenv PGDATA2 /home/postgres/data
    </para>
 
    <para>
+    <indexterm><primary>initlocation</></>
     To create a data storage area in <envar>PGDATA2</>, ensure that
     <filename>/home/postgres</filename> already exists and is writable
     by the user account that runs the server (see <xref

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.13 2001/10/31 20:35:01 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.14 2001/11/12 19:19:39 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -49,6 +49,8 @@
  <sect1 id="locale">
   <title>Locale Support</title>
   
+  <indexterm zone="locale"><primary>locale</></>
+
   <para>
    <firstterm>Locale</> support refers to an application respecting
    cultural preferences regarding alphabets, sorting, number
@@ -171,6 +173,7 @@ export LANG=sv_SE
      <listitem>
       <para>
        Sort order in <command>ORDER BY</> queries.
+       <indexterm><primary>ORDER BY</></>
       </para>
      </listitem>
 
@@ -242,6 +245,8 @@ perl: warning: Falling back to the standard locale ("C").
 
   <sect1 id="multibyte">
    <title>Multibyte Support</title>
+
+  <indexterm zone="multibyte"><primary>multibyte</></>
 
    <note>
     <title>Author</title>
@@ -585,6 +590,8 @@ RESET CLIENT_ENCODING;
 
    <sect2>
     <title>About Unicode</title>
+
+    <indexterm><primary>Unicode</></>
 
     <para>
      An automatic encoding translation between Unicode and other

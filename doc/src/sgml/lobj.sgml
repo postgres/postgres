@@ -1,9 +1,12 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.23 2001/10/09 18:46:00 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.24 2001/11/12 19:19:39 petere Exp $
 -->
 
  <chapter id="largeObjects">
   <title id="largeObjects-title">Large Objects</title>
+
+  <indexterm zone="largeobjects"><primary>large object</></>
+  <indexterm><primary>BLOB</><see>large object</></>
 
   <sect1 id="lo-intro">
    <title>Introduction</title>
@@ -41,6 +44,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.23 2001/10/09 18:46:00 petere
    </para>
 
    <para>
+    <indexterm><primary>TOAST</></>
+    <indexterm><primary>sliced bread</><see>TOAST</></indexterm>
     <productname>PostgreSQL 7.1</productname> introduced a mechanism
     (nicknamed <quote><acronym>TOAST</acronym></quote>) that allows
     data rows to be much larger than individual data pages.  This

@@ -1,6 +1,8 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.17 2001/10/04 04:46:43 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.18 2001/11/12 19:19:39 petere Exp $ -->
 <chapter id="backup">
  <title>Backup and Restore</title>
+
+ <indexterm zone="backup"><primary>backup</></>
 
  <para>
   As everything that contains valuable data, <productname>Postgres</>
@@ -363,6 +365,7 @@ tar -cf backup.tar /usr/local/pgsql/data
 
  <sect1 id="migration">
   <title>Migration between releases</title>
+  <indexterm zone="migration"><primary>upgrading</></>
 
   <para>
    As a general rule, the internal data storage format is subject to

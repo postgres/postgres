@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.29 2001/11/08 23:37:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.30 2001/11/12 19:19:39 petere Exp $
 -->
 
  <chapter id="ecpg">
@@ -27,6 +27,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.29 2001/11/08 23:37:50 petere
 
   <title><application>ecpg</application> - Embedded <acronym>SQL</acronym> 
    in <acronym>C</acronym></title>
+
+  <indexterm zone="ecpg"><primary>embedded SQL</primary><secondary>in C</secondary></indexterm>
 
   <para>
    This describes the embedded <acronym>SQL</acronym> package for
@@ -538,6 +540,7 @@ struct sqlca
     <variablelist>
      <varlistentry>
       <term>Syntax of FETCH</term>
+      <indexterm><primary>FETCH</><secondary>embedded SQL</></indexterm>
       <listitem>
        <para>
         The standard syntax for FETCH is:
@@ -546,7 +549,8 @@ struct sqlca
         FETCH [direction] [amount] IN|FROM <replaceable>cursor</replaceable>.
        </para>
        <para>
-        <application>ORACLE</application>, however, does not use the keywords IN
+        <indexterm><primary>Oracle</></>
+        <application>Oracle</application>, however, does not use the keywords IN
         or FROM. This feature cannot be added since it would create parsing
         conflicts.
        </para>

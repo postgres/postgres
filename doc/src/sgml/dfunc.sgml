@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.15 2001/10/26 19:58:12 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.16 2001/11/12 19:19:39 petere Exp $
 -->
 
 <sect2 id="dfunc">
@@ -25,6 +25,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.15 2001/10/26 19:58:12 tgl E
  </para>
 
  <para>
+  <indexterm><primary>PIC</></>
   Creating shared libraries is generally analoguous to linking
   executables:  first the source files are compiled into object files,
   then the object files are linked together.  The object files need to
@@ -57,6 +58,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.15 2001/10/26 19:58:12 tgl E
   <variablelist>
    <varlistentry>
     <term><productname>BSD/OS</productname></term>
+    <indexterm><primary>BSD/OS</></>
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
@@ -74,6 +76,7 @@ ld -shared -o foo.so foo.o
 
    <varlistentry>
     <term><productname>FreeBSD</productname></term>
+    <indexterm><primary>FreeBSD</></>
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
@@ -91,6 +94,7 @@ gcc -shared -o foo.so foo.o
 
    <varlistentry>
     <term><productname>HP-UX</productname></term>
+    <indexterm><primary>HP-UX</></>
     <listitem>
      <para>
       The compiler flag of the system compiler to create
@@ -117,6 +121,7 @@ ld -b -o foo.sl foo.o
 
    <varlistentry>
     <term><productname>Irix</productname></term>
+    <indexterm><primary>Irix</></>
     <listitem>
      <para>
       <acronym>PIC</acronym> is the default, no special compiler
@@ -132,6 +137,7 @@ ld -shared -o foo.so foo.o
 
    <varlistentry>
     <term><productname>Linux</productname></term>
+    <indexterm><primary>Linux</></>
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
@@ -150,6 +156,7 @@ cc -shared -o foo.so foo.o
 
    <varlistentry>
     <term><productname>NetBSD</productname></term>
+    <indexterm><primary>NetBSD</></>
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
@@ -167,6 +174,7 @@ gcc -shared -o foo.so foo.o
 
    <varlistentry>
     <term><productname>OpenBSD</productname></term>
+    <indexterm><primary>OpenBSD</></>
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
@@ -181,25 +189,8 @@ ld -Bshareable -o foo.so foo.o
    </varlistentry>
 
    <varlistentry>
-    <term>Digital Unix/Tru64 UNIX</term>   
-
-    <listitem>
-     <para>
-      <acronym>PIC</acronym> is the default, so the compilation command
-      is the usual one.  <command>ld</command> with special options is
-      used to do the linking:
-<programlisting>
-cc -c foo.c
-ld -shared -expect_unresolved '*' -o foo.so foo.o
-</programlisting>
-      The same procedure is used with GCC instead of the system
-      compiler; no special options are required.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
     <term><productname>Solaris</productname></term>
+    <indexterm><primary>Solaris</></>
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
@@ -222,7 +213,27 @@ gcc -G -o foo.so foo.o
    </varlistentry>
 
    <varlistentry>
+    <term>Tru64 UNIX</term>   
+    <indexterm><primary>Tru64 UNIX</></>
+    <indexterm><primary>Digital UNIX</><see>Tru64 UNIX</></>
+    <listitem>
+     <para>
+      <acronym>PIC</acronym> is the default, so the compilation command
+      is the usual one.  <command>ld</command> with special options is
+      used to do the linking:
+<programlisting>
+cc -c foo.c
+ld -shared -expect_unresolved '*' -o foo.so foo.o
+</programlisting>
+      The same procedure is used with GCC instead of the system
+      compiler; no special options are required.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><productname>Unixware</productname></term>
+    <indexterm><primary>Unixware</></>
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is <option>-K
