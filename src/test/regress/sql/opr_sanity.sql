@@ -256,6 +256,22 @@ WHERE p1.oprlsortop != 0 AND NOT
         p2.oprright = p1.oprright AND
         p2.oprkind = 'b');
 
+-- Mergejoinable operators across datatypes must come in closed sets, that
+-- is if you provide int2 = int4 and int4 = int8 then you must also provide
+-- int2 = int8 (and commutators of all these).  This is necessary because
+-- the planner tries to deduce additional qual clauses from transitivity
+-- of mergejoinable operators.  If there are clauses int2var = int4var and
+-- int4var = int8var, the planner will deduce int2var = int8var ... and it
+-- had better have a way to represent it.
+
+SELECT p1.oid, p2.oid FROM pg_operator AS p1, pg_operator AS p2
+WHERE p1.oprlsortop != p1.oprrsortop AND
+      p1.oprrsortop = p2.oprlsortop AND
+      p2.oprlsortop != p2.oprrsortop AND
+      NOT EXISTS (SELECT 1 FROM pg_operator p3 WHERE
+      p3.oprlsortop = p1.oprlsortop AND p3.oprrsortop = p2.oprrsortop);
+
+
 -- Hashing only works on simple equality operators "type = sametype",
 -- since the hash itself depends on the bitwise representation of the type.
 -- Check that allegedly hashable operators look like they might be "=".

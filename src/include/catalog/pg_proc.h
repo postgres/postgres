@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.148 2000/07/17 03:05:25 tgl Exp $
+ * $Id: pg_proc.h,v 1.149 2000/07/28 05:07:42 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2490,6 +2490,32 @@ DATA(insert OID = 1843 (  interval_accum   PGUID 12 f t t t 2 f 1187 "1187 1186"
 DESCR("aggregate transition function");
 DATA(insert OID = 1844 (  interval_avg	   PGUID 12 f t t t 1 f 1186 "1187" 100 0 0 100  interval_avg - ));
 DESCR("AVG aggregate final function");
+
+DATA(insert OID = 1850 (  int28eq		   PGUID 12 f t t t 2 f 16 "21 20" 100 0 0 100  int28eq - ));
+DESCR("equal");
+DATA(insert OID = 1851 (  int28ne		   PGUID 12 f t t t 2 f 16 "21 20" 100 0 0 100  int28ne - ));
+DESCR("not equal");
+DATA(insert OID = 1852 (  int28lt		   PGUID 12 f t t t 2 f 16 "21 20" 100 0 0 100  int28lt - ));
+DESCR("less-than");
+DATA(insert OID = 1853 (  int28gt		   PGUID 12 f t t t 2 f 16 "21 20" 100 0 0 100  int28gt - ));
+DESCR("greater-than");
+DATA(insert OID = 1854 (  int28le		   PGUID 12 f t t t 2 f 16 "21 20" 100 0 0 100  int28le - ));
+DESCR("less-than-or-equal");
+DATA(insert OID = 1855 (  int28ge		   PGUID 12 f t t t 2 f 16 "21 20" 100 0 0 100  int28ge - ));
+DESCR("greater-than-or-equal");
+
+DATA(insert OID = 1856 (  int82eq		   PGUID 12 f t t t 2 f 16 "20 21" 100 0 0 100  int82eq - ));
+DESCR("equal");
+DATA(insert OID = 1857 (  int82ne		   PGUID 12 f t t t 2 f 16 "20 21" 100 0 0 100  int82ne - ));
+DESCR("not equal");
+DATA(insert OID = 1858 (  int82lt		   PGUID 12 f t t t 2 f 16 "20 21" 100 0 0 100  int82lt - ));
+DESCR("less-than");
+DATA(insert OID = 1859 (  int82gt		   PGUID 12 f t t t 2 f 16 "20 21" 100 0 0 100  int82gt - ));
+DESCR("greater-than");
+DATA(insert OID = 1860 (  int82le		   PGUID 12 f t t t 2 f 16 "20 21" 100 0 0 100  int82le - ));
+DESCR("less-than-or-equal");
+DATA(insert OID = 1861 (  int82ge		   PGUID 12 f t t t 2 f 16 "20 21" 100 0 0 100  int82ge - ));
+DESCR("greater-than-or-equal");
 
 
 /*

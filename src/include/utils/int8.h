@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: int8.h,v 1.22 2000/06/13 07:35:30 tgl Exp $
+ * $Id: int8.h,v 1.23 2000/07/28 05:07:44 tgl Exp $
  *
  * NOTES
  * These data types are supported on all 64-bit architectures, and may
@@ -50,6 +50,20 @@ extern Datum int48lt(PG_FUNCTION_ARGS);
 extern Datum int48gt(PG_FUNCTION_ARGS);
 extern Datum int48le(PG_FUNCTION_ARGS);
 extern Datum int48ge(PG_FUNCTION_ARGS);
+
+extern Datum int82eq(PG_FUNCTION_ARGS);
+extern Datum int82ne(PG_FUNCTION_ARGS);
+extern Datum int82lt(PG_FUNCTION_ARGS);
+extern Datum int82gt(PG_FUNCTION_ARGS);
+extern Datum int82le(PG_FUNCTION_ARGS);
+extern Datum int82ge(PG_FUNCTION_ARGS);
+
+extern Datum int28eq(PG_FUNCTION_ARGS);
+extern Datum int28ne(PG_FUNCTION_ARGS);
+extern Datum int28lt(PG_FUNCTION_ARGS);
+extern Datum int28gt(PG_FUNCTION_ARGS);
+extern Datum int28le(PG_FUNCTION_ARGS);
+extern Datum int28ge(PG_FUNCTION_ARGS);
 
 extern Datum int8um(PG_FUNCTION_ARGS);
 extern Datum int8pl(PG_FUNCTION_ARGS);
