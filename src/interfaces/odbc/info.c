@@ -2368,7 +2368,9 @@ Int2 result_cols;
 								"AND (pg_proc.proname LIKE '%%upd') "
 								"AND (pg_proc_1.proname LIKE '%%del') "
 								"AND (pg_trigger.tgrelid=pt.tgconstrrelid) "
-								"AND (pg_trigger_1.tgrelid = pt.tgconstrrelid))", 
+								"AND (pg_trigger.tgconstrname=pt.tgconstrname) "
+								"AND (pg_trigger_1.tgrelid=pt.tgconstrrelid) "
+								"AND (pg_trigger_1.tgconstrname=pt.tgconstrname))", 
 				fk_table_needed);		
 
 		result = SQLExecDirect(htbl_stmt, tables_query, strlen(tables_query));

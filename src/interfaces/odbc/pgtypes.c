@@ -217,7 +217,9 @@ Int2 pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 	case PG_TYPE_XID:
 	case PG_TYPE_INT4:          return SQL_INTEGER;
 
-	case PG_TYPE_INT8:			return SQL_BIGINT;
+	/* Change this to SQL_BIGINT for ODBC v3 bjm 2001-01-23 */
+	case PG_TYPE_INT8:			return SQL_CHAR;
+
 	case PG_TYPE_NUMERIC:		return SQL_NUMERIC;
 
 	case PG_TYPE_FLOAT4:        return SQL_REAL;
