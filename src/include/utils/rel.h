@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.7 1996/11/04 11:51:24 scrappy Exp $
+ * $Id: rel.h,v 1.8 1997/09/01 08:13:22 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,30 @@
 #include <access/tupdesc.h>
 #include <rewrite/prs2lock.h>
 #include <storage/fd.h>
+
+typedef struct Trigger {
+    char		*tgname;
+    char		*tgfunc;
+    Oid			tglang;
+    int16		tgtype;
+    int16		tgnargs;
+    int16		tgattr[8];
+    char		*tgtext;
+    char		**tgargs;
+    char		*tgwhen;
+} Trigger;
+
+typedef struct TriggerDesc {
+    uint16		n_before_statement[4];
+    uint16		n_before_row[4];
+    uint16		n_after_row[4];
+    uint16		n_after_statement[4];
+    Trigger		**tg_before_statement[4];
+    Trigger		**tg_before_row[4];
+    Trigger		**tg_after_row[4];
+    Trigger		**tg_after_statement[4];
+    Trigger		*triggers;
+} TriggerDesc;
 
 typedef struct RelationData {
     File		rd_fd; 		/* open file descriptor */
@@ -36,6 +60,7 @@ typedef struct RelationData {
     RuleLock		*rd_rules;	/* rewrite rules */
     IndexStrategy       rd_istrat;    
     RegProcedure*       rd_support;
+    TriggerDesc		*trigdesc;
 } RelationData;
 
 typedef RelationData	*Relation;
