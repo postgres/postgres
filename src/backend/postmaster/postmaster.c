@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.133 2000/01/09 12:13:24 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.134 2000/01/20 04:11:52 tgl Exp $
  *
  * NOTES
  *
@@ -34,7 +34,6 @@
  */
 #include <unistd.h>
 #include <signal.h>
-#include <time.h>
 #include <sys/wait.h>
 #include <ctype.h>
 #include <sys/types.h>
@@ -43,6 +42,7 @@
 #include <sys/socket.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <time.h>
 #include <sys/param.h>
 
 #include "postgres.h"

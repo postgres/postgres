@@ -24,19 +24,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.35 2000/01/18 19:05:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.36 2000/01/20 04:08:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <errno.h>
-#include <signal.h>
-#include <time.h>
-
 #include "postgres.h"
-#include "libpq-fe.h"
-#include "libpq-int.h"
-#include "pqsignal.h"
 
 #ifdef WIN32
 #include "win32.h"
@@ -45,9 +38,17 @@
 #include <sys/time.h>
 #endif
 
+#include <errno.h>
+#include <signal.h>
+#include <time.h>
+
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
+
+#include "libpq-fe.h"
+#include "libpq-int.h"
+#include "pqsignal.h"
 
 
 #define DONOTICE(conn,message) \
