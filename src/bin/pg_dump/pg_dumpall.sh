@@ -6,7 +6,7 @@
 # and "pg_group" tables, which belong to the whole installation rather
 # than any one individual database.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.5 2000/10/25 10:21:38 pjw Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.6 2000/11/02 21:13:32 petere Exp $
 
 CMDNAME=`basename $0`
 
@@ -72,6 +72,7 @@ fi
 
 usage=
 cleanschema=
+accounts_only=
 
 #
 # Scan options. We're interested in the -h (host), -p (port), and -c (clean) options.
@@ -109,6 +110,9 @@ while [ $# -gt 0 ] ; do
                 cleanschema=yes
                 pgdumpextraopts="$pgdumpextraopts -c"
                 ;;
+        --accounts-only)
+                accounts_only=yes
+                ;;
         *)
                 pgdumpextraopts="$pgdumpextraopts $1"
                 ;;
@@ -121,12 +125,13 @@ if [ "$usage" ] ; then
     echo "$CMDNAME dumps a PostgreSQL database cluster."
     echo
     echo "Usage:"
-    echo "  $CMDNAME [ -c ] [ -h host ] [ -p port ]"
+    echo "  $CMDNAME [ -c ] [ -h host ] [ -p port ] [ --accounts-only ]"
     echo
     echo "Options:"
     echo "  -c, --clean              clean (drop) schema prior to create"
     echo "  -h, --host <hostname>    server host name"
     echo "  -p, --port <port>        server port number"
+    echo "  --accounts-only          only dump users and groups"
     echo "Any extra options will be passed to pg_dump."
     echo
     echo "Report bugs to <pgsql-bugs@postgresql.org>."
@@ -177,6 +182,9 @@ while read GRONAME GROSYSID GROLIST ; do
         echo "  ALTER GROUP \"$GRONAME\" ADD USER \"$username\";"
     done
 done
+
+
+test "$accounts_only" = yes && exit 0
 
 
 # First we dump the template in case there are local extensions.

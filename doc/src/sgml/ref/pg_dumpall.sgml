@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.10 2000/10/05 19:48:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.11 2000/11/02 21:13:31 petere Exp $
 Postgres documentation
 -->
 
@@ -23,7 +23,7 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-pg_dumpall [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ] [ -a ] [ -d ] [ -D ] [ -O ] [ -s ] [ -u ] [ -v ] [ -x ]
+pg_dumpall [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ] [ -a ] [ -d ] [ -D ] [ -O ] [ -s ] [ -u ] [ -v ] [ -x ] [ --accounts-only ]
   </synopsis>
 
   <refsect2 id="R2-APP-PG-DUMPALL-1">
@@ -116,6 +116,15 @@ pg_dumpall [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replac
       <listitem>
        <para>
 	Prevent dumping ACLs (grant/revoke commands) and table ownership information.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>--accounts-only</term>
+      <listitem>
+       <para>
+	Only dump user and group information, nothing else.
        </para>
       </listitem>
      </varlistentry>
