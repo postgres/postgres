@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.112 1999/07/16 04:59:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.113 1999/07/16 05:41:17 momjian Exp $
  *
  * NOTES
  *
@@ -32,13 +32,13 @@
  *
  *-------------------------------------------------------------------------
  */
- /* moved here to prevent double define */
+#include "postgres.h"
 #include <sys/param.h>
+ /* moved here to prevent double define */
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
 
-#include "postgres.h"
 
 #ifndef MAXHOSTNAMELEN
 #define MAXHOSTNAMELEN 256
