@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/variables.c,v 1.16 2004/01/24 19:38:49 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/variables.c,v 1.17 2004/01/25 03:07:22 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -14,9 +14,9 @@ CreateVariableSpace(void)
 {
 	struct _variable *ptr;
 
-	ptr = xcalloc(1, sizeof *ptr);
-	ptr->name = xstrdup("@");
-	ptr->value = xstrdup("");
+	ptr = pg_calloc(1, sizeof *ptr);
+	ptr->name = pg_strdup("@");
+	ptr->value = pg_strdup("");
 
 	return ptr;
 }
@@ -152,14 +152,14 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 		if (strcmp(current->name, name) == 0)
 		{
 			free(current->value);
-			current->value = xstrdup(value);
+			current->value = pg_strdup(value);
 			return true;
 		}
 	}
 
-	previous->next = xcalloc(1, sizeof *(previous->next));
-	previous->next->name = xstrdup(name);
-	previous->next->value = xstrdup(value);
+	previous->next = pg_calloc(1, sizeof *(previous->next));
+	previous->next->name = pg_strdup(name);
+	previous->next->value = pg_strdup(value);
 	return true;
 }
 

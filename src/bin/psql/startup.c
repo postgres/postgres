@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.82 2004/01/24 19:38:49 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.83 2004/01/25 03:07:22 neilc Exp $
  */
 #include "postgres_fe.h"
 
@@ -156,9 +156,9 @@ main(int argc, char *argv[])
 	parse_psql_options(argc, argv, &options);
 
 	if (!pset.popt.topt.fieldSep)
-		pset.popt.topt.fieldSep = xstrdup(DEFAULT_FIELD_SEP);
+		pset.popt.topt.fieldSep = pg_strdup(DEFAULT_FIELD_SEP);
 	if (!pset.popt.topt.recordSep)
-		pset.popt.topt.recordSep = xstrdup(DEFAULT_RECORD_SEP);
+		pset.popt.topt.recordSep = pg_strdup(DEFAULT_RECORD_SEP);
 
 	if (options.username)
 	{
@@ -170,7 +170,7 @@ main(int argc, char *argv[])
 		if (strcmp(options.username, "\001") == 0)
 			username = simple_prompt("User name: ", 100, true);
 		else
-			username = xstrdup(options.username);
+			username = pg_strdup(options.username);
 	}
 
 	if (pset.getPassword)
@@ -387,7 +387,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				options->action_string = optarg;
 				break;
 			case 'F':
-				pset.popt.topt.fieldSep = xstrdup(optarg);
+				pset.popt.topt.fieldSep = pg_strdup(optarg);
 				break;
 			case 'h':
 				options->host = optarg;
@@ -413,7 +413,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 					char	   *equal_loc;
 					bool		result;
 
-					value = xstrdup(optarg);
+					value = pg_strdup(optarg);
 					equal_loc = strchr(value, '=');
 					if (!equal_loc)
 						result = do_pset(value, NULL, &pset.popt, true);
@@ -436,7 +436,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				SetVariableBool(pset.vars, "QUIET");
 				break;
 			case 'R':
-				pset.popt.topt.recordSep = xstrdup(optarg);
+				pset.popt.topt.recordSep = pg_strdup(optarg);
 				break;
 			case 's':
 				SetVariableBool(pset.vars, "SINGLESTEP");
@@ -448,7 +448,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				pset.popt.topt.tuples_only = true;
 				break;
 			case 'T':
-				pset.popt.topt.tableAttr = xstrdup(optarg);
+				pset.popt.topt.tableAttr = pg_strdup(optarg);
 				break;
 			case 'u':
 				pset.getPassword = true;
@@ -465,7 +465,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 					char	   *value;
 					char	   *equal_loc;
 
-					value = xstrdup(optarg);
+					value = pg_strdup(optarg);
 					equal_loc = strchr(value, '=');
 					if (!equal_loc)
 					{
@@ -567,8 +567,8 @@ process_psqlrc(void)
 
 	if (home)
 	{
-		psqlrc = xmalloc(strlen(home) + 1 + strlen(PSQLRC) + 1 +
-						 strlen(PG_VERSION) + 1);
+		psqlrc = pg_malloc(strlen(home) + 1 + strlen(PSQLRC) + 1 +
+						   strlen(PG_VERSION) + 1);
 		sprintf(psqlrc, "%s/%s-%s", home, PSQLRC, PG_VERSION);
 
 		if (access(psqlrc, R_OK) == 0)

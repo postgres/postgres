@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.33 2004/01/24 19:38:49 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.34 2004/01/25 03:07:22 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "input.h"
@@ -113,7 +113,7 @@ gets_interactive(const char *prompt)
 		else
 		{
 			free(prev_hist);
-			prev_hist = xstrdup(s);
+			prev_hist = pg_strdup(s);
 			add_history(s);
 		}
 	}
@@ -185,8 +185,8 @@ initializeInput(int flags)
 		{
 			char *psql_history;
 
-			psql_history = xmalloc(strlen(home) + 1 +
-								   strlen(PSQLHISTORY) + 1);
+			psql_history = pg_malloc(strlen(home) + 1 +
+									 strlen(PSQLHISTORY) + 1);
 			sprintf(psql_history, "%s/%s", home, PSQLHISTORY);
 			read_history(psql_history);
 			free(psql_history);
@@ -239,8 +239,8 @@ finishInput(int exitstatus, void *arg)
 			char	*psql_history;
 			int		 hist_size;
 
-			psql_history = xmalloc(strlen(home) + 1 +
-								   strlen(PSQLHISTORY) + 1);
+			psql_history = pg_malloc(strlen(home) + 1 +
+									 strlen(PSQLHISTORY) + 1);
 
 			hist_size = GetVariableNum(pset.vars, "HISTSIZE", -1, -1, true);
 

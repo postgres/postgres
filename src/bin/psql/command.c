@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.110 2004/01/24 19:38:49 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.111 2004/01/25 03:07:22 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -97,7 +97,7 @@ HandleSlashCmds(const char *line,
 										 * backslash command ended */
 
 	psql_assert(line);
-	my_line = xstrdup(line);
+	my_line = pg_strdup(line);
 
 	/*
 	 * Find the first whitespace. line[blank_loc] will now be the
@@ -199,7 +199,7 @@ exec_command(const char *cmd,
 	 * end.
 	 */
 	if (options_string)
-		string = string_cpy = xstrdup(options_string);
+		string = string_cpy = pg_strdup(options_string);
 	else
 		string = string_cpy = NULL;
 
@@ -497,7 +497,7 @@ exec_command(const char *cmd,
 		else
 		{
 			expand_tilde(&fname);
-			pset.gfname = xstrdup(fname);
+			pset.gfname = pg_strdup(fname);
 		}
 		free(fname);
 		status = CMD_SEND;
@@ -693,7 +693,7 @@ exec_command(const char *cmd,
 			char	   *opt;
 
 			opt = scan_option(&string, OT_NORMAL, NULL, false);
-			newval = xstrdup(opt ? opt : "");
+			newval = pg_strdup(opt ? opt : "");
 			free(opt);
 
 			while ((opt = scan_option(&string, OT_NORMAL, NULL, false)))
@@ -1057,7 +1057,7 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 				}
 				else
 				{
-					return_val = xstrdup("");
+					return_val = pg_strdup("");
 					termPQExpBuffer(&output);
 				}
 
@@ -1081,7 +1081,7 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 				save_char = options_string[pos + token_end + 1];
 				options_string[pos + token_end + 1] = '\0';
 				value = GetVariable(pset.vars, options_string + pos + 1);
-				return_val = xstrdup(value ? value : "");
+				return_val = pg_strdup(value ? value : "");
 				options_string[pos + token_end + 1] = save_char;
 				*string = &options_string[pos + token_end + 1];
 				/* XXX should we set *quote to ':' here? */
@@ -1096,7 +1096,7 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 			if (type == OT_FILEPIPE)
 			{
 				*string += strlen(*string);
-				return xstrdup(options_string + pos);
+				return pg_strdup(options_string + pos);
 			}
 			/* fallthrough for other option types */
 
@@ -1156,7 +1156,7 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 				/* Copy the option */
 				token_len = cp - &options_string[pos];
 
-				return_val = xmalloc(token_len + 1);
+				return_val = pg_malloc(token_len + 1);
 				memcpy(return_val, &options_string[pos], token_len);
 				return_val[token_len] = '\0';
 
@@ -1245,7 +1245,7 @@ unescape(const unsigned char *source, size_t len)
 
 	length = Min(len, strlen(source)) + 1;
 
-	tmp = destination = xmalloc(length);
+	tmp = destination = pg_malloc(length);
 
 	for (p = source; p - source < (int) len && *p; p += PQmblen(p, pset.encoding))
 	{
@@ -1526,7 +1526,7 @@ editFile(const char *fname)
 	if (!editorName)
 		editorName = DEFAULT_EDITOR;
 
-	sys = xmalloc(strlen(editorName) + strlen(fname) + 10 + 1);
+	sys = pg_malloc(strlen(editorName) + strlen(fname) + 10 + 1);
 	sprintf(sys,
 #ifndef WIN32
 			"exec "
@@ -1802,7 +1802,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (value)
 		{
 			free(popt->nullPrint);
-			popt->nullPrint = xstrdup(value);
+			popt->nullPrint = pg_strdup(value);
 		}
 		if (!quiet)
 			printf(gettext("Null display is \"%s\".\n"), popt->nullPrint ? popt->nullPrint : "");
@@ -1814,7 +1814,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (value)
 		{
 			free(popt->topt.fieldSep);
-			popt->topt.fieldSep = xstrdup(value);
+			popt->topt.fieldSep = pg_strdup(value);
 		}
 		if (!quiet)
 			printf(gettext("Field separator is \"%s\".\n"), popt->topt.fieldSep);
@@ -1826,7 +1826,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (value)
 		{
 			free(popt->topt.recordSep);
-			popt->topt.recordSep = xstrdup(value);
+			popt->topt.recordSep = pg_strdup(value);
 		}
 		if (!quiet)
 		{
@@ -1857,7 +1857,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (!value)
 			popt->title = NULL;
 		else
-			popt->title = xstrdup(value);
+			popt->title = pg_strdup(value);
 
 		if (!quiet)
 		{
@@ -1875,7 +1875,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (!value)
 			popt->topt.tableAttr = NULL;
 		else
-			popt->topt.tableAttr = xstrdup(value);
+			popt->topt.tableAttr = pg_strdup(value);
 
 		if (!quiet)
 		{
@@ -1946,7 +1946,7 @@ do_shell(const char *command)
 		if (shellName == NULL)
 			shellName = DEFAULT_SHELL;
 
-		sys = xmalloc(strlen(shellName) + 16);
+		sys = pg_malloc(strlen(shellName) + 16);
 		sprintf(sys,
 #ifndef WIN32
 				"exec "

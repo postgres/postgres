@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.93 2004/01/24 19:38:49 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.94 2004/01/25 03:07:22 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -38,17 +38,6 @@ static void processNamePattern(PQExpBuffer buf, const char *pattern,
 				   bool have_where, bool force_escape,
 				   const char *schemavar, const char *namevar,
 				   const char *altnamevar, const char *visibilityrule);
-
-static void *
-xmalloczero(size_t size)
-{
-	void	   *tmp;
-
-	tmp = xmalloc(size);
-	memset(tmp, 0, size);
-	return tmp;
-}
-
 
 /*----------------
  * Handlers for various slash commands displaying some sort of list
@@ -737,14 +726,14 @@ describeOneTableDetails(const char *schemaname,
 			goto error_return;
 
 		if (PQntuples(result) > 0)
-			view_def = xstrdup(PQgetvalue(result, 0, 0));
+			view_def = pg_strdup(PQgetvalue(result, 0, 0));
 
 		PQclear(result);
 	}
 
 	/* Generate table cells to be printed */
 	/* note: initialize all cells[] to NULL in case of error exit */
-	cells = xmalloczero((numrows * cols + 1) * sizeof(*cells));
+	cells = pg_malloc_zero((numrows * cols + 1) * sizeof(*cells));
 
 	for (i = 0; i < numrows; i++)
 	{
@@ -782,9 +771,9 @@ describeOneTableDetails(const char *schemaname,
 			}
 
 #ifdef WIN32
-			cells[i * cols + 2] = xstrdup(mbvalidate(tmpbuf.data, myopt.encoding));
+			cells[i * cols + 2] = pg_strdup(mbvalidate(tmpbuf.data, myopt.encoding));
 #else
-			cells[i * cols + 2] = xstrdup(tmpbuf.data);
+			cells[i * cols + 2] = pg_strdup(tmpbuf.data);
 #endif
 		}
 
@@ -879,8 +868,8 @@ describeOneTableDetails(const char *schemaname,
 			if (strlen(indpred))
 				appendPQExpBuffer(&tmpbuf, _(", predicate (%s)"), indpred);
 
-			footers = xmalloczero(2 * sizeof(*footers));
-			footers[0] = xstrdup(tmpbuf.data);
+			footers = pg_malloc_zero(2 * sizeof(*footers));
+			footers[0] = pg_strdup(tmpbuf.data);
 			footers[1] = NULL;
 		}
 
@@ -908,8 +897,8 @@ describeOneTableDetails(const char *schemaname,
 		}
 
 		/* Footer information about a view */
-		footers = xmalloczero((rule_count + 3) * sizeof(*footers));
-		footers[count_footers] = xmalloc(64 + strlen(view_def));
+		footers = pg_malloc_zero((rule_count + 3) * sizeof(*footers));
+		footers[count_footers] = pg_malloc(64 + strlen(view_def));
 		snprintf(footers[count_footers], 64 + strlen(view_def),
 				 _("View definition:\n%s"), view_def);
 		count_footers++;
@@ -918,7 +907,7 @@ describeOneTableDetails(const char *schemaname,
 		if (rule_count > 0)
 		{
 			printfPQExpBuffer(&buf, _("Rules:"));
-			footers[count_footers++] = xstrdup(buf.data);
+			footers[count_footers++] = pg_strdup(buf.data);
 			for (i = 0; i < rule_count; i++)
 			{
 				const char *ruledef;
@@ -929,7 +918,7 @@ describeOneTableDetails(const char *schemaname,
 
 				printfPQExpBuffer(&buf, " %s", ruledef);
 
-				footers[count_footers++] = xstrdup(buf.data);
+				footers[count_footers++] = pg_strdup(buf.data);
 			}
 			PQclear(result);
 		}
@@ -1066,14 +1055,14 @@ describeOneTableDetails(const char *schemaname,
 		else
 			inherits_count = PQntuples(result6);
 
-		footers = xmalloczero((index_count + check_count + rule_count + trigger_count + foreignkey_count + inherits_count + 6)
-							  * sizeof(*footers));
+		footers = pg_malloc_zero((index_count + check_count + rule_count + trigger_count + foreignkey_count + inherits_count + 6)
+								 * sizeof(*footers));
 
 		/* print indexes */
 		if (index_count > 0)
 		{
 			printfPQExpBuffer(&buf, _("Indexes:"));
-			footers[count_footers++] = xstrdup(buf.data);
+			footers[count_footers++] = pg_strdup(buf.data);
 			for (i = 0; i < index_count; i++)
 			{
 				const char *indexdef;
@@ -1099,7 +1088,7 @@ describeOneTableDetails(const char *schemaname,
 
 				appendPQExpBuffer(&buf, " %s", indexdef);
 
-				footers[count_footers++] = xstrdup(buf.data);
+				footers[count_footers++] = pg_strdup(buf.data);
 			}
 		}
 
@@ -1107,14 +1096,14 @@ describeOneTableDetails(const char *schemaname,
 		if (check_count > 0)
 		{
 			printfPQExpBuffer(&buf, _("Check constraints:"));
-			footers[count_footers++] = xstrdup(buf.data);
+			footers[count_footers++] = pg_strdup(buf.data);
 			for (i = 0; i < check_count; i++)
 			{
 				printfPQExpBuffer(&buf, _("    \"%s\" %s"),
 								  PQgetvalue(result2, i, 1),
 								  PQgetvalue(result2, i, 0));
 
-				footers[count_footers++] = xstrdup(buf.data);
+				footers[count_footers++] = pg_strdup(buf.data);
 			}
 		}
 
@@ -1122,14 +1111,14 @@ describeOneTableDetails(const char *schemaname,
 		if (foreignkey_count > 0)
 		{
 			printfPQExpBuffer(&buf, _("Foreign-key constraints:"));
-			footers[count_footers++] = xstrdup(buf.data);
+			footers[count_footers++] = pg_strdup(buf.data);
 			for (i = 0; i < foreignkey_count; i++)
 			{
 				printfPQExpBuffer(&buf, _("    \"%s\" %s"),
 								  PQgetvalue(result5, i, 0),
 								  PQgetvalue(result5, i, 1));
 
-				footers[count_footers++] = xstrdup(buf.data);
+				footers[count_footers++] = pg_strdup(buf.data);
 			}
 		}
 
@@ -1137,7 +1126,7 @@ describeOneTableDetails(const char *schemaname,
 		if (rule_count > 0)
 		{
 			printfPQExpBuffer(&buf, _("Rules:"));
-			footers[count_footers++] = xstrdup(buf.data);
+			footers[count_footers++] = pg_strdup(buf.data);
 			for (i = 0; i < rule_count; i++)
 			{
 				const char *ruledef;
@@ -1148,7 +1137,7 @@ describeOneTableDetails(const char *schemaname,
 
 				printfPQExpBuffer(&buf, "    %s", ruledef);
 
-				footers[count_footers++] = xstrdup(buf.data);
+				footers[count_footers++] = pg_strdup(buf.data);
 			}
 		}
 
@@ -1156,7 +1145,7 @@ describeOneTableDetails(const char *schemaname,
 		if (trigger_count > 0)
 		{
 			printfPQExpBuffer(&buf, _("Triggers:"));
-			footers[count_footers++] = xstrdup(buf.data);
+			footers[count_footers++] = pg_strdup(buf.data);
 			for (i = 0; i < trigger_count; i++)
 			{
 				const char *tgdef;
@@ -1170,7 +1159,7 @@ describeOneTableDetails(const char *schemaname,
 
 				printfPQExpBuffer(&buf, "    %s", tgdef);
 
-				footers[count_footers++] = xstrdup(buf.data);
+				footers[count_footers++] = pg_strdup(buf.data);
 			}
 		}
 
@@ -1186,7 +1175,7 @@ describeOneTableDetails(const char *schemaname,
 			if (i < inherits_count - 1)
 				appendPQExpBuffer(&buf, ",");
 
-			footers[count_footers++] = xstrdup(buf.data);
+			footers[count_footers++] = pg_strdup(buf.data);
 		}
 
 		/* end of list marker */

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.h,v 1.33 2004/01/24 19:38:49 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.h,v 1.34 2004/01/25 03:07:22 neilc Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H
@@ -25,10 +25,10 @@
  * out-of-memory condition occurs, these functions will bail out
  * safely; therefore, their return value is guaranteed to be non-NULL.
  */
-extern char *xstrdup(const char *string);
-extern void *xmalloc(size_t size);
-extern void *xmalloc_zero(size_t size);
-extern void *xcalloc(size_t nmemb, size_t size);
+extern char *pg_strdup(const char *string);
+extern void *pg_malloc(size_t size);
+extern void *pg_malloc_zero(size_t size);
+extern void *pg_calloc(size_t nmemb, size_t size);
 
 extern bool setQFout(const char *fname);
 

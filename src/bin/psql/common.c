@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.81 2004/01/24 19:38:49 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.82 2004/01/25 03:07:22 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -70,7 +70,7 @@ static bool is_transact_command(const char *query);
  * "Safe" wrapper around strdup()
  */
 char *
-xstrdup(const char *string)
+pg_strdup(const char *string)
 {
 	char	   *tmp;
 
@@ -90,7 +90,7 @@ xstrdup(const char *string)
 }
 
 void *
-xmalloc(size_t size)
+pg_malloc(size_t size)
 {
 	void	   *tmp;
 
@@ -104,17 +104,17 @@ xmalloc(size_t size)
 }
 
 void *
-xmalloc_zero(size_t size)
+pg_malloc_zero(size_t size)
 {
 	void	   *tmp;
 
-	tmp = xmalloc(size);
+	tmp = pg_malloc(size);
 	memset(tmp, 0, size);
 	return tmp;
 }
 
 void *
-xcalloc(size_t nmemb, size_t size)
+pg_calloc(size_t nmemb, size_t size)
 {
 	void	   *tmp;
 
@@ -126,7 +126,6 @@ xcalloc(size_t nmemb, size_t size)
 	}
 	return tmp;
 }
-
 
 /*
  * setQFout
@@ -891,7 +890,7 @@ expand_tilde(char **filename)
 		{
 			char	   *newfn;
 
-			newfn = xmalloc(strlen(home) + strlen(p) + 1);
+			newfn = pg_malloc(strlen(home) + strlen(p) + 1);
 			strcpy(newfn, home);
 			strcat(newfn, p);
 

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.38 2004/01/24 19:38:49 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.39 2004/01/25 03:07:22 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -83,7 +83,7 @@ xstrcat(char **var, const char *more)
 {
 	char	   *newvar;
 
-	newvar = xmalloc(strlen(*var) + strlen(more) + 1);
+	newvar = pg_malloc(strlen(*var) + strlen(more) + 1);
 	strcpy(newvar, *var);
 	strcat(newvar, more);
 	free(*var);
@@ -100,14 +100,14 @@ parse_slash_copy(const char *args)
 	const char *whitespace = " \t\n\r";
 
 	if (args)
-		line = xstrdup(args);
+		line = pg_strdup(args);
 	else
 	{
 		psql_error("\\copy: arguments required\n");
 		return NULL;
 	}
 
-	result = xcalloc(1, sizeof(struct copy_options));
+	result = pg_calloc(1, sizeof(struct copy_options));
 
 	token = strtokx(line, whitespace, ".,()", "\"",
 					0, false, pset.encoding);
@@ -126,7 +126,7 @@ parse_slash_copy(const char *args)
 	}
 #endif
 
-	result->table = xstrdup(token);
+	result->table = pg_strdup(token);
 
 	token = strtokx(NULL, whitespace, ".,()", "\"",
 					0, false, pset.encoding);
@@ -156,7 +156,7 @@ parse_slash_copy(const char *args)
 	if (token[0] == '(')
 	{
 		/* handle parenthesized column list */
-		result->column_list = xstrdup(token);
+		result->column_list = pg_strdup(token);
 		for (;;)
 		{
 			token = strtokx(NULL, whitespace, ".,()", "\"",
@@ -227,7 +227,7 @@ parse_slash_copy(const char *args)
 	else
 	{
 		result->in_dash = false;
-		result->file = xstrdup(token);
+		result->file = pg_strdup(token);
 		expand_tilde(&result->file);
 	}
 
@@ -247,7 +247,7 @@ parse_slash_copy(const char *args)
 						'\\', false, pset.encoding);
 		if (!token)
 			goto error;
-		result->delim = xstrdup(token);
+		result->delim = pg_strdup(token);
 		token = strtokx(NULL, whitespace, NULL, NULL,
 						0, false, pset.encoding);
 	}
@@ -267,7 +267,7 @@ parse_slash_copy(const char *args)
 					token = strtokx(NULL, whitespace, NULL, "'",
 									'\\', false, pset.encoding);
 				if (token)
-					result->delim = xstrdup(token);
+					result->delim = pg_strdup(token);
 				else
 					goto error;
 			}
@@ -279,7 +279,7 @@ parse_slash_copy(const char *args)
 					token = strtokx(NULL, whitespace, NULL, "'",
 									'\\', false, pset.encoding);
 				if (token)
-					result->null = xstrdup(token);
+					result->null = pg_strdup(token);
 				else
 					goto error;
 			}

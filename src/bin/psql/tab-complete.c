@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.99 2004/01/24 19:38:49 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.100 2004/01/25 03:07:22 neilc Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -1417,7 +1417,7 @@ create_command_generator(const char *text, int state)
 	/* find something that matches */
 	while ((name = words_after_create[list_index++].name))
 		if (strncasecmp(name, text, string_length) == 0)
-			return xstrdup(name);
+			return pg_strdup(name);
 
 	/* if nothing matches, return NULL */
 	return NULL;
@@ -1485,7 +1485,7 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 		/* Set up suitably-escaped copies of textual inputs */
 		if (text)
 		{
-			e_text = xmalloc(strlen(text) * 2 + 1);
+			e_text = pg_malloc(strlen(text) * 2 + 1);
 			PQescapeString(e_text, text, strlen(text));
 		}
 		else
@@ -1496,7 +1496,7 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 			size_t charp_len;
 
 			charp_len = strlen(completion_info_charp);
-			e_info_charp = xmalloc(charp_len * 2 + 1);
+			e_info_charp = pg_malloc(charp_len * 2 + 1);
 			PQescapeString(e_info_charp, completion_info_charp,
 						   charp_len);
 		}
@@ -1618,7 +1618,7 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 		while (list_index < PQntuples(result) &&
 			   (item = PQgetvalue(result, list_index++, 0)))
 			if (strncasecmp(text, item, string_length) == 0)
-				return xstrdup(item);
+				return pg_strdup(item);
 	}
 
 	/* If nothing matches, free the db structure and return null */
@@ -1659,12 +1659,12 @@ complete_from_list(const char *text, int state)
 		if (casesensitive && strncmp(text, item, string_length) == 0)
 		{
 			matches++;
-			return xstrdup(item);
+			return pg_strdup(item);
 		}
 
 		/* Second pass is case insensitive, don't bother counting matches */
 		if (!casesensitive && strncasecmp(text, item, string_length) == 0)
-			return xstrdup(item);
+			return pg_strdup(item);
 	}
 
 	/*
@@ -1698,7 +1698,7 @@ complete_from_const(const char *text, int state)
 
 	psql_assert(completion_charp);
 	if (state == 0)
-		return xstrdup(completion_charp);
+		return pg_strdup(completion_charp);
 	else
 		return NULL;
 }
@@ -1788,7 +1788,7 @@ previous_word(int point, int skip)
 	}
 
 	/* make a copy */
-	s = xmalloc(end - start + 2);
+	s = pg_malloc(end - start + 2);
 
 	strncpy(s, &rl_line_buffer[start], end - start + 1);
 	s[end - start + 1] = '\0';
@@ -1814,7 +1814,7 @@ quote_file_name(char *text, int match_type, char *quote_pointer)
 	(void) quote_pointer;		/* not used */
 
 	length = strlen(text) +(match_type == SINGLE_MATCH ? 3 : 2);
-	s = xmalloc(length);
+	s = pg_malloc(length);
 	s[0] = '\'';
 	strcpy(s + 1, text);
 	if (match_type == SINGLE_MATCH)
@@ -1832,10 +1832,10 @@ dequote_file_name(char *text, char quote_char)
 	size_t		length;
 
 	if (!quote_char)
-		return xstrdup(text);
+		return pg_strdup(text);
 
 	length = strlen(text);
-	s = xmalloc(length - 2 + 1);
+	s = pg_malloc(length - 2 + 1);
 	strncpy(s, text +1, length - 2);
 	s[length] = '\0';
 

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.60 2004/01/24 19:38:49 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.61 2004/01/25 03:07:22 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -144,7 +144,7 @@ MainLoop(FILE *source)
 			 * just returned from editing the line? then just copy to the
 			 * input buffer
 			 */
-			line = xstrdup(query_buf->data);
+			line = pg_strdup(query_buf->data);
 			resetPQExpBuffer(query_buf);
 			/* reset parsing state since we are rescanning whole line */
 			in_xcomment = 0;
@@ -332,7 +332,7 @@ MainLoop(FILE *source)
 					/* It is a variable, perform substitution */
 					out_length = strlen(value);
 
-					new = xmalloc(len + out_length - in_length + 1);
+					new = pg_malloc(len + out_length - in_length + 1);
 					sprintf(new, "%.*s%s%s", i, line, value,
 							&line[i + thislen + in_length]);
 

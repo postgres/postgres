@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/prompt.c,v 1.33 2004/01/24 19:38:49 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/prompt.c,v 1.34 2004/01/25 03:07:22 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "prompt.h"
@@ -248,7 +248,7 @@ get_prompt(promptStatus_t status)
 				case '`':
 					{
 						FILE	   *fd = NULL;
-						char	   *file = xstrdup(p + 1);
+						char	   *file = pg_strdup(p + 1);
 						int			cmdend;
 
 						cmdend = strcspn(file, "`");
@@ -274,7 +274,7 @@ get_prompt(promptStatus_t status)
 						const char *val;
 						int			nameend;
 
-						name = xstrdup(p + 1);
+						name = pg_strdup(p + 1);
 						nameend = strcspn(name, ":");
 						name[nameend] = '\0';
 						val = GetVariable(pset.vars, name);
