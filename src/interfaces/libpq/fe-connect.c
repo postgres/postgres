@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.223 2003/02/14 01:24:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.224 2003/02/19 14:31:26 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1744,7 +1744,7 @@ PQsetenvPoll(PGconn *conn)
 						 * server for it.  We must use begin/commit in
 						 * case autocommit is off by default.
 						 */
-						if (!PQsendQuery(conn, "begin; select getdatabaseencoding(); commit"))
+						if (!PQsendQuery(conn, "begin; select pg_client_encoding(); commit"))
 							goto error_return;
 
 						conn->setenv_state = SETENV_STATE_ENCODINGS_WAIT;

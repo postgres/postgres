@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.44 2002/09/04 20:31:42 momjian Exp $ */
+/* $Id: pg_wchar.h,v 1.45 2003/02/19 14:31:26 ishii Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -295,6 +295,7 @@ extern int	pg_database_encoding_max_length(void);
 
 extern void SetDefaultClientEncoding(void);
 extern int	SetClientEncoding(int encoding, bool doit);
+extern void	InitializeClientEncoding(void);
 extern int	pg_get_client_encoding(void);
 extern const char *pg_get_client_encoding_name(void);
 

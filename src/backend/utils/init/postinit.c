@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.118 2002/11/21 06:36:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.119 2003/02/19 14:31:26 ishii Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -396,6 +396,9 @@ InitPostgres(const char *dbname, const char *username)
 
 	/* set default namespace search path */
 	InitializeSearchPath();
+
+	/* initialize client encoding */
+	InitializeClientEncoding();
 
 	/*
 	 * Set up process-exit callback to do pre-shutdown cleanup.  This
