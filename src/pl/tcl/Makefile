@@ -4,7 +4,7 @@
 #    Makefile for the pltcl shared object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.11 2000/03/08 01:58:46 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.12 2000/04/21 03:28:17 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -59,6 +59,19 @@ endif
 	$(TCL_SHLIB_LD) -o $@ $< $(TCL_LIB_SPEC) $(SHLIB_EXTRA_LIBS)
 
 
+CC = $(TCL_CC)
+
+# Since we are using Tcl's choice of C compiler, which might not be the
+# same one selected for Postgres, do NOT use CFLAGS from Makefile.global.
+# Instead use TCL's CFLAGS plus necessary -I directives.
+
+# Can choose either TCL_CFLAGS_OPTIMIZE or TCL_CFLAGS_DEBUG here, as needed
+CFLAGS= $(TCL_CFLAGS_OPTIMIZE)
+
+CFLAGS+= $(TCL_SHLIB_CFLAGS) $(TCL_DEFS)
+
+CFLAGS+= -I$(SRCDIR)/include -I$(SRCDIR)/backend
+        
 #
 # Uncomment the following to enable the unknown command lookup
 # on the first of all calls to the call handler. See the doc
@@ -67,16 +80,6 @@ endif
 #CFLAGS+= -DPLTCL_UNKNOWN_SUPPORT
 
 
-CC = $(TCL_CC)
-CFLAGS+= -I$(LIBPQDIR) -I$(SRCDIR)/include $(TCL_SHLIB_CFLAGS)
-
-# For fmgr.h
-CFLAGS+= -I$(SRCDIR)/backend
-
-CFLAGS+= $(TCL_DEFS)
-
-LDADD+= $(LIBPQ)
-        
 #
 # DLOBJS is the dynamically-loaded object file.
 #
