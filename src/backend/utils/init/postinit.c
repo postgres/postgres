@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.80 2001/01/24 19:43:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.81 2001/02/16 18:50:40 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -30,6 +30,7 @@
 #include "catalog/pg_database.h"
 #include "commands/trigger.h"
 #include "commands/variable.h"	/* for set_default_client_encoding() */
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "storage/backendid.h"
 #include "storage/proc.h"
@@ -41,9 +42,6 @@
 #include "utils/syscache.h"
 #include "utils/temprel.h"
 
-#ifdef MULTIBYTE
-#include "mb/pg_wchar.h"
-#endif
 
 static void ReverifyMyDatabase(const char *name);
 static void InitCommunication(void);
@@ -126,10 +124,15 @@ ReverifyMyDatabase(const char *name)
 
 	/*
 	 * OK, we're golden.  Only other to-do item is to save the MULTIBYTE
-	 * encoding info out of the pg_database tuple.
+	 * encoding info out of the pg_database tuple --- or complain, if we
+	 * can't support it.
 	 */
 #ifdef MULTIBYTE
 	SetDatabaseEncoding(dbform->encoding);
+#else
+	if (dbform->encoding != SQL_ASCII)
+		elog(FATAL, "database was initialized with MULTIBYTE encoding %d,\n\tbut the backend was compiled without multibyte support.\n\tlooks like you need to initdb or recompile.",
+			 dbform->encoding);
 #endif
 
 	heap_endscan(pgdbscan);
