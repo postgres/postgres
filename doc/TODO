@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Oct 23 23:20:29 EDT 2003
+Last updated:		Thu Oct 23 23:24:19 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -21,7 +21,7 @@ Urgent
 	o Master/slave replication
 	o Multi-master replication
 	o Partition data across servers
-	o Queries across databases or servers (two-phase commit) [2phase]
+	o Queries across databases or servers (two-phase commit)
 	o Allow replication over unreliable or non-persistent links
 	o http://gborg.postgresql.org/project/pgreplication/projdisplay.php
 * Point-in-time data recovery using backup and write-ahead log
@@ -514,7 +514,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1157 2003/10/24 03:20:36 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1157 2003/10/24 03:20:36 momjian Exp $
+* Change CVS $Id: TODO,v 1.1158 2003/10/24 03:24:32 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1158 2003/10/24 03:24:32 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
