@@ -1,5 +1,7 @@
 /* Copyright comment */
 %{
+#include <stdarg.h>
+
 #include "postgres.h"
 #include "access/htup.h"
 #include "catalog/catname.h"
@@ -14,7 +16,7 @@
 #endif
 
 #define STRUCT_DEPTH 128
-#define EMPTY make1_str("")
+#define EMPTY make_str("")
 
 /*
  * Variables containing simple states.
@@ -400,7 +402,40 @@ check_indicator(struct ECPGtype *var)
 }
 
 static char *
-make1_str(const char *str)
+cat2_str(char *str1, char *str2)
+{ 
+	char * res_str  = (char *)mm_alloc(strlen(str1) + strlen(str2) + 2);
+
+	strcpy(res_str, str1);
+	strcat(res_str, " ");
+	strcat(res_str, str2);
+	free(str1);
+	free(str2);
+	return(res_str);
+}
+
+static char *
+cat_str(int count, ...)
+{
+	va_list		args;
+	int 		i; 
+	char		*res_str;
+
+	va_start(args, count);
+
+	res_str = va_arg(args, char *);
+
+	/* now add all other strings */
+	for (i = 1; i < count; i++)
+		res_str = cat2_str(res_str, va_arg(args, char *));
+
+	va_end(args);
+
+	return(res_str);
+}
+
+static char *
+make_str(const char *str)
 {
         char * res_str = (char *)mm_alloc(strlen(str) + 1);
 
@@ -421,122 +456,18 @@ make2_str(char *str1, char *str2)
 }
 
 static char *
-cat2_str(char *str1, char *str2)
+make3_str(char *str1, char *str2, char *str3)
 { 
-	char * res_str  = (char *)mm_alloc(strlen(str1) + strlen(str2) + 2);
+	char * res_str  = (char *)mm_alloc(strlen(str1) + strlen(str2) +strlen(str3) + 1);
 
 	strcpy(res_str, str1);
-	strcat(res_str, " ");
 	strcat(res_str, str2);
+	strcat(res_str, str3);
 	free(str1);
 	free(str2);
+	free(str3);
 	return(res_str);
 }
-
-static char *
-make3_str(char *str1, char *str2, char * str3)
-{    
-        char * res_str  = (char *)mm_alloc(strlen(str1) + strlen(str2) + strlen(str3) + 1);
-     
-        strcpy(res_str, str1);
-        strcat(res_str, str2);
-	strcat(res_str, str3);
-	free(str1);
-	free(str2);
-	free(str3);
-        return(res_str);
-}    
-
-static char *
-cat3_str(char *str1, char *str2, char * str3)
-{    
-        char * res_str  = (char *)mm_alloc(strlen(str1) + strlen(str2) + strlen(str3) + 3);
-     
-        strcpy(res_str, str1);
-	strcat(res_str, " ");
-        strcat(res_str, str2);
-	strcat(res_str, " ");
-	strcat(res_str, str3);
-	free(str1);
-	free(str2);
-	free(str3);
-        return(res_str);
-}    
-
-static char *
-make4_str(char *str1, char *str2, char *str3, char *str4)
-{    
-        char * res_str  = (char *)mm_alloc(strlen(str1) + strlen(str2) + strlen(str3) + strlen(str4) + 1);
-     
-        strcpy(res_str, str1);
-        strcat(res_str, str2);
-	strcat(res_str, str3);
-	strcat(res_str, str4);
-	free(str1);
-	free(str2);
-	free(str3);
-	free(str4);
-        return(res_str);
-}
-
-static char *
-cat4_str(char *str1, char *str2, char *str3, char *str4)
-{    
-        char * res_str  = (char *)mm_alloc(strlen(str1) + strlen(str2) + strlen(str3) + strlen(str4) + 4);
-     
-        strcpy(res_str, str1);
-	strcat(res_str, " ");
-        strcat(res_str, str2);
-	strcat(res_str, " ");
-	strcat(res_str, str3);
-	strcat(res_str, " ");
-	strcat(res_str, str4);
-	free(str1);
-	free(str2);
-	free(str3);
-	free(str4);
-        return(res_str);
-}
-
-static char *
-make5_str(char *str1, char *str2, char *str3, char *str4, char *str5)
-{    
-        char * res_str  = (char *)mm_alloc(strlen(str1) + strlen(str2) + strlen(str3) + strlen(str4) + strlen(str5) + 1);
-     
-        strcpy(res_str, str1);
-        strcat(res_str, str2);
-	strcat(res_str, str3);
-	strcat(res_str, str4);
-	strcat(res_str, str5);
-	free(str1);
-	free(str2);
-	free(str3);
-	free(str4);
-	free(str5);
-        return(res_str);
-}    
-
-static char *
-cat5_str(char *str1, char *str2, char *str3, char *str4, char *str5)
-{    
-        char * res_str  = (char *)mm_alloc(strlen(str1) + strlen(str2) + strlen(str3) + strlen(str4) + strlen(str5) + 5);
-     
-        strcpy(res_str, str1);
-	strcat(res_str, " ");
-        strcat(res_str, str2);
-	strcat(res_str, " ");
-	strcat(res_str, str3);
-	strcat(res_str, " ");
-	strcat(res_str, str4);
-	strcat(res_str, " ");
-	strcat(res_str, str5);
-	free(str1);
-	free(str2);
-	free(str3);
-	free(str4);
-	free(str5);
-        return(res_str);
-}    
 
 static char *
 make_name(void)
@@ -795,18 +726,17 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %right		UMINUS
 %left		'.'
 %left		'[' ']'
-%nonassoc	TYPECAST
+%left		TYPECAST
 %left		UNION INTERSECT EXCEPT
 
 %type  <str>	Iconst Fconst Sconst TransactionStmt CreateStmt UserId
 %type  <str>	CreateAsElement OptCreateAs CreateAsList CreateAsStmt
 %type  <str>	OptInherit key_reference key_action comment_text
-%type  <str>    key_match ColLabel SpecialRuleRelation
-%type  <str> 	ColId ColQualifier columnDef ColQualList
+%type  <str>    key_match ColLabel SpecialRuleRelation ColId columnDef
 %type  <str>    ColConstraint ColConstraintElem NumericOnly FloatOnly
 %type  <str>    OptTableElementList OptTableElement TableConstraint
 %type  <str>    ConstraintElem key_actions ColPrimaryKey
-%type  <str>    target_list target_el update_target_list
+%type  <str>    target_list target_el update_target_list ColConstraintList
 %type  <str>    update_target_el opt_id relation_name database_name
 %type  <str>    access_method attr_name class index_name name func_name
 %type  <str>    file_name AexprConst ParamNo TypeId com_expr
@@ -825,7 +755,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>	table_list join_outer where_clause relation_expr sub_type
 %type  <str>	opt_column_list insert_rest InsertStmt OptimizableStmt
 %type  <str>    columnList DeleteStmt LockStmt UpdateStmt CursorStmt
-%type  <str>    NotifyStmt columnElem copy_dirn UnlistenStmt
+%type  <str>    NotifyStmt columnElem copy_dirn UnlistenStmt copy_null
 %type  <str>    copy_delimiter ListenStmt CopyStmt copy_file_name opt_binary
 %type  <str>    opt_with_copy FetchStmt opt_direction fetch_how_many opt_portal_name
 %type  <str>    ClosePortalStmt DropStmt VacuumStmt opt_verbose
@@ -1081,13 +1011,13 @@ CreateUserStmt: CREATE USER UserId
 		user_createdb_clause user_createuser_clause user_group_clause
 		user_valid_clause
 				{
-					$$ = cat2_str(cat5_str(make1_str("create user"), $3, $4, $5, $6), $7);
+					$$ = cat_str(6, make_str("create user"), $3, $4, $5, $6, $7);
 				}
 		| CREATE USER UserId WITH sysid_clause user_passwd_clause
 		user_createdb_clause user_createuser_clause user_group_clause
 		user_valid_clause
 		{
-					$$ = cat5_str(cat5_str(make1_str("create user"), $3, make1_str("with"), $5, $6), $7, $8, $9, $10);
+					$$ = cat_str(9, make_str("create user"), $3, make_str("with"), $5, $6, $7, $8, $9, $10);
 		}
 		;
 
@@ -1101,13 +1031,13 @@ CreateUserStmt: CREATE USER UserId
 AlterUserStmt:  ALTER USER UserId user_createdb_clause
 		user_createuser_clause user_group_clause user_valid_clause
 				{
-					$$ = cat2_str(cat5_str(make1_str("alter user"), $3, $4, $5, $6), $7);
+					$$ = cat_str(6, make_str("alter user"), $3, $4, $5, $6, $7);
 				}
 		|ALTER USER UserId WITH sysid_clause user_passwd_clause
 		user_createdb_clause user_createuser_clause user_group_clause
 		user_valid_clause
 				{
-					$$ = cat5_str(cat5_str(make1_str("alter user"), $3, make1_str("with"), $5, $6), $7, $8, $9, $10);
+					$$ = cat_str(9, make_str("alter user"), $3, make_str("with"), $5, $6, $7, $8, $9, $10);
 				}
 		;
 
@@ -1120,43 +1050,43 @@ AlterUserStmt:  ALTER USER UserId user_createdb_clause
 
 DropUserStmt:  DROP USER UserId
 				{
-					$$ = cat2_str(make1_str("drop user"), $3);
+					$$ = cat2_str(make_str("drop user"), $3);
 				}
 		;
 
-user_passwd_clause:  PASSWORD UserId	{ $$ = cat2_str(make1_str("password") , $2); }
+user_passwd_clause:  PASSWORD UserId	{ $$ = cat2_str(make_str("password") , $2); }
 			| /*EMPTY*/	{ $$ = EMPTY; }
 		;
 
-sysid_clause:	SYSID Iconst		{ $$ = cat2_str(make1_str("sysid"), $2); }
+sysid_clause:	SYSID Iconst		{ $$ = cat2_str(make_str("sysid"), $2); }
 			| /*EMPTY*/     { $$ = EMPTY; }
                 ;
 
 user_createdb_clause:  CREATEDB
 				{
-					$$ = make1_str("createdb");
+					$$ = make_str("createdb");
 				}
 			| NOCREATEDB
 				{
-					$$ = make1_str("nocreatedb");
+					$$ = make_str("nocreatedb");
 				}
 			| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
 user_createuser_clause:  CREATEUSER
 				{
-					$$ = make1_str("createuser");
+					$$ = make_str("createuser");
 				}
 			| NOCREATEUSER
 				{
-					$$ = make1_str("nocreateuser");
+					$$ = make_str("nocreateuser");
 				}
 			| /*EMPTY*/		{ $$ = NULL; }
 		;
 
 user_group_list:  user_group_list ',' UserId
 				{
-					$$ = cat3_str($1, make1_str(","), $3);
+					$$ = cat_str(3, $1, make_str(","), $3);
 				}
 			| UserId
 				{
@@ -1170,12 +1100,12 @@ user_group_clause:  IN GROUP user_group_list
                                  * so an warning message is probably fairer */
 				mmerror(ET_WARN, "IN GROUP is not implemented");
 
-				$$ = cat2_str(make1_str("in group"), $3); 
+				$$ = cat2_str(make_str("in group"), $3); 
 			}
 			| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
-user_valid_clause:  VALID UNTIL Sconst			{ $$ = cat2_str(make1_str("valid until"), $3); }
+user_valid_clause:  VALID UNTIL Sconst			{ $$ = cat2_str(make_str("valid until"), $3); }
 			| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
@@ -1190,81 +1120,81 @@ user_valid_clause:  VALID UNTIL Sconst			{ $$ = cat2_str(make1_str("valid until"
 
 VariableSetStmt:  SET ColId TO var_value
 				{
-					$$ = cat4_str(make1_str("set"), $2, make1_str("to"), $4);
+					$$ = cat_str(4, make_str("set"), $2, make_str("to"), $4);
 				}
 		| SET ColId '=' var_value
 				{
-					$$ = cat4_str(make1_str("set"), $2, make1_str("="), $4);
+					$$ = cat_str(4, make_str("set"), $2, make_str("="), $4);
 				}
 		| SET TIME ZONE zone_value
 				{
-					$$ = cat2_str(make1_str("set time zone"), $4);
+					$$ = cat2_str(make_str("set time zone"), $4);
 				}
 		| SET TRANSACTION ISOLATION LEVEL opt_level
 				{
-					$$ = cat2_str(make1_str("set transaction isolation level"), $5);
+					$$ = cat2_str(make_str("set transaction isolation level"), $5);
 				}
 		| SET NAMES encoding
                                 {
 #ifdef MULTIBYTE
-					$$ = cat2_str(make1_str("set names"), $3);
+					$$ = cat2_str(make_str("set names"), $3);
 #else
                                         mmerror(ET_ERROR, "SET NAMES is not supported");
 #endif
                                 }
                 ;
 
-opt_level:  READ COMMITTED      { $$ = make1_str("read committed"); }
-               | SERIALIZABLE   { $$ = make1_str("serializable"); }
+opt_level:  READ COMMITTED      { $$ = make_str("read committed"); }
+               | SERIALIZABLE   { $$ = make_str("serializable"); }
                ;
 
 
 var_value:  Sconst			{ $$ = $1; }
-		| DEFAULT			{ $$ = make1_str("default"); }
+		| DEFAULT			{ $$ = make_str("default"); }
 		;
 
 zone_value:  Sconst			{ $$ = $1; }
-		| DEFAULT			{ $$ = make1_str("default"); }
-		| LOCAL				{ $$ = make1_str("local"); }
+		| DEFAULT			{ $$ = make_str("default"); }
+		| LOCAL				{ $$ = make_str("local"); }
 		;
 
 VariableShowStmt:  SHOW ColId
 				{
-					$$ = cat2_str(make1_str("show"), $2);
+					$$ = cat2_str(make_str("show"), $2);
 				}
 		| SHOW TIME ZONE
 				{
-					$$ = make1_str("show time zone");
+					$$ = make_str("show time zone");
 				}
 		| SHOW TRANSACTION ISOLATION LEVEL
 				{
-					$$ = make1_str("show transaction isolation level");
+					$$ = make_str("show transaction isolation level");
 				}
 		;
 
 VariableResetStmt:	RESET ColId
 				{
-					$$ = cat2_str(make1_str("reset"), $2);
+					$$ = cat2_str(make_str("reset"), $2);
 				}
 		| RESET TIME ZONE
 				{
-					$$ = make1_str("reset time zone");
+					$$ = make_str("reset time zone");
 				}
 		| RESET TRANSACTION ISOLATION LEVEL
 				{
-					$$ = make1_str("reset transaction isolation level");
+					$$ = make_str("reset transaction isolation level");
 				}
 		;
 
 ConstraintsSetStmt:    SET CONSTRAINTS constraints_set_list constraints_set_mode
                                {
-					$$ = cat3_str(make1_str("set constraints"), $3, $4);
+					$$ = cat_str(3, make_str("set constraints"), $3, $4);
                                }
                ;
 
 constraints_set_list:  ALL
                                {
-                                       $$ = make1_str("all");
+                                       $$ = make_str("all");
                                }
                | constraints_set_namelist
                                {
@@ -1279,17 +1209,17 @@ constraints_set_namelist:      IDENT
                                }
                | constraints_set_namelist ',' IDENT
                                {
-                                       $$ = cat3_str($1, make1_str(","), $3);
+                                       $$ = cat_str(3, $1, make_str(","), $3);
                                }
                ;
 
 constraints_set_mode:  DEFERRED
                                {
-                                       $$ = make1_str("deferred");
+                                       $$ = make_str("deferred");
                                }
                | IMMEDIATE
                                {
-                                       $$ = make1_str("immediate");
+                                       $$ = make_str("immediate");
                                }
                ;
 
@@ -1302,17 +1232,17 @@ constraints_set_mode:  DEFERRED
 
 AddAttrStmt:  ALTER TABLE relation_name opt_inh_star alter_clause
 				{
-					$$ = cat4_str(make1_str("alter table"), $3, $4, $5);
+					$$ = cat_str(4, make_str("alter table"), $3, $4, $5);
 				}
 		;
 
 alter_clause:  ADD opt_column columnDef
 				{
-					$$ = cat3_str(make1_str("add"), $2, $3);
+					$$ = cat_str(3, make_str("add"), $2, $3);
 				}
 			| ADD '(' OptTableElementList ')'
 				{
-					$$ = make3_str(make1_str("add("), $3, make1_str(")"));
+					$$ = cat_str(2, make_str("add("), $3, make_str(")"));
 				}
 			| DROP opt_column ColId
 				{	mmerror(ET_ERROR, "ALTER TABLE/DROP COLUMN not yet implemented"); }
@@ -1333,7 +1263,7 @@ alter_clause:  ADD opt_column columnDef
 
 ClosePortalStmt:  CLOSE opt_id
 				{
-					$$ = cat2_str(make1_str("close"), $2);
+					$$ = cat2_str(make_str("close"), $2);
 				}
 		;
 
@@ -1349,16 +1279,16 @@ opt_id:  ColId		{ $$ = $1; }
  *
  *****************************************************************************/
 
-CopyStmt:  COPY opt_binary relation_name opt_with_copy copy_dirn copy_file_name copy_delimiter
+CopyStmt:  COPY opt_binary relation_name opt_with_copy copy_dirn copy_file_name copy_delimiter copy_null
 				{
-					$$ = cat3_str(cat5_str(make1_str("copy"), $2, $3, $4, $5), $6, $7);
+					$$ = cat_str(8, make_str("copy"), $2, $3, $4, $5, $6, $7, $8);
 				}
 		;
 
 copy_dirn:	TO
-				{ $$ = make1_str("to"); }
+				{ $$ = make_str("to"); }
 		| FROM
-				{ $$ = make1_str("from"); }
+				{ $$ = make_str("from"); }
 		;
 
 /*
@@ -1367,27 +1297,32 @@ copy_dirn:	TO
  * stdout. We silently correct the "typo".		 - AY 9/94
  */
 copy_file_name:  Sconst					{ $$ = $1; }
-		| STDIN					{ $$ = make1_str("stdin"); }
-		| STDOUT				{ $$ = make1_str("stdout"); }
+		| STDIN					{ $$ = make_str("stdin"); }
+		| STDOUT				{ $$ = make_str("stdout"); }
 		;
 
-opt_binary:  BINARY					{ $$ = make1_str("binary"); }
+opt_binary:  BINARY					{ $$ = make_str("binary"); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
-opt_with_copy:	WITH OIDS				{ $$ = make1_str("with oids"); }
+opt_with_copy:	WITH OIDS				{ $$ = make_str("with oids"); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
 /*
  * the default copy delimiter is tab but the user can configure it
  */
-copy_delimiter:  opt_using DELIMITERS Sconst		{ $$ = cat3_str($1, make1_str("delimiters"), $3); }
+copy_delimiter:  opt_using DELIMITERS Sconst		{ $$ = cat_str(3, $1, make_str("delimiters"), $3); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
-opt_using:	USING		{ $$ = make1_str("using"); }
+opt_using:	USING		{ $$ = make_str("using"); }
 		| /* EMPTY */	{ $$ = EMPTY; }
+		;
+
+copy_null:	WITH NULL_P AS Sconst	{ $$ = cat2_str(make_str("with null as"), $4); }
+		| /* EMPTY */   { $$ = EMPTY; }
+		;
 
 /*****************************************************************************
  *
@@ -1399,7 +1334,7 @@ opt_using:	USING		{ $$ = make1_str("using"); }
 CreateStmt:  CREATE OptTemp TABLE relation_name '(' OptTableElementList ')'
 				OptInherit
 				{
-					$$ = cat3_str(cat4_str(make1_str("create"), $2, make1_str("table"), $4), make3_str(make1_str("("), $6, make1_str(")")), $8);
+					$$ = cat_str(8, make_str("create"), $2, make_str("table"), $4, make_str("("), $6, make_str(")"), $8);
 				}
 		;
 
@@ -1407,23 +1342,23 @@ OptTemp:  OptTempType                           { $$ = $1; }
                 | OptTempScope OptTempType	{ $$ = cat2_str($1,$2); }
                 ;
 
-OptTempType:	  TEMP		{ $$ = make1_str("temp"); }
-		| TEMPORARY	{ $$ = make1_str("temporary"); }
+OptTempType:	  TEMP		{ $$ = make_str("temp"); }
+		| TEMPORARY	{ $$ = make_str("temporary"); }
 		| /* EMPTY */	{ $$ = EMPTY; }
 		;
 
 OptTempScope:  GLOBAL
                {
                     mmerror(ET_ERROR, "GLOBAL TEMPORARY TABLE is not currently supported");
-                    $$ = make1_str("global");
+                    $$ = make_str("global");
                }
-             | LOCAL { $$ = make1_str("local"); }
+             | LOCAL { $$ = make_str("local"); }
              ;
 
 
 OptTableElementList:  OptTableElementList ',' OptTableElement
 				{
-					$$ = cat3_str($1, make1_str(","), $3);
+					$$ = cat_str(3, $1, make_str(","), $3);
 				}
 			| OptTableElement
 				{
@@ -1436,27 +1371,23 @@ OptTableElement:  columnDef		{ $$ = $1; }
 			| TableConstraint	{ $$ = $1; }
 		;
 
-columnDef:  ColId Typename ColQualifier
+columnDef:  ColId Typename ColConstraintList
 				{
-					$$ = cat3_str($1, $2, $3);
+					$$ = cat_str(3, $1, $2, $3);
 				}
 	| ColId SERIAL ColPrimaryKey
 		{
-			$$ = make3_str($1, make1_str(" serial "), $3);
+			$$ = cat_str(3, $1, make_str(" serial "), $3);
 		}
 		;
 
-ColQualifier:  ColQualList	{ $$ = $1; }
-			| /*EMPTY*/	{ $$ = EMPTY; }
-		;
-
-ColQualList:  ColQualList ColConstraint	{ $$ = cat2_str($1,$2); }
-			| ColConstraint		{ $$ = $1; }
+ColConstraintList:  ColConstraintList ColConstraint	{ $$ = cat2_str($1,$2); }
+			| /* EMPTY */		{ $$ = EMPTY; }
 		;
 
 ColPrimaryKey:  PRIMARY KEY
                 {
-			$$ = make1_str("primary key");
+			$$ = make_str("primary key");
                 }
               | /*EMPTY*/
 		{
@@ -1467,7 +1398,7 @@ ColPrimaryKey:  PRIMARY KEY
 ColConstraint:
 		CONSTRAINT name ColConstraintElem
 				{
-					$$ = cat3_str(make1_str("constraint"), $2, $3);
+					$$ = cat_str(3, make_str("constraint"), $2, $3);
 				}
 		| ColConstraintElem
 				{ $$ = $1; }
@@ -1491,31 +1422,31 @@ ColConstraint:
  */
 ColConstraintElem:  CHECK '(' a_expr ')'
 				{
-					$$ = make3_str(make1_str("check("), $3, make1_str(")"));
+					$$ = cat_str(3, make_str("check("), $3, make_str(")"));
 				}
 			| DEFAULT NULL_P
 				{
-					$$ = make1_str("default null");
+					$$ = make_str("default null");
 				}
 			| DEFAULT b_expr
 				{
-					$$ = cat2_str(make1_str("default"), $2);
+					$$ = cat2_str(make_str("default"), $2);
 				}
 			| NOT NULL_P
 				{
-					$$ = make1_str("not null");
+					$$ = make_str("not null");
 				}
 			| UNIQUE
 				{
-					$$ = make1_str("unique");
+					$$ = make_str("unique");
 				}
 			| PRIMARY KEY
 				{
-					$$ = make1_str("primary key");
+					$$ = make_str("primary key");
 				}
 			| REFERENCES ColId opt_column_list key_match key_actions
 				{
-					$$ = cat5_str(make1_str("references"), $2, $3, $4, $5);
+					$$ = cat_str(5, make_str("references"), $2, $3, $4, $5);
 				}
 		;
 
@@ -1525,7 +1456,7 @@ ColConstraintElem:  CHECK '(' a_expr ')'
  */
 TableConstraint:  CONSTRAINT name ConstraintElem
 				{
-						$$ = cat3_str(make1_str("constraint"), $2, $3);
+						$$ = cat_str(3, make_str("constraint"), $2, $3);
 				}
 		| ConstraintElem
 				{ $$ = $1; }
@@ -1533,30 +1464,30 @@ TableConstraint:  CONSTRAINT name ConstraintElem
 
 ConstraintElem:  CHECK '(' a_expr ')'
 				{
-					$$ = make3_str(make1_str("check("), $3, make1_str(")"));
+					$$ = cat_str(3, make_str("check("), $3, make_str(")"));
 				}
 		| UNIQUE '(' columnList ')'
 				{
-					$$ = make3_str(make1_str("unique("), $3, make1_str(")"));
+					$$ = cat_str(3, make_str("unique("), $3, make_str(")"));
 				}
 		| PRIMARY KEY '(' columnList ')'
 				{
-					$$ = make3_str(make1_str("primary key("), $4, make1_str(")"));
+					$$ = cat_str(3, make_str("primary key("), $4, make_str(")"));
 				}
 		| FOREIGN KEY '(' columnList ')' REFERENCES ColId opt_column_list key_match key_actions
 				{
-					$$ = cat3_str(cat5_str(make1_str("foreign key("), $4, make1_str(") references"), $7, $8), $9, $10);
+					$$ = cat_str(7, make_str("foreign key("), $4, make_str(") references"), $7, $8, $9, $10);
 				}
 		;
 
 key_match:  MATCH FULL
 		{
-			 $$ = make1_str("match full");
+			 $$ = make_str("match full");
 		}
 		| MATCH PARTIAL		
 		{
 			mmerror(ET_WARN, "FOREIGN KEY match type PARTIAL not implemented yet");
-			$$ = make1_str("match partial");
+			$$ = make_str("match partial");
 		}
 		| /*EMPTY*/
 		{
@@ -1570,18 +1501,18 @@ key_actions:  key_action key_action	{ $$ = cat2_str($1, $2); }
 		| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
-key_action:  ON DELETE key_reference	{ $$ = cat2_str(make1_str("on delete"), $3); }
-		| ON UPDATE key_reference		{ $$ = cat2_str(make1_str("on update"), $3); }
+key_action:  ON DELETE key_reference	{ $$ = cat2_str(make_str("on delete"), $3); }
+		| ON UPDATE key_reference		{ $$ = cat2_str(make_str("on update"), $3); }
 		;
 
-key_reference:  NO ACTION	{ $$ = make1_str("no action"); }
-		| RESTRICT	{ $$ = make1_str("restrict"); }
-		| CASCADE	{ $$ = make1_str("cascade"); }
-		| SET DEFAULT	{ $$ = make1_str("set default"); }
-		| SET NULL_P	{ $$ = make1_str("set null"); }
+key_reference:  NO ACTION	{ $$ = make_str("no action"); }
+		| RESTRICT	{ $$ = make_str("restrict"); }
+		| CASCADE	{ $$ = make_str("cascade"); }
+		| SET DEFAULT	{ $$ = make_str("set default"); }
+		| SET NULL_P	{ $$ = make_str("set null"); }
 		;
 
-OptInherit:  INHERITS '(' relation_name_list ')' { $$ = make3_str(make1_str("inherits ("), $3, make1_str(")")); }
+OptInherit:  INHERITS '(' relation_name_list ')' { $$ = cat_str(3, make_str("inherits ("), $3, make_str(")")); }
 		| /*EMPTY*/ { $$ = EMPTY; }
 		;
 
@@ -1595,15 +1526,15 @@ CreateAsStmt:  CREATE OptTemp TABLE relation_name OptCreateAs AS SelectStmt
 			if (FoundInto == 1)
 				mmerror(ET_ERROR, "CREATE TABLE/AS SELECT may not specify INTO");
 
-			$$ = cat5_str(cat3_str(make1_str("create"), $2, make1_str("table")), $4, $5, make1_str("as"), $7); 
+			$$ = cat_str(7, make_str("create"), $2, make_str("table"), $4, $5, make_str("as"), $7); 
 		}
 		;
 
-OptCreateAs:  '(' CreateAsList ')' { $$ = make3_str(make1_str("("), $2, make1_str(")")); }
+OptCreateAs:  '(' CreateAsList ')' { $$ = cat_str(3, make_str("("), $2, make_str(")")); }
 			| /*EMPTY*/ { $$ = EMPTY; }	
 		;
 
-CreateAsList:  CreateAsList ',' CreateAsElement	{ $$ = cat3_str($1, make1_str(","), $3); }
+CreateAsList:  CreateAsList ',' CreateAsElement	{ $$ = cat_str(3, $1, make_str(","), $3); }
 			| CreateAsElement	{ $$ = $1; }
 		;
 
@@ -1619,7 +1550,7 @@ CreateAsElement:  ColId { $$ = $1; }
 
 CreateSeqStmt:  CREATE SEQUENCE relation_name OptSeqList
 				{
-					$$ = cat3_str(make1_str("create sequence"), $3, $4);
+					$$ = cat_str(3, make_str("create sequence"), $3, $4);
 				}
 		;
 
@@ -1630,27 +1561,27 @@ OptSeqList:  OptSeqList OptSeqElem
 
 OptSeqElem:  CACHE IntegerOnly
 				{
-					$$ = cat2_str(make1_str("cache"), $2);
+					$$ = cat2_str(make_str("cache"), $2);
 				}
 			| CYCLE
 				{
-					$$ = make1_str("cycle");
+					$$ = make_str("cycle");
 				}
 			| INCREMENT IntegerOnly
 				{
-					$$ = cat2_str(make1_str("increment"), $2);
+					$$ = cat2_str(make_str("increment"), $2);
 				}
 			| MAXVALUE IntegerOnly
 				{
-					$$ = cat2_str(make1_str("maxvalue"), $2);
+					$$ = cat2_str(make_str("maxvalue"), $2);
 				}
 			| MINVALUE IntegerOnly
 				{
-					$$ = cat2_str(make1_str("minvalue"), $2);
+					$$ = cat2_str(make_str("minvalue"), $2);
 				}
 			| START IntegerOnly
 				{
-					$$ = cat2_str(make1_str("start"), $2);
+					$$ = cat2_str(make_str("start"), $2);
 				}
 		;
 
@@ -1663,7 +1594,7 @@ FloatOnly:  Fconst
                                }
                        | '-' Fconst
                                {
-                                       $$ = cat2_str(make1_str("-"), $2);
+                                       $$ = cat2_str(make_str("-"), $2);
                                }
                ;
 
@@ -1674,7 +1605,7 @@ IntegerOnly:  Iconst
 				}
 			| '-' Iconst
 				{
-					$$ = cat2_str(make1_str("-"), $2);
+					$$ = cat2_str(make_str("-"), $2);
 				}
 		;
 
@@ -1689,16 +1620,16 @@ IntegerOnly:  Iconst
 CreatePLangStmt:  CREATE PLangTrusted PROCEDURAL LANGUAGE Sconst 
 			HANDLER def_name LANCOMPILER Sconst
 			{
-				$$ = cat4_str(cat5_str(make1_str("create"), $2, make1_str("precedural language"), $5, make1_str("handler")), $7, make1_str("langcompiler"), $9);
+				$$ = cat_str(8, make_str("create"), $2, make_str("precedural language"), $5, make_str("handler"), $7, make_str("langcompiler"), $9);
 			}
 		;
 
-PLangTrusted:		TRUSTED { $$ = make1_str("trusted"); }
+PLangTrusted:		TRUSTED { $$ = make_str("trusted"); }
 			|	{ $$ = EMPTY; }
 
 DropPLangStmt:  DROP PROCEDURAL LANGUAGE Sconst
 			{
-				$$ = cat2_str(make1_str("drop procedural language"), $4);
+				$$ = cat2_str(make_str("drop procedural language"), $4);
 			}
 		;
 
@@ -1714,7 +1645,7 @@ CreateTrigStmt:  CREATE TRIGGER name TriggerActionTime TriggerEvents ON
 				relation_name TriggerForSpec EXECUTE PROCEDURE
 				name '(' TriggerFuncArgs ')'
 				{
-					$$ = cat2_str(cat5_str(cat5_str(make1_str("create trigger"), $3, $4, $5, make1_str("on")), $7, $8, make1_str("execute procedure"), $11), make3_str(make1_str("("), $13, make1_str(")")));
+					$$ = cat_str(12, make_str("create trigger"), $3, $4, $5, make_str("on"), $7, $8, make_str("execute procedure"), $11, make_str("("), $13, make_str(")"));
 				}
 	|	CREATE CONSTRAINT TRIGGER name AFTER TriggerOneEvent ON
                                 relation_name OptConstrFromTable
@@ -1722,12 +1653,12 @@ CreateTrigStmt:  CREATE TRIGGER name TriggerActionTime TriggerEvents ON
                                 FOR EACH ROW EXECUTE PROCEDURE
 				name '(' TriggerFuncArgs ')'
 				{
-					$$ = cat5_str(cat5_str(cat5_str(make1_str("create constraint trigger"), $4, make1_str("after"), $6, make1_str("on")), $8, $9, $10, make1_str("for each row execute procedure")), $16, make1_str("("), $18, make1_str(")"));
+					$$ = cat_str(13, make_str("create constraint trigger"), $4, make_str("after"), $6, make_str("on"), $8, $9, $10, make_str("for each row execute procedure"), $16, make_str("("), $18, make_str(")"));
 				}
 		;
 
-TriggerActionTime:  BEFORE				{ $$ = make1_str("before"); }
-			| AFTER				{ $$ = make1_str("after"); }
+TriggerActionTime:  BEFORE				{ $$ = make_str("before"); }
+			| AFTER				{ $$ = make_str("after"); }
 		;
 
 TriggerEvents:	TriggerOneEvent
@@ -1736,37 +1667,37 @@ TriggerEvents:	TriggerOneEvent
 				}
 			| TriggerOneEvent OR TriggerOneEvent
 				{
-					$$ = cat3_str($1, make1_str("or"), $3);
+					$$ = cat_str(3, $1, make_str("or"), $3);
 				}
 			| TriggerOneEvent OR TriggerOneEvent OR TriggerOneEvent
 				{
-					$$ = cat5_str($1, make1_str("or"), $3, make1_str("or"), $5);
+					$$ = cat_str(5, $1, make_str("or"), $3, make_str("or"), $5);
 				}
 		;
 
-TriggerOneEvent:  INSERT				{ $$ = make1_str("insert"); }
-			| DELETE			{ $$ = make1_str("delete"); }
-			| UPDATE			{ $$ = make1_str("update"); }
+TriggerOneEvent:  INSERT				{ $$ = make_str("insert"); }
+			| DELETE			{ $$ = make_str("delete"); }
+			| UPDATE			{ $$ = make_str("update"); }
 		;
 
 TriggerForSpec:  FOR TriggerForOpt TriggerForType
 				{
-					$$ = cat3_str(make1_str("for"), $2, $3);
+					$$ = cat_str(3, make_str("for"), $2, $3);
 				}
 		;
 
-TriggerForOpt:  EACH					{ $$ = make1_str("each"); }
+TriggerForOpt:  EACH					{ $$ = make_str("each"); }
 			| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
-TriggerForType:  ROW					{ $$ = make1_str("row"); }
-			| STATEMENT			{ $$ = make1_str("statement"); }
+TriggerForType:  ROW					{ $$ = make_str("row"); }
+			| STATEMENT			{ $$ = make_str("statement"); }
 		;
 
 TriggerFuncArgs:  TriggerFuncArg
 				{ $$ = $1; }
 			| TriggerFuncArgs ',' TriggerFuncArg
-				{ $$ = cat3_str($1, make1_str(","), $3); }
+				{ $$ = cat_str(3, $1, make_str(","), $3); }
 			| /*EMPTY*/
 				{ $$ = EMPTY; }
 		;
@@ -1789,7 +1720,7 @@ OptConstrFromTable:                     /* Empty */
                                 }
                 | FROM relation_name
                                 {
-                                        $$ = cat2_str(make1_str("from"), $2);
+                                        $$ = cat2_str(make_str("from"), $2);
                                 }
                 ;
 
@@ -1817,27 +1748,27 @@ ConstraintAttributeSpec: /* Empty */
 
 ConstraintDeferrabilitySpec: NOT DEFERRABLE
                                 {
-                                        $$ = make1_str("not deferrable");
+                                        $$ = make_str("not deferrable");
                                 }
                 | DEFERRABLE
                                 {
-                                        $$ = make1_str("deferrable");
+                                        $$ = make_str("deferrable");
                                 }
                 ;
 
 ConstraintTimeSpec: INITIALLY IMMEDIATE
                                 {
-                                        $$ = make1_str("initially immediate");
+                                        $$ = make_str("initially immediate");
                                 }
                 | INITIALLY DEFERRED
                                 {
-                                        $$ = make1_str("initially deferrable");
+                                        $$ = make_str("initially deferrable");
                                 }
                 ;
 
 DropTrigStmt:  DROP TRIGGER name ON relation_name
 				{
-					$$ = cat4_str(make1_str("drop trigger"), $3, make1_str("on"), $5);
+					$$ = cat_str(4, make_str("drop trigger"), $3, make_str("on"), $5);
 				}
 		;
 
@@ -1850,7 +1781,7 @@ DropTrigStmt:  DROP TRIGGER name ON relation_name
 
 DefineStmt:  CREATE def_type def_rest
 				{
-					$$ = cat3_str(make1_str("create"), $2, $3);
+					$$ = cat_str(3, make_str("create"), $2, $3);
 				}
 		;
 
@@ -1860,26 +1791,26 @@ def_rest:  def_name definition
 				}
 		;
 
-def_type:  OPERATOR		{ $$ = make1_str("operator"); }
-		| TYPE_P	{ $$ = make1_str("type"); }
-		| AGGREGATE	{ $$ = make1_str("aggregate"); }
+def_type:  OPERATOR		{ $$ = make_str("operator"); }
+		| TYPE_P	{ $$ = make_str("type"); }
+		| AGGREGATE	{ $$ = make_str("aggregate"); }
 		;
 
-def_name:  PROCEDURE		{ $$ = make1_str("procedure"); }
-		| JOIN		{ $$ = make1_str("join"); }
+def_name:  PROCEDURE		{ $$ = make_str("procedure"); }
+		| JOIN		{ $$ = make_str("join"); }
 		| ColId		{ $$ = $1; }
 		| all_Op	{ $$ = $1; }
 		;
 
-definition:  '(' def_list ')'				{ $$ = make3_str(make1_str("("), $2, make1_str(")")); }
+definition:  '(' def_list ')'				{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
 		;
 
 def_list:  def_elem					{ $$ = $1; }
-		| def_list ',' def_elem			{ $$ = cat3_str($1, make1_str(","), $3); }
+		| def_list ',' def_elem			{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
 def_elem:  def_name '=' def_arg	{
-					$$ = cat3_str($1, make1_str("="), $3);
+					$$ = cat_str(3, $1, make_str("="), $3);
 				}
 		| def_name
 				{
@@ -1887,7 +1818,7 @@ def_elem:  def_name '=' def_arg	{
 				}
 		| DEFAULT '=' def_arg
 				{
-					$$ = cat2_str(make1_str("default ="), $3);
+					$$ = cat2_str(make_str("default ="), $3);
 				}
 		;
 
@@ -1897,7 +1828,7 @@ def_arg:  ColId			{  $$ = $1; }
 		| Sconst	{  $$ = $1; }
 		| SETOF ColId
 				{
-					$$ = cat2_str(make1_str("setof"), $2);
+					$$ = cat2_str(make_str("setof"), $2);
 				}
 		;
 
@@ -1910,11 +1841,11 @@ def_arg:  ColId			{  $$ = $1; }
 
 DropStmt:  DROP TABLE relation_name_list
 				{
-					$$ = cat2_str(make1_str("drop table"), $3);
+					$$ = cat2_str(make_str("drop table"), $3);
 				}
 		| DROP SEQUENCE relation_name_list
 				{
-					$$ = cat2_str(make1_str("drop sequence"), $3);
+					$$ = cat2_str(make_str("drop sequence"), $3);
 				}
 		;
 
@@ -1926,7 +1857,7 @@ DropStmt:  DROP TABLE relation_name_list
  *****************************************************************************/
 TruncateStmt:  TRUNCATE TABLE relation_name
                                {
-					$$ = cat2_str(make1_str("drop table"), $3);
+					$$ = cat2_str(make_str("drop table"), $3);
                                }
                        ;
 
@@ -1944,36 +1875,36 @@ FetchStmt:	FETCH opt_direction fetch_how_many opt_portal_name INTO into_list
 					if (strcmp($2, "relative") == 0 && atol($3) == 0L)
 						mmerror(ET_ERROR, "FETCH/RELATIVE at current position is not supported");
 
-					$$ = cat4_str(make1_str("fetch"), $2, $3, $4);
+					$$ = cat_str(4, make_str("fetch"), $2, $3, $4);
 				}
 		|	MOVE opt_direction fetch_how_many opt_portal_name
 				{
-					$$ = cat4_str(make1_str("fetch"), $2, $3, $4);
+					$$ = cat_str(4, make_str("fetch"), $2, $3, $4);
 				}
 		;
 
-opt_direction:	FORWARD		{ $$ = make1_str("forward"); }
-		| BACKWARD	{ $$ = make1_str("backward"); }
-		| RELATIVE      { $$ = make1_str("relative"); }
+opt_direction:	FORWARD		{ $$ = make_str("forward"); }
+		| BACKWARD	{ $$ = make_str("backward"); }
+		| RELATIVE      { $$ = make_str("relative"); }
                 | ABSOLUTE
  				{
 					mmerror(ET_WARN, "FETCH/ABSOLUTE not supported, backend will use RELATIVE");
-					$$ = make1_str("absolute");
+					$$ = make_str("absolute");
 				}
 		| /*EMPTY*/	{ $$ = EMPTY; /* default */ }
 		;
 
 fetch_how_many:   Iconst        { $$ = $1; }
-		| '-' Iconst    { $$ = make2_str(make1_str("-"), $2); }
-		| ALL		{ $$ = make1_str("all"); }
-		| NEXT		{ $$ = make1_str("next"); }
-		| PRIOR		{ $$ = make1_str("prior"); }
+		| '-' Iconst    { $$ = cat2_str(make_str("-"), $2); }
+		| ALL		{ $$ = make_str("all"); }
+		| NEXT		{ $$ = make_str("next"); }
+		| PRIOR		{ $$ = make_str("prior"); }
 		| /*EMPTY*/	{ $$ = EMPTY; /*default*/ }
 		;
 
-opt_portal_name:  IN name		{ $$ = cat2_str(make1_str("in"), $2); }
-		| FROM name		{ $$ = cat2_str(make1_str("from"), $2); }
-/*		| name			{ $$ = cat2_str(make1_str("in"), $1); */
+opt_portal_name:  IN name		{ $$ = cat2_str(make_str("in"), $2); }
+		| FROM name		{ $$ = cat2_str(make_str("from"), $2); }
+/*		| name			{ $$ = cat2_str(make_str("in"), $1); */
 		| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
@@ -1991,51 +1922,51 @@ opt_portal_name:  IN name		{ $$ = cat2_str(make1_str("in"), $2); }
  *****************************************************************************/
 CommentStmt:   COMMENT ON comment_type name IS comment_text
                         {
-                               $$ = cat5_str(make1_str("comment on"), $3, $4, make1_str("is"), $6);
+                                $$ = cat_str(5, make_str("comment on"), $3, $4, make_str("is"), $6);
                         }
-               | COMMENT ON comment_cl relation_name '.' attr_name IS comment_text
+                | COMMENT ON comment_cl relation_name '.' attr_name IS comment_text
                         { 
-                               $$ = cat3_str(cat5_str(make1_str("comment on"), $3, $4, make1_str("."), $6), make1_str("is"), $8);
+                                $$ = cat_str(7, make_str("comment on"), $3, $4, make_str("."), $6, make_str("is"), $8);
 			}
                 | COMMENT ON comment_ag name aggr_argtype IS comment_text
                         {
-                                cat2_str(cat5_str(make1_str("comment on"), $3, $4, $5, make1_str("is")), $7);
+                                $$ = cat_str(6, make_str("comment on"), $3, $4, $5, make_str("is"), $7);
 			}
 		| COMMENT ON comment_fn func_name func_args IS comment_text
 			{
-                                cat2_str(cat5_str(make1_str("comment on"), $3, $4, $5, make1_str("is")), $7);
+                                $$ = cat_str(6, make_str("comment on"), $3, $4, $5, make_str("is"), $7);
 			}
 		| COMMENT ON comment_op all_Op '(' oper_argtypes ')' IS comment_text
 			{
-				cat3_str(cat5_str(make1_str("comment on"), $3, $4, make1_str("("), $6), make1_str(") is"), $9);
+				$$ = cat_str(7, make_str("comment on"), $3, $4, make_str("("), $6, make_str(") is"), $9);
 			}
 		| COMMENT ON comment_tg name ON relation_name IS comment_text
                         {
-                                cat3_str(cat5_str(make1_str("comment on"), $3, $4, make1_str("on"), $6), make1_str("is"), $8);
+                                $$ = cat_str(7, make_str("comment on"), $3, $4, make_str("on"), $6, make_str("is"), $8);
 			}
 			;
 
-comment_type:  DATABASE 	{ $$ = make1_str("database"); }
-                | INDEX		{ $$ = make1_str("idnex"); }
-                | RULE		{ $$ = make1_str("rule"); }
-                | SEQUENCE	{ $$ = make1_str("sequence"); }
-                | TABLE		{ $$ = make1_str("table"); }
-                | TYPE_P	{ $$ = make1_str("type"); }
-                | VIEW		{ $$ = make1_str("view"); }
+comment_type:  DATABASE 	{ $$ = make_str("database"); }
+                | INDEX		{ $$ = make_str("idnex"); }
+                | RULE		{ $$ = make_str("rule"); }
+                | SEQUENCE	{ $$ = make_str("sequence"); }
+                | TABLE		{ $$ = make_str("table"); }
+                | TYPE_P	{ $$ = make_str("type"); }
+                | VIEW		{ $$ = make_str("view"); }
 		;
 
-comment_cl:    COLUMN		{ $$ = make1_str("column"); }
+comment_cl:    COLUMN		{ $$ = make_str("column"); }
 
-comment_ag:    AGGREGATE	{ $$ = make1_str("aggregate"); }
+comment_ag:    AGGREGATE	{ $$ = make_str("aggregate"); }
 
-comment_fn:    FUNCTION		{ $$ = make1_str("function"); }
+comment_fn:    FUNCTION		{ $$ = make_str("function"); }
 
-comment_op:    OPERATOR		{ $$ = make1_str("operator"); }
+comment_op:    OPERATOR		{ $$ = make_str("operator"); }
 
-comment_tg:    TRIGGER		{ $$ = make1_str("trigger"); }
+comment_tg:    TRIGGER		{ $$ = make_str("trigger"); }
 
 comment_text:    Sconst		{ $$ = $1; }
-               | NULL_P		{ $$ = make1_str("null"); }
+               | NULL_P		{ $$ = make_str("null"); }
                ;
 
 /*****************************************************************************
@@ -2047,17 +1978,17 @@ comment_text:    Sconst		{ $$ = $1; }
 
 GrantStmt:  GRANT privileges ON relation_name_list TO grantee opt_with_grant
 				{
-					$$ = cat2_str(cat5_str(make1_str("grant"), $2, make1_str("on"), $4, make1_str("to")), $6);
+					$$ = cat_str(7, make_str("grant"), $2, make_str("on"), $4, make_str("to"), $6);
 				}
 		;
 
 privileges:  ALL PRIVILEGES
 				{
-				 $$ = make1_str("all privileges");
+				 $$ = make_str("all privileges");
 				}
 		| ALL
 				{
-				 $$ = make1_str("all");
+				 $$ = make_str("all");
 				}
 		| operation_commalist
 				{
@@ -2071,39 +2002,39 @@ operation_commalist:  operation
 				}
 		| operation_commalist ',' operation
 				{
-						$$ = cat3_str($1, make1_str(","), $3);
+						$$ = cat_str(3, $1, make_str(","), $3);
 				}
 		;
 
 operation:  SELECT
 				{
-						$$ = make1_str("select");
+						$$ = make_str("select");
 				}
 		| INSERT
 				{
-						$$ = make1_str("insert");
+						$$ = make_str("insert");
 				}
 		| UPDATE
 				{
-						$$ = make1_str("update");
+						$$ = make_str("update");
 				}
 		| DELETE
 				{
-						$$ = make1_str("delete");
+						$$ = make_str("delete");
 				}
 		| RULE
 				{
-						$$ = make1_str("rule");
+						$$ = make_str("rule");
 				}
 		;
 
 grantee:  PUBLIC
 				{
-						$$ = make1_str("public");
+						$$ = make_str("public");
 				}
 		| GROUP ColId
 				{
-						$$ = cat2_str(make1_str("group"), $2);
+						$$ = cat2_str(make_str("group"), $2);
 				}
 		| ColId
 				{
@@ -2128,7 +2059,7 @@ opt_with_grant:  WITH GRANT OPTION
 
 RevokeStmt:  REVOKE privileges ON relation_name_list FROM grantee
 				{
-					$$ = cat2_str(cat5_str(make1_str("revoke"), $2, make1_str("on"), $4, make1_str("from")), $6);
+					$$ = cat_str(7, make_str("revoke"), $2, make_str("on"), $4, make_str("from"), $6);
 				}
 		;
 
@@ -2149,15 +2080,15 @@ IndexStmt:	CREATE index_opt_unique INDEX index_name ON relation_name
 				{
 					/* should check that access_method is valid,
 					   etc ... but doesn't */
-					$$ = cat5_str(cat5_str(make1_str("create"), $2, make1_str("index"), $4, make1_str("on")), $6, $7, make3_str(make1_str("("), $9, make1_str(")")), $11);
+					$$ = cat_str(11, make_str("create"), $2, make_str("index"), $4, make_str("on"), $6, $7, make_str("("), $9, make_str(")"), $11);
 				}
 		;
 
-index_opt_unique:  UNIQUE	{ $$ = make1_str("unique"); }
+index_opt_unique:  UNIQUE	{ $$ = make_str("unique"); }
 		| /*EMPTY*/	{ $$ = EMPTY; }
 		;
 
-access_method_clause:  USING access_method	{ $$ = cat2_str(make1_str("using"), $2); }
+access_method_clause:  USING access_method	{ $$ = cat2_str(make_str("using"), $2); }
 		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
@@ -2165,24 +2096,24 @@ index_params:  index_list			{ $$ = $1; }
 		| func_index			{ $$ = $1; }
 		;
 
-index_list:  index_list ',' index_elem		{ $$ = cat3_str($1, make1_str(","), $3); }
+index_list:  index_list ',' index_elem		{ $$ = cat_str(3, $1, make_str(","), $3); }
 		| index_elem			{ $$ = $1; }
 		;
 
 func_index:  func_name '(' name_list ')' opt_type opt_class
 				{
-					$$ = cat4_str($1, make3_str(make1_str("("), $3, ")"), $5, $6);
+					$$ = cat_str(6, $1, make_str("("), $3, ")", $5, $6);
 				}
 		  ;
 
 index_elem:  attr_name opt_type opt_class
 				{
-					$$ = cat3_str($1, $2, $3);
+					$$ = cat_str(3, $1, $2, $3);
 				}
 		;
 
-opt_type:  ':' Typename		{ $$ = cat2_str(make1_str(":"), $2); }
-		| FOR Typename	{ $$ = cat2_str(make1_str("for"), $2); }
+opt_type:  ':' Typename		{ $$ = cat2_str(make_str(":"), $2); }
+		| FOR Typename	{ $$ = cat2_str(make_str("for"), $2); }
 		| /*EMPTY*/	{ $$ = EMPTY; }
 		;
 
@@ -2193,7 +2124,7 @@ opt_type:  ':' Typename		{ $$ = cat2_str(make1_str(":"), $2); }
  *		| WITH class							{ $$ = $2; }
  */
 opt_class:  class				{ $$ = $1; }
-		| USING class			{ $$ = cat2_str(make1_str("using"), $2); }
+		| USING class			{ $$ = cat2_str(make_str("using"), $2); }
 		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
@@ -2206,7 +2137,7 @@ opt_class:  class				{ $$ = $1; }
 
 ExtendStmt:  EXTEND INDEX index_name where_clause
 				{
-					$$ = cat3_str(make1_str("extend index"), $3, $4);
+					$$ = cat_str(3, make_str("extend index"), $3, $4);
 				}
 		;
 
@@ -2220,7 +2151,7 @@ ExtendStmt:  EXTEND INDEX index_name where_clause
 /* NOT USED
 RecipeStmt:  EXECUTE RECIPE recipe_name
 				{
-					$$ = cat2_str(make1_str("execute recipe"), $3);
+					$$ = cat2_str(make_str("execute recipe"), $3);
 				}
 		;
 */
@@ -2243,24 +2174,24 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
 ProcedureStmt:	CREATE FUNCTION func_name func_args
 			 RETURNS func_return opt_with AS func_as LANGUAGE Sconst
 				{
-					$$ = cat2_str(cat5_str(cat5_str(make1_str("create function"), $3, $4, make1_str("returns"), $6), $7, make1_str("as"), $9, make1_str("language")), $11);
+					$$ = cat_str(10, make_str("create function"), $3, $4, make_str("returns"), $6, $7, make_str("as"), $9, make_str("language"), $11);
 				}
 
-opt_with:  WITH definition			{ $$ = cat2_str(make1_str("with"), $2); }
+opt_with:  WITH definition			{ $$ = cat2_str(make_str("with"), $2); }
 		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
-func_args:  '(' func_args_list ')'		{ $$ = make3_str(make1_str("("), $2, make1_str(")")); }
-		| '(' ')'			{ $$ = make1_str("()"); }
+func_args:  '(' func_args_list ')'		{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
+		| '(' ')'			{ $$ = make_str("()"); }
 		;
 
 func_args_list:  TypeId				{ $$ = $1; }
 		| func_args_list ',' TypeId
-				{	$$ = cat3_str($1, make1_str(","), $3); }
+				{	$$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
 func_as: Sconst				{ $$ = $1; }
-		| Sconst ',' Sconst	{ $$ = cat3_str($1, make1_str(","), $3); }
+		| Sconst ',' Sconst	{ $$ = cat_str(3, $1, make_str(","), $3); }
 
 func_return:  set_opt TypeId
 				{
@@ -2268,7 +2199,7 @@ func_return:  set_opt TypeId
 				}
 		;
 
-set_opt:  SETOF					{ $$ = make1_str("setof"); }
+set_opt:  SETOF					{ $$ = make_str("setof"); }
 		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
@@ -2292,38 +2223,38 @@ set_opt:  SETOF					{ $$ = make1_str("setof"); }
 
 RemoveStmt:  DROP remove_type name
 				{
-					$$ = cat3_str(make1_str("drop"), $2, $3);
+					$$ = cat_str(3, make_str("drop"), $2, $3);
 				}
 		;
 
-remove_type:  TYPE_P		{  $$ = make1_str("type"); }
-		| INDEX		{  $$ = make1_str("index"); }
-		| RULE		{  $$ = make1_str("rule"); }
-		| VIEW		{  $$ = make1_str("view"); }
+remove_type:  TYPE_P		{  $$ = make_str("type"); }
+		| INDEX		{  $$ = make_str("index"); }
+		| RULE		{  $$ = make_str("rule"); }
+		| VIEW		{  $$ = make_str("view"); }
 		;
 
 
 RemoveAggrStmt:  DROP AGGREGATE name aggr_argtype
 				{
-						$$ = cat3_str(make1_str("drop aggregate"), $3, $4);
+						$$ = cat_str(3, make_str("drop aggregate"), $3, $4);
 				}
 		;
 
 aggr_argtype:  name			{ $$ = $1; }
-		| '*'			{ $$ = make1_str("*"); }
+		| '*'			{ $$ = make_str("*"); }
 		;
 
 
 RemoveFuncStmt:  DROP FUNCTION func_name func_args
 				{
-						$$ = cat3_str(make1_str("drop function"), $3, $4);
+						$$ = cat_str(3, make_str("drop function"), $3, $4);
 				}
 		;
 
 
 RemoveOperStmt:  DROP OPERATOR all_Op '(' oper_argtypes ')'
 				{
-					$$ = cat3_str(make1_str("drop operator"), $3, make3_str(make1_str("("), $5, make1_str(")")));
+					$$ = cat_str(5, make_str("drop operator"), $3, make_str("("), $5, make_str(")"));
 				}
 		;
 
@@ -2332,11 +2263,11 @@ oper_argtypes:	name
 				   mmerror(ET_ERROR, "parser: argument type missing (use NONE for unary operators)");
 				}
 		| name ',' name
-				{ $$ = cat3_str($1, make1_str(","), $3); }
+				{ $$ = cat_str(3, $1, make_str(","), $3); }
 		| NONE ',' name			/* left unary */
-				{ $$ = cat2_str(make1_str("none,"), $3); }
+				{ $$ = cat2_str(make_str("none,"), $3); }
 		| name ',' NONE			/* right unary */
-				{ $$ = cat2_str($1, make1_str(", none")); }
+				{ $$ = cat2_str($1, make_str(", none")); }
 		;
 
 
@@ -2351,7 +2282,7 @@ oper_argtypes:	name
 RenameStmt:  ALTER TABLE relation_name opt_inh_star
 				  RENAME opt_column opt_name TO name
 				{
-					$$ = cat4_str(cat5_str(make1_str("alter table"), $3, $4, make1_str("rename"), $6), $7, make1_str("to"), $9);
+					$$ = cat_str(8, make_str("alter table"), $3, $4, make_str("rename"), $6, $7, make_str("to"), $9);
 				}
 		;
 
@@ -2359,7 +2290,7 @@ opt_name:  name							{ $$ = $1; }
 		| /*EMPTY*/					{ $$ = EMPTY; }
 		;
 
-opt_column:  COLUMN					{ $$ = make1_str("colmunn"); }
+opt_column:  COLUMN					{ $$ = make_str("colmunn"); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
@@ -2378,22 +2309,22 @@ RuleStmt:  CREATE RULE name AS
 		   ON event TO event_object where_clause
 		   DO opt_instead RuleActionList
 				{
-					$$ = cat2_str(cat5_str(cat5_str(make1_str("create rule"), $3, make1_str("as on"), $7, make1_str("to")), $9, $10, make1_str("do"), $12), $13);
+					$$ = cat_str(10, make_str("create rule"), $3, make_str("as on"), $7, make_str("to"), $9, $10, make_str("do"), $12, $13);
 				}
 		;
 
-RuleActionList:  NOTHING                               { $$ = make1_str("nothing"); }
+RuleActionList:  NOTHING                               { $$ = make_str("nothing"); }
                | SelectStmt                            { $$ = $1; }
                | RuleActionStmt                        { $$ = $1; }
-               | '[' RuleActionMulti ']'               { $$ = cat3_str(make1_str("["), $2, make1_str("]")); }
-               | '(' RuleActionMulti ')'               { $$ = cat3_str(make1_str("("), $2, make1_str(")")); }
+               | '[' RuleActionMulti ']'               { $$ = cat_str(3, make_str("["), $2, make_str("]")); }
+               | '(' RuleActionMulti ')'               { $$ = cat_str(3, make_str("("), $2, make_str(")")); }
                 ;
 
 /* the thrashing around here is to discard "empty" statements... */
 RuleActionMulti:  RuleActionMulti ';' RuleActionStmtOrEmpty
-                                {  $$ = cat3_str($1, make1_str(";"), $3); }
+                                {  $$ = cat_str(3, $1, make_str(";"), $3); }
 		| RuleActionStmtOrEmpty
-				{ $$ = cat2_str($1, make1_str(";")); }
+				{ $$ = cat2_str($1, make_str(";")); }
 		;
 
 RuleActionStmt:        InsertStmt
@@ -2407,7 +2338,7 @@ RuleActionStmtOrEmpty: RuleActionStmt	{ $$ = $1; }
 
 event_object:  relation_name '.' attr_name
 				{
-					$$ = make3_str($1, make1_str("."), $3);
+					$$ = make3_str($1, make_str("."), $3);
 				}
 		| relation_name
 				{
@@ -2416,13 +2347,13 @@ event_object:  relation_name '.' attr_name
 		;
 
 /* change me to select, update, etc. some day */
-event:	SELECT					{ $$ = make1_str("select"); }
-		| UPDATE			{ $$ = make1_str("update"); }
-		| DELETE			{ $$ = make1_str("delete"); }
-		| INSERT			{ $$ = make1_str("insert"); }
+event:	SELECT					{ $$ = make_str("select"); }
+		| UPDATE			{ $$ = make_str("update"); }
+		| DELETE			{ $$ = make_str("delete"); }
+		| INSERT			{ $$ = make_str("insert"); }
 		 ;
 
-opt_instead:  INSTEAD					{ $$ = make1_str("instead"); }
+opt_instead:  INSTEAD					{ $$ = make_str("instead"); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
@@ -2437,23 +2368,23 @@ opt_instead:  INSTEAD					{ $$ = make1_str("instead"); }
 
 NotifyStmt:  NOTIFY relation_name
 				{
-					$$ = cat2_str(make1_str("notify"), $2);
+					$$ = cat2_str(make_str("notify"), $2);
 				}
 		;
 
 ListenStmt:  LISTEN relation_name
 				{
-					$$ = cat2_str(make1_str("listen"), $2);
+					$$ = cat2_str(make_str("listen"), $2);
                                 }
 ;
 
 UnlistenStmt:  UNLISTEN relation_name
 				{
-					$$ = cat2_str(make1_str("unlisten"), $2);
+					$$ = cat2_str(make_str("unlisten"), $2);
                                 }
 		| UNLISTEN '*'
 				{
-					$$ = make1_str("unlisten *");
+					$$ = make_str("unlisten *");
                                 }
 ;
 
@@ -2469,11 +2400,11 @@ UnlistenStmt:  UNLISTEN relation_name
  *                              (END)
  *
  *****************************************************************************/
-TransactionStmt:  ABORT_TRANS opt_trans	{ $$ = make1_str("rollback"); }
-	| BEGIN_TRANS opt_trans		{ $$ = make1_str("begin transaction"); }
-	| COMMIT opt_trans		{ $$ = make1_str("commit"); }
-	| END_TRANS opt_trans			{ $$ = make1_str("commit"); }
-	| ROLLBACK opt_trans			{ $$ = make1_str("rollback"); }
+TransactionStmt:  ABORT_TRANS opt_trans	{ $$ = make_str("rollback"); }
+	| BEGIN_TRANS opt_trans		{ $$ = make_str("begin transaction"); }
+	| COMMIT opt_trans		{ $$ = make_str("commit"); }
+	| END_TRANS opt_trans			{ $$ = make_str("commit"); }
+	| ROLLBACK opt_trans			{ $$ = make_str("rollback"); }
 
 opt_trans: WORK 	{ $$ = ""; }
 	| TRANSACTION	{ $$ = ""; }
@@ -2489,7 +2420,7 @@ opt_trans: WORK 	{ $$ = ""; }
 
 ViewStmt:  CREATE VIEW name AS SelectStmt
 				{
-					$$ = cat4_str(make1_str("create view"), $3, make1_str("as"), $5);
+					$$ = cat_str(4, make_str("create view"), $3, make_str("as"), $5);
 				}
 		;
 
@@ -2497,13 +2428,13 @@ ViewStmt:  CREATE VIEW name AS SelectStmt
 /*****************************************************************************
  *
  *		QUERY:
- *				load make1_str("filename")
+ *				load make_str("filename")
  *
  *****************************************************************************/
 
 LoadStmt:  LOAD file_name
 				{
-					$$ = cat2_str(make1_str("load"), $2);
+					$$ = cat2_str(make_str("load"), $2);
 				}
 		;
 
@@ -2523,29 +2454,29 @@ CreatedbStmt:  CREATE DATABASE database_name WITH opt_database1 opt_database2
 					if (strlen($6) != 0)
 						mmerror(ET_ERROR, "WITH ENCODING is not supported");
 #endif
-					$$ = cat5_str(make1_str("create database"), $3, make1_str("with"), $5, $6);
+					$$ = cat_str(5, make_str("create database"), $3, make_str("with"), $5, $6);
 				}
 		| CREATE DATABASE database_name
         			{
-					$$ = cat2_str(make1_str("create database"), $3);
+					$$ = cat2_str(make_str("create database"), $3);
 				}
 		;
 
-opt_database1:  LOCATION '=' location	{ $$ = cat2_str(make1_str("location ="), $3); }
+opt_database1:  LOCATION '=' location	{ $$ = cat2_str(make_str("location ="), $3); }
 		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
-opt_database2:  ENCODING '=' encoding   { $$ = cat2_str(make1_str("encoding ="), $3); }
+opt_database2:  ENCODING '=' encoding   { $$ = cat2_str(make_str("encoding ="), $3); }
                 | /*EMPTY*/	        { $$ = NULL; }
                 ;
 
 location:  Sconst				{ $$ = $1; }
-		| DEFAULT			{ $$ = make1_str("default"); }
+		| DEFAULT			{ $$ = make_str("default"); }
 		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
 encoding:  Sconst		{ $$ = $1; }
-		| DEFAULT	{ $$ = make1_str("default"); }
+		| DEFAULT	{ $$ = make_str("default"); }
 		| /*EMPTY*/	{ $$ = EMPTY; }
                ;
 
@@ -2558,7 +2489,7 @@ encoding:  Sconst		{ $$ = $1; }
 
 DropdbStmt:	DROP DATABASE database_name
 				{
-					$$ = cat2_str(make1_str("drop database"), $3);
+					$$ = cat2_str(make_str("drop database"), $3);
 				}
 		;
 
@@ -2572,7 +2503,7 @@ DropdbStmt:	DROP DATABASE database_name
 
 ClusterStmt:  CLUSTER index_name ON relation_name
 				{
-				   $$ = cat4_str(make1_str("cluster"), $2, make1_str("on"), $4);
+				   $$ = cat_str(4, make_str("cluster"), $2, make_str("on"), $4);
 				}
 		;
 
@@ -2586,32 +2517,32 @@ ClusterStmt:  CLUSTER index_name ON relation_name
 
 VacuumStmt:  VACUUM opt_verbose opt_analyze
 				{
-					$$ = cat3_str(make1_str("vacuum"), $2, $3);
+					$$ = cat_str(3, make_str("vacuum"), $2, $3);
 				}
 		| VACUUM opt_verbose opt_analyze relation_name opt_va_list
 				{
 					if ( strlen($5) > 0 && strlen($4) == 0 )
 						mmerror(ET_ERROR, "parser: syntax error at or near \"(\"");
-					$$ = cat5_str(make1_str("vacuum"), $2, $3, $4, $5);
+					$$ = cat_str(5, make_str("vacuum"), $2, $3, $4, $5);
 				}
 		;
 
-opt_verbose:  VERBOSE					{ $$ = make1_str("verbose"); }
+opt_verbose:  VERBOSE					{ $$ = make_str("verbose"); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
-opt_analyze:  ANALYZE					{ $$ = make1_str("analyse"); }
+opt_analyze:  ANALYZE					{ $$ = make_str("analyse"); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
-opt_va_list:  '(' va_list ')'				{ $$ = make3_str(make1_str("("), $2, make1_str(")")); }
+opt_va_list:  '(' va_list ')'				{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
 va_list:  name
 				{ $$=$1; }
 		| va_list ',' name
-				{ $$=cat3_str($1, make1_str(","), $3); }
+				{ $$=cat_str(3, $1, make_str(","), $3); }
 		;
 
 
@@ -2624,7 +2555,7 @@ va_list:  name
 
 ExplainStmt:  EXPLAIN opt_verbose OptimizableStmt
 				{
-					$$ = cat3_str(make1_str("explain"), $2, $3);
+					$$ = cat_str(3, make_str("explain"), $2, $3);
 				}
 		;
 
@@ -2663,17 +2594,17 @@ OptimizableStmt:  SelectStmt
  * the same statements without any shift/reduce conflicts */
 InsertStmt:  INSERT INTO relation_name insert_rest
 				{
-					$$ = cat3_str(make1_str("insert into"), $3, $4);
+					$$ = cat_str(3, make_str("insert into"), $3, $4);
 				}
 		;
 
 insert_rest:  VALUES '(' target_list ')'
 				{
-					$$ = make3_str(make1_str("values("), $3, make1_str(")"));
+					$$ = cat_str(3, make_str("values("), $3, make_str(")"));
 				}
 		| DEFAULT VALUES
 				{
-					$$ = make1_str("default values");
+					$$ = make_str("default values");
 				}
 		| SelectStmt
 				{
@@ -2681,21 +2612,21 @@ insert_rest:  VALUES '(' target_list ')'
 				}
 		| '(' columnList ')' VALUES '(' target_list ')'
 				{
-					$$ = make5_str(make1_str("("), $2, make1_str(") values ("), $6, make1_str(")"));
+					$$ = cat_str(5, make_str("("), $2, make_str(") values ("), $6, make_str(")"));
 				}
 		| '(' columnList ')' SelectStmt
 				{
-					$$ = make4_str(make1_str("("), $2, make1_str(")"), $4);
+					$$ = cat_str(4, make_str("("), $2, make_str(")"), $4);
 				}
 		;
 
-opt_column_list:  '(' columnList ')'			{ $$ = make3_str(make1_str("("), $2, make1_str(")")); }
+opt_column_list:  '(' columnList ')'			{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
 columnList:
 		  columnList ',' columnElem
-				{ $$ = cat3_str($1, make1_str(","), $3); }
+				{ $$ = cat_str(3, $1, make_str(","), $3); }
 		| columnElem
 				{ $$ = $1; }
 		;
@@ -2717,28 +2648,28 @@ columnElem:  ColId opt_indirection
 DeleteStmt:  DELETE FROM relation_name
 			 where_clause
 				{
-					$$ = cat3_str(make1_str("delete from"), $3, $4);
+					$$ = cat_str(3, make_str("delete from"), $3, $4);
 				}
 		;
 
 LockStmt:  LOCK_P opt_table relation_name opt_lock
 				{
-					$$ = cat4_str(make1_str("lock"), $2, $3, $4);
+					$$ = cat_str(4, make_str("lock"), $2, $3, $4);
 				}
 		;
 
-opt_lock:  IN lock_type MODE            { $$ = cat3_str(make1_str("in"), $2, make1_str("mode")); }
+opt_lock:  IN lock_type MODE            { $$ = cat_str(3, make_str("in"), $2, make_str("mode")); }
                 | /*EMPTY*/             { $$ = EMPTY;}
                 ;
 
-lock_type:  SHARE ROW EXCLUSIVE 	{ $$ = make1_str("share row exclusive"); }
-                | ROW opt_lmode         { $$ = cat2_str(make1_str("row"), $2);}
-                | ACCESS opt_lmode      { $$ = cat2_str(make1_str("access"), $2);}
+lock_type:  SHARE ROW EXCLUSIVE 	{ $$ = make_str("share row exclusive"); }
+                | ROW opt_lmode         { $$ = cat2_str(make_str("row"), $2);}
+                | ACCESS opt_lmode      { $$ = cat2_str(make_str("access"), $2);}
                 | opt_lmode             { $$ = $1; }
                 ;
 
-opt_lmode:      SHARE                           { $$ = make1_str("share"); }
-                | EXCLUSIVE                     { $$ = make1_str("exclusive"); }
+opt_lmode:      SHARE                           { $$ = make_str("share"); }
+                | EXCLUSIVE                     { $$ = make_str("exclusive"); }
                 ;
 
 /*****************************************************************************
@@ -2753,7 +2684,7 @@ UpdateStmt:  UPDATE relation_name
 			  from_clause
 			  where_clause
 				{
-					$$ = cat2_str(cat5_str(make1_str("update"), $2, make1_str("set"), $4, $5), $6);
+					$$ = cat_str(6, make_str("update"), $2, make_str("set"), $4, $5, $6);
 				}
 		;
 
@@ -2786,21 +2717,21 @@ CursorStmt:  DECLARE name opt_cursor CURSOR FOR
 				        this->next = cur;
 				        this->name = $2;
 					this->connection = connection;
-				        this->command =  cat5_str(make1_str("declare"), mm_strdup($2), $3, make1_str("cursor for"), $7);
+				        this->command =  cat_str(5, make_str("declare"), mm_strdup($2), $3, make_str("cursor for"), $7);
 					this->argsinsert = argsinsert;
 					this->argsresult = argsresult;
 					argsinsert = argsresult = NULL;
 											
 			        	cur = this;
 					
-					$$ = cat3_str(make1_str("/*"), mm_strdup(this->command), make1_str("*/"));
+					$$ = cat_str(3, make_str("/*"), mm_strdup(this->command), make_str("*/"));
 				}
 		;
 
-opt_cursor:  BINARY             	{ $$ = make1_str("binary"); }
-               | INSENSITIVE		{ $$ = make1_str("insensitive"); }
-               | SCROLL        		{ $$ = make1_str("scroll"); }
-               | INSENSITIVE SCROLL	{ $$ = make1_str("insensitive scroll"); }
+opt_cursor:  BINARY             	{ $$ = make_str("binary"); }
+               | INSENSITIVE		{ $$ = make_str("insensitive"); }
+               | SCROLL        		{ $$ = make_str("scroll"); }
+               | INSENSITIVE SCROLL	{ $$ = make_str("insensitive scroll"); }
                | /*EMPTY*/      	{ $$ = EMPTY; }
                ;
 
@@ -2823,7 +2754,7 @@ SelectStmt:      select_clause sort_clause for_update_clause opt_select_limit
 							mmerror(ET_ERROR, "FOR UPDATE is not allowed in this context");
 
 					ForUpdateNotAllowed = 0;
-					$$ = cat4_str($1, $2, $3, $4);
+					$$ = cat_str(4, $1, $2, $3, $4);
 				}
 
 /* This rule parses Select statements including UNION INTERSECT and EXCEPT.
@@ -2835,7 +2766,7 @@ SelectStmt:      select_clause sort_clause for_update_clause opt_select_limit
  */
 select_clause: '(' select_clause ')'
                         {
-                                $$ = make3_str(make1_str("("), $2, make1_str(")")); 
+                                $$ = cat_str(3, make_str("("), $2, make_str(")")); 
                         }
                 | SubSelect
                         {
@@ -2844,17 +2775,17 @@ select_clause: '(' select_clause ')'
                         }
                 | select_clause EXCEPT select_clause
 			{
-				$$ = cat3_str($1, make1_str("except"), $3);
+				$$ = cat_str(3, $1, make_str("except"), $3);
 				ForUpdateNotAllowed = 1;
 			}
 		| select_clause UNION opt_all select_clause
 			{
-				$$ = cat4_str($1, make1_str("union"), $3, $4);
+				$$ = cat_str(4, $1, make_str("union"), $3, $4);
 				ForUpdateNotAllowed = 1;
 			}
 		| select_clause INTERSECT opt_all select_clause
 			{
-				$$ = cat3_str($1, make1_str("intersect"), $3);
+				$$ = cat_str(3, $1, make_str("intersect"), $3);
 				ForUpdateNotAllowed = 1;
 			}
 		;
@@ -2865,37 +2796,37 @@ SubSelect:     SELECT opt_unique target_list
 				{
 					if (strlen($7) > 0 || strlen($8) > 0)
 						ForUpdateNotAllowed = 1;
-					$$ = cat4_str(cat5_str(make1_str("select"), $2, $3, $4, $5), $6, $7, $8);
+					$$ = cat_str(8, make_str("select"), $2, $3, $4, $5, $6, $7, $8);
 				}
 		;
 
 result:  INTO OptTemp opt_table relation_name		{ FoundInto = 1;
-							  $$= cat4_str(make1_str("into"), $2, $3, $4);
+							  $$= cat_str(4, make_str("into"), $2, $3, $4);
 							}
 		| INTO into_list			{ $$ = EMPTY; }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
-opt_table:  TABLE					{ $$ = make1_str("table"); }
+opt_table:  TABLE					{ $$ = make_str("table"); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
-opt_all:  ALL						{ $$ = make1_str("all"); }
+opt_all:  ALL						{ $$ = make_str("all"); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
-opt_unique:  DISTINCT					{ $$ = make1_str("distinct"); }
-		| DISTINCT ON ColId			{ $$ = cat2_str(make1_str("distinct on"), $3); }
-		| ALL					{ $$ = make1_str("all"); }
+opt_unique:  DISTINCT					{ $$ = make_str("distinct"); }
+		| DISTINCT ON ColId			{ $$ = cat2_str(make_str("distinct on"), $3); }
+		| ALL					{ $$ = make_str("all"); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
-sort_clause:  ORDER BY sortby_list			{ $$ = cat2_str(make1_str("order by"), $3); }
+sort_clause:  ORDER BY sortby_list			{ $$ = cat2_str(make_str("order by"), $3); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
 sortby_list:  sortby					{ $$ = $1; }
-		| sortby_list ',' sortby		{ $$ = cat3_str($1, make1_str(","), $3); }
+		| sortby_list ',' sortby		{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
 sortby: a_expr OptUseOp
@@ -2904,28 +2835,28 @@ sortby: a_expr OptUseOp
                                 }
 		;
 
-OptUseOp:  USING all_Op				{ $$ = cat2_str(make1_str("using"), $2); }
-		| ASC				{ $$ = make1_str("asc"); }
-		| DESC				{ $$ = make1_str("desc"); }
+OptUseOp:  USING all_Op				{ $$ = cat2_str(make_str("using"), $2); }
+		| ASC				{ $$ = make_str("asc"); }
+		| DESC				{ $$ = make_str("desc"); }
 		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
 opt_select_limit:      LIMIT select_limit_value ',' select_offset_value
-                       { $$ = cat4_str(make1_str("limit"), $2, make1_str(","), $4); }
+                       { $$ = cat_str(4, make_str("limit"), $2, make_str(","), $4); }
                | LIMIT select_limit_value OFFSET select_offset_value
-                       { $$ = cat4_str(make1_str("limit"), $2, make1_str("offset"), $4); }
+                       { $$ = cat_str(4, make_str("limit"), $2, make_str("offset"), $4); }
                | LIMIT select_limit_value
-                       { $$ = cat2_str(make1_str("limit"), $2); }
+                       { $$ = cat2_str(make_str("limit"), $2); }
                | OFFSET select_offset_value LIMIT select_limit_value
-                       { $$ = cat4_str(make1_str("offset"), $2, make1_str("limit"), $4); }
+                       { $$ = cat_str(4, make_str("offset"), $2, make_str("limit"), $4); }
                | OFFSET select_offset_value
-                       { $$ = cat2_str(make1_str("offset"), $2); }
+                       { $$ = cat2_str(make_str("offset"), $2); }
                | /* EMPTY */
                        { $$ = EMPTY; }
                ;
 
 select_limit_value:	Iconst	{ $$ = $1; }
-	          	| ALL	{ $$ = make1_str("all"); }
+	          	| ALL	{ $$ = make_str("all"); }
 			| PARAM { $$ = make_name(); }
                ;
 
@@ -2940,7 +2871,7 @@ select_offset_value:  	Iconst	{ $$ = $1; }
  *	...however, recursive addattr and rename supported.  make special
  *	cases for these.
  */
-opt_inh_star:  '*'					{ $$ = make1_str("*"); }
+opt_inh_star:  '*'					{ $$ = make_str("*"); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
@@ -2949,27 +2880,27 @@ relation_name_list:  name_list { $$ = $1; };
 name_list:  name
 				{	$$ = $1; }
 		| name_list ',' name
-				{	$$ = cat3_str($1, make1_str(","), $3); }
+				{	$$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
-group_clause:  GROUP BY expr_list			{ $$ = cat2_str(make1_str("group by"), $3); }
+group_clause:  GROUP BY expr_list			{ $$ = cat2_str(make_str("group by"), $3); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
 having_clause:  HAVING a_expr
 				{
-					$$ = cat2_str(make1_str("having"), $2);
+					$$ = cat2_str(make_str("having"), $2);
 				}
 		| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
 for_update_clause:  FOR UPDATE update_list
 		{
-                	$$ = make1_str("for update"); 
+                	$$ = make_str("for update"); 
 		}
 		| FOR READ ONLY
 		{
-			$$ = make1_str("for read only");
+			$$ = make_str("for read only");
 		}
 		| /* EMPTY */
                 {
@@ -2978,7 +2909,7 @@ for_update_clause:  FOR UPDATE update_list
                 ;
 update_list:  OF va_list
               {
-			$$ = cat2_str(make1_str("of"), $2);
+			$$ = cat2_str(make_str("of"), $2);
 	      }
               | /* EMPTY */
               {
@@ -2996,7 +2927,7 @@ update_list:  OF va_list
 
 from_clause:  FROM from_expr
 		{
-			$$ = cat2_str(make1_str("from"), $2);
+			$$ = cat2_str(make_str("from"), $2);
 		}
 		| /* EMPTY */
 		{
@@ -3005,7 +2936,7 @@ from_clause:  FROM from_expr
 
 
 from_expr:  '(' join_clause_with_union ')'
-                                { $$ = make3_str(make1_str("("), $2, make1_str(")")); }
+                                { $$ = cat_str(3, make_str("("), $2, make_str(")")); }
                 | join_clause
                                 { $$ = $1; }
                 | table_list
@@ -3013,14 +2944,14 @@ from_expr:  '(' join_clause_with_union ')'
                 ;
 
 table_list:  table_list ',' table_expr
-                                { $$ = make3_str($1, make1_str(","), $3); }
+                                { $$ = cat_str(3, $1, make_str(","), $3); }
                 | table_expr
                                 { $$ = $1; }
                 ;
 
 table_expr:  relation_expr AS ColLabel
                                 {
-                                        $$ = cat3_str($1, make1_str("as"), $3);
+                                        $$ = cat_str(3, $1, make_str("as"), $3);
                                 }
                 | relation_expr ColId
                                 {
@@ -3067,40 +2998,40 @@ join_list:  join_list join_expr
 
 join_expr:  join_type JOIN table_expr join_qual
                                 {
-					$$ = cat4_str($1, make1_str("join"), $3, $4);
+					$$ = cat_str(4, $1, make_str("join"), $3, $4);
                                 }
                 | NATURAL join_type JOIN table_expr
                                 {
-					$$ = cat4_str(make1_str("natural"), $2, make1_str("join"), $4);
+					$$ = cat_str(4, make_str("natural"), $2, make_str("join"), $4);
                                 }
                 | CROSS JOIN table_expr
-                                { 	$$ = cat2_str(make1_str("cross join"), $3); }
+                                { 	$$ = cat2_str(make_str("cross join"), $3); }
                 ;
 
 /* OUTER is just noise... */
 join_type:  FULL join_outer
                                 {
-                                        $$ = cat2_str(make1_str("full"), $2);
+                                        $$ = cat2_str(make_str("full"), $2);
 					mmerror(ET_WARN, "FULL OUTER JOIN not yet implemented");
                                 }
                 | LEFT join_outer
                                 {
-                                        $$ = cat2_str(make1_str("left"), $2);
+                                        $$ = cat2_str(make_str("left"), $2);
 					mmerror(ET_WARN, "LEFT OUTER JOIN not yet implemented");
                                 }
                 | RIGHT join_outer
                                 {
-                                        $$ = cat2_str(make1_str("right"), $2);
+                                        $$ = cat2_str(make_str("right"), $2);
 					mmerror(ET_WARN, "RIGHT OUTER JOIN not yet implemented");
                                 }
                 | OUTER_P
                                 {
-                                        $$ = make1_str("outer");
+                                        $$ = make_str("outer");
 					mmerror(ET_WARN, "OUTER JOIN not yet implemented");
                                 }
                 | INNER_P
                                 {
-                                        $$ = make1_str("inner");
+                                        $$ = make_str("inner");
 				}
                 | /* EMPTY */
                                 {
@@ -3108,7 +3039,7 @@ join_type:  FULL join_outer
 				}
 
 
-join_outer:  OUTER_P				{ $$ = make1_str("outer"); }
+join_outer:  OUTER_P				{ $$ = make_str("outer"); }
 		| /*EMPTY*/			{ $$ = EMPTY;  /* no qualifiers */ }
 		;
 
@@ -3120,11 +3051,11 @@ join_outer:  OUTER_P				{ $$ = make1_str("outer"); }
  * - thomas 1999-01-07
  */
 
-join_qual:  USING '(' using_list ')'                   { $$ = make3_str(make1_str("using ("), $3, make1_str(")")); }
-               | ON a_expr			       { $$ = cat2_str(make1_str("on"), $2); }
+join_qual:  USING '(' using_list ')'                   { $$ = cat_str(3, make_str("using ("), $3, make_str(")")); }
+               | ON a_expr			       { $$ = cat2_str(make_str("on"), $2); }
                 ;
 
-using_list:  using_list ',' using_expr                  { $$ = make3_str($1, make1_str(","), $3); }
+using_list:  using_list ',' using_expr                  { $$ = cat_str(3, $1, make_str(","), $3); }
                | using_expr				{ $$ = $1; }
                ;
 
@@ -3134,7 +3065,7 @@ using_expr:  ColId
 				}
 		;
 
-where_clause:  WHERE a_expr			{ $$ = cat2_str(make1_str("where"), $2); }
+where_clause:  WHERE a_expr			{ $$ = cat2_str(make_str("where"), $2); }
 		| /*EMPTY*/				{ $$ = EMPTY;  /* no qualifiers */ }
 		;
 
@@ -3146,14 +3077,14 @@ relation_expr:	relation_name
 		| relation_name '*'				  %prec '='
 				{
 					/* inheritance query */
-					$$ = cat2_str($1, make1_str("*"));
+					$$ = cat2_str($1, make_str("*"));
 				}
 
 opt_array_bounds:  '[' ']' opt_array_bounds
 			{
                             $$.index1 = 0;
                             $$.index2 = $3.index1;
-                            $$.str = cat2_str(make1_str("[]"), $3.str);
+                            $$.str = cat2_str(make_str("[]"), $3.str);
                         }
 		| '[' Iresult ']' opt_array_bounds
 			{
@@ -3162,7 +3093,7 @@ opt_array_bounds:  '[' ']' opt_array_bounds
 			    sprintf (txt, "%d", $2);
                             $$.index1 = $2;
                             $$.index2 = $4.index1;
-                            $$.str = cat4_str(make1_str("["), txt, make1_str("]"), $4.str);
+                            $$.str = cat_str(4, make_str("["), txt, make_str("]"), $4.str);
                         }
 		| /* EMPTY */
 			{
@@ -3198,7 +3129,7 @@ Typename:  SimpleTypename opt_array_bounds
 				}
 		| SETOF SimpleTypename
 				{
-					$$ = cat2_str(make1_str("setof"), $2);
+					$$ = cat2_str(make_str("setof"), $2);
 				}
 		;
 
@@ -3215,39 +3146,39 @@ Generic:  generic
 		;
 
 generic:  ident					{ $$ = $1; }
-		| TYPE_P			{ $$ = make1_str("type"); }
-		| SQL_AT			{ $$ = make1_str("at"); }
-		| SQL_AUTOCOMMIT		{ $$ = make1_str("autocommit"); }
-		| SQL_BOOL			{ $$ = make1_str("bool"); }
-		| SQL_BREAK			{ $$ = make1_str("break"); }
-		| SQL_CALL			{ $$ = make1_str("call"); }
-		| SQL_CONNECT			{ $$ = make1_str("connect"); }
-		| SQL_CONNECTION		{ $$ = make1_str("connection"); }
-		| SQL_CONTINUE			{ $$ = make1_str("continue"); }
-		| SQL_DEALLOCATE		{ $$ = make1_str("deallocate"); }
-		| SQL_DISCONNECT		{ $$ = make1_str("disconnect"); }
-		| SQL_FOUND			{ $$ = make1_str("found"); }
-		| SQL_GO			{ $$ = make1_str("go"); }
-		| SQL_GOTO			{ $$ = make1_str("goto"); }
-		| SQL_IDENTIFIED		{ $$ = make1_str("identified"); }
-		| SQL_INDICATOR			{ $$ = make1_str("indicator"); }
-		| SQL_INT			{ $$ = make1_str("int"); }
-		| SQL_LONG			{ $$ = make1_str("long"); }
-		| SQL_OFF			{ $$ = make1_str("off"); }
-		| SQL_OPEN			{ $$ = make1_str("open"); }
-		| SQL_PREPARE			{ $$ = make1_str("prepare"); }
-		| SQL_RELEASE			{ $$ = make1_str("release"); }
-		| SQL_SECTION			{ $$ = make1_str("section"); }
-		| SQL_SHORT			{ $$ = make1_str("short"); }
-		| SQL_SIGNED			{ $$ = make1_str("signed"); }
-		| SQL_SQLERROR			{ $$ = make1_str("sqlerror"); }
-		| SQL_SQLPRINT			{ $$ = make1_str("sqlprint"); }
-		| SQL_SQLWARNING		{ $$ = make1_str("sqlwarning"); }
-		| SQL_STOP			{ $$ = make1_str("stop"); }
-		| SQL_STRUCT			{ $$ = make1_str("struct"); }
-		| SQL_UNSIGNED			{ $$ = make1_str("unsigned"); }
-		| SQL_VAR			{ $$ = make1_str("var"); }
-		| SQL_WHENEVER			{ $$ = make1_str("whenever"); }
+		| TYPE_P			{ $$ = make_str("type"); }
+		| SQL_AT			{ $$ = make_str("at"); }
+		| SQL_AUTOCOMMIT		{ $$ = make_str("autocommit"); }
+		| SQL_BOOL			{ $$ = make_str("bool"); }
+		| SQL_BREAK			{ $$ = make_str("break"); }
+		| SQL_CALL			{ $$ = make_str("call"); }
+		| SQL_CONNECT			{ $$ = make_str("connect"); }
+		| SQL_CONNECTION		{ $$ = make_str("connection"); }
+		| SQL_CONTINUE			{ $$ = make_str("continue"); }
+		| SQL_DEALLOCATE		{ $$ = make_str("deallocate"); }
+		| SQL_DISCONNECT		{ $$ = make_str("disconnect"); }
+		| SQL_FOUND			{ $$ = make_str("found"); }
+		| SQL_GO			{ $$ = make_str("go"); }
+		| SQL_GOTO			{ $$ = make_str("goto"); }
+		| SQL_IDENTIFIED		{ $$ = make_str("identified"); }
+		| SQL_INDICATOR			{ $$ = make_str("indicator"); }
+		| SQL_INT			{ $$ = make_str("int"); }
+		| SQL_LONG			{ $$ = make_str("long"); }
+		| SQL_OFF			{ $$ = make_str("off"); }
+		| SQL_OPEN			{ $$ = make_str("open"); }
+		| SQL_PREPARE			{ $$ = make_str("prepare"); }
+		| SQL_RELEASE			{ $$ = make_str("release"); }
+		| SQL_SECTION			{ $$ = make_str("section"); }
+		| SQL_SHORT			{ $$ = make_str("short"); }
+		| SQL_SIGNED			{ $$ = make_str("signed"); }
+		| SQL_SQLERROR			{ $$ = make_str("sqlerror"); }
+		| SQL_SQLPRINT			{ $$ = make_str("sqlprint"); }
+		| SQL_SQLWARNING		{ $$ = make_str("sqlwarning"); }
+		| SQL_STOP			{ $$ = make_str("stop"); }
+		| SQL_STRUCT			{ $$ = make_str("struct"); }
+		| SQL_UNSIGNED			{ $$ = make_str("unsigned"); }
+		| SQL_VAR			{ $$ = make_str("var"); }
+		| SQL_WHENEVER			{ $$ = make_str("whenever"); }
 		;
 
 /* SQL92 numeric data types
@@ -3257,30 +3188,30 @@ generic:  ident					{ $$ = $1; }
  */
 Numeric:  FLOAT opt_float
 				{
-					$$ = cat2_str(make1_str("float"), $2);
+					$$ = cat2_str(make_str("float"), $2);
 				}
 		| DOUBLE PRECISION
 				{
-					$$ = make1_str("double precision");
+					$$ = make_str("double precision");
 				}
 		| DECIMAL opt_decimal
 				{
-					$$ = cat2_str(make1_str("decimal"), $2);
+					$$ = cat2_str(make_str("decimal"), $2);
 				}
 		| NUMERIC opt_numeric
 				{
-					$$ = cat2_str(make1_str("numeric"), $2);
+					$$ = cat2_str(make_str("numeric"), $2);
 				}
 		;
 
 numeric:  FLOAT
-				{	$$ = make1_str("float"); }
+				{	$$ = make_str("float"); }
 		| DOUBLE PRECISION
-				{	$$ = make1_str("double precision"); }
+				{	$$ = make_str("double precision"); }
 		| DECIMAL
-				{	$$ = make1_str("decimal"); }
+				{	$$ = make_str("decimal"); }
 		| NUMERIC
-				{	$$ = make1_str("numeric"); }
+				{	$$ = make_str("numeric"); }
 		;
 
 opt_float:  '(' Iconst ')'
@@ -3289,7 +3220,7 @@ opt_float:  '(' Iconst ')'
 						mmerror(ET_ERROR, "precision for FLOAT must be at least 1");
 					else if (atol($2) >= 16)
 						mmerror(ET_ERROR, "precision for FLOAT must be less than 16");
-					$$ = make3_str(make1_str("("), $2, make1_str(")"));
+					$$ = cat_str(3, make_str("("), $2, make_str(")"));
 				}
 		| /*EMPTY*/
 				{
@@ -3307,7 +3238,7 @@ opt_numeric:  '(' Iconst ',' Iconst ')'
 						sprintf(errortext, "NUMERIC scale %s must be between 0 and precision %s", $4, $2);
 						mmerror(ET_ERROR, errortext);
 					}
-					$$ = cat3_str(make2_str(make1_str("("), $2), make1_str(","), make2_str($4, make1_str(")")));
+					$$ = cat_str(5, make_str("("), $2, make_str(","), $4, make_str(")"));
 				}
 		| '(' Iconst ')'
 				{
@@ -3315,7 +3246,7 @@ opt_numeric:  '(' Iconst ',' Iconst ')'
 						sprintf(errortext, "NUMERIC precision %s must be between 1 and %d", $2, NUMERIC_MAX_PRECISION);
 						mmerror(ET_ERROR, errortext);
 					}
-					$$ = make3_str(make1_str("("), $2, make1_str(")"));
+					$$ = cat_str(3, make_str("("), $2, make_str(")"));
 				}
 		| /*EMPTY*/
 				{
@@ -3333,7 +3264,7 @@ opt_decimal:  '(' Iconst ',' Iconst ')'
 						sprintf(errortext, "NUMERIC scale %s must be between 0 and precision %s", $4, $2);
 						mmerror(ET_ERROR, errortext);
 					}
-					$$ = cat3_str(make2_str(make1_str("("), $2), make1_str(","), make2_str($4, make1_str(")")));
+					$$ = cat_str(5, make_str("("), $2, make_str(","), $4, make_str(")"));
 				}
 		| '(' Iconst ')'
 				{
@@ -3341,7 +3272,7 @@ opt_decimal:  '(' Iconst ',' Iconst ')'
 						sprintf(errortext, "NUMERIC precision %s must be between 1 and %d", $2, NUMERIC_MAX_PRECISION);
 						mmerror(ET_ERROR, errortext);
 					}
-					$$ = make3_str(make1_str("("), $2, make1_str(")"));
+					$$ = cat_str(3, make_str("("), $2, make_str(")"));
 				}
 		| /*EMPTY*/
 				{
@@ -3368,7 +3299,7 @@ Character:  character '(' Iconst ')'
 						mmerror(ET_ERROR, errortext);
 					}
 
-					$$ = cat2_str($1, make3_str(make1_str("("), $3, make1_str(")")));
+					$$ = cat_str(4, $1, make_str("("), $3, make_str(")"));
 				}
 		| character
 				{
@@ -3384,23 +3315,23 @@ character:  CHARACTER opt_varying opt_charset opt_collate
 						mmerror(ET_WARN, errortext);
 					}
 
-					$$ = cat4_str(make1_str("character"), $2, $3, $4);
+					$$ = cat_str(4, make_str("character"), $2, $3, $4);
 				}
-		| CHAR opt_varying	{ $$ = cat2_str(make1_str("char"), $2); }
-		| VARCHAR		{ $$ = make1_str("varchar"); }
-		| NATIONAL CHARACTER opt_varying { $$ = cat2_str(make1_str("national character"), $3); }
-		| NCHAR opt_varying		{ $$ = cat2_str(make1_str("nchar"), $2); }
+		| CHAR opt_varying	{ $$ = cat2_str(make_str("char"), $2); }
+		| VARCHAR		{ $$ = make_str("varchar"); }
+		| NATIONAL CHARACTER opt_varying { $$ = cat2_str(make_str("national character"), $3); }
+		| NCHAR opt_varying		{ $$ = cat2_str(make_str("nchar"), $2); }
 		;
 
-opt_varying:  VARYING			{ $$ = make1_str("varying"); }
+opt_varying:  VARYING			{ $$ = make_str("varying"); }
 		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
-opt_charset:  CHARACTER SET ColId	{ $$ = cat2_str(make1_str("character set"), $3); }
+opt_charset:  CHARACTER SET ColId	{ $$ = cat2_str(make_str("character set"), $3); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
-opt_collate:  COLLATE ColId		{ $$ = cat2_str(make1_str("collate"), $2); }
+opt_collate:  COLLATE ColId		{ $$ = cat2_str(make_str("collate"), $2); }
 		| /*EMPTY*/					{ $$ = EMPTY; }
 		;
 
@@ -3410,38 +3341,38 @@ Datetime:  datetime
 				}
 		| TIMESTAMP opt_timezone
 				{
-					$$ = cat2_str(make1_str("timestamp"), $2);
+					$$ = cat2_str(make_str("timestamp"), $2);
 				}
 		| TIME
 				{
-					$$ = make1_str("time");
+					$$ = make_str("time");
 				}
 		| INTERVAL opt_interval
 				{
-					$$ = cat2_str(make1_str("interval"), $2);
+					$$ = cat2_str(make_str("interval"), $2);
 				}
 		;
 
-datetime:  YEAR_P								{ $$ = make1_str("year"); }
-		| MONTH_P								{ $$ = make1_str("month"); }
-		| DAY_P									{ $$ = make1_str("day"); }
-		| HOUR_P								{ $$ = make1_str("hour"); }
-		| MINUTE_P								{ $$ = make1_str("minute"); }
-		| SECOND_P								{ $$ = make1_str("second"); }
+datetime:  YEAR_P								{ $$ = make_str("year"); }
+		| MONTH_P								{ $$ = make_str("month"); }
+		| DAY_P									{ $$ = make_str("day"); }
+		| HOUR_P								{ $$ = make_str("hour"); }
+		| MINUTE_P								{ $$ = make_str("minute"); }
+		| SECOND_P								{ $$ = make_str("second"); }
 		;
 
-opt_timezone:  WITH TIME ZONE				{ $$ = make1_str("with time zone"); }
+opt_timezone:  WITH TIME ZONE				{ $$ = make_str("with time zone"); }
 		| /*EMPTY*/					{ $$ = EMPTY; }
 		;
 
 opt_interval:  datetime					{ $$ = $1; }
-		| YEAR_P TO MONTH_P			{ $$ = make1_str("year to #month"); }
-		| DAY_P TO HOUR_P			{ $$ = make1_str("day to hour"); }
-		| DAY_P TO MINUTE_P			{ $$ = make1_str("day to minute"); }
-		| DAY_P TO SECOND_P			{ $$ = make1_str("day to second"); }
-		| HOUR_P TO MINUTE_P			{ $$ = make1_str("hour to minute"); }
-		| MINUTE_P TO SECOND_P			{ $$ = make1_str("minute to second"); }
-		| HOUR_P TO SECOND_P			{ $$ = make1_str("hour to second"); }
+		| YEAR_P TO MONTH_P			{ $$ = make_str("year to #month"); }
+		| DAY_P TO HOUR_P			{ $$ = make_str("day to hour"); }
+		| DAY_P TO MINUTE_P			{ $$ = make_str("day to minute"); }
+		| DAY_P TO SECOND_P			{ $$ = make_str("day to second"); }
+		| HOUR_P TO MINUTE_P			{ $$ = make_str("hour to minute"); }
+		| MINUTE_P TO SECOND_P			{ $$ = make_str("minute to second"); }
+		| HOUR_P TO SECOND_P			{ $$ = make_str("hour to second"); }
 		| /*EMPTY*/					{ $$ = EMPTY; }
 		;
 
@@ -3456,7 +3387,7 @@ a_expr_or_null:  a_expr
 				{ $$ = $1; }
 		| NULL_P
 				{
-					$$ = make1_str("null");
+					$$ = make_str("null");
 				}
 		;
 
@@ -3466,40 +3397,40 @@ a_expr_or_null:  a_expr
  */
 row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 				{
-					$$ = make5_str(make1_str("("), $2, make1_str(") in ("), $6, make1_str(")"));
+					$$ = cat_str(5, make_str("("), $2, make_str(") in ("), $6, make_str(")"));
 				}
 		| '(' row_descriptor ')' NOT IN '(' SubSelect ')'
 				{
-					$$ = make5_str(make1_str("("), $2, make1_str(") not in ("), $7, make1_str(")"));
+					$$ = cat_str(5, make_str("("), $2, make_str(") not in ("), $7, make_str(")"));
 				}
 		| '(' row_descriptor ')' all_Op sub_type  '(' SubSelect ')'
 				{
-					$$ = make4_str(make5_str(make1_str("("), $2, make1_str(")"), $4, $5), make1_str("("), $7, make1_str(")"));
+					$$ = cat_str(8, make_str("("), $2, make_str(")"), $4, $5, make_str("("), $7, make_str(")"));
 				}
 		| '(' row_descriptor ')' all_Op '(' SubSelect ')'
 				{
-					$$ = make3_str(make5_str(make1_str("("), $2, make1_str(")"), $4, make1_str("(")), $6, make1_str(")"));
+					$$ = cat_str(7, make_str("("), $2, make_str(")"), $4, make_str("("), $6, make_str(")"));
 				}
 		| '(' row_descriptor ')' all_Op '(' row_descriptor ')'
 				{
-					$$ = cat3_str(make3_str(make1_str("("), $2, make1_str(")")), $4, make3_str(make1_str("("), $6, make1_str(")")));
+					$$ = cat_str(7, make_str("("), $2, make_str(")"), $4, make_str("("), $6, make_str(")"));
 				}
 		;
 
 row_descriptor:  row_list ',' a_expr
 				{
-					$$ = cat3_str($1, make1_str(","), $3);
+					$$ = cat_str(3, $1, make_str(","), $3);
 				}
 		;
 
-sub_type:  ANY                  { $$ = make1_str("ANY"); }
-         | ALL                  { $$ = make1_str("ALL"); }
+sub_type:  ANY                  { $$ = make_str("ANY"); }
+         | ALL                  { $$ = make_str("ALL"); }
               ;
 
 
 row_list:  row_list ',' a_expr
 				{
-					$$ = cat3_str($1, make1_str(","), $3);
+					$$ = cat_str(3, $1, make_str(","), $3);
 				}
 		| a_expr
 				{
@@ -3509,16 +3440,16 @@ row_list:  row_list ',' a_expr
 
 all_Op:  Op | MathOp;
 
-MathOp:	'+'				{ $$ = make1_str("+"); }
-		| '-'			{ $$ = make1_str("-"); }
-		| '*'			{ $$ = make1_str("*"); }
-		| '%'			{ $$ = make1_str("%"); }
-                | '^'                   { $$ = make1_str("^"); }
-                | '|'                   { $$ = make1_str("|"); }
-		| '/'			{ $$ = make1_str("/"); }
-		| '<'			{ $$ = make1_str("<"); }
-		| '>'			{ $$ = make1_str(">"); }
-		| '='			{ $$ = make1_str("="); }
+MathOp:	'+'				{ $$ = make_str("+"); }
+		| '-'			{ $$ = make_str("-"); }
+		| '*'			{ $$ = make_str("*"); }
+		| '%'			{ $$ = make_str("%"); }
+                | '^'                   { $$ = make_str("^"); }
+                | '|'                   { $$ = make_str("|"); }
+		| '/'			{ $$ = make_str("/"); }
+		| '<'			{ $$ = make_str("<"); }
+		| '>'			{ $$ = make_str(">"); }
+		| '='			{ $$ = make_str("="); }
 		;
 
 /* General expressions
@@ -3540,7 +3471,15 @@ MathOp:	'+'				{ $$ = make1_str("+"); }
 a_expr:  com_expr
 				{	$$ = $1; }
 		| a_expr TYPECAST Typename
-				{	$$ = cat3_str($1, make1_str("::"), $3); }
+				{	$$ = cat_str(3, $1, make_str("::"), $3); }
+		 /*
+                 * Can't collapse this into prior rule by using a_expr_or_null;
+                 * that creates reduce/reduce conflicts.  Grumble.
+                 */
+                | NULL_P TYPECAST Typename
+                                {
+					$$ = cat2_str(make_str("null::"), $3);
+                                }
 		/*
                  * These operators must be called out explicitly in order to make use
                  * of yacc/bison's automatic operator-precedence handling.  All other
@@ -3551,110 +3490,110 @@ a_expr:  com_expr
                  * also to b_expr and to the MathOp list above.
                  */
 		| '-' a_expr %prec UMINUS
-				{	$$ = cat2_str(make1_str("-"), $2); }
+				{	$$ = cat2_str(make_str("-"), $2); }
 		| '%' a_expr
-				{       $$ = cat2_str(make1_str("%"), $2); }
+				{       $$ = cat2_str(make_str("%"), $2); }
 		| '^' a_expr
-				{       $$ = cat2_str(make1_str("^"), $2); }
+				{       $$ = cat2_str(make_str("^"), $2); }
 		| '|' a_expr
-				{       $$ = cat2_str(make1_str("|"), $2); }
+				{       $$ = cat2_str(make_str("|"), $2); }
 /* not possible in embedded sql		| ':' a_expr	
-				{       $$ = cat2_str(make1_str(":"), $2); }
+				{       $$ = cat2_str(make_str(":"), $2); }
 */
 		| ';' a_expr
-				{       $$ = cat2_str(make1_str(";"), $2); }
+				{       $$ = cat2_str(make_str(";"), $2); }
 		| a_expr '%'
-				{       $$ = cat2_str($1, make1_str("%")); }
+				{       $$ = cat2_str($1, make_str("%")); }
 		| a_expr '^'
-				{       $$ = cat2_str($1, make1_str("^")); }
+				{       $$ = cat2_str($1, make_str("^")); }
 		| a_expr '|'
-				{       $$ = cat2_str($1, make1_str("|")); }
+				{       $$ = cat2_str($1, make_str("|")); }
 		| a_expr '+' a_expr
-				{	$$ = cat3_str($1, make1_str("+"), $3); }
+				{	$$ = cat_str(3, $1, make_str("+"), $3); }
 		| a_expr '-' a_expr
-				{	$$ = cat3_str($1, make1_str("-"), $3); }
+				{	$$ = cat_str(3, $1, make_str("-"), $3); }
 		| a_expr '*' a_expr
-				{	$$ = cat3_str($1, make1_str("*"), $3); }
+				{	$$ = cat_str(3, $1, make_str("*"), $3); }
 		| a_expr '/' a_expr
-				{	$$ = cat3_str($1, make1_str("/"), $3); }
+				{	$$ = cat_str(3, $1, make_str("/"), $3); }
 		| a_expr '%' a_expr
-				{	$$ = cat3_str($1, make1_str("%"), $3); }
+				{	$$ = cat_str(3, $1, make_str("%"), $3); }
 		| a_expr '^' a_expr
-				{	$$ = cat3_str($1, make1_str("^"), $3); }
+				{	$$ = cat_str(3, $1, make_str("^"), $3); }
 		| a_expr '|' a_expr
-				{	$$ = cat3_str($1, make1_str("|"), $3); }
+				{	$$ = cat_str(3, $1, make_str("|"), $3); }
 		| a_expr '<' a_expr
-				{	$$ = cat3_str($1, make1_str("<"), $3); }
+				{	$$ = cat_str(3, $1, make_str("<"), $3); }
 		| a_expr '>' a_expr
-				{	$$ = cat3_str($1, make1_str(">"), $3); }
+				{	$$ = cat_str(3, $1, make_str(">"), $3); }
 		| a_expr '=' NULL_P
-                                {       $$ = cat2_str($1, make1_str("= NULL")); }
+                                {       $$ = cat2_str($1, make_str("= NULL")); }
 		/* We allow this for standards-broken SQL products, like MS stuff */
 		| NULL_P '=' a_expr
-                                {       $$ = cat2_str(make1_str("= NULL"), $3); }
+                                {       $$ = cat2_str(make_str("= NULL"), $3); }
 		| a_expr '=' a_expr
-				{	$$ = cat3_str($1, make1_str("="), $3); }
+				{	$$ = cat_str(3, $1, make_str("="), $3); }
 		| a_expr Op a_expr
-				{	$$ = cat3_str($1, make1_str("="), $3); }
+				{	$$ = cat_str(3, $1, $2, $3); }
 		| Op a_expr
 				{	$$ = cat2_str($1, $2); }
 		| a_expr Op
 				{	$$ = cat2_str($1, $2); }
 		| a_expr AND a_expr
-				{	$$ = cat3_str($1, make1_str("and"), $3); }
+				{	$$ = cat_str(3, $1, make_str("and"), $3); }
 		| a_expr OR a_expr
-				{	$$ = cat3_str($1, make1_str("or"), $3); }
+				{	$$ = cat_str(3, $1, make_str("or"), $3); }
 		| NOT a_expr
-				{	$$ = cat2_str(make1_str("not"), $2); }
+				{	$$ = cat2_str(make_str("not"), $2); }
 		| a_expr LIKE a_expr
-				{	$$ = cat3_str($1, make1_str("like"), $3); }
+				{	$$ = cat_str(3, $1, make_str("like"), $3); }
 		| a_expr NOT LIKE a_expr
-				{	$$ = cat3_str($1, make1_str("not like"), $4); }
+				{	$$ = cat_str(3, $1, make_str("not like"), $4); }
 		| a_expr ISNULL
-				{	$$ = cat2_str($1, make1_str("isnull")); }
+				{	$$ = cat2_str($1, make_str("isnull")); }
 		| a_expr IS NULL_P
-				{	$$ = cat2_str($1, make1_str("is null")); }
+				{	$$ = cat2_str($1, make_str("is null")); }
 		| a_expr NOTNULL
-				{	$$ = cat2_str($1, make1_str("notnull")); }
+				{	$$ = cat2_str($1, make_str("notnull")); }
 		| a_expr IS NOT NULL_P
-				{	$$ = cat2_str($1, make1_str("is not null")); }
+				{	$$ = cat2_str($1, make_str("is not null")); }
 		/* IS TRUE, IS FALSE, etc used to be function calls
 		 *  but let's make them expressions to allow the optimizer
 		 *  a chance to eliminate them if a_expr is a constant string.
 		 * - thomas 1997-12-22
 		 */
 		| a_expr IS TRUE_P
-				{	$$ = cat2_str($1, make1_str("is true")); }
+				{	$$ = cat2_str($1, make_str("is true")); }
 		| a_expr IS NOT FALSE_P
-				{	$$ = cat2_str($1, make1_str("is not false")); }
+				{	$$ = cat2_str($1, make_str("is not false")); }
 		| a_expr IS FALSE_P
-				{	$$ = cat2_str($1, make1_str("is false")); }
+				{	$$ = cat2_str($1, make_str("is false")); }
 		| a_expr IS NOT TRUE_P
-				{	$$ = cat2_str($1, make1_str("is not true")); }
+				{	$$ = cat2_str($1, make_str("is not true")); }
 		| a_expr BETWEEN b_expr AND b_expr
 				{
-					$$ = cat5_str($1, make1_str("between"), $3, make1_str("and"), $5); 
+					$$ = cat_str(5, $1, make_str("between"), $3, make_str("and"), $5); 
 				}
 		| a_expr NOT BETWEEN b_expr AND b_expr
 				{
-					$$ = cat5_str($1, make1_str("not between"), $4, make1_str("and"), $6); 
+					$$ = cat_str(5, $1, make_str("not between"), $4, make_str("and"), $6); 
 				}
 		| a_expr IN '(' in_expr ')'
 				{
-					$$ = make4_str($1, make1_str(" in ("), $4, make1_str(")")); 
+					$$ = cat_str(4, $1, make_str(" in ("), $4, make_str(")")); 
 				}
 		| a_expr NOT IN '(' in_expr ')'
 				{
-					$$ = make4_str($1, make1_str(" not in ("), $5, make1_str(")")); 
+					$$ = cat_str(4, $1, make_str(" not in ("), $5, make_str(")")); 
 				}
 		| a_expr all_Op sub_type '(' SubSelect ')'
 				{
-					$$ = cat4_str($1, $2, $3, make3_str(make1_str("("), $5, make1_str(")"))); 
+					$$ = cat_str(6, $1, $2, $3, make_str("("), $5, make_str(")")); 
 				}
 		| row_expr
 				{       $$ = $1; }
 		| cinputvariable
-			        { $$ = make1_str("?"); }
+			        { $$ = make_str("?"); }
 		;
 
 /* Restricted expressions
@@ -3671,49 +3610,53 @@ b_expr:  com_expr
 				}
 		| b_expr TYPECAST Typename
 				{
-					$$ = cat3_str($1, make1_str("::"), $3);
+					$$ = cat_str(3, $1, make_str("::"), $3);
 				}
+                | NULL_P TYPECAST Typename
+                                {
+					$$ = cat2_str(make_str("null::"), $3);
+                                }
 		| '-' b_expr %prec UMINUS
-				{	$$ = cat2_str(make1_str("-"), $2); }
+				{	$$ = cat2_str(make_str("-"), $2); }
 		| '%' b_expr
-				{       $$ = cat2_str(make1_str("%"), $2); }
+				{       $$ = cat2_str(make_str("%"), $2); }
 		| '^' b_expr
-				{       $$ = cat2_str(make1_str("^"), $2); }
+				{       $$ = cat2_str(make_str("^"), $2); }
 		| '|' b_expr
-				{       $$ = cat2_str(make1_str("|"), $2); }
+				{       $$ = cat2_str(make_str("|"), $2); }
 /* not possible in embedded sql		| ':' b_expr	
-				{       $$ = cat2_str(make1_str(":"), $2); }
+				{       $$ = cat2_str(make_str(":"), $2); }
 */
 		| ';' b_expr
-				{       $$ = cat2_str(make1_str(";"), $2); }
+				{       $$ = cat2_str(make_str(";"), $2); }
 		| b_expr '%'
-				{       $$ = cat2_str($1, make1_str("%")); }
+				{       $$ = cat2_str($1, make_str("%")); }
 		| b_expr '^'
-				{       $$ = cat2_str($1, make1_str("^")); }
+				{       $$ = cat2_str($1, make_str("^")); }
 		| b_expr '|'
-				{       $$ = cat2_str($1, make1_str("|")); }
+				{       $$ = cat2_str($1, make_str("|")); }
 		| b_expr '+' b_expr
-				{	$$ = cat3_str($1, make1_str("+"), $3); }
+				{	$$ = cat_str(3, $1, make_str("+"), $3); }
 		| b_expr '-' b_expr
-				{	$$ = cat3_str($1, make1_str("-"), $3); }
+				{	$$ = cat_str(3, $1, make_str("-"), $3); }
 		| b_expr '*' b_expr
-				{	$$ = cat3_str($1, make1_str("*"), $3); }
+				{	$$ = cat_str(3, $1, make_str("*"), $3); }
 		| b_expr '/' b_expr
-				{	$$ = cat3_str($1, make1_str("/"), $3); }
+				{	$$ = cat_str(3, $1, make_str("/"), $3); }
 		| b_expr '%' b_expr
-				{	$$ = cat3_str($1, make1_str("%"), $3); }
+				{	$$ = cat_str(3, $1, make_str("%"), $3); }
 		| b_expr '^' b_expr
-				{	$$ = cat3_str($1, make1_str("^"), $3); }
+				{	$$ = cat_str(3, $1, make_str("^"), $3); }
 		| b_expr '|' b_expr
-				{	$$ = cat3_str($1, make1_str("|"), $3); }
+				{	$$ = cat_str(3, $1, make_str("|"), $3); }
 		| b_expr '<' b_expr
-				{	$$ = cat3_str($1, make1_str("<"), $3); }
+				{	$$ = cat_str(3, $1, make_str("<"), $3); }
 		| b_expr '>' b_expr
-				{	$$ = cat3_str($1, make1_str(">"), $3); }
+				{	$$ = cat_str(3, $1, make_str(">"), $3); }
 		| b_expr '=' b_expr
-				{	$$ = cat3_str($1, make1_str("="), $3); }
+				{	$$ = cat_str(3, $1, make_str("="), $3); }
 		| b_expr Op b_expr
-				{	$$ = cat3_str($1, make1_str("="), $3); }
+				{	$$ = cat_str(3, $1, $2, $3); }
 		| Op b_expr
 				{	$$ = cat2_str($1, $2); }
 		| b_expr Op
@@ -3737,21 +3680,23 @@ com_expr:  attr
 		| AexprConst
 				{	$$ = $1;  }
 		| '(' a_expr_or_null ')'
-				{	$$ = make3_str(make1_str("("), $2, make1_str(")")); }
-		| CAST '(' a_expr AS Typename ')'
-				{ 	$$ = cat3_str(make2_str(make1_str("cast("), $3), make1_str("as"), make2_str($5, make1_str(")"))); }
+				{	$$ = cat_str(3, make_str("("), $2, make_str(")")); }
+		| CAST '(' a_expr_or_null AS Typename ')'
+				{ 	$$ = cat_str(5, make_str("cast("), $3, make_str("as"), $5, make_str(")")); }
 		| case_expr
 				{       $$ = $1; }
 		| func_name '(' ')'
-				{	$$ = cat2_str($1, make1_str("()"));  }
+				{	$$ = cat2_str($1, make_str("()"));  }
 		| func_name '(' expr_list ')'
-				{	$$ = make4_str($1, make1_str("("), $3, make1_str(")"));  }
+				{	$$ = cat_str(4, $1, make_str("("), $3, make_str(")"));  }
+		| func_name '(' DISTINCT expr_list ')'
+				{	$$ = cat_str(4, $1, make_str("( distinct"), $4, make_str(")"));  }
 		| func_name '(' '*' ')'
-				{	$$ = cat2_str($1, make1_str("(*)")); }
+				{	$$ = cat2_str($1, make_str("(*)")); }
 		| CURRENT_DATE
-				{	$$ = make1_str("current_date"); }
+				{	$$ = make_str("current_date"); }
 		| CURRENT_TIME
-				{	$$ = make1_str("current_time"); }
+				{	$$ = make_str("current_time"); }
 		| CURRENT_TIME '(' Iconst ')'
 				{
 					if (atol($3) != 0)
@@ -3760,10 +3705,10 @@ com_expr:  attr
 						mmerror(ET_WARN, errortext);
 					}
 
-					$$ = make1_str("current_time");
+					$$ = make_str("current_time");
 				}
 		| CURRENT_TIMESTAMP
-				{	$$ = make1_str("current_timestamp"); }
+				{	$$ = make_str("current_timestamp"); }
 		| CURRENT_TIMESTAMP '(' Iconst ')'
 				{
 					if (atol($3) != 0)
@@ -3772,31 +3717,31 @@ com_expr:  attr
 						mmerror(ET_WARN, errortext);
 					}
 
-					$$ = make1_str("current_timestamp");
+					$$ = make_str("current_timestamp");
 				}
 		| CURRENT_USER
-				{	$$ = make1_str("current_user"); }
+				{	$$ = make_str("current_user"); }
 		| USER
-				{       $$ = make1_str("user"); }
+				{       $$ = make_str("user"); }
 		| EXTRACT '(' extract_list ')'
-				{	$$ = make3_str(make1_str("extract("), $3, make1_str(")")); }
+				{	$$ = cat_str(3, make_str("extract("), $3, make_str(")")); }
 		| POSITION '(' position_list ')'
-				{	$$ = make3_str(make1_str("position("), $3, make1_str(")")); }
+				{	$$ = cat_str(3, make_str("position("), $3, make_str(")")); }
 		| SUBSTRING '(' substr_list ')'
-				{	$$ = make3_str(make1_str("substring("), $3, make1_str(")")); }
+				{	$$ = cat_str(3, make_str("substring("), $3, make_str(")")); }
 		/* various trim expressions are defined in SQL92 - thomas 1997-07-19 */
 		| TRIM '(' BOTH trim_list ')'
-				{	$$ = make3_str(make1_str("trim(both"), $4, make1_str(")")); }
+				{	$$ = cat_str(3, make_str("trim(both"), $4, make_str(")")); }
 		| TRIM '(' LEADING trim_list ')'
-				{	$$ = make3_str(make1_str("trim(leading"), $4, make1_str(")")); }
+				{	$$ = cat_str(3, make_str("trim(leading"), $4, make_str(")")); }
 		| TRIM '(' TRAILING trim_list ')'
-				{	$$ = make3_str(make1_str("trim(trailing"), $4, make1_str(")")); }
+				{	$$ = cat_str(3, make_str("trim(trailing"), $4, make_str(")")); }
 		| TRIM '(' trim_list ')'
-				{	$$ = make3_str(make1_str("trim("), $3, make1_str(")")); }
+				{	$$ = cat_str(3, make_str("trim("), $3, make_str(")")); }
 		| '(' SubSelect ')'
-				{	$$ = make3_str(make1_str("("), $2, make1_str(")")); }
+				{	$$ = cat_str(3, make_str("("), $2, make_str(")")); }
 		| EXISTS '(' SubSelect ')'
-				{	$$ = make3_str(make1_str("exists("), $3, make1_str(")")); }
+				{	$$ = cat_str(3, make_str("exists("), $3, make_str(")")); }
 		;
 /* 
  * This used to use ecpg_expr, but since there is no shift/reduce conflict
@@ -3804,11 +3749,11 @@ com_expr:  attr
  */
 opt_indirection:  '[' a_expr ']' opt_indirection
 				{
-					$$ = cat4_str(make1_str("["), $2, make1_str("]"), $4);
+					$$ = cat_str(4, make_str("["), $2, make_str("]"), $4);
 				}
 		| '[' a_expr ':' a_expr ']' opt_indirection
 				{
-					$$ = cat2_str(cat5_str(make1_str("["), $2, make1_str(":"), $4, make1_str("]")), $6);
+					$$ = cat_str(6, make_str("["), $2, make_str(":"), $4, make_str("]"), $6);
 				}
 		| /* EMPTY */
 				{	$$ = EMPTY; }
@@ -3817,43 +3762,43 @@ opt_indirection:  '[' a_expr ']' opt_indirection
 expr_list:  a_expr_or_null
 				{ $$ = $1; }
 		| expr_list ',' a_expr_or_null
-				{ $$ = cat3_str($1, make1_str(","), $3); }
+				{ $$ = cat_str(3, $1, make_str(","), $3); }
 		| expr_list USING a_expr
-				{ $$ = cat3_str($1, make1_str("using"), $3); }
+				{ $$ = cat_str(3, $1, make_str("using"), $3); }
 		;
 
 extract_list:  extract_arg FROM a_expr
 				{
-					$$ = cat3_str($1, make1_str("from"), $3);
+					$$ = cat_str(3, $1, make_str("from"), $3);
 				}
 		| /* EMPTY */
 				{	$$ = EMPTY; }
 		| cinputvariable
-			        { $$ = make1_str("?"); }
+			        { $$ = make_str("?"); }
 		;
 
 extract_arg:  datetime		{ $$ = $1; }
-	| TIMEZONE_HOUR 	{ $$ = make1_str("timezone_hour"); }	
-	| TIMEZONE_MINUTE 	{ $$ = make1_str("timezone_minute"); }	
+	| TIMEZONE_HOUR 	{ $$ = make_str("timezone_hour"); }	
+	| TIMEZONE_MINUTE 	{ $$ = make_str("timezone_minute"); }	
 		;
 
 /* position_list uses b_expr not a_expr to avoid conflict with general IN */
 position_list:  b_expr IN b_expr
-				{	$$ = cat3_str($1, make1_str("in"), $3); }
+				{	$$ = cat_str(3, $1, make_str("in"), $3); }
 		| /* EMPTY */
 				{	$$ = EMPTY; }
 		;
 
 substr_list:  expr_list substr_from substr_for
 				{
-					$$ = cat3_str($1, $2, $3);
+					$$ = cat_str(3, $1, $2, $3);
 				}
 		| /* EMPTY */
 				{	$$ = EMPTY; }
 		;
 
 substr_from:  FROM expr_list
-				{	$$ = cat2_str(make1_str("from"), $2); }
+				{	$$ = cat2_str(make_str("from"), $2); }
 		| /* EMPTY */
 				{
 					$$ = EMPTY;
@@ -3861,15 +3806,15 @@ substr_from:  FROM expr_list
 		;
 
 substr_for:  FOR expr_list
-				{	$$ = cat2_str(make1_str("for"), $2); }
+				{	$$ = cat2_str(make_str("for"), $2); }
 		| /* EMPTY */
 				{	$$ = EMPTY; }
 		;
 
 trim_list:  a_expr FROM expr_list
-				{ $$ = cat3_str($1, make1_str("from"), $3); }
+				{ $$ = cat_str(3, $1, make_str("from"), $3); }
 		| FROM expr_list
-				{ $$ = cat2_str(make1_str("from"), $2); }
+				{ $$ = cat2_str(make_str("from"), $2); }
 		| expr_list
 				{ $$ = $1; }
 		;
@@ -3885,7 +3830,7 @@ in_expr:  SubSelect
 in_expr_nodes:  a_expr
 				{	$$ = $1; }
 		| in_expr_nodes ',' a_expr
-				{	$$ = cat3_str($1, make1_str(","), $3);}
+				{	$$ = cat_str(3, $1, make_str(","), $3);}
 		;
 
 /* Case clause
@@ -3904,16 +3849,16 @@ in_expr_nodes:  a_expr
  * - thomas 1998-11-09
  */
 case_expr:  CASE case_arg when_clause_list case_default END_TRANS
-                                { $$ = cat5_str(make1_str("case"), $2, $3, $4, make1_str("end")); }
+                                { $$ = cat_str(5, make_str("case"), $2, $3, $4, make_str("end")); }
                 | NULLIF '(' a_expr ',' a_expr ')'
                                 {
-					$$ = cat5_str(make1_str("nullif("), $3, make1_str(","), $5, make1_str(")"));
+					$$ = cat_str(5, make_str("nullif("), $3, make_str(","), $5, make_str(")"));
 
 					mmerror(ET_WARN, "NULLIF() not yet fully implemented");
                                 }
                 | COALESCE '(' expr_list ')'
                                 {
-					$$ = cat3_str(make1_str("coalesce("), $3, make1_str(")"));
+					$$ = cat_str(3, make_str("coalesce("), $3, make_str(")"));
 				}
 		;
 
@@ -3925,11 +3870,11 @@ when_clause_list:  when_clause_list when_clause
 
 when_clause:  WHEN a_expr THEN a_expr_or_null
                                {
-					$$ = cat4_str(make1_str("when"), $2, make1_str("then"), $4);
+					$$ = cat_str(4, make_str("when"), $2, make_str("then"), $4);
                                }
                ;
 
-case_default:  ELSE a_expr_or_null	{ $$ = cat2_str(make1_str("else"), $2); }
+case_default:  ELSE a_expr_or_null	{ $$ = cat2_str(make_str("else"), $2); }
                | /*EMPTY*/        	{ $$ = EMPTY; }
                ;
 
@@ -3942,20 +3887,20 @@ case_arg:  a_expr              {
 
 attr:  relation_name '.' attrs opt_indirection
 				{
-					$$ = make4_str($1, make1_str("."), $3, $4);
+					$$ = cat_str(4, $1, make_str("."), $3, $4);
 				}
 		| ParamNo '.' attrs opt_indirection
 				{
-					$$ = make4_str($1, make1_str("."), $3, $4);
+					$$ = cat_str(4, $1, make_str("."), $3, $4);
 				}
 		;
 
 attrs:	  attr_name
 				{ $$ = $1; }
 		| attrs '.' attr_name
-				{ $$ = make3_str($1, make1_str("."), $3); }
+				{ $$ = cat_str(3, $1, make_str("."), $3); }
 		| attrs '.' '*'
-				{ $$ = make2_str($1, make1_str(".*")); }
+				{ $$ = make2_str($1, make_str(".*")); }
 		;
 
 
@@ -3967,7 +3912,7 @@ attrs:	  attr_name
 
 /* Target lists as found in SELECT ... and INSERT VALUES ( ... ) */
 target_list:  target_list ',' target_el
-				{	$$ = cat3_str($1, make1_str(","), $3);  }
+				{	$$ = cat_str(3, $1, make_str(","), $3);  }
 		| target_el
 				{	$$ = $1;  }
 		;
@@ -3975,7 +3920,7 @@ target_list:  target_list ',' target_el
 /* AS is not optional because shift/red conflict with unary ops */
 target_el:  a_expr_or_null AS ColLabel
 				{
-					$$ = cat3_str($1, make1_str("as"), $3);
+					$$ = cat_str(3, $1, make_str("as"), $3);
 				}
 		| a_expr_or_null
 				{
@@ -3983,25 +3928,25 @@ target_el:  a_expr_or_null AS ColLabel
 				}
 		| relation_name '.' '*'
 				{
-					$$ = make2_str($1, make1_str(".*"));
+					$$ = make2_str($1, make_str(".*"));
 				}
 		| '*'
 				{
-					$$ = make1_str("*");
+					$$ = make_str("*");
 				}
 		;
 
 /* Target list as found in UPDATE table SET ... */
 update_target_list:  update_target_list ',' update_target_el
-				{	$$ = cat3_str($1, make1_str(","),$3);  }
+				{	$$ = cat_str(3, $1, make_str(","),$3);  }
 		| update_target_el
 				{	$$ = $1;  }
-		| '*'		{ $$ = make1_str("*"); }
+		| '*'		{ $$ = make_str("*"); }
 		;
 
 update_target_el:  ColId opt_indirection '=' a_expr_or_null
 				{
-					$$ = cat4_str($1, $2, make1_str("="), $4);
+					$$ = cat_str(4, $1, $2, make_str("="), $4);
 				}
 		;
 
@@ -4020,7 +3965,7 @@ relation_name:	SpecialRuleRelation
 					/* disallow refs to variable system tables */
 					if (strcmp(LogRelationName, $1) == 0
 					   || strcmp(VariableRelationName, $1) == 0) {
-						sprintf(errortext, make1_str("%s cannot be accessed by users"),$1);
+						sprintf(errortext, make_str("%s cannot be accessed by users"),$1);
 						mmerror(ET_ERROR, errortext);
 					}
 					else
@@ -4070,11 +4015,11 @@ AexprConst:  Iconst
 				{	$$ = $1;  }
 		| TRUE_P
 				{
-					$$ = make1_str("true");
+					$$ = make_str("true");
 				}
 		| FALSE_P
 				{
-					$$ = make1_str("false");
+					$$ = make_str("false");
 				}
 		;
 
@@ -4118,122 +4063,122 @@ TypeId:  ColId
  */
 ColId:  ident					{ $$ = $1; }
 		| datetime			{ $$ = $1; }
-		| ABSOLUTE			{ $$ = make1_str("absolute"); }
-		| ACCESS			{ $$ = make1_str("access"); }
-		| ACTION			{ $$ = make1_str("action"); }
-		| AFTER				{ $$ = make1_str("after"); }
-		| AGGREGATE			{ $$ = make1_str("aggregate"); }
-		| BACKWARD			{ $$ = make1_str("backward"); }
-		| BEFORE			{ $$ = make1_str("before"); }
-		| CACHE				{ $$ = make1_str("cache"); }
-		| COMMENT			{ $$ = make1_str("comment"); } 
-		| COMMITTED			{ $$ = make1_str("committed"); }
-		| CONSTRAINTS			{ $$ = make1_str("constraints"); }
-		| CREATEDB			{ $$ = make1_str("createdb"); }
-		| CREATEUSER			{ $$ = make1_str("createuser"); }
-		| CYCLE				{ $$ = make1_str("cycle"); }
-		| DATABASE			{ $$ = make1_str("database"); }
-		| DEFERRABLE			{ $$ = make1_str("deferrable"); }
-		| DEFERRED			{ $$ = make1_str("deferred"); }
-		| DELIMITERS			{ $$ = make1_str("delimiters"); }
-		| DOUBLE			{ $$ = make1_str("double"); }
-		| EACH				{ $$ = make1_str("each"); }
-		| ENCODING			{ $$ = make1_str("encoding"); }
-		| EXCLUSIVE			{ $$ = make1_str("exclusive"); }
-		| FORWARD			{ $$ = make1_str("forward"); }
-		| FUNCTION			{ $$ = make1_str("function"); }
-		| HANDLER			{ $$ = make1_str("handler"); }
-		| IMMEDIATE			{ $$ = make1_str("immediate"); }
-		| INCREMENT			{ $$ = make1_str("increment"); }
-		| INDEX				{ $$ = make1_str("index"); }
-		| INHERITS			{ $$ = make1_str("inherits"); }
-		| INITIALLY			{ $$ = make1_str("initially"); }
-		| INSENSITIVE			{ $$ = make1_str("insensitive"); }
-		| INSTEAD			{ $$ = make1_str("instead"); }
-		| ISNULL			{ $$ = make1_str("isnull"); }
-		| ISOLATION			{ $$ = make1_str("isolation"); }
-		| KEY				{ $$ = make1_str("key"); }
-		| LANGUAGE			{ $$ = make1_str("language"); }
-		| LANCOMPILER			{ $$ = make1_str("lancompiler"); }
-		| LEVEL				{ $$ = make1_str("level"); }
-		| LOCATION			{ $$ = make1_str("location"); }
-		| MATCH				{ $$ = make1_str("match"); }
-		| MAXVALUE			{ $$ = make1_str("maxvalue"); }
-		| MINVALUE			{ $$ = make1_str("minvalue"); }
-		| MODE				{ $$ = make1_str("mode"); }
-		| NEXT				{ $$ = make1_str("next"); }
-		| NOCREATEDB			{ $$ = make1_str("nocreatedb"); }
-		| NOCREATEUSER			{ $$ = make1_str("nocreateuser"); }
-		| NOTHING			{ $$ = make1_str("nothing"); }
-		| NOTNULL			{ $$ = make1_str("notnull"); }
-		| OF				{ $$ = make1_str("of"); }
-		| OIDS				{ $$ = make1_str("oids"); }
-		| ONLY				{ $$ = make1_str("only"); }
-		| OPERATOR			{ $$ = make1_str("operator"); }
-		| OPTION			{ $$ = make1_str("option"); }
-		| PASSWORD			{ $$ = make1_str("password"); }
-		| PENDANT			{ $$ = make1_str("pendant"); }
-		| PRIOR				{ $$ = make1_str("prior"); }
-		| PRIVILEGES			{ $$ = make1_str("privileges"); }
-		| PROCEDURAL			{ $$ = make1_str("procedural"); }
-		| READ				{ $$ = make1_str("read"); }
-		| RELATIVE			{ $$ = make1_str("relative"); }
-		| RENAME			{ $$ = make1_str("rename"); }
-		| RESTRICT			{ $$ = make1_str("restrict"); }
-		| RETURNS			{ $$ = make1_str("returns"); }
-		| ROW				{ $$ = make1_str("row"); }
-		| RULE				{ $$ = make1_str("rule"); }
-		| SCROLL			{ $$ = make1_str("scroll"); }
-		| SEQUENCE                      { $$ = make1_str("sequence"); }
-		| SERIAL			{ $$ = make1_str("serial"); }
-		| SERIALIZABLE			{ $$ = make1_str("serializable"); }
-		| SHARE				{ $$ = make1_str("share"); }
-		| START				{ $$ = make1_str("start"); }
-		| STATEMENT			{ $$ = make1_str("statement"); }
-		| STDIN                         { $$ = make1_str("stdin"); }
-		| STDOUT                        { $$ = make1_str("stdout"); }
-		| SYSID                         { $$ = make1_str("sysid"); }
-		| TIME				{ $$ = make1_str("time"); }
-		| TIMESTAMP			{ $$ = make1_str("timestamp"); }
-		| TIMEZONE_HOUR                 { $$ = make1_str("timezone_hour"); }
-                | TIMEZONE_MINUTE               { $$ = make1_str("timezone_minute"); }
-		| TRIGGER			{ $$ = make1_str("trigger"); }
-		| TRUNCATE			{ $$ = make1_str("truncate"); }
-		| TRUSTED			{ $$ = make1_str("trusted"); }
-		| TYPE_P			{ $$ = make1_str("type"); }
-		| VALID				{ $$ = make1_str("valid"); }
-		| VERSION			{ $$ = make1_str("version"); }
-		| ZONE				{ $$ = make1_str("zone"); }
-		| SQL_AT			{ $$ = make1_str("at"); }
-		| SQL_BOOL			{ $$ = make1_str("bool"); }
-		| SQL_BREAK			{ $$ = make1_str("break"); }
-		| SQL_CALL			{ $$ = make1_str("call"); }
-		| SQL_CONNECT			{ $$ = make1_str("connect"); }
-		| SQL_CONTINUE			{ $$ = make1_str("continue"); }
-		| SQL_DEALLOCATE		{ $$ = make1_str("deallocate"); }
-		| SQL_DISCONNECT		{ $$ = make1_str("disconnect"); }
-		| SQL_FOUND			{ $$ = make1_str("found"); }
-		| SQL_GO			{ $$ = make1_str("go"); }
-		| SQL_GOTO			{ $$ = make1_str("goto"); }
-		| SQL_IDENTIFIED		{ $$ = make1_str("identified"); }
-		| SQL_INDICATOR			{ $$ = make1_str("indicator"); }
-		| SQL_INT			{ $$ = make1_str("int"); }
-		| SQL_LONG			{ $$ = make1_str("long"); }
-		| SQL_OFF			{ $$ = make1_str("off"); }
-		| SQL_OPEN			{ $$ = make1_str("open"); }
-		| SQL_PREPARE			{ $$ = make1_str("prepare"); }
-		| SQL_RELEASE			{ $$ = make1_str("release"); }
-		| SQL_SECTION			{ $$ = make1_str("section"); }
-		| SQL_SHORT			{ $$ = make1_str("short"); }
-		| SQL_SIGNED			{ $$ = make1_str("signed"); }
-		| SQL_SQLERROR			{ $$ = make1_str("sqlerror"); }
-		| SQL_SQLPRINT			{ $$ = make1_str("sqlprint"); }
-		| SQL_SQLWARNING		{ $$ = make1_str("sqlwarning"); }
-		| SQL_STOP			{ $$ = make1_str("stop"); }
-		| SQL_STRUCT			{ $$ = make1_str("struct"); }
-		| SQL_UNSIGNED			{ $$ = make1_str("unsigned"); }
-		| SQL_VAR			{ $$ = make1_str("var"); }
-		| SQL_WHENEVER			{ $$ = make1_str("whenever"); }
+		| ABSOLUTE			{ $$ = make_str("absolute"); }
+		| ACCESS			{ $$ = make_str("access"); }
+		| ACTION			{ $$ = make_str("action"); }
+		| AFTER				{ $$ = make_str("after"); }
+		| AGGREGATE			{ $$ = make_str("aggregate"); }
+		| BACKWARD			{ $$ = make_str("backward"); }
+		| BEFORE			{ $$ = make_str("before"); }
+		| CACHE				{ $$ = make_str("cache"); }
+		| COMMENT			{ $$ = make_str("comment"); } 
+		| COMMITTED			{ $$ = make_str("committed"); }
+		| CONSTRAINTS			{ $$ = make_str("constraints"); }
+		| CREATEDB			{ $$ = make_str("createdb"); }
+		| CREATEUSER			{ $$ = make_str("createuser"); }
+		| CYCLE				{ $$ = make_str("cycle"); }
+		| DATABASE			{ $$ = make_str("database"); }
+		| DEFERRABLE			{ $$ = make_str("deferrable"); }
+		| DEFERRED			{ $$ = make_str("deferred"); }
+		| DELIMITERS			{ $$ = make_str("delimiters"); }
+		| DOUBLE			{ $$ = make_str("double"); }
+		| EACH				{ $$ = make_str("each"); }
+		| ENCODING			{ $$ = make_str("encoding"); }
+		| EXCLUSIVE			{ $$ = make_str("exclusive"); }
+		| FORWARD			{ $$ = make_str("forward"); }
+		| FUNCTION			{ $$ = make_str("function"); }
+		| HANDLER			{ $$ = make_str("handler"); }
+		| IMMEDIATE			{ $$ = make_str("immediate"); }
+		| INCREMENT			{ $$ = make_str("increment"); }
+		| INDEX				{ $$ = make_str("index"); }
+		| INHERITS			{ $$ = make_str("inherits"); }
+		| INITIALLY			{ $$ = make_str("initially"); }
+		| INSENSITIVE			{ $$ = make_str("insensitive"); }
+		| INSTEAD			{ $$ = make_str("instead"); }
+		| ISNULL			{ $$ = make_str("isnull"); }
+		| ISOLATION			{ $$ = make_str("isolation"); }
+		| KEY				{ $$ = make_str("key"); }
+		| LANGUAGE			{ $$ = make_str("language"); }
+		| LANCOMPILER			{ $$ = make_str("lancompiler"); }
+		| LEVEL				{ $$ = make_str("level"); }
+		| LOCATION			{ $$ = make_str("location"); }
+		| MATCH				{ $$ = make_str("match"); }
+		| MAXVALUE			{ $$ = make_str("maxvalue"); }
+		| MINVALUE			{ $$ = make_str("minvalue"); }
+		| MODE				{ $$ = make_str("mode"); }
+		| NEXT				{ $$ = make_str("next"); }
+		| NOCREATEDB			{ $$ = make_str("nocreatedb"); }
+		| NOCREATEUSER			{ $$ = make_str("nocreateuser"); }
+		| NOTHING			{ $$ = make_str("nothing"); }
+		| NOTNULL			{ $$ = make_str("notnull"); }
+		| OF				{ $$ = make_str("of"); }
+		| OIDS				{ $$ = make_str("oids"); }
+		| ONLY				{ $$ = make_str("only"); }
+		| OPERATOR			{ $$ = make_str("operator"); }
+		| OPTION			{ $$ = make_str("option"); }
+		| PASSWORD			{ $$ = make_str("password"); }
+		| PENDANT			{ $$ = make_str("pendant"); }
+		| PRIOR				{ $$ = make_str("prior"); }
+		| PRIVILEGES			{ $$ = make_str("privileges"); }
+		| PROCEDURAL			{ $$ = make_str("procedural"); }
+		| READ				{ $$ = make_str("read"); }
+		| RELATIVE			{ $$ = make_str("relative"); }
+		| RENAME			{ $$ = make_str("rename"); }
+		| RESTRICT			{ $$ = make_str("restrict"); }
+		| RETURNS			{ $$ = make_str("returns"); }
+		| ROW				{ $$ = make_str("row"); }
+		| RULE				{ $$ = make_str("rule"); }
+		| SCROLL			{ $$ = make_str("scroll"); }
+		| SEQUENCE                      { $$ = make_str("sequence"); }
+		| SERIAL			{ $$ = make_str("serial"); }
+		| SERIALIZABLE			{ $$ = make_str("serializable"); }
+		| SHARE				{ $$ = make_str("share"); }
+		| START				{ $$ = make_str("start"); }
+		| STATEMENT			{ $$ = make_str("statement"); }
+		| STDIN                         { $$ = make_str("stdin"); }
+		| STDOUT                        { $$ = make_str("stdout"); }
+		| SYSID                         { $$ = make_str("sysid"); }
+		| TIME				{ $$ = make_str("time"); }
+		| TIMESTAMP			{ $$ = make_str("timestamp"); }
+		| TIMEZONE_HOUR                 { $$ = make_str("timezone_hour"); }
+                | TIMEZONE_MINUTE               { $$ = make_str("timezone_minute"); }
+		| TRIGGER			{ $$ = make_str("trigger"); }
+		| TRUNCATE			{ $$ = make_str("truncate"); }
+		| TRUSTED			{ $$ = make_str("trusted"); }
+		| TYPE_P			{ $$ = make_str("type"); }
+		| VALID				{ $$ = make_str("valid"); }
+		| VERSION			{ $$ = make_str("version"); }
+		| ZONE				{ $$ = make_str("zone"); }
+		| SQL_AT			{ $$ = make_str("at"); }
+		| SQL_BOOL			{ $$ = make_str("bool"); }
+		| SQL_BREAK			{ $$ = make_str("break"); }
+		| SQL_CALL			{ $$ = make_str("call"); }
+		| SQL_CONNECT			{ $$ = make_str("connect"); }
+		| SQL_CONTINUE			{ $$ = make_str("continue"); }
+		| SQL_DEALLOCATE		{ $$ = make_str("deallocate"); }
+		| SQL_DISCONNECT		{ $$ = make_str("disconnect"); }
+		| SQL_FOUND			{ $$ = make_str("found"); }
+		| SQL_GO			{ $$ = make_str("go"); }
+		| SQL_GOTO			{ $$ = make_str("goto"); }
+		| SQL_IDENTIFIED		{ $$ = make_str("identified"); }
+		| SQL_INDICATOR			{ $$ = make_str("indicator"); }
+		| SQL_INT			{ $$ = make_str("int"); }
+		| SQL_LONG			{ $$ = make_str("long"); }
+		| SQL_OFF			{ $$ = make_str("off"); }
+		| SQL_OPEN			{ $$ = make_str("open"); }
+		| SQL_PREPARE			{ $$ = make_str("prepare"); }
+		| SQL_RELEASE			{ $$ = make_str("release"); }
+		| SQL_SECTION			{ $$ = make_str("section"); }
+		| SQL_SHORT			{ $$ = make_str("short"); }
+		| SQL_SIGNED			{ $$ = make_str("signed"); }
+		| SQL_SQLERROR			{ $$ = make_str("sqlerror"); }
+		| SQL_SQLPRINT			{ $$ = make_str("sqlprint"); }
+		| SQL_SQLWARNING		{ $$ = make_str("sqlwarning"); }
+		| SQL_STOP			{ $$ = make_str("stop"); }
+		| SQL_STRUCT			{ $$ = make_str("struct"); }
+		| SQL_UNSIGNED			{ $$ = make_str("unsigned"); }
+		| SQL_VAR			{ $$ = make_str("var"); }
+		| SQL_WHENEVER			{ $$ = make_str("whenever"); }
 		;
 /* Column label
  * Allowed labels in "AS" clauses.
@@ -4246,56 +4191,56 @@ ColId:  ident					{ $$ = $1; }
  *  when used as a full identifier. - thomas 1997-11-06
  */
 ColLabel:  ColId						{ $$ = $1; }
-		| ABORT_TRANS                                   { $$ = make1_str("abort"); }
-		| ANALYZE                                       { $$ = make1_str("analyze"); }
-		| BINARY                                        { $$ = make1_str("binary"); }
-		| CASE                                        { $$ = make1_str("case"); }
-		| CLUSTER						{ $$ = make1_str("cluster"); }
-		| COALESCE                                        { $$ = make1_str("coalesce"); }
-		| CONSTRAINT					{ $$ = make1_str("constraint"); }
-		| COPY							{ $$ = make1_str("copy"); }
-		| CURRENT							{ $$ = make1_str("current"); }
-		| DO							{ $$ = make1_str("do"); }
-		| ELSE                                        { $$ = make1_str("else"); }
-		| END_TRANS                                        { $$ = make1_str("end"); }
-		| EXPLAIN							{ $$ = make1_str("explain"); }
-		| EXTEND							{ $$ = make1_str("extend"); }
-		| FALSE_P							{ $$ = make1_str("false"); }
-		| FOREIGN						{ $$ = make1_str("foreign"); }
-		| GROUP							{ $$ = make1_str("group"); }
-		| LISTEN							{ $$ = make1_str("listen"); }
-		| LOAD							{ $$ = make1_str("load"); }
-		| LOCK_P							{ $$ = make1_str("lock"); }
-		| MOVE							{ $$ = make1_str("move"); }
-		| NEW							{ $$ = make1_str("new"); }
-		| NONE							{ $$ = make1_str("none"); }
-		| NULLIF                                        { $$ = make1_str("nullif"); }
-		| ORDER							{ $$ = make1_str("order"); }
-		| POSITION						{ $$ = make1_str("position"); }
-		| PRECISION						{ $$ = make1_str("precision"); }
-		| RESET							{ $$ = make1_str("reset"); }
-		| SETOF							{ $$ = make1_str("setof"); }
-		| SHOW							{ $$ = make1_str("show"); }
-		| TABLE							{ $$ = make1_str("table"); }
-		| THEN                                        { $$ = make1_str("then"); }
-		| TRANSACTION					{ $$ = make1_str("transaction"); }
-		| TRUE_P						{ $$ = make1_str("true"); }
-		| VACUUM					{ $$ = make1_str("vacuum"); }
-		| VERBOSE						{ $$ = make1_str("verbose"); }
-		| WHEN                                        { $$ = make1_str("when"); }
+		| ABORT_TRANS                                   { $$ = make_str("abort"); }
+		| ANALYZE                                       { $$ = make_str("analyze"); }
+		| BINARY                                        { $$ = make_str("binary"); }
+		| CASE                                        { $$ = make_str("case"); }
+		| CLUSTER						{ $$ = make_str("cluster"); }
+		| COALESCE                                        { $$ = make_str("coalesce"); }
+		| CONSTRAINT					{ $$ = make_str("constraint"); }
+		| COPY							{ $$ = make_str("copy"); }
+		| CURRENT							{ $$ = make_str("current"); }
+		| DO							{ $$ = make_str("do"); }
+		| ELSE                                        { $$ = make_str("else"); }
+		| END_TRANS                                        { $$ = make_str("end"); }
+		| EXPLAIN							{ $$ = make_str("explain"); }
+		| EXTEND							{ $$ = make_str("extend"); }
+		| FALSE_P							{ $$ = make_str("false"); }
+		| FOREIGN						{ $$ = make_str("foreign"); }
+		| GROUP							{ $$ = make_str("group"); }
+		| LISTEN							{ $$ = make_str("listen"); }
+		| LOAD							{ $$ = make_str("load"); }
+		| LOCK_P							{ $$ = make_str("lock"); }
+		| MOVE							{ $$ = make_str("move"); }
+		| NEW							{ $$ = make_str("new"); }
+		| NONE							{ $$ = make_str("none"); }
+		| NULLIF                                        { $$ = make_str("nullif"); }
+		| ORDER							{ $$ = make_str("order"); }
+		| POSITION						{ $$ = make_str("position"); }
+		| PRECISION						{ $$ = make_str("precision"); }
+		| RESET							{ $$ = make_str("reset"); }
+		| SETOF							{ $$ = make_str("setof"); }
+		| SHOW							{ $$ = make_str("show"); }
+		| TABLE							{ $$ = make_str("table"); }
+		| THEN                                        { $$ = make_str("then"); }
+		| TRANSACTION					{ $$ = make_str("transaction"); }
+		| TRUE_P						{ $$ = make_str("true"); }
+		| VACUUM					{ $$ = make_str("vacuum"); }
+		| VERBOSE						{ $$ = make_str("verbose"); }
+		| WHEN                                        { $$ = make_str("when"); }
 		;
 
 SpecialRuleRelation:  CURRENT
 				{
 					if (QueryIsRule)
-						$$ = make1_str("current");
+						$$ = make_str("current");
 					else
 						mmerror(ET_ERROR, "CURRENT used in non-rule query");
 				}
 		| NEW
 				{
 					if (QueryIsRule)
-						$$ = make1_str("new");
+						$$ = make_str("new");
 					else
 						mmerror(ET_ERROR, "NEW used in non-rule query");
 				}
@@ -4310,16 +4255,16 @@ SpecialRuleRelation:  CURRENT
  */
 ECPGConnect: SQL_CONNECT TO connection_target opt_connection_name opt_user
 		{
-			$$ = make5_str($3, make1_str(","), $5, make1_str(","), $4);
+			$$ = cat_str(5, $3, make_str(","), $5, make_str(","), $4);
                 }
 	| SQL_CONNECT TO DEFAULT
         	{
-                	$$ = make1_str("NULL,NULL,NULL,\"DEFAULT\"");
+                	$$ = make_str("NULL,NULL,NULL,\"DEFAULT\"");
                 }
       /* also allow ORACLE syntax */
         | SQL_CONNECT ora_user
                 {
-		       $$ = make3_str(make1_str("NULL,"), $2, make1_str(",NULL"));
+		       $$ = cat_str(3, make_str("NULL,"), $2, make_str(",NULL"));
 		}
 
 connection_target: database_name opt_server opt_port
@@ -4331,7 +4276,7 @@ connection_target: database_name opt_server opt_port
 		    mmerror(ET_ERROR, errortext);
 		  }
 
-		  $$ = make5_str(make1_str("\""), $1, $2, $3, make1_str("\""));
+		  $$ = make3_str(make_str("\""), make3_str($1, $2, $3), make_str("\""));
 		}
         |  db_prefix server opt_port '/' database_name opt_options
                 {
@@ -4354,7 +4299,7 @@ connection_target: database_name opt_server opt_port
                     mmerror(ET_ERROR, errortext);
 		  }
 	
-		  $$ = make4_str(make5_str(make1_str("\""), $1, $2, $3, make1_str("/")), $5, $6, make1_str("\""));
+		  $$ = make2_str(make3_str(make_str("\""), $1, $2), make3_str(make3_str($3, make_str("/"), $5),  $6, make_str("\"")));
 		}
 	| char_variable
                 {
@@ -4382,7 +4327,7 @@ db_prefix: ident cvariable
 		    mmerror(ET_ERROR, errortext);
 		  }
 
-		  $$ = make3_str($1, make1_str(":"), $2);
+		  $$ = make3_str( $1, make_str(":"), $2);
 		}
         
 server: Op server_name
@@ -4400,41 +4345,41 @@ opt_server: server { $$ = $1; }
         | /* empty */ { $$ = EMPTY; }
 
 server_name: ColId   { $$ = $1; }
-        | ColId '.' server_name { $$ = make3_str($1, make1_str("."), $3); }
+        | ColId '.' server_name { 	$$ = make3_str($1, make_str("."), $3); }
 
-opt_port: ':' Iconst { $$ = make2_str(make1_str(":"), $2); }
+opt_port: ':' Iconst { $$ = make2_str(make_str(":"), $2); }
         | /* empty */ { $$ = EMPTY; }
 
 opt_connection_name: AS connection_target { $$ = $2; }
-        | /* empty */ { $$ = make1_str("NULL"); }
+        | /* empty */ { $$ = make_str("NULL"); }
 
 opt_user: USER ora_user { $$ = $2; }
-          | /* empty */ { $$ = make1_str("NULL,NULL"); }
+          | /* empty */ { $$ = make_str("NULL,NULL"); }
 
 ora_user: user_name
 		{
-                        $$ = make2_str($1, make1_str(",NULL"));
+                        $$ = cat2_str($1, make_str(", NULL"));
 	        }
 	| user_name '/' user_name
 		{
-        		$$ = make3_str($1, make1_str(","), $3);
+        		$$ = cat_str(3, $1, make_str(","), $3);
                 }
         | user_name SQL_IDENTIFIED BY user_name
                 {
-        		$$ = make3_str($1, make1_str(","), $4);
+        		$$ = cat_str(3, $1, make_str(","), $4);
                 }
         | user_name USING user_name
                 {
-        		$$ = make3_str($1, make1_str(","), $3);
+        		$$ = cat_str(3, $1, make_str(","), $3);
                 }
 
 user_name: UserId       { if ($1[0] == '\"')
 				$$ = $1;
 			  else
-				$$ = make3_str(make1_str("\""), $1, make1_str("\""));
+				$$ = make3_str(make_str("\""), $1, make_str("\""));
 			}
         | char_variable { $$ = $1; }
-        | SCONST        { $$ = make3_str(make1_str("\""), $1, make1_str("\"")); }
+        | SCONST        { $$ = make3_str(make_str("\""), $1, make_str("\"")); }
 
 char_variable: cvariable
 		{ /* check if we have a char variable */
@@ -4452,7 +4397,7 @@ char_variable: cvariable
                                 $$ = $1;
                                 break;
                             case ECPGt_varchar:
-                                $$ = make2_str($1, make1_str(".arr"));
+                                $$ = make2_str($1, make_str(".arr"));
                                 break;
                             default:
                                 mmerror(ET_ERROR, "invalid datatype");
@@ -4471,7 +4416,7 @@ opt_options: Op ColId
 				mmerror(ET_ERROR, errortext);
 			}
 			
-			$$ = make2_str(make1_str("?"), $2);
+			$$ = make2_str(make_str("?"), $2);
 		}
 	| /* empty */ { $$ = EMPTY; }
 
@@ -4500,7 +4445,7 @@ ECPGCursorStmt:  DECLARE name opt_cursor CURSOR FOR ident
 				        this->next = cur;
 				        this->name = $2;
 					this->connection = connection;
-				        this->command =  cat4_str(make1_str("declare"), mm_strdup($2), $3, make1_str("cursor for ?"));
+				        this->command =  cat_str(4, make_str("declare"), mm_strdup($2), $3, make_str("cursor for ?"));
 					this->argsresult = NULL;
 
 					thisquery->type = &ecpg_query;
@@ -4514,7 +4459,7 @@ ECPGCursorStmt:  DECLARE name opt_cursor CURSOR FOR ident
 
 			        	cur = this;
 					
-					$$ = cat3_str(make1_str("/*"), mm_strdup(this->command), make1_str("*/"));
+					$$ = cat_str(3, make_str("/*"), mm_strdup(this->command), make_str("*/"));
 				}
 		;
 
@@ -4522,7 +4467,7 @@ ECPGCursorStmt:  DECLARE name opt_cursor CURSOR FOR ident
  * the exec sql deallocate prepare command to deallocate a previously
  * prepared statement
  */
-ECPGDeallocate:	SQL_DEALLOCATE SQL_PREPARE ident	{ $$ = make3_str(make1_str("ECPGdeallocate(__LINE__, \""), $3, make1_str("\");")); }
+ECPGDeallocate:	SQL_DEALLOCATE SQL_PREPARE ident	{ $$ = cat_str(3, make_str("ECPGdeallocate(__LINE__, \""), $3, make_str("\");")); }
 
 /*
  * variable declaration inside the exec sql declare block
@@ -4564,15 +4509,15 @@ declaration: storage_clause
 	}
 	variable_list ';'
 	{
- 		$$ = cat4_str($1, $3.type_str, $5, make1_str(";\n"));
+ 		$$ = cat_str(4, $1, $3.type_str, $5, make_str(";\n"));
 	}
 
-storage_clause : S_EXTERN	{ $$ = make1_str("extern"); }
-       | S_STATIC		{ $$ = make1_str("static"); }
-       | S_SIGNED		{ $$ = make1_str("signed"); }
-       | S_CONST		{ $$ = make1_str("const"); }
-       | S_REGISTER		{ $$ = make1_str("register"); }
-       | S_AUTO			{ $$ = make1_str("auto"); }
+storage_clause : S_EXTERN	{ $$ = make_str("extern"); }
+       | S_STATIC		{ $$ = make_str("static"); }
+       | S_SIGNED		{ $$ = make_str("signed"); }
+       | S_CONST		{ $$ = make_str("const"); }
+       | S_REGISTER		{ $$ = make_str("register"); }
+       | S_AUTO			{ $$ = make_str("auto"); }
        | /* empty */		{ $$ = EMPTY; }
 
 type: simple_type
@@ -4624,23 +4569,23 @@ type: simple_type
 
 enum_type: s_enum '{' c_list '}'
 	{
-		$$ = cat4_str($1, make1_str("{"), $3, make1_str("}"));
+		$$ = cat_str(4, $1, make_str("{"), $3, make_str("}"));
 	}
 	
-s_enum: S_ENUM opt_symbol	{ $$ = cat2_str(make1_str("enum"), $2); }
+s_enum: S_ENUM opt_symbol	{ $$ = cat2_str(make_str("enum"), $2); }
 
 struct_type: s_struct '{' variable_declarations '}'
 	{
 	    ECPGfree_struct_member(struct_member_list[struct_level]);
 	    free(actual_storage[struct_level--]);
-	    $$ = cat4_str($1, make1_str("{"), $3, make1_str("}"));
+	    $$ = cat_str(4, $1, make_str("{"), $3, make_str("}"));
 	}
 
 union_type: s_union '{' variable_declarations '}'
 	{
 	    ECPGfree_struct_member(struct_member_list[struct_level]);
 	    free(actual_storage[struct_level--]);
-	    $$ = cat4_str($1, make1_str("{"), $3, make1_str("}"));
+	    $$ = cat_str(4, $1, make_str("{"), $3, make_str("}"));
 	}
 
 s_struct : S_STRUCT opt_symbol
@@ -4648,7 +4593,7 @@ s_struct : S_STRUCT opt_symbol
             struct_member_list[struct_level++] = NULL;
             if (struct_level >= STRUCT_DEPTH)
                  mmerror(ET_ERROR, "Too many levels in nested structure definition");
-	    $$ = cat2_str(make1_str("struct"), $2);
+	    $$ = cat2_str(make_str("struct"), $2);
 	}
 
 s_union : S_UNION opt_symbol
@@ -4656,7 +4601,7 @@ s_union : S_UNION opt_symbol
             struct_member_list[struct_level++] = NULL;
             if (struct_level >= STRUCT_DEPTH)
                  mmerror(ET_ERROR, "Too many levels in nested structure definition");
-	    $$ = cat2_str(make1_str("union"), $2);
+	    $$ = cat2_str(make_str("union"), $2);
 	}
 
 opt_symbol: /* empty */ 	{ $$ = EMPTY; }
@@ -4682,7 +4627,7 @@ variable_list: variable
 	}
 	| variable_list ',' variable
 	{
-		$$ = cat3_str($1, make1_str(","), $3);
+		$$ = cat_str(3, $1, make_str(","), $3);
 	}
 
 variable: opt_pointer symbol opt_array_bounds opt_initializer
@@ -4703,7 +4648,7 @@ variable: opt_pointer symbol opt_array_bounds opt_initializer
                                else
                                    type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level], actual_type[struct_level].type_enum), dimension); 
 
-                               $$ = make4_str($1, mm_strdup($2), $3.str, $4);
+                               $$ = cat_str(4, $1, mm_strdup($2), $3.str, $4);
                                break;
                            case ECPGt_varchar:
                                if (dimension == -1)
@@ -4728,9 +4673,9 @@ variable: opt_pointer symbol opt_array_bounds opt_initializer
 				   mmerror(ET_ERROR, "pointer to varchar are not implemented");
 
 			       if (dimension == 0)
-				   $$ = make4_str(make5_str(mm_strdup(actual_storage[struct_level]), make1_str(" struct varchar_"), mm_strdup($2), make1_str(" { int len; char arr["), mm_strdup(ascii_len)), make1_str("]; } *"), mm_strdup($2), $4);
+				   $$ = cat_str(7, mm_strdup(actual_storage[struct_level]), make2_str(make_str(" struct varchar_"), mm_strdup($2)), make_str(" { int len; char arr["), mm_strdup(ascii_len), make_str("]; } *"), mm_strdup($2), $4);
 			       else
-                                   $$ = make5_str(make5_str(mm_strdup(actual_storage[struct_level]), make1_str(" struct varchar_"), mm_strdup($2), make1_str(" { int len; char arr["), mm_strdup(ascii_len)), make1_str("]; } "), mm_strdup($2), mm_strdup(dim), $4);
+                                   $$ = cat_str(8, mm_strdup(actual_storage[struct_level]), make2_str(make_str(" struct varchar_"), mm_strdup($2)), make_str(" { int len; char arr["), mm_strdup(ascii_len), make_str("]; } "), mm_strdup($2), mm_strdup(dim), $4);
 
                                break;
                            case ECPGt_char:
@@ -4740,7 +4685,7 @@ variable: opt_pointer symbol opt_array_bounds opt_initializer
                                else
                                    type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length), dimension);
 
-			       $$ = make4_str($1, mm_strdup($2), $3.str, $4);
+			       $$ = cat_str(4, $1, mm_strdup($2), $3.str, $4);
                                break;
                            default:
                                if (dimension < 0)
@@ -4748,7 +4693,7 @@ variable: opt_pointer symbol opt_array_bounds opt_initializer
                                else
                                    type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, 1), dimension);
 
-			       $$ = make4_str($1, mm_strdup($2), $3.str, $4);
+			       $$ = cat_str(4, $1, mm_strdup($2), $3.str, $4);
                                break;
 			}
 
@@ -4761,10 +4706,10 @@ variable: opt_pointer symbol opt_array_bounds opt_initializer
 		}
 
 opt_initializer: /* empty */		{ $$ = EMPTY; }
-	| '=' c_term			{ $$ = make2_str(make1_str("="), $2); }
+	| '=' c_term			{ $$ = cat2_str(make_str("="), $2); }
 
 opt_pointer: /* empty */	{ $$ = EMPTY; }
-	| '*'			{ $$ = make1_str("*"); }
+	| '*'			{ $$ = make_str("*"); }
 
 /*
  * As long as the prepare statement is not supported by the backend, we will
@@ -4773,7 +4718,7 @@ opt_pointer: /* empty */	{ $$ = EMPTY; }
 ECPGDeclare: DECLARE STATEMENT ident
 	{
 		/* this is only supported for compatibility */
-		$$ = cat3_str(make1_str("/* declare statement"), $3, make1_str("*/"));
+		$$ = cat_str(3, make_str("/* declare statement"), $3, make_str("*/"));
 	}
 /*
  * the exec sql disconnect statement: disconnect from the given database 
@@ -4781,12 +4726,12 @@ ECPGDeclare: DECLARE STATEMENT ident
 ECPGDisconnect: SQL_DISCONNECT dis_name { $$ = $2; }
 
 dis_name: connection_object	{ $$ = $1; }
-	| CURRENT	{ $$ = make1_str("CURRENT"); }
-	| ALL		{ $$ = make1_str("ALL"); }
-	| /* empty */	{ $$ = make1_str("CURRENT"); }
+	| CURRENT	{ $$ = make_str("CURRENT"); }
+	| ALL		{ $$ = make_str("ALL"); }
+	| /* empty */	{ $$ = make_str("CURRENT"); }
 
 connection_object: connection_target { $$ = $1; }
-	| DEFAULT	{ $$ = make1_str("DEFAULT"); }
+	| DEFAULT	{ $$ = make_str("DEFAULT"); }
 
 /*
  * execute a given string as sql command
@@ -4802,7 +4747,7 @@ ECPGExecute : EXECUTE IMMEDIATE execstring
 
 		add_variable(&argsinsert, thisquery, &no_indicator); 
 
-		$$ = make1_str("?");
+		$$ = make_str("?");
 	}
 	| EXECUTE ident 
 	{
@@ -4817,11 +4762,11 @@ ECPGExecute : EXECUTE IMMEDIATE execstring
 		add_variable(&argsinsert, thisquery, &no_indicator); 
 	} ecpg_using
 	{
-		$$ = make1_str("?");
+		$$ = make_str("?");
 	}
 
 execstring: char_variable |
-	CSTRING	 { $$ = make3_str(make1_str("\""), $1, make1_str("\"")); };
+	CSTRING	 { $$ = make3_str(make_str("\""), $1, make_str("\"")); };
 
 /*
  * the exec sql free command to deallocate a previously
@@ -4850,7 +4795,7 @@ variablelist: cinputvariable | cinputvariable ',' variablelist
  */
 ECPGPrepare: SQL_PREPARE ident FROM execstring
 	{
-		$$ = make4_str(make1_str("\""), $2, make1_str("\", "), $4);
+		$$ = cat2_str(make3_str(make_str("\""), $2, make_str("\",")), $4);
 	}
 
 /*
@@ -4880,8 +4825,8 @@ ECPGSetAutocommit:  SET SQL_AUTOCOMMIT to_equal on_off
 				$$ = $4;
                         }
 
-on_off:	ON		{ $$ = make1_str("on"); }
-	| SQL_OFF	{ $$ = make1_str("off"); }
+on_off:	ON		{ $$ = make_str("on"); }
+	| SQL_OFF	{ $$ = make_str("off"); }
 
 to_equal:	TO | '=';
 
@@ -4936,20 +4881,20 @@ ECPGTypedef: TYPE_P symbol IS ctype opt_type_array_bounds opt_reference
 
         	types = this;
 
-		$$ = cat5_str(cat3_str(make1_str("/* exec sql type"), mm_strdup($2), make1_str("is")), mm_strdup($4.type_str), mm_strdup($5.str), $6, make1_str("*/"));
+		$$ = cat_str(7, make_str("/* exec sql type"), mm_strdup($2), make_str("is"), mm_strdup($4.type_str), mm_strdup($5.str), $6, make_str("*/"));
 	}
 
 opt_type_array_bounds:  '[' ']' opt_type_array_bounds
 			{
                             $$.index1 = 0;
                             $$.index2 = $3.index1;
-                            $$.str = cat2_str(make1_str("[]"), $3.str);
+                            $$.str = cat2_str(make_str("[]"), $3.str);
                         }
 		| '(' ')' opt_type_array_bounds
 			{
                             $$.index1 = 0;
                             $$.index2 = $3.index1;
-                            $$.str = cat2_str(make1_str("[]"), $3.str);
+                            $$.str = cat2_str(make_str("[]"), $3.str);
                         }
 		| '[' Iresult ']' opt_type_array_bounds
 			{
@@ -4958,7 +4903,7 @@ opt_type_array_bounds:  '[' ']' opt_type_array_bounds
 			    sprintf (txt, "%d", $2);
                             $$.index1 = $2;
                             $$.index2 = $4.index1;
-                            $$.str = cat4_str(make1_str("["), txt, make1_str("]"), $4.str);
+                            $$.str = cat_str(4, make_str("["), txt, make_str("]"), $4.str);
                         }
 		| '(' Iresult ')' opt_type_array_bounds
 			{
@@ -4967,7 +4912,7 @@ opt_type_array_bounds:  '[' ']' opt_type_array_bounds
 			    sprintf (txt, "%d", $2);
                             $$.index1 = $2;
                             $$.index2 = $4.index1;
-                            $$.str = cat4_str(make1_str("["), txt, make1_str("]"), $4.str);
+                            $$.str = cat_str(4, make_str("["), txt, make_str("]"), $4.str);
                         }
 		| /* EMPTY */
 			{
@@ -4977,89 +4922,89 @@ opt_type_array_bounds:  '[' ']' opt_type_array_bounds
                         }
 		;
 
-opt_reference: SQL_REFERENCE { $$ = make1_str("reference"); }
+opt_reference: SQL_REFERENCE { $$ = make_str("reference"); }
 	| /* empty */ 	     { $$ = EMPTY; }
 
 ctype: CHAR
 	{
-		$$.type_str = make1_str("char");
+		$$.type_str = make_str("char");
                 $$.type_enum = ECPGt_char;
 		$$.type_index = -1;
 		$$.type_dimension = -1;
 	}
 	| VARCHAR
 	{
-		$$.type_str = make1_str("varchar");
+		$$.type_str = make_str("varchar");
                 $$.type_enum = ECPGt_varchar;
 		$$.type_index = -1;
 		$$.type_dimension = -1;
 	}
 	| FLOAT
 	{
-		$$.type_str = make1_str("float");
+		$$.type_str = make_str("float");
                 $$.type_enum = ECPGt_float;
 		$$.type_index = -1;
 		$$.type_dimension = -1;
 	}
 	| DOUBLE
 	{
-		$$.type_str = make1_str("double");
+		$$.type_str = make_str("double");
                 $$.type_enum = ECPGt_double;
 		$$.type_index = -1;
 		$$.type_dimension = -1;
 	}
 	| opt_signed SQL_INT
 	{
-		$$.type_str = make1_str("int");
+		$$.type_str = make_str("int");
        	        $$.type_enum = ECPGt_int;
 		$$.type_index = -1;
 		$$.type_dimension = -1;
 	}
 	| SQL_ENUM
 	{
-		$$.type_str = make1_str("int");
+		$$.type_str = make_str("int");
        	        $$.type_enum = ECPGt_int;
 		$$.type_index = -1;
 		$$.type_dimension = -1;
 	}
 	| opt_signed SQL_SHORT
 	{
-		$$.type_str = make1_str("short");
+		$$.type_str = make_str("short");
        	        $$.type_enum = ECPGt_short;
 		$$.type_index = -1;
 		$$.type_dimension = -1;
 	}
 	| opt_signed SQL_LONG
 	{
-		$$.type_str = make1_str("long");
+		$$.type_str = make_str("long");
        	        $$.type_enum = ECPGt_long;
 		$$.type_index = -1;
 		$$.type_dimension = -1;
 	}
 	| SQL_BOOL
 	{
-		$$.type_str = make1_str("bool");
+		$$.type_str = make_str("bool");
        	        $$.type_enum = ECPGt_bool;
 		$$.type_index = -1;
 		$$.type_dimension = -1;
 	}
 	| SQL_UNSIGNED SQL_INT
 	{
-		$$.type_str = make1_str("unsigned int");
+		$$.type_str = make_str("unsigned int");
        	        $$.type_enum = ECPGt_unsigned_int;
 		$$.type_index = -1;
 		$$.type_dimension = -1;
 	}
 	| SQL_UNSIGNED SQL_SHORT
 	{
-		$$.type_str = make1_str("unsigned short");
+		$$.type_str = make_str("unsigned short");
        	        $$.type_enum = ECPGt_unsigned_short;
 		$$.type_index = -1;
 		$$.type_dimension = -1;
 	}
 	| SQL_UNSIGNED SQL_LONG
 	{
-		$$.type_str = make1_str("unsigned long");
+		$$.type_str = make_str("unsigned long");
        	        $$.type_enum = ECPGt_unsigned_long;
 		$$.type_index = -1;
 		$$.type_dimension = -1;
@@ -5072,7 +5017,7 @@ ctype: CHAR
 	} '{' sql_variable_declarations '}'
 	{
 		ECPGfree_struct_member(struct_member_list[struct_level--]);
-		$$.type_str = cat3_str(make1_str("struct {"), $4, make1_str("}"));
+		$$.type_str = cat_str(3, make_str("struct {"), $4, make_str("}"));
 		$$.type_enum = ECPGt_struct;
                 $$.type_index = -1;
                 $$.type_dimension = -1;
@@ -5085,7 +5030,7 @@ ctype: CHAR
 	} '{' sql_variable_declarations '}'
 	{
 		ECPGfree_struct_member(struct_member_list[struct_level--]);
-		$$.type_str = cat3_str(make1_str("union {"), $4, make1_str("}"));
+		$$.type_str = cat_str(3, make_str("union {"), $4, make_str("}"));
 		$$.type_enum = ECPGt_union;
                 $$.type_index = -1;
                 $$.type_dimension = -1;
@@ -5121,7 +5066,7 @@ sql_declaration: ctype
 	}
 	sql_variable_list ';'
 	{
-		$$ = cat3_str($1.type_str, $3, make1_str(";"));
+		$$ = cat_str(3, $1.type_str, $3, make_str(";"));
 	}
 
 sql_variable_list: sql_variable 
@@ -5130,7 +5075,7 @@ sql_variable_list: sql_variable
 	}
 	| sql_variable_list ',' sql_variable
 	{
-		$$ = make3_str($1, make1_str(","), $3);
+		$$ = cat_str(3, $1, make_str(","), $3);
 	}
 
 sql_variable: opt_pointer symbol opt_array_bounds
@@ -5198,7 +5143,7 @@ sql_variable: opt_pointer symbol opt_array_bounds
 			else
 				ECPGmake_struct_member($2, type, &(struct_member_list[struct_level - 1]));
 
-			$$ = cat3_str($1, $2, $3.str);
+			$$ = cat_str(3, $1, $2, $3.str);
 		}
 
 /*
@@ -5252,7 +5197,7 @@ ECPGVar: SQL_VAR symbol IS ctype opt_type_array_bounds opt_reference
 		ECPGfree_type(p->type);
 		p->type = type;
 
-		$$ = cat5_str(cat3_str(make1_str("/* exec sql var"), mm_strdup($2), make1_str("is")), mm_strdup($4.type_str), mm_strdup($5.str), $6, make1_str("*/"));
+		$$ = cat_str(7, make_str("/* exec sql var"), mm_strdup($2), make_str("is"), mm_strdup($4.type_str), mm_strdup($5.str), $6, make_str("*/"));
 	}
 
 /*
@@ -5262,58 +5207,58 @@ ECPGVar: SQL_VAR symbol IS ctype opt_type_array_bounds opt_reference
 ECPGWhenever: SQL_WHENEVER SQL_SQLERROR action {
 	when_error.code = $<action>3.code;
 	when_error.command = $<action>3.command;
-	$$ = cat3_str(make1_str("/* exec sql whenever sqlerror "), $3.str, make1_str("; */\n"));
+	$$ = cat_str(3, make_str("/* exec sql whenever sqlerror "), $3.str, make_str("; */\n"));
 }
 	| SQL_WHENEVER NOT SQL_FOUND action {
 	when_nf.code = $<action>4.code;
 	when_nf.command = $<action>4.command;
-	$$ = cat3_str(make1_str("/* exec sql whenever not found "), $4.str, make1_str("; */\n"));
+	$$ = cat_str(3, make_str("/* exec sql whenever not found "), $4.str, make_str("; */\n"));
 }
 	| SQL_WHENEVER SQL_SQLWARNING action {
 	when_warn.code = $<action>3.code;
 	when_warn.command = $<action>3.command;
-	$$ = cat3_str(make1_str("/* exec sql whenever sql_warning "), $3.str, make1_str("; */\n"));
+	$$ = cat_str(3, make_str("/* exec sql whenever sql_warning "), $3.str, make_str("; */\n"));
 }
 
 action : SQL_CONTINUE {
 	$<action>$.code = W_NOTHING;
 	$<action>$.command = NULL;
-	$<action>$.str = make1_str("continue");
+	$<action>$.str = make_str("continue");
 }
        | SQL_SQLPRINT {
 	$<action>$.code = W_SQLPRINT;
 	$<action>$.command = NULL;
-	$<action>$.str = make1_str("sqlprint");
+	$<action>$.str = make_str("sqlprint");
 }
        | SQL_STOP {
 	$<action>$.code = W_STOP;
 	$<action>$.command = NULL;
-	$<action>$.str = make1_str("stop");
+	$<action>$.str = make_str("stop");
 }
        | SQL_GOTO name {
         $<action>$.code = W_GOTO;
         $<action>$.command = strdup($2);
-	$<action>$.str = cat2_str(make1_str("goto "), $2);
+	$<action>$.str = cat2_str(make_str("goto "), $2);
 }
        | SQL_GO TO name {
         $<action>$.code = W_GOTO;
         $<action>$.command = strdup($3);
-	$<action>$.str = cat2_str(make1_str("goto "), $3);
+	$<action>$.str = cat2_str(make_str("goto "), $3);
 }
        | DO name '(' c_args ')' {
 	$<action>$.code = W_DO;
-	$<action>$.command = make4_str($2, make1_str("("), $4, make1_str(")"));
-	$<action>$.str = cat2_str(make1_str("do"), mm_strdup($<action>$.command));
+	$<action>$.command = cat_str(4, $2, make_str("("), $4, make_str(")"));
+	$<action>$.str = cat2_str(make_str("do"), mm_strdup($<action>$.command));
 }
        | DO SQL_BREAK {
         $<action>$.code = W_BREAK;
         $<action>$.command = NULL;
-        $<action>$.str = make1_str("break");
+        $<action>$.str = make_str("break");
 }
        | SQL_CALL name '(' c_args ')' {
 	$<action>$.code = W_DO;
-	$<action>$.command = make4_str($2, make1_str("("), $4, make1_str(")"));
-	$<action>$.str = cat2_str(make1_str("call"), mm_strdup($<action>$.command));
+	$<action>$.command = cat_str(4, $2, make_str("("), $4, make_str(")"));
+	$<action>$.str = cat2_str(make_str("call"), mm_strdup($<action>$.command));
 }
 
 /* some other stuff for ecpg */
@@ -5322,98 +5267,98 @@ action : SQL_CONTINUE {
 ecpg_expr:  com_expr 
 				{	$$ = $1; }
 		| a_expr TYPECAST Typename
-				{	$$ = cat3_str($1, make1_str("::"), $3); }
+				{	$$ = cat_str(3, $1, make_str("::"), $3); }
 		| '-' ecpg_expr %prec UMINUS
-				{	$$ = cat2_str(make1_str("-"), $2); }
+				{	$$ = cat2_str(make_str("-"), $2); }
 		| '%' ecpg_expr
-				{       $$ = cat2_str(make1_str("%"), $2); }
+				{       $$ = cat2_str(make_str("%"), $2); }
 		| '^' ecpg_expr
-				{       $$ = cat2_str(make1_str("^"), $2); }
+				{       $$ = cat2_str(make_str("^"), $2); }
 		| '|' ecpg_expr
-				{       $$ = cat2_str(make1_str("|"), $2); }
+				{       $$ = cat2_str(make_str("|"), $2); }
 		| ';' a_expr
-				{       $$ = cat2_str(make1_str(";"), $2); }
+				{       $$ = cat2_str(make_str(";"), $2); }
 		| a_expr '%'
-				{       $$ = cat2_str($1, make1_str("%")); }
+				{       $$ = cat2_str($1, make_str("%")); }
 		| a_expr '^'
-				{       $$ = cat2_str($1, make1_str("^")); }
+				{       $$ = cat2_str($1, make_str("^")); }
 		| a_expr '|'
-				{       $$ = cat2_str($1, make1_str("|")); }
+				{       $$ = cat2_str($1, make_str("|")); }
 		| a_expr '+' ecpg_expr
-				{	$$ = cat3_str($1, make1_str("+"), $3); }
+				{	$$ = cat_str(3, $1, make_str("+"), $3); }
 		| a_expr '-' ecpg_expr
-				{	$$ = cat3_str($1, make1_str("-"), $3); }
+				{	$$ = cat_str(3, $1, make_str("-"), $3); }
 		| a_expr '*' ecpg_expr
-				{	$$ = cat3_str($1, make1_str("*"), $3); }
+				{	$$ = cat_str(3, $1, make_str("*"), $3); }
 		| a_expr '/' ecpg_expr
-				{	$$ = cat3_str($1, make1_str("/"), $3); }
+				{	$$ = cat_str(3, $1, make_str("/"), $3); }
 		| a_expr '%' ecpg_expr
-				{	$$ = cat3_str($1, make1_str("%"), $3); }
+				{	$$ = cat_str(3, $1, make_str("%"), $3); }
 		| a_expr '^' ecpg_expr
-				{	$$ = cat3_str($1, make1_str("^"), $3); }
+				{	$$ = cat_str(3, $1, make_str("^"), $3); }
 		| a_expr '|' ecpg_expr
-				{	$$ = cat3_str($1, make1_str("|"), $3); }
+				{	$$ = cat_str(3, $1, make_str("|"), $3); }
 		| a_expr '<' ecpg_expr
-				{	$$ = cat3_str($1, make1_str("<"), $3); }
+				{	$$ = cat_str(3, $1, make_str("<"), $3); }
 		| a_expr '>' ecpg_expr
-				{	$$ = cat3_str($1, make1_str(">"), $3); }
+				{	$$ = cat_str(3, $1, make_str(">"), $3); }
 		| a_expr '=' NULL_P
-                                {       $$ = cat2_str($1, make1_str("= NULL")); }
+                                {       $$ = cat2_str($1, make_str("= NULL")); }
 		| NULL_P '=' ecpg_expr
-                                {       $$ = cat2_str(make1_str("= NULL"), $3); }
+                                {       $$ = cat2_str(make_str("= NULL"), $3); }
 		| a_expr '=' ecpg_expr
-				{	$$ = cat3_str($1, make1_str("="), $3); }
+				{	$$ = cat_str(3, $1, make_str("="), $3); }
 		| a_expr Op ecpg_expr
-				{	$$ = cat3_str($1, make1_str("="), $3); }
+				{	$$ = cat_str(3, $1, make_str("="), $3); }
 		| Op ecpg_expr
 				{	$$ = cat2_str($1, $2); }
 		| a_expr Op
 				{	$$ = cat2_str($1, $2); }
 		| a_expr AND ecpg_expr
-				{	$$ = cat3_str($1, make1_str("and"), $3); }
+				{	$$ = cat_str(3, $1, make_str("and"), $3); }
 		| a_expr OR ecpg_expr
-				{	$$ = cat3_str($1, make1_str("or"), $3); }
+				{	$$ = cat_str(3, $1, make_str("or"), $3); }
 		| NOT ecpg_expr
-				{	$$ = cat2_str(make1_str("not"), $2); }
+				{	$$ = cat2_str(make_str("not"), $2); }
 		| a_expr LIKE ecpg_expr
-				{	$$ = cat3_str($1, make1_str("like"), $3); }
+				{	$$ = cat_str(3, $1, make_str("like"), $3); }
 		| a_expr NOT LIKE ecpg_expr
-				{	$$ = cat3_str($1, make1_str("not like"), $4); }
+				{	$$ = cat_str(3, $1, make_str("not like"), $4); }
 		| a_expr ISNULL
-				{	$$ = cat2_str($1, make1_str("isnull")); }
+				{	$$ = cat2_str($1, make_str("isnull")); }
 		| a_expr IS NULL_P
-				{	$$ = cat2_str($1, make1_str("is null")); }
+				{	$$ = cat2_str($1, make_str("is null")); }
 		| a_expr NOTNULL
-				{	$$ = cat2_str($1, make1_str("notnull")); }
+				{	$$ = cat2_str($1, make_str("notnull")); }
 		| a_expr IS NOT NULL_P
-				{	$$ = cat2_str($1, make1_str("is not null")); }
+				{	$$ = cat2_str($1, make_str("is not null")); }
 		| a_expr IS TRUE_P
-				{	$$ = cat2_str($1, make1_str("is true")); }
+				{	$$ = cat2_str($1, make_str("is true")); }
 		| a_expr IS NOT FALSE_P
-				{	$$ = cat2_str($1, make1_str("is not false")); }
+				{	$$ = cat2_str($1, make_str("is not false")); }
 		| a_expr IS FALSE_P
-				{	$$ = cat2_str($1, make1_str("is false")); }
+				{	$$ = cat2_str($1, make_str("is false")); }
 		| a_expr IS NOT TRUE_P
-				{	$$ = cat2_str($1, make1_str("is not true")); }
+				{	$$ = cat2_str($1, make_str("is not true")); }
 		| a_expr BETWEEN b_expr AND b_expr
 				{
-					$$ = cat5_str($1, make1_str("between"), $3, make1_str("and"), $5); 
+					$$ = cat_str(5, $1, make_str("between"), $3, make_str("and"), $5); 
 				}
 		| a_expr NOT BETWEEN b_expr AND b_expr
 				{
-					$$ = cat5_str($1, make1_str("not between"), $4, make1_str("and"), $6); 
+					$$ = cat_str(5, $1, make_str("not between"), $4, make_str("and"), $6); 
 				}
 		| a_expr IN '(' in_expr ')'
 				{
-					$$ = make4_str($1, make1_str(" in ("), $4, make1_str(")")); 
+					$$ = cat_str(4, $1, make_str(" in ("), $4, make_str(")")); 
 				}
 		| a_expr NOT IN '(' in_expr ')'
 				{
-					$$ = make4_str($1, make1_str(" not in ("), $5, make1_str(")")); 
+					$$ = cat_str(4, $1, make_str(" not in ("), $5, make_str(")")); 
 				}
 		| a_expr all_Op sub_type '(' SubSelect ')'
 				{
-					$$ = cat4_str($1, $2, $3, make3_str(make1_str("("), $5, make1_str(")"))); 
+					$$ = cat_str(4, $1, $2, $3, cat_str(3, make_str("("), $5, make_str(")"))); 
 				}
 		| row_expr
 				{       $$ = $1; }
@@ -5439,7 +5384,7 @@ cinputvariable : cvariable indicator {
 
 civariableonly : cvariable {
 		add_variable(&argsinsert, find_variable($1), &no_indicator); 
-		$$ = make1_str("?");
+		$$ = make_str("?");
 }
 
 cvariable: CVARIABLE			{ $$ = $1; }
@@ -5450,7 +5395,7 @@ indicator: /* empty */			{ $$ = NULL; }
 	| SQL_INDICATOR name		{ check_indicator((find_variable($2))->type); $$ = $2; }
 
 ident: IDENT	{ $$ = $1; }
-	| CSTRING	{ $$ = make3_str(make1_str("\""), $1, make1_str("\"")); };
+	| CSTRING	{ $$ = make3_str(make_str("\""), $1, make_str("\"")); };
 
 /*
  * C stuff
@@ -5467,63 +5412,63 @@ c_stuff: c_anything 	{ $$ = $1; }
 			}
 	| c_stuff '(' c_stuff ')'
 			{
-				$$ = cat4_str($1, make1_str("("), $3, make1_str(")"));
+				$$ = cat_str(4, $1, make_str("("), $3, make_str(")"));
 			}
 
 c_list: c_term			{ $$ = $1; }
-	| c_term ',' c_list	{ $$ = make3_str($1, make1_str(","), $3); }
+	| c_term ',' c_list	{ $$ = cat_str(3, $1, make_str(","), $3); }
 
 c_term:  c_stuff 		{ $$ = $1; }
-	| '{' c_list '}'	{ $$ = make3_str(make1_str("{"), $2, make1_str("}")); }
+	| '{' c_list '}'	{ $$ = cat_str(3, make_str("{"), $2, make_str("}")); }
 
 c_thing:	c_anything	{ $$ = $1; }
-	|	'('		{ $$ = make1_str("("); }
-	|	')'		{ $$ = make1_str(")"); }
-	|	','		{ $$ = make1_str(","); }
-	|	';'		{ $$ = make1_str(";"); }
+	|	'('		{ $$ = make_str("("); }
+	|	')'		{ $$ = make_str(")"); }
+	|	','		{ $$ = make_str(","); }
+	|	';'		{ $$ = make_str(";"); }
 
 c_anything:  IDENT 	{ $$ = $1; }
-	| CSTRING	{ $$ = make3_str(make1_str("\""), $1, make1_str("\"")); }
+	| CSTRING	{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
 	| Iconst	{ $$ = $1; }
 	| Fconst	{ $$ = $1; }
-	| '*'		{ $$ = make1_str("*"); }
-	| '+'		{ $$ = make1_str("+"); }
-	| '-'		{ $$ = make1_str("-"); }
-	| '/'		{ $$ = make1_str("/"); }
-	| '%'		{ $$ = make1_str("%"); }
-	| S_AUTO	{ $$ = make1_str("auto"); }
-	| S_BOOL	{ $$ = make1_str("bool"); }
-	| S_CHAR	{ $$ = make1_str("char"); }
-	| S_CONST	{ $$ = make1_str("const"); }
-	| S_DOUBLE	{ $$ = make1_str("double"); }
-	| S_ENUM	{ $$ = make1_str("enum"); }
-	| S_EXTERN	{ $$ = make1_str("extern"); }
-	| S_FLOAT	{ $$ = make1_str("float"); }
-        | S_INT		{ $$ = make1_str("int"); }
-	| S_LONG	{ $$ = make1_str("long"); }
-	| S_REGISTER	{ $$ = make1_str("register"); }
-	| S_SHORT	{ $$ = make1_str("short"); }
-	| S_SIGNED	{ $$ = make1_str("signed"); }
-	| S_STATIC	{ $$ = make1_str("static"); }
-        | S_STRUCT	{ $$ = make1_str("struct"); }
-        | S_UNION	{ $$ = make1_str("union"); }
-	| S_UNSIGNED	{ $$ = make1_str("unsigned"); }
-	| S_VARCHAR	{ $$ = make1_str("varchar"); }
+	| '*'		{ $$ = make_str("*"); }
+	| '+'		{ $$ = make_str("+"); }
+	| '-'		{ $$ = make_str("-"); }
+	| '/'		{ $$ = make_str("/"); }
+	| '%'		{ $$ = make_str("%"); }
+	| S_AUTO	{ $$ = make_str("auto"); }
+	| S_BOOL	{ $$ = make_str("bool"); }
+	| S_CHAR	{ $$ = make_str("char"); }
+	| S_CONST	{ $$ = make_str("const"); }
+	| S_DOUBLE	{ $$ = make_str("double"); }
+	| S_ENUM	{ $$ = make_str("enum"); }
+	| S_EXTERN	{ $$ = make_str("extern"); }
+	| S_FLOAT	{ $$ = make_str("float"); }
+        | S_INT		{ $$ = make_str("int"); }
+	| S_LONG	{ $$ = make_str("long"); }
+	| S_REGISTER	{ $$ = make_str("register"); }
+	| S_SHORT	{ $$ = make_str("short"); }
+	| S_SIGNED	{ $$ = make_str("signed"); }
+	| S_STATIC	{ $$ = make_str("static"); }
+        | S_STRUCT	{ $$ = make_str("struct"); }
+        | S_UNION	{ $$ = make_str("union"); }
+	| S_UNSIGNED	{ $$ = make_str("unsigned"); }
+	| S_VARCHAR	{ $$ = make_str("varchar"); }
 	| S_ANYTHING	{ $$ = make_name(); }
-        | '['		{ $$ = make1_str("["); }
-	| ']'		{ $$ = make1_str("]"); }
-/*        | '('		{ $$ = make1_str("("); }
-	| ')'		{ $$ = make1_str(")"); }*/
-	| '='		{ $$ = make1_str("="); }
+        | '['		{ $$ = make_str("["); }
+	| ']'		{ $$ = make_str("]"); }
+/*        | '('		{ $$ = make_str("("); }
+	| ')'		{ $$ = make_str(")"); }*/
+	| '='		{ $$ = make_str("="); }
 
 blockstart : '{' {
     braces_open++;
-    $$ = make1_str("{");
+    $$ = make_str("{");
 }
 
 blockend : '}' {
     remove_variables(braces_open--);
-    $$ = make1_str("}");
+    $$ = make_str("}");
 }
 
 %%

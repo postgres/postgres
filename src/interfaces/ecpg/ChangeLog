@@ -737,3 +737,15 @@ Wed Dec  8 08:26:13 CET 1999
 	- Clean up error handling.
         - Set ecpg version to 2.6.11.
 
+Tue Dec 14 07:28:10 CET 1999
+
+	- Synced preproc.y with gram.y.
+	- Simplified string handling.
+
+Wed Dec 15 08:10:52 CET 1999
+
+	- Fixed typo in parser.
+	- Included Bruce's patch to fix two more memory leaks in libecpg.
+	- Some cleanup in libecpg.
+	- Set library version to 3.0.9.
+	- Set ecpg version to 2.6.12.

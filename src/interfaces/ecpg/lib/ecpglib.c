@@ -230,13 +230,14 @@ static
 char *
 quote_postgres(char *arg, int lineno)
 {
-	char	   *res = (char *) ecpg_alloc(2 * strlen(arg) + 1, lineno);
+	char	   *res = (char *) ecpg_alloc(2 * strlen(arg) + 3, lineno);
 	int			i,
-				ri;
+				ri = 0;
 
 	if (!res)
 		return (res);
 
+	res[ri++] = '\'';
 	for (i = 0, ri = 0; arg[i]; i++, ri++)
 	{
 		switch (arg[i])
@@ -253,6 +254,7 @@ quote_postgres(char *arg, int lineno)
 
 		res[ri] = arg[i];
 	}
+	res[ri++] = '\'';
 	res[ri] = '\0';
 
 	return res;
@@ -498,7 +500,6 @@ ECPGexecute(struct statement * stmt)
 					{
 						/* set slen to string length if type is char * */
 						int			slen = (var->varcharsize == 0) ? strlen((char *) var->value) : var->varcharsize;
-						char	   *tmp;
 
 						if (!(newcopy = ecpg_alloc(slen + 1, stmt->lineno)))
 							return false;
@@ -506,18 +507,9 @@ ECPGexecute(struct statement * stmt)
 						strncpy(newcopy, (char *) var->value, slen);
 						newcopy[slen] = '\0';
 
-						if (!(mallocedval = (char *) ecpg_alloc(2 * strlen(newcopy) + 3, stmt->lineno)))
+						mallocedval = quote_postgres(newcopy, stmt->lineno);
+						if (!mallocedval)
 							return false;
-
-						strcpy(mallocedval, "'");
-						tmp = quote_postgres(newcopy, stmt->lineno);
-						if (!tmp)
-							return false;
-
-						strcat(mallocedval, tmp);
-						free(tmp);
-						
-						strcat(mallocedval, "'");
 
 						free(newcopy);
 
@@ -541,7 +533,6 @@ ECPGexecute(struct statement * stmt)
 					{
 						struct ECPGgeneric_varchar *variable =
 						(struct ECPGgeneric_varchar *) (var->value);
-						char	   *tmp;
 
 						if (!(newcopy = (char *) ecpg_alloc(variable->len + 1, stmt->lineno)))
 							return false;
@@ -549,18 +540,9 @@ ECPGexecute(struct statement * stmt)
 						strncpy(newcopy, variable->arr, variable->len);
 						newcopy[variable->len] = '\0';
 
-						if (!(mallocedval = (char *) ecpg_alloc(2 * strlen(newcopy) + 3, stmt->lineno)))
+						mallocedval = quote_postgres(newcopy, stmt->lineno);
+						if (!mallocedval)
 							return false;
-
-						strcpy(mallocedval, "'");
-						tmp = quote_postgres(newcopy, stmt->lineno);
-						if (!tmp)
-							return false;
-
-						strcat(mallocedval, tmp);
-						free(tmp);
-						
-						strcat(mallocedval, "'");
 
 						free(newcopy);
 
@@ -1127,18 +1109,16 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 	
 	if (strcmp(transaction, "commit") == 0 || strcmp(transaction, "rollback") == 0)
 	{
-		struct prepared_statement *this;
-
 		con->committed = true;
 
 		/* deallocate all prepared statements */
-		while(prep_stmts != NULL) {
+		while(prep_stmts != NULL)
+		{
 			bool		b = ECPGdeallocate(lineno, prep_stmts->name);
 
 			if (!b)
 				return false;
 		}
-			
 	}
 
 	return true;
@@ -1415,7 +1395,7 @@ ECPGdeallocate(int lineno, char *name)
 			prev->next = this->next;
 		else
 			prep_stmts = this->next;
-
+		
 		free(this);
 		return true;
 	}
