@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.35 2003/05/06 21:51:41 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.36 2003/05/06 23:10:04 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -160,10 +160,11 @@
     (but note that these exist only within a session, and are never shared
     across sessions).  Existing prepared statements and portals are
     referenced by names assigned when they were created.  In addition,
-    an <quote>unnamed</> prepared statement and portal exist, for use with
-    queries that are to be executed and forgotten.  This is slightly
-    more efficient than using named objects, since the backend knows that
-    it need not save the object's state for re-use.
+    an <quote>unnamed</> prepared statement and portal exist.  Although these
+    behave largely the same as named objects, operations on them are optimized
+    for the case of executing a query only once and then discarding it,
+    whereas operations on named objects are optimized on the expectation
+    of multiple uses.
    </para>
   </sect2>
  </sect1>
@@ -869,7 +870,8 @@
     zero or more CopyData messages (always one per row), followed by CopyDone.
     The backend then reverts to the command-processing mode it was
     in before the <command>COPY</> started, and sends CommandComplete.
-    The frontend cannot abort the transfer (short of closing the connection),
+    The frontend cannot abort the transfer (except by closing the connection
+    or issuing a Cancel request),
     but it can discard unwanted CopyData and CopyDone messages.
    </para>
 
@@ -2013,9 +2015,10 @@ CommandComplete (B)
         <literal>INSERT <replaceable>oid</replaceable>
         <replaceable>rows</replaceable></literal>, where
         <replaceable>rows</replaceable> is the number of rows
-        inserted, and <replaceable>oid</replaceable> is the object ID
-        of the inserted row if <Replaceable>rows</Replaceable> is 1,
-        otherwise <Replaceable>oid</Replaceable> is 0.
+        inserted. <replaceable>oid</replaceable> is the object ID
+        of the inserted row if <Replaceable>rows</Replaceable> is 1
+	and the target table has OIDs;
+	otherwise <Replaceable>oid</Replaceable> is 0.
        </Para>
 
        <Para>
