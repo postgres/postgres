@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.6 1996/10/07 02:32:39 momjian Exp $
+ * $Id: psqlHelp.h,v 1.7 1996/11/16 05:45:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ static struct _helpStruct QL_HELP[] = {
       "create function <function_name> ([<type1>,...<typeN>]) returns <return_type>\n\tas '<object_filename>'|'<sql-queries>'\n\tlanguage 'c'|'sql'|'internal';"},
   { "create index",
       "construct an index",
-      "create index <indexname> on <class_name> [using <access_method>] (<attr1>|<funcname>(<attr1>,...) [<type_class1>]);"},
+      "create [unique] index <indexname> on <class_name> [using <access_method>] (<attr1>|<funcname>(<attr1>,...) [<type_class1>]);"},
   { "create operator",
       "create a user-defined operator",
       "create operator <operator_name> (\n\t[leftarg = <type1>][,rightarg = <type2>]\n\t,procedure = <func_name>,\n\t[,commutator = <com_op>][,negator = <neg_op>]\n\t[,restrict = <res_proc>][,hashes]\n\t[,join = <join_proc>][,sort = <sort_op1>...<sort_opN>]);"},
