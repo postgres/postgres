@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.81 2001/11/21 22:57:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.82 2001/12/21 06:03:27 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -271,6 +271,7 @@ jayt
 	{"jt", TZ, 45},				/* Java Time */
 	{"jul", MONTH, 7},
 	{"julian", UNITS, JULIAN},
+	{"july", MONTH, 7},
 	{"jun", MONTH, 6},
 	{"june", MONTH, 6},
 #if 0
