@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.49 2000/05/29 05:44:33 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.50 2000/05/29 20:51:35 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -249,6 +249,8 @@ install-headers: prebuildheaders $(SRCDIR)/include/config.h
           $(HEADERDIR)/postgres.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/postgres_ext.h \
           $(HEADERDIR)/postgres_ext.h
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/fmgr.h \
+          $(HEADERDIR)/fmgr.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/libpq/pqcomm.h \
           $(HEADERDIR)/libpq/pqcomm.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/libpq/libpq-fs.h \
