@@ -7,28 +7,27 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.99 1999/07/17 20:18:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.100 1999/07/19 02:27:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <ctype.h>
+
+#include "postgres.h"
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "fe-auth.h"
-#include "postgres.h"
 
 #ifdef WIN32
 #include "win32.h"
 #else
-#if !defined(NO_UNISTD_H)
-#include <unistd.h>
-#endif
 #include <netdb.h>
 #include <netinet/tcp.h>
 #endif
-#include <fcntl.h>
-#include <errno.h>
-#include <ctype.h>				/* for isspace() */
 
 #ifndef HAVE_STRDUP
 #include "strdup.h"

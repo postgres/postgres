@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.117 1999/07/17 20:18:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.118 1999/07/19 02:27:08 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -75,7 +75,7 @@
 #include <termios.h>
 #endif
 
-#ifdef __CYGWIN32__
+#ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
 

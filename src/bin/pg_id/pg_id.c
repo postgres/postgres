@@ -9,16 +9,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.8 1999/02/13 23:20:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.9 1999/07/19 02:27:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <sys/types.h>
-#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#ifdef __CYGWIN32__
+#include <sys/types.h>
+#include <pwd.h>
+
+#include "postgres.h"
+#ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
 

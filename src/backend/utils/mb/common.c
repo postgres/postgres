@@ -2,19 +2,15 @@
  * This file contains some public functions
  * usable for both the backend and the frontend.
  * Tatsuo Ishii
- * $Id: common.c,v 1.5 1999/05/25 16:12:41 momjian Exp $ */
+ * $Id: common.c,v 1.6 1999/07/19 02:27:07 momjian Exp $ */
 
 #include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 
 #ifdef WIN32
 #include "win32.h"
-#else
-#if !defined(NO_UNISTD_H)
-#include <unistd.h>
 #endif
-#endif
-
-#include <string.h>
 
 #include "mb/pg_wchar.h"
 

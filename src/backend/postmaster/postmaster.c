@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.114 1999/07/17 20:17:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.115 1999/07/19 02:27:06 momjian Exp $
  *
  * NOTES
  *
@@ -32,46 +32,40 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "postgres.h"
-#include <sys/param.h>
- /* moved here to prevent double define */
-#ifdef HAVE_NETDB_H
-#include <netdb.h>
-#endif
-
-
-#ifndef MAXHOSTNAMELEN
-#define MAXHOSTNAMELEN 256
-#endif
-
-#if !defined(NO_UNISTD_H)
 #include <unistd.h>
-#endif	 /* !NO_UNISTD_H */
-
 #include <signal.h>
 #include <time.h>
-
-
-#ifdef HAVE_LIMITS_H
-#include <limits.h>
-#else
-#include <values.h>
-#endif
 #include <sys/wait.h>
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/socket.h>
-
 #include <errno.h>
 #include <fcntl.h>
+#include <sys/param.h>
+
+#include "postgres.h"
+ /* moved here to prevent double define */
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif
+
+#ifndef MAXHOSTNAMELEN
+#define MAXHOSTNAMELEN 256
+#endif
+
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#else
+#include <values.h>
+#endif
 
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
 
-#ifdef __CYGWIN32__
+#ifdef HAVE_GETOPT_H
 #include "getopt.h"
 #endif
 

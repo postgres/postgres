@@ -7,23 +7,21 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.82 1999/07/17 20:18:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.83 1999/07/19 02:27:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include <unistd.h>
+#include <errno.h>
+#include <ctype.h>
+
+#include "postgres.h"
 #include "libpq-fe.h"
 #include "libpq-int.h"
-#include "postgres.h"
 
 #ifdef WIN32
 #include "win32.h"
-#else
-#if !defined(NO_UNISTD_H)
-#include <unistd.h>
 #endif
-#endif
-#include <errno.h>
-#include <ctype.h>
 
 
 /* keep this in same order as ExecStatusType in libpq-fe.h */

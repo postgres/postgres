@@ -7,25 +7,23 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.21 1999/07/17 20:18:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.22 1999/07/19 02:27:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
+#include <unistd.h>
+#include <fcntl.h>
+#include <io.h>
+#include <sys/stat.h>
+
+#include "postgres.h"
 #include "libpq-fe.h"
 #include "libpq-int.h"
-#include "postgres.h"
 
 #ifdef WIN32
 #include "win32.h"
-#include <io.h>
-#else
-#if !defined(NO_UNISTD_H)
-#include <unistd.h>
 #endif
-#endif
-#include <fcntl.h>
-#include <sys/stat.h>
 
 #include "libpq/libpq-fs.h"		/* must come after sys/stat.h */
 

@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.65 1999/07/17 20:16:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.66 1999/07/19 02:27:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,14 +15,13 @@
 #include <time.h>
 #include <signal.h>
 #include <setjmp.h>
-#ifdef __CYGWIN32__
-#include <getopt.h>
-#endif
 
 #define BOOTSTRAP_INCLUDE		/* mask out stuff in tcop/tcopprot.h */
 
 #include "postgres.h"
-
+#ifdef HAVE_GETOPT_H
+#include <getopt.h>
+#endif
 
 #include "access/genam.h"
 #include "access/heapam.h"

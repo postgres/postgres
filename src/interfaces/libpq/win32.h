@@ -5,9 +5,6 @@
  */
 #define strcasecmp(a,b) stricmp(a,b)
 
-
-
-#define NO_UNISTD_H
 #define SOCKET_SIZE_TYPE int
 
 /*

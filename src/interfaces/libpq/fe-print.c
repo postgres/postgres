@@ -9,29 +9,29 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.24 1999/07/17 20:18:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.25 1999/07/19 02:27:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include <unistd.h>
+#include <signal.h>
+
+#include "postgres.h"
 #include "libpq-fe.h"
 #include "libpq-int.h"
-#include "postgres.h"
 #include "pqsignal.h"
 
 #ifdef WIN32
 #include "win32.h"
 #else
-#if !defined(NO_UNISTD_H)
-#include <unistd.h>
-#endif
 #include <sys/ioctl.h>
-#ifndef HAVE_TERMIOS_H
-#include <sys/termios.h>
-#else
-#include <termios.h>
 #endif
-#endif	 /* WIN32 */
-#include <signal.h>
+
+#ifdef HAVE_TERMIOS_H
+#include <termios.h>
+#else
+#include <sys/termios.h>
+#endif
 
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"

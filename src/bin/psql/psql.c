@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.183 1999/07/17 20:18:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.184 1999/07/19 02:27:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,13 +32,16 @@
 #include "pqsignal.h"
 #include "stringutils.h"
 #include "psqlHelp.h"
+
 #ifndef HAVE_STRDUP
 #include "strdup.h"
 #endif
+
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
 #endif
-#ifdef __CYGWIN32__
+
+#ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
 
