@@ -1,11 +1,11 @@
 
-PyGreSQL - v3.1: PostgreSQL module for Python
+PyGreSQL - v3.2: PostgreSQL module for Python
 ==============================================
 
 0. Copyright notice
 ===================
 
-  PyGreSQL, version 3.1
+  PyGreSQL, version 3.2
   A Python interface for PostgreSQL database.
   Written by D'Arcy J.M. Cain, darcy@druid.net<BR>
   Based heavily on code written by Pascal Andre, andre@chimay.via.ecp.fr.
@@ -28,8 +28,14 @@ PyGreSQL - v3.1: PostgreSQL module for Python
   AUTHOR HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, 
   ENHANCEMENTS, OR MODIFICATIONS.
 
-  Further modifications copyright 1997, 1998 and 1999 by D'Arcy J.M. Cain
+  Further modifications copyright 1997 - 2000 by D'Arcy J.M. Cain
   (darcy@druid.net) subject to the same terms and conditions as above.
+
+  Note that as of March 1 2001 the development of PyGreSQL has been moved
+  directly into the PostgreSQL development tree and is subject to the
+  PostgreSQL copyright except where contradicted by the above copyrights
+  in which case the above copyrights apply.
+
 
 1. Presentation
 ===============
@@ -69,6 +75,7 @@ version of PyGreSQL works with PostgreSQL 6.5 and Python 1.5.2.
   ChangeLog    - changes that affected this package during its history
   pgmodule.c   - the C python module
   pg.py        - PyGreSQL DB class.
+  pgdb.py      - DB-SIG DB-API 2.0 compliant API wrapper for PygreSQL
   tutorial/    - demos directory
                  Content: basics.py, syscat.py, advanced.py, func.py and
                  pgtools.py.  The samples here have been taken from the
@@ -107,10 +114,10 @@ GENERAL
   you probably need to install packages such as Python-devel in addition to 
   the Python package.
 
-* PyGreSQL is implemented as two parts, a C module labeled _pg and a
-  Python wrapper called pg.py.  This changed between 2.1 and 2.2.  This
-  should not affect any existing programs but the installation is slightly
-  different.
+* PyGreSQL is implemented as three parts, a C module labeled _pg and two
+  Python wrappers called pg.py and pgdb.py.  This changed between 2.1 and
+  2.2 and again in 3.0.  These changes should not affect any existing
+  programs but the installation is slightly different.
 
 * Download and unpack the PyGreSQL tarball if you haven't already done so.
 
@@ -217,16 +224,32 @@ For support:
 
   - Python:      newgroup comp.lang.python
   - PostgreSQL:  mailing list (see package documentation for information)
-  - PyGres95:    contact me (andre@via.ecp.fr) for bug reports, ideas, remarks
-                 I will try to answer as long as my free time allow me to do 
-                 that.
-  - PyGreSQL:    contact me (darcy@druid.net) concerning the changes to 2.x.
+  - PyGres95:    contact me (andre@via.ecp.fr) for bug reports, ideas,
+                 remarks I will try to answer as long as my free time allow
+                 me to do that.
+  - PyGreSQL:    contact me (darcy@druid.net) concerning the changes to 2.x
+                 and up.  If you would like to proposes changes please 
+                 join the PyGreSQL mailing list and send context diffs
+                 there.  See http://www.vex.net/mailman/listinfo/pygresql
+                 to join the mailing list.
 
 
 2. Programming information
 ==========================
 
-This module defines three objects: the pgobject that handles the connection 
+You may either choose to use the old, mature interface provided by the
+'pg' module or else the newer 'pgdb' interface compliant with DB-API 2.0
+specification developed by the Python DB-SIG.
+
+The remainder of this chapter and the next chapter describe only
+the older 'pg' API.  As long as PyGreSQL does not contain a
+description of the DB-API you should read about the API at
+http://www.python.org/topics/database/DatabaseAPI-2.0.html
+
+A tutorial like introduction to the DB-API can be found at
+http://www2.linuxjournal.com/lj-issues/issue49/2605.html
+
+The 'pg' module defines three objects: the pgobject that handles the connection
 and all the requests to the database, the pglargeobject that handles
 all the accesses to Postgres large objects and pgqueryobject that handles
 query results.
@@ -1056,7 +1079,7 @@ The C module needs to be cleaned up and redundant code merged.
 
 The DB-API module needs to be documented.
 
-The fetch method should use real cursers.
+The fetch method should use real cursors.
 
 
 6. Future directions
