@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.17 2002/05/17 01:19:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.18 2002/08/04 03:53:11 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -83,7 +83,10 @@ SHOW ALL
 
 <screen>
 SHOW DateStyle;
-INFO:  DateStyle is ISO with US (NonEuropean) conventions
+               DateStyle
+---------------------------------------
+ ISO with US (NonEuropean) conventions
+(1 row)
 </screen>
   </para>
 
@@ -91,9 +94,32 @@ INFO:  DateStyle is ISO with US (NonEuropean) conventions
    Show the current genetic optimizer (<literal>geqo</literal>) setting:
 <screen>
 SHOW GEQO;
-INFO:  geqo is on
+ geqo
+------
+ on
+(1 row)
 </screen>
   </para>
+
+  <para>
+   Show all settings:
+<screen>
+SHOW ALL;
+             name              |                setting
+-------------------------------+---------------------------------------
+ australian_timezones          | off
+ authentication_timeout        | 60
+ checkpoint_segments           | 3
+    .
+    .
+    .
+ wal_debug                     | 0
+ wal_files                     | 0
+ wal_sync_method               | fdatasync
+(94 rows)
+</screen>
+  </para>
+
  </refsect1>
 
  <refsect1 id="R1-SQL-SHOW-3">
@@ -102,6 +128,16 @@ INFO:  geqo is on
   <para>
    The <command>SHOW</command> command is a
    <productname>PostgreSQL</productname> extension.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <para>
+    The function <function>current_setting</function> produces equivalent
+    output. See <citetitle>Miscellaneous Functions</citetitle> in the
+    <citetitle>PostgreSQL User's Guide</citetitle>.
   </para>
  </refsect1>
 </refentry>

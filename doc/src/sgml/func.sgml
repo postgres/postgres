@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.105 2002/07/31 02:27:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.106 2002/08/04 03:53:10 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -4439,6 +4439,121 @@ SELECT NULLIF(value, '(none)') ...
    <para>
     <function>version()</function> returns a string describing the PostgreSQL
     server's version.
+   </para>
+
+   <table>
+    <title>Configuration Settings Information Functions</title>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry></row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>
+        <function>current_setting</function>(<parameter>setting_name</parameter>)
+       </entry>
+       <entry><type>text</type></entry>
+       <entry>value of current setting</entry>
+      </row>
+      <row>
+       <entry>
+        <function>set_config(<parameter>setting_name</parameter>,
+                             <parameter>new_value</parameter>,
+                             <parameter>is_local</parameter>)</function>
+       </entry>
+       <entry><type>text</type></entry>
+       <entry>new value of current setting</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <indexterm zone="functions-misc">
+    <primary>setting</primary>
+    <secondary>current</secondary>
+   </indexterm>
+
+   <indexterm zone="functions-misc">
+    <primary>setting</primary>
+    <secondary>set</secondary>
+   </indexterm>
+
+   <para>
+    The <function>current_setting</function> is used to obtain the current
+    value of the <parameter>setting_name</parameter> setting, as a query
+    result. It is the equivalent to the SQL <command>SHOW</command> command.
+    For example:
+<programlisting>
+select current_setting('DateStyle');
+            current_setting
+---------------------------------------
+ ISO with US (NonEuropean) conventions
+(1 row)
+</programlisting>
+   </para>
+
+   <para>
+    <function>set_config</function> allows the <parameter>setting_name
+    </parameter> setting to be changed to <parameter>new_value</parameter>.
+    If <parameter>is_local</parameter> is set to <literal>true</literal>,
+    the new value will only apply to the current transaction. If you want
+    the new value to apply for the current session, use
+    <literal>false</literal> instead. It is the equivalent to the SQL
+    <command>SET</command> command. For example:
+<programlisting>
+SHOW show_query_stats;
+ show_query_stats
+------------------
+ on
+(1 row)
+
+select set_config('show_query_stats','off','f');
+ set_config
+------------
+ off
+(1 row)
+
+SHOW show_query_stats;
+ show_query_stats
+------------------
+ off
+(1 row)
+
+select set_config('show_query_stats','on','t');
+ set_config
+------------
+ on
+(1 row)
+
+SHOW show_query_stats;
+ show_query_stats
+------------------
+ off
+(1 row)
+
+BEGIN;
+BEGIN
+select set_config('show_query_stats','on','t');
+ set_config
+------------
+ on
+(1 row)
+
+SHOW show_query_stats;
+ show_query_stats
+------------------
+ on
+(1 row)
+
+COMMIT;
+COMMIT
+SHOW show_query_stats;
+ show_query_stats
+------------------
+ off
+(1 row)
+</programlisting>
    </para>
 
    <table>

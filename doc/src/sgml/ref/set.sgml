@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.62 2002/06/11 15:41:30 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.63 2002/08/04 03:53:11 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -494,6 +494,16 @@ SELECT CURRENT_TIMESTAMP AS today;
     <productname>PostgreSQL</productname> extensions.
    </para>
   </refsect2>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <para>
+    The function <function>set_config</function> provides the equivalent
+    capability. See <citetitle>Miscellaneous Functions</citetitle> in the
+    <citetitle>PostgreSQL User's Guide</citetitle>.
+  </para>
  </refsect1>
 </refentry>
 
