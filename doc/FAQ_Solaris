@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL 7.2
 Sun Solaris specific
 to be read in conjunction with the installation instructions
 ============================================================
-last updated:        $Date: 2002/02/12 22:35:07 $
+last updated:        $Date: 2002/03/04 17:47:24 $
 
 current maintainer:  Peter Eisentraut <peter_e@gmx.net>
 
@@ -14,6 +14,7 @@ Contents:
 2) Why do I get problems when building with OpenSSL support?
 3) Why does configure complain about a failed test program?
 4) How do I ensure that pg_dump and pg_restore can handle files > 2 Gb?
+5) Why does my 64-bit build sometimes crash?
 
 
 1) What tools do I need to build and install PostgreSQL on Solaris?
@@ -31,9 +32,10 @@ http://www.sunfreeware.com
 If you prefer sources, look here:
 http://www.gnu.org/order/ftp.html
 
-You can build with either GCC or Sun's compiler suite.
-If you are using Sun's compiler, be careful *not* to select /usr/ucb/cc;
-use /opt/SUNWspro/bin/cc.
+You can build with either GCC or Sun's compiler suite.  We have heard reports
+of problems when using gcc 2.95.1; gcc 2.95.3 is recommended.  If you are
+using Sun's compiler, be careful *not* to select /usr/ucb/cc; use
+/opt/SUNWspro/bin/cc.
 
 
 2) Why do I get problems when building with OpenSSL support?
@@ -79,3 +81,22 @@ to specify support for files with 64-bit offsets.  This has been verified
 to work on Solaris 7:
 
      CFLAGS="`getconf LFS_CFLAGS`"; export CFLAGS
+
+
+5) Why does my 64-bit build sometimes crash?
+
+On Solaris 7 and older, the 64-bit version of libc has a buggy vsnprintf
+routine, which leads to erratic core dumps in PostgreSQL.  The simplest known
+workaround is to force PostgreSQL to use its own version of vsnprintf rather
+than the library copy.  To do this, after you run 'configure' edit two files
+produced by configure:
+
+(1) In src/Makefile.global, change the line
+	SNPRINTF = 
+to read
+	SNPRINTF = snprintf.o
+
+(2) In src/backend/port/Makefile, add "snprintf.o" to OBJS.  (Skip this
+step if you see "$(SNPRINTF)" already listed in OBJS.)
+
+Then build as usual.
