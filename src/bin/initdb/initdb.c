@@ -12,7 +12,7 @@
  * This is a C implementation of the previous shell script for setting up a
  * PostgreSQL cluster location, and should be highly compatible with it.
  *
- * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.4 2003/11/13 01:36:00 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.5 2003/11/13 15:01:40 momjian Exp $
  *
  * TODO:
  *	 - clean up find_postgres code and return values
@@ -2274,6 +2274,11 @@ main(int argc, char *argv[])
 	check_input(info_schema_file);
 	check_input(features_file);
 	check_input(system_views_file);
+
+	printf("The files belonging to this database system will be owned "
+	       "by user \"%s\".\n"
+	       "This user must also own the server process.\n\n",
+	       effective_user);
 
 	setlocales();
 
