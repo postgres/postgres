@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.65 2002/09/03 21:45:44 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.66 2002/12/04 18:14:11 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ include $(top_builddir)/src/Makefile.global
 # shared library parameters
 NAME= pq
 SO_MAJOR_VERSION= 2
-SO_MINOR_VERSION= 2
+SO_MINOR_VERSION= 3
 
 override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) -DFRONTEND -DSYSCONFDIR='"$(sysconfdir)"'
 
