@@ -254,6 +254,7 @@ Run through all candidates and keep those with the most exact matches
 on input types.  Keep all candidates if none have any exact matches.
 If only one candidate remains, use it; else continue to the next step.
 </para>
+</step>
 <step performance="required">
 <para>
 Run through all candidates and keep those with the most exact or
@@ -462,6 +463,7 @@ Run through all candidates and keep those with the most exact matches
 on input types.  Keep all candidates if none have any exact matches.
 If only one candidate remains, use it; else continue to the next step.
 </para>
+</step>
 <step performance="required">
 <para>
 Run through all candidates and keep those with the most exact or
