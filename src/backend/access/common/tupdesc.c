@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.108 2004/12/31 21:59:07 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.109 2005/03/07 04:42:16 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -31,19 +31,19 @@
 #include "utils/typcache.h"
 
 
-/* ----------------------------------------------------------------
- *		CreateTemplateTupleDesc
- *
- *		This function allocates and zeros a tuple descriptor structure.
+/*
+ * CreateTemplateTupleDesc
+ *		This function allocates an empty tuple descriptor structure.
  *
  * Tuple type ID information is initially set for an anonymous record type;
  * caller can overwrite this if needed.
- * ----------------------------------------------------------------
  */
 TupleDesc
 CreateTemplateTupleDesc(int natts, bool hasoid)
 {
 	TupleDesc	desc;
+	char	   *stg;
+	int			attroffset;
 
 	/*
 	 * sanity checks
@@ -51,15 +51,33 @@ CreateTemplateTupleDesc(int natts, bool hasoid)
 	AssertArg(natts >= 0);
 
 	/*
-	 * Allocate enough memory for the tuple descriptor, and zero the
-	 * attrs[] array since TupleDescInitEntry assumes that the array is
-	 * filled with NULL pointers.
+	 * Allocate enough memory for the tuple descriptor, including the
+	 * attribute rows, and set up the attribute row pointers.
+	 *
+	 * Note: we assume that sizeof(struct tupleDesc) is a multiple of
+	 * the struct pointer alignment requirement, and hence we don't need
+	 * to insert alignment padding between the struct and the array of
+	 * attribute row pointers.
 	 */
-	desc = (TupleDesc) palloc(sizeof(struct tupleDesc));
+	attroffset = sizeof(struct tupleDesc) + natts * sizeof(Form_pg_attribute);
+	attroffset = MAXALIGN(attroffset);
+	stg = palloc(attroffset + natts * MAXALIGN(ATTRIBUTE_TUPLE_SIZE));
+	desc = (TupleDesc) stg;
 
 	if (natts > 0)
-		desc->attrs = (Form_pg_attribute *)
-			palloc0(natts * sizeof(Form_pg_attribute));
+	{
+		Form_pg_attribute *attrs;
+		int			i;
+
+		attrs = (Form_pg_attribute *) (stg + sizeof(struct tupleDesc));
+		desc->attrs = attrs;
+		stg += attroffset;
+		for (i = 0; i < natts; i++)
+		{
+			attrs[i] = (Form_pg_attribute) stg;
+			stg += MAXALIGN(ATTRIBUTE_TUPLE_SIZE);
+		}
+	}
 	else
 		desc->attrs = NULL;
 
@@ -75,15 +93,16 @@ CreateTemplateTupleDesc(int natts, bool hasoid)
 	return desc;
 }
 
-/* ----------------------------------------------------------------
- *		CreateTupleDesc
- *
+/*
+ * CreateTupleDesc
  *		This function allocates a new TupleDesc pointing to a given
- *		Form_pg_attribute array
+ *		Form_pg_attribute array.
+ *
+ * Note: if the TupleDesc is ever freed, the Form_pg_attribute array
+ * will not be freed thereby.
  *
  * Tuple type ID information is initially set for an anonymous record type;
  * caller can overwrite this if needed.
- * ----------------------------------------------------------------
  */
 TupleDesc
 CreateTupleDesc(int natts, bool hasoid, Form_pg_attribute *attrs)
@@ -106,14 +125,12 @@ CreateTupleDesc(int natts, bool hasoid, Form_pg_attribute *attrs)
 	return desc;
 }
 
-/* ----------------------------------------------------------------
- *		CreateTupleDescCopy
- *
+/*
+ * CreateTupleDescCopy
  *		This function creates a new TupleDesc by copying from an existing
- *		TupleDesc
+ *		TupleDesc.
  *
- *		!!! Constraints and defaults are not copied !!!
- * ----------------------------------------------------------------
+ * !!! Constraints and defaults are not copied !!!
  */
 TupleDesc
 CreateTupleDescCopy(TupleDesc tupdesc)
@@ -121,38 +138,25 @@ CreateTupleDescCopy(TupleDesc tupdesc)
 	TupleDesc	desc;
 	int			i;
 
-	desc = (TupleDesc) palloc(sizeof(struct tupleDesc));
-	desc->natts = tupdesc->natts;
-	if (desc->natts > 0)
-	{
-		desc->attrs = (Form_pg_attribute *)
-			palloc(desc->natts * sizeof(Form_pg_attribute));
-		for (i = 0; i < desc->natts; i++)
-		{
-			desc->attrs[i] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
-			memcpy(desc->attrs[i], tupdesc->attrs[i], ATTRIBUTE_TUPLE_SIZE);
-			desc->attrs[i]->attnotnull = false;
-			desc->attrs[i]->atthasdef = false;
-		}
-	}
-	else
-		desc->attrs = NULL;
+	desc = CreateTemplateTupleDesc(tupdesc->natts, tupdesc->tdhasoid);
 
-	desc->constr = NULL;
+	for (i = 0; i < desc->natts; i++)
+	{
+		memcpy(desc->attrs[i], tupdesc->attrs[i], ATTRIBUTE_TUPLE_SIZE);
+		desc->attrs[i]->attnotnull = false;
+		desc->attrs[i]->atthasdef = false;
+	}
 
 	desc->tdtypeid = tupdesc->tdtypeid;
 	desc->tdtypmod = tupdesc->tdtypmod;
-	desc->tdhasoid = tupdesc->tdhasoid;
 
 	return desc;
 }
 
-/* ----------------------------------------------------------------
- *		CreateTupleDescCopyConstr
- *
+/*
+ * CreateTupleDescCopyConstr
  *		This function creates a new TupleDesc by copying from an existing
- *		TupleDesc (including its constraints and defaults)
- * ----------------------------------------------------------------
+ *		TupleDesc (including its constraints and defaults).
  */
 TupleDesc
 CreateTupleDescCopyConstr(TupleDesc tupdesc)
@@ -161,20 +165,12 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 	TupleConstr *constr = tupdesc->constr;
 	int			i;
 
-	desc = (TupleDesc) palloc(sizeof(struct tupleDesc));
-	desc->natts = tupdesc->natts;
-	if (desc->natts > 0)
+	desc = CreateTemplateTupleDesc(tupdesc->natts, tupdesc->tdhasoid);
+
+	for (i = 0; i < desc->natts; i++)
 	{
-		desc->attrs = (Form_pg_attribute *)
-			palloc(desc->natts * sizeof(Form_pg_attribute));
-		for (i = 0; i < desc->natts; i++)
-		{
-			desc->attrs[i] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
-			memcpy(desc->attrs[i], tupdesc->attrs[i], ATTRIBUTE_TUPLE_SIZE);
-		}
+		memcpy(desc->attrs[i], tupdesc->attrs[i], ATTRIBUTE_TUPLE_SIZE);
 	}
-	else
-		desc->attrs = NULL;
 
 	if (constr)
 	{
@@ -208,12 +204,9 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 
 		desc->constr = cpy;
 	}
-	else
-		desc->constr = NULL;
 
 	desc->tdtypeid = tupdesc->tdtypeid;
 	desc->tdtypmod = tupdesc->tdtypmod;
-	desc->tdhasoid = tupdesc->tdhasoid;
 
 	return desc;
 }
@@ -226,10 +219,6 @@ FreeTupleDesc(TupleDesc tupdesc)
 {
 	int			i;
 
-	for (i = 0; i < tupdesc->natts; i++)
-		pfree(tupdesc->attrs[i]);
-	if (tupdesc->attrs)
-		pfree(tupdesc->attrs);
 	if (tupdesc->constr)
 	{
 		if (tupdesc->constr->num_defval > 0)
@@ -379,12 +368,10 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 	return true;
 }
 
-/* ----------------------------------------------------------------
- *		TupleDescInitEntry
- *
+/*
+ * TupleDescInitEntry
  *		This function initializes a single attribute structure in
- *		a preallocated tuple descriptor.
- * ----------------------------------------------------------------
+ *		a previously allocated tuple descriptor.
  */
 void
 TupleDescInitEntry(TupleDesc desc,
@@ -404,18 +391,12 @@ TupleDescInitEntry(TupleDesc desc,
 	AssertArg(PointerIsValid(desc));
 	AssertArg(attributeNumber >= 1);
 	AssertArg(attributeNumber <= desc->natts);
-	AssertArg(!PointerIsValid(desc->attrs[attributeNumber - 1]));
-
-	/*
-	 * allocate storage for this attribute
-	 */
-
-	att = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
-	desc->attrs[attributeNumber - 1] = att;
 
 	/*
 	 * initialize the attribute fields
 	 */
+	att = desc->attrs[attributeNumber - 1];
+
 	att->attrelid = 0;			/* dummy value */
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.245 2005/03/04 20:21:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.246 2005/03/07 04:42:16 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -97,13 +97,10 @@ ConstructTupleDescriptor(Relation heapRelation,
 	for (i = 0; i < numatts; i++)
 	{
 		AttrNumber	atnum = indexInfo->ii_KeyAttrNumbers[i];
-		Form_pg_attribute to;
+		Form_pg_attribute to = indexTupDesc->attrs[i];
 		HeapTuple	tuple;
 		Form_pg_type typeTup;
 		Oid			keyType;
-
-		indexTupDesc->attrs[i] = to =
-			(Form_pg_attribute) palloc0(ATTRIBUTE_TUPLE_SIZE);
 
 		if (atnum != 0)
 		{
@@ -151,6 +148,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 		{
 			/* Expressional index */
 			Node	   *indexkey;
+
+			MemSet(to, 0, ATTRIBUTE_TUPLE_SIZE);
 
 			if (indexpr_item == NULL)	/* shouldn't happen */
 				elog(ERROR, "too few entries in indexprs list");

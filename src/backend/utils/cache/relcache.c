@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.215 2005/01/10 20:02:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.216 2005/03/07 04:42:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -491,12 +491,8 @@ RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 			elog(ERROR, "invalid attribute number %d for %s",
 				 attp->attnum, RelationGetRelationName(relation));
 
-		relation->rd_att->attrs[attp->attnum - 1] =
-			(Form_pg_attribute) MemoryContextAlloc(CacheMemoryContext,
-												   ATTRIBUTE_TUPLE_SIZE);
-
-		memcpy((char *) (relation->rd_att->attrs[attp->attnum - 1]),
-			   (char *) attp,
+		memcpy(relation->rd_att->attrs[attp->attnum - 1],
+			   attp,
 			   ATTRIBUTE_TUPLE_SIZE);
 
 		/* Update constraint/default info */
@@ -1338,9 +1334,8 @@ formrdesc(const char *relationName, Oid relationReltype,
 	has_not_null = false;
 	for (i = 0; i < natts; i++)
 	{
-		relation->rd_att->attrs[i] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
-		memcpy((char *) relation->rd_att->attrs[i],
-			   (char *) &att[i],
+		memcpy(relation->rd_att->attrs[i],
+			   &att[i],
 			   ATTRIBUTE_TUPLE_SIZE);
 		has_not_null |= att[i].attnotnull;
 		/* make sure attcacheoff is valid */
@@ -3044,9 +3039,8 @@ load_relcache_init_file(void)
 		{
 			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
 				goto read_failed;
-
-			rel->rd_att->attrs[i] = (Form_pg_attribute) palloc(len);
-
+			if (len != ATTRIBUTE_TUPLE_SIZE)
+				goto read_failed;
 			if ((nread = fread(rel->rd_att->attrs[i], 1, len, fp)) != len)
 				goto read_failed;
 
