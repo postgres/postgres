@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Mar 12 08:51:11 EST 2004
+   Last updated: Mon Mar 29 00:07:11 EST 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -114,22 +114,24 @@
                                       
     1.1) What is PostgreSQL? How is it pronounced?
     
-   PostgreSQL is pronounced Post-Gres-Q-L. The name "Postgres" is also
-   used in conversation.
+   PostgreSQL is pronounced Post-Gres-Q-L. An audio file is available at
+   http://www.postgresql.org/postgresql.mp3 for those would like to hear
+   the pronunciation.
    
    PostgreSQL is an enhancement of the POSTGRES database management
-   system, a next-generation DBMS research prototype. While PostgreSQL
-   retains the powerful data model and rich data types of POSTGRES, it
-   replaces the PostQuel query language with an extended subset of SQL.
-   PostgreSQL is free and the complete source is available.
+   system (and is still sometimes reffered to as simply "Postgres"), a
+   next-generation DBMS research prototype. While PostgreSQL retains the
+   powerful data model and rich data types of POSTGRES, it replaces the
+   PostQuel query language with an extended subset of SQL. PostgreSQL is
+   free and the complete source is available.
    
    PostgreSQL development is performed by a team of developers who all
    subscribe to the PostgreSQL development mailing list. The current
    coordinator is Marc G. Fournier (scrappy@PostgreSQL.org). (See section
    1.6 on how to join). This team is now responsible for all development
    of PostgreSQL. It is a community project and is not controlled by any
-   company. To get involved, see the developer's
-   FAQ,http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html
+   company. To get involved, see the developer's FAQ at
+   http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html
    
    The authors of PostgreSQL 1.01 were Andrew Yu and Jolly Chen. Many
    others have contributed to the porting, testing, debugging, and
@@ -149,7 +151,7 @@
    
    PostgreSQL Data Base Management System
    
-   Portions copyright (c) 1996-2002, PostgreSQL Global Development Group
+   Portions copyright (c) 1996-2004, PostgreSQL Global Development Group
    Portions Copyright (c) 1994-6 Regents of the University of California
    
    Permission to use, copy, modify, and distribute this software and its
@@ -177,7 +179,7 @@
    
     1.3) What Unix platforms does PostgreSQL run on?
     
-   In general, a modern Unix-compatible platform should be able to run
+   In general, any modern Unix-compatible platform should be able to run
    PostgreSQL. The platforms that had received explicit testing at the
    time of release are listed in the installation instructions.
    
@@ -436,7 +438,7 @@
    These include PgAccess http://www.pgaccess.org), PgAdmin III
    (http://www.pgadmin.org, RHDB Admin (http://sources.redhat.com/rhdb/ )
    and Rekall ( http://www.thekompany.com/products/rekall/, proprietary).
-   There is also PHPPgAdmin ( http://phppgadmin.sourceforge.net/ ), a
+   There is also PhpPgAdmin ( http://phppgadmin.sourceforge.net/ ), a
    web-based interface to PostgreSQL.
    
    See http://techdocs.postgresql.org/guides/GUITools for a more detailed
@@ -503,14 +505,14 @@
     
    By default, PostgreSQL only allows connections from the local machine
    using Unix domain sockets. Other machines will not be able to connect
-   unless you add the -i flag to postmaster, and enable host-based
-   authentication by modifying the file $PGDATA/pg_hba.conf accordingly.
-   This will allow TCP/IP connections.
+   unless you turn on tcpip_sockets in the postgresql.conf and enable
+   host-based authentication by modifying the file $PGDATA/pg_hba.conf
+   accordingly. This will allow TCP/IP connections.
    
     3.6) How do I tune the database engine for better performance?
     
-   Certainly, indexes can speed up queries. The EXPLAIN command allows
-   you to see how PostgreSQL is interpreting your query, and which
+   Certainly, indexes can speed up queries. The EXPLAIN ANALYZE command
+   allows you to see how PostgreSQL is interpreting your query, and which
    indexes are being used.
    
    If you are doing many INSERTs, consider doing them in a large batch
@@ -657,11 +659,14 @@
 
     4.3) How do I get a list of tables or other things I can see in psql?
     
-   You can read the source code for psql in file
-   pgsql/src/bin/psql/describe.c. It contains SQL commands that generate
-   the output for psql's backslash commands. You can also start psql with
-   the -E option so it will print out the queries it uses to execute the
-   commands you give.
+   Use the \dt command to see tables in psql. For a complete list of
+   commands inside psql you can use \?. Alternatively you can read the
+   source code for psql in file pgsql/src/bin/psql/describe.c, it
+   contains SQL commands that generate the output for psql's backslash
+   commands. You can also start psql with the -E option so it will print
+   out the queries it uses to execute the commands you give. PostgreSQL
+   also provides an SQLi compliant INFORMATION SCHEMA interface you can
+   query to get information about the database.
    
     4.4) How do you remove a column from a table, or change its data type?
     

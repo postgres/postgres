@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Fri Mar 12 08:51:11 EST 2004</P>
+    <P>Last updated: Mon Mar 29 00:07:11 EST 2004</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -156,11 +156,14 @@
 
     <H4><A name="1.1">1.1</A>) What is PostgreSQL? How is it pronounced?</H4>
 
-    <P>PostgreSQL is pronounced <I>Post-Gres-Q-L</I>.  The name "Postgres" is
-    also used in conversation.</P>
+    <P>PostgreSQL is pronounced <I>Post-Gres-Q-L</I>.  An audio file is 
+       available at http://www.postgresql.org/postgresql.mp3 for those 
+       would like to hear the pronunciation. 
+    </P>
 
     <P>PostgreSQL is an enhancement of the POSTGRES database management
-    system, a next-generation <SMALL>DBMS</SMALL> research prototype.
+    system (and is still sometimes reffered to as simply "Postgres"), 
+    a next-generation <SMALL>DBMS</SMALL> research prototype.
     While PostgreSQL retains the powerful data model and rich data
     types of POSTGRES, it replaces the PostQuel query language with an
     extended subset of <SMALL>SQL</SMALL>. PostgreSQL is free and the
@@ -173,7 +176,7 @@
     section <a href="#1.6">1.6</a> on how to join). This team is now
     responsible for all development of PostgreSQL.  It is a community
     project and is not controlled by any company.  To get involved, see
-    the developer's FAQ,<A href=
+    the developer's FAQ at <A href=
     "http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html">http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html</A>
     </P>
 
@@ -197,7 +200,7 @@
 
     <P>PostgreSQL Data Base Management System</P>
 
-    <P>Portions copyright (c) 1996-2002, PostgreSQL Global Development
+    <P>Portions copyright (c) 1996-2004, PostgreSQL Global Development
     Group Portions Copyright (c) 1994-6 Regents of the University of
     California</P>
 
@@ -227,7 +230,7 @@
     <H4><A name="1.3">1.3</A>) What Unix platforms does PostgreSQL run
     on?</H4>
 
-    <P>In general, a modern Unix-compatible platform should be able to
+    <P>In general, any modern Unix-compatible platform should be able to
     run PostgreSQL. The platforms that had received explicit testing at
     the time of release are listed in the installation
     instructions.</P>
@@ -563,7 +566,7 @@
     href="http://sources.redhat.com/rhdb/">http://sources.redhat.com/rhdb/
     </a>) and Rekall (<a href="http://www.thekompany.com/products/rekall/">
     http://www.thekompany.com/products/rekall/</a>, proprietary). There is 
-    also PHPPgAdmin (<a href="http://phppgadmin.sourceforge.net/">
+    also PhpPgAdmin (<a href="http://phppgadmin.sourceforge.net/">
     http://phppgadmin.sourceforge.net/ </a>), a web-based interface to 
     PostgreSQL.</P>
 
@@ -651,7 +654,7 @@
 
     <P>By default, PostgreSQL only allows connections from the local
     machine using Unix domain sockets. Other machines will not be able
-    to connect unless you add the <I>-i</I> flag to <I>postmaster</I>,
+    to connect unless you turn on tcpip_sockets in the postgresql.conf  
     <B>and</B> enable host-based authentication by modifying the file
     <I>$PGDATA/pg_hba.conf</I> accordingly. This will allow TCP/IP
     connections.</P>
@@ -660,7 +663,7 @@
     better performance?</H4>
 
     <P>Certainly, indexes can speed up queries. The
-    <SMALL>EXPLAIN</SMALL> command allows you to see how PostgreSQL is
+    <SMALL>EXPLAIN ANALYZE</SMALL> command allows you to see how PostgreSQL is
     interpreting your query, and which indexes are being used.</P>
 
     <P>If you are doing many <SMALL>INSERTs</SMALL>, consider doing
@@ -837,12 +840,15 @@
     <H4><A name="4.3">4.3</A>) How do I get a list of tables or other
     things I can see in <I>psql</I>?</H4>
 
-    <P>You can read the source code for <I>psql</I> in file
-    <I>pgsql/src/bin/psql/describe.c</I>. It contains
-    <SMALL>SQL</SMALL> commands that generate the output for psql's
-    backslash commands. You can also start <I>psql</I> with the
-    <I>-E</I> option so it will print out the queries it uses to
-    execute the commands you give.</P>
+    <P>Use the \dt command to see tables in <I>psql</I>. For a complete list of
+    commands inside psql you can use \?. Alternatively you can read the source 
+    code for <I>psql</I> in file <I>pgsql/src/bin/psql/describe.c</I>, it 
+    contains <SMALL>SQL</SMALL> commands that generate the output for 
+    <I>psql</I>'s backslash commands. You can also start <I>psql</I> with the
+    <I>-E</I> option so it will print out the queries it uses to execute the 
+    commands you give. PostgreSQL also provides an <SMALL>SQLi</SMALL> compliant
+    INFORMATION SCHEMA interface you can query to get information about the
+    database.</P>
 
     <H4><A name="4.4">4.4</A>) How do you remove a column from a
     table, or change its data type?</H4>
