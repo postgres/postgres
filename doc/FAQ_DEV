@@ -426,4 +426,4 @@ c-mode)
    using a Command Counter. Incrementing the counter allows transactions
    to be broken into pieces so each piece can see rows modified by
    previous pieces. CommandCounterIncrement() increments the Command
-   Counter, creating a new piece of the transaction.
+   Counter, creating a new part of the transaction.
