@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.311 2004/08/29 05:06:44 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.312 2004/09/27 04:12:02 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2273,25 +2273,21 @@ getSetColTypes(ParseState *pstate, Node *node)
 static void
 applyColumnNames(List *dst, List *src)
 {
-	ListCell   *dst_item = list_head(dst);
-	ListCell   *src_item = list_head(src);
+	ListCell   *dst_item;
+	ListCell   *src_item;
 
 	if (list_length(src) > list_length(dst))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 			 errmsg("CREATE TABLE AS specifies too many column names")));
 
-	while (src_item != NULL && dst_item != NULL)
+	forboth(dst_item, dst, src_item, src)
 	{
 		TargetEntry *d = (TargetEntry *) lfirst(dst_item);
 		ColumnDef  *s = (ColumnDef *) lfirst(src_item);
 
 		Assert(d->resdom && !d->resdom->resjunk);
-
 		d->resdom->resname = pstrdup(s->colname);
-
-		dst_item = lnext(dst_item);
-		src_item = lnext(src_item);
 	}
 }
 
