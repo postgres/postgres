@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/doc/Makefile,v 1.21 2001/08/29 19:14:39 petere Exp $
+# $Header: /cvsroot/pgsql/doc/Makefile,v 1.22 2002/02/06 20:29:35 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -45,15 +45,17 @@ sqlmansectnum = $(shell expr X'$(sqlmansect)' : X'\([0-9]\)')
 
 all: man1/.timestamp man$(sqlmansectnum)/.timestamp
 
-man1/.timestamp man$(sqlmansect_dummy)/.timestamp: man.tar.gz
+man1/.timestamp: man$(sqlmansect_dummy)/.timestamp
+	@echo timestamp >$@
+
+man$(sqlmansect_dummy)/.timestamp: man.tar.gz
 	gzip -d -c $< | $(TAR) xf -
 	for file in man1/*.1; do \
 	  mv $$file $$file.bak && \
 	  sed -e 's/\\fR($(sqlmansect_dummy))/\\fR($(sqlmansectnum))/' $$file.bak >$$file && \
 	  rm $$file.bak || exit; \
 	done
-	@echo timestamp >man1/.timestamp
-	@echo timestamp >man$(sqlmansect_dummy)/.timestamp
+	@echo timestamp >$@
 
 man$(sqlmansectnum)/.timestamp: man$(sqlmansect_dummy)/.timestamp
 	$(mkinstalldirs) man$(sqlmansectnum)
