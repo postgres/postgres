@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.60 1996/11/11 03:12:00 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.61 1996/11/11 12:19:05 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -238,16 +238,6 @@ YFLAGS = -d
 
 ##############################################################################
 #
-#  AR
-
-ifneq (,$(findstring /$(PORTNAME)/, /BSD44_derived/bsdi/sparc/))
-  AROPT = cq
-else
-  AROPT = crs
-endif
-
-##############################################################################
-#
 # Installation. 
 #
 # For many ports, INSTALL is overridden below.
@@ -302,6 +292,16 @@ endif
 
 # Since there are no longer separate files for each platform, much of the
 # commonality among the platforms ought to be factored out of the following.
+
+##############################################################################
+#
+#  AR
+
+ifneq (,$(findstring /$(PORTNAME)/, /BSD44_derived/bsdi/sparc/))
+  AROPT = cq
+else
+  AROPT = crs
+endif
 
 #----------------------------------------------------------------------
 ifeq ($PORTNAME, BSD44_derived)
@@ -855,7 +855,8 @@ srcdir=		$(SRCDIR)
 includedir=	$(HEADERDIR)
 
 
-# This goes here so that customization in Makefile.custom is effective
+# This goes here so that customizations in Makefile.custom and port
+# specific changes above are effective
 ##############################################################################
 #
 # Flags for CC and LD. (depend on COPT and PROFILE)
@@ -893,4 +894,8 @@ CFLAGS+= -D$(PORTNAME)
 CFLAGS+= $(CFLAGS_BE)
 LDADD+= $(LDADD_BE)
 LDFLAGS+= $(LDFLAGS_BE)
+
+ifeq ($(USE_READLINE), false)
+CFLAGS += -DNOREADLINE
+endif
 
