@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.23 1998/09/01 04:29:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.24 1999/02/02 20:30:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,6 @@ find_paths(Query *root, List *rels)
 
 	if (levels_needed <= 1)
 	{
-
 		/*
 		 * Unsorted single relation, no more processing is required.
 		 */
@@ -86,7 +85,6 @@ find_paths(Query *root, List *rels)
 	}
 	else
 	{
-
 		/*
 		 * this means that joins or sorts are required. set selectivities
 		 * of clauses that have not been set by an index.
@@ -123,7 +121,7 @@ find_rel_paths(Query *root, List *rels)
 
 		rel_index_scan_list = find_index_paths(root,
 											   rel,
-										find_relation_indices(root, rel),
+											   find_relation_indices(root, rel),
 											   rel->clauseinfo,
 											   rel->joininfo);
 
@@ -182,18 +180,27 @@ find_join_paths(Query *root, List *outer_rels, int levels_needed)
 	 * genetic query optimizer entry point	   *
 	 *	  <utesch@aut.tu-freiberg.de>		   *
 	 *******************************************/
+	{
+		List	   *temp;
+		int			paths_to_consider = 0;
 
-	if ((_use_geqo_) && length(root->base_rel_list) >= _use_geqo_rels_)
-		return lcons(geqo(root), NIL);	/* returns *one* RelOptInfo, so
-										 * lcons it */
+		foreach(temp, outer_rels)
+		{
+			RelOptInfo *rel = (RelOptInfo *) lfirst(temp);
+			paths_to_consider += length(rel->pathlist);
+		}
 
+		if ((_use_geqo_) && paths_to_consider >= _use_geqo_rels_)
+			/* returns _one_ RelOptInfo, so lcons it */
+			return lcons(geqo(root), NIL);	
+	}
+	
 	/*******************************************
 	 * rest will be deprecated in case of GEQO *
 	 *******************************************/
 
 	while (--levels_needed)
 	{
-
 		/*
 		 * Determine all possible pairs of relations to be joined at this
 		 * level. Determine paths for joining these relation pairs and
@@ -207,7 +214,6 @@ find_join_paths(Query *root, List *outer_rels, int levels_needed)
 		prune_joinrels(new_rels);
 
 #if 0
-
 		/*
 		 * * for each expensive predicate in each path in each distinct
 		 * rel, * consider doing pullup  -- JMH
@@ -247,7 +253,6 @@ find_join_paths(Query *root, List *outer_rels, int levels_needed)
 
 		if (BushyPlanFlag)
 		{
-
 			/*
 			 * prune rels that have been completely incorporated into new
 			 * join rels
