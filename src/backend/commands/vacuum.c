@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.195 2001/05/25 15:45:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.196 2001/06/13 21:44:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -437,15 +437,20 @@ vacuum_rel(Oid relid)
 	/*
 	 * Open the class, get an exclusive lock on it, and check permissions.
 	 *
+	 * We allow the user to vacuum a table if he is superuser, the table
+	 * owner, or the database owner (but in the latter case, only if it's
+	 * not a shared relation).  pg_ownercheck includes the superuser case.
+	 *
 	 * Note we choose to treat permissions failure as a NOTICE and keep
 	 * trying to vacuum the rest of the DB --- is this appropriate?
 	 */
 	onerel = heap_open(relid, AccessExclusiveLock);
 
-	if (!pg_ownercheck(GetUserId(), RelationGetRelationName(onerel),
-					   RELNAME))
+	if (! (pg_ownercheck(GetUserId(), RelationGetRelationName(onerel),
+						 RELNAME) ||
+		   (is_dbadmin(MyDatabaseId) && !onerel->rd_rel->relisshared)))
 	{
-		elog(NOTICE, "Skipping \"%s\" --- only table owner can VACUUM it",
+		elog(NOTICE, "Skipping \"%s\" --- only table or database owner can VACUUM it",
 			 RelationGetRelationName(onerel));
 		heap_close(onerel, AccessExclusiveLock);
 		CommitTransactionCommand();

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.19 2001/06/06 21:29:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.20 2001/06/13 21:44:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,16 +193,18 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	ReleaseSysCache(tuple);
 
 	/*
-	 * Open the class, getting only a read lock on it, and check permissions
+	 * Open the class, getting only a read lock on it, and check permissions.
+	 * Permissions check should match vacuum's check!
 	 */
 	onerel = heap_open(relid, AccessShareLock);
 
-	if (!pg_ownercheck(GetUserId(), RelationGetRelationName(onerel),
-					   RELNAME))
+	if (! (pg_ownercheck(GetUserId(), RelationGetRelationName(onerel),
+						 RELNAME) ||
+		   (is_dbadmin(MyDatabaseId) && !onerel->rd_rel->relisshared)))
 	{
 		/* No need for a notice if we already complained during VACUUM */
 		if (!vacstmt->vacuum)
-			elog(NOTICE, "Skipping \"%s\" --- only table owner can ANALYZE it",
+			elog(NOTICE, "Skipping \"%s\" --- only table or database owner can ANALYZE it",
 				 RelationGetRelationName(onerel));
 		heap_close(onerel, NoLock);
 		CommitTransactionCommand();

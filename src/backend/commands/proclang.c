@@ -3,20 +3,26 @@
  * proclang.c
  *	  PostgreSQL PROCEDURAL LANGUAGE support code.
  *
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.28 2001/06/13 21:44:40 tgl Exp $
+ *
  *-------------------------------------------------------------------------
  */
-#include <ctype.h>
-
 #include "postgres.h"
+
+#include <ctype.h>
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_shadow.h"
 #include "commands/proclang.h"
 #include "fmgr.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
@@ -63,10 +69,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	 * Check permission
 	 */
 	if (!superuser())
-	{
 		elog(ERROR, "Only users with Postgres superuser privilege are "
 			 "permitted to create procedural languages");
-	}
 
 	/*
 	 * Translate the language name and check that this language doesn't
@@ -150,10 +154,8 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 	 * Check permission
 	 */
 	if (!superuser())
-	{
 		elog(ERROR, "Only users with Postgres superuser privilege are "
 			 "permitted to drop procedural languages");
-	}
 
 	/*
 	 * Translate the language name, check that this language exist and is

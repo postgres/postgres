@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.55 2001/05/18 21:24:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.56 2001/06/13 21:44:40 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -33,10 +33,10 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <ctype.h>
 #include <math.h>
-
-#include "postgres.h"
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
@@ -44,10 +44,10 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_shadow.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "fmgr.h"
+#include "miscadmin.h"
 #include "optimizer/cost.h"
 #include "parser/parse_expr.h"
 #include "tcop/dest.h"

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.49 2001/05/31 18:16:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.50 2001/06/13 21:44:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,6 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_shadow.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
@@ -712,14 +711,9 @@ ReindexTable(const char *name, bool force)
 void
 ReindexDatabase(const char *dbname, bool force, bool all)
 {
-	Relation	relation,
-				relationRelation;
-	HeapTuple	dbtuple,
-				tuple;
+	Relation	relationRelation;
 	HeapScanDesc scan;
-	int4		db_owner;
-	Oid			db_id;
-	ScanKeyData scankey;
+	HeapTuple	tuple;
 	MemoryContext private_context;
 	MemoryContext old;
 	int			relcnt,
@@ -730,23 +724,11 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 
 	AssertArg(dbname);
 
-	relation = heap_openr(DatabaseRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&scankey, 0, Anum_pg_database_datname,
-						   F_NAMEEQ, NameGetDatum(dbname));
-	scan = heap_beginscan(relation, 0, SnapshotNow, 1, &scankey);
-	dbtuple = heap_getnext(scan, 0);
-	if (!HeapTupleIsValid(dbtuple))
-		elog(ERROR, "Database \"%s\" does not exist", dbname);
-	db_id = dbtuple->t_data->t_oid;
-	db_owner = ((Form_pg_database) GETSTRUCT(dbtuple))->datdba;
-	heap_endscan(scan);
-	heap_close(relation, NoLock);
-
-	if (GetUserId() != db_owner && !superuser())
-		elog(ERROR, "REINDEX DATABASE: Permission denied.");
-
-	if (db_id != MyDatabaseId)
+	if (strcmp(dbname, DatabaseName) != 0)
 		elog(ERROR, "REINDEX DATABASE: Can be executed only on the currently open database.");
+
+	if (! (superuser() || is_dbadmin(MyDatabaseId)))
+		elog(ERROR, "REINDEX DATABASE: Permission denied.");
 
 	/*
 	 * We cannot run inside a user transaction block; if we were inside a

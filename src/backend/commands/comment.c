@@ -4,10 +4,10 @@
  *
  * PostgreSQL object comments utility code.
  *
- * Copyright (c) 1999, PostgreSQL Global Development Group
+ * Copyright (c) 1999-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.29 2001/06/05 19:34:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.30 2001/06/13 21:44:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_description.h"
 #include "catalog/pg_operator.h"
-#include "catalog/pg_shadow.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_class.h"
@@ -389,16 +388,11 @@ CommentAttribute(char *relname, char *attrname, char *comment)
 static void
 CommentDatabase(char *database, char *comment)
 {
-
 	Relation	pg_database;
-	HeapTuple	dbtuple,
-				usertuple;
 	ScanKeyData entry;
 	HeapScanDesc scan;
+	HeapTuple	dbtuple;
 	Oid			oid;
-	bool		superuser;
-	int32		dba;
-	Oid			userid;
 
 	/*** First find the tuple in pg_database for the database ***/
 
@@ -408,33 +402,17 @@ CommentDatabase(char *database, char *comment)
 	scan = heap_beginscan(pg_database, 0, SnapshotNow, 1, &entry);
 	dbtuple = heap_getnext(scan, 0);
 
-	/*** Validate database exists, and fetch the dba id and oid ***/
+	/*** Validate database exists, and fetch the db oid ***/
 
 	if (!HeapTupleIsValid(dbtuple))
 		elog(ERROR, "database '%s' does not exist", database);
-	dba = ((Form_pg_database) GETSTRUCT(dbtuple))->datdba;
 	oid = dbtuple->t_data->t_oid;
 
-	/*** Now, fetch user information ***/
+	/*** Allow if the user matches the database dba or is a superuser ***/
 
-	userid = GetUserId();
-	usertuple = SearchSysCache(SHADOWSYSID,
-							   ObjectIdGetDatum(userid),
-							   0, 0, 0);
-	if (!HeapTupleIsValid(usertuple))
-		elog(ERROR, "invalid user id %u", (unsigned) userid);
-	superuser = ((Form_pg_shadow) GETSTRUCT(usertuple))->usesuper;
-	ReleaseSysCache(usertuple);
-
-	/*** Allow if the userid matches the database dba or is a superuser ***/
-
-#ifndef NO_SECURITY
-	if (!(superuser || (userid == dba)))
-	{
+	if (!(superuser() || is_dbadmin(oid)))
 		elog(ERROR, "you are not permitted to comment on database '%s'",
 			 database);
-	}
-#endif
 
 	/*** Create the comments with the pg_database oid ***/
 
@@ -444,7 +422,6 @@ CommentDatabase(char *database, char *comment)
 
 	heap_endscan(scan);
 	heap_close(pg_database, AccessShareLock);
-
 }
 
 /*------------------------------------------------------------------

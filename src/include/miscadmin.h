@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.85 2001/05/12 01:48:49 petere Exp $
+ * $Id: miscadmin.h,v 1.86 2001/06/13 21:44:41 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -220,8 +220,12 @@ extern int	CheckPathAccess(char *path, char *name, int open_mode);
 extern void GetCharSetByHost(char *TableName, int host, const char *DataDir);
 extern void SetCharSet(void);
 extern char *convertstr(unsigned char *buff, int len, int dest);
-
 #endif
+
+/* in utils/misc/superuser.c */
+extern bool superuser(void);	/* current user is superuser */
+extern bool is_dbadmin(Oid dbid); /* current user is owner of database */
+
 
 /*****************************************************************************
  *	  pmod.h --																 *

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.58 2001/03/22 03:59:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.59 2001/06/13 21:44:41 tgl Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -39,9 +39,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "catalog/pg_shadow.h"
 #include "libpq/be-fsstubs.h"
 #include "libpq/libpq-fs.h"
+#include "miscadmin.h"
 #include "storage/large_object.h"
 #include "utils/memutils.h"
 

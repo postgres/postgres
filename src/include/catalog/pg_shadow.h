@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_shadow.h,v 1.11 2001/03/09 22:10:13 tgl Exp $
+ * $Id: pg_shadow.h,v 1.12 2001/06/13 21:44:41 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -23,10 +23,6 @@
 #ifndef PG_SHADOW_H
 #define PG_SHADOW_H
 
-
-/* Prototype required for superuser() from superuser.c */
-
-bool		superuser(void);
 
 /* ----------------
  *		pg_shadow definition.  cpp turns this into
