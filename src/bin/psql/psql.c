@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * psql.c--
- *    an interactive front-end to postgres95
+ *    an interactive front-end to postgreSQL
  *
  * Copyright (c) 1996, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.37 1996/12/01 20:28:39 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.37.2.1 1996/12/11 23:07:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1536,9 +1536,9 @@ main(int argc, char **argv)
 	exit(listAllDbs(&settings));
     }
     if (!settings.quiet && !singleQuery && !qfilename) {
-	printf("Welcome to the POSTGRES95 interactive sql monitor:\n");
+	printf("Welcome to the POSTGRESQL interactive sql monitor:\n");
 	printf("  Please read the file COPYRIGHT for copyright terms "
-	       "of POSTGRES95\n\n");
+	       "of POSTGRESQL\n\n");
 	printf("   type \\? for help on slash commands\n");
 	printf("   type \\q to quit\n");
 	printf("   type \\g or terminate with semicolon to execute query\n");
