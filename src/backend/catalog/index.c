@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.64 1998/11/27 19:51:49 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.65 1998/12/13 04:37:50 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -649,7 +649,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 	value[Anum_pg_attribute_attcacheoff - 1] = Int32GetDatum(-1);
 
 	init_tuple = heap_addheader(Natts_pg_attribute,
-								sizeof *(indexRelation->rd_att->attrs[0]),
+				    ATTRIBUTE_TUPLE_SIZE,
 							 (char *) (indexRelation->rd_att->attrs[0]));
 
 	hasind = false;
@@ -689,7 +689,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 		 */
 		memmove(GETSTRUCT(cur_tuple),
 				(char *) indexTupDesc->attrs[i],
-				sizeof(FormData_pg_attribute));
+			        ATTRIBUTE_TUPLE_SIZE);
 
 		value[Anum_pg_attribute_attnum - 1] = Int16GetDatum(i + 1);
 
