@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.54 2001/09/22 22:54:32 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.55 2001/10/05 21:15:38 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -113,7 +113,7 @@ endif
 
 ifeq ($(PORTNAME), darwin)
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LINK.shared		= $(COMPILER) $(CFLAGS_SL)
+  LINK.shared		= $(COMPILER) $(DARWIN_NAMESPACE_SPEC) -bundle -undefined suppress
 endif
 
 ifeq ($(PORTNAME), openbsd)

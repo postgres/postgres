@@ -2,9 +2,12 @@ AROPT = cr
 AWK= awk
  
 DLSUFFIX = .so
-CFLAGS_SL = -bundle -undefined suppress
+CFLAGS_SL =
+ifeq (,$(filter $(host_os), darwin1.0 darwin1.1 darwin1.2))
+DARWIN_NAMESPACE_SPEC = -flat_namespace
+endif
  
 %.so: %.o
-	$(CC) $(CFLAGS) $(CFLAGS_SL) -o $@ $<
+	$(CC) $(DARWIN_NAMESPACE_SPEC) -bundle -undefined suppress -o $@ $<
 
 sqlmansect = 7
