@@ -2,13 +2,12 @@
   <title>Triggers</title>
 
   <para>
-   <productname>Postgres</productname> has various client interfaces
-   such as Perl, Tcl, Python and C, as well as three
-   <firstterm>Procedural Languages</firstterm>
-   (PL).  It is also possible
-   to call C functions as trigger actions.  Note that STATEMENT-level trigger
-   events are not supported in the current version.  You can currently specify
-   BEFORE or AFTER on INSERT, DELETE or UPDATE of a tuple as a trigger event.
+   <productname>Postgres</productname> has various server-side function
+   interfaces. Server-side functions can be written in SQL, PLPGSQL,
+   TCL, or C. Trigger functions can be written in any of these
+   languages. Note that STATEMENT-level trigger events are not supported
+   in the current version. You can currently specify BEFORE or AFTER on
+   INSERT, DELETE or UPDATE of a tuple as a trigger event.
   </para>
 
   <sect1>
@@ -98,7 +97,7 @@ CREATE TRIGGER <replaceable>trigger</replaceable> [ BEFORE | AFTER ] [ INSERT | 
       <term><replaceable>procedure</replaceable></term>
       <listitem>
        <para>
-	The procedure name is the C function called.
+	The procedure name is the function called.
        </para>
       </listitem>
      </varlistentry>
