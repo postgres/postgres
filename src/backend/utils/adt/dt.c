@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.71 1999/05/25 16:12:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.72 1999/07/08 03:22:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1429,7 +1429,7 @@ datetime_trunc(text *units, DateTime *datetime)
 					break;
 
 				case DTK_MICROSEC:
-					fsec = rint(fsec * 1000) / 1000;
+					fsec = rint(fsec * 1000000) / 1000000;
 					break;
 
 				default:
@@ -1573,7 +1573,7 @@ timespan_trunc(text *units, TimeSpan *timespan)
 					break;
 
 				case DTK_MICROSEC:
-					fsec = rint(fsec * 1000) / 1000;
+					fsec = rint(fsec * 1000000) / 1000000;
 					break;
 
 				default:

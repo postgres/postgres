@@ -93,7 +93,7 @@ TYPES
 * Allow LOCALE on a per-column basis, default to ASCII
 * Allow array on int8[]
 * Remove Money type, add money formatting for decimal type
-* Fix typein/out functions to not be user-callable
+* Declare typein/out functions in pg_proc with a special "C string" data type
 * Add non-large-object binary field
 * Add index on NUMERIC type
 
@@ -190,6 +190,7 @@ INDEXES
 * Improve LIMIT processing by using index to limit rows processed
 * Have optimizer take LIMIT into account when considering index scans
 * Make index creation use psort code, because it is now faster(Vadim)
+* Allow creation of sort temp tables > 1 Gig
 * Create more system table indexes for faster cache lookups
 * fix indexscan() so it does leak memory by not requiring caller to free
 * Improve _bt_binsrch() to handle equal keys better, remove _bt_firsteq()(Tom)
