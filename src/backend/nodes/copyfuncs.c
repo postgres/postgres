@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.174 2002/03/29 19:06:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.175 2002/04/05 11:56:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1947,6 +1947,15 @@ _copyFuncWithArgs(FuncWithArgs *from)
 	return newnode;
 }
 
+static InsertDefault *
+_copyInsertDefault(InsertDefault *from)
+{
+	InsertDefault *newnode = makeNode(InsertDefault);
+
+	return newnode;
+}
+
+
 static ClosePortalStmt *
 _copyClosePortalStmt(ClosePortalStmt *from)
 {
@@ -3054,6 +3063,9 @@ copyObject(void *from)
 			break;
 		case T_FuncWithArgs:
 			retval = _copyFuncWithArgs(from);
+			break;
+		case T_InsertDefault:
+			retval = _copyInsertDefault(from);
 			break;
 
 		default:

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.81 2002/04/02 08:51:52 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.82 2002/04/05 11:56:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,9 +175,19 @@ transformTargetList(ParseState *pstate, List *targetlist)
 														false));
 			}
 		}
+		else if (IsA(res->val, InsertDefault))
+		{
+			InsertDefault *newnode = makeNode(InsertDefault);
+
+			/*
+			 * If this is a DEFAULT element, we make a junk entry
+			 * which will get dropped on return to transformInsertStmt().
+			 */
+			p_target = lappend(p_target, newnode);
+		}
 		else
 		{
-			/* Everything else but ColumnRef */
+			/* Everything else but ColumnRef and InsertDefault */
 			p_target = lappend(p_target,
 							   transformTargetEntry(pstate,
 													res->val,

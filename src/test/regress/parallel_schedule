@@ -21,6 +21,7 @@ test: horology
 # ----------
 # These four each depend on the previous one
 # ----------
+test: insert
 test: create_function_1
 test: create_type
 test: create_table

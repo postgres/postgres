@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.299 2002/04/01 04:35:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.300 2002/04/05 11:56:53 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -203,6 +203,7 @@ static bool set_name_needs_quotes(const char *name);
 		from_clause, from_list, opt_array_bounds, qualified_name_list,
 		any_name, any_name_list, expr_list, dotted_name, attrs,
 		target_list, update_target_list, insert_column_list,
+		insert_target_list,
 		def_list, opt_indirection, group_clause, TriggerFuncArgs,
 		select_limit, opt_select_limit
 
@@ -263,7 +264,7 @@ static bool set_name_needs_quotes(const char *name);
 %type <node>	table_ref
 %type <jexpr>	joined_table
 %type <range>	relation_expr
-%type <target>	target_el, update_target_el
+%type <target>	target_el, insert_target_el, update_target_el
 
 %type <typnam>	Typename, SimpleTypename, ConstTypename
 				GenericType, Numeric, Character, ConstDatetime, ConstInterval, Bit
@@ -3504,7 +3505,7 @@ InsertStmt:  INSERT INTO qualified_name insert_rest
 				}
 		;
 
-insert_rest:  VALUES '(' target_list ')'
+insert_rest:  VALUES '(' insert_target_list ')'
 				{
 					$$ = makeNode(InsertStmt);
 					$$->cols = NIL;
@@ -3525,7 +3526,7 @@ insert_rest:  VALUES '(' target_list ')'
 					$$->targetList = NIL;
 					$$->selectStmt = $1;
 				}
-		| '(' insert_column_list ')' VALUES '(' target_list ')'
+		| '(' insert_column_list ')' VALUES '(' insert_target_list ')'
 				{
 					$$ = makeNode(InsertStmt);
 					$$->cols = $2;
@@ -5244,7 +5245,6 @@ c_expr:  columnref
 					s->val.type = T_String;
 					s->val.val.str = "now";
 					s->typename = makeTypeName(xlateSqlType("text"));
-
 					d = makeTypeName(xlateSqlType("timetz"));
 					if (($3 < 0) || ($3 > 13))
 						elog(ERROR,"CURRENT_TIME(%d) precision must be between %d and %d",
@@ -5720,6 +5720,23 @@ update_target_el:  ColId opt_indirection '=' a_expr
 					$$->val = (Node *)$4;
 				}
 		;
+
+insert_target_list:  insert_target_list ',' insert_target_el
+				{	$$ = lappend($1, $3);  }
+		| insert_target_el
+				{	$$ = makeList1($1);  }
+		;
+
+insert_target_el:  target_el	{	$$ = $1;  }
+				| DEFAULT		{	
+									InsertDefault *def = makeNode(InsertDefault);
+									$$ = makeNode(ResTarget);
+									$$->name = NULL;
+									$$->indirection = NULL;
+									$$->val = (Node *)def;
+								}
+				;
+
 
 /*****************************************************************************
  *
