@@ -1,7 +1,7 @@
 /*
  *  Edmund Mergl <E.Mergl@bawue.de>
  *
- *  $Id: oracle_compat.c,v 1.2 1997/03/09 20:40:58 momjian Exp $
+ *  $Id: oracle_compat.c,v 1.3 1997/03/15 06:00:19 scrappy Exp $
  *
  */
 
@@ -9,15 +9,14 @@
 #include <ctype.h>
 #include "postgres.h"
 
-#include "utils/builtins.h"	/* where function declarations go */
 
 /********************************************************************
  *
- * lower
+ * LOWER
  *
  * Syntax:
  *
- *   text *lower(text *string)
+ *   text *LOWER(text *string)
  *
  * Purpose:
  *
@@ -26,9 +25,10 @@
  ********************************************************************/
 
 text *
-lower(text *string)
+LOWER(text *string)
 {
-  char *ptr;
+  text *ret;
+  char *ptr, *ptr_ret;
   int m;
 
   m = VARSIZE(string) - VARHDRSZ;
@@ -37,24 +37,27 @@ lower(text *string)
     return string;
   }
 
-  ptr = VARDATA(string);
+  ret = (text *)malloc(VARSIZE(string));
+  VARSIZE(ret) = VARSIZE(string);
+
+  ptr     = VARDATA(string);
+  ptr_ret = VARDATA(ret);
 
   while (m--) {
-    *ptr = tolower(*ptr);
-    ++ptr;
+    *ptr_ret++ = tolower(*ptr++);
   }
 
-  return string;
+  return ret;
 }
 
 
 /********************************************************************
  *
- * upper
+ * UPPER
  *
  * Syntax:
  *
- *   text *upper(text *string)
+ *   text *UPPER(text *string)
  *
  * Purpose:
  *
@@ -63,9 +66,10 @@ lower(text *string)
  ********************************************************************/
 
 text *
-upper(text *string)
+UPPER(text *string)
 {
-  char *ptr;
+  text *ret;
+  char *ptr, *ptr_ret;
   int m;
 
   m = VARSIZE(string) - VARHDRSZ;
@@ -74,24 +78,27 @@ upper(text *string)
     return string;
   }
 
-  ptr = VARDATA(string);
+  ret = (text *)malloc(VARSIZE(string));
+  VARSIZE(ret) = VARSIZE(string);
+
+  ptr     = VARDATA(string);
+  ptr_ret = VARDATA(ret);
 
   while (m--) {
-    *ptr = toupper(*ptr);
-    ++ptr;
+    *ptr_ret++ = toupper(*ptr++);
   }
 
-  return string;
+  return ret;
 }
 
 
 /********************************************************************
  *
- * initcap
+ * INITCAP
  *
  * Syntax:
  *
- *   text *initcap(text *string)
+ *   text *INITCAP(text *string)
  *
  * Purpose:
  *
@@ -102,9 +109,10 @@ upper(text *string)
  ********************************************************************/
 
 text *
-initcap(text *string)
+INITCAP(text *string)
 {
-  char *ptr;
+  text *ret;
+  char *ptr, *ptr_ret;
   int m;
 
   m = VARSIZE(string) - VARHDRSZ;
@@ -113,32 +121,34 @@ initcap(text *string)
     return string;
   }
 
-  ptr = VARDATA(string);
+  ret = (text *)malloc(VARSIZE(string));
+  VARSIZE(ret) = VARSIZE(string);
 
-  *ptr = toupper(*ptr);
-  ++ptr;
+  ptr  = VARDATA(string);
+  ptr_ret = VARDATA(ret);
+
+  *ptr_ret++ = toupper(*ptr++);
   --m;
 
   while (m--) {
-    if (*(ptr - 1) == ' ' || *(ptr - 1) == '	') {
-      *ptr = toupper(*ptr);
+    if (*(ptr_ret - 1) == ' ' || *(ptr_ret - 1) == '	') {
+      *ptr_ret++ = toupper(*ptr++);
     } else {
-      *ptr = tolower(*ptr);
+      *ptr_ret++ = tolower(*ptr++);
     }
-    ++ptr;
   }
 
-  return string;
+  return ret;
 }
 
 
 /********************************************************************
  *
- * lpad
+ * LPAD
  *
  * Syntax:
  *
- *   text *lpad(text *string1, int4 len, text *string2)
+ *   text *LPAD(text *string1, int4 len, text *string2)
  *
  * Purpose:
  *
@@ -148,10 +158,10 @@ initcap(text *string)
  ********************************************************************/
 
 text *
-lpad(text *string1, int4 len, text *string2)
+LPAD(text *string1, int4 len, text *string2)
 {
   text *ret;
-  char *ptr, *ptr1, *ptr2;
+  char *ptr1, *ptr2, *ptr_ret;
   int m, n;
 
   m = len - VARSIZE(string1) + VARHDRSZ;
@@ -163,11 +173,11 @@ lpad(text *string1, int4 len, text *string2)
   ret = (text *)malloc(VARHDRSZ + len);
   VARSIZE(ret) = VARHDRSZ + len;
 
-  ptr   = VARDATA(ret);
-  ptr2  = VARDATA(string2);
+  ptr2    = VARDATA(string2);
+  ptr_ret = VARDATA(ret);
 
   while (m--) {
-    *ptr++ = *ptr2;
+    *ptr_ret++ = *ptr2;
     ptr2 = ptr2 == VARDATA(string2) + VARSIZE(string2) - VARHDRSZ - 1 ? VARDATA(string2) : ++ptr2;
   }
 
@@ -175,7 +185,7 @@ lpad(text *string1, int4 len, text *string2)
   ptr1 = VARDATA(string1);
 
   while (n--) {
-    *ptr++ = *ptr1++;
+    *ptr_ret++ = *ptr1++;
   }
 
   return ret;
@@ -184,11 +194,11 @@ lpad(text *string1, int4 len, text *string2)
 
 /********************************************************************
  *
- * rpad
+ * RPAD
  *
  * Syntax:
  *
- *   text *rpad(text *string1, int4 len, text *string2)
+ *   text *RPAD(text *string1, int4 len, text *string2)
  *
  * Purpose:
  *
@@ -198,10 +208,10 @@ lpad(text *string1, int4 len, text *string2)
  ********************************************************************/
 
 text *
-rpad(text *string1, int4 len, text *string2)
+RPAD(text *string1, int4 len, text *string2)
 {
   text *ret;
-  char *ptr, *ptr1, *ptr2;
+  char *ptr1, *ptr2, *ptr_ret;
   int m, n;
 
   m = len - VARSIZE(string1) + VARHDRSZ;
@@ -213,18 +223,18 @@ rpad(text *string1, int4 len, text *string2)
   ret = (text *)malloc(VARHDRSZ + len);
   VARSIZE(ret) = VARHDRSZ + len;
 
-  n    = VARSIZE(string1) - VARHDRSZ;
-  ptr  = VARDATA(ret);
-  ptr1 = VARDATA(string1);
+  n       = VARSIZE(string1) - VARHDRSZ;
+  ptr1    = VARDATA(string1);
+  ptr_ret = VARDATA(ret);
 
   while (n--) {
-    *ptr++ = *ptr1++;
+    *ptr_ret++ = *ptr1++;
   }
 
   ptr2  = VARDATA(string2);
 
   while (m--) {
-    *ptr++ = *ptr2;
+    *ptr_ret++ = *ptr2;
     ptr2 = ptr2 == VARDATA(string2) + VARSIZE(string2) - VARHDRSZ - 1 ? VARDATA(string2) : ++ptr2;
   }
 
@@ -234,11 +244,11 @@ rpad(text *string1, int4 len, text *string2)
 
 /********************************************************************
  *
- * ltrim
+ * LTRIM
  *
  * Syntax:
  *
- *   text *ltrim(text *string, text *set)
+ *   text *LTRIM(text *string, text *set)
  *
  * Purpose:
  *
@@ -248,9 +258,10 @@ rpad(text *string1, int4 len, text *string2)
  ********************************************************************/
 
 text *
-ltrim(text *string, text *set)
+LTRIM(text *string, text *set)
 {
-  char *ptr, *ptr2, *end2;
+  text *ret;
+  char *ptr, *ptr2, *end2, *ptr_ret;
   int m;
 
   m = VARSIZE(string) - VARHDRSZ;
@@ -273,30 +284,32 @@ ltrim(text *string, text *set)
     if (*ptr != *ptr2) {
       break;
     }
-    ++ptr;
+    ptr++;
     ptr2 = VARDATA(set);
   }
 
-  m    = VARDATA(string) + VARSIZE(string) - VARHDRSZ - ptr + 1;
-  ptr2 = VARDATA(string);
+  ++m;
+
+  ret = (text *)malloc(VARHDRSZ + m);
+  VARSIZE(ret) = VARHDRSZ + m;
+
+  ptr_ret = VARDATA(ret);
 
   while (m--) {
-    *ptr2++ = *ptr++;
+    *ptr_ret++ = *ptr++;
   }
 
-  VARSIZE(string) -= ptr - ptr2;
-
-  return string;
+  return ret;
 }
 
 
 /********************************************************************
  *
- * rtrim
+ * RTRIM
  *
  * Syntax:
  *
- *   text *rtrim(text *string, text *set)
+ *   text *RTRIM(text *string, text *set)
  *
  * Purpose:
  *
@@ -306,9 +319,10 @@ ltrim(text *string, text *set)
  ********************************************************************/
 
 text *
-rtrim(text *string, text *set)
+RTRIM(text *string, text *set)
 {
-  char *ptr, *ptr2, *end2;
+  text *ret;
+  char *ptr, *ptr2, *end2, *ptr_ret;
   int m;
 
   m = VARSIZE(string) - VARHDRSZ;
@@ -335,19 +349,28 @@ rtrim(text *string, text *set)
     ptr2 = VARDATA(set);
   }
 
-  VARSIZE(string) -= VARDATA(string) + VARSIZE(string) - VARHDRSZ - 1 - ptr;
+  ++m;
 
-  return string;
+  ret = (text *)malloc(VARHDRSZ + m);
+  VARSIZE(ret) = VARHDRSZ + m;
+
+  ptr_ret = VARDATA(ret) + m - 1;
+
+  while (m--) {
+    *ptr_ret-- = *ptr--;
+  }
+
+  return ret;
 }
 
 
 /********************************************************************
  *
- * substr
+ * SUBSTR
  *
  * Syntax:
  *
- *   text *substr(text *string, int4 m, int4 n)
+ *   text *SUBSTR(text *string, int4 m, int4 n)
  *
  * Purpose:
  *
@@ -357,9 +380,10 @@ rtrim(text *string, text *set)
  ********************************************************************/
 
 text *
-substr(text *string, int4 m, int4 n)
+SUBSTR(text *string, int4 m, int4 n)
 {
-  char *ptr, *ptr1;
+  text *ret;
+  char *ptr, *ptr_ret;
   int len;
 
   len = VARSIZE(string) - VARHDRSZ - m;
@@ -368,27 +392,29 @@ substr(text *string, int4 m, int4 n)
     return string;
   }
 
-  ptr  = VARDATA(string);
-  ptr1 = ptr + m - 1;
-  len  = len + 1 < n ? len + 1 : n;
+  len = len + 1 < n ? len + 1 : n;
+
+  ret = (text *)malloc(VARHDRSZ + len);
+  VARSIZE(ret) = VARHDRSZ + len;
+
+  ptr     = VARDATA(string) + m - 1;
+  ptr_ret = VARDATA(ret);
 
   while (len--) {
-    *ptr++ = *ptr1++;
+    *ptr_ret++ = *ptr++;
   }
 
-  VARSIZE(string) -= ptr1 - ptr;
-
-  return string;
+  return ret;
 }
 
 
 /********************************************************************
  *
- * translate
+ * TRANSLATE
  *
  * Syntax:
  *
- *   text *translate(text *string, char from, char to)
+ *   text *TRANSLATE(text *string, char from, char to)
  *
  * Purpose:
  *
@@ -399,22 +425,277 @@ substr(text *string, int4 m, int4 n)
  ********************************************************************/
 
 text *
-translate(text *string, char from, char to)
+TRANSLATE(text *string, char from, char to)
 {
-  char *ptr;
+  text *ret;
+  char *ptr, *ptr_ret;
   int m;
 
-  m   = VARSIZE(string) - VARHDRSZ;
-  ptr = VARDATA(string);
+  m = VARSIZE(string) - VARHDRSZ;
+
+  if (m <= 0) {
+    return string;
+  }
+
+  ret = (text *)malloc(VARSIZE(string));
+  VARSIZE(ret) = VARSIZE(string);
+
+  ptr     = VARDATA(string);
+  ptr_ret = VARDATA(ret);
 
   while (m--) {
-    if (*ptr == from) {
-      *ptr = to;
+    *ptr_ret++ = *ptr == from ? to : *ptr;
+    ptr++;
+  }
+
+  return ret;
+}
+
+
+/********************************************************************
+ *
+ * Functions in lower case are the equivalents with the last 
+ * parameter beeing set to a reasonable default. 
+ *
+ ********************************************************************/
+
+
+/********************************************************************
+ *
+ * lpad
+ *
+ * Syntax:
+ *
+ *   text *lpad(text *string1, int4 len)
+ *
+ * Purpose:
+ *
+ *   Returns string1, left-padded to length len with blanks.
+ *
+ ********************************************************************/
+
+text *
+lpad(text *string1, int4 len)
+{
+  text *ret;
+  char *ptr1, *ptr_ret;
+  int m, n;
+
+  m = len - VARSIZE(string1) + VARHDRSZ;
+
+  if (m <= 0) {
+    return string1;
+  }
+
+  ret = (text *)malloc(VARHDRSZ + len);
+  VARSIZE(ret) = VARHDRSZ + len;
+
+  ptr_ret = VARDATA(ret);
+
+  while (m--) {
+    *ptr_ret++ = ' ';
+  }
+
+  n    = VARSIZE(string1) - VARHDRSZ;
+  ptr1 = VARDATA(string1);
+
+  while (n--) {
+    *ptr_ret++ = *ptr1++;
+  }
+
+  return ret;
+}
+
+
+/********************************************************************
+ *
+ * rpad
+ *
+ * Syntax:
+ *
+ *   text *rpad(text *string1, int4 len)
+ *
+ * Purpose:
+ *
+ *   Returns string1, right-padded to length len with blanks.
+ *
+ ********************************************************************/
+
+text *
+rpad(text *string1, int4 len)
+{
+  text *ret;
+  char *ptr1, *ptr_ret;
+  int m, n;
+
+  m = len - VARSIZE(string1) + VARHDRSZ;
+
+  if (m <= 0) {
+    return string1;
+  }
+
+  ret = (text *)malloc(VARHDRSZ + len);
+  VARSIZE(ret) = VARHDRSZ + len;
+
+  n       = VARSIZE(string1) - VARHDRSZ;
+  ptr1    = VARDATA(string1);
+  ptr_ret = VARDATA(ret);
+
+  while (n--) {
+    *ptr_ret++ = *ptr1++;
+  }
+
+  while (m--) {
+    *ptr_ret++ = ' ';
+  }
+
+  return ret;
+}
+
+
+/********************************************************************
+ *
+ * ltrim
+ *
+ * Syntax:
+ *
+ *   text *ltrim(text *string)
+ *
+ * Purpose:
+ *
+ *   Returns string with initial blanks removed.
+ *
+ ********************************************************************/
+
+text *
+ltrim(text *string)
+{
+  text *ret;
+  char *ptr, *ptr_ret;
+  int m;
+
+  m = VARSIZE(string) - VARHDRSZ;
+
+  if (m <= 0) {
+    return string;
+  }
+
+  ptr = VARDATA(string);
+  
+  while (m--) {
+    if (*ptr != ' ') {
+      break;
     }
     ++ptr;
   }
 
-  return string;
+  ++m;
+
+  ret = (text *)malloc(VARHDRSZ + m);
+  VARSIZE(ret) = VARHDRSZ + m;
+
+  ptr_ret = VARDATA(ret);
+
+  while (m--) {
+    *ptr_ret++ = *ptr++;
+  }
+
+  return ret;
+}
+
+
+/********************************************************************
+ *
+ * rtrim
+ *
+ * Syntax:
+ *
+ *   text *rtrim(text *string)
+ *
+ * Purpose:
+ *
+ *   Returns string with final blanks removed.
+ *
+ ********************************************************************/
+
+text *
+rtrim(text *string)
+{
+  text *ret;
+  char *ptr, *ptr_ret;
+  int m;
+
+  m = VARSIZE(string) - VARHDRSZ;
+
+  if (m <= 0) {
+    return string;
+  }
+
+  ptr = VARDATA(string) + VARSIZE(string) - VARHDRSZ - 1;
+  
+  while (m--) {
+    if (*ptr != ' ') {
+      break;
+    }
+    --ptr;
+  }
+
+  ++m;
+
+  ret = (text *)malloc(VARHDRSZ + m);
+  VARSIZE(ret) = VARHDRSZ + m;
+
+  ptr_ret = VARDATA(ret) + m - 1;
+
+  while (m--) {
+    *ptr_ret-- = *ptr--;
+  }
+
+  return ret;
+}
+
+
+/********************************************************************
+ *
+ * substr
+ *
+ * Syntax:
+ *
+ *   text *substr(text *string, int4 m)
+ *
+ * Purpose:
+ *
+ *   Returns a portion of string, beginning at character m, up to
+ *   the end of string. The first position of string is 1.
+ *
+ ********************************************************************/
+
+text *
+substr(text *string, int4 m)
+{
+  text *ret;
+  char *ptr, *ptr_ret;
+  int len;
+
+  len = VARSIZE(string) - VARHDRSZ - m;
+
+  if (m <= 0 || len <= 0) {
+    return string;
+  }
+
+  len = len + 1;
+
+  ret = (text *)malloc(VARHDRSZ + len);
+  VARSIZE(ret) = VARHDRSZ + len;
+
+  ptr      = VARDATA(string) + m - 1;
+  ptr_ret  = VARDATA(ret);
+
+  while (len--) {
+    *ptr_ret++ = *ptr++;
+  }
+
+  return ret;
 }
 
 
