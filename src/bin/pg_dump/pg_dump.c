@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.55 1997/12/01 22:02:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.56 1997/12/04 01:31:27 scrappy Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -2139,6 +2139,117 @@ dumpAggs(FILE *fout, AggInfo *agginfo, int numAggs,
 }
 
 /*
+ * These are some support functions to fix the acl problem of pg_dump
+ *
+ * Matthew C. Aycock 12/02/97
+ */
+/*
+ * This will return a new string: "s,add"
+ */
+char *AddAcl(char *s, const char *add)
+{
+	char *t;
+
+	if (s == (char *)NULL)
+		return (strdup(add));
+
+	t=(char *)calloc((strlen(s) + strlen(add)+1),sizeof(char));
+	sprintf(t,"%s,%s",s,add);
+
+	return(t);
+}
+/*
+ * This will take a string of 'arwR' and return a
+ * comma delimited string of SELECT,INSERT,UPDATE,DELETE,RULE
+ */
+char *GetPrivledges(char *s)
+{
+	char *acls=NULL;
+
+	/*Grant All           == arwR */
+	/*      INSERT        == ar   */
+    /*      UPDATE/DELETE ==  rw  */
+    /*      SELECT        ==  r   */
+    /*      RULE          ==    R */
+
+	if (strstr(s,"arwR"))
+		return(strdup("ALL"));
+
+	if (strstr(s,"ar"))
+		acls=AddAcl(acls,"INSERT");
+
+	if (strstr(s,"rw"))
+		acls=AddAcl(acls,"UPDATE,DELETE");
+	else
+		if (strchr(s,'r'))
+			acls=AddAcl(acls,"SELECT");
+
+	if (strchr(s,'R'))
+		acls=AddAcl(acls,"RULES");
+
+	return(acls);
+}
+/* This will parse the acl string of TableInfo
+ * into a two deminsional aray:
+ *    user | Privledges
+ * So to reset the acls I need to grant these priviledges
+ * to user
+ */
+ACL *ParseACL(const char *acls,int *count)
+{
+	ACL *ParsedAcl=NULL;
+	int i,
+	    len,
+	    NumAcls=1,  /*There is always public*/
+	    AclLen=0;
+	char *s=NULL,
+	     *user=NULL,
+	     *priv=NULL,
+	     *tok;
+
+	AclLen=strlen(acls);
+
+	if (AclLen == 0) {
+		*count=0;
+		return (ACL *) NULL;
+	}
+
+	for (i=0;i<AclLen;i++)
+		if (acls[i] == ',')
+			NumAcls++;
+
+	ParsedAcl=(ACL *)calloc(AclLen,sizeof(ACL));
+	if (!ParsedAcl) {
+		fprintf(stderr,"Could not allocate space for ACLS!\n");
+		return (ACL *)NULL;
+	}
+
+	s=strdup(acls);
+
+	/* Setup up public*/
+	ParsedAcl[0].user=strdup("Public");
+	tok=strtok(s,",");
+	ParsedAcl[0].privledges=GetPrivledges(strchr(tok,'='));
+
+	/*Do the rest of the users*/
+	i=1;
+	while ((i < NumAcls) && ((tok=strtok(NULL,",")) != (char *)NULL)) {
+		/*User name is string up to = in tok*/
+		len=strchr(tok,'=') - tok -1 ;
+		user=(char*)calloc(len+1,sizeof(char));
+		strncpy(user,tok+1,len);
+		if (user[len-1] == '\"')
+			user[len-1]=(char)NULL;
+		priv=GetPrivledges(tok+len+2);
+		ParsedAcl[i].user=user;
+		ParsedAcl[i].privledges=priv;
+		i++;
+	}
+
+	*count=NumAcls;
+	return (ParsedAcl);
+}
+/*
  * dumpTables:
  *	  write out to fout all the user-define tables
  */
@@ -2151,11 +2262,13 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 {
 	int			i,
 				j,
-				k;
+				k,
+				l;
 	char		q[MAXQUERYLEN];
 	char	  **parentRels;		/* list of names of parent relations */
 	int			numParents;
 	int			actual_atts;	/* number of attrs in this CREATE statment */
+	ACL			*ACLlist;
 	
 	/* First - dump SEQUENCEs */
 	for (i = 0; i < numTables; i++)
@@ -2267,10 +2380,15 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 			strcat(q, ";\n");
 			fputs(q, fout);
 			
-			if (acls)
-				fprintf(fout,
-				 "UPDATE pg_class SET relacl='%s' where relname='%s';\n",
-						tblinfo[i].relacl, tblinfo[i].relname);
+			if (acls) {
+				ACLlist = ParseACL(tblinfo[i].relacl, &l);
+				for(k = 0; k < l; k++) {
+					fprintf(fout,
+							"GRANT %s on %s to %s;\n",
+							ACLlist[k].privledges, tblinfo[i].relname,
+							ACLlist[k].user);
+				}
+			}
 		}
 	}
 }
