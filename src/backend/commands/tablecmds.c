@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.79 2003/08/08 21:41:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.80 2003/08/30 14:59:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2008,7 +2008,7 @@ AlterTableAlterColumnDropNotNull(Oid myrelid, bool recurse,
 		}
 	}
 
-	/* -= now do the thing on this relation =- */
+	/* now do the thing on this relation */
 
 	/*
 	 * get the number of the attribute
@@ -2152,7 +2152,7 @@ AlterTableAlterColumnSetNotNull(Oid myrelid, bool recurse,
 		}
 	}
 
-	/* -= now do the thing on this relation =- */
+	/* now do the thing on this relation */
 
 	/*
 	 * get the number of the attribute
@@ -2280,7 +2280,7 @@ AlterTableAlterColumnDefault(Oid myrelid, bool recurse,
 		}
 	}
 
-	/* -= now do the thing on this relation =- */
+	/* now do the thing on this relation */
 
 	/*
 	 * get the number of the attribute
@@ -2445,7 +2445,7 @@ AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 		}
 	}
 
-	/* -= now do the thing on this relation =- */
+	/* now do the thing on this relation */
 
 	attrelation = heap_openr(AttributeRelationName, RowExclusiveLock);
 
