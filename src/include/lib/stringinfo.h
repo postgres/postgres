@@ -9,7 +9,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: stringinfo.h,v 1.14 1999/08/31 01:28:21 tgl Exp $
+ * $Id: stringinfo.h,v 1.15 2000/01/22 03:52:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,11 +90,21 @@ extern void appendStringInfo(StringInfo str, const char *fmt,...);
 extern void appendStringInfoChar(StringInfo str, char ch);
 
 /*------------------------
+ * appendStringInfoCharMacro
+ * As above, but a macro for even more speed where it matters.
+ * Caution: str argument will be evaluated multiple times.
+ */
+#define appendStringInfoCharMacro(str,ch) \
+	(((str)->len + 1 >= (str)->maxlen) ? \
+	 appendStringInfoChar(str, ch) : \
+	 ((str)->data[(str)->len] = (ch), (str)->data[++(str)->len] = '\0'))
+
+/*------------------------
  * appendBinaryStringInfo
  * Append arbitrary binary data to a StringInfo, allocating more space
  * if necessary.
  */
 extern void appendBinaryStringInfo(StringInfo str,
-					   const char *data, int datalen);
+								   const char *data, int datalen);
 
 #endif	 /* STRINGINFO_H */

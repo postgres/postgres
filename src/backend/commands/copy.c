@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.97 2000/01/19 23:54:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.98 2000/01/22 03:52:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,7 +137,8 @@ CopySendChar(char c, FILE *fp)
  *	backend->frontend functions
  *
  * CopyGetChar does the same for single characters
- * CopyGetEof checks if it's EOF on the input
+ * CopyGetEof checks if it's EOF on the input (or, check for EOF result
+ *		from CopyGetChar)
  *
  * NB: no data conversion is applied by these functions
  */
@@ -1106,18 +1107,6 @@ GetIndexRelations(Oid main_relation_oid,
 	}
 }
 
-
-/*
-   returns 1 if c is in s
-*/
-static bool
-inString(char c, char *s)
-{
-	if (s && c)
-		return strchr(s, c) != NULL;
-	return 0;
-}
-
 /*
  * Reads input from fp until an end of line is seen.
  */
@@ -1171,19 +1160,24 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_
 
 	*isnull = (bool) false;		/* set default */
 
-	if (CopyGetEof(fp))
-		goto endOfFile;
-
 	for (;;)
 	{
 		c = CopyGetChar(fp);
-		if (CopyGetEof(fp))
+		if (c == EOF)
 			goto endOfFile;
-
+		if (c == '\n')
+		{
+			*newline = 1;
+			break;
+		}
+		if (strchr(delim, c))
+		{
+			break;
+		}
 		if (c == '\\')
 		{
 			c = CopyGetChar(fp);
-			if (CopyGetEof(fp))
+			if (c == EOF)
 				goto endOfFile;
 			switch (c)
 			{
@@ -1213,14 +1207,14 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_
 							}
 							else
 							{
-								if (CopyGetEof(fp))
+								if (c == EOF)
 									goto endOfFile;
 								CopyDonePeek(fp, c, 0); /* Return to stream! */
 							}
 						}
 						else
 						{
-							if (CopyGetEof(fp))
+							if (c == EOF)
 								goto endOfFile;
 							CopyDonePeek(fp, c, 0);		/* Return to stream! */
 						}
@@ -1231,7 +1225,7 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_
                        rather then just 'N' to provide compatibility with
                        the default NULL output. -- pe */
                 case 'N':
-                    appendStringInfoChar(&attribute_buf, '\\');
+                    appendStringInfoCharMacro(&attribute_buf, '\\');
                     c = 'N';
                     break;
 				case 'b':
@@ -1257,16 +1251,9 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_
 					if (c != '\n')
 						elog(ERROR, "CopyReadAttribute - end of record marker corrupted. line: %d", lineno);
 					goto endOfFile;
-					break;
 			}
 		}
-		else if (c == '\n' || inString(c, delim))
-		{
-			if (c == '\n')
-				*newline = 1;
-			break;
-		}
-		appendStringInfoChar(&attribute_buf, c);
+		appendStringInfoCharMacro(&attribute_buf, c);
 #ifdef MULTIBYTE
 		/* get additional bytes of the char, if any */
 		s[0] = c;
@@ -1274,9 +1261,9 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_
 		for (j = 1; j < mblen; j++)
 		{
 			c = CopyGetChar(fp);
-			if (CopyGetEof(fp))
+			if (c == EOF)
 				goto endOfFile;
-			appendStringInfoChar(&attribute_buf, c);
+			appendStringInfoCharMacro(&attribute_buf, c);
 		}
 #endif
 	}
