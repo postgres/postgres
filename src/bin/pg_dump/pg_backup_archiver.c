@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.25 2001/04/25 07:03:19 pjw Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.26 2001/05/12 01:03:59 pjw Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -50,6 +50,12 @@
  *
  *	  - Treat OIDs with more respect (avoid using ints, use macros for 
  *		conversion & comparison).
+ *
+ * Modifications - 10-May-2001 - pjw@rhyme.com.au
+ *	  - Treat SEQUENCE SET TOC entries as data entries rather than schema
+ *		entries.
+ *	  - Make allowance for data entries that did not have a data dumper
+ * 		routine (eg. SEQUENCE SET)
  *
  *-------------------------------------------------------------------------
  */
@@ -154,6 +160,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	int			reqs;
 	OutputContext sav;
 	int			impliedDataOnly;
+	bool		defnDumped;
 
 	AH->ropt = ropt;
 
@@ -276,6 +283,8 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 			}
 	 	}
 
+		defnDumped = false;
+
 		if ((reqs & 1) != 0)	/* We want the schema */
 		{
 			/* Reconnect if necessary */
@@ -283,6 +292,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 
 			ahlog(AH, 1, "Creating %s %s\n", te->desc, te->name);
 			_printTocEntry(AH, te, ropt, false);
+			defnDumped = true;
 
 			/* If we created a DB, connect to it... */
 			if (strcmp(te->desc, "DATABASE") == 0)
@@ -290,64 +300,82 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 				ahlog(AH, 1, "Connecting to new DB '%s' as %s\n", te->name, te->owner);
 				_reconnectAsUser(AH, te->name, te->owner);
 			}
-		}
+		}	
 
 		/*
-		 * If we want data, and it has data, then restore that too
+		 * If we have a data component, then process it
 		 */
-		if (AH->PrintTocDataPtr !=NULL && (reqs & 2) != 0)
+		if ( (reqs & 2) != 0 )
 		{
+			/* hadDumper will be set if there is genuine data component for this
+			 * node. Otherwise, we need to check the defn field for statements
+			 * that need to be executed in data-only restores.
+			 */
+			if (te->hadDumper) 
+			{
+				/*
+				 * If we can output the data, then restore it.
+				 */
+				if (AH->PrintTocDataPtr !=NULL && (reqs & 2) != 0)
+				{
 #ifndef HAVE_LIBZ
-			if (AH->compression != 0)
-				die_horribly(AH, "%s: Unable to restore data from a compressed archive\n", progname);
+					if (AH->compression != 0)
+						die_horribly(AH, "%s: Unable to restore data from a compressed archive\n", 
+										progname);
 #endif
 
-			_printTocEntry(AH, te, ropt, true);
+					_printTocEntry(AH, te, ropt, true);
 
-			/*
-			 * Maybe we can't do BLOBS, so check if this node is for BLOBS
-			 */
-			if ((strcmp(te->desc, "BLOBS") == 0) && !_canRestoreBlobs(AH))
-			{
-				ahprintf(AH, "--\n-- SKIPPED \n--\n\n");
+					/*
+					 * Maybe we can't do BLOBS, so check if this node is for BLOBS
+					 */
+					if ((strcmp(te->desc, "BLOBS") == 0) && !_canRestoreBlobs(AH))
+					{
+						ahprintf(AH, "--\n-- SKIPPED \n--\n\n");
 
-				/*
-				 * This is a bit nasty - we assume, for the moment, that
-				 * if a custom output is used, then we don't want
-				 * warnings.
-				 */
-				if (!AH->CustomOutPtr)
-					fprintf(stderr, "%s: WARNING - skipping BLOB restoration\n", progname);
+						/*
+						 * This is a bit nasty - we assume, for the moment, that
+						 * if a custom output is used, then we don't want
+						 * warnings.
+						 */
+						if (!AH->CustomOutPtr)
+							fprintf(stderr, "%s: WARNING - skipping BLOB restoration\n", progname);
 
-			}
-			else
-			{
+					}
+					else
+					{
 
-				_disableTriggersIfNecessary(AH, te, ropt);
+						_disableTriggersIfNecessary(AH, te, ropt);
 
-				/*
-				 * Reconnect if necessary (_disableTriggers may have
-				 * reconnected)
-				 */
-				_reconnectAsOwner(AH, "-", te);
+						/*
+						 * Reconnect if necessary (_disableTriggers may have
+						 * reconnected)
+						 */
+						_reconnectAsOwner(AH, "-", te);
 
-				ahlog(AH, 1, "Restoring data for %s \n", te->name);
+						ahlog(AH, 1, "Restoring data for %s \n", te->name);
 
-				/*
-				 * If we have a copy statement, use it. As of V1.3, these
-				 * are separate to allow easy import from withing a
-				 * database connection. Pre 1.3 archives can not use DB
-				 * connections and are sent to output only.
-				 *
-				 * For V1.3+, the table data MUST have a copy statement so
-				 * that we can go into appropriate mode with libpq.
-				 */
-				if (te->copyStmt && strlen(te->copyStmt) > 0)
-					ahprintf(AH, te->copyStmt);
+						/*
+						 * If we have a copy statement, use it. As of V1.3, these
+						 * are separate to allow easy import from withing a
+						 * database connection. Pre 1.3 archives can not use DB
+						 * connections and are sent to output only.
+						 *
+						 * For V1.3+, the table data MUST have a copy statement so
+						 * that we can go into appropriate mode with libpq.
+						 */
+						if (te->copyStmt && strlen(te->copyStmt) > 0)
+							ahprintf(AH, te->copyStmt);
 
-				(*AH->PrintTocDataPtr) (AH, te, ropt);
+						(*AH->PrintTocDataPtr) (AH, te, ropt);
 
-				_enableTriggersIfNecessary(AH, te, ropt);
+						_enableTriggersIfNecessary(AH, te, ropt);
+					}
+				}
+			} else if (!defnDumped) {
+				/* If we haven't already dumped the defn part, do so now */ 
+				ahlog(AH, 1, "Executing %s %s\n", te->desc, te->name);
+				_printTocEntry(AH, te, ropt, false);
 			}
 		}
 		te = te->next;
@@ -1829,25 +1857,21 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt)
 			return 0;
 	}
 
-	/* Special Case: If 'SEQUENCE SET' and schemaOnly, then not needed */
-	if (ropt->schemaOnly && (strcmp(te->desc, "SEQUENCE SET") == 0))
-		return 0;
+	/* Special Case: If 'SEQUENCE SET' then it is considered a data entry */
+	if (strcmp(te->desc, "SEQUENCE SET") == 0)
+		res = res & 2;
 
 	/* Mask it if we only want schema */
 	if (ropt->schemaOnly)
 		res = res & 1;
 
 	/* Mask it we only want data */
-	if (ropt->dataOnly && (strcmp(te->desc, "SEQUENCE SET") != 0))
+	if (ropt->dataOnly)
 		res = res & 2;
 
 	/* Mask it if we don't have a schema contribition */
 	if (!te->defn || strlen(te->defn) == 0)
 		res = res & 2;
-
-	/* Mask it if we don't have a possible data contribition */
-	if (!te->hadDumper)
-		res = res & 1;
 
 	/* Finally, if we used a list, limit based on that as well */
 	if (ropt->limitToList && !ropt->idWanted[te->id - 1])

@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.205 2001/04/25 07:03:19 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.206 2001/05/12 01:03:59 pjw Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -126,6 +126,12 @@
  *
  *	  - Don't dump CHECK constraints with same source and names both
  *		starting with '$'.
+ *
+ * Modifications - 10-May-2001 - pjw@rhyme.com.au
+ *
+ *	  - Don't dump COMMENTs in data-only dumps
+ *	  - Fix view dumping SQL for V7.0
+ *	  - Fix bug when getting view oid with long view names
  *
  *-------------------------------------------------------------------------
  */
@@ -2047,15 +2053,37 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	 * (sequence) or 'v' (view).
 	 */
 
-	appendPQExpBuffer(query,
+	if (g_fout->remoteVersion >= 70100)
+	{
+		appendPQExpBuffer(query,
 					  "SELECT pg_class.oid, relname, relkind, relacl, "
-	"(select usename from pg_user where relowner = usesysid) as usename, "
+					  "(select usename from pg_user where relowner = usesysid) as usename, "
 					  "relchecks, reltriggers, relhasindex "
 					  "from pg_class "
 					  "where relname !~ '^pg_' "
 					  "and relkind in ('%c', '%c', '%c') "
 					  "order by oid",
 					  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
+	} else {
+		/* 
+		 * In 7.1, view relkind was not set to 'v', so we fake this by checking
+		 * if we have a view by looking up pg_class & pg_rewrite.
+		 */
+		appendPQExpBuffer(query,
+					  "SELECT c.oid, relname, relacl, "
+					  "CASE WHEN relhasrules and relkind = 'r' "
+					  "           And EXISTS(SELECT r.rulename FROM pg_rewrite r WHERE "
+					  "               		r.ev_class = c.oid AND r.ev_type = '1'::\"char\") "
+					  "THEN 'v'::\"char\" "
+					  "ELSE relkind End AS relkind,"
+					  "relacl, (select usename from pg_user where relowner = usesysid) as usename, "
+					  "relchecks, reltriggers, relhasindex "
+					  "from pg_class c "
+					  "where relname !~ '^pg_' "
+					  "and relkind in ('%c', '%c', '%c') "
+					  "order by oid",
+					  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
+	}
 
 	res = PQexec(g_conn, query->data);
 	if (!res ||
@@ -2103,9 +2131,9 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query, "SELECT definition as viewdef, ");
 			/* XXX 7.2 - replace with att from pg_views or some other generic source */
-			appendPQExpBuffer(query, "(select oid from pg_rewrite where rulename='_RET'"
-										" || viewname) as view_oid from pg_views"
-										" where viewname = ");
+			appendPQExpBuffer(query, "(select oid from pg_rewrite where "
+										" rulename=('_RET' || viewname)::name) as view_oid"
+										" from pg_views where viewname = ");
 			formatStringLiteral(query, tblinfo[i].relname, CONV_ALL);
 			appendPQExpBuffer(query, ";");
 
@@ -2973,6 +3001,10 @@ dumpComment(Archive *fout, const char *target, const char *oid)
 	PGresult   *res;
 	PQExpBuffer query;
 	int			i_description;
+
+	/* Comments are SCHEMA not data */
+	if (dataOnly)
+		return;
 
 	/*** Build query to find comment ***/
 
