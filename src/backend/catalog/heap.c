@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.210 2002/07/18 16:47:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.211 2002/07/19 22:21:17 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -793,7 +793,8 @@ heap_create_with_catalog(const char *relname,
  * Formerly, this routine checked for child relations and aborted the
  * deletion if any were found.  Now we rely on the dependency mechanism
  * to check for or delete child relations.  By the time we get here,
- * there are no children and we need only remove the pg_inherits rows.
+ * there are no children and we need only remove any pg_inherits rows
+ * linking this relation to its parent(s).
  */
 static void
 RelationRemoveInheritance(Relation relation)
@@ -1743,21 +1744,25 @@ static void
 RemoveStatistics(Relation rel)
 {
 	Relation	pgstatistic;
-	HeapScanDesc scan;
+	SysScanDesc scan;
 	ScanKeyData key;
 	HeapTuple	tuple;
 
 	pgstatistic = heap_openr(StatisticRelationName, RowExclusiveLock);
 
-	ScanKeyEntryInitialize(&key, 0x0, Anum_pg_statistic_starelid,
-						   F_OIDEQ,
+	ScanKeyEntryInitialize(&key, 0x0,
+						   Anum_pg_statistic_starelid, F_OIDEQ,
 						   ObjectIdGetDatum(RelationGetRelid(rel)));
-	scan = heap_beginscan(pgstatistic, SnapshotNow, 1, &key);
 
-	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	scan = systable_beginscan(pgstatistic, StatisticRelidAttnumIndex, true,
+							  SnapshotNow, 1, &key);
+
+	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+	{
 		simple_heap_delete(pgstatistic, &tuple->t_self);
+	}
 
-	heap_endscan(scan);
+	systable_endscan(scan);
 	heap_close(pgstatistic, RowExclusiveLock);
 }
 
