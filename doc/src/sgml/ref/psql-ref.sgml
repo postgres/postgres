@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.124 2004/12/13 18:05:10 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.125 2004/12/27 20:13:48 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -2574,6 +2574,40 @@ Field separator is "oo".
       </listitem>
 
     </itemizedlist>
+ </refsect1>
+
+
+ <refsect1>
+  <title>Notes for Windows users</title>
+
+ <para>
+  <application>psql</application> is built as a <quote>console
+  application</>.  Since the Windows console windows use a different
+  encoding than the rest of the system, you must take special care
+  when using 8-bit characters within <application>psql</application>.
+  If <application>psql</application> detects a problematic
+  console code page, it will warn you at startup. To change the
+  console code page, two things are necessary:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      Set the code page by entering <userinput>cmd.exe /c chcp
+      1252</userinput>. (1252 is a code page that is appropriate for
+      German; replace it with your value.) If you are using Cygwin,
+      you can put this command in <filename>/etc/profile</filename>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Set the console font to <quote>Lucida Console</>, because the
+      raster font does not work with the ANSI code page.
+     </para>
+    </listitem>
+   </itemizedlist>
+ </para>
+
  </refsect1>
 
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.22 2004/12/26 23:06:56 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.23 2004/12/27 20:13:47 tgl Exp $
 -->
 
 <chapter id="install-win32">
@@ -43,7 +43,7 @@ $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.22 2004/12/26 23:06:56 tg
  </para>
 
  <para>
-  To build everything using using <productname>Borland
+  To build everything using <productname>Borland
   C++</productname>, change into the <filename>src</filename> directory
   and type the command
 <screen>
@@ -77,7 +77,7 @@ $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.22 2004/12/26 23:06:56 tg
     <term><filename>interfaces\libpq\Release\libpq.lib</filename></term>
     <listitem>
      <para>
-      Static library version of the frontend library
+      Static version of the frontend library
      </para>
     </listitem>
    </varlistentry>
@@ -116,34 +116,6 @@ $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.22 2004/12/26 23:06:56 tg
   To use the library, you must add the
   <filename>libpqdll.lib</filename> file to your project.  (In Visual
   C++, just right-click on the project and choose to add it.)
- </para>
-
- <para>
-  <application>psql</application> is compiled as a <quote>console
-  application</>. As the Windows console windows use a different
-  encoding than the rest of the system, you must take special care
-  when using 8-bit characters within <application>psql</application>.
-  If <application>psql</application> detects a problematic
-  console code page, it will warn you at startup. To change the
-  console code page, two things are necessary:
-
-   <itemizedlist>
-    <listitem>
-     <para>
-      Set the code page by entering <userinput>cmd.exe /c chcp
-      1252</userinput>. (1252 is a code page that is appropriate for
-      German; replace it with your value.) If you are using Cygwin,
-      you can put this command in <filename>/etc/profile</filename>.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Set the console font to <quote>Lucida Console</>, because the
-      raster font does not work with the ANSI code page.
-     </para>
-    </listitem>
-   </itemizedlist>
  </para>
 
 </chapter>
