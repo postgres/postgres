@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Dec 21 00:27:04 EST 2001
+Last updated:		Wed Dec 26 18:46:59 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -386,6 +386,8 @@ MISCELLANEOUS
   file descriptor to backend pre-forked for matching database
 * Nested FULL OUTER JOINs don't work (Tom)
 * Allow merge and hash joins on expressions not just simple variables (Tom)
+* Add new pg_proc cachable settings to specify whether function can be
+  evaluated only once or once per query
 
 SOURCE CODE
 -----------
