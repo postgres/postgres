@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.18 1997/08/18 02:14:37 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.19 1997/08/27 03:48:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,9 +15,9 @@
 #include <string.h>
 #include <errno.h>
 #include <pwd.h>
-#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
 #include <sys/socket.h>
-#include <sys/types.h>    /* needed by in.h on Ultrix */
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -299,8 +299,7 @@ find_hba_entry(const char DataDir[], const struct in_addr ip_addr,
   system.
 
 ---------------------------------------------------------------------------*/ 
-  int rc;
-  struct stat statbuf;
+  int fd;
 
   FILE *file;  /* The config file we have to read */
 
@@ -315,9 +314,9 @@ find_hba_entry(const char DataDir[], const struct in_addr ip_addr,
                                    strlen(OLD_CONF_FILE)+2)*sizeof(char));
   sprintf(old_conf_file, "%s/%s", DataDir, OLD_CONF_FILE);
   
-  rc = stat(old_conf_file, &statbuf);
-  if (rc == 0) {  
+  if ((fd = open(old_conf_file,O_RDONLY,0)) != -1) {
     /* Old config file exists.  Tell this guy he needs to upgrade. */
+    close(fd);
     sprintf(PQerrormsg,
             "A file exists by the name used for host-based authentication "
             "in prior releases of Postgres (%s).  The name and format of "

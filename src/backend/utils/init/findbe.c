@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.4 1997/08/12 20:16:12 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.5 1997/08/27 03:48:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,8 +14,8 @@
 #include <grp.h>
 #include <pwd.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "postgres.h"

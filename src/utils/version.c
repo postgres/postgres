@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.5 1997/07/28 00:57:08 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.6 1997/08/27 03:48:50 momjian Exp $
  *
  * NOTES
  *	XXX eventually, should be able to handle version identifiers
@@ -63,42 +63,34 @@ ValidatePgVersion(const char *path, char **reason_p) {
     int	 fd;
     char version[4];
     char full_path[MAXPGPATH+1];
-    struct stat	statbuf;
 
     PathSetVersionFilePath(path, full_path);
     
-    if (stat(full_path, &statbuf) < 0) {
+    if ((fd = open(full_path, O_RDONLY,0)) == -1) {
         *reason_p = malloc(200);
-        sprintf(*reason_p, "File '%s' does not exist.", full_path);
+        sprintf(*reason_p, "File '%s' does not exist or no read permission.", full_path);
     } else {
-        fd = open(full_path, O_RDONLY, 0);
-        if (fd < 0) {
-            *reason_p = malloc(200);
-            sprintf(*reason_p, "Unable to open file '%s'.  Errno = %s (%d).",
-                    full_path, strerror(errno), errno);
-        } else {
-            if (read(fd, version, 4) < 4 ||
-                !isascii(version[0]) || !isdigit(version[0]) ||
-                version[1] != '.' ||
-                !isascii(version[2]) || !isdigit(version[2]) ||
-                version[3] != '\n') {
+        if (read(fd, version, 4) < 4 ||
+            !isascii(version[0]) || !isdigit(version[0]) ||
+            version[1] != '.' ||
+            !isascii(version[2]) || !isdigit(version[2]) ||
+            version[3] != '\n') {
 
+            *reason_p = malloc(200);
+            sprintf(*reason_p, "File '%s' does not have a valid format "
+                    "for a PG_VERSION file.", full_path);
+        } else {
+            if (version[2] != '0' + PG_VERSION ||
+                version[0] != '0' + PG_RELEASE) {
                 *reason_p = malloc(200);
-                sprintf(*reason_p, "File '%s' does not have a valid format "
-                        "for a PG_VERSION file.", full_path);
-            } else {
-                if (version[2] != '0' + PG_VERSION ||
-                    version[0] != '0' + PG_RELEASE) {
-                    *reason_p = malloc(200);
-                    sprintf(*reason_p, 
-                            "Version number in file '%s' should be %d.%d, "
-                            "not %c.%c.",
-                            full_path, 
-                            PG_RELEASE, PG_VERSION, version[0], version[2]);
-                } else *reason_p = NULL;
-            }
-            close(fd);                
+                sprintf(*reason_p, 
+                        "Version number in file '%s' should be %d.%d, "
+                        "not %c.%c.",
+                        full_path, 
+                        PG_RELEASE, PG_VERSION, version[0], version[2]);
+            } else *reason_p = NULL;
         }
+        close(fd);                
     }
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.11 1997/08/19 21:35:50 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.12 1997/08/27 03:48:39 momjian Exp $
  *
  * NOTES
  *      InitPostgres() is the function called from PostgresMain
@@ -30,7 +30,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/file.h>
-#include <sys/stat.h>
 #include <sys/types.h>
 #include <math.h>
 #include <unistd.h>
@@ -78,15 +77,6 @@ static void InitUserid(void);
 
 
 static IPCKey           PostgresIpcKey;
-
-
-#ifndef private
-#ifndef EBUG
-#define private static
-#else   /* !defined(EBUG) */
-#define private
-#endif  /* !defined(EBUG) */
-#endif  /* !defined(private) */
 
 /* ----------------------------------------------------------------
  *                      InitPostgres support
@@ -141,7 +131,7 @@ InitMyDatabaseId()
     sprintf(dbfname, "%s%cpg_database", DataDir, SEP_CHAR);
     fileflags = O_RDONLY;
     
-    if ((dbfd = open(dbfname, O_RDONLY, 0666)) < 0)
+    if ((dbfd = open(dbfname, O_RDONLY, 0)) < 0)
         elog(FATAL, "Cannot open %s", dbfname);
     
     pfree(dbfname);
@@ -261,10 +251,10 @@ static void
 DoChdirAndInitDatabaseNameAndPath(char *name) {
     char *reason;  
       /* Failure reason returned by some function.  NULL if no failure */
-    struct stat	statbuf;
+    int fd;
     char errormsg[1000];
 
-    if (stat(DataDir, &statbuf) < 0) 
+    if ((fd = open(DataDir, O_RDONLY,0)) == -1)
         sprintf(errormsg, "Database system does not exist.  "
                 "PGDATA directory '%s' not found.  Normally, you "
                 "create a database system by running initdb.",
@@ -272,13 +262,14 @@ DoChdirAndInitDatabaseNameAndPath(char *name) {
     else {
         char myPath[MAXPGPATH];  /* DatabasePath points here! */
         
+    	close(fd);
         if (strlen(DataDir) + strlen(name) + 10 > sizeof(myPath))
             sprintf(errormsg, "Internal error in postinit.c: database "
                     "pathname exceeds maximum allowable length.");
         else {
             sprintf(myPath, "%s/base/%s", DataDir, name);
 
-            if (stat(myPath, &statbuf) < 0) 
+            if ((fd = open(myPath, O_RDONLY,0)) == -1)
                 sprintf(errormsg, 
                         "Database '%s' does not exist.  "
                         "(We know this because the directory '%s' "
@@ -288,6 +279,7 @@ DoChdirAndInitDatabaseNameAndPath(char *name) {
                         "of '%s/base/'.",
                         name, myPath, DataDir);
             else {
+            	close(fd);
                 ValidatePgVersion(DataDir, &reason);
                 if (reason != NULL) 
                     sprintf(errormsg, 
