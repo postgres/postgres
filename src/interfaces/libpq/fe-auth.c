@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.64 2002/02/23 04:17:47 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.65 2002/04/24 23:00:40 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,8 +65,7 @@
 
 struct authsvc
 {
-	char		name[NAMEDATALEN];		/* service nickname (for command
-										 * line) */
+	const char *name;			/* service nickname (for command line) */
 	MsgType		msgtype;		/* startup packet header type */
 	int			allowed;		/* initially allowed (before command line
 								 * option parsing)? */
