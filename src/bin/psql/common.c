@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.27 2000/11/27 02:20:36 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.28 2000/12/15 17:54:43 petere Exp $
  */
 #include "postgres.h"
 #include "common.h"
@@ -315,32 +315,6 @@ PSQLexec(const char *query)
 	if (PQresultStatus(res) != PGRES_COPY_OUT)
 		cancelConn = NULL;
 
-	if (PQstatus(pset.db) == CONNECTION_BAD)
-	{
-		if (!pset.cur_cmd_interactive)
-		{
-			psql_error("connection to server was lost\n");
-			exit(EXIT_BADCONN);
-		}
-		fputs("The connection to the server was lost. Attempting reset: ", stderr);
-		PQreset(pset.db);
-		if (PQstatus(pset.db) == CONNECTION_BAD)
-		{
-			fputs("Failed.\n", stderr);
-			PQfinish(pset.db);
-			PQclear(res);
-			pset.db = NULL;
-			SetVariable(pset.vars, "DBNAME", NULL);
-			SetVariable(pset.vars, "HOST", NULL);
-			SetVariable(pset.vars, "PORT", NULL);
-			SetVariable(pset.vars, "USER", NULL);
-			SetVariable(pset.vars, "ENCODING", NULL);
-			return NULL;
-		}
-		else
-			fputs("Succeeded.\n", stderr);
-	}
-
 	if (res && (PQresultStatus(res) == PGRES_COMMAND_OK ||
 				PQresultStatus(res) == PGRES_TUPLES_OK ||
 				PQresultStatus(res) == PGRES_COPY_IN ||
@@ -351,6 +325,31 @@ PSQLexec(const char *query)
 	{
 		psql_error("%s", PQerrorMessage(pset.db));
 		PQclear(res);
+
+		if (PQstatus(pset.db) == CONNECTION_BAD)
+		{
+			if (!pset.cur_cmd_interactive)
+			{
+				psql_error("connection to server was lost\n");
+				exit(EXIT_BADCONN);
+			}
+			fputs("The connection to the server was lost. Attempting reset: ", stderr);
+			PQreset(pset.db);
+			if (PQstatus(pset.db) == CONNECTION_BAD)
+			{
+				fputs("Failed.\n", stderr);
+				PQfinish(pset.db);
+				pset.db = NULL;
+				SetVariable(pset.vars, "DBNAME", NULL);
+				SetVariable(pset.vars, "HOST", NULL);
+				SetVariable(pset.vars, "PORT", NULL);
+				SetVariable(pset.vars, "USER", NULL);
+				SetVariable(pset.vars, "ENCODING", NULL);
+			}
+			else
+				fputs("Succeeded.\n", stderr);
+		}
+
 		return NULL;
 	}
 }
