@@ -1,0 +1,189 @@
+From owner-pgsql-hackers@hub.org Sun Jan 23 13:31:03 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id NAA28482
+	for <pgman@candle.pha.pa.us>; Sun, 23 Jan 2000 13:31:01 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id NAA08409 for <pgman@candle.pha.pa.us>; Sun, 23 Jan 2000 13:04:34 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id MAA65651;
+	Sun, 23 Jan 2000 12:57:33 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Sun, 23 Jan 2000 12:57:20 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id MAA65548
+	for pgsql-hackers-outgoing; Sun, 23 Jan 2000 12:56:20 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by hub.org (8.9.3/8.9.3) with ESMTP id MAA65492
+	for <pgsql-hackers@postgreSQL.org>; Sun, 23 Jan 2000 12:55:41 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id MAA06211;
+	Sun, 23 Jan 2000 12:55:36 -0500 (EST)
+To: Alfred Perlstein <bright@wintelcom.net>
+cc: pgsql-hackers@postgreSQL.org
+Subject: Re: pg_dump possible fix, need testers. (was: Re: [HACKERS] pg_dump disaster) 
+In-reply-to: <20000123022341.J26520@fw.wintelcom.net> 
+References: <20000122211427.C26520@fw.wintelcom.net> <200001230525.AAA08020@candle.pha.pa.us> <20000122220256.H26520@fw.wintelcom.net> <5120.948606837@sss.pgh.pa.us> <20000123022341.J26520@fw.wintelcom.net>
+Comments: In-reply-to Alfred Perlstein <bright@wintelcom.net>
+	message dated "Sun, 23 Jan 2000 02:23:41 -0800"
+Date: Sun, 23 Jan 2000 12:55:36 -0500
+Message-ID: <6208.948650136@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Sender: owner-pgsql-hackers@postgreSQL.org
+Status: ORr
+
+>> Um, I didn't have any trouble at all reproducing Patrick's complaint.
+>> pg_dump any moderately large table (I used tenk1 from the regress
+>> database) and try to load the script with psql.  Kaboom.
+
+> This is after or before my latest patch?
+
+Before.  I haven't updated since yesterday...
+
+> I can't seem to reproduce this problem,
+
+Odd.  Maybe there is something different about the kernel's timing of
+message sending on your platform.  I see it very easily on HPUX 10.20,
+and Patrick sees it very easily on whatever he's using (netbsd I think).
+You might try varying the situation a little, say
+	psql mydb <dumpfile
+	psql -f dumpfile mydb
+	psql mydb
+		\i dumpfile
+and the same with -h localhost (to get a TCP/IP connection instead of
+Unix domain).  At the moment (pre-patch) I see failures with the
+first two of these, but not with the \i method.  -h doesn't seem to
+matter for me, but it might for you.
+
+> Telling me something is wrong without giving suggestions on how
+> to fix it, nor direct pointers to where it fails doesn't help me
+> one bit.  You're not offering constructive critism, you're not
+> even offering valid critism, you're just waving your finger at
+> "problems" that you say exist but don't pin down to anything specific.
+
+I have been explaining it as clearly as I could.  Let's try it
+one more time.
+
+> I spent hours looking over what I did to pqFlush and pqPutnBytes
+> because of what you said earlier when all the bug seems to have
+> come down to is that I missed that the socket is set to non-blocking
+> in all cases now.
+
+Letting the socket mode default to blocking will hide the problems from
+existing clients that don't care about non-block mode.  But people who
+try to actually use the nonblock mode are going to see the same kinds of
+problems that psql is exhibiting.
+
+> The old sequence of events that happened was as follows:
+
+>   user sends data almost filling the output buffer...
+>   user sends another line of text overflowing the buffer...
+>   pqFlush is invoked blocking the user until the output pipe clears...
+>   and repeat.
+
+Right.
+
+> The nonblocking code allows sends to fail so the user can abort
+> sending stuff to the backend in order to process other work:
+
+>   user sends data almost filling the output buffer...
+>   user sends another line of text that may overflow the buffer...
+>   pqFlush is invoked, 
+>     if the pipe can't be cleared an error is returned allowing the user to
+>       retry the send later.
+>     if the flush succeeds then more data is queued and success is returned
+
+But you haven't thought through the mechanics of the "error is returned
+allowing the user to retry" code path clearly enough.  Let's take
+pqPutBytes for an example.  If it returns EOF, is that a hard error or
+does it just mean that the application needs to wait a while?  The
+application *must* distinguish these cases, or it will do the wrong
+thing: for example, if it mistakes a hard error for "wait a while",
+then it will wait forever without making any progress or producing
+an error report.
+
+You need to provide a different return convention that indicates
+what happened, say
+	EOF (-1)	=> hard error (same as old code)
+	0		=> OK
+	1		=> no data was queued due to risk of blocking
+And you need to guarantee that the application knows what the state is
+when the can't-do-it-yet return is made; note that I specified "no data
+was queued" above.  If pqPutBytes might queue some of the data before
+returning 1, the application is in trouble again.  While you apparently
+foresaw that in recoding pqPutBytes, your code doesn't actually work.
+There is the minor code bug that you fail to update "avail" after the
+first pqFlush call, and the much more fundamental problem that you
+cannot guarantee to have queued all or none of the data.  Think about
+what happens if the passed nbytes is larger than the output buffer size.
+You may pass the first pqFlush successfully, then get into the loop and
+get a won't-block return from pqFlush in the loop.  What then?
+You can't simply refuse to support the case nbytes > bufsize at all,
+because that will cause application failures as well (too long query
+sends it into an infinite loop trying to queue data, most likely).
+
+A possible answer is to specify that a return of +N means "N bytes
+remain unqueued due to risk of blocking" (after having queued as much
+as you could).  This would put the onus on the caller to update his
+pointers/counts properly; propagating that into all the internal uses
+of pqPutBytes would be no fun.  (Of course, so far you haven't updated
+*any* of the internal callers to behave reasonably in case of a
+won't-block return; PQfn is just one example.)
+
+Another possible answer is to preserve pqPutBytes' old API, "queue or
+bust", by the expedient of enlarging the output buffer to hold whatever
+we can't send immediately.  This is probably more attractive, even
+though a long query might suck up a lot of space that won't get
+reclaimed as long as the connection lives.  If you don't do this then
+you are going to have to make a lot of ugly changes in the internal
+callers to deal with won't-block returns.  Actually, a bulk COPY IN
+would probably be the worst case --- the app could easily load data into
+the buffer far faster than it could be sent.  It might be best to extend
+PQputline to have a three-way return and add code there to limit the
+growth of the output buffer, while allowing all internal callers to
+assume that the buffer is expanded when they need it.
+
+pqFlush has the same kind of interface design problem: the same EOF code
+is returned for either a hard error or can't-flush-yet, but it would be
+disastrous to treat those cases alike.  You must provide a 3-way return
+code.
+
+Furthermore, the same sort of 3-way return code convention will have to
+propagate out through anything that calls pqFlush (with corresponding
+documentation updates).  pqPutBytes can be made to hide a pqFlush won't-
+block return by trying to enlarge the output buffer, but in most other
+places you won't have a choice except to punt it back to the caller.
+
+PQendcopy has the same interface design problem.  It used to be that
+(unless you passed a null pointer) PQendcopy would *guarantee* that
+the connection was no longer in COPY state on return --- by resetting
+it, if necessary.  So the return code was mainly informative; the
+application didn't have to do anything different if PQendcopy reported
+failure.  But now, a nonblocking application does need to pay attention
+to whether PQendcopy completed or not --- and you haven't provided a way
+for it to tell.  If 1 is returned, the connection might still be in
+COPY state, or it might not (PQendcopy might have reset it).  If the
+application doesn't distinguish these cases then it will fail.
+
+I also think that you want to take a hard look at the automatic "reset"
+behavior upon COPY failure, since a PQreset call will block the
+application until it finishes.  Really, what is needed to close down a
+COPY safely in nonblock mode is a pair of entry points along the line of
+"PQendcopyStart" and "PQendcopyPoll", with API conventions similar to
+PQresetStart/PQresetPoll.  This gives you the ability to do the reset
+(if one is necessary) without blocking the application.  PQendcopy
+itself will only be useful to blocking applications.
+
+> I'm sorry if they don't work for some situations other than COPY IN,
+> but it's functionality that I needed and I expect to be expanded on
+> by myself and others that take interest in nonblocking operation.
+
+I don't think that the nonblock code is anywhere near production quality
+at this point.  It may work for you, if you don't stress it too hard and
+never have a communications failure; but I don't want to see us ship it
+as part of Postgres unless these issues get addressed.
+
+			regards, tom lane
+
+************
+
