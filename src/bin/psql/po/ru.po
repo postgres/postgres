@@ -1,6 +1,6 @@
 # PSQL Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/po/Attic/ru.po,v 1.8 2003/10/13 21:38:37 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/po/Attic/ru.po,v 1.8.2.1 2003/11/15 12:54:28 petere Exp $
 #
 # ChangeLog:
 #   - July 26 - October 12, 2003: Update for 7.4.x; <mokhov@cs.concordia.ca>
@@ -2023,7 +2023,7 @@ msgstr "создать таблицу"
 #: sql_help.h:170
 msgid ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name (\n"
-"    { column_name data_type [ DEFAULT default_expr ] [ column_constraint [, ... ] ]\n"
+"    { column_name data_type [ DEFAULT default_expr ] [ column_constraint [ ... ] ]\n"
 "    | table_constraint\n"
 "    | LIKE parent_table [ { INCLUDING | EXCLUDING } DEFAULTS ] }  [, ... ]\n"
 ")\n"
@@ -2051,7 +2051,7 @@ msgid ""
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 msgstr ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE имя_таблицы (\n"
-"    { имя_колонки тип_данных [ DEFAULT выр_по_умолчанию ] [ констрейнт_на_колонку [, ... ] ]\n"
+"    { имя_колонки тип_данных [ DEFAULT выр_по_умолчанию ] [ констрейнт_на_колонку [ ... ] ]\n"
 "    | констрейнт_на_таблицу\n"
 "    | LIKE таблица_родитель [ { INCLUDING | EXCLUDING } DEFAULTS ] }  [, ... ]\n"
 ")\n"
