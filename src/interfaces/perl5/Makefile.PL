@@ -1,6 +1,6 @@
 #-------------------------------------------------------
 #
-# $Id: Makefile.PL,v 1.16 2000/06/10 18:01:56 petere Exp $
+# $Id: Makefile.PL,v 1.17 2001/03/06 22:07:09 tgl Exp $
 #
 # Copyright (c) 1997, 1998  Edmund Mergl
 #
@@ -12,7 +12,7 @@ use strict;
 
 my %opts;
 
-if (! $ENV{POSTGRES_LIB} || ! $ENV{POSTGRES_INCLUDE}) {
+if (! -d $ENV{POSTGRES_LIB} || ! -d $ENV{POSTGRES_INCLUDE}) {
 
     # Check that we actually are inside the Postgres source tree
     if (! -d "../libpq") {
