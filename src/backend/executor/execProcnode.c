@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.47 2005/03/25 21:57:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.48 2005/04/06 20:13:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,12 +270,6 @@ ExecProcNode(PlanState *node)
 	TupleTableSlot *result;
 
 	CHECK_FOR_INTERRUPTS();
-
-	/*
-	 * deal with NULL nodes..
-	 */
-	if (node == NULL)
-		return NULL;
 
 	if (node->chgParam != NULL) /* something changed */
 		ExecReScan(node, NULL); /* let ReScan handle this */
