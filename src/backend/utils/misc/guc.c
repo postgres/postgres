@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.190 2004/03/15 15:56:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.191 2004/03/22 03:15:29 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@
 /* XXX these should appear in other modules' header files */
 extern bool Log_connections;
 extern bool Log_disconnections;
-extern bool check_function_bodies;
+extern DLLIMPORT bool check_function_bodies;
 extern int	PreAuthDelay;
 extern int	AuthenticationTimeout;
 extern int	CheckPointTimeout;

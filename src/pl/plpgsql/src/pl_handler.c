@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.20 2004/03/19 18:58:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.21 2004/03/22 03:15:33 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -45,7 +45,7 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
-extern bool check_function_bodies;
+extern DLLIMPORT bool check_function_bodies;
 
 static int	plpgsql_firstcall = 1;
 
