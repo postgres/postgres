@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/clusterdb,v 1.9 2003/02/13 05:37:44 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/clusterdb,v 1.10 2003/03/20 18:53:18 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -156,34 +156,12 @@ fi
 for db in $dbname
 do
 	[ "$alldb" ] && echo "Clustering $db"
-	query="SELECT nspname, pg_class.relname, pg_class_2.relname FROM pg_class, pg_class AS pg_class_2 JOIN pg_namespace ON (pg_namespace.oid=relnamespace), pg_index WHERE pg_class.oid=pg_index.indrelid AND pg_class_2.oid=pg_index.indexrelid AND pg_index.indisclustered AND pg_class.relowner=(SELECT usesysid FROM pg_user WHERE usename=current_user)"
 	if [ -z "$table" ]; then
-		tables=`${PATHNAME}psql $db $PSQLOPT -F: -P format=unaligned -t -c "$query"`
+		${PATHNAME}psql $PSQLOPT $ECHOOPT -c "SET autocommit TO 'on';CLUSTER" -d $db
 		[ "$?" -ne 0 ] && exit 1
 	else
-		# if tablename has a dot, use it as namespace separator
-		if echo $table | grep -s '\.' 2>&1 >/dev/null
-		then
-			tbl=`echo $table | cut -d. -f2`
-			nspc=`echo $table | cut -d. -f1`
-			tables=`${PATHNAME}psql $db $PSQLOPT -F: -P format=unaligned -t -c "$query AND pg_class.relname='$tbl' AND nspname='$nspc'"`
-			echo $tables
-		else
-			tables=`${PATHNAME}psql $db $PSQLOPT -F: -P format=unaligned -t -c "$query AND pg_class.relname='$table'"`
-		fi
-	fi
-	query=
-	for tabs in $tables
-	do
-		nspc=`echo $tabs | cut -d: -f1`
-		tab=`echo $tabs | cut -d: -f2`
-		idx=`echo $tabs | cut -d: -f3`
-		query="$query CLUSTER $idx ON $nspc.$tab;"
-	done
-	${PATHNAME}psql $PSQLOPT $ECHOOPT -c "SET autocommit TO 'on';$query" -d $db
-	if [ "$?" -ne 0 ]
-	then
-		echo "$CMDNAME: While clustering $db, the following failed: $query" 1>&2
+		${PATHNAME}psql $PSQLOPT $ECHOOPT -c "SET autocommit TO 'on';CLUSTER $table" -d $db
+		[ "$?" -ne 0 ] && exit 1
 	fi
 done
 

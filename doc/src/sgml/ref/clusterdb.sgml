@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.7 2003/02/19 04:06:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.8 2003/03/20 18:53:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -43,7 +43,7 @@ PostgreSQL documentation
   <para>
    <application>clusterdb</application> is a shell script wrapper around the
    backend command
-   <xref linkend="SQL-CLUSTER" endterm="SQL-CLUSTER-title"> via
+   <xref linkend="SQL-CLUSTER" endterm="sql-cluster-title"> via
    the <productname>PostgreSQL</productname> interactive terminal
    <xref linkend="APP-PSQL">. There is no effective
    difference between clustering databases via this or other methods.
@@ -51,13 +51,6 @@ PostgreSQL documentation
    a database server must be running at the targeted host. Also, any default
    settings and environment variables available to <application>psql</application>
    and the <application>libpq</application> front-end library do apply.
-  </para>
-
-  <para>
-  <application>clusterdb</application> might need to connect several
-  times to the <productname>PostgreSQL</productname> server, asking for
-  a password each time. It is convenient to have a
-  <filename>$HOME/.pgpass</> file in such cases.
   </para>
 
  </refsect1>
@@ -202,10 +195,9 @@ PostgreSQL documentation
       <listitem>
        <para>
         Something went wrong. <application>clusterdb</application> is only a wrapper
-        script. See <xref linkend="SQL-CLUSTER" endterm="SQL-CLUSTER-title">
+        script. See <xref linkend="SQL-CLUSTER" endterm="sql-cluster-title">
         and <xref linkend="APP-PSQL"> for a detailed
-        discussion of error messages and potential problems.  Note that this message
-		may appear once per table to be clustered.
+        discussion of error messages and potential problems.
        </para>
       </listitem>
      </varlistentry>
