@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Mar 11 06:58:51 EST 2005
+   Last updated: Fri Mar 11 08:09:23 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -46,7 +46,7 @@
    
                              General Questions
                                       
-  1.1) How go I get involved in PostgreSQL development?
+  1.1) How do I get involved in PostgreSQL development?
   
    Download the code and have a look around. See 1.7.
    
@@ -553,7 +553,7 @@
    questions about development of new features, on IRC at
    irc.freenode.net in the #postgresql channel.
    
-  1.18) How go I get involved in PostgreSQL web site development?
+  1.18) How do I get involved in PostgreSQL web site development?
   
    PostgreSQL website development is discussed on the
    pgsql-www@postgresql.org mailing list. The is a project page where the
