@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.233 2002/11/09 23:56:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.234 2002/11/11 22:19:21 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -31,14 +31,12 @@
 
 #include "access/heapam.h"
 #include "access/genam.h"
-#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
-#include "catalog/namespace.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_inherits.h"
@@ -673,14 +671,13 @@ AddNewRelationType(const char *typeName,
  *		creates a new cataloged relation.  see comments above.
  * --------------------------------
  */
-
 Oid
 heap_create_with_catalog(const char *relname,
 						 Oid relnamespace,
 						 TupleDesc tupdesc,
 						 char relkind,
 						 bool shared_relation,
-						 char ateoxact,  /* Only used for temp relations */
+						 OnCommitAction oncommit,
 						 bool allow_system_table_mods)
 {
 	Relation	pg_class_desc;
@@ -721,25 +718,6 @@ heap_create_with_catalog(const char *relname,
 
 	/* Assign an OID for the relation's tuple type */
 	new_type_oid = newoid();
-
-
-	/*
-	 *  Add to temprels if we are a temp relation now that we have oid
-	 */
-
-	if(isTempNamespace(relnamespace)) {
-		TempTable	*t;
-		MemoryContext oldcxt;
-
-		oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-		t = (TempTable *) palloc(sizeof(TempTable));
-		t->relid = new_rel_oid;
-		t->ateoxact = ateoxact;
-		t->tid = GetCurrentTransactionId();
-		t->dead = false;
-		reg_temp_rel(t);
-		MemoryContextSwitchTo(oldcxt);
-	}
 
 	/*
 	 * now create an entry in pg_class for the relation.
@@ -803,6 +781,12 @@ heap_create_with_catalog(const char *relname,
 	 * anywhere.
 	 */
 	StoreConstraints(new_rel_desc, tupdesc);
+
+	/*
+	 * If there's a special on-commit action, remember it
+	 */
+	if (oncommit != ONCOMMIT_NOOP)
+		register_on_commit_action(new_rel_oid, oncommit);
 
 	/*
 	 * ok, the relation has been cataloged, so close our relations and
@@ -1165,19 +1149,16 @@ heap_drop_with_catalog(Oid rid)
 	DeleteRelationTuple(RelationGetRelid(rel));
 
 	/*
+	 * forget any ON COMMIT action for the rel
+	 */
+	remove_on_commit_action(rid);
+
+	/*
 	 * unlink the relation's physical file and finish up.
 	 */
 	if (rel->rd_rel->relkind != RELKIND_VIEW &&
 		rel->rd_rel->relkind != RELKIND_COMPOSITE_TYPE)
 		smgrunlink(DEFAULT_SMGR, rel);
-
-	/*
-	 * Keep temprels up to date so that we don't have ON COMMIT execution
-	 * problems at the end of the next transaction block
-	 */
-
-	if(isTempNamespace(RelationGetNamespace(rel)))
-		rm_temp_rel(rid);
 
 	/*
 	 * Close relcache entry, but *keep* AccessExclusiveLock on the
@@ -1941,12 +1922,13 @@ RelationTruncateIndexes(Oid heapId)
  *
  *	 This routine is used to truncate the data from the
  *	 storage manager of any data within the relation handed
- *	 to this routine.
+ *	 to this routine.  This is not transaction-safe!
  */
 void
 heap_truncate(Oid rid)
 {
 	Relation	rel;
+	Oid			toastrelid;
 
 	/* Open relation for processing, and grab exclusive access on it. */
 	rel = heap_open(rid, AccessExclusiveLock);
@@ -1964,6 +1946,11 @@ heap_truncate(Oid rid)
 
 	/* If this relation has indexes, truncate the indexes too */
 	RelationTruncateIndexes(rid);
+
+	/* If it has a toast table, recursively truncate that too */
+	toastrelid = rel->rd_rel->reltoastrelid;
+	if (OidIsValid(toastrelid))
+		heap_truncate(toastrelid);
 
 	/*
 	 * Close the relation, but keep exclusive lock on it until commit.

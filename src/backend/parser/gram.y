@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.375 2002/11/10 00:10:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.376 2002/11/11 22:19:23 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -54,7 +54,6 @@
 #include "catalog/index.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
-#include "commands/tablecmds.h"
 #include "nodes/makefuncs.h"
 #include "nodes/params.h"
 #include "nodes/parsenodes.h"
@@ -106,6 +105,7 @@ static void doNegateFloat(Value *v);
 	bool				boolean;
 	JoinType			jtype;
 	DropBehavior		dbehavior;
+	OnCommitAction		oncommit;
 	List				*list;
 	Node				*node;
 	Value				*value;
@@ -225,7 +225,7 @@ static void doNegateFloat(Value *v);
 %type <typnam>	func_arg func_return func_type aggr_argtype
 
 %type <boolean> opt_arg TriggerForType OptTemp OptWithOids
-%type <chr>		OptEOXact
+%type <oncommit>	OnCommitOption
 
 %type <list>	for_update_clause opt_for_update_clause update_list
 %type <boolean>	opt_all
@@ -1375,24 +1375,20 @@ opt_using:
  *****************************************************************************/
 
 CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
-			OptInherit OptWithOids OptEOXact
+			OptInherit OptWithOids OnCommitOption
 				{
 					CreateStmt *n = makeNode(CreateStmt);
-
-					if($2 == FALSE && $10 != ATEOXACTNOOP)
-						elog(ERROR,"ON COMMIT can only be used on TEMP tables"); 
-
 					$4->istemp = $2;
 					n->relation = $4;
 					n->tableElts = $6;
 					n->inhRelations = $8;
 					n->constraints = NIL;
 					n->hasoids = $9;
-					n->ateoxact = $10;
+					n->oncommit = $10;
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE qualified_name OF qualified_name
-			'(' OptTableElementList ')' OptWithOids
+			'(' OptTableElementList ')' OptWithOids OnCommitOption
 				{
 					/* SQL99 CREATE TABLE OF <UDT> (cols) seems to be satisfied
 					 * by our inheritance capabilities. Let's try it...
@@ -1404,6 +1400,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->inhRelations = makeList1($6);
 					n->constraints = NIL;
 					n->hasoids = $10;
+					n->oncommit = $11;
 					$$ = (Node *)n;
 				}
 		;
@@ -1807,11 +1804,13 @@ OptWithOids:
 			| /*EMPTY*/								{ $$ = TRUE; }
 		;
 
-OptEOXact:    ON COMMIT DROP       			{ $$ = ATEOXACTDROP; }
-			| ON COMMIT DELETE_P ROWS 		{ $$ = ATEOXACTDELETE; }
-			| ON COMMIT PRESERVE ROWS		{ $$ = ATEOXACTPRESERVE; }
-			| /*EMPTY*/         { $$ = ATEOXACTNOOP; }
-       ;
+OnCommitOption:  ON COMMIT DROP				{ $$ = ONCOMMIT_DROP; }
+			| ON COMMIT DELETE_P ROWS		{ $$ = ONCOMMIT_DELETE_ROWS; }
+			| ON COMMIT PRESERVE ROWS		{ $$ = ONCOMMIT_PRESERVE_ROWS; }
+			| /*EMPTY*/						{ $$ = ONCOMMIT_NOOP; }
+		;
+
+
 /*
  * Note: CREATE TABLE ... AS SELECT ... is just another spelling for
  * SELECT ... INTO.

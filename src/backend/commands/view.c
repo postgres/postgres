@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.72 2002/09/22 19:42:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.73 2002/11/11 22:19:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,6 +137,7 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 		createStmt->inhRelations = NIL;
 		createStmt->constraints = NIL;
 		createStmt->hasoids = false;
+		createStmt->oncommit = ONCOMMIT_NOOP;
 
 		/*
 		 * finally create the relation (this will error out if there's an

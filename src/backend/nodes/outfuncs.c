@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.178 2002/11/06 22:31:24 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.179 2002/11/11 22:19:22 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -117,8 +117,9 @@ _outCreateStmt(StringInfo str, CreateStmt *node)
 	appendStringInfo(str, " :constraints ");
 	_outNode(str, node->constraints);
 
-	appendStringInfo(str, " :hasoids %s ",
-					 booltostr(node->hasoids));
+	appendStringInfo(str, " :hasoids %s :oncommit %d ",
+					 booltostr(node->hasoids),
+					 (int) node->oncommit);
 }
 
 static void

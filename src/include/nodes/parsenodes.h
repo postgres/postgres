@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.211 2002/11/09 23:56:39 momjian Exp $
+ * $Id: parsenodes.h,v 1.212 2002/11/11 22:19:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -911,6 +911,16 @@ typedef struct CopyStmt
  * implementation).
  * ----------------------
  */
+
+/* What to do at commit time for temporary relations */
+typedef enum OnCommitAction
+{
+	ONCOMMIT_NOOP,				/* No ON COMMIT clause (do nothing) */
+	ONCOMMIT_PRESERVE_ROWS,		/* ON COMMIT PRESERVE ROWS (do nothing) */
+	ONCOMMIT_DELETE_ROWS,		/* ON COMMIT DELETE ROWS */
+	ONCOMMIT_DROP				/* ON COMMIT DROP */
+} OnCommitAction;
+
 typedef struct CreateStmt
 {
 	NodeTag		type;
@@ -919,7 +929,7 @@ typedef struct CreateStmt
 	List	   *inhRelations;	/* relations to inherit from */
 	List	   *constraints;	/* constraints (list of Constraint nodes) */
 	bool		hasoids;		/* should it have OIDs? */
-	char		ateoxact;		/* what do we do at COMMIT for TEMP ? */
+	OnCommitAction oncommit;	/* what do we do at COMMIT? */
 } CreateStmt;
 
 /* ----------

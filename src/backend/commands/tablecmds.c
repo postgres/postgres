@@ -8,13 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.52 2002/11/09 23:56:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.53 2002/11/11 22:19:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "access/xact.h"
 #include "access/genam.h"
 #include "access/tuptoaster.h"
 #include "catalog/catalog.h"
@@ -52,7 +51,27 @@
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 
-static List *temprels = NIL;
+
+/*
+ * ON COMMIT action list
+ */
+typedef struct OnCommitItem
+{
+	Oid				relid;			/* relid of relation */
+	OnCommitAction	oncommit;		/* what to do at end of xact */
+
+	/*
+	 * If this entry was created during this xact, it should be deleted at
+	 * xact abort.	Conversely, if this entry was deleted during this
+	 * xact, it should be removed at xact commit.  We leave deleted
+	 * entries in the list until commit so that we can roll back if needed.
+	 */
+	bool		created_in_cur_xact;
+	bool		deleted_in_cur_xact;
+} OnCommitItem;
+
+static List *on_commits = NIL;
+
 
 static List *MergeAttributes(List *schema, List *supers, bool istemp,
 				List **supOids, List **supconstr, bool *supHasOids);
@@ -118,12 +137,17 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	int			i;
 	AttrNumber	attnum;
 
-
 	/*
 	 * Truncate relname to appropriate length (probably a waste of time,
 	 * as parser should have done this already).
 	 */
 	StrNCpy(relname, stmt->relation->relname, NAMEDATALEN);
+
+	/*
+	 * Check consistency of arguments
+	 */
+	if (stmt->oncommit != ONCOMMIT_NOOP && !stmt->relation->istemp)
+		elog(ERROR, "ON COMMIT can only be used on TEMP tables");
 
 	/*
 	 * Look up the namespace in which we are supposed to create the
@@ -225,7 +249,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 										  descriptor,
 										  relkind,
 										  false,
-										  stmt->ateoxact,
+										  stmt->oncommit,
 										  allowSystemTableMods);
 
 	StoreCatalogInheritance(relationId, inheritOids);
@@ -333,20 +357,16 @@ RemoveRelation(const RangeVar *relation, DropBehavior behavior)
 
 /*
  * TruncateRelation
- *				  Removes all the rows from a relation
+ *		Removes all the rows from a relation.
  *
- * Exceptions:
- *				  BadArg if name is invalid
- *
- * Note:
- *				  Rows are removed, indexes are truncated and reconstructed.
+ * Note: This routine only does safety and permissions checks;
+ * heap_truncate does the actual work.
  */
 void
 TruncateRelation(const RangeVar *relation)
 {
 	Relation	rel;
 	Oid			relid;
-	Oid			toastrelid;
 	ScanKeyData key;
 	Relation	fkeyRel;
 	SysScanDesc fkeyScan;
@@ -426,17 +446,11 @@ TruncateRelation(const RangeVar *relation)
 	systable_endscan(fkeyScan);
 	heap_close(fkeyRel, AccessShareLock);
 
-	toastrelid = rel->rd_rel->reltoastrelid;
-
 	/* Keep the lock until transaction commit */
 	heap_close(rel, NoLock);
 
-	/* Truncate the table proper */
+	/* Do the real work */
 	heap_truncate(relid);
-
-	/* If it has a toast table, truncate that too */
-	if (OidIsValid(toastrelid))
-		heap_truncate(toastrelid);
 }
 
 /*----------
@@ -3787,18 +3801,12 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	 * when its master is, so there's no need to handle the toast rel as
 	 * temp.
 	 */
-
-	/*
-	 * Pass ATEOXACTNOOP for ateoxact since we want heap_drop_with_catalog()
-	 * to remove TOAST tables for temp tables, not AtEOXact_temp_relations()
-	 */
-
 	toast_relid = heap_create_with_catalog(toast_relname,
 										   PG_TOAST_NAMESPACE,
 										   tupdesc,
 										   RELKIND_TOASTVALUE,
 										   shared_relation,
-										   ATEOXACTNOOP,
+										   ONCOMMIT_NOOP,
 										   true);
 
 	/* make the toast relation visible, else index creation will fail */
@@ -3934,205 +3942,159 @@ needs_toast_table(Relation rel)
 	return (tuple_length > TOAST_TUPLE_THRESHOLD);
 }
 
+
 /*
- * To handle ON COMMIT { DROP | PRESERVE ROWS | DELETE ROWS }
+ * This code supports
+ *	CREATE TEMP TABLE ... ON COMMIT { DROP | PRESERVE ROWS | DELETE ROWS }
+ *
+ * Because we only support this for TEMP tables, it's sufficient to remember
+ * the state in a backend-local data structure.
+ */
+
+/*
+ * Register a newly-created relation's ON COMMIT action.
  */
 void
-AtEOXact_temp_relations(bool iscommit, int bstate)
+register_on_commit_action(Oid relid, OnCommitAction action)
 {
-	List	   *l,
-			   *prev;
-	MemoryContext oldctx;
-
-	if (temprels == NIL)
-		return;
+	OnCommitItem	*oc;
+	MemoryContext oldcxt;
 
 	/*
-	 *	These loops are tricky because we are removing items from the List
-	 *	while we are traversing it.
+	 * We needn't bother registering the relation unless there is an ON COMMIT
+	 * action we need to take.
 	 */
-
-
-	/* Remove 'dead' entries on commit and clear 'dead' status on abort */
-	l = temprels;
-	prev = NIL;
-	while (l != NIL)
-	{
-		TempTable  *t = lfirst(l);
-
-		if (t->dead)
-		{
-			if (iscommit)
-			{
-				/* Remove from temprels, since the user has DROP'd */
-				oldctx = MemoryContextSwitchTo(CacheMemoryContext);
-				if (prev == NIL)
-				{
-					pfree(t);
-					temprels = lnext(l);
-					pfree(l);
-					l = temprels;
-				}
-				else
-				{
-					pfree(t);
-					lnext(prev) = lnext(l);
-					pfree(l);
-					l = lnext(prev);
-				}
-				MemoryContextSwitchTo(oldctx);
-				continue;
-			}
-			else
-				/* user dropped but now we're aborted */
-				t->dead = false;
-		}
-		prev = l;
-		l = lnext(l);
-	}
-
-	if ((iscommit && bstate != TBLOCK_END) ||
-		(!iscommit && bstate != TBLOCK_ABORT))
+	if (action == ONCOMMIT_NOOP || action == ONCOMMIT_PRESERVE_ROWS)
 		return;
 
-	/* Perform per-xact actions */
-	l = temprels;
-	prev = NIL;
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
-	if (iscommit)
+	oc = (OnCommitItem *) palloc(sizeof(OnCommitItem));
+	oc->relid = relid;
+	oc->oncommit = action;
+	oc->created_in_cur_xact = true;
+	oc->deleted_in_cur_xact = false;
+
+	on_commits = lcons(oc, on_commits);
+
+	MemoryContextSwitchTo(oldcxt);
+}
+
+/*
+ * Unregister any ON COMMIT action when a relation is deleted.
+ *
+ * Actually, we only mark the OnCommitItem entry as to be deleted after commit.
+ */
+void
+remove_on_commit_action(Oid relid)
+{
+	List	   *l;
+
+	foreach(l, on_commits)
 	{
-		while (l != NIL)
-		{
-			TempTable  *t = lfirst(l);
+		OnCommitItem  *oc = (OnCommitItem *) lfirst(l);
 
-			if (t->ateoxact == ATEOXACTDROP)
+		if (oc->relid == relid)
+		{
+			oc->deleted_in_cur_xact = true;
+			break;
+		}
+	}
+}
+
+/*
+ * Perform ON COMMIT actions.
+ *
+ * This is invoked just before actually committing, since it's possible
+ * to encounter errors.
+ */
+void
+PreCommit_on_commit_actions(void)
+{
+	List	   *l;
+
+	foreach(l, on_commits)
+	{
+		OnCommitItem  *oc = (OnCommitItem *) lfirst(l);
+
+		/* Ignore entry if already dropped in this xact */
+		if (oc->deleted_in_cur_xact)
+			continue;
+
+		switch (oc->oncommit)
+		{
+			case ONCOMMIT_NOOP:
+			case ONCOMMIT_PRESERVE_ROWS:
+				/* Do nothing (there shouldn't be such entries, actually) */
+				break;
+			case ONCOMMIT_DELETE_ROWS:
+				heap_truncate(oc->relid);
+				CommandCounterIncrement(); /* XXX needed? */
+				break;
+			case ONCOMMIT_DROP:
 			{
 				ObjectAddress object;
 
 				object.classId = RelOid_pg_class;
-				object.objectId = t->relid;
+				object.objectId = oc->relid;
 				object.objectSubId = 0;
-
 				performDeletion(&object, DROP_CASCADE);
-				oldctx = MemoryContextSwitchTo(CacheMemoryContext);
-
-				if (prev == NIL)
-				{
-					pfree(t);
-					temprels = lnext(l);
-					pfree(l);
-					l = temprels;
-				}
-				else
-				{
-					pfree(t);
-					lnext(prev) = lnext(l);
-					pfree(l);
-					l = lnext(prev);
-				}
-
-				MemoryContextSwitchTo(oldctx);
-				CommandCounterIncrement();
-				continue;
+				/*
+				 * Note that table deletion will call remove_on_commit_action,
+				 * so the entry should get marked as deleted.
+				 */
+				Assert(oc->deleted_in_cur_xact);
+				break;
 			}
-			else if (t->ateoxact == ATEOXACTDELETE)
+		}
+	}
+}
+
+/*
+ * Post-commit or post-abort cleanup for ON COMMIT management.
+ *
+ * All we do here is remove no-longer-needed OnCommitItem entries.
+ *
+ * During commit, remove entries that were deleted during this transaction;
+ * during abort, remove those created during this transaction.
+ */
+void
+AtEOXact_on_commit_actions(bool isCommit)
+{
+	List	   *l,
+			   *prev;
+
+	prev = NIL;
+	l = on_commits;
+	while (l != NIL)
+	{
+		OnCommitItem  *oc = (OnCommitItem *) lfirst(l);
+
+		if (isCommit ? oc->deleted_in_cur_xact :
+			oc->created_in_cur_xact)
+		{
+			/* This entry must be removed */
+			if (prev != NIL)
 			{
-				heap_truncate(t->relid);
-				CommandCounterIncrement();
+				lnext(prev) = lnext(l);
+				pfree(l);
+				l = lnext(prev);
 			}
+			else
+			{
+				on_commits = lnext(l);
+				pfree(l);
+				l = on_commits;
+			}
+			pfree(oc);
+		}
+		else
+		{
+			/* This entry must be preserved */
+			oc->created_in_cur_xact = false;
+			oc->deleted_in_cur_xact = false;
 			prev = l;
 			l = lnext(l);
 		}
 	}
-	else
-	{
-		/* Abort --- remove entries added by this xact */
-		TransactionId curtid = GetCurrentTransactionId();
-
-		oldctx = MemoryContextSwitchTo(CacheMemoryContext);
-
-		while (l != NIL)
-		{
-			TempTable  *t = lfirst(l);
-
-			if (t->tid == curtid)
-			{
-				if (prev == NIL)
-				{
-					pfree(t);
-					temprels = lnext(l);
-					pfree(l);
-					l = temprels;
-				}
-				else
-				{
-					pfree(t);
-					lnext(prev) = lnext(l);
-					pfree(l);
-					l = lnext(prev);
-				}
-				continue;
-			}
-			prev = l;
-			l = lnext(l);
-		}
-		MemoryContextSwitchTo(oldctx);
-	}
 }
-
-/*
- * Register a temp rel in temprels
- */
-
-void
-reg_temp_rel(TempTable * t)
-{
-	temprels = lcons(t, temprels);
-}
-
-/*
- * return the ON COMMIT/ateoxact value for a given temp rel
- */
-
-void
-free_temp_rels(void)
-{
-	MemoryContext oldctx;
-
-	oldctx = MemoryContextSwitchTo(CacheMemoryContext);
-	while (temprels != NIL)
-	{
-		List	   *l = temprels;
-
-		temprels = lnext(temprels);
-		pfree(lfirst(l));
-		pfree(l);
-	}
-	MemoryContextSwitchTo(oldctx);
-}
-
-/*
- * Remove (actually just mark for deletion, in case we abort)
- * Relid from the temprels list
- */
-
-void
-rm_temp_rel(Oid relid)
-{
-	List	   *l;
-
-	foreach(l, temprels)
-	{
-		TempTable  *t = lfirst(l);
-
-		if (t->relid == relid)
-		{
-			t->dead = true;
-			return;
-		}
-	}
-
-	/* If we get here, we're in trouble */
-	Assert(1==1);
-}
-

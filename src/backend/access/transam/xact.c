@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.136 2002/11/09 23:56:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.137 2002/11/11 22:19:20 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -951,6 +951,12 @@ CommitTransaction(void)
 	 */
 	DeferredTriggerEndXact();
 
+	/*
+	 * Similarly, let ON COMMIT management do its thing before we start
+	 * to commit.
+	 */
+	PreCommit_on_commit_actions();
+
 	/* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();
 
@@ -1027,7 +1033,7 @@ CommitTransaction(void)
 	AtEOXact_hash();
 	AtEOXact_nbtree();
 	AtEOXact_rtree();
-	AtEOXact_temp_relations(true,s->blockState);
+	AtEOXact_on_commit_actions(true);
 	AtEOXact_Namespace(true);
 	AtEOXact_CatCache(true);
 	AtEOXact_Files();
@@ -1138,7 +1144,7 @@ AbortTransaction(void)
 	AtEOXact_hash();
 	AtEOXact_nbtree();
 	AtEOXact_rtree();
-	AtEOXact_temp_relations(false,s->blockState);
+	AtEOXact_on_commit_actions(false);
 	AtEOXact_Namespace(false);
 	AtEOXact_CatCache(false);
 	AtEOXact_Files();

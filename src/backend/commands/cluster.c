@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.92 2002/11/09 23:56:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.93 2002/11/11 22:19:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,6 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/catname.h"
-#include "catalog/namespace.h"
 #include "commands/cluster.h"
 #include "commands/tablecmds.h"
 #include "miscadmin.h"
@@ -204,7 +203,7 @@ make_new_heap(Oid OIDOldHeap, const char *NewName)
 										  tupdesc,
 										  OldHeap->rd_rel->relkind,
 										  OldHeap->rd_rel->relisshared,
-										  ATEOXACTNOOP,
+										  ONCOMMIT_NOOP,
 										  allowSystemTableMods);
 
 	/*

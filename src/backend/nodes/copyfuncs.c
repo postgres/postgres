@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.216 2002/11/06 22:31:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.217 2002/11/11 22:19:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2037,6 +2037,7 @@ _copyCreateStmt(CreateStmt *from)
 	Node_Copy(from, newnode, inhRelations);
 	Node_Copy(from, newnode, constraints);
 	newnode->hasoids = from->hasoids;
+	newnode->oncommit = from->oncommit;
 
 	return newnode;
 }

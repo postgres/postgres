@@ -5,21 +5,31 @@
 -- test temp table/index masking
 CREATE TABLE temptest(col int);
 CREATE INDEX i_temptest ON temptest(col);
-CREATE TEMP TABLE temptest(col int);
-CREATE INDEX i_temptest ON temptest(col);
+CREATE TEMP TABLE temptest(tcol int);
+CREATE INDEX i_temptest ON temptest(tcol);
+SELECT * FROM temptest;
+ tcol 
+------
+(0 rows)
+
 DROP INDEX i_temptest;
 DROP TABLE temptest;
+SELECT * FROM temptest;
+ col 
+-----
+(0 rows)
+
 DROP INDEX i_temptest;
 DROP TABLE temptest;
 -- test temp table selects
 CREATE TABLE temptest(col int);
 INSERT INTO temptest VALUES (1);
-CREATE TEMP TABLE temptest(col int);
-INSERT INTO temptest VALUES (2);
+CREATE TEMP TABLE temptest(tcol float);
+INSERT INTO temptest VALUES (2.1);
 SELECT * FROM temptest;
- col 
------
-   2
+ tcol 
+------
+  2.1
 (1 row)
 
 DROP TABLE temptest;
@@ -30,9 +40,46 @@ SELECT * FROM temptest;
 (1 row)
 
 DROP TABLE temptest;
-CREATE TEMP TABLE temptest(col int);
 -- test temp table deletion
+CREATE TEMP TABLE temptest(col int);
 \c regression
 SET autocommit TO 'on';
 SELECT * FROM temptest;
 ERROR:  Relation "temptest" does not exist
+-- Test ON COMMIT DELETE ROWS
+CREATE TEMP TABLE temptest(col int) ON COMMIT DELETE ROWS;
+BEGIN;
+INSERT INTO temptest VALUES (1);
+INSERT INTO temptest VALUES (2);
+SELECT * FROM temptest;
+ col 
+-----
+   1
+   2
+(2 rows)
+
+COMMIT;
+SELECT * FROM temptest;
+ col 
+-----
+(0 rows)
+
+DROP TABLE temptest;
+-- Test ON COMMIT DROP
+BEGIN;
+CREATE TEMP TABLE temptest(col int) ON COMMIT DROP;
+INSERT INTO temptest VALUES (1);
+INSERT INTO temptest VALUES (2);
+SELECT * FROM temptest;
+ col 
+-----
+   1
+   2
+(2 rows)
+
+COMMIT;
+SELECT * FROM temptest;
+ERROR:  Relation "temptest" does not exist
+-- ON COMMIT is only allowed for TEMP
+CREATE TABLE temptest(col int) ON COMMIT DELETE ROWS;
+ERROR:  ON COMMIT can only be used on TEMP tables

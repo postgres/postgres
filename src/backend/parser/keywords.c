@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.128 2002/11/09 23:56:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.129 2002/11/11 22:19:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,7 +253,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"right", RIGHT},
 	{"rollback", ROLLBACK},
 	{"row", ROW},
-	{"rows",ROWS},
+	{"rows", ROWS},
 	{"rule", RULE},
 	{"schema", SCHEMA},
 	{"scroll", SCROLL},

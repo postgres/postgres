@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.54 2002/11/09 23:56:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.55 2002/11/11 22:19:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,6 @@
 #include "catalog/pg_class.h"
 #include "catalog/pg_namespace.h"
 #include "commands/defrem.h"
-#include "commands/tablecmds.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodes.h"
@@ -198,7 +197,7 @@ Boot_CreateStmt:
 													  tupdesc,
 													  RELKIND_RELATION,
 													  $3,
-													  ATEOXACTNOOP,
+													  ONCOMMIT_NOOP,
 													  true);
 						elog(DEBUG3, "relation created with oid %u", id);
 					}

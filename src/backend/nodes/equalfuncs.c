@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.162 2002/11/06 00:00:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.163 2002/11/11 22:19:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -839,6 +839,8 @@ _equalCreateStmt(CreateStmt *a, CreateStmt *b)
 	if (!equal(a->constraints, b->constraints))
 		return false;
 	if (a->hasoids != b->hasoids)
+		return false;
+	if (a->oncommit != b->oncommit)
 		return false;
 
 	return true;

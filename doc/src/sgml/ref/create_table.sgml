@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.57 2002/11/09 23:56:38 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.58 2002/11/11 22:19:20 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,8 @@ CREATE [ [ LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PARAMETER">t
     | <replaceable>table_constraint</replaceable> }  [, ... ]
 )
 [ INHERITS ( <replaceable>parent_table</replaceable> [, ... ] ) ]
-[ WITH OIDS | WITHOUT OIDS ] [ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
+[ WITH OIDS | WITHOUT OIDS ]
+[ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
 
 where <replaceable class="PARAMETER">column_constraint</replaceable> is:
 
@@ -107,8 +108,8 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      <para>
       If specified, the table is created as a temporary table.
       Temporary tables are automatically dropped at the end of a
-      session or optionally at the end of the current transaction 
-      (See ON COMMIT below).  Existing permanent tables with the same 
+      session, or optionally at the end of the current transaction 
+      (see ON COMMIT below).  Existing permanent tables with the same 
       name are not visible to the current session while the temporary 
       table exists, unless they are referenced with schema-qualified 
       names. Any indexes created on a temporary table are automatically
@@ -493,22 +494,17 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     <term><literal>ON COMMIT</literal></term>
     <listitem>
      <para>
-      The behaviour of temporary tables at the end of a transaction
+      The behavior of temporary tables at the end of a transaction
       block can be controlled using <literal>ON COMMIT</literal>. 
-      The table will exhibit the same behavior at the end of
-      transaction blocks for the duration of the session unless
-      ON COMMIT DROP is specified or the temporary table is dropped.
-     </para>
-     <para>
-      The three parameters to ON COMMIT are:
+      The three options are:
 
       <variablelist>
        <varlistentry>
         <term><literal>PRESERVE ROWS</literal></term>
         <listitem>
          <para>
-          The rows in the temporary table will persist after the
-          transaction block.
+	  No special action is taken at the ends of transactions.
+	  This is the default behavior.
          </para>
      	</listitem>
        </varlistentry>
@@ -517,8 +513,9 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
         <term><literal>DELETE ROWS</literal></term>
         <listitem>
          <para>
-          All rows in the temporary table will be deleted at the 
-          end of the transaction block.
+          All rows in the temporary table will be deleted at the
+          end of each transaction block.  Essentially, an automatic
+	  <xref linkend="sql-truncate"> is done at each commit.
          </para>
         </listitem>
        </varlistentry>
@@ -527,7 +524,8 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
         <term><literal>DROP</literal></term>
         <listitem>
          <para>
-          The temporary table will be dropped at the end of the transaction.
+          The temporary table will be dropped at the end of the current
+	  transaction block.
          </para>
         </listitem>
        </varlistentry>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.15 2002/09/21 18:39:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.16 2002/11/11 22:19:22 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -846,6 +846,7 @@ DefineCompositeType(const RangeVar *typevar, List *coldeflist)
 	createStmt->inhRelations = NIL;
 	createStmt->constraints = NIL;
 	createStmt->hasoids = false;
+	createStmt->oncommit = ONCOMMIT_NOOP;
 
 	/*
 	 * finally create the relation...
