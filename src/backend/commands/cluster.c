@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.131 2004/12/31 21:59:41 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.132 2005/02/06 20:19:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -605,32 +605,80 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	Relation	NewHeap,
 				OldHeap,
 				OldIndex;
+	TupleDesc	oldTupDesc;
+	TupleDesc	newTupDesc;
+	int			natts;
+	Datum	   *values;
+	char	   *nulls;
 	IndexScanDesc scan;
 	HeapTuple	tuple;
 
 	/*
-	 * Open the relations I need. Scan through the OldHeap on the OldIndex
-	 * and insert each tuple into the NewHeap.
+	 * Open the relations we need.
 	 */
 	NewHeap = heap_open(OIDNewHeap, AccessExclusiveLock);
 	OldHeap = heap_open(OIDOldHeap, AccessExclusiveLock);
 	OldIndex = index_open(OIDOldIndex);
 
+	/*
+	 * Their tuple descriptors should be exactly alike, but here we only
+	 * need assume that they have the same number of columns.
+	 */
+	oldTupDesc = RelationGetDescr(OldHeap);
+	newTupDesc = RelationGetDescr(NewHeap);
+	Assert(newTupDesc->natts == oldTupDesc->natts);
+
+	/* Preallocate values/nulls arrays */
+	natts = newTupDesc->natts;
+	values = (Datum *) palloc0(natts * sizeof(Datum));
+	nulls = (char *) palloc(natts * sizeof(char));
+	memset(nulls, 'n', natts * sizeof(char));
+
+	/*
+	 * Scan through the OldHeap on the OldIndex and copy each tuple into the
+	 * NewHeap.
+	 */
 	scan = index_beginscan(OldHeap, OldIndex, SnapshotNow, 0, (ScanKey) NULL);
 
 	while ((tuple = index_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		/*
-		 * We must copy the tuple because heap_insert() will overwrite the
-		 * commit-status fields of the tuple it's handed, and the
-		 * retrieved tuple will actually be in a disk buffer!  Thus, the
-		 * source relation would get trashed, which is bad news if we
-		 * abort later on.	(This was a bug in releases thru 7.0)
+		 * We cannot simply pass the tuple to heap_insert(), for several
+		 * reasons:
 		 *
-		 * Note that the copied tuple will have the original OID, if any, so
-		 * this does preserve OIDs.
+		 * 1. heap_insert() will overwrite the commit-status fields of the
+		 * tuple it's handed.  This would trash the source relation, which is
+		 * bad news if we abort later on.  (This was a bug in releases thru
+		 * 7.0)
+		 *
+		 * 2. We'd like to squeeze out the values of any dropped columns,
+		 * both to save space and to ensure we have no corner-case failures.
+		 * (It's possible for example that the new table hasn't got a TOAST
+		 * table and so is unable to store any large values of dropped cols.)
+		 *
+		 * 3. The tuple might not even be legal for the new table; this is
+		 * currently only known to happen as an after-effect of ALTER TABLE
+		 * SET WITHOUT OIDS.
+		 *
+		 * So, we must reconstruct the tuple from component Datums.
 		 */
-		HeapTuple	copiedTuple = heap_copytuple(tuple);
+		HeapTuple	copiedTuple;
+		int			i;
+
+		heap_deformtuple(tuple, oldTupDesc, values, nulls);
+
+		/* Be sure to null out any dropped columns */
+		for (i = 0; i < natts; i++)
+		{
+			if (newTupDesc->attrs[i]->attisdropped)
+				nulls[i] = 'n';
+		}
+
+		copiedTuple = heap_formtuple(newTupDesc, values, nulls);
+
+		/* Preserve OID, if any */
+		if (NewHeap->rd_rel->relhasoids)
+			HeapTupleSetOid(copiedTuple, HeapTupleGetOid(tuple));
 
 		simple_heap_insert(NewHeap, copiedTuple);
 
@@ -640,6 +688,9 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	}
 
 	index_endscan(scan);
+
+	pfree(values);
+	pfree(nulls);
 
 	index_close(OldIndex);
 	heap_close(OldHeap, NoLock);
