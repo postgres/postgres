@@ -7,7 +7,7 @@
 # Author:  Peter Eisentraut <peter_e@gmx.net> 
 # Public domain
 
-# $Header: /cvsroot/pgsql/src/bin/pg-config/Attic/pg-config.sh,v 1.1 2000/08/26 13:08:16 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_config/Attic/pg_config.sh,v 1.1 2000/10/10 22:01:55 momjian Exp $
 
 me=`basename $0`
 
@@ -67,4 +67,4 @@ do
     eval "echo $thing"
 done
 
-# end of pg-config
+# end of pg_config
