@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.40 2005/01/23 00:30:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.41 2005/01/29 23:45:36 tgl Exp $ -->
 
 <chapter id="rules">
 <title>The Rule System</title>
@@ -1000,12 +1000,11 @@ CREATE RULE <replaceable>rule_name</> AS ON <replaceable>event</>
     The query trees generated from rule actions are thrown into the
     rewrite system again, and maybe more rules get applied resulting
     in more or less query trees.
-    So the query trees in the rule actions must have either a different command type
-    or a different result relation, otherwise, this recursive process will end up in a loop.
-    There is a fixed recursion limit of currently 100 iterations.
-    If after 100 iterations there are still update rules to apply, the
-    rule system assumes a loop over multiple rule definitions and reports
-    an error.
+    So a rule's actions must have either a different
+    command type or a different result relation than the rule itself is
+    on, otherwise this recursive process will end up in an infinite loop.
+    (Recursive expansion of a rule will be detected and reported as an
+    error.)
 </para>
 
 <para>
