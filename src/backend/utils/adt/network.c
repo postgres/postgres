@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: network.c,v 1.6 1999/02/24 03:17:05 momjian Exp $
+ *	$Id: network.c,v 1.7 1999/03/22 05:00:57 momjian Exp $
  *	Jon Postel RIP 16 Oct 1998
  */
 
@@ -50,23 +50,21 @@ network_in(char *src, int type)
 	int			bits;
 	inet	   *dst;
 
+	if (!src)
+		return NULL;
+		
 	dst = palloc(VARHDRSZ + sizeof(inet_struct));
 	if (dst == NULL)
-	{
 		elog(ERROR, "unable to allocate memory in network_in()");
-		return NULL;
-	}
+
 	/* First, try for an IP V4 address: */
 	ip_family(dst) = AF_INET;
 	bits = inet_net_pton(ip_family(dst), src, &ip_v4addr(dst),
 			type ? ip_addrsize(dst) : -1);
 	if ((bits < 0) || (bits > 32))
-	{
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "could not parse \"%s\"", src);
-		pfree(dst);
-		return NULL;
-	}
+
 	VARSIZE(dst) = VARHDRSZ
 		+ ((char *) &ip_v4addr(dst) - (char *) VARDATA(dst))
 		+ ip_addrsize(dst);
@@ -110,23 +108,16 @@ inet_out(inet *src)
 						  tmp, sizeof(tmp));
 
 		if (dst == NULL)
-		{
 			elog(ERROR, "unable to print address (%s)", strerror(errno));
-			return (NULL);
-		}
 	}
 	else
-	{
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "unknown address family (%d)", ip_family(src));
-		return NULL;
-	}
+
 	dst = palloc(strlen(tmp) + 1);
 	if (dst == NULL)
-	{
 		elog(ERROR, "unable to allocate memory in inet_out()");
-		return NULL;
-	}
+
 	strcpy(dst, tmp);
 	return dst;
 }
@@ -146,6 +137,8 @@ cidr_out(inet *src)
 bool
 network_lt(inet *a1, inet *a2)
 {
+	if (!PointerIsValid(a1) || !PointerIsValid(a2))
+		return FALSE;
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
 		int			order = v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a2));
@@ -157,19 +150,23 @@ network_lt(inet *a1, inet *a2)
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "cannot compare address families %d and %d",
 			 ip_family(a1), ip_family(a2));
-		return (FALSE);
+		return FALSE;
 	}
 }
 
 bool
 network_le(inet *a1, inet *a2)
 {
+	if (!PointerIsValid(a1) || !PointerIsValid(a2))
+		return FALSE;
 	return (network_lt(a1, a2) || network_eq(a1, a2));
 }
 
 bool
 network_eq(inet *a1, inet *a2)
 {
+	if (!PointerIsValid(a1) || !PointerIsValid(a2))
+		return FALSE;
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
 		return ((ip_bits(a1) == ip_bits(a2))
@@ -180,19 +177,23 @@ network_eq(inet *a1, inet *a2)
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "cannot compare address families %d and %d",
 			 ip_family(a1), ip_family(a2));
-		return (FALSE);
+		return FALSE;
 	}
 }
 
 bool
 network_ge(inet *a1, inet *a2)
 {
+	if (!PointerIsValid(a1) || !PointerIsValid(a2))
+		return FALSE;
 	return (network_gt(a1, a2) || network_eq(a1, a2));
 }
 
 bool
 network_gt(inet *a1, inet *a2)
 {
+	if (!PointerIsValid(a1) || !PointerIsValid(a2))
+		return FALSE;
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
 		int			order = v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a2));
@@ -204,19 +205,24 @@ network_gt(inet *a1, inet *a2)
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "cannot compare address families %d and %d",
 			 ip_family(a1), ip_family(a2));
-		return (FALSE);
+		return FALSE;
 	}
 }
 
 bool
 network_ne(inet *a1, inet *a2)
 {
+	if (!PointerIsValid(a1) || !PointerIsValid(a2))
+		return FALSE;
 	return (!network_eq(a1, a2));
 }
 
 bool
 network_sub(inet *a1, inet *a2)
 {
+	if (!PointerIsValid(a1) || !PointerIsValid(a2))
+		return NULL;
+		
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
 		return ((ip_bits(a1) > ip_bits(a2))
@@ -227,13 +233,16 @@ network_sub(inet *a1, inet *a2)
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "cannot compare address families %d and %d",
 			 ip_family(a1), ip_family(a2));
-		return (FALSE);
+		return FALSE;
 	}
 }
 
 bool
 network_subeq(inet *a1, inet *a2)
 {
+	if (!PointerIsValid(a1) || !PointerIsValid(a2))
+		return NULL;
+
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
 		return ((ip_bits(a1) >= ip_bits(a2))
@@ -244,13 +253,16 @@ network_subeq(inet *a1, inet *a2)
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "cannot compare address families %d and %d",
 			 ip_family(a1), ip_family(a2));
-		return (FALSE);
+		return FALSE;
 	}
 }
 
 bool
 network_sup(inet *a1, inet *a2)
 {
+	if (!PointerIsValid(a1) || !PointerIsValid(a2))
+		return NULL;
+
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
 		return ((ip_bits(a1) < ip_bits(a2))
@@ -261,13 +273,16 @@ network_sup(inet *a1, inet *a2)
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "cannot compare address families %d and %d",
 			 ip_family(a1), ip_family(a2));
-		return (FALSE);
+		return FALSE;
 	}
 }
 
 bool
 network_supeq(inet *a1, inet *a2)
 {
+	if (!PointerIsValid(a1) || !PointerIsValid(a2))
+		return NULL;
+
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
 		return ((ip_bits(a1) <= ip_bits(a2))
@@ -278,7 +293,7 @@ network_supeq(inet *a1, inet *a2)
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "cannot compare address families %d and %d",
 			 ip_family(a1), ip_family(a2));
-		return (FALSE);
+		return FALSE;
 	}
 }
 
@@ -304,36 +319,29 @@ network_host(inet *ip)
 	char	   *ptr,
 				tmp[sizeof("255.255.255.255/32")];
 
-	if (ip_type(ip))
-	{
-		elog(ERROR, "CIDR type has no host part");
+	if (!PointerIsValid(ip))
 		return NULL;
-	}
+
+	if (ip_type(ip))
+		elog(ERROR, "CIDR type has no host part");
 
 	if (ip_family(ip) == AF_INET)
 	{
 		/* It's an IP V4 address: */
 		if (inet_net_ntop(AF_INET, &ip_v4addr(ip), 32, tmp, sizeof(tmp)) == NULL)
-		{
 			elog(ERROR, "unable to print host (%s)", strerror(errno));
-			return (NULL);
-		}
 	}
 	else
-	{
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "unknown address family (%d)", ip_family(ip));
-		return (NULL);
-	}
+
 	if ((ptr = strchr(tmp, '/')) != NULL)
 		*ptr = 0;
 	len = VARHDRSZ + strlen(tmp) + 1;
 	ret = palloc(len);
 	if (ret == NULL)
-	{
 		elog(ERROR, "unable to allocate memory in network_host()");
-		return (NULL);
-	}
+
 	VARSIZE(ret) = len;
 	strcpy(VARDATA(ret), tmp);
 	return (ret);
@@ -342,6 +350,9 @@ network_host(inet *ip)
 int4
 network_masklen(inet *ip)
 {
+	if (!PointerIsValid(ip))
+		return 0;
+
 	return ip_bits(ip);
 }
 
@@ -352,6 +363,9 @@ network_broadcast(inet *ip)
 	int			len;
 	char	   *ptr,
 				tmp[sizeof("255.255.255.255/32")];
+
+	if (!PointerIsValid(ip))
+		return NULL;
 
 	if (ip_family(ip) == AF_INET)
 	{
@@ -364,26 +378,20 @@ network_broadcast(inet *ip)
 		addr = htonl(ntohl(ip_v4addr(ip)) | mask);
 
 		if (inet_net_ntop(AF_INET, &addr, 32, tmp, sizeof(tmp)) == NULL)
-		{
 			elog(ERROR, "unable to print address (%s)", strerror(errno));
-			return (NULL);
-		}
+
 	}
 	else
-	{
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "unknown address family (%d)", ip_family(ip));
-		return (NULL);
-	}
+
 	if ((ptr = strchr(tmp, '/')) != NULL)
 		*ptr = 0;
 	len = VARHDRSZ + strlen(tmp) + 1;
 	ret = palloc(len);
 	if (ret == NULL)
-	{
 		elog(ERROR, "unable to allocate memory in network_broadcast()");
-		return (NULL);
-	}
+
 	VARSIZE(ret) = len;
 	strcpy(VARDATA(ret), tmp);
 	return (ret);
@@ -396,30 +404,27 @@ network_network(inet *ip)
 	int			len;
 	char	   	tmp[sizeof("255.255.255.255/32")];
 
+	if (!PointerIsValid(ip))
+		return NULL;
+
 	if (ip_family(ip) == AF_INET)
 	{
 		/* It's an IP V4 address: */
 		int	addr = htonl(ntohl(ip_v4addr(ip)) & (0xffffffff << (32 - ip_bits(ip))));
   
 		if (inet_cidr_ntop(AF_INET, &addr, ip_bits(ip), tmp, sizeof(tmp)) == NULL)
-		{
 			elog(ERROR, "unable to print network (%s)", strerror(errno));
-			return (NULL);
-		}
+
 	}
 	else
-	{
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "unknown address family (%d)", ip_family(ip));
-		return (NULL);
-	}
+
 	len = VARHDRSZ + strlen(tmp) + 1;
 	ret = palloc(len);
 	if (ret == NULL)
-	{
 		elog(ERROR, "unable to allocate memory in network_network()");
-		return (NULL);
-	}
+
 	VARSIZE(ret) = len;
 	strcpy(VARDATA(ret), tmp);
 	return (ret);
@@ -433,32 +438,29 @@ network_netmask(inet *ip)
 	char	   *ptr,
 				tmp[sizeof("255.255.255.255/32")];
 
+	if (!PointerIsValid(ip))
+		return NULL;
+
 	if (ip_family(ip) == AF_INET)
 	{
 		/* It's an IP V4 address: */
 		int			addr = htonl((-1 << (32 - ip_bits(ip))) & 0xffffffff);
 
 		if (inet_net_ntop(AF_INET, &addr, 32, tmp, sizeof(tmp)) == NULL)
-		{
 			elog(ERROR, "unable to print netmask (%s)", strerror(errno));
-			return (NULL);
-		}
+
 	}
 	else
-	{
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "unknown address family (%d)", ip_family(ip));
-		return (NULL);
-	}
+
 	if ((ptr = strchr(tmp, '/')) != NULL)
 		*ptr = 0;
 	len = VARHDRSZ + strlen(tmp) + 1;
 	ret = palloc(len);
 	if (ret == NULL)
-	{
 		elog(ERROR, "unable to allocate memory in network_netmask()");
-		return (NULL);
-	}
+
 	VARSIZE(ret) = len;
 	strcpy(VARDATA(ret), tmp);
 	return (ret);

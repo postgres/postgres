@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$Id: mac.c,v 1.6 1998/10/26 01:01:36 tgl Exp $
+ *	$Id: mac.c,v 1.7 1999/03/22 05:00:57 momjian Exp $
  */
 
 #include <stdio.h>
@@ -156,7 +156,6 @@ macaddr_in(char *str)
 
 	if (strlen(str) > 0)
 	{
-
 		count = sscanf(str, "%x:%x:%x:%x:%x:%x", &a, &b, &c, &d, &e, &f);
 		if (count != 6)
 			count = sscanf(str, "%x-%x-%x-%x-%x-%x", &a, &b, &c, &d, &e, &f);
@@ -168,18 +167,12 @@ macaddr_in(char *str)
 			count = sscanf(str, "%2x%2x.%2x%2x.%2x%2x", &a, &b, &c, &d, &e, &f);
 
 		if (count != 6)
-		{
 			elog(ERROR, "macaddr_in: error in parsing \"%s\"", str);
-			return (NULL);
-		}
 
 		if ((a < 0) || (a > 255) || (b < 0) || (b > 255) ||
 			(c < 0) || (c > 255) || (d < 0) || (d > 255) ||
 			(e < 0) || (e > 255) || (f < 0) || (f > 255))
-		{
 			elog(ERROR, "macaddr_in: illegal address \"%s\"", str);
-			return (NULL);
-		}
 	}
 	else
 	{
@@ -232,6 +225,8 @@ macaddr_out(macaddr *addr)
 bool
 macaddr_lt(macaddr *a1, macaddr *a2)
 {
+	if (!PointerIsValid(a1) || !PointerIsValid(a2))
+		return FALSE;
 	return ((hibits(a1) < hibits(a2)) ||
 			((hibits(a1) == hibits(a2)) && lobits(a1) < lobits(a2)));
 }
@@ -239,6 +234,8 @@ macaddr_lt(macaddr *a1, macaddr *a2)
 bool
 macaddr_le(macaddr *a1, macaddr *a2)
 {
+	if (!PointerIsValid(a1) || !PointerIsValid(a2))
+		return FALSE;
 	return ((hibits(a1) < hibits(a2)) ||
 			((hibits(a1) == hibits(a2)) && lobits(a1) <= lobits(a2)));
 }
@@ -246,12 +243,16 @@ macaddr_le(macaddr *a1, macaddr *a2)
 bool
 macaddr_eq(macaddr *a1, macaddr *a2)
 {
+	if (!PointerIsValid(a1) || !PointerIsValid(a2))
+		return FALSE;
 	return ((hibits(a1) == hibits(a2)) && (lobits(a1) == lobits(a2)));
 }
 
 bool
 macaddr_ge(macaddr *a1, macaddr *a2)
 {
+	if (!PointerIsValid(a1) || !PointerIsValid(a2))
+		return FALSE;
 	return ((hibits(a1) > hibits(a2)) ||
 			((hibits(a1) == hibits(a2)) && lobits(a1) >= lobits(a2)));
 }
@@ -259,6 +260,8 @@ macaddr_ge(macaddr *a1, macaddr *a2)
 bool
 macaddr_gt(macaddr *a1, macaddr *a2)
 {
+	if (!PointerIsValid(a1) || !PointerIsValid(a2))
+		return FALSE;
 	return ((hibits(a1) > hibits(a2)) ||
 			((hibits(a1) == hibits(a2)) && lobits(a1) > lobits(a2)));
 }
@@ -266,6 +269,8 @@ macaddr_gt(macaddr *a1, macaddr *a2)
 bool
 macaddr_ne(macaddr *a1, macaddr *a2)
 {
+	if (!PointerIsValid(a1) || !PointerIsValid(a2))
+		return FALSE;
 	return ((hibits(a1) != hibits(a2)) || (lobits(a1) != lobits(a2)));
 }
 
@@ -298,6 +303,9 @@ macaddr_manuf(macaddr *addr)
 	manufacturer *manuf;
 	int			length;
 	text	   *result;
+
+	if (!PointerIsValid(addr))
+		return NULL;
 
 	for (manuf = manufacturers; manuf->name != NULL; manuf++)
 	{
