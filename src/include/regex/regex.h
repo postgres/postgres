@@ -41,6 +41,7 @@
 #define _REGEX_H_
 
 #include <sys/types.h>
+#include <regex/pg_wchar.h>
 
 /* types */
 typedef off_t regoff_t;
@@ -49,8 +50,12 @@ typedef struct
 {
 	int			re_magic;
 	size_t		re_nsub;		/* number of parenthesized subexpressions */
-	const char *re_endp;		/* end pointer for REG_PEND */
+	const pg_wchar *re_endp;		/* end pointer for REG_PEND */
 	struct re_guts *re_g;		/* none of your business :-) */
+#ifdef MB
+	pg_wchar	*patsave;	/* mee too :-) */
+#endif
+
 } regex_t;
 
 typedef struct

@@ -825,9 +825,9 @@ echo "configure:825: checking setting USE_TCL" >&5
 # Check whether --with-tcl or --without-tcl was given.
 if test "${with_tcl+set}" = set; then
   withval="$with_tcl"
-  USE_TCL=true echo "$ac_t""enabled" 1>&6
+  USE_TCL=true; echo "$ac_t""enabled" 1>&6
 else
-  USE_TCL=false echo "$ac_t""disabled" 1>&6
+  USE_TCL=false; echo "$ac_t""disabled" 1>&6
 
 fi
 
@@ -839,9 +839,9 @@ echo "configure:839: checking setting USE_PERL" >&5
 # Check whether --with-perl or --without-perl was given.
 if test "${with_perl+set}" = set; then
   withval="$with_perl"
-  USE_PERL=true echo "$ac_t""enabled" 1>&6
+  USE_PERL=true; echo "$ac_t""enabled" 1>&6
 else
-  USE_PERL=false echo "$ac_t""disabled" 1>&6
+  USE_PERL=false; echo "$ac_t""disabled" 1>&6
 
 fi
 

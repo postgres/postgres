@@ -21,8 +21,9 @@
 #include "postgres.h"			/* postgres system include file */
 #include "utils/palloc.h"
 #include "utils/builtins.h"		/* where the function declarations go */
+#include "regex/pg_wchar.h"
 
-static int	like(char *text, char *p);
+static int	like(pg_wchar *text, pg_wchar *p);
 
 /*
  *	interface routines called by the function manager
@@ -39,16 +40,22 @@ static int	like(char *text, char *p);
 static bool
 fixedlen_like(char *s, struct varlena * p, int charlen)
 {
-	char	   *sterm,
+	pg_wchar	   *sterm,
 			   *pterm;
 	int			result;
+	int	len;
 
 	if (!s || !p)
 		return FALSE;
 
 	/* be sure sterm is null-terminated */
+#ifdef MB
+	sterm = (pg_wchar *) palloc((charlen + 1)*sizeof(pg_wchar));
+	(void)pg_mb2wchar_with_len((unsigned char *)s,sterm,charlen);
+#else
 	sterm = (char *) palloc(charlen + 1);
 	StrNCpy(sterm, s, charlen + 1);
+#endif
 
 	/*
 	 * p is a text = varlena, not a string so we have to make a string
@@ -56,9 +63,15 @@ fixedlen_like(char *s, struct varlena * p, int charlen)
 	 */
 
 	/* palloc the length of the text + the null character */
-	pterm = (char *) palloc(VARSIZE(p) - VARHDRSZ + 1);
-	memmove(pterm, VARDATA(p), VARSIZE(p) - VARHDRSZ);
-	*(pterm + VARSIZE(p) - VARHDRSZ) = (char) NULL;
+	len = VARSIZE(p) - VARHDRSZ;
+#ifdef MB
+	pterm = (pg_wchar *) palloc((len + 1)*sizeof(pg_wchar));
+	(void)pg_mb2wchar_with_len((unsigned char *)VARDATA(p),pterm,len);
+#else
+	pterm = (char *) palloc(len + 1);
+	memmove(pterm, VARDATA(p), len);
+	*(pterm + len) = (char) NULL;
+#endif
 
 	/* do the regexp matching */
 	result = like(sterm, pterm);
@@ -150,7 +163,7 @@ textnlike(struct varlena * s, struct varlena * p)
 }
 
 
-/*	$Revision: 1.12 $
+/*	$Revision: 1.13 $
 **	"like.c" A first attempt at a LIKE operator for Postgres95.
 **
 **	Originally written by Rich $alz, mirror!rs, Wed Nov 26 19:03:17 EST 1986.
@@ -185,7 +198,7 @@ textnlike(struct varlena * s, struct varlena * p)
 **	Match text and p, return LIKE_TRUE, LIKE_FALSE, or LIKE_ABORT.
 */
 static int
-DoMatch(char *text, char *p)
+DoMatch(pg_wchar *text, pg_wchar *p)
 {
 	int			matched;
 
@@ -228,7 +241,7 @@ DoMatch(char *text, char *p)
 **	User-level routine.  Returns TRUE or FALSE.
 */
 static int
-like(char *text, char *p)
+like(pg_wchar *text, pg_wchar *p)
 {
 	if (p[0] == '%' && p[1] == '\0')
 		return TRUE;

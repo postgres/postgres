@@ -127,12 +127,29 @@ typedef struct
 {
 	uch		   *ptr;			/* -> uch [csetsize] */
 	uch			mask;			/* bit within array */
-	uch			hash;			/* hash code */
+#ifdef MB
+	pg_wchar	hash;			/* hash code */
+	unsigned int	lc;	/* leading character (character-set) */
+#else
+	uch		hash;			/* hash code */
+#endif
 	size_t		smultis;
 	char	   *multis;			/* -> char[smulti]	ab\0cd\0ef\0\0 */
 } cset;
 
 /* note that CHadd and CHsub are unsafe, and CHIN doesn't yield 0/1 */
+#ifdef MB
+#define CHlc(c)	(((unsigned)(c)&0xff0000)>>16)
+#define CHadd(cs, c)	((cs)->ptr[(unsigned)(c)&0xffff] |= (cs)->mask, (cs)->hash += (unsigned)(c)&0xffff,\
+			 (cs)->lc = CHlc(c))
+#define CHsub(cs, c)	((cs)->ptr[(unsigned)(c)&0xffff] &= ~(cs)->mask, (cs)->hash -= (unsigned)(c)&0xffff)
+#define CHIN(cs, c)	((cs)->ptr[(unsigned)(c)&0xffff] & (cs)->mask && \
+			 ((cs)->lc == CHlc(c)))
+#define MCadd(p, cs, cp)		mcadd(p, cs, cp)		/* regcomp() internal
+														 * fns */
+#define MCsub(p, cs, cp)		mcsub(p, cs, cp)
+#define MCin(p, cs, cp) mcin(p, cs, cp)
+#else
 #define CHadd(cs, c)	((cs)->ptr[(uch)(c)] |= (cs)->mask, (cs)->hash += (c))
 #define CHsub(cs, c)	((cs)->ptr[(uch)(c)] &= ~(cs)->mask, (cs)->hash -= (c))
 #define CHIN(cs, c)		((cs)->ptr[(uch)(c)] & (cs)->mask)
@@ -140,6 +157,7 @@ typedef struct
 														 * fns */
 #define MCsub(p, cs, cp)		mcsub(p, cs, cp)
 #define MCin(p, cs, cp) mcin(p, cs, cp)
+#endif
 
 /* stuff for character categories */
 typedef unsigned char cat_t;
@@ -168,7 +186,7 @@ struct re_guts
 	int			neol;			/* number of $ used */
 	int			ncategories;	/* how many character categories */
 	cat_t	   *categories;		/* ->catspace[-CHAR_MIN] */
-	char	   *must;			/* match must contain this string */
+	pg_wchar    *must;			/* match must contain this string */
 	int			mlen;			/* length of must */
 	size_t		nsub;			/* copy of re_nsub */
 	int			backrefs;		/* does it use back references? */
@@ -178,5 +196,21 @@ struct re_guts
 };
 
 /* misc utilities */
-#define OUT		(CHAR_MAX+1)	/* a non-character value */
-#define ISWORD(c)		(isalnum(c) || (c) == '_')
+#ifdef MB
+#  if MB == MULE_INTERNAL
+#    define OUT		(16777216+1)	/* 16777216 == 2^24 == 3 bytes */
+#  elif MB == EUC_JP || MB == EUC_CN || MB == EUC_KR || MB == EUC_TW
+#    define OUT		(USHRT_MAX+1)	/* 2 bytes */
+#  elif MB == UNICODE
+#    define OUT		(USHRT_MAX+1)	/* 2 bytes. assuming UCS-2 */
+#  endif
+#else
+#  define OUT		(CHAR_MAX+1)	/* a non-character value */
+#endif
+
+#ifdef MB
+#define ISWORD(c)	((c >= 0 && c <= UCHAR_MAX) && \
+			 (isalnum(c) || (c) == '_'))
+#else
+#define ISWORD(c)	(isalnum(c) || (c) == '_')
+#endif

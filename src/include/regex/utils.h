@@ -42,7 +42,12 @@
 /* utility definitions */
 #define DUPMAX			100000000		/* xxx is this right? */
 #define INFINITY		(DUPMAX + 1)
+
+#ifdef MB
+#define NC				(SHRT_MAX - SHRT_MIN + 1)
+#else
 #define NC				(CHAR_MAX - CHAR_MIN + 1)
+#endif
 typedef unsigned char uch;
 
 /* switch off assertions (if not already off) if no REDEBUG */

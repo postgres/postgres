@@ -1,0 +1,106 @@
+postgresql 6.3 multi-byte (MB) patch PL2 README	       1998/3/10 作成
+
+							石井達夫
+						t-ishii@sra.co.jp
+		  http://www.sra.co.jp/people/t-ishii/PostgreSQL/
+
+はじめに：
+  このパッチは、フリーな RDBMS(Relational Database Management System)の
+  PostgreSQL (http://www.postgresql.org/)の最新版 6.3 で日本語 EUC
+  など、マルチバイト文字を扱うことを可能にするためのものです。このパッ
+  チをあてることにより、以下のことが可能になります。
+
+    1.マルチバイト文字として、日本語、中国語などの各国の EUC、Unicode、
+      mule internal code がコンパイル時に選択可能。データベースには
+      このコードのまま格納されます。
+    2.テーブル名にマルチバイト文字が使用可能(ただし、OS がマルチバイト
+      のファイル名を許していることが必要)
+    3.カラム名にマルチバイト文字が使用可能
+    4.データそのものにもマルチバイト文字が使用可能
+    5.マルチバイト文字の正規表現検索が使用可能
+    6.マルチバイト文字の LIKE 検索が使用可能
+
+    (ただし、2,3,4 についてはパッチをあてなくても可能です。)
+
+postgresql-6.3 の入手方法：
+  postgresql-6.3.tar.gz は postgresql の日本での公式ミラーサイトで
+  ある ftp://ftp.jaist.ac.jp/pub/dbms/PostgreSQL/ から入手できます。
+  何らかの理由でここから入手できない場合は、
+  ftp://ftp.sra.co.jp/pub/cmd/postgres/6.3/ も利用できます。
+  なお、postgresql のオリジナル ftp サイトは ftp://ftp.postgresql.org
+  です。
+
+このパッチの入手方法：
+
+  ftp://ftp.sra.co.jp/pub/cmd/postgres/6.3/patches/6.3mbPL2.patch.gz 
+  を入手して下さい。
+
+パッチのあてかた：
+  入手したパッチファイルを展開します。
+
+	% gunzip 6.3mbPL2.patch.gz
+
+  postgresql-6.3 のソースを展開します。
+
+	% gtar xfz postgresql-6.3.tar.gz
+
+  すると、postgresql-6.3 というディレクトリができるので、そこに
+  cd します。
+
+	% cd postgresql-6.3
+
+  パッチを当てます。
+
+	% patch -p1 < 6.3mbPL2.patch 
+
+  としてあててください。次に、src/Makefile.custom というファイルを作り、
+	
+	MB=EUC_JP
+
+  の 1 行を追加します。EUC_JP を含め、以下のコードが指定できます。
+
+	EUC_JP		日本語 EUC
+	EUC_CN		GB をベースにした中文EUC。code set 2 は
+			SS2+2バイトコード = 3バイト表現です。
+	EUC_KR		韓国語 EUC。
+	EUC_TW		台湾の EUC。code set 2 は
+			SS2+面番号+2バイトコード = 4バイト表現です。
+	UNICODE		UTF-8。ただしサポートするのは UCS-2 の範囲、
+			すなわち 0xffff までです。
+	MULE_INTERNAL	mule の内部コード。ただし、Type N の不定長文字は
+			サポートしていません。
+
+  選択の目安としては、英語と日本語しか使わない場合は EUC_JP(同様に、中
+  国語しか使わない場合は EUC_CN... などとなります)、その他の言語も使いた
+  い場合は UNICODE もしくは MULE_INTERNAL となるでしょう。
+
+  注意：MULE_INTERNAL を選ぶと、たくさんの文字集合に対応できて便利です
+  が、正規表現で複数の文字集合にまたがるような範囲指定(たとえば、[a-範]
+  とか、[abc範囲]のような)は使えません。複数の範囲指定で異なる文字集合
+  を使うのは構いません(たとえば [abc][範-囲])。また、[^a] のような表現
+  は、"a" の属する文字集合(この場合、US-ASCII)において "a" 以外である
+  ことを表します。決して漢字や平仮名など "a" 以外をすべて表すわけでは
+  ないことに注意して下さい。
+
+  インストールは普通に行ないます。インストールの詳細は INSTALL という
+  テキストファイルを御覧下さい。また、
+  http://www.sra.co.jp/people/t-ishii/PostgreSQL/ でも簡単なインストー
+  ル方法を紹介しています。
+
+謝辞：
+  o 各種文字セット、コード系について、日本語 PostgreSQL メーリングリスト
+    のメンバの方からアドバイスを頂きました。ここに感謝します。
+
+改定履歴：
+
+  1998/3/10 PL2 をリリース
+	* EUC_JP, EUC_CN, MULE_INTERNAL の regression test を追加
+	  (EUC_CN のデータは he@sra.co.jp さん提供)
+	* regexp において、isalpha などに unsigend char 以外の値が
+          渡らないようにガードをかける
+	* 英語のドキュメントを追加
+	* MB を定義しない場合に発生するバグを修正
+
+  1998/3/1 PL1 をリリース
+
+以上。

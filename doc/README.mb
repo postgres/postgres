@@ -1,0 +1,67 @@
+postgresql 6.3 multi-byte(MB) patch PL2 README	  Mar 10 1998
+
+						Tatsuo Ishii
+						t-ishii@sra.co.jp
+		  http://www.sra.co.jp/people/t-ishii/PostgreSQL/
+
+Introduction
+
+MB patch is intended for allowing PostgreSQL to handle multi-byte
+charachter sets such as EUC(Extende Unix Code), Unicode and Mule
+internal code. With the MB patch you can use multi-byte character sets
+in regexp and LIKE. The encoding system chosen is determined at the
+compile time.
+
+The patch also fixes some problems concerning with 8-bit single byte
+character sets including ISO8859. (I would not say all of problems
+have been fixed. I just confirmed that the regression test ran fine
+and a few French characters could be used with the patch. Please let
+me know if you find any problem while using 8-bit characters)
+
+How to use
+
+After applying the MB patch, create src/Makefile.custom with a line
+including:
+
+MB=encoding_system
+
+where encoding_system is one of:
+
+EUC_JP			Japanese EUC
+EUC_CN			Chinese EUC
+EUC_KR			Korean EUC
+EUC_TW			Taiwan EUC
+UNICODE			Unicode(UTF-8)
+MULE_INTERNAL		Mule internal
+
+Example:
+
+% cat Makefile.custom
+MB=EUC_JP
+
+If MB is not defined, nothing is changed except better supporting for
+8-bit single byte character sets.
+
+References
+
+These are good sources to start learning various kind of encoding
+systems.
+
+ftp://ftp.ora.com/pub/examples/nutshell/ujip/doc/cjk.inf
+	Detailed explanations of EUC_JP, EUC_CN, EUC_KR, EUC_TW
+	appear in section 3.2.
+
+Unicode: http://www.unicode.org/
+	The homepage of UNICODE.
+
+	RFC 2044
+	UTF-8 is defined here.
+
+History
+
+Mar 10, 1998 PL2 released
+	* add regression test for EUC_JP, EUC_CN and MULE_INTERNAL
+	* add an English document (this file)
+	* fix problems concerning 8-bit single byte characters
+
+Mar 1, 1998 PL1 released

@@ -164,6 +164,11 @@ int			eflags;
 {
 	struct re_guts *g = preg->re_g;
 
+#ifdef MB
+	pg_wchar *str;
+	int sts;
+#endif
+
 #ifdef REDEBUG
 #define  GOODFLAGS(f)	 (f)
 #else
@@ -177,8 +182,24 @@ int			eflags;
 		return (REG_BADPAT);
 	eflags = GOODFLAGS(eflags);
 
+#ifdef MB
+	str = (pg_wchar *)malloc((strlen(string)+1) * sizeof(pg_wchar));
+	if (!str) {
+	  return(REG_ESPACE);
+	}
+	(void)pg_mb2wchar((unsigned char *)string,str);
 	if (g->nstates <= CHAR_BIT * sizeof(states1) && !(eflags & REG_LARGE))
-		return (smatcher(g, (char *) string, nmatch, pmatch, eflags));
+	  sts = smatcher(g, str, nmatch, pmatch, eflags);
 	else
-		return (lmatcher(g, (char *) string, nmatch, pmatch, eflags));
+	  sts = lmatcher(g, str, nmatch, pmatch, eflags);
+	free((char *)str);
+	return(sts);
+
+#  else
+
+	if (g->nstates <= CHAR_BIT * sizeof(states1) && !(eflags & REG_LARGE))
+		return (smatcher(g, (pg_wchar *) string, nmatch, pmatch, eflags));
+	else
+		return (lmatcher(g, (pg_wchar *) string, nmatch, pmatch, eflags));
+#endif
 }
