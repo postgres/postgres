@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.1 1998/09/11 16:56:23 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.2 1998/09/13 04:00:41 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,6 +19,8 @@ LIBPQHEADERDIR = $(SRCHEADERDIR)/libpq
 LIBNAME= libpq++
 
 CXX=@CXX@
+
+PORTNAME=@PORTNAME@
 
 # We have to override -Werror, which makes warnings, fatal, because we
 # inevitably get the warning, "abstract declarator used as declaration"
@@ -67,6 +69,10 @@ ifeq ($(PORTNAME), unixware)
   shlib := libpq.so.1
   LDFLAGS_SL = -G -z text
   CFLAGS += $(CFLAGS_SL)
+  ifeq ($(CXX), CC)
+    CXXFLAGS += -Xw
+    COMPILE.cc = $(CXX) $(CXXFLAGS:ll,alloca=ll) $(CPPFLAGS) $(TARGET_ARCH) -c
+  endif
 endif
 
 ifeq ($(PORTNAME), univel)
@@ -74,6 +80,10 @@ ifeq ($(PORTNAME), univel)
   shlib := libpq.so.1
   LDFLAGS_SL = -G -z text
   CFLAGS += $(CFLAGS_SL)
+  ifeq ($(CXX), CC)
+    CXXFLAGS += -Xw
+    COMPILE.cc = $(CXX) $(CXXFLAGS:ll,alloca=ll) $(CPPFLAGS) $(TARGET_ARCH) -c
+  endif
 endif
 
 ifeq ($(PORTNAME), hpux)
