@@ -1,10 +1,14 @@
-# $Header: /cvsroot/pgsql/src/makefiles/Makefile.solaris,v 1.3 2000/10/21 22:36:13 petere Exp $
+# $Header: /cvsroot/pgsql/src/makefiles/Makefile.solaris,v 1.4 2000/10/27 23:59:39 petere Exp $
 
 AROPT = crs
 
 ifeq ($(with_gnu_ld), yes)
 export_dynamic = -Wl,-E
+rpath = -Wl,-rpath,$(libdir)
+else
+rpath = -Wl,-R$(libdir)
 endif
+
 
 DLSUFFIX = .so
 ifeq ($(GCC), yes)

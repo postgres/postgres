@@ -2,6 +2,7 @@
 RANLIB= touch
 MK_NO_LORDER= true
 AROPT = crs
+rpath = -Wl,-rpath,$(libdir)
 
 DLSUFFIX = .so
 CFLAGS_SL =

@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.105 2000/10/25 16:13:52 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.106 2000/10/27 23:59:39 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -115,6 +115,7 @@ with_tk		= @with_tk@
 enable_odbc	= @enable_odbc@
 MULTIBYTE	= @MULTIBYTE@
 enable_shared	= @enable_shared@
+enable_rpath	= @enable_rpath@
 
 python_extmakefile = @python_extmakefile@
 python_moduledir = @python_moduledir@
@@ -213,6 +214,9 @@ ELF_SYSTEM= @ELF_SYS@
 # Pull in platform-specific magic
 include $(top_builddir)/src/Makefile.port
 
+ifeq ($(enable_rpath), yes)
+LDFLAGS += $(rpath)
+endif
 
 ##########################################################################
 #

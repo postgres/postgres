@@ -2,13 +2,13 @@
 # which we do by linking -lc before -lcurses.  (Unfortunately we can't
 # just not use libcurses.)  This also ensures that we get the POSIX signal
 # routines in libc, not the BSD-like ones in libBSD.
-LDFLAGS:= -lc $(LDFLAGS)
+LIBS := -lc $(LIBS)
 
 # On the other hand, if we don't have POSIX signals, we need to use the
 # libBSD signal routines.  (HPUX 9 and early HPUX 10 releases don't have
 # POSIX signals.)  Make sure libBSD comes before libc in that case.
 ifeq ($(HAVE_POSIX_SIGNALS), no)
-   LDFLAGS:= -lBSD $(LDFLAGS)
+   LIBS := -lBSD $(LIBS)
 endif
 
 # On HPUX 9, rint() is provided only in the PA1.1 version of libm.
@@ -19,11 +19,15 @@ ifneq ($(HPUXMATHLIB),)
    LDFLAGS:= -L /lib/pa1.1 $(LDFLAGS)
 endif
 
-# On all HPUX versions, embed `libdir' as the shared library search path
-# so that the executables don't need SHLIB_PATH to be set, specify -z
-# to catch null pointer dereferences, and specify -E to make all symbols
-# visible to dynamically linked shared libraries.
-LDFLAGS+= -Wl,+b -Wl,$(libdir) -Wl,-z
+# Embed 'libdir' as the shared library search path so that the executables
+# don't need SHLIB_PATH to be set.  (We do not observe the --enable-rpath
+# switch here because you'd get rather bizarre behavior if you leave this
+# option off.)
+LDFLAGS += -Wl,+b -Wl,$(libdir)
+
+# catch null pointer dereferences
+LDFLAGS += -Wl,-z
+
 export_dynamic = -Wl,-E
 
 AROPT = crs

@@ -1,5 +1,6 @@
 AROPT = crs
 export_dynamic = -Wl,-Bexport
+rpath = -Wl,-R$(libdir)
 DLSUFFIX = .so
 ifeq ($(GCC), yes)
 CFLAGS_SL = -fpic

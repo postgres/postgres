@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.29 2000/10/27 20:09:48 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.30 2000/10/27 23:59:39 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -137,9 +137,6 @@ ifeq ($(PORTNAME), netbsd)
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   ifdef ELF_SYSTEM
     LINK.shared		= $(COMPILER) -shared -Wl,-soname -Wl,$(soname)
-    ifneq ($(SHLIB_LINK),)
-      LINK.shared	+= -Wl,-R$(libdir)
-    endif
   else
     LINK.shared		= $(LD) -x -Bshareable -Bforcearchive
   endif
@@ -148,12 +145,12 @@ endif
 ifeq ($(PORTNAME), hpux)
 # HPUX doesn't believe in version numbers for shlibs
   shlib			:= lib$(NAME)$(DLSUFFIX)
-  LINK.shared		= $(LD) -b
+  LINK.shared		= $(LD) -b +b $(libdir)
 endif
 
 ifeq ($(PORTNAME), irix5)
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
-  LINK.shared		:= $(COMPILER) -shared -rpath $(libdir) -set_version sgi$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  LINK.shared		= $(COMPILER) -shared -set_version sgi$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
 endif
 
 ifeq ($(PORTNAME), linux)
@@ -197,6 +194,7 @@ ifeq ($(PORTNAME), unixware)
       LINK.shared	= $(CXX) -G
     endif
   endif
+  LINK.shared		+= -Wl,-z,text
 endif
 
 ifeq ($(PORTNAME), win)
@@ -214,6 +212,10 @@ endif
 
 # Pull in any extra -L options that the user might have specified.
 SHLIB_LINK := $(filter -L%, $(LDFLAGS)) $(SHLIB_LINK)
+
+ifeq ($(enable_rpath), yes)
+SHLIB_LINK += $(rpath)
+endif
 
 endif # enable_shared
 

@@ -234,6 +234,13 @@ PGAC_ARG_BOOL(enable, shared, yes,
               [  --disable-shared        do not build shared libraries])
 AC_SUBST(enable_shared)
 
+#
+# '-rpath'-like feature can be disabled
+#
+PGAC_ARG_BOOL(enable, rpath, yes,
+              [  --disable-rpath         do not embed shared library search path in executables])
+AC_SUBST(enable_rpath)
+
 
 #
 # C compiler

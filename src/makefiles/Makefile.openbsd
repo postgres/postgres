@@ -2,6 +2,7 @@ AROPT = cq
 
 ifdef ELF_SYSTEM
 export_dynamic = -Wl,-E
+rpath = -R$(libdir)
 endif
 
 DLSUFFIX = .so
