@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.50.2.2 2002/07/21 08:26:52 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.50.2.3 2002/08/18 14:32:21 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"asc", ASC},
 	{"assertion", ASSERTION},
 	{"assignment", ASSIGNMENT},
-	{"asymmetric", ASYMMETRIC},
 	{"at", AT},
 	{"authorization", AUTHORIZATION},
 	{"backward", BACKWARD},
@@ -69,6 +68,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"characteristics", CHARACTERISTICS},
 	{"check", CHECK},
 	{"checkpoint", CHECKPOINT},
+	{"class", CLASS},
 	{"close", CLOSE},
 	{"cluster", CLUSTER},
 	{"coalesce", COALESCE},
@@ -80,6 +80,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"constraint", CONSTRAINT},
 	{"constraints", CONSTRAINTS},
 	{"conversion", CONVERSION_P},
+	{"convert", CONVERT},
 	{"copy", COPY},
 	{"create", CREATE},
 	{"createdb", CREATEDB},
@@ -133,6 +134,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"from", FROM},
 	{"full", FULL},
 	{"function", FUNCTION},
+	{"get", GET},
 	{"global", GLOBAL},
 	{"grant", GRANT},
 	{"group", GROUP_P},
@@ -142,7 +144,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"ilike", ILIKE},
 	{"immediate", IMMEDIATE},
 	{"immutable", IMMUTABLE},
-	{"implicit", IMPLICIT},
 	{"in", IN_P},
 	{"increment", INCREMENT},
 	{"index", INDEX},
@@ -229,6 +230,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"procedure", PROCEDURE},
 	{"read", READ},
 	{"real", REAL},
+	{"recheck", RECHECK},
 	{"references", REFERENCES},
 	{"reindex", REINDEX},
 	{"relative", RELATIVE},
@@ -268,7 +270,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"storage", STORAGE},
 	{"strict", STRICT},
 	{"substring", SUBSTRING},
-	{"symmetric", SYMMETRIC},
 	{"sysid", SYSID},
 	{"table", TABLE},
 	{"temp", TEMP},

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.94.2.3 2002/07/21 08:26:52 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.94.2.4 2002/08/18 14:32:21 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,7 +117,7 @@ xbcat			{quote}{whitespace_with_newline}{quote}
  */
 xhstart			[xX]{quote}
 xhstop			{quote}
-xhinside		[^']+
+xhinside		[^']*
 xhcat			{quote}{whitespace_with_newline}{quote}
 
 /* National character
@@ -333,7 +333,7 @@ cppline			{space}*#(.*\\{space})*.*
 						if (literalbuf[strspn(literalbuf, "01") + 1] != '\0')
 							mmerror(PARSE_ERROR, ET_ERROR, "invalid bit string input.");
 						yylval.str = literalbuf;
-						return BITCONST;
+						return BCONST;
 					}
 
 <xh>{xhinside}	|
@@ -346,31 +346,16 @@ cppline			{space}*#(.*\\{space})*.*
 						token_start = yytext;
 						BEGIN(xh);
 						startlit();
+						addlitchar('x');
 					}
 <xh>{xhstop}		{
-						long val;
-						char* endptr;
-
-						BEGIN(SQL);
-						errno = 0;
-						val = strtol(literalbuf, &endptr, 16);
-						if (*endptr != '\0' || errno == ERANGE
-#ifdef HAVE_LONG_INT_64
-							/* if long > 32 bits, check for overflow of int4 */
-							|| val != (long) ((int32) val)
-#endif
-							)
-							mmerror(PARSE_ERROR, ET_ERROR, "Bad hexadecimal integer input");
-						yylval.ival = val;
-						return ICONST;
+						yylval.str = literalbuf;
+						return XCONST;
 					}
 
-<xh><<EOF>>			{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated hexadecimal integer"); }
+<xh><<EOF>>			{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated hexadecimal string literal"); }
 <SQL>{xnstart}              {
-				/* National character.
-				 * Need to remember type info to flow it forward into the parser.
-		                 * Not yet implemented. - thomas 2002-06-17
-		                 */
+				/* National character. */
 			        token_start = yytext;
 				BEGIN(xq);
 				startlit();

@@ -4,7 +4,7 @@
  *	  lexical token lookup for reserved words in postgres embedded SQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg_keywords.c,v 1.26 2002/05/19 20:00:53 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg_keywords.c,v 1.26.2.1 2002/08/18 14:32:21 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"enum", SQL_ENUM},
 	{"found", SQL_FOUND},
 	{"free", SQL_FREE},
-	{"get", SQL_GET},
 	{"go", SQL_GO},
 	{"goto", SQL_GOTO},
 	{"identified", SQL_IDENTIFIED},

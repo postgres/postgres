@@ -1277,6 +1277,12 @@ Tue Jun 18 15:13:15 CEST 2002
         - Synced preproc.y with gram.y.
         - Synced pgc.l with scan.l.
         - Synced keywords.c.
+	
+Sun Aug 18 16:09:06 CEST 2002
+
+        - Synced preproc.y with gram.y.
+        - Synced pgc.l with scan.l.
+        - Synced keywords.c.
 	- Set ecpg version to 2.10.0.
 	- Set library version to 3.4.0.
 
