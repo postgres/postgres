@@ -10,7 +10,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgconnection.cc,v 1.12 2001/09/30 22:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgconnection.cc,v 1.13 2002/03/11 15:08:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,4 +159,8 @@ const char* PgConnection::DBName() const
 return (const char *)PQdb(pgConn); 
 }
 
+PQnoticeProcessor PgConnection::SetNoticeProcessor(PQnoticeProcessor proc, void *arg)
+{
+return PQsetNoticeProcessor(pgConn, proc, arg);
+}
 

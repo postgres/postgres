@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  * 
- * $Id: pgconnection.h,v 1.15 2002/01/22 19:02:40 tgl Exp $
+ * $Id: pgconnection.h,v 1.16 2002/03/11 15:08:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,6 +80,9 @@ public:
    int ExecTuplesOk(const char* query);     // send a command and check if tuples are returned
    PGnotify* Notifies();
     
+	// set the notice processor
+	PQnoticeProcessor SetNoticeProcessor(PQnoticeProcessor proc, void *arg);
+
 protected:
    ConnStatusType Connect(const char* conninfo);
    void CloseConnection();
