@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.86 2003/07/17 00:55:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.87 2003/07/26 15:17:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2533,7 +2533,7 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 			case DTK_YEAR:
 				tm->tm_mon = 1;
 			case DTK_QUARTER:
-				tm->tm_mon = (3 * (tm->tm_mon / 4)) + 1;
+				tm->tm_mon = (3 * ((tm->tm_mon - 1) / 3)) + 1;
 			case DTK_MONTH:
 				tm->tm_mday = 1;
 			case DTK_DAY:
@@ -2626,7 +2626,7 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 			case DTK_YEAR:
 				tm->tm_mon = 1;
 			case DTK_QUARTER:
-				tm->tm_mon = (3 * (tm->tm_mon / 4)) + 1;
+				tm->tm_mon = (3 * ((tm->tm_mon - 1) / 3)) + 1;
 			case DTK_MONTH:
 				tm->tm_mday = 1;
 			case DTK_DAY:
@@ -2719,7 +2719,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 				case DTK_YEAR:
 					tm->tm_mon = 0;
 				case DTK_QUARTER:
-					tm->tm_mon = (3 * (tm->tm_mon / 4));
+					tm->tm_mon = (3 * (tm->tm_mon / 3));
 				case DTK_MONTH:
 					tm->tm_mday = 0;
 				case DTK_DAY:
@@ -3297,7 +3297,7 @@ interval_part(PG_FUNCTION_ARGS)
 					break;
 
 				case DTK_QUARTER:
-					result = (tm->tm_mon / 4) + 1;
+					result = (tm->tm_mon / 3) + 1;
 					break;
 
 				case DTK_YEAR:
