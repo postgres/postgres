@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.61 2001/03/23 04:49:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.62 2001/05/03 21:16:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -377,7 +377,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 	 * We want the rule's table references to be checked as though by the
 	 * rule owner, not the user referencing the rule.  Therefore, scan
 	 * through the rule's rtables and set the checkAsUser field on all
-	 * rtable entries (except *OLD* and *NEW*).
+	 * rtable entries.
 	 */
 	foreach(l, action)
 	{
@@ -426,29 +426,28 @@ DefineQueryRewrite(RuleStmt *stmt)
 /*
  * setRuleCheckAsUser
  *		Recursively scan a query and set the checkAsUser field to the
- *		given userid in all rtable entries except *OLD* and *NEW*.
+ *		given userid in all rtable entries.
+ *
+ * Note: for a view (ON SELECT rule), the checkAsUser field of the *OLD*
+ * RTE entry will be overridden when the view rule is expanded, and the
+ * checkAsUser field of the *NEW* entry is irrelevant because that entry's
+ * checkFor bits will never be set.  However, for other types of rules it's
+ * important to set these fields to match the rule owner.  So we just set
+ * them always.
  */
 static void
 setRuleCheckAsUser(Query *qry, Oid userid)
 {
 	List	   *l;
 
-	/* Set all the RTEs in this query node, except OLD and NEW */
+	/* Set all the RTEs in this query node */
 	foreach(l, qry->rtable)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
 
-		if (strcmp(rte->eref->relname, "*NEW*") == 0)
-			continue;
-		if (strcmp(rte->eref->relname, "*OLD*") == 0)
-			continue;
-
 		if (rte->subquery)
 		{
-
-			/*
-			 * Recurse into subquery in FROM
-			 */
+			/* Recurse into subquery in FROM */
 			setRuleCheckAsUser(rte->subquery, userid);
 		}
 		else
