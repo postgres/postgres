@@ -17670,6 +17670,12 @@ ac_config_links="$ac_config_links src/backend/port/dynloader.c:src/backend/port/
 ac_config_headers="$ac_config_headers src/include/pg_config.h"
 
 
+# touch files to flex/bison not needed
+cat UPDATED | grep '^\./' | while read FILE
+do
+	touch "$FILE"
+done
+
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
