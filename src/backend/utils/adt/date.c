@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.44 2000/04/12 17:15:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.44.2.1 2000/10/19 20:52:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -495,13 +495,23 @@ time_cmp(TimeADT *time1, TimeADT *time2)
 TimeADT    *
 time_larger(TimeADT *time1, TimeADT *time2)
 {
-	return time_gt(time1, time2) ? time1 : time2;
+	TimeADT    *result;
+
+	/* nodeAgg.c expects me to return a copied datum! */
+	result = palloc(sizeof(*result));
+	*result = time_gt(time1, time2) ? *time1 : *time2;
+	return result;
 }	/* time_larger() */
 
 TimeADT    *
 time_smaller(TimeADT *time1, TimeADT *time2)
 {
-	return time_lt(time1, time2) ? time1 : time2;
+	TimeADT    *result;
+
+	/* nodeAgg.c expects me to return a copied datum! */
+	result = palloc(sizeof(*result));
+	*result = time_lt(time1, time2) ? *time1 : *time2;
+	return result;
 }	/* time_smaller() */
 
 /* overlaps_time()
@@ -742,13 +752,23 @@ timetz_cmp(TimeTzADT *time1, TimeTzADT *time2)
 TimeTzADT  *
 timetz_larger(TimeTzADT *time1, TimeTzADT *time2)
 {
-	return timetz_gt(time1, time2) ? time1 : time2;
+	TimeTzADT  *result;
+
+	/* nodeAgg.c expects me to return a copied datum! */
+	result = palloc(sizeof(*result));
+	*result = timetz_gt(time1, time2) ? *time1 : *time2;
+	return result;
 }	/* timetz_larger() */
 
 TimeTzADT  *
 timetz_smaller(TimeTzADT *time1, TimeTzADT *time2)
 {
-	return timetz_lt(time1, time2) ? time1 : time2;
+	TimeTzADT  *result;
+
+	/* nodeAgg.c expects me to return a copied datum! */
+	result = palloc(sizeof(*result));
+	*result = timetz_lt(time1, time2) ? *time1 : *time2;
+	return result;
 }	/* timetz_smaller() */
 
 /* overlaps_timetz()
