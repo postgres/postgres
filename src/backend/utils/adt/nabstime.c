@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.10 1997/01/06 00:20:13 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.11 1997/01/10 18:22:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,8 +15,10 @@
 #include <ctype.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/timeb.h>
 #include "postgres.h"
+#ifndef USE_POSIX_TIME
+#include <sys/timeb.h>
+#endif
 #include "access/xact.h"
 
 #define MAXDATEFIELDS 25
