@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.167 2002/11/24 21:52:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.168 2002/11/25 03:33:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,9 +32,51 @@
 #include "utils/datum.h"
 
 
+/*
+ * Macros to simplify comparison of different kinds of fields.  Use these
+ * wherever possible to reduce the chance for silly typos.  Note that these
+ * hard-wire the convention that the local variables in an Equal routine are
+ * named 'a' and 'b'.
+ */
+
+/* Compare a simple scalar field (int, float, bool, enum, etc) */
+#define COMPARE_SCALAR_FIELD(fldname) \
+	do { \
+		if (a->fldname != b->fldname) \
+			return false; \
+	} while (0)
+
+/* Compare a field that is a pointer to some kind of Node or Node tree */
+#define COMPARE_NODE_FIELD(fldname) \
+	do { \
+		if (!equal(a->fldname, b->fldname)) \
+			return false; \
+	} while (0)
+
+/* Compare a field that is a pointer to a list of integers */
+#define COMPARE_INTLIST_FIELD(fldname) \
+	do { \
+		if (!equali(a->fldname, b->fldname)) \
+			return false; \
+	} while (0)
+
+/* Compare a field that is a pointer to a C string, or perhaps NULL */
+#define COMPARE_STRING_FIELD(fldname) \
+	do { \
+		if (!equalstr(a->fldname, b->fldname)) \
+			return false; \
+	} while (0)
+
 /* Macro for comparing string fields that might be NULL */
 #define equalstr(a, b)	\
 	(((a) != NULL && (b) != NULL) ? (strcmp(a, b) == 0) : (a) == (b))
+
+/* Compare a field that is a pointer to a simple palloc'd object of size sz */
+#define COMPARE_POINTER_FIELD(fldname, sz) \
+	do { \
+		if (memcmp(a->fldname, b->fldname, (sz)) != 0) \
+			return false; \
+	} while (0)
 
 
 /*
@@ -44,21 +86,14 @@
 static bool
 _equalResdom(Resdom *a, Resdom *b)
 {
-	if (a->resno != b->resno)
-		return false;
-	if (a->restype != b->restype)
-		return false;
-	if (a->restypmod != b->restypmod)
-		return false;
-	if (!equalstr(a->resname, b->resname))
-		return false;
-	if (a->ressortgroupref != b->ressortgroupref)
-		return false;
-	if (a->reskey != b->reskey)
-		return false;
-	if (a->reskeyop != b->reskeyop)
-		return false;
-	/* we ignore resjunk flag ... is this correct? */
+	COMPARE_SCALAR_FIELD(resno);
+	COMPARE_SCALAR_FIELD(restype);
+	COMPARE_SCALAR_FIELD(restypmod);
+	COMPARE_STRING_FIELD(resname);
+	COMPARE_SCALAR_FIELD(ressortgroupref);
+	COMPARE_SCALAR_FIELD(reskey);
+	COMPARE_SCALAR_FIELD(reskeyop);
+	COMPARE_SCALAR_FIELD(resjunk);
 
 	return true;
 }
@@ -66,20 +101,33 @@ _equalResdom(Resdom *a, Resdom *b)
 static bool
 _equalFjoin(Fjoin *a, Fjoin *b)
 {
-	int			nNodes;
+	COMPARE_SCALAR_FIELD(fj_initialized);
+	COMPARE_SCALAR_FIELD(fj_nNodes);
+	COMPARE_NODE_FIELD(fj_innerNode);
+	COMPARE_POINTER_FIELD(fj_results, a->fj_nNodes * sizeof(Datum));
+	COMPARE_POINTER_FIELD(fj_alwaysDone, a->fj_nNodes * sizeof(bool));
 
-	if (a->fj_initialized != b->fj_initialized)
-		return false;
-	if (a->fj_nNodes != b->fj_nNodes)
-		return false;
-	if (!equal(a->fj_innerNode, b->fj_innerNode))
-		return false;
+	return true;
+}
 
-	nNodes = a->fj_nNodes;
-	if (memcmp(a->fj_results, b->fj_results, nNodes * sizeof(Datum)) != 0)
-		return false;
-	if (memcmp(a->fj_alwaysDone, b->fj_alwaysDone, nNodes * sizeof(bool)) != 0)
-		return false;
+static bool
+_equalAlias(Alias *a, Alias *b)
+{
+	COMPARE_STRING_FIELD(aliasname);
+	COMPARE_NODE_FIELD(colnames);
+
+	return true;
+}
+
+static bool
+_equalRangeVar(RangeVar *a, RangeVar *b)
+{
+	COMPARE_STRING_FIELD(catalogname);
+	COMPARE_STRING_FIELD(schemaname);
+	COMPARE_STRING_FIELD(relname);
+	COMPARE_SCALAR_FIELD(inhOpt);
+	COMPARE_SCALAR_FIELD(istemp);
+	COMPARE_NODE_FIELD(alias);
 
 	return true;
 }
@@ -92,12 +140,9 @@ _equalExpr(Expr *a, Expr *b)
 	 * to set it in created nodes, and it is logically a derivative of the
 	 * oper field anyway.
 	 */
-	if (a->opType != b->opType)
-		return false;
-	if (!equal(a->oper, b->oper))
-		return false;
-	if (!equal(a->args, b->args))
-		return false;
+	COMPARE_SCALAR_FIELD(opType);
+	COMPARE_NODE_FIELD(oper);
+	COMPARE_NODE_FIELD(args);
 
 	return true;
 }
@@ -105,20 +150,13 @@ _equalExpr(Expr *a, Expr *b)
 static bool
 _equalVar(Var *a, Var *b)
 {
-	if (a->varno != b->varno)
-		return false;
-	if (a->varattno != b->varattno)
-		return false;
-	if (a->vartype != b->vartype)
-		return false;
-	if (a->vartypmod != b->vartypmod)
-		return false;
-	if (a->varlevelsup != b->varlevelsup)
-		return false;
-	if (a->varnoold != b->varnoold)
-		return false;
-	if (a->varoattno != b->varoattno)
-		return false;
+	COMPARE_SCALAR_FIELD(varno);
+	COMPARE_SCALAR_FIELD(varattno);
+	COMPARE_SCALAR_FIELD(vartype);
+	COMPARE_SCALAR_FIELD(vartypmod);
+	COMPARE_SCALAR_FIELD(varlevelsup);
+	COMPARE_SCALAR_FIELD(varnoold);
+	COMPARE_SCALAR_FIELD(varoattno);
 
 	return true;
 }
@@ -126,12 +164,9 @@ _equalVar(Var *a, Var *b)
 static bool
 _equalOper(Oper *a, Oper *b)
 {
-	if (a->opno != b->opno)
-		return false;
-	if (a->opresulttype != b->opresulttype)
-		return false;
-	if (a->opretset != b->opretset)
-		return false;
+	COMPARE_SCALAR_FIELD(opno);
+	COMPARE_SCALAR_FIELD(opresulttype);
+	COMPARE_SCALAR_FIELD(opretset);
 
 	/*
 	 * We do not examine opid or op_fcache, since these are logically
@@ -151,14 +186,10 @@ _equalOper(Oper *a, Oper *b)
 static bool
 _equalConst(Const *a, Const *b)
 {
-	if (a->consttype != b->consttype)
-		return false;
-	if (a->constlen != b->constlen)
-		return false;
-	if (a->constisnull != b->constisnull)
-		return false;
-	if (a->constbyval != b->constbyval)
-		return false;
+	COMPARE_SCALAR_FIELD(consttype);
+	COMPARE_SCALAR_FIELD(constlen);
+	COMPARE_SCALAR_FIELD(constisnull);
+	COMPARE_SCALAR_FIELD(constbyval);
 	/* XXX What about constisset and constiscast? */
 
 	/*
@@ -175,30 +206,24 @@ _equalConst(Const *a, Const *b)
 static bool
 _equalParam(Param *a, Param *b)
 {
-	if (a->paramkind != b->paramkind)
-		return false;
-	if (a->paramtype != b->paramtype)
-		return false;
+	COMPARE_SCALAR_FIELD(paramkind);
+	COMPARE_SCALAR_FIELD(paramtype);
 
 	switch (a->paramkind)
 	{
 		case PARAM_NAMED:
 		case PARAM_NEW:
 		case PARAM_OLD:
-			if (strcmp(a->paramname, b->paramname) != 0)
-				return false;
+			COMPARE_STRING_FIELD(paramname);
 			break;
 		case PARAM_NUM:
 		case PARAM_EXEC:
-			if (a->paramid != b->paramid)
-				return false;
+			COMPARE_SCALAR_FIELD(paramid);
 			break;
 		case PARAM_INVALID:
-
 			/*
 			 * XXX: Hmmm... What are we supposed to return in this case ??
 			 */
-			return true;
 			break;
 		default:
 			elog(ERROR, "_equalParam: Invalid paramkind value: %d",
@@ -211,12 +236,9 @@ _equalParam(Param *a, Param *b)
 static bool
 _equalFunc(Func *a, Func *b)
 {
-	if (a->funcid != b->funcid)
-		return false;
-	if (a->funcresulttype != b->funcresulttype)
-		return false;
-	if (a->funcretset != b->funcretset)
-		return false;
+	COMPARE_SCALAR_FIELD(funcid);
+	COMPARE_SCALAR_FIELD(funcresulttype);
+	COMPARE_SCALAR_FIELD(funcretset);
 	/*
 	 * Special-case COERCE_DONTCARE, so that pathkeys can build coercion
 	 * nodes that are equal() to both explicit and implicit coercions.
@@ -234,83 +256,45 @@ _equalFunc(Func *a, Func *b)
 static bool
 _equalAggref(Aggref *a, Aggref *b)
 {
-	if (a->aggfnoid != b->aggfnoid)
-		return false;
-	if (a->aggtype != b->aggtype)
-		return false;
-	if (!equal(a->target, b->target))
-		return false;
-	if (a->aggstar != b->aggstar)
-		return false;
-	if (a->aggdistinct != b->aggdistinct)
-		return false;
+	COMPARE_SCALAR_FIELD(aggfnoid);
+	COMPARE_SCALAR_FIELD(aggtype);
+	COMPARE_NODE_FIELD(target);
+	COMPARE_SCALAR_FIELD(aggstar);
+	COMPARE_SCALAR_FIELD(aggdistinct);
 	/* ignore aggno, which is only a private field for the executor */
+
 	return true;
 }
 
 static bool
 _equalSubLink(SubLink *a, SubLink *b)
 {
-	if (a->subLinkType != b->subLinkType)
-		return false;
-	if (a->useor != b->useor)
-		return false;
-	if (!equal(a->lefthand, b->lefthand))
-		return false;
-	if (!equal(a->oper, b->oper))
-		return false;
-	if (!equal(a->subselect, b->subselect))
-		return false;
-	return true;
-}
+	COMPARE_SCALAR_FIELD(subLinkType);
+	COMPARE_SCALAR_FIELD(useor);
+	COMPARE_NODE_FIELD(lefthand);
+	COMPARE_NODE_FIELD(oper);
+	COMPARE_NODE_FIELD(subselect);
 
-static bool
-_equalArrayRef(ArrayRef *a, ArrayRef *b)
-{
-	if (a->refrestype != b->refrestype)
-		return false;
-	if (a->refattrlength != b->refattrlength)
-		return false;
-	if (a->refelemlength != b->refelemlength)
-		return false;
-	if (a->refelembyval != b->refelembyval)
-		return false;
-	if (a->refelemalign != b->refelemalign)
-		return false;
-	if (!equal(a->refupperindexpr, b->refupperindexpr))
-		return false;
-	if (!equal(a->reflowerindexpr, b->reflowerindexpr))
-		return false;
-	if (!equal(a->refexpr, b->refexpr))
-		return false;
-	if (!equal(a->refassgnexpr, b->refassgnexpr))
-		return false;
 	return true;
 }
 
 static bool
 _equalFieldSelect(FieldSelect *a, FieldSelect *b)
 {
-	if (!equal(a->arg, b->arg))
-		return false;
-	if (a->fieldnum != b->fieldnum)
-		return false;
-	if (a->resulttype != b->resulttype)
-		return false;
-	if (a->resulttypmod != b->resulttypmod)
-		return false;
+	COMPARE_NODE_FIELD(arg);
+	COMPARE_SCALAR_FIELD(fieldnum);
+	COMPARE_SCALAR_FIELD(resulttype);
+	COMPARE_SCALAR_FIELD(resulttypmod);
+
 	return true;
 }
 
 static bool
 _equalRelabelType(RelabelType *a, RelabelType *b)
 {
-	if (!equal(a->arg, b->arg))
-		return false;
-	if (a->resulttype != b->resulttype)
-		return false;
-	if (a->resulttypmod != b->resulttypmod)
-		return false;
+	COMPARE_NODE_FIELD(arg);
+	COMPARE_SCALAR_FIELD(resulttype);
+	COMPARE_SCALAR_FIELD(resulttypmod);
 	/*
 	 * Special-case COERCE_DONTCARE, so that pathkeys can build coercion
 	 * nodes that are equal() to both explicit and implicit coercions.
@@ -319,25 +303,14 @@ _equalRelabelType(RelabelType *a, RelabelType *b)
 		a->relabelformat != COERCE_DONTCARE &&
 		b->relabelformat != COERCE_DONTCARE)
 		return false;
+
 	return true;
 }
 
 static bool
 _equalRangeTblRef(RangeTblRef *a, RangeTblRef *b)
 {
-	if (a->rtindex != b->rtindex)
-		return false;
-
-	return true;
-}
-
-static bool
-_equalFromExpr(FromExpr *a, FromExpr *b)
-{
-	if (!equal(a->fromlist, b->fromlist))
-		return false;
-	if (!equal(a->quals, b->quals))
-		return false;
+	COMPARE_SCALAR_FIELD(rtindex);
 
 	return true;
 }
@@ -345,25 +318,60 @@ _equalFromExpr(FromExpr *a, FromExpr *b)
 static bool
 _equalJoinExpr(JoinExpr *a, JoinExpr *b)
 {
-	if (a->jointype != b->jointype)
-		return false;
-	if (a->isNatural != b->isNatural)
-		return false;
-	if (!equal(a->larg, b->larg))
-		return false;
-	if (!equal(a->rarg, b->rarg))
-		return false;
-	if (!equal(a->using, b->using))
-		return false;
-	if (!equal(a->quals, b->quals))
-		return false;
-	if (!equal(a->alias, b->alias))
-		return false;
-	if (a->rtindex != b->rtindex)
-		return false;
+	COMPARE_SCALAR_FIELD(jointype);
+	COMPARE_SCALAR_FIELD(isNatural);
+	COMPARE_NODE_FIELD(larg);
+	COMPARE_NODE_FIELD(rarg);
+	COMPARE_NODE_FIELD(using);
+	COMPARE_NODE_FIELD(quals);
+	COMPARE_NODE_FIELD(alias);
+	COMPARE_SCALAR_FIELD(rtindex);
 
 	return true;
 }
+
+static bool
+_equalFromExpr(FromExpr *a, FromExpr *b)
+{
+	COMPARE_NODE_FIELD(fromlist);
+	COMPARE_NODE_FIELD(quals);
+
+	return true;
+}
+
+static bool
+_equalArrayRef(ArrayRef *a, ArrayRef *b)
+{
+	COMPARE_SCALAR_FIELD(refrestype);
+	COMPARE_SCALAR_FIELD(refattrlength);
+	COMPARE_SCALAR_FIELD(refelemlength);
+	COMPARE_SCALAR_FIELD(refelembyval);
+	COMPARE_SCALAR_FIELD(refelemalign);
+	COMPARE_NODE_FIELD(refupperindexpr);
+	COMPARE_NODE_FIELD(reflowerindexpr);
+	COMPARE_NODE_FIELD(refexpr);
+	COMPARE_NODE_FIELD(refassgnexpr);
+
+	return true;
+}
+
+
+/*
+ * Stuff from plannodes.h
+ */
+
+static bool
+_equalSubPlan(SubPlan *a, SubPlan *b)
+{
+	/* should compare plans, but have to settle for comparing plan IDs */
+	COMPARE_SCALAR_FIELD(plan_id);
+
+	COMPARE_NODE_FIELD(rtable);
+	COMPARE_NODE_FIELD(sublink);
+
+	return true;
+}
+
 
 /*
  * Stuff from relation.h
@@ -376,7 +384,9 @@ _equalRelOptInfo(RelOptInfo *a, RelOptInfo *b)
 	 * We treat RelOptInfos as equal if they refer to the same base rels
 	 * joined in the same order.  Is this appropriate/sufficient?
 	 */
-	return equali(a->relids, b->relids);
+	COMPARE_INTLIST_FIELD(relids);
+
+	return true;
 }
 
 static bool
@@ -386,35 +396,23 @@ _equalIndexOptInfo(IndexOptInfo *a, IndexOptInfo *b)
 	 * We treat IndexOptInfos as equal if they refer to the same index. Is
 	 * this sufficient?
 	 */
-	if (a->indexoid != b->indexoid)
-		return false;
-	return true;
-}
+	COMPARE_SCALAR_FIELD(indexoid);
 
-static bool
-_equalPathKeyItem(PathKeyItem *a, PathKeyItem *b)
-{
-	if (a->sortop != b->sortop)
-		return false;
-	if (!equal(a->key, b->key))
-		return false;
 	return true;
 }
 
 static bool
 _equalPath(Path *a, Path *b)
 {
-	if (a->pathtype != b->pathtype)
-		return false;
-	if (!equal(a->parent, b->parent))
-		return false;
-
+	/* This is safe only because _equalRelOptInfo is incomplete... */
+	COMPARE_NODE_FIELD(parent);
 	/*
 	 * do not check path costs, since they may not be set yet, and being
 	 * float values there are roundoff error issues anyway...
 	 */
-	if (!equal(a->pathkeys, b->pathkeys))
-		return false;
+	COMPARE_SCALAR_FIELD(pathtype);
+	COMPARE_NODE_FIELD(pathkeys);
+
 	return true;
 }
 
@@ -423,12 +421,9 @@ _equalIndexPath(IndexPath *a, IndexPath *b)
 {
 	if (!_equalPath((Path *) a, (Path *) b))
 		return false;
-	if (!equal(a->indexinfo, b->indexinfo))
-		return false;
-	if (!equal(a->indexqual, b->indexqual))
-		return false;
-	if (a->indexscandir != b->indexscandir)
-		return false;
+	COMPARE_NODE_FIELD(indexinfo);
+	COMPARE_NODE_FIELD(indexqual);
+	COMPARE_SCALAR_FIELD(indexscandir);
 
 	/*
 	 * Skip 'rows' because of possibility of floating-point roundoff
@@ -442,10 +437,9 @@ _equalTidPath(TidPath *a, TidPath *b)
 {
 	if (!_equalPath((Path *) a, (Path *) b))
 		return false;
-	if (!equal(a->tideval, b->tideval))
-		return false;
-	if (!equali(a->unjoined_relids, b->unjoined_relids))
-		return false;
+	COMPARE_NODE_FIELD(tideval);
+	COMPARE_INTLIST_FIELD(unjoined_relids);
+
 	return true;
 }
 
@@ -454,8 +448,8 @@ _equalAppendPath(AppendPath *a, AppendPath *b)
 {
 	if (!_equalPath((Path *) a, (Path *) b))
 		return false;
-	if (!equal(a->subpaths, b->subpaths))
-		return false;
+	COMPARE_NODE_FIELD(subpaths);
+
 	return true;
 }
 
@@ -464,10 +458,9 @@ _equalResultPath(ResultPath *a, ResultPath *b)
 {
 	if (!_equalPath((Path *) a, (Path *) b))
 		return false;
-	if (!equal(a->subpath, b->subpath))
-		return false;
-	if (!equal(a->constantqual, b->constantqual))
-		return false;
+	COMPARE_NODE_FIELD(subpath);
+	COMPARE_NODE_FIELD(constantqual);
+
 	return true;
 }
 
@@ -476,14 +469,11 @@ _equalJoinPath(JoinPath *a, JoinPath *b)
 {
 	if (!_equalPath((Path *) a, (Path *) b))
 		return false;
-	if (a->jointype != b->jointype)
-		return false;
-	if (!equal(a->outerjoinpath, b->outerjoinpath))
-		return false;
-	if (!equal(a->innerjoinpath, b->innerjoinpath))
-		return false;
-	if (!equal(a->joinrestrictinfo, b->joinrestrictinfo))
-		return false;
+	COMPARE_SCALAR_FIELD(jointype);
+	COMPARE_NODE_FIELD(outerjoinpath);
+	COMPARE_NODE_FIELD(innerjoinpath);
+	COMPARE_NODE_FIELD(joinrestrictinfo);
+
 	return true;
 }
 
@@ -492,6 +482,7 @@ _equalNestPath(NestPath *a, NestPath *b)
 {
 	if (!_equalJoinPath((JoinPath *) a, (JoinPath *) b))
 		return false;
+
 	return true;
 }
 
@@ -500,12 +491,10 @@ _equalMergePath(MergePath *a, MergePath *b)
 {
 	if (!_equalJoinPath((JoinPath *) a, (JoinPath *) b))
 		return false;
-	if (!equal(a->path_mergeclauses, b->path_mergeclauses))
-		return false;
-	if (!equal(a->outersortkeys, b->outersortkeys))
-		return false;
-	if (!equal(a->innersortkeys, b->innersortkeys))
-		return false;
+	COMPARE_NODE_FIELD(path_mergeclauses);
+	COMPARE_NODE_FIELD(outersortkeys);
+	COMPARE_NODE_FIELD(innersortkeys);
+
 	return true;
 }
 
@@ -514,23 +503,16 @@ _equalHashPath(HashPath *a, HashPath *b)
 {
 	if (!_equalJoinPath((JoinPath *) a, (JoinPath *) b))
 		return false;
-	if (!equal(a->path_hashclauses, b->path_hashclauses))
-		return false;
+	COMPARE_NODE_FIELD(path_hashclauses);
+
 	return true;
 }
 
 static bool
-_equalSubPlan(SubPlan *a, SubPlan *b)
+_equalPathKeyItem(PathKeyItem *a, PathKeyItem *b)
 {
-	/* should compare plans, but have to settle for comparing plan IDs */
-	if (a->plan_id != b->plan_id)
-		return false;
-
-	if (!equal(a->rtable, b->rtable))
-		return false;
-
-	if (!equal(a->sublink, b->sublink))
-		return false;
+	COMPARE_NODE_FIELD(key);
+	COMPARE_SCALAR_FIELD(sortop);
 
 	return true;
 }
@@ -538,49 +520,41 @@ _equalSubPlan(SubPlan *a, SubPlan *b)
 static bool
 _equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 {
-	if (!equal(a->clause, b->clause))
-		return false;
-	if (a->ispusheddown != b->ispusheddown)
-		return false;
-
+	COMPARE_NODE_FIELD(clause);
+	COMPARE_SCALAR_FIELD(ispusheddown);
 	/*
 	 * We ignore subclauseindices, eval_cost, this_selec, left/right_pathkey,
 	 * and left/right_bucketsize, since they may not be set yet, and should be
 	 * derivable from the clause anyway.  Probably it's not really necessary
 	 * to compare any of these remaining fields ...
 	 */
-	if (a->mergejoinoperator != b->mergejoinoperator)
-		return false;
-	if (a->left_sortop != b->left_sortop)
-		return false;
-	if (a->right_sortop != b->right_sortop)
-		return false;
-	if (a->hashjoinoperator != b->hashjoinoperator)
-		return false;
+	COMPARE_SCALAR_FIELD(mergejoinoperator);
+	COMPARE_SCALAR_FIELD(left_sortop);
+	COMPARE_SCALAR_FIELD(right_sortop);
+	COMPARE_SCALAR_FIELD(hashjoinoperator);
+
 	return true;
 }
 
 static bool
 _equalJoinInfo(JoinInfo *a, JoinInfo *b)
 {
-	if (!equali(a->unjoined_relids, b->unjoined_relids))
-		return false;
-	if (!equal(a->jinfo_restrictinfo, b->jinfo_restrictinfo))
-		return false;
+	COMPARE_INTLIST_FIELD(unjoined_relids);
+	COMPARE_NODE_FIELD(jinfo_restrictinfo);
+
 	return true;
 }
 
 static bool
 _equalInnerIndexscanInfo(InnerIndexscanInfo *a, InnerIndexscanInfo *b)
 {
-	if (!equali(a->other_relids, b->other_relids))
-		return false;
-	if (a->isouterjoin != b->isouterjoin)
-		return false;
-	if (!equal(a->best_innerpath, b->best_innerpath))
-		return false;
+	COMPARE_INTLIST_FIELD(other_relids);
+	COMPARE_SCALAR_FIELD(isouterjoin);
+	COMPARE_NODE_FIELD(best_innerpath);
+
 	return true;
 }
+
 
 /*
  * Stuff from parsenodes.h
@@ -589,48 +563,27 @@ _equalInnerIndexscanInfo(InnerIndexscanInfo *a, InnerIndexscanInfo *b)
 static bool
 _equalQuery(Query *a, Query *b)
 {
-	if (a->commandType != b->commandType)
-		return false;
-	if (a->querySource != b->querySource)
-		return false;
-	if (!equal(a->utilityStmt, b->utilityStmt))
-		return false;
-	if (a->resultRelation != b->resultRelation)
-		return false;
-	if (!equal(a->into, b->into))
-		return false;
-	if (a->isPortal != b->isPortal)
-		return false;
-	if (a->isBinary != b->isBinary)
-		return false;
-	if (a->hasAggs != b->hasAggs)
-		return false;
-	if (a->hasSubLinks != b->hasSubLinks)
-		return false;
-	if (!equal(a->rtable, b->rtable))
-		return false;
-	if (!equal(a->jointree, b->jointree))
-		return false;
-	if (!equali(a->rowMarks, b->rowMarks))
-		return false;
-	if (!equal(a->targetList, b->targetList))
-		return false;
-	if (!equal(a->groupClause, b->groupClause))
-		return false;
-	if (!equal(a->havingQual, b->havingQual))
-		return false;
-	if (!equal(a->distinctClause, b->distinctClause))
-		return false;
-	if (!equal(a->sortClause, b->sortClause))
-		return false;
-	if (!equal(a->limitOffset, b->limitOffset))
-		return false;
-	if (!equal(a->limitCount, b->limitCount))
-		return false;
-	if (!equal(a->setOperations, b->setOperations))
-		return false;
-	if (!equali(a->resultRelations, b->resultRelations))
-		return false;
+	COMPARE_SCALAR_FIELD(commandType);
+	COMPARE_SCALAR_FIELD(querySource);
+	COMPARE_NODE_FIELD(utilityStmt);
+	COMPARE_SCALAR_FIELD(resultRelation);
+	COMPARE_NODE_FIELD(into);
+	COMPARE_SCALAR_FIELD(isPortal);
+	COMPARE_SCALAR_FIELD(isBinary);
+	COMPARE_SCALAR_FIELD(hasAggs);
+	COMPARE_SCALAR_FIELD(hasSubLinks);
+	COMPARE_NODE_FIELD(rtable);
+	COMPARE_NODE_FIELD(jointree);
+	COMPARE_INTLIST_FIELD(rowMarks);
+	COMPARE_NODE_FIELD(targetList);
+	COMPARE_NODE_FIELD(groupClause);
+	COMPARE_NODE_FIELD(havingQual);
+	COMPARE_NODE_FIELD(distinctClause);
+	COMPARE_NODE_FIELD(sortClause);
+	COMPARE_NODE_FIELD(limitOffset);
+	COMPARE_NODE_FIELD(limitCount);
+	COMPARE_NODE_FIELD(setOperations);
+	COMPARE_INTLIST_FIELD(resultRelations);
 
 	/*
 	 * We do not check the internal-to-the-planner fields: base_rel_list,
@@ -644,14 +597,10 @@ _equalQuery(Query *a, Query *b)
 static bool
 _equalInsertStmt(InsertStmt *a, InsertStmt *b)
 {
-	if (!equal(a->relation, b->relation))
-		return false;
-	if (!equal(a->cols, b->cols))
-		return false;
-	if (!equal(a->targetList, b->targetList))
-		return false;
-	if (!equal(a->selectStmt, b->selectStmt))
-		return false;
+	COMPARE_NODE_FIELD(relation);
+	COMPARE_NODE_FIELD(cols);
+	COMPARE_NODE_FIELD(targetList);
+	COMPARE_NODE_FIELD(selectStmt);
 
 	return true;
 }
@@ -659,10 +608,8 @@ _equalInsertStmt(InsertStmt *a, InsertStmt *b)
 static bool
 _equalDeleteStmt(DeleteStmt *a, DeleteStmt *b)
 {
-	if (!equal(a->relation, b->relation))
-		return false;
-	if (!equal(a->whereClause, b->whereClause))
-		return false;
+	COMPARE_NODE_FIELD(relation);
+	COMPARE_NODE_FIELD(whereClause);
 
 	return true;
 }
@@ -670,14 +617,10 @@ _equalDeleteStmt(DeleteStmt *a, DeleteStmt *b)
 static bool
 _equalUpdateStmt(UpdateStmt *a, UpdateStmt *b)
 {
-	if (!equal(a->relation, b->relation))
-		return false;
-	if (!equal(a->targetList, b->targetList))
-		return false;
-	if (!equal(a->whereClause, b->whereClause))
-		return false;
-	if (!equal(a->fromClause, b->fromClause))
-		return false;
+	COMPARE_NODE_FIELD(relation);
+	COMPARE_NODE_FIELD(targetList);
+	COMPARE_NODE_FIELD(whereClause);
+	COMPARE_NODE_FIELD(fromClause);
 
 	return true;
 }
@@ -685,42 +628,24 @@ _equalUpdateStmt(UpdateStmt *a, UpdateStmt *b)
 static bool
 _equalSelectStmt(SelectStmt *a, SelectStmt *b)
 {
-	if (!equal(a->distinctClause, b->distinctClause))
-		return false;
-	if (!equal(a->into, b->into))
-		return false;
-	if (!equal(a->intoColNames, b->intoColNames))
-		return false;
-	if (!equal(a->targetList, b->targetList))
-		return false;
-	if (!equal(a->fromClause, b->fromClause))
-		return false;
-	if (!equal(a->whereClause, b->whereClause))
-		return false;
-	if (!equal(a->groupClause, b->groupClause))
-		return false;
-	if (!equal(a->havingClause, b->havingClause))
-		return false;
-	if (!equal(a->sortClause, b->sortClause))
-		return false;
-	if (!equalstr(a->portalname, b->portalname))
-		return false;
-	if (a->binary != b->binary)
-		return false;
-	if (!equal(a->limitOffset, b->limitOffset))
-		return false;
-	if (!equal(a->limitCount, b->limitCount))
-		return false;
-	if (!equal(a->forUpdate, b->forUpdate))
-		return false;
-	if (a->op != b->op)
-		return false;
-	if (a->all != b->all)
-		return false;
-	if (!equal(a->larg, b->larg))
-		return false;
-	if (!equal(a->rarg, b->rarg))
-		return false;
+	COMPARE_NODE_FIELD(distinctClause);
+	COMPARE_NODE_FIELD(into);
+	COMPARE_NODE_FIELD(intoColNames);
+	COMPARE_NODE_FIELD(targetList);
+	COMPARE_NODE_FIELD(fromClause);
+	COMPARE_NODE_FIELD(whereClause);
+	COMPARE_NODE_FIELD(groupClause);
+	COMPARE_NODE_FIELD(havingClause);
+	COMPARE_NODE_FIELD(sortClause);
+	COMPARE_STRING_FIELD(portalname);
+	COMPARE_SCALAR_FIELD(binary);
+	COMPARE_NODE_FIELD(limitOffset);
+	COMPARE_NODE_FIELD(limitCount);
+	COMPARE_NODE_FIELD(forUpdate);
+	COMPARE_SCALAR_FIELD(op);
+	COMPARE_SCALAR_FIELD(all);
+	COMPARE_NODE_FIELD(larg);
+	COMPARE_NODE_FIELD(rarg);
 
 	return true;
 }
@@ -728,16 +653,11 @@ _equalSelectStmt(SelectStmt *a, SelectStmt *b)
 static bool
 _equalSetOperationStmt(SetOperationStmt *a, SetOperationStmt *b)
 {
-	if (a->op != b->op)
-		return false;
-	if (a->all != b->all)
-		return false;
-	if (!equal(a->larg, b->larg))
-		return false;
-	if (!equal(a->rarg, b->rarg))
-		return false;
-	if (!equali(a->colTypes, b->colTypes))
-		return false;
+	COMPARE_SCALAR_FIELD(op);
+	COMPARE_SCALAR_FIELD(all);
+	COMPARE_NODE_FIELD(larg);
+	COMPARE_NODE_FIELD(rarg);
+	COMPARE_INTLIST_FIELD(colTypes);
 
 	return true;
 }
@@ -745,16 +665,11 @@ _equalSetOperationStmt(SetOperationStmt *a, SetOperationStmt *b)
 static bool
 _equalAlterTableStmt(AlterTableStmt *a, AlterTableStmt *b)
 {
-	if (a->subtype != b->subtype)
-		return false;
-	if (!equal(a->relation, b->relation))
-		return false;
-	if (!equalstr(a->name, b->name))
-		return false;
-	if (!equal(a->def, b->def))
-		return false;
-	if (a->behavior != b->behavior)
-		return false;
+	COMPARE_SCALAR_FIELD(subtype);
+	COMPARE_NODE_FIELD(relation);
+	COMPARE_STRING_FIELD(name);
+	COMPARE_NODE_FIELD(def);
+	COMPARE_SCALAR_FIELD(behavior);
 
 	return true;
 }
@@ -762,16 +677,11 @@ _equalAlterTableStmt(AlterTableStmt *a, AlterTableStmt *b)
 static bool
 _equalGrantStmt(GrantStmt *a, GrantStmt *b)
 {
-	if (a->is_grant != b->is_grant)
-		return false;
-	if (a->objtype != b->objtype)
-		return false;
-	if (!equal(a->objects, b->objects))
-		return false;
-	if (!equali(a->privileges, b->privileges))
-		return false;
-	if (!equal(a->grantees, b->grantees))
-		return false;
+	COMPARE_SCALAR_FIELD(is_grant);
+	COMPARE_SCALAR_FIELD(objtype);
+	COMPARE_NODE_FIELD(objects);
+	COMPARE_INTLIST_FIELD(privileges);
+	COMPARE_NODE_FIELD(grantees);
 
 	return true;
 }
@@ -779,15 +689,19 @@ _equalGrantStmt(GrantStmt *a, GrantStmt *b)
 static bool
 _equalPrivGrantee(PrivGrantee *a, PrivGrantee *b)
 {
-	return equalstr(a->username, b->username)
-		&& equalstr(a->groupname, b->groupname);
+	COMPARE_STRING_FIELD(username);
+	COMPARE_STRING_FIELD(groupname);
+
+	return true;
 }
 
 static bool
 _equalFuncWithArgs(FuncWithArgs *a, FuncWithArgs *b)
 {
-	return equal(a->funcname, b->funcname)
-		&& equal(a->funcargs, b->funcargs);
+	COMPARE_NODE_FIELD(funcname);
+	COMPARE_NODE_FIELD(funcargs);
+
+	return true;
 }
 
 static bool
@@ -799,8 +713,7 @@ _equalInsertDefault(InsertDefault *a, InsertDefault *b)
 static bool
 _equalClosePortalStmt(ClosePortalStmt *a, ClosePortalStmt *b)
 {
-	if (!equalstr(a->portalname, b->portalname))
-		return false;
+	COMPARE_STRING_FIELD(portalname);
 
 	return true;
 }
@@ -808,10 +721,8 @@ _equalClosePortalStmt(ClosePortalStmt *a, ClosePortalStmt *b)
 static bool
 _equalClusterStmt(ClusterStmt *a, ClusterStmt *b)
 {
-	if (!equal(a->relation, b->relation))
-		return false;
-	if (!equalstr(a->indexname, b->indexname))
-		return false;
+	COMPARE_NODE_FIELD(relation);
+	COMPARE_STRING_FIELD(indexname);
 
 	return true;
 }
@@ -819,16 +730,11 @@ _equalClusterStmt(ClusterStmt *a, ClusterStmt *b)
 static bool
 _equalCopyStmt(CopyStmt *a, CopyStmt *b)
 {
-	if (!equal(a->relation, b->relation))
-		return false;
-	if (!equal(a->attlist, b->attlist))
-		return false;
-	if (a->is_from != b->is_from)
-		return false;
-	if (!equalstr(a->filename, b->filename))
-		return false;
-	if (!equal(a->options, b->options))
-		return false;
+	COMPARE_NODE_FIELD(relation);
+	COMPARE_NODE_FIELD(attlist);
+	COMPARE_SCALAR_FIELD(is_from);
+	COMPARE_STRING_FIELD(filename);
+	COMPARE_NODE_FIELD(options);
 
 	return true;
 }
@@ -836,18 +742,12 @@ _equalCopyStmt(CopyStmt *a, CopyStmt *b)
 static bool
 _equalCreateStmt(CreateStmt *a, CreateStmt *b)
 {
-	if (!equal(a->relation, b->relation))
-		return false;
-	if (!equal(a->tableElts, b->tableElts))
-		return false;
-	if (!equal(a->inhRelations, b->inhRelations))
-		return false;
-	if (!equal(a->constraints, b->constraints))
-		return false;
-	if (a->hasoids != b->hasoids)
-		return false;
-	if (a->oncommit != b->oncommit)
-		return false;
+	COMPARE_NODE_FIELD(relation);
+	COMPARE_NODE_FIELD(tableElts);
+	COMPARE_NODE_FIELD(inhRelations);
+	COMPARE_NODE_FIELD(constraints);
+	COMPARE_SCALAR_FIELD(hasoids);
+	COMPARE_SCALAR_FIELD(oncommit);
 
 	return true;
 }
@@ -855,12 +755,9 @@ _equalCreateStmt(CreateStmt *a, CreateStmt *b)
 static bool
 _equalDefineStmt(DefineStmt *a, DefineStmt *b)
 {
-	if (a->defType != b->defType)
-		return false;
-	if (!equal(a->defnames, b->defnames))
-		return false;
-	if (!equal(a->definition, b->definition))
-		return false;
+	COMPARE_SCALAR_FIELD(defType);
+	COMPARE_NODE_FIELD(defnames);
+	COMPARE_NODE_FIELD(definition);
 
 	return true;
 }
@@ -868,12 +765,9 @@ _equalDefineStmt(DefineStmt *a, DefineStmt *b)
 static bool
 _equalDropStmt(DropStmt *a, DropStmt *b)
 {
-	if (!equal(a->objects, b->objects))
-		return false;
-	if (a->removeType != b->removeType)
-		return false;
-	if (a->behavior != b->behavior)
-		return false;
+	COMPARE_NODE_FIELD(objects);
+	COMPARE_SCALAR_FIELD(removeType);
+	COMPARE_SCALAR_FIELD(behavior);
 
 	return true;
 }
@@ -881,8 +775,7 @@ _equalDropStmt(DropStmt *a, DropStmt *b)
 static bool
 _equalTruncateStmt(TruncateStmt *a, TruncateStmt *b)
 {
-	if (!equal(a->relation, b->relation))
-		return false;
+	COMPARE_NODE_FIELD(relation);
 
 	return true;
 }
@@ -890,14 +783,10 @@ _equalTruncateStmt(TruncateStmt *a, TruncateStmt *b)
 static bool
 _equalCommentStmt(CommentStmt *a, CommentStmt *b)
 {
-	if (a->objtype != b->objtype)
-		return false;
-	if (!equal(a->objname, b->objname))
-		return false;
-	if (!equal(a->objargs, b->objargs))
-		return false;
-	if (!equalstr(a->comment, b->comment))
-		return false;
+	COMPARE_SCALAR_FIELD(objtype);
+	COMPARE_NODE_FIELD(objname);
+	COMPARE_NODE_FIELD(objargs);
+	COMPARE_STRING_FIELD(comment);
 
 	return true;
 }
@@ -905,14 +794,10 @@ _equalCommentStmt(CommentStmt *a, CommentStmt *b)
 static bool
 _equalFetchStmt(FetchStmt *a, FetchStmt *b)
 {
-	if (a->direction != b->direction)
-		return false;
-	if (a->howMany != b->howMany)
-		return false;
-	if (!equalstr(a->portalname, b->portalname))
-		return false;
-	if (a->ismove != b->ismove)
-		return false;
+	COMPARE_SCALAR_FIELD(direction);
+	COMPARE_SCALAR_FIELD(howMany);
+	COMPARE_STRING_FIELD(portalname);
+	COMPARE_SCALAR_FIELD(ismove);
 
 	return true;
 }
@@ -920,24 +805,15 @@ _equalFetchStmt(FetchStmt *a, FetchStmt *b)
 static bool
 _equalIndexStmt(IndexStmt *a, IndexStmt *b)
 {
-	if (!equalstr(a->idxname, b->idxname))
-		return false;
-	if (!equal(a->relation, b->relation))
-		return false;
-	if (!equalstr(a->accessMethod, b->accessMethod))
-		return false;
-	if (!equal(a->indexParams, b->indexParams))
-		return false;
-	if (!equal(a->whereClause, b->whereClause))
-		return false;
-	if (!equal(a->rangetable, b->rangetable))
-		return false;
-	if (a->unique != b->unique)
-		return false;
-	if (a->primary != b->primary)
-		return false;
-	if (a->isconstraint != b->isconstraint)
-		return false;
+	COMPARE_STRING_FIELD(idxname);
+	COMPARE_NODE_FIELD(relation);
+	COMPARE_STRING_FIELD(accessMethod);
+	COMPARE_NODE_FIELD(indexParams);
+	COMPARE_NODE_FIELD(whereClause);
+	COMPARE_NODE_FIELD(rangetable);
+	COMPARE_SCALAR_FIELD(unique);
+	COMPARE_SCALAR_FIELD(primary);
+	COMPARE_SCALAR_FIELD(isconstraint);
 
 	return true;
 }
@@ -945,18 +821,12 @@ _equalIndexStmt(IndexStmt *a, IndexStmt *b)
 static bool
 _equalCreateFunctionStmt(CreateFunctionStmt *a, CreateFunctionStmt *b)
 {
-	if (a->replace != b->replace)
-		return false;
-	if (!equal(a->funcname, b->funcname))
-		return false;
-	if (!equal(a->argTypes, b->argTypes))
-		return false;
-	if (!equal(a->returnType, b->returnType))
-		return false;
-	if (!equal(a->options, b->options))
-		return false;
-	if (!equal(a->withClause, b->withClause))
-		return false;
+	COMPARE_SCALAR_FIELD(replace);
+	COMPARE_NODE_FIELD(funcname);
+	COMPARE_NODE_FIELD(argTypes);
+	COMPARE_NODE_FIELD(returnType);
+	COMPARE_NODE_FIELD(options);
+	COMPARE_NODE_FIELD(withClause);
 
 	return true;
 }
@@ -964,12 +834,9 @@ _equalCreateFunctionStmt(CreateFunctionStmt *a, CreateFunctionStmt *b)
 static bool
 _equalRemoveAggrStmt(RemoveAggrStmt *a, RemoveAggrStmt *b)
 {
-	if (!equal(a->aggname, b->aggname))
-		return false;
-	if (!equal(a->aggtype, b->aggtype))
-		return false;
-	if (a->behavior != b->behavior)
-		return false;
+	COMPARE_NODE_FIELD(aggname);
+	COMPARE_NODE_FIELD(aggtype);
+	COMPARE_SCALAR_FIELD(behavior);
 
 	return true;
 }
@@ -977,12 +844,9 @@ _equalRemoveAggrStmt(RemoveAggrStmt *a, RemoveAggrStmt *b)
 static bool
 _equalRemoveFuncStmt(RemoveFuncStmt *a, RemoveFuncStmt *b)
 {
-	if (!equal(a->funcname, b->funcname))
-		return false;
-	if (!equal(a->args, b->args))
-		return false;
-	if (a->behavior != b->behavior)
-		return false;
+	COMPARE_NODE_FIELD(funcname);
+	COMPARE_NODE_FIELD(args);
+	COMPARE_SCALAR_FIELD(behavior);
 
 	return true;
 }
@@ -990,12 +854,9 @@ _equalRemoveFuncStmt(RemoveFuncStmt *a, RemoveFuncStmt *b)
 static bool
 _equalRemoveOperStmt(RemoveOperStmt *a, RemoveOperStmt *b)
 {
-	if (!equal(a->opname, b->opname))
-		return false;
-	if (!equal(a->args, b->args))
-		return false;
-	if (a->behavior != b->behavior)
-		return false;
+	COMPARE_NODE_FIELD(opname);
+	COMPARE_NODE_FIELD(args);
+	COMPARE_SCALAR_FIELD(behavior);
 
 	return true;
 }
@@ -1003,12 +864,9 @@ _equalRemoveOperStmt(RemoveOperStmt *a, RemoveOperStmt *b)
 static bool
 _equalRemoveOpClassStmt(RemoveOpClassStmt *a, RemoveOpClassStmt *b)
 {
-	if (!equal(a->opclassname, b->opclassname))
-		return false;
-	if (!equalstr(a->amname, b->amname))
-		return false;
-	if (a->behavior != b->behavior)
-		return false;
+	COMPARE_NODE_FIELD(opclassname);
+	COMPARE_STRING_FIELD(amname);
+	COMPARE_SCALAR_FIELD(behavior);
 
 	return true;
 }
@@ -1016,14 +874,10 @@ _equalRemoveOpClassStmt(RemoveOpClassStmt *a, RemoveOpClassStmt *b)
 static bool
 _equalRenameStmt(RenameStmt *a, RenameStmt *b)
 {
-	if (!equal(a->relation, b->relation))
-		return false;
-	if (!equalstr(a->oldname, b->oldname))
-		return false;
-	if (!equalstr(a->newname, b->newname))
-		return false;
-	if (a->renameType != b->renameType)
-		return false;
+	COMPARE_NODE_FIELD(relation);
+	COMPARE_STRING_FIELD(oldname);
+	COMPARE_STRING_FIELD(newname);
+	COMPARE_SCALAR_FIELD(renameType);
 
 	return true;
 }
@@ -1031,20 +885,13 @@ _equalRenameStmt(RenameStmt *a, RenameStmt *b)
 static bool
 _equalRuleStmt(RuleStmt *a, RuleStmt *b)
 {
-	if (!equal(a->relation, b->relation))
-		return false;
-	if (!equalstr(a->rulename, b->rulename))
-		return false;
-	if (!equal(a->whereClause, b->whereClause))
-		return false;
-	if (a->event != b->event)
-		return false;
-	if (a->instead != b->instead)
-		return false;
-	if (a->replace != b->replace)
-		return false;
-	if (!equal(a->actions, b->actions))
-		return false;
+	COMPARE_NODE_FIELD(relation);
+	COMPARE_STRING_FIELD(rulename);
+	COMPARE_NODE_FIELD(whereClause);
+	COMPARE_SCALAR_FIELD(event);
+	COMPARE_SCALAR_FIELD(instead);
+	COMPARE_NODE_FIELD(actions);
+	COMPARE_SCALAR_FIELD(replace);
 
 	return true;
 }
@@ -1052,8 +899,7 @@ _equalRuleStmt(RuleStmt *a, RuleStmt *b)
 static bool
 _equalNotifyStmt(NotifyStmt *a, NotifyStmt *b)
 {
-	if (!equal(a->relation, b->relation))
-		return false;
+	COMPARE_NODE_FIELD(relation);
 
 	return true;
 }
@@ -1061,8 +907,7 @@ _equalNotifyStmt(NotifyStmt *a, NotifyStmt *b)
 static bool
 _equalListenStmt(ListenStmt *a, ListenStmt *b)
 {
-	if (!equal(a->relation, b->relation))
-		return false;
+	COMPARE_NODE_FIELD(relation);
 
 	return true;
 }
@@ -1070,8 +915,7 @@ _equalListenStmt(ListenStmt *a, ListenStmt *b)
 static bool
 _equalUnlistenStmt(UnlistenStmt *a, UnlistenStmt *b)
 {
-	if (!equal(a->relation, b->relation))
-		return false;
+	COMPARE_NODE_FIELD(relation);
 
 	return true;
 }
@@ -1079,10 +923,8 @@ _equalUnlistenStmt(UnlistenStmt *a, UnlistenStmt *b)
 static bool
 _equalTransactionStmt(TransactionStmt *a, TransactionStmt *b)
 {
-	if (a->command != b->command)
-		return false;
-	if (!equal(a->options, b->options))
-		return false;
+	COMPARE_SCALAR_FIELD(command);
+	COMPARE_NODE_FIELD(options);
 
 	return true;
 }
@@ -1090,10 +932,8 @@ _equalTransactionStmt(TransactionStmt *a, TransactionStmt *b)
 static bool
 _equalCompositeTypeStmt(CompositeTypeStmt *a, CompositeTypeStmt *b)
 {
-	if (!equal(a->typevar, b->typevar))
-		return false;
-	if (!equal(a->coldeflist, b->coldeflist))
-		return false;
+	COMPARE_NODE_FIELD(typevar);
+	COMPARE_NODE_FIELD(coldeflist);
 
 	return true;
 }
@@ -1101,14 +941,10 @@ _equalCompositeTypeStmt(CompositeTypeStmt *a, CompositeTypeStmt *b)
 static bool
 _equalViewStmt(ViewStmt *a, ViewStmt *b)
 {
-	if (!equal(a->view, b->view))
-		return false;
-	if (!equal(a->aliases, b->aliases))
-		return false;
-	if (!equal(a->query, b->query))
-		return false;
-	if (a->replace != b->replace)
-		return false;
+	COMPARE_NODE_FIELD(view);
+	COMPARE_NODE_FIELD(aliases);
+	COMPARE_NODE_FIELD(query);
+	COMPARE_SCALAR_FIELD(replace);
 
 	return true;
 }
@@ -1116,8 +952,7 @@ _equalViewStmt(ViewStmt *a, ViewStmt *b)
 static bool
 _equalLoadStmt(LoadStmt *a, LoadStmt *b)
 {
-	if (!equalstr(a->filename, b->filename))
-		return false;
+	COMPARE_STRING_FIELD(filename);
 
 	return true;
 }
@@ -1125,12 +960,9 @@ _equalLoadStmt(LoadStmt *a, LoadStmt *b)
 static bool
 _equalCreateDomainStmt(CreateDomainStmt *a, CreateDomainStmt *b)
 {
-	if (!equal(a->domainname, b->domainname))
-		return false;
-	if (!equal(a->typename, b->typename))
-		return false;
-	if (!equal(a->constraints, b->constraints))
-		return false;
+	COMPARE_NODE_FIELD(domainname);
+	COMPARE_NODE_FIELD(typename);
+	COMPARE_NODE_FIELD(constraints);
 
 	return true;
 }
@@ -1138,16 +970,11 @@ _equalCreateDomainStmt(CreateDomainStmt *a, CreateDomainStmt *b)
 static bool
 _equalCreateOpClassStmt(CreateOpClassStmt *a, CreateOpClassStmt *b)
 {
-	if (!equal(a->opclassname, b->opclassname))
-		return false;
-	if (!equalstr(a->amname, b->amname))
-		return false;
-	if (!equal(a->datatype, b->datatype))
-		return false;
-	if (!equal(a->items, b->items))
-		return false;
-	if (a->isDefault != b->isDefault)
-		return false;
+	COMPARE_NODE_FIELD(opclassname);
+	COMPARE_STRING_FIELD(amname);
+	COMPARE_NODE_FIELD(datatype);
+	COMPARE_NODE_FIELD(items);
+	COMPARE_SCALAR_FIELD(isDefault);
 
 	return true;
 }
@@ -1155,18 +982,12 @@ _equalCreateOpClassStmt(CreateOpClassStmt *a, CreateOpClassStmt *b)
 static bool
 _equalCreateOpClassItem(CreateOpClassItem *a, CreateOpClassItem *b)
 {
-	if (a->itemtype != b->itemtype)
-		return false;
-	if (!equal(a->name, b->name))
-		return false;
-	if (!equal(a->args, b->args))
-		return false;
-	if (a->number != b->number)
-		return false;
-	if (a->recheck != b->recheck)
-		return false;
-	if (!equal(a->storedtype, b->storedtype))
-		return false;
+	COMPARE_SCALAR_FIELD(itemtype);
+	COMPARE_NODE_FIELD(name);
+	COMPARE_NODE_FIELD(args);
+	COMPARE_SCALAR_FIELD(number);
+	COMPARE_SCALAR_FIELD(recheck);
+	COMPARE_NODE_FIELD(storedtype);
 
 	return true;
 }
@@ -1174,10 +995,8 @@ _equalCreateOpClassItem(CreateOpClassItem *a, CreateOpClassItem *b)
 static bool
 _equalCreatedbStmt(CreatedbStmt *a, CreatedbStmt *b)
 {
-	if (!equalstr(a->dbname, b->dbname))
-		return false;
-	if (!equal(a->options, b->options))
-		return false;
+	COMPARE_STRING_FIELD(dbname);
+	COMPARE_NODE_FIELD(options);
 
 	return true;
 }
@@ -1185,12 +1004,9 @@ _equalCreatedbStmt(CreatedbStmt *a, CreatedbStmt *b)
 static bool
 _equalAlterDatabaseSetStmt(AlterDatabaseSetStmt *a, AlterDatabaseSetStmt *b)
 {
-	if (!equalstr(a->dbname, b->dbname))
-		return false;
-	if (!equalstr(a->variable, b->variable))
-		return false;
-	if (!equal(a->value, b->value))
-		return false;
+	COMPARE_STRING_FIELD(dbname);
+	COMPARE_STRING_FIELD(variable);
+	COMPARE_NODE_FIELD(value);
 
 	return true;
 }
@@ -1198,8 +1014,7 @@ _equalAlterDatabaseSetStmt(AlterDatabaseSetStmt *a, AlterDatabaseSetStmt *b)
 static bool
 _equalDropdbStmt(DropdbStmt *a, DropdbStmt *b)
 {
-	if (!equalstr(a->dbname, b->dbname))
-		return false;
+	COMPARE_STRING_FIELD(dbname);
 
 	return true;
 }
@@ -1207,20 +1022,13 @@ _equalDropdbStmt(DropdbStmt *a, DropdbStmt *b)
 static bool
 _equalVacuumStmt(VacuumStmt *a, VacuumStmt *b)
 {
-	if (a->vacuum != b->vacuum)
-		return false;
-	if (a->full != b->full)
-		return false;
-	if (a->analyze != b->analyze)
-		return false;
-	if (a->freeze != b->freeze)
-		return false;
-	if (a->verbose != b->verbose)
-		return false;
-	if (!equal(a->relation, b->relation))
-		return false;
-	if (!equal(a->va_cols, b->va_cols))
-		return false;
+	COMPARE_SCALAR_FIELD(vacuum);
+	COMPARE_SCALAR_FIELD(full);
+	COMPARE_SCALAR_FIELD(analyze);
+	COMPARE_SCALAR_FIELD(freeze);
+	COMPARE_SCALAR_FIELD(verbose);
+	COMPARE_NODE_FIELD(relation);
+	COMPARE_NODE_FIELD(va_cols);
 
 	return true;
 }
@@ -1228,12 +1036,9 @@ _equalVacuumStmt(VacuumStmt *a, VacuumStmt *b)
 static bool
 _equalExplainStmt(ExplainStmt *a, ExplainStmt *b)
 {
-	if (!equal(a->query, b->query))
-		return false;
-	if (a->verbose != b->verbose)
-		return false;
-	if (a->analyze != b->analyze)
-		return false;
+	COMPARE_NODE_FIELD(query);
+	COMPARE_SCALAR_FIELD(verbose);
+	COMPARE_SCALAR_FIELD(analyze);
 
 	return true;
 }
@@ -1241,10 +1046,8 @@ _equalExplainStmt(ExplainStmt *a, ExplainStmt *b)
 static bool
 _equalCreateSeqStmt(CreateSeqStmt *a, CreateSeqStmt *b)
 {
-	if (!equal(a->sequence, b->sequence))
-		return false;
-	if (!equal(a->options, b->options))
-		return false;
+	COMPARE_NODE_FIELD(sequence);
+	COMPARE_NODE_FIELD(options);
 
 	return true;
 }
@@ -1252,12 +1055,9 @@ _equalCreateSeqStmt(CreateSeqStmt *a, CreateSeqStmt *b)
 static bool
 _equalVariableSetStmt(VariableSetStmt *a, VariableSetStmt *b)
 {
-	if (!equalstr(a->name, b->name))
-		return false;
-	if (!equal(a->args, b->args))
-		return false;
-	if (a->is_local != b->is_local)
-		return false;
+	COMPARE_STRING_FIELD(name);
+	COMPARE_NODE_FIELD(args);
+	COMPARE_SCALAR_FIELD(is_local);
 
 	return true;
 }
@@ -1265,8 +1065,7 @@ _equalVariableSetStmt(VariableSetStmt *a, VariableSetStmt *b)
 static bool
 _equalVariableShowStmt(VariableShowStmt *a, VariableShowStmt *b)
 {
-	if (!equalstr(a->name, b->name))
-		return false;
+	COMPARE_STRING_FIELD(name);
 
 	return true;
 }
@@ -1274,8 +1073,7 @@ _equalVariableShowStmt(VariableShowStmt *a, VariableShowStmt *b)
 static bool
 _equalVariableResetStmt(VariableResetStmt *a, VariableResetStmt *b)
 {
-	if (!equalstr(a->name, b->name))
-		return false;
+	COMPARE_STRING_FIELD(name);
 
 	return true;
 }
@@ -1283,28 +1081,18 @@ _equalVariableResetStmt(VariableResetStmt *a, VariableResetStmt *b)
 static bool
 _equalCreateTrigStmt(CreateTrigStmt *a, CreateTrigStmt *b)
 {
-	if (!equalstr(a->trigname, b->trigname))
+	COMPARE_STRING_FIELD(trigname);
+	COMPARE_NODE_FIELD(relation);
+	COMPARE_NODE_FIELD(funcname);
+	COMPARE_NODE_FIELD(args);
+	COMPARE_SCALAR_FIELD(before);
+	COMPARE_SCALAR_FIELD(row);
+	if (strcmp(a->actions, b->actions) != 0) /* in-line string field */
 		return false;
-	if (!equal(a->relation, b->relation))
-		return false;
-	if (!equal(a->funcname, b->funcname))
-		return false;
-	if (!equal(a->args, b->args))
-		return false;
-	if (a->before != b->before)
-		return false;
-	if (a->row != b->row)
-		return false;
-	if (strcmp(a->actions, b->actions) != 0)
-		return false;
-	if (a->isconstraint != b->isconstraint)
-		return false;
-	if (a->deferrable != b->deferrable)
-		return false;
-	if (a->initdeferred != b->initdeferred)
-		return false;
-	if (!equal(a->constrrel, b->constrrel))
-		return false;
+	COMPARE_SCALAR_FIELD(isconstraint);
+	COMPARE_SCALAR_FIELD(deferrable);
+	COMPARE_SCALAR_FIELD(initdeferred);
+	COMPARE_NODE_FIELD(constrrel);
 
 	return true;
 }
@@ -1312,14 +1100,10 @@ _equalCreateTrigStmt(CreateTrigStmt *a, CreateTrigStmt *b)
 static bool
 _equalDropPropertyStmt(DropPropertyStmt *a, DropPropertyStmt *b)
 {
-	if (!equal(a->relation, b->relation))
-		return false;
-	if (!equalstr(a->property, b->property))
-		return false;
-	if (a->removeType != b->removeType)
-		return false;
-	if (a->behavior != b->behavior)
-		return false;
+	COMPARE_NODE_FIELD(relation);
+	COMPARE_STRING_FIELD(property);
+	COMPARE_SCALAR_FIELD(removeType);
+	COMPARE_SCALAR_FIELD(behavior);
 
 	return true;
 }
@@ -1327,14 +1111,10 @@ _equalDropPropertyStmt(DropPropertyStmt *a, DropPropertyStmt *b)
 static bool
 _equalCreatePLangStmt(CreatePLangStmt *a, CreatePLangStmt *b)
 {
-	if (!equalstr(a->plname, b->plname))
-		return false;
-	if (!equal(a->plhandler, b->plhandler))
-		return false;
-	if (!equal(a->plvalidator, b->plvalidator))
-		return false;
-	if (a->pltrusted != b->pltrusted)
-		return false;
+	COMPARE_STRING_FIELD(plname);
+	COMPARE_NODE_FIELD(plhandler);
+	COMPARE_NODE_FIELD(plvalidator);
+	COMPARE_SCALAR_FIELD(pltrusted);
 
 	return true;
 }
@@ -1342,10 +1122,8 @@ _equalCreatePLangStmt(CreatePLangStmt *a, CreatePLangStmt *b)
 static bool
 _equalDropPLangStmt(DropPLangStmt *a, DropPLangStmt *b)
 {
-	if (!equalstr(a->plname, b->plname))
-		return false;
-	if (a->behavior != b->behavior)
-		return false;
+	COMPARE_STRING_FIELD(plname);
+	COMPARE_SCALAR_FIELD(behavior);
 
 	return true;
 }
@@ -1353,10 +1131,8 @@ _equalDropPLangStmt(DropPLangStmt *a, DropPLangStmt *b)
 static bool
 _equalCreateUserStmt(CreateUserStmt *a, CreateUserStmt *b)
 {
-	if (!equalstr(a->user, b->user))
-		return false;
-	if (!equal(a->options, b->options))
-		return false;
+	COMPARE_STRING_FIELD(user);
+	COMPARE_NODE_FIELD(options);
 
 	return true;
 }
@@ -1364,10 +1140,8 @@ _equalCreateUserStmt(CreateUserStmt *a, CreateUserStmt *b)
 static bool
 _equalAlterUserStmt(AlterUserStmt *a, AlterUserStmt *b)
 {
-	if (!equalstr(a->user, b->user))
-		return false;
-	if (!equal(a->options, b->options))
-		return false;
+	COMPARE_STRING_FIELD(user);
+	COMPARE_NODE_FIELD(options);
 
 	return true;
 }
@@ -1375,12 +1149,9 @@ _equalAlterUserStmt(AlterUserStmt *a, AlterUserStmt *b)
 static bool
 _equalAlterUserSetStmt(AlterUserSetStmt *a, AlterUserSetStmt *b)
 {
-	if (!equalstr(a->user, b->user))
-		return false;
-	if (!equalstr(a->variable, b->variable))
-		return false;
-	if (!equal(a->value, b->value))
-		return false;
+	COMPARE_STRING_FIELD(user);
+	COMPARE_STRING_FIELD(variable);
+	COMPARE_NODE_FIELD(value);
 
 	return true;
 }
@@ -1388,8 +1159,7 @@ _equalAlterUserSetStmt(AlterUserSetStmt *a, AlterUserSetStmt *b)
 static bool
 _equalDropUserStmt(DropUserStmt *a, DropUserStmt *b)
 {
-	if (!equal(a->users, b->users))
-		return false;
+	COMPARE_NODE_FIELD(users);
 
 	return true;
 }
@@ -1397,10 +1167,8 @@ _equalDropUserStmt(DropUserStmt *a, DropUserStmt *b)
 static bool
 _equalLockStmt(LockStmt *a, LockStmt *b)
 {
-	if (!equal(a->relations, b->relations))
-		return false;
-	if (a->mode != b->mode)
-		return false;
+	COMPARE_NODE_FIELD(relations);
+	COMPARE_SCALAR_FIELD(mode);
 
 	return true;
 }
@@ -1408,10 +1176,8 @@ _equalLockStmt(LockStmt *a, LockStmt *b)
 static bool
 _equalConstraintsSetStmt(ConstraintsSetStmt *a, ConstraintsSetStmt *b)
 {
-	if (!equal(a->constraints, b->constraints))
-		return false;
-	if (a->deferred != b->deferred)
-		return false;
+	COMPARE_NODE_FIELD(constraints);
+	COMPARE_SCALAR_FIELD(deferred);
 
 	return true;
 }
@@ -1419,10 +1185,8 @@ _equalConstraintsSetStmt(ConstraintsSetStmt *a, ConstraintsSetStmt *b)
 static bool
 _equalCreateGroupStmt(CreateGroupStmt *a, CreateGroupStmt *b)
 {
-	if (!equalstr(a->name, b->name))
-		return false;
-	if (!equal(a->options, b->options))
-		return false;
+	COMPARE_STRING_FIELD(name);
+	COMPARE_NODE_FIELD(options);
 
 	return true;
 }
@@ -1430,12 +1194,9 @@ _equalCreateGroupStmt(CreateGroupStmt *a, CreateGroupStmt *b)
 static bool
 _equalAlterGroupStmt(AlterGroupStmt *a, AlterGroupStmt *b)
 {
-	if (!equalstr(a->name, b->name))
-		return false;
-	if (a->action != b->action)
-		return false;
-	if (!equal(a->listUsers, b->listUsers))
-		return false;
+	COMPARE_STRING_FIELD(name);
+	COMPARE_SCALAR_FIELD(action);
+	COMPARE_NODE_FIELD(listUsers);
 
 	return true;
 }
@@ -1443,8 +1204,7 @@ _equalAlterGroupStmt(AlterGroupStmt *a, AlterGroupStmt *b)
 static bool
 _equalDropGroupStmt(DropGroupStmt *a, DropGroupStmt *b)
 {
-	if (!equalstr(a->name, b->name))
-		return false;
+	COMPARE_STRING_FIELD(name);
 
 	return true;
 }
@@ -1452,16 +1212,11 @@ _equalDropGroupStmt(DropGroupStmt *a, DropGroupStmt *b)
 static bool
 _equalReindexStmt(ReindexStmt *a, ReindexStmt *b)
 {
-	if (a->reindexType != b->reindexType)
-		return false;
-	if (!equal(a->relation, b->relation))
-		return false;
-	if (!equalstr(a->name, b->name))
-		return false;
-	if (a->force != b->force)
-		return false;
-	if (a->all != b->all)
-		return false;
+	COMPARE_SCALAR_FIELD(reindexType);
+	COMPARE_NODE_FIELD(relation);
+	COMPARE_STRING_FIELD(name);
+	COMPARE_SCALAR_FIELD(force);
+	COMPARE_SCALAR_FIELD(all);
 
 	return true;
 }
@@ -1469,12 +1224,9 @@ _equalReindexStmt(ReindexStmt *a, ReindexStmt *b)
 static bool
 _equalCreateSchemaStmt(CreateSchemaStmt *a, CreateSchemaStmt *b)
 {
-	if (!equalstr(a->schemaname, b->schemaname))
-		return false;
-	if (!equalstr(a->authid, b->authid))
-		return false;
-	if (!equal(a->schemaElts, b->schemaElts))
-		return false;
+	COMPARE_STRING_FIELD(schemaname);
+	COMPARE_STRING_FIELD(authid);
+	COMPARE_NODE_FIELD(schemaElts);
 
 	return true;
 }
@@ -1482,16 +1234,11 @@ _equalCreateSchemaStmt(CreateSchemaStmt *a, CreateSchemaStmt *b)
 static bool
 _equalCreateConversionStmt(CreateConversionStmt *a, CreateConversionStmt *b)
 {
-	if (!equal(a->conversion_name, b->conversion_name))
-		return false;
-	if (!equalstr(a->for_encoding_name, b->for_encoding_name))
-		return false;
-	if (!equalstr(a->to_encoding_name, b->to_encoding_name))
-		return false;
-	if (!equal(a->func_name, b->func_name))
-		return false;
-	if (a->def != b->def)
-		return false;
+	COMPARE_NODE_FIELD(conversion_name);
+	COMPARE_STRING_FIELD(for_encoding_name);
+	COMPARE_STRING_FIELD(to_encoding_name);
+	COMPARE_NODE_FIELD(func_name);
+	COMPARE_SCALAR_FIELD(def);
 
 	return true;
 }
@@ -1499,14 +1246,10 @@ _equalCreateConversionStmt(CreateConversionStmt *a, CreateConversionStmt *b)
 static bool
 _equalCreateCastStmt(CreateCastStmt *a, CreateCastStmt *b)
 {
-	if (!equal(a->sourcetype, b->sourcetype))
-		return false;
-	if (!equal(a->targettype, b->targettype))
-		return false;
-	if (!equal(a->func, b->func))
-		return false;
-	if (a->context != b->context)
-		return false;
+	COMPARE_NODE_FIELD(sourcetype);
+	COMPARE_NODE_FIELD(targettype);
+	COMPARE_NODE_FIELD(func);
+	COMPARE_SCALAR_FIELD(context);
 
 	return true;
 }
@@ -1514,12 +1257,9 @@ _equalCreateCastStmt(CreateCastStmt *a, CreateCastStmt *b)
 static bool
 _equalDropCastStmt(DropCastStmt *a, DropCastStmt *b)
 {
-	if (!equal(a->sourcetype, b->sourcetype))
-		return false;
-	if (!equal(a->targettype, b->targettype))
-		return false;
-	if (a->behavior != b->behavior)
-		return false;
+	COMPARE_NODE_FIELD(sourcetype);
+	COMPARE_NODE_FIELD(targettype);
+	COMPARE_SCALAR_FIELD(behavior);
 
 	return true;
 }
@@ -1527,14 +1267,10 @@ _equalDropCastStmt(DropCastStmt *a, DropCastStmt *b)
 static bool
 _equalPrepareStmt(PrepareStmt *a, PrepareStmt *b)
 {
-	if (!equalstr(a->name, b->name))
-		return false;
-	if (!equal(a->argtypes, b->argtypes))
-		return false;
-	if (!equali(a->argtype_oids, b->argtype_oids))
-		return false;
-	if (!equal(a->query, b->query))
-		return false;
+	COMPARE_STRING_FIELD(name);
+	COMPARE_NODE_FIELD(argtypes);
+	COMPARE_INTLIST_FIELD(argtype_oids);
+	COMPARE_NODE_FIELD(query);
 
 	return true;
 }
@@ -1542,12 +1278,9 @@ _equalPrepareStmt(PrepareStmt *a, PrepareStmt *b)
 static bool
 _equalExecuteStmt(ExecuteStmt *a, ExecuteStmt *b)
 {
-	if (!equalstr(a->name, b->name))
-		return false;
-	if (!equal(a->into, b->into))
-		return false;
-	if (!equal(a->params, b->params))
-		return false;
+	COMPARE_STRING_FIELD(name);
+	COMPARE_NODE_FIELD(into);
+	COMPARE_NODE_FIELD(params);
 
 	return true;
 }
@@ -1555,23 +1288,23 @@ _equalExecuteStmt(ExecuteStmt *a, ExecuteStmt *b)
 static bool
 _equalDeallocateStmt(DeallocateStmt *a, DeallocateStmt *b)
 {
-	if (!equalstr(a->name, b->name))
-		return false;
+	COMPARE_STRING_FIELD(name);
 
 	return true;
 }
 
+
+/*
+ * stuff from parsenodes.h
+ */
+
 static bool
 _equalAExpr(A_Expr *a, A_Expr *b)
 {
-	if (a->oper != b->oper)
-		return false;
-	if (!equal(a->name, b->name))
-		return false;
-	if (!equal(a->lexpr, b->lexpr))
-		return false;
-	if (!equal(a->rexpr, b->rexpr))
-		return false;
+	COMPARE_SCALAR_FIELD(oper);
+	COMPARE_NODE_FIELD(name);
+	COMPARE_NODE_FIELD(lexpr);
+	COMPARE_NODE_FIELD(rexpr);
 
 	return true;
 }
@@ -1579,10 +1312,8 @@ _equalAExpr(A_Expr *a, A_Expr *b)
 static bool
 _equalColumnRef(ColumnRef *a, ColumnRef *b)
 {
-	if (!equal(a->fields, b->fields))
-		return false;
-	if (!equal(a->indirection, b->indirection))
-		return false;
+	COMPARE_NODE_FIELD(fields);
+	COMPARE_NODE_FIELD(indirection);
 
 	return true;
 }
@@ -1590,12 +1321,9 @@ _equalColumnRef(ColumnRef *a, ColumnRef *b)
 static bool
 _equalParamRef(ParamRef *a, ParamRef *b)
 {
-	if (a->number != b->number)
-		return false;
-	if (!equal(a->fields, b->fields))
-		return false;
-	if (!equal(a->indirection, b->indirection))
-		return false;
+	COMPARE_SCALAR_FIELD(number);
+	COMPARE_NODE_FIELD(fields);
+	COMPARE_NODE_FIELD(indirection);
 
 	return true;
 }
@@ -1603,10 +1331,9 @@ _equalParamRef(ParamRef *a, ParamRef *b)
 static bool
 _equalAConst(A_Const *a, A_Const *b)
 {
-	if (!equal(&a->val, &b->val))
+	if (!equal(&a->val, &b->val)) /* hack for in-line Value field */
 		return false;
-	if (!equal(a->typename, b->typename))
-		return false;
+	COMPARE_NODE_FIELD(typename);
 
 	return true;
 }
@@ -1614,14 +1341,10 @@ _equalAConst(A_Const *a, A_Const *b)
 static bool
 _equalFuncCall(FuncCall *a, FuncCall *b)
 {
-	if (!equal(a->funcname, b->funcname))
-		return false;
-	if (!equal(a->args, b->args))
-		return false;
-	if (a->agg_star != b->agg_star)
-		return false;
-	if (a->agg_distinct != b->agg_distinct)
-		return false;
+	COMPARE_NODE_FIELD(funcname);
+	COMPARE_NODE_FIELD(args);
+	COMPARE_SCALAR_FIELD(agg_star);
+	COMPARE_SCALAR_FIELD(agg_distinct);
 
 	return true;
 }
@@ -1629,10 +1352,8 @@ _equalFuncCall(FuncCall *a, FuncCall *b)
 static bool
 _equalAIndices(A_Indices *a, A_Indices *b)
 {
-	if (!equal(a->lidx, b->lidx))
-		return false;
-	if (!equal(a->uidx, b->uidx))
-		return false;
+	COMPARE_NODE_FIELD(lidx);
+	COMPARE_NODE_FIELD(uidx);
 
 	return true;
 }
@@ -1640,12 +1361,9 @@ _equalAIndices(A_Indices *a, A_Indices *b)
 static bool
 _equalExprFieldSelect(ExprFieldSelect *a, ExprFieldSelect *b)
 {
-	if (!equal(a->arg, b->arg))
-		return false;
-	if (!equal(a->fields, b->fields))
-		return false;
-	if (!equal(a->indirection, b->indirection))
-		return false;
+	COMPARE_NODE_FIELD(arg);
+	COMPARE_NODE_FIELD(fields);
+	COMPARE_NODE_FIELD(indirection);
 
 	return true;
 }
@@ -1653,88 +1371,9 @@ _equalExprFieldSelect(ExprFieldSelect *a, ExprFieldSelect *b)
 static bool
 _equalResTarget(ResTarget *a, ResTarget *b)
 {
-	if (!equalstr(a->name, b->name))
-		return false;
-	if (!equal(a->indirection, b->indirection))
-		return false;
-	if (!equal(a->val, b->val))
-		return false;
-
-	return true;
-}
-
-static bool
-_equalTypeCast(TypeCast *a, TypeCast *b)
-{
-	if (!equal(a->arg, b->arg))
-		return false;
-	if (!equal(a->typename, b->typename))
-		return false;
-
-	return true;
-}
-
-static bool
-_equalSortGroupBy(SortGroupBy *a, SortGroupBy *b)
-{
-	if (!equal(a->useOp, b->useOp))
-		return false;
-	if (!equal(a->node, b->node))
-		return false;
-
-	return true;
-}
-
-static bool
-_equalAlias(Alias *a, Alias *b)
-{
-	if (!equalstr(a->aliasname, b->aliasname))
-		return false;
-	if (!equal(a->colnames, b->colnames))
-		return false;
-
-	return true;
-}
-
-static bool
-_equalRangeVar(RangeVar *a, RangeVar *b)
-{
-	if (!equalstr(a->catalogname, b->catalogname))
-		return false;
-	if (!equalstr(a->schemaname, b->schemaname))
-		return false;
-	if (!equalstr(a->relname, b->relname))
-		return false;
-	if (a->inhOpt != b->inhOpt)
-		return false;
-	if (a->istemp != b->istemp)
-		return false;
-	if (!equal(a->alias, b->alias))
-		return false;
-
-	return true;
-}
-
-static bool
-_equalRangeSubselect(RangeSubselect *a, RangeSubselect *b)
-{
-	if (!equal(a->subquery, b->subquery))
-		return false;
-	if (!equal(a->alias, b->alias))
-		return false;
-
-	return true;
-}
-
-static bool
-_equalRangeFunction(RangeFunction *a, RangeFunction *b)
-{
-	if (!equal(a->funccallnode, b->funccallnode))
-		return false;
-	if (!equal(a->alias, b->alias))
-		return false;
-	if (!equal(a->coldeflist, b->coldeflist))
-		return false;
+	COMPARE_STRING_FIELD(name);
+	COMPARE_NODE_FIELD(indirection);
+	COMPARE_NODE_FIELD(val);
 
 	return true;
 }
@@ -1742,20 +1381,50 @@ _equalRangeFunction(RangeFunction *a, RangeFunction *b)
 static bool
 _equalTypeName(TypeName *a, TypeName *b)
 {
-	if (!equal(a->names, b->names))
-		return false;
-	if (a->typeid != b->typeid)
-		return false;
-	if (a->timezone != b->timezone)
-		return false;
-	if (a->setof != b->setof)
-		return false;
-	if (a->pct_type != b->pct_type)
-		return false;
-	if (a->typmod != b->typmod)
-		return false;
-	if (!equal(a->arrayBounds, b->arrayBounds))
-		return false;
+	COMPARE_NODE_FIELD(names);
+	COMPARE_SCALAR_FIELD(typeid);
+	COMPARE_SCALAR_FIELD(timezone);
+	COMPARE_SCALAR_FIELD(setof);
+	COMPARE_SCALAR_FIELD(pct_type);
+	COMPARE_SCALAR_FIELD(typmod);
+	COMPARE_NODE_FIELD(arrayBounds);
+
+	return true;
+}
+
+static bool
+_equalTypeCast(TypeCast *a, TypeCast *b)
+{
+	COMPARE_NODE_FIELD(arg);
+	COMPARE_NODE_FIELD(typename);
+
+	return true;
+}
+
+static bool
+_equalSortGroupBy(SortGroupBy *a, SortGroupBy *b)
+{
+	COMPARE_NODE_FIELD(useOp);
+	COMPARE_NODE_FIELD(node);
+
+	return true;
+}
+
+static bool
+_equalRangeSubselect(RangeSubselect *a, RangeSubselect *b)
+{
+	COMPARE_NODE_FIELD(subquery);
+	COMPARE_NODE_FIELD(alias);
+
+	return true;
+}
+
+static bool
+_equalRangeFunction(RangeFunction *a, RangeFunction *b)
+{
+	COMPARE_NODE_FIELD(funccallnode);
+	COMPARE_NODE_FIELD(alias);
+	COMPARE_NODE_FIELD(coldeflist);
 
 	return true;
 }
@@ -1763,14 +1432,10 @@ _equalTypeName(TypeName *a, TypeName *b)
 static bool
 _equalIndexElem(IndexElem *a, IndexElem *b)
 {
-	if (!equalstr(a->name, b->name))
-		return false;
-	if (!equal(a->funcname, b->funcname))
-		return false;
-	if (!equal(a->args, b->args))
-		return false;
-	if (!equal(a->opclass, b->opclass))
-		return false;
+	COMPARE_STRING_FIELD(name);
+	COMPARE_NODE_FIELD(funcname);
+	COMPARE_NODE_FIELD(args);
+	COMPARE_NODE_FIELD(opclass);
 
 	return true;
 }
@@ -1778,24 +1443,15 @@ _equalIndexElem(IndexElem *a, IndexElem *b)
 static bool
 _equalColumnDef(ColumnDef *a, ColumnDef *b)
 {
-	if (!equalstr(a->colname, b->colname))
-		return false;
-	if (!equal(a->typename, b->typename))
-		return false;
-	if (a->inhcount != b->inhcount)
-		return false;
-	if (a->is_local != b->is_local)
-		return false;
-	if (a->is_not_null != b->is_not_null)
-		return false;
-	if (!equal(a->raw_default, b->raw_default))
-		return false;
-	if (!equalstr(a->cooked_default, b->cooked_default))
-		return false;
-	if (!equal(a->constraints, b->constraints))
-		return false;
-	if (!equal(a->support, b->support))
-		return false;
+	COMPARE_STRING_FIELD(colname);
+	COMPARE_NODE_FIELD(typename);
+	COMPARE_SCALAR_FIELD(inhcount);
+	COMPARE_SCALAR_FIELD(is_local);
+	COMPARE_SCALAR_FIELD(is_not_null);
+	COMPARE_NODE_FIELD(raw_default);
+	COMPARE_STRING_FIELD(cooked_default);
+	COMPARE_NODE_FIELD(constraints);
+	COMPARE_NODE_FIELD(support);
 
 	return true;
 }
@@ -1803,16 +1459,11 @@ _equalColumnDef(ColumnDef *a, ColumnDef *b)
 static bool
 _equalConstraint(Constraint *a, Constraint *b)
 {
-	if (a->contype != b->contype)
-		return false;
-	if (!equalstr(a->name, b->name))
-		return false;
-	if (!equal(a->raw_expr, b->raw_expr))
-		return false;
-	if (!equalstr(a->cooked_expr, b->cooked_expr))
-		return false;
-	if (!equal(a->keys, b->keys))
-		return false;
+	COMPARE_SCALAR_FIELD(contype);
+	COMPARE_STRING_FIELD(name);
+	COMPARE_NODE_FIELD(raw_expr);
+	COMPARE_STRING_FIELD(cooked_expr);
+	COMPARE_NODE_FIELD(keys);
 
 	return true;
 }
@@ -1820,10 +1471,8 @@ _equalConstraint(Constraint *a, Constraint *b)
 static bool
 _equalDefElem(DefElem *a, DefElem *b)
 {
-	if (!equalstr(a->defname, b->defname))
-		return false;
-	if (!equal(a->arg, b->arg))
-		return false;
+	COMPARE_STRING_FIELD(defname);
+	COMPARE_NODE_FIELD(arg);
 
 	return true;
 }
@@ -1831,12 +1480,9 @@ _equalDefElem(DefElem *a, DefElem *b)
 static bool
 _equalTargetEntry(TargetEntry *a, TargetEntry *b)
 {
-	if (!equal(a->resdom, b->resdom))
-		return false;
-	if (!equal(a->fjoin, b->fjoin))
-		return false;
-	if (!equal(a->expr, b->expr))
-		return false;
+	COMPARE_NODE_FIELD(resdom);
+	COMPARE_NODE_FIELD(fjoin);
+	COMPARE_NODE_FIELD(expr);
 
 	return true;
 }
@@ -1844,34 +1490,20 @@ _equalTargetEntry(TargetEntry *a, TargetEntry *b)
 static bool
 _equalRangeTblEntry(RangeTblEntry *a, RangeTblEntry *b)
 {
-	if (a->rtekind != b->rtekind)
-		return false;
-	if (a->relid != b->relid)
-		return false;
-	if (!equal(a->subquery, b->subquery))
-		return false;
-	if (!equal(a->funcexpr, b->funcexpr))
-		return false;
-	if (!equal(a->coldeflist, b->coldeflist))
-		return false;
-	if (a->jointype != b->jointype)
-		return false;
-	if (!equal(a->joinaliasvars, b->joinaliasvars))
-		return false;
-	if (!equal(a->alias, b->alias))
-		return false;
-	if (!equal(a->eref, b->eref))
-		return false;
-	if (a->inh != b->inh)
-		return false;
-	if (a->inFromCl != b->inFromCl)
-		return false;
-	if (a->checkForRead != b->checkForRead)
-		return false;
-	if (a->checkForWrite != b->checkForWrite)
-		return false;
-	if (a->checkAsUser != b->checkAsUser)
-		return false;
+	COMPARE_SCALAR_FIELD(rtekind);
+	COMPARE_SCALAR_FIELD(relid);
+	COMPARE_NODE_FIELD(subquery);
+	COMPARE_NODE_FIELD(funcexpr);
+	COMPARE_NODE_FIELD(coldeflist);
+	COMPARE_SCALAR_FIELD(jointype);
+	COMPARE_NODE_FIELD(joinaliasvars);
+	COMPARE_NODE_FIELD(alias);
+	COMPARE_NODE_FIELD(eref);
+	COMPARE_SCALAR_FIELD(inh);
+	COMPARE_SCALAR_FIELD(inFromCl);
+	COMPARE_SCALAR_FIELD(checkForRead);
+	COMPARE_SCALAR_FIELD(checkForWrite);
+	COMPARE_SCALAR_FIELD(checkAsUser);
 
 	return true;
 }
@@ -1879,10 +1511,8 @@ _equalRangeTblEntry(RangeTblEntry *a, RangeTblEntry *b)
 static bool
 _equalSortClause(SortClause *a, SortClause *b)
 {
-	if (a->tleSortGroupRef != b->tleSortGroupRef)
-		return false;
-	if (a->sortop != b->sortop)
-		return false;
+	COMPARE_SCALAR_FIELD(tleSortGroupRef);
+	COMPARE_SCALAR_FIELD(sortop);
 
 	return true;
 }
@@ -1890,26 +1520,16 @@ _equalSortClause(SortClause *a, SortClause *b)
 static bool
 _equalFkConstraint(FkConstraint *a, FkConstraint *b)
 {
-	if (!equalstr(a->constr_name, b->constr_name))
-		return false;
-	if (!equal(a->pktable, b->pktable))
-		return false;
-	if (!equal(a->fk_attrs, b->fk_attrs))
-		return false;
-	if (!equal(a->pk_attrs, b->pk_attrs))
-		return false;
-	if (a->fk_matchtype != b->fk_matchtype)
-		return false;
-	if (a->fk_upd_action != b->fk_upd_action)
-		return false;
-	if (a->fk_del_action != b->fk_del_action)
-		return false;
-	if (a->deferrable != b->deferrable)
-		return false;
-	if (a->initdeferred != b->initdeferred)
-		return false;
-	if (a->skip_validation != b->skip_validation)
-		return false;
+	COMPARE_STRING_FIELD(constr_name);
+	COMPARE_NODE_FIELD(pktable);
+	COMPARE_NODE_FIELD(fk_attrs);
+	COMPARE_NODE_FIELD(pk_attrs);
+	COMPARE_SCALAR_FIELD(fk_matchtype);
+	COMPARE_SCALAR_FIELD(fk_upd_action);
+	COMPARE_SCALAR_FIELD(fk_del_action);
+	COMPARE_SCALAR_FIELD(deferrable);
+	COMPARE_SCALAR_FIELD(initdeferred);
+	COMPARE_SCALAR_FIELD(skip_validation);
 
 	return true;
 }
@@ -1917,14 +1537,10 @@ _equalFkConstraint(FkConstraint *a, FkConstraint *b)
 static bool
 _equalCaseExpr(CaseExpr *a, CaseExpr *b)
 {
-	if (a->casetype != b->casetype)
-		return false;
-	if (!equal(a->arg, b->arg))
-		return false;
-	if (!equal(a->args, b->args))
-		return false;
-	if (!equal(a->defresult, b->defresult))
-		return false;
+	COMPARE_SCALAR_FIELD(casetype);
+	COMPARE_NODE_FIELD(arg);
+	COMPARE_NODE_FIELD(args);
+	COMPARE_NODE_FIELD(defresult);
 
 	return true;
 }
@@ -1932,10 +1548,8 @@ _equalCaseExpr(CaseExpr *a, CaseExpr *b)
 static bool
 _equalCaseWhen(CaseWhen *a, CaseWhen *b)
 {
-	if (!equal(a->expr, b->expr))
-		return false;
-	if (!equal(a->result, b->result))
-		return false;
+	COMPARE_NODE_FIELD(expr);
+	COMPARE_NODE_FIELD(result);
 
 	return true;
 }
@@ -1943,46 +1557,30 @@ _equalCaseWhen(CaseWhen *a, CaseWhen *b)
 static bool
 _equalNullTest(NullTest *a, NullTest *b)
 {
-	if (!equal(a->arg, b->arg))
-		return false;
-	if (a->nulltesttype != b->nulltesttype)
-		return false;
+	COMPARE_NODE_FIELD(arg);
+	COMPARE_SCALAR_FIELD(nulltesttype);
+
 	return true;
 }
 
 static bool
 _equalBooleanTest(BooleanTest *a, BooleanTest *b)
 {
-	if (!equal(a->arg, b->arg))
-		return false;
-	if (a->booltesttype != b->booltesttype)
-		return false;
+	COMPARE_NODE_FIELD(arg);
+	COMPARE_SCALAR_FIELD(booltesttype);
+
 	return true;
 }
 
 static bool
 _equalConstraintTest(ConstraintTest *a, ConstraintTest *b)
 {
-	if (!equal(a->arg, b->arg))
-		return false;
-	if (a->testtype != b->testtype)
-		return false;
-	if (!equalstr(a->name, b->name))
-		return false;
-	if (!equalstr(a->domname, b->domname))
-		return false;
-	if (!equal(a->check_expr, b->check_expr))
-		return false;
-	return true;
-}
+	COMPARE_NODE_FIELD(arg);
+	COMPARE_SCALAR_FIELD(testtype);
+	COMPARE_STRING_FIELD(name);
+	COMPARE_STRING_FIELD(domname);
+	COMPARE_NODE_FIELD(check_expr);
 
-static bool
-_equalConstraintTestValue(ConstraintTestValue *a, ConstraintTestValue *b)
-{
-	if (a->typeId != b->typeId)
-		return false;
-	if (a->typeMod != b->typeMod)
-		return false;
 	return true;
 }
 
@@ -1992,23 +1590,35 @@ _equalDomainConstraintValue(DomainConstraintValue *a, DomainConstraintValue *b)
 	return true;
 }
 
+static bool
+_equalConstraintTestValue(ConstraintTestValue *a, ConstraintTestValue *b)
+{
+	COMPARE_SCALAR_FIELD(typeId);
+	COMPARE_SCALAR_FIELD(typeMod);
+
+	return true;
+}
+
+
 /*
  * Stuff from pg_list.h
  */
+
 static bool
 _equalValue(Value *a, Value *b)
 {
-	if (a->type != b->type)
-		return false;
+	COMPARE_SCALAR_FIELD(type);
 
 	switch (a->type)
 	{
 		case T_Integer:
-			return a->val.ival == b->val.ival;
+			COMPARE_SCALAR_FIELD(val.ival);
+			break;
 		case T_Float:
 		case T_String:
 		case T_BitString:
-			return strcmp(a->val.str, b->val.str) == 0;
+			COMPARE_STRING_FIELD(val.str);
+			break;
 		case T_Null:
 			/* nothing to do */
 			break;
