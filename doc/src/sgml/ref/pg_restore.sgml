@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.25 2002/05/10 22:36:26 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.26 2002/07/04 03:04:54 momjian Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <docinfo>
@@ -33,7 +33,7 @@
    <arg> -L <replaceable class="parameter">contents-file</replaceable> </arg>
    <group> <arg> -N </arg> <arg> -o </arg> <arg> -r </arg> </group>
    <arg> -O </arg>
-   <arg> -P <replaceable class="parameter">function-name</replaceable> </arg>
+   <arg> -P <replaceable class="parameter">function-name(argtype [, ...])</replaceable> </arg>
    <arg> -R </arg>
    <arg> -s </arg>
    <arg> -S </arg>
@@ -276,8 +276,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-P <replaceable class="parameter">function-name</replaceable></option></term>
-      <term><option>--function=<replaceable class="parameter">function-name</replaceable></option></term>
+      <term><option>-P <replaceable class="parameter">function-name(argtype [, ...])</replaceable></option></term>
+      <term><option>--function=<replaceable class="parameter">function-name(argtype [, ...])</replaceable></option></term>
       <listitem>
        <para>
         Specify a procedure or function to be restored.

@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.34 2002/05/10 22:36:27 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.35 2002/07/04 03:04:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,7 @@
 /* Forward decls */
 static void usage(const char *progname);
 static char *_cleanupName(char *name);
+static char *_cleanupFuncName(char *name);
 
 typedef struct option optType;
 
@@ -220,7 +221,7 @@ main(int argc, char **argv)
 			case 'P':			/* Function */
 				opts->selTypes = 1;
 				opts->selFunction = 1;
-				opts->functionNames = optarg ? strdup(optarg) : NULL;
+				opts->functionNames = _cleanupFuncName(optarg);
 				break;
 			case 'I':			/* Index */
 				opts->selTypes = 1;
@@ -392,7 +393,7 @@ usage(const char *progname)
 		"  -O, --no-owner           do not reconnect to database to match\n"
 		"                           object owner\n"
 		"  -p, --port=PORT          server port number\n"
-		"  -P, --function=NAME      restore named function\n"
+		"  -P, --function=NAME(args)restore named function\n"
 		"  -r, --rearrange          rearrange output to put indexes etc. at end\n"
 		"  -R, --no-reconnect       disallow ALL reconnections to the database\n"
 		"  -s, --schema-only        restore only the schema, no data\n"
@@ -430,7 +431,7 @@ usage(const char *progname)
 		"  -O                       do not reconnect to database to match\n"
 		"                           object owner\n"
 		"  -p PORT                  server port number\n"
-		"  -P NAME                  restore named function\n"
+		"  -P NAME(args)            restore named function\n"
 		"  -r                       rearrange output to put indexes etc. at end\n"
 		"  -R                       disallow ALL reconnections to the database\n"
 		"  -s                       restore only the schema, no data\n"
@@ -476,5 +477,53 @@ _cleanupName(char *name)
 			if (isupper((unsigned char) name[i]))
 				name[i] = tolower((unsigned char) name[i]);
 	}
+	return name;
+}
+
+
+static char *
+_cleanupFuncName(char *name)
+{
+	int			i;
+	char		*ch;
+	
+	if (!name || !name[0])
+		return NULL;
+
+	name = strdup(name);
+
+	if (name[0] == '"')
+	{
+		strcpy(name, &name[1]);
+		if (strchr(name, '"') != NULL)
+			strcpy(strchr(name, '"'), strchr(name, '"')+1);
+	}
+	/* otherwise, convert function name to lowercase... */
+	else
+	{
+		for (i = 0; name[i]; i++)
+			if (isupper((unsigned char) name[i]))
+				name[i] = tolower((unsigned char) name[i]);
+	}
+
+	/* strip out any space before paren */
+	ch = strchr(name,'(');
+	while (ch && ch > name && *(ch-1) == ' ')
+	{
+		strcpy(ch - 1, ch);
+		ch--;
+	}
+
+	/*
+	 *	Strip out spaces after commas in parameter list.
+	 * 	We can't remove all spaces because some types, like
+	 *	'double precision' have spaces.
+	 */
+	if ((ch = strchr(name,'(')) != NULL)
+	{
+		while ((ch = strstr(ch,", ")) != NULL)
+			strcpy(ch + 1, ch + 2);
+	}
+
 	return name;
 }

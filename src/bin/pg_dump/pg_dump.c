@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.268 2002/07/02 05:49:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.269 2002/07/04 03:04:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,14 +104,14 @@ static void dumpTableACL(Archive *fout, TableInfo *tbinfo);
 static void dumpFuncACL(Archive *fout, FuncInfo *finfo);
 static void dumpAggACL(Archive *fout, AggInfo *finfo);
 static void dumpACL(Archive *fout, const char *type, const char *name,
-					const char *nspname, const char *usename,
-					const char *acl, const char *objoid);
+					const char *name_noquotes, const char *nspname,
+					const char *usename, const char *acl, const char *objoid);
 
 static void dumpTriggers(Archive *fout, TableInfo *tblinfo, int numTables);
 static void dumpRules(Archive *fout, TableInfo *tblinfo, int numTables);
 static void formatStringLiteral(PQExpBuffer buf, const char *str,
 								const formatLiteralOptions opts);
-static char *format_function_signature(FuncInfo *finfo);
+static char *format_function_signature(FuncInfo *finfo, bool honor_quotes);
 static void dumpOneFunc(Archive *fout, FuncInfo *finfo);
 static void dumpOneOpr(Archive *fout, OprInfo *oprinfo,
 					   OprInfo *g_oprinfo, int numOperators);
@@ -2721,7 +2721,7 @@ dumpNamespaces(Archive *fout, NamespaceInfo *nsinfo, int numNamespaces)
 		if (strcmp(nspinfo->nspname, "public") == 0)
 		{
 			if (!aclsSkip && strcmp(nspinfo->nspacl, "{=UC}") != 0)
-				dumpACL(fout, "SCHEMA", qnspname, NULL,
+				dumpACL(fout, "SCHEMA", qnspname, nspinfo->nspname, NULL,
 						nspinfo->usename, nspinfo->nspacl,
 						nspinfo->oid);
 		}
@@ -2747,7 +2747,7 @@ dumpNamespaces(Archive *fout, NamespaceInfo *nsinfo, int numNamespaces)
 						nspinfo->oid, "pg_namespace", 0, NULL);
 
 			if (!aclsSkip)
-				dumpACL(fout, "SCHEMA", qnspname, NULL,
+				dumpACL(fout, "SCHEMA", qnspname, nspinfo->nspname, NULL,
 						nspinfo->usename, nspinfo->nspacl,
 						nspinfo->oid);
 		}
@@ -3291,8 +3291,9 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 
 		if (!aclsSkip)
 		{
-			char * tmp = strdup(fmtId(lanname, force_quotes));
-			dumpACL(fout, "LANGUAGE", tmp, finfo[fidx].pronamespace->nspname,
+			char *tmp = strdup(fmtId(lanname, force_quotes));
+			dumpACL(fout, "LANGUAGE", tmp, lanname,
+					finfo[fidx].pronamespace->nspname,
 					NULL, lanacl, lanoid);
 			free(tmp);
 		}
@@ -3333,13 +3334,16 @@ dumpFuncs(Archive *fout, FuncInfo finfo[], int numFuncs)
  * is never qualified.
  */
 static char *
-format_function_signature(FuncInfo *finfo)
+format_function_signature(FuncInfo *finfo, bool honor_quotes)
 {
 	PQExpBufferData fn;
 	int			j;
 
 	initPQExpBuffer(&fn);
-	appendPQExpBuffer(&fn, "%s (", fmtId(finfo->proname, force_quotes));
+	if (honor_quotes)
+		appendPQExpBuffer(&fn, "%s(", fmtId(finfo->proname, force_quotes));
+	else
+		appendPQExpBuffer(&fn, "%s(", finfo->proname);
 	for (j = 0; j < finfo->nargs; j++)
 	{
 		char	   *typname;
@@ -3358,12 +3362,15 @@ format_function_signature(FuncInfo *finfo)
 static void
 dumpFuncACL(Archive *fout, FuncInfo *finfo)
 {
-	char *funcsig;
+	char *funcsig, *funcsig_noquotes;
 
-	funcsig = format_function_signature(finfo);
-	dumpACL(fout, "FUNCTION", funcsig, finfo->pronamespace->nspname,
+	funcsig = format_function_signature(finfo, true);
+	funcsig_noquotes = format_function_signature(finfo, false);
+	dumpACL(fout, "FUNCTION", funcsig, funcsig_noquotes,
+			finfo->pronamespace->nspname,
 			finfo->usename, finfo->proacl, finfo->oid);
 	free(funcsig);
+	free(funcsig_noquotes);
 }
 
 
@@ -3380,6 +3387,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 	PQExpBuffer asPart = createPQExpBuffer();
 	PGresult   *res = NULL;
 	char	   *funcsig = NULL;
+	char	   *funcsig_noquotes = NULL;
 	int			ntups;
 	char	   *proretset;
 	char	   *prosrc;
@@ -3487,7 +3495,8 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 		}
 	}
 
-	funcsig = format_function_signature(finfo);
+	funcsig = format_function_signature(finfo, true);
+	funcsig_noquotes = format_function_signature(finfo, false);
 
 	/* DROP must be fully qualified in case same name appears in pg_catalog */
 	appendPQExpBuffer(delqry, "DROP FUNCTION %s.%s;\n",
@@ -3517,7 +3526,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 					  finfo->proname);
 			exit_nicely();
 		}
-	}	
+	}
 
 	if (proimplicit[0] == 't')
 		appendPQExpBuffer(q, " IMPLICIT CAST");
@@ -3530,7 +3539,8 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 
 	appendPQExpBuffer(q, ";\n");
 
-	ArchiveEntry(fout, finfo->oid, funcsig, finfo->pronamespace->nspname,
+	ArchiveEntry(fout, finfo->oid, funcsig_noquotes,
+				 finfo->pronamespace->nspname,
 				 finfo->usename, "FUNCTION", NULL,
 				 q->data, delqry->data,
 				 NULL, NULL, NULL);
@@ -3551,6 +3561,7 @@ done:
 	destroyPQExpBuffer(delqry);
 	destroyPQExpBuffer(asPart);
 	free(funcsig);
+	free(funcsig_noquotes);
 }
 
 /*
@@ -3939,14 +3950,17 @@ dumpAggs(Archive *fout, AggInfo agginfo[], int numAggs)
  * is never qualified.
  */
 static char *
-format_aggregate_signature(AggInfo *agginfo, Archive *fout)
+format_aggregate_signature(AggInfo *agginfo, Archive *fout, bool honor_quotes)
 {
 	PQExpBufferData buf;
 	bool anybasetype;
 
 	initPQExpBuffer(&buf);
-	appendPQExpBuffer(&buf, "%s",
+	if (honor_quotes)
+		appendPQExpBuffer(&buf, "%s",
 					  fmtId(agginfo->aggname, force_quotes));
+	else
+		appendPQExpBuffer(&buf, "%s", agginfo->aggname);
 
 	anybasetype = (strcmp(agginfo->aggbasetype, "0") == 0);
 
@@ -3974,12 +3988,15 @@ format_aggregate_signature(AggInfo *agginfo, Archive *fout)
 static void
 dumpAggACL(Archive *fout, AggInfo *finfo)
 {
-	char *aggsig;
+	char *aggsig, *aggsig_noquotes;
 
-	aggsig = format_aggregate_signature(finfo, fout);
-	dumpACL(fout, "FUNCTION", aggsig, finfo->aggnamespace->nspname,
+	aggsig = format_aggregate_signature(finfo, fout, true);
+	aggsig_noquotes = format_aggregate_signature(finfo, fout, false);
+	dumpACL(fout, "FUNCTION", aggsig, aggsig_noquotes,
+			finfo->aggnamespace->nspname,
 			finfo->usename, finfo->aggacl, finfo->oid);
 	free(aggsig);
+	free(aggsig_noquotes);
 }
 
 
@@ -3994,7 +4011,8 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	PQExpBuffer q = createPQExpBuffer();
 	PQExpBuffer delq = createPQExpBuffer();
 	PQExpBuffer details = createPQExpBuffer();
-	char	   *aggSig;
+	char	   *aggsig;
+	char	   *aggsig_noquotes;
 	PGresult   *res;
 	int			ntups;
 	int			i_aggtransfn;
@@ -4084,16 +4102,17 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	agginfo->fmtbasetype = strdup(PQgetvalue(res, 0, i_fmtbasetype));
 	convertok = (PQgetvalue(res, 0, i_convertok)[0] == 't');
 
-	aggSig = format_aggregate_signature(agginfo, g_fout);
+	aggsig = format_aggregate_signature(agginfo, g_fout, true);
+ 	aggsig_noquotes = format_aggregate_signature(agginfo, g_fout, false);
 
 	if (!convertok)
 	{
 		write_msg(NULL, "WARNING: aggregate function %s could not be dumped correctly for this database version; ignored\n",
-				  aggSig);
+				  aggsig);
 
 		appendPQExpBuffer(q, "-- WARNING: aggregate function %s could not be dumped correctly for this database version; ignored\n",
-						  aggSig);
-		ArchiveEntry(fout, agginfo->oid, aggSig,
+						  aggsig);
+		ArchiveEntry(fout, agginfo->oid, aggsig_noquotes,
 					 agginfo->aggnamespace->nspname, agginfo->usename,
 					 "WARNING", NULL,
 					 q->data, "" /* Del */ ,
@@ -4146,13 +4165,13 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	/* DROP must be fully qualified in case same name appears in pg_catalog */
 	appendPQExpBuffer(delq, "DROP AGGREGATE %s.%s;\n",
 					  fmtId(agginfo->aggnamespace->nspname, force_quotes),
-					  aggSig);
+					  aggsig);
 
 	appendPQExpBuffer(q, "CREATE AGGREGATE %s ( %s );\n",
 					  fmtId(agginfo->aggname, force_quotes),
 					  details->data);
 
-	ArchiveEntry(fout, agginfo->oid, aggSig,
+	ArchiveEntry(fout, agginfo->oid, aggsig_noquotes,
 				 agginfo->aggnamespace->nspname, agginfo->usename,
 				 "AGGREGATE", NULL,
 				 q->data, delq->data,
@@ -4161,7 +4180,7 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	/*** Dump Aggregate Comments ***/
 
 	resetPQExpBuffer(q);
-	appendPQExpBuffer(q, "AGGREGATE %s", aggSig);
+	appendPQExpBuffer(q, "AGGREGATE %s", aggsig);
 	if (g_fout->remoteVersion >= 70300)
 		dumpComment(fout, q->data,
 					agginfo->aggnamespace->nspname, agginfo->usename,
@@ -4177,7 +4196,8 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);
 	destroyPQExpBuffer(details);
-	free(aggSig);
+	free(aggsig);
+	free(aggsig_noquotes);
 }
 
 
@@ -4276,7 +4296,7 @@ GetPrivileges(Archive *AH, const char *s, const char *type)
  */
 static void
 dumpACL(Archive *fout, const char *type, const char *name,
-		const char *nspname, const char *usename,
+		const char *name_noquotes, const char *nspname, const char *usename,
 		const char *acls, const char *objoid)
 {
 	char	   *aclbuf,
@@ -4390,7 +4410,7 @@ dumpACL(Archive *fout, const char *type, const char *name,
 		appendPQExpBuffer(sql, "%s;\n", fmtId(usename, force_quotes));
 	}
 
-	ArchiveEntry(fout, objoid, name, nspname, usename ? usename : "",
+	ArchiveEntry(fout, objoid, name_noquotes, nspname, usename ? usename : "",
 				 "ACL", NULL, sql->data, "", NULL, NULL, NULL);
 
 	free(aclbuf);
@@ -4401,9 +4421,9 @@ dumpACL(Archive *fout, const char *type, const char *name,
 static void
 dumpTableACL(Archive *fout, TableInfo *tbinfo)
 {
-	char * tmp = strdup( fmtId(tbinfo->relname, force_quotes) );
-	dumpACL(fout, "TABLE", tmp, tbinfo->relnamespace->nspname,
-			tbinfo->usename, tbinfo->relacl,
+	char *tmp = strdup(fmtId(tbinfo->relname, force_quotes));
+	dumpACL(fout, "TABLE", tmp, tbinfo->relname,
+			tbinfo->relnamespace->nspname, tbinfo->usename, tbinfo->relacl,
 			tbinfo->viewoid != NULL ? tbinfo->viewoid : tbinfo->oid);
 	free(tmp);
 }
@@ -5793,20 +5813,17 @@ myFormatType(const char *typname, int32 typmod)
 							  precision, scale);
 		}
 	}
-
 	/*
 	 * char is an internal single-byte data type; Let's make sure we force
 	 * it through with quotes. - thomas 1998-12-13
 	 */
 	else if (!strcmp(typname, "char"))
 	{
-		appendPQExpBuffer(buf, "%s",
-						  fmtId(typname, true));
+		appendPQExpBuffer(buf, "%s", fmtId(typname, true));
 	}
 	else
 	{
-		appendPQExpBuffer(buf, "%s",
-						  fmtId(typname, false));
+		appendPQExpBuffer(buf, "%s", fmtId(typname, false));
 	}
 
 	result = strdup(buf->data);

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.50 2002/07/02 05:49:51 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.51 2002/07/04 03:04:54 momjian Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -191,6 +191,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	 * initially connected to, not the one we will create, which is very
 	 * bad...
 	 */
+
 	if (ropt->create && ropt->noReconnect)
 		die_horribly(AH, modulename, "-C and -R are incompatible options\n");
 
