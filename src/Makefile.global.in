@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.112 2000/11/20 05:18:38 vadim Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.113 2000/11/20 16:52:54 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -145,8 +145,6 @@ CFLAGS = @CFLAGS@
 ifeq ($(GCC), yes)
   CFLAGS += -Wall -Wmissing-prototypes -Wmissing-declarations
 endif
-
-CFLAGS += -DXLOG
 
 CXX = @CXX@
 GXX = @GXX@
