@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.42 2003/03/21 17:18:34 petere Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.43 2003/11/02 21:56:15 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,6 +24,12 @@ SHLIB_LINK = $(BE_DLLLIBS)
 
 # default encoding
 MULTIBYTE = SQL_ASCII
+
+# maximum simultaneous connections for parallel tests
+MAXCONNOPT :=
+ifdef MAX_CONNECTIONS
+MAXCONNOPT += --max-connections=$(MAX_CONNECTIONS)
+endif
 
 
 ##
@@ -113,7 +119,7 @@ all-spi:
 ##
 
 check: all
-	$(SHELL) ./pg_regress --temp-install --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE)
+	$(SHELL) ./pg_regress --temp-install --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) $(MAXCONNOPT)
 
 installcheck: all
 	$(SHELL) ./pg_regress --schedule=$(srcdir)/serial_schedule --multibyte=$(MULTIBYTE)
@@ -128,7 +134,7 @@ bigtest:
 	$(SHELL) ./pg_regress --schedule=$(srcdir)/serial_schedule --multibyte=$(MULTIBYTE) numeric_big
 
 bigcheck:
-	$(SHELL) ./pg_regress --temp-install --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) numeric_big
+	$(SHELL) ./pg_regress --temp-install --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) $(MAXCONNOPT) numeric_big
 
 
 ##

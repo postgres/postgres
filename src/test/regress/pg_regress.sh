@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.35 2003/08/07 14:36:31 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.36 2003/11/02 21:56:15 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -13,6 +13,8 @@ Usage: $me [options...] [extra tests...]
 Options:
   --debug                   turn on debug mode in programs that are run
   --inputdir=DIR            take input files from DIR (default \`.')
+  --max-connections=N       maximum number of concurrent connections
+                            (default is 0 meaning unlimited)
   --multibyte=ENCODING      use ENCODING as the multibyte encoding, and
                             also run a test by the same name
   --outputdir=DIR           place output files in DIR (default \`.')
@@ -92,6 +94,7 @@ unset multibyte
 
 dbname=regression
 hostname=localhost
+maxconnections=0
 
 : ${GMAKE='@GMAKE@'}
 
@@ -124,6 +127,9 @@ do
         --temp-install=*)
                 temp_install=`expr "x$1" : "x--temp-install=\(.*\)"`
                 shift;;
+        --max-connections=*)
+                maxconnections=`expr "x$1" : "x--max-connections=\(.*\)"`
+                shift;;
         --outputdir=*)
                 outputdir=`expr "x$1" : "x--outputdir=\(.*\)"`
                 shift;;
@@ -155,6 +161,26 @@ do
                 shift;;
     esac
 done
+
+# ----------
+# warn of Cygwin likely failure if maxconnections = 0
+# and we are running parallel tests
+# ----------
+
+case $host_platform in
+    *-*-cygwin*)
+	case "$schedule" in
+	    *parallel_schedule*)
+		if [ $maxconnections -eq 0 ] ; then
+		    echo Using unlimited parallel connections is likely to fail or hang on Cygwin.
+		    echo Try \"$me --max-connections=n\" or \"gmake MAX_CONNECTIONS=n check\"
+		    echo with n = 5 or 10 if this happens.
+		    echo
+		fi
+		;;
+	esac
+	;;
+esac
 
 
 # ----------
@@ -248,15 +274,15 @@ if [ -f "$inputdir/resultmap" ]
 then
     while read LINE
     do
-	HOSTPAT=`expr "$LINE" : '.*/\(.*\)='`
-	if [ `expr "$host_platform:$compiler" : "$HOSTPAT"` -ne 0 ]
-	then
-	    # remove hostnamepattern from line so that there are no shell
-	    # wildcards in SUBSTLIST; else later 'for' could expand them!
-	    TESTNAME=`expr "$LINE" : '\(.*\)/'`
-	    SUBST=`echo "$LINE" | sed 's/^.*=//'`
-	    echo "$TESTNAME=$SUBST" >> $TMPFILE
-	fi
+        HOSTPAT=`expr "$LINE" : '.*/\(.*\)='`
+        if [ `expr "$host_platform:$compiler" : "$HOSTPAT"` -ne 0 ]
+        then
+            # remove hostnamepattern from line so that there are no shell
+            # wildcards in SUBSTLIST; else later 'for' could expand them!
+            TESTNAME=`expr "$LINE" : '\(.*\)/'`
+            SUBST=`echo "$LINE" | sed 's/^.*=//'`
+            echo "$TESTNAME=$SUBST" >> $TMPFILE
+        fi
     done <"$inputdir/resultmap"
 fi
 SUBSTLIST=`cat $TMPFILE`
@@ -309,10 +335,11 @@ then
     # Windows needs shared libraries in PATH. (Only those linked into
     # executables, not dlopen'ed ones)
     # ----------
-    case $host_platform in *-*-cygwin*)
-        PATH=$libdir:$PATH
-        export PATH
-        ;;
+    case $host_platform in
+        *-*-cygwin*)
+            PATH=$libdir:$PATH
+            export PATH
+            ;;
     esac
 
     if [ -d "$temp_install" ]; then
@@ -556,11 +583,19 @@ do
     else
         # Start a parallel group
         $ECHO_N "parallel group ($# tests): $ECHO_C"
+        if [ $maxconnections -gt 0 ] ; then
+            connnum=0
+            test $# -gt $maxconnections && $ECHO_N "(in groups of $maxconnections) $ECHO_C"
+        fi
         for name do
             ( 
-	      $PSQL -d "$dbname" <"$inputdir/sql/$name.sql" >"$outputdir/results/$name.out" 2>&1
+              $PSQL -d "$dbname" <"$inputdir/sql/$name.sql" >"$outputdir/results/$name.out" 2>&1
               $ECHO_N " $name$ECHO_C"
             ) &
+            if [ $maxconnections -gt 0 ] ; then
+                connnum=`expr \( $connnum + 1 \) % $maxconnections`
+                test $connnum -eq 0 && wait
+            fi
         done
         wait
         echo
@@ -593,8 +628,8 @@ do
             fi
         done
 
-        # If there are multiple equally valid result file, loop to get the right one.
-        # If none match, diff against the closet one.
+        # If there are multiple equally valid result files, loop to get the right one.
+        # If none match, diff against the closest one.
 
         bestfile=
         bestdiff=

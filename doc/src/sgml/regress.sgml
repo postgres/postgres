@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.34 2003/09/12 22:17:23 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.35 2003/11/02 21:56:14 tgl Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -52,18 +52,18 @@ gmake check
 <screen>
 <computeroutput>
 ======================
- All 77 tests passed.
+ All 93 tests passed.
 ======================
 </computeroutput>
 </screen>
-   or otherwise a note about what tests failed.  See <xref
+   or otherwise a note about which tests failed.  See <xref
    linkend="regress-evaluation"> below for more.
   </para>
 
   <note>
    <para>
     Because this test method runs a temporary server, it will not work
-    when you are the root user (the server will not start as root).
+    when you are the root user (since the server will not start as root).
     If you already did the build as root, you do not have to start all
     over.  Instead, make the regression test directory writable by
     some other user, log in as that user, and restart the tests.
@@ -88,14 +88,18 @@ gmake check
    <para>
     The parallel regression test starts quite a few processes under your
     user ID.  Presently, the maximum concurrency is twenty parallel test
-    scripts, which means sixty processes: there's a server process, a <application>psql</>,
-    and usually a shell parent process for the <application>psql</> for each test script.
+    scripts, which means sixty processes: there's a server process, a
+    <application>psql</>, and usually a shell parent process for the
+    <application>psql</> for each test script.
     So if your system enforces a per-user limit on the number of processes,
     make sure this limit is at least seventy-five or so, else you may get
     random-seeming failures in the parallel test.  If you are not in
-    a position to raise the limit, you can edit the file
-    <filename>src/test/regress/parallel_schedule</> to split the
-    larger concurrent test sets into more manageable groups.
+    a position to raise the limit, you can cut down the degree of parallelism
+    by setting the <literal>MAX_CONNECTIONS</> parameter.  For example,
+<screen>
+gmake MAX_CONNECTIONS=10 check
+</screen>
+    runs no more than ten tests concurrently.
    </para>
   </tip>
 
@@ -109,8 +113,8 @@ gmake check
 <screen>
 gmake SHELL=/bin/ksh check
 </screen>
-    If no non-broken shell is available, you can alter the parallel test
-    schedule as suggested above.
+    If no non-broken shell is available, you may be able to work around the
+    problem by limiting the number of connections, as shown above.
    </para>
   </tip>
 
@@ -177,7 +181,7 @@ gmake installcheck
 
     <para>
      If you run the tests against an already-installed server that was
-     initialized with a collation order locale different than C then
+     initialized with a collation-order locale other than C, then
      there may be differences due to sort order and follow-up
      failures.  The regression test suite is set up to handle this
      problem by providing alternative result files that together are
@@ -199,7 +203,7 @@ gmake installcheck
      <literal><replaceable>testname</>_<replaceable>digit</>.out</>.
      The actual digit is not significant.  Remember that the
      regression test driver will consider all such files to be equally
-     valid test results.  If the test results are platform-dependent,
+     valid test results.  If the test results are platform-specific,
      the technique described in <xref linkend="regress-platform">
      should be used instead.
     </para>
@@ -245,7 +249,7 @@ env TZ=PST8PDT date
 </screen>
      The command above should have returned the current system time in
      the <literal>PST8PDT</literal> time zone. If the <literal>PST8PDT</literal> time zone is not available,
-     then your system may have returned the time in GMT. If the
+     then your system may have returned the time in UTC. If the
      <literal>PST8PDT</literal> time zone is missing, you can set the time zone
      rules explicitly:
 <programlisting>
@@ -364,7 +368,7 @@ diff results/random.out expected/random.out
     which comparison file to use.  So, to eliminate bogus test
     <quote>failures</quote> for a particular platform, you must choose
     or make a variant result file, and then add a line to the mapping
-    file, which is <filename>resultmap</filename>.
+    file, which is <filename>src/test/regress/resultmap</filename>.
    </para>
 
    <para>
