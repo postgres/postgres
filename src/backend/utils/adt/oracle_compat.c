@@ -1,7 +1,7 @@
 /*
  *  Edmund Mergl <E.Mergl@bawue.de>
  *
- *  $Id: oracle_compat.c,v 1.5 1997/03/16 20:40:39 scrappy Exp $
+ *  $Id: oracle_compat.c,v 1.6 1997/05/07 02:46:45 scrappy Exp $
  *
  */
 
@@ -42,11 +42,8 @@ lower(text *string)
   char *ptr, *ptr_ret;
   int m;
 
-  m = VARSIZE(string) - VARHDRSZ;
-
-  if (m <= 0) {
+  if ((string == (text *)NULL) || ((m = VARSIZE(string) - VARHDRSZ) <= 0))
     return string;
-  }
 
   ret = (text *)palloc(VARSIZE(string));
   VARSIZE(ret) = VARSIZE(string);
@@ -83,11 +80,8 @@ upper(text *string)
   char *ptr, *ptr_ret;
   int m;
 
-  m = VARSIZE(string) - VARHDRSZ;
-
-  if (m <= 0) {
+  if ((string == (text *)NULL) || ((m = VARSIZE(string) - VARHDRSZ) <= 0))
     return string;
-  }
 
   ret = (text *)palloc(VARSIZE(string));
   VARSIZE(ret) = VARSIZE(string);
@@ -126,11 +120,8 @@ initcap(text *string)
   char *ptr, *ptr_ret;
   int m;
 
-  m = VARSIZE(string) - VARHDRSZ;
-
-  if (m <= 0) {
+  if ((string == (text *)NULL) || ((m = VARSIZE(string) - VARHDRSZ) <= 0))
     return string;
-  }
 
   ret = (text *)palloc(VARSIZE(string));
   VARSIZE(ret) = VARSIZE(string);
@@ -175,11 +166,12 @@ lpad(text *string1, int4 len, text *string2)
   char *ptr1, *ptr2, *ptr_ret;
   int m, n;
 
-  m = len - VARSIZE(string1) + VARHDRSZ;
-
-  if (m <= 0 || (VARSIZE(string2) - VARHDRSZ) <= 0) {
+  if ((string1 == (text *)NULL) ||
+      (len <= (VARSIZE(string1) - VARHDRSZ)) ||
+      ((m = len - VARSIZE(string1) + VARHDRSZ) <= 0) ||
+      (string2 == (text *)NULL) ||
+      ((VARSIZE(string2) - VARHDRSZ) <= 0))
     return string1;
-  }
 
   ret = (text *)palloc(VARHDRSZ + len);
   VARSIZE(ret) = VARHDRSZ + len;
@@ -225,11 +217,12 @@ rpad(text *string1, int4 len, text *string2)
   char *ptr1, *ptr2, *ptr_ret;
   int m, n;
 
-  m = len - VARSIZE(string1) + VARHDRSZ;
-
-  if (m <= 0 || (VARSIZE(string2) - VARHDRSZ) <= 0) {
+  if ((string1 == (text *)NULL) ||
+      (len <= (VARSIZE(string1) - VARHDRSZ)) ||
+      ((m = len - VARSIZE(string1) + VARHDRSZ) <= 0) ||
+      (string2 == (text *)NULL) ||
+      ((VARSIZE(string2) - VARHDRSZ) <= 0))
     return string1;
-  }
 
   ret = (text *)palloc(VARHDRSZ + len);
   VARSIZE(ret) = VARHDRSZ + len;
@@ -275,11 +268,11 @@ ltrim(text *string, text *set)
   char *ptr, *ptr2, *end2, *ptr_ret;
   int m;
 
-  m = VARSIZE(string) - VARHDRSZ;
-
-  if (m <= 0 || VARSIZE(set) - VARHDRSZ <= 0) {
+  if ((string == (text *)NULL) ||
+      ((m = VARSIZE(string) - VARHDRSZ) <= 0) ||
+      (set == (text *)NULL) ||
+      ((VARSIZE(set) - VARHDRSZ) <= 0))
     return string;
-  }
 
   ptr  = VARDATA(string);
   ptr2 = VARDATA(set);
@@ -336,11 +329,11 @@ rtrim(text *string, text *set)
   char *ptr, *ptr2, *end2, *ptr_ret;
   int m;
 
-  m = VARSIZE(string) - VARHDRSZ;
-
-  if (m <= 0 || VARSIZE(set) - VARHDRSZ <= 0) {
+  if ((string == (text *)NULL) ||
+      ((m = VARSIZE(string) - VARHDRSZ) <= 0) ||
+      (set == (text *)NULL) ||
+      ((VARSIZE(set) - VARHDRSZ) <= 0))
     return string;
-  }
 
   ptr   = VARDATA(string) + VARSIZE(string) - VARHDRSZ - 1;
   ptr2  = VARDATA(set);
@@ -397,11 +390,10 @@ substr(text *string, int4 m, int4 n)
   char *ptr, *ptr_ret;
   int len;
 
-  len = VARSIZE(string) - VARHDRSZ - m;
-
-  if (m <= 0 || n <= 0 || len <= 0) {
+  if ((string == (text *)NULL) ||
+      (m <= 0) || (n <= 0) ||
+      ((len = VARSIZE(string) - VARHDRSZ - m) <= 0))
     return string;
-  }
 
   len = len + 1 < n ? len + 1 : n;
 
@@ -442,11 +434,9 @@ translate(text *string, char from, char to)
   char *ptr, *ptr_ret;
   int m;
 
-  m = VARSIZE(string) - VARHDRSZ;
-
-  if (m <= 0) {
+  if ((string == (text *)NULL) ||
+      ((m = VARSIZE(string) - VARHDRSZ) <= 0))
     return string;
-  }
 
   ret = (text *)palloc(VARSIZE(string));
   VARSIZE(ret) = VARSIZE(string);
@@ -464,3 +454,11 @@ translate(text *string, char from, char to)
 
 
 /* EOF */
+
+
+
+
+
+
+
+
