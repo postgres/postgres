@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.150 2003/03/27 16:45:51 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.151 2003/03/28 00:23:29 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -6981,7 +6981,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
   <table id="functions-aggregate-table">
    <title>Aggregate Functions</title>
 
-   <tgroup cols="5">
+   <tgroup cols="4">
     <thead>
      <row>
       <entry>Function</entry>
