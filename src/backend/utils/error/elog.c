@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.61 2000/06/28 03:32:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.62 2000/09/29 13:35:26 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,10 @@
 #include "commands/copy.h"
 
 extern int	errno;
+
+#ifdef __CYGWIN__
+# define sys_nerr _sys_nerr
+#endif
 extern int	sys_nerr;
 
 extern CommandDest whereToSendOutput;

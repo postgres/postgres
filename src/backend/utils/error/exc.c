@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.29 2000/01/26 05:57:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.30 2000/09/29 13:35:26 petere Exp $
  *
  * NOTE
  *	  XXX this code needs improvement--check for state violations and
@@ -16,9 +16,9 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <errno.h>
-
 #include "postgres.h"
+
+#include <errno.h>
 
 #include "storage/ipc.h"
 #include "utils/exc.h"
@@ -94,15 +94,19 @@ EnableExceptionHandling(bool on)
 	ExceptionHandlingEnabled = on;
 }
 
+
+extern int	errno;
+#ifdef __CYGWIN__
+# define sys_nerr _sys_nerr
+#endif
+extern int	sys_nerr;
+
 static void
 ExcPrint(Exception *excP,
 		 ExcDetail detail,
 		 ExcData data,
 		 ExcMessage message)
 {
-	extern int	errno;
-	extern int	sys_nerr;
-
 #ifdef	lint
 	data = data;
 #endif
