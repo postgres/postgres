@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/execute.sgml,v 1.9 2004/04/22 04:18:41 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/execute.sgml,v 1.10 2004/04/22 11:46:22 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -45,8 +45,6 @@ EXECUTE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable c
   </para>
 
   <para>
-   The command tag returned by <command>EXECUTE</command>
-   is that of the prepared statement, and not <literal>EXECUTE</>.
    For more information on the creation and usage of prepared statements,
    see <xref linkend="sql-prepare" endterm="sql-prepare-title">.
   </para>
@@ -81,8 +79,16 @@ EXECUTE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable c
  </refsect1>
 
  <refsect1>
-  <title>Examples</>
+  <title>Outputs</title>
    <para>
+   The command tag returned by <command>EXECUTE</command>
+   is that of the prepared statement, and not <literal>EXECUTE</>.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</>
+  <para>
     Examples are given in the <xref linkend="sql-prepare-examples"
     endterm="sql-prepare-examples-title"> section of the <xref
     linkend="sql-prepare" endterm="sql-prepare-title"> documentation.
