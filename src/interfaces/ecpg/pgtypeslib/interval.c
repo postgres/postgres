@@ -10,8 +10,8 @@
 #error -ffast-math is known to break this code
 #endif
 
-#include "dt.h"
 #include "extern.h"
+#include "dt.h"
 #include "pgtypes_error.h"
 #include "pgtypes_interval.h"
 #include "datetime.h"

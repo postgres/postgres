@@ -7,8 +7,8 @@
 #include <string.h>
 #include <math.h>
 
-#include "dt.h"
 #include "extern.h"
+#include "dt.h"
 
 static int day_tab[2][13] = {
 	        {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0},

@@ -9,8 +9,8 @@
 #error -ffast-math is known to break this code
 #endif
 
-#include "dt.h"
 #include "extern.h"
+#include "dt.h"
 #include "pgtypes_timestamp.h"
 #include "pgtypes_date.h"
 #include "datetime.h"

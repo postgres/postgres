@@ -6,8 +6,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "dt.h"
 #include "extern.h"
+#include "dt.h"
 #include "pgtypes_error.h"
 #include "pgtypes_date.h"
 

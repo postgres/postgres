@@ -15,18 +15,6 @@ typedef double fsec_t;
 #define JROUND(j) (rint(((double) (j))*TIME_PREC_INV)/TIME_PREC_INV)
 #endif
 
-#ifndef bool
-#define bool char
-#endif   /* ndef bool */
-
-#ifndef FALSE
-#define FALSE   0
-#endif   /* FALSE */
-
-#ifndef TRUE
-#define TRUE       1
-#endif  /* TRUE */
-
 #define USE_POSTGRES_DATES              0
 #define USE_ISO_DATES                   1
 #define USE_SQL_DATES                   2
