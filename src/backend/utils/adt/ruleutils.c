@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.187 2004/12/13 00:33:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.188 2005/01/13 17:19:10 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -182,7 +182,7 @@ static void get_setop_query(Node *setOp, Query *query,
 static Node *get_rule_sortgroupclause(SortClause *srt, List *tlist,
 						 bool force_colno,
 						 deparse_context *context);
-static void get_names_for_var(Var *var, deparse_context *context,
+static void get_names_for_var(Var *var, int levelsup, deparse_context *context,
 				  char **schemaname, char **refname, char **attname);
 static RangeTblEntry *find_rte_by_refname(const char *refname,
 					deparse_context *context);
@@ -1998,7 +1998,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 				char	   *refname;
 				char	   *attname;
 
-				get_names_for_var(var, context,
+				get_names_for_var(var, 0, context,
 								  &schemaname, &refname, &attname);
 				tell_as = (attname == NULL ||
 						   strcmp(attname, colname) != 0);
@@ -2392,6 +2392,10 @@ get_utility_query_def(Query *query, deparse_context *context)
 /*
  * Get the schemaname, refname and attname for a (possibly nonlocal) Var.
  *
+ * In some cases (currently only when recursing into an unnamed join)
+ * the Var's varlevelsup has to be interpreted with respect to a context
+ * above the current one; levelsup indicates the offset.
+ *
  * schemaname is usually returned as NULL.	It will be non-null only if
  * use of the unqualified refname would find the wrong RTE.
  *
@@ -2404,17 +2408,20 @@ get_utility_query_def(Query *query, deparse_context *context)
  * distinguish this case.)
  */
 static void
-get_names_for_var(Var *var, deparse_context *context,
+get_names_for_var(Var *var, int levelsup, deparse_context *context,
 				  char **schemaname, char **refname, char **attname)
 {
+	int			netlevelsup;
 	deparse_namespace *dpns;
 	RangeTblEntry *rte;
 
 	/* Find appropriate nesting depth */
-	if (var->varlevelsup >= list_length(context->namespaces))
-		elog(ERROR, "bogus varlevelsup: %d", var->varlevelsup);
+	netlevelsup = var->varlevelsup + levelsup;
+	if (netlevelsup >= list_length(context->namespaces))
+		elog(ERROR, "bogus varlevelsup: %d offset %d",
+			 var->varlevelsup, levelsup);
 	dpns = (deparse_namespace *) list_nth(context->namespaces,
-										  var->varlevelsup);
+										  netlevelsup);
 
 	/* Find the relevant RTE */
 	if (var->varno >= 1 && var->varno <= list_length(dpns->rtable))
@@ -2467,7 +2474,7 @@ get_names_for_var(Var *var, deparse_context *context,
 											var->varattno-1);
 				if (IsA(aliasvar, Var))
 				{
-					get_names_for_var(aliasvar, context,
+					get_names_for_var(aliasvar, netlevelsup, context,
 									  schemaname, refname, attname);
 					return;
 				}
@@ -2867,7 +2874,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				char	   *refname;
 				char	   *attname;
 
-				get_names_for_var(var, context,
+				get_names_for_var(var, 0, context,
 								  &schemaname, &refname, &attname);
 				if (refname && (context->varprefix || attname == NULL))
 				{
