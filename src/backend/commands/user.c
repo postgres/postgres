@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.99 2002/04/27 21:24:34 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.100 2002/04/28 00:36:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1099,7 +1099,7 @@ CreateGroup(CreateGroupStmt *stmt)
 	List	   *item,
 			   *option,
 			   *newlist = NIL;
-	ArrayType  *userarray;
+	IdList	   *grolist;
 	int			sysid = 0;
 	List	   *userElts = NIL;
 	DefElem    *dsysid = NULL;
@@ -1196,9 +1196,9 @@ CreateGroup(CreateGroupStmt *stmt)
 
 	/* build an array to insert */
 	if (newlist)
-		userarray = IdListToArray(newlist);
+		grolist = IdListToArray(newlist);
 	else
-		userarray = NULL;
+		grolist = NULL;
 
 	/*
 	 * Form a tuple to insert
@@ -1206,11 +1206,11 @@ CreateGroup(CreateGroupStmt *stmt)
 	new_record[Anum_pg_group_groname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->name));
 	new_record[Anum_pg_group_grosysid - 1] = Int32GetDatum(sysid);
-	new_record[Anum_pg_group_grolist - 1] = PointerGetDatum(userarray);
+	new_record[Anum_pg_group_grolist - 1] = PointerGetDatum(grolist);
 
 	new_record_nulls[Anum_pg_group_groname - 1] = ' ';
 	new_record_nulls[Anum_pg_group_grosysid - 1] = ' ';
-	new_record_nulls[Anum_pg_group_grolist - 1] = userarray ? ' ' : 'n';
+	new_record_nulls[Anum_pg_group_grolist - 1] = grolist ? ' ' : 'n';
 
 	tuple = heap_formtuple(pg_group_dsc, new_record, new_record_nulls);
 
