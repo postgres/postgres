@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.23 1999/07/25 17:53:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.24 1999/07/27 03:51:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -750,7 +750,6 @@ FreePathFields(Path *node)
 	freeObject(node->pathkeys);
 
 	freeList(node->joinid);
-	freeObject(node->loc_restrictinfo);
 }
 
 /* ----------------

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.94 1999/07/20 00:18:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.95 1999/07/27 03:51:06 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -76,7 +76,6 @@ static void mapTargetColumns(List *source, List *target);
 static List *makeConstantList( A_Const *node);
 static char *FlattenStringList(List *list);
 static char *fmtId(char *rawid);
-static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr);
 static void param_type_init(Oid *typev, int nargs);
 static Node *doNegate(Node *n);
 
@@ -3724,9 +3723,9 @@ a_expr:  attr
 		| '(' a_expr_or_null ')'
 				{	$$ = $2; }
 		| a_expr Op a_expr
-				{	$$ = makeIndexable($2,$1,$3);	}
+				{	$$ = makeA_Expr(OP, $2, $1, $3);	}
 		| a_expr LIKE a_expr
-				{	$$ = makeIndexable("~~", $1, $3); }
+				{	$$ = makeA_Expr(OP, "~~", $1, $3); }
 		| a_expr NOT LIKE a_expr
 				{	$$ = makeA_Expr(OP, "!~~", $1, $4); }
 		| Op a_expr
@@ -4376,7 +4375,7 @@ b_expr:  attr
 		| '(' a_expr ')'
 				{	$$ = $2; }
 		| b_expr Op b_expr
-				{	$$ = makeIndexable($2,$1,$3);	}
+				{	$$ = makeA_Expr(OP, $2,$1,$3);	}
 		| Op b_expr
 				{	$$ = makeA_Expr(OP, $1, NULL, $2); }
 		| b_expr Op
@@ -5196,157 +5195,6 @@ mapTargetColumns(List *src, List *dst)
 
 	return;
 } /* mapTargetColumns() */
-
-static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
-{
-	Node *result = NULL;
-	
-	/* we do this so indexes can be used */
-	if (strcmp(opname,"~") == 0 ||
-		strcmp(opname,"~*") == 0)
-	{
-		if (nodeTag(rexpr) == T_A_Const &&
-		   ((A_Const *)rexpr)->val.type == T_String &&
-		   ((A_Const *)rexpr)->val.val.str[0] == '^')
-		{
-			A_Const *n = (A_Const *)rexpr;
-			char *match_least = palloc(strlen(n->val.val.str)+2);
-			char *match_most = palloc(strlen(n->val.val.str)+2);
-			int pos, match_pos=0;
-			bool found_special = false;
-
-			/* Cannot optimize if unquoted | { } is present in pattern */
-			for (pos = 1; n->val.val.str[pos]; pos++)
-			{
-				if (n->val.val.str[pos] == '|' ||
-				    n->val.val.str[pos] == '{' ||
-				    n->val.val.str[pos] == '}')
-				{
-					found_special = true;
-					break;
-				}
-		     	if (n->val.val.str[pos] == '\\')
-				{
-					pos++;
-					if (n->val.val.str[pos] == '\0')
-						break;
-				}
-			}
-
-			if (!found_special)
-			{
-				/* note start at pos 1 to skip leading ^ */
-				for (pos = 1; n->val.val.str[pos]; pos++)
-				{
-					if (n->val.val.str[pos] == '.' ||
-						n->val.val.str[pos] == '?' ||
-						n->val.val.str[pos] == '*' ||
-						n->val.val.str[pos] == '[' ||
-						n->val.val.str[pos] == '$' ||
-						(strcmp(opname,"~*") == 0 && isalpha(n->val.val.str[pos])))
-			     		break;
-			     	if (n->val.val.str[pos] == '\\')
-					{
-						pos++;
-						if (n->val.val.str[pos] == '\0')
-							break;
-					}
-					match_least[match_pos] = n->val.val.str[pos];
-					match_most[match_pos++] = n->val.val.str[pos];
-				}
-	
-				if (match_pos != 0)
-				{
-					A_Const *least = makeNode(A_Const);
-					A_Const *most = makeNode(A_Const);
-					
-					/* make strings to be used in index use */
-					match_least[match_pos] = '\0';
-					match_most[match_pos] = '\377';
-					match_most[match_pos+1] = '\0';
-					least->val.type = T_String;
-					least->val.val.str = match_least;
-					most->val.type = T_String;
-					most->val.val.str = match_most;
-#ifdef USE_LOCALE
-					result = makeA_Expr(AND, NULL,
-							makeA_Expr(OP, "~", lexpr, rexpr),
-							makeA_Expr(OP, ">=", lexpr, (Node *)least));
-#else
-					result = makeA_Expr(AND, NULL,
-							makeA_Expr(OP, "~", lexpr, rexpr),
-							makeA_Expr(AND, NULL,
-								makeA_Expr(OP, ">=", lexpr, (Node *)least),
-								makeA_Expr(OP, "<=", lexpr, (Node *)most)));
-#endif
-				}
-			}
-		}
-	}
-	else if (strcmp(opname,"~~") == 0)
-	{
-		if (nodeTag(rexpr) == T_A_Const &&
-		   ((A_Const *)rexpr)->val.type == T_String)
-		{
-			A_Const *n = (A_Const *)rexpr;
-			char *match_least = palloc(strlen(n->val.val.str)+2);
-			char *match_most = palloc(strlen(n->val.val.str)+2);
-			int pos, match_pos=0;
-	
-			for (pos = 0; n->val.val.str[pos]; pos++)
-			{
-				/* % and _ are wildcard characters in LIKE */
-				if (n->val.val.str[pos] == '%' ||
-					n->val.val.str[pos] == '_')
-					break;
-				/* Backslash quotes the next character */
-				if (n->val.val.str[pos] == '\\')
-				{
-					pos++;
-					if (n->val.val.str[pos] == '\0')
-						break;
-				}
-				/*
-				 * NOTE: this code used to think that %% meant a literal %,
-				 * but textlike() itself does not think that, and the SQL92
-				 * spec doesn't say any such thing either.
-				 */
-				match_least[match_pos] = n->val.val.str[pos];
-				match_most[match_pos++] = n->val.val.str[pos];
-			}
-	
-			if (match_pos != 0)
-			{
-				A_Const *least = makeNode(A_Const);
-				A_Const *most = makeNode(A_Const);
-				
-				/* make strings to be used in index use */
-				match_least[match_pos] = '\0';
-				match_most[match_pos] = '\377';
-				match_most[match_pos+1] = '\0';
-				least->val.type = T_String;
-				least->val.val.str = match_least;
-				most->val.type = T_String;
-				most->val.val.str = match_most;
-#ifdef USE_LOCALE
-				result = makeA_Expr(AND, NULL,
-						makeA_Expr(OP, "~~", lexpr, rexpr),
-						makeA_Expr(OP, ">=", lexpr, (Node *)least));
-#else
-				result = makeA_Expr(AND, NULL,
-						makeA_Expr(OP, "~~", lexpr, rexpr),
-						makeA_Expr(AND, NULL,
-							makeA_Expr(OP, ">=", lexpr, (Node *)least),
-							makeA_Expr(OP, "<=", lexpr, (Node *)most)));
-#endif
-			}
-		}
-	}
-	
-	if (result == NULL)
-		result = makeA_Expr(OP, opname, lexpr, rexpr);
-	return result;
-} /* makeIndexable() */
 
 
 /* xlateSqlFunc()

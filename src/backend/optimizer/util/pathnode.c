@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.48 1999/07/25 23:07:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.49 1999/07/27 03:51:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "optimizer/keys.h"
 #include "optimizer/ordering.h"
 #include "optimizer/pathnode.h"
+#include "optimizer/paths.h"
 #include "optimizer/plancat.h"
 #include "optimizer/restrictinfo.h"
 #include "parser/parsetree.h"
@@ -288,22 +289,12 @@ create_seqscan_path(RelOptInfo *rel)
 	pathnode->pathorder->ord.sortop = NULL;
 	pathnode->pathkeys = NIL;
 
-	/*
-	 * copy restrictinfo list into path for expensive function processing
-	 * JMH, 7/7/92
-	 */
-	pathnode->loc_restrictinfo = (List *) copyObject((Node *) rel->restrictinfo);
-
 	if (rel->relids != NULL)
 		relid = lfirsti(rel->relids);
 
 	pathnode->path_cost = cost_seqscan(relid,
 									   rel->pages, rel->tuples);
-	/* add in expensive functions cost!  -- JMH, 7/7/92 */
-#ifdef NOT_USED
-	if (XfuncMode != XFUNC_OFF)
-		pathnode->path_cost += xfunc_get_path_cost(pathnode);
-#endif
+
 	return pathnode;
 }
 
@@ -343,13 +334,6 @@ create_index_path(Query *root,
 	pathnode->indexid = index->relids;
 	pathnode->indexkeys = index->indexkeys;
 	pathnode->indexqual = NIL;
-
-	/*
-	 * copy restrictinfo list into path for expensive function processing
-	 * JMH, 7/7/92
-	 */
-	pathnode->path.loc_restrictinfo = set_difference((List *) copyObject((Node *) rel->restrictinfo),
-													 restriction_clauses);
 
 	/*
 	 * The index must have an ordering for the path to have (ordering)
@@ -403,6 +387,8 @@ create_index_path(Query *root,
 		Cost		clausesel;
 
 		indexquals = get_actual_clauses(restriction_clauses);
+		/* expand special operators to indexquals the executor can handle */
+		indexquals = expand_indexqual_conditions(indexquals);
 
 		index_selectivity(root,
 						  lfirsti(rel->relids),
@@ -425,19 +411,17 @@ create_index_path(Query *root,
 		 * Set selectivities of clauses used with index to the selectivity
 		 * of this index, subdividing the selectivity equally over each of
 		 * the clauses.
+		 *
 		 * XXX Can this divide the selectivities in a better way?
+		 *
 		 * XXX In fact, why the heck are we doing this at all?  We already
-		 * set the cost for the indexpath.
+		 * set the cost for the indexpath, and it's far from obvious that
+		 * the selectivity of the path should have any effect on estimates
+		 * made for other contexts...
 		 */
 		clausesel = pow(selec, 1.0 / (double) length(restriction_clauses));
 		set_clause_selectivities(restriction_clauses, clausesel);
 	}
-
-#ifdef NOT_USED
-	/* add in expensive functions cost!  -- JMH, 7/7/92 */
-	if (XfuncMode != XFUNC_OFF)
-		pathnode->path_cost += xfunc_get_path_cost((Path *) pathnode);
-#endif
 
 	return pathnode;
 }
@@ -473,7 +457,6 @@ create_nestloop_path(RelOptInfo *joinrel,
 	pathnode->path.pathkeys = pathkeys;
 	pathnode->path.joinid = NIL;
 	pathnode->path.outerjoincost = (Cost) 0.0;
-	pathnode->path.loc_restrictinfo = NIL;
 	pathnode->path.pathorder = makeNode(PathOrder);
 
 	if (pathkeys)
@@ -497,11 +480,7 @@ create_nestloop_path(RelOptInfo *joinrel,
 											 page_size(outer_rel->size,
 													   outer_rel->width),
 											 IsA(inner_path, IndexPath));
-	/* add in expensive function costs -- JMH 7/7/92 */
-#ifdef NOT_USED
-	if (XfuncMode != XFUNC_OFF)
-		pathnode->path_cost += xfunc_get_path_cost((Path *) pathnode);
-#endif
+
 	return pathnode;
 }
 
@@ -550,7 +529,6 @@ create_mergejoin_path(RelOptInfo *joinrel,
 	pathnode->jpath.path.pathorder->ordtype = MERGE_ORDER;
 	pathnode->jpath.path.pathorder->ord.merge = order;
 	pathnode->path_mergeclauses = mergeclauses;
-	pathnode->jpath.path.loc_restrictinfo = NIL;
 	pathnode->outersortkeys = outersortkeys;
 	pathnode->innersortkeys = innersortkeys;
 	pathnode->jpath.path.path_cost = cost_mergejoin(outer_path->path_cost,
@@ -561,11 +539,7 @@ create_mergejoin_path(RelOptInfo *joinrel,
 													innersize,
 													outerwidth,
 													innerwidth);
-	/* add in expensive function costs -- JMH 7/7/92 */
-#ifdef NOT_USED
-	if (XfuncMode != XFUNC_OFF)
-		pathnode->path_cost += xfunc_get_path_cost((Path *) pathnode);
-#endif
+
 	return pathnode;
 }
 
@@ -608,7 +582,6 @@ create_hashjoin_path(RelOptInfo *joinrel,
 	pathnode->jpath.outerjoinpath = outer_path;
 	pathnode->jpath.innerjoinpath = inner_path;
 	pathnode->jpath.pathinfo = joinrel->restrictinfo;
-	pathnode->jpath.path.loc_restrictinfo = NIL;
 	pathnode->jpath.path.pathkeys = pathkeys;
 	pathnode->jpath.path.pathorder = makeNode(PathOrder);
 	pathnode->jpath.path.pathorder->ordtype = SORTOP_ORDER;
@@ -625,10 +598,6 @@ create_hashjoin_path(RelOptInfo *joinrel,
 												   innerkeys,
 												   outersize, innersize,
 												 outerwidth, innerwidth);
-	/* add in expensive function costs -- JMH 7/7/92 */
-#ifdef NOT_USED
-	if (XfuncMode != XFUNC_OFF)
-		pathnode->path_cost += xfunc_get_path_cost((Path *) pathnode);
-#endif
+
 	return pathnode;
 }

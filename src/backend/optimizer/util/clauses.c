@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.42 1999/07/25 23:07:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.43 1999/07/27 03:51:04 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -293,8 +293,9 @@ make_andclause(List *andclauses)
 
 /*
  * Sometimes (such as in the result of cnfify), we use lists of expression
- * nodes with implicit AND semantics.  This function converts back to an
- * explicit-AND representation.
+ * nodes with implicit AND semantics.  These functions convert between an
+ * AND-semantics expression list and the ordinary representation of a
+ * boolean expression.
  */
 Expr *
 make_ands_explicit(List *andclauses)
@@ -305,6 +306,17 @@ make_ands_explicit(List *andclauses)
 		return (Expr *) lfirst(andclauses);
 	else
 		return make_andclause(andclauses);
+}
+
+List *
+make_ands_implicit(Expr *clause)
+{
+	if (clause == NULL)
+		return NIL;
+	else if (and_clause((Node *) clause))
+		return clause->args;
+	else
+		return lcons(clause, NIL);
 }
 
 /*****************************************************************************

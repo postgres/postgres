@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.63 1999/07/24 23:21:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.64 1999/07/27 03:51:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,15 +151,11 @@ create_scan_node(Path *best_path, List *tlist)
 	List	   *scan_clauses;
 
 	/*
-	 * Extract the relevant clauses from the parent relation and replace
-	 * the operator OIDs with the corresponding regproc ids.
-	 *
-	 * now that local predicate clauses are copied into paths in
-	 * find_rel_paths() and then (possibly) pulled up in
-	 * xfunc_trypullup(), we get the relevant clauses from the path
-	 * itself, not its parent relation.   --- JMH, 6/15/92
+	 * Extract the relevant restriction clauses from the parent relation;
+	 * the executor must apply all these restrictions during the scan.
+	 * Fix regproc ids in the restriction clauses.
 	 */
-	scan_clauses = fix_opids(get_actual_clauses(best_path->loc_restrictinfo));
+	scan_clauses = fix_opids(get_actual_clauses(best_path->parent->restrictinfo));
 
 	switch (best_path->pathtype)
 	{
@@ -245,8 +241,7 @@ create_join_node(JoinPath *best_path, List *tlist)
 				 best_path->path.pathtype);
 	}
 
-#if 0
-
+#ifdef NOT_USED
 	/*
 	 * * Expensive function pullups may have pulled local predicates *
 	 * into this path node.  Put them in the qpqual of the plan node. *
@@ -282,11 +277,10 @@ create_seqscan_node(Path *best_path, List *tlist, List *scan_clauses)
 	List	   *temp;
 
 	temp = best_path->parent->relids;
-	if (temp == NULL)
-		elog(ERROR, "scanrelid is empty");
-	else
-		scan_relid = (Index) lfirsti(temp);		/* ??? who takes care of
-												 * lnext? - ay */
+	/* there should be exactly one base rel involved... */
+	Assert(length(temp) == 1);
+	scan_relid = (Index) lfirsti(temp);
+
 	scan_node = make_seqscan(tlist,
 							 scan_clauses,
 							 scan_relid,
@@ -319,6 +313,9 @@ create_indexscan_node(IndexPath *best_path,
 	IndexScan  *scan_node;
 	bool		lossy = false;
 
+	/* there should be exactly one base rel involved... */
+	Assert(length(best_path->path.parent->relids) == 1);
+
 	/* check and see if any indices are lossy */
 	foreach(ixid, best_path->indexid)
 	{
@@ -345,9 +342,9 @@ create_indexscan_node(IndexPath *best_path,
 	 * lossy indices the indxqual predicates need to be double-checked
 	 * after the index fetches the best-guess tuples.
 	 *
-	 * There should not be any clauses in scan_clauses that duplicate
-	 * expressions checked by the index, but just in case, we will
-	 * get rid of them via set_difference.
+	 * Since the indexquals were generated from the restriction clauses
+	 * given by scan_clauses, there will normally be some duplications
+	 * between the lists.  Get rid of the duplicates, then add back if lossy.
 	 */
 	if (length(indxqual) > 1)
 	{
@@ -387,9 +384,8 @@ create_indexscan_node(IndexPath *best_path,
 		qpqual = NIL;
 
 	/*
-	 * Fix opids in the completed indxqual.  We don't want to do this sooner
-	 * since it would screw up the set_difference calcs above.  Really,
-	 * this ought to only happen at final exit from the planner...
+	 * Fix opids in the completed indxqual.
+	 * XXX this ought to only happen at final exit from the planner...
 	 */
 	indxqual = fix_opids(indxqual);
 

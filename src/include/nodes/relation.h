@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.36 1999/07/25 17:53:26 tgl Exp $
+ * $Id: relation.h,v 1.37 1999/07/27 03:51:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,7 +148,6 @@ typedef struct Path
 								 * information. */
 	Cost		outerjoincost;
 	Relids		joinid;
-	List	   *loc_restrictinfo;
 } Path;
 
 /*----------
@@ -292,7 +291,7 @@ typedef struct Iter
  *	cinfo -- if NULL, this stream node referes to the path node.
  *			  Otherwise this is a pointer to the current clause.
  *	clausetype -- whether cinfo is in loc_restrictinfo or pathinfo in the
- *			  path node
+ *			  path node (XXX this is now used only by dead code...)
  *	upstream -- linked list pointer upwards
  *	downstream -- ditto, downwards
  *	groupup -- whether or not this node is in a group with the node upstream

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.23 1999/07/25 23:07:23 tgl Exp $
+ * $Id: clauses.h,v 1.24 1999/07/27 03:51:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@ extern Expr *get_notclausearg(Expr *notclause);
 extern bool and_clause(Node *clause);
 extern Expr *make_andclause(List *andclauses);
 extern Expr *make_ands_explicit(List *andclauses);
+extern List *make_ands_implicit(Expr *clause);
 
 extern bool case_clause(Node *clause);
 

@@ -8,10 +8,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.65 1999/07/25 23:07:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.66 1999/07/27 03:51:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include <ctype.h>
 #include <math.h>
 
 #include "postgres.h"
@@ -20,6 +21,7 @@
 #include "access/nbtree.h"
 #include "catalog/catname.h"
 #include "catalog/pg_amop.h"
+#include "catalog/pg_operator.h"
 #include "executor/executor.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -35,8 +37,13 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parsetree.h"
+#include "utils/builtins.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
+typedef enum {
+	Prefix_None, Prefix_Partial, Prefix_Exact
+} Prefix_Status;
 
 static void match_index_orclauses(RelOptInfo *rel, RelOptInfo *index, int indexkey,
 					  int xclass, List *restrictinfo_list);
@@ -65,6 +72,12 @@ static List *create_index_path_group(Query *root, RelOptInfo *rel, RelOptInfo *i
 static bool match_index_to_operand(int indexkey, Expr *operand,
 								   RelOptInfo *rel, RelOptInfo *index);
 static bool function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *index);
+static bool match_special_index_operator(Expr *clause, bool indexkey_on_left);
+static Prefix_Status like_fixed_prefix(char *patt, char **prefix);
+static Prefix_Status regex_fixed_prefix(char *patt, bool case_insensitive,
+										char **prefix);
+static List *prefix_quals(Var *leftop, Oid expr_op,
+						  char *prefix, Prefix_Status pstatus);
 
 
 /*
@@ -502,7 +515,8 @@ group_clauses_by_ikey_for_joins(RelOptInfo *rel,
  *		  or (var op var) for a join clause, where the var or one
  *		  of the vars matches the index key; and
  *	  (2) contain an operator which is in the same class as the index
- *		  operator for this key.
+ *		  operator for this key, or is a "special" operator as recognized
+ *		  by match_special_index_operator().
  *
  *	  In the restriction case, we can cope with (const op var) by commuting
  *	  the clause to (var op const), if there is a commutator operator.
@@ -539,6 +553,7 @@ match_clause_to_indexkey(RelOptInfo *rel,
 	bool		isIndexable = false;
 	Var		   *leftop,
 			   *rightop;
+	Oid			expr_op;
 
 	if (! is_opclause((Node *) clause))
 		return false;
@@ -546,6 +561,7 @@ match_clause_to_indexkey(RelOptInfo *rel,
 	rightop = get_rightop(clause);
 	if (! leftop || ! rightop)
 		return false;
+	expr_op = ((Oper *) clause->oper)->opno;
 
 	if (!join)
 	{
@@ -553,23 +569,17 @@ match_clause_to_indexkey(RelOptInfo *rel,
 		 * Not considering joins, so check for clauses of the form:
 		 * (var/func operator constant) and (constant operator var/func)
 		 */
-		Oid			restrict_op = InvalidOid;
 
 		/*
 		 * Check for standard s-argable clause
 		 */
-		if (IsA(rightop, Const) || IsA(rightop, Param))
+		if ((IsA(rightop, Const) || IsA(rightop, Param)) &&
+			match_index_to_operand(indexkey, (Expr *) leftop,
+								   rel, index))
 		{
-			restrict_op = ((Oper *) ((Expr *) clause)->oper)->opno;
-
-			isIndexable = (op_class(restrict_op, xclass, index->relam) &&
-						   match_index_to_operand(indexkey,
-												  (Expr *) leftop,
-												  rel,
-												  index));
+			isIndexable = op_class(expr_op, xclass, index->relam);
 
 #ifndef IGNORE_BINARY_COMPATIBLE_INDICES
-
 			/*
 			 * Didn't find an index? Then maybe we can find another
 			 * binary-compatible index instead... thomas 1998-08-14
@@ -583,88 +593,70 @@ match_clause_to_indexkey(RelOptInfo *rel,
 				 * make sure we have two different binary-compatible
 				 * types...
 				 */
-				if ((ltype != rtype)
-					&& IS_BINARY_COMPATIBLE(ltype, rtype))
+				if (ltype != rtype && IS_BINARY_COMPATIBLE(ltype, rtype))
 				{
-					char	   *opname;
-					Operator	newop;
+					char	   *opname = get_opname(expr_op);
+					Operator	newop = NULL;
 
-					opname = get_opname(restrict_op);
 					if (opname != NULL)
 						newop = oper(opname, ltype, ltype, TRUE);
-					else
-						newop = NULL;
 
 					/* actually have a different operator to try? */
-					if (HeapTupleIsValid(newop) &&
-						(oprid(newop) != restrict_op))
+					if (HeapTupleIsValid(newop) && oprid(newop) != expr_op)
 					{
-						restrict_op = oprid(newop);
-
-						isIndexable = (op_class(restrict_op, xclass, index->relam) &&
-									   match_index_to_operand(indexkey,
-															  (Expr *) leftop,
-															  rel,
-															  index));
-
+						expr_op = oprid(newop);
+						isIndexable = op_class(expr_op, xclass, index->relam);
 						if (isIndexable)
-							((Oper *) ((Expr *) clause)->oper)->opno = restrict_op;
+							((Oper *) clause->oper)->opno = expr_op;
 					}
 				}
 			}
 #endif
+
+			/*
+			 * If we didn't find a member of the index's opclass,
+			 * see whether it is a "special" indexable operator.
+			 */
+			if (!isIndexable)
+				isIndexable = match_special_index_operator(clause, true);
+
 		}
 
 		/*
 		 * Must try to commute the clause to standard s-arg format.
+		 * XXX do we really have to commute it?  The executor doesn't care!
 		 */
-		else if (IsA(leftop, Const) || IsA(leftop, Param))
+		else if ((IsA(leftop, Const) || IsA(leftop, Param)) &&
+				 match_index_to_operand(indexkey, (Expr *) rightop,
+										rel, index))
 		{
-			restrict_op = get_commutator(((Oper *) ((Expr *) clause)->oper)->opno);
+			Oid		commuted_op = get_commutator(expr_op);
 
-			isIndexable = ((restrict_op != InvalidOid) &&
-						   op_class(restrict_op, xclass, index->relam) &&
-						   match_index_to_operand(indexkey,
-												  (Expr *) rightop,
-												  rel,
-												  index));
+			isIndexable = ((commuted_op != InvalidOid) &&
+						   op_class(commuted_op, xclass, index->relam));
 
 #ifndef IGNORE_BINARY_COMPATIBLE_INDICES
 			if (!isIndexable)
 			{
-				Oid			ltype;
-				Oid			rtype;
+				Oid			ltype = exprType((Node *) leftop);
+				Oid			rtype = exprType((Node *) rightop);
 
-				ltype = exprType((Node *) leftop);
-				rtype = exprType((Node *) rightop);
-
-				if ((ltype != rtype)
-					&& IS_BINARY_COMPATIBLE(ltype, rtype))
+				if (ltype != rtype && IS_BINARY_COMPATIBLE(ltype, rtype))
 				{
-					char	   *opname;
-					Operator	newop;
+					char	   *opname = get_opname(expr_op);
+					Operator	newop = NULL;
 
-					restrict_op = ((Oper *) ((Expr *) clause)->oper)->opno;
-
-					opname = get_opname(restrict_op);
+					/* note we use rtype, ie, the indexkey's type */
 					if (opname != NULL)
 						newop = oper(opname, rtype, rtype, TRUE);
-					else
-						newop = NULL;
 
-					if (HeapTupleIsValid(newop) && (oprid(newop) != restrict_op))
+					if (HeapTupleIsValid(newop) && oprid(newop) != expr_op)
 					{
-						restrict_op = get_commutator(oprid(newop));
-
-						isIndexable = ((restrict_op != InvalidOid) &&
-						   op_class(restrict_op, xclass, index->relam) &&
-									   match_index_to_operand(indexkey,
-															  (Expr *) rightop,
-															  rel,
-															  index));
-
+						expr_op = get_commutator(oprid(newop));
+						isIndexable = (expr_op != InvalidOid) &&
+							op_class(expr_op, xclass, index->relam);
 						if (isIndexable)
-							((Oper *) ((Expr *) clause)->oper)->opno = oprid(newop);
+							((Oper *) clause->oper)->opno = oprid(newop);
 					}
 				}
 			}
@@ -672,12 +664,21 @@ match_clause_to_indexkey(RelOptInfo *rel,
 
 			if (isIndexable)
 			{
-
 				/*
 				 * In place list modification. (op const var/func) -> (op
 				 * var/func const)
 				 */
 				CommuteClause((Node *) clause);
+			}
+			else
+			{
+				/*
+				 * If we didn't find a member of the index's opclass,
+				 * see whether it is a "special" indexable operator.
+				 * (match_special_index_operator must commute the
+				 * clause itself, if it wants to.)
+				 */
+				isIndexable = match_special_index_operator(clause, false);
 			}
 		}
 	}
@@ -694,10 +695,10 @@ match_clause_to_indexkey(RelOptInfo *rel,
 
 		if (match_index_to_operand(indexkey, (Expr *) leftop,
 								   rel, index))
-			join_op = ((Oper *) ((Expr *) clause)->oper)->opno;
+			join_op = expr_op;
 		else if (match_index_to_operand(indexkey, (Expr *) rightop,
 										rel, index))
-			join_op = get_commutator(((Oper *) ((Expr *) clause)->oper)->opno);
+			join_op = get_commutator(expr_op);
 
 		if (join_op && op_class(join_op, xclass, index->relam) &&
 			is_joinable((Node *) clause))
@@ -1221,6 +1222,8 @@ index_innerjoin(Query *root, RelOptInfo *rel, RelOptInfo *index,
 		float		selec;
 
 		indexquals = get_actual_clauses(clausegroup);
+		/* expand special operators to indexquals the executor can handle */
+		indexquals = expand_indexqual_conditions(indexquals);
 
 		index_selectivity(root,
 						  lfirsti(rel->relids),
@@ -1258,18 +1261,6 @@ index_innerjoin(Query *root, RelOptInfo *rel, RelOptInfo *index,
 											  index->tuples,
 											  true);
 
-		/*
-		 * copy restrictinfo list into path for expensive function
-		 * processing -- JMH, 7/7/92
-		 */
-		pathnode->path.loc_restrictinfo = set_difference(copyObject((Node *) rel->restrictinfo),
-														 clausegroup);
-
-#ifdef NOT_USED					/* fix xfunc */
-		/* add in cost for expensive functions!  -- JMH, 7/7/92 */
-		if (XfuncMode != XFUNC_OFF)
-			((Path *) pathnode)->path_cost += xfunc_get_path_cost((Path *) pathnode);
-#endif
 		path_list = lappend(path_list, pathnode);
 		outerrelids_list = lnext(outerrelids_list);
 	}
@@ -1418,4 +1409,461 @@ function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *index)
 	}
 
 	return true;
+}
+
+/****************************************************************************
+ *			----  ROUTINES FOR "SPECIAL" INDEXABLE OPERATORS  ----
+ ****************************************************************************/
+
+/*----------
+ * These routines handle special optimization of operators that can be
+ * used with index scans even though they are not known to the executor's
+ * indexscan machinery.  The key idea is that these operators allow us
+ * to derive approximate indexscan qual clauses, such that any tuples
+ * that pass the operator clause itself must also satisfy the simpler
+ * indexscan condition(s).  Then we can use the indexscan machinery
+ * to avoid scanning as much of the table as we'd otherwise have to,
+ * while applying the original operator as a qpqual condition to ensure
+ * we deliver only the tuples we want.  (In essence, we're using a regular
+ * index as if it were a lossy index.)
+ *
+ * An example of what we're doing is
+ *			textfield LIKE 'abc%'
+ * from which we can generate the indexscanable conditions
+ *			textfield >= 'abc' AND textfield < 'abd'
+ * which allow efficient scanning of an index on textfield.
+ * (In reality, character set and collation issues make the transformation
+ * from LIKE to indexscan limits rather harder than one might think ...
+ * but that's the basic idea.)
+ *
+ * Two routines are provided here, match_special_index_operator() and
+ * expand_indexqual_conditions().  match_special_index_operator() is
+ * just an auxiliary function for match_clause_to_indexkey(); after
+ * the latter fails to recognize a restriction opclause's operator
+ * as a member of an index's opclass, it asks match_special_index_operator()
+ * whether the clause should be considered an indexqual anyway.
+ * expand_indexqual_conditions() converts a list of "raw" indexqual
+ * conditions (with implicit AND semantics across list elements) into
+ * a list that the executor can actually handle.  For operators that
+ * are members of the index's opclass this transformation is a no-op,
+ * but operators recognized by match_special_index_operator() must be
+ * converted into one or more "regular" indexqual conditions.
+ *----------
+ */
+
+/*
+ * match_special_index_operator
+ *	  Recognize restriction clauses that can be used to generate
+ *	  additional indexscanable qualifications.
+ *
+ * The given clause is already known to be a binary opclause having
+ * the form (indexkey OP const/param) or (const/param OP indexkey),
+ * but the OP proved not to be one of the index's opclass operators.
+ * Return 'true' if we can do something with it anyway.
+ */
+static bool
+match_special_index_operator(Expr *clause, bool indexkey_on_left)
+{
+	bool		isIndexable = false;
+	Var		   *leftop,
+			   *rightop;
+	Oid			expr_op;
+	Datum		constvalue;
+	char	   *patt;
+	char	   *prefix;
+
+	/* Currently, all known special operators require the indexkey
+	 * on the left, but this test could be pushed into the switch statement
+	 * if some are added that do not...
+	 */
+	if (! indexkey_on_left)
+		return false;
+
+	/* we know these will succeed */
+	leftop = get_leftop(clause);
+	rightop = get_rightop(clause);
+	expr_op = ((Oper *) clause->oper)->opno;
+
+	/* again, required for all current special ops: */
+	if (! IsA(rightop, Const) ||
+		((Const *) rightop)->constisnull)
+		return false;
+	constvalue = ((Const *) rightop)->constvalue;
+
+	switch (expr_op)
+	{
+		case OID_TEXT_LIKE_OP:
+		case OID_BPCHAR_LIKE_OP:
+		case OID_VARCHAR_LIKE_OP:
+		case OID_NAME_LIKE_OP:
+			/* the right-hand const is type text for all of these */
+			patt = textout((text *) DatumGetPointer(constvalue));
+			isIndexable = like_fixed_prefix(patt, &prefix) != Prefix_None;
+			if (prefix) pfree(prefix);
+			pfree(patt);
+			break;
+
+		case OID_TEXT_REGEXEQ_OP:
+		case OID_BPCHAR_REGEXEQ_OP:
+		case OID_VARCHAR_REGEXEQ_OP:
+		case OID_NAME_REGEXEQ_OP:
+			/* the right-hand const is type text for all of these */
+			patt = textout((text *) DatumGetPointer(constvalue));
+			isIndexable = regex_fixed_prefix(patt, false, &prefix) != Prefix_None;
+			if (prefix) pfree(prefix);
+			pfree(patt);
+			break;
+
+		case OID_TEXT_ICREGEXEQ_OP:
+		case OID_BPCHAR_ICREGEXEQ_OP:
+		case OID_VARCHAR_ICREGEXEQ_OP:
+		case OID_NAME_ICREGEXEQ_OP:
+			/* the right-hand const is type text for all of these */
+			patt = textout((text *) DatumGetPointer(constvalue));
+			isIndexable = regex_fixed_prefix(patt, true, &prefix) != Prefix_None;
+			if (prefix) pfree(prefix);
+			pfree(patt);
+			break;
+	}
+
+	return isIndexable;
+}
+
+/*
+ * expand_indexqual_conditions
+ *	  Given a list of (implicitly ANDed) indexqual clauses,
+ *	  expand any "special" index operators into clauses that the indexscan
+ *	  machinery will know what to do with.  Clauses that were not
+ *	  recognized by match_special_index_operator() must be passed through
+ *	  unchanged.
+ */
+List *
+expand_indexqual_conditions(List *indexquals)
+{
+	List	   *resultquals = NIL;
+	List	   *q;
+
+	foreach(q, indexquals)
+	{
+		Expr	   *clause = (Expr *) lfirst(q);
+		/* we know these will succeed */
+		Var		   *leftop = get_leftop(clause);
+		Var		   *rightop = get_rightop(clause);
+		Oid			expr_op = ((Oper *) clause->oper)->opno;
+		Datum		constvalue;
+		char	   *patt;
+		char	   *prefix;
+		Prefix_Status pstatus;
+
+		switch (expr_op)
+		{
+			/*
+			 * LIKE and regex operators are not members of any index opclass,
+			 * so if we find one in an indexqual list we can assume that
+			 * it was accepted by match_special_index_operator().
+			 */
+			case OID_TEXT_LIKE_OP:
+			case OID_BPCHAR_LIKE_OP:
+			case OID_VARCHAR_LIKE_OP:
+			case OID_NAME_LIKE_OP:
+				/* the right-hand const is type text for all of these */
+				constvalue = ((Const *) rightop)->constvalue;
+				patt = textout((text *) DatumGetPointer(constvalue));
+				pstatus = like_fixed_prefix(patt, &prefix);
+				resultquals = nconc(resultquals,
+									prefix_quals(leftop, expr_op,
+												 prefix, pstatus));
+				if (prefix) pfree(prefix);
+				pfree(patt);
+				break;
+
+			case OID_TEXT_REGEXEQ_OP:
+			case OID_BPCHAR_REGEXEQ_OP:
+			case OID_VARCHAR_REGEXEQ_OP:
+			case OID_NAME_REGEXEQ_OP:
+				/* the right-hand const is type text for all of these */
+				constvalue = ((Const *) rightop)->constvalue;
+				patt = textout((text *) DatumGetPointer(constvalue));
+				pstatus = regex_fixed_prefix(patt, false, &prefix);
+				resultquals = nconc(resultquals,
+									prefix_quals(leftop, expr_op,
+												 prefix, pstatus));
+				if (prefix) pfree(prefix);
+				pfree(patt);
+				break;
+
+			case OID_TEXT_ICREGEXEQ_OP:
+			case OID_BPCHAR_ICREGEXEQ_OP:
+			case OID_VARCHAR_ICREGEXEQ_OP:
+			case OID_NAME_ICREGEXEQ_OP:
+				/* the right-hand const is type text for all of these */
+				constvalue = ((Const *) rightop)->constvalue;
+				patt = textout((text *) DatumGetPointer(constvalue));
+				pstatus = regex_fixed_prefix(patt, true, &prefix);
+				resultquals = nconc(resultquals,
+									prefix_quals(leftop, expr_op,
+												 prefix, pstatus));
+				if (prefix) pfree(prefix);
+				pfree(patt);
+				break;
+
+			default:
+				resultquals = lappend(resultquals, clause);
+				break;
+		}
+	}
+
+	return resultquals;
+}
+
+/*
+ * Extract the fixed prefix, if any, for a LIKE pattern.
+ * *prefix is set to a palloc'd prefix string with 1 spare byte,
+ * or to NULL if no fixed prefix exists for the pattern.
+ * The return value distinguishes no fixed prefix, a partial prefix,
+ * or an exact-match-only pattern.
+ */
+static Prefix_Status
+like_fixed_prefix(char *patt, char **prefix)
+{
+	char	   *match;
+	int			pos,
+				match_pos;
+
+	*prefix = match = palloc(strlen(patt)+2);
+	match_pos = 0;
+
+	for (pos = 0; patt[pos]; pos++)
+	{
+		/* % and _ are wildcard characters in LIKE */
+		if (patt[pos] == '%' ||
+			patt[pos] == '_')
+			break;
+		/* Backslash quotes the next character */
+		if (patt[pos] == '\\')
+		{
+			pos++;
+			if (patt[pos] == '\0')
+				break;
+		}
+		/*
+		 * NOTE: this code used to think that %% meant a literal %,
+		 * but textlike() itself does not think that, and the SQL92
+		 * spec doesn't say any such thing either.
+		 */
+		match[match_pos++] = patt[pos];
+	}
+	
+	match[match_pos] = '\0';
+
+	/* in LIKE, an empty pattern is an exact match! */
+	if (patt[pos] == '\0')
+		return Prefix_Exact;	/* reached end of pattern, so exact */
+
+	if (match_pos > 0)
+		return Prefix_Partial;
+	return Prefix_None;
+}
+
+/*
+ * Extract the fixed prefix, if any, for a regex pattern.
+ * *prefix is set to a palloc'd prefix string with 1 spare byte,
+ * or to NULL if no fixed prefix exists for the pattern.
+ * The return value distinguishes no fixed prefix, a partial prefix,
+ * or an exact-match-only pattern.
+ */
+static Prefix_Status
+regex_fixed_prefix(char *patt, bool case_insensitive,
+				   char **prefix)
+{
+	char	   *match;
+	int			pos,
+				match_pos;
+
+	*prefix = NULL;
+
+	/* Pattern must be anchored left */
+	if (patt[0] != '^')
+		return Prefix_None;
+
+	/* Cannot optimize if unquoted | { } is present in pattern */
+	for (pos = 1; patt[pos]; pos++)
+	{
+		if (patt[pos] == '|' ||
+			patt[pos] == '{' ||
+			patt[pos] == '}')
+			return Prefix_None;
+		if (patt[pos] == '\\')
+		{
+			pos++;
+			if (patt[pos] == '\0')
+				break;
+		}
+	}
+
+	/* OK, allocate space for pattern */
+	*prefix = match = palloc(strlen(patt)+2);
+	match_pos = 0;
+
+	/* note start at pos 1 to skip leading ^ */
+	for (pos = 1; patt[pos]; pos++)
+	{
+		if (patt[pos] == '.' ||
+			patt[pos] == '?' ||
+			patt[pos] == '*' ||
+			patt[pos] == '[' ||
+			patt[pos] == '$' ||
+			/* XXX I suspect isalpha() is not an adequately locale-sensitive
+			 * test for characters that can vary under case folding?
+			 */
+			(case_insensitive && isalpha(patt[pos])))
+			break;
+		if (patt[pos] == '\\')
+		{
+			pos++;
+			if (patt[pos] == '\0')
+				break;
+		}
+		match[match_pos++] = patt[pos];
+	}
+
+	match[match_pos] = '\0';
+
+	if (patt[pos] == '$' && patt[pos+1] == '\0')
+		return Prefix_Exact;	/* pattern specifies exact match */
+	
+	if (match_pos > 0)
+		return Prefix_Partial;
+	return Prefix_None;
+}
+
+/*
+ * Given a fixed prefix that all the "leftop" values must have,
+ * generate suitable indexqual condition(s).  expr_op is the original
+ * LIKE or regex operator; we use it to deduce the appropriate comparison
+ * operators.
+ */
+static List *
+prefix_quals(Var *leftop, Oid expr_op,
+			 char *prefix, Prefix_Status pstatus)
+{
+	List	   *result;
+	Oid			datatype;
+	HeapTuple	optup;
+	void	   *conval;
+	Const	   *con;
+	Oper	   *op;
+	Expr	   *expr;
+	int			prefixlen;
+
+	Assert(pstatus != Prefix_None);
+
+	switch (expr_op)
+	{
+		case OID_TEXT_LIKE_OP:
+		case OID_TEXT_REGEXEQ_OP:
+		case OID_TEXT_ICREGEXEQ_OP:
+			datatype = TEXTOID;
+			break;
+
+		case OID_BPCHAR_LIKE_OP:
+		case OID_BPCHAR_REGEXEQ_OP:
+		case OID_BPCHAR_ICREGEXEQ_OP:
+			datatype = BPCHAROID;
+			break;
+
+		case OID_VARCHAR_LIKE_OP:
+		case OID_VARCHAR_REGEXEQ_OP:
+		case OID_VARCHAR_ICREGEXEQ_OP:
+			datatype = VARCHAROID;
+			break;
+
+		case OID_NAME_LIKE_OP:
+		case OID_NAME_REGEXEQ_OP:
+		case OID_NAME_ICREGEXEQ_OP:
+			datatype = NAMEOID;
+			break;
+
+		default:
+			elog(ERROR, "prefix_quals: unexpected operator %u", expr_op);
+			return NIL;
+	}
+
+	/*
+	 * If we found an exact-match pattern, generate an "=" indexqual.
+	 */
+	if (pstatus == Prefix_Exact)
+	{
+		optup = SearchSysCacheTuple(OPRNAME,
+									PointerGetDatum("="),
+									ObjectIdGetDatum(datatype),
+									ObjectIdGetDatum(datatype),
+									CharGetDatum('b'));
+		if (!HeapTupleIsValid(optup))
+			elog(ERROR, "prefix_quals: no = operator for type %u", datatype);
+		/* Note: we cheat a little by assuming that textin() will do for
+		 * bpchar and varchar constants too...
+		 */
+		conval = (datatype == NAMEOID) ?
+			(void*) namein(prefix) : (void*) textin(prefix);
+		con = makeConst(datatype, ((datatype == NAMEOID) ? NAMEDATALEN : -1),
+						PointerGetDatum(conval),
+						false, false, false, false);
+		op = makeOper(optup->t_data->t_oid, InvalidOid, BOOLOID, 0, NULL);
+		expr = make_opclause(op, leftop, (Var *) con);
+		result = lcons(expr, NIL);
+		return result;
+	}
+
+	/*
+	 * Otherwise, we have a nonempty required prefix of the values.
+	 *
+	 * We can always say "x >= prefix".
+	 */
+	optup = SearchSysCacheTuple(OPRNAME,
+								PointerGetDatum(">="),
+								ObjectIdGetDatum(datatype),
+								ObjectIdGetDatum(datatype),
+								CharGetDatum('b'));
+	if (!HeapTupleIsValid(optup))
+		elog(ERROR, "prefix_quals: no >= operator for type %u", datatype);
+	conval = (datatype == NAMEOID) ?
+		(void*) namein(prefix) : (void*) textin(prefix);
+	con = makeConst(datatype, ((datatype == NAMEOID) ? NAMEDATALEN : -1),
+					PointerGetDatum(conval),
+					false, false, false, false);
+	op = makeOper(optup->t_data->t_oid, InvalidOid, BOOLOID, 0, NULL);
+	expr = make_opclause(op, leftop, (Var *) con);
+	result = lcons(expr, NIL);
+
+	/*
+	 * In ASCII locale we say "x <= prefix\377".  This does not
+	 * work for non-ASCII collation orders, and it's not really
+	 * right even for ASCII.  FIX ME!
+	 * Note we assume the passed prefix string is workspace with
+	 * an extra byte, as created by the xxx_fixed_prefix routines above.
+	 */
+#ifndef USE_LOCALE
+	prefixlen = strlen(prefix);
+	prefix[prefixlen] = '\377';
+	prefix[prefixlen+1] = '\0';
+
+	optup = SearchSysCacheTuple(OPRNAME,
+								PointerGetDatum("<="),
+								ObjectIdGetDatum(datatype),
+								ObjectIdGetDatum(datatype),
+								CharGetDatum('b'));
+	if (!HeapTupleIsValid(optup))
+		elog(ERROR, "prefix_quals: no <= operator for type %u", datatype);
+	conval = (datatype == NAMEOID) ?
+		(void*) namein(prefix) : (void*) textin(prefix);
+	con = makeConst(datatype, ((datatype == NAMEOID) ? NAMEDATALEN : -1),
+					PointerGetDatum(conval),
+					false, false, false, false);
+	op = makeOper(optup->t_data->t_oid, InvalidOid, BOOLOID, 0, NULL);
+	expr = make_opclause(op, leftop, (Var *) con);
+	result = lappend(result, expr);
+#endif
+
+	return result;
 }

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.57 1999/05/25 16:13:46 momjian Exp $
+ * $Id: pg_operator.h,v 1.58 1999/07/27 03:51:11 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -271,7 +271,6 @@ DATA(insert OID = 1283 (  ";"		PGUID 0 l t f	0 701 701	0	0	0	0 dlog1 - - ));
 DATA(insert OID = 1284 (  "|"		PGUID 0 l t f	0 704 702	0	0	0	0 intervalstart - - ));
 DATA(insert OID = 606 (  "<#>"		PGUID 0 b t f 702 702 704	0	0	0	0 mktinterval - - ));
 DATA(insert OID = 607 (  "="	   PGUID 0 b t t  26  26  16 607 608 609 609 oideq eqsel eqjoinsel ));
-#define OIDEqualOperator 607	/* XXX planner/prep/semanopt.c crock */
 DATA(insert OID = 608 (  "<>"	   PGUID 0 b t f  26  26  16 608 607  0  0 oidne neqsel neqjoinsel ));
 
 DATA(insert OID = 644 (  "<>"	   PGUID 0 b t f  30  30  16 644 649   0   0 oid8ne neqsel neqjoinsel ));
@@ -301,7 +300,6 @@ DATA(insert OID = 624 (  "<="	   PGUID 0 b t f  700  700	16 625 623	0 0 float4le
 DATA(insert OID = 625 (  ">="	   PGUID 0 b t f  700  700	16 624 622	0 0 float4ge intgtsel intgtjoinsel ));
 DATA(insert OID = 626 (  "!!="	   PGUID 0 b t f  23   19	16 0   0	0	0	int4notin - - ));
 DATA(insert OID = 627 (  "!!="	   PGUID 0 b t f  26   19	16 0   0	0	0	oidnotin - - ));
-#define OIDNotInOperator 627	/* XXX planner/prep/semanopt.c crock */
 DATA(insert OID = 630 (  "<>"	   PGUID 0 b t f  18  18  16 630  92  0 0 charne neqsel neqjoinsel ));
 
 DATA(insert OID = 631 (  "<"	   PGUID 0 b t f  18  18  16 633 634  0 0 charlt intltsel intltjoinsel ));
@@ -315,8 +313,10 @@ DATA(insert OID = 637 (  "*"	   PGUID 0 b t f  18  18  18 0 0  0 0 charmul - - )
 DATA(insert OID = 638 (  "/"	   PGUID 0 b t f  18  18  18 0 0  0 0 chardiv - - ));
 
 DATA(insert OID = 639 (  "~"	   PGUID 0 b t f  19  25  16 0 640	0 0 nameregexeq eqsel eqjoinsel ));
+#define OID_NAME_REGEXEQ_OP		639
 DATA(insert OID = 640 (  "!~"	   PGUID 0 b t f  19  25  16 0 639	0 0 nameregexne neqsel neqjoinsel ));
 DATA(insert OID = 641 (  "~"	   PGUID 0 b t f  25  25  16 0 642	0 0 textregexeq eqsel eqjoinsel ));
+#define OID_TEXT_REGEXEQ_OP		641
 DATA(insert OID = 642 (  "!~"	   PGUID 0 b t f  25  25  16 0 641	0 0 textregexne neqsel neqjoinsel ));
 DATA(insert OID = 643 (  "<>"	   PGUID 0 b t f  19  19  16 643 93 0 0 namene neqsel neqjoinsel ));
 DATA(insert OID = 654 (  "||"	   PGUID 0 b t f  25  25  25   0 0	0 0 textcat - - ));
@@ -436,6 +436,7 @@ DATA(insert OID =  979 (  "||"	   PGUID 0 b t f 1043 1043 1043    0  0 0 0 textc
 
 DATA(insert OID = 1054 ( "="	   PGUID 0 b t t 1042 1042	 16 1054 1057 1058 1058 bpchareq eqsel eqjoinsel ));
 DATA(insert OID = 1055 ( "~"	   PGUID 0 b t f 1042	25	 16    0 1056  0 0 textregexeq eqsel eqjoinsel ));
+#define OID_BPCHAR_REGEXEQ_OP		1055
 DATA(insert OID = 1056 ( "!~"	   PGUID 0 b t f 1042	25	 16    0 1055  0 0 textregexne neqsel neqjoinsel ));
 DATA(insert OID = 1057 ( "<>"	   PGUID 0 b t f 1042 1042	 16 1057 1054  0 0 bpcharne neqsel neqjoinsel ));
 DATA(insert OID = 1058 ( "<"	   PGUID 0 b t f 1042 1042	 16 1060 1061  0 0 bpcharlt intltsel intltjoinsel ));
@@ -445,6 +446,7 @@ DATA(insert OID = 1061 ( ">="	   PGUID 0 b t f 1042 1042	 16 1059 1058  0 0 bpch
 
 DATA(insert OID = 1062 ( "="	   PGUID 0 b t t 1043 1043	16	1062 1065 1066 1066 varchareq eqsel eqjoinsel ));
 DATA(insert OID = 1063 ( "~"	   PGUID 0 b t f 1043	25	16 0 1064  0 0 textregexeq eqsel eqjoinsel ));
+#define OID_VARCHAR_REGEXEQ_OP		1063
 DATA(insert OID = 1064 ( "!~"	   PGUID 0 b t f 1043	25	16 0 1063  0 0 textregexne neqsel neqjoinsel ));
 DATA(insert OID = 1065 ( "<>"	   PGUID 0 b t f 1043 1043	16 1065 1062  0 0 varcharne neqsel neqjoinsel ));
 DATA(insert OID = 1066 ( "<"	   PGUID 0 b t f 1043 1043	16 1068 1069  0 0 varcharlt intltsel intltjoinsel ));
@@ -501,22 +503,30 @@ DATA(insert OID = 1137 (  "="		PGUID 0 b t t 26 23 16 1136 0 0 0 oideqint4 eqsel
 
 /* LIKE hacks by Keith Parks. */
 DATA(insert OID = 1207 (  "~~"	  PGUID 0 b t f  19   25  16 0 1208 0 0 namelike eqsel eqjoinsel ));
+#define OID_NAME_LIKE_OP		1207
 DATA(insert OID = 1208 (  "!~~"   PGUID 0 b t f  19   25  16 0 1207 0 0 namenlike neqsel neqjoinsel ));
 DATA(insert OID = 1209 (  "~~"	  PGUID 0 b t f  25   25  16 0 1210 0 0 textlike eqsel eqjoinsel ));
+#define OID_TEXT_LIKE_OP		1209
 DATA(insert OID = 1210 (  "!~~"   PGUID 0 b t f  25   25  16 0 1209 0 0 textnlike neqsel neqjoinsel ));
 DATA(insert OID = 1211 (  "~~"	  PGUID 0 b t f  1042 25  16 0 1212 0 0 textlike eqsel eqjoinsel ));
+#define OID_BPCHAR_LIKE_OP		1211
 DATA(insert OID = 1212 (  "!~~"   PGUID 0 b t f  1042 25  16 0 1211 0 0 textnlike neqsel neqjoinsel ));
 DATA(insert OID = 1213 (  "~~"	  PGUID 0 b t f  1043 25  16 0 1214 0 0 textlike eqsel eqjoinsel ));
+#define OID_VARCHAR_LIKE_OP		1213
 DATA(insert OID = 1214 (  "!~~"   PGUID 0 b t f  1043 25  16 0 1213 0 0 textnlike neqsel neqjoinsel ));
 
 /* case-insensitive LIKE hacks */
 DATA(insert OID = 1226 (  "~*"		 PGUID 0 b t f	19	25	16 0 1227  0 0 nameicregexeq eqsel eqjoinsel ));
+#define OID_NAME_ICREGEXEQ_OP		1226
 DATA(insert OID = 1227 (  "!~*"		 PGUID 0 b t f	19	25	16 0 1226  0 0 nameicregexne neqsel neqjoinsel ));
 DATA(insert OID = 1228 (  "~*"		 PGUID 0 b t f	25	25	16 0 1229  0 0 texticregexeq eqsel eqjoinsel ));
+#define OID_TEXT_ICREGEXEQ_OP		1228
 DATA(insert OID = 1229 (  "!~*"		 PGUID 0 b t f	25	25	16 0 1228  0 0 texticregexne neqsel neqjoinsel ));
 DATA(insert OID = 1232 (  "~*"		PGUID 0 b t f  1043  25  16 0 1233	0 0 texticregexeq eqsel eqjoinsel ));
+#define OID_VARCHAR_ICREGEXEQ_OP		1232
 DATA(insert OID = 1233 ( "!~*"		PGUID 0 b t f  1043  25  16 0 1232	0 0 texticregexne neqsel neqjoinsel ));
 DATA(insert OID = 1234 (  "~*"		PGUID 0 b t f  1042  25  16 0 1235	0 0 texticregexeq eqsel eqjoinsel ));
+#define OID_BPCHAR_ICREGEXEQ_OP		1234
 DATA(insert OID = 1235 ( "!~*"		PGUID 0 b t f  1042  25  16 0 1234	0 0 texticregexne neqsel neqjoinsel ));
 
 DATA(insert OID = 1300 (  "="		PGUID 0 b t t  1296 1296 16 1300 1301 1302 1302 timestampeq eqsel eqjoinsel ));

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.88 1999/07/25 17:53:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.89 1999/07/27 03:51:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1097,7 +1097,6 @@ CopyPathFields(Path *from, Path *newnode)
 	newnode->outerjoincost = from->outerjoincost;
 
 	newnode->joinid = listCopy(from->joinid);
-	Node_Copy(from, newnode, loc_restrictinfo);
 }
 
 /* ----------------
