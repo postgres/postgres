@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.182 2002/03/02 00:49:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.183 2002/04/15 23:34:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -913,8 +913,13 @@ connectDBStart(PGconn *conn)
 	 * Thus, we have to make arrangements for all eventualities.
 	 * ----------
 	 */
+retry1:
 	if (connect(conn->sock, &conn->raddr.sa, conn->raddr_len) < 0)
 	{
+		if (SOCK_ERRNO == EINTR)
+			/* Interrupted system call - we'll just try again */
+			goto retry1;
+
 		if (SOCK_ERRNO == EINPROGRESS || SOCK_ERRNO == EWOULDBLOCK || SOCK_ERRNO == 0)
 		{
 			/*
@@ -949,9 +954,14 @@ connectDBStart(PGconn *conn)
 							  SOCK_STRERROR(SOCK_ERRNO));
 			goto connect_errReturn;
 		}
+retry2:
 		/* Now receive the postmasters response */
 		if (recv(conn->sock, &SSLok, 1, 0) != 1)
 		{
+			if (SOCK_ERRNO == EINTR)
+				/* Interrupted system call - we'll just try again */
+				goto retry2;
+
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("could not receive server response to SSL negotiation packet: %s\n"),
 							  SOCK_STRERROR(SOCK_ERRNO));
@@ -2132,8 +2142,12 @@ PQrequestCancel(PGconn *conn)
 			   "PQrequestCancel() -- socket() failed: ");
 		goto cancel_errReturn;
 	}
+retry3:
 	if (connect(tmpsock, &conn->raddr.sa, conn->raddr_len) < 0)
 	{
+		if (SOCK_ERRNO == EINTR)
+			/* Interrupted system call - we'll just try again */
+			goto retry3;
 		strcpy(conn->errorMessage.data,
 			   "PQrequestCancel() -- connect() failed: ");
 		goto cancel_errReturn;
@@ -2150,8 +2164,12 @@ PQrequestCancel(PGconn *conn)
 	crp.cp.backendPID = htonl(conn->be_pid);
 	crp.cp.cancelAuthCode = htonl(conn->be_key);
 
+retry4:
 	if (send(tmpsock, (char *) &crp, sizeof(crp), 0) != (int) sizeof(crp))
 	{
+		if (SOCK_ERRNO == EINTR)
+			/* Interrupted system call - we'll just try again */
+			goto retry4;
 		strcpy(conn->errorMessage.data,
 			   "PQrequestCancel() -- send() failed: ");
 		goto cancel_errReturn;

@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.68 2002/03/06 06:10:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.69 2002/04/15 23:34:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -361,7 +361,7 @@ pqReadReady(PGconn *conn)
 	if (!conn || conn->sock < 0)
 		return -1;
 
-retry:
+retry1:
 	FD_ZERO(&input_mask);
 	FD_SET(conn->sock, &input_mask);
 	timeout.tv_sec = 0;
@@ -371,7 +371,7 @@ retry:
 	{
 		if (SOCK_ERRNO == EINTR)
 			/* Interrupted system call - we'll just try again */
-			goto retry;
+			goto retry1;
 
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("select() failed: %s\n"),
@@ -395,7 +395,7 @@ pqWriteReady(PGconn *conn)
 	if (!conn || conn->sock < 0)
 		return -1;
 
-retry:
+retry2:
 	FD_ZERO(&input_mask);
 	FD_SET(conn->sock, &input_mask);
 	timeout.tv_sec = 0;
@@ -405,7 +405,7 @@ retry:
 	{
 		if (SOCK_ERRNO == EINTR)
 			/* Interrupted system call - we'll just try again */
-			goto retry;
+			goto retry2;
 
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("select() failed: %s\n"),
@@ -478,7 +478,7 @@ pqReadData(PGconn *conn)
 	}
 
 	/* OK, try to read some data */
-tryAgain:
+retry3:
 #ifdef USE_SSL
 	if (conn->ssl)
 		nread = SSL_read(conn->ssl, conn->inBuffer + conn->inEnd,
@@ -490,7 +490,7 @@ tryAgain:
 	if (nread < 0)
 	{
 		if (SOCK_ERRNO == EINTR)
-			goto tryAgain;
+			goto retry3;
 		/* Some systems return EAGAIN/EWOULDBLOCK for no data */
 #ifdef EAGAIN
 		if (SOCK_ERRNO == EAGAIN)
@@ -531,7 +531,7 @@ tryAgain:
 			(conn->inBufSize - conn->inEnd) >= 8192)
 		{
 			someread = 1;
-			goto tryAgain;
+			goto retry3;
 		}
 		return 1;
 	}
@@ -564,7 +564,7 @@ tryAgain:
 	 * Still not sure that it's EOF, because some data could have just
 	 * arrived.
 	 */
-tryAgain2:
+retry4:
 #ifdef USE_SSL
 	if (conn->ssl)
 		nread = SSL_read(conn->ssl, conn->inBuffer + conn->inEnd,
@@ -576,7 +576,7 @@ tryAgain2:
 	if (nread < 0)
 	{
 		if (SOCK_ERRNO == EINTR)
-			goto tryAgain2;
+			goto retry4;
 		/* Some systems return EAGAIN/EWOULDBLOCK for no data */
 #ifdef EAGAIN
 		if (SOCK_ERRNO == EAGAIN)
@@ -804,7 +804,7 @@ pqWait(int forRead, int forWrite, PGconn *conn)
 
 	if (forRead || forWrite)
 	{
-retry:
+retry5:
 		FD_ZERO(&input_mask);
 		FD_ZERO(&output_mask);
 		FD_ZERO(&except_mask);
@@ -817,7 +817,7 @@ retry:
 				   (struct timeval *) NULL) < 0)
 		{
 			if (SOCK_ERRNO == EINTR)
-				goto retry;
+				goto retry5;
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("select() failed: %s\n"),
 							  SOCK_STRERROR(SOCK_ERRNO));
