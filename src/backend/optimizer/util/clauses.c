@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.131 2003/03/10 03:53:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.132 2003/03/14 00:55:17 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1496,6 +1496,28 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		newcoalesce->coalescetype = coalesceexpr->coalescetype;
 		newcoalesce->args = newargs;
 		return (Node *) newcoalesce;
+	}
+	if (IsA(node, FieldSelect))
+	{
+		/*
+		 * We can optimize field selection from a whole-row Var into a
+		 * simple Var.  (This case won't be generated directly by the
+		 * parser, because ParseComplexProjection short-circuits it.
+		 * But it can arise while simplifying functions.)  If the argument
+		 * isn't a whole-row Var, just fall through to do generic processing.
+		 */
+		FieldSelect *fselect = (FieldSelect *) node;
+		Var		   *argvar = (Var *) fselect->arg;
+
+		if (argvar && IsA(argvar, Var) &&
+			argvar->varattno == InvalidAttrNumber)
+		{
+			return (Node *) makeVar(argvar->varno,
+									fselect->fieldnum,
+									fselect->resulttype,
+									fselect->resulttypmod,
+									argvar->varlevelsup);
+		}
 	}
 
 	/*
