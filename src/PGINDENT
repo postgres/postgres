@@ -16,8 +16,8 @@ for FILE
 do
 	cat $FILE |
 	sed 's;/\*  *---;/*---;g' |
-	indent -bad -bap -bbb -bc -bl -d0 -ncdb -nce -cli1 -di16 -nfc1 \
-		-lp -nip -nbc -psl -di1 -i4 -st |
+	indent -bad -bap -bbb -bc -bl -d0 -cdb -nce -cli1 -di16 -nfc1 \
+		-lp -nip -nbc -psl -di1 -i4 -l75 -st |
 	detab -t8 |
 	entab -qc -t4 |
 	sed 's;/\*---;/* ---;g' >/tmp/$$ && cat /tmp/$$ >$FILE
