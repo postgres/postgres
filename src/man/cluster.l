@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/cluster.l,v 1.2 1996/12/11 00:27:07 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/cluster.l,v 1.3 1998/01/10 05:19:14 momjian Exp $
 .TH CLUSTER SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
 cluster \(em give storage clustering advice to Postgres
@@ -21,6 +21,10 @@ information.  The clustering is static.  In other words, if the class is
 updated, it may become unclustered.  No attempt is made to keep new
 instances or updated tuples clustered.  If desired, the user can
 recluster manually by issuing the command again.
+.PP
+The table is actually copied to temporary table in index order,
+then renamed back to the original name.  For this reason, all
+grant permissions and other indexes are lost when cluster is performed.
 .SH EXAMPLE
 .nf
 /*

@@ -8,3 +8,4 @@ doc/TODO
 doc/bug.template
 make new /mirgration file
 update include/version.h after release
+update backend/parser/scan.l for non-flex sites
