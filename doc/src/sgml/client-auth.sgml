@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.21 2001/09/21 21:10:56 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.22 2001/10/04 22:27:18 petere Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -606,7 +606,9 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
     return any user name he chooses. This authentication method is
     therefore only appropriate for closed networks where each client
     machine is under tight control and where the database and system
-    administrators operate in close contact. Heed the warning:
+    administrators operate in close contact. In other words, you must
+    trust the machine running the ident server.
+    Heed the warning:
     <blockquote>
      <attribution>RFC 1413</attribution>
      <para>
@@ -614,7 +616,6 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
       or access control protocol.
      </para>
     </blockquote>
-    You must trust the machine running the ident server.
    </para>
 
    <para>
