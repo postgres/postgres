@@ -2836,7 +2836,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     * New in 7.1 - If this is for PreparedStatement yes, ResultSet no
+     * Indicates whether the driver supports batch updates.
      */
     public boolean supportsBatchUpdates() throws SQLException
     {

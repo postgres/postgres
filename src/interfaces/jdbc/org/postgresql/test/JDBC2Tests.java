@@ -205,6 +205,10 @@ public class JDBC2Tests extends TestSuite {
     suite.addTestSuite(TimestampTest.class);
 
     // PreparedStatement
+    suite.addTestSuite(BatchExecuteTest.class);
+
+	// BatchExecute
+
 
     // MetaData
 

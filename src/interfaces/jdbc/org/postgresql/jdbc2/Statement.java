@@ -179,20 +179,26 @@ public class Statement extends org.postgresql.Statement implements java.sql.Stat
 
     public int[] executeBatch() throws SQLException
     {
-	if(batch==null || batch.isEmpty())
-	    throw new PSQLException("postgresql.stat.batch.empty");
-
+	if(batch==null)
+	    batch=new Vector();
 	int size=batch.size();
 	int[] result=new int[size];
 	int i=0;
-	this.execute("begin"); // PTM: check this when autoCommit is false
 	try {
 	    for(i=0;i<size;i++)
 		result[i]=this.executeUpdate((String)batch.elementAt(i));
-	    this.execute("commit"); // PTM: check this
 	} catch(SQLException e) {
-	    this.execute("abort"); // PTM: check this
-	    throw new PSQLException("postgresql.stat.batch.error",new Integer(i),batch.elementAt(i));
+		int[] resultSucceeded = new int[i];
+		System.arraycopy(result,0,resultSucceeded,0,i);
+
+		PBatchUpdateException updex =
+			new PBatchUpdateException("postgresql.stat.batch.error",
+			    new Integer(i), batch.elementAt(i), resultSucceeded);
+		updex.setNextException(e);
+
+		throw updex;
+	} finally {
+	    batch.removeAllElements();
 	}
 	return result;
     }

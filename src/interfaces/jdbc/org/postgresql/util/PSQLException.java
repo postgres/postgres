@@ -2,8 +2,6 @@ package org.postgresql.util;
 
 import java.io.*;
 import java.sql.*;
-import java.text.*;
-import java.util.*;
 
 /**
  * This class extends SQLException, and provides our internationalisation handling
@@ -11,9 +9,6 @@ import java.util.*;
 public class PSQLException extends SQLException
 {
     private String message;
-
-    // Cache for future errors
-    static ResourceBundle bundle;
 
     /**
      * This provides the same functionality to SQLException
@@ -86,36 +81,9 @@ public class PSQLException extends SQLException
 	translate(error,argv);
     }
 
-    /**
-     * This does the actual translation
-     */
-    private void translate(String id,Object[] args)
-    {
-	if(bundle == null) {
-	    try {
-		bundle = ResourceBundle.getBundle("org.postgresql.errors");
-	    } catch(MissingResourceException e) {
-                // translation files have not been installed.
-                message = id;
-	    }
+	private void translate(String error, Object[] args) {
+		message = MessageTranslator.translate(error,args);
 	}
-
-        if (bundle != null) {
-	// Now look up a localized message. If one is not found, then use
-	// the supplied message instead.
-	    message = null;
-	    try {
-	        message = bundle.getString(id);
-	    } catch(MissingResourceException e) {
-	        message = id;
-	    }
-        }
-
-	// Expand any arguments
-	if(args!=null && message != null)
-	    message = MessageFormat.format(message,args);
-
-    }
 
     /**
      * Overides Throwable
@@ -140,5 +108,4 @@ public class PSQLException extends SQLException
     {
 	return message;
     }
-
 }
