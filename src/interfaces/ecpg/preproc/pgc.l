@@ -119,7 +119,9 @@ xqcat			{quote}{space}*\n{space}*{quote}
 dquote			\"
 xdstart			{dquote}
 xdstop			{dquote}
+xdcqdq			\\\"
 xdinside		[^"]*
+xdcinside		({xdinside}|{xdcqdq})*
 
 /* Comments
  * Ignored by the scanner and parser.
@@ -287,7 +289,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					yylval.str = mm_strdup(literal);
 					return CSTRING;
 				}
-<xdc>{xdinside}	{
+<xdc>{xdcinside}	{
 					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
 						yyerror("ERROR: quoted string parse buffer exceeded");
 					memcpy(literal+llen, yytext, yyleng+1);
