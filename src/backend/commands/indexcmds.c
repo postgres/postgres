@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * defind.c
+ * indexcmds.c
  *	  POSTGRES define, extend and remove index code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.18 2000/01/11 03:33:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.19 2000/01/12 05:04:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,6 +87,9 @@ DefineIndex(char *heapRelationName,
 	numberOfAttributes = length(attributeList);
 	if (numberOfAttributes <= 0)
 		elog(ERROR, "DefineIndex: must specify at least one attribute");
+	if (numberOfAttributes > INDEX_MAX_KEYS)
+		elog(ERROR, "Cannot use more than %d attributes in an index",
+			 INDEX_MAX_KEYS);
 
 	/*
 	 * compute heap relation id
@@ -152,10 +155,8 @@ DefineIndex(char *heapRelationName,
 
 		nargs = length(funcIndex->args);
 		if (nargs > INDEX_MAX_KEYS)
-		{
-			elog(ERROR,
-			   "Too many args to function, limit of %d", INDEX_MAX_KEYS);
-		}
+			elog(ERROR, "Index function can take at most %d arguments",
+				 INDEX_MAX_KEYS);
 
 		FIsetnArgs(&fInfo, nargs);
 
@@ -258,10 +259,12 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 	relationId = index->indrelid;
 	indproc = index->indproc;
 
-	for (i = INDEX_MAX_KEYS-1; i >= 0; i--)
+	for (i = 0; i < INDEX_MAX_KEYS; i++)
+	{
 		if (index->indkey[i] == InvalidAttrNumber)
 			break;
-	numberOfAttributes = i+1;
+	}
+	numberOfAttributes = i;
 
 	if (VARSIZE(&index->indpred) != 0)
 	{
