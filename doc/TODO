@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Sep  3 19:01:42 EDT 2003
+Last updated:		Thu Sep  4 20:50:23 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -337,7 +337,8 @@ Referential Integrity
 * Support triggers on columns (Neil)
 * Have AFTER triggers execute after the appropriate SQL statement in a 
   function, not at the end of the function
-
+* Print table names with constraint names in error messages, or make constraint
+  names unique within a schema
 
 Dependency Checking
 ===================
@@ -490,7 +491,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1127 2003/09/03 23:01:47 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1127 2003/09/03 23:01:47 momjian Exp $
+* Change CVS $Id: TODO,v 1.1128 2003/09/05 00:50:40 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1128 2003/09/05 00:50:40 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
