@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.54 2001/02/16 19:43:52 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.55 2001/02/18 05:30:12 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -936,28 +936,26 @@ env PGOPTIONS='-c geqo=off' psql
       <term>FSYNC (<type>boolean</type>)</term>
       <listitem>
        <para>
-        If this is option is on, the <productname>Postgres</> backend
+        If this option is on, the <productname>Postgres</> backend
         will use the <function>fsync()</> system call in several
         places to make sure that updates are physically written to
-        disk and will not hang around in the write caches. This
+        disk and do not hang around in the kernel buffer cache. This
         increases the chance that a database installation will still
-        be usable after a operating system or hardware crashes by a
+        be usable after an operating system or hardware crash by a
         large amount. (Crashes of the database server itself do
         <emphasis>not</> affect this consideration.)
        </para>
 
        <para>
-        However, this operation severely slows down
-        <productname>Postgres</>, because at all those points it has
+        However, this operation slows down <productname>Postgres</>,
+	because at all those points it has
         to block and wait for the operating system to flush the
         buffers. Without <function>fsync</>, the operating system is
         allowed to do its best in buffering, sorting, and delaying
-        writes, so this can be a <emphasis>very</> big perfomance
-        increase. However, if the system crashes, parts of the data of
-        a transaction that has already been committed -- according to
-        the information on disk -- will still hang around in memory.
-        Inconsistent data (i.e., data corruption) is therefore likely
-        to occur.
+        writes, which can make for a considerable perfomance
+        increase. However, if the system crashes, the results of the
+	last few committed transactions may be lost in part or whole;
+	in the worst case, unrecoverable data corruption may occur.
        </para>
 
        <para>
@@ -967,8 +965,16 @@ env PGOPTIONS='-c geqo=off' psql
         where there is a clear restart point if something goes wrong,
         some leave it on just to be on the safe side. Because it is
         the safe side, on is also the default. If you trust your
-        operating system, your utility company, and your hardware, you
-        might want to disable it.
+        operating system, your hardware, and your utility company (or
+	better your UPS), you might want to disable fsync.
+       </para>
+
+       <para>
+        It should be noted that the performance penalty from doing
+	fsyncs is considerably less in <productname>Postgres</> version
+	7.1 than it was in prior releases.  If you previously suppressed
+	fsyncs because of performance problems, you may wish to reconsider
+	your choice.
        </para>
       </listitem>
      </varlistentry>
