@@ -110,6 +110,9 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	 */
 	public boolean next() throws SQLException
 	{
+	    if (rows == null)
+		throw new PSQLException("postgresql.con.closed");
+
 		if (++current_row >= rows.size())
 			return false;
 		this_row = (byte [][])rows.elementAt(current_row);
