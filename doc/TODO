@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Mar  1 00:18:59 EST 1998
+Last updated:		Sun Mar  1 17:14:36 EST 1998
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -95,6 +95,7 @@ ENHANCEMENTS
 	* add the concept of dataspaces
 	* add DECIMAL, NUMERIC, DOUBLE PRECISION, BIT, BIT VARYING
  	* NCHAR (as distinguished from ordinary varchar),
+	* DOMAIN capability
 * Allow compression of large fields or a compressed field type
 * Fix the rules system(Jan?,Soo-Ho)
 	* robust
@@ -216,13 +217,18 @@ System tables continue to be SELECT-able by PUBLIC.
 
 We also have real deadlock detection code.  No more sixty-second
 timeouts.  And the new locking code implements a FIFO better, so there
-should be less resource starvation during heavy use.  For performance
-reasons, time travel is gone, but can be implemented using triggers (see
-pgsql/contrib/spi/README).  Please check out the new \d command for
-types, operators, etc.  Also, views have their own permissions now, not
-based on the underlying tables, so permissions on them have to be set
-separately.  Check /pgsql/interfaces for some new ways to talk to
-PostgreSQL.
+should be less resource starvation during heavy use.
+
+Many complaints have been made about inadequate documenation in previous
+releases.  Thomas has put much effort into many new manuals for this
+release.  Check out the /doc directory.
+
+For performance reasons, time travel is gone, but can be implemented
+using triggers (see pgsql/contrib/spi/README).  Please check out the new
+\d command for types, operators, etc.  Also, views have their own
+permissions now, not based on the underlying tables, so permissions on
+them have to be set separately.  Check /pgsql/interfaces for some new
+ways to talk to PostgreSQL.
 
 This is the first release that really required an explaination for
 existing users.  In many ways, this was necessary because the new
